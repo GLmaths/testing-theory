@@ -200,7 +200,7 @@ Proof.
     intros p' hw. eapply cnv_nil.
     edestruct (mustx_terminate_ungood {[p']}). eapply com; eauto.
     intros j memj. eapply elem_of_singleton_1 in memj. subst.
-    exists p0. split; eauto. set_solver. contradiction.
+    exists p0. split; eauto. set_solver.
     set_solver.
     set (Y := wt_s_set_from_pset ps [co μ] HAps).
     assert (HAX2 : forall p, p ∈ ps2 -> p ⇓ [co μ]).
