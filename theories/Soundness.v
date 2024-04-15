@@ -211,7 +211,7 @@ Proof.
     edestruct (mustx_terminate_ungood {[p']}).
     inversion hmx2; subst. contradiction. eapply com0; eauto.
     intros j memj. eapply elem_of_singleton_1 in memj. subst.
-    exists p0. split; eauto. set_solver. contradiction. set_solver.
+    exists p0. split; eauto. set_solver. set_solver.
     set (Z := wt_s_set_from_pset ps2 [co μ] HAX2).
     assert (ps' ⊆ Y ∪ Z).
     intros q mem. eapply ps'_spec in mem as (q0 & mem & l').
@@ -273,7 +273,6 @@ Proof.
   eapply pt; eauto with mdb.
   intros p2 mem. replace q with p2 in * by set_solver.
   exists p; set_solver.
-  set_solver.
 Qed.
 
 Lemma wt_mu_mx
@@ -283,7 +282,7 @@ Proof.
   intros nh hmx l w.
   inversion hmx; subst.
   - contradiction.
-  - eapply com; eauto with mdb. exists p1. set_solver. set_solver.
+  - eapply com; eauto with mdb. exists p1. set_solver.
 Qed.
 
 Lemma must_set_if_must
