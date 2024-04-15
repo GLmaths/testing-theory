@@ -428,7 +428,7 @@ Proof. by intros w1 w2; dependent induction w1; eauto with mdb. Qed.
 Lemma wt_push_nil_right `{Lts A L} p q r s : p ⟹[s] q -> q ⟹ r -> p ⟹[s] r.
 Proof.
   intros w1 w2. replace s with (s ++ ([] : trace L)).
-  eapply wt_concat; eauto. symmetry. eapply app_nil_end.
+  eapply wt_concat; eauto. eapply app_nil_r.
 Qed.
 
 Lemma wt_push_right `{Lts A L} p q r μ s :
