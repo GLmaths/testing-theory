@@ -344,6 +344,54 @@ intros. dependent induction H.
 constructor.
 apply cgr_par_step. exact H. eauto with cgr_eq.
 Qed.
+
+Fixpoint GuarDees6 (p : proc) (m : gproc) : proc :=
+match p with
+| q1 & q2 => match q1 with 
+            | pr_nil => match q2 with 
+                      | g g0 => g0 ⊕ m
+                      | _ => q1 & q2
+                      end
+            | g g1 => match q2 with 
+                      | pr_nil => g1 ⊕ m
+                      | _ => q1 & q2
+                      end
+            | _ => q1 & q2
+            end
+| pr_var id' => p
+| pr_rec id' p' => p
+| g gp => g (gpr_choice gp m)
+end. 
+
+
+Lemma ez : forall p q m, p ≡* q -> (GuarDees6 p m) ≡* (GuarDees6 q m).
+Proof.
+intros. dependent induction H. constructor. dependent induction H; simpl; eauto with ccs. simpl. 
+
+admit.
+admit.
+admit.
+admit.
+simpl.
+admit. admit.
+
+apply transitivity with (GuarDees6 y m).
+apply IHclos_trans1. apply IHclos_trans2.
+Admitted.
+
+
+Lemma ez77: forall p r, (GuarDees6 (g p) r) = p ⊕ r.
+Proof.
+simpl. auto.
+Qed.
+
+Lemma ezez : forall p q r, (g p) ≡* (g q) ->  p ⊕ r ≡* q ⊕ r.
+Proof.
+intros.
+rewrite <-ez77 with p r. rewrite <-ez77 with q r. apply ez. auto. 
+Qed.
+
+
 Lemma cgr_choice : forall p1 q1 p2, (g p1) ≡* (g q1) ->  p1 ˖ p2 ≡* q1 ˖ p2.
 Proof.
 intros. dependent induction H. 
