@@ -345,28 +345,19 @@ constructor.
 apply cgr_par_step. exact H. eauto with cgr_eq.
 Qed.
 
-Fixpoint GuarDees6 (p : proc) (m : gproc) : proc :=
+(* Fixpoint GuarDees6 (p : proc) (m : gproc) : proc :=
 match p with
-| q1 & q2 => match q1 with 
-            | pr_nil => match q2 with 
-                      | g g0 => g0 ⊕ m
-                      | _ => q1 & q2
-                      end
-            | g g1 => match q2 with 
-                      | pr_nil => g1 ⊕ m
-                      | _ => q1 & q2
-                      end
-            | _ => q1 & q2
-            end
-| pr_var id' => p
-| pr_rec id' p' => p
+| (g gpr_nil ∥ p) | (p ∥ g gpr_nil)  => GuarDees6 p m
 | g gp => g (gpr_choice gp m)
-end. 
+| _  => p
+end.
 
 
 Lemma ez : forall p q m, p ≡* q -> (GuarDees6 p m) ≡* (GuarDees6 q m).
 Proof.
-intros. dependent induction H. constructor. dependent induction H; simpl; eauto with ccs. simpl. 
+intros. dependent induction H.
+- constructor. induction H; simpl; eauto with cgr_step_structure. simpl. 
+-  
 
 admit.
 admit.
@@ -380,6 +371,7 @@ apply IHclos_trans1. apply IHclos_trans2.
 Admitted.
 
 
+
 Lemma ez77: forall p r, (GuarDees6 (g p) r) = p ⊕ r.
 Proof.
 simpl. auto.
@@ -391,12 +383,66 @@ intros.
 rewrite <-ez77 with p r. rewrite <-ez77 with q r. apply ez. auto. 
 Qed.
 
+*)
+
+Coercion g : gproc >-> proc.
+
+(*
+Fixpoint gnormalise_zeroes M : gproc := match M with
+| gpr_choice M1 M2 => match gnormalise_zeroes M1, gnormalise_zeroes M2 with
+  | gpr_nil, M | M, gpr_nil => M
+  | p1, p2 => gpr_choice p1 p2
+  end
+| _ => M
+end.
+*)
+
+Fixpoint normalise_zeroes p : proc := match p with
+|pr_par p1 p2 => (match normalise_zeroes p1, normalise_zeroes p2 with
+  | gpr_nil, p | p, gpr_nil => p
+  | p1, p2 => pr_par p1 p2
+  end)
+| g M => g M
+| _ => p
+end.
+
+Lemma cgr_normalise_zeroes p : normalise_zeroes p ≡* p.
+Admitted.
+
+Lemma generalised_cgr_choice : forall p1 q1 p2 p1' q1', 
+  normalise_zeroes p1 = g p1' ->
+  normalise_zeroes q1 = g q1' ->
+  p1 ≡* q1 ->  p1' ˖ p2 ≡* q1' ˖ p2.
+Proof.
+intros p1 q1 p2 p1' q1' Heqp Heqq Hcgr.
+revert p1' q1' Heqp Heqq.
+dependent induction Hcgr; intros p1' q1' Heqp Heqq.
+  - admit.
+  - assert (exists M, normalise_zeroes y = g M) by admit.
+    destruct H as (M & HM).
+    transitivity (M  ˖ p2).
+    + apply IHHcgr1; trivial.
+    + apply IHHcgr2; trivial.
+Admitted.
 
 Lemma cgr_choice : forall p1 q1 p2, (g p1) ≡* (g q1) ->  p1 ˖ p2 ≡* q1 ˖ p2.
 Proof.
-intros. dependent induction H. 
+intros p1 q1 p2 H. apply (generalised_cgr_choice (g p1) (g q1)); simpl; trivial.
+Qed.
+
+
+
+
+ dependent induction H.
+  - constructor. now apply cgr_choice_step.
+  - fold cgr in *.
+    transitivity ((gnormalise_zeroes p1) ˖ p2).
+apply (generalised_cgr_choice p1 q1).
+
+
+ dependent induction H.
   - constructor. apply cgr_choice_step. exact H.
-  -
+  - fold cgr in *.
 Admitted.
 
 
