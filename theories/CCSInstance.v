@@ -399,15 +399,132 @@ end.
 
 Fixpoint normalise_zeroes p : proc := match p with
 |pr_par p1 p2 => (match normalise_zeroes p1, normalise_zeroes p2 with
-  | gpr_nil, p | p, gpr_nil => p
+  | gpr_nil, p' | p', gpr_nil => p'
   | p1, p2 => pr_par p1 p2
   end)
 | g M => g M
 | _ => p
 end.
 
-Lemma cgr_normalise_zeroes p : normalise_zeroes p ≡* p.
+Lemma cgr_normalise_zeroes_for_guards p : (exists p', p = (g p')) -> normalise_zeroes p = p.
+Proof.
+intro H.
+destruct H. subst. simpl. reflexivity.
+Qed.
+
+Lemma Struct1 : forall p q, (normalise_zeroes q) = θ -> normalise_zeroes (p ∥ q) = (normalise_zeroes p).
+Proof.
+intros. simpl. rewrite H. destruct (normalise_zeroes p); auto. destruct g0; auto.
+Qed.
+
+Lemma Structbis : forall p q, (normalise_zeroes p) = θ /\ (normalise_zeroes q) = θ-> normalise_zeroes (p ∥ q) = θ.
+Proof.
+intros. destruct H. simpl. rewrite H;auto.
+Qed.
+
+Lemma Struct2 : forall p q, (normalise_zeroes p) = θ -> normalise_zeroes (p ∥ q) = (normalise_zeroes q).
+Proof.
+intros. simpl. rewrite H. auto.
+Qed. 
+
+Lemma Struct3 : forall p q, ~((normalise_zeroes p) = θ) /\  ~((normalise_zeroes q ) = θ)-> normalise_zeroes (p ∥ q) = (normalise_zeroes p) ∥ (normalise_zeroes q).
+Proof.
+intros. destruct H. remember (normalise_zeroes p). remember (normalise_zeroes q). destruct (normalise_zeroes p); destruct (normalise_zeroes q). 
 Admitted.
+
+Lemma Structure_of_parallele_proc p q : normalise_zeroes (p ∥ q) = (normalise_zeroes p) ∥ (normalise_zeroes q) 
+\/( normalise_zeroes (p ∥ q) = (normalise_zeroes p))
+\/( normalise_zeroes (p ∥ q) = (normalise_zeroes q)).
+Proof.
+destruct (proc_dec (normalise_zeroes p) θ); destruct (proc_dec (normalise_zeroes q) θ).
+* right. left. apply Struct1; auto.
+* right. right. apply Struct2; auto.
+* right. left. apply Struct1; auto.
+* left. apply Struct3; auto.
+Qed.
+
+Lemma normalized_respects_cgr_step x y : x ≡ y -> normalise_zeroes x ≡ normalise_zeroes y.
+Proof.
+intro Hcgr.
+dependent induction  Hcgr.
+- reflexivity.
+- simpl. destruct (normalise_zeroes p); auto; try reflexivity. destruct g0; auto; reflexivity. 
+- simpl. destruct (normalise_zeroes p); auto; try reflexivity. destruct g0; auto; reflexivity. 
+- destruct (proc_dec (normalise_zeroes p) θ) ; destruct (proc_dec (normalise_zeroes q) θ).
+  * assert (normalise_zeroes (p ∥ q) =  θ). apply (Structbis p q). auto.
+    assert (normalise_zeroes (q ∥ p) =  θ). apply (Structbis q p). auto. 
+    rewrite H. rewrite H0.  reflexivity.
+  * assert (normalise_zeroes (p ∥ q) =  normalise_zeroes q). apply (Struct2 p q). auto.
+    assert (normalise_zeroes (q ∥ p) =  normalise_zeroes q). apply (Struct1 q p). auto. 
+    rewrite H. rewrite H0.  reflexivity.
+  * assert (normalise_zeroes (p ∥ q) =  normalise_zeroes p). apply (Struct1 p q). auto.
+    assert (normalise_zeroes (q ∥ p) =  normalise_zeroes p). apply (Struct2 q p). auto. 
+    rewrite H. rewrite H0.  reflexivity.
+  * assert (normalise_zeroes (p ∥ q) =  (normalise_zeroes p) ∥ (normalise_zeroes q)). apply (Struct3 p q). auto.
+    assert (normalise_zeroes (q ∥ p) =  (normalise_zeroes q) ∥ (normalise_zeroes p)). apply (Struct3 q p). auto. 
+    rewrite H. rewrite H0.  apply cgr_par_com_step.
+- destruct (proc_dec (normalise_zeroes p) θ) ; destruct (proc_dec (normalise_zeroes q) θ); 
+  destruct (proc_dec (normalise_zeroes r) θ).
+  * assert (normalise_zeroes ((p ∥ q) ∥ r) = normalise_zeroes (p ∥ q)). apply (Struct1 (p ∥ q) r). auto.
+    assert (normalise_zeroes ((p ∥ q)) = θ). apply (Structbis p q). auto.
+    assert (normalise_zeroes (p ∥ (q ∥ r)) = normalise_zeroes (q ∥ r)). apply (Struct2 p (q ∥ r)). auto.
+    assert (normalise_zeroes (q ∥ r) = θ). apply (Structbis q r). auto.
+    rewrite H. rewrite H0. rewrite H1. rewrite H2. reflexivity.
+  *
+- admit.
+- simpl. constructor.
+- simpl. constructor.
+- simpl. constructor.
+- simpl. constructor.
+- simpl. constructor.
+- simpl. constructor. auto.
+- simpl. constructor. auto.
+- simpl. constructor. auto.
+- simpl. constructor. auto.
+- admit.
+- simpl. constructor. auto.
+Admitted.
+
+(* Lemma normalized_respects_cgr x y : x ≡* y -> normalise_zeroes x ≡* normalise_zeroes y.
+Proof.
+intros Hcgr. dependent induction Hcgr. 
+- constructor. apply normalized_respects_cgr_step. exact H.
+- apply transitivity with (normalise_zeroes y); auto.
+Qed. utile ? *)
+
+
+Lemma guards_through_normalize x y: x ≡* y -> (exists p, normalise_zeroes x = g p) ->  (exists q, normalise_zeroes y = g q).
+Proof.
+intros. dependent induction H. 
+* dependent induction H.
+- destruct H0. exists x. auto.
+- simpl in H0. destruct H0. exists x. destruct (normalise_zeroes p); auto. destruct g0; auto. 
+- simpl. destruct H0. exists x. destruct (normalise_zeroes p); auto. destruct g0; auto.
+- admit.
+- admit.
+- admit.
+- simpl in *. exists p; auto.
+- simpl in *. exists (gpr_choice p gpr_nil); auto.
+- simpl in *. exists (gpr_choice q p); auto.
+- simpl in *. exists (gpr_choice p (gpr_choice q r)); auto.
+- simpl in *. exists (gpr_choice (gpr_choice p q) r); auto.
+- simpl in*. destruct H0. inversion H0.
+- simpl in *. exists (gpr_tau q); auto.
+- simpl in *. exists (gpr_input a q); auto.
+- simpl in *. exists (gpr_output a q); auto.
+- admit.
+- simpl in *. exists (gpr_choice q1 p2); auto.
+*  apply IHclos_trans2. apply IHclos_trans1. exact H1.
+Admitted.
+
+(* Lemma cgr_normalise_zeroes p : normalise_zeroes p ≡* p.
+dependent induction p.
+- admit. 
+- simpl. reflexivity. 
+- simpl. reflexivity. 
+- simpl. reflexivity.
+Admitted. utile ? *)
+
 
 Lemma generalised_cgr_choice : forall p1 q1 p2 p1' q1', 
   normalise_zeroes p1 = g p1' ->
@@ -417,13 +534,12 @@ Proof.
 intros p1 q1 p2 p1' q1' Heqp Heqq Hcgr.
 revert p1' q1' Heqp Heqq.
 dependent induction Hcgr; intros p1' q1' Heqp Heqq.
-  - admit.
-  - assert (exists M, normalise_zeroes y = g M) by admit.
-    destruct H as (M & HM).
-    transitivity (M  ˖ p2).
+  - constructor. apply cgr_choice_step. rewrite <-Heqp. rewrite <-Heqq. apply normalized_respects_cgr_step. exact H.
+  - fold cgr in *. destruct (guards_through_normalize x y). auto. exists p1'. auto.
+    transitivity (x0  ˖ p2).
     + apply IHHcgr1; trivial.
     + apply IHHcgr2; trivial.
-Admitted.
+Qed.
 
 Lemma cgr_choice : forall p1 q1 p2, (g p1) ≡* (g q1) ->  p1 ˖ p2 ≡* q1 ˖ p2.
 Proof.
