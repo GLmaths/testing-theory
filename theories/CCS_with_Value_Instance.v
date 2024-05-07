@@ -44,8 +44,11 @@ Inductive Act (ChannelType ValueType : Type) :=
 | ActExt (μ: ExtAct ChannelType ValueType )
 | τ
 .
-Arguments ActExt {_} {_}_.
+Arguments ActExt {_} {_} _.
 Arguments τ {_} {_}.
+
+
+Coercion ActExt : ExtAct >-> Act.
 
 (* Table des vérités *) 
 Inductive Qbit :=
@@ -134,9 +137,9 @@ end.
 Inductive lts : proc -> Act ChannelType ValueType -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) (ActExt (ActIn c v)) (P v)
+    lts (c ? x • P) (ActIn c v) (P v)
 | lts_output : forall {c v P},
-    lts (c ! v • P) (ActExt (ActOut c v)) P
+    lts (c ! v • P) (ActOut c v) P
 
 (*The actions Tau*)
 | lts_tau : forall {P},
@@ -150,12 +153,12 @@ Inductive lts : proc -> Act ChannelType ValueType -> proc -> Prop :=
 
 (* Communication of a channel output and input that have the same name*)
 | lts_comL : forall {c v p1 p2 q1 q2},
-    lts p1 (ActExt (ActOut c v)) p2 ->
-    lts q1 (ActExt (ActIn c v)) q2 ->
+    lts p1 (ActOut c v) p2 ->
+    lts q1 (ActIn c v) q2 ->
     lts (p1 ‖ q1) τ (p2 ‖ q2) 
 | lts_comR : forall {c v p1 p2 q1 q2},
-    lts p1 (ActExt (ActOut c v)) p2 ->
-    lts q1 (ActExt (ActIn c v)) q2 ->
+    lts p1 (ActOut c v) p2 ->
+    lts q1 (ActIn c v) q2 ->
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
 (*The decoration for the transition system...*)
