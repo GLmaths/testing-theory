@@ -210,10 +210,13 @@ Class Label (L: Type) :=
 #[global] Existing Instance label_eqdec.
 #[global] Existing Instance label_countable.
 
+Record SimplyFinite {A : Type} P : Type := Build_Finite
+  { enum : list A;  elem_of_enum : ∀ x : A, (P x <-> x ∈ enum) }.
+
 Class Lts (A L : Type) `{Label L} :=
   MkLts {
       lts_step: A → Act L → A → Prop;
-      lts_state_eqdec: EqDecision A;
+(*      lts_state_eqdec: EqDecision A; *)
 
       lts_step_decidable a α b : Decision (lts_step a α b);
 
@@ -226,7 +229,9 @@ Class Lts (A L : Type) `{Label L} :=
       lts_stable_spec1 p α : ¬ lts_stable p α → { q | lts_step p α q };
       lts_stable_spec2 p α : { q | lts_step p α q } → ¬ lts_stable p α;
     }.
+    (*
 #[global] Existing Instance lts_state_eqdec.
+*)
 #[global] Existing Instance lts_step_decidable.
 #[global] Existing Instance lts_stable_decidable.
 
@@ -238,15 +243,17 @@ Notation "p ↛"      := (lts_stable p τ) (at level 30, format "p  ↛").
 Notation "p ↛{ α }" := (lts_stable p α) (at level 30, format "p  ↛{ α }").
 Notation "p ↛[ μ ]" := (lts_stable p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
 
-Class FiniteLts A L `{Lts A L} :=
+Class SimplyFiniteLts A L `{Lts A L} :=
   MkFlts {
-      folts_states_countable: Countable A;
-      folts_next_states_finite p α : Finite (dsig (fun q => lts_step p α q));
+  
+      (*folts_states_countable: Countable A; *)
+      folts_next_states_finite p α : SimplyFinite ((fun q => lts_step p α q));
 }.
 
+(*
 #[global] Existing Instance folts_states_countable.
 #[global] Existing Instance folts_next_states_finite.
-
+*)
 Class LtsEq (A L : Type) `{Lts A L} := {
     (* todo: use Equivalence *)
     eq_rel : A -> A -> Prop;
@@ -583,18 +590,12 @@ Proof.
 Qed.
 
 
-Definition lts_tau_set `{FiniteLts A L} p : list A :=
-  map proj1_sig (enum $ dsig (lts_step p τ)).
+Definition lts_tau_set `{SimplyFiniteLts A L} p : list A :=
+  (enum (lts_step p τ)) (folts_next_states_finite p τ).
 
-Lemma lts_tau_set_spec : forall `{FiniteLts A L} p q, q ∈ lts_tau_set p <-> p ⟶ q.
+Lemma lts_tau_set_spec : forall `{SimplyFiniteLts A L} p q, q ∈ lts_tau_set p <-> p ⟶ q.
 Proof.
-  intros. split.
-  intro mem. unfold lts_tau_set in mem.
-  eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
-  eapply bool_decide_unpack. eassumption.
-  intro. eapply elem_of_list_fmap.
-  exists (dexist q H2). split.
-  eauto. eapply elem_of_enum.
+  intros. now rewrite (elem_of_enum _ (folts_next_states_finite p τ)).
 Qed.
 
 Lemma lts_ht_input_ex `{LtsObaFW A L} (p : A) :
@@ -1350,7 +1351,7 @@ Next Obligation. intros ??????. by apply lts_stable_spec1. Qed.
 Next Obligation. intros ??????. by apply lts_stable_spec2. Qed.
 
 Section sts_executions.
-  Context `{Sts A}.
+  Context `{Sts A
 
   CoInductive max_exec_from: A -> Type :=
   | MExStop x (Hstable: sts_stable x): max_exec_from x
