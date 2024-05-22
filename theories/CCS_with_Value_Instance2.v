@@ -260,11 +260,8 @@ end.
 
 Definition open_rec_Eq' (k : nat) (fresh : names) (E : Equation (Variables)) : (Equation (Variables)) :=
 match E with 
-| a = b => (open_rec_Variables k fresh a) = (open_rec_Variables k fresh a)
+| a = b => (open_rec_Variables k fresh a) = (open_rec_Variables k fresh b)
 end.
-
-
-
 
 Fixpoint open_rec_proc' (k : nat) (fresh : names) (p : proc') {struct p} : proc' :=
 match p with
@@ -284,6 +281,9 @@ match x with
 | gpr_tau' p' => gpr_tau' (open_rec_proc' k fresh p')
 | gpr_choice' p1 p2 => gpr_choice' (open_rec_gproc' k fresh p1) (open_rec_gproc' k fresh p2)
 end.
+
+Notation "t1 ^ x1" := (open_rec_proc' 0 x1 t1).
+
 
 Inductive GoodCondition : Equation (Variables) -> Prop :=
 | equation : forall x y, GoodCondition (fvar x = fvar y).
@@ -308,10 +308,6 @@ Admitted.
 Proof. intro. intros. exact (H ∈ H0).
 Qed.
 
-Definition open t1 u1 := open_rec_proc' 0 u1 t1.
-
-Notation "t1 ^^ u1" := (open t1 u1) (at level 67).
-Notation "t1 ^ x1" := (open t1 x1).
 
 Inductive process : proc' -> Prop :=
 | process_par' : forall p1 p2, process p1 -> process p2 -> process (pr_par' p1 p2)
@@ -329,14 +325,59 @@ Inductive process : proc' -> Prop :=
 | process_choice' : forall p1 p2 : gproc', process (g' p1) -> process (g' p2) -> process (g' (gpr_choice' p1 p2))
 .
 
+#[global] Hint Constructors process:ccs.
 
 Definition body t1 := exists L : gmultiset names, forall x, x ∉ L -> process (open_rec_proc' 0 x t1).
+
+Definition bodyOnCondition C := exists L : gmultiset names, forall x, x ∉ L -> GoodCondition (open_rec_Eq' 0 x C).
 
 Check ((bvar 0) ! (fvar "v") • ⓪).
 Check (fvar "c" ? x • ((bvar 0) ! (fvar "v") • ⓪)).
 Lemma Exemple : (g' (((fvar "v") ! (fvar "v") • ⓪))) = open_rec_proc' 0 ("v") (((bvar 0) ! (fvar "v") • ⓪)) .
 Proof.
 simpl. reflexivity.
+Qed.
+
+Lemma Exemple2 : process ((fvar "c" ? x • ((bvar 0) ! (fvar "v") • ⓪))) .
+Proof.
+simpl. apply process_input' with ∅. intros. simpl. apply process_output'. apply fvar_is_free. apply fvar_is_free.
+  apply process_nil'.
+Qed.
+
+Lemma Exemple3 : (g' ((fvar "l") ! (fvar "v") • ⓪) = (((bvar 0) ! (fvar "v") • ⓪))^("l")).
+Proof. simpl. reflexivity.
+Qed.
+
+
+Check (fvar "c" ? x • (((bvar 0) ! (fvar "v") • ⓪) + ((fvar "v") ! (bvar 0) • ⓪))).
+
+Lemma Exemple4 : g' (fvar "e" ! fvar "v" • ⓪ + (fvar "v" ! fvar "e" • ⓪)) = (((0 ! fvar "v" • ⓪) + (fvar "v" ! 0 • ⓪)) ^ "e").
+Proof.
+simpl. reflexivity.
+Qed. 
+
+
+
+Lemma Exemple5 : g' (fvar "e" ! fvar "v" • ⓪ + (fvar "v" ! fvar "e" • ⓪)) = (((0 ! fvar "v" • ⓪) + (fvar "v" ! 0 • ⓪)) ^ "e").
+Proof.
+simpl. reflexivity. 
+Qed. 
+
+Check (((0 ! fvar "v" • ⓪) + ((fvar "c") ? y • (fvar "v" ! 0 • ⓪))) ^ "e").
+
+Compute (((0 ! fvar "v" • ⓪) + ((bvar 0) ? y • (fvar "v" ! 0 • ⓪))) ^ "e").
+
+Check (process(fvar "c" ? x • (If ((bvar 1) = (fvar "a")) Then ① Else ⓪))).
+Lemma Exemple6 : process(fvar "c" ? x • (If ((bvar 0) = (fvar "a")) Then ① Else ⓪)).
+Proof.
+eapply process_input' with ∅. intros. simpl. apply process_if_then_else'. apply equation. apply process_success'.
+apply process_nil'.
+Qed.
+
+Lemma Exemple7 : process(fvar "c" ? x • (fvar "c" ? x • (If ((bvar 1) = (bvar 0)) Then ① Else ⓪))).
+Proof.
+econstructor. instantiate (1:=∅). intros. econstructor. instantiate (1:=∅). intros. simpl. constructor.
+ apply equation. apply process_success'. apply process_nil'.
 Qed.
 
 (*
@@ -392,18 +433,23 @@ intros. split.
 * intros. destruct H. exists x. intros. simpl. apply process_rec'. apply H. auto.
 Qed.
 
-Lemma Bodies3 : forall C P Q, body (If C Then P Else Q) <-> body P /\ body Q.
+Lemma Bodies3 : forall C P Q, body (If C Then P Else Q) <-> (bodyOnCondition C) /\ body P /\ body Q.
 Proof.
 intros. split.
-* intros. inversion H. split. exists x. simpl in H0. intros. 
+* intros. inversion H. split.
+  ** exists x. intros. assert (process ((If C Then P Else Q) ^ x0)).
+     apply H0. auto. inversion H2. auto. ** split.
+  - exists x. simpl in H0. intros. 
   assert (process(If (open_rec_Eq' 0 x0 C) Then (open_rec_proc' 0 x0 P) Else (open_rec_proc' 0 x0 Q))).
   apply H0. auto. inversion H2. auto.
-  exists x. simpl in H0. intros. 
+  - exists x. simpl in H0. intros. 
   assert (process(If (open_rec_Eq' 0 x0 C) Then (open_rec_proc' 0 x0 P) Else (open_rec_proc' 0 x0 Q))).
   apply H0. auto. inversion H2. auto.
-* intros. destruct H. destruct H. destruct H0.
-  exists (x ⊎ x0). intros. simpl. apply process_if_then_else'. admit. 
-   apply H. admit. apply H0. admit.
+* intros. destruct H. destruct H0. destruct H. destruct H0. destruct H1.
+  exists (x ⊎ x0 ⊎ x1). intros. simpl. apply process_if_then_else'.
+  ** apply H. admit.
+  ** apply H0. admit.
+  ** apply H1. admit.
 Admitted.
 
 Lemma Subst_with_Body : forall p q n, body p -> body q -> body (pr_subst n p q).
@@ -414,7 +460,17 @@ intros. dependent induction p.
 * simpl. destruct (decide(n0 = n)). auto. auto.
 * simpl. destruct(decide (n0 = n)). auto. apply Bodies2. apply IHp. assert (body (rec n • p) <-> body p). apply Bodies2.
   destruct H1. apply H1. auto. auto.
-* simpl.
+* destruct H. destruct H0. simpl. apply Bodies3.
+  split. exists (x ⊎ x0). intros. 
+  ** assert (process ((If e Then p1 Else p2) ^ x1)). apply H. admit. inversion H2. auto. 
+  ** split.
+     *** apply IHp1. exists (x ⊎ x0). intros.
+      assert (process ((If e Then p1 Else p2) ^ x1)). apply H. admit. inversion H2. auto.
+      exists (x ⊎ x0). intros. apply H0. admit.
+     *** apply IHp2. exists (x ⊎ x0). intros.
+      assert (process ((If e Then p1 Else p2) ^ x1)). apply H. admit. inversion H2. auto.
+      exists (x ⊎ x0). intros. apply H0. admit.
+*
 Admitted.
 
 Fixpoint ChannelName_for_Input_of_proc' (p : proc') : gmultiset names :=
