@@ -28,7 +28,6 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 Require Import Relations.
 Require Import Coq.Wellfounded.Inverse_Image.
 
-
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
 Inductive ExtAct (Channel Data : Type) :=
@@ -49,11 +48,10 @@ Arguments τ {_} {_}.
 
 Coercion ActExt : ExtAct >-> Act.
 
-Parameter Channel : Type.
+Context (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
-
-Parameter Value : Type.
 (*Exemple : Definition Value := nat.*)
+
 
 Inductive Data :=
 | cst : Value -> Data
@@ -1279,3 +1277,4 @@ intros. revert H. rename H0 into Transition. dependent induction Transition.
 * intros. dependent destruction H. apply IHTransition. assumption.
 * intros. dependent destruction H. apply IHTransition. assumption.
 Qed.
+
