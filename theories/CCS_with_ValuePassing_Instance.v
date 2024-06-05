@@ -1021,7 +1021,7 @@ intros P Q H.
 apply Congruence_Simplicity with τ. exact Taus_Implies_Reduction. exact H.
 Qed.
 
-Theorem HarmonyLemmaForCCS : forall P Q, (lts_then_sc P τ Q) <-> (sts P Q).
+Theorem HarmonyLemmaForCCSWithValuePassing : forall P Q, (lts_then_sc P τ Q) <-> (sts P Q).
 Proof.
 intros. split.
 * apply TausAndCong_Implies_Reduction.
