@@ -1058,92 +1058,45 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 
 #[global] Hint Constructors Well_Defined_Input_in:ccs.
 
-Lemma Well_Defined_over_subst_in_Data : forall x, Well_Defined_Data 1 x -> ((x = bvar 0) \/ (exists v, x = cst v)).
+Lemma Inequation_k_data : forall k d, Well_Defined_Data k d -> Well_Defined_Data (S k) d.
 Proof.
-intros. dependent induction H.
-* left. destruct x. reflexivity. inversion H. inversion H1.
-* right. exists x. reflexivity.
+intros. dependent destruction d. constructor. dependent destruction H. constructor. auto with arith.
 Qed.
 
-Lemma Well_Defined_over_subst_in_DataGeneralize : forall x k, Well_Defined_Data (S k) x 
-                -> ((exists n, n < (S k) /\ (x = bvar n)) \/ (exists v, x = cst v)).
+Lemma Inequation_k_equation : forall k c, Well_Defined_Condition k c -> Well_Defined_Condition (S k) c.
 Proof.
-intros. dependent induction H.
-* left. exists x. split. auto. auto.
-* right. exists x. reflexivity.
+intros. dependent destruction c. destruct d; destruct d0.
+- constructor; constructor.
+- dependent destruction H. constructor. constructor. apply Inequation_k_data. assumption.
+- dependent destruction H. constructor. apply Inequation_k_data. assumption. constructor. 
+- dependent destruction H. constructor; apply Inequation_k_data; assumption.
 Qed.
 
-Lemma Well_Defined_over_subst_in_Eq : forall e v, Well_Defined_Condition 1 e 
-              -> Well_Defined_Condition 0 (subst_in_Equation 0 (cst v) e).
+Lemma Inequation_k_proc : forall k p, Well_Defined_Input_in k p -> Well_Defined_Input_in (S k) p.
 Proof.
-intros. dependent induction H. simpl. assert ((x = bvar 0) \/ (exists v, x = cst v)). 
-apply Well_Defined_over_subst_in_Data. auto. assert ((y = bvar 0) \/ (exists v, y = cst v)). 
-apply Well_Defined_over_subst_in_Data. auto.
-- destruct H1; destruct H2.
-  * subst. simpl. constructor; constructor.
-  * subst. simpl. constructor. constructor.  destruct H2.  subst. simpl. constructor.
-  * destruct H1. subst. simpl. constructor; constructor.
-  * destruct H1. destruct H2. subst. simpl. constructor; constructor.
-Qed.
-
-(* maybe usefull ? *)
-Lemma Well_Defined_over_subst_in_EqGeneralize : forall e v k, Well_Defined_Condition (S k) e 
-              -> Well_Defined_Condition k (subst_in_Equation k (cst v) e).
-Proof.
-(*intros. revert v. dependent induction H. simpl. assert ((exists n, n < (S k) /\ (x = bvar n)) \/ (exists v, x = cst v)). 
-apply Well_Defined_over_subst_in_DataGeneralize. auto. assert ((exists n, n < (S k) /\ (y = bvar n)) \/ (exists v, y = cst v)). 
-apply Well_Defined_over_subst_in_DataGeneralize. auto.
-- destruct H1; destruct H2.
-  * subst. simpl. constructor; constructor.
-  * subst. simpl. constructor. constructor.  destruct H2.  subst. simpl. constructor.
-  * destruct H1. subst. simpl. constructor; constructor.
-  * destruct H1. destruct H2. subst. simpl. constructor; constructor.*)
-Admitted.
-
-(* maybe usefull ? *)
-Lemma Well_Defined_over_subst : forall P v, Well_Defined_Input_in 1 P -> Well_Defined_Input_in 0 (P ^ (cst v)).
-Proof.
-(*induction P as (p & Hp) using
+intros. revert H. revert k.
+induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p.
-  - intros. simpl. constructor. apply Hp. simpl. auto with arith. dependent destruction H. auto.
-    apply Hp. simpl. auto with arith. dependent destruction H. auto.
-  - intros. simpl. admit.
-  - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. auto.
-  - intros. simpl. dependent destruction H. constructor. apply Well_Defined_over_subst_in_Eq. auto.
-    apply Hp. simpl. auto with arith. auto. apply Hp. simpl. auto with arith. auto.
-  - destruct g0.
-    * intros. simpl. constructor.
-    * intros. simpl. constructor.
-    * intros. simpl. constructor.*)
-Admitted.
+- intros. dependent destruction H. constructor; apply Hp; simpl; auto with arith; assumption.
+- intros. constructor.
+- intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
+- intros. dependent destruction H. constructor. 
+  ** apply Inequation_k_equation. assumption.
+  ** apply Hp. simpl; auto with arith. assumption.
+  ** apply Hp. simpl; auto with arith. assumption.
+- destruct g0.
+  ** intros. constructor.
+  ** intros. constructor.
+  ** intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
+  ** intros. constructor. apply Inequation_k_data. dependent destruction H. assumption.
+     apply Hp. simpl; auto with arith. dependent destruction H. assumption.
+  ** intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
+  ** intros. dependent destruction H. constructor.
+    -- apply Hp. simpl; auto with arith. assumption.
+    -- apply Hp. simpl; auto with arith. assumption.
+Qed.
 
-
-(* TODO *)
-Lemma LTS_Respects_WD : forall p q α, Well_Defined_Input_in 0 p -> lts p α q ->  Well_Defined_Input_in 0 q.
-Proof.
-(*intros. revert H. dependent induction H0.
-* intros. dependent destruction H0. 
- admit. 
-* intros. dependent destruction H0. auto.
-* intros. dependent destruction H0. auto.
-* (* dependent induction P. *) admit.
-* intros. dependent destruction H1. auto.
-* intros. dependent destruction H1. auto.
-* intros. dependent destruction H. constructor. apply IHlts1. auto.
-  apply IHlts2. auto.
-* intros. dependent destruction H. constructor. apply IHlts2. auto.
-  apply IHlts1. auto.
-* intros. dependent destruction H1. constructor; auto. 
-* intros. dependent destruction H1. constructor; auto. 
-* intros. dependent destruction H1. apply IHlts. auto.
-* intros. dependent destruction H1. apply IHlts. auto.*)
-Admitted.
-
-(*TODO*)
-Lemma STS_Respects_WD : forall p q, Well_Defined_Input_in 0 p -> sts p q -> Well_Defined_Input_in 0 q.
-Proof.
-Admitted.
 
 Lemma Congruence_step_Respects_WD_k : forall p q k, Well_Defined_Input_in k p -> p ≡ q -> Well_Defined_Input_in k q. 
 Proof.
@@ -1179,4 +1132,150 @@ Qed.
 Lemma Congruence_Respects_WD : forall p q, Well_Defined_Input_in 0 p -> p ≡* q -> Well_Defined_Input_in 0 q.
 Proof.
 intros. eapply Congruence_Respects_WD_k; eauto.
+Qed.
+
+Lemma NotK : forall n k,  n < S k -> n ≠ k -> n < k.
+Proof.
+intros. assert (n ≤ k). auto with arith. destruct H1. exfalso. apply H0. reflexivity. auto with arith.
+Qed.
+
+Lemma ForData : forall k v d, Well_Defined_Data (S k) d -> Well_Defined_Data k (subst_Data k (cst v) d).
+Proof.
+intros. revert H. revert v. revert k. dependent induction d.
+* intros. simpl. constructor.
+* intros. simpl. destruct (decide (n = k )).
+  - constructor.
+  - dependent destruction H. constructor. apply NotK; assumption.
+Qed.
+
+Lemma ForEquation : forall k v e, Well_Defined_Condition (S k) e 
+                -> Well_Defined_Condition k (subst_in_Equation k (cst v) e).
+Proof.
+intros. revert H. revert v. revert k. 
+- dependent destruction e. dependent induction d; dependent induction d0.
+  * intros. simpl. constructor; constructor.
+  * intros. simpl. destruct (decide (n = k)).
+    ** constructor; constructor.
+    ** constructor. constructor. dependent destruction H. dependent destruction H0. constructor. apply NotK; assumption.
+  * intros. simpl. constructor; try constructor. destruct (decide (n = k)). constructor. dependent destruction H.
+    dependent destruction H. constructor. apply NotK; assumption.
+  * intros. simpl. constructor.
+    ** destruct (decide (n = k)); try constructor. dependent destruction H. dependent destruction H. 
+    apply NotK; assumption.
+    ** destruct (decide (n0 = k)); try constructor. dependent destruction H. dependent destruction H0. 
+    apply NotK; assumption.
+Qed.
+
+Lemma ForSTS : forall k p v, Well_Defined_Input_in (S k) p -> Well_Defined_Input_in k (subst_in_proc k (cst v) p).
+Proof.
+intros. revert v. revert H. revert k.
+induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct p.
+* intros. dependent destruction H. simpl. constructor. 
+  - apply Hp. simpl. auto with arith. assumption.
+  - apply Hp. simpl. auto with arith. assumption.
+* intros. simpl. constructor.
+* intros. simpl. dependent destruction H. constructor. apply Hp. simpl. auto with arith. assumption.
+* intros. simpl. dependent destruction H. constructor.
+  - apply ForEquation. assumption.
+  - apply Hp. simpl. auto with arith. assumption.
+  - apply Hp. simpl. auto with arith. assumption.
+* destruct g0.
+  - intros. simpl. constructor.
+  - intros. simpl. constructor.
+  - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
+  - intros. simpl. constructor.
+    -- eapply ForData. dependent destruction H. assumption.
+    -- apply Hp. simpl. auto. dependent destruction H. assumption.
+  - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
+  - intros. simpl. dependent destruction H. constructor.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g0_1))). apply Hp.
+      simpl.  auto with arith. assumption. assumption.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g0_2))). apply Hp.
+      simpl.  auto with arith. assumption. assumption.
+Qed.
+
+
+
+Lemma ForRecursionSanity : forall p' p x k, Well_Defined_Input_in k p' -> Well_Defined_Input_in k p 
+            -> Well_Defined_Input_in k (pr_subst x p' p).
+Proof.
+intros. revert H. revert H0. revert k. revert x. revert p.
+induction p' as (p' & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct p'.
+* intros. simpl. constructor. 
+  ** apply Hp. simpl. auto with arith. assumption. dependent destruction H. assumption.
+  ** apply Hp. simpl. auto with arith. assumption. dependent destruction H. assumption.
+* intros. simpl. destruct (decide (x = n)). assumption. assumption.
+* intros. simpl. destruct (decide (x=n)). 
+  ** dependent destruction H. assumption.
+  ** constructor. apply Hp. simpl; auto with arith. assumption. dependent destruction H. assumption.
+* intros. simpl. dependent destruction H. constructor.
+  ** assumption.
+  ** apply Hp. simpl; auto with arith. assumption. assumption.
+  ** apply Hp. simpl; auto with arith. assumption. assumption.
+* destruct g0. 
+  ** intros. simpl. constructor.
+  ** intros. simpl. constructor.
+  ** intros. simpl. constructor. dependent destruction H. apply Hp. 
+    - simpl;auto with arith.
+    - apply Inequation_k_proc. assumption.
+    - assumption.
+  ** intros. simpl. constructor. dependent destruction H. assumption. apply Hp.
+    - simpl; auto with arith.
+    - assumption.
+    - dependent destruction H. assumption.
+  ** intros. simpl. constructor. apply Hp.
+    - simpl; auto with arith.
+    - assumption.
+    - dependent destruction H. assumption.
+  ** intros. simpl. dependent destruction H. constructor.
+    - assert (Well_Defined_Input_in k (pr_subst x (g g0_1) p)). apply Hp. simpl; auto with arith. assumption.
+      assumption. assumption.
+    - assert (Well_Defined_Input_in k (pr_subst x (g g0_2) p)). apply Hp. simpl; auto with arith. assumption.
+      assumption. assumption.
+Qed.
+
+Lemma RecursionOverReduction_is_WD : forall k x p, Well_Defined_Input_in k (rec x • p) -> Well_Defined_Input_in k (pr_subst x p (rec x • p)).
+Proof.
+intros. apply ForRecursionSanity. dependent destruction H. assumption. assumption.
+Qed.
+
+
+Lemma STS_Respects_WD : forall p q, Well_Defined_Input_in 0 p -> sts p q -> Well_Defined_Input_in 0 q.
+Proof.
+intros. revert H. rename H0 into Reduction. dependent induction Reduction.
+* intros. constructor.
+  - dependent destruction H. dependent destruction H. dependent destruction H. assumption.
+  - dependent destruction H. dependent destruction H0. dependent destruction H0_. apply ForSTS. assumption. 
+* intros. dependent destruction H. dependent destruction H. assumption.
+* intros. dependent destruction H. apply RecursionOverReduction_is_WD. constructor. assumption.
+* intros. dependent destruction H0. assumption.
+* intros. dependent destruction H0. assumption.
+* intros. dependent destruction H. constructor. apply IHReduction. assumption. assumption.
+* intros. apply Congruence_Respects_WD with q2. apply IHReduction. apply Congruence_Respects_WD with p1. 
+  assumption. assumption. assumption.
+Qed.
+
+Lemma LTS_Respects_WD : forall p q α, Well_Defined_Input_in 0 p -> lts p α q ->  Well_Defined_Input_in 0 q.
+Proof.
+intros. revert H. rename H0 into Transition. dependent induction Transition.
+* intros. apply ForSTS. dependent destruction H. assumption.
+* intros. dependent destruction H. assumption.
+* intros. dependent destruction H. assumption.
+* intros. apply ForRecursionSanity. dependent destruction H. assumption. assumption.
+* intros. dependent destruction H0. assumption.
+* intros. dependent destruction H0. assumption.
+* intros. dependent destruction H. constructor. 
+  ** apply IHTransition1. assumption.
+  ** apply IHTransition2. assumption.
+* intros. dependent destruction H. constructor.
+  ** apply IHTransition2. assumption.
+  ** apply IHTransition1. assumption.
+* intros. dependent destruction H. constructor. apply IHTransition. assumption. assumption.
+* intros. dependent destruction H. constructor. assumption. apply IHTransition. assumption.
+* intros. dependent destruction H. apply IHTransition. assumption.
+* intros. dependent destruction H. apply IHTransition. assumption.
 Qed.
