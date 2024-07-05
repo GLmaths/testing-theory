@@ -60,6 +60,7 @@ Inductive Equation (A : Type) : Type :=
 | Inequality : A -> A -> Equation A
 | Or : Equation A -> Equation A -> Equation A
 | Not : Equation A -> Equation A.
+(* I have a Type Of Equation and I know how to evaluate it *)
 
 Arguments  tt  {_}.
 Arguments  ff  {_} .
@@ -71,7 +72,15 @@ Notation "'non' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
-Parameter Eval_Eq : Equation Data -> (option bool).
+Context (Eval_Eq : Equation Data -> (option bool)).
+Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+#[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
+Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+#[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
+Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+#[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
+Context (value_is_countable : Countable Value). (* only here for the classes *)
+#[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
 
 (* Definition of processes*)
 Inductive proc : Type :=
@@ -1418,15 +1427,6 @@ apply transitivity with ((c ! v • 𝟘) ‖ q1). assumption.
 apply transitivity with ((c ! v • 𝟘) ‖ q2). eauto with cgr. eauto with cgr.
 Qed. 
 
-Hypothesis channel_eq_dec : EqDecision Channel.
-#[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-Hypothesis channel_is_countable : Countable Channel.
-#[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-Hypothesis value_eq_dec : EqDecision Value.
-#[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
-Hypothesis value_is_countable : Countable Value.
-#[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
-
 Lemma Data_dec : forall (x y : Data) , {x = y} + {x <> y}.
 Proof.
 decide equality. 
@@ -1447,7 +1447,7 @@ match tree with
   | GenLeaf (inr v) => cst v
   | GenLeaf (inl i) => bvar i
   | _ => bvar 0
-end. 
+end.
 
 Lemma encode_decide_datas d : decode_data (encode_data d) = d.
 Proof. case d. 
@@ -1536,7 +1536,7 @@ Definition decode_TypeOfActions (tree :gen_tree (nat + (Channel + Data))) : opti
 match tree with
   | GenNode 0 [GenLeaf (inr (inl c)); GenLeaf (inr (inr v))] => Some (act c v)
   | _ => None
-end. 
+end.
 
 Lemma encode_decide_TypeOfActions p : decode_TypeOfActions (encode_TypeOfActions  p) = Some p.
 Proof. 
@@ -1546,8 +1546,9 @@ Qed.
 
 #[global] Instance TypeOfActions_countable : Countable TypeOfActions.
 Proof.
-  eexists. intros. admit.
-Admitted.
+  eapply inj_countable with encode_TypeOfActions decode_TypeOfActions. 
+  intro. apply encode_decide_TypeOfActions.
+Qed.
 
 Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)) :=
   match p with
