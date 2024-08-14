@@ -1,0 +1,17 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Definition} \PYG{n}{bhv\PYGZus{}pre\PYGZus{}cond1} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:=}
+  \PYG{k}{forall} \PYG{n}{s}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⇓} \PYG{n}{s} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{q} \PYG{n+nb+bp}{⇓} \PYG{n}{s}\PYG{o}{.}
+
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ≼₁ q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{bhv\PYGZus{}pre\PYGZus{}cond1} \PYG{n}{p} \PYG{n}{q}\PYG{o}{)} \PYG{o}{(}\PYG{n}{at} \PYG{n}{level} \PYG{l+m+mi}{70}\PYG{o}{).}
+
+\PYG{k+kn}{Definition} \PYG{n}{bhv\PYGZus{}pre\PYGZus{}cond2} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:=}
+  \PYG{k}{forall} \PYG{n}{s} \PYG{n}{q\PYGZsq{}}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⇓} \PYG{n}{s} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{q} \PYG{n+nb+bp}{⟹}\PYG{o}{[}\PYG{n}{s}\PYG{o}{]} \PYG{n}{q\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{q\PYGZsq{}} \PYG{n+nb+bp}{↛} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+    \PYG{o}{∃} \PYG{n}{p\PYGZsq{}}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⟹}\PYG{o}{[}\PYG{n}{s}\PYG{o}{]} \PYG{n}{p\PYGZsq{}} \PYG{o}{/\PYGZbs{}} \PYG{n}{p\PYGZsq{}} \PYG{n+nb+bp}{↛} \PYG{o}{/\PYGZbs{}} \PYG{n}{lts\PYGZus{}outputs} \PYG{n}{p\PYGZsq{}} \PYG{n+nb+bp}{⊆} \PYG{n}{lts\PYGZus{}outputs} \PYG{n}{q\PYGZsq{}}\PYG{o}{.}
+
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ≼₂ q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{bhv\PYGZus{}pre\PYGZus{}cond2} \PYG{n}{p} \PYG{n}{q}\PYG{o}{)} \PYG{o}{(}\PYG{n}{at} \PYG{n}{level} \PYG{l+m+mi}{70}\PYG{o}{).}
+
+\PYG{k+kn}{Definition} \PYG{n}{bhv\PYGZus{}pre} \PYG{o}{`\PYGZob{}@}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L} \PYG{n}{HL}\PYG{o}{,} \PYG{o}{@}\PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L} \PYG{n}{HL}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:=}
+  \PYG{n}{p} \PYG{n+nb+bp}{≼}\PYG{n}{₁} \PYG{n}{q} \PYG{o}{/\PYGZbs{}} \PYG{n}{p} \PYG{n+nb+bp}{≼}\PYG{n}{₂} \PYG{n}{q}\PYG{o}{.}
+
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ≼ q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{bhv\PYGZus{}pre} \PYG{n}{p} \PYG{n}{q}\PYG{o}{)} \PYG{o}{(}\PYG{n}{at} \PYG{n}{level} \PYG{l+m+mi}{70}\PYG{o}{).}
+\end{Verbatim}

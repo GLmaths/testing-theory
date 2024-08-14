@@ -1,0 +1,29 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+
+\PYG{k+kn}{Section} \PYG{n}{failure}\PYG{o}{.}
+
+  \PYG{k+kn}{Definition} \PYG{n}{Failure} \PYG{o}{`\PYGZob{}}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{s} \PYG{o}{:} \PYG{n}{trace} \PYG{n}{L}\PYG{o}{)} \PYG{o}{(}\PYG{n}{G} \PYG{o}{:} \PYG{n}{gset} \PYG{o}{(}\PYG{n}{ExtAct} \PYG{n}{L}\PYG{o}{))} \PYG{o}{:=}
+    \PYG{n}{p} \PYG{n+nb+bp}{⇓} \PYG{n}{s} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k}{exists} \PYG{n}{p\PYGZsq{}}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⟹}\PYG{o}{[}\PYG{n}{s}\PYG{o}{]} \PYG{n}{p\PYGZsq{}} \PYG{o}{/\PYGZbs{}}
+      \PYG{k}{forall} \PYG{n}{μ}\PYG{o}{,} \PYG{n}{μ} \PYG{n+nb+bp}{∈} \PYG{n}{G} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{o}{¬} \PYG{k}{exists} \PYG{n}{p0}\PYG{o}{,} \PYG{n}{p\PYGZsq{}} \PYG{n+nb+bp}{⟹}\PYG{o}{\PYGZob{}}\PYG{n}{μ}\PYG{o}{\PYGZcb{}} \PYG{n}{p0}\PYG{o}{.}
+
+  \PYG{k+kn}{Definition} \PYG{n}{fail\PYGZus{}pre\PYGZus{}ms\PYGZus{}cond2}
+    \PYG{o}{`\PYGZob{}@}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsA}\PYG{o}{,} \PYG{o}{@}\PYG{n}{FiniteLts} \PYG{n}{B} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsB}\PYG{o}{\PYGZcb{}}
+    \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:=} \PYG{k}{forall} \PYG{n}{s} \PYG{n}{G}\PYG{o}{,} \PYG{n}{Failure} \PYG{n}{q} \PYG{n}{s} \PYG{n}{G} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Failure} \PYG{n}{p} \PYG{n}{s} \PYG{n}{G}\PYG{o}{.}
+
+  \PYG{k+kn}{Definition} \PYG{n}{fail\PYGZus{}pre\PYGZus{}ms}
+    \PYG{o}{`\PYGZob{}@}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsA}\PYG{o}{,} \PYG{o}{@}\PYG{n}{FiniteLts} \PYG{n}{B} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsB}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:=}
+    \PYG{n}{p} \PYG{n+nb+bp}{≼}\PYG{n}{₁} \PYG{n}{q} \PYG{o}{/\PYGZbs{}} \PYG{n}{fail\PYGZus{}pre\PYGZus{}ms\PYGZus{}cond2} \PYG{n}{p} \PYG{n}{q}\PYG{o}{.}
+
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}}\PYG{n}{LL} \PYG{o}{:} \PYG{n}{Label} \PYG{n}{L}\PYG{o}{\PYGZcb{}.}
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}}\PYG{n}{LtsA} \PYG{o}{:} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}.}
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}}\PYG{n}{LtsR} \PYG{o}{:} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{R} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{R} \PYG{n}{L}\PYG{o}{\PYGZcb{}.}
+
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}@}\PYG{n}{LtsObaFB} \PYG{n}{A} \PYG{n}{L} \PYG{n}{LL} \PYG{n}{LtsA} \PYG{n}{LtsEqA} \PYG{n}{LtsObaA}\PYG{o}{\PYGZcb{}.}
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}@}\PYG{n}{LtsObaFB} \PYG{n}{R} \PYG{n}{L} \PYG{n}{LL} \PYG{n}{LtsR} \PYG{n}{LtsEqR} \PYG{n}{LtsObaR}\PYG{o}{\PYGZcb{}.}
+
+  \PYG{k+kn}{Theorem} \PYG{n}{equivalence\PYGZus{}pre\PYGZus{}failure\PYGZus{}must\PYGZus{}set} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{R}\PYG{o}{)} \PYG{o}{:}
+   \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n+nb+bp}{∅}\PYG{o}{)} \PYG{n+nb+bp}{≾} \PYG{o}{(}\PYG{n}{q} \PYG{n+nb+bp}{▷} \PYG{n+nb+bp}{∅}\PYG{o}{)} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n+nb+bp}{∅}\PYG{o}{)} \PYG{n+nb+bp}{⋖} \PYG{o}{(}\PYG{n}{q} \PYG{n+nb+bp}{▷} \PYG{n+nb+bp}{∅}\PYG{o}{).}
+
+\PYG{k+kn}{End} \PYG{n}{failure}\PYG{o}{.}
+\end{Verbatim}

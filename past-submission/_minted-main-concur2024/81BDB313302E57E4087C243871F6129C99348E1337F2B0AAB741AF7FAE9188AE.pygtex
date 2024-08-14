@@ -1,0 +1,37 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Class} \PYG{n}{LtsOba} \PYG{o}{(}\PYG{n}{A} \PYG{n}{L} \PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{LtsEq} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:=}
+    \PYG{n}{MkOBA} \PYG{o}{\PYGZob{}}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}output\PYGZus{}commutativity} \PYG{o}{\PYGZob{}}\PYG{n}{p} \PYG{n}{q} \PYG{n}{r} \PYG{n}{a} \PYG{n}{α}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+        \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{q} \PYG{o}{→} \PYG{n}{q} \PYG{n+nb+bp}{⟶}\PYG{o}{\PYGZob{}}\PYG{n}{α}\PYG{o}{\PYGZcb{}} \PYG{n}{r} \PYG{o}{→}
+        \PYG{o}{∃} \PYG{n}{t}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{\PYGZob{}}\PYG{n}{α}\PYG{o}{\PYGZcb{}} \PYG{n}{t} \PYG{o}{∧} \PYG{n}{t} \PYG{n+nb+bp}{⟶≡}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{r} \PYG{o}{;}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}output\PYGZus{}confluence} \PYG{o}{\PYGZob{}}\PYG{n}{p} \PYG{n}{q1} \PYG{n}{q2} \PYG{n}{a} \PYG{n}{μ}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+        \PYG{n}{μ} \PYG{o}{≠} \PYG{n}{ActOut} \PYG{n}{a} \PYG{o}{→} \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{q1} \PYG{o}{→} \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{μ}\PYG{o}{]} \PYG{n}{q2} \PYG{o}{→}
+        \PYG{o}{∃} \PYG{n}{r}\PYG{o}{,} \PYG{n}{q1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{μ}\PYG{o}{]} \PYG{n}{r} \PYG{o}{∧} \PYG{n}{q2} \PYG{n+nb+bp}{⟶≡}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{r} \PYG{o}{;}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}output\PYGZus{}tau} \PYG{o}{\PYGZob{}}\PYG{n}{p} \PYG{n}{q1} \PYG{n}{q2} \PYG{n}{a}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+        \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{q1} \PYG{o}{→} \PYG{n}{p} \PYG{n+nb+bp}{⟶} \PYG{n}{q2} \PYG{o}{→}
+        \PYG{o}{(∃} \PYG{n}{t}\PYG{o}{,} \PYG{n}{q1} \PYG{n+nb+bp}{⟶} \PYG{n}{t} \PYG{o}{∧} \PYG{n}{q2} \PYG{n+nb+bp}{⟶≡}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{t}\PYG{o}{)} \PYG{o}{∨} \PYG{n}{q1} \PYG{n+nb+bp}{⟶≡}\PYG{o}{[}\PYG{n}{ActIn} \PYG{n}{a}\PYG{o}{]} \PYG{n}{q2} \PYG{o}{;}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}output\PYGZus{}deter} \PYG{o}{\PYGZob{}}\PYG{n}{p1} \PYG{n}{p2} \PYG{n}{p3} \PYG{n}{a}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+        \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p2} \PYG{o}{→} \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p3} \PYG{o}{→} \PYG{n}{p2} \PYG{n+nb+bp}{≡} \PYG{n}{p3} \PYG{o}{;}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}output\PYGZus{}deter\PYGZus{}inv} \PYG{o}{\PYGZob{}}\PYG{n}{p1} \PYG{n}{p2} \PYG{n}{q1} \PYG{n}{q2}\PYG{o}{\PYGZcb{}} \PYG{n}{a} \PYG{o}{:}
+        \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{q1} \PYG{o}{→} \PYG{n}{p2} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{q2} \PYG{o}{→} \PYG{n}{q1} \PYG{n+nb+bp}{≡} \PYG{n}{q2} \PYG{o}{→} \PYG{n}{p1} \PYG{n+nb+bp}{≡} \PYG{n}{p2}\PYG{o}{;}
+      \PYG{c}{(* Multiset of outputs *)}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{p} \PYG{o}{:} \PYG{n}{gmultiset} \PYG{n}{L}\PYG{o}{;}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo\PYGZus{}spec1} \PYG{n}{p} \PYG{n}{a} \PYG{o}{:} \PYG{n}{a} \PYG{n+nb+bp}{∈} \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{p} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{n}{a} \PYG{n+nb+bp}{∈} \PYG{n}{lts\PYGZus{}outputs} \PYG{n}{p}\PYG{o}{;}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo\PYGZus{}spec2} \PYG{n}{p} \PYG{n}{a} \PYG{n}{q} \PYG{o}{:}
+        \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{p} \PYG{o}{=} \PYG{o}{\PYGZob{}[+} \PYG{n}{a} \PYG{o}{+]\PYGZcb{}} \PYG{n+nb+bp}{⊎} \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{q}\PYG{o}{;}
+    \PYG{o}{\PYGZcb{}.}
+
+\PYG{k+kn}{Class} \PYG{n}{LtsObaFB} \PYG{o}{(}\PYG{n}{A} \PYG{n}{L}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{`\PYGZob{}}\PYG{n}{LtsOba} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:=}
+  \PYG{n}{MkLtsObaFB} \PYG{o}{\PYGZob{}}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}fb\PYGZus{}feedback} \PYG{o}{\PYGZob{}}\PYG{n}{p1} \PYG{n}{p2} \PYG{n}{p3} \PYG{n}{a}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+        \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p2} \PYG{o}{→} \PYG{n}{p2} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActIn} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p3} \PYG{o}{→} \PYG{n}{p1} \PYG{n+nb+bp}{⟶≡} \PYG{n}{p3}
+    \PYG{o}{\PYGZcb{}.}
+
+\PYG{k+kn}{Class} \PYG{n}{LtsObaFW} \PYG{o}{(}\PYG{n}{A} \PYG{n}{L} \PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{`\PYGZob{}}\PYG{n}{LtsOba} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:=}
+  \PYG{n}{MkLtsObaFW} \PYG{o}{\PYGZob{}}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}fw\PYGZus{}forward} \PYG{n}{p1} \PYG{n}{a} \PYG{o}{:}
+        \PYG{o}{∃} \PYG{n}{p2}\PYG{o}{,} \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActIn} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p2} \PYG{o}{∧} \PYG{n}{p2} \PYG{n+nb+bp}{⟶≡}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p1}\PYG{o}{;}
+      \PYG{n}{lts\PYGZus{}oba\PYGZus{}fw\PYGZus{}feedback} \PYG{o}{\PYGZob{}}\PYG{n}{p1} \PYG{n}{p2} \PYG{n}{p3} \PYG{n}{a}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+        \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p2} \PYG{o}{→} \PYG{n}{p2} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActIn} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p3} \PYG{o}{→} \PYG{n}{p1} \PYG{n+nb+bp}{⟶≡} \PYG{n}{p3} \PYG{o}{∨} \PYG{n}{p1} \PYG{n+nb+bp}{≡} \PYG{n}{p3}\PYG{o}{;}
+    \PYG{o}{\PYGZcb{}.}
+\end{Verbatim}

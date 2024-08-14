@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Definition} \PYG{n}{pre\PYGZus{}extensional} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{R}\PYG{o}{)} \PYG{o}{:} \PYG{k+kt}{Prop} \PYG{o}{:=}
+   \PYG{k}{forall} \PYG{o}{(}\PYG{n}{r} \PYG{o}{:} \PYG{n}{B}\PYG{o}{),} \PYG{n}{must\PYGZus{}extensional} \PYG{n}{p} \PYG{n}{r} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must\PYGZus{}extensional} \PYG{n}{q} \PYG{n}{r}\PYG{o}{.}
+
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ⊑ₑ q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{pre\PYGZus{}extensional} \PYG{n}{p} \PYG{n}{q}\PYG{o}{).}
+\end{Verbatim}

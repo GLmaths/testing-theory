@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Section} \PYG{n}{correctness}\PYG{o}{.}
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}}\PYG{n}{LtsObaFB} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{n}{LtsObaFB} \PYG{n}{R} \PYG{n}{L}\PYG{o}{,} \PYG{n}{LtsObaFB} \PYG{n}{B} \PYG{n}{L}\PYG{o}{\PYGZcb{}.}
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{R} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L}\PYG{o}{\PYGZcb{}.}
+  \PYG{c}{(* The LTS can express the tests required for completeness *)}
+  \PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}!}\PYG{n}{gen\PYGZus{}spec\PYGZus{}conv} \PYG{n}{gen\PYGZus{}conv}\PYG{o}{,} \PYG{o}{!}\PYG{n}{gen\PYGZus{}spec\PYGZus{}acc} \PYG{n}{gen\PYGZus{}acc}\PYG{o}{\PYGZcb{}.}
+
+  \PYG{k+kn}{Theorem} \PYG{n}{equivalence\PYGZus{}bhv\PYGZus{}acc\PYGZus{}ctx} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{R}\PYG{o}{)} \PYG{o}{:}
+    \PYG{n}{p} \PYG{n+nb+bp}{⊑}\PYG{n}{ₑ} \PYG{n}{q} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{o}{(}\PYG{n}{p}\PYG{o}{,} \PYG{n+nb+bp}{∅}\PYG{o}{)} \PYG{n+nb+bp}{≼} \PYG{o}{(}\PYG{n}{q}\PYG{o}{,} \PYG{n+nb+bp}{∅}\PYG{o}{).}
+\PYG{k+kn}{End} \PYG{n}{correctness}\PYG{o}{.}
+\end{Verbatim}

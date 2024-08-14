@@ -1,0 +1,154 @@
+\section{Forwarders}
+\label{sec:appendix-forxarders}
+
+The intuition behind forwarders, quoting \cite{DBLP:conf/ecoop/HondaT91},
+is that ``any message can come into the configuration, regardless of the forms of
+inner receptors. [\ldots] As the experimenter is not synchronously
+interacting with the configuration [\ldots], he may send any message
+as he likes.''
+
+In this appendix we give the technical results to ensure that
+the function $\liftFW{-}$ builds an LTS that satisfies
+the axioms of the class \texttt{LtsEq}.
+
+  \newcommand{\stripSym}{\mathsf{strip}}
+  \newcommand{\strip}[1]{\stripSym(#1)}
+
+  \begin{definition}\label{def:strip-def}
+    We define the function $\stripSym : \States \longrightarrow \States$ by induction on $
+    \outputmultiset{ \server }$ as follows: if
+    $\outputmultiset{\server}  = \varnothing $ then
+    $\strip{\server} = \server$, while
+    if $\exists \co{\aa} \in \outputmultiset{\server}$ and $\server \st{ \co{\aa} } \server'$ then
+    $ \strip{ \server } =  \strip{ \server' } $.
+    Note that $\strip{ \server }$ is well-defined thanks to the \outputdeterminacy
+    and the \outputcommutativity axioms.\hfill$\blacksquare$
+  \end{definition}
+
+
+    %%   and $$.
+    %% $$
+    %% \strip{ \server } =
+    %% \begin{cases}
+    %%   \server & \text{ if } \outputmultiset{\server} = \varnothing\\
+    %%   \strip{ \server' } & \text{ if } \exists  \mu \in \outputmultiset{\server} \text{ and }\server \st{ \mu } \server'
+    %% \end{cases}
+    %% $$
+    
+
+%% \begin{lemma}
+%%   \label{lem:stout-uniqueness}
+%%   Let $\genlts_A \in \oba$ and $\serverA, \serverB_1, \serverB_2 \in A$.
+%%   If
+%%   $\outnorm{\serverA}{\serverB_1}$ and $\outnorm{\serverA}{\serverB_2}$ then
+%%   $\serverB_1 \simeq \serverB_2$.
+%% \end{lemma}
+%% \begin{proof}
+%%   By induction on the cardinality of $\outputmultiset{\serverA}$,
+%%   together with an application of the \outputdeterminacy axiom.
+%% \end{proof}
+
+
+
+We now wish to show that $\liftFW{\genlts} \in \obaFW$ for any LTS
+$\genlts$ of output-buffered agents with feedback.
+Owing to the structure of our typeclasses, we have first to construct an
+equivalence~$\doteq$ over $\liftFW{\genlts}$ that is compatible with the
+transition relation, \ie satisfies the axiom in \rfig{Axiom-LtsEq}.
+We do this in the obvious manner, \ie by combining the equivalence $\simeq$
+over the states of~$\genlts$ with an equivalence over mailboxes.
+
+\begin{definition}
+  \label{def:fw-eq}
+  For any LTS $\genlts$, two states $\serverA \triangleright M$
+    and $\serverB \triangleright N$ of $\liftFW{\genlts}$ are
+  equivalent, denoted
+  $\serverA \triangleright M \doteq \serverB \triangleright N$, if
+  $ \strip{ \serverA } \simeq \strip{ \serverB }$ and
+  $M \uplus \outputmultiset{\serverA} = N \uplus
+  \outputmultiset{\serverB}$.\hfill$\blacksquare$
+\end{definition}
+
+
+
+\begin{lemma}
+  \label{lem:harmony-sta}\coqLTS{harmony_a}
+  %%%% THIS IS NOT THE HARMONY LEMMA
+  For every $\genlts_\StatesA$ and every
+  $\serverA \triangleright M, \serverB \triangleright N \in \StatesA \times MO$,
+  and every $\alpha \in L$, if
+  $
+  \serverA \triangleright M \mathrel{({\doteq} \cdot {\sta{\alpha}})}
+  \serverB \triangleright N
+  $ then
+  $
+  \serverA  \triangleright M \mathrel{({\sta{\alpha}} \cdot {\doteq})} \serverB' \triangleright N'.
+  $
+  %%%% OLD STATEMENT %%%
+  %% For every $\genlts = \lts{\States}{L}{\st{}}$, %
+  %% every $\serverA, \serverB' \in \States$, %
+  %% every $M,N' \in MO$ and %
+  %% every $\alpha \in L$, if
+  %% $
+  %% \serverA \triangleright M \mathrel{({\doteq}  \cdot {\sta{\alpha}})} \serverB'
+  %% \triangleright N'
+  %% $ then %  \text{ implies }
+  %% $
+  %% \serverA  \triangleright M \mathrel{({\sta{\alpha}} \cdot {\doteq})} \serverB' \triangleright N'.
+  %% $
+\end{lemma}
+
+
+
+%\ilacom{To be more general, in the above paragraph we could replace ``client'' by
+%  ``process'' and ``server'' by ``environment''.}
+
+%% \pl{
+
+%% \begin{figure}
+%% \hrulefill
+%%   $$
+%%   \begin{array}{llll}
+%%     \begin{prooftree}
+%%       \justifies
+%%       \server \stout{\varnothing} \server
+%%     \end{prooftree}
+%%     &
+%%     \begin{prooftree}
+%%       \server_1 \st{\co{\aa}} \server_2 \qquad
+%%       \server_2 \stout{M} \server_3
+%%       \justifies
+%%       \server_1 \stout{\mset{\aa} \uplus M} \server_3
+%%     \end{prooftree}
+%%   \end{array}
+%%   $$
+%%   \caption{The transition $\serverA \stout{M} \serverB$}
+%%   \label{fig:rules-stout}
+%%   \hrulefill
+%% \end{figure}
+
+%% \begin{definition}
+%%   Given an LTS $\genlts_{\StatesA}$% $\lts{\States}{L}{\st{}}$
+%%   and two states $\serverA, \serverB \in \StatesA$,
+%% we define the transition relation $\server \st{M} \serverB$,
+%% where $M$ is a multiset of actions, via the following rules
+%% \begin{description}
+%% \item[\rname{st-m-refl}]
+%%   $\server \st{\varnothing} \server$
+%% \item[\rname{st-m-mu}]
+%%   $\server \st{\mset{\mu} \uplus M} \serverB$ \quad if $\server \st{\mu} \server'$
+%%   and $\server' \st{M} \serverB$
+%% \end{description}
+%% \end{definition}
+
+%% \TODO{QUESTION: should we skip the definition of strip and inline its definition
+%%   where it is used ? It would avoid another indirection.}
+
+%% \begin{definition}
+%%   Let $\genlts_A \in \oba$.
+%%   Given two servers $\serverA$ and $\serverB$ in $A$,
+%%   let $\outnorm{\serverA}{\serverB}$ be the relation defined as
+%%   $$
+%%   \outnorm{\serverA}{\serverB} = \serverA \st{\outputmultiset{\serverA}} \serverB
+%%   $$
+%% \end{definition}

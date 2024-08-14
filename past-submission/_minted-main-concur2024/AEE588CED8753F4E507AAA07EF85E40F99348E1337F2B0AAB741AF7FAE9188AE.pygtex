@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{alt\PYGZus{}set\PYGZus{}singleton\PYGZus{}iff}
+  \PYG{o}{`\PYGZob{}@}\PYG{n}{FiniteLts} \PYG{n}{P} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsP}\PYG{o}{,} \PYG{o}{@}\PYG{n}{FiniteLts} \PYG{n}{Q} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsQ}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{P}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{Q}\PYG{o}{)} \PYG{o}{:} \PYG{n}{p} \PYG{n+nb+bp}{≼} \PYG{n}{q} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{o}{\PYGZob{}[} \PYG{n}{p} \PYG{o}{]\PYGZcb{}} \PYG{n+nb+bp}{≼}\PYG{n}{ₓ} \PYG{n}{q}\PYG{o}{.}
+\end{Verbatim}

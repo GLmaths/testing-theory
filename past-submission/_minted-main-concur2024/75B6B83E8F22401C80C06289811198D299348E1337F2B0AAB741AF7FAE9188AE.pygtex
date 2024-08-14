@@ -1,0 +1,13 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Inductive} \PYG{n}{lts\PYGZus{}fw\PYGZus{}step} \PYG{o}{\PYGZob{}}\PYG{n}{A} \PYG{n}{L} \PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{\PYGZcb{}} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+  \PYG{n}{A} \PYG{o}{*} \PYG{n}{mb} \PYG{n}{L} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Act} \PYG{n}{L} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{A} \PYG{o}{*} \PYG{n}{mb} \PYG{n}{L} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Prop} \PYG{o}{:=}
+\PYG{o}{|} \PYG{n}{lts\PYGZus{}fw\PYGZus{}p} \PYG{n}{p} \PYG{n}{q} \PYG{n}{m} \PYG{n}{α}\PYG{o}{:}
+  \PYG{n}{lts\PYGZus{}step} \PYG{n}{p} \PYG{n}{α} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{lts\PYGZus{}fw\PYGZus{}step} \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n}{m}\PYG{o}{)} \PYG{n}{α} \PYG{o}{(}\PYG{n}{q} \PYG{n+nb+bp}{▷} \PYG{n}{m}\PYG{o}{)}
+\PYG{o}{|} \PYG{n}{lts\PYGZus{}fw\PYGZus{}out\PYGZus{}mb} \PYG{n}{m} \PYG{n}{p} \PYG{n}{a} \PYG{o}{:}
+  \PYG{n}{lts\PYGZus{}fw\PYGZus{}step} \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{o}{\PYGZob{}[+} \PYG{n}{a} \PYG{o}{+]\PYGZcb{}} \PYG{n+nb+bp}{⊎} \PYG{n}{m}\PYG{o}{)} \PYG{o}{(}\PYG{n}{ActExt} \PYG{o}{\PYGZdl{}} \PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{)} \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n}{m}\PYG{o}{)}
+\PYG{o}{|} \PYG{n}{lts\PYGZus{}fw\PYGZus{}inp\PYGZus{}mb} \PYG{n}{m} \PYG{n}{p} \PYG{n}{a} \PYG{o}{:}
+  \PYG{n}{lts\PYGZus{}fw\PYGZus{}step} \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n}{m}\PYG{o}{)} \PYG{o}{(}\PYG{n}{ActExt} \PYG{o}{\PYGZdl{}} \PYG{n}{ActIn} \PYG{n}{a}\PYG{o}{)} \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{o}{\PYGZob{}[+} \PYG{n}{a} \PYG{o}{+]\PYGZcb{}} \PYG{n+nb+bp}{⊎} \PYG{n}{m}\PYG{o}{)}
+\PYG{o}{|} \PYG{n}{lts\PYGZus{}fw\PYGZus{}com} \PYG{n}{m} \PYG{n}{p} \PYG{n}{a} \PYG{n}{q} \PYG{o}{:}
+  \PYG{n}{lts\PYGZus{}step} \PYG{n}{p} \PYG{o}{(}\PYG{n}{ActExt} \PYG{o}{\PYGZdl{}} \PYG{n}{ActIn} \PYG{n}{a}\PYG{o}{)} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+  \PYG{n}{lts\PYGZus{}fw\PYGZus{}step} \PYG{o}{(}\PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{o}{\PYGZob{}[+} \PYG{n}{a} \PYG{o}{+]\PYGZcb{}} \PYG{n+nb+bp}{⊎} \PYG{n}{m}\PYG{o}{)} \PYG{n}{τ} \PYG{o}{(}\PYG{n}{q} \PYG{n+nb+bp}{▷} \PYG{n}{m}\PYG{o}{).}
+\end{Verbatim}

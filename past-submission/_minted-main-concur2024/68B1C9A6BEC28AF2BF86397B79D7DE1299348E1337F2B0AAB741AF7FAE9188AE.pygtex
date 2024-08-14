@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{lts\PYGZus{}fw\PYGZus{}eq\PYGZus{}spec} \PYG{o}{`\PYGZob{}}\PYG{n}{LtsObaFB} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{n}{p} \PYG{n}{q} \PYG{n}{t} \PYG{n}{mp} \PYG{n}{mq} \PYG{n}{mt} \PYG{n}{α} \PYG{o}{:}
+  \PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n}{mp} \PYG{n+nb+bp}{≐} \PYG{n}{t} \PYG{n+nb+bp}{▷} \PYG{n}{mt} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{o}{(}\PYG{n}{t} \PYG{n+nb+bp}{▷} \PYG{n}{mt}\PYG{o}{)} \PYG{n+nb+bp}{⟶}\PYG{o}{\PYGZob{}}\PYG{n}{α}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{q} \PYG{n+nb+bp}{▷} \PYG{n}{mq}\PYG{o}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n}{mp} \PYG{n+nb+bp}{⟶≐}\PYG{o}{\PYGZob{}}\PYG{n}{α}\PYG{o}{\PYGZcb{}} \PYG{n}{q} \PYG{n+nb+bp}{▷} \PYG{n}{mq}\PYG{o}{.}
+\end{Verbatim}

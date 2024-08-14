@@ -1,0 +1,15 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k+kn}{Class} \PYG{n}{LtsEq} \PYG{o}{(}\PYG{n}{A} \PYG{n}{L} \PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:=} \PYG{o}{\PYGZob{}}
+      \PYG{n}{eq\PYGZus{}rel} \PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{n}{A} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;}
+
+      \PYG{n}{eq\PYGZus{}rel\PYGZus{}refl} \PYG{n}{p} \PYG{o}{:} \PYG{n}{eq\PYGZus{}rel} \PYG{n}{p} \PYG{n}{p}\PYG{o}{;}
+      \PYG{n}{eq\PYGZus{}symm} \PYG{n}{p} \PYG{n}{q} \PYG{o}{:} \PYG{n}{eq\PYGZus{}rel} \PYG{n}{p} \PYG{n}{q} \PYG{o}{→} \PYG{n}{eq\PYGZus{}rel} \PYG{n}{q} \PYG{n}{p}\PYG{o}{;}
+      \PYG{n}{eq\PYGZus{}trans} \PYG{n}{p} \PYG{n}{q} \PYG{n}{r} \PYG{o}{:}
+      \PYG{n}{eq\PYGZus{}rel} \PYG{n}{p} \PYG{n}{q} \PYG{o}{→} \PYG{n}{eq\PYGZus{}rel} \PYG{n}{q} \PYG{n}{r} \PYG{o}{→} \PYG{n}{eq\PYGZus{}rel} \PYG{n}{p} \PYG{n}{r}\PYG{o}{;}
+
+      \PYG{n}{eq\PYGZus{}spec} \PYG{n}{p} \PYG{n}{q} \PYG{o}{(}\PYG{n}{α} \PYG{o}{:} \PYG{n}{Act} \PYG{n}{L}\PYG{o}{)} \PYG{o}{:}
+      \PYG{o}{(∃} \PYG{n}{p\PYGZsq{}}\PYG{o}{,} \PYG{o}{(}\PYG{n}{eq\PYGZus{}rel} \PYG{n}{p} \PYG{n}{p\PYGZsq{}}\PYG{o}{)} \PYG{o}{∧} \PYG{n}{p\PYGZsq{}} \PYG{n+nb+bp}{⟶}\PYG{o}{\PYGZob{}}\PYG{n}{α}\PYG{o}{\PYGZcb{}} \PYG{n}{q}\PYG{o}{)}
+      \PYG{o}{→}
+      \PYG{o}{(∃} \PYG{n}{q\PYGZsq{}}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{\PYGZob{}}\PYG{n}{α}\PYG{o}{\PYGZcb{}} \PYG{n}{q\PYGZsq{}} \PYG{o}{∧} \PYG{o}{(}\PYG{n}{eq\PYGZus{}rel} \PYG{n}{q\PYGZsq{}} \PYG{n}{q}\PYG{o}{))}
+    \PYG{o}{\PYGZcb{}.}
+\end{Verbatim}

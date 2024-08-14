@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k+kn}{Class} \PYG{n}{Sts} \PYG{o}{(}\PYG{n}{A}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{:=} \PYG{n}{MkSts} \PYG{o}{\PYGZob{}}
+      \PYG{n}{sts\PYGZus{}step}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{n}{A} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;}
+      \PYG{n}{sts\PYGZus{}stable}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;} \PYG{o}{\PYGZcb{}.}
+
+    \PYG{k+kn}{Inductive} \PYG{n}{ExtAct} \PYG{o}{(}\PYG{n}{A}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{:=}     \PYG{k+kn}{Inductive} \PYG{n}{Act} \PYG{o}{(}\PYG{n}{A}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{:=}
+    \PYG{o}{|} \PYG{n}{ActIn} \PYG{o}{(}\PYG{n}{a}\PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{|} \PYG{n}{ActOut} \PYG{o}{(}\PYG{n}{a}\PYG{o}{:} \PYG{n}{A}\PYG{o}{).}   \PYG{o}{|} \PYG{n}{ActExt} \PYG{o}{(}\PYG{n}{ext}\PYG{o}{:} \PYG{n}{ExtAct} \PYG{n}{A}\PYG{o}{)} \PYG{o}{|} \PYG{n}{τ}\PYG{o}{.}
+
+    \PYG{k+kn}{Class} \PYG{n}{Label} \PYG{o}{(}\PYG{n}{L}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{:=}          \PYG{k+kn}{Class} \PYG{n}{Lts} \PYG{o}{(}\PYG{n}{A} \PYG{n}{L} \PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{`\PYGZob{}}\PYG{n}{Label} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:=}
+    \PYG{n}{MkLabel} \PYG{o}{\PYGZob{}}                         \PYG{n}{MkLts} \PYG{o}{\PYGZob{}}
+     \PYG{n}{label\PYGZus{}eqdec}\PYG{o}{:} \PYG{n}{EqDecision} \PYG{n}{L}\PYG{o}{;}        \PYG{n}{lts\PYGZus{}step}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{n}{Act} \PYG{n}{L} \PYG{o}{→} \PYG{n}{A} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;}
+     \PYG{n}{label\PYGZus{}countable}\PYG{o}{:} \PYG{n}{Countable} \PYG{n}{L}\PYG{o}{;} \PYG{o}{\PYGZcb{}.}  \PYG{n}{lts\PYGZus{}outputs}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{n}{finite\PYGZus{}set} \PYG{n}{L}\PYG{o}{;}
+                                       \PYG{n}{lts\PYGZus{}performs}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{o}{(}\PYG{n}{Act} \PYG{n}{L}\PYG{o}{)} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;} \PYG{o}{\PYGZcb{}.}
+\end{Verbatim}

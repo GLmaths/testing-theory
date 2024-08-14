@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{bhvx\PYGZus{}mu\PYGZus{}ex} \PYG{o}{`\PYGZob{}@}\PYG{n}{FiniteLts} \PYG{n}{P} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsP}\PYG{o}{,} \PYG{o}{@}\PYG{n}{FiniteLts} \PYG{n}{Q} \PYG{n}{L} \PYG{n}{HL} \PYG{n}{LtsQ}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{ps} \PYG{o}{:} \PYG{n}{gset} \PYG{n}{P}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{n}{q\PYGZsq{}} \PYG{o}{:} \PYG{n}{Q}\PYG{o}{)} \PYG{n}{μ}
+  \PYG{o}{:} \PYG{n}{ps} \PYG{n+nb+bp}{≼}\PYG{n}{ₓ} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{o}{(}\PYG{k}{forall} \PYG{n}{p}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{∈} \PYG{n}{ps} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{p} \PYG{n+nb+bp}{⇓} \PYG{o}{[}\PYG{n}{μ}\PYG{o}{])} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+    \PYG{n}{q} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{μ}\PYG{o}{]} \PYG{n}{q\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k}{exists} \PYG{n}{p\PYGZsq{}}\PYG{o}{,} \PYG{n}{wt\PYGZus{}set\PYGZus{}from\PYGZus{}pset\PYGZus{}spec1} \PYG{n}{ps} \PYG{o}{[}\PYG{n}{μ}\PYG{o}{]} \PYG{o}{\PYGZob{}[} \PYG{n}{p\PYGZsq{}} \PYG{o}{]\PYGZcb{}.}
+\end{Verbatim}

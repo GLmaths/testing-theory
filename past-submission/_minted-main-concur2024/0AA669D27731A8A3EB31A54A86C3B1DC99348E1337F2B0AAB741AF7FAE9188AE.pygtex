@@ -1,0 +1,16 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Inductive} \PYG{n}{strip} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:} \PYG{n}{A} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{gmultiset} \PYG{n}{L} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{A} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Prop} \PYG{o}{:=}
+\PYG{o}{|} \PYG{n}{strip\PYGZus{}nil} \PYG{n}{p} \PYG{o}{:} \PYG{n}{p} \PYG{n+nb+bp}{⟿}\PYG{o}{\PYGZob{}}\PYG{n+nb+bp}{∅}\PYG{o}{\PYGZcb{}} \PYG{n}{p}
+\PYG{o}{|} \PYG{n}{strip\PYGZus{}step} \PYG{n}{p1} \PYG{n}{p2} \PYG{n}{p3} \PYG{n}{a} \PYG{n}{m} \PYG{o}{:}
+  \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p2} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{p2} \PYG{n+nb+bp}{⟿}\PYG{o}{\PYGZob{}}\PYG{n}{m}\PYG{o}{\PYGZcb{}} \PYG{n}{p3} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{p1} \PYG{n+nb+bp}{⟿}\PYG{o}{\PYGZob{}\PYGZob{}[+} \PYG{n}{a} \PYG{o}{+]\PYGZcb{}} \PYG{n+nb+bp}{⊎} \PYG{n}{m}\PYG{o}{\PYGZcb{}} \PYG{n}{p3}
+
+\PYG{n}{where} \PYG{l+s+s2}{\PYGZdq{}p ⟿\PYGZob{} m \PYGZcb{} q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{strip} \PYG{n}{p} \PYG{n}{m} \PYG{n}{q}\PYG{o}{).}
+
+\PYG{k+kn}{Definition} \PYG{n}{fw\PYGZus{}eq} \PYG{o}{`\PYGZob{}}\PYG{n}{LtsOba} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A} \PYG{o}{*} \PYG{n}{mb} \PYG{n}{L}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{A} \PYG{o}{*} \PYG{n}{mb} \PYG{n}{L}\PYG{o}{)} \PYG{o}{:=}
+  \PYG{k}{forall} \PYG{o}{(}\PYG{n}{p\PYGZsq{}} \PYG{n}{q\PYGZsq{}} \PYG{o}{:} \PYG{n}{A}\PYG{o}{),}
+    \PYG{n}{p}\PYG{o}{.}\PYG{l+m+mi}{1} \PYG{n+nb+bp}{⟿}\PYG{o}{\PYGZob{}}\PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{p}\PYG{o}{.}\PYG{l+m+mi}{1}\PYG{o}{\PYGZcb{}} \PYG{n}{p\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+    \PYG{n}{q}\PYG{o}{.}\PYG{l+m+mi}{1} \PYG{n+nb+bp}{⟿}\PYG{o}{\PYGZob{}}\PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{q}\PYG{o}{.}\PYG{l+m+mi}{1}\PYG{o}{\PYGZcb{}} \PYG{n}{q\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+    \PYG{n}{p\PYGZsq{}} \PYG{n+nb+bp}{⋍} \PYG{n}{q\PYGZsq{}} \PYG{o}{/\PYGZbs{}} \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{p}\PYG{o}{.}\PYG{l+m+mi}{1} \PYG{n+nb+bp}{⊎} \PYG{n}{p}\PYG{o}{.}\PYG{l+m+mi}{2} \PYG{o}{=} \PYG{n}{lts\PYGZus{}oba\PYGZus{}mo} \PYG{n}{q}\PYG{o}{.}\PYG{l+m+mi}{1} \PYG{n+nb+bp}{⊎} \PYG{n}{q}\PYG{o}{.}\PYG{l+m+mi}{2}\PYG{o}{.}
+
+\PYG{n}{Infix} \PYG{l+s+s2}{\PYGZdq{}≐\PYGZdq{}} \PYG{o}{:=} \PYG{n}{fw\PYGZus{}eq} \PYG{o}{(}\PYG{n}{at} \PYG{n}{level} \PYG{l+m+mi}{70}\PYG{o}{).}
+\end{Verbatim}

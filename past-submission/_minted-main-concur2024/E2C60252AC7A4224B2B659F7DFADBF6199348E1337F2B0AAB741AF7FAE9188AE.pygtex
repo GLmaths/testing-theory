@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Inductive} \PYG{n}{mustx}
+  \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{LtsEq} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{ps} \PYG{o}{:} \PYG{n}{gset} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:} \PYG{k+kt}{Prop} \PYG{o}{:=}
+\PYG{o}{|} \PYG{n}{mx\PYGZus{}now} \PYG{o}{(}\PYG{n}{hh} \PYG{o}{:} \PYG{n}{good} \PYG{n}{e}\PYG{o}{)} \PYG{o}{:} \PYG{n}{mustx} \PYG{n}{ps} \PYG{n}{e}
+\PYG{o}{|} \PYG{n}{mx\PYGZus{}step}
+    \PYG{o}{(}\PYG{n}{nh} \PYG{o}{:} \PYG{o}{¬} \PYG{n}{good} \PYG{n}{e}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{ex} \PYG{o}{:} \PYG{k}{forall} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{),} \PYG{n}{p} \PYG{n+nb+bp}{∈} \PYG{n}{ps} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{o}{∃} \PYG{n}{t}\PYG{o}{,} \PYG{n}{parallel\PYGZus{}step} \PYG{o}{(}\PYG{n}{p}\PYG{o}{,} \PYG{n}{e}\PYG{o}{)} \PYG{n}{τ} \PYG{n}{t}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{pt} \PYG{o}{:} \PYG{k}{forall} \PYG{n}{ps\PYGZsq{}}\PYG{o}{,}
+        \PYG{n}{lts\PYGZus{}tau\PYGZus{}set\PYGZus{}from\PYGZus{}pset\PYGZus{}spec1} \PYG{n}{ps} \PYG{n}{ps\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{ps\PYGZsq{}} \PYG{o}{≠} \PYG{n+nb+bp}{∅} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+        \PYG{n}{mustx} \PYG{n}{ps\PYGZsq{}} \PYG{n}{e}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{et} \PYG{o}{:} \PYG{k}{forall} \PYG{o}{(}\PYG{n}{e\PYGZsq{}} \PYG{o}{:} \PYG{n}{B}\PYG{o}{),} \PYG{n}{e} \PYG{n+nb+bp}{⟶} \PYG{n}{e\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{mustx} \PYG{n}{ps} \PYG{n}{e\PYGZsq{}}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{com} \PYG{o}{:} \PYG{k}{forall} \PYG{o}{(}\PYG{n}{e\PYGZsq{}} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{n}{μ} \PYG{o}{(}\PYG{n}{ps\PYGZsq{}} \PYG{o}{:} \PYG{n}{gset} \PYG{n}{A}\PYG{o}{),}
+        \PYG{n}{lts\PYGZus{}step} \PYG{n}{e} \PYG{o}{(}\PYG{n}{ActExt} \PYG{n}{μ}\PYG{o}{)} \PYG{n}{e\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+        \PYG{n}{wt\PYGZus{}set\PYGZus{}from\PYGZus{}pset\PYGZus{}spec1} \PYG{n}{ps} \PYG{o}{[}\PYG{n}{co} \PYG{n}{μ}\PYG{o}{]} \PYG{n}{ps\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{ps\PYGZsq{}} \PYG{o}{≠} \PYG{n+nb+bp}{∅} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+        \PYG{n}{mustx} \PYG{n}{ps\PYGZsq{}} \PYG{n}{e\PYGZsq{}}\PYG{o}{)}
+  \PYG{o}{:} \PYG{n}{mustx} \PYG{n}{ps} \PYG{n}{e}\PYG{o}{.}
+\end{Verbatim}

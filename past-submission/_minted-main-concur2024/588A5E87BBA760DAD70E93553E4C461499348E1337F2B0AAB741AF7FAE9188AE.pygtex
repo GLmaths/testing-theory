@@ -1,0 +1,12 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Class} \PYG{n}{Sts} \PYG{o}{(}\PYG{n}{A}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{:=} \PYG{o}{\PYGZob{}}
+    \PYG{n}{sts\PYGZus{}step}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{n}{A} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;}
+    \PYG{n}{sts\PYGZus{}state\PYGZus{}eqdec}\PYG{o}{:} \PYG{n}{EqDecision} \PYG{n}{A}\PYG{o}{;}
+    \PYG{n}{sts\PYGZus{}step\PYGZus{}decidable}\PYG{o}{:} \PYG{n}{RelDecision} \PYG{n}{sts\PYGZus{}step}\PYG{o}{;}
+
+    \PYG{n}{sts\PYGZus{}stable}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;}
+    \PYG{n}{sts\PYGZus{}stable\PYGZus{}decidable} \PYG{n}{p} \PYG{o}{:} \PYG{n}{Decision} \PYG{o}{(}\PYG{n}{sts\PYGZus{}stable} \PYG{n}{p}\PYG{o}{);}
+    \PYG{n}{sts\PYGZus{}stable\PYGZus{}spec1} \PYG{n}{p} \PYG{o}{:} \PYG{o}{¬} \PYG{n}{sts\PYGZus{}stable} \PYG{n}{p} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{o}{\PYGZob{}} \PYG{n}{q} \PYG{o}{|} \PYG{n}{sts\PYGZus{}step} \PYG{n}{p} \PYG{n}{q} \PYG{o}{\PYGZcb{};}
+    \PYG{n}{sts\PYGZus{}stable\PYGZus{}spec2} \PYG{n}{p} \PYG{o}{:} \PYG{o}{\PYGZob{}} \PYG{n}{q} \PYG{o}{|} \PYG{n}{sts\PYGZus{}step} \PYG{n}{p} \PYG{n}{q} \PYG{o}{\PYGZcb{}} \PYG{o}{→} \PYG{o}{¬} \PYG{n}{sts\PYGZus{}stable} \PYG{n}{p}\PYG{o}{;}
+  \PYG{o}{\PYGZcb{}.}
+\end{Verbatim}

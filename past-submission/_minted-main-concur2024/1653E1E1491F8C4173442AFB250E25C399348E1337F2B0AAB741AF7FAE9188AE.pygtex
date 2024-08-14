@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{must\PYGZus{}gen\PYGZus{}a\PYGZus{}with\PYGZus{}s}
+  \PYG{o}{`\PYGZob{}@}\PYG{n}{LtsObaFW} \PYG{n}{A} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LA} \PYG{n}{LOA} \PYG{n}{V}\PYG{o}{,} \PYG{o}{@}\PYG{n}{LtsObaFB} \PYG{n}{B} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LB} \PYG{n}{LOB} \PYG{n}{W}\PYG{o}{,}
+    \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{,} \PYG{o}{!}\PYG{n}{gen\PYGZus{}spec\PYGZus{}acc} \PYG{n}{gen\PYGZus{}acc}\PYG{o}{\PYGZcb{}}
+  \PYG{n}{s} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{hcnv} \PYG{o}{:} \PYG{n}{p} \PYG{n+nb+bp}{⇓} \PYG{n}{s}\PYG{o}{)} \PYG{n}{O} \PYG{o}{:}
+  \PYG{o}{(}\PYG{k}{exists} \PYG{n}{p\PYGZsq{}}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⟹}\PYG{o}{[}\PYG{n}{s}\PYG{o}{]} \PYG{n}{p\PYGZsq{}} \PYG{o}{/\PYGZbs{}} \PYG{n}{lts\PYGZus{}stable} \PYG{n}{p\PYGZsq{}} \PYG{n}{τ} \PYG{o}{/\PYGZbs{}} \PYG{n}{lts\PYGZus{}outputs} \PYG{n}{p\PYGZsq{}} \PYG{n+nb+bp}{⊆} \PYG{n}{O}\PYG{o}{)}
+    \PYG{o}{\PYGZbs{}/} \PYG{n}{must} \PYG{n}{p} \PYG{o}{(}\PYG{n}{gen\PYGZus{}acc} \PYG{o}{(}\PYG{n}{oas} \PYG{n}{p} \PYG{n}{s} \PYG{n}{hcnv} \PYG{n+nb+bp}{∖} \PYG{n}{O}\PYG{o}{)} \PYG{n}{s}\PYG{o}{).}
+\end{Verbatim}

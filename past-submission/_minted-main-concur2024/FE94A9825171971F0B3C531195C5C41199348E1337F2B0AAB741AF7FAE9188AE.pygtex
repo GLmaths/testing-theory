@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Definition} \PYG{n}{trace} \PYG{n}{L} \PYG{o}{:=} \PYG{n}{list} \PYG{o}{(}\PYG{n}{ExtAct} \PYG{n}{L}\PYG{o}{).}
+
+\PYG{k+kn}{Inductive} \PYG{n}{wt} \PYG{o}{:} \PYG{n}{A} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{trace} \PYG{n}{L} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{A} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Prop} \PYG{o}{:=}
+\PYG{o}{|} \PYG{n}{wt\PYGZus{}nil} \PYG{n}{p} \PYG{o}{:} \PYG{n}{wt} \PYG{n}{p} \PYG{n+nb+bp}{[]} \PYG{n}{p}
+\PYG{o}{|} \PYG{n}{wt\PYGZus{}tau} \PYG{n}{s} \PYG{n}{p} \PYG{n}{q} \PYG{n}{t} \PYG{o}{(}\PYG{n}{l} \PYG{o}{:} \PYG{n}{p} \PYG{n+nb+bp}{⟶} \PYG{n}{q}\PYG{o}{)} \PYG{o}{(}\PYG{n}{w} \PYG{o}{:} \PYG{n}{wt} \PYG{n}{q} \PYG{n}{s} \PYG{n}{t}\PYG{o}{)} \PYG{o}{:} \PYG{n}{wt} \PYG{n}{p} \PYG{n}{s} \PYG{n}{t}
+\PYG{o}{|} \PYG{n}{wt\PYGZus{}act} \PYG{n}{μ} \PYG{n}{s} \PYG{n}{p} \PYG{n}{q} \PYG{n}{t} \PYG{o}{(}\PYG{n}{l} \PYG{o}{:} \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{μ}\PYG{o}{]} \PYG{n}{q}\PYG{o}{)} \PYG{o}{(}\PYG{n}{w} \PYG{o}{:} \PYG{n}{wt} \PYG{n}{q} \PYG{n}{s} \PYG{n}{t}\PYG{o}{)} \PYG{o}{:} \PYG{n}{wt} \PYG{n}{p} \PYG{o}{(}\PYG{n}{μ} \PYG{o}{::} \PYG{n}{s}\PYG{o}{)} \PYG{n}{t}\PYG{o}{.}
+
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ⟹[s] q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{wt} \PYG{n}{p} \PYG{n}{s} \PYG{n}{q}\PYG{o}{).}
+\end{Verbatim}

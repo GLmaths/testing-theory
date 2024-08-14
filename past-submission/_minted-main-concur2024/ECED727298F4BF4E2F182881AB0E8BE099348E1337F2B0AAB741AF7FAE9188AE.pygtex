@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{must\PYGZus{}iff\PYGZus{}cnv}
+  \PYG{o}{`\PYGZob{}@}\PYG{n}{LtsObaFW} \PYG{n}{A} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LA} \PYG{n}{LOA} \PYG{n}{V}\PYG{o}{,} \PYG{o}{@}\PYG{n}{LtsObaFB} \PYG{n}{B} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LB} \PYG{n}{LOB} \PYG{n}{W}\PYG{o}{,}
+    \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{,} \PYG{o}{!}\PYG{n}{gen\PYGZus{}spec\PYGZus{}conv} \PYG{n}{gen\PYGZus{}conv}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{n}{s} \PYG{o}{:}
+   \PYG{n}{must} \PYG{n}{p} \PYG{o}{(}\PYG{n}{gen\PYGZus{}conv} \PYG{n}{s}\PYG{o}{)} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{n}{p} \PYG{n+nb+bp}{⇓} \PYG{n}{s}\PYG{o}{.}
+\PYG{k+kn}{Proof}\PYG{o}{.} \PYG{k}{split}\PYG{o}{;} \PYG{o}{[}\PYG{k}{eapply} \PYG{n}{cnv\PYGZus{}if\PYGZus{}must} \PYG{o}{|} \PYG{k}{eapply} \PYG{n}{must\PYGZus{}if\PYGZus{}cnv}\PYG{o}{];} \PYG{k}{eauto}\PYG{o}{.} \PYG{k+kn}{Qed}\PYG{o}{.}
+\end{Verbatim}

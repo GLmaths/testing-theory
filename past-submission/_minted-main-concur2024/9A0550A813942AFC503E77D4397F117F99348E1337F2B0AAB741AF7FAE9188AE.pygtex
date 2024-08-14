@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{soundnessx} \PYG{o}{`\PYGZob{}}
+    \PYG{o}{@}\PYG{n}{LtsObaFW} \PYG{n}{A} \PYG{n}{L} \PYG{n}{Lbl} \PYG{n}{LtsA} \PYG{n}{LtsEqA} \PYG{n}{LtsObaA}\PYG{o}{,}
+    \PYG{o}{@}\PYG{n}{LtsObaFW} \PYG{n}{C} \PYG{n}{L} \PYG{n}{Lbl} \PYG{n}{LtsC} \PYG{n}{LtsEqC} \PYG{n}{LtsObaC}\PYG{o}{,}
+    \PYG{o}{@}\PYG{n}{LtsObaFB} \PYG{n}{B} \PYG{n}{L} \PYG{n}{Lbl} \PYG{n}{LtsB} \PYG{n}{LtsEqB} \PYG{n}{LtsObaB}\PYG{o}{,}
+    \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{C} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{\PYGZcb{}}
+    \PYG{o}{(}\PYG{n}{ps} \PYG{o}{:} \PYG{n}{gset} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:} \PYG{n}{mustx} \PYG{n}{ps} \PYG{n}{e} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+      \PYG{k}{forall} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{C}\PYG{o}{),} \PYG{n}{ps} \PYG{n+nb+bp}{≼}\PYG{n}{ₓ} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{q} \PYG{n}{e}\PYG{o}{.}
+\end{Verbatim}

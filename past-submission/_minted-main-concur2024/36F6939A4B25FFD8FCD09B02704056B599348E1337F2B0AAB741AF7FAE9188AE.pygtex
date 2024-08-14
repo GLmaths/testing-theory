@@ -1,0 +1,16 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Inductive} \PYG{n}{must} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{LtsEq} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:} \PYG{k+kt}{Prop} \PYG{o}{:=}
+\PYG{o}{|} \PYG{n}{m\PYGZus{}now} \PYG{o}{:} \PYG{n}{good} \PYG{n}{e} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p} \PYG{n}{e}
+\PYG{o}{|} \PYG{n}{m\PYGZus{}step}
+    \PYG{o}{(}\PYG{n}{nh} \PYG{o}{:} \PYG{o}{¬} \PYG{n}{good} \PYG{n}{e}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{ex} \PYG{o}{:} \PYG{o}{∃} \PYG{n}{t}\PYG{o}{,} \PYG{n}{parallel\PYGZus{}step} \PYG{o}{(}\PYG{n}{p}\PYG{o}{,} \PYG{n}{e}\PYG{o}{)} \PYG{n}{τ} \PYG{n}{t}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{pt} \PYG{o}{:} \PYG{k}{forall} \PYG{n}{p\PYGZsq{}}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⟶} \PYG{n}{p\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p\PYGZsq{}} \PYG{n}{e}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{et} \PYG{o}{:} \PYG{k}{forall} \PYG{n}{e\PYGZsq{}}\PYG{o}{,} \PYG{n}{e} \PYG{n+nb+bp}{⟶} \PYG{n}{e\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p} \PYG{n}{e\PYGZsq{}}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{com} \PYG{o}{:} \PYG{k}{forall} \PYG{n}{p\PYGZsq{}} \PYG{n}{e\PYGZsq{}} \PYG{n}{μ}\PYG{o}{,} \PYG{n}{e} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{μ}\PYG{o}{]} \PYG{n}{e\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{p} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{co} \PYG{n}{μ}\PYG{o}{]} \PYG{n}{p\PYGZsq{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p\PYGZsq{}} \PYG{n}{e\PYGZsq{}}\PYG{o}{)}
+  \PYG{o}{:} \PYG{n}{must} \PYG{n}{p} \PYG{n}{e}
+\PYG{o}{.}
+
+\PYG{k+kn}{Lemma} \PYG{n}{must\PYGZus{}sts\PYGZus{}iff\PYGZus{}must} \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{LtsEq} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:} \PYG{n}{must\PYGZus{}sts} \PYG{n}{p} \PYG{n}{e} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p} \PYG{n}{e}\PYG{o}{.}
+\end{Verbatim}

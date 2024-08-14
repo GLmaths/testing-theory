@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{stability\PYGZus{}nbhvleqtwo}
+  \PYG{o}{`\PYGZob{}@}\PYG{n}{LtsObaFW} \PYG{n}{P} \PYG{n}{L} \PYG{n}{Lbl} \PYG{n}{LtsP} \PYG{n}{LtsEqP} \PYG{n}{LtsObaP}\PYG{o}{,}
+    \PYG{o}{@}\PYG{n}{LtsObaFW} \PYG{n}{Q} \PYG{n}{L} \PYG{n}{Lbl} \PYG{n}{LtsQ} \PYG{n}{LtsEqQ} \PYG{n}{LtsObaQ}\PYG{o}{,}
+    \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{P} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{Q} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{LtsEq} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{X} \PYG{o}{:} \PYG{n}{gset} \PYG{n}{P}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{Q}\PYG{o}{)} \PYG{n}{e} \PYG{o}{:}
+  \PYG{o}{¬} \PYG{n}{good} \PYG{n}{e} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{mustx} \PYG{n}{X} \PYG{n}{e} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{X} \PYG{n+nb+bp}{≼}\PYG{n}{ₓ2} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k}{exists} \PYG{n}{t}\PYG{o}{,} \PYG{o}{(}\PYG{n}{q}\PYG{o}{,} \PYG{n}{e}\PYG{o}{)} \PYG{n+nb+bp}{⟶}\PYG{o}{\PYGZob{}}\PYG{n}{τ}\PYG{o}{\PYGZcb{}} \PYG{n}{t}\PYG{o}{.}
+\end{Verbatim}

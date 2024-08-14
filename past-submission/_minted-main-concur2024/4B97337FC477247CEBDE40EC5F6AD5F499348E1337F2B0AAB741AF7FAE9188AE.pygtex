@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{must\PYGZus{}set\PYGZus{}iff\PYGZus{}must\PYGZus{}for\PYGZus{}all}
+  \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{LtsEq} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{X} \PYG{o}{:} \PYG{n}{gset} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:} \PYG{n}{X} \PYG{o}{≠} \PYG{n+nb+bp}{∅} \PYG{o}{\PYGZhy{}\PYGZgt{}}
+    \PYG{o}{(}\PYG{k}{forall} \PYG{n}{p}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{∈} \PYG{n}{X} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p} \PYG{n}{e}\PYG{o}{)} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{n}{mustx} \PYG{n}{X} \PYG{n}{e}\PYG{o}{.}
+\end{Verbatim}

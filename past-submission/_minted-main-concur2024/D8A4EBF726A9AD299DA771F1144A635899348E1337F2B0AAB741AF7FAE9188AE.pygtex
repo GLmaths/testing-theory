@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}}\PYG{n}{Hsts}\PYG{o}{:} \PYG{n}{Sts} \PYG{n}{A}\PYG{o}{,} \PYG{o}{@}\PYG{n}{CountableSts} \PYG{n}{A} \PYG{n}{Hsts}\PYG{o}{\PYGZcb{}.}
+\PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}@}\PYG{n}{Bar} \PYG{n}{A} \PYG{n}{Hsts}\PYG{o}{\PYGZcb{}.}
+
+\PYG{k+kn}{Theorem} \PYG{n}{extensional\PYGZus{}implies\PYGZus{}intensional} \PYG{n}{x}\PYG{o}{:}
+  \PYG{n}{extensional\PYGZus{}pred} \PYG{n}{x} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{intensional\PYGZus{}pred} \PYG{n}{x}\PYG{o}{.}
+\end{Verbatim}

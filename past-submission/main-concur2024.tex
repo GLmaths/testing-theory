@@ -1,0 +1,183 @@
+\documentclass[english,a4paper,anonymous,cleveref,thm-restate]{lipics-style/lipics-v2021}
+\pdfoutput=1 %% as indicated in the authors guideline
+
+\input{macros}
+
+
+%% PC members that may understand the paper
+%% Davide Sangiorgi
+%% Michele Boreale
+%% Daniele Gorla
+%% Valeria Vignudelli
+%% Alexandra Silva
+
+
+
+\newcommand{\ie}{{\em i.e.}\xspace}
+\newcommand{\sts}[2]{\ensuremath{\langle #1, #2 \rangle}}
+\newcommand{\myspace}{\phantom{\scalebox{.6}{$\ok$}}}
+\newcommand{\ltsof}[1]{\ensuremath{\textsc{lts}(#1)}}
+\newcommand{\ltsFWof}[1]{\ensuremath{\textsc{ltsFW}(#1)}}
+
+
+\renewcommand{\traceA}{s_1}
+\newcommand{\traceB}{s_2}
+\newcommand{\traceC}{s_3}
+
+
+\DeclareUnicodeCharacter{2208}{$\in$}
+\DeclareUnicodeCharacter{2203}{$\exists$}
+\DeclareUnicodeCharacter{2200}{$\forall$}
+\DeclareUnicodeCharacter{2113}{$\ell$}
+\DeclareUnicodeCharacter{03B1}{$\alpha$}
+\DeclareUnicodeCharacter{27F6}{$\longrightarrow$}
+\DeclareUnicodeCharacter{2227}{$\wedge$}
+\DeclareUnicodeCharacter{2228}{$\vee$}
+\DeclareUnicodeCharacter{2261}{$\equiv$}
+\DeclareUnicodeCharacter{3BC}{$\mu$}
+\DeclareUnicodeCharacter{2260}{$\neq$}
+\DeclareUnicodeCharacter{27F9}{$\Longrightarrow$} %⟹ (U+27F9)
+\DeclareUnicodeCharacter{03B7}{$\eta$} %η (U+03B7)
+\DeclareUnicodeCharacter{03BB}{$\lambda$} %λ (U+03BB)
+\DeclareUnicodeCharacter{03C4}{$\tau$} %λ (U+03BB)
+\DeclareUnicodeCharacter{21D3}{$\Downarrow$}
+\DeclareUnicodeCharacter{227C}{$\preccurlyeq$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2081}{${}_1$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2082}{${}_2$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2091}{${}_{\textrm{e}}$} %λ (U+03BB)
+\DeclareUnicodeCharacter{219B}{$\nrightarrow$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2286}{$\subseteq$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2291}{$\sqsubseteq$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2205}{$\emptyset$} %λ (U+03BB)
+\DeclareUnicodeCharacter{227E}{$\precsim$} %λ (U+03BB)
+\DeclareUnicodeCharacter{25B7}{$\triangleright$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2194}{$\leftrightarrow$} %λ (U+03BB)
+\DeclareUnicodeCharacter{2250}{$\doteq$} %λ (U+03BB)
+\DeclareUnicodeCharacter{228E}{$\uplus$} %λ (U+03BB)
+\DeclareUnicodeCharacter{27FF}{$\rightsquigarrow$} % ⟿
+\DeclareUnicodeCharacter{22CD}{$\simeq$} %
+\DeclareUnicodeCharacter{2216}{$\setminus$} %
+\DeclareUnicodeCharacter{2093}{$_x$} %
+\DeclareUnicodeCharacter{2913}{$\downarrow_i$} %
+\DeclareUnicodeCharacter{22D6}{$\lessdot$} %
+
+\newcommand{\mspreorder}{\ensuremath{\preceq_{MS}}}
+\newcommand{\aspreorder}{\ensuremath{\preceq_{AS}}}
+\newcommand{\outof}[1]{O(#1)}
+\newcommand{\outnorm}[2]{\mathit{strip}(#1, #2)}
+\newcommand{\outputmultisetSym}{\mathsf{mbox}}
+\newcommand{\outputmultiset}[1]{\outputmultisetSym(#1)}
+
+
+\title{Constructive characterisations of the
+  \texorpdfstring{\mustpreorder}{MUST-preorder} for asynchrony}
+
+
+%%% FORMAT
+%%% \author{name}{affil}{email}{orcid}{funding}.
+
+
+  \author{ANONYMOUS}{HIDDEN}{}{}{}
+% \author{Giovanni Bernardi}{IRIF}{gio@irif.fr}{ORCID}{F}
+%
+% \author{Ilaria Castellani}{INRIA}{mail}{ORCID}{F}
+%
+% \author{Paul Laforgue}{Nomadic Labs}{mail}{ORCID}{F}
+%
+% \author{Léo Stefanesco}{Max Planck}{mail}{ORCID}{F}
+%
+% \authorrunning{G. Bernardi, I. Castellani, P. Laforgue, and L. Stefanesco}
+
+\ccsdesc{classification}
+
+%% \acknowledgements{
+%%   This paper benefited from discussions with Guillaume Geoffroy, Hugo Herbelin and Pierre-Evariste Dagand.
+%% }
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  De Nicola and Hennessy's \mustpreorder is a contextual refinement which states
+that a server~$\serverB$ refines a server~$\serverA$ if all clients satisfied
+by~$\serverA$ are also satisfied by~$\serverB$. Owing to the universal
+quantification over clients, this definition does not yied a practical proof
+method for the \mustpreorder,  %does not enjoy a simple proof method, and
+and alternative characterisations are necessary to reason on it.
+
+We present the first characterisations of the \mustpreorder
+that are constructive, supported by a mechanisation in Coq,
+and independent from any calculus:
+our results pertain to Selinger output-buffered
+agents with feedback. This is a class of Labelled Transition Systems
+that captures programs that communicate asynchronously via
+a shared unordered buffer, as in
+% \ila{the asynchronous variants of
+%   \CCS and the $\pi$-calculus.}
+{asynchronous \CCS or the
+asynchronous $\pi$-calculus.}
+
+Our results are surprising: the behavioural characterisations
+devised for synchronous communication carry over as they stand
+to asynchronous communication, if servers are enhanced to act as forwarders,
+\ie they can input any message as long as they
+store it back into the shared buffer.
+This suggests a technique to port standard characterisations
+%\gb{and also failure refinement}
+from synchronous to asynchronous settings.
+\end{abstract}
+
+
+\input{introduction}
+\input{preliminaries}
+
+\renewcommand{\state}{p}
+\renewcommand{\stateA}{p_1}
+\renewcommand{\stateB}{p_2}
+\renewcommand{\stateC}{q_3}
+\newcommand{\stdleq}{\mathrel{\preccurlyeq_{\mathsf{std}}}}
+\renewcommand{\state}{p}
+\renewcommand{\stateA}{p'}
+\renewcommand{\trace}{s}
+
+\newcommand{\asleqC}{\preccurlyeq_{\textsf{cnv}}}
+\newcommand{\asleqA}{\preccurlyeq_{\textsf{acc}}}
+\newcommand{\asleqAfw}{\preccurlyeq^{\fw}_{\textsf{acc}}}
+
+\newcommand{\util}{\rightarrow\equiv}
+
+\input{definition-preorder}
+\newcommand{\oh}{\mathcal{O}_p}
+\newcommand{\ohmy}{O}
+\newcommand{\ogood}{O_{\mathsf{good}}}
+\renewcommand{\States}{C}
+
+
+\input{conclusion}
+
+%%\input{TODO}
+%
+%
+\bibliographystyle{plainurl}%
+\bibliography{main.bib}%
+%
+\appendix%
+\label{sec:appendix}
+%%%%%%% HIDE
+%%\input{appendix/future_works}
+%%\input{axioms}
+\input{bar-induction}
+\input{appendix-forwarders}
+%% %%%%%%% HIDE
+%% %%\input{appendix/proofs_about_forwarders} TO BE FINISHED
+%\input{completeness-bhv}
+\input{proof_of_completeness}
+%\input{soundness-bhv}
+\input{proof_of_soundness}
+\input{traces_normal_form}
+\input{ACCS}
+\input{further_comparison}
+\input{counterexample}
+\input{coq_details}
+\input{coq_tex_mapping}
+\end{document}

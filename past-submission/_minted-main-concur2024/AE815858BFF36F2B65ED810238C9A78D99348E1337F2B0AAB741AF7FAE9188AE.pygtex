@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Inductive} \PYG{n}{cnv} \PYG{o}{:} \PYG{n}{A} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{trace} \PYG{n}{L} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Prop} \PYG{o}{:=}
+  \PYG{o}{|} \PYG{n}{cnv\PYGZus{}ext\PYGZus{}nil} \PYG{n}{p} \PYG{o}{:} \PYG{n}{terminate} \PYG{n}{p} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{cnv} \PYG{n}{p} \PYG{n+nb+bp}{[]}
+  \PYG{o}{|} \PYG{n}{cnv\PYGZus{}ext\PYGZus{}act} \PYG{n}{p} \PYG{n}{μ} \PYG{n}{s} \PYG{o}{:}
+    \PYG{n}{terminate} \PYG{n}{p} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{o}{(}\PYG{k}{forall} \PYG{n}{q}\PYG{o}{,} \PYG{n}{p} \PYG{n+nb+bp}{⟹}\PYG{o}{\PYGZob{}}\PYG{n}{μ}\PYG{o}{\PYGZcb{}} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{cnv} \PYG{n}{q} \PYG{n}{s}\PYG{o}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{cnv} \PYG{n}{p} \PYG{o}{(}\PYG{n}{μ} \PYG{o}{::} \PYG{n}{s}\PYG{o}{).}
+
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ⇓ s\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{cnv} \PYG{n}{p} \PYG{n}{s}\PYG{o}{).}
+\end{Verbatim}

@@ -1,0 +1,23 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}}\PYG{n}{Label} \PYG{n}{L}\PYG{o}{\PYGZcb{}.}
+\PYG{k+kn}{Context} \PYG{o}{`\PYGZob{}!}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{\PYGZcb{}.}
+
+\PYG{k+kn}{Lemma} \PYG{n}{terminate\PYGZus{}extensional\PYGZus{}iff\PYGZus{}terminate} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{:}
+  \PYG{n}{terminate\PYGZus{}extensional} \PYG{n}{p} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{n}{terminate} \PYG{n}{p}\PYG{o}{.}
+
+\PYG{k+kn}{Inductive} \PYG{n}{must\PYGZus{}sts} \PYG{o}{`\PYGZob{}}\PYG{n}{Sts} \PYG{o}{(}\PYG{n}{A} \PYG{o}{*} \PYG{n}{B}\PYG{o}{),} \PYG{n}{good} \PYG{o}{:} \PYG{n}{B} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Prop}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:}
+  \PYG{k+kt}{Prop} \PYG{o}{:=}
+\PYG{o}{|} \PYG{n}{m\PYGZus{}sts\PYGZus{}now} \PYG{o}{:} \PYG{n}{good} \PYG{n}{e} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must\PYGZus{}sts} \PYG{n}{p} \PYG{n}{e}
+\PYG{o}{|} \PYG{n}{m\PYGZus{}sts\PYGZus{}step}
+    \PYG{o}{(}\PYG{n}{nh} \PYG{o}{:} \PYG{o}{¬} \PYG{n}{good} \PYG{n}{e}\PYG{o}{)}
+    \PYG{o}{(}\PYG{n}{nst} \PYG{o}{:} \PYG{o}{¬} \PYG{n}{sts\PYGZus{}stable} \PYG{o}{(}\PYG{n}{p}\PYG{o}{,} \PYG{n}{e}\PYG{o}{))}
+    \PYG{o}{(}\PYG{n}{l} \PYG{o}{:} \PYG{k}{forall} \PYG{n}{p\PYGZsq{}} \PYG{n}{e\PYGZsq{}}\PYG{o}{,} \PYG{n}{sts\PYGZus{}step} \PYG{o}{(}\PYG{n}{p}\PYG{o}{,} \PYG{n}{e}\PYG{o}{)} \PYG{o}{(}\PYG{n}{p\PYGZsq{}}\PYG{o}{,} \PYG{n}{e\PYGZsq{}}\PYG{o}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must\PYGZus{}sts} \PYG{n}{p\PYGZsq{}} \PYG{n}{e\PYGZsq{}}\PYG{o}{)}
+  \PYG{o}{:} \PYG{n}{must\PYGZus{}sts} \PYG{n}{p} \PYG{n}{e}
+\PYG{o}{.}
+
+\PYG{k+kn}{Lemma} \PYG{n}{must\PYGZus{}extensional\PYGZus{}iff\PYGZus{}must\PYGZus{}sts}
+  \PYG{o}{`\PYGZob{}}\PYG{n}{good} \PYG{o}{:} \PYG{n}{B} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{Prop}\PYG{o}{,} \PYG{n}{good\PYGZus{}decidable} \PYG{o}{:} \PYG{k}{forall} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{),} \PYG{n}{Decision} \PYG{o}{(}\PYG{n}{good} \PYG{n}{e}\PYG{o}{)\PYGZcb{}}
+  \PYG{o}{`\PYGZob{}}\PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{LtsEq} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{,}
+    \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:}
+  \PYG{n}{must\PYGZus{}extensional} \PYG{n}{p} \PYG{n}{e} \PYG{o}{\PYGZlt{}\PYGZhy{}\PYGZgt{}} \PYG{n}{must\PYGZus{}sts} \PYG{n}{p} \PYG{n}{e}\PYG{o}{.}
+\end{Verbatim}

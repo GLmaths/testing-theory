@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Definition} \PYG{n}{terminate} \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{:} \PYG{k+kt}{Prop} \PYG{o}{:=}
+    \PYG{k}{forall} \PYG{n}{η} \PYG{o}{:} \PYG{n}{max\PYGZus{}exec\PYGZus{}from} \PYG{n}{p}\PYG{o}{,} \PYG{k}{exists} \PYG{n}{n} \PYG{n}{fex}\PYG{o}{,}
+      \PYG{n}{mex\PYGZus{}take\PYGZus{}from} \PYG{n}{n} \PYG{n}{η} \PYG{o}{=} \PYG{n}{Some} \PYG{n}{fex} \PYG{o}{/\PYGZbs{}} \PYG{n}{lts\PYGZus{}stable} \PYG{o}{(}\PYG{n}{fex\PYGZus{}from\PYGZus{}last} \PYG{n}{fex}\PYG{o}{)} \PYG{n}{τ}\PYG{o}{.}
+\end{Verbatim}

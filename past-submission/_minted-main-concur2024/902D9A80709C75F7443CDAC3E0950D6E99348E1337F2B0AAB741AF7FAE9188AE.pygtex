@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Inductive} \PYG{n}{parallel\PYGZus{}step} \PYG{o}{`\PYGZob{}}\PYG{n}{M1}\PYG{o}{:} \PYG{n}{Lts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{n}{M2}\PYG{o}{:} \PYG{n}{Lts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:}
+  \PYG{n}{A} \PYG{o}{*} \PYG{n}{B} \PYG{o}{→} \PYG{n}{Act} \PYG{n}{L} \PYG{o}{→} \PYG{n}{A} \PYG{o}{*} \PYG{n}{B} \PYG{o}{→} \PYG{k+kt}{Prop} \PYG{o}{:=}
+\PYG{o}{|} \PYG{n}{ParLeft} \PYG{n}{l} \PYG{n}{a1} \PYG{n}{a2} \PYG{n}{b}\PYG{o}{:} \PYG{n}{a1} \PYG{o}{\PYGZhy{}[}\PYG{n}{l}\PYG{o}{]→} \PYG{n}{a2} \PYG{o}{→} \PYG{n}{parallel\PYGZus{}step} \PYG{o}{(}\PYG{n}{a1}\PYG{o}{,} \PYG{n}{b}\PYG{o}{)} \PYG{n}{l} \PYG{o}{(}\PYG{n}{a2}\PYG{o}{,} \PYG{n}{b}\PYG{o}{)}
+\PYG{o}{|} \PYG{n}{ParRight} \PYG{n}{l} \PYG{n}{a} \PYG{n}{b1} \PYG{n}{b2}\PYG{o}{:} \PYG{n}{b1} \PYG{o}{\PYGZhy{}[}\PYG{n}{l}\PYG{o}{]→} \PYG{n}{b2} \PYG{o}{→} \PYG{n}{parallel\PYGZus{}step} \PYG{o}{(}\PYG{n}{a}\PYG{o}{,} \PYG{n}{b1}\PYG{o}{)} \PYG{n}{l} \PYG{o}{(}\PYG{n}{a}\PYG{o}{,} \PYG{n}{b2}\PYG{o}{)}
+\PYG{o}{|} \PYG{n}{ParSync} \PYG{n}{l1} \PYG{n}{l2} \PYG{n}{a1} \PYG{n}{a2} \PYG{n}{b1} \PYG{n}{b2}\PYG{o}{:}
+  \PYG{n}{act\PYGZus{}match} \PYG{n}{l1} \PYG{n}{l2} \PYG{o}{→} \PYG{n}{a1} \PYG{o}{\PYGZhy{}[}\PYG{n}{l1}\PYG{o}{]→} \PYG{n}{a2} \PYG{o}{→} \PYG{n}{b1} \PYG{o}{\PYGZhy{}[}\PYG{n}{l2}\PYG{o}{]→} \PYG{n}{b2} \PYG{o}{→}
+  \PYG{n}{parallel\PYGZus{}step} \PYG{o}{(}\PYG{n}{a1}\PYG{o}{,} \PYG{n}{b1}\PYG{o}{)} \PYG{n}{τ} \PYG{o}{(}\PYG{n}{a2}\PYG{o}{,} \PYG{n}{b2}\PYG{o}{)}
+\PYG{o}{.}
+\end{Verbatim}

@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{completeness}
+  \PYG{o}{`\PYGZob{}@}\PYG{n}{LtsObaFB} \PYG{n}{A} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LA} \PYG{n}{LOA} \PYG{n}{V}\PYG{o}{,} \PYG{o}{@}\PYG{n}{LtsObaFB} \PYG{n}{B} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LB} \PYG{n}{LOB} \PYG{n}{W}\PYG{o}{,}
+    \PYG{o}{@}\PYG{n}{LtsObaFB} \PYG{n}{C} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LC} \PYG{n}{LOC} \PYG{n}{VC}\PYG{o}{,}
+    \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{A} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{B} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{FiniteLts} \PYG{n}{C} \PYG{n}{L}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{C} \PYG{n}{L} \PYG{n}{good}\PYG{o}{,}
+    \PYG{o}{!}\PYG{n}{gen\PYGZus{}spec\PYGZus{}conv} \PYG{n}{gen\PYGZus{}conv}\PYG{o}{,} \PYG{o}{!}\PYG{n}{gen\PYGZus{}spec\PYGZus{}acc} \PYG{n}{gen\PYGZus{}acc}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{p} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{q} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{:} \PYG{n}{p} \PYG{n+nb+bp}{⊑} \PYG{n}{q} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{p} \PYG{n+nb+bp}{▷} \PYG{n+nb+bp}{∅} \PYG{n+nb+bp}{≼} \PYG{n}{q} \PYG{n+nb+bp}{▷} \PYG{n+nb+bp}{∅}\PYG{o}{.}
+\end{Verbatim}

@@ -1,0 +1,30 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Class} \PYG{n}{Label} \PYG{o}{(}\PYG{n}{L}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{:=} \PYG{o}{\PYGZob{}}
+  \PYG{n}{label\PYGZus{}eqdec}\PYG{o}{:} \PYG{n}{EqDecision} \PYG{n}{L}\PYG{o}{;}
+  \PYG{n}{label\PYGZus{}countable}\PYG{o}{:} \PYG{n}{Countable} \PYG{n}{L}\PYG{o}{;}
+\PYG{o}{\PYGZcb{}.}
+
+\PYG{k+kn}{Inductive} \PYG{n}{Act} \PYG{o}{(}\PYG{n}{A}\PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{:=} \PYG{n}{ActExt} \PYG{o}{(}\PYG{n}{μ}\PYG{o}{:} \PYG{n}{ExtAct} \PYG{n}{A}\PYG{o}{)} \PYG{o}{|} \PYG{n}{τ}\PYG{o}{.}
+
+\PYG{k+kn}{Class} \PYG{n}{Lts} \PYG{o}{(}\PYG{n}{A} \PYG{n}{L} \PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{`\PYGZob{}}\PYG{n}{Label} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:=} \PYG{o}{\PYGZob{}}
+    \PYG{n}{lts\PYGZus{}step}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{n}{Act} \PYG{n}{L} \PYG{o}{→} \PYG{n}{A} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;}
+    \PYG{n}{lts\PYGZus{}state\PYGZus{}eqdec}\PYG{o}{:} \PYG{n}{EqDecision} \PYG{n}{A}\PYG{o}{;}
+
+    \PYG{n}{lts\PYGZus{}step\PYGZus{}decidable} \PYG{n}{a} \PYG{n}{α} \PYG{n}{b} \PYG{o}{:} \PYG{n}{Decision} \PYG{o}{(}\PYG{n}{lts\PYGZus{}step} \PYG{n}{a} \PYG{n}{α} \PYG{n}{b}\PYG{o}{);}
+
+    \PYG{n}{lts\PYGZus{}outputs} \PYG{o}{:} \PYG{n}{A} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{gset} \PYG{n}{L}\PYG{o}{;}
+    \PYG{n}{lts\PYGZus{}outputs\PYGZus{}spec1} \PYG{n}{p1} \PYG{n}{x} \PYG{n}{p2} \PYG{o}{:}
+      \PYG{n}{lts\PYGZus{}step} \PYG{n}{p1} \PYG{o}{(}\PYG{n}{ActExt} \PYG{o}{(}\PYG{n}{ActOut} \PYG{n}{x}\PYG{o}{))} \PYG{n}{p2} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{x} \PYG{n+nb+bp}{∈} \PYG{n}{lts\PYGZus{}outputs} \PYG{n}{p1}\PYG{o}{;}
+    \PYG{n}{lts\PYGZus{}outputs\PYGZus{}spec2} \PYG{n}{p1} \PYG{n}{x} \PYG{o}{:}
+      \PYG{n}{x} \PYG{n+nb+bp}{∈} \PYG{n}{lts\PYGZus{}outputs} \PYG{n}{p1} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{o}{\PYGZob{}}\PYG{n}{p2} \PYG{o}{|} \PYG{n}{lts\PYGZus{}step} \PYG{n}{p1} \PYG{o}{(}\PYG{n}{ActExt} \PYG{o}{(}\PYG{n}{ActOut} \PYG{n}{x}\PYG{o}{))} \PYG{n}{p2}\PYG{o}{\PYGZcb{};}
+
+    \PYG{n}{lts\PYGZus{}stable}\PYG{o}{:} \PYG{n}{A} \PYG{o}{→} \PYG{n}{Act} \PYG{n}{L} \PYG{o}{→} \PYG{k+kt}{Prop}\PYG{o}{;}
+    \PYG{n}{lts\PYGZus{}stable\PYGZus{}decidable} \PYG{n}{p} \PYG{n}{α} \PYG{o}{:} \PYG{n}{Decision} \PYG{o}{(}\PYG{n}{lts\PYGZus{}stable} \PYG{n}{p} \PYG{n}{α}\PYG{o}{);}
+    \PYG{n}{lts\PYGZus{}stable\PYGZus{}spec1} \PYG{n}{p} \PYG{n}{α} \PYG{o}{:} \PYG{o}{¬} \PYG{n}{lts\PYGZus{}stable} \PYG{n}{p} \PYG{n}{α} \PYG{o}{→} \PYG{o}{\PYGZob{}} \PYG{n}{q} \PYG{o}{|} \PYG{n}{lts\PYGZus{}step} \PYG{n}{p} \PYG{n}{α} \PYG{n}{q} \PYG{o}{\PYGZcb{};}
+    \PYG{n}{lts\PYGZus{}stable\PYGZus{}spec2} \PYG{n}{p} \PYG{n}{α} \PYG{o}{:} \PYG{o}{\PYGZob{}} \PYG{n}{q} \PYG{o}{|} \PYG{n}{lts\PYGZus{}step} \PYG{n}{p} \PYG{n}{α} \PYG{n}{q} \PYG{o}{\PYGZcb{}} \PYG{o}{→} \PYG{o}{¬} \PYG{n}{lts\PYGZus{}stable} \PYG{n}{p} \PYG{n}{α}\PYG{o}{;}
+  \PYG{o}{\PYGZcb{}.}
+
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ⟶ q\PYGZdq{}}      \PYG{o}{:=} \PYG{o}{(}\PYG{n}{lts\PYGZus{}step} \PYG{n}{p} \PYG{n}{τ} \PYG{n}{q}\PYG{o}{).}
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ⟶\PYGZob{} α \PYGZcb{} q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{lts\PYGZus{}step} \PYG{n}{p} \PYG{n}{α} \PYG{n}{q}\PYG{o}{).}
+\PYG{k+kn}{Notation} \PYG{l+s+s2}{\PYGZdq{}p ⟶[ α ] q\PYGZdq{}} \PYG{o}{:=} \PYG{o}{(}\PYG{n}{lts\PYGZus{}step} \PYG{n}{p} \PYG{o}{(}\PYG{n}{ActExt} \PYG{n}{μ}\PYG{o}{)} \PYG{n}{q}\PYG{o}{).}
+\end{Verbatim}

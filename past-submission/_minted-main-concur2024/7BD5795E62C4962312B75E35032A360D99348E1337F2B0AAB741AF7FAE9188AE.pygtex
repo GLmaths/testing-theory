@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Lemma} \PYG{n}{must\PYGZus{}output\PYGZus{}swap\PYGZus{}l\PYGZus{}fw}
+  \PYG{o}{`\PYGZob{}@}\PYG{n}{LtsObaFW} \PYG{n}{A} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LA} \PYG{n}{LOA} \PYG{n}{V}\PYG{o}{,} \PYG{o}{@}\PYG{n}{LtsObaFB} \PYG{n}{B} \PYG{n}{L} \PYG{n}{IL} \PYG{n}{LB} \PYG{n}{LOB} \PYG{n}{W}\PYG{o}{,} \PYG{o}{!}\PYG{n}{Good} \PYG{n}{B} \PYG{n}{L} \PYG{n}{good}\PYG{o}{\PYGZcb{}}
+  \PYG{o}{(}\PYG{n}{p1} \PYG{n}{p2} \PYG{o}{:} \PYG{n}{A}\PYG{o}{)} \PYG{o}{(}\PYG{n}{e1} \PYG{n}{e2} \PYG{o}{:} \PYG{n}{B}\PYG{o}{)} \PYG{o}{(}\PYG{n}{a} \PYG{o}{:} \PYG{n}{L}\PYG{o}{)} \PYG{o}{:}
+  \PYG{n}{p1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{p2} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{e1} \PYG{n+nb+bp}{⟶}\PYG{o}{[}\PYG{n}{ActOut} \PYG{n}{a}\PYG{o}{]} \PYG{n}{e2} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p1} \PYG{n}{e2} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{must} \PYG{n}{p2} \PYG{n}{e1}\PYG{o}{.}
+\end{Verbatim}

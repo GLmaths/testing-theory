@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{Definition} \PYG{n}{mb} \PYG{o}{(}\PYG{n}{L} \PYG{o}{:} \PYG{k+kt}{Type}\PYG{o}{)} \PYG{o}{`\PYGZob{}}\PYG{n}{Label} \PYG{n}{L}\PYG{o}{\PYGZcb{}} \PYG{o}{:=} \PYG{n}{gmultiset} \PYG{n}{L}\PYG{o}{.}
+\end{Verbatim}
