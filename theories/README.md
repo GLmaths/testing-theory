@@ -1,6 +1,6 @@
 # For ACCS_SEQ.v
 
-ACCS + SEQ is an Asynchronous Communicating System with Sequentiation.
+ACCS + SEQ is an Asynchronous Communicating System with Sequentiation made by Gaëtan Lopez, Hugo Feree and Giovanni Bernardi.
 
 The COQ file is made by Gaëtan Lopez, supervised by Hugo Feree.
 
