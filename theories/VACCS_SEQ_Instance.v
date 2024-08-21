@@ -2136,9 +2136,66 @@ intros. split.
 - intros. destruct H. subst. constructor.
 Qed.
 
+
+
+Lemma Well_Def_Subset : forall k M M0, Well_Defined_Input_in_MultiSet k M0 -> gmultiset_subseteq M M0 
+                          -> Well_Defined_Input_in_MultiSet k M.
+Proof.
+intros. revert H0. revert M. dependent induction H; intros.
+- assert (M = ∅). multiset_solver. subst. constructor.
+- assert (0 < multiplicity (c ⋉ d) M0 \/ multiplicity (c ⋉ d) M0 = 0). multiset_solver.
+  destruct H2.
+  * assert (exists x, M0 = x ⊎ {[+ c ⋉ d +]}).
+    exists (gmultiset_difference M0 ({[+ c ⋉ d +]})).
+    multiset_solver. destruct H3. rewrite H3 in H1.
+    assert (gmultiset_subseteq x M). multiset_solver.
+    assert (Well_Defined_Input_in_MultiSet k x). eapply IHWell_Defined_Input_in_MultiSet.
+    assumption.
+    rewrite H3. constructor; assumption.
+  * assert (gmultiset_subseteq M0 M). multiset_solver.
+    eapply IHWell_Defined_Input_in_MultiSet. assumption.
+Qed.
+
+Lemma Well_Def_Singleton : forall k c d, Well_Defined_Input_in_MultiSet k {[+ c ⋉ d +]} ->  Well_Defined_Data k d.
+Proof.
+intros.
+dependent destruction H. 
+- assert (M = ∅). multiset_solver.
+  rewrite H1 in x. assert (c = c0 /\ d0 = d). multiset_solver.
+  destruct H2. subst. assumption.
+Qed.
+
 Lemma STS_Respects_WD : forall S S', Well_Defined_Input_in_State 0 S -> sts S S' -> Well_Defined_Input_in_State 0 S'.
 Proof.
-Admitted.
+intros. revert H. rename H0 into Reduction. dependent induction Reduction.
+* intros. dependent destruction H. 
+  dependent destruction H0. dependent destruction H0_. 
+  constructor. 
+  - eapply Well_Def_Subset with (M ⊎ {[+ c ⋉ v +]}).  assumption. multiset_solver. 
+  - assert (Well_Defined_Input_in_MultiSet 0 {[+ c ⋉ v +]}).
+    eapply Well_Def_Subset with (M ⊎ {[+ c ⋉ v +]}). assumption. multiset_solver.
+    eapply Well_Def_Singleton in H0.
+    eapply Well_Def_Data_Is_a_value in H0.  destruct H0. subst.
+    eapply ForSTS. assumption.
+* intros. dependent destruction H. constructor.
+  - constructor. assumption. dependent destruction H0. dependent destruction H0_. assumption. 
+  - dependent destruction H0. dependent destruction H0_. assumption.
+* intros. dependent destruction H. dependent destruction H0. dependent destruction H0_. constructor; assumption.
+* intros. dependent destruction H. constructor. assumption. apply RecursionOverReduction_is_WD. assumption.
+* intros. dependent destruction H0. dependent destruction H1. constructor; assumption.
+* intros. dependent destruction H0. dependent destruction H1. constructor; assumption.
+* intros. dependent destruction H. dependent destruction H0. assert (Well_Defined_Input_in_State 0 ❲ M1, P1 ❳). 
+  constructor; assumption. apply IHReduction in H0. dependent destruction H0.
+  constructor. assumption. constructor; assumption.
+* intros. dependent destruction H. dependent destruction H0. dependent destruction H0_. 
+  assert (Well_Defined_Input_in_State 0 ❲ M1, P1 ❳). 
+  constructor; assumption. apply IHReduction in H0. dependent destruction H0.
+  constructor. assumption. constructor; assumption.
+* intros. dependent destruction H0. dependent destruction H1. dependent destruction H1_.
+  constructor; assumption. 
+* intros. apply CongruenceM_Respects_WD with S2'. apply IHReduction. eapply CongruenceM_Respects_WD with S1. 
+  assumption. assumption. assumption. 
+Qed.
 
 Inductive Well_Defined_Action: (Act TypeOfActions) -> Prop :=
 | ActionOuput_with_value_is_always_defined : forall c v, Well_Defined_Action (ActOut  (c ⋉ (cst v)))
@@ -2178,7 +2235,32 @@ Qed.
 Lemma LTS_Respects_WD : forall S S' α, Well_Defined_Input_in_State 0 S -> Well_Defined_Action α -> ltsM S α S' 
             ->  Well_Defined_Input_in_State 0 S'.
 Proof.
-Admitted.
+intros. dependent induction H1.
+- dependent destruction H.
+  assert (Well_Defined_Input_in 0 q). eapply (PreLTS_Respects_WD p q (ActIn (c ⋉ v))); assumption.
+  constructor; assumption.
+- dependent destruction H. constructor.
+  eapply Well_Def_Subset with (M ⊎ {[+ c ⋉ v +]}). assumption. multiset_solver.
+  assumption.
+- constructor.
+  * dependent destruction H. assumption.
+  * dependent destruction H. eapply (PreLTS_Respects_WD p q τ); assumption.
+- dependent destruction H. constructor.
+  * constructor. assumption. eapply Output_are_good in H0. instantiate (1 := v) in H0.
+    destruct H0. subst. constructor. exact H2.
+  * eapply (PreLTS_Respects_WD p q (ActOut (c ⋉ v))).
+    assumption. eapply Output_are_good in H0. instantiate (1 := v) in H0. destruct H0. subst. econstructor.
+    eassumption. exact H2.
+- dependent destruction H1_. dependent destruction H1_0. dependent destruction H.
+  constructor. 
+  * eapply Well_Def_Subset with (M2 ⊎ {[+ c ⋉ v +]}). assumption. multiset_solver.
+  * eapply PreLTS_Respects_WD. exact H0. 
+    assert (Well_Defined_Data 0 v). eapply Well_Def_Singleton. eapply Well_Def_Subset. 
+    instantiate (1 := (M2 ⊎ {[+ c ⋉ v +]})). assumption. 
+    instantiate (1 := c). multiset_solver.
+    instantiate (1 := ActExt (ActIn (c ⋉ v))). eapply Well_Def_Data_Is_a_value in H3.
+    destruct H3. subst. constructor. assumption.
+Qed.
 
 (* Lemma to simplify the Data in Value for a transition *)
 Lemma OutputWithValue : forall p q a, ltsM p (ActOut a) q -> exists c d, a = c ⋉ d.
