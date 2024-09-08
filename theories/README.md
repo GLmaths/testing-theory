@@ -22,13 +22,13 @@ Finally, it fits to all LTS (Labelled Transition System) classes from the Charac
 - line 787 to 826 : Transition System of the Process
 - line 828 to 847 : Transition System of the States (induced mainly from the one on Process)
 - line 1189 to 1227 : Reduction System of the State
-- line 2168 to 2198 : Closed Terms reduces to Closed Terms
-- line 2235 to 2263 : Closed Termns transits to Closed Terms
-- line 1517 to 1551 : One side of the Harmony Lemma
-- line 1623 to 1716 : The other side of the Harmony Lemma
-- line 2296 to 2384 : All Proof of Selingers axioms
-- line 2386 to 2391 : Proof of the Lemma 3.4. from (First-Order Axioms for Asynchrony, Peter Selinger, 1997)
-- line 3181 to 3227 : Instance of all the Classes, you need for the characterization
+- line 2119 to 2149 : Closed Terms reduces to Closed Terms
+- line 2186 to 2214 : Closed Termns transits to Closed Terms
+- line 1510 to 1533 : One side of the Harmony Lemma
+- line 1574 to 1667 : The other side of the Harmony Lemma
+- line 2249 to 2335 : All Proof of Selingers axioms
+- line 2337 to 2342 : Proof of the Lemma 3.4. from (First-Order Axioms for Asynchrony, Peter Selinger, 1997)
+- line 3134 to 3178 : Instance of all the Classes, you need for the characterization
 ## Processes and States
 
 ```javascript
