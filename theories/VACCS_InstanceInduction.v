@@ -547,44 +547,163 @@ Qed.
 
 Scheme proc_gproc_ind := Induction for proc Sort Prop
   with gproc_proc_ind := Induction for gproc Sort Prop.
+  
+  
+Check proc_gproc_ind.
 
-Combined Scheme proc_gproc_mutind from proc_gproc_ind,gproc_proc_ind.
+Combined Scheme proc_gproc_mutind from proc_gproc_ind,gproc_proc_ind. (* not usefull with our situation *)
 
 Require Import FunInd.
 
 Function size2 (p : proc) := 
   match p with
-  | p ‖ q  => S (size p + size q)
+  | p ‖ q  => S (size2 p + size2 q)
   | pr_var _ => 1
-  | If C Then p Else q => S (size p + size q)
-  | rec x • p => S (size p)
+  | If C Then p Else q => S (size2 p + size2 q)
+  | rec x • p => S (size2 p)
   | c ! v • 𝟘 => 1
   | g ① => 1
   | g 𝟘 => 0
-  | g (c ? x • p) => S (size p)
-  | g (t • p) => S (size p)
-  | g (p + q) => S (gsize p + gsize q)
+  | g (c ? x • p) => 0 (*S (size2 p)*)
+  | g (t • p) => 0 (*S (size2 p)*)
+  | g (p + q) => 0 (*S (size2 (g p) + size2 (g q))*)
   end.
+
+Check size2_ind.
 
 Functional Scheme size_ind := Induction for size2 Sort Prop.
 
-(* Functional Scheme proc_size_ind2 := Induction for size Sort Prop
-with gproc_size_ind2 := Induction for gsize Sort Prop. *)
+Check size_ind.
 
-Definition cgr_subst2 p:= forall q q' x, q ≡* q' → pr_subst x (g p) q ≡* pr_subst x (g p) q'.
+Function size3 (p : proc) := 
+  match p with
+  | p ‖ q  => S (size3 p + size3 q)
+  | pr_var _ => 1
+  | If C Then p Else q => S (size3 p + size3 q)
+  | rec x • p => S (size3 p)
+  | c ! v • 𝟘 => 1
+  | g p => gsize3 p
+  end
 
-Check cgr_subst2.
+with gsize3 p :=
+  match p with
+  | ① => 1
+  | 𝟘 => 0
+  | c ? x • p => S (size3 p)
+  | t • p => S (size3 p)
+  | p + q => S (gsize3 p + gsize3 q)
+end.
+
+Check size3_ind.
+
+(* error if size3 is Fixpoint *) 
+Functional Scheme size33_ind := Induction for size3 Sort Prop.
+Functional Scheme gsize33_ind := Induction for gsize3 Sort Prop.
+Check size33_ind.
+
+
+Functional Scheme proc_size_ind3 := Induction for size3 Sort Prop
+with gproc_size_ind2 := Induction for gsize3 Sort Prop.
+
+Check proc_size_ind3.
+
+Definition PPS (P : proc -> nat -> Prop) (p : gproc) (s : nat) := P (g p) s.
+
+Lemma proc_gproc_myinduction : ∀ (P : proc → nat → Prop),
+         (∀ p p0 q : proc, p = p0 ‖ q → P p0 (size3 p0) → P q (size3 q) → P (p0 ‖ q) (S (size3 p0 + size3 q)))
+         → (∀ (p : proc) (_x : nat), p = _x → P _x 1)
+           → (∀ (p : proc) (C : Equation Data) (p0 q : proc),
+                p = (If C
+                        Then p0 
+                        Else q)
+                → P p0 (size3 p0) → P q (size3 q) → P (If C
+                                                          Then p0 
+                                                          Else q) (S (size3 p0 + size3 q)))
+             → (∀ (p : proc) (x : nat) (p0 : proc),
+                  p = rec x • p0 → P p0 (size3 p0) → P (rec x • p0) (S (size3 p0)))
+               → (∀ (p : proc) (c : Channel) (v : Data), p = c ! v • 𝟘 → P (c ! v • 𝟘) 1)
+                 → (∀ (p : proc) (p0 : gproc), p = p0 → P (g p0) (gsize3 p0) → P p0 (gsize3 p0))
+                   → (∀ p : gproc, p = ① → P (g ①) 1)
+                     → (∀ p : gproc, p = 𝟘 → P (g 𝟘) 0)
+                       → (∀ (p : gproc) (c : Channel) (p0 : proc),
+                            p = gpr_input c p0 → P p0 (size3 p0) → P (g (gpr_input c p0)) (S (size3 p0)))
+                         → (∀ (p : gproc) (p0 : proc),
+                              p = t • p0 → P p0 (size3 p0) → P (g (t • p0)) (S (size3 p0)))
+                           → (∀ p p0 q : gproc,
+                                p = p0 + q
+                                → P (g p0) (gsize3 p0)
+                                  → P (g q) (gsize3 q) → P (g (p0 + q)) (S (gsize3 p0 + gsize3 q)))
+                             → ∀ p : proc, P p (size3 p).
+Proof.
+
+intros. revert p. eapply proc_size_ind3.
+- eauto.
+- eauto.
+- eauto.
+- eauto.
+- eauto.
+- intros. instantiate (1 := PPS P) in H10. unfold PPS in H10. eauto.
+- intros. unfold PPS. eauto.
+- intros. unfold PPS. eauto.
+- intros. unfold PPS. eauto.
+- intros. unfold PPS. eauto.
+- intros. unfold PPS. eauto.
+Qed.
+
+
+Definition cgr_subst2 p := forall q q' x, q ≡* q' → pr_subst x p q ≡* pr_subst x p q'.
 
 (* Substition lemma, needed to contextualise the equivalence *)
 Lemma cgr_subst1 p q q' x : q ≡* q' → pr_subst x p q ≡* pr_subst x p q'.
 Proof.
 revert q q' x.
 
-Check proc_gproc_mutind.
-Check proc_gproc_ind.
-einduction p using proc_gproc_mutind; simpl;  intros.
+
+(* Version with the induction principle with the same P for proc and gproc *)
+induction p,(size3) using proc_gproc_myinduction; intros; simpl.
+(* have to specify P0 with functional induction (size3 p) *)
+
+- apply cgr_fullpar.
+    apply IHn. assumption. 
+    apply IHn0. assumption. 
+- destruct (decide (x = _x)). assumption. reflexivity.
+- apply cgr_full_if.
+    apply IHn. assumption.
+    apply IHn0. assumption.
+- destruct (decide (x0 = x)).
+    * reflexivity.
+    * apply cgr_recursion. eapply IHn. assumption.
+- eauto with cgr.
+- eauto.
+- reflexivity.
+- reflexivity.
+- apply cgr_input. eapply IHn. apply NewVar_Respects_Congruence. assumption.
+- apply cgr_tau. eapply IHn. assumption.
+- apply cgr_fullchoice. 
+  * eapply IHn. assumption.
+  * eapply IHn0. assumption.
 
 
+(* Version with the induction principle (not with dependent *)
+(*
+functional induction (size3 p) using size3_ind; intros; simpl; auto.
+
+- apply cgr_fullpar.
+    apply IHn. assumption. 
+    apply IHn0. assumption. 
+- destruct (decide (x = _x)). assumption. reflexivity.
+- apply cgr_full_if.
+    apply IHn. assumption.
+    apply IHn0. assumption.
+- destruct (decide (x0 = x)).
+    * reflexivity.
+    * apply cgr_recursion. eapply IHn. assumption.
+- eauto with cgr.
+- (* cant move forward due to dependent inductive types *) 
+*)
+
+
+(* Version with the mutual induction principle *)
 (*
 einduction p using proc_gproc_ind; simpl;  intros.
 
@@ -609,11 +728,7 @@ einduction p using proc_gproc_ind; simpl;  intros.
  
 
 
-(* functional induction (size2 p) using size_ind ; simpl; intros.
-pattern (size2 p).
-eapply size_ind; intros; simpl; subst.
-
-
+(*  (* Old version *)
 (* Induction on the size of p*)
 induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
