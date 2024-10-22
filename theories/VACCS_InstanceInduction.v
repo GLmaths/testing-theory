@@ -547,13 +547,12 @@ Qed.
 
 Scheme proc_gproc_ind := Induction for proc Sort Prop
   with gproc_proc_ind := Induction for gproc Sort Prop.
-  
-  
+
 Check proc_gproc_ind.
 
-Combined Scheme proc_gproc_mutind from proc_gproc_ind,gproc_proc_ind. (* not usefull with our situation *)
+(* Combined Scheme proc_gproc_mutind from proc_gproc_ind,gproc_proc_ind. (*not usefull with our situation *) *)
 
-Require Import FunInd.
+(*Require Import FunInd.
 
 Function size2 (p : proc) := 
   match p with
@@ -605,38 +604,27 @@ Check size33_ind.
 Functional Scheme proc_size_ind3 := Induction for size3 Sort Prop
 with gproc_size_ind2 := Induction for gsize3 Sort Prop.
 
-Check proc_size_ind3.
+Check proc_size_ind3. *)
 
-Definition PPS (P : proc -> nat -> Prop) (p : gproc) (s : nat) := P (g p) s.
+Definition PPS (P : proc -> Prop) (p : gproc) := P (g p).
 
-Lemma proc_gproc_myinduction : ∀ (P : proc → nat → Prop),
-         (∀ p p0 q : proc, p = p0 ‖ q → P p0 (size3 p0) → P q (size3 q) → P (p0 ‖ q) (S (size3 p0 + size3 q)))
-         → (∀ (p : proc) (_x : nat), p = _x → P _x 1)
-           → (∀ (p : proc) (C : Equation Data) (p0 q : proc),
-                p = (If C
-                        Then p0 
-                        Else q)
-                → P p0 (size3 p0) → P q (size3 q) → P (If C
-                                                          Then p0 
-                                                          Else q) (S (size3 p0 + size3 q)))
-             → (∀ (p : proc) (x : nat) (p0 : proc),
-                  p = rec x • p0 → P p0 (size3 p0) → P (rec x • p0) (S (size3 p0)))
-               → (∀ (p : proc) (c : Channel) (v : Data), p = c ! v • 𝟘 → P (c ! v • 𝟘) 1)
-                 → (∀ (p : proc) (p0 : gproc), p = p0 → P (g p0) (gsize3 p0) → P p0 (gsize3 p0))
-                   → (∀ p : gproc, p = ① → P (g ①) 1)
-                     → (∀ p : gproc, p = 𝟘 → P (g 𝟘) 0)
-                       → (∀ (p : gproc) (c : Channel) (p0 : proc),
-                            p = gpr_input c p0 → P p0 (size3 p0) → P (g (gpr_input c p0)) (S (size3 p0)))
-                         → (∀ (p : gproc) (p0 : proc),
-                              p = t • p0 → P p0 (size3 p0) → P (g (t • p0)) (S (size3 p0)))
-                           → (∀ p p0 q : gproc,
-                                p = p0 + q
-                                → P (g p0) (gsize3 p0)
-                                  → P (g q) (gsize3 q) → P (g (p0 + q)) (S (gsize3 p0 + gsize3 q)))
-                             → ∀ p : proc, P p (size3 p).
+Lemma proc_gproc_myinduction : ∀ (P : proc → Prop),
+         (∀ p : proc, P p → ∀ p0 : proc, P p0 → P (p ‖ p0))
+         → (∀ n : nat, P n)
+           → (∀ (n : nat) (p : proc), P p → P (rec n • p))
+             → (∀ (e : Equation Data) (p : proc), P p → ∀ p0 : proc, P p0 → P (If e
+                                                                                Then p 
+                                                                                Else p0))
+               → (∀ (c : Channel) (d : Data), P (c ! d • 𝟘))
+                 → (∀ g0 : gproc, P (g g0) → P g0)
+                   → P (g ①)
+                     → P (g 𝟘)
+                       → (∀ (c : Channel) (p : proc), P p → P (g (gpr_input c p)))
+                         → (∀ p : proc, P p → P (g (t • p)))
+                           → (∀ g1 : gproc, P (g g1) → ∀ g0 : gproc, P (g g0) → P (g (g1 + g0))) → ∀ p : proc, P p.
 Proof.
 
-intros. revert p. eapply proc_size_ind3.
+intros. revert p. eapply proc_gproc_ind.
 - eauto.
 - eauto.
 - eauto.
@@ -650,15 +638,14 @@ intros. revert p. eapply proc_size_ind3.
 - intros. unfold PPS. eauto.
 Qed.
 
-
-Definition cgr_subst2 p := forall q q' x, q ≡* q' → pr_subst x p q ≡* pr_subst x p q'.
+(*Definition cgr_subst2 p := forall q q' x, q ≡* q' → pr_subst x p q ≡* pr_subst x p q'. *)
 
 (* Substition lemma, needed to contextualise the equivalence *)
 Lemma cgr_subst1 p q q' x : q ≡* q' → pr_subst x p q ≡* pr_subst x p q'.
 Proof.
 revert q q' x.
 
-
+(*
 (* Version with the induction principle with the same P for proc and gproc *)
 induction p,(size3) using proc_gproc_myinduction; intros; simpl.
 (* have to specify P0 with functional induction (size3 p) *)
@@ -681,7 +668,7 @@ induction p,(size3) using proc_gproc_myinduction; intros; simpl.
 - apply cgr_tau. eapply IHn. assumption.
 - apply cgr_fullchoice. 
   * eapply IHn. assumption.
-  * eapply IHn0. assumption.
+  * eapply IHn0. assumption. *)
 
 
 (* Version with the induction principle (not with dependent *)
@@ -726,7 +713,25 @@ einduction p using proc_gproc_ind; simpl;  intros.
   * unfold cgr_subst2 in IHp0. apply IHp0. assumption.
   * unfold cgr_subst2 in IHp1. apply IHp1. assumption. *)
  
+einduction p using proc_gproc_myinduction; simpl;  intros.
 
+- apply cgr_fullpar.
+    apply IHp0_1. assumption. 
+    apply IHp0_2. assumption. 
+- destruct (decide (x = n)). assumption. reflexivity.
+- destruct (decide (x = n)). reflexivity. apply cgr_recursion. apply IHp0. assumption.
+- apply cgr_full_if.
+    apply IHp0_1. assumption.
+    apply IHp0_2. assumption.
+- eauto with cgr.
+- apply IHp0. assumption.
+- reflexivity.
+- reflexivity.
+- apply cgr_input. apply IHp0. apply NewVar_Respects_Congruence. assumption.
+- apply cgr_tau. apply IHp0. assumption.
+- apply cgr_fullchoice.
+  * apply IHp0. assumption.
+  * apply IHp1. assumption.
 
 (*  (* Old version *)
 (* Induction on the size of p*)
