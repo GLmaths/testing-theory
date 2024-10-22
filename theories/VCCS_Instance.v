@@ -107,13 +107,18 @@ with gproc_ind0 := Induction for gproc Sort Prop.
 
 Combined Scheme proc_ind' from proc_ind0, gproc_ind0.
 
-Ltac my_proc_ind :=
-match goal with |- ?Q => eapply proj1; apply proc_ind' end.
+Local Definition proc_Prop (P : proc -> Prop) := 
+  (forall p, P p) /\ (forall q, P (g q)).
 
-(* Demonstrate how to use the my_proc_ind tactic
+Ltac my_proc_ind p :=
+match goal with |- ?Q ?p => idtac Q;
+  enough (X : proc_Prop Q); [apply X | apply proc_ind'] end.
+
+(* Demonstrate how to use the my_proc_ind tactic *)
 Goal (forall p : proc, p = p).
-my_proc_ind.
-*)
+intro p.
+my_proc_ind p.
+Abort.
 
 
 (*Some notation to simplify the view of the code*)
