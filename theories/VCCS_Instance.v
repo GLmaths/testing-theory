@@ -101,6 +101,20 @@ with gproc : Type :=
 Coercion pr_var : nat >-> proc.
 Coercion g : gproc >-> proc.
 
+(* Induction schemes *)
+Scheme proc_ind0 := Induction for proc Sort Prop
+with gproc_ind0 := Induction for gproc Sort Prop.
+
+Combined Scheme proc_ind' from proc_ind0, gproc_ind0.
+
+Ltac my_proc_ind :=
+match goal with |- ?Q => eapply proj1; apply proc_ind' end.
+
+(* Demonstrate how to use the my_proc_ind tactic
+Goal (forall p : proc, p = p).
+my_proc_ind.
+*)
+
 
 (*Some notation to simplify the view of the code*)
 
