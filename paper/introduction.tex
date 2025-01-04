@@ -322,21 +322,6 @@
 % %well-known theorem by \cite{DBLP:journals/jacm/HennessyM85},  and they
 % identify the behavioural proprieties that are invariant under code refactoring done via~$\testleqS$.
 
-%% OLD POPL TEXT
-%% By contrast, {\em logical} characterisations
-%% define~$\altleq$~comparing servers according to the formulae of the
-%% recursive Hennessy-Milner logic\footnote{\ie the modal $\mu$-calculus}
-%% that they satisfy: %
-%% if $\serverA \altleq \serverB$ and~$\serverA$~satisfies a
-%% formula~$\phi$,
-%% %such %as~$\dmd{\texttt{str}}(\dmd{\texttt{int}}\true
-%% % \wedge \dmd{\texttt{float}}\true)$
-%% then~$\serverB$~also does.
-
-%%%%%%%%% ILARIA: end of Logical characterisation %%%%%%%%%%%%%%%
-
-
-
 
 
 %% \paragraph{Asynchrony} %
@@ -360,40 +345,6 @@
 %% \rfig{first-example}.
 %% We defer a more detailed discussion of these axioms in
 %% to \rsec{preliminaries}.
-
-\input{axioms-figure}
-
-%The \outputfeedback axiom states that any message emitted by an agent
-%is immediately available as input to the agent itself.
-
-%% These axioms are typically enjoyed by LTS of calculi in which
-%% communication takes place via a global unordered mailbox.
-%% In turn, this communication model is the one that a priori allows for the most
-%% \nondeterminismT, and this is why we favour it.
-
-
-%% gb{The~$\tau$ action denotes internal computation of an agent, or a
-%%   interactions between two agents. For instance, the computations
-%%   in the system~$\csys{ \server_0 }{ \client_0 }$, where~$\server_0$
-%%   and~$\client_0$ are give in \rfig{first-example} amount to
-%%   $\csys{ \server_0 }{ \client_0 } \st{\tau}
-%%   \csys{ \server_1 }{ \client_2 } \st{\tau} \csys{ \server_3 }{
-%%   \client_3 }$.
-%%   Note that \outputcommutativity implies a lack of causality between
-%%   the client output $\co{{\tt str}}$ and its input ${\tt int}$, and hence
-%%   the order of interactions depends on the order of the inputs in the
-%%   server side.}
-%%% NOT IMPORTANT ON A FIRST READ
-%% We find it worth attention for it is the one that allows for the most
-%% \nondeterminismT, and thus proofs that tackle this model can be adapted to more
-%% deterministic settings, for instance when asynchrony is implemented
-%% via ordered queues, as in \cite{josephs}.
-%% The more deterministic the semantics, the easier the reasoning,
-%% as already shown by theories of \mustpreorder in \CCS as compared
-%% to the ones for session types \cite{DBLP:journals/mscs/BernardiH16}.
-%% In output-buffered agents, outputs enjoy the \outputcommutativity\ and
-
-%% \outputfeedback\ axioms.
 %% \paragraph{Technical difficulties} % due to asynchrony.}
 %% The practical importance of asynchrony motivates a % suitable
 %% specific study of~$\testleqS$. Efforts in this direction have
@@ -472,13 +423,10 @@
 This paper
 \begin{itemize}
 \item Proves that the results of \cite{} hold independently
-  from the nature of the LTS actions. The results of 
-  \cite{} ass well as the theorems by De Nicola and Hennessy (here \ref{AAA}
-  and \ref{AAA}) 
-  are corollaries of our more general theorems (\ref{} and \ref{}).
-  This is the first 
-  constructive and machine-checked account of the De Nicola and
-  Hennessy's classical results.
+  from the nature of the actions used in the LTS.
+  The information sufficient and necessary for the proofs
+  to work is whether an action is blocking or non-blocking.
+  The nature of actions is irrelevant.
   
 \item Characterises the traces that are actually relevant in the
   completeness arguments (\ref{AAA}),
@@ -489,7 +437,21 @@ This paper
   the MUST-preorder, which reduces the amount of actions
   to be check in order to prove that a program $q$ refines
   a program $p$ (\ref{}).
+
+\item Showcases the method proposed in \cite{}:
+  to obtain a proof method for the MUST-preorder it is sufficient to
+  give a calculus an LTS whose non-blocking actions satisfy Selinger
+  axioms.
+  
+
+\item
+  Obtains the results of \cite{}, the theorems by De Nicola and
+  Hennessy (here \ref{AAA} and \ref{AAA}), and an analogous result for
+  Input Buffered Agents as corollaries of our more general theorems
+  (\ref{} and \ref{}).
+  Note in passing that this is the first constructive and machine-checked
+  account of De Nicola and Hennessy's classical results.
   
 \item Discusses a use-case in which we prove that two servers
-  are related by the MUST-preorder (\ref{}).
+  written in a minimal calculus are related by the MUST-preorder (\ref{}).
 \end{itemize}
