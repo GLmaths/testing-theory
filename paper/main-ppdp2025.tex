@@ -4,7 +4,7 @@
 \input{macros}
 
 
-\title{Verifying first-order asynchronous servers}
+\title{The MUST-preorder can be used in practice}
 %%  \texorpdfstring{\mustpreorder}{MUST-preorder} for asynchrony}
 
 
@@ -54,31 +54,13 @@
 
 
 \input{introduction}
-%% \input{preliminaries}
-
-%% \renewcommand{\state}{p}
-%% \renewcommand{\stateA}{p_1}
-%% \renewcommand{\stateB}{p_2}
-%% \renewcommand{\stateC}{q_3}
-%% \newcommand{\stdleq}{\mathrel{\preccurlyeq_{\mathsf{std}}}}
-%% \renewcommand{\state}{p}
-%% \renewcommand{\stateA}{p'}
-%% \renewcommand{\trace}{s}
-
-%% \newcommand{\asleqC}{\preccurlyeq_{\textsf{cnv}}}
-%% \newcommand{\asleqA}{\preccurlyeq_{\textsf{acc}}}
+\input{preliminaries}
+\input{properties_LTS}
+\input{improved_characterisation}
+\input{conclusion}
 
 
-%% \newcommand{\util}{\rightarrow\equiv}
 
-%% \input{definition-preorder}
-
-%% \newcommand{\oh}{\mathcal{O}_p}
-
-%% \newcommand{\ogood}{O_{\mathsf{good}}}
-%% \renewcommand{\States}{C}
-%% \input{further_comparison}
-%% \input{conclusion}
 
 \bibliographystyle{plainurl}%
 \bibliography{main.bib}%
@@ -91,7 +73,6 @@
 \appendix%
 %% \label{sec:appendix}
 %% \input{bar-induction}
-%% %% %% ADDED FOR RESPONSE
 %% %% \clearpage
 %% \input{appendix-forwarders}
 %% %% %\clearpage
@@ -108,6 +89,6 @@
 %% \input{ACCS}
 %% % \input{coinductive-char}
 %% \input{counterexample}
-\input{coq_details}
-\input{coq_tex_mapping}
+\input{files-from-esop2025-submission/coq_details}
+\input{files-from-esop2025-submission/coq_tex_mapping}
 \end{document}
