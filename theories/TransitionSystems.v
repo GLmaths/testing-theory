@@ -32,7 +32,8 @@ Require Import Coq.Logic.JMeq.
 Require Import Coq.Program.Wf Setoid.
 Require Import Coq.Program.Equality.
 From Coq.Logic Require Import ProofIrrelevance.
-From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
+
+From stdpp Require Import base countable list decidable finite gmap.
 
 Lemma sig_eq {A} (P : A → Prop) (x y : sig P) :
   proj1_sig x = proj1_sig y → x = y.

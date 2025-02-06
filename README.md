@@ -1,6 +1,8 @@
 # testing-theory
-This repository contains the fork by G. Lopez,
-to work on his second year master internship.
+This repository is the fork by by G. Lopez of
+[this project](https://github.com/gbtito/testing-theory).
+The code here will be developed througout Lopez PhD thesis.
 
-To aim is to extend the existing Coq mechanisation of 
-testing theory à la De Nicola and Hennessy.
+
+The work is lead by [Giovanni Bernardi](https://www.irif.fr/~gio/),
+with the help of [Hugo Férée](https://hugo.feree.fr/).
