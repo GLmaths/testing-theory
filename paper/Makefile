@@ -1,14 +1,14 @@
 default:
-	pdflatex -shell-escape main-concur2026.tex
+	pdflatex -shell-escape main-ppdp2025.tex
 
 bib:
-	bibtex main-concur2026
+	bibtex main-ppdp2025
 
 final:
-	pdflatex -shell-escape main-concur2026.tex
-	bibtex main-concur2026
-	pdflatex -shell-escape main-concur2026.tex
-	pdflatex -shell-escape main-concur2026.tex
+	pdflatex -shell-escape main-ppdp2025.tex
+	bibtex main-ppdp2025
+	pdflatex -shell-escape main-ppdp2025.tex
+	pdflatex -shell-escape main-ppdp2025.tex
 
 
 add:
