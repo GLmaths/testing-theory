@@ -1,5 +1,78 @@
+\newcommand{\erlang}{\href{https://www.erlang.org/faq/introduction.html}{\textsf{Erlang}}\xspace}
+\newcommand{\elixir}{\href{https://elixir-lang.org/}{\textsf{Elixir}}\xspace}
+
+
 \section{Introduction}
 \label{sec:intro}
+
+\paragraph{Software update is a critical operation.}
+Correct operations of software systems are jeopardised by an
+apparently innocuous operation:
+software update. Considering the following cases. %
+%%% ORDERED WRT TIME %%%
+On August $1$st $2012$ an update of the trading software by the Knight
+Capital Group caused a major stock market disruption, making the
+company lose~$400$ million US dollars (USD) and go bankrupt in
+nearly~$45$ minutes \cite{knightmare,WkKnightmare}.
+On January $24$th $2014$ a configuration update caused a~$25$ minutes
+outage of Google services \cite{WkGoogle}.
+On October $4$th $2021$ an update in the DNS tables at Facebook has led
+to more than~$7$ hours of downtime in the company services (WhatsApp,
+Instagram, Facebook), and a loss of at least~$60$ million
+dollars in revenue \cite{facebook}.
+On September $6$th $2023$ a software update at
+United Airlines made it to the news for it grounded for one day
+essentially all of the carrier planes in the
+US~\cite{update-grounded-flights}.
+On July $19$th $2024$ the company \href{https://www.crowdstrike.com/}{CrowdStrike} 
+distributed a faulty software update that caused a global outage
+in airlines, banks, and media for an estimated total loss of~$10$
+billions USD \cite{WkCrowd}.
+
+
+
+\paragraph{Why asynchrony ?}
+Asynchrony is intrinsic to multi-cores CPU, because
+the usual computer memory (i.e. the RAM) is asynchronous:
+a program can always read and write the memory cells it
+has access to. This is the very basis for shared-memory concurrency.
+Owing to the asynchronous behaviour of memory, ad-hoc assembly
+instructions like \textsc{cmpxchgl} \cite{WkCAS} are required to
+synchronise concurrent programs which, at present, are
+the only manner to harness the sheer power of multi-cores CPU
+\cite{doi:10.1126/science.aam9744}.
+As for languages, the Linux kernel API supports asynchronous process execution via a workqueue \cite{workqueue}, and offers ad-hoc
+constructs for locking \cite{locktypes}.
+\textsc{Python} and \textsc{Javascript} offer developers the
+\textsc{await} (i.e. async wait) construct to spawn asynchronous
+computations. \textsc{Java} offers a similar mechanism via the 
+\texttt{Future} interface, which represents the result of asynchronous
+function calls \cite{java.future}.
+Asynchrony is such a fundamental phenomenon that it is studied also
+in $\lambda$-calculus and the foundations of PL \cite{DBLP:journals/lmcs/AhmanP24}.
+
+
+%%%
+Asynchrony is intrinsic also to
+the beating heart of distributed systems: message-passing software
+\gb{Cite also lamport and lynch.}
+\cite{10.5555/2517679}.
+On the Internet programs interact by storing messages in queues,
+and a priori send operations are decoupled from reception ones.
+Moreover in networks messages can be lost, corrupted, or received
+out of order.
+%and the time when messages are actually read is not know a priori.
+Developing software for distributed systems is thus notoriously
+hard. PLs exists, that have been designed to streamline message-passing.
+Two successful cases are \erlang\ and \elixir. They both rely on {\em
+  actors}, i.e. computational units that
+comprise an identifier, some code, and a {\em private mailbox} (i.e. a queue),
+used for communication with other actors \cite{DBLP:journals/jfp/AghaMST97}.
+
+
+
+
+
 
 %% Code refactoring is a routine task to develop or update software, and
 %% it requires methods to ensure that a program~$\serverA$ can be safely
@@ -418,40 +491,57 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+Though we propose a minor generalisation of Selinger axioms, 
+this paper remains chiefly analytical: it studies in depth axioms
+on LTS, to prove their logical independence, and to improve
+the results of \cite{bernardi2025}.
+The corollaries of our analysis is a unique characterisation
+of the \mustpreorder\ for different calculi:
+CCS with value passing, %
+its asynchronous variant, %
+the core join calculus. %
+
 
 \subsection*{Contributions} 
 This paper
 \begin{itemize}
-\item Proves that the results of \cite{} hold independently
+  
+\item Proves that the results of \cite{bernardi2025} hold independently
   from the nature of the actions used in the LTS.
   The information sufficient and necessary for the proofs
-  to work is whether an action is blocking or non-blocking.
-  The nature of actions is irrelevant.
-  
-\item Characterises the traces that are actually relevant in the
-  completeness arguments (\ref{AAA}),
-  thereby tackling the universal
-  quantification on traces.
+  to work is whether an action is blocking or non-blocking:
+  the nature of actions is irrelevant.
 
-\item Provides a novel co-inductive characterisation of
-  the MUST-preorder, which reduces the amount of actions
-  to be check in order to prove that a program $q$ refines
-  a program $p$ (\ref{}).
-
-\item Showcases the method proposed in \cite{}:
-  to obtain a proof method for the MUST-preorder it is sufficient to
-  give a calculus an LTS whose non-blocking actions satisfy Selinger
-  axioms.
-  
-
-\item
+  \item %
+  Showcases the approach suggested in \cite{bernardi2025}
+  to obtain a proof method for the \mustpreorder.
+  It is sufficient to give a calculus an LTS such that
+  \begin{enumerate}
+    \item the Harmony Lemma holds,
+    \item non-blocking actions satisfy Selinger axioms,
+    \item contexts can be defined, that satisfy the completeness
+      axioms of \cite{bernardi2025}.
+  \end{enumerate}
+  We do so for three different calculi.
   Obtains the results of \cite{}, the theorems by De Nicola and
   Hennessy (here \ref{AAA} and \ref{AAA}), and an analogous result for
   Input Buffered Agents as corollaries of our more general theorems
   (\ref{} and \ref{}).
   Note in passing that this is the first constructive and machine-checked
-  account of De Nicola and Hennessy's classical results.
+  account of De Nicola and Hennessy's results for synchronous calculi.
   
-\item Discusses a use-case in which we prove that two servers
-  written in a minimal calculus are related by the MUST-preorder (\ref{}).
+ \item %
+  Characterises the traces that are
+  actually relevant in the
+  completeness arguments (\ref{}).
+  This reduces the amount of traces to be actually
+  accounted for by an algorithm.
+
+\item %
+  Provides a novel co-inductive characterisation of
+  the \mustpreorder, which reduces the amount of actions
+  to be check in order to prove that a program $\serverB$ refines
+  a program $\serverA$ (\ref{}).
+  Showcases how to employ this proof method discussing a concrete
+  example in Coq. (\ref{}).
 \end{itemize}
