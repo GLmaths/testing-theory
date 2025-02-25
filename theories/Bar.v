@@ -22,7 +22,6 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
 Require Import Coq.Unicode.Utf8.
 Require Import Coq.Lists.List.
 Import ListNotations.

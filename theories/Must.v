@@ -22,17 +22,9 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Lists.List.
-Import ListNotations.
+
 Require Import Coq.Program.Equality.
-Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Coq.Logic.JMeq.
-Require Import Coq.Program.Wf Setoid.
-Require Import Coq.Program.Equality.
-From Coq.Logic Require Import ProofIrrelevance.
-From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
+From stdpp Require Import base countable decidable finite gmap.
 From Must Require Import TransitionSystems.
 
 Class Good (A L : Type) (good : A -> Prop) `{Lts A L, !LtsEq A L} := {

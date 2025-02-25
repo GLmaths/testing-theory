@@ -47,10 +47,9 @@ Inductive Act (Channel : Type) :=
 Arguments ActExt {_} _.
 Arguments τ {_} .
 
-
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 

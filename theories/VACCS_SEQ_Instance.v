@@ -37,7 +37,7 @@ From Must Require Import TransitionSystems Must Completeness.
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -72,14 +72,14 @@ Notation "'non' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
-Context (Eval_Eq : Equation Data -> (option bool)).
-Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+Parameter (Eval_Eq : Equation Data -> (option bool)).
+Parameter (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+Parameter (channel_is_countable : Countable Channel). (* only here for the classes *)
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+Parameter (value_eq_dec : EqDecision Value). (* only here for the classes *)
 #[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
-Context (value_is_countable : Countable Value). (* only here for the classes *)
+Parameter (value_is_countable : Countable Value). (* only here for the classes *)
 #[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
 
 (* Definition of processes*)
@@ -126,7 +126,7 @@ Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
 Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • P" := (gpr_output c v P) (at level 50).
-Notation "c ? x • P" := (gpr_input c P) (at level 50).
+Notation "c ? P" := (gpr_input c P) (at level 50).
 Notation "'t' • P" := (gpr_tau P) (at level 50).
 Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
@@ -163,7 +163,7 @@ with gNewVar k M {struct M} : gproc :=
 match M with
 | δ => δ
 | ① => ①
-| c ? x • p => c ? x • (NewVar (S k) p)
+| c ? p => c ? (NewVar (S k) p)
 | c ! v • p => c ! (NewVar_in_Data k v) • (NewVar k p)
 | t • p => t • (NewVar k p)
 | p1 + p2 => (gNewVar k p1) + (gNewVar k p2)
@@ -201,7 +201,7 @@ match M with
 | δ => δ
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (Lift (S k) p)
+| c ? p => c ? (Lift (S k) p)
 | c ! v • p => c ! (Lift_in_Data k v) • (Lift k p)
 | t • p => t • (Lift k p)
 | p1 + p2 => (gLift k p1) + (gLift k p2)
@@ -246,7 +246,7 @@ with subst_in_gproc k X M {struct M} : gproc :=
 match M with
 | δ => δ
 | ① => ①
-| c ? x • p => c ? x • (subst_in_proc (S k) (NewVar_in_Data 0 X) p)
+| c ? p => c ? (subst_in_proc (S k) (NewVar_in_Data 0 X) p)
 | c ! v • p => c ! (subst_Data k X v) • (subst_in_proc k X p)
 | t • p => t • (subst_in_proc k X p)
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
@@ -269,7 +269,7 @@ with gsize p :=
   match p with
   | δ => 1
   | ① => 1
-  | c ? x • p => S (size p)
+  | c ? p => S (size p)
   | c ! v • p => S (size p)
   | t • p => S (size p)
   | p + q => S (gsize p + gsize q)
@@ -289,9 +289,9 @@ intros. destruct d.
 - simpl. destruct (decide (k < S n)). (* case decide. *)
   * simpl. destruct (decide (S n = k)) as [e | e].
     ** exfalso. dependent destruction l. eapply Nat.neq_succ_diag_l. exact e. 
-       rewrite <-e in l. apply Arith_prebase.le_S_gt_stt in l. eapply Nat.nlt_succ_diag_l. exact l.
+       rewrite <-e in l. lia.
     ** destruct (decide (S n < k)). 
-       *** apply Arith_prebase.lt_n_Sm_le in l. lia. (* pas top *)
+       *** lia. (* pas top *)
        *** auto.
   * simpl. destruct (decide (n = k)).
     ** lia. (* pas top *)
@@ -371,7 +371,7 @@ end
 with gpr_subst id p q {struct p} := match p with
 | δ => δ
 | ① => ①
-| c ? x • p => c ? x • (pr_subst id p (NewVar 0 q))
+| c ? p => c ? (pr_subst id p (NewVar 0 q))
 | c ! v • p => c ! v • (pr_subst id p q)
 | t • p => t • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
@@ -492,7 +492,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (t • p) (t • q)
 | cgr_input_step : forall c p q,
     cgr_step p q ->
-    cgr_step (c ? x • p) (c ? x • q)
+    cgr_step (c ? p) (c ? q)
 | cgr_output_step : forall c v p q, 
     cgr_step p q -> 
     cgr_step (c ! v • p) (c ! v • q)
@@ -530,8 +530,8 @@ Inductive cgr_step : proc -> proc -> Prop :=
 | cgr_seq_choice_rev_step : forall G G' P, cgr_step (((g G) ; P) + ((g G'); P)) ((G + G') ; P)
 | cgr_seq_tau_step : forall P Q, cgr_step ((t • P) ; Q) (t • (P ; Q))
 | cgr_seq_tau_rev_step : forall P Q, cgr_step (t • (P ; Q)) ((t • P) ; Q)
-| cgr_seq_input_step : forall c P Q , cgr_step ((c ? x • P) ; Q) (c ? x • (P ; NewVar 0 Q))
-| cgr_seq_input_rev_step : forall c P Q , cgr_step (c ? x • (P ; NewVar 0 Q)) ((c ? x • P) ; Q) 
+| cgr_seq_input_step : forall c P Q , cgr_step ((c ? P) ; Q) (c ? (P ; NewVar 0 Q))
+| cgr_seq_input_rev_step : forall c P Q , cgr_step (c ? (P ; NewVar 0 Q)) ((c ? P) ; Q) 
 | cgr_seq_output_step : forall c v P Q, cgr_step ((c ! v • P) ; Q) (c ! v • (P ; Q))
 | cgr_seq_output_rev_step : forall c v P Q, cgr_step (c ! v • (P ; Q)) ((c ! v • P) ; Q)
 .
@@ -642,7 +642,7 @@ intros. dependent induction H.
 constructor. 
 apply cgr_tau_step. exact H. eauto with cgr_eq.
 Qed. 
-Lemma cgr_input : forall c p q, p ≡* q -> (c ? x • p) ≡* (c ? x • q).
+Lemma cgr_input : forall c p q, p ≡* q -> (c ? p) ≡* (c ? q).
 Proof.
 intros.
 dependent induction H. 
@@ -717,10 +717,10 @@ Qed.
 Lemma cgr_seq_tau_rev : forall P Q, (t • (P ; Q)) ≡* ((t • P) ; Q).
 Proof. intros. constructor. apply cgr_seq_tau_rev_step.
 Qed.
-Lemma cgr_seq_input: forall c P Q , ((c ? x • P) ; Q) ≡* (c ? x • (P ; NewVar 0 Q)).
+Lemma cgr_seq_input: forall c P Q , ((c ? P) ; Q) ≡* (c ? (P ; NewVar 0 Q)).
 Proof. intros. constructor. apply cgr_seq_input_step.
 Qed.
-Lemma cgr_seq_input_rev : forall c P Q , (c ? x • (P ; NewVar 0 Q)) ≡* ((c ? x • P) ; Q).
+Lemma cgr_seq_input_rev : forall c P Q , (c ? (P ; NewVar 0 Q)) ≡* ((c ? P) ; Q).
 Proof. intros. constructor. apply cgr_seq_input_rev_step.
 Qed.
 Lemma cgr_seq_output : forall c v P Q, ((c ! v • P) ; Q) ≡* (c ! v • (P ; Q)).
@@ -788,7 +788,7 @@ end.
 Inductive lts : proc -> (Act TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) (ActIn (c ⋉ v)) (P^v)
+    lts (c ? P) (ActIn (c ⋉ v)) (P^v)
 | lts_output : forall {c v P},
     lts (c ! v • P) (ActOut (c ⋉ v)) P
 
@@ -1191,7 +1191,7 @@ Inductive sts : States -> States -> Prop :=
 (*The axiomes*)
 (* Communication of channels output and input that have the same name *)
 | sts_com : forall {c v M p g}, 
-    sts (❲M ⊎ {[+ c ⋉ v +]}, ((c ? x • p) + g)❳) (❲M , (p ^ v)❳)
+    sts (❲M ⊎ {[+ c ⋉ v +]}, ((c ? p) + g)❳) (❲M , (p ^ v)❳)
 (* Send Output to Memory *)
 | sts_send: forall {c v M p g}, 
     sts (❲M, ((c ! v • p) + g)❳) (❲M ⊎ {[+ c ⋉ v +]}, p❳)
@@ -1697,7 +1697,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_success : forall k, Well_Defined_Input_in k (①)
 | WD_nil : forall k, Well_Defined_Input_in k (𝟘)
 | WD_input : forall k c p, Well_Defined_Input_in (S k) p
-                  -> Well_Defined_Input_in k (c ? x • p)
+                  -> Well_Defined_Input_in k (c ? p)
 | WD_output : forall k c v p, Well_Defined_Data k v -> Well_Defined_Input_in k p
                   -> Well_Defined_Input_in k (c ! v • p)
 | WD_tau : forall k p,  Well_Defined_Input_in k p -> Well_Defined_Input_in k (t • p)
@@ -1779,10 +1779,9 @@ intros. split.
   * intros. simpl. constructor.
   * intros. inversion H. destruct (decide (i < S n)). constructor. subst.
     inversion H0. rewrite H3 in H2. auto with arith. constructor. inversion H0.
-    subst. apply PeanoNat.Nat.nlt_succ_r in n0. apply (Arith_prebase.lt_plus_trans_stt n i k) in n0.
-    assert ((i + k)%nat = (k + i)%nat). auto with arith. rewrite <-H1. assumption.
+    lia.
     subst. destruct (decide (i < S n)). constructor. inversion H2. inversion H2.
-Qed. 
+Qed.
 
 Lemma WD_eq_and_NewVar : forall e k i, Well_Defined_Condition (k + i) e <-> 
                             Well_Defined_Condition (S (k + i)) (NewVar_in_Equation i e).
@@ -2432,7 +2431,7 @@ encode_gproc (gp: gproc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) +
   match gp with
   | δ => GenNode 2 []
   | ① => GenNode 1 []
-  | c ? x • p => GenNode 3 ((GenLeaf (inr $ inr c)) :: [encode_proc p])
+  | c ? p => GenNode 3 ((GenLeaf (inr $ inr c)) :: [encode_proc p])
   | c ! v • p => GenNode 4 ((GenLeaf (inr $ inl $ inr $ (c ⋉ v))) :: [encode_proc p])
   | t • p => GenNode 5 [encode_proc p]
   | gp + gq => GenNode 6 (encode_gproc gp :: [encode_gproc gq])
@@ -2464,7 +2463,7 @@ decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)
   match t' with
   | GenNode 2 [] => δ 
   | GenNode 1 [] => ①
-  | GenNode 3 (GenLeaf (inr (inr c)) :: [ep]) => c ? x • (decode_proc ep) 
+  | GenNode 3 (GenLeaf (inr (inr c)) :: [ep]) => c ? (decode_proc ep) 
   | GenNode 4 (GenLeaf (inr ( inl (inr a))) :: [ep]) => (Channel_of a) ! (Data_of a) • (decode_proc ep) 
   | GenNode 5 [eq] => t • (decode_proc eq) 
   | GenNode 6 (egp :: [egq]) => (decode_gproc egp) + (decode_gproc egq) 
@@ -2587,7 +2586,7 @@ moutputs_of_g (gp : gproc) : gmultiset TypeOfActions :=
 match gp with
   | δ => ∅
   | ① => ∅
-  | c ? x • p => ∅
+  | c ? p => ∅
   | c ! v • p => {[+ (c ⋉ v) +]}
   | t • p => ∅
   | gp1 + gp2 => moutputs_of_g gp1 ⊎ moutputs_of_g gp2
@@ -2674,7 +2673,7 @@ lts_set_input_g (g0 : gproc) (a : TypeOfActions) : gset proc :=
   match g0 with
   | δ => ∅
   | ① => ∅
-  | c ? x • p => if decide(Channel_of a = c) then {[ p^(Data_of a) ]} else ∅
+  | c ? p => if decide(Channel_of a = c) then {[ p^(Data_of a) ]} else ∅
   | c ! v • p => ∅
   | t • p => ∅
   | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
@@ -2707,7 +2706,7 @@ lts_set_output_g (g0 : gproc) (a : TypeOfActions) : gset proc :=
   match g0 with
   | δ => ∅
   | ① => ∅
-  | c ? x • p => ∅
+  | c ? p => ∅
   | c ! v • p => if decide(a = (c ⋉ v)) then {[ p ]} else ∅
   | t • p => ∅
   | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
@@ -2755,7 +2754,7 @@ lts_set_tau_g (gp : gproc) : gset proc :=
 match gp with
   | δ => ∅
   | ① => ∅
-  | c ? x • p => ∅
+  | c ? p => ∅
   | c ! v • p => ∅
   | t • p => {[ p ]}
   | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2

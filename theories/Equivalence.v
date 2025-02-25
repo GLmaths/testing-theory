@@ -22,11 +22,9 @@
    SOFTWARE.
 *)
 
-From stdpp Require Import base decidable gmap.
 Require Import ssreflect.
 Require Import Coq.Program.Equality.
-
-From stdpp Require Import finite.
+From stdpp Require Import base decidable gmap finite.
 From Must Require Import TransitionSystems Must Bar Completeness Soundness Lift.
 
 (** Extensional definition of Convergence and its equivalence
