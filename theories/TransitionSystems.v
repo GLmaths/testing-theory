@@ -138,7 +138,7 @@ Qed.
 
 (** Actions  *)
 
-Inductive ExtAct (A: Type) :=
+(* Inductive ExtAct (A: Type) :=
 | ActIn (a : A)
 | ActOut (a : A)
 .
@@ -201,35 +201,78 @@ Definition are_inputs {A} (s : trace A) := Forall is_input s.
 
 Definition is_output {A} (μ : ExtAct A) := ∃ a, μ = ActOut a.
 
-Definition are_outputs {A} (s : trace A) := Forall is_output s.
+Definition are_outputs {A} (s : trace A) := Forall is_output s. *)
 
-Class Label (L: Type) :=
+(* Class Label (L: Type) :=
   MkLabel {
       label_eqdec: EqDecision L;
       label_countable: Countable L;
     }.
 #[global] Existing Instance label_eqdec.
 #[global] Existing Instance label_countable.
+ *)
 
-Class Lts (A L : Type) `{Label L} :=
+Class ExtAction (A : Type) :=
+  MkExtAction {
+      extaction_eqdec: EqDecision A;
+      extaction_countable: Countable A;
+      NonBlocking : A -> Prop;
+      nb_eqdec: forall a, Decision (NonBlocking a); (* pas nécessaire pour l'instant, 
+                          nécessaire pour faire des preuves sur les actions visible en général*)
+      IsDual : A -> A -> Prop;
+      ComDual : forall a b, IsDual a b -> IsDual b a; (* nécessaire pour parallel_step_commutative*)
+    }.
+#[global] Existing Instance extaction_eqdec.
+#[global] Existing Instance extaction_countable.
+
+
+Inductive Act (A: Type) :=
+| ActExt (μ: A)
+| τ
+.
+Arguments ActExt {_} _.
+Arguments τ {_}.
+
+Definition trace L := list L.
+
+#[global] Instance act_eqdec `{EqDecision L} : EqDecision (Act L).
+Proof. solve_decision. Defined.
+
+(* Definition act_match {A} (l1 l2: Act A) :=
+  match l1, l2 with
+  | ActExt x, ActExt y => extaction_eqdec x y
+  | _, _ => False
+  end.
+
+Definition act_match_commutative {A} (l1 l2: Act A):
+  act_match l1 l2 -> act_match l2 l1.
+Proof. by destruct l1 as [[?|?]|], l2 as [[?|?]|]; eauto; intros ->. Qed.
+
+#[global] Instance act_match_dec `{EqDecision L} : ∀ (ℓ1 ℓ2: Act L), Decision (act_match ℓ1 ℓ2).
+Proof. intros [l1|] [l2|]; try by (right; eauto). simpl. apply _. Defined. *)
+
+
+Class Lts (P A : Type) `{ExtAction A} :=
   MkLts {
-      lts_step: A → Act L → A → Prop;
-      lts_state_eqdec: EqDecision A;
+      lts_step: P → Act A → P → Prop;
+      lts_state_eqdec: EqDecision P;
 
       lts_step_decidable a α b : Decision (lts_step a α b);
 
-      lts_outputs : A -> gset L;
-      lts_outputs_spec1 p1 x p2 : lts_step p1 (ActExt (ActOut x)) p2 -> x ∈ lts_outputs p1;
-      lts_outputs_spec2 p1 x : x ∈ lts_outputs p1 -> {p2 | lts_step p1 (ActExt (ActOut x)) p2};
+      lts_non_blocking_action : P -> gset A; 
+      lts_non_blocking_action_spec1 p1 η p2 : (NonBlocking η /\ lts_step p1 (ActExt η) p2 ) -> η ∈ lts_non_blocking_action p1; 
+      lts_non_blocking_action_spec2 p1 η : η ∈ lts_non_blocking_action p1 -> {p2 | (NonBlocking η /\ lts_step p1 (ActExt η) p2) } ;
 
-      lts_stable: A → Act L → Prop;
+      lts_stable: P → Act A → Prop;
       lts_stable_decidable p α : Decision (lts_stable p α);
       lts_stable_spec1 p α : ¬ lts_stable p α → { q | lts_step p α q };
       lts_stable_spec2 p α : { q | lts_step p α q } → ¬ lts_stable p α;
     }.
 #[global] Existing Instance lts_state_eqdec.
 #[global] Existing Instance lts_step_decidable.
-#[global] Existing Instance lts_stable_decidable.
+#[global] Existing Instance lts_stable_decidable. 
+
+
 
 Notation "p ⟶ q"      := (lts_step p τ q) (at level 30, format "p  ⟶  q").
 Notation "p ⟶{ α } q" := (lts_step p α q) (at level 30, format "p  ⟶{ α }  q").
@@ -239,7 +282,7 @@ Notation "p ↛"      := (lts_stable p τ) (at level 30, format "p  ↛").
 Notation "p ↛{ α }" := (lts_stable p α) (at level 30, format "p  ↛{ α }").
 Notation "p ↛[ μ ]" := (lts_stable p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
 
-Class FiniteLts A L `{Lts A L} :=
+Class FiniteLts P A `{Lts P A} :=
   MkFlts {
       folts_states_countable: Countable A;
       folts_next_states_finite p α : Finite (dsig (fun q => lts_step p α q));
@@ -248,17 +291,17 @@ Class FiniteLts A L `{Lts A L} :=
 #[global] Existing Instance folts_states_countable.
 #[global] Existing Instance folts_next_states_finite.
 
-Class LtsEq (A L : Type) `{Lts A L} := {
+Class LtsEq (P A : Type) `{Lts P A} := {
     (* todo: use Equivalence *)
-    eq_rel : A -> A -> Prop;
+    eq_rel : P -> P -> Prop;
     eq_rel_refl p : eq_rel p p;
     eq_symm p q : eq_rel p q -> eq_rel q p;
     eq_trans p q r : eq_rel p q -> eq_rel q r -> eq_rel p r;
     (* reference: L 1.4.15 p.51 Sangiorgi pi-book *)
-    eq_spec p q (α : Act L) : (exists r, eq_rel p r /\ r ⟶{α} q) -> (exists r, p ⟶{α} r /\ eq_rel r q);
+    eq_spec p q (α : Act A) : (exists r, eq_rel p r /\ r ⟶{α} q) -> (exists r, p ⟶{α} r /\ eq_rel r q);
   }.
 
-Add Parametric Relation `{Lts A L, ! LtsEq A L} : A eq_rel
+Add Parametric Relation `{Lts P A, ! LtsEq P A} : P eq_rel
     reflexivity proved by (eq_rel_refl)
     symmetry proved by (eq_symm)
     transitivity proved by (eq_trans)
@@ -266,49 +309,50 @@ Add Parametric Relation `{Lts A L, ! LtsEq A L} : A eq_rel
 
 Infix "⋍" := eq_rel (at level 70).
 
-Definition lts_sc `{Lts A L, !LtsEq A L} p α q := exists r, p ⟶{α} r /\ r ⋍ q.
+Definition lts_sc `{Lts P A, !LtsEq P A} p α q := exists r, p ⟶{α} r /\ r ⋍ q.
 
 Notation "p ⟶⋍ q" := (lts_sc p τ q) (at level 30, format "p  ⟶⋍  q").
 Notation "p ⟶⋍{ α } q" := (lts_sc p α q) (at level 30, format "p  ⟶⋍{ α }  q").
 Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p  ⟶⋍[ μ ]  q").
 
-Class LtsOba (A L : Type) `{Lts A L, !LtsEq A L} :=
+Class LtsOba (P A : Type) `{Lts P A, !LtsEq P A} :=
   MkOBA {
       (* Multiset of outputs *)
-      lts_oba_mo p : gmultiset L;
-      lts_oba_mo_spec1 p a : a ∈ lts_oba_mo p <-> a ∈ lts_outputs p;
-      lts_oba_mo_spec2 p a : forall q, p ⟶[ActOut a] q -> lts_oba_mo p = {[+ a +]} ⊎ lts_oba_mo q;
+      lts_oba_mo (p : P) : gmultiset A;
+      lts_oba_mo_spec1 p η : η ∈ lts_oba_mo p <-> η ∈ lts_non_blocking_action p;
+      lts_oba_mo_spec2 p η : forall q, NonBlocking η -> p ⟶[ η ] q -> lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
       (* Selinger axioms. *)
-      lts_oba_output_commutativity {p q r a α} :
-      p ⟶[ActOut a] q -> q ⟶{α} r -> (∃ t, p ⟶{α} t /\ t ⟶⋍[ActOut a] r) ;
-      lts_oba_output_confluence {p q1 q2 a μ} :
-      μ ≠ ActOut a -> p ⟶[ActOut a] q1 -> p ⟶[μ] q2 ->
-      ∃ r, q1 ⟶[μ] r /\ q2 ⟶⋍[ActOut a] r ;
-      lts_oba_output_tau {p q1 q2 a} :
-      p ⟶[ActOut a] q1 -> p ⟶ q2 -> (∃ t, q1 ⟶ t /\ q2 ⟶⋍[ActOut a] t) \/ q1 ⟶⋍[ActIn a] q2 ;
-      lts_oba_output_deter {p1 p2 p3 a} :
-      p1 ⟶[ActOut a] p2 -> p1 ⟶[ActOut a] p3 -> p2 ⋍ p3 ;
+      lts_oba_non_blocking_action_commutativity {p q r η α} :
+      NonBlocking η -> p ⟶[ η ] q -> q ⟶{ α } r -> (∃ t, p ⟶{α} t /\ t ⟶⋍[ η ] r) ;
+      lts_oba_non_blocking_action_confluence {p q1 q2 η μ} :
+      NonBlocking η -> μ ≠ η -> p ⟶[ η ] q1 -> p ⟶[ μ ] q2 ->
+      ∃ r, q1 ⟶[ μ ] r /\ q2 ⟶⋍[ η ] r ; 
+      lts_oba_non_blocking_action_tau {p q1 q2 η} :
+      NonBlocking η -> p ⟶[ η ] q1 -> p ⟶ q2 -> (∃ t, q1 ⟶ t /\ q2 ⟶⋍[ η ] t) \/ (∃ μ, (IsDual η μ) /\ q1 ⟶⋍[ μ ] q2) ; 
+      lts_oba_non_blocking_action_deter {p1 p2 p3 η} :
+      NonBlocking η -> p1 ⟶[ η ] p2 -> p1 ⟶[ η ] p3 -> p2 ⋍ p3 ;
       (* Extra axiom, it would be nice to remove it, not used that much. *)
-      lts_oba_output_deter_inv {p1 p2 q1 q2} a :
-      p1 ⟶[ActOut a] q1 -> p2 ⟶[ActOut a] q2 -> q1 ⋍ q2 -> p1 ⋍ p2
+      lts_oba_non_blocking_action_deter_inv {p1 p2 q1 q2} η :
+      NonBlocking η -> p1 ⟶[ η ] q1 -> p2 ⟶[ η ] q2 -> q1 ⋍ q2 -> p1 ⋍ p2
     }.
 
-Class LtsObaFB (A L: Type) `{LtsOba A L} :=
+
+Class LtsObaFB (P A: Type) `{LtsOba P A} :=
   MkLtsObaFB {
-      lts_oba_fb_feedback {p1 p2 p3 a} : p1 ⟶[ActOut a] p2 -> p2 ⟶[ActIn a] p3 -> p1 ⟶⋍ p3
+      lts_oba_fb_feedback {p1 p2 p3 η μ} : NonBlocking η -> IsDual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 -> p1 ⟶⋍ p3
     }.
 
-Class LtsObaFW (A L : Type) `{LtsOba A L} :=
+Class LtsObaFW (P A : Type) `{LtsOba P A} :=
   MkLtsObaFW {
-      lts_oba_fw_forward p1 a : ∃ p2, p1 ⟶[ActIn a] p2 /\ p2 ⟶[ActOut a] p1 ;
-      lts_oba_fw_feedback {p1 p2 p3 a} : p1 ⟶[ActOut a] p2 -> p2 ⟶[ActIn a] p3 -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
+      lts_oba_fw_forward p1 η μ : ∃ p2, NonBlocking η -> IsDual η μ -> p1 ⟶[ μ ] p2 /\ p2 ⟶[ η ] p1 ;
+      lts_oba_fw_feedback {p1 p2 p3 η μ } : NonBlocking η -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
     }.
 
 (* Inductive definition of terminate. *)
 
 Reserved Notation "p ⤓" (at level 60).
 
-Inductive terminate `{Lts A L} (p : A) : Prop :=
+Inductive terminate `{Lts P A} (p : P) : Prop :=
 | tstep : (forall q, p ⟶ q -> terminate q) -> terminate p
 
 where "p ⤓" := (terminate p).
@@ -334,27 +378,29 @@ Qed.
 Lemma terminate_preserved_by_eq2 `{LtsEq A L} {p q} : p ⋍ q -> p ⤓ -> q ⤓.
 Proof. intros. eapply terminate_preserved_by_eq; eauto. Qed.
 
-Lemma terminate_preserved_by_lts_output `{LtsOba A L} {p q a} : p ⟶[ActOut a] q -> p ⤓ -> q ⤓.
+Lemma terminate_preserved_by_lts_non_blocking_action `{LtsOba P A} {p q η} : NonBlocking η  -> p ⟶[ η ] q -> p ⤓ -> q ⤓.
 Proof.
-  intros l ht. revert q a l.
-  dependent induction ht; intros q a l1.
+  intros nb l ht. revert q η nb l.
+  dependent induction ht; intros q a nb l1.
   eapply tstep. intros q' l2.
-  destruct (lts_oba_output_commutativity l1 l2) as (t & l3 & l4); eauto.
+  destruct (lts_oba_non_blocking_action_commutativity nb l1 l2) as (t & l3 & l4); eauto.
   destruct l4 as (q0 & l0 & eq0).
   eapply terminate_preserved_by_eq.
-  eapply H3. eapply l3. eapply l0. eassumption.
+  eapply H3. eapply l3. eapply nb. eapply l0. eassumption.
 Qed.
 
-Lemma stable_tau_preserved_by_lts_output `{LtsOba A L} p q a : p ↛ -> p ⟶[ActOut a] q -> q ↛.
+Lemma stable_tau_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η : NonBlocking η -> p ↛ -> p ⟶[ η ] q -> q ↛.
 Proof.
-  intros st l.
+  intros nb st l.
   case (lts_stable_decidable q τ); eauto.
   intro nst. eapply lts_stable_spec1 in nst as (t & l').
-  destruct (lts_oba_output_commutativity l l') as (r & l1 & l2).
+  destruct (lts_oba_non_blocking_action_commutativity nb l l') as (r & l1 & l2).
   edestruct (lts_stable_spec2 p τ); eauto with mdb.
 Qed.
 
-Lemma lts_input_preserved_by_lts_output `{LtsOba A L} p q a b :
+(*
+(* A réfléchir et à travailler ? No conozco los input *)
+ Lemma lts_input_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η b :
   (exists t, p ⟶[ActIn b] t) -> p ⟶[ActOut a] q -> (exists t, q ⟶[ActIn b] t).
 Proof.
   intros (t & hl1) hl2.
@@ -370,11 +416,11 @@ Proof.
   intro nst. eapply lts_stable_spec1 in nst as (t & l').
   destruct (lts_oba_output_commutativity l l') as (r & l1 & l2).
   edestruct (lts_stable_spec2 p (ActExt $ ActIn b)); eauto with mdb.
-Qed.
+Qed. *)
 
 (* Weak transitions *)
 
-Inductive wt `{Lts A L} : A -> trace L -> A -> Prop :=
+Inductive wt `{Lts P A} : P -> trace A -> P -> Prop :=
 | wt_nil p : wt p [] p
 | wt_tau s p q t (l : p ⟶ q) (w : wt q s t) : wt p s t
 | wt_act μ s p q t (l : p ⟶[μ] q) (w : wt q s t) : wt p (μ :: s) t
@@ -386,13 +432,13 @@ Notation "p ⟹ q" := (wt p [] q) (at level 30).
 Notation "p ⟹{ μ } q" := (wt p [μ] q) (at level 30, format "p  ⟹{ μ }  q").
 Notation "p ⟹[ s ] q" := (wt p s q) (at level 30, format "p  ⟹[ s ]  q").
 
-Definition wt_sc `{Lts A L, !LtsEq A L} p s q := ∃ r, p ⟹[s] r /\ r ⋍ q.
+Definition wt_sc `{Lts P A, !LtsEq P A} p s q := ∃ r, p ⟹[s] r /\ r ⋍ q.
 
 Notation "p ⟹⋍ q" := (wt_sc p [] q) (at level 30, format "p  ⟹⋍  q").
 Notation "p ⟹⋍{ μ } q" := (wt_sc p [μ] q) (at level 30, format "p  ⟹⋍{ μ }  q").
 Notation "p ⟹⋍[ s ] q" := (wt_sc p s q) (at level 30, format "p  ⟹⋍[ s ]  q").
 
-Lemma wt_pop `{Lts A L} p q μ s : p ⟹[μ :: s] q -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
+Lemma wt_pop `{Lts P A} p q μ s : p ⟹[μ :: s] q -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
 Proof.
   intro w.
   dependent induction w; eauto with mdb.
@@ -400,11 +446,11 @@ Proof.
   exists r. eauto with mdb.
 Qed.
 
-Lemma wt_concat `{Lts A L} p q r s1 s2 :
+Lemma wt_concat `{Lts P A} p q r s1 s2 :
   p ⟹[s1] q -> q ⟹[s2] r -> p ⟹[s1 ++ s2] r.
 Proof. intros w1 w2. dependent induction w1; simpl; eauto with mdb. Qed.
 
-Lemma wt_push_left `{Lts A L} {p q r μ s} :
+Lemma wt_push_left `{Lts P A} {p q r μ s} :
   p ⟹{μ} q -> q ⟹[s] r -> p ⟹[μ :: s] r.
 Proof.
   intros w1 w2.
@@ -412,7 +458,7 @@ Proof.
   eapply wt_concat; eauto.
 Qed.
 
-Lemma wt_split `{Lts A L} p q s1 s2 :
+Lemma wt_split `{Lts P A} p q s1 s2 :
   p ⟹[s1 ++ s2] q -> ∃ r, p ⟹[s1] r /\ r ⟹[s2] q.
 Proof.
   revert p q.
@@ -423,20 +469,20 @@ Proof.
     exists r'. split. eapply wt_push_left; eauto. assumption.
 Qed.
 
-Lemma wt_push_nil_left `{Lts A L} {p q r s} : p ⟹ q -> q ⟹[s] r -> p ⟹[s] r.
+Lemma wt_push_nil_left `{Lts P A} {p q r s} : p ⟹ q -> q ⟹[s] r -> p ⟹[s] r.
 Proof. by intros w1 w2; dependent induction w1; eauto with mdb. Qed.
 
-Lemma wt_push_nil_right `{Lts A L} p q r s : p ⟹[s] q -> q ⟹ r -> p ⟹[s] r.
+Lemma wt_push_nil_right `{Lts P A} p q r s : p ⟹[s] q -> q ⟹ r -> p ⟹[s] r.
 Proof.
-  intros w1 w2. replace s with (s ++ ([] : trace L)).
+  intros w1 w2. replace s with (s ++ ([] : trace A)).
   eapply wt_concat; eauto. eapply app_nil_r.
 Qed.
 
-Lemma wt_push_right `{Lts A L} p q r μ s :
+Lemma wt_push_right `{Lts P A} p q r μ s :
   p ⟹[s] q -> q ⟹{μ} r -> p ⟹[s ++ [μ]] r.
 Proof. intros w1 w2. eapply wt_concat; eauto. Qed.
 
-Lemma wt_decomp_one `{Lts A L} {μ p q} : p ⟹{μ} q -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ] r2 ∧ r2 ⟹ q.
+Lemma wt_decomp_one `{Lts P A} {μ p q} : p ⟹{μ} q -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ] r2 ∧ r2 ⟹ q.
 Proof.
   intro w.
   dependent induction w; eauto with mdb.
@@ -444,20 +490,22 @@ Proof.
   exists r1, r2. eauto with mdb.
 Qed.
 
-Lemma stable_tau_preserved_by_wt_output `{LtsOba A L} p q s :
-  are_outputs s -> p ↛ -> p ⟹[s] q -> q ↛.
+Lemma stable_tau_preserved_by_wt_non_blocking_action `{LtsOba P A} p q s :
+  Forall NonBlocking s ->  p ↛ -> p ⟹[s] q -> q ↛.
 Proof.
   intros s_spec hst hw.
   induction hw; eauto.
   - eapply lts_stable_spec2 in hst. now exfalso. eauto.
-  - destruct μ as [a|a]. inversion s_spec; subst.
-    + inversion H4. inversion H2.
-    + inversion s_spec; subst.
-      eapply IHhw. eassumption. eapply stable_tau_preserved_by_lts_output; eauto.
-Qed.
+  - inversion s_spec; subst.
+    eapply IHhw. eassumption. eapply stable_tau_preserved_by_lts_non_blocking_action; eauto.
+Qed. 
 
-Lemma stable_tau_input_preserved_by_wt_output `{LtsOba A L} p q s a :
-  are_outputs s -> p ↛ -> p ↛[ActIn a] -> p ⟹[s] q -> q ↛[ActIn a].
+(* 
+(*à retravailler la définition de input *)
+
+
+Lemma stable_tau_input_preserved_by_wt_non_blocking_action `{LtsOba A L} p q s a :
+  Forall NonBlocking s -> p ↛ -> p ↛[ActIn a] -> p ⟹[s] q -> q ↛[ActIn a].
 Proof.
   intros s_spec hst_tau hst_inp hw.
   induction hw; eauto.
@@ -483,13 +531,13 @@ Proof.
       eapply stable_tau_preserved_by_lts_output; eauto.
       eapply lts_input_preserved_by_lts_output; eauto.
 Qed.
-
+ *)
 
 (* Convergence *)
 
 Reserved Notation "p ⇓ s" (at level 70).
 
-Inductive cnv `{Lts A L} : A -> trace L -> Prop :=
+Inductive cnv `{Lts P A} : P -> trace A -> Prop :=
 | cnv_nil p : p ⤓ -> p ⇓ []
 | cnv_act p μ s : p ⤓ -> (forall q, p ⟹{μ} q -> q ⇓ s) -> p ⇓ μ :: s
 
@@ -497,10 +545,10 @@ where "p ⇓ s" := (cnv p s).
 
 Global Hint Constructors cnv:mdb.
 
-Lemma cnv_terminate `{M : Lts A L} p s : p ⇓ s -> p ⤓.
+Lemma cnv_terminate `{M : Lts P A} p s : p ⇓ s -> p ⤓.
 Proof. by intros hcnv; now inversion hcnv. Qed.
 
-Lemma cnv_preserved_by_lts_tau `{M : Lts A L} s p : p ⇓ s -> forall q, p ⟶ q -> q ⇓ s.
+Lemma cnv_preserved_by_lts_tau `{M : Lts P A} s p : p ⇓ s -> forall q, p ⟶ q -> q ⇓ s.
 Proof.
   intros hcnv q l.
   inversion hcnv; subst.
@@ -510,7 +558,7 @@ Proof.
     + eauto with mdb.
 Qed.
 
-Lemma cnv_preserved_by_wt_nil `{M : Lts A L} s p :
+Lemma cnv_preserved_by_wt_nil `{M : Lts P A} s p :
   p ⇓ s -> forall q, p ⟹ q -> q ⇓ s.
 Proof.
   intros hcnv q w.
@@ -518,11 +566,11 @@ Proof.
   eapply IHw. eapply cnv_preserved_by_lts_tau; eauto. reflexivity.
 Qed.
 
-Lemma cnv_preserved_by_wt_act `{M: Lts A L} s p μ :
+Lemma cnv_preserved_by_wt_act `{M: Lts P A} s p μ :
   p ⇓ μ :: s -> forall q, p ⟹{μ} q -> q ⇓ s.
 Proof. by intros hcnv; inversion hcnv; eauto with mdb. Qed.
 
-Lemma cnv_iff_prefix_terminate_l `{M: Lts A L} p s :
+Lemma cnv_iff_prefix_terminate_l `{M: Lts P A} p s :
   p ⇓ s -> (forall t q, t `prefix_of` s -> p ⟹[t] q -> q ⤓).
 Proof.
   intros hcnv t q hpre w.
@@ -537,7 +585,7 @@ Proof.
     eassumption.
 Qed.
 
-Lemma cnv_iff_prefix_terminate_r `{M: Lts A L} p s :
+Lemma cnv_iff_prefix_terminate_r `{M: Lts P A} p s :
   (forall t q, t `prefix_of` s -> p ⟹[t] q -> q ⤓) -> p ⇓ s.
 Proof.
   intros h.
@@ -551,13 +599,13 @@ Proof.
   eapply wt_push_left; eassumption.
 Qed.
 
-Corollary cnv_iff_prefix_terminate `{M: Lts A L} p s :
+Corollary cnv_iff_prefix_terminate `{M: Lts P A} p s :
   p ⇓ s <-> (forall s0 q, s0 `prefix_of` s -> p ⟹[s0] q -> q ⤓).
 Proof.
   split; [eapply cnv_iff_prefix_terminate_l|eapply cnv_iff_prefix_terminate_r].
 Qed.
 
-Lemma cnv_wt_prefix `{M: Lts A L} s1 s2 p :
+Lemma cnv_wt_prefix `{M: Lts P A} s1 s2 p :
   p ⇓ s1 ++ s2 -> forall q, p ⟹[s1] q -> q ⇓ s2.
 Proof.
   revert s2 p.
@@ -567,27 +615,27 @@ Proof.
     inversion hcnv; eauto with mdb.
 Qed.
 
-Lemma terminate_preserved_by_wt_nil `{M: Lts A L} p : p ⤓ -> forall q, p ⟹ q -> q ⤓.
+Lemma terminate_preserved_by_wt_nil `{M: Lts P A} p : p ⤓ -> forall q, p ⟹ q -> q ⤓.
 Proof.
   intros hcnv q w.
   dependent induction w; eauto with mdb.
   eapply IHw. eapply terminate_preserved_by_lts_tau; eauto. reflexivity.
 Qed.
 
-Lemma terminate_preserved_by_wt_output `{M: LtsOba A L} p q a : p ⤓ -> p ⟹{ActOut a} q -> q ⤓.
+Lemma terminate_preserved_by_wt_non_blocking_action `{M: LtsOba P A} p q η : NonBlocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
 Proof.
-  intros ht w.
+  intros nb ht w.
   dependent induction w.
   - eapply IHw; eauto. eapply terminate_preserved_by_lts_tau; eauto.
   - eapply terminate_preserved_by_wt_nil.
-    eapply terminate_preserved_by_lts_output; eauto. assumption.
+    eapply terminate_preserved_by_lts_non_blocking_action; eauto. assumption.
 Qed.
 
 
-Definition lts_tau_set `{FiniteLts A L} p : list A :=
+Definition lts_tau_set `{FiniteLts P A} p : list P :=
   map proj1_sig (enum $ dsig (lts_step p τ)).
 
-Lemma lts_tau_set_spec : forall `{FiniteLts A L} p q, q ∈ lts_tau_set p <-> p ⟶ q.
+Lemma lts_tau_set_spec : forall `{FiniteLts P A} p q, q ∈ lts_tau_set p <-> p ⟶ q.
 Proof.
   intros. split.
   intro mem. unfold lts_tau_set in mem.
@@ -598,19 +646,20 @@ Proof.
   eauto. eapply elem_of_enum.
 Qed.
 
-Lemma lts_ht_input_ex `{LtsObaFW A L} (p : A) :
+(* (* à retravailler et à définir *)
+Lemma lts_ht_input_ex `{LtsObaFW P A} (p : A) :
   forall a, exists p', lts_step p (ActExt (ActIn a)) p'.
-Proof. intro a. destruct (lts_oba_fw_forward p a) as (t & l1 & l2). eauto. Qed.
+Proof. intro a. destruct (lts_oba_fw_forward p a) as (t & l1 & l2). eauto. Qed. *)
 
-Inductive parallel_step `{M1: Lts A L, M2: Lts B L}: A * B → Act L → A * B → Prop :=
+Inductive parallel_step `{M1: Lts P1 A, M2: Lts P2 A}: P1 * P2 → Act A → P1 * P2 → Prop :=
 | ParLeft α a1 a2 b (l : a1 ⟶{α} a2) : parallel_step (a1, b) α (a2, b)
 | ParRight α a b1 b2 (l : b1 ⟶{α} b2) : parallel_step (a, b1) α (a, b2)
-| ParSync α1 α2 a1 a2 b1 b2 (eq : act_match α1 α2) (l1 : a1 ⟶{α1} a2) (l2 : b1 ⟶{α2} b2) : parallel_step (a1, b1) τ (a2, b2)
+| ParSync μ1 μ2 a1 a2 b1 b2 (eq : IsDual μ1 μ2) (l1 : a1 ⟶[μ1] a2) (l2 : b1 ⟶[μ2] b2) : parallel_step (a1, b1) τ (a2, b2)
 .
 
 Global Hint Constructors parallel_step:mdb.
 
-Lemma eq_spec_wt `{LtsEq A L} p p' : p ⋍ p' -> forall q s, p ⟹[s] q -> p' ⟹⋍[s] q.
+Lemma eq_spec_wt `{LtsEq P A} p p' : p ⋍ p' -> forall q s, p ⟹[s] q -> p' ⟹⋍[s] q.
 Proof.
   intros heq q s w.
   revert p' heq.
@@ -627,37 +676,39 @@ Proof.
 Qed.
 
 (* fixme: ugly - remove in the caller ? *)
-Lemma mk_lts_eq `{LtsEq A L} {p α q} : lts_step p α q -> lts_sc p α q.
+Lemma mk_lts_eq `{LtsEq P A} {p α q} : lts_step p α q -> lts_sc p α q.
 Proof. intro. exists q; split. eauto with mdb. reflexivity. Qed.
 
-Lemma delay_wt_output_nil `{LtsObaFW A L} {p q r a} :
-  p ⟶⋍[ActOut a] q ->
+Lemma delay_wt_non_blocking_action_nil `{LtsObaFW P A} {p q r η} :
+  NonBlocking η ->
+  p ⟶⋍[η] q ->
   q ⟹ r ->
-  exists t, p ⟹ t /\ t ⟶⋍[ActOut a] r.
+  exists t, p ⟹ t /\ t ⟶⋍[η] r.
 Proof.
-  intros l w.
-  revert p a l.
-  dependent induction w; intros p0 a (p' & hl & heq); eauto with mdb.
+  intros nb l w.
+  revert p η nb l.
+  dependent induction w; intros p0 η nb (p' & hl & heq); eauto with mdb.
   - exists p0. split; eauto with mdb. exists p'. split; eauto with mdb.
   - destruct (eq_spec p' q τ) as (r & hlr & heqr); eauto with mdb.
-    destruct (lts_oba_output_commutativity hl hlr) as (r' & l1 & (t' & l2 & heqt')).
-    edestruct (IHw JMeq_refl r' a) as (r0 & w0 & (r1 & l1' & heq1)).
-    exists t'. split. eassumption. etrans; eassumption.
+    destruct (lts_oba_non_blocking_action_commutativity nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
+    edestruct (IHw JMeq_refl r' η) as (r0 & w0 & (r1 & l1' & heq1)).
+    exact nb. exists t'. split. eassumption. etrans; eassumption.
     exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
 Qed.
 
-Lemma delay_wt_output `{LtsObaFW A L} {p q r a s} :
-  p ⟶⋍[ActOut a] q -> q ⟹[s] r ->
-  exists t, p ⟹[s] t /\ t ⟶⋍[ActOut a] r.
+Lemma delay_wt_non_blocking_action `{LtsObaFW P A} {p q r η s} :
+  NonBlocking η ->
+  p ⟶⋍[η] q -> q ⟹[s] r ->
+  exists t, p ⟹[s] t /\ t ⟶⋍[η] r.
 Proof.
-  revert p q r a.
-  induction s as [|μ s']; intros p q r a l w.
-  - eapply delay_wt_output_nil; eauto.
+  revert p q r η.
+  induction s as [|μ s']; intros p q r η nb l w.
+  - eapply delay_wt_non_blocking_action_nil; eauto.
   - eapply wt_pop in w as (q' & w0 & w1).
     destruct (wt_decomp_one w0) as (q0 & q1 & w2 & l' & w3).
-    destruct (delay_wt_output_nil l w2) as (t & w4 & (q0' & l1' & heq')).
+    destruct (delay_wt_non_blocking_action_nil nb l w2) as (t & w4 & (q0' & l1' & heq')).
     destruct (eq_spec q0' q1 (ActExt μ)) as (r' & hr' & heqr'). eauto with mdb.
-    destruct (lts_oba_output_commutativity l1' hr') as (u & l2 & l3).
+    destruct (lts_oba_non_blocking_action_commutativity nb l1' hr') as (u & l2 & l3).
     edestruct (eq_spec_wt q1 r' (symmetry heqr') r) as (t1 & w5 & l4); eauto with mdb.
     eapply wt_push_nil_left; eassumption.
     edestruct (IHs' u r') as (t2 & w6 & l5); eauto with mdb.
@@ -667,7 +718,7 @@ Proof.
     etrans; eassumption.
 Qed.
 
-Lemma cnv_preserved_by_eq `{LtsEq A L} p q s : p ⋍ q -> p ⇓ s -> q ⇓ s.
+Lemma cnv_preserved_by_eq `{LtsEq P A} p q s : p ⋍ q -> p ⇓ s -> q ⇓ s.
 Proof.
   intros heq hcnv. revert q heq.
   induction hcnv; intros.
@@ -680,34 +731,36 @@ Proof.
       eapply (H4 t' hlt' t heqt').
 Qed.
 
-Lemma cnv_preserved_by_lts_output `{LtsObaFW A L} p q a s :
-  p ⇓ s -> p ⟶[ActOut a] q -> q ⇓ s.
+Lemma cnv_preserved_by_lts_non_blocking_action `{LtsObaFW P A} p q η s :
+  NonBlocking η -> p ⇓ s -> p ⟶[η] q -> q ⇓ s.
 Proof.
-  revert p q a.
-  induction s as [|μ s']; intros p q a hacnv l.
+  revert p q η.
+  induction s as [|μ s']; intros p q η nb hacnv l.
   - eapply cnv_nil. inversion hacnv. subst.
-    eapply terminate_preserved_by_lts_output; eassumption.
+    eapply terminate_preserved_by_lts_non_blocking_action; eassumption.
   - inversion hacnv. subst.
     eapply cnv_act.
-    + eapply terminate_preserved_by_lts_output; eassumption.
+    + eapply terminate_preserved_by_lts_non_blocking_action; eassumption.
     + intros r w.
-      destruct (delay_wt_output (mk_lts_eq l) w) as (t & w0 & l1).
+      destruct (delay_wt_non_blocking_action nb (mk_lts_eq l) w) as (t & w0 & l1).
       destruct l1 as (r' & l2 & heq).
       eapply cnv_preserved_by_eq. eassumption.
-      eapply IHs'. eapply H7, w0.
+      eapply IHs'. exact nb. eapply H7, w0.
       eassumption.
 Qed.
 
-Lemma cnv_preserved_by_wt_output `{LtsObaFW A L} p q a s :
-  p ⇓ s -> p ⟹{ActOut a} q -> q ⇓ s.
+Lemma cnv_preserved_by_wt_non_blocking_action `{LtsObaFW P A} p q η s :
+  NonBlocking η -> p ⇓ s -> p ⟹{η} q -> q ⇓ s.
 Proof.
-  intros hcnv w.
+  intros nb hcnv w.
   destruct (wt_decomp_one w) as (r1 & r2 & w1 & l0 & w2).
   eapply (cnv_preserved_by_wt_nil _ r2); eauto.
-  eapply (cnv_preserved_by_lts_output r1); eauto.
+  eapply (cnv_preserved_by_lts_non_blocking_action r1); eauto.
   eapply cnv_preserved_by_wt_nil; eauto.
 Qed.
 
+(* 
+(* A travailler, à définir *)
 Lemma cnv_drop_input_hd `{LtsObaFW A L} p a s :
   p ⇓ ActIn a :: s -> p ⇓ s.
 Proof.
@@ -716,23 +769,24 @@ Proof.
   destruct (lts_oba_fw_forward p a) as (r & l1 & l2).
   eapply cnv_preserved_by_lts_output.
   eapply H7. eapply wt_act. eassumption. eapply wt_nil. eapply l2.
-Qed.
+Qed. *)
 
 (* fixme: it should be enought to have ltsOBA + one of the feedback *)
-Lemma cnv_retract_lts_output `{LtsObaFW A L} p q a s :
-  p ⇓ s -> p ⟶[ActOut a] q -> q ⇓ ActIn a :: s.
+(*Bizarre*)
+Lemma cnv_retract_lts_non_blocking_action `{LtsObaFW P A} p q η μ s :
+  NonBlocking η -> (*  IsDual η μ -> *) p ⇓ s -> p ⟶[η] q -> q ⇓ μ :: s.
 Proof.
-  intros hcnv l.
+  intros nb (* duo *) hcnv l.
   eapply cnv_act.
-  - inversion hcnv; eapply terminate_preserved_by_lts_output; eassumption.
+  - inversion hcnv; eapply terminate_preserved_by_lts_non_blocking_action; eassumption.
   - intros q' w.
     destruct (wt_decomp_one w) as (r1 & r2 & w1 & l0 & w2).
-    destruct (delay_wt_output (mk_lts_eq l) w1) as (t & w0 & l1).
+    destruct (delay_wt_non_blocking_action nb (mk_lts_eq l) w1) as (t & w0 & l1).
     destruct l1 as (r' & l1 & heq).
     edestruct (eq_spec r' r2) as (r & hlr & heqr). exists r1. eauto.
     eapply (cnv_preserved_by_wt_nil _ r2); eauto.
     eapply cnv_preserved_by_eq. eassumption.
-    destruct (lts_oba_fw_feedback l1 hlr) as [(t0 & hlt0 & heqt0)|].
+    destruct (lts_oba_fw_feedback nb l1 hlr) as [(t0 & hlt0 & heqt0)|].
     eapply cnv_preserved_by_eq. eassumption.
     eapply cnv_preserved_by_lts_tau.
     eapply (cnv_preserved_by_wt_nil _ p); eauto. eassumption.
@@ -740,40 +794,40 @@ Proof.
     eapply (cnv_preserved_by_wt_nil _ p); eauto.
 Qed.
 
-Lemma cnv_retract_wt_output `{LtsObaFW A L} p q a s :
-  p ⇓ s -> p ⟹{ActOut a} q -> q ⇓ ActIn a :: s.
+Lemma cnv_retract_wt_non_blocking_action `{LtsObaFW P A} p q η μ s :
+  NonBlocking η -> (*  IsDual η μ  ->*) p ⇓ s -> p ⟹{η} q -> q ⇓ μ :: s.
 Proof.
-  intros hcnv w.
+  intros nb (* duo *) hcnv w.
   eapply wt_decomp_one in w as (t1 & t2 & w1 & l & w2).
   eapply cnv_preserved_by_wt_nil; eauto.
-  eapply (cnv_retract_lts_output t1); eauto.
+  eapply (cnv_retract_lts_non_blocking_action t1); eauto.
   eapply cnv_preserved_by_wt_nil; eauto.
 Qed.
 
 (* fixme: naming clash join/concat/push etc *)
-Lemma wt_join_nil `{Lts A L} {p q r} : p ⟹ q -> q ⟹ r -> p ⟹ r.
+Lemma wt_join_nil `{Lts P A} {p q r} : p ⟹ q -> q ⟹ r -> p ⟹ r.
 Proof. intros w1 w2. dependent induction w1; eauto with mdb. Qed.
 
-Lemma wt_join_nil_eq `{LtsEq A L} {p q r} : p ⟹⋍ q -> q ⟹⋍ r -> p ⟹⋍ r.
+Lemma wt_join_nil_eq `{LtsEq P A} {p q r} : p ⟹⋍ q -> q ⟹⋍ r -> p ⟹⋍ r.
 Proof.
   intros (q' & hwq' & heqq') (r' & hwr' & heqr').
   destruct (eq_spec_wt _ _ (symmetry heqq') r' [] hwr') as (r1 & hwr1 & heqr1).
   exists r1. split. eapply (wt_push_nil_left hwq' hwr1). etrans; eassumption.
 Qed.
 
-Lemma wt_join_nil_eq_l `{LtsEq A L} {p q r s} : p ⟹⋍ q -> q ⟹[s] r -> p ⟹⋍[s] r.
+Lemma wt_join_nil_eq_l `{LtsEq P A} {p q r s} : p ⟹⋍ q -> q ⟹[s] r -> p ⟹⋍[s] r.
 Proof.
   intros (q' & hwq' & heqq') w2.
   destruct (eq_spec_wt _ _ (symmetry heqq') r s w2) as (r1 & hwr1 & heqr1).
   exists r1. split. eapply (wt_push_nil_left hwq' hwr1). eassumption.
 Qed.
 
-Lemma wt_join_nil_eq_r `{LtsEq A L} {p q r s} : p ⟹[s] q -> q ⟹⋍ r -> p ⟹⋍[s] r.
+Lemma wt_join_nil_eq_r `{LtsEq P A} {p q r s} : p ⟹[s] q -> q ⟹⋍ r -> p ⟹⋍[s] r.
   intros w1 (r' & hwr' & heqr').
   exists r'. split. eapply wt_push_nil_right; eauto. eassumption.
 Qed.
 
-Lemma wt_join_eq `{LtsEq A L} {p q r s1 s2} : p ⟹⋍[s1] q -> q ⟹⋍[s2] r -> p ⟹⋍[s1 ++ s2] r.
+Lemma wt_join_eq `{LtsEq P A} {p q r s1 s2} : p ⟹⋍[s1] q -> q ⟹⋍[s2] r -> p ⟹⋍[s1 ++ s2] r.
   revert p q r s2.
   induction s1; intros p q r s2 (q' & hwq' & heqq') w2; simpl in *.
   - destruct w2 as  (r' & hwr' & heqr').
@@ -785,30 +839,31 @@ Lemma wt_join_eq `{LtsEq A L} {p q r s1 s2} : p ⟹⋍[s1] q -> q ⟹⋍[s2] r -
     exists t'. split. eapply (wt_push_left w0 hwt'). eassumption.
 Qed.
 
-Lemma wt_join_eq_l `{LtsEq A L} {p q r s1 s2} : p ⟹⋍[s1] q -> q ⟹[s2] r -> p ⟹⋍[s1 ++ s2] r.
+Lemma wt_join_eq_l `{LtsEq P A} {p q r s1 s2} : p ⟹⋍[s1] q -> q ⟹[s2] r -> p ⟹⋍[s1 ++ s2] r.
 Proof.
   intros (q' & hwq' & heqq') w2.
   destruct (eq_spec_wt _ _ (symmetry heqq') r s2 w2) as (r1 & hwr1 & heqr1).
   exists r1. split. eapply wt_concat; eassumption. eassumption.
 Qed.
 
-Lemma wt_join_eq_r `{LtsEq A L} {p q r s1 s2} : p ⟹[s1] q -> q ⟹⋍[s2] r -> p ⟹⋍[s1 ++ s2] r.
+Lemma wt_join_eq_r `{LtsEq P A} {p q r s1 s2} : p ⟹[s1] q -> q ⟹⋍[s2] r -> p ⟹⋍[s1 ++ s2] r.
 Proof.
   intros w1 (r' & hwr' & heqr').
   exists r'. split. eapply wt_concat; eassumption. eassumption.
 Qed.
 
-Lemma wt_annhil `{LtsObaFW A L} p q a : p ⟹[[ActOut a ; ActIn a]] q -> p ⟹⋍ q.
+(*Bizarre*)
+Lemma wt_annhil `{LtsObaFW P A} p q η μ : NonBlocking η -> (* IsDual η μ -> *) p ⟹[[η ; μ]] q -> p ⟹⋍ q.
 Proof.
-  intros w.
-  destruct (wt_pop p q (ActOut a) [ActIn a] w) as (u & w1 & w2).
+  intros nb (* id *) w.
+  destruct (wt_pop p q (η) [μ] w) as (u & w1 & w2).
   eapply wt_decomp_one in w1 as (t1 & t2 & w3 & l1 & w4).
   eapply wt_decomp_one in w2 as (r1 & r2 & w5 & l2 & w6).
   eapply (wt_join_nil_eq_r w3).
-  destruct (delay_wt_output_nil (mk_lts_eq l1) (wt_join_nil w4 w5)) as (v & w0 & (v' & hlv' & heqv')).
+  destruct (delay_wt_non_blocking_action_nil nb (mk_lts_eq l1) (wt_join_nil w4 w5)) as (v & w0 & (v' & hlv' & heqv')).
   eapply (wt_join_nil_eq_r w0).
-  destruct (eq_spec v' r2 (ActExt $ ActIn a)) as (r2' & hlr2' & heqr2'); eauto with mdb.
-  edestruct (lts_oba_fw_feedback hlv' hlr2') as [(t & hlt & heqt)|].
+  destruct (eq_spec v' r2 (ActExt $ μ)) as (r2' & hlr2' & heqr2'); eauto with mdb.
+  edestruct (lts_oba_fw_feedback nb hlv' hlr2') as [(t & hlt & heqt)|].
   - eapply wt_join_nil_eq.
     exists t. split. eapply wt_tau; eauto with mdb. eassumption.
     eapply wt_join_nil_eq_r. eapply wt_nil.
@@ -817,27 +872,29 @@ Proof.
     eassumption.
 Qed.
 
-Lemma lts_to_wt `{Lts A L} {p q μ} : p ⟶[μ] q -> p ⟹{μ} q.
+Lemma lts_to_wt `{Lts P A} {p q μ} : p ⟶[μ] q -> p ⟹{μ} q.
 Proof. eauto with mdb. Qed.
 
+(* (*à redéfinir, à travailler *)
 Lemma are_inputs_preserved_by_perm {L} (s1 s2 : trace L) :
   s1 ≡ₚ s2 -> are_inputs s1 -> are_inputs s2.
-Proof. intros hp his. eapply Permutation_Forall; eauto. Qed.
+Proof. intros hp his. eapply Permutation_Forall; eauto. Qed. 
+*)
 
-Lemma are_outputs_preserved_by_perm {L} (s1 s2 : trace L) :
-  s1 ≡ₚ s2 -> are_outputs s1 -> are_outputs s2.
+Lemma are_non_blocking_action_preserved_by_perm {A Pp} (s1 s2 : trace A) :
+  s1 ≡ₚ s2 -> Forall Pp s1 -> Forall Pp s2.
 Proof. intros hp hos. eapply Permutation_Forall; eauto. Qed.
 
-Lemma wt_output_swap `{LtsObaFW A L} p q a b : p ⟹[[ActOut a ; ActOut b]] q -> p ⟹⋍[[ActOut b; ActOut a]] q.
+Lemma wt_non_blocking_action_swap `{LtsObaFW P A} p q η1 η2 : NonBlocking η1 -> NonBlocking η2 -> p ⟹[[η1 ; η2]] q -> p ⟹⋍[[η2; η1]] q.
 Proof.
-  intro w.
-  destruct (wt_pop p q (ActOut a) [ActOut b] w) as (t & w1 & w2).
+  intros nb1 nb2 w.
+  destruct (wt_pop p q η1 [η2] w) as (t & w1 & w2).
   eapply wt_decomp_one in w1 as (t1 & t2 & w3 & l1 & w4).
   eapply wt_decomp_one in w2 as (r1 & r2 & w5 & l2 & w6).
   assert (h : t2 ⟹ r1) by (eapply wt_push_nil_left; eassumption).
-  destruct (delay_wt_output (mk_lts_eq l1) h) as (r & w7 & (r1' & hlr1' & heqr1')).
-  destruct (eq_spec r1' r2 (ActExt $ ActOut b)) as (t' & hlt' & heqt'). eauto with mdb.
-  destruct (lts_oba_output_commutativity hlr1' hlt') as (u & hlu & (t0 & hlt0 & heqt0)); eauto.
+  destruct (delay_wt_non_blocking_action nb1 (mk_lts_eq l1) h) as (r & w7 & (r1' & hlr1' & heqr1')).
+  destruct (eq_spec r1' r2 (ActExt $ η2)) as (t' & hlt' & heqt'). eauto with mdb.
+  destruct (lts_oba_non_blocking_action_commutativity nb1 hlr1' hlt') as (u & hlu & (t0 & hlt0 & heqt0)); eauto.
   eapply wt_join_nil_eq_r.
   eapply (wt_push_nil_left w3).
   eapply (wt_push_nil_left w7).
@@ -845,7 +902,10 @@ Proof.
   eapply eq_spec_wt. symmetry. etrans. eapply heqt0. eapply heqt'. eapply w6.
 Qed.
 
-Lemma wt_input_swap `{LtsObaFW A L} p q a b : p ⟹[[ActIn a ; ActIn b]] q -> p ⟹⋍[[ActIn b; ActIn a]] q.
+
+(*
+(*A retravailler définition de input ?*)
+Lemma wt_input_swap `{LtsObaFW P A} p q a b : p ⟹[[ActIn a ; ActIn b]] q -> p ⟹⋍[[ActIn b; ActIn a]] q.
 Proof.
   intro w.
   destruct (wt_pop p q (ActIn a) [ActIn b] w) as (t & w1 & w2).
@@ -874,7 +934,7 @@ Proof.
     exists q'. split; eauto with mdb.
 Qed.
 
-Lemma cnv_input_swap `{LtsObaFW A L} p a b s :
+Lemma cnv_input_swap `{LtsObaFW P A} p a b s :
   p ⇓ ActIn a :: ActIn b :: s -> p ⇓ ActIn b :: ActIn a :: s.
 Proof.
   intros hcnv.
@@ -896,7 +956,7 @@ Proof.
     eapply (cnv_wt_prefix [ActIn a ; ActIn b]); eauto.
 Qed.
 
-Lemma cnv_input_perm `{LtsObaFW A L} p s1 s2 :
+Lemma cnv_input_perm `{LtsObaFW P A} p s1 s2 :
   are_inputs s1 -> s1 ≡ₚ s2 -> p ⇓ s1 -> p ⇓ s2.
 Proof.
   intros his hp hcnv.
@@ -912,29 +972,30 @@ Proof.
   - eapply IHhp2. eapply are_inputs_preserved_by_perm; eauto.
     eapply IHhp1. eapply are_inputs_preserved_by_perm; eauto.
     eassumption.
-Qed.
+Qed.*)
 
-Lemma cnv_output_swap `{LtsObaFW A L} p a b s :
-  p ⇓ ActOut a :: ActOut b :: s -> p ⇓ ActOut b :: ActOut a :: s.
+Lemma cnv_non_blocking_action_swap `{LtsObaFW P A} p η1 η2 s :
+  NonBlocking η1 -> NonBlocking η2 ->
+  p ⇓ η1 :: η2 :: s -> p ⇓ η2 :: η1 :: s.
 Proof.
-  intros hcnv.
+  intros nb1 nb2 hcnv.
   eapply cnv_act.
   - now inversion hcnv.
   - intros q hw1.
     eapply cnv_act.
     eapply (cnv_terminate q []).
-    eapply cnv_preserved_by_wt_output; eauto. eapply cnv_nil. now inversion hcnv.
+    eapply cnv_preserved_by_wt_non_blocking_action; eauto. eapply cnv_nil. now inversion hcnv.
     intros t hw2.
-    replace (ActOut a :: ActOut b :: s) with ([ActOut a ; ActOut b] ++ s) in hcnv.
+    replace (η1 :: η2 :: s) with ([η1 ; η2] ++ s) in hcnv.
     set (hw3 := wt_concat _ _ _ _ _ hw1 hw2). simpl in hw3.
-    eapply wt_output_swap in hw3 as (t' & hw4 & eq').
+    eapply wt_non_blocking_action_swap in hw3 as (t' & hw4 & eq').
     eapply cnv_preserved_by_eq. eassumption.
     eapply cnv_wt_prefix. eauto. eassumption.
-    now simpl.
+    now simpl. now simpl. now simpl.
 Qed.
 
-Lemma cnv_output_perm `{LtsObaFW A L} p s1 s2 :
-  are_outputs s1 -> s1 ≡ₚ s2 -> p ⇓ s1 -> p ⇓ s2.
+Lemma cnv_non_blocking_action_perm `{LtsObaFW P A} p s1 s2 :
+  Forall NonBlocking s1 -> s1 ≡ₚ s2 -> p ⇓ s1 -> p ⇓ s2.
 Proof.
   intros hos hp hcnv.
   revert p hos hcnv.
@@ -944,8 +1005,7 @@ Proof.
     intros q w. eapply IHhp; eauto with mdb.
     now inversion hos.
   - inversion hos. inversion H6.
-    destruct H5, H9. subst.
-    now eapply cnv_output_swap.
+    now eapply cnv_non_blocking_action_swap.
   - eapply IHhp2.
     eapply Permutation_Forall; eassumption.
     eapply IHhp1.
@@ -953,7 +1013,9 @@ Proof.
     eassumption.
 Qed.
 
-Lemma wt_input_perm `{LtsObaFW A L} {p q} s1 s2 :
+(*
+(*A retravailler , à définir *)
+Lemma wt_input_perm `{LtsObaFW P A} {p q} s1 s2 :
   are_inputs s1 -> s1 ≡ₚ s2 -> p ⟹[s1] q -> p ⟹⋍[s2] q.
 Proof.
   intros his hp w.
@@ -975,10 +1037,10 @@ Proof.
     eapply IHhp2 in hw' as (q'' & hw'' & heq''); eauto.
     exists q''. split; eauto. etrans; eauto.
     eapply are_inputs_preserved_by_perm; eauto.
-Qed.
+Qed.*)
 
-Lemma wt_output_perm `{LtsObaFW A L} {p q} s1 s2 :
-  are_outputs s1 -> s1 ≡ₚ s2 -> p ⟹[s1] q -> p ⟹⋍[s2] q.
+Lemma wt_non_blocking_action_perm `{LtsObaFW P A} {p q} s1 s2 :
+  Forall NonBlocking s1 -> s1 ≡ₚ s2 -> p ⟹[s1] q -> p ⟹⋍[s2] q.
 Proof.
   intros hos hp w.
   revert p q hos w.
@@ -989,27 +1051,28 @@ Proof.
     eapply wt_join_eq_r. eassumption.
     eapply IHhp. now inversion hos. eassumption.
   - inversion hos. inversion H6.
-    destruct H5, H9. subst.
-    replace (ActOut x3 :: ActOut x2 :: l) with ([ActOut x3 ; ActOut x2] ++ l) by eauto.
-    replace (ActOut x2 :: ActOut x3 :: l) with ([ActOut x2 ; ActOut x3] ++ l) in w by eauto.
+    (* destruct H5, H9.*) subst. 
+    replace (x :: y :: l) with ([x ; y] ++ l) by eauto.
+    replace (y :: x :: l) with ([y ; x] ++ l) in w by eauto.
     eapply wt_split in w as (p' & w1 & w2).
     eapply wt_join_eq_l.
-    eapply wt_output_swap. eassumption. eassumption.
+    eapply wt_non_blocking_action_swap. eassumption. eassumption. eassumption. eassumption.
   - eapply IHhp1 in w as (q' & hw' & heq'); eauto.
     eapply IHhp2 in hw' as (q'' & hw'' & heq''); eauto.
     exists q''. split; eauto. etrans; eauto.
-    eapply are_outputs_preserved_by_perm; eauto.
+    eapply are_non_blocking_action_preserved_by_perm; eauto.
 Qed.
 
-Lemma push_wt_output `{LtsObaFW A L} {p q a s} :
-  p ⟹[ActOut a :: s] q ->
-  p ⟹⋍[s ++ [ActOut a]] q.
+Lemma push_wt_non_blocking_action `{LtsObaFW P A} {p q η s} :
+  NonBlocking η ->
+  p ⟹[η :: s] q ->
+  p ⟹⋍[s ++ [η]] q.
 Proof.
-  intro w.
+  intros nb w.
   eapply wt_pop in w as (t & w1 & w2).
   eapply wt_decomp_one in w1 as (t1 & t2 & w3 & l & w4).
   set (w5 := wt_push_nil_left w4 w2).
-  destruct (delay_wt_output (mk_lts_eq l) w5) as (r & w6 & w7).
+  destruct (delay_wt_non_blocking_action nb (mk_lts_eq l) w5) as (r & w6 & w7).
   eapply wt_join_eq.
   exists r. split.
   eapply wt_push_nil_left; eassumption. reflexivity.
@@ -1017,63 +1080,103 @@ Proof.
   exists u. split. eapply wt_act. eassumption. eapply wt_nil. eassumption.
 Qed.
 
+(*
+(* à travailler, à définir *)
 Lemma map_co_are_inputs_are_outputs {L} (s : trace L) : are_inputs s -> are_outputs (map co s).
 Proof.
   induction s; intros his.
   - now eapply Forall_nil.
   - inversion his. destruct H1. subst. simpl.
     eapply Forall_cons. eexists. reflexivity. eapply IHs. eauto.
-Qed.
+Qed.*)
 
-Lemma cnv_retract `{LtsObaFW A L} p q s1 s2 :
-  are_outputs s1 -> p ⇓ s2 -> p ⟹[s1] q -> q ⇓ map co s1 ++ s2.
-Proof.
-  revert s2 p q.
-  induction s1; intros s2 p q hos hcnv w.
-  - eapply cnv_preserved_by_wt_nil; eauto.
-  - inversion hos. destruct H5. subst. simpl.
-    eapply push_wt_output in w as (q' & hwq' & heqq').
+Fixpoint map2 {A B C} (f : A -> B -> C) (l1 : list A) (l2 : list B) : list C := 
+  match l1 with
+       | [] => []
+       | a :: t => match l2 with 
+                      | [] => []
+                      | b :: t' => (f a b) :: map2 f t t'
+                  end
+  end.
+
+(* necessary ? *)
+Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list B → Prop :=
+    Forall2_nil : Forall2 P [] [] | Forall2_cons : ∀ (x : A) (y : B) (la : list A) (lb : list B), P x y → Forall2 P la lb → Forall2 P (x :: la) (y :: lb).
+
+Lemma cnv_retract `{LtsObaFW P A} p q s1 s2 s3:
+  Forall NonBlocking s1 -> Forall2 IsDual s1 s3 -> p ⇓ s2 -> p ⟹[s1] q -> q ⇓ s3 ++ s2.
+Proof. 
+  revert s2 s3 p q.
+  induction s1; intros s2 s3 p q hos duo hcnv w; inversion duo ; subst.
+  - eapply cnv_preserved_by_wt_nil ; eauto.
+  - inversion hos. subst. 
+    eapply push_wt_non_blocking_action in w as (q' & hwq' & heqq').
     eapply wt_split in hwq' as (t & w1 & w2).
-    eapply cnv_preserved_by_eq. eassumption.
-    eapply cnv_retract_wt_output.
-    eapply (IHs1 s2 p t H6 hcnv w1). eassumption.
+    eapply cnv_preserved_by_eq. eassumption. subst.
+    eapply cnv_retract_wt_non_blocking_action; eauto. eauto.
 Qed.
 
-Lemma forward_s `{LtsObaFW A L} p s :
-  are_inputs s -> exists t, p ⟹[s] t /\ t ⟹⋍[map co s] p.
+Lemma forward_s `{LtsObaFW P A} p s1 s3:
+  Forall NonBlocking s3 -> Forall2 IsDual s3 s1 -> exists t, p ⟹[s1] t /\ t ⟹⋍[s3] p.
 Proof.
-  intros his. revert p his. dependent induction s; intros.
+  intros nb duo. revert p nb duo. dependent induction s1; intros; inversion duo ; subst.
   - exists p. simpl. split; eauto with mdb.
     exists p. split; eauto with mdb. reflexivity.
-  - inversion his. destruct H5. subst.
-    simpl.
-    destruct (lts_oba_fw_forward p x0) as (q & l0 & l1).
-    destruct (IHs q H6) as (q' & w1 & w2).
+  - (* inversion his. destruct H5. subst. 
+    simpl.*)
+    inversion nb; subst. 
+    edestruct (lts_oba_fw_forward p x a) as (q & l0 & l1); eauto.
+    destruct (IHs1 la q H8) as (q' & w1 & w2); eauto.
     exists q'. split.
     + eauto with mdb.
-    + assert (q' ⟹⋍[map co s ++ [ActOut x0]] p).
+    + assert (q' ⟹⋍[la ++ [x]] p).
       eapply wt_join_eq.
       eassumption. (* destruct l1 as (p' & hlp' & heqp'). *)
       exists p. split. eauto with mdb. reflexivity.
       destruct H3 as (p' & hwp' & heqp').
-      eapply (wt_output_perm (map co s ++ [ActOut x0])) in hwp' as (p0 & hwp0 & heqp0).
+      eapply (wt_non_blocking_action_perm (la ++ [x])) in hwp' as (p0 & hwp0 & heqp0).
       exists p0. split. eassumption. etrans; eassumption.
-      eapply Forall_app. split.
-      now eapply map_co_are_inputs_are_outputs.
-      eapply Forall_cons. eauto. eexists. reflexivity. eauto.
+      eapply Forall_app. split. assumption. eauto. 
+      (* now eapply map_co_are_inputs_are_outputs.
+      eapply Forall_cons. eauto. eexists. reflexivity. eauto. *)
       symmetry. eapply Permutation_cons_append.
 Qed.
 
-Lemma map_co_involution {L} (s : trace L) : map co (map co s) = s.
-Proof. induction s; cbn; eauto. now rewrite co_involution, IHs. Qed.
+(* Lemma map_co_involution {L} (s : trace L) : map co (map co s) = s.
+Proof. induction s; cbn; eauto. now rewrite co_involution, IHs. Qed. *)
 
-Lemma cnv_drop_output_in_the_middle `{LtsObaFW A L} p s1 s2 a :
-  are_inputs s1 ->
-  p ⇓ s1 ++ [ActOut a] ++ s2 ->
-  forall r, p ⟶[ActOut a] r -> r ⇓ s1 ++ s2.
+
+(* Lemma cnv_drop_in_the_middle `{LtsObaFW P A} p s1 s2 s3 (* η *) μ:
+  Forall NonBlocking s3 -> Forall2 IsDual s3 s1 ->
+  p ⇓ s1 ++ [μ] ++ s2 ->
+  forall r, p ⟶[μ] r -> r ⇓ s1 ++ s2.
 Proof.
-  intros his hcnv r l.
-  destruct (forward_s r s1 his) as (t & w1 & w2).
+  intros nb duo hcnv r l.
+  destruct (forward_s r s1 s3) as (t & w1 & w2). assumption. assumption.
+  * destruct (*besoin de la décidabilité de NonBlocking ?*)
+  
+  
+  destruct (delay_wt_non_blocking_action (mk_lts_eq l) w1) as (t' & w3 & l4).
+  replace s1 with (map co (map co s1)) by eapply map_co_involution.
+  destruct l4 as (t0 & hlt0 & heqt0).
+  destruct w2 as (t1 & hwt1 & heqt1).
+  set (h := eq_spec_wt t t0 (symmetry heqt0) t1 _ hwt1).
+  destruct h as (t2 & hwt2 & heqt2).
+  eapply cnv_preserved_by_eq. etrans. eapply heqt2. eassumption.
+  eapply (cnv_retract t0); eauto.
+  eapply map_co_are_inputs_are_outputs. eassumption.
+  eapply (cnv_wt_prefix (s1 ++ [ActOut a]) _ p).
+  now rewrite <- app_assoc. eapply wt_concat; eauto with mdb. *)
+
+(* 
+Lemma cnv_drop_output_in_the_middle `{LtsObaFW P A} p s1 s2 η :
+  (* are_inputs s1 -> *)
+  NonBlocking η ->
+  p ⇓ s1 ++ [η] ++ s2 ->
+  forall r, p ⟶[η] r -> r ⇓ s1 ++ s2.
+Proof.
+  intros nb hcnv r l.
+  destruct (forward_s nb s1 r) as (t & w1 & w2).
   destruct (delay_wt_output (mk_lts_eq l) w1) as (t' & w3 & l4).
   replace s1 with (map co (map co s1)) by eapply map_co_involution.
   destruct l4 as (t0 & hlt0 & heqt0).
@@ -1116,9 +1219,9 @@ Lemma cnv_drop_in_the_middle `{LtsObaFW A L} p s1 s2 μ :
 Proof.
   intros his hcnv r l.
   destruct μ; [eapply cnv_drop_input_in_the_middle | eapply cnv_drop_output_in_the_middle]; eauto.
-Qed.
+Qed. *)
 
-Lemma cnv_annhil `{LtsObaFW A L} p a s1 s2 s3 :
+(* Lemma cnv_annhil `{LtsObaFW P A} p a s1 s2 s3 :
   are_inputs s1 -> are_inputs s2 ->
   p ⇓ s1 ++ [ActIn a] ++ s2 ++ [ActOut a] ++ s3 ->
   p ⇓ s1 ++ s2 ++ s3.
@@ -1148,14 +1251,21 @@ Proof.
   eapply Forall_cons. eexists. reflexivity.
   eapply map_co_are_inputs_are_outputs. assumption.
   symmetry. eapply Permutation_app_swap_app.
-Qed.
+Qed. *)
 
-Lemma parallel_step_commutative `{M1: Lts A L, M2: Lts B L} (s1 s'1: A) (s2 s'2: B) ℓ:
+Lemma parallel_step_commutative `{M1: Lts P1 A, M2: Lts P2 A} (s1 s'1: P1) (s2 s'2: P2) ℓ:
   parallel_step (s1, s2) ℓ (s'1, s'2) → parallel_step (s2, s1) ℓ (s'2, s'1).
 Proof.
-  intros Hstep. inversion Hstep; simplify_eq; [by econstructor|by econstructor|].
-  eapply act_match_commutative in eq.
-  eapply (ParSync _ _ _ _ _ _ eq l2 l1); eauto.
+  intros Hstep. inversion Hstep; subst.
+    * now eapply ParRight.
+    * now eapply ParLeft.
+    * eapply ComDual in eq. eapply ParSync.
+      - exact eq.  eapply  eauto with mdb. eapply ParSync.ParLeft 
+  
+  intros Hstep. 
+  inversion Hstep; simplify_eq; [by econstructor|by econstructor|].
+  eapply ComDual in eq.
+  eapply ParSync.  exact eq. (ParSync _ _ _ _ _ _ eq l2 l1); eauto.
 Qed.
 
 Fixpoint search_steps {S1 S2 L: Type} `{Label L} (M1: Lts S1 L) (M2: Lts S2 L) (s1: S1) (s2: S2) s'1 s'2 candidates :=
