@@ -175,12 +175,12 @@ Class ExtAction (A : Type) :=
   MkExtAction {
       extaction_eqdec: EqDecision A;
       extaction_countable: Countable A;
-      NonBlocking : A -> Prop;
-      nb_eqdec: forall a, Decision (NonBlocking a); (* pas nécessaire pour l'instant, 
+      non_blocking : A -> Prop;
+      nb_eqdec: forall a, Decision (non_blocking a); (* pas nécessaire pour l'instant, 
                           nécessaire pour faire des preuves sur les actions visible en général*)
-      IsDual : A -> A -> Prop;
-      ExistDuoNB : forall a, NonBlocking a -> exists b , IsDual a b;
-      ComDual : forall a b, IsDual a b -> IsDual b a; (* nécessaire pour parallel_step_commutative*)
+      dual : A -> A -> Prop;
+      co_non_blocking : forall a, non_blocking a -> exists b , dual a b;
+      sym_dual : forall a b, dual a b -> dual b a; (* nécessaire pour parallel_step_commutative*)
     }.
 #[global] Existing Instance extaction_eqdec.
 #[global] Existing Instance extaction_countable.
@@ -220,8 +220,8 @@ Class Lts (P A : Type) `{ExtAction A} :=
       lts_step_decidable a α b : Decision (lts_step a α b);
 
       lts_non_blocking_action : P -> gset A; 
-      lts_non_blocking_action_spec1 p1 η p2 : NonBlocking η -> lts_step p1 (ActExt η) p2 -> η ∈ lts_non_blocking_action p1; 
-      lts_non_blocking_action_spec2 p1 η : η ∈ lts_non_blocking_action p1 -> {p2 | (NonBlocking η /\ lts_step p1 (ActExt η) p2) } ;
+      lts_non_blocking_action_spec1 p1 η p2 : non_blocking η -> lts_step p1 (ActExt η) p2 -> η ∈ lts_non_blocking_action p1; 
+      lts_non_blocking_action_spec2 p1 η : η ∈ lts_non_blocking_action p1 -> {p2 | (non_blocking η /\ lts_step p1 (ActExt η) p2) } ;
 
       lts_stable: P → Act A → Prop;
       lts_stable_decidable p α : Decision (lts_stable p α);
@@ -280,32 +280,32 @@ Class LtsOba (P A : Type) `{Lts P A, !LtsEq P A} :=
       (* Multiset of outputs *)
       lts_oba_mo (p : P) : gmultiset A;
       lts_oba_mo_spec1 p η : η ∈ lts_oba_mo p <-> η ∈ lts_non_blocking_action p;
-      lts_oba_mo_spec2 p η : forall q, NonBlocking η -> p ⟶[ η ] q -> lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
+      lts_oba_mo_spec2 p η : forall q, non_blocking η -> p ⟶[ η ] q -> lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
       (* Selinger axioms. *)
       lts_oba_non_blocking_action_commutativity {p q r η α} :
-      NonBlocking η -> p ⟶[ η ] q -> q ⟶{ α } r -> (∃ t, p ⟶{α} t /\ t ⟶⋍[ η ] r) ;
+      non_blocking η -> p ⟶[ η ] q -> q ⟶{ α } r -> (∃ t, p ⟶{α} t /\ t ⟶⋍[ η ] r) ;
       lts_oba_non_blocking_action_confluence {p q1 q2 η μ} :
-      NonBlocking η -> μ ≠ η -> p ⟶[ η ] q1 -> p ⟶[ μ ] q2 ->
+      non_blocking η -> μ ≠ η -> p ⟶[ η ] q1 -> p ⟶[ μ ] q2 ->
       ∃ r, q1 ⟶[ μ ] r /\ q2 ⟶⋍[ η ] r ; 
       lts_oba_non_blocking_action_tau {p q1 q2 η} :
-      NonBlocking η -> p ⟶[ η ] q1 -> p ⟶ q2 -> (∃ t, q1 ⟶ t /\ q2 ⟶⋍[ η ] t) \/ (∃ μ, (IsDual η μ) /\ q1 ⟶⋍[ μ ] q2) ; 
+      non_blocking η -> p ⟶[ η ] q1 -> p ⟶ q2 -> (∃ t, q1 ⟶ t /\ q2 ⟶⋍[ η ] t) \/ (∃ μ, (dual η μ) /\ q1 ⟶⋍[ μ ] q2) ; 
       lts_oba_non_blocking_action_deter {p1 p2 p3 η} :
-      NonBlocking η -> p1 ⟶[ η ] p2 -> p1 ⟶[ η ] p3 -> p2 ⋍ p3 ;
+      non_blocking η -> p1 ⟶[ η ] p2 -> p1 ⟶[ η ] p3 -> p2 ⋍ p3 ;
       (* Extra axiom, it would be nice to remove it, not used that much. *)
       lts_oba_non_blocking_action_deter_inv {p1 p2 q1 q2} η :
-      NonBlocking η -> p1 ⟶[ η ] q1 -> p2 ⟶[ η ] q2 -> q1 ⋍ q2 -> p1 ⋍ p2
+      non_blocking η -> p1 ⟶[ η ] q1 -> p2 ⟶[ η ] q2 -> q1 ⋍ q2 -> p1 ⋍ p2
     }.
 
 
 Class LtsObaFB (P A: Type) `{LtsOba P A} :=
   MkLtsObaFB {
-      lts_oba_fb_feedback {p1 p2 p3 η μ} : NonBlocking η -> IsDual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 -> p1 ⟶⋍ p3
+      lts_oba_fb_feedback {p1 p2 p3 η μ} : non_blocking η -> dual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 -> p1 ⟶⋍ p3
     }.
 
 Class LtsObaFW (P A : Type) `{LtsOba P A} :=
   MkLtsObaFW {
-      lts_oba_fw_forward p1 η μ : ∃ p2, NonBlocking η -> IsDual η μ -> p1 ⟶[ μ ] p2 /\ p2 ⟶[ η ] p1 ;
-      lts_oba_fw_feedback {p1 p2 p3 η μ } : NonBlocking η -> IsDual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
+      lts_oba_fw_forward p1 η μ : ∃ p2, non_blocking η -> dual η μ -> p1 ⟶[ μ ] p2 /\ p2 ⟶[ η ] p1 ;
+      lts_oba_fw_feedback {p1 p2 p3 η μ } : non_blocking η -> dual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
     }.
 
 (* Inductive definition of terminate. *)
@@ -338,7 +338,7 @@ Qed.
 Lemma terminate_preserved_by_eq2 `{LtsEq A L} {p q} : p ⋍ q -> p ⤓ -> q ⤓.
 Proof. intros. eapply terminate_preserved_by_eq; eauto. Qed.
 
-Lemma terminate_preserved_by_lts_non_blocking_action `{LtsOba P A} {p q η} : NonBlocking η  -> p ⟶[ η ] q -> p ⤓ -> q ⤓.
+Lemma terminate_preserved_by_lts_non_blocking_action `{LtsOba P A} {p q η} : non_blocking η  -> p ⟶[ η ] q -> p ⤓ -> q ⤓.
 Proof.
   intros nb l ht. revert q η nb l.
   dependent induction ht; intros q a nb l1.
@@ -349,7 +349,7 @@ Proof.
   eapply H3. eapply l3. eapply nb. eapply l0. eassumption.
 Qed.
 
-Lemma stable_tau_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η : NonBlocking η -> p ↛ -> p ⟶[ η ] q -> q ↛.
+Lemma stable_tau_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η : non_blocking η -> p ↛ -> p ⟶[ η ] q -> q ↛.
 Proof.
   intros nb st l.
   case (lts_stable_decidable q τ); eauto.
@@ -361,7 +361,7 @@ Qed.
 
 (* A réfléchir et à travailler ? No conozco los input *)
  Lemma lts_different_action_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η μ :
-  NonBlocking η -> μ ≠ η ->
+  non_blocking η -> μ ≠ η ->
   (exists t, p ⟶[μ] t) -> p ⟶[η] q -> (exists t, q ⟶[μ] t).
 Proof.
   intros nb neq (t & hl1) hl2.
@@ -369,7 +369,7 @@ Proof.
 Qed.
 
 Lemma stable_action_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η μ :
-  NonBlocking η ->
+  non_blocking η ->
   p ↛[μ] -> p ⟶[η] q -> q ↛[μ] .
 Proof.
   intros nb st l.
@@ -452,7 +452,7 @@ Proof.
 Qed.
 
 Lemma stable_tau_preserved_by_wt_non_blocking_action `{LtsOba P A} p q s :
-  Forall NonBlocking s ->  p ↛ -> p ⟹[s] q -> q ↛.
+  Forall non_blocking s ->  p ↛ -> p ⟹[s] q -> q ↛.
 Proof.
   intros s_spec hst hw.
   induction hw; eauto.
@@ -463,7 +463,7 @@ Qed.
 
 
 Lemma stable_tau_action_preserved_by_wt_non_blocking_action `{LtsOba P A} p q s μ :
-  Forall NonBlocking s -> p ↛ -> p ↛[μ] -> p ⟹[s] q -> q ↛[μ].
+  Forall non_blocking s -> p ↛ -> p ↛[μ] -> p ⟹[s] q -> q ↛[μ].
 Proof.
   intros s_spec hst_tau hst_inp hw.
   induction hw; eauto.
@@ -478,7 +478,7 @@ Definition Eq {A : Type} (s1 : A) (s2 : A) := s1 = s2.
 Definition NotEq {A : Type} (s1 : A) (s2 : A) := s1 ≠ s2.
 
 Lemma lts_input_preserved_by_wt_output `{LtsOba P A} p q s μ :
-  Forall NonBlocking s -> Forall (NotEq μ) s-> p ↛ -> (exists t, p ⟶[μ] t) -> p ⟹[s] q -> (exists t, q ⟶[μ] t).
+  Forall non_blocking s -> Forall (NotEq μ) s-> p ↛ -> (exists t, p ⟶[μ] t) -> p ⟹[s] q -> (exists t, q ⟶[μ] t).
 Proof.
   intros s_spec1 s_spec2 hst_tau hst_inp hw.
   induction hw; eauto.
@@ -580,7 +580,7 @@ Proof.
   eapply IHw. eapply terminate_preserved_by_lts_tau; eauto. reflexivity.
 Qed.
 
-Lemma terminate_preserved_by_wt_non_blocking_action `{M: LtsOba P A} p q η : NonBlocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
+Lemma terminate_preserved_by_wt_non_blocking_action `{M: LtsOba P A} p q η : non_blocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
 Proof.
   intros nb ht w.
   dependent induction w.
@@ -606,17 +606,17 @@ Qed.
 
 
 Lemma lts_ht_input_ex `{LtsObaFW P A} (p : P) :
-  forall η, NonBlocking η -> exists μ, exists p', lts_step p (ActExt μ) p'.
+  forall η, non_blocking η -> exists μ, exists p', lts_step p (ActExt μ) p'.
 Proof. intro η. intro nb.
-assert (exists μ , IsDual η μ) as Duo.
-+ eapply ExistDuoNB. assumption.
+assert (exists μ , dual η μ) as Duo.
++ eapply co_non_blocking. assumption.
 + destruct Duo as [μ Duo]. exists μ. edestruct (lts_oba_fw_forward p η μ) as (t & l1 & l2); eauto. Qed.
 
 
 Inductive parallel_step `{H : ExtAction A, M1: @Lts P1 A H, M2: @Lts P2 A H}: P1 * P2 → Act A → P1 * P2 → Prop :=
 | ParLeft α a1 a2 b (l : a1 ⟶{α} a2) : parallel_step (a1, b) α (a2, b)
 | ParRight α a b1 b2 (l : b1 ⟶{α} b2) : parallel_step (a, b1) α (a, b2)
-| ParSync μ1 μ2 a1 a2 b1 b2 (eq : IsDual μ1 μ2) (l1 : a1 ⟶[μ1] a2) (l2 : b1 ⟶[μ2] b2) : parallel_step (a1, b1) τ (a2, b2)
+| ParSync μ1 μ2 a1 a2 b1 b2 (eq : dual μ1 μ2) (l1 : a1 ⟶[μ1] a2) (l2 : b1 ⟶[μ2] b2) : parallel_step (a1, b1) τ (a2, b2)
 .
 
 Global Hint Constructors parallel_step:mdb.
@@ -642,7 +642,7 @@ Lemma mk_lts_eq `{LtsEq P A} {p α q} : lts_step p α q -> lts_sc p α q.
 Proof. intro. exists q; split. eauto with mdb. reflexivity. Qed.
 
 Lemma delay_wt_non_blocking_action_nil `{LtsObaFW P A} {p q r η} :
-  NonBlocking η ->
+  non_blocking η ->
   p ⟶⋍[η] q ->
   q ⟹ r ->
   exists t, p ⟹ t /\ t ⟶⋍[η] r.
@@ -659,7 +659,7 @@ Proof.
 Qed.
 
 Lemma delay_wt_non_blocking_action `{LtsObaFW P A} {p q r η s} :
-  NonBlocking η ->
+  non_blocking η ->
   p ⟶⋍[η] q -> q ⟹[s] r ->
   exists t, p ⟹[s] t /\ t ⟶⋍[η] r.
 Proof.
@@ -694,7 +694,7 @@ Proof.
 Qed.
 
 Lemma cnv_preserved_by_lts_non_blocking_action `{LtsObaFW P A} p q η s :
-  NonBlocking η -> p ⇓ s -> p ⟶[η] q -> q ⇓ s.
+  non_blocking η -> p ⇓ s -> p ⟶[η] q -> q ⇓ s.
 Proof.
   revert p q η.
   induction s as [|μ s']; intros p q η nb hacnv l.
@@ -712,7 +712,7 @@ Proof.
 Qed.
 
 Lemma cnv_preserved_by_wt_non_blocking_action `{LtsObaFW P A} p q η s :
-  NonBlocking η -> p ⇓ s -> p ⟹{η} q -> q ⇓ s.
+  non_blocking η -> p ⇓ s -> p ⟹{η} q -> q ⇓ s.
 Proof.
   intros nb hcnv w.
   destruct (wt_decomp_one w) as (r1 & r2 & w1 & l0 & w2).
@@ -739,7 +739,7 @@ Qed.  *)
 
 (* fixme: it should be enought to have ltsOBA + one of the feedback *)
 Lemma cnv_retract_lts_non_blocking_action `{LtsObaFW P A} p q η μ s :
-  NonBlocking η -> IsDual η μ -> p ⇓ s -> p ⟶[η] q -> q ⇓ μ :: s.
+  non_blocking η -> dual η μ -> p ⇓ s -> p ⟶[η] q -> q ⇓ μ :: s.
 Proof.
   intros nb duo hcnv l.
   eapply cnv_act.
@@ -760,7 +760,7 @@ Proof.
 Qed.
 
 Lemma cnv_retract_wt_non_blocking_action `{LtsObaFW P A} p q η μ s :
-  NonBlocking η -> IsDual η μ -> p ⇓ s -> p ⟹{η} q -> q ⇓ μ :: s.
+  non_blocking η -> dual η μ -> p ⇓ s -> p ⟹{η} q -> q ⇓ μ :: s.
 Proof.
   intros nb duo hcnv w.
   eapply wt_decomp_one in w as (t1 & t2 & w1 & l & w2).
@@ -818,7 +818,7 @@ Proof.
 Qed.
 
 (*Bizarre*)
-Lemma wt_annhil `{LtsObaFW P A} p q η μ : NonBlocking η -> IsDual η μ -> p ⟹[[η ; μ]] q -> p ⟹⋍ q.
+Lemma wt_annhil `{LtsObaFW P A} p q η μ : non_blocking η -> dual η μ -> p ⟹[[η ; μ]] q -> p ⟹⋍ q.
 Proof.
   intros nb duo w.
   destruct (wt_pop p q (η) [μ] w) as (u & w1 & w2).
@@ -843,11 +843,11 @@ Proof. eauto with mdb. Qed.
 (*
 (* Pas besoin pour l'instant, avec la decision,  *)
 Lemma are_NotBlocking_action_preserved_by_perm {L} (s1 s2 : trace L) :
-  s1 ≡ₚ s2 -> Forall NotNonBlocking s1 -> are_inputs s2.
+  s1 ≡ₚ s2 -> Forall Notnon_blocking s1 -> are_inputs s2.
 Proof. intros hp his. eapply Permutation_Forall; eauto. Qed. 
 
 Lemma are_non_blocking_action_preserved_by_perm {L} (s1 s2 : trace L) :
-  s1 ≡ₚ s2 -> Forall NonBlocking s1 -> are_inputs s2.
+  s1 ≡ₚ s2 -> Forall non_blocking s1 -> are_inputs s2.
 Proof. intros hp his. eapply Permutation_Forall; eauto. Qed. 
 *)
 
@@ -855,7 +855,7 @@ Lemma are_actions_preserved_by_perm {A Pp} (s1 s2 : trace A) :
   s1 ≡ₚ s2 -> Forall Pp s1 -> Forall Pp s2.
 Proof. intros hp hos. eapply Permutation_Forall; eauto. Qed.
 
-Lemma wt_non_blocking_action_swap `{LtsObaFW P A} p q η1 η2 : NonBlocking η1 -> NonBlocking η2 -> p ⟹[[η1 ; η2]] q -> p ⟹⋍[[η2; η1]] q.
+Lemma wt_non_blocking_action_swap `{LtsObaFW P A} p q η1 η2 : non_blocking η1 -> non_blocking η2 -> p ⟹[[η1 ; η2]] q -> p ⟹⋍[[η2; η1]] q.
 Proof.
   intros nb1 nb2 w.
   destruct (wt_pop p q η1 [η2] w) as (t & w1 & w2).
@@ -874,7 +874,7 @@ Qed.
 
 
 Lemma wt_input_swap `{LtsObaFW P A} p q μ1 μ2 : 
-  (exists η2, NonBlocking η2 /\ IsDual η2 μ2)
+  (exists η2, non_blocking η2 /\ dual η2 μ2)
   -> p ⟹[[μ1 ; μ2]] q -> p ⟹⋍[[μ2; μ1]] q.
 Proof.
   intro BlocDuo. destruct BlocDuo as [η2 Hyp]. decompose record Hyp.
@@ -908,7 +908,7 @@ Qed.
 (*
 (* A voir *)
 Lemma cnv_input_swap `{LtsObaFW P A} p μ1 μ2 s :
-  (exists η2, NonBlocking η2 /\ IsDual η2 μ2)
+  (exists η2, non_blocking η2 /\ dual η2 μ2)
   -> p ⇓ μ1 :: μ2 :: s -> p ⇓ μ2 :: μ1 :: s.
 Proof.
   intro BlocDuo. destruct BlocDuo as [η2 Hyp]. decompose record Hyp.
@@ -954,7 +954,7 @@ Qed.
 *)
 
 Lemma cnv_non_blocking_action_swap `{LtsObaFW P A} p η1 η2 s :
-  NonBlocking η1 -> NonBlocking η2 ->
+  non_blocking η1 -> non_blocking η2 ->
   p ⇓ η1 :: η2 :: s -> p ⇓ η2 :: η1 :: s.
 Proof.
   intros nb1 nb2 hcnv.
@@ -974,7 +974,7 @@ Proof.
 Qed.
 
 Lemma cnv_non_blocking_action_perm `{LtsObaFW P A} p s1 s2 :
-  Forall NonBlocking s1 -> s1 ≡ₚ s2 -> p ⇓ s1 -> p ⇓ s2.
+  Forall non_blocking s1 -> s1 ≡ₚ s2 -> p ⇓ s1 -> p ⇓ s2.
 Proof.
   intros hos hp hcnv.
   revert p hos hcnv.
@@ -1018,7 +1018,7 @@ Proof.
 Qed. *)
 
 Lemma wt_non_blocking_action_perm `{LtsObaFW P A} {p q} s1 s2 :
-  Forall NonBlocking s1 -> s1 ≡ₚ s2 -> p ⟹[s1] q -> p ⟹⋍[s2] q.
+  Forall non_blocking s1 -> s1 ≡ₚ s2 -> p ⟹[s1] q -> p ⟹⋍[s2] q.
 Proof.
   intros hos hp w.
   revert p q hos w.
@@ -1042,7 +1042,7 @@ Proof.
 Qed.
 
 Lemma push_wt_non_blocking_action `{LtsObaFW P A} {p q η s} :
-  NonBlocking η ->
+  non_blocking η ->
   p ⟹[η :: s] q ->
   p ⟹⋍[s ++ [η]] q.
 Proof.
@@ -1073,7 +1073,7 @@ Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list
     | Forall2_cons : ∀ (x : A) (y : B) (la : list A) (lb : list B), P x y → Forall2 P la lb → Forall2 P (x :: la) (y :: lb).
 
 Lemma cnv_retract `{LtsObaFW P A} p q s1 s2 s3:
-  Forall NonBlocking s1 -> Forall2 IsDual s1 s3 -> p ⇓ s2 -> p ⟹[s1] q -> q ⇓ s3 ++ s2.
+  Forall non_blocking s1 -> Forall2 dual s1 s3 -> p ⇓ s2 -> p ⟹[s1] q -> q ⇓ s3 ++ s2.
 Proof. 
   revert s2 s3 p q.
   induction s1; intros s2 s3 p q hos duo hcnv w; inversion duo ; subst.
@@ -1086,7 +1086,7 @@ Proof.
 Qed.
 
 Lemma forward_s `{LtsObaFW P A} p s1 s3:
-  Forall NonBlocking s3 -> Forall2 IsDual s3 s1 -> exists t, p ⟹[s1] t /\ t ⟹⋍[s3] p.
+  Forall non_blocking s3 -> Forall2 dual s3 s1 -> exists t, p ⟹[s1] t /\ t ⟹⋍[s3] p.
 Proof.
   intros nb duo. revert p nb duo. dependent induction s1; intros; inversion duo ; subst.
   - exists p. simpl. split; eauto with mdb.
@@ -1109,13 +1109,13 @@ Qed.
 
 
 (* Lemma cnv_drop_in_the_middle `{LtsObaFW P A} p s1 s2 s3 (* η *) μ:
-  Forall NonBlocking s3 -> Forall2 IsDual s3 s1 ->
+  Forall non_blocking s3 -> Forall2 dual s3 s1 ->
   p ⇓ s1 ++ [μ] ++ s2 ->
   forall r, p ⟶[μ] r -> r ⇓ s1 ++ s2.
 Proof.
   intros nb duo hcnv r l.
   destruct (forward_s r s1 s3) as (t & w1 & w2). assumption. assumption.
-  * destruct (*besoin de la décidabilité de NonBlocking ?*)
+  * destruct (*besoin de la décidabilité de non_blocking ?*)
   
   
   destruct (delay_wt_non_blocking_action (mk_lts_eq l) w1) as (t' & w3 & l4).
@@ -1133,7 +1133,7 @@ Proof.
 (* 
 Lemma cnv_drop_output_in_the_middle `{LtsObaFW P A} p s1 s2 η :
   (* are_inputs s1 -> *)
-  NonBlocking η ->
+  non_blocking η ->
   p ⇓ s1 ++ [η] ++ s2 ->
   forall r, p ⟶[η] r -> r ⇓ s1 ++ s2.
 Proof.
@@ -1221,20 +1221,20 @@ Proof.
   intros Hstep. inversion Hstep; subst.
     * now eapply ParRight.
     * now eapply ParLeft.
-    * eapply ComDual in eq. eapply ParSync.
+    * eapply sym_dual in eq. eapply ParSync.
       - exact eq.
       - assumption.
       - assumption.
 Qed. 
 
 (* 
-=> Besoin existence d'une co-action pour chaque action : forall μ, exists η, IsDual μ η
+=> Besoin existence d'une co-action pour chaque action : forall μ, exists η, dual μ η
 
 Fixpoint search_steps {S1 S2 L: Type} (* `{L} *) (M1: Lts S1 L) (M2: Lts S2 L) (s1: S1) (s2: S2) s'1 s'2 candidates :=
   match candidates with
   | [] => None
   | η::xs =>
-      if decide (lts_step s1 (ActExt η) s'1 ∧ lts_step s2 (ActExt μ) s'2 ∧ (IsDual η μ)) then
+      if decide (lts_step s1 (ActExt η) s'1 ∧ lts_step s2 (ActExt μ) s'2 ∧ (dual η μ)) then
         Some x
       else
         search_steps M1 M2 s1 s2 s'1 s'2 xs
@@ -1299,7 +1299,7 @@ Qed.
   match l with
   | [] => true
   | μ1::bs =>
-      if decide (forall μ2, IsDual μ1 μ2 ∧ ¬lts_stable s1 (ActExt $ μ1) ∧ ¬lts_stable s2 (ActExt $ μ2))
+      if decide (forall μ2, dual μ1 μ2 ∧ ¬lts_stable s1 (ActExt $ μ1) ∧ ¬lts_stable s2 (ActExt $ μ2))
         then false 
         else parallel_lts_stable_helper s1 s2 bs
   end.
@@ -1626,11 +1626,11 @@ Definition mb (A : Type) `{ExtAction A} := gmultiset A.
 Inductive lts_fw_step {P A : Type} `{Lts P A} : P * mb A -> Act A -> P * mb A -> Prop :=
 | lts_fw_p p q m α:
   lts_step p α q -> lts_fw_step (p, m) α (q, m)
-| lts_fw_send_mb m p η : (* NonBlocking η -> , pas nécessaire à priori si on part d'une mailbox vide *)
+| lts_fw_send_mb m p η : (* non_blocking η -> , pas nécessaire à priori si on part d'une mailbox vide *)
   lts_fw_step (p, {[+ η +]} ⊎ m) (ActExt $ η) (p, m)
-| lts_fw_store_mb m p η μ : NonBlocking η -> IsDual η μ -> 
+| lts_fw_store_mb m p η μ : non_blocking η -> dual η μ -> 
   lts_fw_step (p, m) (ActExt $ μ) (p, {[+ η +]} ⊎ m)
-| lts_fw_com m p η μ q : IsDual η μ -> 
+| lts_fw_com m p η μ q : dual η μ -> 
   lts_step p (ActExt $ μ) q ->
   lts_fw_step (p, {[+ η +]} ⊎ m) τ (q, m)
 .
@@ -1644,7 +1644,7 @@ Reserved Notation "p ⟿{ m } q" (at level 30, format "p  ⟿{ m }  q").
 Inductive strip `{Lts P A} : P -> gmultiset A -> P -> Prop :=
 | strip_nil p : p ⟿{∅} p
 | strip_step p1 p2 p3 η m :
-  NonBlocking η -> p1 ⟶[η] p2 -> p2 ⟿{m} p3 -> p1 ⟿{{[+ η +]} ⊎ m} p3
+  non_blocking η -> p1 ⟶[η] p2 -> p2 ⟿{m} p3 -> p1 ⟿{{[+ η +]} ⊎ m} p3
 
 where "p ⟿{ m } q" := (strip p m q).
 
@@ -1670,7 +1670,7 @@ Proof.
 Qed.
 
 Lemma strip_mem_ex `{LtsOba P A} {p1 p2 m η} :
-  p1 ⟿{{[+ η +]} ⊎ m} p2 -> (exists p', p1 ⟶[η] p' /\ NonBlocking η) .
+  p1 ⟿{{[+ η +]} ⊎ m} p2 -> (exists p', p1 ⟶[η] p' /\ non_blocking η) .
 Proof.
   intros hw.
   dependent induction hw.
@@ -1738,7 +1738,7 @@ Qed.
 Global Hint Resolve fw_eq_refl:mdb.
 
 
-Lemma lts_oba_mo_non_blocking_spec1 `{LtsOba P A} {p η} : η ∈ lts_oba_mo p -> NonBlocking η.
+Lemma lts_oba_mo_non_blocking_spec1 `{LtsOba P A} {p η} : η ∈ lts_oba_mo p -> non_blocking η.
 Proof.
 intro Hyp. 
 eapply lts_oba_mo_spec1 in Hyp. eapply lts_non_blocking_action_spec2 in Hyp. destruct Hyp. destruct a. assumption.
@@ -1746,13 +1746,13 @@ Qed.
 
 (* 
 A voir, pas clair....
-Lemma lts_oba_mo_non_blocking_spec2 `{LtsOba P A} {p η} : NonBlocking η -> η ∈ lts_oba_mo p.
+Lemma lts_oba_mo_non_blocking_spec2 `{LtsOba P A} {p η} : non_blocking η -> η ∈ lts_oba_mo p.
 Proof.
 intro Hyp. 
 eapply lts_non_blocking_action_spec1 in Hyp. eapply lts_non_blocking_action_spec2 in Hyp. destruct Hyp. destruct a. assumption.
 Qed. *)
 
-Lemma lts_oba_mo_non_blocking_contra `{LtsOba P A} {p η} : ¬ NonBlocking η -> ¬ η ∈ lts_oba_mo p.
+Lemma lts_oba_mo_non_blocking_contra `{LtsOba P A} {p η} : ¬ non_blocking η -> ¬ η ∈ lts_oba_mo p.
 Proof.
 intro NotNB. intro Hyp. eapply lts_oba_mo_non_blocking_spec1 in Hyp. contradiction.
 Qed.
@@ -1775,7 +1775,7 @@ Proof.
       edestruct (eq_spec p t (ActExt $ η)) as (u & hlu & hequ); eauto with mdb. 
       eapply lts_non_blocking_action_spec1, lts_oba_mo_spec1 in hlu. multiset_solver. assumption.
     + eapply lts_oba_mo_non_blocking_contra in n. instantiate (1 := q) in n. multiset_solver.
-  - assert {t | NonBlocking x /\ p ⟶[x] t} as (t & hlt).
+  - assert {t | non_blocking x /\ p ⟶[x] t} as (t & hlt).
     eapply lts_non_blocking_action_spec2, lts_oba_mo_spec1. multiset_solver. destruct hlt as [nb hlt].
     edestruct (eq_spec q t (ActExt $ x)) as (u & hlu & hequ).
     exists p. split. now symmetry.  assumption. 
@@ -1816,7 +1816,7 @@ Proof.
   induction ns using gmultiset_ind; intros.
   - exists p. constructor.
   - assert (mem : x ∈ lts_oba_mo p) by multiset_solver.
-    assert (exists q, NonBlocking x /\ p ⟶[x] q) as (q & l).
+    assert (exists q, non_blocking x /\ p ⟶[x] q) as (q & l).
     
     eapply lts_oba_mo_spec1, lts_non_blocking_action_spec2 in mem as (q & nbTr); eauto.
     destruct l as (nb & l).
@@ -1852,9 +1852,9 @@ Global Hint Resolve fw_eq_equiv:mdb.
 
 Definition lts_fw_stable `{ExtAction A, Lts P A} (s : P * mb A) (ℓ : Act A) : Prop :=
   match ℓ with
-  | ActExt η => if (decide (NonBlocking η)) then η ∉ lts_non_blocking_action s.1 /\ η ∉ s.2
+  | ActExt η => if (decide (non_blocking η)) then η ∉ lts_non_blocking_action s.1 /\ η ∉ s.2
                                             else False (* wrong def *)
-  | τ => lts_stable s.1 τ /\ forall η μ, η ∈ s.2 -> IsDual η μ -> s.1 ↛[μ]
+  | τ => lts_stable s.1 τ /\ forall η μ, η ∈ s.2 -> dual η μ -> s.1 ↛[μ]
   end.
 
 Lemma lts_com_ex_xs `{Lts P A} (p : P) (m : list A) :
@@ -1940,7 +1940,7 @@ Proof.
 Qed. *)
 
 (* Lemma decision_lts_fw_step_non_blocking_action `{Lts P A} p1 m1 p2 m2 η :
-  NonBlocking η -> Decision (lts_fw_step (p1, m1) (ActExt $ η) (p2, m2)).
+  non_blocking η -> Decision (lts_fw_step (p1, m1) (ActExt $ η) (p2, m2)).
 Proof.
   destruct (decide (m1 = {[+ η +]} ⊎ m2)); subst.
   destruct (decide (p1 = p2)); subst.
@@ -2058,7 +2058,6 @@ Proof.
   etrans. eassumption. now symmetry.
 Qed.
 
-Print mb.
 
 Inductive ForallMSET {A : Type} {EqDecision0 : EqDecision A} {H : Countable A} (P : A → Prop) : gmultiset A → Prop :=
     Forall_nil : ForallMSET P ∅ | Forall_cons : ∀ (x : A) (m : gmultiset A), P x → ForallMSET P m → ForallMSET P ({[+ x +]} ⊎ m).
@@ -2139,8 +2138,8 @@ Qed.
 
 (* 
 (* (* à faire avant au lieu des neq ? *)
-Lemma BlockingAction_are_not_non_blocking `{LtsOba P A} {η μ} : NonBlocking μ -> ¬ NonBlocking η -> μ ≠ η.
-intro. intro. destruct (decide(NonBlocking μ)).
+Lemma BlockingAction_are_not_non_blocking `{LtsOba P A} {η μ} : non_blocking μ -> ¬ non_blocking η -> μ ≠ η.
+intro. intro. destruct (decide(non_blocking μ)).
 
 
    η ∈ lts_oba_mo p *)
