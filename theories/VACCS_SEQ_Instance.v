@@ -133,12 +133,14 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 Notation "P ; Q" := (gpr_seq P Q) (at level 50).
 
+
+(*Notation with the De Brujin's indices for the variables*)
+(* NewVar makes unrecognizable variable from the current environement*)
 Definition NewVar_in_Data (k : nat) (Y : Data) : Data := 
 match Y with
 | cst v => cst v
 | bvar i => if (decide(k < S i)) then bvar (S i) else bvar i
 end.
-
 
 Fixpoint NewVar_in_Equation (k : nat) (E : Equation Data) : Equation Data :=
 match E with
@@ -169,6 +171,8 @@ match M with
 | p1 + p2 => (gNewVar k p1) + (gNewVar k p2)
 | P ; Q => (NewVar k P) ; (NewVar k Q)
 end.
+
+
 
 Definition Lift_in_Data (k : nat) (Y : Data) : Data := 
 match Y with
@@ -232,6 +236,7 @@ match E with
 | non e => non (subst_in_Equation k X e)
 end.
 
+(* Important *)
 Fixpoint subst_in_proc (k : nat) (X : Data) (p : proc) {struct p} : proc :=
 match p with
 | P ‖ Q => (subst_in_proc k X P) ‖ (subst_in_proc k X Q)
@@ -296,12 +301,12 @@ intros. destruct d.
   * simpl. destruct (decide (n = k)).
     ** lia. (* pas top *)
     ** destruct n. 
-      -- assert ( 0 < k). lia. (* Search (if decide _ then _ else _). rewrite (decide_True _ _ H).*) destruct (decide (0 < k)). 
+      -- assert ( 0 < k). lia. destruct (decide (0 < k)). 
          *** auto. 
-         *** exfalso. auto with arith. (* ou auto car Nat.pred 0 = 0 *)
+         *** exfalso. auto with arith.
       -- destruct (decide (S n < k)).
         *** auto.
-        *** exfalso. lia. (* pas top *)
+        *** exfalso. lia. 
 Qed.
 
 Lemma All_According_To_Eq : forall e k v, (subst_in_Equation k v (NewVar_in_Equation k e) = e).
@@ -321,6 +326,8 @@ intros E. dependent induction E; intros.
   rewrite H. auto.
 Qed.
 
+(*Making a variable independent from the environment, makes the substitution non-effective *)
+(* Important *)
 Lemma All_According : forall p k v, subst_in_proc k v (NewVar k p) = p.
 Proof.
 intros. revert v. revert k.
@@ -456,6 +463,7 @@ Qed.
 Reserved Notation "p ≡ q" (at level 70).
 
 (*Naïve definition of a relation ≡ that will become a congruence ≡* by transitivity*)
+(* Important *)
 Inductive cgr_step : proc -> proc -> Prop :=
 (*  Reflexivity of the Relation ≡  *)
 | cgr_refl_step : forall p, p ≡ p
@@ -572,6 +580,7 @@ Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 #[global] Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
 
 (* The relation ≡* is an equivence relation*)
+(* Important *)
 #[global] Instance cgr_is_eq_rel  : Equivalence cgr.
 Proof. repeat split.
        + apply cgr_refl.
@@ -785,6 +794,7 @@ match S with
 end.
 
 (* The Labelled Transition System (LTS-transition) *)
+(* Important *)
 Inductive lts : proc -> (Act TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
@@ -826,14 +836,13 @@ Inductive lts : proc -> (Act TypeOfActions) -> proc -> Prop :=
     lts (p1 ; q) α (p2 ; q).
 
 (* The Labelled Transition System (LTS-transition for states) *)
+(* Important *)
 Inductive ltsM : States -> (Act TypeOfActions) -> States -> Prop :=
 (*The Input and the Output*)
 | ltsM_input : forall {M p q c v}, lts p (ActIn (c ⋉ v)) q ->
     ltsM (❲M , p❳) (ActIn (c ⋉ v)) (❲M , q❳)
 | ltsM_output : forall {M c v P},
     ltsM (❲M ⊎ {[+ c ⋉ v +]} , P❳) (ActOut (c ⋉ v)) (❲M , P❳)
-
-
 
 | ltsM_tau : forall {M p q}, lts p τ q ->
     ltsM (❲M , p❳) τ (❲M , q❳)
@@ -966,7 +975,7 @@ destruct P; simpl; intros.
     rewrite H. rewrite H0. auto.
 Qed.
 
-
+(* Important *)
 Lemma Congruence_Respects_Substitution : forall p q v k, p ≡* q -> (subst_in_proc k v p) ≡* (subst_in_proc k v q).
 Proof.
 intros. revert k. revert v. dependent induction H. 
@@ -1047,7 +1056,7 @@ destruct p; simpl; intros.
 Qed. 
 
 
-
+(* Important *)
 Lemma NewVar_Respects_Congruence : forall p p' j, p ≡* p' -> NewVar j p ≡* NewVar j p'.
 Proof.
 intros.  revert j.  dependent induction H. dependent induction H ; simpl ; auto with cgr.
@@ -1061,6 +1070,7 @@ Qed.
 
 
 (* Substition lemma, needed to contextualise the equivalence *)
+(* Important *)
 Lemma cgr_subst1 p q q' x : q ≡* q' → pr_subst x p q ≡* pr_subst x p q'.
 Proof.
 revert q q' x.
@@ -1156,6 +1166,7 @@ Proof.
 Qed.
 
 (* ≡* respects the substitution of his variable *)
+(* Important *)
 Lemma cgr_subst2 q p p' x : p ≡* p' → pr_subst x p q ≡* pr_subst x p' q.
 Proof. 
 intros hcgr. induction hcgr. constructor. now eapply cgr_step_subst2. apply transitivity with (pr_subst x y q).
@@ -1187,6 +1198,7 @@ intros. destruct H. simpl. assumption.
 Qed.
 
 (* State Transition System (STS-reduction) *)
+(* Important *)
 Inductive sts : States -> States -> Prop :=
 (*The axiomes*)
 (* Communication of channels output and input that have the same name *)
@@ -1260,6 +1272,7 @@ intros. dependent induction H0; eauto; try inversion H.
 Qed.
 
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
+(* Important *)
 Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
 Proof. 
 (* by induction on the congruence and the step then...*)
@@ -1507,6 +1520,7 @@ Qed.
 
 
 (* One side of the Harmony Lemma *)
+(* Important *)
 Lemma Reduction_Implies_TausAndCong : forall S S', (sts S S') -> (ltsM_then_sc S τ S').
 Proof.
 intros P Q Reduction. 
@@ -1533,6 +1547,7 @@ induction Reduction.
 Qed.
 
 (* The More Stronger Harmony Lemma (in one side) is more stronger *)
+(* Important *)
 Lemma Congruence_Simplicity : (forall α , ((forall P Q, (((ltsM P α Q) -> (sts P Q)))) 
 -> (forall P Q, ((ltsM_then_sc P α Q) -> (sts P Q))))).
 Proof.
@@ -1571,6 +1586,7 @@ intros. revert p2. dependent induction H;intros.
     -- assumption.
 Qed.
 
+(* Important *)
 Lemma Taus_Implies_Reduction : forall P Q, (ltsM P τ Q) -> (sts P Q).
 Proof. 
 intros.
@@ -1666,6 +1682,7 @@ intros P Q H.
 apply Congruence_Simplicity with τ. exact Taus_Implies_Reduction. exact H.
 Qed.
 
+(* Important *)
 Theorem HarmonyLemmaForCCSWithValuePassing : forall P Q, (ltsM_then_sc P τ Q) <-> (sts P Q).
 Proof.
 intros. split.
