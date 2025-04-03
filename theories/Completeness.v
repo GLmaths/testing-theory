@@ -354,7 +354,7 @@ Proof.
       as [hu | (ν & s1 & s2 & s3 & eq__s & sc & i0 & i1 & i2)]; eauto with mdb.
     eapply must_eq_client. symmetry. eassumption.
     eapply Hlength.
-    ++ subst. rewrite 6 length_app. simpl. lia.
+    ++ subst. rewrite 6 app_length. simpl. lia.
     ++ inversion i0. subst. eapply cnv_annhil; eauto.
   + intros p' e' ν hle hlp.
     destruct (inversion_gen_mu_gen_conv s ν e' hle)
@@ -363,7 +363,7 @@ Proof.
     eapply (cnv_drop_in_the_middle p s1 s2) in hlp; subst; eauto with mdb.
     eapply must_eq_client. symmetry. eassumption.
     eapply Hlength; subst; eauto with mdb.
-    rewrite 2 length_app. simpl. lia.
+    rewrite 2 app_length. simpl. lia.
 Qed.
 
 Lemma must_iff_cnv
@@ -641,7 +641,7 @@ Proof.
       eapply (must_eq_client p (gen_acc O2 (s1 ++ s2 ++ s3))). now symmetry.
       edestruct (gen_acc_tau_ex s1 s2 s3 μ O1) as (t & hlt & heqt); eauto.
       eapply Hlength; eauto.
-      ++ rewrite heqs, 6 length_app. simpl. lia.
+      ++ rewrite heqs, 6 app_length. simpl. lia.
       ++ eapply must_eq_client. eapply heqt. eapply et. now rewrite heqs.
     + intros p' e' μ l1 l2.
       edestruct inversion_gen_mu_gen_acc as [|H3]; eauto with mdb.
@@ -650,7 +650,7 @@ Proof.
       edestruct @f_gen_lts_mu_in_the_middle as (t & l & heq'); eauto.
       now destruct gen_spec_acc0.
       eapply Hlength. rewrite heqs.
-      rewrite 2 length_app. simpl. lia.
+      rewrite 2 app_length. simpl. lia.
       eapply must_eq_client. eapply heq'.
       eapply com. rewrite heqs. eassumption.
       now rewrite co_involution. eassumption.
