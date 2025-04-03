@@ -37,7 +37,7 @@ From Must Require Import TransitionSystems Must Completeness.
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -72,14 +72,14 @@ Notation "'non' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
-Context (Eval_Eq : Equation Data -> (option bool)).
-Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+Parameter (Eval_Eq : Equation Data -> (option bool)).
+Parameter (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+Parameter (channel_is_countable : Countable Channel). (* only here for the classes *)
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+Parameter (value_eq_dec : EqDecision Value). (* only here for the classes *)
 #[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
-Context (value_is_countable : Countable Value). (* only here for the classes *)
+Parameter (value_is_countable : Countable Value). (* only here for the classes *)
 #[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
 
 (* Definition of processes*)
@@ -122,7 +122,7 @@ Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
 Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • 𝟘" := (pr_output c v) (at level 50).
-Notation "c ? x • P" := (gpr_input c P) (at level 50).
+Notation "c ? P" := (gpr_input c P) (at level 50).
 Notation "'t' • P" := (gpr_tau P) (at level 50).
 Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
@@ -165,7 +165,7 @@ with subst_in_gproc k X M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (subst_in_proc (S k) (Succ_bvar X) p)  (* Succ_bvar X = NewVar_in_Data 0 v *)
+| c ? p => c ? (subst_in_proc (S k) (Succ_bvar X) p)  (* Succ_bvar X = NewVar_in_Data 0 v *)
 | t • p => t • (subst_in_proc k X p)
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
 end.
@@ -204,7 +204,7 @@ with gNewVar k M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (NewVar (S k) p)
+| c ? p => c ? (NewVar (S k) p)
 | t • p => t • (NewVar k p)
 | p1 + p2 => (gNewVar k p1) + (gNewVar k p2)
 end.
@@ -223,7 +223,7 @@ end
 with gpr_subst id p q {struct p} := match p with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (pr_subst id p (NewVar 0 q))
+| c ? p => c ? (pr_subst id p (NewVar 0 q))
 | t • p => t • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
@@ -233,7 +233,7 @@ end.
 Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) (ActIn (c ⋉ v)) (P^v)
+    lts (c ? P) (ActIn (c ⋉ v)) (P^v)
 | lts_output : forall {c v},
     lts (c ! v • 𝟘) (ActOut (c ⋉ v)) 𝟘
 
@@ -288,7 +288,7 @@ with gsize p :=
   match p with
   | ① => 1
   | 𝟘 => 0
-  | c ? x • p => S (size p)
+  | c ? p => S (size p)
   | t • p => S (size p)
   | p + q => S (gsize p + gsize q)
 end.
@@ -334,7 +334,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (t • p) (t • q)
 | cgr_input_step : forall c p q,
     cgr_step p q ->
-    cgr_step (c ? x • p) (c ? x • q)
+    cgr_step (c ? p) (c ? q)
 | cgr_par_step : forall p q r,
     cgr_step p q ->
     p ‖ r ≡ q ‖ r
@@ -457,7 +457,7 @@ intros. dependent induction H.
 constructor. 
 apply cgr_tau_step. exact H. eauto with cgr_eq.
 Qed. 
-Lemma cgr_input : forall c p q, p ≡* q -> (c ? x • p) ≡* (c ? x • q).
+Lemma cgr_input : forall c p q, p ≡* q -> (c ? p) ≡* (c ? q).
 Proof.
 intros.
 dependent induction H. 
@@ -607,7 +607,7 @@ Inductive sts : proc -> proc -> Prop :=
 (*The axiomes*)
 (* Communication of channels output and input that have the same name *)
 | sts_com : forall {c v p2 g2}, 
-    sts ((c ! v • 𝟘) ‖ ((c ? x • p2) + g2)) (𝟘 ‖ (p2 ^ v))
+    sts ((c ! v • 𝟘) ‖ ((c ? p2) + g2)) (𝟘 ‖ (p2 ^ v))
 (* Nothing more , something less *)
 | sts_tau : forall {p g}, 
     sts ((t • p) + g) p
@@ -636,7 +636,7 @@ Inductive sts : proc -> proc -> Prop :=
 
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 Lemma ReductionShape : forall P Q, sts P Q ->
-((exists c v P2 G2 S, ((P ≡* ((c ! v • 𝟘) ‖ ((c ? x • P2) + G2)) ‖ S)) /\ (Q ≡*((𝟘 ‖ (P2^v)) ‖ S)))
+((exists c v P2 G2 S, ((P ≡* ((c ! v • 𝟘) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((𝟘 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
 \/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
 \/ (exists P1 P0 S E, (P ≡* ((If E Then P1 Else P0) ‖ S)) /\ (Q ≡* P1 ‖ S) /\ (Eval_Eq E = Some true))
@@ -654,7 +654,7 @@ induction Transition.
     split. apply cgr_par_nil_rev. assumption.
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]]. 
     * decompose record IH. left. exists x. exists x0. exists x1. exists x2. exists (x3 ‖ q). split.
-        ** apply transitivity with ((((x ! x0 • 𝟘) ‖ ((x ? l • x1) + x2)) ‖ x3) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
+        ** apply transitivity with ((((x ! x0 • 𝟘) ‖ ((x ? x1) + x2)) ‖ x3) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
         ** apply transitivity with (((𝟘 ‖ x1^x0) ‖ x3) ‖ q). apply cgr_par. auto.  apply cgr_par_assoc. 
     * decompose record IH. right. left. exists x. exists x0. exists (x1 ‖ q). split.
         ** apply transitivity with (((t • x + x0) ‖ x1) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
@@ -691,32 +691,32 @@ Qed.
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForInput : forall P Q c v, (lts P (ActIn (c ⋉ v))) Q -> 
-(exists P1 G R, ((P ≡* ((c ? x • P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
+(exists P1 G R, ((P ≡* ((c ? P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P Q c v Transition.
  dependent induction Transition.
 - exists P. exists 𝟘. exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? x • P) + 𝟘). apply cgr_trans with (c ? x • P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
+  * apply cgr_trans with ((c ? P) + 𝟘). apply cgr_trans with (c ? P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
-  * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
+  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ p). split; try split.
-  * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
+  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p2). exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? l • x) + (x0 + p2)). apply cgr_trans with (((c ? l • x) + x0) + p2).
-    apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? l • x) + x0) ‖ 𝟘).
+  * apply cgr_trans with ((c ? x) + (x0 + p2)). apply cgr_trans with (((c ? x) + x0) + p2).
+    apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? x) + x0) ‖ 𝟘).
     assumption. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. assumption.
   * reflexivity.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p1). exists 𝟘. split; try split.
-  * apply cgr_trans with ((c ? l • x) + (x0 + p1)). apply cgr_trans with (((c ? l • x) + x0) + p1).
+  * apply cgr_trans with ((c ? x) + (x0 + p1)). apply cgr_trans with (((c ? x) + x0) + p1).
     apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p2. reflexivity.
-    apply cgr_trans with (((c ? l • x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
+    apply cgr_trans with (((c ? x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p2. reflexivity. rewrite <-H2. assumption. 
   * reflexivity.
 Qed.
@@ -904,7 +904,7 @@ Qed.
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ Q).
 Proof. 
 intros P Q Reduction. 
-assert ((exists c v P2 G2 S, ((P ≡* ((c ! v • 𝟘) ‖ ((c ? x • P2) + G2)) ‖ S)) /\ (Q ≡*((𝟘 ‖ (P2^v)) ‖ S)))
+assert ((exists c v P2 G2 S, ((P ≡* ((c ! v • 𝟘) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((𝟘 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
 \/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
 \/ (exists P1 P0 S E, (P ≡* ((If E Then P1 Else P0) ‖ S)) /\ (Q ≡* P1 ‖ S) /\ (Eval_Eq E = Some true))
@@ -916,11 +916,11 @@ destruct H as [IH|[IH|[IH|[IH |IH]]]].
 (*First case τ by communication *)
 
 - decompose record IH.
-  assert (lts ((x ! x0 • 𝟘) ‖ ((x ? l • x1) + x2) ‖ x3) τ (𝟘 ‖ (x1^x0) ‖ x3)).
+  assert (lts ((x ! x0 • 𝟘) ‖ ((x ? x1) + x2) ‖ x3) τ (𝟘 ‖ (x1^x0) ‖ x3)).
   * apply lts_parL.   
     eapply lts_comL. instantiate (2:= x). instantiate (1:= x0).
     apply lts_output. apply lts_choiceL. apply lts_input.
-  * assert (sc_then_lts P τ ((𝟘 ‖ x1^x0) ‖ x3)). exists (((x ! x0 • 𝟘) ‖ ((x ? l • x1) + x2)) ‖ x3). split. assumption. assumption.
+  * assert (sc_then_lts P τ ((𝟘 ‖ x1^x0) ‖ x3)). exists (((x ! x0 • 𝟘) ‖ ((x ? x1) + x2)) ‖ x3). split. assumption. assumption.
     assert (lts_then_sc P τ ((𝟘 ‖ x1^x0) ‖ x3)). apply Congruence_Respects_Transition. assumption. destruct H3. destruct H3.
     exists x4. split. assumption. apply transitivity with ((𝟘 ‖ x1^x0) ‖ x3). assumption. symmetry. assumption.
 
@@ -1018,8 +1018,8 @@ dependent induction H.
   - apply sts_ifZero. assumption.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption.  decompose record H1.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H4.
-    eapply sts_cong. instantiate (1:=((c ! v • 𝟘) ‖ ((c ? l • x0) + x1)) ‖ (x ‖ x2)).
-    apply cgr_trans with ((c ! v • 𝟘 ‖ x) ‖ (((c ? l • x0) + x1) ‖ x2)). apply cgr_fullpar. assumption. assumption.
+    eapply sts_cong. instantiate (1:=((c ! v • 𝟘) ‖ ((c ? x0) + x1)) ‖ (x ‖ x2)).
+    apply cgr_trans with ((c ! v • 𝟘 ‖ x) ‖ (((c ? x0) + x1) ‖ x2)). apply cgr_fullpar. assumption. assumption.
     apply InversionParallele. 
     instantiate (1 := (𝟘 ‖ (x0^v)) ‖ (x ‖ x2)). apply sts_par.
     apply sts_com. 
@@ -1027,9 +1027,9 @@ dependent induction H.
     symmetry. assumption. symmetry. assumption.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption. decompose record H1.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H4.
-    eapply sts_cong. instantiate (1:=((c ! v • 𝟘) ‖ ((c ? l • x0) + x1)) ‖ (x ‖ x2)).
+    eapply sts_cong. instantiate (1:=((c ! v • 𝟘) ‖ ((c ? x0) + x1)) ‖ (x ‖ x2)).
     apply transitivity with (p1 ‖ q1). apply cgr_par_com.
-    apply transitivity with (((c ! v • 𝟘) ‖ x) ‖ (((c ? l • x0) + x1) ‖ x2)).
+    apply transitivity with (((c ! v • 𝟘) ‖ x) ‖ (((c ? x0) + x1) ‖ x2)).
     apply cgr_fullpar. assumption. assumption. apply InversionParallele. 
     instantiate (1 := (𝟘 ‖ (x0^v)) ‖ (x ‖ x2)). apply sts_par. apply sts_com.
     apply transitivity with ((𝟘 ‖ x) ‖ ((x0^v) ‖ x2)). apply InversionParallele. apply transitivity with (p2 ‖ q2). apply cgr_fullpar. 
@@ -1086,7 +1086,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_success : forall k, Well_Defined_Input_in k (①)
 | WD_nil : forall k, Well_Defined_Input_in k (𝟘)
 | WD_input : forall k c p, Well_Defined_Input_in (S k) p
-                  -> Well_Defined_Input_in k (c ? x • p)
+                  -> Well_Defined_Input_in k (c ? p)
 | WD_output : forall k c v, Well_Defined_Data k v 
                   -> Well_Defined_Input_in k (c ! v • 𝟘)
 | WD_tau : forall k p,  Well_Defined_Input_in k p -> Well_Defined_Input_in k (t • p)
@@ -1672,7 +1672,7 @@ encode_gproc (gp: gproc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) +
   match gp with
   | ① => GenNode 1 []
   | 𝟘 => GenNode 0 []
-  | c ? x • p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
+  | c ? p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
   | t • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
   end.
@@ -1702,7 +1702,7 @@ decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)
   match t' with
   | GenNode 1 [] => ①
   | GenNode 0 [] => 𝟘
-  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? x • (decode_proc ep)
+  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? (decode_proc ep)
   | GenNode 3 [eq] => t • (decode_proc eq)
   | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
   | _ => ① 
@@ -1855,7 +1855,7 @@ end.
 
 Fixpoint lts_set_input_g (g : gproc) (a : TypeOfActions) : gset proc :=
   match g with
-  | c ? x • p => if decide(Channel_of a = c) then {[ p^(Data_of a) ]} else ∅
+  | c ? p => if decide(Channel_of a = c) then {[ p^(Data_of a) ]} else ∅
   | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
   | ① => ∅
   | 𝟘 => ∅
@@ -1877,7 +1877,7 @@ match p with
   
 Fixpoint lts_set_tau_g (gp : gproc) : gset proc :=
 match gp with
-  | c ? x • p => ∅
+  | c ? p => ∅
   | ① => ∅
   | 𝟘 => ∅
   | t • p => {[ p ]}

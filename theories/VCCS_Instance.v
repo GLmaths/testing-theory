@@ -49,7 +49,7 @@ Arguments τ {_} {_}.
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -129,7 +129,7 @@ Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
 Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • P" := (gpr_output c v P) (at level 50).
-Notation "c ? x • P" := (gpr_input c P) (at level 50).
+Notation "c ?   P" := (gpr_input c P) (at level 50).
 Notation "'t' • P" := (gpr_tau P) (at level 50).
 Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
@@ -166,7 +166,7 @@ with subst_in_gproc k X M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (subst_in_proc (S k) (Succ_bvar X) p)
+| c ? p => c ? (subst_in_proc (S k) (Succ_bvar X) p)
 | c ! v • p => c ! (subst_Data k X v) • (subst_in_proc k X p)
 | t • p => t • (subst_in_proc k X p)
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
@@ -200,7 +200,7 @@ with gNewVar k M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (NewVar (S k) p)
+| c ? p => c ? (NewVar (S k) p)
 | c ! v • p => c ! (NewVar_in_Data k v) • (NewVar k p)
 | t • p => t • (NewVar k p)
 | p1 + p2 => (gNewVar k p1) + (gNewVar k p2)
@@ -219,7 +219,7 @@ end
 with gpr_subst id p q {struct p} := match p with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (pr_subst id p (NewVar 0 q))
+| c ? p => c ? (pr_subst id p (NewVar 0 q))
 | c ! v • p => c ! v • (pr_subst id p q)
 | t • p => t • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
@@ -230,7 +230,7 @@ end.
 Inductive lts : proc-> (Act Channel Data) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) (ActIn c (cst v)) (P^v)
+    lts (c ? P) (ActIn c (cst v)) (P^v)
 | lts_output : forall {c v P},
     lts (c ! (cst v) • P) (ActOut c (cst v)) P
 
@@ -284,7 +284,7 @@ with gsize p :=
   match p with
   | ① => 1
   | 𝟘 => 0
-  | c ? x • p => S (size p)
+  | c ? p => S (size p)
   | c ! v • p => S (size p)
   | t • p => S (size p)
   | p + q => S (gsize p + gsize q)
@@ -331,7 +331,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (t • p) (t • q)
 | cgr_input_step : forall c p q,
     cgr_step p q ->
-    cgr_step (c ? x • p) (c ? x • q)
+    cgr_step (c ? p) (c ? q)
 | cgr_output_step : forall c v p q,
     cgr_step p q ->
     cgr_step (c ! v • p) (c ! v • q)
@@ -457,7 +457,7 @@ intros. dependent induction H.
 constructor. 
 apply cgr_tau_step. exact H. eauto with cgr_eq.
 Qed. 
-Lemma cgr_input : forall c p q, p ≡* q -> (c ? x • p) ≡* (c ? x • q).
+Lemma cgr_input : forall c p q, p ≡* q -> (c ? p) ≡* (c ? q).
 Proof.
 intros.
 dependent induction H. 
@@ -626,8 +626,8 @@ Qed.
 Inductive sts : proc -> proc -> Prop :=
 (*The axiomes*)
 (* Communication of channels output and input that have the same name *)
-| sts_com : forall {c v p1 g1 p2 g2}, (*Well_Defined_Input_in 0 (((c ! (cst v) • p1) + g1) ‖ ((c ? x • p2) + g2)) ->*)
-    sts (((c ! (cst v) • p1) + g1) ‖ ((c ? x • p2) + g2)) (p1 ‖ (p2 ^ v))
+| sts_com : forall {c v p1 g1 p2 g2}, (*Well_Defined_Input_in 0 (((c ! (cst v) • p1) + g1) ‖ ((c ? p2) + g2)) ->*)
+    sts (((c ! (cst v) • p1) + g1) ‖ ((c ? p2) + g2)) (p1 ‖ (p2 ^ v))
 (* Nothing more , something less *)
 | sts_tau : forall {p g}, (* Well_Defined_Input_in 0 (((t • p) + g)) -> *)
     sts ((t • p) + g) p
@@ -656,7 +656,7 @@ Inductive sts : proc -> proc -> Prop :=
 
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 Lemma ReductionShape : forall P Q, sts P Q ->
-((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! (cst v) • P1) + G1) ‖ ((c ? x • P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
+((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! (cst v) • P1) + G1) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
 \/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
 \/ (exists P1 P0 S v, (P ≡* ((If (v == v) Then P1 Else P0) ‖ S)) /\ (Q ≡* P1 ‖ S))
@@ -673,7 +673,7 @@ induction Transition.
     split. apply cgr_par_nil_rev. auto.
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]];  decompose record IH. 
     * left. exists x. exists x0. exists x1. exists x2. exists x3. exists x4. exists (x5 ‖ q). split.
-        ** apply transitivity with (((((x ! x0 • x1) + x3) ‖ ((x ? l • x2) + x4)) ‖ x5) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
+        ** apply transitivity with (((((x ! x0 • x1) + x3) ‖ ((x ? x2) + x4)) ‖ x5) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
         ** apply transitivity with (((x1 ‖ x2^x0) ‖ x5) ‖ q). apply cgr_par. auto.  apply cgr_par_assoc. 
     * right. left. exists x. exists x0. exists (x1 ‖ q). split.
         ** apply transitivity with (((t • x + x0) ‖ x1) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
@@ -703,32 +703,32 @@ Qed.
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForInput : forall P Q c v, (lts P (ActIn c v)) Q -> 
-(exists P1 G R, ((P ≡* ((c ? x • P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
+(exists P1 G R, ((P ≡* ((c ? P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P Q c v Transition.
  dependent induction Transition.
 - exists P. exists 𝟘. exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? x • P) + 𝟘). apply cgr_trans with (c ? x • P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
+  * apply cgr_trans with ((c ? P) + 𝟘). apply cgr_trans with (c ? P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
-  * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
+  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ p). split; try split.
-  * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
+  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p2). exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? l • x) + (x0 + p2)). apply cgr_trans with (((c ? l • x) + x0) + p2).
-    apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? l • x) + x0) ‖ 𝟘).
+  * apply cgr_trans with ((c ? x) + (x0 + p2)). apply cgr_trans with (((c ? x) + x0) + p2).
+    apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? x) + x0) ‖ 𝟘).
     assumption. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. assumption.
   * reflexivity.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p1). exists 𝟘. split; try split.
-  * apply cgr_trans with ((c ? l • x) + (x0 + p1)). apply cgr_trans with (((c ? l • x) + x0) + p1).
+  * apply cgr_trans with ((c ? x) + (x0 + p1)). apply cgr_trans with (((c ? x) + x0) + p1).
     apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p2. reflexivity.
-    apply cgr_trans with (((c ? l • x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
+    apply cgr_trans with (((c ? x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p2. reflexivity. rewrite <-H2. assumption. 
   * reflexivity.
 Qed.
@@ -918,7 +918,7 @@ Qed.
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ Q).
 Proof. 
 intros P Q Reduction. 
-assert ((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! (cst v) • P1) + G1) ‖ ((c ? x • P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
+assert ((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! (cst v) • P1) + G1) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
 \/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
 \/ (exists P1 P0 S v, (P ≡* ((If (v == v) Then P1 Else P0) ‖ S)) /\ (Q ≡* P1 ‖ S))
@@ -929,11 +929,11 @@ destruct H as [IH|[IH|[IH|[IH |IH]]]];  decompose record IH.
 
 (*First case τ by communication *)
 
-- assert (lts (((x ! x0 • x1) + x3) ‖ ((x ? l • x2) + x4) ‖ x5) τ (x1 ‖ (x2^x0) ‖ x5)).
+- assert (lts (((x ! x0 • x1) + x3) ‖ ((x ? x2) + x4) ‖ x5) τ (x1 ‖ (x2^x0) ‖ x5)).
   * apply lts_parL.   
     eapply lts_comL. apply lts_choiceL. instantiate (2:= x). instantiate (1:= x0).
     apply lts_output. apply lts_choiceL. apply lts_input.
-  * assert (sc_then_lts P τ ((x1 ‖ x2^x0) ‖ x5)). exists ((((x ! x0 • x1) + x3) ‖ ((x ? l • x2) + x4)) ‖ x5). split. assumption. assumption.
+  * assert (sc_then_lts P τ ((x1 ‖ x2^x0) ‖ x5)). exists ((((x ! x0 • x1) + x3) ‖ ((x ? x2) + x4)) ‖ x5). split. assumption. assumption.
     assert (lts_then_sc P τ ((x1 ‖ x2^x0) ‖ x5)). apply Congruence_Respects_Transition. assumption. destruct H3. destruct H3.
     exists x6. split. assumption. apply transitivity with ((x1 ‖ x2^x0) ‖ x5). assumption. symmetry. assumption.
 
@@ -1027,8 +1027,8 @@ dependent induction H.
   - apply sts_ifZero. assumption.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption.  decompose record H1.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H4.
-    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? l • x2) + x3)) ‖ (x1 ‖ x4)).
-    apply cgr_trans with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? l • x2) + x3) ‖ x4)). apply cgr_fullpar. assumption. assumption.
+    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? x2) + x3)) ‖ (x1 ‖ x4)).
+    apply cgr_trans with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? x2) + x3) ‖ x4)). apply cgr_fullpar. assumption. assumption.
     apply InversionParallele. 
     instantiate (1 := (x ‖ (x2^v)) ‖ (x1 ‖ x4)). apply sts_par.
     apply sts_com. 
@@ -1036,9 +1036,9 @@ dependent induction H.
     symmetry. assumption. symmetry. assumption.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption. decompose record H1.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H4.
-    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? l • x2) + x3)) ‖ (x1 ‖ x4)).
+    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? x2) + x3)) ‖ (x1 ‖ x4)).
     apply transitivity with (p1 ‖ q1). apply cgr_par_com.
-    apply transitivity with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? l • x2) + x3) ‖ x4)).
+    apply transitivity with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? x2) + x3) ‖ x4)).
     apply cgr_fullpar. assumption. assumption. apply InversionParallele. 
     instantiate (1 := (x ‖ (x2^v)) ‖ (x1 ‖ x4)). apply sts_par. apply sts_com.
     apply transitivity with ((x ‖ x1) ‖ ((x2^v) ‖ x4)). apply InversionParallele. apply transitivity with (p2 ‖ q2). apply cgr_fullpar. 
@@ -1091,7 +1091,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_success : forall k, Well_Defined_Input_in k (①)
 | WD_nil : forall k, Well_Defined_Input_in k (𝟘)
 | WD_input : forall k c p, Well_Defined_Input_in (S k) p
-                  -> Well_Defined_Input_in k (c ? x • p)
+                  -> Well_Defined_Input_in k (c ? p)
 | WD_output : forall k c v p, Well_Defined_Data k v 
                     -> Well_Defined_Input_in k p -> Well_Defined_Input_in k (c ! v • p)
 | WD_tau : forall k p,  Well_Defined_Input_in k p -> Well_Defined_Input_in k (t • p)

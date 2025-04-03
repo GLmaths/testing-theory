@@ -22,18 +22,11 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
 Require Import Coq.Unicode.Utf8.
-Require Import Coq.Lists.List.
-Import ListNotations.
-Require Import Coq.Program.Equality.
 Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Coq.Logic.JMeq.
-Require Import Coq.Program.Wf Setoid.
 Require Import Coq.Program.Equality.
-From Coq.Logic Require Import ProofIrrelevance.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import TransitionSystems Must Soundness.
+From Must Require Import TransitionSystems Must Soundness Equivalence Completeness.
 
 CoInductive copre `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ} (ps : gset A) (q : B) : Prop := {
     c_tau q' : q ⟶ q' -> copre ps q'
@@ -172,8 +165,6 @@ Section eq_contextual.
   Context `{!Good E L good}.
 
   (* ************************************************** *)
-
-  From Must Require Import Equivalence Completeness.
 
   Context `{igen_conv : @gen_spec_conv  _ _ _ _ _ good Good0 gen_conv}.
   Context `{igen_acc : @gen_spec_acc _ _ _ _ _ good Good0 gen_acc}.
