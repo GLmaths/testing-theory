@@ -65,7 +65,7 @@ with gproc_dec (x y : gproc) : { x = y } + { x <> y }.
 Proof.
   decide equality; destruct (decide (n = n0)); eauto.
   decide equality; destruct (decide (n = n0)); eauto.
-Qed.
+Defined.
 
 #[global] Instance proc_eq_decision_instance : EqDecision proc.
 Proof. by exact proc_dec. Defined.
@@ -271,7 +271,7 @@ Proof. all: case p =>//= *; f_equal=>//. Qed.
 Proof.
   refine (inj_countable' encode_proc decode_proc _).
   apply encode_decide_procs.
-Qed.
+Defined.
 
 Lemma gset_nempty_ex (g : gset proc) : g ≠ ∅ -> {p | p ∈ g}.
 Proof.
@@ -488,15 +488,15 @@ Qed.
 
 Definition proc_stable p α := lts_set p α = ∅.
 
-Lemma lts_dec p α q : { lts p α q } + { ~ lts p α q }.
+Definition lts_dec p α q : { lts p α q } + { ~ lts p α q }.
 Proof.
   destruct (decide (q ∈ lts_set p α)).
   - eapply lts_set_spec0 in e. eauto.
   - right. intro l. now eapply lts_set_spec1 in l.
-Qed.
+Defined.
 
-Lemma proc_stable_dec p α : Decision (proc_stable p α).
-Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Qed.
+Definition proc_stable_dec p α : Decision (proc_stable p α).
+Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Defined.
 
 (* same as in ProcInstances *)
 #[global] Program Instance CCS_lts : Lts proc name := {|
@@ -504,17 +504,17 @@ Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Qed.
     lts_stable p := proc_stable p;
     lts_outputs := outputs_of;
     |}.
-Next Obligation. apply lts_dec. Qed.
+Next Obligation. apply lts_dec. Defined.
 Next Obligation.
   move=> /= ????. apply outputs_of_spec2. eauto.
 Qed.
 Next Obligation.
   intros. simpl. now eapply outputs_of_spec1 in H.
-Qed.
-Next Obligation. exact (proc_stable_dec). Qed.
+Defined.
+Next Obligation. exact (proc_stable_dec). Defined.
 Next Obligation.
   intros p [[a|a]|]; intro hs; eapply gset_nempty_ex in hs as (r & l); exists r; now eapply lts_set_spec0.
-Qed.
+Defined.
 Next Obligation.
   intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
 Qed.
@@ -757,7 +757,7 @@ Proof.
   edestruct (harmony_cgr p (!a ∥ r) α) as (t & l3 & l4).
   exists (!a ∥ q). split. now symmetry. eapply lts_parR. eassumption.
   exists t. split. eassumption.
-  edestruct (harmony_cgr t (pr ∥ r) (ActExt (ActOut a))) as (u & l5 & l6).
+  edestruct (harmony_cgr t (pr_nil ∥ r) (ActExt (ActOut a))) as (u & l5 & l6).
   exists (!a ∥ r). split. eassumption. eapply lts_parL, lts_output.
   exists u. split; eauto with ccs.
   etrans; eauto with ccs.
