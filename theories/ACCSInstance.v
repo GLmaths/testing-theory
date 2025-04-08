@@ -532,7 +532,7 @@ Proof.
   - eapply (in_list_finite (elements (lts_set_tau p))).
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_tau_spec1.
-Qed.
+Defined.
 
 Require Import Relations.
 
@@ -1170,7 +1170,7 @@ Proof.
   intros hm. now eapply pre_extensional_eq, equivalence_bhv_acc_ctx.
 Qed.
 
-
+(* TODO: these lemmas have nothing to do here ; and need proper names *)
 Lemma coin_refl `{FiniteLts A L} {p : A} : {[ p ]} ⩽ p.
 Proof. eapply eqx. eapply alt_set_singleton_iff. firstorder. Qed.
 

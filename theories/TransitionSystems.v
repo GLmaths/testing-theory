@@ -85,7 +85,7 @@ Section in_list_finite.
     intros ?%elem_of_Forall_to_sig_1; done.
   Qed.
 
-  Lemma in_list_finite (l : list A) : (∀ x, P x → x ∈ l) → Finite {x : A | P x}.
+  Definition in_list_finite (l : list A) : (∀ x, P x → x ∈ l) → Finite {x : A | P x}.
   Proof.
     intros Hl.
     assert (Forall P (filter P (remove_dups l))) as Hels.
@@ -98,7 +98,7 @@ Section in_list_finite.
         apply elem_of_remove_dups, Hl; apply (proj2_sig x). }
       replace x with (`x ↾ Hx'); last by apply sig_eq.
       done.
-  Qed.
+  Defined.
 End in_list_finite.
 
 From stdpp Require Import gmultiset. (* fixme *)
@@ -2756,7 +2756,7 @@ Next Obligation.
   - eapply (in_list_finite (lts_fw_tau_set p m)).
     intros (p0, m0) h%bool_decide_unpack.
     now eapply lts_fw_tau_set_spec1.
-Qed.
+Defined.
 
 Definition lts_tau_set_from_pset_spec1 `{Countable A, Lts A L}
   (ps : gset A) (qs : gset A) :=
