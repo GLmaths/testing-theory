@@ -2,7 +2,12 @@ From Must Require Import ACCSInstance TransitionSystems Coin.
 From stdpp Require Import strings sets gmap base.
 From Coq Require Import Relations.
 
+Ltac lts_inversion q :=
+match goal with
+| H : lts_step ?p ?a q |- _ => inversion H; subst; clear H
+| H : lts ?p ?a q |- _ => inversion H; subst; clear H end.
 
+(* TODO: still needed? *)
 (* Executable step through lts ; i.e. inversion lemma for lts_fw_p *)
 Lemma lts_fw_p_step p m α q n :
   lts_fw_step (p ▷ m) α (q ▷ n) ->
@@ -62,335 +67,200 @@ apply lts_fw_p_step in Hl. case decide in Hl; subst.
   (* we rely on the fact that we can contradict impossible inputs *)
 Qed.
 
+(* Given an assumption that a tau transition reaches q, 
+  make a case distinction on the possible values of q *)
+Ltac step_tac H0 :=
+  let H := fresh H0 in
+  assert(H := H0);
+  (apply lts_tau_set_spec in H || apply lts_set_input_spec1 in H);
+  vm_compute in H; simpl in H; discriminate ||
+  apply elem_of_list_In in H; simpl in H;
+  repeat destruct H as [H | H]; subst.
 
-Lemma q_terminate : forall M, (!"a" ∥ (τ⋅ !"b" ⊕  τ⋅ !"c") ▷ M) ⤓.
+(* A tactic to try and prove termination *)
+Ltac term_tac l :=
+  constructor;
+  let p := fresh "p" in let M := fresh "M" in
+  intros (p, M) l; apply lts_fw_p_step in l; case decide in l; subst;
+  [ step_tac l
+  | let a := fresh "a" in let Ha := fresh "Ha" in let HM := fresh "HM" in
+    destruct l as (a & Ha & HM); subst; step_tac Ha
+  ]; tauto || let H := fresh l in try term_tac H.
+
+Example q_terminate : forall M, (!"a" ∥ (τ⋅ !"b" ⊕  τ⋅ !"c") ▷ M) ⤓.
+Proof. intro M. term_tac H. Qed.
+
+
+Lemma choice_copre_l p q: forall (M : mb name) X,
+  {[τ⋅ p ⊕ τ⋅ q ▷ M]} ∪ X ⩽ p ▷ M.
 Proof.
-intro M. constructor. intros (p1, M1) l.
-apply lts_fw_p_step in l. case decide in l.
-(* τ *)
-- subst. apply lts_inv in l.
-  destruct l as [(q1 & q2 & Heq & _ & μ & _ & Hl)| [(q1 & Heq & Hl) | (q2 & Heq & Hl)]];
-  subst.
-  + apply lts_inv in Hl. destruct Hl as [Hl | Hl];
-    apply lts_inv in Hl; destruct Hl as [Heq Hf]; subst; discriminate Hf.
-  + subst. apply lts_inv in Hl. destruct Hl as (a & Hf & _). discriminate Hf.
-  + subst. apply lts_inv in Hl. destruct Hl as [Hl | Hl].
-    * apply lts_inv in Hl; destruct Hl as [Heq _]; subst.
-      apply parallel_output_terminate.
-    * apply lts_inv in Hl; destruct Hl as [Heq _]; subst.
-      apply parallel_output_terminate.
-- destruct l as (a & Hl & Heq). subst.
-  (* if a parallel makes an input, one of them does *)
-  apply lts_inv in Hl.
-  destruct Hl as [(q1 & q2 & _ & Hf & μ & _ & Hl)| [(q1 & Heq & Hl) | (q2 & Heq & Hl)]];
-  subst.
-  + discriminate.
-  + subst. apply lts_inv in Hl. destruct Hl as (b & Hf & _). discriminate.
-  + subst. apply lts_inv in Hl. destruct Hl as [Hl | Hl];
-    apply lts_inv in Hl; destruct Hl as [Heq _]; subst.
-    * apply parallel_output_terminate.
-    * apply parallel_output_terminate.
+intros M X. eapply c_tau.
+- apply h_cup, coin_refl.
+- constructor. apply lts_choiceL. constructor.
 Qed.
 
-Lemma ineq01 : forall (M : mb name) X,
-    {[ τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M ]} ∪ X
-      ⩽ !"a" ∥ !"b" ▷ M.
+Lemma choice_copre_r p q: forall (M : mb name) X,
+  {[τ⋅ p ⊕ τ⋅ q ▷ M]} ∪ X ⩽ q ▷ M.
 Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l. inversion l; subst; contradict_by_stability.
-  - intros pM' Hs.
-    exists (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M), (!"a" ∥ !"b" ▷ M).
-    split.
-    + eapply elem_of_union; left; now eapply elem_of_singleton_2.
-    + split. eapply wt_tau.
-      eapply lts_fw_p, lts_choiceL, lts_tau.
-      eapply wt_nil. split. eassumption. set_solver.
-  - intros.
-    inversion H0; subst.
-    + inversion H6; subst.
-      ++ inversion H7; subst.
-         assert (pr_nil ∥ !"b" ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceL, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parL, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-      ++ inversion H7; subst.
-         assert (!"a" ∥ pr_nil ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceL, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parR, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-    + assert (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ m ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-    + assert (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ {[+ a +]} ⊎ M ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l. inversion l; subst; contradict_by_stability.
+intros M X. eapply c_tau.
+- apply h_cup, coin_refl.
+- constructor. apply lts_choiceR. constructor.
 Qed.
 
-Example ineq02 : forall (M : mb name) X,
-    {[ τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M ]} ∪ X
-      ⩽ !"a" ∥ !"c" ▷ M.
+(* TODO: generalise and move *)
+Lemma choice_elem_of (p : (proc * mb name)) X: p ∈ X -> X ⩽ p.
 Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l.
-    inversion l; subst; contradict_by_stability.
-  - intros.
-    exists (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M), (!"a" ∥ !"c" ▷ M).
-    split.
-    + eapply elem_of_union. left. now eapply elem_of_singleton_2.
-    + split. eapply wt_tau.
-      eapply lts_fw_p, lts_choiceR, lts_tau.
-      eapply wt_nil.
-      split. eassumption. set_solver.
-  - intros.
-    inversion H0; subst.
-    + inversion H6; subst.
-      ++ inversion H7; subst.
-         assert (pr_nil ∥ !"c" ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceR, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parL, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-      ++ inversion H7; subst.
-         assert (!"a" ∥ pr_nil ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceR, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parR, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-    + assert (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ m ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-    + assert (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ {[+ a +]} ⊎ M ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l. inversion l; subst; contradict_by_stability.
+intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
+apply h_cup, coin_refl.
 Qed.
 
-Example ineq03 : forall (M : mb name) X,
-    {[ (!"b" ▷ M); (!"c" ▷ M) ]} ∪ X
-      ⩽ τ⋅ !"b" ⊕ τ⋅ !"c" ▷ M.
+
+(* /!\ set_solver may use coinduction hypothesis! *)
+Lemma choice_copre_rev p q: forall M X,
+  {[ (p ▷ M); (q ▷ M) ]} ∪ X ⩽ τ⋅ p ⊕ τ⋅ q ▷ M.
 Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l.
-    inversion l; subst. inversion H2; subst.
-    + inversion H4; subst.
-      eapply h_cup. eapply h_cup. eapply coin_refl.
-    + inversion H4; subst.
-      eapply h_cup.
-      replace ({[!"b" ▷ M'; !"c" ▷ M']})
-        with ({[!"c" ▷ M'; !"b" ▷ M']} : gset (proc * mb name)).
-      eapply h_cup. eapply coin_refl.
-      eapply leibniz_equiv.
-      intros q.
-      split; intros h%elem_of_union; destruct h as [hl | hr]; eapply elem_of_union; eauto.
-    + inversion H2; subst; inversion H4.
-  - intros.
-    exfalso. eapply (lts_stable_spec2 (τ⋅ !"b" ⊕ τ⋅ !"c" ▷ M)).
-    eexists. eapply lts_fw_p, lts_choiceL, lts_tau. assumption.
-  - intros. inversion H0; subst.
-    + inversion H6; subst; inversion H7.
-    + assert ({[!"b" ▷ m; !"c" ▷ m ]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
+cofix hco.
+intros. split.
+- clear hco. intros (q', M') l. apply lts_fw_p_step in l. case decide in l.
+  + subst. apply lts_inv in l. destruct l as [Hp | Hq].
+    * inversion Hp; subst. apply choice_elem_of. set_solver.
+    * inversion Hq; subst. apply choice_elem_of. set_solver.
+  + destruct l as (a & Ha & Heq); subst.
+    apply lts_inv in Ha. destruct Ha as [Ha | Ha]; inversion Ha.
+- intros Ht Hs.
+  exfalso. eapply (lts_stable_spec2 (τ⋅ p ⊕ τ⋅ q ▷ M)).
+  eexists. eapply lts_fw_p, lts_choiceL, lts_tau. assumption.
+- intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
+  + repeat lts_inversion q0.
+  + rewrite (union_difference_L {[p ▷ m; q ▷ m ]} ps'). apply hco.
+    clear hco.
+    intros p' mem%elem_of_union.
+    destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
+    * apply Hw with (p ▷ {[+ a +]} ⊎ m). set_solver.
       eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
+    * apply Hw with (q ▷ {[+ a +]} ⊎ m). set_solver.
       eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-    + assert ({[!"b" ▷ {[+ a +]} ⊎ M; !"c" ▷ {[+ a +]} ⊎ M]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l.
-    inversion l; subst; try contradict_by_stability. inversion H3; subst.
-    + inversion H5; subst. constructor. intros.
-      inversion H0; subst; contradict_by_stability.
-    + inversion H5; subst. constructor. intros.
-      inversion H0; subst; contradict_by_stability.
+  + rewrite (union_difference_L {[p ▷ {[+ a +]} ⊎ M; q ▷ {[+ a +]} ⊎ M]} ps'). apply hco.
+    clear hco.
+    intros p' mem%elem_of_union.
+    destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
+    * apply Hw with (p ▷ M). set_solver.
+      eapply wt_act. apply lts_fw_inp_mb. apply wt_nil.
+    * eapply Hw with (q ▷ M). set_solver.
+      eapply wt_act. eapply lts_fw_inp_mb. eapply wt_nil.
+- clear hco. intros Ht. constructor. intros (q', M') l.
+  inversion l; subst; try contradict_by_stability.
+  repeat lts_inversion q'.
+  + apply Ht. set_solver.
+  + apply Ht. set_solver.
 Qed.
 
-Example ineq03' : forall (M : mb name) X,
-    {[ (pr_nil ∥ !"b" ▷ M); (pr_nil ∥ !"c" ▷ M) ]} ∪ X
-      ⩽ τ⋅ (pr_nil ∥ !"b") ⊕ τ⋅ (pr_nil ∥ !"c") ▷ M.
-Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l.
-    inversion l; subst. inversion H2; subst.
-    + inversion H4; subst.
-      eapply h_cup. eapply h_cup. eapply coin_refl.
-    + inversion H4; subst.
-      eapply h_cup.
-      replace ({[pr_nil ∥ !"b" ▷ M'; pr_nil ∥ !"c" ▷ M']})
-        with ({[pr_nil ∥ !"c" ▷ M'; pr_nil ∥  !"b" ▷ M']} : gset (proc * mb name)).
-      eapply h_cup. eapply coin_refl.
-      eapply leibniz_equiv.
-      intros q.
-      split; intros h%elem_of_union; destruct h as [hl | hr]; eapply elem_of_union; eauto.
-    + inversion H2; subst; inversion H4.
-  - intros.
-    exfalso. eapply (lts_stable_spec2 (τ⋅ (pr_nil ∥ !"b") ⊕ τ⋅ (pr_nil ∥ !"c") ▷ M)).
-    eexists. eapply lts_fw_p, lts_choiceL, lts_tau. assumption.
-  - intros. inversion H0; subst.
-    + inversion H6; subst; inversion H7.
-    + assert ({[pr_nil ∥ !"b" ▷ m; pr_nil ∥ !"c" ▷ m ]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-    + assert ({[pr_nil ∥ !"b" ▷ {[+ a +]} ⊎ M; pr_nil ∥ !"c" ▷ {[+ a +]} ⊎ M]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l.
-    inversion l; subst; try contradict_by_stability. inversion H3; subst.
-    + inversion H5; subst. constructor. intros.
-      inversion H0; subst; contradict_by_stability.
-    + inversion H5; subst. constructor. intros.
-      inversion H0; subst; contradict_by_stability.
-Qed.
-
-Example ineq4 : forall (M : mb name) X,
+Example code_hoisting : forall (M : mb name) X,
     {[ τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M ]} ∪ X
       ⩽ !"a" ∥ (τ⋅ !"b" ⊕ τ⋅ !"c") ▷ M.
 Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros q l.
-    inversion l; subst. inversion H3; subst. inversion H1; subst. simpl in H2.
-    inversion H2; subst.
-    inversion H6; subst. inversion H6; subst.
-    inversion H4; subst.
-    + inversion H4; subst. 
-      ++ inversion H5; subst. eapply ineq01.
-      ++ inversion H5; subst. eapply ineq02.
-    + contradict_by_stability.
-  - intros. exfalso.
-    eapply (lts_stable_spec2 (!"a" ∥ (τ⋅ !"b" ⊕ τ⋅ !"c") ▷ M)); eauto.
-    exists (!"a" ∥ !"b" ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
-  - intros. inversion H0; subst. 
-    + inversion H6; subst. inversion H7; subst.
-      ++ eapply h2.
-        ** etrans. eapply t_step. eapply cgr_par_nil_rev.
-           etrans. eapply t_step. eapply cgr_par_com. reflexivity.
-        ** eapply (h2 (τ⋅ (pr_nil ∥ !"b") ⊕ τ⋅ (pr_nil ∥ !"c"))).
-           symmetry.
+cofix hco.
+intros M X. split.
+- intros q l. lts_inversion q.
+  + lts_inversion q0.
+   * repeat lts_inversion q2.
+   * lts_inversion p2.
+   * repeat lts_inversion q2.
+    -- apply choice_copre_l.
+    -- apply choice_copre_r.
+  + contradict_by_stability.
+- intros. exfalso.
+  eapply (lts_stable_spec2 (!"a" ∥ (τ⋅ !"b" ⊕ τ⋅ !"c") ▷ M)); eauto.
+  exists (!"a" ∥ !"b" ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
+- intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
+  + lts_inversion q; subst. lts_inversion p2; subst.
+  (* h2 : pas beau ! adhoc ; ACCS *)
+    * eapply h2.
+      -- etrans. eapply t_step. eapply cgr_par_nil_rev.
+         etrans. eapply t_step. eapply cgr_par_com. reflexivity.
+      -- eapply (h2 (τ⋅ (pr_nil ∥ !"b") ⊕ τ⋅ (pr_nil ∥ !"c"))).
+        ++ symmetry.
            etrans. eapply t_step. eapply cgr_choice.
            eapply cgr_tau. eapply cgr_par_nil_rev.
            eapply cgr_tau. eapply cgr_par_nil_rev.
            etrans. eapply t_step. eapply cgr_choice.
            eapply cgr_tau. eapply cgr_par_com.
            eapply cgr_tau. eapply cgr_par_com. reflexivity.
-           assert ({[ (pr_nil ∥ !"b" ▷ M); (pr_nil ∥ !"c" ▷ M) ]} ⊆ ps').
-           intros x mem%elem_of_union.
-           destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-           eapply H1. eapply elem_of_union. left. now eapply elem_of_singleton.
-           eapply wt_tau. eapply lts_fw_p. eapply lts_choiceL, lts_tau.
-           eapply wt_act. eapply lts_fw_p. eapply lts_parL, lts_output. eapply wt_nil.
-           eapply H1. eapply elem_of_union. left. now eapply elem_of_singleton.
-           eapply wt_tau. eapply lts_fw_p. eapply lts_choiceR, lts_tau.
-           eapply wt_act. eapply lts_fw_p. eapply lts_parL, lts_output. eapply wt_nil.
-           eapply union_difference_L in H2.
-           rewrite H2. eapply ineq03'.
-      ++ inversion H7; subst; inversion H8.
-    + assert (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ m ∈ ps').
-      eapply H1.
+        ++ assert (Hi : {[ (pr_nil ∥ !"b" ▷ M); (pr_nil ∥ !"c" ▷ M) ]} ⊆ ps'). {
+            intros x mem%elem_of_union.
+             destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
+             eapply Hw. eapply elem_of_union. left. now eapply elem_of_singleton.
+             eapply wt_tau. eapply lts_fw_p. eapply lts_choiceL, lts_tau.
+             eapply wt_act. eapply lts_fw_p. eapply lts_parL, lts_output. eapply wt_nil.
+             eapply Hw. eapply elem_of_union. left. now eapply elem_of_singleton.
+             eapply wt_tau. eapply lts_fw_p. eapply lts_choiceR, lts_tau.
+             eapply wt_act. eapply lts_fw_p. eapply lts_parL, lts_output. eapply wt_nil.
+           }
+           eapply union_difference_L in Hi.
+           rewrite Hi. eapply choice_copre_rev.
+    * repeat lts_inversion q2.
+  + assert (Hin : τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ m ∈ ps').
+    * eapply Hw.
       eapply elem_of_union. left.
       eapply elem_of_singleton. reflexivity.
       eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-    + assert (τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ {[+ a +]} ⊎ M ∈ ps').
-      eapply H1.
+    * eapply union_difference_singleton_L in Hin.
+      rewrite Hin. eapply hco.
+  + assert (Hin : τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ {[+ a +]} ⊎ M ∈ ps').
+    * eapply Hw.
       eapply elem_of_union. left.
       eapply elem_of_singleton. reflexivity.
       eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-  - intros. eapply q_terminate.
+    * eapply union_difference_singleton_L in Hin.
+      rewrite Hin. eapply hco.
+- intros. eapply q_terminate.
 Qed.
+
+(* TODO: generalise, and avoid using h2 *)
+Example code_hoisting_gen a b c: forall (M : mb name) X,
+    {[ τ⋅ (a ∥ b) ⊕ τ⋅ (a ∥ c) ▷ M ]} ∪ X
+      ⩽ a ∥ (τ⋅ b ⊕ τ⋅ c) ▷ M.
+Proof.
+cofix hco.
+intros M X. split.
+- intros q l. lts_inversion q.
+  + lts_inversion q0.
+   * repeat lts_inversion q2.
+   * admit.
+   * repeat lts_inversion q2.
+    -- apply choice_copre_l.
+    -- apply choice_copre_r.
+  + admit.
+- intros. exfalso.
+  eapply (lts_stable_spec2 (a ∥ (τ⋅ b ⊕ τ⋅ c) ▷ M)); eauto.
+  exists (a ∥ b ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
+- intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
+  + lts_inversion q.
+  (* h2 : pas beau ! adhoc ; ACCS *)
+    * admit.
+    * repeat lts_inversion q2.
+  + assert (Hin : τ⋅ (a ∥ b) ⊕ τ⋅ (a ∥ c) ▷ m ∈ ps').
+    * eapply Hw.
+      eapply elem_of_union. left.
+      eapply elem_of_singleton. reflexivity.
+      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
+    * eapply union_difference_singleton_L in Hin.
+      rewrite Hin. eapply hco.
+  + assert (Hin : τ⋅ (a ∥ b) ⊕ τ⋅ (a ∥ c) ▷ {[+ a0 +]} ⊎ M ∈ ps').
+    * eapply Hw.
+      eapply elem_of_union. left.
+      eapply elem_of_singleton. reflexivity.
+      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
+    * eapply union_difference_singleton_L in Hin.
+      rewrite Hin. eapply hco.
+- intros Ht. constructor. intros q Hq. lts_inversion q.
+  + lts_inversion q0.
+    * repeat lts_inversion q2.
+    * apply terminate_preserved_by_lts_tau with (a ∥ (τ⋅ b ⊕ τ⋅ c) ▷ M).
+      -- eapply hco. exact Ht. (* cheating? *)
+      -- now do 2 constructor.
+    * repeat lts_inversion q2.
+      -- admit.
+      -- admit.
+  + admit.
+Admitted.
