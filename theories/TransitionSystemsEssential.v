@@ -148,17 +148,21 @@ Class ExtAction (A : Type) :=
       extaction_eqdec: EqDecision A;
       extaction_countable: Countable A;
       non_blocking : A -> Prop;
-      nb_dec: forall a, Decision (non_blocking a); (* pas nécessaire pour l'instant, 
+      nb_dec a : Decision (non_blocking a); (* pas nécessaire pour l'instant, 
                           nécessaire pour faire des preuves sur les actions visible en général*)
       dual : A -> A -> Prop;
-      d_dec : forall a b, Decision (dual a b);
-      co_non_blocking : forall a, non_blocking a -> exists b , dual a b;
+      d_dec a b: Decision (dual a b);
+      co_non_blocking a : non_blocking a -> exists b , dual a b;
       sym_dual : Symmetric dual; (* nécessaire pour parallel_step_commutative*)
+      essential : A -> Prop;
+      e_dec a : Decision (essential a) ;
+      essential_for_com μ1 μ2 : dual μ1 μ2 -> essential μ1 \/ essential μ2 ;
     }.
 #[global] Existing Instance extaction_eqdec.
 #[global] Existing Instance extaction_countable.
 #[global] Existing Instance nb_dec.
 #[global] Existing Instance d_dec.
+#[global] Existing Instance e_dec.
 #[global] Instance dual_sym `{ExtAction A} : Symmetric dual.
 exact sym_dual.
 Qed.
@@ -184,11 +188,9 @@ Class Lts (P A : Type) `{ExtAction A} :=
       lts_step_decidable a α b : Decision (lts_step a α b);
 
       lts_essential_actions : P -> gset A; 
-      lts_essential_action_spec1 μ1 μ2 p1 p2 p'1 p'2 : 
-                      lts_step p1 (ActExt μ1) p'1 ->  lts_step p2 (ActExt μ2) p'2 -> dual μ1 μ2
-                      -> μ1 ∈ lts_essential_actions p1 \/ μ2 ∈ lts_essential_actions p2 ;
+      lts_essential_action_spec1 ξ p : ξ ∈ lts_essential_actions p ->  {p' | essential ξ /\ lts_step p (ActExt ξ) p'} ;
       (* rajouter une l'existence d'une action dual ?*)
-      lts_essential_action_spec2 μ p : μ ∈ lts_essential_actions p -> {p' | lts_step p (ActExt μ) p'};
+      lts_essential_action_spec2 ξ p p' : essential ξ -> lts_step p (ActExt ξ) p' -> ξ ∈ lts_essential_actions p ;
       (* A garder ? *)
 (*       lts_non_blocking_action_spec1 p1 η p2 : non_blocking η -> lts_step p1 (ActExt η) p2 -> η ∈ lts_essential_action p1; 
       lts_non_blocking_action_spec2 p1 η : η ∈ lts_essential_action p1 -> {p2 | (non_blocking η /\ lts_step p1 (ActExt η) p2) } ; *)
@@ -198,11 +200,12 @@ Class Lts (P A : Type) `{ExtAction A} :=
       lts_stable_spec1 p α : ¬ lts_stable p α → { q | lts_step p α q };
       lts_stable_spec2 p α : { q | lts_step p α q } → ¬ lts_stable p α;
 
-      φ : P;
+      φ : P; (*nécessaire pour prouver chaine infini et dual de non_blocking is blocking pour forwarder *)
 
-      lts_dual_nb_action : A -> P -> gset A; 
-      lts_dual_nb_action_spec1 p1 η μ p2 : non_blocking η -> dual μ η -> lts_step p1 (ActExt μ) p2 -> μ ∈ lts_dual_nb_action η p1; 
-      lts_dual_nb_action_spec2 p1 η μ : μ ∈ lts_dual_nb_action η p1 -> {p2 | (non_blocking η /\ dual μ η /\ lts_step p1 (ActExt μ) p2) } ;
+      lts_dual_action : A -> P -> gset A; 
+      lts_dual_action_spec1 p p' ξ μ : essential ξ -> lts_step p (ActExt μ) p' -> dual μ ξ -> μ ∈ lts_dual_action ξ p;
+      lts_dual_action_spec2 p ξ μ : μ ∈ lts_dual_action ξ p 
+                            -> {p' | essential ξ /\ lts_step p (ActExt μ) p' /\ dual μ ξ};
     }.
 #[global] Existing Instance lts_state_eqdec.
 #[global] Existing Instance lts_step_decidable.
@@ -1184,13 +1187,13 @@ Lemma Forall2_app {A B : Type} P (s1 s3 : list A) (s2 s4 : list B) : Forall2 P s
 Proof.
   intros Hyp1 Hyp2.
   dependent induction s1; dependent induction s3.
-  + eauto.
+  + Admitted.
 
-Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list B → Prop :=
+(* Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list B → Prop :=
     Forall2_nil : Forall2 P [] [] 
     | Forall2_cons : ∀ (x : A) (y : B) (la : list A) (lb : list B), P x y → Forall2 P la lb → Forall2 P (x :: la) (y :: lb).
-
-
+(* mémo *)
+ *)
 Lemma cnv_annhil `{LtsObaFW P A} p μ η s1 s2 s3 :
   Forall exist_co_nba s1 -> Forall exist_co_nba s2 -> non_blocking η -> dual μ η ->
   p ⇓ s1 ++ [μ] ++ s2 ++ [η] ++ s3 ->
@@ -1236,151 +1239,180 @@ Proof.
 Qed. 
 
 
-(* Pas mal mais inutile pour l'instant *)
-(* Fixpoint search_co_steps {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) s'1 (candidates : list A) η:=
+Fixpoint search_co_steps {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) s'1 ξ candidates :=
   match candidates with 
   | [] => None
   | μ :: xs =>
-    if decide (lts_step s1 (ActExt μ) s'1 /\ non_blocking η /\ dual μ η) 
+    if decide (lts_step s1 (ActExt μ) s'1 /\ essential ξ /\ dual μ ξ) 
       then Some μ
-      else search_co_steps M1 s1 s'1 xs η
+      else search_co_steps M1 s1 s'1 ξ xs
   end.
 
-Lemma search_co_steps_spec_helper {S1 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) s1 s'1 l η:
-  (elements $ lts_dual_nb_action η s1) = lnot ++ l →
-  (∀ μ, μ ∈ lnot → ¬ (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η)) →
-  is_Some $ search_co_steps M1 s1 s'1 l η<->
-  ∃ μ, (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η).
-Proof.
-  revert lnot. induction l; intros lnot.
-  { simpl. intros Hels Hnots. split; [intros Hc; inversion Hc; done |]. intros (μ & Hstep & nb & duo). exfalso.
-    eapply (lts_dual_nb_action_spec1 s1 η μ) in nb as Hyp. simplify_list_eq. set_solver. exact duo. exact Hstep. }
-  intros Helems Hnots. simpl.
-  destruct (decide (s1 ⟶[a] s'1 ∧ non_blocking η ∧ dual a η)).
-  + split. eauto. intro Hyp. eauto.
-  + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto.
-Qed.
-
-Lemma search_co_steps_spec_1 {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) s'1 η :
-  is_Some $ search_co_steps M1 s1 s'1 (elements $ lts_dual_nb_action η s1) η<->
-  ∃ μ, (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η).
-Proof. apply (search_co_steps_spec_helper []); [done| intros ??; set_solver]. Qed.
-
-Lemma search_co_steps_spec_2 {S1 S2 A: Type} `{ExtAction A} μ (M1: Lts S1 A) s1 s'1 l η:
-  search_co_steps M1 s1 s'1 l η = Some μ →
-  (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η).
-Proof.
-  induction l; [done|]. simpl.
-  destruct (decide (s1 ⟶[a] s'1 ∧ non_blocking η ∧ dual a η)); [|eauto].
-  intros ?. simplify_eq. done.
-Qed. *)
-
-(* Definition decide_co_step_raw {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) η μ:
-  Decision (exists s'1, non_blocking η ∧ dual μ η ∧ s1 ⟶[μ] s'1).
-Proof.
-  destruct (decide (lts_stable s1 (ActExt μ))) as [stable | not_stable].
-  + right. intro Hyp. decompose record Hyp. assert (¬ s1 ↛[μ]). eapply lts_stable_spec2. eexists. eassumption.
-    contradiction.
-  + eapply lts_stable_spec1 in not_stable. destruct not_stable as [s'1 step].
-    destruct (decide (non_blocking η)) as [nb | not_nb].
-    ++ destruct (decide (dual μ η)) as [duo | not_duo].
-      +++ left. exists s'1. eauto.
-      +++ right. intro Hyp. decompose record Hyp. eapply not_duo. assumption.
-    ++ right. intro Hyp. decompose record Hyp. apply not_nb. assumption.
-Qed.*)
-
-Lemma spec_co_action {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) η μ : 
-{ s'1 | non_blocking η ∧ dual μ η ∧ s1 ⟶[μ] s'1 } -> μ ∈ lts_dual_nb_action η s1.
-Proof.
-  + intro Hyp. destruct Hyp as [s'1 [step [nb duo]]]. eapply lts_dual_nb_action_spec1; eauto.
-Qed.
-
-Lemma spec_co_action_rev {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) η μ : 
-μ ∈ lts_dual_nb_action η s1  ->  { s'1 | non_blocking η ∧ dual μ η ∧ s1 ⟶[μ] s'1 } .
-Proof. 
-  + intro Hyp. eapply lts_dual_nb_action_spec2 in Hyp. destruct Hyp as [s'1 Hyp]. exists s'1. eauto.
-Qed.
-
-(*Definition decide_co_step {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) η μ:
-  Decision (μ ∈ lts_dual_nb_action η s1).
-Proof.
-  destruct (decide (lts_stable s1 (ActExt μ))) as [stable | not_stable].
-  + right.  intro Hyp. eapply spec_co_action in Hyp. decompose record Hyp. assert (¬ s1 ↛[μ]). eapply lts_stable_spec2.
-   eexists. eassumption. contradiction.
-  + eapply lts_stable_spec1 in not_stable. destruct not_stable as [s'1 step].
-    destruct (decide (non_blocking η)) as [nb | not_nb].
-    ++ destruct (decide (dual μ η)) as [duo | not_duo].
-      +++ left. eapply spec_co_action. exists s'1. eauto.
-      +++ right. intro Hyp. eapply spec_co_action in Hyp. decompose record Hyp. eapply not_duo. assumption.
-    ++ right. intro Hyp. eapply spec_co_action in Hyp. decompose record Hyp. apply not_nb. assumption.
-Qed. *)
-
-Definition decide_exists_co_step {S2 A: Type} `{ExtAction A} (M2: Lts S2 A) (s2: S2) η:
-  Decision ( exists μ , μ ∈ lts_dual_nb_action η s2 ). (*  ¬ { μ | μ ∈ lts_dual_nb_action η s2 } . *)
-Proof.
-  destruct (lts_dual_nb_action η s2).
-  + right. intro. destruct H0. inversion H0.
-  + left. exists a. eapply elem_of_list_here.
-Qed.
-
-Definition decide_exists_par_step {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) s'1 η:
-  Decision (s1 ⟶[η] s'1 ∧ (∃ μ : A, μ ∈ lts_dual_nb_action η s2)).
-Proof.
-  eapply and_dec. eapply lts_step_decidable. eapply decide_exists_co_step.
-Qed.
-
-#[global] Instance decide_co_step {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) s'1 η : 
-Decision (s1 ⟶[η] s'1 ∧ (∃ μ : A, μ ∈ lts_dual_nb_action η s2)).
-eapply decide_exists_par_step.
-Qed.
-
-
-Fixpoint search_steps {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2: S2) s'1 candidates :=
-  match candidates with
-  | [] => None
-  | η::xs =>
-      if decide (lts_step s1 (ActExt η) s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action η s2)) then
-        Some η
-      else
-        search_steps M1 M2 s1 s2 s'1 xs
-  end.
-
-Lemma search_steps_spec_helper {S1 S2 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 l:
-  (elements $ lts_non_blocking_action s1) = lnot ++ l →
-  (∀ η, η ∈ lnot → ∀ μ , (¬ s1 ⟶[η] s'1 \/ ¬ μ ∈ lts_dual_nb_action η s2)) →
-  is_Some $ search_steps M1 M2 s1 s2 s'1 l ->
-  { η & { μ | s1 ⟶[η] s'1 /\ μ ∈ lts_dual_nb_action η s2}}.
-  (* TODO : 2ieme direction ?*)
+Lemma search_co_steps_spec_helper {S1 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) s1 s'1 l ξ:
+  (elements $ lts_dual_action ξ s1) = lnot ++ l →
+  (∀ μ, μ ∈ lnot → ¬ (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ)) →
+  is_Some $ search_co_steps M1 s1 s'1 ξ l ->
+  { μ | (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ)}.
 Proof.
   revert lnot. induction l; intros lnot.
   { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc. done. }
-(*   { intros Hc. exfalso. inversion Hc. done. }
-  
-   inversion Hc. ; done. |]. intros (η & Hstep & μ & Hyp). exfalso.
-    eapply (lts_non_blocking_action_spec1) in Hstep as Hyp1. simplify_list_eq. set_solver. eapply spec_co_action in Hyp.
-    decompose record Hyp. assumption. }
-  intros Helems Hnots. simpl.
-  destruct (decide (s1 ⟶[a] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action a s2))).
-  + split. eauto. intro Hyp. eauto.
+  {intros Helems Hnots. simpl.
+  destruct (decide (s1 ⟶[a] s'1 ∧ essential ξ ∧ dual a ξ)).
+  + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. *)
-Admitted.
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed.
 
-Lemma search_steps_spec_1 {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1:
-  is_Some $ search_steps M1 M2 s1 s2 s'1 (elements $ lts_non_blocking_action s1) ->
-  { η &  { μ | s1 ⟶[η] s'1 ∧ μ ∈ lts_dual_nb_action η s2}}.
-Proof. apply (search_steps_spec_helper []) ; [done| intros ??; set_solver]. Qed.
+Lemma search_co_steps_spec_helper_rev {S1 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) s1 s'1 l ξ:
+  (elements $ lts_dual_action ξ s1) = lnot ++ l →
+  (∀ μ, μ ∈ lnot → ¬ (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ)) →
+  { μ | (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ)}  -> is_Some $ search_co_steps M1 s1 s'1 ξ l .
+Proof.
+  revert lnot. induction l; intros lnot.
+  { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc. destruct H0 as [Hstep [ess_act duo]].
+   eapply (lts_dual_action_spec1 s1 s'1 ξ x) in ess_act as Hyp. simplify_list_eq. set_solver. exact Hstep. exact duo. }
+  { intros Helems Hnots. simpl.
+  destruct (decide (s1 ⟶[a] s'1 ∧ essential ξ ∧ dual a ξ)).
+  + eauto.
+  + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed.
 
-Lemma search_steps_spec_2 {S1 S2 A: Type} `{ExtAction A} η (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 l:
-  search_steps M1 M2 s1 s2 s'1 l = Some η →
-  s1 ⟶[η] s'1 * { μ | μ ∈ lts_dual_nb_action η s2}.
+Lemma search_co_steps_spec_1 {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) s'1 ξ :
+  is_Some $ search_co_steps M1 s1 s'1 ξ (elements $ lts_dual_action ξ s1) ->
+  { μ | (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ)}.
+Proof. apply (search_co_steps_spec_helper []); [done| intros ??; set_solver]. Qed.
+
+Lemma search_co_steps_spec_1_rev {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) s'1 ξ :
+  { μ | (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ)} 
+  -> is_Some $ search_co_steps M1 s1 s'1 ξ (elements $ lts_dual_action ξ s1).
+Proof. apply (search_co_steps_spec_helper_rev []); [done| intros ??; set_solver]. Qed.
+
+Lemma search_co_steps_spec_2 {S1 A: Type} `{ExtAction A} μ (M1: Lts S1 A) s1 s'1 l ξ:
+  search_co_steps M1 s1 s'1 ξ l = Some μ →
+  (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ).
 Proof.
   induction l; [done|]. simpl.
-(*   destruct (decide (s1 ⟶[a] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action a s2))); [|eauto].
-  intros ?. simplify_eq. done. *)
+  destruct (decide (s1 ⟶[a] s'1 ∧ essential ξ ∧ dual a ξ)) ; [|eauto].
+  intros ?. simplify_eq. done.
+Qed. 
+
+Definition decide_co_step {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) (s'1 : S1) (ξ : A) :
+  Decision (∃ μ, s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ).
+  destruct (search_co_steps M1 s1 s'1 ξ (elements $ lts_dual_action ξ s1)) as [a|] eqn:Hpar1.
+  { left. apply search_co_steps_spec_2 in Hpar1. exists a. done. }
+  { right; intros contra. destruct contra. assert ({ μ | (s1 ⟶[μ] s'1 ∧ essential ξ ∧ dual μ ξ)} ). 
+    exists x. eauto. apply search_co_steps_spec_1_rev in X. 
+  inversion X. simplify_eq. }
+Defined.
+
+Definition decide_co_step' {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s'1 : S1) (s2 : S2) (s'2 : S2)  (ξ : A) :
+  Decision (s1 ⟶[ξ] s'1 ∧ ∃ μ, s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ).
+  eapply and_dec.
+    + exact (lts_step_decidable s1 (ActExt ξ) s'1).
+    + eapply decide_co_step.
+Defined.
+
+#[global] Instance dec_co_act {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s'1 : S1) (s2 : S2) (s'2 : S2)  (ξ : A) :
+  Decision (s1 ⟶[ξ] s'1 ∧ ∃ μ, s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ).
+  eapply decide_co_step'.
+Defined.
+
+
+
+
+Fixpoint search_steps {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2: S2) s'1 s'2 candidates :=
+  match candidates with
+  | [] => None
+  | ξ::xs => if (decide (s1 ⟶[ξ] s'1 ∧ is_Some $ search_co_steps M2 s2 s'2 ξ (elements $ lts_dual_action ξ s2)))
+  
+  (* ∃ μ, s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ )) *)
+  
+  
+                then Some ξ
+                else search_steps M1 M2 s1 s2 s'1 s'2 xs
+  end.
+
+Lemma search_steps_spec_helper {S1 S2 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 s'2 l:
+  (elements $ lts_essential_actions s1) = lnot ++ l →
+  (∀ ξ, ξ ∈ lnot → ¬ (s1 ⟶[ξ] s'1 ∧ is_Some $ search_co_steps M2 s2 s'2 ξ (elements $ lts_dual_action ξ s2))) →
+  
+  (* ∀ μ , (¬ s1 ⟶[ξ] s'1 \/ ¬ μ ∈ lts_dual_action ξ s2)) *) 
+  
+  is_Some $ search_steps M1 M2 s1 s2 s'1 s'2 l ->
+  { ξ & { μ | s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ}}.
+Proof.
+  revert lnot. induction l; intros lnot.
+  { simpl. intros Hels Hnots Hc. exfalso. inversion Hc. done. }
+  { intros Helems Hnots. simpl. 
+        destruct (decide (s1 ⟶[a] s'1 ∧ is_Some (search_co_steps M2 s2 s'2 a (elements (lts_dual_action a s2))))).
+   + intro. destruct a0. eapply search_co_steps_spec_helper in H2. destruct H2. exists a. exists x. split; eauto.
+     instantiate (1:= []). eauto. intro. intro. inversion H3.
+   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed.
+
+
+
+Lemma search_steps_spec_helper_rev {S1 S2 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 s'2 l:
+  (elements $ lts_essential_actions s1) = lnot ++ l →
+  (∀ ξ, ξ ∈ lnot → ¬ (s1 ⟶[ξ] s'1 ∧ is_Some $ search_co_steps M2 s2 s'2 ξ (elements $ lts_dual_action ξ s2))) →
+  
+  (* ∀ μ , (¬ s1 ⟶[ξ] s'1 \/ ¬ μ ∈ lts_dual_action ξ s2)) *) 
+  
+  
+  { ξ & { μ | s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ}} ->
+  is_Some $ search_steps M1 M2 s1 s2 s'1 s'2 l.
+  
+  (* { η & { μ | s1 ⟶[η] s'1 /\ μ ∈ lts_dual_action η s2}}. *)
+Proof.
+  revert lnot. induction l; intros lnot.
+  { simpl. intros Hels Hnots. intros (ξ & μ & Hstep1 & Hstep2 & ess_act & duo). exfalso. 
+    specialize (lts_essential_action_spec2 _ _ _ ess_act Hstep1) as Hyp. simplify_list_eq. admit. }
+  { intros Helems Hnots. simpl. 
+        destruct (decide (s1 ⟶[a] s'1 ∧ is_Some (search_co_steps M2 s2 s'2 a (elements (lts_dual_action a s2))))).
+        
+        
+        
+        
+   + intro. destruct a0. (* eapply search_co_steps_spec_helper in H2. destruct H2. exists a. exists x. split; eauto.
+     instantiate (1:= []). eauto. intro. intro. inversion H3.
+   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. } *)
+
 Admitted.
 
+Lemma search_steps_spec_1 {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 s'2:
+  is_Some $ search_steps M1 M2 s1 s2 s'1 s'2 (elements $ lts_essential_actions s1) ->
+  { ξ & { μ | s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ }}.
+Proof. apply (search_steps_spec_helper []) ; [done| intros ??; set_solver]. Qed.
+
+Lemma search_steps_spec_1_rev {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 s'2:
+  { ξ & { μ | s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ }} ->
+  is_Some $ search_steps M1 M2 s1 s2 s'1 s'2 (elements $ lts_essential_actions s1).
+Proof. apply (search_steps_spec_helper_rev []) ; [done| intros ??; set_solver]. Qed.
+
+Lemma search_steps_spec_2 {S1 S2 A: Type} `{ExtAction A} ξ (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 s'2 l:
+  search_steps M1 M2 s1 s2 s'1 s'2 l = Some ξ →
+  { μ | s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ essential ξ ∧ dual μ ξ}.
+  
+  (* s1 ⟶[η] s'1 * { μ | μ ∈ lts_dual_nb_action η s2}. *)
+Proof.
+  induction l; [done|]. simpl.
+  destruct (decide (s1 ⟶[a] s'1 ∧ is_Some (search_co_steps M2 s2 s'2 a (elements (lts_dual_action a s2))))).
+  intros ?. simplify_eq. destruct a0. eapply search_co_steps_spec_1 in H1. destruct H1. exists x. done. eauto.
+Qed.
+
+(* Lemma spec_co_action {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) η μ : 
+{ s'1 | essential η ∧ dual μ η ∧ s1 ⟶[μ] s'1 } -> μ ∈ lts_dual_nb_action η s1.
+Proof.
+  + intro Hyp. destruct Hyp as [s'1 [step [nb duo]]]. eapply lts_dual_nb_action_spec1; eauto.
+Qed. *)
+(* Lemma spec_co_action_rev {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) η μ : 
+μ ∈ lts_dual_nb_action η s1  ->  { s'1 | non_blocking η ∧ dual μ η ∧ s1 ⟶[μ] s'1 } .
+Proof. 
+  + intro Hyp. eapply lts_dual_nb_action_spec2 in Hyp. destruct Hyp as [s'1 Hyp]. exists s'1. eauto.
+Qed. *)
 
 Definition decide_parallel_step {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2: S2) ℓ s'1 s'2:
   Decision (parallel_step (s1, s2) ℓ (s'1, s'2)).
@@ -1391,41 +1423,71 @@ Proof.
   { simplify_eq. left. by constructor. }
   destruct ℓ.
   { right. intros contra; inversion contra; simplify_eq; eauto. }
-(*   
-  destruct (decide (exists lts_stable s1 )). *)
-  destruct (search_steps _ _ s1 s2 s'1 (elements $ lts_non_blocking_action s1)) as [x|] eqn:Hpar1.
-  { apply search_steps_spec_2 in Hpar1 as [step  [μ Hμ]].
-    (* apply spec_co_action_rev in Hμ. destruct Hμ as (s''1 & nb & duo & tr). symmetry in duo.
-    left. eapply ParSync.
-    + exact duo.
-    + exact step.
-    + exact  *)
-    admit. Print gset.
-(*      eapply ParSync with  ; eauto. eassumption. admit. admit. }
-  destruct (search_steps _ _ s2 s1 s'2 (elements $ lts_non_blocking_action s2)) as [x|] eqn:Hpar2.
-  { apply search_steps_spec_2 in Hpar2 as [??]. left; eapply ParSync; eauto. admit. admit. }
+  destruct (search_steps _ _ s1 s2 s'1 s'2 (elements $ lts_essential_actions s1)) as [ξ|] eqn:Hpar1.
+  { apply search_steps_spec_2 in Hpar1 as [μ [step1 [step2 [ess_act duo]]]]. symmetry in duo.
+   left; eapply ParSync; eauto. }
+  destruct (search_steps _ _ s2 s1 s'2 s'1 (elements $ lts_essential_actions s2)) as [ξ|] eqn:Hpar2.
+  { apply search_steps_spec_2 in Hpar2 as [μ [step1 [step2 [ess_act duo]]]]. 
+   left; eapply ParSync; eauto. }
   right; intros contra; inversion contra; simplify_eq; eauto.
-  destruct α1 as [a|], α2 as [b|]; eauto.
-  destruct a, b; eauto; simpl in *; simplify_eq.
-  - assert (is_Some $ search_steps _ _ s2 s1 s'2 s'1 (elements (lts_outputs s2))) as Hc; [|].
-    apply search_steps_spec_1. eexists; split; eauto.
-    rewrite Hpar2 in Hc. by inversion Hc.
-  - assert (is_Some $ search_steps _ _ s1 s2 s'1 s'2 (elements (lts_outputs s1))) as Hc; [|].
-    apply search_steps_spec_1. eexists; split; eauto.
-    rewrite Hpar1 in Hc. by inversion Hc. *)
+  eapply essential_for_com in eq as case_essential. destruct case_essential as [ess_act1 | ess_act2].
+  - assert (is_Some $ search_steps _ _ s1 s2 s'1 s'2 (elements (lts_essential_actions s1))) as Hc; [|].
+    eapply search_steps_spec_1_rev. exists μ1. exists μ2. repeat split; eauto. symmetry; eauto.
+    inversion Hc. simplify_eq.
+  - assert (is_Some $ search_steps M2 M1 s2 s1 s'2 s'1 (elements (lts_essential_actions s2))) as Hc; [|].
+    eapply search_steps_spec_1_rev. exists μ2. exists μ1. repeat split; eauto.
+    inversion Hc. simplify_eq.
+Defined.
+
+
+Lemma list_and_set {A : Type} `{ExtAction A} (a : A) (l : list A) (set : gset A) : elements (set) = a :: l -> a ∈ set.
+Proof.
 Admitted.
 
+#[global] Instance dec_co_act_stable 
+{S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s'1 : S1) (s2 : S2) (μ1 : A) :
+        Decision
+                                  (essential μ1
+                                   ∧ (∃ s'2 : S2,
+                                        is_Some
+                                          (search_co_steps M2 s2 s'2 μ1
+                                             (elements (lts_dual_action μ1 s2))))).
+                                             Proof.
+  destruct (decide (essential μ1)).
+  + assert (∀ μ2, μ2 ∈ lts_dual_action μ1 s2 → {s'2 : S2 | essential μ1 ∧ s2 ⟶[μ2] s'2 ∧ dual μ2 μ1}).
+  intro. eapply lts_dual_action_spec2. 
+  case_eq (elements (lts_dual_action μ1 s2)); intro.
+    ++ right. intro. destruct H1. simpl in *. destruct H2. inversion H2. inversion H3.
+    ++ left. destruct (X a). eapply list_and_set. eassumption. split; eauto. exists x. simpl in *.
+  decompose record a0. assert (s2 ⟶[a] x ∧ essential μ1 ∧ dual a μ1). repeat split; eauto.
+  assert ((if decide (s2 ⟶[a] x ∧ essential μ1 ∧ dual a μ1) then Some a else search_co_steps M2 s2 x μ1 l) = Some a).
+  eapply decide_True; eauto. rewrite H5. eapply (mk_is_Some). reflexivity.
+  + right. intro. destruct H0. contradiction.
+Qed.
 
-(* Fixpoint parallel_lts_stable_helper {S1 S2 A: Type} `{H : ExtAction A} {M1: @Lts S1 A H} {M2: @Lts S2 A H}
+
+
+Fixpoint parallel_lts_stable_helper {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A}
   (s1: S1) (s2: S2) (l: list A) : bool :=
   match l with
   | [] => true
   | μ1::bs =>
-      if decide (forall μ2, dual μ1 μ2 ∧ ¬lts_stable s1 (ActExt $ μ1) ∧ ¬lts_stable s2 (ActExt $ μ2))
+      if (decide (essential μ1 /\ exists s'2, (is_Some (search_co_steps M2 s2 s'2 μ1 (elements (lts_dual_action μ1 s2))))))
         then false 
         else parallel_lts_stable_helper s1 s2 bs
   end.
- *)
+
+
+
+(* Fixpoint parallel_lts_stable_helper {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A}
+  (s1: S1) (s2: S2) (l: list A) : bool :=
+  match l with
+  | [] => true
+  | μ1::bs =>
+      if decide (∀ μ2, dual μ1 μ2 ∧ ¬lts_stable s1 (ActExt $ μ1) ∧ ¬lts_stable s2 (ActExt $ μ2))
+        then false 
+        else parallel_lts_stable_helper s1 s2 bs
+  end.  *)
 
 (*
 Lemma parallel_sts_stable_helper_spec_1 {S1 S2 L: Type} `{Label L} {M1: Lts S1 L} {M2: Lts S2 L}
