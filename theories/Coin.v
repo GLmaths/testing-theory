@@ -176,3 +176,24 @@ Section eq_contextual.
     now rewrite equivalence_bhv_acc_ctx.
   Qed.
 End eq_contextual.
+
+
+Lemma coin_refl `{FiniteLts A L} {p : A} : {[ p ]} ⩽ p.
+Proof. eapply eqx. eapply alt_set_singleton_iff. firstorder. Qed.
+
+Lemma coin_union `{FiniteLts A L} : forall (X1 X2  : gset A) (q : A), X1 ⩽ q -> X1 ∪ X2 ⩽ q.
+Proof.
+  intros X1 X2 q Ho.
+  eapply eqx. eapply eqx in Ho as (h1 & h2).
+  split.
+  - intros s hcnv.
+    eapply h1. set_solver.
+  - intros s p hw hst hcnv.
+    destruct (h2 s p hw hst ltac:(set_solver)). set_solver.
+Qed.
+
+Lemma coin_elem_of `{FiniteLts A L} (p : A) X: p ∈ X -> X ⩽ p.
+Proof.
+intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
+apply coin_union, coin_refl.
+Qed.

@@ -1170,21 +1170,7 @@ Proof.
   intros hm. now eapply pre_extensional_eq, equivalence_bhv_acc_ctx.
 Qed.
 
-(* TODO: these lemmas have nothing to do here ; and need proper names *)
-Lemma coin_refl `{FiniteLts A L} {p : A} : {[ p ]} ⩽ p.
-Proof. eapply eqx. eapply alt_set_singleton_iff. firstorder. Qed.
-
-Lemma h_cup : forall (X1 X2  : gset (proc * mb name)) (q : proc * mb name), X1 ⩽ q -> X1 ∪ X2 ⩽ q.
-Proof.
-  intros.
-  eapply eqx. eapply eqx in H as (h1 & h2).
-  split.
-  - intros s hcnv.
-    eapply h1. set_solver.
-  - intros s p hw hst hcnv.
-    destruct (h2 s p hw hst ltac:(set_solver)). set_solver.
-Qed.
-
+(* TODO: this lemma has nothing to do here ; and need proper name *)
 Lemma h2 : forall q q' X M,
     q ≡* q' -> (X : gset (proc * mb name)) ⩽ q ▷ M -> X ⩽ q' ▷ M.
 Proof.
