@@ -152,14 +152,22 @@ Class ExtAction (A : Type) :=
                           nécessaire pour faire des preuves sur les actions visible en général*)
       dual : A -> A -> Prop;
       d_dec a b: Decision (dual a b);
-      co_non_blocking a : non_blocking a -> exists b , dual a b;
+      
+      co_nb : A -> A;
+      duo_nb_co_nb a : non_blocking a -> dual (co_nb a) a;
+      
+      
       sym_dual : Symmetric dual; (* nécessaire pour parallel_step_commutative*)
       essential : A -> Prop;
       e_dec a : Decision (essential a) ;
       essential_for_com μ1 μ2 : dual μ1 μ2 -> essential μ1 \/ essential μ2 ;
-
+      
       lts_oba_fw_non_blocking_duo_spec η μ: non_blocking η -> dual η μ ->  ¬ non_blocking μ ;
       (* sinon chaine infini de n_b_actions avec le fw *)
+      
+      nb_action_are_essential a : non_blocking a -> essential a;
+      
+      (* co_nb_not_essential a : ¬ (essential (co_nb a)); (* ne garder que si FW contient cette action *) *)
     }.
 #[global] Existing Instance extaction_eqdec.
 #[global] Existing Instance extaction_countable.
@@ -620,7 +628,7 @@ Lemma lts_ht_input_ex `{LtsObaFW P A} (p : P) :
 Proof. 
   intro η. intro nb.
 assert (exists μ , dual η μ) as Duo.
-+ eapply co_non_blocking. assumption.
++ exists (co_nb η). symmetry. eapply (duo_nb_co_nb η). assumption.
 + destruct Duo as [μ Duo]. exists μ. edestruct (lts_oba_fw_forward  p η μ) as (t & l1 & l2); eauto. Qed.
 
 
@@ -1903,7 +1911,7 @@ Proof. constructor; first apply _. intros *; apply finite_countable. Qed.
 
 (** A mailbox is a multiset of names. *)
 
-Definition mb (A : Type) `{ExtAction A} := gmultiset A.
+Definition mb (A : Type) `{ExtAction A} := gmultiset A. (* {m : gmultiset A | forall η, η ∈ m -> non_blocking η}. *)
 
 (** Lts extended with forwarders. *)
 
@@ -1912,8 +1920,8 @@ Inductive lts_fw_step {P A : Type} `{Lts P A} : P * mb A -> Act A -> P * mb A ->
   lts_step p α q -> lts_fw_step (p, m) α (q, m)
 | lts_fw_send_mb m p η : non_blocking η -> (*pas nécessaire à priori si on part d'une mailbox vide *)
   lts_fw_step (p, {[+ η +]} ⊎ m) (ActExt $ η) (p, m)
-| lts_fw_store_mb m p η μ : non_blocking η -> dual η μ -> 
-  lts_fw_step (p, m) (ActExt $ μ) (p, {[+ η +]} ⊎ m)
+| lts_fw_store_mb m p η μ : non_blocking η -> dual η μ ->  ¬ essential μ (* obligatoire, pour l'heure *) -> 
+  lts_fw_step (p, m) (ActExt $ μ) (* (ActExt $ co_nb $ η) *) (p, {[+ η +]} ⊎ m)
 | lts_fw_com m p η μ q : dual η μ -> 
   lts_step p (ActExt $ μ) q -> 
   non_blocking η -> (*pas nécessaire à priori si on part d'une mailbox vide *)
@@ -2114,44 +2122,58 @@ Global Hint Resolve fw_eq_equiv:mdb.
 
 (** LtsObaFw : lts_fw instance. *)
 
-Definition non_blocking_dual {S1 A: Type} `{ExtAction A} {M: Lts S1 A} (η : A) :=
+(* Definition non_blocking_dual {S1 A: Type} `{ExtAction A} {M: Lts S1 A} (η : A) :=
         ∃ η1, non_blocking η1 ∧ dual η η1. 
 
 #[global] Instance dec_non_blocking_dual {S1 A: Type} `{ExtAction A} {M: Lts S1 A} (η : A) 
       : (* ¬ non_blocking η ->  *) Decision (non_blocking_dual η).
 Proof. 
-Admitted.
+Admitted. *)
 
 
 
 Definition lts_fw_stable `{ExtAction A, Lts P A} (s : P * mb A) (ℓ : Act A) : Prop :=
   match ℓ with
   | ActExt η => if (decide (non_blocking η)) then lts_stable s.1 (ActExt η) /\ η ∉ s.2
-                                            else if (decide (non_blocking_dual η)) then False
-                                                                                   else lts_stable s.1 (ActExt η)
-  | τ => lts_stable s.1 τ /\ forall η μ, η ∈ s.2 -> dual η μ -> s.1 ↛[μ]
+                                             else (* lts_stable s.1 (ActExt η) /\ forall μ, dual η μ -> ¬ non_blocking μ *)
+                                                    if (decide (lts_stable s.1 (ActExt η))) then True
+                                                                                            else False
+  | τ => lts_stable s.1 τ /\ forall μ η, η ∈ s.2 /\ dual μ η -> s.1 ↛[μ]
   end.
 
 Lemma lts_com_ex_xs `{Lts P A} (p : P) (m : list A) :
-  {μ | μ ∈ m /\ ¬ lts_stable p (ActExt $ μ) }
-  + {forall μ, μ ∈ m -> lts_stable p (ActExt $ μ)}.
+  (* (forall η' (m' : list A), η' ∈  m' -> essential η' ) ->  car si on est non_blocking alors on est essential*)
+  {η & {μ | η ∈ m /\ dual μ η /\ ¬ lts_stable p (ActExt $ μ)} }
+  + {forall μ η, η ∈ m /\ dual μ η -> lts_stable p (ActExt $ μ)}.
 Proof.
+  (* intro Hyp. *)
   induction m.
-  - right. inversion 1.
-  - destruct IHm as [(b & mem & hnst)|].
-    + left. exists b. set_solver.
-    + destruct (lts_stable_decidable p (ActExt $ a)).
-      ++ right. intros. inversion H1; set_solver.
-      ++ left. exists a. set_solver.
-Qed.
+  - right. inversion 1. inversion H2.
+  - destruct IHm as [(b & b' & mem & duo & hnst)|].
+    + left. exists b. exists b'. set_solver.
+    + case_eq (elements (lts_dual_action a p)).
+      ++ intro case1. right. intros. destruct H1. inversion H1; subst. 
+        +++ assert (non_blocking a) as ess_act. admit.
+            apply nb_action_are_essential in ess_act. destruct (lts_stable_decidable p (ActExt $ μ)) as [|Hyp'].
+            assumption. eapply lts_stable_spec1 in Hyp'. destruct Hyp' as (p' & HypTr).
+            eapply lts_dual_action_spec1 in ess_act; eauto. eapply elem_of_elements in ess_act.
+            rewrite case1 in ess_act. inversion ess_act.
+        +++ set_solver. 
+      ++ intros a' l' exist_co_actions. assert (a' ∈ lts_dual_action a p) as Important_Hyp. 
+         eapply elem_of_elements. rewrite exist_co_actions. set_solver.
+         left. exists a. exists a'. split. set_solver.
+         eapply lts_dual_action_spec2 in Important_Hyp. destruct Important_Hyp as (p' & ess_act & HypTr & duo).
+         split; eauto. eapply lts_stable_spec2. exists p'. assumption.
+Admitted.
+
 
 Lemma lts_com_ex `{Lts P A} (p : P) (m : mb A) :
-  {μ | μ ∈ m /\ ¬ lts_stable p (ActExt $ μ)}
-  + {forall μ, μ ∈ m -> lts_stable p (ActExt $ μ)}.
+  {η & {μ | η ∈ m /\ dual μ η /\ ¬ lts_stable p (ActExt $ μ)} }
+  + {forall μ η, η ∈ m /\ dual μ η -> lts_stable p (ActExt $ μ)}.
 Proof.
-  destruct (lts_com_ex_xs p (elements m)) as [(b & mem & hnst)|].
-  + left. exists b. split. now eapply gmultiset_elem_of_elements. eassumption.
-  + right. intros. eapply gmultiset_elem_of_elements in H1. eauto.
+  destruct (lts_com_ex_xs p (elements m)) as [(b & b' & mem & duo & not_stable)|].
+  + left. exists b. exists b'. split. now eapply gmultiset_elem_of_elements. split; eassumption.
+  + right. intros μ η (mem & duo). eapply gmultiset_elem_of_elements in mem. eauto.
 Qed.
 
 
@@ -2201,24 +2223,27 @@ Proof.
        right. inversion 1; subst. 
        +++ contradiction.
        +++ contradiction.
-       +++ assert (¬ non_blocking η). apply (lts_oba_fw_non_blocking_duo_spec η0 η);eauto. contradiction.
+       +++ assert (¬ non_blocking η). (*  assert (¬ non_blocking (co_nb η0)).  *)
+           apply (lts_oba_fw_non_blocking_duo_spec η0 η);eauto. 
+            (* apply (lts_oba_fw_non_blocking_duo_spec η0 (co_nb η0));eauto. symmetry. eapply duo_nb_co_nb. assumption. *)
+            contradiction.
     ++ right. inversion 1; subst.
        +++ contradiction.
        +++ contradiction.
-       +++ assert (¬ non_blocking η). apply (lts_oba_fw_non_blocking_duo_spec η0 η); eauto. 
+       +++ assert (¬ non_blocking η).  (* assert (¬ non_blocking (co_nb η0)).   *)
+           apply (lts_oba_fw_non_blocking_duo_spec η0 η); eauto.
+           (* apply (lts_oba_fw_non_blocking_duo_spec η0 (co_nb η0)); eauto. symmetry. eapply duo_nb_co_nb. assumption. *)
            contradiction. 
 Qed.
 
 
-(* Lemma decision_lts_fw_step_input `{Lts P A} p1 m1 p2 m2 μ :
+(*Lemma decision_lts_fw_step_input `{Lts P A} p1 m1 p2 m2 μ :
   ¬ non_blocking μ -> Decision (lts_fw_step (p1, m1) (ActExt $ μ) (p2, m2)).
 Proof.
   intro not_nb.
   destruct (lts_step_decidable p1 (ActExt μ) p2).
   + destruct (decide (m1 = m2)); subst.
     ++ left. eauto with mdb.
-    ++ destruct (decide (non_blocking_dual μ)).
-       destruct n0.
     ++ destruct (decide (m2 = {[+ μ +]} ⊎ m1)); subst.
        +++ destruct (decide (p1 = p2)); subst.
            * right. intro. 
@@ -2227,8 +2252,7 @@ Proof.
        +++ right. inversion 1; subst. 
            * eauto.
            * contradiction.
-           *  
-
+           *  admit. 
   + destruct (decide (m2 = {[+ μ +]} ⊎ m1)); subst.
     +++ destruct (decide (p1 = p2)); subst.
         left. eauto with mdb.
@@ -2258,7 +2282,6 @@ Proof.
 Admitted. *)
 
 
-
 #[global] Program Instance MbLts {A : Type} `{Lts P A} : Lts (P * mb A) A :=
   {|
     lts_step p α q  := lts_fw_step p α q ;
@@ -2279,63 +2302,89 @@ Next Obligation.
   eapply elem_of_union. inversion HypTr; subst; simpl in *.
   - left. eapply lts_essential_action_spec1; eassumption.
   - right. eapply gmultiset_elem_of_dom. multiset_solver.
-  - left. eapply lts_essential_action_spec1. eassumption.
+  - exfalso. (* eapply co_nb_not_essential. eassumption. *) contradiction.
 Qed.
 Next Obligation.
-  intros.
-  destruct p1 as (p1, m1). simpl in *.
-  destruct (decide (x ∈ lts_outputs p1)).
-  eapply lts_outputs_spec2 in e as (p0 & l0).
-  exists (p0, m1). eauto with mdb.
-  destruct (decide (x ∈ dom m1)).
-  exists (p1, m1 ∖ {[+ x +]}).
+  intros ? ? ? ? s ? where_is_the_essential_action.
+  destruct s as (p, m). simpl in *.
+  destruct (decide (ξ ∈ lts_essential_actions p)).
+  eapply lts_essential_action_spec2 in e as (p' & ess_act & HypTr).
+  exists (p', m). eauto with mdb.
+  destruct (decide (ξ ∈ dom m)).
+  exists (p, m ∖ {[+ ξ +]}).
   eapply gmultiset_elem_of_dom, gmultiset_disj_union_difference' in e.
-  rewrite e at 1. eapply lts_fw_out_mb.
-  exfalso. eapply elem_of_union in H1. destruct H1; eauto.
-Qed.
+  rewrite e at 1. assert (non_blocking ξ) as HypSup. 
+  (*peut etre fait en supposant que la mailbox ne contient que des non_blocking *) admit.
+   split. eapply nb_action_are_essential in HypSup. assumption. eapply lts_fw_send_mb. assumption. 
+  exfalso. eapply elem_of_union in where_is_the_essential_action. 
+  destruct where_is_the_essential_action; eauto.
+Admitted.
 Next Obligation.
-  intros. simpl in *. destruct α as [[|]|].
-  - right. simpl. intro. now exfalso.
-  - simpl. destruct (decide (a ∈ p.2)).
+  intros. simpl in *. destruct α as [|]. simpl in *.
+  destruct (decide (non_blocking μ)) as [nb | not_nb].
+
+  - destruct (decide (μ ∈ p.2)). 
     + right. intro. destruct H1. contradiction.
-    + destruct (decide (a ∈ lts_outputs p.1)).
-      ++ right. destruct 1. contradiction.
-      ++ left. split; eassumption.
+    + eapply nb_action_are_essential in nb.
+      destruct (decide (μ ∈ lts_essential_actions p.1)) as [in_proc | not_in_proc].
+      ++ right. destruct 1. 
+         eapply lts_essential_action_spec2 in in_proc. destruct in_proc as (p' & ess_act & HypTr). 
+         eapply lts_stable_spec2. exists p'. exact HypTr. assumption.
+      ++ left. split. destruct (decide (p.1 ↛[μ])) as [stable | not_stable].
+        +++ eauto.
+        +++ exfalso. eapply lts_stable_spec1 in not_stable. destruct not_stable.
+            eapply (lts_essential_action_spec1 p.1) in nb. contradiction. eassumption.
+        +++ assumption.
+  - destruct (decide (p.1 ↛[μ])) as [stable | not_stable]. 
+    + left. eauto. (* split. eauto. intro u. intro duo. intro. eapply lts_fw_store_mb. m p). η μ).  admit. (* TODO *) *)
+    + right. eauto. (* right. intros (impossible & Hyp). contradiction. *)
   - destruct p as (p, m); simpl in *;
       destruct (decide (lts_stable p τ)); simpl in *; firstorder.
-    destruct (lts_com_ex p m) as [(b & mem & hnst)|].
-    right. set_solver.
-    left. set_solver.
+      destruct (lts_com_ex p m) as [(b & b' & mem & duo & not_stable)|].
+        + right. set_solver.
+        + left. set_solver.
 Qed.
 Next Obligation.
-  intros ? ? ? ? (p, m) [[a|a]|] hnst.
-  - exists (p, {[+ a +]} ⊎ m). eauto with mdb.
-  - destruct (decide (a ∈ m)).
+  intros ? ? ? ? (p, m) [|] not_stable.
+  - destruct (decide (non_blocking μ)) as [nb | not_nb].
+    + destruct (decide (μ ∈ m)).
     eapply gmultiset_disj_union_difference' in e.
-    exists (p, m ∖ {[+ a +]}). rewrite e at 1. eauto with mdb.
-    destruct (decide (a ∈ lts_outputs p)).
-    eapply lts_outputs_spec2 in e as (q & l). eauto with mdb.
-    exfalso. now eapply hnst.
+    exists (p, m ∖ {[+ μ +]}). rewrite e at 1. eauto with mdb.
+    destruct (decide (μ ∈ lts_essential_actions p)).
+    eapply lts_essential_action_spec2 in e as (q & ess_act & l). eauto with mdb.
+    exfalso. (* now  *) eapply not_stable. 
+    simpl. 
+    assert (p ↛[μ] ∧ μ ∉ m). 
+    ++ split;eauto. eapply nb_action_are_essential in nb as ess_act.
+       destruct (decide (p ↛[μ])) as [tauto | impossible]. 
+      +++ eauto.
+      +++ eapply lts_stable_spec1 in impossible. destruct impossible as (p' & HypTr).
+          eapply lts_essential_action_spec1 in ess_act; eauto. contradiction.
+    ++ eapply decide_True in nb. erewrite nb. assumption.
+    + admit. (* exists (p, {[+ μ +]} ⊎ m). eauto with mdb. *) (* TODO : existence d'une co_co_action ? *)
   - destruct (decide (lts_stable p τ)).
-    destruct (lts_com_ex p m) as [(b & mem & hnst')|].
-    + eapply lts_stable_spec1 in hnst' as (p' & l').
+    destruct (lts_com_ex p m) as [(b & b' & mem & duo & not_stable')|].
+    + eapply lts_stable_spec1 in not_stable' as (p' & l').
       eapply gmultiset_disj_union_difference' in mem.
-      exists (p', m ∖ {[+ b +]}). rewrite mem at 1.
-      eauto with mdb.
-    + exfalso. now eapply hnst.
+      exists (p', m ∖ {[+ b +]}). rewrite mem at 1. symmetry in duo.
+      eapply lts_fw_com; eauto. eauto with mdb. admit.
+    + exfalso. eapply not_stable. split; eauto.
     + eapply lts_stable_spec1 in n as (p' & l'). eauto with mdb.
-Qed.
+Admitted.
 Next Obligation.
-  intros ? ? ? ? (p, m) [[a|a]|] ((p2,m2), l) hst; simpl in hst; eauto.
-  inversion l; subst.
-  - eapply lts_outputs_spec1 in H4. naive_solver.
-  - multiset_solver.
-  - destruct hst as (hstp & hstm).
+  intros ? ? ? ? (p, m) [|] ((p2,m2), l); simpl. 
+  - destruct (decide(non_blocking μ)) as [nb | not_nb]; intro hst.
+    + inversion l; subst.
+      ++ destruct hst as (stable & mem). eapply lts_stable_spec2 in stable; eauto.
+      ++ multiset_solver.
+      ++ apply nb_action_are_essential in nb as ess_act. contradiction. 
+    + admit.
+  - intro hst. destruct hst as (hstp & hstm).
     inversion l; subst.
     + eapply lts_stable_spec2 in hstp; eauto.
-    + set (hsti := hstm a ltac:(multiset_solver)).
-      eapply lts_stable_spec2 in hsti; eauto.
-Qed. *)
+    + set (hsti := hstm μ η).
+      eapply lts_stable_spec2 in hsti ; eauto. split. multiset_solver. symmetry.  assumption.
+Admitted.
 
 Definition lts_fw_sc `{LtsOba P A} (p : P * mb A) α (q : P * mb A) :=
   exists r, lts_fw_step p α r /\ r ≐ q.
