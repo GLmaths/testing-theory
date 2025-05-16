@@ -148,21 +148,21 @@ Class ExtAction (A : Type) :=
       extaction_eqdec: EqDecision A;
       extaction_countable: Countable A;
       non_blocking : A -> Prop;
-      nb_dec: forall a, Decision (non_blocking a); (* pas nécessaire pour l'instant, 
-                          nécessaire pour faire des preuves sur les actions visible en général*)
+      nb_dec a : Decision (non_blocking a);
       dual : A -> A -> Prop;
-      d_dec : forall a b, Decision (dual a b);
-      co_non_blocking : forall a, non_blocking a -> exists b , dual a b;
-      sym_dual : Symmetric dual; (* nécessaire pour parallel_step_commutative*)
+      d_dec a b: Decision (dual a b);
+      
+      lts_oba_fw_non_blocking_duo_spec η μ: non_blocking η -> dual η μ ->  ¬ non_blocking μ ;
+      (* sinon chaine infini de n_b_actions avec le fw *)
+      
+      co : A -> A;
+      unique_nb η μ: non_blocking η -> dual η μ -> η = (co μ);
+      (* sinon, not finite lts ET en plus construction du fw pas valable *)
     }.
 #[global] Existing Instance extaction_eqdec.
 #[global] Existing Instance extaction_countable.
 #[global] Existing Instance nb_dec.
 #[global] Existing Instance d_dec.
-#[global] Instance dual_sym `{ExtAction A} : Symmetric dual.
-exact sym_dual.
-Qed.
-
 
 Inductive Act (A: Type) :=
 | ActExt (μ: A)
@@ -173,10 +173,8 @@ Arguments τ {_}.
 
 Definition trace A := list A.
 
-#[global] Instance act_eqdec `{EqDecision L} : EqDecision (Act L).
+#[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
 Proof. solve_decision. Defined.
-
-Print gset.
 
 Class Lts (P A : Type) `{ExtAction A} :=
   MkLts {
@@ -185,28 +183,14 @@ Class Lts (P A : Type) `{ExtAction A} :=
 
       lts_step_decidable a α b : Decision (lts_step a α b);
 
-      lts_essential_actions : P -> gset A;
-
-      lts_non_blocking_action : P -> gset A; 
-      lts_non_blocking_action_spec1 p1 η p2 : non_blocking η -> lts_step p1 (ActExt η) p2 -> η ∈ lts_non_blocking_action p1; 
-      lts_non_blocking_action_spec2 p1 η : η ∈ lts_non_blocking_action p1 -> {p2 | (non_blocking η /\ lts_step p1 (ActExt η) p2) } ;
-
       lts_stable: P → Act A → Prop;
       lts_stable_decidable p α : Decision (lts_stable p α);
       lts_stable_spec1 p α : ¬ lts_stable p α → { q | lts_step p α q };
       lts_stable_spec2 p α : { q | lts_step p α q } → ¬ lts_stable p α;
-
-      φ : P;
-
-      lts_dual_nb_action : A -> P -> list A; 
-      lts_dual_nb_action_spec1 p1 η μ p2 : non_blocking η -> dual μ η -> lts_step p1 (ActExt μ) p2 -> μ ∈ lts_dual_nb_action η p1; 
-      lts_dual_nb_action_spec2 p1 η μ : μ ∈ lts_dual_nb_action η p1 -> {p2 | (non_blocking η /\ dual μ η /\ lts_step p1 (ActExt μ) p2) } ;
     }.
 #[global] Existing Instance lts_state_eqdec.
 #[global] Existing Instance lts_step_decidable.
 #[global] Existing Instance lts_stable_decidable. 
-
-
 
 Notation "p ⟶ q"      := (lts_step p τ q) (at level 30, format "p  ⟶  q").
 Notation "p ⟶{ α } q" := (lts_step p α q) (at level 30, format "p  ⟶{ α }  q").
@@ -216,7 +200,7 @@ Notation "p ↛"      := (lts_stable p τ) (at level 30, format "p  ↛").
 Notation "p ↛{ α }" := (lts_stable p α) (at level 30, format "p  ↛{ α }").
 Notation "p ↛[ μ ]" := (lts_stable p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
 
-Class FiniteLts P A `{Lts P A} :=
+Class FiniteImageLts P A `{Lts P A} :=
   MkFlts {
       folts_states_countable: Countable P;
       folts_next_states_finite p α : Finite (dsig (fun q => lts_step p α q));
@@ -228,18 +212,20 @@ Class FiniteLts P A `{Lts P A} :=
 Class LtsEq (P A : Type) `{Lts P A} := {
     (* todo: use Equivalence *)
     eq_rel : P -> P -> Prop;
-    eq_rel_refl p : eq_rel p p;
-    eq_symm p q : eq_rel p q -> eq_rel q p;
-    eq_trans p q r : eq_rel p q -> eq_rel q r -> eq_rel p r;
+    eq_rel_eq : Equivalence eq_rel;
     (* reference: L 1.4.15 p.51 Sangiorgi pi-book *)
     eq_spec p q (α : Act A) : (exists r, eq_rel p r /\ r ⟶{α} q) -> (exists r, p ⟶{α} r /\ eq_rel r q);
   }.
 
-Add Parametric Relation `{Lts P A, ! LtsEq P A} : P eq_rel
+
+#[global] Instance rel_equivalence `{LtsEq P A }: Equivalence eq_rel.
+  by exact eq_rel_eq.
+Defined.
+(* Add Parametric Relation `{Lts P A, ! LtsEq P A} : P eq_rel
     reflexivity proved by (eq_rel_refl)
     symmetry proved by (eq_symm)
     transitivity proved by (eq_trans)
-    as sc_proc_rel.
+    as sc_proc_rel. *)
 
 Infix "⋍" := eq_rel (at level 70).
 
@@ -248,15 +234,27 @@ Definition lts_sc `{Lts P A, !LtsEq P A} p α q := exists r, p ⟶{α} r /\ r �
 Notation "p ⟶⋍ q" := (lts_sc p τ q) (at level 30, format "p  ⟶⋍  q").
 Notation "p ⟶⋍{ α } q" := (lts_sc p α q) (at level 30, format "p  ⟶⋍{ α }  q").
 Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p  ⟶⋍[ μ ]  q").
-
-Class LtsOba (P A : Type) `{Lts P A, !LtsEq P A} :=
+(* `{Prop_of_Inter P A, !LtsEq P A} *) 
+Class LtsOba (P A : Type) `{H : ExtAction A} (* {I : InteractionAction A}   *)
+            {M : @Lts P A H} {Rel : @LtsEq P A H M} 
+                          (* `{@Prop_of_Inter P A H I M} *)  :=
   MkOBA {
       (* Multiset of outputs *)
       lts_oba_mo (p : P) : gmultiset A;
-      lts_oba_mo_spec1 p η : η ∈ lts_oba_mo p <-> η ∈ lts_non_blocking_action p;
-      lts_oba_mo_spec2 p η : forall q, non_blocking η -> p ⟶[ η ] q -> lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
+
+      (* lts_oba_mo_spec1 p η : η ∈ lts_oba_mo p -> η ∈ lts_essential_actions p; *) 
+      (* à rajouter ? *)
+      (* lts_non_blocking_action_spec1 p1 η p2 : non_blocking η -> lts_step p1 (ActExt η) p2 -> η ∈ lts_non_blocking_action p1; 
+      lts_non_blocking_action_spec2 p1 η : η ∈ lts_non_blocking_action p1 -> {p2 | (non_blocking η /\ lts_step p1 (ActExt η) p2) } ; *)
+      lts_oba_mo_spec_bis1 p1 η p2 : non_blocking η -> lts_step p1 (ActExt η) p2 -> η ∈ lts_oba_mo p1; 
+      lts_oba_mo_spec_bis2 p1 η : η ∈ lts_oba_mo p1 -> {p2 | (non_blocking η /\ lts_step p1 (ActExt η) p2) } ; 
+
+      (* à remplacer par axiom pas de suite infini de non_blocking ?*)
+      lts_oba_mo_spec2 p η : forall q, non_blocking η -> p ⟶[ η ] q 
+                    -> lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
+
       (* Selinger axioms. *)
-      lts_oba_non_blocking_action_commutativity {p q r η α} :
+      lts_oba_non_blocking_action_delay {p q r η α} :
       non_blocking η -> p ⟶[ η ] q -> q ⟶{ α } r -> (∃ t, p ⟶{α} t /\ t ⟶⋍[ η ] r) ;
       lts_oba_non_blocking_action_confluence {p q1 q2 η μ} :
       non_blocking η -> μ ≠ η -> p ⟶[ η ] q1 -> p ⟶[ μ ] q2 ->
@@ -278,8 +276,6 @@ Class LtsObaFB (P A: Type) `{LtsOba P A} :=
 
 Class LtsObaFW (P A : Type) `{LtsOba P A} :=
   MkLtsObaFW {
-      lts_oba_fw_non_blocking_duo_spec η μ: non_blocking η -> dual η μ ->  ¬ non_blocking μ ;
-      (* sinon chaine infini de n_b_actions avec le fw *)
       lts_oba_fw_forward p1 η μ : ∃ p2, non_blocking η -> dual η μ -> p1 ⟶[ μ ] p2 /\ p2 ⟶[ η ] p1 ;
       lts_oba_fw_feedback {p1 p2 p3 η μ } : non_blocking η -> dual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
     }.
@@ -290,7 +286,7 @@ Class LtsObaFW (P A : Type) `{LtsOba P A} :=
 Lemma lts_oba_mo_non_blocking_spec1 `{LtsOba P A} {p η} : η ∈ lts_oba_mo p -> non_blocking η.
 Proof.
 intro Hyp. 
-eapply lts_oba_mo_spec1 in Hyp. eapply lts_non_blocking_action_spec2 in Hyp. destruct Hyp. destruct a. assumption.
+eapply lts_oba_mo_spec_bis2 in Hyp. destruct Hyp as (p2 & nb & tr). assumption.
 Qed.
 
 Lemma lts_oba_mo_non_blocking_contra `{LtsOba P A} {p η} : ¬ non_blocking η -> ¬ η ∈ lts_oba_mo p.
@@ -336,12 +332,13 @@ Proof. intros. eapply terminate_preserved_by_eq; eauto. Qed.
 Lemma terminate_preserved_by_lts_non_blocking_action `{LtsOba P A} {p q η} : non_blocking η  -> p ⟶[ η ] q -> p ⤓ -> q ⤓.
 Proof.
   intros nb l ht. revert q η nb l.
-  dependent induction ht; intros q a nb l1.
+  induction ht as [p Hyp1 Hyp2].
+  intros q a nb l1.
   eapply tstep. intros q' l2.
-  destruct (lts_oba_non_blocking_action_commutativity nb l1 l2) as (t & l3 & l4); eauto.
+  destruct (lts_oba_non_blocking_action_delay nb l1 l2) as (t & l3 & l4); eauto.
   destruct l4 as (q0 & l0 & eq0).
   eapply terminate_preserved_by_eq.
-  eapply H3. eapply l3. eapply nb. eapply l0. eassumption.
+  eapply Hyp2. eapply l3. eapply nb. eapply l0. eassumption.
 Qed.
 
 Lemma stable_tau_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η : non_blocking η -> p ↛ -> p ⟶[ η ] q -> q ↛.
@@ -349,7 +346,7 @@ Proof.
   intros nb st l.
   case (lts_stable_decidable q τ); eauto.
   intro nst. eapply lts_stable_spec1 in nst as (t & l').
-  destruct (lts_oba_non_blocking_action_commutativity nb l l') as (r & l1 & l2).
+  destruct (lts_oba_non_blocking_action_delay nb l l') as (r & l1 & l2).
   edestruct (lts_stable_spec2 p τ); eauto with mdb.
 Qed.
 
@@ -368,7 +365,7 @@ Proof.
   intros nb st l.
   case (lts_stable_decidable q (ActExt $ μ)); eauto.
   intro nst. eapply lts_stable_spec1 in nst as (t & l').
-  destruct (lts_oba_non_blocking_action_commutativity nb l l') as (r & l1 & l2).
+  destruct (lts_oba_non_blocking_action_delay nb l l') as (r & l1 & l2).
   edestruct (lts_stable_spec2 p (ActExt $ μ)); eauto with mdb.
 Qed.
 
@@ -583,10 +580,10 @@ Proof.
 Qed.
 
 
-Definition lts_tau_set `{FiniteLts P A} p : list P :=
+Definition lts_tau_set `{FiniteImageLts P A} p : list P :=
   map proj1_sig (enum $ dsig (lts_step p τ)).
 
-Lemma lts_tau_set_spec : forall `{FiniteLts P A} p q, q ∈ lts_tau_set p <-> p ⟶ q.
+Lemma lts_tau_set_spec : forall `{FiniteImageLts P A} p q, q ∈ lts_tau_set p <-> p ⟶ q.
 Proof.
   intros. split.
   intro mem. unfold lts_tau_set in mem.
@@ -598,22 +595,16 @@ Proof.
 Qed.
 
 
-Lemma lts_ht_input_ex `{LtsObaFW P A} (p : P) :
+(* Lemma lts_ht_input_ex `{LtsObaFW P A} (p : P) :
   forall η, non_blocking η -> exists μ, exists p', lts_step p (ActExt μ) p'.
 Proof. 
   intro η. intro nb.
 assert (exists μ , dual η μ) as Duo.
-+ eapply co_non_blocking. assumption.
++ exists (co_nb η). symmetry. eapply (duo_nb_co_nb η). assumption.
 + destruct Duo as [μ Duo]. exists μ. edestruct (lts_oba_fw_forward  p η μ) as (t & l1 & l2); eauto. Qed.
+ *)
 
 
-Inductive parallel_step `{H : ExtAction A, M1: @Lts P1 A H, M2: @Lts P2 A H}: P1 * P2 → Act A → P1 * P2 → Prop :=
-| ParLeft α a1 a2 b (l : a1 ⟶{α} a2) : parallel_step (a1, b) α (a2, b)
-| ParRight α a b1 b2 (l : b1 ⟶{α} b2) : parallel_step (a, b1) α (a, b2)
-| ParSync μ1 μ2 a1 a2 b1 b2 (eq : dual μ1 μ2) (l1 : a1 ⟶[μ1] a2) (l2 : b1 ⟶[μ2] b2) : parallel_step (a1, b1) τ (a2, b2)
-.
-
-Global Hint Constructors parallel_step:mdb.
 
 Lemma eq_spec_wt `{LtsEq P A} p p' : p ⋍ p' -> forall q s, p ⟹[s] q -> p' ⟹⋍[s] q.
 Proof.
@@ -646,7 +637,7 @@ Proof.
   dependent induction w; intros p0 η nb (p' & hl & heq); eauto with mdb.
   - exists p0. split; eauto with mdb. exists p'. split; eauto with mdb.
   - destruct (eq_spec p' q τ) as (r & hlr & heqr); eauto with mdb.
-    destruct (lts_oba_non_blocking_action_commutativity nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
+    destruct (lts_oba_non_blocking_action_delay nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
     edestruct (IHw JMeq_refl r' η) as (r0 & w0 & (r1 & l1' & heq1)).
     exact nb. exists t'. split. eassumption. etrans; eassumption.
     exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
@@ -664,7 +655,7 @@ Proof.
     destruct (wt_decomp_one w0) as (q0 & q1 & w2 & l' & w3).
     destruct (delay_wt_non_blocking_action_nil nb l w2) as (t & w4 & (q0' & l1' & heq')).
     destruct (eq_spec q0' q1 (ActExt μ)) as (r' & hr' & heqr'). eauto with mdb.
-    destruct (lts_oba_non_blocking_action_commutativity nb l1' hr') as (u & l2 & l3).
+    destruct (lts_oba_non_blocking_action_delay nb l1' hr') as (u & l2 & l3).
     edestruct (eq_spec_wt q1 r' (symmetry heqr') r) as (t1 & w5 & l4); eauto with mdb.
     eapply wt_push_nil_left; eassumption.
     edestruct (IHs' u r') as (t2 & w6 & l5); eauto with mdb.
@@ -694,14 +685,14 @@ Proof.
   induction s as [|μ s']; intros p q η nb hacnv l.
   - eapply cnv_nil. inversion hacnv. subst.
     eapply terminate_preserved_by_lts_non_blocking_action; eassumption.
-  - inversion hacnv. subst.
+  - inversion hacnv as [|p'  μ'  T  Hyp_p_conv Hyp_conv_through_μ];subst.
     eapply cnv_act.
     + eapply terminate_preserved_by_lts_non_blocking_action; eassumption.
     + intros r w.
       destruct (delay_wt_non_blocking_action nb (mk_lts_eq l) w) as (t & w0 & l1).
       destruct l1 as (r' & l2 & heq).
       eapply cnv_preserved_by_eq. eassumption.
-      eapply IHs'. exact nb. eapply H7, w0.
+      eapply IHs'. exact nb. eapply Hyp_conv_through_μ, w0.
       eassumption.
 Qed.
 
@@ -720,10 +711,10 @@ Lemma cnv_drop_input_hd `{LtsObaFW P A} p μ s :
   (exists η, non_blocking η /\ dual η μ) -> p ⇓ μ :: s -> p ⇓ s.
 Proof.
   intros Hyp hacnv. destruct Hyp as [η Hyp]. destruct Hyp as [nb duo].
-  inversion hacnv; subst.
+  inversion hacnv as [|p'  μ'  T  Hyp_p_conv Hyp_conv_through_μ];subst.
   destruct (lts_oba_fw_forward p η μ) as (r & l1 & l2). eassumption. eassumption.
   eapply cnv_preserved_by_lts_non_blocking_action. eassumption.
-  eapply H7. eapply wt_act. eassumption. eapply wt_nil. eapply l2.
+  eapply Hyp_conv_through_μ. eapply wt_act. eassumption. eapply wt_nil. eapply l2.
 Qed. 
 
 
@@ -784,6 +775,7 @@ Qed.
 
 Lemma wt_join_eq `{LtsEq P A} {p q r s1 s2} : p ⟹⋍[s1] q -> q ⟹⋍[s2] r -> p ⟹⋍[s1 ++ s2] r.
   revert p q r s2.
+Proof.
   induction s1; intros p q r s2 (q' & hwq' & heqq') w2; simpl in *.
   - destruct w2 as  (r' & hwr' & heqr').
     destruct (eq_spec_wt _ _ (symmetry heqq') r' s2 hwr') as (r1 & hwr1 & heqr1).
@@ -817,12 +809,12 @@ Proof.
   destruct (delay_wt_non_blocking_action_nil nb (mk_lts_eq l1) (wt_join_nil w4 w5)) as (v & w0 & (v' & hlv' & heqv')).
   eapply (wt_join_nil_eq_r w0).
   destruct (eq_spec v' r2 (ActExt $ μ)) as (r2' & hlr2' & heqr2'); eauto with mdb.
-  edestruct (lts_oba_fw_feedback nb duo hlv' hlr2') as [(t & hlt & heqt)|].
+  edestruct (lts_oba_fw_feedback nb duo hlv' hlr2') as [(t & hlt & heqt)| Hyp_equiv].
   - eapply wt_join_nil_eq.
     exists t. split. eapply wt_tau; eauto with mdb. eassumption.
     eapply wt_join_nil_eq_r. eapply wt_nil.
     eapply eq_spec_wt. etrans. eapply (symmetry heqr2'). now symmetry. eassumption.
-  - eapply eq_spec_wt. etrans. eapply (symmetry heqr2'). symmetry. now rewrite H3.
+  - eapply eq_spec_wt. etrans. eapply (symmetry heqr2'). symmetry. now rewrite Hyp_equiv.
     eassumption.
 Qed.
 
@@ -843,7 +835,7 @@ Proof.
   assert (h : t2 ⟹ r1) by (eapply wt_push_nil_left; eassumption).
   destruct (delay_wt_non_blocking_action nb1 (mk_lts_eq l1) h) as (r & w7 & (r1' & hlr1' & heqr1')).
   destruct (eq_spec r1' r2 (ActExt $ η2)) as (t' & hlt' & heqt'). eauto with mdb.
-  destruct (lts_oba_non_blocking_action_commutativity nb1 hlr1' hlt') as (u & hlu & (t0 & hlt0 & heqt0)); eauto.
+  destruct (lts_oba_non_blocking_action_delay nb1 hlr1' hlt') as (u & hlu & (t0 & hlt0 & heqt0)); eauto.
   eapply wt_join_nil_eq_r.
   eapply (wt_push_nil_left w3).
   eapply (wt_push_nil_left w7).
@@ -856,14 +848,14 @@ Lemma wt_input_swap `{LtsObaFW P A} p q μ1 μ2 :
   (exists η2, non_blocking η2 /\ dual η2 μ2)
   -> p ⟹[[μ1 ; μ2]] q -> p ⟹⋍[[μ2; μ1]] q.
 Proof.
-  intro BlocDuo. destruct BlocDuo as [η2 Hyp]. decompose record Hyp.
+  intro BlocDuo. destruct BlocDuo as (η2 & nb & duo).
   intro w.
   destruct (wt_pop p q (μ1) [μ2] w) as (t & w1 & w2).
   eapply wt_decomp_one in w1 as (t1 & t2 & w3 & l1 & w4).
   eapply wt_decomp_one in w2 as (r1 & r2 & w5 & l2 & w6).
   destruct (lts_oba_fw_forward t1 η2 μ2) as (t1' & l3 & l4); eauto.
   replace [μ2; μ1] with ([μ2] ++ [μ1]) by eauto.
-  destruct (delay_wt_non_blocking_action H3 (mk_lts_eq l4) (lts_to_wt l1)) as (r & l5 & l6).
+  destruct (delay_wt_non_blocking_action nb (mk_lts_eq l4) (lts_to_wt l1)) as (r & l5 & l6).
   eapply wt_join_nil_eq_r.
   eapply (wt_push_nil_left w3).
   eapply (wt_act _ _ _ _ _ l3).
@@ -871,10 +863,10 @@ Proof.
   eapply (wt_push_nil_left w7).
   eapply (wt_act _ _ _ _ _ l7 w8).
   assert (h : t2 ⟹ r1) by (eapply wt_push_nil_left; eassumption).
-  destruct (delay_wt_non_blocking_action H3 l6 h) as (v & wv & (v' & lv & heqv)).
+  destruct (delay_wt_non_blocking_action nb l6 h) as (v & wv & (v' & lv & heqv)).
   destruct (eq_spec v' r2 (ActExt $ μ2)) as (t' & hlt' & heqt'); eauto with mdb.
   eapply (wt_join_nil_eq_r wv).
-  destruct (lts_oba_fw_feedback H3 H4 lv hlt') as [(t3 & hlt3 & heqt3)|]; subst; eauto with mdb.
+  destruct (lts_oba_fw_feedback nb duo lv hlt') as [(t3 & hlt3 & heqt3)|]; subst; eauto with mdb.
   - eapply wt_join_nil_eq.
     exists t3. split; eauto with mdb.
     edestruct (eq_spec_wt r2 t') as (q' & hwq' & heqq').
@@ -889,8 +881,8 @@ Lemma cnv_input_swap `{LtsObaFW P A} p μ1 μ2 s :
   -> p ⇓ μ1 :: μ2 :: s -> p ⇓ μ2 :: μ1 :: s.
 Proof.
   intros BlocDuo1 BlocDuo2 hcnv. 
-  destruct BlocDuo1 as [η1 Hyp1]. destruct Hyp1 as [nb1 duo1].
-  destruct BlocDuo2 as [η2 Hyp2]. destruct Hyp2 as [nb2 duo2].
+  destruct BlocDuo1 as (η1 & nb1 & duo1).
+  destruct BlocDuo2 as (η2 & nb2 & duo2).
   destruct (lts_oba_fw_forward p η1 μ1) as (t0 & l1 & l2). eassumption. eassumption.
   destruct (lts_oba_fw_forward t0 η2 μ2) as (t1 & l3 & l4). eassumption. eassumption.
   inversion hcnv; subst.
@@ -910,7 +902,8 @@ Proof.
 Qed.
 
 
-Definition exist_co_nba `{ExtAction A} (μ : A) := exists (η : A), (non_blocking η /\ dual η μ).
+Definition exist_co_nba (* {A : Type} `{ExtAct A}  *)
+      `{ExtAction A} (μ : A) := exists (η : A), (non_blocking η /\ dual η μ).
 
 Lemma cnv_input_perm `{LtsObaFW P A} p s1 s2 :
   Forall exist_co_nba s1 -> s1 ≡ₚ s2 -> p ⇓ s1 -> p ⇓ s2.
@@ -922,9 +915,10 @@ Proof.
     eapply cnv_act; eauto with mdb.
     intros q w. eapply IHhp; eauto with mdb.
     now inversion his.
-  - inversion his. inversion H6.
-    destruct H5, H9. subst.
-    eapply cnv_input_swap; eauto.
+  - inversion his as [|? ? Hyp_co_act Hyp_list_co_act]; subst. 
+    inversion Hyp_list_co_act as [|? ? Hyp_co_act' Hyp_list_co_act']; subst.
+    destruct Hyp_co_act, Hyp_co_act'. 
+    eapply cnv_input_swap; eauto. 
   - eapply IHhp2. eapply are_actions_preserved_by_perm; eauto.
     eapply IHhp1. eapply are_actions_preserved_by_perm; eauto.
     eassumption.
@@ -960,7 +954,7 @@ Proof.
     eapply cnv_act; eauto with mdb.
     intros q w. eapply IHhp; eauto with mdb.
     now inversion hos.
-  - inversion hos. inversion H6.
+  - inversion hos as [| ? ? nb Hyp_nb_list]; subst. inversion Hyp_nb_list;subst.
     now eapply cnv_non_blocking_action_swap.
   - eapply IHhp2.
     eapply Permutation_Forall; eassumption.
@@ -981,8 +975,9 @@ Proof.
     replace (x :: l') with ([x] ++ l') by eauto.
     eapply wt_join_eq_r. eassumption.
     eapply IHhp. now inversion his. eassumption.
-  - inversion his. inversion H6.
-    destruct H5, H9. subst.
+  - inversion his as [| ? ? Hyp_co_act Hyp_co_act_list]; subst. 
+    inversion Hyp_co_act_list as [| ? ? Hyp_co_act' Hyp_co_act_list']; subst. 
+    destruct Hyp_co_act, Hyp_co_act'.
     replace (x :: y :: l) with ([x ; y] ++ l) by eauto.
     replace (y :: x :: l) with ([y ; x] ++ l) in w by eauto.
     eapply wt_split in w as (p' & w1 & w2).
@@ -1005,7 +1000,8 @@ Proof.
     replace (x :: l') with ([x] ++ l') by eauto.
     eapply wt_join_eq_r. eassumption.
     eapply IHhp. now inversion hos. eassumption.
-  - inversion hos. inversion H6; subst. 
+  - inversion hos as [| ? ? nb Hyp_nb_list].
+    inversion Hyp_nb_list as [| ? ? nb' Hyp_nb_list']; subst. 
     replace (x :: y :: l) with ([x ; y] ++ l) by eauto.
     replace (y :: x :: l) with ([y ; x] ++ l) in w by eauto.
     eapply wt_split in w as (p' & w1 & w2).
@@ -1065,47 +1061,49 @@ Lemma forward_s `{LtsObaFW P A} p s1 s3:
   Forall non_blocking s3 -> Forall2 dual s3 s1 -> exists t, p ⟹[s1] t /\ t ⟹⋍[s3] p.
 Proof.
   intros nb duo. revert p nb duo. dependent induction s1; intros; inversion duo ; subst.
-  - exists p. simpl. split; eauto with mdb.
+  - exists p. simpl. split ; eauto with mdb.
     exists p. split; eauto with mdb. reflexivity.
-  - inversion nb; subst. 
+  - inversion nb as [|? ? nb' Hyp_nb_list']; subst. 
     edestruct (lts_oba_fw_forward p x a) as (q & l0 & l1); eauto.
-    destruct (IHs1 la q H8) as (q' & w1 & w2); eauto.
+    destruct (IHs1 la q Hyp_nb_list') as (q' & w1 & w2); eauto.
     exists q'. split.
     + eauto with mdb.
-    + assert (q' ⟹⋍[la ++ [x]] p).
-      eapply wt_join_eq.
-      eassumption.
-      exists p. split. eauto with mdb. reflexivity.
-      destruct H3 as (p' & hwp' & heqp').
-      eapply (wt_non_blocking_action_perm (la ++ [x])) in hwp' as (p0 & hwp0 & heqp0).
-      exists p0. split. eassumption. etrans; eassumption.
-      eapply Forall_app. split. assumption. eauto. 
-      symmetry. eapply Permutation_cons_append.
+    + assert (q' ⟹⋍[la ++ [x]] p) as Hyp. 
+      eapply wt_join_eq. eassumption. exists p. split. eauto with mdb. reflexivity.
+      ++ destruct Hyp as (p' & hwp' & heqp').
+         eapply (wt_non_blocking_action_perm (la ++ [x])) in hwp' as (p0 & hwp0 & heqp0).
+         exists p0. split. eassumption. etrans; eassumption.
+         eapply Forall_app. split. assumption. eauto. 
+         symmetry. eapply Permutation_cons_append.
 Qed.
 
-Lemma EquivDef_inv1 `{ExtAction A} (s1 : trace A) : Forall exist_co_nba s1 -> (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1).
+Lemma EquivDef_inv1 `{ExtAction A} (s1 : trace A) : Forall exist_co_nba s1 
+    -> (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1).
 Proof.
   dependent induction s1; intro Hyp.
   - exists []. split. eauto. eapply Forall2_nil.
-  -inversion Hyp; subst.  destruct H2. destruct H0.
-   eapply IHs1 in H3. destruct H3.
-   exists (x :: x0). destruct H2.
-   split. eapply Forall_cons; eauto.
-   eapply Forall2_cons ; eauto.
+  - inversion Hyp as [|? ? Hyp1 Hyp2] ; subst. destruct Hyp1 as (η & nb & duo).
+    eapply IHs1 in Hyp2. destruct Hyp2 as (s3 & Hyp3).
+    exists (η :: s3). destruct Hyp3 as (all_nb & all_dual).
+    split. eapply Forall_cons; eauto.
+    eapply Forall2_cons ; eauto.
 Qed.
 
 Lemma EquivDef_inv2 `{ExtAction A} (s1 : trace A) : (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1) -> Forall exist_co_nba s1.
 Proof.
   dependent induction s1; intro Hyp.
   - eauto.
-  - destruct Hyp. dependent induction x.  destruct H0. inversion H1.
-    eapply Forall_cons. 
-    exists a0. destruct H0. inversion H0; subst. inversion H1; subst. split; eauto.
-    eapply IHs1.
-    exists x. destruct H0. inversion H0; subst. inversion H1; subst. split; eauto.
+  - destruct Hyp as (s3 & Hyp). induction s3 as [|η s3 ].  
+    + destruct Hyp as (all_nb & all_duo). 
+      inversion all_duo.
+    + destruct Hyp as (all_nb & all_duo). inversion all_nb; subst. inversion all_duo; subst. 
+      eapply Forall_cons. 
+      * exists η. split; eauto.
+      * eapply IHs1. exists s3. split; eauto.
 Qed.
 
-Lemma EquivDef `{ExtAction A} (s1 : trace A) : (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1) <-> Forall exist_co_nba s1.
+Lemma EquivDef `{ExtAction A} (s1 : trace A) : 
+  (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1) <-> Forall exist_co_nba s1.
 Proof.
   split. 
   * eapply EquivDef_inv2.
@@ -1163,12 +1161,18 @@ Proof.
   destruct (decide(non_blocking μ)); [eapply cnv_drop_non_blocking_action_in_the_middle | eapply cnv_drop_input_in_the_middle; eauto]; eauto.
 Qed. 
 
+Lemma Forall2_size {A B : Type} P (s1 : list A) (s2 : list B) : Forall2 P s1 s2 -> length s1 = length s2.
+Proof.
+  intros Hyp. dependent induction Hyp; simpl ; eauto.
+Qed.
 
 Lemma Forall2_app {A B : Type} P (s1 s3 : list A) (s2 s4 : list B) : Forall2 P s1 s2 -> Forall2 P s3 s4 -> Forall2 P (s1 ++ s3) (s2 ++ s4).
 Proof.
-Admitted.
+  intros Hyp1 Hyp2.
+  dependent induction s1; dependent induction s3.
+  + Admitted.
 
-
+(* (* eapply sym_dual. *)
 Lemma cnv_annhil `{LtsObaFW P A} p μ η s1 s2 s3 :
   Forall exist_co_nba s1 -> Forall exist_co_nba s2 -> non_blocking η -> dual μ η ->
   p ⇓ s1 ++ [μ] ++ s2 ++ [η] ++ s3 ->
@@ -1199,293 +1203,844 @@ Proof.
   eapply wt_concat. rewrite <- app_assoc. eassumption. eassumption.
   eassumption.
   symmetry. eapply Permutation_app_swap_app.
+Qed.*)
+
+
+(* Class InteractionAction (A : Type) :=
+  MkInteractionAction {
+      inter : A -> A -> Prop;
+      inter_dec a b: Decision (inter a b);
+      (* i_r : Act A -> Act A -> Act A; *)
+      (* à implémenter plus tard, pour généraliser l'interaction *)
+    }.
+#[global] Existing Instance inter_dec. *)
+
+Class Prop_of_Inter  (P1 P2 A : Type) (inter : A -> A -> Prop) `{@Lts P1 A H} `{@Lts P2 A H} :=
+  MkProp_of_Inter {
+      inter_dec a b: Decision (inter a b);
+      lts_essential_actions_left : P1 -> gset A; (*à mettre dans le LTS?*)
+      lts_essential_action_spec_left p ξ: ξ ∈ lts_essential_actions_left p ->  
+                      {p' | lts_step p (ActExt ξ) p'} ;(*à mettre dans le LTS?*)
+      lts_essential_actions_right : P2 -> gset A; (*à mettre dans le LTS?*)
+      lts_essential_action_spec_right p ξ: ξ ∈ lts_essential_actions_right p ->  
+                      {p' | lts_step p (ActExt ξ) p'} ;(*à mettre dans le LTS?*)
+
+      lts_essential_actions_spec_interact (p1 : P1) α1 p'1 (p2 : P2) α2 p'2: 
+        lts_step p1 (ActExt α1) p'1 ->
+        lts_step p2 (ActExt α2) p'2 -> 
+        inter α1 α2 ->
+          α1 ∈ lts_essential_actions_left p1 \/ α2 ∈ lts_essential_actions_right p2;
+
+      lts_co_inter_action_left : A -> P1 -> gset A;
+      lts_co_inter_action_spec_left p1 p'1 ξ μ p2 : 
+                 ξ ∈ lts_essential_actions_right p2 ->  lts_step p1 (ActExt μ) p'1 -> inter μ ξ
+                                             -> μ ∈ lts_co_inter_action_left ξ p1;
+
+      lts_co_inter_action_right : A -> P2 -> gset A; (* pour le FW , = mb ?*)
+      lts_co_inter_action_spec_right p2 p'2 ξ μ p1 : 
+                ξ ∈ lts_essential_actions_left p1 ->  lts_step p2 (ActExt μ) p'2 -> inter ξ μ 
+                                              -> μ ∈ lts_co_inter_action_right ξ p2;
+    }.
+#[global] Existing Instance inter_dec.
+Fixpoint search_co_steps_right `{Prop_of_Inter S1 S2 A inter} 
+  (s2: S2) s'2 ξ candidates (s1 : S1) :=
+  match candidates with
+  | [] => None
+  | μ :: xs =>
+    if decide (ξ ∈ lts_essential_actions_left s1 /\ lts_step s2 (ActExt μ) s'2  /\ inter ξ μ) 
+      then Some μ
+      else search_co_steps_right s2 s'2 ξ xs s1
+  end.
+
+Lemma search_co_steps_spec_helper_right `{Prop_of_Inter S1 S2 A inter}
+  lnot (s2 : S2) (s'2 : S2) l (ξ : A) (s1 : S1) :
+  (elements $ lts_co_inter_action_right ξ s2) = lnot ++ l →
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ)) →
+  is_Some $ search_co_steps_right s2 s'2 ξ l s1 ->
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ)}.
+Proof.
+  revert lnot. induction l; intros lnot.
+  { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc. done. }
+  {intros Helems Hnots. simpl.
+  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] s'2 ∧ inter ξ a)).
+  + eauto.
+  + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
-Lemma parallel_step_commutative `{H : ExtAction , M1: @Lts P1 A H, M2: @Lts P2 A H} (s1 s'1: P1) (s2 s'2: P2) ℓ:
-  parallel_step (s1, s2) ℓ (s'1, s'2) → parallel_step (s2, s1) ℓ (s'2, s'1).
+Lemma search_co_steps_spec_helper_right_rev `{Prop_of_Inter S1 S2 A inter} 
+  lnot (s2 : S2) s'2 l ξ (s1 : S1) :
+  (elements $ lts_co_inter_action_right ξ s2) = lnot ++ l →
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ)) →
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ)}  -> is_Some $ search_co_steps_right s2 s'2 ξ l s1.
 Proof.
-  intros Hstep. inversion Hstep; subst.
-    * now eapply ParRight.
-    * now eapply ParLeft.
-    * eapply symmetry in eq. eapply ParSync.
-      - exact eq.
-      - assumption.
-      - assumption.
+  revert lnot. induction l; intros lnot.
+  { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc as (μ & ess_act & Hstep & duo).
+   eapply (lts_co_inter_action_spec_right s2 s'2 ξ μ s1) in Hstep as Hyp. simplify_list_eq. set_solver. exact ess_act. exact duo. }
+  { intros Helems Hnots. simpl.
+  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] s'2 ∧ inter ξ a)).
+  + eauto.
+  + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed.
+
+Lemma search_co_steps_spec_1_right `{Prop_of_Inter S1 S2 A inter} 
+  (s2 : S2) s'2 ξ s1:
+  is_Some $ search_co_steps_right s2 s'2 ξ (elements $ lts_co_inter_action_right ξ s2) s1 ->
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ)}.
+Proof. apply (search_co_steps_spec_helper_right []); [done| intros ??; set_solver]. Qed.
+
+Lemma search_co_steps_spec_1_right_rev `{Prop_of_Inter S1 S2 A}
+  (s2 : S2) s'2 ξ s1:
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ)} 
+  -> is_Some $ search_co_steps_right s2 s'2 ξ (elements $ lts_co_inter_action_right ξ s2) s1.
+Proof. apply (search_co_steps_spec_helper_right_rev []); [done| intros ??; set_solver]. Qed.
+
+Lemma search_co_steps_spec_2_right `{Prop_of_Inter S1 S2 A inter}
+  μ s2 s'2 l ξ s1:
+  search_co_steps_right s2 s'2 ξ l s1 = Some μ →
+  (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ).
+Proof.
+  induction l; [done|]. simpl.
+  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] s'2 ∧ inter ξ a)) ; [|eauto].
+  intros ?. simplify_eq. done.
 Qed. 
 
+Definition decide_co_step_right `{Prop_of_Inter S1 S2 A inter}
+  (s2: S2) (s'2 : S2) (ξ : A) (s1 : S1) :
+  Decision (∃ μ, ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ).
+  destruct (search_co_steps_right s2 s'2 ξ (elements $ lts_co_inter_action_right ξ s2) s1) as [a|] eqn:Hpar1.
+  { left. apply search_co_steps_spec_2_right in Hpar1. exists a. done. }
+  { right; intros contra. destruct contra. assert ({ μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ)} ). 
+    exists x. eauto. apply search_co_steps_spec_1_right_rev in X. 
+  inversion X. simplify_eq. }
+Defined.
 
-(* Pas mal mais inutile pour l'instant *)
-(* Fixpoint search_co_steps {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) s'1 (candidates : list A) η:=
+Lemma implication_simplified_right `{Prop_of_Inter S1 S2 A inter} 
+  (s1: S1) (* (s'1 : S1) *) (s2 : S2) (s'2 : S2)  (ξ : A) :
+  Decision (∃ μ, ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ) 
+  -> Decision (ξ ∈ lts_essential_actions_left s1 ∧ ∃ μ, s2 ⟶[μ] s'2 ∧ inter ξ μ).
+Proof.
+  intros Hyp. destruct Hyp as [case1 | case2]. 
+  + left. decompose record case1. repeat split; eauto.
+  + right. intro Hyp. apply case2. decompose record Hyp. eexists. repeat split; eauto.
+Qed.
+
+Definition decide_co_step_right' `{Prop_of_Inter S1 S2 A} 
+  (s1: S1) (* (s'1 : S1) *) (s2 : S2) (s'2 : S2)  (ξ : A) :
+  Decision (ξ ∈ lts_essential_actions_left s1 ∧ ∃ μ, s2 ⟶[μ] s'2 ∧ inter ξ μ).
+  eapply implication_simplified_right. 
+    + eapply decide_co_step_right.
+Defined.
+
+#[global] Instance dec_co_act_right `{Prop_of_Inter S1 S2 A} 
+  (s1: S1) (* (s'1 : S1) *) (s2 : S2) (s'2 : S2)  (ξ : A) :
+  Decision (ξ ∈ lts_essential_actions_left s1 ∧ ∃ μ, s2 ⟶[μ] s'2 ∧ inter ξ μ).
+  eapply decide_co_step_right'.
+Defined.
+
+
+
+
+Fixpoint search_steps_essential_left `{Prop_of_Inter S1 S2 A}
+  (s1: S1) (s2: S2) s'1 s'2 candidates :=
+  match candidates with
+  | [] => None
+  | ξ::xs => if (decide (ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1
+              ∧ is_Some $ (search_co_steps_right s2 s'2 ξ (elements $ lts_co_inter_action_right ξ s2) s1)))
+                then Some ξ
+                else search_steps_essential_left s1 s2 s'1 s'2 xs
+  end.
+
+Lemma search_steps_spec_helper_essential_left `{M12 : Prop_of_Inter S1 S2 A}
+  lnot (s1 :S1) (s2 : S2) s'1 s'2 l:
+  (elements $ lts_essential_actions_left s1) = lnot ++ l →
+  (∀ ξ, ξ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 
+          ∧ is_Some $ search_co_steps_right s2 s'2 ξ (elements $ lts_co_inter_action_right ξ s2) s1)) →
+  is_Some $ search_steps_essential_left s1 s2 s'1 s'2 l ->
+  { ξ & { μ | ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ}}.
+Proof.
+  revert lnot. induction l as [| ξ l]; intro lnot.
+  { simpl. intros Hels Hnots Hc. exfalso. inversion Hc. done. }
+  { intros Helems Hnots. simpl. 
+        destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 
+        ∧ is_Some (search_co_steps_right s2 s'2 ξ (elements (lts_co_inter_action_right ξ s2)) s1))) as [case1 | case2].
+   + intro. destruct case1 as (ess_act & HypTr & Hyp_co_step). 
+     eapply search_co_steps_spec_helper_right in Hyp_co_step. 
+     destruct Hyp_co_step as (μ & ess_act' & HypTr_right & duo). exists ξ. exists μ. split; eauto.
+     instantiate (1:= []). eauto. intro. intro impossible. inversion impossible.
+   + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed.
+
+Lemma search_steps_spec_helper_essential_left_rev `{M12 : Prop_of_Inter S1 S2 A}
+  lnot s1 s2 s'1 s'2 l:
+  (elements $ lts_essential_actions_left s1) = lnot ++ l →
+  (∀ ξ, ξ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 
+          ∧ is_Some $ search_co_steps_right s2 s'2 ξ (elements $ lts_co_inter_action_right ξ s2) s1)) →
+  { ξ & { μ | ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ}} ->
+  is_Some $ search_steps_essential_left s1 s2 s'1 s'2 l.
+Proof.
+  revert lnot. induction l as [| ξ l]; intros lnot.
+  { simpl. intros Hels Hnots. intros (ξ & μ & ess_act & Hstep1 & Hstep2 & duo). exfalso.
+    simplify_list_eq. 
+    eapply (Hnots ξ). eapply elem_of_elements. exact ess_act.
+    split. exact ess_act. split. exact Hstep1.
+    apply search_co_steps_spec_1_right_rev. exists μ. repeat split; eauto. }
+  { intros Helems Hnots. simpl. 
+       destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 
+       ∧ is_Some (search_co_steps_right s2 s'2 ξ (elements (lts_co_inter_action_right ξ s2)) s1))) as [case1 | case2].
+   + intro Hyp. eauto.
+   + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed.
+
+
+
+Lemma search_steps_spec_1_essential_left `{M12 : Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) s'1 s'2:
+  is_Some $ search_steps_essential_left s1 s2 s'1 s'2 (elements $ lts_essential_actions_left s1) ->
+  { ξ & { μ | ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ}}.
+Proof. apply (search_steps_spec_helper_essential_left []) ; [done| intros ??; set_solver]. Qed.
+
+Lemma search_steps_spec_1_essential_left_rev `{M12 : Prop_of_Inter S1 S2 A}
+  s1 s2 s'1 s'2:
+  { ξ & { μ | ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2 ∧ inter ξ μ}} ->
+  is_Some $ search_steps_essential_left s1 s2 s'1 s'2 (elements $ lts_essential_actions_left s1).
+Proof. apply (search_steps_spec_helper_essential_left_rev []) ; [done| intros ??; set_solver]. Qed.
+
+Lemma search_steps_spec_2_essential_left `{M12 : Prop_of_Inter S1 S2 A}
+  ξ (s1 : S1) (s2 : S2) s'1 s'2 l:
+  search_steps_essential_left s1 s2 s'1 s'2 l = Some ξ →
+  { μ | ξ ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ] s'1 ∧ s2 ⟶[μ] s'2  ∧ inter ξ μ}.
+Proof.
+  induction l as [| ξ' l] ; [done|]. simpl.
+  destruct (decide (ξ' ∈ lts_essential_actions_left s1 ∧ s1 ⟶[ξ'] s'1 
+    ∧ is_Some (search_co_steps_right s2 s'2 ξ' (elements (lts_co_inter_action_right ξ' s2)) s1))) as [case1 | case2].
+  intros ?;simplify_eq. destruct case1 as (ess_act & HypTr & Hyp_co_step). 
+  eapply search_co_steps_spec_1_right in Hyp_co_step. destruct Hyp_co_step as (μ & ess_act' & HypTr_right & duo). 
+  exists μ. done. eauto.
+Qed.
+
+Fixpoint search_co_steps_left `{Prop_of_Inter S1 S2 A}
+  (s1: S1) s'1 ξ candidates (s2 : S2) :=
   match candidates with 
   | [] => None
   | μ :: xs =>
-    if decide (lts_step s1 (ActExt μ) s'1 /\ non_blocking η /\ dual μ η) 
+    if decide (ξ ∈ lts_essential_actions_right s2 /\ lts_step s1 (ActExt μ) s'1  /\ inter μ ξ)
       then Some μ
-      else search_co_steps M1 s1 s'1 xs η
+      else search_co_steps_left s1 s'1 ξ xs s2
   end.
 
-Lemma search_co_steps_spec_helper {S1 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) s1 s'1 l η:
-  (elements $ lts_dual_nb_action η s1) = lnot ++ l →
-  (∀ μ, μ ∈ lnot → ¬ (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η)) →
-  is_Some $ search_co_steps M1 s1 s'1 l η<->
-  ∃ μ, (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η).
+Lemma search_co_steps_spec_helper_left `{Prop_of_Inter S1 S2 A}
+  lnot (s1 : S1) (s'1 : S1) l (ξ : A) s2 :
+  (elements $ lts_co_inter_action_left ξ s1) = lnot ++ l →
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)) →
+  is_Some $ search_co_steps_left s1 s'1 ξ l s2->
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)}.
 Proof.
   revert lnot. induction l; intros lnot.
-  { simpl. intros Hels Hnots. split; [intros Hc; inversion Hc; done |]. intros (μ & Hstep & nb & duo). exfalso.
-    eapply (lts_dual_nb_action_spec1 s1 η μ) in nb as Hyp. simplify_list_eq. set_solver. exact duo. exact Hstep. }
-  intros Helems Hnots. simpl.
-  destruct (decide (s1 ⟶[a] s'1 ∧ non_blocking η ∧ dual a η)).
-  + split. eauto. intro Hyp. eauto.
+  { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc. done. }
+  {intros Helems Hnots. simpl.
+  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[a] s'1 ∧ inter a ξ)).
+  + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto.
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
-Lemma search_co_steps_spec_1 {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) s'1 η :
-  is_Some $ search_co_steps M1 s1 s'1 (elements $ lts_dual_nb_action η s1) η<->
-  ∃ μ, (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η).
-Proof. apply (search_co_steps_spec_helper []); [done| intros ??; set_solver]. Qed.
-
-Lemma search_co_steps_spec_2 {S1 S2 A: Type} `{ExtAction A} μ (M1: Lts S1 A) s1 s'1 l η:
-  search_co_steps M1 s1 s'1 l η = Some μ →
-  (s1 ⟶[μ] s'1 ∧ non_blocking η ∧ dual μ η).
+Lemma search_co_steps_spec_helper_left_rev `{Prop_of_Inter S1 S2 A}
+  lnot s1 s'1 l ξ s2:
+  (elements $ lts_co_inter_action_left ξ s1) = lnot ++ l →
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)) →
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)}  -> is_Some $ search_co_steps_left s1 s'1 ξ l s2.
 Proof.
-  induction l; [done|]. simpl.
-  destruct (decide (s1 ⟶[a] s'1 ∧ non_blocking η ∧ dual a η)); [|eauto].
+  revert lnot. induction l as [|μ l]; intros lnot.
+  { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc as (μ & ess_act & Hstep & duo).
+   eapply (lts_co_inter_action_spec_left s1 s'1 ξ μ) in Hstep as Hyp. simplify_list_eq. set_solver. exact ess_act. exact duo. }
+  { intros Helems Hnots. simpl.
+  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)).
+  + eauto.
+  + apply (IHl (lnot ++ [μ])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed.
+
+Lemma search_co_steps_spec_1_left `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) s'1 ξ s2:
+  is_Some $ search_co_steps_left s1 s'1 ξ (elements $ lts_co_inter_action_left ξ s1) s2 ->
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)}.
+Proof. apply (search_co_steps_spec_helper_left []); [done| intros ??; set_solver]. Qed.
+
+Lemma search_co_steps_spec_1_left_rev `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) s'1 ξ s2:
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)} 
+  -> is_Some $ search_co_steps_left s1 s'1 ξ (elements $ lts_co_inter_action_left ξ s1) s2.
+Proof. apply (search_co_steps_spec_helper_left_rev []); [done| intros ??; set_solver]. Qed.
+
+Lemma search_co_steps_spec_2_left `{Prop_of_Inter S1 S2 A}
+  μ s1 s'1 l ξ s2:
+  search_co_steps_left s1 s'1 ξ l s2 = Some μ →
+  (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ).
+Proof.
+  induction l  as [| μ' l ]; [done|]. simpl.
+  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ'] s'1 ∧ inter μ' ξ)) ; [|eauto].
   intros ?. simplify_eq. done.
-Qed. *)
+Qed. 
 
-(* Definition decide_co_step_raw {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) η μ:
-  Decision (exists s'1, non_blocking η ∧ dual μ η ∧ s1 ⟶[μ] s'1).
+Definition decide_co_step_left `{Prop_of_Inter S1 S2 A}
+  (s1: S1) (s'1 : S1) (ξ : A) (s2 : S2) :
+  Decision (∃ μ, ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ).
+  destruct (search_co_steps_left s1 s'1 ξ (elements $ lts_co_inter_action_left ξ s1) s2) as [a|] eqn:Hpar1.
+  { left. apply search_co_steps_spec_2_left in Hpar1. exists a. done. }
+  { right; intros contra. destruct contra as (μ & Hyp). 
+    assert ({ μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)} ) as HypSup. 
+    exists μ. eauto. apply search_co_steps_spec_1_left_rev in HypSup. 
+    inversion HypSup. simplify_eq. }
+Defined.
+
+Lemma implication_simplified_left `{Prop_of_Inter S1 S2 A} 
+  (s1: S1) (s'1 : S1) (s2 : S2) (* (s'2 : S2) *)  (ξ : A) :
+  Decision (∃ μ, ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ) 
+  -> Decision (ξ ∈ lts_essential_actions_right s2 ∧ ∃ μ, s1 ⟶[μ] s'1 ∧ inter μ ξ).
 Proof.
-  destruct (decide (lts_stable s1 (ActExt μ))) as [stable | not_stable].
-  + right. intro Hyp. decompose record Hyp. assert (¬ s1 ↛[μ]). eapply lts_stable_spec2. eexists. eassumption.
-    contradiction.
-  + eapply lts_stable_spec1 in not_stable. destruct not_stable as [s'1 step].
-    destruct (decide (non_blocking η)) as [nb | not_nb].
-    ++ destruct (decide (dual μ η)) as [duo | not_duo].
-      +++ left. exists s'1. eauto.
-      +++ right. intro Hyp. decompose record Hyp. eapply not_duo. assumption.
-    ++ right. intro Hyp. decompose record Hyp. apply not_nb. assumption.
-Qed.*)
-
-Lemma spec_co_action {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1 : S1) η μ : 
-(exists s'1, non_blocking η ∧ dual μ η ∧ s1 ⟶[μ] s'1) <-> μ ∈ lts_dual_nb_action η s1.
-Proof. split.
-  + intro Hyp. destruct Hyp as [s'1 [step [nb duo]]]. eapply lts_dual_nb_action_spec1; eauto.
-  + intro Hyp. eapply lts_dual_nb_action_spec2 in Hyp. destruct Hyp as [s'1 Hyp]. exists s'1. eauto.
+  intros Hyp. destruct Hyp as [case1 | case2]. left. decompose record case1. repeat split; eauto.
+  right. intro HypContra. apply case2. decompose record HypContra. eexists. repeat split; eauto.
 Qed.
 
-(*Definition decide_co_step {S1 A: Type} `{ExtAction A} (M1: Lts S1 A) (s1: S1) η μ:
-  Decision (μ ∈ lts_dual_nb_action η s1).
-Proof.
-  destruct (decide (lts_stable s1 (ActExt μ))) as [stable | not_stable].
-  + right.  intro Hyp. eapply spec_co_action in Hyp. decompose record Hyp. assert (¬ s1 ↛[μ]). eapply lts_stable_spec2.
-   eexists. eassumption. contradiction.
-  + eapply lts_stable_spec1 in not_stable. destruct not_stable as [s'1 step].
-    destruct (decide (non_blocking η)) as [nb | not_nb].
-    ++ destruct (decide (dual μ η)) as [duo | not_duo].
-      +++ left. eapply spec_co_action. exists s'1. eauto.
-      +++ right. intro Hyp. eapply spec_co_action in Hyp. decompose record Hyp. eapply not_duo. assumption.
-    ++ right. intro Hyp. eapply spec_co_action in Hyp. decompose record Hyp. apply not_nb. assumption.
-Qed. *)
+Definition decide_co_step_left' `{Prop_of_Inter S1 S2 A} 
+  (s1: S1) (s'1 : S1) (s2 : S2) (* (s'2 : S2) *)  (ξ : A) :
+  Decision (ξ ∈ lts_essential_actions_right s2 ∧ ∃ μ, s1 ⟶[μ] s'1 ∧ inter μ ξ ).
+  eapply implication_simplified_left. 
+    + eapply decide_co_step_left.
+Defined.
 
-Definition decide_exists_co_step {S2 A: Type} `{ExtAction A} (M2: Lts S2 A) (s2: S2) η:
-  Decision (exists μ, μ ∈ lts_dual_nb_action η s2).
-Proof.
-  destruct (lts_dual_nb_action η s2).
-  + right. intro. destruct H0. inversion H0.
-  + left. exists a. eapply elem_of_list_here.
-Qed.
-
-Definition decide_exists_par_step {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) s'1 η:
-  Decision (s1 ⟶[η] s'1 ∧ (∃ μ : A, μ ∈ lts_dual_nb_action η s2)).
-Proof.
-  eapply and_dec. eapply lts_step_decidable. eapply decide_exists_co_step.
-Qed.
-
-#[global] Instance decide_co_step {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) s'1 η : 
-Decision (s1 ⟶[η] s'1 ∧ (∃ μ : A, μ ∈ lts_dual_nb_action η s2)).
-eapply decide_exists_par_step.
-Qed.
+#[global] Instance dec_co_act_left `{M12 : Prop_of_Inter S1 S2 A}
+  (s1: S1) (s'1 : S1) (s2 : S2) (* (s'2 : S2) *)  (ξ : A) :
+  Decision (ξ ∈ lts_essential_actions_right s2 ∧ ∃ μ, s1 ⟶[μ] s'1 ∧ inter μ ξ).
+  eapply decide_co_step_left'. 
+Defined.  
 
 
-Fixpoint search_steps {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2: S2) s'1 candidates :=
+
+
+Fixpoint search_steps_essential_right `{M12 : Prop_of_Inter S1 S2 A}
+  (s1: S1) (s2: S2) s'1 s'2 candidates :=
   match candidates with
   | [] => None
-  | η::xs =>
-      if decide (lts_step s1 (ActExt η) s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action η s2)) then
-        Some η
-      else
-        search_steps M1 M2 s1 s2 s'1 xs
+  | ξ::xs => if (decide (ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 
+          ∧ is_Some $ search_co_steps_left s1 s'1 ξ (elements $ lts_co_inter_action_left ξ s1) s2))
+                then Some ξ
+                else search_steps_essential_right s1 s2 s'1 s'2 xs
   end.
 
-Lemma search_steps_spec_helper {S1 S2 A: Type} `{ExtAction A} lnot (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 l:
-  (elements $ lts_non_blocking_action s1) = lnot ++ l →
-  (∀ η, η ∈ lnot → ¬ (s1 ⟶[η] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action η s2))) →
-  is_Some $ search_steps M1 M2 s1 s2 s'1 l <->
-  ∃ η, s1 ⟶[η] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action η s2).
+Lemma search_steps_spec_helper_essential_right `{M12 : Prop_of_Inter S1 S2 A}
+  lnot (s1 :S1) (s2 : S2) s'1 s'2 l:
+  (elements $ lts_essential_actions_right s2) = lnot ++ l →
+  (∀ ξ, ξ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 
+    ∧ is_Some $ search_co_steps_left s1 s'1 ξ (elements $ lts_co_inter_action_left ξ s1) s2)) →
+  is_Some $ search_steps_essential_right s1 s2 s'1 s'2 l ->
+  { ξ & { μ | ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ}}.
 Proof.
-  revert lnot. induction l; intros lnot.
-  { simpl. intros Hels Hnots. split; [intros Hc; inversion Hc; done |]. intros (η & Hstep & μ & Hyp). exfalso.
-    eapply (lts_non_blocking_action_spec1) in Hstep as Hyp1. simplify_list_eq. set_solver. eapply spec_co_action in Hyp.
-    decompose record Hyp. assumption. }
-  intros Helems Hnots. simpl.
-  destruct (decide (s1 ⟶[a] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action a s2))).
-  + split. eauto. intro Hyp. eauto.
-  + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto.
+  revert lnot. induction l as [| ξ l]; intros lnot.
+  { simpl. intros Hels Hnots Hc. exfalso. inversion Hc. done. }
+  { intros Helems Hnots. simpl. 
+        destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 
+          ∧ is_Some (search_co_steps_left s1 s'1 ξ (elements (lts_co_inter_action_left ξ s1)) s2 )))  as [case1 | case2].
+   + intro. destruct case1 as (ess_act & HypTr_right & Hyp_co_act_left). 
+     eapply search_co_steps_spec_helper_left in Hyp_co_act_left. 
+     destruct Hyp_co_act_left as (μ & ess_act' & HypTr_left & duo). 
+     exists ξ. exists μ. split; eauto.
+     instantiate (1:= []). eauto. intro. intro Hyp. inversion Hyp.
+   + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
-Lemma search_steps_spec_1 {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1:
-  is_Some $ search_steps M1 M2 s1 s2 s'1 (elements $ lts_non_blocking_action s1) <->
-  ∃ η, (s1 ⟶[η] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action η s2)).
-Proof. apply (search_steps_spec_helper []) ; [done| intros ??; set_solver]. Qed.
-
-Lemma search_steps_spec_2 {S1 S2 A: Type} `{ExtAction A} η (M1: Lts S1 A) (M2: Lts S2 A) s1 s2 s'1 l:
-  search_steps M1 M2 s1 s2 s'1 l = Some η →
-  (s1 ⟶[η] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action η s2)).
+Lemma search_steps_spec_helper_essential_right_rev `{M12 : Prop_of_Inter S1 S2 A}
+  lnot s1 s2 s'1 s'2 l:
+  (elements $ lts_essential_actions_right s2) = lnot ++ l →
+  (∀ ξ, ξ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 
+    ∧ is_Some $ search_co_steps_left s1 s'1 ξ (elements $ lts_co_inter_action_left ξ s1) s2)) →
+  { ξ & { μ | ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ}} ->
+  is_Some $ search_steps_essential_right s1 s2 s'1 s'2 l.
 Proof.
-  induction l; [done|]. simpl.
-  destruct (decide (s1 ⟶[a] s'1 ∧ (exists μ, μ ∈ lts_dual_nb_action a s2))); [|eauto].
-  intros ?. simplify_eq. done.
+  revert lnot. induction l as [| ξ l] ; intros lnot.
+  { simpl. intros Hels Hnots. intros (ξ & μ & ess_act & Hstep1 & Hstep2 & duo). exfalso.
+    simplify_list_eq. 
+    eapply (Hnots ξ). eapply elem_of_elements. exact ess_act.
+    split. exact ess_act. split. exact Hstep1.
+    apply search_co_steps_spec_1_left_rev. exists μ. repeat split; eauto. }
+  { intros Helems Hnots. simpl. 
+        destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 
+          ∧ is_Some (search_co_steps_left s1 s'1 ξ (elements (lts_co_inter_action_left ξ s1)) s2 )))  as [case1 | case2].
+   + intro Hyp. eauto.
+   + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
+  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+Qed. 
+
+Lemma search_steps_spec_1_essential_right `{M12 : Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) s'1 s'2:
+  is_Some $ search_steps_essential_right s1 s2 s'1 s'2 (elements $ lts_essential_actions_right s2) ->
+  { ξ & { μ | ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ}}.
+Proof. apply (search_steps_spec_helper_essential_right []) ; [done| intros ??; set_solver]. Qed.
+
+Lemma search_steps_spec_1_essential_right_rev `{M12 : Prop_of_Inter S1 S2 A}
+  s1 s2 s'1 s'2:
+  { ξ & { μ | ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ}} ->
+  is_Some $ search_steps_essential_right s1 s2 s'1 s'2 (elements $ lts_essential_actions_right s2).
+Proof. apply (search_steps_spec_helper_essential_right_rev []) ; [done| intros ??; set_solver]. Qed.
+
+Lemma search_steps_spec_2_essential_right `{M12 : Prop_of_Inter S1 S2 A}
+  ξ (s1 : S1) (s2 : S2) s'1 s'2 l:
+  search_steps_essential_right s1 s2 s'1 s'2 l = Some ξ →
+  { μ | ξ ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ] s'2 ∧ s1 ⟶[μ] s'1  ∧ inter μ ξ}.
+Proof.
+  induction l as [| ξ' l]; [done|].  simpl.
+  destruct (decide (ξ' ∈ lts_essential_actions_right s2 ∧ s2 ⟶[ξ'] s'2 
+      ∧ is_Some (search_co_steps_left s1 s'1 ξ' (elements (lts_co_inter_action_left ξ' s1)) s2))) as [case1 | case2].
+  intros ?. simplify_eq. destruct case1 as (ess_act & HypTr_right & Hyp_co_act_left). 
+  eapply search_co_steps_spec_1_left in Hyp_co_act_left. 
+  destruct Hyp_co_act_left as (μ & ess_act' & HypTr_left & duo). exists μ. done. eauto.
 Qed.
 
+Inductive inter_step `{M12 : Prop_of_Inter P1 P2 A inter}
+            : P1 * P2 → Act A → P1 * P2 → Prop :=
+| ParLeft α a1 a2 b (l : a1 ⟶{α} a2) : inter_step (a1, b) α (a2, b)
+| ParRight α a b1 b2 (l : b1 ⟶{α} b2) : inter_step (a, b1) α (a, b2)
+| ParSync μ1 μ2 a1 a2 b1 b2 (eq : inter μ1 μ2) (l1 : a1 ⟶[μ1] a2) (l2 : b1 ⟶[μ2] b2) : inter_step (a1, b1) τ (a2, b2)
+.
 
-Definition decide_parallel_step {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2: S2) ℓ s'1 s'2:
-  Decision (parallel_step (s1, s2) ℓ (s'1, s'2)).
+
+Global Hint Constructors inter_step:mdb.
+
+
+Definition decide_inter_step `{M12 : Prop_of_Inter S1 S2 A inter}
+            (s1: S1) (s2: S2) ℓ s'1 s'2:
+  Decision (inter_step (s1, s2) ℓ (s'1, s'2)).
 Proof.
-  destruct (decide (M1.(lts_step) s1 ℓ s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
+  destruct (decide (lts_step s1 ℓ s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
   { simplify_eq. left. by constructor. }
-  destruct (decide (M2.(lts_step) s2 ℓ s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
+  destruct (decide (lts_step s2 ℓ s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
   { simplify_eq. left. by constructor. }
   destruct ℓ.
   { right. intros contra; inversion contra; simplify_eq; eauto. }
-  destruct (decide (exists lts_stable s1 
-  destruct (search_steps _ _ s1 s2 s'1 (elements $ lts_non_blocking_action s1)) as [x|] eqn:Hpar1.
-  { apply search_steps_spec_2 in Hpar1 as [step Hyp]. left; eapply ParSync; eauto. admit. admit. }
-  destruct (search_steps _ _ s2 s1 s'2 (elements $ lts_non_blocking_action s2)) as [x|] eqn:Hpar2.
-  { apply search_steps_spec_2 in Hpar2 as [??]. left; eapply ParSync; eauto. admit. admit. }
+  destruct (search_steps_essential_left s1 s2 s'1 s'2 (elements $ lts_essential_actions_left s1)) as [ξ|] eqn:Hpar1.
+  { apply search_steps_spec_2_essential_left in Hpar1 as (μ & ess_act & step_left & step_right & duo). 
+   left; eapply ParSync; eauto. }
+  destruct (search_steps_essential_right s1 s2 s'1 s'2 (elements $ lts_essential_actions_right s2)) as [ξ|] eqn:Hpar2.
+  { apply search_steps_spec_2_essential_right in Hpar2 as (μ & ess_act & step_right & step_left & duo).  
+   left; eapply ParSync; eauto. }
   right; intros contra; inversion contra; simplify_eq; eauto.
-  destruct α1 as [a|], α2 as [b|]; eauto.
-  destruct a, b; eauto; simpl in *; simplify_eq.
-  - assert (is_Some $ search_steps _ _ s2 s1 s'2 s'1 (elements (lts_outputs s2))) as Hc; [|].
-    apply search_steps_spec_1. eexists; split; eauto.
-    rewrite Hpar2 in Hc. by inversion Hc.
-  - assert (is_Some $ search_steps _ _ s1 s2 s'1 s'2 (elements (lts_outputs s1))) as Hc; [|].
-    apply search_steps_spec_1. eexists; split; eauto.
-    rewrite Hpar1 in Hc. by inversion Hc.
-Qed. 
+  eapply lts_essential_actions_spec_interact in eq as case_essential; eauto. destruct case_essential as [ess_act1 | ess_act2].
+  - assert (is_Some $ search_steps_essential_left s1 s2 s'1 s'2 (elements (lts_essential_actions_left s1))) as Hc; [|].
+    eapply search_steps_spec_1_essential_left_rev. exists μ1. exists μ2. repeat split; eauto.
+    inversion Hc. simplify_eq.
+  - assert (is_Some $ search_steps_essential_right s1 s2 s'1 s'2 (elements (lts_essential_actions_right s2))) as Hc; [|].
+    eapply search_steps_spec_1_essential_right_rev. exists μ2. exists μ1. repeat split; eauto.
+    inversion Hc. simplify_eq.
+Defined.
 
+Lemma list_and_set {A : Type} `{ExtAction A} (a : A) (l : list A) (set : gset A) : elements (set) = a :: l -> a ∈ set.
+Proof.
+  intro Hyp. eapply elem_of_elements. rewrite Hyp. set_solver.
+Qed.
 
-(* Fixpoint parallel_lts_stable_helper {S1 S2 A: Type} `{H : ExtAction A} {M1: @Lts S1 A H} {M2: @Lts S2 A H}
+Definition inter_not_stable_essential_left (* {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) *) 
+  `{Prop_of_Inter S1 S2 A}
+          (s1: S1) (s2 : S2) (ξ : A) :=
+        ¬lts_stable s1 (ActExt $ ξ) ∧ (∃ μ, ¬lts_stable s2 (ActExt $ μ) ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1). 
+(*          ∧ (∃ s'2 : S2, is_Some (search_co_steps M2 s2 s'2 ξ (elements $ lts_dual_action ξ s2))). *)
+
+(* Lemma inter_inter `{Prop_of_Inter S1 S2 A} p1 p2 ξ : {μ | μ ∈ lts_co_inter_action_right ξ p2 
+              /\ ξ ∈ lts_essential_actions_left p1 /\ ¬lts_stable p2 (ActExt $ μ) /\ inter ξ μ } + 
+          {forall μ, μ ∈ lts_co_inter_action_right ξ p2 
+          ->  lts_stable p2 (ActExt $ μ) \/ ¬ inter ξ μ \/ ξ ∉ lts_essential_actions_left p1}.
+Proof.
+  remember (elements (lts_co_inter_action_right ξ p2)) as l.
+  revert Heql. revert p2. revert p1. revert ξ.
+  induction l as [| μ l]. 
+  + intros. right. intros μ in_list. apply elem_of_elements in in_list.
+    rewrite <-Heql in in_list. set_solver.
+  + intros ξ p1 p2 elem_def. 
+    destruct (decide (p2 ↛[μ])).
+    ++ right. intros. destruct (decide (inter ξ μ)).
+      +++ destruct (decide (ξ ∉ lts_essential_actions_left p1)). 
+    
+    destruct (decide ()).
+    
+    split; eauto. eapply elem_of_elements. set_solver. *)
+
+#[global] Instance dec_co_act_stable_essential_left `{Prop_of_Inter S1 S2 A}
+       (s1: S1) (s2 : S2) (ξ : A)
+      : Decision (inter_not_stable_essential_left s1 s2 ξ).
+Proof. 
+destruct (decide (¬lts_stable s1 (ActExt $ ξ))) as [not_stable_left | stable1_left].
+  + destruct (decide (ξ ∈ lts_essential_actions_left s1)) as [ess_act | not_ess_act].
+    ++ (* case_eq (elements (lts_co_inter_action_right ξ s2)). *) admit.
+    ++ right. intros (HypTr & μ & Hyp). decompose record Hyp. contradiction.
+  + right. intros (HypTr & μ & Hyp). decompose record Hyp. contradiction.
+Admitted.
+
+Lemma transition_to_not_stable_essential_left `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) (s'2 : S2) (ξ : A) : 
+  { μ | s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1} 
+  -> { μ | ¬lts_stable s2 (ActExt $ μ) ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}.
+Proof.
+  intro Hyp. destruct Hyp as [μ [HypTr2 [inter_prop ess_act]]].  eexists. repeat split; eauto. eapply lts_stable_spec2. exists s'2. eauto.
+Qed.
+
+Lemma not_stable_to_transition_essential_left `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) (* (s'2 : S2) *) (ξ : A) : 
+  { μ | ¬lts_stable s2 (ActExt $ μ) ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1} 
+  -> {s'2 & { μ | s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}}.
+Proof.
+  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_stable_spec1 in HypNotStable2. 
+  destruct HypNotStable2 as [s'2 HypTr2]. eexists. eexists. repeat split; eauto.
+Qed.
+
+Lemma some_witness1 `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) (ξ : A) : 
+  (∃ μ : A, ¬ s2 ↛[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1) 
+  -> { μ & { s'2 | s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}}.
+Proof.
+  intro Hyp. case_eq (elements (lts_co_inter_action_right ξ s2)).
+  + intro no_element. exfalso. destruct Hyp as (μ & HypTr & inter_prop & ess_act).
+    eapply lts_stable_spec1 in HypTr. destruct HypTr as (s'2 & Tr). eapply lts_co_inter_action_spec_right in Tr; eauto.
+    eapply elem_of_elements in Tr. rewrite no_element in Tr. set_solver.
+  + intro μ. intro l. intro some_elements. assert (μ ∈ lts_co_inter_action_right ξ s2) as main_prop.
+    eapply elem_of_elements. rewrite some_elements. set_solver.
+    (* eapply lts_co_inter_action_spec2 in main_prop. destruct main_prop as (s'2 & ess_act & HypTr & duo).
+    exists μ. exists s'2. repeat split; eauto. *)
+Admitted.
+
+(* Lemma some_witness2 {S2 A: Type} `{ExtAction A} (M2: Lts S2 A)  (s2 : S2) (ξ : A) : 
+is_Some $ search_co_steps M1 s2 s'2 ξ (elements $ lts_dual_action ξ s2) -> { μ : A | ∃ s'2, s2 ⟶[μ] s'2 ∧ dual μ ξ ∧ essential ξ}.
+Proof.
+  intro Hyp. exists ξ. destruct Hyp as (μ & not_stable & duo & ess_act).
+  eapply lts_stable_spec1 in not_stable. destruct not_stable as (s'2 & HypTr). exists μ. exists s'2. repeat split; eauto.
+Qed.
+
+Lemma some_witness2 {S2 A: Type} `{ExtAction A} (M2: Lts S2 A)  (s2 : S2) (ξ : A) : 
+(∃ μ : A, ¬ s2 ↛[μ] ∧ dual μ ξ ∧ essential ξ) -> (∃ μ : A, {s'2 | s2 ⟶[μ] s'2 ∧ dual μ ξ ∧ essential ξ}).
+Proof.
+Admitted.
+ *)
+Fixpoint inter_lts_stable_helper_essential_left (* {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A} *)
+  `{Prop_of_Inter S1 S2 A}
   (s1: S1) (s2: S2) (l: list A) : bool :=
   match l with
   | [] => true
-  | μ1::bs =>
-      if decide (forall μ2, dual μ1 μ2 ∧ ¬lts_stable s1 (ActExt $ μ1) ∧ ¬lts_stable s2 (ActExt $ μ2))
+  | ξ::bs =>
+      if decide (inter_not_stable_essential_left s1 s2 ξ)
+        then false 
+        else inter_lts_stable_helper_essential_left s1 s2 bs
+  end.
+
+
+(* Definition not_co_act_stable {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) (ξ : A) :=
+        essential ξ ∧ (∃ s'2 : S2, is_Some (search_co_steps M2 s2 s'2 ξ (elements $ lts_dual_action ξ s2))).
+
+#[global] Instance dec_co_act_stable {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) (ξ : A)
+      : Decision (not_co_act_stable M1 M2 s1 s2 ξ).
+Proof.   destruct (decide (essential ξ)).
+  + assert (∀ μ2, μ2 ∈ lts_dual_action ξ s2 → {s'2 : S2 | essential ξ ∧ s2 ⟶[μ2] s'2 ∧ dual μ2 ξ}) as dual_def.
+  intro μ2. eapply lts_dual_action_spec2. 
+  case_eq (elements (lts_dual_action ξ s2)).
+    ++ intro case1. right. intro contra. destruct contra as [ess_act Hyp]. rewrite case1 in Hyp. simpl in *.
+       destruct Hyp as [x impossible]. inversion impossible. simplify_eq.
+    ++ intros a l case2. left. destruct (dual_def a) as [s'2 Hyp]. eapply list_and_set. eassumption. split; eauto. exists s'2.
+       rewrite case2. decompose record Hyp. assert (s2 ⟶[a] s'2 ∧ essential ξ ∧ dual a ξ). repeat split; eauto.
+       assert ((if decide (s2 ⟶[a] s'2 ∧ essential ξ ∧ dual a ξ) then Some a else search_co_steps M2 s2 s'2 ξ l) = Some a) as eq.
+       eapply decide_True; eauto. simpl. rewrite eq. eapply (mk_is_Some). reflexivity.
+  + right. intro contra. destruct contra. contradiction.
+Defined.
+
+Fixpoint parallel_lts_stable_helper {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A}
+  (s1: S1) (s2: S2) (l: list A) : bool :=
+  match l with
+  | [] => true
+  | ξ::bs =>
+      if decide (not_co_act_stable M1 M2 s1 s2 ξ)
         then false 
         else parallel_lts_stable_helper s1 s2 bs
-  end.
- *)
+  end. *)
 
-(*
-Lemma parallel_sts_stable_helper_spec_1 {S1 S2 L: Type} `{Label L} {M1: Lts S1 L} {M2: Lts S2 L}
-  (s1: S1) (s2: S2) (l: list L) :
-  parallel_lts_stable_helper s1 s2 l = false → {s' | parallel_step (s1, s2) τ s'}.
+Lemma inter_sts_stable_helper_spec_1_essential_left `{Prop_of_Inter S1 S2 A}
+  (s1: S1) (s2: S2) (l: list A) :
+  inter_lts_stable_helper_essential_left s1 s2 l = false → {s' | inter_step (s1, s2) τ s'}.
 Proof.
-  induction l; [done|].
-  simpl. destruct (decide (¬lts_stable s1 (ActExt (ActOut a)) ∧ ¬lts_stable s2 (ActExt (ActIn a))))
-    as [[Hs1 Hs2]|]; eauto. intros _.
-  apply lts_stable_spec1 in Hs1 as [s'1 ?].
-  apply lts_stable_spec1 in Hs2 as [s'2 ?].
-  refine ((s'1, s'2) ↾ _). econstructor 3; eauto. done.
+  induction l as [| ξ l ]; [done|].
+  simpl. destruct (decide (inter_not_stable_essential_left s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
+  destruct Hyp as [not_stable1 act_founded]. eapply some_witness1 in act_founded.
+  destruct act_founded as (μ & s'2 & HypTr2 & duo & ess_act).
+  apply lts_stable_spec1 in not_stable1 as [s'1 HypTr1].
+  exists (s'1, s'2). eapply ParSync. exact duo. exact HypTr1. exact HypTr2.
 Qed.
 
-Lemma parallel_sts_stable_helper_spec_2 {S1 S2 L: Type} `{Label L} {M1: Lts S1 L} {M2: Lts S2 L}
-  (s1: S1) (s2: S2) a s'1 s'2 :
-  s1 ⟶[ActOut a] s'1 → s2 ⟶[ActIn a] s'2 →
-  parallel_lts_stable_helper s1 s2 (elements $ lts_outputs s1) = false.
+Lemma inter_sts_stable_helper_spec_2_essential_left `{Prop_of_Inter S1 S2 A}
+  (s1: S1) (s2: S2) ξ μ s'1 s'2 :
+  s1 ⟶[ξ] s'1 → s2 ⟶[μ] s'2 → inter ξ μ → ξ ∈ lts_essential_actions_left s1 →
+  inter_lts_stable_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1) = false.
 Proof.
-  intros Hs1 Hs2.
+  intros Hs1 Hs2 duo ess_act.
   assert (∀ l rest,
-             (elements $ lts_outputs s1) = rest ++ l →
-             (∀ x, x ∈ rest → ¬ (s1 ⟶[ActOut x] s'1 ∧ s2 ⟶[ActIn x] s'2)) →
-             parallel_lts_stable_helper s1 s2 l = false) as Hccl.
+             (elements $ lts_essential_actions_left s1) = rest ++ l →
+             (∀ ξ, ξ ∈ rest → ¬ (s1 ⟶[ξ] s'1 ∧ (exists μ, s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1 ))) →
+             inter_lts_stable_helper_essential_left s1 s2 l = false) as Hccl.
   induction l as [| b l IHl].
-  - intros rest Hrest Hnots. pose proof (lts_outputs_spec1 _ _ _ Hs1) as Hin. simplify_list_eq.
+  - intros rest Hrest Hnots. (* pose proof (lts_essential_action_spec_left _ ξ ess_act Hs1) as Hin.  *)
+    simplify_list_eq.
     exfalso. eapply Hnots; eauto. set_solver.
   - intros rest Hrest Hnots. simplify_list_eq.
-    destruct (decide (¬ lts_stable s1 (ActExt (ActOut b)) ∧ ¬ lts_stable s2 (ActExt (ActIn b)))); [auto|].
+    destruct (decide (inter_not_stable_essential_left s1 s2 b)) as [case1 | case2]; [auto|].
     eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
     intros x [Hin | ->%elem_of_list_singleton]%elem_of_app; [eauto|].
-    intros [Hstep1 Hstep2].
-    pose proof (lts_stable_spec2 _ _ (_ ↾ Hstep1)). pose proof (lts_stable_spec2 _ _ (_ ↾ Hstep2)). eauto.
+    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_stable_spec2. exists s'1. assumption.
+    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_stable_spec2. exists s'2. assumption.
+    split; eauto. 
   - apply (Hccl _ []); eauto. set_solver.
 Qed.
-*)
-(* Definition parallel_lts_stable {S1 S2 A: Type} `{H : ExtAction A} (M1: @Lts S1 A H) (M2: @Lts S2 A H)
+
+
+
+
+Definition inter_not_stable_essential_right (* {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) *) 
+  `{Prop_of_Inter S1 S2 A}
+          (s1: S1) (s2 : S2) (ξ : A) :=
+        ¬lts_stable s2 (ActExt $ ξ) ∧ (∃ μ, ¬lts_stable s1 (ActExt $ μ) ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2). 
+(*          ∧ (∃ s'2 : S2, is_Some (search_co_steps M2 s2 s'2 ξ (elements $ lts_dual_action ξ s2))). *)
+
+(* Lemma inter_inter `{Prop_of_Inter S1 S2 A} p1 p2 ξ : {μ | μ ∈ lts_co_inter_action_right ξ p2 
+              /\ ξ ∈ lts_essential_actions_left p1 /\ ¬lts_stable p2 (ActExt $ μ) /\ inter ξ μ } + 
+          {forall μ, μ ∈ lts_co_inter_action_right ξ p2 
+          ->  lts_stable p2 (ActExt $ μ) \/ ¬ inter ξ μ \/ ξ ∉ lts_essential_actions_left p1}.
+Proof.
+  remember (elements (lts_co_inter_action_right ξ p2)) as l.
+  revert Heql. revert p2. revert p1. revert ξ.
+  induction l as [| μ l]. 
+  + intros. right. intros μ in_list. apply elem_of_elements in in_list.
+    rewrite <-Heql in in_list. set_solver.
+  + intros ξ p1 p2 elem_def. 
+    destruct (decide (p2 ↛[μ])).
+    ++ right. intros. destruct (decide (inter ξ μ)).
+      +++ destruct (decide (ξ ∉ lts_essential_actions_left p1)). 
+    
+    destruct (decide ()).
+    
+    split; eauto. eapply elem_of_elements. set_solver. *)
+
+#[global] Instance dec_co_act_stable_essential_right `{Prop_of_Inter S1 S2 A}
+       (s1: S1) (s2 : S2) (ξ : A)
+      : Decision (inter_not_stable_essential_right (* M1 M2 *) s1 s2 ξ).
+Proof. 
+destruct (decide (¬lts_stable s2 (ActExt $ ξ))) as [not_stable_left | stable1_left].
+  + destruct (decide (ξ ∈ lts_essential_actions_right s2)) as [ess_act | not_ess_act].
+    ++ (* case_eq (elements (lts_co_inter_action_right ξ s2)). *) admit.
+    ++ right. intros (HypTr & μ & Hyp). decompose record Hyp. contradiction.
+  + right. intros (HypTr & μ & Hyp). decompose record Hyp. contradiction.
+Admitted.
+
+Lemma transition_to_not_stable_essential_right `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) (s'1 : S1) (ξ : A) : 
+  { μ | s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2} 
+  -> { μ | ¬lts_stable s1 (ActExt $ μ) ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}.
+Proof.
+  intro Hyp. destruct Hyp as [μ [HypTr2 [inter_prop ess_act]]].  eexists. repeat split; eauto. 
+  eapply lts_stable_spec2. exists s'1. eauto.
+Qed.
+
+Lemma not_stable_to_transition_essential_right `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) (* (s'2 : S2) *) (ξ : A) : 
+  { μ | ¬lts_stable s1 (ActExt $ μ) ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2} 
+  -> {s'1 & { μ | s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}}.
+Proof.
+  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_stable_spec1 in HypNotStable2. 
+  destruct HypNotStable2 as [s'2 HypTr2]. eexists. eexists. repeat split; eauto.
+Qed.
+
+Lemma some_witness1_left `{Prop_of_Inter S1 S2 A}
+  (s1 : S1) (s2 : S2) (ξ : A) : 
+  (∃ μ : A, ¬ s1 ↛[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2) 
+  -> { μ & { s'1 | s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}}.
+Proof.
+  intro Hyp. case_eq (elements (lts_co_inter_action_left ξ s1)).
+  + intro no_element. exfalso. destruct Hyp as (μ & HypTr & inter_prop & ess_act).
+    eapply lts_stable_spec1 in HypTr. destruct HypTr as (s'1 & Tr). eapply lts_co_inter_action_spec_left in Tr; eauto.
+    eapply elem_of_elements in Tr. rewrite no_element in Tr. set_solver.
+  + intro μ. intro l. intro some_elements. assert (μ ∈ lts_co_inter_action_left ξ s1) as main_prop.
+    eapply elem_of_elements. rewrite some_elements. set_solver.
+    (* eapply lts_co_inter_action_spec2 in main_prop. destruct main_prop as (s'2 & ess_act & HypTr & duo).
+    exists μ. exists s'2. repeat split; eauto. *)
+Admitted.
+
+(* Lemma some_witness2 {S2 A: Type} `{ExtAction A} (M2: Lts S2 A)  (s2 : S2) (ξ : A) : 
+is_Some $ search_co_steps M1 s2 s'2 ξ (elements $ lts_dual_action ξ s2) -> { μ : A | ∃ s'2, s2 ⟶[μ] s'2 ∧ dual μ ξ ∧ essential ξ}.
+Proof.
+  intro Hyp. exists ξ. destruct Hyp as (μ & not_stable & duo & ess_act).
+  eapply lts_stable_spec1 in not_stable. destruct not_stable as (s'2 & HypTr). exists μ. exists s'2. repeat split; eauto.
+Qed.
+
+Lemma some_witness2 {S2 A: Type} `{ExtAction A} (M2: Lts S2 A)  (s2 : S2) (ξ : A) : 
+(∃ μ : A, ¬ s2 ↛[μ] ∧ dual μ ξ ∧ essential ξ) -> (∃ μ : A, {s'2 | s2 ⟶[μ] s'2 ∧ dual μ ξ ∧ essential ξ}).
+Proof.
+Admitted.
+ *)
+Fixpoint inter_lts_stable_helper_essential_right (* {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A} *)
+  `{Prop_of_Inter S1 S2 A}
+  (s1: S1) (s2: S2) (l: list A) : bool :=
+  match l with
+  | [] => true
+  | ξ::bs =>
+      if decide (inter_not_stable_essential_right s1 s2 ξ)
+        then false 
+        else inter_lts_stable_helper_essential_right s1 s2 bs
+  end.
+
+
+(* Definition not_co_act_stable {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) (ξ : A) :=
+        essential ξ ∧ (∃ s'2 : S2, is_Some (search_co_steps M2 s2 s'2 ξ (elements $ lts_dual_action ξ s2))).
+
+#[global] Instance dec_co_act_stable {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A) (s1: S1) (s2 : S2) (ξ : A)
+      : Decision (not_co_act_stable M1 M2 s1 s2 ξ).
+Proof.   destruct (decide (essential ξ)).
+  + assert (∀ μ2, μ2 ∈ lts_dual_action ξ s2 → {s'2 : S2 | essential ξ ∧ s2 ⟶[μ2] s'2 ∧ dual μ2 ξ}) as dual_def.
+  intro μ2. eapply lts_dual_action_spec2. 
+  case_eq (elements (lts_dual_action ξ s2)).
+    ++ intro case1. right. intro contra. destruct contra as [ess_act Hyp]. rewrite case1 in Hyp. simpl in *.
+       destruct Hyp as [x impossible]. inversion impossible. simplify_eq.
+    ++ intros a l case2. left. destruct (dual_def a) as [s'2 Hyp]. eapply list_and_set. eassumption. split; eauto. exists s'2.
+       rewrite case2. decompose record Hyp. assert (s2 ⟶[a] s'2 ∧ essential ξ ∧ dual a ξ). repeat split; eauto.
+       assert ((if decide (s2 ⟶[a] s'2 ∧ essential ξ ∧ dual a ξ) then Some a else search_co_steps M2 s2 s'2 ξ l) = Some a) as eq.
+       eapply decide_True; eauto. simpl. rewrite eq. eapply (mk_is_Some). reflexivity.
+  + right. intro contra. destruct contra. contradiction.
+Defined.
+
+Fixpoint parallel_lts_stable_helper {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A}
+  (s1: S1) (s2: S2) (l: list A) : bool :=
+  match l with
+  | [] => true
+  | ξ::bs =>
+      if decide (not_co_act_stable M1 M2 s1 s2 ξ)
+        then false 
+        else parallel_lts_stable_helper s1 s2 bs
+  end. *)
+
+Lemma inter_sts_stable_helper_spec_1_essential_right `{Prop_of_Inter S1 S2 A}
+  (s1: S1) (s2: S2) (l: list A) :
+  inter_lts_stable_helper_essential_right s1 s2 l = false → {s' | inter_step (s1, s2) τ s'}.
+Proof.
+  induction l as [| ξ l ]; [done|].
+  simpl. destruct (decide (inter_not_stable_essential_right s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
+  destruct Hyp as [not_stable1 act_founded]. eapply some_witness1_left in act_founded.
+  destruct act_founded as (μ & s'1 & HypTr1 & duo & ess_act).
+  apply lts_stable_spec1 in not_stable1 as [s'2 HypTr2].
+  exists (s'1, s'2). eapply ParSync. exact duo. exact HypTr1. exact HypTr2.
+Qed.
+
+Lemma inter_sts_stable_helper_spec_2_essential_right `{Prop_of_Inter S1 S2 A}
+  (s1: S1) (s2: S2) μ ξ s'1 s'2 :
+  s1 ⟶[μ] s'1 → s2 ⟶[ξ] s'2 → inter μ ξ → ξ ∈ lts_essential_actions_right s2 →
+  inter_lts_stable_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2) = false.
+Proof.
+  intros Hs1 Hs2 duo ess_act.
+  assert (∀ l rest,
+             (elements $ lts_essential_actions_right s2) = rest ++ l →
+             (∀ ξ, ξ ∈ rest → ¬ (s2 ⟶[ξ] s'2 ∧ (exists μ, s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2 ))) →
+             inter_lts_stable_helper_essential_right s1 s2 l = false) as Hccl.
+  induction l as [| b l IHl].
+  - intros rest Hrest Hnots. (* pose proof (lts_essential_action_spec_left _ ξ ess_act Hs1) as Hin.  *)
+    simplify_list_eq.
+    exfalso. eapply Hnots; eauto. set_solver.
+  - intros rest Hrest Hnots. simplify_list_eq.
+    destruct (decide (inter_not_stable_essential_right s1 s2 b)) as [case1 | case2]; [auto|].
+    eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
+    intros x [Hin | ->%elem_of_list_singleton]%elem_of_app; [eauto|].
+    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_stable_spec2. exists s'2. assumption.
+    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_stable_spec2. exists s'1. assumption.
+    split; eauto. 
+  - apply (Hccl _ []); eauto. set_solver.
+Qed.
+
+
+Definition inter_lts_stable `{Prop_of_Inter S1 S2 A}
   (s1: S1) (s2: S2) (ℓ : Act A): Prop :=
   lts_stable s1 ℓ ∧ lts_stable s2 ℓ ∧
     match ℓ with
-    | τ => parallel_lts_stable_helper s1 s2 (elements $ lts_non_blocking_action s1)
-        ∧ parallel_lts_stable_helper s2 s1 (elements $ lts_non_blocking_action s2)
+    | τ => inter_lts_stable_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1)
+        ∧ inter_lts_stable_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2)
     | _ => True
-    end. *)
+    end.
+
+(* Definition parallel_dual_action {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A}
+   (ξ : A) (s: S1*S2) : gset A := M1.(lts_dual_action) ξ s.1 ∪  M2.(lts_dual_action) ξ s.2.
 
 
-#[global] Instance parallel_lts {S1 S2 A: Type} `{ExtAction A} (M1: Lts S1 A) (M2: Lts S2 A):
-  Lts (S1 * S2) A.
-Admitted.
-(* 
-#[global] Instance parallel_lts {S1 S2 A: Type} `{H : ExtAction A} (M1: @Lts S1 A H) (M2: @Lts S2 A H):
-  @Lts (S1 * S2) A H.
-
+Lemma parallel_dual_action_spec1 {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A} (s : S1*S2) s' ξ μ : 
+          essential ξ -> parallel_step s (ActExt μ) s' -> dual μ ξ -> μ ∈ parallel_dual_action ξ s.
 Proof.
-  refine (MkLts _ _ _ parallel_step _ _
-            (λ s, M1.(lts_non_blocking_action) s.1 ∪  M2.(lts_non_blocking_action) s.2) _
-            _
-            (λ s, parallel_lts_stable M1 M2 s.1 s.2) _ _ _).
-  - intros [s1 s2] ℓ [s'1 s'2]. apply decide_parallel_step.
-  - intros s1 x s2 Hstep. inversion Hstep; simplify_eq.
-    + pose proof M1.(lts_outputs_spec1). set_solver.
-    + pose proof M2.(lts_outputs_spec1). set_solver.
-  - intros (s1, s2) x mem.
-    destruct (decide (x ∈ lts_outputs s1)).
-    eapply lts_outputs_spec2 in e as (s' & hl').
-    exists (s', s2). now eapply ParLeft.
-    destruct (decide (x ∈ lts_outputs s2)).
-    eapply lts_outputs_spec2 in e as (s' & hl').
-    exists (s1, s'). now eapply ParRight.
-    exfalso. set_solver.
-  - intros ??. unfold parallel_lts_stable.
+  intros ess_act Hstep duo. eapply elem_of_union.
+  inversion Hstep; subst.
+  + left. simpl. eapply lts_dual_action_spec1; eauto.
+  + right. simpl. eapply lts_dual_action_spec1; eauto.
+Qed.
+
+Lemma parallel_dual_action_spec2_raw {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A} 
+          (s : S1*S2) ξ μ : μ ∈ parallel_dual_action ξ s ->
+                            {μ ∈ M1.(lts_dual_action) ξ s.1} + {μ ∈ M2.(lts_dual_action) ξ s.2}.
+Proof.
+  intro Hyp. destruct (decide (μ ∈ M1.(lts_dual_action) ξ s.1)).
+  + left. eauto.
+  + right. eapply (elem_of_union (M1.(lts_dual_action) ξ s.1) (M2.(lts_dual_action) ξ s.2)) in Hyp.
+    destruct Hyp. contradiction. assumption.
+Qed.
+
+Lemma parallel_dual_action_spec2 {S1 S2 A: Type} `{ExtAction A} {M1: Lts S1 A} {M2: Lts S2 A} 
+          (s : S1*S2) ξ μ : μ ∈ parallel_dual_action ξ s
+                            -> {s' | essential ξ /\ parallel_step s (ActExt μ) s' /\ dual μ ξ}.
+Proof.
+  intros Hyp. destruct s as (s1 & s2). simpl in *.
+  apply parallel_dual_action_spec2_raw in Hyp. destruct Hyp as [ duo_in_M1 | duo_in_M2].
+  + eapply lts_dual_action_spec2 in duo_in_M1. destruct duo_in_M1 as (s'1 & ess_act & HypTr & duo). 
+    exists ((s'1,s2)). repeat split; eauto. now eapply ParLeft.
+  + eapply lts_dual_action_spec2 in duo_in_M2. destruct duo_in_M2 as (s'2 & ess_act & HypTr & duo). 
+    exists ((s1,s'2)). repeat split; eauto. now eapply ParRight.
+Qed. *)
+
+
+
+
+#[global] Instance inter_lts 
+  `(inter : A -> A -> Prop)
+  `{Prop_of_Inter S1 S2 A inter} :
+  Lts (S1 * S2) A. 
+Proof.
+  refine (MkLts _ _ _ inter_step _ _ (λ s, inter_lts_stable s.1 s.2) _ _ _).
+  - intros [s1 s2] ℓ [s'1 s'2]. apply decide_inter_step.
+  - intros ??. unfold inter_lts_stable.
     apply and_dec; [apply _|apply and_dec; [apply _|]]. destruct α; apply _.
-  - intros [a b] ℓ Hns. simpl in Hns. unfold parallel_lts_stable in Hns.
+  - intros [a b] ℓ Hns. simpl in Hns. unfold inter_lts_stable in Hns.
     destruct (decide (lts_stable a ℓ)) as [|Hns1]; cycle 1.
     { apply lts_stable_spec1 in Hns1 as [s' ?]. refine ((s', b) ↾ _). by constructor. }
     destruct (decide (lts_stable b ℓ)) as [|Hns2]; cycle 1.
     { apply lts_stable_spec1 in Hns2 as [s' ?]. refine ((a, s') ↾ _). by constructor. }
     destruct ℓ as [n|]; [exfalso; by apply Hns|].
-    destruct (parallel_lts_stable_helper a b (elements (lts_outputs a))) eqn:Hs1; cycle 1.
-    { by apply parallel_sts_stable_helper_spec_1 in Hs1. }
-    destruct (parallel_lts_stable_helper b a (elements (lts_outputs b))) eqn:Hs2; cycle 1.
-    { apply parallel_sts_stable_helper_spec_1 in Hs2 as [[??] Hstep%parallel_step_commutative].
-      exact (_ ↾ Hstep). }
+    destruct (inter_lts_stable_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1; cycle 1.
+    { by apply inter_sts_stable_helper_spec_1_essential_left in Hs1. }
+    destruct (inter_lts_stable_helper_essential_right a b (elements (lts_essential_actions_right b))) eqn:Hs2; cycle 1.
+    { by apply inter_sts_stable_helper_spec_1_essential_right in Hs2. } 
     exfalso. apply Hns; eauto.
   - intros [s1 s2] ℓ [[s'1 s'2] Hstep].
-    unfold parallel_lts_stable. rewrite !not_and_l.
+    unfold inter_lts_stable. rewrite !not_and_l.
     inversion Hstep; simplify_eq; simpl.
     + pose proof (lts_stable_spec2 _ _ (s'1 ↾ l)). eauto.
     + pose proof (lts_stable_spec2 _ _ (s'2 ↾ l)). eauto.
-    + destruct α1 as [a|], α2 as [b|]; eauto.
-      destruct a as [a|a], b as [b|b]; eauto;
-        simpl in *; simplify_eq.
-      * assert (parallel_lts_stable_helper s2 s1 (elements $ lts_outputs s2) = false) as Hccl; cycle 1.
+    + eapply lts_essential_actions_spec_interact in eq as where_is_the_essential_action; eauto.
+      destruct where_is_the_essential_action as [ ess_act1 | ess_act2].
+      ++ assert (inter_lts_stable_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1) = false) as Hccl; cycle 1.
         { right; right. intros [??]. by rewrite Hccl in *. }
-        eapply parallel_sts_stable_helper_spec_2; eauto.
-      * assert (parallel_lts_stable_helper s1 s2 (elements $ lts_outputs s1) = false) as Hccl; cycle 1.
+        eapply inter_sts_stable_helper_spec_2_essential_left; eauto.
+      ++ assert (inter_lts_stable_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2) = false) as Hccl; cycle 1.
         { right; right. intros [??]. by rewrite Hccl in *. }
-        eapply parallel_sts_stable_helper_spec_2; eauto.
-Defined.  *)
+        eapply inter_sts_stable_helper_spec_2_essential_right; eauto.
+Defined.
 
 Class Sts (P: Type) := MkSts {
     sts_step: P → P → Prop;
@@ -1688,46 +2243,200 @@ Proof.
   - intros ?. apply clts_next_states_countable.
 Defined.
 
-
 #[global]
-Instance parallel_clts {S1 S2 L: Type} `{ExtAction L} `{!Lts S1 L} `{!Lts S2 L} `{M1: !CountableLts S1 L} `{M2: !CountableLts S2 L}:
-  CountableLts (S1 * S2) L.
-
-(* #[global]
-Instance parallel_clts {P1 P2 A: Type} `{H : ExtAction A} `{S1 : @Lts P1 A H} `{S2 : @Lts P2 A H} 
-`{M1: @CountableLts P1 A H S1} `{M2: @CountableLts P2 A H S2}:
-  @CountableLts (P1 * P2) A H. *)
-
+Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!Lts S1 A} `{!Lts S2 A} `{M1: !CountableLts S1 A} 
+`{M2: !CountableLts S2 A} `{inter : A -> A -> Prop} `{i : !Prop_of_Inter S1 S2 A inter}: CountableLts (S1 * S2) A.
 Proof.
   apply MkClts.
-  - admit. (* eapply prod_countable. *)
-  - intros x ℓ. admit. (* apply countable_sig. intros y.
-    destruct (decide (bool_decide (x ⟶{ℓ} y))); [left | right]; done. *)
-Admitted.
+  -  eapply prod_countable.
+  - intros x ℓ. apply countable_sig. intros y.
+    destruct (decide (bool_decide (x ⟶{ℓ} y))); [left | right]; done.
+Qed.
 
-#[global] Instance finite_countable_lts `{FiniteLts P A} : CountableLts P A.
+#[global] Instance finite_countable_lts `{FiniteImageLts P A} : CountableLts P A.
 Proof. constructor; first apply _. intros *; apply finite_countable. Qed.
 
-(** A mailbox is a multiset of names. *)
 
-Definition mb (A : Type) `{ExtAction A} := gmultiset A.
+
+(** Parallel Lts extended with parallel. *)
+
+Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ1 μ2 \/ dual μ2 μ1.
+
+#[global] Program Instance parallel_Lts {P1 P2 A : Type} `{H : ExtAction A} (M1: Lts P1 A) (M2: Lts P2 A)
+  `{Prop_of_Inter P1 P2 A parallel_inter} 
+: Lts (P1 * P2) A := inter_lts parallel_inter. 
+
+(* #[global] Program Instance parallel_inter_spec `{ExtAction A} : InteractionAction A.
+Next Obligation.
+  intros ? ? μ1 μ2. exact (parallel_inter μ1 μ2).
+Defined.
+Next Obligation.
+  intros ? ? μ1 μ2. unfold parallel_inter_spec_obligation_1.
+  eapply or_dec.
+  + exact (d_dec μ1 μ2).
+  + exact (d_dec μ2 μ1).
+Defined.
+ *)
+
+
+(* à voir *)
+(* Lemma parallel_step_commutative 
+(*     {S1 S2 A: Type} `{H : ExtAction A}  `{!Lts S1 A} `{!Lts S2 A} `{M1: !CountableLts S1 A} 
+    `{M2: !CountableLts S2 A} `{C : InteractionAction A} `{i : !Prop_of_Inter S1 S2 A} *)
+    `{Prop_of_Inter P1 P2 A}
+    (s1 s'1: P1) (s2 s'2: P2) ℓ:
+    inter_step (s1, s2) ℓ (s'1, s'2) → inter_step (s2, s1) ℓ (s'2, s'1).
+Proof.
+  intros Hstep. inversion Hstep; subst.
+    * now eapply ParRight.
+    * now eapply ParLeft.
+    * eapply symmetry in eq. eapply ParSync.
+      - exact eq.
+      - assumption.
+      - assumption.
+Qed.  *) 
 
 (** Lts extended with forwarders. *)
 
-Inductive lts_fw_step {P A : Type} `{Lts P A} : P * mb A -> Act A -> P * mb A -> Prop :=
-| lts_fw_p p q m α:
-  lts_step p α q -> lts_fw_step (p, m) α (q, m)
-| lts_fw_send_mb m p η : non_blocking η -> (*pas nécessaire à priori si on part d'une mailbox vide *)
-  lts_fw_step (p, {[+ η +]} ⊎ m) (ActExt $ η) (p, m)
-| lts_fw_store_mb m p η μ : non_blocking η -> dual η μ -> 
-  lts_fw_step (p, m) (ActExt $ μ) (p, {[+ η +]} ⊎ m)
-| lts_fw_com m p η μ q : dual η μ -> 
-  lts_step p (ActExt $ μ) q -> 
-  non_blocking η -> (*pas nécessaire à priori si on part d'une mailbox vide *)
-  lts_fw_step (p, {[+ η +]} ⊎ m) τ (q, m)
-.
+(** A mailbox is a multiset of names. *)
 
-Global Hint Constructors lts_fw_step:mdb.
+Definition mb (A : Type) `{ExtAction A} := gmultiset A. (* {m : gmultiset A | forall η, η ∈ m -> non_blocking η}. *)
+
+
+(* #[global] Program Instance fw_inter_spec {A: Type} (H : ExtAction A) : InteractionAction A.
+Next Obligation.
+  intros ? ? μ1 μ2. exact (fw_inter μ1 μ2).
+Defined.
+Next Obligation.
+  intros ? ? μ1 μ2. unfold fw_inter_spec_obligation_1.
+  eapply and_dec.
+  + exact (d_dec μ1 μ2).
+  + exact (nb_dec μ2).
+Defined. *)
+
+Inductive lts_multiset_step `{ExtAction A} : mb A -> Act A -> mb A -> Prop :=
+| lts_multiset_add m η μ (duo : dual η μ) (nb : non_blocking η) :
+   lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
+| lts_multiset_minus m η (nb : non_blocking η):  
+   lts_multiset_step ({[+ η +]} ⊎ m) (ActExt η) m.
+
+Global Hint Constructors lts_multiset_step:mdb.
+
+Parameter (lts_multiset_step_decidable : 
+forall (A : Type) (H : ExtAction A) m α m', Decision (lts_multiset_step m α m')).
+
+Definition lts_multiset_stable `{ExtAction A} (m : mb A) (α : Act A): Prop := 
+match α with
+    | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
+                                                                        else True
+                                               else (∃ μ, dual η μ) -> False
+    | τ => True
+end. 
+
+Parameter (lts_multiset_stable_decidable : 
+forall (A : Type) (H : ExtAction A) m α, Decision (lts_multiset_stable m α)).
+
+
+Lemma non_blocking_action_in_ms `{ExtAction A}  mb1 η mb2 :  
+    non_blocking η -> (* mb1 ⟶[η] mb2 *) lts_multiset_step mb1 (ActExt η) mb2 
+    ->  {[+ η +]} ⊎ mb2 = mb1.
+Proof.
+  intros nb Hstep.
+  inversion Hstep as [ ? μ ? duo nb'|]; subst.
+  + apply (lts_oba_fw_non_blocking_duo_spec μ η ) in nb'; eauto. contradiction.
+  + eauto.
+Qed.
+
+Lemma blocking_action_in_ms `{ExtAction A}  mb1 μ mb2 :  
+    ¬ non_blocking μ -> (* mb1 ⟶[η] mb2 *) lts_multiset_step mb1 (ActExt μ) mb2 
+    ->  (* ∃ η,  *) ({[+ co μ +]} ⊎ mb1 = mb2 /\ (dual (co μ) μ /\ non_blocking (co μ))).
+Proof.
+  intros nb Hstep.
+  inversion Hstep as [ ? η ? duo nb'|]; subst.
+  + assert (η =  co μ) as eq. eapply unique_nb;eauto. subst. eauto.
+  + contradiction.
+Qed.
+
+
+(* Parameter (dec_nb_co_act : 
+forall (A : Type) (H : ExtAction A)  (μ : A), Decision (exists η, dual η μ /\ non_blocking η)).
+
+Definition lts_multiset_step_decidable `{ExtAction A} (m : mb A) (α : Act A) (m' : mb A) 
+      : Decision (lts_multiset_step m α m').
+Proof.
+  destruct α as [μ |]. 
+  + destruct (decide (non_blocking μ)) as [nb | not_nb].
+    ++ rename μ into η. destruct (decide (η ∈ m)) as [in_mem | not_in_mem].
+      +++ assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq. 
+          multiset_solver. rewrite eq. 
+          destruct (decide (m' = m ∖ {[+ η +]})) as [case1 | case2].
+          * left. rewrite case1. eauto with mdb.
+          * right. intro imp. inversion imp; subst.
+            ** eapply lts_oba_fw_non_blocking_duo_spec in duo; eauto.
+            ** multiset_solver.
+      +++ destruct (dec_nb_co_act A H η) as [case1 | case2].
+          ** right. intro Hyp. destruct case1 as (μ & duo).
+             inversion Hyp; subst.
+             eapply lts_oba_fw_non_blocking_duo_spec in duo0; eauto.
+             multiset_solver.
+          ** right. intro Hyp. inversion Hyp; subst. 
+             ++++ apply case2. exists η0; eauto.
+             ++++ multiset_solver.
+    ++ destruct (dec_nb_co_act A H μ) as [case1 | case2].
+      +++  left. destruct case1 as (η & duo & nb).  eauto with mdb.
+          destruct (decide (η ∈ m')) as [in_mem | not_in_mem].
+          ++++ assert (m' = {[+ η +]} ⊎ (m' ∖ {[+ η +]})) as eq. 
+               multiset_solver. rewrite eq.
+               destruct (decide (m = m' ∖ {[+ η +]})) as [case1 | case2].
+               * subst. eauto with mdb.
+               * multiset_solver.
+  + right. intro impossible. inversion impossible.
+Defined. *)
+
+(* Definition lts_fw_stable `{ExtAction A, Lts P A} (s : P * mb A) (ℓ : Act A) : Prop :=
+  match ℓ with
+  | ActExt η => if (decide (non_blocking η)) then lts_stable s.1 (ActExt η) /\ η ∉ s.2
+                                             else (* lts_stable s.1 (ActExt η) /\ forall μ, dual η μ -> ¬ non_blocking μ *)
+                                                    if (decide (lts_stable s.1 (ActExt η))) then True
+                                                                                            else False
+  | τ => lts_stable s.1 τ /\ forall μ η, η ∈ s.2 /\ dual μ η -> s.1 ↛[μ]
+  end. *)
+  
+  
+(*    lts_step: P → Act A → P → Prop;
+      lts_state_eqdec: EqDecision P;
+
+      lts_step_decidable a α b : Decision (lts_step a α b);
+
+      lts_stable: P → Act A → Prop;
+      lts_stable_decidable p α : Decision (lts_stable p α);
+      lts_stable_spec1 p α : ¬ lts_stable p α → { q | lts_step p α q };
+      lts_stable_spec2 p α : { q | lts_step p α q } → ¬ lts_stable p α; *)
+
+#[global] Program Instance MbLts `{H : ExtAction A} : Lts (mb A) A :=
+{|
+    lts_step m α m' := lts_multiset_step m α m' ;
+    lts_stable p := lts_multiset_stable p;
+    lts_step_decidable m α m' := lts_multiset_step_decidable A H m α m';
+    lts_stable_decidable m α := lts_multiset_stable_decidable A H m α;
+(*     lts_essential_actions p := lts_essential_actions p.1 ∪ dom p.2; *)
+  |}.
+Next Obligation.
+  intros.
+  admit.
+Admitted.
+Next Obligation.
+  intros.
+  admit.
+Admitted.
+
+Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ1 μ2 /\ non_blocking μ1.
+
+
+#[global] Program Instance FW_Lts {P A : Type} `{H : ExtAction A} (M: Lts P A) 
+  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts} 
+: Lts (P * mb A) A := inter_lts fw_inter. 
+
 
 (** Stout reduction. *)
 
@@ -1770,10 +2479,9 @@ Proof.
   - assert (mem : η ∈ {[+ η0 +]} ⊎ m0). rewrite x. multiset_solver.
     eapply gmultiset_elem_of_disj_union in mem as [here | there].
     + eapply gmultiset_elem_of_singleton in here. subst. firstorder.
-    + edestruct IHhw; eauto.
+    + edestruct IHhw as (p & HypTr & nb) ; eauto.
       eapply gmultiset_disj_union_difference' in there; eassumption.
-      destruct H4.
-      edestruct (lts_oba_non_blocking_action_commutativity H3 H2 H4) as (u & l2 & l3).
+      edestruct (lts_oba_non_blocking_action_delay H2 H1 HypTr) as (u & l2 & l3).
       eauto.
 Qed.
 
@@ -1839,20 +2547,20 @@ Proof.
     destruct (nb_dec η).
     destruct (lts_stable_decidable q (ActExt $ η)).
     + destruct (decide (η ∈ lts_oba_mo q)).
-      ++ eapply lts_oba_mo_spec1, lts_non_blocking_action_spec2 in e as (t & hl).
+      ++ eapply (* lts_oba_mo_spec1, *) lts_oba_mo_spec_bis2 in e as (t & hl).
          eapply lts_stable_spec2 in l. multiset_solver. destruct hl. now exists t. (* pourquoi ne marche pas ? => now eauto. *)
       ++ destruct (multiplicity η (lts_oba_mo q)) eqn:eq; multiset_solver.
     + eapply lts_stable_spec1 in n0 as (t & hl).
       edestruct (eq_spec p t (ActExt $ η)) as (u & hlu & hequ); eauto with mdb. 
-      eapply lts_non_blocking_action_spec1, lts_oba_mo_spec1 in hlu. multiset_solver. assumption.
+      eapply lts_oba_mo_spec_bis1 (* , lts_oba_mo_spec1 *) in hlu. multiset_solver. assumption.
     + eapply lts_oba_mo_non_blocking_contra in n. instantiate (1 := q) in n. multiset_solver.
   - assert {t | non_blocking x /\ p ⟶[x] t} as (t & hlt).
-    eapply lts_non_blocking_action_spec2, lts_oba_mo_spec1. multiset_solver. destruct hlt as [nb hlt].
+    eapply lts_oba_mo_spec_bis2. (* , lts_oba_mo_spec1. *) multiset_solver. destruct hlt as [nb hlt].
     edestruct (eq_spec q t (ActExt $ x)) as (u & hlu & hequ).
     exists p. split. now symmetry.  assumption. 
     eapply lts_oba_mo_spec2 in hlu, hlt.
-    assert (x ∈ lts_oba_mo q) by multiset_solver.
-    eapply gmultiset_disj_union_difference' in H2.
+    assert (x ∈ lts_oba_mo q) as mem by multiset_solver .
+    eapply gmultiset_disj_union_difference' in mem.
     rewrite hlu.
     assert (hmo = lts_oba_mo t).
     eapply gmultiset_disj_union_inj_1. etrans; eassumption.
@@ -1889,12 +2597,12 @@ Proof.
   - assert (mem : x ∈ lts_oba_mo p) by multiset_solver.
     assert (exists q, non_blocking x /\ p ⟶[x] q) as (q & l).
     
-    eapply lts_oba_mo_spec1, lts_non_blocking_action_spec2 in mem as (q & nbTr); eauto.
+    eapply (* lts_oba_mo_spec1, *) lts_oba_mo_spec_bis2 in mem as (q & nbTr); eauto.
     destruct l as (nb & l).
     
     set (h := lts_oba_mo_spec2 p x q nb l) in mem.
-    assert (ns = lts_oba_mo q). rewrite <- Heqns in h. multiset_solver.
-    eapply IHns in H2 as (q0 & hw).
+    assert (ns = lts_oba_mo q) as mb_name. rewrite <- Heqns in h. multiset_solver.
+    eapply IHns in mb_name as (q0 & hw).
     exists q0. eapply strip_step; eassumption.
 Qed.
 
@@ -1919,226 +2627,21 @@ Proof. constructor; eauto with mdb. Qed.
 
 Global Hint Resolve fw_eq_equiv:mdb.
 
-(** LtsObaFw : lts_fw instance. *)
-
-Definition lts_fw_stable `{ExtAction A, Lts P A} (s : P * mb A) (ℓ : Act A) : Prop :=
-  match ℓ with
-  | ActExt η => if (decide (non_blocking η)) then η ∉ lts_non_blocking_action s.1 /\ η ∉ s.2
-                                            else False (* wrong def *)
-  | τ => lts_stable s.1 τ /\ forall η μ, η ∈ s.2 -> dual η μ -> s.1 ↛[μ]
-  end.
-
-Lemma lts_com_ex_xs `{Lts P A} (p : P) (m : list A) :
-  {μ | μ ∈ m /\ ¬ lts_stable p (ActExt $ μ) }
-  + {forall μ, μ ∈ m -> lts_stable p (ActExt $ μ)}.
-Proof.
-  induction m.
-  - right. inversion 1.
-  - destruct IHm as [(b & mem & hnst)|].
-    + left. exists b. set_solver.
-    + destruct (lts_stable_decidable p (ActExt $ a)).
-      ++ right. intros. inversion H1; set_solver.
-      ++ left. exists a. set_solver.
-Qed.
-
-Lemma lts_com_ex `{Lts P A} (p : P) (m : mb A) :
-  {μ | μ ∈ m /\ ¬ lts_stable p (ActExt $ μ)}
-  + {forall μ, μ ∈ m -> lts_stable p (ActExt $ μ)}.
-Proof.
-  destruct (lts_com_ex_xs p (elements m)) as [(b & mem & hnst)|].
-  + left. exists b. split. now eapply gmultiset_elem_of_elements. eassumption.
-  + right. intros. eapply gmultiset_elem_of_elements in H1. eauto.
-Qed.
-
-
-Lemma lts_com_ex_dec_ `{Countable A} (m1 : gmultiset A) (m2 : gmultiset A) :
-  {η | m2 = {[+ η +]} ⊎ m1} + {forall η, m2 ≠ {[+ η +]} ⊎ m1}.
-Proof.
-  set (d := m2 ∖ m1).
-  set (xs := elements d).
-  destruct xs eqn:eq.
-  + eapply gmultiset_elements_empty_iff in eq. right. multiset_solver.
-  + destruct l.
-    ++ eapply gmultiset_elements_singleton_inv in eq.
-       destruct (decide (m1 ⊆ m2)).
-       +++ left. exists a.
-           replace ({[+ a +]} ⊎ m1) with (m1 ⊎ {[+ a +]}) by multiset_solver.
-           rewrite <- eq. multiset_solver.
-       +++ right. multiset_solver.
-    ++ right. intros b eq'.
-       replace xs with (elements (m2 ∖ m1)) in eq; eauto.
-       rewrite eq' in eq.
-       replace (({[+ b +]} ⊎ m1) ∖ m1) with ({[+ b +]} ⊎ (m1 ∖ m1)) in eq by multiset_solver.
-       rewrite gmultiset_difference_diag in eq.
-       replace ({[+ b +]} ⊎ ∅) with ({[+ b +]} : gmultiset A) in eq.
-       rewrite gmultiset_elements_singleton in eq.
-       multiset_solver.
-       multiset_solver.
-Qed.
-
-
-(*Besoin ici de lts OBA pour contredire la suite infini de non_blocking action ?*)
-
-
-Lemma decision_lts_fw_step_non_blocking_action `{Lts P A} p1 m1 p2 m2 η :
-  non_blocking η -> Decision (lts_fw_step (p1, m1) (ActExt $ η) (p2, m2)).
-Proof.
-  intro nb.
-  destruct (decide (m1 = {[+ η +]} ⊎ m2)); subst.
-  destruct (decide (p1 = p2)); subst.
-  + left. eauto with mdb.
-  + right. inversion 1; subst.
-    ++ symmetry in H7. now eapply gmultiset_neq_s in H7.
-    ++ contradiction.
-    ++ multiset_solver.
-  + destruct (lts_step_decidable p1 (ActExt $ η) p2).
-    ++ destruct (decide (m1 = m2)); subst.
-       left. eauto with mdb. 
-       right. inversion 1; subst. 
-       +++ contradiction.
-       +++ contradiction.
-       +++ assert (¬ non_blocking η). (* apply (lts_oba_fw_non_blocking_duo_spec η0 η).  tourne dans le vide ?*) 
-           admit. contradiction. 
-       (* lts_oba_fw_non_blocking_duo_spec η μ: non_blocking η -> dual η μ ->  ¬ non_blocking μ ; *)
-    ++ right. inversion 1; subst.
-       +++ contradiction.
-       +++ contradiction.
-       +++ assert (¬ non_blocking η). (* apply (lts_oba_fw_non_blocking_duo_spec η0 η).  tourne dans le vide ?*) 
-           admit. contradiction. 
-Admitted.
-
-
-(* utile ? *)
-(*
-Lemma decision_lts_fw_step_input `{Lts P A} p1 m1 p2 m2 μ :
-  ¬ non_blocking μ -> Decision (lts_fw_step (p1, m1) (ActExt $ μ) (p2, m2)).
-Proof.
-  intro not_nb.
-  destruct (lts_step_decidable p1 (ActExt μ) p2).
-  + destruct (decide (m1 = m2)); subst.
-    ++ left. eauto with mdb.
-    ++ destruct (decide (exists η, non_blocking η /\ dual μ
-        non_blocking η
-    ++ destruct (decide (m2 = {[+ μ +]} ⊎ m1)); subst.
-       +++ destruct (decide (p1 = p2)); subst.
-           * right. intro. 
-           inversion H1; subst. multiset_solver. multiset_solver. assert (η = μ). multiset_solver. rewrite H2 in H6. contradiction.
-           * right. inversion 1; subst; contradiction.
-       +++ right. inversion 1; subst. 
-           * eauto.
-           * contradiction.
-           *  
-
-  + destruct (decide (m2 = {[+ μ +]} ⊎ m1)); subst.
-    +++ destruct (decide (p1 = p2)); subst.
-        left. eauto with mdb.
-        right. inversion 1; subst; contradiction.
-    +++ right. inversion 1; subst; contradiction.
-Qed.
- *)
-
-
-Lemma decision_lts_fw_step_tau `{Lts P A} p1 m1 p2 m2 :
-  Decision (lts_fw_step (p1, m1) τ (p2, m2)).
-Proof.
-  destruct (decide (m1 = m2)).
-  + destruct (lts_step_decidable p1 τ p2).
-    ++ subst. left. eauto with mdb.
-    ++ right. inversion 1; subst; try contradiction; eapply gmultiset_neq_s; eauto.
-  + destruct (lts_com_ex_dec_ m2 m1) as [(η, eq)| neq]; subst.
-    ++ destruct (decide (non_blocking η)).
-       +++ destruct (decide( admit.
-       +++ right. inversion 1; subst. contradiction. 
-       assert (η0 = η). admit. (* easy ?*) rewrite H2  in H8. contradiction.
-    ++ destruct (lts_step_decidable p1 (ActExt $ ActIn a) p2).
-       left. subst. eauto with mdb.
-       right. inversion 1; subst.
-       +++ contradiction.
-       +++ cut (a = a0); intros; subst; [|eapply gmultiset_mono]; eauto.
-    ++ right. inversion 1; multiset_solver.
-Qed.
-
-
-
-#[global] Program Instance MbLts {L : Type} `{Lts A L} : Lts (A * mb L) L :=
-  {|
-    lts_step p α q  := lts_fw_step p α q ;
-    lts_stable p := lts_fw_stable p;
-    lts_non_blocking_action p := lts_non_blocking_action p.1 ∪ dom p.2;
-  |}.
+(* #[global] Program Instance Lts_of_OBA `{LtsOba P A} : Lts P A.
 Next Obligation.
-Proof.
-  intros ? ? ? ? (p1, m1) α (p2, m2).
-  destruct α as [|]. destruct (decide(non_blocking μ)).
-  (* - eapply decision_lts_fw_step_input. *)
-  - now eapply decision_lts_fw_step_non_blocking_action.
-  - admit.
-  - eapply decision_lts_fw_step_tau.
-Qed.
-Next Obligation.
-  intros. destruct p1 as (p1, m1), p2 as (p2, m2).
-  eapply elem_of_union. inversion H1; subst; simpl in *.
-  - left. eapply lts_outputs_spec1. eassumption.
-  - right. eapply gmultiset_elem_of_dom. multiset_solver.
-Qed.
-Next Obligation.
-  intros.
-  destruct p1 as (p1, m1). simpl in *.
-  destruct (decide (x ∈ lts_outputs p1)).
-  eapply lts_outputs_spec2 in e as (p0 & l0).
-  exists (p0, m1). eauto with mdb.
-  destruct (decide (x ∈ dom m1)).
-  exists (p1, m1 ∖ {[+ x +]}).
-  eapply gmultiset_elem_of_dom, gmultiset_disj_union_difference' in e.
-  rewrite e at 1. eapply lts_fw_out_mb.
-  exfalso. eapply elem_of_union in H1. destruct H1; eauto.
-Qed.
-Next Obligation.
-  intros. simpl in *. destruct α as [[|]|].
-  - right. simpl. intro. now exfalso.
-  - simpl. destruct (decide (a ∈ p.2)).
-    + right. intro. destruct H1. contradiction.
-    + destruct (decide (a ∈ lts_outputs p.1)).
-      ++ right. destruct 1. contradiction.
-      ++ left. split; eassumption.
-  - destruct p as (p, m); simpl in *;
-      destruct (decide (lts_stable p τ)); simpl in *; firstorder.
-    destruct (lts_com_ex p m) as [(b & mem & hnst)|].
-    right. set_solver.
-    left. set_solver.
-Qed.
-Next Obligation.
-  intros ? ? ? ? (p, m) [[a|a]|] hnst.
-  - exists (p, {[+ a +]} ⊎ m). eauto with mdb.
-  - destruct (decide (a ∈ m)).
-    eapply gmultiset_disj_union_difference' in e.
-    exists (p, m ∖ {[+ a +]}). rewrite e at 1. eauto with mdb.
-    destruct (decide (a ∈ lts_outputs p)).
-    eapply lts_outputs_spec2 in e as (q & l). eauto with mdb.
-    exfalso. now eapply hnst.
-  - destruct (decide (lts_stable p τ)).
-    destruct (lts_com_ex p m) as [(b & mem & hnst')|].
-    + eapply lts_stable_spec1 in hnst' as (p' & l').
-      eapply gmultiset_disj_union_difference' in mem.
-      exists (p', m ∖ {[+ b +]}). rewrite mem at 1.
-      eauto with mdb.
-    + exfalso. now eapply hnst.
-    + eapply lts_stable_spec1 in n as (p' & l'). eauto with mdb.
-Qed.
-Next Obligation.
-  intros ? ? ? ? (p, m) [[a|a]|] ((p2,m2), l) hst; simpl in hst; eauto.
-  inversion l; subst.
-  - eapply lts_outputs_spec1 in H4. naive_solver.
-  - multiset_solver.
-  - destruct hst as (hstp & hstm).
-    inversion l; subst.
-    + eapply lts_stable_spec2 in hstp; eauto.
-    + set (hsti := hstm a ltac:(multiset_solver)).
-      eapply lts_stable_spec2 in hsti; eauto.
-Qed. *)
+intros. := . *)
 
-Definition lts_fw_sc `{LtsOba P A} (p : P * mb A) α (q : P * mb A) :=
-  exists r, lts_fw_step p α r /\ r ≐ q.
+(* Parameter (P : Type).
+Parameter (A : Type).
+Parameter (H : ExtAction A).
+Parameter (LL : @Lts P A H).
+
+Check ((FW_Lts LL).(lts_step)). *)
+Definition lts_fw_sc (* `{inter : A -> A -> Prop} *) (* `{H : ExtAction A} *)
+  `{M : @Lts P A H} (* `{Equa : @LtsEq P A H M} *) `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  `{M1 : @LtsOba P A H M Equa}
+  (p : P * mb A) α (q : P * mb A) :=
+  exists r, ((FW_Lts M).(lts_step) p α r) /\ r ≐ q.
 
 Notation "p ⟶≐ q" := (lts_fw_sc p τ q) (at level 90, format "p  ⟶≐  q").
 Notation "p ⟶≐{ α } q" := (lts_fw_sc p α q) (at level 90, format "p  ⟶≐{ α }  q").
@@ -2147,10 +2650,10 @@ Notation "p ⟶≐[ μ ] q" := (lts_fw_sc p (ActExt μ) q) (at level 90, format 
 Lemma strip_retract_act `{LtsOba P A}
   {p q m t α} : p ⟿{m} q -> q ⟶{α} t -> exists r t', p ⟶{α} r /\ r ⟿{m} t' /\ t ⋍ t'.
 Proof.
-  intros. induction H2; eauto.
+  intros HypStrip HypTr. induction HypStrip as [| ? ? ? ? ? nb HypTr' ?  InductionHyp]; eauto.
   exists t, t. repeat split; eauto. constructor. reflexivity.
-  eapply IHstrip in H3 as (r & t' & l & hwo & heq).
-  edestruct (lts_oba_non_blocking_action_commutativity H2 H4 l) as (u & l1 & (r' & lr' & heqr')).
+  eapply InductionHyp in HypTr as (r & t' & l & hwo & heq).
+  edestruct (lts_oba_non_blocking_action_delay nb HypTr' l) as (u & l1 & (r' & lr' & heqr')).
   edestruct (strip_eq_sim_ex hwo _ heqr') as (t0 & hwo0 & heq0).
   exists u, t0. repeat split; eauto. eapply strip_step; eassumption.
   etrans. eassumption. now symmetry.
@@ -2176,10 +2679,12 @@ Admitted. *)
 Lemma strip_delay_action_not_in_m `{LtsOba P A} {p q m t μ} :
   μ ∉ m -> p ⟿{m} q -> p ⟶[μ] t -> exists r, q ⟶[μ] r.
 Proof.
-  intros. revert t H2 H4.
-  induction H3; eauto; intros.
-  assert (neq : μ ≠ η /\ μ ∉ m) by now multiset_solver. destruct neq as [neq not_in].
-  edestruct (lts_oba_non_blocking_action_confluence H2 neq H3 H6) as (r & l1 & l2). eauto.
+  intros not_in_mem HypStrip HypTr. revert t not_in_mem HypTr.
+  induction HypStrip as [| ? ? ? ? ? nb HypTr' HypStrip]. 
+  + eauto.
+  + intros.
+    assert (neq : μ ≠ η /\ μ ∉ m) by now multiset_solver. destruct neq as [neq not_in].
+    edestruct (lts_oba_non_blocking_action_confluence nb neq HypTr' HypTr) as (r & l1 & l2). eauto.
 Qed.
 
 Lemma strip_delay_m `{LtsOba P A} {p q m t μ} :
@@ -2243,7 +2748,7 @@ Proof.
     + subst. exists p. split. eapply strip_nil. exists q. split. assumption. reflexivity.
     + multiset_solver.
   - assert (mem : x ∈ lts_oba_mo p) by multiset_solver.
-    eapply lts_oba_mo_spec1, lts_non_blocking_action_spec2 in mem as (p1 & hlp1). destruct hlp1 as [nb hlp1].
+    eapply lts_oba_mo_spec_bis2 in mem as (p1 & hlp1). destruct hlp1 as [nb hlp1].
     assert (neq : μ ≠ x).  eapply BlockingAction_are_not_non_blocking; eauto.
     edestruct (lts_oba_non_blocking_action_confluence nb neq hlp1 hlp) as (u & l2 & l3).
     destruct l3 as (u' & hlu & hequ).
@@ -2302,19 +2807,19 @@ Qed.
 
 Lemma strip_delay_tau `{LtsOba P A} {p q m t} :
   p ⟿{m} q -> p ⟶ t ->
-  (exists η μ r, non_blocking η /\ dual η μ /\ p ⟶[η] r /\ r ⟶⋍[μ] t) \/ (exists r w, q ⟶ r /\ t ⟿{m} w /\ w ⋍ r).
+  (exists η μ r, dual η μ /\ non_blocking η /\ p ⟶[η] r /\ r ⟶⋍[μ] t) \/ (exists r w, q ⟶ r /\ t ⟿{m} w /\ w ⋍ r).
 Proof.
   intros hr hl. revert t hl.
-  induction hr; intros.
+  induction hr as [| ? ? ? ? ? nb HypTr' ?]; intros.
   + right. exists t, t. repeat split; eauto. eapply strip_nil. reflexivity.
-  + edestruct (lts_oba_non_blocking_action_tau H2 H3 hl) as [(r & l1 & l2)|].
-    ++ eapply IHhr in l1 as [(b & c & r' & nb & duo & l3 & l4) |(u, (w, (hu & hw & heq)))].
-       +++ edestruct (lts_oba_non_blocking_action_commutativity H2 H3 l3) as (z & l6 & l7).
+  + edestruct (lts_oba_non_blocking_action_tau nb HypTr' hl) as [(r & l1 & l2)|].
+    ++ eapply IHhr in l1 as [(b & c & r' & duo & nb' & l3 & l4) |(u, (w, (hu & hw & heq)))].
+       +++ edestruct (lts_oba_non_blocking_action_delay nb HypTr' l3) as (z & l6 & l7).
            left. exists b, c , z. split. assumption. split. assumption. split. assumption.
            destruct l7 as (t0 & hlt0 & eqt0).
            destruct l4 as (t1 & hlt1 & eqt1).
            destruct (eq_spec t0 t1 (ActExt $ c)) as (t2 & hlt2 & eqt2); eauto.
-           edestruct (lts_oba_non_blocking_action_commutativity H2 hlt0 hlt2) as (w & lw1 & lw2).
+           edestruct (lts_oba_non_blocking_action_delay nb hlt0 hlt2) as (w & lw1 & lw2).
            exists w. split. assumption.
            destruct l2 as (v1 & hlv1 & heqv1).
            destruct lw2 as (u1 & hlu1 & hequ1).
@@ -2328,17 +2833,13 @@ Proof.
            destruct (strip_eq_sim_ex hw _ heqr') as (w' & hww' & heqw').
            exists u, w'. repeat split. assumption. eapply strip_step; eauto.
            etrans; eauto.
-    ++ destruct H4 as (μ & duo & r & hlr & heq).
+    ++ destruct H1 as (μ & duo & r & hlr & heq).
        left. exists η, μ. exists p2. split; eauto. split. eassumption. split. eauto. exists r. eauto.
 Qed.
 
-(* Lemma dual_not_non_blocking `{LtsObaFB P A} η μ : non_blocking η -> dual μ η ->  ¬ non_blocking μ.
-Proof.
-intros nb duo. intro Hyp. assert (exists p, p : P). eapply (lts_oba_fw_forward μ η) in nb. *)
-
-(*dual d'un non blocking is NOT non_blocking ??*)
-(*
-Lemma lts_fw_eq_spec_left_tau `{LtsObaFB P A} p q q' mp mq :
+Lemma lts_fw_eq_spec_left_tau  (* `{M : @Lts P A H}  *)
+  `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  (p : P) (q : P) q' (mp : mb A) (mq : mb A) :
   p ▷ mp ≐ q ▷ mq -> q ⟶ q' -> p ▷ mp ⟶≐ q' ▷ mq.
 Proof.
   intros heq l.
@@ -2346,23 +2847,27 @@ Proof.
   edestruct (lts_oba_mo_strip p) as (p0 & hwp).
   edestruct (heq p0 q0) as (heq0 & heqm0); eauto. simpl in *.
   destruct (strip_delay_tau hwq l) as
-    [(a & b & q1 & nb & duo & l1 & l2) | (qt & q1 & hltqt & hwq1 & heq1)].
+    [(a & b & q1 & duo & nb  & l1 & l2) | (qt & q1 & hltqt & hwq1 & heq1)].
   - destruct l2 as (q'' & hlq1 & heq'').
-    edestruct (lts_oba_non_blocking_action_commutativity nb l1 hlq1) as (q2 & hlq & hlq2).
-    edestruct (fw_eq_input_simulation heq hlq) as (p2 & hlp_inp & heqp2).
+    edestruct (lts_oba_non_blocking_action_delay nb l1 hlq1) as (q2 & hlq & hlq2).
+    assert (¬ non_blocking b) as not_nb. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+    edestruct (fw_eq_input_simulation heq not_nb hlq) as (p2 & hlp_inp & heqp2).
     assert (mem : a ∈ lts_oba_mo p ⊎ mp)
-      by (eapply lts_outputs_spec1, lts_oba_mo_spec1 in l1; multiset_solver).
+      by (eapply lts_oba_mo_spec_bis1 in l1; multiset_solver).
     eapply gmultiset_elem_of_disj_union in mem as [hleft | hright].
-    + assert {p1 | p ⟶[ActOut a] p1} as (p1 & hlp_out)
-          by now eapply lts_outputs_spec2, lts_oba_mo_spec1.
+    + assert {p1 | non_blocking a /\ p ⟶[a] p1} as (p1 & nb1 & tr1)
+          by now eapply lts_oba_mo_spec_bis2.
       (* p ->[!a] p1 *)
-      assert (neq : ActIn a ≠ ActOut a) by now inversion 1.
-      edestruct (lts_oba_output_confluence neq hlp_out hlp_inp)
+      assert (neq : b ≠ a). now eapply BlockingAction_are_not_non_blocking. 
+      edestruct (lts_oba_non_blocking_action_confluence nb neq tr1 hlp_inp)
         as (p'' & hlp1 & hlp2).
       (* p1 ->[a] p''   p2 ->[!a] p'' *)
-      destruct (lts_oba_fb_feedback hlp_out hlp1)
+      destruct (lts_oba_fb_feedback nb duo tr1 hlp1)
         as (p' & hlp_tau & heqp').
-      exists (p', mp). split. eauto with mdb.
+      exists (p', mp). split. 
+
+      eapply ParLeft. (*nécessaire ?*)  eauto with mdb.
+
       intros pt qt hwpt hwqt. simpl in *.
       edestruct (lts_oba_mo_strip p2) as (pt' & hwpt').
       edestruct (lts_oba_mo_strip q2) as (qt' & hwqt').
@@ -2392,7 +2897,12 @@ Proof.
       ++ multiset_solver.
     + exists (p2, mp ∖ {[+ a +]}). split.
       ++ eapply gmultiset_disj_union_difference' in hright.
-         rewrite hright at 1. eauto with mdb.
+         rewrite hright at 1. 
+         
+         eapply ParSync; eauto. (*nécessaire ?*) unfold fw_inter.  
+         split; eauto.
+         eapply lts_multiset_minus; eauto.
+         
       ++ destruct hlq2 as (q''' & hlq2 & heqq'').
          assert (heqm2 : lts_oba_mo q2 = {[+ a +]} ⊎ lts_oba_mo q').
          replace (lts_oba_mo q') with (lts_oba_mo q''').
@@ -2420,7 +2930,10 @@ Proof.
   - edestruct (eq_spec p0 qt τ) as (pt & hlpt & heqpt); eauto.
     edestruct (strip_retract_act hwp hlpt )
       as (p' & p1 & wp' & hwp' & heqpr0).
-    exists (p', mp). split. eauto with mdb.
+    exists (p', mp). split.
+
+    eapply ParLeft. (*nécessaire ?*)  eauto with mdb.
+
     intros pr qr hwpr hwqr. simpl in *.
     assert (heqr1 : lts_oba_mo p' = lts_oba_mo p ⊎ lts_oba_mo p1).
     eapply strip_after; eauto.
@@ -2441,27 +2954,30 @@ Proof.
       now rewrite heqr3. assumption.
     + multiset_solver.
 Qed.
- *)
-Lemma lts_fw_eq_spec_left_output `{LtsObaFB P A} p q q' mp mq η :
+
+Lemma lts_fw_eq_spec_left_output `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  p q q' mp mq η :
   p ▷ mp ≐ q ▷ mq -> non_blocking η -> q ⟶[η] q' -> p ▷ mp ⟶≐[η] q' ▷ mq.
 Proof.
   intros heq nb l.
   edestruct (lts_oba_mo_strip p) as (p0 & hwp).
   edestruct (lts_oba_mo_strip q) as (q0 & hwq).
-  set (h0 := lts_non_blocking_action_spec1 _ _ _ nb l).
-  eapply lts_oba_mo_spec1 in h0.
+  assert (η ∈ lts_oba_mo q) as h0. eapply lts_oba_mo_spec_bis1; eauto.
   edestruct (heq p0 q0) as (heq0 & heqm0); eauto. simpl in *.
   assert (h1 : η ∈ lts_oba_mo p ⊎ mp) by multiset_solver.
   eapply gmultiset_elem_of_disj_union in h1 as [hleft|hright].
   ++ eapply gmultiset_disj_union_difference' in hleft as heqmop.
-     eapply lts_oba_mo_spec1, lts_non_blocking_action_spec2 in hleft as (p' & nb1 & hl').
+     eapply lts_oba_mo_spec_bis2 in hleft as (p' & nb1 & hl').
      rewrite heqmop in hwp.
      eapply strip_eq_step in hwp as (p0' & hwop0' & heqp0'); eauto.
-     set (h2 := lts_non_blocking_action_spec1 _ _ _ nb l). eapply lts_oba_mo_spec1 in h2.
+     assert (η ∈ lts_oba_mo q) as h2. eapply (lts_oba_mo_spec_bis1 _ _ _ nb l).
      eapply gmultiset_disj_union_difference' in h2 as heqmoq.
      rewrite heqmoq in hwq.
      eapply strip_eq_step in hwq as (q0' & hwoq0' & heqq0'); eauto.
-     exists (p', mp). split; eauto with mdb. 
+     exists (p', mp). 
+     
+     split. eapply ParLeft. eauto with mdb.
+     
      intros pt qt hwopt hwoqt. simpl in *.
      eapply lts_oba_mo_spec2 in hl', l; eauto.
      assert (heq1 : lts_oba_mo q' = lts_oba_mo q ∖ {[+ η +]})
@@ -2478,7 +2994,11 @@ Proof.
      +++ multiset_solver.
   ++ eapply gmultiset_disj_union_difference' in hright.
      rewrite hright.
-     eexists. split. eauto with mdb.
+     eexists. split.
+     
+     eapply (ParRight (ActExt η) p ({[+ η +]} ⊎ mp ∖ {[+ η +]}) (mp ∖ {[+ η +]})).  
+     eapply lts_multiset_minus. eauto with mdb.
+     
      intros pt qt hwopt hwoqt. simpl in *.
      split.
      +++ edestruct (heq pt q0) as (heq1 & heqm1); eauto. simpl in *.
@@ -2494,17 +3014,21 @@ Proof.
      +++ eapply lts_oba_mo_spec2 in l; eauto. multiset_solver.
 Qed.
 
-Lemma lts_fw_eq_spec_left_input `{LtsObaFB P A} p q q' mp mq μ :
+Lemma lts_fw_eq_spec_left_input `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+   p q q' mp mq μ :
    p ▷ mp ≐ q ▷ mq -> ¬ non_blocking μ -> q ⟶[μ] q' -> p ▷ mp ⟶≐[μ] q' ▷ mq.
 Proof.
   intros not_nb heq l.
   edestruct (fw_eq_input_simulation not_nb heq l) as (p' & hl' & heq').
-  exists (p' ▷ mp). eauto with mdb.
+  exists (p' ▷ mp). 
+  
+  (*nécessaire?*) split.
+  + eapply ParLeft. eauto with mdb.
+  + eauto with mdb.
 Qed.
 
-
-(* (* presque bon , plus qu'à prouver le tau *)
-Lemma lts_fw_eq_spec_left `{LtsObaFB A L} p q q' α mp mq :
+Lemma lts_fw_eq_spec_left `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  p q q' α mp mq :
   p ▷ mp ≐ q ▷ mq -> q ⟶{α} q' -> p ▷ mp ⟶≐{α} q' ▷ mq.
 Proof.
   intros heq l. destruct α as [μ | ].
@@ -2513,14 +3037,18 @@ Proof.
    ++ eapply lts_fw_eq_spec_left_input; eauto.
   + eapply lts_fw_eq_spec_left_tau; eauto.
 Qed.
- *)
-Lemma lts_fw_eq_spec_right `{LtsObaFB P A} p q mp mq η :
-  non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> p ▷ mp ⟶≐[η] (q, mq).
+
+Lemma lts_fw_eq_spec_right_nb `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+   p q mp mq η :
+  non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> p ▷ mp ⟶≐[η] q ▷ mq.
 Proof.
   intros nb heq.
   destruct (decide (η ∈ mp)).
   + exists (p, mp ∖ {[+ η +]}). split.
-    eapply gmultiset_disj_union_difference' in e. rewrite e at 1. eauto with mdb.
+    eapply gmultiset_disj_union_difference' in e. rewrite e at 1. 
+    
+    (*nécessaire?*) eapply ParRight. eapply lts_multiset_minus. eauto with mdb.
+    
     intros p' q' hw1 hw2. simpl in *.
     edestruct (heq p' q'); eauto; simpl in *.
     split. eassumption.
@@ -2541,13 +3069,16 @@ Proof.
     eapply gmultiset_eq_pop_l.
     rewrite 1 gmultiset_disj_union_comm. reflexivity.
   + edestruct (lts_oba_mo_strip p) as (p' & hwp).
-    assert (η ∈ lts_oba_mo p).
+    assert (η ∈ lts_oba_mo p) as Hyp.
     edestruct (lts_oba_mo_strip q) as (q' & hwq).
     destruct (heq p' q' hwp hwq) as (heq' & heqmo). simpl in *.
-    assert (η ∈ lts_oba_mo p ⊎ mp). rewrite heqmo. multiset_solver.
-    eapply gmultiset_elem_of_disj_union in H3 as [hleft | hright]; multiset_solver.
-    eapply lts_oba_mo_spec1, lts_non_blocking_action_spec2 in H3 as (p0 & nb1 & hl0).
-    exists (p0, mp). split. eauto with mdb.
+    assert (η ∈ lts_oba_mo p ⊎ mp) as Hyp'. rewrite heqmo. multiset_solver.
+    eapply gmultiset_elem_of_disj_union in Hyp' as [hleft | hright]; multiset_solver.
+    eapply lts_oba_mo_spec_bis2 in Hyp as (p0 & nb1 & hl0).
+    exists (p0, mp). split.
+    
+    (*nécessaire*) eapply ParLeft. eauto with mdb.
+    
     intros p1 q1 hw1 hw2. simpl in *. split.
     edestruct (heq p' q1); eauto; simpl in *.
     set (heqmo := lts_oba_mo_spec2 _ _ _ nb1 hl0).
@@ -2556,10 +3087,10 @@ Proof.
     set (h := strip_m_deter hw1 hwo4).
     etrans. eassumption. etrans; eassumption.
     set (heqmo := lts_oba_mo_spec2 _ _ _ nb1 hl0).
-    edestruct (heq p' q1); eauto; simpl in *.
-    rewrite heqmo in H4.
+    edestruct (heq p' q1) as (equiv & mb_equal); eauto; simpl in *.
+    rewrite heqmo in mb_equal.
     replace (lts_oba_mo q ⊎ ({[+ η +]} ⊎ mq))
-      with ({[+ η +]} ⊎ lts_oba_mo q ⊎ mq) in H4.
+      with ({[+ η +]} ⊎ lts_oba_mo q ⊎ mq) in mb_equal.
     eapply (gmultiset_disj_union_inj_1 ({[+ η +]})). multiset_solver.
     rewrite <- gmultiset_disj_union_assoc.
     rewrite gmultiset_disj_union_comm.
@@ -2568,8 +3099,23 @@ Proof.
     now rewrite gmultiset_disj_union_comm.
 Qed.
 
-Lemma lts_fw_com_eq_spec `{LtsObaFB P A} p q q' mp mq μ η:
-  ¬ non_blocking μ (* utile OU prouvable ?*) -> dual η μ -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[μ] q' -> p ▷ mp ⟶≐ q' ▷ mq.
+
+
+Lemma lts_fw_eq_spec_right_not_nb `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+   p q mp mq η μ:
+  (* ¬  *) non_blocking η (* utile OU prouvable ?*) -> dual η μ -> p ▷ mp ≐ q ▷ mq -> p ▷ mp ⟶≐[μ] q ▷ {[+ η +]} ⊎ mq.
+Proof.
+  intros nb duo heq.
+  exists (p ▷ ({[+ η +]} ⊎ mp)). split.
+  + eapply ParRight. eapply lts_multiset_add; eauto.
+  + edestruct heq; simpl. 
+Admitted.
+
+
+Lemma lts_fw_com_eq_spec `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  p q q' mp mq μ η:
+  ¬ non_blocking μ (* utile OU prouvable ?*) -> dual η μ -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[μ] q' 
+  -> p ▷ mp ⟶≐ q' ▷ mq.
 Proof.
   intros not_nb duo heq hl.
   edestruct (fw_eq_input_simulation heq not_nb hl) as (p' & hl' & heq').
@@ -2578,12 +3124,15 @@ Proof.
   edestruct (heq p0 q0) as (heqp0 & heqm); eauto. simpl in *.
   assert (mem : η ∈ lts_oba_mo p ⊎ mp) by (now rewrite heqm; multiset_solver).
   eapply gmultiset_elem_of_disj_union in mem as [hleft | hright].
-  - eapply lts_oba_mo_spec1, lts_non_blocking_action_spec2 in hleft as (p1 & nb & hl1).
+  - eapply lts_oba_mo_spec_bis2 in hleft as (p1 & nb & hl1).
     assert (neq : μ ≠ η). eapply BlockingAction_are_not_non_blocking; eauto.
     edestruct (lts_oba_non_blocking_action_confluence nb neq hl1 hl') as (p2 & hlp1 & hlp').
     edestruct (lts_oba_fb_feedback nb duo hl1 hlp1) as (p3 & hlp & heqp3).
     exists (p3, mp). split.
-    + eauto with mdb.
+
+    + (*nécessaire?*) eapply ParLeft. eauto with mdb.
+    
+    
     + intros ph qh hsph hsqh. simpl in *.
       destruct hlp' as (p2' & hlp2' & heqp2').
       destruct (lts_oba_mo_strip p') as (ph' & hsph').
@@ -2591,8 +3140,8 @@ Proof.
       eapply lts_oba_mo_spec2 in hlp2' as hmeqp2'; eauto.
       assert (heqmu : lts_oba_mo p2' = lts_oba_mo p' ∖ {[+ η +]}) by multiset_solver.
       split.
-      ++ eapply lts_non_blocking_action_spec1 in hlp2' as hmem; eauto.
-         eapply lts_oba_mo_spec1, gmultiset_disj_union_difference' in hmem.
+      ++ eapply lts_oba_mo_spec_bis1 in hlp2' as hmem; eauto.
+         eapply gmultiset_disj_union_difference' in hmem.
          rewrite hmem in hsph'.
          eapply strip_eq_step in hsph' as h1; eauto.
          destruct h1 as (p4 & hsu & heqp4).
@@ -2612,7 +3161,11 @@ Proof.
          transitivity p2. assumption. now symmetry.
   - eapply gmultiset_disj_union_difference' in hright.
     exists (p' ▷ mp ∖ {[+ η +]}).
-    split. rewrite hright at 1. eauto with mdb.
+    split. rewrite hright at 1. 
+    assert (non_blocking η) as nb. admit. (* can be admitted *)
+    
+    eapply ParSync. split; eauto. eauto with mdb. eapply lts_multiset_minus; eauto.
+    
     intros pt qt hw1 hw2. simpl in *.
     edestruct (heq' pt qt) as (heqt0 & heqmt); eauto.
     split; simpl in *; eauto.
@@ -2626,178 +3179,218 @@ Proof.
     transitivity (lts_oba_mo p' ⊎ {[+ η +]} ⊎  mp ∖ {[+ η +]}). multiset_solver.
     rewrite <- gmultiset_disj_union_assoc.
     now replace (({[+ η +]} ⊎ mp ∖ {[+ η +]})) with mp.
-Qed.
+Admitted.
 
 
-(*Manque l'instance du LTS forwarder *)
-
-Lemma lts_fw_eq_spec  `{LtsObaFB P A} (p : P) (q : P) t mp (mq : mb A) mt (α : Act A) :
-  p ▷ mp ≐ t ▷ mt -> (t ▷ mt) ⟶{α} (q ▷ mq) -> p ▷ mp ⟶≐{α} q ▷ mq.
+Lemma lts_fw_eq_spec  `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  (p : P) (q : P) (t : P) (mp : mb A) (mq : mb A) (mt : mb A) (α : Act A) :
+  (p ▷ mp) ≐ (t ▷ mt) -> (t ▷ mt) ⟶{α} (q ▷ mq) -> p ▷ mp ⟶≐{α} q ▷ mq.
 Proof.
-  intros heq hl. inversion hl; subst.
+  intros heq hl. inversion hl as [ | ? ? ? ? Hstep | ] ; subst.
   - eapply lts_fw_eq_spec_left; eauto.
-  - eapply lts_fw_eq_spec_right; eauto.
-  - exists (p, {[+ a +]} ⊎ mp). split.
-    ++ eauto with mdb.
-    ++ intros p1 q1 hw1 hw2. edestruct (heq p1 q1); multiset_solver.
-  - eapply lts_fw_com_eq_spec; eauto.
+  - destruct α. 
+    + destruct (decide (non_blocking μ)) as [nb | not_nb]. 
+      ++ eapply (non_blocking_action_in_ms mt μ mq) in nb as equal_mb; eauto.
+         eapply lts_fw_eq_spec_right_nb; eauto. rewrite equal_mb. eauto. 
+      ++ assert (¬ non_blocking μ) as not_nb'. assumption.
+         eapply (blocking_action_in_ms mt μ mq) in not_nb' as (equal_mb & duo & nb); eauto.
+         rewrite <-equal_mb.
+         eapply lts_fw_eq_spec_right_not_nb; eauto.
+    + inversion Hstep.
+  - destruct eq as (duo & nb).
+    assert ({[+ μ2 +]} ⊎ mq = mt) as equal_mb.
+    apply non_blocking_action_in_ms; eauto.
+    eapply lts_fw_com_eq_spec; eauto. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+    rewrite equal_mb. eauto.
 Qed.
 
 
-#[global] Program Instance MbLtsEq {L : Type} `{LtsObaFB A L} : LtsEq (A * mb L) L :=
+#[global] Program Instance MbLtsEq `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+: LtsEq (P * mb A) A :=
   {| eq_rel := fw_eq |}.
-Next Obligation. intros. eapply fw_eq_refl. Qed.
-Next Obligation. intros. eapply fw_eq_symm; eauto. Qed.
-Next Obligation. intros. eapply fw_eq_trans; eauto. Qed.
+Next Obligation. intros. split.
+  + eapply fw_eq_refl.
+  + eapply fw_eq_symm.
+  + eapply fw_eq_trans.
+Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? (p, mp) (q, mq) α ((t, mt) & heq & hl).
+  intros ? ? ? ? ? ? ? ? (p, mp) (q, mq) α ((t, mt) & heq & hl).
   eapply lts_fw_eq_spec; eauto.
 Qed.
 
-#[global] Program Instance LtsMBOba `{LtsObaFB A L} : LtsOba (A * mb L) L :=
+#[global] Program Instance LtsMBOba 
+  `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  : LtsOba (P * mb A) A :=
   {| lts_oba_mo p := lts_oba_mo p.1 ⊎ p.2 |}.
 Next Obligation.
-  intros; simpl in *.
-  rewrite gmultiset_elem_of_disj_union, elem_of_union.
-  now rewrite gmultiset_elem_of_dom, lts_oba_mo_spec1.
+  intros ? ? ? ? ? ? ? ? p1 η p2 nb Hstep; simpl in *.
+  inversion Hstep; subst; simpl in *.
+  + apply (lts_oba_mo_spec_bis1 a1 η a2) in nb; eauto. set_solver.
+  + apply (non_blocking_action_in_ms b1 η b2) in nb; eauto. set_solver.
 Qed.
 Next Obligation.
-  intros; simpl in *.
-  inversion H3; subst; simpl in *.
-  - eapply lts_oba_mo_spec2 in H4. multiset_solver.
-  - rewrite gmultiset_disj_union_comm, <- gmultiset_disj_union_assoc.
-    now replace (m ⊎ lts_oba_mo p0) with (lts_oba_mo p0 ⊎ m) by eapply gmultiset_disj_union_comm.
+  intros ? ? ? ? ? ? ? ? (p , mem) η mem_non_blocking; simpl in *.
+  rewrite gmultiset_elem_of_disj_union in mem_non_blocking. 
+  destruct (decide (η ∈ lts_oba_mo p)) as [non_blocking_in_p | non_blocking_not_in_p].
+  + eapply lts_oba_mo_spec_bis2 in non_blocking_in_p as (p' & nb & Hstep).
+    exists (p', mem). split.
+    ++ exact nb.
+    ++ eauto with mdb.
+  + destruct (decide (η ∈ mem)) as [non_blocking_in_mem | non_blocking_not_in_mem].
+    assert (non_blocking η) as nb. admit.
+    * exists (p , mem ∖ {[+ η +]}). split.
+      ++ exact nb.
+      ++ eapply ParRight. assert (mem = {[+ η +]} ⊎ mem ∖ {[+ η +]}) as eq. multiset_solver.
+         rewrite eq at 1. eapply lts_multiset_minus. exact nb. 
+    * exfalso. destruct mem_non_blocking; contradiction.
+Admitted.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb Hstep ; simpl in *.
+  inversion Hstep; subst; simpl in *.
+  - apply (lts_oba_mo_spec2 a1 η a2) in nb; eauto. multiset_solver.
+  - apply (non_blocking_action_in_ms b1 η b2) in nb; eauto; subst. 
+    rewrite gmultiset_disj_union_comm, <- gmultiset_disj_union_assoc.
+    now replace (b2 ⊎ lts_oba_mo a) with (lts_oba_mo a ⊎ b2) by eapply gmultiset_disj_union_comm.
 Qed.
 Next Obligation.
-  intros. destruct p as (p, mp), q as (q, mq), r as (r, mr).
-  inversion H3; inversion H4; subst.
-  - destruct (lts_oba_output_commutativity H8 H14) as (t & hlt0 & (r0 & hlr0 & heqr0)).
+intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q, mq), r as (r, mr).
+  inversion Hstep_nb (* as [a b c d e f| a b c d e f| a b c d e f] *) ; inversion Hstep; subst.
+  - destruct (lts_oba_non_blocking_action_delay nb l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
     exists (t, mr). split; simpl in *. eauto with mdb.
     exists (r0, mr). split. simpl in *. eauto with mdb.
     now eapply fw_eq_id_mb.
   - exists (p, mr). split; simpl in *. eauto with mdb.
     exists (r, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - exists (p, {[+ a0 +]} ⊎ mq). split; simpl in *. eauto with mdb.
-    exists (r, {[+ a0 +]} ⊎ mq). split. simpl in *. eauto with mdb. reflexivity.
-  - destruct (lts_oba_output_commutativity H8 H14) as (t & hlt0 & (r0 & hlr0 & heqr0)).
+  - destruct (lts_oba_non_blocking_action_delay nb l l1) as (t & hlt0 & (r0 & hlr0 & heqr0)).
     exists (t, mr). split. simpl in *. eauto with mdb.
     exists (r0, mr). split. simpl in *. eauto with mdb.
     now eapply fw_eq_id_mb.
-  - exists (r, {[+ a +]} ⊎ mr).
+  - apply (non_blocking_action_in_ms mp η mr) in nb as eq; subst; eauto.
+    exists (r, {[+ η +]} ⊎ mr).
     split. simpl in *. eauto with mdb.
     exists (r, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - replace ({[+ a +]} ⊎ ({[+ a1 +]} ⊎ mr))
-      with ({[+ a1 +]} ⊎ ({[+ a +]} ⊎ mr)) by multiset_solver.
-    exists (r, {[+ a +]} ⊎ mr).
-    split. simpl in *. eauto with mdb.
-    exists (r, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - exists (r, {[+ a1 +]} ⊎ ({[+ a +]} ⊎ mq)).
-    split. simpl in *. eauto with mdb.
-    replace ({[+ a1 +]} ⊎ ({[+ a +]} ⊎ mq))
-      with ({[+ a +]} ⊎ ({[+ a1 +]} ⊎ mq)) by multiset_solver.
-    eexists. split. simpl in *. eauto with mdb. reflexivity.
-  - replace ({[+ a +]} ⊎ ({[+ a1 +]} ⊎ mr))
-      with ({[+ a1 +]} ⊎ ({[+ a +]} ⊎ mr)) by multiset_solver.
-    eexists. split.  simpl in *. eauto with mdb.
-    eexists. split.  simpl in *. eauto with mdb. reflexivity.
+  - destruct α as [μ |]. 
+    + apply (non_blocking_action_in_ms mp η mq) in nb as eq; subst; eauto.
+      destruct ((decide (non_blocking μ))) as [nb' | not_nb'].
+      ++ apply (non_blocking_action_in_ms mq μ mr) in nb' as eq; subst; eauto.
+         replace ({[+ η +]} ⊎ ({[+ μ +]} ⊎ mr))
+         with ({[+ μ +]} ⊎ ({[+ η +]} ⊎ mr)) by multiset_solver.
+         exists (r, {[+ η +]} ⊎ mr). split.
+         * eapply ParRight. eapply lts_multiset_minus. exact nb'.
+         * exists (r, mr). split. eapply ParRight. eapply lts_multiset_minus. exact nb. reflexivity.
+      ++ apply (blocking_action_in_ms mq μ mr) in not_nb' as (eq & duo & nb'); subst; eauto.
+         exists (r, {[+ co μ +]} ⊎ ({[+ η +]} ⊎ mq)).
+         split.
+         * eapply ParRight. eapply lts_multiset_add; eauto.
+         * replace ({[+ co μ +]} ⊎ ({[+ η +]} ⊎ mq))
+           with ({[+ η +]} ⊎ ({[+ co μ +]} ⊎ mq)) by multiset_solver.
+           exists (r ▷ {[+ co μ +]} ⊎ mq). split. eapply ParRight. eapply lts_multiset_minus. exact nb. reflexivity.
+    + inversion l0.
+  - destruct eq as (duo & nb').
+    apply (non_blocking_action_in_ms mp η mq) in nb as eq_mem; subst; eauto.
+    apply (non_blocking_action_in_ms mq μ2 mr) in nb' as eq_mem; subst; eauto.
+    replace ({[+ η +]} ⊎ ({[+ μ2 +]} ⊎ mr))
+    with ({[+ μ2 +]} ⊎ ({[+ η +]} ⊎ mr)) by multiset_solver.
+    exists (r, ({[+ η +]} ⊎ mr)). split. eapply (ParSync μ1 μ2); eauto.
+    + split; eauto.
+    + apply lts_multiset_minus. exact nb'.
+    + exists (r ▷ mr). split. eapply ParRight. apply lts_multiset_minus; exact nb. reflexivity.
 Qed.
+(* Next Obligation.
+  intros; simpl in *.
+  inversion H3; subst; simpl in *.
+  - eapply lts_oba_mo_spec2 in H4. multiset_solver.
+  - rewrite gmultiset_disj_union_comm, <- gmultiset_disj_union_assoc.
+    now replace (m ⊎ lts_oba_mo p0) with (lts_oba_mo p0 ⊎ m) by eapply gmultiset_disj_union_comm.
+Qed. *)
 Next Obligation.
-  intros. destruct p as (p, mp), q1 as (q, mq), q2 as (r, mr).
-  inversion H4; subst.
-  - inversion H5; subst.
-    + edestruct (lts_oba_output_confluence H3 H9 H10) as (t & hlt0 & (r0 & hlr0 & heqr0)).
+  intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb not_eq Hstep_nb Hstep. 
+  destruct p as (p, mp), q1 as (q, mq), q2 as (r, mr).
+  inversion Hstep_nb; subst.
+  - inversion Hstep; subst.
+    + edestruct (lts_oba_non_blocking_action_confluence nb not_eq l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
       exists (t, mr). split; simpl in *. eauto with mdb.
       exists (r0, mr). split. simpl in *. eauto with mdb.
       now eapply fw_eq_id_mb.
     + exists (q, mr). split. simpl in *. eauto with mdb.
       exists (q, mr). split. simpl in *. eauto with mdb. reflexivity.
-    + exists (q, {[+ a0 +]} ⊎ mq). split. simpl in *. eauto with mdb.
-      exists (q,  {[+ a0 +]} ⊎ mq). split. simpl in *. eauto with mdb. reflexivity.
-  - inversion H5; subst.
+  - inversion Hstep; subst.
     + exists (r, mq). split; simpl in *. eauto with mdb.
       exists (r, mq). split. simpl in *. eauto with mdb. reflexivity.
-    + assert (neq : a ≠ a0) by naive_solver.
-      assert (a0 ∈ mq).
-      assert (a0 ∈ {[+ a +]} ⊎ mq).
-      rewrite <- H8; multiset_solver. multiset_solver.
-      eapply gmultiset_disj_union_difference' in H6.
-      rewrite H6.
-      exists (r, mq ∖ {[+ a0 +]}). split.
-      simpl in *. eauto with mdb.
-      assert (a ∈ mr).
-      assert (a ∈ {[+ a0 +]} ⊎ mr).
-      rewrite H8; multiset_solver. multiset_solver.
-      eapply gmultiset_disj_union_difference' in H7.
-      assert (mq ∖ {[+ a0 +]} = mr ∖ {[+ a +]})%stdpp.
-      eapply (gmultiset_disj_union_inj_1 {[+ a0 +]}).
-      replace ({[+ a0 +]} ⊎ mq ∖ {[+ a0 +]}) with mq by eauto.
-      eapply (gmultiset_disj_union_inj_1 {[+ a +]}).
-      replace ({[+ a +]} ⊎ ({[+ a0 +]} ⊎ mr ∖ {[+ a +]}))
-        with (({[+ a0 +]} ⊎ ({[+ a +]} ⊎ mr ∖ {[+ a +]}))) by multiset_solver.
-      replace ({[+ a +]} ⊎ mr ∖ {[+ a +]}) with mr by eauto.
-      now symmetry.
-      rewrite H7. rewrite H9.
-      eexists.
-      split. simpl in *. eauto with mdb. reflexivity.
-    + exists (r, {[+ a0 +]} ⊎ mq). split. simpl in *. eauto with mdb.
-      replace ({[+ a0 +]} ⊎ ({[+ a +]} ⊎ mq)) with ({[+ a +]} ⊎ ({[+ a0 +]} ⊎ mq)) by multiset_solver.
-      exists (r, ({[+ a0 +]} ⊎ mq)).
-      split. simpl in *. eauto with mdb. reflexivity.
+    + eapply (non_blocking_action_in_ms mp η mq) in nb as eq; eauto ; subst.
+      destruct (decide (non_blocking μ)) as [nb' | not_nb'].
+      * eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ mq) μ mr) in nb' as eq; eauto ; subst.
+        assert (neq : η ≠ μ) by naive_solver.
+        assert (μ ∈ mq) as mem. multiset_solver.
+        assert (μ ∈ {[+ η +]} ⊎ mq) as mem'. multiset_solver.
+        eapply gmultiset_disj_union_difference' in mem. rewrite mem.
+        exists (r, mq ∖ {[+ μ +]}). split.
+        ++ eapply ParRight. eapply lts_multiset_minus; eauto.
+        ++ assert (η ∈ mr) as mem''. multiset_solver. 
+           assert (mr = {[+ η +]} ⊎ (mq ∖ {[+ μ +]})) as mem'''. multiset_solver.
+           rewrite mem'''. exists (r ▷ mq ∖ {[+ μ +]}). split. 
+           eapply ParRight. eapply lts_multiset_minus; eauto. reflexivity.
+      * eapply (blocking_action_in_ms ({[+ η +]} ⊎ mq) μ mr) in not_nb' as (eq & duo & nb'); eauto ; subst.
+        exists (r ▷ {[+ co μ +]} ⊎ mq). split.
+        ++ eapply ParRight. eapply lts_multiset_add; eauto.
+        ++ assert ({[+ co μ +]} ⊎ ({[+ η +]} ⊎ mq) = {[+ η +]} ⊎ ({[+ co μ +]} ⊎ mq)) as eq. multiset_solver.
+           rewrite eq. exists (r ▷ {[+ co μ +]} ⊎ mq). split. 
+           eapply ParRight. eapply lts_multiset_minus; eauto. reflexivity.
 Qed.
 Next Obligation.
 Proof.
-  intros ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) a l1 l2.
-  inversion l1; subst.
-  - inversion l2; subst.
-    + edestruct (lts_oba_output_tau H6 H7) as
-        [(t & hl1 & (t0 & hl0 & heq0)) | (t0 & hl0 & heq0)].
+  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep.
+  inversion Hstep_nb ;subst.
+  - inversion Hstep ; subst.
+    + edestruct (lts_oba_non_blocking_action_tau nb l l0) as
+        [(t & hl1 & (t0 & hl0 & heq0)) | (μ & duo & t0 & hl0 & heq0)].
       left. exists (t, m3).
       split. simpl. eauto with mdb.
       exists (t0, m3). split. simpl. eauto with mdb.
       now eapply fw_eq_id_mb.
-      right. exists (t0, m3). split. simpl. eauto with mdb.
+      right. exists μ. split.  exact duo. exists (t0, m3). split. simpl. eauto with mdb.
       now eapply fw_eq_id_mb.
-    + assert (neq : ActIn a0 ≠ ActOut a) by now inversion 1.
-      edestruct (lts_oba_output_confluence neq H6 H7)
+    + inversion l0.
+    + destruct eq as (duo' & nb').
+      assert (¬ non_blocking μ1). eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+      assert (neq : μ1 ≠ η). intro. subst. contradiction. 
+      edestruct (lts_oba_non_blocking_action_confluence nb neq l l1)
         as (t & hl1 & (t1 & hl2 & heq1)).
-      left. exists (t, m3). split. simpl. eauto with mdb.
+      left. exists (t, m3). split. eapply ParSync; eauto. split; eauto.
       exists (t1, m3). split. simpl. eauto with mdb.
       now eapply fw_eq_id_mb.
-  - inversion l2; subst.
+  - eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto. 
+    inversion Hstep ; subst.
     + left. exists (p3, m2).
       split. simpl. eauto with mdb.
-      exists (p3, m2). split. eapply lts_fw_out_mb. reflexivity.
-    + destruct (decide (a0 = a)); subst.
-      ++ right.
-         eapply gmultiset_disj_union_inj_1 in H5. subst.
-         exists (p3, m2). split. simpl. eauto with mdb. reflexivity.
-      ++ left.
-         assert (a ∈ m3).
-         assert (a ∈ {[+ a0 +]} ⊎ m3).
-         rewrite H5. multiset_solver.
-         multiset_solver.
-         assert (a0 ∈ m2).
-         assert (a0 ∈ {[+ a +]} ⊎ m2).
-         rewrite <- H5. multiset_solver. multiset_solver.
-         eapply gmultiset_disj_union_difference' in H3, H4.
-         exists (p3, m2 ∖ {[+ a0 +]}).
-         split.
-         rewrite H4 at 1. simpl. eauto with mdb.
-         rewrite H3 at 1.
-         assert (m3 ∖ {[+ a +]} = m2 ∖ {[+ a0 +]}).
-         multiset_solver.
-         rewrite <- H7. eexists. split.
-         simpl. eauto with mdb. reflexivity.
+      exists (p3, m2). split. eapply ParRight; eassumption. reflexivity.
+    + inversion l0.
+    + destruct eq as (duo & nb').
+      eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ m2) μ2 m3) in nb' as eq'; subst; eauto. 
+      destruct (decide (μ2 = η)) as [eq | not_eq]; subst.
+      ++ right. assert (m2 = m3) as eq_mem. multiset_solver. rewrite <-eq_mem in l2.  
+         exists μ1. split; eauto. exists (p3, m2). split. simpl. eauto with mdb. rewrite eq_mem. reflexivity.
+      ++ left. eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ m2) μ2 m3) in nb' as eq; subst; eauto.
+         assert (η ∈ m3). multiset_solver.
+         assert (η ∈ {[+ μ2 +]} ⊎ m3). multiset_solver.
+         assert (μ2 ∈ m2). multiset_solver.
+         assert (μ2 ∈ {[+ η +]} ⊎ m2). multiset_solver.
+         exists (p3, m2 ∖ {[+ μ2 +]}). split. eapply (ParSync μ1 μ2); eauto.
+         split; eauto. assert (m2 = {[+ μ2 +]} ⊎ (m2 ∖ {[+ μ2 +]})) as eq_mem. multiset_solver.
+         rewrite eq_mem at 1. eapply lts_multiset_minus; eauto.
+         assert (m3 = ({[+ η +]} ⊎ (m2 ∖ {[+ μ2 +]}))) as eq_mem'. multiset_solver.
+         rewrite eq_mem'. exists (p3 ▷ m2 ∖ {[+ μ2 +]}). split.
+         eapply ParRight. eapply lts_multiset_minus; eauto. reflexivity.
 Qed.
 Next Obligation.
-  intros.
-  destruct p1 as (p1, mp1), p2 as (p2, mp2), p3 as (p3, mp3).
+  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep_nb'.
   intros p2' p3' hwp2 hwp3; simpl in *.
-  inversion H3; subst.
-  - inversion H4; subst.
+  inversion Hstep_nb ; subst.
+  - inversion Hstep_nb' ; subst.
     + eapply fw_eq_id_mb; eauto.
-      eapply lts_oba_output_deter; eauto.
-    + set (he1 := lts_oba_mo_spec2 _ _ _ H8).
+      eapply lts_oba_non_blocking_action_deter; eauto.
+    + eapply (non_blocking_action_in_ms m2 η m3) in nb as eq; subst; eauto.
+      set (he1 := lts_oba_mo_spec2 _ _ _ nb l).
       rewrite he1 in hwp3.
       eapply strip_eq_step in hwp3 as (p0 & hw0 & heq0); eauto. split.
       etrans. eapply strip_m_deter; eauto. eassumption.
@@ -2805,8 +3398,9 @@ Next Obligation.
       rewrite gmultiset_disj_union_comm at 1.
       rewrite <- 2 gmultiset_disj_union_assoc.
       eapply gmultiset_eq_pop_l. multiset_solver.
-  - inversion H4; subst.
-    + set (he1 := lts_oba_mo_spec2 _ _ _ H8).
+  - inversion Hstep_nb' ; subst.
+    + eapply (non_blocking_action_in_ms m3 η m2) in nb as eq; subst; eauto.
+      set (he1 := lts_oba_mo_spec2 _ _ _ nb l0).
       rewrite he1 in hwp2.
       eapply strip_eq_step in hwp2 as (p0 & hw0 & heq0); eauto. split.
       etrans. symmetry. eassumption.
@@ -2815,18 +3409,20 @@ Next Obligation.
       rewrite gmultiset_disj_union_comm at 1.
       rewrite <- 2 gmultiset_disj_union_assoc.
       eapply gmultiset_eq_pop_l. multiset_solver.
-    + split.  eapply strip_m_deter; eauto. multiset_solver.
+    + eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto.
+      eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ m2) η m3) in nb as eq; subst; eauto.
+      assert (m3 = m2) by multiset_solver; subst.
+      split.  eapply strip_m_deter; eauto. multiset_solver.
 Qed.
 Next Obligation.
-  intros.
-  destruct p1 as (p1, mp1), q1 as (q1, mq1), p2 as (p2, mp2), q2 as (q2, mq2).
-  inversion H3; subst; intros p1' p2' hwp1 hwp2; simpl in *.
-  - eapply lts_oba_mo_spec2 in H9 as hd1.
+  intros ? ? ? ? ? ? ? ? (p1, mp1) (p2, mp2) (q1, mq1) (q2, mq2) η nb Hstep_nb Hstep_nb' equiv.
+  inversion Hstep_nb; subst;  intros p1' p2' hwp1 hwp2; simpl in *.
+  - eapply lts_oba_mo_spec2 in l as hd1; eauto.
     edestruct (lts_oba_mo_strip q1) as (q1' & hwq1).
-    inversion H4; subst.
+    inversion Hstep_nb'; subst.
     + edestruct (lts_oba_mo_strip q2) as (q2' & hwq2).
-      edestruct (H5 q1' q2'); eauto; simpl in *.
-      eapply lts_oba_mo_spec2 in H10 as hd2.
+      edestruct (equiv q1' q2'); eauto; simpl in *.
+      eapply lts_oba_mo_spec2 in l0 as hd2; eauto.
       split.
       ++ rewrite hd1 in hwp1. rewrite hd2 in hwp2.
          eapply strip_eq_step in hwp1, hwp2; eauto.
@@ -2839,7 +3435,7 @@ Next Obligation.
          transitivity q2'. now symmetry.
          transitivity t2. now symmetry. eassumption.
       ++ multiset_solver.
-    + edestruct (H5 q1' p2'); eauto; simpl in *.
+    + edestruct (equiv q1' p2'); eauto; simpl in *.
       split.
       ++ rewrite hd1 in hwp1.
          eapply strip_eq_step in hwp1; eauto.
@@ -2849,12 +3445,13 @@ Next Obligation.
          transitivity q1'; naive_solver.
       ++ rewrite hd1. symmetry.
          rewrite gmultiset_disj_union_comm at 1.
+         eapply (non_blocking_action_in_ms mp2 η mq2) in nb as eq; subst.
          rewrite <- 2 gmultiset_disj_union_assoc.
-         eapply gmultiset_eq_pop_l. multiset_solver.
-  - inversion H4; subst.
-    + eapply lts_oba_mo_spec2 in H9 as hd1.
+         eapply gmultiset_eq_pop_l. multiset_solver. assumption.
+  - inversion Hstep_nb'; subst.
+    + eapply lts_oba_mo_spec2 in l0 as hd1; eauto.
       edestruct (lts_oba_mo_strip q2) as (q2' & hwq2).
-      edestruct (H5 p1' q2'); eauto; simpl in *.
+      edestruct (equiv p1' q2'); eauto; simpl in *.
       split.
       ++ rewrite hd1 in hwp2.
          eapply strip_eq_step in hwp2; eauto.
@@ -2864,60 +3461,97 @@ Next Obligation.
          transitivity t2; naive_solver.
       ++ rewrite hd1.
          rewrite gmultiset_disj_union_comm at 1.
+         eapply (non_blocking_action_in_ms mp1 η mq1) in nb as eq; subst.
          rewrite <- 2 gmultiset_disj_union_assoc.
-         eapply gmultiset_eq_pop_l. multiset_solver.
-    + edestruct (H5 p1' p2'); eauto; simpl in *.
+         eapply gmultiset_eq_pop_l. multiset_solver. assumption.
+    + eapply (non_blocking_action_in_ms mp1 η mq1) in nb as eq; subst; eauto.
+      edestruct (equiv p1' p2'); eauto; simpl in *.
+      eapply (non_blocking_action_in_ms mp2 η mq2) in nb as eq; subst; eauto.
+      split. assumption.
       multiset_solver.
 Qed.
 
-#[global] Program Instance LtsMBObaFW `{LtsObaFB A L} : LtsObaFW (A * mb L) L.
+#[global] Program Instance LtsMBObaFW 
+  `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  : LtsObaFW (P * mb A) A.
 Next Obligation.
-  intros.
-  destruct p1 as (p, m).
-  exists (p, {[+ a +]} ⊎ m). split; eauto with mdb.
-  eapply lts_fw_inp_mb.
-  eapply lts_fw_out_mb.
+  intros ? ? ? ? ? ? ? ? (p, m) η μ.
+  exists (p, {[+ η +]} ⊎ m). split; eauto with mdb.
+  eapply ParRight. eapply lts_multiset_add; eauto.
+  eapply ParRight. eapply lts_multiset_minus; eauto.
 Qed.
 Next Obligation.
-  intros.
-  destruct p1 as (p1, m1), p2 as (p2, m2), p3 as (p3, m3).
-  inversion H3; subst.
-  + inversion H4; subst.
-    ++ left. destruct (lts_oba_fb_feedback H8 H9) as (t & l & heq).
-       exists (t, m3). split. eapply lts_fw_p. eassumption.
+  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η μ nb duo Hstep_nb Hstep.
+  inversion Hstep_nb; subst.
+  + inversion Hstep; subst.
+    ++ left. destruct (lts_oba_fb_feedback nb duo l l0) as (t & l1 & heq).
+       exists (t, m3). split. eapply ParLeft; assumption.
        now eapply fw_eq_id_mb.
     ++ right. simpl. unfold fw_eq.
-       intros. simpl in *. set (heq := lts_oba_mo_spec2 _ _ _ H8).
-       rewrite heq in H5. rewrite heq. split.
-       +++ destruct (strip_mem_ex H5) as (e & l).
-           destruct (strip_eq_step H5 e l) as (t & hwo & heq'); eauto.
-           set (h := lts_oba_output_deter H8 l).
+       intros p' q' strip_p strip_q. simpl in *.
+       assert ( ¬ non_blocking μ) as not_nb. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst.
+       set (heq := lts_oba_mo_spec2 _ _ _ nb l).
+       rewrite heq in strip_p. rewrite heq. split.
+       +++ destruct (strip_mem_ex strip_p) as (e & l' & nb'').
+           destruct (strip_eq_step strip_p e l') as (t & hwo & heq'); eauto.
+           set (h := lts_oba_non_blocking_action_deter nb'' l l').
            etrans. symmetry. eassumption.
            symmetry. eapply strip_eq_sim; eassumption.
        +++ rewrite <- gmultiset_disj_union_assoc.
            rewrite gmultiset_disj_union_comm.
            rewrite <- gmultiset_disj_union_assoc.
            eapply gmultiset_eq_pop_l.
+           assert (η = co μ) as eq_nb. eapply unique_nb; eauto; subst. subst.
            now rewrite gmultiset_disj_union_comm.
-  + inversion H4; subst.
-    ++ left. exists (p3, m3). split. simpl. eauto with mdb. reflexivity.
-    ++ right. reflexivity.
-Qed. *)
+       +++ assumption.
+  + inversion Hstep; subst.
+    ++ left. exists (p3, m3). split. eapply ParSync; eauto. split; eauto. reflexivity.
+    ++ right. 
+       eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto.
+       assert (¬ non_blocking μ) as not_nb. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst; eauto.
+       assert (η = co μ) as eq_nb. eapply unique_nb; eauto. subst.
+       reflexivity.
+Qed. 
 
 (** Derivatives. *)
 (* η *) (* ¬ non_blocking μ *)
-(* Definition lts_fw_input_set `{FiniteLts P A} p (m : mb A) μ η :=
-  (p, {[+ η +]} ⊎ m) :: map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ) /\ dual μ η)).
- *)
 
-Definition lts_fw_non_blocking_action_set `{FiniteLts P A} (p : P) (m : mb A) η :=
+(* Definition co_set `{ExtAction A} (μ : A) := {η | non_blocking η /\ dual η μ /\ ¬ non_blocking μ}.
+Definition co `{ExtAction A} (μ : A) := 
+              if decide ({η | non_blocking η  /\dual η μ /\ ¬ non_blocking μ})
+              then μ
+              else μ. *)
+              
+(* Definition lts_fw_input_set `{FiniteLts A L} p (m : mb L) a :=
+  (p, {[+ a +]} ⊎ m) :: map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ ActIn a))).*)
+(* Parameter A : Type.
+Parameter μ : A. 
+Check (proj1_sig (co μ)). *)
+Definition lts_fw_not_non_blocking_action_set `{FiniteImageLts P A} 
+  (p : P) (m : mb A) μ :=
+  if (decide (dual (co μ) μ /\ non_blocking (co μ))) 
+  then (p, {[+ (co μ) +]} ⊎ m) :: map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ)))
+  else map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ))).
+
+
+Definition lts_fw_non_blocking_action_set `{FiniteImageLts P A} 
+  (p : P) (m : mb A) η :=
   let ps := map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ η))) in
   if (decide (η ∈ m)) then (p, m ∖ {[+ η +]}) :: ps else ps.
 
-(* Definition lts_fw_com_fin `{FiniteLts P A} (p : P) (m : list A) : list (A * list P) :=
-  map (fun a => (a, map proj1_sig (enum $ dsig (lts_step p (ActExt $ ActIn a))))) m.
 
-Definition lts_fw_tau_set `{FiniteLts P A} (p : P) (m : mb A) : list (P * mb A) :=
+Definition lts_fw_co_fin `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  (p : P) (η : A) (* : list (A * list P) *) :=
+  map (fun μ => (η, map proj1_sig (enum $ dsig (lts_step p (ActExt $ μ))))) (elements (lts_co_inter_action_left η p)).
+
+Definition lts_fw_com_fin `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  (p : P) (m : list A) : list (A * list P) :=
+  concat (map (fun η => (lts_fw_co_fin p η)) m). (* flat_map (fun η => (lts_fw_co_fin p η)) m. *)
+
+Definition lts_fw_tau_set `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  (p : P) (m : mb A) : list (P * mb A) :=
   let xs := map (fun p => (proj1_sig p, m)) (enum $ dsig (fun q => p ⟶ q)) in
   let ys :=
     concat (map
@@ -2926,82 +3560,118 @@ Definition lts_fw_tau_set `{FiniteLts P A} (p : P) (m : mb A) : list (P * mb A) 
       )) in
   xs ++ ys.
 
-Lemma lts_fw_input_set_spec1 `{FiniteLts A L} p1 m1 p2 m2 a :
-  lts_fw_step (p1, m1) (ActExt (ActIn a)) (p2, m2) ->
-  (p2, m2) ∈ lts_fw_input_set p1 m1 a.
-Proof.
-  intros l.
-  inversion l; subst.
-  + right. eapply elem_of_list_fmap.
-    exists (dexist p2 H5). split. reflexivity. eapply elem_of_enum.
-  + left.
-Qed.
-
-Lemma lts_fw_output_set_spec1 `{FiniteLts A L} p1 m1 p2 m2 a :
-  lts_fw_step (p1, m1) (ActExt (ActOut a)) (p2, m2) ->
-  (p2, m2) ∈ lts_fw_output_set p1 m1 a.
-Proof.
-  intros l.
-  inversion l; subst.
-  + unfold lts_fw_output_set.
-    destruct (decide (a ∈ m2)).
-    right. eapply elem_of_list_fmap.
-    exists (dexist p2 H5). split. reflexivity. eapply elem_of_enum.
-    eapply elem_of_list_fmap.
-    exists (dexist p2 H5). split. reflexivity. eapply elem_of_enum.
-  + unfold lts_fw_output_set.
-    destruct (decide (a ∈ {[+ a +]} ⊎ m2)).
-    ++ replace (({[+ a +]} ⊎ m2) ∖ {[+ a +]}) with m2 by multiset_solver.
-       left.
-    ++ multiset_solver.
-Qed.
-
-Lemma lts_fw_tau_set_spec1 `{FiniteLts A L} p1 m1 p2 m2 :
-  lts_fw_step (p1, m1) τ (p2, m2) ->
+Lemma lts_fw_tau_set_spec1 `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  p1 m1 p2 m2 :
+  (p1, m1) ⟶ (p2, m2) ->
   (p2, m2) ∈ lts_fw_tau_set p1 m1.
 Proof.
   intros l.
   inversion l; subst.
   + eapply elem_of_app. left.
     eapply elem_of_list_fmap.
-    exists (dexist p2 H5). split. reflexivity. eapply elem_of_enum.
-  + eapply elem_of_app. right.
+    exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
+  + inversion l0.
+  + destruct eq as (duo & nb).
+    eapply elem_of_app. right.
     eapply elem_of_list_In.
     eapply in_concat.
     exists (map (fun p => (p, m2))
-         (map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ ActIn a))))
+         (map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ μ1))))
       ).
     split.
     eapply elem_of_list_In.
     eapply elem_of_list_fmap.
-    exists (a, map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ ActIn a)))).
+    exists (co μ1, map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ μ1)))).
+    eapply (non_blocking_action_in_ms m1 μ2 m2) in nb as eq; subst; eauto.
+    assert (μ2 = co μ1) as eq. eapply unique_nb; eauto. subst.
     split.
-    now replace (({[+ a +]} ⊎ m2) ∖ {[+ a +]}) with m2 by multiset_solver.
-    eapply elem_of_list_fmap.
-    exists a. split; eauto.
+    
+    
+    
+    now replace (({[+ co μ1 +]} ⊎ m2) ∖ {[+ co μ1 +]}) with m2 by multiset_solver.
+
+    assert ((∃ μ : A,
+    co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) =
+    co μ ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ)))) ∧ (co μ) ∈ elements ({[+ co μ1 +]} ⊎ m2)) 
+    -> co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
+        ∈ concat (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)))). admit.
+    eapply H2.
+    (* eapply elem_of_list_fmap. *)
+    exists μ1. split; eauto.
     eapply elem_of_Permutation_proper.
-    eapply (gmultiset_elements_disj_union {[+ a +]} m2).
+    eapply (gmultiset_elements_disj_union {[+ co μ1 +]} m2).
     rewrite gmultiset_elements_singleton. set_solver.
+    
+    
     eapply elem_of_list_In.
     eapply elem_of_list_fmap.
     eexists.  split. reflexivity.
     eapply elem_of_list_fmap.
-    exists (dexist p2 H5). split. reflexivity. eapply elem_of_enum.
+    exists (dexist p2 l1). split. reflexivity. eapply elem_of_enum.
+Admitted.
+
+Lemma lts_fw_input_set_spec1 `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  p1 m1 p2 m2 μ :
+  (p1, m1) ⟶[μ] (p2, m2) -> ¬ non_blocking μ -> 
+  (p2, m2) ∈ lts_fw_not_non_blocking_action_set p1 m1 μ.
+Proof.
+  intros l not_nb.
+  inversion l; subst.
+  + unfold lts_fw_not_non_blocking_action_set.
+    destruct (decide (dual (co μ) μ /\ non_blocking (co μ))) as [(duo & nb) | case2].
+    - right. eapply elem_of_list_fmap.
+      exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
+    - eapply elem_of_list_fmap.
+      exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
+  + eapply (blocking_action_in_ms m1 μ m2) in not_nb as (eq & duo & nb); eauto; subst.
+    unfold lts_fw_not_non_blocking_action_set.
+    destruct (decide (dual (co μ) μ /\ non_blocking (co μ))) as [toto | impossible].
+    ++ left.
+    ++ assert (dual (co μ) μ ∧ non_blocking (co μ)); eauto. contradiction.
+Qed. 
+
+
+Lemma lts_fw_non_blocking_action_set_spec1 `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  p1 m1 p2 m2 η :
+  (p1, m1) ⟶[η] (p2, m2) -> non_blocking η -> 
+  (p2, m2) ∈ lts_fw_non_blocking_action_set p1 m1 η.
+Proof.
+  intros l nb.
+  inversion l; subst.
+  + unfold lts_fw_non_blocking_action_set.
+    destruct (decide (η ∈ m2)) as [in_mem | not_in_mem].
+    right. eapply elem_of_list_fmap. 
+    exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum. 
+    eapply elem_of_list_fmap.
+    exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum. 
+  + unfold lts_fw_non_blocking_action_set.
+    eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst ; eauto.
+    destruct (decide (η ∈ {[+ η +]} ⊎ m2)).
+    ++ replace (({[+ η +]} ⊎ m2) ∖ {[+ η +]}) with m2 by multiset_solver.
+       left.
+    ++ multiset_solver.
 Qed.
 
-#[global] Program Instance LtsMBFinite {L : Type} `{FiniteLts A L} : FiniteLts (A * mb L) L.
-Next Obligation.
-  intros ? ? ? ? ? (p, m) [[a|a]|].
-  - eapply (in_list_finite (lts_fw_input_set p m a)). simpl in *.
-    intros (p0, m0) h%bool_decide_unpack.
-    now eapply lts_fw_input_set_spec1.
-  - eapply (in_list_finite (lts_fw_output_set p m a));
-    intros (p0, m0) h%bool_decide_unpack.
-    now eapply lts_fw_output_set_spec1.
-  - eapply (in_list_finite (lts_fw_tau_set p m)).
-    intros (p0, m0) h%bool_decide_unpack.
-    now eapply lts_fw_tau_set_spec1.
-Qed. *)
+
+
+#[global] Program Instance LtsMBFinite {A : Type} `{@FiniteImageLts P A H M} 
+  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  : FiniteImageLts (P * mb A) A.
+Next Obligation. 
+  intros ? ? ? ? ? ? (p, m) α.
+  destruct α as [η | ].
+  + destruct (decide (non_blocking η)) as [nb | not_nb].
+    - eapply (in_list_finite (lts_fw_non_blocking_action_set p m η));
+      intros (p0, m0) h%bool_decide_unpack.
+      now eapply lts_fw_non_blocking_action_set_spec1.
+    - rename η into μ. 
+      eapply (in_list_finite (lts_fw_not_non_blocking_action_set p m μ)). simpl in *.
+      intros (p0, m0) h%bool_decide_unpack.
+      now eapply lts_fw_input_set_spec1. 
+  + eapply (in_list_finite (lts_fw_tau_set p m)).
+      intros (p0, m0) h%bool_decide_unpack.
+      now eapply lts_fw_tau_set_spec1.
+Qed.
 
 Definition lts_tau_set_from_pset_spec1 `{Countable P, Lts P A}
   (ps : gset P) (qs : gset P) :=
@@ -3015,10 +3685,10 @@ Definition lts_tau_set_from_pset_spec `{Countable P, Lts P A}
   (ps : gset P) (qs : gset P) :=
   lts_tau_set_from_pset_spec1 ps qs /\ lts_tau_set_from_pset_spec2 ps qs.
 
-Definition lts_tau_set_from_pset `{FiniteLts P A} (ps : gset P) : gset P :=
+Definition lts_tau_set_from_pset `{FiniteImageLts P A} (ps : gset P) : gset P :=
   ⋃ (map (fun p => list_to_set (lts_tau_set p)) (elements ps)).
 
-Lemma lts_tau_set_from_pset_ispec `{Lts P A, !FiniteLts P A}
+Lemma lts_tau_set_from_pset_ispec `{Lts P A, !FiniteImageLts P A}
   (ps : gset P) :
   lts_tau_set_from_pset_spec ps (lts_tau_set_from_pset ps).
 Proof.
@@ -3036,12 +3706,12 @@ Proof.
     + eapply lts_tau_set_spec in l. multiset_solver.
 Qed.
 
-Fixpoint wt_set_nil `{FiniteLts P A} (p : P) (t : terminate p) : gset P :=
+Fixpoint wt_set_nil `{FiniteImageLts P A} (p : P) (t : terminate p) : gset P :=
   let '(tstep _ f) := t in
   let k q := wt_set_nil (`q) (f (`q) (proj2_dsig q)) in
   {[ p ]} ∪ ⋃ map k (enum $ dsig (lts_step p τ)).
 
-Lemma wt_set_nil_spec1 `{FiniteLts P A} p q (tp : terminate p) :
+Lemma wt_set_nil_spec1 `{FiniteImageLts P A} p q (tp : terminate p) :
   q ∈ wt_set_nil p tp -> p ⟹ q.
 Proof.
   case tp. induction tp.
@@ -3055,7 +3725,7 @@ Proof.
     ++ eapply H3. eapply (proj2_dsig r). eassumption.
 Qed.
 
-Lemma wt_set_nil_spec2 `{FiniteLts P A} p q : forall (tp : terminate p), p ⟹ q -> q ∈ wt_set_nil p tp.
+Lemma wt_set_nil_spec2 `{FiniteImageLts P A} p q : forall (tp : terminate p), p ⟹ q -> q ∈ wt_set_nil p tp.
 Proof.
   intros. revert tp. dependent induction H2; intros tp; destruct tp.
   + set_solver.
@@ -3069,7 +3739,7 @@ Proof.
     eapply IHwt. eauto.
 Qed.
 
-Lemma wt_nil_set_dec `{FiniteLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q).
+Lemma wt_nil_set_dec `{FiniteImageLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set_nil p ht)).
@@ -3077,7 +3747,7 @@ Proof.
   - right. intro wt. eapply n. now eapply wt_set_nil_spec2.
 Qed.
 
-Lemma wt_set_nil_fin_aux `{FiniteLts P A}
+Lemma wt_set_nil_fin_aux `{FiniteImageLts P A}
   (p : P) (ht : terminate p) (d : ∀ q, Decision (p ⟹ q)) : Finite (dsig (fun q => p ⟹ q)).
 Proof.
   unfold dsig.
@@ -3086,7 +3756,7 @@ Proof.
   now eapply elem_of_elements, wt_set_nil_spec2.
 Qed.
 
-Definition wt_set_nil_fin `{FiniteLts P A}
+Definition wt_set_nil_fin `{FiniteImageLts P A}
   (p : P) (ht : p ⤓) : Finite (dsig (fun q => p ⟹ q)) :=
   wt_set_nil_fin_aux p ht (wt_nil_set_dec p ht).
 
@@ -3094,7 +3764,7 @@ Lemma wt_push_nil_left_lts `{Lts P A} {p q r μ} : p ⟹ q -> q ⟶[μ] r -> p �
 Proof. by intros w1 lts; dependent induction w1; eauto with mdb. Qed.
 
 Definition wt_set_mu
-  `{FiniteLts P A} (p : P)
+  `{FiniteImageLts P A} (p : P)
   (μ : A) (s : trace A) (hcnv : p ⇓ μ :: s) : gset P :=
   let ht := cnv_terminate p (μ :: s) hcnv in
   let ps0 := @enum (dsig (fun q => p ⟹ q)) _ (wt_set_nil_fin p ht) in
@@ -3109,7 +3779,7 @@ Definition wt_set_mu
              ) (f (`t))
     ) ps0.
 
-Lemma wt_set_mu_spec1 `{FiniteLts P A}
+Lemma wt_set_mu_spec1 `{FiniteImageLts P A}
   (p q : P) (μ : A) (s : trace A) (hcnv : p ⇓ μ :: s) :
   q ∈ wt_set_mu p μ s hcnv -> p ⟹{μ} q.
 Proof.
@@ -3124,7 +3794,7 @@ Proof.
   eapply bool_decide_unpack. eassumption.
 Qed.
 
-Lemma wt_set_mu_spec2 `{FiniteLts P A}
+Lemma wt_set_mu_spec2 `{FiniteImageLts P A}
   (p q : P) (μ : A) (s : trace A) (hcnv : p ⇓ μ :: s) :
   p ⟹{μ} q -> q ∈ wt_set_mu p μ s hcnv.
 Proof.
@@ -3138,7 +3808,7 @@ Proof.
   exists (dexist q hw2). split. reflexivity. eapply elem_of_enum.
 Qed.
 
-Lemma wt_mu_set_dec `{FiniteLts P A} p μ s (hcnv : p ⇓ μ :: s) : forall q, Decision (p ⟹{μ} q).
+Lemma wt_mu_set_dec `{FiniteImageLts P A} p μ s (hcnv : p ⇓ μ :: s) : forall q, Decision (p ⟹{μ} q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set_mu p μ s hcnv)).
@@ -3146,7 +3816,7 @@ Proof.
   - right. intro wt. eapply n. now eapply wt_set_mu_spec2.
 Qed.
 
-Lemma wt_mu_set_fin_aux `{FiniteLts P A}
+Lemma wt_mu_set_fin_aux `{FiniteImageLts P A}
   (p : P) μ s (hcnv : p ⇓ μ :: s) (d : ∀ q, Decision (p ⟹{μ} q)) : Finite (dsig (fun q => p ⟹{μ} q)).
 Proof.
   unfold dsig.
@@ -3155,11 +3825,11 @@ Proof.
   now eapply elem_of_elements, wt_set_mu_spec2.
 Qed.
 
-Definition wt_set_mu_fin `{FiniteLts P A}
+Definition wt_set_mu_fin `{FiniteImageLts P A}
   (p : P) μ s (hcnv : p ⇓ μ :: s) : Finite (dsig (fun q => p ⟹{μ} q)) :=
   wt_mu_set_fin_aux p μ s hcnv (wt_mu_set_dec p μ s hcnv).
 
-Fixpoint wt_set `{FiniteLts P A} (p : P) (s : trace A) (hcnv : cnv p s) : gset P :=
+Fixpoint wt_set `{FiniteImageLts P A} (p : P) (s : trace A) (hcnv : cnv p s) : gset P :=
   match s as s0 return cnv p s0 -> gset P with
   | [] =>
       fun _ => wt_set_nil p (cnv_terminate p _ hcnv)
@@ -3172,7 +3842,7 @@ Fixpoint wt_set `{FiniteLts P A} (p : P) (s : trace A) (hcnv : cnv p s) : gset P
           ) ts
   end hcnv.
 
-Lemma wt_set_spec1 `{FiniteLts P A}
+Lemma wt_set_spec1 `{FiniteImageLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
   q ∈ wt_set p s hcnv -> p ⟹[s] q.
 Proof.
@@ -3184,7 +3854,7 @@ Proof.
     eapply IHs. eassumption.
 Defined.
 
-Lemma wt_set_spec2 `{FiniteLts P A}
+Lemma wt_set_spec2 `{FiniteImageLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
   p ⟹[s] q -> q ∈ wt_set p s hcnv.
 Proof.
@@ -3199,7 +3869,7 @@ Proof.
     + now eapply IHs'.
 Defined.
 
-Lemma wt_set_dec `{FiniteLts P A} p s (hcnv : p ⇓ s) : forall q, Decision (p ⟹[s] q).
+Lemma wt_set_dec `{FiniteImageLts P A} p s (hcnv : p ⇓ s) : forall q, Decision (p ⟹[s] q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set p s hcnv)).
@@ -3207,7 +3877,7 @@ Proof.
   - right. intro wt. eapply n. now eapply wt_set_spec2.
 Qed.
 
-Lemma wt_set_fin_aux `{FiniteLts P A}
+Lemma wt_set_fin_aux `{FiniteImageLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q)) : Finite (dsig (fun q => p ⟹[s] q)).
 Proof.
   unfold dsig.
@@ -3216,11 +3886,11 @@ Proof.
   now eapply elem_of_elements, wt_set_spec2.
 Qed.
 
-Definition wt_set_fin `{FiniteLts P A}
+Definition wt_set_fin `{FiniteImageLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q)) :=
   wt_set_fin_aux p s hcnv (wt_set_dec p s hcnv).
 
-Fixpoint wt_nil_stable_set `{FiniteLts P A} (p : P) (ht : p ⤓) : gset P :=
+Fixpoint wt_nil_stable_set `{FiniteImageLts P A} (p : P) (ht : p ⤓) : gset P :=
   match lts_stable_decidable p τ with
   | left  _ => {[ p ]}
   | right _ =>
@@ -3229,7 +3899,7 @@ Fixpoint wt_nil_stable_set `{FiniteLts P A} (p : P) (ht : p ⤓) : gset P :=
       ⋃ map k (enum (dsig (fun q => p ⟶ q)))
   end.
 
-Lemma wt_nil_stable_set_spec1 `{FiniteLts P A}
+Lemma wt_nil_stable_set_spec1 `{FiniteImageLts P A}
   (p q : P) (ht : p ⤓) :
   q ∈ wt_nil_stable_set p ht -> p ⟹ q /\ q ↛.
 Proof.
@@ -3246,7 +3916,7 @@ Proof.
     eassumption. eassumption.
 Qed.
 
-Lemma wt_nil_stable_set_spec2 `{FiniteLts P A}
+Lemma wt_nil_stable_set_spec2 `{FiniteImageLts P A}
   (p q : P) (ht : p ⤓) :
   (p ⟹ q /\ q ↛) -> q ∈ wt_nil_stable_set p ht.
 Proof.
@@ -3259,7 +3929,7 @@ Proof.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
 Qed.
 
-Lemma wt_nil_stable_set_dec `{FiniteLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q /\ q ↛).
+Lemma wt_nil_stable_set_dec `{FiniteImageLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q /\ q ↛).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_nil_stable_set p ht)).
@@ -3267,7 +3937,7 @@ Proof.
   - right. intro wt. eapply n. now eapply wt_nil_stable_set_spec2.
 Qed.
 
-Lemma wt_nil_stable_set_fin_aux `{FiniteLts P A}
+Lemma wt_nil_stable_set_fin_aux `{FiniteImageLts P A}
   (p : P) (ht : p ⤓) (d : ∀ q, Decision (p ⟹ q /\ q ↛)) : Finite (dsig (fun q => p ⟹ q /\ q ↛)).
 Proof.
   unfold dsig.
@@ -3276,7 +3946,7 @@ Proof.
   now eapply elem_of_elements, wt_nil_stable_set_spec2.
 Qed.
 
-Definition wt_nil_stable_set_fin `{FiniteLts P A}
+Definition wt_nil_stable_set_fin `{FiniteImageLts P A}
   (p : P) (ht : p ⤓) : Finite (dsig (fun q => p ⟹ q /\ q ↛)) :=
   wt_nil_stable_set_fin_aux p ht (wt_nil_stable_set_dec p ht).
 
@@ -3284,12 +3954,12 @@ Lemma cnv_wt_s_terminate `{Lts P A}
   (p q : P) s (hcnv : p ⇓ s) : p ⟹[s] q -> q ⤓.
 Proof. eapply cnv_iff_prefix_terminate; eauto. Qed.
 
-Definition wt_stable_set `{FiniteLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
+Definition wt_stable_set `{FiniteImageLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
   let ps := @enum (dsig (fun q => p ⟹[s] q)) _ (wt_set_fin p s hcnv) in
   let k t := wt_nil_stable_set (`t) (cnv_wt_s_terminate p (`t) s hcnv (proj2_dsig t)) in
   ⋃ map k ps.
 
-Lemma wt_stable_set_spec1 `{FiniteLts P A}
+Lemma wt_stable_set_spec1 `{FiniteImageLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
   q ∈ wt_stable_set p s hcnv -> p ⟹[s] q /\ q ↛.
 Proof.
@@ -3302,7 +3972,7 @@ Proof.
   firstorder.
 Qed.
 
-Lemma wt_stable_set_spec2 `{FiniteLts P A}
+Lemma wt_stable_set_spec2 `{FiniteImageLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
   (p ⟹[s] q /\ q ↛) -> q ∈ wt_stable_set p s hcnv.
 Proof.
@@ -3313,7 +3983,7 @@ Proof.
   simpl. eapply wt_nil_stable_set_spec2. eauto with mdb.
 Qed.
 
-Lemma wt_stable_set_fin_aux `{FiniteLts P A}
+Lemma wt_stable_set_fin_aux `{FiniteImageLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q /\ q ↛)) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)).
 Proof.
   unfold dsig.
@@ -3323,7 +3993,7 @@ Proof.
 Qed.
 
 
-Lemma wt_stable_set_dec `{FiniteLts P A} p s (hcnv : p ⇓ s) : forall q, Decision (p ⟹[s] q /\ q ↛).
+Lemma wt_stable_set_dec `{FiniteImageLts P A} p s (hcnv : p ⇓ s) : forall q, Decision (p ⟹[s] q /\ q ↛).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_stable_set p s hcnv)).
@@ -3331,11 +4001,11 @@ Proof.
   - right. intro wt. eapply n. now eapply wt_stable_set_spec2.
 Qed.
 
-Definition wt_stable_set_fin `{FiniteLts P A}
+Definition wt_stable_set_fin `{FiniteImageLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)) :=
   wt_stable_set_fin_aux p s hcnv (wt_stable_set_dec p s hcnv).
 
-Lemma wt_nil_set_stable `{FiniteLts P A} p hcnv :
+Lemma wt_nil_set_stable `{FiniteImageLts P A} p hcnv :
   lts_stable p τ -> wt_set p [] hcnv = {[ p ]}.
 Proof.
   intros hst.
@@ -3350,7 +4020,7 @@ Proof.
     eauto with mdb. set_solver.
 Qed.
 
-Lemma wt_stable_set_stable_singleton `{FiniteLts P A} p hcnv :
+Lemma wt_stable_set_stable_singleton `{FiniteImageLts P A} p hcnv :
   lts_stable p τ -> wt_stable_set p [] hcnv = {[ p ]}.
 Proof.
   intro hst.
@@ -3362,7 +4032,7 @@ Proof.
     eapply wt_stable_set_spec2. split; eauto with mdb.
 Qed.
 
-Fixpoint wt_s_set_from_pset_xs `{Lts P A, !FiniteLts P A}
+Fixpoint wt_s_set_from_pset_xs `{Lts P A, !FiniteImageLts P A}
   (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
   match ps as ps0 return (forall p, p ∈ ps0 -> p ⇓ s) -> gset P with
   | [] => fun _ => ∅
@@ -3374,19 +4044,19 @@ Fixpoint wt_s_set_from_pset_xs `{Lts P A, !FiniteLts P A}
         ys ∪ wt_s_set_from_pset_xs ps' s ha'
   end hcnv.
 
-Definition wt_set_from_pset_spec1_xs `{FiniteLts P A}
+Definition wt_set_from_pset_spec1_xs `{FiniteImageLts P A}
   (ps : list P) (s : trace A) (qs : gset P) :=
   forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹[s] q.
 
-Definition wt_set_from_pset_spec2_xs `{FiniteLts P A}
+Definition wt_set_from_pset_spec2_xs `{FiniteImageLts P A}
   (ps : list P) (s : trace A) (qs : gset P) :=
   forall p q, p ∈ ps -> p ⟹[s] q -> q ∈ qs.
 
-Definition wt_set_from_pset_spec_xs `{FiniteLts P A}
+Definition wt_set_from_pset_spec_xs `{FiniteImageLts P A}
   (ps : list P) (s : trace A) (qs : gset P) :=
   wt_set_from_pset_spec1_xs ps s qs /\ wt_set_from_pset_spec2_xs ps s qs.
 
-Lemma wt_s_set_from_pset_xs_ispec `{Lts P A, !FiniteLts P A}
+Lemma wt_s_set_from_pset_xs_ispec `{Lts P A, !FiniteImageLts P A}
   (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   wt_set_from_pset_spec_xs ps s (wt_s_set_from_pset_xs ps s hcnv).
 Proof.
@@ -3408,7 +4078,7 @@ Proof.
       ++ right. eapply IHps in hwp'; eauto.
 Qed.
 
-Lemma lift_cnv_elements `{Lts P A, !FiniteLts P A}
+Lemma lift_cnv_elements `{Lts P A, !FiniteImageLts P A}
   (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   forall p, p ∈ (elements ps) -> p ⇓ s.
 Proof.
@@ -3416,7 +4086,7 @@ Proof.
   eapply hcnv. now eapply elem_of_elements.
 Qed.
 
-Definition wt_s_set_from_pset `{Lts P A, !FiniteLts P A}
+Definition wt_s_set_from_pset `{Lts P A, !FiniteImageLts P A}
   (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
   wt_s_set_from_pset_xs (elements ps) s (lift_cnv_elements ps s hcnv).
 
@@ -3424,15 +4094,15 @@ Definition wt_set_from_pset_spec1 `{Countable P, Lts P A}
   (ps : gset P) (s : trace A) (qs : gset P) :=
   forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹[s] q.
 
-Definition wt_set_from_pset_spec2 `{FiniteLts P A}
+Definition wt_set_from_pset_spec2 `{FiniteImageLts P A}
   (ps : gset P) (s : trace A) (qs : gset P) :=
   forall p q, p ∈ ps -> p ⟹[s] q -> q ∈ qs.
 
-Definition wt_set_from_pset_spec `{FiniteLts P A}
+Definition wt_set_from_pset_spec `{FiniteImageLts P A}
   (ps : gset P) (s : trace A) (qs : gset P) :=
   wt_set_from_pset_spec1 ps s qs /\ wt_set_from_pset_spec2 ps s qs.
 
-Lemma wt_s_set_from_pset_ispec `{Lts P A, !FiniteLts P A}
+Lemma wt_s_set_from_pset_ispec `{Lts P A, !FiniteImageLts P A}
   (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   wt_set_from_pset_spec ps s (wt_s_set_from_pset ps s hcnv).
 Proof.
