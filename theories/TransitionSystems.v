@@ -2322,20 +2322,6 @@ Inductive lts_multiset_step `{ExtAction A} : mb A -> Act A -> mb A -> Prop :=
 
 Global Hint Constructors lts_multiset_step:mdb.
 
-Parameter (lts_multiset_step_decidable : 
-forall (A : Type) (H : ExtAction A) m α m', Decision (lts_multiset_step m α m')).
-
-Definition lts_multiset_stable `{ExtAction A} (m : mb A) (α : Act A): Prop := 
-match α with
-    | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
-                                                                        else True
-                                               else (∃ μ, dual η μ) -> False
-    | τ => True
-end. 
-
-Parameter (lts_multiset_stable_decidable : 
-forall (A : Type) (H : ExtAction A) m α, Decision (lts_multiset_stable m α)).
-
 
 Lemma non_blocking_action_in_ms `{ExtAction A}  mb1 η mb2 :  
     non_blocking η -> (* mb1 ⟶[η] mb2 *) lts_multiset_step mb1 (ActExt η) mb2 
@@ -2357,6 +2343,50 @@ Proof.
   + contradiction.
 Qed.
 
+Parameter (lts_exists_duo_decidable : 
+forall (A : Type) (H : ExtAction A) μ, Decision (∃ η' : A, non_blocking η' ∧ dual η' μ)).
+#[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} μ 
+  : Decision (∃ η', non_blocking η' /\ dual η' μ).
+Proof. exact (lts_exists_duo_decidable A H μ). Qed.
+
+
+Definition lts_multiset_step_decidable `{ExtAction A} m α m' : Decision (lts_multiset_step m α m').
+Proof.
+  destruct α as [μ |].
+  + destruct (decide (non_blocking μ)) as [nb | not_nb].
+    - rename μ into η. destruct (decide (m =  {[+ η +]} ⊎ m')); subst.
+      ++ left. eapply lts_multiset_minus; eauto.
+      ++ right. intro. eapply non_blocking_action_in_ms in nb; eauto.
+    - destruct (decide (∃ η', non_blocking η' /\ dual η' μ)) as [exists_dual | not_exists_dual].
+      ++ admit.
+      ++ right. intro HypTr. 
+         eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto; subst.
+  + right. inversion 1.
+Admitted.
+
+Definition lts_multiset_stable `{ExtAction A} (m : mb A) (α : Act A): Prop := 
+match α with
+    | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
+                                                                        else True
+                                               else (* ¬ (∃ *) forall η', dual η' η -> ¬ non_blocking η'
+    | τ => True
+end.
+
+Definition lts_multiset_stable_decidable `{ExtAction A} m α : Decision (lts_multiset_stable m α).
+Proof.
+  destruct α as [μ |].
+  + simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
+    - rename μ into η. destruct (decide (η ∈ m)) as [in_mem | not_in_mem].
+      ++ right. intro. eauto.
+      ++ left. eauto. 
+    - destruct (decide (∃ η', non_blocking η' /\ dual η' μ)) as [exists_dual | not_exists_dual].
+      ++ right. intro imp. destruct exists_dual as (η & nb & duo). destruct (imp η); eauto.
+      ++ left. eauto. 
+  + left. simpl. eauto.
+Qed.
+
+(* Parameter (lts_multiset_stable_decidable : 
+forall (A : Type) (H : ExtAction A) m α, Decision (lts_multiset_stable m α)). *)
 
 (* Parameter (dec_nb_co_act : 
 forall (A : Type) (H : ExtAction A)  (μ : A), Decision (exists η, dual η μ /\ non_blocking η)).
@@ -2417,18 +2447,40 @@ Defined. *)
 {|
     lts_step m α m' := lts_multiset_step m α m' ;
     lts_stable p := lts_multiset_stable p;
-    lts_step_decidable m α m' := lts_multiset_step_decidable A H m α m';
-    lts_stable_decidable m α := lts_multiset_stable_decidable A H m α;
+    lts_step_decidable m α m' := lts_multiset_step_decidable m α m';
+    lts_stable_decidable m α := lts_multiset_stable_decidable m α;
 (*     lts_essential_actions p := lts_essential_actions p.1 ∪ dom p.2; *)
   |}.
 Next Obligation.
-  intros.
-  admit.
-Admitted.
+  intros ? ? m α not_stable; simpl in *.
+  destruct α.
+  - simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
+    + rename μ into η. destruct (decide (η ∈ m)).
+      ++ assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq. multiset_solver.
+         exists (m ∖ {[+ η +]}). rewrite eq at 1. eapply lts_multiset_minus; eauto.
+      ++ exfalso. eauto.
+    + destruct (decide (∃ η' : A, non_blocking η' ∧ dual η' μ)) as [exist | not_exists ].
+      ++ exists ({[+ co μ +]} ⊎ m). destruct exist as (η & nb & duo).
+         eapply unique_nb in nb as eq; eauto;subst.
+         constructor; eauto.  
+      ++ exfalso. eapply not_stable. eauto.
+  - simpl in *. exfalso. eauto.
+Qed.
 Next Obligation.
-  intros.
-  admit.
-Admitted.
+  intros ? ? m α not_stable; simpl in *.
+  destruct α.
+  + intro stable. simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
+    ++ destruct (decide (μ ∈ m)) as [in_mem | not_in_mem]. 
+      +++ eauto. 
+      +++ destruct not_stable as (q & HypTr). 
+          eapply non_blocking_action_in_ms in nb;eauto; subst. 
+          multiset_solver.
+    ++ destruct not_stable as (q & HypTr).
+       eapply blocking_action_in_ms in not_nb as Hyp;eauto; subst.
+       destruct Hyp as (eq & duo & nb). subst.
+       eapply stable in duo as not_nb'. eauto.
+  + intro impossible. destruct not_stable as (q & HypTr). inversion HypTr.
+Qed.
 
 Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ1 μ2 /\ non_blocking μ1.
 
@@ -3103,13 +3155,16 @@ Qed.
 
 Lemma lts_fw_eq_spec_right_not_nb `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
    p q mp mq η μ:
-  (* ¬  *) non_blocking η (* utile OU prouvable ?*) -> dual η μ -> p ▷ mp ≐ q ▷ mq -> p ▷ mp ⟶≐[μ] q ▷ {[+ η +]} ⊎ mq.
+  (* ¬  *) non_blocking η (* utile OU prouvable ?*) -> dual η μ -> p ▷ mp ≐ q ▷ mq 
+  -> p ▷ mp ⟶≐[μ] q ▷ {[+ η +]} ⊎ mq.
 Proof.
   intros nb duo heq.
   exists (p ▷ ({[+ η +]} ⊎ mp)). split.
   + eapply ParRight. eapply lts_multiset_add; eauto.
-  + edestruct heq; simpl. 
-Admitted.
+  + constructor; simpl in *. 
+    - edestruct heq; simpl in *; eauto.
+    - edestruct heq; simpl in *; eauto. multiset_solver.
+Qed.
 
 
 Lemma lts_fw_com_eq_spec `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
