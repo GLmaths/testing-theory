@@ -2502,7 +2502,7 @@ Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ1 μ2 /\ non_blocking μ1.
 Reserved Notation "p ⟿{ m } q" (at level 30, format "p  ⟿{ m }  q").
 
 Inductive strip `{LtsEq P A} : P -> gmultiset A -> P -> Prop :=
-| strip_nil p p': p ⋍ p' -> p ⟿{∅} p'
+| strip_nil p p'(eq : p ⋍ p') : p ⟿{∅} p'
 | strip_step p1 p2 p3 η m :
   non_blocking η -> p1 ⟶[η] p2 -> p2 ⟿{m} p3 -> p1 ⟿{{[+ η +]} ⊎ m} p3
 
@@ -2573,7 +2573,7 @@ Proof.
   revert p p1 p2.
   induction m using gmultiset_ind; intros p p1 p2 hw1 hw2.
   - inversion hw1; inversion hw2; subst; try multiset_solver. 
-    eapply symmetry in H1. etransitivity; eauto.
+    eapply symmetry in eq. etransitivity; eauto.
   - destruct (strip_mem_ex hw1) as (t1 & lt1). destruct lt1 as [ lt1 nb1].
     destruct (strip_mem_ex hw2) as (t2 & lt2). destruct lt2 as [ lt2 nb2].
     eapply strip_eq_step in hw1 as (r1 & hwr1 & heqr1); eauto.
@@ -2777,8 +2777,8 @@ Proof.
   intros hwp. revert p q hwp.
   induction m using gmultiset_ind; intros.
   - inversion hwp; subst. 
-    -- assert (∅ ⊎ lts_oba_mo q = lts_oba_mo q) as eq by multiset_solver.
-       rewrite eq. eapply lts_oba_mo_eq; eauto.
+    -- assert (∅ ⊎ lts_oba_mo q = lts_oba_mo q) as mem by multiset_solver.
+       rewrite mem. eapply lts_oba_mo_eq; eauto.
     -- multiset_solver.
   - eapply strip_mem_ex in hwp as h0.
     destruct h0 as (e & hle). destruct hle as [hle nb].
@@ -2809,7 +2809,7 @@ Proof.
   intros hwp1 hwp. revert q m2 hwp.
   dependent induction hwp1; intros.
   - rewrite gmultiset_disj_union_left_id in hwp.
-    symmetry in H1. eapply strip_aux2 in H1; eauto.
+    symmetry in eq. eapply strip_aux2 in eq; eauto.
   - rewrite <- gmultiset_disj_union_assoc in hwp.
     eapply strip_eq_step in hwp as (r1 & hwr1 & heqr1); eauto.
     destruct (IHhwp1 _ _ hwr1) as (u & hwp3 & hequ).
@@ -2890,7 +2890,7 @@ Lemma strip_delay_tau `{LtsOba P A} {p q m t} :
 Proof.
   intros hr hl. revert t hl.
   induction hr as [| ? ? ? ? ? nb HypTr' ?]; intros.
-  + right. edestruct (eq_spec p' t) as (p'' & l & equiv). symmetry in H1. exists p. split;eauto.
+  + right. edestruct (eq_spec p' t) as (p'' & l & equiv). symmetry in eq. exists p. split;eauto.
     exists p'', t. repeat split; eauto. eapply strip_nil. reflexivity. symmetry; eauto.
   + edestruct (lts_oba_non_blocking_action_tau nb HypTr' hl) as [(r & l1 & l2)|].
     ++ eapply IHhr in l1 as [(b & c & r' & duo & nb' & l3 & l4) |(u, (w, (hu & hw & heq)))].
