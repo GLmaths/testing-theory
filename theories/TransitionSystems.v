@@ -158,11 +158,18 @@ Class ExtAction (A : Type) :=
       co : A -> A;
       unique_nb η μ: non_blocking η -> dual η μ -> η = (co μ);
       (* sinon, not finite lts ET en plus construction du fw pas valable *)
+      
+      (*Extra hypothesis for the moment *)
+      duo_sym : Symmetric dual;
+      
+      exists_duo_nb η : non_blocking η -> exists μ, dual η μ;
+      nb_not_nb η μ1 μ2 : non_blocking η -> dual η μ2 -> dual μ1 μ2 -> non_blocking μ1;
     }.
 #[global] Existing Instance extaction_eqdec.
 #[global] Existing Instance extaction_countable.
 #[global] Existing Instance nb_dec.
 #[global] Existing Instance d_dec.
+#[global] Existing Instance duo_sym.
 
 Inductive Act (A: Type) :=
 | ActExt (μ: A)
@@ -289,7 +296,7 @@ intro Hyp.
 eapply lts_oba_mo_spec_bis2 in Hyp. destruct Hyp as (p2 & nb & tr). assumption.
 Qed.
 
-Lemma lts_oba_mo_non_blocking_contra `{LtsOba P A} {p η} : ¬ non_blocking η -> ¬ η ∈ lts_oba_mo p.
+Lemma lts_oba_mo_non_blocking_contra `{LtsOba P A} {p η} : ¬ non_blocking η -> η ∉ lts_oba_mo p.
 Proof.
 intro NotNB. intro Hyp. eapply lts_oba_mo_non_blocking_spec1 in Hyp. contradiction.
 Qed.
@@ -2260,7 +2267,7 @@ Proof. constructor; first apply _. intros *; apply finite_countable. Qed.
 
 (** Parallel Lts extended with parallel. *)
 
-Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ1 μ2 \/ dual μ2 μ1.
+Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ1 μ2. (* \/ dual μ2 μ1. *)
 
 #[global] Program Instance parallel_Lts {P1 P2 A : Type} `{H : ExtAction A} (M1: Lts P1 A) (M2: Lts P2 A)
   `{Prop_of_Inter P1 P2 A parallel_inter} 
@@ -2494,8 +2501,8 @@ Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ1 μ2 /\ non_blocking μ1.
 
 Reserved Notation "p ⟿{ m } q" (at level 30, format "p  ⟿{ m }  q").
 
-Inductive strip `{Lts P A} : P -> gmultiset A -> P -> Prop :=
-| strip_nil p : p ⟿{∅} p
+Inductive strip `{LtsEq P A} : P -> gmultiset A -> P -> Prop :=
+| strip_nil p p': p ⋍ p' -> p ⟿{∅} p'
 | strip_step p1 p2 p3 η m :
   non_blocking η -> p1 ⟶[η] p2 -> p2 ⟿{m} p3 -> p1 ⟿{{[+ η +]} ⊎ m} p3
 
@@ -2516,7 +2523,7 @@ Lemma strip_eq_sim_ex `{LtsOba P A} {e e' m} :
 Proof.
   intro w.
   dependent induction w; intros r heq.
-  - exists r. split. constructor. assumption.
+  - exists r. split. constructor. reflexivity. etransitivity; eauto.
   - destruct (eq_spec r p2 (ActExt $ η)) as (r0 & l0 & heq0). eauto.
     destruct (IHw r0 heq0) as (r' & hwo' & heq').
     exists r'. split. eapply strip_step; eassumption. eassumption.
@@ -2565,7 +2572,8 @@ Lemma strip_m_deter `{LtsOba P A} {m p p1 p2} :
 Proof.
   revert p p1 p2.
   induction m using gmultiset_ind; intros p p1 p2 hw1 hw2.
-  - inversion hw1; inversion hw2; subst; multiset_solver.
+  - inversion hw1; inversion hw2; subst; try multiset_solver. 
+    eapply symmetry in H1. etransitivity; eauto.
   - destruct (strip_mem_ex hw1) as (t1 & lt1). destruct lt1 as [ lt1 nb1].
     destruct (strip_mem_ex hw2) as (t2 & lt2). destruct lt2 as [ lt2 nb2].
     eapply strip_eq_step in hw1 as (r1 & hwr1 & heqr1); eauto.
@@ -2645,7 +2653,7 @@ Proof.
   remember (lts_oba_mo p) as ns.
   revert p Heqns.
   induction ns using gmultiset_ind; intros.
-  - exists p. constructor.
+  - exists p. constructor. reflexivity.
   - assert (mem : x ∈ lts_oba_mo p) by multiset_solver.
     assert (exists q, non_blocking x /\ p ⟶[x] q) as (q & l).
     
@@ -2702,13 +2710,15 @@ Notation "p ⟶≐[ μ ] q" := (lts_fw_sc p (ActExt μ) q) (at level 90, format 
 Lemma strip_retract_act `{LtsOba P A}
   {p q m t α} : p ⟿{m} q -> q ⟶{α} t -> exists r t', p ⟶{α} r /\ r ⟿{m} t' /\ t ⋍ t'.
 Proof.
-  intros HypStrip HypTr. induction HypStrip as [| ? ? ? ? ? nb HypTr' ?  InductionHyp]; eauto.
-  exists t, t. repeat split; eauto. constructor. reflexivity.
-  eapply InductionHyp in HypTr as (r & t' & l & hwo & heq).
-  edestruct (lts_oba_non_blocking_action_delay nb HypTr' l) as (u & l1 & (r' & lr' & heqr')).
-  edestruct (strip_eq_sim_ex hwo _ heqr') as (t0 & hwo0 & heq0).
-  exists u, t0. repeat split; eauto. eapply strip_step; eassumption.
-  etrans. eassumption. now symmetry.
+  intros HypStrip HypTr. 
+  induction HypStrip as [| ? ? ? ? ? nb HypTr' ?  InductionHyp]; eauto.
+  + edestruct (eq_spec p t) as (t' & l & equiv). exists p'. split; eauto.
+    exists t', t. repeat split; eauto. constructor;eauto. reflexivity.
+  + eapply InductionHyp in HypTr as (r & t' & l & hwo & heq).
+    edestruct (lts_oba_non_blocking_action_delay nb HypTr' l) as (u & l1 & (r' & lr' & heqr')).
+    edestruct (strip_eq_sim_ex hwo _ heqr') as (t0 & hwo0 & heq0).
+    exists u, t0. repeat split; eauto. eapply strip_step; eassumption.
+    etrans. eassumption. now symmetry.
 Qed.
 
 
@@ -2732,8 +2742,10 @@ Lemma strip_delay_action_not_in_m `{LtsOba P A} {p q m t μ} :
   μ ∉ m -> p ⟿{m} q -> p ⟶[μ] t -> exists r, q ⟶[μ] r.
 Proof.
   intros not_in_mem HypStrip HypTr. revert t not_in_mem HypTr.
-  induction HypStrip as [| ? ? ? ? ? nb HypTr' HypStrip]. 
-  + eauto.
+  induction HypStrip as [? ? equiv| ? ? ? ? ? nb HypTr' HypStrip]. 
+  + intros. symmetry in equiv. 
+    edestruct (eq_spec p' t) as (p'' & l' & equiv'). exists p. split; eauto.
+    exists p''. eauto.
   + intros.
     assert (neq : μ ≠ η /\ μ ∉ m) by now multiset_solver. destruct neq as [neq not_in].
     edestruct (lts_oba_non_blocking_action_confluence nb neq HypTr' HypTr) as (r & l1 & l2). eauto.
@@ -2746,7 +2758,7 @@ Proof.
   intros Hyp hwp hlp. revert p q t μ Hyp hwp hlp.
   induction m using gmultiset_ind; intros.
   - inversion hwp.
-    + subst. exists t. eapply strip_nil.
+    + subst. exists t. eapply strip_nil. reflexivity.
     + multiset_solver.
   - eapply strip_mem_ex in hwp as h0.
     destruct h0 as (e & hle). destruct hle as [hle nb].
@@ -2764,7 +2776,10 @@ Lemma strip_after `{LtsOba P A} {p q m} :
 Proof.
   intros hwp. revert p q hwp.
   induction m using gmultiset_ind; intros.
-  - inversion hwp; multiset_solver.
+  - inversion hwp; subst. 
+    -- assert (∅ ⊎ lts_oba_mo q = lts_oba_mo q) as eq by multiset_solver.
+       rewrite eq. eapply lts_oba_mo_eq; eauto.
+    -- multiset_solver.
   - eapply strip_mem_ex in hwp as h0.
     destruct h0 as (e & hle). destruct hle as [hle nb].
     eapply strip_eq_step in hle as h1; eauto. destruct h1 as (r & hwr & heqr).
@@ -2776,13 +2791,25 @@ Proof.
     eapply lts_oba_mo_eq. eassumption. eassumption.
 Qed.
 
+Lemma strip_aux2 `{LtsOba P A} {p q q' m} :
+  p ⋍ q -> strip q m q' -> exists p', strip p m p' /\ p' ⋍ q'.
+Proof.
+  intros hwp1 hwp. revert p hwp1.
+  dependent induction hwp; intros.
+  - exists p. split; eauto. constructor. eauto.
+  - edestruct (eq_spec p p2) as (p' & l & equiv). exists p1. split; eauto.
+    edestruct (IHhwp p') as (p'3 & stripped & equiv'); eauto.
+    exists p'3.
+    split. econstructor; eauto. eauto.
+Qed.
+
 Lemma strip_aux1 `{LtsOba P A} {p q t m1 m2} :
   strip p m1 t -> strip p (m1 ⊎ m2) q -> exists r, strip t m2 r /\ r ⋍ q.
 Proof.
   intros hwp1 hwp. revert q m2 hwp.
   dependent induction hwp1; intros.
   - rewrite gmultiset_disj_union_left_id in hwp.
-    exists q. split. eassumption. reflexivity.
+    symmetry in H1. eapply strip_aux2 in H1; eauto.
   - rewrite <- gmultiset_disj_union_assoc in hwp.
     eapply strip_eq_step in hwp as (r1 & hwr1 & heqr1); eauto.
     destruct (IHhwp1 _ _ hwr1) as (u & hwp3 & hequ).
@@ -2797,7 +2824,7 @@ Proof.
   revert p q t μ Not_nb hwt hlp Heqpmo.
   induction pmo using gmultiset_ind; intros.
   - inversion hwt.
-    + subst. exists p. split. eapply strip_nil. exists q. split. assumption. reflexivity.
+    + subst. exists p. split. eapply strip_nil. reflexivity. exists t. split. assumption. eauto.
     + multiset_solver.
   - assert (mem : x ∈ lts_oba_mo p) by multiset_solver.
     eapply lts_oba_mo_spec_bis2 in mem as (p1 & hlp1). destruct hlp1 as [nb hlp1].
@@ -2863,7 +2890,8 @@ Lemma strip_delay_tau `{LtsOba P A} {p q m t} :
 Proof.
   intros hr hl. revert t hl.
   induction hr as [| ? ? ? ? ? nb HypTr' ?]; intros.
-  + right. exists t, t. repeat split; eauto. eapply strip_nil. reflexivity.
+  + right. edestruct (eq_spec p' t) as (p'' & l & equiv). symmetry in H1. exists p. split;eauto.
+    exists p'', t. repeat split; eauto. eapply strip_nil. reflexivity. symmetry; eauto.
   + edestruct (lts_oba_non_blocking_action_tau nb HypTr' hl) as [(r & l1 & l2)|].
     ++ eapply IHhr in l1 as [(b & c & r' & duo & nb' & l3 & l4) |(u, (w, (hu & hw & heq)))].
        +++ edestruct (lts_oba_non_blocking_action_delay nb HypTr' l3) as (z & l6 & l7).
@@ -3260,7 +3288,8 @@ Proof.
 Qed.
 
 
-#[global] Program Instance MbLtsEq `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+#[global] Program Instance MbLtsEq `{LL : @LtsObaFB P A H M Rel LLOBA}  
+`{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
 : LtsEq (P * mb A) A :=
   {| eq_rel := fw_eq |}.
 Next Obligation. intros. split.
@@ -3615,7 +3644,8 @@ Definition lts_fw_tau_set `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A
       )) in
   xs ++ ys.
 
-Lemma lts_fw_tau_set_spec1 `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+Lemma lts_fw_tau_set_spec1 `{@FiniteImageLts P A H M} 
+  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
   p1 m1 p2 m2 :
   (p1, m1) ⟶ (p2, m2) ->
   (p2, m2) ∈ lts_fw_tau_set p1 m1.
@@ -3780,7 +3810,8 @@ Proof.
     ++ eapply H3. eapply (proj2_dsig r). eassumption.
 Qed.
 
-Lemma wt_set_nil_spec2 `{FiniteImageLts P A} p q : forall (tp : terminate p), p ⟹ q -> q ∈ wt_set_nil p tp.
+Lemma wt_set_nil_spec2 `{FiniteImageLts P A} p q : 
+    forall (tp : terminate p), p ⟹ q -> q ∈ wt_set_nil p tp.
 Proof.
   intros. revert tp. dependent induction H2; intros tp; destruct tp.
   + set_solver.
@@ -3803,7 +3834,8 @@ Proof.
 Qed.
 
 Lemma wt_set_nil_fin_aux `{FiniteImageLts P A}
-  (p : P) (ht : terminate p) (d : ∀ q, Decision (p ⟹ q)) : Finite (dsig (fun q => p ⟹ q)).
+  (p : P) (ht : terminate p) (d : ∀ q, Decision (p ⟹ q)) : 
+      Finite (dsig (fun q => p ⟹ q)).
 Proof.
   unfold dsig.
   eapply (in_list_finite (elements (wt_set_nil p ht))).
@@ -3863,7 +3895,8 @@ Proof.
   exists (dexist q hw2). split. reflexivity. eapply elem_of_enum.
 Qed.
 
-Lemma wt_mu_set_dec `{FiniteImageLts P A} p μ s (hcnv : p ⇓ μ :: s) : forall q, Decision (p ⟹{μ} q).
+Lemma wt_mu_set_dec `{FiniteImageLts P A} p μ s (hcnv : p ⇓ μ :: s) : 
+    forall q, Decision (p ⟹{μ} q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set_mu p μ s hcnv)).
@@ -3872,7 +3905,8 @@ Proof.
 Qed.
 
 Lemma wt_mu_set_fin_aux `{FiniteImageLts P A}
-  (p : P) μ s (hcnv : p ⇓ μ :: s) (d : ∀ q, Decision (p ⟹{μ} q)) : Finite (dsig (fun q => p ⟹{μ} q)).
+  (p : P) μ s (hcnv : p ⇓ μ :: s) (d : ∀ q, Decision (p ⟹{μ} q)) : 
+    Finite (dsig (fun q => p ⟹{μ} q)).
 Proof.
   unfold dsig.
   eapply (in_list_finite (elements (wt_set_mu p μ s hcnv))).
@@ -3924,7 +3958,8 @@ Proof.
     + now eapply IHs'.
 Defined.
 
-Lemma wt_set_dec `{FiniteImageLts P A} p s (hcnv : p ⇓ s) : forall q, Decision (p ⟹[s] q).
+Lemma wt_set_dec `{FiniteImageLts P A} p s (hcnv : p ⇓ s) : 
+    forall q, Decision (p ⟹[s] q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set p s hcnv)).
@@ -3933,7 +3968,8 @@ Proof.
 Qed.
 
 Lemma wt_set_fin_aux `{FiniteImageLts P A}
-  (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q)) : Finite (dsig (fun q => p ⟹[s] q)).
+  (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q)) : 
+    Finite (dsig (fun q => p ⟹[s] q)).
 Proof.
   unfold dsig.
   eapply (in_list_finite (elements (wt_set p s hcnv))).
@@ -3984,7 +4020,8 @@ Proof.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
 Qed.
 
-Lemma wt_nil_stable_set_dec `{FiniteImageLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q /\ q ↛).
+Lemma wt_nil_stable_set_dec `{FiniteImageLts P A} p (ht : p ⤓) : 
+  forall q, Decision (p ⟹ q /\ q ↛).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_nil_stable_set p ht)).
@@ -3993,7 +4030,8 @@ Proof.
 Qed.
 
 Lemma wt_nil_stable_set_fin_aux `{FiniteImageLts P A}
-  (p : P) (ht : p ⤓) (d : ∀ q, Decision (p ⟹ q /\ q ↛)) : Finite (dsig (fun q => p ⟹ q /\ q ↛)).
+  (p : P) (ht : p ⤓) (d : ∀ q, Decision (p ⟹ q /\ q ↛)) : 
+    Finite (dsig (fun q => p ⟹ q /\ q ↛)).
 Proof.
   unfold dsig.
   eapply (in_list_finite (elements (wt_nil_stable_set p ht))).
@@ -4039,7 +4077,8 @@ Proof.
 Qed.
 
 Lemma wt_stable_set_fin_aux `{FiniteImageLts P A}
-  (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q /\ q ↛)) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)).
+  (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q /\ q ↛)) : 
+  Finite (dsig (fun q => p ⟹[s] q /\ q ↛)).
 Proof.
   unfold dsig.
   eapply (in_list_finite (elements (wt_stable_set p s hcnv))).
@@ -4048,7 +4087,8 @@ Proof.
 Qed.
 
 
-Lemma wt_stable_set_dec `{FiniteImageLts P A} p s (hcnv : p ⇓ s) : forall q, Decision (p ⟹[s] q /\ q ↛).
+Lemma wt_stable_set_dec `{FiniteImageLts P A} p s (hcnv : p ⇓ s) : 
+  forall q, Decision (p ⟹[s] q /\ q ↛).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_stable_set p s hcnv)).
