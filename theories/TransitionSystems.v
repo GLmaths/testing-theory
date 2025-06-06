@@ -241,7 +241,7 @@ Definition lts_sc `{Lts P A, !LtsEq P A} p α q := exists r, p ⟶{α} r /\ r �
 Notation "p ⟶⋍ q" := (lts_sc p τ q) (at level 30, format "p  ⟶⋍  q").
 Notation "p ⟶⋍{ α } q" := (lts_sc p α q) (at level 30, format "p  ⟶⋍{ α }  q").
 Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p  ⟶⋍[ μ ]  q").
-(* `{Prop_of_Inter P A, !LtsEq P A} *) 
+
 Class LtsOba (P A : Type) `{H : ExtAction A} (* {I : InteractionAction A}   *)
             {M : @Lts P A H} {Rel : @LtsEq P A H M} 
                           (* `{@Prop_of_Inter P A H I M} *)  :=
@@ -290,18 +290,21 @@ Class LtsObaFW (P A : Type) `{LtsOba P A} :=
 
 (* Signification between mailbox and non_blocking *)
 
-Lemma lts_oba_mo_non_blocking_spec1 `{LtsOba P A} {p η} : η ∈ lts_oba_mo p -> non_blocking η.
+Lemma lts_oba_mo_non_blocking_spec1 `{LtsOba P A} {p η} : 
+  η ∈ lts_oba_mo p -> non_blocking η.
 Proof.
 intro Hyp. 
 eapply lts_oba_mo_spec_bis2 in Hyp. destruct Hyp as (p2 & nb & tr). assumption.
 Qed.
 
-Lemma lts_oba_mo_non_blocking_contra `{LtsOba P A} {p η} : ¬ non_blocking η -> η ∉ lts_oba_mo p.
+Lemma lts_oba_mo_non_blocking_contra `{LtsOba P A} {p η} : 
+  ¬ non_blocking η -> η ∉ lts_oba_mo p.
 Proof.
 intro NotNB. intro Hyp. eapply lts_oba_mo_non_blocking_spec1 in Hyp. contradiction.
 Qed.
 
-Lemma BlockingAction_are_not_non_blocking `{LtsOba P A} {η μ} : non_blocking η -> ¬ non_blocking μ -> μ ≠ η.
+Lemma BlockingAction_are_not_non_blocking `{LtsOba P A} {η μ} : 
+  non_blocking η -> ¬ non_blocking μ -> μ ≠ η.
 Proof.
   intro nb1. intro nb2. intro eq. rewrite eq in nb2. contradiction.
 Qed.
@@ -336,7 +339,8 @@ Qed.
 Lemma terminate_preserved_by_eq2 `{LtsEq P A} {p q} : p ⋍ q -> p ⤓ -> q ⤓.
 Proof. intros. eapply terminate_preserved_by_eq; eauto. Qed.
 
-Lemma terminate_preserved_by_lts_non_blocking_action `{LtsOba P A} {p q η} : non_blocking η  -> p ⟶[ η ] q -> p ⤓ -> q ⤓.
+Lemma terminate_preserved_by_lts_non_blocking_action `{LtsOba P A} {p q η} : 
+    non_blocking η  -> p ⟶[ η ] q -> p ⤓ -> q ⤓.
 Proof.
   intros nb l ht. revert q η nb l.
   induction ht as [p Hyp1 Hyp2].
@@ -348,7 +352,8 @@ Proof.
   eapply Hyp2. eapply l3. eapply nb. eapply l0. eassumption.
 Qed.
 
-Lemma stable_tau_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η : non_blocking η -> p ↛ -> p ⟶[ η ] q -> q ↛.
+Lemma stable_tau_preserved_by_lts_non_blocking_action `{LtsOba P A} p q η : 
+  non_blocking η -> p ↛ -> p ⟶[ η ] q -> q ↛.
 Proof.
   intros nb st l.
   case (lts_stable_decidable q τ); eauto.
@@ -475,7 +480,9 @@ Definition Eq {A : Type} (s1 : A) (s2 : A) := s1 = s2.
 Definition NotEq {A : Type} (s1 : A) (s2 : A) := s1 ≠ s2.
 
 Lemma lts_input_preserved_by_wt_output `{LtsOba P A} p q s μ :
-  Forall non_blocking s -> Forall (NotEq μ) s -> p ↛ -> (exists t, p ⟶[μ] t) -> p ⟹[s] q -> (exists t, q ⟶[μ] t).
+  Forall non_blocking s 
+    -> Forall (NotEq μ) s -> p ↛ -> (exists t, p ⟶[μ] t) -> p ⟹[s] q 
+      -> (exists t, q ⟶[μ] t).
 Proof.
   intros s_spec1 s_spec2 hst_tau hst_inp hw.
   induction hw; eauto.
@@ -577,7 +584,8 @@ Proof.
   eapply IHw. eapply terminate_preserved_by_lts_tau; eauto. reflexivity.
 Qed.
 
-Lemma terminate_preserved_by_wt_non_blocking_action `{M: LtsOba P A} p q η : non_blocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
+Lemma terminate_preserved_by_wt_non_blocking_action `{M: LtsOba P A} p q η : 
+  non_blocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
 Proof.
   intros nb ht w.
   dependent induction w.
@@ -2267,7 +2275,10 @@ Proof. constructor; first apply _. intros *; apply finite_countable. Qed.
 
 (** Parallel Lts extended with parallel. *)
 
-Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ1 μ2. (* \/ dual μ2 μ1. *)
+Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ2 μ1 . (* \/ dual μ2 μ1. *)
+
+#[global] Instance parallel_inter_sym `{ExtAction A} : Symmetric parallel_inter.
+Proof. intros μ1 μ2. intro Hyp. eapply duo_sym. assumption. Defined.
 
 #[global] Program Instance parallel_Lts {P1 P2 A : Type} `{H : ExtAction A} (M1: Lts P1 A) (M2: Lts P2 A)
   `{Prop_of_Inter P1 P2 A parallel_inter} 
