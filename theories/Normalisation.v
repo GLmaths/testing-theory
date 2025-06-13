@@ -345,7 +345,7 @@ Proof.
     eapply elem_of_list_fmap. exists a. split; eauto.
     eapply gmultiset_elem_of_elements.
     now eapply norm_output_mem in e0.
-    rewrite e1, app_assoc, app_length.
+    rewrite e1, app_assoc, length_app.
     eapply elem_of_Permutation in mem as (s0 & eqp) .
     replace (length (s1 ++ s2)) with (length (b :: s0)).
     replace (length s') with (length s'').
