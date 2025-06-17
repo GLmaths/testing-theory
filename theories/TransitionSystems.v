@@ -381,6 +381,34 @@ Proof.
   edestruct (lts_stable_spec2 p (ActExt $ μ)); eauto with mdb.
 Qed.
 
+Inductive terminate_i`{Lts P A} (p : P) : Prop :=
+| t_stable' : p ↛ -> terminate_i p
+| tstep' : (exists p', p ⟶ p') -> (forall q, p ⟶ q -> terminate_i q) -> terminate_i p.
+
+Lemma terminate_i_to_terminate `{LtsP : Lts P A} (p : P) : terminate_i p -> p ⤓.
+Proof.
+  intro Hyp. induction Hyp as [| p witness spec Ind].
+  + eapply terminate_if_stable. assumption.
+  + eapply tstep; eauto.
+Qed.
+
+Lemma terminate_to_terminate_i `{LtsP : Lts P A} (p : P) : p ⤓ -> terminate_i p .
+Proof.
+  intro Hyp. induction Hyp as [p Hyp1 Hyp2].
+  destruct (decide (lts_stable p τ)) as [stable | not_stable].
+  + eapply t_stable'. assumption.
+  + eapply tstep'. eapply lts_stable_spec1 in not_stable. 
+    destruct not_stable as (p' & tr).
+    ++ exists p'; eauto.
+    ++ intro p'. intro tr. eapply Hyp2. assumption.
+Qed.
+
+Lemma terminate_i_equal_terminate' `{LtsP : Lts P A} (p : P) : p ⤓ <-> terminate_i p .
+Proof.
+  split ; [eapply terminate_to_terminate_i | eapply terminate_i_to_terminate].
+Qed.
+
+
 (* Weak transitions *)
 
 Inductive wt `{Lts P A} : P -> trace A -> P -> Prop :=
