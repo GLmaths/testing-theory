@@ -53,6 +53,13 @@ Proof.
   eapply hp. eapply good_preserved_by_lts_non_blocking_action_converse; eauto with mdb.
 Qed.
 
+Lemma ungood_preserved_by_eq `{LtsOba P A, !Good P A good} p q :
+  ~ good p -> q ⋍ p -> ~ good q.
+Proof.
+  intros not_happy eq. intro happy.
+  eapply good_preserved_by_eq in happy; eauto with mdb.
+Qed.
+
 Lemma ungood_preserved_by_wt_non_blocking_action 
   `{LtsOba P A, !Good P A good} 
   r1 r2 s :
