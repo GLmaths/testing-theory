@@ -869,7 +869,8 @@ Lemma are_actions_preserved_by_perm {A Pp} (s1 s2 : trace A) :
   s1 ≡ₚ s2 -> Forall Pp s1 -> Forall Pp s2.
 Proof. intros hp hos. eapply Permutation_Forall; eauto. Qed.
 
-Lemma wt_non_blocking_action_swap `{LtsObaFW P A} p q η1 η2 : non_blocking η1 -> non_blocking η2 -> p ⟹[[η1 ; η2]] q -> p ⟹⋍[[η2; η1]] q.
+Lemma wt_non_blocking_action_swap `{LtsObaFW P A} p q η1 η2 : 
+      non_blocking η1 -> non_blocking η2 -> p ⟹[[η1 ; η2]] q -> p ⟹⋍[[η2; η1]] q.
 Proof.
   intros nb1 nb2 w.
   destruct (wt_pop p q η1 [η2] w) as (t & w1 & w2).
@@ -1172,18 +1173,57 @@ Proof.
   now rewrite <- app_assoc. eapply wt_concat; eauto with mdb.
 Qed.
 
+
 Lemma cnv_drop_input_in_the_middle `{LtsObaFW P A} p s1 s2 μ :
-  Forall exist_co_nba s1 -> ¬ non_blocking μ ->
-  p ⇓ s1 ++ [μ] ++ s2 ->
+  exist_co_nba μ ->
+  Forall exist_co_nba s1 -> p ⇓ s1 ++ [μ] ++ s2 ->
   forall r, p ⟶[μ] r -> r ⇓ s1 ++ s2.
 Proof.
+  (* initial demo *)
+  intros Hyp his hcnv r l.
+  eapply EquivDef in his as [s nbs_duos]. destruct nbs_duos as [nbs duos].
+  destruct (forward_s r s1 s) as (t & w1 & w2); eauto.
+  (* replace s1 with (map co (map co s1)) by eapply map_co_involution. *)
+  destruct w2 as (r' & hwr' & heqr').
+  assert (p ⟹⋍[s1 ++ [μ]] t).
+  eapply (wt_input_perm (μ :: s1)).
+  eapply Forall_cons. assumption. eapply EquivDef. exists s. split; eauto.
+  eapply Permutation_cons_append.
+  eapply wt_act; eassumption.
+  destruct H2 as (t' & hwt' & heqt').
+  eapply cnv_preserved_by_eq. eapply heqr'.
+  eapply (cnv_retract t); eauto.
+  eapply cnv_preserved_by_eq. eassumption.
+  eapply (cnv_wt_prefix (s1 ++ [μ]) _ p).
+  now rewrite <- app_assoc.
+  eassumption.
+Qed.
+(*   (* À VOIR *)
+  revert p μ s2.
+  induction s1 as [|ν s']; intros p μ s2 not_nb his hcnv p' HypTr; simpl in *.
+  + eapply (cnv_wt_prefix ([μ])). exact hcnv. eapply lts_to_wt. exact HypTr.
+  +   
+(*   intros not_nb. 
+  
+  
+  
+  (* intros p μ hcnv.
+  induction (cnv_terminate p (s1 ++ [μ] ++ s2) hcnv) as [p hp IHtp]. *)
+  (* dependent induction hcnv. *)
+
+    
+    
+    
   intros Hyp not_nb hcnv r l.
   eapply EquivDef in Hyp as [s nbs_duos]. destruct nbs_duos as [nbs duos].
   destruct (forward_s r s1 s) as (t & w1 & w2); eauto.
   destruct w2 as (r' & hwr' & heqr').
   assert (p ⟹⋍[s1 ++ [μ]] t).
   eapply (wt_input_perm (μ :: s1)).
-  eapply Forall_cons. eexists. (* reflexivity.  eassumption.
+  eapply Forall_cons. eexists. 
+  
+  
+   reflexivity.  eassumption.
   eapply Permutation_cons_append.
   eapply wt_act; eassumption.
   destruct H3 as (t' & hwt' & heqt').
@@ -1194,30 +1234,30 @@ Proof.
   eapply (cnv_wt_prefix (s1 ++ [ActIn a]) _ p).
   now rewrite <- app_assoc.
   eassumption. *)
-Admitted.
+Admitted. *)
 
-
+(* (* à voir *)
 Lemma cnv_drop_in_the_middle `{LtsObaFW P A} p s1 s2 μ :
   Forall exist_co_nba s1 -> p ⇓ s1 ++ [μ] ++ s2 -> forall r, p ⟶[μ] r -> r ⇓ s1 ++ s2.
 Proof.
   intros Hyp hcnv r l.
   destruct (decide(non_blocking μ)); [eapply cnv_drop_non_blocking_action_in_the_middle | eapply cnv_drop_input_in_the_middle; eauto]; eauto.
-Qed. 
+Qed. *)
 
 Lemma Forall2_size {A B : Type} P (s1 : list A) (s2 : list B) : Forall2 P s1 s2 -> length s1 = length s2.
 Proof.
   intros Hyp. dependent induction Hyp; simpl ; eauto.
 Qed.
 
-Lemma Forall2_app {A B : Type} P (s1 s3 : list A) (s2 s4 : list B) : Forall2 P s1 s2 -> Forall2 P s3 s4 -> Forall2 P (s1 ++ s3) (s2 ++ s4).
+Lemma Forall2_app {A B : Type} P (s1 s3 : list A) (s2 s4 : list B) : 
+      Forall2 P s1 s2 -> Forall2 P s3 s4 -> Forall2 P (s1 ++ s3) (s2 ++ s4).
 Proof.
   intros Hyp1 Hyp2.
   dependent induction s1; dependent induction s3.
   + Admitted.
 
-(* (* eapply sym_dual. *)
 Lemma cnv_annhil `{LtsObaFW P A} p μ η s1 s2 s3 :
-  Forall exist_co_nba s1 -> Forall exist_co_nba s2 -> non_blocking η -> dual μ η ->
+  Forall exist_co_nba s1 -> Forall exist_co_nba s2 -> non_blocking η -> dual η μ ->
   p ⇓ s1 ++ [μ] ++ s2 ++ [η] ++ s3 ->
   p ⇓ s1 ++ s2 ++ s3.
 Proof.
@@ -1229,7 +1269,7 @@ Proof.
   eapply Forall_app. split; eauto.
   assert (Forall2 dual (s1' ++ [η] ++ s2') (s1 ++ [μ] ++ s2)).
   eapply Forall2_app. assumption.
-  eapply Forall2_app. apply Forall2_cons. eapply sym_dual. assumption. apply Forall2_nil. assumption.
+  eapply Forall2_app. apply Forall2_cons. assumption. apply Forall2_nil. assumption.
   edestruct (forward_s p (s1 ++ [μ] ++ s2)) as (t & w1 & w2); eauto.
   destruct w2 as (r & hwr & heqr).
   eapply (wt_non_blocking_action_perm _ ([η] ++ s1' ++ s2')) in hwr as (r0 & hwr0 & heqr0).
@@ -1246,7 +1286,7 @@ Proof.
   eapply wt_concat. rewrite <- app_assoc. eassumption. eassumption.
   eassumption.
   symmetry. eapply Permutation_app_swap_app.
-Qed.*)
+Qed.
 
 
 (* Class InteractionAction (A : Type) :=

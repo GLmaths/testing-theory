@@ -267,7 +267,7 @@ Lemma must_mu_either_good_cnv `{
     -> forall μ μ' p, p ∈ ps 
       -> parallel_inter μ μ'
         -> e ⟶[μ'] e' 
-          -> good e \/ good e' \/ p ⇓ [μ].
+          -> good e \/ good e' (* ajout par rapport à Input/Output *) \/ p ⇓ [μ].
 Proof.
   intros hmx μ μ' p mem inter l.
   destruct (decide (good e)); destruct (decide (good e')).
@@ -277,80 +277,7 @@ Proof.
   + right. right. eapply ungood_acnv_mu; eauto.
 Qed.
 
-
-(* Lemma must_mu_either_good_cnv `{
-  @LtsOba P A H LtsP EP, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
-
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-
-  ps e e' :
-  mustx ps e 
-    -> forall μ μ' p, p ∈ ps 
-      -> parallel_inter μ μ'
-        -> e ⟶[μ'] e' 
-          -> good e \/ p ⇓ [μ].
-Proof.
-  intros hmx μ μ' p mem inter l.
-  dependent induction hmx.
-  - now left.
-  - edestruct mustx_terminate_ungood; eauto with mdb.
-  (* 2ieme piste destruct sur la transition de ex *)
-    assert (∃ t : P * E, inter_step (p ▷ e) τ t) as HypTr.
-    eapply ex; eauto. destruct HypTr as (( p'' , e'') & tr ).
-    dependent destruction tr.
-    + 
-    
-  
-  (* 1er piste decider si p fait μ*) 
-    destruct (decide (lts_stable p (ActExt μ))) as [stable_p | not_stable_p].
-    + left. admit.
-    + eapply lts_stable_spec1 in not_stable_p. destruct not_stable_p as ( p' & HypTr).
-      assert (h1 : wt_set_from_pset_spec1 ps [μ] {[p']}).
-      exists p. assert (q = p') as eq. admit. subst.
-      split; eauto. eapply wt_act; eauto. eapply wt_nil.
-      eapply H4. exact inter.
-
-
-    
-  
-  
-    right.
-    edestruct mustx_terminate_ungood; eauto with mdb. contradiction.
-    eapply cnv_act. eauto.
-    intros q w.
-    destruct (decide (non_blocking μ)) as [nb | not_nb].
-    + rename μ into η.
-      eapply cnv_nil.
-      eapply terminate_preserved_by_wt_non_blocking_action; eauto.
-    + assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
-      exists p. split; set_solver.
-      assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
-      set (hm := com e' μ μ'  {[ q ]} inter l h1 h2).
-      destruct (mustx_terminate_ungood _ _ hm). 
-      ++ destruct (decide (non_blocking μ')) as [nb' | not_nb'].
-         +++ contradict nh.
-             eapply good_preserved_by_lts_non_blocking_action_converse; eassumption.
-         +++ admit.
-      ++ eapply cnv_nil. eapply H6. set_solver.
-Admitted. (* big admitted *)
- *)
-(* Lemma ungood_acnv_mu `{
-  @LtsOba P A H LtsP EP, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
-
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-
-  ps e e' :
-  mustx ps e 
-    -> forall μ μ' p, parallel_inter μ μ'
-      -> p ∈ ps 
-        -> e ⟶[μ'] e' 
-          -> ¬ good e 
-            -> p ⇓ [μ].
-Proof. intros. edestruct must_mu_either_good_cnv'; eauto. contradiction. Qed. *)
-
-(* to rework *)
+(* to rework , why ?*)
 Lemma mx_sum `{
   LtsP : Lts P A, !FiniteImageLts P A, 
   LtsE : !Lts E A, !LtsEq E A, !Good E A good}

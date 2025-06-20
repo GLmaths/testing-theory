@@ -34,16 +34,18 @@ From Must Require Import TransitionSystems Must Bar Completeness Soundness Lift.
 
 Section convergence.
 
-  Context `{Label L}.
-  Context `{!Lts A L, !FiniteLts A L}.
-
-  Definition terminate_extensional (p : A) : Prop :=
+  Context `{ExtAction A}.
+(*   Context `{!Lts P A}.
+  Context `{!FiniteImageLts P A}.
+ *)
+ 
+  Definition terminate_extensional (p : P) : Prop :=
     forall η : max_exec_from p, exists n fex,
       mex_take_from n η = Some fex /\ lts_stable (fex_from_last fex) τ.
 
   #[global] Instance conv_bar : Bar A := {| bar_pred p := sts_stable p |}.
 
-  Lemma terminate_intensional_coincide (p : A) :
+  Lemma terminate_intensional_coincide (p : P) :
     intensional_pred p ↔ terminate p.
   Proof.
     split.
@@ -57,13 +59,13 @@ Section convergence.
       + constructor 2 =>//.
   Qed.
 
-  Lemma terminate_ext_pred_iff_terminate_extensional (p : A) :
+  Lemma terminate_ext_pred_iff_terminate_extensional (p : P) :
     extensional_pred p <-> terminate_extensional p.
   Proof. split; intros Hme η; destruct (Hme η) as (?&?&?&?); naive_solver. Qed.
 
   (* ************************************************** *)
 
-  Lemma terminate_extensional_iff_terminate (p : A) :
+  Lemma terminate_extensional_iff_terminate (p : P) :
     terminate_extensional p <-> terminate p.
   Proof.
     rewrite <- terminate_ext_pred_iff_terminate_extensional.
@@ -73,14 +75,14 @@ Section convergence.
     - eapply intensional_implies_extensional.
   Qed.
 
-  Inductive cnv_extensional : A -> trace L -> Prop :=
+  Inductive cnv_extensional : P -> trace A -> Prop :=
   | cnv_ext_nil p : terminate_extensional p -> cnv_extensional p []
   | cnv_ext_act p μ s :
     terminate_extensional p ->
     (forall q, p ⟹{μ} q -> cnv_extensional q s) ->
     cnv_extensional p (μ :: s).
 
-  Lemma cnv_extensional_iff_terminate (p : A) s : cnv_extensional p s <-> cnv p s.
+  Lemma cnv_extensional_iff_terminate (p : P) s : cnv_extensional p s <-> cnv p s.
   Proof.
     revert p. induction s as [|μ s].
     - now split; inversion 1; subst; constructor; eapply terminate_extensional_iff_terminate.

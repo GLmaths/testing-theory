@@ -162,6 +162,21 @@ Definition bhv_pre_cond1 `{Lts P A, Lts Q A}
 
 Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
+
+Definition lts_pre_acc_set_of `{Lts P A} (p : P) (μ : A) : Prop := 
+      ¬ lts_stable p (ActExt μ).
+
+Definition lts_acc_set_of `{Lts P A} (p : P) : A -> Prop := lts_pre_acc_set_of p.
+
+Definition Included {A : Type} (B C: A -> Prop) : Prop := 
+    forall μ : A, B μ -> C μ.
+Notation "B ⫅ C" := (Included B C) (at level 20, format "B ⫅ C").
+
+Definition Setminus {A : Type} (B C: A -> Prop) : A -> Prop :=
+    fun μ : A => B μ /\ ~ C μ.
+Notation "B \ C" := (Setminus B C) (at level 20, format "B \ C").
+
+
 Definition bhv_pre_cond2 `{
   @Lts P A H, 
   @Lts Q A H}
@@ -169,7 +184,7 @@ Definition bhv_pre_cond2 `{
   (p : P) (q : Q) :=
   forall s q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (forall μ, ¬ lts_stable p' (ActExt μ) -> ¬ lts_stable q' (ActExt μ)). 
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_pre_acc_set_of p' ⫅ lts_pre_acc_set_of q'). 
 
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). 
 
@@ -269,9 +284,10 @@ Lemma must_mu_either_good_cnv `{
     -> forall μ μ',
       parallel_inter μ μ'
         -> e ⟶[μ'] e' 
-          -> ¬ good e -> p ⇓ [μ].
+          -> ¬ good e -> ¬ good e'
+             -> p ⇓ [μ].
 Proof.
-  intros hmx μ μ' inter l not_happy.
+  intros hmx μ μ' inter l not_happy not_happy'.
   dependent induction hmx.
   + contradiction.
   + eapply cnv_act; eauto. 
