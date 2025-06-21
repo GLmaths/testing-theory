@@ -32,9 +32,8 @@ Require Import Coq.Logic.JMeq.
 Require Import Coq.Program.Wf Setoid.
 Require Import Coq.Program.Equality.
 From Coq.Logic Require Import ProofIrrelevance.
-From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import TransitionSystems Must.
-From Must Require Import Lift.
+From stdpp Require Import sets base countable finite gmap list finite decidable finite gmap.
+From Must Require Import TransitionSystems Must Lift Subset_Act.
 
 (** Test generators specification. *)
 
@@ -63,6 +62,7 @@ Class gen_spec {P A : Type} `{Lts P A, !LtsEq P A, !Good P A good}
               ¬ non_blocking (co_of μ) ->
               gen (μ :: s) ⟶[μ'] e -> e ⋍ gen s /\ μ' = co_of μ;
   }.
+
 
 Lemma co_of_inj `{
   M1 : LtsOba E A, !Good E A good, !gen_spec co_of f}
@@ -129,7 +129,7 @@ Proof.
   assert (¬ non_blocking (co_of (co μ))) as not_nb'.
   eapply lts_oba_fw_non_blocking_duo_spec in nb ; eauto. symmetry. eapply co_inter.
   eapply nb_not_nb; eauto.
-Qed. 
+Qed.
 
 Lemma gen_spec_determinacy `{
   M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
@@ -156,6 +156,7 @@ Class gen_spec_conv {P A : Type} `{Lts P A, ! LtsEq P A, !Good P A good}
 
 #[global] Existing Instance gen_conv_spec_gen_spec.
 
+
 Class gen_spec_acc {P : Type} `{Lts P A, ! LtsEq P A, !Good P A good}
   (co_of : A -> A) (gen_acc : (* gset A *)(A -> Prop) -> list A -> P) := {
     gen_acc_spec_gen_spec O : gen_spec co_of (gen_acc O) ;
@@ -165,14 +166,72 @@ Class gen_spec_acc {P : Type} `{Lts P A, ! LtsEq P A, !Good P A good}
                 non_blocking η -> gen_acc O [] ↛[η] ;
   (* t3-> *) gen_spec_acc_nil_mu_inv O μ e : 
                 ¬ non_blocking μ -> gen_acc O [] ⟶[μ] e
-                    -> (exists η, μ = co_of η /\ O η) ;
+                    -> (exists η, μ = co_of η /\ η ∈ O) ;
   (* t3<- *) gen_spec_acc_nil_mem_lts_inp O η : 
-                O η (* η ∈ O *) -> ∃ r μ, gen_acc O [] ⟶[μ] r /\ μ = co_of η;
+                η ∈ O -> ∃ r μ, gen_acc O [] ⟶[μ] r /\ μ = co_of η;
     (* t4 *) gen_spec_acc_nil_lts_not_nb_good μ e' O : 
                 ¬ non_blocking μ -> gen_acc O [] ⟶[μ] e' -> good e' ;
   }.
 
 #[global] Existing Instance gen_acc_spec_gen_spec.
+
+
+Lemma co_inter' `{
+  Lts E A, ! LtsEq E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  {O : A → Prop}
+  μ :
+  parallel_inter μ (co_of μ).
+Proof.
+  eapply co_inter. Unshelve. eauto.
+Qed.
+
+Lemma co_inter_spec1' `{
+  Lts E A, ! LtsEq E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  {O : A → Prop}
+  μ μ':
+  parallel_inter μ' (co_of μ)
+                          -> μ = μ'.
+Proof.
+  eapply co_inter_spec1. Unshelve. eauto.
+Qed.
+
+Lemma co_of_inj' `{
+  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  {O : A → Prop}
+  μ μ' :
+  co_of μ = co_of μ' -> μ = μ'.
+Proof.
+  eapply co_of_inj. Unshelve. eauto.
+Qed.
+
+Lemma co_co_is_id' `{
+  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  {O : A → Prop}
+  μ :
+  μ = co_of (co_of μ).
+Proof.
+  eapply co_co_is_id. Unshelve. eauto.
+Qed.
+
+
+Lemma co_is_co_of_nb' `{
+  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  {O : A → Prop}
+  μ :
+  non_blocking (co_of μ) -> co_of μ = co μ.
+Proof.
+  eapply co_is_co_of_nb. Unshelve. eauto.
+Qed.
+
+Lemma co_of_is_co_nb' `{
+  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  {O : A → Prop}
+  μ :
+  non_blocking (co μ) -> dual (co μ) μ -> co_of μ = co μ.
+Proof.
+  eapply co_of_is_co_nb. Unshelve. eauto.
+Qed.
+
 
 (** Facts about Must *)
 
@@ -727,11 +786,9 @@ Lemma completeness1 `{
   (p : P) (q : Q) : p ⊑ q -> p ≼₁ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cnv, hleq, must_iff_cnv. Qed.
 
-(** Second requirement for completeness *)
-
-Definition oas `{FiniteImageLts P A} (p : P) (s : list A) (hcnv : p ⇓ s) : list (A -> Prop) :=
+Definition oas `{FiniteImageLts P A} (p : P) (s : list A) (hcnv : p ⇓ s) : A -> Prop :=
   let ps : list P := elements (wt_stable_set p s hcnv) in
-  (* ⋃  *) map lts_acc_set_of ps.
+  ⋃ map lts_acc_set_of ps.
 
 Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
   (h : forall p, p ∈ ps -> P p \/ Q p) : Exists P ps \/ Forall Q ps.
@@ -740,7 +797,7 @@ Proof.
   destruct IHps; destruct (h p); eauto; set_solver.
 Qed.
 
-Lemma exists_forall_in_gset `{Countable B} (ps : gset B) (P : B -> Prop) (Q : B -> Prop)
+Lemma exists_forall_in_gset `{Countable A} (ps : gset A) (P : A -> Prop) (Q : A -> Prop)
   (h : forall p, p ∈ ps -> P p \/ Q p) : (exists p, p ∈ ps /\ P p)\/ (forall p, p ∈ ps -> Q p).
 Proof.
   induction ps using set_ind_L. set_solver.
@@ -779,27 +836,23 @@ Proof.
   set_solver.
 Qed.
 
-(* Definition `{ExtAction A} (Acc1 : list (A -> Prop)) (Acc1 : list (A -> Prop)) 
-          := forall X , X ∈ Acc1  gset P.  *)
-
 Lemma union_wt_acceptance_set_subseteq `{FiniteImageLts P A} μ s p q h1 h2 :
     p ⟹{μ} q -> oas q s h1 ⊆ oas p (μ :: s) h2.
 Proof.
-  intros hw a Hyp. 
-  eapply wt_acceptance_set_subseteq; eauto.
-(*   (O & mem1 & mem2)%elem_of_union_list.
+  intros hw a (O & mem1 & mem2)%elem_of_union_list.
   eapply elem_of_union_list.
-  exists O. split; eauto. eapply wt_outputs_subseteq; eauto. *)
+  exists O. split; eauto. eapply wt_acceptance_set_subseteq; eauto.
 Qed.
 
 Lemma union_acceptance_set_lts_tau_subseteq `{FiniteImageLts P A} s p q h1 h2 :
   p ⟶ q -> oas q s h1 ⊆ oas p s h2.
 Proof.
-  intros hw a Hyp. 
-  eapply lts_tau_acceptance_set_subseteq; eauto.
+  intros l a (O & mem1 & mem2)%elem_of_union_list.
+  eapply elem_of_union_list.
+  exists O. split; eauto. eapply lts_tau_acceptance_set_subseteq; eauto.
 Qed.
 
-Lemma aft_output_must_gen_acc `{
+Lemma aft_not_nb_co_of_must_gen_acc `{
   @LtsOba P A H LtsP LtsEqP, 
   @LtsOba E A H LtsE LtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
 
@@ -809,11 +862,11 @@ Lemma aft_output_must_gen_acc `{
   p ⤓ -> ¬ non_blocking (co_of μ) -> (forall q, p ⟹{μ} q -> must q (gen_acc O s)) 
               -> must p (gen_acc O (μ :: s) : E).
 Proof.
-  intro tp. (* not_nb hmq. *) revert O μ s. induction tp.
+  intro tp. revert O μ s. induction tp.
   intros O μ s not_nb hmq.
   eapply m_step.
   - eapply gen_spec_ungood.
-  - edestruct (@gen_spec_co_not_nb_lts_tau_ex E A); eauto with mdb. (* 3 *)
+  - edestruct (@gen_spec_co_not_nb_lts_tau_ex E A); eauto with mdb.
     now destruct gen_spec_acc0.
   - intros. eapply H4. eassumption. eassumption. 
     eauto with mdb.
@@ -822,16 +875,17 @@ Proof.
   - intros p' e' μ' μ'' inter l0 l1.
     eapply gen_spec_co_not_nb_lts_mu_uniq in l1 as (h1 & h2). subst.
       eapply must_eq_client. symmetry; eauto.
-      eapply hmq. eapply co_inter_spec1 in inter. subst. eauto with mdb. eauto.
-    Unshelve. exact O. (* ?????? dû à (* 3 *)*)
+      eapply hmq. eapply co_inter_spec1' in inter. subst. eauto with mdb. eauto.
+      
+      Unshelve. eauto.
 Qed.
+
 
 Lemma gen_acc_tau_ex `{
   M1 : LtsObaFB E A, !Good E A good, !gen_spec_acc co_of f} 
   s1 s2 s3 μ O :
   exist_co_nba μ -> Forall exist_co_nba s1 -> Forall exist_co_nba s2 ->
   f O (s1 ++ [μ] ++ s2 ++ [co_of μ] ++ s3) ⟶⋍ f O (s1 ++ s2 ++ s3).
-  (* inversion_gen_tau *)
 Proof.
   intros.
   assert (f O (s1 ++ [μ] ++ s2 ++ [co_of μ] ++ s3) ⟶⋍[co_of μ]
@@ -842,14 +896,14 @@ Proof.
             f O ((s1 ++ s2) ++ s3)) as (e2 & l2 & heq2).
   replace (s1 ++ s2 ++ [co_of μ] ++ s3) with ((s1 ++ s2) ++ [co_of μ] ++ s3).
   eapply (@f_gen_lts_mu_in_the_middle E A _ _ _ _ _ _ co_of (f O) _
-            (s1 ++ s2) s3 (co_of μ)); simpl in *; eauto. (* 3 *)
+            (s1 ++ s2) s3 (co_of μ)); simpl in *; eauto.
   unfold exist_co_nba. eapply Forall_app; eauto.
   now rewrite <- app_assoc.
-  assert (μ =co_of (co_of μ)) as eq. eapply co_co_is_id.
+  assert (μ =co_of (co_of μ)) as eq. eapply co_co_is_id'.
   rewrite <-eq in l2.
-  destruct H1 as (a' & nb & duo).
-  assert (a' = co μ). eapply unique_nb; eauto. subst.
-  assert (co_of μ = co μ) as eq'. eapply co_of_is_co_nb; eauto.
+  destruct H1 as (a' & nb & duo). 
+  assert (a' = co μ). eapply unique_nb; eauto. subst. 
+  assert (co_of μ = co μ) as eq'. eapply co_of_is_co_nb'; eauto.
   rewrite<- eq' in nb, duo.
   (* subst.  *)simpl in *.
   edestruct (eq_spec e1 e2) as (e' & l' & heq'). eauto.
@@ -859,13 +913,15 @@ Proof.
   transitivity e'. eauto.
   transitivity e2; eauto.
   
-  Unshelve. eauto. eauto. (* ?????? dû à (* 3 *)*)
+  Unshelve. eauto. eauto.
 Qed.
+
+
 
 Lemma must_f_gen_a_subseteq_non_blocking `{
   @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
   s e η O1 :
-  non_blocking η -> gen_acc O1 s ⟶[η] e -> forall O2, O1 ⫅ O2 
+  non_blocking η -> gen_acc O1 s ⟶[η] e -> forall O2, O1 ⊆ O2 
     -> exists t, gen_acc O2 s ⟶[η] t.
 Proof.
   revert e O1.
@@ -876,8 +932,13 @@ Proof.
          (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc O2) _ μ s')
          as (r' & hl' & heqr').
        assert (¬ non_blocking (co_of μ)) as not_nb. 
-       eapply lts_oba_fw_non_blocking_duo_spec; eauto. 
-       assert (parallel_inter (co_of μ) μ). symmetry. eapply co_inter. eauto.
+       eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+       assert (parallel_inter (co_of μ) μ). symmetry. 
+
+       inversion gen_spec_acc0; subst. destruct (gen_acc_spec_gen_spec0 O2).
+       (* ugly ?*)
+
+       eapply co_inter0. eauto.
        edestruct (gen_spec_co_not_nb_lts_mu_uniq not_nb l). subst. contradiction. 
     ++ edestruct
         (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc O1) _ μ s')
@@ -899,21 +960,24 @@ Proof.
        +++ assert (e ⋍ gen_acc O1 s' /\ η = co_of μ) as (equiv & eq).
            eapply gen_spec_co_not_nb_lts_mu_uniq; eauto. subst.
            exists e2. eauto.
-           Unshelve. eauto.
 Qed.
 
 Lemma must_f_gen_a_subseteq_not_non_blocking `{
   @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
   s e μ' O1 :
-  ¬ non_blocking μ' -> gen_acc O1 s ⟶[μ'] e -> forall O2, O1 ⫅ O2 
+  ¬ non_blocking μ' -> gen_acc O1 s ⟶[μ'] e -> forall O2, O1 ⊆ O2 
       -> exists t, gen_acc O2 s ⟶[μ'] t.
 Proof.
   revert e O1.
   induction s as [|μ s']; intros e O1 not_nb l O2 hsub.
-  + eapply gen_spec_acc_nil_mu_inv in l as (μ'' & eq & In) ; eauto. subst.
+  + (* eapply gen_spec_acc_nil_mu_inv in l as (μ'' & eq & In) ; eauto. subst.
     eapply hsub in In.
     eapply gen_spec_acc_nil_mem_lts_inp in In as (r & μ''' & HypTr & eq). subst.
-    eauto.
+    eauto. *) 
+    assert (∃ η : A, μ' = co_of η ∧ η ∈ O1) as (μ'' & eq & In).
+    eapply gen_spec_acc_nil_mu_inv; eauto. subst.
+    eapply hsub in In. eapply gen_spec_acc_nil_mem_lts_inp in In as (r & μ''' & HypTr & eq).
+    subst. eauto.
   + destruct (decide (non_blocking (co_of μ))) as [nb' | not_nb'].
     ++ edestruct
         (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc O1) _ μ s')
@@ -938,42 +1002,41 @@ Qed.
 
 Lemma must_f_gen_a_subseteq_tau `{
   @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
-  s e O1 : gen_acc O1 s ⟶ e -> forall O2, (forall μ, O1 μ -> O2 μ) 
+  s e O1 : gen_acc O1 s ⟶ e -> forall O2, O1 ⊆ O2
       -> exists t, gen_acc O2 s ⟶ t.
 Proof.
   revert e O1.
   induction s as [|μ s']; intros e O1 l O2 hsub.
   + exfalso. eapply lts_stable_spec2, gen_spec_acc_nil_stable_tau; eauto.
   + destruct (decide (non_blocking (co_of μ))) as [nb | not_nb].
-    ++ edestruct
-        (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc O1) _ μ s')
-        as (r & hl & heqr). (* simpl in hl. *)
+    ++ assert (gen_acc O1 (μ :: s') ⟶⋍[co_of μ] gen_acc O1 s') as (r & hl & heqr).
+       apply gen_spec_mu_lts_co.
        destruct (lts_oba_non_blocking_action_tau nb hl l) 
         as [(r1 & l1 & (r2 & l2 & heq))| (μ' & duo & (r' & hl' & heq'))].
        +++ edestruct (eq_spec (gen_acc O1 s') r1) as (e' & hle' & heqe').
            symmetry in heqr. eauto.
            eapply IHs' in hle' as (t & hlt).
-           edestruct
-             (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc O2) _ μ s')
-             as (r' & hl' & heqr'). simpl in hl'.
+           assert (gen_acc O2 (μ :: s') ⟶⋍[co_of μ] gen_acc O2 s') as (r' & hl' & heqr').
+           apply gen_spec_mu_lts_co.
            edestruct (eq_spec r' t) as (e2 & hle2 & heqe2). eauto.
            edestruct (lts_oba_non_blocking_action_delay nb hl' hle2) as (v & l3 & l4).
-           eauto with mdb. eassumption.
+           eauto with mdb. eassumption. 
        +++ edestruct (eq_spec (gen_acc O1 s') r') as (t & hlt & heqt).
            symmetry in heqr. eauto.
-           assert (¬ non_blocking μ') as not_nb. 
-           eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+           assert (¬ non_blocking μ') as not_nb.
+           eapply lts_oba_fw_non_blocking_duo_spec; eauto. 
            edestruct (must_f_gen_a_subseteq_not_non_blocking s' t μ' O1 not_nb hlt O2 hsub).
-           edestruct
-             (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc O2) _ μ' s')
-             as (u & hlu & hequ).
+           assert (gen_acc O2 (μ' :: s') ⟶⋍[co_of μ'] gen_acc O2 s') as (u & hlu & hequ).
+           apply gen_spec_mu_lts_co.
            edestruct (eq_spec u x) as (t' & hlt' & heqt'). eauto.
-           assert (μ = μ'). eapply co_inter_spec1. eauto. subst.
+           assert (μ = μ'). 
+
+           inversion gen_spec_acc0; subst. destruct (gen_acc_spec_gen_spec0 O2).
+           apply co_inter_spec2. eauto. subst.  (* ugly ?*)
+
            edestruct (lts_oba_fb_feedback nb duo hlu hlt'); eauto.
-           firstorder.
+           firstorder. 
     ++ eapply gen_spec_co_not_nb_lts_tau_ex. exact not_nb.
-    
-    Unshelve. eauto.
 Qed.
 
 Lemma must_f_gen_a_subseteq_nil `{
@@ -983,7 +1046,7 @@ Lemma must_f_gen_a_subseteq_nil `{
   `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
 
   (p : P) O1 : 
-  must p (gen_acc O1 []) -> forall O2, O1 ⫅ O2 -> must p (gen_acc O2 []).
+  must p (gen_acc O1 []) -> forall O2, O1 ⊆ O2 -> must p (gen_acc O2 []).
 Proof.
   intros hm.
   assert (hpt : p ⤓)
@@ -1004,19 +1067,29 @@ Proof.
           destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
           ++++ contradict nb1.
                eapply lts_oba_fw_non_blocking_duo_spec; eauto.
-          ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ & eq' & In). subst.
+          ++++ (* eapply gen_spec_acc_nil_mu_inv in l2 as (μ & eq' & In). subst.
                eapply hsub in In.
                apply gen_spec_acc_nil_mem_lts_inp in In as (e & μ' & l & eq'). subst.
-               eauto with mdb. eauto with mdb.
+               eauto with mdb. eauto with mdb. *) 
+               assert (∃ η : A, μ2 = co_of η ∧ η ∈ O1) as (μ'' & eq' & In).
+               eapply gen_spec_acc_nil_mu_inv; eauto. subst.
+               eapply hsub in In. eapply gen_spec_acc_nil_mem_lts_inp in In 
+                as (e & μ' & l & eq').
+               subst. eauto with mdb.
           ++++ exfalso.
                assert ({q : E | gen_acc O1 [] ⟶[μ2] q}) as impossible. eauto.
                eapply lts_stable_spec2 in impossible. 
                assert (gen_acc O1 [] ↛[μ2]). eapply gen_spec_acc_nil_stable_nb ; eauto.
                contradiction.
-          ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ & eq' & In). subst.
+          ++++ (* eapply gen_spec_acc_nil_mu_inv in l2 as (μ & eq' & In). subst.
                eapply hsub in In.
                apply gen_spec_acc_nil_mem_lts_inp in In as (e & μ' & l & eq'). subst.
-               eauto with mdb. eauto with mdb.
+               eauto with mdb. eauto with mdb. *)
+               assert (∃ η : A, μ2 = co_of η ∧ η ∈ O1) as (μ'' & eq' & In).
+               eapply gen_spec_acc_nil_mu_inv; eauto. subst.
+               eapply hsub in In. eapply gen_spec_acc_nil_mem_lts_inp in In 
+                as (e & μ' & l & eq').
+               subst. eauto with mdb.
     + intros e l.
       exfalso. 
       assert ({q : E | gen_acc O2 [] ⟶ q}) as impossible. eauto.
@@ -1042,7 +1115,7 @@ Lemma must_f_gen_a_subseteq `{
 
   s (p : P) O1 :
   
-  must p (gen_acc O1 s) -> forall O2, O1 ⫅ O2
+  must p (gen_acc O1 s) -> forall O2, O1 ⊆ O2
       -> must p (gen_acc O2 s).
 Proof.
   revert p O1.
@@ -1086,8 +1159,6 @@ Proof.
       eassumption.
 Qed.
 
-
-
 Lemma must_gen_acc_stable `{
   @LtsOba P A H LtsP LtsEqP, 
   @LtsOba E A H LtsE LtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
@@ -1096,16 +1167,12 @@ Lemma must_gen_acc_stable `{
 
   (p : P) O : 
 
-  p ↛ -> must p (gen_acc (lts_acc_set_of p \ O) []) 
-         \/ lts_acc_set_of p ⫅ O.
+  p ↛ -> must p (gen_acc (lts_acc_set_of p ∖ O) []) 
+         \/ lts_acc_set_of p ⊆ O.
 Proof.
   intros.
-  remember (lts_acc_set_of p \ O ) as D. 
-  
-  (*définir l'inductivité sur les prédicat *)
-  
-  
-(*   destruct D as [|a D'] using set_ind_L.
+  remember (lts_acc_set_of p ∖ O ) as D.
+  (*destruct D as [|a D'] using set_ind_L.
   + right. set_solver.
   + left.
     eapply m_step.
@@ -1136,10 +1203,10 @@ Lemma must_gen_a_with_nil `{
 
   (p : P) (hcnv : p ⇓ []) O :
 
-  (exists p', p ⟹ p' /\ lts_stable p' τ /\ lts_acc_set_of p' ⫅ O).
-  (* \/ must p (gen_acc (oas p [] hcnv \ O) []). *)
+  (exists p', p ⟹ p' /\ lts_stable p' τ /\ lts_acc_set_of p' ⊆ O)
+  \/ must p (gen_acc (oas p [] hcnv ∖ O) []).
 Proof.
-(*   induction (cnv_terminate p [] hcnv) as (p, hpt, ihhp).
+  induction (cnv_terminate p [] hcnv) as (p, hpt, ihhp).
   destruct (decide (lts_stable p τ)) as [st | (p' & l)%lts_stable_spec1].
   - destruct (must_gen_acc_stable p O st).
     + right. unfold oas.
@@ -1149,27 +1216,31 @@ Proof.
   - assert
       (h : ∀ q,
           q ∈ lts_tau_set p ->
-          (exists p', q ⟹ p' ∧ lts_stable p' τ ∧ lts_outputs p' ⊆ O) ∨
+          (exists p', q ⟹ p' ∧ lts_stable p' τ ∧ lts_acc_set_of p' ⊆ O) ∨
             (exists h, must q (gen_acc (oas q [] h ∖ O) []))).
     intros q l'%lts_tau_set_spec.
     destruct (hpt q l') as (hq).
     edestruct (ihhp q l') as [hl | hr].
     now left. right. exists (cnv_nil _ (tstep q hq)). eauto.
-    destruct (@exists_forall_in A (lts_tau_set p) _ _ h).
-    + eapply Exists_exists in H1 as (t & l'%lts_tau_set_spec & t' & w & st & sub).
+    destruct (@exists_forall_in P (lts_tau_set p) _ _ h).
+    + eapply Exists_exists in H3 as (t & l'%lts_tau_set_spec & t' & w & st & sub).
       left. exists t'. eauto with mdb.
     + right. eapply m_step.
       ++ eapply gen_spec_ungood.
       ++ eauto with mdb.
       ++ intros p0 l0%lts_tau_set_spec.
-         eapply Forall_forall in H1 as (h0 & hm).
+         eapply Forall_forall in H3 as (h0 & hm).
          eapply must_f_gen_a_subseteq; eauto.
-         eapply difference_mono_r, union_outputs_lts_tau_subseteq; eauto.
+         eapply difference_mono_r, union_acceptance_set_lts_tau_subseteq; eauto.
          now eapply lts_tau_set_spec. eassumption.
       ++ intros e' l'. exfalso.
-         eapply (@lts_stable_spec2 B). eauto. eapply gen_spec_acc_nil_stable_tau.
-      ++ intros p0 e0 μ le%gen_spec_acc_nil_lts_not_nb_good lp; eauto with mdb. *)
-Admitted.
+         eapply (@lts_stable_spec2 E). eauto. eapply gen_spec_acc_nil_stable_tau.
+      ++ intros p0 e0 μ1 μ2 inter lp le.
+         destruct (decide (non_blocking μ2)) as [ nb | not_nb].
+         +++ eapply gen_spec_acc_nil_stable_nb in nb; eauto. 
+             exfalso. eapply lts_stable_spec2. eauto. eauto. 
+         +++ eapply m_now. eapply gen_spec_acc_nil_lts_not_nb_good; eauto.
+Qed.
 
 Lemma must_gen_a_with_s `{
   @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
@@ -1179,45 +1250,50 @@ Lemma must_gen_a_with_s `{
 
   s (p : P) (hcnv : p ⇓ s) O :
 
-  (exists p', p ⟹[s] p' /\ lts_stable p' τ /\ lts_acc_set_of p' ⫅ O).
-        (* \/ must p (gen_acc (oas p s hcnv ∖ O) s). *)
+  (exists p', p ⟹[s] p' /\ lts_stable p' τ /\ lts_acc_set_of p' ⊆ O)
+        \/ must p (gen_acc (oas p s hcnv ∖ O) s).
 Proof.
-(*   revert p hcnv O.
+  revert p hcnv O.
   induction s as [|μ s'].
   - eapply must_gen_a_with_nil.
   - intros p hcnv O.
     set (ps := wt_set_mu p μ s' hcnv).
-    inversion hcnv; subst.
+    inversion hcnv as [| ? ? ? conv Hyp_conv]; subst.
     assert (hcnv0 : forall p', p' ∈ ps -> p' ⇓ s') by (intros ? mem%wt_set_mu_spec1; eauto).
     assert (he : ∀ p', p' ∈ ps ->
-                      (exists pr p0, p0 ∈ wt_stable_set p' s' pr ∧ lts_outputs p0 ⊆ O)
+                      (exists pr p0, p0 ∈ wt_stable_set p' s' pr ∧ lts_acc_set_of p0 ⊆ O)
                       ∨ (exists h, must p' (gen_acc (oas p' s' h ∖ O) s'))).
     intros p' mem.
     destruct (IHs' p' (hcnv0 _ mem) O) as [(r & w & st & sub)| hm].
     left. eapply wt_set_mu_spec1 in mem.
-    exists (H5 _ mem), r. split; [eapply wt_stable_set_spec2 |]; eauto.
+    exists (Hyp_conv _ mem), r. split; [eapply wt_stable_set_spec2 |]; eauto.
     right. eauto.
-    destruct (exists_forall_in_gset ps _ _ he).
-    + left. destruct H1
+    destruct (exists_forall_in_gset ps _ _ he) as [Hyp | Hyp].
+    + left. destruct Hyp
         as (p1 & ?%wt_set_mu_spec1 & ? & r & (? & ?)%wt_stable_set_spec1 & ?).
       exists r. repeat split; eauto. eapply wt_push_left; eauto.
-    + right. destruct μ. inversion hcnv; subst.
-      ++ destruct (lts_oba_fw_forward p a) as (p' & l0 & l1).
-         assert (gen_acc (oas p (ActIn a :: s') hcnv ∖ O) (ActIn a :: s')
-                   ⟶⋍[co $ ActIn a] gen_acc (oas p (ActIn a :: s') hcnv ∖ O) s')
+    + right. assert (parallel_inter μ (co_of μ)) as inter.
+      eapply co_inter'.
+      destruct (decide (non_blocking (co_of μ))) as [nb | not_nb]. 
+      inversion hcnv; subst.
+      ++ destruct (lts_oba_fw_forward p (co_of μ) μ) as (p' & l0 & l1); eauto.
+         assert (gen_acc (oas p (μ :: s') hcnv ∖ O) (μ :: s')
+                   ⟶⋍[co_of $ μ] gen_acc (oas p (μ :: s') hcnv ∖ O) s')
            as (e' & hle' & heqe') by eapply gen_spec_mu_lts_co.
-         eapply must_output_swap_l_fw. eauto. eauto.
+         eapply must_non_blocking_action_swap_l_fw; eauto.
          eapply (must_eq_client _ _ _ (symmetry heqe')).
-         edestruct (H1 p') as (? & hm).
+         edestruct (Hyp p') as (? & hm).
          eapply wt_set_mu_spec2; eauto with mdb.
          eapply must_f_gen_a_subseteq, difference_mono_r, 
-          union_wt_outputs_subseteq; eauto with mdb.
-      ++ eapply aft_output_must_gen_acc; eauto.
-         intros p' hw. edestruct (H1 p') as (? & hm).
+          union_wt_acceptance_set_subseteq; eauto with mdb.
+      ++ eapply aft_not_nb_co_of_must_gen_acc; eauto.
+         intros p' hw. edestruct (Hyp p') as (? & hm).
          eapply wt_set_mu_spec2; eauto.
          eapply must_f_gen_a_subseteq, difference_mono_r, 
-          union_wt_outputs_subseteq; eauto with mdb. *)
-Admitted.
+          union_wt_acceptance_set_subseteq; eauto with mdb.
+
+      Unshelve. eauto.
+Qed.
 
 Lemma not_must_gen_a_without_required_acc_set `{
   @LtsObaFW P A H LtsP LtsEqP V, 
@@ -1227,7 +1303,7 @@ Lemma not_must_gen_a_without_required_acc_set `{
 
   (q q' : P) s O :
 
-  q ⟹[s] q' -> q' ↛ -> ¬ must q (gen_acc (O \ lts_acc_set_of q') s).
+  q ⟹[s] q' -> q' ↛ -> ¬ must q (gen_acc (O ∖ lts_acc_set_of q') s).
 Proof.
   intros wt hst.
   dependent induction wt; intros hm.
@@ -1241,7 +1317,7 @@ Proof.
            ++++ contradict nb1. 
                 eapply lts_oba_fw_non_blocking_duo_spec; eauto.
            ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ' & eq' & In); eauto. subst.
-                assert (μ' = μ1). eapply co_inter_spec1. eassumption. subst.
+                assert (μ' = μ1). eapply co_inter_spec1'. eassumption. subst.
                 assert (lts_acc_set_of p μ1) as not_stable.
                 assert ({p' : P | p ⟶[μ1] p'}) as Hyp. eauto. 
                 eapply lts_stable_spec2 in Hyp.
@@ -1250,7 +1326,7 @@ Proof.
                 contradiction.
            ++++ eapply lts_stable_spec2, gen_spec_acc_nil_stable_nb; eauto.
            ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ' & eq' & In); eauto. subst.
-                assert (μ' = μ1). eapply co_inter_spec1. eassumption. subst.
+                assert (μ' = μ1). eapply co_inter_spec1'. eassumption. subst.
                 assert (lts_acc_set_of p μ1) as not_stable.
                 assert ({p' : P | p ⟶[μ1] p'}) as Hyp. eauto. 
                 eapply lts_stable_spec2 in Hyp.
@@ -1259,15 +1335,14 @@ Proof.
                 contradiction.
   - eapply (IHwt hst), (must_preserved_by_lts_tau_srv p q _ hm l).
   - eapply (IHwt hst).
-    assert (gen_acc (O \ lts_acc_set_of t) (μ :: s) ⟶⋍[co_of μ]
-              gen_acc (O \ lts_acc_set_of t) s) as (e' & hle' & heqe')
+    assert (gen_acc (O ∖ lts_acc_set_of t) (μ :: s) ⟶⋍[co_of μ]
+              gen_acc (O ∖ lts_acc_set_of t) s) as (e' & hle' & heqe')
     by eapply gen_spec_mu_lts_co.
     eapply must_eq_client; eauto.
     inversion hm as [happy |]; subst.
     + now eapply gen_spec_ungood in happy.
-    + assert (parallel_inter μ (co_of μ)) as inter. eapply co_inter. eauto.
-    
-    Unshelve. eauto. eauto. eauto.
+    + assert (parallel_inter μ (co_of μ)) as inter. eapply co_inter'. eauto.
+      Unshelve. eauto. eauto. eauto.
 Qed.
 
 Lemma completeness2 `{
@@ -1281,10 +1356,10 @@ Lemma completeness2 `{
   (p : P) (q : Q) : p ⊑ q -> p ≼₂ q.
 Proof.
   intros hpre s q' hacnv w st.
-  destruct (must_gen_a_with_s s p hacnv (lts_acc_set_of q')) (*as  [|hm] *).
+  destruct (must_gen_a_with_s s p hacnv (lts_acc_set_of q')) as  [|hm].
   + eauto.
-  (* + eapply hpre in hm. contradict hm.
-    eapply not_must_gen_a_without_required_output; set_solver. *)
+  + eapply hpre in hm. contradict hm.
+    eapply not_must_gen_a_without_required_acc_set ; set_solver.
 Qed.
 
 Lemma completeness_fw `{

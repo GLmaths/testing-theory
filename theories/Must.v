@@ -33,7 +33,7 @@ Require Import Coq.Program.Wf Setoid.
 Require Import Coq.Program.Equality.
 From Coq.Logic Require Import ProofIrrelevance.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import TransitionSystems.
+From Must Require Import TransitionSystems Subset_Act.
 
 Class Good (P A : Type) (good : P -> Prop) `{Lts P A, !LtsEq P A} := {
     good_decidable e : Decision (good e);
@@ -162,21 +162,6 @@ Definition bhv_pre_cond1 `{Lts P A, Lts Q A}
 
 Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
-
-Definition lts_pre_acc_set_of `{Lts P A} (p : P) (μ : A) : Prop := 
-      ¬ lts_stable p (ActExt μ).
-
-Definition lts_acc_set_of `{Lts P A} (p : P) : A -> Prop := lts_pre_acc_set_of p.
-
-Definition Included {A : Type} (B C: A -> Prop) : Prop := 
-    forall μ : A, B μ -> C μ.
-Notation "B ⫅ C" := (Included B C) (at level 20, format "B ⫅ C").
-
-Definition Setminus {A : Type} (B C: A -> Prop) : A -> Prop :=
-    fun μ : A => B μ /\ ~ C μ.
-Notation "B \ C" := (Setminus B C) (at level 20, format "B \ C").
-
-
 Definition bhv_pre_cond2 `{
   @Lts P A H, 
   @Lts Q A H}
@@ -184,7 +169,7 @@ Definition bhv_pre_cond2 `{
   (p : P) (q : Q) :=
   forall s q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_pre_acc_set_of p' ⫅ lts_pre_acc_set_of q'). 
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_pre_acc_set_of p' ⊆ lts_pre_acc_set_of q'). 
 
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). 
 

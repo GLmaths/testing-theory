@@ -27,23 +27,26 @@ Require Import ssreflect.
 Require Import Coq.Program.Equality.
 
 From stdpp Require Import finite.
-From Must Require Import TransitionSystems Must Bar Completeness Soundness Lift.
+From Must Require Import TransitionSystems Must Bar Completeness Soundness Lift Subset_Act.
 
 (** Extensional definition of Convergence and its equivalence
     with the inductive definition. *)
 
 Section convergence.
-
-  Context `{ExtAction A}.
-(*   Context `{!Lts P A}.
+  (* set of processes *)
+  Context `{P : Type}.
+  (* set of external actions *)
+  Context `{A : Type}.
+  
+  Context `{H : !ExtAction A}.
+  Context `{!Lts P A}.
   Context `{!FiniteImageLts P A}.
- *)
  
   Definition terminate_extensional (p : P) : Prop :=
     forall η : max_exec_from p, exists n fex,
       mex_take_from n η = Some fex /\ lts_stable (fex_from_last fex) τ.
 
-  #[global] Instance conv_bar : Bar A := {| bar_pred p := sts_stable p |}.
+  #[global] Instance conv_bar : Bar P := {| bar_pred p := sts_stable p |}.
 
   Lemma terminate_intensional_coincide (p : P) :
     intensional_pred p ↔ terminate p.
@@ -94,35 +97,40 @@ Section convergence.
 End convergence.
 
 Section must_set_acc_set.
-  Context `{LL : Label L}.
-  Context `{LtsA : !Lts A L, !FiniteLts A L}.
-  Context `{LtsR : !Lts R L, !FiniteLts R L}.
+  Context `{P : Type}.
+  Context `{A : Type}.
+  Context `{H : !ExtAction A}.
+  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
+  Context `{LtsR : !Lts R A, !FiniteImageLts R A}.
 
-  Context `{@LtsObaFB A L LL LtsA LtsEqA LtsObaA}.
-  Context `{@LtsObaFB R L LL LtsR LtsEqR LtsObaR}.
+  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
+  Context `{@LtsObaFB R A H LtsR LtsEqR LtsObaR}.
 
-  (* fixme : use already defined *)
-  Definition outputs_acc (p : A * mb L) s (h : p ⇓ s) : gset (ExtAct L) :=
-    ⋃ map
-      (fun p => set_map ActOut (lts_outputs p) : gset (ExtAct L))
-      (elements (wt_stable_set p s h)).
+
+  Definition actions_acc 
+  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts} 
+  (p : P * mb A) s (h : p ⇓ s) : 
+    @SubSet_Act A := oas p s h.
 
   (* ************************************************** *)
 
-  Lemma either_wperform_mu (p : A * mb L) μ :
+  Lemma either_wperform_mu 
+  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts} 
+  (p : P * mb A) μ :
     p ⤓ -> (exists q, p ⟹{μ} q) \/ ~ (exists q, p ⟹{μ} q).
   Proof.
     intro ht. induction ht.
     destruct (lts_stable_decidable p (ActExt μ)).
     - assert (∀ x, x ∈ enum (dsig (lts_step p τ)) -> (∃ q0, `x ⟹{μ} q0) \/ ~ (∃ q0, `x ⟹{μ} q0))
+         as Hyp
         by (intros (x & mem) _; set_solver).
-      edestruct (exists_forall_in _ _ _ H3).
-      eapply Exists_exists in H4 as ((q' & pr) & mem & (q0 & hw)).
-      left. exists q0. eapply wt_tau; eauto. now eapply bool_decide_unpack.
-      right. intros (q' & hw). inversion hw; subst.
-      ++ contradict H4. intros n. rewrite Forall_forall in n.
-         eapply (n (dexist q l0)). eapply elem_of_enum. eauto.
-      ++ eapply (@lts_stable_spec2 (A * mb L)); eauto.
+      edestruct (exists_forall_in _ _ _ Hyp) as [Hyp' | Hyp'].
+      + eapply Exists_exists in Hyp' as ((q' & pr) & mem & (q0 & hw)).
+        left. exists q0. eapply wt_tau; eauto. now eapply bool_decide_unpack.
+      + right. intros (q' & hw). inversion hw; subst.
+        ++ contradict Hyp'. intros n. rewrite Forall_forall in n.
+           eapply (n (dexist q l0)). eapply elem_of_enum. eauto.
+        ++ eapply (@lts_stable_spec2 (P * mb A)); eauto.
     - left. eapply lts_stable_spec1 in n as (q & l). eauto with mdb.
   Qed.
 
