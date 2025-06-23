@@ -36,13 +36,12 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 From Must Require Import TransitionSystems.
 
 
-Definition SubSet_Act {A : Type} := A -> Prop.
-
+Definition subset_of (A : Type) := A -> Prop.
 
 Definition lts_pre_acc_set_of `{Lts P A} (p : P) (μ : A) : Prop := 
       ¬ lts_stable p (ActExt μ).
 
-Definition lts_acc_set_of `{Lts P A} (p : P) : SubSet_Act := lts_pre_acc_set_of p.
+Definition lts_acc_set_of `{Lts P A} (p : P) : subset_of A := lts_pre_acc_set_of p.
 
 (* Definition Included {A : Type} (B C: A -> Prop) : Prop := 
     forall μ : A, B μ -> C μ.
@@ -53,35 +52,35 @@ Definition Setminus {A : Type} (B C: A -> Prop) : A -> Prop :=
 Notation "B \ C" := (Setminus B C) (at level 20, format "B \ C"). *)
 
 
-Definition Union_of_Act {A :Type} (S : SubSet_Act) (S' : SubSet_Act) (a : A)  : Prop := 
+Definition Union_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a \/ S' a.
-Definition Intersection_of_Act {A :Type} (S : SubSet_Act) (S' : SubSet_Act) (a : A)  : Prop := 
+Definition Intersection_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a /\ S' a.
 Definition Empty_of_Act {A : Type} (x : A) : Prop := False.
-Definition Difference_of_act {A :Type} (S : SubSet_Act) (S' : SubSet_Act) (a : A)  : Prop := 
+Definition Difference_of_act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a /\ (~ (S' a)).
 (* Definition Singleton_of_Act {A : Type} (x : A) : Prop := forall y : A , x = y. *)
 
 (** Instances to use sets notation/properties from stdpp lib *)
-#[global] Instance Union_of_Actions {A : Type} : Union (@SubSet_Act A).
+#[global] Instance Union_of_Actions {A : Type} : Union (@subset_of A).
 exact Union_of_Act. Defined.
-#[global] Instance Empty_Actions {A : Type} : Empty (@SubSet_Act A).
+#[global] Instance Empty_Actions {A : Type} : Empty (@subset_of A).
 exact Empty_of_Act. Defined.
-#[global] Instance Singleton_of_Actions {A : Type} : Singleton A (@SubSet_Act A).
+#[global] Instance Singleton_of_Actions {A : Type} : Singleton A (@subset_of A).
 intro single_element. exact (fun x : A => single_element = x). Defined.
-#[global] Instance Elements_of {A : Type} : ElemOf A (@SubSet_Act A).
+#[global] Instance Elements_of {A : Type} : ElemOf A (@subset_of A).
 intro x. intro P. exact (P x). Defined.
-#[global] Instance Intersection_of_Actions {A : Type} : Intersection (@SubSet_Act A).
+#[global] Instance Intersection_of_Actions {A : Type} : Intersection (@subset_of A).
 exact Intersection_of_Act. Defined.
-#[global] Instance Difference_of_Actions {A : Type} : Difference (@SubSet_Act A).
+#[global] Instance Difference_of_Actions {A : Type} : Difference (@subset_of A).
 exact Difference_of_act. Defined.
-#[global] Instance Top_Actions {A : Type} : Top (@SubSet_Act A).
+#[global] Instance Top_Actions {A : Type} : Top (@subset_of A).
 intro. exact True. Defined.
-(* #[global] Instance SubsetEq_of_Actions {A : Type} : SubsetEq (@SubSet_Act A).
+(* #[global] Instance SubsetEq_of_Actions {A : Type} : SubsetEq (@subset_of A).
 intro P. intro Q. exact (forall x : A, P x -> Q x). Defined. *)
 
 
-#[global] Instance SemiSet_of_Actions {A : Type} : SemiSet A (@SubSet_Act A).
+#[global] Instance SemiSet_of_Actions {A : Type} : SemiSet A (@subset_of A).
 repeat split.
 + intros. intro. exact H.
 + intro. inversion H. reflexivity.
@@ -95,17 +94,20 @@ repeat split.
   ++ right; eauto.
 Defined.
 
-#[global] Instance Set_of_Actions {A : Type} : Set_ A (@SubSet_Act A).
+#[global] Instance Set_of_Actions {A : Type} : Set_ A (@subset_of A).
 repeat split; try set_solver.
 + destruct H. eauto.
 + destruct H. eauto.
 + destruct H. eauto.
 + destruct H. eauto. Defined.
 
-#[global] Instance TopSet_of_Actions {A : Type} : TopSet A (@SubSet_Act A).
+#[global] Instance TopSet_of_Actions {A : Type} : TopSet A (@subset_of A).
 repeat split ; try set_solver. Defined.
 
-#[global] Instance LeibnizEquiv_Actions {A : Type} : LeibnizEquiv (@SubSet_Act A).
-Admitted.
+(* Axiom Extensionality_Subset_of: 
+  forall A : Type, forall S S': subset_of A, (S ⊆ S' /\ S' ⊆ S) -> S = S'.
 
-
+#[global] Instance LeibnizEquiv_Actions {A : Type} : LeibnizEquiv (@subset_of A).
+  intro. intros.
+  eapply Extensionality_Subset_of. set_solver.
+Qed. *)

@@ -98,24 +98,25 @@ End convergence.
 
 Section must_set_acc_set.
   Context `{P : Type}.
+  Context `{Q : Type}.
   Context `{A : Type}.
   Context `{H : !ExtAction A}.
   Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
-  Context `{LtsR : !Lts R A, !FiniteImageLts R A}.
+  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
 
   Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
-  Context `{@LtsObaFB R A H LtsR LtsEqR LtsObaR}.
+  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
+
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
 
 
   Definition actions_acc 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts} 
-  (p : P * mb A) s (h : p ⇓ s) : 
-    @SubSet_Act A := oas p s h.
+  (p : P * mb A) s (h : p ⇓ s) : subset_of A := oas p s h.
 
   (* ************************************************** *)
 
   Lemma either_wperform_mu 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts} 
   (p : P * mb A) μ :
     p ⤓ -> (exists q, p ⟹{μ} q) \/ ~ (exists q, p ⟹{μ} q).
   Proof.
@@ -134,60 +135,73 @@ Section must_set_acc_set.
     - left. eapply lts_stable_spec1 in n as (q & l). eauto with mdb.
   Qed.
 
-  Lemma either_wperform_mem (p : A * mb L) (G : gset (ExtAct L)) (ht : p ⤓) :
+  Lemma either_wperform_mem 
+    (p : P * mb A) (G : subset_of A) (ht : p ⤓) :
     (exists μ p', μ ∈ G /\ p ⟹{μ} p') \/ (forall μ p', μ ∈ G -> ~ p ⟹{μ} p').
   Proof.
-    induction G using set_ind_L; [|destruct IHG, (either_wperform_mu p x)]; set_solver.
-  Qed.
+    (* induction G using set_ind_L; [|destruct IHG, (either_wperform_mu p x)]; set_solver. *)
+  Admitted.
 
-  Lemma either_wperform_mem_set (ps : gset (A * mb L)) (G : gset (ExtAct L)) (ht : forall p, p ∈ ps -> p ⤓) :
-    (exists p', p' ∈ ps /\ forall μ p0, μ ∈ G -> ~ p' ⟹{μ} p0) \/ (forall p', p' ∈ ps -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0).
+  Lemma either_wperform_mem_set
+    (ps : gset (P * mb A)) (G : subset_of A) (ht : forall p, p ∈ ps -> p ⤓) :
+    (exists p', p' ∈ ps /\ forall μ p0, μ ∈ G 
+      -> ~ p' ⟹{μ} p0) \/ (forall p', p' ∈ ps -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0).
   Proof.
     induction ps using set_ind_L; [|destruct IHps, (either_wperform_mem x G)]; set_solver.
   Qed.
 
-  Lemma either_MUST (p : A * mb L) (G : gset (ExtAct L)) (hcnv : p ⇓ []) : MUST p G \/ ~ MUST p G.
+  Lemma either_MUST
+      (p : P * mb A) (G : subset_of A) (hcnv : p ⇓ []) :
+      MUST p G \/ ~ MUST p G.
   Proof.
-    destruct (either_wperform_mem_set (wt_set p [] hcnv) G).
-    - intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-    - right. intro hm. destruct H1 as (p' & mem%wt_set_spec1%hm & nhw). set_solver.
+    assert (∀ p0 : P * mb A, p0 ∈ wt_set p [] hcnv → p0 ⤓) as pre_Hyp.
+    intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
+    destruct (either_wperform_mem_set (wt_set p [] hcnv) G) as [Hyp|]; eauto.
+    - right. intro hm. destruct Hyp as (p' & mem%wt_set_spec1%hm & nhw). set_solver.
     - left. intros p1 hw%(wt_set_spec2 _ p1 [] hcnv). set_solver.
   Qed.
 
-  Lemma either_ex_nMUST_or_MUST (ps : gset (A * mb L)) G (ht : forall p, p ∈ ps -> p ⇓ []) :
+  Lemma either_ex_nMUST_or_MUST
+    (ps : gset (P * mb A)) G (ht : forall p, p ∈ ps -> p ⇓ []) :
     (exists p, p ∈ ps /\ ~ MUST p G) \/ (forall p, p ∈ ps -> MUST p G).
   Proof.
     induction ps using set_ind_L; [|edestruct IHps, (either_MUST x G)]; set_solver.
   Qed.
 
-  Lemma either_MUST__s (ps : gset (A * mb L)) (G : gset (ExtAct L)) :
+  Lemma either_MUST__s
+    (ps : gset (P * mb A)) (G : subset_of A ) :
     (forall p, p ∈ ps -> p ⇓ []) -> MUST__s ps G \/ ~ MUST__s ps G.
   Proof.
-    intros. edestruct (either_ex_nMUST_or_MUST ps G); eauto.
-    right. intros hm. destruct H2 as (p0 & mem0%hm & hnm). contradiction.
+    intros. edestruct (either_ex_nMUST_or_MUST ps G) as [Hyp |]; eauto.
+    right. intros hm. destruct Hyp as (p0 & mem0%hm & hnm). contradiction.
   Qed.
 
-  Lemma nMusts_ex (ps : gset (A * mb L)) G :
+  Lemma nMusts_ex
+    (ps : gset (P * mb A)) G :
     (forall p, p ∈ ps -> p ⇓ []) -> ~ MUST__s ps G -> exists p, p ∈ ps /\ ~ MUST p G.
   Proof. intros. edestruct (either_ex_nMUST_or_MUST ps G); set_solver. Qed.
 
-  Lemma nMust_ex (p : A * mb L) G (hcnv : p ⇓ []) (hnm : ~ MUST p G) :
+  Lemma nMust_ex
+    (p : P * mb A) G (hcnv : p ⇓ []) (hnm : ~ MUST p G) :
     exists p', p ⟹ p' /\ forall μ p0, μ ∈ G -> ~ p' ⟹{μ} p0.
   Proof.
-    destruct (either_wperform_mem_set (wt_set p [] hcnv) G).
-    - intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-    - destruct H1 as (p' & mem'%wt_set_spec1 & nhw). set_solver.
-    - edestruct hnm. intros p' mem. eapply H1. eapply wt_set_spec2; eauto.
+    assert (∀ p0 : P * mb A, p0 ∈ wt_set p [] hcnv → p0 ⤓).
+    intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
+    destruct (either_wperform_mem_set (wt_set p [] hcnv) G) as [Hyp|Hyp]; eauto.
+    - destruct Hyp as (p' & mem'%wt_set_spec1 & nhw). set_solver.
+    - edestruct hnm. intros p' mem. eapply Hyp. eapply wt_set_spec2; eauto.
   Qed.
 
-  Lemma nMusts_nMust (p : A * mb L) G (hcnv : p ⇓ []) (hnm : ~ MUST__s (wt_set p [] hcnv) G) : ¬ MUST p G.
+  Lemma nMusts_nMust
+  (p : P * mb A) G (hcnv : p ⇓ []) (hnm : ~ MUST__s (wt_set p [] hcnv) G) : ¬ MUST p G.
   Proof.
     intro hm. eapply hnm. intros p' mem0%wt_set_spec1.
     intros r hw. eapply hm. eapply wt_push_nil_left; eassumption.
   Qed.
 
-  Lemma nMust_out_acc_ex (p : A * mb L) pt G s hcnv :
-    pt ∈ AFTER p s hcnv -> ~ MUST pt (outputs_acc p s hcnv ∖ G) ->
+(*  Lemma nMust_out_acc_ex (p : P * mb A) pt G s hcnv :
+    `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
+    pt ∈ AFTER p s hcnv -> ~ MUST pt (actions_acc p s hcnv ∖ G) ->
     exists p', pt ⟹ p' /\ p' ↛ /\ set_map ActOut (lts_outputs p') ⊆ G.
   Proof.
     intros mem%wt_set_spec1 hnm.
@@ -213,10 +227,12 @@ Section must_set_acc_set.
     eapply (nhw $ ActOut a); eauto. set_solver.
     eapply wt_push_nil_left; eauto with mdb.
     constructor; eapply (cnv_wt_s_terminate p pt s hcnv); eauto.
-  Qed.
+  Qed. *)
 
-  Lemma either_MUST_or_ex (p : A * mb L) G s hcnv :
-    MUST__s (AFTER p s hcnv) (outputs_acc p s hcnv ∖ G)
+(*   Lemma either_MUST_or_ex 
+    `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
+    (p : P * mb A) G s hcnv :
+    MUST__s (AFTER p s hcnv) (actions_acc p s hcnv ∖ G)
     \/ (exists p', p ⟹[s] p' /\ p' ↛ /\ set_map ActOut (lts_outputs p') ⊆ G).
   Proof.
     assert (h1 : forall p0, p0 ∈ AFTER p s hcnv → p0 ⇓ []).
@@ -226,11 +242,12 @@ Section must_set_acc_set.
     eapply nMusts_ex in H1 as (pt & mem & hnm); eauto.
     eapply nMust_out_acc_ex in hnm as (pt' & hw & hst & hsub); eauto.
     exists pt'. split; eauto. eapply wt_push_nil_right; eauto. now eapply wt_set_spec1 in mem.
-  Qed.
+  Qed. *)
 
-  Lemma Must_out_acc_npre (p : A * mb L) (q q' : R * mb L) s hcnv :
+(*   Lemma Must_out_acc_npre 
+    (p : P * mb A) (q q' : Q * mb A) s hcnv :
     q ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    MUST__s (AFTER p s hcnv) (outputs_acc p s hcnv ∖ set_map ActOut (lts_outputs q')) ->
+    MUST__s (AFTER p s hcnv) (actions_acc p s hcnv ∖ set_map ActOut (lts_outputs q')) ->
     ~ p ≾₂ q.
   Proof.
     intros hcnv' hw hst hm pre2.
@@ -245,16 +262,17 @@ Section must_set_acc_set.
     inversion hw'; subst.
     eapply lts_stable_spec2 in hst; eauto.
     eapply nmem. eapply lts_outputs_spec1 in l. set_solver.
-  Qed.
+  Qed. *)
 
   (* ************************************************** *)
 
-  Lemma equivalence_bhv_acc_mst2 (p : A) (q : R) :
+  Lemma equivalence_bhv_acc_mst2
+    (p : P) (q : Q) :
     (p, ∅) ≼₁ (q, ∅) -> (p, ∅) ≾₂ (q, ∅) <-> (p, ∅) ≼₂ (q, ∅).
   Proof.
     intro hpre1.
     split.
-    - intro hpre2. intros s q' hcnv hw hst.
+    - intro hpre2. intros s q' hcnv hw hst. (*
       edestruct (either_MUST_or_ex (p, ∅) (set_map ActOut (lts_outputs q')) s hcnv).
       + exfalso. eapply Must_out_acc_npre; eauto with mdb.
       + set_solver.
@@ -272,10 +290,12 @@ Section must_set_acc_set.
       + destruct μ.
         ++ edestruct (lts_oba_fw_forward q0 a) as (qr & hl1 & hl2); eauto with mdb.
         ++ eapply lts_outputs_spec1, hsubpt, lts_outputs_spec2 in l as (qr & l).
-           exists qr. split; eauto. eapply wt_push_nil_left; eauto with mdb.
-  Qed.
+           exists qr. split; eauto. eapply wt_push_nil_left; eauto with mdb. *)
+  Admitted.
 
-  Theorem equivalence_bhv_acc_mst (p : A) (q : R) : (p, ∅) ≾ (q, ∅) <-> (p, ∅) ≼ (q, ∅).
+  Theorem equivalence_bhv_acc_mst
+  (p : P) (q : Q) :
+  (p, ∅) ≾ (q, ∅) <-> (p, ∅) ≼ (q, ∅).
   Proof.
     split; intros (pre1 & pre2); split; eauto; now eapply equivalence_bhv_acc_mst2.
   Qed.
@@ -286,15 +306,21 @@ End must_set_acc_set.
 
 Section failure_must_set.
 
-  Context `{LL : Label L}.
-  Context `{LtsA : !Lts A L, !FiniteLts A L}.
-  Context `{LtsR : !Lts R L, !FiniteLts R L}.
+  Context `{P : Type}.
+  Context `{Q : Type}.
+  Context `{A : Type}.
+  Context `{H : !ExtAction A}.
+  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
+  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
 
-  Context `{@LtsObaFB A L LL LtsA LtsEqA LtsObaA}.
-  Context `{@LtsObaFB R L LL LtsR LtsEqR LtsObaR}.
+  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
+  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
+
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
 
   Lemma equivalence_must_set_nfailure
-    (p : A) (s : trace L) h1 (G : gset (ExtAct L)) :
+    (p : P) (s : trace A) h1 (G : subset_of A) :
     MUST__s (AFTER (p, ∅) s h1) G <-> ¬ Failure (p, ∅) s G.
   Proof.
     split.
@@ -302,11 +328,11 @@ Section failure_must_set.
       edestruct (hm e) as (μ & p' & mem' & hw'). eapply wt_set_spec2. eauto. eapply wt_nil.
       edestruct (hf μ mem'). eauto.
     - intros hnf.
-      destruct (either_MUST__s (AFTER (p, ∅) s h1) G).
-      + intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
-        eapply (wt_set_spec1 _ _ _ _ mem0).
-      + eassumption.
-      + eapply nMusts_ex in H1 as (p0 & mem & hnm).
+      assert (∀ p0 : P * mb A, p0 ∈ AFTER (p ▷ ∅) s h1 → p0 ⇓ []).
+      intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
+      eapply (wt_set_spec1 _ _ _ _ mem0).
+      destruct (either_MUST__s (AFTER (p, ∅) s h1) G) as [Hyp | Hyp]; eauto.
+      + eapply nMusts_ex in Hyp as (p0 & mem & hnm).
         exfalso. eapply hnf.
         eapply nMust_ex in hnm as (p1 & hw1 & hnp).
         exists p1. split.
@@ -315,12 +341,11 @@ Section failure_must_set.
         intros μ mem0 (p' & hw'). eapply hnp. eassumption.
         eassumption.
         eapply cnv_nil, cnv_wt_s_terminate; eauto.
-        eapply (wt_set_spec1 _ _ _ _ mem).
-        intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
-        eapply (wt_set_spec1 _ _ _ _ mem0).
+        eapply (wt_set_spec1 _ _ _ _ mem). eauto.
   Qed.
 
-  Lemma equivalence_nmust_set_failure (p : A) (s : trace L) h1 (G : gset (ExtAct L)) :
+  Lemma equivalence_nmust_set_failure
+    (p : P) (s : trace A) h1 (G : subset_of A) :
     ¬ MUST__s (AFTER (p ▷ ∅) s h1) G <-> Failure (p ▷ ∅) s G.
   Proof.
     split.
@@ -347,14 +372,22 @@ Section failure_must_set.
 End failure_must_set.
 
 Section failure_must_set_pre.
-  Context `{LL : Label L}.
-  Context `{LtsA : !Lts A L, !FiniteLts A L}.
-  Context `{LtsR : !Lts R L, !FiniteLts R L}.
+  Context `{P : Type}.
+  Context `{Q : Type}.
+  Context `{A : Type}.
+  Context `{H : !ExtAction A}.
+  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
+  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
 
-  Context `{@LtsObaFB A L LL LtsA LtsEqA LtsObaA}.
-  Context `{@LtsObaFB R L LL LtsR LtsEqR LtsObaR}.
+  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
+  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
 
-  Theorem equivalence_pre_failure_must_set (p : A) (q : R) : (p ▷ ∅) ≾ (q ▷ ∅) <-> (p ▷ ∅) ⋖ (q ▷ ∅).
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
+
+  Theorem equivalence_pre_failure_must_set
+  
+  (p : P) (q : Q) : (p ▷ ∅) ≾ (q ▷ ∅) <-> (p ▷ ∅) ⋖ (q ▷ ∅).
   Proof.
     split.
     - intros (hpre1 & hpre2). split; eauto.
@@ -374,19 +407,36 @@ End failure_must_set_pre.
 Section preorder.
 
   (** Extensional definition of Must *)
+(*   Context `{P : Type}.
+  Context `{E : Type}. *)
+ (*  Context `{H : !ExtAction A}. *)
+(*   Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
+  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
 
-  Definition must_extensional `{Sts (A * B), good : B -> Prop} (p : A) (e : B) : Prop :=
-    forall η : max_exec_from (p, e), exists n fex, mex_take_from n η = Some fex /\ good (fex_from_last fex).2.
+  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
+  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}. 
+  
+  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  *)
+  Definition must_extensional
+    {P : Type}
+    `{Sts (P * E), good : E -> Prop} 
+    (p : P) (e : E) : Prop :=
+    forall η : max_exec_from (p, e), exists n fex, mex_take_from n η = Some fex 
+          /\ good (fex_from_last fex).2 .
 
-  Definition good_client `{Sts (A * B), good : B -> Prop} (s : (A * B)) := good s.2.
+  Definition good_client {P : Type} `{Sts (P * E), good : E -> Prop} (s : (P * E)) := good s.2.
 
-  #[global] Program Instance must_bar `{Sts (A * B)} (good : B -> Prop)
-    `{good_decidable : forall e, Decision (good e)}: Bar (A * B) :=
+  #[global] Program Instance must_bar {P : Type} {E : Type} `{Sts (P * E)} (good : E -> Prop)
+    `{good_decidable : forall e, Decision (good e)}: Bar (P * E) :=
     {| bar_pred '(p, e) := good e |}.
   Next Obligation. intros. destruct x as (p, e). simpl. eauto. Defined.
 
-  Lemma must_intensional_coincide `{Sts (A * B), good : B -> Prop, good_decidable : forall (e : B), Decision (good e)}
-    (p : A) (e : B) : @intensional_pred (A * B) _ (must_bar good) (p, e) ↔ @must_sts A B _ good p e.
+  Lemma must_intensional_coincide {P : Type}
+    `{Sts (P * E), good : E -> Prop, good_decidable : 
+    forall (e : E), Decision (good e)}
+    (p : P) (e : E) : @intensional_pred (P * E) _ (must_bar good) (p, e) ↔ 
+    @must_sts P E _ good p e.
   Proof.
     split.
     - intros H1. dependent induction H1; subst.
@@ -395,31 +445,39 @@ Section preorder.
         rewrite /bar_pred /= in H1.
         now eapply m_sts_now. eapply m_sts_step; eauto.
     - intros hm; dependent induction hm.
-      + constructor 1. rewrite /bar_pred //=.
+      + constructor 1. 
+        rewrite /bar_pred //=.
       + constructor 2.
         * eassumption.
         * intros (q, e') Hstep. apply H0 =>//=.
   Qed.
-
-  Lemma must_ext_pred_iff_must_extensional
-    `{Sts (A * B), good : B -> Prop, good_decidable : forall (e : B), Decision (good e)}
-    (p : A) (e : B) : @extensional_pred _ _ (must_bar good) (p, e) <-> @must_extensional A  B _ good p e.
+  Print must_extensional.
+  Lemma must_ext_pred_iff_must_extensional 
+    {P : Type}  
+    `{StsPE : Sts (P * E), good : E -> Prop, good_decidable : forall (e : E), Decision (good e)}
+    (p : P) (e : E) : @extensional_pred _ _ (must_bar good) (p, e) <-> 
+    @must_extensional P E _ good p e.
   Proof. split; intros Hme η; destruct (Hme η) as (?&?&?&?).
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
   Qed.
 
   Definition pre_extensional
-    `{Sts (A * B), Sts (R * B), good : B -> Prop, good_decidable : forall (e : B), Decision (good e)}
-    (p : A) (q : R) : Prop :=
-    forall (e : B), @must_extensional A B _ good p e -> @must_extensional R B _ good q e.
+    {P : Type} {Q : Type} 
+    `{Sts (P * E), Sts (Q * E), good : E -> Prop, good_decidable : forall (e : E), 
+    Decision (good e)}
+    (p : P) (q : Q) : Prop :=
+    forall (e : E), @must_extensional P E _ good p e -> @must_extensional Q E _ good q e.
 
   (* ************************************************** *)
 
   Lemma must_extensional_iff_must_sts
-    `{good : B -> Prop, good_decidable : forall (e : B), Decision (good e)}
-    `{Lts A L, !Lts B L, !LtsEq B L, !Good B L good, !FiniteLts A L, !FiniteLts B L}
-    (p : A) (e : B) : @must_extensional A B _ good p e <-> @must_sts A B _ good p e.
+    {P : Type}
+    `{good : E -> Prop, good_decidable : forall (e : E), Decision (good e)}
+    `{LtsP : @Lts P A H, !FiniteImageLts P A,
+    LtsE : !Lts E A, !LtsEq E A, !Good E A good,  !FiniteImageLts E A}
+    `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE} (* à rajouter en context ? *)
+    (p : P) (e : E) : @must_extensional P E _ good p e <-> @must_sts P E _ good p e.
   Proof.
     split.
     - intros hm. destruct Good0.
@@ -433,37 +491,46 @@ Section preorder.
 
   Notation "p ⊑ₑ q" := (pre_extensional p q) (at level 70).
 
-  Context `{good : B -> Prop}.
+  Context `{good : E -> Prop}.
   Context `{good_dec : forall e, Decision (good e)}.
-  Context `{LL : Label L}.
-  Context `{LtsA : !Lts A L, !FiniteLts A L}.
-  Context `{LtsR : !Lts R L, !FiniteLts R L}.
-
-  Context `{LtsB : !Lts B L, !FiniteLts B L, LtsEqB: !LtsEq B L, !Good B L good}.
+  Context `{P : Type}.
+  Context `{Q : Type}.
+  Context `{H : !ExtAction A}.
+  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
+  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
+  Context `{LtsE : !Lts E A, !FiniteImageLts E A, LtsEqE: !LtsEq E A, !Good E A good}.
+  Context `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}.
+  Context `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}.
 
   (* ************************************************** *)
 
-  Lemma pre_extensional_eq (p : A) (q : R) : @pre_extensional A B _ _ _ good _ p q <-> p ⊑ q.
+  Lemma pre_extensional_eq (p : P) (q : Q) : 
+    @pre_extensional P Q _ _ _ good _ p q <-> p ⊑ q.
     unfold pre_extensional, ctx_pre.
+  Proof.
     split; intros hpre e.
     - rewrite <- 2 must_sts_iff_must, <- 2 must_extensional_iff_must_sts; eauto.
     - rewrite -> 2 must_extensional_iff_must_sts, -> 2 must_sts_iff_must; eauto.
   Qed.
 
-  Context `{@LtsObaFB A L LL LtsA LtsEqA LtsObaA}.
-  Context `{@LtsObaFB R L LL LtsR LtsEqR LtsObaR}.
-  Context `{@LtsObaFB B L LL LtsB LtsEqB LtsObaB}.
+  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
+  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
+  Context `{@LtsObaFB E A H LtsE LtsEqE LtsObaE}.
 
-  Context `{igen_conv : @gen_spec_conv  _ _ _ _ _ good Good0 gen_conv}.
-  Context `{igen_acc : @gen_spec_acc _ _ _ _ _ good Good0 gen_acc}.
+  Context `{igen_conv : @gen_spec_conv _ _ _ _ _ good Good0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc _ _ _ _ _ good Good0 co_of gen_acc}.
+
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
+  Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
+  Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}.
 
   (* ************************************************** *)
 
   (** Equivalence between the extensional definition of the contextual preorder and
       the alternative, inductive characterisation. *)
-
-  Theorem equivalence_bhv_acc_ctx (p : A) (q : R) :
-    @pre_extensional A B _ _ _ good _ p q <-> (p, ∅) ≼ (q, ∅).
+  Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
+    @pre_extensional P Q _ _ _ good _ p q <-> (p, ∅) ≼ (q, ∅).
   Proof.
     split.
     - intros hpre%pre_extensional_eq.
@@ -476,7 +543,7 @@ Section preorder.
 
 
   Corollary equivalence_bhv_mst_ctx
-    (p : A) (q : R) : (p, ∅) ≾ (q, ∅) <-> @pre_extensional A B _ _ _ good _ p q.
+    (p : P) (q : Q) : (p, ∅) ≾ (q, ∅) <-> @pre_extensional P Q _ _ _ good _ p q.
   Proof.
     rewrite pre_extensional_eq.
     rewrite equivalence_bhv_acc_mst.
@@ -485,19 +552,26 @@ Section preorder.
   Qed.
 
 End preorder.
-
+(* 
 From stdpp Require Import gmultiset.
 
 Section application.
 
-  Lemma nil_stable `{LtsOba A L} (q : A) (h : forall α, q ↛{α}) (m : mb L) : (q, m) ↛.
+  Lemma nil_stable `{@LtsOba Q A H LtsQ LtsEqQ}
+  `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+  (q : Q) (h : forall α, q ↛{α}) (m : mb A) : 
+  (q, m) ↛.
   Proof.
     destruct (decide ((q, m) ↛)); eauto.
     eapply lts_stable_spec1 in n as (q' & l').
     inversion l'; edestruct lts_stable_spec2; eauto.
   Qed.
 
-  Lemma nil_cnv `{LtsOba A L} (q : A) (h : forall α, q ↛{α}) s m : (q, m) ⇓ s.
+  Lemma nil_cnv
+  `{@LtsOba Q A H LtsQ LtsEqQ}
+  `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+  (q : Q) (h : forall α, q ↛{α}) s m : 
+  (q, m) ⇓ s.
     dependent induction s.
     - now eapply cnv_nil, terminate_if_stable, nil_stable.
     - eapply cnv_act.
@@ -507,10 +581,11 @@ Section application.
         inversion l; subst; [edestruct lts_stable_spec2 | |]; try eapply cnv_preserved_by_wt_nil; eauto.
   Qed.
 
-  CoInductive ionly_spec `{LtsOba A L} (p : A) : Prop :=
-  | mstep : (forall μ p', p ⟶[μ] p' -> exists a, μ = ActIn a) -> (forall α p', p ⟶{α} p' -> ionly_spec p') -> ionly_spec p.
+  CoInductive ionly_spec `{LtsOba P A} (p : P) : Prop :=
+  | mstep : (forall μ p', p ⟶[μ] p' -> exists a, μ = ActIn a) 
+        -> (forall α p', p ⟶{α} p' -> ionly_spec p') -> ionly_spec p.
 
-  Lemma lts_outputs_ionly_spec `{LtsOba A L} (p : A) (pr : ionly_spec p) : lts_outputs p = ∅.
+  Lemma lts_outputs_ionly_spec `{LtsOba P A} (p : P) (pr : ionly_spec p) : lts_outputs p = ∅.
   Proof.
     eapply leibniz_equiv. intro a. split.
     intros mem. eapply lts_outputs_spec2 in mem as (p' & l').
@@ -581,4 +656,4 @@ Section application.
     now eapply equivalence_bhv_acc_ctx; split; intros ? ?; [eapply nil_cnv | eapply ionly_nil_leq2].
   Qed.
 
-End application.
+End application. *)

@@ -91,9 +91,9 @@ Global Hint Constructors must_sts:mdb.
 Inductive must `{
     LtsP : @Lts P A H, 
     LtsE : ! Lts E A, ! LtsEq E A, !Good E A good} 
-    
+
     `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-    
+
     (p : P) (e : E) : Prop :=
 | m_now : good e -> must p e
 | m_step
@@ -157,6 +157,20 @@ Global Hint Unfold ctx_pre: mdb.
 
 Notation "p ⊑ q" := (ctx_pre p q) (at level 70).
 
+Lemma ctx_pre_not `{
+  LtsP : Lts P A, 
+  LtsQ : !Lts Q A, 
+  LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
+  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE} 
+  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  (p : P) (q : Q) (e : E) :
+  p ⊑ q -> ¬ must q e -> ¬ must p e.
+Proof.
+  intros hpre not_must.
+  intro Hyp. eapply hpre in Hyp.
+  contradiction.
+Qed.
+
 Definition bhv_pre_cond1 `{Lts P A, Lts Q A} 
   (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
 
@@ -169,7 +183,7 @@ Definition bhv_pre_cond2 `{
   (p : P) (q : Q) :=
   forall s q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_pre_acc_set_of p' ⊆ lts_pre_acc_set_of q'). 
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_pre_acc_set_of p' ⊆ lts_pre_acc_set_of q').
 
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). 
 
@@ -181,9 +195,9 @@ Notation "p ≼ q" := (bhv_pre p q) (at level 70).
 Lemma must_eq_client `{
   LtsP : Lts P A, 
   LtsQ : ! Lts Q A, ! LtsEq Q A, !Good Q A good}
-  
+
   `{@Prop_of_Inter P Q A parallel_inter H LtsP LtsQ} :
-  
+
   forall (p : P) (q r : Q), q ⋍ r -> must p q -> must p r.
 Proof.
   intros p q r heq hm.
@@ -243,9 +257,9 @@ Proof. by inversion 1; eauto with mdb. Qed.
 Lemma must_preserved_by_lts_tau_clt `{
   LtsP : Lts P A, 
   LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
-  
+
   `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  
+
   (p : P) (e1 e2 : E) : 
   must p e1 -> ¬ good e1 -> e1 ⟶ e2 -> must p e2.
 Proof. by inversion 1; eauto with mdb. Qed.
@@ -253,16 +267,16 @@ Proof. by inversion 1; eauto with mdb. Qed.
 Lemma must_terminate_ungood `{
   LtsP : Lts P A, 
   LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
-  
+
   `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  
+
   (p : P) (e : E) : must p e -> ¬ good e -> p ⤓.
 Proof. intros hm. dependent induction hm; eauto with mdb. contradiction. Qed.
 
 Lemma must_mu_either_good_cnv `{
   LtsP : Lts P A, 
   LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
-  
+
   `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
   (p : P) (e e': E)  : 
   must p e 
@@ -291,11 +305,11 @@ Section must_sets.
   Local Open Scope positive.
 
   Definition MUST `{Lts P A} 
-    (p : P) (G : gset A) :=
+    (p : P) (G : subset_of A) :=
     forall p', p ⟹ p' -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0.
 
   Definition MUST__s `{FiniteImageLts P A} 
-    (ps : gset P) (G : gset A) := 
+    (ps : gset P) (G : subset_of A) := 
     forall p, p ∈ ps -> MUST p G.
 
   (* Residuals of a process p AFTER the execution of s. *)
@@ -324,7 +338,7 @@ Section failure.
 (* Meme ExtAction ? *)
 
   Definition Failure `{FiniteImageLts P A} 
-    (p : P) (s : trace A) (G : gset A) :=
+    (p : P) (s : trace A) (G : subset_of A) :=
     p ⇓ s -> exists p', p ⟹[s] p' /\ forall μ, μ ∈ G -> ¬ exists p0, p' ⟹{μ} p0.
 
   Definition fail_pre_ms_cond2 `{@FiniteImageLts P A HA LtsP, @FiniteImageLts Q A HA LtsQ} 
