@@ -172,41 +172,6 @@ Proof.
 Qed.
 
 
-(* Lemma must_mu_either_good_cnv `{
-  @LtsOba P A H LtsP EP, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
-
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-
-  ps e e' :
-  mustx ps e 
-    -> forall μ μ' p, p ∈ ps 
-      -> parallel_inter μ μ'
-        -> e ⟶[μ'] e' 
-          -> good e \/ p ⇓ [μ].
-Proof.
-  intros hmx μ μ' p mem inter l.
-  induction hmx.
-  - now left.
-  - right.
-    edestruct mustx_terminate_ungood; eauto with mdb. contradiction.
-    eapply cnv_act. eauto.
-    intros q w.
-    destruct (decide (non_blocking μ)) as [nb | not_nb].
-    + eapply cnv_nil.
-      eapply terminate_preserved_by_wt_non_blocking_action; eauto.
-    + assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
-      exists p. split; set_solver.
-      assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
-      set (hm := com e' μ μ' {[ q ]} inter l h1 h2).
-      destruct (mustx_terminate_ungood _ _ hm).
-      ++ destruct (decide (non_blocking μ')) as [nb' | not_nb'].
-         +++ contradict nh.
-             eapply good_preserved_by_lts_non_blocking_action_converse; eassumption.
-         +++ admit.
-      ++ eapply cnv_nil. eapply H6. set_solver.
-Admitted. *)
-
 Lemma ungood_acnv_mu `{
   @LtsOba P A H LtsP EP, !FiniteImageLts P A, 
   LtsE : !Lts E A, !LtsEq E A, !Good E A good}
@@ -223,7 +188,8 @@ Proof.
   intros hmx μ μ' p mem inter l not_happy not_happy'.
   dependent induction hmx.
   - contradiction.
-  - edestruct mustx_terminate_ungood as [happy | finish]; eauto with mdb.
+  - edestruct mustx_terminate_ungood as [happy | finish].
+    +  eauto with mdb.
     + contradiction.
     + destruct (decide (non_blocking μ)) as [nb | not_nb];
       destruct (decide (non_blocking μ')) as [nb' | not_nb'].

@@ -23,7 +23,8 @@
 *)
 
 Require Import Coq.Program.Equality.
-From stdpp Require Import base countable finite gmap list finite base decidable finite gmap gmultiset.
+From stdpp Require Import base countable finite gmap list 
+                        finite base decidable finite gmap gmultiset.
 From Must Require Import TransitionSystems Must.
 
 Lemma woutpout_preserves_good `{LtsObaFB P A, !Good P A good }
@@ -68,14 +69,38 @@ Proof.
     etrans. eassumption. now symmetry.
 Qed.
 
+
+Lemma elem_eq `{ExtAction A} (g1 g2 : gmultiset A) : 
+  elements (g1 ⊎ g2) = elements (g1) ++ elements g2.
+Proof.
+  assert (elements (g1 ⊎ g2) ≡ₚ elements g1 ++ elements g2) as eq.
+  eapply gmultiset_elements_disj_union.
+  (* setoid_rewrite eq. *)
+Admitted.
+
+Lemma not_in_mb_to_not_eq `{ExtAction A} (x : A) (g : gmultiset A) : 
+  (elements ({[+ x +]} ⊎ g) = [ x ] ++ elements g).
+Proof.
+  assert (elements (@singletonMS A (gmultiset A) gmultiset_singleton x) = [x]) as eq.
+  rewrite gmultiset_elements_singleton. eauto.
+  rewrite<- eq.
+  now eapply elem_eq.
+Qed.
+
 Lemma simpl_P_in_l `{ExtAction A} {P} 
   (η : A) (m : mb A) : 
   Forall P (elements ({[+ η +]} ⊎ m)) -> P η /\ Forall P (elements m).
 Proof.
-  intro Hyp.
   assert (η ∈ elements ({[+ η +]} ⊎ m)) as mem. eapply elem_of_elements. multiset_solver.
+  (* assert (((@singletonMS A (gmultiset A) gmultiset_singleton η) ⊎ ∅ 
+  = ((@singletonMS A (gmultiset A) gmultiset_singleton η))%(gmultiset A)).
+  multiset_solver. *)
   induction m using gmultiset_ind.
-  + admit.
+  + (* intros.
+    assert ((elements (disj_union (singletonMS η) (GMultiSet ∅) )) = [η]) as eq.
+    multiset_solver.
+    rewrite gmultiset_set_fold_empty.
+  erewrite gmultiset_disj_union_right_id in H0. *) admit.
   + admit.
 Admitted.
 
@@ -127,9 +152,9 @@ Proof.
   dependent induction stripped.
   + multiset_solver.
   + assert (elements ({[+ η +]} ⊎ m) = η :: (elements m)) as eq.
-    admit.
+    eapply not_in_mb_to_not_eq.
     ++ rewrite eq. constructor. eapply BlockingAction_are_not_non_blocking; eauto. eauto.
-Admitted.
+Qed.
 
 
 Lemma woutpout_delay_tau `{LtsOba P A} {p q m t} :
@@ -692,14 +717,21 @@ Proof.
 Qed.
 
 
-Lemma not_in_mb_to_not_eq `{LtsOba P A} {μ p}: 
+
+
+Lemma not_in_mb_to_not_eq' `{LtsOba P A} {μ p}: 
   μ ∉ lts_oba_mo p 
   -> Forall (NotEq μ) (elements (lts_oba_mo p)).
 Proof.
   induction (lts_oba_mo p) using gmultiset_ind.
   + constructor.
   + intro not_in_mem.
-Admitted.
+    assert (elements ({[+ x +]} ⊎ g) = x :: elements g) as eq.
+    eapply not_in_mb_to_not_eq.
+    rewrite eq. constructor.
+    ++ intro. subst. set_solver.
+    ++ assert (μ ∉ g). set_solver. now eapply IHg.
+Qed.
 
 Lemma mo_stripped_equiv `{LtsOba P A} r m r' r'' : 
   r ⟿{m} r'
@@ -743,9 +775,9 @@ Lemma mo_stripped `{LtsOba P A} r m r' :
   -> (∀ η : A, non_blocking η -> r' ↛[η]) 
   -> lts_oba_mo r = m. 
 Proof.
-  intros stripped Hyp.
+  revert r r'.
   induction m using gmultiset_ind.
-  + inversion stripped; subst. 
+  + intros r r' stripped Hyp. inversion stripped; subst. 
     ++ destruct (decide (lts_oba_mo r = ∅)) as [empty | not_empty].
        -- assumption.
        -- eapply gmultiset_choose in not_empty. destruct not_empty as (η & mem).
@@ -754,8 +786,17 @@ Proof.
           exists r; split; eauto. 
           assert (¬ r' ↛[η]). eapply lts_stable_spec2; exists r''; eauto. contradiction.
     ++ multiset_solver.
-  + inversion stripped; subst. multiset_solver.
-Admitted.
+  + intros r r' stripped Hyp.
+    assert (exists r'', r ⟶[x] r'') as (r'' & HypTr).
+    eapply aux0; eauto. set_solver.
+    assert (r ⟿{{[+ x +]} ⊎ m} r') as des; eauto.
+    eapply aux3_ in stripped as (t'' & stripped'' & eq); eauto.
+    eapply IHm in stripped''; eauto.
+    rewrite<- stripped''.
+    eapply lts_oba_mo_spec2; eauto.
+    eapply nb_with_strip in des. exact des. set_solver.
+    intros. eapply stable_equiv; eauto. symmetry. eauto.
+Qed.
 
 Lemma must_to_must_fw `{
   @LtsObaFB P A H LtsP M K, !FiniteImageLts P A,
@@ -795,7 +836,7 @@ Proof.
              eapply lts_multiset_minus; eauto.
          +++ assert (μ2 ∉ lts_oba_mo e) as not_in_mb. 
              eapply lts_oba_mo_non_blocking_contra; eauto.
-             eapply not_in_mb_to_not_eq in not_in_mb.
+             eapply not_in_mb_to_not_eq' in not_in_mb.
              edestruct (woutpout_delay_inp not_in_mb hmo l2) as (e3 & l3).
              exists (a2, lts_oba_mo e, e3).
              eapply ParSync; simpl; eauto.

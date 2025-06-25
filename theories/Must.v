@@ -273,8 +273,23 @@ Lemma must_terminate_ungood `{
   (p : P) (e : E) : must p e -> ¬ good e -> p ⤓.
 Proof. intros hm. dependent induction hm; eauto with mdb. contradiction. Qed.
 
-Lemma must_mu_either_good_cnv `{
+Lemma must_terminate_ungood' `{
   LtsP : Lts P A, 
+  LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
+
+  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+
+  (p : P) (e : E) : must p e -> good e \/ p ⤓.
+Proof. 
+  intros hm. destruct (decide (good e)) as [happy | not_happy].
+  + now left. 
+  + right. eapply must_terminate_ungood; eauto.
+Qed.
+
+(*
+(* vrai mais à voir si nécessaire *)
+Lemma must_mu_either_good_cnv `{
+  LtsP : Lts P A, !FiniteImageLts P A, 
   LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
 
   `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
@@ -288,13 +303,50 @@ Lemma must_mu_either_good_cnv `{
 Proof.
   intros hmx μ μ' inter l not_happy not_happy'.
   dependent induction hmx.
-  + contradiction.
-  + eapply cnv_act; eauto. 
-    ++ eapply tstep. intros p'' tr.
-       eapply must_terminate_ungood; eauto.
-    ++ intros p'' tr.
-       admit.
-Admitted.
+  - contradiction.
+  - assert (must p e) as Hyp. eauto with mdb.
+    eapply must_terminate_ungood' in Hyp.
+    destruct Hyp as [happy | finish].
+    + contradiction.
+    + destruct (decide (non_blocking μ)) as [nb | not_nb];
+      destruct (decide (non_blocking μ')) as [nb' | not_nb'].
+      ++ exfalso. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+      ++ assert (must p e) as Hyp. eauto with mdb.
+         eapply must_terminate_ungood' in Hyp.
+         destruct Hyp as [happy' | finish'].
+         +++ contradiction.
+         +++ eapply cnv_act. eauto.
+             intros q w.
+             eapply cnv_nil.
+             eapply terminate_preserved_by_wt_non_blocking_action; eauto.
+      ++ assert (must p e) as Hyp. eauto with mdb.
+         eapply must_terminate_ungood' in Hyp.
+         destruct Hyp as [happy' | finish'].
+         +++ contradiction.
+         +++ eapply cnv_act. eauto.
+             intros q w.
+             (* assert (h1 : wt_set_from_pset_spec1 {[p]} [μ] {[q]}).
+         exists p. split; set_solver.
+         assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver. *)
+         (* set (hm := com q e' μ μ' inter l h1 h2). *)
+         (* destruct (must_terminate_ungood _ _).
+         +++ contradict nh.
+             eapply good_preserved_by_lts_non_blocking_action_converse; eassumption.
+         +++ eapply cnv_nil. eapply H6. set_solver. *) admit.
+      ++ assert (must p e) as Hyp. eauto with mdb.
+         eapply must_terminate_ungood' in Hyp.
+         destruct Hyp as [happy' | finish'].
+         +++ contradiction.
+         +++ eapply cnv_act. eauto.
+             intros q w.
+         (* assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
+         exists p. split; set_solver.
+         assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
+         set (hm := com e' μ μ' {[ q ]} inter l h1 h2).
+         destruct (mustx_terminate_ungood _ _ hm).
+         +++ contradiction.
+         +++ eapply cnv_nil. eapply H6. set_solver. *) admit.
+Admitted. *)
 
 (** Must sets. *)
 
@@ -341,11 +393,11 @@ Section failure.
     (p : P) (s : trace A) (G : subset_of A) :=
     p ⇓ s -> exists p', p ⟹[s] p' /\ forall μ, μ ∈ G -> ¬ exists p0, p' ⟹{μ} p0.
 
-  Definition fail_pre_ms_cond2 `{@FiniteImageLts P A HA LtsP, @FiniteImageLts Q A HA LtsQ} 
+  Definition fail_pre_ms_cond2 `{@FiniteImageLts P A H LtsP, @FiniteImageLts Q A H LtsQ} 
     (p : P) (q : Q) :=
     forall s G, Failure q s G -> Failure p s G.
 
-  Definition fail_pre_ms `{@FiniteImageLts P A HA LtsP, @FiniteImageLts Q A HA LtsQ} 
+  Definition fail_pre_ms `{@FiniteImageLts P A H LtsP, @FiniteImageLts Q A H LtsQ} 
     (p : P) (q : Q) :=
     p ≼₁ q /\ fail_pre_ms_cond2 p q.
 

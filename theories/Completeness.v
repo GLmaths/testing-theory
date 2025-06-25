@@ -477,8 +477,8 @@ Lemma inversion_gen_mu_nb `{
   f s ⟶[μ] p ->
   non_blocking μ -> 
   ¬ good p ->
-  ∃ s1 s2 μ', s = s1 ++ μ' :: s2 /\ p ⋍ f (s1 ++ s2) /\ μ = co_of μ' 
-    /\ Forall exist_co_nba s1 (* /\ (¬ non_blocking μ' -> s1 = []) *).
+  ∃ s1 s2 μ', s = s1 ++ μ' :: s2 /\ p ⋍ f (s1 ++ s2) 
+  /\ μ = co_of μ' /\ Forall exist_co_nba s1 (* /\ (¬ non_blocking μ' -> s1 = []) *).
 Proof.
   revert μ p.
   induction s
@@ -755,36 +755,11 @@ Proof.
                   exists (gen_conv ((a :: s1) ++ s2)). split;eauto. admit.
                 exists r. split; eauto.
                 inversion his; subst. assert (non_blocking (co_of a)). admit.
-                 eapply must_eq_client. symmetry. eassumption.
-                 eapply Hlength; subst; eauto with mdb. simpl. admit.
+                eapply must_eq_client. symmetry. eassumption.
+                 eapply Hlength; subst; eauto with mdb. admit.
                   eapply cnv_preserved_by_wt_act; eauto.
 
-                 
-                 eapply lts_to_wt;eauto.
-
-    
-    
-     as [nb | not_nb].
-       +++ inversion his; subst. destruct H5.
-    rewrite 2 app_length. simpl. lia.
-    
-    destruct s1co_of ν'
-    destruct (decide (non_blocking (co_of ν'))).
-    eapply (cnv_drop_in_the_middle p s1 s2) in hlp; subst; eauto with mdb.
-    eapply must_eq_client. symmetry. eassumption.
-    eapply Hlength; subst; eauto with mdb.
-    rewrite 2 app_length. simpl. lia.
-
-destruct (decide (non_blocking (co_of ν'))).
-    
-    
-    
-    
-
-
-
-
-  revert p.
+ (*  revert p.
   induction s
     as (s & Hlength) using
          (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
@@ -831,13 +806,13 @@ destruct (decide (non_blocking (co_of ν'))).
                  assert (co_of a = co a). eapply co_of_is_co_nb; eauto. 
                  subst; eauto. subst; eauto.
                  subst.
-                 assert (ν = a). admit. subst.
+                 assert (ν = a). admit. subst. (* exfalso ? *)
                  assert (e' ⋍ gen_conv (s1 ++ a :: s2)). admit.
                  eapply must_eq_client. symmetry. exact H4.
                  eapply Hlength; auto.
                  eapply (cnv_wt_prefix [a] (s1 ++ a :: s2) p).
                  simpl. eauto.
-                 eapply lts_to_wt. auto. (* exfalso ? *)
+                 eapply lts_to_wt. auto. (* exfalso ? *) *)
 Admitted.
 
 Lemma must_iff_cnv `{
@@ -1360,7 +1335,7 @@ Lemma must_gen_a_with_nil `{
 
   (p : P) (hcnv : p ⇓ []) O :
 
-  (forall p', p ⟹ p' -> lts_stable p' τ -> (∃ x, x ∈ lts_acc_set_of p' ∖ O))
+  (forall p', p' ∈ wt_stable_set p [] hcnv -> (∃ x, x ∈ lts_acc_set_of p' ∖ O))
   -> must p (gen_acc (oas p [] hcnv ∖ O) []).
 Proof.
   induction (cnv_terminate p [] hcnv) as (p, hpt, ihhp).
@@ -1371,7 +1346,7 @@ Proof.
     simpl. assert (lts_acc_set_of p ⊆ lts_acc_set_of p ∪ ∅). set_solver.
     assert (must p (gen_acc ((lts_acc_set_of p) ∖ O) [])).
     assert (∃ x : A, x ∈ lts_acc_set_of p ∖ O).
-    eapply Hyp. constructor. eauto.
+    eapply Hyp. eapply wt_stable_set_spec2. split; eauto with mdb.
     eapply must_gen_acc_stable; eauto. eapply must_f_gen_a_subseteq; eauto.
     eapply difference_mono_r. eauto.
   + assert
@@ -1380,9 +1355,11 @@ Proof.
           (forall p', (q ⟹ p' -> lts_stable p' τ -> (∃ x, x ∈ lts_acc_set_of p' ∖ O)))
             -> (exists H, must q (gen_acc (oas q [] H ∖ O) []))).
     ++ intros q l'%lts_tau_set_spec.
-       destruct (hpt q l') as (hq).
+       destruct (hpt q l') as (hq). 
        intros. assert (must q (gen_acc (oas q [] (cnv_nil q (tstep q hq)) ∖ O) [])).
        eapply ihhp;eauto.
+       intros. eapply wt_stable_set_spec1 in H4 as (Hyp & Hyp').
+       eapply H3; eauto.
        exists (cnv_nil _ (tstep q hq)). eauto.
     ++ intros.
        eapply m_step.
@@ -1391,8 +1368,8 @@ Proof.
            ++++ intros p0 l0%lts_tau_set_spec.
                 assert (∃ H3 : p0 ⇓ [], must p0 (gen_acc (oas p0 [] H3 ∖ O) [])) as (h0 & hm).
                 eapply h; eauto. intros.
-                eapply H3; eauto. econstructor.
-                eapply lts_tau_set_spec. exact l0. eauto.
+                eapply H3; eauto. eapply wt_stable_set_spec2; split; eauto.
+                eapply lts_tau_set_spec in l0. econstructor; eauto.
                 assert ((oas p0 [] h0 ∖ O) ⊆ (oas p [] hcnv ∖ O)).
                 eapply difference_mono_r.
                 eapply union_acceptance_set_lts_tau_subseteq. 
@@ -1417,18 +1394,18 @@ Lemma must_gen_a_with_s `{
 
   s (p : P) (hcnv : p ⇓ s) O :
 
-  (forall p', p ⟹[s] p' -> lts_stable p' τ -> (∃ x, x ∈ lts_acc_set_of p' ∖ O))
+  (forall p', p' ∈ wt_stable_set p s hcnv -> (∃ x, x ∈ lts_acc_set_of p' ∖ O))
+  
   -> must p (gen_acc (oas p s hcnv ∖ O) s).
 Proof.
   revert p hcnv O.
   induction s as [|μ s'].
-  - eapply must_gen_a_with_nil.
+  - intros. eapply must_gen_a_with_nil.
+    eauto.
   - intros p hcnv O.
     set (ps := wt_set_mu p μ s' hcnv).
     inversion hcnv as [| ? ? ? conv Hyp_conv]; subst.
     assert (hcnv0 : forall p', p' ∈ ps -> p' ⇓ s') by (intros ? mem%wt_set_mu_spec1; eauto).
-    
-    
     assert (he : ∀ p', p' ∈ ps ->
                       (forall pr p0, p0 ∈ wt_stable_set p' s' pr 
                       -> (∃ x, x ∈ lts_acc_set_of p0 ∖ O))
@@ -1437,8 +1414,8 @@ Proof.
     + intros p' mem Hyp.
       assert (must p' (gen_acc (oas p' s' (hcnv0 _ mem) ∖ O) s')).
       eapply IHs'; eauto.
-      intros. eapply Hyp; eauto. eapply wt_stable_set_spec2. split; eauto.
-      exists (hcnv0 p' mem). eauto.
+      exists (hcnv0 p' mem).
+      intros. eauto.
     + intro Hyp.
     (* 
     destruct (exists_forall_in_gset ps _ _ he) as [Hyp | Hyp].
@@ -1463,10 +1440,10 @@ Proof.
              
              eapply wt_set_mu_spec2; eauto with mdb.
              
-             intros. eapply Hyp; eauto. 
-             eapply wt_push_left; eauto. eapply lts_to_wt; eauto.
-             eapply wt_stable_set_spec1; eauto.
-             eapply wt_stable_set_spec1; eauto.
+             intros pr p0 Hyp'. eapply Hyp; eauto.
+             eapply wt_stable_set_spec1 in Hyp' as (weak_Tr & stable); eauto.
+             eapply wt_stable_set_spec2; eauto.
+             split; eauto. eapply wt_push_left; eauto. eapply lts_to_wt; eauto.
              destruct H3.
              assert (oas p' s' x ∖ O ⊆ oas p (μ :: s') hcnv ∖ O).
              eapply difference_mono_r.
@@ -1479,18 +1456,34 @@ Proof.
              eapply he; eauto.
              eapply wt_set_mu_spec2; eauto.
              intros weak_conv p''' Hyp'.  
-             eapply Hyp. eapply wt_push_left; eauto.
-             eapply wt_set_mu_spec2 in hw; eauto.
-             eapply wt_stable_set_spec1; eauto.
-             eapply wt_stable_set_spec1; eauto.
+             eapply Hyp. 
+             eapply wt_stable_set_spec1 in Hyp' as (weak_Tr & stable); eauto.
+             eapply wt_stable_set_spec2; eauto.
+             split; eauto.
+             eapply wt_push_left; eauto.
              assert ((oas p' s' h ∖ O) ⊆ oas p (μ :: s') hcnv ∖ O).
              eapply difference_mono_r. 
              eapply union_wt_acceptance_set_subseteq; eauto with mdb.
              eapply must_f_gen_a_subseteq, difference_mono_r, 
               union_wt_acceptance_set_subseteq; eauto with mdb.
 
-      Unshelve. eauto. eauto. eauto. eauto.
+      Unshelve. eauto.
 Qed.
+
+Lemma must_gen_a_with_s_contra `{
+  @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
+  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
+
+  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+
+  s (p : P) (hcnv : p ⇓ s) O :
+
+  ¬ must p (gen_acc (oas p s hcnv ∖ O) s)
+  
+  -> exists p', p' ∈ wt_stable_set p s hcnv /\ lts_acc_set_of p' ⊆ O.
+Proof.
+  intros.
+Admitted.
 
 Lemma not_must_gen_a_without_required_acc_set `{
   @LtsObaFW P A H LtsP LtsEqP V, 
@@ -1545,7 +1538,8 @@ Qed.
 Lemma completeness2 `{
   @LtsObaFW P A H LtsP LtsEqP VP, !FiniteImageLts P A,
   @LtsObaFW Q A H LtsQ LtsEqQ VQ, !FiniteImageLts Q A,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @LtsObaFB E A H LtsE LtsEqE VE, 
+  !Good E A good, !gen_spec_acc co_of gen_acc}
 
   `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
   `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
@@ -1558,22 +1552,17 @@ Proof.
   assert (¬ must q (gen_acc (oas p s hacnv ∖ lts_acc_set_of q') s)) as not_must.
   eapply not_must_gen_a_without_required_acc_set; eauto.
   eapply (ctx_pre_not p q) in not_must; eauto.
-  assert (must p (gen_acc (oas p s hacnv ∖ lts_acc_set_of q') s)).
-  eapply must_gen_a_with_s. intros.
-  assert (¬ ∃ x : A, x ∈ lts_acc_set_of p' ∖ lts_acc_set_of q').
-  eapply must_gen_acc_stable_inv_oas_inv; eauto.
-  assert (must_gen_acc_stable_inv_oas_inv).
-  eapply 
-  eapply 
-  + eapply hpre in hm. contradict hm.
-    eapply not_must_gen_a_without_required_acc_set ; set_solver.
-Admitted.
+  eapply must_gen_a_with_s_contra in not_must.
+  destruct not_must as (p' & Hyp & mem).
+  eapply wt_stable_set_spec1 in Hyp as (wk_tr & stable).
+  eauto.
+Qed.
 
 Lemma completeness_fw `{
-  @LtsObaFW P A H LtsP LtsEqP VP, !FiniteImageLts P A
+  @LtsObaFW P A H LtsP LtsEqP VP, !FiniteImageLts P A,
   @LtsObaFW Q A H LtsQ LtsEqQ VQ, !FiniteImageLts Q A, 
-  @LtsObaFB E A H LtsE LtsEqE VC, !FiniteImageLts E A, !Good E A good,
-  !gen_spec_conv co_of gen_conv, !gen_spec_acc co_f gen_acc}
+  @LtsObaFB E A H LtsE LtsEqE VE, !FiniteImageLts E A, 
+  !Good E A good, !gen_spec_conv co_of gen_conv, !gen_spec_acc co_f gen_acc}
 
   `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
   `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
