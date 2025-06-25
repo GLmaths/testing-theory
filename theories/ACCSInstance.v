@@ -55,6 +55,8 @@ Notation pr_nil := (g gpr_nil).
 Notation pr_input a p := (g (gpr_input a p)).
 Notation pr_tau p := (g (gpr_tau p)).
 Notation pr_choice p q := (g (gpr_choice p q)).
+Notation "𝟘" := pr_nil.
+Notation "c ? P" := (gpr_input c P) (at level 50).
 
 Infix "∥" := pr_par (at level 50).
 Infix "⊕" := pr_choice (at level 50).
@@ -661,6 +663,19 @@ Proof. induction 1; eauto with ccs. Qed.
 Lemma cgr_par_right p q1 q2 : q1 ≡* q2 -> p ∥ q1 ≡* p ∥ q2.
 Proof. induction 1; eauto with ccs. Qed.
 
+Lemma cgr_choice_right (p q1 q2 : gproc) :
+  g q1 ≡* g q2 → p ⊕ q1 ≡* p ⊕ q2.
+Proof.
+intros H1.
+apply clos_trans_tn1 in H1.
+apply clos_tn1_trans.
+dependent induction H1.
+- constructor 1. eauto with ccs.
+- econstructor 2.
+  + apply cgr_choice; try eassumption; eauto with ccs.
+  + inversion_clear H.
+Abort.
+
 Lemma harmony_cgr : forall p q α, (exists r, p ≡* r /\ lts r α q) -> (exists r, lts p α r /\ r ≡* q).
 Proof.
   intros p q α (p' & hcgr & l).
@@ -1204,5 +1219,3 @@ Proof.
     eapply elem_of_union. left. now eapply gmultiset_elem_of_dom.
     eapply elem_of_union. right. now eapply gmultiset_elem_of_dom.
 Qed.
-
-

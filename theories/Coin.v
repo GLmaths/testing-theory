@@ -181,7 +181,18 @@ End eq_contextual.
 Lemma coin_refl `{FiniteLts A L} {p : A} : {[ p ]} ⩽ p.
 Proof. eapply eqx. eapply alt_set_singleton_iff. firstorder. Qed.
 
-Lemma coin_union `{FiniteLts A L} : forall (X1 X2  : gset A) (q : A), X1 ⩽ q -> X1 ∪ X2 ⩽ q.
+Lemma coin_union_l `{FiniteLts A L} : forall (X1 X2  : gset A) (q : A), X1 ⩽ q -> X1 ∪ X2 ⩽ q.
+Proof.
+  intros X1 X2 q Ho.
+  eapply eqx. eapply eqx in Ho as (h1 & h2).
+  split.
+  - intros s hcnv.
+    eapply h1. set_solver.
+  - intros s p hw hst hcnv.
+    destruct (h2 s p hw hst ltac:(set_solver)). set_solver.
+Qed.
+
+Lemma coin_union_r `{FiniteLts A L} : forall (X1 X2  : gset A) (q : A), X2   ⩽ q -> X1 ∪ X2 ⩽ q.
 Proof.
   intros X1 X2 q Ho.
   eapply eqx. eapply eqx in Ho as (h1 & h2).
@@ -195,5 +206,174 @@ Qed.
 Lemma coin_elem_of `{FiniteLts A L} (p : A) X: p ∈ X -> X ⩽ p.
 Proof.
 intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
-apply coin_union, coin_refl.
+apply coin_union_l, coin_refl.
 Qed.
+
+(* faster than set set_solver *)
+Ltac set_tac :=
+solve[apply elem_of_union_r; set_tac] ||
+solve[apply elem_of_union_l; set_tac] ||
+assumption ||
+now apply elem_of_singleton_2.
+
+(* TODO : should go with mb Lts construction *)
+Lemma fw_wt `{FiniteLts A L} (t : A) q m:
+  t ⟹ q -> (t ▷ m) ⟹ (q ▷ m).
+Proof.
+intro Ht. induction Ht.
+- apply wt_nil.
+- apply wt_tau with (q  ▷ m).
+  + now constructor.
+  + assumption.
+- apply wt_act with (q ▷ m).
+  + now constructor.
+  + assumption.
+Qed.
+
+Lemma fw_wt_mb_com `{FiniteLts A L} (t : A) a q m:
+  t ⟹{ActIn a} q -> (t ▷ {[+ a +]} ⊎ m) ⟹ (q ▷ m).
+Proof.
+intro Ht. dependent induction Ht.
+- apply wt_tau with (q ▷ {[+ a +]} ⊎ m).
+  + now constructor.
+  + apply IHHt; trivial.
+- apply wt_tau with (q  ▷ m).
+  + now constructor.
+  + now apply fw_wt.
+Qed.
+
+Lemma fw_wt_left `{FiniteLts A L} (t : A) q0 (M : mb L) μ :
+  t ⟹{μ} q0 -> (t ▷ M) ⟹{μ} (q0 ▷ M).
+Proof.
+intros Ht.
+dependent induction Ht.
+- apply wt_tau with (q ▷ M).
+  + now constructor.
+  + apply IHHt; trivial.
+- apply wt_act with (q ▷ M).
+  + now constructor.
+  + now apply fw_wt.
+Qed.
+
+Lemma copre_fw_inv_l `{FiniteLts A L} (p t: A):
+  (∀ μ p', p ⟶{μ} p' <-> (p' = t /\ μ = τ)) ->
+  forall M (X : gset (A * mb L)) (q : A * mb L),  {[t ▷ M]} ∪ {[p ▷ M]} ∪ X ⩽ q -> {[p ▷ M]} ∪ X ⩽ q.
+Proof.
+intros Hinv. cofix hco. intros M X q Hq.
+assert(Hpt : (p ▷ M) ⟶ (t ▷ M)) by (apply lts_fw_p, Hinv; tauto).
+constructor.
+- intros q' Hq'. apply hco, Hq, Hq'.
+- intros Ht Hs. destruct Hq as [ _ Hq _ _].
+  destruct Hq as (p1 & p2 & Hin & Hcnv & Hs' & Hout).
+  + intros p0 Hin. repeat rewrite elem_of_union in Hin.
+    destruct Hin as [[Heqt | Heqp] | Hin].
+    * apply elem_of_singleton_1 in Heqt. subst.
+      apply terminate_preserved_by_lts_tau with (p ▷ M).
+      -- apply Ht. set_tac.
+      -- assumption.
+    * apply elem_of_singleton_1 in Heqp. subst.
+      apply Ht. set_tac.
+    * apply Ht. set_tac.
+  + trivial.
+  + repeat rewrite elem_of_union in Hin.
+    destruct Hin as [[Heqt | Heqp] | Hin].
+    * apply elem_of_singleton_1 in Heqt. subst.
+      exists (p ▷ M). exists p2. repeat split; trivial.
+      -- set_tac.
+      -- apply wt_tau with (t ▷ M); assumption.
+      -- apply Hs'.
+      -- apply Hs'.
+    * apply elem_of_singleton_1 in Heqp. subst.
+      exists (p ▷ M). exists p2. repeat split; trivial.
+      -- set_tac.
+      -- apply Hs'.
+      -- apply Hs'.
+    * exists p1. exists p2; intuition.
+      apply elem_of_union_r. set_tac.
+- intros μ q' ps' Hμ1 Hμ2 Hwt. eapply Hq; [| eassumption |].
+  + intros p0 Hin. repeat rewrite elem_of_union in Hin.
+    destruct Hin as [[Heqt | Heqp] | Hin].
+    * apply elem_of_singleton_1 in Heqt. subst.
+      apply cnv_preserved_by_lts_tau with (p ▷ M).
+      -- apply Hμ1. set_tac.
+      -- assumption.
+    * apply elem_of_singleton_1 in Heqp. subst. apply Hμ1. set_tac.
+    * apply Hμ1. set_tac.
+  + destruct Hwt as [Hwt1 Hwt2].
+    split.
+    * intros p' Hp'. destruct (Hwt1 p' Hp') as [p0 [Hin Hp0]].
+      repeat rewrite elem_of_union in Hin. destruct Hin as [Heqt | Hin].
+      -- apply elem_of_singleton_1 in Heqt. subst.
+         exists (p ▷ M). split; [set_tac|assumption].
+      -- exists p0. split; [set_tac|assumption].
+    * intros p' p'' Hin Hμ.
+      repeat rewrite elem_of_union in Hin.
+      destruct Hin as [[Heqt | Heqp] | Hin].
+      -- apply elem_of_singleton_1 in Heqt. subst.
+         eapply Hwt2 with (p ▷ M); [set_tac|].
+         apply wt_tau with (t ▷ M); assumption.
+      -- apply elem_of_singleton_1 in Heqp. subst.
+         eapply Hwt2 with (p ▷ M); [set_tac|assumption].
+      -- eapply Hwt2 with p'; [set_tac|]. apply Hμ.
+- intros Ht. apply Hq. intros p0 Hin.
+  repeat rewrite elem_of_union in Hin. destruct Hin as [[Heqt | Heqp] | Hin].
+  + apply elem_of_singleton_1 in Heqt. subst.
+    apply terminate_preserved_by_lts_tau with (p ▷ M).
+    * apply Ht. set_tac.
+    * now apply Hpt.
+  + apply elem_of_singleton_1 in Heqp. subst.
+    apply Ht. set_tac.
+  + apply Ht. set_tac.
+Qed.
+
+Lemma copre_inv_l `{FiniteLts A L} (p : A) X t q : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
+  {[t]} ∪ X ⩽ q -> {[p]} ∪ X ⩽ q.
+Proof.
+intros Hpt Hinv. revert q. cofix hco. intros q Hq.
+constructor.
+- intros q' Hq'. apply hco, Hq, Hq'.
+- intros Ht Hs. destruct Hq as [ _ Hq _ _].
+  destruct Hq as (p1 & p2 & Hin & Hcnv & Hs' & Hout).
+  + intros p0 Hin. apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
+    * apply elem_of_singleton_1 in Heqt. subst.
+      apply terminate_preserved_by_lts_tau with p.
+      -- apply Ht. set_tac.
+      -- now apply Hpt.
+    * apply Ht. set_tac.
+  + trivial.
+  + apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
+    * apply elem_of_singleton_1 in Heqt. subst.
+      exists p. exists p2. repeat split; trivial.
+      -- set_tac.
+      -- apply wt_tau with t; [|assumption].
+          now apply Hpt. (* p ⟶ t *)
+    * exists p1. exists p2; intuition.
+      apply elem_of_union_r. set_tac.
+- intros μ q' ps' Hμ1 Hμ2 Hwt. eapply Hq; [| eassumption |].
+  + intros p0 Hin. apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
+    * apply elem_of_singleton_1 in Heqt. subst.
+      apply cnv_preserved_by_lts_tau with p.
+      -- apply Hμ1. set_tac.
+      -- now apply Hpt. (* p ⟶ t *)
+    * apply Hμ1. set_tac.
+  + destruct Hwt as [Hwt1 Hwt2].
+    split.
+    * intros p' Hp'. destruct (Hwt1 p' Hp') as [p0 [Hin Hp0]].
+      apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
+      -- apply elem_of_singleton_1 in Heqt. subst.
+         exists t. split; [set_tac|now apply Hinv].
+      -- exists p0. split; [set_tac|assumption].
+    * intros p' p'' Hin Hμ.
+      apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
+      -- apply elem_of_singleton_1 in Heqt. subst.
+         eapply Hwt2 with p; [set_tac|]. apply Hinv, Hμ.
+      -- eapply Hwt2 with p'; [set_tac|]. apply Hμ.
+- intros Ht. apply Hq. intros p0 Hin.
+  apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
+  + apply elem_of_singleton_1 in Heqt. subst.
+    apply terminate_preserved_by_lts_tau with p.
+    * apply Ht. set_tac.
+    * now apply Hpt.
+  + apply Ht. set_tac.
+Qed.
+
