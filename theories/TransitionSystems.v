@@ -162,7 +162,7 @@ Class ExtAction (A : Type) :=
       (*Extra hypothesis for the moment *)
       duo_sym : Symmetric dual;
       
-      exists_duo_nb η : non_blocking η -> exists μ, dual η μ;
+      exists_duo_nb η : (* non_blocking η ->  *) exists μ, dual η μ; (* que pour dual ?*)
       nb_not_nb η μ1 μ2 : non_blocking η -> dual η μ2 -> dual μ1 μ2 -> non_blocking μ1;
     }.
 #[global] Existing Instance extaction_eqdec.
@@ -2611,6 +2611,10 @@ Proof.
     eauto.
 Qed.
 
+
+(* #[global] Instance ProofIr `{ExtAction A} : ∀ x, ProofIrrel (non_blocking x).
+intros. intro. intro. Admitted. *)
+
 (* À VOIR *)
 (* Inductive lts_multiset_step `{ExtAction A} : {m : mb A | forall η, η ∈ m -> non_blocking η}
 -> Act A -> {m : mb A | forall η, η ∈ m -> non_blocking η} -> Prop :=
@@ -2684,16 +2688,17 @@ intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
     assert (¬ non_blocking μ).
     eapply lts_oba_fw_non_blocking_duo_spec; eauto. contradiction.
   + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
-    ++ assert { μ' | dual (co μ) μ'} as (μ' & duo).
-       exact (choice (fun μ0 => dual (co μ) μ0) (exists_duo_nb (co μ) nb') ).
-       assert ((co μ) = (co μ')). eapply unique_nb; eauto.
-       destruct (decide (dual (co μ) μ)).
-       +++ left. exists (co μ). eauto.
-       +++ admit. (* point d'omnbre *)
+    ++ assert { μ' | dual μ μ'} as (μ' & duo).
+       exact (choice (fun μ0 => dual μ μ0) (exists_duo_nb μ) ).
+       symmetry in duo.
+       destruct (decide (non_blocking μ')) as [nb'' | not_nb''].
+       +++ left. exists μ'; eauto.
+       +++ right. intro Hyp. destruct Hyp as (μ'' & nb'' & duo'').
+           assert (non_blocking μ'). eapply nb_not_nb; eauto. contradiction.
     ++ right. intro imp. destruct imp as (η'' & nb'' & duo).
        assert (η'' = (co μ)). eapply unique_nb; eauto. subst.
        contradiction.
-Admitted.
+Qed.
 
 #[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} μ 
   : Decision (∃ η', non_blocking η' /\ dual η' μ).
@@ -2827,12 +2832,60 @@ where "p ⟿{ m } q" := (strip p m q).
 
 (** Equivalence between forwarders. *)
 
-Definition purge_blocking_action `{ExtAction A} (m : mb A) : (mb A):=
-match m with
-| ∅ => ∅
-| {[+ x +]} ⊎ m' => ∅
-| _ => ∅
+(* Fixpoint purge_blocking_action_list `{ExtAction A} l {struct l}: (mb A):=
+match l with
+| [] => ∅
+| a :: l' => if (decide (non_blocking a)) 
+                    then {[+ a +]} ⊎ (purge_blocking_action_list l')
+                    else (purge_blocking_action_list l')
 end. 
+
+
+Definition purge_blocking_action `{!ExtAction A} (m : mb A)  : (mb A):= 
+  purge_blocking_action_list (elements (m : mb A)).
+
+Lemma purge_blocking_action_mor `{!ExtAction A} (m1 m2 : mb A) : purge_blocking_action (m1 ⊎ m2) = 
+    purge_blocking_action (m1) ⊎ purge_blocking_action m2.
+Proof.
+  induction m1 using gmultiset_ind; induction m2 using gmultiset_ind ;
+  intros; try multiset_solver.
+  + assert ((∅ : gmultiset A) ⊎ (({[+ x +]} ⊎ X) : gmultiset A) = ((({[+ x +]} ⊎ X)): gmultiset A)) as eq. multiset_solver.
+Admitted.
+
+
+Lemma non_blocking_mb `{ExtAction A} (m : mb A) :
+  (forall η, η ∈ m -> non_blocking η) -> purge_blocking_action (m : mb A) = (m : mb A).
+Proof.
+  induction m using gmultiset_ind; intros Hyp.
+  + unfold purge_blocking_action.
+    assert (elements (∅ : gmultiset A) = []).
+    eapply gmultiset_elements_empty.
+    (* rewrite H0.
+    assert (elements ∅ = []).
+    rewrite H0.
+    (* assert (elements  = []). rewrite gmultiset_elements_empty. *) *)
+    admit.
+  + assert (∀ η : A, η ∈ X → non_blocking η).
+    intros η mem.
+    eapply Hyp. multiset_solver.
+    assert (purge_blocking_action ({[+ x +]} ⊎ X) = 
+      purge_blocking_action ({[+ x +]}) ⊎ purge_blocking_action X).
+    eapply purge_blocking_action_mor.
+    rewrite H1.
+    assert (non_blocking x). eapply Hyp. multiset_solver.
+    assert (elements ({[+ x +]} : gmultiset A) = [x]).
+    eapply gmultiset_elements_singleton.
+    unfold purge_blocking_action. rewrite H3.
+    
+  
+  eapply gmultiset_elem_of_disj_union in mem as [here | there].
+    ++ assert (η = x). multiset_solver. subst.
+       
+  simpl. unfold purge_blocking_action.
+    assert (elements ({[+ x +]} ⊎ X) = x :: elements X).
+    multiset_solver.
+     simpl.
+ *)
 
 Definition fw_eq `{LtsOba P A} (p : P * mb A) (q : P * mb A) :=
   forall (p' q' : P),
@@ -3046,18 +3099,32 @@ Proof.
 Qed.
 
 
-(* Inductive ForallMSET {A : Type} {EqDecision0 : EqDecision A} {H : Countable A} (P : A → Prop) : gmultiset A → Prop :=
-    Forall_nil : ForallMSET P ∅ | Forall_cons : ∀ (x : A) (m : gmultiset A), P x → ForallMSET P m → ForallMSET P ({[+ x +]} ⊎ m).
+(* Inductive ForallMSET `{H : ExtAction} (P : A → Prop) : 
+      gmultiset A → Prop :=
+    | Forall_nil : ForallMSET P ∅ 
+    | Forall_cons : ∀ (x : A) (m : gmultiset A), P x → ForallMSET P m 
+            → ForallMSET P ({[+ x +]} ⊎ m).
 
-(* Lemma simplifyMSET {A : Type} {EqDeq : EqDecision A} {H : Countable A} {P η m} : ForallMSET P ({[+ η +]} ⊎ m) -> P η. *)
+(* Lemma simplifyMSET {A : Type} `{H : ExtAction A} P η m : ForallMSET P ({[+ η +]} ⊎ m) 
+-> P η /\ ForallMSET P m.
+Admitted. *)
 
-Lemma simplifyMSET {A : Type} {EqDecision0 : EqDecision A} {H : Countable A} : 
-  forall (P : A -> Prop) (η : A) (m : gmultiset A) , ForallMSET P ({[+ η +]} ⊎ m) -> P η /\ ForallMSET P m.
+Lemma simplifyMSET {A : Type} `{H : ExtAction A} (P : A -> Prop) (η : A) (m : gmultiset A) : 
+      ForallMSET P ({[+ η +]} ⊎ m) -> P η /\ ForallMSET P m.
 Proof.
-  intros.
-  dependent induction H0.
-  * multiset_solver.
-  * eapply IHForallMSET.
+  revert η.
+  induction m using gmultiset_ind; intros.
+  + assert (ForallMSET P ({[+ η +]})). admit.
+    inversion H1; subst. assert (x = η). multiset_solver. subst.
+    split;eauto; try constructor.
+  + inversion H0. multiset_solver.
+    assert (η ∈ {[+ x0 +]} ⊎ m0). multiset_solver.
+    destruct (decide (x0 = η)) as [eq | not_eq ].
+    ++ subst. split. eauto. 
+       assert (ForallMSET P ({[+ η +]} ⊎ m0)).
+       econstructor; eauto.
+       admit.
+    ++ admit. 
 Admitted. *)
 
 (* Lemma SimplifyMultiSet_and_eq : forall μ η m, μ ∉ {[+ η +]} ⊎ m -> μ ≠ η /\ μ ∉ m. *)
@@ -3521,10 +3588,12 @@ Qed.
 
 Lemma lts_fw_com_eq_spec `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
   p q q' mp mq μ η:
-  ¬ non_blocking μ (* utile OU prouvable ?*) -> dual η μ -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[μ] q' 
+  ¬ non_blocking μ (* utile OU prouvable ?*) -> dual η μ 
+  -> non_blocking η (* à enlever si multiset de nb action *)
+  -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[μ] q' 
   -> p ▷ mp ⟶≐ q' ▷ mq.
 Proof.
-  intros not_nb duo heq hl.
+  intros not_nb duo nb'  heq hl.
   edestruct (fw_eq_input_simulation heq not_nb hl) as (p' & hl' & heq').
   edestruct (lts_oba_mo_strip p) as (p0 & hwp).
   edestruct (lts_oba_mo_strip q) as (q0 & hwq).
@@ -3569,7 +3638,7 @@ Proof.
   - eapply gmultiset_disj_union_difference' in hright.
     exists (p' ▷ mp ∖ {[+ η +]}).
     split. rewrite hright at 1.
-    assert (non_blocking η) as nb. admit. (* can be admitted *)
+    (* assert (non_blocking η) as nb. admit. (* can be admitted *) *)
     
     eapply ParSync. split; eauto. eauto with mdb. eapply lts_multiset_minus; eauto.
     
@@ -3586,7 +3655,7 @@ Proof.
     transitivity (lts_oba_mo p' ⊎ {[+ η +]} ⊎  mp ∖ {[+ η +]}). multiset_solver.
     rewrite <- gmultiset_disj_union_assoc.
     now replace (({[+ η +]} ⊎ mp ∖ {[+ η +]})) with mp.
-Admitted.
+Qed.
 
 
 Lemma lts_fw_eq_spec  `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
@@ -3704,13 +3773,6 @@ intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as 
     + apply lts_multiset_minus. exact nb'.
     + exists (r ▷ mr). split. eapply ParRight. apply lts_multiset_minus; exact nb. reflexivity.
 Qed.
-(* Next Obligation.
-  intros; simpl in *.
-  inversion H3; subst; simpl in *.
-  - eapply lts_oba_mo_spec2 in H4. multiset_solver.
-  - rewrite gmultiset_disj_union_comm, <- gmultiset_disj_union_assoc.
-    now replace (m ⊎ lts_oba_mo p0) with (lts_oba_mo p0 ⊎ m) by eapply gmultiset_disj_union_comm.
-Qed. *)
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb not_eq Hstep_nb Hstep. 
   destruct p as (p, mp), q1 as (q, mq), q2 as (r, mr).
@@ -3960,7 +4022,7 @@ Definition lts_fw_com_fin `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A
 
 Definition lts_fw_tau_set `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
   (p : P) (m : mb A) : list (P * mb A) :=
-  let xs := map (fun p => (proj1_sig p, m)) (enum $ dsig (fun q => p ⟶ q)) in
+  let xs := map (fun p' => (proj1_sig p', m)) (enum $ dsig (fun q => p ⟶ q)) in
   let ys :=
     concat (map
               (fun '(a, ps) => map (fun p => (p, m ∖ {[+ a +]})) ps)
@@ -3998,15 +4060,31 @@ Proof.
     
     
     now replace (({[+ co μ1 +]} ⊎ m2) ∖ {[+ co μ1 +]}) with m2 by multiset_solver.
+    
 
-    assert ((∃ μ : A,
-    co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) =
-    co μ ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ)))) ∧ (co μ) ∈ elements ({[+ co μ1 +]} ⊎ m2)) 
+    assert (co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) =
+co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
+∧ co μ1 ∈ elements ({[+ co μ1 +]} ⊎ m2) 
     -> co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
-        ∈ concat (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)))). admit.
-    eapply H2.
+        ∈ concat (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)))) as Hyp.
+    (* assert ((∃ μ : A,
+    co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) =
+    co μ ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ)))) 
+    ∧ (co μ) ∈ elements ({[+ co μ1 +]} ⊎ m2)) 
+    -> co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
+        ∈ concat (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)))) as Hyp. *)
+    intro Hyp'. destruct Hyp' as (Hyp_eq & mem).
     (* eapply elem_of_list_fmap. *)
-    exists μ1. split; eauto.
+        
+        
+    admit.
+         
+         
+    eapply Hyp.
+    (* eapply elem_of_list_fmap. *)
+    (* exists μ1. *)
+   
+     split; eauto.
     eapply elem_of_Permutation_proper.
     eapply (gmultiset_elements_disj_union {[+ co μ1 +]} m2).
     rewrite gmultiset_elements_singleton. set_solver.

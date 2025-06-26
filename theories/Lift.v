@@ -70,14 +70,16 @@ Proof.
 Qed.
 
 
-Lemma elem_eq `{ExtAction A} (g1 g2 : gmultiset A) : 
-  elements (g1 ⊎ g2) = elements (g1) ++ elements g2.
+(* Lemma elem_eq `{ExtAction A} (x : A) (g1 g2 : gmultiset A) : 
+  x ∈ elements (g1 ⊎ g2) = x ∈ elements (g1) ++ elements g2.
 Proof.
-  assert (elements (g1 ⊎ g2) ≡ₚ elements g1 ++ elements g2) as eq.
-  eapply gmultiset_elements_disj_union.
+  eapply elem_of_Permutation_proper.
+    eapply (gmultiset_elements_disj_union {[+ co μ1 +]} m2).
   (* setoid_rewrite eq. *)
 Admitted.
-
+eapply elem_of_Permutation_proper.
+    eapply (gmultiset_elements_disj_union {[+ co μ1 +]} m2).
+    
 Lemma not_in_mb_to_not_eq `{ExtAction A} (x : A) (g : gmultiset A) : 
   (elements ({[+ x +]} ⊎ g) = [ x ] ++ elements g).
 Proof.
@@ -85,24 +87,33 @@ Proof.
   rewrite gmultiset_elements_singleton. eauto.
   rewrite<- eq.
   now eapply elem_eq.
-Qed.
+Qed. *)
+
+(* Inductive ForallMSET `{H : ExtAction} (P : A → Prop) : 
+      gmultiset A → Prop :=
+    | Forall_nil : ForallMSET P ∅ 
+    | Forall_cons : ∀ (x : A) (m : gmultiset A), P x → ForallMSET P m 
+            → ForallMSET P ({[+ x +]} ⊎ m).
+*)
 
 Lemma simpl_P_in_l `{ExtAction A} {P} 
-  (η : A) (m : mb A) : 
-  Forall P (elements ({[+ η +]} ⊎ m)) -> P η /\ Forall P (elements m).
+  (η : A) (m : mb A): 
+  Forall P (elements ({[+ η +]} ⊎ m)) <-> P η /\ Forall P (elements m).
 Proof.
-  assert (η ∈ elements ({[+ η +]} ⊎ m)) as mem. eapply elem_of_elements. multiset_solver.
-  (* assert (((@singletonMS A (gmultiset A) gmultiset_singleton η) ⊎ ∅ 
-  = ((@singletonMS A (gmultiset A) gmultiset_singleton η))%(gmultiset A)).
-  multiset_solver. *)
-  induction m using gmultiset_ind.
-  + (* intros.
-    assert ((elements (disj_union (singletonMS η) (GMultiSet ∅) )) = [η]) as eq.
-    multiset_solver.
-    rewrite gmultiset_set_fold_empty.
-  erewrite gmultiset_disj_union_right_id in H0. *) admit.
-  + admit.
-Admitted.
+  split.
+  + assert ((elements ({[+ η +]} ⊎ m)) ≡ₚ elements ({[+ η +]} : gmultiset A) ++ (elements m)).
+  eapply gmultiset_elements_disj_union.
+  intro. assert (Forall P (elements (gmultiset_singleton η) ++ elements m)) as Hyp.
+  eapply are_actions_preserved_by_perm; eauto.
+  assert (elements (gmultiset_singleton η) = [η]) as eq.
+  eapply gmultiset_elements_singleton. rewrite eq in Hyp. simpl in *.
+  inversion Hyp. subst. split; eauto.
+  + intros (PHyp & FHyp).
+    assert (Forall P (η :: elements m)). econstructor; eauto.
+    eapply are_actions_preserved_by_perm. symmetry. eapply gmultiset_elements_disj_union.
+    assert (elements (gmultiset_singleton η) = [η]) as eq.
+    eapply gmultiset_elements_singleton. unfold singletonMS. rewrite eq. simpl in *. eauto.
+Qed.
 
 Lemma woutpout_delay_inp `{LtsOba P A} {p q m t μ} : 
     Forall (NotEq μ) (elements m) -> strip p m q -> p ⟶[μ] t -> exists r, q ⟶[μ] r.
@@ -151,9 +162,10 @@ Proof.
   induction l. *)
   dependent induction stripped.
   + multiset_solver.
-  + assert (elements ({[+ η +]} ⊎ m) = η :: (elements m)) as eq.
-    eapply not_in_mb_to_not_eq.
-    ++ rewrite eq. constructor. eapply BlockingAction_are_not_non_blocking; eauto. eauto.
+  + (* assert (elements ({[+ η +]} ⊎ m) = η :: (elements m)) as eq.
+    eapply not_in_mb_to_not_eq. *)
+    ++ intro. eapply simpl_P_in_l. split; eauto.
+       eapply BlockingAction_are_not_non_blocking; eauto.
 Qed.
 
 
@@ -726,9 +738,7 @@ Proof.
   induction (lts_oba_mo p) using gmultiset_ind.
   + constructor.
   + intro not_in_mem.
-    assert (elements ({[+ x +]} ⊎ g) = x :: elements g) as eq.
-    eapply not_in_mb_to_not_eq.
-    rewrite eq. constructor.
+    eapply simpl_P_in_l. split.
     ++ intro. subst. set_solver.
     ++ assert (μ ∉ g). set_solver. now eapply IHg.
 Qed.
