@@ -623,7 +623,7 @@ Proof.
     -- dependent induction hm; subst. 
       + eapply m_now. eapply good_preserved_by_lts_non_blocking_action; eassumption.
       + assert (non_blocking η) as nb. eauto.
-        eapply exists_duo_nb in H4 as (μ & duo). 
+        edestruct exists_duo_nb as (μ & duo). 
         eapply com; eauto.
         eapply ParRight. assert (¬ non_blocking μ) as not_nb.
         eapply lts_oba_fw_non_blocking_duo_spec; eauto.

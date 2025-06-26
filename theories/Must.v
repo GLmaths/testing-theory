@@ -183,7 +183,7 @@ Definition bhv_pre_cond2 `{
   (p : P) (q : Q) :=
   forall s q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_pre_acc_set_of p' ⊆ lts_pre_acc_set_of q').
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_acc_set_of p' ⊆ lts_acc_set_of q').
 
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). 
 

@@ -3681,9 +3681,10 @@ Proof.
 Qed.
 
 
-#[global] Program Instance MbLtsEq `{LL : @LtsObaFB P A H M Rel LLOBA}  
-`{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
-: LtsEq (P * mb A) A :=
+#[global] Program Instance MbLtsEq 
+  `{LL : @LtsObaFB P A H LtsP LtsEqP LLOBA}  
+  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
+  : LtsEq (P * mb A) A :=
   {| eq_rel := fw_eq |}.
 Next Obligation. intros. split.
   + eapply fw_eq_refl.
@@ -3696,7 +3697,8 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance LtsMBOba 
-  `{LL : @LtsObaFB P A H M Rel LLOBA}  `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+  `{LL : @LtsObaFB P A H LtsP LtsEqP LLOBA}  
+  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
   : LtsOba (P * mb A) A :=
   {| lts_oba_mo p := lts_oba_mo p.1 ⊎ p.2 |}.
 Next Obligation.
@@ -4020,7 +4022,8 @@ Definition lts_fw_com_fin `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A
   (p : P) (m : list A) : list (A * list P) :=
   concat (map (fun η => (lts_fw_co_fin p η)) m). (* flat_map (fun η => (lts_fw_co_fin p η)) m. *)
 
-Definition lts_fw_tau_set `{@FiniteImageLts P A H M} `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
+Definition lts_fw_tau_set `{@FiniteImageLts P A H M} 
+    `{@Prop_of_Inter P (mb A) A fw_inter H M MbLts}
   (p : P) (m : mb A) : list (P * mb A) :=
   let xs := map (fun p' => (proj1_sig p', m)) (enum $ dsig (fun q => p ⟶ q)) in
   let ys :=

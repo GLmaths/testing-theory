@@ -104,6 +104,10 @@ repeat split; try set_solver.
 #[global] Instance TopSet_of_Actions {A : Type} : TopSet A (@subset_of A).
 repeat split ; try set_solver. Defined.
 
+Lemma set_ind_L `{H : ExtAction A} (P : subset_of A) `{∀ x, Decision (P x)} : 
+  P ∅ → True. (∀ x X, x ∉ X → P X → P ({[ x ]} ∪ X)) → ∀ X, P X.
+Proof. apply set_ind. by intros ?? ->%leibniz_equiv_iff. Qed.
+
 (* Axiom Extensionality_Subset_of: 
   forall A : Type, forall S S': subset_of A, (S ⊆ S' /\ S' ⊆ S) -> S = S'.
 
