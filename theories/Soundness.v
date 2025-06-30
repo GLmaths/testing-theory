@@ -35,7 +35,7 @@ From Coq.Logic Require Import ProofIrrelevance.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From Must Require Import TransitionSystems Must.
+From Must Require Import TransitionSystems Must Subset_Act.
 
 (* ************************************************************ *)
 
@@ -598,7 +598,7 @@ Definition bhv_pre_cond2__x
   forall s q',
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ ps -> p ⇓ s) ->
-    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (forall μ, ¬ lts_stable p' (ActExt μ) -> ¬ lts_stable q' (ActExt μ)).
+    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (lts_acc_set_of p' ⊆ lts_acc_set_of q').
 
 Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 
@@ -672,14 +672,14 @@ Proof.
      exists r. repeat split. eapply ps1_spec; eassumption. eauto.
 Qed.
 
-Lemma terminate_then_wt_stable  `{Lts P A} p : 
+Lemma terminate_then_wt_refuses  `{Lts P A} p : 
   p ⤓ -> exists p', p ⟹ p' /\ p' ↛.
 Proof.
   intros ht.
   induction ht.
-  destruct (lts_stable_decidable p τ).
+  destruct (lts_refuses_decidable p τ).
   - exists p; eauto with mdb.
-  - eapply lts_stable_spec1 in n as (p'& l).
+  - eapply lts_refuses_spec1 in n as (p'& l).
     destruct (H2 p' l) as (p0 & w0 & st0).
     exists p0; eauto with mdb.
 Qed.
@@ -696,7 +696,7 @@ Proof.
   assert (exists q0, q ⟹{μ} q0 /\ q0 ↛) as (q0 & wq0 & stq0).
   assert (hqt : q' ⤓). eapply cnv_terminate, cnv_preserved_by_wt_act.
   eapply h1, hcnv. eauto with mdb.
-  eapply terminate_then_wt_stable in hqt as (q0 & w0 & st0).
+  eapply terminate_then_wt_refuses in hqt as (q0 & w0 & st0).
   exists q0; eauto with mdb.
   destruct (h2 [μ] q0 wq0 stq0 hcnv) as (p1 & mem1 & p0 & wp0 & stp0) (* & subp0) *).
   exists p0. intros p1' mem. replace p1' with p0 by set_solver. eauto.
@@ -716,13 +716,13 @@ Lemma ungood_must_st_nleqx `{
       -> (¬ exists t, (q, e) ⟶ t) 
         -> ¬ X ≼ₓ2 q.
 Proof.
-  intros not_happy all_must stable_tau_q.
+  intros not_happy all_must refuses_tau_q.
   intro hbhv2.
-  destruct (lts_stable_decidable q τ) as [stable_q | not_stable_q].
+  destruct (lts_refuses_decidable q τ) as [refuses_q | not_refuses_q].
   - assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
     destruct (mustx_terminate_ungood X e all_must) as [|htps]; eauto with mdb. contradiction.
     
-    destruct (hbhv2 [] q (wt_nil q) stable_q htX) as (p & mem & p' & wp & stp' & sub).
+    destruct (hbhv2 [] q (wt_nil q) refuses_q htX) as (p & mem & p' & wp & stp' & sub).
     
     assert (mustx {[ p' ]} e) as must_p'. 
     eapply (wt_nil_mx p). eapply (mx_sub X e all_must). set_solver. eassumption.
@@ -731,17 +731,17 @@ Proof.
     edestruct (ex p') as ((p'' , e'') & HypTr). now eapply elem_of_singleton.
     
     inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
-    + eapply lts_stable_spec2 in stp'; eauto.
-    + destruct (lts_stable_decidable e τ) as [stable_e | not_stable_e].
-      ++ eapply lts_stable_spec2 in stable_e. eauto. eauto with mdb.
-      ++ eapply stable_tau_q. exists (q , e''). eapply ParRight; eauto.
-    + assert (¬ q ↛[μ1]) as not_stable_q.
-      eapply (sub μ1). eapply lts_stable_spec2; eauto.
-      eapply lts_stable_spec1 in not_stable_q as (q'' & HypTr_q'').
-      eapply stable_tau_q. exists (q'', e'').
+    + eapply lts_refuses_spec2 in stp'; eauto.
+    + destruct (lts_refuses_decidable e τ) as [refuses_e | not_refuses_e].
+      ++ eapply lts_refuses_spec2 in refuses_e. eauto. eauto with mdb.
+      ++ eapply refuses_tau_q. exists (q , e''). eapply ParRight; eauto.
+    + assert (¬ q ↛[μ1]) as not_refuses_q.
+      eapply (sub μ1). eapply lts_refuses_spec2; eauto.
+      eapply lts_refuses_spec1 in not_refuses_q as (q'' & HypTr_q'').
+      eapply refuses_tau_q. exists (q'', e'').
       eapply ParSync; eauto.
-  - eapply lts_stable_spec1 in not_stable_q as (q' & l). 
-    eapply stable_tau_q. exists (q' ▷ e). eapply ParLeft. assumption.
+  - eapply lts_refuses_spec1 in not_refuses_q as (q' & l). 
+    eapply refuses_tau_q. exists (q' ▷ e). eapply ParLeft. assumption.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
@@ -759,10 +759,10 @@ Lemma stability_nbhvleqtwo `{
         -> exists t, (q, e) ⟶{τ} t.
 Proof.
   intros nhg hmx hleq.
-  destruct (lts_stable_decidable (q, e) τ).
+  destruct (lts_refuses_decidable (q, e) τ).
   - exfalso. apply (ungood_must_st_nleqx X q e nhg hmx).
-    intros (t & hl). eapply lts_stable_spec2 in l. contradiction. eauto. eassumption.
-  - eapply lts_stable_spec1 in n as (t & hl). eauto.
+    intros (t & hl). eapply lts_refuses_spec2 in l. contradiction. eauto. eassumption.
+  - eapply lts_refuses_spec1 in n as (t & hl). eauto.
 Qed.
 
 Lemma soundnessx `{

@@ -67,11 +67,11 @@ Lemma ungood_preserved_by_wt_non_blocking_action
 Proof.
   intros s_spec hst hng hw.
   induction hw; eauto.
-  - eapply lts_stable_spec2 in hst. now exfalso. eauto.
+  - eapply lts_refuses_spec2 in hst. now exfalso. eauto.
   - inversion s_spec; subst.
     inversion s_spec; subst.
     eapply IHhw. eassumption.
-    eapply stable_tau_preserved_by_lts_non_blocking_action; eauto.
+    eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
     eapply ungood_preserved_by_lts_non_blocking_action; eauto.
 Qed.
 
@@ -81,7 +81,7 @@ Inductive must_sts
 | m_sts_now : good e -> must_sts p e
 | m_sts_step
     (nh : ¬ good e)
-    (nst : ¬ sts_stable (p, e))
+    (nst : ¬ sts_refuses (p, e))
     (l : forall p' e', sts_step (p, e) (p', e') -> must_sts p' e')
   : must_sts p e
 .
@@ -122,7 +122,7 @@ Proof.
   split.
   - intro hm. dependent induction hm; eauto with mdb.
     eapply m_step; eauto with mdb.
-    + eapply sts_stable_spec1 in nst as ((p', e') & hl).
+    + eapply sts_refuses_spec1 in nst as ((p', e') & hl).
       exists (p', e'). now simpl in hl.
     + simpl in *; eauto with mdb.
     + simpl in *; eauto with mdb.
@@ -131,13 +131,13 @@ Proof.
       eapply (ParSync μ1 μ2); eauto.
   - intro hm. dependent induction hm; eauto with mdb.
     eapply m_sts_step; eauto with mdb.
-    + eapply sts_stable_spec2.
-      destruct (decide (sts_stable (p, e))).
+    + eapply sts_refuses_spec2.
+      destruct (decide (sts_refuses (p, e))).
       ++ exfalso.
          destruct ex as ((p', e'), hl).
-         eapply sts_stable_spec2 in s; eauto.
+         eapply sts_refuses_spec2 in s; eauto.
          exists (p', e'). now simpl.
-      ++ now eapply sts_stable_spec1 in n.
+      ++ now eapply sts_refuses_spec1 in n.
     + intros p' e' hl.
       inversion hl; subst; eauto with mdb.
 Qed.

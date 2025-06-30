@@ -202,9 +202,9 @@ Lemma conv (* `{Lts P A}  *)
 Proof.
   intro ht.
   induction ht.
-  destruct (lts_stable_decidable (p, ∅) τ).
+  destruct (lts_refuses_decidable (p, ∅) τ).
   - eapply tstep. intros (p', m') l'.
-    apply lts_stable_spec2 in l. now exfalso. eauto with mdb.
+    apply lts_refuses_spec2 in l. now exfalso. eauto with mdb.
   - eapply tstep. intros (p', m') l'.
     inversion l'; subst.
     + eapply H2; eauto.
@@ -703,26 +703,26 @@ Proof.
     exists q0. eapply strip_step; eassumption.
 Qed.
 
-Lemma stable_equiv `{LtsEq P A} p q α : 
+Lemma refuses_equiv `{LtsEq P A} p q α : 
   p ⋍ q -> p ↛{ α } -> q ↛{ α }.
 Proof.
-  intros equiv stable. destruct (decide (q ↛{α})) as [stable_q | not_stable_q].
+  intros equiv refuses. destruct (decide (q ↛{α})) as [refuses_q | not_refuses_q].
   + assumption.
-  + eapply lts_stable_spec1 in not_stable_q as (q' & l).
+  + eapply lts_refuses_spec1 in not_refuses_q as (q' & l).
     edestruct (eq_spec p q') as (p' & l' & equiv'). exists q; eauto.
-    assert (¬ p ↛{α}). eapply lts_stable_spec2. eexists; eauto. contradiction.
+    assert (¬ p ↛{α}). eapply lts_refuses_spec2. eexists; eauto. contradiction.
 Qed.
 
-Lemma lts_oba_mo_strip_stable `{LtsOba P A} p q: 
+Lemma lts_oba_mo_strip_refuses `{LtsOba P A} p q: 
   strip p (lts_oba_mo p) q 
   -> forall η, non_blocking η -> q ↛[η].
 Proof.
   intros w.
   dependent induction w.
   - intros η nb.
-    destruct (lts_stable_decidable p (ActExt $ η)) as [stable | not_stable].
-    + eapply stable_equiv; eauto.
-    + eapply lts_stable_spec1 in not_stable as (q & l).
+    destruct (lts_refuses_decidable p (ActExt $ η)) as [refuses | not_refuses].
+    + eapply refuses_equiv; eauto.
+    + eapply lts_refuses_spec1 in not_refuses as (q & l).
       eapply lts_oba_mo_spec_bis1 in l. multiset_solver. eassumption.
   - eapply lts_oba_mo_spec2 in H2. rewrite <- x in H2.
     eapply gmultiset_eq_drop_l in H2. eauto. eassumption.
@@ -794,7 +794,7 @@ Proof.
           eapply lts_oba_mo_spec_bis2 in mem. destruct mem as (p2 & nb & l).
           eapply Hyp in nb. symmetry in eq. edestruct (eq_spec r' p2) as (r'' & l' & equiv').
           exists r; split; eauto. 
-          assert (¬ r' ↛[η]). eapply lts_stable_spec2; exists r''; eauto. contradiction.
+          assert (¬ r' ↛[η]). eapply lts_refuses_spec2; exists r''; eauto. contradiction.
     ++ multiset_solver.
   + intros r r' stripped Hyp.
     assert (exists r'', r ⟶[x] r'') as (r'' & HypTr).
@@ -805,7 +805,7 @@ Proof.
     rewrite<- stripped''.
     eapply lts_oba_mo_spec2; eauto.
     eapply nb_with_strip in des. exact des. set_solver.
-    intros. eapply stable_equiv; eauto. symmetry. eauto.
+    intros. eapply refuses_equiv; eauto. symmetry. eauto.
 Qed.
 
 Lemma must_to_must_fw `{
@@ -887,8 +887,8 @@ Proof.
              rewrite gmultiset_disj_union_right_id.
              eapply H7; eauto with mdb.
          +++ exfalso. subst.
-             eapply lts_stable_spec2.
-             exists e0. eassumption. eapply lts_oba_mo_strip_stable; eauto.
+             eapply lts_refuses_spec2.
+             exists e0. eassumption. eapply lts_oba_mo_strip_refuses; eauto.
        ++ destruct (decide (non_blocking μ1)) as [ nb1 | not_nb1];  simpl in *.
           +++ inversion l1; subst.
               ++++ rewrite <- gmultiset_disj_union_right_id.
@@ -934,7 +934,7 @@ Proof.
                  eapply strip_union; eauto.
                  assert (∀ η : A, non_blocking η → t'_strip ↛[η]).
                  rewrite<- eq in stripped''.
-                 eapply lts_oba_mo_strip_stable; eauto.
+                 eapply lts_oba_mo_strip_refuses; eauto.
                  assert (lts_oba_mo e ⊎ lts_oba_mo e0 = lts_oba_mo r).
                  symmetry. eapply mo_stripped; eauto.
                  destruct (lts_oba_mo_strip r) as (r_stripped & stripped''').
@@ -984,8 +984,8 @@ Proof.
          eauto with mdb.
       ++ destruct (decide (non_blocking μ2)); destruct (decide (non_blocking μ1)). 
          +++ exfalso. eapply lts_oba_fw_non_blocking_duo_spec. eauto. symmetry; eauto. eauto.
-         +++ exfalso. eapply (lts_stable_spec2 e').
-             exists e0. exact l2. eapply lts_oba_mo_strip_stable; eauto.
+         +++ exfalso. eapply (lts_refuses_spec2 e').
+             exists e0. exact l2. eapply lts_oba_mo_strip_refuses; eauto.
          +++ eapply woutpout_preserves_mu in l2 as (r0 & r1 & l0 & _); eauto.
              inversion l1; subst.
              ++++ exists (p0, r0). 

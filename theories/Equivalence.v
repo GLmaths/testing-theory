@@ -44,9 +44,9 @@ Section convergence.
  
   Definition terminate_extensional (p : P) : Prop :=
     forall η : max_exec_from p, exists n fex,
-      mex_take_from n η = Some fex /\ lts_stable (fex_from_last fex) τ.
+      mex_take_from n η = Some fex /\ lts_refuses (fex_from_last fex) τ.
 
-  #[global] Instance conv_bar : Bar P := {| bar_pred p := sts_stable p |}.
+  #[global] Instance conv_bar : Bar P := {| bar_pred p := sts_refuses p |}.
 
   Lemma terminate_intensional_coincide (p : P) :
     intensional_pred p ↔ terminate p.
@@ -54,10 +54,10 @@ Section convergence.
     split.
     - intros H1. dependent induction H1.
       + rewrite /bar_pred /= in H0. constructor => q l.
-        eapply lts_stable_spec2 in H0. contradiction. eauto.
+        eapply lts_refuses_spec2 in H0. contradiction. eauto.
       + constructor => q l. by eauto.
     - intros H1; induction H1.
-      destruct (decide (sts_stable p)).
+      destruct (decide (sts_refuses p)).
       + constructor 1; rewrite /bar_pred //=.
       + constructor 2 =>//.
   Qed.
@@ -121,7 +121,7 @@ Section must_set_acc_set.
     p ⤓ -> (exists q, p ⟹{μ} q) \/ ~ (exists q, p ⟹{μ} q).
   Proof.
     intro ht. induction ht.
-    destruct (lts_stable_decidable p (ActExt μ)).
+    destruct (lts_refuses_decidable p (ActExt μ)).
     - assert (∀ x, x ∈ enum (dsig (lts_step p τ)) -> (∃ q0, `x ⟹{μ} q0) \/ ~ (∃ q0, `x ⟹{μ} q0))
          as Hyp
         by (intros (x & mem) _; set_solver).
@@ -131,8 +131,8 @@ Section must_set_acc_set.
       + right. intros (q' & hw). inversion hw; subst.
         ++ contradict Hyp'. intros n. rewrite Forall_forall in n.
            eapply (n (dexist q l0)). eapply elem_of_enum. eauto.
-        ++ eapply (@lts_stable_spec2 (P * mb A)); eauto.
-    - left. eapply lts_stable_spec1 in n as (q & l). eauto with mdb.
+        ++ eapply (@lts_refuses_spec2 (P * mb A)); eauto.
+    - left. eapply lts_refuses_spec1 in n as (q & l). eauto with mdb.
   Qed.
 
   Lemma either_wperform_mem 
@@ -210,7 +210,7 @@ Section must_set_acc_set.
     eapply nMust_ex in hnm as (p' & hw' & nhw).
     assert (ht': p' ⤓)
       by (eapply (cnv_wt_s_terminate p p' s hcnv), wt_push_nil_right; eauto).
-    eapply terminate_then_wt_stable in ht' as (p0 & hw0 & hst).
+    eapply terminate_then_wt_refuses in ht' as (p0 & hw0 & hst).
     exists p0. split. eapply wt_push_nil_left; eauto.
     split; eauto.
     intros μ mem_mu.
@@ -224,12 +224,12 @@ Section must_set_acc_set.
       eapply elem_of_union_list. eexists. split; eauto.
       eapply elem_of_list_fmap.
       exists p0. repeat split; eauto.
-      eapply elem_of_elements, wt_stable_set_spec2; split; eauto.
+      eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
       eapply wt_push_nil_right, wt_push_nil_right; eauto.
       (* exfalso. *)
       (* eapply elem_of_union_list in mem0.
       destruct mem0 as (A' & ACC & mem'). *)
-      eapply lts_stable_spec1 in mem_mu as (p'0 & HypTr).
+      eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr).
       destruct (decide (μ ∈ lts_acc_set_of q')).
       + eauto.
       + exfalso.
@@ -251,7 +251,7 @@ Section must_set_acc_set.
     eapply nMust_ex in hnm as (p' & hw' & nhw).
     assert (ht': p' ⤓)
       by (eapply (cnv_wt_s_terminate p p' s hcnv), wt_push_nil_right; eauto).
-    eapply terminate_then_wt_stable in ht' as (p0 & hw0 & hst).
+    eapply terminate_then_wt_refuses in ht' as (p0 & hw0 & hst).
     exists p0. split. eapply wt_push_nil_left; eauto.
     split; eauto.
     intros μ mem_mu.
@@ -265,12 +265,12 @@ Section must_set_acc_set.
       eapply elem_of_union_list. eexists. split; eauto.
       eapply elem_of_list_fmap.
       exists p0. repeat split; eauto.
-      eapply elem_of_elements, wt_stable_set_spec2; split; eauto.
+      eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
       eapply wt_push_nil_right, wt_push_nil_right; eauto.
       (* exfalso. *)
       (* eapply elem_of_union_list in mem0.
       destruct mem0 as (A' & ACC & mem'). *)
-      eapply lts_stable_spec1 in mem_mu as (p'0 & HypTr).
+      eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr).
       (* destruct (decide (μ ∈ G)).
       + eauto.  *)
       + assert (μ ∉ G). admit.
@@ -314,10 +314,10 @@ Section must_set_acc_set.
     eapply elem_of_union_list in mem as (X & mem1 & mem2).
     eapply elem_of_list_fmap in mem1 as (r & heq & mem1). subst.
     (* eapply elem_of_map in mem2 as (a & heq & mem2). exists a. assumption. *)
-    assert { r' | r ⟶[ μ ] r'} as (r' & HypTr). eapply lts_stable_spec1. eauto.
+    assert { r' | r ⟶[ μ ] r'} as (r' & HypTr). eapply lts_refuses_spec1. eauto.
     inversion hw'; subst.
-    eapply lts_stable_spec2 in hst; eauto.
-    eapply nmem. eapply lts_stable_spec2. eauto.
+    eapply lts_refuses_spec2 in hst; eauto.
+    eapply nmem. eapply lts_refuses_spec2. eauto.
   Qed.
 
   (* ************************************************** *)
@@ -335,18 +335,18 @@ Section must_set_acc_set.
     - intro hpre2.
       intros s hcnv hcnv' G hm q' mem%wt_set_spec1 q0 hw.
       assert (exists r, q0 ⟹ r /\ r ↛) as (qt & hw' & hstq').
-      eapply terminate_then_wt_stable, terminate_preserved_by_wt_nil; eauto.
+      eapply terminate_then_wt_refuses, terminate_preserved_by_wt_nil; eauto.
       eapply cnv_wt_s_terminate; eauto.
       edestruct (hpre2 s qt hcnv) as (pt & hwpt & hstpt & hsubpt); eauto.
       eapply wt_push_nil_right; eauto. eapply wt_push_nil_right; eauto.
       assert (exists μ r, μ ∈ G /\ pt ⟹{μ} r) as (μ & p0 & mem0 & hw0).
       eapply hm. eapply wt_set_spec2; eauto. eapply wt_nil.
       exists μ. inversion hw0; subst.
-      + exfalso. eapply lts_stable_spec2 in hstpt; eauto.
-      + assert (¬ lts_stable qt (ActExt μ)) as not_stable_qt.
+      + exfalso. eapply lts_refuses_spec2 in hstpt; eauto.
+      + assert (¬ lts_refuses qt (ActExt μ)) as not_refuses_qt.
         eapply hsubpt.
-        eapply lts_stable_spec2. eauto.
-        eapply lts_stable_spec1 in not_stable_qt as (qr & l').
+        eapply lts_refuses_spec2. eauto.
+        eapply lts_refuses_spec1 in not_refuses_qt as (qr & l').
         exists qr. split; eauto. eapply wt_push_nil_left; eauto with mdb.
   Qed.
 
@@ -614,21 +614,21 @@ From stdpp Require Import gmultiset.
 
 Section application.
 
-  Lemma nil_stable (* `{@LtsOba Q A H LtsQ LtsEqQ} *)
+  Lemma nil_refuses (* `{@LtsOba Q A H LtsQ LtsEqQ} *)
   (* `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts} *)
   {Q A : Type} {H : ExtAction A}
   `{@LtsOba Q A H LtsQ LtsEqQ}
   `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
   
   (q : Q) (h : forall α, q ↛{α}) (m : mb A) : 
-  lts_stable (q, m) τ.
+  lts_refuses (q, m) τ.
   Proof.
     destruct (decide ((q, m) ↛)); eauto.
-    eapply lts_stable_spec1 in n as (q' & l').
+    eapply lts_refuses_spec1 in n as (q' & l').
     inversion l'; subst.
-    + edestruct lts_stable_spec2; eauto.
+    + edestruct lts_refuses_spec2; eauto.
     + inversion l.
-    + edestruct lts_stable_spec2; eauto.
+    + edestruct lts_refuses_spec2; eauto.
   Qed.
 
   Lemma nil_cnv
@@ -639,14 +639,14 @@ Section application.
   (q, m) ⇓ s.
   Proof.
     dependent induction s.
-    - now eapply cnv_nil, terminate_if_stable, nil_stable.
+    - now eapply cnv_nil, terminate_if_refuses, nil_refuses.
     - eapply cnv_act.
-      + now eapply terminate_if_stable, nil_stable.
+      + now eapply terminate_if_refuses, nil_refuses.
       + intros (q', m') hw. inversion hw; subst.
-        ++ exfalso. eapply (@lts_stable_spec2 (Q * mb A)).
-           eauto. now eapply nil_stable.
+        ++ exfalso. eapply (@lts_refuses_spec2 (Q * mb A)).
+           eauto. now eapply nil_refuses.
         ++ inversion l; subst.
-           +++ edestruct lts_stable_spec2. eauto. eauto.
+           +++ edestruct lts_refuses_spec2. eauto. eauto.
            +++ eapply cnv_preserved_by_wt_nil; eauto.
   Qed.
 
@@ -712,7 +712,9 @@ Qed.
         ++ eapply gmultiset_elem_of_dom. eapply gmultiset_elem_of_dom in in_oba.
            eapply lts_non_blocking_ionly_spec in pr.
            set_solver.
-        ++ eapply gmultiset_elem_of_dom. exact in_mem.
+        ++ eapply gmultiset_elem_of_dom.
+           eapply lts_mb_nb_with_nb_spec1 in in_mem as (nb & in_mem).
+           exact in_mem.
       + destruct pr as (h1 & h2); inversion l; subst; eauto.
         ++ inversion l0.
         ++ assert (non_blocking μ2) as nb. destruct eq; eauto.
@@ -731,7 +733,7 @@ Qed.
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> exists t, (p, m) ⟹ t /\ t ↛ /\ dom (lts_oba_mo t) ⊆ dom m.
   Proof.
-    intros ht heq. edestruct @terminate_then_wt_stable as (t & hw & hst); eauto with mdb.
+    intros ht heq. edestruct @terminate_then_wt_refuses as (t & hw & hst); eauto with mdb.
     exists t; split; eauto. split; eauto. eapply lts_non_blocking_ionly_spec_wt_nil; eauto.
   Qed.
 
@@ -750,10 +752,10 @@ Qed.
     - inversion hcnv; subst.
       edestruct ionly_nil_leq2_wt_nil as (p' & hw & hst' & hsub); eauto.
       exists p'. split; eauto.
-      split; eauto. admit. 
-    - exfalso. eapply (@lts_stable_spec2 (Q * mb A)). eauto. now eapply nil_stable.
+      split; eauto. admit.
+    - exfalso. eapply (@lts_refuses_spec2 (Q * mb A)). eauto. now eapply nil_refuses.
     - inversion hcnv; inversion l; subst.
-      + exfalso. eapply (@lts_stable_spec2 Q); eauto.
+      + exfalso. eapply (@lts_refuses_spec2 Q); eauto.
       + destruct (decide (non_blocking μ)) as [nb | not_nb].
         ++ assert (non_blocking μ). eauto.
            eapply non_blocking_action_in_ms in nb; eauto ; subst.

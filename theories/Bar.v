@@ -288,7 +288,7 @@ Section stss.
   Inductive add_sink_step A `{Sts A}: add_sink A → add_sink A → Prop :=
   | StepOrig a b: sts_step a b -> add_sink_step A (Orig a) (Orig b)
   | StepSinkSink : add_sink_step A Sink Sink
-  | StepStableSink a: (sts_stable a) → add_sink_step A (Orig a) Sink
+  | StepStableSink a: (sts_refuses a) → add_sink_step A (Orig a) Sink
   .
 
   Lemma add_sink_orig_step `{Sts A} {x x'}:
@@ -296,7 +296,7 @@ Section stss.
   Proof. by inversion 1. Qed.
 
   Lemma add_sink_step_sink `{Sts A} {x}:
-    add_sink_step _ (Orig x) Sink → sts_stable x.
+    add_sink_step _ (Orig x) Sink → sts_refuses x.
   Proof. by inversion 1. Qed.
 
   #[global] Instance add_sink_step_decision A `{Sts A}:
@@ -305,16 +305,16 @@ Section stss.
     intros x y. destruct x as [x|]; destruct y as [y|].
     - destruct (decide $ sts_step x y); [by left; constructor|right].
       intros contra. inversion contra. congruence.
-    - destruct (decide (sts_stable x)); [by left; constructor|right].
+    - destruct (decide (sts_refuses x)); [by left; constructor|right].
       intros contra. inversion contra. congruence.
     - right; intros contra. inversion contra.
     - left; constructor.
   Qed.
 
-  Definition add_sink_stable A `{Sts A} (x: add_sink A) := False.
+  Definition add_sink_refuses A `{Sts A} (x: add_sink A) := False.
 
-  #[global] Instance add_sink_stable_decision A `{Sts A}:
-     ∀ x : add_sink A, Decision (add_sink_stable _ x).
+  #[global] Instance add_sink_refuses_decision A `{Sts A}:
+     ∀ x : add_sink A, Decision (add_sink_refuses _ x).
   Proof. intros [x|]; apply _. Qed.
 
   #[global] Instance add_sink_sts A (X: Sts A):
@@ -322,24 +322,24 @@ Section stss.
   Proof.
     refine {|
         sts_step := add_sink_step A;
-        sts_stable := add_sink_stable A;
+        sts_refuses := add_sink_refuses A;
       |}.
     - intros [x|] _.
-      + destruct (decide (sts_stable x)) as [|Hns].
+      + destruct (decide (sts_refuses x)) as [|Hns].
         * refine (Sink ↾ _). by constructor.
-        * destruct (sts_stable_spec1 _ Hns) as [y ?].
+        * destruct (sts_refuses_spec1 _ Hns) as [y ?].
           refine (Orig y ↾ _). by constructor.
       + refine (Sink ↾ _). by constructor.
-    - unfold add_sink_stable. tauto.
+    - unfold add_sink_refuses. tauto.
   Defined.
 
   Instance add_sink_step_inhabited `{Sts A}:
     ∀ x : add_sink A, Inhabited (dsig (λ y : add_sink A, sts_step x y)).
   Proof.
     intros [x|].
-    - destruct (decide (sts_stable x)) as [|Hnstable].
+    - destruct (decide (sts_refuses x)) as [|Hnrefuses].
       + refine (populate $ exist _ Sink _). apply bool_decide_spec. by constructor.
-      + destruct (sts_stable_spec1 _ Hnstable) as [y ?].
+      + destruct (sts_refuses_spec1 _ Hnrefuses) as [y ?].
         refine (populate $ exist _ (Orig y) _). apply bool_decide_spec. by constructor.
     - refine (populate $ exist _ Sink _). apply bool_decide_spec. constructor.
   Qed.
@@ -388,7 +388,7 @@ Section barred_sts.
 
   CoFixpoint add_sink_max_to_iexec `{Sts A} {x: A} (η: max_exec_from x): iexec_from (Orig x) :=
     match η in max_exec_from a return iexec_from (Orig a) with
-    | MExStop y Hstable => IExStep (Orig y) Sink (StepStableSink A y Hstable) add_sink_Ω
+    | MExStop y Hrefuses => IExStep (Orig y) Sink (StepStableSink A y Hrefuses) add_sink_Ω
     | MExStep y x' Hstep η => IExStep (Orig y) (Orig x') (StepOrig A y x' Hstep) (add_sink_max_to_iexec η)
     end.
 
@@ -422,7 +422,7 @@ Section barred_sts.
     extensional_pred a → infinite_extensional_pred (Orig a).
   Proof.
     intros Hexter η. unfold extensional_pred in Hexter.
-    destruct (Hexter (add_sink_iexec_to_max η)) as (n & p & Heq & Hstable).
+    destruct (Hexter (add_sink_iexec_to_max η)) as (n & p & Heq & Hrefuses).
     exists n. by rewrite (add_sink_iexec_to_max_last _ _ _ _ Heq).
   Qed.
 
@@ -432,7 +432,7 @@ Section barred_sts.
 
   Inductive intensional_pred `{Bar A}: A -> Prop :=
   | IntDone p: bar_pred p -> intensional_pred p
-  | IntHer p: ¬(sts_stable p) → (∀ p', sts_step p p' -> intensional_pred p') -> intensional_pred p.
+  | IntHer p: ¬(sts_refuses p) → (∀ p', sts_step p p' -> intensional_pred p') -> intensional_pred p.
 
   Lemma sink_no_hope `{Bar A}: ¬ complete_intensional_pred (@Sink A).
   Proof.
@@ -447,7 +447,7 @@ Section barred_sts.
     dependent induction Hc; [constructor 1; done|].
     (* TODO: don't use autogen'd names *)
 
-    destruct (decide (sts_stable a)) as [Hs|].
+    destruct (decide (sts_refuses a)) as [Hs|].
     { specialize (H3 _ (StepStableSink _ _ Hs)). by exfalso; apply sink_no_hope. }
     constructor 2; [done|]. intros p' Hstep. eapply H4; try done. by constructor.
   Qed.
@@ -485,7 +485,7 @@ Section bar_helper.
       destruct (fex_last f) as [a|]; [|by right; auto]. destruct (bar_decidable a); eauto.
     - intros η. unfold P. destruct (decide (sts_step x (η.(iex_start)))) as [Hstep|Hstep];
         [|exists 1; simpl; by destruct (decide (sts_step x (iex_start η)))].
-      destruct (Hconv (IExStep _ _ Hstep η.(iex))) as [n Hstable].
+      destruct (Hconv (IExStep _ _ Hstep η.(iex))) as [n Hrefuses].
        exists n. destruct (fex_cons x (iex_take n η)) as [p'|] eqn:Hcons; [|easy].
         rewrite <- (iex_fex_take _ Hstep) in Hcons. injection Hcons. by intros <-.
     - intros q; unfold P, Q.
