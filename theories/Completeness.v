@@ -37,7 +37,7 @@ From Must Require Import TransitionSystems Must Lift Subset_Act.
 
 (** Test generators specification. *)
 
-Class gen_spec {P A : Type} `{Lts P A, !LtsEq P A, !Good P A good}
+Class gen_spec {P A : Type} `{gLts P A, !gLtsEq P A, !Good P A good}
   (co_of : A -> A) (gen : list A -> P) := {
             co_inter μ : parallel_inter μ (co_of μ);
                 (* co_of μ interract with μ *)
@@ -65,7 +65,7 @@ Class gen_spec {P A : Type} `{Lts P A, !LtsEq P A, !Good P A good}
 
 
 Lemma co_of_inj `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f}
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f}
   μ μ' :
   co_of μ = co_of μ' -> μ = μ'.
 Proof.
@@ -75,7 +75,7 @@ Proof.
 Qed.
 
 Lemma co_co_is_id `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   μ :
   μ = co_of (co_of μ).
 Proof.
@@ -86,7 +86,7 @@ Qed.
 
 
 Lemma co_is_co_of_nb `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   μ :
   non_blocking (co_of μ) -> co_of μ = co μ.
 Proof.
@@ -97,7 +97,7 @@ Qed.
 
 (* à voir*)
 (* Lemma co_of_is_co_nb' `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   μ :
   non_blocking (co μ) (* -> dual (co μ) μ *) -> co_of μ = co μ.
 Proof.
@@ -118,7 +118,7 @@ Proof.
 Qed. *)
 
 Lemma co_of_is_co_nb `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   μ :
   non_blocking (co μ) -> dual (co μ) μ -> co_of μ = co μ.
 Proof.
@@ -132,7 +132,7 @@ Proof.
 Qed.
 
 Lemma gen_spec_determinacy `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   μ1 s e:
   f (μ1 :: s) ⟶[co_of μ1] e -> e ⋍ f s.
 Proof.
@@ -146,7 +146,7 @@ Qed.
 
 
 
-Class gen_spec_conv {P A : Type} `{Lts P A, ! LtsEq P A, !Good P A good}
+Class gen_spec_conv {P A : Type} `{gLts P A, ! gLtsEq P A, !Good P A good}
   (co_of : A -> A) (gen_conv : list A -> P) := {
     gen_conv_spec_gen_spec : gen_spec co_of gen_conv ;
     (* c1 *) gen_spec_conv_nil_refuses_mu μ : gen_conv [] ↛[μ] ;
@@ -157,7 +157,7 @@ Class gen_spec_conv {P A : Type} `{Lts P A, ! LtsEq P A, !Good P A good}
 #[global] Existing Instance gen_conv_spec_gen_spec.
 
 
-Class gen_spec_acc {P : Type} `{Lts P A, ! LtsEq P A, !Good P A good}
+Class gen_spec_acc {P : Type} `{gLts P A, ! gLtsEq P A, !Good P A good}
   (co_of : A -> A) (gen_acc : (* gset A *)(A -> Prop) -> list A -> P) := {
     gen_acc_spec_gen_spec O : gen_spec co_of (gen_acc O) ;
     (* t1 *) gen_spec_acc_nil_refuses_tau O : 
@@ -177,7 +177,7 @@ Class gen_spec_acc {P : Type} `{Lts P A, ! LtsEq P A, !Good P A good}
 
 
 Lemma co_inter' `{
-  Lts E A, ! LtsEq E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  gLts E A, ! gLtsEq E A, !Good E A good, !gen_spec_acc co_of gen_acc}
   {O : A → Prop}
   μ :
   parallel_inter μ (co_of μ).
@@ -186,7 +186,7 @@ Proof.
 Qed.
 
 Lemma co_inter_spec1' `{
-  Lts E A, ! LtsEq E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  gLts E A, ! gLtsEq E A, !Good E A good, !gen_spec_acc co_of gen_acc}
   {O : A → Prop}
   μ μ':
   parallel_inter μ' (co_of μ)
@@ -196,7 +196,7 @@ Proof.
 Qed.
 
 Lemma co_of_inj' `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  M1 : gLtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
   {O : A → Prop}
   μ μ' :
   co_of μ = co_of μ' -> μ = μ'.
@@ -205,7 +205,7 @@ Proof.
 Qed.
 
 Lemma co_co_is_id' `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  M1 : gLtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
   {O : A → Prop}
   μ :
   μ = co_of (co_of μ).
@@ -215,7 +215,7 @@ Qed.
 
 
 Lemma co_is_co_of_nb' `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  M1 : gLtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
   {O : A → Prop}
   μ :
   non_blocking (co_of μ) -> co_of μ = co μ.
@@ -224,7 +224,7 @@ Proof.
 Qed.
 
 Lemma co_of_is_co_nb' `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
+  M1 : gLtsOba E A, !Good E A good, !gen_spec_acc co_of gen_acc}
   {O : A → Prop}
   μ :
   non_blocking (co μ) -> dual (co μ) μ -> co_of μ = co μ.
@@ -236,10 +236,10 @@ Qed.
 (** Facts about Must *)
 
 Lemma must_preserved_by_weak_nil_srv `{
-  LtsP : Lts P A, 
-  LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p q : P) (e : E) : 
   must p e -> p ⟹ q 
@@ -252,10 +252,10 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_synch_if_notgood `{
-  LtsP : Lts P A, 
-  LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p p' : P) (r r' : E) μ μ':
   must p r -> ¬ good r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
@@ -270,7 +270,7 @@ Qed.
 (* Facts about test generators. *)
 
 Lemma gen_conv_always_reduces `{
-  LtsOba E A, !Good E A good, !gen_spec_conv co_of gen_conv} s :
+  gLtsOba E A, !Good E A good, !gen_spec_conv co_of gen_conv} s :
   ∃ e, gen_conv s ⟶ e.
 Proof.
   induction s as [|μ s'].
@@ -285,10 +285,10 @@ Proof.
 Qed.
 
 Lemma terminate_must_test_conv_nil `{
-  LtsP : Lts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
+  gLtsP : gLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) : 
   p ⤓ -> must p (gen_conv []).
@@ -305,10 +305,10 @@ Proof.
 Qed.
 
 Lemma must_gen_conv_wta_mu `{
-  LtsP : Lts P A, 
-  LtsE : ! Lts E A, ! LtsEq E A, !Good E A good, ! gen_spec_conv co_of gen_conv}
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good, ! gen_spec_conv co_of gen_conv}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   μ s (p q : P): 
   must p (gen_conv (μ :: s)) -> 
@@ -329,10 +329,10 @@ Qed.
 (** First implication of the first requirement. *)
 
 Lemma cnv_if_must `{
-  LtsP : Lts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
+  gLtsP : gLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   s (p : P) : 
   must p (gen_conv s) -> p ⇓ s.
@@ -347,7 +347,7 @@ Proof.
 Qed.
 
 Lemma f_gen_lts_mu_in_the_middle `{
-  LtsOba P A, !Good P A good, !gen_spec co_of f} 
+  gLtsOba P A, !Good P A good, !gen_spec co_of f} 
   s1 s2 μ:
   Forall exist_co_nba s1
     -> f (s1 ++ μ :: s2) ⟶⋍[co_of μ] f (s1 ++ s2).
@@ -372,7 +372,7 @@ Proof.
 Qed.
 
 Lemma f_gen_lts_mu_in_the_middle' `{
-  LtsOba P A, !Good P A good, !gen_spec co_of f} 
+  gLtsOba P A, !Good P A good, !gen_spec co_of f} 
   s1 s2 μ p:
   Forall exist_co_nba s1
     -> f (s1 ++ μ :: s2) ⟶⋍[co_of μ] p -> p ⋍ f (s1 ++ s2).
@@ -427,7 +427,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_mu_not_nb `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   s μ' p :
   (forall μ, f [] ↛[μ] \/ (forall e, f [] ⟶[μ] e -> good e)) ->
   f s ⟶[μ'] p ->
@@ -471,7 +471,7 @@ Qed.
 
 
 Lemma inversion_gen_mu_nb `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   s μ p :
   (forall μ, f [] ↛[μ] \/ (forall e, f [] ⟶[μ] e -> good e)) ->
   f s ⟶[μ] p ->
@@ -528,7 +528,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_mu `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   s μ p :
   (forall μ, f [] ↛[μ] \/ (forall e, f [] ⟶[μ] e -> good e)) ->
   f s ⟶[μ] p ->
@@ -542,7 +542,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_mu_gen_conv `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec_conv co_of f}
+  M1 : gLtsOba E A, !Good E A good, !gen_spec_conv co_of f}
   s μ p :
   f s ⟶[μ] p ->
   good p \/ 
@@ -557,7 +557,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_mu_gen_acc`{
-  M1 : LtsOba E A, !Good E A good, !gen_spec_acc co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec_acc co_of f} 
   s μ p O :
   f O s ⟶[μ] p ->
   good p \/ 
@@ -576,7 +576,7 @@ Qed.
 Definition not_non_blocking `{ExtAction A} μ := ¬ non_blocking μ.
 
 Lemma inversion_gen_tau `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec co_of f}
+  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f}
   s q :
   (f [] ↛ \/ (forall e, f [] ⟶ e -> good e)) ->
   (forall μ, f [] ↛[μ] \/ (forall e, f [] ⟶[μ] e -> good e)) ->
@@ -662,7 +662,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_tau_gen_conv `{
-  M1 : LtsOba E A, !Good E A good, !gen_spec_conv co_of f} 
+  M1 : gLtsOba E A, !Good E A good, !gen_spec_conv co_of f} 
   s q :
   f s ⟶ q ->
   good q \/ (∃ μ s1 s2 s3, s = s1 ++ [μ] ++ s2 ++ [co_of μ] ++ s3
@@ -678,7 +678,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_tau_gen_acc
-  `{M1 : LtsOba A L, !Good A L good, !gen_spec_acc co_of f} s O q :
+  `{M1 : gLtsOba A L, !Good A L good, !gen_spec_acc co_of f} s O q :
   f O s ⟶ q ->
   good q \/ (∃ μ s1 s2 s3, s = s1 ++ [μ] ++ s2 ++ [co_of μ] ++ s3
                           /\ q ⋍ f O (s1 ++ s2 ++ s3)
@@ -699,11 +699,11 @@ Qed.
 (** Converse implication of the first requirement. *)
 
 Lemma must_if_cnv `{
-  @LtsObaFW P A H LtsP LtsEqP V,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good,
+  @gLtsObaFW P A H gLtsP gLtsEqP V,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good,
   !gen_spec_conv co_of gen_conv} 
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   s (p : P) :
   p ⇓ s -> must p (gen_conv s).
@@ -816,28 +816,28 @@ Proof.
 Admitted.
 
 Lemma must_iff_cnv `{
-  @LtsObaFW P A H LtsP LtsEqP V,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, 
+  @gLtsObaFW P A H gLtsP gLtsEqP V,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, 
   !gen_spec_conv co_of gen_conv}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) s : must p (gen_conv s) <-> p ⇓ s.
 Proof. split; [eapply cnv_if_must | eapply must_if_cnv]; eauto. Qed.
 
 Lemma completeness1 `{
-    @LtsObaFW P A H LtsP LtsEqP V,
-    @LtsObaFW Q A H LtsQ LtsEqQ T,
-    @LtsObaFB E A H LtsE LtsEqE W, !Good E A good,
+    @gLtsObaFW P A H gLtsP gLtsEqP V,
+    @gLtsObaFW Q A H gLtsQ gLtsEqQ T,
+    @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good,
     ! gen_spec_conv co_of gen_conv}
     
-    `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-    `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+    `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+    `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
     
   (p : P) (q : Q) : p ⊑ q -> p ≼₁ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cnv, hleq, must_iff_cnv. Qed.
 
-Definition oas `{FiniteImageLts P A} (p : P) (s : list A) (hcnv : p ⇓ s) : A -> Prop :=
+Definition oas `{FiniteImagegLts P A} (p : P) (s : list A) (hcnv : p ⇓ s) : A -> Prop :=
   let ps : list P := elements (wt_refuses_set p s hcnv) in
   ⋃ map lts_acc_set_of ps.
 
@@ -856,7 +856,7 @@ Proof.
 Qed.
 
 Lemma wt_acceptance_set_subseteq
-  `{FiniteImageLts P A} μ s p q hacnv1 hacnv2 :
+  `{FiniteImagegLts P A} μ s p q hacnv1 hacnv2 :
   p ⟹{μ} q ->
   map lts_acc_set_of (elements (wt_refuses_set q s hacnv1)) ⊆
     map lts_acc_set_of (elements (wt_refuses_set p (μ :: s) hacnv2)).
@@ -872,7 +872,7 @@ Proof.
   set_solver.
 Qed.
 
-Lemma lts_tau_acceptance_set_subseteq `{FiniteImageLts P A} s p q hacnv1 hacnv2 :
+Lemma lts_tau_acceptance_set_subseteq `{FiniteImagegLts P A} s p q hacnv1 hacnv2 :
   p ⟶ q ->
   map lts_acc_set_of (elements $ wt_refuses_set q s hacnv1) ⊆
     map lts_acc_set_of (elements $ wt_refuses_set p s hacnv2).
@@ -887,7 +887,7 @@ Proof.
   set_solver.
 Qed.
 
-Lemma union_wt_acceptance_set_subseteq `{FiniteImageLts P A} μ s p q h1 h2 :
+Lemma union_wt_acceptance_set_subseteq `{FiniteImagegLts P A} μ s p q h1 h2 :
     p ⟹{μ} q -> oas q s h1 ⊆ oas p (μ :: s) h2.
 Proof.
   intros hw a (O & mem1 & mem2)%elem_of_union_list.
@@ -895,7 +895,7 @@ Proof.
   exists O. split; eauto. eapply wt_acceptance_set_subseteq; eauto.
 Qed.
 
-Lemma union_acceptance_set_lts_tau_subseteq `{FiniteImageLts P A} s p q h1 h2 :
+Lemma union_acceptance_set_lts_tau_subseteq `{FiniteImagegLts P A} s p q h1 h2 :
   p ⟶ q -> oas q s h1 ⊆ oas p s h2.
 Proof.
   intros l a (O & mem1 & mem2)%elem_of_union_list.
@@ -904,10 +904,10 @@ Proof.
 Qed.
 
 Lemma aft_not_nb_co_of_must_gen_acc `{
-  @LtsOba P A H LtsP LtsEqP, 
-  @LtsOba E A H LtsE LtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsOba P A H gLtsP gLtsEqP, 
+  @gLtsOba E A H gLtsE gLtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) μ s O :
   p ⤓ -> ¬ non_blocking (co_of μ) -> (forall q, p ⟹{μ} q -> must q (gen_acc O s)) 
@@ -933,7 +933,7 @@ Qed.
 
 
 Lemma gen_acc_tau_ex `{
-  M1 : LtsObaFB E A, !Good E A good, !gen_spec_acc co_of f} 
+  M1 : gLtsObaFB E A, !Good E A good, !gen_spec_acc co_of f} 
   s1 s2 s3 μ O :
   exist_co_nba μ -> Forall exist_co_nba s1 -> Forall exist_co_nba s2 ->
   f O (s1 ++ [μ] ++ s2 ++ [co_of μ] ++ s3) ⟶⋍ f O (s1 ++ s2 ++ s3).
@@ -970,7 +970,7 @@ Qed.
 
 
 Lemma must_f_gen_a_subseteq_non_blocking `{
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
   s e η O1 :
   non_blocking η -> gen_acc O1 s ⟶[η] e -> forall O2, O1 ⊆ O2 
     -> exists t, gen_acc O2 s ⟶[η] t.
@@ -1014,7 +1014,7 @@ Proof.
 Qed.
 
 Lemma must_f_gen_a_subseteq_not_non_blocking `{
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
   s e μ' O1 :
   ¬ non_blocking μ' -> gen_acc O1 s ⟶[μ'] e -> forall O2, O1 ⊆ O2 
       -> exists t, gen_acc O2 s ⟶[μ'] t.
@@ -1052,7 +1052,7 @@ Proof.
 Qed.
 
 Lemma must_f_gen_a_subseteq_tau `{
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
   s e O1 : gen_acc O1 s ⟶ e -> forall O2, O1 ⊆ O2
       -> exists t, gen_acc O2 s ⟶ t.
 Proof.
@@ -1091,10 +1091,10 @@ Proof.
 Qed.
 
 Lemma must_f_gen_a_subseteq_nil `{
-  LtsP : @Lts P A H, 
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
+  gLtsP : @gLts P A H, 
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) O1 : 
   must p (gen_acc O1 []) -> forall O2, O1 ⊆ O2 -> must p (gen_acc O2 []).
@@ -1158,11 +1158,11 @@ Proof.
 Qed.
 
 Lemma must_f_gen_a_subseteq `{
-  LtsP : @Lts P A H,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good,
+  gLtsP : @gLts P A H,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good,
     !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   s (p : P) O1 :
   
@@ -1211,14 +1211,57 @@ Proof.
 Qed.
 
 Lemma must_gen_acc_refuses `{
-  @LtsOba P A H LtsP LtsEqP, 
-  @LtsOba E A H LtsE LtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsOba P A H gLtsP gLtsEqP, 
+  @gLtsOba E A H gLtsE gLtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+
+  (p : P) q : 
+
+  p ↛ (* -> *) (* ¬  *) (* (∃ x, x ∈ lts_acc_set_of p ∖ O) *)
+      -> must p (gen_acc (lts_acc_set_of p ∖ lts_acc_set_of q) []) \/ (lts_acc_set_of p ⊆ lts_acc_set_of q).
+Proof.
+  intros refuses.
+  assert (lts_acc_set_of p ∖ lts_acc_set_of q ≡ ∅ \/ ∃ x, x ∈ lts_acc_set_of p ∖ lts_acc_set_of q) 
+    as empty_OR_not_empty. admit.
+  destruct empty_OR_not_empty as [Hyp | (x & In) ].
+  + right. intro. intro mem. rewrite elem_of_equiv_empty in Hyp.
+    assert (x ∉ lts_acc_set_of p ∖ lts_acc_set_of q). eapply Hyp.
+    destruct (decide (x ∈ lts_acc_set_of q)). 
+    ++ eauto.
+    ++ assert (x ∈ lts_acc_set_of p ∖ lts_acc_set_of q).
+       split; eauto. contradiction.
+  + left. eapply m_step.
+    ++ now eapply gen_spec_ungood.
+    ++ edestruct (gen_spec_acc_nil_mem_lts_inp (lts_acc_set_of p ∖ lts_acc_set_of q) x)
+         as (t & μ & HypTr & eq). set_solver. subst.
+       destruct In as (In_acc & not_in_O).
+       eapply lts_refuses_spec1 in In_acc as (p' & HypTr').
+       exists (p' , t).
+       eapply ParSync; eauto. eapply co_inter.
+    ++ intros p' l'. exfalso. eapply (@lts_refuses_spec2 P); eauto with mdb.
+    ++ intros e' l'. exfalso.
+       eapply (@lts_refuses_spec2 E A _ _ (gen_acc (lts_acc_set_of p ∖ lts_acc_set_of q) []) τ); eauto with mdb.
+       eapply gen_spec_acc_nil_refuses_tau.
+    ++ intros p' e' μ' μ inter l1 l0.
+       destruct (decide (non_blocking μ)) as [nb | not_nb].
+       +++ exfalso.
+           eapply (@lts_refuses_spec2 E); eauto with mdb.
+           eapply gen_spec_acc_nil_refuses_nb; eauto.
+       +++ eapply gen_spec_acc_nil_lts_not_nb_good in l0; eauto. eauto with mdb.
+    Unshelve. exact (lts_acc_set_of q).
+Admitted.
+
+
+(* Lemma must_gen_acc_refuses `{
+  @gLtsOba P A H gLtsP gLtsEqP, 
+  @gLtsOba E A H gLtsE gLtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
+
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) O : 
 
-  p ↛ -> (* ¬ (lts_acc_set_of p ⊆ O) *) (∃ x, x ∈ lts_acc_set_of p ∖ O)
+  p ↛ -> (* ¬  *) (∃ x, x ∈ lts_acc_set_of p ∖ O)
       -> must p (gen_acc (lts_acc_set_of p ∖ O) []).
 Proof.
   intros refuses not_empty.
@@ -1242,15 +1285,17 @@ Proof.
            eapply gen_spec_acc_nil_refuses_nb; eauto.
        +++ eapply gen_spec_acc_nil_lts_not_nb_good in l0; eauto. eauto with mdb.
     Unshelve. eauto.
-Qed.
+Qed. *)
+
+
 
 (******************* UTILE ? *****************)
 
 Lemma must_gen_acc_refuses_inv `{
-  @LtsOba P A H LtsP LtsEqP, 
-  @LtsOba E A H LtsE LtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsOba P A H gLtsP gLtsEqP, 
+  @gLtsOba E A H gLtsE gLtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) O :
 
@@ -1262,10 +1307,10 @@ Qed.
 
 
 Lemma must_gen_acc_refuses_inv' `{
-  @LtsOba P A H LtsP LtsEqP, 
-  @LtsOba E A H LtsE LtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsOba P A H gLtsP gLtsEqP, 
+  @gLtsOba E A H gLtsE gLtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) O : 
 
@@ -1276,10 +1321,10 @@ Proof.
 Qed.
 
 Lemma must_gen_acc_refuses_inv'' `{
-  @LtsOba P A H LtsP LtsEqP, 
-  @LtsOba E A H LtsE LtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsOba P A H gLtsP gLtsEqP, 
+  @gLtsOba E A H gLtsE gLtsEqE, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) O : 
 
@@ -1291,10 +1336,10 @@ Qed.
 
 
 Lemma must_gen_acc_refuses_oas `{
-  @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (hcnv : p ⇓ []) O : 
 
@@ -1312,10 +1357,10 @@ Proof.
 Qed.
 
 Lemma must_gen_acc_refuses_inv_oas_inv `{
-  @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (hcnv : p ⇓ []) O :
 
@@ -1328,10 +1373,10 @@ Qed.
 (******************* UTILE ? *****************)
 
 Lemma must_gen_a_with_nil `{
-  @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (hcnv : p ⇓ []) O :
 
@@ -1387,10 +1432,10 @@ Proof.
 Qed.
 
 Lemma must_gen_a_with_s `{
-  @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   s (p : P) (hcnv : p ⇓ s) O :
 
@@ -1471,10 +1516,10 @@ Proof.
 Qed.
 
 Lemma must_gen_a_with_s_contra `{
-  @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   s (p : P) (hcnv : p ⇓ s) O :
 
@@ -1486,10 +1531,10 @@ Proof.
 Admitted.
 
 Lemma not_must_gen_a_without_required_acc_set `{
-  @LtsObaFW P A H LtsP LtsEqP V, 
-  @LtsObaFB E A H LtsE LtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
+  @gLtsObaFW P A H gLtsP gLtsEqP V, 
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc co_of gen_acc} 
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (q q' : P) s O :
 
@@ -1536,13 +1581,13 @@ Proof.
 Qed.
 
 Lemma completeness2 `{
-  @LtsObaFW P A H LtsP LtsEqP VP, !FiniteImageLts P A,
-  @LtsObaFW Q A H LtsQ LtsEqQ VQ, !FiniteImageLts Q A,
-  @LtsObaFB E A H LtsE LtsEqE VE, 
+  @gLtsObaFW P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A,
+  @gLtsObaFB E A H gLtsE gLtsEqE VE, 
   !Good E A good, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
   (p : P) (q : Q) : p ⊑ q -> p ≼₂ q.
 Proof.
@@ -1559,31 +1604,31 @@ Proof.
 Qed.
 
 Lemma completeness_fw `{
-  @LtsObaFW P A H LtsP LtsEqP VP, !FiniteImageLts P A,
-  @LtsObaFW Q A H LtsQ LtsEqQ VQ, !FiniteImageLts Q A, 
-  @LtsObaFB E A H LtsE LtsEqE VE, !FiniteImageLts E A, 
+  @gLtsObaFW P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A, 
+  @gLtsObaFB E A H gLtsE gLtsEqE VE, !FiniteImagegLts E A, 
   !Good E A good, !gen_spec_conv co_of gen_conv, !gen_spec_acc co_f gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
   (p : P) (q : Q) : p ⊑ q -> p ≼ q.
 Proof. intros. split. now apply completeness1. now apply completeness2. Qed.
 
 Lemma completeness `{
-  @LtsObaFB P A H LtsP LtsEqP VP, !FiniteImageLts P A,
-  @LtsObaFB Q A H LtsQ LtsEqQ VQ, !FiniteImageLts Q A,
-  @LtsObaFB E A H LtsE LtsEqE VE, !FiniteImageLts E A, !Good E A good,
+  @gLtsObaFB P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A,
+  @gLtsObaFB Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A,
+  @gLtsObaFB E A H gLtsE gLtsEqE VE, !FiniteImagegLts E A, !Good E A good,
   !gen_spec_conv co_of gen_conv, !gen_spec_acc co_of gen_acc}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-  `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
-  `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+  `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
   (p : P) (q : Q) : p ⊑ q -> p ▷ ∅ ≼ q ▷ ∅.
 Proof.
