@@ -243,9 +243,8 @@ Notation "p ⟶⋍ q" := (lts_sc p τ q) (at level 30, format "p  ⟶⋍  q").
 Notation "p ⟶⋍{ α } q" := (lts_sc p α q) (at level 30, format "p  ⟶⋍{ α }  q").
 Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p  ⟶⋍[ μ ]  q").
 
-Class gLtsOba (P A : Type) `{H : ExtAction A} (* {I : InteractionAction A}   *)
-            {M : @gLts P A H} {Rel : @gLtsEq P A H M} 
-                          (* `{@Prop_of_Inter P A H I M} *)  :=
+Class gLtsOba (P A : Type) `{H : ExtAction A}
+            {LtsP : @gLts P A H} {Rel : @gLtsEq P A H LtsP} :=
   MkOBA {
       (* Multiset of outputs *)
       lts_oba_mo (p : P) : gmultiset A;

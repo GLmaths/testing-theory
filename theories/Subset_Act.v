@@ -38,10 +38,10 @@ From Must Require Import TransitionSystems.
 
 Definition subset_of (A : Type) := A -> Prop.
 
-Definition lts_pre_acc_set_of `{Lts P A} (p : P) (μ : A) : Prop := 
+Definition lts_pre_acc_set_of `{gLts P A} (p : P) (μ : A) : Prop := 
       ¬ lts_refuses p (ActExt μ).
 
-Definition lts_acc_set_of `{Lts P A} (p : P) : subset_of A := lts_pre_acc_set_of p.
+Definition lts_acc_set_of `{gLts P A} (p : P) : subset_of A := lts_pre_acc_set_of p.
 
 (* Definition Included {A : Type} (B C: A -> Prop) : Prop := 
     forall μ : A, B μ -> C μ.

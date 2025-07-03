@@ -27,7 +27,7 @@ From stdpp Require Import base countable finite gmap list
                         finite base decidable finite gmap gmultiset.
 From Must Require Import TransitionSystems Must.
 
-Lemma woutpout_preserves_good `{LtsObaFB P A, !Good P A good }
+Lemma woutpout_preserves_good `{gLtsObaFB P A, !Good P A good }
   e m e': good e -> strip e m e' -> good e'.
 Proof.
   intros happy stripped.
@@ -36,7 +36,7 @@ Proof.
   + eapply IHstripped. eapply good_preserved_by_lts_non_blocking_action; eauto.
 Qed.
 
-Lemma woutpout_preserves_good_converse `{LtsObaFB P A, !Good P A good }
+Lemma woutpout_preserves_good_converse `{gLtsObaFB P A, !Good P A good }
   e m e': good e' -> strip e m e' -> good e.
 Proof.
   intros happy stripped. induction stripped.
@@ -45,7 +45,7 @@ Proof.
     now eapply IHstripped.
 Qed.
 
-Lemma strip_eq `{@LtsOba P A H LtsP LOA} {e e' m} :
+Lemma strip_eq `{@gLtsOba P A H gLtsP LOA} {e e' m} :
   strip e m e' -> forall r, eq_rel r e -> exists r', strip r m r' /\ eq_rel r' e'.
 Proof.
   intro w.
@@ -56,7 +56,7 @@ Proof.
     exists r'. split. eapply strip_step; eassumption. eassumption.
 Qed.
 
-Lemma woutpout_preserves_mu `{LtsOba P A}
+Lemma woutpout_preserves_mu `{gLtsOba P A}
   {p q m t α} : strip p m q -> q ⟶{α} t -> exists r t', p ⟶{α} r /\ strip r m t' /\ eq_rel t t'.
 Proof.
   intros stripped Hstep. induction stripped as [ | ? ? ? ? ? nb Hstep_nb ]; eauto.
@@ -115,7 +115,7 @@ Proof.
     eapply gmultiset_elements_singleton. unfold singletonMS. rewrite eq. simpl in *. eauto.
 Qed.
 
-Lemma woutpout_delay_inp `{LtsOba P A} {p q m t μ} : 
+Lemma woutpout_delay_inp `{gLtsOba P A} {p q m t μ} : 
     Forall (NotEq μ) (elements m) -> strip p m q -> p ⟶[μ] t -> exists r, q ⟶[μ] r.
 Proof.
   intros noteq_l stripped Hstep. revert t noteq_l Hstep. 
@@ -129,7 +129,7 @@ Proof.
 Qed.
 
 
-Lemma nb_with_strip `{LtsOba P A} p1 m p'1 η: p1 ⟿{m} p'1 -> η ∈ m -> non_blocking η.
+Lemma nb_with_strip `{gLtsOba P A} p1 m p'1 η: p1 ⟿{m} p'1 -> η ∈ m -> non_blocking η.
 Proof.
   intros stripped mem.
   dependent induction stripped.
@@ -141,7 +141,7 @@ Proof.
 Qed.
 
 
-(* Lemma nb_with_strip_m `{LtsOba P A} p1 m p'1: p1 ⟿{m} p'1 -> Forall non_blocking (elements m).
+(* Lemma nb_with_strip_m `{gLtsOba P A} p1 m p'1: p1 ⟿{m} p'1 -> Forall non_blocking (elements m).
 Proof.
   intros stripped.
   (* remember (elements m) as l.
@@ -154,7 +154,7 @@ Proof.
 Admitted. *)
 
 
-Lemma not_nb_with_strip_m `{LtsOba P A} p1 m p'1 μ : p1 ⟿{m} p'1 -> ¬ non_blocking μ
+Lemma not_nb_with_strip_m `{gLtsOba P A} p1 m p'1 μ : p1 ⟿{m} p'1 -> ¬ non_blocking μ
     -> Forall (NotEq μ) (elements m).
 Proof.
   intros stripped.
@@ -169,7 +169,7 @@ Proof.
 Qed.
 
 
-Lemma woutpout_delay_tau `{LtsOba P A} {p q m t} :
+Lemma woutpout_delay_tau `{gLtsOba P A} {p q m t} :
   strip p m q -> p ⟶ t 
   -> (exists η μ r t, non_blocking η /\ dual η μ /\ p ⟶[η] r /\ q ⟶[μ] t) \/ (exists r, q ⟶ r).
 Proof.
@@ -195,8 +195,8 @@ Proof.
        eapply woutpout_delay_inp in hlr as (u & lu) ; eauto.
 Qed.
 
-Lemma conv (* `{Lts P A}  *)
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
+Lemma conv (* `{gLts P A}  *)
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
@@ -221,7 +221,7 @@ Lemma gmultiset_not_elem_of_multiplicity `{Countable A} x (g : gmultiset A) :
   x ∉ g <-> multiplicity x g = 0.
 Proof. multiset_solver. Qed.
 
-Lemma aux0 `{LtsOba P A} {e e' m} :
+Lemma aux0 `{gLtsOba P A} {e e' m} :
   forall η, η ∈ m -> strip e m e' -> exists e', e ⟶[η] e'.
 Proof.
   intros a mem w.
@@ -236,7 +236,7 @@ Qed.
 Lemma gmultiset_eq_drop_l `{Countable A} (m1 m2 m3 : gmultiset A) : m1 ⊎ m2 = m1 ⊎ m3 -> m2 = m3.
 Proof. by multiset_solver. Qed.
 
-Lemma aux3_ `{@LtsOba P A H LtsP LOA} {e e' m η} :
+Lemma aux3_ `{@gLtsOba P A H gLtsP LOA} {e e' m η} :
   strip e ({[+ η +]} ⊎ m) e' -> forall r, e ⟶[η] r -> exists t, strip r m t /\ eq_rel t e'.
 Proof.
   intro w.
@@ -259,10 +259,10 @@ Proof.
 Qed.
 
 Lemma must_non_blocking_action_swap_l_fw_eq `{
-  @LtsObaFW P A H LtsP M K, 
-  @LtsObaFB E A H LtsE Y V, !Good E A good}
+  @gLtsObaFW P A H gLtsP M K, 
+  @gLtsObaFB E A H gLtsE Y V, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p1 p2 : P) (e1 e2 : E) (η : A) :
   non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> must p1 e2 -> must p2 e1.
@@ -372,10 +372,10 @@ Proof.
 Qed. 
 
 Lemma must_non_blocking_action_swap_r_fw_eq`{
-  @LtsObaFW P A H LtsP M K, 
-  @LtsObaFB E A H LtsE Y V, !Good E A good}
+  @gLtsObaFW P A H gLtsP M K, 
+  @gLtsObaFB E A H gLtsE Y V, !Good E A good}
   
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   
   (p1 p2 : P) (e1 e2 : E) (η : A) :
   non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> must p2 e1 -> must p1 e2.
@@ -508,10 +508,10 @@ Proof.
 Qed.
 
 Lemma must_non_blocking_action_swap_l_fw `{
-  @LtsObaFW P A H LtsP M K, 
-  @LtsObaFB E A H LtsE Y V, !Good E A good}
+  @gLtsObaFW P A H gLtsP M K, 
+  @gLtsObaFB E A H gLtsE Y V, !Good E A good}
   
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   
   (p1 p2 : P) (e1 e2 : E) (η : A) :
   non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> must p1 e2 -> must p2 e1.
@@ -520,10 +520,10 @@ Proof.
 Qed.
 
 Lemma must_non_blocking_action_swap_r_fw `{
-  @LtsObaFW P A H LtsP M K, 
-  @LtsObaFB E A H LtsE Y V, !Good E A good}
+  @gLtsObaFW P A H gLtsP M K, 
+  @gLtsObaFB E A H gLtsE Y V, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p1 p2 : P) (e1 e2 : E) (η : A) :
   non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> must p2 e1 -> must p1 e2.
@@ -533,11 +533,11 @@ Proof.
 Qed.
 
 Lemma nf_must_fw_l `{
-  @LtsObaFB P A H LtsP M K, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE Y V, !Good E A good}
+  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE Y V, !Good E A good}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
   m1 m2 (p : P) (e e' : E) : e ⟿{m1} e' -> must (p, m1 ⊎ m2) e' -> must (p, m2) e.
 Proof.
@@ -563,7 +563,7 @@ Qed.
 
 
 Lemma add_in_mb_fw_tau `{
-  @Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
+  @Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
 
   (m : mb A) (p : P) (mp : mb A) (p' : P) (mp' : mb A) :
   (p ▷ mp) ⟶ (p' ▷ mp') -> (p ▷ m ⊎ mp) ⟶ (p' ▷ m ⊎ mp').
@@ -587,7 +587,7 @@ Proof.
 Qed.
 
 Lemma add_in_mb_fw_action `{
-  @Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
+  @Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
 
   (m : mb A) (p : P) (mp : mb A) (p' : P) (mp' : mb A) (μ : A):
   (p ▷ mp) ⟶[μ] (p' ▷ mp') -> (p ▷ m ⊎ mp) ⟶[μ] (p' ▷ m ⊎ mp').
@@ -606,11 +606,11 @@ Qed.
 
 
 Lemma nf_must_fw_r `{
-  @LtsObaFB P A H LtsP M K, !FiniteImageLts P A ,
-  @LtsObaFB E A H LtsE Y V,  !Good E A good}
+  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A ,
+  @gLtsObaFB E A H gLtsE Y V,  !Good E A good}
   
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
   
   (p : P) (e e' : E) m1 m2 : 
   strip e m1 e' -> must (p, m2) e -> must (p, m1 ⊎ m2) e'.
@@ -673,11 +673,11 @@ Proof.
 Qed.  (* existence d'une co_action nécéssaire *)
 
 Lemma nf_must_fw `{
-  @LtsObaFB P A H LtsP M K, !FiniteImageLts P A ,
-  @LtsObaFB E A H LtsE Y V , !Good E A good}
+  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A ,
+  @gLtsObaFB E A H gLtsE Y V , !Good E A good}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
   (p : P) (e e' : E) m : 
   strip e m e' -> must (p, m) e' <-> must (p, ∅) e.
@@ -687,7 +687,7 @@ Proof.
   - rewrite <- gmultiset_disj_union_right_id. eapply nf_must_fw_r; eassumption.
 Qed.
 
-Lemma lts_oba_mo_strip `{LtsOba P A} p : 
+Lemma lts_oba_mo_strip `{gLtsOba P A} p : 
   exists q , strip p (lts_oba_mo p) q.
 Proof.
   remember (lts_oba_mo p) as ns.
@@ -703,7 +703,7 @@ Proof.
     exists q0. eapply strip_step; eassumption.
 Qed.
 
-Lemma refuses_equiv `{LtsEq P A} p q α : 
+Lemma refuses_equiv `{gLtsEq P A} p q α : 
   p ⋍ q -> p ↛{ α } -> q ↛{ α }.
 Proof.
   intros equiv refuses. destruct (decide (q ↛{α})) as [refuses_q | not_refuses_q].
@@ -713,7 +713,7 @@ Proof.
     assert (¬ p ↛{α}). eapply lts_refuses_spec2. eexists; eauto. contradiction.
 Qed.
 
-Lemma lts_oba_mo_strip_refuses `{LtsOba P A} p q: 
+Lemma lts_oba_mo_strip_refuses `{gLtsOba P A} p q: 
   strip p (lts_oba_mo p) q 
   -> forall η, non_blocking η -> q ↛[η].
 Proof.
@@ -731,7 +731,7 @@ Qed.
 
 
 
-Lemma not_in_mb_to_not_eq' `{LtsOba P A} {μ p}: 
+Lemma not_in_mb_to_not_eq' `{gLtsOba P A} {μ p}: 
   μ ∉ lts_oba_mo p 
   -> Forall (NotEq μ) (elements (lts_oba_mo p)).
 Proof.
@@ -743,7 +743,7 @@ Proof.
     ++ assert (μ ∉ g). set_solver. now eapply IHg.
 Qed.
 
-Lemma mo_stripped_equiv `{LtsOba P A} r m r' r'' : 
+Lemma mo_stripped_equiv `{gLtsOba P A} r m r' r'' : 
   r ⟿{m} r'
   -> r' ⋍ r'' 
   -> r ⟿{m} r''.
@@ -754,7 +754,7 @@ Proof.
   + intro Hyp. econstructor; eauto.
 Qed.
 
-Lemma mo_stripped_equiv_rev `{LtsOba P A} r m r' r'' : 
+Lemma mo_stripped_equiv_rev `{gLtsOba P A} r m r' r'' : 
   r ⟿{m} r'
   -> r ⋍ r'' 
   -> r'' ⟿{m} r'.
@@ -767,7 +767,7 @@ Proof.
     econstructor. assumption. exact l. eapply IHstripped. symmetry;eauto.
 Qed.
 
-Lemma strip_union `{LtsOba P A} p1 m1 p2 m2 p3 : 
+Lemma strip_union `{gLtsOba P A} p1 m1 p2 m2 p3 : 
     p1 ⟿{m1} p2 
     -> p2 ⟿{m2} p3 
     -> p1 ⟿{m1 ⊎ m2} p3.
@@ -780,7 +780,7 @@ Proof.
     rewrite eq. econstructor; eauto.
 Qed.
 
-Lemma mo_stripped `{LtsOba P A} r m r' : 
+Lemma mo_stripped `{gLtsOba P A} r m r' : 
   r ⟿{m} r'
   -> (∀ η : A, non_blocking η -> r' ↛[η]) 
   -> lts_oba_mo r = m. 
@@ -809,12 +809,12 @@ Proof.
 Qed.
 
 Lemma must_to_must_fw `{
-  @LtsObaFB P A H LtsP M K, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE Y V, !Good E A good}
+  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE Y V, !Good E A good}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) (m : mb A) :
   must p e 
@@ -954,12 +954,12 @@ Proof.
 Qed.
 
 Lemma must_fw_to_must `{
-  @LtsObaFB P A H LtsP M K, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE Y V, !Good E A good}
+  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE Y V, !Good E A good}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) : must (p, ∅) e -> must p e.
 Proof.
@@ -1011,12 +1011,12 @@ Proof.
 Qed.
 
 Lemma must_iff_must_fw `{
-  @LtsObaFB P A H LtsP M K, !FiniteImageLts P A,
-  @LtsObaFB E A H LtsE Y V , !Good E A good}
+  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A,
+  @gLtsObaFB E A H gLtsE Y V , !Good E A good}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) :
   must p e <-> must (p, ∅) e.
@@ -1030,21 +1030,21 @@ Proof.
 Qed.
 
 Lemma lift_fw_ctx_pre `{
-    @LtsObaFB P A H LtsP LOP V, !FiniteImageLts P A,
-    @LtsObaFB Q A H LtsQ LOQ W, !FiniteImageLts Q A,
-    @LtsObaFB E A H LtsE LOE Y, !Good E A good}
+    @gLtsObaFB P A H gLtsP LOP V, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsQ LOQ W, !FiniteImagegLts Q A,
+    @gLtsObaFB E A H gLtsE LOE Y, !Good E A good}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
 
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
 
-  `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
     
     
   (p : P) (q : Q) : p ⊑ q <-> (p, ∅) ⊑ (q, ∅).

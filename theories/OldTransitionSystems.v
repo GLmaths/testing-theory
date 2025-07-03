@@ -2780,7 +2780,7 @@ Proof.
   split.
   - intros a mem.
     eapply elem_of_union_list in mem as (xs & mem1 & mem2).
-    eapply elem_of_list_ in mem1 as (p & heq0 & mem1).
+    eapply elem_of_list_fmap in mem1 as (p & heq0 & mem1).
     subst.  eapply elem_of_list_to_set in mem2.
     eapply lts_tau_set_spec in mem2. multiset_solver.
   - intros p q mem l.
@@ -2804,7 +2804,7 @@ Proof.
   eapply elem_of_union in mem as [here | there].
   + eapply elem_of_singleton_1 in here. subst. eauto with mdb.
   + eapply elem_of_union_list in there as (ps & mem1 & mem2).
-    eapply elem_of_list_ in mem1 as (r & mem1 & eq). subst.
+    eapply elem_of_list_fmap in mem1 as (r & mem1 & eq). subst.
     eapply wt_tau; [|destruct (t (`r) (proj2_dsig r)) eqn:eqn0].
     ++ eapply (proj2_dsig r).
     ++ eapply H3. eapply (proj2_dsig r). eassumption.
@@ -2818,7 +2818,7 @@ Proof.
     eapply elem_of_union_list.
     set (qr := dexist q l).
     exists (wt_set_nil (`qr) (t0 (`qr) (proj2_dsig qr))).
-    split. eapply elem_of_list_.
+    split. eapply elem_of_list_fmap.
     exists qr. split. reflexivity.
     eapply elem_of_enum. simpl.
     eapply IHwt. eauto.
@@ -2870,7 +2870,7 @@ Lemma wt_set_mu_spec1 `{FiniteLts A L}
 Proof.
   intros mem.
   eapply elem_of_union_list in mem as (g & mem1 & mem2).
-  eapply elem_of_list_ in mem1 as ((t & hw1) & eq & mem1). subst.
+  eapply elem_of_list_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
   eapply elem_of_union_list in mem2 as (g & mem3 & mem4).
   eapply elem_of_list_fmap in mem3 as ((u & hlts) & eq & mem3). subst.
   eapply elem_of_list_to_set, elem_of_list_fmap in mem4 as ((v & hw2) & eq & mem4). subst.

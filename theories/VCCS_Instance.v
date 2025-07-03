@@ -28,23 +28,10 @@ Require Import Coq.Program.Equality Coq.Strings.String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 Require Import Relations.
 Require Import Coq.Wellfounded.Inverse_Image.
-
+From stdpp Require Import base countable finite gmap list gmultiset strings.
+From Must Require Import OldTransitionSystems (* Must Completeness *).
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
-Inductive ExtAct (Channel Data : Type) :=
-| ActIn : Channel -> Data -> ExtAct Channel Data
-| ActOut : Channel -> Data -> ExtAct Channel Data
-.
-
-Arguments ActIn {_} {_} _ _.
-Arguments ActOut {_} {_} _ _.
-
-Inductive Act (Channel Data : Type) :=
-| ActExt (μ: ExtAct Channel Data)
-| τ
-.
-Arguments ActExt {_} {_} _.
-Arguments τ {_} {_}.
 
 
 Coercion ActExt : ExtAct >-> Act.
@@ -61,6 +48,10 @@ Inductive Data :=
 Coercion cst : Value >-> Data.
 Coercion bvar : nat >-> Data.
 
+Inductive TypeOfActions := 
+| act : Channel -> Data -> TypeOfActions.
+
+Notation "c ⋉ v" := (act c v) (at level 50).
 
 Inductive Equation (A : Type) : Type :=
 | Equality : A -> A -> Equation A.
@@ -227,12 +218,12 @@ end.
 
 
 (* The Labelled Transition System (LTS-transition) *)
-Inductive lts : proc-> (Act Channel Data) -> proc -> Prop :=
+Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) (ActIn c (cst v)) (P^v)
+    lts (c ? x • P) (ActIn (c ⋉ (cst v))) (P^v)
 | lts_output : forall {c v P},
-    lts (c ! (cst v) • P) (ActOut c (cst v)) P
+    lts (c ! (cst v) • P) (ActOut (c ⋉ (cst v))) P
 
 (*The actions Tau*)
 | lts_tau : forall {P},
@@ -246,12 +237,12 @@ Inductive lts : proc-> (Act Channel Data) -> proc -> Prop :=
 
 (* Communication of a channel output and input that have the same name*)
 | lts_comL : forall {c v p1 p2 q1 q2},
-    lts p1 (ActOut c (cst v)) p2 ->
-    lts q1 (ActIn c (cst v)) q2 ->
+    lts p1 (ActOut (c ⋉ (cst v))) p2 ->
+    lts q1 (ActIn (c ⋉(cst v))) q2 ->
     lts (p1 ‖ q1) τ (p2 ‖ q2) 
 | lts_comR : forall {c v p1 p2 q1 q2},
-    lts p1 (ActOut c (cst v)) p2 ->
-    lts q1 (ActIn c (cst v)) q2 ->
+    lts p1 (ActOut (c ⋉ (cst v))) p2 ->
+    lts q1 (ActIn (c ⋉ (cst v))) q2 ->
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
 (*The decoration for the transition system...*)
@@ -702,7 +693,7 @@ Qed.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForInput : forall P Q c v, (lts P (ActIn c v)) Q -> 
+Lemma TransitionShapeForInput : forall P Q c v, (lts P (ActIn (c ⋉ v))) Q -> 
 (exists P1 G R, ((P ≡* ((c ? x • P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P Q c v Transition.
@@ -735,7 +726,7 @@ Qed.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a OUPUT,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForOutput : forall P Q c v, (lts P (ActOut c v)) Q -> 
+Lemma TransitionShapeForOutput : forall P Q c v, (lts P (ActOut (c ⋉ v))) Q -> 
 (exists P1 G R, ((P ≡* ((c ! v • P1 + G) ‖ R)) /\ (Q ≡* (P1 ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P Q c v Transition.
@@ -883,10 +874,10 @@ Proof.
     + intros. dependent destruction l. exists p. split. apply lts_output. 
       constructor. assumption.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step p2 (ActOut c (cst v))).  exact l1. destruct H0. exists (x ‖ q2).
+      -- destruct (IHcgr_step p2 (ActOut (c ⋉ (cst v)))).  exact l1. destruct H0. exists (x ‖ q2).
           split. eapply lts_comL. exact H0. assumption.
           apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step q2 (ActIn c (cst v))). assumption. destruct H0. exists (x ‖ p2).
+      -- destruct (IHcgr_step q2 (ActIn (c ⋉ (cst v)))). assumption. destruct H0. exists (x ‖ p2).
           split.  eapply lts_comR. exact l1. assumption.
           apply cgr_fullpar. assumption. reflexivity.
       -- destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
@@ -1376,3 +1367,736 @@ intros. revert H. rename H0 into Transition. dependent induction Transition.
 * intros. dependent destruction H. apply IHTransition. assumption.
 Qed.
 
+Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+#[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
+Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+#[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
+Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+#[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
+Context (value_is_countable : Countable Value). (* only here for the classes *)
+#[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
+
+Lemma Data_dec : forall (x y : Data) , {x = y} + {x <> y}.
+Proof.
+decide equality. 
+* destruct (decide(v = v0)). left. assumption. right. assumption.
+* destruct (decide (n = n0)). left. assumption. right. assumption.
+Qed.
+
+#[global] Instance data_eqdecision : EqDecision Data. by exact Data_dec . Defined.
+
+
+Definition encode_data (D : Data) : gen_tree (nat + Value) :=
+match D with
+  | cst v => GenLeaf (inr v)
+  | bvar i => GenLeaf (inl i)
+end.
+
+Definition decode_data (tree : gen_tree (nat + Value)) : Data :=
+match tree with
+  | GenLeaf (inr v) => cst v
+  | GenLeaf (inl i) => bvar i
+  | _ => bvar 0
+end.
+
+Lemma encode_decide_datas d : decode_data (encode_data d) = d.
+Proof. case d. 
+* intros. simpl. reflexivity.
+* intros. simpl. reflexivity.
+Qed.
+
+#[global] Instance data_countable : Countable Data.
+Proof.
+  refine (inj_countable' encode_data decode_data _).
+  apply encode_decide_datas.
+Qed.
+
+Lemma TypeOfActions_dec : forall (x y : TypeOfActions) , {x = y} + {x <> y}.
+Proof.
+decide equality. 
+* destruct (decide(d = d0)). left. assumption. right. assumption.
+* destruct (decide (c = c0)). left. assumption. right. assumption.
+Qed.
+
+#[global] Instance TypeOfActions_eqdecision : EqDecision TypeOfActions. by exact TypeOfActions_dec . Defined.
+
+
+Definition encode_TypeOfActions (a : TypeOfActions) : gen_tree (nat + (Channel + Data)) :=
+match a with
+  | act c v => GenNode 0 [GenLeaf (inr (inl c)) ; GenLeaf (inr (inr v))]
+end.
+
+Definition decode_TypeOfActions (tree :gen_tree (nat + (Channel + Data))) : option TypeOfActions :=
+match tree with
+  | GenNode 0 [GenLeaf (inr (inl c)); GenLeaf (inr (inr v))] => Some (act c v)
+  | _ => None
+end.
+
+Lemma encode_decide_TypeOfActions p : decode_TypeOfActions (encode_TypeOfActions  p) = Some p.
+Proof. 
+induction p. 
+* simpl. reflexivity.
+Qed.
+
+#[global] Instance TypeOfActions_countable : Countable TypeOfActions.
+Proof.
+  eapply inj_countable with encode_TypeOfActions decode_TypeOfActions. 
+  intro. apply encode_decide_TypeOfActions.
+Qed.
+
+Definition encode_ExtAct_TypeOfActions (a : ExtAct TypeOfActions) : 
+    gen_tree (nat + (Channel + Data)) :=
+match a with
+  | ActIn a => GenNode 0 [encode_TypeOfActions a]
+  | ActOut a => GenNode 1 [encode_TypeOfActions a]
+end.
+
+Definition decode_ExtAct_TypeOfActions_raw (tree :gen_tree (nat + (Channel + Data))) 
+  : option (ExtAct (option TypeOfActions)) :=
+match tree with
+  | GenNode 0 [l] => Some (ActIn (decode_TypeOfActions l))
+  | GenNode 1 [l] => Some (ActOut (decode_TypeOfActions l))
+  | _ => None
+end.
+
+Definition simpl_option (a : option (ExtAct (option TypeOfActions)))
+  : option (ExtAct TypeOfActions) :=
+match a with
+  | Some (ActIn None) => None
+  | Some (ActIn (Some b)) => Some (ActIn b)
+  | Some (ActOut None) => None
+  | Some (ActOut (Some b)) => Some (ActOut b)
+  | None => None
+end.
+
+Definition decode_ExtAct_TypeOfActions (tree :gen_tree (nat + (Channel + Data))) 
+  : option (ExtAct TypeOfActions) := simpl_option (decode_ExtAct_TypeOfActions_raw tree).
+
+Lemma encode_decide_ExtAct_TypeOfActions a : 
+  decode_ExtAct_TypeOfActions (encode_ExtAct_TypeOfActions  a) = Some a.
+Proof. 
+induction a. 
+* unfold decode_ExtAct_TypeOfActions. simpl.
+  rewrite encode_decide_TypeOfActions. eauto.
+* unfold decode_ExtAct_TypeOfActions. simpl.
+  rewrite encode_decide_TypeOfActions. eauto.
+Qed.
+
+
+#[global] Instance ExtAct_TypeOfActions_countable : Countable (ExtAct TypeOfActions).
+Proof.
+  eapply inj_countable with encode_ExtAct_TypeOfActions decode_ExtAct_TypeOfActions. 
+  intro. apply encode_decide_ExtAct_TypeOfActions.
+Qed.
+
+
+Lemma Equation_dec : forall (x y : Equation Data) , {x = y} + {x <> y}.
+Proof.
+decide equality. apply Data_dec. apply Data_dec.
+Qed.
+
+#[global] Instance equation_dec : EqDecision (Equation Data). exact Equation_dec. Defined.
+
+Definition encode_equation (E : Equation Data) : gen_tree (nat + Data) :=
+match E with
+  | D1 == D2 => GenNode 0 [GenLeaf (inr D1) ; GenLeaf (inr D2)]
+end.
+
+Definition decode_equation (tree : gen_tree (nat + Data)) : option (Equation Data) :=
+match tree with
+  | GenNode 0 [GenLeaf (inr d); GenLeaf (inr d')] => Some (d == d')
+  | _ => None
+end. 
+
+
+Lemma encode_decide_equations p : decode_equation (encode_equation p) = Some p.
+Proof. 
+induction p.
+* simpl. reflexivity.
+Qed.
+
+#[global] Instance equation_countable : Countable (Equation Data).
+Proof.
+  refine (inj_countable encode_equation decode_equation _).
+  apply encode_decide_equations.
+Qed.
+
+Fixpoint proc_dec (x y : proc) : { x = y } + { x <> y }
+with gproc_dec (x y : gproc) : { x = y } + { x <> y }.
+Proof.
+decide equality. 
+* destruct (decide(n = n0));eauto.
+* destruct (decide(n = n0));eauto.
+* destruct (decide(e = e0));eauto. 
+* decide equality; destruct (decide(c = c0));eauto.
+  destruct (decide(d = d0));eauto.
+Qed.
+
+#[global] Instance proc_eqdecision : EqDecision proc. by exact proc_dec. Defined.
+
+
+Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)) :=
+  match p with
+  | p ‖ q  => GenNode 0 [encode_proc p; encode_proc q]
+  | pr_var i => GenNode 2 [GenLeaf $ inl i]
+  | rec x • P => GenNode 3 [GenLeaf $ inl x; encode_proc P]
+  | If C Then A Else B => GenNode 4 [GenLeaf (inr ( inl (inl C))) ; encode_proc A; encode_proc B]
+  | g gp => GenNode 1 [encode_gproc gp]
+  end
+with
+encode_gproc (gp: gproc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)) :=
+  match gp with
+  | ① => GenNode 1 []
+  | 𝟘 => GenNode 0 []
+  | c ? x • p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
+  | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ (c ⋉ v)); encode_proc p]
+  | t • p => GenNode 3 [encode_proc p]
+  | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
+  end.
+  
+Definition Channel_of (a : TypeOfActions) : Channel := 
+match a with 
+| act c d => c
+end.
+
+Definition Data_of (a : TypeOfActions) : Data := 
+match a with 
+| act c d => d
+end.
+
+Fixpoint decode_proc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel))) : proc :=
+  match t' with
+  | GenNode 0 [ep; eq] => (decode_proc ep) ‖ (decode_proc eq)
+  | GenNode 2 [GenLeaf (inl i)] => pr_var i
+  | GenNode 3 [GenLeaf (inl i); egq] => rec i • (decode_proc egq)
+  | GenNode 4 [GenLeaf (inr ( inl (inl C))); A; B] => If C Then (decode_proc A) Else (decode_proc B)
+  | GenNode 1 [egp] => g (decode_gproc egp)
+  | _ => ① 
+  end
+with
+decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel))): gproc :=
+  match t' with
+  | GenNode 1 [] => ①
+  | GenNode 0 [] => 𝟘
+  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? x • (decode_proc ep)
+  | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (Channel_of a) ! (Data_of a) • (decode_proc ep)
+  | GenNode 3 [eq] => t • (decode_proc eq)
+  | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
+  | _ => ① 
+  end.
+
+Lemma encode_decide_procs p : decode_proc (encode_proc p) = p
+with encode_decide_gprocs p : decode_gproc (encode_gproc p) = p.
+Proof. all: case p. 
+* intros. simpl. rewrite (encode_decide_procs p0). rewrite (encode_decide_procs p1). reflexivity.
+* intros. simpl. reflexivity.
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_procs p0). rewrite (encode_decide_procs p1). reflexivity.
+* intros. simpl. rewrite (encode_decide_gprocs g0). reflexivity.
+* intros. simpl. reflexivity. 
+* intros. simpl. reflexivity. 
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_gprocs g0). rewrite (encode_decide_gprocs g1). reflexivity.
+Qed.
+
+#[global] Instance proc_count : Countable proc.
+refine (inj_countable' encode_proc decode_proc _).
+  apply encode_decide_procs.
+Qed.
+
+Fixpoint moutputs_of_g (gp : gproc) : gmultiset (TypeOfActions) :=
+  match gp with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c ? x • p => ∅
+  | c ! (cst v) • p => {[+ (c ⋉ v) +]}
+  | c ! (bvar i) • p => ∅
+  | t • p => ∅
+  | g1 + g2 => moutputs_of_g g1 ⊎ moutputs_of_g g2
+  end.
+
+
+Fixpoint moutputs_of p : gmultiset TypeOfActions := 
+match p with
+  | P ‖ Q => (moutputs_of P) ⊎ (moutputs_of Q)
+  | pr_var _ => ∅
+  | rec _ • _ => ∅
+  | If C Then P Else Q => ∅
+  | g p => moutputs_of_g p
+end.
+
+
+
+Definition outputs_of p := dom (moutputs_of p).
+
+Lemma mo_equiv_spec_step : forall {p q}, p ≡ q -> moutputs_of p = moutputs_of q.
+Proof. intros. dependent induction H; multiset_solver. Qed.
+
+Lemma mo_equiv_spec : forall {p q}, p ≡* q -> moutputs_of p = moutputs_of q.
+Proof.
+  intros p q hcgr.
+  induction hcgr. now eapply mo_equiv_spec_step.
+  etrans; eauto.
+Qed.
+
+
+Lemma mo_spec_l e a :
+  a ∈ moutputs_of e -> {e' | lts e (ActExt $ ActOut a) e'}.
+Proof.
+  intros mem.
+  dependent induction e.
+  + cbn in mem.
+    destruct (decide (a ∈ moutputs_of e1)) as [mem_left | not_mem_left].
+    ++ destruct (IHe1 a) as (e1' & lts__e1); eauto.
+       exists (e1' ‖ e2). repeat split; eauto with ccs.
+    ++ destruct (decide (a ∈ moutputs_of e2)) as [mem_right | not_mem_right].
+       +++ destruct (IHe2 a) as (e2' & lts__e2); eauto.
+           exists (e1 ‖ e2'). repeat split; eauto with ccs.
+       +++ exfalso. multiset_solver.
+    + exfalso. multiset_solver.
+    + exfalso. multiset_solver.
+    + exfalso. multiset_solver.
+    + unfold moutputs_of in mem.
+      remember g0.
+      dependent induction g0; rewrite Heqg1 in mem; simpl in *.
+      ++ exfalso;inversion mem.
+      ++ exfalso;inversion mem.
+      ++ exfalso;inversion mem.
+      ++ remember d. destruct d; subst.
+         +++ exists p. assert (a = c ⋉ v). multiset_solver. subst.
+            eapply lts_output.
+         +++ exfalso. inversion mem.
+      ++ exfalso;inversion mem.
+      ++ destruct (decide (a ∈ moutputs_of g0_2)) as [mem_right | not_mem_right].
+         +++ destruct (IHg0_2 a g0_2) as (e2' & lts__e2); eauto.
+             exists e2'. rewrite Heqg1. repeat split; eauto with ccs.
+         +++ destruct (decide (a ∈ moutputs_of g0_1)) as [mem_left | not_mem_left].
+             ++++ destruct (IHg0_1 a g0_1) as (e1' & lts__e1); eauto.
+                  exists e1'. rewrite Heqg1. repeat split; eauto with ccs.
+             ++++ exfalso. multiset_solver.
+Qed.
+
+Lemma mo_spec_r p a :
+  {p' | lts p (ActExt $ ActOut a) p'} -> a ∈ moutputs_of p.
+Proof.
+    induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  intros (e' & l).
+  inversion l; subst.
+  + simpl. multiset_solver.
+  + simpl. eapply gmultiset_elem_of_disj_union. left.
+    eapply (Hp p1). simpl. lia. exists p2. eauto.
+  + simpl. eapply gmultiset_elem_of_disj_union. right.
+    eapply (Hp q1). simpl. lia. exists q2. eauto.
+  + simpl. eapply gmultiset_elem_of_disj_union. left.
+    eapply (Hp p1). simpl. lia. exists e'. eauto.
+  + simpl. eapply gmultiset_elem_of_disj_union. right.
+    eapply (Hp p2). simpl. lia. exists e'. eauto.
+Qed.
+
+
+Lemma outputs_of_spec2 p a : a ∈ outputs_of p -> {q | lts p (ActExt (ActOut a)) q}.
+Proof.
+  intros mem.
+  eapply gmultiset_elem_of_dom in mem.
+  eapply mo_spec_l in mem.
+  firstorder.
+Qed.
+
+(* Lemma outputs_of_spec1_zero (p : proc) (a : TypeOfActions) : {q | lts p (ActExt (ActOut a)) q} 
+      -> a ∈ outputs_of p.
+Proof.    
+  intros (p' & lts__p).
+  dependent induction p.
+  + eapply gmultiset_elem_of_dom.
+    cbn. inversion lts__p; subst. apply IHp1 in H3. eapply gmultiset_elem_of_dom in H3. multiset_solver.
+     apply IHp2 in H3. eapply gmultiset_elem_of_dom in H3. multiset_solver.
+  + inversion lts__p; subst.
+  + inversion lts__p; subst.
+  + inversion lts__p; subst.
+  + inversion lts__p; subst. unfold outputs_of. multiset_solver.
+  + assert (lts g0 (ActOut a) p'). assumption. apply OutputWithValue in H.
+    decompose record H. subst. rename x into c. rename x0 into v.
+    now eapply guarded_does_no_output in lts__p.
+Qed. *)
+
+Lemma outputs_of_spec1 (p : proc) (a : TypeOfActions) (q : proc) : lts p (ActExt (ActOut a)) q
+      -> a ∈ outputs_of p.
+Proof.
+intros. eapply gmultiset_elem_of_dom. eapply mo_spec_r. eauto.
+Qed.
+
+
+Fixpoint lts_set_output_g (g : gproc) (a : TypeOfActions) : gset proc :=
+  match g with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c ? x • p => ∅
+  | c ! (cst v) • p => if decide(a = (c ⋉ (cst v))) then {[ p ]} else ∅
+  | c ! (bvar i) • p => ∅
+  | t • p => ∅
+  | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
+  end.
+
+Fixpoint lts_set_output (p : proc) (a : TypeOfActions) : gset proc:=
+match p with
+  | p1 ‖ p2 => 
+      let ps1 := lts_set_output p1 a in
+      let ps2 := lts_set_output p2 a in
+      (* fixme: find a way to map over sets. *)
+      list_to_set (map (fun p => p ‖ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ‖ p) (elements ps2))
+  | pr_var _ => ∅
+  | rec _ • _ => ∅
+  | If _ Then _ Else _ => ∅
+  | g gp  => lts_set_output_g gp a
+end.
+
+Fixpoint lts_set_input_g (g : gproc) (a : TypeOfActions) : gset proc :=
+  match a with
+  | act c (bvar i) => ∅
+  | act c (cst v) => 
+  match g with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c' ? x • p => if decide(Channel_of a = c') then {[ p^(Data_of a) ]} else ∅
+  | c' ! v • p => ∅
+  | t • p => ∅
+  | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
+  end
+  end.
+
+
+Fixpoint lts_set_input (p : proc) (a : TypeOfActions) : gset proc :=
+match p with
+  | p1 ‖ p2 =>
+      let ps1 := lts_set_input p1 a in
+      let ps2 := lts_set_input p2 a in
+      list_to_set (map (fun p => p ‖ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ‖ p) (elements ps2))
+  | pr_var _ => ∅
+  | rec _ • _ => ∅ 
+  | If _ Then _ Else _ => ∅
+  | g gp => lts_set_input_g gp a  
+  end.
+
+
+Fixpoint lts_set_tau_g (gp : gproc) : gset proc :=
+match gp with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c ? x • p => ∅
+  | c ! v • p => ∅
+  | t • p => {[ p ]}
+  | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
+end.
+
+(* Context (Eval_Eq : Equation Data -> (option bool)). 
+à implémenter si du temps *)
+
+Fixpoint lts_set_tau (p : proc) : gset proc :=
+match p with
+  | p1 ‖ p2 =>
+      let ps1_tau : gset proc := list_to_set (map (fun p => p ‖ p2) (elements $ lts_set_tau p1)) in
+      let ps2_tau : gset proc := list_to_set (map (fun p => p1 ‖ p) (elements $ lts_set_tau p2)) in
+      let ps_tau := ps1_tau ∪ ps2_tau in
+      let acts1 := outputs_of p1 in
+      let acts2 := outputs_of p2 in
+      let ps1 :=
+        flat_map (fun a =>
+                    map
+                      (fun '(p1 , p2) => p1 ‖ p2)
+                      (list_prod (elements $ lts_set_output p1 a) (elements $ lts_set_input p2 a)))
+        (elements $ outputs_of p1) in
+      let ps2 :=
+        flat_map
+          (fun a =>
+             map
+               (fun '(p1 , p2) => p1 ‖ p2)
+               (list_prod (elements $ lts_set_input p1 a) (elements $ lts_set_output p2 a)))
+          (elements $ outputs_of p2)
+      in
+      ps_tau ∪ list_to_set ps1 ∪ list_to_set ps2
+  | pr_var _ => ∅
+  | rec x • p => {[ pr_subst x p (rec x • p) ]}
+  | If (x == y) Then A Else B => if decide ( x = y ) then {[ A ]}
+                                                     else {[ B ]}
+                        (* match (Eval_Eq C) with 
+                          | Some true => {[ A ]}
+                          | Some false => {[ B ]}
+                          | None => ∅
+                          end *)
+  | g gp => lts_set_tau_g gp
+end.
+
+Lemma lts_set_output_spec0 p a q : q ∈ lts_set_output p a -> lts p (ActExt (ActOut a)) q.
+Proof.
+  revert q.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0));
+  destruct p; intros q mem; simpl in mem;  try now inversion mem.
+  - eapply elem_of_union in mem as [mem | mem]. 
+    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+      apply lts_parL. rewrite elem_of_elements in mem. eapply Hp. simpl ; lia. eauto. 
+    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+      apply lts_parR. eapply Hp. simpl; lia. rewrite elem_of_elements in mem.  exact mem.
+  - destruct g0; simpl in mem;  try now inversion mem.
+    + destruct d.
+       ++ case (TypeOfActions_dec a (c ⋉ v)) in mem.
+          +++ subst. rewrite decide_True in mem; eauto.
+              assert (q = p). set_solver. subst. eauto with ccs.
+          +++ rewrite decide_False in mem; eauto. inversion mem.
+       ++ inversion mem.
+    + eapply elem_of_union in mem as [mem | mem].
+      ++ eapply lts_choiceL.
+         eapply Hp. simpl; lia. eauto.
+      ++ eapply lts_choiceR.
+         eapply Hp. simpl; lia. eauto.
+Qed.
+
+Lemma lts_set_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_set_output p a.
+Proof.
+  intro l. dependent induction l; try set_solver.
+  simpl. destruct (decide (c ⋉ v = c ⋉ v)) as [eq | not_eq]. 
+  + set_solver.
+  + exfalso. apply not_eq. reflexivity.
+Qed.
+
+Lemma lts_set_input_spec0 p a q : q ∈ lts_set_input p a -> lts p (ActExt $ ActIn a) q.
+Proof.
+  intro mem.
+  dependent induction p; simpl in mem; try set_solver.
+  + eapply elem_of_union in mem. destruct mem.
+    ++ eapply elem_of_list_to_set in H.
+       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       rewrite elem_of_elements in mem. eauto with ccs.
+    ++ eapply elem_of_list_to_set in H.
+       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       rewrite elem_of_elements in mem. eauto with ccs.
+  + destruct a. destruct d.
+    ++ dependent induction g0; simpl in mem; try set_solver.
+       +++ destruct (decide (c0 = c)).
+           ++++ subst. eapply elem_of_singleton_1 in mem. subst. apply lts_input.
+           ++++ inversion mem.
+       +++ eapply elem_of_union in mem. destruct mem; eauto with ccs.
+    ++ destruct g0; simpl in *; try inversion mem.  
+Qed.
+
+Lemma simplify_input_cst p a q : lts p (ActExt $ ActIn a) q -> exists c v, a = act c (cst v).
+Proof.
+  revert q.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0));
+  destruct p; intros q l; try now inversion l.
+  + inversion l ; subst.
+    ++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+    ++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+  + destruct g0; try now inversion l.
+    ++ inversion l; subst. eexists ;eauto.
+    ++ inversion l; subst.
+       +++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+       +++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+Qed.
+
+Lemma simplify_output_cst p a q : lts p (ActExt $ ActOut a) q -> exists c v, a = act c (cst v).
+Proof.
+  revert q.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0));
+  destruct p; intros q l; try now inversion l.
+  + inversion l ; subst.
+    ++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+    ++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+  + destruct g0; try now inversion l.
+    ++ inversion l; subst. eexists ;eauto.
+    ++ inversion l; subst.
+       +++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+       +++ eapply Hp in H3 as (c & v & eq); subst; simpl; try now lia. eexists;eauto.
+Qed.
+
+Lemma lts_set_input_spec1 p a q : lts p (ActExt $ ActIn a) q -> q ∈ lts_set_input p a.
+Proof.
+  intro l. destruct a. destruct d.
+  + dependent induction l; try set_solver.
+    simpl. rewrite decide_True; eauto. set_solver.
+  + exfalso. eapply simplify_input_cst in l as (c' & v' & eq).
+    inversion eq.
+Qed.
+
+Lemma simplify_output_data p a : a ∈ (moutputs_of p) -> exists c v, a = act c (cst v).
+Proof.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0));
+  destruct p; intro mem; try now inversion mem.
+  + simpl. eapply gmultiset_elem_of_disj_union in mem.
+    destruct mem as [in_left | in_right].
+    ++ eapply Hp in in_left as (c & v & eq); subst;  try now simpl; lia.
+       eauto.
+    ++ eapply Hp in in_right as (c & v & eq); subst;  try now simpl; lia.
+       eauto.
+  + destruct a. 
+    destruct g0; simpl in * ; try now inversion mem.
+    ++ destruct d0.
+       +++ assert (act c d = act c0 (cst v)). multiset_solver.
+           subst. eexists; eauto.
+       +++ inversion mem.
+    ++ eapply gmultiset_elem_of_disj_union in mem.
+       destruct mem as [in_left | in_right].
+       +++ assert (c ⋉ d ∈ moutputs_of  (g g0_1)) as Hyp_Left.
+           simpl; eauto.
+           eapply Hp in Hyp_Left as (c' & v' & eq); subst;  try now simpl; lia.
+           inversion eq; subst.
+           eexists; eauto.
+       +++ assert (c ⋉ d ∈ moutputs_of  (g g0_2)) as Hyp_Right.
+           simpl; eauto.
+           eapply Hp in Hyp_Right as (c' & v' & eq); subst;  try now simpl; lia.
+           inversion eq; subst.
+           eexists; eauto.
+Qed.
+
+Lemma lts_set_tau_spec0 p q : q ∈ lts_set_tau p -> lts p τ q.
+Proof.
+  - intro mem.
+    dependent induction p; simpl in mem.
+    + eapply elem_of_union in mem. destruct mem as [mem1 | mem2].
+      ++ eapply elem_of_union in mem1.
+         destruct mem1.
+         eapply elem_of_union in H as [mem1 | mem2]. 
+         eapply elem_of_list_to_set, elem_of_list_fmap in mem1 as (t' & eq & h); subst.
+         rewrite elem_of_elements in h. eauto with ccs.
+         eapply elem_of_list_to_set, elem_of_list_fmap in mem2 as (t' & eq & h); subst.
+         rewrite elem_of_elements in h. eauto with ccs.
+         eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in H as (t' & eq & h); subst.
+         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
+         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+         eapply lts_set_output_spec0 in mem1.
+         eapply lts_set_input_spec0 in mem2.
+         assert (lts p1 (ActExt (ActOut t')) t1) as Hyp. eauto.
+         eapply simplify_output_cst in Hyp as (c & v & eq'); eauto; subst.
+         eapply lts_comL. exact mem1. exact mem2.
+      ++ eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem2 as (t' & eq & h); subst.
+         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
+         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+         eapply lts_set_input_spec0 in mem1.
+         eapply lts_set_output_spec0 in mem2. 
+         assert (lts p2 (ActExt (ActOut t')) t2) as Hyp. eauto.
+         eapply simplify_output_cst in Hyp as (c & v & eq'); eauto; subst.
+         eapply lts_comR. exact mem2. exact mem1.
+    + inversion mem.
+    + eapply elem_of_singleton_1 in mem. subst; eauto with ccs.
+    + destruct e. destruct (decide (d = d0)); subst.
+      * assert (q = p1). set_solver. rewrite H. 
+        subst. eapply lts_ifOne. eauto.
+      * assert (q = p2). set_solver. rewrite H. subst. constructor. eauto.
+    + dependent induction g0; simpl in mem; try set_solver;
+        try eapply elem_of_singleton_1 in mem; subst; eauto with ccs.
+      eapply elem_of_union in mem as [mem1 | mem2]; eauto with ccs.
+Qed.
+
+Lemma lts_set_tau_spec1 p q : lts p τ q -> q ∈ lts_set_tau p.
+Proof. 
+  intro l. dependent induction l; simpl; try set_solver.
+  - rewrite H. rewrite decide_True. set_solver. eauto. 
+  - rewrite decide_False. set_solver. eauto. 
+  - eapply elem_of_union. left.
+    eapply elem_of_union. right.
+    eapply elem_of_list_to_set.
+    rewrite elem_of_list_In. rewrite in_flat_map.
+    exists (c ⋉ v). split.
+    + eapply elem_of_list_In, elem_of_elements.
+      eapply outputs_of_spec1. eauto.
+    + eapply elem_of_list_In, elem_of_list_fmap.
+      exists (p2 , q2). split.
+      ++ reflexivity.
+      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+         eapply lts_set_output_spec1; eauto with ccs.
+         eapply lts_set_input_spec1; eauto with ccs.
+  - eapply elem_of_union. right.
+    eapply elem_of_list_to_set.
+    rewrite elem_of_list_In. rewrite in_flat_map.
+    exists (c ⋉ v). split.
+    + eapply elem_of_list_In, elem_of_elements.
+      eapply outputs_of_spec1. exact l1.
+    + eapply elem_of_list_In, elem_of_list_fmap.
+      exists (q2 , p2). split.
+      ++ reflexivity.
+      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+         eapply lts_set_input_spec1; eauto with ccs.
+         eapply lts_set_output_spec1; eauto with ccs.
+Qed.
+
+
+Definition lts_set (p : proc) (α : Act TypeOfActions): gset proc :=
+  match α with
+  | τ => lts_set_tau p
+  | ActExt (ActIn a) => lts_set_input p a
+  | ActExt (ActOut a) => lts_set_output p a
+  end.
+
+Lemma lts_set_spec0 p α q : q ∈ lts_set p α -> lts p α q.
+Proof.
+  destruct α as [[a|a]|].
+  - now eapply lts_set_input_spec0.
+  - now eapply lts_set_output_spec0.
+  - now eapply lts_set_tau_spec0.
+Qed.
+
+Lemma lts_set_spec1 p α q : lts p α q -> q ∈ lts_set p α.
+Proof.
+  destruct α as [[a|a]|].
+  - now eapply lts_set_input_spec1.
+  - now eapply lts_set_output_spec1.
+  - now eapply lts_set_tau_spec1.
+Qed.
+
+Definition proc_stable p α := lts_set p α = ∅.
+
+Lemma lts_dec p α q : { lts p α q } + { ~ lts p α q }.
+Proof.
+  destruct (decide (q ∈ lts_set p α)).
+  - eapply lts_set_spec0 in e. eauto.
+  - right. intro l. now eapply lts_set_spec1 in l.
+Qed.
+
+Lemma proc_stable_dec p α : Decision (proc_stable p α).
+Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Qed.
+
+Lemma gset_nempty_ex (g : gset proc) : g ≠ ∅ -> {p | p ∈ g}.
+Proof.
+  intro n. destruct (elements g) eqn:eq.
+  + destruct n. eapply elements_empty_iff in eq. set_solver.
+  + exists p. eapply elem_of_elements. rewrite eq. set_solver.
+Qed.
+
+#[global] Program Instance VCCS_Label : Label TypeOfActions := 
+  {| label_eqdec := TypeOfActions_dec ;
+  label_countable := TypeOfActions_countable |}. (* useless, already said it, it is just a reminder *)
+
+#[global] Program Instance VCCS_Lts : Lts proc TypeOfActions := 
+  {| lts_step x ℓ y  := lts x ℓ y ;
+     lts_state_eqdec := proc_dec ;
+     lts_step_decidable p α q := lts_dec p α q ;
+     lts_outputs := outputs_of ;
+     lts_outputs_spec1 p1 x p2 := outputs_of_spec1 p1 x p2;
+     lts_outputs_spec2 p1 x := outputs_of_spec2 p1 x;
+     lts_stable p := proc_stable p;
+     lts_stable_decidable p α := proc_stable_dec p α 
+    |}.
+    Next Obligation.
+        intros p [[a|a]|]; intro hs;eapply gset_nempty_ex in hs as (r & l); eapply lts_set_spec0 in l; 
+        exists r; assumption.
+    Qed.
+    Next Obligation.  
+        intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
+    Qed.
+
+#[global] Program Instance VCCS_LtsEq : LtsEq proc TypeOfActions := 
+  {| eq_rel x y  := cgr x y;
+     eq_rel_refl p := cgr_refl p;
+     eq_symm p q := cgr_symm p q;
+     eq_trans x y z:= cgr_trans x y z;
+     eq_spec p q α := Congruence_Respects_Transition p q α |}.

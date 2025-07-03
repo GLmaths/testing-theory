@@ -39,8 +39,8 @@ Section convergence.
   Context `{A : Type}.
   
   Context `{H : !ExtAction A}.
-  Context `{!Lts P A}.
-  Context `{!FiniteImageLts P A}.
+  Context `{!gLts P A}.
+  Context `{!FiniteImagegLts P A}.
  
   Definition terminate_extensional (p : P) : Prop :=
     forall η : max_exec_from p, exists n fex,
@@ -101,14 +101,14 @@ Section must_set_acc_set.
   Context `{Q : Type}.
   Context `{A : Type}.
   Context `{H : !ExtAction A}.
-  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
-  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
+  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
 
-  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
-  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
+  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
+  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
 
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
 
 
   Definition actions_acc 
@@ -134,13 +134,39 @@ Section must_set_acc_set.
         ++ eapply (@lts_refuses_spec2 (P * mb A)); eauto.
     - left. eapply lts_refuses_spec1 in n as (q & l). eauto with mdb.
   Qed.
+(*   Lemma empty_OR_not_empty `{gLts P A} `{gLts Q A} (p : P) (q : Q): 
+  lts_acc_set_of p ∖ lts_acc_set_of q ≡ ∅ 
+  \/ ∃ x, x ∈ lts_acc_set_of p ∖ lts_acc_set_of q.
+  Proof.
+  Admitted. *)
+  
+(*   Lemma empty_OR_not_empty (p : P * mb A) (q : Q * mb A) s (hcnv : p ⇓ s) : 
+  (actions_acc p s hcnv ∖ lts_acc_set_of q) ≡ ∅ 
+  \/ ∃ x, x ∈ (actions_acc p s hcnv ∖ lts_acc_set_of q).
+  Proof.
+    unfold actions_acc.
+    unfold oas. 
+  Admitted.
 
-  Lemma either_wperform_mem 
-    (p : P * mb A) (G : subset_of A) (ht : p ⤓) :
+  (* can be proved with empty_OR_not_empty => induction on the length of ps*)
+  Lemma either_wperform_mem
+    (p : P * mb A) (q : Q * mb A) (ht : p ⤓) s hcnv:
+    (exists μ p', μ ∈ (actions_acc p s hcnv ∖ lts_acc_set_of q) /\ p ⟹{μ} p') 
+    \/ (forall μ p', μ ∈ (actions_acc p s hcnv ∖ lts_acc_set_of q) -> ~ p ⟹{μ} p').
+  Proof.
+    destruct (empty_OR_not_empty p q s hcnv) as [case_1 | case_2].
+    + set_solver.
+    + destruct case_2, (either_wperform_mu p x). ; set_solver.
+    induction G using set_ind_L; [|destruct IHG, (either_wperform_mu p x)]; set_solver.
+  Admitted. *)
+  Lemma either_wperform_mem (p : P * mb A) (G : subset_of A) (ht : p ⤓) :
     (exists μ p', μ ∈ G /\ p ⟹{μ} p') \/ (forall μ p', μ ∈ G -> ~ p ⟹{μ} p').
   Proof.
-    (* induction G using set_ind_L; [|destruct IHG, (either_wperform_mu p x)]; set_solver. *)
+    (* induction G using set_ind_L.
+    + set_solver. 
+    + destruct IHG, (either_wperform_mu p x); set_solver. *)
   Admitted.
+
 
   Lemma either_wperform_mem_set
     (ps : gset (P * mb A)) (G : subset_of A) (ht : forall p, p ∈ ps -> p ⤓) :
@@ -367,14 +393,14 @@ Section failure_must_set.
   Context `{Q : Type}.
   Context `{A : Type}.
   Context `{H : !ExtAction A}.
-  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
-  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
+  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
 
-  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
-  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
+  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
+  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
 
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
 
   Lemma equivalence_must_set_nfailure
     (p : P) (s : trace A) h1 (G : subset_of A) :
@@ -433,14 +459,14 @@ Section failure_must_set_pre.
   Context `{Q : Type}.
   Context `{A : Type}.
   Context `{H : !ExtAction A}.
-  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
-  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
+  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
 
-  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
-  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
+  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
+  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
 
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
 
   Theorem equivalence_pre_failure_must_set
   
@@ -467,13 +493,13 @@ Section preorder.
 (*   Context `{P : Type}.
   Context `{E : Type}. *)
  (*  Context `{H : !ExtAction A}. *)
-(*   Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
-  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
+(*   Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
 
-  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
-  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}. 
+  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
+  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}. 
   
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   *)
   Definition must_extensional
     {P : Type}
@@ -531,9 +557,9 @@ Section preorder.
   Lemma must_extensional_iff_must_sts
     {P : Type}
     `{good : E -> Prop, good_decidable : forall (e : E), Decision (good e)}
-    `{LtsP : @Lts P A H, !FiniteImageLts P A,
-    LtsE : !Lts E A, !LtsEq E A, !Good E A good,  !FiniteImageLts E A}
-    `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE} (* à rajouter en context ? *)
+    `{gLtsP : @gLts P A H, !FiniteImagegLts P A,
+    gLtsE : !gLts E A, !gLtsEq E A, !Good E A good,  !FiniteImagegLts E A}
+    `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} (* à rajouter en context ? *)
     (p : P) (e : E) : @must_extensional P E _ good p e <-> @must_sts P E _ good p e.
   Proof.
     split.
@@ -553,11 +579,11 @@ Section preorder.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
-  Context `{LtsP : !Lts P A, !FiniteImageLts P A}.
-  Context `{LtsQ : !Lts Q A, !FiniteImageLts Q A}.
-  Context `{LtsE : !Lts E A, !FiniteImageLts E A, LtsEqE: !LtsEq E A, !Good E A good}.
-  Context `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}.
-  Context `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}.
+  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
+  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Good E A good}.
+  Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
+  Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
 
   (* ************************************************** *)
 
@@ -570,17 +596,17 @@ Section preorder.
     - rewrite -> 2 must_extensional_iff_must_sts, -> 2 must_sts_iff_must; eauto.
   Qed.
 
-  Context `{@LtsObaFB P A H LtsP LtsEqP LtsObaP}.
-  Context `{@LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}.
-  Context `{@LtsObaFB E A H LtsE LtsEqE LtsObaE}.
+  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
+  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
+  Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
 
   Context `{igen_conv : @gen_spec_conv _ _ _ _ _ good Good0 co_of gen_conv}.
   Context `{igen_acc : @gen_spec_acc _ _ _ _ _ good Good0 co_of gen_acc}.
 
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}.
-  Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}.
-  Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}.
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
+  Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
+  Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
 
   (* ************************************************** *)
 
@@ -614,11 +640,11 @@ From stdpp Require Import gmultiset.
 
 Section application.
 
-  Lemma nil_refuses (* `{@LtsOba Q A H LtsQ LtsEqQ} *)
-  (* `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts} *)
+  Lemma nil_refuses (* `{@gLtsOba Q A H gLtsQ gLtsEqQ} *)
+  (* `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts} *)
   {Q A : Type} {H : ExtAction A}
-  `{@LtsOba Q A H LtsQ LtsEqQ}
-  `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+  `{@gLtsOba Q A H gLtsQ gLtsEqQ}
+  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
   
   (q : Q) (h : forall α, q ↛{α}) (m : mb A) : 
   lts_refuses (q, m) τ.
@@ -633,8 +659,8 @@ Section application.
 
   Lemma nil_cnv
   {Q A : Type} {H : ExtAction A}
-  `{@LtsOba Q A H LtsQ LtsEqQ}
-  `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+  `{@gLtsOba Q A H gLtsQ gLtsEqQ}
+  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
   (q : Q) (h : forall α, q ↛{α}) s m : 
   (q, m) ⇓ s.
   Proof.
@@ -651,12 +677,12 @@ Section application.
   Qed.
 
   CoInductive ionly_spec {P A : Type} {H : ExtAction A} 
-    `{@LtsOba P A H LtsQ LtsEqQ} (p : P) : Prop :=
+    `{@gLtsOba P A H gLtsQ gLtsEqQ} (p : P) : Prop :=
   | mstep : (forall μ p', p ⟶[μ] p' -> ¬ non_blocking μ) 
         -> (forall α p', p ⟶{α} p' -> ionly_spec p') -> ionly_spec p.
 
   Lemma lts_non_blocking_ionly_spec {P A : Type}
-        `{LtsOba P A} (p : P) (pr : ionly_spec p) : dom (lts_oba_mo p) = ∅.
+        `{gLtsOba P A} (p : P) (pr : ionly_spec p) : dom (lts_oba_mo p) = ∅.
   Proof.
     eapply leibniz_equiv. intro a. split.
     + intros mem.
@@ -669,8 +695,8 @@ Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil_empty_mb 
         {Q A : Type} {H : ExtAction A}
-        `{LL : @LtsObaFB Q A H LtsQ LtsEqQ LLOBA}
-        `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+        `{LL : @gLtsObaFB Q A H gLtsQ gLtsEqQ LLOBA}
+        `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
         p (pr : ionly_spec p) :
     (p, ∅) ⤓ -> forall t, (p, ∅) ⟹ t -> dom (lts_oba_mo t) = ∅.
   Proof.
@@ -692,8 +718,8 @@ Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil 
     {Q A : Type} {H : ExtAction A}
-        `{LL : @LtsObaFB Q A H LtsQ LtsEqQ LLOBA}
-        `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+        `{LL : @gLtsObaFB Q A H gLtsQ gLtsEqQ LLOBA}
+        `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> forall t, (p, m) ⟹ t
       -> dom (lts_oba_mo t) ⊆ dom m.
@@ -728,8 +754,8 @@ Qed.
   Qed.
 
   Lemma ionly_nil_leq2_wt_nil {Q A : Type} {H : ExtAction A}
-        `{LL : @LtsObaFB Q A H LtsQ LtsEqQ LLOBA}
-        `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+        `{LL : @gLtsObaFB Q A H gLtsQ gLtsEqQ LLOBA}
+        `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> exists t, (p, m) ⟹ t /\ t ↛ /\ dom (lts_oba_mo t) ⊆ dom m.
   Proof.
@@ -738,11 +764,11 @@ Qed.
   Qed.
 
   Lemma ionly_nil_leq2 {P Q A : Type} `{
-    @LtsObaFB P A H LtsP LtsEqP LtsObaP,
-    @LtsObaFB Q A H LtsQ LtsEqQ LtsObaQ}
+    @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP,
+    @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
 
-    `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-    `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
+    `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
 
     (p : P) (pr : ionly_spec p) (q : Q) m (h : forall α, q ↛{α}) : 
     (p, m) ≼₂ (q, m).
@@ -771,18 +797,18 @@ Qed.
   Admitted.
 
   Lemma input_only_leq_nil {P Q A : Type} `{
-    @LtsObaFB P A H LtsP LtsEqP V, !FiniteImageLts P A,
-    @LtsObaFB Q A H LtsQ LtsEqQ W, !FiniteImageLts Q A,
-    @LtsObaFB E A H LtsE LtsEqE X, !FiniteImageLts E A, !Good E A good, (∀ e : E, Decision (good e)),
+    @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsQ gLtsEqQ W, !FiniteImagegLts Q A,
+    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Good E A good, (∀ e : E, Decision (good e)),
     @gen_spec_conv  _ _ _ _ _ good _ co_of gen_conv, @gen_spec_acc _ _ _ _ _ good _ co_of gen_acc}
-    `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-    `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+    `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+    `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
     
-    `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-    `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+    `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+    `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-    `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
-    `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
     (p : P) (pr : ionly_spec p) (q : Q) (h : forall α, q ↛{α}) : 
     @pre_extensional _ _ _ _ _ good _ p q.
   Proof.

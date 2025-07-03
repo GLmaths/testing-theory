@@ -40,10 +40,10 @@ From Must Require Import TransitionSystems Must Subset_Act.
 (* ************************************************************ *)
 
 Inductive mustx `{
-  LtsP : @Lts P A H, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (ps : gset P) (e : E) : Prop :=
 | mx_now (hh : good e) : mustx ps e
@@ -65,10 +65,10 @@ Inductive mustx `{
 #[global] Hint Constructors mustx:mdb.
 
 Lemma mx_sub `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e : 
   mustx ps e 
@@ -92,10 +92,10 @@ Proof.
 Qed.
 
 Lemma mx_mem `{
-  LtsP : Lts (* Oba *) P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good} 
+  gLtsP : gLts (* Oba *) P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good} 
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e : 
   mustx ps e 
@@ -118,10 +118,10 @@ Proof.
 Qed.
 
 Lemma mustx_terminate_ungood `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
   
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   
   ps e : 
   mustx ps e 
@@ -137,10 +137,10 @@ Proof.
 Qed.
 
 (* Lemma must_terminates_ungood `{
-  LtsP : Lts P A, 
-  LtsE : ! Lts E A, ! LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
   
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   
   (p : P) (e : E) : must p e -> ¬ good e -> (p , e) ⤓.
 Proof. intros hm. dependent induction hm.
@@ -152,10 +152,10 @@ Proof. intros hm. dependent induction hm.
     ++ eapply H2; eauto. Search (good _). *)
 
 Lemma mustx_terminate_ungood' `{
-  @LtsOba P A H LtsP EP, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e :
   mustx ps e
@@ -173,10 +173,10 @@ Qed.
 
 
 Lemma ungood_acnv_mu `{
-  @LtsOba P A H LtsP EP, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e e' :
   mustx ps e 
@@ -223,10 +223,10 @@ Proof.
 Qed.
 
 Lemma must_mu_either_good_cnv `{
-  @LtsOba P A H LtsP EP, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e e' :
   mustx ps e 
@@ -245,10 +245,10 @@ Qed.
 
 (* to rework , why ?*)
 Lemma mx_sum `{
-  LtsP : Lts P A, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps1 ps2 e : mustx ps1 e 
     -> mustx ps2 e 
@@ -363,10 +363,10 @@ Proof.
 Qed.
 
 Lemma mx_forall `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good} 
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good} 
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e :
   ps ≠ ∅ 
@@ -383,10 +383,10 @@ Proof.
 Qed.
 
 Lemma wt_nil_mx `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE} :
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} :
 
   forall p1 p2 e, mustx {[ p1 ]} e 
     -> p1 ⟹ p2 -> mustx {[ p2 ]} e.
@@ -401,10 +401,10 @@ Proof.
 Qed.
 
 Lemma wt_mu_mx `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   p1 p2 e e' μ μ':
   parallel_inter μ μ' -> ¬ good e -> mustx {[ p1 ]} e 
@@ -417,10 +417,10 @@ Proof.
 Qed.
 
 Lemma must_set_if_must `{
-  LtsP : Lts P A, !FiniteImageLts P A, 
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A, 
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) : must p e -> mustx {[ p ]} e.
 Proof.
@@ -444,10 +444,10 @@ Proof.
 Qed.
 
 Lemma must_if_must_set_helper `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (ps : gset P) (e : E) : 
   mustx ps e 
@@ -482,10 +482,10 @@ Proof.
 Qed.
 
 Lemma must_if_must_set `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) : 
   mustx {[ p ]} e 
@@ -493,10 +493,10 @@ Lemma must_if_must_set `{
 Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
 
 Lemma must_set_iff_must `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) : 
   must p e <-> mustx {[ p ]} e.
@@ -504,10 +504,10 @@ Proof. split; [eapply must_set_if_must | eapply must_if_must_set]. Qed.
 
 (* To move, also present in Completeness. *)
 Lemma must_preserved_by_weak_nil_srv `{
-  LtsP : Lts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p q : P) (e : E) : 
   must p e -> p ⟹ q -> must q e.
@@ -519,10 +519,10 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_wt_synch_if_notgood `{
-  LtsP : Lts P A, 
-  LtsE : !Lts E A, ! LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, 
+  gLtsE : !gLts E A, ! gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p p' : P) (r r' : E) (μ : A) (μ' : A):
   must p r 
@@ -541,10 +541,10 @@ Proof.
 Qed.
 
 Lemma must_set_for_all `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (X : gset P) (e : E) : 
   X ≠ ∅ 
@@ -572,10 +572,10 @@ Proof.
 Qed.
 
 Lemma must_set_iff_must_for_all `{
-  LtsP : Lts P A, !FiniteImageLts P A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  gLtsP : gLts P A, !FiniteImagegLts P A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (X : gset P) (e : E) : 
   X ≠ ∅ -> (forall p, p ∈ X -> must p e) <-> mustx X e.
@@ -588,13 +588,13 @@ Qed.
 
 (* ************************************************************ *)
 
-Definition bhv_pre_cond1__x `{FiniteImageLts P A, FiniteImageLts Q A} (ps : gset P) (q : Q) :=
+Definition bhv_pre_cond1__x `{FiniteImagegLts P A, FiniteImagegLts Q A} (ps : gset P) (q : Q) :=
   forall s, (forall p, p ∈ ps -> p ⇓ s) -> q ⇓ s.
 
 Notation "ps ≼ₓ1 q" := (bhv_pre_cond1__x ps q) (at level 70).
 
 Definition bhv_pre_cond2__x
-  `{@FiniteImageLts P A HA LtsP, @FiniteImageLts Q A HA LtsQ} (ps : gset P) (q : Q) :=
+  `{@FiniteImagegLts P A HA gLtsP, @FiniteImagegLts Q A HA gLtsQ} (ps : gset P) (q : Q) :=
   forall s q',
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ ps -> p ⇓ s) ->
@@ -606,7 +606,7 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 
 Notation "ps ≼ₓ q" := (bhv_pre_cond1__x ps q /\ bhv_pre_cond2__x ps q) (at level 70).
 
-Lemma alt_set_singleton_iff `{@FiniteImageLts P A HA LtsP, @FiniteImageLts Q A HA LtsQ}
+Lemma alt_set_singleton_iff `{@FiniteImagegLts P A HA gLtsP, @FiniteImagegLts Q A HA gLtsQ}
   (p : P) (q : Q) : p ≼ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
@@ -619,15 +619,15 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_tau `{
-  FiniteImageLts P A, 
-  FiniteImageLts Q A} 
+  FiniteImagegLts P A, 
+  FiniteImagegLts Q A} 
   (ps : gset P) (q q' : Q) :
   ps ≼ₓ1 q -> q ⟶ q' -> ps ≼ₓ1 q'.
 Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 
 Lemma bhvx_preserved_by_tau `{
-  @FiniteImageLts P A H LtsP,
-  @FiniteImageLts Q A H LtsQ}
+  @FiniteImagegLts P A H gLtsP,
+  @FiniteImagegLts Q A H gLtsQ}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
 Proof.
   intros l (halt1 & halt2).
@@ -638,8 +638,8 @@ Proof.
 Qed.
 
 Lemma bhvleqone_mu `{
-  @FiniteImageLts P A H LtsP, 
-  @FiniteImageLts Q A H LtsQ}
+  @FiniteImagegLts P A H gLtsP, 
+  @FiniteImagegLts Q A H gLtsQ}
   
   (ps0 ps1 : gset P) μ (q q' : Q) (htp : forall p, p ∈ ps0 -> terminate p) :
   ps0 ≼ₓ1 q -> wt_set_from_pset_spec ps0 [μ] ps1  -> q ⟶[μ] q' -> ps1 ≼ₓ1 q'.
@@ -654,8 +654,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_mu `{
-  @FiniteImageLts P A H LtsP,
-  @FiniteImageLts Q A H LtsQ}
+  @FiniteImagegLts P A H gLtsP,
+  @FiniteImagegLts Q A H gLtsQ}
   (ps0 : gset P) (q : Q) μ ps1 q' (htp : forall p, p ∈ ps0 -> terminate p) :
   q ⟶[μ] q' 
     -> wt_set_from_pset_spec ps0 [μ] ps1 
@@ -672,7 +672,7 @@ Proof.
      exists r. repeat split. eapply ps1_spec; eassumption. eauto.
 Qed.
 
-Lemma terminate_then_wt_refuses  `{Lts P A} p : 
+Lemma terminate_then_wt_refuses  `{gLts P A} p : 
   p ⤓ -> exists p', p ⟹ p' /\ p' ↛.
 Proof.
   intros ht.
@@ -685,8 +685,8 @@ Proof.
 Qed.
 
 Lemma bhvx_mu_ex `{
-  @FiniteImageLts P A H LtsP,
-  @FiniteImageLts Q A H LtsQ}
+  @FiniteImagegLts P A H gLtsP,
+  @FiniteImagegLts Q A H gLtsQ}
   
   (ps : gset P) (q q' : Q) μ
   : ps ≼ₓ q -> (forall p, p ∈ ps -> p ⇓ [μ]) ->
@@ -703,12 +703,12 @@ Proof.
 Qed.
 
 Lemma ungood_must_st_nleqx `{
-  @LtsObaFW P A H LtsP LtsEqP LtsObaP, !FiniteImageLts P A,
-  @LtsObaFW Q A H LtsQ LtsEqQ LtsObaQ, !FiniteImageLts Q A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   
   (X : gset P) (q : Q) e : 
   ¬ good e 
@@ -745,12 +745,12 @@ Proof.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
-  @LtsObaFW P A H LtsP LtsEqP LtsObaP, !FiniteImageLts P A,
-  @LtsObaFW Q A H LtsQ LtsEqQ LtsObaQ, !FiniteImageLts Q A,
-  LtsE : !Lts E A, !LtsEq E A, !Good E A good}
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
   (X : gset P) (q : Q) e : 
   ¬ good e 
@@ -766,12 +766,12 @@ Proof.
 Qed.
 
 Lemma soundnessx `{
-  @LtsObaFW P A H LtsP LtsEqP LtsObaP, !FiniteImageLts P A,
-  @LtsObaFW Q A H LtsQ LtsEqQ LtsObaQ, !FiniteImageLts Q A,
-  @LtsObaFB E A H LtsE LtsEqE LtsObaE, !FiniteImageLts E A, !Good E A good}
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !FiniteImagegLts E A, !Good E A good}
   
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   
   (ps : gset P) (e : E) : 
   mustx ps e 
@@ -820,12 +820,12 @@ Proof.
 Qed.
 
 Lemma soundness_fw `{
-  @LtsObaFW P A H LtsP LtsEqP V, !FiniteImageLts P A,
-  @LtsObaFW Q A H LtsQ LtsEqQ T, !FiniteImageLts Q A,
-  @LtsObaFB E A H LtsE LtsEqE W, !FiniteImageLts E A, !Good E A good }
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
     
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   
   (p : P) (q : Q) : p ≼ q -> p ⊑ q.
 Proof.
@@ -837,18 +837,18 @@ Qed.
 From Must Require Lift.
 
 Lemma soundness `{
-  @LtsObaFB P A H LtsP LtsEqP V, !FiniteImageLts P A,
-  @LtsObaFB Q A H LtsQ LtsEqQ T, !FiniteImageLts Q A,
-  @LtsObaFB E A H LtsE LtsEqE W, !FiniteImageLts E A, !Good E A good }
+  @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  @gLtsObaFB Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
   
-  `{@Prop_of_Inter P E A parallel_inter H LtsP LtsE}
-  `{@Prop_of_Inter Q E A parallel_inter H LtsQ LtsE}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   
-  `{@Prop_of_Inter P (mb A) A fw_inter H LtsP MbLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
   
-  `{@Prop_of_Inter Q (mb A) A fw_inter H LtsQ MbLts}
-  `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) LtsE}
+  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+  `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
   
   
   (p : P) (q : Q) : p ▷ ∅ ≼ q ▷ ∅ -> p ⊑ q.
