@@ -245,7 +245,7 @@ Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p 
 
 Class gLtsOba (P A : Type) `{H : ExtAction A}
             {LtsP : @gLts P A H} {Rel : @gLtsEq P A H LtsP} :=
-  MkOBA {
+  MkOba {
       (* Multiset of outputs *)
       lts_oba_mo (p : P) : gmultiset A;
 
@@ -761,7 +761,7 @@ Proof.
 Qed. 
 
 
-(* fixme: it should be enought to have ltsOBA + one of the feedback *)
+(* fixme: it should be enought to have ltsOba + one of the feedback *)
 Lemma cnv_retract_lts_non_blocking_action `{gLtsObaFW P A} p q η μ s :
   non_blocking η -> dual η μ -> p ⇓ s -> p ⟶[η] q -> q ⇓ μ :: s.
 Proof.
@@ -3325,7 +3325,7 @@ Proof. constructor; eauto with mdb. Qed.
 
 Global Hint Resolve fw_eq_equiv:mdb.
 
-(* #[global] Program Instance gLts_of_OBA `{gLtsOba P A} : gLts P A.
+(* #[global] Program Instance gLts_of_Oba `{gLtsOba P A} : gLts P A.
 Next Obligation.
 intros. := . *)
 
@@ -3774,7 +3774,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left `{
-  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}
+  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   p q q' α mp mq :
   p ▷ mp ≐ q ▷ mq -> q ⟶{α} q' -> p ▷ mp ⟶≐{α} q' ▷ mq.
@@ -3787,7 +3787,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_right_nb `{
-  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}
+  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   p q mp mq η :
   non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> p ▷ mp ⟶≐[η] q ▷ mq.
@@ -3851,7 +3851,7 @@ Qed.
 
 
 Lemma lts_fw_eq_spec_right_not_nb `{
-  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}
+  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
    p q mp mq η μ:
   (* ¬  *) non_blocking η (* utile OU prouvable ?*) -> dual η μ -> p ▷ mp ≐ q ▷ mq 
@@ -3870,7 +3870,7 @@ Qed.
 
 
 Lemma lts_fw_com_eq_spec `{
-  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}
+  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   p q q' mp mq μ η:
   ¬ non_blocking μ (* utile OU prouvable ?*) -> dual η μ 
@@ -3956,7 +3956,7 @@ Qed.
 
 
 Lemma lts_fw_eq_spec  `{
-  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}
+  M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   (p : P) (q : P) (t : P) (mp : mb A) (mq : mb A) (mt : mb A) (α : Act A) :
   (p ▷ mp) ≐ (t ▷ mt) -> (t ▷ mt) ⟶{α} (q ▷ mq) -> p ▷ mp ⟶≐{α} q ▷ mq.
@@ -3980,8 +3980,8 @@ Proof.
 Qed.
 
 
-#[global] Program Instance MbgLtsEq 
-  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}  
+#[global] Program Instance FW_gLtsEq 
+  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}  
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   : gLtsEq (P * mb A) A :=
   {| eq_rel := fw_eq |}.
@@ -3997,8 +3997,8 @@ Qed.
 
 
 
-#[global] Program Instance gLtsMBOba 
-  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}  
+#[global] Program Instance FW_gLtsOba
+  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}  
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   : gLtsOba (P * mb A) A :=
   {| lts_oba_mo p := lts_oba_mo p.1 ⊎ mb_without_not_nb p.2 |}.
@@ -4263,8 +4263,8 @@ Next Obligation.
       multiset_solver.
 Qed.
 
-#[global] Program Instance gLtsMBObaFW 
-  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsOBAP}
+#[global] Program Instance FW_gLtsObaFW
+  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   : gLtsObaFW (P * mb A) A.
 Next Obligation.
