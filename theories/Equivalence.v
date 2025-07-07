@@ -37,11 +37,11 @@ Section convergence.
   Context `{P : Type}.
   (* set of external actions *)
   Context `{A : Type}.
-  
+
   Context `{H : !ExtAction A}.
   Context `{!gLts P A}.
   Context `{!FiniteImagegLts P A}.
- 
+
   Definition terminate_extensional (p : P) : Prop :=
     forall η : max_exec_from p, exists n fex,
       mex_take_from n η = Some fex /\ lts_refuses (fex_from_last fex) τ.
@@ -159,77 +159,89 @@ Section must_set_acc_set.
     + destruct case_2, (either_wperform_mu p x). ; set_solver.
     induction G using set_ind_L; [|destruct IHG, (either_wperform_mu p x)]; set_solver.
   Admitted. *)
-  Lemma either_wperform_mem (p : P * mb A) (G : subset_of A) (ht : p ⤓) :
-    (exists μ p', μ ∈ G /\ p ⟹{μ} p') \/ (forall μ p', μ ∈ G -> ~ p ⟹{μ} p').
+  Lemma either_wperform_mem (p : P * mb A) (L : (list (P * mb A)) * (Q * mb A)) (ht : p ⤓) :
+    (exists μ p', μ ∈ union_of_actions_without L /\ p ⟹{μ} p') 
+      \/ (forall μ p', μ ∈ union_of_actions_without L -> ~ p ⟹{μ} p').
   Proof.
-    (* induction G using set_ind_L.
+    (*induction G using set_ind_L.
     + set_solver. 
     + destruct IHG, (either_wperform_mu p x); set_solver. *)
   Admitted.
 
 
   Lemma either_wperform_mem_set
-    (ps : gset (P * mb A)) (G : subset_of A) (ht : forall p, p ∈ ps -> p ⤓) :
-    (exists p', p' ∈ ps /\ forall μ p0, μ ∈ G 
-      -> ~ p' ⟹{μ} p0) \/ (forall p', p' ∈ ps -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0).
+    (ps : gset (P * mb A)) (L : (list (P * mb A)) * (Q * mb A)) (ht : forall p, p ∈ ps -> p ⤓) :
+    (exists p', p' ∈ ps /\ forall μ p0, μ ∈ union_of_actions_without L
+      -> ~ p' ⟹{μ} p0) 
+      \/ (forall p', p' ∈ ps -> exists μ p0, μ ∈ union_of_actions_without L /\ p' ⟹{μ} p0).
   Proof.
-    induction ps using set_ind_L; [|destruct IHps, (either_wperform_mem x G)]; set_solver.
+    induction ps using set_ind_L. 
+    + set_solver. 
+    + destruct IHps, (@either_wperform_mem x L); set_solver.
   Qed.
 
   Lemma either_MUST
-      (p : P * mb A) (G : subset_of A) (hcnv : p ⇓ []) :
-      MUST p G \/ ~ MUST p G.
+      (p : P * mb A) (L : (list (P * mb A)) * (Q * mb A)) (hcnv : p ⇓ []) :
+      MUST p (union_of_actions_without L) \/ ~ MUST p (union_of_actions_without L).
   Proof.
     assert (∀ p0 : P * mb A, p0 ∈ wt_set p [] hcnv → p0 ⤓) as pre_Hyp.
     intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-    destruct (either_wperform_mem_set (wt_set p [] hcnv) G) as [Hyp|]; eauto.
+    destruct (either_wperform_mem_set (wt_set p [] hcnv) L) 
+      as [Hyp|]; eauto.
     - right. intro hm. destruct Hyp as (p' & mem%wt_set_spec1%hm & nhw). set_solver.
     - left. intros p1 hw%(wt_set_spec2 _ p1 [] hcnv). set_solver.
   Qed.
 
   Lemma either_ex_nMUST_or_MUST
-    (ps : gset (P * mb A)) G (ht : forall p, p ∈ ps -> p ⇓ []) :
-    (exists p, p ∈ ps /\ ~ MUST p G) \/ (forall p, p ∈ ps -> MUST p G).
+    (ps : gset (P * mb A)) (L : (list (P * mb A)) * (Q * mb A)) 
+      (ht : forall p, p ∈ ps -> p ⇓ []) :
+    (exists p, p ∈ ps /\ ~ MUST p (union_of_actions_without L)) 
+      \/ (forall p, p ∈ ps -> MUST p (union_of_actions_without L)).
   Proof.
-    induction ps using set_ind_L; [|edestruct IHps, (either_MUST x G)]; set_solver.
+    induction ps using set_ind_L; [|edestruct IHps, (either_MUST x L)]; set_solver.
   Qed.
 
   Lemma either_MUST__s
-    (ps : gset (P * mb A)) (G : subset_of A ) :
-    (forall p, p ∈ ps -> p ⇓ []) -> MUST__s ps G \/ ~ MUST__s ps G.
+    (ps : gset (P * mb A)) (L : (list (P * mb A)) * (Q * mb A))  :
+    (forall p, p ∈ ps -> p ⇓ []) -> MUST__s ps (union_of_actions_without L) \/ ~ MUST__s ps (union_of_actions_without L).
   Proof.
-    intros. edestruct (either_ex_nMUST_or_MUST ps G) as [Hyp |]; eauto.
+    intros. edestruct (either_ex_nMUST_or_MUST ps L) as [Hyp |]; eauto.
     right. intros hm. destruct Hyp as (p0 & mem0%hm & hnm). contradiction.
   Qed.
 
   Lemma nMusts_ex
-    (ps : gset (P * mb A)) G :
-    (forall p, p ∈ ps -> p ⇓ []) -> ~ MUST__s ps G -> exists p, p ∈ ps /\ ~ MUST p G.
-  Proof. intros. edestruct (either_ex_nMUST_or_MUST ps G); set_solver. Qed.
+    (ps : gset (P * mb A)) (L : (list (P * mb A)) * (Q * mb A)) :
+    (forall p, p ∈ ps -> p ⇓ []) -> ~ MUST__s ps (union_of_actions_without L) 
+    -> exists p, p ∈ ps /\ ~ MUST p (union_of_actions_without L).
+  Proof. intros. edestruct (either_ex_nMUST_or_MUST ps L); set_solver. Qed.
 
   Lemma nMust_ex
-    (p : P * mb A) G (hcnv : p ⇓ []) (hnm : ~ MUST p G) :
-    exists p', p ⟹ p' /\ forall μ p0, μ ∈ G -> ~ p' ⟹{μ} p0.
+    (p : P * mb A) (L : (list (P * mb A)) * (Q * mb A)) (hcnv : p ⇓ []) 
+    (hnm : ~ MUST p (union_of_actions_without L)) :
+    exists p', p ⟹ p' /\ forall μ p0, μ ∈ (union_of_actions_without L) -> ~ p' ⟹{μ} p0.
   Proof.
     assert (∀ p0 : P * mb A, p0 ∈ wt_set p [] hcnv → p0 ⤓).
     intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-    destruct (either_wperform_mem_set (wt_set p [] hcnv) G) as [Hyp|Hyp]; eauto.
+    destruct (either_wperform_mem_set (wt_set p [] hcnv) L) as [Hyp|Hyp]; eauto.
     - destruct Hyp as (p' & mem'%wt_set_spec1 & nhw). set_solver.
     - edestruct hnm. intros p' mem. eapply Hyp. eapply wt_set_spec2; eauto.
   Qed.
 
   Lemma nMusts_nMust
-  (p : P * mb A) G (hcnv : p ⇓ []) (hnm : ~ MUST__s (wt_set p [] hcnv) G) : ¬ MUST p G.
+  (p : P * mb A) (L : (list (P * mb A)) * (Q * mb A)) (hcnv : p ⇓ []) 
+  (hnm : ~ MUST__s (wt_set p [] hcnv) (union_of_actions_without L)) : 
+  ¬ MUST p (union_of_actions_without L).
   Proof.
     intro hm. eapply hnm. intros p' mem0%wt_set_spec1.
     intros r hw. eapply hm. eapply wt_push_nil_left; eassumption.
   Qed.
-  
+
   Lemma nMust_out_acc_ex 
-  
+
     (p : P * mb A) pt (q' : Q * mb A) s hcnv :
-    
-    pt ∈ AFTER p s hcnv -> ~ MUST pt (actions_acc p s hcnv ∖ lts_acc_set_of q') ->
+
+    pt ∈ AFTER p s hcnv 
+    -> ~ MUST pt (union_of_actions_without ((elements (wt_refuses_set p s hcnv)) , q')) ->
     exists p', pt ⟹ p' /\ p' ↛ /\ lts_acc_set_of p' ⊆ lts_acc_set_of q'.
   Proof.
     intros mem%wt_set_spec1 hnm.
@@ -259,63 +271,22 @@ Section must_set_acc_set.
       destruct (decide (μ ∈ lts_acc_set_of q')).
       + eauto.
       + exfalso.
-        eapply (nhw $ μ); eauto. set_solver.
+        eapply (nhw $ μ); eauto. unfold actions_acc in mem0.
+        unfold oas in mem0. set_solver.
         eapply wt_push_nil_left; eauto with mdb.
       + constructor; eapply (cnv_wt_s_terminate p pt s hcnv); eauto.
   Qed.
 
-  
-
-  (* Lemma nMust_out_acc_ex 
-  
-    (p : P * mb A) pt G s hcnv :
-    
-    pt ∈ AFTER p s hcnv -> ~ MUST pt (actions_acc p s hcnv ∖ G) ->
-    exists p', pt ⟹ p' /\ p' ↛ /\ lts_acc_set_of p' ⊆ G.
-  Proof.
-    intros mem%wt_set_spec1 hnm.
-    eapply nMust_ex in hnm as (p' & hw' & nhw).
-    assert (ht': p' ⤓)
-      by (eapply (cnv_wt_s_terminate p p' s hcnv), wt_push_nil_right; eauto).
-    eapply terminate_then_wt_refuses in ht' as (p0 & hw0 & hst).
-    exists p0. split. eapply wt_push_nil_left; eauto.
-    split; eauto.
-    intros μ mem_mu.
-(*     assert (is_output μ) as (a & heq).
-    eapply elem_of_map in mem_mu as (a & heq & mem2).
-    exists a. assumption. subst. *)
-    (* destruct (decide (μ ∈ G)).
-    + eauto. 
-    + assert (μ ∉ G). admit.*)
-      assert (mem0 : μ ∈ actions_acc p s hcnv).
-      eapply elem_of_union_list. eexists. split; eauto.
-      eapply elem_of_list_fmap.
-      exists p0. repeat split; eauto.
-      eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
-      eapply wt_push_nil_right, wt_push_nil_right; eauto.
-      (* exfalso. *)
-      (* eapply elem_of_union_list in mem0.
-      destruct mem0 as (A' & ACC & mem'). *)
-      eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr).
-      (* destruct (decide (μ ∈ G)).
-      + eauto.  *)
-      + assert (μ ∉ G). admit.
-        exfalso.
-        eapply (nhw $ μ); eauto. set_solver.
-        eapply wt_push_nil_left; eauto with mdb.
-      + constructor; eapply (cnv_wt_s_terminate p pt s hcnv); eauto.
-  Admitted. *)
-
   Lemma either_MUST_or_ex 
     (p : P * mb A) (q' : Q * mb A)  s hcnv :
-    MUST__s (AFTER p s hcnv) (actions_acc p s hcnv ∖ lts_acc_set_of q')
+    MUST__s (AFTER p s hcnv) (union_of_actions_without ((elements (wt_refuses_set p s hcnv)) , q'))
     \/ (exists p', p ⟹[s] p' /\ p' ↛ /\ lts_acc_set_of p' ⊆ lts_acc_set_of q').
   Proof.
     assert (h1 : forall p0, p0 ∈ AFTER p s hcnv → p0 ⇓ []).
     intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
     eapply (wt_set_spec1 _ _ _ _ mem0).
-    destruct (either_MUST__s (AFTER p s hcnv) (actions_acc p s hcnv ∖ lts_acc_set_of q')) 
-        as [ |Hyp]. Print AFTER.
+    destruct (either_MUST__s (AFTER p s hcnv) ((elements (wt_refuses_set p s hcnv)) , q')) 
+        as [ |Hyp].
     + eauto.
     + left. eauto.
     + right.
@@ -403,8 +374,9 @@ Section failure_must_set.
   Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
 
   Lemma equivalence_must_set_nfailure
-    (p : P) (s : trace A) h1 (G : subset_of A) :
-    MUST__s (AFTER (p, ∅) s h1) G <-> ¬ Failure (p, ∅) s G.
+    (p : P) (s : trace A) h1 (L : (list (P * mb A) * (Q * mb A))) :
+    MUST__s (AFTER (p, ∅) s h1) (union_of_actions_without L) 
+      <-> ¬ Failure (p, ∅) s (union_of_actions_without L).
   Proof.
     split.
     - intros hm (e & hw & hf). eassumption.
@@ -414,7 +386,7 @@ Section failure_must_set.
       assert (∀ p0 : P * mb A, p0 ∈ AFTER (p ▷ ∅) s h1 → p0 ⇓ []).
       intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
       eapply (wt_set_spec1 _ _ _ _ mem0).
-      destruct (either_MUST__s (AFTER (p, ∅) s h1) G) as [Hyp | Hyp]; eauto.
+      destruct (either_MUST__s (AFTER (p, ∅) s h1) L) as [Hyp | Hyp]; eauto.
       + eapply nMusts_ex in Hyp as (p0 & mem & hnm).
         exfalso. eapply hnf.
         eapply nMust_ex in hnm as (p1 & hw1 & hnp).
@@ -428,8 +400,9 @@ Section failure_must_set.
   Qed.
 
   Lemma equivalence_nmust_set_failure
-    (p : P) (s : trace A) h1 (G : subset_of A) :
-    ¬ MUST__s (AFTER (p ▷ ∅) s h1) G <-> Failure (p ▷ ∅) s G.
+    (p : P) (s : trace A) h1 (L : (list (P * mb A) * (Q * mb A))) :
+    ¬ MUST__s (AFTER (p ▷ ∅) s h1) (union_of_actions_without L) 
+      <-> Failure (p ▷ ∅) s (union_of_actions_without L).
   Proof.
     split.
     - intro hm.
@@ -454,7 +427,7 @@ Section failure_must_set.
 
 End failure_must_set.
 
-Section failure_must_set_pre.
+(* Section failure_must_set_pre.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{A : Type}.
@@ -485,7 +458,7 @@ Section failure_must_set_pre.
       intros hf%hpre2. contradiction.
   Qed.
 
-End failure_must_set_pre.
+End failure_must_set_pre. *)
 
 Section preorder.
 
@@ -534,7 +507,7 @@ Section preorder.
         * eassumption.
         * intros (q, e') Hstep. apply H0 =>//=.
   Qed.
-  Print must_extensional.
+
   Lemma must_ext_pred_iff_must_extensional 
     {P : Type}  
     `{StsPE : Sts (P * E), good : E -> Prop, good_decidable : forall (e : E), Decision (good e)}
@@ -600,13 +573,16 @@ Section preorder.
   Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
   Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
 
-  Context `{igen_conv : @gen_spec_conv _ _ _ _ _ good Good0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc _ _ _ _ _ good Good0 co_of gen_acc}.
-
   Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
   Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
   Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
   Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
+
+  Context `{igen_conv : @gen_spec_conv _ _ _ _ _ good Good0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ 
+                        good Good0 co_of gen_acc _ _}.
+
+
 
   (* ************************************************** *)
 
@@ -763,7 +739,7 @@ Qed.
     exists t; split; eauto. split; eauto. eapply lts_non_blocking_ionly_spec_wt_nil; eauto.
   Qed.
 
-  Lemma ionly_nil_leq2 {P Q A : Type} `{
+(*   Lemma ionly_nil_leq2 {P Q A : Type} `{
     @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP,
     @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
 
@@ -778,7 +754,10 @@ Qed.
     - inversion hcnv; subst.
       edestruct ionly_nil_leq2_wt_nil as (p' & hw & hst' & hsub); eauto.
       exists p'. split; eauto.
-      split; eauto. admit.
+      split; eauto.
+
+      intro μ. intro mem.
+
     - exfalso. eapply (@lts_refuses_spec2 (Q * mb A)). eauto. now eapply nil_refuses.
     - inversion hcnv; inversion l; subst.
       + exfalso. eapply (@lts_refuses_spec2 Q); eauto.
@@ -813,6 +792,6 @@ Qed.
     @pre_extensional _ _ _ _ _ good _ p q.
   Proof.
     now eapply equivalence_bhv_acc_ctx; split; intros ? ?; [eapply nil_cnv | eapply ionly_nil_leq2].
-  Qed.
+  Qed. *)
 
 End application.

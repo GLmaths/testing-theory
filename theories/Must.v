@@ -42,7 +42,6 @@ Class Good (P A : Type) (good : P -> Prop) `{gLts P A, !gLtsEq P A} := {
     good_preserved_by_lts_non_blocking_action_converse p q η : non_blocking η -> p ⟶[η] q -> good q -> good p;
 }.
 
-
 #[global] Instance good_dec `{Good P A good} e : Decision (good e).
 Proof. eapply good_decidable. Defined.
 
@@ -286,68 +285,6 @@ Proof.
   + right. eapply must_terminate_ungood; eauto.
 Qed.
 
-(*
-(* vrai mais à voir si nécessaire *)
-Lemma must_mu_either_good_cnv `{
-  gLtsP : gLts P A, !FiniteImagegLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-  (p : P) (e e': E)  : 
-  must p e 
-    -> forall μ μ',
-      parallel_inter μ μ'
-        -> e ⟶[μ'] e' 
-          -> ¬ good e -> ¬ good e'
-             -> p ⇓ [μ].
-Proof.
-  intros hmx μ μ' inter l not_happy not_happy'.
-  dependent induction hmx.
-  - contradiction.
-  - assert (must p e) as Hyp. eauto with mdb.
-    eapply must_terminate_ungood' in Hyp.
-    destruct Hyp as [happy | finish].
-    + contradiction.
-    + destruct (decide (non_blocking μ)) as [nb | not_nb];
-      destruct (decide (non_blocking μ')) as [nb' | not_nb'].
-      ++ exfalso. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
-      ++ assert (must p e) as Hyp. eauto with mdb.
-         eapply must_terminate_ungood' in Hyp.
-         destruct Hyp as [happy' | finish'].
-         +++ contradiction.
-         +++ eapply cnv_act. eauto.
-             intros q w.
-             eapply cnv_nil.
-             eapply terminate_preserved_by_wt_non_blocking_action; eauto.
-      ++ assert (must p e) as Hyp. eauto with mdb.
-         eapply must_terminate_ungood' in Hyp.
-         destruct Hyp as [happy' | finish'].
-         +++ contradiction.
-         +++ eapply cnv_act. eauto.
-             intros q w.
-             (* assert (h1 : wt_set_from_pset_spec1 {[p]} [μ] {[q]}).
-         exists p. split; set_solver.
-         assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver. *)
-         (* set (hm := com q e' μ μ' inter l h1 h2). *)
-         (* destruct (must_terminate_ungood _ _).
-         +++ contradict nh.
-             eapply good_preserved_by_lts_non_blocking_action_converse; eassumption.
-         +++ eapply cnv_nil. eapply H6. set_solver. *) admit.
-      ++ assert (must p e) as Hyp. eauto with mdb.
-         eapply must_terminate_ungood' in Hyp.
-         destruct Hyp as [happy' | finish'].
-         +++ contradiction.
-         +++ eapply cnv_act. eauto.
-             intros q w.
-         (* assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
-         exists p. split; set_solver.
-         assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
-         set (hm := com e' μ μ' {[ q ]} inter l h1 h2).
-         destruct (mustx_terminate_ungood _ _ hm).
-         +++ contradiction.
-         +++ eapply cnv_nil. eapply H6. set_solver. *) admit.
-Admitted. *)
-
 (** Must sets. *)
 
 Section must_sets.
@@ -386,8 +323,6 @@ Notation "p ≾₂ q" := (bhv_pre_ms_cond2 p q) (at level 70).
 Notation "p ≾ q" := (bhv_pre_ms p q) (at level 70).
 
 Section failure.
-
-(* Meme ExtAction ? *)
 
   Definition Failure `{FiniteImagegLts P A} 
     (p : P) (s : trace A) (G : subset_of A) :=
