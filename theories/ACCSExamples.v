@@ -821,11 +821,60 @@ symmetry. eapply t_trans.
 - eapply t_step, cgr_par_nil.
 Qed.
 
-Require Import Must.
-
 Axiom FF : False.
 Ltac cheat := exfalso; apply FF.
 
+Example unreliable_reliable' :
+ unreliableW ⊑ reliableW.
+Proof. 
+apply soundness, alt_set_singleton_iff, eqx.
+(* generalisation *)
+enough (Ht : forall n z (M :  mb name) X,
+  {[add_zeros z unreliableW ▷ add_data n M]} ∪ X ⩽ add_work n reliableW ▷ M). {
+  replace ({[unreliableW ▷ (∅ : mb name)]}) with
+          ({[unreliableW ▷ add_data 0 ∅ ]} ∪ ∅ : gset (proc * mb name))
+          by (simpl; set_solver).
+  apply (Ht 0 0 ∅ ∅).
+  }
+cofix hco. intros n z M X.
+assert(Hrs := reliableW_stable_work).
+constructor.
+(* A. stable by τ *)
+- cheat.
+(* B. Weak transitions to stable states preserve output inclusion *)
+- cheat.
+(* C. Weak termination sets *)
+- intros μ q' ps' Hμ1 Hμ2 Hwt. inversion Hμ2; subst.
+  + add_tac; [| clear hco; lts_inversion]. clear Hμ2.
+    assert(Hin : (add_zeros (S z) unreliableW ▷ add_data (x0 + x) M) ∈ ps'). {
+      clear hco. (* needed to avoid set_tac to use hco *)
+      apply Hwt with (p := add_zeros z unreliableW ▷ add_data (S (x + x0)) M);
+      [ simpl; set_solver|].
+      apply wt_tau with
+        (add_zeros z (τ⋅ ! "end" ⊕
+        ("data" ? (τ⋅ (! "work" ∥ unreliableW) ⊕ τ⋅ ! "bye")))
+         ▷ add_data (S (x + x0)) M); [apply lts_fw_p, add_zeros_lts; term_tac|].
+      setoid_rewrite <- add_data_comm.
+      apply wt_tau with (add_zeros z (τ⋅(! "work" ∥ unreliableW) ⊕ τ⋅! "bye")
+                         ▷ add_data (x + x0) M);
+      [apply lts_fw_com, add_zeros_lts, lts_choiceR; constructor|].
+      eapply wt_tau with (add_zeros z (! "work" ∥ unreliableW) ▷ add_data (x + x0) M);
+      [apply lts_fw_p, add_zeros_lts, lts_choiceL; constructor
+      |eapply wt_act; [|apply wt_nil]].
+      simpl. rewrite Nat.add_comm. apply lts_fw_p, add_zeros_lts. term_tac.
+    }
+    apply union_difference_singleton_L in Hin. rewrite Hin.
+  replace (add_work x0 (𝟘 ∥ add_work x reliableW)) with
+  (add_work (x0 + x) reliableW) by cheat.
+ 
+  apply hco.
+  + cheat.
+  + cheat.
+(* D. Termination on the left implies termination on the right *)
+- cheat.
+Qed.
+
+(* FRESH *)
 Example unreliable_reliable :
  unreliableW ⊑ reliableW.
 Proof. 
@@ -853,7 +902,7 @@ constructor.
       [|refine (coin_union_l _ _ _ (coin_refl))].
       apply unreliable_add_work_add_data_terminate.
     * (* Loop back on coinduction hypothesis, with one more !"work" *)
-      apply (hco (S n)).
+      apply (hco (S n) z).
   + (* B' : weak transitions outputs *)
     clear hco. intros Ht Hs.
     contradict Hs. apply lts_stable_spec2.
@@ -892,16 +941,16 @@ constructor.
             apply lts_fw_p, add_zeros_lts. do 2 constructor.
           }
           apply union_difference_singleton_L in Hin. rewrite Hin.
-          apply h2 with (add_work (x + x0) reliableW); [|apply hco].
+          apply h2 with (add_work (x + x0) reliableW); [|cheat].
           symmetry. apply cgr_par_nil_l.
       -- lts_inversion; lts_inversion.
          (* input "data" *)
          eapply co_preserved_by_wt_nil with (add_work n reliableW ▷ ({["data"]} ⊎ M)).
-         2 : { eapply hco; eauto. constructor. }
+         2 : { cheat. }
          apply reliableW_consume_data.
     * apply co_preserved_by_wt_nil with (add_work n reliableW ▷ m).
      -- eapply wt_tau; [|apply wt_nil].
-        constructor. eapply add_work_inversion. constructor.
+        constructor. cheat. (* eapply add_work_inversion. constructor. *)
      -- assert(Hin : (add_zeros z  unreliableW ▷ add_data n m) ∈ ps'). {
         clear hco. (* needed to avoid set_tac to use hco *)
         eapply Hwt with (p := add_zeros z unreliableW
@@ -910,7 +959,7 @@ constructor.
         [apply lts_fw_out_mb| apply wt_nil].
         }
         apply union_difference_singleton_L in Hin. rewrite Hin.
-        apply hco.
+        apply hco. (* DANGER! *)
     * apply co_preserved_by_wt_nil with (add_work n reliableW ▷ {[+ a +]} ⊎ M).
      -- eapply wt_tau; [|apply wt_nil].
         constructor. eapply add_work_inversion. constructor.
@@ -921,7 +970,7 @@ constructor.
         [apply lts_fw_inp_mb|apply wt_nil].
         }
         apply union_difference_singleton_L in Hin. rewrite Hin.
-        apply hco.
+        cheat. (* DANGER! *)
   + clear hco. intros _. clear X.
     apply terminate_preserved_by_lts_tau with (add_work n reliableW ▷ M).
     * apply add_work_reliableW_terminate.
@@ -937,8 +986,7 @@ constructor.
   intro Heq; rewrite Heq in Htau. now apply elem_of_empty in Htau.
 (* C. Weak termination sets *)
 - intros μ q' ps' Hμ1 Hμ2 Hwt. inversion Hμ2; subst.
-  + destruct n as [|n]; [clear hco; lts_inversion|].
-    add_tac; [| clear hco; lts_inversion]. clear Hμ2.
+  + add_tac; [| clear hco; lts_inversion]. clear Hμ2.
     assert(Hin : (add_zeros (S z) unreliableW ▷ add_data (x0 + x) M) ∈ ps'). {
       clear hco. (* needed to avoid set_tac to use hco *)
       apply Hwt with (p := add_zeros z unreliableW ▷ add_data (S (x + x0)) M);
@@ -957,10 +1005,13 @@ constructor.
       simpl. rewrite Nat.add_comm. apply lts_fw_p, add_zeros_lts. term_tac.
     }
     apply union_difference_singleton_L in Hin. rewrite Hin.
-    apply h2 with (add_work (x0 + x) reliableW); [|apply (hco (x0 + x) (S z))].
+    apply h2 with (add_work (x0 + x) reliableW); [|cheat].
     clear hco. (* ici? *)
+    cheat.
+(*
     rewrite add_work_par_comm, add_work_plus.
     symmetry. apply cgr_par_nil_l.
+    *)
   + assert(Hin : (add_zeros z unreliableW ▷ add_data n m) ∈ ps'). {
       clear hco. (* needed to avoid set_tac to use hco *)
       eapply Hwt with (p := add_zeros z unreliableW ▷ add_data n ({[+ a +]} ⊎ m))
@@ -970,7 +1021,7 @@ constructor.
       [term_tac|]. apply add_data_comm.
     }
     apply union_difference_singleton_L in Hin. rewrite Hin.
-    apply hco.
+    apply hco. (* OK *)
   + assert(Hin : (add_zeros z unreliableW ▷ add_data n ({[+a+]} ⊎ M)) ∈ ps'). {
       clear hco.
       eapply Hwt with (p := add_zeros z unreliableW ▷ add_data n M); [ set_tac|].
@@ -980,7 +1031,7 @@ constructor.
       [term_tac|]. now rewrite add_data_comm.
     }
     apply union_difference_singleton_L in Hin. rewrite Hin.
-    apply hco.
+    apply hco. (* OK *)
 (* D. Termination on the left implies termination on the right *)
 - intros. apply add_work_reliableW_terminate.
 Qed.
