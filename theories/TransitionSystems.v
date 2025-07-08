@@ -20,17 +20,13 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Lists.List.
+From Coq Require ssreflect Setoid.
+From Coq.Unicode Require Import Utf8.
+From Coq.Lists Require Import List.
 Import ListNotations.
-Require Import Coq.Program.Equality.
-Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Coq.Logic.JMeq.
-Require Import Coq.Program.Wf Setoid.
-Require Import Coq.Program.Equality.
-From Coq.Logic Require Import ProofIrrelevance.
-
+From Coq.Wellfounded Require Import Inverse_Image.
+From Coq.Logic Require Import JMeq ProofIrrelevance.
+From Coq.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 
 Lemma sig_eq {A} (P : A → Prop) (x y : sig P) :

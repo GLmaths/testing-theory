@@ -20,7 +20,7 @@
    SOFTWARE.
 *)
 
-Require Import Coq.Program.Equality.
+From Coq.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list 
                         finite base decidable finite gmap gmultiset.
 From Must Require Import TransitionSystems Must.

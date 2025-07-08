@@ -21,10 +21,10 @@
 *)
 
 
-Require Import Coq.Program.Equality Coq.Strings.String.
-From stdpp Require Import base countable finite gmap list gmultiset strings.
-Require Import Relations.
-Require Import Coq.Wellfounded.Inverse_Image.
+From Coq.Program Require Import Equality.
+From Coq.Strings Require Import String.
+From Coq Require Import Relations.
+From Coq.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import OldTransitionSystems Must Completeness.

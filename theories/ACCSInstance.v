@@ -23,7 +23,8 @@
    SOFTWARE.
 *)
 
-Require Import Coq.Program.Equality Coq.Strings.String.
+From Coq.Program Require Import Equality.
+From Coq.Strings Require Import String.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import TransitionSystems Must Completeness Soundness Coin Normalisation.

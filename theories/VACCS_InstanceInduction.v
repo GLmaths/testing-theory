@@ -30,7 +30,7 @@ Require Import Relations.
 Require Import Coq.Wellfounded.Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import TransitionSystems Must Completeness.
+From Must Require Import OldTransitionSystems Must Completeness.
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
@@ -547,8 +547,6 @@ Qed.
 
 Scheme proc_gproc_ind := Induction for proc Sort Prop
   with gproc_proc_ind := Induction for gproc Sort Prop.
-
-Check proc_gproc_ind.
 
 (* Combined Scheme proc_gproc_mutind from proc_gproc_ind,gproc_proc_ind. (*not usefull with our situation *) *)
 
