@@ -5,4 +5,6 @@
  (package must-testing)
  (synopsis "Must testing")
  (theories stdpp)
+ (flags (-w -deprecated-missing-stdlib)
+        (-w -deprecated-from-Coq))
 )
