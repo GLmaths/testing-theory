@@ -1,7 +1,4 @@
 (*
-   Copyright (c) 2024 Nomadic Labs
-   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
-   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
    Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,7 +27,7 @@ Require Import Relations.
 Require Import Coq.Wellfounded.Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import TransitionSystems Must Completeness.
+From Must Require Import OldTransitionSystems Must Completeness.
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)

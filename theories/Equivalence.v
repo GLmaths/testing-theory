@@ -1,7 +1,5 @@
 (*
-   Copyright (c) 2024 Nomadic Labs
-   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
-   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -463,17 +461,7 @@ End failure_must_set_pre. *)
 Section preorder.
 
   (** Extensional definition of Must *)
-(*   Context `{P : Type}.
-  Context `{E : Type}. *)
- (*  Context `{H : !ExtAction A}. *)
-(*   Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
 
-  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
-  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}. 
-  
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-  *)
   Definition must_extensional
     {P : Type}
     `{Sts (P * E), good : E -> Prop} 
@@ -616,8 +604,7 @@ From stdpp Require Import gmultiset.
 
 Section application.
 
-  Lemma nil_refuses (* `{@gLtsOba Q A H gLtsQ gLtsEqQ} *)
-  (* `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts} *)
+  Lemma nil_refuses
   {Q A : Type} {H : ExtAction A}
   `{@gLtsOba Q A H gLtsQ gLtsEqQ}
   `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
@@ -654,7 +641,7 @@ Section application.
 
   CoInductive ionly_spec {P A : Type} {H : ExtAction A} 
     `{@gLtsOba P A H gLtsQ gLtsEqQ} (p : P) : Prop :=
-  | mstep : (forall μ p', p ⟶[μ] p' -> ¬ non_blocking μ) 
+  | mstep : (forall μ p', p ⟶[μ] p' -> exist_co_nba μ) 
         -> (forall α p', p ⟶{α} p' -> ionly_spec p') -> ionly_spec p.
 
   Lemma lts_non_blocking_ionly_spec {P A : Type}
@@ -664,16 +651,17 @@ Section application.
     + intros mem.
       eapply gmultiset_elem_of_dom in mem.
       eapply lts_oba_mo_spec_bis2 in mem as (p' & nb & l').
-      destruct pr as (h1 & h2). eapply h1 in l' as not_nb.
+      destruct pr as (h1 & h2). eapply h1 in l' as (a' & nb' & duo').
+      eapply lts_oba_fw_non_blocking_duo_spec in nb'; eauto.
       contradiction.
     + intro. set_solver.
 Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil_empty_mb 
-        {Q A : Type} {H : ExtAction A}
-        `{LL : @gLtsObaFB Q A H gLtsQ gLtsEqQ LLOBA}
-        `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
-        p (pr : ionly_spec p) :
+    {Q A : Type} {H : ExtAction A}
+    `{M : @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
+    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    p (pr : ionly_spec p) :
     (p, ∅) ⤓ -> forall t, (p, ∅) ⟹ t -> dom (lts_oba_mo t) = ∅.
   Proof.
     intros hpt p' hw.
@@ -694,8 +682,8 @@ Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil 
     {Q A : Type} {H : ExtAction A}
-        `{LL : @gLtsObaFB Q A H gLtsQ gLtsEqQ LLOBA}
-        `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{M : @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
+    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> forall t, (p, m) ⟹ t
       -> dom (lts_oba_mo t) ⊆ dom m.
@@ -729,9 +717,10 @@ Qed.
                rewrite gmultiset_size_singleton in heq. eauto.
   Qed.
 
-  Lemma ionly_nil_leq2_wt_nil {Q A : Type} {H : ExtAction A}
-        `{LL : @gLtsObaFB Q A H gLtsQ gLtsEqQ LLOBA}
-        `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+  Lemma ionly_nil_leq2_wt_nil 
+    {Q A : Type} {H : ExtAction A}
+    `{M : @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
+    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> exists t, (p, m) ⟹ t /\ t ↛ /\ dom (lts_oba_mo t) ⊆ dom m.
   Proof.
@@ -739,7 +728,27 @@ Qed.
     exists t; split; eauto. split; eauto. eapply lts_non_blocking_ionly_spec_wt_nil; eauto.
   Qed.
 
-(*   Lemma ionly_nil_leq2 {P Q A : Type} `{
+  Lemma ionly_wt
+    {Q A : Type} {H : ExtAction A}
+    `{M : @gLtsOba Q A H gLtsQ gLtsEqQ}
+    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    p (pr : ionly_spec p) m p' m' : 
+    (p ▷ m) ⟹ (p' ▷ m') 
+      -> ionly_spec p'.
+  Proof.
+    intro mem.
+    dependent induction mem.
+    + exact pr.
+    + inversion l; subst.
+      ++ destruct pr as (only_receive & Hyp). assert (ionly_spec a2).
+         eapply Hyp; eauto. eapply IHmem; eauto.
+      ++ inversion l0.
+      ++ destruct eq as (nb & duo).
+         assert (ionly_spec a2). destruct pr as (only_receive & Hyp).
+         eapply Hyp; eauto. eapply IHmem; eauto.
+  Qed.
+
+  Lemma ionly_nil_leq2 {P Q A : Type} `{
     @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP,
     @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
 
@@ -755,9 +764,29 @@ Qed.
       edestruct ionly_nil_leq2_wt_nil as (p' & hw & hst' & hsub); eauto.
       exists p'. split; eauto.
       split; eauto.
-
       intro μ. intro mem.
-
+      destruct (decide (non_blocking μ)) as [nb | not_nb].
+      + rename μ into η.
+        eapply lts_refuses_spec1 in mem as (p'' & Tr).
+        assert (η ∈ dom (lts_oba_mo p')) as mem'.
+        eapply gmultiset_elem_of_dom. eapply lts_oba_mo_spec_bis1; eauto.
+        eapply hsub in mem'. eapply lts_refuses_spec2.
+        eapply gmultiset_elem_of_dom in mem'.
+        assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq'. multiset_solver.
+        rewrite eq'.
+        exists (q ▷ (m ∖ {[+ η +]})). eapply ParRight.
+        eapply lts_multiset_minus; eauto.
+      + destruct p' as (p' , m').
+        assert (ionly_spec p') as Hyp. eapply ionly_wt; eauto.
+        destruct Hyp as (only_receive & Hyp').
+        eapply lts_refuses_spec1 in mem as ((p'' , m'') & Tr'').
+        inversion Tr''; subst.
+        ++ assert (exist_co_nba μ) as (η & nb & duo). eapply only_receive; eauto.
+           eapply lts_refuses_spec2. exists (q ▷ ({[+ η +]} ⊎ m)).
+           eapply ParRight. simpl in *. eapply lts_multiset_add; eauto.
+        ++ eapply blocking_action_in_ms in not_nb as (eq' & duo' & nb') ; eauto ;subst.
+           eapply lts_refuses_spec2. exists (q ▷ {[+ co μ +]} ⊎ m).
+           eapply ParRight. eapply lts_multiset_add; eauto.
     - exfalso. eapply (@lts_refuses_spec2 (Q * mb A)). eauto. now eapply nil_refuses.
     - inversion hcnv; inversion l; subst.
       + exfalso. eapply (@lts_refuses_spec2 Q); eauto.
@@ -773,25 +802,29 @@ Qed.
            edestruct (IHhw ({[+ co μ +]} ⊎ m) p) as (t' & hw' & hst' & hsub'); eauto.
            eapply H8, wt_act. eapply ParRight. eauto. eapply wt_nil.
            exists t'. split. eapply wt_act; eauto. eapply ParRight. eauto. now split.
-  Admitted.
+  Qed.
 
   Lemma input_only_leq_nil {P Q A : Type} `{
     @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsQ gLtsEqQ W, !FiniteImagegLts Q A,
-    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Good E A good, (∀ e : E, Decision (good e)),
-    @gen_spec_conv  _ _ _ _ _ good _ co_of gen_conv, @gen_spec_acc _ _ _ _ _ good _ co_of gen_acc}
+    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Good E A good, (∀ e : E, Decision (good e))}
+
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
     `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
-    
+
     `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
     `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
     `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
     `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+
+    `{@gen_spec_conv  _ _ _ _ _ good _ co_of gen_conv, 
+    @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ good _ co_of gen_acc _ _}
+
     (p : P) (pr : ionly_spec p) (q : Q) (h : forall α, q ↛{α}) : 
     @pre_extensional _ _ _ _ _ good _ p q.
   Proof.
     now eapply equivalence_bhv_acc_ctx; split; intros ? ?; [eapply nil_cnv | eapply ionly_nil_leq2].
-  Qed. *)
+  Qed.
 
 End application.

@@ -1,7 +1,4 @@
 (*
-   Copyright (c) 2024 Nomadic Labs
-   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
-   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
    Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
