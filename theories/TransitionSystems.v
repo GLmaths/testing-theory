@@ -3850,11 +3850,12 @@ Definition lts_fw_non_blocking_action_set `{FiniteImagegLts P A}
   let ps := map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ η))) in
   if (decide (η ∈ m)) then (p, m ∖ {[+ η +]}) :: ps else ps.
 
+
 Definition lts_fw_co_fin `{@FiniteImagegLts P A H M}
   `{@Prop_of_Inter P (mb A) A fw_inter H M MbgLts}
   (p : P) (η : A) (* : list (A * list P) *) :=
   map (fun μ => (η, map proj1_sig (enum $ dsig (lts_step p (ActExt $ μ))))) 
-    (elements (lts_co_inter_action_left η p)).
+    (elements (lts_co_inter_action_left η p) ++ elements (lts_essential_actions_left p)).
 
 Definition lts_fw_com_fin `{@FiniteImagegLts P A H M}
   `{@Prop_of_Inter P (mb A) A fw_inter H M MbgLts}
@@ -3900,44 +3901,45 @@ Proof.
     eapply (non_blocking_action_in_ms m1 μ2 m2) in nb as eq; subst; eauto.
     assert (μ2 = co μ1) as eq. eapply unique_nb; eauto. subst.
     split.
-    
-    
-    
     now replace (({[+ co μ1 +]} ⊎ m2) ∖ {[+ co μ1 +]}) with m2 by multiset_solver.
-    
-
-    (* assert (co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) =
-co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
-∧ co μ1 ∈ elements ({[+ co μ1 +]} ⊎ m2) 
-    -> co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
-        ∈ concat (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)))) as Hyp. *)
-    (* Search (concat _).
-    Search (map _). *)
     assert (elements ({[+ co μ1 +]} ⊎ m2) ≡ₚ 
     elements (gmultiset_singleton (co μ1)) ++ elements (m2)) as equiv.
     unfold singletonMS. eapply gmultiset_elements_disj_union.
     assert (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)) ≡ₚ 
-    map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ (co μ1)+]} : gmultiset A) ++ elements m2))
+    map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+(co μ1)+]} : gmultiset A) ++ elements m2))
     as equiv2.
     eapply Permutation_map. eauto.
     erewrite gmultiset_elements_singleton in equiv2.
-    simpl in equiv2. (*  intro. *) (* eapply in_concat. *)
-    
-    
+    simpl in equiv2. 
     assert (eq : co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) ∈ 
     lts_fw_co_fin p1 (co μ1)).
-    (* unfold lts_fw_co_fin.
-    assert (μ1 ∈ lts_co_inter_action_left (co μ1) p1).
-    eapply lts_co_inter_action_spec_left ; eauto.
+    unfold lts_fw_co_fin.
     edestruct (lts_essential_actions_spec_interact _ _ _ _ _ _ l1 l2 inter) 
       as [ess_act | not_ess_act].
-    ++ admit.
-    ++ eauto. *)
-    admit. 
-    (* Search (map _). *)
-    
-    
-    unfold lts_fw_com_fin. 
+    ++ rewrite map_app.  eapply elem_of_app. right. 
+       eapply elem_of_list_In. 
+       assert (lts_essential_actions_left p1 = 
+       {[μ1]} ∪ lts_essential_actions_left p1 ∖ {[μ1]}) as eq''.
+        eapply union_difference_singleton_L;eauto.
+       rewrite eq''.
+       assert (elements ({[μ1]} ∪ (lts_essential_actions_left p1) ∖ {[μ1]}) ≡ₚ
+        μ1 :: elements ((lts_essential_actions_left p1) ∖ {[μ1]})) as eq'''.
+        eapply elements_union_singleton. set_solver. symmetry in eq'''.
+       eapply Permutation_in. eapply Permutation_map. exact eq'''. simpl. left. eauto.
+    ++ assert (μ1 ∈ lts_co_inter_action_left (co μ1) p1). eauto.
+       eapply lts_co_inter_action_spec_left ; eauto.
+       rewrite map_app. 
+       eapply elem_of_app. left. 
+       eapply elem_of_list_In. 
+       assert (lts_co_inter_action_left (co μ1) p1 = 
+       {[μ1]} ∪ lts_co_inter_action_left (co μ1) p1 ∖ {[μ1]}) as eq''.
+        eapply union_difference_singleton_L;eauto.
+       rewrite eq''.
+       assert (elements ({[μ1]} ∪ (lts_co_inter_action_left (co μ1) p1) ∖ {[μ1]}) ≡ₚ
+        μ1 :: elements ((lts_co_inter_action_left (co μ1) p1) ∖ {[μ1]})) as eq'''.
+       eapply elements_union_singleton. set_solver. symmetry in eq'''.
+       eapply Permutation_in. eapply Permutation_map. exact eq'''. simpl. left. eauto.
+    ++ unfold lts_fw_com_fin. 
     rewrite<- flat_map_concat_map.
     assert (eq' : flat_map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2))
     ≡ₚ flat_map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} : gmultiset A) 
@@ -3945,41 +3947,15 @@ co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
     eapply Permutation_flat_map. eauto.
     erewrite gmultiset_elements_singleton in eq'.
     simpl in *.
-(*     assert (co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) ∈ lts_fw_co_fin p1 (co μ1)).
-    eauto.  *)
-   (*  unfold elem_of. Search (_ ≡ₚ_ -> _). *)
     eapply elem_of_Permutation_proper; eauto. 
-    eapply elem_of_list_In. (* eapply Permutation_in; eauto. *)
+    eapply elem_of_list_In. 
     eapply in_or_app. left. eapply elem_of_list_In in eq. eauto.
-    (* set_solver.  *)(* eapply Permutation_in; eauto. 
-    Permutation_flat_map   Permutation_in
-map_app
-    Search (concat _).
-    erewrite gmultiset_elements_singleton in equiv2. *)
-    (* admit. Check elem_of_Permutation_proper. *)
-    (* assert ((∃ μ : A,
-    co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) =
-    co μ ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ)))) 
-    ∧ (co μ) ∈ elements ({[+ co μ1 +]} ⊎ m2)) 
-    -> co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))
-        ∈ concat (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)))) as Hyp. *)
-
-    (* eapply elem_of_list_fmap. *)
-
-    (* eapply elem_of_list_fmap. *)
-    (* exists μ1. *)
-
-(*     eapply elem_of_Permutation_proper.
-    eapply (gmultiset_elements_disj_union {[+ co μ1 +]} m2).
-    rewrite gmultiset_elements_singleton. set_solver.
-    
-     *)
-    eapply elem_of_list_In.
+    ++ eapply elem_of_list_In.
     eapply elem_of_list_fmap.
     eexists.  split. reflexivity.
     eapply elem_of_list_fmap.
     exists (dexist p2 l1). split. reflexivity. eapply elem_of_enum.
-Admitted.
+Qed.
 
 Lemma lts_fw_input_set_spec1 `{@FiniteImagegLts P A H gLtsP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
