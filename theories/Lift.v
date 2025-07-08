@@ -1,5 +1,8 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -148,7 +151,7 @@ Proof.
     ++ left. exists η. 
        exists μ. exists p2.
        assert (¬ non_blocking μ) as not_nb.
-       eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+       eapply dual_blocks; eauto.
        assert (Forall (NotEq μ) (elements m)) as simpl_in_l.
        eapply not_nb_with_strip_m; eauto.
        eapply woutpout_delay_inp in hlr as (u & lu) ; eauto.
@@ -563,7 +566,7 @@ Proof.
         edestruct exists_duo_nb as (μ & duo). 
         eapply com; eauto.
         eapply ParRight. assert (¬ non_blocking μ) as not_nb.
-        eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+        eapply dual_blocks; eauto.
         eapply lts_multiset_add; eauto.
     -- replace ({[+ η +]} ⊎ m ⊎ m2) with (m ⊎ ({[+ η +]} ⊎ m2)) by multiset_solver.
        eapply IHhwo. eassumption.
@@ -871,7 +874,7 @@ Proof.
       ++ eapply woutpout_preserves_mu in l0 as (r0 & r1 & l0 & _); eauto.
          eauto with mdb.
       ++ destruct (decide (non_blocking μ2)); destruct (decide (non_blocking μ1)). 
-         +++ exfalso. eapply lts_oba_fw_non_blocking_duo_spec. eauto. symmetry; eauto. eauto.
+         +++ exfalso. eapply dual_blocks. eauto. symmetry; eauto. eauto.
          +++ exfalso. eapply (lts_refuses_spec2 e').
              exists e0. exact l2. eapply lts_oba_mo_strip_refuses; eauto.
          +++ eapply woutpout_preserves_mu in l2 as (r0 & r1 & l0 & _); eauto.

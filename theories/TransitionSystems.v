@@ -1,5 +1,8 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +73,7 @@ Section in_list_finite.
         exists Hx; apply elem_of_cons; eauto.
   Qed.
 
-  Lemma Forall_to_sig_NoDup l HPl : NoDup l → NoDup (Forall_to_sig l HPl).
+  Lemma Forall_to_sig_NoDup (l : list A) HPl : NoDup l → NoDup (Forall_to_sig l HPl).
   Proof.
     revert HPl; induction l as [|a l IHl]; simpl;
       intros HPl; first by constructor.
@@ -85,8 +88,8 @@ Section in_list_finite.
     assert (Forall P (filter P (remove_dups l))) as Hels.
     { apply Forall_forall. intros ?. rewrite<- elem_of_list_In. rewrite elem_of_list_filter ; tauto. }
     refine {| enum := Forall_to_sig (filter P (remove_dups (l : list A))) Hels |}.
-    - eapply Forall_to_sig_NoDup. eapply list.NoDup_filter.
-      eapply list.NoDup_remove_dups.
+    - eapply Forall_to_sig_NoDup. eapply list_relations.NoDup_filter.
+      eapply NoDup_remove_dups.
     - intros x.
       edestruct (elem_of_Forall_to_sig_2 _ Hels) as [Hx' ?].
       { apply elem_of_list_filter; split; first apply (proj2_sig x).
@@ -94,7 +97,7 @@ Section in_list_finite.
       replace x with (`x ↾ Hx'); last by apply sig_eq.
       done.
   Qed.
-  
+
 End in_list_finite.
 
 (** Multiset helpers. *)
@@ -134,19 +137,19 @@ Qed.
 
 Class ExtAction (A : Type) :=
   MkExtAction {
-      extaction_eqdec: EqDecision A;
-      extaction_countable: Countable A;
+      eqdec: EqDecision A;
+      countable: Countable A;
       non_blocking : A -> Prop;
-      nb_dec a : Decision (non_blocking a);
+      non_blocking_dec a : Decision (non_blocking a);
       dual : A -> A -> Prop;
-      d_dec a b: Decision (dual a b);
+      dual_dec a b: Decision (dual a b);
 
-      (* Co-action of a non-blocking action is blocking, otherwise infinite non-blocking action sequence in FW*)
-      lts_oba_fw_non_blocking_duo_spec η μ:
+      (* Co-action of a non-blocking action is blocking, otherwise infinite non-blocking action sequence in FW *)
+      dual_blocks η μ:
       non_blocking η -> dual η μ -> 
         ¬ non_blocking μ ;
 
-      (* FiniteImageLts for FW *)
+      (* Unique non-blocking action *)
       co : A -> A;
       unique_nb η μ: non_blocking η -> dual η μ -> η = (co μ);
 
@@ -155,10 +158,10 @@ Class ExtAction (A : Type) :=
       nb_not_nb η μ1 μ2 : non_blocking η -> dual η μ2 -> dual μ1 μ2 -> non_blocking μ1;
       duo_sym : Symmetric dual;
     }.
-#[global] Existing Instance extaction_eqdec.
-#[global] Existing Instance extaction_countable.
-#[global] Existing Instance nb_dec.
-#[global] Existing Instance d_dec.
+#[global] Existing Instance eqdec.
+#[global] Existing Instance countable.
+#[global] Existing Instance non_blocking_dec.
+#[global] Existing Instance dual_dec.
 #[global] Existing Instance duo_sym.
 
 (* Actions *)
@@ -310,7 +313,7 @@ Qed.
 
 (* Inductive definition of terminate. *)
 
-Reserved Notation "p ⤓" (at level 60).
+Reserved Notation "p ⤓" (at level 1).
 
 Inductive terminate `{gLts P A} (p : P) : Prop :=
 | tstep : (forall q, p ⟶ q -> terminate q) -> terminate p
@@ -2338,7 +2341,7 @@ Proof.
   inversion Hstep as [ ? μ ? duo nb'|]; subst.
   + simpl in *. 
     assert (nb'' : non_blocking μ); eauto.
-    apply (lts_oba_fw_non_blocking_duo_spec μ η ) in nb''; eauto. contradiction.
+    apply (dual_blocks μ η ) in nb''; eauto. contradiction.
   + eauto.
 Qed.
 
@@ -2358,7 +2361,7 @@ Proof.
 intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
   + right. intro Hyp. destruct Hyp as (μ' & nb' & duo').
     assert (¬ non_blocking μ).
-    eapply lts_oba_fw_non_blocking_duo_spec; eauto. contradiction.
+    eapply dual_blocks; eauto. contradiction.
   + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
     ++ assert { μ' | dual μ μ'} as (μ' & duo).
        exact (choice (fun μ0 => dual μ μ0) (exists_duo_nb μ) ).
@@ -2834,7 +2837,7 @@ Proof.
   induction hmo using gmultiset_ind; intros p q Heqhmo heq.
   - eapply leibniz_equiv. intros η.
     rewrite multiplicity_empty.
-    destruct (nb_dec η).
+    destruct (non_blocking_dec η).
     destruct (lts_refuses_decidable q (ActExt $ η)).
     + destruct (decide (η ∈ lts_oba_mo q)).
       ++ eapply (* lts_oba_mo_spec1, *) lts_oba_mo_spec_bis2 in e as (t & hl).
@@ -3136,7 +3139,7 @@ Proof.
     [(a & b & q1 & duo & nb  & l1 & l2) | (qt & q1 & hltqt & hwq1 & heq1)].
   - destruct l2 as (q'' & hlq1 & heq'').
     edestruct (lts_oba_non_blocking_action_delay nb l1 hlq1) as (q2 & hlq & hlq2).
-    assert (¬ non_blocking b) as not_nb. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+    assert (¬ non_blocking b) as not_nb. eapply dual_blocks; eauto.
     edestruct (fw_eq_input_simulation heq not_nb hlq) as (p2 & hlp_inp & heqp2).
     assert (mem : a ∈ lts_oba_mo p ⊎ (mb_without_not_nb mp))
       by (eapply lts_oba_mo_spec_bis1 in l1; multiset_solver).
@@ -3503,7 +3506,7 @@ Proof.
   - destruct eq as (duo & nb).
     assert ({[+ μ2 +]} ⊎ mq = mt) as equal_mb.
     apply non_blocking_action_in_ms; eauto.
-    eapply lts_fw_com_eq_spec; eauto. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+    eapply lts_fw_com_eq_spec; eauto. eapply dual_blocks; eauto.
     rewrite equal_mb. eauto.
 Qed.
 
@@ -3657,7 +3660,7 @@ Proof.
       now eapply fw_eq_id_mb.
     + inversion l0.
     + destruct eq as (duo' & nb').
-      assert (¬ non_blocking μ1). eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+      assert (¬ non_blocking μ1). eapply dual_blocks; eauto.
       assert (neq : μ1 ≠ η). intro. subst. contradiction. 
       edestruct (lts_oba_non_blocking_action_confluence nb neq l l1)
         as (t & hl1 & (t1 & hl2 & heq1)).
@@ -3807,7 +3810,7 @@ Next Obligation.
        now eapply fw_eq_id_mb.
     ++ right. simpl. unfold fw_eq.
        intros p' q' strip_p strip_q. simpl in *.
-       assert ( ¬ non_blocking μ) as not_nb. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+       assert ( ¬ non_blocking μ) as not_nb. eapply dual_blocks; eauto.
        eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst.
        set (heq := lts_oba_mo_spec2 _ _ _ nb l).
        rewrite heq in strip_p. rewrite heq. split.
@@ -3830,7 +3833,7 @@ Next Obligation.
     ++ left. exists (p3, m3). split. eapply ParSync; eauto. split; eauto. reflexivity.
     ++ right. 
        eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto.
-       assert (¬ non_blocking μ) as not_nb. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+       assert (¬ non_blocking μ) as not_nb. eapply dual_blocks; eauto.
        eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst; eauto.
        assert (η = co μ) as eq_nb. eapply unique_nb; eauto. subst.
        reflexivity.

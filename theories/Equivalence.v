@@ -1,5 +1,8 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -650,7 +653,7 @@ Section application.
       eapply gmultiset_elem_of_dom in mem.
       eapply lts_oba_mo_spec_bis2 in mem as (p' & nb & l').
       destruct pr as (h1 & h2). eapply h1 in l' as (a' & nb' & duo').
-      eapply lts_oba_fw_non_blocking_duo_spec in nb'; eauto.
+      eapply dual_blocks in nb'; eauto.
       contradiction.
     + intro. set_solver.
 Qed.

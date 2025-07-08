@@ -1,5 +1,8 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -188,7 +191,7 @@ Proof.
     + contradiction.
     + destruct (decide (non_blocking μ)) as [nb | not_nb];
       destruct (decide (non_blocking μ')) as [nb' | not_nb'].
-      ++ exfalso. eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+      ++ exfalso. eapply dual_blocks; eauto.
       ++ edestruct mustx_terminate_ungood; eauto with mdb. contradiction.
          eapply cnv_act. eauto.
          intros q w.

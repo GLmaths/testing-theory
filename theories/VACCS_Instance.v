@@ -29,12 +29,14 @@ From Coq.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import OldTransitionSystems.
 
+
+
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -69,14 +71,14 @@ Notation "'non' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
-Context (Eval_Eq : Equation Data -> (option bool)).
-Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+Parameter (Eval_Eq : Equation Data -> (option bool)).
+Parameter (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+Parameter (channel_is_countable : Countable Channel). (* only here for the classes *)
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+Parameter (value_eq_dec : EqDecision Value). (* only here for the classes *)
 #[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
-Context (value_is_countable : Countable Value). (* only here for the classes *)
+Parameter (value_is_countable : Countable Value). (* only here for the classes *)
 #[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
 
 (* Definition of processes*)
@@ -290,7 +292,7 @@ with gsize p :=
   | p + q => S (gsize p + gsize q)
 end.
 
-#[global] Hint Constructors lts:ccs.
+Hint Constructors lts:ccs.
 
 Reserved Notation "p ≡ q" (at level 70).
 
@@ -349,7 +351,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
 .
 
 
-#[global] Hint Constructors cgr_step:cgr_step_structure.
+Hint Constructors cgr_step:cgr_step_structure.
 
 Infix "≡" := cgr_step (at level 70).
 
@@ -380,7 +382,7 @@ Proof. intros p q hcgr. induction hcgr. constructor. apply cgr_symm_step. exact 
 #[global] Instance cgr_trans : Transitive cgr.
 Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 
-#[global] Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
 
 (* The relation ≡* is an equivence relation*)
 #[global] Instance cgr_is_eq_rel  : Equivalence cgr.
@@ -511,7 +513,7 @@ apply cgr_par_com. apply transitivity with (M4 ‖ M2). apply cgr_par. exact H0.
 Qed.
 
 
-#[global] Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
+Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
 cgr_par_assoc_rev cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc 
 cgr_choice_assoc_rev cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice 
 cgr_refl cgr_symm cgr_trans:cgr.
@@ -594,9 +596,9 @@ Proof.
   eapply cgr_subst1. constructor. apply cgr_recursion_step. exact heq.
 Qed.
 
-#[global] Hint Resolve cgr_is_eq_rel: ccs.
-#[global] Hint Constructors clos_trans:ccs.
-#[global] Hint Unfold cgr:ccs.
+Hint Resolve cgr_is_eq_rel: ccs.
+Hint Constructors clos_trans:ccs.
+Hint Unfold cgr:ccs.
 
 
 (* State Transition System (STS-reduction) *)
@@ -628,7 +630,7 @@ Inductive sts : proc -> proc -> Prop :=
     p1 ≡* p2 -> sts p2 q2 -> q2 ≡* q1 -> sts p1 q1
 .
 
-#[global] Hint Constructors sts:ccs.
+Hint Constructors sts:ccs.
 
 
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
@@ -696,21 +698,21 @@ intros P Q c v Transition.
   * apply cgr_trans with ((c ? x • P) + 𝟘). apply cgr_trans with (c ? x • P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
+- edestruct IHTransition;eauto. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
   * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ p). split; try split.
+- edestruct IHTransition;eauto. decompose record H. exists x. exists x0. exists (x1 ‖ p). split; try split.
   * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p2). exists 𝟘. split ; try split.
+- edestruct IHTransition; eauto. decompose record H. exists x. exists (x0 + p2). exists 𝟘. split ; try split.
   * apply cgr_trans with ((c ? l • x) + (x0 + p2)). apply cgr_trans with (((c ? l • x) + x0) + p2).
     apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? l • x) + x0) ‖ 𝟘).
     assumption. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. assumption.
   * reflexivity.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p1). exists 𝟘. split; try split.
+- edestruct IHTransition; eauto. decompose record H. exists x. exists (x0 + p1). exists 𝟘. split; try split.
   * apply cgr_trans with ((c ? l • x) + (x0 + p1)). apply cgr_trans with (((c ? l • x) + x0) + p1).
     apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p2. reflexivity.
     apply cgr_trans with (((c ? l • x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
@@ -733,14 +735,14 @@ intros P Q c v Transition.
 - exists 𝟘. split.
   * apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists (x ‖ q). split.
+- edestruct IHTransition;eauto. decompose record H. exists (x ‖ q). split.
   * apply cgr_trans with (((c ! v • 𝟘) ‖ x) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((𝟘 ‖ x) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists (x ‖ p). split.
+- edestruct IHTransition; eauto. decompose record H. exists (x ‖ p). split.
   * apply cgr_trans with (((c ! v • 𝟘) ‖ x) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((𝟘 ‖ x) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
-- edestruct guarded_does_no_output. eauto.
-- edestruct guarded_does_no_output. eauto.
+- edestruct guarded_does_no_output. subst. eauto.
+- edestruct guarded_does_no_output. subst. eauto.
 Qed.
 
 
@@ -1090,7 +1092,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_choice : forall k p1 p2,  Well_Defined_Input_in k (g p1) ->  Well_Defined_Input_in k (g p2) 
               ->  Well_Defined_Input_in k (p1 + p2).
 
-#[global] Hint Constructors Well_Defined_Input_in:ccs.
+Hint Constructors Well_Defined_Input_in:ccs.
 
 Lemma Inequation_k_data : forall k d, Well_Defined_Data k d -> Well_Defined_Data (S k) d.
 Proof.
@@ -1369,7 +1371,7 @@ Inductive Well_Defined_Action: (Act TypeOfActions) -> Prop :=
 Lemma Output_are_good : forall p1 p2 c d, Well_Defined_Input_in 0 p1 -> lts p1 (ActOut (c ⋉ d)) p2 
       -> exists v, d = cst v.
 Proof.
-intros. dependent induction H0. dependent destruction H. apply Well_Def_Data_Is_a_value in H. destruct H.
+intros. dependent induction H0. dependent destruction H. eapply Well_Def_Data_Is_a_value in H. destruct H.
 subst. exists x. reflexivity.
 - dependent destruction H. eapply IHlts with c. assumption. reflexivity.
 - dependent destruction H. eapply IHlts with c. assumption. reflexivity.

@@ -33,7 +33,7 @@ From Must Require Import OldTransitionSystems.
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -1364,13 +1364,13 @@ intros. revert H. rename H0 into Transition. dependent induction Transition.
 * intros. dependent destruction H. apply IHTransition. assumption.
 Qed.
 
-Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+Parameter (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+Parameter (channel_is_countable : Countable Channel). (* only here for the classes *)
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+Parameter (value_eq_dec : EqDecision Value). (* only here for the classes *)
 #[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
-Context (value_is_countable : Countable Value). (* only here for the classes *)
+Parameter (value_is_countable : Countable Value). (* only here for the classes *)
 #[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
 
 Lemma Data_dec : forall (x y : Data) , {x = y} + {x <> y}.

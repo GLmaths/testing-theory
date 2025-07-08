@@ -24,11 +24,11 @@
 *)
 
 
-From Stdlib.Program Require Import Equality.
-From Stdlib.Strings Require Import String.
+From Coq.Program Require Import Equality.
+From Coq.Strings Require Import String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Stdlib Require Import Relations.
-From Stdlib.Wellfounded Require Import Inverse_Image.
+From Coq Require Import Relations.
+From Coq.Wellfounded Require Import Inverse_Image.
 
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
@@ -51,7 +51,7 @@ Arguments τ {_} .
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -86,7 +86,7 @@ Coercion pr_var : nat >-> proc.
 Coercion g : gproc >-> proc.
 
 Notation "①" := (gpr_success).
-Notation "⓪" := (gpr_nil).
+Notation "𝟘" := (gpr_nil).
 Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
 Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
@@ -107,7 +107,7 @@ Fixpoint size (p : proc) :=
 with gsize p :=
   match p with
   | ① => 1
-  | ⓪ => 0
+  | 𝟘 => 0
   | c ! • p => S (size p)
   | c ? • p => S (size p)
   | t • p => S (size p)
@@ -127,7 +127,7 @@ end
 
 with gpr_subst id p q {struct p} := match p with
 | ① => p
-| ⓪ => p
+| 𝟘 => p
 | c ! • p =>
     c ! • (pr_subst id p q)
 | c ? • p =>
@@ -181,7 +181,7 @@ Inductive lts : proc -> Act Channel -> proc -> Prop :=
 .
 
 
-#[global] Hint Constructors lts:ccs.
+Hint Constructors lts:ccs.
 
 Reserved Notation "p ≡ q" (at level 70).
 (*Naïve definition of a relation ≡ that will become a congruence ≡* by transitivity*)
@@ -191,9 +191,9 @@ Inductive cgr_step : proc -> proc -> Prop :=
 
 (* Rules for the Parallèle *)
 | cgr_par_nil_step : forall p, 
-    p ‖ ⓪ ≡ p
+    p ‖ 𝟘 ≡ p
 | cgr_par_nil_rev_step : forall p,
-    p ≡ p ‖ ⓪
+    p ≡ p ‖ 𝟘
 | cgr_par_com_step : forall p q,
     p ‖ q ≡ q ‖ p
 | cgr_par_assoc_step : forall p q r,
@@ -203,9 +203,9 @@ Inductive cgr_step : proc -> proc -> Prop :=
 
 (* Rules for the Summation *)
 | cgr_choice_nil_step : forall p,
-    cgr_step (p + ⓪) p
+    cgr_step (p + 𝟘) p
 | cgr_choice_nil_rev_step : forall p,
-    cgr_step (g p) (p + ⓪)
+    cgr_step (g p) (p + 𝟘)
 | cgr_choice_com_step : forall p q,
     cgr_step (p + q) (q + p)
 | cgr_choice_assoc_step : forall p q r,
@@ -237,7 +237,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
 
 
 
-#[global] Hint Constructors cgr_step:cgr_step_structure.
+Hint Constructors cgr_step:cgr_step_structure.
 
 Infix "≡" := cgr_step (at level 70).
 
@@ -263,7 +263,7 @@ Proof. intros p q hcgr. induction hcgr. constructor. apply cgr_symm_step. exact 
 #[global] Instance cgr_trans : Transitive cgr.
 Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 
-#[global] Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
 
 (* The relation ≡* is an equivence relation*)
 #[global] Instance cgr_is_eq_rel  : Equivalence cgr.
@@ -274,12 +274,12 @@ Proof. repeat split.
 Qed.
 
 (*the relation ≡* respects all the rules that ≡ respected*)
-Lemma cgr_par_nil : forall p, p ‖ ⓪ ≡* p.
+Lemma cgr_par_nil : forall p, p ‖ 𝟘 ≡* p.
 Proof.
 constructor.
 apply cgr_par_nil_step.
 Qed.
-Lemma cgr_par_nil_rev : forall p, p ≡* p ‖ ⓪.
+Lemma cgr_par_nil_rev : forall p, p ≡* p ‖ 𝟘.
 Proof.
 constructor.
 apply cgr_par_nil_rev_step.
@@ -299,12 +299,12 @@ Proof.
 constructor.
 apply cgr_par_assoc_rev_step.
 Qed.
-Lemma cgr_choice_nil : forall p, p + ⓪ ≡* p.
+Lemma cgr_choice_nil : forall p, p + 𝟘 ≡* p.
 Proof.
 constructor.
 apply cgr_choice_nil_step.
 Qed.
-Lemma cgr_choice_nil_rev : forall p, g p ≡* p + ⓪.
+Lemma cgr_choice_nil_rev : forall p, g p ≡* p + 𝟘.
 Proof.
 constructor.
 apply cgr_choice_nil_rev_step.
@@ -377,13 +377,8 @@ apply transitivity with (M2 ‖ M3). apply cgr_par. exact H. apply transitivity 
 apply cgr_par_com. apply transitivity with (M4 ‖ M2). apply cgr_par. exact H0. apply cgr_par_com.
 Qed.
 
-(*(* Decision procedure for the Channel of channel *)
-Definition Channel_eq_dec : forall (x y : Channel), { x = y } + { x <> y } := string_dec.
 
-#[global] Instance Channel_eqdecision : EqDecision Channel. by exact Channel_eq_dec. Defined.*)
-
-
-#[global] Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
+Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
 cgr_par_assoc_rev cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc 
 cgr_choice_assoc_rev cgr_recursion cgr_tau cgr_input cgr_output cgr_par cgr_choice 
 cgr_refl cgr_symm cgr_trans:cgr.
@@ -413,7 +408,7 @@ Inductive sts : proc -> proc -> Prop :=
 .
 Infix "➙" := sts (at level 50).
 
-#[global] Hint Constructors sts:ccs.
+Hint Constructors sts:ccs.
 
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 Lemma ReductionShape : forall P Q, P ➙ Q ->
@@ -423,9 +418,9 @@ Lemma ReductionShape : forall P Q, P ➙ Q ->
 Proof.
 intros P Q Transition.
 induction Transition.
-  - left. exists c. exists p1. exists p2. exists g1. exists g2. exists ⓪. split; apply cgr_par_nil_rev.
-  - right. left. exists p. exists g0. exists ⓪. split; apply cgr_par_nil_rev.
-  - right. right. exists x. exists p. exists ⓪. split; apply cgr_par_nil_rev.
+  - left. exists c. exists p1. exists p2. exists g1. exists g2. exists 𝟘. split; apply cgr_par_nil_rev.
+  - right. left. exists p. exists g0. exists 𝟘. split; apply cgr_par_nil_rev.
+  - right. right. exists x. exists p. exists 𝟘. split; apply cgr_par_nil_rev.
   - destruct IHTransition as [IH|[IH|IH]]; [ left | right; left | right; right]; decompose record IH.
     * exists x. exists x0. exists x1. exists x2. exists x3. exists (x4 ‖ q). split.
         ** apply transitivity with (((((x ! • x0) + x2) ‖ ((x ? • x1) + x3)) ‖ x4) ‖ q). apply cgr_par. exact H. apply cgr_par_assoc.
@@ -450,66 +445,66 @@ Qed.
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForInput : forall P V x, (lts P (ActIn x) V -> 
-(exists Q M R, ((P ≡* ((x ? • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = ⓪))).
+(exists Q M R, ((P ≡* ((x ? • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P V x Transition.
  dependent induction Transition.
-- exists p. exists ⓪. exists ⓪. split ; try split.
-  * apply cgr_trans with ((x ? • p) + ⓪). apply cgr_trans with (x ? • p). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
+- exists p. exists 𝟘. exists 𝟘. split ; try split.
+  * apply cgr_trans with ((x ? • p) + 𝟘). apply cgr_trans with (x ? • p). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ q). split; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ q). split; try split.
   * apply cgr_trans with ((((x ? • x0) + x1) ‖ x2) ‖ q). apply cgr_par. exact H0. apply cgr_par_assoc.
   * apply cgr_trans with ((x0 ‖ x2) ‖ q). apply cgr_par. exact H1. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ p). split; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ p). split; try split.
   * apply cgr_trans with ((((x ? • x0) + x1) ‖ x2) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. exact H0. apply cgr_par_assoc.
   * apply cgr_trans with ((x0 ‖ x2) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. exact H1. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists (x1 + p2). exists ⓪. split ; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists (x1 + p2). exists 𝟘. split ; try split.
   * apply cgr_trans with ((x ? • x0) + (x1 + p2)). apply cgr_trans with (((x ? • x0) + x1) + p2).
-    apply cgr_choice. assert (x2 = ⓪). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((x ? • x0) + x1) ‖ ⓪).
+    apply cgr_choice. assert (x2 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((x ? • x0) + x1) ‖ 𝟘).
     exact H0. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
-  * assert (x2 = ⓪). apply H3. exists p1. reflexivity. rewrite H2 in H1. exact H1.
+  * assert (x2 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. exact H1.
   * reflexivity.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists (x1 + p1). exists ⓪. split; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists (x1 + p1). exists 𝟘. split; try split.
   * apply cgr_trans with ((x ? • x0) + (x1 + p1)). apply cgr_trans with (((x ? • x0) + x1) + p1).
-    apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x2 = ⓪). apply H3. exists p2. reflexivity.
+    apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x2 = 𝟘). apply H3. exists p2. reflexivity.
     apply cgr_trans with (((x ? • x0) + x1) ‖ x2). exact H0. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
-  * assert (x2 = ⓪). apply H3. exists p2. reflexivity. rewrite <-H2. exact H1.
+  * assert (x2 = 𝟘). apply H3. exists p2. reflexivity. rewrite <-H2. exact H1.
   * reflexivity.
 Qed.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a OUPUT,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForOutput : forall P V x, (lts P (ActOut x) V -> 
-(exists Q M R, ((P ≡* ((x ! • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = ⓪))).
+(exists Q M R, ((P ≡* ((x ! • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P V x Transition.
  dependent induction Transition.
-- exists p. exists ⓪. exists ⓪. split ; try split.
-  * apply cgr_trans with ((x ! • p) + ⓪). apply cgr_trans with (x ! • p). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
+- exists p. exists 𝟘. exists 𝟘. split ; try split.
+  * apply cgr_trans with ((x ! • p) + 𝟘). apply cgr_trans with (x ! • p). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ q). split; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ q). split; try split.
   * apply cgr_trans with ((((x ! • x0) + x1) ‖ x2) ‖ q). apply cgr_par. exact H0. apply cgr_par_assoc.
   * apply cgr_trans with ((x0 ‖ x2) ‖ q). apply cgr_par. exact H1. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ p). split; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists x1. exists (x2 ‖ p). split; try split.
   * apply cgr_trans with ((((x ! • x0) + x1) ‖ x2) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. exact H0. apply cgr_par_assoc.
   * apply cgr_trans with ((x0 ‖ x2) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. exact H1. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists (x1 + p2). exists ⓪. split ; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists (x1 + p2). exists 𝟘. split ; try split.
   * apply cgr_trans with ((x ! • x0) + (x1 + p2)). apply cgr_trans with (((x ! • x0) + x1) + p2).
-    apply cgr_choice. assert (x2 = ⓪). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((x ! • x0) + x1) ‖ ⓪).
+    apply cgr_choice. assert (x2 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((x ! • x0) + x1) ‖ 𝟘).
     exact H0. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
-  * assert (x2 = ⓪). apply H3. exists p1. reflexivity. rewrite H2 in H1. exact H1.
+  * assert (x2 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. exact H1.
   * reflexivity.
-- destruct (IHTransition x). reflexivity. decompose record H. exists x0. exists (x1 + p1). exists ⓪. split; try split.
+- edestruct IHTransition. reflexivity. decompose record H. exists x0. exists (x1 + p1). exists 𝟘. split; try split.
   * apply cgr_trans with ((x ! • x0) + (x1 + p1)). apply cgr_trans with (((x ! • x0) + x1) + p1).
-    apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x2 = ⓪). apply H3. exists p2. reflexivity.
+    apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x2 = 𝟘). apply H3. exists p2. reflexivity.
     apply cgr_trans with (((x ! • x0) + x1) ‖ x2). exact H0. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
-  * assert (x2 = ⓪). apply H3. exists p2. reflexivity. rewrite <-H2. exact H1.
+  * assert (x2 = 𝟘). apply H3. exists p2. reflexivity. rewrite <-H2. exact H1.
   * reflexivity.
 Qed.
 
@@ -520,7 +515,7 @@ Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P 
 Proof.
 intros P V Hyp. 
 destruct Hyp. rename H into Transition. dependent induction Transition.
-- exists p. exists ⓪. split. 
+- exists p. exists 𝟘. split. 
   * apply cgr_choice_nil_rev.
   * apply cgr_refl.
 - inversion H0. inversion H.
@@ -618,7 +613,7 @@ Proof.
   - dependent induction H. 
 (* reasonning about all possible cases due to the structure of terms *)
     + intros. exists q.  split.  exact l. reflexivity. 
-    + intros. exists (q ‖ ⓪). split. apply lts_parL. exact l. auto with cgr (*par contexte parallele*). 
+    + intros. exists (q ‖ 𝟘). split. apply lts_parL. exact l. auto with cgr (*par contexte parallele*). 
     + intros. dependent destruction l. inversion l2. inversion l1. exists p2. split. exact l. auto with cgr. 
       inversion l.
     + intros. dependent destruction l.
@@ -777,7 +772,7 @@ Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof.
 intros.
 dependent induction H.
-  - eapply sts_cong. instantiate (1:=  ((t • p) + ⓪)). apply cgr_choice_nil_rev. instantiate (1:=p).
+  - eapply sts_cong. instantiate (1:=  ((t • p) + 𝟘)). apply cgr_choice_nil_rev. instantiate (1:=p).
     apply sts_tau. apply cgr_refl.
   - apply sts_rec.
   - destruct (TransitionShapeForOutput p1 p2 a). exact H. destruct H1. destruct H1. destruct H1. destruct H2.

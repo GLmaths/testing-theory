@@ -24,10 +24,11 @@
 *)
 
 
-Require Import Coq.Program.Equality Coq.Strings.String.
+From Coq.Program Require Import Equality.
+From Coq.Strings Require Import String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-Require Import Relations.
-Require Import Coq.Wellfounded.Inverse_Image.
+From Coq Require Import Relations.
+From Coq.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import OldTransitionSystems Must Completeness.
@@ -37,7 +38,7 @@ From Must Require Import OldTransitionSystems Must Completeness.
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -72,14 +73,14 @@ Notation "'non' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
-Context (Eval_Eq : Equation Data -> (option bool)).
-Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+Parameter (Eval_Eq : Equation Data -> (option bool)).
+Parameter (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+Parameter (channel_is_countable : Countable Channel). (* only here for the classes *)
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+Parameter (value_eq_dec : EqDecision Value). (* only here for the classes *)
 #[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
-Context (value_is_countable : Countable Value). (* only here for the classes *)
+Parameter (value_is_countable : Countable Value). (* only here for the classes *)
 #[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
 
 (* Definition of processes*)

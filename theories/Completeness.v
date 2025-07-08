@@ -1,5 +1,8 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -96,10 +99,10 @@ Lemma co_of_is_co_nb `{
 Proof.
   intros nb duo.
   assert (parallel_inter μ (co_of μ)) as inter. eapply co_inter.
-  assert (¬ non_blocking μ) as not_nb. eapply lts_oba_fw_non_blocking_duo_spec in nb ; eauto.
+  assert (¬ non_blocking μ) as not_nb. eapply dual_blocks in nb ; eauto.
   eapply unique_nb; eauto.
   assert (¬ non_blocking (co_of (co μ))) as not_nb'.
-  eapply lts_oba_fw_non_blocking_duo_spec in nb ; eauto. symmetry. eapply co_inter.
+  eapply dual_blocks in nb ; eauto. symmetry. eapply co_inter.
   eapply nb_not_nb; eauto.
 Qed.
 
@@ -493,7 +496,7 @@ Proof.
              as (s1' & s2' & μ' & eq0 & eq1 & eq2 & eq3 (* & eq4 *)); eauto. subst.
              destruct (decide (non_blocking (co_of ν))) as [nb' | not_nb'].
              ++++ assert (¬ non_blocking ν) as not_nb''.
-                  eapply lts_oba_fw_non_blocking_duo_spec; eauto. eapply co_inter.
+                  eapply dual_blocks; eauto. eapply co_inter.
                   assert (Forall exist_co_nba (ν :: s1')) as Hyp.
                   constructor. esplit; eauto. split ;eauto. eapply co_inter. eauto.
                   exists (ν :: s1'), s2', μ'. repeat split; eauto.
@@ -581,7 +584,7 @@ Proof.
       ++ assert (parallel_inter μ' (co_of μ')) as inter.
          eapply co_inter.
          assert (¬ non_blocking μ') as not_nb.
-         eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+         eapply dual_blocks; eauto.
          edestruct (gen_spec_mu_lts_co μ' s') as (r & hlr & heqr).
          destruct (lts_oba_non_blocking_action_tau nb hlr HypTr)
          as [(r1 & l1 & (r2 & l2 & heq))| HypTr''].
@@ -970,7 +973,7 @@ Proof.
          (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc L2) _ μ s')
          as (r' & hl' & heqr').
        assert (¬ non_blocking (co_of μ)) as not_nb. 
-       eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+       eapply dual_blocks; eauto.
        assert (parallel_inter (co_of μ) μ). symmetry. 
 
        inversion gen_spec_acc0; subst. destruct (gen_acc_spec_gen_spec0 L2).
@@ -1065,7 +1068,7 @@ Proof.
        +++ edestruct (eq_spec (gen_acc L1 s') r') as (t & hlt & heqt).
            symmetry in heqr. eauto.
            assert (¬ non_blocking μ') as not_nb.
-           eapply lts_oba_fw_non_blocking_duo_spec; eauto. 
+           eapply dual_blocks; eauto. 
            edestruct (must_f_gen_a_subseteq_not_non_blocking s' t μ' L1 not_nb hlt L2 hsub).
            assert (gen_acc L2 (μ' :: s') ⟶⋍[co_of μ'] gen_acc L2 s') as (u & hlu & hequ).
            apply gen_spec_mu_lts_co.
@@ -1108,7 +1111,7 @@ Proof.
       +++ destruct (decide (non_blocking μ1)) as [nb1 | not_nb1]; 
           destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
           ++++ contradict nb1.
-               eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+               eapply dual_blocks; eauto.
           ++++ assert (∃ η : A, μ2 = co_of η ∧ η ∈ union_of_actions_without L1) 
                as (μ'' & eq' & In).
                eapply gen_spec_acc_nil_mu_inv; eauto. subst.
@@ -1170,7 +1173,7 @@ Proof.
       ++ destruct (decide (non_blocking μ1)) as [nb1 | not_nb1]; 
          destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
          +++ contradict nb1. 
-             eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+             eapply dual_blocks; eauto.
          +++ eapply must_f_gen_a_subseteq_not_non_blocking in l2 as (t & hl); eauto with mdb.
          +++ eapply must_f_gen_a_subseteq_non_blocking in l2 as (t & hl); eauto with mdb.
          +++ eapply must_f_gen_a_subseteq_not_non_blocking in l2 as (t & hl); eauto with mdb.
@@ -1418,7 +1421,7 @@ Proof.
        +++ destruct (decide (non_blocking μ1)) as [nb1 | not_nb1]; 
            destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
            ++++ contradict nb1. 
-                eapply lts_oba_fw_non_blocking_duo_spec; eauto.
+                eapply dual_blocks; eauto.
            ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ' & eq' & In); eauto. subst.
                 assert (μ' = μ1). eapply (@co_inter_spec1' P Q);eauto. subst.
                 assert (lts_acc_set_of q μ1) as not_refuses.

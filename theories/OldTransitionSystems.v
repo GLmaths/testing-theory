@@ -303,7 +303,7 @@ Class LtsObaFW (A L : Type) `{LtsOba A L} :=
 
 (* Inductive definition of terminate. *)
 
-Reserved Notation "p ⤓" (at level 60).
+Reserved Notation "p ⤓" (at level 1).
 
 Inductive terminate `{Lts A L} (p : A) : Prop :=
 | tstep : (forall q, p ⟶ q -> terminate q) -> terminate p

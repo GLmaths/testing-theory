@@ -2,6 +2,7 @@
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
    Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +23,17 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Lists.List.
+From Coq Require ssreflect.
+From Coq.Unicode Require Import Utf8.
+From Coq.Lists Require Import List.
 Import ListNotations.
-Require Import Coq.Program.Equality.
+From Coq.Program Require Import Equality.
 From Must Require Import TransitionSystems.
 
 From stdpp Require Import base countable gmap list.
 
 (* For proving that Bar-induction is admissible *)
-Require Coq.Logic.ClassicalEpsilon.
+From Coq.Logic Require ClassicalEpsilon.
 
 CoInductive infinite_stream A: Type :=
    | S_Step : A -> infinite_stream A -> infinite_stream A.

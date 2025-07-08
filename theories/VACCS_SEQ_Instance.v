@@ -34,7 +34,7 @@ From Must Require Import OldTransitionSystems Must Completeness.
 
 Coercion ActExt : ExtAct >-> Act.
 
-Context (Channel Value : Type).
+Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
 (*Exemple : Definition Value := nat.*)
 
@@ -69,14 +69,14 @@ Notation "'non' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
-Context (Eval_Eq : Equation Data -> (option bool)).
-Context (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
+Parameter (Eval_Eq : Equation Data -> (option bool)).
+Parameter (channel_eq_dec : EqDecision Channel). (* only here for the classes *)
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-Context (channel_is_countable : Countable Channel). (* only here for the classes *)
+Parameter (channel_is_countable : Countable Channel). (* only here for the classes *)
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-Context (value_eq_dec : EqDecision Value). (* only here for the classes *)
+Parameter (value_eq_dec : EqDecision Value). (* only here for the classes *)
 #[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
-Context (value_is_countable : Countable Value). (* only here for the classes *)
+Parameter (value_is_countable : Countable Value). (* only here for the classes *)
 #[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
 
 (* Definition of processes*)
@@ -286,12 +286,12 @@ intros. destruct d.
 - simpl. destruct (decide (k < S n)). (* case decide. *)
   * simpl. destruct (decide (S n = k)) as [e | e].
     ** exfalso. dependent destruction l. eapply Nat.neq_succ_diag_l. exact e. 
-       rewrite <-e in l. apply Arith_prebase.le_S_gt_stt in l. eapply Nat.nlt_succ_diag_l. exact l.
+       rewrite <-e in l. lia.
     ** destruct (decide (S n < k)). 
-       *** apply Arith_prebase.lt_n_Sm_le in l. lia. (* pas top *)
+       *** lia.
        *** auto.
   * simpl. destruct (decide (n = k)).
-    ** lia. (* pas top *)
+    ** lia. 
     ** destruct n. 
       -- assert ( 0 < k). lia. (* Search (if decide _ then _ else _). rewrite (decide_True _ _ H).*) destruct (decide (0 < k)). 
          *** auto. 
@@ -1776,8 +1776,9 @@ intros. split.
   * intros. simpl. constructor.
   * intros. inversion H. destruct (decide (i < S n)). constructor. subst.
     inversion H0. rewrite H3 in H2. auto with arith. constructor. inversion H0.
-    subst. apply PeanoNat.Nat.nlt_succ_r in n0. apply (Arith_prebase.lt_plus_trans_stt n i k) in n0.
-    assert ((i + k)%nat = (k + i)%nat). auto with arith. rewrite <-H1. assumption.
+    subst. apply PeanoNat.Nat.nlt_succ_r in n0.
+    eapply Nat.lt_lt_add_l in n0;eauto.
+    assert ((i + k)%nat = (k + i)%nat). auto with arith. rewrite <-H1. 
     subst. destruct (decide (i < S n)). constructor. inversion H2. inversion H2.
 Qed. 
 
