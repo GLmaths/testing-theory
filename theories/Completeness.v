@@ -33,7 +33,7 @@ From Coq.Logic Require Import JMeq ProofIrrelevance.
 From stdpp Require Import sets base countable finite gmap list finite decidable finite gmap.
 From Must Require Import TransitionSystems Must Lift Subset_Act.
 
-(** Test generators specification. *)
+(** Test generators specification. **)
 
 Class gen_spec (* {E A : Type} *)
   `{gLts E A, !gLtsEq E A, !Good E A good}
