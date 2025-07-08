@@ -1,5 +1,8 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +24,11 @@
 *)
 
 
-Require Import Coq.Program.Equality Coq.Strings.String.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-Require Import Relations.
-Require Import Coq.Wellfounded.Inverse_Image.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
