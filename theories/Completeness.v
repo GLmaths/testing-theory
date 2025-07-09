@@ -712,7 +712,7 @@ Proof.
       as [hu | (ν & s1 & s2 & s3 & eq__s & sc & i0 & i1 & i2)]; eauto with mdb.
     eapply must_eq_client. symmetry. eassumption.
     eapply Hlength.
-    ++ subst. rewrite 6 app_length. simpl. lia.
+    ++ subst. rewrite 6 length_app. simpl. lia.
     ++ inversion i0 as (x & nb & duo).
        assert (x = co ν). eapply unique_nb; eauto. subst.
        assert (co_of ν = co ν) as eq. eapply co_of_is_co_nb; eauto. 
@@ -722,7 +722,7 @@ Proof.
       as [hg | (s1 & s2 & ν'' & heq & sc & eq & his)]; eauto with mdb.
     rewrite heq in hle. subst. 
     assert (ν'' = ν'). eapply co_inter_spec1; eauto. subst.
-    destruct s1.
+    dependent induction s1.
     ++ simpl in *.
        eapply must_eq_client. symmetry. eassumption.
        eapply Hlength; subst; eauto with mdb.
@@ -732,12 +732,12 @@ Proof.
        +++ eapply (cnv_drop_non_blocking_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
        eapply must_eq_client. symmetry. eassumption.
        eapply Hlength; subst; eauto with mdb.
-       rewrite 2 app_length. simpl. lia.
+       rewrite 2 length_app. simpl. lia.
        +++ destruct (decide (non_blocking (co_of ν'))) as [nb | not_nb].
            ++++ eapply (cnv_drop_input_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
                 eapply must_eq_client. symmetry. eassumption.
                 eapply Hlength; subst; eauto with mdb.
-                rewrite 2 app_length. simpl. lia. esplit; eauto.
+                rewrite 2 length_app. simpl. lia. esplit; eauto.
            ++++ assert (e' ⟶⋍[co_of ν'] gen_conv (s1 ++ s2)) as (r' & hh' & jj').
                 edestruct (eq_spec e'
                   (gen_conv (s1 ++ s2)) (ActExt (co_of ν'))) as (r & hh & jj).
@@ -764,7 +764,7 @@ Proof.
     eapply must_eq_client. symmetry. eassumption.
     subst.
     eapply Hlength.
-    ++ subst. rewrite 6 app_length. simpl. lia.
+    ++ subst. rewrite 6 length_app. simpl. lia.
     ++ inversion i0 (* as (x & nb & duo) *). destruct H3.
        assert (x = co ν). eapply unique_nb; eauto. subst. 
        eapply cnv_annhil; eauto. assert (co_of ν = co ν) as eq'.
@@ -778,12 +778,12 @@ Proof.
     ++ eapply (cnv_drop_non_blocking_action_in_the_middle p s1 s2) in hlp; subst; eauto with mdb.
        eapply must_eq_client. symmetry. eassumption.
        eapply Hlength; subst; eauto with mdb.
-       rewrite 2 app_length. simpl. lia.
+       rewrite 2 length_app. simpl. lia.
     ++ destruct (decide (non_blocking (co_of ν))) as [nb | not_nb].
        +++ eapply (cnv_drop_input_in_the_middle p s1 s2) in hlp; subst; eauto with mdb.
            eapply must_eq_client. symmetry. eassumption.
            eapply Hlength; subst; eauto with mdb.
-           rewrite 2 app_length. simpl. lia. esplit; eauto.
+           rewrite 2 length_app. simpl. lia. esplit; eauto.
        +++ destruct s1.
             ++++ simpl in *.
                  eapply must_eq_client. symmetry. eassumption.
@@ -1183,7 +1183,7 @@ Proof.
       eapply (must_eq_client p (gen_acc L2 (s1 ++ s2 ++ s3))). now symmetry.
       edestruct (gen_acc_tau_ex s1 s2 s3 μ L1) as (t & hlt & heqt); eauto.
       eapply Hlength; eauto.
-      ++ rewrite heqs, 6 app_length. simpl. lia.
+      ++ rewrite heqs, 6 length_app. simpl. lia.
       ++ eapply must_eq_client. eapply heqt. eapply et. now rewrite heqs.
     + intros p' e' μ μ' inter l1 l2.
       edestruct @inversion_gen_mu_gen_acc as [|Hyp]; eauto with mdb.
@@ -1192,7 +1192,7 @@ Proof.
       edestruct @f_gen_lts_mu_in_the_middle as (t & l & heq'); eauto.
       now destruct gen_spec_acc0.
       eapply Hlength. rewrite heqs.
-      rewrite 2 app_length. simpl. lia.
+      rewrite 2 length_app. simpl. lia.
       eapply must_eq_client. eapply heq'.
       eapply com; eauto. rewrite heqs. eassumption.
       eassumption.
