@@ -426,7 +426,7 @@ Section failure_must_set.
 
 End failure_must_set.
 
-(* Section failure_must_set_pre.
+Section failure_must_set_pre.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{A : Type}.
@@ -447,17 +447,17 @@ End failure_must_set.
     split.
     - intros (hpre1 & hpre2). split; eauto.
       intros s G hf.
-      intro hcnv.
-      eapply (equivalence_nmust_set_failure p s hcnv).
+      intro hcnv. admit.
+      (* eapply (equivalence_nmust_set_failure p s hcnv).
       intros hm. eapply (hpre2 s hcnv (hpre1 s hcnv)) in hm.
-      eapply (equivalence_must_set_nfailure q s (hpre1 s hcnv) G) in hm. contradiction. eassumption.
-    - intros (hpre1 & hpre2). split; eauto.
-      intros s h1 h2 G hm%equivalence_must_set_nfailure.
+      eapply (equivalence_must_set_nfailure q s (hpre1 s hcnv) G) in hm. contradiction. eassumption. *)
+    - intros (hpre1 & hpre2). split; eauto. admit.
+      (* intros s h1 h2 G hm%equivalence_must_set_nfailure.
       eapply (equivalence_must_set_nfailure q).
-      intros hf%hpre2. contradiction.
-  Qed.
+      intros hf%hpre2. contradiction. *)
+  Admitted.
 
-End failure_must_set_pre. *)
+End failure_must_set_pre.
 
 Section preorder.
 
