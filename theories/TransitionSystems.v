@@ -1202,6 +1202,30 @@ Proof.
   eassumption.
 Qed.
 
+Lemma cnv_drop_action_in_the_middle `{gLtsObaFW P A} p s1 s2 μ :
+  (* exist_co_nba μ -> *) Forall exist_co_nba s1 -> p ⇓ s1 ++ [μ] ++ s2 -> forall r, p ⟶[μ] r
+    -> r ⇓ s1 ++ s2.
+Proof.
+  intros his hcnv r l.
+  revert p s2 μ his hcnv r l.
+  dependent induction s1; intros.
+  - simpl in *.
+    eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto.
+  - inversion his; subst.
+    destruct H4 as (a' & nb & inter).
+    assert (¬ non_blocking a) as not_nb.
+    { eapply dual_blocks; eauto. }
+    assert (a' = co a) as eq_subst.
+    { eapply unique_nb; eauto. } subst.
+    edestruct (lts_oba_fw_forward p (co a) a) as (p_a & Hyp).
+    destruct (Hyp nb inter) as (tr_b & tr_nb).
+    edestruct (lts_oba_non_blocking_action_delay nb tr_nb l) as (p'_a & tr'_b & r' & tr'_nb & equiv').
+    assert (p'_a ⇓ s1 ++ s2).
+    { eapply IHs1; eauto. eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto. }
+    eapply cnv_preserved_by_eq; eauto.
+    eapply cnv_retract_wt_non_blocking_action; eauto. eapply lts_to_wt; eauto.
+Qed.
+
 Lemma Forall2_app {A B : Type} P (s1 s3 : list A) (s2 s4 : list B) : 
   Forall2 P s1 s2 -> Forall2 P s3 s4 
     -> Forall2 P (s1 ++ s3) (s2 ++ s4).

@@ -687,6 +687,30 @@ Qed.
 
 (** Converse implication of the first requirement. *)
 
+Lemma cnv_drop_action_in_the_middle `{gLtsObaFW P A} p s1 s2 μ :
+  (* exist_co_nba μ -> *) Forall exist_co_nba s1 -> p ⇓ s1 ++ [μ] ++ s2 -> forall r, p ⟶[μ] r
+    -> r ⇓ s1 ++ s2.
+Proof.
+  intros his hcnv r l.
+  revert p s2 μ his hcnv r l.
+  dependent induction s1; intros.
+  - simpl in *.
+    eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto.
+  - inversion his; subst.
+    destruct H4 as (a' & nb & inter).
+    assert (¬ non_blocking a) as not_nb.
+    { eapply dual_blocks; eauto. }
+    assert (a' = co a) as eq_subst.
+    { eapply unique_nb; eauto. } subst.
+    edestruct (lts_oba_fw_forward p (co a) a) as (p_a & Hyp).
+    destruct (Hyp nb inter) as (tr_b & tr_nb).
+    edestruct (lts_oba_non_blocking_action_delay nb tr_nb l) as (p'_a & tr'_b & r' & tr'_nb & equiv').
+    assert (p'_a ⇓ s1 ++ s2).
+    { eapply IHs1; eauto. eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto. }
+    eapply cnv_preserved_by_eq; eauto.
+    eapply cnv_retract_wt_non_blocking_action; eauto. eapply lts_to_wt; eauto.
+Qed.
+
 Lemma must_if_cnv `{
   @gLtsObaFW P A H gLtsP gLtsEqP V,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good,
@@ -733,76 +757,11 @@ Proof.
        eapply must_eq_client. symmetry. eassumption.
        eapply Hlength; subst; eauto with mdb.
        rewrite 2 length_app. simpl. lia.
-       +++ destruct (decide (non_blocking (co_of ν'))) as [nb | not_nb].
-           ++++ eapply (cnv_drop_input_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
-                eapply must_eq_client. symmetry. eassumption.
-                eapply Hlength; subst; eauto with mdb.
-                rewrite 2 length_app. simpl. lia. esplit; eauto.
-           ++++ assert (e' ⟶⋍[co_of ν'] gen_conv (s1 ++ s2)) as (r' & hh' & jj').
-                edestruct (eq_spec e'
-                  (gen_conv (s1 ++ s2)) (ActExt (co_of ν'))) as (r & hh & jj).
-                  exists (gen_conv ((a :: s1) ++ s2)). split;eauto. admit.
-                exists r. split; eauto.
-                inversion his; subst. assert (non_blocking (co_of a)). admit.
-                eapply must_eq_client. symmetry. eassumption.
-                 eapply Hlength; subst; eauto with mdb. admit.
-                  eapply cnv_preserved_by_wt_act; eauto.
-
- (*  revert p.
-  induction s
-    as (s & Hlength) using
-         (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  intros p hcnv.
-  induction (cnv_terminate p s hcnv) as [p hp IHtp].
-  apply m_step.
-  + eapply gen_spec_ungood.
-  + edestruct gen_conv_always_reduces. eauto with mdb.
-  + intros p' l. eapply IHtp; [|eapply cnv_preserved_by_lts_tau]; eauto.
-  + intros e' l.
-    destruct (inversion_gen_tau_gen_conv s e' l)
-      as [hu | (ν & s1 & s2 & s3 & eq__s & sc & i0 & i1 & i2)]; eauto with mdb.
-    eapply must_eq_client. symmetry. eassumption.
-    subst.
-    eapply Hlength.
-    ++ subst. rewrite 6 length_app. simpl. lia.
-    ++ inversion i0 (* as (x & nb & duo) *). destruct H3.
-       assert (x = co ν). eapply unique_nb; eauto. subst. 
-       eapply cnv_annhil; eauto. assert (co_of ν = co ν) as eq'.
-       eapply co_of_is_co_nb; eauto. rewrite eq' in hcnv. eauto. 
-  + intros p' e' ν ν' inter hlp hle.
-    destruct (inversion_gen_mu_gen_conv s ν' e' hle)
-      as [hg | (s1 & s2 & ν'' & heq & sc & eq & his(*  & eq3 *))]; eauto with mdb.
-    rewrite heq in hle. subst. assert (ν'' = ν). eapply co_inter_spec1. eauto. subst.
-    
-    destruct (decide (non_blocking ν)) as [nb' | not_nb'].
-    ++ eapply (cnv_drop_non_blocking_action_in_the_middle p s1 s2) in hlp; subst; eauto with mdb.
-       eapply must_eq_client. symmetry. eassumption.
-       eapply Hlength; subst; eauto with mdb.
-       rewrite 2 length_app. simpl. lia.
-    ++ destruct (decide (non_blocking (co_of ν))) as [nb | not_nb].
-       +++ eapply (cnv_drop_input_in_the_middle p s1 s2) in hlp; subst; eauto with mdb.
+       +++ eapply (cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
            eapply must_eq_client. symmetry. eassumption.
            eapply Hlength; subst; eauto with mdb.
-           rewrite 2 length_app. simpl. lia. esplit; eauto.
-       +++ destruct s1.
-            ++++ simpl in *.
-                 eapply must_eq_client. symmetry. eassumption.
-                 eapply Hlength; subst; eauto with mdb. eapply cnv_preserved_by_wt_act; eauto.
-                 eapply lts_to_wt;eauto.
-            ++++ inversion his as [|? ? Hyp]; subst. 
-                 destruct Hyp as (a' & nb' & duo').
-                 assert (a' = co a). eapply unique_nb; auto. 
-                 assert (co_of a = co a). eapply co_of_is_co_nb; eauto. 
-                 subst; eauto. subst; eauto.
-                 subst.
-                 assert (ν = a). admit. subst. (* exfalso ? *)
-                 assert (e' ⋍ gen_conv (s1 ++ a :: s2)). admit.
-                 eapply must_eq_client. symmetry. exact H4.
-                 eapply Hlength; auto.
-                 eapply (cnv_wt_prefix [a] (s1 ++ a :: s2) p).
-                 simpl. eauto.
-                 eapply lts_to_wt. auto. (* exfalso ? *) *)
-Admitted.
+           rewrite 2 length_app. simpl. lia.
+Qed.
 
 Lemma must_iff_cnv `{
   @gLtsObaFW P A H gLtsP gLtsEqP V,
