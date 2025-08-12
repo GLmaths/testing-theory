@@ -27,12 +27,10 @@ From Coq Require Import Relations.
 From Coq.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import OldTransitionSystems Must Completeness.
+From Must Require Import InputOutputActions ActTau OldTransitionSystems Must Completeness.
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
-
-Coercion ActExt : ExtAct >-> Act.
 
 Parameter (Channel Value : Type).
 (*Exemple : Definition Channel := string.*)
@@ -782,12 +780,12 @@ match S with
 end.
 
 (* The Labelled Transition System (LTS-transition) *)
-Inductive lts : proc -> (Act TypeOfActions) -> proc -> Prop :=
+Inductive lts : proc -> (ActIO TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) (ActIn (c ⋉ v)) (P^v)
+    lts (c ? x • P) ((c ⋉ v) ?) (P^v)
 | lts_output : forall {c v P},
-    lts (c ! v • P) (ActOut (c ⋉ v)) P
+    lts (c ! v • P) ((c ⋉ v) !) P
 
 (*The actions Tau*)
 | lts_tau : forall {P},
@@ -823,24 +821,24 @@ Inductive lts : proc -> (Act TypeOfActions) -> proc -> Prop :=
     lts (p1 ; q) α (p2 ; q).
 
 (* The Labelled Transition System (LTS-transition for states) *)
-Inductive ltsM : States -> (Act TypeOfActions) -> States -> Prop :=
+Inductive ltsM : States -> (ActIO TypeOfActions) -> States -> Prop :=
 (*The Input and the Output*)
-| ltsM_input : forall {M p q c v}, lts p (ActIn (c ⋉ v)) q ->
-    ltsM (❲M , p❳) (ActIn (c ⋉ v)) (❲M , q❳)
+| ltsM_input : forall {M p q c v}, lts p ((c ⋉ v) ?) q ->
+    ltsM (❲M , p❳) ((c ⋉ v) ?) (❲M , q❳)
 | ltsM_output : forall {M c v P},
-    ltsM (❲M ⊎ {[+ c ⋉ v +]} , P❳) (ActOut (c ⋉ v)) (❲M , P❳)
+    ltsM (❲M ⊎ {[+ c ⋉ v +]} , P❳) ((c ⋉ v) !) (❲M , P❳)
 
 
 
 | ltsM_tau : forall {M p q}, lts p τ q ->
     ltsM (❲M , p❳) τ (❲M , q❳)
-| ltsM_send : forall {M c v p q}, lts p (ActOut (c ⋉ v)) q ->
+| ltsM_send : forall {M c v p q}, lts p ((c ⋉ v) !) q ->
     ltsM (❲M , p❳) τ (❲M ⊎ {[+ c ⋉ v +]}, q❳)
 
 (* Communication of a channel output and input that have the same name*)
 | ltsM_com : forall {M1 M2 M2' c v S1 S2 S2'},
-    ltsM (❲M1, S1❳) (ActOut (c ⋉ v)) (❲ M2, S2' ❳) ->
-    ltsM (❲ M1, S1❳) (ActIn (c ⋉ v)) (❲ M2', S2 ❳)->
+    ltsM (❲M1, S1❳) ((c ⋉ v) !) (❲ M2, S2' ❳) ->
+    ltsM (❲ M1, S1❳) ((c ⋉ v) ?) (❲ M2', S2 ❳)->
     ltsM (❲M1 , S1❳) τ (❲M2 , S2❳).
 
 
@@ -853,7 +851,7 @@ Lemma Subst_And_NewVar_in_Data : forall j k v d, (NewVar_in_Data j (subst_Data (
 Proof.
 intros. revert k. revert v. revert j. dependent induction d.
 * intros. simpl. reflexivity.
-* intros. simpl. destruct (decide(n = (j+k)%nat)). 
+* intros. simpl. destruct (decide(n = (j+k)%nat)).
   - destruct (decide (j < S n)).
      -- simpl. destruct (decide ((S n = (j + S k)%nat))). 
         --- auto.
@@ -1225,13 +1223,13 @@ Inductive sts : States -> States -> Prop :=
 
 #[global] Hint Constructors sts:ccs.
 
-Lemma MemoryOfInput : forall S S' c v , ltsM S (ActIn (c ⋉ v)) S' -> MailBox_of S = MailBox_of S'.
+Lemma MemoryOfInput : forall S S' c v , ltsM S ((c ⋉ v) ?) S' -> MailBox_of S = MailBox_of S'.
 Proof.
 intros. dependent induction H.
 - simpl. reflexivity.
 Qed.
 
-Lemma MemoryOfInputDestruct : forall M1 M2 P1 P2 c v , ltsM ❲M1, P1❳ (ActIn (c ⋉ v)) ❲M2, P2❳ 
+Lemma MemoryOfInputDestruct : forall M1 M2 P1 P2 c v , ltsM ❲M1, P1❳ ((c ⋉ v) ?) ❲M2, P2❳ 
                                                         -> M1 = M2.
 Proof.
 intros. 
@@ -1409,7 +1407,7 @@ destruct S. destruct R. destruct S'.
 assert (g0 = g1). inversion hcgr. subst. reflexivity. subst.
   induction l.
 * assert (p ≡* p2). apply cgr_states_simplified in hcgr. simpl in *. assumption.
-  assert (lts_then_sc p (ActIn (c ⋉ v)) q). apply Congruence_Respects_Transition. exists p2. split. 
+  assert (lts_then_sc p ((c ⋉ v) ?) q). apply Congruence_Respects_Transition. exists p2. split. 
   assumption. assumption. destruct H1. destruct H1.
   exists ❲g1, x ❳. split. constructor. assumption. apply cgr_states_simplified_memory in hcgr. rewrite hcgr.
   constructor. assumption.
@@ -1421,7 +1419,7 @@ assert (g0 = g1). inversion hcgr. subst. reflexivity. subst.
   exists ❲g1, x ❳. split. constructor. assumption. apply cgr_states_simplified_memory in hcgr. rewrite hcgr.
   constructor. assumption.
 * assert (p ≡* p2). apply cgr_states_simplified in hcgr. simpl in *. assumption.
-  assert (lts_then_sc p (ActOut (c ⋉ v)) q). apply Congruence_Respects_Transition. exists p2. split. 
+  assert (lts_then_sc p ((c ⋉ v) !) q). apply Congruence_Respects_Transition. exists p2. split. 
   assumption. assumption. destruct H1. destruct H1.
   exists ❲ M ⊎ {[+ c ⋉ v +]}, x ❳. split. assert (g1 = M). apply cgr_states_simplified_memory in hcgr.
   assumption. rewrite H3.
@@ -1429,8 +1427,7 @@ assert (g0 = g1). inversion hcgr. subst. reflexivity. subst.
 * assert (g1 = M1). apply cgr_states_simplified_memory in hcgr. assumption.
   assert (S1 =  S2'). inversion l1. reflexivity. assert (M1 = M2'). inversion l2. reflexivity.
   subst.
-  
-  assert (sc_then_lts p (ActIn (c ⋉ v)) S2).
+  assert (sc_then_lts p ((c ⋉ v) ?) S2).
   exists S2'. split. inversion hcgr. subst. assumption. inversion l2. assumption.
   eapply Congruence_Respects_Transition in H. destruct H.
   destruct H. eapply ltsM_input in H. instantiate (1 := M2) in H.
@@ -1627,32 +1624,32 @@ dependent induction H.
     -- constructor. eauto with cgr.
   * constructor. apply IHlts. 
     -- auto.
-    -- intros. inversion H0.
-    -- intros. inversion H0. 
+    -- intros. dependent destruction H0.
+    -- intros. dependent destruction H0.
   * eapply sts_cong.
     -- instantiate (1 := ❲ M2 ⊎ {[+ c ⋉ v +]}, q1 ‖ p ❳). constructor. eauto with cgr.
     -- instantiate (1 := ❲ M2, q2 ‖ p ❳). constructor. apply IHlts. 
         ** auto.
-        ** intros. inversion H0. 
-        ** intros. inversion H0. 
+        ** intros. dependent destruction H0.
+        ** intros. dependent destruction H0.
     -- constructor. eauto with cgr.
   * apply SumReduction_ForSTS. apply IHlts.
     -- auto.
-    -- intros. inversion H0. 
-    -- intros. inversion H0. 
+    -- intros. dependent destruction H0.
+    -- intros. dependent destruction H0.
   * eapply sts_cong. 
     -- instantiate (1 := ❲ M2 ⊎ {[+ c ⋉ v +]}, p2 + p1 ❳ ). constructor. eauto with cgr.
     -- instantiate (1 := ❲ M2, q ❳ ). apply SumReduction_ForSTS. apply IHlts.
         ** auto.
-        ** intros. inversion H0.
-        ** intros. inversion H0.
+        ** intros. dependent destruction H0.
+        ** intros. dependent destruction H0.
     -- constructor. eauto with cgr.
   * eapply sts_cong. 
     -- instantiate (1 := ❲ M2 ⊎ {[+ c ⋉ v +]}, p1; q + δ❳  ). constructor. eauto with cgr.
     -- instantiate (1 := ❲ M2, p2; q ❳ ). constructor. apply IHlts.
         ** auto.
-        ** intros. inversion H0.
-        ** intros. inversion H0.
+        ** intros. dependent destruction H0.
+        ** intros. dependent destruction H0.
     -- constructor. eauto with cgr.
 Qed.
 
@@ -1702,9 +1699,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
               ->  Well_Defined_Input_in k (p1 + p2)
 | WD_seq : forall k p1 p2,  Well_Defined_Input_in k p1 ->  Well_Defined_Input_in k p2 
               ->  Well_Defined_Input_in k (p1 ; p2).
-              
-              
-              
+
 Inductive Well_Defined_Input_in_MultiSet : nat -> gmultiset TypeOfActions -> Prop :=
 | WD_gmset_empty : forall k, Well_Defined_Input_in_MultiSet k ∅
 | WD_gmset_base : forall k M d c, Well_Defined_Input_in_MultiSet k M -> Well_Defined_Data k d ->
@@ -2146,12 +2141,12 @@ intros. revert H. rename H0 into Reduction. dependent induction Reduction.
   assumption. assumption. assumption. 
 Qed.
 
-Inductive Well_Defined_Action: (Act TypeOfActions) -> Prop :=
-| ActionOuput_with_value_is_always_defined : forall c v, Well_Defined_Action (ActOut  (c ⋉ (cst v)))
-| ActionInput_with_value_is_always_defined : forall c v, Well_Defined_Action (ActIn  (c ⋉ (cst v)))
+Inductive Well_Defined_Action: (ActIO TypeOfActions) -> Prop :=
+| ActionOutput_with_value_is_always_defined : forall c v, Well_Defined_Action ((c ⋉ (cst v)) !)
+| ActionInput_with_value_is_always_defined : forall c v, Well_Defined_Action ((c ⋉ (cst v)) ?)
 | Tau_is_always_defined : Well_Defined_Action (τ).
 
-Lemma Output_are_good : forall p1 p2 c d, Well_Defined_Input_in 0 p1 -> lts p1 (ActOut (c ⋉ d)) p2 
+Lemma Output_are_good : forall p1 p2 c d, Well_Defined_Input_in 0 p1 -> lts p1 ((c ⋉ d) !) p2 
       -> exists v, d = cst v.
 Proof.
 intros. dependent induction H0. dependent destruction H. apply Well_Def_Data_Is_a_value in H. destruct H.
@@ -2186,7 +2181,7 @@ Lemma LTS_Respects_WD : forall S S' α, Well_Defined_Input_in_State 0 S -> Well_
 Proof.
 intros. dependent induction H1.
 - dependent destruction H.
-  assert (Well_Defined_Input_in 0 q). eapply (PreLTS_Respects_WD p q (ActIn (c ⋉ v))); assumption.
+  assert (Well_Defined_Input_in 0 q). eapply (PreLTS_Respects_WD p q ((c ⋉ v) ?)); assumption.
   constructor; assumption.
 - dependent destruction H. constructor.
   eapply Well_Def_Subset with (M ⊎ {[+ c ⋉ v +]}). assumption. multiset_solver.
@@ -2197,7 +2192,7 @@ intros. dependent induction H1.
 - dependent destruction H. constructor.
   * constructor. assumption. eapply Output_are_good in H0. instantiate (1 := v) in H0.
     destruct H0. subst. constructor. exact H2.
-  * eapply (PreLTS_Respects_WD p q (ActOut (c ⋉ v))).
+  * eapply (PreLTS_Respects_WD p q ((c ⋉ v) !)).
     assumption. eapply Output_are_good in H0. instantiate (1 := v) in H0. destruct H0. subst. econstructor.
     eassumption. exact H2.
 - dependent destruction H1_. dependent destruction H1_0. dependent destruction H.
@@ -2212,13 +2207,13 @@ intros. dependent induction H1.
 Qed.
 
 (* Lemma to simplify the Data in Value for a transition *)
-Lemma OutputWithValue : forall p q a, ltsM p (ActOut a) q -> exists c d, a = c ⋉ d.
+Lemma OutputWithValue : forall p q a, ltsM p (a !) q -> exists c d, a = c ⋉ d.
 Proof.
 intros. dependent destruction a. dependent induction H.
 - exists c. exists d. reflexivity.
 Qed.
 
-Lemma InputWithValue : forall p q a, ltsM p (ActIn a) q -> exists c v, a = c ⋉ v.
+Lemma InputWithValue : forall p q a, ltsM p (a ?) q -> exists c v, a = c ⋉ v.
 Proof.
 intros. dependent destruction a. dependent induction H.
 - exists c. exists d. reflexivity.
@@ -2245,12 +2240,12 @@ Qed.
 (* Peter Selinger Axioms (OutBuffered Agent with FeedBack) up to structural equivalence*)
 
 Lemma OBA_with_FB_First_Axiom : forall p q r a α,
-  ltsM p (ActOut a) q -> ltsM q α r ->
-  (exists r', ltsM p α r' /\ ltsM_then_sc r' (ActOut a) r). (* output-commutativity *)
+  ltsM p (a !) q -> ltsM q α r ->
+  (exists r', ltsM p α r' /\ ltsM_then_sc r' (a !) r). (* output-commutativity *)
 Proof.
-intros. assert (ltsM p (ActOut a) q). assumption. apply OutputWithValue in H1.
+intros. assert (ltsM p (a !) q). assumption. apply OutputWithValue in H1.
 decompose record H1. subst.
-assert (ltsM p (ActOut (x ⋉ x0)) q). assumption. dependent destruction H. destruct r.
+assert (ltsM p ((x ⋉ x0) !) q). assumption. dependent destruction H. destruct r.
 exists ❲ g0 ⊎ {[+ x ⋉ x0 +]}, p ❳. split.
 * apply ForallSets. assumption.
 * exists ❲ g0, p ❳. split. 
@@ -2260,11 +2255,11 @@ Qed.
 
 Lemma OBA_with_FB_Second_Axiom : forall p q1 q2 a μ, 
   μ ≠ (ActOut a) ->
-  ltsM p (ActOut a) q1 ->
+  ltsM p (a !) q1 ->
   ltsM p (ActExt μ) q2 ->
-  ∃ r : States, ltsM q1 (ActExt μ) r ∧ ltsM_then_sc q2 (ActOut a) r. (* output-confluence  *)
+  ∃ r : States, ltsM q1 (ActExt μ) r ∧ ltsM_then_sc q2 (a !) r. (* output-confluence  *)
 Proof.
-intros. assert (ltsM p (ActOut a) q1).  assumption. dependent destruction H2.
+intros. assert (ltsM p (a !) q1).  assumption. dependent destruction H2.
 inversion H1; subst.
 - exists ❲ M , q ❳. split. 
   * constructor. assumption.
@@ -2282,14 +2277,14 @@ inversion H1; subst.
 Qed.
 
 Lemma OBA_with_FB_Third_Axiom : forall p1 p2 p3 a, 
-            ltsM p1 (ActOut a) p2 → ltsM p1 (ActOut a) p3 -> p2 ≋ p3. (* output-determinacy *)
+            ltsM p1 (a !) p2 → ltsM p1 (a !) p3 -> p2 ≋ p3. (* output-determinacy *)
 Proof.
-intros. assert (ltsM p1 (ActOut a) p2). assumption. dependent destruction H0.
+intros. assert (ltsM p1 (a !) p2). assumption. dependent destruction H0.
 dependent destruction H1. assert (M0 = M). multiset_solver. rewrite H0. 
 constructor. eauto with cgr.
 Qed.
 
-Lemma OBA_with_FB_Fourth_Axiom : forall p1 p2 p3 a, ltsM p1 (ActOut a) p2 -> ltsM p2 (ActIn a) p3 
+Lemma OBA_with_FB_Fourth_Axiom : forall p1 p2 p3 a, ltsM p1 (a !) p2 -> ltsM p2 (a ?) p3 
                               -> ltsM_then_sc p1 τ p3. (* feedback *)
 Proof.
 intros. dependent destruction H. dependent destruction H0. 
@@ -2300,10 +2295,10 @@ exists ❲ M, q ❳. split. econstructor.
 Qed.
 
 Lemma OBA_with_FB_Fifth_Axiom : forall p q1 q2 a,
-  ltsM p (ActOut a) q1 -> ltsM p τ q2 ->
-  (∃ q : States, ltsM q1 τ q /\ ltsM_then_sc q2 (ActOut a) q) \/ ltsM_then_sc q1 (ActIn a) q2. (* output-tau  *)
+  ltsM p (a !) q1 -> ltsM p τ q2 ->
+  (∃ q : States, ltsM q1 τ q /\ ltsM_then_sc q2 (a !) q) \/ ltsM_then_sc q1 (a ?) q2. (* output-tau  *)
 Proof.
-intros. assert (ltsM p (ActOut a) q1). assumption. destruct a. 
+intros. assert (ltsM p (a !) q1). assumption. destruct a. 
 dependent destruction H0. 
 - dependent destruction H1. left. eexists. instantiate (1 := ❲ M0, q ❳). split.
   * constructor. assumption.
@@ -2322,7 +2317,7 @@ dependent destruction H0.
     rewrite H0. constructor. eauto with cgr.
   * dependent destruction H1. inversion H0_; subst. left.
     eexists. split. eapply ltsM_com.
-    assert (ltsM ❲ M, S2' ❳ (ActOut (c0 ⋉ v)) ❲ (gmultiset_difference M2 ({[+ c ⋉ d +]})) , S2' ❳).
+    assert (ltsM ❲ M, S2' ❳ ((c0 ⋉ v) !) ❲ (gmultiset_difference M2 ({[+ c ⋉ d +]})) , S2' ❳).
     assert (M = (gmultiset_difference M2 ({[+ c ⋉ d +]})) ⊎ {[+ c0 ⋉ v +]}).
     multiset_solver. rewrite H0. constructor. exact H0.
     dependent destruction H0_0. constructor. exact l.
@@ -2333,7 +2328,7 @@ dependent destruction H0.
 Qed.
 
 Lemma ExtraAxiom : forall p1 p2 q1 q2 a,
-      ltsM p1 (ActOut a) q1 -> ltsM p2 (ActOut a) q2 -> q1 ≋ q2 -> p1 ≋ p2.
+      ltsM p1 (a !) q1 -> ltsM p2 (a !) q2 -> q1 ≋ q2 -> p1 ≋ p2.
 Proof.
 intros. dependent destruction H1. dependent destruction H. dependent destruction H0.
 constructor. assumption. 
@@ -2537,7 +2532,7 @@ Definition outputs_of_State p := dom (moutputs_of_State p).
 Lemma mo_equiv_spec_step : forall {p q}, p ≋ q -> moutputs_of_State p = moutputs_of_State q.
 Proof. intros. dependent induction H; multiset_solver. Qed.
 
-Lemma mo_spec p a q : ltsM p (ActOut a) q -> moutputs_of_State p = {[+ a +]} ⊎ moutputs_of_State q.
+Lemma mo_spec p a q : ltsM p (a !) q -> moutputs_of_State p = {[+ a +]} ⊎ moutputs_of_State q.
 Proof.
   intros l.
   dependent destruction l. multiset_solver. 
@@ -2616,7 +2611,7 @@ Proof.
   + inversion lts__p; subst.
   + inversion lts__p; subst.
   + inversion lts__p; subst.
-  + assert (lts g0 (ActOut a) p'). assumption. destruct a.
+  + assert (lts g0 (a !) p'). assumption. destruct a.
     inversion lts__p; subst.
     * unfold outputs_of. multiset_solver.
     * unfold outputs_of. simpl. eapply gmultiset_elem_of_dom. eapply gmultiset_elem_of_disj_union. left.
@@ -3085,11 +3080,11 @@ Proof.
     eapply lts_set_input_spec1. assumption. 
 Qed.
 
-Definition ltsM_set (S : States) (α : Act TypeOfActions): gset States :=
+Definition ltsM_set (S : States) (α : ActIO TypeOfActions): gset States :=
   match α with
   | τ => ltsM_set_tau S
-  | ActExt (ActIn a) => ltsM_set_input S a
-  | ActExt (ActOut a) => ltsM_set_output S a
+  | a ? => ltsM_set_input S a
+  | a ! => ltsM_set_output S a
   end.
 
 Lemma ltsM_set_spec0 p α q : q ∈ ltsM_set p α -> ltsM p α q.

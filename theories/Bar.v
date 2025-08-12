@@ -23,12 +23,9 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect.
 From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
-Import ListNotations.
 From Coq.Program Require Import Equality.
-From Must Require Import TransitionSystems.
+From Must Require Import TransitionSystems gLts StateTransitionSystems.
 
 From stdpp Require Import base countable gmap list.
 

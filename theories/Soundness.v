@@ -33,7 +33,10 @@ From Coq.Logic Require Import JMeq ProofIrrelevance.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From Must Require Import TransitionSystems Must Subset_Act.
+From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
+      Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
+      Termination Convergence FiniteImageLTS WeakTransitions Lift.
+From Must Require Import ActTau.
 
 (* ************************************************************ *)
 
@@ -90,7 +93,7 @@ Proof.
 Qed.
 
 Lemma mx_mem `{
-  gLtsP : gLts (* Oba *) P A, !FiniteImagegLts P A,
+  gLtsP : gLts P A, !FiniteImagegLts P A,
   gLtsE : !gLts E A, !gLtsEq E A, !Good E A good} 
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -118,9 +121,9 @@ Qed.
 Lemma mustx_terminate_ungood `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
   gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
-  
+
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-  
+
   ps e : 
   mustx ps e 
     -> good e \/ forall p, p ∈ ps -> p ⤓.
@@ -133,21 +136,6 @@ Proof.
     eapply tstep. intros p' l.
     edestruct (H1 {[p']}); [exists p; set_solver| | |]; set_solver.
 Qed.
-
-(* Lemma must_terminates_ungood `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
-  
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-  
-  (p : P) (e : E) : must p e -> ¬ good e -> (p , e) ⤓.
-Proof. intros hm. dependent induction hm.
-  + intro. contradiction.
-  + intro not_good. eapply tstep.
-    intros (p'' , e'') HypTr.
-    inversion HypTr; subst.
-    ++ eapply H1; eauto.
-    ++ eapply H2; eauto. Search (good _). *)
 
 Lemma mustx_terminate_ungood' `{
   @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
@@ -831,8 +819,6 @@ Proof.
   eapply (soundnessx {[p]}).
   now eapply must_set_iff_must. now eapply alt_set_singleton_iff.
 Qed.
-
-From Must Require Lift.
 
 Lemma soundness `{
   @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,

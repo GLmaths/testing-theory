@@ -33,12 +33,15 @@ Require Import Coq.Program.Wf Setoid.
 Require Import Coq.Program.Equality.
 From Coq.Logic Require Import ProofIrrelevance.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import TransitionSystems Must Soundness.
+From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
+            Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
+              GeneralizeLtsOutputs Termination WeakTransitions Convergence  
+               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction .
 
-CoInductive copre `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ} (ps : gset A) (q : B) : Prop := {
+CoInductive copre `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ} (ps : gset A) (q : B) : Prop := {
     c_tau q' : q ⟶ q' -> copre ps q'
   ; c_now : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
-            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ lts_outputs p' ⊆ lts_outputs q
+            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ lts_acc_set_of p' ⊆ lts_acc_set_of q
   ; c_step : forall μ q' ps', (forall p, p ∈ ps -> p ⇓ [μ]) ->
                          q ⟶[μ] q' -> wt_set_from_pset_spec ps [μ] ps' -> copre ps' q'
   ; c_cnv : (forall p, p ∈ ps -> p ⤓) -> q ⤓
@@ -47,7 +50,7 @@ CoInductive copre `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ} (ps : gset A
 Notation "p ⩽ q" := (copre p q) (at level 70).
 
 Lemma copre_if_prex
-  `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ}
+  `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
   (ps : gset A) (q : B) : ps ≼ₓ q -> ps ⩽ q.
 Proof.
   revert ps q.
@@ -56,9 +59,10 @@ Proof.
   constructor.
   - intros q' l. eapply H2, bhvx_preserved_by_tau; eauto.
   - intros hterm hst.
-    edestruct (hsub2 [] q) as (p' & hw & hstp' & hsub0).
+    edestruct (hsub2 [] q) as (p' & hw & p'' & hstp' & stable & hsub0).
     eapply wt_nil. eassumption. intros p' mem. constructor.
-    eapply hterm. eauto. eauto.
+    eapply hterm. eauto.
+    exists p'. exists p''. repeat split; eauto.
   - intros μ q' ps' hcnv hw wtspec.
     eapply H2.
     eapply bhvx_preserved_by_mu; eauto.
@@ -69,12 +73,12 @@ Proof.
 Qed.
 
 Lemma co_preserved_by_wt_nil
-  `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ}
+  `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
   (ps : gset A) (q q' : B) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
 Proof. intro hw. dependent induction hw; eauto. destruct 1. eauto. Qed.
 
 Lemma prex1_if_copre
-  `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ}
+  `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
   (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ1 q.
 Proof.
   intros.
@@ -94,7 +98,7 @@ Proof.
      intros q' hw.
      eapply wt_decomp_one in hw as (q0' & q1' & q1 & hlt & hw0').
      assert (hpre : ps ⩽ q). constructor; eauto.
-     eapply IHs.
+     eapply IHs; eauto.
      ++ eapply co_preserved_by_wt_nil. eassumption.
         eapply (co_preserved_by_wt_nil ps q q0') in hpre. destruct hpre.
         eapply (c_step1 a q1'); eauto.
@@ -106,7 +110,7 @@ Proof.
 Qed.
 
 Lemma prex2_if_copre
-  `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ}
+  `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
   (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ2 q.
 Proof.
   revert ps q.
@@ -118,7 +122,7 @@ Proof.
     ++ destruct hsub.
        edestruct c_now0.
        intros p0 mem0. edestruct (hcnv p0 mem0); eauto. eassumption.
-       firstorder.
+       decompose record H1. repeat eexists;  eauto.
     ++ eapply IHhw; eauto. destruct hsub. eapply c_tau0. eassumption.
   + intros. rename a into μ.
     replace (μ :: s) with ([μ] ++ s) in H1 by eauto.
@@ -135,7 +139,8 @@ Proof.
     eapply c_step0. eassumption. eassumption.
     eapply wt_s_set_from_pset_ispec.
     assert (ps' ⩽ q0) by (eapply co_preserved_by_wt_nil; eauto).
-    edestruct (IHs ps' q0 H6 _ hw1 H2) as (r & memr & p' & hwr & hst & hsub').
+    edestruct (IHs ps' q0 H6 _ hw1 H2) 
+    as (r & memr & p' & hwr & hst & hsub').
     intros.
     edestruct (wt_s_set_from_pset_ispec ps [μ] hcnv').
     eapply H8 in H7 as (p0  & hmem0 & hw0).
@@ -148,7 +153,7 @@ Proof.
 Qed.
 
 
-Theorem eqx `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ} (X : gset A) (q : B) :
+Theorem eqx `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ} (X : gset A) (q : B) :
   X ≼ₓ q <-> X ⩽ q.
 Proof.
   split.
@@ -157,29 +162,33 @@ Proof.
 Qed.
 
 Section eq_contextual.
+  
+  Context `{H : ExtAction A}.
+  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
+  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A}.
 
-  Context `{LL : Label L}.
-  Context `{LtsA : !Lts A L, !FiniteLts A L}.
-  Context `{LtsB : !Lts B L, !FiniteLts B L}.
-  Context `{LtsE : !Lts E L, !FiniteLts E L}.
-
-  Context `{@LtsObaFB A L LL LtsA LtsEqA LtsObaA}.
-  Context `{@LtsObaFB B L LL LtsB LtsEqB LtsObaB}.
-  Context `{@LtsObaFB E L LL LtsE LtsEqE LtsObaE}.
+  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
+  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
+  Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
 
   Context `{good : E -> Prop}.
   Context `{good_dec : forall e, Decision (good e)}.
-  Context `{!Good E L good}.
+  Context `{!Good E A good}.
 
   (* ************************************************** *)
+  Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
+  Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
+  Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
+  Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
 
-  From Must Require Import Equivalence Completeness.
+  Context `{igen_conv : @gen_spec_conv  _ _ _ _ _ good Good0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ good Good0 co_of gen_acc _ _}.
 
-  Context `{igen_conv : @gen_spec_conv  _ _ _ _ _ good Good0 gen_conv}.
-  Context `{igen_acc : @gen_spec_acc _ _ _ _ _ good Good0 gen_acc}.
-
-  Theorem eq_ctx (p : A) (q : B) :
-    @pre_extensional A E _ _ _ good _ p q <-> {[ p ▷ (∅ : mb L) ]} ⩽ q ▷ (∅ : mb L).
+  Theorem eq_ctx (p : P) (q : Q) :
+    @pre_extensional P Q _ _ _ good _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
   Proof.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.

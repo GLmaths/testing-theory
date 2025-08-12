@@ -20,39 +20,32 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
-Import ListNotations.
-From Coq.Program Require Import Wf Equality.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
+(* From Coq Require ssreflect Setoid. *)
+(* From Coq.Unicode Require Import Utf8. *)
+(* From Coq.Lists Require Import List.
+Import ListNotations. *)
+(* From Coq.Program Require Import Wf Equality. *)
+(* From Coq.Wellfounded Require Import Inverse_Image. *)
+(* From Coq.Logic Require Import JMeq ProofIrrelevance. *)
 
-From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import TransitionSystems.
-
+From stdpp Require Import gmap.
+From Must Require Import gLts.
 
 Definition subset_of (A : Type) := A -> Prop.
 
 Definition lts_pre_acc_set_of `{gLts P A} (p : P) (μ : A) : Prop := 
-      ¬ lts_refuses p (ActExt μ).
+      ¬ p ↛[μ].
 
 Definition lts_acc_set_of `{gLts P A} (p : P) : subset_of A := lts_pre_acc_set_of p.
 
-(* Definition Included {A : Type} (B C: A -> Prop) : Prop := 
-    forall μ : A, B μ -> C μ.
-Notation "B ⫅ C" := (Included B C) (at level 20, format "B ⫅ C").
-
-Definition Setminus {A : Type} (B C: A -> Prop) : A -> Prop :=
-    fun μ : A => B μ /\ ~ C μ.
-Notation "B \ C" := (Setminus B C) (at level 20, format "B \ C"). *)
-
-
 Definition Union_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a \/ S' a.
+
 Definition Intersection_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a /\ S' a.
+
 Definition Empty_of_Act {A : Type} (x : A) : Prop := False.
+
 Definition Difference_of_act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a /\ (~ (S' a)).
 (* Definition Singleton_of_Act {A : Type} (x : A) : Prop := forall y : A , x = y. *)
@@ -72,16 +65,11 @@ exact Intersection_of_Act. Defined.
 exact Difference_of_act. Defined.
 #[global] Instance Top_Actions {A : Type} : Top (@subset_of A).
 intro. exact True. Defined.
-(* #[global] Instance SubsetEq_of_Actions {A : Type} : SubsetEq (@subset_of A).
-intro P. intro Q. exact (forall x : A, P x -> Q x). Defined. *)
-
-
 #[global] Instance SemiSet_of_Actions {A : Type} : SemiSet A (@subset_of A).
 repeat split.
 + intros. intro. exact H.
 + intro. inversion H. reflexivity.
-+ intro eq. subst. (* unfold elem_of. unfold singleton. unfold Singleton_of_Actions. 
-    unfold Elements_of. *) reflexivity.
++ intro eq. subst. reflexivity.
 + intro Hyp. destruct Hyp.
   ++ left; eauto.
   ++ right; eauto.
@@ -99,15 +87,3 @@ repeat split; try set_solver.
 
 #[global] Instance TopSet_of_Actions {A : Type} : TopSet A (@subset_of A).
 repeat split ; try set_solver. Defined.
-
-(* Lemma set_ind_L `{H : ExtAction A} (P : subset_of A) `{∀ x, Decision (P x)} : 
-  P ∅ → True. (∀ x X, x ∉ X → P X → P ({[ x ]} ∪ X)) → ∀ X, P X.
-Proof. apply set_ind. by intros ?? ->%leibniz_equiv_iff. Qed. *)
-
-(* Axiom Extensionality_Subset_of: 
-  forall A : Type, forall S S': subset_of A, (S ⊆ S' /\ S' ⊆ S) -> S = S'.
-
-#[global] Instance LeibnizEquiv_Actions {A : Type} : LeibnizEquiv (@subset_of A).
-  intro. intros.
-  eapply Extensionality_Subset_of. set_solver.
-Qed. *)

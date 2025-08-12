@@ -26,7 +26,9 @@
 From stdpp Require Import base decidable gmap finite.
 From Coq Require Import ssreflect.
 From Coq.Program Require Import Equality.
-From Must Require Import TransitionSystems Must Bar Completeness Soundness Lift Subset_Act.
+From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
+    Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
+    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau.
 
 (** Extensional definition of Convergence and its equivalence
     with the inductive definition. *)
@@ -251,29 +253,20 @@ Section must_set_acc_set.
     exists p0. split. eapply wt_push_nil_left; eauto.
     split; eauto.
     intros μ mem_mu.
-(*     assert (is_output μ) as (a & heq).
-    eapply elem_of_map in mem_mu as (a & heq & mem2).
-    exists a. assumption. subst. *)
-    (* destruct (decide (μ ∈ G)).
-    + eauto. 
-    + assert (μ ∉ G). admit.*)
-      assert (mem0 : μ ∈ actions_acc p s hcnv).
-      eapply elem_of_union_list. eexists. split; eauto.
-      eapply elem_of_list_fmap.
-      exists p0. repeat split; eauto.
-      eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
-      eapply wt_push_nil_right, wt_push_nil_right; eauto.
-      (* exfalso. *)
-      (* eapply elem_of_union_list in mem0.
-      destruct mem0 as (A' & ACC & mem'). *)
-      eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr).
-      destruct (decide (μ ∈ lts_acc_set_of q')).
+    assert (mem0 : μ ∈ actions_acc p s hcnv).
+    eapply elem_of_union_list. eexists. split; eauto.
+    eapply elem_of_list_fmap.
+    exists p0. repeat split; eauto.
+    eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
+    eapply wt_push_nil_right, wt_push_nil_right; eauto.
+    eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr).
+    { destruct (decide (μ ∈ lts_acc_set_of q')).
       + eauto.
       + exfalso.
         eapply (nhw $ μ); eauto. unfold actions_acc in mem0.
         unfold oas in mem0. set_solver.
-        eapply wt_push_nil_left; eauto with mdb.
-      + constructor; eapply (cnv_wt_s_terminate p pt s hcnv); eauto.
+        eapply wt_push_nil_left; eauto with mdb. }
+    constructor; eapply (cnv_wt_s_terminate p pt s hcnv); eauto.
   Qed.
 
   Lemma either_MUST_or_ex 
@@ -522,7 +515,8 @@ Section preorder.
     `{gLtsP : @gLts P A H, !FiniteImagegLts P A,
     gLtsE : !gLts E A, !gLtsEq E A, !Good E A good,  !FiniteImagegLts E A}
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} (* à rajouter en context ? *)
-    (p : P) (e : E) : @must_extensional P E _ good p e <-> @must_sts P E _ good p e.
+    (p : P) (e : E) : 
+    @must_extensional P E _ good p e <-> @must_sts P E _ good p e.
   Proof.
     split.
     - intros hm. destruct Good0.
@@ -570,8 +564,6 @@ Section preorder.
   Context `{igen_conv : @gen_spec_conv _ _ _ _ _ good Good0 co_of gen_conv}.
   Context `{igen_acc : @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ 
                         good Good0 co_of gen_acc _ _}.
-
-
 
   (* ************************************************** *)
 

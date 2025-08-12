@@ -23,32 +23,25 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
+
 From Coq.Unicode Require Import Utf8.
 From Coq.Lists Require Import List.
 Import ListNotations.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
-From Coq.Program Require Import Wf Equality.
-From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA FiniteImageLTS 
-    WeakTransitions StateTransitionSystems Lts_FW Convergence Termination InteractionBetweenLts 
-    InListPropHelper.
 
-Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=
-  MkgLtsObaFB {
-      lts_oba_fb_feedback {p1 p2 p3 η μ} :
-      non_blocking η -> dual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 
-        -> p1 ⟶⋍ p3
-    }.
+From stdpp Require Import decidable.
 
+  (* Actions := External Action ⊎ { τ }*)
 
+  Inductive Act (A: Type) :=
+    | ActExt (μ: A)
+    | τ
+   .
+  Arguments ActExt {_} _.
+  Arguments τ {_}.
 
+  (* List Notation *)
+  Definition ε {A : Type} := [] : list A.
+  Definition trace A := list A.
 
-
-
-
-
-
-
-
+  #[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
+  Proof. solve_decision. Defined.

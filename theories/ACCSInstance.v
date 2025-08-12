@@ -25,15 +25,20 @@
 
 From Coq.Program Require Import Equality.
 From Coq.Strings Require Import String.
+From Coq Require Import Relations.
+From Coq.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import TransitionSystems Must Completeness Soundness Coin Normalisation.
+From Must Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
+      Completeness Soundness Coin Normalisation GeneralizeLtsOutputs
+      MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
+      (* gLts *) (* Bisimulation *).
 
 Definition name := string.
 Definition name_eq_dec : forall (x y : name), { x = y } + { x <> y } := string_dec.
 
 #[global] Instance name_eqdecision : EqDecision name. by exact name_eq_dec. Defined.
-#[global] Instance name_countable' : Countable name. by exact string_countable. Defined.
+#[global] Instance name_countable' : Countable name. by exact String.countable. Defined.
 
 Inductive proc : Type :=
 | pr_output : name -> proc
@@ -109,7 +114,7 @@ with gpr_subst id p q {struct p} := match p with
     gpr_choice (gpr_subst id p1 q) (gpr_subst id p2 q)
 end.
 
-Inductive lts : proc -> Act name -> proc -> Prop :=
+Inductive lts : proc -> ActIO name -> proc -> Prop :=
 | lts_input : forall {a t},
     lts (pr_input a t) (ActExt (ActIn a)) t
 | lts_output : forall {a},
@@ -463,7 +468,7 @@ Lemma lts_set_tau_spec1 p q : lts p τ q -> q ∈ lts_set_tau p.
          eapply lts_set_input_spec1; eauto with ccs.
 Qed.
 
-Definition lts_set (p : proc) (α : Act name): gset proc :=
+Definition lts_set (p : proc) (α : ActIO name): gset proc :=
   match α with
   | τ => lts_set_tau p
   | ActExt (ActIn a) => lts_set_input p a
@@ -748,7 +753,7 @@ Qed.
 
 Definition lts_eq p α q := exists r, lts p α r /\ cgr r q.
 
-Lemma aux0 (p q r : proc) (a : name) (α : Act name) :
+Lemma aux0 (p q r : proc) (a : name) (α : ActIO name) :
   lts p (ActExt (ActOut a)) q -> lts q α r ->
   (exists t, lts p α t /\ lts_eq t (ActExt (ActOut a)) r).
 Proof.
@@ -844,7 +849,7 @@ Proof.
   etrans; eauto.
 Qed.
 
-Lemma mo_spec p a q : p ⟶[ActOut a] q -> moutputs_of p = {[+ a +]} ⊎ moutputs_of q.
+Lemma mo_spec p a q : p ⇾[ActOut a] q -> moutputs_of p = {[+ a +]} ⊎ moutputs_of q.
 Proof.
   intros l. eapply output_shape, mo_equiv_spec in l. simpl in l. eauto.
 Qed.
@@ -928,10 +933,10 @@ Proof.
   eauto with ccs. eauto with ccs.
 Qed.
 
-#[global] Program Instance CCS_Good : @Good proc name good CCS_Name_label CCS_lts CCS_EqLTS.
+#[global] Program Instance CCS_Good : @Good proc (ExtAct name) good gLabel_nb (* CCS_lts *) _ _ (* CCS_EqLTS *).
 Next Obligation. intros. eapply good_preserved_by_cgr; eassumption. Qed.
-Next Obligation. intros. eapply good_preserved_by_output; eassumption. Qed.
-Next Obligation. intros. eapply good_preserved_by_lts_output_converse; eassumption. Qed.
+Next Obligation. intros. simpl in *. destruct H as (a & eq); subst. eapply good_preserved_by_output; eassumption. Qed.
+Next Obligation. intros. simpl in *. destruct H as (a & eq); subst. eapply good_preserved_by_lts_output_converse; eassumption. Qed.
 
 Fixpoint gen_test s p :=
   match s with
@@ -980,7 +985,25 @@ Qed.
 
 Definition gen_conv s := gen_test s (pr_tau pr_success).
 
-#[global] Program Instance gen_conv_gen_test_inst : gen_spec gen_conv.
+From Must Require Import gLts InputOutputActions Bisimulation.
+
+#[global] Instance dec_output μ : Decision (∃ a : name, ActOut a = μ).
+Proof.
+  destruct μ.
+  + right. intros (a' & eq). inversion eq. 
+  + left. exists a; eauto.
+Defined.
+
+#[global] Program Instance gen_conv_gen_test_inst : @gen_spec proc (ExtAct name) gLabel_nb _ _ _ CCS_Good co gen_conv.
+Next Obligation.
+  intros. unfold parallel_inter. unfold dual. simpl.
+  destruct μ; simpl; eauto.
+Qed.
+Next Obligation.
+  intros. unfold parallel_inter in H. unfold dual in H. simpl in *.
+  destruct μ; simpl in *; eauto. destruct μ'; subst; eauto. inversion H.
+  destruct μ'; subst; eauto. inversion H.
+Qed.
 Next Obligation.
   intros. eapply gen_test_ungood_if; try eassumption. inversion 1.
 Qed.
@@ -988,21 +1011,61 @@ Next Obligation.
   intros. eapply gen_test_lts_mu.
 Qed.
 Next Obligation.
-  intros. eapply gen_test_gen_spec_out_lts_tau_ex_inst.
+  intros. case_eq ((co μ)).
+  + intros. rewrite H0 in H. simpl in *.
+    assert ((exists a, ActOut a = μ)) as (a' & eq).
+    { destruct μ. 
+      ++ simpl in *. inversion H0.
+      ++ simpl in *. exists a0. reflexivity. }
+    subst. eapply gen_test_gen_spec_out_lts_tau_ex_inst.
+  + intros. exfalso.
+    eapply H. exists a ; eauto.
 Qed.
 Next Obligation.
-  intros. eapply gen_test_gen_spec_out_lts_tau_good. eassumption.
+  intros. case_eq ((co μ)).
+  + intros. rewrite H1 in H. simpl in *.
+    assert ((exists a, ActOut a = μ)) as (a' & eq).
+    { destruct μ. 
+      ++ simpl in *. inversion H1.
+      ++ simpl in *. exists a0. reflexivity. }
+    subst. eapply gen_test_gen_spec_out_lts_tau_good;eauto.
+  + intros. exfalso.
+    eapply H. exists a ; eauto.
 Qed.
 Next Obligation.
-  intros. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
+  intros. case_eq ((co μ)).
+  + intros. rewrite H1 in H. simpl in *.
+    assert ((exists a, ActOut a = μ)) as (a' & eq).
+    { destruct μ. 
+      ++ simpl in *. inversion H1.
+      ++ simpl in *. exists a0. reflexivity. }
+    subst. simpl in *. eapply gen_test_gen_spec_out_lts_mu_uniq in H0 as (eq & eq_act).
+    constructor. rewrite eq. eauto. unfold gen_conv. reflexivity.
+  + intros. exfalso.
+    eapply H. exists a ; eauto.
+Qed.
+Next Obligation.
+  intros. case_eq ((co μ)).
+  + intros. rewrite H2 in H. simpl in *.
+    assert ((exists a, ActOut a = μ)) as (a' & eq).
+    { destruct μ. 
+      ++ simpl in *. inversion H2.
+      ++ simpl in *. exists a0. reflexivity. }
+    subst. simpl in *. eapply gen_test_gen_spec_out_lts_mu_uniq in H0 as (eq & eq_act).
+    contradiction.
+  + intros. exfalso.
+    eapply H. exists a ; eauto.
 Qed.
 
-#[global] Program Instance gen_conv_gen_spec_conv_inst : gen_spec_conv gen_conv.
+#[global] Program Instance gen_conv_gen_spec_conv_inst : @gen_spec_conv proc (ExtAct name) gLabel_nb _ _ _ CCS_Good co gen_conv.
 Next Obligation.
   intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
 Qed.
 Next Obligation. cbn. eauto with ccs. Qed.
 Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
+
+Definition union_of_outputs_without (l : list proc) (p : proc) : gset name :=
+  (⋃ map outputs_of l) ∖ (outputs_of p).
 
 Fixpoint unroll_fw (xs : list name) : proc :=
   match xs with
@@ -1010,7 +1073,8 @@ Fixpoint unroll_fw (xs : list name) : proc :=
   | x :: xs' => pr_input x pr_success & unroll_fw xs'
   end.
 
-Definition gen_acc (g : gset name) s := gen_test s (unroll_fw (elements g)).
+Definition gen_acc (Ps : list proc * proc) s := 
+  gen_test s (unroll_fw (elements (union_of_outputs_without Ps.1 Ps.2))).
 
 Lemma unroll_a_eq_perm (xs ys : list name) : xs ≡ₚ ys -> unroll_fw xs ≡* unroll_fw ys.
 Proof.
@@ -1022,10 +1086,21 @@ Proof.
     eauto with ccs. eauto with ccs.
 Qed.
 
-#[global] Program Instance gen_acc_gen_test_inst g : gen_spec (fun s => gen_acc g s).
+#[global] Program Instance gen_acc_gen_test_inst g : gen_spec co (fun s => gen_acc g s).
+Next Obligation.
+  intros. unfold parallel_inter. unfold dual. destruct μ; simpl; eauto.
+Qed.
+Next Obligation.
+  intros. symmetry in H. unfold parallel_inter in H. unfold dual in H. simpl in *.
+  destruct μ'.
+  + rewrite simplify_match_input in H. destruct μ. simpl in *. inversion H.
+    subst; eauto. simpl in *. inversion H.
+  + rewrite simplify_match_output in H. destruct μ. simpl in *. inversion H.
+    subst; eauto. simpl in *. inversion H. subst. eauto.
+Qed.
 Next Obligation.
   intros g s hh. eapply gen_test_ungood_if; try eassumption.
-  intro hh0. induction (elements g).
+  intro hh0. induction (elements (union_of_outputs_without g.1 g.2)).
   - cbn in hh0. inversion hh0.
   - inversion hh0; subst. destruct H0.
     + inversion H.
@@ -1035,13 +1110,34 @@ Next Obligation.
   intros. eapply gen_test_lts_mu.
 Qed.
 Next Obligation.
-  intros. eapply gen_test_gen_spec_out_lts_tau_ex_inst.
+  intros. destruct μ. 
+  + exfalso. unfold non_blocking in H. simpl in *.
+    unfold non_blocking_output in H. unfold is_output in H.
+    eapply H. exists a; eauto.
+  + eapply gen_test_gen_spec_out_lts_tau_ex_inst.
 Qed.
 Next Obligation.
-  intros. eapply gen_test_gen_spec_out_lts_tau_good. simpl in H. eassumption.
+  intros. destruct μ. 
+  + exfalso. unfold non_blocking in H. simpl in *.
+    unfold non_blocking_output in H. unfold is_output in H.
+    eapply H. exists a; eauto.
+  + eapply gen_test_gen_spec_out_lts_tau_good. simpl in H0. eassumption.
 Qed.
 Next Obligation.
-  intros. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
+  intros. destruct μ. 
+  + exfalso. unfold non_blocking in H. simpl in *.
+    unfold non_blocking_output in H. unfold is_output in H.
+    eapply H. exists a; eauto.
+  + simpl in *. eapply gen_test_gen_spec_out_lts_mu_uniq in H0 as (eq & eq_mu).
+    subst. subst. reflexivity.
+Qed.
+Next Obligation.
+  intros. destruct μ. 
+  + exfalso. unfold non_blocking in H. simpl in *.
+    unfold non_blocking_output in H. unfold is_output in H.
+    eapply H. exists a; eauto.
+  + simpl in *. eapply gen_test_gen_spec_out_lts_mu_uniq in H0 as (eq & eq_mu).
+    subst. exfalso. eauto.
 Qed.
 
 Lemma gen_acc_does_not_output : forall g t a, ~ lts (unroll_fw g) (ActExt $ ActOut a) t.
@@ -1067,10 +1163,51 @@ Proof.
     + eapply IHg'. eassumption.
 Qed.
 
-Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ g -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
+Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ (union_of_outputs_without g.1 g.2) 
+    -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
 Proof.
-  remember g. revert g0 Heqg0.
-  induction g using set_ind_L; intros g0 Heqg0 mem.
+  remember (union_of_outputs_without g.1 g.2). revert g0 Heqg0.
+  induction g.1; intros g0 Heqg0 mem.
+  - subst. unfold union_of_outputs_without in mem.
+    simpl in *. assert (∅ ∖ outputs_of g.2 = ∅). set_solver. set_solver.
+  - rewrite Heqg0 in mem.
+  (* 
+   assert (hn : {[a]} ## X) by set_solver.
+    destruct (decide (x = a)).
+    + subst.
+      set (h := elements_disj_union {[a]} X hn).
+      cbn. assert (exists t, lts (unroll_fw (a :: elements X)) (ActExt $ ActIn a) t).
+      simpl. eauto with ccs.
+      destruct H0 as (r & hl).
+      edestruct
+        (eq_spec 
+         (* proc name gLabel_nb CCS_lts CCS_EqLTS *)
+        (unroll_fw (elements ({[a]} ∪ X))) r (ActExt $ ActIn a)) as (t & hlt & heqt).
+      exists (unroll_fw (a :: elements X)).
+      split. eapply unroll_a_eq_perm.
+      replace (elements {[a]}) with [a] in h. eauto.
+      now rewrite elements_singleton.
+      simpl in *. eapply hl. destruct g.
+      simpl in *. rewrite<- Heqg0. eauto.
+    + assert (mem' : a ∈ X) by set_solver.
+      edestruct (IHg0 Heqg0X eq_refl mem') as (r & hlr); eauto.
+(*       edestruct
+        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
+           (unroll_fw (elements ({[x]} ∪ X)))
+           (pr_par (pr_input x pr_success) r) (ActExt $ ActIn a)) as (t & hlt & heqt).
+      exists (unroll_fw (x :: elements X)).
+      split. eapply unroll_a_eq_perm.
+      set (h := elements_disj_union {[x]} X hn).
+      replace (elements {[x]}) with [x] in h. eauto.
+      now rewrite elements_singleton.
+      simpl in *. eauto with ccs. subst. eauto. *) *)
+Admitted.
+
+(* Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ (union_of_outputs_without g.1 g.2) 
+    -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
+Proof.
+  remember (union_of_outputs_without g.1 g.2). revert g0 Heqg0.
+  induction g0 using set_ind_L; intros Heqg0 mem.
   - subst. inversion mem.
   - assert (hn : {[x]} ## X) by set_solver.
     destruct (decide (x = a)).
@@ -1080,16 +1217,18 @@ Proof.
       simpl. eauto with ccs.
       destruct H0 as (r & hl).
       edestruct
-        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-           (unroll_fw (elements ({[a]} ∪ X))) r (ActExt $ ActIn a)) as (t & hlt & heqt).
+        (eq_spec 
+         (* proc name gLabel_nb CCS_lts CCS_EqLTS *)
+        (unroll_fw (elements ({[a]} ∪ X))) r (ActExt $ ActIn a)) as (t & hlt & heqt).
       exists (unroll_fw (a :: elements X)).
       split. eapply unroll_a_eq_perm.
       replace (elements {[a]}) with [a] in h. eauto.
       now rewrite elements_singleton.
-      simpl in *. eapply hl. eauto.
+      simpl in *. eapply hl. destruct g.
+      simpl in *. rewrite<- Heqg0. eauto.
     + assert (mem' : a ∈ X) by set_solver.
-      edestruct (IHg X eq_refl mem') as (r & hlr); eauto.
-      edestruct
+      edestruct (IHg0 Heqg0X eq_refl mem') as (r & hlr); eauto.
+(*       edestruct
         (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
            (unroll_fw (elements ({[x]} ∪ X)))
            (pr_par (pr_input x pr_success) r) (ActExt $ ActIn a)) as (t & hlt & heqt).
@@ -1098,10 +1237,12 @@ Proof.
       set (h := elements_disj_union {[x]} X hn).
       replace (elements {[x]}) with [x] in h. eauto.
       now rewrite elements_singleton.
-      simpl in *. eauto with ccs. subst. eauto.
-Qed.
+      simpl in *. eauto with ccs. subst. eauto. *)
+Admitted. *)
 
-#[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc gen_acc.
+
+(*
+#[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc co gen_acc.
 Next Obligation.
   intros g. simpl. unfold proc_stable. cbn.
   remember (lts_set_tau (unroll_fw (elements g))) as ps.
@@ -1170,166 +1311,7 @@ Proof.
   intros hm. now eapply pre_extensional_eq, equivalence_bhv_acc_ctx.
 Qed.
 
-(* Proof of hoisting *)
-
-Lemma q_terminate : forall M, !"a" & (gpr_tau (!"b") ⊕ gpr_tau (!"c")) ▷ M ⤓.
-Proof.
-  intro M. constructor.
-  intros (p1, M1) l. inversion l; subst.
-  inversion H2; subst.
-  inversion H1; subst.
-  inversion H3; subst; inversion H6. inversion H4.
-  inversion H4; subst. inversion H5; subst.
-  constructor. intros (p2, M2) l2. inversion l2; subst.
-  inversion H3; subst. inversion H1; subst. inversion H6. inversion H7. inversion H7.
-  inversion H3; subst; inversion H7.
-  inversion H5; subst.
-  constructor. intros (p2, M2) l2. inversion l2; subst.
-  inversion H3; subst. inversion H1; subst. inversion H6. inversion H7. inversion H7.
-  inversion H3; subst; inversion H7.
-  inversion H2; subst. inversion H4. inversion H4; subst; inversion H5.
-Qed.
-
-Lemma coin_refl `{FiniteLts A L} {p : A} : {[ p ]} ⩽ p.
-Proof. eapply eqx. eapply alt_set_singleton_iff. firstorder. Qed.
-
-Lemma h_cup : forall (X1 X2  : gset (proc * mb name)) (q : proc * mb name), X1 ⩽ q -> X1 ∪ X2 ⩽ q.
-Proof.
-  intros.
-  eapply eqx. eapply eqx in H as (h1 & h2).
-  split.
-  - intros s hcnv.
-    eapply h1. set_solver.
-  - intros s p hw hst hcnv.
-    destruct (h2 s p hw hst ltac:(set_solver)). set_solver.
-Qed.
-
-Lemma ineq01 : forall (M : mb name) X,
-    {[ gpr_tau (!"a" & !"b") ⊕ gpr_tau (!"a" & !"c") ▷ M ]} ∪ X
-      ⩽ !"a" & !"b" ▷ M.
-Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l.
-    inversion l; subst. inversion H2; subst.
-    inversion H1; subst. inversion H3; subst. inversion H4. inversion H4.
-    inversion H2; subst; inversion H4.
-  - intros.
-    exists (gpr_tau (!"a" & !"b") ⊕ gpr_tau (!"a" & !"c") ▷ M), (! "a" & ! "b" ▷ M).
-    split.
-    + eapply elem_of_union. left. now eapply elem_of_singleton_2.
-    + split. eapply wt_tau.
-      eapply lts_fw_p, lts_choiceL, lts_tau.
-      eapply wt_nil.
-      split. eassumption. set_solver.
-  - intros.
-    inversion H0; subst.
-    + inversion H6; subst.
-      ++ inversion H7; subst.
-         assert (pr_nil & ! "b" ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceL, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parL, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-      ++ inversion H7; subst.
-         assert (! "a" & pr_nil ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceL, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parR, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-    + assert (gpr_tau (! "a" & ! "b") ⊕ gpr_tau (! "a" & ! "c") ▷ m ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-    + assert (gpr_tau (! "a" & ! "b") ⊕ gpr_tau (! "a" & ! "c") ▷ {[+ a +]} ⊎ M ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l.
-    inversion l; subst. inversion H3; subst.
-    inversion H2; subst. inversion H4. inversion H5. inversion H5.
-    inversion H3; subst. inversion H5. inversion H5.
-Qed.
-
-Example ineq02 : forall (M : mb name) X,
-    {[ gpr_tau (! "a" & ! "b") ⊕ gpr_tau (! "a" & ! "c") ▷ M ]} ∪ X
-      ⩽ ! "a" & ! "c" ▷ M.
-Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l.
-    inversion l; subst. inversion H2; subst.
-    inversion H1; subst. inversion H3; subst. inversion H4. inversion H4.
-    inversion H2; subst; inversion H4.
-  - intros.
-    exists (gpr_tau (!"a" & !"b") ⊕ gpr_tau (!"a" & !"c") ▷ M), (! "a" & ! "c" ▷ M).
-    split.
-    + eapply elem_of_union. left. now eapply elem_of_singleton_2.
-    + split. eapply wt_tau.
-      eapply lts_fw_p, lts_choiceR, lts_tau.
-      eapply wt_nil.
-      split. eassumption. set_solver.
-  - intros.
-    inversion H0; subst.
-    + inversion H6; subst.
-      ++ inversion H7; subst.
-         assert (pr_nil & ! "c" ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceR, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parL, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-      ++ inversion H7; subst.
-         assert (! "a" & pr_nil ▷ M ∈ ps').
-         eapply H1.
-         eapply elem_of_union. left.
-         eapply elem_of_singleton. reflexivity.
-         eapply wt_tau. eapply lts_fw_p, lts_choiceR, lts_tau.
-         eapply wt_act. eapply lts_fw_p, lts_parR, lts_output.
-         eapply wt_nil.
-         eapply union_difference_singleton_L in H2.
-         rewrite H2. eapply h_cup. eapply coin_refl.
-    + assert (gpr_tau (! "a" & ! "b") ⊕ gpr_tau (! "a" & ! "c") ▷ m ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-    + assert (gpr_tau (! "a" & ! "b") ⊕ gpr_tau (! "a" & ! "c") ▷ {[+ a +]} ⊎ M ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l.
-    inversion l; subst. inversion H3; subst.
-    inversion H2; subst. inversion H4. inversion H5. inversion H5.
-    inversion H3; subst. inversion H5. inversion H5.
-Qed.
-
+(* TODO: this lemma has nothing to do here ; and need proper name *)
 Lemma h2 : forall q q' X M,
     q ≡* q' -> (X : gset (proc * mb name)) ⩽ q ▷ M -> X ⩽ q' ▷ M.
 Proof.
@@ -1363,198 +1345,4 @@ Proof.
     eapply elem_of_union. left. now eapply gmultiset_elem_of_dom.
     eapply elem_of_union. right. now eapply gmultiset_elem_of_dom.
 Qed.
-
-Example ineq03 : forall (M : mb name) X,
-    {[ (! "b" ▷ M); (! "c" ▷ M) ]} ∪ X
-      ⩽ gpr_tau (! "b") ⊕ gpr_tau (! "c") ▷ M.
-Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l.
-    inversion l; subst. inversion H2; subst.
-    + inversion H4; subst.
-      eapply h_cup. eapply h_cup. eapply coin_refl.
-    + inversion H4; subst.
-      eapply h_cup.
-      replace ({[! "b" ▷ M'; ! "c" ▷ M']})
-        with ({[! "c" ▷ M'; ! "b" ▷ M']} : gset (proc * mb name)).
-      eapply h_cup. eapply coin_refl.
-      eapply leibniz_equiv.
-      intros q.
-      split; intros h%elem_of_union; destruct h as [hl | hr]; eapply elem_of_union; eauto.
-    + inversion H2; subst; inversion H4.
-  - intros.
-    exfalso. eapply (lts_stable_spec2 (gpr_tau (! "b") ⊕ gpr_tau (! "c") ▷ M)).
-    eexists. eapply lts_fw_p, lts_choiceL, lts_tau. assumption.
-  - intros. inversion H0; subst.
-    + inversion H6; subst; inversion H7.
-    + assert ({[! "b" ▷ m; ! "c" ▷ m ]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-    + assert ({[! "b" ▷ {[+ a +]} ⊎ M; ! "c" ▷ {[+ a +]} ⊎ M]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l.
-    inversion l; subst. inversion H3; subst.
-    inversion H5; subst. constructor. intros.
-    inversion H0; subst. inversion H7. inversion H2.
-    inversion H5; subst. constructor. intros.
-    inversion H0; subst. inversion H7. inversion H2.
-    inversion H3; subst; inversion H5.
-Qed.
-
-Example ineq03' : forall (M : mb name) X,
-    {[ (pr_nil & ! "b" ▷ M); (pr_nil & ! "c" ▷ M) ]} ∪ X
-      ⩽ gpr_tau (pr_nil & ! "b") ⊕ gpr_tau (pr_nil & ! "c") ▷ M.
-Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros (q', M') l.
-    inversion l; subst. inversion H2; subst.
-    + inversion H4; subst.
-      eapply h_cup. eapply h_cup. eapply coin_refl.
-    + inversion H4; subst.
-      eapply h_cup.
-      replace ({[pr_nil & ! "b" ▷ M'; pr_nil & ! "c" ▷ M']})
-        with ({[pr_nil & ! "c" ▷ M'; pr_nil &  ! "b" ▷ M']} : gset (proc * mb name)).
-      eapply h_cup. eapply coin_refl.
-      eapply leibniz_equiv.
-      intros q.
-      split; intros h%elem_of_union; destruct h as [hl | hr]; eapply elem_of_union; eauto.
-    + inversion H2; subst; inversion H4.
-  - intros.
-    exfalso. eapply (lts_stable_spec2 (gpr_tau (pr_nil & ! "b") ⊕ gpr_tau (pr_nil & ! "c") ▷ M)).
-    eexists. eapply lts_fw_p, lts_choiceL, lts_tau. assumption.
-  - intros. inversion H0; subst.
-    + inversion H6; subst; inversion H7.
-    + assert ({[pr_nil & ! "b" ▷ m; pr_nil & ! "c" ▷ m ]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-    + assert ({[pr_nil & ! "b" ▷ {[+ a +]} ⊎ M; pr_nil & ! "c" ▷ {[+ a +]} ⊎ M]} ⊆ ps').
-      intros p mem%elem_of_union.
-      destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_union. right.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_L in H2.
-      rewrite H2. eapply hco.
-  - intros. constructor.
-    intros (q', M') l.
-    inversion l; subst. inversion H3; subst.
-    inversion H5; subst. constructor. intros.
-    inversion H0; subst. inversion H7; subst. inversion H4. inversion H8. inversion H8.
-    inversion H2; subst; inversion H8.
-    inversion H5; subst. constructor. intros.
-    inversion H0; subst. inversion H7; subst. inversion H4. inversion H8. inversion H8.
-    inversion H2; subst; inversion H8.
-    inversion H3; subst; inversion H5.
-Qed.
-
-Example ineq4 : forall (M : mb name) X,
-    {[ gpr_tau (!"a" & !"b") ⊕ gpr_tau (!"a" & !"c") ▷ M ]} ∪ X
-      ⩽ !"a" & (gpr_tau (!"b") ⊕ gpr_tau (!"c")) ▷ M.
-Proof.
-  cofix hco.
-  intros.
-  split.
-  - intros q l.
-    inversion l; subst. inversion H3; subst. inversion H1; subst. simpl in H2.
-    inversion H2; subst.
-    inversion H6; subst. inversion H6; subst.
-    inversion H4; subst.
-    + inversion H4; subst.
-      ++ inversion H5; subst. eapply ineq01.
-      ++ inversion H5; subst. eapply ineq02.
-    + inversion H0; subst. inversion H4.
-      inversion H4; subst; inversion H5.
-  - intros. exfalso.
-    eapply (lts_stable_spec2 (! "a" & (gpr_tau (! "b") ⊕ gpr_tau (! "c")) ▷ M)); eauto.
-    exists (! "a" & !"b" ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
-  - intros. inversion H0; subst.
-    + inversion H6; subst. inversion H7; subst.
-      ++ eapply h2.
-         etrans. eapply t_step. eapply cgr_par_nil_rev.
-         etrans. eapply t_step. eapply cgr_par_com.
-         reflexivity.
-         eapply (h2 (gpr_tau (pr_nil & ! "b") ⊕ gpr_tau (pr_nil & ! "c"))).
-         symmetry.
-         etrans. eapply t_step. eapply cgr_choice.
-         eapply cgr_tau. eapply cgr_par_nil_rev.
-         eapply cgr_tau. eapply cgr_par_nil_rev.
-         etrans. eapply t_step. eapply cgr_choice.
-         eapply cgr_tau. eapply cgr_par_com.
-         eapply cgr_tau. eapply cgr_par_com. reflexivity.
-         assert ({[ (pr_nil & ! "b" ▷ M); (pr_nil & ! "c" ▷ M) ]} ⊆ ps').
-         intros x mem%elem_of_union.
-         destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
-         eapply H1. eapply elem_of_union. left. now eapply elem_of_singleton.
-         eapply wt_tau. eapply lts_fw_p. eapply lts_choiceL, lts_tau.
-         eapply wt_act. eapply lts_fw_p. eapply lts_parL, lts_output. eapply wt_nil.
-         eapply H1. eapply elem_of_union. left. now eapply elem_of_singleton.
-         eapply wt_tau. eapply lts_fw_p. eapply lts_choiceR, lts_tau.
-         eapply wt_act. eapply lts_fw_p. eapply lts_parL, lts_output. eapply wt_nil.
-         eapply union_difference_L in H2.
-         rewrite H2. eapply ineq03'.
-      ++ inversion H7; subst; inversion H8.
-    + assert (gpr_tau (!"a" & !"b") ⊕ gpr_tau (!"a" & !"c") ▷ m ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-    + assert (gpr_tau (!"a" & !"b") ⊕ gpr_tau (!"a" & !"c") ▷ {[+ a +]} ⊎ M ∈ ps').
-      eapply H1.
-      eapply elem_of_union. left.
-      eapply elem_of_singleton. reflexivity.
-      eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
-      eapply union_difference_singleton_L in H2.
-      rewrite H2. eapply hco.
-  - intros. eapply q_terminate.
-Qed.
+ *)

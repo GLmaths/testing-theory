@@ -23,15 +23,11 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
 From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
-Import ListNotations.
-From Coq.Program Require Import Wf Equality.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
-From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import TransitionSystems Subset_Act.
+From Coq.Program Require Import Equality.
+From stdpp Require Import finite gmap decidable.
+From Must Require Import ActTau gLts TransitionSystems Bisimulation Lts_OBA Subset_Act WeakTransitions 
+    StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
 Class Good (P A : Type) (good : P -> Prop) `{gLts P A, !gLtsEq P A} := {
     good_decidable e : Decision (good e);
@@ -50,13 +46,6 @@ Proof.
   eapply hp. eapply good_preserved_by_lts_non_blocking_action_converse; eauto with mdb.
 Qed.
 
-Lemma ungood_preserved_by_eq `{gLtsOba P A, !Good P A good} p q :
-  ~ good p -> q ⋍ p -> ~ good q.
-Proof.
-  intros not_happy eq. intro happy.
-  eapply good_preserved_by_eq in happy; eauto with mdb.
-Qed.
-
 Lemma ungood_preserved_by_wt_non_blocking_action 
   `{gLtsOba P A, !Good P A good} 
   r1 r2 s :
@@ -70,6 +59,13 @@ Proof.
     eapply IHhw. eassumption.
     eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
     eapply ungood_preserved_by_lts_non_blocking_action; eauto.
+Qed.
+
+Lemma ungood_preserved_by_eq `{gLtsOba P A, !Good P A good} p q :
+  ~ good p -> q ⋍ p -> ~ good q.
+Proof.
+  intros not_happy eq. intro happy.
+  eapply good_preserved_by_eq in happy; eauto with mdb.
 Qed.
 
 Inductive must_sts 
@@ -95,7 +91,7 @@ Inductive must `{
 | m_now : good e -> must p e
 | m_step
     (nh : ¬ good e)
-    (ex : ∃ t, inter_step (p, e) τ t)
+    (ex : ∃ t, (p, e) ⟶ t)
     (pt : forall p', p ⟶ p' -> must p' e)
     (et : forall e', e ⟶ e' -> must p e')
     (com : forall p' e' μ1 μ2, parallel_inter μ1 μ2
@@ -205,15 +201,23 @@ Proof.
     + intro rh. eapply nh. eapply good_preserved_by_eq; eauto with mdb.
       now symmetry.
     + destruct ex as (t & l).
-      inversion l; subst; eauto with mdb.
+      inversion l; subst.
+      ++ exists (a2 ▷ r). eapply ParLeft; eauto.
       ++ symmetry in heq.
-         edestruct (eq_spec r b2 τ) as (t & l3 & l4); eauto with mdb.
+         assert (r ⟶⋍ b2) as (t & l3 & l4).
+         { eapply eq_spec; eauto. }
+         exists (p ▷ t). eapply ParRight; eauto.
       ++ symmetry in heq.
-         edestruct (eq_spec r b2 (ActExt μ2) ) as (t & l3 & l4); eauto with mdb.
+         assert (r ⟶⋍[μ2] b2) as (t & l3 & l4).
+         { eapply eq_spec; eauto. }
+         exists (a2 ▷ t). eapply ParSync; eauto.
     + intros r' l.
-      edestruct (eq_spec e r' τ) as (t & l3 & l4); eauto with mdb.
+      assert (e ⟶⋍ r') as (t & l3 & l4).
+      { eapply eq_spec; eauto. }
+      eauto.
     + intros p' r' μ1 μ2 inter l__r l__p.
-      edestruct (eq_spec e r' (ActExt μ2)) as (e' & l__e' & eq'); eauto with mdb.
+      assert (e ⟶⋍[μ2] r') as (e' & l__e' & eq').
+      { eapply eq_spec; eauto. } eauto.
 Qed.
 
 Lemma must_eq_server `{
@@ -232,13 +236,20 @@ Proof.
     + destruct ex as (t & l).
       inversion l; subst; eauto with mdb.
       ++ symmetry in heq.
-         edestruct (eq_spec q a2 τ) as (t & l3 & l4); eauto with mdb.
+         assert (q ⟶⋍ a2) as (t & l3 & l4).
+         { eapply eq_spec; eauto. }
+         exists (t ▷ e). eapply ParLeft; eauto.
+      ++ exists (q ▷ b2). eapply ParRight; eauto.
       ++ symmetry in heq.
-         edestruct (eq_spec q a2 (ActExt μ1)) as (t & l3 & l4); eauto with mdb.
+         assert (q ⟶⋍[μ1] a2) as (t & l3 & l4).
+         { eapply eq_spec; eauto. }
+         exists (t ▷ b2). eapply ParSync; eauto.
     + intros q' l.
-      edestruct (eq_spec p q' τ) as (t & l3 & l4); eauto with mdb.
+      assert (p ⟶⋍ q') as (t & l3 & l4).
+      { eapply eq_spec; eauto. } eauto.
     + intros q' e' μ1 μ2 inter l__e l__q.
-      edestruct (eq_spec p q' (ActExt (μ1))) as (p' & l' & heq'); eauto with mdb.
+      assert (p ⟶⋍[μ1] q') as (t & l3 & l4).
+      { eapply eq_spec; eauto. } eauto.
 Qed.
 
 Lemma must_preserved_by_lts_tau_srv `{
@@ -251,6 +262,22 @@ Lemma must_preserved_by_lts_tau_srv `{
   must p1 e -> p1 ⟶ p2 -> must p2 e.
 Proof. by inversion 1; eauto with mdb. Qed.
 
+Lemma must_preserved_by_weak_nil_srv `{
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
+
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+
+  (p q : P) (e : E) : 
+  must p e -> p ⟹ q 
+    -> must q e.
+Proof.
+  intros hm w.
+  dependent induction w; eauto with mdb.
+  eapply IHw; eauto.
+  eapply must_preserved_by_lts_tau_srv; eauto.
+Qed.
+
 Lemma must_preserved_by_lts_tau_clt `{
   gLtsP : gLts P A, 
   gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
@@ -260,6 +287,75 @@ Lemma must_preserved_by_lts_tau_clt `{
   (p : P) (e1 e2 : E) : 
   must p e1 -> ¬ good e1 -> e1 ⟶ e2 -> must p e2.
 Proof. by inversion 1; eauto with mdb. Qed.
+
+Lemma must_preserved_by_synch_if_notgood `{
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
+
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+
+  (p p' : P) (r r' : E) μ μ':
+  must p r -> ¬ good r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
+    -> must p' r'.
+Proof.
+  intros hm u inter l__p l__r.
+  inversion hm; subst.
+  - contradiction.
+  - eapply com; eauto with mdb.
+Qed.
+
+Lemma must_preserved_by_lts_tau_clt_rev `{
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
+
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+
+  (p : P) (e1 e2 : E) : 
+  must p e2 -> e1 ⟶ e2 -> ¬ good e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
+    -> must p e1.
+Proof.
+  intros must_hyp hyp_tr not_happy not_ext_action tau_determinacy.
+  revert e1 hyp_tr not_happy not_ext_action tau_determinacy.
+  dependent induction must_hyp.
+  - intros. contradiction.
+  - intros. destruct (decide (good e1)) as [happy' | not_happy'].
+    + now eapply m_now.
+    + eapply m_step; eauto.
+      ++ exists (p ▷ e). eapply ParRight; eauto.
+      ++ intros. assert (e ⋍ e'). { symmetry; eauto. }
+         eapply must_eq_client; eauto. eauto.
+         eapply m_step; eauto.
+      ++ intros p' e' μ1 μ2 inter tr_server tr_client. 
+         assert (e1 ↛[μ2]); eauto.
+         assert (¬ e1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
+Qed.
+
+Lemma must_preserved_by_lts_tau_clt_rev_rev `{
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
+
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+
+  (p : P) (e1 e2 : E) : 
+  must p e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> good e') -> p ⤓
+    -> must p e1.
+Proof.
+  intros must_hyp hyp_tr not_ext_action happy_determinacy conv.
+  revert e1 e2 must_hyp hyp_tr not_ext_action happy_determinacy.
+  dependent induction conv.
+  - intros. destruct (decide (good e1)) as [happy | not_happy].
+    + now eapply m_now.
+    + eapply m_step; eauto.
+      ++ exists (p ▷ e2). eapply ParRight; eauto.
+      ++ intros. assert (must p e2).
+      { eapply m_now; eauto. }
+      assert (must p' e2).
+      { eapply must_preserved_by_lts_tau_srv; eauto. }
+      assert (p' ⤓); eauto.
+      ++ intros. assert (good e'); eauto. now eapply m_now.
+      ++ intros. assert (e1 ↛[μ2]); eauto.
+         assert (¬ e1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
+Qed.
 
 Lemma must_terminate_ungood `{
   gLtsP : gLts P A, 
@@ -281,6 +377,28 @@ Proof.
   intros hm. destruct (decide (good e)) as [happy | not_happy].
   + now left. 
   + right. eapply must_terminate_ungood; eauto.
+Qed.
+
+Lemma must_preserved_by_lts_wk_clt `{
+  gLtsP : gLts P A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
+
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+
+  (p : P) (e1 e2 : E) : 
+  must p e1 -> ¬ good e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ good e') -> e1 ⟹ e2 -> must p e2.
+Proof.
+  intros Hyp not_happy Hyp_not_happy wk_tr.
+  remember e2.
+  dependent induction wk_tr. 
+  + subst. eauto.
+  + subst. assert (∀ e' : E, q ⟹ e' → e' ≠ e2 → ¬ good e') as Hyp_final.
+    {intros. eapply Hyp_not_happy. econstructor; eauto. eauto. }
+    assert (must p q).
+    {eapply must_preserved_by_lts_tau_clt; eauto. }
+    destruct (decide (q = e2)) as [ eq | not_eq].
+    ++ subst. eauto.
+    ++ eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
 Qed.
 
 (** Must sets. *)

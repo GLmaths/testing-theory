@@ -29,31 +29,19 @@ From Coq.Strings Require Import String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Coq Require Import Relations.
 From Coq.Wellfounded Require Import Inverse_Image.
+From Must Require Import InputOutputActions ActTau.
 
+(*************************************** Channels ******************************************)
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
-(* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
-Inductive ExtAct (Channel: Type) :=
-| ActIn : Channel -> ExtAct Channel
-| ActOut : Channel -> ExtAct Channel
-.
 
-Arguments ActIn {_} _ .
-Arguments ActOut {_} _ .
+Parameter (Channel : Type).
 
-Inductive Act (Channel : Type) :=
-| ActExt (μ: ExtAct Channel)
-| τ
-.
-Arguments ActExt {_} _.
-Arguments τ {_} .
+Parameter (channel_eq_dec : EqDecision Channel).
+#[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
 
-
-Coercion ActExt : ExtAct >-> Act.
-
-Parameter (Channel Value : Type).
-(*Exemple : Definition Channel := string.*)
-(*Exemple : Definition Value := nat.*)
+Parameter (channel_is_countable : Countable Channel).
+#[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
 
 
 (* Definition of processes*)
@@ -140,12 +128,12 @@ end.
 
 
 (* The Labelled Transition System (LTS-transition) *)
-Inductive lts : proc -> Act Channel -> proc -> Prop :=
+Inductive lts : proc -> ActIO Channel -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c p},
-    lts (c ? • p) (ActExt (ActIn c)) p
+    lts (c ? • p) (c ?) p
 | lts_output : forall {c p},
-    lts (c ! • p) (ActExt (ActOut c)) p
+    lts (c ! • p) (c !) p
 
 (*The actions Tau*)
 | lts_tau : forall {p},
@@ -444,8 +432,8 @@ Qed.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForInput : forall P V x, (lts P (ActIn x) V -> 
-(exists Q M R, ((P ≡* ((x ? • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
+Lemma TransitionShapeForInput : forall P V c, (lts P (c ?) V -> 
+(exists Q M R, ((P ≡* ((c ? • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P V x Transition.
  dependent induction Transition.
@@ -477,8 +465,8 @@ Qed.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a OUPUT,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForOutput : forall P V x, (lts P (ActOut x) V -> 
-(exists Q M R, ((P ≡* ((x ! • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
+Lemma TransitionShapeForOutput : forall P V c, (lts P (c !) V -> 
+(exists Q M R, ((P ≡* ((c ! • Q) + M) ‖ R)) /\ (V ≡* (Q ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P V x Transition.
  dependent induction Transition.
@@ -523,10 +511,10 @@ destruct Hyp. rename H into Transition. dependent induction Transition.
 - inversion H0. inversion H.
 - inversion H0. inversion H.
 - inversion H0. inversion H.
-- destruct (IHTransition (reflexivity τ)). exists p1. reflexivity. destruct H. destruct H.  exists x. 
+- edestruct (IHTransition ). reflexivity. exists p1. reflexivity. destruct H. destruct H.  exists x. 
   exists (x0 + p2). split. apply cgr_trans with (((t • x) + x0) + p2). apply cgr_choice. exact H.
   apply cgr_choice_assoc. exact H1.
-- destruct (IHTransition (reflexivity τ)). exists p2. reflexivity. destruct H. destruct H.  exists x. 
+- edestruct (IHTransition ). reflexivity. exists p2. reflexivity. destruct H. destruct H.  exists x. 
   exists (x0 + p1). split. apply cgr_trans with (((t • x) + x0) + p1). apply cgr_trans with (p2 + p1). 
   apply cgr_choice_com. apply cgr_choice. exact H. apply cgr_choice_assoc. exact H1.
 Qed.
@@ -818,3 +806,502 @@ intros. split.
 * apply TausAndCong_Implies_Reduction.
 * apply Reduction_Implies_TausAndCong.
 Qed.
+
+
+(* Definition encode_ExtAct_Channel (a : ExtAct Channel) : 
+    gen_tree (nat + Channel) :=
+match a with
+  | ActIn a => GenNode 0 [encode_Channel a]
+  | ActOut a => GenNode 1 [encode_Channel a]
+end.
+
+Definition decode_ExtAct_Channel_raw (tree :gen_tree (nat + (Channel + Data))) 
+  : option (ExtAct (option Channel)) :=
+match tree with
+  | GenNode 0 [l] => Some (ActIn (decode_Channel l))
+  | GenNode 1 [l] => Some (ActOut (decode_Channel l))
+  | _ => None
+end.
+
+Definition simpl_option (a : option (ExtAct (option Channel)))
+  : option (ExtAct Channel) :=
+match a with
+  | Some (ActIn None) => None
+  | Some (ActIn (Some b)) => Some (ActIn b)
+  | Some (ActOut None) => None
+  | Some (ActOut (Some b)) => Some (ActOut b)
+  | None => None
+end.
+
+Definition decode_ExtAct_Channel (tree :gen_tree (nat + (Channel + Data))) 
+  : option (ExtAct Channel) := simpl_option (decode_ExtAct_Channel_raw tree).
+
+Lemma encode_decide_ExtAct_Channel a : 
+  decode_ExtAct_Channel (encode_ExtAct_Channel  a) = Some a.
+Proof. 
+induction a. 
+* unfold decode_ExtAct_Channel. simpl.
+  rewrite encode_decide_Channel. eauto.
+* unfold decode_ExtAct_Channel. simpl.
+  rewrite encode_decide_Channel. eauto.
+Qed.
+
+
+#[global] Instance ExtAct_Channel_countable : Countable (ExtAct Channel).
+Proof.
+  eapply inj_countable with encode_ExtAct_Channel decode_ExtAct_Channel. 
+  intro. apply encode_decide_ExtAct_Channel.
+Qed.
+ *)
+
+Fixpoint proc_dec (x y : proc) : { x = y } + { x <> y }
+with gproc_dec (x y : gproc) : { x = y } + { x <> y }.
+Proof.
+decide equality. 
+* destruct (decide(n = n0));eauto.
+* destruct (decide(n = n0));eauto.
+* decide equality ; destruct (decide(c = c0));eauto.
+Qed.
+
+#[global] Instance proc_eqdecision : EqDecision proc. by exact proc_dec. Defined.
+
+
+Fixpoint encode_proc (p: proc) : gen_tree (nat + Channel) :=
+  match p with
+  | p ‖ q  => GenNode 0 [encode_proc p; encode_proc q]
+  | pr_var i => GenNode 2 [GenLeaf $ inl i]
+  | rec x • P => GenNode 3 [GenLeaf $ inl x; encode_proc P]
+  | g gp => GenNode 1 [encode_gproc gp]
+  end
+with
+encode_gproc (gp: gproc) : gen_tree (nat + Channel) :=
+  match gp with
+  | ① => GenNode 1 []
+  | 𝟘 => GenNode 0 []
+  | c ? • p => GenNode 2 [GenLeaf (inr $ c); encode_proc p]
+  | c ! • p  => GenNode 5 [GenLeaf (inr $ c); encode_proc p]
+  | t • p => GenNode 3 [encode_proc p]
+  | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
+  end.
+
+Fixpoint decode_proc (t': gen_tree (nat + Channel)) : proc :=
+  match t' with
+  | GenNode 0 [ep; eq] => (decode_proc ep) ‖ (decode_proc eq)
+  | GenNode 2 [GenLeaf (inl i)] => pr_var i 
+  | GenNode 3 [GenLeaf (inl i); egq] => rec i • (decode_proc egq)
+  | GenNode 1 [egp] => g (decode_gproc egp) 
+  | _ => ① 
+  end
+with
+decode_gproc (t': gen_tree (nat + Channel)): gproc :=
+  match t' with
+  | GenNode 1 [] => ① 
+  | GenNode 0 [] => 𝟘 
+  | GenNode 2 [GenLeaf (inr c); ep] => c ? • (decode_proc ep)
+  | GenNode 5 [GenLeaf (inr c) ; ep] => c ! • (decode_proc ep)
+  | GenNode 3 [eq] => t • (decode_proc eq)
+  | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
+  | _ => ① 
+  end.
+
+Lemma encode_decide_procs p : decode_proc (encode_proc p) = p
+with encode_decide_gprocs p : decode_gproc (encode_gproc p) = p.
+Proof. all: case p. 
+* intros. simpl. rewrite (encode_decide_procs p0). rewrite (encode_decide_procs p1). reflexivity.
+* intros. simpl. reflexivity.
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_gprocs g0). reflexivity.
+* intros. simpl. reflexivity. 
+* intros. simpl. reflexivity. 
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
+* intros. simpl. rewrite (encode_decide_gprocs g0). rewrite (encode_decide_gprocs g1). reflexivity.
+Qed.
+
+#[global] Instance proc_count : Countable proc.
+refine (inj_countable' encode_proc decode_proc _).
+  apply encode_decide_procs.
+Qed.
+
+Fixpoint moutputs_of_g (gp : gproc) : gmultiset Channel :=
+  match gp with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c ?  • p => ∅
+  | c !  • p => {[+ c +]}
+  | t • p => ∅
+  | g1 + g2 => moutputs_of_g g1 ⊎ moutputs_of_g g2
+  end.
+
+
+Fixpoint moutputs_of p : gmultiset Channel := 
+match p with
+  | P ‖ Q => (moutputs_of P) ⊎ (moutputs_of Q)
+  | pr_var _ => ∅
+  | rec _ • _ => ∅
+  | g p => moutputs_of_g p
+end.
+
+Definition outputs_of p := dom (moutputs_of p).
+
+Lemma mo_equiv_spec_step : forall {p q}, p ≡ q -> moutputs_of p = moutputs_of q.
+Proof. intros. dependent induction H ; try multiset_solver; simpl in *; try rewrite H; eauto. Qed.
+
+Lemma mo_equiv_spec : forall {p q}, p ≡* q -> moutputs_of p = moutputs_of q.
+Proof.
+  intros p q hcgr.
+  induction hcgr. now eapply mo_equiv_spec_step.
+  etrans; eauto.
+Qed.
+
+Lemma mo_spec_l e a :
+  a ∈ moutputs_of e -> {e' | lts e (ActExt $ ActOut a) e'}.
+Proof.
+  intros mem.
+  dependent induction e.
+  + cbn in mem.
+    destruct (decide (a ∈ moutputs_of e1)) as [mem_left | not_mem_left].
+    ++ destruct (IHe1 a) as (e1' & lts__e1); eauto.
+       exists (e1' ‖ e2). repeat split; eauto with ccs.
+    ++ destruct (decide (a ∈ moutputs_of e2)) as [mem_right | not_mem_right].
+       +++ destruct (IHe2 a) as (e2' & lts__e2); eauto.
+           exists (e1 ‖ e2'). repeat split; eauto with ccs.
+       +++ exfalso. multiset_solver.
+    + exfalso. multiset_solver.
+    + exfalso. multiset_solver.
+    + unfold moutputs_of in mem.
+      remember g0.
+      dependent induction g0; rewrite Heqg1 in mem; simpl in *.
+      ++ exfalso;inversion mem.
+      ++ exfalso;inversion mem.
+      ++ exfalso;inversion mem.
+      ++ subst. assert (a = c). multiset_solver. subst. eauto with ccs.
+      ++ exfalso;inversion mem.
+      ++ destruct (decide (a ∈ moutputs_of g0_2)) as [mem_right | not_mem_right].
+         +++ destruct (IHg0_2 a g0_2) as (e2' & lts__e2); eauto.
+             exists e2'. rewrite Heqg1. repeat split; eauto with ccs.
+         +++ destruct (decide (a ∈ moutputs_of g0_1)) as [mem_left | not_mem_left].
+             ++++ destruct (IHg0_1 a g0_1) as (e1' & lts__e1); eauto.
+                  exists e1'. rewrite Heqg1. repeat split; eauto with ccs.
+             ++++ exfalso. multiset_solver.
+Qed.
+
+Lemma mo_spec_r p a :
+  {p' | lts p (ActExt $ ActOut a) p'} -> a ∈ moutputs_of p.
+Proof.
+    induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  intros (e' & l).
+  inversion l; subst.
+  + simpl. multiset_solver.
+  + simpl. eapply gmultiset_elem_of_disj_union. left.
+    eapply (Hp p1). simpl. lia. exists p2. eauto.
+  + simpl. eapply gmultiset_elem_of_disj_union. right.
+    eapply (Hp q1). simpl. lia. exists q2. eauto.
+  + simpl. eapply gmultiset_elem_of_disj_union. left.
+    eapply (Hp p1). simpl. lia. exists e'. eauto.
+  + simpl. eapply gmultiset_elem_of_disj_union. right.
+    eapply (Hp p2). simpl. lia. exists e'. eauto.
+Qed.
+
+
+Lemma outputs_of_spec2 p a : a ∈ outputs_of p -> {q | lts p (ActExt (ActOut a)) q}.
+Proof.
+  intros mem.
+  eapply gmultiset_elem_of_dom in mem.
+  eapply mo_spec_l in mem.
+  firstorder.
+Qed.
+
+Lemma outputs_of_spec1 (p : proc) (a : Channel) (q : proc) : lts p (ActExt (ActOut a)) q
+      -> a ∈ outputs_of p.
+Proof.
+intros. eapply gmultiset_elem_of_dom. eapply mo_spec_r. eauto.
+Qed.
+
+Fixpoint lts_set_output_g (g : gproc) (a : Channel) : gset proc :=
+  match g with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c ? • p => ∅
+  | c ! • p => if decide(a = c) then {[ p ]} else ∅
+  | t • p => ∅
+  | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
+  end.
+
+Fixpoint lts_set_output (p : proc) (a : Channel) : gset proc:=
+match p with
+  | p1 ‖ p2 => 
+      let ps1 := lts_set_output p1 a in
+      let ps2 := lts_set_output p2 a in
+      (* fixme: find a way to map over sets. *)
+      list_to_set (map (fun p => p ‖ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ‖ p) (elements ps2))
+  | pr_var _ => ∅
+  | rec _ • _ => ∅
+  | g gp  => lts_set_output_g gp a
+end.
+
+Fixpoint lts_set_input_g (g : gproc) (a : Channel) : gset proc :=
+ match g with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c' ? • p => if decide (a = c') then {[ p ]} else ∅
+  | c' ! • p => ∅
+  | t • p => ∅
+  | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
+  end.
+
+
+Fixpoint lts_set_input (p : proc) (a : Channel) : gset proc :=
+match p with
+  | p1 ‖ p2 =>
+      let ps1 := lts_set_input p1 a in
+      let ps2 := lts_set_input p2 a in
+      list_to_set (map (fun p => p ‖ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ‖ p) (elements ps2))
+  | pr_var _ => ∅
+  | rec _ • _ => ∅ 
+  | g gp => lts_set_input_g gp a  
+  end.
+
+
+Fixpoint lts_set_tau_g (gp : gproc) : gset proc :=
+match gp with
+  | ① => ∅
+  | 𝟘 => ∅
+  | c ? • p => ∅
+  | c ! • p => ∅
+  | t • p => {[ p ]}
+  | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
+end.
+
+(* Context (Eval_Eq : Equation Data -> (option bool)). 
+à implémenter si du temps *)
+
+Fixpoint lts_set_tau (p : proc) : gset proc :=
+match p with
+  | p1 ‖ p2 =>
+      let ps1_tau : gset proc := list_to_set (map (fun p => p ‖ p2) (elements $ lts_set_tau p1)) in
+      let ps2_tau : gset proc := list_to_set (map (fun p => p1 ‖ p) (elements $ lts_set_tau p2)) in
+      let ps_tau := ps1_tau ∪ ps2_tau in
+      let acts1 := outputs_of p1 in
+      let acts2 := outputs_of p2 in
+      let ps1 :=
+        flat_map (fun a =>
+                    map
+                      (fun '(p1 , p2) => p1 ‖ p2)
+                      (list_prod (elements $ lts_set_output p1 a) (elements $ lts_set_input p2 a)))
+        (elements $ outputs_of p1) in
+      let ps2 :=
+        flat_map
+          (fun a =>
+             map
+               (fun '(p1 , p2) => p1 ‖ p2)
+               (list_prod (elements $ lts_set_input p1 a) (elements $ lts_set_output p2 a)))
+          (elements $ outputs_of p2)
+      in
+      ps_tau ∪ list_to_set ps1 ∪ list_to_set ps2
+  | pr_var _ => ∅
+  | rec x • p => {[ pr_subst x p (rec x • p) ]}
+  | g gp => lts_set_tau_g gp
+end.
+
+Lemma lts_set_output_spec0 p a q : q ∈ lts_set_output p a -> lts p (ActExt (ActOut a)) q.
+Proof.
+  revert q.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0));
+  destruct p; intros q mem; simpl in mem;  try now inversion mem.
+  - eapply elem_of_union in mem as [mem | mem]. 
+    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+      apply lts_parL. rewrite elem_of_elements in mem. eapply Hp. simpl ; lia. eauto. 
+    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+      apply lts_parR. eapply Hp. simpl; lia. rewrite elem_of_elements in mem.  exact mem.
+  - destruct g0; simpl in mem;  try now inversion mem.
+    + destruct (decide (a = c)); subst.
+          +++ subst. assert (q = p). set_solver. subst. eauto with ccs.
+          +++ inversion mem.
+    + eapply elem_of_union in mem as [mem | mem].
+      ++ eapply lts_choiceL.
+         eapply Hp. simpl; lia. eauto.
+      ++ eapply lts_choiceR.
+         eapply Hp. simpl; lia. eauto.
+Qed.
+
+Lemma lts_set_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_set_output p a.
+Proof.
+  intro l. dependent induction l; try set_solver.
+  - simpl. rewrite decide_True; eauto. set_solver.
+Qed.
+
+Lemma lts_set_input_spec0 p a q : q ∈ lts_set_input p a -> lts p (ActExt $ ActIn a) q.
+Proof.
+  intro mem.
+  dependent induction p; simpl in mem; try set_solver.
+  + eapply elem_of_union in mem. destruct mem.
+    ++ eapply elem_of_list_to_set in H.
+       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       rewrite elem_of_elements in mem. eauto with ccs.
+    ++ eapply elem_of_list_to_set in H.
+       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       rewrite elem_of_elements in mem. eauto with ccs.
+  + dependent induction g0; simpl in mem; try set_solver.
+      ++ destruct (decide (a = c)).
+         +++ subst. eapply elem_of_singleton_1 in mem. subst. apply lts_input.
+         +++ inversion mem.
+      ++ eapply elem_of_union in mem. destruct mem; eauto with ccs.
+Qed.
+
+Lemma lts_set_input_spec1 p a q : lts p (ActExt $ ActIn a) q -> q ∈ lts_set_input p a.
+Proof.
+  intro l. dependent induction l; try set_solver. simpl. rewrite decide_True; eauto with set_solver.
+Qed.
+
+Lemma lts_set_tau_spec0 p q : q ∈ lts_set_tau p -> lts p τ q.
+Proof.
+  - intro mem.
+    dependent induction p; simpl in mem.
+    + eapply elem_of_union in mem. destruct mem as [mem1 | mem2].
+      ++ eapply elem_of_union in mem1.
+         destruct mem1.
+         eapply elem_of_union in H as [mem1 | mem2]. 
+         eapply elem_of_list_to_set, elem_of_list_fmap in mem1 as (t' & eq & h); subst.
+         rewrite elem_of_elements in h. eauto with ccs.
+         eapply elem_of_list_to_set, elem_of_list_fmap in mem2 as (t' & eq & h); subst.
+         rewrite elem_of_elements in h. eauto with ccs.
+         eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in H as (t' & eq & h); subst.
+         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
+         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+         eapply lts_set_output_spec0 in mem1.
+         eapply lts_set_input_spec0 in mem2. eapply lts_comL. exact mem1. exact mem2.
+      ++ eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem2 as (t' & eq & h); subst.
+         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
+         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+         eapply lts_set_input_spec0 in mem1.
+         eapply lts_set_output_spec0 in mem2. eapply lts_comR. exact mem2. exact mem1.
+    + inversion mem.
+    + eapply elem_of_singleton_1 in mem. subst; eauto with ccs.
+    + dependent induction g0; simpl in mem; try set_solver;
+        try eapply elem_of_singleton_1 in mem; subst; eauto with ccs.
+      eapply elem_of_union in mem as [mem1 | mem2]; eauto with ccs.
+Qed.
+
+Lemma lts_set_tau_spec1 p q : lts p τ q -> q ∈ lts_set_tau p.
+Proof. 
+  intro l. dependent induction l; simpl; try set_solver.
+  - eapply elem_of_union. left.
+    eapply elem_of_union. right.
+    eapply elem_of_list_to_set.
+    rewrite elem_of_list_In. rewrite in_flat_map.
+    exists a. split.
+    + eapply elem_of_list_In, elem_of_elements.
+      eapply outputs_of_spec1. eauto.
+    + eapply elem_of_list_In, elem_of_list_fmap.
+      exists (p2 , q2). split.
+      ++ reflexivity.
+      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+         eapply lts_set_output_spec1; eauto with ccs.
+         eapply lts_set_input_spec1; eauto with ccs.
+  - eapply elem_of_union. right.
+    eapply elem_of_list_to_set.
+    rewrite elem_of_list_In. rewrite in_flat_map.
+    exists a. split.
+    + eapply elem_of_list_In, elem_of_elements.
+      eapply outputs_of_spec1. exact l1.
+    + eapply elem_of_list_In, elem_of_list_fmap.
+      exists (q2 , p2). split.
+      ++ reflexivity.
+      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+         eapply lts_set_input_spec1; eauto with ccs.
+         eapply lts_set_output_spec1; eauto with ccs.
+Qed.
+
+Definition lts_set (p : proc) (α : ActIO Channel): gset proc :=
+  match α with
+  | τ => lts_set_tau p
+  | a ? => lts_set_input p a
+  | a ! => lts_set_output p a
+  end.
+
+Lemma lts_set_spec0 p α q : q ∈ lts_set p α -> lts p α q.
+Proof.
+  destruct α as [[a|a]|].
+  - now eapply lts_set_input_spec0.
+  - now eapply lts_set_output_spec0.
+  - now eapply lts_set_tau_spec0.
+Qed.
+
+Lemma lts_set_spec1 p α q : lts p α q -> q ∈ lts_set p α.
+Proof.
+  destruct α as [[a|a]|].
+  - now eapply lts_set_input_spec1.
+  - now eapply lts_set_output_spec1.
+  - now eapply lts_set_tau_spec1.
+Qed.
+
+Definition proc_stable p α := lts_set p α = ∅.
+
+Lemma lts_dec p α q : { lts p α q } + { ~ lts p α q }.
+Proof.
+  destruct (decide (q ∈ lts_set p α)).
+  - eapply lts_set_spec0 in e. eauto.
+  - right. intro l. now eapply lts_set_spec1 in l.
+Qed.
+
+Lemma proc_stable_dec p α : Decision (proc_stable p α).
+Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Qed.
+
+Lemma gset_nempty_ex (g : gset proc) : g ≠ ∅ -> {p | p ∈ g}.
+Proof.
+  intro n. destruct (elements g) eqn:eq.
+  + destruct n. eapply elements_empty_iff in eq. set_solver.
+  + exists p. eapply elem_of_elements. rewrite eq. set_solver.
+Qed.
+
+From Must Require Import OldTransitionSystems.
+
+#[global] Program Instance CCS_Label : Label Channel.
+
+#[global] Program Instance CCS_Lts : Lts proc Channel := 
+  {| lts_step x ℓ y  := lts x ℓ y ;
+     lts_state_eqdec := proc_dec ;
+     lts_step_decidable p α q := lts_dec p α q ;
+     lts_outputs := outputs_of ;
+     lts_outputs_spec1 p1 x p2 := outputs_of_spec1 p1 x p2;
+     lts_outputs_spec2 p1 x := outputs_of_spec2 p1 x;
+     lts_stable p := proc_stable p;
+     lts_stable_decidable p α := proc_stable_dec p α 
+    |}.
+    Next Obligation.
+        intros p [[a|a]|]; intro hs;eapply gset_nempty_ex in hs as (r & l); eapply lts_set_spec0 in l; 
+        exists r; assumption.
+    Qed.
+    Next Obligation.  
+        intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
+    Qed.
+
+#[global] Program Instance CCS_LtsEq : LtsEq proc Channel := 
+  {| eq_rel x y  := cgr x y;
+     eq_rel_refl p := cgr_refl p;
+     eq_symm p q := cgr_symm p q;
+     eq_trans x y z:= cgr_trans x y z;
+     eq_spec p q α := Congruence_Respects_Transition p q α |}.
+
+From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
+
+#[global] Program Instance CCS_ggLts : gLts proc (ExtAct Channel) := ggLts gLabel_b.
+
+#[global] Program Instance CCS_ggLtsEq : gLtsEq proc (ExtAct Channel) := 
+  ggLtsEq gLabel_b.
+
+#[global] Program Instance CCS_gLtsOBA : gLtsOba proc (ExtAct Channel) := ggLtsOba_b.
+
+#[global] Program Instance CCS_gLtsOBAFB : gLtsObaFB proc (ExtAct Channel) := ggLtsObaFB_b.
+
+#[global] Program Instance CCS_gLtsOBAFW : gLtsObaFW proc (ExtAct Channel) := ggLtsObaFW_b.
+
+

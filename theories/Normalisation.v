@@ -26,11 +26,12 @@ From Coq.Program Require Import Equality.
 
 From stdpp Require Import base countable finite gmap list decidable gmultiset.
 
-From Must Require Import TransitionSystems Must.
+From Must Require Import ActTau InputOutputActions OldTransitionSystems FiniteImageLTS 
+    gLts Bisimulation Lts_FW Convergence Termination WeakTransitions Must GeneralizeLtsOutputs.
 
 Definition ntrace L `{Label L} : Type := list (gmultiset L * gmultiset L).
 
-Fixpoint normalize_loop `{Label L} (s : trace L) (mi : gmultiset L) (mo : gmultiset L)
+Fixpoint normalize_loop `{Label L} (s : list (ExtAct L)) (mi : gmultiset L) (mo : gmultiset L)
   : ntrace L :=
   match s with
   | [] => [(mi, mo)]
@@ -42,13 +43,13 @@ Fixpoint normalize_loop `{Label L} (s : trace L) (mi : gmultiset L) (mo : gmulti
       normalize_loop s' mi ({[+ a +]} ⊎ mo)
   end.
 
-Definition normalize `{Label L} (s : trace L) : ntrace L :=
+Definition normalize `{Label L} (s : trace (ExtAct L)) : ntrace L :=
   match s with
   | [] => []
   | _ => normalize_loop s ∅ ∅
   end.
 
-Fixpoint linearize `{Label L} (nt : ntrace L) : trace L :=
+Fixpoint linearize `{Label L} (nt : ntrace L) : trace (ExtAct L) :=
   match nt with
   | [] => []
   | (mi, mo) :: nt' =>
@@ -358,7 +359,7 @@ Qed.
 
 Require Import Wellfounded.
 
-Theorem normalize_wta_r `{LtsObaFW A L} : forall s p q, p ⟹[s] q -> p ⟹⋍[⟪s⟫] q.
+Theorem normalize_wta_r `{LtsObaFW A L} : forall s (p : A) q, p ⟹[s] q -> p ⟹⋍[ ⟪s⟫] q.
 Proof.
   induction s
     as (s & Hlength)
@@ -381,13 +382,13 @@ Proof.
     eapply norm_length in e0. eassumption.
     set (h := Hlength s' hl r q w3).
     eapply wt_join_eq.
-    eapply (wt_input_perm s1).
-    eassumption. now symmetry. eassumption.
-    eapply wt_join_eq.
-    eapply (wt_output_perm s2).
-    assumption. now symmetry. eassumption.
-    eauto.
-Qed.
+    eapply (wt_input_perm s1);eauto.
+    admit. (* eassumption. *)
+    now symmetry. eapply wt_join_eq.
+    eapply (wt_non_blocking_action_perm s2); eauto.
+    admit. (* eassumption. *)
+    now symmetry.  eassumption.
+Admitted.
 
 Lemma are_inputs_map_ActIn `{Label L} (s : list L) : are_inputs (map ActIn s).
 Proof.
@@ -401,9 +402,9 @@ Proof.
   eapply Forall_nil. eapply Forall_cons. now exists a. eassumption.
 Qed.
 
-Lemma normalize_wta_l `{LtsObaFW A L} : forall s p q, p ⟹[⟪s⟫] q -> p ⟹⋍[s] q.
+Lemma normalize_wta_l `{LtsObaFW A L} : forall s (p : A) q, p ⟹[⟪s⟫] q -> p ⟹⋍[s] q.
 Proof.
-  induction s
+   induction s
     as (s & Hlength)
          using
          (well_founded_induction (wf_inverse_image _ nat _ List.length PeanoNat.Nat.lt_wf_0)).
@@ -424,14 +425,15 @@ Proof.
     set (h := Hlength s' hl r q w3).
     eapply wt_join_eq.
     eapply (wt_input_perm (map ActIn (elements mi))).
-    eapply are_inputs_map_ActIn. now symmetry. eassumption.
+    admit. (* eapply are_inputs_map_ActIn. *)
+    now symmetry. eassumption.
     eapply wt_join_eq.
-    eapply (wt_output_perm (map ActOut (elements mo))).
-    eapply are_outputs_map_ActOut. now symmetry. eassumption.
-    eauto.
-Qed.
+    eapply (wt_non_blocking_action_perm (map ActOut (elements mo))).
+    admit. (* eapply are_outputs_map_ActOut. *)
+    now symmetry. eassumption. eauto.
+Admitted.
 
-Lemma normalize_wta `{LtsObaFW A L} s p q : p ⟹⋍[⟪s⟫] q <-> p ⟹⋍[s] q.
+Lemma normalize_wta `{LtsObaFW A L} s (p : A) q : p ⟹⋍[⟪s⟫] q <-> p ⟹⋍[s] q.
 Proof.
   split.
   intros (q' & w & sc).
@@ -458,40 +460,35 @@ Qed.
 
 Lemma stable_preserved_by_eq `{LtsEq A L} p q : p ⋍ q -> p ↛ -> q ↛.
 Proof.
-  intros heq hst.
-  destruct (lts_stable_decidable q τ). eassumption.
-  eapply lts_stable_spec1 in n as (q' & hl).
-  edestruct (eq_spec p q') as (p' & hl' & heq'). eauto.
-  exfalso. eapply lts_stable_spec2; eauto.
-Qed.
+Admitted.
 
-Lemma normalize_accs `{LtsObaFW A L, !FiniteLts A L} (p : A) (s : trace L) h1 h2 :
-  (set_map lts_outputs (wt_stable_set p s h1) : gset (gset L))
-  ≡ (set_map lts_outputs (wt_stable_set p (linorm s) h2) : gset (gset L)).
+Lemma normalize_accs `{LtsObaFW A L, !FiniteLts A L} (p : A) (s : trace (ExtAct L)) h1 h2 :
+  (set_map lts_outputs (wt_refuses_set p s h1) : gset (gset L))
+  ≡ (set_map lts_outputs (wt_refuses_set p (linorm s) h2) : gset (gset L)).
 Proof.
   intros.
   split.
   - intro.
     eapply elem_of_map.
     eapply elem_of_map in H3 as (q & eq & mem).
-    eapply wt_stable_set_spec1 in mem as (w & st).
+    eapply wt_refuses_set_spec1 in mem as (w & st).
     eapply normalize_wta_r in w as (q' & w' & st').
     exists q'. split.
     transitivity (lts_outputs q). assumption. symmetry.
     eapply leibniz_equiv. now eapply outputs_of_eq in st'.
-    eapply wt_stable_set_spec2; split.
+    eapply wt_refuses_set_spec2; split.
     eassumption.
     symmetry in st'. eapply stable_preserved_by_eq; eauto.
   - intro.
     eapply elem_of_map.
     eapply elem_of_map in H3 as (q & eq & mem).
-    eapply wt_stable_set_spec1 in mem as (w & st).
+    eapply wt_refuses_set_spec1 in mem as (w & st).
     eapply normalize_wta_l in w as (q' & w' & st').
     exists q'. split.
     transitivity (lts_outputs q). eassumption.
     eapply leibniz_equiv.
     eapply outputs_of_eq. symmetry. eassumption.
-    eapply wt_stable_set_spec2; split.
+    eapply wt_refuses_set_spec2; split.
     eassumption.
     symmetry in st'. eapply stable_preserved_by_eq; eauto.
 Qed.
@@ -511,26 +508,7 @@ Definition bhv_lin_pre `{@Lts P L HL, @Lts Q L HL} (p : P) (q : Q) := p ⪷₁ q
 
 Notation "p ⪷ q" := (bhv_lin_pre p q) (at level 70).
 
-Lemma cnv_prefix `{Lts A L} {p s1 s2} : p ⇓ s1 ++ s2 -> p ⇓ s1.
-  revert s2 p. induction s1; intros.
-  - eapply cnv_nil. now inversion H1.
-  - eapply cnv_act. now inversion H1.
-    intros q hw. inversion H1; subst. eauto.
-Qed.
-
-Lemma cnv_jump `{Lts A L} s1 s2 p : p ⇓ s1 -> (forall q, p ⟹[s1] q -> q ⇓ s2) -> p ⇓ s1 ++ s2.
-Proof.
-  revert s2 p.
-  induction s1 as [| μ s']; intros s2 p hcnv hs2.
-  - eapply hs2. eauto with mdb.
-  - simpl. eapply cnv_act.
-    + now inversion hcnv.
-    + intros t w.
-      eapply IHs'. inversion hcnv; eauto.
-      intros. eapply hs2. eapply wt_push_left; eauto.
-Qed.
-
-Lemma normalize_acnv_l `{LtsObaFW A L} p s : p ⇓ s -> p ⇓ ⟪ s ⟫.
+Lemma normalize_acnv_l `{LtsObaFW A L} (p : A) s : p ⇓ s -> p ⇓ ⟪ s ⟫.
 Proof.
   revert p.
   induction s
@@ -547,30 +525,33 @@ Proof.
     rewrite app_assoc.
     eapply cnv_jump.
     + eapply cnv_jump.
-      eapply cnv_input_perm. eassumption. now symmetry.
-      eapply cnv_prefix. eassumption.
+      eapply (cnv_input_perm p s1);eauto.
+      admit. (* eassumption *)
+      now symmetry. (* intros.
+      eapply cnv_prefix. eassumption. *)
       intros q hw.
       eapply (wt_input_perm _ s1) in hw as (q0 & hw0 & heq0).
       eapply h2, cnv_prefix in hw0.
       eapply cnv_preserved_by_eq. eassumption.
-      eapply cnv_output_perm. eassumption.
-      now symmetry. eassumption.
-      eapply are_inputs_map_ActIn. now symmetry.
+      eapply (cnv_non_blocking_action_perm q0 s2 (map ActOut (elements mo))); eauto.
+      admit. (* assumption. *)
+      now symmetry.
+      admit. (* eapply are_inputs_map_ActIn. *) now symmetry.
     + intros q hw.
       eapply Hlength. eapply norm_length. eassumption.
       eapply wt_split in hw as (t & hw1 & hw2).
       eapply (wt_input_perm _ s1) in hw1 as (p0 & hwp0 & heqp0).
-      eapply (wt_output_perm _ s2) in hw2 as (q0 & hwq0 & heqq0).
+      eapply (wt_non_blocking_action_perm _ s2) in hw2 as (q0 & hwq0 & heqq0).
       eapply cnv_preserved_by_eq. eassumption.
       assert (t ⇓ s2 ++ s').
       eapply cnv_preserved_by_eq. eassumption.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
-      eapply are_outputs_map_ActOut. now symmetry.
-      eapply are_inputs_map_ActIn. now symmetry.
-Qed.
+      admit. (* eapply are_outputs_map_ActOut. *) now symmetry.
+      admit. (* eapply are_inputs_map_ActIn. *) now symmetry.
+Admitted.
 
-Lemma normalize_acnv_r `{LtsObaFW A L} p s : p ⇓ ⟪ s ⟫ -> p ⇓ s.
+Lemma normalize_acnv_r `{LtsObaFW A L} (p : A) s : p ⇓ ⟪ s ⟫ -> p ⇓ s.
 Proof.
   revert p.
   induction s
@@ -589,27 +570,31 @@ Proof.
     rewrite app_assoc.
     eapply cnv_jump.
     + eapply cnv_jump.
-      eapply cnv_input_perm. eapply are_inputs_map_ActIn. eassumption. eassumption.
+      eapply cnv_input_perm.
+      admit. (* eapply are_inputs_map_ActIn. *) eassumption. eassumption.
       intros q hw.
       eapply (wt_input_perm s1 (map ActIn (elements mi))) in hw as (q0 & hw0 & heq0).
       eapply h1, cnv_prefix in hw0.
       eapply cnv_preserved_by_eq. eassumption.
-      eapply cnv_output_perm. eapply are_outputs_map_ActOut. eassumption.
-      eassumption. eassumption. now symmetry.
+      eapply cnv_non_blocking_action_perm.
+      admit. (* eapply are_outputs_map_ActOut. *) eassumption.
+      eassumption.
+      admit. (* eassumption. *) now symmetry.
     + intros q hw.
       eapply Hlength. eapply norm_length. eassumption.
       eapply wt_split in hw as (t & hw1 & hw2).
       eapply (wt_input_perm s1 (map ActIn (elements mi))) in hw1 as (p0 & hwp0 & heqp0).
-      eapply (wt_output_perm s2 (map ActOut (elements mo))) in hw2 as (q0 & hwq0 & heqq0).
+      eapply (wt_non_blocking_action_perm s2 (map ActOut (elements mo))) in hw2 as (q0 & hwq0 & heqq0).
       eapply cnv_preserved_by_eq. eassumption.
       assert (t ⇓ map ActOut (elements mo) ++ ⟪ s' ⟫).
       eapply cnv_preserved_by_eq. eassumption.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
-      eassumption. now symmetry. eassumption. now symmetry.
-Qed.
+      admit. (* eassumption. *) now symmetry.
+      admit. (* eassumption. *) now symmetry.
+Admitted.
 
-Lemma normalize_acnv `{LtsObaFW A L} p s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
+Lemma normalize_acnv `{LtsObaFW A L} (p : A) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
 Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed.
 
 Lemma asyn_iff_bhv
@@ -631,9 +616,13 @@ Proof.
       eapply normalize_wta_l in w' as (p0 & wp0 & scp).
       exists p0. repeat split. eassumption.
       eapply stable_preserved_by_eq. symmetry. eassumption. eassumption.
+      
+      eapply retrieve_a_better_pre_order; eauto.
+      intros. admit. (* eapply fw_does_all_input. *)
+      
       rewrite (outputs_of_eq p0 p'), (outputs_of_eq q' q0); eauto with mdb.
       now symmetry.
   - intros (hl1 & hl2). split.
     + intros s hacnv. eauto.
     + intros nt q' hacnv w st. eauto.
-Qed.
+Admitted.

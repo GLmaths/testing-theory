@@ -27,6 +27,15 @@ From Coq Require Import Relations.
 From Coq.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InputOutputActions ActTau OldTransitionSystems.
+From Coq.Vectors Require Vector.
+(* Module Import V := Coq.Vectors.Vector.
+Import V.VectorNotations. *)
+(* Require Import Coq.Lists.List.
+Import ListNotations. *)
+From Coq Require List.
+Import ListNotations.
+From stdpp Require Import vector list.
+
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
@@ -41,14 +50,18 @@ Parameter (channel_is_countable : Countable Channel).
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
 
 
-(*************************************** Values ******************************************)
+(* (*************************************** Values ******************************************)
 Parameter (Value : Type).
 
 Parameter (value_eq_dec : EqDecision Value).
-#[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
+#[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.*)
+#[global] Instance value_eqdecision : EqDecision nat. by exact Nat.eq_dec. Defined.
 
-Parameter (value_is_countable : Countable Value).
-#[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
+(*Parameter (value_is_countable : Countable Value).
+#[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined. *)
+#[global] Instance value_countable : Countable nat. by exact nat_countable. Defined.
+
+Definition Value := nat.
 
 (* Values and their bound variables *)
 Inductive Data :=
@@ -73,30 +86,9 @@ Inductive TypeOfActions :=
 
 Notation "c ⋉ v" := (act c v) (at level 50).
 
-Inductive Equation (A : Type) : Type :=
-| Equality : A -> A -> Equation A.
+(* Parameter (Equation : Type -> Type).
 
-Arguments  Equality {_} _ _.
-
-Notation "x == y" := (Equality x y) (at level 50).
-
-(* Definition Eval_Eq (E : Equation Data) : option bool :=
-match E with
-| cst v0 == cst v1 => if (decide (v0 = v1)) then (Some true)
-                                           else (Some false)
-| _ => None
-end. *)
-
-Definition Eval_Eq (E : Equation Data) : option bool :=
-match E with
-| cst t == cst t' => if (decide (t = t')) then (Some true)
-                                          else (Some false)
-| bvar i == cst t => None
-| cst t == bvar i => None
-| bvar i == bvar i' => if (decide (i = i')) then (Some true)
-                                          else None
-end.
-
+Parameter (Eval_Eq : Equation Data -> (option bool)). *)
 
 (* Definition of processes*)
 Inductive proc : Type :=
@@ -106,8 +98,12 @@ Inductive proc : Type :=
 | pr_var : nat -> proc
 (* recursion for process*)
 | pr_rec : nat -> proc -> proc
-(* If test *NEW term in comparison of CCS* *)
-| pr_if_then_else : Equation Data -> proc -> proc -> proc
+(* matching nat with 0 and S n *)
+| pr_match : Data -> proc -> proc -> proc
+(* (* matching nat with nats' in l o *)
+| pr_match_list {n : nat}: Data -> vec Data n -> vec proc n -> proc -> proc *)
+(* (* If test *NEW term in comparison of CCS* *)
+| pr_if_then_else : (list Data -> Prop) -> proc -> proc -> proc *)
 (*The Guards*)
 | g : gproc -> proc
 
@@ -139,22 +135,45 @@ Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • P" := (gpr_output c v P) (at level 50).
 Notation "c ? x • P" := (gpr_input c P) (at level 50).
 Notation "'t' • P" := (gpr_tau P) (at level 50).
-Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
+(* Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
-"'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
+"'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'"). *)
+
+Notation "'Match' d 'With' 'zero=>' P 'succ=>' Q" := (pr_match d P Q) 
+(at level 200, right associativity, format
+"'[v   ' 'Match'  d  'With' '/' '[' 'zero=>'  P  ']' '/' '[' 'succ=>'  Q ']' ']'").
+(* Notation "'Match' d  'With' v_nat '=>' v_proc 'otherwise=>' p" := (pr_match_list d v_nat v_proc p) 
+(at level 200, right associativity, format
+"'[v   ' 'Match' d  '/' 'With' '/' '[' v_nat '=>'  v_proc  ']' '/' '[' 'otherwise=>'  p ']' ']'"). *)
 
 (*Definition of the Substitution *)
 Definition subst_Data (k : nat) (X : Data) (Y : Data) : Data := 
 match Y with
 | cst v => cst v
-| bvar i => if (decide(i = k)) then X (* else bvar i *) else if (decide(i < k)) then bvar i
+| bvar i => if (decide(i = k)) then X else if (decide(i < k)) then bvar i
                                                               else bvar (Nat.pred i)
 end.
 
-Definition subst_in_Equation (k : nat) (X : Data) (E : Equation Data) : Equation Data :=
+(* Definition subst_in_Equation (k : nat) (X : Data) (E : Equation Data) : Equation Data :=
 match E with 
 | D1 == D2 => (subst_Data k X D1) == (subst_Data k X D2)
-end.
+end. *)
+
+(* Definition subst_in_l (k : nat) (X : Data) (l : list Data) : list Data :=
+match l with 
+| [] => []
+| d :: l => (subst_Data k X d) :: l
+end. *)
+
+(* Definition subst_in_vec_Data {n : nat} (k : nat) (X : Data) (V : vec Data n) : vec Data n :=
+match V with 
+| [#] => [#]
+| d ::: l => (subst_Data k X d) ::: l
+end. *)
+
+
+(* Definition subst_in_Equation (k : nat) (X : Data) (P : list Data -> Prop) : list Data -> Prop 
+    := fun l => P (subst_in_l k X l). *)
 
 Definition Succ_bvar (X : Data) : Data :=
 match X with
@@ -162,14 +181,21 @@ match X with
 | bvar i => bvar (S i)
 end.
 
+
 Fixpoint subst_in_proc (k : nat) (X : Data) (p : proc) {struct p} : proc :=
 match p with
 | P ‖ Q => (subst_in_proc k X P) ‖ (subst_in_proc k X Q)
 | pr_var i => pr_var i
 | rec x • P =>  rec x • (subst_in_proc k X P)
-| If C Then P Else Q => If (subst_in_Equation k X C)
+| Match d With zero=> P succ=> Q => Match (subst_Data k X d) With 
+                                      zero=> (subst_in_proc (S k) (Succ_bvar X) P)
+                                      succ=> (subst_in_proc (S k) (Succ_bvar X) Q)
+(* | Match d With v_nat => v_proc otherwise=> p => Match (subst_Data k X d) With  
+                                                      (subst_in_vec_Data k X v_nat) => (vmap (subst_in_proc (S k) (Succ_bvar X)) v_proc)
+                                                      otherwise=> (subst_in_proc (S k) (Succ_bvar X) p) *)
+(* | If C Then P Else Q => If (subst_in_Equation k X C)
                            Then (subst_in_proc k X P)
-                           Else (subst_in_proc k X Q)
+                           Else (subst_in_proc k X Q) *)
 | g M => subst_in_gproc k X M
 end
 
@@ -191,19 +217,42 @@ match Y with
 | bvar i => if (decide(k < S i)) then bvar (S i) else bvar i
 end.
 
-Definition NewVar_in_Equation (k : nat) (E : Equation Data) : Equation Data :=
+(* Definition NewVar_in_Equation (k : nat) (E : Equation Data) : Equation Data :=
 match E with
 | D1 == D2 => (NewVar_in_Data k D1) == (NewVar_in_Data k D2)
+end. *)
+
+(* Definition NewVar_in_l (k : nat) (l : list Data) : list Data :=
+match l with 
+| [] => []
+| d :: l => (NewVar_in_Data k d) :: l
 end.
+ *)
+
+(* Definition NewVar_in_vec_Data {n : nat} (k : nat) (V : vec Data n) : vec Data n :=
+match V with 
+| [#] => [#]
+| d ::: l => (NewVar_in_Data k d) ::: l
+end. *)
+
+(* Definition NewVar_in_Equation (k : nat) (P : list Data -> Prop) : list Data -> Prop 
+    := fun l => P (NewVar_in_l k l).
+ *)
 
 Fixpoint NewVar (k : nat) (p : proc) {struct p} : proc :=
 match p with
 | P ‖ Q => (NewVar k P) ‖ (NewVar k Q)
 | pr_var i => pr_var i
 | rec x • P =>  rec x • (NewVar k P)
-| If C Then P Else Q => If (NewVar_in_Equation k C)
+| Match d With zero=> P succ=> Q => Match (NewVar_in_Data k d) With
+                                  zero=> (NewVar (S k) P)
+                                  succ=> (NewVar (S k) Q)
+(* | Match d With v_nat => v_proc otherwise=> p => Match (NewVar_in_Data k d) With  
+                                                      (NewVar_in_vec_Data k v_nat) => (vmap (NewVar (S k)) v_proc)
+                                                      otherwise=> (NewVar (S k) p) *)
+(* | If C Then P Else Q => If (NewVar_in_Equation k C)
                           Then (NewVar k P)
-                          Else (NewVar k Q)
+                          Else (NewVar k Q) *)
 | g M => gNewVar k M
 end
 
@@ -223,7 +272,13 @@ Fixpoint pr_subst (id : nat) (p : proc) (q : proc) : proc :=
   | p1 ‖ p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q) 
   | pr_var id' => if decide (id = id') then q else p
   | rec id' • p => if decide (id = id') then p else rec id' • (pr_subst id p q)
-  | If C Then P Else Q => If C Then (pr_subst id P q) Else (pr_subst id Q q)
+  | Match n With zero=> P succ=> Q => Match n With
+                                        zero=> (pr_subst id P (NewVar 0 q))
+                                        succ=> (pr_subst id Q (NewVar 0 q))
+(*   | Match d With v_nat => v_proc otherwise=> P => Match d With  
+                                                      v_nat => (vmap (fun P' => pr_subst id P' (NewVar 0 q)) v_proc)
+                                                      otherwise=> (pr_subst id P (NewVar 0 q)) *)
+(*   | If C Then P Else Q => If C Then (pr_subst id P q) Else (pr_subst id Q q) *)
   | g gp => g (gpr_subst id gp q)
 end
 
@@ -236,6 +291,10 @@ with gpr_subst id p q {struct p} := match p with
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
 
+(* #[global] Program Instance LOOK (n : nat) : LookupTotal nat proc (vec Data n).
+Next Obligation.
+intros. exact 𝟘. Defined. (* Delta in VCCS_SEQ, I think *) *)
+
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
@@ -244,23 +303,37 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 | lts_output : forall {c v P},
     lts (c ! v • P) ((c ⋉ v) !) P
 
+(* Patern matching on nat constructor *)
+| lts_match_zero : forall {p q α p'}, lts (p^(cst 0)) α p' -> 
+    lts (Match (cst 0) With zero=> p succ=> q) α p'
+| lts_match_succ: forall {p q α q' n'}, lts (q^(cst n')) α q' -> 
+    lts (Match (cst (S n')) With zero=> p succ=> q) α q'
+
+(* (* Patern matching on nat list *)
+| lts_match_any : forall {n'} {v_nat : vec Data n'} {i v_proc n α p' q},
+  (cst n) = v_nat !!! i ->
+  lts ((v_proc !!! i)^(cst n)) α p' ->
+    lts (Match (cst n) With v_nat => v_proc otherwise=> q) α p' *)
+(* | lts_match_none : forall {p q α q' n'}, lts (q^(cst n')) α q' -> 
+    lts (Match (cst n) With zero=> otherwise=> q) α q' *) 
+
 (*The actions Tau*)
 | lts_tau : forall {P},
     lts (t • P) τ P 
 | lts_recursion : forall {x P},
     lts (rec x • P) τ (pr_subst x P (rec x • P))
-| lts_ifOne : forall {p p' q α E}, Eval_Eq E = Some true -> lts p α p' ->  
-    lts (If E Then p Else q) α p'
-| lts_ifZero : forall {p q q' α E}, Eval_Eq E = Some false -> lts q α q' -> 
-    lts (If E Then p Else q) α q'
+(* | lts_ifOne : forall {p q P l}, P l -> Decision (P l) -> 
+    lts (If P Then p Else q) τ p
+| lts_ifZero : forall {p q P l}, ¬ P l -> Decision (P l) ->
+    lts (If P Then p Else q) τ q *)
 
 (* Communication of a channel output and input that have the same name*)
 | lts_comL : forall {c v p1 p2 q1 q2},
     lts p1 ((c ⋉ v) !) p2 ->
-    lts q1 ((c ⋉ v) ?) q2 ->
+    lts q1 ((c ⋉v) ?) q2 ->
     lts (p1 ‖ q1) τ (p2 ‖ q2) 
 | lts_comR : forall {c v p1 p2 q1 q2},
-    lts p1 ((c ⋉  v) !) p2 ->
+    lts p1 ((c ⋉ v) !) p2 ->
     lts q1 ((c ⋉ v) ?) q2 ->
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
@@ -285,7 +358,9 @@ Fixpoint size (p : proc) :=
   match p with
   | p ‖ q  => S (size p + size q)
   | pr_var _ => 1
-  | If C Then p Else q => S (size p + size q)
+  | Match d With zero=> P succ=> Q => S (size P + size Q)
+(*   | Match d With v_nat => v_proc otherwise=> P  => S ((list_sum (vmap size v_proc)) + size P) *)
+(*   | If C Then p Else q => S (size p + size q) *)
   | rec x • p => S (size p)
   | g p => gsize p
   end
@@ -302,18 +377,33 @@ end.
 
 #[global] Hint Constructors lts:ccs.
 
-Reserved Notation "p ≡ q" (at level 70).
+Fixpoint MatchEq (d : Data) (v : nat) P Q :=
+match v with 
+| 0 => Match d With zero=> P succ=> Q
+| S n'' => Match d With zero=> Q succ=> (MatchEq (bvar 0) n'' (NewVar 0 P) (NewVar 0 Q))
+end.
+
+Notation "'If' '(' d '==' n ')' 'Then' P 'Else' Q" := (MatchEq d n P Q)
+(at level 200, right associativity, format
+"'[v   ' 'If'  '('  d  '=='  n  ')'  '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 
 (*Naïve definition of a relation ≡ that will become a congruence ≡* by transitivity*)
 Inductive cgr_step : proc -> proc -> Prop :=
 (*  Reflexivity of the Relation ≡  *)
 | cgr_refl_step : forall p, p ≡ p
 
-(* Rules for pattern matching *)
-| cgr_if_true_step : forall p q E, Eval_Eq E = Some true -> (If E Then p Else q) ≡ p
-| cgr_if_true_rev_step  : forall p q E, Eval_Eq E = Some true -> p ≡ If E Then p Else q
-| cgr_if_false_step  : forall p q E, Eval_Eq E = Some false -> (If E Then p Else q) ≡ q
-| cgr_if_false_rev_step  : forall p q E, Eval_Eq E = Some false -> q ≡ If E Then p Else q
+(* Rules for pattern matching with nat constructor *)
+| cgr_match_zero_step : forall p q, (Match (cst 0) With zero=> p succ=> q) ≡ p^(cst 0)
+| cgr_match_zero_rev_step  : forall p q, p^(cst 0) ≡ (Match (cst 0) With zero=> p succ=> q)
+| cgr_match_succ_step  : forall p q n', (Match (cst (S n')) With zero=> p succ=> q) ≡ q^(cst n')
+| cgr_match_succ_rev_step  : forall p q n', q^(cst n') ≡ (Match (cst (S n')) With zero=> p succ=> q)
+
+(* (* Rules for pattern matching with nat constructor *)
+((v_nat !!! i)^(cst n))
+| cgr_match_zero_step : forall p q, (Match (cst 0) With zero=> p succ=> q) ≡ p^(cst 0)
+| cgr_match_zero_rev_step  : forall p q, p^(cst 0) ≡ (Match (cst 0) With zero=> p succ=> q)
+| cgr_match_succ_step  : forall p q n', (Match (S n') With zero=> p succ=> q) ≡ q^(cst n')
+| cgr_match_succ_rev_step  : forall p q n', q^(cst n') ≡ (Match (S n') With zero=> p succ=> q) *)
 
 (* Rules for the Parallèle *)
 | cgr_par_nil_step : forall p, 
@@ -354,12 +444,27 @@ Inductive cgr_step : proc -> proc -> Prop :=
 | cgr_par_step : forall p q r,
     cgr_step p q ->
     p ‖ r ≡ q ‖ r
-| cgr_if_left_step : forall C p q q',
+(* | cgr_if_left_step : forall C p q q',
     cgr_step q q' ->
     (If C Then p Else q) ≡ (If C Then p Else q')
 | cgr_if_right_step : forall C p p' q,
     cgr_step p p' ->
-    (If C Then p Else q) ≡ (If C Then p' Else q)
+    (If C Then p Else q) ≡ (If C Then p' Else q) *)
+| cgr_match_zero_branch_context_step : forall n p p' q, 
+    cgr_step p p' ->
+    (Match n With zero=> p succ=> q) ≡ (Match n With zero=> p' succ=> q)
+| cgr_match_succ_branch_context_step : forall n p q q', 
+    cgr_step q q' ->
+    (Match n With zero=> p succ=> q) ≡ (Match n With zero=> p succ=> q')
+   
+(* | cgr_match_nat_any_branch : forall p p' v_proc i d v_nat q, 
+    cgr_step p p' -> p = v_proc !!! i \/ p' = v_proc !!! i -> 
+    (Match d With v_nat => v_proc succ=> q) ≡ (Match n With zero=> p' succ=> q)
+    
+    (Match (cst n) With v_nat => v_proc otherwise=> q)
+| cgr_match_right_step : forall n p q q', 
+    cgr_step q q' ->
+    (Match n With zero=> p succ=> q) ≡ (Match n With zero=> p succ=> q') *)
 
 (*...and sums (only for guards (by sanity))*)
 | cgr_choice_step : forall p1 q1 p2,
@@ -409,27 +514,26 @@ Proof. repeat split.
        + apply cgr_trans.
 Qed.
 
-
 (*the relation ≡* respects all the rules that ≡ respected*)
-Lemma cgr_if_true : forall p q E, Eval_Eq E = Some true -> (If E Then p Else q) ≡* p.
+Lemma cgr_match_zero : forall p q, (Match (cst 0) With zero=> p succ=> q) ≡* p^(cst 0).
 Proof.
 constructor.
-apply cgr_if_true_step; eauto.
+apply cgr_match_zero_step; eauto.
 Qed.
-Lemma cgr_if_true_rev : forall p q E, Eval_Eq E = Some true -> p ≡* (If E Then p Else q).
+Lemma cgr_match_zero_rev : forall p q, p^(cst 0) ≡* (Match (cst 0) With zero=> p succ=> q).
 Proof.
 constructor.
-apply cgr_if_true_rev_step; eauto.
+apply cgr_match_zero_rev_step; eauto.
 Qed.
-Lemma cgr_if_false : forall p q E, Eval_Eq E = Some false -> (If E Then p Else q) ≡* q.
+Lemma cgr_match_succ : forall p q n', (Match (cst (S n')) With zero=> p succ=> q) ≡* q^(cst n').
 Proof.
 constructor.
-apply cgr_if_false_step; eauto.
+apply cgr_match_succ_step; eauto.
 Qed.
-Lemma cgr_if_false_rev : forall p q E, Eval_Eq E = Some false -> q ≡* (If E Then p Else q).
+Lemma cgr_match_succ_rev : forall p q n', q^(cst n') ≡* (Match (cst (S n')) With zero=> p succ=> q).
 Proof.
 constructor.
-apply cgr_if_false_rev_step; eauto.
+apply cgr_match_succ_rev_step; eauto.
 Qed.
 Lemma cgr_par_nil : forall p, p ‖ 𝟘 ≡* p.
 Proof.
@@ -512,7 +616,7 @@ intros. dependent induction H.
 constructor.
 apply cgr_par_step. exact H. eauto with cgr_eq.
 Qed.
-Lemma cgr_if_left : forall C p q q', q ≡* q' -> (If C Then p Else q) ≡* (If C Then p Else q').
+(* Lemma cgr_if_left : forall C p q q', q ≡* q' -> (If C Then p Else q) ≡* (If C Then p Else q').
 Proof.
 intros. dependent induction H. 
 constructor.
@@ -523,21 +627,42 @@ Proof.
 intros. dependent induction H. 
 constructor.
 apply cgr_if_right_step. exact H. eauto with cgr_eq.
-Qed.
+Qed. *)
 Lemma cgr_choice : forall p q r, g p ≡* g q -> p + r ≡* q + r.
 Proof.
 intros. dependent induction H. 
 constructor.
 apply cgr_choice_step. exact H. admit. (* again and again *)
 Admitted.
+Lemma cgr_match_zero_branch_context : forall n p p' q, p ≡* p' 
+  -> (Match n With zero=> p succ=> q) ≡* (Match n With zero=> p' succ=> q).
+Proof.
+intros. dependent induction H. 
+constructor.
+apply cgr_match_zero_branch_context_step. exact H. eauto with cgr_eq.
+Qed.
+Lemma cgr_match_succ_branch_context : forall n p q q', q ≡* q' 
+  -> (Match n With zero=> p succ=> q) ≡* (Match n With zero=> p succ=> q').
+Proof.
+intros. dependent induction H. 
+constructor.
+apply cgr_match_succ_branch_context_step. exact H. eauto with cgr_eq.
+Qed.
 
+Lemma cgr_full_match : forall n p p' q q', p ≡* p' -> q ≡* q'
+  -> (Match n With zero=> p succ=> q) ≡* (Match n With zero=> p' succ=> q').
+Proof.
+intros.
+apply transitivity with (Match n With zero=> p succ=> q'). apply cgr_match_succ_branch_context. exact H0. 
+apply cgr_match_zero_branch_context. exact H. 
+Qed.
 
-Lemma cgr_full_if : forall C p p' q q', p ≡* p' -> q ≡* q' -> (If C Then p Else q) ≡* (If C Then p' Else q').
+(* Lemma cgr_full_if : forall C p p' q q', p ≡* p' -> q ≡* q' -> (If C Then p Else q) ≡* (If C Then p' Else q').
 Proof.
 intros.
 apply transitivity with (If C Then p Else q'). apply cgr_if_left. exact H0. 
 apply cgr_if_right. exact H. 
-Qed.
+Qed. *)
 
 
 (* The sum of guards respects ≡* *)
@@ -556,63 +681,432 @@ apply cgr_par_com. apply transitivity with (M4 ‖ M2). apply cgr_par. exact H0.
 Qed.
 
 
-#[global] Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
+#[global] Hint Resolve cgr_match_zero cgr_match_zero_rev cgr_match_succ cgr_match_succ_rev
 cgr_par_nil cgr_par_nil_rev cgr_par_com cgr_par_assoc cgr_par_assoc_rev 
 cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc cgr_choice_assoc_rev
-cgr_recursion cgr_tau cgr_input cgr_output cgr_if_left cgr_if_right cgr_par cgr_choice
-cgr_full_if cgr_fullchoice cgr_fullpar 
+cgr_recursion cgr_tau cgr_input cgr_output (* cgr_if_left cgr_if_right *) cgr_par cgr_choice
+cgr_match_zero_branch_context cgr_match_succ_branch_context
+cgr_full_match (* cgr_full_if *) cgr_fullchoice cgr_fullpar 
 
 cgr_refl cgr_symm cgr_trans:cgr.
 
-Lemma subst_equation E k v x: Eval_Eq E = Some x -> Eval_Eq (subst_in_Equation k v E) = Some x.
+
+(* Parameter (subst_true : forall k v eq, Eval_Eq eq = Some(true)
+            -> Eval_Eq (subst_in_Equation k v eq) = Some(true)).
+Parameter (subst_false : forall k v eq, Eval_Eq eq = Some(false)
+            -> Eval_Eq (subst_in_Equation k v eq) = Some(false)).
+Parameter (NewVar_true : forall j eq, Eval_Eq eq = Some(true)
+            -> Eval_Eq (NewVar_in_Equation j eq) = Some(true)).
+Parameter (NewVar_false : forall j eq, Eval_Eq eq = Some(false)
+            -> Eval_Eq (NewVar_in_Equation j eq) = Some(false)). *)
+
+Lemma Subst_For_Data k v j d m: subst_Data j (cst m) (subst_Data (j + (S k)) (NewVar_in_Data j v) d) 
+          =  (subst_Data (j + k) v (subst_Data j (cst m) d)).
 Proof.
-  intros. destruct E. destruct d; destruct d0; simpl in *; eauto ; try inversion H.
-  destruct (decide (n = n0)).
-  - inversion H; subst.
-    destruct (decide (n0 = k)).
-    + subst. destruct v. 
-      rewrite decide_True; eauto.
-      rewrite decide_True; eauto.
-    + destruct (decide (n0 < k)).
-      * rewrite decide_True; eauto.
-      * rewrite decide_True; eauto.
-  - inversion H; subst.
+  intros. revert k. revert v. revert j.
+  dependent induction d; intros.
+  - simpl. reflexivity.
+  - simpl. destruct (decide (n = (j + S k)%nat)).
+    + destruct (decide((n = j)%nat)).
+      * simpl. subst. lia.
+      * subst. simpl. rewrite decide_False; eauto with lia. simpl. 
+        rewrite decide_True; eauto with lia. destruct v.
+        -- simpl. eauto.
+        -- simpl. destruct (decide ((j < S n))).
+           ++ simpl. rewrite decide_False; eauto with lia.
+              rewrite decide_False; eauto with lia.
+           ++ simpl. rewrite decide_False; eauto with lia.
+              rewrite decide_True; eauto with lia.
+    + destruct (decide (n < j + S k)).
+      * simpl. destruct (decide((n = j)%nat)).
+        -- subst. simpl. reflexivity.
+        -- destruct (decide (n < j)).
+           ++ simpl. destruct (decide ((n = (j + k)%nat))).
+              ** subst. lia.
+              ** simpl. rewrite decide_True; eauto with lia.
+           ++ destruct (decide (n=0) % nat).
+              ** subst. lia.
+              ** (* assert (exists n', n= S n') as (n' & eq). Search (_ ≠ 0). *)
+                 simpl. destruct (decide (Nat.pred n = (j + k)%nat)).
+                 --- lia.
+                 --- rewrite decide_True; eauto with lia.
+      * simpl. rewrite decide_False; eauto with lia. 
+        rewrite decide_False; eauto with lia.
+        rewrite decide_False; eauto with lia.
+        rewrite decide_False; eauto with lia.
+        simpl. rewrite decide_False; eauto with lia.
+        rewrite decide_False; eauto with lia.
 Qed.
 
-
-Lemma NewVar_equation E k x : Eval_Eq E = Some x -> Eval_Eq (NewVar_in_Equation k E) = Some x.
+Lemma Succ_bvar_and_NewVar_in_Data_0 : forall v, NewVar_in_Data 0 v = Succ_bvar v.
 Proof.
-  intros. destruct E. destruct d; destruct d0; simpl in *; eauto; try inversion H.
-  destruct (decide (n = n0)).
-  - inversion H; subst.
-    destruct (decide ((k < S n0))).
-    + rewrite decide_True; eauto.
-    + rewrite decide_True; eauto.
-  - inversion H; subst.
+intros. induction v; simpl; reflexivity.
 Qed.
+
+Lemma New_Var_And_NewVar_in_Data : forall j i e, NewVar_in_Data (i + S j) (NewVar_in_Data i e) = NewVar_in_Data i (NewVar_in_Data (i + j) e).
+Proof.
+intros. revert j. induction e.
+* intros. simpl. reflexivity.
+* intros. simpl. destruct (decide (i < S n)); destruct (decide (i + j < S n)); simpl; auto.
+  - destruct (decide (i + S j < S (S n))); destruct ((decide (i < S (S n)))); simpl; auto with arith. exfalso. apply n0. auto with arith.
+    exfalso. apply n0. simpl. assert ((i + S j)%nat = S (i + j)%nat). auto with arith. rewrite H. auto with arith.
+  - destruct (decide (i + S j < S (S n))); destruct (decide (i < S n)); simpl; auto with arith. exfalso. apply n0. 
+    assert ((i + S j)%nat = S (i + j)%nat). auto with arith. rewrite H in l0. auto with arith. exfalso. apply n1. assumption. exfalso. apply n2.
+    assumption.
+  - exfalso. apply n0. assert (i <= i + j). auto with arith. destruct H. assumption. apply transitivity with (S m). auto with arith. assumption.
+  - destruct (decide (i + S j < S n)); destruct (decide (i < S n)); simpl; auto with arith. exfalso. apply n2. eauto with arith.
+    exfalso. apply n0. assumption.
+Qed.
+
+Lemma Subst_For_Match k v j p m : subst_in_proc j (cst m) (subst_in_proc (j + (S k)) (NewVar_in_Data j v) p) 
+          = subst_in_proc (k + j) v (subst_in_proc j (cst m) p).
+Proof.
+  intros. revert k. revert v. revert j.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; simpl; intros.
+  * assert ((subst_in_proc j (cst m) (subst_in_proc (j + (S k)) (NewVar_in_Data j v) p1)) 
+        = subst_in_proc (k + j) v (subst_in_proc j (cst m) p1)) as eq1.
+    { apply Hp. simpl. auto with arith. }
+    assert ((subst_in_proc j (cst m) (subst_in_proc (j + (S k)) (NewVar_in_Data j v) p2)) 
+        = subst_in_proc (k + j) v (subst_in_proc j (cst m) p2)) as eq2.
+    { apply Hp. simpl. auto with arith. }
+    rewrite eq1. rewrite eq2. auto.
+  * reflexivity.
+  * assert ((subst_in_proc j (cst m) (subst_in_proc (j + (S k)) (NewVar_in_Data j v) p)) 
+        = subst_in_proc (k + j) v (subst_in_proc j (cst m) p)) as eq.
+    { apply Hp. simpl. auto with arith. }
+    rewrite eq; auto.
+  * assert (subst_Data j (cst m) (subst_Data (j + S k) (NewVar_in_Data j v) d)
+          =  (subst_Data (j + k) v (subst_Data j (cst m) d))) as eq.
+    { eapply Subst_For_Data. }
+    assert (j + k = k + j)%nat as eq' by lia . rewrite eq' in eq.
+    simpl in *. rewrite eq.
+    assert (subst_in_proc (S j) (cst m) (subst_in_proc ((S j) + S k) (NewVar_in_Data (S j) (NewVar_in_Data 0 v)) p1) =
+           subst_in_proc (k + (S j)) (NewVar_in_Data 0 v) (subst_in_proc (S j) (cst m) p1)) as eq1.
+    { eapply Hp ;eauto with lia. }
+    assert (subst_in_proc (S j) (cst m) (subst_in_proc ((S j) + S k) (NewVar_in_Data (S j) (NewVar_in_Data 0 v)) p2) =
+           subst_in_proc (k + (S j)) (NewVar_in_Data 0 v) (subst_in_proc (S j) (cst m) p2)) as eq2.
+    { eapply Hp ;eauto with lia. } simpl in *.
+    rewrite<- (Succ_bvar_and_NewVar_in_Data_0 (NewVar_in_Data j v)).
+    assert ((NewVar_in_Data 0 (NewVar_in_Data j v)) = (NewVar_in_Data (S j) (NewVar_in_Data 0 v))) as eq''.
+    { assert (S j = 0 + S j)%nat as eq'1 by lia. assert (0 + j = j)%nat as eq'2 by lia.
+      rewrite eq'1. rewrite<- eq'2. rewrite New_Var_And_NewVar_in_Data. eauto. }
+    rewrite eq''.
+    rewrite eq1, eq2. rewrite<- (Succ_bvar_and_NewVar_in_Data_0 v).
+    assert ((k + S j) = S (k + j))%nat as eq''' by lia.
+    rewrite eq'''. reflexivity.
+  * destruct g0; simpl; auto.
+    - rewrite<- (Succ_bvar_and_NewVar_in_Data_0 v).
+      rewrite<- (Succ_bvar_and_NewVar_in_Data_0 ((NewVar_in_Data j v))).
+      assert (S j = 0 + S j)%nat as eq'1 by lia. assert (0 + j = j)%nat as eq'2 by lia.
+      rewrite eq'1. rewrite<- eq'2. rewrite<- New_Var_And_NewVar_in_Data.
+      simpl in *. assert (S (k + j) = k + S j)%nat as eqd by lia.
+      assert ((S (j + S k)) = ((S j) + S k))%nat as eqd' by lia.
+      rewrite eqd. rewrite eqd'.
+      assert ((subst_in_proc (S j) (cst m)
+        (subst_in_proc ((S j) + S k) (NewVar_in_Data (S j) (NewVar_in_Data 0 v)) p)) =
+          (subst_in_proc (k + S j) (NewVar_in_Data 0 v) (subst_in_proc (S j) (cst m) p))) as eq''.
+      { eapply Hp. simpl; lia. }
+      rewrite eq''. eauto.
+    - assert (j + k = k + j)%nat as eq' by lia .
+      simpl in *.
+      assert (subst_Data j (cst m) (subst_Data (j + S k) (NewVar_in_Data j v) d)
+        = subst_Data (k + j) v (subst_Data j (cst m) d)) as eq_data.
+      { rewrite<- eq'. eapply Subst_For_Data. }
+      rewrite eq_data.
+      assert (subst_in_proc j (cst m) (subst_in_proc (j + S k) (NewVar_in_Data j v) p)
+        = subst_in_proc (k + j) v (subst_in_proc j (cst m) p)) as eq''.
+      { eapply Hp; lia. }
+      rewrite eq''; eauto.
+    - assert (subst_in_proc j (cst m) (subst_in_proc (j + S k) (NewVar_in_Data j v) p)
+        = subst_in_proc (k + j) v (subst_in_proc j (cst m) p)) as eq''.
+      { eapply Hp; simpl; lia. }
+      rewrite eq''; eauto.
+    - assert (subst_in_proc j (cst m) (subst_in_proc (j + S k) (NewVar_in_Data j v) g0_1) =
+           subst_in_proc (k + j) v (subst_in_proc j (cst m) g0_1)) as eq1.
+      { eapply Hp; simpl ; lia. }
+      assert (subst_in_proc j (cst m) (subst_in_proc (j + S k) (NewVar_in_Data j v) g0_2) =
+           subst_in_proc (k + j) v (subst_in_proc j (cst m) g0_2)) as eq2.
+      { eapply Hp; simpl ; lia. } simpl in *.
+      inversion eq1. inversion eq2.
+      rewrite H0, H1. eauto.
+Qed.
+
 
 Lemma Congruence_Respects_Substitution : forall p q v k, p ≡* q -> (subst_in_proc k v p) ≡* (subst_in_proc k v q).
 Proof.
-intros. revert k. revert v. dependent induction H. 
+intros. revert k. revert v. dependent induction H.
 * dependent induction H; simpl; eauto with cgr.
-  - intros. eapply cgr_if_true; eapply subst_equation in H; eauto.
-  - intros. eapply cgr_if_true_rev; eapply subst_equation in H; eauto.
-  - intros. eapply cgr_if_false; eapply subst_equation in H; eauto.
-  - intros. eapply cgr_if_false_rev; eapply subst_equation in H; eauto.
+  - intros. etrans. eapply cgr_match_zero.
+    assert (S k = 0 + S k)%nat as eq by lia.
+    assert (k = 0 + k)%nat as eq' by lia.
+    assert (k + 0 = k)%nat as eq'' by lia.
+    rewrite eq, eq'. rewrite Subst_For_Match. simpl. rewrite eq''. reflexivity.
+  - intros. etrans. 2: { eapply cgr_match_zero_rev. }
+    assert (S k = 0 + S k)%nat as eq by lia.
+    assert (k = 0 + k)%nat as eq' by lia.
+    assert (k + 0 = k)%nat as eq'' by lia.
+    rewrite eq, eq'. rewrite Subst_For_Match. simpl. rewrite eq''. reflexivity.
+  - intros. etrans. eapply cgr_match_succ.
+    assert (S k = 0 + S k)%nat as eq by lia.
+    assert (k = 0 + k)%nat as eq' by lia.
+    assert (k + 0 = k)%nat as eq'' by lia.
+    rewrite eq.  rewrite Subst_For_Match. simpl. rewrite eq''. reflexivity.
+  - intros. etrans. 2: { eapply cgr_match_succ_rev. }
+    assert (S k = 0 + S k)%nat as eq by lia.
+    assert (k = 0 + k)%nat as eq' by lia.
+    assert (k + 0 = k)%nat as eq'' by lia.
+    rewrite eq, eq'. rewrite Subst_For_Match. simpl. rewrite eq''. reflexivity.
 * eauto with cgr.
 Qed.
 
+Lemma New_Var_And_NewVar : forall j i p, NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p).
+Proof.
+intros. revert j i. induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct p; simpl; intros.
+* assert (NewVar (i + S j) (NewVar i p1) = NewVar i (NewVar (i + j) p1)). apply Hp. simpl. auto with arith.
+  assert (NewVar (i + S j) (NewVar i p2) = NewVar i (NewVar (i + j) p2)). apply Hp. simpl. auto with arith.
+  rewrite H, H0. auto.
+* reflexivity.
+* assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)). apply Hp. simpl. auto with arith.
+  rewrite H. auto.
+* assert (NewVar_in_Data (i + S j) (NewVar_in_Data i d) = NewVar_in_Data i (NewVar_in_Data (i + j) d))
+  as eq.
+  { eapply  New_Var_And_NewVar_in_Data. }
+  rewrite eq.
+  assert (NewVar (S i + S j) (NewVar (S i) p1) = NewVar (S i) (NewVar ((S i) + j) p1)). apply Hp. simpl. auto with arith.
+  assert (NewVar (S i + S j) (NewVar (S i) p2) = NewVar (S i) (NewVar ((S i) + j) p2)). apply Hp. simpl. auto with arith.
+  assert ((S (i + S j)) = (S i) + S j)%nat as eq'' by lia.
+  assert ((S (i + j)) = S i + j)%nat as eq''' by lia.
+  rewrite eq''. rewrite eq'''.
+  rewrite H, H0. auto.
+* destruct g0.
+  - simpl. reflexivity.
+  - simpl. reflexivity.
+  - simpl. assert (NewVar (S (i + S j)) (NewVar (S i) p) = NewVar (S i) (NewVar (S (i + j)) p)).
+    assert (S (i + S j%nat) = ((S i) + (S j))%nat). auto with arith. rewrite H. assert (S (i + j) = (S i + j)%nat).
+    auto with arith. rewrite H0. 
+    apply Hp. simpl. auto with arith. rewrite H. auto.
+  - simpl. assert (NewVar_in_Data (i + S j) (NewVar_in_Data i d) = NewVar_in_Data i (NewVar_in_Data (i + j) d)).
+    apply New_Var_And_NewVar_in_Data. rewrite H. auto.
+    assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)). apply Hp. simpl. auto with arith.
+    rewrite H0. auto.
+  - simpl. assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)).
+    apply Hp. simpl. auto with arith. rewrite H. auto.
+  - simpl. assert (NewVar (i + S j) (NewVar i (g g0_1)) = NewVar i (NewVar (i + j) (g g0_1))).
+    apply Hp. simpl. auto with arith. 
+    assert (NewVar (i + S j) (NewVar i (g g0_2)) = NewVar i (NewVar (i + j) (g g0_2))).
+    apply Hp. simpl. auto with arith. simpl in H , H0. inversion H. inversion H0.
+    rewrite H2 , H3. auto.
+Qed.
+
+Lemma Subst_And_NewVar_in_Data : forall j k v d, (NewVar_in_Data j (subst_Data (j + k) v d))
+                                        = subst_Data (j + S k) (NewVar_in_Data j v) (NewVar_in_Data j d).
+Proof.
+intros. revert k. revert v. revert j. dependent induction d.
+* intros. simpl. reflexivity.
+* intros. simpl. destruct (decide(n = (j+k)%nat)).
+  - destruct (decide (j < S n)).
+     -- simpl. destruct (decide ((S n = (j + S k)%nat))). 
+        --- auto.
+        --- exfalso. lia. (* pas top *)
+     -- simpl. destruct (decide (n = (j + S k)%nat)).
+        --- auto.
+        --- exfalso. lia. (* pas top *) 
+  -  destruct (decide (n < j + k)).
+     -- simpl. destruct (decide (j < S n)). 
+        --- simpl. destruct (decide (S n = (j + S k)%nat)). 
+            ** exfalso. lia. (* pas top *)
+            ** destruct (decide (S n < j + S k)).
+               *** auto.
+               *** exfalso. lia. (* pas top *) 
+        --- simpl. destruct (decide(n = (j + S k)%nat)). 
+            ** lia.
+            ** destruct (decide (n < j + S k)).
+              ---- auto.
+              ---- lia. (* pas top *) 
+     -- simpl. destruct (decide (j < S (Nat.pred n))).
+        --- destruct (decide (j < S n)).
+            ** simpl. destruct (decide (S n = (j + S k)%nat)).
+              *** lia. (* pas top *) 
+              *** destruct (decide (S n < j + S k)). 
+                **** lia. (* pas top *) 
+                **** assert (n ≠ 0). lia. destruct n. lia. simpl. auto. (* pas top *) 
+            ** simpl. destruct (decide (n = (j + S k)%nat)).
+              *** lia.
+              *** destruct (decide (n < j + S k)).
+                **** lia.
+                **** lia.
+       --- destruct (decide (j < S n)).
+          ** simpl. destruct (decide(S n = (j + S k)%nat)).
+              *** lia.
+              *** lia.
+         ** lia.
+Qed.
+
+Lemma Subst_And_NewVar : forall j k v P, NewVar j (subst_in_proc (j + k) v P) =
+                                         subst_in_proc (j + S k) (NewVar_in_Data j v) (NewVar j P).
+Proof.
+intros. revert k. revert v. revert j. 
+induction P as (P & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct P; simpl; intros.
+* assert (NewVar j (subst_in_proc (j + k) v P1) = subst_in_proc (j + S k) (NewVar_in_Data j v) (NewVar j P1)). 
+  apply Hp. simpl. auto with arith.
+  assert (NewVar j (subst_in_proc (j + k) v P2) = subst_in_proc (j + (S k)) (NewVar_in_Data j v) (NewVar j P2)). 
+  apply Hp. simpl. auto with arith.
+  rewrite H. rewrite H0. auto.
+* reflexivity.
+* assert (NewVar j (subst_in_proc (j + k) v P) = subst_in_proc (j + (S k)) (NewVar_in_Data j v) (NewVar j P)). 
+  apply Hp. simpl. auto with arith. rewrite H. auto.
+* assert (S (j+k) = (S j + k))%nat as eq1 by lia.
+  assert (S (j + S k) = (S j + S k))%nat as eq2 by lia.
+  assert (NewVar (S j) (subst_in_proc (S (j + k)) (Succ_bvar v) P1) 
+      = subst_in_proc (S (j + S k)) (Succ_bvar (NewVar_in_Data j v)) (NewVar (S j) P1) ). 
+  { rewrite eq1, eq2. rewrite<- (Succ_bvar_and_NewVar_in_Data_0 (NewVar_in_Data j v)).
+    assert (0 + j = j)%nat as eq'' by lia. rewrite<- eq''.
+    rewrite<- New_Var_And_NewVar_in_Data. apply Hp. simpl. auto with arith. }
+  assert (NewVar (S j) (subst_in_proc (S (j + k)) (Succ_bvar v) P2) 
+      = subst_in_proc (S (j + S k)) (Succ_bvar (NewVar_in_Data j v)) (NewVar (S j) P2) ). 
+  { rewrite eq1, eq2. rewrite<- (Succ_bvar_and_NewVar_in_Data_0 (NewVar_in_Data j v)).
+    assert (0 + j = j)%nat as eq'' by lia. rewrite<- eq''.
+    rewrite<- New_Var_And_NewVar_in_Data. apply Hp. simpl. auto with arith. }
+  rewrite H. rewrite H0. auto.
+  assert (NewVar_in_Data j (subst_Data (j + k) v d) 
+      = subst_Data (j + S k) (NewVar_in_Data j v) (NewVar_in_Data j d)) as eq'''.
+  { apply Subst_And_NewVar_in_Data. }
+  rewrite eq'''; eauto.
+* destruct g0; simpl; auto.
+  - assert ((NewVar (S j) (subst_in_proc (S (j + k)) (NewVar_in_Data 0 v) p)) 
+      = (subst_in_proc (S (j + S k)) (NewVar_in_Data (S j) (NewVar_in_Data 0 v)) (NewVar (S j) p))).
+    { assert (size p < size (gpr_input c p)). simpl. auto with arith. eapply (Hp p H (S j) (NewVar_in_Data 0 v) k). }
+    assert ((NewVar_in_Data 0 (NewVar_in_Data j v)) = NewVar_in_Data (S j) (NewVar_in_Data 0 v)).
+    { assert (0 + j = j)%nat as eq' by lia. rewrite<- eq' at 1.
+      assert (0 + S j = S j)%nat as eq'' by lia. rewrite<- eq''.
+      rewrite New_Var_And_NewVar_in_Data. eauto. } 
+    simpl in *. rewrite<- (Succ_bvar_and_NewVar_in_Data_0 (NewVar_in_Data j v)).
+    rewrite H0. rewrite<- H. auto.
+  - assert (NewVar j (subst_in_proc (j + k) v p) = subst_in_proc (j + (S k)) (NewVar_in_Data j v) (NewVar j p)). 
+    apply Hp. simpl. auto with arith.
+    assert (NewVar_in_Data j (subst_Data (j + k) v d) =  subst_Data (j + S k) (NewVar_in_Data j v) (NewVar_in_Data j d)). 
+    eapply Subst_And_NewVar_in_Data. 
+    rewrite H. rewrite H0. auto.
+  - assert (NewVar j (subst_in_proc (j + k) v p) = subst_in_proc (j + S k) (NewVar_in_Data j v) (NewVar j p)). eapply Hp. 
+    simpl. auto with arith. rewrite H. auto.
+  - assert (NewVar j (subst_in_proc (j + k) v (g g0_1)) = subst_in_proc (j + S k) (NewVar_in_Data j v) (NewVar j (g g0_1))). 
+    apply Hp. simpl. auto with arith.
+    assert (NewVar j (subst_in_proc (j + k) v (g g0_2)) = subst_in_proc (j + (S k)) (NewVar_in_Data j v) (NewVar j (g g0_2))). 
+    apply Hp. simpl. auto with arith. simpl in H0. simpl in H. inversion H. inversion H0.
+    rewrite H2. rewrite H3. auto.
+Qed.
+
+Lemma Subst_And_NewVar_in_Data_trice : forall j i d m, NewVar_in_Data (j + i) (subst_Data i (cst m) d) 
+      = subst_Data i (cst m) (NewVar_in_Data (j + (S i)) d).
+Proof.
+  intros. destruct d; simpl.
+  - eauto.
+  - destruct (decide (n = i)).
+    + subst. simpl. destruct (decide (j + S i < S i)).
+      * simpl. lia.
+      * simpl. rewrite decide_True; eauto.
+    + destruct (decide (n < i)).
+      * rewrite decide_False; eauto with lia.
+        simpl. rewrite decide_False; eauto with lia.
+        rewrite decide_False; eauto with lia.
+        rewrite decide_True; eauto with lia.
+      * simpl. destruct (decide (j + i < S (Nat.pred n))).
+        -- rewrite decide_True; eauto with lia. simpl.
+           rewrite decide_False; eauto with lia.
+           rewrite decide_False; eauto with lia.
+        -- rewrite decide_False; eauto with lia. simpl.
+           rewrite decide_False; eauto with lia.
+           rewrite decide_False; eauto with lia.
+Qed.
+
+Lemma Subst_And_NewVar_trice : forall j i p m, NewVar (j + i) (subst_in_proc i (cst m) p) 
+      = subst_in_proc i (cst m) (NewVar ((S j) + i) p).
+Proof.
+  intros. revert j i. 
+  induction p as (p & Hp) using
+      (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; simpl; intros.
+  * assert (NewVar (j + i) (subst_in_proc i (cst m) p1) = subst_in_proc i (cst m) (NewVar ((S j)+i) p1)) as eq1. 
+    { apply Hp. simpl. auto with arith. }
+    assert (NewVar (j + i) (subst_in_proc i (cst m) p2) = subst_in_proc i (cst m) (NewVar ((S j) + i) p2)) as eq2. 
+    { apply Hp. simpl. auto with arith. }
+    rewrite eq1, eq2. auto.
+  * reflexivity.
+  * assert (NewVar (j + i) (subst_in_proc i (cst m) p) = subst_in_proc i (cst m) (NewVar ((S j) + i) p)) as eq. 
+    { apply Hp. simpl. auto with arith. }
+    rewrite eq. auto.
+  * assert (S (j + i) = (j + S i))%nat as eq1 by lia.
+    assert (S (j + S i) = (S j + S i))%nat as eq2 by lia.
+    rewrite eq1 , eq2.
+    assert (NewVar (j + S i) (subst_in_proc (S i) (cst m) p1)
+        = subst_in_proc (S i) (cst m) (NewVar (S j + S i) p1)) as eq'1. 
+    { apply Hp. simpl. auto with arith. }
+    assert (NewVar (j + S i) (subst_in_proc (S i) (cst m) p2)
+        = subst_in_proc (S i) (cst m) (NewVar (S j + S i) p2)) as eq'2.
+    { apply Hp. simpl. auto with arith. }
+    rewrite eq'1, eq'2.
+    assert (NewVar_in_Data (j + i) (subst_Data i (cst m) d)
+        = subst_Data i  (cst m) (NewVar_in_Data (j + S i) d)) as eq'''.
+    { eapply Subst_And_NewVar_in_Data_trice. }
+    rewrite eq'''; eauto.
+  * destruct g0; simpl; auto.
+    - assert ((NewVar (j + S i) (subst_in_proc (S i) (cst m) p)) 
+        = (subst_in_proc (S i) (cst m) (NewVar (S j + S i) p))) as eq1.
+      { eapply Hp. eauto with arith. }
+      assert (S (j + i) = j + S i)%nat as eq2 by lia.
+      assert (S (j + S i) = S j + S i)%nat as eq3 by lia.
+      rewrite eq2, eq3, eq1. eauto.
+    - assert (NewVar_in_Data (j + i) (subst_Data i (cst m) d) 
+            = subst_Data i (cst m) (NewVar_in_Data (j + S i) d)) as eq1. 
+      { eapply Subst_And_NewVar_in_Data_trice. }
+      assert (NewVar (j + i) (subst_in_proc i (cst m) p) 
+          = subst_in_proc i (cst m) (NewVar (S j + i) p)) as eq2.
+      { apply Hp. simpl. auto with arith. }
+      assert (S (j + i) = j + S i)%nat as eq3 by lia.
+      rewrite eq3, eq1 ,eq2. eauto.
+      assert (S j + i = j + S i)%nat as eq4 by lia.
+      rewrite eq4. eauto.
+    - assert (NewVar (j + i) (subst_in_proc i (cst m) p) 
+        = subst_in_proc i (cst m) (NewVar (S (j + i)) p)) as eq.
+      { eapply Hp. eauto with arith. }
+      rewrite eq. eauto.
+    - assert (S (j + i) = (j + S i))%nat as eq1 by lia.
+      assert (NewVar (j + i) (subst_in_proc i (cst m) g0_1)
+          = subst_in_proc i (cst m) (NewVar (S j + i) g0_1)) as eq'1. 
+      { apply Hp. simpl. auto with arith. }
+      assert (NewVar (j + i) (subst_in_proc i (cst m) g0_2)
+          = subst_in_proc i (cst m) (NewVar (S j + i) g0_2)) as eq'2.
+      { apply Hp. simpl. auto with arith. }
+      inversion eq'1. inversion eq'2. eauto.
+Qed.
 
 Lemma NewVar_Respects_Congruence : forall p p' j, p ≡* p' -> NewVar j p ≡* NewVar j p'.
 Proof.
-intros.  revert j.  dependent induction H.
-- dependent induction H ; simpl ; auto with cgr.
-* intros. eapply cgr_if_true; eapply NewVar_equation in H; eauto.
-* intros. eapply cgr_if_true_rev; eapply NewVar_equation in H; eauto.
-* intros. eapply cgr_if_false; eapply NewVar_equation in H; eauto.
-* intros. eapply cgr_if_false_rev; eapply NewVar_equation in H; eauto.
-* intros. apply cgr_choice. apply IHcgr_step. 
-- eauto with cgr.
+intros.  revert j.  dependent induction H. dependent induction H ; simpl ; auto with cgr.
+  - intros. etrans. eapply cgr_match_zero.
+    assert (j = j + 0)%nat as eq by lia.
+    rewrite eq. rewrite Subst_And_NewVar_trice.
+    reflexivity.
+  - intros. etrans. 2:{ eapply cgr_match_zero_rev. }
+    assert (j = j + 0)%nat as eq by lia.
+    rewrite eq. rewrite Subst_And_NewVar_trice.
+    reflexivity.
+  - intros. etrans. eapply cgr_match_succ.
+    assert (j = j + 0)%nat as eq by lia.
+    rewrite eq. rewrite Subst_And_NewVar_trice.
+    reflexivity.
+  - intros. etrans. 2:{ eapply cgr_match_succ_rev. }
+    assert (j = j + 0)%nat as eq by lia.
+    rewrite eq. rewrite Subst_And_NewVar_trice.
+    reflexivity.
+  - intros. apply cgr_choice. apply IHcgr_step. 
+  - eauto with cgr.
 Qed.
 
 (* Substition lemma, needed to contextualise the equivalence *)
@@ -628,9 +1122,11 @@ destruct p; intros; simpl.
     apply Hp. simpl. rewrite <-Nat.add_succ_l. apply PeanoNat.Nat.lt_add_pos_l. apply Nat.lt_0_succ. exact H.
   - destruct (decide (x = n)). exact H. reflexivity.
   - destruct (decide (x = n)). reflexivity. apply cgr_recursion. apply Hp. simpl. auto. exact H.
-  - apply cgr_full_if.
-    apply Hp. simpl. rewrite <-Nat.add_succ_r. apply PeanoNat.Nat.lt_add_pos_r. apply Nat.lt_0_succ. exact H. 
-    apply Hp. simpl. rewrite <-Nat.add_succ_l. apply PeanoNat.Nat.lt_add_pos_l. apply Nat.lt_0_succ. exact H.  
+  - apply cgr_full_match.
+    apply Hp. simpl. rewrite <-Nat.add_succ_r. apply PeanoNat.Nat.lt_add_pos_r. apply Nat.lt_0_succ.
+    eapply NewVar_Respects_Congruence; eauto.
+    apply Hp. simpl. rewrite <-Nat.add_succ_l. apply PeanoNat.Nat.lt_add_pos_l. apply Nat.lt_0_succ.
+    eapply NewVar_Respects_Congruence; eauto.
   - destruct g0; intros; simpl.
     * reflexivity.
     * reflexivity.
@@ -642,6 +1138,160 @@ destruct p; intros; simpl.
       auto. assert (pr_subst x (g g0_2) q ≡* pr_subst x (g g0_2) q'). apply Hp. simpl. auto with arith. auto.
       auto. 
 Qed.
+
+Lemma PrSubst_NewVar : forall j n P p, pr_subst n (NewVar j P) (NewVar j p) = NewVar j (pr_subst n P p).
+Proof.
+intros. revert j n p. induction P as (P & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct P; intros.
+* simpl. assert (pr_subst n (NewVar j P1) (NewVar j p) =  NewVar j (pr_subst n P1 p)). apply Hp. simpl. auto with arith.
+  assert (pr_subst n (NewVar j P2) (NewVar j p) =  (NewVar j (pr_subst n P2 p))). apply Hp. simpl. auto with arith.
+  rewrite H. rewrite H0. auto.
+* simpl. destruct (decide (n0 = n)); simpl; auto.
+* simpl. destruct (decide (n0 = n)); simpl ; auto. 
+  assert (pr_subst n0 (NewVar j P) (NewVar j p) = NewVar j (pr_subst n0 P p)). apply Hp. simpl. auto with arith.
+  rewrite H.  auto.
+* simpl. assert (pr_subst n (NewVar (S j) P1) (NewVar (S j) (NewVar 0 p)) = NewVar (S j) (pr_subst n P1 (NewVar 0 p)) ).
+  { apply Hp. simpl. auto with arith. }
+  simpl. assert (pr_subst n (NewVar (S j) P2) (NewVar (S j) (NewVar 0 p)) = NewVar (S j) (pr_subst n P2 (NewVar 0 p)) ).
+  { apply Hp. simpl. auto with arith. } assert (0 + j = j)%nat as eq1 by lia.
+  rewrite<- eq1. rewrite<- New_Var_And_NewVar. simpl.
+  rewrite H. rewrite H0. eauto.
+* destruct g0; simpl; auto.
+  - assert (NewVar (S j) (NewVar 0 p)= NewVar 0 (NewVar j p)). eapply (New_Var_And_NewVar j 0).
+    rewrite <-H.
+    assert (pr_subst n (NewVar (S j) p0) (NewVar (S j) (NewVar 0 p)) = NewVar (S j) (pr_subst n p0 (NewVar 0 p))).
+    eapply (Hp p0). simpl. auto with arith. rewrite H0. auto.
+  - assert (pr_subst n (NewVar j p0) (NewVar j p) = NewVar j (pr_subst n p0 p)).
+    apply Hp. simpl. auto with arith. rewrite H. auto.
+  - assert (pr_subst n (NewVar j p0) (NewVar j p) = NewVar j (pr_subst n p0 p)). apply Hp.
+    simpl. auto with cgr. rewrite H. auto.
+  - assert (pr_subst n (NewVar j (g g0_1)) (NewVar j p) = NewVar j (pr_subst n (g g0_1) p)).
+    apply Hp. simpl. auto with arith.
+    assert (pr_subst n (NewVar j (g g0_2)) (NewVar j p) = NewVar j (pr_subst n (g g0_2) p)).
+    apply Hp. simpl. auto with arith.
+    inversion H. inversion H0. auto.
+Qed.
+
+Lemma All_According_To_Data : forall k v d, (subst_Data k v (NewVar_in_Data k d) = d).
+Proof.
+intros. destruct d. 
+- simpl. auto.
+- simpl. destruct (decide (k < S n)). (* case decide. *)
+  * simpl. destruct (decide (S n = k)) as [e | e].
+    ** exfalso. dependent destruction l. eapply Nat.neq_succ_diag_l. exact e. 
+       rewrite <-e in l. lia.
+    ** destruct (decide (S n < k)). 
+       *** lia.
+       *** auto.
+  * simpl. destruct (decide (n = k)).
+    ** lia. 
+    ** destruct n. 
+      -- assert ( 0 < k). lia. destruct (decide (0 < k)). 
+         *** auto. 
+         *** exfalso. auto with arith.
+      -- destruct (decide (S n < k)).
+        *** auto.
+        *** exfalso. lia.
+Qed.
+
+Lemma All_According : forall p k v, subst_in_proc k v (NewVar k p) = p.
+Proof.
+intros. revert v. revert k.
+induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct p; intros. 
+* simpl. assert (subst_in_proc k v (NewVar k p1) = p1) as eq1.
+  { apply Hp. simpl. auto with arith. }
+  assert (subst_in_proc k v (NewVar k p2) = p2) as eq2.
+  { apply Hp. simpl. auto with arith. }
+  rewrite eq1, eq2. auto.
+* simpl. auto.
+* simpl. assert (subst_in_proc k v (NewVar k p) = p).
+  { apply Hp. simpl. auto with arith. }
+  rewrite H. auto.
+* simpl. assert (subst_Data k v (NewVar_in_Data k d) = d) as eq0.
+  { apply All_According_To_Data. }
+  assert (subst_in_proc (S k) (Succ_bvar v) (NewVar (S k) p1) = p1) as eq1.
+  { apply Hp. simpl. auto with arith. }
+  assert (subst_in_proc (S k) (Succ_bvar v) (NewVar (S k) p2) = p2) as eq2.
+  { apply Hp. simpl. auto with arith. }
+  rewrite eq0, eq1, eq2. auto.
+* destruct g0.
+  - simpl. auto.
+  - simpl. auto.
+  - simpl. assert (subst_in_proc (S k) (NewVar_in_Data 0 v) (NewVar (S k) p) = p) as eq.
+    { apply Hp. simpl. auto with arith. }
+    rewrite<- Succ_bvar_and_NewVar_in_Data_0. rewrite eq. auto.
+  - simpl. assert (subst_Data k v (NewVar_in_Data k d) = d). apply All_According_To_Data.
+    assert (subst_in_proc k v (NewVar k p) = p). apply Hp. simpl. auto with arith.
+    rewrite H, H0. auto.
+  - simpl. assert (subst_in_proc k v (NewVar k p) = p). apply Hp. simpl. auto with arith.
+    rewrite H. auto.
+  - simpl. assert (subst_in_proc k v (NewVar k (g g0_1)) = g g0_1) as eq1.
+    { apply Hp. simpl. auto with arith. }
+    assert (subst_in_proc k v (NewVar k (g g0_2)) = g g0_2) as eq2.
+    { apply Hp. simpl. auto with arith. }
+    dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
+Qed.
+
+
+Lemma PrSubst_NewVar2 : forall j n p q m, (subst_in_proc j (cst m) (pr_subst n p (NewVar j q))
+              = pr_subst n (subst_in_proc j (cst m) p) q).
+Proof.
+intros. revert p j n q m. induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct p; intros.
+* simpl. assert ((subst_in_proc j (cst m) (pr_subst n p1 (NewVar j q)) 
+        = pr_subst n (subst_in_proc j (cst m) p1) q)) as eq1.
+  { apply Hp. simpl. auto with arith. }
+  assert (subst_in_proc j (cst m) (pr_subst n p2 (NewVar j q))
+    = pr_subst n (subst_in_proc j (cst m) p2) q) as eq2.
+  { apply Hp. simpl. auto with arith. }
+  rewrite eq1, eq2. eauto.
+* simpl. destruct (decide (n = n0)); simpl; auto.
+  + rewrite decide_True;eauto. rewrite decide_True;eauto.
+    rewrite (All_According q j (cst m)). eauto.
+  + rewrite decide_False;eauto. rewrite decide_False;eauto.
+* simpl. destruct (decide (n0 = n)); simpl ; auto.
+  assert (subst_in_proc j (cst m) (pr_subst n0 p (NewVar j q)) = pr_subst n0 (subst_in_proc j (cst m) p) q) as eq.
+  { apply Hp. simpl. auto with arith. }
+  rewrite eq. auto.
+* simpl.
+  assert (subst_in_proc (S j) (cst m) (pr_subst n p1 (NewVar (S j) (NewVar 0 q))) =
+      pr_subst n (subst_in_proc (S j) (cst m) p1) (NewVar 0 q)) as eq1.
+  { apply Hp. simpl. auto with arith. }
+  assert (subst_in_proc (S j) (cst m) (pr_subst n p2 (NewVar (S j) (NewVar 0 q))) =
+      pr_subst n (subst_in_proc (S j) (cst m) p2) (NewVar 0 q)) as eq2.
+  { apply Hp. simpl. auto with arith. }
+  assert (0 + j = j)%nat as eq3 by lia.
+  rewrite<- eq3. rewrite<- New_Var_And_NewVar.
+  simpl in *. rewrite eq1, eq2. eauto.
+* destruct g0; simpl; auto.
+  - assert ((subst_in_proc (S j) (cst m) (pr_subst n p (NewVar (S j) (NewVar 0 q)))) =
+          pr_subst n (subst_in_proc (S j) (cst m) p) (NewVar 0 q)) as eq1.
+    { eapply Hp. eauto with arith. }
+    assert ((0 + j) = j)%nat as eq2 by lia.
+    rewrite<- eq2. rewrite<- New_Var_And_NewVar.
+    simpl in *. rewrite eq1; eauto.
+  - assert (subst_in_proc j (cst m) (pr_subst n p (NewVar j q)) =
+        pr_subst n (subst_in_proc j (cst m) p) q) as eq.
+    { apply Hp. simpl. auto with arith. }
+    rewrite eq. auto.
+  - assert (subst_in_proc j (cst m) (pr_subst n p (NewVar j q)) =
+       pr_subst n (subst_in_proc j (cst m) p) q) as eq.
+    { apply Hp. simpl. auto with cgr. }
+    rewrite eq. auto.
+  - simpl. assert (subst_in_proc j (cst m) (pr_subst n (g g0_1) (NewVar j q)) 
+        = pr_subst n (subst_in_proc j (cst m) (g g0_1)) q) as eq1.
+    { apply Hp. simpl. auto with arith. }
+    assert (subst_in_proc j (cst m) (pr_subst n (g g0_2) (NewVar j q)) 
+        = pr_subst n (subst_in_proc j (cst m) (g g0_2)) q) as eq2.
+    { apply Hp. simpl. auto with arith. }
+    dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
+Qed.
+
+
 (* ≡ respects the substitution of his variable*)
 Lemma cgr_step_subst2 : forall p p' q x, p ≡ p' → pr_subst x p q ≡ pr_subst x p' q.
 Proof.
@@ -649,10 +1299,10 @@ Proof.
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   intros p' q n hcgr ; inversion hcgr; try auto; try (exact H).
   - constructor.
-  - constructor; eauto.
-  - constructor; eauto.
-  - constructor; eauto.
-  - constructor; eauto.
+  - simpl. rewrite<- PrSubst_NewVar2. eapply cgr_match_zero_step.
+  - simpl. rewrite<- PrSubst_NewVar2. eapply cgr_match_zero_rev_step.
+  - simpl. rewrite<- PrSubst_NewVar2. eapply cgr_match_succ_step.
+  - simpl. rewrite<- PrSubst_NewVar2. eapply cgr_match_succ_rev_step.
   - constructor.
   - constructor.
   - constructor.
@@ -669,10 +1319,8 @@ Proof.
   - simpl. constructor. apply Hp. subst. simpl. auto. exact H. 
   - simpl. constructor. apply Hp. subst. simpl. rewrite <-Nat.add_succ_r. apply PeanoNat.Nat.lt_add_pos_r. apply Nat.lt_0_succ.
     exact H.
-  - simpl. constructor. apply Hp. subst. simpl. rewrite <-Nat.add_succ_l. apply PeanoNat.Nat.lt_add_pos_l. apply Nat.lt_0_succ.
-    exact H.
-  - simpl. constructor. apply Hp. subst. simpl. rewrite <-Nat.add_succ_r. apply PeanoNat.Nat.lt_add_pos_r. apply Nat.lt_0_succ.
-    exact H.
+  - simpl. constructor. apply Hp. subst. simpl. rewrite <-Nat.add_succ_l. lia. exact H.
+  - simpl. constructor. apply Hp. subst. simpl. rewrite <-Nat.add_succ_r. lia. exact H.
   - simpl. apply cgr_choice_step. 
     assert (pr_subst n (g p1) q ≡ pr_subst n (g q1) q). apply Hp. subst. simpl. rewrite <-Nat.add_succ_r. 
     apply PeanoNat.Nat.lt_add_pos_r. apply Nat.lt_0_succ.
@@ -698,7 +1346,6 @@ Qed.
 #[global] Hint Resolve cgr_is_eq_rel: ccs.
 #[global] Hint Constructors clos_trans:ccs.
 #[global] Hint Unfold cgr:ccs.
-
 
 (* State Transition System (STS-reduction) *)
 Inductive sts : proc -> proc -> Prop :=
@@ -768,14 +1415,14 @@ intros P Q c v Transition.
   * apply cgr_trans with ((c ? x • P) + 𝟘). apply cgr_trans with (c ? x • P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
-- destruct (IHTransition c v). reflexivity. decompose record H0. exists x. exists x0. exists x1. split; try split.
-  * apply cgr_trans with p. apply cgr_if_true. assumption. assumption.
+- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists x1. split; try split.
+  * apply cgr_trans with (p^(cst 0)). apply cgr_match_zero. assumption.
   * assumption.
-  * intros. inversion H3. inversion H5.
-- destruct (IHTransition c v). reflexivity. decompose record H0. exists x. exists x0. exists x1. split; try split.
-  * apply cgr_trans with q. apply cgr_if_false. assumption. assumption.
+  * intros. inversion H2. inversion H4.
+- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists x1. split; try split.
+  * apply cgr_trans with (q^(cst n')). apply cgr_match_succ. assumption.
   * assumption.
-  * intros. inversion H3. inversion H5.
+  * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
   * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
@@ -809,14 +1456,14 @@ intros P Q c v Transition.
   * apply cgr_trans with ((c ! v • P) + 𝟘). apply cgr_trans with (c ! v • P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
-- destruct (IHTransition c v). reflexivity. decompose record H0. exists x. exists x0. exists x1. split; try split.
-  * apply cgr_trans with p. apply cgr_if_true. assumption. assumption.
+- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists x1. split; try split.
+  * apply cgr_trans with (p^(cst 0)). apply cgr_match_zero. assumption.
   * assumption.
-  * intros. inversion H3. inversion H5.
-- destruct (IHTransition c v). reflexivity. decompose record H0. exists x. exists x0. exists x1. split; try split.
-  * apply cgr_trans with q. apply cgr_if_false. assumption. assumption.
+  * intros. inversion H2. inversion H4.
+- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists x1. split; try split.
+  * apply cgr_trans with (q^(cst n')). apply cgr_match_succ. assumption.
   * assumption.
-  * intros. inversion H3. inversion H5.
+  * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
   * apply cgr_trans with ((((c ! v • x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
@@ -846,12 +1493,12 @@ Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P 
 Proof.
 intros P V Hyp. 
 destruct Hyp. rename H into Transition. dependent induction Transition.
+- inversion H0. inversion H.
+- inversion H0. inversion H.
 - exists P. exists 𝟘. split. 
   * apply cgr_choice_nil_rev.
   * apply cgr_refl.
 - inversion H0. inversion H.
-- inversion H0. inversion H1.
-- inversion H0. inversion H1.
 - inversion H0. inversion H.
 - inversion H0. inversion H.
 - inversion H0. inversion H.
@@ -881,14 +1528,10 @@ Proof.
   - dependent induction H. 
 (* reasonning about all possible cases due to the structure of terms *)
     + intros. exists q.  split.  exact l. reflexivity.
-    + intros. exists q0.  split. eapply lts_ifOne; eauto. reflexivity.
-    + intros. dependent destruction l.
-      -- exists p'. split; eauto. reflexivity.
-      -- eauto. rewrite H in H0. inversion H0.
-    + intros. exists q0.  split. eapply lts_ifZero; eauto. reflexivity.
-    + intros. dependent destruction l.
-      -- eauto. rewrite H in H0. inversion H0.
-      -- exists q'. split; eauto. reflexivity.
+    + intros. exists q0.  split. eapply lts_match_zero; eauto. reflexivity.
+    + intros. dependent destruction l. exists p'. split; eauto. reflexivity.
+    + intros. exists q0.  split. eapply lts_match_succ; eauto. reflexivity.
+    + intros. dependent destruction l. exists q'. split; eauto. reflexivity.
     + intros. exists (q ‖ 𝟘). split. apply lts_parL. assumption. auto with cgr (*par contexte parallele*). 
     + intros. dependent destruction l. inversion l2. inversion l1. exists p2. split. exact l. auto with cgr. 
       inversion l.
@@ -974,20 +1617,22 @@ Proof.
           assumption. apply cgr_par.
           constructor. assumption.
     + intros. dependent destruction l.
-      -- eexists. split. instantiate (1:= p'). apply lts_ifOne; eauto. reflexivity. 
-      -- destruct (IHcgr_step q'0 α) as (q'1 & l' & equiv'). eauto.
-         eexists. split. apply lts_ifZero; eauto. eauto.
+      -- admit.
+      -- admit.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step p'0 α) as (p'1 & l' & equiv'). eauto.
+      -- admit.
+      -- admit.
+      (* -- destruct (IHcgr_step p'0 α) as (p'1 & l' & equiv'). eauto.
          eexists. split. apply lts_ifOne; eauto. eauto.
-      -- eexists. split. instantiate (1:= q'). apply lts_ifZero; eauto. reflexivity. 
+      -- eexists. split. instantiate (1:= q'). apply lts_ifZero; eauto. reflexivity.  *)
     + intros. dependent destruction l. 
       -- destruct (IHcgr_step q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. eauto with cgr.
-Qed.
+Admitted.
 
+(*
 (* One side of the Harmony Lemma *)
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ Q).
 Proof. 
@@ -1072,17 +1717,17 @@ Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof. 
 intros.
 dependent induction H.
+  - eapply sts_cong.
+    + eapply cgr_match_zero; eauto.
+    + eauto.
+    + reflexivity.
+  - eapply sts_cong.
+    + eapply cgr_match_succ; eauto.
+    + eauto.
+    + reflexivity.
   - eapply sts_cong.  instantiate (1:=  ((t • P) + 𝟘)). apply cgr_choice_nil_rev. instantiate (1:=P).
     apply sts_tau. constructor. constructor.
   - apply sts_recursion.
-  - eapply sts_cong.
-    + eapply cgr_if_true; eauto.
-    + eauto.
-    + reflexivity.
-  - eapply sts_cong.
-    + eapply cgr_if_false; eauto.
-    + eauto.
-    + reflexivity.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption.  decompose record H1.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H4.
     eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? l • x2) + x3)) ‖ (x1 ‖ x4)).
@@ -1135,17 +1780,20 @@ Inductive Well_Defined_Data : nat -> Data -> Prop :=
 | bvar_is_defined_up_to_k: forall k x, (x < k) -> Well_Defined_Data k (bvar x)
 | cst_is_always_defined : forall k x, Well_Defined_Data k (cst x).
 
-Inductive Well_Defined_Condition : nat -> Equation Data -> Prop :=
-| equationOnValueXX : forall k x y, Well_Defined_Data k x -> Well_Defined_Data k y -> Well_Defined_Condition k (x == y).
+(* Inductive Well_Defined_Condition : nat -> Equation Data -> Prop :=
+| equationOnValueXX : forall k x y, Well_Defined_Data k x -> Well_Defined_Data k y -> Well_Defined_Condition k (x == y). *)
 
 Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_par : forall k p1 p2, Well_Defined_Input_in k p1 -> Well_Defined_Input_in k p2 
                 -> Well_Defined_Input_in k (p1 ‖ p2)
 | WD_var : forall k i, Well_Defined_Input_in k (pr_var i)
 | WD_rec : forall k x p1, Well_Defined_Input_in k p1 -> Well_Defined_Input_in k (rec x • p1)
-| WD_if_then_else : forall k p1 p2 C, Well_Defined_Condition k C -> Well_Defined_Input_in k p1 
+(* | WD_if_then_else : forall k p1 p2 C, Well_Defined_Condition k C -> Well_Defined_Input_in k p1 
                     -> Well_Defined_Input_in k p2 
-                        -> Well_Defined_Input_in k (If C Then p1 Else p2)
+                        -> Well_Defined_Input_in k (If C Then p1 Else p2) *)
+| WD_match : forall k p1 p2 v, Well_Defined_Data k v -> Well_Defined_Input_in (S k) p1
+                    -> Well_Defined_Input_in (S k) p2
+                        -> Well_Defined_Input_in k (Match v With zero=> p1 succ=> p2)
 | WD_success : forall k, Well_Defined_Input_in k (①)
 | WD_nil : forall k, Well_Defined_Input_in k (𝟘)
 | WD_input : forall k c p, Well_Defined_Input_in (S k) p
@@ -1163,14 +1811,14 @@ Proof.
 intros. dependent destruction d. constructor. dependent destruction H. constructor. auto with arith.
 Qed.
 
-Lemma Inequation_k_equation : forall k c, Well_Defined_Condition k c -> Well_Defined_Condition (S k) c.
+(* Lemma Inequation_k_equation : forall k c, Well_Defined_Condition k c -> Well_Defined_Condition (S k) c.
 Proof.
 intros. dependent destruction c. destruct d; destruct d0.
 - constructor; constructor.
 - dependent destruction H. constructor. constructor. apply Inequation_k_data. assumption.
 - dependent destruction H. constructor. apply Inequation_k_data. assumption. constructor. 
 - dependent destruction H. constructor; apply Inequation_k_data; assumption.
-Qed.
+Qed. *)
 
 Lemma Inequation_k_proc : forall k p, Well_Defined_Input_in k p -> Well_Defined_Input_in (S k) p.
 Proof.
@@ -1181,8 +1829,12 @@ destruct p.
 - intros. dependent destruction H. constructor; apply Hp; simpl; auto with arith; assumption.
 - intros. constructor.
 - intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
-- intros. dependent destruction H. constructor. 
+(* - intros. dependent destruction H. constructor. 
   ** apply Inequation_k_equation. assumption.
+  ** apply Hp. simpl; auto with arith. assumption.
+  ** apply Hp. simpl; auto with arith. assumption. *)
+- intros. dependent destruction H. constructor. 
+  ** apply Inequation_k_data. assumption.
   ** apply Hp. simpl; auto with arith. assumption.
   ** apply Hp. simpl; auto with arith. assumption.
 - destruct g0.
@@ -1253,7 +1905,7 @@ intros. revert H. revert v. revert k. dependent induction d.
     -- constructor. apply NotK. apply transitivity with n. lia. (* pas top *) assumption. lia.
 Qed.
 
-Lemma ForEquation : forall k v e, Well_Defined_Condition (S k) e 
+(* Lemma ForEquation : forall k v e, Well_Defined_Condition (S k) e 
                 -> Well_Defined_Condition k (subst_in_Equation k (cst v) e).
 Proof.
 intros. revert H. revert v. revert k. 
@@ -1279,7 +1931,7 @@ intros. revert H. revert v. revert k.
        destruct (decide(n0 < k)).
        --- constructor. assumption.
        --- constructor. lia. 
-Qed.
+Qed. *)
 
 Lemma ForSTS : forall k p v, Well_Defined_Input_in (S k) p -> Well_Defined_Input_in k (subst_in_proc k (cst v) p).
 Proof.
@@ -1292,8 +1944,12 @@ destruct p.
   - apply Hp. simpl. auto with arith. assumption.
 * intros. simpl. constructor.
 * intros. simpl. dependent destruction H. constructor. apply Hp. simpl. auto with arith. assumption.
-* intros. simpl. dependent destruction H. constructor.
+(* * intros. simpl. dependent destruction H. constructor.
   - apply ForEquation. assumption.
+  - apply Hp. simpl. auto with arith. assumption.
+  - apply Hp. simpl. auto with arith. assumption. *)
+* intros. simpl. dependent destruction H. constructor.
+  - apply ForData. assumption.
   - apply Hp. simpl. auto with arith. assumption.
   - apply Hp. simpl. auto with arith. assumption.
 * destruct g0.
@@ -1323,16 +1979,14 @@ dependent induction d; intros.
     auto with arith. 
 Qed.
 
-
-
-Lemma WD_eq_and_NewVar : forall e k i, Well_Defined_Condition (k + i) e 
+(* Lemma WD_eq_and_NewVar : forall e k i, Well_Defined_Condition (k + i) e 
                           -> Well_Defined_Condition (S (k + i)) (NewVar_in_Equation i e).
 Proof.
 intro. dependent induction e; intros; simpl. 
 * dependent induction H. constructor. 
   - apply WD_data_and_NewVar. assumption.
   - apply WD_data_and_NewVar. assumption.
-Qed.
+Qed. *)
 
 Lemma WD_and_NewVar : forall k i p, Well_Defined_Input_in (k + i) p -> Well_Defined_Input_in ((S k) + i) (NewVar i p).
 Proof.
@@ -1345,9 +1999,18 @@ destruct p; intros; simpl.
    - apply Hp. simpl. auto with arith. assumption.
 * constructor.
 * constructor. dependent destruction H. apply Hp. simpl. auto with arith. assumption.
-* dependent destruction H. constructor. apply  WD_eq_and_NewVar. assumption.
+(* * dependent destruction H. constructor. apply WD_eq_and_NewVar. assumption.
    - apply Hp. simpl. auto with arith. assumption.
-   - apply Hp. simpl. auto with arith. assumption.
+   - apply Hp. simpl. auto with arith. assumption. *)
+* dependent destruction H. constructor. apply WD_data_and_NewVar. assumption.
+   - assert (S (S (k + i)) = (S k) + (S i))%nat as eq by lia.
+     rewrite eq. apply Hp. simpl. auto with arith. 
+     assert (S(k+i) = k + S i)%nat as eq' by lia.
+     rewrite<- eq'. assumption.
+   - assert (S (S (k + i)) = (S k) + (S i))%nat as eq by lia.
+     rewrite eq. apply Hp. simpl. auto with arith. 
+     assert (S(k+i) = k + S i)%nat as eq' by lia.
+     rewrite<- eq'. assumption.
 * destruct g0; intros; simpl.
   - constructor.
   - constructor.
@@ -1366,6 +2029,7 @@ destruct p; intros; simpl.
        apply Hp. simpl. auto with arith. assumption. assumption.
 Qed.
 
+
 Lemma ForRecursionSanity : forall p' p x k, Well_Defined_Input_in k p' -> Well_Defined_Input_in k p 
             -> Well_Defined_Input_in k (pr_subst x p' p).
 Proof.
@@ -1380,17 +2044,21 @@ destruct p'.
 * intros. simpl. destruct (decide (x=n)). 
   ** dependent destruction H. assumption.
   ** constructor. apply Hp. simpl; auto with arith. assumption. dependent destruction H. assumption.
-* intros. simpl. dependent destruction H. constructor.
-  ** assumption.
-  ** apply Hp. simpl; auto with arith. assumption. assumption.
-  ** apply Hp. simpl; auto with arith. assumption. assumption.
+* intros. simpl. dependent destruction H. constructor. 
+    - simpl;auto with arith.
+    - apply Hp. simpl; lia. assert ((S k) = ((S k) + 0)%nat). auto with arith. 
+      rewrite H3. apply (WD_and_NewVar k 0 p).
+      assert (k = (k + 0)%nat). auto with arith. rewrite <-H4. assumption. eauto.
+    - apply Hp. simpl; lia. assert ((S k) = ((S k) + 0)%nat). auto with arith. 
+      rewrite H3. apply (WD_and_NewVar k 0 p).
+      assert (k = (k + 0)%nat). auto with arith. rewrite <-H4. assumption. eauto.
 * destruct g0. 
   ** intros. simpl. constructor.
   ** intros. simpl. constructor.
   ** intros. simpl. constructor. dependent destruction H. apply Hp. 
     - simpl;auto with arith.
     - assert ((S k) = ((S k) + 0)%nat). auto with arith. rewrite H1. apply (WD_and_NewVar k 0 p0).
-      assert (k = (k + 0)%nat). auto with arith. rewrite <-H2. assumption. 
+      assert (k = (k + 0)%nat). auto with arith. rewrite <-H2. assumption.
     - assumption.
   ** intros. simpl. constructor. dependent destruction H. assumption. apply Hp.
     - simpl; auto with arith.
@@ -1448,8 +2116,8 @@ Lemma Output_are_good : forall p1 p2 c d, Well_Defined_Input_in 0 p1 -> lts p1 (
 Proof.
 intros. dependent induction H0. dependent destruction H. eapply Well_Def_Data_Is_a_value in H. destruct H.
 subst. exists x. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
+- dependent destruction H. eapply IHlts with c. eapply ForSTS; eauto. reflexivity.
+- dependent destruction H. eapply IHlts with c. eapply ForSTS; eauto. reflexivity.
 - dependent destruction H. eapply IHlts with c. assumption. reflexivity.
 - dependent destruction H. eapply IHlts with c. assumption. reflexivity.
 - dependent destruction H. eapply IHlts with c. assumption. reflexivity.
@@ -1462,10 +2130,10 @@ Proof.
 intros. revert H. revert H0. rename H1 into Transition. dependent induction Transition.
 * intros. dependent destruction H0. apply ForSTS. dependent destruction H. assumption.
 * intros. dependent destruction H. assumption.
+* intros. inversion H; subst. eapply IHTransition; eauto. eapply ForSTS; eauto.
+* intros. inversion H; subst. eapply IHTransition; eauto. eapply ForSTS; eauto.
 * intros. dependent destruction H. assumption.
 * intros. apply ForRecursionSanity. dependent destruction H. assumption. assumption.
-* intros. inversion H1; subst. eapply IHTransition; eauto.
-* intros. inversion H1; subst. eapply IHTransition; eauto.
 * intros. dependent destruction H. constructor. 
   ** apply IHTransition1. assert (exists v', v = cst v'). eapply Output_are_good. exact H.
      exact Transition1. destruct H2. subst. constructor. assumption.
@@ -1586,7 +2254,7 @@ Proof.
 Qed.
 
 
-Lemma Equation_dec : forall (x y : Equation Data) , {x = y} + {x <> y}.
+(* Lemma Equation_dec : forall (x y : Equation Data) , {x = y} + {x <> y}.
 Proof.
 decide equality. apply Data_dec. apply Data_dec.
 Qed.
@@ -1615,7 +2283,7 @@ Qed.
 Proof.
   refine (inj_countable encode_equation decode_equation _).
   apply encode_decide_equations.
-Qed.
+Qed.*)
 
 Fixpoint proc_dec (x y : proc) : { x = y } + { x <> y }
 with gproc_dec (x y : gproc) : { x = y } + { x <> y }.
@@ -1623,7 +2291,7 @@ Proof.
 decide equality. 
 * destruct (decide(n = n0));eauto.
 * destruct (decide(n = n0));eauto.
-* destruct (decide(e = e0));eauto. 
+* destruct (decide(d = d0));eauto. 
 * decide equality; destruct (decide(c = c0));eauto.
   destruct (decide(d = d0));eauto.
 Qed.
@@ -1631,7 +2299,7 @@ Qed.
 #[global] Instance proc_eqdecision : EqDecision proc. by exact proc_dec. Defined.
 
 
-Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)) :=
+(* Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)) :=
   match p with
   | p ‖ q  => GenNode 0 [encode_proc p; encode_proc q]
   | pr_var i => GenNode 2 [GenLeaf $ inl i]
@@ -1648,8 +2316,27 @@ encode_gproc (gp: gproc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) +
   | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ (c ⋉ v)); encode_proc p]
   | t • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
+  end. *)
+
+Fixpoint encode_proc (p: proc) : gen_tree (nat + ((Data + TypeOfActions) + Channel)) :=
+  match p with
+  | p ‖ q  => GenNode 0 [encode_proc p; encode_proc q]
+  | pr_var i => GenNode 2 [GenLeaf $ inl i]
+  | rec x • P => GenNode 3 [GenLeaf $ inl x; encode_proc P]
+  | Match n With zero=> A succ=> B => GenNode 4 [GenLeaf (inr ( inl (inl n))) ; encode_proc A; encode_proc B]
+  | g gp => GenNode 1 [encode_gproc gp]
+  end
+with
+encode_gproc (gp: gproc) : gen_tree (nat + ((Data + TypeOfActions) + Channel)) :=
+  match gp with
+  | ① => GenNode 1 []
+  | 𝟘 => GenNode 0 []
+  | c ? x • p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
+  | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ (c ⋉ v)); encode_proc p]
+  | t • p => GenNode 3 [encode_proc p]
+  | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
   end.
-  
+
 Definition Channel_of (a : TypeOfActions) : Channel := 
 match a with 
 | act c d => c
@@ -1660,7 +2347,7 @@ match a with
 | act c d => d
 end.
 
-Fixpoint decode_proc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel))) : proc :=
+(* Fixpoint decode_proc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel))) : proc :=
   match t' with
   | GenNode 0 [ep; eq] => (decode_proc ep) ‖ (decode_proc eq)
   | GenNode 2 [GenLeaf (inl i)] => pr_var i
@@ -1671,6 +2358,28 @@ Fixpoint decode_proc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + 
   end
 with
 decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel))): gproc :=
+  match t' with
+  | GenNode 1 [] => ①
+  | GenNode 0 [] => 𝟘
+  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? x • (decode_proc ep)
+  | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (Channel_of a) ! (Data_of a) • (decode_proc ep)
+  | GenNode 3 [eq] => t • (decode_proc eq)
+  | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
+  | _ => ① 
+  end.
+ *)
+
+Fixpoint decode_proc (t': gen_tree (nat + ((Data + TypeOfActions) + Channel))) : proc :=
+  match t' with
+  | GenNode 0 [ep; eq] => (decode_proc ep) ‖ (decode_proc eq)
+  | GenNode 2 [GenLeaf (inl i)] => pr_var i
+  | GenNode 3 [GenLeaf (inl i); egq] => rec i • (decode_proc egq)
+  | GenNode 4 [GenLeaf (inr ( inl (inl n))); A; B] => Match n With zero=> (decode_proc A) succ=> (decode_proc B)
+  | GenNode 1 [egp] => g (decode_gproc egp)
+  | _ => ① 
+  end
+with
+decode_gproc (t': gen_tree (nat + ((Data + TypeOfActions) + Channel))): gproc :=
   match t' with
   | GenNode 1 [] => ①
   | GenNode 0 [] => 𝟘
@@ -1702,6 +2411,9 @@ refine (inj_countable' encode_proc decode_proc _).
   apply encode_decide_procs.
 Qed.
 
+Definition subst_TypeOfActions (k : nat) (X : Data) (a : TypeOfActions) : TypeOfActions := 
+  (Channel_of a ⋉ (subst_Data k X (Data_of a))).
+
 Fixpoint moutputs_of_g (gp : gproc) : gmultiset (TypeOfActions) :=
   match gp with
   | ① => ∅
@@ -1712,27 +2424,52 @@ Fixpoint moutputs_of_g (gp : gproc) : gmultiset (TypeOfActions) :=
   | g1 + g2 => moutputs_of_g g1 ⊎ moutputs_of_g g2
   end.
 
-
 Fixpoint moutputs_of p : gmultiset TypeOfActions := 
 match p with
   | P ‖ Q => (moutputs_of P) ⊎ (moutputs_of Q)
   | pr_var _ => ∅
   | rec _ • _ => ∅
-  | If E Then P Else Q => match (Eval_Eq E) with 
-                          | Some true => moutputs_of P
-                          | Some false => moutputs_of Q
-                          | None => ∅
-                          end
+(*   | If E Then P Else => Q => match (Eval_Eq E) with 
+                                        | Some true => moutputs_of P
+                                        | Some false => moutputs_of Q
+                                        | None => ∅
+                                      end *)
+  | Match (cst 0) With zero=> P succ=> Q => gmultiset_map (fun a => subst_TypeOfActions 0 (cst 0) a) (moutputs_of P)
+  | Match (cst (S n)) With zero=> P succ=> Q => gmultiset_map (fun a => subst_TypeOfActions 0 (cst n) a) (moutputs_of P)
+  | Match (bvar i) With zero=> P succ=> Q => ∅
   | g p => moutputs_of_g p
 end.
+
+Lemma eq_gmo_gmultiset p m (* k *) :
+moutputs_of_g (subst_in_gproc 0 (cst m) p) = gmultiset_map (fun a => subst_TypeOfActions 0 (cst m) a) (moutputs_of_g p).
+Proof.
+  dependent induction p; simpl in * ;eauto.
+  + rewrite gmultiset_map_singleton. unfold subst_TypeOfActions. simpl. eauto.
+  + rewrite IHp1. rewrite IHp2. rewrite gmultiset_map_disj_union. eauto.
+Qed.
+
+Lemma eq_mo_gmultiset p m (* k *) :
+moutputs_of (subst_in_proc 0 (cst m) p) = gmultiset_map (fun a => subst_TypeOfActions 0 (cst m) a) (moutputs_of p).
+Proof.
+  dependent induction p; simpl in * ;eauto.
+  + rewrite gmultiset_map_disj_union.
+    rewrite (IHp1 m (* k *) ). rewrite (IHp2 m (* k *) ). eauto.
+  + destruct d.
+    ++ destruct v.
+       +++ simpl. 
+  + eapply eq_gmo_gmultiset.
+Admitted.
 
 Definition outputs_of p := dom (moutputs_of p).
 
 Lemma mo_equiv_spec_step : forall {p q}, p ≡ q -> moutputs_of p = moutputs_of q.
-Proof. intros. dependent induction H ; try multiset_solver; simpl in *; try rewrite H; eauto.
-+ destruct (Eval_Eq C); eauto. destruct b; eauto.
-+ destruct (Eval_Eq C); eauto. destruct b; eauto.
-Qed.
+Proof. intros. dependent induction H; try multiset_solver; simpl in *.
++ rewrite eq_mo_gmultiset. eauto.
++ rewrite eq_mo_gmultiset. eauto.
++ rewrite eq_mo_gmultiset. eauto. admit.
++ rewrite eq_mo_gmultiset. eauto. admit.
++ rewrite IHcgr_step. eauto.
+Admitted.
 
 Lemma mo_equiv_spec : forall {p q}, p ≡* q -> moutputs_of p = moutputs_of q.
 Proof.
@@ -1756,15 +2493,15 @@ Proof.
        +++ exfalso. multiset_solver.
     + exfalso. multiset_solver.
     + exfalso. multiset_solver.
-    + simpl in mem. case_eq (Eval_Eq e1). 
-      ++ intros. destruct b.
-         +++ rewrite H in mem. 
+    + simpl in mem. case_eq d. 
+      ++ intros. destruct v; subst.
+         +++ (* rewrite<- eq_mo_gmultiset in mem. 
              eapply IHe1 in mem as (e' & l').
-             exists e'. econstructor; eauto.
-         +++ rewrite H in mem. 
+             exists e'. econstructor; eauto. *) admit.
+         +++ (* rewrite H in mem. 
              eapply IHe2 in mem as (e' & l').
-             exists e'. eapply lts_ifZero; eauto.
-      ++ intro. rewrite H in mem. exfalso. inversion mem.
+             exists e'. eapply lts_ifZero; eauto. *) admit.
+      ++ intros. subst. exfalso. inversion mem.
     + unfold moutputs_of in mem.
       remember g0.
       dependent induction g0; rewrite Heqg1 in mem; simpl in *.
@@ -1780,7 +2517,7 @@ Proof.
              ++++ destruct (IHg0_1 a g0_1) as (e1' & lts__e1); eauto.
                   exists e1'. rewrite Heqg1. repeat split; eauto with ccs.
              ++++ exfalso. multiset_solver.
-Qed.
+Admitted.
 
 Lemma mo_spec_r p a :
   {p' | lts p (ActExt $ ActOut a) p'} -> a ∈ moutputs_of p.
@@ -1790,8 +2527,8 @@ Proof.
   intros (e' & l).
   inversion l; subst.
   + simpl. multiset_solver.
-  + simpl in *. rewrite H. eapply Hp; eauto. simpl. lia.
-  + simpl in *. rewrite H. eapply Hp; eauto. simpl. lia.
+  + simpl in *. rewrite<- eq_mo_gmultiset. eapply Hp; eauto. admit.
+  + simpl in *. rewrite<- eq_mo_gmultiset. eapply Hp; eauto. admit. admit.
   + simpl. eapply gmultiset_elem_of_disj_union. left.
     eapply (Hp p1). simpl. lia. exists p2. eauto.
   + simpl. eapply gmultiset_elem_of_disj_union. right.
@@ -1800,7 +2537,7 @@ Proof.
     eapply (Hp p1). simpl. lia. exists e'. eauto.
   + simpl. eapply gmultiset_elem_of_disj_union. right.
     eapply (Hp p2). simpl. lia. exists e'. eauto.
-Qed.
+Admitted.
 
 
 Lemma outputs_of_spec2 p a : a ∈ outputs_of p -> {q | lts p (ActExt (ActOut a)) q}.
@@ -1828,7 +2565,7 @@ Fixpoint lts_set_output_g (g : gproc) (a : TypeOfActions) : gset proc :=
   | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
   end.
 
-Fixpoint lts_set_output (p : proc) (a : TypeOfActions) : gset proc:=
+Fixpoint lts_set_output (p : proc) (a : TypeOfActions) {struct p} : gset proc:=
 match p with
   | p1 ‖ p2 => 
       let ps1 := lts_set_output p1 a in
@@ -1837,11 +2574,14 @@ match p with
       list_to_set (map (fun p => p ‖ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ‖ p) (elements ps2))
   | pr_var _ => ∅
   | rec _ • _ => ∅
-  | If C Then A Else B => match (Eval_Eq C) with 
+(*   | If C Then A Else B => match (Eval_Eq C) with 
                           | Some true => lts_set_output A a
                           | Some false => lts_set_output B a
                           | None => ∅
-                          end 
+                          end  *)
+  | Match (cst 0) With zero=> P succ=> Q => lts_set_output (P^(cst 0)) a
+  | Match (cst (S n)) With zero=> P succ=> Q => lts_set_output Q a
+  | Match (bvar i) With zero=> P succ=> Q => ∅
   | g gp  => lts_set_output_g gp a
 end.
 
@@ -2221,6 +2961,6 @@ From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeL
 
 #[global] Program Instance VCCS_gLtsOBAFW : gLtsObaFW proc (ExtAct TypeOfActions) := ggLtsObaFW_b.
 
-
+*)
 
 

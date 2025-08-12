@@ -23,32 +23,17 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
 From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
-Import ListNotations.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
-From Coq.Program Require Import Wf Equality.
-From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA FiniteImageLTS 
-    WeakTransitions StateTransitionSystems Lts_FW Convergence Termination InteractionBetweenLts 
-    InListPropHelper.
+From stdpp Require Import base.
+From Must Require Import gLts InteractionBetweenLts.
 
-Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=
-  MkgLtsObaFB {
-      lts_oba_fb_feedback {p1 p2 p3 η μ} :
-      non_blocking η -> dual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 
-        -> p1 ⟶⋍ p3
-    }.
+(**************************************** Parallel LTS of two LTS *************************************)
 
+Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ2 μ1 . (* \/ dual μ2 μ1. *)
 
+#[global] Instance parallel_inter_sym `{ExtAction A} : Symmetric parallel_inter.
+Proof. intros μ1 μ2. intro Hyp. eapply duo_sym. assumption. Defined.
 
-
-
-
-
-
-
-
-
+#[global] Program Instance parallel_gLts {P1 P2 A : Type} `{H : ExtAction A} (M1: gLts P1 A) (M2: gLts P2 A)
+  `{Prop_of_Inter P1 P2 A parallel_inter} 
+: gLts (P1 * P2) A := inter_lts parallel_inter. 

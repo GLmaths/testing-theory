@@ -23,32 +23,26 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
 From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
-Import ListNotations.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
-From Coq.Program Require Import Wf Equality.
-From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA FiniteImageLTS 
-    WeakTransitions StateTransitionSystems Lts_FW Convergence Termination InteractionBetweenLts 
-    InListPropHelper.
+From Must Require Import gLts Bisimulation Lts_OBA.
 
-Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=
-  MkgLtsObaFB {
-      lts_oba_fb_feedback {p1 p2 p3 η μ} :
-      non_blocking η -> dual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 
-        -> p1 ⟶⋍ p3
+Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
+  MkgLtsObaFW {
+      lts_oba_fw_forward p1 η ɣ :
+      ∃ p2, non_blocking η -> dual η ɣ
+        -> p1 ⟶[ ɣ ] p2 /\ p2 ⟶[ η ] p1 ;
+      lts_oba_fw_feedback {p1 p2 p3 η ɣ } :
+      non_blocking η -> dual η ɣ -> p1 ⟶[ η ] p2 -> p2 ⟶[ ɣ ] p3 
+        -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
     }.
 
+(* Properties on OBA FW *)
 
-
-
-
-
-
-
-
-
-
+Lemma lts_ht_input_ex `{gLtsObaFW P A} (p : P) :
+  ∀ η, non_blocking η → ∃ μ, exists p', p ⟶[ μ ] p'.
+Proof.
+  intro η. intro nb.
+  assert (∃ μ , dual η μ) as (μ & duo) by eapply exists_duo_nb.
+  eapply unique_nb in nb as eq; eauto; subst.
+  edestruct (lts_oba_fw_forward  p (co μ) μ) as (t & l1 & l2); eauto.
+Qed.
