@@ -578,4 +578,4 @@ Next Obligation.
        +++ inversion H4; subst.
            eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
        +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
-Qed. *)
+Qed. *) *)

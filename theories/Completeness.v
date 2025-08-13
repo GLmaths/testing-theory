@@ -58,19 +58,12 @@ Class gen_spec (* {E A : Type} *)
               ¬ non_blocking (co_of μ) ->
               gen (μ :: s) ⟶ e -> good e;
     (* 5 *) gen_spec_mu_lts_not_nb_determinacy {μ s e}:
-               ¬ non_blocking (co_of μ) -> (* nécessaire je pense *)
+               ¬ non_blocking (co_of μ) ->
               gen (μ :: s) ⟶[co_of μ] e -> e ⋍ gen s;
 
     (* 6 *) gen_spec_mu_lts_not_nb_side_effect {e μ μ' s} :
               ¬ non_blocking (co_of μ) ->
               gen (μ :: s) ⟶[μ'] e -> μ' ≠ co_of μ -> good e ;
-
-    (* (* à voir*) gen_spec_mu_lts_not_nb_as_nb {μ μ' e s} :
-              ¬ non_blocking (co_of μ) ->
-              gen (μ :: s) ⟶[μ'] e -> ¬ non_blocking μ';  *)
-
-              (* penser à not good *)
-              (* peut , peut-etre, etre enlever en réflichissant sur OBAFW *)
   }.
 
 Lemma co_of_inj `{
@@ -428,6 +421,7 @@ Proof.
          assert (non_blocking (co_of ν)).
          eapply nb_not_nb; eauto. contradiction.
 Qed.
+
 
 Lemma side_effect_by_blocking_action `{
   gLtsOba P A, !Good P A good, !gen_spec co_of f} 
@@ -1006,9 +1000,9 @@ Lemma must_f_gen_a_subseteq_not_non_blocking {P Q : Type} `{
   LtsQ : @gLts Q A H,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc P Q co_of gen_acc} 
   s e μ' L1 :
-  ¬ non_blocking μ' -> gen_acc L1 s ⟶[μ'] e 
+  ¬ non_blocking μ' -> gen_acc L1 s ⟶[μ'] e
     -> forall L2, union_of_actions_without L1 ⊆ union_of_actions_without L2 
-      -> exists t, gen_acc L2 s ⟶[μ'] t.
+      -> (exists t, gen_acc L2 s ⟶[μ'] t) \/ (∃ e', gen_acc L2 s ⟶ e').
 Proof.
   revert e L1.
   induction s as [|μ s']; intros e L1 not_nb l L2 hsub.
@@ -1020,27 +1014,24 @@ Proof.
     ++ edestruct
         (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc L1) _ μ s')
         as (r & hl & heqr).
-       assert (not_eq :  μ' ≠ (co_of μ)). intro impossible. subst. contradiction.
+       assert (not_eq :  μ' ≠ (co_of μ)). { intro impossible. subst. contradiction. }
        destruct (lts_oba_non_blocking_action_confluence nb' not_eq hl l) as
          (r1 & l1 & r2 & l2 & heq).
        edestruct (eq_spec (gen_acc L1 s') r1) as (e' & hle' & heqe').
        symmetry in heqr. eauto.
-       eapply IHs' in hle' as (t & hlt).
-       edestruct
+       eapply IHs' in hle' as [(t & hlt_mu) | (t & hlt_tau)]; eauto.
+       +++ edestruct
          (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc L2) _ μ s')
          as (r' & hl' & heqr'). simpl in hl'.
-       edestruct (eq_spec r' t) as (e2 & hle2 & heqe2). eauto.
-       edestruct (lts_oba_non_blocking_action_delay nb' hl' hle2) as (v & l3 & l4).
-       eauto with mdb. eassumption. eauto.
-    ++ destruct (decide (μ' = co_of μ)) as [eq | neq].
-       +++ edestruct (@gen_spec_mu_lts_co E A _ _ _ _ _ co_of (gen_acc L2) _ μ s')
-              as (r' & hl' & heqr'). subst.
-           assert (e ⋍ gen_acc L1 s').
-           { eapply (gen_spec_mu_lts_not_nb_determinacy not_nb' l). } eauto.
-       +++ destruct (decide ((gen_acc L2 (μ :: s')) ↛[μ'])) as [refuses | accepts].
-           ++++ admit.
-           ++++ eapply lts_refuses_spec1 in accepts as (g & tr). eauto.
-Admitted.
+           edestruct (eq_spec r' t) as (e2 & hle2 & heqe2). eauto.
+           edestruct (lts_oba_non_blocking_action_delay nb' hl' hle2) as (v & l3 & l4).
+           eauto with mdb.
+       +++ right. assert (gen_acc L2 (μ :: s') ⟶⋍[co_of μ] gen_acc L2 s') as (r' & hl' & heqr').
+           apply gen_spec_mu_lts_co.
+           edestruct (eq_spec r' t) as (e2 & hle2 & heqe2); eauto.
+           edestruct (lts_oba_non_blocking_action_delay nb' hl' hle2) as (v & l3 & l4); eauto.
+    ++ right. eapply gen_spec_co_not_nb_lts_tau_ex; eauto.
+Qed.
 
 Lemma must_f_gen_a_subseteq_tau {P Q : Type} `{
   LtsP : @gLts P A H,
@@ -1052,33 +1043,42 @@ Lemma must_f_gen_a_subseteq_tau {P Q : Type} `{
       -> exists t, gen_acc L2 s ⟶ t.
 Proof.
   revert e L1.
-  induction s as [|μ s']; intros e L1 l L2 hsub.
+  induction s
+    as (s & Hlength) using
+         (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
+  intros e L1 l (* not_happy *) L2 hsub. destruct s.
   + exfalso. eapply lts_refuses_spec2, (@gen_spec_acc_nil_refuses_tau P Q); eauto.
-  + destruct (decide (non_blocking (co_of μ))) as [nb | not_nb].
-    ++ assert (gen_acc L1 (μ :: s') ⟶⋍[co_of μ] gen_acc L1 s') as (r & hl & heqr).
+  + destruct (decide (non_blocking (co_of a))) as [nb | not_nb].
+    ++ assert (gen_acc L1 (a :: s) ⟶⋍[co_of a] gen_acc L1 s) as (r & hl & heqr).
        apply gen_spec_mu_lts_co.
        destruct (lts_oba_non_blocking_action_tau nb hl l) 
         as [(r1 & l1 & (r2 & l2 & heq))| (μ' & duo & (r' & hl' & heq'))].
-       +++ edestruct (eq_spec (gen_acc L1 s') r1) as (e' & hle' & heqe').
+       +++ edestruct (eq_spec (gen_acc L1 s) r1) as (e' & hle' & heqe').
            symmetry in heqr. eauto.
-           eapply IHs' in hle' as (t & hlt).
-           assert (gen_acc L2 (μ :: s') ⟶⋍[co_of μ] gen_acc L2 s') as (r' & hl' & heqr').
+           eapply Hlength in hle' as (t & hlt).
+           assert (gen_acc L2 (a :: s) ⟶⋍[co_of a] gen_acc L2 s) as (r' & hl' & heqr').
            apply gen_spec_mu_lts_co.
            edestruct (eq_spec r' t) as (e2 & hle2 & heqe2). eauto.
-           edestruct (lts_oba_non_blocking_action_delay nb hl' hle2) as (v & l3 & l4).
-           eauto with mdb. eassumption. 
-       +++ edestruct (eq_spec (gen_acc L1 s') r') as (t & hlt & heqt).
+           edestruct (lts_oba_non_blocking_action_delay nb hl' hle2) as (v & l3 & l4); eauto.
+           eauto with mdb.
+           eassumption.
+       +++ edestruct (eq_spec (gen_acc L1 s) r') as (t & hlt & heqt).
            symmetry in heqr. eauto.
            assert (¬ non_blocking μ') as not_nb.
            eapply dual_blocks; eauto.
-           assert (μ = μ').
+           assert (a = μ').
            { eapply co_inter_spec1;eauto. } subst.
-           edestruct (must_f_gen_a_subseteq_not_non_blocking s' t μ' L1 not_nb hlt L2 hsub).
-           assert (gen_acc L2 (μ' :: s') ⟶⋍[co_of μ'] gen_acc L2 s') as (u & hlu & hequ).
-           apply gen_spec_mu_lts_co.
-           edestruct (eq_spec u x) as (t' & hlt' & heqt'). eauto.
-           edestruct (lts_oba_fb_feedback nb duo hlu hlt'); eauto.
-           firstorder. 
+           edestruct (must_f_gen_a_subseteq_not_non_blocking s t μ' L1 not_nb hlt L2 hsub) as [(x & tr)| (e' & tr)].
+           ++++ assert (gen_acc L2 (μ' :: s) ⟶⋍[co_of μ'] gen_acc L2 s) as (u & hlu & hequ).
+                apply gen_spec_mu_lts_co.
+                edestruct (eq_spec u x) as (t' & hlt' & heqt'). eauto.
+                edestruct (lts_oba_fb_feedback nb duo hlu hlt'); eauto.
+                firstorder.
+           ++++ assert (gen_acc L2 (μ' :: s) ⟶⋍[co_of μ'] gen_acc L2 s) as (u & hlu & hequ).
+                apply gen_spec_mu_lts_co.
+                edestruct (eq_spec u e') as (t' & hlt' & heqt'). eauto.
+                edestruct (lts_oba_non_blocking_action_delay nb hlu hlt') 
+                    as (e'' & tr'' & e''' & tr''' & equiv) ; eauto. 
     ++ eapply gen_spec_co_not_nb_lts_tau_ex. exact not_nb.
     Unshelve. eauto.
 Qed.
@@ -1175,17 +1175,19 @@ Proof.
     + destruct ex as (t & l). inversion l; subst; eauto with mdb.
       ++ exists (a2 ▷ gen_acc L2 (ν :: s')). eapply ParLeft; eauto.
       ++ eapply must_f_gen_a_subseteq_tau in l0 as (e & hle).
-         exists (p ▷ e). eapply ParRight; eauto. exact hsub.
+         exists (p ▷ e). eapply ParRight; eauto. eauto.
       ++ destruct (decide (non_blocking μ1)) as [nb1 | not_nb1]; 
          destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
          +++ contradict nb1. 
              eapply dual_blocks; eauto.
-         +++ eapply must_f_gen_a_subseteq_not_non_blocking in l2 as (t & hl); eauto with mdb.
-             exists (a2 ▷ t). eapply ParSync; eauto.
+         +++ eapply must_f_gen_a_subseteq_not_non_blocking in l2 as [(t & hl_mu) | (t & hl_tau)]; eauto with mdb.
+             ++++ exists (a2 ▷ t). eapply ParSync; eauto.
+             ++++ exists (p ▷ t). eapply ParRight; eauto.
          +++ eapply must_f_gen_a_subseteq_non_blocking in l2 as (t & hl); eauto with mdb.
              exists (a2 ▷ t). eapply ParSync; eauto.
-         +++ eapply must_f_gen_a_subseteq_not_non_blocking in l2 as (t & hl); eauto with mdb.
-             exists (a2 ▷ t). eapply ParSync; eauto.
+         +++ eapply must_f_gen_a_subseteq_not_non_blocking in l2 as [(t & hl_mu) | (t & hl_tau)]; eauto with mdb.
+             ++++ exists (a2 ▷ t). eapply ParSync; eauto.
+             ++++ exists (p ▷ t). eapply ParRight; eauto.
     + intros e' l.
       edestruct @inversion_gen_tau_gen_acc as [|Hyp]; eauto with mdb.
       destruct Hyp as (μ & s1 & s2 & s3 & heqs & sc & himu & his1 & his2).

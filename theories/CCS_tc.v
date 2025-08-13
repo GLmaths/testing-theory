@@ -448,5 +448,5 @@ Next Obligation.
   intro H. intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
 Qed.
 Next Obligation. cbn. eauto with ccs. Qed.
-Next Obligation. intros H e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
+Next Obligation. intros H e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed. *)
 

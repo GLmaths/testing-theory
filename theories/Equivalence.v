@@ -135,35 +135,35 @@ Section must_set_acc_set.
         ++ eapply (@lts_refuses_spec2 (P * mb A)); eauto.
     - left. eapply lts_refuses_spec1 in n as (q & l). eauto with mdb.
   Qed.
-(*   Lemma empty_OR_not_empty `{gLts P A} `{gLts Q A} (p : P) (q : Q): 
-  lts_acc_set_of p ∖ lts_acc_set_of q ≡ ∅ 
-  \/ ∃ x, x ∈ lts_acc_set_of p ∖ lts_acc_set_of q.
-  Proof.
-  Admitted. *)
   
-(*   Lemma empty_OR_not_empty (p : P * mb A) (q : Q * mb A) s (hcnv : p ⇓ s) : 
-  (actions_acc p s hcnv ∖ lts_acc_set_of q) ≡ ∅ 
-  \/ ∃ x, x ∈ (actions_acc p s hcnv ∖ lts_acc_set_of q).
+(*   Lemma empty_OR_not_empty (p : P * mb A) (q : Q * mb A) (ht : p ⤓) s (hcnv : p ⇓ s): 
+  actions_acc p s hcnv ∖ lts_acc_set_of q ≡ ∅ 
+  \/ ∃ x, x ∈ actions_acc p s hcnv ∖ lts_acc_set_of q.
   Proof.
-    unfold actions_acc.
-    unfold oas. 
   Admitted.
-
-  (* can be proved with empty_OR_not_empty => induction on the length of ps*)
   Lemma either_wperform_mem
     (p : P * mb A) (q : Q * mb A) (ht : p ⤓) s hcnv:
     (exists μ p', μ ∈ (actions_acc p s hcnv ∖ lts_acc_set_of q) /\ p ⟹{μ} p') 
     \/ (forall μ p', μ ∈ (actions_acc p s hcnv ∖ lts_acc_set_of q) -> ~ p ⟹{μ} p').
   Proof.
-    destruct (empty_OR_not_empty p q s hcnv) as [case_1 | case_2].
+    destruct (empty_OR_not_empty p q ht s hcnv) as [case_1 | case_2].
     + set_solver.
-    + destruct case_2, (either_wperform_mu p x). ; set_solver.
+    + destruct case_2, (either_wperform_mu p x) ; try set_solver.
     induction G using set_ind_L; [|destruct IHG, (either_wperform_mu p x)]; set_solver.
   Admitted. *)
+
   Lemma either_wperform_mem (p : P * mb A) (L : (list (P * mb A)) * (Q * mb A)) (ht : p ⤓) :
     (exists μ p', μ ∈ union_of_actions_without L /\ p ⟹{μ} p') 
       \/ (forall μ p', μ ∈ union_of_actions_without L -> ~ p ⟹{μ} p').
   Proof.
+    destruct p as (p , M).
+    induction (lts_essential_actions_left p) using set_ind_L.
+(*     + right. intros. intro. 
+    destruct (decide (lts_refuses (p , M) τ)) as [stable | not_stable].
+    +  *)
+    
+    (* destruct (decide (μ ∈ union_of_actions_without L)). *)
+    (* destruct (decide (p ⟹{μ} p')). *)
     (*induction G using set_ind_L.
     + set_solver. 
     + destruct IHG, (either_wperform_mu p x); set_solver. *)

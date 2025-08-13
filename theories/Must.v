@@ -46,6 +46,13 @@ Proof.
   eapply hp. eapply good_preserved_by_lts_non_blocking_action_converse; eauto with mdb.
 Qed.
 
+Lemma ungood_preserved_by_lts_non_blocking_action_converse `{gLtsOba P A, !Good P A good} p q η :
+  non_blocking η -> p ⟶[η] q -> ~ good q -> ~ good p.
+Proof.
+  intros nb l1 hp hq.
+  eapply hp. eapply good_preserved_by_lts_non_blocking_action; eauto with mdb.
+Qed.
+
 Lemma ungood_preserved_by_wt_non_blocking_action 
   `{gLtsOba P A, !Good P A good} 
   r1 r2 s :
