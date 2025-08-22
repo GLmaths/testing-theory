@@ -137,15 +137,15 @@ Next Obligation.
   + exact (OldTransitionSystems.eq_spec p q τ Hyp).
 Qed.
 
-Definition label_to_output `{Label A} (a : A) : ExtAct A := ActOut a.
+Definition label_to_output {A} (a : A) : ExtAct A := ActOut a.
 
-Definition mo_label_to_mo_output `{Label A} (m : gmultiset A) : gmultiset (ExtAct A) :=
+Definition mo_label_to_mo_output `{Countable A} (m : gmultiset A) : gmultiset (ExtAct A) :=
     gmultiset_map label_to_output m.
 
-Definition set_label_to_mo_output `{Label A}
+(* Definition set_label_to_mo_output `{Countable A}
     (m : gset A) : gset (ExtAct A) :=
     list_to_set (fmap label_to_output (elements m)).
-
+ *)
 (* #[global] Instance output_in_gmultiset_dec `{Prop_of_Inter S1 S2 A} 
   η x p1 :
   Decision (η = label_to_output x ∧ x ∈ lts_oba_mo p1). *)
@@ -356,119 +356,72 @@ Next Obligation.
   inversion mem.
 Qed.
 
-
-(*
-#[global] Program Instance Inter
-  `{Lts P A} `{Lts Q A} (H : ExtAction (ExtAct A))
-    {ext_m : forall μ1 μ2, dual μ1 μ2 = ext_act_match μ1 μ2}: 
-    Prop_of_Inter P Q (ExtAct A) parallel_inter.
+#[global] Program Instance Inter_parallel_IO {A : Type} (H : ExtAction (ExtAct A))
+  `{LtsP : @Lts P A L} `{LtsQ : @Lts Q A L} 
+    {ext_m : forall μ1 μ2, parallel_inter μ2 μ1 = ext_act_match μ1 μ2}: 
+    @Prop_of_Inter P Q (ExtAct A) parallel_inter H (@ggLts A H P L LtsP) (@ggLts A H Q L LtsQ) :=
+    {| lts_essential_actions_left p := set_map ActOut (lts_outputs p) ;
+       lts_essential_actions_right q := set_map ActOut (lts_outputs q)|}.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? p. 
-  Check (set_label_to_mo_output (lts_outputs p)). Check (@lts_outputs).
-  exact (fun x => @set_label_to_mo_output A H1 (lts_outputs x)). 
-Admitted.
-Next Obligation.
-  intros ? ? ? ? ? ? p ? Hyp ;simpl in *.
-  unfold Inter_FW_obligation_1 in Hyp.
-  unfold set_label_to_mo_output in Hyp.
+  intros ? ? ? ? ? ? ? ? p ? Hyp ;simpl in *.
+  unfold set_map in Hyp. simpl in *.
   eapply elem_of_list_to_set in Hyp.
   eapply elem_of_list_fmap in Hyp.
-
-  assert {x : A | ξ = label_to_output x ∧ x ∈ elements (lts_outputs p)} as wit.
-  eapply choice;eauto. intro.
-  destruct (decide (ξ = label_to_output x)).
-  + destruct (decide (x ∈ elements (lts_outputs p))).
-    ++ left; eauto.
-    ++ right. intros (Hyp1 & imp). contradiction.
-  + right. intros (imp & Hyp2). contradiction.
-  
-  + destruct wit as ( a & eq & mem ).
-    unfold label_to_output in eq; subst.
-    assert (a ∈ lts_outputs p) as mem'.
-    eapply elem_of_elements; eauto.
-    eapply lts_outputs_spec2 in mem'. 
-    eauto.
+  destruct ξ.
+  + exfalso. destruct Hyp as (a' & eq & mem). inversion eq.
+  + eapply lts_outputs_spec2. destruct Hyp as (a' & eq & mem).
+    inversion eq. subst. eapply elem_of_elements. eauto.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? q;simpl in *.
-  exact (set_label_to_mo_output (lts_outputs q)).
-Defined.
-Next Obligation.
-  intros ? ? ? ? ? ? q ? Hyp ;simpl in *.
-  unfold Inter_FW_obligation_1 in Hyp.
-  unfold set_label_to_mo_output in Hyp.
+  intros ? ? ? ? ? ? ? ? q ? Hyp ;simpl in *.
+  unfold set_map in Hyp. simpl in *.
   eapply elem_of_list_to_set in Hyp.
   eapply elem_of_list_fmap in Hyp.
-
-  assert {x : A | ξ = label_to_output x ∧ x ∈ elements (lts_outputs q)} as wit.
-  eapply choice;eauto. intro.
-  destruct (decide (ξ = label_to_output x)).
-  + destruct (decide (x ∈ elements (lts_outputs q))).
-    ++ left; eauto.
-    ++ right. intros (Hyp1 & imp). contradiction.
-  + right. intros (imp & Hyp2). contradiction.
-  
-  + destruct wit as ( a & eq & mem ).
-    unfold label_to_output in eq; subst.
-    assert (a ∈ lts_outputs q) as mem'.
-    eapply elem_of_elements; eauto.
-    eapply lts_outputs_spec2 in mem'. 
-    eauto.
+  destruct ξ.
+  + exfalso. destruct Hyp as (a' & eq & mem). inversion eq.
+  + eapply lts_outputs_spec2. destruct Hyp as (a' & eq & mem).
+    inversion eq. subst. eapply elem_of_elements. eauto.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? q ? q' ? ? inter;simpl in *.
-  unfold Inter_par_obligation_1. unfold Inter_par_obligation_3.
-  destruct α1 as [a (* input a *) | a (* output b *)].
-  + right. destruct inter as [case_1 | case_2].
-    ++ symmetry in case_1. eapply simplify_match_input in case_1 as eq; subst.
-       unfold set_label_to_mo_output.
-       eapply elem_of_list_to_set.
-       eapply elem_of_list_fmap. exists a. split; eauto. 
-       eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
-    ++ eapply simplify_match_input in case_2 as eq; subst.
-       unfold set_label_to_mo_output.
-       eapply elem_of_list_to_set.
-       eapply elem_of_list_fmap. exists a. split; eauto. 
-       eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
-  + left. 
+  intros ? ? ? ? ? ? ? ? ? ? ? q ? q' ? ? inter;simpl in *.
+  destruct μ1 as [ (*Input*) a | (*Output*) a].
+  + right. symmetry in inter. erewrite ext_m in inter. eapply simplify_match_input in inter. subst.
+    eapply elem_of_list_to_set.
+    eapply elem_of_list_fmap. exists a. split; eauto. 
+    eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
+  + left. symmetry in inter. erewrite ext_m in inter. eapply simplify_match_output in inter. subst.
     eapply elem_of_list_to_set.
     eapply elem_of_list_fmap. exists a. split; eauto. 
     eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ξ p;simpl in *.
-  destruct ξ as [ a (* Input_case *) | a (* Ouput_case *)].
+  intros ? ? ? ? ? ? ? ? ξ p;simpl in *.
+  destruct ξ as [ (*Input*) a | (*Output*) a ].
   + exact empty. 
   + exact {[ ActIn a ]}.
 Defined.
 Next Obligation.
-  unfold Inter_FW_obligation_6.
-  unfold Inter_FW_obligation_3.
-  intros ? ? ? ? ? ? ? ? ? ? q mem l inter;simpl in *. 
+  unfold Inter_parallel_IO_obligation_4.
+  intros ? ? ? ? ? ? ? ? ? ? ? ? q mem l inter;simpl in *. 
   eapply elem_of_list_to_set in mem.
   eapply elem_of_list_fmap in mem.
-  destruct mem as ( a & eq & mem ); subst. simpl.
-  destruct inter as [case_1 | case_2]; unfold gLabel_nb_obligation_4 in *.
-  + eapply simplify_match_output in case_1. subst. set_solver.
-  + symmetry in case_2. eapply simplify_match_output in case_2. subst. set_solver.
+  destruct mem as ( a & eq & mem ); subst.
+  erewrite ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ξ q;simpl in *.
-  destruct ξ as [ a (* Input_case *) | a (* Ouput_case *)].
+  intros ? ? ? ? ? ? ? ? ξ q;simpl in *.
+  destruct ξ as [ (*Input*) a | (*Output*) a ].
   + exact empty. 
   + exact {[ ActIn a ]}.
 Defined.
 Next Obligation.
-  unfold Inter_FW_obligation_6.
-  unfold Inter_FW_obligation_3.
-  intros ? ? ? ? ? ? ? ? ? ? q mem l inter;simpl in *. 
+  unfold Inter_parallel_IO_obligation_6.
+  intros ? ? ? ? ? ? ? ? ? ? ? ? q mem l inter;simpl in *. 
   eapply elem_of_list_to_set in mem.
   eapply elem_of_list_fmap in mem.
-  destruct mem as ( a & eq & mem ); subst. simpl.
-  destruct inter as [case_1 | case_2]; unfold gLabel_nb_obligation_4 in *.
-  + symmetry in case_1. eapply simplify_match_output in case_1. subst. set_solver.
-  + eapply simplify_match_output in case_2. subst. set_solver.
-Defined. *)
+  destruct mem as ( a & eq & mem ); subst. symmetry in inter.
+  erewrite ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
+Defined.
 
 (* #[global] Program Instance Inter_FW_par_nb
   `{@Lts P A H} `{@Lts E A H}

@@ -137,7 +137,7 @@ Class gen_spec_conv
 Definition union_of_actions_without `{gLts P A} `{gLts Q A}
   (ready_set : list P) (q : Q) := ⋃ map lts_acc_set_of ready_set ∖ (lts_acc_set_of q).
 
-Class gen_spec_acc
+(* Class gen_spec_acc
   (* ! FiniteImagegLts P A *)
   (P : Type) (Q : Type)
   `{@gLts E A H, ! gLtsEq E A, !Good E A good}
@@ -159,9 +159,9 @@ Class gen_spec_acc
     (* t4 *) gen_spec_acc_nil_lts_not_nb_good μ e' (p : list P) (q : Q) : 
                 ¬ non_blocking μ -> gen_acc p q ε ⟶[μ] e' -> good e' ;
   }.
+ *)
 
-
-(* Class gen_spec_acc
+Class gen_spec_acc
   (* ! FiniteImagegLts P A *)
   (P : Type) (Q : Type)
   `{@gLts E A H, ! gLtsEq E A, !Good E A good}
@@ -173,16 +173,22 @@ Class gen_spec_acc
                 gen_acc p q ε ↛ ;
     (* t2 *) gen_spec_acc_nil_refuses_nb (p : list P) (q : Q) η : 
                 non_blocking η -> gen_acc p q ε ↛[η] ;
-  (* t3-> *) gen_spec_acc_nil_mu_inv (p : list P) (q : Q) μ e : 
+(*   (* t3-> *) gen_spec_acc_nil_mu_inv (p : list P) (q : Q) μ e : 
                 ¬ non_blocking μ -> gen_acc p q ε ⟶[μ] e -> good e
-                    -> (∃ η, μ = co_of η /\ η ∈ union_of_actions_without p q);
+                    -> (∃ η, μ = co_of η /\ η ∈ union_of_actions_without p q); *)
   (* t3<- *) gen_spec_acc_nil_mem_lts_inp (p : list P) (q : Q) η : 
                 η ∈ union_of_actions_without p q 
                     -> ∃ r η', gen_acc p q ε ⟶[co_of η'] r /\ good r;
-  (* t4 *) gen_spec_acc_nil_lts_not_nb_good μ e' (p : list P) (q : Q) : 
-                ¬ non_blocking μ -> gen_acc p q ε ⟶[μ] e' -> ¬ good e'
-                -> ∀ α, e' ↛{ α }
-  }. *)
+  (* t4 *) gen_spec_acc_nil_lts_to_good μ e' (p : list P) (q : Q) : 
+                ¬ non_blocking μ -> gen_acc p q ε ⟶[μ] e' -> good e' ->
+                (∃ η, μ = co_of η /\ η ∈ union_of_actions_without p q);
+  (* t4' *) gen_spec_acc_nil_lts_to_not_good μ e' (p : list P) (q : Q) : 
+                ¬ non_blocking μ -> gen_acc p q ε ⟶[μ] e' -> ¬ good e' ->
+                (co_of μ) ∉ union_of_actions_without p q;
+(* fail *)  gen_spec_acc_nil_lts_to_not_good_fails μ e' (p : list P) (q : Q) : 
+                ¬ non_blocking μ -> gen_acc p q ε ⟶[μ] e' -> ¬ good e' ->
+                ∀ α, e' ↛{ α }
+  }.
 
 #[global] Existing Instance gen_acc_spec_gen_spec.
 
@@ -543,9 +549,10 @@ Qed.
 Lemma inversion_gen_mu_nb `{
   M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
   s μ p :
-  (forall μ, f ε ↛[μ] \/ (forall e, f ε ⟶[μ] e -> good e)) ->
+  (forall μ, f ε ↛[μ] \/ (∀ e, f ε ⟶[μ] e -> good e \/ (∀ α, e ↛{α} /\ ¬ good e))) ->
   f s ⟶[μ] p ->
-  non_blocking μ -> 
+  non_blocking μ ->
+  (∀ α, p ↛{α} /\ ¬ good p) \/
   good p \/
   ∃ s1 s2 μ', s = s1 ++ μ' :: s2
   /\ p ⋍ f (s1 ++ s2) 
@@ -557,7 +564,9 @@ Proof.
     as (s & Hlength) using
          (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
   destruct s as [|ν s']; intros μ p h l nb.
-  - edestruct (h μ); eauto. now eapply lts_refuses_spec2 in H0; eauto.
+  - edestruct (h μ) as [refuses_ext_action| Hyp1]; eauto.
+    + now eapply lts_refuses_spec2 in refuses_ext_action; eauto.
+    + edestruct (Hyp1 p); eauto.
   - (* destruct (decide (non_blocking ν)) as [nb'| not_nb']. *)
     + edestruct (gen_spec_mu_lts_co ν s') as (r & hlr & heqr).
       destruct (decide (co_of ν = μ)) as [eq | not_eq].
@@ -1469,9 +1478,9 @@ Proof.
            destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
            ++++ contradict nb1. 
                 eapply dual_blocks; eauto.
-           ++++ destruct (decide (co_of μ2 ∈ union_of_actions_without L q)). eapply gen_spec_acc_nil_mu_inv in l2 as (μ' & In); eauto.
+           ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ' & In); eauto.
                 admit.
-           μ' ∈ union_of_actions_without L q
+           
            
                 (* assert (μ' = μ1). eapply (@co_inter_spec1' P Q);eauto. subst.
                 assert (lts_acc_set_of q μ1) as not_refuses.
