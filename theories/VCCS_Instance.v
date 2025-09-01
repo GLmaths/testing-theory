@@ -2221,6 +2221,16 @@ From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeL
 
 #[global] Program Instance VCCS_gLtsOBAFW : gLtsObaFW proc (ExtAct TypeOfActions) := ggLtsObaFW_b.
 
+From Must Require Import InteractionBetweenLts ParallelLTSConstruction.
+
+#[global] Program Instance Interaction_between_parallel_VACCS :
+  @Prop_of_Inter proc proc (ExtAct TypeOfActions) parallel_inter gLabel_b
+  VCCS_ggLts VCCS_ggLts :=  Inter_parallel_IO gLabel_b.
+Next Obligation.
+  intros μ1 μ2 inter. unfold parallel_inter in inter.
+  unfold dual in inter. simpl in *. eauto.
+Defined.
+
 
 
 

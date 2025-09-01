@@ -32,6 +32,9 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ParallelLTSCons
 InteractionBetweenLts.
 (************************************* Examples for VACCS *************************************)
 Parameter c : Channel.
+Parameter O : Value.
+
+Definition p : proc := c ? x • (c ! O • 𝟘).
 
 Definition q : proc := c ? x • (c ! (bvar 0) • 𝟘).
 
@@ -95,9 +98,11 @@ Proof.
   - now eapply m_now.
   - inversion ex. inversion H2; subst.
     + inversion l.
-    + eapply m_step; eauto.
+    + eapply m_step.
+      * eauto. 
       * exists ((g 𝟘) ▷ b2). eapply ParRight; eauto.
       * intros. inversion H3.
+      * intros. eapply H0. eauto. eauto. eapply et. eauto.
       * intros. inversion H4.
     + inversion l1; subst.
       symmetry in eq. eapply simplify_match_input in eq. subst.
@@ -106,8 +111,7 @@ Proof.
       inversion Mq'.
       * assert (good_VACCS e).
         { eapply good_preserved_by_lts_non_blocking_action_converse; eauto.
-          eexists; eauto. }
-        now eapply m_now.
+          eexists; eauto. } contradiction.
       * inversion ex0; subst. inversion H3; subst.
         -- inversion l.
         -- eapply (OBA_with_FB_First_Axiom e b2 b0) in l2 
@@ -126,6 +130,85 @@ Proof.
            ++ intros. inversion H5.
 Qed.
 
+Lemma q_is_above_p : 
+  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ p q). (* p ⊑ q *)
+Proof.
+  intros e HypMust.
+  dependent induction HypMust.
+  - now apply m_now.
+  - eapply m_step; eauto.
+    + inversion ex; subst. inversion H2; subst.
+      * inversion l.
+      * exists (q ▷ b2). eapply ParRight. eauto.
+      * inversion l1; subst. symmetry in eq.
+        eapply simplify_match_input in eq as eq'; subst.
+        symmetry in eq. eexists. eapply ParSync; eauto.
+        unfold q. eapply lts_input; eauto.
+    + intros. eauto. inversion H2.
+    + intros. inversion H3; subst. symmetry in H2.
+      eapply simplify_match_input in H2 as eq;subst.
+      assert (¬ good_VACCS e') as not_happy'.
+      { eapply ungood_preserved_by_lts_non_blocking_action; eauto.
+        exists (c ⋉ v); eauto. }
+      eapply m_step; eauto.
+      * symmetry in H2. assert (must ((c ! O • 𝟘) ^ v) e') as Mp'.
+        { eapply (must_preserved_by_synch_if_notgood p _ e _) ; eauto.
+          eapply m_step; eauto. eapply lts_input. }
+        inversion Mp'. contradiction.
+        inversion ex0. inversion H5; subst.
+        -- inversion l.
+        -- exists ((c ! 0 • 𝟘) ^ v ▷ b2). eapply ParRight; eauto.
+        -- inversion l1; subst. symmetry in eq. eapply simplify_match_output in eq as eq'; subst.
+           assert (e' ⟶[ActIn (c ⋉ O)] b2) as l'2; eauto.
+           eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & equiv1 & equiv2 & eq1).
+           edestruct (eq_spec e') as (e'1 & Tr'1 & equiv'1). 
+           { exists ((gpr_input c p1 + g1) ‖ r1). split; eauto. eapply lts_parL.
+             eapply lts_choiceL. eapply lts_input. }
+           simpl. exists (g 𝟘 , e'1). eapply ParSync.
+           ++ symmetry in H2. exact H2.
+           ++ eapply lts_output.
+           ++ eauto.
+      * intros. inversion H5.
+      * intros. destruct (decide (good_VACCS e'0)) as [happy | not_happy].
+        -- now eapply m_now.
+        -- eapply (OBA_with_FB_First_Axiom e e' e'0) in H4 
+                    as (e1 & HypTr1 & e'1 & HypTr'1 & equiv); eauto.
+           eapply must_eq_client; eauto. assert (¬ good_VACCS e'1) as not_happy''.
+           { eapply ungood_preserved_by_eq; eauto. }
+           assert (¬ good_VACCS e1) as not_happy'''.
+           { eapply ungood_preserved_by_lts_non_blocking_action_converse; eauto.
+             unfold non_blocking; simpl. exists (c ⋉ v); eauto. }
+           assert (must q e1); eauto. symmetry in H2.
+           eapply must_preserved_by_synch_if_notgood; eauto.
+      * intros. inversion H6; subst. symmetry in H5.
+        eapply simplify_match_output in H5 as eq; subst.
+        assert (lts e ((c ⋉ v) !) e') as l2; eauto.
+        eapply OBA_with_FB_Fourth_Axiom in l2 as (e'1 & HypTr'1 & equiv1); eauto.
+        eapply must_eq_client; eauto. assert (must p e) as Mp. eapply m_step; eauto.
+        assert (must p e'1) as Mp';eauto.
+        assert (must q e'1); eauto. eapply NIL_is_above_q. eauto.
+Qed.
 
 
+Lemma NIL_is_above_p : 
+  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ p (g 𝟘)). (* p ⊑ 𝟘 *)
+Proof.
+  intros e Hyp. eapply NIL_is_above_q. eapply q_is_above_p. exact Hyp.
+Qed.
 
+Lemma p_is_not_above_NIL : 
+¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) p).
+Proof.
+  (* the test , take v different from O : c ! v || c ? x . if x = v then GOOD else FAIL *)
+Admitted.
+
+Lemma p_is_above_q : 
+  ¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ q p). (* ¬ q ⊑ p *)
+Proof.
+  intros imp. assert (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) q) as HypMust.
+  { eapply q_is_above_NIL; eauto. }
+  assert (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) p) as imp'.
+  { intros e HM. eapply imp. eapply HypMust. eauto. }
+  assert (¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) p)). { eapply p_is_not_above_NIL. }
+  contradiction.
+Qed.

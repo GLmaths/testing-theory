@@ -2239,11 +2239,9 @@ From Must Require Import InteractionBetweenLts ParallelLTSConstruction.
   @Prop_of_Inter proc proc (ExtAct TypeOfActions) parallel_inter gLabel_nb
   VACCS_ggLts VACCS_ggLts :=  Inter_parallel_IO gLabel_nb.
 Next Obligation.
-  intros. unfold parallel_inter.
-  unfold dual. simpl. eauto.
+  intros μ1 μ2 inter. unfold parallel_inter in inter.
+  unfold dual in inter. simpl in *. eauto.
 Defined.
-
-
 
 
 
