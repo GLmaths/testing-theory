@@ -33,6 +33,8 @@ InteractionBetweenLts.
 (************************************* Examples for VACCS *************************************)
 Parameter c : Channel.
 Parameter O : Value.
+Parameter I : Value.
+Parameter (neq : O ≠ I).
 
 Definition p : proc := c ? x • (c ! O • 𝟘).
 
@@ -196,11 +198,67 @@ Proof.
   intros e Hyp. eapply NIL_is_above_q. eapply q_is_above_p. exact Hyp.
 Qed.
 
+Definition Test := (c ! I • 𝟘) ‖ (c ? x • (If (bvar 0 == I) Then ① Else (g 𝟘))).
+
+Lemma this_Test_is_not_good : ¬ good_VACCS Test.
+Proof.
+  intro imp. inversion imp; subst. inversion H0; subst.
+  - inversion H.
+  - inversion H.
+Qed.
+
+Lemma NIL_must_this_TEST :  must (g 𝟘) Test.
+Proof.
+  eapply m_step.
+  - eapply this_Test_is_not_good.
+  - exists (g 𝟘 ▷ (g 𝟘 ‖ ((If (bvar 0 == I) Then ① Else (g 𝟘))^I))).
+    eapply ParRight. eapply lts_comL; eauto with ccs.
+  - intros ? imp. inversion imp.
+  - intros. inversion H; subst.
+    + inversion H3; subst. simpl. inversion H2; subst.
+      constructor. constructor. right. constructor. constructor. simpl.
+      eapply decide_True; eauto.
+    + inversion H3.
+    + inversion H4.
+    + inversion H4.
+  - intros. inversion H0. 
+Qed.
+
+
 Lemma p_is_not_above_NIL : 
 ¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) p).
 Proof.
-  (* the test , take v different from O : c ! v || c ? x . if x = v then GOOD else FAIL *)
-Admitted.
+  intro imp.
+  assert (must p Test).
+  { eapply imp. eapply NIL_must_this_TEST. }
+  inversion H.
+  + eapply this_Test_is_not_good; eauto.
+  + assert (must ((c ! O • 𝟘)^I) ((g 𝟘) ‖ (c ? x • (If (bvar 0 == I) Then ① Else (g 𝟘))))) as Mp.
+    { eapply com; eauto. 2: { eapply lts_input. } 2: { eapply lts_parL. eapply lts_output. }
+    simpl; eauto. }
+    simpl in Mp.
+    assert (must (g 𝟘) ((g 𝟘) ‖ ((If ((bvar 0) == I)
+                                           Then ① 
+                                           Else 𝟘)^O))) as Mp'.
+    { eapply must_preserved_by_synch_if_notgood; eauto. intro imp'.
+      inversion imp'; subst. inversion H1. inversion H0. inversion H0.
+      2 : { eapply lts_output. } 2 : { eapply lts_parR. eapply lts_input. }
+      simpl; eauto. } simpl in Mp'. inversion Mp'.
+    ++ inversion H0; subst. inversion H2.
+       * inversion H1.
+       * inversion H1; subst.
+         - simpl in H7. rewrite decide_False in H7. inversion H7.
+           eapply neq.
+         - inversion H5.
+    ++ inversion ex0. inversion H0; subst.
+       * inversion l.
+       * inversion l; subst.
+         - inversion H3.
+         - inversion H4.
+         - inversion H5.
+         - inversion H5; subst. inversion H8. inversion H8.
+       * inversion l1.
+Qed.
 
 Lemma p_is_above_q : 
   ¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ q p). (* ¬ q ⊑ p *)
