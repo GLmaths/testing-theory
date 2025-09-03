@@ -260,7 +260,7 @@ Proof.
        * inversion l1.
 Qed.
 
-Lemma p_is_above_q : 
+Lemma p_is_not_above_q : 
   ¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ q p). (* ¬ q ⊑ p *)
 Proof.
   intros imp. assert (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) q) as HypMust.
