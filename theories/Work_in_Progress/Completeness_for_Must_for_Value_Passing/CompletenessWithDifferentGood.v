@@ -38,6 +38,8 @@ From Must Require Import ActTau.
 
 (** Test generators specification. **)
 
+
+(*
 Class gen_spec (* {E A : Type} *)
   `{gLts E A, !gLtsEq E A, !Good E A good}
   (co_of : A -> A) (gen : list A -> E) := {
@@ -1563,3 +1565,5 @@ Proof.
   exact FW_gLtsObaFW. exact gLtsMBFinite. exact FW_gLtsObaFW. exact gLtsMBFinite.
   now rewrite <- Lift.lift_fw_ctx_pre.
 Qed.
+
+*)
