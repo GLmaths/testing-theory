@@ -26,7 +26,7 @@
 From Coq.Unicode Require Import Utf8.
 From Coq.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
-From Must Require Import ActTau gLts TransitionSystems Bisimulation Lts_OBA Subset_Act WeakTransitions 
+From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions 
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
 Class Good (P A : Type) (good : P -> Prop) `{gLts P A, !gLtsEq P A} := {

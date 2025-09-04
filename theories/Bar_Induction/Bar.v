@@ -25,7 +25,7 @@
 
 From Coq.Unicode Require Import Utf8.
 From Coq.Program Require Import Equality.
-From Must Require Import TransitionSystems gLts StateTransitionSystems.
+From Must Require Import gLts StateTransitionSystems.
 
 From stdpp Require Import base countable gmap list.
 
