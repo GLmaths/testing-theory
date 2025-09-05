@@ -579,12 +579,14 @@ Definition bhv_pre_cond1__x `{FiniteImagegLts P A, FiniteImagegLts Q A} (ps : gs
 
 Notation "ps ≼ₓ1 q" := (bhv_pre_cond1__x ps q) (at level 70).
 
-Definition bhv_pre_cond2__x
-  `{@FiniteImagegLts P A HA gLtsP, @FiniteImagegLts Q A HA gLtsQ} (ps : gset P) (q : Q) :=
+Definition bhv_pre_cond2__x `{
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
+  (ps : gset P) (q : Q) :=
   forall s q',
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ ps -> p ⇓ s) ->
-    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (lts_acc_set_of p' ⊆ lts_acc_set_of q').
+    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (reduce_actions_of 𝝳P p' ⊆ reduce_actions_of 𝝳Q q').
 
 Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 
@@ -592,7 +594,9 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 
 Notation "ps ≼ₓ q" := (bhv_pre_cond1__x ps q /\ bhv_pre_cond2__x ps q) (at level 70).
 
-Lemma alt_set_singleton_iff `{@FiniteImagegLts P A HA gLtsP, @FiniteImagegLts Q A HA gLtsQ}
+Lemma alt_set_singleton_iff `{
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
   (p : P) (q : Q) : p ≼ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
@@ -612,8 +616,8 @@ Lemma bhvleqone_preserved_by_tau `{
 Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 
 Lemma bhvx_preserved_by_tau `{
-  @FiniteImagegLts P A H gLtsP,
-  @FiniteImagegLts Q A H gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
 Proof.
   intros l (halt1 & halt2).
@@ -626,7 +630,6 @@ Qed.
 Lemma bhvleqone_mu `{
   @FiniteImagegLts P A H gLtsP, 
   @FiniteImagegLts Q A H gLtsQ}
-  
   (ps0 ps1 : gset P) μ (q q' : Q) (htp : forall p, p ∈ ps0 -> terminate p) :
   ps0 ≼ₓ1 q -> wt_set_from_pset_spec ps0 [μ] ps1  -> q ⟶[μ] q' -> ps1 ≼ₓ1 q'.
 Proof.
@@ -640,8 +643,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_mu `{
-  @FiniteImagegLts P A H gLtsP,
-  @FiniteImagegLts Q A H gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
   (ps0 : gset P) (q : Q) μ ps1 q' (htp : forall p, p ∈ ps0 -> terminate p) :
   q ⟶[μ] q' 
     -> wt_set_from_pset_spec ps0 [μ] ps1 
@@ -671,9 +674,8 @@ Proof.
 Qed.
 
 Lemma bhvx_mu_ex `{
-  @FiniteImagegLts P A H gLtsP,
-  @FiniteImagegLts Q A H gLtsQ}
-  
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ}
   (ps : gset P) (q q' : Q) μ
   : ps ≼ₓ q -> (forall p, p ∈ ps -> p ⇓ [μ]) ->
     q ⟶[μ] q' -> exists p', wt_set_from_pset_spec1 ps [μ] {[ p' ]}.
@@ -689,8 +691,8 @@ Proof.
 Qed.
 
 Lemma ungood_must_st_nleqx `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
   gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -722,7 +724,9 @@ Proof.
       ++ eapply lts_refuses_spec2 in refuses_e. eauto. eauto with mdb.
       ++ eapply refuses_tau_q. exists (q , e''). eapply ParRight; eauto.
     + assert (¬ q ↛[μ1]) as not_refuses_q.
-      eapply (sub μ1). eapply lts_refuses_spec2; eauto.
+      { eapply reduction_spec2. eapply sub. 
+        eapply reduction_spec1.
+        eapply lts_refuses_spec2; eauto. }
       eapply lts_refuses_spec1 in not_refuses_q as (q'' & HypTr_q'').
       eapply refuses_tau_q. exists (q'', e'').
       eapply ParSync; eauto.
@@ -731,8 +735,8 @@ Proof.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
   gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -752,8 +756,8 @@ Proof.
 Qed.
 
 Lemma soundnessx `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !FiniteImagegLts E A, !Good E A good}
   
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -806,8 +810,8 @@ Proof.
 Qed.
 
 Lemma soundness_fw `{
-  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
     
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -834,7 +838,8 @@ Lemma soundness `{
   `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
   `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
   
-  
+  `{PreAP : @PreExtAction A H (P * mb A) PreA 𝝳 (inter_lts fw_inter),
+    PreAQ : @PreExtAction A H (Q * mb A) PreA 𝝳 (inter_lts fw_inter)}
   (p : P) (q : Q) : p ▷ ∅ ≼ q ▷ ∅ -> p ⊑ q.
 Proof.
   intros halt e hm.

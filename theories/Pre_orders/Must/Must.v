@@ -157,40 +157,7 @@ Global Hint Unfold ctx_pre: mdb.
 
 Notation "p ⊑ q" := (ctx_pre p q) (at level 70).
 
-Lemma ctx_pre_not `{
-  gLtsP : gLts P A, 
-  gLtsQ : !gLts Q A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
-  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
-  (p : P) (q : Q) (e : E) :
-  p ⊑ q -> ¬ must q e -> ¬ must p e.
-Proof.
-  intros hpre not_must.
-  intro Hyp. eapply hpre in Hyp.
-  contradiction.
-Qed.
-
-Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
-  (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
-
-Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
-
-Definition bhv_pre_cond2 `{
-  @gLts P A H, 
-  @gLts Q A H}
-  
-  (p : P) (q : Q) :=
-  forall s q',
-    p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (lts_acc_set_of p' ⊆ lts_acc_set_of q').
-
-Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). 
-
-Definition bhv_pre `{@gLts P A H, @gLts Q A H} (p : P) (q : Q) := 
-      p ≼₁ q /\ p ≼₂ q.
-
-Notation "p ≼ q" := (bhv_pre p q) (at level 70).
+(********************************************* Properties on Must_i **********************************************)
 
 Lemma must_eq_client `{
   gLtsP : gLts P A, 
@@ -407,6 +374,58 @@ Proof.
     ++ subst. eauto.
     ++ eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
 Qed.
+
+Lemma ctx_pre_not `{
+  gLtsP : gLts P A, 
+  gLtsQ : !gLts Q A, 
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good}
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
+  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
+  (p : P) (q : Q) (e : E) :
+  p ⊑ q -> ¬ must q e -> ¬ must p e.
+Proof.
+  intros hpre not_must.
+  intro Hyp. eapply hpre in Hyp.
+  contradiction.
+Qed.
+
+(********************************************* Alt-preorder of Must_i **********************************************)
+
+
+Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
+  (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
+
+Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
+
+
+Class PreExtAction `{H : ExtAction A} `{P : Type} (PreAct : Type) {𝝳 : A → PreAct} (LtsP : @gLts P A H):=
+  MkPreExtAction {
+      eqdecPreA: EqDecision PreAct;
+      countablePreA: Countable PreAct;
+
+      reduce_actions_of : (* subset_of A *) (A → PreAct) -> P -> list PreAct;
+
+      reduction_spec1 (μ : A) (p : P) : μ ∈ lts_acc_set_of p -> (𝝳 μ) ∈ (reduce_actions_of 𝝳 p) ;
+      reduction_spec2 (μ : A) (p : P) : (𝝳 μ) ∈ (reduce_actions_of 𝝳 p) -> μ ∈ lts_acc_set_of p ;
+  }.
+
+Definition bhv_pre_cond2 {PreA : Type} `{
+  LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA 𝝳P LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA 𝝳Q LtsQ}
+  (p : P) (q : Q) :=
+  forall s q',
+    p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (reduce_actions_of 𝝳P p' ⊆ reduce_actions_of 𝝳Q q').
+
+Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). 
+
+Definition bhv_pre `{
+  LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA 𝝳P LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA 𝝳Q LtsQ}
+    (p : P) (q : Q) := 
+      p ≼₁ q /\ p ≼₂ q.
+
+Notation "p ≼ q" := (bhv_pre p q) (at level 70).
 
 (** Must sets. *)
 

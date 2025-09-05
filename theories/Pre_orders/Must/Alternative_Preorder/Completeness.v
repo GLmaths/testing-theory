@@ -141,19 +141,20 @@ Class gen_spec_acc
   (* ! FiniteImagegLts P A *)
   (P : Type) (Q : Type)
   `{@gLts E A H, ! gLtsEq E A, !Good E A good}
-  (co_of : A -> A) (gen_acc : (* gset A *)(list P * Q) -> list A -> E) 
-  {LtsP : @gLts P A H} {LtsQ : @gLts Q A H}
+  (co_of : A -> A) (gen_acc : subset_of A -> list A -> E) 
+  {LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA 𝝳 LtsP}
+  {LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA 𝝳 LtsQ}
     := {
-    gen_acc_spec_gen_spec (L : list P * Q) : gen_spec co_of (gen_acc L) ;
-    (* t1 *) gen_spec_acc_nil_refuses_tau (L : list P * Q) : 
+    gen_acc_spec_gen_spec (L : subset_of A) : gen_spec co_of (gen_acc L) ;
+    (* t1 *) gen_spec_acc_nil_refuses_tau (L : subset_of A) : 
                 gen_acc L ε ↛ ;
-    (* t2 *) gen_spec_acc_nil_refuses_nb (L : list P * Q) η : 
+    (* t2 *) gen_spec_acc_nil_refuses_nb (L : subset_of A) η : 
                 non_blocking η -> gen_acc L ε ↛[η] ;
-  (* t3-> *) gen_spec_acc_nil_mu_inv (L : list P * Q) μ e : 
+  (* t3-> *) gen_spec_acc_nil_mu_inv (L : subset_of A) μ e : 
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e
-                    -> (exists η, μ = co_of η /\ η ∈ union_of_actions_without L) ;
+                    -> (exists η, μ = co_of η /\ (𝝳 η) ∈ fmap 𝝳 L) ;
   (* t3<- *) gen_spec_acc_nil_mem_lts_inp (L : list P * Q) η : 
-                η ∈ union_of_actions_without L -> ∃ r, gen_acc L ε ⟶[co_of η] r ;
+                (𝝳 η) ∈ fmap 𝝳 L -> ∃ r, gen_acc L ε ⟶[co_of η] r ;
                 (* ∃ r μ, gen_acc O ε ⟶[co_of η] r /\ μ = co_of η *)
     (* t4 *) gen_spec_acc_nil_lts_not_nb_good μ e' (L : list P * Q) : 
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e' -> good e' ;
