@@ -699,35 +699,39 @@ Lemma ungood_must_st_nleqx `{
   (X : gset P) (q : Q) e : 
   ¬ good e 
     -> mustx X e 
-      -> (¬ exists t, (q, e) ⟶ t) 
+      -> (q, e) ↛
         -> ¬ X ≼ₓ2 q.
 Proof.
-  intros not_happy all_must refuses_tau_q.
-  intro hbhv2.
-  destruct (lts_refuses_decidable q τ) as [refuses_q | not_refuses_q].
-  - assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
-    destruct (mustx_terminate_ungood X e all_must) as [|htps]; eauto with mdb. contradiction.
-    
-    destruct (hbhv2 [] q (wt_nil q) refuses_q htX) as (p & mem & p' & wp & stp' & sub).
-    
-    assert (mustx {[ p' ]} e) as must_p'. 
-    eapply (wt_nil_mx p). eapply (mx_sub X e all_must). set_solver. eassumption.
-    
-    destruct must_p'; eauto.
-    edestruct (ex p') as ((p'' , e'') & HypTr). now eapply elem_of_singleton.
-    
-    inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
-    + eapply lts_refuses_spec2 in stp'; eauto.
-    + destruct (lts_refuses_decidable e τ) as [refuses_e | not_refuses_e].
-      ++ eapply lts_refuses_spec2 in refuses_e. eauto. eauto with mdb.
-      ++ eapply refuses_tau_q. exists (q , e''). eapply ParRight; eauto.
-    + assert (¬ q ↛[μ1]) as not_refuses_q.
-      eapply (sub μ1). eapply lts_refuses_spec2; eauto.
-      eapply lts_refuses_spec1 in not_refuses_q as (q'' & HypTr_q'').
-      eapply refuses_tau_q. exists (q'', e'').
-      eapply ParSync; eauto.
-  - eapply lts_refuses_spec1 in not_refuses_q as (q' & l). 
-    eapply refuses_tau_q. exists (q' ▷ e). eapply ParLeft. assumption.
+  intros not_happy all_must refuses_tau_q hbhv2.
+
+  assert (q ↛) as stable_q.
+  { destruct (lts_refuses_decidable q τ) as [refuses_q | not_refuses_q].
+    - exact refuses_q.
+    - exfalso. eapply lts_refuses_spec1 in not_refuses_q as (q' & l).
+      eapply (lts_refuses_spec2 (q ▷ e)); eauto. exists (q' ▷ e). eapply ParLeft. exact l. }
+
+  assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
+  { destruct (mustx_terminate_ungood X e all_must) as [|htps]; eauto with mdb. contradiction. }
+
+  destruct (hbhv2 [] q (wt_nil q) stable_q htX) as (p & mem & p' & wp & stp' & sub).
+
+  assert (mustx {[ p' ]} e) as must_p'. 
+  { eapply (wt_nil_mx p). eapply (mx_sub X e all_must). set_solver. eassumption. }
+
+  destruct must_p'; eauto.
+  edestruct (ex p') as ((p'' , e'') & HypTr). now eapply elem_of_singleton.
+
+  inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
+  + eapply lts_refuses_spec2 in stp'; eauto.
+  + destruct (lts_refuses_decidable e τ) as [refuses_e | not_refuses_e].
+    ++ eapply lts_refuses_spec2 in refuses_e. eauto. eauto with mdb.
+    ++ eapply (lts_refuses_spec2 (q ▷ e)); eauto.
+       exists (q , e''). eapply ParRight; eauto.
+  + assert (¬ q ↛[μ1]) as not_refuses_q.
+    { eapply (sub μ1). eapply lts_refuses_spec2; eauto. }
+    eapply lts_refuses_spec1 in not_refuses_q as (q'' & HypTr_q'').
+    eapply (lts_refuses_spec2 (q ▷ e)); eauto. exists (q'', e'').
+    eapply ParSync; eauto.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
@@ -746,8 +750,7 @@ Lemma stability_nbhvleqtwo `{
 Proof.
   intros nhg hmx hleq.
   destruct (lts_refuses_decidable (q, e) τ).
-  - exfalso. apply (ungood_must_st_nleqx X q e nhg hmx).
-    intros (t & hl). eapply lts_refuses_spec2 in l. contradiction. eauto. eassumption.
+  - exfalso. apply (ungood_must_st_nleqx X q e nhg hmx); eauto.
   - eapply lts_refuses_spec1 in n as (t & hl). eauto.
 Qed.
 
@@ -755,10 +758,10 @@ Lemma soundnessx `{
   @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
   @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
   @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !FiniteImagegLts E A, !Good E A good}
-  
+
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
-  
+
   (ps : gset P) (e : E) : 
   mustx ps e 
     -> forall (q : Q), ps ≼ₓ q 
@@ -809,10 +812,10 @@ Lemma soundness_fw `{
   @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
   @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
-    
+
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
-  
+
   (p : P) (q : Q) : p ≼ q -> p ⊑ q.
 Proof.
   intros halt e hm.
@@ -824,17 +827,16 @@ Lemma soundness `{
   @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
   @gLtsObaFB Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
-  
+
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
-  
+
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-  
+
   `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
   `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-  
-  
+
   (p : P) (q : Q) : p ▷ ∅ ≼ q ▷ ∅ -> p ⊑ q.
 Proof.
   intros halt e hm.
