@@ -97,7 +97,6 @@ Inductive proc : Type :=
 | pr_tau : proc -> proc (*A tau action : does nothing *)
 | pr_if_then_else : Equation Data -> proc -> proc -> proc (* not in pi-calculus *)
 .
- 
 Coercion pr_var : var >-> proc.
 
 (*Some notation to simplify the view of the code*)
@@ -114,29 +113,72 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 
-(* usefull to adapt the indices when it passes through a input *)
-Definition Succ_bvar (X : Data) : Data :=
-match X with
-| cst v => cst v
-| bvar i => bvar (S i)
-end.
+(* Lift all variables greater or equal than k to have (k+1) fresh variables *)
+Class Liftable (A : Type) := {lift : var -> A -> A}.
+Infix "↑" := lift (at level 60, right associativity).
 
-Definition subst_Data (k : nat) (X : Data) (Y : Data) : Data := 
+(* Adding the "var" case after discussing with Hugo *)
+Instance liftable_Var : Liftable var :=
+  {lift := fun k i => if (decide(k <= i)) then S i else i}.
+
+Instance liftable_Data : Liftable Data := {
+  lift k X := match X with
+| cst v => cst v
+                 | bvar i => bvar (k ↑ i)
+                 end
+}.
+Instance liftable_EqData : Liftable (Equation Data) := {
+  lift := fix lift_eq k E := match E with
+  | tt => tt
+  | ff => ff
+  | D1 ⩽ D2 => (k ↑ D1) ⩽ (k ↑ D2)
+  | e1 ∨ e2 => (lift_eq k e1) ∨ (lift_eq k e2)
+  | non e => non (lift_eq k e)
+end
+}.
+
+Fixpoint NewVar (k : nat) (p : proc) {struct p} : proc :=
+  match p with
+  | ① => ①
+  | 𝟘 => 𝟘
+  | rec P =>  rec (NewVar k P)
+  | pr_var i => pr_var i
+  | p1 + p2 => (NewVar k p1) + (NewVar k p2)
+  | P ‖ Q => (NewVar k P) ‖ (NewVar k Q)
+  | c ! v • P => c ! (k ↑ v) • (NewVar k P)
+  | ν P => ν (NewVar (S k) P)
+  | c ? p => c ? (NewVar (S k) p)
+  | t • p => t • (NewVar k p)
+  | If C Then P Else Q => If (k ↑ C) Then (NewVar k P) Else (NewVar k Q)
+  end.
+Instance liftable_proc : Liftable proc := { lift := NewVar }.
+
+(* useful to adapt the indices when it passes through a input *)
+(* Definition Succ_bvar (X : Data) : Data := NewVar_in_Data 0 X. *)
+
+Class Substitutable (A : Type) := { subst : var -> Data -> A -> A}.
+Notation "t1 ^ x1" := (subst 0 x1 t1).
+Notation "p [ k ← X ]" := (subst k X p) (k at next level, X at next level).
+
+Definition subst_data := fun k X Y =>
 match Y with
 | cst v => cst v
 | bvar i => if (decide(i = k)) then X else bvar i
 end.
+Instance substitutable_Data : Substitutable Data := { subst:= subst_data }.
 
-Fixpoint subst_in_Equation (k : nat) (X : Data) (E : Equation Data) : Equation Data :=
+Instance substitutable_Equation : Substitutable (Equation Data) := {
+  subst := fix subst_in_Equation k X E :=
 match E with
 | tt => tt
 | ff => ff
-| D1 ⩽ D2 => (subst_Data k X D1) ⩽ (subst_Data k X D2)
+    | D1 ⩽ D2 => D1 [k ← X] ⩽ D2 [k ← X]
 | e1 ∨ e2 => (subst_in_Equation k X e1) ∨ (subst_in_Equation k X e2)
 | non e => non (subst_in_Equation k X e)
-end.
+    end
+}.
 
-Fixpoint subst_in_proc (k : nat) (X : Data) (p : proc) {struct p} : proc :=
+Fixpoint subst_in_proc k X p :=
 match p with
 | ① => ①
 | 𝟘 => 𝟘
@@ -144,61 +186,136 @@ match p with
 | pr_var i => pr_var i
 | p1 + p2 => (subst_in_proc k X p1) + (subst_in_proc k X p2)
 | P ‖ Q => (subst_in_proc k X P) ‖ (subst_in_proc k X Q)
-| c ! v • P => c ! (subst_Data k X v) • (subst_in_proc k X P)
-| ν P => ν (subst_in_proc (S k) (Succ_bvar X) P)
-| c ? p => c ? (subst_in_proc (S k) (Succ_bvar X) p)  (* Succ_bvar X = NewVar_in_Data 0 v *)
+    | c ! v • P => c ! v [k ← X] • (subst_in_proc k X P)
+    | ν P => ν (subst_in_proc (0 ↑ k) (0 ↑ X) P)
+    | c ? p => c ? (subst_in_proc (0 ↑ k) (0 ↑ X) p)  (* Succ_bvar X = NewVar_in_Data 0 v *)
 | t • p => t • (subst_in_proc k X p)
-| If C Then P Else Q => If (subst_in_Equation k X C) Then (subst_in_proc k X P) Else (subst_in_proc k X Q)
+    | If C Then P Else Q => If (C [k ← X]) Then (subst_in_proc k X P) Else (subst_in_proc k X Q)
 end.
 
+Instance substitutable_proc : Substitutable proc := { subst:= subst_in_proc }.
 
-Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
+Lemma lift_in_var_bijective : forall n (x:var) (y:var), 
+  (n ↑ x) = (n ↑ y) <-> x = y.
+Proof.
+  intros n x y. split.
+  - unfold lift, liftable_Var. repeat case decide; lia.
+  - intro. now subst.
+Qed.
 
-(* making a fresh variable *)
-Definition NewVar_in_Data (k : nat) (Y : Data) : Data := 
-match Y with
-| cst v => cst v
-| bvar i => if (decide(k < S i)) then bvar (S i) else bvar i
-end.
+Lemma subst_in_data_new : forall (D: Data) v k n,
+  (n ↑ D) [(n ↑ k) ← (n ↑ v)] = n ↑ (D [k ← v]).
+Proof.
+  intro D. induction D; auto.
+  intros v0 k n. simpl. case (decide (v = k)); intro.
+  - rewrite decide_True; try reflexivity. subst. reflexivity.
+  - rewrite decide_False. reflexivity. intro. by apply lift_in_var_bijective in H.
+Qed.
 
-Fixpoint NewVar_in_Equation (k : nat) (E : Equation Data) : Equation Data :=
-match E with
-| tt => tt
-| ff => ff
-| D1 ⩽ D2 => (NewVar_in_Data k D1) ⩽ (NewVar_in_Data k D2)
-| e1 ∨ e2 => (NewVar_in_Equation k e1) ∨ (NewVar_in_Equation k e2)
-| non e => non (NewVar_in_Equation k e)
-end.
+Lemma subst_in_equation_new : forall (E: Equation Data) v k n,
+  (n ↑ E) [(n ↑ k) ← (n ↑ v)] = n ↑ (E [k ← v]).
+Proof.
+  intro E. induction E; auto.
+  - intros. change (n ↑ (a ⩽ a0)) [(n ↑ k) ← (n ↑ v)] with
+    ((n ↑ a) [(n ↑ k) ← (n ↑ v)] ⩽ (n ↑ a0) [(n ↑ k) ← (n ↑ v)]).
+    by rewrite subst_in_data_new, subst_in_data_new.
+  - intros. change ((n ↑ (E1 ∨ E2)) [(n ↑ k) ← (n ↑ v)]) with
+    ((n ↑ E1) [(n ↑ k) ← (n ↑ v)] ∨ (n ↑ E2) [(n ↑ k) ← (n ↑ v)]).
+    by rewrite IHE1, IHE2.
+  - intros.  change ((n ↑ (non E)) [(n ↑ k) ← (n ↑ v)]) with
+    (non ((n ↑ E) [(n ↑ k) ← (n ↑ v)])).
+    by rewrite IHE.
+Qed.
 
-Fixpoint NewVar (k : nat) (p : proc) {struct p} : proc :=
-match p with
-| ① => ①
-| 𝟘 => 𝟘
-| rec P =>  rec (NewVar k P)
-| pr_var i => pr_var i
-| p1 + p2 => (NewVar k p1) + (NewVar k p2)
-| P ‖ Q => (NewVar k P) ‖ (NewVar k Q)
-| c ! v • P => c ! (NewVar_in_Data k v) • (NewVar k P)
-| ν P => ν (NewVar (S k) P)
-| c ? p => c ? (NewVar (S k) p)
-| t • p => t • (NewVar k p)
-| If C Then P Else Q => If (NewVar_in_Equation k C) Then (NewVar k P) Else (NewVar k Q)
-end.
+Lemma succ_on_lift : forall k n,
+(S (n ↑ k)) = (S n) ↑ (S k).
+Proof.
+  intros k n. destruct (decide (n <= k)).
+  - unfold lift, liftable_Var. rewrite decide_True.
+    * rewrite decide_True.
+      ** reflexivity.
+      ** auto with arith.
+    * assumption.
+  - unfold lift, liftable_Var. rewrite decide_False.
+    * rewrite decide_False.
+      ** reflexivity.
+      ** intro. apply n0. by apply Arith_base.gt_S_le_stt.
+    * assumption.
+Qed.
 
-Fixpoint lift_pr_var (p : proc) (n : nat) {struct p} : proc :=
-match p with
-| ① => ①
-| 𝟘 => 𝟘
-| rec P => rec (lift_pr_var P n)
-| pr_var i => if decide (n < S i) then pr_var (S i) else pr_var i
-| p1 + p2 => (lift_pr_var p1 n) + (lift_pr_var p2 n)
-| P ‖ Q => (lift_pr_var P n) ‖ (lift_pr_var Q n)
-| c ! v • P => c ! v • (lift_pr_var P n)
-| ν P => ν (lift_pr_var P (S n))
-| c ? p => c ? (lift_pr_var p (S n))
-| t • p => t • (lift_pr_var p n)
-| If C Then P Else Q => If C Then (lift_pr_var P n) Else (lift_pr_var Q n)
-end.
+Lemma lift_of_lift_data : forall n k (v:Data),
+k ≤ n ->
+((S n) ↑ (k ↑ v)) = k ↑ (n ↑ v).
+Proof.
+  intros n k v H. destruct v.
+  - trivial. (* cst case *)
+  - simpl.
+    destruct (decide (k ≤ v)).
+    + destruct (decide (n ≤ v)).
+      * rewrite decide_True, decide_True. reflexivity. lia. lia.
+      * rewrite decide_False, decide_True. reflexivity. assumption. lia.
+    + destruct (decide (n ≤ v)).
+      * rewrite decide_True, decide_False. reflexivity. lia. lia.
+      * rewrite decide_False, decide_False. reflexivity. assumption. lia.
+Qed.
+
+Lemma lift_of_lift_data_0 : forall n (v:Data),
+(0 ↑ (n ↑ v)) = (S n) ↑ (0 ↑ v).
+Proof.
+intros.
+rewrite (lift_of_lift_data n 0). reflexivity. lia.
+Qed.
+
+Opaque liftable_Data.
+Opaque liftable_Var.
+
+Lemma lift_of_lift_eq : forall n k (e:Equation Data),
+k ≤ n ->
+((S n) ↑ (k ↑ e)) = k ↑ (n ↑ e).
+Proof.
+  intros n k e H. induction e; auto.
+  - simpl. now rewrite lift_of_lift_data, lift_of_lift_data.
+  - simpl. setoid_rewrite IHe1. now setoid_rewrite IHe2.
+  - simpl. now setoid_rewrite IHe.
+Qed.
+Opaque liftable_EqData.
+
+Lemma lift_of_lift_proc : forall n k (p:proc),
+k ≤ n ->
+((S n) ↑ (k ↑ p)) = k ↑ (n ↑ p).
+Proof.
+  intros n k p H. revert n k H. induction p.
+  - reflexivity.
+  - now simpl.
+  - intros. simpl. now setoid_rewrite IHp.
+  - now simpl.
+  - intros. simpl. setoid_rewrite (IHp1 n k H). now setoid_rewrite IHp2.
+  - intros. simpl. setoid_rewrite (IHp1 n k H). now setoid_rewrite IHp2.
+  - intros. simpl. setoid_rewrite (IHp n k H). now rewrite (lift_of_lift_data n k d H).
+  - intros. simpl. setoid_rewrite (IHp (S n) (S k)). reflexivity. lia.
+  - intros. simpl. setoid_rewrite (IHp (S n) (S k)). reflexivity. lia.
+  - intros. simpl. now setoid_rewrite (IHp n k H).
+  - intros. simpl. setoid_rewrite (IHp1 n k H). setoid_rewrite (IHp2 n k H). setoid_rewrite (lift_of_lift_eq n k e H). reflexivity.
+Qed.
+
+Lemma subst_in_succ_new : forall P v k n,
+  (n ↑ P) [(n ↑ k) ← (n ↑ v)] = n ↑ P [k ← v].
+Proof.
+  intro P. induction P; try reflexivity.
+  - intros. simpl. now rewrite IHP.
+  - intros. simpl. now rewrite IHP1, IHP2.
+  - intros. simpl. now rewrite IHP1, IHP2.
+  - intros. simpl. now rewrite subst_in_data_new, IHP.
+  - intros. simpl.
+    rewrite succ_on_lift.
+    rewrite <- (lift_of_lift_data n 0).
+    now rewrite IHP. lia.
+  - intros. simpl.
+    rewrite succ_on_lift.
+    rewrite <- (lift_of_lift_data n 0). now rewrite IHP. lia.
+  - intros. simpl. now rewrite IHP.
+  - intros. simpl. rewrite IHP1. rewrite IHP2. rewrite subst_in_equation_new. reflexivity.
+Qed.
 
 (* Substitution for the Recursive Variable *)
 Fixpoint pr_subst (id : nat) (p : proc) (q : proc) : proc :=
@@ -210,14 +327,13 @@ match p with
 | p1 + p2 => (pr_subst id p1 q) + (pr_subst id p2 q)
 | p1 ‖ p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q) 
 | c ! v • P => c ! v • P
-| ν p => ν (pr_subst id p q)
-| c ? p => c ? (pr_subst id p (NewVar 0 q))
+| ν p => ν (pr_subst id p (0 ↑ q))
+| c ? p => c ? (pr_subst id p (0 ↑ q))
 (* New Var here is needed to readapt the indices in p *)
 (*Example : rec X • c ? • (bvar 1 ‖ X ) *) 
 | t • p => t • (pr_subst id p q)
 | If C Then P Else Q => If C Then (pr_subst id P q) Else (pr_subst id Q q)
 end.
-
 
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
@@ -340,11 +456,18 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (p1 + p2) (q1 + p2)
 
 
+(* MISSING ν ν rule (swap indexes 0 and 1) *)
+| cgr_res_nil_step :
+    cgr_step (ν 𝟘) 𝟘
+| cgr_res_nil_rev_step :
+    cgr_step 𝟘 (ν 𝟘)
 | cgr_res_step : forall p q,
     cgr_step p q ->
     cgr_step (ν p) (ν q)
-| 
-
+| cgr_scope_step: forall P Q,
+    cgr_step (ν (P ‖ (0 ↑ Q))) ((ν P) ‖ Q)
+| cgr_scope_rev_step: forall P Q,
+    cgr_step ((ν P) ‖ Q) (ν (P ‖ (0 ↑ Q)))
 .
 
 
@@ -368,7 +491,6 @@ Definition cgr := (clos_trans proc cgr_step).
 
 Infix "≡*" := cgr (at level 70).
 
-
 (* The relation ≡* is reflexive*)
 #[global] Instance cgr_refl : Reflexive cgr.
 Proof. intros. constructor. apply cgr_refl_step. Qed.
@@ -388,7 +510,6 @@ Proof. repeat split.
        + apply cgr_symm.
        + apply cgr_trans.
 Qed.
-
 
 (*the relation ≡* respects all the rules that ≡ respected*)
 Lemma cgr_par_nil : forall p, p ‖ 𝟘 ≡* p.
@@ -451,20 +572,36 @@ Lemma cgr_tau : forall p q, p ≡* q -> (t • p) ≡* (t • q).
 Proof.
 intros. dependent induction H. 
 constructor. 
-apply cgr_tau_step. exact H. eauto with cgr_eq.
+apply cgr_tau_step. exact H.
+simple eapply cgr_trans. exact IHclos_trans1. assumption.
 Qed. 
 Lemma cgr_input : forall c p q, p ≡* q -> (c ? p) ≡* (c ? q).
 Proof.
 intros.
 dependent induction H. 
-* constructor. apply cgr_input_step. auto.
-* eauto with cgr_eq.
+* constructor. by apply cgr_input_step.
+* simple eapply cgr_trans. exact IHclos_trans1. assumption.
 Qed.
 Lemma cgr_res : forall p q, p ≡* q -> (ν p) ≡* (ν q).
 Proof.
 intros. dependent induction H.
-- constructor. apply c
-
+- constructor. apply cgr_res_step. exact H.
+- eauto with cgr_eq.
+Qed.
+Lemma cgr_res_nil : 𝟘 ≡* (ν 𝟘).
+Proof.
+constructor. exact cgr_res_nil_rev_step.
+Qed.
+Lemma cgr_scope : forall P Q, 
+  ν (P ‖ (0 ↑ Q)) ≡* (ν P) ‖ Q.
+Proof.
+intros P Q.  constructor. apply cgr_scope_step.
+Qed.
+Lemma cgr_scope_rev : forall P Q, 
+  (ν P ‖ Q) ≡* ν (P ‖ (0 ↑ Q)).
+Proof.
+intros P Q. constructor. apply cgr_scope_rev_step.
+Qed.
 Lemma cgr_par : forall p q r, p ≡* q-> p ‖ r ≡* q ‖ r.
 Proof.
 intros. dependent induction H. 
@@ -512,28 +649,45 @@ apply transitivity with (M2 ‖ M3). apply cgr_par. exact H. apply transitivity 
 apply cgr_par_com. apply transitivity with (M4 ‖ M2). apply cgr_par. exact H0. apply cgr_par_com.
 Qed.
 
-
 #[global] Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
 cgr_par_assoc_rev cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc 
 cgr_choice_assoc_rev cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice 
-cgr_refl cgr_symm cgr_trans:cgr.
+cgr_refl cgr_symm cgr_res cgr_scope cgr_scope_rev cgr_res_nil cgr_trans : cgr.
 
 
-Lemma Congruence_Respects_Substitution : forall p q v k, p ≡* q -> (subst_in_proc k v p) ≡* (subst_in_proc k v q).
+Lemma Congruence_Respects_Substitution : forall p q v k,
+p ≡* q -> p [k ←  v] ≡* q [k ← v].
 Proof.
 intros p q v k congruence_hyp. revert k. revert v. 
 induction congruence_hyp as [p q base_case | p r q transitivity_case]. 
-+ dependent induction base_case; simpl; eauto with cgr.
++ induction base_case; intros; auto with cgr.
+(* auto's simple apply is not sufficient, so we still need to apply the lemmas *)
+- apply cgr_par_com.
+- apply cgr_par_assoc.
+- apply cgr_par_assoc_rev.
+- apply cgr_choice_com.
+- apply cgr_choice_assoc.
+- apply cgr_choice_assoc_rev.
+- apply cgr_recursion. apply IHbase_case.
+- apply cgr_tau. apply IHbase_case.
+- apply cgr_input. apply IHbase_case.
+- apply cgr_par. apply IHbase_case.
+- apply cgr_if_left. apply IHbase_case.
+- apply cgr_if_right. apply IHbase_case.
+- apply cgr_choice. apply IHbase_case.
+- apply cgr_res. apply IHbase_case.
+- simpl. setoid_rewrite (subst_in_succ_new Q v k 0). apply cgr_scope.
+- simpl. setoid_rewrite (subst_in_succ_new Q v k 0). apply cgr_scope_rev.
 + eauto with cgr.
 Qed.
 
-Lemma NewVar_Respects_Congruence : forall p p' j, p ≡* p' -> NewVar j p ≡* NewVar j p'.
+Lemma NewVar_Respects_Congruence : forall p q n, p ≡* q -> n ↑ p ≡* n ↑ q.
 Proof.
-intros p q j congruence_hyp. revert j.  
+intros p q n congruence_hyp. revert n.
 induction congruence_hyp as [p q base_case | p r q transitivity_case]. 
-+ dependent induction base_case ; simpl ; auto with cgr.
-  (* one case analysis remains *) 
-  (* - intros. apply cgr_choice. apply IHbase_case.  *)
++ induction base_case; simpl; auto with cgr.
+  - intro n. simpl. rewrite lift_of_lift_proc. apply cgr_scope. lia.
+  - intro n. simpl. rewrite lift_of_lift_proc. apply cgr_scope_rev. lia.
 + eauto with cgr.
 Qed.
 
