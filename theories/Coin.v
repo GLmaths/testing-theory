@@ -28,6 +28,9 @@ Require Import Coq.Program.Equality.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 From Must Require Import TransitionSystems Must Soundness Equivalence Completeness.
 
+
+(* TODO: define me using the coinduction library *)
+
 CoInductive copre `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ} (ps : gset A) (q : B) : Prop := {
     c_tau q' : q ⟶ q' -> copre ps q'
   ; c_now : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
