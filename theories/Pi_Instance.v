@@ -156,18 +156,20 @@ Instance liftable_proc : Liftable proc := { lift := NewVar }.
 (* useful to adapt the indices when it passes through a input *)
 (* Definition Succ_bvar (X : Data) : Data := NewVar_in_Data 0 X. *)
 
-Class Substitutable (A : Type) := { subst : var -> Data -> A -> A}.
+Class Substitutable (A : Type) (B:Type) := { subst : var -> B -> A -> A}.
 Notation "t1 ^ x1" := (subst 0 x1 t1).
 Notation "p [ k ← X ]" := (subst k X p) (k at next level, X at next level).
+(* Arguments subst A B _ _ _ _ : simpl never. *)
 
 Definition subst_data := fun k X Y =>
 match Y with
 | cst v => cst v
 | bvar i => if (decide(i = k)) then X else bvar i
 end.
-Instance substitutable_Data : Substitutable Data := { subst:= subst_data }.
+Instance substitutable_Data : Substitutable Data Data := { subst:= subst_data }.
 
-Instance substitutable_Equation : Substitutable (Equation Data) := {
+
+Instance substitutable_Equation : Substitutable (Equation Data) Data := {
   subst := fix subst_in_Equation k X E :=
 match E with
 | tt => tt
@@ -193,7 +195,7 @@ match p with
     | If C Then P Else Q => If (C [k ← X]) Then (subst_in_proc k X P) Else (subst_in_proc k X Q)
 end.
 
-Instance substitutable_proc : Substitutable proc := { subst:= subst_in_proc }.
+Instance substitutable_proc : Substitutable proc Data := { subst:= subst_in_proc }.
 
 Lemma lift_in_var_bijective : forall n (x:var) (y:var), 
   (n ↑ x) = (n ↑ y) <-> x = y.
@@ -259,13 +261,6 @@ Proof.
       * rewrite decide_False, decide_False. reflexivity. assumption. lia.
 Qed.
 
-Lemma lift_of_lift_data_0 : forall n (v:Data),
-(0 ↑ (n ↑ v)) = (S n) ↑ (0 ↑ v).
-Proof.
-intros.
-rewrite (lift_of_lift_data n 0). reflexivity. lia.
-Qed.
-
 Opaque liftable_Data.
 Opaque liftable_Var.
 
@@ -318,22 +313,37 @@ Proof.
 Qed.
 
 (* Substitution for the Recursive Variable *)
-Fixpoint pr_subst (id : nat) (p : proc) (q : proc) : proc :=
+Fixpoint pr_subst (id : nat) (q : proc) (p : proc) : proc :=
 match p with 
 | ① => ①
 | 𝟘 => 𝟘
-| rec p => rec (pr_subst id p q)
+| rec p => rec (pr_subst id q p)
 | pr_var id' => if decide (id = id') then q else p
-| p1 + p2 => (pr_subst id p1 q) + (pr_subst id p2 q)
-| p1 ‖ p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q) 
+| p1 + p2 => (pr_subst id q p1) + (pr_subst id q p2)
+| p1 ‖ p2 => (pr_subst id q p1) ‖ (pr_subst id q p2) 
 | c ! v • P => c ! v • P
-| ν p => ν (pr_subst id p (0 ↑ q))
-| c ? p => c ? (pr_subst id p (0 ↑ q))
-(* New Var here is needed to readapt the indices in p *)
+| ν p => ν (pr_subst id (0 ↑ q)) p
+| c ? p => c ? (pr_subst id (0 ↑ q) p)
+(* ↑ here is needed to readapt the indices in p *)
 (*Example : rec X • c ? • (bvar 1 ‖ X ) *) 
-| t • p => t • (pr_subst id p q)
-| If C Then P Else Q => If C Then (pr_subst id P q) Else (pr_subst id Q q)
+| t • p => t • (pr_subst id q p)
+| If C Then P Else Q => If C Then (pr_subst id q P) Else (pr_subst id q Q)
 end.
+Instance substitutable_proc_rec : Substitutable proc proc := { subst:= pr_subst }.
+
+Lemma pr_subst_through_lift : forall n Q k q,
+  pr_subst n (k ↑ q) (k ↑ Q) = k ↑ (pr_subst n q Q).
+Proof.
+  intros n Q. induction Q; try reflexivity.
+  - simpl. now setoid_rewrite IHQ.
+  - simpl. case decide. reflexivity. reflexivity.
+  - simpl. setoid_rewrite IHQ1. now setoid_rewrite IHQ2.
+  - simpl. setoid_rewrite IHQ1. now setoid_rewrite IHQ2.
+  - simpl. intros. rewrite <- lift_of_lift_proc.  now setoid_rewrite IHQ. lia.
+  - simpl. intros. rewrite <- lift_of_lift_proc.  now setoid_rewrite IHQ. lia.
+  - simpl. now setoid_rewrite IHQ.
+  - simpl. setoid_rewrite IHQ1. now setoid_rewrite IHQ2.
+Qed.
 
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
@@ -347,7 +357,7 @@ Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
 | lts_tau : forall {P},
     lts (t • P) τ P
 | lts_recursion : forall {x P},
-    lts (rec P) τ (pr_subst x P (rec P))
+    lts (rec P) τ ((rec P) [x ← P])
 | lts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     lts (If E Then p Else q) τ p
 | lts_ifZero : forall {p q E}, Eval_Eq E = Some false -> 
@@ -470,11 +480,9 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step ((ν P) ‖ Q) (ν (P ‖ (0 ↑ Q)))
 .
 
-
 #[global] Hint Constructors cgr_step:cgr_step_structure.
 (* congruence notation *)
 Infix "≡" := cgr_step (at level 70).
-
 
 (* The relation ≡ is an reflexive*)
 #[global] Instance cgr_refl_step_is_refl : Reflexive cgr_step.
@@ -655,7 +663,7 @@ cgr_choice_assoc_rev cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cg
 cgr_refl cgr_symm cgr_res cgr_scope cgr_scope_rev cgr_res_nil cgr_trans : cgr.
 
 
-Lemma Congruence_Respects_Substitution : forall p q v k,
+Lemma Congruence_Respects_Substitution : forall p q (v:Data) k,
 p ≡* q -> p [k ←  v] ≡* q [k ← v].
 Proof.
 intros p q v k congruence_hyp. revert k. revert v. 
@@ -692,67 +700,64 @@ induction congruence_hyp as [p q base_case | p r q transitivity_case].
 Qed.
 
 
-(* Substition lemma, needed to contextualise the equivalence *)
-Lemma cgr_subst1 p q q' x : q ≡* q' → pr_subst x p q ≡* pr_subst x p q'.
+(* Substition lemma for the substitution in recursive processes *)
+Lemma cgr_subst1 (p:proc) (q:proc) q' x : q ≡* q' → p [x ← q] ≡* p [x ← q'].
 Proof.
+(* Induction on the size of q*)
 revert q q' x.
-
-(* Induction on the size of p*)
  induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image proc nat lt size Nat.lt_wf_0)).
-destruct p; intros; simpl.
+destruct p; intros.
   - reflexivity.
   - reflexivity.
-  - eauto with cgr.
-  - destruct (decide (x = v)); eauto with cgr.
+  - simpl. simple apply cgr_recursion, Hp. unfold lt. simple apply le_n. assumption.
+  - simpl. destruct decide. assumption. simple apply cgr_refl.
   - apply cgr_fullchoice.
-    * apply Hp. simpl. auto with arith. assumption.
+    * apply Hp. simpl. lia. assumption.
     * apply Hp. simpl. auto with arith. assumption.
   - apply cgr_fullpar.
     * apply Hp. simpl. auto with arith. assumption. 
     * apply Hp. simpl. auto with arith. assumption.
-  - eauto with cgr.
-  - 
-  admit. (* TODO ν *)
-  - admit. (* TODO ν *)
-  - auto with cgr.
+  - simple apply cgr_refl.
+  - simpl. simple apply cgr_res. apply Hp. simpl. unfold lt. apply le_n. by apply NewVar_Respects_Congruence.
+  - simpl. simple apply cgr_input. apply Hp. auto with arith. by apply NewVar_Respects_Congruence.
+  - simpl. auto with cgr.
   - apply cgr_full_if.
     * apply Hp. simpl. auto with arith. assumption.
     * apply Hp. simpl. auto with arith. assumption.
-  (* - destruct g0; simpl.
-    * apply cgr_input. apply Hp. simpl. auto with arith. apply NewVar_Respects_Congruence. assumption.
-    * apply cgr_tau. apply Hp. simpl. auto with arith. assumption. *)
 Qed.
 
-(* ≡ respects the substitution (in recursion) of his variable*)
-Lemma cgr_step_subst2 : forall p p' q x, p ≡ p' → pr_subst x p q ≡ pr_subst x p' q.
+(* Substitution lemma for the substitution in recursive processes *)
+Lemma cgr_step_subst2 : forall p p' q x, p ≡ p' → p [x ← q] ≡ p' [x ← q].
 Proof.
-  induction p as (p & Hp) using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros p' q n hcgr ; inversion hcgr; try auto; try (exact H); try (now constructor); simpl.
-  - destruct (decide (n = x)). auto. constructor. apply Hp. subst. simpl. auto. assumption.
-  - constructor. apply Hp. subst. simpl. auto. assumption.
-  - constructor. apply Hp. subst. simpl. auto. assumption.
+  induction p
+  as (p & Hp) using (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  intros p' q n hcgr.
+  inversion hcgr; try (now constructor).
+  - apply cgr_recursion_step. apply Hp. subst. unfold lt. simple apply le_n. assumption.
+  - constructor. apply Hp. subst. unfold lt. simple apply le_n. assumption.
+  - constructor. apply Hp. subst. unfold lt. simple apply le_n. assumption. 
   - constructor. apply Hp. subst. simpl. auto with arith. assumption. 
   - constructor. apply Hp. subst. simpl. auto with arith. assumption. 
   - constructor. apply Hp. subst. simpl. auto with arith. assumption. 
-  - apply cgr_choice_step. 
-    assert (pr_subst n (g p1) q ≡ pr_subst n (g q1) q). apply Hp; subst. simpl. eauto with arith. assumption.
-    assumption.
+  - constructor. apply Hp; subst. simpl. auto with arith. assumption.
+  - constructor. apply Hp. subst. unfold lt. simple apply le_n. assumption.
+  - simpl. rewrite pr_subst_through_lift. constructor.
+  - simpl. rewrite pr_subst_through_lift. constructor.
 Qed.
 
 (* ≡* respects the substitution of his variable *)
-Lemma cgr_subst2 q p p' x : p ≡* p' → pr_subst x p q ≡* pr_subst x p' q.
+Lemma cgr_subst2 q p p' x : p ≡* p' → p [x ← q] ≡* p' [x ← q].
 Proof. 
 intros congruence_hyp. induction congruence_hyp as [p p' base_case | p p' p'' transitivity_case]. 
   + constructor. now eapply cgr_step_subst2.
-  + apply transitivity with (pr_subst x p' q).
+  + apply transitivity with p' [x ← q].
     * assumption.
     * assumption.
 Qed.
 
 (* ≡ respects the substitution / recursion *)
-Lemma cgr_subst p q x : p ≡ q -> pr_subst x p (rec x • p) ≡* pr_subst x q (rec x • q).
+Lemma cgr_subst p q x : p ≡ q -> p [x ← rec p] ≡* q [x ← rec q].
 Proof.
   intro congruence_hyp.
   etrans.
@@ -776,7 +781,7 @@ Inductive sts : proc -> proc -> Prop :=
     sts ((t • p) + g) p
 (* Resursion *)
 | sts_recursion : forall {x p}, 
-    sts (rec x • p) (pr_subst x p (rec x • p))
+    sts (rec p) (pr_subst x p (rec p))
 (*If Yes*)
 | sts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     sts (If E Then p Else q) p
@@ -801,7 +806,7 @@ Inductive sts : proc -> proc -> Prop :=
 Lemma ReductionShape : forall P Q, sts P Q ->
 ((exists c v P2 G2 S, ((P ≡* ((c ! v • 𝟘) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((𝟘 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
-\/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
+\/ (exists n P1 S, (P ≡* ((rec P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec P1) ‖ S)))
 \/ (exists P1 P0 S E, (P ≡* ((If E Then P1 Else P0) ‖ S)) /\ (Q ≡* P1 ‖ S) /\ (Eval_Eq E = Some true))
 \/ (exists P1 P0 S E, (P ≡* ((If E Then P1 Else P0) ‖ S)) /\ (Q ≡* P0 ‖ S) /\ (Eval_Eq E = Some false))
 ).
@@ -809,7 +814,7 @@ Proof.
 intros P Q Transition.
 induction Transition.
   - left. exists c. exists v. exists p2. exists g2. exists (𝟘). split; apply cgr_par_nil_rev.
-  - right. left. exists p. exists g0. exists 𝟘. split; apply cgr_par_nil_rev.
+  - right. left. exists p. exists g. exists 𝟘. split; apply cgr_par_nil_rev.
   - right. right. left. exists x. exists p. exists 𝟘. split; apply cgr_par_nil_rev.
   - right. right. right. left. exists p. exists q. exists 𝟘. exists E. split. apply cgr_par_nil_rev.
     split. apply cgr_par_nil_rev. assumption.
@@ -823,8 +828,8 @@ induction Transition.
         ** apply transitivity with (((t • x + x0) ‖ x1) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
         ** apply transitivity with (x ‖ (x1) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
     * decompose record IH. right. right. left. exists x. exists x0. exists (x1 ‖ q). split. 
-        ** apply transitivity with ((rec x • x0 ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
-        ** apply transitivity with ((pr_subst x x0 (rec x • x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
+        ** apply transitivity with ((rec x0 ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
+        ** apply transitivity with ((pr_subst x x0 (rec x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
     * destruct IH. destruct H. destruct H. destruct H. destruct H. destruct H0.
       right. right. right. left. exists x. exists x0. exists (x1 ‖ q). exists x2. split.
         ** apply transitivity with (((If x2 Then x Else x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
