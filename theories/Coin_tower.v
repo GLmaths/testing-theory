@@ -242,13 +242,23 @@ Proof.
   firstorder.
 Qed.
 
+Lemma wt_set_union `{FiniteLts A L} (X1 X2 : gset A) (s : trace L) {ps}
+  : wt_set_from_pset_spec (X1 ∪ X2) s ps
+    -> exists ps1 ps2, wt_set_from_pset_spec X1 s ps1
+                 /\ wt_set_from_pset_spec X2 s ps2
+                 /\ (ps = ps1 ∪ ps2) .
+Proof.
+  intros [w1 w2].
+  unfold wt_set_from_pset_spec1 in w1.
+  unfold wt_set_from_pset_spec2 in w2.
+Admitted.
+
 Lemma coin_union_l `{FiniteLts A L} {PRE : Chain copre_m}
   : forall (X1 X2 : gset A) (q : A), elem PRE X1 q -> elem PRE (X1 ∪ X2) q.
 Proof.
-  intros X1 X2.
   apply tower; clear PRE.
-  - intros P HP ????; eapply HP; eauto.
-  - intros PRE CIH q h.
+  - intros P HP ??????; eapply HP; eauto.
+  - intros PRE CIH X1 X2 q h.
     unfold copre_m, body.
     constructor.
     + intros q' hqq'; now apply CIH, h.(c_tau_).
@@ -258,28 +268,40 @@ Proof.
       exists p, p'; split; eauto.
       now apply elem_of_union_l.
     + intros μ q' ps' hp hqq' hps'.
-      !!! WIP HERE!!!
-
-  eapply eqx. eapply eqx in Ho as (h1 & h2).
-  split.
-  - intros s hcnv.
-    eapply h1. set_solver.
-  - intros s p hw hst hcnv.
-    destruct (h2 s p hw hst ltac:(set_solver)). set_solver.
+      destruct (wt_set_union _ _ _ hps') as [ ps1 [ ps2 [ h1 [ h2 -> ] ] ] ].
+      apply CIH.
+      eapply h.(c_step_); [ | exact hqq' | exact h1 ].
+      intros p i; now apply hp, elem_of_union_l.
+    + intros hp.
+      apply h.(c_cnv_).
+      intros p i; now apply hp, elem_of_union_l.
 Qed.
 
-Lemma coin_union_r `{FiniteLts A L} : forall (X1 X2  : gset A) (q : A), X2   ⩽ q -> X1 ∪ X2 ⩽ q.
+Lemma coin_union_r `{FiniteLts A L} {PRE : Chain copre_m}
+  : forall (X1 X2 : gset A) (q : A), elem PRE X2 q -> elem PRE (X1 ∪ X2) q.
 Proof.
-  intros X1 X2 q Ho.
-  eapply eqx. eapply eqx in Ho as (h1 & h2).
-  split.
-  - intros s hcnv.
-    eapply h1. set_solver.
-  - intros s p hw hst hcnv.
-    destruct (h2 s p hw hst ltac:(set_solver)). set_solver.
+  apply tower; clear PRE.
+  - intros P HP ??????; eapply HP; eauto.
+  - intros PRE CIH X1 X2 q h.
+    unfold copre_m, body.
+    constructor.
+    + intros q' hqq'; now apply CIH, h.(c_tau_).
+    + intros hp hq.
+      assert (hp_ : ∀ p : A, p ∈ X2 → p ⤓) by (intros ??; now apply hp, elem_of_union_r).
+      destruct (h.(c_now_) hp_ hq) as [ p [ p' [ pi [ hpp' out ] ] ]].
+      exists p, p'; split; eauto.
+      now apply elem_of_union_r.
+    + intros μ q' ps' hp hqq' hps'.
+      destruct (wt_set_union _ _ _ hps') as [ ps1 [ ps2 [ h1 [ h2 -> ] ] ] ].
+      apply CIH.
+      eapply h.(c_step_); [ | exact hqq' | exact h2 ].
+      intros p i; now apply hp, elem_of_union_r.
+    + intros hp.
+      apply h.(c_cnv_).
+      intros p i; now apply hp, elem_of_union_r.
 Qed.
 
-Lemma coin_elem_of `{FiniteLts A L} (p : A) X: p ∈ X -> X ⩽ p.
+Lemma coin_elem_of `{FiniteLts A L} {PRE : Chain copre_m} (p : A) X: p ∈ X -> elem PRE X p.
 Proof.
 intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
 apply coin_union_l, coin_refl.
@@ -408,54 +430,54 @@ Proof.
       * apply Ht. set_tac.
 Qed.
 
-Lemma copre_inv_l `{FiniteLts A L} (p : A) X t q : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
-  {[t]} ∪ X ⩽ q -> {[p]} ∪ X ⩽ q.
+Lemma copre_inv_l `{FiniteLts A L} {PRE : Chain copre_m} (p : A) X t q : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
+  elem PRE ({[t]} ∪ X) q -> elem PRE ({[p]} ∪ X) q.
 Proof.
-intros Hpt Hinv. revert q. cofix hco. intros q Hq.
-constructor.
-- intros q' Hq'. apply hco, Hq, Hq'.
-- intros Ht Hs. destruct Hq as [ _ Hq _ _].
-  destruct Hq as (p1 & p2 & Hin & Hcnv & Hs' & Hout).
-  + intros p0 Hin. apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
-    * apply elem_of_singleton_1 in Heqt. subst.
-      apply terminate_preserved_by_lts_tau with p.
-      -- apply Ht. set_tac.
-      -- now apply Hpt.
-    * apply Ht. set_tac.
-  + trivial.
-  + apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
-    * apply elem_of_singleton_1 in Heqt. subst.
-      exists p. exists p2. repeat split; trivial.
-      -- set_tac.
-      -- apply wt_tau with t; [|assumption].
-          now apply Hpt. (* p ⟶ t *)
-    * exists p1. exists p2; intuition.
-      apply elem_of_union_r. set_tac.
-- intros μ q' ps' Hμ1 Hμ2 Hwt. eapply Hq; [| eassumption |].
-  + intros p0 Hin. apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
-    * apply elem_of_singleton_1 in Heqt. subst.
-      apply cnv_preserved_by_lts_tau with p.
-      -- apply Hμ1. set_tac.
-      -- now apply Hpt. (* p ⟶ t *)
-    * apply Hμ1. set_tac.
-  + destruct Hwt as [Hwt1 Hwt2].
-    split.
-    * intros p' Hp'. destruct (Hwt1 p' Hp') as [p0 [Hin Hp0]].
-      apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
-      -- apply elem_of_singleton_1 in Heqt. subst.
-         exists t. split; [set_tac|now apply Hinv].
-      -- exists p0. split; [set_tac|assumption].
-    * intros p' p'' Hin Hμ.
-      apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
-      -- apply elem_of_singleton_1 in Heqt. subst.
-         eapply Hwt2 with p; [set_tac|]. apply Hinv, Hμ.
-      -- eapply Hwt2 with p'; [set_tac|]. apply Hμ.
-- intros Ht. apply Hq. intros p0 Hin.
-  apply elem_of_union in Hin. destruct Hin as [Heqt | Hin].
-  + apply elem_of_singleton_1 in Heqt. subst.
-    apply terminate_preserved_by_lts_tau with p.
-    * apply Ht. set_tac.
-    * now apply Hpt.
-  + apply Ht. set_tac.
+  intros Hpt Hinv; revert q.
+  apply tower; clear PRE.
+  - intros P HP ????; eapply HP; eauto.
+  - intros PRE CIH q h.
+    constructor.
+    + intros q' Hq'.
+      now apply CIH, h.(c_tau_).
+    + intros Ht Hs.
+      destruct h.(c_now_) as [ p1 [ p' [ hp [ hpp' [ hp' ho ] ] ] ]]; eauto.
+      * intros p0 Hin.
+        apply elem_of_union in Hin; destruct Hin as [Heqt | Hin].
+        -- apply elem_of_singleton_1 in Heqt; subst.
+           apply terminate_preserved_by_lts_tau with p; eauto.
+           apply Ht; set_tac.
+        -- apply Ht; set_tac.
+      * apply elem_of_union in hp; destruct hp as [Heqt | Hin].
+        -- apply elem_of_singleton_1 in Heqt; subst.
+           exists p, p'; repeat split; [ set_tac | | | ]; trivial.
+           now apply wt_tau with t.
+        -- exists p1, p'; intuition.
+           now apply elem_of_union_r.
+    + intros μ q' ps' hμ hqq' w.
+      eapply h.(c_step_); eauto.
+      * intros p0 hin; apply elem_of_union in hin; destruct hin as [Heqt | Hin].
+        -- apply elem_of_singleton_1 in Heqt; subst.
+           apply cnv_preserved_by_lts_tau with p; eauto.
+           apply hμ; set_tac.
+        -- apply hμ; set_tac.
+      * destruct w as [Hwt1 Hwt2]; split.
+        -- intros p' Hp'.
+           destruct (Hwt1 p' Hp') as [p0 [Hin Hp0]].
+           apply elem_of_union in Hin; destruct Hin as [Heqt | Hin].
+           ++ apply elem_of_singleton_1 in Heqt; subst.
+              exists t; split; [set_tac|now apply Hinv].
+           ++ exists p0. split; [set_tac|assumption].
+        -- intros p' p'' Hin Hμ.
+           apply elem_of_union in Hin; destruct Hin as [Heqt | Hin].
+           ++ apply elem_of_singleton_1 in Heqt; subst.
+              eapply Hwt2 with p; [set_tac|]; apply Hinv, Hμ.
+           ++ eapply Hwt2 with p'; [set_tac|]; apply Hμ.
+    + intros Ht.
+      apply h.(c_cnv_); intros p0 Hin.
+      apply elem_of_union in Hin; destruct Hin as [Heqt | Hin].
+      * apply elem_of_singleton_1 in Heqt; subst.
+        apply terminate_preserved_by_lts_tau with p; eauto.
+        apply Ht; set_tac.
+      * apply Ht; set_tac.
 Qed.
-
