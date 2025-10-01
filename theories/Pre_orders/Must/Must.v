@@ -397,31 +397,28 @@ Definition bhv_pre_cond1 `{gLts P A, gLts Q A}
 
 Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
-
-Class PreExtAction `{H : ExtAction A} `{P : Type} (PreAct : Type) {𝝳 : A → PreAct} (LtsP : @gLts P A H):=
+(* Class of preactions.
+  Each state can only reduce for finitely many preactions *)
+Class PreExtAction `{H : ExtAction A} {P : Type} `{Countable PreAct} {𝝳 : A → PreAct} (LtsP : @gLts P A H):=
   MkPreExtAction {
-      eqdecPreA: EqDecision PreAct;
-      countablePreA: Countable PreAct;
+      preactions_of : P -> gset PreAct; (* finite subset_of A *) 
 
-      reduce_actions_of : (* subset_of A *) (A → PreAct) -> P -> list PreAct;
-
-      reduction_spec1 (μ : A) (p : P) : μ ∈ lts_acc_set_of p -> (𝝳 μ) ∈ (reduce_actions_of 𝝳 p) ;
-      reduction_spec2 (μ : A) (p : P) : (𝝳 μ) ∈ (reduce_actions_of 𝝳 p) -> μ ∈ lts_acc_set_of p ;
+      preactions_of_spec (μ : A) (p : P) : μ ∈ lts_acc_set_of p <-> (𝝳 μ) ∈ (preactions_of p) ;
   }.
 
-Definition bhv_pre_cond2 {PreA : Type} `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA 𝝳P LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA 𝝳Q LtsQ}
+Definition bhv_pre_cond2 `{PreA_countable : Countable PreA} `{
+  LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA _ _ 𝝳P LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA _ _ 𝝳Q LtsQ}
   (p : P) (q : Q) :=
   forall s q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (reduce_actions_of 𝝳P p' ⊆ reduce_actions_of 𝝳Q q').
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (preactions_of p' ⊆ preactions_of q').
 
-Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). 
+Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
 
-Definition bhv_pre `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA 𝝳P LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA 𝝳Q LtsQ}
+Definition bhv_pre `{PreA_countable : Countable PreA} `{
+  LtsP : @gLts P A H, PreAP : @PreExtAction A _ P PreA _ _ 𝝳P LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A _ Q PreA _ _ 𝝳Q LtsQ}
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
 
