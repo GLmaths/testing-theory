@@ -153,8 +153,114 @@ Fixpoint NewVar (k : nat) (p : proc) {struct p} : proc :=
   end.
 Instance liftable_proc : Liftable proc := { lift := NewVar }.
 
-(* useful to adapt the indices when it passes through a input *)
-(* Definition Succ_bvar (X : Data) : Data := NewVar_in_Data 0 X. *)
+Lemma lift_var_def: forall k n, k <= n -> k ≠ k ↑ n.
+Proof.
+intros k n H. intro Hn. simpl in Hn.
+rewrite decide_True in Hn by assumption.
+lia.
+Qed.
+
+Lemma lift_var_mono: forall k n, n <= k ↑ n.
+Proof.
+intros k n. simpl. case decide; lia.
+Qed.
+
+Lemma lift_nonzero : forall k n, k ≤ n ->  0 ≠ k ↑ n.
+Proof.
+intros. simpl. rewrite decide_True by assumption. lia.
+Qed.
+
+Lemma lift_in_var_bijective : forall n (x:var) (y:var), 
+  (n ↑ x) = (n ↑ y) <-> x = y.
+Proof.
+  intros n x y. split.
+  - unfold lift, liftable_Var. repeat case decide; lia.
+  - intro. now subst.
+Qed.
+
+Lemma succ_on_lift : forall k n,
+(S (n ↑ k)) = (S n) ↑ (S k).
+Proof.
+  intros k n. destruct (decide (n <= k)).
+  - unfold lift, liftable_Var. rewrite decide_True.
+    * rewrite decide_True.
+      ** reflexivity.
+      ** auto with arith.
+    * assumption.
+  - unfold lift, liftable_Var. rewrite decide_False.
+    * rewrite decide_False.
+      ** reflexivity.
+      ** intro. apply n0. by apply Arith_base.gt_S_le_stt.
+    * assumption.
+Qed.
+
+Lemma lift_of_lift_data : forall n k (v:Data),
+k ≤ n ->
+((S n) ↑ (k ↑ v)) = k ↑ (n ↑ v).
+Proof.
+  intros n k v H. destruct v.
+  - trivial. (* cst case *)
+  - simpl.
+    destruct (decide (k ≤ v)).
+    + destruct (decide (n ≤ v)).
+      * rewrite decide_True, decide_True. reflexivity. lia. lia.
+      * rewrite decide_False, decide_True. reflexivity. assumption. lia.
+    + destruct (decide (n ≤ v)).
+      * rewrite decide_True, decide_False. reflexivity. lia. lia.
+      * rewrite decide_False, decide_False. reflexivity. assumption. lia.
+Qed.
+
+
+Definition lift_n {A} `{Liftable A} n k (p:A) :=  Nat.iter n (lift k) p.
+
+
+Lemma lift_smaller : forall k n, S k ≤ n -> (S k) ↑ n = k ↑ n.
+Proof.
+induction n.
+- lia.
+- intro. simpl. rewrite decide_True by assumption. rewrite decide_True by lia. reflexivity.
+Qed.
+
+Opaque liftable_Var.
+
+Lemma lift_n_mono : forall k i n, n ≤ lift_n k i n.
+Proof.
+induction k.
+- trivial.
+- simpl. intros.
+  assert (Hleq1 : n ≤ lift_n k i n) by apply IHk.
+  assert (Hleq2: lift_n k i n ≤ (i ↑ lift_n k i n) ) by apply lift_var_mono.
+  lia.
+Qed.
+
+Lemma lift_n_mono2 :forall k i n, S i ≤ n -> S i ≤ lift_n k (S i) n.
+Proof.
+induction k.
+- trivial.
+- intros i n H. simpl.
+  assert (H2: S i ≤ lift_n k (S i) n) by (now apply (IHk i n)).
+  assert (H3: lift_n k (S i) n ≤ (S i ↑ lift_n k (S i) n)) by apply lift_var_mono.
+  lia.
+Qed.
+
+Lemma lift_n_smaller : forall k i n, S i ≤ n -> lift_n k (S i) n = lift_n k i n.
+Proof.
+induction k.
+- trivial.
+- intros i n H. simpl. rewrite lift_smaller.
+  + now rewrite IHk by lia.
+  + now apply lift_n_mono2.
+Qed.
+
+Transparent liftable_Var.
+Lemma lift_n_nonzero : forall k n,  S k ≤ n -> S k ≤ lift_n k (S k) n.
+Proof.
+  induction k; intros n H.
+  - exact H.
+  - simpl. rewrite decide_True by now apply lift_n_mono2.
+    now apply le_S, lift_n_mono2.
+Qed.
+Opaque liftable_Var.
 
 Class Substitutable (A : Type) (B:Type) := { subst : var -> B -> A -> A}.
 Notation "t1 ^ x1" := (subst 0 x1 t1).
@@ -197,13 +303,6 @@ end.
 
 Instance substitutable_proc : Substitutable proc Data := { subst:= subst_in_proc }.
 
-Lemma lift_in_var_bijective : forall n (x:var) (y:var), 
-  (n ↑ x) = (n ↑ y) <-> x = y.
-Proof.
-  intros n x y. split.
-  - unfold lift, liftable_Var. repeat case decide; lia.
-  - intro. now subst.
-Qed.
 
 Lemma subst_in_data_new : forall (D: Data) v k n,
   (n ↑ D) [(n ↑ k) ← (n ↑ v)] = n ↑ (D [k ← v]).
@@ -213,6 +312,8 @@ Proof.
   - rewrite decide_True; try reflexivity. subst. reflexivity.
   - rewrite decide_False. reflexivity. intro. by apply lift_in_var_bijective in H.
 Qed.
+Opaque liftable_Data.
+
 
 Lemma subst_in_equation_new : forall (E: Equation Data) v k n,
   (n ↑ E) [(n ↑ k) ← (n ↑ v)] = n ↑ (E [k ← v]).
@@ -229,40 +330,7 @@ Proof.
     by rewrite IHE.
 Qed.
 
-Lemma succ_on_lift : forall k n,
-(S (n ↑ k)) = (S n) ↑ (S k).
-Proof.
-  intros k n. destruct (decide (n <= k)).
-  - unfold lift, liftable_Var. rewrite decide_True.
-    * rewrite decide_True.
-      ** reflexivity.
-      ** auto with arith.
-    * assumption.
-  - unfold lift, liftable_Var. rewrite decide_False.
-    * rewrite decide_False.
-      ** reflexivity.
-      ** intro. apply n0. by apply Arith_base.gt_S_le_stt.
-    * assumption.
-Qed.
 
-Lemma lift_of_lift_data : forall n k (v:Data),
-k ≤ n ->
-((S n) ↑ (k ↑ v)) = k ↑ (n ↑ v).
-Proof.
-  intros n k v H. destruct v.
-  - trivial. (* cst case *)
-  - simpl.
-    destruct (decide (k ≤ v)).
-    + destruct (decide (n ≤ v)).
-      * rewrite decide_True, decide_True. reflexivity. lia. lia.
-      * rewrite decide_False, decide_True. reflexivity. assumption. lia.
-    + destruct (decide (n ≤ v)).
-      * rewrite decide_True, decide_False. reflexivity. lia. lia.
-      * rewrite decide_False, decide_False. reflexivity. assumption. lia.
-Qed.
-
-Opaque liftable_Data.
-Opaque liftable_Var.
 
 Lemma lift_of_lift_eq : forall n k (e:Equation Data),
 k ≤ n ->
