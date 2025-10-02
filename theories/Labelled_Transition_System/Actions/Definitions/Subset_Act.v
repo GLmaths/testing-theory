@@ -31,12 +31,22 @@ Import ListNotations. *)
 From stdpp Require Import gmap.
 From Must Require Import gLts.
 
+(**************************Definition of a Subset of A *************************************)
+
 Definition subset_of (A : Type) := A -> Prop.
 
-Definition lts_pre_acc_set_of `{gLts P A} (p : P) (μ : A) : Prop := 
-      ¬ p ↛[μ].
+(*************************** Examples of Subset ***********************)
 
-Definition lts_acc_set_of `{gLts P A} (p : P) : subset_of A := lts_pre_acc_set_of p.
+(* All actions *)
+Definition actions_of `{gLts P A} (p : P) : subset_of A :=
+  fun μ => ¬ p ↛[μ].
+
+(* Only co - blocking action *)
+Definition co_actions_of `{gLts P A} (p : P) : subset_of A := 
+  fun μ1 => exists μ2, ¬ p ↛[μ2] /\ dual μ2 μ1 /\ blocking μ1.
+
+
+(******************* Instantiations to use the usual notation of sets ***********************)
 
 Definition Union_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a \/ S' a.

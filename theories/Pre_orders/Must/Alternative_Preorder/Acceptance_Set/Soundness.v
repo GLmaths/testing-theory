@@ -572,7 +572,7 @@ Proof.
 Qed.
 
 
-(* ************************************************************ *)
+(* *************************************************************)
 
 Definition bhv_pre_cond1__x `{FiniteImagegLts P A, FiniteImagegLts Q A} (ps : gset P) (q : Q) :=
   forall s, (forall p, p ∈ ps -> p ⇓ s) -> q ⇓ s.
@@ -580,13 +580,13 @@ Definition bhv_pre_cond1__x `{FiniteImagegLts P A, FiniteImagegLts Q A} (ps : gs
 Notation "ps ≼ₓ1 q" := (bhv_pre_cond1__x ps q) (at level 70).
 
 Definition bhv_pre_cond2__x `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
   (ps : gset P) (q : Q) :=
   forall s q',
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ ps -> p ⇓ s) ->
-    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (reduce_actions_of 𝝳P p' ⊆ reduce_actions_of 𝝳Q q').
+    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
 
 Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 
@@ -595,8 +595,8 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 Notation "ps ≼ₓ q" := (bhv_pre_cond1__x ps q /\ bhv_pre_cond2__x ps q) (at level 70).
 
 Lemma alt_set_singleton_iff `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
   (p : P) (q : Q) : p ≼ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
@@ -616,8 +616,8 @@ Lemma bhvleqone_preserved_by_tau `{
 Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 
 Lemma bhvx_preserved_by_tau `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
 Proof.
   intros l (halt1 & halt2).
@@ -643,8 +643,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_mu `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳P gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳Q gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
   (ps0 : gset P) (q : Q) μ ps1 q' (htp : forall p, p ∈ ps0 -> terminate p) :
   q ⟶[μ] q' 
     -> wt_set_from_pset_spec ps0 [μ] ps1 
@@ -674,8 +674,8 @@ Proof.
 Qed.
 
 Lemma bhvx_mu_ex `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
   (ps : gset P) (q q' : Q) μ
   : ps ≼ₓ q -> (forall p, p ∈ ps -> p ⇓ [μ]) ->
     q ⟶[μ] q' -> exists p', wt_set_from_pset_spec1 ps [μ] {[ p' ]}.
@@ -691,8 +691,10 @@ Proof.
 Qed.
 
 Lemma ungood_must_st_nleqx `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+  PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -734,12 +736,20 @@ Proof.
       eapply Hyp in nb as (tr1 & tr2); eauto.
       eapply (lts_refuses_spec2 (q ▷ e)); eauto. exists (q'', e'').
       eapply ParSync; eauto.
-    +  admit.
+    + assert (𝝳 μ2 ∈ pre_co_actions_of p') as mem'. 
+      { eapply preactions_of_spec. exists μ1. repeat split; eauto.
+        eapply lts_refuses_spec2;eauto. symmetry in eq; eauto. }
+      eapply sub in mem'. eapply preactions_of_spec in mem'.
+      destruct mem' as (μ'1 & Tr & duo & b). 
+      eapply lts_refuses_spec1 in Tr as (q'' & tr'').
+      eapply (lts_refuses_spec2 (q,e)). exists (q'', e'').
+      symmetry in duo.
+      eapply ParSync; eauto. eauto.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -758,8 +768,10 @@ Proof.
 Qed.
 
 Lemma soundnessx `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
+  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+  PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+  PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !FiniteImagegLts E A, !Good E A good}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -812,8 +824,10 @@ Proof.
 Qed.
 
 Lemma soundness_fw `{
-  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA 𝝳 gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A, PreAQ : @PreExtAction A H Q PreA 𝝳 gLtsQ,
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
+  PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
+  PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -840,8 +854,8 @@ Lemma soundness `{
   `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
   `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-  `{PreAP : @PreExtAction A H (P * mb A) PreA 𝝳 (inter_lts fw_inter),
-    PreAQ : @PreExtAction A H (Q * mb A) PreA 𝝳 (inter_lts fw_inter)}
+  `{PreAP : @PreExtAction A H (P * mb A) PreA PreA_eq PreA_countable 𝝳 (inter_lts fw_inter),
+    PreAQ : @PreExtAction A H (Q * mb A) PreA PreA_eq PreA_countable 𝝳 (inter_lts fw_inter)}
   (p : P) (q : Q) : p ▷ ∅ ≼ q ▷ ∅ -> p ⊑ q.
 Proof.
   intros halt e hm.
