@@ -137,7 +137,9 @@ Class gen_spec_conv
 Definition union_of_co_actions_without `{gLts P A} `{gLts Q A}
   (p_L : list P * Q) := (⋃ map co_actions_of p_L.1) ∖ (co_actions_of p_L.2).
 
-Definition union_of_pre_co_actions_without `{gLts P A} `{gLts Q A}
+Definition union_of_pre_co_actions_without 
+  `{LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  `{LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
   (p_L : list P * Q) := ⋃ map pre_co_actions_of p_L.1 ∖ (pre_co_actions_of p_L.2).
 
 Class gen_spec_acc
@@ -803,10 +805,11 @@ Proof.
 Qed.
 
 Lemma wt_acceptance_set_subseteq
-  `{FiniteImagegLts P A} μ s p q hacnv1 hacnv2 :
+  `{gLtsP : @gLts P A H, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  μ s p q hacnv1 hacnv2 :
   p ⟹{μ} q ->
-  map co_actions_of (elements (wt_refuses_set q s hacnv1)) ⊆
-    map co_actions_of (elements (wt_refuses_set p (μ :: s) hacnv2)).
+  map pre_co_actions_of (elements (wt_refuses_set q s hacnv1)) ⊆
+    map pre_co_actions_of (elements (wt_refuses_set p (μ :: s) hacnv2)).
 Proof.
   intros.
   intros a in__a.
@@ -819,40 +822,48 @@ Proof.
   set_solver.
 Qed.
 
-Lemma lts_tau_acceptance_set_subseteq `{FiniteImagegLts P A} s p q hacnv1 hacnv2 :
+Lemma lts_tau_acceptance_set_subseteq
+  `{gLtsP : @gLts P A H, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  s p q hacnv1 hacnv2 :
   p ⟶ q ->
-  map co_actions_of (elements $ wt_refuses_set q s hacnv1) ⊆
-    map co_actions_of (elements $ wt_refuses_set p s hacnv2).
+  map pre_co_actions_of (elements $ wt_refuses_set q s hacnv1) ⊆
+    map pre_co_actions_of (elements $ wt_refuses_set p s hacnv2).
 Proof.
   intros.
   intros a in__a.
   assert (wt_refuses_set q s hacnv1 ⊆ wt_refuses_set p s hacnv2).
-  intros t in__t.
-  eapply wt_refuses_set_spec2.
-  eapply wt_refuses_set_spec1 in in__t.
-  destruct in__t. split; eauto with mdb.
+  { intros t in__t. eapply wt_refuses_set_spec2.
+    eapply wt_refuses_set_spec1 in in__t.
+    destruct in__t. split; eauto with mdb. }
   set_solver.
 Qed.
 
-Definition oas `{FiniteImagegLts P A} (p : P) (s : list A) (hcnv : p ⇓ s) : A -> Prop :=
+Definition oas 
+  `{gLtsP : @gLts P A H, FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreA:=
   let ps : list P := elements (wt_refuses_set p s hcnv) in
-  ⋃ map co_actions_of ps.
+  ⋃ map pre_co_actions_of ps.
 
-Lemma union_wt_acceptance_set_subseteq `{FiniteImagegLts P A} μ s p q h1 h2 :
-    p ⟹{μ} q -> oas q s h1 ⊆ oas p (μ :: s) h2.
+Lemma union_wt_acceptance_set_subseteq
+  `{gLtsP : @gLts P A H, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  μ s p q h1 h2 :
+  p ⟹{μ} q -> oas q s h1 ⊆ oas p (μ :: s) h2.
 Proof.
   intros hw a (O & mem1 & mem2)%elem_of_union_list.
   eapply elem_of_union_list.
   exists O. split; eauto. eapply wt_acceptance_set_subseteq; eauto.
 Qed.
 
-Lemma union_acceptance_set_lts_tau_subseteq `{FiniteImagegLts P A} s p q h1 h2 :
+Lemma union_acceptance_set_lts_tau_subseteq
+  `{gLtsP : @gLts P A H, FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  s p q h1 h2 :
   p ⟶ q -> oas q s h1 ⊆ oas p s h2.
 Proof.
   intros l a (L & mem1 & mem2)%elem_of_union_list.
   eapply elem_of_union_list.
-  exists L. split; eauto. eapply lts_tau_acceptance_set_subseteq; eauto.
-Qed.
+  exists L. split; eauto.
+  (* eapply lts_tau_acceptance_set_subseteq; eauto. *) (* probleme de typage *)
+Admitted.
 
 Lemma aft_not_nb_co_of_must_gen_acc {P Q : Type} `{
   gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
@@ -1138,25 +1149,6 @@ Proof.
                destruct co_set as (μ'1 & Tr & duo & b).
                eapply lts_refuses_spec1 in Tr as (p'' & Tr).
                exists (p'', r). eapply ParSync. symmetry. exact duo. exact Tr. exact Tr'.
-          (*destruct (decide (non_blocking μ1)) as [nb1 | not_nb1]; 
-          destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
-          ++++ contradict nb1.
-               eapply dual_blocks; eauto.
-          ++++ assert (∃ η : A, (* μ2 = co_of η ∧ *) 𝝳 η ∈ L1) 
-               as (μ'' (* & eq' *) & In).
-               eapply (@gen_spec_acc_nil_mu_inv P Q); eauto. subst.
-               eapply hsub in In. eapply (@gen_spec_acc_nil_mem_lts_inp P Q) in In 
-                as (e & l); eauto.
-               exists (p' ▷ e). eapply ParSync; eauto. admit.
-          ++++ exfalso.
-               assert ({q : E | gen_acc L1 ε ⟶[μ2] q}) as impossible. eauto.
-               eapply lts_refuses_spec2 in impossible. 
-               assert (gen_acc L1 ε ↛[μ2]). eapply (@gen_spec_acc_nil_refuses_nb P Q); eauto.
-               contradiction.
-          ++++ assert (∃ η : A, (* μ2 = co_of η ∧ *) 𝝳 η ∈ L1) as (μ'' (* & eq' *) & In).
-               eapply (@gen_spec_acc_nil_mu_inv P Q); eauto. subst.
-               eapply hsub in In. eapply (@gen_spec_acc_nil_mem_lts_inp P Q) in In 
-                as (e & l); eauto. exists (p' ▷ e). eapply ParSync; eauto. admit. *)
     + intros e l.
       exfalso. 
       assert ({q : E | gen_acc L2 ε ⟶ q}) as impossible. eauto.
@@ -1202,8 +1194,8 @@ Proof.
     + eapply gen_spec_ungood.
     + destruct ex as (t & l). inversion l; subst; eauto with mdb.
       ++ exists (a2 ▷ gen_acc L2 (ν :: s')). eapply ParLeft; eauto.
-      ++ (* eapply (@must_f_gen_a_subseteq_tau P Q) in l0 as (e & hle); eauto.
-         exists (p ▷ e). eapply ParRight; eauto. *) admit. (* à refaire, de même que l'admit précédent *)
+      ++ eapply (@must_f_gen_a_subseteq_tau P Q) in l0 as (e & hle); eauto.
+         exists (p ▷ e). eapply ParRight; eauto.
       ++ destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
          +++ eapply (@must_f_gen_a_subseteq_non_blocking P Q) in l2 as (t & hl); eauto with mdb.
              exists (a2 ▷ t). eapply ParSync; eauto.
@@ -1256,7 +1248,7 @@ Proof.
       ++ assert (a ∈ pre_co_actions_of p ∖ pre_co_actions_of q) as mem'.
          { set_solver. }
          assert (a ∈ pre_co_actions_of p) as co_set. 
-         { eauto. admit. } 
+         { eauto. eapply elem_of_difference; eauto. } 
          eapply (@gen_spec_acc_nil_mem_lts_inp P Q) in mem' as (r & μ & Tr & eq); eauto.
          subst. eapply preactions_of_spec in co_set.
          destruct co_set as (μ' & Tr' & duo & b).
@@ -1276,7 +1268,7 @@ Proof.
                 eapply (@gen_spec_acc_nil_refuses_nb P Q); eauto.
          ++++++ eapply (@gen_spec_acc_nil_lts_not_nb_good P Q) in l'0. 
                 eapply m_now.  exact l'0. exact gen_spec_acc0. eauto.
-Admitted.
+Qed.
 
 (* Lemma must_gen_acc_refuses_inv' {P Q : Type} `{
   LtsP : @gLts P A H,
@@ -1313,8 +1305,8 @@ Qed.
 Lemma must_gen_a_with_nil {P Q : Type} `{
   gLtsP : @gLts P A H,
   gLtsQ : @gLts Q A H,
-  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A, @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A, @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -1322,18 +1314,19 @@ Lemma must_gen_a_with_nil {P Q : Type} `{
   (p : P) (hcnv : p ⇓ ε) (q : Q):
 
   (exists p', p ⟹ p' /\ lts_refuses p' τ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q)
-  \/ must p (gen_acc (elements (wt_refuses_set p ε hcnv) , q) ε).
+  \/ must p (gen_acc ((oas p ε hcnv) ∖ (pre_co_actions_of q)) ε).
 Proof.
   induction (cnv_terminate p ε hcnv) as (p, hpt, ihhp).
   destruct (decide (lts_refuses p τ)) as [st | (p'' & l)%lts_refuses_spec1].
   + destruct (must_gen_acc_refuses p q st) as [Hyp | Hyp].
-    ++ right. eauto. unfold oas.
+    ++ right. unfold oas.
        rewrite wt_refuses_set_refuses_singleton, elements_singleton; eauto.
+       simpl. rewrite union_empty_r_L. set_solver.
     ++ left. exists p. split; eauto. constructor.
   + assert (∀ q0 : P,
          q0 ∈ lts_tau_set p
-         → (∃ p' : P, q0 ⟹ p' ∧ p' ↛ ∧ lts_acc_set_of p' ⊆ lts_acc_set_of q)
-             ∨ (exists h, must q0 (gen_acc (elements (wt_refuses_set q0 ε h) , q) ε))) as Hyp.
+         → (∃ p' : P, q0 ⟹ p' ∧ p' ↛ ∧ pre_co_actions_of p' ⊆ pre_co_actions_of  q)
+             ∨ (exists h, must q0 (gen_acc ((oas q0 ε h) ∖ (pre_co_actions_of q)) ε))) as Hyp.
   ++ intros q' l'%lts_tau_set_spec.
      destruct (hpt q' l') as (hq).
      assert (q' ⇓ ε) as cnv_nil'.
@@ -1346,7 +1339,7 @@ Proof.
            left. exists t'. eauto with mdb.
        +++ right. eapply m_step.
            ++++ eapply gen_spec_ungood.
-           ++++ exists (p'' ▷ gen_acc (elements (wt_refuses_set p ε hcnv) ▷ q) ε). eapply ParLeft; eauto.
+           ++++ exists (p'' ▷ gen_acc ((oas p ε hcnv) ∖ (pre_co_actions_of q)) ε). eapply ParLeft; eauto.
            ++++ intros p0 l0%lts_tau_set_spec.
                 eapply Forall_forall in Hyp' as (h0 & hm).
                 eapply must_f_gen_a_subseteq; eauto.
@@ -1355,27 +1348,27 @@ Proof.
                 eapply lts_tau_set_spec. exact l0.
                 eauto.
            ++++ intros e' l'. exfalso.
-                eapply (@lts_refuses_spec2 E). eauto. eapply gen_spec_acc_nil_refuses_tau.
+                eapply (@lts_refuses_spec2 E). eauto. eapply (@gen_spec_acc_nil_refuses_tau P Q); eauto.
            ++++ intros p0 e0 μ' μ inter lp le.
                 destruct (decide (non_blocking μ)) as [nb | not_nb].
-                +++++ exfalso. 
-                      assert ({q' : E | gen_acc (elements (wt_refuses_set p ε hcnv) , q) ε ⟶[μ] q'}).
-                      eauto. eapply (lts_refuses_spec2); eauto. 
-                      eapply gen_spec_acc_nil_refuses_nb; auto.
+                +++++ exfalso.
+                      assert ({q' : E | gen_acc ((oas p ε hcnv) ∖ (pre_co_actions_of q)) ε ⟶[μ] q'}).
+                      { eauto. } eapply (lts_refuses_spec2); eauto. 
+                      eapply (@gen_spec_acc_nil_refuses_nb P Q); eauto.
                 +++++ eapply m_now. eapply (@gen_spec_acc_nil_lts_not_nb_good P Q); eauto.
 Qed.
 
 Lemma must_gen_a_with_s {P Q : Type} `{
-  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
+  @gLtsObaFW P A H gLtsP gLtsEqP V, !FiniteImagegLts P A, @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A, @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc P Q co_of gen_acc} 
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   s (p : P) (hcnv : p ⇓ s) (q : Q):
 
-  (exists p', p ⟹[s] p' /\ lts_refuses p' τ /\ lts_acc_set_of p' ⊆ lts_acc_set_of q) 
-      \/ must p (gen_acc (elements (wt_refuses_set p s hcnv) , q) s).
+  (exists p', p ⟹[s] p' /\ lts_refuses p' τ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q) 
+      \/ must p (gen_acc ((oas p s hcnv) ∖ (pre_co_actions_of q)) s).
 Proof.
   revert p hcnv q.
   induction s as [|μ s'].
@@ -1385,32 +1378,31 @@ Proof.
     inversion hcnv as [| ? ? ? conv Hyp_conv]; subst.
     assert (hcnv0 : forall p', p' ∈ ps -> p' ⇓ s') by (intros ? mem%wt_set_mu_spec1; eauto).
     assert (he : ∀ p', p' ∈ ps ->
-     ((exists pr p0, p0 ∈ wt_refuses_set p' s' pr ∧ lts_acc_set_of p0 ⊆ lts_acc_set_of q) 
-             \/ (exists h, must p' (gen_acc (elements (wt_refuses_set p' s' h) , q) s')))).
+     ((exists pr p0, p0 ∈ wt_refuses_set p' s' pr ∧ pre_co_actions_of p0 ⊆ pre_co_actions_of q) 
+             \/ (exists h, must p' (gen_acc ((oas p' s' h) ∖ (pre_co_actions_of q)) s')))).
     + intros p' mem.
       destruct (IHs' p' (hcnv0 _ mem) q) as [(r & w & st & sub)| hm].
       ++ left. eapply wt_set_mu_spec1 in mem.
          exists (Hyp_conv _ mem), r. split; [eapply wt_refuses_set_spec2 |]; eauto.
       ++ right. eauto.
-      
     + destruct (exists_forall_in_gset ps _ _ he) as [Hyp | Hyp].
       ++ left. destruct Hyp
           as (p1 & ?%wt_set_mu_spec1 & ? & r & (? & ?)%wt_refuses_set_spec1 & ?).
          exists r. repeat split; eauto. eapply wt_push_left; eauto.
       ++ right. 
          assert (parallel_inter μ (co_of μ)) as inter.
-         eapply (@co_inter' P Q); eauto. exact (elements ps , q).
+         eapply (@co_inter' P Q); eauto. eauto. exact (⋃ map pre_co_actions_of (elements ps) ∖ (pre_co_actions_of q)).
          destruct (decide (non_blocking (co_of μ))) as [nb | not_nb]. 
          inversion hcnv; subst.
          +++ destruct (lts_oba_fw_forward p (co_of μ) μ) as (p' & l0 & l1); eauto.
-             assert (gen_acc (elements (wt_refuses_set p (μ :: s') hcnv) , q) (μ :: s')
-                   ⟶⋍[co_of $ μ] gen_acc (elements (wt_refuses_set p (μ :: s') hcnv) , q) s')
+             assert (gen_acc ((oas p (μ :: s') hcnv) ∖ (pre_co_actions_of q)) (μ :: s')
+                   ⟶⋍[co_of $ μ] gen_acc ((oas p (μ :: s') hcnv) ∖ (pre_co_actions_of q)) s')
             as (e' & hle' & heqe') by eapply gen_spec_mu_lts_co.
              eapply must_non_blocking_action_swap_l_fw; eauto.
              eapply (must_eq_client _ _ _ (symmetry heqe')).
              edestruct (Hyp p') as (? & hm).
              eapply wt_set_mu_spec2; eauto with mdb.
-             assert (oas p' s' x ∖ lts_acc_set_of q ⊆ oas p (μ :: s') hcnv ∖ lts_acc_set_of q).
+             assert (oas p' s' x ∖ pre_co_actions_of q ⊆ oas p (μ :: s') hcnv ∖ pre_co_actions_of q).
              eapply difference_mono_r.
              eapply union_wt_acceptance_set_subseteq; eauto with mdb.
              eapply must_f_gen_a_subseteq; eauto.
@@ -1418,22 +1410,22 @@ Proof.
              intros p' hw.
              edestruct (Hyp p') as (? & hm).
              eapply wt_set_mu_spec2; eauto.
-             assert ((oas p' s' x ∖ lts_acc_set_of q) ⊆ oas p (μ :: s') hcnv ∖ lts_acc_set_of q).
+             assert ((oas p' s' x ∖ pre_co_actions_of q) ⊆ oas p (μ :: s') hcnv ∖ pre_co_actions_of q).
              eapply difference_mono_r. 
              eapply union_wt_acceptance_set_subseteq; eauto with mdb.
              eapply must_f_gen_a_subseteq; eauto.
 Qed.
 
-Lemma not_must_gen_a_without_required_acc_set {P Q : Type} `{
-  gLtsP : @gLts P A H,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ V,
+Lemma not_must_gen_a_without_required_acc_set {(* P *) Q : Type} `{
+  gLtsP : @gLts P A H, @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ V, @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE W, !Good E A good, !gen_spec_acc P Q co_of gen_acc} 
 
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
   (q q' : Q) s (L : list P) :
 
-  q ⟹[s] q' -> q' ↛ -> ¬ must q (gen_acc (L , q') s).
+  q ⟹[s] q' -> q' ↛ -> ¬ must q (gen_acc ((⋃ map pre_co_actions_of L) ∖ (pre_co_actions_of q')) s).
 Proof.
   intros wt hst.
   dependent induction wt; intros hm. rename p into q.
@@ -1442,41 +1434,31 @@ Proof.
     ++ destruct ex as (t & l). inversion l; subst.
        +++ eapply (lts_refuses_spec2 q τ); eauto with mdb.
        +++ eapply lts_refuses_spec2, (@gen_spec_acc_nil_refuses_tau P Q); eauto.
-       +++ destruct (decide (non_blocking μ1)) as [nb1 | not_nb1]; 
-           destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
-           ++++ contradict nb1. 
-                eapply dual_blocks; eauto.
-           ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ' & eq' & In); eauto. subst.
-                assert (μ' = μ1). eapply (@co_inter_spec1' P Q);eauto. subst.
-                assert (lts_acc_set_of q μ1) as not_refuses.
-                assert ({q' : Q | q ⟶[μ1] q'}) as Hyp. eauto. 
-                eapply lts_refuses_spec2 in Hyp.
-                intro refuses. contradiction.
-                destruct In; simpl in *.
-                contradiction.
-           ++++ eapply lts_refuses_spec2, (@gen_spec_acc_nil_refuses_nb P Q); eauto.
-           ++++ eapply gen_spec_acc_nil_mu_inv in l2 as (μ' & eq' & In); eauto. subst.
-                assert (μ' = μ1). eapply (@co_inter_spec1' P Q); eauto. subst.
-                assert (lts_acc_set_of q μ1) as not_refuses.
-                assert ({q' : Q | q ⟶[μ1] q'}) as Hyp. eauto. 
-                eapply lts_refuses_spec2 in Hyp.
-                intro refuses. contradiction.
-                destruct In.
+       +++ destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
+           ++++ exfalso. eapply lts_refuses_spec2.
+                eauto. eapply (@gen_spec_acc_nil_refuses_nb P Q);eauto. 
+           ++++ eapply (@gen_spec_acc_nil_mu_inv P Q) in l2 as mem; eauto.
+                assert (𝝳 μ2 ∉ pre_co_actions_of q) as not_in_mem.
+                { set_solver. }
+                assert (𝝳 μ2 ∈ pre_co_actions_of q) as in_mem.
+                { eapply preactions_of_spec. exists μ1. repeat split; eauto.
+                eapply lts_refuses_spec2; eauto. symmetry in eq; eauto. }
                 contradiction.
   - eapply (IHwt hst), (must_preserved_by_lts_tau_srv p q _ hm l).
   - eapply (IHwt hst).
-    assert (gen_acc (L , t) (μ :: s) ⟶⋍[co_of μ]
-              gen_acc (L , t) s) as (e' & hle' & heqe')
+    assert (gen_acc ((⋃ map pre_co_actions_of L) ∖ (pre_co_actions_of t)) (μ :: s) ⟶⋍[co_of μ]
+              gen_acc ((⋃ map pre_co_actions_of L) ∖ (pre_co_actions_of t)) s) as (e' & hle' & heqe')
     by eapply gen_spec_mu_lts_co.
     eapply must_eq_client; eauto.
     inversion hm as [happy |]; subst.
     + now eapply gen_spec_ungood in happy.
-    + assert (parallel_inter μ (co_of μ)) as inter. eapply (@co_inter' P Q); eauto. eauto.
+    + assert (parallel_inter μ (co_of μ)) as inter. eapply (@co_inter' P Q); eauto. exact (⋃ map pre_co_actions_of L).
+      eauto.
 Qed.
 
 Lemma completeness2 {P Q : Type} `{
-  @gLtsObaFW P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A,
+  @gLtsObaFW P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A, @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A, @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
   @gLtsObaFB E A H gLtsE gLtsEqE VE, 
   !Good E A good, !gen_spec_acc P Q co_of gen_acc}
 
@@ -1493,9 +1475,9 @@ Proof.
 Qed.
 
 Lemma completeness_fw {P Q : Type} `{
-  @gLtsObaFW P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A, 
-  @gLtsObaFB E A H gLtsE gLtsEqE VE, !FiniteImagegLts E A, 
+  @gLtsObaFW P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A, @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
+  @gLtsObaFW Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A, @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
+  @gLtsObaFB E A H gLtsE gLtsEqE VE, !FiniteImagegLts E A,
   !Good E A good, !gen_spec_conv co_of gen_conv, !gen_spec_acc P Q co_f gen_acc}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
@@ -1503,6 +1485,32 @@ Lemma completeness_fw {P Q : Type} `{
 
   (p : P) (q : Q) : p ⊑ q -> p ≼ q.
 Proof. intros. split. now apply completeness1. now apply completeness2. Qed.
+
+(* From stdpp Require Import gmultiset.
+
+#[global] Program Instance PreActionForFW 
+  `{@PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts} 
+  : @PreExtAction A H (P * mb A) PreA PreA_eq PreA_countable 𝝳 (FW_gLts gLtsP) := 
+  {| pre_co_actions_of p := pre_co_actions_of p.1 ∪ dom (gmultiset_map 𝝳 (* (mb_without_not_nb *) p.2 (* ) *)) |}.
+Next Obligation.
+ intros. split.
+ - intro mem. destruct p as (p , m). destruct mem as (μ' & tr & duo & b).
+   eapply lts_refuses_spec1 in tr as (p' & tr). inversion tr; subst.
+   + eapply elem_of_union_l. simpl. eapply preactions_of_spec.
+     exists μ'. repeat split; eauto. eapply lts_refuses_spec2; eauto.
+   + destruct (decide (non_blocking μ')) as [nb | not_nb].
+     * eapply non_blocking_action_in_ms in nb; eauto. subst.
+       eapply elem_of_union_r. admit.
+     * eapply blocking_action_in_ms in not_nb as (eq & duo' & nb); eauto. subst.
+       symmetry in duo. eapply (nb_not_nb (co μ') μ) in nb ;eauto. contradiction.
+ - intro mem. destruct p as (p , m). eapply elem_of_union in mem. destruct mem as [p_co_act | multiset_co_act].
+   + simpl in p_co_act. eapply preactions_of_spec in p_co_act. destruct p_co_act as (μ' & tr & duo & b).
+     exists μ'. repeat split; eauto. eapply lts_refuses_spec2.
+     eapply lts_refuses_spec1 in tr as (p' & tr). exists (p' ▷ m).
+     eapply ParLeft. exact tr.
+   + admit.
+Admitted. *)
 
 Lemma completeness {P Q : Type} `{
   @gLtsObaFB P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A,
@@ -1517,6 +1525,9 @@ Lemma completeness {P Q : Type} `{
 
   `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
   `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (FW_gLts gLtsQ) gLtsE}
+
+  `{@PreExtAction A H (P * mb A) PreA PreA_eq PreA_countable 𝝳 (FW_gLts gLtsP)}
+  `{@PreExtAction A H (Q * mb A) PreA PreA_eq PreA_countable 𝝳 (FW_gLts gLtsQ)}
 
   `{!gen_spec_conv co_of gen_conv, !gen_spec_acc (P * mb A) (Q * mb A) co_of gen_acc}
 
