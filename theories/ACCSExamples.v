@@ -1,9 +1,11 @@
-From Must Require Import ACCSInstance TransitionSystems Coin Termination
+From Must Require Import ACCSInstance TransitionSystems Coin_tower Termination
                          Must Completeness Soundness Equivalence.
 From stdpp Require Import strings sets gmap base gmultiset.
 From Coq Require Import Relations.
 From Coq Require Import Program.Equality.
 From Must Require Import Must.
+From Coinduction Require Import all.
+
 
 
 Ltac lts_inversion := Termination.lts_inversion lts; try discriminate.
@@ -141,28 +143,28 @@ Qed.
 Example q_terminate : forall M, (!"a" ∥ (τ⋅ !"b" ⊕  τ⋅ !"c") ▷ M) ⤓.
 Proof. intro M. term_tac. Qed.
 
-Lemma choice_copre_l p q: forall (M : mb name) X,
-  {[τ⋅ p ⊕ τ⋅ q ▷ M]} ∪ X ⩽ p ▷ M.
+Lemma choice_copre_l (p q : proc) : forall (PRE : Chain (copre_m (LtsP := MbLts))) (M : mb name) X,
+  elem PRE ({[τ⋅ p ⊕ τ⋅ q ▷ M]} ∪ X) (p ▷ M).
 Proof.
-intros M X. eapply c_tau.
-- apply coin_union_l, coin_refl.
+intros PRE M X. eapply c_tau_.
+- change (copre_ ?a ?b ?c) with (copre_m a b c); apply coin_union_l, coin_refl.
 - constructor. apply lts_choiceL. constructor.
 Qed.
 
-Lemma choice_copre_r p q: forall (M : mb name) X,
-  {[τ⋅ p ⊕ τ⋅ q ▷ M]} ∪ X ⩽ q ▷ M.
+Lemma choice_copre_r p q: forall (PRE : Chain (copre_m (LtsP := MbLts))) (M : mb name) X,
+  elem PRE ({[τ⋅ p ⊕ τ⋅ q ▷ M]} ∪ X) (q ▷ M).
 Proof.
-intros M X. eapply c_tau.
-- apply coin_union_l, coin_refl.
+intros PRE M X. eapply c_tau_.
+- change (copre_ ?a ?b ?c) with (copre_m a b c); apply coin_union_l, coin_refl.
 - constructor. apply lts_choiceR. constructor.
 Qed.
 
-Lemma choice_copre_rev p q: forall M X,
-  {[ (p ▷ M); (q ▷ M) ]} ∪ X ⩽ τ⋅ p ⊕ τ⋅ q ▷ M.
+Lemma choice_copre_rev (p q : proc) : forall (PRE : Chain (copre_m (LtsP := MbLts))) M X,
+  elem PRE ({[ (p ▷ M); (q ▷ M) ]} ∪ X) (τ⋅ p ⊕ τ⋅ q ▷ M).
 Proof.
-cofix hco.
-intros. split.
-- clear hco. intros (q', M') l.
+  intro PRE; apply tower; clear PRE; [ intros P HP ????; eapply HP; eauto | ].
+  intros PRE CIH M X; split.
+- intros (q', M') l.
   inversion_clear l.
   + repeat lts_inversion; apply coin_elem_of; set_tac.
   + repeat lts_inversion.
@@ -172,8 +174,8 @@ intros. split.
 - intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
   + repeat lts_inversion.
   + rewrite (union_difference_L {[p ▷ m; q ▷ m ]} ps').
-    * apply hco.
-    * clear hco.
+    * apply CIH.
+    * 
       intros p' mem%elem_of_union.
       destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
       -- apply Hw with (p ▷ {[+ a +]} ⊎ m). set_tac.
@@ -181,14 +183,14 @@ intros. split.
       -- apply Hw with (q ▷ {[+ a +]} ⊎ m). set_tac.
          eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
   + rewrite (union_difference_L {[p ▷ {[+ a +]} ⊎ M; q ▷ {[+ a +]} ⊎ M]} ps').
-    apply hco. clear hco.
+    apply CIH.
     intros p' mem%elem_of_union.
     destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
     * apply Hw with (p ▷ M). set_tac.
       eapply wt_act. apply lts_fw_inp_mb. apply wt_nil.
     * eapply Hw with (q ▷ M). set_tac.
       eapply wt_act. eapply lts_fw_inp_mb. eapply wt_nil.
-- clear hco. intros Ht. constructor. intros (q', M') l.
+- intros Ht. constructor. intros (q', M') l.
   inversion l; subst; repeat lts_inversion; apply Ht; set_tac.
 Qed.
 
@@ -272,12 +274,14 @@ induction p using proc_gproc_ind with
   apply cgr_choice_trans; assumption.
 Qed.
 
+About c_tau.
 
 Example code_hoisting_outputs : forall (M : mb name) X,
     {[ τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M ]} ∪ X
       ⩽ !"a" ∥ (τ⋅ !"b" ⊕ τ⋅ !"c") ▷ M.
 Proof.
-cofix hco.
+  unfold copre.
+  coinduction PRE CIH.
 intros M X. split.
 - intros q l. repeat lts_inversion.
   + apply choice_copre_l.
@@ -287,6 +291,7 @@ intros M X. split.
   exists (!"a" ∥ !"b" ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
 - intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
   + repeat lts_inversion.
+
     eapply h2.
     -- etrans. eapply t_step. eapply cgr_par_nil_rev.
        etrans. eapply t_step. eapply cgr_par_com. reflexivity.
