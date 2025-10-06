@@ -21,7 +21,7 @@
  (name must-testing)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends dune coq-stdpp)
+ (depends dune coq-stdpp coq-coinduction)
  (tags
   (topics "to describe" your project)))
 
