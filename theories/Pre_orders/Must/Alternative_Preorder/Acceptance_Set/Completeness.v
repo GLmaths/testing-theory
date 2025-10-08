@@ -855,15 +855,15 @@ Proof.
 Qed.
 
 Lemma union_acceptance_set_lts_tau_subseteq
-  `{gLtsP : @gLts P A H, FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
+  `{gLtsP : @gLts P A H, !FiniteImagegLts P A, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
   s p q h1 h2 :
   p ⟶ q -> oas q s h1 ⊆ oas p s h2.
 Proof.
   intros l a (L & mem1 & mem2)%elem_of_union_list.
   eapply elem_of_union_list.
   exists L. split; eauto.
-  (* eapply lts_tau_acceptance_set_subseteq; eauto. *) (* probleme de typage *)
-Admitted.
+  eapply lts_tau_acceptance_set_subseteq; eauto.
+Qed.
 
 Lemma aft_not_nb_co_of_must_gen_acc {P Q : Type} `{
   gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
