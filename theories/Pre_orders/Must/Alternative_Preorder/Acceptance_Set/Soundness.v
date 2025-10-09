@@ -363,9 +363,9 @@ Proof.
   induction ps using set_ind_L.
   - set_solver.
   - destruct (set_choose_or_empty X).
-    eapply mx_sum; set_solver.
-    assert (X = ∅) by set_solver.
-    rewrite H3, union_empty_r_L. set_solver.
+    + eapply mx_sum; set_solver.
+    + assert (X = ∅) by set_solver.
+      rewrite H3, union_empty_r_L. set_solver.
 Qed.
 
 Lemma wt_nil_mx `{
