@@ -3199,3 +3199,22 @@ Proof.
     eapply wt_s_set_from_pset_xs_ispec.
     eapply elem_of_elements; eassumption. eassumption.
 Qed.
+
+(* wt_set_from_pset_spec is a functional relation.
+  in particular, ps' can be built from wt_set_from_pset_spec *)
+  Lemma wt_set_from_pset_spec_unique `{FiniteLts A L} ps s ps' ps'' :
+    wt_set_from_pset_spec ps s ps' ->
+    wt_set_from_pset_spec ps s ps'' -> ps' ≡ ps''.
+  Proof.
+    intros [H1' H2'] [H1'' H2'']. apply set_equiv. intro x; split; intro Hin.
+    - destruct (H1' _ Hin) as (p & Hinp & Hp). eapply H2''; eauto.
+    - destruct (H1'' _ Hin) as (p & Hinp & Hp). eapply H2'; eauto.
+  Qed.
+  
+  Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{Lts A L, !FiniteLts A L}
+  (ps : gset A) s ps' (hcnv : forall p, p ∈ ps -> p ⇓ s) :
+  wt_set_from_pset_spec ps s ps' -> ps' ≡ wt_s_set_from_pset ps s hcnv.
+  Proof.
+    intro Hps'.
+    eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
+  Qed.

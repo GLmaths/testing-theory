@@ -243,14 +243,32 @@ Proof.
 Qed.
 
 Lemma wt_set_union `{FiniteLts A L} (X1 X2 : gset A) (s : trace L) {ps}
+  (Hcnv : ∀ p : A, p ∈ X1 ∪ X2 → p ⇓ s)
   : wt_set_from_pset_spec (X1 ∪ X2) s ps
     -> exists ps1 ps2, wt_set_from_pset_spec X1 s ps1
                  /\ wt_set_from_pset_spec X2 s ps2
-                 /\ (ps = ps1 ∪ ps2) .
+                 /\ (ps ≡ ps1 ∪ ps2) .
 Proof.
-  intros [w1 w2].
-  unfold wt_set_from_pset_spec1 in w1.
-  unfold wt_set_from_pset_spec2 in w2.
+  intros [Hw1 Hw2].
+  assert(Hcnv1 : ∀ p : A, p ∈ X1 → p ⇓ s) by (intros; apply Hcnv; set_solver).
+  assert(Hcnv2 : ∀ p : A, p ∈ X2 → p ⇓ s) by (intros; apply Hcnv; set_solver).
+  exists (wt_s_set_from_pset X1 s Hcnv1).
+  exists (wt_s_set_from_pset X2 s Hcnv2).
+  do 2 (split; [apply wt_s_set_from_pset_ispec|]).
+  apply set_equiv. intro x; split; intro Hin.
+  - destruct (Hw1 _ Hin) as (p & Hinp%elem_of_union & Hp).
+    destruct Hinp as [Hin1 | Hin2].
+    + eapply elem_of_union_l, wt_s_set_from_pset_ispec; eauto.
+    + eapply elem_of_union_r, wt_s_set_from_pset_ispec; eauto.
+  - rewrite elem_of_union in Hin.
+    destruct Hin as [Hin | Hin];
+    apply wt_s_set_from_pset_ispec in Hin as (p & Hin & Hp);
+    eapply Hw2; eauto; set_solver.
+Qed.
+
+Global Instance Proper_elem `{FiniteLts A L} {PRE : Chain copre_m} :
+  Proper ((≡) ==> (=) ==> (iff)) (elem PRE).
+Proof.
 Admitted.
 
 Lemma coin_union_l `{FiniteLts A L} {PRE : Chain copre_m}
@@ -268,7 +286,7 @@ Proof.
       exists p, p'; split; eauto.
       now apply elem_of_union_l.
     + intros μ q' ps' hp hqq' hps'.
-      destruct (wt_set_union _ _ _ hps') as [ ps1 [ ps2 [ h1 [ h2 -> ] ] ] ].
+      destruct (wt_set_union _ _ _ hp hps') as [ ps1 [ ps2 [ h1 [ h2 -> ] ] ] ].
       apply CIH.
       eapply h.(c_step_); [ | exact hqq' | exact h1 ].
       intros p i; now apply hp, elem_of_union_l.
@@ -292,7 +310,7 @@ Proof.
       exists p, p'; split; eauto.
       now apply elem_of_union_r.
     + intros μ q' ps' hp hqq' hps'.
-      destruct (wt_set_union _ _ _ hps') as [ ps1 [ ps2 [ h1 [ h2 -> ] ] ] ].
+      destruct (wt_set_union _ _ _ hp hps') as [ ps1 [ ps2 [ h1 [ h2 -> ] ] ] ].
       apply CIH.
       eapply h.(c_step_); [ | exact hqq' | exact h2 ].
       intros p i; now apply hp, elem_of_union_r.
