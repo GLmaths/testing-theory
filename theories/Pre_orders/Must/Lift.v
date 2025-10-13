@@ -90,16 +90,16 @@ Proof.
       eapply good_preserved_by_lts_non_blocking_action; eauto.
     + destruct ex as ((p' & e') & l).
       inversion l; subst.
-      destruct lp as (p0 & hlp0 & heqp0).
-      ++ destruct (lts_oba_non_blocking_action_tau nb hlp0 l0) as [(t & l1 & l2) | m].
-         +++ edestruct (eq_spec p2 t τ) as (p2' & hlp2' & heqp2').
-             exists p0. split. now symmetry. eassumption.
-             exists (p2', e1). eapply ParLeft; eauto.
-         +++ destruct m as (μ & duo &  p2' & hl & heq).
-             destruct le as (e0 & hle0 & heqe0). 
-             edestruct (eq_spec p2 p2' (ActExt $ μ)) as (p3 & hlp3 & heqp3).
-             exists p0. split. now symmetry. eassumption.
-             exists (p3, e0). eapply ParSync; eauto.
+      ++ destruct lp as (p0 & hlp0 & heqp0).
+         destruct (lts_oba_non_blocking_action_tau nb hlp0 l0) as [(t & l1 & l2) | m].
+           +++ edestruct (eq_spec p2 t τ) as (p2' & hlp2' & heqp2').
+               exists p0. split. now symmetry. eassumption.
+               exists (p2', e1). eapply ParLeft; eauto.
+           +++ destruct m as (μ & duo &  p2' & hl & heq).
+               destruct le as (e0 & hle0 & heqe0). 
+               edestruct (eq_spec p2 p2' (ActExt $ μ)) as (p3 & hlp3 & heqp3).
+               exists p0. split. now symmetry. eassumption.
+               exists (p3, e0). eapply ParSync; eauto.
       ++ destruct le as (e0 & hle0 & heqe0).
          edestruct (eq_spec e0 e' τ) as (e3 & hle3 & heqe3).
          exists e2. split. now symmetry. eassumption.
