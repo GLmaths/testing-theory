@@ -247,7 +247,7 @@ Lemma wt_set_union `{FiniteLts A L} (X1 X2 : gset A) (s : trace L) {ps}
   : wt_set_from_pset_spec (X1 ∪ X2) s ps
     -> exists ps1 ps2, wt_set_from_pset_spec X1 s ps1
                  /\ wt_set_from_pset_spec X2 s ps2
-                 /\ (ps ≡ ps1 ∪ ps2) .
+                 /\ (ps = ps1 ∪ ps2) .
 Proof.
   intros [Hw1 Hw2].
   assert(Hcnv1 : ∀ p : A, p ∈ X1 → p ⇓ s) by (intros; apply Hcnv; set_solver).
@@ -255,6 +255,7 @@ Proof.
   exists (wt_s_set_from_pset X1 s Hcnv1).
   exists (wt_s_set_from_pset X2 s Hcnv2).
   do 2 (split; [apply wt_s_set_from_pset_ispec|]).
+  apply leibniz_equiv.
   apply set_equiv. intro x; split; intro Hin.
   - destruct (Hw1 _ Hin) as (p & Hinp%elem_of_union & Hp).
     destruct Hinp as [Hin1 | Hin2].
@@ -269,7 +270,9 @@ Qed.
 Global Instance Proper_elem `{FiniteLts A L} {PRE : Chain copre_m} :
   Proper ((≡) ==> (=) ==> (iff)) (elem PRE).
 Proof.
-Admitted.
+  intros ?? HX ?? <-.
+  now rewrite (leibniz_equiv _ _ HX).
+Qed.
 
 Lemma coin_union_l `{FiniteLts A L} {PRE : Chain copre_m}
   : forall (X1 X2 : gset A) (q : A), elem PRE X1 q -> elem PRE (X1 ∪ X2) q.
