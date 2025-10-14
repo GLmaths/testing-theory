@@ -554,18 +554,81 @@ Global Instance symmetric_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq
  Symmetric eq_rel_set.
 Proof. intros x y. unfold eq_rel_set. intuition. Qed.
 
+Global Instance reflexive_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+ Reflexive eq_rel_set.
+Proof. intro X; split; intros x Hx; exists x; intuition. Qed.
+
+Global Instance equiv_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+ Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
+Proof.
+intros X X' HX Y Y' HY Heq. split; intros x Hx.
+- apply HX, Heq in Hx as (y & Hy & Heq'). apply HY in Hy. eauto.
+- apply HY, Heq in Hx as (y & Hy & Heq'). apply HX in Hy. eauto.
+Qed.
+
+Global Instance eq_rel_set_union `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+  Proper ((eq_rel_set) ==> (eq_rel_set) ==> (eq_rel_set)) union.
+Proof.
+intros X X' HX Y Y' HY.
+split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
+ (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
+Qed.
+(*
+Lemma wt_s_set_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+  forall {X X' : list A} {s} hcnv hcnv',
+ ((forall x, x ∈ X -> exists y, y ∈ X' ∧ eq_rel x y) ∧
+ (forall y, y ∈ X' -> exists x, x ∈ X ∧ eq_rel y x)) ->
+  eq_rel_set (wt_s_set_from_pset_xs X s hcnv) (wt_s_set_from_pset_xs X' s hcnv').
+Proof.
+induction X as [|p X]; intros X' s hcnv hcnv' [Heq1 Heq2]; simpl.
+- destruct X' as [|p' X'].
+  + reflexivity.
+  + exfalso. destruct (Heq2 p') as (x & Hx & _); [auto with *|]. inversion Hx.
+- destruct (Heq1 p) as (p' & Hp' & Heq); [auto with *|].
+  pose (X'' := remove lts_state_eqdec p' X').
+  apply eq_rel_set_union.
+  + admit.
+  + eapply IHX. split; intros x Hx.
+    * destruct (Heq1 x) as (y & Hy & Heq); [auto with *|].
+      exists y.
+apply Heq1.
+rewrite IHX.
+unfold wt_s_set_from_pset, wt_s_set_from_pset_xs.
+fold wt_s_set_from_pset_xs.
+wt_s_set_from_pset_xs
+*)
 
 Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
-  forall {X X' s Y}, eq_rel_set X X' -> wt_set_from_pset_spec X s Y
+  forall {X X' s Y}, eq_rel_set X X' -> (∀ p : A, p ∈ X → p ⇓ s) ->
+  wt_set_from_pset_spec X s Y
   -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
 Proof.
-Admitted.
+intros X X' s Y HXX' Hcnv Hwt.
+assert (hcnv' : ∀ p : A, p ∈ X' → p ⇓ s). {
+  intros p Hp. apply HXX' in Hp as (p' & Hp' & Heqp').
+  rewrite Heqp'. now apply Hcnv.
+}
+unshelve eexists (wt_s_set_from_pset X' s hcnv').
+assert(Hps' := wt_s_set_from_pset_ispec X' s hcnv').
+split; trivial. split.
+- intros x Hx. apply Hwt in Hx as (p & Hin & Hp).
+  apply HXX' in Hin as (x' & Hx' & Heq').
+  eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
+  exists y; split; trivial. eapply Hps'; eauto. now symmetry.
+- intros x Hx. apply Hps' in Hx as (p & Hin & Hp).
+  apply HXX' in Hin as (x' & Hx' & Heq').
+  eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
+  exists y; split; trivial. eapply Hwt; eauto. now symmetry.
+Qed.
+
 
 Global Instance Proper_eq_rel_set_l `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
   Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
 Proof.
-Admitted.
-
+intros p p' HX ???; subst. apply eq_rel_set_union; trivial.
+split; setoid_rewrite elem_of_singleton;
+intros x Hx; subst; eexists; split; trivial. now symmetry.
+Qed.
 
 
 Global Instance copre_eq_rel_l `{TransitionSystems.LtsOba A L} `{!FiniteLts A L}
@@ -586,11 +649,12 @@ Proof.
         apply eq_spec_wt with (p' := p'') in hpp' as (r & Hr & Heqr); trivial.
         exists p''; exists r; repeat split; trivial; now rewrite Heqr.
     + intros μ q' ps' hμ hqq' w.
-      apply (wt_set_from_pset_spec_eq_rel_set (symmetry hXX')) in w as (ps'' & Heqps' & HXps'').
+      apply (wt_set_from_pset_spec_eq_rel_set (symmetry hXX')) in w
+        as (ps'' & Heqps' & HXps''); [|trivial].
       apply CIH with ps''; [now symmetry|].
       eapply h.(c_step_); eauto.
       intros p Hp. apply hXX' in Hp as (p'' & Hin & Heqp'').
-      eapply cnv_preserved_by_eq; [apply symmetry, Heqp''|auto with *].
+      rewrite Heqp''; auto with *.
     + intros Ht.
       apply h.(c_cnv_); intros p0 Hin.
       apply hXX' in Hin as (p'' & Hin & Heqp'').
