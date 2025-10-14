@@ -399,16 +399,32 @@ Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
 (* Class of preactions.
   Each state can only reduce for finitely many preactions *)
-Class PreExtAction `{H : ExtAction A} {P : Type} `{Countable PreAct} {𝝳 : A → PreAct} (LtsP : @gLts P A H):=
-  MkPreExtAction {
-      pre_co_actions_of : P -> gset PreAct; (* finite subset_of A *) 
 
-      preactions_of_spec (μ : A) (p : P) : μ ∈ co_actions_of p <-> (𝝳 μ) ∈ (pre_co_actions_of p) ;
+
+(********************************** Infinite Branching Lts to Finite Branching Lts **********************)
+Class AbsAction `{H : ExtAction A} {E FinA : Type} (LtsE : @gLts E A H) (Φ : A → FinA) :=
+  MkAbsAction {
+    abstraction_test_spec μ μ' e : (Φ μ) = (Φ μ') -> ¬ e ↛[ μ ] -> ¬ e ↛[ μ' ]
+  }.
+
+
+(********************************** PreCoAct modulo Finite Branching Lts on Test **********************)
+Class PreExtAction `{H : ExtAction A} {P FinA: Type} `{Countable PreAct} 
+  {𝝳 : FinA → PreAct} {Φ : A → FinA} (LtsP : @gLts P A H) :=
+  MkPreExtAction {
+      pre_co_actions_of_fin : P -> FinA -> Prop ;
+
+      preactions_of_fin_test_spec1 (μ : A) (p : P) : μ ∈ co_actions_of p -> (Φ μ) ∈ (pre_co_actions_of_fin p);
+      preactions_of_fin_test_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) 
+            -> ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Φ μ');
+
+      pre_co_actions_of : P -> gset PreAct;
+      preactions_of_spec (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) <-> (𝝳 pre_μ) ∈ (pre_co_actions_of p);
   }.
 
 Definition bhv_pre_cond2 `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 LtsQ}
+  LtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
   (p : P) (q : Q) :=
   forall s q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
@@ -417,8 +433,8 @@ Definition bhv_pre_cond2 `{
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
 
 Definition bhv_pre `{PreA_countable : Countable PreA} `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction A _ P PreA _ _ 𝝳 LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A _ Q PreA _ _ 𝝳 LtsQ}
+  LtsP : @gLts P A H, PreAP : @PreExtAction A _ P FiniteA PreA _ _ 𝝳 Φ LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A _ Q FiniteA PreA _ _ 𝝳 Φ LtsQ}
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
 

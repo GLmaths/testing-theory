@@ -39,7 +39,7 @@ From Must Require Import ActTau.
 (** Test generators specification. **)
 
 Class gen_spec (* {E A : Type} *)
-  `{gLts E A, !gLtsEq E A, !Good E A good}
+  `{gLts E A, !gLtsEq E A, AbPE : @AbsAction A H E FinA gLtsE Φ, !Good E A good}
   (co_of : A -> A) (gen : list A -> E) := {
             co_inter μ : parallel_inter μ (co_of μ);
                 (* co_of μ interract with μ *)
@@ -67,7 +67,7 @@ Class gen_spec (* {E A : Type} *)
   }.
 
 Lemma co_of_inj `{
-  gLts E A, !gLtsEq E A, !Good E A good, !gen_spec co_of f}
+  gLts E A, !gLtsEq E A, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f}
   μ μ' :
   co_of μ = co_of μ' -> μ = μ'.
 Proof.
@@ -77,7 +77,7 @@ Proof.
 Qed.
 
 Lemma co_co_is_id `{
-  gLts E A, !gLtsEq E A, !Good E A good, !gen_spec co_of f} 
+  gLts E A, !gLtsEq E A, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   μ :
   μ = co_of (co_of μ).
 Proof.
@@ -87,7 +87,7 @@ Proof.
 Qed.
 
 Lemma co_is_co_of_nb `{
-  gLts E A, !gLtsEq E A, !Good E A good, !gen_spec co_of f} 
+  gLts E A, !gLtsEq E A, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   μ :
   non_blocking (co_of μ) -> co_of μ = co μ.
 Proof.
@@ -97,7 +97,7 @@ Proof.
 Qed.
 
 Lemma co_of_is_co_nb `{
-  gLts E A, !gLtsEq E A, !Good E A good, !gen_spec co_of f} 
+  gLts E A, !gLtsEq E A, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   μ :
   non_blocking (co μ) -> dual (co μ) μ -> co_of μ = co μ.
 Proof.
@@ -111,7 +111,7 @@ Proof.
 Qed.
 
 Lemma gen_spec_determinacy `{
-  gLtsOba E A, !Good E A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   μ1 s e:
   f (μ1 :: s) ⟶[co_of μ1] e -> e ⋍ f s.
 Proof.
@@ -124,7 +124,7 @@ Proof.
 Qed.
 
 Class gen_spec_conv
-  `{gLts E A, ! gLtsEq E A, !Good E A good}
+  `{gLts E A, AbP : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good}
   (co_of : A -> A) (gen_conv : list A -> E) := {
     gen_conv_spec_gen_spec : gen_spec co_of gen_conv ;
     (* c1 *) gen_spec_conv_nil_refuses_mu μ : gen_conv ε ↛[μ] ;
@@ -138,16 +138,15 @@ Definition union_of_co_actions_without `{gLts P A} `{gLts Q A}
   (p_L : list P * Q) := (⋃ map co_actions_of p_L.1) ∖ (co_actions_of p_L.2).
 
 Definition union_of_pre_co_actions_without 
-  `{LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
-  `{LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
+  `{LtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (p_L : list P * Q) := ⋃ map pre_co_actions_of p_L.1 ∖ (pre_co_actions_of p_L.2).
 
 Class gen_spec_acc
-  (* ! FiniteImagegLts P A *)
   (P : Type) (Q : Type)
-  `{LtsP : @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP}
-  `{LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ}
-  `{@gLts E A H, ! gLtsEq E A, !Good E A good}
+  `{LtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  `{@gLts E A H, AbP : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good}
   (co_of : A -> A) (gen_acc : gset PreA -> list A -> E) 
 
     := {
@@ -158,10 +157,10 @@ Class gen_spec_acc
                 non_blocking η -> gen_acc L ε ↛[η] ;
   (* t3-> *) gen_spec_acc_nil_mu_inv (L : gset PreA) μ e : 
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e
-                    -> (𝝳 μ) ∈ L ;
+                    -> (𝝳 (Φ μ)) ∈ L ;
   (* t3<- *) gen_spec_acc_nil_mem_lts_inp (L : gset PreA) pη : 
                 pη ∈ L -> (* ∃ r, gen_acc L ε ⟶[co_of η] r ; *)
-                ∃ r μ, gen_acc L ε ⟶[μ] r /\ (𝝳 μ = pη);
+                ∃ r μ, gen_acc L ε ⟶[μ] r /\ (𝝳 (Φ μ) = pη);
     (* t4 *) gen_spec_acc_nil_lts_not_nb_good μ e' (L : gset PreA) : 
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e' -> good e' ;
   }.
@@ -169,9 +168,9 @@ Class gen_spec_acc
 #[global] Existing Instance gen_acc_spec_gen_spec.
 
 Lemma co_inter' {P Q : Type} `{
-  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
-  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
-  @gLts E A H, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
+  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
+  @gLts E A H, AbE : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
   `{L : gset PreA}
   μ :
   parallel_inter μ (co_of μ).
@@ -180,9 +179,9 @@ Proof.
 Qed.
 
 Lemma co_inter_spec1' {P Q : Type} `{
-  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
-  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
-  @gLts E A H, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
+  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
+  @gLts E A H, AbE : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
   `{L : gset PreA}
   μ μ' :
   parallel_inter μ' (co_of μ)
@@ -192,9 +191,9 @@ Proof.
 Qed.
 
 Lemma co_of_inj' {P Q : Type}  `{
-  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
-  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
-  @gLts E A H, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
+  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
+  @gLts E A H, AbE : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
   `{L : gset PreA}
   μ μ' :
   co_of μ = co_of μ' -> μ = μ'.
@@ -203,9 +202,9 @@ Proof.
 Qed.
 
 Lemma co_co_is_id' {P Q : Type}  `{
-  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
-  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
-  @gLts E A H, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
+  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
+  @gLts E A H, AbE : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc}
   `{L : gset PreA}
   μ :
   μ = co_of (co_of μ).
@@ -214,9 +213,9 @@ Proof.
 Qed.
 
 Lemma co_is_co_of_nb' {P Q : Type}  `{
-  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
-  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
-  @gLts E A H, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc }
+  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
+  @gLts E A H, AbE : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc }
   `{L : gset PreA}
   μ :
   non_blocking (co_of μ) -> co_of μ = co μ.
@@ -225,9 +224,9 @@ Proof.
 Qed.
 
 Lemma co_of_is_co_nb' {P Q : Type}  `{
-  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P PreA PreA_eq PreA_countable 𝝳 gLtsP,
-  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q PreA PreA_eq PreA_countable 𝝳 gLtsQ,
-  @gLts E A H, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc }
+  gLtsP: @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ: @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
+  @gLts E A H, AbE : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good, !gen_spec_acc P Q co_of gen_acc }
   `{L : gset PreA}
   μ :
   non_blocking (co μ) -> dual (co μ) μ -> co_of μ = co μ.
@@ -238,7 +237,7 @@ Qed.
 (* Facts about test generators. *)
 
 Lemma gen_conv_always_reduces `{
-  gLtsOba E A, !Good E A good, !gen_spec_conv co_of gen_conv} s :
+  @gLtsOba E A H gLtsE gLtsEqE, AbE : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec_conv co_of gen_conv} s :
   ∃ e, gen_conv s ⟶ e.
 Proof.
   induction s as [|μ s'].
@@ -254,7 +253,7 @@ Qed.
 
 Lemma terminate_must_test_conv_nil `{
   gLtsP : gLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
+  gLtsE : !gLts E A, AbE : @AbsAction A H E FinA gLtsE Φ, !gLtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -275,7 +274,7 @@ Qed.
 
 Lemma must_gen_conv_wta_mu `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Good E A good, ! gen_spec_conv co_of gen_conv}
+  gLtsE : ! gLts E A, AbE : @AbsAction A H E FinA gLtsE Φ, ! gLtsEq E A, !Good E A good, ! gen_spec_conv co_of gen_conv}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -299,7 +298,7 @@ Qed.
 
 Lemma cnv_if_must `{
   gLtsP : gLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
+  gLtsE : !gLts E A, AbE : @AbsAction A H E FinA gLtsE Φ, !gLtsEq E A, !Good E A good, !gen_spec_conv co_of gen_conv}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -316,7 +315,7 @@ Proof.
 Qed.
 
 Lemma f_gen_lts_mu_in_the_middle `{
-  gLtsOba P A, !Good P A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   s1 s2 μ:
   Forall exist_co_nba s1
     -> f (s1 ++ μ :: s2) ⟶⋍[co_of μ] f (s1 ++ s2).
@@ -341,7 +340,7 @@ Proof.
 Qed.
 
 Lemma f_gen_lts_mu_in_the_middle' `{
-  gLtsOba P A, !Good P A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   s1 s2 μ p:
   Forall exist_co_nba s1
     -> f (s1 ++ μ :: s2) ⟶⋍[co_of μ] p -> p ⋍ f (s1 ++ s2).
@@ -397,7 +396,7 @@ Qed.
 
 
 Lemma side_effect_by_blocking_action `{
-  gLtsOba P A, !Good P A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   s μ μ' e:
   ¬ non_blocking (co_of μ) -> f (μ :: s) ⟶[μ'] e -> ¬ non_blocking μ'.
 Proof.
@@ -414,7 +413,7 @@ Proof.
 Qed.
 
 Lemma f_gen_lts_mu_in_the_middle_not_nb_or_neq `{
-  gLtsOba P A, !Good P A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   s1 s2 μ μ' e:
   Forall exist_co_nba s1 -> ¬ non_blocking (co_of μ) -> μ' ≠ co_of μ -> ¬ non_blocking μ'
     -> f (s1 ++ μ :: s2) ⟶[μ'] e -> good e.
@@ -442,7 +441,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_mu_not_nb `{
-  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   s μ' p :
   (forall μ, f ε ↛[μ] \/ (forall e, f ε ⟶[μ] e -> good e)) ->
   f s ⟶[μ'] p ->
@@ -489,7 +488,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_mu_nb `{
-  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   s μ p :
   (forall μ, f ε ↛[μ] \/ (forall e, f ε ⟶[μ] e -> good e)) ->
   f s ⟶[μ] p ->
@@ -505,7 +504,7 @@ Proof.
     as (s & Hlength) using
          (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
   destruct s as [|ν s']; intros μ p h l nb.
-  - edestruct (h μ); eauto. now eapply lts_refuses_spec2 in H0; eauto.
+  - edestruct (h μ) as [Tr|]; eauto. now eapply lts_refuses_spec2 in Tr; eauto.
   - (* destruct (decide (non_blocking ν)) as [nb'| not_nb']. *)
     + edestruct (gen_spec_mu_lts_co ν s') as (r & hlr & heqr).
       destruct (decide (co_of ν = μ)) as [eq | not_eq].
@@ -541,7 +540,7 @@ Proof.
 Qed.
 
 Lemma inversion_gen_mu `{
-  M1 : gLtsOba E A, !Good E A good, !gen_spec co_of f} 
+  @gLtsOba E A H gLtsE gLtsEqE, AbP : @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec co_of f} 
   s μ p :
   (forall μ, f ε ↛[μ] \/ (forall e, f ε ⟶[μ] e -> good e)) ->
   f s ⟶[μ] p ->
