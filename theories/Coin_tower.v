@@ -274,6 +274,49 @@ Proof.
   now rewrite (leibniz_equiv _ _ HX).
 Qed.
 
+Global Instance Proper_lts_outputs `{TransitionSystems.LtsOba A L}:
+  Proper ((eq_rel) ==> (=)) lts_outputs.
+Proof.
+  intros μ μ' Heq. apply leibniz_equiv.
+  intros x. do 2 rewrite <- lts_oba_mo_spec1. now erewrite lts_oba_mo_eq; eauto.
+Qed.
+
+Global Instance Proper_lts_stable `{TransitionSystems.LtsOba A L}:
+  Proper ((eq_rel) ==> (=) ==> (impl)) lts_stable.
+Proof.
+  intros p p' Heq α α' ? Hs; subst α'.
+  case (decide (lts_stable p' α)); trivial. intro Hf.
+  apply lts_stable_spec1 in Hf as (q & Hq).
+  destruct (eq_spec p q α) as (r & Hr & Heqr).
+  - eexists; split; eauto.
+  - contradict Hs. apply lts_stable_spec2. eexists; eauto.
+Qed.
+
+(* In the case of a Lts with equivalence relation, the right hand side can also
+  be rewritten *)
+Global Instance Proper_eq_rel `{FiniteLts A L} `{!LtsEq A L}
+  `{!TransitionSystems.LtsOba A L} {PRE : Chain copre_m}: 
+  Proper ((≡) ==> (eq_rel) ==> (impl)) (elem PRE).
+Proof.
+  intros ?? HX ?? Heq. rewrite (leibniz_equiv _ _ HX). clear x HX.
+  revert x0 y0 Heq y.
+  apply tower; clear PRE.
+  - intros P HP h x0 y0 y Heq R HR; simpl in *; eapply HP; eauto. now apply Heq.
+  - intros Hc Heq x0 y0 Hequiv y h. constructor.
+    + intros q Hq.
+      destruct (eq_spec x0 q τ) as (r & Hr & Heqr).
+      * exists y0. split; trivial.
+      * eapply Heq; eauto. now apply h.
+    + intros hp hq. apply h.(c_now_) in hp as (p & p' & Hin & Hpp' & Hs' & Hinc).
+      * exists p; exists p'. now setoid_rewrite <- Hequiv.
+      * now setoid_rewrite Hequiv.
+    + intros μ q' ps' Hcnv Hq' Hwts.
+      destruct (eq_spec x0 q' (ActExt μ)) as (r & Hr & Heqr).
+      * exists y0. split; trivial.
+      * eapply Heq; eauto. eapply h.(c_step_) with μ; eauto.
+    + intro ht. eapply terminate_preserved_by_eq2; eauto. now apply h.(c_cnv_).
+Qed.
+
 Lemma coin_union_l `{FiniteLts A L} {PRE : Chain copre_m}
   : forall (X1 X2 : gset A) (q : A), elem PRE X1 q -> elem PRE (X1 ∪ X2) q.
 Proof.
@@ -502,3 +545,4 @@ Proof.
         apply Ht; set_tac.
       * apply Ht; set_tac.
 Qed.
+
