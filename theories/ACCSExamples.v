@@ -287,8 +287,7 @@ Example code_hoisting_outputs : forall (M : mb name) X,
     {[ τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M ]} ∪ X
       ⩽ !"a" ∥ (τ⋅ !"b" ⊕ τ⋅ !"c") ▷ M.
 Proof.
-  unfold copre.
-  coinduction PRE CIH.
+unfold copre. coinduction PRE CIH.
 intros M X. split.
 - intros q l. repeat lts_inversion.
   + apply choice_copre_l.
@@ -359,16 +358,13 @@ Qed.
 Lemma omega_is_bottom p : {[omega]} ⩽ p.
 Proof.
 revert p.
-cofix hco. intros p.
+unfold copre. coinduction PRE hco. intros p.
 constructor.
 - intros q Hq. apply hco.
-- clear hco. intros Ht _. exfalso. apply omega_diverges, (Ht omega).
-  auto with *.
-- clear hco. intros a b c Ht _. exfalso.
-  eapply omega_diverges, cnv_terminate, (Ht omega).
-  auto with *.
-- clear hco. intros Ht. exfalso. apply omega_diverges, (Ht omega).
-  auto with *.
+- intros Ht _. exfalso. apply omega_diverges, (Ht omega). set_tac.
+- intros a b c Ht _. exfalso.
+  eapply omega_diverges, cnv_terminate, (Ht omega). set_tac.
+- intros Ht. exfalso. apply omega_diverges, (Ht omega). set_tac.
 Qed.
 
 End Omega.
