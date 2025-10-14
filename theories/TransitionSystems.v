@@ -3218,3 +3218,11 @@ Qed.
     intro Hps'.
     eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
   Qed.
+
+  Global Instance Proper_wt_set_from_pset_spec `{Lts A L, !FiniteLts A L} :
+    Proper ((≡) ==> (=) ==> (≡) ==> (iff)) wt_set_from_pset_spec.
+  Proof.
+    intros ps1 ps2 Hps s s' Hs ps1' ps2' Hps'.
+    unfold wt_set_from_pset_spec, wt_set_from_pset_spec1, wt_set_from_pset_spec2.
+    subst. setoid_rewrite Hps. setoid_rewrite Hps'. trivial.
+  Qed.

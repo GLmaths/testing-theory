@@ -211,11 +211,12 @@ end
 with gproc_absorb_nil (gp : gproc) : gproc := match gp with
 | gpr_input a p => gpr_input a (proc_absorb_nil p)
 | gpr_tau p => gpr_tau (proc_absorb_nil p)
-| gpr_choice g1 g2 => let g1' := gproc_absorb_nil g1 in
+| gpr_choice g1 g2 => gpr_choice g1 g2 (* TODO: can't simplify under + yet
+                      let g1' := gproc_absorb_nil g1 in
                       let g2' := gproc_absorb_nil g2 in
                       if decide (g g1' = pr_nil) then g2'
                       else if decide (g g2' = pr_nil) then g1'
-                      else gpr_choice g1' g2'
+                      else gpr_choice g1' g2' *)
 | gp => gp
 end.
 
@@ -223,6 +224,7 @@ end.
 Scheme proc_gproc_ind := Induction for proc Sort Prop
   with gproc_proc_ind := Induction for gproc Sort Prop.
 
+(*
 (* TODO : also missing in VACCS *)
 Lemma cgr_choice_trans : forall p1 q1 p2 q2, g p1 ≡* g q1 -> g p2 ≡* g q2 -> 
   pr_choice p1 p2 ≡* pr_choice q1 q2.
@@ -230,10 +232,10 @@ Proof.
 intros. dependent induction H. 
 constructor.
 Admitted.
+*)
 
 
-
-Lemma proc_absorb_nil_cgr p : p ≡* proc_absorb_nil p.
+Lemma proc_absorb_nil_cgr p : eq_rel p (proc_absorb_nil p).
 Proof.
 induction p using proc_gproc_ind with
   (P0 := fun gp => g gp ≡* g (gproc_absorb_nil gp)); simpl; auto with *.
@@ -258,6 +260,7 @@ induction p using proc_gproc_ind with
 - induction IHp; [now repeat constructor| etrans; eassumption].
 - induction IHp; [now repeat constructor| etrans; eassumption].
 - induction IHp; [now repeat constructor| etrans; eassumption].
+(*
 - case decide; intro Heq; subst. {
   transitivity (gpr_nil ⊕ g0).
     + eapply cgr_choice_trans; [|reflexivity]. etrans; [eassumption|].
@@ -272,9 +275,13 @@ induction p using proc_gproc_ind with
     + etrans; [constructor; apply cgr_choice_nil|]. assumption.
   }
   apply cgr_choice_trans; assumption.
+*)
 Qed.
 
-About c_tau.
+(* TODO: move to Transition Systems *)
+Global Instance Proper_mb_eq `{LtsObaFB A L}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
+Proof. intros p1 p2 Hp M1 M2 HM; simpl. subst. now apply fw_eq_id_mb. Qed.
+
 
 Example code_hoisting_outputs : forall (M : mb name) X,
     {[ τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M ]} ∪ X
@@ -291,13 +298,19 @@ intros M X. split.
   exists (!"a" ∥ !"b" ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
 - intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
   + repeat lts_inversion.
-
-    eapply h2.
-    -- etrans. eapply t_step. eapply cgr_par_nil_rev.
-       etrans. eapply t_step. eapply cgr_par_com. reflexivity.
-    -- eapply (h2 (τ⋅ (pr_nil ∥ !"b") ⊕ τ⋅ (pr_nil ∥ !"c"))).
-      ++ apply proc_absorb_nil_cgr.
-      ++ assert (Hi : {[ (pr_nil ∥ !"b" ▷ M); (pr_nil ∥ !"c" ▷ M) ]} ⊆ ps'). {
+    (* Here we can simplify modulo congruence.
+       Replaces the infamous h2 *)
+    setoid_rewrite proc_absorb_nil_cgr; simpl.
+    (* TODO: handling + should make this work in 1 step *)
+    setoid_replace ((τ⋅ ! "b" ⊕ τ⋅ ! "c")▷ M)
+              with ((τ⋅ (!"b" ∥ pr_nil) ⊕ τ⋅ (!"c" ∥ pr_nil))▷ M).
+    2 : { setoid_rewrite proc_absorb_nil_cgr; simpl.
+          apply fw_eq_id_mb; econstructor 2; repeat constructor. }
+    setoid_replace ((τ⋅ (!"b" ∥ pr_nil) ⊕ τ⋅ (!"c" ∥ pr_nil))▷ M)
+              with ((τ⋅ (pr_nil ∥ !"b") ⊕ τ⋅ (pr_nil ∥ !"c"))▷ M).
+    2 : { setoid_rewrite proc_absorb_nil_cgr; simpl.
+          apply fw_eq_id_mb. constructor. constructor; constructor; apply cgr_par_com. }
+    assert (Hi : {[ (pr_nil ∥ !"b" ▷ M); (pr_nil ∥ !"c" ▷ M) ]} ⊆ ps'). {
           intros x mem%elem_of_union.
            destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
            - eapply Hw.
@@ -320,14 +333,14 @@ intros M X. split.
       eapply elem_of_singleton. reflexivity.
       eapply wt_act. eapply (lts_fw_out_mb m). eapply wt_nil.
     * eapply union_difference_singleton_L in Hin.
-      rewrite Hin. eapply hco.
+      rewrite Hin. eapply CIH.
   + assert (Hin : τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ {[+ a +]} ⊎ M ∈ ps').
     * eapply Hw.
       eapply elem_of_union. left.
       eapply elem_of_singleton. reflexivity.
       eapply wt_act. eapply (lts_fw_inp_mb M). eapply wt_nil.
     * eapply union_difference_singleton_L in Hin.
-      rewrite Hin. eapply hco.
+      rewrite Hin. eapply CIH.
 - intros. eapply q_terminate.
 Qed.
 
