@@ -1185,6 +1185,7 @@ Proof.
   intros hm. now eapply pre_extensional_eq, equivalence_bhv_acc_ctx.
 Qed.
 
+(*
 (* TODO: this lemma has nothing to do here ; and need proper name *)
 Lemma h2 : forall q q' X M,
     q ≡* q' -> (X : gset (proc * mb name)) ⩽ q ▷ M -> X ⩽ q' ▷ M.
@@ -1219,3 +1220,4 @@ Proof.
     eapply elem_of_union. left. now eapply gmultiset_elem_of_dom.
     eapply elem_of_union. right. now eapply gmultiset_elem_of_dom.
 Qed.
+*)

@@ -546,3 +546,53 @@ Proof.
       * apply Ht; set_tac.
 Qed.
 
+Definition eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L} (X Y : gset A) :=
+ (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
+ (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
+
+Global Instance symmetric_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+ Symmetric eq_rel_set.
+Proof. intros x y. unfold eq_rel_set. intuition. Qed.
+
+
+Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+  forall {X X' s Y}, eq_rel_set X X' -> wt_set_from_pset_spec X s Y
+  -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
+Proof.
+Admitted.
+
+Global Instance Proper_eq_rel_set_l `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+  Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
+Proof.
+Admitted.
+
+
+
+Global Instance copre_eq_rel_l `{TransitionSystems.LtsOba A L} `{!FiniteLts A L}
+  {PRE : Chain copre_m}: Proper ((eq_rel_set) ==> (=) ==> (impl)) (elem PRE).
+Proof.
+  intros X X' HXX' q q' ?; subst q'.
+  revert X X' q HXX'. apply tower; clear PRE.
+  - intros P HP ???????; eapply HP; eauto.
+  - intros PRE CIH X X' q hXX' h.
+    constructor.
+    + intros q' Hq'.
+      now apply CIH with (X := X), h.(c_tau_).
+    + intros Ht Hs.
+      destruct h.(c_now_) as [ p1 [ p' [ hp [ hpp' [ hp' ho ] ] ] ]]; eauto.
+      * intros p0 Hin. apply hXX' in Hin as (p' & Hin & Heqp').
+        apply (terminate_preserved_by_eq2 (symmetry Heqp')). now apply Ht.
+      * apply hXX' in hp as (p'' & Hin & Heqp'').
+        apply eq_spec_wt with (p' := p'') in hpp' as (r & Hr & Heqr); trivial.
+        exists p''; exists r; repeat split; trivial; now rewrite Heqr.
+    + intros μ q' ps' hμ hqq' w.
+      apply (wt_set_from_pset_spec_eq_rel_set (symmetry hXX')) in w as (ps'' & Heqps' & HXps'').
+      apply CIH with ps''; [now symmetry|].
+      eapply h.(c_step_); eauto.
+      intros p Hp. apply hXX' in Hp as (p'' & Hin & Heqp'').
+      eapply cnv_preserved_by_eq; [apply symmetry, Heqp''|auto with *].
+    + intros Ht.
+      apply h.(c_cnv_); intros p0 Hin.
+      apply hXX' in Hin as (p'' & Hin & Heqp'').
+      eapply terminate_preserved_by_eq2; [apply symmetry, Heqp''|auto with *].
+Qed.
