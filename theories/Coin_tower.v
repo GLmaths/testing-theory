@@ -136,6 +136,12 @@ Section copre.
     now apply (c_tau h).
   Qed.
 
+  (* TODO: this may replace the above at some point *)
+  Lemma co_preserved_by_wt_nil' {PRE : Chain copre_m}
+    (ps : gset A) (q q' : B) : q ⟹ q' -> elem PRE ps q -> elem PRE ps q'.
+  Proof.
+  Admitted.
+
   Lemma prex1_if_copre (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ1 q.
   Proof.
     intros hpq s; revert ps q hpq.

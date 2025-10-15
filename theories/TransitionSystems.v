@@ -1685,12 +1685,11 @@ Proof.
     eapply gmultiset_eq_pop_l. eapply IHhmo. eassumption. now symmetry.
 Qed.
 
-Lemma fw_eq_id_mb `{LtsOba A L} p q m : p ⋍ q -> fw_eq (p, m) (q, m).
+Global Instance fw_eq_id_mb `{LtsObaFB A L}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
 Proof.
-  intros heq p' q' hwp hwq. simpl in *.
-  set (h := lts_oba_mo_eq heq).
-  split. rewrite <- h in hwq. eapply (strip_eq_sim heq hwp hwq).
-  multiset_solver.
+  intros p1 p2 heq M1 M HM; simpl. subst M1.
+  set (h := lts_oba_mo_eq heq). intros q q' Hp1 Hp2; simpl in *; split;
+  rewrite h in *; trivial. eapply (strip_eq_sim heq Hp1 Hp2).
 Qed.
 
 (** The structural congruence is symmetric. *)
