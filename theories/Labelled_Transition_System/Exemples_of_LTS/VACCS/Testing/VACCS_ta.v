@@ -415,7 +415,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros g s hh. eapply gen_test_ungood_if; try eassumption.
-  intro hh0. eapply not_good_P; eauto.
+  eapply not_good_P; eauto.
 Qed.
 Next Obligation.
   intros. eapply gen_test_lts_mu.
@@ -439,7 +439,7 @@ Next Obligation.
   intros. simpl in *.
   destruct μ.
   + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
-  + simpl in *. assert (lts (gen_acc g (ActOut a :: s)) (ActExt μ') e) as Hyp_tr; eauto.
+  + simpl in *. assert (lts (gen_acc G (ActOut a :: s)) (ActExt μ') e) as Hyp_tr; eauto.
     eapply Hyp_WD in Hyp_tr as (WD_trace & WD_action) ; eauto.
     inversion WD_trace; subst. inversion WD_action; subst.
     ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
@@ -447,8 +447,8 @@ Next Obligation.
 Qed.
 
 
-(*
-Lemma gen_acc_does_not_output : forall g t a, ~ lts (unroll_fw g) (ActExt $ ActOut a) t.
+
+(* Lemma gen_acc_does_not_not_blocking_actions : forall l t a, ¬ (lts (unroll_fw l) (ActExt $ ActOut a) t).
 Proof.
   intros g.
   induction g as [| b g'].
@@ -469,18 +469,18 @@ Proof.
       eapply gen_acc_does_not_output. eassumption.
     + inversion H3.
     + eapply IHg'. eassumption.
-Qed.
+Qed. *)
 
-Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ g -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
+(* Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs_on c ∈ G -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c ⋉ v))) r.
 Proof.
-  remember g. revert g0 Heqg0.
-  induction g using set_ind_L; intros g0 Heqg0 mem.
+  remember G. revert g Heqg.
+  induction G using set_ind_L; intros g0 Heqg0 mem.
   - subst. inversion mem.
   - assert (hn : {[x]} ## X) by set_solver.
-    destruct (decide (x = a)).
+    destruct (decide (x = (Inputs_on c))).
     + subst.
-      set (h := elements_disj_union {[a]} X hn).
-      cbn. assert (exists t, lts (unroll_fw (a :: elements X)) (ActExt $ ActIn a) t).
+      set (h := elements_disj_union {[Inputs_on c]} X hn).
+      cbn. assert (exists t, lts (unroll_fw (a :: elements X)) (ActExt $ ActIn (Inputs_on c)) t).
       simpl. eauto with ccs.
       destruct H0 as (r & hl).
       edestruct
@@ -503,9 +503,10 @@ Proof.
       replace (elements {[x]}) with [x] in h. eauto.
       now rewrite elements_singleton.
       simpl in *. eauto with ccs. subst. eauto.
-Qed.
-
-#[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc gen_acc.
+Qed. *)
+Check gen_spec_acc.
+(* #[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc PreAct EqPreAct 
+        CountaPreAct proc (ExtAct TypeOfActions) gLabel_nb gen_acc (fun x => 𝝳 (Φ x)).
 Next Obligation.
   intros g. simpl. unfold proc_stable. cbn.
   remember (lts_set_tau (unroll_fw (elements g))) as ps.
@@ -563,4 +564,4 @@ Next Obligation.
        +++ inversion H4; subst.
            eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
        +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
-Qed. *)
+Qed.  *)
