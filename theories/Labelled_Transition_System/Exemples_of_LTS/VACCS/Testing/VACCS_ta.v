@@ -375,31 +375,33 @@ Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
 | cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
                                                     -> Well_Defined_Trace (a :: s).
 
-Parameter P : proc.
-Parameter not_good_P : ¬ good_VACCS P.
-(* Fixpoint unroll_fw (L : list proc * proc) : proc :=
+
+Fixpoint unroll_fw (L : list PreAct) : proc :=
   match L with
   | [] => (g 𝟘)
-  | x :: l => (c ? x • ①) ‖ unroll_fw l
-  end. *)
+  | Inputs_on c :: l => (c ? x • ①) ‖ unroll_fw l
+  | Outputs_on c :: l => unroll_fw l
+  end.
 
-(* Definition gen_acc (g : gset name) s := gen_test s (unroll_fw (elements g)). *)
+Definition gen_acc (G : gset PreAct) s := gen_test s (unroll_fw (elements G)).
 
-Definition gen_acc (L : list proc * proc) s := gen_test s P.
-
-(* Lemma unroll_a_eq_perm (xs ys : list name) : xs ≡ₚ ys -> unroll_fw xs ≡* unroll_fw ys.
+Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> unroll_fw xs ≡* unroll_fw ys.
 Proof.
   intro hperm. dependent induction hperm; simpl; eauto with ccs.
-  - eapply cgr_par_right; eauto with ccs.
-  - transitivity ((pr_input y pr_success & pr_input x pr_success) & unroll_fw l).
-    eauto with ccs.
-    transitivity ((pr_input x pr_success & pr_input y pr_success) & unroll_fw l).
-    eauto with ccs. eauto with ccs.
-Qed. *)
+  - reflexivity.
+  - destruct x; eauto. eapply cgr_fullpar; eauto with ccs. reflexivity.
+  - admit.
+Admitted.
 
-#[global] Program Instance gen_acc_gen_test_inst g 
-  {Hyp_WD : forall α s e, lts (gen_acc g s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α} 
-    : gen_spec co (fun s => gen_acc g s).
+Lemma not_good_P G : ¬ (good_VACCS (gen_acc G ε)).
+Proof.
+  intros imp.
+  unfold gen_acc in imp. unfold gen_test in imp.
+Admitted.
+
+#[global] Program Instance gen_acc_gen_test_inst G 
+  {Hyp_WD : forall α s e, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α} 
+    : gen_spec co (fun s => gen_acc G s).
 Next Obligation.
   intros. unfold parallel_inter. unfold dual. destruct μ; simpl; eauto.
 Qed.

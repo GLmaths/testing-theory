@@ -534,7 +534,7 @@ Qed.
 
 Lemma fw_does_all_input
   `{@gLtsObaFW Q (ExtAct A) (@gLabel_nb A L) LtsQ LtsEqQ LtsObaQ} :
-   forall (q' : Q) μ, ¬ is_output μ -> μ ∈ lts_acc_set_of q'.
+   forall (q' : Q) μ, ¬ is_output μ -> μ ∈ actions_of q'.
 Proof.
   intros q' μ not_nb. destruct μ as [ (* Input *) a | (* Output *) a].
   + assert (non_blocking_output (ActOut a)) as nb.
@@ -553,19 +553,24 @@ Proof.
     exists a; eauto. contradiction.
 Qed.
 
-Lemma retrieve_a_better_pre_order
+(* Lemma retrieve_a_better_pre_order
   `{@Lts P A L} `{@Lts Q A L} (p : P) (q : Q) :
-   (forall (q' : Q) μ, ¬ is_output μ -> μ ∈ lts_acc_set_of q') -> 
-    (lts_acc_set_of p ⊆ lts_acc_set_of q
+   (forall (q' : Q) μ, ¬ is_output μ -> μ ∈ actions_of q') -> 
+    (co_actions_of p ⊆ co_actions_of q
       <-> lts_outputs p ⊆ lts_outputs q).
 Proof.
   intro fw_b_action.
   split.
   + intro inclusion. intro a. intro mem. eapply lts_outputs_spec2 in mem as (p2 & l).
-    assert ((ActOut a) ∈ lts_acc_set_of p) as mem.
-    eapply lts_refuses_spec2. simpl. eauto.
-    eapply inclusion in mem. eapply lts_refuses_spec1 in mem as (q' & l').
-    simpl in *. eapply lts_outputs_spec1 in l'. eauto.
+    assert ((ActIn a) ∈ co_actions_of p) as mem.
+    { exists (ActOut a). repeat split.
+      - eapply lts_refuses_spec2. eauto.
+      - intro imp. unfold non_blocking in imp. simpl in *.
+        unfold all_blocking_action in imp. eauto. }
+    eapply inclusion in mem. destruct mem as (μ & Tr & duo & b).
+    eapply lts_refuses_spec1 in Tr as (q' & l').
+    simpl in *. symmetry in duo. eapply simplify_match_input in duo; subst.
+    eapply lts_outputs_spec1 in l'. eauto.
   + intro inclusion.
     intros μ mem. destruct μ as [ (* Input *) a | (* Output *) a].
     ++ eapply fw_b_action. intro imp. inversion imp. inversion H1.
@@ -577,13 +582,13 @@ Lemma retrieve_a_better_pre_order_final
   `{@gLtsObaFW P (ExtAct A) (@gLabel_nb A L) LtsP LtsEqP LtsObaP}
   `{@gLtsObaFW Q (ExtAct A) (@gLabel_nb A L) LtsQ LtsEqQ LtsObaQ}
     (p : P) (q : Q):
-    lts_acc_set_of p ⊆ lts_acc_set_of q
+    actions_of p ⊆ actions_of q
       <-> dom (lts_oba_mo p) ⊆ dom (lts_oba_mo q).
 Proof.
   split.
   + intros inclusion μ mem. eapply gmultiset_elem_of_dom in mem.
     eapply lts_oba_mo_spec_bis2 in mem as (p' & nb & Tr).
-    assert (μ ∈ lts_acc_set_of p) as mem. { eapply lts_refuses_spec2; eauto. }
+    assert (μ ∈ actions_of p) as mem. { eapply lts_refuses_spec2; eauto. }
     eapply inclusion in mem. eapply lts_refuses_spec1 in mem as (q' & Tr').
     eapply gmultiset_elem_of_dom. eapply lts_oba_mo_spec_bis1; eauto.
   + intros inclusion μ mem.
@@ -594,7 +599,7 @@ Proof.
        { multiset_solver. }
        eapply lts_oba_mo_spec_bis2 in mem' as (q'' & nb & Tr''). eauto.
        unfold non_blocking. simpl. exists a; eauto.
-Qed.
+Qed. *)
 
 
 

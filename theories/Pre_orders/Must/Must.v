@@ -449,11 +449,11 @@ Section must_sets.
   Local Open Scope positive.
 
   Definition MUST `{gLts P A} 
-    (p : P) (G : subset_of A) :=
+    (p : P) (G : gset A) :=
     forall p', p ⟹ p' -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0.
 
   Definition MUST__s `{FiniteImagegLts P A} 
-    (ps : gset P) (G : subset_of A) := 
+    (ps : gset P) (G : gset A) := 
     forall p, p ∈ ps -> MUST p G.
 
   (* Residuals of a process p AFTER the execution of s. *)
