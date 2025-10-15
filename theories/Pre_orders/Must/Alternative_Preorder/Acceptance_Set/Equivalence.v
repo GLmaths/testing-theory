@@ -556,9 +556,8 @@ Section preorder.
   Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
   Context `{@AbsAction A H E FinA gLtsE Φ}.
 
-  Context `{igen_conv : @gen_spec_conv _ _ _ _ _ _ _ _ _ good Good0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-                        good Good0 co_of gen_acc}.
+  Context `{igen_conv : @gen_spec_conv E _ _ _ _ good Good0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ good Good0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
 
   (* ************************************************** *)
 

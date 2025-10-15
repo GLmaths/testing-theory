@@ -38,10 +38,13 @@ From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts
               GeneralizeLtsOutputs Termination WeakTransitions Convergence  
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction .
 
-CoInductive copre `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ} (ps : gset A) (q : B) : Prop := {
+CoInductive copre `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
+  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
+  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
+  (ps : gset A) (q : B) : Prop := {
     c_tau q' : q ⟶ q' -> copre ps q'
   ; c_now : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
-            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ lts_acc_set_of p' ⊆ lts_acc_set_of q
+            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q
   ; c_step : forall μ q' ps', (forall p, p ∈ ps -> p ⇓ [μ]) ->
                          q ⟶[μ] q' -> wt_set_from_pset_spec ps [μ] ps' -> copre ps' q'
   ; c_cnv : (forall p, p ∈ ps -> p ⤓) -> q ⤓
@@ -51,6 +54,8 @@ Notation "p ⩽ q" := (copre p q) (at level 70).
 
 Lemma copre_if_prex
   `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
+  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
+  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
   (ps : gset A) (q : B) : ps ≼ₓ q -> ps ⩽ q.
 Proof.
   revert ps q.
@@ -74,11 +79,15 @@ Qed.
 
 Lemma co_preserved_by_wt_nil
   `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
+  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
+  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
   (ps : gset A) (q q' : B) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
 Proof. intro hw. dependent induction hw; eauto. destruct 1. eauto. Qed.
 
 Lemma prex1_if_copre
   `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
+  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
+  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
   (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ1 q.
 Proof.
   intros.
@@ -111,6 +120,8 @@ Qed.
 
 Lemma prex2_if_copre
   `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
+  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
+  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
   (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ2 q.
 Proof.
   revert ps q.
@@ -153,7 +164,10 @@ Proof.
 Qed.
 
 
-Theorem eqx `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ} (X : gset A) (q : B) :
+Theorem eqx `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ} 
+  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
+  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
+  (X : gset A) (q : B) :
   X ≼ₓ q <-> X ⩽ q.
 Proof.
   split.
@@ -184,8 +198,12 @@ Section eq_contextual.
   Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
   Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
 
-  Context `{igen_conv : @gen_spec_conv  _ _ _ _ _ good Good0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ good Good0 co_of gen_acc _ _}.
+  Context `{@PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsP)}.
+  Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
+  Context `{@AbsAction A H E FinA gLtsE Φ}.
+
+  Context `{igen_conv : @gen_spec_conv E _ _ _ _ good Good0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ good Good0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
     @pre_extensional P Q _ _ _ good _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
