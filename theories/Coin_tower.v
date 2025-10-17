@@ -384,6 +384,14 @@ solve[apply elem_of_union_l; set_tac] ||
 assumption ||
 now apply elem_of_singleton_2.
 
+Lemma coin_choose `{FiniteLts A L} {PRE : Chain copre_m}
+  : forall {X : gset A} {q : A} {p : A}, p ∈ X -> elem PRE {[p]} q -> elem PRE X q.
+Proof.
+  intros X q p Hin He.
+  setoid_replace X with ({[p]} ∪ (X ∖ {[p]})) by now apply union_difference_singleton.
+  now apply coin_union_l.
+Qed.
+
 (* TODO : should go with mb Lts construction *)
 Lemma fw_wt `{FiniteLts A L} (t : A) q m:
   t ⟹ q -> (t ▷ m) ⟹ (q ▷ m).
@@ -570,6 +578,15 @@ Proof.
 intros X X' HX Y Y' HY Heq. split; intros x Hx.
 - apply HX, Heq in Hx as (y & Hy & Heq'). apply HY in Hy. eauto.
 - apply HY, Heq in Hx as (y & Hy & Heq'). apply HX in Hy. eauto.
+Qed.
+
+Global Instance proper_singleton_elem_eq_rel_set
+  `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+  Proper ((eq_rel) ==> (eq_rel_set)) singleton.
+Proof.
+  intros x y Hx. split; intros x' Hx'%elem_of_singleton;
+  subst x'; [exists y|exists x]; split; eauto; try apply elem_of_singleton; trivial.
+  now symmetry.
 Qed.
 
 Global Instance eq_rel_set_union `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
