@@ -204,29 +204,14 @@ end
 with gproc_absorb_nil (gp : gproc) : gproc := match gp with
 | gpr_input a p => gpr_input a (proc_absorb_nil p)
 | gpr_tau p => gpr_tau (proc_absorb_nil p)
-| gpr_choice g1 g2 => gpr_choice g1 g2 (* TODO: can't simplify under + yet
-                      let g1' := gproc_absorb_nil g1 in
-                      let g2' := gproc_absorb_nil g2 in
-                      if decide (g g1' = pr_nil) then g2'
-                      else if decide (g g2' = pr_nil) then g1'
-                      else gpr_choice g1' g2' *)
+| gpr_choice g1 g2 => gpr_choice g1 g2
+  (* We can't can't simplify under + yet *)
 | gp => gp
 end.
 
 (* Defining mutual induction principle for processes and guards *)
 Scheme proc_gproc_ind := Induction for proc Sort Prop
   with gproc_proc_ind := Induction for gproc Sort Prop.
-
-(*
-(* TODO : also missing in VACCS *)
-Lemma cgr_choice_trans : forall p1 q1 p2 q2, g p1 ≡* g q1 -> g p2 ≡* g q2 -> 
-  pr_choice p1 p2 ≡* pr_choice q1 q2.
-Proof.
-intros. dependent induction H. 
-constructor.
-Admitted.
-*)
-
 
 Lemma proc_absorb_nil_cgr p : eq_rel p (proc_absorb_nil p).
 Proof.
@@ -253,22 +238,6 @@ induction p using proc_gproc_ind with
 - induction IHp; [now repeat constructor| etrans; eassumption].
 - induction IHp; [now repeat constructor| etrans; eassumption].
 - induction IHp; [now repeat constructor| etrans; eassumption].
-(*
-- case decide; intro Heq; subst. {
-  transitivity (gpr_nil ⊕ g0).
-    + eapply cgr_choice_trans; [|reflexivity]. etrans; [eassumption|].
-      rewrite Heq. reflexivity.
-    + etrans; [constructor; apply cgr_choice_com|].
-      etrans; [constructor; apply cgr_choice_nil|]. assumption.
-  }
-  case decide; intro Heq'. {
-  transitivity (g ⊕ gpr_nil).
-    + apply cgr_choice_trans; [reflexivity|]. etrans; [eassumption|].
-      rewrite Heq'. reflexivity.
-    + etrans; [constructor; apply cgr_choice_nil|]. assumption.
-  }
-  apply cgr_choice_trans; assumption.
-*)
 Qed.
 
 
@@ -808,159 +777,162 @@ Example unreliable_reliable :
  unreliableW ⊑ reliableW.
 Proof. 
 apply soundness, alt_set_singleton_iff, eqx.
-(* generalisation *)
-enough (Ht : forall n (M :  mb name) X,
-  {[unreliableW ▷ add_data n M]} ∪ X ⩽ add_work n reliableW ▷ M). {
+(* The trick is to generalise to all terms that are weakly reachable from the
+  right-hand-side AND followed by a recursive call *)
+enough (Ht : forall n (M :  mb name) X q0,
+  q0 ∈ [add_work n reliableW; add_work n (τ⋅ ! "end" ⊕ ("data" ? (! "work" ∥ reliableW)))] ->
+  {[unreliableW ▷ add_data n M]} ∪ X ⩽ q0 ▷ M). {
   replace ({[unreliableW ▷ (∅ : mb name)]}) with
           ({[unreliableW ▷ add_data 0 ∅ ]} ∪ ∅ : gset (proc * mb name))
           by (simpl; set_solver).
-  apply (Ht 0 ∅ ∅).
+  apply (Ht 0 ∅ ∅). constructor.
   }
-unfold copre. coinduction PRE hco. intros n M X.
+unfold copre. coinduction PRE hco. intros n M X q0 Hq0.
 assert(Hrs := reliableW_stable_work).
 constructor.
 (* A. stable by τ *)
-- intros q Hq. lts_inversion; add_tac; lts_inversion; simpl. fold reliableW.
-  apply (b_chain PRE). constructor.
-  (* A' : stable by τ *)
-  + intros q Hq. lts_inversion; add_tac; repeat lts_inversion.
-    * (* → add_work n (! "end") ▷ M *)
-      apply co_preserved_by_wt_nil' with (unreliableW ▷ add_data n M);
+- intros q Hq.
+  apply elem_of_cons in Hq0 as [Hq0 | Hq0%elem_of_list_singleton]; subst.
+  (* for free, since we generalised the induction hypothesis with the next step *)
+  { lts_inversion; add_tac; lts_inversion. simpl. apply hco. right. left. }
+  lts_inversion; add_tac; repeat lts_inversion; simpl;
+  (* for free, since we generalised the induction hypothesis with the next step *)
+  [| apply (hco (S n)); left].
+  (* → add_work n (! "end") ▷ M *)
+  (* no need to put this one in the induction hypothesis as it is not followed
+      by a recursive call *)
+   apply (gfp_chain PRE), co_preserved_by_wt_nil with (unreliableW ▷ add_data n M);
       [|refine (coin_union_l _ _ _ (coin_refl))].
-      apply unreliable_add_work_add_data_terminate.
-    * (* Loop back on coinduction hypothesis, with one more !"work" *)
-      apply (hco (S n)).
-  + (* B' : weak transitions outputs *)
-    clear hco. intros Ht Hs.
-    contradict Hs. apply lts_stable_spec2.
-    exists (add_work n (!"end") ▷ M). constructor. apply add_work_inversion.
-    term_tac.
-  + (* C' : Weak termination sets *)
-    intros μ q' ps' Hμ1 Hμ2 Hwt. lts_inversion.
-    * add_tac.
-      -- (* output "work" *)
-        (* TODO: this is very similar to (C) below *)
-        setoid_rewrite <- add_work_zero.
-        apply co_preserved_by_wt_nil' with (add_work (x + x0) reliableW ▷ M).
-        ++ eapply wt_tau; [|apply wt_nil].
-           constructor. apply add_work_inversion; term_tac.
-        ++ assert(Hin : (𝟘 ∥ unreliableW ▷ add_data (x0 + x) M) ∈ ps'). {
-            apply Hwt with (p := unreliableW ▷ add_data (S (x + x0)) M);
-            [ simpl; set_solver|].
-            apply wt_tau with
-              ((τ⋅ ! "end" ⊕
-              ("data" ? (τ⋅ (! "work" ∥ unreliableW) ⊕ τ⋅ ! "bye")))
-               ▷ add_data (S (x + x0)) M); [apply lts_fw_p; term_tac|].
-            setoid_rewrite <- add_data_comm.
-            apply wt_tau with ((τ⋅(! "work" ∥ unreliableW) ⊕ τ⋅! "bye")
-                               ▷ add_data (x + x0) M);
-            [apply lts_fw_com, lts_choiceR; constructor|].
-            eapply wt_tau with ((! "work" ∥ unreliableW) ▷ add_data (x + x0) M);
-            [apply lts_fw_p, lts_choiceL; constructor
-            |eapply wt_act; [|apply wt_nil]].
-            simpl. rewrite Nat.add_comm. apply lts_fw_p. term_tac.
-          }
-          apply union_difference_singleton_L in Hin.
-          (* TODO: some typeclass magic should work here *)
-          assert(Heq0 : eq_rel_set ps' ({[unreliableW ▷ add_data (x + x0) M]}
-                                  ∪ ps' ∖ {[𝟘 ∥ unreliableW ▷ add_data (x + x0) M]})).
-          { rewrite Hin at 1. replace (x0 + x) with (x + x0) by lia.
-            apply Proper_eq_rel_set_l; trivial.
-            apply fw_eq_id_mb; trivial; apply proc_absorb_nil_cgr. }
-          rewrite Heq0.
-          apply (hco (x + x0) M).
-      -- lts_inversion; lts_inversion.
-         (* getting rid of X would allow us to compute ps' exactly here *)
-         assert(Hin : (unreliableW ▷ add_data n ({[+"data"+]} ⊎ M)) ∈ ps'). {
-            eapply Hwt with (p := unreliableW ▷ add_data n M); [ set_tac|].
-            eapply wt_act; [apply lts_fw_inp_mb|rewrite add_data_comm; apply wt_nil].
-          }
-          apply union_difference_singleton_L in Hin. rewrite Hin.
-         apply (hco (S n)).
-    * apply co_preserved_by_wt_nil' with (add_work n reliableW ▷ m).
-     -- eapply wt_tau; [|apply wt_nil].
-        constructor. eapply add_work_inversion. constructor.
-     -- assert(Hin : ( unreliableW ▷ add_data n m) ∈ ps'). {
-        eapply Hwt with (p := unreliableW
-                         ▷ add_data n ({[+ a +]} ⊎ m)); [ set_tac|].
-        rewrite <- add_data_comm. eapply wt_act;
-        [apply lts_fw_out_mb| apply wt_nil].
-        }
-        apply union_difference_singleton_L in Hin. rewrite Hin.
-        apply hco.
-    * apply co_preserved_by_wt_nil' with (add_work n reliableW ▷ {[+ a +]} ⊎ M).
-     -- eapply wt_tau; [|apply wt_nil].
-        constructor. eapply add_work_inversion. constructor.
-     -- assert(Hin : (unreliableW ▷ add_data n ({[+ a +]} ⊎ M)) ∈ ps'). {
-        eapply Hwt with (p := unreliableW ▷ add_data n M); [ set_tac|].
-        rewrite <- add_data_comm. eapply wt_act;
-        [apply lts_fw_inp_mb|apply wt_nil].
-        }
-        apply union_difference_singleton_L in Hin. rewrite Hin.
-        apply hco.
-  + clear hco. intros _. clear X.
-    apply terminate_preserved_by_lts_tau with (add_work n reliableW ▷ M).
-    * apply add_work_reliableW_terminate.
-    * constructor. apply add_work_inversion. term_tac.
+   apply unreliable_add_work_add_data_terminate.
 (* B. Weak transitions to stable states preserve output inclusion *)
-- clear hco. intros Ht Hs.
+- intros Ht Hs.
   destruct Hs as [Hs _]. simpl in Hs.
   (* Easy, the right-hand side is stable. *)
-  assert (Htau : (add_work n reliableW) ⟶
-          (add_work n (τ⋅ ! "end" ⊕ ("data" ? (! "work" ∥ reliableW))))).
-  { apply add_work_inversion. constructor. }
-  contradict Hs. unfold proc_stable. apply lts_set_spec1 in Htau.
-  intro Heq; rewrite Heq in Htau. now apply elem_of_empty in Htau.
+  contradict Hs. unfold proc_stable.
+  apply elem_of_cons in Hq0 as [Hq0 | Hq0%elem_of_list_singleton]; subst.
+  + apply non_empty_inhabited_L with
+      (add_work n (τ⋅ ! "end" ⊕ ("data" ? (! "work" ∥ reliableW)))).
+    apply lts_set_spec1. apply add_work_inversion. constructor.
+  + apply non_empty_inhabited_L with (add_work n (! "end")).
+    apply lts_set_spec1. apply add_work_inversion. do 2 constructor.
 (* C. Weak termination sets *)
-- intros μ q' ps' Hμ1 Hμ2 Hwt. inversion Hμ2; subst.
-  + add_tac; [| clear hco; lts_inversion]. clear Hμ2.
-    rewrite <- add_work_zero.
-    assert(Hin : (pr_nil ∥ unreliableW ▷ add_data (x0 + x) M) ∈ ps'). {
-      apply Hwt with (p := unreliableW ▷ add_data (S (x + x0)) M);
-      [ simpl; set_solver|].
-      apply wt_tau with
-        ((τ⋅ ! "end" ⊕
-        ("data" ? (τ⋅ (! "work" ∥ unreliableW) ⊕ τ⋅ ! "bye")))
-         ▷ add_data (S (x + x0)) M); [apply lts_fw_p; term_tac|].
-      setoid_rewrite <- add_data_comm.
-      apply wt_tau with ((τ⋅(! "work" ∥ unreliableW) ⊕ τ⋅! "bye")
-                         ▷ add_data (x + x0) M);
-      [apply lts_fw_com, lts_choiceR; constructor|].
-      eapply wt_tau with ((! "work" ∥ unreliableW) ▷ add_data (x + x0) M);
-      [apply lts_fw_p, lts_choiceL; constructor
-      |eapply wt_act; [|apply wt_nil]].
-      simpl. rewrite Nat.add_comm. apply lts_fw_p. term_tac.
-    }
-    apply union_difference_singleton_L in Hin.
-    (* TODO: some typeclass magic should work here *)
-    assert(Heq0 : eq_rel_set ps' ({[unreliableW ▷ add_data (x + x0) M]}
-                            ∪ ps' ∖ {[𝟘 ∥ unreliableW ▷ add_data (x + x0) M]})).
-    { rewrite Hin at 1. replace (x0 + x) with (x + x0) by lia.
-      apply Proper_eq_rel_set_l; trivial.
-      apply fw_eq_id_mb; trivial; apply proc_absorb_nil_cgr. }
-    rewrite Heq0.
-    apply (hco (x + x0) M).
-  + assert(Hin : (unreliableW ▷ add_data n m) ∈ ps'). {
-      eapply Hwt with (p := unreliableW ▷ add_data n ({[+ a +]} ⊎ m))
-      ; [ set_tac|].
-      eapply wt_act; [| apply wt_nil].
-      replace (add_data n ({[+ a +]} ⊎ m)) with ({[+ a +]} ⊎ (add_data n m));
-      [term_tac|]. apply add_data_comm.
-    }
-    apply union_difference_singleton_L in Hin. rewrite Hin.
-    apply hco.
-  + assert(Hin : (unreliableW ▷ add_data n ({[+a+]} ⊎ M)) ∈ ps'). {
-      clear hco.
-      eapply Hwt with (p := unreliableW ▷ add_data n M); [ set_tac|].
-      eapply wt_act.
-      apply lts_fw_inp_mb.
-      replace  ({[+ a +]} ⊎ (add_data n M)) with (add_data n ({[+ a +]} ⊎ M));
-      [term_tac|]. now rewrite add_data_comm.
-    }
-    apply union_difference_singleton_L in Hin. rewrite Hin.
-    apply hco.
+- intros μ q' ps' Hμ1 Hμ2 Hwt.
+  apply elem_of_cons in Hq0 as [Hq0 | Hq0%elem_of_list_singleton]; subst.
+  + inversion Hμ2; subst.
+    * (* ! "work" *)
+      add_tac; [| lts_inversion]. clear Hμ2.
+      rewrite <- add_work_zero.
+      assert(Hin : (pr_nil ∥ unreliableW ▷ add_data (x0 + x) M) ∈ ps'). {
+        apply Hwt with (p := unreliableW ▷ add_data (S (x + x0)) M);
+        [ simpl; set_solver|].
+        apply wt_tau with
+          ((τ⋅ ! "end" ⊕
+          ("data" ? (τ⋅ (! "work" ∥ unreliableW) ⊕ τ⋅ ! "bye")))
+           ▷ add_data (S (x + x0)) M); [apply lts_fw_p; term_tac|].
+        setoid_rewrite <- add_data_comm.
+        apply wt_tau with ((τ⋅(! "work" ∥ unreliableW) ⊕ τ⋅! "bye")
+                           ▷ add_data (x + x0) M);
+        [apply lts_fw_com, lts_choiceR; constructor|].
+        eapply wt_tau with ((! "work" ∥ unreliableW) ▷ add_data (x + x0) M);
+        [apply lts_fw_p, lts_choiceL; constructor
+        |eapply wt_act; [|apply wt_nil]].
+        simpl. rewrite Nat.add_comm. apply lts_fw_p. term_tac.
+      }
+      apply union_difference_singleton_L in Hin.
+      (* TODO: some typeclass magic should work here *)
+      assert(Heq0 : eq_rel_set ps' ({[unreliableW ▷ add_data (x + x0) M]}
+                              ∪ ps' ∖ {[𝟘 ∥ unreliableW ▷ add_data (x + x0) M]})).
+      { rewrite Hin at 1. replace (x0 + x) with (x + x0) by lia.
+        apply Proper_eq_rel_set_l; trivial.
+        apply fw_eq_id_mb; trivial; apply proc_absorb_nil_cgr. }
+      rewrite Heq0.
+      apply (hco (x + x0) M). left.
+    * (* output from the mailbox *)
+      assert(Hin : (unreliableW ▷ add_data n m) ∈ ps'). {
+        eapply Hwt with (p := unreliableW ▷ add_data n ({[+ a +]} ⊎ m))
+        ; [ set_tac|].
+        eapply wt_act; [| apply wt_nil].
+        replace (add_data n ({[+ a +]} ⊎ m)) with ({[+ a +]} ⊎ (add_data n m));
+        [term_tac|]. apply add_data_comm.
+      }
+      apply union_difference_singleton_L in Hin. rewrite Hin.
+      apply hco. left.
+    * (* input in the mailbox *)
+      assert(Hin : (unreliableW ▷ add_data n ({[+a+]} ⊎ M)) ∈ ps'). {
+        eapply Hwt with (p := unreliableW ▷ add_data n M); [ set_tac|].
+        eapply wt_act.
+        apply lts_fw_inp_mb.
+        replace  ({[+ a +]} ⊎ (add_data n M)) with (add_data n ({[+ a +]} ⊎ M));
+        [term_tac|]. now rewrite add_data_comm.
+      }
+      apply union_difference_singleton_L in Hin. rewrite Hin.
+      apply hco. left.
+  (* TODO: there seeems to be some redundancy with the previous bullet. *)
+  + inversion Hμ2; subst; [add_tac| |].
+    * (* ! "work" *)
+      rewrite <- add_work_zero.
+      assert(Hin : (pr_nil ∥ unreliableW ▷ add_data (x0 + x) M) ∈ ps'). {
+        apply Hwt with (p := unreliableW ▷ add_data (S (x + x0)) M);
+        [ simpl; set_solver|].
+        apply wt_tau with
+          ((τ⋅ ! "end" ⊕
+          ("data" ? (τ⋅ (! "work" ∥ unreliableW) ⊕ τ⋅ ! "bye")))
+           ▷ add_data (S (x + x0)) M); [apply lts_fw_p; term_tac|].
+        setoid_rewrite <- add_data_comm.
+        apply wt_tau with ((τ⋅(! "work" ∥ unreliableW) ⊕ τ⋅! "bye")
+                           ▷ add_data (x + x0) M);
+        [apply lts_fw_com, lts_choiceR; constructor|].
+        eapply wt_tau with ((! "work" ∥ unreliableW) ▷ add_data (x + x0) M);
+        [apply lts_fw_p, lts_choiceL; constructor
+        |eapply wt_act; [|apply wt_nil]].
+        simpl. rewrite Nat.add_comm. apply lts_fw_p.
+        apply lts_parL. term_tac.
+      }
+      apply union_difference_singleton_L in Hin.
+      (* TODO: some typeclass magic should work here *)
+      assert(Heq0 : eq_rel_set ps' ({[unreliableW ▷ add_data (x + x0) M]}
+                              ∪ ps' ∖ {[𝟘 ∥ unreliableW ▷ add_data (x + x0) M]})).
+      { rewrite Hin at 1. replace (x0 + x) with (x + x0) by lia.
+        apply Proper_eq_rel_set_l; trivial.
+        apply fw_eq_id_mb; trivial; apply proc_absorb_nil_cgr. }
+      rewrite Heq0.
+      apply (hco (x + x0) M). right. left.
+    * (* ? "data" *)
+      clear Hμ2. lts_inversion; lts_inversion.
+      assert(Hin : (unreliableW ▷ add_data n ({[+"data"+]} ⊎ M)) ∈ ps'). {
+        eapply Hwt with (p := unreliableW ▷ add_data n M); [ set_tac|].
+        eapply wt_act; [apply lts_fw_inp_mb|rewrite add_data_comm; apply wt_nil].
+      }
+      apply union_difference_singleton_L in Hin. rewrite Hin.
+      apply (hco (S n)). left.
+    * (* output from the mailbox *)
+      assert(Hin : (unreliableW ▷ add_data n m) ∈ ps'). {
+        eapply Hwt with (p := unreliableW ▷ add_data n ({[+ a +]} ⊎ m))
+        ; [ set_tac|].
+        eapply wt_act; [| apply wt_nil].
+        replace (add_data n ({[+ a +]} ⊎ m)) with ({[+ a +]} ⊎ (add_data n m));
+        [term_tac|]. apply add_data_comm.
+      }
+      apply union_difference_singleton_L in Hin. rewrite Hin.
+      apply hco. right. left.
+    * (* input in the mailbox *)
+      assert(Hin : (unreliableW ▷ add_data n ({[+a+]} ⊎ M)) ∈ ps'). {
+        eapply Hwt with (p := unreliableW ▷ add_data n M); [ set_tac|].
+        eapply wt_act.
+        apply lts_fw_inp_mb.
+        replace  ({[+ a +]} ⊎ (add_data n M)) with (add_data n ({[+ a +]} ⊎ M));
+        [term_tac|]. now rewrite add_data_comm.
+      }
+      apply union_difference_singleton_L in Hin. rewrite Hin.
+      apply hco. right. left.
 (* D. Termination on the left implies termination on the right *)
-- intros. apply add_work_reliableW_terminate.
+- intros.
+  apply elem_of_cons in Hq0 as [Hq0 | Hq0%elem_of_list_singleton]; subst.
+  + apply add_work_reliableW_terminate.
+  + constructor. intros q Hq. lts_inversion.
+    * add_tac. repeat lts_inversion. apply add_work_end_terminate.
+    * add_tac. repeat lts_inversion. apply (add_work_reliableW_terminate m (S n)).
 Qed.
+
 
 End Example_2_1.

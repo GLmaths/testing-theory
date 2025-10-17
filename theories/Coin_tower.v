@@ -76,6 +76,11 @@ Section copre.
     intros h%(gfp_pfp copre_m); intros; now apply h.(c_tau_).
   Qed.
 
+  Lemma c_tau' {PRE : Chain copre_m} {ps q q'} :
+    copre_m (elem PRE) ps q -> q ⟶ q' -> elem PRE ps q' .
+  Proof.
+    intros h Ht. now apply h.(c_tau_). Qed.
+
   Lemma c_now {ps q}
     : ps ⩽ q
       -> (forall p, p ∈ ps -> p ⤓)
@@ -136,11 +141,6 @@ Section copre.
     now apply (c_tau h).
   Qed.
 
-  (* TODO: this may replace the above at some point *)
-  Lemma co_preserved_by_wt_nil' {PRE : Chain copre_m}
-    (ps : gset A) (q q' : B) : q ⟹ q' -> elem PRE ps q -> elem PRE ps q'.
-  Proof.
-  Admitted.
 
   Lemma prex1_if_copre (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ1 q.
   Proof.
@@ -579,30 +579,6 @@ intros X X' HX Y Y' HY.
 split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
  (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
 Qed.
-(*
-Lemma wt_s_set_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
-  forall {X X' : list A} {s} hcnv hcnv',
- ((forall x, x ∈ X -> exists y, y ∈ X' ∧ eq_rel x y) ∧
- (forall y, y ∈ X' -> exists x, x ∈ X ∧ eq_rel y x)) ->
-  eq_rel_set (wt_s_set_from_pset_xs X s hcnv) (wt_s_set_from_pset_xs X' s hcnv').
-Proof.
-induction X as [|p X]; intros X' s hcnv hcnv' [Heq1 Heq2]; simpl.
-- destruct X' as [|p' X'].
-  + reflexivity.
-  + exfalso. destruct (Heq2 p') as (x & Hx & _); [auto with *|]. inversion Hx.
-- destruct (Heq1 p) as (p' & Hp' & Heq); [auto with *|].
-  pose (X'' := remove lts_state_eqdec p' X').
-  apply eq_rel_set_union.
-  + admit.
-  + eapply IHX. split; intros x Hx.
-    * destruct (Heq1 x) as (y & Hy & Heq); [auto with *|].
-      exists y.
-apply Heq1.
-rewrite IHX.
-unfold wt_s_set_from_pset, wt_s_set_from_pset_xs.
-fold wt_s_set_from_pset_xs.
-wt_s_set_from_pset_xs
-*)
 
 Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
   forall {X X' s Y}, eq_rel_set X X' -> (∀ p : A, p ∈ X → p ⇓ s) ->
