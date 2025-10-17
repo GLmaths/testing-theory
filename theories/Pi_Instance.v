@@ -611,6 +611,9 @@ Inductive sts : proc -> proc -> Prop :=
 
 #[global] Hint Constructors sts:ccs.
 
+Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
+Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
+
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 (* Lemma 1.2.20 from Sangiorgi and Walker *)
 Lemma ReductionShape : forall P Q, sts P Q ->
@@ -631,49 +634,43 @@ induction Transition.
   - right. right. right. right. exists p, q, 𝟘, E, 0.
     repeat split. apply cgr_par_nil_rev. apply cgr_par_nil_rev. assumption.
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
-    Ltac finish_base H := rewrite H, <- cgr_par_assoc.
-    Ltac finish_induction H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, <- cgr_scope.
-    * destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
-      left. revert n H1 H2.  induction n; intros; simpl in H1, H2.
-      ** exists c, v, P1, P2, g1,g2, (s ‖ q), 0. simpl. split; [ now finish_base H1 | now finish_base H2 ].
-      ** exists c, v, P1, P2, g1,g2, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_induction H1 | now finish_induction H2 ].
-    * destruct IH as (P1 & P2 & s & n & [H1 H2]).
-      right. left. revert n H1 H2. induction n; intros; simpl in H1, H2.
-      ** exists P1, P2, (s ‖ q), 0. split; [ now finish_base H1 | now finish_base H2 ].
-      ** exists P1, P2, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_induction H1 | now finish_induction H2 ].
-    * destruct IH as (P1 & s & n & [H1 H2]).
-      right. right. left. revert n H1 H2. induction n; intros; simpl in H1, H2.
-      ** exists P1, (s ‖ q), 0. split; [ now finish_base H1 | now finish_base H2 ].
-      ** exists P1, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_induction H1 | now finish_induction H2 ].
-    * destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).
-      right. right. right. left. revert n H1 H2. induction n; intros; simpl in H1, H2.
-      ** exists P1, P0, (s ‖ q), E, 0. split; [ now finish_base H1 | now finish_base H2 ].
-      ** exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n). repeat split; [ now finish_induction H1 | now finish_induction H2 | assumption ].
-    * destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).
-      right. right. right. right. revert n H1 H2. induction n; intros; simpl in H1, H2.
-      ** exists P1, P0, (s ‖ q), E, 0. split; [ now finish_base H1 | now finish_base H2 ].
-      ** exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n). repeat split; [ now finish_induction H1 | now finish_induction H2 | assumption ].
+    + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]]. left. intros. simpl in H1, H2.
+      destruct n.
+      * exists c, v, P1, P2, g1,g2, (s ‖ q), 0. simpl. split; [ now finish_zero H1 | now finish_zero H2 ].
+      * exists c, v, P1, P2, g1,g2, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H1 | now finish_Sn H2 ].
+    + destruct IH as (P1 & P2 & s & n & [H1 H2]). right. left. destruct n; intros; simpl in H1, H2.
+      * exists P1, P2, (s ‖ q), 0. split; [ now finish_zero H1 | now finish_zero H2 ].
+      * exists P1, P2, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H1 | now finish_Sn H2 ].
+    + destruct IH as (P1 & s & n & [H1 H2]). right. right. left. destruct n; simpl in H1, H2.
+      * exists P1, (s ‖ q), 0. split; [ now finish_zero H1 | now finish_zero H2 ].
+      * exists P1, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H1 | now finish_Sn H2 ].
+    + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).  right. right. right. left. destruct n; simpl in H1, H2.
+      * exists P1, P0, (s ‖ q), E, 0. split; [ now finish_zero H1 | now finish_zero H2 ].
+      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n). repeat split; [ now finish_Sn H1 | now finish_Sn H2 | assumption ].
+    + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]). right. right. right. right. destruct n; simpl in H1, H2.
+      * exists P1, P0, (s ‖ q), E, 0. split; [ now finish_zero H1 | now finish_zero H2 ].
+      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n). repeat split; [ now finish_Sn H1 | now finish_Sn H2 | assumption ].
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
-    * destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
+    + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
       left. exists c, v, P1, P2, g1, g2, s, n. split; [ now rewrite <- H1 | now rewrite <- H2 ].
-    * destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
+    + destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
       right. left. exists P1, P2, s, n. split; [ now rewrite <- H1 | now rewrite <- H2 ].
-    * destruct IH as [P1 [s [n [H1 H2]]]].
+    + destruct IH as [P1 [s [n [H1 H2]]]].
       right. right. left. exists P1, s, n. split; [ now rewrite <- H1 | now rewrite <- H2 ].
-    * destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
       right. right. right. left. exists P1, P0, s, E, n. repeat split; [ now rewrite <- H1 | now rewrite <- H2 | assumption ].
-    * destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
       right. right. right. right. exists P1, P0, s, E, n. repeat split; [ now rewrite <- H1 | now rewrite <- H2 | assumption ].
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
-    * destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
+    + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
       left. exists c, v, P1, P2, g1, g2, s, (S n). split; [now rewrite H1 | now rewrite H2 ].
-    * destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
+    + destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
       right. left. exists P1, P2, s, (S n). split; [ now rewrite H1 | now rewrite H2 ].
-    * destruct IH as [P1 [s [n [H1 H2]]]].
+    + destruct IH as [P1 [s [n [H1 H2]]]].
       right. right. left. exists P1, s, (S n). split; [ now rewrite H1 | now rewrite H2 ].
-    * destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
       right. right. right. left. exists P1, P0, s, E, (S n). repeat split; [ now rewrite H1 | now rewrite H2 | assumption ].
-    * destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
       right. right. right. right. exists P1, P0, s, E, (S n). repeat split; [ now rewrite H1 | now rewrite H2 | assumption ].
 Qed.
 
