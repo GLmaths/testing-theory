@@ -151,13 +151,13 @@ Class gen_spec_acc (PreA : Type) `{CC : Countable PreA}
                 gen_acc L ε ↛ ; 
     (* t2 *) gen_spec_acc_nil_refuses_nb (L : gset PreA) η : 
                 non_blocking η -> gen_acc L ε ↛[η] ;
-  (* t3-> *) gen_spec_acc_nil_mu_inv (L : gset PreA) μ e : 
+  (* t4-> *) gen_spec_acc_nil_mu_inv (L : gset PreA) μ e : 
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e
                     -> (Γ μ) ∈ L ;
-  (* t3<- *) gen_spec_acc_nil_mem_lts_inp (L : gset PreA) pη : 
+  (* t4<- *) gen_spec_acc_nil_mem_lts_inp (L : gset PreA) pη : 
                 pη ∈ L -> (* ∃ r, gen_acc L ε ⟶[co_of η] r ; *)
                 ∃ r μ, gen_acc L ε ⟶[μ] r /\ (Γ μ = pη);
-    (* t4 *) gen_spec_acc_nil_lts_not_nb_good μ e' (L : gset PreA) : 
+    (* t3 *) gen_spec_acc_nil_lts_not_nb_good μ e' (L : gset PreA) : 
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e' -> good e' ;
   }.
 
@@ -1217,7 +1217,8 @@ Qed.
 Lemma must_gen_acc_refuses {P Q : Type} `{
   @gLtsOba P A H gLtsP gLtsEqP, @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @gLtsOba Q A H gLtsQ gLtsEqQ, @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @gLtsOba E A H gLtsE gLtsEqE, @AbsAction A H E FinA gLtsE Φ, !Good E A good, !gen_spec_acc PreA co_of gen_acc (fun x => (𝝳  (Φ x)))}
+  @gLtsOba E A H gLtsE gLtsEqE, @AbsAction A H E FinA gLtsE Φ, !Good E A good, 
+  !gen_spec_acc PreA co_of gen_acc (fun x => (𝝳  (Φ x)))}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
