@@ -30,7 +30,6 @@ From stdpp Require base countable finite gmap list gmultiset strings.
 Require Import Relations Morphisms.
 Require Import Coq.Wellfounded.Inverse_Image.
 
-From Must Require Import TransitionSystems Must Completeness.
 
 Require Import signatures.pi.
 Require Import signatures.unscoped.
@@ -51,18 +50,11 @@ Notation "↑↑" := (shift >> var_Data).
 (* Notation "p [ x ← v ]" := (subst_proc id (fun y => if (base.decide (y = x)) then v else y) p).
 Notation "p [ x ⇐ q ]" := (subst_proc (fun y => if (base.decide (y = x)) then q else y) id p). *)
 
-Coercion ActExt : ExtAct >-> Act.
-
 (*Coercion makes the specification of 'cst' and 'bvar' useless, then simplify the notation *)
 Coercion cst : Value >-> Data.
 Coercion var_Data : nat >-> Data.
 Coercion var_proc : nat >-> proc.
 
-(* Label of action (other than tau), here it is a channel's name with a data transmitted *)
-Inductive TypeOfActions := 
-| act : Data -> Data -> TypeOfActions.
-
-Notation "c ⋉ v" := (act c v) (at level 50).
 (* Arguments  tt  {_}.
 Arguments  ff  {_} .
 Arguments  Inequality  {_} _ _.
@@ -72,6 +64,22 @@ Arguments  Not  {_}  _. *)
 Notation "'non' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y) (at level 50).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
+
+(* From Must Require Import TransitionSystems Must Completeness. *)
+(* We need to distinguish actions for bound/free input now, so we don't use
+   the types in TransitionSystems. *)
+(* Label of action (other than tau), here it is a channel's name with a data transmitted *)
+Inductive ExternalAction := 
+| act : Data -> Data -> ExternalAction.
+
+Inductive Act :=
+| ActIn (a : ExternalAction)
+| FreeOut (a : ExternalAction)
+| BoundOut (a : ExternalAction)
+| τ
+.
+
+Notation "c ⋉ v" := (act c v) (at level 50).
 
 Parameter (Eval_Eq : Equation -> (option bool)).
 Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
@@ -160,8 +168,8 @@ Inductive cgr_step : proc -> proc -> Prop :=
     p1 ≡ q1 -> 
     (p1 + p2) ≡ (q1 + p2)
 
-
-(* MISSING ν ν rule (swap indexes 0 and 1) *)
+(* | cgr_nu_nu_step : forall p,
+    (ν ν p) ≡ (ν ν (swap_two p)) *)
 | cgr_res_nil_step :
     (ν 𝟘) ≡ 𝟘
 | cgr_res_nil_rev_step :
@@ -176,8 +184,22 @@ Inductive cgr_step : proc -> proc -> Prop :=
 where "p ≡ q" := (cgr_step p q).
 
 #[global] Hint Constructors cgr_step:cgr_step_structure.
-(* congruence notation *)
-Infix "≡" := cgr_step (at level 70).
+
+(* /!\ for induction principle to make coq understand that guards are sub-terms of proc *)
+Fixpoint size (p : proc) := 
+  match p with
+  | ① => 1
+  | 𝟘 => 0
+  | p ‖ q  => S (size p + size q)
+  | rec p => S (size p)
+  | var_proc _ => 1
+  | c ! v • p => S (size p)
+  | c ? p => S (size p)
+  | ν p => S (size p)
+  | t • p => S (size p)
+  | p + q => S (size p + size q)
+  | If C Then p Else q => S (size p + size q)
+end.
 
 (* The relation ≡ is an reflexive*)
 #[global] Instance cgr_refl_step_is_refl : Reflexive cgr_step.
@@ -186,6 +208,10 @@ Proof. intro. apply cgr_refl_step. Qed.
 #[global] Instance cgr_symm_step : Symmetric cgr_step.
 Proof. intros p q hcgr. induction hcgr; try solve [constructor; try exact IHhcgr].
 Qed.
+(* - assert (swap_two (swap_two p) = p).
+  + unfold swap_two. admit.
+  + replace (ν p) with (ν (swap_two (swap_two p))). apply cgr_nu_nu_step. now rewrite H. *)
+(* Admitted. *)
 
 (* Defining the transitive closure of ≡ *)
 Infix "≡" := cgr_step (at level 70).
@@ -383,25 +409,11 @@ Proof. intros p p' Hp. apply cgr_tau; assumption. Qed.
 (* Lemma Congruence_Respects_Substitution : forall p q s,
 p ≡* q -> p [s] ≡* q [s].
 Proof.
-intros p q v k congruence_hyp. revert k. revert v. 
+intros p q s congruence_hyp. revert s.
 induction congruence_hyp as [p q base_case | p r q transitivity_case]. 
-+ induction base_case; intros; auto with cgr.
-(* auto's simple apply is not sufficient, so we still need to apply the lemmas *)
-- apply cgr_par_com.
-- apply cgr_par_assoc.
-- apply cgr_par_assoc_rev.
-- apply cgr_choice_com.
-- apply cgr_choice_assoc.
-- apply cgr_choice_assoc_rev.
-- apply cgr_recursion. apply IHbase_case.
-- apply cgr_tau. apply IHbase_case.
-- apply cgr_input. apply IHbase_case.
-- apply cgr_par. apply IHbase_case.
-- apply cgr_if_left. apply IHbase_case.
-- apply cgr_if_right. apply IHbase_case.
-- apply cgr_choice. apply IHbase_case.
-- apply cgr_res. apply IHbase_case.
-- simpl. setoid_rewrite (subst_in_succ_new Q v k 0). apply cgr_scope.
++ induction base_case; intros; asimpl; auto with cgr.
+- apply cgr_recursion. unfold core.funcomp. apply IHbase_case. admit.
+- setoid_rewrite (subst_in_succ_new Q v k 0). apply cgr_scope.
 - simpl. setoid_rewrite (subst_in_succ_new Q v k 0). apply cgr_scope_rev.
 + eauto with cgr.
 Qed. *)
@@ -676,12 +688,12 @@ Qed.
 
 
 (* The Labelled Transition System (LTS-transition) *)
-Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
+Inductive lts : proc-> Act -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
     lts (c ? P) (ActIn (c ⋉ v)) (P [v ..])
 | lts_output : forall {c v P},
-    lts (c ! v • P) (ActOut (c ⋉ v)) 𝟘
+    lts (c ! v • P) (FreeOut (c ⋉ v)) P
 
 (*The actions Tau*)
 | lts_tau : forall {P},
@@ -695,23 +707,36 @@ Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
 
 (* Communication of a channel output and input that have the same name*)
 | lts_comL : forall {c v p1 p2 q1 q2},
-    lts p1 (ActOut (c ⋉ v)) p2 ->
+    lts p1 (FreeOut (c ⋉ v)) p2 ->
     lts q1 (ActIn (c ⋉ v)) q2 ->
     lts (p1 ‖ q1) τ (p2 ‖ q2) 
 | lts_comR : forall {c v p1 p2 q1 q2},
-    lts p1 (ActOut (c ⋉ v)) p2 ->
+    lts p1 (FreeOut (c ⋉ v)) p2 ->
     lts q1 (ActIn (c ⋉ v)) q2 ->
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
-(*The decoration for the transition system...*)
-(*...for the parallele*)   
+(* Scoped rules *)
+| lts_close_l : forall {c v p1 p2 q1 q2},
+    lts p1 (BoundOut (c ⋉ v)) p2 ->
+    lts q1 (ActIn (c ⋉ v)) q2 ->
+    lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
+| lts_close_r : forall {c v p1 p2 q1 q2},
+    lts q1 (BoundOut (c ⋉ v)) q2 ->
+    lts p1 (ActIn (c ⋉ v)) p2 ->
+    lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
+| lts_res : forall {p q α},
+    lts p α q ->
+    lts (ν p) α (ν q)
+| lts_open : forall {c v p1 p2},
+    lts p1 (FreeOut (c ⋉ v)) p2 ->
+    lts (ν p1) (BoundOut (c ⋉ v)) (ν p2)
+
 | lts_parL : forall {α p1 p2 q},
     lts p1 α p2 ->
     lts (p1 ‖ q) α (p2 ‖ q)
 | lts_parR : forall {α p q1 q2}, 
     lts q1 α q2 ->
     lts (p ‖ q1) α (p ‖ q2)
-(*...for the sum*)
 | lts_choiceL : forall {p1 p2 q α},
     lts p1 α q -> 
     lts (p1 + p2) α q
@@ -725,82 +750,106 @@ Inductive lts : proc-> (Act TypeOfActions) -> proc -> Prop :=
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForInput : forall P Q c v, (lts P (ActIn (c ⋉ v))) Q -> 
-(exists P1 G R, ((P ≡* ((c ? P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
+exists P1 G R n, (P ≡* νs n ((c ? P1 + G) ‖ R)) /\ (Q ≡* νs n (P1[v..] ‖ R)).
+(* /\ ((exists L,P = (g L)) -> R = 𝟘))). *)
 Proof.
 intros P Q c v Transition.
  dependent induction Transition.
-- exists P. exists 𝟘. exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? P) + 𝟘). apply cgr_trans with (c ? P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
-  * apply cgr_par_nil_rev.
-  * reflexivity.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
-  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
-  * apply cgr_trans with ((x^v ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
-  * intros. inversion H2. inversion H4.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ p). split; try split.
-  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
-  * apply cgr_trans with ((x^v ‖ x1) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
-  * intros. inversion H2. inversion H4.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p2). exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? x) + (x0 + p2)). apply cgr_trans with (((c ? x) + x0) + p2).
-    apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? x) + x0) ‖ 𝟘).
-    assumption. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
+- exists P, 𝟘, 𝟘, 0. split; eauto with cgr.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. exists P1, G, R, (S n). split.
+  + now rewrite H0.
+  + now rewrite H1.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, G, (R ‖ q), 0. simpl. split; [now finish_zero H0 | now finish_zero H1 ].
+  + exists P1, G, (R ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H0 | now finish_Sn H1 ].
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, G, (R ‖ p), 0. simpl. split; [rewrite H0|rewrite H1]; now rewrite cgr_par_com, cgr_par_assoc.
+  + exists P1, G, (R ‖ nvars n (p [↑↑])), (S n). simpl. split; [finish_Sn H0| finish_Sn H1]; now rewrite cgr_par_com.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, G, R, 0. simpl. split.
+    * rewrite H0. admit.
+    * now rewrite H1.
+  + exists P1, G, R, (S n). simpl. split.
+    * rewrite H0. admit.
+    * now rewrite H1.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, G, (R ‖ q), 0. simpl. split.
+    * rewrite H0. rewrite cgr_par_com. now rewrite cgr_par_assoc.
+    * rewrite H1. rewrite cgr_par_com. now rewrite cgr_par_assoc.
+  + exists P1, G, (R ‖ nvars n (p [↑↑])), (S n). simpl. split; [finish_Sn H0| finish_Sn H1]; now rewrite cgr_par_com.
+
+(* - destruct (IHTransition c v eq_refl). decompose record H.
+  exists x. exists (x0 + p2). exists 𝟘. split.
+  * rewrite cgr_par_nil. rewrite <- cgr_choice_assoc. apply cgr_choice.
+  * transitivity ((c ? x) + (x0 + p2)).
+    ** apply cgr_trans with (((c ? x) + x0) + p2).
+      *** apply cgr_choice. assert (x1 = 𝟘).
+          **** apply H3. exists p1. reflexivity. admit.
+          **** rewrite H1 in H0. apply transitivity with (((c ? x) + x0) ‖ 𝟘).
+               ***** assumption.
+               ***** apply cgr_par_nil.
+      *** apply cgr_choice_assoc.
+    ** apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. assumption.
-  * reflexivity.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p1). exists 𝟘. split; try split.
-  * apply cgr_trans with ((c ? x) + (x0 + p1)). apply cgr_trans with (((c ? x) + x0) + p1).
-    apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p2. reflexivity.
-    apply cgr_trans with (((c ? x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
-  * assert (x1 = 𝟘). apply H3. exists p2. reflexivity. rewrite <-H2. assumption. 
-  * reflexivity.
+  * reflexivity. *)
 Qed.
 
 
-Lemma guarded_does_no_output : forall p c v q, ¬ lts (g p) (ActOut (c ⋉ v)) q.
+(* Lemma guarded_does_no_output : forall p c v q, ¬ lts (g p) (ActOut (c ⋉ v)) q.
 Proof. 
 intros. intro Transition. 
 dependent induction Transition;eapply IHTransition; eauto.
-Qed.
-
+Qed. *)
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a OUPUT,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForOutput : forall P Q c v, (lts P (ActOut (c ⋉ v)) Q) -> 
-(exists R, (P ≡* ((c ! v • 𝟘) ‖ R) /\ (Q ≡* (𝟘 ‖ R)))).
+Lemma TransitionShapeForOutput : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) ->
+exists G R n, P ≡* νs n (c ! v • G ‖ R) /\ Q ≡* νs n (G ‖ R).
 Proof.
 intros P Q c v Transition.
-dependent induction Transition.
-- exists 𝟘. split.
-  * apply cgr_par_nil_rev.
-  * apply cgr_par_nil_rev.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists (x ‖ q). split.
-  * apply cgr_trans with (((c ! v • 𝟘) ‖ x) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
-  * apply cgr_trans with ((𝟘 ‖ x) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
-- destruct (IHTransition c v). reflexivity. decompose record H. exists (x ‖ p). split.
-  * apply cgr_trans with (((c ! v • 𝟘) ‖ x) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
-  * apply cgr_trans with ((𝟘 ‖ x) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
-- edestruct guarded_does_no_output. eauto.
-- edestruct guarded_does_no_output. eauto.
-Qed.
+dependent induction Transition; try destruct (IHTransition c v eq_refl) as [G [R [n [H0 H1]]]].
+- exists P, 𝟘, 0. split; apply cgr_par_nil_rev.
+- exists G, R, (S n). split; simpl; [now rewrite H0 | now rewrite H1].
+- destruct n.
+  + exists G, (R ‖ q), 0. split; [ now finish_zero H0 | now finish_zero H1 ].
+  + exists G, (R ‖ nvars n (q [↑↑])), (S n). split; [now finish_Sn H0 | now finish_Sn H1].
+- destruct n; simpl in H0, H1.
+  + exists G, (R ‖ p), 0. simpl. split; [rewrite H0|rewrite H1]; now rewrite cgr_par_com, cgr_par_assoc.
+  + exists G, (R ‖ nvars n (p [↑↑])), (S n). simpl. split; [finish_Sn H0| finish_Sn H1]; now rewrite cgr_par_com.
+- destruct n; simpl in H0, H1.
+  + exists G, R, 0. simpl. split.
+    * rewrite H0. admit.
+    * now rewrite H1.
+  + exists G, R, (S n). simpl. split.
+    * rewrite H0. admit.
+    * now rewrite H1.
+- destruct n; simpl in H0, H1.
+  + exists G, R, 0. simpl. split.
+    * rewrite H0. rewrite cgr_par_com. now rewrite cgr_par_assoc. admit.
+    * now rewrite H1.
+  + exists G, R, (S n). simpl. split.
+    * admit.
+    * now rewrite H1.
+(* - edestruct guarded_does_no_output. eauto. *)
+Admitted.
 
 
-Lemma TransitionShapeForOutputSimplified : forall P Q c v, (lts P (ActOut (c ⋉ v)) Q) 
+(* Lemma TransitionShapeForOutputSimplified : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) 
                                         -> (P ≡* ((c ! v • 𝟘) ‖ Q)).
 Proof.
 intros. 
-assert ((exists R, (P ≡* ((c ! v • 𝟘) ‖ R) /\ (Q ≡* (𝟘 ‖ R))))) as previous_result.
-apply TransitionShapeForOutput. assumption.
-decompose record previous_result.
+destruct (TransitionShapeForOutput P Q c v H) as [G [R [n [H0 H1]]]].
+
 apply transitivity with (((c ! v • 𝟘) ‖ x) ‖ 𝟘). apply transitivity with ((c ! v • 𝟘) ‖ x); eauto.
 auto with cgr. apply transitivity with ((c ! v • 𝟘) ‖ (x ‖ 𝟘)). auto with cgr. apply cgr_fullpar. auto with cgr.
 eauto with cgr. 
-Qed. 
+Qed.  *)
 
 
 (* For the (LTS-transition), the transitable Guards and transitted terms, that performs a Tau ,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P = (g L))) -> 
-(exists Q M, ((P ≡* ((t • Q) + M))) /\ (V ≡* (Q))).
+(* Lemma TransitionShapeForTauAndGuard : forall P V, lts P τ V -> 
+exists M, P ≡* (t • V) + M.
 Proof.
 intros P V (Transition & guard_witness). 
 dependent induction Transition.
@@ -825,7 +874,7 @@ dependent induction Transition.
     * destruct H. destruct H.  exists x. 
       exists (x0 + p1). split; eauto. apply cgr_trans with (((t • x) + x0) + p1). apply cgr_trans with (p2 + p1). 
       apply cgr_choice_com. apply cgr_choice. assumption. apply cgr_choice_assoc.
-Qed.
+Qed. *)
 
 (* p 'is equivalent some r 'and r performs α to q *)
 Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
@@ -841,56 +890,70 @@ Proof.
   intros p q α (p' & hcgr & l).
   revert q α l.
   dependent induction hcgr.
-  - dependent induction H. 
-(* reasonning about all possible cases due to the structure of terms *)
-    + intros. exists q.  split.  exact l. reflexivity. 
-    + intros. exists (q ‖ 𝟘). split. apply lts_parL. assumption. auto with cgr (*par contexte parallele*). 
-    + intros. dependent destruction l. inversion l2. inversion l1. exists p2. split. exact l. auto with cgr. 
-      inversion l.
+  - dependent induction H.
+    + intros q α l. exists q. split. exact l. reflexivity.
+    + intros q α l. exists (q ‖ 𝟘). split. apply lts_parL. assumption. apply cgr_par_nil.
+    + intros q α l. dependent destruction l.
+      * inversion l2.
+      * inversion l1.
+      * inversion l2.
+      * inversion l1.
+      * exists p2. split. assumption. apply cgr_par_nil_rev.
+      * inversion l.
+    + intros r α l. dependent destruction l.
+      * exists (q2 ‖ p2). split; [apply (@lts_comR c v _ _ _ _ l1 l2) | apply cgr_par_com].
+      * exists (p2 ‖ q2). split; [apply (@lts_comL c v _ _ _ _ l1 l2) | apply cgr_par_com].
+      * eexists. split. apply (lts_close_r l1 l2). apply cgr_res. apply cgr_par_com. 
+      * eexists. split. apply (lts_close_l l1 l2). apply cgr_res. apply cgr_par_com.
+      * exists (p ‖ p2). split. apply (lts_parR l). apply cgr_par_com.
+      * exists (q2 ‖ q). split. apply (lts_parL l). apply cgr_par_com.
     + intros. dependent destruction l.
-      -- exists (q2 ‖ p2). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). exact l1. exact l2. auto with cgr.
-      -- exists (p2 ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). exact l1. exact l2. auto with cgr.
-      -- exists (p ‖ p2). split. apply lts_parR. assumption. auto with cgr.
-      -- exists (q2 ‖ q). split. apply lts_parL. assumption. auto with cgr.
-    + intros. dependent destruction l.
-      -- dependent destruction l2. 
-         * exists ((p2 ‖ p0) ‖ r). split.
-           apply lts_parL. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption. assumption. auto with cgr.
-         * exists ((p2 ‖ q) ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). apply lts_parL. assumption. assumption.
+      * dependent destruction l2. 
+         ** exists ((p2 ‖ p0) ‖ r). split.
+           apply lts_parL. apply (@lts_comL c v _ _ _ _ l1 l2). apply cgr_par_assoc.
+         ** exists ((p2 ‖ q) ‖ q2). split. apply (@lts_comL c v). apply (lts_parL l1). assumption.
            apply cgr_par_assoc.
-      -- dependent destruction l1. 
-         * exists ((q2 ‖ p2) ‖ r). split. apply lts_parL. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption.
+      * dependent destruction l1. 
+         ** exists ((q2 ‖ p2) ‖ r). split. apply lts_parL. apply (@lts_comR c v). assumption.
            assumption. auto with cgr.
-         * exists ((q2 ‖ q) ‖ q0). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parL.
+         ** exists ((q2 ‖ q) ‖ q0). split. apply (@lts_comR c v). assumption. apply lts_parL.
            assumption. auto with cgr.
-      -- exists ((p2 ‖ q) ‖ r). split. apply lts_parL. apply lts_parL. assumption. auto with cgr.
-      -- dependent destruction l.
-         * exists ((p ‖ p2) ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption. assumption.
+      * admit. (* bound *)
+      * admit. (* bound*)
+      * exists ((p2 ‖ q) ‖ r). split. apply lts_parL. apply lts_parL. assumption. auto with cgr.
+      * dependent destruction l.
+         ** exists ((p ‖ p2) ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption. assumption.
            auto with cgr.
-         * exists ((p ‖ q2) ‖ p2). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parR.
+         ** exists ((p ‖ q2) ‖ p2). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parR.
            assumption. auto with cgr.
-         * exists ((p ‖ p2) ‖ r). split. apply lts_parL. apply lts_parR. assumption. auto with cgr.
-         * exists ((p ‖ q) ‖ q2). split. apply lts_parR. assumption. auto with cgr.
+         ** admit. (* bound *)
+         ** admit. (* bound *)
+         ** exists ((p ‖ p2) ‖ r). split. apply lts_parL. apply lts_parR. assumption. auto with cgr.
+         ** exists ((p ‖ q) ‖ q2). split. apply lts_parR. assumption. auto with cgr.
     + intros. dependent destruction l.
-      -- dependent destruction l1. 
-         * exists (p2 ‖ (q ‖ q2)). split.
+      * dependent destruction l1. 
+         ** exists (p2 ‖ (q ‖ q2)). split.
            eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parR. assumption. auto with cgr.
-         * exists (p ‖ (q0 ‖ q2)). split. apply lts_parR. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption.
+         ** exists (p ‖ (q0 ‖ q2)). split. apply lts_parR. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption.
            assumption. auto with cgr.
-      -- dependent destruction l2. 
-         * exists (p0 ‖ (q ‖ p2)). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption.
+      * dependent destruction l2. 
+         ** exists (p0 ‖ (q ‖ p2)). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption.
            assumption. auto with cgr.
-         * exists (p ‖ (q2 ‖ p2)). split. apply lts_parR.  eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption.
+         ** exists (p ‖ (q2 ‖ p2)). split. apply lts_parR.  eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption.
            assumption. auto with cgr.
-      -- dependent destruction l.
-         * exists (p2 ‖ (q2 ‖ r)). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c).  assumption. apply lts_parL.
+      * admit. (* bound *)
+      * admit. (* bound *)
+      * dependent destruction l.
+         ** exists (p2 ‖ (q2 ‖ r)). split. apply (@lts_comL c v). assumption. apply lts_parL.
            assumption. auto with cgr.
-         * exists (q2 ‖ (p2 ‖ r)). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). apply lts_parL. assumption.
+         ** exists (q2 ‖ (p2 ‖ r)). split. apply (@lts_comR c v). apply lts_parL. assumption.
            assumption. auto with cgr.
-         * exists (p2 ‖ ( q ‖ r)). split. apply lts_parL. assumption. auto with cgr.
-         * exists (p ‖ (q2 ‖ r)). split. apply lts_parR. apply lts_parL. assumption. auto with cgr.
-      -- exists (p ‖ (q ‖ q2)). split. apply lts_parR.  auto. apply lts_parR. assumption. auto with cgr.
-    + intros. exists q.  split. apply lts_choiceL.  assumption. auto with cgr.
+         ** admit. (* bound *)
+         ** admit. (* bound *)
+         ** exists (p2 ‖ ( q ‖ r)). split. apply lts_parL. assumption. auto with cgr.
+         ** exists (p ‖ (q2 ‖ r)). split. apply lts_parR. apply lts_parL. assumption. auto with cgr.
+      * exists (p ‖ (q ‖ q2)). split. apply lts_parR.  auto. apply lts_parR. assumption. auto with cgr.
+    + intros. exists q.  split. apply lts_choiceL. assumption. auto with cgr.
     + intros. dependent destruction l.
       -- exists q. split. assumption. auto with cgr.
       -- inversion l.
@@ -907,25 +970,26 @@ Proof.
          * exists q0. split. apply lts_choiceL. assumption. auto with cgr.
          * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. auto with cgr.
       -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. auto with cgr.
-    + intros. dependent destruction l. exists (pr_subst x p (rec x • p)). split. apply lts_recursion. 
-      apply cgr_subst. assumption.
+    + intros. dependent destruction l. eexists. split. apply lts_recursion.
+       assert (p ≡* q) by now constructor. rewrite H0. admit. (** substitution in recursion? *)
     + intros. dependent destruction l. exists p.  split. apply lts_tau.
       constructor. assumption.
-    + intros. dependent destruction l. exists (p^v). split. apply lts_input.
-      apply Congruence_Respects_Substitution. constructor. apply H.
+    + intros. dependent destruction l. exists (p [v..]). split. apply lts_input.
+      assert (p ≡* q) by now constructor. now rewrite H0.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step p2 (ActOut (c ⋉ v))).  exact l1. destruct H0. exists (x ‖ q2).
-          split. eapply lts_comL. exact H0. assumption.
-          apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step q2 (ActIn (c ⋉ v))). assumption. destruct H0. exists (x ‖ p2).
-          split.  eapply lts_comR. exact l1. assumption.
-          apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
-          split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
-          assumption. reflexivity.
-      -- eexists. split. instantiate (1:= (p ‖ q2)). apply lts_parR.
-          assumption. apply cgr_par.
-          constructor. assumption.
+      * destruct (IHcgr_step p2 (FreeOut (c ⋉ v))).  exact l1. destruct H0. exists (x ‖ q2).
+        split. eapply lts_comL. exact H0. assumption.
+        apply cgr_fullpar. assumption. reflexivity.
+      * destruct (IHcgr_step q2 (ActIn (c ⋉ v))). assumption. destruct H0. exists (x ‖ p2).
+        split.  eapply lts_comR. exact l1. assumption.
+        apply cgr_fullpar. assumption. reflexivity.
+      * admit. (* bound *)
+      * admit. (* bound *)
+      * destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
+        split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
+        assumption. reflexivity.
+      * eexists. split. instantiate (1:= (p ‖ q2)). apply lts_parR.
+        assumption. apply cgr_par. now constructor.
     + intros. dependent destruction l.
       -- eexists. split. instantiate (1:= p). apply lts_ifOne. assumption. reflexivity. 
       -- eexists. split. instantiate (1:= q). apply lts_ifZero. assumption.
@@ -938,6 +1002,11 @@ Proof.
     + intros. dependent destruction l. 
       -- destruct (IHcgr_step q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
+    + intros. dependent destruction l.
+    + intros. repeat dependent destruction l.
+    + admit. (* res *)
+    + admit. (* res *)
+    + admit. (* res *)
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. eauto with cgr.
 Qed.
