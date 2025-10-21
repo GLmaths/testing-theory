@@ -626,7 +626,6 @@ Inductive sts : proc -> proc -> Prop :=
 Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
 Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
 
-(* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 (* Lemma 1.2.20 from Sangiorgi and Walker *)
 Lemma ReductionShape : forall P Q, sts P Q ->
 ((exists c v P1 P2 G1 G2 s n, (P ≡* νs n (((c ! v • P1) + G1 ‖ ((c ? P2) + G2)) ‖ s)) /\ (Q ≡* νs n ((P1 ‖ (P2[v..])) ‖ s)))
@@ -717,19 +716,23 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 
 (* Scoped rules *)
 | lts_close_l : forall {c v p1 p2 q1 q2},
-    lts p1 (BoundOut (c ⋉ v)) p2 ->
-    lts q1 (ActIn (c ⋉ v)) q2 ->
-    lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
+    lts p1 (BoundOut (c ⋉ v)) p2 ->      (* this term is an "open" term, (see the lts_open rule) *)
+    lts q1 (ActIn (c ⋉ v)) q2 ->         (* while this one is a "closed" term *)
+    lts (p1 ‖ q1) τ (ν (p2 ‖ (q2 [↑↑]))) (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
 | lts_close_r : forall {c v p1 p2 q1 q2},
     lts q1 (BoundOut (c ⋉ v)) q2 ->
     lts p1 (ActIn (c ⋉ v)) p2 ->
     lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
 | lts_res : forall {p q α},
     lts p α q ->
-    lts (ν p) α (ν q)
-| lts_open : forall {c v p1 p2},
-    lts p1 (FreeOut (c ⋉ v)) p2 ->
-    lts (ν p1) (BoundOut (c ⋉ v)) (ν p2)
+    lts (ν p) α (ν q) (* only α needs to shift here!! (both chan and value).
+                         as a consequence, the channel in α can never be 0 (giving the condition in paper)
+                         as in onther places: we started with an "open" value, that's why we add a flat ν *)
+| lts_open : forall {c p1 p2}, (** remark: we are adding a ν but we are not shifting. this corresponds to the intuition in momigliano&cecilia that free rules handle open terms *)
+    c <> var_Data 0 ->
+    lts p1 (FreeOut (c ⋉ (var_Data 0))) p2 ->       (** condition: c must not be 0 ! *)
+    lts (ν p1) (BoundOut (c ⋉ (var_Data 0))) p2     (* this should happen only when v = 0 *)
+                                                    (* note that p2 is now an open term. its scope is going to be closed in the close rule *)
 
 | lts_parL : forall {α p1 p2 q},
     lts p1 α p2 ->
@@ -744,6 +747,8 @@ Inductive lts : proc-> Act -> proc -> Prop :=
     lts p2 α q -> 
     lts (p1 + p2) α q
 .
+
+(* observations: a closed term does no visible actions (only τ) *)
 
 #[global] Hint Constructors lts:ccs.
 
@@ -884,6 +889,7 @@ Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
 
 
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
+(* fact 1.4.16 in Sangiorgi&Walker *)
 Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
 Proof. 
 (* by induction on the congruence and the step then...*)
