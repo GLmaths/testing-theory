@@ -380,7 +380,6 @@ Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
   | [] => 𝟘
   | Inputs_on c :: l => (c ? x • ①) + unroll_fw l
-  | Outputs_on c :: l => unroll_fw l
   end.
 
 Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))).
@@ -393,9 +392,6 @@ Proof.
   - destruct y ; destruct x.
     + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.
       eapply cgr_choice_com. reflexivity. eapply cgr_choice_assoc.
-    + eapply cgr_fullchoice; eauto with ccs. reflexivity. reflexivity.
-    + eapply cgr_fullchoice; eauto with ccs. reflexivity. reflexivity.
-    + reflexivity.
 Qed.
 
 Lemma not_good_P G : ¬ (good_VACCS (gen_acc G ε)).
@@ -460,7 +456,6 @@ Proof.
     + inversion R; subst.
       * inversion H3.
       * eapply IHg'. eauto.
-    + eapply IHg'. eauto.
 Qed.
 
 Lemma gen_acc_does_not_tau : forall g p, ~ lts (unroll_fw g) τ p.
@@ -472,7 +467,6 @@ Proof.
     + inversion R; subst.
       * inversion H3.
       * eapply IHg'. eauto.
-    + eapply IHg'. eauto.
 Qed.
 
 Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs_on c ∈ G 
@@ -508,15 +502,6 @@ Proof.
         replace (elements {[Inputs_on c0]}) with [Inputs_on c0] in h. eauto.
         now rewrite elements_singleton. simpl in *.
         eapply lts_choiceR. eauto. subst. eauto.
-      * subst. destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
-        simpl in *. 
-        edestruct (eq_spec (g (unroll_fw (elements ({[Outputs_on c0]} ∪ X))))
-             r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
-        exists (g (unroll_fw (Outputs_on c0 :: elements X))).
-        split. eapply unroll_a_eq_perm.
-        set (h := elements_disj_union {[Outputs_on c0]} X hn).
-        replace (elements {[Outputs_on c0]}) with [Outputs_on c0] in h. eauto.
-        now rewrite elements_singleton. simpl in *. eauto. eauto.
 Qed.
 
 #[global] Program Instance gen_acc_gen_spec_acc_inst
@@ -555,15 +540,13 @@ Next Obligation.
          +++ inversion hlt; subst. 
              ** inversion H6; subst. set_solver.
              ** set_solver.
-         +++ set_solver.
     * destruct H0. exists a. reflexivity.
 Qed.
 Next Obligation.
   intros. destruct pη.
   + eapply gen_acc_gen_spec_acc_nil_mem_lts_inp in H; eauto.
     destruct H as (r & v & Tr). exists r , (ActIn $ (c ⋉ v)). split; eauto.
-  + 
-Admitted.
+Qed.
 Next Obligation.
   intros Hyp a e' g. revert a e'.
   induction g using set_ind_L; intros a e' b hl.
@@ -581,5 +564,4 @@ Next Obligation.
        +++ inversion hlt; subst.
            ++++ inversion H4; subst. simpl in *. eapply good_preserved_by_cgr; eauto. constructor.
            ++++ eapply good_preserved_by_cgr. eapply IHg; eauto. eauto.
-       +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
 Qed.

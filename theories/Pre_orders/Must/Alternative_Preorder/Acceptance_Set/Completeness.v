@@ -155,7 +155,7 @@ Class gen_spec_acc (PreA : Type) `{CC : Countable PreA}
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e
                     -> (Γ μ) ∈ L ;
   (* t4<- *) gen_spec_acc_nil_mem_lts_inp (L : gset PreA) pη : 
-                pη ∈ L -> (* ∃ r, gen_acc L ε ⟶[co_of η] r ; *)
+                pη ∈ L -> 
                 ∃ r μ, gen_acc L ε ⟶[μ] r /\ (Γ μ = pη);
     (* t3 *) gen_spec_acc_nil_lts_not_nb_good μ e' (L : gset PreA) : 
                 ¬ non_blocking μ -> gen_acc L ε ⟶[μ] e' -> good e' ;
@@ -1124,14 +1124,17 @@ Proof.
                { exists μ1. repeat split; eauto. eapply lts_refuses_spec2; eauto.
                  symmetry in eq; eauto. }
                eapply preactions_of_fin_test_spec1 in co_set.
-               eapply preactions_of_spec in co_set.
+               eapply preactions_of_spec1 in co_set.
                eapply gen_spec_acc_nil_mu_inv in l2 as mem; eauto.
                eapply hsub in mem.
                eapply gen_spec_acc_nil_mem_lts_inp in mem as (r & μ'2 & Tr' & eq'); eauto.
                rewrite<- eq' in co_set.
-               eapply preactions_of_spec in co_set.
+               eapply preactions_of_spec2 in co_set; eauto.
                eapply preactions_of_fin_test_spec2 in co_set as (μ'' & co_set & eq'').
                destruct co_set as (μ'1 & Tr & duo & b).
+               assert (blocking μ'2).
+               { intro imp. eapply gen_spec_acc_nil_refuses_nb in imp. 
+                 eapply (@lts_refuses_spec2 E). exists r. exact Tr'. eauto. }
                assert (¬ gen_acc L2 ε ↛[μ'']) as Tr''.
                { eapply (abstraction_test_spec μ'2 μ'' (gen_acc L2 ε)) in eq''; eauto.
                  eapply lts_refuses_spec2; eauto. }
@@ -1240,15 +1243,18 @@ Proof.
          assert (a ∈ pre_co_actions_of p) as co_set. 
          { eauto. eapply elem_of_difference; eauto. }
          eapply gen_spec_acc_nil_mem_lts_inp in mem' as (r & μ & Tr & eq); eauto.
-         subst. eapply preactions_of_spec in co_set.
+         subst. eapply preactions_of_spec2 in co_set.
          eapply preactions_of_fin_test_spec2 in co_set as (μ'' & co_set & eq). 
          destruct co_set as (μ' & Tr' & duo & b).
+         assert (blocking μ).
+         { intro imp. eapply gen_spec_acc_nil_refuses_nb in imp. 
+           eapply (@lts_refuses_spec2 E). exists r. exact Tr. eauto. }
          assert (¬ (gen_acc (pre_co_actions_of p ∖ pre_co_actions_of q) ε) ↛[μ'']) as Tr''.
          { eapply abstraction_test_spec; eauto. eapply lts_refuses_spec2; eauto. }
          rewrite<- HeqD in Tr''.
          eapply lts_refuses_spec1 in Tr'' as (e'' & Tr'').
          eapply lts_refuses_spec1 in Tr' as (p'' & Tr').
-         exists (p'' , e''). symmetry in duo. eapply ParSync; eauto.
+         exists (p'' , e''). symmetry in duo. eapply ParSync; eauto. eauto.
       ++ intros p' l'. exfalso. eapply (lts_refuses_spec2 p); eauto with mdb.
       ++ intros e' l'. exfalso.
          assert (¬ gen_acc (pre_co_actions_of p ∖ pre_co_actions_of q) ε ↛ ).
@@ -1436,7 +1442,7 @@ Proof.
                 assert (𝝳 (Φ μ2) ∉ pre_co_actions_of q) as not_in_mem.
                 { set_solver. }
                 assert (𝝳 (Φ μ2) ∈ pre_co_actions_of q) as in_mem.
-                { eapply preactions_of_spec. eapply preactions_of_fin_test_spec1. exists μ1. repeat split; eauto.
+                { eapply preactions_of_spec1. eapply preactions_of_fin_test_spec1. exists μ1. repeat split; eauto.
                 eapply lts_refuses_spec2; eauto. symmetry in eq; eauto. }
                 contradiction.
   - eapply (IHwt hst), (must_preserved_by_lts_tau_srv p q _ hm l).

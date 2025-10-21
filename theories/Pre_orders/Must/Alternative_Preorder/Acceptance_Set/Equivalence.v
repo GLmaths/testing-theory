@@ -481,7 +481,7 @@ Section preorder.
         * eassumption.
         * intros (q, e') Hstep. apply H0 =>//=.
   Qed.
-  Check @must_extensional.
+
   Lemma must_ext_pred_iff_must_extensional {P : Type}
     `{StsPE : Sts (P * E), good : E -> Prop, good_decidable : forall (e : E), Decision (good e)}
     (p : P) (e : E) : @extensional_pred _ _ (must_bar good) (p, e) <-> 

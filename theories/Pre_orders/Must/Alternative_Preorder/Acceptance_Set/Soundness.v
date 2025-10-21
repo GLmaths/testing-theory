@@ -707,7 +707,7 @@ Lemma ungood_must_st_nleqx `{
     -> mustx X e 
       -> (q, e) ↛
         -> ¬ X ≼ₓ2 q.
-Proof. 
+Proof.
   intros not_happy all_must refuses_tau_q hbhv2.
 
   assert (q ↛) as stable_q.
@@ -742,18 +742,18 @@ Proof.
       { exists μ1. repeat split; eauto.
         eapply lts_refuses_spec2;eauto. symmetry in eq; eauto. }
       eapply preactions_of_fin_test_spec1 in some_co_action_of_p.
-      eapply preactions_of_spec in some_co_action_of_p.
+      eapply preactions_of_spec1 in some_co_action_of_p.
       eapply sub in some_co_action_of_p.
-      eapply preactions_of_spec in some_co_action_of_p.
+      eapply preactions_of_spec2 in some_co_action_of_p.
       eapply preactions_of_fin_test_spec2 in some_co_action_of_p as (μ' & mem' & eq').
-      assert (¬ e ↛[μ']) as Tr_Test.
-      { eapply abstraction_test_spec. exact eq'. apply lts_refuses_spec2. eauto. }
       destruct mem' as (μ'1 & Tr & duo & b).
+      assert (¬ e ↛[μ']) as Tr_Test.
+      { eapply abstraction_test_spec. exact not_nb. exact b. exact eq'. apply lts_refuses_spec2. eauto. }
       eapply lts_refuses_spec1 in Tr_Test as (e' & Tr').
       eapply lts_refuses_spec1 in Tr as (q' & Tr).
       eapply (lts_refuses_spec2 (q,e)). exists (q', e').
       symmetry in duo.
-      eapply ParSync; eauto. eauto.
+      eapply ParSync; eauto. eauto. eauto.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
