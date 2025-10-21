@@ -61,7 +61,7 @@ Arguments  Inequality  {_} _ _.
 Arguments  Or  {_} _ _.
 Arguments  Not  {_}  _. *)
 
-Notation "'non' e" := (Not e) (at level 50).
+Notation "'not' e" := (Not e) (at level 50).
 Notation "x ∨ y" := (Or x y) (at level 50).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
@@ -92,18 +92,20 @@ Parameter (value_is_countable : countable.Countable Value). (* only here for the
 #[global] Instance value_countable : countable.Countable Value. Proof. exact value_is_countable. Defined.
 
 (*Some notation to simplify the view of the code*)
-Notation "①" := (pr_success).
-Notation "𝟘" := (pr_nil).
+Notation "①" := (gpr_success).
+Notation "𝟘" := (gpr_nil).
 Notation "'rec' p" := (pr_rec p) (at level 50).
-Notation "P + Q" := (pr_choice P Q).
+Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
-Notation "c ! v • P" := (pr_output c v P) (at level 50).
+Notation "c ! v • P" := (gpr_output c v P) (at level 50).
 Notation "'ν' P" := (pr_res P) (at level 50).
-Notation "c ? P" := (pr_input c P) (at level 50).
-Notation "'t' • P" := (pr_tau P) (at level 50).
+Notation "c ? P" := (gpr_input c P) (at level 50).
+Notation "'t' • P" := (gpr_tau P) (at level 50).
 Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
+
+Coercion g : gproc >-> proc.
 
 Definition swap_two p :=
   ren_proc ids (fun x => match x with 0 => S 0 | S 0 => 0 | n => n end) p.
@@ -135,7 +137,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
 | cgr_choice_nil_step : forall p,
     (p + 𝟘) ≡ p
 | cgr_choice_nil_rev_step : forall p,
-    p ≡ (p + 𝟘)
+    (g p) ≡ (p + 𝟘)
 | cgr_choice_com_step : forall p q,
     (p + q) ≡ (q + p)
 | cgr_choice_assoc_step : forall p q r,
@@ -165,7 +167,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
 (*...and sums (only for guards (by sanity))*)
 (* this rule is in the corrected book of Sangiorgi, see his typos *)
 | cgr_choice_step : forall p1 q1 p2,
-    p1 ≡ q1 -> 
+    (g p1) ≡ (g q1) -> 
     (p1 + p2) ≡ (q1 + p2)
 
 (* | cgr_nu_nu_step : forall p,
@@ -186,7 +188,7 @@ where "p ≡ q" := (cgr_step p q).
 #[global] Hint Constructors cgr_step:cgr_step_structure.
 
 (* /!\ for induction principle to make coq understand that guards are sub-terms of proc *)
-Fixpoint size (p : proc) := 
+(* Fixpoint size (p : proc) := 
   match p with
   | ① => 1
   | 𝟘 => 0
@@ -199,7 +201,7 @@ Fixpoint size (p : proc) :=
   | t • p => S (size p)
   | p + q => S (size p + size q)
   | If C Then p Else q => S (size p + size q)
-end.
+end. *)
 
 (* The relation ≡ is an reflexive*)
 #[global] Instance cgr_refl_step_is_refl : Reflexive cgr_step.
@@ -271,7 +273,7 @@ Proof.
 constructor.
 apply cgr_choice_nil_step.
 Qed.
-Lemma cgr_choice_nil_rev : forall p, p ≡* p + 𝟘.
+Lemma cgr_choice_nil_rev : forall p, (g p) ≡* p + 𝟘.
 Proof.
 constructor.
 apply cgr_choice_nil_rev_step.
@@ -349,12 +351,12 @@ intros. dependent induction H.
 - constructor.  apply cgr_if_right_step. exact H.
 - eauto with cgr_eq.
 Qed.
-Lemma cgr_choice : forall p q r, p ≡* q -> p + r ≡* q + r.
+Lemma cgr_choice : forall p q r, (g p) ≡* (g q) -> p + r ≡* q + r.
 Proof.
-intros. dependent induction H. 
-- constructor.  apply cgr_choice_step. exact H.
-- eauto with cgr_eq.
-Qed.
+intros. dependent induction H.
+- constructor. apply cgr_choice_step. exact H.
+- etransitivity. apply (IHclos_trans1 p q). reflexivity. admit.
+Admitted.
 
 (* The if of processes respects ≡* *)
 Lemma cgr_full_if : forall C p p' q q', p ≡* p' -> q ≡* q' -> (If C Then p Else q) ≡* (If C Then p' Else q').
@@ -364,11 +366,11 @@ apply transitivity with (If C Then p Else q'). apply cgr_if_left. exact H0.
 apply cgr_if_right. exact H. 
 Qed.
 (* The sum of guards respects ≡* *)
-Lemma cgr_fullchoice : forall M1 M2 M3 M4, M1 ≡* M2 -> M3 ≡* M4 -> M1 + M3 ≡* M2 + M4.
+Lemma cgr_fullchoice : forall M1 M2 M3 M4, (g M1) ≡* (g M2) -> (g M3) ≡* (g M4) -> M1 + M3 ≡* M2 + M4.
 Proof.
 intros.
-apply transitivity with (M2 + M3). apply cgr_choice. exact H. apply transitivity with (M3 + M2).
-apply cgr_choice_com. apply transitivity with (M4 + M2). apply cgr_choice. exact H0. apply cgr_choice_com.
+apply transitivity with (g (M2 + M3)). apply cgr_choice. exact H. apply transitivity with (g (M3 + M2)).
+apply cgr_choice_com. apply transitivity with (g (M4 + M2)). apply cgr_choice. exact H0. apply cgr_choice_com.
 Qed.
 (* The parallele of process respects ≡* *)
 Lemma cgr_fullpar : forall M1 M2 M3 M4, M1 ≡* M2 -> M3 ≡* M4 -> M1 ‖ M3 ≡* M2 ‖ M4.
@@ -394,8 +396,8 @@ apply transitivity with (p' ‖ q).
     * apply cgr_par_com.
 Qed.
 
-#[global] Instance pr_choice_proper : Proper (cgr ==> cgr ==> cgr) pr_choice.
-Proof. intros p p' Hp q q' Hq. apply cgr_fullchoice; assumption. Qed.
+(* #[global] Instance gpr_choice_proper : Proper (cgr ==> cgr ==> cgr) gpr_choice.
+Proof. intros p p' Hp q q' Hq. apply cgr_fullchoice; assumption. Qed. *)
 
 #[global] Instance pr_res_proper : Proper (cgr ==> cgr) pr_res.
 Proof. intros p p' Hp. apply cgr_res; assumption. Qed.
@@ -403,7 +405,7 @@ Proof. intros p p' Hp. apply cgr_res; assumption. Qed.
 #[global] Instance pr_rec_proper : Proper (cgr ==> cgr) pr_rec.
 Proof. intros p p' Hp. apply cgr_recursion; assumption. Qed.
 
-#[global] Instance pr_tau_proper : Proper (cgr ==> cgr) pr_tau.
+#[global] Instance pr_tau_proper : Proper (cgr ==> cgr) gpr_tau.
 Proof. intros p p' Hp. apply cgr_tau; assumption. Qed.
 
 (* Lemma Congruence_Respects_Substitution : forall p q s,
@@ -457,6 +459,7 @@ intros sp' sp Hp s' s Hs q1 q2 Hq.
 induction Hq as [p q base_case | p r q transitivity_case].
 - subst. revert sp s. induction base_case; intros; try solve [asimpl; auto with cgr].
   (* + simpl. unfold subst2. simpl. substify. simpl. Set Printing All. *)
+  + asimpl. apply cgr_choice. apply IHbase_case.
   + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope _ _).
   + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope_rev _ _).
 - subst. now rewrite IHtransitivity_case.
@@ -598,7 +601,7 @@ Inductive sts : proc -> proc -> Prop :=
 (* Nothing more , something less *)
 | sts_tau : forall {p g}, 
     sts ((t • p) + g) p
-(* Resursion *)
+(* Recursion *)
 | sts_recursion : forall {p}, 
     sts (rec p) (p <[(rec p)..])
 (*If Yes*)
@@ -638,7 +641,7 @@ Proof.
 intros P Q Transition.
 induction Transition.
   - left. exists c, v, p1, p2, g1, g2, 𝟘, 0. split; apply cgr_par_nil_rev.
-  - right. left. exists p, g, 𝟘, 0. split; apply cgr_par_nil_rev.
+  - right. left. exists p, g0, 𝟘, 0. split; apply cgr_par_nil_rev.
   - right. right. left. exists p, 𝟘, 0. split; apply cgr_par_nil_rev.
   - right. right. right. left. exists p, q, 𝟘, E, 0.
     repeat split. apply cgr_par_nil_rev. apply cgr_par_nil_rev.  assumption.
@@ -741,10 +744,10 @@ Inductive lts : proc-> Act -> proc -> Prop :=
     lts q1 α q2 ->
     lts (p ‖ q1) α (p ‖ q2)
 | lts_choiceL : forall {p1 p2 q α},
-    lts p1 α q -> 
+    lts (g p1) α q -> 
     lts (p1 + p2) α q
 | lts_choiceR : forall {p1 p2 q α},
-    lts p2 α q -> 
+    lts (g p2) α q -> 
     lts (p1 + p2) α q
 .
 

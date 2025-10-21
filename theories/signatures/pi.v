@@ -662,38 +662,23 @@ Qed.
 
 Inductive proc : Type :=
   | var_proc : nat -> proc
-  | pr_success : proc
-  | pr_nil : proc
   | pr_rec : proc -> proc
-  | pr_choice : proc -> proc -> proc
   | pr_par : proc -> proc -> proc
-  | pr_output : Data -> Data -> proc -> proc
   | pr_res : proc -> proc
-  | pr_input : Data -> proc -> proc
-  | pr_tau : proc -> proc
-  | pr_if_then_else : Equation -> proc -> proc -> proc.
-
-Lemma congr_pr_success : pr_success = pr_success.
-Proof.
-exact (eq_refl).
-Qed.
-
-Lemma congr_pr_nil : pr_nil = pr_nil.
-Proof.
-exact (eq_refl).
-Qed.
+  | pr_if_then_else : Equation -> proc -> proc -> proc
+  | g : gproc -> proc
+with gproc : Type :=
+  | gpr_success : gproc
+  | gpr_nil : gproc
+  | gpr_output : Data -> Data -> proc -> gproc
+  | gpr_input : Data -> proc -> gproc
+  | gpr_tau : proc -> gproc
+  | gpr_choice : gproc -> gproc -> gproc.
 
 Lemma congr_pr_rec {s0 : proc} {t0 : proc} (H0 : s0 = t0) :
   pr_rec s0 = pr_rec t0.
 Proof.
 exact (eq_trans eq_refl (ap (fun x => pr_rec x) H0)).
-Qed.
-
-Lemma congr_pr_choice {s0 : proc} {s1 : proc} {t0 : proc} {t1 : proc}
-  (H0 : s0 = t0) (H1 : s1 = t1) : pr_choice s0 s1 = pr_choice t0 t1.
-Proof.
-exact (eq_trans (eq_trans eq_refl (ap (fun x => pr_choice x s1) H0))
-         (ap (fun x => pr_choice t0 x) H1)).
 Qed.
 
 Lemma congr_pr_par {s0 : proc} {s1 : proc} {t0 : proc} {t1 : proc}
@@ -703,33 +688,10 @@ exact (eq_trans (eq_trans eq_refl (ap (fun x => pr_par x s1) H0))
          (ap (fun x => pr_par t0 x) H1)).
 Qed.
 
-Lemma congr_pr_output {s0 : Data} {s1 : Data} {s2 : proc} {t0 : Data}
-  {t1 : Data} {t2 : proc} (H0 : s0 = t0) (H1 : s1 = t1) (H2 : s2 = t2) :
-  pr_output s0 s1 s2 = pr_output t0 t1 t2.
-Proof.
-exact (eq_trans
-         (eq_trans (eq_trans eq_refl (ap (fun x => pr_output x s1 s2) H0))
-            (ap (fun x => pr_output t0 x s2) H1))
-         (ap (fun x => pr_output t0 t1 x) H2)).
-Qed.
-
 Lemma congr_pr_res {s0 : proc} {t0 : proc} (H0 : s0 = t0) :
   pr_res s0 = pr_res t0.
 Proof.
 exact (eq_trans eq_refl (ap (fun x => pr_res x) H0)).
-Qed.
-
-Lemma congr_pr_input {s0 : Data} {s1 : proc} {t0 : Data} {t1 : proc}
-  (H0 : s0 = t0) (H1 : s1 = t1) : pr_input s0 s1 = pr_input t0 t1.
-Proof.
-exact (eq_trans (eq_trans eq_refl (ap (fun x => pr_input x s1) H0))
-         (ap (fun x => pr_input t0 x) H1)).
-Qed.
-
-Lemma congr_pr_tau {s0 : proc} {t0 : proc} (H0 : s0 = t0) :
-  pr_tau s0 = pr_tau t0.
-Proof.
-exact (eq_trans eq_refl (ap (fun x => pr_tau x) H0)).
 Qed.
 
 Lemma congr_pr_if_then_else {s0 : Equation} {s1 : proc} {s2 : proc}
@@ -741,6 +703,51 @@ exact (eq_trans
             (eq_trans eq_refl (ap (fun x => pr_if_then_else x s1 s2) H0))
             (ap (fun x => pr_if_then_else t0 x s2) H1))
          (ap (fun x => pr_if_then_else t0 t1 x) H2)).
+Qed.
+
+Lemma congr_g {s0 : gproc} {t0 : gproc} (H0 : s0 = t0) : g s0 = g t0.
+Proof.
+exact (eq_trans eq_refl (ap (fun x => g x) H0)).
+Qed.
+
+Lemma congr_gpr_success : gpr_success = gpr_success.
+Proof.
+exact (eq_refl).
+Qed.
+
+Lemma congr_gpr_nil : gpr_nil = gpr_nil.
+Proof.
+exact (eq_refl).
+Qed.
+
+Lemma congr_gpr_output {s0 : Data} {s1 : Data} {s2 : proc} {t0 : Data}
+  {t1 : Data} {t2 : proc} (H0 : s0 = t0) (H1 : s1 = t1) (H2 : s2 = t2) :
+  gpr_output s0 s1 s2 = gpr_output t0 t1 t2.
+Proof.
+exact (eq_trans
+         (eq_trans (eq_trans eq_refl (ap (fun x => gpr_output x s1 s2) H0))
+            (ap (fun x => gpr_output t0 x s2) H1))
+         (ap (fun x => gpr_output t0 t1 x) H2)).
+Qed.
+
+Lemma congr_gpr_input {s0 : Data} {s1 : proc} {t0 : Data} {t1 : proc}
+  (H0 : s0 = t0) (H1 : s1 = t1) : gpr_input s0 s1 = gpr_input t0 t1.
+Proof.
+exact (eq_trans (eq_trans eq_refl (ap (fun x => gpr_input x s1) H0))
+         (ap (fun x => gpr_input t0 x) H1)).
+Qed.
+
+Lemma congr_gpr_tau {s0 : proc} {t0 : proc} (H0 : s0 = t0) :
+  gpr_tau s0 = gpr_tau t0.
+Proof.
+exact (eq_trans eq_refl (ap (fun x => gpr_tau x) H0)).
+Qed.
+
+Lemma congr_gpr_choice {s0 : gproc} {s1 : gproc} {t0 : gproc} {t1 : gproc}
+  (H0 : s0 = t0) (H1 : s1 = t1) : gpr_choice s0 s1 = gpr_choice t0 t1.
+Proof.
+exact (eq_trans (eq_trans eq_refl (ap (fun x => gpr_choice x s1) H0))
+         (ap (fun x => gpr_choice t0 x) H1)).
 Qed.
 
 Lemma upRen_proc_proc (xi : nat -> nat) : nat -> nat.
@@ -762,28 +769,34 @@ Fixpoint ren_proc (xi_proc : nat -> nat) (xi_Data : nat -> nat) (s : proc)
 {struct s} : proc :=
   match s with
   | var_proc s0 => var_proc (xi_proc s0)
-  | pr_success => pr_success
-  | pr_nil => pr_nil
   | pr_rec s0 =>
       pr_rec
         (ren_proc (upRen_proc_proc xi_proc) (upRen_proc_Data xi_Data) s0)
-  | pr_choice s0 s1 =>
-      pr_choice (ren_proc xi_proc xi_Data s0) (ren_proc xi_proc xi_Data s1)
   | pr_par s0 s1 =>
       pr_par (ren_proc xi_proc xi_Data s0) (ren_proc xi_proc xi_Data s1)
-  | pr_output s0 s1 s2 =>
-      pr_output (ren_Data xi_Data s0) (ren_Data xi_Data s1)
-        (ren_proc xi_proc xi_Data s2)
   | pr_res s0 =>
       pr_res
         (ren_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data) s0)
-  | pr_input s0 s1 =>
-      pr_input (ren_Data xi_Data s0)
-        (ren_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data) s1)
-  | pr_tau s0 => pr_tau (ren_proc xi_proc xi_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       pr_if_then_else (ren_Equation xi_Data s0) (ren_proc xi_proc xi_Data s1)
         (ren_proc xi_proc xi_Data s2)
+  | g s0 => g (ren_gproc xi_proc xi_Data s0)
+  end
+with ren_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat) (s : gproc)
+{struct s} : gproc :=
+  match s with
+  | gpr_success => gpr_success
+  | gpr_nil => gpr_nil
+  | gpr_output s0 s1 s2 =>
+      gpr_output (ren_Data xi_Data s0) (ren_Data xi_Data s1)
+        (ren_proc xi_proc xi_Data s2)
+  | gpr_input s0 s1 =>
+      gpr_input (ren_Data xi_Data s0)
+        (ren_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data) s1)
+  | gpr_tau s0 => gpr_tau (ren_proc xi_proc xi_Data s0)
+  | gpr_choice s0 s1 =>
+      gpr_choice (ren_gproc xi_proc xi_Data s0)
+        (ren_gproc xi_proc xi_Data s1)
   end.
 
 Lemma up_proc_proc (sigma : nat -> proc) : nat -> proc.
@@ -805,31 +818,36 @@ Fixpoint subst_proc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
 (s : proc) {struct s} : proc :=
   match s with
   | var_proc s0 => sigma_proc s0
-  | pr_success => pr_success
-  | pr_nil => pr_nil
   | pr_rec s0 =>
       pr_rec
         (subst_proc (up_proc_proc sigma_proc) (up_proc_Data sigma_Data) s0)
-  | pr_choice s0 s1 =>
-      pr_choice (subst_proc sigma_proc sigma_Data s0)
-        (subst_proc sigma_proc sigma_Data s1)
   | pr_par s0 s1 =>
       pr_par (subst_proc sigma_proc sigma_Data s0)
         (subst_proc sigma_proc sigma_Data s1)
-  | pr_output s0 s1 s2 =>
-      pr_output (subst_Data sigma_Data s0) (subst_Data sigma_Data s1)
-        (subst_proc sigma_proc sigma_Data s2)
   | pr_res s0 =>
       pr_res
         (subst_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data) s0)
-  | pr_input s0 s1 =>
-      pr_input (subst_Data sigma_Data s0)
-        (subst_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data) s1)
-  | pr_tau s0 => pr_tau (subst_proc sigma_proc sigma_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       pr_if_then_else (subst_Equation sigma_Data s0)
         (subst_proc sigma_proc sigma_Data s1)
         (subst_proc sigma_proc sigma_Data s2)
+  | g s0 => g (subst_gproc sigma_proc sigma_Data s0)
+  end
+with subst_gproc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
+(s : gproc) {struct s} : gproc :=
+  match s with
+  | gpr_success => gpr_success
+  | gpr_nil => gpr_nil
+  | gpr_output s0 s1 s2 =>
+      gpr_output (subst_Data sigma_Data s0) (subst_Data sigma_Data s1)
+        (subst_proc sigma_proc sigma_Data s2)
+  | gpr_input s0 s1 =>
+      gpr_input (subst_Data sigma_Data s0)
+        (subst_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data) s1)
+  | gpr_tau s0 => gpr_tau (subst_proc sigma_proc sigma_Data s0)
+  | gpr_choice s0 s1 =>
+      gpr_choice (subst_gproc sigma_proc sigma_Data s0)
+        (subst_gproc sigma_proc sigma_Data s1)
   end.
 
 Lemma upId_proc_proc (sigma : nat -> proc)
@@ -863,36 +881,44 @@ Fixpoint idSubst_proc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
 subst_proc sigma_proc sigma_Data s = s :=
   match s with
   | var_proc s0 => Eq_proc s0
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (idSubst_proc (up_proc_proc sigma_proc) (up_proc_Data sigma_Data)
            (upId_proc_proc _ Eq_proc) (upId_proc_Data _ Eq_Data) s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s0)
-        (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s0)
         (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output (idSubst_Data sigma_Data Eq_Data s0)
-        (idSubst_Data sigma_Data Eq_Data s1)
-        (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (idSubst_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
            (upId_Data_proc _ Eq_proc) (upId_Data_Data _ Eq_Data) s0)
-  | pr_input s0 s1 =>
-      congr_pr_input (idSubst_Data sigma_Data Eq_Data s0)
-        (idSubst_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
-           (upId_Data_proc _ Eq_proc) (upId_Data_Data _ Eq_Data) s1)
-  | pr_tau s0 =>
-      congr_pr_tau (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else (idSubst_Equation sigma_Data Eq_Data s0)
         (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s1)
         (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s2)
+  | g s0 => congr_g (idSubst_gproc sigma_proc sigma_Data Eq_proc Eq_Data s0)
+  end
+with idSubst_gproc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
+(Eq_proc : forall x, sigma_proc x = var_proc x)
+(Eq_Data : forall x, sigma_Data x = var_Data x) (s : gproc) {struct s} :
+subst_gproc sigma_proc sigma_Data s = s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output (idSubst_Data sigma_Data Eq_Data s0)
+        (idSubst_Data sigma_Data Eq_Data s1)
+        (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input (idSubst_Data sigma_Data Eq_Data s0)
+        (idSubst_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
+           (upId_Data_proc _ Eq_proc) (upId_Data_Data _ Eq_Data) s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau (idSubst_proc sigma_proc sigma_Data Eq_proc Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (idSubst_gproc sigma_proc sigma_Data Eq_proc Eq_Data s0)
+        (idSubst_gproc sigma_proc sigma_Data Eq_proc Eq_Data s1)
   end.
 
 Lemma upExtRen_proc_proc (xi : nat -> nat) (zeta : nat -> nat)
@@ -926,45 +952,55 @@ Fixpoint extRen_proc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
 ren_proc xi_proc xi_Data s = ren_proc zeta_proc zeta_Data s :=
   match s with
   | var_proc s0 => ap (var_proc) (Eq_proc s0)
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (extRen_proc (upRen_proc_proc xi_proc) (upRen_proc_Data xi_Data)
            (upRen_proc_proc zeta_proc) (upRen_proc_Data zeta_Data)
            (upExtRen_proc_proc _ _ Eq_proc) (upExtRen_proc_Data _ _ Eq_Data)
            s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice
-        (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s0)
-        (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par
         (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s0)
         (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output (extRen_Data xi_Data zeta_Data Eq_Data s0)
-        (extRen_Data xi_Data zeta_Data Eq_Data s1)
-        (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (extRen_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
            (upRen_Data_proc zeta_proc) (upRen_Data_Data zeta_Data)
            (upExtRen_Data_proc _ _ Eq_proc) (upExtRen_Data_Data _ _ Eq_Data)
            s0)
-  | pr_input s0 s1 =>
-      congr_pr_input (extRen_Data xi_Data zeta_Data Eq_Data s0)
-        (extRen_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
-           (upRen_Data_proc zeta_proc) (upRen_Data_Data zeta_Data)
-           (upExtRen_Data_proc _ _ Eq_proc) (upExtRen_Data_Data _ _ Eq_Data)
-           s1)
-  | pr_tau s0 =>
-      congr_pr_tau
-        (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else (extRen_Equation xi_Data zeta_Data Eq_Data s0)
         (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s1)
         (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s2)
+  | g s0 =>
+      congr_g
+        (extRen_gproc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s0)
+  end
+with extRen_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+(zeta_proc : nat -> nat) (zeta_Data : nat -> nat)
+(Eq_proc : forall x, xi_proc x = zeta_proc x)
+(Eq_Data : forall x, xi_Data x = zeta_Data x) (s : gproc) {struct s} :
+ren_gproc xi_proc xi_Data s = ren_gproc zeta_proc zeta_Data s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output (extRen_Data xi_Data zeta_Data Eq_Data s0)
+        (extRen_Data xi_Data zeta_Data Eq_Data s1)
+        (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input (extRen_Data xi_Data zeta_Data Eq_Data s0)
+        (extRen_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
+           (upRen_Data_proc zeta_proc) (upRen_Data_Data zeta_Data)
+           (upExtRen_Data_proc _ _ Eq_proc) (upExtRen_Data_Data _ _ Eq_Data)
+           s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau
+        (extRen_proc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (extRen_gproc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s0)
+        (extRen_gproc xi_proc xi_Data zeta_proc zeta_Data Eq_proc Eq_Data s1)
   end.
 
 Lemma upExt_proc_proc (sigma : nat -> proc) (tau : nat -> proc)
@@ -999,42 +1035,52 @@ Fixpoint ext_proc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
 subst_proc sigma_proc sigma_Data s = subst_proc tau_proc tau_Data s :=
   match s with
   | var_proc s0 => Eq_proc s0
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (ext_proc (up_proc_proc sigma_proc) (up_proc_Data sigma_Data)
            (up_proc_proc tau_proc) (up_proc_Data tau_Data)
            (upExt_proc_proc _ _ Eq_proc) (upExt_proc_Data _ _ Eq_Data) s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice
-        (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s0)
-        (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par
         (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s0)
         (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output (ext_Data sigma_Data tau_Data Eq_Data s0)
-        (ext_Data sigma_Data tau_Data Eq_Data s1)
-        (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (ext_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
            (up_Data_proc tau_proc) (up_Data_Data tau_Data)
            (upExt_Data_proc _ _ Eq_proc) (upExt_Data_Data _ _ Eq_Data) s0)
-  | pr_input s0 s1 =>
-      congr_pr_input (ext_Data sigma_Data tau_Data Eq_Data s0)
-        (ext_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
-           (up_Data_proc tau_proc) (up_Data_Data tau_Data)
-           (upExt_Data_proc _ _ Eq_proc) (upExt_Data_Data _ _ Eq_Data) s1)
-  | pr_tau s0 =>
-      congr_pr_tau
-        (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else (ext_Equation sigma_Data tau_Data Eq_Data s0)
         (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s1)
         (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s2)
+  | g s0 =>
+      congr_g
+        (ext_gproc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s0)
+  end
+with ext_gproc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
+(tau_proc : nat -> proc) (tau_Data : nat -> Data)
+(Eq_proc : forall x, sigma_proc x = tau_proc x)
+(Eq_Data : forall x, sigma_Data x = tau_Data x) (s : gproc) {struct s} :
+subst_gproc sigma_proc sigma_Data s = subst_gproc tau_proc tau_Data s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output (ext_Data sigma_Data tau_Data Eq_Data s0)
+        (ext_Data sigma_Data tau_Data Eq_Data s1)
+        (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input (ext_Data sigma_Data tau_Data Eq_Data s0)
+        (ext_proc (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
+           (up_Data_proc tau_proc) (up_Data_Data tau_Data)
+           (upExt_Data_proc _ _ Eq_proc) (upExt_Data_Data _ _ Eq_Data) s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau
+        (ext_proc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (ext_gproc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s0)
+        (ext_gproc sigma_proc sigma_Data tau_proc tau_Data Eq_proc Eq_Data s1)
   end.
 
 Lemma up_ren_ren_proc_proc (xi : nat -> nat) (zeta : nat -> nat)
@@ -1074,47 +1120,24 @@ ren_proc zeta_proc zeta_Data (ren_proc xi_proc xi_Data s) =
 ren_proc rho_proc rho_Data s :=
   match s with
   | var_proc s0 => ap (var_proc) (Eq_proc s0)
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (compRenRen_proc (upRen_proc_proc xi_proc) (upRen_proc_Data xi_Data)
            (upRen_proc_proc zeta_proc) (upRen_proc_Data zeta_Data)
            (upRen_proc_proc rho_proc) (upRen_proc_Data rho_Data)
            (up_ren_ren _ _ _ Eq_proc) Eq_Data s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice
-        (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
-           rho_Data Eq_proc Eq_Data s0)
-        (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
-           rho_Data Eq_proc Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par
         (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
            rho_Data Eq_proc Eq_Data s0)
         (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
            rho_Data Eq_proc Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output (compRenRen_Data xi_Data zeta_Data rho_Data Eq_Data s0)
-        (compRenRen_Data xi_Data zeta_Data rho_Data Eq_Data s1)
-        (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
-           rho_Data Eq_proc Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (compRenRen_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
            (upRen_Data_proc zeta_proc) (upRen_Data_Data zeta_Data)
            (upRen_Data_proc rho_proc) (upRen_Data_Data rho_Data) Eq_proc
            (up_ren_ren _ _ _ Eq_Data) s0)
-  | pr_input s0 s1 =>
-      congr_pr_input (compRenRen_Data xi_Data zeta_Data rho_Data Eq_Data s0)
-        (compRenRen_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
-           (upRen_Data_proc zeta_proc) (upRen_Data_Data zeta_Data)
-           (upRen_Data_proc rho_proc) (upRen_Data_Data rho_Data) Eq_proc
-           (up_ren_ren _ _ _ Eq_Data) s1)
-  | pr_tau s0 =>
-      congr_pr_tau
-        (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
-           rho_Data Eq_proc Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else
         (compRenRen_Equation xi_Data zeta_Data rho_Data Eq_Data s0)
@@ -1122,6 +1145,44 @@ ren_proc rho_proc rho_Data s :=
            rho_Data Eq_proc Eq_Data s1)
         (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
            rho_Data Eq_proc Eq_Data s2)
+  | g s0 =>
+      congr_g
+        (compRenRen_gproc xi_proc xi_Data zeta_proc zeta_Data rho_proc
+           rho_Data Eq_proc Eq_Data s0)
+  end
+with compRenRen_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+(zeta_proc : nat -> nat) (zeta_Data : nat -> nat) (rho_proc : nat -> nat)
+(rho_Data : nat -> nat)
+(Eq_proc : forall x, funcomp zeta_proc xi_proc x = rho_proc x)
+(Eq_Data : forall x, funcomp zeta_Data xi_Data x = rho_Data x) (s : gproc)
+{struct s} :
+ren_gproc zeta_proc zeta_Data (ren_gproc xi_proc xi_Data s) =
+ren_gproc rho_proc rho_Data s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output
+        (compRenRen_Data xi_Data zeta_Data rho_Data Eq_Data s0)
+        (compRenRen_Data xi_Data zeta_Data rho_Data Eq_Data s1)
+        (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
+           rho_Data Eq_proc Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input (compRenRen_Data xi_Data zeta_Data rho_Data Eq_Data s0)
+        (compRenRen_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
+           (upRen_Data_proc zeta_proc) (upRen_Data_Data zeta_Data)
+           (upRen_Data_proc rho_proc) (upRen_Data_Data rho_Data) Eq_proc
+           (up_ren_ren _ _ _ Eq_Data) s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau
+        (compRenRen_proc xi_proc xi_Data zeta_proc zeta_Data rho_proc
+           rho_Data Eq_proc Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (compRenRen_gproc xi_proc xi_Data zeta_proc zeta_Data rho_proc
+           rho_Data Eq_proc Eq_Data s0)
+        (compRenRen_gproc xi_proc xi_Data zeta_proc zeta_Data rho_proc
+           rho_Data Eq_proc Eq_Data s1)
   end.
 
 Lemma up_ren_subst_proc_proc (xi : nat -> nat) (tau : nat -> proc)
@@ -1162,8 +1223,6 @@ subst_proc tau_proc tau_Data (ren_proc xi_proc xi_Data s) =
 subst_proc theta_proc theta_Data s :=
   match s with
   | var_proc s0 => Eq_proc s0
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (compRenSubst_proc (upRen_proc_proc xi_proc)
@@ -1171,24 +1230,12 @@ subst_proc theta_proc theta_Data s :=
            (up_proc_Data tau_Data) (up_proc_proc theta_proc)
            (up_proc_Data theta_Data) (up_ren_subst_proc_proc _ _ _ Eq_proc)
            (up_ren_subst_proc_Data _ _ _ Eq_Data) s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice
-        (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
-           theta_Data Eq_proc Eq_Data s0)
-        (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
-           theta_Data Eq_proc Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par
         (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
            theta_Data Eq_proc Eq_Data s0)
         (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
            theta_Data Eq_proc Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output
-        (compRenSubst_Data xi_Data tau_Data theta_Data Eq_Data s0)
-        (compRenSubst_Data xi_Data tau_Data theta_Data Eq_Data s1)
-        (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
-           theta_Data Eq_proc Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (compRenSubst_proc (upRen_Data_proc xi_proc)
@@ -1196,18 +1243,6 @@ subst_proc theta_proc theta_Data s :=
            (up_Data_Data tau_Data) (up_Data_proc theta_proc)
            (up_Data_Data theta_Data) (up_ren_subst_Data_proc _ _ _ Eq_proc)
            (up_ren_subst_Data_Data _ _ _ Eq_Data) s0)
-  | pr_input s0 s1 =>
-      congr_pr_input
-        (compRenSubst_Data xi_Data tau_Data theta_Data Eq_Data s0)
-        (compRenSubst_proc (upRen_Data_proc xi_proc)
-           (upRen_Data_Data xi_Data) (up_Data_proc tau_proc)
-           (up_Data_Data tau_Data) (up_Data_proc theta_proc)
-           (up_Data_Data theta_Data) (up_ren_subst_Data_proc _ _ _ Eq_proc)
-           (up_ren_subst_Data_Data _ _ _ Eq_Data) s1)
-  | pr_tau s0 =>
-      congr_pr_tau
-        (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
-           theta_Data Eq_proc Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else
         (compRenSubst_Equation xi_Data tau_Data theta_Data Eq_Data s0)
@@ -1215,6 +1250,46 @@ subst_proc theta_proc theta_Data s :=
            theta_Data Eq_proc Eq_Data s1)
         (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
            theta_Data Eq_proc Eq_Data s2)
+  | g s0 =>
+      congr_g
+        (compRenSubst_gproc xi_proc xi_Data tau_proc tau_Data theta_proc
+           theta_Data Eq_proc Eq_Data s0)
+  end
+with compRenSubst_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+(tau_proc : nat -> proc) (tau_Data : nat -> Data) (theta_proc : nat -> proc)
+(theta_Data : nat -> Data)
+(Eq_proc : forall x, funcomp tau_proc xi_proc x = theta_proc x)
+(Eq_Data : forall x, funcomp tau_Data xi_Data x = theta_Data x) (s : gproc)
+{struct s} :
+subst_gproc tau_proc tau_Data (ren_gproc xi_proc xi_Data s) =
+subst_gproc theta_proc theta_Data s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output
+        (compRenSubst_Data xi_Data tau_Data theta_Data Eq_Data s0)
+        (compRenSubst_Data xi_Data tau_Data theta_Data Eq_Data s1)
+        (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
+           theta_Data Eq_proc Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input
+        (compRenSubst_Data xi_Data tau_Data theta_Data Eq_Data s0)
+        (compRenSubst_proc (upRen_Data_proc xi_proc)
+           (upRen_Data_Data xi_Data) (up_Data_proc tau_proc)
+           (up_Data_Data tau_Data) (up_Data_proc theta_proc)
+           (up_Data_Data theta_Data) (up_ren_subst_Data_proc _ _ _ Eq_proc)
+           (up_ren_subst_Data_Data _ _ _ Eq_Data) s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau
+        (compRenSubst_proc xi_proc xi_Data tau_proc tau_Data theta_proc
+           theta_Data Eq_proc Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (compRenSubst_gproc xi_proc xi_Data tau_proc tau_Data theta_proc
+           theta_Data Eq_proc Eq_Data s0)
+        (compRenSubst_gproc xi_proc xi_Data tau_proc tau_Data theta_proc
+           theta_Data Eq_proc Eq_Data s1)
   end.
 
 Lemma up_subst_ren_proc_proc (sigma : nat -> proc) (zeta_proc : nat -> nat)
@@ -1291,8 +1366,6 @@ ren_proc zeta_proc zeta_Data (subst_proc sigma_proc sigma_Data s) =
 subst_proc theta_proc theta_Data s :=
   match s with
   | var_proc s0 => Eq_proc s0
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (compSubstRen_proc (up_proc_proc sigma_proc)
@@ -1300,24 +1373,12 @@ subst_proc theta_proc theta_Data s :=
            (upRen_proc_Data zeta_Data) (up_proc_proc theta_proc)
            (up_proc_Data theta_Data) (up_subst_ren_proc_proc _ _ _ _ Eq_proc)
            (up_subst_ren_proc_Data _ _ _ Eq_Data) s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice
-        (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
-           theta_proc theta_Data Eq_proc Eq_Data s0)
-        (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
-           theta_proc theta_Data Eq_proc Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par
         (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
            theta_proc theta_Data Eq_proc Eq_Data s0)
         (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
            theta_proc theta_Data Eq_proc Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output
-        (compSubstRen_Data sigma_Data zeta_Data theta_Data Eq_Data s0)
-        (compSubstRen_Data sigma_Data zeta_Data theta_Data Eq_Data s1)
-        (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
-           theta_proc theta_Data Eq_proc Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (compSubstRen_proc (up_Data_proc sigma_proc)
@@ -1325,18 +1386,6 @@ subst_proc theta_proc theta_Data s :=
            (upRen_Data_Data zeta_Data) (up_Data_proc theta_proc)
            (up_Data_Data theta_Data) (up_subst_ren_Data_proc _ _ _ _ Eq_proc)
            (up_subst_ren_Data_Data _ _ _ Eq_Data) s0)
-  | pr_input s0 s1 =>
-      congr_pr_input
-        (compSubstRen_Data sigma_Data zeta_Data theta_Data Eq_Data s0)
-        (compSubstRen_proc (up_Data_proc sigma_proc)
-           (up_Data_Data sigma_Data) (upRen_Data_proc zeta_proc)
-           (upRen_Data_Data zeta_Data) (up_Data_proc theta_proc)
-           (up_Data_Data theta_Data) (up_subst_ren_Data_proc _ _ _ _ Eq_proc)
-           (up_subst_ren_Data_Data _ _ _ Eq_Data) s1)
-  | pr_tau s0 =>
-      congr_pr_tau
-        (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
-           theta_proc theta_Data Eq_proc Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else
         (compSubstRen_Equation sigma_Data zeta_Data theta_Data Eq_Data s0)
@@ -1344,6 +1393,47 @@ subst_proc theta_proc theta_Data s :=
            theta_proc theta_Data Eq_proc Eq_Data s1)
         (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
            theta_proc theta_Data Eq_proc Eq_Data s2)
+  | g s0 =>
+      congr_g
+        (compSubstRen_gproc sigma_proc sigma_Data zeta_proc zeta_Data
+           theta_proc theta_Data Eq_proc Eq_Data s0)
+  end
+with compSubstRen_gproc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
+(zeta_proc : nat -> nat) (zeta_Data : nat -> nat) (theta_proc : nat -> proc)
+(theta_Data : nat -> Data)
+(Eq_proc : forall x,
+           funcomp (ren_proc zeta_proc zeta_Data) sigma_proc x = theta_proc x)
+(Eq_Data : forall x, funcomp (ren_Data zeta_Data) sigma_Data x = theta_Data x)
+(s : gproc) {struct s} :
+ren_gproc zeta_proc zeta_Data (subst_gproc sigma_proc sigma_Data s) =
+subst_gproc theta_proc theta_Data s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output
+        (compSubstRen_Data sigma_Data zeta_Data theta_Data Eq_Data s0)
+        (compSubstRen_Data sigma_Data zeta_Data theta_Data Eq_Data s1)
+        (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
+           theta_proc theta_Data Eq_proc Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input
+        (compSubstRen_Data sigma_Data zeta_Data theta_Data Eq_Data s0)
+        (compSubstRen_proc (up_Data_proc sigma_proc)
+           (up_Data_Data sigma_Data) (upRen_Data_proc zeta_proc)
+           (upRen_Data_Data zeta_Data) (up_Data_proc theta_proc)
+           (up_Data_Data theta_Data) (up_subst_ren_Data_proc _ _ _ _ Eq_proc)
+           (up_subst_ren_Data_Data _ _ _ Eq_Data) s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau
+        (compSubstRen_proc sigma_proc sigma_Data zeta_proc zeta_Data
+           theta_proc theta_Data Eq_proc Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (compSubstRen_gproc sigma_proc sigma_Data zeta_proc zeta_Data
+           theta_proc theta_Data Eq_proc Eq_Data s0)
+        (compSubstRen_gproc sigma_proc sigma_Data zeta_proc zeta_Data
+           theta_proc theta_Data Eq_proc Eq_Data s1)
   end.
 
 Lemma up_subst_subst_proc_proc (sigma : nat -> proc) (tau_proc : nat -> proc)
@@ -1425,8 +1515,6 @@ subst_proc tau_proc tau_Data (subst_proc sigma_proc sigma_Data s) =
 subst_proc theta_proc theta_Data s :=
   match s with
   | var_proc s0 => Eq_proc s0
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (compSubstSubst_proc (up_proc_proc sigma_proc)
@@ -1435,24 +1523,12 @@ subst_proc theta_proc theta_Data s :=
            (up_proc_Data theta_Data)
            (up_subst_subst_proc_proc _ _ _ _ Eq_proc)
            (up_subst_subst_proc_Data _ _ _ Eq_Data) s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice
-        (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
-           theta_proc theta_Data Eq_proc Eq_Data s0)
-        (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
-           theta_proc theta_Data Eq_proc Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par
         (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
            theta_proc theta_Data Eq_proc Eq_Data s0)
         (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
            theta_proc theta_Data Eq_proc Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output
-        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s0)
-        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s1)
-        (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
-           theta_proc theta_Data Eq_proc Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (compSubstSubst_proc (up_Data_proc sigma_proc)
@@ -1461,19 +1537,6 @@ subst_proc theta_proc theta_Data s :=
            (up_Data_Data theta_Data)
            (up_subst_subst_Data_proc _ _ _ _ Eq_proc)
            (up_subst_subst_Data_Data _ _ _ Eq_Data) s0)
-  | pr_input s0 s1 =>
-      congr_pr_input
-        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s0)
-        (compSubstSubst_proc (up_Data_proc sigma_proc)
-           (up_Data_Data sigma_Data) (up_Data_proc tau_proc)
-           (up_Data_Data tau_Data) (up_Data_proc theta_proc)
-           (up_Data_Data theta_Data)
-           (up_subst_subst_Data_proc _ _ _ _ Eq_proc)
-           (up_subst_subst_Data_Data _ _ _ Eq_Data) s1)
-  | pr_tau s0 =>
-      congr_pr_tau
-        (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
-           theta_proc theta_Data Eq_proc Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else
         (compSubstSubst_Equation sigma_Data tau_Data theta_Data Eq_Data s0)
@@ -1481,6 +1544,49 @@ subst_proc theta_proc theta_Data s :=
            theta_proc theta_Data Eq_proc Eq_Data s1)
         (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
            theta_proc theta_Data Eq_proc Eq_Data s2)
+  | g s0 =>
+      congr_g
+        (compSubstSubst_gproc sigma_proc sigma_Data tau_proc tau_Data
+           theta_proc theta_Data Eq_proc Eq_Data s0)
+  end
+with compSubstSubst_gproc (sigma_proc : nat -> proc)
+(sigma_Data : nat -> Data) (tau_proc : nat -> proc) (tau_Data : nat -> Data)
+(theta_proc : nat -> proc) (theta_Data : nat -> Data)
+(Eq_proc : forall x,
+           funcomp (subst_proc tau_proc tau_Data) sigma_proc x = theta_proc x)
+(Eq_Data : forall x,
+           funcomp (subst_Data tau_Data) sigma_Data x = theta_Data x)
+(s : gproc) {struct s} :
+subst_gproc tau_proc tau_Data (subst_gproc sigma_proc sigma_Data s) =
+subst_gproc theta_proc theta_Data s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output
+        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s0)
+        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s1)
+        (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
+           theta_proc theta_Data Eq_proc Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input
+        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s0)
+        (compSubstSubst_proc (up_Data_proc sigma_proc)
+           (up_Data_Data sigma_Data) (up_Data_proc tau_proc)
+           (up_Data_Data tau_Data) (up_Data_proc theta_proc)
+           (up_Data_Data theta_Data)
+           (up_subst_subst_Data_proc _ _ _ _ Eq_proc)
+           (up_subst_subst_Data_Data _ _ _ Eq_Data) s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau
+        (compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data
+           theta_proc theta_Data Eq_proc Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (compSubstSubst_gproc sigma_proc sigma_Data tau_proc tau_Data
+           theta_proc theta_Data Eq_proc Eq_Data s0)
+        (compSubstSubst_gproc sigma_proc sigma_Data tau_proc tau_Data
+           theta_proc theta_Data Eq_proc Eq_Data s1)
   end.
 
 Lemma renRen_proc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
@@ -1503,6 +1609,26 @@ exact (fun s =>
          (fun n => eq_refl) (fun n => eq_refl) s).
 Qed.
 
+Lemma renRen_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+  (zeta_proc : nat -> nat) (zeta_Data : nat -> nat) (s : gproc) :
+  ren_gproc zeta_proc zeta_Data (ren_gproc xi_proc xi_Data s) =
+  ren_gproc (funcomp zeta_proc xi_proc) (funcomp zeta_Data xi_Data) s.
+Proof.
+exact (compRenRen_gproc xi_proc xi_Data zeta_proc zeta_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
+Lemma renRen'_gproc_pointwise (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+  (zeta_proc : nat -> nat) (zeta_Data : nat -> nat) :
+  pointwise_relation _ eq
+    (funcomp (ren_gproc zeta_proc zeta_Data) (ren_gproc xi_proc xi_Data))
+    (ren_gproc (funcomp zeta_proc xi_proc) (funcomp zeta_Data xi_Data)).
+Proof.
+exact (fun s =>
+       compRenRen_gproc xi_proc xi_Data zeta_proc zeta_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
 Lemma renSubst_proc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
   (tau_proc : nat -> proc) (tau_Data : nat -> Data) (s : proc) :
   subst_proc tau_proc tau_Data (ren_proc xi_proc xi_Data s) =
@@ -1520,6 +1646,26 @@ Lemma renSubst_proc_pointwise (xi_proc : nat -> nat) (xi_Data : nat -> nat)
 Proof.
 exact (fun s =>
        compRenSubst_proc xi_proc xi_Data tau_proc tau_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
+Lemma renSubst_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+  (tau_proc : nat -> proc) (tau_Data : nat -> Data) (s : gproc) :
+  subst_gproc tau_proc tau_Data (ren_gproc xi_proc xi_Data s) =
+  subst_gproc (funcomp tau_proc xi_proc) (funcomp tau_Data xi_Data) s.
+Proof.
+exact (compRenSubst_gproc xi_proc xi_Data tau_proc tau_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
+Lemma renSubst_gproc_pointwise (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+  (tau_proc : nat -> proc) (tau_Data : nat -> Data) :
+  pointwise_relation _ eq
+    (funcomp (subst_gproc tau_proc tau_Data) (ren_gproc xi_proc xi_Data))
+    (subst_gproc (funcomp tau_proc xi_proc) (funcomp tau_Data xi_Data)).
+Proof.
+exact (fun s =>
+       compRenSubst_gproc xi_proc xi_Data tau_proc tau_Data _ _
          (fun n => eq_refl) (fun n => eq_refl) s).
 Qed.
 
@@ -1547,6 +1693,30 @@ exact (fun s =>
          (fun n => eq_refl) (fun n => eq_refl) s).
 Qed.
 
+Lemma substRen_gproc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
+  (zeta_proc : nat -> nat) (zeta_Data : nat -> nat) (s : gproc) :
+  ren_gproc zeta_proc zeta_Data (subst_gproc sigma_proc sigma_Data s) =
+  subst_gproc (funcomp (ren_proc zeta_proc zeta_Data) sigma_proc)
+    (funcomp (ren_Data zeta_Data) sigma_Data) s.
+Proof.
+exact (compSubstRen_gproc sigma_proc sigma_Data zeta_proc zeta_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
+Lemma substRen_gproc_pointwise (sigma_proc : nat -> proc)
+  (sigma_Data : nat -> Data) (zeta_proc : nat -> nat)
+  (zeta_Data : nat -> nat) :
+  pointwise_relation _ eq
+    (funcomp (ren_gproc zeta_proc zeta_Data)
+       (subst_gproc sigma_proc sigma_Data))
+    (subst_gproc (funcomp (ren_proc zeta_proc zeta_Data) sigma_proc)
+       (funcomp (ren_Data zeta_Data) sigma_Data)).
+Proof.
+exact (fun s =>
+       compSubstRen_gproc sigma_proc sigma_Data zeta_proc zeta_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
 Lemma substSubst_proc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
   (tau_proc : nat -> proc) (tau_Data : nat -> Data) (s : proc) :
   subst_proc tau_proc tau_Data (subst_proc sigma_proc sigma_Data s) =
@@ -1568,6 +1738,30 @@ Lemma substSubst_proc_pointwise (sigma_proc : nat -> proc)
 Proof.
 exact (fun s =>
        compSubstSubst_proc sigma_proc sigma_Data tau_proc tau_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
+Lemma substSubst_gproc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
+  (tau_proc : nat -> proc) (tau_Data : nat -> Data) (s : gproc) :
+  subst_gproc tau_proc tau_Data (subst_gproc sigma_proc sigma_Data s) =
+  subst_gproc (funcomp (subst_proc tau_proc tau_Data) sigma_proc)
+    (funcomp (subst_Data tau_Data) sigma_Data) s.
+Proof.
+exact (compSubstSubst_gproc sigma_proc sigma_Data tau_proc tau_Data _ _
+         (fun n => eq_refl) (fun n => eq_refl) s).
+Qed.
+
+Lemma substSubst_gproc_pointwise (sigma_proc : nat -> proc)
+  (sigma_Data : nat -> Data) (tau_proc : nat -> proc)
+  (tau_Data : nat -> Data) :
+  pointwise_relation _ eq
+    (funcomp (subst_gproc tau_proc tau_Data)
+       (subst_gproc sigma_proc sigma_Data))
+    (subst_gproc (funcomp (subst_proc tau_proc tau_Data) sigma_proc)
+       (funcomp (subst_Data tau_Data) sigma_Data)).
+Proof.
+exact (fun s =>
+       compSubstSubst_gproc sigma_proc sigma_Data tau_proc tau_Data _ _
          (fun n => eq_refl) (fun n => eq_refl) s).
 Qed.
 
@@ -1604,47 +1798,24 @@ Fixpoint rinst_inst_proc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
 :=
   match s with
   | var_proc s0 => Eq_proc s0
-  | pr_success => congr_pr_success
-  | pr_nil => congr_pr_nil
   | pr_rec s0 =>
       congr_pr_rec
         (rinst_inst_proc (upRen_proc_proc xi_proc) (upRen_proc_Data xi_Data)
            (up_proc_proc sigma_proc) (up_proc_Data sigma_Data)
            (rinstInst_up_proc_proc _ _ Eq_proc)
            (rinstInst_up_proc_Data _ _ Eq_Data) s0)
-  | pr_choice s0 s1 =>
-      congr_pr_choice
-        (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
-           Eq_Data s0)
-        (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
-           Eq_Data s1)
   | pr_par s0 s1 =>
       congr_pr_par
         (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
            Eq_Data s0)
         (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
            Eq_Data s1)
-  | pr_output s0 s1 s2 =>
-      congr_pr_output (rinst_inst_Data xi_Data sigma_Data Eq_Data s0)
-        (rinst_inst_Data xi_Data sigma_Data Eq_Data s1)
-        (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
-           Eq_Data s2)
   | pr_res s0 =>
       congr_pr_res
         (rinst_inst_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
            (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
            (rinstInst_up_Data_proc _ _ Eq_proc)
            (rinstInst_up_Data_Data _ _ Eq_Data) s0)
-  | pr_input s0 s1 =>
-      congr_pr_input (rinst_inst_Data xi_Data sigma_Data Eq_Data s0)
-        (rinst_inst_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
-           (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
-           (rinstInst_up_Data_proc _ _ Eq_proc)
-           (rinstInst_up_Data_Data _ _ Eq_Data) s1)
-  | pr_tau s0 =>
-      congr_pr_tau
-        (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
-           Eq_Data s0)
   | pr_if_then_else s0 s1 s2 =>
       congr_pr_if_then_else
         (rinst_inst_Equation xi_Data sigma_Data Eq_Data s0)
@@ -1652,6 +1823,41 @@ Fixpoint rinst_inst_proc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
            Eq_Data s1)
         (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
            Eq_Data s2)
+  | g s0 =>
+      congr_g
+        (rinst_inst_gproc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
+           Eq_Data s0)
+  end
+with rinst_inst_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+(sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
+(Eq_proc : forall x, funcomp (var_proc) xi_proc x = sigma_proc x)
+(Eq_Data : forall x, funcomp (var_Data) xi_Data x = sigma_Data x) (s : gproc)
+{struct s} :
+ren_gproc xi_proc xi_Data s = subst_gproc sigma_proc sigma_Data s :=
+  match s with
+  | gpr_success => congr_gpr_success
+  | gpr_nil => congr_gpr_nil
+  | gpr_output s0 s1 s2 =>
+      congr_gpr_output (rinst_inst_Data xi_Data sigma_Data Eq_Data s0)
+        (rinst_inst_Data xi_Data sigma_Data Eq_Data s1)
+        (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
+           Eq_Data s2)
+  | gpr_input s0 s1 =>
+      congr_gpr_input (rinst_inst_Data xi_Data sigma_Data Eq_Data s0)
+        (rinst_inst_proc (upRen_Data_proc xi_proc) (upRen_Data_Data xi_Data)
+           (up_Data_proc sigma_proc) (up_Data_Data sigma_Data)
+           (rinstInst_up_Data_proc _ _ Eq_proc)
+           (rinstInst_up_Data_Data _ _ Eq_Data) s1)
+  | gpr_tau s0 =>
+      congr_gpr_tau
+        (rinst_inst_proc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
+           Eq_Data s0)
+  | gpr_choice s0 s1 =>
+      congr_gpr_choice
+        (rinst_inst_gproc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
+           Eq_Data s0)
+        (rinst_inst_gproc xi_proc xi_Data sigma_proc sigma_Data Eq_proc
+           Eq_Data s1)
   end.
 
 Lemma rinstInst'_proc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
@@ -1673,6 +1879,25 @@ exact (fun s =>
          (fun n => eq_refl) s).
 Qed.
 
+Lemma rinstInst'_gproc (xi_proc : nat -> nat) (xi_Data : nat -> nat)
+  (s : gproc) :
+  ren_gproc xi_proc xi_Data s =
+  subst_gproc (funcomp (var_proc) xi_proc) (funcomp (var_Data) xi_Data) s.
+Proof.
+exact (rinst_inst_gproc xi_proc xi_Data _ _ (fun n => eq_refl)
+         (fun n => eq_refl) s).
+Qed.
+
+Lemma rinstInst'_gproc_pointwise (xi_proc : nat -> nat)
+  (xi_Data : nat -> nat) :
+  pointwise_relation _ eq (ren_gproc xi_proc xi_Data)
+    (subst_gproc (funcomp (var_proc) xi_proc) (funcomp (var_Data) xi_Data)).
+Proof.
+exact (fun s =>
+       rinst_inst_gproc xi_proc xi_Data _ _ (fun n => eq_refl)
+         (fun n => eq_refl) s).
+Qed.
+
 Lemma instId'_proc (s : proc) : subst_proc (var_proc) (var_Data) s = s.
 Proof.
 exact (idSubst_proc (var_proc) (var_Data) (fun n => eq_refl)
@@ -1687,6 +1912,20 @@ exact (fun s =>
          (fun n => eq_refl) s).
 Qed.
 
+Lemma instId'_gproc (s : gproc) : subst_gproc (var_proc) (var_Data) s = s.
+Proof.
+exact (idSubst_gproc (var_proc) (var_Data) (fun n => eq_refl)
+         (fun n => eq_refl) s).
+Qed.
+
+Lemma instId'_gproc_pointwise :
+  pointwise_relation _ eq (subst_gproc (var_proc) (var_Data)) id.
+Proof.
+exact (fun s =>
+       idSubst_gproc (var_proc) (var_Data) (fun n => eq_refl)
+         (fun n => eq_refl) s).
+Qed.
+
 Lemma rinstId'_proc (s : proc) : ren_proc id id s = s.
 Proof.
 exact (eq_ind_r (fun t => t = s) (instId'_proc s) (rinstInst'_proc id id s)).
@@ -1696,6 +1935,18 @@ Lemma rinstId'_proc_pointwise : pointwise_relation _ eq (@ren_proc id id) id.
 Proof.
 exact (fun s =>
        eq_ind_r (fun t => t = s) (instId'_proc s) (rinstInst'_proc id id s)).
+Qed.
+
+Lemma rinstId'_gproc (s : gproc) : ren_gproc id id s = s.
+Proof.
+exact (eq_ind_r (fun t => t = s) (instId'_gproc s) (rinstInst'_gproc id id s)).
+Qed.
+
+Lemma rinstId'_gproc_pointwise :
+  pointwise_relation _ eq (@ren_gproc id id) id.
+Proof.
+exact (fun s =>
+       eq_ind_r (fun t => t = s) (instId'_gproc s) (rinstInst'_gproc id id s)).
 Qed.
 
 Lemma varL'_proc (sigma_proc : nat -> proc) (sigma_Data : nat -> Data)
@@ -1725,6 +1976,9 @@ Proof.
 exact (fun x => eq_refl).
 Qed.
 
+Class Up_gproc X Y :=
+    up_gproc : X -> Y.
+
 Class Up_proc X Y :=
     up_proc : X -> Y.
 
@@ -1734,6 +1988,8 @@ Class Up_Equation X Y :=
 Class Up_Data X Y :=
     up_Data : X -> Y.
 
+#[global] Instance Subst_gproc : (Subst2 _ _ _ _) := @subst_gproc.
+
 #[global] Instance Subst_proc : (Subst2 _ _ _ _) := @subst_proc.
 
 #[global] Instance Up_Data_proc : (Up_proc _ _) := @up_Data_proc.
@@ -1741,6 +1997,8 @@ Class Up_Data X Y :=
 #[global] Instance Up_proc_Data : (Up_Data _ _) := @up_proc_Data.
 
 #[global] Instance Up_proc_proc : (Up_proc _ _) := @up_proc_proc.
+
+#[global] Instance Ren_gproc : (Ren2 _ _ _ _) := @ren_gproc.
 
 #[global] Instance Ren_proc : (Ren2 _ _ _ _) := @ren_proc.
 
@@ -1760,6 +2018,15 @@ Instance Subst_Equation : (Subst1 _ _ _) := @subst_Equation.
 #[global]
 Instance VarInstance_Data : (Var _ _) := @var_Data.
 
+Notation "[ sigma_proc ; sigma_Data ]" := (subst_gproc sigma_proc sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_proc ; sigma_Data ]" :=
+(subst_gproc sigma_proc sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__gproc" := up_gproc (only printing)  : subst_scope.
+
 Notation "[ sigma_proc ; sigma_Data ]" := (subst_proc sigma_proc sigma_Data)
 ( at level 1, left associativity, only printing)  : fscope.
 
@@ -1774,6 +2041,12 @@ Notation "↑__proc" := up_Data_proc (only printing)  : subst_scope.
 Notation "↑__Data" := up_proc_Data (only printing)  : subst_scope.
 
 Notation "↑__proc" := up_proc_proc (only printing)  : subst_scope.
+
+Notation "⟨ xi_proc ; xi_Data ⟩" := (ren_gproc xi_proc xi_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s ⟨ xi_proc ; xi_Data ⟩" := (ren_gproc xi_proc xi_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
 
 Notation "⟨ xi_proc ; xi_Data ⟩" := (ren_proc xi_proc xi_Data)
 ( at level 1, left associativity, only printing)  : fscope.
@@ -1828,6 +2101,31 @@ Notation "x '__Data'" := (var_Data x) ( at level 5, format "x __Data")  :
 subst_scope.
 
 #[global]
+Instance subst_gproc_morphism :
+ (Proper
+    (respectful (pointwise_relation _ eq)
+       (respectful (pointwise_relation _ eq) (respectful eq eq)))
+    (@subst_gproc)).
+Proof.
+exact (fun f_proc g_proc Eq_proc f_Data g_Data Eq_Data s t Eq_st =>
+       eq_ind s
+         (fun t' =>
+          subst_gproc f_proc f_Data s = subst_gproc g_proc g_Data t')
+         (ext_gproc f_proc f_Data g_proc g_Data Eq_proc Eq_Data s) t Eq_st).
+Qed.
+
+#[global]
+Instance subst_gproc_morphism2 :
+ (Proper
+    (respectful (pointwise_relation _ eq)
+       (respectful (pointwise_relation _ eq) (pointwise_relation _ eq)))
+    (@subst_gproc)).
+Proof.
+exact (fun f_proc g_proc Eq_proc f_Data g_Data Eq_Data s =>
+       ext_gproc f_proc f_Data g_proc g_Data Eq_proc Eq_Data s).
+Qed.
+
+#[global]
 Instance subst_proc_morphism :
  (Proper
     (respectful (pointwise_relation _ eq)
@@ -1849,6 +2147,30 @@ Instance subst_proc_morphism2 :
 Proof.
 exact (fun f_proc g_proc Eq_proc f_Data g_Data Eq_Data s =>
        ext_proc f_proc f_Data g_proc g_Data Eq_proc Eq_Data s).
+Qed.
+
+#[global]
+Instance ren_gproc_morphism :
+ (Proper
+    (respectful (pointwise_relation _ eq)
+       (respectful (pointwise_relation _ eq) (respectful eq eq)))
+    (@ren_gproc)).
+Proof.
+exact (fun f_proc g_proc Eq_proc f_Data g_Data Eq_Data s t Eq_st =>
+       eq_ind s
+         (fun t' => ren_gproc f_proc f_Data s = ren_gproc g_proc g_Data t')
+         (extRen_gproc f_proc f_Data g_proc g_Data Eq_proc Eq_Data s) t Eq_st).
+Qed.
+
+#[global]
+Instance ren_gproc_morphism2 :
+ (Proper
+    (respectful (pointwise_relation _ eq)
+       (respectful (pointwise_relation _ eq) (pointwise_relation _ eq)))
+    (@ren_gproc)).
+Proof.
+exact (fun f_proc g_proc Eq_proc f_Data g_Data Eq_Data s =>
+       extRen_gproc f_proc f_Data g_proc g_Data Eq_proc Eq_Data s).
 Qed.
 
 #[global]
@@ -1952,9 +2274,10 @@ Ltac auto_unfold := repeat
                       Up_Data_Data, Up_Data, up_Data, Subst_Data, Subst1,
                       subst1, Ren_Equation, Ren1, ren1, Subst_Equation,
                       Subst1, subst1, VarInstance_proc, Var, ids, Ren_proc,
-                      Ren2, ren2, Up_proc_proc, Up_proc, up_proc,
-                      Up_proc_Data, Up_Data, up_Data, Up_Data_proc, Up_proc,
-                      up_proc, Subst_proc, Subst2, subst2.
+                      Ren2, ren2, Ren_gproc, Ren2, ren2, Up_proc_proc,
+                      Up_proc, up_proc, Up_proc_Data, Up_Data, up_Data,
+                      Up_Data_proc, Up_proc, up_proc, Subst_proc, Subst2,
+                      subst2, Subst_gproc, Subst2, subst2.
 
 Tactic Notation "auto_unfold" "in" "*" := repeat
                                            unfold VarInstance_Data, Var, ids,
@@ -1964,20 +2287,29 @@ Tactic Notation "auto_unfold" "in" "*" := repeat
                                             Ren_Equation, Ren1, ren1,
                                             Subst_Equation, Subst1, subst1,
                                             VarInstance_proc, Var, ids,
-                                            Ren_proc, Ren2, ren2,
-                                            Up_proc_proc, Up_proc, up_proc,
-                                            Up_proc_Data, Up_Data, up_Data,
-                                            Up_Data_proc, Up_proc, up_proc,
-                                            Subst_proc, Subst2, subst2 
-                                            in *.
+                                            Ren_proc, Ren2, ren2, Ren_gproc,
+                                            Ren2, ren2, Up_proc_proc,
+                                            Up_proc, up_proc, Up_proc_Data,
+                                            Up_Data, up_Data, Up_Data_proc,
+                                            Up_proc, up_proc, Subst_proc,
+                                            Subst2, subst2, Subst_gproc,
+                                            Subst2, subst2 in *.
 
 Ltac asimpl' := repeat (first
-                 [ progress setoid_rewrite substSubst_proc_pointwise
+                 [ progress setoid_rewrite substSubst_gproc_pointwise
+                 | progress setoid_rewrite substSubst_gproc
+                 | progress setoid_rewrite substSubst_proc_pointwise
                  | progress setoid_rewrite substSubst_proc
+                 | progress setoid_rewrite substRen_gproc_pointwise
+                 | progress setoid_rewrite substRen_gproc
                  | progress setoid_rewrite substRen_proc_pointwise
                  | progress setoid_rewrite substRen_proc
+                 | progress setoid_rewrite renSubst_gproc_pointwise
+                 | progress setoid_rewrite renSubst_gproc
                  | progress setoid_rewrite renSubst_proc_pointwise
                  | progress setoid_rewrite renSubst_proc
+                 | progress setoid_rewrite renRen'_gproc_pointwise
+                 | progress setoid_rewrite renRen_gproc
                  | progress setoid_rewrite renRen'_proc_pointwise
                  | progress setoid_rewrite renRen_proc
                  | progress setoid_rewrite substSubst_Equation_pointwise
@@ -2000,8 +2332,12 @@ Ltac asimpl' := repeat (first
                  | progress setoid_rewrite varLRen'_proc
                  | progress setoid_rewrite varL'_proc_pointwise
                  | progress setoid_rewrite varL'_proc
+                 | progress setoid_rewrite rinstId'_gproc_pointwise
+                 | progress setoid_rewrite rinstId'_gproc
                  | progress setoid_rewrite rinstId'_proc_pointwise
                  | progress setoid_rewrite rinstId'_proc
+                 | progress setoid_rewrite instId'_gproc_pointwise
+                 | progress setoid_rewrite instId'_gproc
                  | progress setoid_rewrite instId'_proc_pointwise
                  | progress setoid_rewrite instId'_proc
                  | progress setoid_rewrite rinstId'_Equation_pointwise
@@ -2021,8 +2357,8 @@ Ltac asimpl' := repeat (first
                      upRen_Data_proc, upRen_proc_Data, upRen_proc_proc,
                      up_Data_Data, upRen_Data_Data, up_ren
                  | progress
-                    cbn[subst_proc ren_proc subst_Equation ren_Equation
-                       subst_Data ren_Data]
+                    cbn[subst_gproc subst_proc ren_gproc ren_proc
+                       subst_Equation ren_Equation subst_Data ren_Data]
                  | progress fsimpl ]).
 
 Ltac asimpl := check_no_evars;
@@ -2031,15 +2367,18 @@ Ltac asimpl := check_no_evars;
                   Up_Data_Data, Up_Data, up_Data, Subst_Data, Subst1, subst1,
                   Ren_Equation, Ren1, ren1, Subst_Equation, Subst1, subst1,
                   VarInstance_proc, Var, ids, Ren_proc, Ren2, ren2,
-                  Up_proc_proc, Up_proc, up_proc, Up_proc_Data, Up_Data,
-                  up_Data, Up_Data_proc, Up_proc, up_proc, Subst_proc,
-                  Subst2, subst2 in *; asimpl'; minimize.
+                  Ren_gproc, Ren2, ren2, Up_proc_proc, Up_proc, up_proc,
+                  Up_proc_Data, Up_Data, up_Data, Up_Data_proc, Up_proc,
+                  up_proc, Subst_proc, Subst2, subst2, Subst_gproc, Subst2,
+                  subst2 in *; asimpl'; minimize.
 
 Tactic Notation "asimpl" "in" hyp(J) := revert J; asimpl; intros J.
 
 Tactic Notation "auto_case" := auto_case ltac:(asimpl; cbn; eauto).
 
-Ltac substify := auto_unfold; try setoid_rewrite rinstInst'_proc_pointwise;
+Ltac substify := auto_unfold; try setoid_rewrite rinstInst'_gproc_pointwise;
+                  try setoid_rewrite rinstInst'_gproc;
+                  try setoid_rewrite rinstInst'_proc_pointwise;
                   try setoid_rewrite rinstInst'_proc;
                   try setoid_rewrite rinstInst'_Equation_pointwise;
                   try setoid_rewrite rinstInst'_Equation;
@@ -2047,6 +2386,8 @@ Ltac substify := auto_unfold; try setoid_rewrite rinstInst'_proc_pointwise;
                   try setoid_rewrite rinstInst'_Data.
 
 Ltac renamify := auto_unfold;
+                  try setoid_rewrite_left rinstInst'_gproc_pointwise;
+                  try setoid_rewrite_left rinstInst'_gproc;
                   try setoid_rewrite_left rinstInst'_proc_pointwise;
                   try setoid_rewrite_left rinstInst'_proc;
                   try setoid_rewrite_left rinstInst'_Equation_pointwise;
@@ -2060,7 +2401,11 @@ Module Extra.
 
 Import Core.
 
+#[global] Hint Opaque subst_gproc: rewrite.
+
 #[global] Hint Opaque subst_proc: rewrite.
+
+#[global] Hint Opaque ren_gproc: rewrite.
 
 #[global] Hint Opaque ren_proc: rewrite.
 
