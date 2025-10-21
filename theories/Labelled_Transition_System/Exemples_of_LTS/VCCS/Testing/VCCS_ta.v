@@ -395,27 +395,45 @@ Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
 | cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
                                                     -> Well_Defined_Trace (a :: s).
 
-Parameter P : proc.
-Parameter not_good_P : ¬ good_VCCS P.
-(* Fixpoint unroll_fw (L : list proc * proc) : proc :=
+Parameter O : Value.
+
+Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
-  | [] => (g 𝟘)
-  | x :: l => (c ? x • ①) ‖ unroll_fw l
-  end. *)
+  | [] => 𝟘
+  | Inputs_on c :: l => (c ? x • ①) + unroll_fw l
+  | Outputs_on c :: l => (c ! O • ①) + unroll_fw l
+  end.
 
-(* Definition gen_acc (g : gset name) s := gen_test s (unroll_fw (elements g)). *)
 
-Definition gen_acc (L : list proc * proc) s := gen_test s P.
+Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))).
 
-(* Lemma unroll_a_eq_perm (xs ys : list name) : xs ≡ₚ ys -> unroll_fw xs ≡* unroll_fw ys.
+Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> (g (unroll_fw xs)) ≡* (g (unroll_fw ys)).
 Proof.
   intro hperm. dependent induction hperm; simpl; eauto with ccs.
-  - eapply cgr_par_right; eauto with ccs.
-  - transitivity ((pr_input y pr_success & pr_input x pr_success) & unroll_fw l).
-    eauto with ccs.
-    transitivity ((pr_input x pr_success & pr_input y pr_success) & unroll_fw l).
-    eauto with ccs. eauto with ccs.
-Qed. *)
+  - reflexivity.
+  - destruct x; eauto.
+    + eapply cgr_fullchoice; eauto with ccs. reflexivity.
+    + eapply cgr_fullchoice; eauto with ccs. reflexivity.
+  - destruct y ; destruct x.
+    + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.
+      eapply cgr_choice_com. reflexivity. eapply cgr_choice_assoc.
+    + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.
+      eapply cgr_choice_com. reflexivity. eapply cgr_choice_assoc.
+    + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.
+      eapply cgr_choice_com. reflexivity. eapply cgr_choice_assoc.
+    + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.
+      eapply cgr_choice_com. reflexivity. eapply cgr_choice_assoc.
+Qed.
+
+Lemma not_good_P G : ¬ (good_VCCS (gen_acc G ε)).
+Proof.
+  intros imp.
+  unfold gen_acc in imp. unfold gen_test in imp.
+  simpl in *. induction G using set_ind_L. 
+  + simpl in *. admit.
+  + simpl in *. admit. 
+Admitted.
+
 
 #[global] Program Instance gen_acc_gen_test_inst g 
   {Hyp_WD : forall α s e, lts (gen_acc g s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α} 
@@ -432,8 +450,8 @@ Next Obligation.
     subst; eauto. simpl in *. inversion H. subst. eauto.
 Qed.
 Next Obligation.
-  intros s hh. eapply gen_test_ungood_if; try eassumption.
-  exact not_good_P.
+  intros g s hh. eapply gen_test_ungood_if; try eassumption.
+  eapply not_good_P; eauto.
 Qed.
 Next Obligation.
   intros. eapply gen_test_lts_mu.
@@ -459,64 +477,91 @@ Next Obligation.
   eapply gen_test_gen_spec_good_not_mu. exact Hyp. exact Hyp'. eauto. eauto.
 Qed.
 
-
-(*
-Lemma gen_acc_does_not_output : forall g t a, ~ lts (unroll_fw g) (ActExt $ ActOut a) t.
+Lemma gen_acc_does_not_tau : forall g r, ~ lts (unroll_fw g) τ r.
 Proof.
   intros g.
   induction g as [| b g'].
-  - cbn. intros t a R. inversion R.
-  - cbn. intros t a R. inversion R; subst.
-    + inversion H3.
-    + eapply IHg', H3.
+  - cbn. intros p R. inversion R.
+  - cbn. intros p R. destruct b.
+    + inversion R; subst.
+      * inversion H3.
+      * eapply IHg'. eauto.
+    + inversion R; subst.
+      * inversion H3.
+      * eapply IHg'. eauto.
 Qed.
 
-Lemma gen_acc_does_not_tau : forall g t, ~ lts (unroll_fw g) τ t.
+Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs_on c ∈ G 
+          -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c ⋉ v))) r.
 Proof.
-  intros g.
-  induction g as [| b g'].
-  - cbn. intros t R. inversion R.
-  - cbn. intros t R.
-    inversion R; subst.
-    + inversion H1; subst. cbn in H2.
-      eapply gen_acc_does_not_output. eassumption.
-    + inversion H3.
-    + eapply IHg'. eassumption.
-Qed.
-
-Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ g -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
-Proof.
-  remember g. revert g0 Heqg0.
-  induction g using set_ind_L; intros g0 Heqg0 mem.
+  remember G. revert g Heqg.
+  induction G using set_ind_L; intros g0 Heqg0 mem.
   - subst. inversion mem.
   - assert (hn : {[x]} ## X) by set_solver.
-    destruct (decide (x = a)).
+    destruct (decide (x = (Inputs_on c))).
     + subst.
-      set (h := elements_disj_union {[a]} X hn).
-      cbn. assert (exists t, lts (unroll_fw (a :: elements X)) (ActExt $ ActIn a) t).
+      set (h := elements_disj_union {[Inputs_on c]} X hn).
+      cbn. assert (exists p, lts (unroll_fw ((Inputs_on c) :: elements X)) (ActExt $ ActIn (c ⋉ (bvar 0))) p).
       simpl. eauto with ccs.
       destruct H0 as (r & hl).
-      edestruct
-        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-           (unroll_fw (elements ({[a]} ∪ X))) r (ActExt $ ActIn a)) as (t & hlt & heqt).
-      exists (unroll_fw (a :: elements X)).
+      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ (bvar 0)))) 
+          as (p & hlt & heqt).
+      exists (unroll_fw ((Inputs_on c) :: elements X)).
       split. eapply unroll_a_eq_perm.
-      replace (elements {[a]}) with [a] in h. eauto.
+      replace (elements {[Inputs_on c]}) with [Inputs_on c] in h. eauto.
       now rewrite elements_singleton.
       simpl in *. eapply hl. eauto.
-    + assert (mem' : a ∈ X) by set_solver.
-      edestruct (IHg X eq_refl mem') as (r & hlr); eauto.
-      edestruct
-        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-           (unroll_fw (elements ({[x]} ∪ X)))
-           (pr_par (pr_input x pr_success) r) (ActExt $ ActIn a)) as (t & hlt & heqt).
-      exists (unroll_fw (x :: elements X)).
+    + assert (mem' : Inputs_on c ∈ X) by set_solver.
+      edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
+      destruct x.
+      * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
+        simpl in *. 
+        edestruct (eq_spec (g (unroll_fw (elements ({[Inputs_on c0]} ∪ X))))
+             r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
+        exists (g (unroll_fw (Inputs_on c0 :: elements X))).
+        split. eapply unroll_a_eq_perm.
+        set (h := elements_disj_union {[Inputs_on c0]} X hn).
+        replace (elements {[Inputs_on c0]}) with [Inputs_on c0] in h. eauto.
+        now rewrite elements_singleton. simpl in *.
+        eapply lts_choiceR. eauto. subst. eauto.
+      * admit.
+Admitted.
+
+Lemma gen_acc_gen_spec_acc_nil_mem_lts_output G c : Outputs_on c ∈ G 
+          -> exists r, lts (gen_acc G []) (ActExt $ ActOut ((c ⋉ O))) r.
+Proof.
+  remember G. revert g Heqg.
+  induction G using set_ind_L; intros g0 Heqg0 mem.
+  - subst. inversion mem.
+  - assert (hn : {[x]} ## X) by set_solver.
+    destruct (decide (x = (Outputs_on c))).
+    + subst.
+      set (h := elements_disj_union {[Outputs_on c]} X hn).
+      cbn. assert (exists p, lts (unroll_fw ((Outputs_on c) :: elements X)) (ActExt $ ActOut(c ⋉ O)) p).
+      simpl. eauto with ccs.
+      destruct H0 as (r & hl).
+      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActOut (c ⋉ O))) 
+          as (p & hlt & heqt).
+      exists (unroll_fw ((Inputs_on c) :: elements X)).
       split. eapply unroll_a_eq_perm.
-      set (h := elements_disj_union {[x]} X hn).
-      replace (elements {[x]}) with [x] in h. eauto.
+      replace (elements {[Outputs_on c]}) with [Outputs_on c] in h. eauto.
       now rewrite elements_singleton.
-      simpl in *. eauto with ccs. subst. eauto.
+      simpl in *. eapply hl. eauto.
+    + assert (mem' : Inputs_on c ∈ X) by set_solver.
+      edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
+      destruct x.
+      * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
+        simpl in *. 
+        edestruct (eq_spec (g (unroll_fw (elements ({[Inputs_on c0]} ∪ X))))
+             r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
+        exists (g (unroll_fw (Inputs_on c0 :: elements X))).
+        split. eapply unroll_a_eq_perm.
+        set (h := elements_disj_union {[Inputs_on c0]} X hn).
+        replace (elements {[Inputs_on c0]}) with [Inputs_on c0] in h. eauto.
+        now rewrite elements_singleton. simpl in *.
+        eapply lts_choiceR. eauto. subst. eauto.
 Qed.
+
 
 #[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc gen_acc.
 Next Obligation.

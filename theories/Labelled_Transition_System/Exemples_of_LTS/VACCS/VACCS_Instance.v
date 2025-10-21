@@ -2276,7 +2276,6 @@ Qed.
 
 Inductive PreAct :=
 | Inputs_on (c : Channel)
-(* | Outputs_on (c : Channel) *)
 .
 
 Definition 𝝳 (pre_μ : FinA) : PreAct :=
@@ -2290,11 +2289,6 @@ Next Obligation.
   + destruct (decide( c = c0)).
     - left. f_equal. eauto.
     - right. intro. inversion H. contradiction.
-(*   + right. intro.  inversion H. 
-  + right. intro.  inversion H.
-  + destruct (decide( c = c0)).
-    - left. f_equal. eauto.
-    - right. intro. inversion H. contradiction. *)
 Qed.
 
 Parameter CountPreAct : Countable PreAct.
@@ -2323,7 +2317,10 @@ Proof.
   intros.
   induction p as (p & Hp) using
         (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)). destruct p.
-  + admit.
+  + eapply gmultiset_elem_of_dom in mem. simpl in *. eapply gmultiset_elem_of_disj_union in mem.
+    destruct mem as [mem1 | mem2].
+    - eapply gmultiset_elem_of_dom in mem1. eapply Hp; admit.
+    - eapply gmultiset_elem_of_dom in mem2. eapply Hp; admit.
   + inversion mem.
   + inversion mem.
   + case_eq (Eval_Eq e); intros; simpl in *.
@@ -2331,7 +2328,9 @@ Proof.
         -- admit.
         -- admit.
         -- eapply gmultiset_elem_of_dom in mem. simpl in *. rewrite H in mem. inversion mem.
-  + admit.
+  + assert (¬ q ↛[ ActOut (c0 ⋉ d) ]).
+    { eapply accepts_preserved_by_eq. eapply lts_refuses_spec2.
+      exists 𝟘. constructor. eauto. } admit.
   + inversion mem.
 Admitted.
 
@@ -2368,8 +2367,7 @@ Next Obligation.
     destruct b. exists a; eauto.
 Qed.
 Next Obligation.
-  intros. simpl in *. revert pre_pre_μ pre_μ H H0. 
-  (* eapply gmultiset_elem_of_dom in H. revert c H. *)
+  intros. simpl in *. revert pre_pre_μ pre_μ H H0.
       induction p as (p & Hp) using
         (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
       intros. destruct pre_pre_μ. destruct p; intros. (* destruct pre_μ; simpl in *.  *)

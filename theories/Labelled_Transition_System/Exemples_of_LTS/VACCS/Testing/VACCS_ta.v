@@ -398,10 +398,17 @@ Lemma not_good_P G : ¬ (good_VACCS (gen_acc G ε)).
 Proof.
   intros imp.
   unfold gen_acc in imp. unfold gen_test in imp.
+  simpl in *. induction G using set_ind_L. 
+  + simpl in *. admit.
+  + simpl in *. admit. 
 Admitted.
 
+Parameter O : Value.
+
+
+
 #[global] Program Instance gen_acc_gen_test_inst G 
-  {Hyp_WD : forall α s e, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α} 
+  {Hyp_WD : forall α s e, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
     : gen_spec co (fun s => gen_acc G s).
 Next Obligation.
   intros. unfold parallel_inter. unfold dual. destruct μ; simpl; eauto.
@@ -468,6 +475,7 @@ Proof.
       * inversion H3.
       * eapply IHg'. eauto.
 Qed.
+
 
 Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs_on c ∈ G 
           -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c ⋉ v))) r.

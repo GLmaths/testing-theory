@@ -2252,13 +2252,19 @@ Qed.
 #[global] Program Instance gAbsAction {A : Type} 
   : @AbsAction (ExtAct TypeOfActions) gLabel_b proc FinA VCCS_ggLts Φ.
 Next Obligation.
-  intros. destruct μ; destruct μ'; destruct a; destruct a0; inversion H; subst.
-  - eapply lts_refuses_spec1 in H0 as (e' & Tr). simpl in *.
+  intros. destruct μ; destruct μ'; destruct a; destruct a0.
+  - inversion H1; subst. eapply lts_refuses_spec1 in H2 as (e' & Tr). simpl in *.
     eapply TransitionShapeForInput in Tr as (P1 & G & R & eq & eq' & Hyp).
     assert (¬ (((gpr_input c0 P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ? })) as accepts.
     { eapply lts_refuses_spec2. exists (P1^(d0) ‖ R). eapply lts_parL. eapply lts_choiceL. constructor. }
     eapply accepts_preserved_by_eq in accepts. exact accepts. symmetry. eauto.
-  - eauto.
+  - simpl in *. inversion H1.
+  - simpl in *. inversion H1.
+  - inversion H1; subst. eapply lts_refuses_spec1 in H2 as (e' & Tr). simpl in *.
+    eapply TransitionShapeForOutput in Tr as (P1 & G & R & eq & eq' & Hyp).
+    assert (¬ (((c0 ! d0 • P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ! })) as accepts.
+    { eapply lts_refuses_spec2. exists (P1 ‖ R). eapply lts_parL. eapply lts_choiceL. constructor. }
+    eapply accepts_preserved_by_eq in accepts. exact accepts. symmetry. eauto.
 Qed.
 
 Inductive PreAct :=
@@ -2338,115 +2344,92 @@ Next Obligation.
   + destruct a. simpl. exists (ActOut (c ⋉ d)). split; eauto.
 Qed.
 Next Obligation.
-  intros. split; intros ; simpl in *. 
-  - destruct H as (μ' & eq & mem). subst. destruct μ'.
-    + destruct mem as (μ & mem & duo & b). destruct a. simpl.
-      symmetry in duo. eapply simplify_match_input in duo. subst.
-      eapply lts_refuses_spec1 in mem as (p' & Tr).
-      eapply TransitionShapeForOutput in Tr as (P1 & G & R & eq & eq' & Hyp). 
-      assert (Inputs_on c ∈ PreCoAct_of ((c ! d • P1 + G) ‖ R)).
-      { eapply gmultiset_elem_of_dom. simpl. set_solver. }
-      eapply PreCoEquiv. symmetry. exact eq. eauto.
-    + destruct mem as (μ & mem & duo & b). destruct a. simpl.
-      symmetry in duo. eapply simplify_match_output in duo. subst.
-      eapply lts_refuses_spec1 in mem as (p' & Tr).
-      eapply TransitionShapeForInput in Tr as (P1 & G & R & eq & eq' & Hyp). 
-      assert (Outputs_on c ∈ PreCoAct_of ((gpr_input c P1 + G) ‖ R)).
-      { eapply gmultiset_elem_of_dom. simpl. set_solver. }
-      eapply PreCoEquiv. symmetry. exact eq. eauto.
-  - intros. destruct pre_μ; simpl in *.
-    + eapply gmultiset_elem_of_dom in H. revert c H.
-      induction p as (p & Hp) using
-        (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-      destruct p; intros.
-      * simpl in *. eapply gmultiset_elem_of_disj_union in H. destruct H.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-           eapply lts_refuses_spec2. exists (p'1 ‖ p2). constructor. eauto. lia.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-           eapply lts_refuses_spec2. exists (p1 ‖ p'2). constructor. eauto. lia.
-      * simpl in *. inversion H.
-      * simpl in *. inversion H.
-      * case_eq (Eval_Eq e); intros; simpl in *. rewrite H0 in H. destruct b.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-           eapply lts_refuses_spec2. exists p'1. constructor; eauto. lia.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-           eapply lts_refuses_spec2. exists p'2. eapply lts_ifZero; eauto. lia.
-        -- rewrite H0 in H. inversion H.
-      * destruct g0.
-        ** simpl in *. inversion H.
-        ** simpl in *. inversion H.
-        ** simpl in *. assert (Inputs_on c = Outputs_on c0). { multiset_solver. } inversion H0.
-        ** simpl in *. assert (Inputs_on c = Inputs_on c0). { multiset_solver. } inversion H0; subst. 
-           exists (ActIn (c0 ⋉ d)). split.
-           -- simpl. eauto.
-           -- simpl. exists (ActOut (c0 ⋉ d)). repeat split; eauto.
-              eapply lts_refuses_spec2. exists p. constructor. intro. inversion H1.
-        ** simpl in *. inversion H.
-        ** simpl in *. eapply gmultiset_elem_of_disj_union in H. destruct H.
-           -- assert (Inputs_on c ∈ mPreCoAct_of (g g0_1)) as Hyp; eauto.
-              eapply Hp in Hyp. destruct Hyp as (μ' & eq & mem).
-              exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-              exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-              eapply lts_refuses_spec2. exists p'1. constructor. eauto. simpl. lia.
-           -- assert (Inputs_on c ∈ mPreCoAct_of (g g0_2)) as Hyp; eauto.
-              eapply Hp in Hyp. destruct Hyp as (μ' & eq & mem).
-              exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-              exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-              eapply lts_refuses_spec2. exists p'2. eapply lts_choiceR; eauto. simpl. lia.
-    + eapply gmultiset_elem_of_dom in H. revert c H.
-      induction p as (p & Hp) using
-        (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-      destruct p; intros.
-      * simpl in *. eapply gmultiset_elem_of_disj_union in H. destruct H.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-           eapply lts_refuses_spec2. exists (p'1 ‖ p2). constructor. eauto. lia.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-           eapply lts_refuses_spec2. exists (p1 ‖ p'2). constructor. eauto. lia.
-      * simpl in *. inversion H.
-      * simpl in *. inversion H.
-      * case_eq (Eval_Eq e); intros; simpl in *. rewrite H0 in H. destruct b.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-           eapply lts_refuses_spec2. exists p'1. constructor; eauto. lia.
-        -- eapply Hp in H. destruct H as (μ' & eq & mem).
-           exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-           exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-           eapply lts_refuses_spec2. exists p'2. eapply lts_ifZero; eauto. lia.
-        -- rewrite H0 in H. inversion H.
-      * destruct g0.
-        ** simpl in *. inversion H.
-        ** simpl in *. inversion H.
-        ** simpl in *. assert (Outputs_on c = Outputs_on c0). { multiset_solver. } inversion H0; subst.
-           exists (ActOut (c0 ⋉ v)). split.
-           -- simpl. eauto.
-           -- exists (ActIn (c0 ⋉ v)). repeat split.
-              ++ eapply lts_refuses_spec2. exists (p^v). constructor.
-              ++ intro imp. inversion imp.
-        ** simpl in *. assert (Outputs_on c = Inputs_on c0). { multiset_solver. } inversion H0.
-        ** simpl in *. inversion H.
-        ** simpl in *. eapply gmultiset_elem_of_disj_union in H. destruct H.
-           -- assert (Outputs_on c ∈ mPreCoAct_of (g g0_1)) as Hyp; eauto.
-              eapply Hp in Hyp. destruct Hyp as (μ' & eq & mem).
-              exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-              exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-              eapply lts_refuses_spec2. exists p'1. constructor. eauto. simpl. lia.
-           -- assert (Outputs_on c ∈ mPreCoAct_of (g g0_2)) as Hyp; eauto.
-              eapply Hp in Hyp. destruct Hyp as (μ' & eq & mem).
-              exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
-              exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-              eapply lts_refuses_spec2. exists p'2. eapply lts_choiceR; eauto. simpl. lia.
+  intros.
+  destruct H as (μ & eq & mem).
+  destruct μ.
+  + destruct mem as (μ' & Tr & duo & b). symmetry in duo.
+    destruct a. eapply simplify_match_input in duo. subst.
+    eapply lts_refuses_spec1 in Tr as (p' & Tr).
+    eapply TransitionShapeForOutput in Tr as (P1 & P2 & R & eq & eq' & Hyp).
+    assert (𝝳 (Φ (ActIn (c ⋉ d))) ∈ PreCoAct_of ((c ! d • P1 + P2) ‖ R)).
+    { eapply gmultiset_elem_of_dom. simpl. multiset_solver. }
+    eapply PreCoEquiv. symmetry. eauto. eauto.
+  + destruct mem as (μ' & Tr & duo & b). symmetry in duo.
+    destruct a. eapply simplify_match_output in duo. subst.
+    eapply lts_refuses_spec1 in Tr as (p' & Tr).
+    eapply TransitionShapeForInput in Tr as (P1 & P2 & R & eq & eq' & Hyp).
+    assert (𝝳 (Φ (ActOut (c ⋉ d))) ∈ PreCoAct_of ((c ? x • P1 + P2) ‖ R)).
+    { eapply gmultiset_elem_of_dom. simpl. multiset_solver. }
+    eapply PreCoEquiv. symmetry. eauto. eauto.
 Qed.
+Next Obligation.
+  intros. simpl in *. revert pre_pre_μ pre_μ H H0.
+  induction p as (p & Hp) using
+        (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  intros. destruct p; intros.
+  * eapply gmultiset_elem_of_dom in H0.
+    eapply gmultiset_elem_of_disj_union in H0. destruct H0.
+    -- eapply (Hp p1) in H. destruct H as (μ' & eq & mem).
+       destruct mem as (μ'' & Tr & duo & b). exists μ'. split; eauto. 
+       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
+       eapply lts_refuses_spec2. exists (p'1 ‖ p2). constructor. eauto. simpl. lia.
+       eapply gmultiset_elem_of_dom. eauto.
+    -- eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
+       exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
+       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
+       eapply lts_refuses_spec2. exists (p1 ‖ p'2). constructor. eauto. simpl. lia.
+       eapply gmultiset_elem_of_dom. eauto.
+  * simpl in *. inversion H0.
+  * simpl in *. inversion H0.
+  * case_eq (Eval_Eq e); intros; simpl in *.
+    eapply gmultiset_elem_of_dom in H0. simpl in *. rewrite H1 in H0. destruct b.
+    -- eapply (Hp p1) in H. destruct H as (μ' & eq & mem).
+       exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
+       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
+       eapply lts_refuses_spec2. exists p'1. constructor; eauto. lia.
+       eapply gmultiset_elem_of_dom; eauto.
+    -- eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
+       exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
+       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
+       eapply lts_refuses_spec2. exists p'2. eapply lts_ifZero; eauto. lia.
+       eapply gmultiset_elem_of_dom; eauto.
+    -- eapply gmultiset_elem_of_dom in H0. simpl in *. rewrite H1 in H0. inversion H0.
+  * destruct g0.
+    ** simpl in *. inversion H0.
+    ** simpl in *. inversion H0.
+    ** eapply gmultiset_elem_of_dom in H0. simpl in *.
+       destruct pre_μ.
+       + simpl in *. subst. multiset_solver.
+       + simpl in *. subst. assert (c0 = c) by multiset_solver. subst.
+         exists (ActOut (c ⋉ v)). split.
+         -- simpl in *. reflexivity.
+         -- exists (ActIn (c ⋉ v)). repeat split ;eauto.
+            eapply lts_refuses_spec2. exists (p^v). constructor.
+            intro imp. inversion imp.
+    ** eapply gmultiset_elem_of_dom in H0. simpl in *.
+       destruct pre_μ.
+       + simpl in *. subst. assert (c0 = c) by multiset_solver. subst.
+         exists (ActIn (c ⋉ d)). split.
+         -- simpl in *. reflexivity.
+         -- exists (ActOut (c ⋉ d)). repeat split ;eauto.
+            eapply lts_refuses_spec2. exists p. constructor.
+            intro imp. inversion imp.
+       + simpl in *. subst. multiset_solver.
+    ** simpl in *. inversion H0.
+    ** simpl in *. eapply gmultiset_elem_of_dom in H0.
+       eapply gmultiset_elem_of_disj_union in H0. destruct H0 as [mem1 | mem2].
+       -- assert (pre_pre_μ ∈ mPreCoAct_of (g g0_1)) as Hyp; eauto.
+          eapply gmultiset_elem_of_dom in Hyp.
+          eapply Hp in Hyp. destruct Hyp as (μ' & eq & mem).
+          exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
+          exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
+          eapply lts_refuses_spec2. exists p'1. constructor. eauto. simpl. lia. eauto.
+       -- assert (pre_pre_μ ∈ mPreCoAct_of (g g0_2)) as Hyp; eauto.
+          eapply gmultiset_elem_of_dom in Hyp.
+          eapply Hp in Hyp. destruct Hyp as (μ' & eq & mem).
+          exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
+          exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
+          eapply lts_refuses_spec2. exists p'2. eapply lts_choiceR; eauto. simpl. lia. eauto.
+Qed.
+
 
