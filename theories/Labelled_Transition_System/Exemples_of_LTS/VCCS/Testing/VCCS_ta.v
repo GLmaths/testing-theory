@@ -501,10 +501,10 @@ Proof.
     destruct (decide (x = (Inputs_on c))).
     + subst.
       set (h := elements_disj_union {[Inputs_on c]} X hn).
-      cbn. assert (exists p, lts (unroll_fw ((Inputs_on c) :: elements X)) (ActExt $ ActIn (c ⋉ (bvar 0))) p).
+      cbn. assert (exists p, lts (unroll_fw ((Inputs_on c) :: elements X)) (ActExt $ ActIn (c ⋉ O)) p).
       simpl. eauto with ccs.
       destruct H0 as (r & hl).
-      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ (bvar 0)))) 
+      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ O))) 
           as (p & hlt & heqt).
       exists (unroll_fw ((Inputs_on c) :: elements X)).
       split. eapply unroll_a_eq_perm.
@@ -515,7 +515,7 @@ Proof.
       edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
       destruct x.
       * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
-        simpl in *. 
+        simpl in *.
         edestruct (eq_spec (g (unroll_fw (elements ({[Inputs_on c0]} ∪ X))))
              r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
         exists (g (unroll_fw (Inputs_on c0 :: elements X))).
@@ -524,11 +524,20 @@ Proof.
         replace (elements {[Inputs_on c0]}) with [Inputs_on c0] in h. eauto.
         now rewrite elements_singleton. simpl in *.
         eapply lts_choiceR. eauto. subst. eauto.
-      * admit.
-Admitted.
+      * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
+        simpl in *.
+        edestruct (eq_spec (g (unroll_fw (elements ({[Outputs_on c0]} ∪ X))))
+             r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
+        exists (g (unroll_fw (Outputs_on c0 :: elements X))).
+        split. eapply unroll_a_eq_perm.
+        set (h := elements_disj_union {[Outputs_on c0]} X hn).
+        replace (elements {[Outputs_on c0]}) with [Outputs_on c0] in h. eauto.
+        now rewrite elements_singleton. simpl in *.
+        eapply lts_choiceR. eauto. subst. eauto.
+Qed.
 
 Lemma gen_acc_gen_spec_acc_nil_mem_lts_output G c : Outputs_on c ∈ G 
-          -> exists r, lts (gen_acc G []) (ActExt $ ActOut ((c ⋉ O))) r.
+          -> exists r v, lts (gen_acc G []) (ActExt $ ActOut ((c ⋉ v))) r.
 Proof.
   remember G. revert g Heqg.
   induction G using set_ind_L; intros g0 Heqg0 mem.
@@ -537,35 +546,49 @@ Proof.
     destruct (decide (x = (Outputs_on c))).
     + subst.
       set (h := elements_disj_union {[Outputs_on c]} X hn).
-      cbn. assert (exists p, lts (unroll_fw ((Outputs_on c) :: elements X)) (ActExt $ ActOut(c ⋉ O)) p).
+      cbn. assert (exists p, lts (unroll_fw ((Outputs_on c) :: elements X)) (ActExt $ ActOut (c ⋉ O)) p).
       simpl. eauto with ccs.
       destruct H0 as (r & hl).
-      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActOut (c ⋉ O))) 
+      edestruct (eq_spec (g (unroll_fw (elements ({[(Outputs_on c)]} ∪ X)))) r (ActExt $ ActOut (c ⋉ O))) 
           as (p & hlt & heqt).
-      exists (unroll_fw ((Inputs_on c) :: elements X)).
+      exists (unroll_fw ((Outputs_on c) :: elements X)).
       split. eapply unroll_a_eq_perm.
       replace (elements {[Outputs_on c]}) with [Outputs_on c] in h. eauto.
       now rewrite elements_singleton.
       simpl in *. eapply hl. eauto.
-    + assert (mem' : Inputs_on c ∈ X) by set_solver.
+    + assert (mem' : Outputs_on c ∈ X) by set_solver.
       edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
       destruct x.
       * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
-        simpl in *. 
+        simpl in *.
         edestruct (eq_spec (g (unroll_fw (elements ({[Inputs_on c0]} ∪ X))))
-             r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
+             r  (ActExt $ ActOut (c ⋉ x))) as (p & hlt & heqt).
         exists (g (unroll_fw (Inputs_on c0 :: elements X))).
         split. eapply unroll_a_eq_perm.
         set (h := elements_disj_union {[Inputs_on c0]} X hn).
         replace (elements {[Inputs_on c0]}) with [Inputs_on c0] in h. eauto.
         now rewrite elements_singleton. simpl in *.
         eapply lts_choiceR. eauto. subst. eauto.
+      * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
+        simpl in *.
+        edestruct (eq_spec (g (unroll_fw (elements ({[Outputs_on c0]} ∪ X))))
+             r  (ActExt $ ActOut (c ⋉ x))) as (p & hlt & heqt).
+        exists (g (unroll_fw (Outputs_on c0 :: elements X))).
+        split. eapply unroll_a_eq_perm.
+        set (h := elements_disj_union {[Outputs_on c0]} X hn).
+        replace (elements {[Outputs_on c0]}) with [Outputs_on c0] in h. eauto.
+        now rewrite elements_singleton. simpl in *.
+        eapply lts_choiceR. eauto. subst. eauto.
 Qed.
 
-
-#[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc gen_acc.
+#[global] Program Instance gen_acc_gen_spec_acc_inst
+  {Hyp_WD : forall α s e L, lts (gen_acc L s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
+  : gen_spec_acc PreAct co gen_acc (fun x => 𝝳 (Φ x)).
 Next Obligation.
-  intros g. simpl. unfold proc_stable. cbn.
+  intros. eapply gen_acc_gen_test_inst. intros. eapply Hyp_WD. eauto.
+Qed.
+Next Obligation.
+  intros Hyp g. simpl. unfold proc_stable. cbn.
   remember (lts_set_tau (unroll_fw (elements g))) as ps.
   destruct ps using set_ind_L; eauto.
   assert (mem : x ∈ lts_set_tau (unroll_fw (elements g))) by set_solver.
@@ -573,42 +596,58 @@ Next Obligation.
   now eapply gen_acc_does_not_tau in mem.
 Qed.
 Next Obligation.
-  intros g a. simpl. unfold proc_stable. cbn.
-  remember (lts_set_output (unroll_fw (elements g)) a) as ps.
-  destruct ps using set_ind_L; eauto.
-  assert (mem : x ∈ lts_set_output (unroll_fw (elements g)) a) by set_solver.
-  eapply lts_set_output_spec0 in mem.
-  now eapply gen_acc_does_not_output in mem.
+  intros Hyp g a nb. inversion nb.
 Qed.
 Next Obligation.
-  intros g.
+  intros Hyp g.
   induction g using set_ind_L; intros.
-  - inversion H.
-  - edestruct
-      (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-         (unroll_fw (x :: elements X)) e (ActExt (ActIn a))) as (t & hlt & heqt).
-    ++ exists (gen_acc ({[x]} ∪ X) []).
-       split.
-       +++ eapply unroll_a_eq_perm.
-           assert (hn : {[x]} ## X) by set_solver.
-           set (h := elements_disj_union {[x]} X hn).
-           replace (elements {[x]}) with [x] in h. symmetry. eauto.
-           now rewrite elements_singleton.
-       +++ eassumption.
-    ++ cbn in hlt. inversion hlt; subst.
-       +++ inversion H5; subst. set_solver.
-       +++ set_solver.
+  - inversion H0.
+  - destruct μ.
+    * edestruct (eq_spec (g (unroll_fw (x :: elements X))) e (ActExt (ActIn a))) as (p & hlt & heqt).
+      ++ exists (gen_acc ({[x]} ∪ X) []).
+         split.
+         +++ eapply unroll_a_eq_perm.
+             assert (hn : {[x]} ## X) by set_solver.
+             set (h := elements_disj_union {[x]} X hn).
+             replace (elements {[x]}) with [x] in h. symmetry. eauto.
+             now rewrite elements_singleton.
+         +++ eassumption.
+      ++ cbn in hlt. destruct x.
+         +++ inversion hlt; subst. 
+             ** inversion H6; subst. set_solver.
+             ** set_solver.
+         +++ inversion hlt; subst. 
+             ** inversion H6; subst.
+             ** set_solver.
+    * edestruct (eq_spec (g (unroll_fw (x :: elements X))) e (ActExt (ActOut a))) as (p & hlt & heqt).
+      ++ exists (gen_acc ({[x]} ∪ X) []).
+         split.
+         +++ eapply unroll_a_eq_perm.
+             assert (hn : {[x]} ## X) by set_solver.
+             set (h := elements_disj_union {[x]} X hn).
+             replace (elements {[x]}) with [x] in h. symmetry. eauto.
+             now rewrite elements_singleton.
+         +++ eassumption.
+      ++ cbn in hlt. destruct x.
+         +++ inversion hlt; subst. 
+             ** inversion H6; subst.
+             ** set_solver.
+         +++ inversion hlt; subst. 
+             ** inversion H6; subst. set_solver.
+             ** set_solver.
 Qed.
 Next Obligation.
-  intros. eapply gen_acc_gen_spec_acc_nil_mem_lts_inp; eauto.
+  intros. destruct pη.
+  + eapply gen_acc_gen_spec_acc_nil_mem_lts_inp in H; eauto.
+    destruct H as (r & v & Tr). exists r , (ActIn $ (c ⋉ v)). split; eauto.
+  + eapply gen_acc_gen_spec_acc_nil_mem_lts_output in H; eauto.
+    destruct H as (r & v & Tr). exists r , (ActOut $ (c ⋉ v)). split; eauto.
 Qed.
 Next Obligation.
-  intros a e' g. revert a e'.
-  induction g using set_ind_L; intros a e' hl.
+  intros Hyp a e' g. revert a e'.
+  induction g using set_ind_L; intros a e' b hl.
   - inversion hl.
-  - edestruct
-      (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-         (unroll_fw (x :: elements X)) e' (ActExt a)) as (t & hlt & heqt).
+  - edestruct (eq_spec (g (unroll_fw (x :: elements X))) e' (ActExt a)) as (p & hlt & heqt).
     ++ exists (gen_acc ({[x]} ∪ X) []).
        split; eauto.
        eapply unroll_a_eq_perm.
@@ -617,8 +656,11 @@ Next Obligation.
        replace (elements {[x]}) with [x] in h
            by now rewrite elements_singleton.
        symmetry. eauto.
-    ++ simpl in hlt. inversion hlt; subst.
-       +++ inversion H4; subst.
-           eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
-       +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
-Qed. *)
+    ++ simpl in hlt. destruct x.
+       +++ inversion hlt; subst.
+           ++++ inversion H4; subst. simpl in *. eapply good_preserved_by_cgr; eauto. constructor.
+           ++++ eapply good_preserved_by_cgr. eapply IHg; eauto. eauto.
+       +++ inversion hlt; subst.
+           ++++ inversion H4; subst. simpl in *. eapply good_preserved_by_cgr; eauto. constructor.
+           ++++ eapply good_preserved_by_cgr. eapply IHg; eauto. eauto.
+Qed.

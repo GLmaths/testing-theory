@@ -487,10 +487,10 @@ Proof.
     destruct (decide (x = (Inputs_on c))).
     + subst.
       set (h := elements_disj_union {[Inputs_on c]} X hn).
-      cbn. assert (exists p, lts (unroll_fw ((Inputs_on c) :: elements X)) (ActExt $ ActIn (c ⋉ (bvar 0))) p).
+      cbn. assert (exists p, lts (unroll_fw ((Inputs_on c) :: elements X)) (ActExt $ ActIn (c ⋉ O)) p).
       simpl. eauto with ccs.
       destruct H0 as (r & hl).
-      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ (bvar 0)))) 
+      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ O))) 
           as (p & hlt & heqt).
       exists (unroll_fw ((Inputs_on c) :: elements X)).
       split. eapply unroll_a_eq_perm.

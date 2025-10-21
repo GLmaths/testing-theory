@@ -378,6 +378,13 @@ Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
 | cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
                                                     -> Well_Defined_Trace (a :: s).
 
+(* Lemma WellDefinedTest s α e : Well_Defined_Trace s -> lts (gen_conv s) α e -> Well_Defined_Action α.
+Proof.
+  intros Hyp Tr.
+  dependent induction Hyp.
+  + inversion Tr; subst. constructor.
+  + simpl in *. *)
+
 #[global] Program Instance gen_acc_gen_test_inst 
   {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
 : gen_spec co gen_conv.
