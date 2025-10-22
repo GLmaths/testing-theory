@@ -4,5 +4,4 @@
  (name Must)
  (package must-testing)
  (synopsis "Must testing")
- (theories stdpp Coinduction)
-)
+ (theories stdpp Coinduction))
