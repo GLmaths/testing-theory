@@ -755,62 +755,60 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 
 #[global] Hint Constructors lts:ccs.
 
-(* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
-are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForInput : forall P Q c v, (lts P (ActIn (c ⋉ v))) Q -> 
-exists P1 G R n, (P ≡* νs n ((c ? P1 + G) ‖ R)) /\ (Q ≡* νs n (P1[v..] ‖ R)).
-(* /\ ((exists L,P = (g L)) -> R = 𝟘))). *)
+Ltac not_a_guard := intro hex; inversion hex as [L absurd_hyp]; inversion absurd_hyp.
+
+Lemma TransitionShapeForInput : forall P Q c v, lts P (ActIn (c ⋉ v)) Q -> 
+exists P1 G R n, (P ≡* νs n ((c ? P1 + G) ‖ R)) /\ (Q ≡* νs n (P1[v..] ‖ R))
+/\ ((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
 Proof.
 intros P Q c v Transition.
  dependent induction Transition.
 - exists P, 𝟘, 𝟘, 0. split; eauto with cgr.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. exists P1, G, R, (S n). split.
-  + now rewrite H0.
-  + now rewrite H1.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, G, (R ‖ q), 0. simpl. split; [now finish_zero H0 | now finish_zero H1 ].
-  + exists P1, G, (R ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H0 | now finish_Sn H1 ].
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, G, (R ‖ p), 0. simpl. split; [rewrite H0|rewrite H1]; now rewrite cgr_par_com, cgr_par_assoc.
-  + exists P1, G, (R ‖ nvars n (p [↑↑])), (S n). simpl. split; [finish_Sn H0| finish_Sn H1]; now rewrite cgr_par_com.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, G, R, 0. simpl. split.
-    * rewrite H0. admit.
-    * now rewrite H1.
-  + exists P1, G, R, (S n). simpl. split.
-    * rewrite H0. admit.
-    * now rewrite H1.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 H1]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, G, (R ‖ q), 0. simpl. split.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]].
+  exists P1, G, R, (S n). split. now rewrite H0. split. now rewrite H1. not_a_guard.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, G, (R ‖ q), 0. simpl.
+  split. now finish_zero H0. split. now finish_zero H1. not_a_guard.
+  + exists P1, G, (R ‖ nvars n (q [↑↑])), (S n).
+  split. now finish_Sn H0. split. now finish_Sn H1. not_a_guard.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, G, (R ‖ p), 0. simpl. split.
     * rewrite H0. rewrite cgr_par_com. now rewrite cgr_par_assoc.
-    * rewrite H1. rewrite cgr_par_com. now rewrite cgr_par_assoc.
-  + exists P1, G, (R ‖ nvars n (p [↑↑])), (S n). simpl. split; [finish_Sn H0| finish_Sn H1]; now rewrite cgr_par_com.
-
-(* - destruct (IHTransition c v eq_refl). decompose record H.
-  exists x. exists (x0 + p2). exists 𝟘. split.
-  * rewrite cgr_par_nil. rewrite <- cgr_choice_assoc. apply cgr_choice.
-  * transitivity ((c ? x) + (x0 + p2)).
-    ** apply cgr_trans with (((c ? x) + x0) + p2).
-      *** apply cgr_choice. assert (x1 = 𝟘).
-          **** apply H3. exists p1. reflexivity. admit.
-          **** rewrite H1 in H0. apply transitivity with (((c ? x) + x0) ‖ 𝟘).
-               ***** assumption.
-               ***** apply cgr_par_nil.
-      *** apply cgr_choice_assoc.
-    ** apply cgr_par_nil_rev.
-  * assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. assumption.
-  * reflexivity. *)
+    * split.
+      ** rewrite H1. rewrite cgr_par_com. now rewrite cgr_par_assoc.
+      ** not_a_guard.
+  + exists P1, G, (R ‖ nvars n (p [↑↑])), (S n). simpl.
+  split. finish_Sn H0. now rewrite cgr_par_com. split. finish_Sn H1. now rewrite cgr_par_com. not_a_guard.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, (G + p2), R, 0. simpl. split.
+    * rewrite (proj1 (H2 (ex_intro (fun x => eq (g p1) (g x)) p1 eq_refl))). rewrite cgr_par_nil.
+      rewrite <- cgr_choice_assoc. apply cgr_choice.
+      rewrite H0.
+      rewrite (proj1 (H2 (ex_intro (fun x => eq (g p1) (g x)) p1 eq_refl))). now rewrite cgr_par_nil.
+      (* rewrite H2 by now exists p1. now rewrite cgr_par_nil. *)
+    * split.
+      ** now rewrite H1.
+      ** intro. apply H2. now exists p1.
+  + assert (S n = 0) by apply (H2 (ex_intro (fun x => eq (g p1) (g x)) p1 eq_refl)). inversion H.
+- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
+  + exists P1, (G + p1), R, 0. simpl. split.
+    * rewrite (proj1 (H2 (ex_intro (fun x => eq (g p2) (g x)) p2 eq_refl))). rewrite cgr_par_nil.
+      rewrite <- cgr_choice_assoc. rewrite cgr_choice_com. apply cgr_choice.
+      rewrite H0.
+      rewrite (proj1 (H2 (ex_intro (fun x => eq (g p2) (g x)) p2 eq_refl))). now rewrite cgr_par_nil.
+    * split.
+      ** now rewrite H1.
+      ** intro. apply H2. now exists p2.
+  + assert (S n = 0) by apply (H2 (ex_intro (fun x => eq (g p2) (g x)) p2 eq_refl)). inversion H.
 Qed.
 
 
-(* Lemma guarded_does_no_output : forall p c v q, ¬ lts (g p) (ActOut (c ⋉ v)) q.
+Lemma guarded_does_no_output : forall p c v q, not (lts (g p) (BoundOut (c ⋉ v)) q).
 Proof. 
-intros. intro Transition. 
-dependent induction Transition;eapply IHTransition; eauto.
-Qed. *)
+intros. intro Transition.
+dependent induction Transition; eapply IHTransition; eauto.
+Qed.
 
-(* For the (LTS-transition), the transitable terms and transitted terms, that performs a OUPUT,
-are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForOutput : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) ->
 exists G R n, P ≡* νs n (c ! v • G ‖ R) /\ Q ≡* νs n (G ‖ R).
 Proof.
