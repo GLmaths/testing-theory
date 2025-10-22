@@ -667,7 +667,7 @@ Proof.
     etrans; eassumption.
 Qed.
 
-Global Instance cnv_preserved_by_eq `{LtsEq A L}: 
+Global Instance cnv_preserved_by_eq `{LtsEq A L}:
   Proper ((eq_rel) ==> (=) ==> (impl)) cnv.
 Proof.
   intros p q heq s s' Hs hcnv. subst s'. revert q heq.
@@ -3209,7 +3209,7 @@ Qed.
     - destruct (H1' _ Hin) as (p & Hinp & Hp). eapply H2''; eauto.
     - destruct (H1'' _ Hin) as (p & Hinp & Hp). eapply H2'; eauto.
   Qed.
-  
+
   Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{Lts A L, !FiniteLts A L}
   (ps : gset A) s ps' (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   wt_set_from_pset_spec ps s ps' -> ps' ≡ wt_s_set_from_pset ps s hcnv.

@@ -301,7 +301,7 @@ Qed.
 (* In the case of a Lts with equivalence relation, the right hand side can also
   be rewritten *)
 Global Instance Proper_eq_rel `{FiniteLts A L} `{!LtsEq A L}
-  `{!TransitionSystems.LtsOba A L} {PRE : Chain copre_m}: 
+  `{!TransitionSystems.LtsOba A L} {PRE : Chain copre_m}:
   Proper ((≡) ==> (eq_rel) ==> (impl)) (elem PRE).
 Proof.
   intros ?? HX ?? Heq. rewrite (leibniz_equiv _ _ HX). clear x HX.

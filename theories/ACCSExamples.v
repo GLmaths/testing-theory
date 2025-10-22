@@ -247,7 +247,7 @@ Qed.
 (* TODO : should be in ACCS *)
 Local Instance Proper_par : Proper ((eq_rel) ==> (eq_rel) ==> (eq_rel)) (fun x y => x ∥ y).
 Proof.
-intros p p' Hp q q' Hq. 
+intros p p' Hp q q' Hq.
 eapply t_trans.
 - apply cgr_par_right, Hq.
 - apply cgr_par_left, Hp.
@@ -345,7 +345,7 @@ Qed.
 
 
 (* Remark : proofs using the definition of must are not always difficult *)
-Lemma musts_choice (p q : gproc) (e : proc) : 
+Lemma musts_choice (p q : gproc) (e : proc) :
   must (g p) e -> must (g q) e -> must (p ⊕ q) e.
 Proof.
 intros Hp Hq.
@@ -479,7 +479,7 @@ Defined.
 End AddWork.
 
 (* Adds n "data" in the mailbox *)
-Fixpoint add_data n m : mb name := 
+Fixpoint add_data n m : mb name :=
 match n with
 | O => m
 | S n => add_data n ({[+ "data" +]} ⊎ m)
@@ -497,7 +497,7 @@ Ltac add_tac := match goal with
 | H : (lts_step (add_work ?n _) ?μ ?q0) |- _ =>
   apply add_work_inversion in H; try tauto;
   decompose [and or ex] H; subst; clear H; try discriminate
-| H : (lts (add_work ?n _) ?μ ?q0) |- _ => 
+| H : (lts (add_work ?n _) ?μ ?q0) |- _ =>
   apply add_work_inversion in H; try tauto;
   decompose [and or ex] H; subst; clear H; try discriminate
 end;
