@@ -81,7 +81,7 @@ Proof.
 Qed.
 
 
-#[global] Program Instance CCS_Good : @Good proc (ExtAct Channel) good_CCS gLabel_b CCS_ggLts CCS_ggLtsEq.
+#[global] Program Instance CCS_Good : @Testing_Predicate proc (ExtAct Channel) good_CCS gLabel_b CCS_ggLts CCS_ggLtsEq.
 Next Obligation. 
  intros. eapply good_preserved_by_cgr; eassumption.
 Qed.

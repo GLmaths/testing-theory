@@ -99,7 +99,7 @@ Proof.
   dependent induction hcgr; [eapply good_preserved_by_cgr_step|]; eauto.
 Qed.
 
-#[global] Program Instance VCCS_Good : @Good proc (ExtAct TypeOfActions) good_VCCS gLabel_b VCCS_ggLts VCCS_ggLtsEq.
+#[global] Program Instance VCCS_Good : @Testing_Predicate proc (ExtAct TypeOfActions) good_VCCS gLabel_b VCCS_ggLts VCCS_ggLtsEq.
 Next Obligation. 
  intros. eapply good_preserved_by_cgr; eassumption.
 Qed.
