@@ -12,11 +12,20 @@ Inductive clos_n {A : Type} (R : relation A) : nat -> relation A :=
 Lemma clos_trans_clos_n {A : Type} (R : relation A) : 
  forall x y, clos_trans A R x y -> exists n, clos_n R n x y.
 Proof.
-Admitted.
+intros x y H. apply clos_trans_t1n in H.
+induction H.
+- exists 1. econstructor; eauto. constructor.
+- destruct IHclos_trans_1n as (n1 & Hn1).
+  exists (S n1). econstructor; eauto.
+Qed.
 
-Lemma clos_n_clos_trans {A : Type} (R : relation A) :
+Lemma clos_n_clos_trans `{_ : Reflexive A R} :
  forall x y n, clos_n R n x y -> clos_trans A R x y.
-Proof. Admitted.
+Proof.
+induction 1 as [|n].
+- now constructor.
+- eapply t_trans; eauto. now constructor.
+Qed.
 
 Lemma clos_n_S_inv {A : Type} (R : relation A) x y n:
   clos_n R (S n) x y -> x = y \/ (exists z, R x z /\ clos_n R n z y).
