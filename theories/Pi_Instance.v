@@ -61,7 +61,7 @@ Arguments  Inequality  {_} _ _.
 Arguments  Or  {_} _ _.
 Arguments  Not  {_}  _. *)
 
-Notation "'not' e" := (Not e) (at level 50).
+(* Notation "'not' e" := (Not e) (at level 50). *)
 Notation "x ∨ y" := (Or x y) (at level 50).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
@@ -629,6 +629,8 @@ Inductive sts : proc -> proc -> Prop :=
 Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
 Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
 
+Hint Rewrite <- cgr_par_assoc : cgr.
+
 (* Lemma 1.2.20 from Sangiorgi and Walker *)
 Lemma ReductionShape : forall P Q, sts P Q ->
 ((exists c v P1 P2 G1 G2 s n, (P ≡* νs n (((c ! v • P1) + G1 ‖ ((c ? P2) + G2)) ‖ s)) /\ (Q ≡* νs n ((P1 ‖ (P2[v..])) ‖ s)))
@@ -656,8 +658,9 @@ induction Transition.
       * exists P1, P2, (s ‖ q), 0. split; [ now finish_zero H1 | now finish_zero H2 ].
       * exists P1, P2, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H1 | now finish_Sn H2 ].
     + destruct IH as (P1 & s & n & [H1 H2]). right. right. left. destruct n; simpl in H1, H2.
-      * exists P1, (s ‖ q), 0. split; [ now finish_zero H1 | now finish_zero H2 ].
-      * exists P1, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H1 | now finish_Sn H2 ].
+      * exists P1, (s ‖ q), 0. split; simpl; now rewrite ?H1, ?H2, <- cgr_par_assoc.
+      * exists P1, (s ‖ nvars n (q [↑↑])), (S n).
+        split; [ now finish_Sn H1 | now finish_Sn H2 ].
     + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).  right. right. right. left. destruct n; simpl in H1, H2.
       * exists P1, P0, (s ‖ q), E, 0. split; [ now finish_zero H1 | now finish_zero H2 ].
       * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n). repeat split; [ now finish_Sn H1 | now finish_Sn H2 | assumption ].
@@ -701,7 +704,7 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 | lts_tau : forall {P},
     lts (t • P) τ P
 | lts_recursion : forall {P},
-    lts (rec P) τ ((rec P) <[P ..])
+    lts (rec P) τ (P <[(rec P) ..])
 | lts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     lts (If E Then p Else q) τ p
 | lts_ifZero : forall {p q E}, Eval_Eq E = Some false -> 
@@ -781,11 +784,9 @@ intros P Q c v Transition.
   split. finish_Sn H0. now rewrite cgr_par_com. split. finish_Sn H1. now rewrite cgr_par_com. not_a_guard.
 - destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
   + exists P1, (G + p2), R, 0. simpl. split.
-    * rewrite (proj1 (H2 (ex_intro (fun x => eq (g p1) (g x)) p1 eq_refl))). rewrite cgr_par_nil.
-      rewrite <- cgr_choice_assoc. apply cgr_choice.
-      rewrite H0.
-      rewrite (proj1 (H2 (ex_intro (fun x => eq (g p1) (g x)) p1 eq_refl))). now rewrite cgr_par_nil.
-      (* rewrite H2 by now exists p1. now rewrite cgr_par_nil. *)
+    * destruct H2. { now exists p1. } subst.
+      rewrite cgr_par_nil, <- cgr_choice_assoc. apply cgr_choice.
+      now rewrite H0, cgr_par_nil.
     * split.
       ** now rewrite H1.
       ** intro. apply H2. now exists p1.
@@ -809,7 +810,8 @@ intros. intro Transition.
 dependent induction Transition; eapply IHTransition; eauto.
 Qed.
 
-Lemma TransitionShapeForOutput : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) ->
+
+Lemma TransitionShapeForFreeOutput : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) ->
 exists G R n, P ≡* νs n (c ! v • G ‖ R) /\ Q ≡* νs n (G ‖ R).
 Proof.
 intros P Q c v Transition.
@@ -839,6 +841,9 @@ dependent induction Transition; try destruct (IHTransition c v eq_refl) as [G [R
 (* - edestruct guarded_does_no_output. eauto. *)
 Admitted.
 
+Lemma TransitionShapeForBoundOutput : forall P Q c v, lts P (BoundOut (c ⋉ v)) Q ->
+exists G R n, P ≡* νs n (c ! v • G ‖ R) /\ Q ≡* νs n (G ‖ R).
+Admitted.
 
 (* Lemma TransitionShapeForOutputSimplified : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) 
                                         -> (P ≡* ((c ! v • 𝟘) ‖ Q)).
