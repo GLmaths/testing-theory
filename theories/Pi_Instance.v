@@ -1023,73 +1023,72 @@ Proof.
     destruct H. destruct H0. eauto with cgr.
 Qed.
 
-
+Lemma TransitionUnderScope : forall P Q α, lts P α Q -> forall n, lts (νs n P) α (νs n Q).
+Proof. 
+intros P Q α Transition n.
+induction n.
+- simpl. exact Transition.
+- simpl. now apply lts_res.
+Qed.
 
 (* One side of the Harmony Lemma *)
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ Q).
 Proof. 
-intros P Q Reduction. 
-assert ((exists c v P2 G2 S, ((P ≡* ((c ! v • 𝟘) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((𝟘 ‖ (P2^v)) ‖ S)))
-\/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
-\/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
-\/ (exists P1 P0 S E, (P ≡* ((If E Then P1 Else P0) ‖ S)) /\ (Q ≡* P1 ‖ S) /\ (Eval_Eq E = Some true))
-\/ (exists P1 P0 S E, (P ≡* ((If E Then P1 Else P0) ‖ S)) /\ (Q ≡* P0 ‖ S) /\ (Eval_Eq E = Some false))
-). 
-apply ReductionShape. exact Reduction.
-destruct H as [IH|[IH|[IH|[IH |IH]]]]. 
+intros P Q Reduction.
+destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
 
-(*First case τ by communication *)
+(* First case τ by communication *)
 
-- decompose record IH.
-  assert (lts ((x ! x0 • 𝟘) ‖ ((x ? x1) + x2) ‖ x3) τ (𝟘 ‖ (x1^x0) ‖ x3)).
-  * apply lts_parL.   
-    eapply lts_comL. instantiate (2:= x). instantiate (1:= x0).
-    apply lts_output. apply lts_choiceL. apply lts_input.
-  * assert (sc_then_lts P τ ((𝟘 ‖ x1^x0) ‖ x3)). exists (((x ! x0 • 𝟘) ‖ ((x ? x1) + x2)) ‖ x3). split. assumption. assumption.
-    assert (lts_then_sc P τ ((𝟘 ‖ x1^x0) ‖ x3)). apply Congruence_Respects_Transition. assumption. destruct H3. destruct H3.
-    exists x4. split. assumption. apply transitivity with ((𝟘 ‖ x1^x0) ‖ x3). assumption. symmetry. assumption.
+- destruct IH as [c [v [P1 [P2 [G1 [G2 [s [n [H1 H2]]]]]]]]].
+  destruct (Congruence_Respects_Transition P (νs n (P1 ‖ P2 [v..] ‖ s)) τ) as [? [H3 H4]].
+  { eexists. split.
+    * exact H1.
+    * apply TransitionUnderScope, lts_parL, (@lts_comL c v); eauto with ccs.  }
+  + eexists. split.
+    * exact H3.
+    * etransitivity. exact H4. now rewrite H2.
 
-(*Second case τ by Tau Action *)
+(* Second case τ by Tau Action *)
 
-- decompose record IH.
-  assert (lts ((t • x + x0) ‖ x1) τ (x ‖ x1)). constructor.
-  apply lts_choiceL. apply lts_tau.
-  assert (sc_then_lts P τ (x ‖ x1)). exists ((t • x + x0) ‖ x1). split. assumption. apply lts_parL.
-  apply lts_choiceL. apply lts_tau.
-  assert (lts_then_sc P τ (x ‖ x1)). apply Congruence_Respects_Transition. assumption. destruct H3. destruct H3. 
-  exists x2. split. assumption. apply transitivity with (x ‖ x1). assumption. symmetry. assumption.
+- destruct IH as [P1 [G1 [s [n [H1 H2]]]]].
+  destruct (Congruence_Respects_Transition P (νs n (P1 ‖ s)) τ) as [? [H3 H4]].
+  { eexists. split; eauto using TransitionUnderScope, H1 with ccs. }
+  eexists. split.
+    + exact H3.
+    + rewrite H4. now rewrite H2.
 
-(*Third case τ by recursion *)
+(* Third case τ by recursion *)
 
-- decompose record IH.
-  assert (lts (rec x • x0 ‖ x1) τ (pr_subst x x0 (rec x • x0) ‖ x1)). 
-  constructor. apply lts_recursion. assert (sc_then_lts P τ ((pr_subst x x0 (rec x • x0) ‖ x1))). 
-  exists (rec x • x0 ‖ x1). split. assumption. assumption. assert (lts_then_sc P τ (pr_subst x x0 (rec x • x0) ‖ x1)). 
-  apply Congruence_Respects_Transition. assumption. destruct H3. destruct H3. 
-  exists x2. split. assumption. apply transitivity with (pr_subst x x0 (rec x • x0) ‖ x1). assumption.
-  symmetry. assumption.
+- destruct IH as [P1 [s [n [H1 H2]]]].
+  destruct (Congruence_Respects_Transition P (νs n (P1 <[(rec P1)..] ‖ s)) τ) as [? [H3 H4]].
+  { eexists. split.
+    + exact H1.
+    + apply TransitionUnderScope, lts_parL, lts_recursion. }
+  eexists. split.
+    + exact H3.
+    + rewrite H4. now rewrite H2.
 
-(*Fourth case τ by If ONE*)
+(* Fourth case τ by If ONE*)
 
-- destruct IH. destruct H. destruct H. destruct H. destruct H. destruct H0. 
-  assert (lts ((If x2 Then x Else x0) ‖ x1) τ (x ‖ x1)). constructor. apply lts_ifOne. assumption.
-  assert (sc_then_lts P τ (x ‖ x1)). exists ((If x2 Then x Else x0) ‖ x1). split. assumption.
-  constructor. constructor. assumption. 
-  assert (lts_then_sc P τ (x ‖ x1)). apply Congruence_Respects_Transition. 
-  exists ((If x2 Then x Else x0) ‖ x1). split. assumption. assumption. destruct H4. destruct H4.
-  exists x3. split. assumption. apply transitivity with (x ‖ x1). assumption. 
-  symmetry. assumption.
+- destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+  destruct (Congruence_Respects_Transition P (νs n (P1 ‖ s)) τ) as [? [H4 H5]].
+  { eexists. split.
+    * exact H1.
+    * apply TransitionUnderScope, lts_parL, lts_ifOne. assumption. }
+  eexists. split.
+    + exact H4.
+    + etransitivity. exact H5. now rewrite H2.
 
-(*Fifth case τ by If ZERO*)
+(* Fifth case τ by If ZERO*)
 
-- destruct IH. destruct H. destruct H. destruct H. destruct H. destruct H0. 
-  assert (lts ((If x2 Then x Else x0) ‖ x1) τ (x0 ‖ x1)). constructor. apply lts_ifZero. assumption.
-  assert (sc_then_lts P τ (x0 ‖ x1)). exists ((If x2 Then x Else x0) ‖ x1). split. assumption.
-  apply lts_parL. apply lts_ifZero. assumption.
-  assert (lts_then_sc P τ (x0 ‖ x1)). apply Congruence_Respects_Transition. 
-  exists ((If x2 Then x Else x0) ‖ x1). split.  assumption. assumption. destruct H4. destruct H4.
-  exists x3. split. assumption. apply transitivity with (x0 ‖ x1). assumption.
-  symmetry. assumption. 
+- destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+  destruct (Congruence_Respects_Transition P (νs n (P0 ‖ s)) τ) as [? [H4 H5]].
+  { eexists. split.
+    * exact H1.
+    * apply TransitionUnderScope, lts_parL, lts_ifZero. assumption. }
+  eexists. split.
+    + exact H4.
+    + etransitivity. exact H5. now rewrite H2.
 Qed.
 
 
@@ -1124,11 +1123,11 @@ apply transitivity with ((Q ‖ P) ‖ (R ‖ S)). apply cgr_par. apply cgr_par_
 apply transitivity with ((Q ‖ R) ‖ (P ‖ S)). apply InversionParallele. apply cgr_par. apply cgr_par_com.
 Qed.
 
-(* The More Stronger Harmony Lemma (in one side) is more stronger *)
-Lemma Congruence_Simplicity : (forall α , ((forall P Q, (((lts P α Q) -> (sts P Q)))) 
--> (forall P Q, ((lts_then_sc P α Q) -> (sts P Q))))).
+(* Strengthened Harmony Lemma (in one side) *)
+Lemma Congruence_Simplicity : forall α ,
+  (forall P Q, lts P α Q -> sts P Q) -> (forall P Q, lts_then_sc P α Q -> sts P Q).
 Proof.
-intros ? Hyp ? ? transition_then_congruence_hyp. 
+intros ? Hyp ? ? transition_then_congruence_hyp.
 destruct transition_then_congruence_hyp as (R & transition & cong).
 eapply sts_cong. 
 * apply cgr_refl. 
@@ -1140,31 +1139,28 @@ Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof. 
 intros P Q Transition.
 dependent induction Transition.
-  - eapply sts_cong.  instantiate (1:=  ((t • P) + 𝟘)). apply cgr_choice_nil_rev. eapply sts_tau. reflexivity.
-  - apply sts_recursion.
-  - apply sts_ifOne. assumption.
-  - apply sts_ifZero. assumption.
-  - destruct (TransitionShapeForOutput p1 p2 c v). assumption.  decompose record H.
-    destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H2.
-    eapply sts_cong. instantiate (1:=((c ! v • 𝟘) ‖ ((c ? x0) + x1)) ‖ (x ‖ x2)).
-    apply cgr_trans with ((c ! v • 𝟘 ‖ x) ‖ (((c ? x0) + x1) ‖ x2)). apply cgr_fullpar. assumption. assumption.
-    apply InversionParallele. 
-    instantiate (1 := (𝟘 ‖ (x0^v)) ‖ (x ‖ x2)). apply sts_par.
-    apply sts_com. 
-    apply transitivity with ((𝟘 ‖ x) ‖ ((x0^v) ‖ x2)). apply InversionParallele. apply cgr_fullpar. 
-    symmetry. assumption. symmetry. assumption.
-  - destruct (TransitionShapeForOutput p1 p2 c v). assumption. decompose record H.
-    destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H2.
-    eapply sts_cong. instantiate (1:=((c ! v • 𝟘) ‖ ((c ? x0) + x1)) ‖ (x ‖ x2)).
-    apply transitivity with (p1 ‖ q1). apply cgr_par_com.
-    apply transitivity with (((c ! v • 𝟘) ‖ x) ‖ (((c ? x0) + x1) ‖ x2)).
-    apply cgr_fullpar. assumption. assumption. apply InversionParallele. 
-    instantiate (1 := (𝟘 ‖ (x0^v)) ‖ (x ‖ x2)). apply sts_par. apply sts_com.
-    apply transitivity with ((𝟘 ‖ x) ‖ ((x0^v) ‖ x2)). apply InversionParallele. apply transitivity with (p2 ‖ q2). apply cgr_fullpar. 
-    symmetry. assumption. symmetry. assumption. apply cgr_par_com.
-- apply sts_par. apply IHTransition. reflexivity.
-- eapply sts_cong. instantiate (1:= q1 ‖ p). apply cgr_par_com. instantiate (1:= q2 ‖ p).
-  apply sts_par. apply IHTransition. reflexivity. apply cgr_par_com.
+- eapply sts_cong. instantiate (1:=  ((t • P) + 𝟘)). apply cgr_choice_nil_rev. eapply sts_tau. reflexivity.
+- apply sts_recursion.
+- apply sts_ifOne. assumption.
+- apply sts_ifZero. assumption.
+- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
+  admit.
+- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
+  admit.
+- destruct (TransitionShapeForBoundOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
+  admit.
+- destruct (TransitionShapeForBoundOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
+  admit.
+- now apply sts_res, IHTransition.
+- now apply sts_par, IHTransition.
+- eapply sts_cong.
+  + apply cgr_par_com.
+  + now eapply sts_par, IHTransition.
+  + apply cgr_par_com.
 - destruct (TransitionShapeForTauAndGuard (g p1) q). split. assumption. exists p1. reflexivity.
   decompose record H.
   eapply sts_cong. instantiate (1:= ((t • x) + (x0 + p2))).
@@ -1191,6 +1187,10 @@ intros. split.
 * apply Reduction_Implies_TausAndCong.
 Qed.
 
+
+
+
+(*
 (*The next work is for making 'bvar' always relates to an input*) 
 
 (* Definition for Well Abstracted bvariable *)
@@ -2263,3 +2263,4 @@ Qed.
 #[global] Program Instance VACCS_LtsObaFB : LtsObaFB proc TypeOfActions :=
   {| lts_oba_fb_feedback p1 p2 p3 a := OBA_with_FB_Fourth_Axiom p1 p2 p3 a |}.
 
+*)
