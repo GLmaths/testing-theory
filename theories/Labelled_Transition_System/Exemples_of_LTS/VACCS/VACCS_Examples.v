@@ -29,7 +29,7 @@ From Coq.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InputOutputActions ActTau OldTransitionSystems Must VACCS_Instance VACCS_Good
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ParallelLTSConstruction ForwarderConstruction
-InteractionBetweenLts.
+InteractionBetweenLts Testing_Predicate.
 (************************************* Examples for VACCS *************************************)
 Parameter c : Channel.
 Parameter O : Value.
@@ -77,12 +77,12 @@ Proof.
               ** eapply (OBA_with_FB_First_Axiom e e' e'0) in H4 
                     as (e1 & HypTr1 & e'1 & HypTr'1 & equiv); eauto.
                  eapply must_eq_client; eauto. assert (¬ good_VACCS e'1) as not_happy'.
-                 { eapply ungood_preserved_by_eq; eauto. }
+                 { eapply unattaboy_preserved_by_eq; eauto. }
                  assert (¬ good_VACCS e1) as not_happy''.
-                 { eapply ungood_preserved_by_lts_non_blocking_action_converse; eauto.
+                 { eapply unattaboy_preserved_by_lts_non_blocking_action_converse; eauto.
                    unfold non_blocking; simpl. exists (c ⋉ v); eauto. }
                  assert (must q e1); eauto.
-                 eapply must_preserved_by_synch_if_notgood; eauto.
+                 eapply must_preserved_by_synch_if_notattaboy; eauto.
                  simpl; eauto.
            ++ intros. inversion H5; subst. simpl in *. symmetry in H2.
               eapply simplify_match_output in H2. subst. 
@@ -109,10 +109,10 @@ Proof.
     + inversion l1; subst.
       symmetry in eq. eapply simplify_match_input in eq. subst.
       assert (must ((c ! (bvar 0) • 𝟘) ^ v) b2) as Mq'.
-      { eapply must_preserved_by_synch_if_notgood ; eauto. simpl; eauto. }
+      { eapply must_preserved_by_synch_if_notattaboy ; eauto. simpl; eauto. }
       inversion Mq'.
       * assert (good_VACCS e).
-        { eapply good_preserved_by_lts_non_blocking_action_converse; eauto.
+        { eapply attaboy_preserved_by_lts_non_blocking_action_converse; eauto.
           eexists; eauto. } contradiction.
       * inversion ex0; subst. inversion H3; subst.
         -- inversion l.
@@ -150,11 +150,11 @@ Proof.
     + intros. inversion H3; subst. symmetry in H2.
       eapply simplify_match_input in H2 as eq;subst.
       assert (¬ good_VACCS e') as not_happy'.
-      { eapply ungood_preserved_by_lts_non_blocking_action; eauto.
+      { eapply unattaboy_preserved_by_lts_non_blocking_action; eauto.
         exists (c ⋉ v); eauto. }
       eapply m_step; eauto.
       * symmetry in H2. assert (must ((c ! O • 𝟘) ^ v) e') as Mp'.
-        { eapply (must_preserved_by_synch_if_notgood p _ e _) ; eauto.
+        { eapply (must_preserved_by_synch_if_notattaboy p _ e _) ; eauto.
           eapply m_step; eauto. eapply lts_input. }
         inversion Mp'. contradiction.
         inversion ex0. inversion H5; subst.
@@ -176,12 +176,12 @@ Proof.
         -- eapply (OBA_with_FB_First_Axiom e e' e'0) in H4 
                     as (e1 & HypTr1 & e'1 & HypTr'1 & equiv); eauto.
            eapply must_eq_client; eauto. assert (¬ good_VACCS e'1) as not_happy''.
-           { eapply ungood_preserved_by_eq; eauto. }
+           { eapply unattaboy_preserved_by_eq; eauto. }
            assert (¬ good_VACCS e1) as not_happy'''.
-           { eapply ungood_preserved_by_lts_non_blocking_action_converse; eauto.
+           { eapply unattaboy_preserved_by_lts_non_blocking_action_converse; eauto.
              unfold non_blocking; simpl. exists (c ⋉ v); eauto. }
            assert (must q e1); eauto. symmetry in H2.
-           eapply must_preserved_by_synch_if_notgood; eauto.
+           eapply must_preserved_by_synch_if_notattaboy; eauto.
       * intros. inversion H6; subst. symmetry in H5.
         eapply simplify_match_output in H5 as eq; subst.
         assert (lts e ((c ⋉ v) !) e') as l2; eauto.
@@ -240,7 +240,7 @@ Proof.
     assert (must (g 𝟘) ((g 𝟘) ‖ ((If ((bvar 0) == I)
                                            Then ① 
                                            Else 𝟘)^O))) as Mp'.
-    { eapply must_preserved_by_synch_if_notgood; eauto. intro imp'.
+    { eapply must_preserved_by_synch_if_notattaboy; eauto. intro imp'.
       inversion imp'; subst. inversion H1. inversion H0. inversion H0.
       2 : { eapply lts_output. } 2 : { eapply lts_parR. eapply lts_input. }
       simpl; eauto. } simpl in Mp'. inversion Mp'.

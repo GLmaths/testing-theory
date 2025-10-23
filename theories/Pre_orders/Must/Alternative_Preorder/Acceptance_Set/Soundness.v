@@ -35,21 +35,21 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
-      Termination Convergence FiniteImageLTS WeakTransitions Lift.
+      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate.
 From Must Require Import ActTau.
 
 (* ************************************************************ *)
 
 Inductive mustx `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (ps : gset P) (e : E) : Prop :=
-| mx_now (hh : good e) : mustx ps e
+| mx_now (hh : attaboy e) : mustx ps e
 | mx_step
-    (nh : ¬ good e)
+    (nh : ¬ attaboy e)
     (ex : forall (p : P), p ∈ ps -> ∃ t, inter_step (p, e) τ t)
     (pt : forall ps',
         lts_tau_set_from_pset_spec1 ps ps' -> ps' ≠ ∅ ->
@@ -67,7 +67,7 @@ Inductive mustx `{
 
 Lemma mx_sub `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -94,7 +94,7 @@ Qed.
 
 Lemma mx_mem `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good} 
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy} 
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -118,15 +118,15 @@ Proof.
     + exists Y0, ({[x]} ∪ Z0). set_solver.
 Qed.
 
-Lemma mustx_terminate_ungood `{
+Lemma mustx_terminate_unattaboy `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e : 
   mustx ps e 
-    -> good e \/ forall p, p ∈ ps -> p ⤓.
+    -> attaboy e \/ forall p, p ∈ ps -> p ⤓.
 Proof.
   intros hmx.
   induction hmx.
@@ -137,15 +137,15 @@ Proof.
     edestruct (H1 {[p']}); [exists p; set_solver| | |]; set_solver.
 Qed.
 
-Lemma mustx_terminate_ungood' `{
+Lemma mustx_terminate_unattaboy' `{
   @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   ps e :
   mustx ps e
-        -> forall p, p ∈ ps -> ¬ good e -> p ⤓.
+        -> forall p, p ∈ ps -> ¬ attaboy e -> p ⤓.
 Proof.
   intros hmx p mem not_happy.
   dependent induction hmx.
@@ -158,9 +158,9 @@ Proof.
 Qed.
 
 
-Lemma ungood_acnv_mu `{
+Lemma unattaboy_acnv_mu `{
   @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -169,48 +169,48 @@ Lemma ungood_acnv_mu `{
     -> forall μ μ' p, p ∈ ps 
       -> parallel_inter μ μ'
         -> e ⟶[μ'] e' 
-          -> ¬ good e -> ¬ good e' -> p ⇓ [μ].
+          -> ¬ attaboy e -> ¬ attaboy e' -> p ⇓ [μ].
 Proof.
   intros hmx μ μ' p mem inter l not_happy not_happy'.
   dependent induction hmx.
   - contradiction.
-  - edestruct mustx_terminate_ungood as [happy | finish].
+  - edestruct mustx_terminate_unattaboy as [happy | finish].
     +  eauto with mdb.
     + contradiction.
     + destruct (decide (non_blocking μ)) as [nb | not_nb];
       destruct (decide (non_blocking μ')) as [nb' | not_nb'].
       ++ exfalso. eapply dual_blocks; eauto.
-      ++ edestruct mustx_terminate_ungood; eauto with mdb. contradiction.
+      ++ edestruct mustx_terminate_unattaboy; eauto with mdb. contradiction.
          eapply cnv_act. eauto.
          intros q w.
          eapply cnv_nil.
          eapply terminate_preserved_by_wt_non_blocking_action; eauto.
-      ++ edestruct mustx_terminate_ungood; eauto with mdb. contradiction.
+      ++ edestruct mustx_terminate_unattaboy; eauto with mdb. contradiction.
          eapply cnv_act. eauto.
          intros q w.
          assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
          exists p. split; set_solver.
          assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
          set (hm := com e' μ μ' {[ q ]} inter l h1 h2).
-         destruct (mustx_terminate_ungood _ _ hm).
+         destruct (mustx_terminate_unattaboy _ _ hm).
          +++ contradict nh.
-             eapply good_preserved_by_lts_non_blocking_action_converse; eassumption.
+             eapply attaboy_preserved_by_lts_non_blocking_action_converse; eassumption.
          +++ eapply cnv_nil. eapply H6. set_solver.
-      ++ edestruct mustx_terminate_ungood; eauto with mdb. contradiction.
+      ++ edestruct mustx_terminate_unattaboy; eauto with mdb. contradiction.
          eapply cnv_act. eauto.
          intros q w.
          assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
          exists p. split; set_solver.
          assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
          set (hm := com e' μ μ' {[ q ]} inter l h1 h2).
-         destruct (mustx_terminate_ungood _ _ hm).
+         destruct (mustx_terminate_unattaboy _ _ hm).
          +++ contradiction.
          +++ eapply cnv_nil. eapply H6. set_solver.
 Qed.
 
-Lemma must_mu_either_good_cnv `{
+Lemma must_mu_either_attaboy_cnv `{
   @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -219,20 +219,20 @@ Lemma must_mu_either_good_cnv `{
     -> forall μ μ' p, p ∈ ps 
       -> parallel_inter μ μ'
         -> e ⟶[μ'] e' 
-          -> good e \/ good e' (* ajout par rapport à Input/Output *) \/ p ⇓ [μ].
+          -> attaboy e \/ attaboy e' (* ajout par rapport à Input/Output *) \/ p ⇓ [μ].
 Proof.
   intros hmx μ μ' p mem inter l.
-  destruct (decide (good e)); destruct (decide (good e')).
+  destruct (decide (attaboy e)); destruct (decide (attaboy e')).
   + left; eauto.
   + left; eauto.
   + right; eauto.
-  + right. right. eapply ungood_acnv_mu; eauto.
+  + right. right. eapply unattaboy_acnv_mu; eauto.
 Qed.
 
 (* to rework , why ?*)
 Lemma mx_sum `{
   gLtsP : gLts P A, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -291,23 +291,23 @@ Proof.
   - intros e' l. eapply H2; eauto with mdb.
     inversion hmx2; subst; eauto with mdb. contradiction.
   - intros e' μ μ' ps' duo l ps'_spec neq_nil.
-    destruct (good_decidable e'); eauto with mdb.
+    destruct (attaboy_decidable e'); eauto with mdb.
     assert (HAps : forall p, p ∈ ps -> p ⇓ [μ]).
     intros p0 mem0.
-    eapply cnv_act. edestruct (mustx_terminate_ungood ps); eauto with mdb.
+    eapply cnv_act. edestruct (mustx_terminate_unattaboy ps); eauto with mdb.
     contradiction.
     intros p' hw. eapply cnv_nil.
-    edestruct (mustx_terminate_ungood {[p']}). eapply com; eauto.
+    edestruct (mustx_terminate_unattaboy {[p']}). eapply com; eauto.
     intros j memj. eapply elem_of_singleton_1 in memj. subst.
     exists p0. split; eauto. set_solver.
     set_solver.
     set (Y := wt_s_set_from_pset ps [μ] HAps).
     assert (HAX2 : forall p, p ∈ ps2 -> p ⇓ [μ]).
     intros p0 mem0.
-    eapply cnv_act. edestruct (mustx_terminate_ungood ps2); eauto with mdb.
+    eapply cnv_act. edestruct (mustx_terminate_unattaboy ps2); eauto with mdb.
     contradiction.
     intros p' hw. eapply cnv_nil.
-    edestruct (mustx_terminate_ungood {[p']}).
+    edestruct (mustx_terminate_unattaboy {[p']}).
     inversion hmx2; subst. contradiction. eapply com0; eauto.
     intros j memj. eapply elem_of_singleton_1 in memj. subst.
     exists p0. split; eauto. set_solver. set_solver.
@@ -350,7 +350,7 @@ Qed.
 
 Lemma mx_forall `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good} 
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy} 
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -370,7 +370,7 @@ Qed.
 
 Lemma wt_nil_mx `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} :
 
@@ -388,12 +388,12 @@ Qed.
 
 Lemma wt_mu_mx `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   p1 p2 e e' μ μ':
-  parallel_inter μ μ' -> ¬ good e -> mustx {[ p1 ]} e 
+  parallel_inter μ μ' -> ¬ attaboy e -> mustx {[ p1 ]} e 
     -> e ⟶[μ'] e' -> p1 ⟹{μ} p2 -> mustx {[p2]} e'.
 Proof.
   intros duo nh hmx l w.
@@ -404,7 +404,7 @@ Qed.
 
 Lemma must_set_if_must `{
   gLtsP : gLts P A, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -431,7 +431,7 @@ Qed.
 
 Lemma must_if_must_set_helper `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -469,7 +469,7 @@ Qed.
 
 Lemma must_if_must_set `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -480,7 +480,7 @@ Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
 
 Lemma must_set_iff_must `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -491,7 +491,7 @@ Proof. split; [eapply must_set_if_must | eapply must_if_must_set]. Qed.
 (* To move, also present in Completeness. *)
 Lemma must_preserved_by_weak_nil_srv `{
   gLtsP : gLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -504,15 +504,15 @@ Proof.
   eapply must_preserved_by_lts_tau_srv; eauto.
 Qed.
 
-Lemma must_preserved_by_wt_synch_if_notgood `{
+Lemma must_preserved_by_wt_synch_if_notattaboy `{
   gLtsP : gLts P A, 
-  gLtsE : !gLts E A, ! gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p p' : P) (r r' : E) (μ : A) (μ' : A):
   must p r 
-    -> ¬ good r 
+    -> ¬ attaboy r 
       -> parallel_inter μ μ'
         -> p ⟹{μ} p' 
           -> r ⟶[μ'] r' 
@@ -528,7 +528,7 @@ Qed.
 
 Lemma must_set_for_all `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -538,7 +538,7 @@ Lemma must_set_for_all `{
       -> mustx X e.
 Proof.
   intros xneq_nil hm.
-  destruct (good_decidable e).
+  destruct (attaboy_decidable e).
   - now eapply mx_now.
   - eapply mx_step.
     + eassumption.
@@ -554,12 +554,12 @@ Proof.
     + intros e' μ μ' X' duo hle xspec' xneq_nil'.
       eapply mx_forall. eassumption.
       intros p' (p0 & h%hm & hl)%xspec'. eapply must_set_iff_must.
-      eapply must_preserved_by_wt_synch_if_notgood; eauto.
+      eapply must_preserved_by_wt_synch_if_notattaboy; eauto.
 Qed.
 
 Lemma must_set_iff_must_for_all `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -690,12 +690,12 @@ Proof.
   exists p0. intros p1' mem. replace p1' with p0 by set_solver. eauto.
 Qed.
 
-Lemma ungood_must_st_nleqx `{
+Lemma unattaboy_must_st_nleqx `{
   @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
   PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
   PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{AbE : @AbsAction A H E FinA gLtsE Φ}
 
@@ -703,7 +703,7 @@ Lemma ungood_must_st_nleqx `{
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   
   (X : gset P) (q : Q) e : 
-  ¬ good e 
+  ¬ attaboy e 
     -> mustx X e 
       -> (q, e) ↛
         -> ¬ X ≼ₓ2 q.
@@ -717,7 +717,7 @@ Proof.
       eapply (lts_refuses_spec2 (q ▷ e)); eauto. exists (q' ▷ e). eapply ParLeft. exact l. }
 
   assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
-  { destruct (mustx_terminate_ungood X e all_must) as [|htps]; eauto with mdb. contradiction. }
+  { destruct (mustx_terminate_unattaboy X e all_must) as [|htps]; eauto with mdb. contradiction. }
 
   destruct (hbhv2 [] q (wt_nil q) stable_q htX) as (p & mem & p' & wp & stp' & sub).
 
@@ -761,7 +761,7 @@ Lemma stability_nbhvleqtwo `{
   PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
   PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  gLtsE : !gLts E A, !gLtsEq E A, !Good E A good}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{AbE : @AbsAction A H E FinA gLtsE Φ}
 
@@ -769,14 +769,14 @@ Lemma stability_nbhvleqtwo `{
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
   (X : gset P) (q : Q) e : 
-  ¬ good e 
+  ¬ attaboy e 
     -> mustx X e 
       -> X ≼ₓ2 q 
         -> exists t, (q, e) ⟶{τ} t.
 Proof.
   intros nhg hmx hleq.
   destruct (lts_refuses_decidable (q, e) τ).
-  - exfalso. apply (ungood_must_st_nleqx X q e nhg hmx); eauto.
+  - exfalso. apply (unattaboy_must_st_nleqx X q e nhg hmx); eauto.
   - eapply lts_refuses_spec1 in n as (t & hl). eauto.
 Qed.
 
@@ -785,7 +785,7 @@ Lemma soundnessx `{
   PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
   PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !FiniteImagegLts E A, !Good E A good}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !FiniteImagegLts E A, !Testing_Predicate E A attaboy}
 
   `{AbE : @AbsAction A H E FinA gLtsE Φ}
 
@@ -800,11 +800,11 @@ Proof.
   intros hmx q (halt1 & halt2).
   dependent induction hmx.
   - eauto with mdb.
-  - destruct (mustx_terminate_ungood ps e ltac:(eauto with mdb)).
+  - destruct (mustx_terminate_unattaboy ps e ltac:(eauto with mdb)).
     contradiction.
     assert (q_conv : q ⤓).
     eapply cnv_terminate, halt1; intros; eapply cnv_nil.
-    destruct (mustx_terminate_ungood ps e); eauto with mdb.
+    destruct (mustx_terminate_unattaboy ps e); eauto with mdb.
     induction q_conv as [q tq IHq_conv].
     eapply m_step.
     + eassumption.
@@ -815,10 +815,10 @@ Proof.
       ++ eauto with mdb.
     + intros e' hle. eapply H6; eassumption.
     + intros q' e' μ μ' inter le lq.
-      destruct (decide (good e')).
+      destruct (decide (attaboy e')).
       ++ eapply m_now. assumption.
       ++ assert (HA : forall p, p ∈ ps -> p ⇓ [μ]).
-         intros; eapply ungood_acnv_mu; eauto with mdb.
+         intros; eapply unattaboy_acnv_mu; eauto with mdb.
          set (ts := wt_s_set_from_pset ps [μ] HA).
          set (ts_spec := wt_s_set_from_pset_ispec ps [μ] HA).
          assert ((exists p, p ∈ ts) \/ ts ≡ ∅)%stdpp as [neq_nil | eq_nil]
@@ -843,7 +843,7 @@ Lemma soundness_fw `{
   PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @gLtsObaFW Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
   PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Testing_Predicate E A attaboy }
 
   `{AbE : @AbsAction A H E FinA gLtsE Φ}
 
@@ -860,7 +860,7 @@ Qed.
 Lemma soundness `{
   @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
   @gLtsObaFB Q A H gLtsQ gLtsEqQ T, !FiniteImagegLts Q A,
-  @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Good E A good }
+  @gLtsObaFB E A H gLtsE gLtsEqE W, !FiniteImagegLts E A, !Testing_Predicate E A attaboy }
 
   `{AbE : @AbsAction A H E FinA gLtsE Φ}
 

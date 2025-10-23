@@ -29,40 +29,29 @@ From stdpp Require Import finite gmap decidable.
 From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
-Inductive must_sts 
+Inductive may_sts 
   `{Sts (P1 * P2), attaboy : P2 -> Prop}
   (p : P1) (e : P2) : Prop :=
-| m_sts_now : attaboy e -> must_sts p e
-| m_sts_step
-    (nh : ¬ attaboy e)
-    (nst : ¬ sts_refuses (p, e))
-    (l : forall p' e', sts_step (p, e) (p', e') -> must_sts p' e')
-  : must_sts p e
+| m_sts_now : attaboy e -> may_sts p e
+| m_sts_step p' e' (nh : ¬ attaboy e) (nst : sts_step (p, e) (p', e')) (l : may_sts p' e') : may_sts p e
 .
 
-Global Hint Constructors must_sts:mdb.
+Global Hint Constructors may_sts:mdb.
 
-Inductive must `{
+Inductive may `{
     gLtsP : @gLts P A H, 
     gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy} 
 
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
     (p : P) (e : E) : Prop :=
-| m_now : attaboy e -> must p e
-| m_step
-    (nh : ¬ attaboy e)
-    (ex : ∃ t, (p, e) ⟶ t)
-    (pt : forall p', p ⟶ p' -> must p' e)
-    (et : forall e', e ⟶ e' -> must p e')
-    (com : forall p' e' μ1 μ2, parallel_inter μ1 μ2
-      -> p ⟶[μ1] p' 
-        -> e ⟶[μ2] e'  
-          -> must p' e')
-  : must p e
-.
+| may_now : attaboy e -> may p e
+| may_server_step p' (nh : ¬ attaboy e) (pt : p ⟶ p') (hmay : may p' e) : may p e
+| may_client_step e' (nh : ¬ attaboy e) (et : e ⟶ e') (hmay : may p e') : may p e
+| may_com_step p' μ1 e' μ2 (nh : ¬ attaboy e) (inter : parallel_inter μ1 μ2) 
+          (trS : p ⟶[μ1] p') (trC : e ⟶[μ2] e') (hmay : may p' e') : may p e.
 
-Global Hint Constructors must:mdb.
+Global Hint Constructors may:mdb.
 
 Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
@@ -71,32 +60,21 @@ Lemma must_sts_iff_must `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) :
-  @must_sts P E _ attaboy p e <-> must p e.
+  @may_sts P E _ attaboy p e <-> may p e.
 Proof.
   split.
   - intro hm. dependent induction hm; eauto with mdb.
-    eapply m_step; eauto with mdb.
-    + eapply sts_refuses_spec1 in nst as ((p', e') & hl).
-      exists (p', e'). now simpl in hl.
-    + simpl in *; eauto with mdb.
-    + simpl in *; eauto with mdb.
-    + intros p' e' μ1 μ2 duo hl1 hl2.
-      eapply H1. simpl.
-      eapply (ParSync μ1 μ2); eauto.
+    inversion nst as [ | | ]; subst.
+    + eapply may_server_step; eauto.
+    + eapply may_client_step; eauto.
+    + eapply may_com_step; eauto. 
   - intro hm. dependent induction hm; eauto with mdb.
-    eapply m_sts_step; eauto with mdb.
-    + eapply sts_refuses_spec2.
-      destruct (decide (sts_refuses (p, e))).
-      ++ exfalso.
-         destruct ex as ((p', e'), hl).
-         eapply sts_refuses_spec2 in s; eauto.
-         exists (p', e'). now simpl.
-      ++ now eapply sts_refuses_spec1 in n.
-    + intros p' e' hl.
-      inversion hl; subst; eauto with mdb.
+    + eapply m_sts_step; eauto. eapply ParLeft; eauto.
+    + eapply m_sts_step; eauto. eapply ParRight; eauto.
+    + eapply m_sts_step; eauto. eapply ParSync; eauto.
 Qed.
 
-Definition ctx_pre `{
+Definition ctx_may_pre `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
   gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
@@ -105,11 +83,11 @@ Definition ctx_pre `{
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
   (p : P) (q : Q) 
-  := forall (e : E), must p e -> must q e.
+  := forall (e : E), may p e -> may q e.
 
-Global Hint Unfold ctx_pre: mdb.
+Global Hint Unfold ctx_may_pre: mdb.
 
-Notation "p ⊑ q" := (ctx_pre p q) (at level 70).
+Notation "p ⊑ q" := (ctx_may_pre p q) (at level 70).
 
 
 
@@ -121,336 +99,88 @@ Lemma must_eq_client `{
 
   `{@Prop_of_Inter P Q A parallel_inter H gLtsP gLtsQ} :
 
-  forall (p : P) (q r : Q), q ⋍ r -> must p q -> must p r.
+  forall (p : P) (q r : Q), q ⋍ r -> may p q -> may p r.
 Proof.
   intros p q r heq hm.
   revert r heq.
   dependent induction hm; intros.
-  - apply m_now. eapply attaboy_preserved_by_eq; eauto.
-  - apply m_step; eauto with mdb.
-    + intro rh. eapply nh. eapply attaboy_preserved_by_eq; eauto with mdb.
-      now symmetry.
-    + destruct ex as (t & l).
-      inversion l; subst.
-      ++ exists (a2 ▷ r). eapply ParLeft; eauto.
-      ++ symmetry in heq.
-         assert (r ⟶⋍ b2) as (t & l3 & l4).
-         { eapply eq_spec; eauto. }
-         exists (p ▷ t). eapply ParRight; eauto.
-      ++ symmetry in heq.
-         assert (r ⟶⋍[μ2] b2) as (t & l3 & l4).
-         { eapply eq_spec; eauto. }
-         exists (a2 ▷ t). eapply ParSync; eauto.
-    + intros r' l.
-      assert (e ⟶⋍ r') as (t & l3 & l4).
-      { eapply eq_spec; eauto. }
-      eauto.
-    + intros p' r' μ1 μ2 inter l__r l__p.
-      assert (e ⟶⋍[μ2] r') as (e' & l__e' & eq').
-      { eapply eq_spec; eauto. } eauto.
+  - apply may_now. eapply attaboy_preserved_by_eq; eauto.
+  - eapply may_server_step; eauto. eapply unattaboy_preserved_by_eq; eauto. symmetry. exact heq.
+  - edestruct (eq_spec r e') as (r' & tr & eq).
+    { exists e. split; eauto. now symmetry. }
+    eapply may_client_step; eauto. eapply unattaboy_preserved_by_eq; eauto. symmetry. exact heq.
+    eapply IHhm. now symmetry.
+  - edestruct (eq_spec r e') as (r' & tr & eq).
+    { exists e. split; eauto. now symmetry. }
+    eapply may_com_step; eauto. eapply unattaboy_preserved_by_eq; eauto. symmetry. exact heq.
+    eapply IHhm. now symmetry.
 Qed.
 
 Lemma must_eq_server `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq P A, ! gLtsEq E A, !Testing_Predicate E A attaboy} 
+  gLtsP : gLts P A, ! gLtsEq P A,
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy} 
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} :
 
-  forall (p q : P) (e : E), p ⋍ q -> must p e -> must q e.
+  forall (p q : P) (e : E), p ⋍ q -> may p e -> may q e.
 Proof.
-  intros p q e heq hm.
+  intros p q r heq hm.
   revert q heq.
   dependent induction hm; intros.
-  - now apply m_now.
-  - apply m_step; eauto with mdb.
-    + destruct ex as (t & l).
-      inversion l; subst; eauto with mdb.
-      ++ symmetry in heq.
-         assert (q ⟶⋍ a2) as (t & l3 & l4).
-         { eapply eq_spec; eauto. }
-         exists (t ▷ e). eapply ParLeft; eauto.
-      ++ exists (q ▷ b2). eapply ParRight; eauto.
-      ++ symmetry in heq.
-         assert (q ⟶⋍[μ1] a2) as (t & l3 & l4).
-         { eapply eq_spec; eauto. }
-         exists (t ▷ b2). eapply ParSync; eauto.
-    + intros q' l.
-      assert (p ⟶⋍ q') as (t & l3 & l4).
-      { eapply eq_spec; eauto. } eauto.
-    + intros q' e' μ1 μ2 inter l__e l__q.
-      assert (p ⟶⋍[μ1] q') as (t & l3 & l4).
-      { eapply eq_spec; eauto. } eauto.
+  - apply may_now. exact H1.
+  - edestruct (eq_spec q p') as (q' & tr & eq).
+    { exists p. split; eauto. now symmetry. }
+    eapply may_server_step; eauto.
+    eapply IHhm. now symmetry.
+  - eapply may_client_step; eauto.
+  - edestruct (eq_spec q p') as (q' & tr & eq).
+    { exists p. split; eauto. now symmetry. }
+    eapply may_com_step; eauto.
+    eapply IHhm. now symmetry.
 Qed.
 
-Lemma must_preserved_by_lts_tau_srv `{
+Lemma may_not_stable_or_attaboy `{
   gLtsP : gLts P A, 
   gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  (p1 p2 : P) (e : E) : 
-  must p1 e -> p1 ⟶ p2 -> must p2 e.
-Proof. by inversion 1; eauto with mdb. Qed.
-
-Lemma must_preserved_by_weak_nil_srv `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p q : P) (e : E) : 
-  must p e -> p ⟹ q 
-    -> must q e.
-Proof.
-  intros hm w.
-  dependent induction w; eauto with mdb.
-  eapply IHw; eauto.
-  eapply must_preserved_by_lts_tau_srv; eauto.
-Qed.
-
-Lemma must_preserved_by_lts_tau_clt `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e1 e2 : E) : 
-  must p e1 -> ¬ attaboy e1 -> e1 ⟶ e2 -> must p e2.
-Proof. by inversion 1; eauto with mdb. Qed.
-
-Lemma must_preserved_by_synch_if_notattaboy `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p p' : P) (r r' : E) μ μ':
-  must p r -> ¬ attaboy r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
-    -> must p' r'.
-Proof.
-  intros hm u inter l__p l__r.
-  inversion hm; subst.
-  - contradiction.
-  - eapply com; eauto with mdb.
-Qed.
-
-Lemma must_preserved_by_lts_tau_clt_rev `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e1 e2 : E) : 
-  must p e2 -> e1 ⟶ e2 -> ¬ attaboy e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
-    -> must p e1.
-Proof.
-  intros must_hyp hyp_tr not_happy not_ext_action tau_determinacy.
-  revert e1 hyp_tr not_happy not_ext_action tau_determinacy.
-  dependent induction must_hyp.
-  - intros. contradiction.
-  - intros. destruct (decide (attaboy e1)) as [happy' | not_happy'].
-    + now eapply m_now.
-    + eapply m_step; eauto.
-      ++ exists (p ▷ e). eapply ParRight; eauto.
-      ++ intros. assert (e ⋍ e'). { symmetry; eauto. }
-         eapply must_eq_client; eauto. eauto.
-         eapply m_step; eauto.
-      ++ intros p' e' μ1 μ2 inter tr_server tr_client. 
-         assert (e1 ↛[μ2]); eauto.
-         assert (¬ e1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
-Qed.
-
-Lemma must_preserved_by_lts_tau_clt_rev_rev `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e1 e2 : E) : 
-  must p e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> attaboy e') -> p ⤓
-    -> must p e1.
-Proof.
-  intros must_hyp hyp_tr not_ext_action happy_determinacy conv.
-  revert e1 e2 must_hyp hyp_tr not_ext_action happy_determinacy.
-  dependent induction conv.
-  - intros. destruct (decide (attaboy e1)) as [happy | not_happy].
-    + now eapply m_now.
-    + eapply m_step; eauto.
-      ++ exists (p ▷ e2). eapply ParRight; eauto.
-      ++ intros. assert (must p e2).
-      { eapply m_now; eauto. }
-      assert (must p' e2).
-      { eapply must_preserved_by_lts_tau_srv; eauto. }
-      assert (p' ⤓); eauto.
-      ++ intros. assert (attaboy e'); eauto. now eapply m_now.
-      ++ intros. assert (e1 ↛[μ2]); eauto.
-         assert (¬ e1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
-Qed.
-
-Lemma must_terminate_unattaboy `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e : E) : must p e -> ¬ attaboy e -> p ⤓.
-Proof. intros hm. dependent induction hm; eauto with mdb. contradiction. Qed.
-
-Lemma must_terminate_unattaboy' `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e : E) : must p e -> attaboy e \/ p ⤓.
+  (p : P) (e : E) : may p e -> attaboy e \/ ¬ e ↛.
 Proof. 
   intros hm. destruct (decide (attaboy e)) as [happy | not_happy].
   + now left. 
-  + right. eapply must_terminate_unattaboy; eauto.
-Qed.
+  + right. admit.
+Admitted.
 
-Lemma must_preserved_by_lts_wk_clt `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e1 e2 : E) : 
-  must p e1 -> ¬ attaboy e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ attaboy e') -> e1 ⟹ e2 -> must p e2.
-Proof.
-  intros Hyp not_happy Hyp_not_happy wk_tr.
-  remember e2.
-  dependent induction wk_tr. 
-  + subst. eauto.
-  + subst. assert (∀ e' : E, q ⟹ e' → e' ≠ e2 → ¬ attaboy e') as Hyp_final.
-    {intros. eapply Hyp_not_happy. econstructor; eauto. eauto. }
-    assert (must p q).
-    {eapply must_preserved_by_lts_tau_clt; eauto. }
-    destruct (decide (q = e2)) as [ eq | not_eq].
-    ++ subst. eauto.
-    ++ eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
-Qed.
-
-Lemma ctx_pre_not `{
+Lemma ctx_may_pre_not `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
   gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   (p : P) (q : Q) (e : E) :
-  p ⊑ q -> ¬ must q e -> ¬ must p e.
+  p ⊑ q -> ¬ may q e -> ¬ may p e.
 Proof.
-  intros hpre not_must.
+  intros hpre not_may.
   intro Hyp. eapply hpre in Hyp.
   contradiction.
 Qed.
 
-(********************************************* Alt-preorder of Must_i **********************************************)
+(********************************************* Alt-preorder of May_i **********************************************)
 
 
-Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
-  (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
+(* Definition bhv_pre_cond1 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H} 
+  (p : P) (q : Q) := (* TODO *).
 
-Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
+Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70). *)
 
-(* Class of preactions.
-  Each state can only reduce for finitely many preactions *)
+(* Definition bhv_pre_cond2 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
+  (p : P) (q : Q) :=(* TODO *).
 
+Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). *)
 
-(********************************** Infinite Branching Lts to Finite Branching Lts **********************)
-Class AbsAction `{H : ExtAction A} {E FinA : Type} (LtsE : @gLts E A H) (Φ : A → FinA) :=
-  MkAbsAction {
-    abstraction_test_spec μ μ' e : blocking μ -> blocking μ' -> (Φ μ) = (Φ μ') -> ¬ e ↛[ μ ] -> ¬ e ↛[ μ' ]
-  }.
-
-
-(********************************** PreCoAct modulo Finite Branching Lts on Test **********************)
-Class PreExtAction `{H : ExtAction A} {P FinA: Type} `{Countable PreAct} 
-  {𝝳 : FinA → PreAct} {Φ : A → FinA} (LtsP : @gLts P A H) :=
-  MkPreExtAction {
-      pre_co_actions_of_fin : P -> FinA -> Prop ;
-
-      preactions_of_fin_test_spec1 (μ : A) (p : P) : μ ∈ co_actions_of p -> (Φ μ) ∈ (pre_co_actions_of_fin p);
-      preactions_of_fin_test_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) 
-            -> ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Φ μ');
-
-      pre_co_actions_of : P -> gset PreAct;
-      preactions_of_spec1 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) 
-        -> (𝝳 pre_μ) ∈ (pre_co_actions_of p);
-      preactions_of_spec2 (pre_pre_μ : PreAct) (pre_μ : FinA) (p : P) : 
-      (𝝳 pre_μ) = pre_pre_μ -> pre_pre_μ ∈ (pre_co_actions_of p) 
-        -> pre_μ ∈ (pre_co_actions_of_fin p);
-  }.
-
-Definition bhv_pre_cond2 `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
-  (p : P) (q : Q) :=
-  forall s q',
-    p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
-
-Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
-
-Definition bhv_pre `{PreA_countable : Countable PreA} `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction A _ P FiniteA PreA _ _ 𝝳 Φ LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A _ Q FiniteA PreA _ _ 𝝳 Φ LtsQ}
+(* Definition bhv_pre `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
 
-Notation "p ≼ q" := (bhv_pre p q) (at level 70).
-
-(** Must sets. *)
-
-Section must_sets.
-
-  (* https://arxiv.org/pdf/1612.03191.pdf *)
-
-  Local Open Scope positive.
-
-  Definition MUST `{gLts P A} 
-    (p : P) (G : gset A) :=
-    forall p', p ⟹ p' -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0.
-
-  Definition MUST__s `{FiniteImagegLts P A} 
-    (ps : gset P) (G : gset A) := 
-    forall p, p ∈ ps -> MUST p G.
-
-  (* Residuals of a process p AFTER the execution of s. *)
-
-  Definition AFTER `{FiniteImagegLts P A} 
-    (p : P) (s : trace A) (hcnv : p ⇓ s) := 
-    wt_set p s hcnv. 
-
-  Definition bhv_pre_ms_cond2 `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    forall s h1 h2 G, MUST__s (AFTER p s h1) G -> MUST__s (AFTER q s h2) G.
-
-  Definition bhv_pre_ms `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    p ≼₁ q /\ bhv_pre_ms_cond2 p q.
-End must_sets.
-
-Global Hint Unfold bhv_pre_ms:mdb. 
-
-Notation "p ≾₂ q" := (bhv_pre_ms_cond2 p q) (at level 70).
-
-Notation "p ≾ q" := (bhv_pre_ms p q) (at level 70).
-
-Section failure.
-
-  Definition Failure `{FiniteImagegLts P A} 
-    (p : P) (s : trace A) (G : subset_of A) :=
-    p ⇓ s -> exists p', p ⟹[s] p' /\ forall μ, μ ∈ G -> ¬ exists p0, p' ⟹{μ} p0.
-
-  Definition fail_pre_ms_cond2 `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    forall s G, Failure q s G -> Failure p s G.
-
-  Definition fail_pre_ms `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    p ≼₁ q /\ fail_pre_ms_cond2 p q.
-
-End failure.
-
-Notation "p ⋖ q" := (fail_pre_ms p q) (at level 70).
+Notation "p ≼ q" := (bhv_pre p q) (at level 70). *)

@@ -36,7 +36,8 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence  
-               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction .
+               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
+               Testing_Predicate.
 
 CoInductive copre `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
   `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
@@ -186,9 +187,9 @@ Section eq_contextual.
   Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
   Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
 
-  Context `{good : E -> Prop}.
-  Context `{good_dec : forall e, Decision (good e)}.
-  Context `{!Good E A good}.
+  Context `{attaboy : E -> Prop}.
+  Context `{attaboy_dec : forall e, Decision (attaboy e)}.
+  Context `{!Testing_Predicate E A attaboy}.
 
   (* ************************************************** *)
   Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
@@ -202,11 +203,11 @@ Section eq_contextual.
   Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
   Context `{@AbsAction A H E FinA gLtsE Φ}.
 
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ good Good0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ good Good0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_conv : @gen_spec_conv E _ _ _ _ attaboy Testing_Predicate0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ attaboy Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ good _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
+    @pre_extensional P Q _ _ _ attaboy _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
   Proof.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.

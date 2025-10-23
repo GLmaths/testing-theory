@@ -28,7 +28,8 @@ From Coq Require Import ssreflect.
 From Coq.Program Require Import Equality.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
-    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau.
+    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
+    Testing_Predicate.
 
 (** Extensional definition of Convergence and its equivalence
     with the inductive definition. *)
@@ -450,28 +451,28 @@ Section preorder.
   (** Extensional definition of Must *)
 
   Definition must_extensional {P : Type}
-    `{Sts (P * E), good : E -> Prop} 
+    `{Sts (P * E), attaboy : E -> Prop} 
     (p : P) (e : E) : Prop :=
     forall η : max_exec_from (p, e), exists n fex, mex_take_from n η = Some fex 
-          /\ good (fex_from_last fex).2 .
+          /\ attaboy (fex_from_last fex).2 .
 
-  Definition good_client {P : Type} `{Sts (P * E), good : E -> Prop} (s : (P * E)) := good s.2.
+  Definition attaboy_client {P : Type} `{Sts (P * E), attaboy : E -> Prop} (s : (P * E)) := attaboy s.2.
 
-  #[global] Program Instance must_bar {P : Type} {E : Type} `{Sts (P * E)} (good : E -> Prop)
-    `{good_decidable : forall e, Decision (good e)}: Bar (P * E) :=
-    {| bar_pred '(p, e) := good e |}.
+  #[global] Program Instance must_bar {P : Type} {E : Type} `{Sts (P * E)} (attaboy : E -> Prop)
+    `{attaboy_decidable : forall e, Decision (attaboy e)}: Bar (P * E) :=
+    {| bar_pred '(p, e) := attaboy e |}.
   Next Obligation. intros. destruct x as (p, e). simpl. eauto. Defined.
 
   Lemma must_intensional_coincide {P : Type}
-    `{Sts (P * E), good : E -> Prop, good_decidable : 
-    forall (e : E), Decision (good e)}
-    (p : P) (e : E) : @intensional_pred (P * E) _ (must_bar good) (p, e) ↔ 
-    @must_sts P E _ good p e.
+    `{Sts (P * E), attaboy : E -> Prop, attaboy_decidable : 
+    forall (e : E), Decision (attaboy e)}
+    (p : P) (e : E) : @intensional_pred (P * E) _ (must_bar attaboy) (p, e) ↔ 
+    @must_sts P E _ attaboy p e.
   Proof.
     split.
     - intros H1. dependent induction H1; subst.
       + rewrite /bar_pred /= in H1. now eapply m_sts_now.
-      + destruct (good_decidable e).
+      + destruct (attaboy_decidable e).
         rewrite /bar_pred /= in H1.
         now eapply m_sts_now. eapply m_sts_step; eauto.
     - intros hm; dependent induction hm.
@@ -483,9 +484,9 @@ Section preorder.
   Qed.
 
   Lemma must_ext_pred_iff_must_extensional {P : Type}
-    `{StsPE : Sts (P * E), good : E -> Prop, good_decidable : forall (e : E), Decision (good e)}
-    (p : P) (e : E) : @extensional_pred _ _ (must_bar good) (p, e) <-> 
-    @must_extensional P E _ good p e.
+    `{StsPE : Sts (P * E), attaboy : E -> Prop, attaboy_decidable : forall (e : E), Decision (attaboy e)}
+    (p : P) (e : E) : @extensional_pred _ _ (must_bar attaboy) (p, e) <-> 
+    @must_extensional P E _ attaboy p e.
   Proof. split; intros Hme η; destruct (Hme η) as (?&?&?&?).
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
@@ -493,27 +494,27 @@ Section preorder.
 
   Definition pre_extensional
     {P : Type} {Q : Type} 
-    `{Sts (P * E), Sts (Q * E), good : E -> Prop, good_decidable : forall (e : E), 
-    Decision (good e)}
+    `{Sts (P * E), Sts (Q * E), attaboy : E -> Prop, attaboy_decidable : forall (e : E), 
+    Decision (attaboy e)}
     (p : P) (q : Q) : Prop :=
-    forall (e : E), @must_extensional P E _ good p e -> @must_extensional Q E _ good q e.
+    forall (e : E), @must_extensional P E _ attaboy p e -> @must_extensional Q E _ attaboy q e.
 
   (* ************************************************** *)
 
   Lemma must_extensional_iff_must_sts
     {P : Type}
-    `{good : E -> Prop, good_decidable : forall (e : E), Decision (good e)}
+    `{attaboy : E -> Prop, attaboy_decidable : forall (e : E), Decision (attaboy e)}
     `{gLtsP : @gLts P A H, !FiniteImagegLts P A,
-    gLtsE : !gLts E A, !gLtsEq E A, !Good E A good,  !FiniteImagegLts E A}
+    gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy,  !FiniteImagegLts E A}
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} (* à rajouter en context ? *)
     (p : P) (e : E) : 
-    @must_extensional P E _ good p e <-> @must_sts P E _ good p e.
+    @must_extensional P E _ attaboy p e <-> @must_sts P E _ attaboy p e.
   Proof.
     split.
-    - intros hm. destruct Good0.
+    - intros hm. destruct Testing_Predicate0.
       eapply must_ext_pred_iff_must_extensional in hm.
       now eapply must_intensional_coincide, extensional_implies_intensional.
-    - intros hm. destruct Good0.
+    - intros hm. destruct Testing_Predicate0.
       eapply must_intensional_coincide in hm.
       rewrite <- must_ext_pred_iff_must_extensional.
       eapply intensional_implies_extensional. eapply hm.
@@ -521,21 +522,21 @@ Section preorder.
 
   Notation "p ⊑ₑ q" := (pre_extensional p q) (at level 70).
 
-  Context `{good : E -> Prop}.
-  Context `{good_dec : forall e, Decision (good e)}.
+  Context `{attaboy : E -> Prop}.
+  Context `{attaboy_dec : forall e, Decision (attaboy e)}.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
   Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
   Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Good E A good}.
+  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A attaboy}.
   Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
   Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
 
   (* ************************************************** *)
 
   Lemma pre_extensional_eq (p : P) (q : Q) : 
-    @pre_extensional P Q _ _ _ good _ p q <-> p ⊑ q.
+    @pre_extensional P Q _ _ _ attaboy _ p q <-> p ⊑ q.
     unfold pre_extensional, ctx_pre.
   Proof.
     split; intros hpre e.
@@ -556,15 +557,15 @@ Section preorder.
   Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
   Context `{@AbsAction A H E FinA gLtsE Φ}.
 
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ good Good0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ good Good0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_conv : @gen_spec_conv E _ _ _ _ attaboy Testing_Predicate0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ attaboy Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
 
   (* ************************************************** *)
 
   (** Equivalence between the extensional definition of the contextual preorder and
       the alternative, inductive characterisation. *)
   Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ good _ p q <-> (p, ∅) ≼ (q, ∅).
+    @pre_extensional P Q _ _ _ attaboy _ p q <-> (p, ∅) ≼ (q, ∅).
   Proof.
     split.
     - intros hpre%pre_extensional_eq.
@@ -577,7 +578,7 @@ Section preorder.
 
 
 (*   Corollary equivalence_bhv_mst_ctx
-    (p : P) (q : Q) : (p, ∅) ≾ (q, ∅) <-> @pre_extensional P Q _ _ _ good _ p q.
+    (p : P) (q : Q) : (p, ∅) ≾ (q, ∅) <-> @pre_extensional P Q _ _ _ attaboy _ p q.
   Proof.
     rewrite pre_extensional_eq.
     rewrite equivalence_bhv_acc_mst.
@@ -794,7 +795,7 @@ Qed.
   Lemma input_only_leq_nil {P Q A : Type} `{
     @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsQ gLtsEqQ W, !FiniteImagegLts Q A,
-    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Good E A good, (∀ e : E, Decision (good e))}
+    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Testing_Predicate E A attaboy, (∀ e : E, Decision (attaboy e))}
 
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
     `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
@@ -805,11 +806,11 @@ Qed.
     `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
     `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-    `{@gen_spec_conv  _ _ _ _ _ good _ co_of gen_conv, 
-    @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ good _ co_of gen_acc _ _}
+    `{@gen_spec_conv  _ _ _ _ _ attaboy _ co_of gen_conv, 
+    @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ attaboy _ co_of gen_acc _ _}
 
     (p : P) (pr : ionly_spec p) (q : Q) (h : forall α, q ↛{α}) : 
-    @pre_extensional _ _ _ _ _ good _ p q.
+    @pre_extensional _ _ _ _ _ attaboy _ p q.
   Proof.
     now eapply equivalence_bhv_acc_ctx; split; intros ? ?; [eapply nil_cnv | eapply ionly_nil_leq2].
   Qed. *)

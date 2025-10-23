@@ -39,14 +39,21 @@ Class Testing_Predicate (P A : Type) (attaboy : P -> Prop) `{gLts P A, !gLtsEq P
 #[global] Instance attaboy_dec `{Testing_Predicate P A attaboy} e : Decision (attaboy e).
 Proof. eapply attaboy_decidable. Defined.
 
-Lemma unattaboy_preserved_by_lts_non_blocking_action `{gLtsOba P A, !Testing_Predicate P A attaboy} p q η :
+Lemma unattaboy_preserved_by_eq `{gLtsEq P A, !Testing_Predicate P A attaboy} p q :
+  ~ attaboy p -> q ⋍ p -> ~ attaboy q.
+Proof.
+  intros not_happy eq. intro happy.
+  eapply attaboy_preserved_by_eq in happy; eauto with mdb.
+Qed.
+
+Lemma unattaboy_preserved_by_lts_non_blocking_action `{gLtsEq P A, !Testing_Predicate P A attaboy} p q η :
   non_blocking η -> p ⟶[η] q -> ~ attaboy p -> ~ attaboy q.
 Proof.
   intros nb l1 hp hq.
   eapply hp. eapply attaboy_preserved_by_lts_non_blocking_action_converse; eauto with mdb.
 Qed.
 
-Lemma unattaboy_preserved_by_lts_non_blocking_action_converse `{gLtsOba P A, !Testing_Predicate P A attaboy} p q η :
+Lemma unattaboy_preserved_by_lts_non_blocking_action_converse `{gLtsEq P A, !Testing_Predicate P A attaboy} p q η :
   non_blocking η -> p ⟶[η] q -> ~ attaboy q -> ~ attaboy p.
 Proof.
   intros nb l1 hp hq.
@@ -66,13 +73,6 @@ Proof.
     eapply IHhw. eassumption.
     eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
     eapply unattaboy_preserved_by_lts_non_blocking_action; eauto.
-Qed.
-
-Lemma unattaboy_preserved_by_eq `{gLtsOba P A, !Testing_Predicate P A attaboy} p q :
-  ~ attaboy p -> q ⋍ p -> ~ attaboy q.
-Proof.
-  intros not_happy eq. intro happy.
-  eapply attaboy_preserved_by_eq in happy; eauto with mdb.
 Qed.
 
 Lemma woutpout_preserves_attaboy `{gLtsOba P A, !Testing_Predicate P A attaboy} e m e':

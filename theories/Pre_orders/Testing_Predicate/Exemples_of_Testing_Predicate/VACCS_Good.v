@@ -25,7 +25,7 @@
 
 From Coq.Program Require Import Equality.
 From stdpp Require Import countable decidable.
-From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must VACCS_Instance.
+From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must VACCS_Instance Testing_Predicate.
 
 
 Inductive good_VACCS : proc -> Prop :=
