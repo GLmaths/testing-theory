@@ -1273,15 +1273,15 @@ Next Obligation.
     + exfalso. eapply H0. exists a. eauto.
 Qed.
 Next Obligation.
-  intros. eapply gen_acc_gen_spec_acc_nil_mem_lts_inp; eauto.
+  intros. simpl in *. eapply gen_acc_gen_spec_acc_nil_mem_lts_inp in H as (r & tr).
+  exists r. exists (ActIn pη). split; eauto.
 Qed.
 Next Obligation.
   intros a e' g. revert a e'.
-  induction g using set_ind_L; intros a e' hl.
+  induction g using set_ind_L; intros a e' nb hl.
   - inversion hl.
   - edestruct
-      (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-         (unroll_fw (x :: elements X)) e' (ActExt a)) as (t & hlt & heqt).
+      (eq_spec (unroll_fw (x :: elements X)) e' (ActExt a)) as (t & hlt & heqt).
     ++ exists (gen_acc ({[x]} ∪ X) []).
        split; eauto.
        eapply unroll_a_eq_perm.
@@ -1298,7 +1298,7 @@ Qed.
 
 From Must Require Import EquivalenceAS.
 
-Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ q <-> p ▷ ∅ ≼ q ▷ (∅ : gmultiset name).
+(* Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ q <-> p ▷ ∅ ≼ q ▷ (∅ : gmultiset name).
 Proof.
   split.
   intros hm%pre_extensional_eq. now eapply equivalence_bhv_acc_ctx.
@@ -1338,5 +1338,4 @@ Proof.
     eapply gmultiset_elem_of_disj_union in H as [hl1 | hr1].
     eapply elem_of_union. left. now eapply gmultiset_elem_of_dom.
     eapply elem_of_union. right. now eapply gmultiset_elem_of_dom.
-Qed.
- *)
+Qed. *)
