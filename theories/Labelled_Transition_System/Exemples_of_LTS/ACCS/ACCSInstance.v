@@ -30,8 +30,8 @@ From Coq.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
-      Completeness Soundness Coin Normalisation GeneralizeLtsOutputs
-      MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
+      CompletenessAS SoundnessAS DefinitionCI Normalisation GeneralizeLtsOutputs
+      MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction Testing_Predicate
       (* gLts *) (* Bisimulation *).
 
 Definition name := string.
@@ -439,6 +439,7 @@ Proof.
 Qed.
 
 Lemma lts_set_tau_spec1 p q : lts p τ q -> q ∈ lts_set_tau p.
+Proof.
   intro l. dependent induction l; simpl; try set_solver.
   destruct μ.
   - eapply elem_of_union. right.
@@ -933,7 +934,7 @@ Proof.
   eauto with ccs. eauto with ccs.
 Qed.
 
-#[global] Program Instance CCS_Good : @Good proc (ExtAct name) good gLabel_nb (* CCS_lts *) _ _ (* CCS_EqLTS *).
+#[global] Program Instance CCS_Good : @Testing_Predicate proc (ExtAct name) good gLabel_nb (* CCS_lts *) _ _ (* CCS_EqLTS *).
 Next Obligation. intros. eapply good_preserved_by_cgr; eassumption. Qed.
 Next Obligation. intros. simpl in *. destruct H as (a & eq); subst. eapply good_preserved_by_output; eassumption. Qed.
 Next Obligation. intros. simpl in *. destruct H as (a & eq); subst. eapply good_preserved_by_lts_output_converse; eassumption. Qed.
@@ -1064,17 +1065,53 @@ Qed.
 Next Obligation. cbn. eauto with ccs. Qed.
 Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
-Definition union_of_outputs_without (l : list proc) (p : proc) : gset name :=
-  (⋃ map outputs_of l) ∖ (outputs_of p).
-
 Fixpoint unroll_fw (xs : list name) : proc :=
   match xs with
   | [] => pr_nil
   | x :: xs' => pr_input x pr_success & unroll_fw xs'
   end.
 
-Definition gen_acc (Ps : list proc * proc) s := 
-  gen_test s (unroll_fw (elements (union_of_outputs_without Ps.1 Ps.2))).
+Definition FinA := name.
+
+Definition Φ (μ : ExtAct name) : FinA :=
+match μ with
+| ActIn c => c
+| ActOut c => c
+end.
+
+From Must Require Import DefinitionAS.
+
+#[global] Program Instance gAbsAction {A : Type} 
+  : @AbsAction (ExtAct name) gLabel_nb proc FinA _ Φ.
+Next Obligation.
+  intros. destruct μ; destruct μ'.
+  - simpl in H1. subst. eapply lts_refuses_spec1 in H2 as (e' & Tr).
+    eapply lts_refuses_spec2. eauto.
+  - unfold blocking in H0. exfalso. eapply H0. exists a0. eauto.
+  - unfold blocking in H. exfalso. eapply H. exists a. eauto.
+  - unfold blocking in H. exfalso. eapply H. exists a. eauto.
+Qed.
+
+Definition PreAct := FinA.
+
+Definition 𝝳 (pre_μ : FinA) : PreAct := pre_μ.
+
+#[global] Program Instance EqPreAct : EqDecision PreAct.
+
+#[global] Program Instance CountaPreAct: Countable PreAct := name_countable'.
+
+Fixpoint  mPreCoAct_of p : gmultiset PreAct := 
+match p with
+  | pr_par P Q => (mPreCoAct_of P) ⊎ (mPreCoAct_of Q)
+  | pr_output c => {[+ c +]}
+  | pr_var _ => ∅
+  | pr_rec _ _ => ∅
+  | g p => ∅
+end.
+
+Definition PreCoAct_of p := dom (mPreCoAct_of p).
+
+Definition gen_acc (G : gset PreAct) s := gen_test s (unroll_fw (elements G)).
 
 Lemma unroll_a_eq_perm (xs ys : list name) : xs ≡ₚ ys -> unroll_fw xs ≡* unroll_fw ys.
 Proof.
@@ -1099,8 +1136,8 @@ Next Obligation.
     subst; eauto. simpl in *. inversion H. subst. eauto.
 Qed.
 Next Obligation.
-  intros g s hh. eapply gen_test_ungood_if; try eassumption.
-  intro hh0. induction (elements (union_of_outputs_without g.1 g.2)).
+  intros G s hh. eapply gen_test_ungood_if; try eassumption.
+  intro hh0. induction (elements G).
   - cbn in hh0. inversion hh0.
   - inversion hh0; subst. destruct H0.
     + inversion H.
@@ -1163,53 +1200,14 @@ Proof.
     + eapply IHg'. eassumption.
 Qed.
 
-Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ (union_of_outputs_without g.1 g.2) 
-    -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
+Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G a : a ∈ G
+    -> exists r, lts (gen_acc G []) (ActExt $ ActIn a) r.
 Proof.
-  remember (union_of_outputs_without g.1 g.2). revert g0 Heqg0.
-  induction g.1; intros g0 Heqg0 mem.
-  - subst. unfold union_of_outputs_without in mem.
-    simpl in *. assert (∅ ∖ outputs_of g.2 = ∅). set_solver. set_solver.
-  - rewrite Heqg0 in mem.
-  (* 
-   assert (hn : {[a]} ## X) by set_solver.
-    destruct (decide (x = a)).
-    + subst.
-      set (h := elements_disj_union {[a]} X hn).
-      cbn. assert (exists t, lts (unroll_fw (a :: elements X)) (ActExt $ ActIn a) t).
-      simpl. eauto with ccs.
-      destruct H0 as (r & hl).
-      edestruct
-        (eq_spec 
-         (* proc name gLabel_nb CCS_lts CCS_EqLTS *)
-        (unroll_fw (elements ({[a]} ∪ X))) r (ActExt $ ActIn a)) as (t & hlt & heqt).
-      exists (unroll_fw (a :: elements X)).
-      split. eapply unroll_a_eq_perm.
-      replace (elements {[a]}) with [a] in h. eauto.
-      now rewrite elements_singleton.
-      simpl in *. eapply hl. destruct g.
-      simpl in *. rewrite<- Heqg0. eauto.
-    + assert (mem' : a ∈ X) by set_solver.
-      edestruct (IHg0 Heqg0X eq_refl mem') as (r & hlr); eauto.
-(*       edestruct
-        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-           (unroll_fw (elements ({[x]} ∪ X)))
-           (pr_par (pr_input x pr_success) r) (ActExt $ ActIn a)) as (t & hlt & heqt).
-      exists (unroll_fw (x :: elements X)).
-      split. eapply unroll_a_eq_perm.
-      set (h := elements_disj_union {[x]} X hn).
-      replace (elements {[x]}) with [x] in h. eauto.
-      now rewrite elements_singleton.
-      simpl in *. eauto with ccs. subst. eauto. *) *)
-Admitted.
-
-(* Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ (union_of_outputs_without g.1 g.2) 
-    -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
-Proof.
-  remember (union_of_outputs_without g.1 g.2). revert g0 Heqg0.
-  induction g0 using set_ind_L; intros Heqg0 mem.
+  remember G. revert g0 Heqg0.
+  induction G using set_ind_L ; intros g0 Heqg0 mem.
   - subst. inversion mem.
-  - assert (hn : {[x]} ## X) by set_solver.
+  - rewrite Heqg0 in mem.
+   assert (hn : {[x]} ## X) by set_solver.
     destruct (decide (x = a)).
     + subst.
       set (h := elements_disj_union {[a]} X hn).
@@ -1224,25 +1222,20 @@ Proof.
       split. eapply unroll_a_eq_perm.
       replace (elements {[a]}) with [a] in h. eauto.
       now rewrite elements_singleton.
-      simpl in *. eapply hl. destruct g.
-      simpl in *. rewrite<- Heqg0. eauto.
+      simpl in *. eapply hl. eauto.
     + assert (mem' : a ∈ X) by set_solver.
-      edestruct (IHg0 Heqg0X eq_refl mem') as (r & hlr); eauto.
-(*       edestruct
-        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-           (unroll_fw (elements ({[x]} ∪ X)))
-           (pr_par (pr_input x pr_success) r) (ActExt $ ActIn a)) as (t & hlt & heqt).
+      edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
+      edestruct (eq_spec (unroll_fw (elements ({[x]} ∪ X))) (pr_par (pr_input x pr_success) r) 
+        (ActExt $ ActIn a)) as (t & hlt & heqt).
       exists (unroll_fw (x :: elements X)).
       split. eapply unroll_a_eq_perm.
       set (h := elements_disj_union {[x]} X hn).
       replace (elements {[x]}) with [x] in h. eauto.
       now rewrite elements_singleton.
-      simpl in *. eauto with ccs. subst. eauto. *)
-Admitted. *)
+      simpl in *. eauto with ccs. subst. eauto.
+Qed.
 
-
-(*
-#[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc co gen_acc.
+#[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc PreAct co gen_acc (fun x => 𝝳 (Φ x)).
 Next Obligation.
   intros g. simpl. unfold proc_stable. cbn.
   remember (lts_set_tau (unroll_fw (elements g))) as ps.
@@ -1252,31 +1245,32 @@ Next Obligation.
   now eapply gen_acc_does_not_tau in mem.
 Qed.
 Next Obligation.
-  intros g a. simpl. unfold proc_stable. cbn.
-  remember (lts_set_output (unroll_fw (elements g)) a) as ps.
+  intros g a nb. inversion nb; subst. inversion nb; subst. inversion H; subst.
+  simpl. unfold proc_stable. cbn.
+  remember (lts_set_output (unroll_fw (elements g)) x0) as ps.
   destruct ps using set_ind_L; eauto.
-  assert (mem : x ∈ lts_set_output (unroll_fw (elements g)) a) by set_solver.
+  assert (mem : x ∈ lts_set_output (unroll_fw (elements g)) x0) by set_solver.
   eapply lts_set_output_spec0 in mem.
   now eapply gen_acc_does_not_output in mem.
 Qed.
 Next Obligation.
   intros g.
   induction g using set_ind_L; intros.
-  - inversion H.
-  - edestruct
-      (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-         (unroll_fw (x :: elements X)) e (ActExt (ActIn a))) as (t & hlt & heqt).
-    ++ exists (gen_acc ({[x]} ∪ X) []).
-       split.
-       +++ eapply unroll_a_eq_perm.
-           assert (hn : {[x]} ## X) by set_solver.
-           set (h := elements_disj_union {[x]} X hn).
-           replace (elements {[x]}) with [x] in h. symmetry. eauto.
-           now rewrite elements_singleton.
-       +++ eassumption.
-    ++ cbn in hlt. inversion hlt; subst.
-       +++ inversion H5; subst. set_solver.
-       +++ set_solver.
+  - inversion H0.
+  - destruct μ. 
+    + edestruct (eq_spec (unroll_fw (x :: elements X)) e (ActExt (ActIn a))) as (t & hlt & heqt).
+      ++ exists (gen_acc ({[x]} ∪ X) []).
+         split.
+         +++ eapply unroll_a_eq_perm.
+             assert (hn : {[x]} ## X) by set_solver.
+             set (h := elements_disj_union {[x]} X hn).
+             replace (elements {[x]}) with [x] in h. symmetry. eauto.
+             now rewrite elements_singleton.
+         +++ eassumption.
+      ++ cbn in hlt. inversion hlt; subst.
+         +++ inversion H6; subst. set_solver.
+         +++ set_solver.
+    + exfalso. eapply H0. exists a. eauto.
 Qed.
 Next Obligation.
   intros. eapply gen_acc_gen_spec_acc_nil_mem_lts_inp; eauto.
@@ -1302,7 +1296,7 @@ Next Obligation.
        +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
 Qed.
 
-From Must Require Import Equivalence.
+From Must Require Import EquivalenceAS.
 
 Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ q <-> p ▷ ∅ ≼ q ▷ (∅ : gmultiset name).
 Proof.

@@ -33,7 +33,7 @@ From Coq.Logic Require Import JMeq ProofIrrelevance.
 From stdpp Require Import sets base countable finite gmap list finite decidable finite gmap.
 From Must Require Import gLts Bisimulation Lts_OBA WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
       InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
-       Must Lift Subset_Act Convergence Termination Testing_Predicate.
+       Must Lift Subset_Act Convergence Termination Testing_Predicate DefinitionAS.
 From Must Require Import ActTau.
 
 (** Test generators specification. **)

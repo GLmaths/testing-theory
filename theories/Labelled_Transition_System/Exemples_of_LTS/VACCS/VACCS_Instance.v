@@ -2260,6 +2260,8 @@ Proof.
   simpl. intros. inversion H. eauto.
 Qed.
 
+From Must Require Import DefinitionAS.
+
 #[global] Program Instance gAbsAction {A : Type} 
   : @AbsAction (ExtAct TypeOfActions) gLabel_nb proc FinA VACCS_ggLts Φ.
 Next Obligation.

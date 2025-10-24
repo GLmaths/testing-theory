@@ -35,7 +35,7 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
-      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate.
+      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS.
 From Must Require Import ActTau.
 
 (* ************************************************************ *)

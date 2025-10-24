@@ -31,7 +31,7 @@ From Coq.Logic Require Import JMeq ProofIrrelevance.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
 From Must Require Import ActTau gLts VCCS_Instance VCCS_Good Bisimulation InputOutputActions 
-        Completeness ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
+        CompletenessAS ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
 match μ with 

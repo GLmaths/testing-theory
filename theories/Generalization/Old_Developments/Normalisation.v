@@ -27,7 +27,7 @@ From Coq.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list decidable gmultiset.
 
 From Must Require Import ActTau InputOutputActions OldTransitionSystems FiniteImageLTS 
-    gLts Bisimulation Lts_FW Convergence Termination WeakTransitions Must GeneralizeLtsOutputs.
+    gLts Bisimulation Lts_FW Convergence Termination WeakTransitions Must GeneralizeLtsOutputs DefinitionAS.
 
 Definition ntrace L `{Label L} : Type := list (gmultiset L * gmultiset L).
 
@@ -458,10 +458,6 @@ Proof.
   eapply lts_outputs_spec1. eassumption.
 Qed.
 
-Lemma stable_preserved_by_eq `{LtsEq A L} p q : p ⋍ q -> p ↛ -> q ↛.
-Proof.
-Admitted.
-
 Lemma normalize_accs `{LtsObaFW A L, !FiniteLts A L} (p : A) (s : trace (ExtAct L)) h1 h2 :
   (set_map lts_outputs (wt_refuses_set p s h1) : gset (gset L))
   ≡ (set_map lts_outputs (wt_refuses_set p (linorm s) h2) : gset (gset L)).
@@ -597,8 +593,9 @@ Admitted.
 Lemma normalize_acnv `{LtsObaFW A L} (p : A) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
 Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed.
 
-Lemma asyn_iff_bhv
-  `{@LtsObaFW P L IL LA LOA V, @LtsObaFW Q L IL LB LOB W,
+(* Lemma asyn_iff_bhv
+  `{@LtsObaFW P L IL LA LOA V, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP,
+    @LtsObaFW Q L IL LB LOB W, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ
     !FiniteLts Q L, !FiniteLts Q L} : forall (p : P) (q : Q), p ⪷ q <-> p ≼ q.
 Proof.
   intros p q. split.
@@ -625,4 +622,4 @@ Proof.
   - intros (hl1 & hl2). split.
     + intros s hacnv. eauto.
     + intros nt q' hacnv w st. eauto.
-Admitted.
+Admitted. *)

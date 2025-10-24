@@ -27,7 +27,7 @@ From Coq Require Import Relations.
 From Coq.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import InputOutputActions ActTau OldTransitionSystems Must Completeness.
+From Must Require Import InputOutputActions ActTau OldTransitionSystems Must CompletenessAS.
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)

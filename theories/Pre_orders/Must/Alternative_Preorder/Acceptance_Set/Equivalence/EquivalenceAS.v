@@ -27,9 +27,9 @@ From stdpp Require Import base decidable gmap finite.
 From Coq Require Import ssreflect.
 From Coq.Program Require Import Equality.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
-    Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
+    Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
-    Testing_Predicate.
+    Testing_Predicate DefinitionAS.
 
 (** Extensional definition of Convergence and its equivalence
     with the inductive definition. *)
