@@ -379,7 +379,7 @@ Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
 Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
   | [] => 𝟘
-  | Inputs_on c :: l => (c ? x • ①) + unroll_fw l
+  | Inputs c :: l => (c ? x • ①) + unroll_fw l
   end.
 
 Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))).
@@ -477,37 +477,37 @@ Proof.
 Qed.
 
 
-Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs_on c ∈ G 
+Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs c ∈ G 
           -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c ⋉ v))) r.
 Proof.
   remember G. revert g Heqg.
   induction G using set_ind_L; intros g0 Heqg0 mem.
   - subst. inversion mem.
   - assert (hn : {[x]} ## X) by set_solver.
-    destruct (decide (x = (Inputs_on c))).
+    destruct (decide (x = (Inputs c))).
     + subst.
-      set (h := elements_disj_union {[Inputs_on c]} X hn).
-      cbn. assert (exists p, lts (unroll_fw ((Inputs_on c) :: elements X)) (ActExt $ ActIn (c ⋉ O)) p).
+      set (h := elements_disj_union {[Inputs c]} X hn).
+      cbn. assert (exists p, lts (unroll_fw ((Inputs c) :: elements X)) (ActExt $ ActIn (c ⋉ O)) p).
       simpl. eauto with ccs.
       destruct H0 as (r & hl).
-      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs_on c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ O))) 
+      edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ O))) 
           as (p & hlt & heqt).
-      exists (unroll_fw ((Inputs_on c) :: elements X)).
+      exists (unroll_fw ((Inputs c) :: elements X)).
       split. eapply unroll_a_eq_perm.
-      replace (elements {[Inputs_on c]}) with [Inputs_on c] in h. eauto.
+      replace (elements {[Inputs c]}) with [Inputs c] in h. eauto.
       now rewrite elements_singleton.
       simpl in *. eapply hl. eauto.
-    + assert (mem' : Inputs_on c ∈ X) by set_solver.
+    + assert (mem' : Inputs c ∈ X) by set_solver.
       edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
       destruct x.
       * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
         simpl in *. 
-        edestruct (eq_spec (g (unroll_fw (elements ({[Inputs_on c0]} ∪ X))))
+        edestruct (eq_spec (g (unroll_fw (elements ({[Inputs c0]} ∪ X))))
              r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
-        exists (g (unroll_fw (Inputs_on c0 :: elements X))).
+        exists (g (unroll_fw (Inputs c0 :: elements X))).
         split. eapply unroll_a_eq_perm.
-        set (h := elements_disj_union {[Inputs_on c0]} X hn).
-        replace (elements {[Inputs_on c0]}) with [Inputs_on c0] in h. eauto.
+        set (h := elements_disj_union {[Inputs c0]} X hn).
+        replace (elements {[Inputs c0]}) with [Inputs c0] in h. eauto.
         now rewrite elements_singleton. simpl in *.
         eapply lts_choiceR. eauto. subst. eauto.
 Qed.

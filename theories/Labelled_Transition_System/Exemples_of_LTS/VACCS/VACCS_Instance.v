@@ -2255,10 +2255,6 @@ match μ with
 | ActOut (c ⋉ v) => Inputs c
 end.
 
-Lemma same_input_channel c v c' v' : Φ (ActIn (c ⋉ v)) =  Φ (ActIn (c' ⋉ v')) -> c = c'.
-Proof.
-  simpl. intros. inversion H. eauto.
-Qed.
 
 From Must Require Import DefinitionAS.
 
@@ -2276,14 +2272,9 @@ Next Obligation.
   - unfold blocking in H. exfalso. eapply H. exists (c ⋉ d). eauto.
 Qed.
 
-Inductive PreAct :=
-| Inputs_on (c : Channel)
-.
+Definition PreAct := FinA.
 
-Definition 𝝳 (pre_μ : FinA) : PreAct :=
-match pre_μ with
-| Inputs c => Inputs_on c
-end.
+Definition 𝝳 (pre_μ : FinA) : PreAct := pre_μ.
 
 #[global] Program Instance EqPreAct : EqDecision PreAct.
 Next Obligation.
@@ -2300,7 +2291,7 @@ Parameter CountPreAct : Countable PreAct.
 Fixpoint  mPreCoAct_of p : gmultiset PreAct := 
 match p with
   | P ‖ Q => (mPreCoAct_of P) ⊎ (mPreCoAct_of Q)
-  | c ! v • 𝟘 => {[+ (Inputs_on c) +]}
+  | c ! v • 𝟘 => {[+ (Inputs c) +]}
   | pr_var _ => ∅
   | rec _ • _ => ∅
   | If E Then P Else Q => match (Eval_Eq E) with 
@@ -2355,65 +2346,51 @@ Next Obligation.
   + destruct a. simpl. exists (ActOut (c ⋉ d)). split; eauto.
 Qed.
 Next Obligation.
-  intros.
-  destruct H as (μ & eq & mem).
-  destruct μ.
-  + destruct mem as (μ' & Tr & duo & b). symmetry in duo.
-    destruct a. eapply simplify_match_input in duo. subst.
-    eapply lts_refuses_spec1 in Tr as (p' & Tr).
-    eapply TransitionShapeForOutput in Tr as (R & eq & eq').
-    assert (𝝳 (Φ (ActIn (c ⋉ d))) ∈ PreCoAct_of ((c ! d • 𝟘) ‖ R)).
-    { eapply gmultiset_elem_of_dom. simpl. multiset_solver. }
-    eapply PreCoEquiv. symmetry. eauto. eauto.
-  + destruct mem as (μ' & Tr & duo & b).
-    destruct b. exists a; eauto.
-Qed.
-Next Obligation.
-  intros. simpl in *. revert pre_pre_μ pre_μ H H0.
+  intros. split.
+  - intros. destruct H as (μ & eq & mem).
+    destruct μ.
+    + destruct mem as (μ' & Tr & duo & b). symmetry in duo.
+      destruct a. eapply simplify_match_input in duo. subst.
+      eapply lts_refuses_spec1 in Tr as (p' & Tr).
+      eapply TransitionShapeForOutput in Tr as (R & eq & eq').
+      assert (𝝳 (Φ (ActIn (c ⋉ d))) ∈ PreCoAct_of ((c ! d • 𝟘) ‖ R)).
+      { eapply gmultiset_elem_of_dom. simpl. multiset_solver. }
+      eapply PreCoEquiv. symmetry. eauto. eauto.
+    + destruct mem as (μ' & Tr & duo & b).
+      destruct b. exists a; eauto.
+  - intros. simpl in *. revert pre_μ H.
       induction p as (p & Hp) using
         (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-      intros. destruct pre_pre_μ. destruct p; intros. (* destruct pre_μ; simpl in *.  *)
-      * eapply gmultiset_elem_of_dom in H0.
-        eapply gmultiset_elem_of_disj_union in H0. destruct H0.
-        -- eapply (Hp p1) in H. destruct H as (μ' & eq & mem). 
+      intros. (* destruct pre_pre_μ. *) destruct p; intros. (* destruct pre_μ; simpl in *.  *)
+      * eapply gmultiset_elem_of_dom in H.
+        eapply gmultiset_elem_of_disj_union in H. destruct H.
+        -- eapply gmultiset_elem_of_dom in H. eapply (Hp p1) in H. destruct H as (μ' & eq & mem). 
            destruct mem as (μ'' & Tr & duo & b). exists μ'. split; eauto. 
            exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
            eapply lts_refuses_spec2. exists (p'1 ‖ p2). constructor. eauto. simpl. lia.
-           eapply gmultiset_elem_of_dom. eauto.
-        -- eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
+        -- eapply gmultiset_elem_of_dom in H.  eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
            exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
            exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
            eapply lts_refuses_spec2. exists (p1 ‖ p'2). constructor. eauto. simpl. lia.
-           eapply gmultiset_elem_of_dom. eauto.
-      * simpl in *. inversion H0.
-      * simpl in *. inversion H0.
+      * simpl in *. inversion H.
+      * simpl in *. inversion H.
       * case_eq (Eval_Eq e); intros; simpl in *.
-        eapply gmultiset_elem_of_dom in H0. simpl in *. rewrite H1 in H0. destruct b.
-        -- eapply (Hp p1) in H. destruct H as (μ' & eq & mem).
+        eapply gmultiset_elem_of_dom in H. simpl in *. rewrite H0 in H. destruct b.
+        -- eapply gmultiset_elem_of_dom in H. eapply (Hp p1) in H. destruct H as (μ' & eq & mem).
            exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
            exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
            eapply lts_refuses_spec2. exists p'1. constructor; eauto. lia.
-           eapply gmultiset_elem_of_dom; eauto.
-        -- eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
+        -- eapply gmultiset_elem_of_dom in H. eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
            exists μ'. split; eauto. destruct mem as (μ'' & Tr & duo & b).
            exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
            eapply lts_refuses_spec2. exists p'2. eapply lts_ifZero; eauto. lia.
-           eapply gmultiset_elem_of_dom; eauto.
-        -- eapply gmultiset_elem_of_dom in H0. simpl in *. rewrite H1 in H0. inversion H0.
-      * eapply gmultiset_elem_of_dom in H0. simpl in *.
-        assert (Inputs_on c0 = Inputs_on c) as Hyp. { set_solver. } inversion Hyp. subst.
+        -- eapply gmultiset_elem_of_dom in H. simpl in *. rewrite H0 in H. inversion H.
+      * eapply gmultiset_elem_of_dom in H. simpl in *.
         exists (ActIn (c ⋉ d)). split.
-        -- simpl in *. destruct pre_μ. inversion H. eauto.
+        -- simpl in *. destruct pre_μ. unfold 𝝳 in H. assert (c = c0) by multiset_solver; subst. eauto.
         -- exists (ActOut (c ⋉ d)). repeat split ;eauto.
            eapply lts_refuses_spec2. exists 𝟘. constructor.
-           intro imp. inversion imp. destruct x; subst. inversion H1.
-      * destruct g0.
-        ** simpl in *. inversion H0.
-        ** simpl in *. inversion H0.
-        ** simpl in *. inversion H0.
-        ** simpl in *. inversion H0.
-        ** simpl in *. inversion H0.
+           intro imp. inversion imp. destruct x; subst. inversion H0.
+      * inversion H.
 Qed.
-
-
 

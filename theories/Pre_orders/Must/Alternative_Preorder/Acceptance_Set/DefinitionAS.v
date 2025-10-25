@@ -46,15 +46,11 @@ Class PreExtAction `{H : ExtAction A} {P FinA: Type} `{Countable PreAct}
       pre_co_actions_of_fin : P -> FinA -> Prop ;
 
       preactions_of_fin_test_spec1 (μ : A) (p : P) : μ ∈ co_actions_of p -> (Φ μ) ∈ (pre_co_actions_of_fin p);
-      preactions_of_fin_test_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) 
+      preactions_of_fin_test_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p)
             -> ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Φ μ');
 
       pre_co_actions_of : P -> gset PreAct;
-      preactions_of_spec1 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) 
-        -> (𝝳 pre_μ) ∈ (pre_co_actions_of p);
-      preactions_of_spec2 (pre_pre_μ : PreAct) (pre_μ : FinA) (p : P) : 
-      (𝝳 pre_μ) = pre_pre_μ -> pre_pre_μ ∈ (pre_co_actions_of p) 
-        -> pre_μ ∈ (pre_co_actions_of_fin p);
+      preactions_of_spec (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) <-> (𝝳 pre_μ) ∈ (pre_co_actions_of p);
   }.
 
 

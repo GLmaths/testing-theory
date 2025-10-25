@@ -742,9 +742,9 @@ Proof.
       { exists μ1. repeat split; eauto.
         eapply lts_refuses_spec2;eauto. symmetry in eq; eauto. }
       eapply preactions_of_fin_test_spec1 in some_co_action_of_p.
-      eapply preactions_of_spec1 in some_co_action_of_p.
+      eapply preactions_of_spec in some_co_action_of_p.
       eapply sub in some_co_action_of_p.
-      eapply preactions_of_spec2 in some_co_action_of_p.
+      eapply preactions_of_spec in some_co_action_of_p.
       eapply preactions_of_fin_test_spec2 in some_co_action_of_p as (μ' & mem' & eq').
       destruct mem' as (μ'1 & Tr & duo & b).
       assert (¬ e ↛[μ']) as Tr_Test.
@@ -753,7 +753,7 @@ Proof.
       eapply lts_refuses_spec1 in Tr as (q' & Tr).
       eapply (lts_refuses_spec2 (q,e)). exists (q', e').
       symmetry in duo.
-      eapply ParSync; eauto. eauto. eauto.
+      eapply ParSync; eauto. eauto.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
