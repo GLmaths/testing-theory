@@ -1,25 +1,13 @@
-# Development for LTS, STS and testing pre-orders
+# Testing
 
-## Bar_Induction
+## May
 
-## Coq_Helpers
+Definition of May and Alternative pre orders.
 
-Lemmas in Coq to help in proofs.
+## Must
 
-## Generalization
+Definition of Must and Alternative pre orders.
 
-Lemmas and Instances that say the current development is a generalization of the work done in COQ of "Constructive characterisations of the must-preorder for asynchrony", 2025, Giovanni Bernardi, Ilaria Castellani, Paul Laforgue, Léo Stefanesco.
+## Testing Predicate
 
-## Interaction_Between_Lts
-
-Definitions and lemmas for the interaction between LTS like the parallel LTS, the forwarder LTS.
-
-## Labelled_Transition_System
-
-## Testing_Pre_orders
-
-Pre orders for testing like Must and May.
-
-## State_Transition_Systems
-
-## Work_in_Progress
+Definition of a predicate for testing.
