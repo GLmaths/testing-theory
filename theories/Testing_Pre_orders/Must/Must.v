@@ -29,6 +29,8 @@ From stdpp Require Import finite gmap decidable.
 From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
+(********************************************* Definition of Must_i **********************************************)
+
 Inductive must_sts 
   `{Sts (P1 * P2), attaboy : P2 -> Prop}
   (p : P1) (e : P2) : Prop :=
@@ -41,6 +43,8 @@ Inductive must_sts
 .
 
 Global Hint Constructors must_sts:mdb.
+
+(************************ Definition of Must_i decomposed with parallel computation definition *********************)
 
 Inductive must `{
     gLtsP : @gLts P A H, 
@@ -63,6 +67,8 @@ Inductive must `{
 .
 
 Global Hint Constructors must:mdb.
+
+(****************** Must_i and Must decomposed with parallel computation definition are equivalent ****************)
 
 Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
@@ -96,6 +102,8 @@ Proof.
       inversion hl; subst; eauto with mdb.
 Qed.
 
+(********************************* Definition of the contextual pre order with Must_i *********************************)
+
 Definition ctx_pre `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
@@ -110,7 +118,6 @@ Definition ctx_pre `{
 Global Hint Unfold ctx_pre: mdb.
 
 Notation "p ⊑ q" := (ctx_pre p q) (at level 70).
-
 
 
 (********************************************* Properties on Must_i **********************************************)
@@ -344,65 +351,3 @@ Proof.
   intro Hyp. eapply hpre in Hyp.
   contradiction.
 Qed.
-
-From Must Require Import DefinitionAS.
-
-(** Must sets. *)
-
-Section must_sets.
-
-  (* https://arxiv.org/pdf/1612.03191.pdf *)
-
-  Local Open Scope positive.
-
-  Definition MUST `{gLts P A} 
-    (p : P) (G : gset A) :=
-    forall p', p ⟹ p' -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0.
-
-  Definition MUST__s `{FiniteImagegLts P A} 
-    (ps : gset P) (G : gset A) := 
-    forall p, p ∈ ps -> MUST p G.
-
-  (* Residuals of a process p AFTER the execution of s. *)
-
-  Definition AFTER `{FiniteImagegLts P A} 
-    (p : P) (s : trace A) (hcnv : p ⇓ s) := 
-    wt_set p s hcnv. 
-
-  Definition bhv_pre_ms_cond2 `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    forall s h1 h2 G, MUST__s (AFTER p s h1) G -> MUST__s (AFTER q s h2) G.
-
-  Definition bhv_pre_ms `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    p ≼₁ q /\ bhv_pre_ms_cond2 p q.
-End must_sets.
-
-Global Hint Unfold bhv_pre_ms:mdb. 
-
-Notation "p ≾₂ q" := (bhv_pre_ms_cond2 p q) (at level 70).
-
-Notation "p ≾ q" := (bhv_pre_ms p q) (at level 70).
-
-Section failure.
-
-  Definition Failure `{FiniteImagegLts P A} 
-    (p : P) (s : trace A) (G : subset_of A) :=
-    p ⇓ s -> exists p', p ⟹[s] p' /\ forall μ, μ ∈ G -> ¬ exists p0, p' ⟹{μ} p0.
-
-  Definition fail_pre_ms_cond2 `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    forall s G, Failure q s G -> Failure p s G.
-
-  Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
-  (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
-
-  Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
-
-  Definition fail_pre_ms `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    p ≼₁ q /\ fail_pre_ms_cond2 p q.
-
-End failure.
-
-Notation "p ⋖ q" := (fail_pre_ms p q) (at level 70).
