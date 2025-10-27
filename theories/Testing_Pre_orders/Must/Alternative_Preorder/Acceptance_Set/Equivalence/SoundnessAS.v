@@ -408,7 +408,7 @@ Lemma must_set_if_must `{
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  (p : P) (e : E) : must p e -> mustx {[ p ]} e.
+  (p : P) (e : E) : p must_pass e -> mustx {[ p ]} e.
 Proof.
   intro hm. dependent induction hm.
   - eauto with mdb.
@@ -438,7 +438,7 @@ Lemma must_if_must_set_helper `{
   (ps : gset P) (e : E) : 
   mustx ps e 
     -> forall p, p ∈ ps 
-      -> must p e.
+      -> p must_pass e.
 Proof.
   intro hm. dependent induction hm.
   - eauto with mdb.
@@ -475,7 +475,7 @@ Lemma must_if_must_set `{
 
   (p : P) (e : E) : 
   mustx {[ p ]} e 
-    -> must p e.
+    -> p must_pass e.
 Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
 
 Lemma must_set_iff_must `{
@@ -485,46 +485,8 @@ Lemma must_set_iff_must `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) : 
-  must p e <-> mustx {[ p ]} e.
+  p must_pass e <-> mustx {[ p ]} e.
 Proof. split; [eapply must_set_if_must | eapply must_if_must_set]. Qed.
-
-(* To move, also present in Completeness. *)
-Lemma must_preserved_by_weak_nil_srv `{
-  gLtsP : gLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p q : P) (e : E) : 
-  must p e -> p ⟹ q -> must q e.
-Proof.
-  intros hm w.
-  dependent induction w; eauto with mdb.
-  eapply IHw; eauto.
-  eapply must_preserved_by_lts_tau_srv; eauto.
-Qed.
-
-Lemma must_preserved_by_wt_synch_if_notattaboy `{
-  gLtsP : gLts P A, 
-  gLtsE : !gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p p' : P) (r r' : E) (μ : A) (μ' : A):
-  must p r 
-    -> ¬ attaboy r 
-      -> parallel_inter μ μ'
-        -> p ⟹{μ} p' 
-          -> r ⟶[μ'] r' 
-            -> must p' r'.
-Proof.
-  intros hm u duo hwp hwr.
-  dependent induction hwp.
-  - eapply IHhwp; eauto. eapply must_preserved_by_lts_tau_srv; eauto.
-  - eapply must_preserved_by_weak_nil_srv; eauto.
-    inversion hm. contradiction. eapply com.
-    eassumption. eassumption. eassumption.
-Qed.
 
 Lemma must_set_for_all `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
@@ -534,7 +496,7 @@ Lemma must_set_for_all `{
 
   (X : gset P) (e : E) : 
   X ≠ ∅ 
-    -> (forall p, p ∈ X -> must p e) 
+    -> (forall p, p ∈ X -> p must_pass e) 
       -> mustx X e.
 Proof.
   intros xneq_nil hm.
@@ -564,7 +526,7 @@ Lemma must_set_iff_must_for_all `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (X : gset P) (e : E) : 
-  X ≠ ∅ -> (forall p, p ∈ X -> must p e) <-> mustx X e.
+  X ≠ ∅ -> (forall p, p ∈ X -> p must_pass e) <-> mustx X e.
 Proof.
   intros.
   split. now eapply must_set_for_all.
@@ -597,7 +559,7 @@ Notation "ps ≼ₓ q" := (bhv_pre_cond1__x ps q /\ bhv_pre_cond2__x ps q) (at l
 Lemma alt_set_singleton_iff `{
   @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
-  (p : P) (q : Q) : p ≼ q <-> {[ p ]} ≼ₓ q.
+  (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
   - intros (hbhv1 & hbhv2). split.
@@ -795,7 +757,7 @@ Lemma soundnessx `{
   (ps : gset P) (e : E) : 
   mustx ps e 
     -> forall (q : Q), ps ≼ₓ q 
-      -> must q e.
+      -> q must_pass e.
 Proof.
   intros hmx q (halt1 & halt2).
   dependent induction hmx.
@@ -850,7 +812,7 @@ Lemma soundness_fw `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
-  (p : P) (q : Q) : p ≼ q -> p ⊑ q.
+  (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros halt e hm.
   eapply (soundnessx {[p]}).
@@ -875,7 +837,7 @@ Lemma soundness `{
 
   `{PreAP : @PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter),
     PreAQ : @PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter)}
-  (p : P) (q : Q) : p ▷ ∅ ≼ q ▷ ∅ -> p ⊑ q.
+  (p : P) (q : Q) : p ▷ ∅ ≼ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros halt e hm.
   eapply Lift.must_iff_must_fw in hm.

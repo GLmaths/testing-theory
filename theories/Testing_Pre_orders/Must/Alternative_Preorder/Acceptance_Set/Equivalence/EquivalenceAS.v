@@ -64,7 +64,7 @@ Section preorder.
   (** Equivalence between the extensional definition of the contextual preorder and
       the alternative, inductive characterisation. *)
   Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ attaboy _ p q <-> (p, ∅) ≼ (q, ∅).
+    @pre_extensional P Q _ _ _ attaboy _ p q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
     split.
     - intros hpre%pre_extensional_eq.

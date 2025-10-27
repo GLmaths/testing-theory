@@ -121,42 +121,12 @@ Section preorder.
   (* ************************************************** *)
 
   Lemma pre_extensional_eq (p : P) (q : Q) : 
-    @pre_extensional P Q _ _ _ attaboy _ p q <-> p ⊑ q.
+    @pre_extensional P Q _ _ _ attaboy _ p q <-> p ⊑ₘᵤₛₜᵢ q.
     unfold pre_extensional, ctx_pre.
   Proof.
     split; intros hpre e.
     - rewrite <- 2 must_sts_iff_must, <- 2 must_extensional_iff_must_sts; eauto.
     - rewrite -> 2 must_extensional_iff_must_sts, -> 2 must_sts_iff_must; eauto.
-  Qed.
-
-  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
-  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
-  Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
-
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
-  Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
-
-  Context `{@PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsP)}.
-  Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
-  Context `{@AbsAction A H E FinA gLtsE Φ}.
-
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ attaboy Testing_Predicate0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ attaboy Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
-
-  (* ************************************************** *)
-
-  (** Equivalence between the extensional definition of the contextual preorder and
-      the alternative, inductive characterisation. *)
-  Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ attaboy _ p q <-> (p, ∅) ≼ (q, ∅).
-  Proof.
-    split.
-    - intros hpre%pre_extensional_eq.
-      now eapply lift_fw_ctx_pre, completeness_fw in hpre.
-    - intros hpre%soundness_fw.
-      now eapply pre_extensional_eq, lift_fw_ctx_pre.
   Qed.
 
 End preorder.

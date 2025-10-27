@@ -29,45 +29,21 @@ From stdpp Require Import finite gmap decidable.
 From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
-Section must_sets.
+(********************************************* Alt-preorder of May_i **********************************************)
 
-  (* https://arxiv.org/pdf/1612.03191.pdf *)
 
-  Local Open Scope positive.
+(* Definition bhv_pre_cond1 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H} 
+  (p : P) (q : Q) := (* TODO *).
 
-  Definition MUST `{gLts P A} 
-    (p : P) (G : gset A) :=
-    forall p', p ⟹ p' -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0.
+Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70). *)
 
-  Definition MUST__s `{FiniteImagegLts P A} 
-    (ps : gset P) (G : gset A) := 
-    forall p, p ∈ ps -> MUST p G.
+(* Definition bhv_pre_cond2 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
+  (p : P) (q : Q) :=(* TODO *).
 
-  (* Residuals of a process p AFTER the execution of s. *)
+Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). *)
 
-  Definition AFTER `{FiniteImagegLts P A} 
-    (p : P) (s : trace A) (hcnv : p ⇓ s) := 
-    wt_set p s hcnv. 
+(* Definition bhv_pre `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
+    (p : P) (q : Q) := 
+      p ≼₁ q /\ p ≼₂ q.
 
-  Definition bhv_pre_ms_cond1 `{gLts P A, gLts Q A} 
-  (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
-
-  Definition bhv_pre_ms_cond2 `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    forall s h1 h2 G, MUST__s (AFTER p s h1) G -> MUST__s (AFTER q s h2) G.
-
-  Definition bhv_pre_ms `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-    (p : P) (q : Q) :=
-    bhv_pre_ms_cond1 p q /\ bhv_pre_ms_cond2 p q.
-End must_sets.
-
-Global Hint Unfold bhv_pre_ms:mdb.
-
-Notation "p 'MUST' L" := (MUST p L) (at level 70).
-
-Notation "p ≾₁ q" := (bhv_pre_ms_cond1 p q) (at level 70).
-
-Notation "p ≾₂ q" := (bhv_pre_ms_cond2 p q) (at level 70).
-
-Notation "p ≾ₘᵤₛₜ q" := (bhv_pre_ms p q) (at level 70).
-
+Notation "p ≼ q" := (bhv_pre p q) (at level 70). *)

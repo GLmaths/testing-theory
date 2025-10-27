@@ -41,7 +41,7 @@ Definition p : proc := c ? x • (c ! O • 𝟘).
 Definition q : proc := c ? x • (c ! (bvar 0) • 𝟘).
 
 Lemma q_is_above_NIL : 
-  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) q). (* 𝟘 ⊑ q *)
+  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) q). (* 𝟘 ⊑ₘᵤₛₜᵢ q *)
 Proof.
   intros e Hyp.
   dependent induction Hyp.
@@ -92,7 +92,7 @@ Proof.
 Qed.
 
 Lemma NIL_is_above_q : 
-  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ q (g 𝟘)). (* q ⊑ 𝟘 *)
+  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ q (g 𝟘)). (* q ⊑ₘᵤₛₜᵢ 𝟘 *)
 Proof.
   intros e Hyp.
   assert (must q e) as Mq; eauto.
@@ -133,7 +133,7 @@ Proof.
 Qed.
 
 Lemma q_is_above_p : 
-  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ p q). (* p ⊑ q *)
+  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ p q). (* p ⊑ₘᵤₛₜᵢ q *)
 Proof.
   intros e HypMust.
   dependent induction HypMust.
@@ -193,7 +193,7 @@ Qed.
 
 
 Lemma NIL_is_above_p : 
-  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ p (g 𝟘)). (* p ⊑ 𝟘 *)
+  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ p (g 𝟘)). (* p ⊑ₘᵤₛₜᵢ 𝟘 *)
 Proof.
   intros e Hyp. eapply NIL_is_above_q. eapply q_is_above_p. exact Hyp.
 Qed.
@@ -207,7 +207,7 @@ Proof.
   - inversion H.
 Qed.
 
-Lemma NIL_must_this_TEST :  must (g 𝟘) Test.
+Lemma NIL_must_this_TEST :  (g 𝟘) must_pass Test.
 Proof.
   eapply m_step.
   - eapply this_Test_is_not_good.
@@ -226,7 +226,7 @@ Qed.
 
 
 Lemma p_is_not_above_NIL : 
-¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) p).
+¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) p). (* ¬ 𝟘 ⊑ₘᵤₛₜᵢ p *)
 Proof.
   intro imp.
   assert (must p Test).
@@ -261,7 +261,7 @@ Proof.
 Qed.
 
 Lemma p_is_not_above_q : 
-  ¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ q p). (* ¬ q ⊑ p *)
+  ¬ (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ q p). (* ¬ q ⊑ₘᵤₛₜᵢ p *)
 Proof.
   intros imp. assert (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) q) as HypMust.
   { eapply q_is_above_NIL; eauto. }

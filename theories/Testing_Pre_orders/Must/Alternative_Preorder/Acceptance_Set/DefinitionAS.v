@@ -75,5 +75,5 @@ Definition bhv_pre `{PreA_countable : Countable PreA} `{
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
 
-Notation "p ≼ q" := (bhv_pre p q) (at level 70).
+Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 

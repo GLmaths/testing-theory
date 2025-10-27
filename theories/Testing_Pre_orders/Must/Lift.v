@@ -55,8 +55,8 @@ Lemma must_non_blocking_action_swap_l_fw_eq `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p1 p2 : P) (e1 e2 : E) (η : A) :
-  non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> must p1 e2
-    -> must p2 e1.
+  non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> p1 must_pass  e2
+    -> p2 must_pass  e1.
 Proof.
   intros nb lp le hm. revert e1 p2 nb lp le.
   induction hm as [p e happy|p1 e2 nh ex Hpt IHpt Het IHet Hcom IHcom]; intros e1 p2 nb lp le.
@@ -162,8 +162,8 @@ Lemma must_non_blocking_action_swap_r_fw_eq`{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p1 p2 : P) (e1 e2 : E) (η : A) :
-  non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> must p2 e1
-    -> must p1 e2.
+  non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> p2 must_pass e1
+    -> p1 must_pass e2.
 Proof.
   intros nb lp le hm. revert e2 p1 nb le lp.
   induction hm as [|p2 e1 nh ex Hpt IHpt Het IHet Hcom IHcom]; intros e2 p1 nb le lp.
@@ -279,8 +279,8 @@ Lemma must_non_blocking_action_swap_l_fw `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p1 p2 : P) (e1 e2 : E) (η : A) :
-  non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> must p1 e2 
-    -> must p2 e1.
+  non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> p1 must_pass e2 
+    -> p2 must_pass e1.
 Proof.
   intros. eapply must_non_blocking_action_swap_l_fw_eq; eauto; eexists; split; eauto; reflexivity.
 Qed.
@@ -292,8 +292,8 @@ Lemma must_non_blocking_action_swap_r_fw `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p1 p2 : P) (e1 e2 : E) (η : A) :
-  non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> must p2 e1
-    -> must p1 e2.
+  non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> p2 must_pass e1
+    -> p1 must_pass e2.
 Proof.
   intros.
   eapply must_non_blocking_action_swap_r_fw_eq; eauto; eexists; split; eauto; reflexivity.
@@ -306,7 +306,7 @@ Lemma nf_must_fw_l `{
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-  m1 m2 (p : P) (e e' : E) : e ⟿{m1} e' -> must (p, m1 ⊎ m2) e' -> must (p, m2) e.
+  m1 m2 (p : P) (e e' : E) : e ⟿{m1} e' -> (p, m1 ⊎ m2) must_pass e' -> (p, m2) must_pass e.
 Proof.
   revert p e e' m2.
   induction m1 using gmultiset_ind; intros p e e' m2 hmo hm.
@@ -336,7 +336,7 @@ Lemma nf_must_fw_r `{
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
   (p : P) (e e' : E) m1 m2 : 
-  e ⟿{m1} e' -> must (p, m2) e -> must (p, m1 ⊎ m2) e'.
+  e ⟿{m1} e' -> (p, m2) must_pass e -> (p, m1 ⊎ m2) must_pass e'.
 Proof.
   intro hwo. revert p m2.
   dependent induction hwo; intros q m2 hm.
@@ -363,7 +363,7 @@ Lemma nf_must_fw `{
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
   (p : P) (e e' : E) m : 
-  e ⟿{m} e' -> must (p, m) e' <-> must (p, ∅) e.
+  e ⟿{m} e' -> (p, m) must_pass e' <-> (p, ∅) must_pass e.
 Proof.
   intros. split; intro hm.
   - eapply nf_must_fw_l; eauto. now rewrite gmultiset_disj_union_right_id.
@@ -379,8 +379,8 @@ Lemma must_to_must_fw `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) (m : mb A) :
-  must p e -> m = lts_oba_mo e -> forall e', e ⟿{m} e' 
-    -> must (p, m) e'.
+  p must_pass e -> m = lts_oba_mo e -> forall e', e ⟿{m} e' 
+    -> (p, m) must_pass e'.
 Proof.
   intros hm. revert m.
   dependent induction hm; intros m heq e' hmo.
@@ -519,7 +519,7 @@ Lemma must_fw_to_must `{
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  (p : P) (e : E) : must (p, ∅) e -> must p e.
+  (p : P) (e : E) : (p, ∅) must_pass e -> p must_pass e.
 Proof.
   intro hm.
   dependent induction hm; eauto with mdb.
@@ -577,7 +577,7 @@ Lemma must_iff_must_fw `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) :
-  must p e <-> must (p, ∅) e.
+  p must_pass e <-> (p, ∅) must_pass e.
 Proof.
   split; intro hm.
   - edestruct (lts_oba_mo_strip e) as (e' & hmo).
@@ -604,7 +604,7 @@ Lemma lift_fw_ctx_pre `{
 
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
-  (p : P) (q : Q) : p ⊑ q <-> (p, ∅) ⊑ (q, ∅).
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⊑ₘᵤₛₜᵢ (q, ∅).
 Proof.
   split; intros hctx e hm%must_iff_must_fw. 
   - rewrite <- must_iff_must_fw. eauto.

@@ -92,7 +92,6 @@ Section failure_must_set.
       eapply (wt_set_spec1 _ _ _ _ mem0).
     - intros (e & hmem & hf) hm. eassumption.
       unfold MUST__s in hm.
-      unfold MUST in hm.
       edestruct (hm e) as (μ & p1 & mem1 & hw1).
       eapply (wt_set_spec2 _ _ _ _ hmem). eapply wt_nil.
       eapply (hf μ mem1). eauto.
@@ -116,7 +115,7 @@ Section failure_must_set_pre.
 
   Theorem equivalence_pre_failure_must_set
 
-  (p : P) (q : Q) : (p ▷ ∅) ≾ (q ▷ ∅) <-> (p ▷ ∅) ⋖ (q ▷ ∅).
+  (p : P) (q : Q) : (p ▷ ∅) ≾ₘᵤₛₜ (q ▷ ∅) <-> (p ▷ ∅) ⋖ (q ▷ ∅).
   Proof.
     split.
     - intros (hpre1 & hpre2). split.

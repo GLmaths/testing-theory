@@ -775,7 +775,7 @@ Lemma completeness1 `{
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
     `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
-  (p : P) (q : Q) : p ⊑ q -> p ≼₁ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼₁ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cnv, hleq, must_iff_cnv. Qed.
 
 Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
@@ -1308,7 +1308,7 @@ Lemma completeness2 {P Q : Type} `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
-  (p : P) (q : Q) : p ⊑ q -> p ≼₂ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼₂ q.
 Proof.
   intros hpre s q' hacnv w st.
   destruct (must_gen_a_with_s s p hacnv q') as [|hm].
@@ -1326,7 +1326,7 @@ Lemma completeness_fw {P Q : Type} `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
-  (p : P) (q : Q) : p ⊑ q -> p ≼ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼ₐₛ q.
 Proof. intros. split. now apply completeness1. now apply completeness2. Qed.
 
 (* From stdpp Require Import gmultiset.
@@ -1383,9 +1383,6 @@ Lemma completeness {P Q : Type} `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
-  (* `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
-  `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
- *)
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (FW_gLts gLtsP) gLtsE}
 
@@ -1397,7 +1394,7 @@ Lemma completeness {P Q : Type} `{
 
   `{!gen_spec_conv co_of gen_conv, !gen_spec_acc PreA co_of gen_acc (fun x => (𝝳  (Φ x)))}
 
-  (p : P) (q : Q) : (ctx_pre p q) -> p ▷ ∅ ≼ q ▷ ∅.
+  (p : P) (q : Q) : (ctx_pre p q) -> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
   intros hctx.
   eapply (@completeness_fw (P * mb A) (Q * mb A)); eauto.

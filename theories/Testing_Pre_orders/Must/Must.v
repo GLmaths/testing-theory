@@ -29,7 +29,7 @@ From stdpp Require Import finite gmap decidable.
 From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
-(********************************************* Definition of Must_i **********************************************)
+(********************************************* Definition of Must_i ********************************************)
 
 Inductive must_sts 
   `{Sts (P1 * P2), attaboy : P2 -> Prop}
@@ -44,7 +44,7 @@ Inductive must_sts
 
 Global Hint Constructors must_sts:mdb.
 
-(************************ Definition of Must_i decomposed with parallel computation definition *********************)
+(********************* Definition of Must_i decomposed with parallel computation definition *****************)
 
 Inductive must `{
     gLtsP : @gLts P A H, 
@@ -66,6 +66,8 @@ Inductive must `{
   : must p e
 .
 
+Notation "p 'must_pass' e" := (must p e) (at level 70).
+
 Global Hint Constructors must:mdb.
 
 (****************** Must_i and Must decomposed with parallel computation definition are equivalent ****************)
@@ -77,7 +79,7 @@ Lemma must_sts_iff_must `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) :
-  @must_sts P E _ attaboy p e <-> must p e.
+  @must_sts P E _ attaboy p e <-> p must_pass e.
 Proof.
   split.
   - intro hm. dependent induction hm; eauto with mdb.
@@ -113,11 +115,11 @@ Definition ctx_pre `{
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
 
   (p : P) (q : Q) 
-  := forall (e : E), must p e -> must q e.
+  := forall (e : E), p must_pass e -> q must_pass e.
 
 Global Hint Unfold ctx_pre: mdb.
 
-Notation "p ⊑ q" := (ctx_pre p q) (at level 70).
+Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre p q) (at level 70).
 
 
 (********************************************* Properties on Must_i **********************************************)
@@ -128,7 +130,7 @@ Lemma must_eq_client `{
 
   `{@Prop_of_Inter P Q A parallel_inter H gLtsP gLtsQ} :
 
-  forall (p : P) (q r : Q), q ⋍ r -> must p q -> must p r.
+  forall (p : P) (q r : Q), q ⋍ r -> p must_pass q -> p must_pass r.
 Proof.
   intros p q r heq hm.
   revert r heq.
@@ -163,7 +165,7 @@ Lemma must_eq_server `{
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} :
 
-  forall (p q : P) (e : E), p ⋍ q -> must p e -> must q e.
+  forall (p q : P) (e : E), p ⋍ q -> p must_pass e -> q must_pass e.
 Proof.
   intros p q e heq hm.
   revert q heq.
@@ -196,7 +198,7 @@ Lemma must_preserved_by_lts_tau_srv `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p1 p2 : P) (e : E) : 
-  must p1 e -> p1 ⟶ p2 -> must p2 e.
+  p1 must_pass e -> p1 ⟶ p2 -> p2 must_pass e.
 Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_weak_nil_srv `{
@@ -206,8 +208,8 @@ Lemma must_preserved_by_weak_nil_srv `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p q : P) (e : E) : 
-  must p e -> p ⟹ q 
-    -> must q e.
+  p must_pass e -> p ⟹ q 
+    -> q must_pass e.
 Proof.
   intros hm w.
   dependent induction w; eauto with mdb.
@@ -222,7 +224,7 @@ Lemma must_preserved_by_lts_tau_clt `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  must p e1 -> ¬ attaboy e1 -> e1 ⟶ e2 -> must p e2.
+  p must_pass e1 -> ¬ attaboy e1 -> e1 ⟶ e2 -> p must_pass e2.
 Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_synch_if_notattaboy `{
@@ -232,8 +234,8 @@ Lemma must_preserved_by_synch_if_notattaboy `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p p' : P) (r r' : E) μ μ':
-  must p r -> ¬ attaboy r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
-    -> must p' r'.
+  p must_pass r -> ¬ attaboy r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
+    -> p' must_pass r'.
 Proof.
   intros hm u inter l__p l__r.
   inversion hm; subst.
@@ -248,8 +250,8 @@ Lemma must_preserved_by_lts_tau_clt_rev `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  must p e2 -> e1 ⟶ e2 -> ¬ attaboy e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
-    -> must p e1.
+  p must_pass e2 -> e1 ⟶ e2 -> ¬ attaboy e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
+    -> p must_pass e1.
 Proof.
   intros must_hyp hyp_tr not_happy not_ext_action tau_determinacy.
   revert e1 hyp_tr not_happy not_ext_action tau_determinacy.
@@ -274,8 +276,8 @@ Lemma must_preserved_by_lts_tau_clt_rev_rev `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  must p e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> attaboy e') -> p ⤓
-    -> must p e1.
+  p must_pass e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> attaboy e') -> p ⤓
+    -> p must_pass e1.
 Proof.
   intros must_hyp hyp_tr not_ext_action happy_determinacy conv.
   revert e1 e2 must_hyp hyp_tr not_ext_action happy_determinacy.
@@ -300,7 +302,7 @@ Lemma must_terminate_unattaboy `{
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  (p : P) (e : E) : must p e -> ¬ attaboy e -> p ⤓.
+  (p : P) (e : E) : p must_pass e -> ¬ attaboy e -> p ⤓.
 Proof. intros hm. dependent induction hm; eauto with mdb. contradiction. Qed.
 
 Lemma must_terminate_unattaboy' `{
@@ -309,7 +311,7 @@ Lemma must_terminate_unattaboy' `{
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  (p : P) (e : E) : must p e -> attaboy e \/ p ⤓.
+  (p : P) (e : E) : p must_pass e -> attaboy e \/ p ⤓.
 Proof. 
   intros hm. destruct (decide (attaboy e)) as [happy | not_happy].
   + now left. 
@@ -323,7 +325,7 @@ Lemma must_preserved_by_lts_wk_clt `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  must p e1 -> ¬ attaboy e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ attaboy e') -> e1 ⟹ e2 -> must p e2.
+  p must_pass e1 -> ¬ attaboy e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ attaboy e') -> e1 ⟹ e2 -> p must_pass e2.
 Proof.
   intros Hyp not_happy Hyp_not_happy wk_tr.
   remember e2.
@@ -338,6 +340,28 @@ Proof.
     ++ eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
 Qed.
 
+Lemma must_preserved_by_wt_synch_if_notattaboy `{
+  gLtsP : gLts P A, 
+  gLtsE : !gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+
+  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+
+  (p p' : P) (r r' : E) (μ : A) (μ' : A):
+  p must_pass r 
+    -> ¬ attaboy r 
+      -> parallel_inter μ μ'
+        -> p ⟹{μ} p' 
+          -> r ⟶[μ'] r' 
+            -> p' must_pass r'.
+Proof.
+  intros hm u duo hwp hwr.
+  dependent induction hwp.
+  - eapply IHhwp; eauto. eapply must_preserved_by_lts_tau_srv; eauto.
+  - eapply must_preserved_by_weak_nil_srv; eauto.
+    inversion hm. contradiction. eapply com.
+    eassumption. eassumption. eassumption.
+Qed.
+
 Lemma ctx_pre_not `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
@@ -345,7 +369,7 @@ Lemma ctx_pre_not `{
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   (p : P) (q : Q) (e : E) :
-  p ⊑ q -> ¬ must q e -> ¬ must p e.
+  p ⊑ₘᵤₛₜᵢ q -> ¬ q must_pass e -> ¬ p must_pass e.
 Proof.
   intros hpre not_must.
   intro Hyp. eapply hpre in Hyp.

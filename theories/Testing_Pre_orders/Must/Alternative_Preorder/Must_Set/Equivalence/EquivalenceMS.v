@@ -29,7 +29,7 @@ From Coq.Program Require Import Equality.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS DefinitionMS MustE.
+    Testing_Predicate DefinitionAS DefinitionMS MustE EquivalenceAS.
 
 Section must_set_acc_set.
   Context `{P : Type}.
@@ -89,7 +89,7 @@ Section must_set_acc_set.
 
   Lemma either_MUST
       (p : P * mb A) (G : gset A) (hcnv : p ⇓ []) :
-      MUST p G \/ ~ MUST p G.
+      p MUST G \/ ~ p MUST G.
   Proof.
     assert (∀ p0 : P * mb A, p0 ∈ wt_set p [] hcnv → p0 ⤓) as pre_Hyp.
     intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
@@ -102,8 +102,8 @@ Section must_set_acc_set.
   Lemma either_ex_nMUST_or_MUST
     (ps : gset (P * mb A)) (G : gset A)
       (ht : forall p, p ∈ ps -> p ⇓ []) :
-    (exists p, p ∈ ps /\ ~ MUST p G) 
-      \/ (forall p, p ∈ ps -> MUST p G).
+    (exists p, p ∈ ps /\ ~ p MUST G) 
+      \/ (forall p, p ∈ ps -> p MUST G).
   Proof.
     induction ps using set_ind_L; [|edestruct IHps, (either_MUST x G)]; set_solver.
   Qed.
@@ -119,12 +119,12 @@ Section must_set_acc_set.
   Lemma nMusts_ex
     (ps : gset (P * mb A)) (G : gset A) :
     (forall p, p ∈ ps -> p ⇓ []) -> ~ MUST__s ps G 
-    -> exists p, p ∈ ps /\ ~ MUST p G.
+    -> exists p, p ∈ ps /\ ~ p MUST G.
   Proof. intros. edestruct (either_ex_nMUST_or_MUST ps G); set_solver. Qed.
 
   Lemma nMust_ex
     (p : P * mb A) (G : gset A) (hcnv : p ⇓ []) 
-    (hnm : ~ MUST p G) :
+    (hnm : ~ p MUST G) :
     exists p', p ⟹ p' /\ forall μ p0, μ ∈ G -> ~ p' ⟹{μ} p0.
   Proof.
     assert (∀ p0 : P * mb A, p0 ∈ wt_set p [] hcnv → p0 ⤓).
@@ -137,7 +137,7 @@ Section must_set_acc_set.
   Lemma nMusts_nMust
   (p : P * mb A) (G : gset A) (hcnv : p ⇓ []) 
   (hnm : ~ MUST__s (wt_set p [] hcnv) G) : 
-  ¬ MUST p G.
+  ¬ p MUST G.
   Proof.
     intro hm. eapply hnm. intros p' mem0%wt_set_spec1.
     intros r hw. eapply hm. eapply wt_push_nil_left; eassumption.
@@ -250,7 +250,7 @@ Section must_set_acc_set.
 
   Theorem equivalence_bhv_acc_mst
   (p : P) (q : Q) :
-  (p, ∅) ≾ (q, ∅) <-> (p, ∅) ≼ (q, ∅).
+  (p, ∅) ≾ₘᵤₛₜ (q, ∅) <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
     split; intros (pre1 & pre2); split; eauto; now eapply equivalence_bhv_acc_mst2.
   Qed.
@@ -274,7 +274,7 @@ Section must_set_acc_set.
   Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ attaboy Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
 
   Corollary equivalence_bhv_mst_ctx
-    (p : P) (q : Q) : (p, ∅) ≾ (q, ∅) <-> @pre_extensional P Q _ _ _ attaboy _ p q.
+    (p : P) (q : Q) : (p, ∅) ≾ₘᵤₛₜ (q, ∅) <-> @pre_extensional P Q _ _ _ attaboy _ p q.
   Proof.
     erewrite pre_extensional_eq.
     rewrite equivalence_bhv_acc_mst.
