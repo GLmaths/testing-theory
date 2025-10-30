@@ -94,13 +94,13 @@ Parameter (value_is_countable : countable.Countable Value). (* only here for the
 (*Some notation to simplify the view of the code*)
 Notation "①" := (gpr_success).
 Notation "𝟘" := (gpr_nil).
-Notation "'rec' p" := (pr_rec p) (at level 50).
 Notation "P + Q" := (gpr_choice P Q).
-Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • P" := (gpr_output c v P) (at level 50).
-Notation "'ν' P" := (pr_res P) (at level 50).
 Notation "c ? P" := (gpr_input c P) (at level 50).
 Notation "'t' • P" := (gpr_tau P) (at level 50).
+Notation "'rec' p" := (pr_rec p) (at level 50).
+Notation "P ‖ Q" := (pr_par P Q) (at level 60).
+Notation "'ν' P" := (pr_res P) (at level 50).
 Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
@@ -626,10 +626,9 @@ Inductive sts : proc -> proc -> Prop :=
 
 #[global] Hint Constructors sts:ccs.
 
-Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
-Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
-
 Hint Rewrite <- cgr_par_assoc : cgr.
+Hint Rewrite <- n_extrusion : cgr.
+Hint Rewrite cgr_scope : cgr.
 
 (* Lemma 1.2.20 from Sangiorgi and Walker *)
 Lemma ReductionShape : forall P Q, sts P Q ->
@@ -639,56 +638,74 @@ Lemma ReductionShape : forall P Q, sts P Q ->
 \/ (exists P1 P0 s E n, (P ≡* νs n ((If E Then P1 Else P0) ‖ s)) /\ (Q ≡* νs n (P1 ‖ s)) /\ (Eval_Eq E = Some true))
 \/ (exists P1 P0 s E n, (P ≡* νs n ((If E Then P1 Else P0) ‖ s)) /\ (Q ≡* νs n (P0 ‖ s)) /\ (Eval_Eq E = Some false))
 ).
-Proof.
+Proof with autorewrite with cgr; reflexivity.
 intros P Q Transition.
 induction Transition.
   - left. exists c, v, p1, p2, g1, g2, 𝟘, 0. split; apply cgr_par_nil_rev.
   - right. left. exists p, g0, 𝟘, 0. split; apply cgr_par_nil_rev.
   - right. right. left. exists p, 𝟘, 0. split; apply cgr_par_nil_rev.
   - right. right. right. left. exists p, q, 𝟘, E, 0.
-    repeat split. apply cgr_par_nil_rev. apply cgr_par_nil_rev.  assumption.
+    repeat split; [apply cgr_par_nil_rev | apply cgr_par_nil_rev | assumption].
   - right. right. right. right. exists p, q, 𝟘, E, 0.
-    repeat split. apply cgr_par_nil_rev. apply cgr_par_nil_rev. assumption.
+    repeat split; [apply cgr_par_nil_rev | apply cgr_par_nil_rev | assumption].
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
-    + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]]. left. intros. simpl in H1, H2.
-      destruct n.
-      * exists c, v, P1, P2, g1,g2, (s ‖ q), 0. simpl. split; [ now finish_zero H1 | now finish_zero H2 ].
-      * exists c, v, P1, P2, g1,g2, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H1 | now finish_Sn H2 ].
-    + destruct IH as (P1 & P2 & s & n & [H1 H2]). right. left. destruct n; intros; simpl in H1, H2.
-      * exists P1, P2, (s ‖ q), 0. split; [ now finish_zero H1 | now finish_zero H2 ].
-      * exists P1, P2, (s ‖ nvars n (q [↑↑])), (S n). split; [ now finish_Sn H1 | now finish_Sn H2 ].
-    + destruct IH as (P1 & s & n & [H1 H2]). right. right. left. destruct n; simpl in H1, H2.
-      * exists P1, (s ‖ q), 0. split; simpl; now rewrite ?H1, ?H2, <- cgr_par_assoc.
+    + destruct IH as (c & v & P1 & P2 & g1 & g2 & s & n & H1 & H2).
+      left. destruct n.
+      * exists c, v, P1, P2, g1,g2, (s ‖ q), 0. split; rewrite ?H1, ?H2...
+      * exists c, v, P1, P2, g1,g2, (s ‖ nvars n (q [↑↑])), (S n).
+        split; simpl; rewrite ?H1, ?H2...
+    + destruct IH as (P1 & P2 & s & n & H1 & H2). right. left. destruct n.
+      * exists P1, P2, (s ‖ q), 0. split; rewrite ?H1, ?H2...
+      * exists P1, P2, (s ‖ nvars n (q [↑↑])), (S n).
+        split; simpl; rewrite ?H1, ?H2...
+    + destruct IH as (P1 & s & n & [H1 H2]). right. right. left. destruct n.
+      * exists P1, (s ‖ q), 0. split; rewrite ?H1, ?H2...
       * exists P1, (s ‖ nvars n (q [↑↑])), (S n).
-        split; [ now finish_Sn H1 | now finish_Sn H2 ].
-    + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).  right. right. right. left. destruct n; simpl in H1, H2.
-      * exists P1, P0, (s ‖ q), E, 0. split; [ now finish_zero H1 | now finish_zero H2 ].
-      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n). repeat split; [ now finish_Sn H1 | now finish_Sn H2 | assumption ].
-    + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]). right. right. right. right. destruct n; simpl in H1, H2.
-      * exists P1, P0, (s ‖ q), E, 0. split; [ now finish_zero H1 | now finish_zero H2 ].
-      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n). repeat split; [ now finish_Sn H1 | now finish_Sn H2 | assumption ].
+        split; simpl; rewrite ?H1, ?H2...
+    + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).
+      right. right. right. left. destruct n.
+      * exists P1, P0, (s ‖ q), E, 0.
+        repeat split; [ rewrite H1 | rewrite H2 | assumption]...
+      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n).
+        repeat split; simpl; [ rewrite H1 | rewrite H2 | assumption ]...
+    + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).
+      right. right. right. right. destruct n; simpl in H1, H2.
+      * exists P1, P0, (s ‖ q), E, 0.
+        repeat split; [ rewrite H1 | rewrite H2 | assumption ]...
+      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n).
+        repeat split; simpl; [ rewrite H1 | rewrite H2 | assumption ]...
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
     + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
-      left. exists c, v, P1, P2, g1, g2, s, n. split; [ now rewrite <- H1 | now rewrite <- H2 ].
+      left. exists c, v, P1, P2, g1, g2, s, n.
+      split; [ now rewrite <- H1 | now rewrite <- H2 ].
     + destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
-      right. left. exists P1, P2, s, n. split; [ now rewrite <- H1 | now rewrite <- H2 ].
+      right. left. exists P1, P2, s, n.
+      split; [ now rewrite <- H1 | now rewrite <- H2 ].
     + destruct IH as [P1 [s [n [H1 H2]]]].
-      right. right. left. exists P1, s, n. split; [ now rewrite <- H1 | now rewrite <- H2 ].
+      right. right. left. exists P1, s, n.
+      split; [ now rewrite <- H1 | now rewrite <- H2 ].
     + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
-      right. right. right. left. exists P1, P0, s, E, n. repeat split; [ now rewrite <- H1 | now rewrite <- H2 | assumption ].
+      right. right. right. left. exists P1, P0, s, E, n.
+      repeat split; now rewrite <- ?H1, <- ?H2.
     + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
-      right. right. right. right. exists P1, P0, s, E, n. repeat split; [ now rewrite <- H1 | now rewrite <- H2 | assumption ].
+      right. right. right. right. exists P1, P0, s, E, n.
+      repeat split; now rewrite <- ?H1, <- ?H2.
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
     + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
-      left. exists c, v, P1, P2, g1, g2, s, (S n). split; [now rewrite H1 | now rewrite H2 ].
+      left. exists c, v, P1, P2, g1, g2, s, (S n).
+      split; [now rewrite H1 | now rewrite H2 ].
     + destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
-      right. left. exists P1, P2, s, (S n). split; [ now rewrite H1 | now rewrite H2 ].
+      right. left. exists P1, P2, s, (S n).
+      split; [ now rewrite H1 | now rewrite H2 ].
     + destruct IH as [P1 [s [n [H1 H2]]]].
-      right. right. left. exists P1, s, (S n). split; [ now rewrite H1 | now rewrite H2 ].
+      right. right. left. exists P1, s, (S n).
+      split; [ now rewrite H1 | now rewrite H2 ].
     + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
-      right. right. right. left. exists P1, P0, s, E, (S n). repeat split; [ now rewrite H1 | now rewrite H2 | assumption ].
+      right. right. right. left. exists P1, P0, s, E, (S n).
+      repeat split; now rewrite ?H1, ?H2.
     + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
-      right. right. right. right. exists P1, P0, s, E, (S n). repeat split; [ now rewrite H1 | now rewrite H2 | assumption ].
+      right. right. right. right. exists P1, P0, s, E, (S n).
+      repeat split; now rewrite ?H1, ?H2.
 Qed.
 
 
@@ -760,7 +777,11 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 
 Ltac not_a_guard := intro hex; inversion hex as [L absurd_hyp]; inversion absurd_hyp.
 
-Lemma TransitionShapeForInput : forall P Q c v, lts P (ActIn (c ⋉ v)) Q -> 
+
+
+Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
+Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
+
 exists P1 G R n, (P ≡* νs n ((c ? P1 + G) ‖ R)) /\ (Q ≡* νs n (P1[v..] ‖ R))
 /\ ((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
 Proof.
