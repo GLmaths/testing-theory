@@ -345,6 +345,189 @@ Proof.
 exact (fun x => eq_refl).
 Qed.
 
+Inductive ExtAction : Type :=
+    act : Data -> Data -> ExtAction.
+
+Lemma congr_act {s0 : Data} {s1 : Data} {t0 : Data} {t1 : Data}
+  (H0 : s0 = t0) (H1 : s1 = t1) : act s0 s1 = act t0 t1.
+Proof.
+exact (eq_trans (eq_trans eq_refl (ap (fun x => act x s1) H0))
+         (ap (fun x => act t0 x) H1)).
+Qed.
+
+Definition subst_ExtAction (sigma_Data : nat -> Data) (s : ExtAction) :
+  ExtAction :=
+  match s with
+  | act s0 s1 => act (subst_Data sigma_Data s0) (subst_Data sigma_Data s1)
+  end.
+
+Definition idSubst_ExtAction (sigma_Data : nat -> Data)
+  (Eq_Data : forall x, sigma_Data x = var_Data x) (s : ExtAction) :
+  subst_ExtAction sigma_Data s = s :=
+  match s with
+  | act s0 s1 =>
+      congr_act (idSubst_Data sigma_Data Eq_Data s0)
+        (idSubst_Data sigma_Data Eq_Data s1)
+  end.
+
+Definition ext_ExtAction (sigma_Data : nat -> Data) (tau_Data : nat -> Data)
+  (Eq_Data : forall x, sigma_Data x = tau_Data x) (s : ExtAction) :
+  subst_ExtAction sigma_Data s = subst_ExtAction tau_Data s :=
+  match s with
+  | act s0 s1 =>
+      congr_act (ext_Data sigma_Data tau_Data Eq_Data s0)
+        (ext_Data sigma_Data tau_Data Eq_Data s1)
+  end.
+
+Definition compSubstSubst_ExtAction (sigma_Data : nat -> Data)
+  (tau_Data : nat -> Data) (theta_Data : nat -> Data)
+  (Eq_Data : forall x,
+             funcomp (subst_Data tau_Data) sigma_Data x = theta_Data x)
+  (s : ExtAction) :
+  subst_ExtAction tau_Data (subst_ExtAction sigma_Data s) =
+  subst_ExtAction theta_Data s :=
+  match s with
+  | act s0 s1 =>
+      congr_act
+        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s0)
+        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s1)
+  end.
+
+Lemma substSubst_ExtAction (sigma_Data : nat -> Data)
+  (tau_Data : nat -> Data) (s : ExtAction) :
+  subst_ExtAction tau_Data (subst_ExtAction sigma_Data s) =
+  subst_ExtAction (funcomp (subst_Data tau_Data) sigma_Data) s.
+Proof.
+exact (compSubstSubst_ExtAction sigma_Data tau_Data _ (fun n => eq_refl) s).
+Qed.
+
+Lemma substSubst_ExtAction_pointwise (sigma_Data : nat -> Data)
+  (tau_Data : nat -> Data) :
+  pointwise_relation _ eq
+    (funcomp (subst_ExtAction tau_Data) (subst_ExtAction sigma_Data))
+    (subst_ExtAction (funcomp (subst_Data tau_Data) sigma_Data)).
+Proof.
+exact (fun s =>
+       compSubstSubst_ExtAction sigma_Data tau_Data _ (fun n => eq_refl) s).
+Qed.
+
+Lemma instId'_ExtAction (s : ExtAction) : subst_ExtAction (var_Data) s = s.
+Proof.
+exact (idSubst_ExtAction (var_Data) (fun n => eq_refl) s).
+Qed.
+
+Lemma instId'_ExtAction_pointwise :
+  pointwise_relation _ eq (subst_ExtAction (var_Data)) id.
+Proof.
+exact (fun s => idSubst_ExtAction (var_Data) (fun n => eq_refl) s).
+Qed.
+
+Inductive Act : Type :=
+  | ActIn : ExtAction -> Act
+  | FreeOut : ExtAction -> Act
+  | BoundOut : ExtAction -> Act
+  | tau_action : Act.
+
+Lemma congr_ActIn {s0 : ExtAction} {t0 : ExtAction} (H0 : s0 = t0) :
+  ActIn s0 = ActIn t0.
+Proof.
+exact (eq_trans eq_refl (ap (fun x => ActIn x) H0)).
+Qed.
+
+Lemma congr_FreeOut {s0 : ExtAction} {t0 : ExtAction} (H0 : s0 = t0) :
+  FreeOut s0 = FreeOut t0.
+Proof.
+exact (eq_trans eq_refl (ap (fun x => FreeOut x) H0)).
+Qed.
+
+Lemma congr_BoundOut {s0 : ExtAction} {t0 : ExtAction} (H0 : s0 = t0) :
+  BoundOut s0 = BoundOut t0.
+Proof.
+exact (eq_trans eq_refl (ap (fun x => BoundOut x) H0)).
+Qed.
+
+Lemma congr_tau_action : tau_action = tau_action.
+Proof.
+exact (eq_refl).
+Qed.
+
+Definition subst_Act (sigma_Data : nat -> Data) (s : Act) : Act :=
+  match s with
+  | ActIn s0 => ActIn (subst_ExtAction sigma_Data s0)
+  | FreeOut s0 => FreeOut (subst_ExtAction sigma_Data s0)
+  | BoundOut s0 => BoundOut (subst_ExtAction sigma_Data s0)
+  | tau_action => tau_action
+  end.
+
+Definition idSubst_Act (sigma_Data : nat -> Data)
+  (Eq_Data : forall x, sigma_Data x = var_Data x) (s : Act) :
+  subst_Act sigma_Data s = s :=
+  match s with
+  | ActIn s0 => congr_ActIn (idSubst_ExtAction sigma_Data Eq_Data s0)
+  | FreeOut s0 => congr_FreeOut (idSubst_ExtAction sigma_Data Eq_Data s0)
+  | BoundOut s0 => congr_BoundOut (idSubst_ExtAction sigma_Data Eq_Data s0)
+  | tau_action => congr_tau_action
+  end.
+
+Definition ext_Act (sigma_Data : nat -> Data) (tau_Data : nat -> Data)
+  (Eq_Data : forall x, sigma_Data x = tau_Data x) (s : Act) :
+  subst_Act sigma_Data s = subst_Act tau_Data s :=
+  match s with
+  | ActIn s0 => congr_ActIn (ext_ExtAction sigma_Data tau_Data Eq_Data s0)
+  | FreeOut s0 =>
+      congr_FreeOut (ext_ExtAction sigma_Data tau_Data Eq_Data s0)
+  | BoundOut s0 =>
+      congr_BoundOut (ext_ExtAction sigma_Data tau_Data Eq_Data s0)
+  | tau_action => congr_tau_action
+  end.
+
+Definition compSubstSubst_Act (sigma_Data : nat -> Data)
+  (tau_Data : nat -> Data) (theta_Data : nat -> Data)
+  (Eq_Data : forall x,
+             funcomp (subst_Data tau_Data) sigma_Data x = theta_Data x)
+  (s : Act) :
+  subst_Act tau_Data (subst_Act sigma_Data s) = subst_Act theta_Data s :=
+  match s with
+  | ActIn s0 =>
+      congr_ActIn
+        (compSubstSubst_ExtAction sigma_Data tau_Data theta_Data Eq_Data s0)
+  | FreeOut s0 =>
+      congr_FreeOut
+        (compSubstSubst_ExtAction sigma_Data tau_Data theta_Data Eq_Data s0)
+  | BoundOut s0 =>
+      congr_BoundOut
+        (compSubstSubst_ExtAction sigma_Data tau_Data theta_Data Eq_Data s0)
+  | tau_action => congr_tau_action
+  end.
+
+Lemma substSubst_Act (sigma_Data : nat -> Data) (tau_Data : nat -> Data)
+  (s : Act) :
+  subst_Act tau_Data (subst_Act sigma_Data s) =
+  subst_Act (funcomp (subst_Data tau_Data) sigma_Data) s.
+Proof.
+exact (compSubstSubst_Act sigma_Data tau_Data _ (fun n => eq_refl) s).
+Qed.
+
+Lemma substSubst_Act_pointwise (sigma_Data : nat -> Data)
+  (tau_Data : nat -> Data) :
+  pointwise_relation _ eq
+    (funcomp (subst_Act tau_Data) (subst_Act sigma_Data))
+    (subst_Act (funcomp (subst_Data tau_Data) sigma_Data)).
+Proof.
+exact (fun s => compSubstSubst_Act sigma_Data tau_Data _ (fun n => eq_refl) s).
+Qed.
+
+Lemma instId'_Act (s : Act) : subst_Act (var_Data) s = s.
+Proof.
+exact (idSubst_Act (var_Data) (fun n => eq_refl) s).
+Qed.
+
+Lemma instId'_Act_pointwise :
+  pointwise_relation _ eq (subst_Act (var_Data)) id.
+Proof.
+exact (fun s => idSubst_Act (var_Data) (fun n => eq_refl) s).
+Qed.
+
 Inductive Equation : Type :=
   | tt : Equation
   | ff : Equation
@@ -1985,6 +2168,12 @@ Class Up_proc X Y :=
 Class Up_Equation X Y :=
     up_Equation : X -> Y.
 
+Class Up_Act X Y :=
+    up_Act : X -> Y.
+
+Class Up_ExtAction X Y :=
+    up_ExtAction : X -> Y.
+
 Class Up_Data X Y :=
     up_Data : X -> Y.
 
@@ -2008,6 +2197,11 @@ Class Up_Data X Y :=
 Instance Subst_Equation : (Subst1 _ _ _) := @subst_Equation.
 
 #[global] Instance Ren_Equation : (Ren1 _ _ _) := @ren_Equation.
+
+#[global] Instance Subst_Act : (Subst1 _ _ _) := @subst_Act.
+
+#[global]
+Instance Subst_ExtAction : (Subst1 _ _ _) := @subst_ExtAction.
 
 #[global] Instance Subst_Data : (Subst1 _ _ _) := @subst_Data.
 
@@ -2075,6 +2269,22 @@ Notation "⟨ xi_Data ⟩" := (ren_Equation xi_Data)
 
 Notation "s ⟨ xi_Data ⟩" := (ren_Equation xi_Data s)
 ( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "[ sigma_Data ]" := (subst_Act sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_Data ]" := (subst_Act sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__Act" := up_Act (only printing)  : subst_scope.
+
+Notation "[ sigma_Data ]" := (subst_ExtAction sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_Data ]" := (subst_ExtAction sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__ExtAction" := up_ExtAction (only printing)  : subst_scope.
 
 Notation "[ sigma_Data ]" := (subst_Data sigma_Data)
 ( at level 1, left associativity, only printing)  : fscope.
@@ -2234,6 +2444,43 @@ exact (fun f_Data g_Data Eq_Data s => extRen_Equation f_Data g_Data Eq_Data s).
 Qed.
 
 #[global]
+Instance subst_Act_morphism :
+ (Proper (respectful (pointwise_relation _ eq) (respectful eq eq))
+    (@subst_Act)).
+Proof.
+exact (fun f_Data g_Data Eq_Data s t Eq_st =>
+       eq_ind s (fun t' => subst_Act f_Data s = subst_Act g_Data t')
+         (ext_Act f_Data g_Data Eq_Data s) t Eq_st).
+Qed.
+
+#[global]
+Instance subst_Act_morphism2 :
+ (Proper (respectful (pointwise_relation _ eq) (pointwise_relation _ eq))
+    (@subst_Act)).
+Proof.
+exact (fun f_Data g_Data Eq_Data s => ext_Act f_Data g_Data Eq_Data s).
+Qed.
+
+#[global]
+Instance subst_ExtAction_morphism :
+ (Proper (respectful (pointwise_relation _ eq) (respectful eq eq))
+    (@subst_ExtAction)).
+Proof.
+exact (fun f_Data g_Data Eq_Data s t Eq_st =>
+       eq_ind s
+         (fun t' => subst_ExtAction f_Data s = subst_ExtAction g_Data t')
+         (ext_ExtAction f_Data g_Data Eq_Data s) t Eq_st).
+Qed.
+
+#[global]
+Instance subst_ExtAction_morphism2 :
+ (Proper (respectful (pointwise_relation _ eq) (pointwise_relation _ eq))
+    (@subst_ExtAction)).
+Proof.
+exact (fun f_Data g_Data Eq_Data s => ext_ExtAction f_Data g_Data Eq_Data s).
+Qed.
+
+#[global]
 Instance subst_Data_morphism :
  (Proper (respectful (pointwise_relation _ eq) (respectful eq eq))
     (@subst_Data)).
@@ -2272,18 +2519,21 @@ Qed.
 Ltac auto_unfold := repeat
                      unfold VarInstance_Data, Var, ids, Ren_Data, Ren1, ren1,
                       Up_Data_Data, Up_Data, up_Data, Subst_Data, Subst1,
-                      subst1, Ren_Equation, Ren1, ren1, Subst_Equation,
-                      Subst1, subst1, VarInstance_proc, Var, ids, Ren_proc,
-                      Ren2, ren2, Ren_gproc, Ren2, ren2, Up_proc_proc,
-                      Up_proc, up_proc, Up_proc_Data, Up_Data, up_Data,
-                      Up_Data_proc, Up_proc, up_proc, Subst_proc, Subst2,
-                      subst2, Subst_gproc, Subst2, subst2.
+                      subst1, Subst_ExtAction, Subst1, subst1, Subst_Act,
+                      Subst1, subst1, Ren_Equation, Ren1, ren1,
+                      Subst_Equation, Subst1, subst1, VarInstance_proc, Var,
+                      ids, Ren_proc, Ren2, ren2, Ren_gproc, Ren2, ren2,
+                      Up_proc_proc, Up_proc, up_proc, Up_proc_Data, Up_Data,
+                      up_Data, Up_Data_proc, Up_proc, up_proc, Subst_proc,
+                      Subst2, subst2, Subst_gproc, Subst2, subst2.
 
 Tactic Notation "auto_unfold" "in" "*" := repeat
                                            unfold VarInstance_Data, Var, ids,
                                             Ren_Data, Ren1, ren1,
                                             Up_Data_Data, Up_Data, up_Data,
                                             Subst_Data, Subst1, subst1,
+                                            Subst_ExtAction, Subst1, subst1,
+                                            Subst_Act, Subst1, subst1,
                                             Ren_Equation, Ren1, ren1,
                                             Subst_Equation, Subst1, subst1,
                                             VarInstance_proc, Var, ids,
@@ -2320,6 +2570,10 @@ Ltac asimpl' := repeat (first
                  | progress setoid_rewrite renSubst_Equation
                  | progress setoid_rewrite renRen'_Equation_pointwise
                  | progress setoid_rewrite renRen_Equation
+                 | progress setoid_rewrite substSubst_Act_pointwise
+                 | progress setoid_rewrite substSubst_Act
+                 | progress setoid_rewrite substSubst_ExtAction_pointwise
+                 | progress setoid_rewrite substSubst_ExtAction
                  | progress setoid_rewrite substSubst_Data_pointwise
                  | progress setoid_rewrite substSubst_Data
                  | progress setoid_rewrite substRen_Data_pointwise
@@ -2344,6 +2598,10 @@ Ltac asimpl' := repeat (first
                  | progress setoid_rewrite rinstId'_Equation
                  | progress setoid_rewrite instId'_Equation_pointwise
                  | progress setoid_rewrite instId'_Equation
+                 | progress setoid_rewrite instId'_Act_pointwise
+                 | progress setoid_rewrite instId'_Act
+                 | progress setoid_rewrite instId'_ExtAction_pointwise
+                 | progress setoid_rewrite instId'_ExtAction
                  | progress setoid_rewrite varLRen'_Data_pointwise
                  | progress setoid_rewrite varLRen'_Data
                  | progress setoid_rewrite varL'_Data_pointwise
@@ -2358,13 +2616,15 @@ Ltac asimpl' := repeat (first
                      up_Data_Data, upRen_Data_Data, up_ren
                  | progress
                     cbn[subst_gproc subst_proc ren_gproc ren_proc
-                       subst_Equation ren_Equation subst_Data ren_Data]
+                       subst_Equation ren_Equation subst_Act subst_ExtAction
+                       subst_Data ren_Data]
                  | progress fsimpl ]).
 
 Ltac asimpl := check_no_evars;
                 repeat
                  unfold VarInstance_Data, Var, ids, Ren_Data, Ren1, ren1,
                   Up_Data_Data, Up_Data, up_Data, Subst_Data, Subst1, subst1,
+                  Subst_ExtAction, Subst1, subst1, Subst_Act, Subst1, subst1,
                   Ren_Equation, Ren1, ren1, Subst_Equation, Subst1, subst1,
                   VarInstance_proc, Var, ids, Ren_proc, Ren2, ren2,
                   Ren_gproc, Ren2, ren2, Up_proc_proc, Up_proc, up_proc,
@@ -2412,6 +2672,10 @@ Import Core.
 #[global] Hint Opaque subst_Equation: rewrite.
 
 #[global] Hint Opaque ren_Equation: rewrite.
+
+#[global] Hint Opaque subst_Act: rewrite.
+
+#[global] Hint Opaque subst_ExtAction: rewrite.
 
 #[global] Hint Opaque subst_Data: rewrite.
 

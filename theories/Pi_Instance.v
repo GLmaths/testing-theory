@@ -34,10 +34,13 @@ Require Import Coq.Wellfounded.Inverse_Image.
 Require Import signatures.pi.
 Require Import signatures.unscoped.
 
-Notation "tm <[ s ]" :=
-  (subst2 s ids tm) (at level 10, right associativity) : subst_scope.
+#[global] Instance Subst_proc_data : (Subst1 _ _ _) := fun x => @subst_proc ids x.
+#[global] Instance Subst_proc_proc : (Subst1 _ _ _) := fun x => @subst_proc x ids.
+
+(* Notation "tm [ s1 ; s2 ]" :=
+  (subst2 s1 s2 tm) (at level 10, right associativity) : subst_scope. *)
 Notation "tm [ s ]" :=
-  (subst2 ids s tm) (at level 10, right associativity) : subst_scope.
+  (subst1 s tm) (at level 10, right associativity) : subst_scope.
 Notation "a ⋅ x" :=
   (ren1 a x) (at level 20, right associativity) : subst_scope.
 Notation "↑" := (shift) : subst_scope.
@@ -69,7 +72,7 @@ Notation "x ⩽ y" := (Inequality x y) (at level 50).
 (* We need to distinguish actions for bound/free input now, so we don't use
    the types in TransitionSystems. *)
 (* Label of action (other than tau), here it is a channel's name with a data transmitted *)
-Inductive ExternalAction := 
+(* Inductive ExternalAction := 
 | act : Data -> Data -> ExternalAction.
 
 Inductive Act :=
@@ -77,9 +80,11 @@ Inductive Act :=
 | FreeOut (a : ExternalAction)
 | BoundOut (a : ExternalAction)
 | τ
-.
+. *)
 
 Notation "c ⋉ v" := (act c v) (at level 50).
+Definition τ := tau_action.
+
 
 Parameter (Eval_Eq : Equation -> (option bool)).
 Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
@@ -465,6 +470,16 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
+Instance SubstDataProper : Proper (eq ==> cgr ==> cgr) Subst_proc_data.
+Proof.
+intros s' s Hs q1 q2 Hq. unfold Subst_proc_data. now rewrite Hq, Hs.
+Qed.
+
+Instance SubstProcProper : Proper (eq ==> cgr ==> cgr) Subst_proc_proc.
+Proof.
+intros s' s Hs q1 q2 Hq. unfold Subst_proc_proc. now rewrite Hq, Hs.
+Qed.
+
 Definition νs n q := Nat.iter n (fun p => ν p) q.
 
 Instance NewsProper : Proper (eq ==> cgr ==> cgr) νs.
@@ -474,7 +489,9 @@ intros n ? <- p1 p2 Heq. induction n.
 - simpl. now apply cgr_res.
 Qed.
 
-Definition nvars (n : nat) (p: proc) := Nat.iter n (fun p => p [↑↑]) p.
+Definition nvars {A : Type} `{_ : Subst1 (nat -> Data) A A} (n : nat) (p: A) :=
+  Nat.iter n (fun p => p [↑↑]) p.
+
 Instance nvars_proper : Proper (eq ==> cgr ==> cgr) nvars.
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
@@ -603,7 +620,7 @@ Inductive sts : proc -> proc -> Prop :=
     sts ((t • p) + g) p
 (* Recursion *)
 | sts_recursion : forall {p}, 
-    sts (rec p) (p <[(rec p)..])
+    sts (rec p) (p [(rec p)..])
 (*If Yes*)
 | sts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     sts (If E Then p Else q) p
@@ -634,7 +651,7 @@ Hint Rewrite cgr_scope : cgr.
 Lemma ReductionShape : forall P Q, sts P Q ->
 ((exists c v P1 P2 G1 G2 s n, (P ≡* νs n (((c ! v • P1) + G1 ‖ ((c ? P2) + G2)) ‖ s)) /\ (Q ≡* νs n ((P1 ‖ (P2[v..])) ‖ s)))
 \/ (exists P1 G1 s n, (P ≡* νs n (((t • P1) + G1) ‖ s)) /\ (Q ≡* νs n (P1 ‖ s)))
-\/ (exists P1 s n, (P ≡* νs n ((rec P1) ‖ s)) /\ (Q ≡* νs n (P1 <[(rec P1)..] ‖ s)))
+\/ (exists P1 s n, (P ≡* νs n ((rec P1) ‖ s)) /\ (Q ≡* νs n (P1 [(rec P1)..] ‖ s)))
 \/ (exists P1 P0 s E n, (P ≡* νs n ((If E Then P1 Else P0) ‖ s)) /\ (Q ≡* νs n (P1 ‖ s)) /\ (Eval_Eq E = Some true))
 \/ (exists P1 P0 s E n, (P ≡* νs n ((If E Then P1 Else P0) ‖ s)) /\ (Q ≡* νs n (P0 ‖ s)) /\ (Eval_Eq E = Some false))
 ).
@@ -721,7 +738,7 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 | lts_tau : forall {P},
     lts (t • P) τ P
 | lts_recursion : forall {P},
-    lts (rec P) τ (P <[(rec P) ..])
+    lts (rec P) τ (P [(rec P) ..])
 | lts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     lts (If E Then p Else q) τ p
 | lts_ifZero : forall {p q E}, Eval_Eq E = Some false -> 
@@ -747,8 +764,9 @@ Inductive lts : proc-> Act -> proc -> Prop :=
     lts p1 (ActIn (c ⋉ v)) p2 ->
     lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
 | lts_res : forall {p q α},
-    lts p α q ->
-    lts (ν p) α (ν q) (* only α needs to shift here!! (both chan and value).
+    lts p (α [↑↑]) q ->
+    lts (ν p) α (ν q)
+                      (* only α needs to shift here!! (both chan and value).
                          as a consequence, the channel in α can never be 0 (giving the condition in paper)
                          as in onther places: we started with an "open" value, that's why we add a flat ν *)
 | lts_open : forall {c p1 p2}, (** remark: we are adding a ν but we are not shifting. this corresponds to the intuition in momigliano&cecilia that free rules handle open terms *)

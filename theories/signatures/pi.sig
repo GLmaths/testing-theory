@@ -5,11 +5,21 @@
 proc  : Type
 gproc : Type
 Data  : Type
+ExtAction : Type
+Act : Type
 
 Value : Type
 Equation : Type
 
 cst : Value -> Data
+
+act : Data -> Data -> ExtAction
+
+ActIn    : ExtAction -> Act
+FreeOut  : ExtAction -> Act
+BoundOut : ExtAction -> Act
+tau_action : Act
+
 
 tt : Equation
 ff : Equation
