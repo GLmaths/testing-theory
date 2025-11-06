@@ -107,6 +107,7 @@ destruct p; intros.
   assert (subst_in_proc k v (NewVar k p2) = p2) as eq2.
   { apply Hp. simpl. auto with arith. }
   rewrite eq1, eq2. auto.
+* simpl. f_equal. eapply Hp. simpl; eauto.
 * destruct g.
   - simpl. auto.
   - simpl. auto.
@@ -200,6 +201,7 @@ destruct p; simpl; intros.
   assert (NewVar (i + S j) (NewVar i p2) = NewVar i (NewVar (i + j) p2)) as eq3.
   { apply Hp. simpl. auto with arith. }
   rewrite eq2, eq3. auto.
+* f_equal. eapply Hp. simpl; eauto.
 * destruct g; simpl.
   - simpl. reflexivity.
   - simpl. reflexivity.

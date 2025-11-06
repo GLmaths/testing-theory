@@ -33,6 +33,8 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import ActTau gLts VCCS_Instance VCCS_Good Bisimulation InputOutputActions 
         CompletenessAS ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
+Parameter O : Value.
+
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
 match μ with 
 | ActIn (c ⋉ d) => ActIn (c ⋉ (NewVar_in_Data k d))
@@ -107,6 +109,7 @@ destruct p; intros.
   assert (subst_in_proc k v (NewVar k p2) = p2) as eq2.
   { apply Hp. simpl. auto with arith. }
   rewrite eq1, eq2. auto.
+* simpl. f_equal. eapply Hp. simpl; eauto.
 * destruct g.
   - simpl. auto.
   - simpl. auto.
@@ -201,6 +204,7 @@ destruct p; simpl; intros.
   assert (NewVar (i + S j) (NewVar i p2) = NewVar i (NewVar (i + j) p2)) as eq3.
   { apply Hp. simpl. auto with arith. }
   rewrite eq2, eq3. auto.
+* f_equal. eapply Hp. simpl; eauto.
 * destruct g; simpl.
   - simpl. reflexivity.
   - simpl. reflexivity.
@@ -394,8 +398,6 @@ Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
 | empty_list_is_always_defined : Well_Defined_Trace ε
 | cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
                                                     -> Well_Defined_Trace (a :: s).
-
-Parameter O : Value.
 
 Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
