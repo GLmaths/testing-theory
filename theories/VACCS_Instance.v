@@ -727,7 +727,7 @@ Lemma cgr_full_if : forall C p p' q q', p ≡* p' -> q ≡* q' ->
   (If C Then p Else q) ≡* (If C Then p' Else q').
 Proof.
 intros.
-apply transitivity with (If C Then p Else q'). apply cgr_if_left. exact H0. 
+transitivity  (If C Then p Else q'). apply cgr_if_left. exact H0. 
 apply cgr_if_right. exact H. 
 Qed.
 
@@ -736,9 +736,9 @@ Qed.
 Lemma cgr_fullchoice M1 M2 M3 M4: g M1 ≡* g M2 -> g M3 ≡* g M4 -> M1 + M3 ≡* M2 + M4.
 Proof.
 intros H H0.
-apply transitivity with (g (M2 + M3)); [apply cgr_choice; exact H|].
-apply transitivity with (g (M3 + M2)).
-apply cgr_choice_com. apply transitivity with (g (M4 + M2)).
+transitivity  (g (M2 + M3)); [apply cgr_choice; exact H|].
+transitivity  (g (M3 + M2)).
+apply cgr_choice_com. transitivity  (g (M4 + M2)).
 apply cgr_choice. exact H0. apply cgr_choice_com.
 Qed.
 
@@ -746,9 +746,9 @@ Qed.
 Lemma cgr_fullpar M1 M2 M3 M4: M1 ≡* M2 -> M3 ≡* M4 -> M1 ‖ M3 ≡* M2 ‖ M4.
 Proof.
 intros H H0.
-apply transitivity with (M2 ‖ M3); [apply cgr_par; exact H|].
-apply transitivity with (M3 ‖ M2); [apply cgr_par_com|].
-apply transitivity with (M4 ‖ M2); [apply cgr_par; exact H0|]. apply cgr_par_com.
+transitivity  (M2 ‖ M3); [apply cgr_par; exact H|].
+transitivity  (M3 ‖ M2); [apply cgr_par_com|].
+transitivity  (M4 ‖ M2); [apply cgr_par; exact H0|]. apply cgr_par_com.
 Qed.
 
 
@@ -842,7 +842,7 @@ Proof.
 intros congruence_hyp.
 induction congruence_hyp as [p p' base_case | p p' p'' transitivity_case]. 
   + constructor. now eapply cgr_step_subst2.
-  + apply transitivity with (pr_subst x p' q).
+  + transitivity  (pr_subst x p' q).
     * assumption.
     * assumption.
 Qed.
@@ -891,9 +891,8 @@ Inductive sts : proc -> proc -> Prop :=
 .
 
 #[global] Hint Constructors sts:ccs.
-
-
-(* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
+(* 
+(* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *) *)
 Lemma ReductionShape : forall P Q, sts P Q ->
 ((exists c v P2 G2 S, ((P ≡* ((c ! v • 𝟘) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((𝟘 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
@@ -902,6 +901,7 @@ Lemma ReductionShape : forall P Q, sts P Q ->
 \/ (exists P1 P0 S E, (P ≡* ((If E Then P1 Else P0) ‖ S)) /\ (Q ≡* P0 ‖ S) /\ (Eval_Eq E = Some false))
 ).
 Proof with auto with cgr.
+
 intros P Q Transition.
 induction Transition.
   - left. exists c, v, p2, g2, (𝟘).
@@ -912,22 +912,22 @@ induction Transition.
   - right. right. right. right. exists p, q, 𝟘, E...
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
     * decompose record IH. left. exists x, x0, x1, x2, (x3 ‖ q). split.
-        ** apply transitivity with ((((x ! x0 • 𝟘) ‖ ((x ? x1) + x2)) ‖ x3) ‖ q)...
-        ** apply transitivity with (((𝟘 ‖ x1^x0) ‖ x3) ‖ q)...
+        ** transitivity ((((x ! x0 • 𝟘) ‖ ((x ? x1) + x2)) ‖ x3) ‖ q)...
+        ** transitivity  (((𝟘 ‖ x1^x0) ‖ x3) ‖ q)...
     * decompose record IH. right. left. exists x, x0, (x1 ‖ q). split.
-        ** apply transitivity with (((t • x + x0) ‖ x1) ‖ q)...
-        ** apply transitivity with (x ‖ (x1) ‖ q)...
+        ** transitivity  (((t • x + x0) ‖ x1) ‖ q)...
+        ** transitivity  (x ‖ (x1) ‖ q)...
     * decompose record IH. right. right. left. exists x, x0, (x1 ‖ q). split.
-        ** apply transitivity with ((rec x • x0 ‖ x1) ‖ q)...
-        ** apply transitivity with ((pr_subst x x0 (rec x • x0) ‖ x1) ‖ q)...
+        ** transitivity  ((rec x • x0 ‖ x1) ‖ q)...
+        ** transitivity  ((pr_subst x x0 (rec x • x0) ‖ x1) ‖ q)...
     * destruct IH. destruct H. destruct H. destruct H. destruct H. destruct H0.
       right. right. right. left. exists x, x0, (x1 ‖ q), x2. split.
-        ** apply transitivity with (((If x2 Then x Else x0) ‖ x1) ‖ q)...
-        ** split... apply transitivity with ((x ‖ x1) ‖ q)...
+        ** transitivity  (((If x2 Then x Else x0) ‖ x1) ‖ q)...
+        ** split... transitivity  ((x ‖ x1) ‖ q)...
     * destruct IH. destruct H. destruct H. destruct H. destruct H. destruct H0.
       right. right. right. right. exists x, x0, (x1 ‖ q), x2. split.
-        ** apply transitivity with (((If x2 Then x Else x0) ‖ x1) ‖ q)...
-        ** split... apply transitivity with ((x0 ‖ x1) ‖ q)...
+        ** transitivity  (((If x2 Then x Else x0) ‖ x1) ‖ q)...
+        ** split... transitivity  ((x0 ‖ x1) ‖ q)...
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].  
     * decompose record IH.
       left. exists x, x0, x1, x2, x3. split.
@@ -976,7 +976,7 @@ intros P Q c v Transition.
     apply cgr_trans with ((c ? x) + (x0 + p2))...
     apply cgr_trans with (((c ? x) + x0) + p2)...
     apply cgr_choice.
-    apply transitivity with (((c ? x) + x0) ‖ 𝟘)...
+    transitivity  (((c ? x) + x0) ‖ 𝟘)...
   + assert (x1 = 𝟘) by (apply H3; now exists p1). now subst.
 - destruct (IHTransition c v). reflexivity. decompose record H.
   exists x, (x0 + p1), 𝟘.
@@ -1023,9 +1023,9 @@ intros.
 assert ((exists R, (P ≡* ((c ! v • 𝟘) ‖ R) /\ (Q ≡* (𝟘 ‖ R))))) as previous_result.
 apply TransitionShapeForOutput. assumption.
 decompose record previous_result.
-apply transitivity with (((c ! v • 𝟘) ‖ x) ‖ 𝟘); auto with cgr.
-apply transitivity with ((c ! v • 𝟘) ‖ x); eauto with cgr.
-apply transitivity with ((c ! v • 𝟘) ‖ (x ‖ 𝟘)). auto with cgr.
+transitivity  (((c ! v • 𝟘) ‖ x) ‖ 𝟘); auto with cgr.
+transitivity  ((c ! v • 𝟘) ‖ x); eauto with cgr.
+transitivity  ((c ! v • 𝟘) ‖ (x ‖ 𝟘)). auto with cgr.
 apply cgr_fullpar; eauto with cgr.
 Qed. 
 
@@ -1174,7 +1174,7 @@ destruct H as [IH|[IH|[IH|[IH |IH]]]].
       by (exists (((x ! x0 • 𝟘) ‖ ((x ? x1) + x2)) ‖ x3); auto with cgr).
     destruct (Congruence_Respects_Transition _ _ _ Hsc) as [x4 [? ?]].
     exists x4. split...
-    apply transitivity with ((𝟘 ‖ x1^x0) ‖ x3)...
+    transitivity  ((𝟘 ‖ x1^x0) ‖ x3)...
 
 (* Second case τ by Tau Action *)
 
@@ -1184,7 +1184,7 @@ destruct H as [IH|[IH|[IH|[IH |IH]]]].
   assert (Hsc : sc_then_lts P τ (x ‖ x1))
     by (exists ((t • x + x0) ‖ x1); split; auto with cgr).
   destruct (Congruence_Respects_Transition _ _ _ Hsc) as [x2 [? ?]].
-  exists x2. split... apply transitivity with (x ‖ x1)...
+  exists x2. split... transitivity  (x ‖ x1)...
 
 (* Third case τ by recursion *)
 
@@ -1197,7 +1197,7 @@ destruct H as [IH|[IH|[IH|[IH |IH]]]].
     apply Congruence_Respects_Transition. assumption.
   destruct H3. destruct H3. 
   exists x2. split. assumption.
-  apply transitivity with (pr_subst x x0 (rec x • x0) ‖ x1)...
+  transitivity  (pr_subst x x0 (rec x • x0) ‖ x1)...
 
 (* Fourth case τ by If ONE *)
 
@@ -1209,7 +1209,7 @@ destruct H as [IH|[IH|[IH|[IH |IH]]]].
     constructor. constructor. assumption. 
   assert (lts_then_sc P τ (x ‖ x1)). apply Congruence_Respects_Transition. 
   exists ((If x2 Then x Else x0) ‖ x1)... destruct H4. destruct H4.
-  exists x3. split. assumption. apply transitivity with (x ‖ x1)...
+  exists x3. split. assumption. transitivity  (x ‖ x1)...
 
 (* Fifth case τ by If ZERO *)
 
@@ -1219,7 +1219,7 @@ destruct H as [IH|[IH|[IH|[IH |IH]]]].
   assert (sc_then_lts P τ (x0 ‖ x1)). exists ((If x2 Then x Else x0) ‖ x1)...
   assert (lts_then_sc P τ (x0 ‖ x1)). apply Congruence_Respects_Transition. 
   exists ((If x2 Then x Else x0) ‖ x1)... destruct H4. destruct H4.
-  exists x3. split... apply transitivity with (x0 ‖ x1)...
+  exists x3. split... transitivity  (x0 ‖ x1)...
 Qed.
 
 
@@ -1227,31 +1227,31 @@ Qed.
 Lemma InversionParallele : forall P Q R S, (P ‖ Q) ‖ (R ‖ S) ≡* (P ‖ R) ‖ (Q ‖ S) . 
 Proof. 
 intros.
-apply transitivity with (((P ‖ Q) ‖ R) ‖ S). apply cgr_par_assoc_rev.
-apply transitivity with ((P ‖ (Q ‖ R)) ‖ S). apply cgr_par. apply cgr_par_assoc.
-apply transitivity with (((Q ‖ R) ‖ P) ‖ S). apply cgr_par. apply cgr_par_com.
-apply transitivity with ((Q ‖ R) ‖ (P ‖ S)). apply cgr_par_assoc.
-apply transitivity with ((R ‖ Q) ‖ (P ‖ S)). apply cgr_par. apply cgr_par_com.
-apply transitivity with (((R ‖ Q) ‖ P) ‖ S). apply cgr_par_assoc_rev.
-apply transitivity with ((P ‖ (R ‖ Q)) ‖ S). apply cgr_par. apply cgr_par_com.
-apply transitivity with (((P ‖ R) ‖ Q) ‖ S). apply cgr_par. apply cgr_par_assoc_rev.
-apply transitivity with ((P ‖ R) ‖ (Q ‖ S)). apply cgr_par_assoc.
+transitivity  (((P ‖ Q) ‖ R) ‖ S). apply cgr_par_assoc_rev.
+transitivity  ((P ‖ (Q ‖ R)) ‖ S). apply cgr_par. apply cgr_par_assoc.
+transitivity  (((Q ‖ R) ‖ P) ‖ S). apply cgr_par. apply cgr_par_com.
+transitivity  ((Q ‖ R) ‖ (P ‖ S)). apply cgr_par_assoc.
+transitivity  ((R ‖ Q) ‖ (P ‖ S)). apply cgr_par. apply cgr_par_com.
+transitivity  (((R ‖ Q) ‖ P) ‖ S). apply cgr_par_assoc_rev.
+transitivity  ((P ‖ (R ‖ Q)) ‖ S). apply cgr_par. apply cgr_par_com.
+transitivity  (((P ‖ R) ‖ Q) ‖ S). apply cgr_par. apply cgr_par_assoc_rev.
+transitivity  ((P ‖ R) ‖ (Q ‖ S)). apply cgr_par_assoc.
 reflexivity. 
 Qed.
 Lemma InversionParallele2 : forall P Q R S, (P ‖ Q) ‖ (R ‖ S) ≡* (R ‖ P) ‖ (S ‖ Q).
 Proof.
 intros. 
-apply transitivity with ((P ‖ R) ‖ (Q ‖ S)). apply InversionParallele.
-apply transitivity with ((R ‖ P) ‖ (Q ‖ S)). apply cgr_par. apply cgr_par_com.
-apply transitivity with ((Q ‖ S) ‖ (R ‖ P)). apply cgr_par_com.
-apply transitivity with ((S ‖ Q) ‖ (R ‖ P)). apply cgr_par. apply cgr_par_com.
+transitivity  ((P ‖ R) ‖ (Q ‖ S)). apply InversionParallele.
+transitivity  ((R ‖ P) ‖ (Q ‖ S)). apply cgr_par. apply cgr_par_com.
+transitivity  ((Q ‖ S) ‖ (R ‖ P)). apply cgr_par_com.
+transitivity  ((S ‖ Q) ‖ (R ‖ P)). apply cgr_par. apply cgr_par_com.
 apply cgr_par_com.
 Qed.
 Lemma InversionParallele3 : forall P Q R S, (P ‖ Q) ‖ (R ‖ S) ≡* (R ‖ Q) ‖ (P ‖ S).
 Proof.
 intros.
-apply transitivity with ((Q ‖ P) ‖ (R ‖ S)); auto with cgr.
-apply transitivity with ((Q ‖ R) ‖ (P ‖ S)); auto with cgr.
+transitivity  ((Q ‖ P) ‖ (R ‖ S)); auto with cgr.
+transitivity  ((Q ‖ R) ‖ (P ‖ S)); auto with cgr.
 apply InversionParallele; auto with cgr.
 Qed.
 
@@ -1284,19 +1284,19 @@ dependent induction Transition.
       * apply cgr_fullpar; tauto.
       * apply InversionParallele.
     + instantiate (1 := (𝟘 ‖ (x0^v)) ‖ (x ‖ x2)). apply sts_par, sts_com.
-    + apply transitivity with ((𝟘 ‖ x) ‖ ((x0^v) ‖ x2)).
+    + transitivity  ((𝟘 ‖ x) ‖ ((x0^v) ‖ x2)).
       * apply InversionParallele.
       * apply cgr_fullpar; now symmetry.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption. decompose record H.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H2.
     eapply sts_cong. instantiate (1:=((c ! v • 𝟘) ‖ ((c ? x0) + x1)) ‖ (x ‖ x2)).
-    apply transitivity with (p1 ‖ q1). apply cgr_par_com.
-    apply transitivity with (((c ! v • 𝟘) ‖ x) ‖ (((c ? x0) + x1) ‖ x2)).
+    transitivity  (p1 ‖ q1). apply cgr_par_com.
+    transitivity  (((c ! v • 𝟘) ‖ x) ‖ (((c ? x0) + x1) ‖ x2)).
     apply cgr_fullpar. assumption. assumption. apply InversionParallele. 
     instantiate (1 := (𝟘 ‖ (x0^v)) ‖ (x ‖ x2)). apply sts_par. apply sts_com.
-    apply transitivity with ((𝟘 ‖ x) ‖ ((x0^v) ‖ x2)).
+    transitivity  ((𝟘 ‖ x) ‖ ((x0^v) ‖ x2)).
     + apply InversionParallele.
-    + apply transitivity with (p2 ‖ q2). apply cgr_fullpar. 
+    + transitivity  (p2 ‖ q2). apply cgr_fullpar. 
     symmetry. assumption. symmetry. assumption. apply cgr_par_com.
 - apply sts_par. apply IHTransition. reflexivity.
 - eapply sts_cong.
@@ -1307,7 +1307,7 @@ dependent induction Transition.
   + split; trivial. now exists p1.
   + eapply sts_cong.
     * instantiate (1:= ((t • x) + (x0 + p2))).
-      apply transitivity with (g (((t • x) + x0) + p2)).
+      transitivity  (g (((t • x) + x0) + p2)).
       -- now apply cgr_choice.
       -- apply cgr_choice_assoc.
     * instantiate (1:= x). apply sts_tau.
@@ -1316,8 +1316,8 @@ dependent induction Transition.
   + split; trivial. now exists p2.
   + eapply sts_cong.
     * instantiate (1:= ((t • x) + (x0 + p1))).
-      apply transitivity with (g (((t • x) + x0 ) + p1))...
-      apply transitivity with (g (p2 + p1))...
+      transitivity  (g (((t • x) + x0 ) + p1))...
+      transitivity  (g (p2 + p1))...
     * instantiate (1:= x). apply sts_tau.
     * symmetry. assumption.
 Qed.
@@ -1532,7 +1532,7 @@ dependent induction d; intros.
 - simpl. constructor.
 - simpl. destruct (decide (i < S n)).
   * constructor. simpl. dependent destruction H. auto with arith.
-  * constructor. dependent destruction H. apply transitivity with i.
+  * constructor. dependent destruction H. transitivity  i.
     apply Nat.nlt_succ_r. assumption.
     auto with arith. 
 Qed.
@@ -1771,15 +1771,15 @@ revert H0. revert p3. dependent induction H.
   * apply cgr_fullpar. eapply IHlts. eauto. eauto. assumption. eauto with cgr.
   * apply TransitionShapeForOutputSimplified in H.
     apply TransitionShapeForOutputSimplified in H6.
-    apply transitivity with (p2 ‖ ((c ! v • 𝟘) ‖ q2)). eauto with cgr. 
-    apply transitivity with ((p2 ‖ (c ! v • 𝟘)) ‖ q2). eauto with cgr. apply cgr_par.
+    transitivity  (p2 ‖ ((c ! v • 𝟘) ‖ q2)). eauto with cgr. 
+    transitivity  ((p2 ‖ (c ! v • 𝟘)) ‖ q2). eauto with cgr. apply cgr_par.
     eauto with cgr.
 - intros. inversion H0 ; subst.
   * apply TransitionShapeForOutputSimplified in H.
     apply TransitionShapeForOutputSimplified in H6.
-    apply transitivity with (((c ! v • 𝟘) ‖ p2) ‖ q2). eauto with cgr.
-    apply transitivity with (( p2 ‖ (c ! v • 𝟘)) ‖ q2). eauto with cgr.
-    apply transitivity with ( p2 ‖ ((c ! v • 𝟘) ‖ q2)). eauto with cgr.
+    transitivity  (((c ! v • 𝟘) ‖ p2) ‖ q2). eauto with cgr.
+    transitivity  (( p2 ‖ (c ! v • 𝟘)) ‖ q2). eauto with cgr.
+    transitivity  ( p2 ‖ ((c ! v • 𝟘) ‖ q2)). eauto with cgr.
     apply cgr_fullpar. reflexivity. eauto with cgr.
   * apply cgr_fullpar. reflexivity. eapply IHlts. eauto. eauto. assumption.
 - intros. exfalso. eapply guarded_does_no_output. eassumption.
@@ -1827,8 +1827,8 @@ intros. assert (lts p1 (ActOut a) q1). assumption. apply OutputWithValue in H2.
 decompose record H2. subst. rename x into c. rename x0 into v.
 eapply TransitionShapeForOutputSimplified in H0.
 eapply TransitionShapeForOutputSimplified in H.
-apply transitivity with ((c ! v • 𝟘) ‖ q1). assumption.
-apply transitivity with ((c ! v • 𝟘) ‖ q2). eauto with cgr. eauto with cgr.
+transitivity  ((c ! v • 𝟘) ‖ q1). assumption.
+transitivity  ((c ! v • 𝟘) ‖ q2). eauto with cgr. eauto with cgr.
 Qed. 
 
 Lemma Data_dec : forall (x y : Data) , {x = y} + {x <> y}.
