@@ -108,6 +108,9 @@ destruct p; intros.
   { apply Hp. simpl. auto with arith. }
   rewrite eq1, eq2. auto.
 * simpl. rewrite All_According_To_Data. reflexivity.
+* simpl. assert (subst_in_proc k v (NewVar k p) = p).
+  { apply Hp. simpl. auto with arith. }
+  rewrite H. auto.
 * destruct g.
   - simpl. auto.
   - simpl. auto.
@@ -198,6 +201,9 @@ destruct p; simpl; intros.
   { apply Hp. simpl. auto with arith. }
   rewrite eq2, eq3. auto.
 * rewrite New_Var_And_NewVar_in_Data. eauto.
+* assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)) as eq.
+  { apply Hp. simpl. auto with arith. }
+  rewrite eq. auto.
 * destruct g; simpl.
   - simpl. reflexivity.
   - simpl. reflexivity.

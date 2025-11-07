@@ -118,12 +118,6 @@ Arguments  Equality {_} _ _.
 
 Notation "x == y" := (Equality x y) (at level 50).
 
-(* Definition Eval_Eq (E : Equation Data) : option bool :=
-match E with
-| cst v0 == cst v1 => if (decide (v0 = v1)) then (Some true)
-                                           else (Some false)
-| _ => None
-end. *)
 
 Definition Eval_Eq (E : Equation Data) : option bool :=
 match E with
@@ -353,32 +347,6 @@ with gpr_subst id p q {struct p} := match p with
 | t • p => t • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
-
-(* (* Definition for Well Abstracted bvariable *)
-Inductive ChannelData_free_on : nat -> ChannelData -> Prop :=
-| bvar_is_free : forall k i, k ≠ i -> ChannelData_free_on k (bvarC i)
-| cst_is_always_defined : forall k c, ChannelData_free_on k (cstC c).
-
-Inductive Proc_free_on : nat -> proc -> Prop :=
-| par_free_on : forall k p1 p2, Proc_free_on k p1 -> Proc_free_on k p2 
-                -> Proc_free_on k (p1 ‖ p2)
-| res_free_on : forall k p, Proc_free_on (S k) p -> Proc_free_on k (ν p)
-| var_free_on : forall k i, Proc_free_on k (pr_var i)
-| rec_free_on : forall k x p1, Proc_free_on k p1 -> Proc_free_on k (rec x • p1)
-| if_then_else_free_on : forall k p1 p2 C, Proc_free_on k p1 -> Proc_free_on k p2 
-                        -> Proc_free_on k (If C Then p1 Else p2)
-| success_free_on : forall k, Proc_free_on k (①)
-| nil_free_on : forall k, Proc_free_on k (𝟘)
-| input_free_on : forall k c p, ChannelData_free_on k c -> Proc_free_on k p
-                  -> Proc_free_on k (c ? x • p)
-| output_free_on : forall k c v p, ChannelData_free_on k c -> Proc_free_on k p
-                    -> Proc_free_on k (c ! v • p)
-| tau_free_on : forall k p, Proc_free_on k p -> Proc_free_on k (t • p)
-| choice_free_on : forall k p1 p2, Proc_free_on k (g p1) -> Proc_free_on k (g p2) 
-              ->  Proc_free_on k (p1 + p2).
-
-#[global] Hint Constructors Proc_free_on:ccs. *)
-
 
 
 (* The Labelled Transition System (LTS-transition) *)
@@ -1561,10 +1529,6 @@ Proof.
       + apply cgr_trans with p2. exact H. exact H1.
       + apply cgr_trans with q2. apply cgr_symm. apply H0. apply H3.
 Qed.
-
-(* Lemma Proc_free_respects_cgr k P Q : P ≡* Q -> Proc_free_on k P -> Proc_free_on k Q.
-Proof.
-Admitted. *)
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
@@ -4387,7 +4351,7 @@ Fixpoint mPreCoAct_of_g (k : nat) (gp : gproc) : gmultiset PreAct :=
   | 𝟘 => ∅
   | (cstC c) ? x • p => {[+ Outputs_on (cstC c) +]}
   | (bvarC i) ? x • p => if decide(k < (S i)) then {[+ Outputs_on (bvarC (i - k)) +]}
-                                            else ∅
+                                              else ∅
   | (cstC c) ! v • p => {[+ Inputs_on (cstC c) +]}
   | (bvarC i) ! v • p => if decide(k < (S i)) then {[+ Inputs_on (bvarC (i - k)) +]}
                                               else ∅

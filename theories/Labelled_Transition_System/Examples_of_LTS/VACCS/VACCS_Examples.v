@@ -162,10 +162,10 @@ Proof.
         -- exists ((c ! 0 • 𝟘) ^ v ▷ b2). eapply ParRight; eauto.
         -- inversion l1; subst. symmetry in eq. eapply simplify_match_output in eq as eq'; subst.
            assert (e' ⟶[ActIn (c ⋉ O)] b2) as l'2; eauto.
-           eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & equiv1 & equiv2 & eq1).
-           edestruct (eq_spec e') as (e'1 & Tr'1 & equiv'1). 
-           { exists ((gpr_input c p1 + g1) ‖ r1). split; eauto. eapply lts_parL.
-             eapply lts_choiceL. eapply lts_input. }
+           eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & n & equiv1 & equiv2 & eq1).
+           edestruct (Congruence_Respects_Transition e') as (e'1 & Tr'1 & equiv'1). 
+           { exists (Ѵ n (((gpr_input c p1 + g1) ‖ r1))). split; eauto. eapply lts_res_ext_n. eapply lts_parL.
+             eapply lts_choiceL. instantiate (2 := ActIn (c ⋉ v)). simpl. eapply lts_input. }
            simpl. exists (g 𝟘 , e'1). eapply ParSync.
            ++ symmetry in H2. exact H2.
            ++ eapply lts_output.
