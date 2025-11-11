@@ -32,10 +32,10 @@ From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransit
 (********************************************* Definition of May *****************************************)
 
 Inductive may_sts 
-  `{Sts (P * T), attaboy : T -> Prop}
+  `{Sts (P * T), outcome : T -> Prop}
   (p : P) (t : T) : Prop :=
-| m_sts_now : attaboy t -> may_sts p t
-| m_sts_step p' t' (nh : ¬ attaboy t) (nst : sts_step (p, t) (p', t')) (l : may_sts p' t') : may_sts p t
+| m_sts_now : outcome t -> may_sts p t
+| m_sts_step p' t' (nh : ¬ outcome t) (nst : sts_step (p, t) (p', t')) (l : may_sts p' t') : may_sts p t
 .
 
 Global Hint Constructors may_sts:mdb.
@@ -44,15 +44,15 @@ Global Hint Constructors may_sts:mdb.
 
 Inductive may `{
     gLtsP : @gLts P A H, 
-    gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A attaboy} 
+    gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome} 
 
     `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
     (p : P) (t : T) : Prop :=
-| may_now : attaboy t -> may p t
-| may_server_step p' (nh : ¬ attaboy t) (pt : p ⟶ p') (hmay : may p' t) : may p t
-| may_client_step t' (nh : ¬ attaboy t) (et : t ⟶ t') (hmay : may p t') : may p t
-| may_com_step p' μ1 t' μ2 (nh : ¬ attaboy t) (inter : parallel_inter μ1 μ2) 
+| may_now : outcome t -> may p t
+| may_server_step p' (nh : ¬ outcome t) (pt : p ⟶ p') (hmay : may p' t) : may p t
+| may_client_step t' (nh : ¬ outcome t) (et : t ⟶ t') (hmay : may p t') : may p t
+| may_com_step p' μ1 t' μ2 (nh : ¬ outcome t) (inter : parallel_inter μ1 μ2) 
           (trS : p ⟶[μ1] p') (trC : t ⟶[μ2] t') (hmay : may p' t') : may p t.
 
 Global Hint Constructors may:mdb.
@@ -63,12 +63,12 @@ Notation "p 'may_pass' t" := (may p t) (at level 70).
 
 Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A attaboy}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
   (p : P) (t : T) :
-  @may_sts P T _ attaboy p t <-> may p t.
+  @may_sts P T _ outcome p t <-> may p t.
 Proof.
   split.
   - intro hm. dependent induction hm; eauto with mdb.
@@ -87,7 +87,7 @@ Qed.
 Definition ctx_may_pre `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A attaboy}
+  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
 
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} 
   `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
@@ -103,7 +103,7 @@ Notation "p ⊑ₘₐᵧ q" := (ctx_may_pre p q) (at level 70).
 
 Lemma may_eq_client `{
   gLtsP : gLts P A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A attaboy}
+  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
 
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
 
@@ -112,21 +112,21 @@ Proof.
   intros p q r heq hm.
   revert r heq.
   dependent induction hm; intros.
-  - apply may_now. eapply attaboy_preserved_by_eq; eauto.
-  - eapply may_server_step; eauto. eapply unattaboy_preserved_by_eq; eauto. symmetry. exact heq.
+  - apply may_now. eapply outcome_preserved_by_eq; eauto.
+  - eapply may_server_step; eauto. eapply unoutcome_preserved_by_eq; eauto. symmetry. exact heq.
   - edestruct (eq_spec r t') as (r' & tr & eq).
     { exists t. split; eauto. now symmetry. }
-    eapply may_client_step; eauto. eapply unattaboy_preserved_by_eq; eauto. symmetry. exact heq.
+    eapply may_client_step; eauto. eapply unoutcome_preserved_by_eq; eauto. symmetry. exact heq.
     eapply IHhm. now symmetry.
   - edestruct (eq_spec r t') as (r' & tr & eq).
     { exists t. split; eauto. now symmetry. }
-    eapply may_com_step; eauto. eapply unattaboy_preserved_by_eq; eauto. symmetry. exact heq.
+    eapply may_com_step; eauto. eapply unoutcome_preserved_by_eq; eauto. symmetry. exact heq.
     eapply IHhm. now symmetry.
 Qed.
 
 Lemma may_eq_server `{
   gLtsP : gLts P A, ! gLtsEq P A,
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A attaboy} 
+  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome} 
 
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
 
@@ -147,15 +147,15 @@ Proof.
     eapply IHhm. now symmetry.
 Qed.
 
-Lemma may_not_stable_or_attaboy `{
+Lemma may_not_stable_or_outcome `{
   gLtsP : gLts P A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A attaboy}
+  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
 
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (p : P) (t : T) : p may_pass t -> attaboy t \/ ¬ t ↛ \/ (exists μ, ¬ t ↛[μ]). 
+  (p : P) (t : T) : p may_pass t -> outcome t \/ ¬ t ↛ \/ (exists μ, ¬ t ↛[μ]). 
 Proof. 
-  intros hm. destruct (decide (attaboy t)) as [happy | not_happy].
+  intros hm. destruct (decide (outcome t)) as [happy | not_happy].
   + now left. 
   + right. admit.
 Admitted.
@@ -163,7 +163,7 @@ Admitted.
 Lemma ctx_may_pre_not `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A attaboy}
+  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} 
   `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
   (p : P) (q : Q) (t : T) :

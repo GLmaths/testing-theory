@@ -50,7 +50,7 @@ Qed.
 
 Lemma must_non_blocking_action_swap_l_fw_eq `{
   @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -62,13 +62,13 @@ Proof.
   induction hm as [p e happy|p1 e2 nh ex Hpt IHpt Het IHet Hcom IHcom]; intros e1 p2 nb lp le.
   - eapply m_now.
     destruct le as (e' & hle' & heqe').
-    eapply attaboy_preserved_by_lts_non_blocking_action_converse. eassumption. eassumption.
-    eapply attaboy_preserved_by_eq. eapply happy. now symmetry.
+    eapply outcome_preserved_by_lts_non_blocking_action_converse. eassumption. eassumption.
+    eapply outcome_preserved_by_eq. eapply happy. now symmetry.
   - eapply m_step.
     + intro h.
       destruct le as (e' & hle' & heqe').
-      eapply nh, (attaboy_preserved_by_eq e' e2); eauto.
-      eapply attaboy_preserved_by_lts_non_blocking_action; eauto.
+      eapply nh, (outcome_preserved_by_eq e' e2); eauto.
+      eapply outcome_preserved_by_lts_non_blocking_action; eauto.
     + destruct ex as ((p' & e') & l).
       inversion l; subst.
       destruct lp as (p0 & hlp0 & heqp0).
@@ -157,7 +157,7 @@ Qed.
 
 Lemma must_non_blocking_action_swap_r_fw_eq`{
   @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -169,15 +169,15 @@ Proof.
   induction hm as [|p2 e1 nh ex Hpt IHpt Het IHet Hcom IHcom]; intros e2 p1 nb le lp.
   - eapply m_now.
     destruct le as (e' & hle' & heqe').
-    eapply attaboy_preserved_by_eq.
-    eapply attaboy_preserved_by_lts_non_blocking_action; eassumption.
+    eapply outcome_preserved_by_eq.
+    eapply outcome_preserved_by_lts_non_blocking_action; eassumption.
     eassumption.
   - destruct lp as (p0 & hlp0 & heqp0).
     destruct le as (e0 & hle0 & heqe0).
     eapply m_step.
     + intro h. eapply nh.
-      eapply attaboy_preserved_by_lts_non_blocking_action_converse; eauto.
-      eapply attaboy_preserved_by_eq. eapply h. now symmetry.
+      eapply outcome_preserved_by_lts_non_blocking_action_converse; eauto.
+      eapply outcome_preserved_by_eq. eapply h. now symmetry.
     + destruct ex as ((p' & e') & l).
       inversion l; subst.
       ++ edestruct (eq_spec p0 p' τ) as (p3 & hlp3 & heqp3).
@@ -202,9 +202,9 @@ Proof.
                  assert (hm : must p' e0) by eauto with mdb.
                  eapply (must_eq_client p' e0 e2) in hm.
                  eapply (must_eq_server p' p1 e2) in hm.
-                 assert (¬ attaboy e2).
-                 intro hh. eapply nh. eapply attaboy_preserved_by_lts_non_blocking_action_converse.
-                 eassumption. eassumption. eapply attaboy_preserved_by_eq. eassumption.
+                 assert (¬ outcome e2).
+                 intro hh. eapply nh. eapply outcome_preserved_by_lts_non_blocking_action_converse.
+                 eassumption. eassumption. eapply outcome_preserved_by_eq. eassumption.
                  etrans. symmetry. eassumption. eassumption.
                  inversion hm; subst. contradiction. eassumption.
                  etrans. symmetry. eassumption. now symmetry. eassumption.
@@ -274,7 +274,7 @@ Qed.
 
 Lemma must_non_blocking_action_swap_l_fw `{
   @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -287,7 +287,7 @@ Qed.
 
 Lemma must_non_blocking_action_swap_r_fw `{
   @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -301,7 +301,7 @@ Qed.
 
 Lemma nf_must_fw_l `{
   @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE Y V, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE Y V, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
@@ -330,7 +330,7 @@ Qed.
 
 Lemma nf_must_fw_r `{
   @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A ,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
@@ -344,7 +344,7 @@ Proof.
   - rewrite gmultiset_disj_union_left_id. eapply must_eq_client; eauto.
   - assert (must (q, {[+ η +]} ⊎ m2) p2).
     -- dependent induction hm; subst. 
-      + eapply m_now. eapply attaboy_preserved_by_lts_non_blocking_action; eassumption.
+      + eapply m_now. eapply outcome_preserved_by_lts_non_blocking_action; eassumption.
       + assert (non_blocking η) as nb. eauto.
         edestruct exists_duo_nb as (μ & duo). 
         eapply com; eauto.
@@ -357,7 +357,7 @@ Qed.
 
 Lemma nf_must_fw `{
   @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A ,
-  @gLtsObaFB E A H gLtsE Y V , !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE Y V , !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
@@ -372,7 +372,7 @@ Qed.
 
 Lemma must_to_must_fw `{
   @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
@@ -384,9 +384,9 @@ Lemma must_to_must_fw `{
 Proof.
   intros hm. revert m.
   dependent induction hm; intros m heq e' hmo.
-  - eapply m_now. eapply woutpout_preserves_attaboy; eauto.
+  - eapply m_now. eapply woutpout_preserves_outcome; eauto.
   - eapply m_step; eauto with mdb.
-    + intro hh. destruct nh. eapply woutpout_preserves_attaboy_converse; eauto.
+    + intro hh. destruct nh. eapply woutpout_preserves_outcome_converse; eauto.
     + destruct ex as (t & l). inversion l; subst.
       ++ exists ((a2, lts_oba_mo e), e').
          eapply ParLeft. eapply ParLeft. assumption.
@@ -513,7 +513,7 @@ Qed.
 
 Lemma must_fw_to_must `{
   @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
@@ -527,7 +527,7 @@ Proof.
   - edestruct (lts_oba_mo_strip e) as (e' & hwo).
     assert (must (p, lts_oba_mo e) e'). eapply nf_must_fw; eauto with mdb.
     inversion H5; subst.
-    + exfalso. eapply woutpout_preserves_attaboy_converse in H9; eauto.
+    + exfalso. eapply woutpout_preserves_outcome_converse in H9; eauto.
     + destruct ex0 as (((p0, m0), e0) & l).
       inversion l; subst.
       ++ inversion l0; subst.
@@ -570,7 +570,7 @@ Qed.
 
 Lemma must_iff_must_fw `{
   @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE , !Testing_Predicate E A attaboy}
+  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE , !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
@@ -590,7 +590,7 @@ Qed.
 Lemma lift_fw_ctx_pre `{
     @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-    @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A attaboy}
+    @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
 

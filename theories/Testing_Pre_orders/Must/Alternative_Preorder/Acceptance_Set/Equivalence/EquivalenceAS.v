@@ -32,14 +32,14 @@ From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransi
     Testing_Predicate DefinitionAS MustE.
 
 Section preorder.
-  Context `{attaboy : E -> Prop}.
-  Context `{attaboy_dec : forall e, Decision (attaboy e)}.
+  Context `{outcome : E -> Prop}.
+  Context `{outcome_dec : forall e, Decision (outcome e)}.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
   Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
   Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A attaboy}.
+  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A outcome}.
   Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
   Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
 
@@ -56,15 +56,15 @@ Section preorder.
   Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
   Context `{@AbsAction A H E FinA gLtsE Φ}.
 
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ attaboy Testing_Predicate0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ attaboy Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_conv : @gen_spec_conv E _ _ _ _ outcome Testing_Predicate0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ outcome Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
 
   (* ************************************************** *)
 
   (** Equivalence between the extensional definition of the contextual preorder and
       the alternative, inductive characterisation. *)
   Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ attaboy _ p q <-> (p, ∅) ≼ₐₛ (q, ∅).
+    @pre_extensional P Q _ _ _ outcome _ p q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
     split.
     - intros hpre%pre_extensional_eq.

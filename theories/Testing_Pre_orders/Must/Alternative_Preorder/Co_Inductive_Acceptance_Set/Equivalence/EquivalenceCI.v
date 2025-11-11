@@ -61,9 +61,9 @@ Section eq_contextual.
   Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
   Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
 
-  Context `{attaboy : E -> Prop}.
-  Context `{attaboy_dec : forall e, Decision (attaboy e)}.
-  Context `{!Testing_Predicate E A attaboy}.
+  Context `{outcome : E -> Prop}.
+  Context `{outcome_dec : forall e, Decision (outcome e)}.
+  Context `{!Testing_Predicate E A outcome}.
 
   (* ************************************************** *)
   Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
@@ -77,11 +77,11 @@ Section eq_contextual.
   Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
   Context `{@AbsAction A H E FinA gLtsE Φ}.
 
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ attaboy Testing_Predicate0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ attaboy Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_conv : @gen_spec_conv E _ _ _ _ outcome Testing_Predicate0 co_of gen_conv}.
+  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ outcome Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ attaboy _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
+    @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
   Proof.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.

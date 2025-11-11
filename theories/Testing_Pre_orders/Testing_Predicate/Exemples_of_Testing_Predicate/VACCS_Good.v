@@ -214,15 +214,15 @@ Qed.
 Lemma good_preserved_by_non_bloking_actions p q a : good_VACCS p -> lts p (a !) q -> good_VACCS q.
 Proof.
   intros hhp hl. destruct a.
-  eapply TransitionShapeForOutputSimplified in hl as (n & hl).
-  eapply (good_preserved_by_cgr p (Ѵ n (VarC_add n c ! d • 𝟘) ‖ q)) in hhp; eauto with ccs.
-  inversion hhp; subst. destruct H0; eauto with ccs. eapply good_VACCS_res_n in H. inversion H.
+  eapply TransitionShapeForOutputSimplified in hl.
+  eapply (good_preserved_by_cgr p ((c ! d • 𝟘) ‖ q)) in hhp; eauto with ccs.
+  inversion hhp; subst. destruct H0; eauto with ccs. inversion H.
 Qed.
 
 Lemma good_preserved_by_non_bloking_actions_converse p q a : lts p (a !) q -> good_VACCS q -> good_VACCS p.
 Proof.
   intros hl hhq. destruct a.
-  eapply TransitionShapeForOutputSimplified in hl as (n & hl).
+  eapply TransitionShapeForOutputSimplified in hl.
   eapply good_preserved_by_cgr.
   eapply good_par. right.
   eauto with ccs. symmetry. eauto with ccs.

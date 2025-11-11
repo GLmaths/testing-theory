@@ -432,9 +432,19 @@ Proof.
   intros imp.
   unfold gen_acc in imp. unfold gen_test in imp.
   simpl in *. induction G using set_ind_L. 
-  + simpl in *. admit.
-  + simpl in *. admit. 
-Admitted.
+  + rewrite elements_empty in imp.
+    simpl in *. inversion imp.
+  + eapply elements_union_singleton in H.
+    eapply unroll_a_eq_perm in H. simpl in *. destruct x.
+    ++ eapply good_preserved_by_cgr in H; eauto. inversion H; subst.
+       destruct H1.
+       - inversion H0.
+       - eauto.
+    ++ eapply good_preserved_by_cgr in H; eauto. inversion H; subst.
+       destruct H1.
+       - inversion H0.
+       - eauto.
+Qed.
 
 
 #[global] Program Instance gen_acc_gen_test_inst g 

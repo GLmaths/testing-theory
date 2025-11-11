@@ -33,6 +33,8 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation InputOutputActions 
         CompletenessAS ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
+Parameter O : Value.
+
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
 match μ with 
 | ActIn (c ⋉ d) => ActIn (c ⋉ (NewVar_in_Data k d))
@@ -405,13 +407,15 @@ Proof.
   intros imp.
   unfold gen_acc in imp. unfold gen_test in imp.
   simpl in *. induction G using set_ind_L. 
-  + simpl in *. admit.
-  + simpl in *. admit. 
-Admitted.
-
-Parameter O : Value.
-
-
+  + rewrite elements_empty in imp.
+    simpl in *. inversion imp.
+  + eapply elements_union_singleton in H.
+    eapply unroll_a_eq_perm in H. simpl in *. destruct x.
+    eapply good_preserved_by_cgr in H; eauto. inversion H; subst.
+    destruct H1.
+    - inversion H0.
+    - eauto.
+Qed.
 
 #[global] Program Instance gen_acc_gen_test_inst G 
   {Hyp_WD : forall α s e, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}

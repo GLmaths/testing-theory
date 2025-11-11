@@ -237,7 +237,7 @@ Qed.
   Lemma input_only_leq_nil {P Q A : Type} `{
     @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsQ gLtsEqQ W, !FiniteImagegLts Q A,
-    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Testing_Predicate E A attaboy, (∀ e : E, Decision (attaboy e))}
+    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Testing_Predicate E A outcome, (∀ e : E, Decision (outcome e))}
 
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
     `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
@@ -248,11 +248,11 @@ Qed.
     `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
     `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-    `{@gen_spec_conv  _ _ _ _ _ attaboy _ co_of gen_conv, 
-    @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ attaboy _ co_of gen_acc _ _}
+    `{@gen_spec_conv  _ _ _ _ _ outcome _ co_of gen_conv, 
+    @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ outcome _ co_of gen_acc _ _}
 
     (p : P) (pr : ionly_spec p) (q : Q) (h : forall α, q ↛{α}) : 
-    @pre_extensional _ _ _ _ _ attaboy _ p q.
+    @pre_extensional _ _ _ _ _ outcome _ p q.
   Proof.
     now eapply equivalence_bhv_acc_ctx; split; intros ? ?; [eapply nil_cnv | eapply ionly_nil_leq2].
   Qed. *)

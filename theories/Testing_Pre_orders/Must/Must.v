@@ -32,11 +32,11 @@ From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransit
 (********************************************* Definition of Must_i ********************************************)
 
 Inductive must_sts 
-  `{Sts (P1 * P2), attaboy : P2 -> Prop}
+  `{Sts (P1 * P2), outcome : P2 -> Prop}
   (p : P1) (e : P2) : Prop :=
-| m_sts_now : attaboy e -> must_sts p e
+| m_sts_now : outcome e -> must_sts p e
 | m_sts_step
-    (nh : ¬ attaboy e)
+    (nh : ¬ outcome e)
     (nst : ¬ sts_refuses (p, e))
     (l : forall p' e', sts_step (p, e) (p', e') -> must_sts p' e')
   : must_sts p e
@@ -48,14 +48,14 @@ Global Hint Constructors must_sts:mdb.
 
 Inductive must `{
     gLtsP : @gLts P A H, 
-    gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy} 
+    gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome} 
 
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
     (p : P) (e : E) : Prop :=
-| m_now : attaboy e -> must p e
+| m_now : outcome e -> must p e
 | m_step
-    (nh : ¬ attaboy e)
+    (nh : ¬ outcome e)
     (ex : ∃ t, (p, e) ⟶ t)
     (pt : forall p', p ⟶ p' -> must p' e)
     (et : forall e', e ⟶ e' -> must p e')
@@ -74,12 +74,12 @@ Global Hint Constructors must:mdb.
 
 Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e : E) :
-  @must_sts P E _ attaboy p e <-> p must_pass e.
+  @must_sts P E _ outcome p e <-> p must_pass e.
 Proof.
   split.
   - intro hm. dependent induction hm; eauto with mdb.
@@ -109,7 +109,7 @@ Qed.
 Definition ctx_pre `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
@@ -126,7 +126,7 @@ Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre p q) (at level 70).
 
 Lemma must_eq_client `{
   gLtsP : gLts P A, 
-  gLtsQ : ! gLts Q A, ! gLtsEq Q A, !Testing_Predicate Q A attaboy}
+  gLtsQ : ! gLts Q A, ! gLtsEq Q A, !Testing_Predicate Q A outcome}
 
   `{@Prop_of_Inter P Q A parallel_inter H gLtsP gLtsQ} :
 
@@ -135,9 +135,9 @@ Proof.
   intros p q r heq hm.
   revert r heq.
   dependent induction hm; intros.
-  - apply m_now. eapply attaboy_preserved_by_eq; eauto.
+  - apply m_now. eapply outcome_preserved_by_eq; eauto.
   - apply m_step; eauto with mdb.
-    + intro rh. eapply nh. eapply attaboy_preserved_by_eq; eauto with mdb.
+    + intro rh. eapply nh. eapply outcome_preserved_by_eq; eauto with mdb.
       now symmetry.
     + destruct ex as (t & l).
       inversion l; subst.
@@ -161,7 +161,7 @@ Qed.
 
 Lemma must_eq_server `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq P A, ! gLtsEq E A, !Testing_Predicate E A attaboy} 
+  gLtsE : ! gLts E A, ! gLtsEq P A, ! gLtsEq E A, !Testing_Predicate E A outcome} 
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} :
 
@@ -193,7 +193,7 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_srv `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -203,7 +203,7 @@ Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_weak_nil_srv `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
@@ -219,22 +219,22 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  p must_pass e1 -> ¬ attaboy e1 -> e1 ⟶ e2 -> p must_pass e2.
+  p must_pass e1 -> ¬ outcome e1 -> e1 ⟶ e2 -> p must_pass e2.
 Proof. by inversion 1; eauto with mdb. Qed.
 
-Lemma must_preserved_by_synch_if_notattaboy `{
+Lemma must_preserved_by_synch_if_notoutcome `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p p' : P) (r r' : E) μ μ':
-  p must_pass r -> ¬ attaboy r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
+  p must_pass r -> ¬ outcome r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
     -> p' must_pass r'.
 Proof.
   intros hm u inter l__p l__r.
@@ -245,19 +245,19 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  p must_pass e2 -> e1 ⟶ e2 -> ¬ attaboy e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
+  p must_pass e2 -> e1 ⟶ e2 -> ¬ outcome e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
     -> p must_pass e1.
 Proof.
   intros must_hyp hyp_tr not_happy not_ext_action tau_determinacy.
   revert e1 hyp_tr not_happy not_ext_action tau_determinacy.
   dependent induction must_hyp.
   - intros. contradiction.
-  - intros. destruct (decide (attaboy e1)) as [happy' | not_happy'].
+  - intros. destruct (decide (outcome e1)) as [happy' | not_happy'].
     + now eapply m_now.
     + eapply m_step; eauto.
       ++ exists (p ▷ e). eapply ParRight; eauto.
@@ -271,18 +271,18 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev_rev `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  p must_pass e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> attaboy e') -> p ⤓
+  p must_pass e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> outcome e') -> p ⤓
     -> p must_pass e1.
 Proof.
   intros must_hyp hyp_tr not_ext_action happy_determinacy conv.
   revert e1 e2 must_hyp hyp_tr not_ext_action happy_determinacy.
   dependent induction conv.
-  - intros. destruct (decide (attaboy e1)) as [happy | not_happy].
+  - intros. destruct (decide (outcome e1)) as [happy | not_happy].
     + now eapply m_now.
     + eapply m_step; eauto.
       ++ exists (p ▷ e2). eapply ParRight; eauto.
@@ -291,47 +291,47 @@ Proof.
       assert (must p' e2).
       { eapply must_preserved_by_lts_tau_srv; eauto. }
       assert (p' ⤓); eauto.
-      ++ intros. assert (attaboy e'); eauto. now eapply m_now.
+      ++ intros. assert (outcome e'); eauto. now eapply m_now.
       ++ intros. assert (e1 ↛[μ2]); eauto.
          assert (¬ e1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
 Qed.
 
-Lemma must_terminate_unattaboy `{
+Lemma must_terminate_unoutcome `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  (p : P) (e : E) : p must_pass e -> ¬ attaboy e -> p ⤓.
+  (p : P) (e : E) : p must_pass e -> ¬ outcome e -> p ⤓.
 Proof. intros hm. dependent induction hm; eauto with mdb. contradiction. Qed.
 
-Lemma must_terminate_unattaboy' `{
+Lemma must_terminate_unoutcome' `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
-  (p : P) (e : E) : p must_pass e -> attaboy e \/ p ⤓.
+  (p : P) (e : E) : p must_pass e -> outcome e \/ p ⤓.
 Proof. 
-  intros hm. destruct (decide (attaboy e)) as [happy | not_happy].
+  intros hm. destruct (decide (outcome e)) as [happy | not_happy].
   + now left. 
-  + right. eapply must_terminate_unattaboy; eauto.
+  + right. eapply must_terminate_unoutcome; eauto.
 Qed.
 
 Lemma must_preserved_by_lts_wk_clt `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p : P) (e1 e2 : E) : 
-  p must_pass e1 -> ¬ attaboy e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ attaboy e') -> e1 ⟹ e2 -> p must_pass e2.
+  p must_pass e1 -> ¬ outcome e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ outcome e') -> e1 ⟹ e2 -> p must_pass e2.
 Proof.
   intros Hyp not_happy Hyp_not_happy wk_tr.
   remember e2.
   dependent induction wk_tr. 
   + subst. eauto.
-  + subst. assert (∀ e' : E, q ⟹ e' → e' ≠ e2 → ¬ attaboy e') as Hyp_final.
+  + subst. assert (∀ e' : E, q ⟹ e' → e' ≠ e2 → ¬ outcome e') as Hyp_final.
     {intros. eapply Hyp_not_happy. econstructor; eauto. eauto. }
     assert (must p q).
     {eapply must_preserved_by_lts_tau_clt; eauto. }
@@ -340,15 +340,15 @@ Proof.
     ++ eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
 Qed.
 
-Lemma must_preserved_by_wt_synch_if_notattaboy `{
+Lemma must_preserved_by_wt_synch_if_notoutcome `{
   gLtsP : gLts P A, 
-  gLtsE : !gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : !gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
 
   (p p' : P) (r r' : E) (μ : A) (μ' : A):
   p must_pass r 
-    -> ¬ attaboy r 
+    -> ¬ outcome r 
       -> parallel_inter μ μ'
         -> p ⟹{μ} p' 
           -> r ⟶[μ'] r' 
@@ -365,7 +365,7 @@ Qed.
 Lemma ctx_pre_not `{
   gLtsP : gLts P A, 
   gLtsQ : !gLts Q A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A attaboy}
+  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
   (p : P) (q : Q) (e : E) :

@@ -1662,13 +1662,41 @@ Proof.
     eauto.
 Qed.
 
+Lemma VarCadd_and_NewVarCn n c v : VarC_add n c ! v • 𝟘 = NewVarCn 0 n (c ! v • 𝟘).
+Proof.
+  revert c v.
+  induction n.
+  + destruct c; simpl;  eauto.
+  + intros. replace (S n)%nat with (n + 1)%nat by lia.
+    rewrite VarC_add_revert_def.
+    rewrite (IHn (VarC_add 1 c) v). symmetry. etrans.
+    replace (n + 1)%nat with (S n)%nat by lia. simpl in *.
+    rewrite<- NewVarCn_revert_def. simpl. reflexivity.
+    destruct c; eauto.
+Qed.
+
+Lemma simpl_NewVarC_nil n : NewVarCn 0 n 𝟘 = 𝟘.
+Proof.
+  induction n; simpl; subst; eauto. rewrite IHn. simpl. eauto.
+Qed.
 
 Lemma TransitionShapeForOutputSimplified : forall P Q c v, (lts P ((c ⋉ v) !) Q) 
-                                        -> exists n,(P ≡* ((Ѵ  n ((VarC_add n c) ! v • 𝟘))) ‖ Q).
+                                        -> P ≡* ((c ! v • 𝟘) ‖ Q).
 Proof.
-intros. assert (exists R n, (P ≡* Ѵ  n (((VarC_add n c) ! v • 𝟘) ‖ R)) /\ (Q ≡* Ѵ  n (𝟘 ‖ R))). apply TransitionShapeForOutput. assumption.
-decompose record H0. exists x0. etrans. eassumption. admit.
-Admitted.
+  intros. assert (exists R n, (P ≡* Ѵ  n (((VarC_add n c) ! v • 𝟘) ‖ R)) /\ (Q ≡* Ѵ  n (𝟘 ‖ R))) as (R & n & eq1 & eq2).
+  { apply TransitionShapeForOutput. assumption. }
+  assert (Q ≡* Ѵ n R).
+  { symmetry. etrans. eapply cgr_par_nil_rev. etrans. eapply cgr_res_scope_n.
+    etrans. eapply cgr_res_n.  eapply cgr_par_com. symmetry. destruct n; simpl in *; eauto. rewrite simpl_NewVarC_nil. simpl. eauto. }
+  assert ((VarC_add n c ! v • 𝟘) = NewVarCn 0 n (c ! v • 𝟘)) as eq.
+  { eapply VarCadd_and_NewVarCn. }
+  rewrite eq in eq1.
+  assert (P ≡* (c ! v • 𝟘) ‖ Ѵ  n R).
+  { symmetry. etrans. etrans. eapply cgr_par_com. eapply cgr_res_scope_n.
+    etrans. eapply cgr_res_n. eapply cgr_par_com. symmetry. eauto. }
+  symmetry. etrans. eapply cgr_par_com. etrans. eapply cgr_par. eauto.
+  etrans. eapply cgr_par_com. symmetry. eauto.
+Qed.
 
 (* For the (LTS-transition), the transitable Guards and transitted terms, that performs a Tau ,
 are pretty all the same, up to ≡* *)
@@ -3290,15 +3318,15 @@ Lemma OBA_with_FB_First_Axiom : forall p q r a α,
   (exists r', lts p α r' /\ lts_then_sc r' (a !) r). (* output-commutativity *)
 Proof.
   intros. assert (lts p (a !) q). assumption. apply OutputWithValue in H1.
-  decompose record H1. subst. eapply TransitionShapeForOutputSimplified in H as (n & eq).
-  eapply lts_parR in H0. instantiate (1 := Ѵ n (VarC_add n x ! x0 • 𝟘)) in H0.
-  edestruct (Congruence_Respects_Transition p (Ѵ n (VarC_add n x ! x0 • 𝟘) ‖ r) α).
-  exists (Ѵ n (VarC_add n x ! x0 • 𝟘) ‖ q). split; assumption. destruct H.
-  assert (lts (Ѵ n (VarC_add n x ! x0 • 𝟘) ‖ r) ((x ⋉ x0) !) (Ѵ n 𝟘 ‖ r)). constructor.
-  eapply lts_res_ext_n. simpl. constructor.
-  edestruct (Congruence_Respects_Transition x1 (Ѵ n 𝟘 ‖ r) ((x ⋉ x0) !)).
-  exists (Ѵ n (VarC_add n x ! x0 • 𝟘) ‖ r). split ; assumption. destruct H4.
-  assert (x2 ≡* r). etrans. eauto. eapply cgr_par_nil_n.
+  decompose record H1. subst. eapply TransitionShapeForOutputSimplified in H as eq.
+  eapply lts_parR in H0. instantiate (1 := x ! x0 • 𝟘) in H0.
+  edestruct (Congruence_Respects_Transition p ((x ! x0 • 𝟘) ‖ r) α).
+  exists ((x ! x0 • 𝟘) ‖ q). split; assumption. destruct H2.
+  assert (lts ((x ! x0 • 𝟘) ‖ r) ((x ⋉ x0) !) (𝟘 ‖ r)). constructor.
+  constructor.
+  edestruct (Congruence_Respects_Transition x1 (𝟘 ‖ r) ((x ⋉ x0) !)).
+  exists ((x ! x0 • 𝟘) ‖ r). split ; assumption. destruct H5.
+  assert (x2 ≡* r). etrans. eauto. etrans. eapply cgr_par_com. eapply cgr_par_nil.
   exists x1. split. assumption. exists x2. split; assumption.
 Qed.
 
@@ -3322,17 +3350,16 @@ Lemma OBA_with_FB_Second_Axiom : forall p q1 q2 a μ,
 Proof.
   intros. assert (lts p (a !) q1). assumption. apply OutputWithValue in H2.
   decompose record H2. subst. rename x into c. rename x0 into v.
-  eapply TransitionShapeForOutputSimplified in H0 as (n & H0).
-  edestruct (Congruence_Respects_Transition (Ѵ n (VarC_add n c ! v • 𝟘) ‖ q1) q2 (ActExt μ)).
+  eapply TransitionShapeForOutputSimplified in H0.
+  edestruct (Congruence_Respects_Transition ((c ! v • 𝟘) ‖ q1) q2 (ActExt μ)).
   exists p. split. symmetry. assumption. assumption.
   destruct H3. inversion H3; subst.
-  - assert (lts (Ѵ n (VarC_add n c ! v • 𝟘)) (ActExt μ) p2); eauto. eapply simpl_output_res in H9 as (eq1 & eq2). subst.
-    assert (ActOut (c ⋉ v) = ActOut (c ⋉ v)). eauto. exfalso. eapply H. eauto.
+  - inversion H9. subst. assert (ActOut (c ⋉ v) = ActOut (c ⋉ v)). eauto. exfalso. eapply H. eauto.
   - exists q3. split. assumption.
-    assert (lts (Ѵ n (VarC_add n c ! v • 𝟘) ‖ q3) ((c ⋉ v) !) (Ѵ n 𝟘 ‖ q3)). constructor. eapply lts_res_ext_n. constructor.
-    edestruct (Congruence_Respects_Transition q2 (Ѵ n 𝟘 ‖ q3) ((c ⋉ v) !)).
-    exists (Ѵ n (VarC_add n c ! v • 𝟘) ‖ q3). split. eauto with cgr. assumption. destruct H6. exists x. split. assumption.
-    etrans. eauto. eapply cgr_par_nil_n.
+    assert (lts ((c ! v • 𝟘) ‖ q3) ((c ⋉ v) !) (𝟘 ‖ q3)). constructor. constructor.
+    edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q3) ((c ⋉ v) !)).
+    exists ((c ! v • 𝟘) ‖ q3). split. eauto with cgr. assumption. destruct H6. exists x. split. assumption.
+    etrans. eauto. etrans. eapply cgr_par_com. eapply cgr_par_nil.
 Qed.
 
 Lemma OBA_with_FB_Third_Axiom : forall p1 p2 p3 a, 
@@ -3351,34 +3378,35 @@ Proof.
   - intros. inversion H0;subst. eapply cgr_res. eapply (IHlts v (VarC_add 1 c)); eauto.
   - intros. inversion H0;subst. 
     * apply cgr_fullpar. eapply IHlts. eauto. eauto. assumption. eauto with cgr.
-    * (* apply TransitionShapeForOutputSimplified in H as (n & H).
-      apply TransitionShapeForOutputSimplified in H6 as (n' & H6).
-      apply transitivity with (p2 ‖ (Ѵ n (VarC_add n c ! v • 𝟘) ‖ q2)). eapply cgr_fullpar. 
+    * apply TransitionShapeForOutputSimplified in H.
+      apply TransitionShapeForOutputSimplified in H6.
+      apply transitivity with (p2 ‖ ((c ! v • 𝟘) ‖ q2)). eapply cgr_fullpar. 
       reflexivity. exact H6. etrans. symmetry. eapply cgr_par_assoc.
-      eapply cgr_par. etrans. eapply cgr_par_com. symmetry. eauto. *) admit.
+      eapply cgr_par. etrans. eapply cgr_par_com. symmetry. eauto.
   - intros. inversion H0 ; subst.
-    * (*apply TransitionShapeForOutputSimplified in H.
+      apply TransitionShapeForOutputSimplified in H.
       apply TransitionShapeForOutputSimplified in H6.
       apply transitivity with (((c ! v • 𝟘) ‖ p2) ‖ q2). eauto with cgr.
       apply transitivity with (( p2 ‖ (c ! v • 𝟘)) ‖ q2). eauto with cgr.
       apply transitivity with ( p2 ‖ ((c ! v • 𝟘) ‖ q2)). eauto with cgr. apply cgr_fullpar. reflexivity.
-      eauto with cgr. *) admit.
+      eauto with cgr.
     * apply cgr_fullpar. reflexivity. eapply IHlts. eauto. eauto. assumption.
   - intros. exfalso. eapply guarded_does_no_output. eassumption.
   - intros. exfalso. eapply guarded_does_no_output. eassumption.
-Admitted.
+Qed.
 
 Lemma OBA_with_FB_Fourth_Axiom : forall p1 p2 p3 a, lts p1 (a !) p2 -> lts p2 (a ?) p3 
                               -> lts_then_sc p1 τ p3. (* feedback *)
 Proof.
   intros. assert (lts p1 (a !) p2). assumption. apply OutputWithValue in H1.
   decompose record H1. subst. rename x into c. rename x0 into v.
-  eapply TransitionShapeForOutputSimplified in H as (n & H).
-  assert (lts (Ѵ n (VarC_add n c ! v • 𝟘)) ((c ⋉ v) !) (Ѵ n 𝟘)). eapply lts_res_ext_n.
+  eapply TransitionShapeForOutputSimplified in H.
+  assert (lts ((c ! v • 𝟘)) ((c ⋉ v) !) 𝟘).
   constructor.
-  assert (lts (Ѵ n (VarC_add n c ! v • 𝟘) ‖ p2) τ  (Ѵ n 𝟘 ‖ p3)). econstructor; eassumption.
-  edestruct (Congruence_Respects_Transition p1 (Ѵ n 𝟘 ‖ p3) τ). exists (Ѵ n (VarC_add n c ! v • 𝟘) ‖ p2).
-  split; assumption. destruct H4. exists x. split. assumption. etrans. eauto. eapply cgr_par_nil_n.
+  assert (lts ((c ! v • 𝟘) ‖ p2) τ  (𝟘 ‖ p3)). econstructor; eassumption.
+  edestruct (Congruence_Respects_Transition p1 ( 𝟘 ‖ p3) τ). exists (( c ! v • 𝟘) ‖ p2).
+  split; assumption. destruct H4. exists x. split. assumption. etrans. eauto. etrans.
+  eapply cgr_par_com. eapply cgr_par_nil. 
 Qed.
 
 Lemma OBA_with_FB_Fifth_Axiom : forall p q1 q2 a,
@@ -3387,29 +3415,28 @@ Lemma OBA_with_FB_Fifth_Axiom : forall p q1 q2 a,
 Proof.
   intros. assert (lts p (a !) q1). assumption. apply OutputWithValue in H1.
   decompose record H1. subst. rename x into c. rename x0 into v.
-  eapply TransitionShapeForOutputSimplified in H as (n & H).
-  edestruct (Congruence_Respects_Transition (Ѵ n (VarC_add n c ! v • 𝟘) ‖ q1) q2 τ). exists p. split. eauto with cgr. assumption.
-  (* destruct H2. dependent induction H2.
+  eapply TransitionShapeForOutputSimplified in H.
+  edestruct (Congruence_Respects_Transition ((c ! v • 𝟘) ‖ q1) q2 τ). exists p. split. eauto with cgr. assumption.
+  destruct H2. dependent induction H2.
   - inversion H2_; subst. right. exists q0. split. assumption. eauto with cgr. 
   - inversion H2_0.
   - inversion H2.
   - left. exists q0. split. assumption. 
     assert (lts ((c ! v • 𝟘) ‖ q0) ((c ⋉ v) !) (𝟘 ‖ q0)). constructor. constructor.
     edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q0) ((c ⋉ v) !)). exists ((c ! v • 𝟘) ‖ q0).
-    split. eauto with cgr. assumption. destruct H5. exists x. split. assumption. eauto with cgr. *) admit.
-Admitted.
-
+    split. eauto with cgr. assumption. destruct H5. exists x. split. assumption. eauto with cgr.
+Qed.
 
 Lemma ExtraAxiom : forall p1 p2 q1 q2 a,
       lts p1 (a !) q1 -> lts p2 (a !) q2 -> q1 ≡* q2 -> p1 ≡* p2.
 Proof.
   intros. assert (lts p1 (a !) q1). assumption. apply OutputWithValue in H2.
   decompose record H2. subst. rename x into c. rename x0 into v.
-  eapply TransitionShapeForOutputSimplified in H0 as (n' & H0).
-  eapply TransitionShapeForOutputSimplified in H as (n & H).
-  (* apply transitivity with ((c ! v • 𝟘) ‖ q1). assumption.
-  apply transitivity with ((c ! v • 𝟘) ‖ q2). eauto with cgr. eauto with cgr. *) admit.
-Admitted.
+  eapply TransitionShapeForOutputSimplified in H0.
+  eapply TransitionShapeForOutputSimplified in H.
+  apply transitivity with ((c ! v • 𝟘) ‖ q1). assumption.
+  apply transitivity with ((c ! v • 𝟘) ‖ q2). eauto with cgr. eauto with cgr.
+Qed.
 
 Definition encode_channeldata (C : ChannelData) : gen_tree (nat + Channel) :=
 match C with
@@ -3896,9 +3923,9 @@ Lemma mo_spec p a q : lts p (a !) q -> moutputs_of 0 p = {[+ a +]} ⊎ moutputs_
 Proof.
   intros l. assert (lts p (a !) q). assumption. apply OutputWithValue in H.
   decompose record H. subst. rename x into c. rename x0 into v.
-  eapply TransitionShapeForOutputSimplified in l as (n & l). eapply mo_equiv_spec in l. simpl in l.
-  rewrite l. f_equal. rewrite<- simpl_new_output. simpl. destruct c; eauto.
-  replace (n0 - 0)%nat with n0%nat; try lia. eauto.
+  eapply TransitionShapeForOutputSimplified in l. eapply mo_equiv_spec in l. simpl in l.
+  rewrite l. f_equal. simpl. destruct c; eauto.
+  replace (n - 0)%nat with n%nat; try lia. eauto.
 Qed.
 
 Lemma mo_spec_l e a k :
@@ -3981,33 +4008,37 @@ Proof.
   firstorder.
 Qed.
 
-Lemma outputs_of_spec1_zero (p : proc) (a : TypeOfActions) : {q | lts p (ActExt (ActOut a)) q} 
-      -> a ∈ outputs_of p.
+Lemma outputs_of_spec1_raw (e : proc) (a : TypeOfActions) k : {e' | lts (Ѵ  k e) (ActExt (ActOut a)) (Ѵ  k e')} 
+      -> a ∈ moutputs_of k e.
 Proof.
-  intros (p' & lts__p).
-  dependent induction p.
-  + eapply gmultiset_elem_of_dom.
-    cbn. inversion lts__p; subst. apply IHp1 in H3. eapply gmultiset_elem_of_dom in H3. multiset_solver.
-     apply IHp2 in H3. eapply gmultiset_elem_of_dom in H3. multiset_solver.
-  + inversion lts__p; subst.
-  + inversion lts__p; subst.
-  + inversion lts__p; subst ; eapply gmultiset_elem_of_dom; simpl in *; rewrite H4.
-    ++ eapply gmultiset_elem_of_dom. eapply IHp1; eauto.
-    ++ eapply gmultiset_elem_of_dom. eapply IHp2; eauto.
-  + inversion lts__p; subst. unfold outputs_of. eapply gmultiset_elem_of_dom. eapply mo_spec_r; exists 𝟘 ; simpl; eauto.
-    split. eauto. destruct c. multiset_solver. replace (n - 0)%nat with n%nat by lia. multiset_solver.
-  + inversion lts__p; subst. eapply gmultiset_elem_of_dom. simpl. eapply mo_spec_r. exists p'0.
-    split; eauto. replace (VarC_action_add 1 (ActOut a)) with (ActOut (VarC_TypeOfActions_add 1 a)) in H1. eapply mo_spec in H1.
-    admit. simpl. destruct a. simpl. eauto.
-  + assert (lts g0 (a !) p'). assumption. apply OutputWithValue in H.
-    decompose record H. subst. rename x into c. rename x0 into v.
-    now eapply guarded_does_no_output in lts__p.
-Admitted.
+  dependent induction e; intros (e' & l).
+  + cbn. eapply inversion_res_ext in l.
+    inversion l; subst.
+    eapply gmultiset_elem_of_disj_union. left.
+    eapply IHe1. exists p2. eapply lts_res_ext_n; eauto.
+    eapply gmultiset_elem_of_disj_union. right.
+    eapply IHe2. exists q2. eapply lts_res_ext_n; eauto.
+  + eapply inversion_res_ext in l. inversion l.
+  + eapply inversion_res_ext in l. inversion l.
+  + eapply inversion_res_ext in l. inversion l; subst; simpl in *; rewrite H4.
+    ++ destruct a. eapply IHe1 ; eauto. exists e'. eapply lts_res_ext_n. simpl; eauto.
+    ++ destruct a. eapply IHe2 ; eauto. exists e'. eapply lts_res_ext_n. simpl; eauto.
+  + eapply inversion_res_ext in l. inversion l; subst. destruct a.
+    inversion H; subst. destruct c0.
+    ++ simpl. subst. multiset_solver.
+    ++ simpl. rewrite decide_True; try lia. replace (k + n - k)%nat with n%nat by lia. multiset_solver.
+  + eapply inversion_res_ext in l. inversion l; subst. destruct a. simpl. eapply IHe. exists p'.
+    eapply lts_res_ext_n. simpl in *. rewrite<- VarC_add_revert_def in H1. simpl in *. eauto.
+  + destruct a. simpl in *. eapply inversion_res_ext in l. now eapply guarded_does_no_output in l.
+Qed.
 
 Lemma outputs_of_spec1 (p : proc) (a : TypeOfActions) (q : proc) : lts p (ActExt (ActOut a)) q
       -> a ∈ outputs_of p.
 Proof.
-intros. eapply outputs_of_spec1_zero. exists q. assumption.
+  intros mem.
+  eapply gmultiset_elem_of_dom.
+  eapply outputs_of_spec1_raw.
+  firstorder.
 Qed.
 
 Fixpoint lts_set_output (p : proc) (a : TypeOfActions) : gset proc:=
@@ -4226,7 +4257,7 @@ Proof.
     rewrite elem_of_list_In. rewrite in_flat_map.
     exists (c ⋉ v). split.
     + eapply elem_of_list_In, elem_of_elements.
-      eapply outputs_of_spec1_zero. eauto.
+      eapply outputs_of_spec1. eauto.
     + eapply elem_of_list_In, elem_of_list_fmap.
       exists (p2 , q2). split.
       ++ reflexivity.
@@ -4238,7 +4269,7 @@ Proof.
     rewrite elem_of_list_In. rewrite in_flat_map.
     exists (c ⋉ v). split.
     + eapply elem_of_list_In, elem_of_elements.
-      eapply outputs_of_spec1_zero. exists p2. exact l1.
+      eapply outputs_of_spec1. exact l1.
     + eapply elem_of_list_In, elem_of_list_fmap.
       exists (q2 , p2). split.
       ++ reflexivity.

@@ -36,28 +36,28 @@ Section preorder.
   (** Extensional definition of Must *)
 
   Definition must_extensional {P : Type}
-    `{Sts (P * E), attaboy : E -> Prop} 
+    `{Sts (P * E), outcome : E -> Prop} 
     (p : P) (e : E) : Prop :=
     forall η : max_exec_from (p, e), exists n fex, mex_take_from n η = Some fex 
-          /\ attaboy (fex_from_last fex).2 .
+          /\ outcome (fex_from_last fex).2 .
 
-  Definition attaboy_client {P : Type} `{Sts (P * E), attaboy : E -> Prop} (s : (P * E)) := attaboy s.2.
+  Definition outcome_client {P : Type} `{Sts (P * E), outcome : E -> Prop} (s : (P * E)) := outcome s.2.
 
-  #[global] Program Instance must_bar {P : Type} {E : Type} `{Sts (P * E)} (attaboy : E -> Prop)
-    `{attaboy_decidable : forall e, Decision (attaboy e)}: Bar (P * E) :=
-    {| bar_pred '(p, e) := attaboy e |}.
+  #[global] Program Instance must_bar {P : Type} {E : Type} `{Sts (P * E)} (outcome : E -> Prop)
+    `{outcome_decidable : forall e, Decision (outcome e)}: Bar (P * E) :=
+    {| bar_pred '(p, e) := outcome e |}.
   Next Obligation. intros. destruct x as (p, e). simpl. eauto. Defined.
 
   Lemma must_intensional_coincide {P : Type}
-    `{Sts (P * E), attaboy : E -> Prop, attaboy_decidable : 
-    forall (e : E), Decision (attaboy e)}
-    (p : P) (e : E) : @intensional_pred (P * E) _ (must_bar attaboy) (p, e) ↔ 
-    @must_sts P E _ attaboy p e.
+    `{Sts (P * E), outcome : E -> Prop, outcome_decidable : 
+    forall (e : E), Decision (outcome e)}
+    (p : P) (e : E) : @intensional_pred (P * E) _ (must_bar outcome) (p, e) ↔ 
+    @must_sts P E _ outcome p e.
   Proof.
     split.
     - intros H1. dependent induction H1; subst.
       + rewrite /bar_pred /= in H1. now eapply m_sts_now.
-      + destruct (attaboy_decidable e).
+      + destruct (outcome_decidable e).
         rewrite /bar_pred /= in H1.
         now eapply m_sts_now. eapply m_sts_step; eauto.
     - intros hm; dependent induction hm.
@@ -69,9 +69,9 @@ Section preorder.
   Qed.
 
   Lemma must_ext_pred_iff_must_extensional {P : Type}
-    `{StsPE : Sts (P * E), attaboy : E -> Prop, attaboy_decidable : forall (e : E), Decision (attaboy e)}
-    (p : P) (e : E) : @extensional_pred _ _ (must_bar attaboy) (p, e) <-> 
-    @must_extensional P E _ attaboy p e.
+    `{StsPE : Sts (P * E), outcome : E -> Prop, outcome_decidable : forall (e : E), Decision (outcome e)}
+    (p : P) (e : E) : @extensional_pred _ _ (must_bar outcome) (p, e) <-> 
+    @must_extensional P E _ outcome p e.
   Proof. split; intros Hme η; destruct (Hme η) as (?&?&?&?).
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
@@ -79,21 +79,21 @@ Section preorder.
 
   Definition pre_extensional
     {P : Type} {Q : Type} 
-    `{Sts (P * E), Sts (Q * E), attaboy : E -> Prop, attaboy_decidable : forall (e : E), 
-    Decision (attaboy e)}
+    `{Sts (P * E), Sts (Q * E), outcome : E -> Prop, outcome_decidable : forall (e : E), 
+    Decision (outcome e)}
     (p : P) (q : Q) : Prop :=
-    forall (e : E), @must_extensional P E _ attaboy p e -> @must_extensional Q E _ attaboy q e.
+    forall (e : E), @must_extensional P E _ outcome p e -> @must_extensional Q E _ outcome q e.
 
   (* ************************************************** *)
 
   Lemma must_extensional_iff_must_sts
     {P : Type}
-    `{attaboy : E -> Prop, attaboy_decidable : forall (e : E), Decision (attaboy e)}
+    `{outcome : E -> Prop, outcome_decidable : forall (e : E), Decision (outcome e)}
     `{gLtsP : @gLts P A H, !FiniteImagegLts P A,
-    gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A attaboy,  !FiniteImagegLts E A}
+    gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome,  !FiniteImagegLts E A}
     `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} (* à rajouter en context ? *)
     (p : P) (e : E) : 
-    @must_extensional P E _ attaboy p e <-> @must_sts P E _ attaboy p e.
+    @must_extensional P E _ outcome p e <-> @must_sts P E _ outcome p e.
   Proof.
     split.
     - intros hm. destruct Testing_Predicate0.
@@ -107,21 +107,21 @@ Section preorder.
 
   Notation "p ⊑ₑ q" := (pre_extensional p q) (at level 70).
 
-  Context `{attaboy : E -> Prop}.
-  Context `{attaboy_dec : forall e, Decision (attaboy e)}.
+  Context `{outcome : E -> Prop}.
+  Context `{outcome_dec : forall e, Decision (outcome e)}.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
   Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
   Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A attaboy}.
+  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A outcome}.
   Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
   Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
 
   (* ************************************************** *)
 
   Lemma pre_extensional_eq (p : P) (q : Q) : 
-    @pre_extensional P Q _ _ _ attaboy _ p q <-> p ⊑ₘᵤₛₜᵢ q.
+    @pre_extensional P Q _ _ _ outcome _ p q <-> p ⊑ₘᵤₛₜᵢ q.
     unfold pre_extensional, ctx_pre.
   Proof.
     split; intros hpre e.
