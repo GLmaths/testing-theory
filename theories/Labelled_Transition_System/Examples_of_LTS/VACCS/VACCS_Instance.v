@@ -4046,8 +4046,7 @@ match p with
   | p1 ‖ p2 => 
       let ps1 := lts_set_output p1 a in
       let ps2 := lts_set_output p2 a in
-      (* fixme: find a way to map over sets. *)
-      list_to_set (map (fun p => p ‖ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ‖ p) (elements ps2))
+      (set_map (fun p => p ‖ p2) ps1) ∪ (set_map (fun p => p1 ‖ p) ps2)
   | pr_var _ => ∅
   | rec _ • _ => ∅
   | If E Then A Else B => match (Eval_Eq E) with 
@@ -4056,7 +4055,7 @@ match p with
                           | None => ∅
                           end
   | c ! v • 𝟘 => if decide(a = (c ⋉ v)) then {[ (g 𝟘) ]} else ∅
-  | ν p => list_to_set (map (fun q => ν q) (elements $ lts_set_output p (VarC_TypeOfActions_add 1 a))) 
+  | ν p => (set_map (fun q => ν q) (lts_set_output p (VarC_TypeOfActions_add 1 a))) 
   | g _  => ∅
 end.
 
@@ -4074,7 +4073,7 @@ match p with
   | p1 ‖ p2 =>
       let ps1 := lts_set_input p1 a in
       let ps2 := lts_set_input p2 a in
-      list_to_set (map (fun p => p ‖ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ‖ p) (elements ps2))
+      (set_map (fun p => p ‖ p2) ps1) ∪ (set_map (fun p => p1 ‖ p) ps2)
   | pr_var _ => ∅
   | rec _ • _ => ∅ 
   | c ! v • 𝟘 => ∅
@@ -4083,7 +4082,7 @@ match p with
                           | Some false => lts_set_input B a
                           | None => ∅
                           end
-  | ν p => list_to_set (map (fun q => ν q) (elements $ lts_set_input p (VarC_TypeOfActions_add 1 a))) 
+  | ν p => set_map (fun q => ν q) (lts_set_input p (VarC_TypeOfActions_add 1 a)) 
   | g gp => lts_set_input_g gp a  
   end.
 
@@ -4100,8 +4099,8 @@ end.
 Fixpoint lts_set_tau (p : proc) : gset proc :=
 match p with
   | p1 ‖ p2 =>
-      let ps1_tau : gset proc := list_to_set (map (fun p => p ‖ p2) (elements $ lts_set_tau p1)) in
-      let ps2_tau : gset proc := list_to_set (map (fun p => p1 ‖ p) (elements $ lts_set_tau p2)) in
+      let ps1_tau : gset proc := set_map (fun p => p ‖ p2) (lts_set_tau p1) in
+      let ps2_tau : gset proc := set_map (fun p => p1 ‖ p) (lts_set_tau p2) in
       let ps_tau := ps1_tau ∪ ps2_tau in
       let acts1 := outputs_of p1 in
       let acts2 := outputs_of p2 in
@@ -4128,7 +4127,7 @@ match p with
                           | Some false => lts_set_tau B
                           | None => ∅
                           end
-  | ν p => list_to_set (map (fun q => ν q) (elements $ lts_set_tau p))
+  | ν p => set_map (fun q => ν q) (lts_set_tau p)
   | g gp => lts_set_tau_g gp
 end.
 
@@ -4650,7 +4649,7 @@ Proof.
     assert (non_blocking_output (ActOut ((j + k + n)%nat ⋉ d))).
     exists ((j + k + n)%nat ⋉ d). eauto. contradiction.
 Qed.
-Check @co_actions_of.
+
 Lemma VarC_action_add_co_rev j k μ' p : VarC_action_add (j + k) μ' ∈ @co_actions_of _ _ (@gLabel_nb TypeOfActions VACCS_Label) _ p
                         -> VarC_action_add k μ' ∈ @co_actions_of _ _ (@gLabel_nb TypeOfActions VACCS_Label) _ (Ѵ  j p).
 Proof.

@@ -486,7 +486,7 @@ Next Obligation.
         eapply non_blocking_action_in_ms in l; eauto. set_solver.
       * eapply blocking_action_in_ms in l as (eq & duo & nb);eauto.
         eapply ext_m in duo. symmetry in duo. eapply simplify_match_output in duo. subst.
-        rewrite duo in Tr, nb. admit.
+        rewrite duo in Tr, nb. inversion nb. admit.
   - eapply simplify_match_output in inter. subst. right.
     eapply elem_of_list_to_set.
     eapply elem_of_list_fmap. exists a. split; eauto.

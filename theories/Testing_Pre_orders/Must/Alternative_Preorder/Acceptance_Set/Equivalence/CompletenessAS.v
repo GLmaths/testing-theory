@@ -1329,7 +1329,9 @@ Lemma completeness_fw {P Q : Type} `{
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼ₐₛ q.
 Proof. intros. split. now apply completeness1. now apply completeness2. Qed.
 
-(* From stdpp Require Import gmultiset.
+
+(*
+From stdpp Require Import gmultiset.
 
 #[global] Program Instance PreActionForFW 
   `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
@@ -1378,7 +1380,8 @@ Admitted. *)
 Lemma completeness {P Q : Type} `{
   @gLtsObaFB P A H gLtsP gLtsEqP VP, !FiniteImagegLts P A,
   @gLtsObaFB Q A H gLtsQ gLtsEqQ VQ, !FiniteImagegLts Q A,
-  @gLtsObaFB E A H gLtsE gLtsEqE VE, !FiniteImagegLts E A, @AbsAction A H E FinA gLtsE Φ, !Testing_Predicate E A outcome}
+  @gLtsObaFB E A H gLtsE gLtsEqE VE, !FiniteImagegLts E A,
+  @AbsAction A H E FinA gLtsE Φ, !Testing_Predicate E A outcome}
 
   `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
   `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
@@ -1392,7 +1395,7 @@ Lemma completeness {P Q : Type} `{
   `{@PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsP)}
   `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}
 
-  `{!gen_spec_conv co_of gen_conv, !gen_spec_acc PreA co_of gen_acc (fun x => (𝝳  (Φ x)))}
+  `{!gen_spec_conv co_of gen_conv, !gen_spec_acc PreA co_of gen_acc (fun x => (𝝳 (Φ x)))}
 
   (p : P) (q : Q) : (ctx_pre p q) -> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
