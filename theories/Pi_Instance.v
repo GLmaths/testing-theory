@@ -34,21 +34,18 @@ Require Import Coq.Wellfounded.Inverse_Image.
 Require Import signatures.pi.
 Require Import signatures.unscoped.
 
-#[global] Instance Subst_proc_data : (Subst1 _ _ _) := fun x => @subst_proc ids x.
-#[global] Instance Subst_proc_proc : (Subst1 _ _ _) := fun x => @subst_proc x ids.
 
-(* Notation "tm [ s1 ; s2 ]" :=
-  (subst2 s1 s2 tm) (at level 10, right associativity) : subst_scope. *)
+Notation "tm [ s1 ; s2 ]" :=
+  (subst2 s1 s2 tm) (at level 10, right associativity) : subst_scope.
 Notation "tm [ s ]" :=
   (subst1 s tm) (at level 10, right associativity) : subst_scope.
-Notation "a ⋅ x" :=
-  (ren1 a x) (at level 20, right associativity) : subst_scope.
-Notation "↑" := (shift) : subst_scope.
 Notation "s '..'" := (scons s ids) (at level 1, format "s ..") : subst_scope.
 Notation "f >> g" := (fun x => g (f x)) (at level 50) : subst_scope.
 Notation "s .: sigma" := (scons s sigma) (at level 55, sigma at next level, right associativity) : subst_scope.
 Open Scope subst_scope.
-Notation "↑↑" := (shift >> var_Data).
+Notation "⋅" := ids.
+Notation "⇑ t" := (t [⋅ ; (shift >> var_Data)]) (at level 20).
+Notation "↿ D" := (D [shift >> var_Data]) (at level 20).
 
 (* Notation "p [ x ← v ]" := (subst_proc id (fun y => if (base.decide (y = x)) then v else y) p).
 Notation "p [ x ⇐ q ]" := (subst_proc (fun y => if (base.decide (y = x)) then q else y) id p). *)
@@ -87,6 +84,7 @@ Definition τ := tau_action.
 
 
 Parameter (Eval_Eq : Equation -> (option bool)).
+Axiom (Eval_Eq_Monotone : forall E, Eval_Eq (↿ E) = Eval_Eq E).
 Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
 #[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
 Parameter (channel_is_countable : countable.Countable Value). (* only here for the classes *)
@@ -185,9 +183,9 @@ Inductive cgr_step : proc -> proc -> Prop :=
     p ≡ q ->
     (ν p) ≡ (ν q)
 | cgr_scope_step: forall (P Q:proc),
-    (ν (P ‖ Q [↑↑])) ≡ ((ν P) ‖ Q)
+    (ν (P ‖ (⇑ Q) )) ≡ ((ν P) ‖ Q)
 | cgr_scope_rev_step: forall (P Q:proc),
-    ((ν P) ‖ Q) ≡ (ν (P ‖ (Q [↑↑])))
+    ((ν P) ‖ Q) ≡ (ν (P ‖ (⇑ Q)))
 where "p ≡ q" := (cgr_step p q).
 
 #[global] Hint Constructors cgr_step:cgr_step_structure.
@@ -329,12 +327,12 @@ Proof.
 constructor. exact cgr_res_nil_rev_step.
 Qed.
 Lemma cgr_scope : forall P Q, 
-  ν (P ‖ Q [↑↑]) ≡* (ν P) ‖ Q.
+  ν (P ‖ (⇑ Q)) ≡* (ν P) ‖ Q.
 Proof.
 intros P Q.  constructor. apply cgr_scope_step.
 Qed.
 Lemma cgr_scope_rev : forall P Q, 
-  (ν P ‖ Q) ≡* ν (P ‖ Q[↑↑]).
+  (ν P ‖ Q) ≡* ν (P ‖ (⇑Q)).
 Proof.
 intros P Q. constructor. apply cgr_scope_rev_step.
 Qed.
@@ -430,33 +428,15 @@ Qed. *)
 Arguments core.funcomp _ _ _/.
 
 Lemma permute_subst : forall sp s Q,
-  (subst2 (up_Data_proc sp) (up_Data_Data s) (Q [↑↑]))
+  (⇑ Q) [(up_Data_proc sp); (up_Data_Data s)]
   =
-  (subst2 sp s Q) [↑↑].
+  ⇑ (Q [sp; s]).
 Proof.
 intros.
 asimpl.
 simpl. substify. 
 reflexivity.
 Qed.
-
-(* Lemma subst_and_ren :
-forall p sp s,
-  subst_proc (up_Data_proc (up_Data_proc sp)) (up_Data_Data (up_Data_Data s)) p
-=
-subst_proc (up_Data_proc (up_Data_proc sp)) (up_Data_Data (up_Data_Data s))
-(subst_proc
- (fun x : nat => var_proc (idsRen x))
- (fun x : nat => var_Data
-  match x return nat with
-| O => S O
-| S n0 => match n0 return nat with
-| O => O
-| S _ => x
-end
-end) p).
-Proof.
-intro p sp s. *)
 
 Instance SubstProper : Proper (eq ==> eq ==> cgr ==> cgr) subst2.
 Proof.
@@ -470,15 +450,6 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
-Instance SubstDataProper : Proper (eq ==> cgr ==> cgr) Subst_proc_data.
-Proof.
-intros s' s Hs q1 q2 Hq. unfold Subst_proc_data. now rewrite Hq, Hs.
-Qed.
-
-Instance SubstProcProper : Proper (eq ==> cgr ==> cgr) Subst_proc_proc.
-Proof.
-intros s' s Hs q1 q2 Hq. unfold Subst_proc_proc. now rewrite Hq, Hs.
-Qed.
 
 Definition νs n q := Nat.iter n (fun p => ν p) q.
 
@@ -489,8 +460,8 @@ intros n ? <- p1 p2 Heq. induction n.
 - simpl. now apply cgr_res.
 Qed.
 
-Definition nvars {A : Type} `{_ : Subst1 (nat -> Data) A A} (n : nat) (p: A) :=
-  Nat.iter n (fun p => p [↑↑]) p.
+Definition nvars {A : Type} `{_ : Subst2 (nat -> proc) (nat -> Data) A A} (n : nat) (p: A) :=
+  Nat.iter n (fun p => ⇑ p) p.
 
 Instance nvars_proper : Proper (eq ==> cgr ==> cgr) nvars.
 Proof.
@@ -499,7 +470,7 @@ intros n ? <- p1 p2 Heq. induction n.
 - simpl. now rewrite IHn.
 Qed.
 
-Lemma shift_in_nvars : forall n q, nvars n q [↑↑] = nvars n (q [↑↑]).
+Lemma shift_in_nvars : forall n q, ⇑ nvars n q = nvars n (⇑ q).
 Proof.
 induction n.
 - now simpl.
@@ -614,13 +585,13 @@ Inductive sts : proc -> proc -> Prop :=
 (*The axiomes*)
 (* Communication of channels output and input that have the same name *)
 | sts_com : forall {c v p1 p2 g1 g2}, 
-    sts ((c ! v • p1) + g1 ‖ ((c ? p2) + g2)) (p1 ‖ p2 [v..])
+    sts ((c ! v • p1) + g1 ‖ ((c ? p2) + g2)) (p1 ‖ p2 [⋅; v..])
 (* Nothing more , something less *)
 | sts_tau : forall {p g}, 
     sts ((t • p) + g) p
 (* Recursion *)
 | sts_recursion : forall {p}, 
-    sts (rec p) (p [(rec p)..])
+    sts (rec p) (p [(rec p).. ; ⋅])
 (*If Yes*)
 | sts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     sts (If E Then p Else q) p
@@ -649,9 +620,9 @@ Hint Rewrite cgr_scope : cgr.
 
 (* Lemma 1.2.20 from Sangiorgi and Walker *)
 Lemma ReductionShape : forall P Q, sts P Q ->
-((exists c v P1 P2 G1 G2 s n, (P ≡* νs n (((c ! v • P1) + G1 ‖ ((c ? P2) + G2)) ‖ s)) /\ (Q ≡* νs n ((P1 ‖ (P2[v..])) ‖ s)))
+((exists c v P1 P2 G1 G2 s n, (P ≡* νs n (((c ! v • P1) + G1 ‖ ((c ? P2) + G2)) ‖ s)) /\ (Q ≡* νs n ((P1 ‖ (P2[⋅;v..])) ‖ s)))
 \/ (exists P1 G1 s n, (P ≡* νs n (((t • P1) + G1) ‖ s)) /\ (Q ≡* νs n (P1 ‖ s)))
-\/ (exists P1 s n, (P ≡* νs n ((rec P1) ‖ s)) /\ (Q ≡* νs n (P1 [(rec P1)..] ‖ s)))
+\/ (exists P1 s n, (P ≡* νs n ((rec P1) ‖ s)) /\ (Q ≡* νs n (P1 [(rec P1)..; ⋅] ‖ s)))
 \/ (exists P1 P0 s E n, (P ≡* νs n ((If E Then P1 Else P0) ‖ s)) /\ (Q ≡* νs n (P1 ‖ s)) /\ (Eval_Eq E = Some true))
 \/ (exists P1 P0 s E n, (P ≡* νs n ((If E Then P1 Else P0) ‖ s)) /\ (Q ≡* νs n (P0 ‖ s)) /\ (Eval_Eq E = Some false))
 ).
@@ -669,27 +640,27 @@ induction Transition.
     + destruct IH as (c & v & P1 & P2 & g1 & g2 & s & n & H1 & H2).
       left. destruct n.
       * exists c, v, P1, P2, g1,g2, (s ‖ q), 0. split; rewrite ?H1, ?H2...
-      * exists c, v, P1, P2, g1,g2, (s ‖ nvars n (q [↑↑])), (S n).
+      * exists c, v, P1, P2, g1,g2, (s ‖ nvars n (⇑ q)), (S n).
         split; simpl; rewrite ?H1, ?H2...
     + destruct IH as (P1 & P2 & s & n & H1 & H2). right. left. destruct n.
       * exists P1, P2, (s ‖ q), 0. split; rewrite ?H1, ?H2...
-      * exists P1, P2, (s ‖ nvars n (q [↑↑])), (S n).
+      * exists P1, P2, (s ‖ nvars n (⇑ q)), (S n).
         split; simpl; rewrite ?H1, ?H2...
     + destruct IH as (P1 & s & n & [H1 H2]). right. right. left. destruct n.
       * exists P1, (s ‖ q), 0. split; rewrite ?H1, ?H2...
-      * exists P1, (s ‖ nvars n (q [↑↑])), (S n).
+      * exists P1, (s ‖ nvars n (⇑ q)), (S n).
         split; simpl; rewrite ?H1, ?H2...
     + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).
       right. right. right. left. destruct n.
       * exists P1, P0, (s ‖ q), E, 0.
         repeat split; [ rewrite H1 | rewrite H2 | assumption]...
-      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n).
+      * exists P1, P0, (s ‖ nvars n (⇑ q)), E, (S n).
         repeat split; simpl; [ rewrite H1 | rewrite H2 | assumption ]...
     + destruct IH as (P1 & P0 & s & E & n & [H1 [H2 H3]]).
       right. right. right. right. destruct n; simpl in H1, H2.
       * exists P1, P0, (s ‖ q), E, 0.
         repeat split; [ rewrite H1 | rewrite H2 | assumption ]...
-      * exists P1, P0, (s ‖ nvars n (q [↑↑])), E, (S n).
+      * exists P1, P0, (s ‖ nvars n (⇑ q)), E, (S n).
         repeat split; simpl; [ rewrite H1 | rewrite H2 | assumption ]...
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
     + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
@@ -730,7 +701,7 @@ Qed.
 Inductive lts : proc-> Act -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? P) (ActIn (c ⋉ v)) (P [v ..])
+    lts (c ? P) (ActIn (c ⋉ v)) (P [⋅; v ..])
 | lts_output : forall {c v P},
     lts (c ! v • P) (FreeOut (c ⋉ v)) P
 
@@ -738,7 +709,7 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 | lts_tau : forall {P},
     lts (t • P) τ P
 | lts_recursion : forall {P},
-    lts (rec P) τ (P [(rec P) ..])
+    lts (rec P) τ (P [(rec P) ..; ⋅])
 | lts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     lts (If E Then p Else q) τ p
 | lts_ifZero : forall {p q E}, Eval_Eq E = Some false -> 
@@ -757,14 +728,14 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 (* Scoped rules *)
 | lts_close_l : forall {c v p1 p2 q1 q2},
     lts p1 (BoundOut (c ⋉ v)) p2 ->      (* this term is an "open" term, (see the lts_open rule) *)
-    lts q1 (ActIn (c ⋉ v)) q2 ->         (* while this one is a "closed" term *)
-    lts (p1 ‖ q1) τ (ν (p2 ‖ (q2 [↑↑]))) (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
+    lts (⇑ q1) (ActIn (c ⋉ v)) q2 ->  (* while this one is a "closed" term *)
+    lts (p1 ‖ (⇑ q1)) τ (ν (p2 ‖ q2))   (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
 | lts_close_r : forall {c v p1 p2 q1 q2},
     lts q1 (BoundOut (c ⋉ v)) q2 ->
-    lts p1 (ActIn (c ⋉ v)) p2 ->
-    lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
+    lts (⇑ p1) (ActIn (c ⋉ v)) p2 ->
+    lts ((⇑ p1) ‖ q1) τ (ν (p2 ‖ q2))
 | lts_res : forall {p q α},
-    lts p (α [↑↑]) q ->
+    lts p (↿ α) q ->
     lts (ν p) α (ν q)
                       (* only α needs to shift here!! (both chan and value).
                          as a consequence, the channel in α can never be 0 (giving the condition in paper)
@@ -800,26 +771,60 @@ Ltac not_a_guard := intro hex; inversion hex as [L absurd_hyp]; inversion absurd
 Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
 Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
 
-exists P1 G R n, (P ≡* νs n ((c ? P1 + G) ‖ R)) /\ (Q ≡* νs n (P1[v..] ‖ R))
+
+Lemma helpme: forall α, (exists c v, ↿ α = ActIn (c ⋉ v)) -> exists c v, α = ActIn (c ⋉ v).
+Proof.
+intros α H. destruct H as [c [v H0]]. destruct α.
+- destruct e as [c1 v1]. now exists c1, v1.
+- destruct e as [c1 v1]. simpl in H0. inversion H0.
+- destruct e as [c1 v1]. simpl in H0. inversion H0.
+- simpl in H0. inversion H0.
+Qed.
+
+Lemma TransitionShapeForInput : forall P Q c v
+(* m, lts P (nShift_Action m (ActIn (c ⋉ v))) (nvars m Q) -> *)
+, lts P (ActIn (c ⋉ v)) Q -> 
+exists P1 G R n, (P ≡* νs n ((c ? P1 + G) ‖ R)) /\ (Q ≡* νs n (P1[⋅; v..] ‖ R))
 /\ ((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
 Proof.
-intros P Q c v Transition.
- dependent induction Transition.
+intros P Q c v.
+(* intro m.
+intro Transition. dependent induction Transition.
+- destruct m. 
+
++ exists P, 𝟘, 𝟘, 0. simpl. simpl in x, x0. inversion x0. subst. split; eauto with cgr.
++ 
+(* exists P, 𝟘, 𝟘, 0. *)
+repeat eexists.
+simpl in x. simpl. repeat split.
+  * admit.
+  * admit.
+
+- simpl in IHTransition, x. destruct (helpme α) as [c1 [v1 Heq]]. {now exists c, v. }  
+  destruct (IHTransition c1  v1 Heq) as [P1 [G [R [H0 [H1 H2]]]]].
+  exists P1, G, R. split. rewrite H0. simpl. split. now rewrite H1. not_a_guard.
+
+ *)
+
+
+intro Transition. dependent induction Transition.
 - exists P, 𝟘, 𝟘, 0. split; eauto with cgr.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]].
-  exists P1, G, R, (S n). split. now rewrite H0. split. now rewrite H1. not_a_guard.
+- destruct (IHTransition (subst_Data shift c) (subst_Data shift v) eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]].
+  exists P1, G, R, (S n).
+  (* split. now rewrite H0. split. now rewrite H1. not_a_guard. *)
+  admit.
 - destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
   + exists P1, G, (R ‖ q), 0. simpl.
-  split. now finish_zero H0. split. now finish_zero H1. not_a_guard.
-  + exists P1, G, (R ‖ nvars n (q [↑↑])), (S n).
-  split. now finish_Sn H0. split. now finish_Sn H1. not_a_guard.
+    split. now rewrite H0, <- cgr_par_assoc. split. now rewrite H1, <- cgr_par_assoc. not_a_guard.
+  + exists P1, G, (R ‖ nvars n (⇑ q)), (S n).
+    split. now finish_Sn H0. split. now finish_Sn H1. not_a_guard.
 - destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
   + exists P1, G, (R ‖ p), 0. simpl. split.
-    * rewrite H0. rewrite cgr_par_com. now rewrite cgr_par_assoc.
+    * now rewrite H0, cgr_par_com, cgr_par_assoc.
     * split.
-      ** rewrite H1. rewrite cgr_par_com. now rewrite cgr_par_assoc.
+      ** now rewrite H1, cgr_par_com, cgr_par_assoc.
       ** not_a_guard.
-  + exists P1, G, (R ‖ nvars n (p [↑↑])), (S n). simpl.
+  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n). simpl.
   split. finish_Sn H0. now rewrite cgr_par_com. split. finish_Sn H1. now rewrite cgr_par_com. not_a_guard.
 - destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
   + exists P1, (G + p2), R, 0. simpl. split.
@@ -829,21 +834,21 @@ intros P Q c v Transition.
     * split.
       ** now rewrite H1.
       ** intro. apply H2. now exists p1.
-  + assert (S n = 0) by apply (H2 (ex_intro (fun x => eq (g p1) (g x)) p1 eq_refl)). inversion H.
+  + destruct H2 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
 - destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
   + exists P1, (G + p1), R, 0. simpl. split.
-    * rewrite (proj1 (H2 (ex_intro (fun x => eq (g p2) (g x)) p2 eq_refl))). rewrite cgr_par_nil.
-      rewrite <- cgr_choice_assoc. rewrite cgr_choice_com. apply cgr_choice.
-      rewrite H0.
-      rewrite (proj1 (H2 (ex_intro (fun x => eq (g p2) (g x)) p2 eq_refl))). now rewrite cgr_par_nil.
+    * destruct H2. { now exists p2. } subst.
+      rewrite cgr_par_nil, <- cgr_choice_assoc, cgr_choice_com.
+      apply cgr_choice.
+      now rewrite H0, cgr_par_nil.
     * split.
       ** now rewrite H1.
       ** intro. apply H2. now exists p2.
-  + assert (S n = 0) by apply (H2 (ex_intro (fun x => eq (g p2) (g x)) p2 eq_refl)). inversion H.
+  + destruct H2 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Qed.
 
 
-Lemma guarded_does_no_output : forall p c v q, not (lts (g p) (BoundOut (c ⋉ v)) q).
+Lemma GuardedDoesNoBoundOutput : forall p c v q, not (lts (g p) (BoundOut (c ⋉ v)) q).
 Proof. 
 intros. intro Transition.
 dependent induction Transition; eapply IHTransition; eauto.
@@ -851,38 +856,54 @@ Qed.
 
 
 Lemma TransitionShapeForFreeOutput : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) ->
-exists G R n, P ≡* νs n (c ! v • G ‖ R) /\ Q ≡* νs n (G ‖ R).
+exists P1 G R n, P ≡* νs n (c ! v • P1 + G ‖ R) /\ Q ≡* νs n (P1 ‖ R) /\
+((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
 Proof.
 intros P Q c v Transition.
-dependent induction Transition; try destruct (IHTransition c v eq_refl) as [G [R [n [H0 H1]]]].
-- exists P, 𝟘, 0. split; apply cgr_par_nil_rev.
-- exists G, R, (S n). split; simpl; [now rewrite H0 | now rewrite H1].
+dependent induction Transition; try destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]].
+- exists P, 𝟘, 𝟘, 0. eauto with cgr.
+- (* exists G, R, (S n). split; simpl; now rewrite ?H0, ?H1. *)
+  admit.
 - destruct n.
-  + exists G, (R ‖ q), 0. split; [ now finish_zero H0 | now finish_zero H1 ].
-  + exists G, (R ‖ nvars n (q [↑↑])), (S n). split; [now finish_Sn H0 | now finish_Sn H1].
+  + exists P1, G, (R ‖ q), 0. repeat split.
+    * now finish_zero H0.
+    * now finish_zero H1.
+    * inversion H. inversion H3.
+  + exists P1, G, (R ‖ nvars n (⇑ q)), (S n). repeat split.
+    * now finish_Sn H0.
+    * now finish_Sn H1.
+    * inversion H. inversion H3.
+    * inversion H. inversion H3.
 - destruct n; simpl in H0, H1.
-  + exists G, (R ‖ p), 0. simpl. split; [rewrite H0|rewrite H1]; now rewrite cgr_par_com, cgr_par_assoc.
-  + exists G, (R ‖ nvars n (p [↑↑])), (S n). simpl. split; [finish_Sn H0| finish_Sn H1]; now rewrite cgr_par_com.
-- destruct n; simpl in H0, H1.
-  + exists G, R, 0. simpl. split.
-    * rewrite H0. admit.
+  + exists P1, G, (R ‖ p), 0. simpl.
+    repeat split; [rewrite H0|rewrite H1 | inversion H; inversion H3];
+    now rewrite cgr_par_com, cgr_par_assoc.
+  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n). simpl. repeat split.
+    * finish_Sn H0. now rewrite cgr_par_com.
+    * finish_Sn H1. now rewrite cgr_par_com.
+    * inversion H; inversion H3.
+    * inversion H; inversion H3.
+- destruct n.
+  + exists P1, (G + p2), R, 0. simpl. repeat split.
+    * destruct H2. { now exists p1. } subst.
+      rewrite cgr_par_nil, <- cgr_choice_assoc. apply cgr_choice.
+      now rewrite H0, cgr_par_nil.
     * now rewrite H1.
-  + exists G, R, (S n). simpl. split.
-    * rewrite H0. admit.
+    * apply H2. now exists p1.
+  + destruct H2 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
+- destruct n.
+  + exists P1, (G + p1), R, 0. simpl. repeat split.
+    * destruct H2. { now exists p2. } subst.
+      rewrite cgr_choice_com.
+      rewrite cgr_par_nil. rewrite <- cgr_choice_assoc. apply cgr_choice.
+      now rewrite H0, cgr_par_nil.
     * now rewrite H1.
-- destruct n; simpl in H0, H1.
-  + exists G, R, 0. simpl. split.
-    * rewrite H0. rewrite cgr_par_com. now rewrite cgr_par_assoc. admit.
-    * now rewrite H1.
-  + exists G, R, (S n). simpl. split.
-    * admit.
-    * now rewrite H1.
-(* - edestruct guarded_does_no_output. eauto. *)
+    * apply H2. now exists p2.
+  + destruct H2 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Admitted.
 
-Lemma TransitionShapeForBoundOutput : forall P Q c v, lts P (BoundOut (c ⋉ v)) Q ->
-exists G R n, P ≡* νs n (c ! v • G ‖ R) /\ Q ≡* νs n (G ‖ R).
-Admitted.
+(* Lemma TransitionShapeForBoundOutput : forall  *)
+
 
 (* Lemma TransitionShapeForOutputSimplified : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) 
                                         -> (P ≡* ((c ! v • 𝟘) ‖ Q)).
@@ -932,6 +953,69 @@ Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
 (* p performs α to some r and this is equivalent to q*)
 Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
 
+Axiom fake_transition : forall {c v p1 p2 q1 q2},
+    lts p1 (BoundOut (c ⋉ v)) p2 ->
+    lts q1 (ActIn (c ⋉ v)) q2 ->
+    lts (p1 ‖ ⇑ q1) τ (ν (p2 ‖ q2)).
+
+Lemma SubstLTS : forall p α q σ,
+  lts p α q -> lts (p [⋅;σ]) (α [σ]) (q [⋅;σ]).
+  intros p α q σ Transition.
+  dependent induction Transition.
+  - asimpl. simpl. substify. simpl. apply lts_input. admit.
+  - apply lts_output.
+  - apply lts_tau.
+  - apply lts_recursion. admit.
+  - apply lts_ifOne. admit.
+  - apply lts_ifZero. admit.
+  - apply (lts_comL IHTransition1 IHTransition2).
+  - apply (lts_comR IHTransition1 IHTransition2).
+  - asimpl. simpl. eapply lts_close_l.
+
+Lemma shift_transition : forall p α q, lts p α q -> lts (⇑ p) (↿ α) (⇑ q).
+intros p α q Transition.
+dependent induction Transition.
+- asimpl. simpl.
+assert
+(
+subst2 ids (scons 
+  (subst_Data (fun x : nat => var_Data (shift x)) v)
+  ids)
+  (subst_proc var_proc
+  (scons (var_Data 0) (fun x : nat => (shift (shift x)))) P)
+  =
+  (subst_proc var_proc
+  (scons (subst_Data (fun x : nat => var_Data (shift x)) v) (fun x : nat => var_Data (shift x)))
+  P)). asimpl. simpl. reflexivity.
+  rewrite <- H.
+  apply lts_input.
+- apply lts_output.
+- apply lts_tau.
+- apply lts_recursion. admit.
+- apply lts_ifOne. now rewrite Eval_Eq_Monotone.
+- apply lts_ifZero. now rewrite Eval_Eq_Monotone.
+- apply (lts_comL IHTransition1 IHTransition2).
+- apply (lts_comR IHTransition1 IHTransition2).
+- change ((p1 ‖ q1 [↑↑]) [↑↑]) with ((p1 [↑↑] ‖ q1 [↑↑] [↑↑])).
+assert 
+(@eq proc
+  (pr_res
+  (pr_par
+  (subst_proc ids ↑↑ p2)
+  (subst_proc ids ↑↑ q2)))
+  (pr_res
+  (pr_par
+  (subst_proc ids (up_Data_Data ↑↑) p2)
+  (subst_proc ids (up_Data_Data ↑↑) q2)))).
+  admit.
+
+  replace ((ν (p2 ‖ q2)) [↑↑]) with (ν (p2 [↑↑] ‖ q2 [↑↑])).
+  apply (lts_close_l IHTransition1 IHTransition2).
+
+admit. asimpl. unfold Subst_proc_data. simpl.
+- admit.
+- apply (lts_res). fold subst_proc. apply IHTransition.
+Admitted.
 
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
 (* fact 1.4.16 in Sangiorgi&Walker *)
@@ -947,7 +1031,7 @@ Proof.
     + intros q α l. dependent destruction l.
       * inversion l2.
       * inversion l1.
-      * inversion l2.
+      * rewrite x in l2. inversion l2.
       * inversion l1.
       * exists p2. split. assumption. apply cgr_par_nil_rev.
       * inversion l.
@@ -969,38 +1053,64 @@ Proof.
            assumption. auto with cgr.
          ** exists ((q2 ‖ q) ‖ q0). split. apply (@lts_comR c v). assumption. apply lts_parL.
            assumption. auto with cgr.
-      * admit. (* bound *)
-      * admit. (* bound*)
-      * exists ((p2 ‖ q) ‖ r). split. apply lts_parL. apply lts_parL. assumption. auto with cgr.
+      * rewrite x in l2. dependent destruction l2.
+        ** eexists. split.
+           *** eapply lts_parL. eapply (lts_close_l l1 l2).
+           *** rewrite <- cgr_par_assoc. apply cgr_scope_rev.
+        ** eexists. split.
+           *** eapply (lts_close_l _ _).
+           *** reflexivity.
+      * dependent destruction l1.
+        ** eexists. split.
+           *** eapply lts_parL, (lts_close_r l1 l2).
+           *** admit.
+        ** eexists. split.
+           *** eapply (lts_close_r _ _).
+           *** reflexivity.
+      * exists ((p2 ‖ q) ‖ r). split.
+        ** apply lts_parL, lts_parL, l.
+        ** apply cgr_par_assoc.
       * dependent destruction l.
-         ** exists ((p ‖ p2) ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption. assumption.
-           auto with cgr.
-         ** exists ((p ‖ q2) ‖ p2). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parR.
-           assumption. auto with cgr.
-         ** admit. (* bound *)
-         ** admit. (* bound *)
+         ** exists ((p ‖ p2) ‖ q2). split. eapply lts_comL. apply lts_parR, l1. apply l2. apply cgr_par_assoc.
+         ** exists ((p ‖ q2) ‖ p2). split. eapply lts_comR. apply l1. apply lts_parR. apply l2. apply cgr_par_assoc.
+         ** eexists. split.
+            *** eapply (lts_close_l _ l2).
+            *** admit. (* scope extrusion *)
+         ** eexists. split.
+            *** eapply (lts_close_r l1 _).
+            ***  admit. (* scope extrusion *)
          ** exists ((p ‖ p2) ‖ r). split. apply lts_parL. apply lts_parR. assumption. auto with cgr.
          ** exists ((p ‖ q) ‖ q2). split. apply lts_parR. assumption. auto with cgr.
     + intros. dependent destruction l.
-      * dependent destruction l1. 
+      * dependent destruction l1.
          ** exists (p2 ‖ (q ‖ q2)). split.
-           eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parR. assumption. auto with cgr.
-         ** exists (p ‖ (q0 ‖ q2)). split. apply lts_parR. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption.
-           assumption. auto with cgr.
+            eapply lts_comL. apply l1. apply lts_parR, l2. apply cgr_par_assoc_rev.
+         ** exists (p ‖ (q0 ‖ q2)). split.
+            eapply lts_parR, lts_comL. apply l1. apply l2. apply cgr_par_assoc_rev.
       * dependent destruction l2. 
-         ** exists (p0 ‖ (q ‖ p2)). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption.
-           assumption. auto with cgr.
-         ** exists (p ‖ (q2 ‖ p2)). split. apply lts_parR.  eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption.
-           assumption. auto with cgr.
-      * admit. (* bound *)
-      * admit. (* bound *)
+         ** exists (p0 ‖ (q ‖ p2)). split.
+            eapply lts_comR. apply lts_parR, l1. apply l2. apply cgr_par_assoc_rev.
+         ** exists (p ‖ (q2 ‖ p2)). split.
+            eapply lts_parR, lts_comR. apply l1. apply l2. apply cgr_par_assoc_rev.
+      * eexists. split.
+         ** eapply (lts_close_l _ _).
+         ** reflexivity.
+      * eexists. split.
+         ** eapply (lts_close_r _ _).
+         ** reflexivity.
       * dependent destruction l.
-         ** exists (p2 ‖ (q2 ‖ r)). split. apply (@lts_comL c v). assumption. apply lts_parL.
-           assumption. auto with cgr.
-         ** exists (q2 ‖ (p2 ‖ r)). split. apply (@lts_comR c v). apply lts_parL. assumption.
-           assumption. auto with cgr.
-         ** admit. (* bound *)
-         ** admit. (* bound *)
+         ** exists (p2 ‖ (q2 ‖ r)). split.
+            *** apply (lts_comL l1), lts_parL, l2.
+            *** apply cgr_par_assoc_rev.
+         ** exists (q2 ‖ (p2 ‖ r)). split.
+            *** apply (@lts_comR c v). apply lts_parL, l1. exact l2.
+            *** apply cgr_par_assoc_rev.
+         ** eexists. split.
+            *** eapply (lts_close_r _ _).
+            *** admit. (* scope extrusion *)
+         ** eexists. split.
+            *** eapply (lts_close_l _ _).
+            *** admit. (* scope extrusion *)
          ** exists (p2 ‖ ( q ‖ r)). split. apply lts_parL. assumption. auto with cgr.
          ** exists (p ‖ (q2 ‖ r)). split. apply lts_parR. apply lts_parL. assumption. auto with cgr.
       * exists (p ‖ (q ‖ q2)). split. apply lts_parR.  auto. apply lts_parR. assumption. auto with cgr.
@@ -1028,14 +1138,17 @@ Proof.
     + intros. dependent destruction l. exists (p [v..]). split. apply lts_input.
       assert (p ≡* q) by now constructor. now rewrite H0.
     + intros. dependent destruction l.
-      * destruct (IHcgr_step p2 (FreeOut (c ⋉ v))).  exact l1. destruct H0. exists (x ‖ q2).
-        split. eapply lts_comL. exact H0. assumption.
+      * destruct (IHcgr_step p2 (FreeOut (c ⋉ v)) l1) as [x [H0 H1]].
+        exists (x ‖ q2). split. eapply lts_comL. exact H0. assumption.
         apply cgr_fullpar. assumption. reflexivity.
-      * destruct (IHcgr_step q2 (ActIn (c ⋉ v))). assumption. destruct H0. exists (x ‖ p2).
-        split.  eapply lts_comR. exact l1. assumption.
+      * destruct (IHcgr_step q2 (ActIn (c ⋉ v)) l2) as [x [H0 H1]].
+        exists (x ‖ p2). split. eapply lts_comR. exact l1. assumption.
         apply cgr_fullpar. assumption. reflexivity.
-      * admit. (* bound *)
-      * admit. (* bound *)
+      * destruct (IHcgr_step p2 _ l1) as [x [H0 H1]].
+        eexists. split.
+        ** apply (lts_close_l H0 l2).
+        ** now rewrite H1.
+      * destruct (IHcgr_step p2 _ l2) as [x [H0 H1]]. admit. (* broken IH :( *)
       * destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
         split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
         assumption. reflexivity.
@@ -1055,9 +1168,49 @@ Proof.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
     + intros. dependent destruction l.
     + intros. repeat dependent destruction l.
-    + admit. (* res *)
-    + admit. (* res *)
-    + admit. (* res *)
+    + intros. dependent destruction l; destruct (IHcgr_step _ _ l) as [x [H1 H2]].
+      * eexists. split.
+        ** apply (lts_res H1).
+        ** now rewrite H2.
+      * eexists. split.
+        ** apply (lts_open H0). exact H1.
+        ** exact H2.
+    + intros. dependent destruction l.
+      * (* processes ν P and Q did a comm-L through a parallel. Now I move Q inside the ν. How do they communicate? *)
+        eexists. split.
+        ** eapply lts_res. admit.
+         (* eapply fake_transition. apply lts_open. *)
+        ** admit.
+      * eexists. split.
+        ** eapply lts_res. simpl. eapply lts_comR. admit. admit.
+        ** admit.
+      * (* close-L: corresponds to scope extrusion *)
+        (* I need a lemma saying: since the process does a bound output, it is congruent to something with
+           some νs at the beginning (and the correct ν as the first one). This lemma will use the νν congruence rule*)
+        dependent destruction l1.
+        -- (* res on P *) eexists (ν ν ( q ‖ q2 [↑↑] )).
+        split.
+           ++ eapply lts_res. eapply lts_close_l. exact l1. eapply shift_transition in l2. exact l2.
+           ++ auto with cgr.
+        -- (* open on P *) eexists (ν (p2 ‖ q2)) . split.
+          ++ eapply lts_res. eapply lts_comL. exact l1. simpl in l2.  2:{ eapply shift_transition in l2. exact l2.  } admit.
+          ++ reflexivity.
+
+
+        eexists. split.
+        ** eapply lts_res. eapply lts_close_l.
+           *** dependent destruction l1.
+               **** 
+      admit.
+      * eexists. admit.
+      * eexists. split.
+        ** eapply lts_res. eapply lts_parL. admit.
+        ** admit.
+      * eexists. admit.
+    + intros q α l. dependent destruction l.
+      * 
+    
+    admit. (* res *)
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. eauto with cgr.
 Qed.
@@ -1079,7 +1232,7 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
 (* First case τ by communication *)
 
 - destruct IH as [c [v [P1 [P2 [G1 [G2 [s [n [H1 H2]]]]]]]]].
-  destruct (Congruence_Respects_Transition P (νs n (P1 ‖ P2 [v..] ‖ s)) τ) as [? [H3 H4]].
+  destruct (Congruence_Respects_Transition P (νs n (P1 ‖ P2 [⋅;v..] ‖ s)) τ) as [? [H3 H4]].
   { eexists. split.
     * exact H1.
     * apply TransitionUnderScope, lts_parL, (@lts_comL c v); eauto with ccs.  }
@@ -1099,7 +1252,7 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
 (* Third case τ by recursion *)
 
 - destruct IH as [P1 [s [n [H1 H2]]]].
-  destruct (Congruence_Respects_Transition P (νs n (P1 <[(rec P1)..] ‖ s)) τ) as [? [H3 H4]].
+  destruct (Congruence_Respects_Transition P (νs n (P1 [(rec P1)..;⋅] ‖ s)) τ) as [? [H3 H4]].
   { eexists. split.
     + exact H1.
     + apply TransitionUnderScope, lts_parL, lts_recursion. }
@@ -2303,3 +2456,46 @@ Qed.
   {| lts_oba_fb_feedback p1 p2 p3 a := OBA_with_FB_Fourth_Axiom p1 p2 p3 a |}.
 
 *)
+
+(* Definition test_term :=  (ν ν (1 ! 0 • (0 ? 𝟘) + 𝟘) ‖ 0 ? (0 ! 3 • 𝟘) + 𝟘).
+
+Lemma test_term_sts: sts test_term (ν ν (0 ? 𝟘 ‖ 0 ! 3 • 𝟘)).
+Proof.
+unfold test_term.
+eapply sts_res.
+eapply sts_cong.
+- apply cgr_scope_rev.
+- eapply sts_res. eapply sts_com.
+- simpl. asimpl. apply cgr_refl.
+Qed.
+
+Lemma check : 
+  (@subst2 _ _ _ _ Subst_proc ids (@scons Data O ids)
+  (gpr_output 0 (@subst1 _ _ _ Subst_Data ids 4) 𝟘))= 
+0 ! 3 • 𝟘.
+Proof.
+reflexivity.
+Qed.
+
+Lemma test_term_lts: lts test_term τ
+  (ν ν (0 ? 𝟘 ‖ 0 ! 3 • 𝟘)).
+  (* (subst_proc ids (@scons Data (var_Data O) ids)
+  (gpr_output 0
+  (Subst_Data ids 4) (Subst_proc ids (@scons Data O ids) 𝟘)
+  )))). *)
+Proof.
+unfold test_term.
+unfold Subst_proc. Set Printing All.
+(* eexists. *)
+assert (τ = Shift_Action τ) by reflexivity. rewrite H.
+eapply lts_res.
+eapply (@lts_close_l 1).
+- eapply (@lts_open 1).
+  + intro F. inversion F.
+  + eapply lts_choiceL. eapply lts_output.
+- eapply lts_choiceL. rewrite <- check. apply lts_input.
+Set Printing All.
+Show Proof.
+Qed.
+
+ *)
