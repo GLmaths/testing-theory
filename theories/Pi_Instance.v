@@ -44,7 +44,10 @@ Notation "f >> g" := (fun x => g (f x)) (at level 50) : subst_scope.
 Notation "s .: sigma" := (scons s sigma) (at level 55, sigma at next level, right associativity) : subst_scope.
 Open Scope subst_scope.
 Notation "⋅" := ids.
-Notation "⇑ t" := (t [⋅ ; (shift >> var_Data)]) (at level 20).
+Notation "tm ⟨ r ⟩" := (ren2 ids r tm) (at level 20).
+(* Notation "⇑ t" := (t [⋅ ; (shift >> var_Data)]) (at level 20).
+Notation "↿ D" := (D [shift >> var_Data]) (at level 20). *)
+Notation "⇑ t" := (t ⟨ shift ⟩) (at level 20).
 Notation "↿ D" := (D [shift >> var_Data]) (at level 20).
 
 (* Notation "p [ x ← v ]" := (subst_proc id (fun y => if (base.decide (y = x)) then v else y) p).
@@ -450,6 +453,29 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
+Lemma permute_ren : forall sp s Q, (*** TODO CHANGE STATEMENT *)
+  (⇑ Q) [(up_Data_proc sp); (up_Data_Data s)]
+  =
+  ⇑ (Q [sp; s]).
+Proof.
+intros.
+asimpl.
+simpl. substify. 
+reflexivity.
+Qed.
+
+Instance RenProper : Proper (eq ==> eq ==> cgr ==> cgr) ren2.
+Proof.
+intros sp' sp Hp s' s Hs q1 q2 Hq.
+induction Hq as [p q base_case | p r q transitivity_case].
+- subst. revert sp s. induction base_case; intros; try solve [asimpl; auto with cgr].
+  (* + simpl. unfold subst2. simpl. substify. simpl. Set Printing All. *)
+  + asimpl. apply cgr_choice. apply IHbase_case.
+  + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope _ _).
+  + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope_rev _ _).
+- subst. now rewrite IHtransitivity_case.
+Qed.
+
 
 Definition νs n q := Nat.iter n (fun p => ν p) q.
 
@@ -460,7 +486,7 @@ intros n ? <- p1 p2 Heq. induction n.
 - simpl. now apply cgr_res.
 Qed.
 
-Definition nvars {A : Type} `{_ : Subst2 (nat -> proc) (nat -> Data) A A} (n : nat) (p: A) :=
+Definition nvars  (n : nat) (p: proc) :=
   Nat.iter n (fun p => ⇑ p) p.
 
 Instance nvars_proper : Proper (eq ==> cgr ==> cgr) nvars.
@@ -958,19 +984,30 @@ Axiom fake_transition : forall {c v p1 p2 q1 q2},
     lts q1 (ActIn (c ⋉ v)) q2 ->
     lts (p1 ‖ ⇑ q1) τ (ν (p2 ‖ q2)).
 
-Lemma SubstLTS : forall p α q σ,
-  lts p α q -> lts (p [⋅;σ]) (α [σ]) (q [⋅;σ]).
+Definition ren_Action (xi : nat -> nat) (a : Act) : Act :=
+  match a with
+  | ActIn (act d1 d2) => ActIn (act (subst_Data xi d1) (subst_Data xi d2))
+  | FreeOut (act d1 d2) => FreeOut (act (subst_Data xi d1) (subst_Data xi d2))
+  | BoundOut (act d1 d2) => BoundOut (act (subst_Data xi d1) (subst_Data xi d2))
+  | tau_action => tau_action
+  end.
+
+#[global] Instance Ren_Act : (Ren1 _ _ _) := @ren_Action.
+
+Lemma SubstLTS : forall p α q (σ : nat -> nat),
+  lts p α q -> lts (ren2 ids σ p) (ren1 σ α) (ren2 ids σ q).
   intros p α q σ Transition.
+  About σ.
   dependent induction Transition.
-  - asimpl. simpl. substify. simpl. apply lts_input. admit.
+  - asimpl. simpl. apply lts_input. admit.
   - apply lts_output.
   - apply lts_tau.
-  - apply lts_recursion. admit.
+  - asimpl. simpl. apply lts_recursion. admit.
   - apply lts_ifOne. admit.
   - apply lts_ifZero. admit.
   - apply (lts_comL IHTransition1 IHTransition2).
   - apply (lts_comR IHTransition1 IHTransition2).
-  - asimpl. simpl. eapply lts_close_l.
+  - substify. asimpl. simpl. eapply (lts_close_l IHTransition1 IHTransition2).
 
 Lemma shift_transition : forall p α q, lts p α q -> lts (⇑ p) (↿ α) (⇑ q).
 intros p α q Transition.
