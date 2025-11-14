@@ -453,16 +453,11 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
-Lemma permute_ren : forall sp s Q, (*** TODO CHANGE STATEMENT *)
-  (⇑ Q) [(up_Data_proc sp); (up_Data_Data s)]
+Lemma permute_ren : forall sp s Q,
+  ren2 (upRen_Data_proc sp) (upRen_Data_Data s) (⇑ Q)
   =
-  ⇑ (Q [sp; s]).
-Proof.
-intros.
-asimpl.
-simpl. substify. 
-reflexivity.
-Qed.
+  ⇑ (ren2 sp s Q).
+Proof. now asimpl. Qed.
 
 Instance RenProper : Proper (eq ==> eq ==> cgr ==> cgr) ren2.
 Proof.
@@ -471,8 +466,8 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. revert sp s. induction base_case; intros; try solve [asimpl; auto with cgr].
   (* + simpl. unfold subst2. simpl. substify. simpl. Set Printing All. *)
   + asimpl. apply cgr_choice. apply IHbase_case.
-  + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope _ _).
-  + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope_rev _ _).
+  + unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope _ _).
+  + unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_rev _ _).
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
@@ -994,36 +989,70 @@ Definition ren_Action (xi : nat -> nat) (a : Act) : Act :=
 
 #[global] Instance Ren_Act : (Ren1 _ _ _) := @ren_Action.
 
+Require Import Coq.Logic.FunctionalExtensionality.
 Lemma SubstLTS : forall p α q (σ : nat -> nat),
   lts p α q -> lts (ren2 ids σ p) (ren1 σ α) (ren2 ids σ q).
-  intros p α q σ Transition.
-  About σ.
-  dependent induction Transition.
-  - asimpl. simpl. apply lts_input. admit.
+  intros p α q σ Transition. revert σ.
+  dependent induction Transition; intro σ.
+  - asimpl. simpl.
+    replace (
+    (subst_proc
+    (fun x : nat => var_proc (idsRen x))
+    (scons (ren_Data σ v) (σ >> var_Data))) P)
+    with
+    (ren_proc ids (scons O (σ >> S)) P [⋅; (v [σ >> var_Data])..])
+    by now asimpl.
+    apply lts_input.
   - apply lts_output.
   - apply lts_tau.
-  - asimpl. simpl. apply lts_recursion. admit.
+  - asimpl. simpl.
+    assert ((0 .: idsRen >> S) = ids).
+    apply FunctionalExtensionality.functional_extensionality.
+    intro n. destruct n; trivial.
+    rewrite H.
+
+    assert ((pr_rec (ren2 ids σ P)) = (pr_rec (ren_proc ids σ P))) by reflexivity.
+    rewrite <- H0.
+
+    assert (
+    (subst_proc
+    (scons
+    (pr_rec
+    (@ren2 _ _ proc proc Ren_proc ids σ P))
+    (fun x : nat => var_proc (idsRen x)))
+    (fun x : nat => var_Data (σ x)) P)
+    =
+    (subst2
+    (scons (pr_rec (ren2 ids σ P)) ids)
+    ids
+    (ren2 ids σ P))). asimpl. reflexivity.
+    
+    rewrite H1.
+    apply lts_recursion.
+
   - apply lts_ifOne. admit.
   - apply lts_ifZero. admit.
-  - apply (lts_comL IHTransition1 IHTransition2).
-  - apply (lts_comR IHTransition1 IHTransition2).
-  - substify. asimpl. simpl. eapply (lts_close_l IHTransition1 IHTransition2).
+  - apply (lts_comL (IHTransition1 _) (IHTransition2 _)).
+  - apply (lts_comR (IHTransition1 _) (IHTransition2 _)).
+  - asimpl. simpl. simpl in IHTransition2.
+    eapply (lts_close_l (IHTransition1 _) (IHTransition2 _)).
 
 Lemma shift_transition : forall p α q, lts p α q -> lts (⇑ p) (↿ α) (⇑ q).
 intros p α q Transition.
 dependent induction Transition.
 - asimpl. simpl.
 assert
-(
-subst2 ids (scons 
-  (subst_Data (fun x : nat => var_Data (shift x)) v)
-  ids)
-  (subst_proc var_proc
-  (scons (var_Data 0) (fun x : nat => (shift (shift x)))) P)
+  (subst2 ids
+  (scons (subst_Data (shift >> var_Data) v) ids)
+  (subst_proc ids
+  (scons (var_Data 0) (shift >> shift >> var_Data))
+  P)
   =
-  (subst_proc var_proc
-  (scons (subst_Data (fun x : nat => var_Data (shift x)) v) (fun x : nat => var_Data (shift x)))
-  P)). asimpl. simpl. reflexivity.
+  (subst2 ids 
+  (scons (subst_Data (shift >> var_Data) v)
+  (shift >> var_Data))
+  P)).
+  asimpl. simpl. reflexivity.
   rewrite <- H.
   apply lts_input.
 - apply lts_output.
