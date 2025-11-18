@@ -1292,10 +1292,12 @@ Proof.
               gen_acc (E ∖ (pre_co_actions_of t)) s) as (e' & hle' & heqe')
     by eapply test_next_step.
     eapply must_eq_client; eauto.
-    inversion hm as [happy |]; subst.
-    + now eapply test_ungood in happy.
-    + assert (parallel_inter μ (co_of μ)) as inter. eapply co_inter; eauto.
-      eauto. Unshelve. exact E.
+    assert (¬ outcome (gen_acc (E ∖ pre_co_actions_of t) (μ :: s))).
+    { eapply test_ungood. }
+    assert (parallel_inter μ (co_of μ)) as inter.
+    { eapply co_inter; eauto. }
+    eapply must_preserved_by_synch_if_notoutcome; eauto.
+    Unshelve. exact E.
 Qed.
 
 Lemma completeness2 {P Q : Type} `{
