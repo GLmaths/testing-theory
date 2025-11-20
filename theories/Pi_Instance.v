@@ -45,13 +45,6 @@ Notation "s .: sigma" := (scons s sigma) (at level 55, sigma at next level, righ
 Open Scope subst_scope.
 Notation "⋅" := ids.
 Notation "tm ⟨ r ⟩" := (ren2 ids r tm) (at level 20).
-(* Notation "⇑ t" := (t [⋅ ; (shift >> var_Data)]) (at level 20).
-Notation "↿ D" := (D [shift >> var_Data]) (at level 20). *)
-Notation "⇑ t" := (t ⟨ shift ⟩) (at level 20).
-Notation "↿ D" := (D [shift >> var_Data]) (at level 20).
-
-(* Notation "p [ x ← v ]" := (subst_proc id (fun y => if (base.decide (y = x)) then v else y) p).
-Notation "p [ x ⇐ q ]" := (subst_proc (fun y => if (base.decide (y = x)) then q else y) id p). *)
 
 (*Coercion makes the specification of 'cst' and 'bvar' useless, then simplify the notation *)
 Coercion cst : Value >-> Data.
@@ -112,6 +105,32 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 
 Coercion g : gproc >-> proc.
+
+Definition νs n := Nat.iter n (fun p => ν p).
+
+Class Shiftable (A : Type) := shift_op : A -> A.
+Instance Shiftable_proc : Shiftable proc := ren2 ids shift.
+Instance Shiftable_Data : Shiftable Data := ren1 shift.
+Instance Shiftable_Act  : Shiftable Act :=
+  fun a => match a with
+  | ActIn (act c v) => ActIn (act (ren1 shift c) (ren1 shift v))
+  | FreeOut (act c v) => FreeOut (act (ren1 shift c) (ren1 shift v))
+  | BoundOut (act c v) => BoundOut (act (ren1 shift c) (ren1 shift v))
+  | τ => τ
+  end.
+Notation "⇑" := shift_op.
+
+Definition nvars {A: Type} `{_ : Shiftable A} (n : nat) : A -> A :=
+  Nat.iter n (⇑).
+
+Lemma shift_in_nvars {A : Type} `{Shiftable A}:
+  forall n (q:A), ⇑ (nvars n q) = nvars n (⇑ q).
+Proof.
+induction n.
+- now simpl.
+- intros. simpl. now rewrite IHn.
+Qed.
+
 
 Definition swap_two p :=
   ren_proc ids (fun x => match x with 0 => S 0 | S 0 => 0 | n => n end) p.
@@ -471,31 +490,17 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
-
-Definition νs n q := Nat.iter n (fun p => ν p) q.
-
 Instance NewsProper : Proper (eq ==> cgr ==> cgr) νs.
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
 - now simpl.
 - simpl. now apply cgr_res.
 Qed.
-
-Definition nvars  (n : nat) (p: proc) :=
-  Nat.iter n (fun p => ⇑ p) p.
-
-Instance nvars_proper : Proper (eq ==> cgr ==> cgr) nvars.
+Instance nvars_proper : Proper (eq ==> cgr ==> cgr) (@nvars proc _).
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
 - now simpl.
-- simpl. now rewrite IHn.
-Qed.
-
-Lemma shift_in_nvars : forall n q, ⇑ nvars n q = nvars n (⇑ q).
-Proof.
-induction n.
-- now simpl.
-- intros. simpl. now rewrite IHn.
+- simpl. unfold shift_op. unfold Shiftable_proc. now rewrite IHn.
 Qed.
 
 Lemma n_extrusion : forall n p q, (νs n p) ‖ q ≡* νs n (p ‖ nvars n q).
@@ -756,7 +761,7 @@ Inductive lts : proc-> Act -> proc -> Prop :=
     lts (⇑ p1) (ActIn (c ⋉ v)) p2 ->
     lts ((⇑ p1) ‖ q1) τ (ν (p2 ‖ q2))
 | lts_res : forall {p q α},
-    lts p (↿ α) q ->
+    lts p (⇑ α) q ->
     lts (ν p) α (ν q)
                       (* only α needs to shift here!! (both chan and value).
                          as a consequence, the channel in α can never be 0 (giving the condition in paper)
@@ -793,7 +798,7 @@ Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
 Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
 
 
-Lemma helpme: forall α, (exists c v, ↿ α = ActIn (c ⋉ v)) -> exists c v, α = ActIn (c ⋉ v).
+Lemma helpme: forall α, (exists c v, ⇑ α = ActIn (c ⋉ v)) -> exists c v, α = ActIn (c ⋉ v).
 Proof.
 intros α H. destruct H as [c [v H0]]. destruct α.
 - destruct e as [c1 v1]. now exists c1, v1.
