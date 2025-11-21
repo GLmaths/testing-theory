@@ -791,86 +791,70 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 #[global] Hint Constructors lts:ccs.
 
 Ltac not_a_guard := intro hex; inversion hex as [L absurd_hyp]; inversion absurd_hyp.
-
-
-
 Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
-Ltac finish_Sn H := simpl; rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
+Ltac finish_Sn H :=  rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
 
-
-Lemma helpme: forall α, (exists c v, ⇑ α = ActIn (c ⋉ v)) -> exists c v, α = ActIn (c ⋉ v).
-Proof.
-intros α H. destruct H as [c [v H0]]. destruct α.
-- destruct e as [c1 v1]. now exists c1, v1.
-- destruct e as [c1 v1]. simpl in H0. inversion H0.
-- destruct e as [c1 v1]. simpl in H0. inversion H0.
-- simpl in H0. inversion H0.
-Qed.
-
-Lemma TransitionShapeForInput : forall P Q c v
-(* m, lts P (nShift_Action m (ActIn (c ⋉ v))) (nvars m Q) -> *)
-, lts P (ActIn (c ⋉ v)) Q -> 
-exists P1 G R n, (P ≡* νs n ((c ? P1 + G) ‖ R)) /\ (Q ≡* νs n (P1[⋅; v..] ‖ R))
-/\ ((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
+Lemma TransitionShapeForInput : forall P Q c v,
+  lts P (ActIn (c ⋉ v)) Q -> exists P1 G R n cn vn,
+  (P ≡* νs n ((cn ? P1 + G) ‖ R)) /\
+  (Q ≡* νs n (P1[⋅; vn..] ‖ R))   /\
+  (ActIn (cn ⋉ vn)) = nvars n (ActIn (c ⋉ v)) /\
+  ((exists L, P = g L) -> R = 𝟘 /\ n = 0).
 Proof.
 intros P Q c v.
-(* intro m.
-intro Transition. dependent induction Transition.
-- destruct m. 
-
-+ exists P, 𝟘, 𝟘, 0. simpl. simpl in x, x0. inversion x0. subst. split; eauto with cgr.
-+ 
-(* exists P, 𝟘, 𝟘, 0. *)
-repeat eexists.
-simpl in x. simpl. repeat split.
-  * admit.
-  * admit.
-
-- simpl in IHTransition, x. destruct (helpme α) as [c1 [v1 Heq]]. {now exists c, v. }  
-  destruct (IHTransition c1  v1 Heq) as [P1 [G [R [H0 [H1 H2]]]]].
-  exists P1, G, R. split. rewrite H0. simpl. split. now rewrite H1. not_a_guard.
-
- *)
-
-
-intro Transition. dependent induction Transition.
-- exists P, 𝟘, 𝟘, 0. split; eauto with cgr.
-- destruct (IHTransition (subst_Data shift c) (subst_Data shift v) eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]].
-  exists P1, G, R, (S n).
-  (* split. now rewrite H0. split. now rewrite H1. not_a_guard. *)
-  admit.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, G, (R ‖ q), 0. simpl.
-    split. now rewrite H0, <- cgr_par_assoc. split. now rewrite H1, <- cgr_par_assoc. not_a_guard.
-  + exists P1, G, (R ‖ nvars n (⇑ q)), (S n).
-    split. now finish_Sn H0. split. now finish_Sn H1. not_a_guard.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, G, (R ‖ p), 0. simpl. split.
+intro Transition. dependent induction Transition generalizing c v.
+- exists P, 𝟘, 𝟘, 0, c, v. split; eauto with cgr.
+- destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H4).
+  exists P1, G, R, (S n), cn, vn. simpl. do 3 (try split).
+  + now rewrite H0.
+  + now rewrite H1.
+  + rewrite shift_in_nvars. now rewrite H3.
+  + not_a_guard.
+- destruct (IHTransition c v eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H4).
+  destruct n; intros; simpl in H0, H1.
+  + exists P1, G, (R ‖ q), 0, cn, vn. simpl. do 3 (try split).
+    * now rewrite H0, <- cgr_par_assoc.
+    * now rewrite H1, <- cgr_par_assoc.
+    * now rewrite H3.
+    * not_a_guard.
+  + exists P1, G, (R ‖ nvars n (⇑ q)), (S n), cn, vn. simpl. do 3 (try split).
+    * now finish_Sn H0.
+    * now finish_Sn H1.
+    * now rewrite H3.
+    * not_a_guard.
+- destruct (IHTransition c v eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H4).
+  destruct n; intros; simpl in H0, H1.
+  + exists P1, G, (R ‖ p), 0, cn, vn. simpl. do 3 (try split).
     * now rewrite H0, cgr_par_com, cgr_par_assoc.
-    * split.
-      ** now rewrite H1, cgr_par_com, cgr_par_assoc.
-      ** not_a_guard.
-  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n). simpl.
-  split. finish_Sn H0. now rewrite cgr_par_com. split. finish_Sn H1. now rewrite cgr_par_com. not_a_guard.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, (G + p2), R, 0. simpl. split.
-    * destruct H2. { now exists p1. } subst.
+    * now rewrite H1, cgr_par_com, cgr_par_assoc.
+    * now rewrite H3.
+    * not_a_guard.
+  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n), cn, vn. simpl. do 3 (try split).
+    * finish_Sn H0. now rewrite cgr_par_com.
+    * finish_Sn H1. now rewrite cgr_par_com.
+    * now rewrite H3.
+    * not_a_guard.
+- destruct (IHTransition c v eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H4).
+  destruct n; intros; simpl in H0, H1.
+  + exists P1, (G + p2), R, 0, cn, vn. simpl. do 3 (try split).
+    * destruct H4. { now exists p1. } subst.
       rewrite cgr_par_nil, <- cgr_choice_assoc. apply cgr_choice.
       now rewrite H0, cgr_par_nil.
-    * split.
-      ** now rewrite H1.
-      ** intro. apply H2. now exists p1.
-  + destruct H2 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
-- destruct (IHTransition c v eq_refl) as [P1 [G [R [n [H0 [H1 H2]]]]]]. destruct n; intros; simpl in H0, H1.
-  + exists P1, (G + p1), R, 0. simpl. split.
-    * destruct H2. { now exists p2. } subst.
+    * now rewrite H1.
+    * now rewrite H3.
+    * intro. apply H4. now exists p1.
+  + destruct H4 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
+- destruct (IHTransition c v eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H4).
+  destruct n; intros; simpl in H0, H1.
+  + exists P1, (G + p1), R, 0, cn, vn. simpl. do 3 (try split).
+    * destruct H4. { now exists p2. } subst.
       rewrite cgr_par_nil, <- cgr_choice_assoc, cgr_choice_com.
       apply cgr_choice.
       now rewrite H0, cgr_par_nil.
-    * split.
-      ** now rewrite H1.
-      ** intro. apply H2. now exists p2.
-  + destruct H2 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
+    * now rewrite H1.
+    * now rewrite H3.
+    * intro. apply H4. now exists p2.
+  + destruct H4 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Qed.
 
 
