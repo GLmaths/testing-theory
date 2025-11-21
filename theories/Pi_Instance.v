@@ -754,12 +754,12 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 (* Scoped rules *)
 | lts_close_l : forall {c v p1 p2 q1 q2},
     lts p1 (BoundOut (c ⋉ v)) p2 ->      (* this term is an "open" term, (see the lts_open rule) *)
-    lts (⇑ q1) (ActIn (c ⋉ v)) q2 ->  (* while this one is a "closed" term *)
-    lts (p1 ‖ (⇑ q1)) τ (ν (p2 ‖ q2))   (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
+    lts q1 (ActIn (c ⋉ v)) q2 ->  (* while this one is a "closed" term *)
+    lts (p1 ‖ q1) τ (ν (p2 ‖ ⇑ q2))   (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
 | lts_close_r : forall {c v p1 p2 q1 q2},
     lts q1 (BoundOut (c ⋉ v)) q2 ->
-    lts (⇑ p1) (ActIn (c ⋉ v)) p2 ->
-    lts ((⇑ p1) ‖ q1) τ (ν (p2 ‖ q2))
+    lts p1 (ActIn (c ⋉ v)) p2 ->
+    lts (p1 ‖ q1) τ (ν (⇑ p2 ‖ q2))
 | lts_res : forall {p q α},
     lts p (⇑ α) q ->
     lts (ν p) α (ν q)
@@ -986,7 +986,7 @@ Definition ren_Action (xi : nat -> nat) (a : Act) : Act :=
 
 #[global] Instance Ren_Act : (Ren1 _ _ _) := @ren_Action.
 
-Require Import Coq.Logic.FunctionalExtensionality.
+(* Require Import Coq.Logic.FunctionalExtensionality.
 Lemma SubstLTS : forall p α q (σ : nat -> nat),
   lts p α q -> lts (ren2 ids σ p) (ren1 σ α) (ren2 ids σ q).
   intros p α q σ Transition. revert σ.
@@ -1078,7 +1078,14 @@ assert
 admit. asimpl. unfold Subst_proc_data. simpl.
 - admit.
 - apply (lts_res). fold subst_proc. apply IHTransition.
-Admitted.
+Admitted. *)
+
+Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
+Proof.
+intros p q r H. destruct p; inversion H.
+eexists. eexists. split. reflexivity. reflexivity.
+Qed.
+
 
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
 (* fact 1.4.16 in Sangiorgi&Walker *)
@@ -1094,7 +1101,7 @@ Proof.
     + intros q α l. dependent destruction l.
       * inversion l2.
       * inversion l1.
-      * rewrite x in l2. inversion l2.
+      * inversion l2.
       * inversion l1.
       * exists p2. split. assumption. apply cgr_par_nil_rev.
       * inversion l.
@@ -1105,43 +1112,57 @@ Proof.
       * eexists. split. apply (lts_close_l l1 l2). apply cgr_res. apply cgr_par_com.
       * exists (p ‖ p2). split. apply (lts_parR l). apply cgr_par_com.
       * exists (q2 ‖ q). split. apply (lts_parL l). apply cgr_par_com.
-    + intros. dependent destruction l.
+    + (* cgr_par_assoc *)
+      intros. dependent destruction l.
+      (* lts_com_l *)
       * dependent destruction l2. 
          ** exists ((p2 ‖ p0) ‖ r). split.
            apply lts_parL. apply (@lts_comL c v _ _ _ _ l1 l2). apply cgr_par_assoc.
          ** exists ((p2 ‖ q) ‖ q2). split. apply (@lts_comL c v). apply (lts_parL l1). assumption.
            apply cgr_par_assoc.
+      (* lts_com_r *)
       * dependent destruction l1. 
          ** exists ((q2 ‖ p2) ‖ r). split. apply lts_parL. apply (@lts_comR c v). assumption.
            assumption. auto with cgr.
          ** exists ((q2 ‖ q) ‖ q0). split. apply (@lts_comR c v). assumption. apply lts_parL.
            assumption. auto with cgr.
-      * rewrite x in l2. dependent destruction l2.
-        ** eexists. split.
-           *** eapply lts_parL. eapply (lts_close_l l1 l2).
-           *** rewrite <- cgr_par_assoc. apply cgr_scope_rev.
+      (* lts_close_l *)
+      * dependent destruction l2.
+        ** eexists.
+           split.
+           *** eapply lts_parL.
+               eapply (lts_close_l l1 l2).
+           *** now rewrite cgr_scope, cgr_scope, cgr_par_assoc.
         ** eexists. split.
            *** eapply (lts_close_l _ _).
            *** reflexivity.
+      (* lts_close_r *)
       * dependent destruction l1.
-        ** eexists. split.
-           *** eapply lts_parL, (lts_close_r l1 l2).
-           *** admit.
         ** eexists. split.
            *** eapply (lts_close_r _ _).
            *** reflexivity.
-      * exists ((p2 ‖ q) ‖ r). split.
+        ** eexists. split.
+           *** eapply (lts_close_r _ _).
+           *** reflexivity.
+      (* lts_par_l *)
+       * exists ((p2 ‖ q) ‖ r). split.
         ** apply lts_parL, lts_parL, l.
         ** apply cgr_par_assoc.
-      * dependent destruction l.
+      (* lts_par_r *)
+       * dependent destruction l.
          ** exists ((p ‖ p2) ‖ q2). split. eapply lts_comL. apply lts_parR, l1. apply l2. apply cgr_par_assoc.
          ** exists ((p ‖ q2) ‖ p2). split. eapply lts_comR. apply l1. apply lts_parR. apply l2. apply cgr_par_assoc.
          ** eexists. split.
             *** eapply (lts_close_l _ l2).
-            *** admit. (* scope extrusion *)
+            *** rewrite (cgr_par_com p (ν _)).
+                rewrite (cgr_scope (p2 ‖ ⇑ p)).
+                rewrite cgr_scope, cgr_scope.
+                now rewrite cgr_par_assoc, cgr_par_assoc, (cgr_par_com p).
          ** eexists. split.
             *** eapply (lts_close_r l1 _).
-            ***  admit. (* scope extrusion *)
+            *** rewrite (cgr_par_com (⇑ (p2 ‖ p))).
+                rewrite cgr_scope, (cgr_par_com (⇑ p2)).
+                eauto with cgr.
          ** exists ((p ‖ p2) ‖ r). split. apply lts_parL. apply lts_parR. assumption. auto with cgr.
          ** exists ((p ‖ q) ‖ q2). split. apply lts_parR. assumption. auto with cgr.
     + intros. dependent destruction l.
@@ -1170,10 +1191,12 @@ Proof.
             *** apply cgr_par_assoc_rev.
          ** eexists. split.
             *** eapply (lts_close_r _ _).
-            *** admit. (* scope extrusion *)
+            *** rewrite (cgr_par_com (⇑ (q2 ‖ r)) p2). eauto with cgr.
          ** eexists. split.
             *** eapply (lts_close_l _ _).
-            *** admit. (* scope extrusion *)
+            *** rewrite (cgr_par_com q2 (⇑ (p2 ‖ r))).
+                rewrite cgr_par_com, cgr_scope, (cgr_par_com (⇑ p2)), cgr_scope.
+                now rewrite cgr_par_assoc_rev.
          ** exists (p2 ‖ ( q ‖ r)). split. apply lts_parL. assumption. auto with cgr.
          ** exists (p ‖ (q2 ‖ r)). split. apply lts_parR. apply lts_parL. assumption. auto with cgr.
       * exists (p ‖ (q ‖ q2)). split. apply lts_parR.  auto. apply lts_parR. assumption. auto with cgr.
@@ -1195,10 +1218,11 @@ Proof.
          * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. auto with cgr.
       -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. auto with cgr.
     + intros. dependent destruction l. eexists. split. apply lts_recursion.
-       assert (p ≡* q) by now constructor. rewrite H0. admit. (** substitution in recursion? *)
+       assert (Hrew : p ≡* q) by now constructor.
+       rewrite Hrew. admit. (** substitution in recursion? *)
     + intros. dependent destruction l. exists p.  split. apply lts_tau.
       constructor. assumption.
-    + intros. dependent destruction l. exists (p [v..]). split. apply lts_input.
+    + intros. dependent destruction l. exists (p [⋅;v..]). split. apply lts_input.
       assert (p ≡* q) by now constructor. now rewrite H0.
     + intros. dependent destruction l.
       * destruct (IHcgr_step p2 (FreeOut (c ⋉ v)) l1) as [x [H0 H1]].
@@ -1211,7 +1235,9 @@ Proof.
         eexists. split.
         ** apply (lts_close_l H0 l2).
         ** now rewrite H1.
-      * destruct (IHcgr_step p2 _ l2) as [x [H0 H1]]. admit. (* broken IH :( *)
+      * destruct (IHcgr_step p2 _ l2) as [x [H0 H1]]. eexists. split.
+        ** apply (lts_close_r l1 H0).
+        ** unfold shift_op, Shiftable_proc. now rewrite H1.
       * destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
         split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
         assumption. reflexivity.
