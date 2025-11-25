@@ -854,13 +854,6 @@ try destruct (IHTransition c v eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 &
   + destruct H4 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Qed.
 
-
-Lemma GuardedDoesNoBoundOutput : forall p c v q, not (lts (g p) (BoundOut (c ⋉ v)) q).
-Proof. 
-intros. intro Transition.
-dependent induction Transition; eapply IHTransition; eauto.
-Qed.
-
 Lemma TransitionShapeForFreeOutput : forall P Q c v,
   lts P (FreeOut (c ⋉ v)) Q -> exists P1 G R n cn vn,
   P ≡* νs n (cn ! vn • P1 + G ‖ R) /\
@@ -920,8 +913,43 @@ dependent induction Transition; try destruct (IHTransition c v eq_refl) as (P1 &
   + destruct H2 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Qed.
 
-(* Lemma TransitionShapeForBoundOutput : forall  *)
+Lemma GuardedDoesNoBoundOutput : forall p c v q, not (lts (g p) (BoundOut (c ⋉ v)) q).
+Proof. 
+intros. intro Transition.
+dependent induction Transition; eapply IHTransition; eauto.
+Qed.
 
+Lemma TransitionShapeForBoundOutput : forall P Q c v,
+  lts P (BoundOut (c ⋉ v)) Q ->
+  exists n P' Q',
+  (P ≡* νs n (P' ‖ Q')).
+  (* /\ (⇑ v) = (var_Data n). *)
+  (* I know that: ⇑ LHS = n 
+     want to prove: LHS = S n *)
+Proof.
+intros. dependent induction H.
+- destruct (IHlts (⇑ c) (⇑ v) eq_refl) as [n (P & Q & Hind1)]. exists (S n), P, Q.
+  (* split. *)
+  * now rewrite Hind1.
+  (* * admit. *)
+- exists 1, p1, 𝟘.
+  (* split. *)
+  * now rewrite cgr_par_nil.
+  (* * reflexivity. *)
+- destruct (IHlts c v eq_refl) as (n & P & Q & IH1).
+  exists n, P, (Q ‖ nvars n q).
+  (* split. *)
+  * now rewrite IH1, <- cgr_par_assoc, <- n_extrusion.
+  (* * exact IH2. *)
+- destruct (IHlts c v eq_refl) as (n & P & Q & IH1).
+  exists n, (P ‖ nvars n p), Q.
+  (* split. *)
+  * rewrite IH1. rewrite (cgr_par_com (_‖_)), <- cgr_par_assoc, <- n_extrusion.
+    now rewrite (cgr_par_com p), (cgr_par_com Q).
+  (* * exact IH2. *)
+- apply GuardedDoesNoBoundOutput in H. contradiction.
+- apply GuardedDoesNoBoundOutput in H. contradiction.
+Qed.
 
 (* Lemma TransitionShapeForOutputSimplified : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) 
                                         -> (P ≡* ((c ! v • 𝟘) ‖ Q)).
