@@ -298,20 +298,24 @@ Qed.
 
 Lemma must_terminate_unoutcome `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (p : P) (e : E) : p must_pass e -> ¬ outcome e -> p ⤓.
-Proof. intros hm. dependent induction hm; eauto with mdb. contradiction. Qed.
+  (p : P) (e : T) : p must_pass e -> ¬ outcome e -> p ⤓.
+Proof.
+  intros hm. dependent induction hm.
+  + contradiction.
+  + eauto with mdb.
+Qed.
 
 Lemma must_terminate_unoutcome' `{
   gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (p : P) (e : E) : p must_pass e -> outcome e \/ p ⤓.
+  (p : P) (e : T) : p must_pass e -> outcome e \/ p ⤓.
 Proof. 
   intros hm. destruct (decide (outcome e)) as [happy | not_happy].
   + now left. 

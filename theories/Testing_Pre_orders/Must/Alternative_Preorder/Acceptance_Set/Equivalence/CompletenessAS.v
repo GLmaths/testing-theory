@@ -264,7 +264,7 @@ Proof.
     exists e0. eassumption. eapply tc_does_no_external_action.
 Qed.
 
-Lemma must_gen_conv_wta_mu `{
+Lemma must_tc_wt_mu `{
   gLtsP : gLts P A, 
   gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome, ! gen_spec_conv co_of gen_conv}
 
@@ -279,7 +279,6 @@ Proof.
   + eapply IHw; eauto with mdb.
     eapply must_preserved_by_lts_tau_srv; eauto.
   + edestruct test_next_step as (t' & hlt' & heqt').
-    (* edestruct test_next_step as (t' & hlt' & heqt'). *)
     eapply (must_eq_client _ _ _ heqt').
     eapply (must_preserved_by_weak_nil_srv q t); eauto.
     eapply must_preserved_by_synch_if_notoutcome; eauto with mdb.
@@ -290,20 +289,20 @@ Qed.
 
 Lemma cnv_if_must `{
   gLtsP : gLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome, !gen_spec_conv co_of gen_conv}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome, !gen_spec_conv co_of gen_conv}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
   s (p : P) : 
   must p (gen_conv s) -> p ⇓ s.
 Proof.
   revert p.
   induction s as [|μ s']; intros p hm.
-  - eapply cnv_nil.
+  - eapply cnv_nil. Check @must_terminate_unoutcome.
     eapply (must_terminate_unoutcome _ _ hm), test_ungood.
   - eapply cnv_act.
     + eapply (must_terminate_unoutcome _ _ hm), test_ungood.
-    + intros q w. eapply IHs', must_gen_conv_wta_mu; eauto.
+    + intros q w. eapply IHs', must_tc_wt_mu; eauto.
 Qed.
 
 Lemma f_gen_lts_mu_in_the_middle `{
@@ -703,12 +702,35 @@ Qed.
 
 (** Converse implication of the first requirement. *)
 
+
+Lemma test_follows_trace_determinacy' `{CC : Countable PreAct} `{
+  @gLtsOba E A H gLtsE gLtsEqE,
+  !Testing_Predicate E A outcome,
+  !gen_spec co_of f}
+
+  μ μ' s e:
+              blocking (co_of μ) -> parallel_inter μ μ' ->
+              f (μ :: s) ⟶[μ'] e -> e ⋍ f s.
+Proof.
+Admitted.
+
+Lemma test_side_effect_by_construction' `{CC : Countable PreAct} `{
+  @gLtsOba E A H gLtsE gLtsEqE,
+  !Testing_Predicate E A outcome,
+  !gen_spec co_of f}
+
+  μ μ' μ'' s e:
+              blocking (co_of μ) -> parallel_inter μ'' μ' ->  μ'' ≠ μ ->
+              f (μ :: s) ⟶[μ'] e -> outcome e.
+Proof.
+Admitted.
+
 Lemma must_if_cnv `{
   @gLtsObaFW P A H gLtsP gLtsEqP V,
-  @gLtsObaFB E A H gLtsE gLtsEqE W, !Testing_Predicate E A outcome,
+  @gLtsObaFB T A H gLtsT gLtsEqT W, !Testing_Predicate T A outcome,
   !gen_spec_conv co_of gen_conv} 
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
   s (p : P) :
   p ⇓ s -> must p (gen_conv s).
@@ -735,10 +757,32 @@ Proof.
        rewrite<- eq in duo, nb. eapply cnv_annhil; eauto.
   + intros p' e' ν' ν inter hlp hle.
     destruct (inversion_gen_mu_gen_conv s ν e' hle)
-      as [hg | (s1 & s2 & ν'' & heq & sc & eq & his)]; eauto with mdb.
-    rewrite heq in hle. subst. 
+      as [hg | (s1 & s2 & ν'' & heq & sc & eq & his)]; eauto with mdb. subst.
+    (* destruct s1.
+    ++ destruct (decide (ν' = ν'')) as [eq | not_eq]; subst; simpl in *.
+       * assert (e' ⋍ gen_conv s2).
+         { eapply test_follows_trace_determinacy'; eauto. admit. }
+         eapply must_eq_client. symmetry; eassumption.
+         eapply Hlength; subst; eauto with mdb.
+         eapply cnv_preserved_by_wt_act; eauto.
+         eapply lts_to_wt; eauto.
+       * assert (outcome e').
+         { eapply test_side_effect_by_construction'; eauto. admit. }
+         now eapply m_now.
+    ++ simpl in *. destruct (decide (ν' = a)) as [eq | not_eq]; subst; simpl in *.
+       * assert (e' ⋍ gen_conv s2).
+         { eapply test_follows_trace_determinacy'; eauto. admit. }
+         eapply must_eq_client. symmetry; eassumption.
+         eapply Hlength; subst; eauto with mdb. admit. lia.
+         eapply cnv_preserved_by_wt_act; eauto.
+         eapply lts_to_wt; eauto.
+       * assert (outcome e').
+         { eapply test_side_effect_by_construction'; eauto. admit. }
+         now eapply m_now. *)
+    
+    
     assert (ν'' = ν'). eapply co_inter_spec1; eauto. subst.
-    dependent induction s1.
+    destruct s1.
     ++ simpl in *.
        eapply must_eq_client. symmetry. eassumption.
        eapply Hlength; subst; eauto with mdb.
@@ -852,33 +896,33 @@ Proof.
   eapply lts_tau_acceptance_set_subseteq; eauto.
 Qed.
 
-Lemma aft_not_nb_co_of_must_gen_acc `{CC : Countable PreAct} `{
+Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
   @gLtsOba P A H gLtsP gLtsEqP,
-  @gLtsOba E A H gLtsE gLtsEqE, !Testing_Predicate E A outcome, !gen_spec_acc PreAct co_of gen_acc Γ}
+  @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome,
+  !gen_spec_acc PreAct co_of gen_acc Γ}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (p : P) μ s L :
-  p ⤓ -> ¬ non_blocking (co_of μ) -> (forall q, p ⟹{μ} q -> must q (gen_acc L s)) 
-              -> must p (gen_acc L (μ :: s) : E).
+  (p : P) μ s E :
+  p ⤓ -> blocking (co_of μ) -> (forall q, p ⟹{μ} q -> must q (gen_acc E s)) 
+              -> must p (gen_acc E (μ :: s) : T).
 Proof.
-  intro tp. revert L μ s. induction tp.
+  intro tp. revert E μ s. induction tp.
   intros L μ s not_nb hmq.
   eapply m_step.
   - eapply test_ungood.
-  - edestruct (@test_tau_transition E A); eauto with mdb.
+  - edestruct (@test_tau_transition T A); eauto with mdb.
     now destruct gen_spec_acc0. exists (p ▷ x). eapply ParRight; eauto.
   - intros. eapply H4. exact H5. eassumption. eauto with mdb.
   - intros e' l. eapply m_now.
     apply (test_reset_tau_path μ s e'). eassumption. eassumption.
   - intros p' e' μ' μ'' inter l0 l1.
-    destruct (decide (μ'' = co_of μ)) as [eq | neq].
-    + subst. eapply test_follows_trace_determinacy in not_nb as h1; eauto.
+    destruct (decide (μ' = μ)) as [eq | neq].
+    + subst. eapply (test_follows_trace_determinacy' μ μ'') in not_nb as h1; eauto.
       eapply must_eq_client. symmetry; eauto.
-      eapply hmq.
-      eapply co_inter_spec1 in inter; eauto. subst. eauto with mdb.
-    + eapply m_now. eapply test_side_effect_by_construction;eauto. Unshelve. eauto.
-Qed.
+      eapply hmq. eauto with mdb. eauto.
+    + eapply m_now. eapply (test_side_effect_by_construction' μ μ'' μ');eauto.
+Admitted.
 
 Lemma gen_acc_tau_ex `{CC : Countable PreAct}`{
   @gLtsObaFB E A H gLtsE LtsEqE LtsOBAE, !Testing_Predicate E A outcome, !gen_spec_acc PreAct co_of f Γ} 
@@ -1243,7 +1287,7 @@ Proof.
           assert (oas p' s' x ∖ E ⊆ oas p (μ :: s') hcnv ∖ E).
           { eapply difference_mono_r. eapply union_wt_acceptance_set_subseteq; eauto with mdb. }
           eapply must_ta_monotonicity; eauto.
-      +++ eapply aft_not_nb_co_of_must_gen_acc; eauto.
+      +++ eapply after_blocking_co_of_must_tacc; eauto.
           intros p' hw.
           edestruct (Hyp p') as (? & hm).
           eapply wt_set_mu_spec2; eauto.
