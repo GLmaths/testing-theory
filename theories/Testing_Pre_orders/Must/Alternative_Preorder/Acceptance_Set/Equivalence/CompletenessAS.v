@@ -702,29 +702,6 @@ Qed.
 
 (** Converse implication of the first requirement. *)
 
-
-Lemma test_follows_trace_determinacy' `{CC : Countable PreAct} `{
-  @gLtsOba E A H gLtsE gLtsEqE,
-  !Testing_Predicate E A outcome,
-  !gen_spec co_of f}
-
-  μ μ' s e:
-              blocking (co_of μ) -> parallel_inter μ μ' ->
-              f (μ :: s) ⟶[μ'] e -> e ⋍ f s.
-Proof.
-Admitted.
-
-Lemma test_side_effect_by_construction' `{CC : Countable PreAct} `{
-  @gLtsOba E A H gLtsE gLtsEqE,
-  !Testing_Predicate E A outcome,
-  !gen_spec co_of f}
-
-  μ μ' μ'' s e:
-              blocking (co_of μ) -> parallel_inter μ'' μ' ->  μ'' ≠ μ ->
-              f (μ :: s) ⟶[μ'] e -> outcome e.
-Proof.
-Admitted.
-
 Lemma must_if_cnv `{
   @gLtsObaFW P A H gLtsP gLtsEqP V,
   @gLtsObaFB T A H gLtsT gLtsEqT W, !Testing_Predicate T A outcome,
@@ -904,7 +881,7 @@ Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
   (p : P) μ s E :
-  p ⤓ -> blocking (co_of μ) -> (forall q, p ⟹{μ} q -> must q (gen_acc E s)) 
+  p ⤓ -> blocking (co_of μ) -> (forall q μ', parallel_inter μ' (co_of μ) -> p ⟹{μ'} q -> must q (gen_acc E s)) 
               -> must p (gen_acc E (μ :: s) : T).
 Proof.
   intro tp. revert E μ s. induction tp.
@@ -917,12 +894,12 @@ Proof.
   - intros e' l. eapply m_now.
     apply (test_reset_tau_path μ s e'). eassumption. eassumption.
   - intros p' e' μ' μ'' inter l0 l1.
-    destruct (decide (μ' = μ)) as [eq | neq].
-    + subst. eapply (test_follows_trace_determinacy' μ μ'') in not_nb as h1; eauto.
+    destruct (decide (μ'' = co_of μ)) as [eq | neq].
+    + subst. eapply test_follows_trace_determinacy in not_nb as h1; eauto.
       eapply must_eq_client. symmetry; eauto.
-      eapply hmq. eauto with mdb. eauto.
-    + eapply m_now. eapply (test_side_effect_by_construction' μ μ'' μ');eauto.
-Admitted.
+      eapply hmq. eauto with mdb. eauto with mdb.
+    + eapply m_now. eapply test_side_effect_by_construction ;eauto.
+Qed.
 
 Lemma gen_acc_tau_ex `{CC : Countable PreAct}`{
   @gLtsObaFB E A H gLtsE LtsEqE LtsOBAE, !Testing_Predicate E A outcome, !gen_spec_acc PreAct co_of f Γ} 
@@ -1288,12 +1265,14 @@ Proof.
           { eapply difference_mono_r. eapply union_wt_acceptance_set_subseteq; eauto with mdb. }
           eapply must_ta_monotonicity; eauto.
       +++ eapply after_blocking_co_of_must_tacc; eauto.
-          intros p' hw.
+          intros p' μ' inter' hw. eapply co_inter_spec1 in inter'; subst.
           edestruct (Hyp p') as (? & hm).
-          eapply wt_set_mu_spec2; eauto.
-          assert ((oas p' s' x ∖ E) ⊆ oas p (μ :: s') hcnv ∖ E).
+          eapply wt_set_mu_spec2; eauto. eauto.
+          assert ((oas p' s' x ∖ E) ⊆ oas p (μ' :: s') hcnv ∖ E).
           { eapply difference_mono_r. eapply union_wt_acceptance_set_subseteq; eauto with mdb. }
-          eapply must_ta_monotonicity; eauto. Unshelve. exact (⋃ map pre_co_actions_of (elements ps) ∖ E).
+          eapply must_ta_monotonicity; eauto.
+          Unshelve. exact (⋃ map pre_co_actions_of (elements ps) ∖ E).
+          exact (⋃ map pre_co_actions_of (elements ps) ∖ E).
 Qed.
 
 Lemma not_must_ta_without_required_acc_set {Q : Type} `{
