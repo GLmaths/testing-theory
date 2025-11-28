@@ -1326,9 +1326,7 @@ Proof with (subst; eauto with lts cgr).
         ** now rewrite H1.
       * admit. (* The issue with inductive hypothesis that Serguei was talking about *)
       * destruct (IHcgr_step p2 α l) as [x H0]. destruct H0...
-      * eexists (α ⇑? p ‖ q2). split.
-        -- apply lts_parR...
-        -- admit.
+      * eexists (α ⇑? p ‖ q2). admit. (* this is very strange *)
     + intros. dependent destruction l.
       -- exists p...
       -- exists q. split.
@@ -1342,14 +1340,15 @@ Proof with (subst; eauto with lts cgr).
     + intros. dependent destruction l. 
       -- destruct (IHcgr_step q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
+    + intros. admit. (* swap case. Big hole! *)
     + intros. dependent destruction l.
     + intros. repeat dependent destruction l.
     + intros. dependent destruction l; destruct (IHcgr_step _ _ l) as [x [H1 H2]].
       * eexists. split.
         ** apply (lts_res H1).
-        ** now rewrite H2.
+        ** case (is_bound_out α); now rewrite H2.
       * eexists. split.
-        ** apply (lts_open H0). exact H1.
+        ** apply (lts_open H1).
         ** exact H2.
     + intros. dependent destruction l.
        (* processes ν P and Q did a comm-L through a parallel.
