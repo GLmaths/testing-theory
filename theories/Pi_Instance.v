@@ -78,18 +78,6 @@ Inductive Act :=
 Notation "c ⋉ v" := (act c v) (at level 50).
 Definition τ := tau_action.
 
-
-Parameter (Eval_Eq : Equation -> (option bool)).
-Axiom (Eval_Eq_Monotone : forall E, Eval_Eq (↿ E) = Eval_Eq E).
-Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
-#[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
-Parameter (channel_is_countable : countable.Countable Value). (* only here for the classes *)
-#[global] Instance channel_countable : countable.Countable Value. Proof. exact channel_is_countable. Defined.
-Parameter (value_eq_dec : base.EqDecision Value). (* only here for the classes *)
-#[global] Instance value_eqdecision : base.EqDecision Value. Proof. exact value_eq_dec. Defined.
-Parameter (value_is_countable : countable.Countable Value). (* only here for the classes *)
-#[global] Instance value_countable : countable.Countable Value. Proof. exact value_is_countable. Defined.
-
 (*Some notation to simplify the view of the code*)
 Notation "①" := (gpr_success).
 Notation "𝟘" := (gpr_nil).
@@ -115,10 +103,22 @@ Instance Shiftable_Act  : Shiftable Act :=
   fun a => match a with
   | ActIn (act c v) => ActIn (act (ren1 shift c) (ren1 shift v))
   | FreeOut (act c v) => FreeOut (act (ren1 shift c) (ren1 shift v))
-  | BoundOut (act c v) => BoundOut (act (ren1 shift c) (ren1 shift v))
+  | BoundOut c => BoundOut (ren1 shift c)
   | τ => τ
   end.
 Notation "⇑" := shift_op.
+
+Parameter (Eval_Eq : Equation -> (option bool)).
+Axiom (Eval_Eq_Monotone : forall E, Eval_Eq (⇑ E) = Eval_Eq E).
+Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
+#[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
+Parameter (channel_is_countable : countable.Countable Value). (* only here for the classes *)
+#[global] Instance channel_countable : countable.Countable Value. Proof. exact channel_is_countable. Defined.
+Parameter (value_eq_dec : base.EqDecision Value). (* only here for the classes *)
+#[global] Instance value_eqdecision : base.EqDecision Value. Proof. exact value_eq_dec. Defined.
+Parameter (value_is_countable : countable.Countable Value). (* only here for the classes *)
+#[global] Instance value_countable : countable.Countable Value. Proof. exact value_is_countable. Defined.
+
 
 Definition nvars {A: Type} `{_ : Shiftable A} (n : nat) : A -> A :=
   Nat.iter n (⇑).
@@ -460,16 +460,42 @@ simpl. substify.
 reflexivity.
 Qed.
 
+Definition eq_up_to_cgr f g := forall x :nat, f x ≡* g x.
+
 Instance SubstProper : Proper (eq ==> eq ==> cgr ==> cgr) subst2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq.
 induction Hq as [p q base_case | p r q transitivity_case].
 - subst. revert sp s. induction base_case; intros; try solve [asimpl; auto with cgr].
-  (* + simpl. unfold subst2. simpl. substify. simpl. Set Printing All. *)
   + asimpl. apply cgr_choice. apply IHbase_case.
   + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope _ _).
   + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope_rev _ _).
 - subst. now rewrite IHtransitivity_case.
+Qed.
+
+Instance SubstProper' : Proper (eq_up_to_cgr ==> eq ==> eq ==> cgr) subst2.
+Proof.
+intros sp' sp Hp s' s Hs q1 q2 Hq. subst.
+revert sp' sp s Hp. induction q2; intros; try solve [asimpl; auto with cgr].
+- asimpl. simpl. apply cgr_recursion. apply IHq2.
+intro n.
+revert sp sp' Hp.
+ induction n.
++ reflexivity.
++ intros. simpl. apply IHn.
+
+Admitted.
+
+Instance SubstProperTotal : Proper (eq_up_to_cgr ==> eq ==> cgr ==> cgr) subst2.
+intros sp' sp Hp s' s Hs q1 q2 Hq. subst.
+now rewrite Hq, Hp.
+Qed.
+
+Instance SubstProper'' : Proper (cgr ==> eq ==> eq_up_to_cgr) scons.
+intros p p' Hp s s' Hs. subst.
+intros [|n]; simpl.
+- trivial.
+- reflexivity.
 Qed.
 
 Lemma permute_ren : forall sp s Q,
@@ -722,6 +748,19 @@ induction Transition.
       repeat split; now rewrite ?H1, ?H2.
 Qed.
 
+(* Definition shift_if_bound_out (a:Act) p : proc :=
+  match a with
+  | BoundOut _ => ⇑ p
+  | _ => p
+  end. *)
+
+Definition is_bound_out (a:Act) : bool :=
+  match a with
+  | BoundOut _ => true
+  | _ => false
+  end.
+
+Notation "a '⇑?' p" := (if is_bound_out a then ⇑ p else p) (at level 20).
 
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> Act -> proc -> Prop :=
@@ -752,14 +791,14 @@ Inductive lts : proc-> Act -> proc -> Prop :=
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
 (* Scoped rules *)
-| lts_close_l : forall {c v p1 p2 q1 q2},
-    lts p1 (BoundOut (c ⋉ v)) p2 ->      (* this term is an "open" term, (see the lts_open rule) *)
-    lts q1 (ActIn (c ⋉ v)) q2 ->  (* while this one is a "closed" term *)
-    lts (p1 ‖ q1) τ (ν (p2 ‖ ⇑ q2))   (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
-| lts_close_r : forall {c v p1 p2 q1 q2},
-    lts q1 (BoundOut (c ⋉ v)) q2 ->
-    lts p1 (ActIn (c ⋉ v)) p2 ->
-    lts (p1 ‖ q1) τ (ν (⇑ p2 ‖ q2))
+| lts_close_l : forall {c p1 p2 q1 q2},
+    lts p1 (BoundOut c) p2 ->      (* this term is an "open" term, (see the lts_open rule) *)
+    lts q1 (ActIn (c ⋉ 0)) q2 ->  (* while this one is a "closed" term *)
+    lts (p1 ‖ q1) τ (ν (p2 ‖ q2))   (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
+| lts_close_r : forall {c p1 p2 q1 q2},
+    lts q1 (BoundOut c) q2 ->
+    lts p1 (ActIn (c ⋉ 0)) p2 ->
+    lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
 | lts_res : forall {p q α},
     lts p (⇑ α) q ->
     lts (ν p) α (ν q)
@@ -767,17 +806,18 @@ Inductive lts : proc-> Act -> proc -> Prop :=
                          as a consequence, the channel in α can never be 0 (giving the condition in paper)
                          as in onther places: we started with an "open" value, that's why we add a flat ν *)
 | lts_open : forall {c p1 p2}, (** remark: we are adding a ν but we are not shifting. this corresponds to the intuition in momigliano&cecilia that free rules handle open terms *)
-    c <> var_Data 0 ->
-    lts p1 (FreeOut (c ⋉ (var_Data 0))) p2 ->       (** condition: c must not be 0 ! *)
-    lts (ν p1) (BoundOut (c ⋉ (var_Data 0))) p2     (* this should happen only when v = 0 *)
+    lts p1 (FreeOut ((⇑ c) ⋉ (var_Data 0))) p2 ->   (** condition: c must not be 0 ! *)
+    lts (ν p1) (BoundOut c) p2                      (* this should happen only when v = 0 *)
                                                     (* note that p2 is now an open term. its scope is going to be closed in the close rule *)
 
-| lts_parL : forall {α p1 p2 q},
+| lts_parL : forall {α} {p1 p2 q q' : proc},
     lts p1 α p2 ->
-    lts (p1 ‖ q) α (p2 ‖ q)
-| lts_parR : forall {α p q1 q2}, 
+    q' = (if is_bound_out α then (⇑ q) else q) ->
+    lts (p1 ‖ q) α (p2 ‖ q')
+| lts_parR : forall {α} {p p' q1 q2 : proc}, 
     lts q1 α q2 ->
-    lts (p ‖ q1) α (p ‖ q2)
+    p' = (if is_bound_out α then (⇑ p) else p) ->
+    lts (p ‖ q1) α (p' ‖ q2)
 | lts_choiceL : forall {p1 p2 q α},
     lts (g p1) α q -> 
     lts (p1 + p2) α q
@@ -785,6 +825,11 @@ Inductive lts : proc-> Act -> proc -> Prop :=
     lts (g p2) α q -> 
     lts (p1 + p2) α q
 .
+Hint Constructors lts:lts.
+
+(* Goal exists p,  p = ⇑ (ν ( 1 ! 0 • gpr_nil)).
+
+eexists. unfold shift_op, Shiftable_proc, shift, ren2, Ren_proc, ren_proc, ren_Data. simpl. Set Printing All. *)
 
 (* observations: a closed term does no visible actions (only τ) *)
 
@@ -913,14 +958,14 @@ dependent induction Transition; try destruct (IHTransition c v eq_refl) as (P1 &
   + destruct H2 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Qed.
 
-Lemma GuardedDoesNoBoundOutput : forall p c v q, not (lts (g p) (BoundOut (c ⋉ v)) q).
+Lemma GuardedDoesNoBoundOutput : forall p c q, not (lts (g p) (BoundOut c) q).
 Proof. 
 intros. intro Transition.
 dependent induction Transition; eapply IHTransition; eauto.
 Qed.
 
-Lemma TransitionShapeForBoundOutput : forall P Q c v,
-  lts P (BoundOut (c ⋉ v)) Q ->
+Lemma TransitionShapeForBoundOutput : forall P Q c,
+  lts P (BoundOut c) Q ->
   exists n P' Q',
   (P ≡* νs n (P' ‖ Q')).
   (* /\ (⇑ v) = (var_Data n). *)
@@ -928,7 +973,7 @@ Lemma TransitionShapeForBoundOutput : forall P Q c v,
      want to prove: LHS = S n *)
 Proof.
 intros. dependent induction H.
-- destruct (IHlts (⇑ c) (⇑ v) eq_refl) as [n (P & Q & Hind1)]. exists (S n), P, Q.
+- destruct (IHlts (⇑ c) eq_refl) as [n (P & Q & Hind1)]. exists (S n), P, Q.
   (* split. *)
   * now rewrite Hind1.
   (* * admit. *)
@@ -936,12 +981,12 @@ intros. dependent induction H.
   (* split. *)
   * now rewrite cgr_par_nil.
   (* * reflexivity. *)
-- destruct (IHlts c v eq_refl) as (n & P & Q & IH1).
+- destruct (IHlts c eq_refl) as (n & P & Q & IH1).
   exists n, P, (Q ‖ nvars n q).
   (* split. *)
   * now rewrite IH1, <- cgr_par_assoc, <- n_extrusion.
   (* * exact IH2. *)
-- destruct (IHlts c v eq_refl) as (n & P & Q & IH1).
+- destruct (IHlts c eq_refl) as (n & P & Q & IH1).
   exists n, (P ‖ nvars n p), Q.
   (* split. *)
   * rewrite IH1. rewrite (cgr_par_com (_‖_)), <- cgr_par_assoc, <- n_extrusion.
@@ -993,14 +1038,8 @@ dependent induction Transition.
       apply cgr_choice_com. apply cgr_choice. assumption. apply cgr_choice_assoc.
 Qed. *)
 
-(* p 'is equivalent some r 'and r performs α to q *)
-Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
-
-(* p performs α to some r and this is equivalent to q*)
-Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
-
 Axiom fake_transition : forall {c v p1 p2 q1 q2},
-    lts p1 (BoundOut (c ⋉ v)) p2 ->
+    lts p1 (BoundOut c) p2 ->
     lts q1 (ActIn (c ⋉ v)) q2 ->
     lts (p1 ‖ ⇑ q1) τ (ν (p2 ‖ q2)).
 
@@ -1008,7 +1047,7 @@ Definition ren_Action (xi : nat -> nat) (a : Act) : Act :=
   match a with
   | ActIn (act d1 d2) => ActIn (act (subst_Data xi d1) (subst_Data xi d2))
   | FreeOut (act d1 d2) => FreeOut (act (subst_Data xi d1) (subst_Data xi d2))
-  | BoundOut (act d1 d2) => BoundOut (act (subst_Data xi d1) (subst_Data xi d2))
+  | BoundOut d1 => BoundOut (subst_Data xi d1)
   | tau_action => tau_action
   end.
 
@@ -1108,126 +1147,126 @@ admit. asimpl. unfold Subst_proc_data. simpl.
 - apply (lts_res). fold subst_proc. apply IHTransition.
 Admitted. *)
 
+
+Lemma shift_transition : forall p α q, lts p α q -> lts (⇑ p) (⇑ α) (⇑ q).
+Admitted.
+
+Lemma shift_transition2 : forall p α q, lts (⇑ p) (⇑ α) q -> exists q', q = ⇑ q'.
+Proof.
+intros p α q Transition.
+dependent induction Transition.
+- destruct p; inversion x0. admit.
+- destruct p; inversion x0. destruct g0; inversion x0. eexists. reflexivity.
+- destruct p; inversion x0. destruct g0; inversion x0. eexists. reflexivity.
+- destruct p; inversion x0. eexists. admit.
+- destruct p; inversion x0. eexists. reflexivity.
+- destruct p; inversion x0. eexists. reflexivity.
+- destruct p; inversion x0. eexists. destruct (IHTransition1 p3 α). assumption. (* does not work *)
+
 Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
 Proof.
 intros p q r H. destruct p; inversion H.
 eexists. eexists. split. reflexivity. reflexivity.
 Qed.
 
+Lemma Shift_Decompose_Input : forall p q c,
+  ⇑ (g p) = c ? q -> exists c' q', c = (⇑ c') /\ q = (⇑ q').
+Proof.
+intros p q c H. destruct p; inversion H.
+eexists. eexists. split. reflexivity. unfold upRen_Data_proc. unfold upRen_Data_Data, up_ren.
+
+
+Ltac case_shift :=
+  match goal with
+  |- context G [ ?a ⇑? _ ] => case is_bound_out
+  end.
+Hint Extern 1 (_ ≡* _) => case_shift:cgr.
+
+(* p 'is equivalent some r 'and r performs α to q *)
+Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
+
+(* p performs α to some r and this is equivalent to q*)
+Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
+Hint Unfold lts_then_sc:lts.
 
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
 (* fact 1.4.16 in Sangiorgi&Walker *)
 Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
-Proof. 
+Proof with (subst; eauto with lts cgr).
 (* by induction on the congruence and the step then...*)
   intros p q α (p' & hcgr & l).
   revert q α l.
+  unfold lts_then_sc.
   dependent induction hcgr.
   - dependent induction H.
     + intros q α l. exists q. split. exact l. reflexivity.
-    + intros q α l. exists (q ‖ 𝟘). split. apply lts_parL. assumption. apply cgr_par_nil.
+    + intros q α l. exists (q ‖ 𝟘).
+      split.
+      * apply lts_parL. assumption. destruct (is_bound_out α); reflexivity.
+      * apply cgr_par_nil.
     + intros q α l. dependent destruction l.
       * inversion l2.
       * inversion l1.
       * inversion l2.
       * inversion l1.
-      * exists p2. split. assumption. apply cgr_par_nil_rev.
+      * exists p2. split. assumption. destruct (is_bound_out α); apply cgr_par_nil_rev.
       * inversion l.
-    + intros r α l. dependent destruction l.
-      * exists (q2 ‖ p2). split; [apply (@lts_comR c v _ _ _ _ l1 l2) | apply cgr_par_com].
-      * exists (p2 ‖ q2). split; [apply (@lts_comL c v _ _ _ _ l1 l2) | apply cgr_par_com].
-      * eexists. split. apply (lts_close_r l1 l2). apply cgr_res. apply cgr_par_com. 
-      * eexists. split. apply (lts_close_l l1 l2). apply cgr_res. apply cgr_par_com.
-      * exists (p ‖ p2). split. apply (lts_parR l). apply cgr_par_com.
-      * exists (q2 ‖ q). split. apply (lts_parL l). apply cgr_par_com.
+    + intros r α l. dependent destruction l...
     + (* cgr_par_assoc *)
       intros. dependent destruction l.
       (* lts_com_l *)
-      * dependent destruction l2. 
-         ** exists ((p2 ‖ p0) ‖ r). split.
-           apply lts_parL. apply (@lts_comL c v _ _ _ _ l1 l2). apply cgr_par_assoc.
-         ** exists ((p2 ‖ q) ‖ q2). split. apply (@lts_comL c v). apply (lts_parL l1). assumption.
-           apply cgr_par_assoc.
+      * dependent destruction l2...
       (* lts_com_r *)
-      * dependent destruction l1. 
-         ** exists ((q2 ‖ p2) ‖ r). split. apply lts_parL. apply (@lts_comR c v). assumption.
-           assumption. auto with cgr.
-         ** exists ((q2 ‖ q) ‖ q0). split. apply (@lts_comR c v). assumption. apply lts_parL.
-           assumption. auto with cgr.
+      * dependent destruction l1...
       (* lts_close_l *)
       * dependent destruction l2.
-        ** eexists.
-           split.
-           *** eapply lts_parL.
-               eapply (lts_close_l l1 l2).
-           *** now rewrite cgr_scope, cgr_scope, cgr_par_assoc.
-        ** eexists. split.
-           *** eapply (lts_close_l _ _).
-           *** reflexivity.
+        -- eexists (ν ((p2 ‖ p0) ‖ r)). split.
+            ++ eapply lts_close_l.
+            ++ reflexivity.
+        -- eexists. split.
+           ++ eapply (lts_close_l _ _).
+           ++ reflexivity.
       (* lts_close_r *)
       * dependent destruction l1.
-        ** eexists. split.
-           *** eapply (lts_close_r _ _).
-           *** reflexivity.
-        ** eexists. split.
-           *** eapply (lts_close_r _ _).
-           *** reflexivity.
+        -- eexists. split.
+           ++ eapply (lts_close_r _ _).
+           ++ reflexivity.
+        -- eexists. split.
+           ++ eapply (lts_close_r _ _).
+           ++ reflexivity.
       (* lts_par_l *)
-       * exists ((p2 ‖ q) ‖ r). split.
-        ** apply lts_parL, lts_parL, l.
-        ** apply cgr_par_assoc.
+       * eexists. split.
+        ++ eauto with lts.
+        ++ case is_bound_out...
       (* lts_par_r *)
-       * dependent destruction l.
-         ** exists ((p ‖ p2) ‖ q2). split. eapply lts_comL. apply lts_parR, l1. apply l2. apply cgr_par_assoc.
-         ** exists ((p ‖ q2) ‖ p2). split. eapply lts_comR. apply l1. apply lts_parR. apply l2. apply cgr_par_assoc.
-         ** eexists. split.
-            *** eapply (lts_close_l _ l2).
-            *** rewrite (cgr_par_com p (ν _)).
-                rewrite (cgr_scope (p2 ‖ ⇑ p)).
-                rewrite cgr_scope, cgr_scope.
-                now rewrite cgr_par_assoc, cgr_par_assoc, (cgr_par_com p).
-         ** eexists. split.
-            *** eapply (lts_close_r l1 _).
-            *** rewrite (cgr_par_com (⇑ (p2 ‖ p))).
-                rewrite cgr_scope, (cgr_par_com (⇑ p2)).
-                eauto with cgr.
-         ** exists ((p ‖ p2) ‖ r). split. apply lts_parL. apply lts_parR. assumption. auto with cgr.
-         ** exists ((p ‖ q) ‖ q2). split. apply lts_parR. assumption. auto with cgr.
+       * pose (l' := l). dependent destruction l...
+         ++ eexists. split.
+            ** eapply (lts_close_l _ _).
+            ** rewrite (cgr_scope (p2 ‖ q2) p), cgr_par_com. reflexivity.
+         ++ eexists. split.
+            ** eapply (lts_close_r l1 _).
+            ** rewrite (cgr_par_assoc (⇑ p) p2 q2).
+               rewrite (cgr_par_com (⇑ p)).
+               eauto with cgr.
+         ++ exists ((α ⇑? ((p ‖ q))‖ q2))...
     + intros. dependent destruction l.
-      * dependent destruction l1.
-         ** exists (p2 ‖ (q ‖ q2)). split.
-            eapply lts_comL. apply l1. apply lts_parR, l2. apply cgr_par_assoc_rev.
-         ** exists (p ‖ (q0 ‖ q2)). split.
-            eapply lts_parR, lts_comL. apply l1. apply l2. apply cgr_par_assoc_rev.
-      * dependent destruction l2. 
-         ** exists (p0 ‖ (q ‖ p2)). split.
-            eapply lts_comR. apply lts_parR, l1. apply l2. apply cgr_par_assoc_rev.
-         ** exists (p ‖ (q2 ‖ p2)). split.
-            eapply lts_parR, lts_comR. apply l1. apply l2. apply cgr_par_assoc_rev.
+      * dependent destruction l1...
+      * dependent destruction l2...
       * eexists. split.
-         ** eapply (lts_close_l _ _).
-         ** reflexivity.
+         ++ eapply (lts_close_l _ _).
+         ++ reflexivity.
       * eexists. split.
-         ** eapply (lts_close_r _ _).
-         ** reflexivity.
-      * dependent destruction l.
-         ** exists (p2 ‖ (q2 ‖ r)). split.
-            *** apply (lts_comL l1), lts_parL, l2.
-            *** apply cgr_par_assoc_rev.
-         ** exists (q2 ‖ (p2 ‖ r)). split.
-            *** apply (@lts_comR c v). apply lts_parL, l1. exact l2.
-            *** apply cgr_par_assoc_rev.
-         ** eexists. split.
-            *** eapply (lts_close_r _ _).
-            *** rewrite (cgr_par_com (⇑ (q2 ‖ r)) p2). eauto with cgr.
-         ** eexists. split.
-            *** eapply (lts_close_l _ _).
-            *** rewrite (cgr_par_com q2 (⇑ (p2 ‖ r))).
-                rewrite cgr_par_com, cgr_scope, (cgr_par_com (⇑ p2)), cgr_scope.
-                now rewrite cgr_par_assoc_rev.
-         ** exists (p2 ‖ ( q ‖ r)). split. apply lts_parL. assumption. auto with cgr.
-         ** exists (p ‖ (q2 ‖ r)). split. apply lts_parR. apply lts_parL. assumption. auto with cgr.
-      * exists (p ‖ (q ‖ q2)). split. apply lts_parR.  auto. apply lts_parR. assumption. auto with cgr.
+         ++ eapply (lts_close_r _ _).
+         ++ reflexivity.
+      * dependent destruction l...
+         ++ eexists. split.
+            ** eapply (lts_close_l _ _)...
+            ** eauto with cgr.
+         ++ eexists. split.
+            ** eapply (lts_close_l _ _)...
+            ** eauto with cgr.
+         ++ exists (p2 ‖ α ⇑? ( q ‖ r))...
+      * eexists; split...
     + intros. exists q.  split. apply lts_choiceL. assumption. auto with cgr.
     + intros. dependent destruction l.
       -- exists q. split. assumption. auto with cgr.
@@ -1245,20 +1284,17 @@ Proof.
          * exists q0. split. apply lts_choiceL. assumption. auto with cgr.
          * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. auto with cgr.
       -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. auto with cgr.
-    + intros. dependent destruction l. eexists. split. apply lts_recursion.
-       assert (Hrew : p ≡* q) by now constructor.
-       rewrite Hrew. admit. (** substitution in recursion? *)
+    + intros. dependent destruction l.
+       eexists. split.
+       * apply lts_recursion.
+       * assert (Hrew : p ≡* q) by now constructor. now rewrite Hrew.
     + intros. dependent destruction l. exists p.  split. apply lts_tau.
       constructor. assumption.
     + intros. dependent destruction l. exists (p [⋅;v..]). split. apply lts_input.
       assert (p ≡* q) by now constructor. now rewrite H0.
     + intros. dependent destruction l.
-      * destruct (IHcgr_step p2 (FreeOut (c ⋉ v)) l1) as [x [H0 H1]].
-        exists (x ‖ q2). split. eapply lts_comL. exact H0. assumption.
-        apply cgr_fullpar. assumption. reflexivity.
-      * destruct (IHcgr_step q2 (ActIn (c ⋉ v)) l2) as [x [H0 H1]].
-        exists (x ‖ p2). split. eapply lts_comR. exact l1. assumption.
-        apply cgr_fullpar. assumption. reflexivity.
+      * destruct (IHcgr_step p2 (FreeOut (c ⋉ v)) l1) as [x [H0 H1]]...
+      * destruct (IHcgr_step q2 (ActIn (c ⋉ v)) l2) as [x [H0 H1]]...
       * destruct (IHcgr_step p2 _ l1) as [x [H0 H1]].
         eexists. split.
         ** apply (lts_close_l H0 l2).
@@ -1266,15 +1302,15 @@ Proof.
       * destruct (IHcgr_step p2 _ l2) as [x [H0 H1]]. eexists. split.
         ** apply (lts_close_r l1 H0).
         ** unfold shift_op, Shiftable_proc. now rewrite H1.
-      * destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
-        split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
-        assumption. reflexivity.
-      * eexists. split. instantiate (1:= (p ‖ q2)). apply lts_parR.
-        assumption. apply cgr_par. now constructor.
+      * destruct (IHcgr_step p2 α l) as [x H0]. destruct H0...
+      * eexists (α ⇑? p ‖ q2). split.
+        -- apply lts_parR...
+        -- admit.
     + intros. dependent destruction l.
-      -- eexists. split. instantiate (1:= p). apply lts_ifOne. assumption. reflexivity. 
-      -- eexists. split. instantiate (1:= q). apply lts_ifZero. assumption.
-         constructor. assumption.
+      -- exists p...
+      -- exists q. split.
+         ++ apply lts_ifZero...
+         ++ constructor. assumption.
     + intros. dependent destruction l.
       -- eexists. split. instantiate (1:= p). apply lts_ifOne. assumption.
          constructor. assumption.
@@ -1293,51 +1329,78 @@ Proof.
         ** apply (lts_open H0). exact H1.
         ** exact H2.
     + intros. dependent destruction l.
-      * (* processes ν P and Q did a comm-L through a parallel. Now I move Q inside the ν. How do they communicate? *)
-        eexists. split.
-        ** eapply lts_res. admit.
-         (* eapply fake_transition. apply lts_open. *)
-        ** admit.
-      * eexists. split.
-        ** eapply lts_res. simpl. eapply lts_comR. admit. admit.
-        ** admit.
+       (* processes ν P and Q did a comm-L through a parallel.
+           Now I move Q inside the ν. How do they communicate? *)
+      * dependent destruction l1. eexists. split.
+        ** eapply lts_res.
+           assert (lts (⇑ Q) (⇑ (ActIn (c ⋉ v))) (⇑ q2)) by now apply shift_transition.
+           eapply (lts_comL l1 H).
+        ** apply cgr_scope.
+      * dependent destruction l2. eexists. split.
+        ** eapply lts_res.
+           assert (lts (⇑ Q) (⇑ (FreeOut (c ⋉ v))) (⇑ p2)) by now apply shift_transition.
+           eapply (lts_comR H l2).
+        ** apply cgr_scope.
       * (* close-L: corresponds to scope extrusion *)
-        (* I need a lemma saying: since the process does a bound output, it is congruent to something with
-           some νs at the beginning (and the correct ν as the first one). This lemma will use the νν congruence rule*)
+      (* I need a lemma saying: since the process does a bound output, it is
+         congruent to something with some νs at the beginning (and the correct
+         ν as the first one). This lemma will use the νν congruence rule *)
         dependent destruction l1.
-        -- (* res on P *) eexists (ν ν ( q ‖ q2 [↑↑] )).
+        -- (* res on P *) eexists.
+        (* (ν ν ( q ‖ ⇑ q2 )). *)
         split.
-           ++ eapply lts_res. eapply lts_close_l. exact l1. eapply shift_transition in l2. exact l2.
-           ++ auto with cgr.
-        -- (* open on P *) eexists (ν (p2 ‖ q2)) . split.
-          ++ eapply lts_res. eapply lts_comL. exact l1. simpl in l2.  2:{ eapply shift_transition in l2. exact l2.  } admit.
+           ++ eapply lts_res. eapply (lts_close_l l1).
+              eapply shift_transition in l2. exact l2. admit.
+           ++ rewrite cgr_scope. admit. (* Seems wrong *)
+        -- (* open on P *) eexists  (ν (p2 ‖ q2)). split.
+          ++ eapply lts_res. eapply (lts_comL l1 _).
           ++ reflexivity.
-
-
-        eexists. split.
-        ** eapply lts_res. eapply lts_close_l.
-           *** dependent destruction l1.
-               **** 
-      admit.
-      * eexists. admit.
-      * eexists. split.
-        ** eapply lts_res. eapply lts_parL. admit.
-        ** admit.
-      * eexists. admit.
+      * (* close-R *) eexists. admit.
+      * (* par-L *) dependent destruction l...
+        -- eexists. split.
+           ++ eapply lts_res. eapply lts_parL...
+           ++  cgr_scope.
+        -- eexists (p2 ‖ ⇑ Q). split.
+           ++ eapply (lts_open H). apply (lts_parL l).
+           ++ admit.
+      * (* par-R *) eexists. split.
+        -- eapply lts_res. eapply lts_parR.
+           assert (lts (⇑ Q) (⇑ α) (⇑ q2)) by now apply shift_transition.
+           exact H.
+        -- apply cgr_scope.
     + intros q α l. dependent destruction l.
-      * 
-    
-    admit. (* res *)
+      (* ν () did an α to q, what do νP \parallel Q do ? *)
+      (* two possible cases: res or open *)
+      * dependent destruction l.
+        -- eexists. split.
+           ++ eapply lts_res. eapply (lts_res H).
+           ++ admit.
+        -- admit.
+        -- admit.
+        -- admit.
+        -- eexists. split.
+           ++ eapply lts_parL. eapply lts_res. exact l.
+           ++ eapply cgr_scope_rev.
+        -- eexists (ν P ‖ q2). split.
+           ++ eapply lts_parR. admit.
+           ++ eapply cgr_scope. admit. (* This seems like a good place to go to the blackboard. *)
+      * (* open case. Then ν P ‖ Q did a FreeOut. Two cases are possible: νP did it, or Q *) 
+        dependent destruction l. apply lts_open in l. apply (@lts_parL _ _ _ Q) in l.
+        -- eexists. split.
+           ++ eapply lts_parL. eapply (lts_open H l).
+           ++ admit. (** THIS IS WRONG? *)
+        -- eexists. ++ (* How does this work *)
+           admit.
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. eauto with cgr.
 Qed.
 
-Lemma TransitionUnderScope : forall P Q α, lts P α Q -> forall n, lts (νs n P) α (νs n Q).
-Proof. 
-intros P Q α Transition n.
-induction n.
+Lemma TransitionUnderScope : forall P Q n α, lts P (nvars n α) Q -> lts (νs n P) α (νs n Q).
+Proof.
+intros P Q n.
+induction n; intros α Transition.
 - simpl. exact Transition.
-- simpl. now apply lts_res.
+- simpl. apply lts_res, IHn. rewrite <- shift_in_nvars. exact Transition.
 Qed.
 
 (* One side of the Harmony Lemma *)
