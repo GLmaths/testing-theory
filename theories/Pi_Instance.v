@@ -46,6 +46,8 @@ Open Scope subst_scope.
 Notation "⋅" := ids.
 Notation "tm ⟨ r ⟩" := (ren2 ids r tm) (at level 20).
 
+Arguments core.funcomp _ _ _/.
+
 (*Coercion makes the specification of 'cst' and 'bvar' useless, then simplify the notation *)
 Coercion cst : Value >-> Data.
 Coercion var_Data : nat >-> Data.
@@ -131,16 +133,16 @@ induction n.
 - intros. simpl. now rewrite IHn.
 Qed.
 
+Definition injective (σ : nat -> nat) :=
+  forall x y, σ x = σ y -> x = y.
 
-Definition swap_two p :=
-  ren_proc ids (fun x => match x with 0 => S 0 | S 0 => 0 | n => n end) p.
-(* have this automatically unfold *)
-Arguments swap_two / _.
+Definition swap : nat -> nat := 1 .: (0 .: (shift >> shift >> ids)).
 
-(* Lemma swap_two_example : exists p, p =
-  swap_two
-   (0 ? (0 ! var_Data 0 • ①) ‖ (1 ! var_Data 1 • (1 ? (1 ! var_Data 1 • ①)))).
-   unfold swap_two. asimpl. unfold core.funcomp. *)
+Lemma swap_involutive : forall x, (swap >> swap) x = ids x.
+Proof.
+  intros [|[|x]]; reflexivity.
+Qed.
+
 
 Reserved Notation "p ≡ q" (at level 70).
 Inductive cgr_step : proc -> proc -> Prop :=
@@ -195,8 +197,8 @@ Inductive cgr_step : proc -> proc -> Prop :=
     (g p1) ≡ (g q1) -> 
     (p1 + p2) ≡ (q1 + p2)
 
-(* | cgr_nu_nu_step : forall p,
-    (ν ν p) ≡ (ν ν (swap_two p)) *)
+| cgr_nu_nu_step : forall p,
+    (ν ν p) ≡ (ν ν (p ⟨swap⟩))
 | cgr_res_nil_step :
     (ν 𝟘) ≡ 𝟘
 | cgr_res_nil_rev_step :
@@ -228,12 +230,21 @@ where "p ≡ q" := (cgr_step p q).
   | If C Then p Else q => S (size p + size q)
 end. *)
 
+
+(* Require functional extensionality *)
+
+From Coq Require Import FunctionalExtensionality.
+
 (* The relation ≡ is an reflexive*)
 #[global] Instance cgr_refl_step_is_refl : Reflexive cgr_step.
 Proof. intro. apply cgr_refl_step. Qed.
 (* The relation ≡ is symmetric*)
 #[global] Instance cgr_symm_step : Symmetric cgr_step.
 Proof. intros p q hcgr. induction hcgr; try solve [constructor; try exact IHhcgr].
+- assert (p = p ⟨swap⟩ ⟨swap⟩).
+  {assert (Hext : (swap >> swap) = ids) by apply functional_extensionality, swap_involutive.
+  asimpl. simpl. rewrite Hext. asimpl. reflexivity. }
+  rewrite H at 2. apply cgr_nu_nu_step.
 Qed.
 (* - assert (swap_two (swap_two p) = p).
   + unfold swap_two. admit.
@@ -344,6 +355,10 @@ intros. dependent induction H.
 - constructor. apply cgr_res_step. exact H.
 - eauto with cgr_eq.
 Qed.
+Lemma cgr_nu_nu : forall p, (ν ν p) ≡* (ν ν (p ⟨swap⟩)).
+Proof.
+intros p. constructor. apply cgr_nu_nu_step.
+Qed.
 Lemma cgr_res_nil : 𝟘 ≡* (ν 𝟘).
 Proof.
 constructor. exact cgr_res_nil_rev_step.
@@ -447,7 +462,6 @@ Qed. *)
 
 (* The old Congruence lemmas can now be restated using Autosubst's help.
    This still requires some technical work and lemmas on substitutions. *)
-Arguments core.funcomp _ _ _/.
 
 Lemma permute_subst : forall sp s Q,
   (⇑ Q) [(up_Data_proc sp); (up_Data_Data s)]
@@ -468,10 +482,11 @@ intros sp' sp Hp s' s Hs q1 q2 Hq.
 induction Hq as [p q base_case | p r q transitivity_case].
 - subst. revert sp s. induction base_case; intros; try solve [asimpl; auto with cgr].
   + asimpl. apply cgr_choice. apply IHbase_case.
+  + admit. (* Swap case *)
   + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope _ _).
   + unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope_rev _ _).
 - subst. now rewrite IHtransitivity_case.
-Qed.
+Admitted.
 
 Instance SubstProper' : Proper (eq_up_to_cgr ==> eq ==> eq ==> cgr) subst2.
 Proof.
@@ -511,10 +526,11 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. revert sp s. induction base_case; intros; try solve [asimpl; auto with cgr].
   (* + simpl. unfold subst2. simpl. substify. simpl. Set Printing All. *)
   + asimpl. apply cgr_choice. apply IHbase_case.
+  + asimpl. simpl. admit. (* Swap case *)
   + unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope _ _).
   + unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_rev _ _).
 - subst. now rewrite IHtransitivity_case.
-Qed.
+Admitted.
 
 Instance NewsProper : Proper (eq ==> cgr ==> cgr) νs.
 Proof.
@@ -761,6 +777,7 @@ Definition is_bound_out (a:Act) : bool :=
   end.
 
 Notation "a '⇑?' p" := (if is_bound_out a then ⇑ p else p) (at level 20).
+Notation "a '?↔' p" := (if is_bound_out a then p ⟨swap⟩ else p) (at level 20).
 
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> Act -> proc -> Prop :=
@@ -793,15 +810,15 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 (* Scoped rules *)
 | lts_close_l : forall {c p1 p2 q1 q2},
     lts p1 (BoundOut c) p2 ->      (* this term is an "open" term, (see the lts_open rule) *)
-    lts q1 (ActIn (c ⋉ 0)) q2 ->  (* while this one is a "closed" term *)
+    lts (⇑ q1) (ActIn (c ⋉ 0)) q2 ->  (* while this one is a "closed" term *)
     lts (p1 ‖ q1) τ (ν (p2 ‖ q2))   (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
 | lts_close_r : forall {c p1 p2 q1 q2},
     lts q1 (BoundOut c) q2 ->
-    lts p1 (ActIn (c ⋉ 0)) p2 ->
+    lts (⇑ p1) (ActIn (c ⋉ 0)) p2 ->
     lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
 | lts_res : forall {p q α},
     lts p (⇑ α) q ->
-    lts (ν p) α (ν q)
+    lts (ν p) α (ν (α ?↔ q ))
                       (* only α needs to shift here!! (both chan and value).
                          as a consequence, the channel in α can never be 0 (giving the condition in paper)
                          as in onther places: we started with an "open" value, that's why we add a flat ν *)
@@ -912,7 +929,7 @@ dependent induction Transition; try destruct (IHTransition c v eq_refl) as (P1 &
 - destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H2).
     exists P1, G, R, (S n), cn, vn. do 3 (try split).
   + now rewrite H0.
-  + now rewrite H1.
+  + simpl. now rewrite H1.
   + rewrite H3. simpl. now rewrite shift_in_nvars.
   + not_a_guard.
 - destruct n.
@@ -1221,8 +1238,8 @@ Proof with (subst; eauto with lts cgr).
       (* lts_close_l *)
       * dependent destruction l2.
         -- eexists (ν ((p2 ‖ p0) ‖ r)). split.
-            ++ eapply lts_close_l.
-            ++ reflexivity.
+            ++ admit.
+            ++ admit.
         -- eexists. split.
            ++ eapply (lts_close_l _ _).
            ++ reflexivity.
@@ -1299,9 +1316,7 @@ Proof with (subst; eauto with lts cgr).
         eexists. split.
         ** apply (lts_close_l H0 l2).
         ** now rewrite H1.
-      * destruct (IHcgr_step p2 _ l2) as [x [H0 H1]]. eexists. split.
-        ** apply (lts_close_r l1 H0).
-        ** unfold shift_op, Shiftable_proc. now rewrite H1.
+      * admit. (* The issue with inductive hypothesis that Serguei was talking about *)
       * destruct (IHcgr_step p2 α l) as [x H0]. destruct H0...
       * eexists (α ⇑? p ‖ q2). split.
         -- apply lts_parR...
