@@ -342,9 +342,8 @@ Proof.
     destruct H4 as (a' & nb & inter).
     assert (blocking a) as not_nb.
     { eapply dual_blocks; eauto. }
-    assert (a' = co a) as eq_subst.
-    { eapply unique_nb; eauto. } subst.
-    edestruct (lts_oba_fw_forward p (co a) a) as (p_a & Hyp).
+    
+    edestruct (lts_oba_fw_forward p a' a) as (p_a & Hyp).
     destruct (Hyp nb inter) as (tr_b & tr_nb).
     edestruct (lts_oba_non_blocking_action_delay nb tr_nb l) as (p'_a & tr'_b & r' & tr'_nb & equiv').
     assert (p'_a ⇓ s1 ++ s2).

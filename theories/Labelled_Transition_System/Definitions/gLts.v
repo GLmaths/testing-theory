@@ -45,7 +45,7 @@ Class ExtAction (A : Type) :=
         ¬ non_blocking ɣ ;
 
       (* Without dual, an action isn't observable *)
-      exists_duo_nb μ : { η | dual η μ };
+      exists_dual μ : { η | dual η μ };
 
       (* Unique non-blocking action *)
       unique_nb η ɣ: non_blocking η → dual η ɣ → η = proj1_sig (exists_duo_nb ɣ);
@@ -60,6 +60,8 @@ Class ExtAction (A : Type) :=
 #[global] Existing Instance non_blocking_dec.
 #[global] Existing Instance dual_dec.
 #[global] Existing Instance duo_sym.
+
+Notation "'co' ɣ" := (proj1_sig (exists_dual ɣ)) (at level 30).
 
 Definition blocking `{ExtAction A} (ɣ : A) := ¬ non_blocking ɣ.
 
@@ -94,11 +96,12 @@ intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
   + right. intro Hyp. destruct Hyp as (μ' & nb' & duo').
     assert (blocking μ).
     eapply dual_blocks; eauto. contradiction.
-  + destruct (decide (non_blocking (proj1_sig (exists_duo_nb μ)))) as [nb' | not_nb'].
+  + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
     ++ left. exists (proj1_sig (exists_duo_nb μ)) ; eauto.
        split. eauto. exact (proj2_sig (exists_duo_nb μ)).
     ++ right. intro imp. destruct imp as (η'' & nb'' & duo).
-       assert (η'' = (proj1_sig (exists_duo_nb μ))). eapply unique_nb; eauto. subst.
+       assert (η'' = co μ).
+       { eapply unique_nb; eauto. } subst.
        contradiction.
 Qed.
 
