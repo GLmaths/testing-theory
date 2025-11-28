@@ -515,3 +515,166 @@ Proof.
     eapply wt_s_set_from_pset_xs_ispec.
     eapply elem_of_elements; eassumption. eassumption.
 Qed.
+
+(* Definition co_wt_refuses_set `{FiniteImagegLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
+  let ps := @enum (dsig (fun q => p ⟹[s] q)) _ (wt_set_fin p s hcnv) in
+  let k t := wt_nil_refuses_set (`t) (cnv_wt_s_terminate p (`t) s hcnv (proj2_dsig t)) in
+  ⋃ map k ps.
+
+Lemma co_wt_refuses_set_spec1 `{FiniteImagegLts P A}
+  (p q : P) s (hcnv : p ⇓ᶜᵒ s) :
+  q ∈ co_wt_refuses_set p s hcnv -> ∃ s', parallel_inter s' s /\ p ⟹[s'] q /\ q ↛.
+Proof.
+  intro mem.
+  eapply elem_of_union_list in mem as (g & mem1 & mem2).
+  eapply elem_of_list_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
+  simpl in mem2.
+  eapply wt_nil_refuses_set_spec1 in mem2.
+  split. eapply wt_push_nil_right. eapply bool_decide_unpack. eassumption. firstorder.
+  firstorder.
+Qed.
+
+Lemma co_wt_refuses_set_spec2 `{FiniteImagegLts P A}
+  (p q : P) s (hcnv : p ⇓ᶜᵒ s) s' :
+  (p ⟹[s'] q /\ q ↛ /\ parallel_inter s' s) -> q ∈ co_wt_refuses_set p s hcnv.
+Proof.
+  intros (hw & hst).
+  eapply elem_of_union_list.
+  eexists. split. eapply elem_of_list_fmap.
+  exists (dexist q hw). split. reflexivity. eapply elem_of_enum.
+  simpl. eapply wt_nil_refuses_set_spec2. eauto with mdb.
+Qed.
+
+Lemma wt_refuses_set_fin_aux `{FiniteImagegLts P A}
+  (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q /\ q ↛)) : 
+  Finite (dsig (fun q => p ⟹[s] q /\ q ↛)).
+Proof.
+  unfold dsig.
+  eapply (in_list_finite (elements (wt_refuses_set p s hcnv))).
+  intros q Htrans%bool_decide_unpack.
+  now eapply elem_of_elements, wt_refuses_set_spec2.
+Qed.
+
+
+Lemma wt_refuses_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
+  forall q, Decision (p ⟹[s] q /\ q ↛).
+Proof.
+  intro q.
+  destruct (decide (q ∈ wt_refuses_set p s hcnv)).
+  - left. eapply (wt_refuses_set_spec1 p q s hcnv e).
+  - right. intro wt. eapply n. now eapply wt_refuses_set_spec2.
+Qed.
+
+Definition wt_refuses_set_fin `{FiniteImagegLts P A}
+  (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)) :=
+  wt_refuses_set_fin_aux p s hcnv (wt_refuses_set_dec p s hcnv).
+
+Lemma wt_nil_set_refuses `{FiniteImagegLts P A} p hcnv :
+  lts_refuses p τ -> wt_set p [] hcnv = {[ p ]}.
+Proof.
+  intros hst.
+  eapply leibniz_equiv.
+  intro q. split.
+  - intro mem.
+    eapply wt_set_spec1 in mem.
+    inversion mem; subst.
+    + set_solver.
+    + exfalso. eapply lts_refuses_spec2; eauto.
+  - intro mem. eapply wt_set_spec2. replace q with p.
+    eauto with mdb. set_solver.
+Qed.
+
+Lemma wt_refuses_set_refuses_singleton `{FiniteImagegLts P A} p hcnv :
+  lts_refuses p τ -> wt_refuses_set p [] hcnv = {[ p ]}.
+Proof.
+  intro hst.
+  eapply leibniz_equiv.
+  intro q. split; intro mem.
+  - eapply wt_refuses_set_spec1 in mem as (w & hst').
+    inversion w; subst. set_solver. exfalso. eapply lts_refuses_spec2; eauto.
+  - eapply elem_of_singleton_1 in mem. subst.
+    eapply wt_refuses_set_spec2. split; eauto with mdb.
+Qed.
+
+Fixpoint wt_s_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
+  (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
+  match ps as ps0 return (forall p, p ∈ ps0 -> p ⇓ s) -> gset P with
+  | [] => fun _ => ∅
+  | p :: ps' =>
+      fun ha =>
+        let pr := ha p (elem_of_list_here p ps') in
+        let ys := wt_set p s pr in
+        let ha' := fun q mem => ha q (elem_of_list_further q p ps' mem) in
+        ys ∪ wt_s_set_from_pset_xs ps' s ha'
+  end hcnv.
+
+Definition wt_set_from_pset_spec1_xs `{FiniteImagegLts P A}
+  (ps : list P) (s : trace A) (qs : gset P) :=
+  forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹[s] q.
+
+Definition wt_set_from_pset_spec2_xs `{FiniteImagegLts P A}
+  (ps : list P) (s : trace A) (qs : gset P) :=
+  forall p q, p ∈ ps -> p ⟹[s] q -> q ∈ qs.
+
+Definition wt_set_from_pset_spec_xs `{FiniteImagegLts P A}
+  (ps : list P) (s : trace A) (qs : gset P) :=
+  wt_set_from_pset_spec1_xs ps s qs /\ wt_set_from_pset_spec2_xs ps s qs.
+
+Lemma wt_s_set_from_pset_xs_ispec `{gLts P A, !FiniteImagegLts P A}
+  (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
+  wt_set_from_pset_spec_xs ps s (wt_s_set_from_pset_xs ps s hcnv).
+Proof.
+  split.
+  - induction ps as [|p ps].
+    intros p mem. set_solver.
+    intros p' mem. simpl in *.
+    eapply elem_of_union in mem as [hl|hr].
+    exists p. split.
+    set_solver. now eapply wt_set_spec1 in hl.
+    eapply IHps in hr as (p0 & mem & hwp0).
+    exists p0. repeat split; set_solver.
+  - induction ps as [|p ps].
+    + intros p'. set_solver.
+    + intros p' q mem hwp'.
+      eapply elem_of_union.
+      inversion mem; subst.
+      ++ left. eapply wt_set_spec2; eauto.
+      ++ right. eapply IHps in hwp'; eauto.
+Qed.
+
+Lemma lift_cnv_elements `{gLts P A, !FiniteImagegLts P A}
+  (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
+  forall p, p ∈ (elements ps) -> p ⇓ s.
+Proof.
+  intros p mem.
+  eapply hcnv. now eapply elem_of_elements.
+Qed.
+
+Definition wt_s_set_from_pset `{gLts P A, !FiniteImagegLts P A}
+  (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
+  wt_s_set_from_pset_xs (elements ps) s (lift_cnv_elements ps s hcnv).
+
+Definition wt_set_from_pset_spec1 `{Countable P, gLts P A}
+  (ps : gset P) (s : trace A) (qs : gset P) :=
+  forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹[s] q.
+
+Definition wt_set_from_pset_spec2 `{FiniteImagegLts P A}
+  (ps : gset P) (s : trace A) (qs : gset P) :=
+  forall p q, p ∈ ps -> p ⟹[s] q -> q ∈ qs.
+
+Definition wt_set_from_pset_spec `{FiniteImagegLts P A}
+  (ps : gset P) (s : trace A) (qs : gset P) :=
+  wt_set_from_pset_spec1 ps s qs /\ wt_set_from_pset_spec2 ps s qs.
+
+Lemma wt_s_set_from_pset_ispec `{gLts P A, !FiniteImagegLts P A}
+  (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
+  wt_set_from_pset_spec ps s (wt_s_set_from_pset ps s hcnv).
+Proof.
+  split.
+  - intros p mem.
+    eapply wt_s_set_from_pset_xs_ispec in mem as (p' & mem & hwp').
+    exists p'. split; set_solver.
+  - intros p q mem hwp.
+    eapply wt_s_set_from_pset_xs_ispec.
+    eapply elem_of_elements; eassumption. eassumption.
+Qed. *)
