@@ -810,11 +810,11 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 (* Scoped rules *)
 | lts_close_l : forall {c p1 p2 q1 q2},
     lts p1 (BoundOut c) p2 ->      (* this term is an "open" term, (see the lts_open rule) *)
-    lts (⇑ q1) (ActIn (c ⋉ 0)) q2 ->  (* while this one is a "closed" term *)
+    lts (⇑ q1) (ActIn (⇑ c ⋉ 0)) q2 ->  (* while this one is a "closed" term *)
     lts (p1 ‖ q1) τ (ν (p2 ‖ q2))   (* so whe should shift q2 here. This corresponds to cgr_scope (scope extrusion) *)
 | lts_close_r : forall {c p1 p2 q1 q2},
     lts q1 (BoundOut c) q2 ->
-    lts (⇑ p1) (ActIn (c ⋉ 0)) p2 ->
+    lts (⇑ p1) (ActIn (⇑ c ⋉ 0)) p2 ->
     lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
 | lts_res : forall {p q α},
     lts p (⇑ α) q ->
@@ -1209,7 +1209,7 @@ Hint Unfold lts_then_sc:lts.
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
 (* fact 1.4.16 in Sangiorgi&Walker *)
 Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
-Proof with (subst; eauto with lts cgr).
+Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto lenght *)
 (* by induction on the congruence and the step then...*)
   intros p q α (p' & hcgr & l).
   revert q α l.
@@ -1317,16 +1317,19 @@ Proof with (subst; eauto with lts cgr).
       constructor. assumption.
     + intros. dependent destruction l. exists (p [⋅;v..]). split. apply lts_input.
       assert (p ≡* q) by now constructor. now rewrite H0.
-    + intros. dependent destruction l.
-      * destruct (IHcgr_step p2 (FreeOut (c ⋉ v)) l1) as [x [H0 H1]]...
-      * destruct (IHcgr_step q2 (ActIn (c ⋉ v)) l2) as [x [H0 H1]]...
-      * destruct (IHcgr_step p2 _ l1) as [x [H0 H1]].
-        eexists. split.
-        ** apply (lts_close_l H0 l2).
-        ** now rewrite H1.
+    + (** cgr_par **)
+      intros. dependent destruction l.
+      * destruct (IHcgr_step _ _ l1) as [x [H0 H1]]...
+      * destruct (IHcgr_step _ _ l2) as [x [H0 H1]]...
+      * destruct (IHcgr_step _ _ l1) as [x [H0 H1]]...
       * admit. (* The issue with inductive hypothesis that Serguei was talking about *)
-      * destruct (IHcgr_step p2 α l) as [x H0]. destruct H0...
-      * eexists (α ⇑? p ‖ q2). admit. (* this is very strange *)
+      * destruct (IHcgr_step _ _ l) as [x [H0 H1]]...
+      * apply (t_step _ cgr_step) in H.
+        case_eq (is_bound_out α); eexists; split.
+        -- eauto with lts.
+        -- rewrite H0. apply cgr_par. unfold shift_op, Shiftable_proc. now rewrite H.
+        -- eauto with lts.
+        -- rewrite H0. now rewrite H.
     + intros. dependent destruction l.
       -- exists p...
       -- exists q. split.
@@ -1337,9 +1340,9 @@ Proof with (subst; eauto with lts cgr).
          constructor. assumption.
       -- eexists. split. instantiate (1:= q). apply lts_ifZero. assumption. 
          constructor. reflexivity.
-    + intros. dependent destruction l. 
-      -- destruct (IHcgr_step q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
-      -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
+    + intros. dependent destruction l.
+      -- destruct (IHcgr_step q α l) as [x H0]. destruct H0...
+      -- eauto with lts cgr.
     + intros. admit. (* swap case. Big hole! *)
     + intros. dependent destruction l.
     + intros. repeat dependent destruction l.
@@ -1350,14 +1353,15 @@ Proof with (subst; eauto with lts cgr).
       * eexists. split.
         ** apply (lts_open H1).
         ** exact H2.
+    (*** cgr_scope ***)
     + intros. dependent destruction l.
-       (* processes ν P and Q did a comm-L through a parallel.
-           Now I move Q inside the ν. How do they communicate? *)
+      (** lts_comL **)
       * dependent destruction l1. eexists. split.
         ** eapply lts_res.
            assert (lts (⇑ Q) (⇑ (ActIn (c ⋉ v))) (⇑ q2)) by now apply shift_transition.
            eapply (lts_comL l1 H).
         ** apply cgr_scope.
+      (** lts_comR **)  
       * dependent destruction l2. eexists. split.
         ** eapply lts_res.
            assert (lts (⇑ Q) (⇑ (FreeOut (c ⋉ v))) (⇑ p2)) by now apply shift_transition.
@@ -1371,31 +1375,51 @@ Proof with (subst; eauto with lts cgr).
         -- (* res on P *) eexists.
         (* (ν ν ( q ‖ ⇑ q2 )). *)
         split.
-           ++ eapply lts_res. eapply (lts_close_l l1).
-              eapply shift_transition in l2. exact l2. admit.
-           ++ rewrite cgr_scope. admit. (* Seems wrong *)
-        -- (* open on P *) eexists  (ν (p2 ‖ q2)). split.
-          ++ eapply lts_res. eapply (lts_comL l1 _).
+           ++ eapply lts_res. eapply lts_close_l. { apply l1. }
+              eapply shift_transition in l2. 
+              (* eapply lts_res. eapply (lts_close_l l1).
+              eapply shift_transition in l2. exact l2. *)
+              admit.
+           ++ simpl. rewrite cgr_scope. rewrite cgr_scope. rewrite cgr_nu_nu.
+              rewrite <- cgr_scope. reflexivity. admit. (* Seems wrong *)
+        -- (* open on P *) eexists. split.
+          ++ eauto with lts.
           ++ reflexivity.
       * (* close-R *) eexists. admit.
       * (* par-L *) dependent destruction l...
         -- eexists. split.
-           ++ eapply lts_res. eapply lts_parL...
-           ++  cgr_scope.
-        -- eexists (p2 ‖ ⇑ Q). split.
-           ++ eapply (lts_open H). apply (lts_parL l).
-           ++ admit.
+           ++ eapply lts_res...
+           ++ case_eq (is_bound_out α).
+              ** intro Hbound. assert (is_bound_out (⇑ α) = true).
+                 { case_eq α; intros; subst; inversion Hbound. reflexivity. }
+                 rewrite H. asimpl. simpl.
+                 replace (ren_proc
+                 (fun x : nat => idsRen (ids (ids x)))
+                 (shift >> shift) Q)
+                 with (⇑ (⇑ Q)) by (asimpl; reflexivity).
+                 apply cgr_scope.
+              ** intro Hnotbound.
+                 assert (is_bound_out (⇑ α) = false).
+                 { case_eq α; intros; subst; inversion Hnotbound; try (case e; simpl; trivial). reflexivity. }
+                 rewrite H...
       * (* par-R *) eexists. split.
         -- eapply lts_res. eapply lts_parR.
            assert (lts (⇑ Q) (⇑ α) (⇑ q2)) by now apply shift_transition.
-           exact H.
-        -- apply cgr_scope.
+           exact H. reflexivity.
+        -- case_eq (is_bound_out α); intros.
+           ** assert (is_bound_out (⇑ α) = true).
+              { case_eq α; intros; subst; inversion H; reflexivity. }
+              rewrite H0.  asimpl. simpl. admit.
+            ** assert (is_bound_out (⇑ α) = false).
+               { case_eq α; intros; subst; inversion H; try (case e; simpl; trivial). reflexivity. }
+               rewrite H0...
+    (*** cgr_scope_rev ***)
     + intros q α l. dependent destruction l.
       (* ν () did an α to q, what do νP \parallel Q do ? *)
       (* two possible cases: res or open *)
       * dependent destruction l.
-        -- eexists. split.
-           ++ eapply lts_res. eapply (lts_res H).
+        -- assert (α = τ) by admit. subst. eexists. split.
+           ++ admit. (* The induction hypothesis probelm that Serguei mentioned? *)
            ++ admit.
         -- admit.
         -- admit.

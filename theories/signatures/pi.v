@@ -425,7 +425,7 @@ Qed.
 Inductive Act : Type :=
   | ActIn : ExtAction -> Act
   | FreeOut : ExtAction -> Act
-  | BoundOut : ExtAction -> Act
+  | BoundOut : Data -> Act
   | tau_action : Act.
 
 Lemma congr_ActIn {s0 : ExtAction} {t0 : ExtAction} (H0 : s0 = t0) :
@@ -440,7 +440,7 @@ Proof.
 exact (eq_trans eq_refl (ap (fun x => FreeOut x) H0)).
 Qed.
 
-Lemma congr_BoundOut {s0 : ExtAction} {t0 : ExtAction} (H0 : s0 = t0) :
+Lemma congr_BoundOut {s0 : Data} {t0 : Data} (H0 : s0 = t0) :
   BoundOut s0 = BoundOut t0.
 Proof.
 exact (eq_trans eq_refl (ap (fun x => BoundOut x) H0)).
@@ -455,7 +455,7 @@ Definition subst_Act (sigma_Data : nat -> Data) (s : Act) : Act :=
   match s with
   | ActIn s0 => ActIn (subst_ExtAction sigma_Data s0)
   | FreeOut s0 => FreeOut (subst_ExtAction sigma_Data s0)
-  | BoundOut s0 => BoundOut (subst_ExtAction sigma_Data s0)
+  | BoundOut s0 => BoundOut (subst_Data sigma_Data s0)
   | tau_action => tau_action
   end.
 
@@ -465,7 +465,7 @@ Definition idSubst_Act (sigma_Data : nat -> Data)
   match s with
   | ActIn s0 => congr_ActIn (idSubst_ExtAction sigma_Data Eq_Data s0)
   | FreeOut s0 => congr_FreeOut (idSubst_ExtAction sigma_Data Eq_Data s0)
-  | BoundOut s0 => congr_BoundOut (idSubst_ExtAction sigma_Data Eq_Data s0)
+  | BoundOut s0 => congr_BoundOut (idSubst_Data sigma_Data Eq_Data s0)
   | tau_action => congr_tau_action
   end.
 
@@ -476,8 +476,7 @@ Definition ext_Act (sigma_Data : nat -> Data) (tau_Data : nat -> Data)
   | ActIn s0 => congr_ActIn (ext_ExtAction sigma_Data tau_Data Eq_Data s0)
   | FreeOut s0 =>
       congr_FreeOut (ext_ExtAction sigma_Data tau_Data Eq_Data s0)
-  | BoundOut s0 =>
-      congr_BoundOut (ext_ExtAction sigma_Data tau_Data Eq_Data s0)
+  | BoundOut s0 => congr_BoundOut (ext_Data sigma_Data tau_Data Eq_Data s0)
   | tau_action => congr_tau_action
   end.
 
@@ -496,7 +495,7 @@ Definition compSubstSubst_Act (sigma_Data : nat -> Data)
         (compSubstSubst_ExtAction sigma_Data tau_Data theta_Data Eq_Data s0)
   | BoundOut s0 =>
       congr_BoundOut
-        (compSubstSubst_ExtAction sigma_Data tau_Data theta_Data Eq_Data s0)
+        (compSubstSubst_Data sigma_Data tau_Data theta_Data Eq_Data s0)
   | tau_action => congr_tau_action
   end.
 

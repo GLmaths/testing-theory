@@ -17,7 +17,7 @@ act : Data -> Data -> ExtAction
 
 ActIn    : ExtAction -> Act
 FreeOut  : ExtAction -> Act
-BoundOut : ExtAction -> Act
+BoundOut : Data -> Act
 tau_action : Act
 
 
