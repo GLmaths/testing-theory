@@ -84,10 +84,10 @@ intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
     assert (blocking μ).
     eapply dual_blocks; eauto. contradiction.
   + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
-    ++ assert { μ' | dual μ μ'} as (μ' & duo).
+    ++ destruct (exists_dual_nb μ) as (μ' & duo).
        exact (choice (fun μ0 => dual μ μ0) (exists_duo_nb μ) ).
        symmetry in duo.
-       destruct (decide (non_blocking μ')) as [nb'' | not_nb''].
+       destruct (decide (non_blocking (co μ))) as [nb'' | not_nb''].
        +++ left. exists μ'; eauto.
        +++ right. intro Hyp. destruct Hyp as (μ'' & nb'' & duo'').
            assert (non_blocking μ'). eapply nb_not_nb; eauto. contradiction.

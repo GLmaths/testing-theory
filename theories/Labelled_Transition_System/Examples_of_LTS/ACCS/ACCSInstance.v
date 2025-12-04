@@ -1257,7 +1257,7 @@ Next Obligation.
   intros g.
   induction g using set_ind_L; intros.
   - inversion H0.
-  - destruct β. 
+  - destruct μ. 
     + edestruct (eq_spec (unroll_fw (x :: elements X)) e (ActExt (ActIn a))) as (t & hlt & heqt).
       ++ exists (gen_acc ({[x]} ∪ X) []).
          split.
@@ -1274,7 +1274,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros. simpl in *. eapply gen_acc_gen_spec_acc_nil_mem_lts_inp in H as (r & tr).
-  exists r. exists (ActIn pβ). split; eauto.
+  exists r. exists (ActIn pη). split; eauto.
 Qed.
 Next Obligation.
   intros a e' g. revert a e'.
