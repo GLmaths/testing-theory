@@ -298,7 +298,7 @@ Lemma cnv_if_must `{
 Proof.
   revert p.
   induction s as [|μ s']; intros p hm.
-  - eapply cnv_nil. Check @must_terminate_unoutcome.
+  - eapply cnv_nil.
     eapply (must_terminate_unoutcome _ _ hm), test_ungood.
   - eapply cnv_act.
     + eapply (must_terminate_unoutcome _ _ hm), test_ungood.
@@ -729,51 +729,26 @@ Proof.
     eapply Hlength.
     ++ subst. rewrite 6 length_app. simpl. lia.
     ++ inversion i0 as (x & nb & duo).
-       assert (x = co ν). eapply unique_nb; eauto. subst.
-       assert (co_of ν = co ν) as eq. eapply co_of_is_co_nb; eauto. 
+       assert (x = co ν).
+       { eapply unique_nb; eauto. } subst.
+       assert (co_of ν = co ν) as eq.
+       { eapply co_of_is_co_nb; eauto. } 
        rewrite<- eq in duo, nb. eapply cnv_annhil; eauto.
   + intros p' e' ν' ν inter hlp hle.
     destruct (inversion_gen_mu_gen_conv s ν e' hle)
       as [hg | (s1 & s2 & ν'' & heq & sc & eq & his)]; eauto with mdb. subst.
-    (* destruct s1.
-    ++ destruct (decide (ν' = ν'')) as [eq | not_eq]; subst; simpl in *.
-       * assert (e' ⋍ gen_conv s2).
-         { eapply test_follows_trace_determinacy'; eauto. admit. }
-         eapply must_eq_client. symmetry; eassumption.
-         eapply Hlength; subst; eauto with mdb.
-         eapply cnv_preserved_by_wt_act; eauto.
-         eapply lts_to_wt; eauto.
-       * assert (outcome e').
-         { eapply test_side_effect_by_construction'; eauto. admit. }
-         now eapply m_now.
-    ++ simpl in *. destruct (decide (ν' = a)) as [eq | not_eq]; subst; simpl in *.
-       * assert (e' ⋍ gen_conv s2).
-         { eapply test_follows_trace_determinacy'; eauto. admit. }
-         eapply must_eq_client. symmetry; eassumption.
-         eapply Hlength; subst; eauto with mdb. admit. lia.
-         eapply cnv_preserved_by_wt_act; eauto.
-         eapply lts_to_wt; eauto.
-       * assert (outcome e').
-         { eapply test_side_effect_by_construction'; eauto. admit. }
-         now eapply m_now. *)
-    
-    
-    assert (ν'' = ν'). eapply co_inter_spec1; eauto. subst.
+    assert (ν'' = ν').
+    { eapply co_inter_spec1; eauto. } subst.
     destruct s1.
     ++ simpl in *.
        eapply must_eq_client. symmetry. eassumption.
        eapply Hlength; subst; eauto with mdb.
        eapply cnv_preserved_by_wt_act; eauto.
        eapply lts_to_wt; eauto.
-    ++ destruct (decide (non_blocking ν')) as [nb' | not_nb'].
-       +++ eapply (cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
+    ++ eapply (cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
        eapply must_eq_client. symmetry. eassumption.
        eapply Hlength; subst; eauto with mdb.
        rewrite 2 length_app. simpl. lia.
-       +++ eapply (cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
-           eapply must_eq_client. symmetry. eassumption.
-           eapply Hlength; subst; eauto with mdb.
-           rewrite 2 length_app. simpl. lia.
 Qed.
 
 Lemma must_iff_cnv `{
