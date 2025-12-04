@@ -262,7 +262,7 @@ Qed.
 
 Lemma strip_delay_tau `{gLtsOba P A} {p q m t} :
   p ⟿{m} q -> p ⟶ t
-    -> (∃ η μ r, dual η μ /\ non_blocking η /\ p ⟶[η] r /\ r ⟶⋍[μ] t) \/ (∃ r w, q ⟶ r /\ t ⟿{m} w /\ w ⋍ r).
+    -> (∃ η β r, dual β η /\ non_blocking η /\ p ⟶[η] r /\ r ⟶⋍[β] t) \/ (∃ r w, q ⟶ r /\ t ⟿{m} w /\ w ⋍ r).
 Proof.
   intros hr hl. revert t hl.
   induction hr as [| ? ? ? ? ? nb HypTr' ?]; intros.
@@ -290,8 +290,8 @@ Proof.
            destruct (strip_eq hw _ heqr') as (w' & hww' & heqw').
            exists u, w'. repeat split. assumption. eapply strip_step; eauto.
            etrans; eauto.
-    ++ destruct H1 as (μ & duo & r & hlr & heq).
-       left. exists η, μ. exists p2. split; eauto. split. eassumption. split. eauto. exists r. eauto.
+    ++ destruct H1 as (β & duo & r & hlr & heq).
+       left. exists η, β. exists p2. split; eauto. split. eassumption. split. eauto. exists r. eauto.
 Qed.
 
 Lemma woutpout_delay_inp `{gLtsOba P A} {p q m t μ} : 
@@ -335,9 +335,9 @@ Proof.
     etrans. eassumption. now symmetry.
 Qed.
 
-Lemma not_nb_with_strip_m `{gLtsOba P A} p1 m p'1 μ :
-  p1 ⟿{m} p'1 -> ¬ non_blocking μ
-    -> Forall (NotEq μ) (elements m).
+Lemma not_nb_with_strip_m `{gLtsOba P A} p1 m p'1 β :
+  p1 ⟿{m} p'1 -> blocking β
+    -> Forall (NotEq β) (elements m).
 Proof.
   intros stripped.
   dependent induction stripped.
@@ -348,14 +348,14 @@ Qed.
 
 Lemma woutpout_delay_tau `{gLtsOba P A} {p q m t} :
   p ⟿{m} q -> p ⟶ t 
-    -> (∃ η μ r t, non_blocking η /\ dual η μ /\ p ⟶[η] r /\ q ⟶[μ] t) \/ (∃ r, q ⟶ r).
+    -> (∃ η β r t, non_blocking η /\ dual β η /\ p ⟶[η] r /\ q ⟶[β] t) \/ (∃ r, q ⟶ r).
 Proof.
   intros stripped Hstep. revert t Hstep.
   induction stripped as [ | ? ? ? ? ? nb Hstep_nb]; intros.
   + symmetry in eq. edestruct (eq_spec p' t) as (p'' & l & equiv). exists p; eauto.
     right. exists p''; eauto.
   + edestruct (lts_oba_non_blocking_action_tau nb Hstep_nb Hstep) 
-    as [(r & l1 & l2)| (μ & duo & r & hlr & heq)].
+    as [(r & l1 & l2)| (β & duo & r & hlr & heq)].
     ++ eapply IHstripped in l1 as [(b & t' & r' & l3 & l4)|].
        * destruct l4 as (nb' & duo' & Hstep_nb' & Hstep').
          edestruct (lts_oba_non_blocking_action_delay nb Hstep_nb Hstep_nb') as (z & l6 & l7).
@@ -364,11 +364,11 @@ Proof.
          eauto.
        * right. eauto.
     ++ left. exists η. 
-       exists μ. exists p2.
-       assert (¬ non_blocking μ) as not_nb.
-       eapply dual_blocks; eauto.
-       assert (Forall (NotEq μ) (elements m)) as simpl_in_l.
-       eapply not_nb_with_strip_m; eauto.
+       exists β. exists p2.
+       assert (blocking β) as not_nb.
+       { eapply dual_blocks; eauto. }
+       assert (Forall (NotEq β) (elements m)) as simpl_in_l.
+       { eapply not_nb_with_strip_m; eauto. }
        eapply woutpout_delay_inp in hlr as (u & lu) ; eauto.
 Qed.
 

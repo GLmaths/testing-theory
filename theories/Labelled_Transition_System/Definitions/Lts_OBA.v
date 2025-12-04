@@ -55,7 +55,7 @@ Class gLtsOba (P A : Type) `{H : ExtAction A}
         → ∃ r, q1 ⟶[ μ ] r /\ q2 ⟶⋍[ η ] r ; 
       lts_oba_non_blocking_action_tau {p q1 q2 η} :
       non_blocking η → p ⟶[ η ] q1 → p ⟶ q2 
-        → (∃ t, q1 ⟶ t /\ q2 ⟶⋍[ η ] t) \/ (∃ μ, (dual η μ) /\ q1 ⟶⋍[ μ ] q2) ; 
+        → (∃ t, q1 ⟶ t /\ q2 ⟶⋍[ η ] t) \/ (∃ β, (dual β η) /\ q1 ⟶⋍[ β ] q2) ; 
       lts_oba_non_blocking_action_deter {p1 p2 p3 η} :
       non_blocking η → p1 ⟶[ η ] p2 → p1 ⟶[ η ] p3 
         → p2 ⋍ p3 ;
@@ -74,14 +74,14 @@ Proof.
   intro mem. apply lts_oba_mo_spec_bis2 in mem as (p2 & nb & tr). exact nb.
 Qed.
 
-Lemma lts_oba_mo_non_blocking_contra `{gLtsOba P A} {p ɣ} : 
-  blocking ɣ → ɣ ∉ lts_oba_mo p.
+Lemma lts_oba_mo_non_blocking_contra `{gLtsOba P A} {p β} : 
+  blocking β → β ∉ lts_oba_mo p.
 Proof.
   intros not_nb mem. apply lts_oba_mo_non_blocking_spec1 in mem. contradiction.
 Qed.
 
-Lemma BlockingAction_are_not_non_blocking `{gLtsOba P A} {η ɣ} : 
-  non_blocking η → blocking ɣ → ɣ ≠ η.
+Lemma BlockingAction_are_not_non_blocking `{gLtsOba P A} {η β} : 
+  non_blocking η → blocking β → β ≠ η.
 Proof.
   intros nb1 nb2 eq. rewrite eq in nb2. contradiction.
 Qed.
@@ -100,14 +100,14 @@ Qed.
 
 (* Relation between co_nba, non_blocking and dual *)
 
-Definition exist_co_nba (* {A : Type} `{ExtAct A}  *)
-      `{ExtAction A} (ɣ : A) := exists (η : A), (non_blocking η /\ dual η ɣ).
+Definition exist_co_nba
+      `{ExtAction A} (β : A) := exists (η : A), (non_blocking η /\ dual β η).
 
 Lemma EquivDef_inv1 `{ExtAction A} (s1 : list A) :
   Forall exist_co_nba s1 
-    → (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1).
+    → (exists s3, Forall non_blocking s3 /\ Forall2 dual s1 s3 ).
 Proof.
-  induction s1 as [| ɣ l HypInd].
+  induction s1 as [| β l HypInd].
   - exists []. split. eauto. eapply Forall2_nil.
   - intro his. inversion his as [|? ? (η & nb & duo) Hyp2] ; subst.
     apply HypInd in Hyp2 as (s3 & all_nb & all_dual).
@@ -117,7 +117,7 @@ Proof.
 Qed.
 
 Lemma EquivDef_inv2 `{ExtAction A} (s1 : list A) :
-  (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1)
+  (exists s3, Forall non_blocking s3 /\ Forall2 dual s1 s3)
     → Forall exist_co_nba s1.
 Proof.
   induction s1; intro Hyp.
@@ -131,7 +131,7 @@ Proof.
 Qed.
 
 Lemma EquivDef `{ExtAction A} (s1 : list A) : 
-  (exists s3, Forall non_blocking s3 /\ Forall2 dual s3 s1) ↔ Forall exist_co_nba s1.
+  (exists s3, Forall non_blocking s3 /\ Forall2 dual s1 s3) ↔ Forall exist_co_nba s1.
 Proof.
   split. 
   * apply EquivDef_inv2.

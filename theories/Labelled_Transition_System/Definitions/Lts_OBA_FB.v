@@ -31,14 +31,12 @@ From Coq.Wellfounded Require Import Inverse_Image.
 From Coq.Logic Require Import JMeq ProofIrrelevance.
 From Coq.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA FiniteImageLTS 
-    WeakTransitions StateTransitionSystems Lts_FW Convergence Termination InteractionBetweenLts 
-    InListPropHelper.
+From Must Require Import ForAllHelper MultisetHelper gLts Lts_OBA Bisimulation.
 
 Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=
   MkgLtsObaFB {
-      lts_oba_fb_feedback {p1 p2 p3 η μ} :
-      non_blocking η -> dual η μ -> p1 ⟶[ η ] p2 -> p2 ⟶[ μ ] p3 
+      lts_oba_fb_feedback {p1 p2 p3 β η} :
+      non_blocking η -> dual β η -> p1 ⟶[ η ] p2 -> p2 ⟶[ β ] p3 
         -> p1 ⟶⋍ p3
     }.
 

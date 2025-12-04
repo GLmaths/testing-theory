@@ -289,7 +289,7 @@ Proof.
 Qed.
 
 Lemma wt_input_swap `{gLtsObaFW P A} p q μ1 μ2 : 
-  (exists η2, non_blocking η2 /\ dual η2 μ2) -> p ⟹[[μ1 ; μ2]] q
+  (exists η2, non_blocking η2 /\ dual μ2 η2) -> p ⟹[[μ1 ; μ2]] q
     -> p ⟹⋍[[μ2; μ1]] q.
 Proof.
   intro BlocDuo. destruct BlocDuo as (η2 & nb & duo).
@@ -363,7 +363,7 @@ Proof.
 Qed.
 
 Lemma wt_annhil `{gLtsObaFW P A} p q η μ :
-  non_blocking η -> dual η μ -> p ⟹[[η ; μ]] q
+  non_blocking η -> dual μ η -> p ⟹[[η ; μ]] q
     -> p ⟹⋍ q.
 Proof.
   intros nb duo w.
@@ -411,21 +411,21 @@ Proof.
 Qed.
 
 Lemma forward_s `{gLtsObaFW P A} p s1 s3:
-  Forall non_blocking s3 -> Forall2 dual s3 s1
+  Forall non_blocking s3 -> Forall2 dual s1 s3
     -> exists t, p ⟹[s1] t /\ t ⟹⋍[s3] p.
 Proof.
   intros nb duo. revert p nb duo. dependent induction s1; intros; inversion duo ; subst.
   - exists p. simpl. split ; eauto with mdb.
     exists p. split; eauto with mdb. reflexivity.
   - inversion nb as [|? ? nb' Hyp_nb_list']; subst. 
-    edestruct (lts_oba_fw_forward p x a) as (q & l0 & l1); eauto.
-    destruct (IHs1 l q Hyp_nb_list') as (q' & w1 & w2); eauto.
+    edestruct (lts_oba_fw_forward p y a) as (q & l0 & l1); eauto.
+    destruct (IHs1 l' q Hyp_nb_list') as (q' & w1 & w2); eauto.
     exists q'. split.
     + eauto with mdb.
-    + assert (q' ⟹⋍[l ++ [x]] p) as Hyp. 
+    + assert (q' ⟹⋍[l' ++ [y]] p) as Hyp. 
       eapply wt_join_eq. eassumption. exists p. split. eauto with mdb. reflexivity.
       ++ destruct Hyp as (p' & hwp' & heqp').
-         eapply (wt_non_blocking_action_perm (l ++ [x])) in hwp' as (p0 & hwp0 & heqp0).
+         eapply (wt_non_blocking_action_perm (l' ++ [y])) in hwp' as (p0 & hwp0 & heqp0).
          exists p0. split. eassumption. etrans; eassumption.
          eapply Forall_app. split. assumption. eauto. 
          symmetry. eapply Permutation_cons_append.

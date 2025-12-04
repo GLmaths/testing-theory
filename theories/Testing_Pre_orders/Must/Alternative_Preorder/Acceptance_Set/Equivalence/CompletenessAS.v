@@ -342,7 +342,7 @@ Proof.
     contradiction.
 Qed.
 
-Lemma f_gen_lts_mu_in_the_middle_not_nb_or_neq `{
+Lemma f_gen_lts_mu_in_the_middle_b_or_neq `{
   @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_spec f} 
   s1 s2 μ μ' t:
   Forall non_blocking s1 -> blocking μ -> μ' ≠ μ -> blocking μ'
@@ -366,7 +366,7 @@ Proof.
       eapply outcome_preserved_by_eq; eauto. etransitivity ;eauto. now symmetry.
 Qed.
 
-Lemma inversion_gen_mu_not_nb `{
+Lemma inversion_test_b_external_action `{
   @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_spec f} 
   s μ' t :
   (forall μ, f ε ↛[μ] \/ (forall t, f ε ⟶[μ] t -> outcome t)) ->
@@ -413,7 +413,7 @@ Proof.
       ++ left. eapply test_side_effect_by_construction; eauto.
 Qed.
 
-Lemma inversion_gen_mu_nb `{
+Lemma inversion_test_nb_external_action `{
   @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_spec f} 
   s μ' t :
   (forall μ, f ε ↛[μ] \/ (forall t, f ε ⟶[μ] t -> outcome t)) ->
@@ -464,7 +464,7 @@ Proof.
            { eapply test_side_effect_by_construction; eauto. } eauto. 
 Qed.
 
-Lemma inversion_gen_mu `{
+Lemma inversion_test_external_action `{
   @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_spec f} 
   s μ' t :
   (forall μ, f ε ↛[μ] \/ (forall t, f ε ⟶[μ] t -> outcome t)) ->
@@ -480,7 +480,7 @@ Proof.
   + eapply inversion_gen_mu_not_nb; eauto.
 Qed.
 
-Lemma inversion_gen_mu_tconv `{
+Lemma inversion_tconv_external_action `{
   @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_convergence_spec f} 
   s μ' t :
   f s ⟶[μ'] t ->
@@ -494,7 +494,7 @@ Proof.
   left. eapply tconv_does_no_external_action; eauto.
 Qed.
 
-Lemma inversion_gen_mu_ta `{CC: Countable PreAct} `{
+Lemma inversion_ta_external_action `{CC: Countable PreAct} `{
   @gLtsOba T A H gLtsT gLtsEqT,
   !Testing_Predicate T A outcome, !test_co_acceptance_set_spec PreAct f Γ} 
   s μ' (t : T) (O : gset PreAct) :
@@ -511,7 +511,7 @@ Proof.
        +++ right. intro e. eapply ta_transition_to_good; eauto.
 Qed.
 
-Lemma inversion_gen_tau `{
+Lemma inversion_test_tau_action `{
   @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_spec f}
   s t :
   (f ε ↛ \/ (forall t, f ε ⟶ t -> outcome t)) ->
@@ -562,7 +562,7 @@ Proof.
              destruct (eq_spec (f s') r'' (ActExt $ μ)) as (t0 & hlt0 & heqt0).
              { exists r. split; eauto. now symmetry. }
              assert (f s' ⟶[μ] t0) as Hyp; eauto.
-             eapply inversion_gen_mu in Hyp; eauto.
+             eapply inversion_test_external_action in Hyp; eauto.
              destruct Hyp as [good | continue].
              ++++ assert (t0 ⋍ t) as equiv.
                   { etrans. eauto. now symmetry. }
@@ -574,7 +574,7 @@ Proof.
     + left. eapply test_reset_tau_path. exact not_nb. exact HypTr.
 Qed.
 
-Lemma inversion_gen_tau_tconv `{
+Lemma inversion_tconv_tau_action `{
   @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_convergence_spec f} 
   s t :
   f s ⟶ t ->
@@ -593,7 +593,7 @@ Proof.
   + intro μ. left. eapply tconv_does_no_external_action.
 Qed.
 
-Lemma inversion_gen_tau_ta `{CC : Countable PreAct} `{
+Lemma inversion_ta_tau_action `{CC : Countable PreAct} `{
   @gLtsOba T A H gLtsT gLtsEqT,
   !Testing_Predicate T A outcome, !test_co_acceptance_set_spec PreAct f Γ}
   s O t :
@@ -637,30 +637,25 @@ Proof.
   + edestruct tconv_always_reduces. exists (p ▷ x). eapply ParRight; eauto.
   + intros p' l. eapply IHtp; [|eapply co_cnv_preserved_by_lts_tau]; eauto.
   + intros e' l.
-    destruct (inversion_gen_tau_tconv s e' l)
+    destruct (inversion_tconv_tau_action s e' l)
       as [hu | (η & ν & s1 & s2 & s3 & eq__s & sc & i0 & i1 & i2 & duo)]; eauto with mdb.
     eapply must_eq_client. symmetry. eassumption.
     eapply Hlength.
     * subst. rewrite 6 length_app. simpl. lia.
     * subst. eapply co_cnv_annhil; eauto.
   + intros p' e' ν' ν inter hlp hle.
-    destruct (inversion_gen_mu_tconv s ν e' hle)
+    destruct (inversion_tconv_external_action s ν e' hle)
       as [hg | (s1 & s2 & ν'' & heq & sc & eq & his)]; eauto with mdb. subst.
     destruct s1.
     * simpl in *.
-       eapply must_eq_client. symmetry. eassumption.
-       eapply Hlength; subst; eauto with mdb.
-       eapply co_cnv_preserved_by_wt_act; eauto.
-       eapply lts_to_wt; eauto.
-    * destruct (decide (non_blocking ν')) as [nb' | not_nb'].
-       +++ eapply (co_cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
-           eapply must_eq_client. symmetry. eassumption.
-           eapply Hlength; subst; eauto with mdb.
-           rewrite 2 length_app. simpl. lia.
-       +++ eapply (co_cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
-           eapply must_eq_client. symmetry. eassumption.
-           eapply Hlength; subst; eauto with mdb.
-           rewrite 2 length_app. simpl. lia.
+      eapply must_eq_client. symmetry. eassumption.
+      eapply Hlength; subst; eauto with mdb.
+      eapply co_cnv_preserved_by_wt_act; eauto.
+      eapply lts_to_wt; eauto.
+    * eapply (co_cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
+      eapply must_eq_client. symmetry. eassumption.
+      eapply Hlength; subst; eauto with mdb.
+      rewrite 2 length_app. simpl. lia.
 Qed.
 
 Lemma must_iff_cnv `{
@@ -973,7 +968,7 @@ Proof.
            { eapply test_tau_transition. eauto. }
            exists (p , e'). eapply ParRight. exact tr'.
       + intros e' l.
-        edestruct @inversion_gen_tau_ta as [|Hyp]; eauto with mdb.
+        edestruct @inversion_ta_tau_action as [|Hyp]; eauto with mdb.
         destruct Hyp as (η & μ & s1 & s2 & s3 & heqs & sc & himu & his1 & his2 & duo).
         eapply (must_eq_client p (ta E2 (s1 ++ s2 ++ s3))). now symmetry.
         edestruct (@ta_tau_ex _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ s1 s2 s3 η μ E1) as (t & hlt & heqt); eauto.
@@ -981,7 +976,7 @@ Proof.
         ++ rewrite heqs, 6 length_app. simpl. lia.
         ++ eapply must_eq_client. eapply heqt. eapply et. now rewrite heqs.
       + intros p' e' μ μ' inter l1 l2.
-        edestruct @inversion_gen_mu_ta as [|Hyp]; eauto with mdb.
+        edestruct @inversion_ta_external_action as [|Hyp]; eauto with mdb.
         destruct Hyp as (s1 & s2 & μ''' & heqs & heq & eq & his1). subst.
         eapply must_eq_client. symmetry. eassumption.
         edestruct @f_gen_lts_mu_in_the_middle as (t & l & heq'); eauto.
