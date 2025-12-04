@@ -27,6 +27,10 @@ From Coq.Unicode Require Import Utf8.
 From Coq.Program Require Import Equality.
 From stdpp Require Import countable finite gmultiset.
 
+Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list B → Prop :=
+    Forall2_nil : Forall2 P [] [] 
+    | Forall2_cons : ∀ (x : A) (y : B) (la : list A) (lb : list B), P x y → Forall2 P la lb → Forall2 P (x :: la) (y :: lb).
+
 Lemma Forall2_app {A B : Type} P (s1 s3 : list A) (s2 s4 : list B) : 
   Forall2 P s1 s2 -> Forall2 P s3 s4 
     -> Forall2 P (s1 ++ s3) (s2 ++ s4).

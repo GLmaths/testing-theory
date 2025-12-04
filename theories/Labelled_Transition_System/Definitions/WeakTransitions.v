@@ -419,13 +419,13 @@ Proof.
     exists p. split; eauto with mdb. reflexivity.
   - inversion nb as [|? ? nb' Hyp_nb_list']; subst. 
     edestruct (lts_oba_fw_forward p x a) as (q & l0 & l1); eauto.
-    destruct (IHs1 l q Hyp_nb_list') as (q' & w1 & w2); eauto.
+    destruct (IHs1 la q Hyp_nb_list') as (q' & w1 & w2); eauto.
     exists q'. split.
     + eauto with mdb.
-    + assert (q' ⟹⋍[l ++ [x]] p) as Hyp. 
+    + assert (q' ⟹⋍[la ++ [x]] p) as Hyp. 
       eapply wt_join_eq. eassumption. exists p. split. eauto with mdb. reflexivity.
       ++ destruct Hyp as (p' & hwp' & heqp').
-         eapply (wt_non_blocking_action_perm (l ++ [x])) in hwp' as (p0 & hwp0 & heqp0).
+         eapply (wt_non_blocking_action_perm (la ++ [x])) in hwp' as (p0 & hwp0 & heqp0).
          exists p0. split. eassumption. etrans; eassumption.
          eapply Forall_app. split. assumption. eauto. 
          symmetry. eapply Permutation_cons_append.

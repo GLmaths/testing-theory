@@ -44,13 +44,12 @@ Class ExtAction (A : Type) :=
       non_blocking η → dual η ɣ → 
         ¬ non_blocking ɣ ;
 
-      (* Without dual, an action isn't observable *)
-      exists_dual μ : { η | dual η μ };
-
       (* Unique non-blocking action *)
-      unique_nb η ɣ: non_blocking η → dual η ɣ → η = proj1_sig (exists_duo_nb ɣ);
+      co : A → A;
+      unique_nb η ɣ: non_blocking η → dual η ɣ → η = (co ɣ);
 
-      (* Handy Hypothesis *)
+      (* Handy hypothesis *)
+      exists_duo_nb η : exists μ, dual η μ;
       nb_not_nb η1 η2 ɣ : non_blocking η1 → dual η1 ɣ → dual η2 ɣ → non_blocking η2;
       duo_sym : Symmetric dual;
       (* Can we derive these hypothesis ?*)
@@ -60,8 +59,6 @@ Class ExtAction (A : Type) :=
 #[global] Existing Instance non_blocking_dec.
 #[global] Existing Instance dual_dec.
 #[global] Existing Instance duo_sym.
-
-Notation "'co' ɣ" := (proj1_sig (exists_dual ɣ)) (at level 30).
 
 Definition blocking `{ExtAction A} (ɣ : A) := ¬ non_blocking ɣ.
 
@@ -97,11 +94,15 @@ intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
     assert (blocking μ).
     eapply dual_blocks; eauto. contradiction.
   + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
-    ++ left. exists (proj1_sig (exists_duo_nb μ)) ; eauto.
-       split. eauto. exact (proj2_sig (exists_duo_nb μ)).
+    ++ assert { μ' | dual μ μ'} as (μ' & duo).
+       exact (choice (fun μ0 => dual μ μ0) (exists_duo_nb μ) ).
+       symmetry in duo.
+       destruct (decide (non_blocking μ')) as [nb'' | not_nb''].
+       +++ left. exists μ'; eauto.
+       +++ right. intro Hyp. destruct Hyp as (μ'' & nb'' & duo'').
+           assert (non_blocking μ'). eapply nb_not_nb; eauto. contradiction.
     ++ right. intro imp. destruct imp as (η'' & nb'' & duo).
-       assert (η'' = co μ).
-       { eapply unique_nb; eauto. } subst.
+       assert (η'' = (co μ)). eapply unique_nb; eauto. subst.
        contradiction.
 Qed.
 

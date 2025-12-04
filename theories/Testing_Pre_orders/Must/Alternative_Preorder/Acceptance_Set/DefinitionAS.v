@@ -53,116 +53,25 @@ Class PreExtAction `{H : ExtAction A} {P FinA: Type} `{Countable PreAct}
       preactions_of_spec (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) <-> (𝝳 pre_μ) ∈ (pre_co_actions_of p);
   }.
 
-From Must Require Import ParallelLTSConstruction.
 
-Definition parallel_inter_trace
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  (s' : trace A) (s : trace A) : Prop := Forall2 parallel_inter s' s.
-
-Definition co_cnv `{gLtsT : @gLts T A H}
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  (p : P) (s : trace A) : Prop :=
-  forall s', parallel_inter_trace s' s -> p ⇓ s'.
-
-Notation "p ⇓ᶜᵒ s" := (co_cnv p s) (at level 30, format "p ⇓ᶜᵒ s").
-
-Lemma cnv_if_co_cnv
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
-   (p : P) (q : Q) : (forall s , p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s) -> (forall s', p ⇓ s' -> q ⇓ s').
-Proof.
-  intros Hyp s' conv.
-  assert (Forall2 parallel_inter s' (fmap co s')).
-  { admit. }
-Admitted.
-
-Lemma co_cnv_if_cnv
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
-  (p : P) (q : Q) : (forall s', p ⇓ s' -> q ⇓ s') -> (forall s , p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s).
-Proof.
-  intros Hyp s conv s' inter_trace.
-  eapply Hyp. eapply conv. exact inter_trace.
-Qed.
-
-Lemma cnv_iff_co_cnv
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
-  (p : P) (q : Q) : (forall s', p ⇓ s' -> q ⇓ s') <-> (forall s , p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s).
-Proof.
-  split.
-  - eapply co_cnv_if_cnv.
-  - eapply cnv_if_co_cnv.
-Qed.
-
-Lemma co_cnv_nil `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
-  ∀ p : P, p ⤓ → p ⇓ᶜᵒ ε.
-Proof.
-  intros. intros s inter_trace.
-  inversion inter_trace; subst.
-  eapply cnv_nil. eauto.
-Qed.
-
-Lemma co_cnv_act `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
-  ∀ (p : P) (μ' : A) (s : trace A),
-                p ⤓ → (∀ q : P , ∀ μ : A, p ⟹{μ} q → parallel_inter μ μ' → q ⇓ᶜᵒ s) 
-              → p ⇓ᶜᵒ (μ' :: s).
-Proof.
-  intros. intros s0 inter_trace.
-  inversion inter_trace; subst.
-  eapply cnv_act. eauto.
-  intros q wt.
-  eapply H2 in wt; eauto.
-Qed.
-
-Lemma co_cnv_terminate `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
-  ∀ (p : P) (s : trace A), p ⇓ᶜᵒ s → p ⤓.
-Proof.
-  intros p s co_conv. eapply cnv_terminate.
-  eapply co_conv. instantiate (1 := (fmap co s)).
-  admit.
-Admitted.
-
-Lemma co_cnv_preserved_by_lts_tau `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
-     ∀ (s : trace A) (p : P),
-         p ⇓ᶜᵒ s → ∀ q : P, p ⟶ q → q ⇓ᶜᵒ s.
-Proof.
-  intros. intros s0 inter_trace.
-  eapply cnv_preserved_by_lts_tau; eauto.
-Qed.
-
-Lemma parallel_inter_and_dual
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  (s1 s2 : list A)  :
-    Forall2 parallel_inter s1 s2 <-> Forall2 dual s2 s1.
-Proof.
-Admitted.
-
-Definition bhv_pre_cond1 `{@gLts P A H, @gLts Q A H}
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  (p : P) (q : Q) := forall s, p ⇓ᶜᵒ s -> p ⇓ᶜᵒ s.
+Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
+  (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
 
 Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
 Definition bhv_pre_cond2 `{
-  gLtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  gLtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT
-  }
+  LtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
   (p : P) (q : Q) :=
-  forall (s : trace A) (s' : trace A) (q' : Q),
-    p ⇓ᶜᵒ s -> Forall2 parallel_inter s' s -> q ⟹[s'] q' -> q' ↛ ->
-    ∃ (p' : P) (s'' : trace A) , Forall2 parallel_inter s'' s /\ p ⟹[s''] p' /\ p' ↛
-    /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
+  forall s q',
+    p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
 
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
 
-Definition bhv_pre (* `{PreA_countable : Countable PreA} *)
-  `{
-  gLtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  gLtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT
-  }
+Definition bhv_pre `{PreA_countable : Countable PreA} `{
+  LtsP : @gLts P A H, PreAP : @PreExtAction A _ P FiniteA PreA _ _ 𝝳 Φ LtsP,
+  LtsQ : @gLts Q A H, PreAQ : @PreExtAction A _ Q FiniteA PreA _ _ 𝝳 Φ LtsQ}
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
 
