@@ -139,8 +139,10 @@ Instance Shift_Data : Shiftable Data := ren1 shift.
 Instance Shift_Act  : Shiftable Act := ren1 shift.
 Notation "⇑" := shift_op.
 
-Parameter (Eval_Eq : Equation -> (option bool)).
-Axiom Eval_Eq_Monotone : forall E σ, injective σ -> Eval_Eq (ren1 σ E) = Eval_Eq E.
+Parameter Eval_Eq : Equation -> (option bool).
+Parameter Eq_Subst_Spec : (nat -> nat) -> Prop.
+Parameter Eq_Subst_Spec_lift : forall σ, Eq_Subst_Spec σ -> Eq_Subst_Spec (up_ren σ).
+Axiom Eval_Eq_Spec : forall E σ, Eq_Subst_Spec σ -> Eval_Eq (ren1 σ E) = Eval_Eq E.
 Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
 #[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
 Parameter (channel_is_countable : countable.Countable Value). (* only here for the classes *)
@@ -1113,12 +1115,14 @@ intros. apply lts_res in H0. rewrite H in H0. assumption.
 Qed.
 
 Require Import Coq.Logic.FunctionalExtensionality.
-Lemma ren_lts : forall p α q σ, lts p α q ->
+Lemma ren_lts : forall p α q σ,
+  Eq_Subst_Spec σ ->
+  lts p α q ->
   (is_bound_out α = false ->
     lts (ren2 ids σ p) (ren1 σ α) (ren2 ids σ q)) /\
    (is_bound_out α = true ->
     lts (ren2 ids σ p) (ren1 σ α) (ren2 ids (up_ren σ) q)).
-  intros p α q σ Transition. revert σ.
+  intros p α q σ EqSpec Transition. revert σ EqSpec.
   dependent induction Transition; intro σ; split; intro Hbound; inversion Hbound; subst.
   - asimpl. simpl. refine (eq_rect _ _ lts_input _ _). now asimpl.
     (* replace (
@@ -1143,35 +1147,35 @@ Lemma ren_lts : forall p α q σ, lts p α q ->
       P))
     with (subst2 (rec ( P⟨σ⟩) .: ids) ids (P ⟨σ⟩)) by now asimpl.
     apply lts_recursion.
-  - apply lts_ifOne. admit.
-  - apply lts_ifZero. admit.
-  - destruct (IHTransition1 σ) as [IHTransition1' _].
-    destruct (IHTransition2 σ) as [IHTransition2' _].
+  - apply lts_ifOne. apply (Eval_Eq_Spec E σ) in EqSpec. rewrite H in EqSpec. assumption.
+  - apply lts_ifZero. apply (Eval_Eq_Spec E σ) in EqSpec. rewrite H in EqSpec. assumption.
+  - destruct (IHTransition1 σ EqSpec) as [IHTransition1' _].
+    destruct (IHTransition2 σ EqSpec) as [IHTransition2' _].
     eapply lts_comL.
     + apply IHTransition1'. reflexivity.
     + apply IHTransition2'. reflexivity.
-  - destruct (IHTransition1 σ) as [IHTransition1' _].
-    destruct (IHTransition2 σ) as [IHTransition2' _].
+  - destruct (IHTransition1 σ EqSpec) as [IHTransition1' _].
+    destruct (IHTransition2 σ EqSpec) as [IHTransition2' _].
     eapply lts_comR.
     + apply IHTransition1'. reflexivity.
     + apply IHTransition2'. reflexivity.
-  - destruct (IHTransition1 σ) as [_ IHTransition1'].
-    destruct (IHTransition2 (up_ren σ)) as [IHTransition2' _].
+  - destruct (IHTransition1 σ EqSpec) as [_ IHTransition1'].
+    destruct (IHTransition2 (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition2' _].
     eapply (@lts_close_l (ren1 σ c)); fold ren_proc. (* giving the channel explicitly to avoid some unfolding *)
     + apply IHTransition1'. reflexivity.
     + unfold shift_op, Shift_proc.
       rewrite shift_permute.
       rewrite shift_permute_Data.
       apply IHTransition2'. reflexivity.
-  - destruct (IHTransition1 σ) as [_ IHTransition1'].
-    destruct (IHTransition2 (up_ren σ)) as [IHTransition2' _].
+  - destruct (IHTransition1 σ EqSpec) as [_ IHTransition1'].
+    destruct (IHTransition2 (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition2' _].
     eapply (@lts_close_r (ren1 σ c)); fold ren_proc. (* giving the channel explicitly to avoid some unfolding *)
     + apply IHTransition1'. reflexivity.
     + unfold shift_op, Shift_proc.
       rewrite shift_permute.
       rewrite shift_permute_Data.
       apply IHTransition2'. reflexivity.
-  - destruct (IHTransition (up_ren σ)) as [IHTransition' _].
+  - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition' _].
     rewrite Hbound. asimpl.
     refine (eq_rect _ _ (lts_res _) _ _).
     * unfold shift_op, Shift_Act, Ren_Act. rewrite shift_permute_Action.
@@ -1179,7 +1183,7 @@ Lemma ren_lts : forall p α q σ, lts p α q ->
       rewrite (is_bound_ren _ shift) in Hbound.
       apply Hbound.
     * rewrite <- (is_bound_ren _ σ). now rewrite Hbound.
-  - destruct (IHTransition (up_ren σ)) as [_ IHTransition'].
+  - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [_ IHTransition'].
     rewrite Hbound. asimpl.
     refine (eq_rect _ _ (lts_res _) _ _).
     * unfold shift_op, Shift_Act, Ren_Act. rewrite shift_permute_Action.
@@ -1187,35 +1191,35 @@ Lemma ren_lts : forall p α q σ, lts p α q ->
       rewrite (is_bound_ren _ shift) in Hbound.
       apply Hbound.
     * rewrite <- (is_bound_ren _ σ), Hbound. simpl. now asimpl.
-  - destruct (IHTransition (up_ren σ)) as [IHTransition' _].
+  - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition' _].
     eapply lts_open; fold ren_proc.
     unfold Ren_Act, ren_Act in IHTransition'. asimpl in IHTransition'.
     eapply IHTransition'. reflexivity.
-  - destruct (IHTransition σ) as [IHTransition' _].
+  - destruct (IHTransition σ EqSpec) as [IHTransition' _].
     eapply lts_parL; fold ren_proc.
     + apply IHTransition'. exact Hbound.
     + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. now rewrite Hbound.
-  - destruct (IHTransition σ) as [_ IHTransition'].
+  - destruct (IHTransition σ EqSpec) as [_ IHTransition'].
     eapply lts_parL; fold ren_proc.
     + apply IHTransition'. exact Hbound.
     + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. rewrite Hbound.
       asimpl. simpl. reflexivity.
-  - destruct (IHTransition σ) as [IHTransition' _].
+  - destruct (IHTransition σ EqSpec) as [IHTransition' _].
     eapply lts_parR; fold ren_proc.
     + apply IHTransition'. exact Hbound.
     + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. now rewrite Hbound.
-  - destruct (IHTransition σ) as [_ IHTransition'].
+  - destruct (IHTransition σ EqSpec) as [_ IHTransition'].
     eapply lts_parR; fold ren_proc.
     + apply IHTransition'. exact Hbound.
     + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. rewrite Hbound.
       asimpl. simpl. reflexivity.
-  - destruct (IHTransition σ) as [IHTransition' _].
+  - destruct (IHTransition σ EqSpec) as [IHTransition' _].
     eapply lts_choiceL. apply IHTransition'. exact Hbound.
-  - destruct (IHTransition σ) as [_ IHTransition'].
+  - destruct (IHTransition σ EqSpec) as [_ IHTransition'].
     eapply lts_choiceL. apply IHTransition'. exact Hbound.
-  - destruct (IHTransition σ) as [IHTransition' _].
+  - destruct (IHTransition σ EqSpec) as [IHTransition' _].
     eapply lts_choiceR. apply IHTransition'. exact Hbound.
-  - destruct (IHTransition σ) as [_ IHTransition'].
+  - destruct (IHTransition σ EqSpec) as [_ IHTransition'].
     eapply lts_choiceR. apply IHTransition'. exact Hbound.
 Qed.
 
