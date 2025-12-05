@@ -96,22 +96,51 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 
 Coercion g : gproc >-> proc.
 
+(** Autosubst doesn't generate these for Action, since it doesn't contain bound variables *)
+
+Definition ren_Act (xi : nat -> nat) (a : Act) : Act :=
+  match a with
+  | ActIn (act d1 d2) => ActIn (act (subst_Data xi d1) (subst_Data xi d2))
+  | FreeOut (act d1 d2) => FreeOut (act (subst_Data xi d1) (subst_Data xi d2))
+  | BoundOut d1 => BoundOut (subst_Data xi d1)
+  | tau_action => tau_action
+ end.
+
+Lemma compRenRen_Act (xi : nat -> nat) (zeta : nat -> nat)
+  (rho : nat -> nat)
+  (Eq_Act : forall x, core.funcomp zeta xi x = rho x) (s : Act) :
+  ren_Act zeta (ren_Act xi s) = ren_Act rho s.
+  Proof.
+  destruct s; try destruct e.
+  - simpl. f_equal. f_equal; now apply compRenRen_Data.
+  - simpl. f_equal. f_equal; now apply compRenRen_Data.
+  - simpl. f_equal. now apply compRenRen_Data.
+  - reflexivity.
+Qed.
+
+Lemma renRen_Act (xi : nat -> nat) (zeta : nat -> nat) (a : Act)
+  :
+  ren_Act zeta (ren_Act xi a) =
+  ren_Act (core.funcomp zeta xi) a.
+Proof.
+exact (compRenRen_Act xi zeta _ (fun n => eq_refl) a).
+Qed.
+
+#[global] Instance Ren_Act : (Ren1 _ _ _) := @ren_Act.
+
 Definition νs n := Nat.iter n (fun p => ν p).
 
+Definition injective (σ : nat -> nat) :=
+  forall x y, σ x = σ y -> x = y.
+
 Class Shiftable (A : Type) := shift_op : A -> A.
-Instance Shiftable_proc : Shiftable proc := ren2 ids shift.
-Instance Shiftable_Data : Shiftable Data := ren1 shift.
-Instance Shiftable_Act  : Shiftable Act :=
-  fun a => match a with
-  | ActIn (act c v) => ActIn (act (ren1 shift c) (ren1 shift v))
-  | FreeOut (act c v) => FreeOut (act (ren1 shift c) (ren1 shift v))
-  | BoundOut c => BoundOut (ren1 shift c)
-  | τ => τ
-  end.
+Instance Shift_proc : Shiftable proc := ren2 ids shift.
+Instance Shift_Data : Shiftable Data := ren1 shift.
+Instance Shift_Act  : Shiftable Act := ren1 shift.
 Notation "⇑" := shift_op.
 
 Parameter (Eval_Eq : Equation -> (option bool)).
-Axiom (Eval_Eq_Monotone : forall E, Eval_Eq (⇑ E) = Eval_Eq E).
+Axiom Eval_Eq_Monotone : forall E σ, injective σ -> Eval_Eq (ren1 σ E) = Eval_Eq E.
 Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
 #[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
 Parameter (channel_is_countable : countable.Countable Value). (* only here for the classes *)
@@ -132,9 +161,6 @@ induction n.
 - now simpl.
 - intros. simpl. now rewrite IHn.
 Qed.
-
-Definition injective (σ : nat -> nat) :=
-  forall x y, σ x = σ y -> x = y.
 
 Definition swap : nat -> nat := 1 .: (0 .: (shift >> shift >> ids)).
 
@@ -542,7 +568,7 @@ Instance nvars_proper : Proper (eq ==> cgr ==> cgr) (@nvars proc _).
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
 - now simpl.
-- simpl. unfold shift_op. unfold Shiftable_proc. now rewrite IHn.
+- simpl. unfold shift_op. unfold Shift_proc. now rewrite IHn.
 Qed.
 
 Lemma n_extrusion : forall n p q, (νs n p) ‖ q ≡* νs n (p ‖ nvars n q).
@@ -823,7 +849,7 @@ Inductive lts : proc-> Act -> proc -> Prop :=
                          as a consequence, the channel in α can never be 0 (giving the condition in paper)
                          as in onther places: we started with an "open" value, that's why we add a flat ν *)
 | lts_open : forall {c p1 p2}, (** remark: we are adding a ν but we are not shifting. this corresponds to the intuition in momigliano&cecilia that free rules handle open terms *)
-    lts p1 (FreeOut ((⇑ c) ⋉ (var_Data 0))) p2 ->   (** condition: c must not be 0 ! *)
+    lts p1 (FreeOut ((⇑ c) ⋉ (var_Data 0))) p2 ->   (** condition: (⇑ c must not be 0 ! *)
     lts (ν p1) (BoundOut c) p2                      (* this should happen only when v = 0 *)
                                                     (* note that p2 is now an open term. its scope is going to be closed in the close rule *)
 
@@ -1055,130 +1081,143 @@ dependent induction Transition.
       apply cgr_choice_com. apply cgr_choice. assumption. apply cgr_choice_assoc.
 Qed. *)
 
-Axiom fake_transition : forall {c v p1 p2 q1 q2},
-    lts p1 (BoundOut c) p2 ->
-    lts q1 (ActIn (c ⋉ v)) q2 ->
-    lts (p1 ‖ ⇑ q1) τ (ν (p2 ‖ q2)).
+Lemma shift_permute : forall p σ,
+  p ⟨σ⟩ ⟨shift⟩ = p ⟨shift⟩ ⟨up_ren σ⟩.
+Proof. now asimpl. Qed.
 
-Definition ren_Action (xi : nat -> nat) (a : Act) : Act :=
-  match a with
-  | ActIn (act d1 d2) => ActIn (act (subst_Data xi d1) (subst_Data xi d2))
-  | FreeOut (act d1 d2) => FreeOut (act (subst_Data xi d1) (subst_Data xi d2))
-  | BoundOut d1 => BoundOut (subst_Data xi d1)
-  | tau_action => tau_action
-  end.
+Lemma shift_permute_Data : forall (v:Data) σ,
+  ren1 shift (ren1 σ v) = ren1 (up_ren σ) (ren1 shift v).
+Proof. now asimpl. Qed.
 
-#[global] Instance Ren_Act : (Ren1 _ _ _) := @ren_Action.
+(** Autosubst should solve this? *)
+Lemma shift_permute_Action : forall (a:Act) σ,
+  ren1 shift (ren1 σ a) = ren1 (up_ren σ) (ren1 shift a).
+Proof.
+intros.
+unfold ren1, Ren_Act.
+now repeat rewrite renRen_Act.
+Qed.
 
-(* Require Import Coq.Logic.FunctionalExtensionality.
-Lemma SubstLTS : forall p α q (σ : nat -> nat),
-  lts p α q -> lts (ren2 ids σ p) (ren1 σ α) (ren2 ids σ q).
+Lemma is_bound_ren : forall α σ,
+  is_bound_out α = is_bound_out (ren1 σ α).
+Proof.
+intros α σ. destruct α; try destruct e; reflexivity.
+Qed.
+
+Lemma res_not_bound : forall p α q,
+  is_bound_out α = false ->
+  lts p (⇑ α) q ->
+  lts (ν p) α (ν q).
+Proof.
+intros. apply lts_res in H0. rewrite H in H0. assumption.
+Qed.
+
+Require Import Coq.Logic.FunctionalExtensionality.
+Lemma ren_lts : forall p α q σ, lts p α q ->
+  (is_bound_out α = false ->
+    lts (ren2 ids σ p) (ren1 σ α) (ren2 ids σ q)) /\
+   (is_bound_out α = true ->
+    lts (ren2 ids σ p) (ren1 σ α) (ren2 ids (up_ren σ) q)).
   intros p α q σ Transition. revert σ.
-  dependent induction Transition; intro σ.
-  - asimpl. simpl.
-    replace (
+  dependent induction Transition; intro σ; split; intro Hbound; inversion Hbound; subst.
+  - asimpl. simpl. refine (eq_rect _ _ lts_input _ _). now asimpl.
+    (* replace (
     (subst_proc
-    (fun x : nat => var_proc (idsRen x))
-    (scons (ren_Data σ v) (σ >> var_Data))) P)
+      (fun x : nat => var_proc (idsRen x))
+      ((ren_Data σ v) .: (σ >> var_Data)))
+      P)
     with
-    (ren_proc ids (scons O (σ >> S)) P [⋅; (v [σ >> var_Data])..])
-    by now asimpl.
-    apply lts_input.
+    (ren_proc ids (up_ren σ) P [⋅; (v [σ >> var_Data])..])
+    by now asimpl. apply lts_input. *)
   - apply lts_output.
   - apply lts_tau.
   - asimpl. simpl.
-    assert ((0 .: idsRen >> S) = ids).
-    apply FunctionalExtensionality.functional_extensionality.
-    intro n. destruct n; trivial.
-    rewrite H.
-
-    assert ((pr_rec (ren2 ids σ P)) = (pr_rec (ren_proc ids σ P))) by reflexivity.
-    rewrite <- H0.
-
-    assert (
+    replace (0 .: idsRen >> S) with ids by
+     (apply FunctionalExtensionality.functional_extensionality;
+      intros [|n]; trivial).
+    replace (ren_proc ids σ P) with (P ⟨σ⟩) by reflexivity.
+    replace (
     (subst_proc
-    (scons
-    (pr_rec
-    (@ren2 _ _ proc proc Ren_proc ids σ P))
-    (fun x : nat => var_proc (idsRen x)))
-    (fun x : nat => var_Data (σ x)) P)
-    =
-    (subst2
-    (scons (pr_rec (ren2 ids σ P)) ids)
-    ids
-    (ren2 ids σ P))). asimpl. reflexivity.
-    
-    rewrite H1.
+      ((rec (P ⟨σ⟩)) .: (fun x : nat => var_proc (idsRen x)))
+      (fun x : nat => var_Data (σ x))
+      P))
+    with (subst2 (rec ( P⟨σ⟩) .: ids) ids (P ⟨σ⟩)) by now asimpl.
     apply lts_recursion.
-
   - apply lts_ifOne. admit.
   - apply lts_ifZero. admit.
-  - apply (lts_comL (IHTransition1 _) (IHTransition2 _)).
-  - apply (lts_comR (IHTransition1 _) (IHTransition2 _)).
-  - asimpl. simpl. simpl in IHTransition2.
-    eapply (lts_close_l (IHTransition1 _) (IHTransition2 _)).
-
-Lemma shift_transition : forall p α q, lts p α q -> lts (⇑ p) (↿ α) (⇑ q).
-intros p α q Transition.
-dependent induction Transition.
-- asimpl. simpl.
-assert
-  (subst2 ids
-  (scons (subst_Data (shift >> var_Data) v) ids)
-  (subst_proc ids
-  (scons (var_Data 0) (shift >> shift >> var_Data))
-  P)
-  =
-  (subst2 ids 
-  (scons (subst_Data (shift >> var_Data) v)
-  (shift >> var_Data))
-  P)).
-  asimpl. simpl. reflexivity.
-  rewrite <- H.
-  apply lts_input.
-- apply lts_output.
-- apply lts_tau.
-- apply lts_recursion. admit.
-- apply lts_ifOne. now rewrite Eval_Eq_Monotone.
-- apply lts_ifZero. now rewrite Eval_Eq_Monotone.
-- apply (lts_comL IHTransition1 IHTransition2).
-- apply (lts_comR IHTransition1 IHTransition2).
-- change ((p1 ‖ q1 [↑↑]) [↑↑]) with ((p1 [↑↑] ‖ q1 [↑↑] [↑↑])).
-assert 
-(@eq proc
-  (pr_res
-  (pr_par
-  (subst_proc ids ↑↑ p2)
-  (subst_proc ids ↑↑ q2)))
-  (pr_res
-  (pr_par
-  (subst_proc ids (up_Data_Data ↑↑) p2)
-  (subst_proc ids (up_Data_Data ↑↑) q2)))).
-  admit.
-
-  replace ((ν (p2 ‖ q2)) [↑↑]) with (ν (p2 [↑↑] ‖ q2 [↑↑])).
-  apply (lts_close_l IHTransition1 IHTransition2).
-
-admit. asimpl. unfold Subst_proc_data. simpl.
-- admit.
-- apply (lts_res). fold subst_proc. apply IHTransition.
-Admitted. *)
-
-
-Lemma shift_transition : forall p α q, lts p α q -> lts (⇑ p) (⇑ α) (⇑ q).
-Admitted.
-
-Lemma shift_transition2 : forall p α q, lts (⇑ p) (⇑ α) q -> exists q', q = ⇑ q'.
-Proof.
-intros p α q Transition.
-dependent induction Transition.
-- destruct p; inversion x0. admit.
-- destruct p; inversion x0. destruct g0; inversion x0. eexists. reflexivity.
-- destruct p; inversion x0. destruct g0; inversion x0. eexists. reflexivity.
-- destruct p; inversion x0. eexists. admit.
-- destruct p; inversion x0. eexists. reflexivity.
-- destruct p; inversion x0. eexists. reflexivity.
-- destruct p; inversion x0. eexists. destruct (IHTransition1 p3 α). assumption. (* does not work *)
+  - destruct (IHTransition1 σ) as [IHTransition1' _].
+    destruct (IHTransition2 σ) as [IHTransition2' _].
+    eapply lts_comL.
+    + apply IHTransition1'. reflexivity.
+    + apply IHTransition2'. reflexivity.
+  - destruct (IHTransition1 σ) as [IHTransition1' _].
+    destruct (IHTransition2 σ) as [IHTransition2' _].
+    eapply lts_comR.
+    + apply IHTransition1'. reflexivity.
+    + apply IHTransition2'. reflexivity.
+  - destruct (IHTransition1 σ) as [_ IHTransition1'].
+    destruct (IHTransition2 (up_ren σ)) as [IHTransition2' _].
+    eapply (@lts_close_l (ren1 σ c)); fold ren_proc. (* giving the channel explicitly to avoid some unfolding *)
+    + apply IHTransition1'. reflexivity.
+    + unfold shift_op, Shift_proc.
+      rewrite shift_permute.
+      rewrite shift_permute_Data.
+      apply IHTransition2'. reflexivity.
+  - destruct (IHTransition1 σ) as [_ IHTransition1'].
+    destruct (IHTransition2 (up_ren σ)) as [IHTransition2' _].
+    eapply (@lts_close_r (ren1 σ c)); fold ren_proc. (* giving the channel explicitly to avoid some unfolding *)
+    + apply IHTransition1'. reflexivity.
+    + unfold shift_op, Shift_proc.
+      rewrite shift_permute.
+      rewrite shift_permute_Data.
+      apply IHTransition2'. reflexivity.
+  - destruct (IHTransition (up_ren σ)) as [IHTransition' _].
+    rewrite Hbound. asimpl.
+    refine (eq_rect _ _ (lts_res _) _ _).
+    * unfold shift_op, Shift_Act, Ren_Act. rewrite shift_permute_Action.
+      apply IHTransition'.
+      rewrite (is_bound_ren _ shift) in Hbound.
+      apply Hbound.
+    * rewrite <- (is_bound_ren _ σ). now rewrite Hbound.
+  - destruct (IHTransition (up_ren σ)) as [_ IHTransition'].
+    rewrite Hbound. asimpl.
+    refine (eq_rect _ _ (lts_res _) _ _).
+    * unfold shift_op, Shift_Act, Ren_Act. rewrite shift_permute_Action.
+      apply IHTransition'.
+      rewrite (is_bound_ren _ shift) in Hbound.
+      apply Hbound.
+    * rewrite <- (is_bound_ren _ σ), Hbound. simpl. now asimpl.
+  - destruct (IHTransition (up_ren σ)) as [IHTransition' _].
+    eapply lts_open; fold ren_proc.
+    unfold Ren_Act, ren_Act in IHTransition'. asimpl in IHTransition'.
+    eapply IHTransition'. reflexivity.
+  - destruct (IHTransition σ) as [IHTransition' _].
+    eapply lts_parL; fold ren_proc.
+    + apply IHTransition'. exact Hbound.
+    + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. now rewrite Hbound.
+  - destruct (IHTransition σ) as [_ IHTransition'].
+    eapply lts_parL; fold ren_proc.
+    + apply IHTransition'. exact Hbound.
+    + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. rewrite Hbound.
+      asimpl. simpl. reflexivity.
+  - destruct (IHTransition σ) as [IHTransition' _].
+    eapply lts_parR; fold ren_proc.
+    + apply IHTransition'. exact Hbound.
+    + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. now rewrite Hbound.
+  - destruct (IHTransition σ) as [_ IHTransition'].
+    eapply lts_parR; fold ren_proc.
+    + apply IHTransition'. exact Hbound.
+    + rewrite Hbound. rewrite (is_bound_ren _ σ) in Hbound. rewrite Hbound.
+      asimpl. simpl. reflexivity.
+  - destruct (IHTransition σ) as [IHTransition' _].
+    eapply lts_choiceL. apply IHTransition'. exact Hbound.
+  - destruct (IHTransition σ) as [_ IHTransition'].
+    eapply lts_choiceL. apply IHTransition'. exact Hbound.
+  - destruct (IHTransition σ) as [IHTransition' _].
+    eapply lts_choiceR. apply IHTransition'. exact Hbound.
+  - destruct (IHTransition σ) as [_ IHTransition'].
+    eapply lts_choiceR. apply IHTransition'. exact Hbound.
+Qed.
 
 Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
 Proof.
@@ -1191,7 +1230,6 @@ Lemma Shift_Decompose_Input : forall p q c,
 Proof.
 intros p q c H. destruct p; inversion H.
 eexists. eexists. split. reflexivity. unfold upRen_Data_proc. unfold upRen_Data_Data, up_ren.
-
 
 Ltac case_shift :=
   match goal with
