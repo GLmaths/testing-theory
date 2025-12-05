@@ -42,39 +42,39 @@ From Must Require Import ActTau.
 
 Inductive mustx `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (ps : gset P) (e : E) : Prop :=
-| mx_now (hh : outcome e) : mustx ps e
+  (ps : gset P) (t : T) : Prop :=
+| mx_now (hh : outcome t) : mustx ps t
 | mx_step
-    (nh : ¬ outcome e)
-    (ex : forall (p : P), p ∈ ps -> ∃ t, inter_step (p, e) τ t)
+    (nh : ¬ outcome t)
+    (ex : forall (p : P), p ∈ ps -> ∃ p', inter_step (p, t) τ p')
     (pt : forall ps',
         lts_tau_set_from_pset_spec1 ps ps' -> ps' ≠ ∅ ->
-        mustx ps' e)
-    (et : forall (e' : E), e ⟶ e' -> mustx ps e')
-    (com : forall (e' : E) μ1 μ2 (ps' : gset P),
+        mustx ps' t)
+    (et : forall (t' : T), t ⟶ t' -> mustx ps t')
+    (com : forall (t' : T) μ1 μ2 (ps' : gset P),
         parallel_inter μ1 μ2 ->
-        lts_step e (ActExt μ2) e' ->
+        lts_step t (ActExt μ2) t' ->
         wt_set_from_pset_spec1 ps [μ1] ps' -> 
         ps' ≠ ∅ ->
-        mustx ps' e')
-  : mustx ps e.
+        mustx ps' t')
+  : mustx ps t.
 
 #[global] Hint Constructors mustx:mdb.
 
 Lemma mx_sub `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps e : 
-  mustx ps e 
+  ps t : 
+  mustx ps t 
     -> forall qs, qs ⊆ ps 
-      -> mustx qs e.
+      -> mustx qs t.
 Proof.
   intros hmx. dependent induction hmx.
   - eauto with mdb.
@@ -88,20 +88,20 @@ Proof.
          intro eq_nil. destruct l' as (q & mem%sub & l%H5); set_solver.
          set_solver.
       ++ intros p (q & mem%sub & l)%hs. eauto.
-    + intros e' μ μ' qs' hle duo hwqs hneq_nil.
-      eapply (H3 e' μ μ'); eauto. intros p' mem%hwqs. set_solver.
+    + intros t' μ μ' qs' hle duo hwqs hneq_nil.
+      eapply (H3 t' μ μ'); eauto. intros p' mem%hwqs. set_solver.
 Qed.
 
 Lemma mx_mem `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome} 
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome} 
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps e : 
-  mustx ps e 
+  ps t : 
+  mustx ps t 
     -> forall p, p ∈ ps 
-      -> mustx {[ p ]} e.
+      -> mustx {[ p ]} t.
 Proof. intros hmx p mem. eapply mx_sub; set_solver. Qed.
 
 Lemma lem_dec `{Countable A} (X Y Z : gset A) :
@@ -120,13 +120,13 @@ Qed.
 
 Lemma mustx_terminate_unoutcome `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps e : 
-  mustx ps e 
-    -> outcome e \/ forall p, p ∈ ps -> p ⤓.
+  ps t : 
+  mustx ps t 
+    -> outcome t \/ forall p, p ∈ ps -> p ⤓.
 Proof.
   intros hmx.
   induction hmx.
@@ -138,14 +138,14 @@ Proof.
 Qed.
 
 Lemma mustx_terminate_unoutcome' `{
-  @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  @gLtsOba P A H gLtsP gLtsEqP, !FiniteImagegLts P A, 
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps e :
-  mustx ps e
-        -> forall p, p ∈ ps -> ¬ outcome e -> p ⤓.
+  ps t :
+  mustx ps t
+        -> forall p, p ∈ ps -> ¬ outcome t -> p ⤓.
 Proof.
   intros hmx p mem not_happy.
   dependent induction hmx.
@@ -159,17 +159,17 @@ Qed.
 
 
 Lemma unoutcome_acnv_mu `{
-  @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  @gLtsOba P A H gLtsP gLtsEqP, !FiniteImagegLts P A, 
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps e e' :
-  mustx ps e 
+  ps t t' :
+  mustx ps t 
     -> forall μ μ' p, p ∈ ps 
       -> parallel_inter μ μ'
-        -> e ⟶[μ'] e' 
-          -> ¬ outcome e -> ¬ outcome e' -> p ⇓ [μ].
+        -> t ⟶[μ'] t' 
+          -> ¬ outcome t -> ¬ outcome t' -> p ⇓ [μ].
 Proof.
   intros hmx μ μ' p mem inter l not_happy not_happy'.
   dependent induction hmx.
@@ -191,7 +191,7 @@ Proof.
          assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
          exists p. split; set_solver.
          assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
-         set (hm := com e' μ μ' {[ q ]} inter l h1 h2).
+         set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
          destruct (mustx_terminate_unoutcome _ _ hm).
          +++ contradict nh.
              eapply outcome_preserved_by_lts_non_blocking_action_converse; eassumption.
@@ -202,7 +202,7 @@ Proof.
          assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
          exists p. split; set_solver.
          assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
-         set (hm := com e' μ μ' {[ q ]} inter l h1 h2).
+         set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
          destruct (mustx_terminate_unoutcome _ _ hm).
          +++ contradiction.
          +++ eapply cnv_nil. eapply H6. set_solver.
@@ -210,19 +210,19 @@ Qed.
 
 Lemma must_mu_either_outcome_cnv `{
   @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps e e' :
-  mustx ps e 
+  ps t t' :
+  mustx ps t
     -> forall μ μ' p, p ∈ ps 
       -> parallel_inter μ μ'
-        -> e ⟶[μ'] e' 
-          -> outcome e \/ outcome e' (* ajout par rapport à Input/Output *) \/ p ⇓ [μ].
+        -> t ⟶[μ'] t' 
+          -> outcome t \/ outcome t' (* ajout par rapport à Input/Output *) \/ p ⇓ [μ].
 Proof.
   intros hmx μ μ' p mem inter l.
-  destruct (decide (outcome e)); destruct (decide (outcome e')).
+  destruct (decide (outcome t)); destruct (decide (outcome t')).
   + left; eauto.
   + left; eauto.
   + right; eauto.
@@ -232,13 +232,13 @@ Qed.
 (* to rework , why ?*)
 Lemma mx_sum `{
   gLtsP : gLts P A, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps1 ps2 e : mustx ps1 e 
-    -> mustx ps2 e 
-      -> mustx (ps1 ∪ ps2) e.
+  ps1 ps2 t : mustx ps1 t 
+    -> mustx ps2 t
+      -> mustx (ps1 ∪ ps2) t.
 Proof.
   intros hmx1 hmx2. revert ps2 hmx2.
   dependent induction hmx1. eauto with mdb.
@@ -275,23 +275,23 @@ Proof.
       ++ assert (Y' = ∅) by set_solver.
          assert (Z' = ps') by set_solver. subst.
          inversion hmx2; subst. set_solver.
-         eapply pt0. intros t mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+         eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
     + destruct Z_' using set_ind_L.
       ++ assert (Y' = ps') by set_solver.
-         assert (mustx ps e) by eauto with mdb.
+         assert (mustx ps t) by eauto with mdb.
          inversion H8; subst. set_solver.
-         eapply pt0. intros t mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+         eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
       ++ subst.
          replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
          eapply H1.
-         intros t mem. apply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+         intros t' mem. apply lts_tau_set_from_pset_ispec. set_solver. set_solver.
          inversion hmx2; subst. now contradiction nh.
          eapply pt0.
-         intros t mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
-  - intros e' l. eapply H2; eauto with mdb.
+         intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+  - intros t' l. eapply H2; eauto with mdb.
     inversion hmx2; subst; eauto with mdb. contradiction.
-  - intros e' μ μ' ps' duo l ps'_spec neq_nil.
-    destruct (outcome_decidable e'); eauto with mdb.
+  - intros t' μ μ' ps' duo l ps'_spec neq_nil.
+    destruct (outcome_decidable t'); eauto with mdb.
     assert (HAps : forall p, p ∈ ps -> p ⇓ [μ]).
     intros p0 mem0.
     eapply cnv_act. edestruct (mustx_terminate_unoutcome ps); eauto with mdb.
@@ -328,36 +328,36 @@ Proof.
          eapply elem_of_union in mem.
          destruct mem; eapply (wt_s_set_from_pset_ispec ps [μ] HAps) in l'; set_solver.
       ++ inversion hmx2; subst. now contradict nh.
-         eapply com0. eassumption. eassumption. intros t mem.
+         eapply com0. eassumption. eassumption. intros t'' mem.
          eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
          set_solver. set_solver.
     + destruct Z0 using set_ind_L.
       ++ inversion hmx2; subst. now contradict nh.
-         eapply com. eassumption. eassumption. intros t mem.
+         eapply com. eassumption. eassumption. intros t'' mem.
          eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
          set_solver. set_solver.
       ++ replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
          eapply H3; eauto with mdb.
-         intros t mem.
+         intros t'' mem.
          eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
          set_solver. set_solver.
          inversion hmx2; subst. now contradict nh.
          eapply com0. eassumption. eassumption.
-         intros t mem.
+         intros t'' mem.
          eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
          set_solver. set_solver.
 Qed.
 
 Lemma mx_forall `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome} 
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome} 
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  ps e :
+  ps t :
   ps ≠ ∅ 
-    -> (forall p, p ∈ ps -> mustx {[p]} e) 
-      -> mustx ps e.
+    -> (forall p, p ∈ ps -> mustx {[p]} t) 
+      -> mustx ps t.
 Proof.
   intros neq_nil hm.
   induction ps using set_ind_L.
@@ -370,9 +370,9 @@ Qed.
 
 Lemma wt_nil_mx `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} :
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
 
   forall p1 p2 e, mustx {[ p1 ]} e 
     -> p1 ⟹ p2 -> mustx {[ p2 ]} e.
@@ -388,13 +388,13 @@ Qed.
 
 Lemma wt_mu_mx `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  p1 p2 e e' μ μ':
-  parallel_inter μ μ' -> ¬ outcome e -> mustx {[ p1 ]} e 
-    -> e ⟶[μ'] e' -> p1 ⟹{μ} p2 -> mustx {[p2]} e'.
+  p1 p2 t t' μ μ':
+  parallel_inter μ μ' -> ¬ outcome t -> mustx {[ p1 ]} t 
+    -> t ⟶[μ'] t' -> p1 ⟹{μ} p2 -> mustx {[p2]} t'.
 Proof.
   intros duo nh hmx l w.
   inversion hmx; subst.
@@ -404,11 +404,11 @@ Qed.
 
 Lemma must_set_if_must `{
   gLtsP : gLts P A, !FiniteImagegLts P A, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (p : P) (e : E) : p must_pass e -> mustx {[ p ]} e.
+  (p : P) (t : T) : p must_pass t -> mustx {[ p ]} t.
 Proof.
   intro hm. dependent induction hm.
   - eauto with mdb.
@@ -431,14 +431,14 @@ Qed.
 
 Lemma must_if_must_set_helper `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (ps : gset P) (e : E) : 
-  mustx ps e 
+  (ps : gset P) (t : T) : 
+  mustx ps t 
     -> forall p, p ∈ ps 
-      -> p must_pass e.
+      -> p must_pass t.
 Proof.
   intro hm. dependent induction hm.
   - eauto with mdb.
@@ -469,38 +469,38 @@ Qed.
 
 Lemma must_if_must_set `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (p : P) (e : E) : 
-  mustx {[ p ]} e 
-    -> p must_pass e.
+  (p : P) (t : T) : 
+  mustx {[ p ]} t 
+    -> p must_pass t.
 Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
 
 Lemma must_set_iff_must `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (p : P) (e : E) : 
-  p must_pass e <-> mustx {[ p ]} e.
+  (p : P) (t : T) : 
+  p must_pass t <-> mustx {[ p ]} t.
 Proof. split; [eapply must_set_if_must | eapply must_if_must_set]. Qed.
 
 Lemma must_set_for_all `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (X : gset P) (e : E) : 
+  (X : gset P) (t : T) : 
   X ≠ ∅ 
-    -> (forall p, p ∈ X -> p must_pass e) 
-      -> mustx X e.
+    -> (forall p, p ∈ X -> p must_pass t) 
+      -> mustx X t.
 Proof.
   intros xneq_nil hm.
-  destruct (outcome_decidable e).
+  destruct (outcome_decidable t).
   - now eapply mx_now.
   - eapply mx_step.
     + eassumption.
@@ -521,12 +521,12 @@ Qed.
 
 Lemma must_set_iff_must_for_all `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
 
-  (X : gset P) (e : E) : 
-  X ≠ ∅ -> (forall p, p ∈ X -> p must_pass e) <-> mustx X e.
+  (X : gset P) (t : T) : 
+  X ≠ ∅ -> (forall p, p ∈ X -> p must_pass t) <-> mustx X t.
 Proof.
   intros.
   split. now eapply must_set_for_all.
@@ -536,29 +536,42 @@ Qed.
 
 (* *************************************************************)
 
-Definition bhv_pre_cond1__x `{FiniteImagegLts P A, FiniteImagegLts Q A} (ps : gset P) (q : Q) :=
-  forall s, (forall p, p ∈ ps -> p ⇓ s) -> q ⇓ s.
+Definition bhv_pre_cond1__x `{
+  @FiniteImagegLts P A H gLtsP,
+  @FiniteImagegLts Q A H gLtsQ,
+  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT,
+  @Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  (ps : gset P) (q : Q) :=
+  forall s, (forall p, p ∈ ps -> p ⇓ᶜᵒ s) -> q ⇓ᶜᵒ s.
 
 Notation "ps ≼ₓ1 q" := (bhv_pre_cond1__x ps q) (at level 70).
 
 Definition bhv_pre_cond2__x `{
   @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ,
+  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT,
+  @Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
   (ps : gset P) (q : Q) :=
-  forall s q',
-    q ⟹[s] q' -> q' ↛ ->
-    (forall p, p ∈ ps -> p ⇓ s) ->
-    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
+  forall s s' q',
+    q ⟹[s'] q' -> q' ↛ ->
+    (forall p, p ∈ ps -> p ⇓ᶜᵒ s) ->
+    exists p, p ∈ ps 
+    /\ exists p' s'', Forall2 parallel_inter s'' s /\ p ⟹[s''] p' /\ p' ↛ 
+    /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
 
 Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 
 #[global] Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
 
-Notation "ps ≼ₓ q" := (bhv_pre_cond1__x ps q /\ bhv_pre_cond2__x ps q) (at level 70).
+Notation "ps ≼ₓ q" := (ps ≼ₓ1 q /\ ps ≼ₓ2 q) (at level 70).
 
-Lemma alt_set_singleton_iff `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+(* Lemma alt_set_singleton_iff `{
+  @FiniteImagegLts P A H gLtsP,
+  PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  @FiniteImagegLts Q A H gLtsQ,
+  PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
+  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT,
+  @Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
   (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
@@ -569,15 +582,17 @@ Proof.
     + intros s mem. eapply h1. set_solver.
     + intros s q' w st hcnv. edestruct h2 ; set_solver.
 Qed.
-
+ *)
 Lemma bhvleqone_preserved_by_tau `{
-  FiniteImagegLts P A, 
-  FiniteImagegLts Q A} 
+  @FiniteImagegLts P A H gLtsP,
+  @FiniteImagegLts Q A H gLtsQ,
+  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT,
+  @Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT} 
   (ps : gset P) (q q' : Q) :
   ps ≼ₓ1 q -> q ⟶ q' -> ps ≼ₓ1 q'.
-Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
+Proof. intros halt1 l s mem. eapply co_cnv_preserved_by_lts_tau; eauto. Qed.
 
-Lemma bhvx_preserved_by_tau `{
+(* Lemma bhvx_preserved_by_tau `{
   @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
@@ -587,9 +602,9 @@ Proof.
   - intros s mem. eapply cnv_preserved_by_lts_tau; eauto.
   - intros s q'' w st hcnv.
     destruct (halt2 s q'') as (p' & mem & p'' & hw & hst) (* & sub0) *); eauto with mdb.
-Qed.
+Qed. *)
 
-Lemma bhvleqone_mu `{
+(* Lemma bhvleqone_mu `{
   @FiniteImagegLts P A H gLtsP, 
   @FiniteImagegLts Q A H gLtsQ}
   (ps0 ps1 : gset P) μ (q q' : Q) (htp : forall p, p ∈ ps0 -> terminate p) :
@@ -843,4 +858,4 @@ Proof.
   eapply Lift.must_iff_must_fw in hm.
   eapply Lift.must_iff_must_fw.
   now eapply (soundness_fw (p ▷ ∅) (q ▷ ∅)).
-Qed.
+Qed. *)

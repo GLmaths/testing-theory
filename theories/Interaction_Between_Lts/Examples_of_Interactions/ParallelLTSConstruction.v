@@ -29,7 +29,7 @@ From Must Require Import gLts InteractionBetweenLts.
 
 (**************************************** Parallel LTS of two LTS *************************************)
 
-Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ2 μ1 . (* \/ dual μ2 μ1. *)
+Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ1 μ2 .
 
 #[global] Instance parallel_inter_sym `{ExtAction A} : Symmetric parallel_inter.
 Proof. intros μ1 μ2. intro Hyp. eapply duo_sym. assumption. Defined.

@@ -59,8 +59,7 @@ Defined.
 #[global] Program Instance gLabel_nb
   `{Label A} : ExtAction (ExtAct A) :=
    {| non_blocking η := non_blocking_output η ;
-      dual μ1 μ2 := ext_act_match μ1 μ2 ;
-      gLts.co ɣ := InputOutputActions.co ɣ |}.
+      dual μ1 μ2 := ext_act_match μ1 μ2 |}.
 Next Obligation.
  intros. simpl. destruct a.
  * right. intro Hyp. destruct Hyp as (a' & eq). inversion eq.
@@ -68,24 +67,18 @@ Next Obligation.
 Defined.
 Next Obligation.
  intros ? ? ? ? nb dual; simpl in *.
- destruct nb as (a & eq). subst. eapply simplify_match_output in dual.
+ destruct nb as (a & eq). subst. symmetry in dual. eapply simplify_match_output in dual.
  subst. intro imp. inversion imp. inversion H0.
 Defined.
-Next Obligation.
- intros A H η ɣ nb dual; simpl in *.
- destruct nb as (a & eq); subst; simpl in *.
- destruct ɣ as [ (* Input *) a' | (* Output *) a' ].
- + subst; eauto.
- + inversion dual.
-Defined.
 Next Obligation. 
-  intros. exists (co η). unfold ext_act_match.
-  destruct η; simpl in *; eauto. 
+  intros. destruct μ.
+  + exists (ActOut a). simpl; eauto.
+  + exists (ActIn a). simpl; eauto.
 Defined.
 Next Obligation.
-  intros A ? ? ? ? (a & eq) Hyp Hyp'; subst.
-  exists a. eapply simplify_match_output in Hyp; subst.
-  symmetry in Hyp'. eapply simplify_match_input in Hyp'; eauto.
+  simpl. intros A ? η β (a & eq) duo ; subst.
+  symmetry in duo. eapply simplify_match_output in duo; subst.
+  unfold gLabel_nb_obligation_3. simpl. eauto.
 Defined.
 
 
@@ -93,20 +86,17 @@ Defined.
   `{Label A} :
         gLts.ExtAction (ExtAct A) :=
    {| non_blocking η := all_blocking_action η ;
-      dual μ1 μ2 := ext_act_match μ1 μ2 ;
-      gLts.co ɣ := InputOutputActions.co ɣ |}.
+      dual μ1 μ2 := ext_act_match μ1 μ2
+      |}.
 Next Obligation.
   intros ? ? ? ? nb ; simpl in *. inversion nb.
 Defined.
-Next Obligation.
- intros ? ? ? ? nb dual; simpl in *. inversion nb.
+Next Obligation. 
+  intros. exists (co_act μ). unfold ext_act_match.
+  destruct μ; simpl in *; eauto. 
 Defined.
 Next Obligation. 
-  intros. exists (co η). unfold ext_act_match.
-  destruct η; simpl in *; eauto. 
-Defined.
-Next Obligation. 
-  intros ? ? ? ? ? nb; simpl in *. inversion nb.
+  intros ? ? ? ? nb; simpl in *. inversion nb.
 Defined.
 
 #[global] Program Instance ggLts {A : Type}
@@ -233,7 +223,7 @@ Qed.
   (ggLts gLabel_nb) (ggLtsEq gLabel_nb) ggLtsOba_nb.
 Next Obligation.
   intros ? ? ? ? ? LtsOBAP ? ? ? ? ? ? nb dual l1 l2 ;simpl in *.
-  destruct nb as (a & eq); subst.
+  destruct nb as (a & eq); subst. symmetry in dual.
   eapply simplify_match_output in dual; subst.
   eapply OldTransitionSystems.lts_oba_fb_feedback; eauto.
 Qed.
@@ -246,12 +236,13 @@ Next Obligation.
   destruct (decide (non_blocking_output η)) as [nb | not_nb].
   + destruct nb as (a & eq); subst.
     destruct (OldTransitionSystems.lts_oba_fw_forward p a) as (p' & l1 & l2).
-    exists p'. intros Hyp duo. eapply simplify_match_output in duo; subst. split;eauto.
+    exists p'. intros Hyp duo. symmetry in duo.
+    eapply simplify_match_output in duo; subst. split;eauto.
   + exists p. intro. contradiction.
 Qed.
 Next Obligation.
   intros ? ? ? ? ? ? ? p p' p'' η μ nb dual l1 l2;simpl in *.
-  destruct nb as (a & eq); subst.
+  destruct nb as (a & eq); subst. symmetry in dual.
   eapply simplify_match_output in dual; subst.
   eapply OldTransitionSystems.lts_oba_fw_feedback in l1; eauto.
 Qed.
@@ -337,18 +328,18 @@ Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ξ p;simpl in *.
   destruct (decide (non_blocking ξ)) as [ nb (* Input_case *) | not_nb (* Ouput_case *)].
-  + exact {[ co ξ ]}.
+  + exact {[ co_act ξ ]}.
   + exact empty.
 Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? m mem l inter;simpl in *.
   unfold Inter_FW_IO_obligation_4.
   destruct inter as (duo & nb). rewrite decide_True; eauto.
-  assert (μ = co ξ).
+  assert (μ = co_act ξ).
   { eapply ext_m in duo.
     destruct ξ as [a | a].
-    + eapply simplify_match_input in duo; subst; eauto.
-    + eapply simplify_match_output in duo; subst; eauto. }
+    + symmetry in duo. eapply simplify_match_input in duo; subst; eauto.
+    + symmetry in duo. eapply simplify_match_output in duo; subst; eauto. }
   subst; set_solver.
 Defined.
 Next Obligation.
@@ -358,7 +349,7 @@ Qed.
 
 #[global] Program Instance Inter_parallel_IO {A : Type} (H : ExtAction (ExtAct A))
   `{LtsP : @Lts P A L} `{LtsQ : @Lts Q A L} 
-    {ext_m : forall μ1 μ2, parallel_inter μ2 μ1 -> ext_act_match μ1 μ2}: 
+    {ext_m : forall μ1 μ2, parallel_inter μ1 μ2 -> ext_act_match μ1 μ2}: 
     @Prop_of_Inter P Q (ExtAct A) parallel_inter H (@ggLts A H P L LtsP) (@ggLts A H Q L LtsQ) :=
     {| lts_essential_actions_left p := set_map ActOut (lts_outputs p) ;
        lts_essential_actions_right q := set_map ActOut (lts_outputs q)|}.
@@ -385,11 +376,12 @@ Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? q ? q' ? ? inter;simpl in *.
   destruct μ1 as [ (*Input*) a | (*Output*) a].
-  + right. symmetry in inter. eapply ext_m in inter. eapply simplify_match_input in inter. subst.
+  + right. eapply ext_m in inter.
+    eapply simplify_match_input in inter. subst.
     eapply elem_of_list_to_set.
     eapply elem_of_list_fmap. exists a. split; eauto. 
     eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
-  + left. symmetry in inter. eapply ext_m in inter. eapply simplify_match_output in inter. subst.
+  + left. eapply ext_m in inter. eapply simplify_match_output in inter. subst.
     eapply elem_of_list_to_set.
     eapply elem_of_list_fmap. exists a. split; eauto. 
     eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
@@ -406,7 +398,8 @@ Next Obligation.
   eapply elem_of_list_to_set in mem.
   eapply elem_of_list_fmap in mem.
   destruct mem as ( a & eq & mem ); subst.
-  eapply ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
+  eapply ext_m in inter. symmetry in inter.
+  eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ξ q;simpl in *.
@@ -420,13 +413,14 @@ Next Obligation.
   eapply elem_of_list_to_set in mem.
   eapply elem_of_list_fmap in mem.
   destruct mem as ( a & eq & mem ); subst. symmetry in inter.
-  eapply ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
+  eapply ext_m in inter. symmetry in inter.
+  eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 
 
 #[global] Program Instance Inter_FW_parallel_IO {A : Type} (H : ExtAction (ExtAct A))
   `{LtsP : @Lts P A L} `{LtsE : @Lts E A L}
-    {ext_m : forall μ1 μ2, parallel_inter μ2 μ1 -> ext_act_match μ1 μ2}
+    {ext_m : forall μ1 μ2, parallel_inter μ1 μ2 -> ext_act_match μ1 μ2}
     : @Prop_of_Inter (P * mb (ExtAct A)) E (ExtAct A) parallel_inter
       H (@FW_gLts P (ExtAct A) H (@ggLts A H P L LtsP) (@Inter_FW_IO A H P L LtsP ext_m)) (@ggLts A H E L LtsE):=
     {| lts_essential_actions_left p := set_map ActOut (lts_outputs p.1) ∪ (dom (mb_without_not_nb p.2)); 
@@ -474,7 +468,7 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? (p1 , m1) ? (p'1, m'1) ? ? ? Tr ? inter;simpl in *.
-  eapply ext_m in inter. destruct μ2 as [ (*Input*) a | (*Output*) a].
+  symmetry in inter. eapply ext_m in inter. destruct μ2 as [ (*Input*) a | (*Output*) a].
   - eapply simplify_match_input in inter. subst. left.
     inversion Tr; subst.
     + eapply elem_of_union. left. eapply elem_of_list_to_set.
@@ -485,7 +479,7 @@ Next Obligation.
       * eapply lts_mb_nb_with_nb_spec2; eauto.
         eapply non_blocking_action_in_ms in l; eauto. set_solver.
       * eapply blocking_action_in_ms in l as (eq & duo & nb);eauto.
-        eapply ext_m in duo. symmetry in duo. eapply simplify_match_output in duo. subst.
+        eapply ext_m in duo. eapply simplify_match_output in duo. subst.
         rewrite duo in Tr, nb. admit.
   - eapply simplify_match_output in inter. subst. right.
     eapply elem_of_list_to_set.
@@ -503,7 +497,7 @@ Next Obligation.
   - eapply elem_of_list_to_set in mem.
     eapply elem_of_list_fmap in mem. destruct mem as (? & eq & ?).
     inversion eq.
-  - eapply ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
+  - symmetry in inter. eapply ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ξ e;simpl in *.
@@ -515,11 +509,11 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? p q ? μ (p1 , m1) mem ? inter;simpl in *.
   unfold Inter_FW_parallel_IO_obligation_6. symmetry in inter.
   destruct ξ as [ (*Input*) a | (*Output*) a].
-  - eapply ext_m in inter. eapply simplify_match_input in inter. subst.
+  - symmetry in inter. eapply ext_m in inter. eapply simplify_match_input in inter. subst.
     eapply elem_of_union in mem. destruct mem as [case1 | case2].
     + set_solver.
     + set_solver.
-  - eapply ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
+  - symmetry in inter. eapply ext_m in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 
 Lemma com_only_with_output `{A : Type} (η : ExtAct A) η': 

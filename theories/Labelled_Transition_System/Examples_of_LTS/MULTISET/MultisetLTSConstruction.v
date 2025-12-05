@@ -105,12 +105,10 @@ Proof.
       ++ left. eapply lts_multiset_minus; eauto.
       ++ right. intro. eapply non_blocking_action_in_ms in nb; eauto.
     - destruct (decide (∃ η', non_blocking η' /\ dual μ η')) as [exists_dual | not_exists_dual].
-      assert ({ η' | non_blocking η' ∧ dual η' μ}) as Hyp'.
-      exact (choice (fun η' => non_blocking η' ∧ dual μ η') exists_dual).
-      destruct Hyp' as (η' & nb & duo).
-      ++ assert (η' = co μ) as eq. eapply unique_nb; eauto. subst.
-         destruct (decide (({[+ (co μ) +]} ⊎ m = m') )) as [eq | not_eq].
-         +++ subst. left. eauto with mdb. 
+      ++ destruct (decide (({[+ (co μ) +]} ⊎ m = m') )) as [eq | not_eq].
+         +++ left. destruct exists_dual as (η' & nb & duo).
+             assert (η' = co μ) as eq'.
+             { eapply unique_nb; eauto. } subst. eauto with mdb. 
          +++ right. intro. eapply blocking_action_in_ms in not_nb as (eq'' & Hyp) ; eauto.
       ++ right. intro HypTr. 
          eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto; subst.
@@ -121,7 +119,7 @@ Definition lts_multiset_refuses `{ExtAction A} (m : mb A) (α : Act A): Prop :=
 match α with
     | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
                                                                         else True
-                                               else forall η', dual η' η -> blocking η'
+                                               else forall η', dual η η' -> blocking η'
     | τ => True
 end.
 
@@ -132,7 +130,7 @@ Proof.
     - rename μ into η. destruct (decide (η ∈ m)) as [in_mem | not_in_mem].
       ++ right. intro. eauto.
       ++ left. eauto. 
-    - destruct (decide (∃ η', non_blocking η' /\ dual η' μ)) as [exists_dual | not_exists_dual].
+    - destruct (decide (∃ η', non_blocking η' /\ dual μ η')) as [exists_dual | not_exists_dual].
       ++ right. intro imp. destruct exists_dual as (η & nb & duo). destruct (imp η); eauto.
       ++ left. unfold blocking. eauto.
   + left. simpl. eauto.
@@ -153,7 +151,7 @@ Next Obligation.
       ++ assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq. multiset_solver.
          exists (m ∖ {[+ η +]}). rewrite eq at 1. eapply lts_multiset_minus; eauto.
       ++ exfalso. eauto.
-    + destruct (decide (∃ η' : A, non_blocking η' ∧ dual η' μ)) as [exist | not_exists ].
+    + destruct (decide (∃ η' : A, non_blocking η' ∧ dual μ η')) as [exist | not_exists ].
       ++ exists ({[+ co μ +]} ⊎ m). destruct exist as (η & nb & duo).
          eapply unique_nb in nb as eq; eauto;subst.
          constructor; eauto.  
@@ -333,27 +331,26 @@ Proof.
     rewrite decide_True. reflexivity. eauto.
 Qed.
 
-Lemma lts_mb_nb_spec2 `{H : ExtAction A} μ m : 
-      blocking μ ->  
-        mb_without_not_nb (({[+ μ +]} : gmultiset A) ⊎ m : gmultiset A) = (mb_without_not_nb m : gmultiset A).
+Lemma lts_mb_nb_spec2 `{H : ExtAction A} β m : 
+      blocking β ->  
+        mb_without_not_nb (({[+ β +]} : gmultiset A) ⊎ m : gmultiset A) = (mb_without_not_nb m : gmultiset A).
 Proof.
-  revert μ.
+  revert β.
   induction m using gmultiset_ind.
-  + intros μ nb.
-    assert (eq : (({[+ μ +]} : gmultiset A) ⊎ ∅ : gmultiset A) = ({[+ μ +]} : gmultiset A)).
-    eapply gmultiset_disj_union_right_id. unfold mb in eq.
-    unfold mb.
-    rewrite eq.
+  + intros β b.
+    assert (eq : (({[+ β +]} : gmultiset A) ⊎ ∅ : gmultiset A) = ({[+ β +]} : gmultiset A)).
+    { eapply gmultiset_disj_union_right_id. }
+    unfold mb in eq. unfold mb. rewrite eq.
     unfold mb_without_not_nb. unfold mb.
     erewrite gmultiset_elements_singleton. simpl.
     rewrite decide_False. reflexivity. eauto.
-  + intros μ nb.
+  + intros β nb.
     unfold mb_without_not_nb.
-    assert (elements ({[+ μ +]} ⊎ ({[+ x +]} ⊎ m)) ≡ₚ 
-          elements ({[+ μ +]} : gmultiset A) ++ elements ({[+ x +]} ⊎ m)) as eq.
+    assert (elements ({[+ β +]} ⊎ ({[+ x +]} ⊎ m)) ≡ₚ 
+          elements ({[+ β +]} : gmultiset A) ++ elements ({[+ x +]} ⊎ m)) as eq.
     eapply gmultiset_elements_disj_union.
-    rewrite (lts_mb_nb_on_list_perm (elements ({[+ μ +]} ⊎ ({[+ x +]} ⊎ m))) 
-    (elements ({[+ μ +]} : gmultiset A) ++ elements ({[+ x +]} ⊎ m))); eauto.
+    rewrite (lts_mb_nb_on_list_perm (elements ({[+ β +]} ⊎ ({[+ x +]} ⊎ m))) 
+    (elements ({[+ β +]} : gmultiset A) ++ elements ({[+ x +]} ⊎ m))); eauto.
     rewrite  gmultiset_elements_singleton. simpl.
     rewrite decide_False. reflexivity. eauto.
 Qed.

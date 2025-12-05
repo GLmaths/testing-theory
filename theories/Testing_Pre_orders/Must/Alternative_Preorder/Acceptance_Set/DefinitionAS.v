@@ -35,7 +35,7 @@ From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransit
 (********************************** Infinite Branching Lts to Finite Branching Lts **********************)
 Class AbsAction `{H : ExtAction A} {E FinA : Type} (LtsE : @gLts E A H) (Φ : A → FinA) :=
   MkAbsAction {
-    abstraction_test_spec μ μ' e : blocking μ -> blocking μ' -> (Φ μ) = (Φ μ') -> ¬ e ↛[ μ ] -> ¬ e ↛[ μ' ]
+    abstraction_test_spec β β' e : blocking β -> blocking β' -> (Φ β) = (Φ β') -> ¬ e ↛[ β ] -> ¬ e ↛[ β' ]
   }.
 
 
@@ -45,12 +45,12 @@ Class PreExtAction `{H : ExtAction A} {P FinA: Type} `{Countable PreAct}
   MkPreExtAction {
       pre_co_actions_of_fin : P -> FinA -> Prop ;
 
-      preactions_of_fin_test_spec1 (μ : A) (p : P) : μ ∈ co_actions_of p -> (Φ μ) ∈ (pre_co_actions_of_fin p);
-      preactions_of_fin_test_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p)
-            -> ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Φ μ');
+      preactions_of_fin_test_spec1 (β : A) (p : P) : β ∈ co_actions_of p -> (Φ β) ∈ (pre_co_actions_of_fin p);
+      preactions_of_fin_test_spec2 (pre_β : FinA) (p : P) : pre_β ∈ (pre_co_actions_of_fin p)
+            -> ∃ β', β' ∈ co_actions_of p /\ pre_β = (Φ β');
 
       pre_co_actions_of : P -> gset PreAct;
-      preactions_of_spec (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) <-> (𝝳 pre_μ) ∈ (pre_co_actions_of p);
+      preactions_of_spec (pre_β : FinA) (p : P) : pre_β ∈ (pre_co_actions_of_fin p) <-> (𝝳 pre_β) ∈ (pre_co_actions_of p);
   }.
 
 From Must Require Import ParallelLTSConstruction.
@@ -66,16 +66,6 @@ Definition co_cnv `{gLtsT : @gLts T A H}
 
 Notation "p ⇓ᶜᵒ s" := (co_cnv p s) (at level 30, format "p ⇓ᶜᵒ s").
 
-Lemma cnv_if_co_cnv
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
-   (p : P) (q : Q) : (forall s , p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s) -> (forall s', p ⇓ s' -> q ⇓ s').
-Proof.
-  intros Hyp s' conv.
-  assert (Forall2 parallel_inter s' (fmap co s')).
-  { admit. }
-Admitted.
-
 Lemma co_cnv_if_cnv
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
   `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
@@ -83,16 +73,6 @@ Lemma co_cnv_if_cnv
 Proof.
   intros Hyp s conv s' inter_trace.
   eapply Hyp. eapply conv. exact inter_trace.
-Qed.
-
-Lemma cnv_iff_co_cnv
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
-  (p : P) (q : Q) : (forall s', p ⇓ s' -> q ⇓ s') <-> (forall s , p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s).
-Proof.
-  split.
-  - eapply co_cnv_if_cnv.
-  - eapply cnv_if_co_cnv.
 Qed.
 
 Lemma co_cnv_nil `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
@@ -115,13 +95,29 @@ Proof.
   eapply H2 in wt; eauto.
 Qed.
 
+Lemma parallel_inter_co_trace `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} s :
+  Forall2 parallel_inter (list_fmap A A (λ x : A, co x) s) s.
+Proof.
+  dependent induction s.
+  + simpl. constructor.
+  + simpl in *. constructor.
+    * destruct (exists_dual a) as (x & duo).
+      symmetry. eauto.
+    * eauto.
+Qed.
+
 Lemma co_cnv_terminate `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
   ∀ (p : P) (s : trace A), p ⇓ᶜᵒ s → p ⤓.
 Proof.
   intros p s co_conv. eapply cnv_terminate.
-  eapply co_conv. instantiate (1 := (fmap co s)).
-  admit.
-Admitted.
+  eapply co_conv. instantiate (1 := (fmap (fun x => co x) s)).
+  { revert co_conv. dependent induction s.
+    + simpl. constructor.
+    + simpl in *. constructor.
+      * destruct (exists_dual a) as (x & duo).
+        unfold parallel_inter. symmetry. eauto.
+      * eapply (@parallel_inter_co_trace P T). eauto. }
+Qed.
 
 Lemma co_cnv_preserved_by_lts_tau `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
      ∀ (s : trace A) (p : P),
@@ -131,23 +127,17 @@ Proof.
   eapply cnv_preserved_by_lts_tau; eauto.
 Qed.
 
-Lemma parallel_inter_and_dual
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  (s1 s2 : list A)  :
-    Forall2 parallel_inter s1 s2 <-> Forall2 dual s2 s1.
-Proof.
-Admitted.
-
 Definition bhv_pre_cond1 `{@gLts P A H, @gLts Q A H}
   `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  (p : P) (q : Q) := forall s, p ⇓ᶜᵒ s -> p ⇓ᶜᵒ s.
+  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  (p : P) (q : Q) := forall s, p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s.
 
 Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
 Definition bhv_pre_cond2 `{
   gLtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   gLtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT
+  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT,@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT
   }
   (p : P) (q : Q) :=
   forall (s : trace A) (s' : trace A) (q' : Q),
@@ -161,7 +151,7 @@ Definition bhv_pre (* `{PreA_countable : Countable PreA} *)
   `{
   gLtsP : @gLts P A H, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   gLtsQ : @gLts Q A H, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT
+  @Prop_of_Inter P T A parallel_inter H gLtsP gLtsT, @Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT
   }
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.

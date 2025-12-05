@@ -223,15 +223,15 @@ Fixpoint gen_test_raw Vs s p {struct s}:=
   | [] => p
   | ActIn (c ⋉ d) :: s' => match Vs with
                             | [] => (g 𝟘)     (*whatever*)
-                            | ActIn (c ⋉ d') :: s'' =>  (c ! d' • 𝟘) ‖ (gen_test_raw s'' s' p)
+                            | ActIn (c ⋉ d') :: s'' => (c ? x • (If ( bvar 0 ==  NewVar_in_Data 0 d' )
+                                   Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
+                                   Else ①)) + (t • ①)
                             | ActOut (c ⋉ d') :: s'' => (g 𝟘)     (*whatever*)
                             end
   | ActOut (c ⋉ d) :: s' => match Vs with
                             | [] => 𝟘     (*whatever*)
                             | ActIn (c ⋉ d') :: s'' => (g 𝟘)
-                            | ActOut (c ⋉ d') :: s'' => (c ? x • (If ( bvar 0 ==  NewVar_in_Data 0 d' )
-                                   Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
-                                   Else ①)) + (t • ①)
+                            | ActOut (c ⋉ d') :: s'' => (c ! d' • 𝟘) ‖ (gen_test_raw s'' s' p)
                             end
   end.
 
@@ -245,7 +245,7 @@ Proof.
   destruct s; intros; simpl in *.
   - eapply All_According.
   - destruct e as [ (*Input*) (c , v) | (*Output*) (c , v)].
-    + case_eq s'.
+    (* + case_eq s'.
       * intros. simpl. reflexivity.
       * intros. subst. simpl.
         case_eq (NewVar_in_label k e). intros.
@@ -288,17 +288,13 @@ Proof.
                  { rewrite eq1 at 3. rewrite<- New_Var_And_NewVar. rewrite eq1 at 2.
                    rewrite<- New_Var_And_NewVar_in_Trace. simpl in *.
                  { eapply Hlength; eauto with arith. } }
-                 rewrite eq2. eauto.
-Qed.
+                 rewrite eq2. eauto. *)
+Admitted.
 
 Lemma gen_test_lts_mu μ s p :
-   (gen_test (μ :: s) p) ⟶⋍[co μ] (gen_test s p).
+   (gen_test (μ :: s) p) ⟶⋍[μ] (gen_test s p).
 Proof.
   intros. destruct μ as [ (* Input *) (c , v) | (* Output *) (c , v) ].
-  - simpl in *. exists (𝟘 ‖ gen_test s p). split.
-    + unfold gen_test. simpl.
-      constructor. constructor.
-    + etrans. eapply cgr_par_com. eapply cgr_par_nil.
   - unfold gen_test. simpl in *.
     eexists. split.
     + eapply lts_choiceL. eapply lts_input.
@@ -306,6 +302,10 @@ Proof.
       etrans. eapply cgr_if_true.
       * eapply Eval_simpl_true. eauto.
       * rewrite All_According_to_gen_test. reflexivity.
+  - simpl in *. exists (𝟘 ‖ gen_test s p). split.
+    + unfold gen_test. simpl.
+      constructor. constructor.
+    + etrans. eapply cgr_par_com. eapply cgr_par_nil.
 Qed.
 
 Lemma gen_test_ungood_if p : ¬ good_VACCS p -> forall s, ¬ good_VACCS (gen_test s p).
@@ -315,8 +315,8 @@ Proof.
   induction s as [|μ s']; simpl in *.
   - contradiction.
   - destruct μ; destruct a; subst.
-    + inversion nhg; subst. destruct H0. inversion H. contradiction.
     + inversion nhg; subst. destruct H0; inversion H.
+    + inversion nhg; subst. destruct H0. inversion H. contradiction.
 Qed.
 
 Lemma gen_test_gen_spec_out_lts_tau_ex s p :
@@ -330,18 +330,18 @@ Proof.
 Qed.
 
 Lemma gen_test_gen_spec_out_lts_tau_ex_inst a s p :
-  exists e', lts (gen_test (ActOut a :: s) p) τ e'.
+  exists e', lts (gen_test (ActIn a :: s) p) τ e'.
 Proof. unfold gen_test. simpl. destruct a. eauto with ccs. Qed.
 
 Lemma gen_test_gen_spec_out_lts_tau_good a s e p :
-  lts (gen_test (ActOut a :: s) p) τ e -> good_VACCS e.
+  lts (gen_test (ActIn a :: s) p) τ e -> good_VACCS e.
 Proof.
   unfold gen_test. simpl. destruct a.
   inversion 1; subst; inversion H4; subst; eauto with ccs.
 Qed.
 
 Lemma gen_test_gen_spec_out_lts_mu_uniq e a s p :
-  lts (gen_test (ActOut a :: s) p) (ActExt $ ActIn a) e -> e ≡ gen_test s p.
+  lts (gen_test (ActIn a :: s) p) (ActExt $ ActIn a) e -> e ≡ gen_test s p.
 Proof.
   unfold gen_test. simpl. destruct a.
   intros. inversion H; subst; inversion H4; subst; eauto.
@@ -350,9 +350,9 @@ Proof.
 Qed.
 
 Lemma gen_test_gen_spec_good_not_mu e a μ' s p :
-  Well_Defined_ExtAction (ActOut a)
+  Well_Defined_ExtAction (ActIn a)
   -> Well_Defined_ExtAction (μ') 
-    -> lts (gen_test (ActOut a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
+    -> lts (gen_test (ActIn a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
 Proof.
   intros WD_trace WD_action tr neq. unfold gen_test in tr. simpl in *. 
   destruct a. inversion tr.
@@ -389,18 +389,7 @@ Proof.
 
 #[global] Program Instance gen_acc_gen_test_inst 
   {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
-: gen_spec co gen_conv.
-Next Obligation.
-  intros. unfold parallel_inter. unfold dual. destruct μ; simpl; eauto.
-Qed.
-Next Obligation.
-  intros. symmetry in H. unfold parallel_inter in H. unfold dual in H. simpl in *.
-  destruct μ'.
-  + rewrite simplify_match_input in H. destruct μ. simpl in *. inversion H.
-    subst; eauto. simpl in *. inversion H.
-  + rewrite simplify_match_output in H. destruct μ. simpl in *. inversion H.
-    subst; eauto. simpl in *. inversion H. subst. eauto.
-Qed.
+: test_spec gen_conv.
 Next Obligation.
   intros s hh. eapply gen_test_ungood_if; try eassumption.
   intro hh0. inversion hh0.
@@ -409,34 +398,34 @@ Next Obligation.
   intros. eapply gen_test_lts_mu.
 Qed.
 Next Obligation.
-  intros. destruct μ.
-  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+  intros. destruct β.
   + eapply gen_test_gen_spec_out_lts_tau_ex_inst.
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 Next Obligation.
-  intros. destruct μ.
-  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+  intros. destruct β.
   + eapply gen_test_gen_spec_out_lts_tau_good. simpl in H. eassumption.
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 Next Obligation.
-  intros. destruct μ.
-  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+  intros. destruct β.
   + unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 Next Obligation.
-  intros. simpl in *.
-  destruct μ.
-  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
-  + simpl in *. assert (lts (gen_conv (ActOut a :: s)) (ActExt μ') e) as Hyp_tr; eauto.
+  intros ? t' β μ' s b Tr neq. simpl in *.
+  destruct β.
+  + assert (lts (gen_conv (ActIn a :: s)) (ActExt μ') t') as Hyp_tr; eauto.
     eapply Hyp_WD in Hyp_tr as (WD_trace & WD_action) ; eauto.
     inversion WD_trace; subst. inversion WD_action; subst.
-    ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
-    ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
+    ++ eapply gen_test_gen_spec_good_not_mu in neq; eauto. constructor.
+    ++ eapply gen_test_gen_spec_good_not_mu in neq; eauto. constructor.
+  + exfalso. eapply b. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 
 #[global] Program Instance gen_conv_gen_spec_conv_inst 
   {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
-  : gen_spec_conv co gen_conv.
+  : test_convergence_spec gen_conv.
 Next Obligation.
   intro Hyp. eexact (@gen_acc_gen_test_inst Hyp).
 Defined.

@@ -36,7 +36,7 @@ From Must Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_FW Lts_OBA
 
 (**************************************** Forwarder LTS *************************************)
 
-Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ1 μ2 /\ non_blocking μ1.
+Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ2 μ1 /\ non_blocking μ1.
 
 #[global] Program Instance FW_gLts {P A : Type} `{H : ExtAction A} (M: gLts P A) 
   `{@Prop_of_Inter P (mb A) A fw_inter H M MbgLts}
@@ -160,9 +160,9 @@ Notation "p ⟶≐[ μ ] q" := (lts_fw_sc p (ActExt μ) q) (at level 90, format 
 
 (* Properties on our FW Equivalence, to assert it is a simulation. *)
 
-Lemma fw_eq_blocking_action_simulation `{gLtsOba P A} {p q mp mq μ q'} :
-  p ▷ mp ≐ q ▷ mq -> blocking μ  -> q ⟶[μ] q'
-    -> exists p', p ⟶[μ] p' /\ p' ▷ mp ≐ q' ▷ mq.
+Lemma fw_eq_blocking_action_simulation `{gLtsOba P A} {p q mp mq β q'} :
+  p ▷ mp ≐ q ▷ mq -> blocking β  -> q ⟶[β] q'
+    -> exists p', p ⟶[β] p' /\ p' ▷ mp ≐ q' ▷ mq.
 Proof.
   intros heq not_nb hlq. 
   edestruct (lts_oba_mo_strip p) as (p0 & hwp).
@@ -173,7 +173,7 @@ Proof.
   edestruct (strip_delay_inp4 not_nb hlq hwq') as (q2 & hwq2 & hlq2).
   assert (q0 ⋍ q2) by (eapply strip_m_deter; eauto).
   destruct hlq2 as (r & hlr & heqr).
-  edestruct (eq_spec p0 r (ActExt $ μ)) as (p0' & hlp0' & heqp0').
+  edestruct (eq_spec p0 r (ActExt $ β)) as (p0' & hlp0' & heqp0').
   exists q2. split; eauto. transitivity q0; eauto.
   edestruct (strip_retract_act hwp hlp0' ) as (p' & wp' & p1 & hwp' & heqp').
   exists p'. split. eassumption.
@@ -201,9 +201,9 @@ Qed.
 Lemma lts_fw_eq_spec_left_blocking_action `{
    M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
    `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-   p q q' mp mq μ :
-   p ▷ mp ≐ q ▷ mq -> blocking μ -> q ⟶[μ] q'
-    -> p ▷ mp ⟶≐[μ] q' ▷ mq.
+   p q q' mp mq β :
+   p ▷ mp ≐ q ▷ mq -> blocking β -> q ⟶[β] q'
+    -> p ▷ mp ⟶≐[β] q' ▷ mq.
 Proof.
   intros not_nb heq l.
   edestruct (fw_eq_blocking_action_simulation not_nb heq l) as (p' & hl' & heq').
@@ -467,9 +467,9 @@ Qed.
 Lemma lts_fw_eq_spec_right_blocking_action `{
   M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-   p q mp mq η μ:
-  non_blocking η -> dual η μ -> p ▷ mp ≐ q ▷ mq 
-    -> p ▷ mp ⟶≐[μ] q ▷ {[+ η +]} ⊎ mq.
+   p q mp mq η β:
+  non_blocking η -> dual β η -> p ▷ mp ≐ q ▷ mq 
+    -> p ▷ mp ⟶≐[β] q ▷ {[+ η +]} ⊎ mq.
 Proof.
   intros nb duo heq.
   exists (p ▷ ({[+ η +]} ⊎ mp)). split.
@@ -485,8 +485,8 @@ Qed.
 Lemma lts_fw_com_eq_spec `{
   M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  p q q' mp mq μ η:
-  blocking μ -> dual η μ -> non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[μ] q' 
+  p q q' mp mq β η:
+  blocking β -> dual β η -> non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[β] q' 
     -> p ▷ mp ⟶≐ q' ▷ mq.
 Proof.
   intros not_nb duo nb' heq hl.
@@ -500,7 +500,7 @@ Proof.
     by (now rewrite heqm; multiset_solver).
   eapply gmultiset_elem_of_disj_union in mem as [hleft | hright].
   - eapply lts_oba_mo_spec_bis2 in hleft as (p1 & nb & hl1).
-    assert (neq : μ ≠ η). eapply BlockingAction_are_not_non_blocking; eauto.
+    assert (neq : β ≠ η). eapply BlockingAction_are_not_non_blocking; eauto.
     edestruct (lts_oba_non_blocking_action_confluence nb neq hl1 hl') as (p2 & hlp1 & hlp').
     edestruct (lts_oba_fb_feedback nb duo hl1 hlp1) as (p3 & hlp & heqp3).
     exists (p3, mp). split.
@@ -880,7 +880,7 @@ Next Obligation.
   eapply ParRight. eapply lts_multiset_minus; eauto.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η μ nb duo Hstep_nb Hstep.
+  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) β η nb duo Hstep_nb Hstep.
   inversion Hstep_nb; subst.
   + inversion Hstep; subst.
     ++ left. destruct (lts_oba_fb_feedback nb duo l l0) as (t & l1 & heq).
@@ -888,8 +888,8 @@ Next Obligation.
        now eapply fw_eq_id_mb.
     ++ right. simpl. unfold fw_eq.
        intros p' q' strip_p strip_q. simpl in *.
-       assert ( blocking μ) as not_nb. eapply dual_blocks; eauto.
-       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst.
+       assert ( blocking β) as not_nb. eapply dual_blocks; eauto.
+       eapply (blocking_action_in_ms m2 β m3) in not_nb as (eq & duo' & nb'); subst.
        set (heq := lts_oba_mo_spec2 _ _ _ nb l).
        rewrite heq in strip_p. rewrite heq. split.
        +++ destruct (strip_mem_ex strip_p) as (e & l' & nb'').
@@ -897,31 +897,31 @@ Next Obligation.
            set (h := lts_oba_non_blocking_action_deter nb'' l l').
            etrans. symmetry. eassumption.
            symmetry. eapply strip_eq_sim; eassumption.
-       +++ assert (mb_without_not_nb ({[+ co μ +]} ⊎ m2) 
-              = {[+ co μ +]} ⊎ mb_without_not_nb m2) as eq''.
+       +++ assert (mb_without_not_nb ({[+ co β +]} ⊎ m2) 
+              = {[+ co β +]} ⊎ mb_without_not_nb m2) as eq''.
            eapply lts_mb_nb_spec1;eauto. rewrite eq''.
            rewrite <- gmultiset_disj_union_assoc.
            rewrite gmultiset_disj_union_comm.
            rewrite <- gmultiset_disj_union_assoc.
            eapply gmultiset_eq_pop_l.
-           assert (η = co μ) as eq_nb. eapply unique_nb; eauto; subst. subst.
+           assert (η = co β) as eq_nb. eapply unique_nb; eauto; subst. subst.
            now rewrite gmultiset_disj_union_comm.
        +++ assumption.
   + inversion Hstep; subst.
     ++ left. exists (p3, m3). split. eapply ParSync; eauto. split; eauto. reflexivity.
     ++ right. 
        eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto.
-       assert (blocking μ) as not_nb. eapply dual_blocks; eauto.
-       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst; eauto.
-       assert (η = co μ) as eq_nb. eapply unique_nb; eauto. subst.
+       assert (blocking β) as not_nb. eapply dual_blocks; eauto.
+       eapply (blocking_action_in_ms m2 β m3) in not_nb as (eq & duo' & nb'); subst; eauto.
+       assert (η = co β) as eq_nb. eapply unique_nb; eauto. subst.
        reflexivity.
 Qed.
 
 (**********************************Forwarder Construction is a Finite Image LTS ************************)
 
-Definition lts_fw_not_non_blocking_action_set `{FiniteImagegLts P A} 
+Definition lts_fw_blocking_action_set `{FiniteImagegLts P A} 
   (p : P) (m : mb A) μ :=
-  if (decide (dual (co μ) μ /\ non_blocking (co μ))) 
+  if (decide (dual μ (co μ) /\ non_blocking (co μ))) 
   then (p, {[+ (co μ) +]} ⊎ m) :: map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ)))
   else map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ))).
 
@@ -1039,23 +1039,23 @@ Qed.
 
 Lemma lts_fw_input_set_spec1 `{@FiniteImagegLts P A H gLtsP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  p1 m1 p2 m2 μ :
-  (p1, m1) ⟶[μ] (p2, m2) -> blocking μ -> 
-    (p2, m2) ∈ lts_fw_not_non_blocking_action_set p1 m1 μ.
+  p1 m1 p2 m2 β :
+  (p1, m1) ⟶[β] (p2, m2) -> blocking β -> 
+    (p2, m2) ∈ lts_fw_blocking_action_set p1 m1 β.
 Proof.
   intros l not_nb.
   inversion l; subst.
-  + unfold lts_fw_not_non_blocking_action_set.
-    destruct (decide (dual (co μ) μ /\ non_blocking (co μ))) as [(duo & nb) | case2].
+  + unfold lts_fw_blocking_action_set.
+    destruct (decide (dual β (co β) /\ non_blocking (co β))) as [(duo & nb) | case2].
     - right. eapply elem_of_list_fmap.
       exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
     - eapply elem_of_list_fmap.
       exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
-  + eapply (blocking_action_in_ms m1 μ m2) in not_nb as (eq & duo & nb); eauto; subst.
-    unfold lts_fw_not_non_blocking_action_set.
-    destruct (decide (dual (co μ) μ /\ non_blocking (co μ))) as [toto | impossible].
+  + eapply (blocking_action_in_ms m1 β m2) in not_nb as (eq & duo & nb); eauto; subst.
+    unfold lts_fw_blocking_action_set.
+    destruct (decide (dual β (co β) /\ non_blocking (co β))) as [toto | impossible].
     ++ left.
-    ++ assert (dual (co μ) μ ∧ non_blocking (co μ)); eauto. contradiction.
+    ++ assert (dual β (co β) ∧ non_blocking (co β)); eauto. contradiction.
 Qed. 
 
 Lemma lts_fw_non_blocking_action_set_spec1 `{@FiniteImagegLts P A H gLtsP}
@@ -1091,7 +1091,7 @@ Next Obligation.
       intros (p0, m0) h%bool_decide_unpack.
       now eapply lts_fw_non_blocking_action_set_spec1.
     - rename η into μ. 
-      eapply (in_list_finite (lts_fw_not_non_blocking_action_set p m μ)). simpl in *.
+      eapply (in_list_finite (lts_fw_blocking_action_set p m μ)). simpl in *.
       intros (p0, m0) h%bool_decide_unpack.
       now eapply lts_fw_input_set_spec1. 
   + eapply (in_list_finite (lts_fw_tau_set p m)).

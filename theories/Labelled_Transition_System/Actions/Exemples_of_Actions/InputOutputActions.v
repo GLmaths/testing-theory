@@ -61,7 +61,7 @@ Definition act_match {A} (l1 l2: Act (ExtAct A)) :=
   | _, _ => False
   end.
 
-Definition co {A} (l: ExtAct A) :=
+Definition co_act {A} (l: ExtAct A) :=
   match l with
   | ActIn x => ActOut x
   | ActOut x => ActIn x
@@ -69,10 +69,10 @@ Definition co {A} (l: ExtAct A) :=
 
 (* fixme: Involution does not hold anymore in the context of pi-calculus. *)
 
-Lemma co_involution {A} (l: ExtAct A) : co (co l) = l.
+Lemma co_involution {A} (l: ExtAct A) : co_act (co_act l) = l.
 Proof. destruct l; eauto. Qed.
 
-Lemma dual_co {A} (μ : ExtAct A)  : ext_act_match (co μ) μ.
+Lemma dual_co {A} (μ : ExtAct A)  : ext_act_match (co_act μ) μ.
 Proof.
   destruct μ; simpl; eauto. 
 Qed.

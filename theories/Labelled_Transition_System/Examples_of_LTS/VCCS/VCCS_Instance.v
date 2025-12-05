@@ -4282,7 +4282,7 @@ Qed.
 #[global] Program Instance gAbsAction {A : Type} 
   : @AbsAction (ExtAct TypeOfActions) gLabel_b proc FinA VCCS_ggLts Φ.
 Next Obligation.
-  intros. destruct μ; destruct μ'; destruct a; destruct a0.
+  intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst. eapply lts_refuses_spec1 in H2 as (e' & Tr). simpl in *.
     eapply TransitionShapeForInput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
     assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ? })) as accepts.
@@ -4715,7 +4715,7 @@ Qed.
      pre_co_actions_of p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; simpl in *.
-  exists μ. split ;eauto.
+  exists β. split ;eauto.
 Qed.
 Next Obligation.
   intros; simpl in *.
