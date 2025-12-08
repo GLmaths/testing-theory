@@ -130,8 +130,39 @@ Qed.
 
 Definition νs n := Nat.iter n (fun p => ν p).
 
+Definition swap : nat -> nat := 1 .: (0 .: (shift >> shift >> ids)).
+
+Lemma swap_involutive : forall x, (swap >> swap) x = ids x.
+Proof.
+  intros [|[|x]]; reflexivity.
+Qed.
+
+Lemma shift_shift_swap : forall x, (shift >> shift >> swap) x = (shift >> shift) x.
+Proof.
+  intros [|[|x]]; reflexivity.
+Qed.
+
 Definition injective (σ : nat -> nat) :=
   forall x y, σ x = σ y -> x = y.
+
+Lemma Shift_Injective : injective shift.
+Proof.
+  intros x y H. now inversion H.
+Qed.
+
+Lemma Swap_Injective : injective swap.
+Proof.
+  assert (Aux: forall y, 1 <> ((0 .: (fun x : nat => ⋅ (shift (shift x)))) y) )
+  by (destruct y; [ now simpl | intro H; inversion H ]).
+  assert (Aux2: injective (0 .: (fun x0 : nat => ⋅ (shift (shift x0)))))
+  by (intros x y H; destruct x,y; inversion H; trivial).
+  intros x y H. 
+  induction x, y.
+  - trivial.
+  - simpl in H. apply Aux in H. contradiction.
+  - simpl in H. apply eq_sym, Aux in H. contradiction.
+  - simpl in H. apply Aux2 in H. now rewrite H.
+Qed.
 
 Class Shiftable (A : Type) := shift_op : A -> A.
 Instance Shift_proc : Shiftable proc := ren2 ids shift.
@@ -139,10 +170,26 @@ Instance Shift_Data : Shiftable Data := ren1 shift.
 Instance Shift_Act  : Shiftable Act := ren1 shift.
 Notation "⇑" := shift_op.
 
+Lemma Shift_Shift_Swap_pr : forall p, (⇑ (⇑ p)) ⟨swap⟩ = ⇑ (⇑ p).
+Proof. now asimpl. Qed.
+
+Lemma Shift_Shift_Swap_Data : forall (d: Data), ren1 swap (⇑ (⇑ d)) = ⇑ (⇑ d).
+Proof. now asimpl. Qed.
+
+Lemma Shift_Shift_Swap_Act : forall x, ren1 swap (⇑ (⇑ x)) = ⇑ (⇑ x).
+intro x. asimpl. unfold Ren_Act, ren_Act, shift_op, Shift_Act.
+destruct x; try destruct e; asimpl; simpl.
+- f_equal; f_equal; asimpl; reflexivity.
+- f_equal; f_equal; asimpl; reflexivity.
+- f_equal; asimpl; reflexivity.
+- f_equal; f_equal; asimpl; reflexivity.
+Qed.
+
 Parameter Eval_Eq : Equation -> (option bool).
 Parameter Eq_Subst_Spec : (nat -> nat) -> Prop.
+Parameter Eq_Subst_Spec_inj : forall σ, injective σ -> Eq_Subst_Spec σ.
 Parameter Eq_Subst_Spec_lift : forall σ, Eq_Subst_Spec σ -> Eq_Subst_Spec (up_ren σ).
-Axiom Eval_Eq_Spec : forall E σ, Eq_Subst_Spec σ -> Eval_Eq (ren1 σ E) = Eval_Eq E.
+Parameter Eval_Eq_Spec : forall E σ, Eq_Subst_Spec σ -> Eval_Eq (ren1 σ E) = Eval_Eq E.
 Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
 #[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
 Parameter (channel_is_countable : countable.Countable Value). (* only here for the classes *)
@@ -151,7 +198,6 @@ Parameter (value_eq_dec : base.EqDecision Value). (* only here for the classes *
 #[global] Instance value_eqdecision : base.EqDecision Value. Proof. exact value_eq_dec. Defined.
 Parameter (value_is_countable : countable.Countable Value). (* only here for the classes *)
 #[global] Instance value_countable : countable.Countable Value. Proof. exact value_is_countable. Defined.
-
 
 Definition nvars {A: Type} `{_ : Shiftable A} (n : nat) : A -> A :=
   Nat.iter n (⇑).
@@ -163,14 +209,6 @@ induction n.
 - now simpl.
 - intros. simpl. now rewrite IHn.
 Qed.
-
-Definition swap : nat -> nat := 1 .: (0 .: (shift >> shift >> ids)).
-
-Lemma swap_involutive : forall x, (swap >> swap) x = ids x.
-Proof.
-  intros [|[|x]]; reflexivity.
-Qed.
-
 
 Reserved Notation "p ≡ q" (at level 70).
 Inductive cgr_step : proc -> proc -> Prop :=
@@ -260,8 +298,11 @@ end. *)
 
 
 (* Require functional extensionality *)
-
 From Coq Require Import FunctionalExtensionality.
+Lemma Swap_Proc_Involutive : forall p, p ⟨swap⟩ ⟨swap⟩ = p.
+  assert (Hext : (swap >> swap) = ids) by apply functional_extensionality, swap_involutive.
+  asimpl. simpl. rewrite Hext. asimpl. reflexivity.
+  Qed.
 
 (* The relation ≡ is an reflexive*)
 #[global] Instance cgr_refl_step_is_refl : Reflexive cgr_step.
@@ -269,10 +310,7 @@ Proof. intro. apply cgr_refl_step. Qed.
 (* The relation ≡ is symmetric*)
 #[global] Instance cgr_symm_step : Symmetric cgr_step.
 Proof. intros p q hcgr. induction hcgr; try solve [constructor; try exact IHhcgr].
-- assert (p = p ⟨swap⟩ ⟨swap⟩).
-  {assert (Hext : (swap >> swap) = ids) by apply functional_extensionality, swap_involutive.
-  asimpl. simpl. rewrite Hext. asimpl. reflexivity. }
-  rewrite H at 2. apply cgr_nu_nu_step.
+- rewrite <- (Swap_Proc_Involutive p) at 2. apply cgr_nu_nu_step.
 Qed.
 (* - assert (swap_two (swap_two p) = p).
   + unfold swap_two. admit.
@@ -1223,6 +1261,33 @@ Lemma ren_lts : forall p α q σ,
     eapply lts_choiceR. apply IHTransition'. exact Hbound.
 Qed.
 
+Lemma shift_transition p α q :
+  lts p α q ->
+  (is_bound_out α = false ->
+  lts (⇑ p) (⇑ α) (⇑ q))
+  /\
+  (is_bound_out α = true ->
+  lts (⇑ p) (⇑ α) (q ⟨up_ren shift⟩)).
+Proof.
+intro Transition.
+apply (ren_lts p α q shift (Eq_Subst_Spec_inj shift Shift_Injective)) in Transition.
+assumption.
+Qed.
+
+Lemma swap_transition p α q :
+  lts p α q ->
+  (is_bound_out α = false ->
+  lts (p ⟨swap⟩) (ren1 swap α) (q ⟨swap⟩))
+  /\
+  (is_bound_out α = true ->
+  lts (p ⟨swap⟩) (ren1 swap α) (q ⟨up_ren swap⟩)).
+Proof.
+intro Transition.
+apply (ren_lts p α q swap (Eq_Subst_Spec_inj swap Swap_Injective)) in Transition.
+assumption.
+Qed.
+  
+
 Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
 Proof.
 intros p q r H. destruct p; inversion H.
@@ -1307,7 +1372,6 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
             ** (* possibly eapply returning a term that is too "simpl"d.
                   Giving an explicit witness might work better *)
               rewrite cgr_par_assoc. change (ren_proc ids shift p) with (⇑ p). eauto with cgr.
-         ++ exists ((α ⇑? ((p ‖ q))‖ q2))...
     + intros. dependent destruction l.
       * dependent destruction l1...
       * dependent destruction l2...
@@ -1332,7 +1396,6 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
          ++ eexists. split.
             ** eapply lts_close_r...
             ** eauto with cgr.
-         ++ exists (p2 ‖ α ⇑? ( q ‖ r))...
       * eexists; split...
     + intros. exists q.  split. apply lts_choiceL. assumption. auto with cgr.
     + intros. dependent destruction l.
@@ -1369,7 +1432,7 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
       * apply (t_step _ cgr_step) in H.
         case_eq (is_bound_out α); eexists; split.
         -- eauto with lts.
-        -- rewrite H0. apply cgr_par. unfold shift_op, Shiftable_proc. now rewrite H.
+        -- rewrite H0. apply cgr_par. unfold shift_op, Shift_proc. now rewrite H.
         -- eauto with lts.
         -- rewrite H0. now rewrite H.
     + intros. dependent destruction l.
@@ -1414,41 +1477,55 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
          congruent to something with some νs at the beginning (and the correct
          ν as the first one). This lemma will use the νν congruence rule *)
         dependent destruction l1.
-        -- (* res on P *) eexists.
-        (* (ν ν ( q ‖ ⇑ q2 )). *)
-        split.
+        -- (* res on P *) eexists. split.
            ++ eapply lts_res. eapply lts_close_l. { apply l1. }
-              eapply shift_transition in l2. 
-              (* eapply lts_res. eapply (lts_close_l l1).
-              eapply shift_transition in l2. exact l2. *)
-              admit.
-           ++ simpl. rewrite cgr_scope. rewrite cgr_scope. rewrite cgr_nu_nu.
-              rewrite <- cgr_scope. reflexivity. admit. (* Seems wrong *)
+              apply shift_transition, proj1 in l2.
+              specialize (l2 eq_refl).
+              apply swap_transition, proj1 in l2.
+              specialize (l2 eq_refl).
+              rewrite Shift_Shift_Swap_pr in l2.
+              replace (ren1 swap (⇑ (ActIn ((⇑ c) ⋉ 0)))) with (ActIn ((ren1 swap (⇑ (⇑ c))) ⋉ 0)) in l2
+              by (asimpl; unfold Ren_Act, ren_Act; simpl; now asimpl).
+              rewrite Shift_Shift_Swap_Data in l2.
+              apply l2.
+           ++ simpl. rewrite <- cgr_scope.
+              replace (q ‖ (⇑ q2) ⟨ swap ⟩) with ((q ⟨ swap ⟩ ‖ ((⇑ q2)))⟨ swap ⟩).
+              apply cgr_symm, cgr_nu_nu.
+              asimpl. f_equal. f_equal.
+              rewrite <- renRen_proc.
+              apply Swap_Proc_Involutive.
         -- (* open on P *) eexists. split.
           ++ eauto with lts.
           ++ reflexivity.
       * (* close-R *) eexists. admit.
       * (* par-L *) dependent destruction l...
+        (* one case is trivial, the other is manual *)
         -- eexists. split.
            ++ eapply lts_res...
            ++ case_eq (is_bound_out α).
-              ** intro Hbound. assert (is_bound_out (⇑ α) = true).
-                 { case_eq α; intros; subst; inversion Hbound. reflexivity. }
-                 rewrite H. asimpl. simpl.
-                 replace (ren_proc
-                 (fun x : nat => idsRen (ids (ids x)))
-                 (shift >> shift) Q)
-                 with (⇑ (⇑ Q)) by (asimpl; reflexivity).
+              ** intro Hbound.
+                 rewrite is_bound_ren with (σ := shift) in Hbound.
+                 change (ren1 shift α) with (⇑ α) in Hbound.
+                 rewrite Hbound. asimpl. simpl.
+                 replace (ren_proc _ (shift >> shift) Q) with (⇑ (⇑ Q)) by now asimpl.
                  apply cgr_scope.
               ** intro Hnotbound.
-                 assert (is_bound_out (⇑ α) = false).
-                 { case_eq α; intros; subst; inversion Hnotbound; try (case e; simpl; trivial). reflexivity. }
-                 rewrite H...
-      * (* par-R *) eexists. split.
-        -- eapply lts_res. eapply lts_parR.
-           assert (lts (⇑ Q) (⇑ α) (⇑ q2)) by now apply shift_transition.
-           exact H. reflexivity.
-        -- case_eq (is_bound_out α); intros.
+                 rewrite is_bound_ren with (σ := shift) in Hnotbound.
+                 unfold shift_op, Shift_Act. rewrite Hnotbound...
+      * (* par-R *) case_eq (is_bound_out α); intro Hbound. eexists.
+        -- split.
+           ++ eapply lts_res. eapply lts_parR.
+              ** apply shift_transition. exact l. exact Hbound.
+              ** reflexivity.
+            ++ rewrite Hbound.
+               rewrite is_bound_ren with (σ := shift) in Hbound.
+               unfold shift_op, Shift_Act, Shift_proc. rewrite Hbound.
+               asimpl. simpl. rewrite cgr_scope_rev. 
+
+                 
+           ** assert (lts (⇑ Q) (⇑ α) (⇑ q2)) by now apply shift_transition. exact H. admit.
+           ** reflexivity.
+        --
            ** assert (is_bound_out (⇑ α) = true).
               { case_eq α; intros; subst; inversion H; reflexivity. }
               rewrite H0.  asimpl. simpl. admit.
