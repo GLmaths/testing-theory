@@ -161,12 +161,6 @@ induction Transition.
       repeat split; now rewrite ?H1, ?H2.
 Qed.
 
-(* Definition shift_if_bound_out (a:Act) p : proc :=
-  match a with
-  | BoundOut _ => ⇑ p
-  | _ => p
-  end. *)
-
 Definition is_bound_out (a:Act) : bool :=
   match a with
   | BoundOut _ => true
@@ -175,6 +169,10 @@ Definition is_bound_out (a:Act) : bool :=
 
 Notation "a '⇑?' p" := (if is_bound_out a then ⇑ p else p) (at level 20).
 Notation "a '?↔' p" := (if is_bound_out a then p ⟨swap⟩ else p) (at level 20).
+
+Lemma Shift_Through_Questions : forall a (p:proc),
+  ⇑ (a ⇑? p) = a ⇑? (⇑ p).
+Proof. intros [ | | | ]; reflexivity. Qed.
 
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> Act -> proc -> Prop :=
@@ -475,6 +473,10 @@ Proof.
 intros α σ. destruct α; try destruct e; reflexivity.
 Qed.
 
+Lemma is_bound_shift : forall α,
+  is_bound_out α = is_bound_out (⇑ α).
+Proof. intro α. eapply is_bound_ren. Qed.
+
 Lemma res_not_bound : forall p α q,
   is_bound_out α = false ->
   lts p (⇑ α) q ->
@@ -494,27 +496,16 @@ Lemma ren_lts : forall p α q σ,
   intros p α q σ EqSpec Transition. revert σ EqSpec.
   dependent induction Transition; intro σ; split; intro Hbound; inversion Hbound; subst.
   - asimpl. simpl. refine (eq_rect _ _ lts_input _ _). now asimpl.
-    (* replace (
-    (subst_proc
-      (fun x : nat => var_proc (idsRen x))
-      ((ren_Data σ v) .: (σ >> var_Data)))
-      P)
-    with
-    (ren_proc ids (up_ren σ) P [⋅; (v [σ >> var_Data])..])
-    by now asimpl. apply lts_input. *)
   - apply lts_output.
   - apply lts_tau.
   - asimpl. simpl.
     replace (0 .: idsRen >> S) with ids by
      (apply FunctionalExtensionality.functional_extensionality;
       intros [|n]; trivial).
-    replace (ren_proc ids σ P) with (P ⟨σ⟩) by reflexivity.
     replace (
     (subst_proc
-      ((rec (P ⟨σ⟩)) .: (fun x : nat => var_proc (idsRen x)))
-      (fun x : nat => var_Data (σ x))
-      P))
-    with (subst2 (rec ( P⟨σ⟩) .: ids) ids (P ⟨σ⟩)) by now asimpl.
+      ((rec ren_proc ids σ P) .: (idsRen >> var_proc)) (σ >> var_Data) P))
+    with (subst2 (rec (P⟨σ⟩) .: ids) ids (P ⟨σ⟩)) by now asimpl.
     apply lts_recursion.
   - apply lts_ifOne. apply (Eval_Eq_Spec E σ) in EqSpec. rewrite H in EqSpec. assumption.
   - apply lts_ifZero. apply (Eval_Eq_Spec E σ) in EqSpec. rewrite H in EqSpec. assumption.
@@ -618,7 +609,6 @@ apply (ren_lts p α q swap (Eq_Subst_Spec_inj swap Swap_Injective)) in Transitio
 assumption.
 Qed.
   
-
 Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
 Proof.
 intros p q r H. destruct p; inversion H.
@@ -648,7 +638,6 @@ Hint Unfold lts_then_sc:lts.
 (* fact 1.4.16 in Sangiorgi&Walker *)
 Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
 Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto lenght *)
-(* by induction on the congruence and the step then...*)
   intros p q α (p' & hcgr & l).
   revert q α l.
   unfold lts_then_sc.
@@ -803,7 +792,8 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
            assert (lts (⇑ Q) (⇑ (FreeOut (c ⋉ v))) (⇑ p2)) by now apply shift_transition.
            eapply (lts_comR H l2).
         ** apply cgr_scope.
-      * (* close-L: corresponds to scope extrusion *)
+      * (* close-L *)
+      (** To discuss: look at the comment below, and the actual proof *)
       (* I need a lemma saying: since the process does a bound output, it is
          congruent to something with some νs at the beginning (and the correct
          ν as the first one). This lemma will use the νν congruence rule *)
@@ -820,38 +810,47 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               rewrite Shift_Shift_Swap_Data in l2.
               apply l2.
            ++ simpl. rewrite <- cgr_scope.
-              replace (q ‖ (⇑ q2) ⟨ swap ⟩) with ((q ⟨ swap ⟩ ‖ ((⇑ q2)))⟨ swap ⟩).
+              replace (q ‖ (⇑ q2) ⟨ swap ⟩) with ((q ⟨ swap ⟩ ‖ ((⇑ q2)))⟨ swap ⟩)
+              by
+              (asimpl; repeat f_equal; rewrite <- renRen_proc; apply Swap_Proc_Involutive).
               apply cgr_symm, cgr_nu_nu.
-              asimpl. f_equal. f_equal.
-              rewrite <- renRen_proc.
-              apply Swap_Proc_Involutive.
         -- (* open on P *) eexists. split.
           ++ eauto with lts.
           ++ reflexivity.
-      * (* close-R *) eexists. admit.
+      * (* close-R *)
+        dependent destruction l2. eexists. split.
+        -- eapply lts_res.
+           eapply lts_close_r.
+           ++ apply shift_transition, proj2 in l1. apply l1. reflexivity.
+           ++ apply swap_transition, proj1 in l2. specialize (l2 eq_refl).
+              rewrite <- Shift_Swap in l2.
+              rewrite Swap_Proc_Involutive in l2.
+              replace (ren1 swap (⇑ (ActIn ((⇑ c) ⋉ 0)))) with (ActIn ((ren1 swap (⇑ (⇑ c))) ⋉ 0)) in l2
+              by (asimpl; unfold Ren_Act, ren_Act; simpl; now asimpl).
+              rewrite Shift_Shift_Swap_Data in l2.
+              apply l2.
+        -- simpl. rewrite <- Shift_Swap. 
+           replace  ((q ⟨ swap ⟩ ‖ ((⇑ q2) ⟨ swap ⟩))) with ((q ‖ (⇑ q2)) ⟨ swap ⟩)
+           by
+           (asimpl; repeat f_equal; rewrite <- renRen_proc; apply Swap_Proc_Involutive).
+           now rewrite <- cgr_nu_nu, cgr_scope.
       * (* par-L *) dependent destruction l...
         (* one case is trivial, the other is manual *)
         -- eexists. split.
            ++ eapply lts_res...
            ++ case_eq (is_bound_out α).
-              ** intro Hbound.
-                 rewrite is_bound_ren with (σ := shift) in Hbound.
-                 change (ren1 shift α) with (⇑ α) in Hbound.
+              ** intro Hbound. rewrite is_bound_shift in Hbound.
                  rewrite Hbound. asimpl. simpl.
                  replace (ren_proc _ (shift >> shift) Q) with (⇑ (⇑ Q)) by now asimpl.
                  apply cgr_scope.
-              ** intro Hnotbound.
-                 rewrite is_bound_ren with (σ := shift) in Hnotbound.
-                 change (ren1 shift α) with (⇑ α) in Hnotbound.
+              ** intro Hnotbound. rewrite is_bound_shift in Hnotbound.
                  rewrite Hnotbound...
       * (* par-R *) case_eq (is_bound_out α); intro Hbound; eexists.
         -- split.
            ++ eapply lts_res. eapply lts_parR.
               ** apply shift_transition. exact l. exact Hbound.
               ** reflexivity.
-           ++ rewrite Hbound.
-              rewrite is_bound_ren with (σ := shift) in Hbound.
-              change (ren1 shift α) with (⇑ α) in Hbound.
+           ++ rewrite Hbound. rewrite is_bound_shift in Hbound.
               rewrite Hbound.
               cbn.
               rewrite cgr_scope_rev.
@@ -862,27 +861,36 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
            ++ eapply lts_res.
               apply shift_transition, proj1 in l. specialize (l Hbound).
               eapply lts_parR. exact l. reflexivity.
-           ++ rewrite Hbound.
-              rewrite is_bound_ren with (σ := shift) in Hbound.
-              change (ren1 shift α) with (⇑ α) in Hbound.
+           ++ rewrite Hbound. rewrite is_bound_shift in Hbound.
               rewrite Hbound.
               apply cgr_scope.
     (*** cgr_scope_rev ***)
-    + intros q α l. dependent destruction l.
+    + intros q α l.
       (* ν () did an α to q, what do νP \parallel Q do ? *)
       (* two possible cases: res or open *)
+      dependent destruction l.
+      (* res case: then νP ‖ Q did any action, and we have 6 possible cases *)
       * dependent destruction l.
+        (* lts_comR *)
         -- assert (α = τ) by admit. subst. eexists. split.
            ++ admit. (* The induction hypothesis probelm that Serguei mentioned? *)
            ++ admit.
+        (* lts_comL *)
+        -- eexists. admit.
+        (* lts_close_l *)
+        -- eexists. admit.
+        (* lts_close_r *)
         -- admit.
-        -- admit.
-        -- admit.
+        (* parL *)
         -- eexists. split.
-           ++ eapply lts_parL. eapply lts_res. exact l.
-           ++ eapply cgr_scope_rev.
-        -- eexists (ν P ‖ q2). split.
-           ++ eapply lts_parR. admit.
+           ++ eapply lts_parL...
+           ++ case_eq (is_bound_out α);
+              intro Hbound; rewrite is_bound_shift in Hbound; rewrite Hbound.
+              ** rewrite cgr_scope_rev. now asimpl.
+              ** eauto with cgr.
+        (* parR *)
+        -- eexists. split.
+           ++ eapply lts_parR. admit. 
            ++ eapply cgr_scope. admit. (* This seems like a good place to go to the blackboard. *)
       * (* open case. Then ν P ‖ Q did a FreeOut. Two cases are possible: νP did it, or Q *) 
         dependent destruction l.
