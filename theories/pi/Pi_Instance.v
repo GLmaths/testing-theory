@@ -768,7 +768,66 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
     + intros. dependent destruction l.
       -- destruct (IHcgr_step q α l) as [x H0]. destruct H0...
       -- eauto with lts cgr.
-    + intros. admit. (* swap case. Big hole! *)
+    + (* cgr_nu_nu *)
+      intros.
+      case_eq (is_bound_out α); intro;
+      dependent destruction l.
+      (* lts_res, when α is bound *)
+      * dependent destruction l.
+           (* preceded by another lts_res *)
+        -- eexists. split.
+           ++ rewrite is_bound_shift, is_bound_shift in H. eapply swap_transition, proj2 in l.
+              specialize (l H).
+              rewrite Swap_Proc_Involutive in l. rewrite Shift_Shift_Swap_Act in l.
+              eapply lts_res, lts_res. exact l.
+           ++ rewrite H. rewrite is_bound_shift in H. rewrite H.
+              replace
+              (ν (ν (q ⟨up_ren swap⟩ ⟨swap⟩)) ⟨swap⟩) with (ν (ν (q ⟨up_ren swap⟩ ⟨swap⟩ ⟨up_ren swap⟩)))
+              by now asimpl.
+              replace
+              (ν ((ν (q ⟨swap⟩)) ⟨swap⟩)) with (ν (ν (q ⟨swap⟩ ⟨up_ren swap⟩)))
+              by now asimpl.
+              rewrite (cgr_nu_nu (q ⟨swap⟩ ⟨up_ren swap⟩)).
+              asimpl. simpl.
+              (* apply cgr_refl. *)
+              (* These two need a lemma to be equated. Also, asimpl is super slow. *)
+              admit.
+           (* preceded by lts_open *)
+        -- eexists. split.
+           ++ 
+              eapply swap_transition, proj1 in l.
+              specialize (l eq_refl).
+              rewrite Swap_Proc_Involutive in l.
+              apply lts_open in l.
+              rewrite x in l.
+              apply (res_bound _ _ _ H) in l. admit.
+
+            ++ rewrite H. reflexivity.
+      (* lts_open, when α is bound *)
+      * dependent destruction l. eexists. split.
+        -- eapply swap_transition, proj1 in l.
+           specialize (l eq_refl).
+           replace (ren1 swap (⇑ (FreeOut (⇑ c ⋉ 0)))) with (FreeOut (ren1 swap (⇑ (⇑ c)) ⋉ 0)) in l
+           by (asimpl; unfold Ren_Act, ren_Act; simpl; now asimpl).
+           rewrite Shift_Shift_Swap_Data in l.
+           rewrite Swap_Proc_Involutive in l.
+           apply (@lts_res _ (q ⟨swap⟩)). apply lts_open. exact l.
+        -- now rewrite Swap_Proc_Involutive.
+      (* lts_res, when α is not bound *)
+      * dependent destruction l.
+        -- eexists. split.
+           (* only the res case is possible *)
+           ++ rewrite is_bound_shift, is_bound_shift in H.
+              eapply swap_transition, proj1 in l. specialize (l H).
+              rewrite Swap_Proc_Involutive in l. rewrite Shift_Shift_Swap_Act in l.
+              eapply lts_res, lts_res. exact l.
+           ++ rewrite H. rewrite is_bound_shift in H. rewrite H. now rewrite <- cgr_nu_nu.
+           (* open case is indeed absurd *)
+        -- rewrite is_bound_shift in H.
+           assert (Absurd: is_bound_out (⇑ α) = true) by now rewrite <- x.
+           rewrite H in Absurd. inversion Absurd.
+      (* open with α not bound is absurd *)
+      * inversion H.
     + intros. dependent destruction l.
     + intros. repeat dependent destruction l.
     + intros. dependent destruction l; destruct (IHcgr_step _ _ l) as [x [H1 H2]].
