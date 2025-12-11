@@ -1,6 +1,7 @@
 
 Require Export signatures.pi.
 Require Export signatures.unscoped.
+Require Import Relations Morphisms.
 Arguments core.funcomp _ _ _/.
 
 (** Notation for π calculus terms *)
@@ -79,7 +80,7 @@ Qed.
 
 Definition swap : nat -> nat := 1 .: (0 .: (shift >> shift >> ids)).
 
-Lemma swap_involutive : forall x, (swap >> swap) x = ids x.
+Lemma swap_involutive : (pointwise_relation _ eq) (swap >> swap) ids.
 Proof.
   intros [|[|x]]; reflexivity.
 Qed.
@@ -111,11 +112,10 @@ Proof.
   - simpl in H. apply Aux2 in H. now rewrite H.
 Qed.
 
-(* Require functional extensionality *)
-From Coq Require Import FunctionalExtensionality.
+(* uses morphisms instances to avoid functional extensionality *)
 Lemma Swap_Proc_Involutive : forall p, p ⟨swap⟩ ⟨swap⟩ = p.
-assert (Hext : (swap >> swap) = ids) by apply functional_extensionality, swap_involutive.
-asimpl. simpl. rewrite Hext. asimpl. reflexivity.
+Proof.
+asimpl. intro p. rewrite swap_involutive. now asimpl.
 Qed.
 
 Class Shiftable (A : Type) := shift_op : A -> A.
@@ -163,4 +163,4 @@ destruct x; try destruct e; asimpl; simpl.
 Qed.
 
 Lemma Shift_Swap : forall (p:proc), (⇑ p) ⟨swap⟩ = p ⟨up_ren shift⟩.
-Proof. now asimpl. Qed.
+Proof. asimpl. unfold core.funcomp. simpl. now asimpl. Qed.

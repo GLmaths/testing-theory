@@ -308,18 +308,19 @@ intros [|n]; simpl.
 - reflexivity.
 Qed.
 
-Instance RenProper : Proper (eq ==> eq ==> cgr ==> cgr) ren2.
+Instance RenProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) ren2.
 Proof.
-intros sp' sp Hp s' s Hs q1 q2 Hq.
+intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs. clear Hs s'.
 induction Hq as [p q base_case | p r q transitivity_case].
-- subst. revert sp s. induction base_case; intros; try solve [asimpl; auto with cgr].
-  (* + simpl. unfold subst2. simpl. substify. simpl. Set Printing All. *)
+- subst. revert sp s.
+  induction base_case; intros; try solve [asimpl; auto with cgr].
   + asimpl. apply cgr_choice. apply IHbase_case.
-  + asimpl. simpl. admit. (* Swap case *)
+  + asimpl. simpl. change (idsRen >> sp) with sp.
+    etransitivity; [apply cgr_nu_nu|]. now asimpl.
   + unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope _ _).
   + unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_rev _ _).
 - subst. now rewrite IHtransitivity_case.
-Admitted.
+Qed.
 
 Instance NewsProper : Proper (eq ==> cgr ==> cgr) νs.
 Proof.

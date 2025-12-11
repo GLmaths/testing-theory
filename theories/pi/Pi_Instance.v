@@ -485,7 +485,15 @@ Proof.
 intros. apply lts_res in H0. rewrite H in H0. assumption.
 Qed.
 
-Require Import Coq.Logic.FunctionalExtensionality.
+Lemma res_bound : forall p α q,
+  is_bound_out α = true ->
+  lts p (⇑ α) q ->
+  lts (ν p) α (ν q ⟨swap⟩).
+Proof.
+intros. apply lts_res in H0. rewrite H in H0. assumption.
+Qed.
+
+
 Lemma ren_lts : forall p α q σ,
   Eq_Subst_Spec σ ->
   lts p α q ->
@@ -499,9 +507,9 @@ Lemma ren_lts : forall p α q σ,
   - apply lts_output.
   - apply lts_tau.
   - asimpl. simpl.
-    replace (0 .: idsRen >> S) with ids by
-     (apply FunctionalExtensionality.functional_extensionality;
-      intros [|n]; trivial).
+    assert (Heq: (pointwise_relation _ eq) (0 .: idsRen >> S) ids) by (intros [|n]; trivial).
+    (* uses ren_proc_morphism to avoid functional extensionality *)
+    rewrite Heq. clear Heq.
     replace (
     (subst_proc
       ((rec ren_proc ids σ P) .: (idsRen >> var_proc)) (σ >> var_Data) P))
@@ -781,18 +789,10 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               rewrite Swap_Proc_Involutive in l. rewrite Shift_Shift_Swap_Act in l.
               eapply lts_res, lts_res. exact l.
            ++ rewrite H. rewrite is_bound_shift in H. rewrite H.
-              replace
-              (ν (ν (q ⟨up_ren swap⟩ ⟨swap⟩)) ⟨swap⟩) with (ν (ν (q ⟨up_ren swap⟩ ⟨swap⟩ ⟨up_ren swap⟩)))
-              by now asimpl.
-              replace
-              (ν ((ν (q ⟨swap⟩)) ⟨swap⟩)) with (ν (ν (q ⟨swap⟩ ⟨up_ren swap⟩)))
-              by now asimpl.
-              rewrite (cgr_nu_nu (q ⟨swap⟩ ⟨up_ren swap⟩)).
-              asimpl. simpl.
-              (* apply cgr_refl. *)
-              (* These two need a lemma to be equated. Also, asimpl is super slow. *)
-              admit.
-           (* preceded by lts_open *)
+              etransitivity; [apply cgr_nu_nu|]. fold ren_proc. asimpl. simpl.
+              apply cgr_res, cgr_res.
+              eapply RenProper; try easy.
+              intro n. do 4 (destruct n as [|n]; trivial).
         -- eexists. split.
            ++ 
               eapply swap_transition, proj1 in l.
