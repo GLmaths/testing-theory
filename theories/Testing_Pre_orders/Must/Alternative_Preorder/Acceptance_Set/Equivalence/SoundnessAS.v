@@ -570,14 +570,14 @@ Proof.
     + intros s q' w st hcnv. edestruct h2 ; set_solver.
 Qed.
 
-Lemma bhvleqone_preserved_by_tau `{
+Lemma bhvleqone_preserved_by_reduction `{
   FiniteImagegLts P A, 
   FiniteImagegLts Q A} 
   (ps : gset P) (q q' : Q) :
   ps ≼ₓ1 q -> q ⟶ q' -> ps ≼ₓ1 q'.
 Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 
-Lemma bhvx_preserved_by_tau `{
+Lemma bhvx_preserved_by_reduction `{
   @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
@@ -589,7 +589,7 @@ Proof.
     destruct (halt2 s q'') as (p' & mem & p'' & hw & hst) (* & sub0) *); eauto with mdb.
 Qed.
 
-Lemma bhvleqone_mu `{
+Lemma bhvleqone_preserved_by_external_action `{
   @FiniteImagegLts P A H gLtsP, 
   @FiniteImagegLts Q A H gLtsQ}
   (ps0 ps1 : gset P) μ (q q' : Q) (htp : forall p, p ∈ ps0 -> terminate p) :
@@ -604,7 +604,7 @@ Proof.
   + eauto with mdb.
 Qed.
 
-Lemma bhvx_preserved_by_mu `{
+Lemma bhvx_preserved_by_external_action `{
   @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps0 : gset P) (q : Q) μ ps1 q' (htp : forall p, p ∈ ps0 -> terminate p) :
@@ -614,7 +614,7 @@ Lemma bhvx_preserved_by_mu `{
         -> ps1 ≼ₓ q'.
 Proof.
   intros lts__q ps1_spec (halt1 & halt2). split.
-  - eapply bhvleqone_mu; eauto.
+  - eapply bhvleqone_preserved_by_external_action; eauto.
   -  intros s q0 wt st hcnv.
      edestruct (halt2 (μ :: s) q0) as (t & mem & p0 & p1 & wta__t & sub); eauto with mdb.
      intros p' mem'. eapply cnv_act; eauto.
@@ -635,7 +635,7 @@ Proof.
     exists p0; eauto with mdb.
 Qed.
 
-Lemma bhvx_mu_ex `{
+Lemma reverse_trace_inclusion `{
   @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps : gset P) (q q' : Q) μ
@@ -773,7 +773,7 @@ Proof.
     + eapply (stability_nbhvleqtwo ps); eauto with mdb.
     + intros q' l. eapply IHq_conv.
       ++ eassumption.
-      ++ eapply bhvleqone_preserved_by_tau; eauto.
+      ++ eapply bhvleqone_preserved_by_reduction; eauto.
       ++ eauto with mdb.
     + intros e' hle. eapply H6; eassumption.
     + intros q' e' μ μ' inter le lq.
@@ -790,10 +790,10 @@ Proof.
          intro eq_nil. destruct neq_nil as (t & mem).
          replace ts with (wt_s_set_from_pset ps [μ] HA) in mem; eauto.
          subst. rewrite eq_nil in mem. inversion mem.
-         eapply bhvleqone_mu; eauto with mdb.
-         eapply bhvx_preserved_by_mu; eauto with mdb.
+         eapply bhvleqone_preserved_by_external_action; eauto with mdb.
+         eapply bhvx_preserved_by_external_action; eauto with mdb.
          exfalso.
-         edestruct (bhvx_mu_ex ps q q' (μ)) as (p' & u); eauto.
+         edestruct (reverse_trace_inclusion ps q q' (μ)) as (p' & u); eauto.
          assert (p' ∈ ts) as mem.
          edestruct (u p' ltac:(set_solver)) as (r & mem & hw).
          eapply ts_spec; eauto.
