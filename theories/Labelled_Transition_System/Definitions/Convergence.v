@@ -340,9 +340,8 @@ Proof.
     eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto.
   - inversion his; subst.
     destruct H4 as (a' & nb & inter).
-    assert (blocking a) as not_nb.
+    assert (blocking a) as b.
     { eapply dual_blocks; eauto. }
-    
     edestruct (lts_oba_fw_forward p a' a) as (p_a & Hyp).
     destruct (Hyp nb inter) as (tr_b & tr_nb).
     edestruct (lts_oba_non_blocking_action_delay nb tr_nb l) as (p'_a & tr'_b & r' & tr'_nb & equiv').
