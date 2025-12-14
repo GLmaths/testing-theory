@@ -388,7 +388,6 @@ intros. dependent induction H.
 - destruct (IHlts (⇑ c) eq_refl) as [n (P & Q & Hind1)]. exists (S n), P, Q.
   (* split. *)
   * now rewrite Hind1.
-  (* * admit. *)
 - exists 1, p1, 𝟘.
   (* split. *)
   * now rewrite cgr_par_nil.
@@ -491,6 +490,87 @@ Lemma res_bound : forall p α q,
   lts (ν p) α (ν q ⟨swap⟩).
 Proof.
 intros. apply lts_res in H0. rewrite H in H0. assumption.
+Qed.
+
+
+Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
+Proof.
+intros p q r H. destruct p; inversion H.
+eexists. eexists. split. reflexivity. reflexivity.
+Qed.
+
+Lemma Invert_Shift : forall (c: Data) c' σ,
+  ⇑ c = ren1 (up_ren σ) c' -> exists c'', c' = ⇑ c''.
+Proof.
+intros c c' σ Heq.
+assert (H1 : ⇑ c <> 0) by  (destruct c; intro H; now inversion H).
+rewrite Heq in H1.
+assert (H2 : c' <> 0) by
+(intro Hdiff; rewrite Hdiff in H1; asimpl in H1; contradiction).
+destruct c'.
+- destruct n; [contradiction|]. now exists n.
+- now exists v.
+Qed.
+
+Lemma Invert_Lts_Input : forall p q c v σ,
+  lts (p ⟨σ⟩) (ActIn (c ⋉ v)) q ->
+  exists c', c = ren1 σ c'.
+Proof.
+intros p q c v σ transition.
+dependent induction transition.
+- destruct p; inversion x. destruct g0; inversion x. now exists d.
+- destruct p; inversion x.
+  destruct (IHtransition p (⇑ c) (⇑ v) (up_ren σ) H0 eq_refl) as [c' Heq].
+  destruct (Invert_Shift _ _ _ Heq) as (d & Hd).
+  exists d.
+  rewrite Hd in Heq. rewrite permute_ren1 in Heq.
+  now apply Shift_Op_Injective in Heq.
+- destruct p; inversion x. asimpl in x.
+  destruct (IHtransition p3 _ _ _ H0 eq_refl) as (d & ?). exists d. exact H.
+- destruct p; inversion x. asimpl in x.
+  destruct (IHtransition p2 _ _ _ H1 eq_refl) as (d & ?). exists d. exact H.
+- destruct p; inversion x. destruct g0; inversion x.
+  assert (Heq: (g p1) = (g g0_1) ⟨σ⟩) by (asimpl; simpl; f_equal; exact H1).
+  destruct (IHtransition (g g0_1) _ _ _ Heq eq_refl) as (d & ?). exists d. exact H.
+- destruct p; inversion x. destruct g0; inversion x.
+  assert (Heq: (g p2) = (g g0_2) ⟨σ⟩) by (asimpl; simpl; f_equal; exact H2).
+  destruct (IHtransition (g g0_2) _ _ _ Heq eq_refl) as (d & ?). exists d. exact H.
+Qed.
+
+Lemma Invert_Lts_Input_Full : forall p q c v σ,
+  lts (p ⟨σ⟩) (ActIn (c ⋉ ren1 σ v)) q ->
+  exists c' q',
+  c = ren1 σ c' /\
+  q = q' ⟨σ⟩    /\
+  lts p (ActIn (c' ⋉ v)) q'.
+Proof.
+intros p q c v σ transition.
+dependent induction transition.
+- destruct p; inversion x. destruct g0; inversion x.
+  repeat eexists; [|eapply lts_input]. now asimpl.
+- destruct p; inversion x.
+  assert (HeqAct: ⇑ (ActIn (c ⋉ ren1 σ v)) = ActIn (⇑ c ⋉ ren1 (up_ren σ) (⇑ v)))
+  by (unfold shift_op; now rewrite <- shift_permute_Data).
+  destruct (IHtransition p (⇑ c) (⇑ v) (up_ren σ) H0 HeqAct) as (c' & q' & Heq1 & Heq2 & Heq3).
+  destruct (Invert_Shift _ _ _ Heq1) as (d & Hd).
+  exists d, (ν q'). repeat split.
+  + rewrite Hd in Heq1. rewrite permute_ren1 in Heq1. now apply Shift_Op_Injective in Heq1.
+  + now rewrite Heq2.
+  + rewrite Hd in Heq3. refine (eq_rect _ _ (lts_res _) _ _). apply Heq3. reflexivity.
+- destruct p; inversion x. asimpl in x.
+  destruct (IHtransition p3 _ _ _ H0 eq_refl) as (d & q' & Heq1 & Heq2 & Heq3).
+  exists d, (q' ‖ p4). subst. repeat split; eauto with lts.
+- destruct p; inversion x. asimpl in x.
+  destruct (IHtransition p2 _ _ _ H1 eq_refl) as (d & q' & Heq1 & Heq2 & Heq3).
+  subst. now repeat eexists; eauto with lts.
+- destruct p; inversion x. destruct g0; inversion x.
+  assert (Heq: (g p1) = (g g0_1) ⟨σ⟩) by (asimpl; simpl; f_equal; exact H1).
+  destruct (IHtransition (g g0_1) _ _ _ Heq eq_refl) as (d & q' & Heq1 & Heq2 & Heq3).
+  eexists. eexists. repeat split; eauto with lts.
+- destruct p; inversion x. destruct g0; inversion x.
+  assert (Heq: (g p2) = (g g0_2) ⟨σ⟩) by (asimpl; simpl; f_equal; exact H2).
+  destruct (IHtransition (g g0_2) _ _ _ Heq eq_refl) as (d & q' & Heq1 & Heq2 & Heq3).
+  eexists. eexists. repeat split; eauto with lts.
 Qed.
 
 
@@ -617,18 +697,6 @@ apply (ren_lts p α q swap (Eq_Subst_Spec_inj swap Swap_Injective)) in Transitio
 assumption.
 Qed.
   
-Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
-Proof.
-intros p q r H. destruct p; inversion H.
-eexists. eexists. split. reflexivity. reflexivity.
-Qed.
-
-Lemma Shift_Decompose_Input : forall p q c,
-  ⇑ (g p) = c ? q -> exists c' q', c = (⇑ c') /\ q = (⇑ q').
-Proof.
-intros p q c H. destruct p; inversion H.
-eexists. eexists. split. reflexivity. unfold upRen_Data_proc. unfold upRen_Data_Data, up_ren.
-
 Ltac case_shift :=
   match goal with
   |- context G [ ?a ⇑? _ ] => case is_bound_out
@@ -930,12 +998,39 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
       dependent destruction l.
       (* res case: then νP ‖ Q did any action, and we have 6 possible cases *)
       * dependent destruction l.
-        (* lts_comR *)
-        -- assert (α = τ) by admit. subst. eexists. split.
-           ++ admit. (* The induction hypothesis probelm that Serguei mentioned? *)
-           ++ admit.
         (* lts_comL *)
-        -- eexists. admit.
+        -- replace α with τ by (destruct α; try destruct e; now inversion x).
+           destruct (Invert_Lts_Input _ _ _ _ _ l2) as (c' & Hc'). subst.
+           destruct v.
+           (* communicate a channel *)
+           ++ destruct n.
+              (* the channel is 0 *)
+              ** eexists. split; [|reflexivity].
+                 eapply lts_close_l; [apply (lts_open l1) | apply l2].
+              (* the channel is S n *)
+              ** replace (FreeOut (((ren1 shift c') ⋉ (S n)))) with 
+                         (⇑ (FreeOut (c' ⋉ n))) in l1 by now asimpl.
+                 replace (var_Data (S n)) with (ren1 shift (var_Data n)) in l2 by now asimpl.
+                 destruct (Invert_Lts_Input_Full _ _ _ _ _ l2) as (d & q' & H & Heq1 & Heq2).
+                 apply Shift_Op_Injective in H.
+                 eexists. split.
+                 --- eapply lts_comL; [eauto with lts|]. rewrite H. apply Heq2.
+                 --- rewrite Heq1. eauto with cgr.
+           (* communicate a constant value *)
+           ++ replace (FreeOut (((ren1 shift c') ⋉ v))) with
+                      (ren1 shift (FreeOut ((c' ⋉ v)))) in l1 by now asimpl.
+              replace (cst v) with (ren1 shift (cst v)) in l2 by now asimpl.
+              destruct (Invert_Lts_Input_Full _ _ _ _ _ l2) as (d & q' & H & Heq1 & Heq2).
+              apply Shift_Op_Injective in H.
+              eexists. split.
+              ** eapply lts_comL. eapply lts_res, l1. rewrite H. apply Heq2.
+              ** rewrite Heq1. eauto with cgr.
+        (* lts_comR *)
+        -- admit.
+        
+        eexists. split.
+           ++ eapply lts_parL. eapply lts_res. admit. admit.
+           ++ admit.
         (* lts_close_l *)
         -- eexists. admit.
         (* lts_close_r *)
@@ -949,7 +1044,7 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               ** eauto with cgr.
         (* parR *)
         -- eexists. split.
-           ++ eapply lts_parR. admit. 
+           ++ eapply lts_parR. admit. admit.
            ++ eapply cgr_scope. admit. (* This seems like a good place to go to the blackboard. *)
       * (* open case. Then ν P ‖ Q did a FreeOut. Two cases are possible: νP did it, or Q *) 
         dependent destruction l.
