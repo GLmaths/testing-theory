@@ -512,6 +512,39 @@ destruct c'.
 - now exists v.
 Qed.
 
+Lemma Invert_Shift_Act : forall (α:Act) α' σ,
+  ⇑ α = ren1 (up_ren σ) α' -> exists α'', α' = ⇑ α''.
+Proof.
+intros α α' σ Heq.
+destruct α, α'; try destruct e; try destruct e0; inversion Heq.
+- apply Invert_Shift in H0, H1. destruct H0, H1. exists (ActIn (x ⋉ x0)). now subst.
+- apply Invert_Shift in H0, H1. destruct H0, H1. exists (FreeOut (x ⋉ x0)). now subst.
+- apply Invert_Shift in H0. destruct H0. exists (BoundOut x). now subst.
+- now exists tau_action.
+Qed.
+
+Lemma Invert_Shift_Simple : forall (α:Act) α',
+   α' = ⇑ α -> exists α'', α' = ⇑ α''.
+Proof.
+intros. symmetry in H.
+replace α' with (ren1 (up_ren ids) α') in H.
+eapply Invert_Shift_Act. exact H.
+assert (Heq: (pointwise_relation _ eq) (0 .: idsRen >> S) ids) by (intros [|n]; trivial).
+asimpl. unfold Ren_Act.
+destruct α'; try destruct e.
+- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
+- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
+- cbn; repeat f_equal; destruct d; try destruct n; trivial.
+- trivial.
+Qed.
+
+Lemma Invert_Bound_Out : forall (α:Act) c,
+   BoundOut c = ⇑ α -> exists d, c = ⇑ d /\ α = BoundOut d.
+Proof.
+intros. destruct α; try destruct e; inversion H.
+now exists d.
+Qed.
+
 Lemma Invert_Lts_Input : forall p q c v σ,
   lts (p ⟨σ⟩) (ActIn (c ⋉ v)) q ->
   exists c', c = ren1 σ c'.
@@ -850,7 +883,7 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
       dependent destruction l.
       (* lts_res, when α is bound *)
       * dependent destruction l.
-           (* preceded by another lts_res *)
+        (* preceded by another lts_res *)
         -- eexists. split.
            ++ rewrite is_bound_shift, is_bound_shift in H. eapply swap_transition, proj2 in l.
               specialize (l H).
@@ -861,16 +894,19 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               apply cgr_res, cgr_res.
               eapply RenProper; try easy.
               intro n. do 4 (destruct n as [|n]; trivial).
-        -- eexists. split.
-           ++ 
-              eapply swap_transition, proj1 in l.
+        (* preceded by lts_open *)
+        -- apply Invert_Bound_Out in x. destruct x as [d [Hd Hbound]].
+           rewrite Hbound. eexists. split.
+           ++ eapply swap_transition, proj1 in l.
               specialize (l eq_refl).
               rewrite Swap_Proc_Involutive in l.
-              apply lts_open in l.
-              rewrite x in l.
-              apply (res_bound _ _ _ H) in l. admit.
-
-            ++ rewrite H. reflexivity.
+              rewrite Hd in l.
+              replace (ren1 swap (FreeOut ((⇑ (⇑ d)) ⋉ 0))) with
+                      (FreeOut (ren1 swap (⇑ (⇑ d)) ⋉ 1)) in l by trivial.
+              rewrite Shift_Shift_Swap_Data in l.
+              eapply lts_open.
+              eapply lts_res. apply l.
+           ++ reflexivity.
       (* lts_open, when α is bound *)
       * dependent destruction l. eexists. split.
         -- eapply swap_transition, proj1 in l.
