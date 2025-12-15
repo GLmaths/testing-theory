@@ -606,6 +606,44 @@ dependent induction transition.
   eexists. eexists. repeat split; eauto with lts.
 Qed.
 
+Lemma Invert_Lts_FreeOut : forall p q c v σ,
+lts (p ⟨σ⟩) (FreeOut (c ⋉ v)) q ->
+  exists c' v' q',
+  c = ren1 σ c' /\
+  v = ren1 σ v' /\
+  q = q' ⟨σ⟩    /\
+  lts p (FreeOut (c' ⋉ v')) q'.
+Proof.
+intros p q c v σ transition.
+dependent induction transition.
+- destruct p; inversion x. destruct g0; inversion x.
+  repeat eexists; eapply lts_output.
+- destruct p; inversion x.
+  assert (HeqAct: ⇑ (FreeOut (c ⋉ v)) = FreeOut (⇑ c ⋉ ⇑ v)) by trivial.
+  destruct (IHtransition p (⇑ c) (⇑ v) (up_ren σ) H0 HeqAct) as (c' & v' & q' & Heq1 & Heq2 & Heq3 & Heq4).
+  destruct (Invert_Shift _ _ _ Heq1) as (d & Hd).
+  destruct (Invert_Shift _ _ _ Heq2) as (w & Hw).
+  exists d, w, (ν q'). repeat split.
+  + rewrite Hd in Heq1. rewrite permute_ren1 in Heq1. now apply Shift_Op_Injective in Heq1.
+  + rewrite Hw in Heq2. rewrite permute_ren1 in Heq2. now apply Shift_Op_Injective in Heq2.
+  + now rewrite Heq3.
+  + rewrite Hd, Hw in Heq4. refine (eq_rect _ _ (lts_res _) _ _). apply Heq4. reflexivity.
+- destruct p; inversion x. asimpl in x.
+  destruct (IHtransition p3 _ _ _ H0 eq_refl) as (d & w & q' & Heq1 & Heq2 & Heq3 & Heq4).
+  exists d, w, (q' ‖ p4). subst. repeat split; eauto with lts.
+- destruct p; inversion x. asimpl in x.
+  destruct (IHtransition p2 _ _ _ H1 eq_refl) as (d & w & q' & Heq1 & Heq2 & Heq3 & Heq4).
+  subst. now repeat eexists; eauto with lts.
+- destruct p; inversion x. destruct g0; inversion x.
+  assert (Heq: (g p1) = (g g0_1) ⟨σ⟩) by (asimpl; simpl; f_equal; exact H1).
+  destruct (IHtransition (g g0_1) _ _ _ Heq eq_refl) as (d & w & q' & Heq1 & Heq2 & Heq3 & Heq4).
+  eexists. eexists. eexists. repeat split; eauto with lts.
+- destruct p; inversion x. destruct g0; inversion x.
+  assert (Heq: (g p2) = (g g0_2) ⟨σ⟩) by (asimpl; simpl; f_equal; exact H2).
+  destruct (IHtransition (g g0_2) _ _ _ Heq eq_refl) as (d & w & q' & Heq1 & Heq2 & Heq3 & Heq4).
+  eexists. eexists. eexists. repeat split; eauto with lts.
+Qed.
+
 
 Lemma ren_lts : forall p α q σ,
   Eq_Subst_Spec σ ->
@@ -1040,10 +1078,10 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
            destruct v.
            (* communicate a channel *)
            ++ destruct n.
-              (* the channel is 0 *)
+              (* the channel is 0. Then this "com" becomes "close" *)
               ** eexists. split; [|reflexivity].
                  eapply lts_close_l; [apply (lts_open l1) | apply l2].
-              (* the channel is S n *)
+              (* the channel is S n. So it is actually "com" *)
               ** replace (FreeOut (((ren1 shift c') ⋉ (S n)))) with 
                          (⇑ (FreeOut (c' ⋉ n))) in l1 by now asimpl.
                  replace (var_Data (S n)) with (ren1 shift (var_Data n)) in l2 by now asimpl.
@@ -1062,11 +1100,12 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               ** eapply lts_comL. eapply lts_res, l1. rewrite H. apply Heq2.
               ** rewrite Heq1. eauto with cgr.
         (* lts_comR *)
-        -- admit.
-        
-        eexists. split.
-           ++ eapply lts_parL. eapply lts_res. admit. admit.
-           ++ admit.
+        -- replace α with τ by (destruct α; try destruct e; now inversion x).
+            destruct (Invert_Lts_FreeOut _ _ _ _ _ l1) as (c' & v' & q' & Hc' & Hv' & Hq' & Htransition).
+            subst.
+            eexists. split.
+            ++ eapply lts_comR; [exact Htransition|]. eapply lts_res. apply l2.
+            ++ eauto with cgr.
         (* lts_close_l *)
         -- eexists. admit.
         (* lts_close_r *)
