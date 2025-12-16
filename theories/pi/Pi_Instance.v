@@ -938,8 +938,8 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               specialize (l eq_refl).
               rewrite Swap_Proc_Involutive in l.
               rewrite Hd in l.
-              replace (ren1 swap (FreeOut ((⇑ (⇑ d)) ⋉ 0))) with
-                      (FreeOut (ren1 swap (⇑ (⇑ d)) ⋉ 1)) in l by trivial.
+              change (ren1 swap (FreeOut ((⇑ (⇑ d)) ⋉ 0))) with
+                     (FreeOut (ren1 swap (⇑ (⇑ d)) ⋉ 1)) in l.
               rewrite Shift_Shift_Swap_Data in l.
               eapply lts_open.
               eapply lts_res. apply l.
@@ -1109,7 +1109,28 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
             ++ eapply lts_comR; [exact Htransition|]. eapply lts_res. apply l2.
             ++ eauto with cgr.
         (* lts_close_l *)
-        -- eexists. admit.
+        -- replace α with τ by (destruct α; try destruct e; now inversion x).
+           (* Pack the two shifts in a single renaming, to be used with Invert_Lts_Input *)
+           (* (can't do it with replace because asimpl complains about evars) *)
+           assert (Hrew: (⇑ (⇑ Q)) = (ren_proc ids (shift >> shift) Q)) by now asimpl.
+           rewrite Hrew in l2.
+           destruct (Invert_Lts_Input _ _ _ _ _ l2) as (c' & Hc').
+           replace (ren1 (shift >> shift) c') with (⇑ (⇑ c')) in Hc' by now asimpl.
+           apply Shift_Op_Injective in Hc'. subst.
+           rewrite <- Hrew in l2. clear Hrew.
+
+           apply swap_transition, proj1 in l2. specialize (l2 eq_refl).
+           rewrite Shift_Shift_Swap_pr in l2. cbn in l2.
+           rewrite Shift_Shift_Swap_Data in l2.
+           change (var_Data 1) with (⇑ (var_Data 0)) in l2.
+           destruct (Invert_Lts_Input_Full _ _ _ _ _ l2) as (d & q' & H & Heq1 & Heq2).
+           apply Shift_Op_Injective in H. rewrite <- H in Heq2.
+           change (q' ⟨shift⟩) with (⇑ q') in Heq1.
+           eexists. split.
+           ++ eapply lts_close_l. eapply lts_res, l1. apply Heq2.
+           ++ simpl. rewrite cgr_scope_rev. rewrite <- Heq1.
+              change (p2 ⟨swap⟩ ‖ q2 ⟨ swap ⟩) with ((p2 ‖ q2) ⟨ swap ⟩).
+              symmetry. apply cgr_nu_nu.
         (* lts_close_r *)
         -- admit.
         (* parL *)
