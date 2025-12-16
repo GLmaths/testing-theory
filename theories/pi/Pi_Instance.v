@@ -492,58 +492,6 @@ Proof.
 intros. apply lts_res in H0. rewrite H in H0. assumption.
 Qed.
 
-
-Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
-Proof.
-intros p q r H. destruct p; inversion H.
-eexists. eexists. split. reflexivity. reflexivity.
-Qed.
-
-Lemma Invert_Shift : forall (c: Data) c' σ,
-  ⇑ c = ren1 (up_ren σ) c' -> exists c'', c' = ⇑ c''.
-Proof.
-intros c c' σ Heq.
-assert (H1 : ⇑ c <> 0) by  (destruct c; intro H; now inversion H).
-rewrite Heq in H1.
-assert (H2 : c' <> 0) by
-(intro Hdiff; rewrite Hdiff in H1; asimpl in H1; contradiction).
-destruct c'.
-- destruct n; [contradiction|]. now exists n.
-- now exists v.
-Qed.
-
-Lemma Invert_Shift_Act : forall (α:Act) α' σ,
-  ⇑ α = ren1 (up_ren σ) α' -> exists α'', α' = ⇑ α''.
-Proof.
-intros α α' σ Heq.
-destruct α, α'; try destruct e; try destruct e0; inversion Heq.
-- apply Invert_Shift in H0, H1. destruct H0, H1. exists (ActIn (x ⋉ x0)). now subst.
-- apply Invert_Shift in H0, H1. destruct H0, H1. exists (FreeOut (x ⋉ x0)). now subst.
-- apply Invert_Shift in H0. destruct H0. exists (BoundOut x). now subst.
-- now exists tau_action.
-Qed.
-
-Lemma Invert_Shift_Simple : forall (α:Act) α',
-   α' = ⇑ α -> exists α'', α' = ⇑ α''.
-Proof.
-intros. symmetry in H.
-replace α' with (ren1 (up_ren ids) α') in H.
-eapply Invert_Shift_Act. exact H.
-assert (Heq: (pointwise_relation _ eq) (0 .: idsRen >> S) ids) by (intros [|n]; trivial).
-destruct α'; try destruct e.
-- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
-- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
-- cbn; repeat f_equal; destruct d; try destruct n; trivial.
-- trivial.
-Qed.
-
-Lemma Invert_Bound_Out : forall (α:Act) c,
-   BoundOut c = ⇑ α -> exists d, c = ⇑ d /\ α = BoundOut d.
-Proof.
-intros. destruct α; try destruct e; inversion H.
-now exists d.
-Qed.
-
 Lemma Invert_Lts_Input : forall p q c v σ,
   lts (p ⟨σ⟩) (ActIn (c ⋉ v)) q ->
   exists c', c = ren1 σ c'.
@@ -640,8 +588,33 @@ dependent induction transition.
 - destruct p; inversion x. destruct g0; inversion x.
   assert (Heq: (g p2) = (g g0_2) ⟨σ⟩) by (asimpl; simpl; f_equal; exact H2).
   destruct (IHtransition (g g0_2) _ _ _ Heq eq_refl) as (d & w & q' & Heq1 & Heq2 & Heq3 & Heq4).
-  eexists. eexists. eexists. repeat split; eauto with lts.
+  eexists. eexists. eexists. repeat split; eauto with lts,
 Qed.
+
+Lemma Invert_Lts_BoundOut : forall p q c σ,
+  lts (p ⟨σ⟩) (BoundOut c) q ->
+  exists c' q',
+  c = ren1 σ c' /\
+  q = q' ⟨up_ren σ⟩    /\
+  lts p (BoundOut c') q'.
+Proof.
+intros p q c σ transition.
+dependent induction transition.
+- (* lts_res *)
+  destruct p; inversion x.
+  destruct (IHtransition _ (⇑ c) _ H0 eq_refl) as (c' & q' & Heq1 & Heq2 & Heq3).
+  destruct (Invert_Shift _ _ _ Heq1) as (d & Hd). rewrite Hd in Heq1. rewrite permute_ren1 in Heq1.
+  apply Shift_Op_Injective in Heq1. rewrite Heq2. rewrite <- Up_Up_Swap.
+  eexists. exists (ν (q' ⟨swap⟩)). repeat split.
+  + exact Heq1.
+  + rewrite Hd in Heq3. eapply res_bound; trivial.
+- (* lts_close *)
+  destruct p; inversion x.
+  repeat eexists.
+- admit.
+- admit.
+- admit.
+- admit.
 
 
 Lemma ren_lts : forall p α q σ,
@@ -1132,7 +1105,11 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               change (p2 ⟨swap⟩ ‖ q2 ⟨ swap ⟩) with ((p2 ‖ q2) ⟨ swap ⟩).
               symmetry. apply cgr_nu_nu.
         (* lts_close_r *)
-        -- admit.
+        -- replace α with τ by (destruct α; try destruct e; now inversion x).
+           destruct (Invert_Lts_FreeOut _ _ _ _ _ l1) as (c' & v' & p' & Hc' & Hv' & Hp' & Htransition).
+
+           eexists. split.
+           ++ eapply lts_close_r. eapply 
         (* parL *)
         -- eexists. split.
            ++ eapply lts_parL...

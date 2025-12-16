@@ -175,3 +175,59 @@ Qed.
 
 Lemma Shift_Swap : forall (p:proc), (⇑ p) ⟨swap⟩ = p ⟨up_ren shift⟩.
 Proof. asimpl. unfold core.funcomp. simpl. now asimpl. Qed.
+
+
+Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
+Proof.
+intros p q r H. destruct p; inversion H.
+eexists. eexists. split. reflexivity. reflexivity.
+Qed.
+
+Lemma Invert_Shift : forall (c: Data) c' σ,
+  ⇑ c = ren1 (up_ren σ) c' -> exists c'', c' = ⇑ c''.
+Proof.
+intros c c' σ Heq.
+assert (H1 : ⇑ c <> 0) by  (destruct c; intro H; now inversion H).
+rewrite Heq in H1.
+assert (H2 : c' <> 0) by
+(intro Hdiff; rewrite Hdiff in H1; asimpl in H1; contradiction).
+destruct c'.
+- destruct n; [contradiction|]. now exists n.
+- now exists v.
+Qed.
+
+Lemma Invert_Shift_Act : forall (α:Act) α' σ,
+  ⇑ α = ren1 (up_ren σ) α' -> exists α'', α' = ⇑ α''.
+Proof.
+intros α α' σ Heq.
+destruct α, α'; try destruct e; try destruct e0; inversion Heq.
+- apply Invert_Shift in H0, H1. destruct H0, H1. exists (ActIn (x ⋉ x0)). now subst.
+- apply Invert_Shift in H0, H1. destruct H0, H1. exists (FreeOut (x ⋉ x0)). now subst.
+- apply Invert_Shift in H0. destruct H0. exists (BoundOut x). now subst.
+- now exists tau_action.
+Qed.
+
+Lemma Invert_Shift_Simple : forall (α:Act) α',
+   α' = ⇑ α -> exists α'', α' = ⇑ α''.
+Proof.
+intros. symmetry in H.
+replace α' with (ren1 (up_ren ids) α') in H.
+eapply Invert_Shift_Act. exact H.
+assert (Heq: (pointwise_relation _ eq) (0 .: idsRen >> S) ids) by (intros [|n]; trivial).
+destruct α'; try destruct e.
+- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
+- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
+- cbn; repeat f_equal; destruct d; try destruct n; trivial.
+- trivial.
+Qed.
+
+Lemma Invert_Bound_Out : forall (α:Act) c,
+   BoundOut c = ⇑ α -> exists d, c = ⇑ d /\ α = BoundOut d.
+Proof.
+intros. destruct α; try destruct e; inversion H.
+now exists d.
+Qed.
+
+Lemma Up_Up_Swap : forall (p: proc) σ,
+  p ⟨swap⟩ ⟨up_ren (up_ren σ)⟩ = p ⟨up_ren (up_ren σ)⟩ ⟨swap⟩.
+Proof. intros. asimpl. now simpl. Qed.
