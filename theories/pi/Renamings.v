@@ -48,9 +48,9 @@ Coercion var_proc : nat >-> proc.
 
 Definition ren_Act (xi : nat -> nat) (a : Act) : Act :=
   match a with
-  | ActIn (act d1 d2) => ActIn (act (subst_Data xi d1) (subst_Data xi d2))
-  | FreeOut (act d1 d2) => FreeOut (act (subst_Data xi d1) (subst_Data xi d2))
-  | BoundOut d1 => BoundOut (subst_Data xi d1)
+  | ActIn (act d1 d2) => ActIn (act (ren_Data xi d1) (ren_Data xi d2))
+  | FreeOut (act d1 d2) => FreeOut (act (ren_Data xi d1) (ren_Data xi d2))
+  | BoundOut d1 => BoundOut (ren_Data xi d1)
   | tau_action => tau_action
  end.
 

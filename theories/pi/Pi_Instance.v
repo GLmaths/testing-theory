@@ -530,7 +530,6 @@ intros. symmetry in H.
 replace α' with (ren1 (up_ren ids) α') in H.
 eapply Invert_Shift_Act. exact H.
 assert (Heq: (pointwise_relation _ eq) (0 .: idsRen >> S) ids) by (intros [|n]; trivial).
-asimpl. unfold Ren_Act.
 destruct α'; try destruct e.
 - cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
 - cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
@@ -697,7 +696,7 @@ Lemma ren_lts : forall p α q σ,
   - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition' _].
     rewrite Hbound. asimpl.
     refine (eq_rect _ _ (lts_res _) _ _).
-    * unfold shift_op, Shift_Act, Ren_Act. rewrite shift_permute_Action.
+    * unfold shift_op. rewrite shift_permute_Action.
       apply IHTransition'.
       rewrite (is_bound_ren _ shift) in Hbound.
       apply Hbound.
@@ -705,15 +704,15 @@ Lemma ren_lts : forall p α q σ,
   - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [_ IHTransition'].
     rewrite Hbound. asimpl.
     refine (eq_rect _ _ (lts_res _) _ _).
-    * unfold shift_op, Shift_Act, Ren_Act. rewrite shift_permute_Action.
+    * unfold shift_op. rewrite shift_permute_Action.
       apply IHTransition'.
       rewrite (is_bound_ren _ shift) in Hbound.
       apply Hbound.
     * rewrite <- (is_bound_ren _ σ), Hbound. simpl. now asimpl.
   - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition' _].
     eapply lts_open; fold ren_proc.
-    unfold Ren_Act, ren_Act in IHTransition'. asimpl in IHTransition'.
-    eapply IHTransition'. reflexivity.
+    cbn in IHTransition'. asimpl in IHTransition'.
+    now eapply IHTransition'.
   - destruct (IHTransition σ EqSpec) as [IHTransition' _].
     eapply lts_parL; fold ren_proc.
     + apply IHTransition'. exact Hbound.
@@ -949,8 +948,9 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
       * dependent destruction l. eexists. split.
         -- eapply swap_transition, proj1 in l.
            specialize (l eq_refl).
-           replace (ren1 swap (⇑ (FreeOut (⇑ c ⋉ 0)))) with (FreeOut (ren1 swap (⇑ (⇑ c)) ⋉ 0)) in l
-           by (asimpl; unfold Ren_Act, ren_Act; simpl; now asimpl).
+           replace (ren1 swap (⇑ (FreeOut (⇑ c ⋉ 0)))) with
+                   (FreeOut (ren1 swap (⇑ (⇑ c)) ⋉ 0)) in l
+           by now cbn.
            rewrite Shift_Shift_Swap_Data in l.
            rewrite Swap_Proc_Involutive in l.
            apply (@lts_res _ (q ⟨swap⟩)). apply lts_open. exact l.
@@ -1006,8 +1006,9 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
               apply swap_transition, proj1 in l2.
               specialize (l2 eq_refl).
               rewrite Shift_Shift_Swap_pr in l2.
-              replace (ren1 swap (⇑ (ActIn ((⇑ c) ⋉ 0)))) with (ActIn ((ren1 swap (⇑ (⇑ c))) ⋉ 0)) in l2
-              by (asimpl; unfold Ren_Act, ren_Act; simpl; now asimpl).
+              replace (ren1 swap (⇑ (ActIn ((⇑ c) ⋉ 0)))) with
+                      (ActIn ((ren1 swap (⇑ (⇑ c))) ⋉ 0)) in l2
+              by now cbn.
               rewrite Shift_Shift_Swap_Data in l2.
               apply l2.
            ++ simpl. rewrite <- cgr_scope.
@@ -1026,8 +1027,9 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
            ++ apply swap_transition, proj1 in l2. specialize (l2 eq_refl).
               rewrite <- Shift_Swap in l2.
               rewrite Swap_Proc_Involutive in l2.
-              replace (ren1 swap (⇑ (ActIn ((⇑ c) ⋉ 0)))) with (ActIn ((ren1 swap (⇑ (⇑ c))) ⋉ 0)) in l2
-              by (asimpl; unfold Ren_Act, ren_Act; simpl; now asimpl).
+              replace (ren1 swap (⇑ (ActIn ((⇑ c) ⋉ 0)))) with
+                      (ActIn ((ren1 swap (⇑ (⇑ c))) ⋉ 0)) in l2
+              by now cbn.
               rewrite Shift_Shift_Swap_Data in l2.
               apply l2.
         -- simpl. rewrite <- Shift_Swap. 
