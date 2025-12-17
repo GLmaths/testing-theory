@@ -50,6 +50,7 @@ Proof. constructor; first apply _. intros *; apply finite_countable. Qed.
 
 (******************************** Tools for Finite Image LTS ************************************)
 
+(***************** Tau Set ***************************)
 Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶ p')).
 
@@ -97,6 +98,57 @@ Proof.
     + eapply lts_tau_set_spec in l. multiset_solver.
 Qed.
 
+(***************** External Action Set ***************************)
+
+Definition lts_extaction_set `{FiniteImagegLts P A} p μ : list P :=
+  map proj1_sig (enum $ dsig (fun p' => p ⟶[ μ ] p')).
+
+Lemma lts_extaction_set_spec : forall `{FiniteImagegLts P A} p μ q, 
+        q ∈ lts_extaction_set p μ <-> p ⟶[ μ ] q.
+Proof.
+  intros. split.
+  intro mem. unfold lts_tau_set in mem.
+  eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
+  eapply bool_decide_unpack. eassumption.
+  intro. eapply elem_of_list_fmap.
+  exists (dexist q H2). split.
+  eauto. eapply elem_of_enum.
+Qed.
+
+Definition lts_extaction_set_from_pset_spec1 `{Countable P, gLts P A}
+  (ps : gset P) μ (qs : gset P) :=
+  forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟶[ μ ] q.
+
+Definition lts_extaction_set_from_pset_spec2 `{Countable P, gLts P A}
+  (ps : gset P) μ (qs : gset P) :=
+  forall p q, p ∈ ps -> p ⟶[ μ ] q -> q ∈ qs.
+
+Definition lts_extaction_set_from_pset_spec `{Countable P, gLts P A}
+  (ps : gset P) μ (qs : gset P):=
+  lts_extaction_set_from_pset_spec1 ps μ qs /\ lts_extaction_set_from_pset_spec2 ps μ qs.
+
+Definition lts_extaction_set_from_pset `{FiniteImagegLts P A} (ps : gset P) μ : gset P :=
+  ⋃ (map (fun p => list_to_set (lts_extaction_set p μ)) (elements ps)).
+
+Lemma lts_extaction_set_from_pset_ispec `{gLts P A, !FiniteImagegLts P A}
+  (ps : gset P) μ :
+  lts_extaction_set_from_pset_spec ps μ (lts_extaction_set_from_pset ps μ).
+Proof.
+  split.
+  - intros a mem.
+    eapply elem_of_union_list in mem as (xs & mem1 & mem2).
+    eapply elem_of_list_fmap in mem1 as (p & heq0 & mem1).
+    subst.  eapply elem_of_list_to_set in mem2.
+    eapply lts_extaction_set_spec in mem2. multiset_solver.
+  - intros p q mem l.
+    eapply elem_of_union_list.
+    exists (list_to_set (lts_extaction_set p μ)).
+    split.
+    + multiset_solver.
+    + eapply lts_extaction_set_spec in l. multiset_solver.
+Qed.
+
+(******** Weak Traces Sets **********)
 Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : terminate p) : gset P :=
   let '(tstep _ f) := t in
   let k q := wt_set_nil (`q) (f (`q) (proj2_dsig q)) in
