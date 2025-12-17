@@ -93,6 +93,21 @@ Qed.
 Definition injective (σ : nat -> nat) :=
   forall x y, σ x = σ y -> x = y.
 
+Lemma Injective_Ren_Data : forall (σ : nat -> nat),
+  injective σ -> forall d1 d2 : Data, ren1 σ d1 = ren1 σ d2 -> d1 = d2.
+Proof.
+intros σ Hinj d1 d2 Heq.
+destruct d1, d2; inversion Heq; try reflexivity; now rewrite (Hinj n0 n).
+Qed.
+
+Lemma Injective_UpRen : forall (σ : nat -> nat),
+  injective σ -> injective (up_ren σ).
+Proof.
+intros σ Hinj.
+intros [|n0] [|n1] H; trivial; inversion H.
+apply Hinj in H1. now rewrite H1.
+Qed.
+
 Lemma Shift_Injective : injective shift.
 Proof.
   intros x y H. now inversion H.
@@ -231,3 +246,20 @@ Qed.
 Lemma Up_Up_Swap : forall (p: proc) σ,
   p ⟨swap⟩ ⟨up_ren (up_ren σ)⟩ = p ⟨up_ren (up_ren σ)⟩ ⟨swap⟩.
 Proof. intros. asimpl. now simpl. Qed.
+
+Lemma shift_permute : forall p σ,
+  p ⟨σ⟩ ⟨shift⟩ = p ⟨shift⟩ ⟨up_ren σ⟩.
+Proof. now asimpl. Qed.
+
+Lemma shift_permute_Data : forall (v:Data) σ,
+  ren1 shift (ren1 σ v) = ren1 (up_ren σ) (ren1 shift v).
+Proof. now asimpl. Qed.
+
+(** Autosubst should solve this? *)
+Lemma shift_permute_Action : forall (a:Act) σ,
+  ren1 shift (ren1 σ a) = ren1 (up_ren σ) (ren1 shift a).
+Proof.
+intros.
+unfold ren1, Ren_Act.
+now repeat rewrite renRen_Act.
+Qed.
