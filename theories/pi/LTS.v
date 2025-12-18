@@ -86,4 +86,38 @@ Inductive lts : proc-> Act -> proc -> Prop :=
 
 (* observations: a closed term does no visible actions (only τ) *)
 
+
+Lemma res_not_bound : forall p α q,
+  is_bound_out α = false ->
+  lts p (⇑ α) q ->
+  lts (ν p) α (ν q).
+Proof.
+intros. apply lts_res in H0. rewrite H in H0. assumption.
+Qed.
+
+Lemma res_bound : forall p α q,
+  is_bound_out α = true ->
+  lts p (⇑ α) q ->
+  lts (ν p) α (ν q ⟨swap⟩).
+Proof.
+intros. apply lts_res in H0. rewrite H in H0. assumption.
+Qed.
+
+Lemma parR_bound : forall p α q1 q2,
+  is_bound_out α = true ->
+  lts q1 α q2 ->
+  lts (p ‖ q1) α (⇑ p ‖ q2).
+Proof.
+intros. eapply lts_parR in H0. exact H0. now rewrite H.
+Qed.
+
+Lemma parR_not_bound : forall p α q1 q2,
+  is_bound_out α = false ->
+  lts q1 α q2 ->
+  lts (p ‖ q1) α (p ‖ q2).
+Proof.
+intros. eapply lts_parR in H0. exact H0. now rewrite H.
+Qed.
+
 #[global] Hint Constructors lts:lts.
+#[global] Hint Resolve res_not_bound res_bound parR_bound parR_not_bound : lts.

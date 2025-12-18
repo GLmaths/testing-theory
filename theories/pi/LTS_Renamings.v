@@ -21,22 +21,6 @@ Proof.
 intros α H. destruct α; try destruct e; try discriminate; eauto.
 Qed.
 
-Lemma res_not_bound : forall p α q,
-  is_bound_out α = false ->
-  lts p (⇑ α) q ->
-  lts (ν p) α (ν q).
-Proof.
-intros. apply lts_res in H0. rewrite H in H0. assumption.
-Qed.
-
-Lemma res_bound : forall p α q,
-  is_bound_out α = true ->
-  lts p (⇑ α) q ->
-  lts (ν p) α (ν q ⟨swap⟩).
-Proof.
-intros. apply lts_res in H0. rewrite H in H0. assumption.
-Qed.
-
 Lemma Invert_Lts_Input : forall p q c v σ,
   lts (p ⟨σ⟩) (ActIn (c ⋉ v)) q ->
   exists c', c = ren1 σ c'.
