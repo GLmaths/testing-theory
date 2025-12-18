@@ -373,9 +373,8 @@ Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
 Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
 Hint Unfold lts_then_sc:lts.
 
-(* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
-(* fact 1.4.16 in Sangiorgi&Walker *)
-Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
+
+Lemma Congruence_Respects_Transition_Old  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
 Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto lenght *)
   intros p q α (p' & hcgr & l).
   revert q α l.
@@ -431,6 +430,7 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
             ** (* possibly eapply returning a term that is too "simpl"d.
                   Giving an explicit witness might work better *)
               rewrite cgr_par_assoc. change (ren_proc ids shift p) with (⇑ p). eauto with cgr.
+    (* cgr_par_assoc_rev *)
     + intros. dependent destruction l.
       * dependent destruction l1...
       * dependent destruction l2...
@@ -456,29 +456,37 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
             ** eapply lts_close_r...
             ** eauto with cgr.
       * eexists; split...
-    + intros. exists q.  split. apply lts_choiceL. assumption. auto with cgr.
+    (* cgr_choice_nil *)
+    + intros. exists q. split. now apply lts_choiceL. reflexivity.
+    (* cgr_choice_nil_rev *)
     + intros. dependent destruction l.
-      -- exists q. split. assumption. auto with cgr.
+      -- exists q. split. assumption. reflexivity.
       -- inversion l.
+    (* cgr_choice_com *)
     + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceR. assumption. auto with cgr.
-      -- exists q0. split. apply lts_choiceL. assumption. auto with cgr.
+      -- exists q0. split. now apply lts_choiceR. reflexivity.
+      -- exists q0. split. now apply lts_choiceL. reflexivity.
+    (* cgr_choice_assoc *)
     + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceL. apply lts_choiceL. assumption. auto with cgr.
+      -- exists q0. split. apply lts_choiceL. now apply lts_choiceL. reflexivity.
       -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. apply lts_choiceR. assumption. auto with cgr.
-         * exists q0. split. apply lts_choiceR. assumption. auto with cgr.
+         * exists q0. split. apply lts_choiceL. now apply lts_choiceR. reflexivity.
+         * exists q0. split. now apply lts_choiceR. reflexivity.
+    (* cgr_choice_assoc_rev *)
     + intros. dependent destruction l.
       -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. assumption. auto with cgr.
-         * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. auto with cgr.
-      -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. auto with cgr.
+         * exists q0. split. apply lts_choiceL. assumption. reflexivity.
+         * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. reflexivity.
+      -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. reflexivity.
+    (* cgr_recursion *)
     + intros. dependent destruction l.
        eexists. split.
        * apply lts_recursion.
        * assert (Hrew : p ≡* q) by now constructor. now rewrite Hrew.
+    (* cgr_tau *)
     + intros. dependent destruction l. exists p.  split. apply lts_tau.
       constructor. assumption.
+    (* cgr_input *)
     + intros. dependent destruction l. exists (p [⋅;v..]). split. apply lts_input.
       assert (p ≡* q) by now constructor. now rewrite H0.
     + (** cgr_par **)
@@ -486,7 +494,8 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
       * destruct (IHcgr_step _ _ l1) as [x [H0 H1]]...
       * destruct (IHcgr_step _ _ l2) as [x [H0 H1]]...
       * destruct (IHcgr_step _ _ l1) as [x [H0 H1]]...
-      * admit. (* The issue with inductive hypothesis that Serguei was talking about *)
+      * destruct (Invert_Lts_Input q p2 (⇑ c) 0 shift l2).
+       admit. (* The issue with inductive hypothesis that Serguei was talking about *)
       * destruct (IHcgr_step _ _ l) as [x [H0 H1]]...
       * apply (t_step _ cgr_step) in H.
         case_eq (is_bound_out α); eexists; split.
@@ -765,12 +774,128 @@ Proof with (subst; eauto 6 with lts cgr). (* some cases needs the extra eauto le
         -- eexists. split.
            ++ eapply lts_parL...
            ++ reflexivity.
-        -- eexists. split.
-           ++ (* How does this work *)
-              eapply lts_parR. eapply lts_open.  admit. admit.
-            ++ reflexivity.
+        -- (* this is not possible *)
+           destruct (Invert_Lts_FreeOut _ _ _ _ _ l) as (c' & v' & q' & Hc' & Hv' & Hq' & Htransition).
+           destruct v'; try destruct n; inversion Hv'.
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. eauto with cgr.
+Qed.
+
+(*
+lts_res
+lts_open
+lts_parL
+lts_parR
+lts_choiceL
+lts_choiceR *)
+
+(* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
+(* fact 1.4.16 in Sangiorgi&Walker *)
+Lemma Congruence_Respects_Transition : forall p p' q α,
+  p ≡ p' -> lts p α q -> exists r, (lts p' α r) /\ r ≡* q.
+Proof with (info_eauto with lts cgr).
+intros p p' q α hcgr  hlts.
+revert p' hcgr.
+dependent induction hlts; intros p'' hcgr.
+- (* lts_input *)     inversion hcgr... eexists; rewrite H2...
+- (* lts_output *)    inversion hcgr...
+- (* lts_tau *)       inversion hcgr... eexists; rewrite H0...
+- (* lts_recursion *) inversion hcgr... eexists; rewrite H0...
+- (* lts_ifOne *)
+  inversion hcgr... repeat eexists.
+  + eauto with lts.
+  + now constructor.
+- (* lts_ifZero *)
+  inversion hcgr... repeat eexists.
+  + eauto with lts.
+  + now constructor.
+- (* lts_comL *)
+  inversion hcgr...
+  + subst. inversion hlts2.
+  + (* cgr_par_assoc *) subst. inversion hlts1...
+  + (* cgr_par_assoc_rev *) subst. inversion hlts2...
+  + (* cgr_par *) subst. destruct (IHhlts1 _ H2) as [r [Hlts Hcongr]]...
+  + (* cgr_scope_rev *)
+    subst p1. inversion hlts1.
+    apply shift_transition, proj1 in hlts2.
+    repeat eexists...
+- (* lts_comR *)
+  inversion hcgr...
+  + subst p1. inversion hlts1.
+  + (* cgr_par_assoc *) subst. inversion hlts2...
+  + (* cgr_par_assoc_rev *) subst. inversion hlts1...
+  + (* cgr_par *) subst. destruct (IHhlts2 _ H2) as [r [Hlts Hcongr]]...
+  + (* cgr_scope_rev *)
+    subst q1. inversion hlts2.
+    apply shift_transition, proj1 in hlts1.
+    repeat eexists...
+- (* lts_close_l *)
+  inversion hcgr...
+  + subst q1. inversion hlts2.
+  + (* cgr_par_assoc *) subst.
+    inversion hlts1.
+    * subst. repeat eexists.
+      -- eapply lts_close_l. exact H1. eapply parR_not_bound...
+      -- simpl...
+    * subst. repeat eexists...
+  + (* cgr_par_assoc_rev *) subst.
+    inversion hlts2.
+    * subst. repeat eexists...
+    * subst. repeat eexists...
+  + (* cgr_par *) subst. destruct (IHhlts1 _ H2) as [r [Hlts Hcongr]].
+    repeat eexists...
+  + (* cgr_scope_rev *)
+    subst p1. inversion hlts1.
+    * subst. apply shift_transition, proj1 in hlts2.
+      specialize (hlts2 eq_refl).
+      apply swap_transition, proj1 in hlts2.
+      rewrite Shift_Shift_Swap_pr in hlts2. cbn in hlts2.
+      replace (ren_Data swap (ren_Data shift (⇑ c)) ⋉ 0) with
+              (ren_Data swap (⇑ (⇑ c)) ⋉ 0) in hlts2 by now cbn.
+      rewrite Shift_Shift_Swap_Data in hlts2. specialize (hlts2 eq_refl).
+      repeat eexists.
+      ** eapply lts_res. eapply lts_close_l. exact H0. apply hlts2.
+      ** simpl. rewrite <- (Swap_Proc_Involutive q) at 1.
+         replace (q ⟨swap⟩⟨swap⟩ ‖ (⇑ q2) ⟨ swap ⟩) with ((q ⟨ swap ⟩ ‖ (⇑ q2)) ⟨ swap ⟩) by trivial.
+         rewrite <- cgr_nu_nu. now rewrite cgr_scope_rev.
+    * eauto with lts cgr.
+- (* lts_close_r *)
+  inversion hcgr...
+  + subst q1. inversion hlts1.
+  + (* cgr_par_assoc *) subst. inversion hlts2...
+    * subst. repeat eexists...
+    * subst. repeat eexists...
+  + (* cgr_par_assoc_rev *) subst. inversion hlts1...
+    * subst. repeat eexists...
+    * subst. repeat eexists.
+      -- eapply lts_close_r. exact H1. eapply lts_parL...
+      -- simpl...
+  + (* cgr_par *) subst.
+    assert (Hshift : ⇑ p1 ≡ ⇑ q) by
+    (apply RenProperStep; trivial; intro x; trivial).
+    destruct (IHhlts2 _ Hshift) as [r [Hlts Hcongr]].
+    repeat eexists...
+  + (* cgr_scope_rev *)
+    subst p1. inversion hlts2; subst.
+    * apply shift_transition, proj2 in hlts1.
+      specialize (hlts1 eq_refl).
+      (* This is a clever example of using swap in a place
+         where no actual swap rule is involved *)
+      repeat eexists.
+      -- eapply lts_res. eapply lts_close_r. exact hlts1.
+         eapply swap_transition, proj1 in H0.
+         specialize (H0 eq_refl).
+         rewrite <- Shift_Swap in H0.
+         rewrite Swap_Proc_Involutive in H0.
+         change (ren1 swap (⇑ (ActIn (⇑ c ⋉ 0))))
+           with (ActIn (ren1 swap (⇑ (⇑ c)) ⋉ 0)) in H0.
+         rewrite Shift_Shift_Swap_Data in H0.
+         apply H0.
+      -- simpl. rewrite <- Shift_Swap.
+         change ((q ⟨ swap ⟩ ‖ (⇑ q2) ⟨ swap ⟩))
+           with ((q ‖ (⇑ q2)) ⟨ swap ⟩).
+         now rewrite <- cgr_nu_nu, cgr_scope_rev.
+
 Qed.
 
 Lemma TransitionUnderScope : forall P Q n α, lts P (nvars n α) Q -> lts (νs n P) α (νs n Q).
