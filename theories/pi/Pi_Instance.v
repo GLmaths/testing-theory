@@ -367,7 +367,10 @@ Ltac case_shift :=
 Hint Extern 1 (_ ≡* _) => case_shift:cgr.
 
 (* p 'is equivalent some r 'and r performs α to q *)
-Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
+Definition sc_then_lts p α q := exists r, r ≡* p /\ (lts r α q).
+
+(* p 'is equivalent some r 'and r performs α to q *)
+Definition sc_step_then_lts p α q := exists r, r ≡ p /\ (lts r α q).
 
 (* p performs α to some r and this is equivalent to q*)
 Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
@@ -375,10 +378,12 @@ Hint Unfold lts_then_sc:lts.
 
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
 (* fact 1.4.16 in Sangiorgi&Walker *)
-Lemma Congruence_Respects_Transition : forall p p' q α,
-  p ≡ p' -> lts p α q -> exists r, (lts p' α r) /\ r ≡* q.
+(* First we prove it just for one step, then for the full congruence *)
+Lemma Congruence_Respects_Transition_Step : forall p q α,
+  sc_step_then_lts p α q -> lts_then_sc p α q.
 Proof with (info_eauto with lts cgr).
-intros p p' q α hcgr  hlts.
+unfold sc_step_then_lts, lts_then_sc.
+intros p' q α (p & hcgr & hlts).
 revert p' hcgr.
 dependent induction hlts; intros p'' hcgr.
 - (* lts_input *)     inversion hcgr... eexists; rewrite H2...
@@ -735,13 +740,36 @@ dependent induction hlts; intros p'' hcgr.
   + (* cgr_choice_assoc *) subst. inversion hlts; subst...
 Qed.
 
+Lemma Congruence_Respects_Transition : forall p q α,
+  sc_then_lts p α q -> lts_then_sc p α q.
+Proof.
+intros p q α (r & Hcongr & Hlts).
+revert q Hlts. induction Hcongr.
+- intros. apply Congruence_Respects_Transition_Step. eexists; eauto.
+- intros q Hlts. destruct (IHHcongr1 _ Hlts) as [p [Hplts Hpcongr]].
+  destruct (IHHcongr2 _ Hplts) as [q' [Hlts' Hqcongr]].
+  eexists. split.
+  * apply Hlts'.
+  * now rewrite Hqcongr, Hpcongr.
+Qed.
 
-Lemma TransitionUnderScope : forall P Q n α, lts P (nvars n α) Q -> lts (νs n P) α (νs n Q).
+
+Lemma TransitionUnderScope : forall P Q n α,
+  is_bound_out α = false ->
+  lts P (nvars n α) Q -> lts (νs n P) α (νs n Q).
 Proof.
 intros P Q n.
-induction n; intros α Transition.
+induction n; intros α Hact Transition.
 - simpl. exact Transition.
-- simpl. apply lts_res, IHn. rewrite <- shift_in_nvars. exact Transition.
+- simpl. apply res_not_bound, IHn. apply Hact. now rewrite <- (is_bound_shift α).
+  rewrite <- shift_in_nvars. exact Transition.
+Qed.
+
+Lemma tau_helper : forall n, τ = nvars n τ.
+Proof.
+induction n; simpl.
+- reflexivity.
+- rewrite <- IHn. reflexivity.
 Qed.
 
 (* One side of the Harmony Lemma *)
@@ -754,54 +782,66 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
 
 - destruct IH as [c [v [P1 [P2 [G1 [G2 [s [n [H1 H2]]]]]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 ‖ P2 [⋅;v..] ‖ s)) τ) as [? [H3 H4]].
-  { eexists. split.
-    * exact H1.
-    * apply TransitionUnderScope, lts_parL, (@lts_comL c v); eauto with ccs.  }
+  + eexists. split.
+    * now rewrite H1.
+    * apply TransitionUnderScope, lts_parL. reflexivity.
+      erewrite <- tau_helper.
+      eauto with lts. erewrite <- tau_helper. reflexivity.
   + eexists. split.
     * exact H3.
-    * etransitivity. exact H4. now rewrite H2.
+    * rewrite H4, H2. reflexivity.
 
 (* Second case τ by Tau Action *)
 
 - destruct IH as [P1 [G1 [s [n [H1 H2]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 ‖ s)) τ) as [? [H3 H4]].
-  { eexists. split; eauto using TransitionUnderScope, H1 with ccs. }
-  eexists. split.
-    + exact H3.
-    + rewrite H4. now rewrite H2.
+  + eexists. split.
+    * now rewrite H1.
+    * apply TransitionUnderScope, lts_parL. reflexivity.
+      erewrite <- tau_helper.
+      eauto with lts. erewrite <- tau_helper. reflexivity.
+  + eexists. split.
+    * exact H3.
+    * rewrite H4, H2. reflexivity.
 
 (* Third case τ by recursion *)
 
 - destruct IH as [P1 [s [n [H1 H2]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 [(rec P1)..;⋅] ‖ s)) τ) as [? [H3 H4]].
-  { eexists. split.
-    + exact H1.
-    + apply TransitionUnderScope, lts_parL, lts_recursion. }
-  eexists. split.
-    + exact H3.
-    + rewrite H4. now rewrite H2.
+  + eexists. split.
+    * now rewrite H1.
+    * apply TransitionUnderScope, lts_parL. reflexivity.
+      erewrite <- tau_helper.
+      eauto with lts. erewrite <- tau_helper. reflexivity.
+  + eexists. split.
+    * exact H3.
+    * rewrite H4, H2. reflexivity.
 
 (* Fourth case τ by If ONE*)
 
 - destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 ‖ s)) τ) as [? [H4 H5]].
-  { eexists. split.
-    * exact H1.
-    * apply TransitionUnderScope, lts_parL, lts_ifOne. assumption. }
-  eexists. split.
-    + exact H4.
-    + etransitivity. exact H5. now rewrite H2.
+  + eexists. split.
+    * now rewrite H1.
+    * apply TransitionUnderScope, lts_parL. reflexivity.
+      erewrite <- tau_helper.
+      eapply lts_ifOne. exact H3. erewrite <- tau_helper. reflexivity.
+  + eexists. split.
+    * exact H4.
+    * etransitivity. exact H5. now rewrite H2.
 
 (* Fifth case τ by If ZERO*)
 
 - destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P0 ‖ s)) τ) as [? [H4 H5]].
-  { eexists. split.
-    * exact H1.
-    * apply TransitionUnderScope, lts_parL, lts_ifZero. assumption. }
-  eexists. split.
-    + exact H4.
-    + etransitivity. exact H5. now rewrite H2.
+  + eexists. split.
+    * now rewrite H1.
+    * apply TransitionUnderScope, lts_parL. reflexivity.
+      erewrite <- tau_helper.
+      eapply lts_ifZero. exact H3. erewrite <- tau_helper. reflexivity.
+  + eexists. split.
+    * exact H4.
+    * etransitivity. exact H5. now rewrite H2.
 Qed.
 
 
