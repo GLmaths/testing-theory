@@ -888,6 +888,82 @@ eapply sts_cong.
 * exact cong.
 Qed.
 
+Lemma sts_nres: forall P Q, (sts P Q) -> (forall n, sts (νs n P) (νs n Q)).
+Proof.
+intros P Q H n.
+induction n.
+- exact H.
+- apply sts_res. exact IHn.
+Qed.
+
+Lemma Communication_Under_News: forall p1 q1 n m c v P1 P2 G1 G2 R1 R2,
+p1 ≡* νs n ((nvars n c) ! (nvars n v) • P1 + G1 ‖ R1) ->
+q1 ≡* νs m ((nvars m c) ? P2 + G2 ‖ R2) ->
+(p1 ‖ q1) ≡*
+νs n
+  (νs m
+  ((nvars (m + n) c ! nvars (m + n) v • nvars m P1 + nvars m G1
+‖ nvars (m + n) c
+? P2 ⟨ upRen_Data_Data (upn m (Nat.iter n shift)) ⟩ +
+G2 ⟨ upn m (Nat.iter n shift) ⟩)
+‖ (R2 ⟨ upn m (Nat.iter n shift) ⟩ ‖ nvars m R1))).
+Proof.
+intros.
+rewrite H, H0.
+rewrite n_extrusion.
+rewrite nvars_νs.
+rewrite cgr_par_com.
+rewrite n_extrusion.
+rewrite Shift_to_Ren_Data.
+cbn. fold ren_proc. fold ren_gproc.
+rewrite renRen_Data, Pointwise_Up_Shift_Sum.
+rewrite Push_nvars_par, Push_nvars_choice, Push_nvars_output.
+repeat rewrite nvars_sum.
+rewrite PeanoNat.Nat.add_comm.
+rewrite <- Shift_to_Ren_Data.
+rewrite cgr_par_com, cgr_par_assoc.
+rewrite (cgr_par_com (nvars m R1)), cgr_par_assoc.
+rewrite cgr_par_assoc_rev.
+reflexivity.
+Qed.
+
+Lemma Communicated_Under_News : forall n m v P1 P2 R1 R2,
+νs n (νs m
+  ((nvars m P1 ‖ P2 ⟨ upRen_Data_Data (upn m (Nat.iter n shift)) ⟩ [⋅; (nvars (m + n) v)..])
+    ‖
+    (R2 ⟨ upn m (Nat.iter n shift) ⟩ ‖ nvars m R1)))
+≡*
+νs n (P1 ‖ R1) ‖ νs m (P2 [⋅; (nvars m v)..] ‖ R2).
+Proof.
+intros.
+rewrite cgr_par_assoc, cgr_par_com, cgr_par_assoc_rev.
+rewrite n_extrusion. rewrite nvars_νs.
+rewrite (cgr_par_com (P1 ‖ R1)). rewrite n_extrusion.
+apply (NewsProper _ _ eq_refl).
+apply (NewsProper _ _ eq_refl).
+rewrite Push_nvars_par. rewrite (cgr_par_assoc ).
+change ((P2 [⋅; (nvars n v)..] ‖ R2) ⟨ upn m (Nat.iter n shift) ⟩)
+with ((P2 [⋅; (nvars n v)..] ⟨ upn m (Nat.iter n shift) ⟩ ‖ R2 ⟨ upn m (Nat.iter n shift) ⟩)).
+rewrite (cgr_par_com (nvars m R1)).
+apply cgr_par.
+apply cgr_par. fold ren_proc.
+(* rewrite <- nvars_sum. *)
+rewrite PeanoNat.Nat.add_comm.
+rewrite Shift_to_Ren_Data.
+rewrite <- Pointwise_Up_Shift_Sum.
+asimpl. simpl.
+apply SubstProper.
+- reflexivity.
+- intro k.
+   rewrite Shift_to_Ren_Data. now asimpl.
+- reflexivity.
+Qed.
+(* replace (P2 ⟨ upRen_Data_Data (upn m (Nat.iter n shift)) ⟩ [⋅; (nvars (m + n) v)..]
+‖ R2 ⟨ upn m (Nat.iter n shift) ⟩) with
+(P2 ⟨ upRen_Data_Data (upn m (Nat.iter n shift)) ⟩ [⋅; (nvars (m + n) v)..]
+‖ R2 ⟨ upn m (Nat.iter n shift) ⟩). admit. *)
+
+
 Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof. 
 intros P Q Transition.
@@ -896,15 +972,34 @@ dependent induction Transition.
 - apply sts_recursion.
 - apply sts_ifOne. assumption.
 - apply sts_ifZero. assumption.
-- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
-  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
-  admit.
-- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
-  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
-  admit.
-- destruct (TransitionShapeForBoundOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
-  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
-  admit.
+- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as (P1 & G1 & R1 & n & c1' & v1' & Hcongr1 & Hcongr1' & Hact1 & Hguard1).
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as (P2 & G2 & R2 & m & c2' & v2' & Hcongr2 & Hcongr2' & Hact2 & Hguard2).
+  rewrite Push_nvars_ActIn in Hact2.
+  inversion Hact2.
+  rewrite Push_nvars_FreeOut in Hact1.
+  inversion Hact1.
+  rewrite H0 in Hcongr2.
+  rewrite H2, H3 in Hcongr1.
+  rewrite H1 in Hcongr2'.
+  eapply sts_cong.
+  + apply Communication_Under_News. exact Hcongr1. exact Hcongr2.
+  + repeat eapply sts_nres. eapply sts_par. eapply sts_com.
+  + rewrite Hcongr1', Hcongr2'. apply Communicated_Under_News.
+- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as (P1 & G1 & R1 & n & c1' & v1' & Hcongr1 & Hcongr1' & Hact1 & Hguard1).
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as (P2 & G2 & R2 & m & c2' & v2' & Hcongr2 & Hcongr2' & Hact2 & Hguard2).
+  rewrite Push_nvars_ActIn in Hact2.
+  inversion Hact2.
+  rewrite Push_nvars_FreeOut in Hact1.
+  inversion Hact1.
+  rewrite H0 in Hcongr2.
+  rewrite H2, H3 in Hcongr1.
+  rewrite H1 in Hcongr2'.
+  eapply sts_cong.
+  + rewrite cgr_par_com.
+    apply Communication_Under_News. exact Hcongr1. exact Hcongr2.
+  + repeat eapply sts_nres. eapply sts_par. eapply sts_com.
+  + rewrite (cgr_par_com q2). rewrite Hcongr1', Hcongr2'. apply Communicated_Under_News.
+- destruct (TransitionShapeForBoundOutput p1 p2 c Transition1) as (n & P1 & Hguard1).
 - destruct (TransitionShapeForBoundOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
   destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
   admit.
