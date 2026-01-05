@@ -135,6 +135,7 @@ Qed.
 
 Class Shiftable (A : Type) := shift_op : A -> A.
 Instance Shift_proc : Shiftable proc := ren2 ids shift.
+Instance Shift_gproc : Shiftable gproc := ren2 ids shift.
 Instance Shift_Data : Shiftable Data := ren1 shift.
 Instance Shift_Act  : Shiftable Act := ren1 shift.
 Notation "⇑" := shift_op.
@@ -148,6 +149,68 @@ Qed.
 
 Definition nvars {A: Type} `{_ : Shiftable A} (n : nat) : A -> A :=
   Nat.iter n (⇑).
+
+Lemma Shift_to_Ren : forall (p:proc) n, nvars n p = p ⟨Nat.iter n shift⟩.
+Proof.
+intros p n. induction n.
+- now asimpl.
+- simpl. rewrite IHn. now asimpl.
+Qed.
+
+Lemma Shift_to_Ren_Data : forall (d:Data) n, nvars n d = ren1 (Nat.iter n shift) d.
+Proof.
+intros p n. induction n.
+- now asimpl.
+- simpl. rewrite IHn. now asimpl.
+Qed.
+
+Lemma nvars_sum : forall n m {A: Type} `{_ : Shiftable A} (q:A),
+  nvars n (nvars m q) = nvars (n + m) q.
+Proof.
+intros n m A Hq. induction n.
+- now simpl.
+- intros. simpl. now rewrite IHn.
+Qed.
+
+Lemma Push_nvars_output: forall n c v P,
+  nvars n (c ! v • P) = (nvars n c) ! (nvars n v) • (nvars n P).
+Proof.
+intros. induction n; simpl; auto.
+rewrite IHn. reflexivity.
+Qed.
+
+Lemma Push_nvars_par: forall n P Q,
+  nvars n (P ‖ Q) = (nvars n P) ‖ (nvars n Q).
+Proof.
+intros. induction n. trivial. simpl. now rewrite IHn.
+Qed.
+
+Lemma Push_nvars_choice: forall n P Q,
+  nvars n (g (P + Q)) = (nvars n  P) + (nvars n Q).
+Proof.
+intros. induction n. trivial. simpl. now rewrite IHn.
+Qed.
+
+Lemma Push_nvars_FreeOut : forall n c v, nvars n (FreeOut (c ⋉ v)) = FreeOut (nvars n c ⋉ nvars n v).
+Proof.
+intros n c v.
+induction n; simpl; try reflexivity.
+rewrite IHn. reflexivity.
+Qed.
+
+Lemma Push_nvars_ActIn : forall n c v, nvars n (ActIn (c ⋉ v)) = ActIn (nvars n c ⋉ nvars n v).
+Proof.
+intros n c v.
+induction n; simpl; try reflexivity.
+rewrite IHn. reflexivity.
+Qed.
+
+Lemma Push_nvars_BoundOut : forall n v, nvars n (BoundOut  v) = BoundOut (nvars n v).
+Proof.
+intros n v.
+induction n; simpl; try reflexivity.
+rewrite IHn. reflexivity.
+Qed.
 
 Lemma shift_in_nvars {A : Type} `{Shiftable A}:
   forall n (q:A), ⇑ (nvars n q) = nvars n (⇑ q).
@@ -190,7 +253,6 @@ Qed.
 
 Lemma Shift_Swap : forall (p:proc), (⇑ p) ⟨swap⟩ = p ⟨up_ren shift⟩.
 Proof. asimpl. unfold core.funcomp. simpl. now asimpl. Qed.
-
 
 Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
 Proof.
@@ -262,4 +324,118 @@ Proof.
 intros.
 unfold ren1, Ren_Act.
 now repeat rewrite renRen_Act.
+Qed.
+
+Definition upn n sigma :=
+Nat.iter n (fun sigma => up_ren sigma) sigma.
+
+Lemma shift_upn_permute: forall (d:Data) n,
+ ren1 (up_ren (upn n swap)) (⇑ d) = ⇑ (ren1 (upn n swap) d).
+Proof. destruct n; now rewrite permute_ren1. Qed.
+
+Lemma shiftn_permute: forall (d:Data) n sigma, 
+  ren1 (upn n sigma) (nvars n d) = nvars n (ren1 sigma d).
+Proof.
+  intros.
+  induction n.
+  - now simpl.
+  - simpl nvars. rewrite <- IHn.
+    unfold shift_op, Shift_Data.
+    now rewrite shift_permute_Data.
+Qed.
+
+Lemma upnswap_neut: forall n (d:Data), 
+  (ren1 (upn n swap) (nvars (S (S n)) d)) = nvars (S (S n)) d.
+Proof.
+  induction n; intros.
+  - simpl. now rewrite Shift_Shift_Swap_Data.
+  - simpl nvars. simpl upn. rewrite shift_upn_permute.
+    simpl nvars in IHn. now rewrite IHn.
+Qed.
+
+Lemma var0_shiftupn: forall n,
+  ⇑ (ren1 (upn n swap) (nvars n (var_Data 0))) = 
+  ren1 (upn (S n) swap) (ren1 (upn n swap) (nvars n (var_Data 0))).
+Proof.
+  intro.
+  induction n.
+  - reflexivity.
+  - simpl nvars. simpl upn.
+    rewrite shift_upn_permute.
+    rewrite IHn at 1.
+    unfold shift_op, Shift_Data.
+    now rewrite shift_permute_Data.
+Qed.
+
+Lemma var0_shiftupn2: forall n,
+  nvars (S n) (var_Data 0) = ren1 (upn n swap) (nvars n (var_Data 0)).
+Proof.
+  intros. 
+  induction n.
+  - reflexivity.
+  - simpl nvars in *. rewrite IHn. now erewrite var0_shiftupn.
+Qed.
+
+Lemma upn_up: forall n sigma, 
+  upn n (up_ren sigma) = up_ren (upn n sigma).
+Proof.
+  intros.
+  induction n.
+  - reflexivity.
+  - simpl upn. now rewrite IHn.
+Qed.
+
+Lemma upn_νs: forall n P sigma, 
+  (νs n P)⟨sigma⟩ = νs n (P⟨upn n sigma⟩).
+Proof.
+  intros.
+  generalize dependent sigma.
+  induction n; intros.
+  - reflexivity.
+  - cbn in *. rewrite IHn. rewrite upn_up. auto.
+Qed.
+
+Lemma nvars_νs: forall n m P, nvars m (νs n P) = νs n (P⟨ upn n (Nat.iter m shift) ⟩).
+Proof.
+intros n m P.
+rewrite Shift_to_Ren.
+apply upn_νs.
+Qed.
+
+Lemma shift_νs: forall n P, 
+  ⇑ (νs n P) = νs n (P⟨upn n shift⟩).
+Proof.
+ unfold shift_op, Shift_proc.
+ intros. eapply upn_νs.
+Qed.
+
+Lemma Shift_of_nat: forall n m, Nat.iter n shift m = Nat.add n m.
+Proof.
+induction n.
+- reflexivity.
+- intros. simpl. now rewrite IHn.
+Qed.
+
+Lemma Up_Shift_Sum: forall n m x,
+(upn m (Nat.iter n shift) (m + x)) = Nat.add n (m + x).
+Proof.
+intros.
+induction m.
+- simpl. now rewrite Shift_of_nat.
+- simpl. rewrite IHm. now rewrite PeanoNat.Nat.add_succ_r. 
+Qed.
+
+Lemma Pointwise_Up_Shift_Sum: forall n m,
+(pointwise_relation _ eq)
+ (core.funcomp (upn m (Nat.iter n shift)) (Nat.iter m shift))
+  (Nat.iter (n + m) shift).
+Proof.
+intros.
+induction m.
+- simpl. rewrite PeanoNat.Nat.add_0_r. reflexivity.
+- simpl. unfold core.funcomp in IHm.
+  intro x.
+  repeat rewrite Shift_of_nat. rewrite Up_Shift_Sum.
+  rewrite PeanoNat.Nat.add_succ_r.
+  now rewrite PeanoNat.Nat.add_assoc.
 Qed.
