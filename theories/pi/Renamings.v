@@ -1,4 +1,3 @@
-
 Require Export signatures.pi.
 Require Export signatures.unscoped.
 Require Import Relations Morphisms.

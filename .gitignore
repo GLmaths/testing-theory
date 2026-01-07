@@ -1,1 +1,8 @@
 _build/
+.envrc
+.CoqMakefile.d
+.direnv/
+devenv.lock
+.lia.cache
+.nix/
+.vscode/
