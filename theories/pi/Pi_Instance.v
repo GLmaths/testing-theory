@@ -31,40 +31,35 @@ Require Import Coq.Wellfounded.Inverse_Image.
 
 From Must.pi Require Import Renamings Congruence LTS LTS_Renamings.
 
-Parameter (channel_eq_dec : base.EqDecision Value). (* only here for the classes *)
+Parameter (channel_eq_dec : base.EqDecision Value).
 #[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
-Parameter (channel_is_countable : countable.Countable Value). (* only here for the classes *)
+Parameter (channel_is_countable : countable.Countable Value).
 #[global] Instance channel_countable : countable.Countable Value. Proof. exact channel_is_countable. Defined.
-Parameter (value_eq_dec : base.EqDecision Value). (* only here for the classes *)
+Parameter (value_eq_dec : base.EqDecision Value).
 #[global] Instance value_eqdecision : base.EqDecision Value. Proof. exact value_eq_dec. Defined.
-Parameter (value_is_countable : countable.Countable Value). (* only here for the classes *)
+Parameter (value_is_countable : countable.Countable Value).
 #[global] Instance value_countable : countable.Countable Value. Proof. exact value_is_countable. Defined.
 
-(* State Transition System (STS-reduction), reduction semantic *)
 Inductive sts : proc -> proc -> Prop :=
-(*The axiomes*)
-(* Communication of channels output and input that have the same name *)
 | sts_com : forall {c v p1 p2 g1 g2}, 
     sts ((c ! v • p1) + g1 ‖ ((c ? p2) + g2)) (p1 ‖ p2 [⋅; v..])
-(* Nothing more , something less *)
+
 | sts_tau : forall {p g}, 
     sts ((t • p) + g) p
-(* Recursion *)
+
 | sts_recursion : forall {p}, 
     sts (rec p) (p [(rec p).. ; ⋅])
-(*If Yes*)
+
 | sts_ifOne : forall {p q E}, Eval_Eq E = Some true -> 
     sts (If E Then p Else q) p
-(*If No*)
+
 | sts_ifZero : forall {p q E}, Eval_Eq E = Some false -> 
     sts (If E Then p Else q) q
 
-(* The left parallele respect the Reduction *)
 | sts_par : forall {p1 p2 q}, 
     sts p1 p2 ->
     sts (p1 ‖ q) (p2 ‖ q)
 
-(*The Congruence respects the Reduction *)
 | sts_cong : forall {p1 p2 q2 q1},
     p1 ≡* p2 -> sts p2 q2 -> q2 ≡* q1 -> sts p1 q1
 
@@ -228,7 +223,8 @@ Lemma TransitionShapeForFreeOutput : forall P Q c v,
   ((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
 Proof.
 intros P Q c v Transition.
-dependent induction Transition; try destruct (IHTransition c v eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
+dependent induction Transition; try destruct (IHTransition c v eq_refl)
+  as (P1 & G & R & n & H0 & H1 & H3).
 - exists P, 𝟘, 𝟘, 0. repeat split; eauto with cgr.
 - destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
     exists P1, G, R, (S n). do 2 (try split).
@@ -322,17 +318,6 @@ intros. dependent induction H.
 - apply GuardedDoesNoBoundOutput in H. contradiction.
 Qed.
 
-(* Lemma TransitionShapeForOutputSimplified : forall P Q c v, (lts P (FreeOut (c ⋉ v)) Q) 
-                                        -> (P ≡* ((c ! v • 𝟘) ‖ Q)).
-Proof.
-intros. 
-destruct (TransitionShapeForOutput P Q c v H) as [G [R [n [H0 H1]]]].
-
-apply transitivity with (((c ! v • 𝟘) ‖ x) ‖ 𝟘). apply transitivity with ((c ! v • 𝟘) ‖ x); eauto.
-auto with cgr. apply transitivity with ((c ! v • 𝟘) ‖ (x ‖ 𝟘)). auto with cgr. apply cgr_fullpar. auto with cgr.
-eauto with cgr. 
-Qed.  *)
-
 Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P = (g L))) -> 
 (exists Q M, ((P ≡* ((t • Q) + M))) /\ (V ≡* (Q))).
 Proof.
@@ -357,7 +342,6 @@ dependent induction Transition;
       rewrite cgr_choice_com.
       apply cgr_choice. assumption.
 Qed.
-
   
 Ltac case_shift :=
   match goal with
@@ -380,7 +364,7 @@ Hint Unfold lts_then_sc:lts.
 (* First we prove it just for one step, then for the full congruence *)
 Lemma Congruence_Respects_Transition_Step : forall p q α,
   sc_step_then_lts p α q -> lts_then_sc p α q.
-Proof with (info_eauto with lts cgr).
+Proof with (eauto with lts cgr).
 unfold sc_step_then_lts, lts_then_sc.
 intros p' q α (p & hcgr & hlts).
 revert p' hcgr.
@@ -444,7 +428,7 @@ dependent induction hlts; intros p'' hcgr.
       repeat eexists.
       ** eapply lts_res. eapply lts_close_l. exact H0. apply hlts2.
       ** simpl. rewrite <- (Swap_Proc_Involutive q) at 1.
-         replace (q ⟨swap⟩⟨swap⟩ ‖ (⇑ q2) ⟨ swap ⟩) with ((q ⟨ swap ⟩ ‖ (⇑ q2)) ⟨ swap ⟩) by trivial.
+         change (q ⟨swap⟩⟨swap⟩ ‖ (⇑ q2) ⟨ swap ⟩) with ((q ⟨ swap ⟩ ‖ (⇑ q2)) ⟨ swap ⟩).
          rewrite <- cgr_nu_nu. now rewrite cgr_scope_rev.
     * eauto with lts cgr.
 - (* lts_close_r *)
@@ -752,7 +736,6 @@ revert q Hlts. induction Hcongr.
   * now rewrite Hqcongr, Hpcongr.
 Qed.
 
-
 Lemma TransitionUnderScope : forall P Q n α,
   is_bound_out α = false ->
   lts P (nvars n α) Q -> lts (νs n P) α (νs n Q).
@@ -778,7 +761,6 @@ intros P Q Reduction.
 destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
 
 (* First case τ by communication *)
-
 - destruct IH as [c [v [P1 [P2 [G1 [G2 [s [n [H1 H2]]]]]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 ‖ P2 [⋅;v..] ‖ s)) τ) as [? [H3 H4]].
   + eexists. split.
@@ -791,7 +773,6 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
     * rewrite H4, H2. reflexivity.
 
 (* Second case τ by Tau Action *)
-
 - destruct IH as [P1 [G1 [s [n [H1 H2]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 ‖ s)) τ) as [? [H3 H4]].
   + eexists. split.
@@ -804,7 +785,6 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
     * rewrite H4, H2. reflexivity.
 
 (* Third case τ by recursion *)
-
 - destruct IH as [P1 [s [n [H1 H2]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 [(rec P1)..;⋅] ‖ s)) τ) as [? [H3 H4]].
   + eexists. split.
@@ -817,7 +797,6 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
     * rewrite H4, H2. reflexivity.
 
 (* Fourth case τ by If ONE*)
-
 - destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P1 ‖ s)) τ) as [? [H4 H5]].
   + eexists. split.
@@ -830,7 +809,6 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
     * etransitivity. exact H5. now rewrite H2.
 
 (* Fifth case τ by If ZERO*)
-
 - destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
   destruct (Congruence_Respects_Transition P (νs n (P0 ‖ s)) τ) as [? [H4 H5]].
   + eexists. split.
@@ -841,38 +819,6 @@ destruct (ReductionShape P Q Reduction) as [IH|[IH|[IH|[IH |IH]]]].
   + eexists. split.
     * exact H4.
     * etransitivity. exact H5. now rewrite H2.
-Qed.
-
-
-(* Some lemmas for multiple parallele processes to simplify the statements of proof*)
-Lemma InversionParallele : forall P Q R S, (P ‖ Q) ‖ (R ‖ S) ≡* (P ‖ R) ‖ (Q ‖ S) . 
-Proof. 
-intros.
-apply transitivity with (((P ‖ Q) ‖ R) ‖ S). apply cgr_par_assoc_rev.
-apply transitivity with ((P ‖ (Q ‖ R)) ‖ S). apply cgr_par. apply cgr_par_assoc.
-apply transitivity with (((Q ‖ R) ‖ P) ‖ S). apply cgr_par. apply cgr_par_com.
-apply transitivity with ((Q ‖ R) ‖ (P ‖ S)). apply cgr_par_assoc.
-apply transitivity with ((R ‖ Q) ‖ (P ‖ S)). apply cgr_par. apply cgr_par_com.
-apply transitivity with (((R ‖ Q) ‖ P) ‖ S). apply cgr_par_assoc_rev.
-apply transitivity with ((P ‖ (R ‖ Q)) ‖ S). apply cgr_par. apply cgr_par_com.
-apply transitivity with (((P ‖ R) ‖ Q) ‖ S). apply cgr_par. apply cgr_par_assoc_rev.
-apply transitivity with ((P ‖ R) ‖ (Q ‖ S)). apply cgr_par_assoc.
-reflexivity. 
-Qed.
-Lemma InversionParallele2 : forall P Q R S, (P ‖ Q) ‖ (R ‖ S) ≡* (R ‖ P) ‖ (S ‖ Q).
-Proof.
-intros. 
-apply transitivity with ((P ‖ R) ‖ (Q ‖ S)). apply InversionParallele.
-apply transitivity with ((R ‖ P) ‖ (Q ‖ S)). apply cgr_par. apply cgr_par_com.
-apply transitivity with ((Q ‖ S) ‖ (R ‖ P)). apply cgr_par_com.
-apply transitivity with ((S ‖ Q) ‖ (R ‖ P)). apply cgr_par. apply cgr_par_com.
-apply cgr_par_com.
-Qed.
-Lemma InversionParallele3 : forall P Q R S, (P ‖ Q) ‖ (R ‖ S) ≡* (R ‖ Q) ‖ (P ‖ S).
-Proof.
-intros.
-apply transitivity with ((Q ‖ P) ‖ (R ‖ S)). apply cgr_par. apply cgr_par_com.
-apply transitivity with ((Q ‖ R) ‖ (P ‖ S)). apply InversionParallele. apply cgr_par. apply cgr_par_com.
 Qed.
 
 (* Strengthened Harmony Lemma (in one side) *)
@@ -957,11 +903,6 @@ apply SubstProper.
    rewrite Shift_to_Ren_Data. now asimpl.
 - reflexivity.
 Qed.
-(* replace (P2 ⟨ upRen_Data_Data (upn m (Nat.iter n shift)) ⟩ [⋅; (nvars (m + n) v)..]
-‖ R2 ⟨ upn m (Nat.iter n shift) ⟩) with
-(P2 ⟨ upRen_Data_Data (upn m (Nat.iter n shift)) ⟩ [⋅; (nvars (m + n) v)..]
-‖ R2 ⟨ upn m (Nat.iter n shift) ⟩). admit. *)
-
 
 Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof. 
@@ -1039,7 +980,6 @@ dependent induction Transition.
     rewrite cgr_choice_assoc. apply sts_tau.
 Qed.
 
-(* One side of the Harmony Lemma*)
 Lemma TausAndCong_Implies_Reduction: forall P Q, (lts_then_sc P τ Q) -> (sts P Q).
 Proof.
 intros P Q H.
