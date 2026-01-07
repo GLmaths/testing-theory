@@ -38,6 +38,9 @@ Inductive cgr_step : proc -> proc -> Prop :=
 | cgr_input_step : forall c p q,
     p ≡ q ->
     (c ? p) ≡ (c ? q)
+| cgr_output_step : forall c v p q,
+    p ≡ q ->
+    (c ! v • p) ≡ (c ! v • q)
 | cgr_par_step : forall p q r,
     p ≡ q ->
     (p ‖ r) ≡ (q ‖ r)
@@ -164,8 +167,14 @@ constructor.
 Qed. 
 Lemma cgr_input : forall c p q, p ≡* q -> (c ? p) ≡* (c ? q).
 Proof.
-intros. induction H. 
+intros. induction H.
 - constructor. now apply cgr_input_step.
+- eauto with cgr_eq.
+Qed.
+Lemma cgr_output : forall c v p q, p ≡* q -> (c ! v • p) ≡* (c ! v • q).
+Proof.
+intros. induction H.
+- constructor. now apply cgr_output_step.
 - eauto with cgr_eq.
 Qed.
 Lemma cgr_res : forall p q, p ≡* q -> (ν p) ≡* (ν q).
@@ -214,7 +223,7 @@ Lemma cgr_choice : forall p q r, (g p) ≡* (g q) -> p + r ≡* q + r.
 Proof.
 intros. dependent induction H.
 - constructor. apply cgr_choice_step. exact H.
-- etransitivity. apply (IHclos_trans1 p q). reflexivity. admit.
+- etransitivity. apply (IHclos_trans1 p q). reflexivity.
 Admitted.
 
 (* The if of processes respects ≡* *)
@@ -272,64 +281,7 @@ Qed.
 (* The old Congruence lemmas can now be restated using Autosubst's help.
    This still requires some technical work and lemmas on substitutions. *)
 
-Definition eq_up_to_cgr f g := forall x :nat, f x ≡* g x.
-
-Instance SubstProperStep : Proper (eq ==> (pointwise_relation _ eq) ==> cgr_step ==> cgr_step) subst2.
-Proof.
-intros sp' sp Hp s' s Hs q1 q2 Hq. subst. rewrite Hs. clear Hs s'. revert sp s.
-induction Hq;  intros; try solve [asimpl; auto with cgr_step_structure].
-- asimpl. apply cgr_choice_step. apply IHHq.
-- admit.
-(* - change ((ν (ν p)) [sp; s]) with ((ν (ν p)) [sp; s]).
-  asimpl. simpl.
-  unfold shift.
-  assert (subst_proc sp ((var_Data 1) .: ((var_Data 0) .: (fun x => ren_Data S (ren_Data S (s x))))) p = 
-          ren_proc ids swap
-            (subst_proc sp ((var_Data 0) .: (var_Data 1 .: (fun x => ren_Data S (ren_Data S (s x))))) p)).
-          unfold swap. asimpl. simpl. cbn.
-  rewrite H.
-  apply cgr_nu_nu_step. *)
-- unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope_step _ _).
-- unfold subst2. simpl. rewrite permute_subst. exact (cgr_scope_rev_step _ _).
-Admitted.
-
-Instance SubstProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) subst2.
-Proof.
-intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs, Hp.
-induction Hq as [p q base_case | p r q transitivity_case].
-- apply t_step. apply SubstProperStep; trivial. intro n; trivial.
-- subst. now rewrite IHtransitivity_case.
-Qed.
-
-Instance SubstProper' : Proper (eq_up_to_cgr ==> (pointwise_relation _ eq) ==> eq ==> cgr) subst2.
-Proof.
-intros sp' sp Hp s' s Hs q1 q2 Hq. subst. rewrite Hs. clear Hs.
-revert sp' sp s Hp. induction q2; intros; try solve [asimpl; auto with cgr].
-- asimpl. simpl. apply cgr_recursion. apply IHq2.
-intro n.
-destruct n.
-+ reflexivity.
-+ simpl.
- (* apply Hp.
-
-revert sp sp' Hp.
- induction n.
-+ reflexivity.
-+ intros. simpl. *)
-Admitted.
-
-Instance SubstProperTotal : Proper (eq_up_to_cgr ==> eq ==> cgr ==> cgr) subst2.
-intros sp' sp Hp s' s Hs q1 q2 Hq. subst.
-now rewrite Hq, Hp.
-Qed.
-
-Instance SubstProper'' : Proper (cgr ==> eq ==> eq_up_to_cgr) scons.
-intros p p' Hp s s' Hs. subst.
-intros [|n]; simpl.
-- trivial.
-- reflexivity.
-Qed.
-
+(* The lemmas on renaming suffice for all of the treatment, except recursive variables. *)
 Instance RenProperStep : Proper (eq ==> (pointwise_relation _ eq) ==> cgr_step ==> cgr_step) ren2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs. clear Hs s'. subst.
@@ -337,10 +289,9 @@ intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs. clear Hs s'. subst.
   induction Hq; intros; try solve [asimpl; auto with cgr_step_structure].
   - asimpl. apply cgr_choice_step. apply IHHq.
   - asimpl. simpl. change (idsRen >> sp) with sp.
-    assert (ren_proc sp (1 .: (0 .: (fun x => S (S (s x))))) p = 
-            ren_proc ids swap (ren_proc sp (0 .: (1 .: (fun x => S (S (s x))))) p)).
-            unfold swap. asimpl. now cbn.
-    rewrite H.
+    replace (ren_proc sp (1 .: (0 .: (fun x => S (S (s x))))) p) 
+      with  ((ren_proc sp (0 .: (1 .: (fun x => S (S (s x))))) p) ⟨swap⟩)
+      by now asimpl.
     apply cgr_nu_nu_step.
   - unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_step _ _).
   - unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_rev_step _ _).
@@ -354,13 +305,95 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
+(* In order to treat recursive variables, we need more subtle instances on substitutions *)
+Definition eq_up_to_cgr f g := forall x :nat, f x ≡* g x.
+
+Instance SubstProperStep : Proper (eq ==> (pointwise_relation _ eq) ==> cgr_step ==> cgr_step) subst2.
+Proof.
+intros sp' sp Hp s' s Hs q1 q2 Hq. subst. rewrite Hs. clear Hs s'. revert sp s.
+induction Hq;  intros; try solve [asimpl; auto with cgr_step_structure].
+- asimpl. apply cgr_choice_step. apply IHHq.
+- cbn. rewrite Up_Up_Subst_Swap. now apply cgr_nu_nu_step.
+- unfold subst2. simpl. rewrite Shift_Permute_Subst. exact (cgr_scope_step _ _).
+- unfold subst2. simpl. rewrite Shift_Permute_Subst. exact (cgr_scope_rev_step _ _).
+Qed.
+
+Instance SubstProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) subst2.
+Proof.
+intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs, Hp.
+induction Hq as [p q base_case | p r q transitivity_case].
+- apply t_step. apply SubstProperStep; trivial. reflexivity.
+- subst. now rewrite IHtransitivity_case.
+Qed.
+
+Lemma SubstProper_proc
+  (p : proc)
+  (sp sp' : nat -> proc) (Hp : eq_up_to_cgr sp sp')
+  (s : nat -> Data) : 
+  p[sp; s] ≡* p[sp'; s]
+with SubstProper_gproc
+  (q : gproc)
+  (sp sp' : nat -> proc) (Hp : eq_up_to_cgr sp sp')
+  (s : nat -> Data) :
+  gpr_cgr (q[sp; s]) (q[sp'; s]).
+Proof.
+induction p; cbn.
+- apply Hp.
+- apply cgr_recursion. fold subst_proc. apply SubstProper_proc.
+  (* if two substitutions are eq_up_to_cgr, they are also when moved below a binder *)
+  intros [|n].
+  + reflexivity.
+  + simpl. apply RenProper; try reflexivity. apply Hp.
+- rewrite (SubstProper_proc p1), (SubstProper_proc p2). reflexivity. assumption. assumption.
+- rewrite SubstProper_proc. reflexivity.
+  intros [|n].
+  + apply RenProper; try reflexivity. apply Hp.
+  + apply RenProper; try reflexivity. apply Hp.
+- apply cgr_full_if.
+  + rewrite SubstProper_proc; try reflexivity. assumption.
+  + rewrite SubstProper_proc; try reflexivity. assumption.
+- fold subst_gproc. apply SubstProper_gproc. assumption.
+- unfold gpr_cgr in *. induction q; cbn.
+  + reflexivity.
+  + reflexivity.
+  (* This is, very surprisingly, the only place where we need cgr_output. *)
+  + fold subst_proc. apply cgr_output. apply SubstProper_proc. assumption.
+  + fold subst_proc. apply cgr_input. apply SubstProper_proc.
+    intros [|n].
+    * apply RenProper; try reflexivity. apply Hp.
+    * apply RenProper; try reflexivity. apply Hp.
+  + fold subst_proc. apply cgr_tau. apply SubstProper_proc. assumption.
+  + apply cgr_fullchoice.
+    * rewrite SubstProper_gproc; try reflexivity. assumption.
+    * rewrite SubstProper_gproc; try reflexivity. assumption.
+Qed.
+
+Instance SubstProperMutual : Proper (eq_up_to_cgr ==> (pointwise_relation _ eq) ==> eq ==> cgr) subst2.
+Proof.
+intros sp' sp Hp s' s Hs q1 q2 Hq. subst. rewrite Hs.
+apply SubstProper_proc. assumption.
+Qed.
+
+Instance SubstProperTotal : Proper (eq_up_to_cgr ==> eq ==> cgr ==> cgr) subst2.
+Proof.
+intros sp' sp Hp s' s Hs q1 q2 Hq.
+subst. now rewrite Hq, Hp.
+Qed.
+
+Instance SconsProper : Proper (cgr ==> eq ==> eq_up_to_cgr) scons.
+intros p p' Hp s s' Hs. subst.
+intros [|n]; simpl.
+- trivial.
+- reflexivity.
+Qed.
+
 Instance NewsProper : Proper (eq ==> cgr ==> cgr) νs.
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
 - now simpl.
 - simpl. now apply cgr_res.
 Qed.
-Instance nvars_proper : Proper (eq ==> cgr ==> cgr) (@nvars proc _).
+Instance nvarsProper : Proper (eq ==> cgr ==> cgr) (@nvars proc _).
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
 - now simpl.

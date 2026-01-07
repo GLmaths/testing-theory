@@ -23,12 +23,7 @@
    SOFTWARE.
 *)
 
-Require Import Coq.Program.Equality Coq.Strings.String.
-Require Import RelationClasses.
-From stdpp Require base countable finite gmap list gmultiset strings.
-Require Import Relations Morphisms.
-Require Import Coq.Wellfounded.Inverse_Image.
-
+Require Import Coq.Program.Equality Relations Morphisms.
 From Must.pi Require Import Renamings Congruence LTS LTS_Renamings.
 
 Parameter (channel_eq_dec : base.EqDecision Value).
@@ -126,35 +121,35 @@ induction Transition.
       * exists P1, P0, (s ‖ nvars n (⇑ q)), E, (S n).
         repeat split; simpl; [ rewrite H1 | rewrite H2 | assumption ]...
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
-    + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
+    + destruct IH as (c & v & P1 & P2 & g1 & g2 & s & n & H1 & H2).
       left. exists c, v, P1, P2, g1, g2, s, n.
       split; [ now rewrite <- H1 | now rewrite <- H2 ].
-    + destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
+    + destruct IH as (P1 & P2 & s & n & [H1 H2]).
       right. left. exists P1, P2, s, n.
       split; [ now rewrite <- H1 | now rewrite <- H2 ].
-    + destruct IH as [P1 [s [n [H1 H2]]]].
+    + destruct IH as (P1 & s & n & [H1 H2]).
       right. right. left. exists P1, s, n.
       split; [ now rewrite <- H1 | now rewrite <- H2 ].
-    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as (P1 & P0 & s & E & n & H1 & H2 & H3).
       right. right. right. left. exists P1, P0, s, E, n.
       repeat split; now rewrite <- ?H1, <- ?H2.
-    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as (P1 & P0 & s & E & n & H1 & H2 & H3).
       right. right. right. right. exists P1, P0, s, E, n.
       repeat split; now rewrite <- ?H1, <- ?H2.
   - destruct IHTransition as [IH|[IH|[IH|[IH |IH]]]].
-    + destruct IH as [c [v [P1 [P2 [g1 [g2 [s [n [H1 H2]]]]]]]]].
+    + destruct IH as (c & v & P1 & P2 & g1 & g2 & s & n & H1 & H2).
       left. exists c, v, P1, P2, g1, g2, s, (S n).
       split; [now rewrite H1 | now rewrite H2 ].
-    + destruct IH as [P1 [P2 [s [n [H1 H2]]]]].
+    + destruct IH as (P1 & P2 & s & n & H1 & H2).
       right. left. exists P1, P2, s, (S n).
       split; [ now rewrite H1 | now rewrite H2 ].
-    + destruct IH as [P1 [s [n [H1 H2]]]].
+    + destruct IH as (P1 & s & n & H1 & H2).
       right. right. left. exists P1, s, (S n).
       split; [ now rewrite H1 | now rewrite H2 ].
-    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as (P1 & P0 & s & E & n & H1 & H2 & H3).
       right. right. right. left. exists P1, P0, s, E, (S n).
       repeat split; now rewrite ?H1, ?H2.
-    + destruct IH as [P1 [P0 [s [E [n [H1 [H2 H3]]]]]]].
+    + destruct IH as (P1 & P0 & s & E & n & H1 & H2 & H3).
       right. right. right. right. exists P1, P0, s, E, (S n).
       repeat split; now rewrite ?H1, ?H2.
 Qed.
@@ -370,7 +365,7 @@ intros p' q α (p & hcgr & hlts).
 revert p' hcgr.
 dependent induction hlts; intros p'' hcgr.
 - (* lts_input *)     inversion hcgr... eexists; rewrite H2...
-- (* lts_output *)    inversion hcgr...
+- (* lts_output *)    inversion hcgr... subst. eexists. split; [apply lts_output | now rewrite H3].
 - (* lts_tau *)       inversion hcgr... eexists; rewrite H0...
 - (* lts_recursion *) inversion hcgr... eexists; rewrite H0...
 - (* lts_ifOne *)
@@ -842,34 +837,34 @@ induction n.
 Qed.
 
 Lemma Communication_Under_News: forall n1 n2 m c v P1 P2 G1 G2 R1 R2,
-( νs n1 ((nvars n1 c) ! (nvars n2 v) • P1 + G1 ‖ R1)
-‖
-νs m ((nvars m c) ? P2 + G2 ‖ R2))
-≡*
-νs n1
-  (νs m
-  ((nvars (m + n1) c ! nvars (m + n2) v • nvars m P1 + nvars m G1
-‖ nvars (m + n1) c
-? P2 ⟨ upRen_Data_Data (upn m (Nat.iter n1 shift)) ⟩ +
-G2 ⟨ upn m (Nat.iter n1 shift) ⟩)
-‖ (R2 ⟨ upn m (Nat.iter n1 shift) ⟩ ‖ nvars m R1))).
+(νs n1
+  ((nvars n1 c) ! (nvars n2 v) • P1 + G1 ‖ R1)
+  ‖
+  νs m ((nvars m c) ? P2 + G2 ‖ R2))
+  ≡*
+  νs n1 (νs m
+    ((nvars (m + n1) c ! nvars (m + n2) v • nvars m P1 + nvars m G1
+      ‖ nvars (m + n1) c ?
+          P2 ⟨ up_ren (upn m (Nat.iter n1 shift)) ⟩ +
+          G2 ⟨ upn m (Nat.iter n1 shift) ⟩)
+          ‖ (R2 ⟨ upn m (Nat.iter n1 shift) ⟩ ‖ nvars m R1))).
 Proof.
-intros.
-rewrite n_extrusion.
-rewrite nvars_νs.
-rewrite cgr_par_com.
-rewrite n_extrusion.
-rewrite Shift_to_Ren_Data.
-cbn. fold ren_proc. fold ren_gproc.
-rewrite renRen_Data, Pointwise_Up_Shift_Sum.
-rewrite Push_nvars_par, Push_nvars_choice, Push_nvars_output.
-repeat rewrite nvars_sum.
-rewrite PeanoNat.Nat.add_comm.
-rewrite <- Shift_to_Ren_Data.
-rewrite cgr_par_com, cgr_par_assoc.
-rewrite (cgr_par_com (nvars m R1)), cgr_par_assoc.
-rewrite cgr_par_assoc_rev.
-reflexivity.
+  intros.
+  rewrite n_extrusion.
+  rewrite nvars_νs.
+  rewrite cgr_par_com.
+  rewrite n_extrusion.
+  rewrite Shift_to_Ren_Data.
+  cbn. fold ren_proc. fold ren_gproc.
+  rewrite renRen_Data, Pointwise_Up_Shift_Sum.
+  rewrite Push_nvars_par, Push_nvars_choice, Push_nvars_output.
+  repeat rewrite nvars_sum.
+  rewrite PeanoNat.Nat.add_comm.
+  rewrite <- Shift_to_Ren_Data.
+  rewrite cgr_par_com, cgr_par_assoc.
+  rewrite (cgr_par_com (nvars m R1)), cgr_par_assoc.
+  rewrite cgr_par_assoc.
+  reflexivity.
 Qed.
 
 Lemma Communicated_Under_News : forall n m v P1 P2 R1 R2,
@@ -888,20 +883,18 @@ apply (NewsProper _ _ eq_refl).
 apply (NewsProper _ _ eq_refl).
 rewrite Push_nvars_par. rewrite (cgr_par_assoc ).
 change ((P2 [⋅; (nvars n v)..] ‖ R2) ⟨ upn m (Nat.iter n shift) ⟩)
-with ((P2 [⋅; (nvars n v)..] ⟨ upn m (Nat.iter n shift) ⟩ ‖ R2 ⟨ upn m (Nat.iter n shift) ⟩)).
+  with ((P2 [⋅; (nvars n v)..] ⟨ upn m (Nat.iter n shift) ⟩ ‖
+         R2 ⟨ upn m (Nat.iter n shift) ⟩)).
 rewrite (cgr_par_com (nvars m R1)).
 apply cgr_par.
 apply cgr_par. fold ren_proc.
-(* rewrite <- nvars_sum. *)
 rewrite PeanoNat.Nat.add_comm.
 rewrite Shift_to_Ren_Data.
 rewrite <- Pointwise_Up_Shift_Sum.
 asimpl. simpl.
-apply SubstProper.
-- reflexivity.
-- intro k.
-   rewrite Shift_to_Ren_Data. now asimpl.
-- reflexivity.
+rewrite Shift_to_Ren_Data.
+apply SubstProper; try reflexivity.
+now asimpl.
 Qed.
 
 Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).

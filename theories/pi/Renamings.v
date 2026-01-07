@@ -85,11 +85,6 @@ Proof.
   intros [|[|x]]; reflexivity.
 Qed.
 
-Lemma shift_shift_swap : forall x, (shift >> shift >> swap) x = (shift >> shift) x.
-Proof.
-  intros [|[|x]]; reflexivity.
-Qed.
-
 Definition injective (σ : nat -> nat) :=
   forall x y, σ x = σ y -> x = y.
 
@@ -220,7 +215,7 @@ induction n.
 - intros. simpl. now rewrite IHn.
 Qed.
 
-Lemma permute_subst : forall sp s Q,
+Lemma Shift_Permute_Subst : forall sp s Q,
   (⇑ Q) [(up_Data_proc sp); (up_Data_Data s)]
   =
   ⇑ (Q [sp; s]).
@@ -235,6 +230,23 @@ Proof. now asimpl. Qed.
 Lemma permute_ren1 : forall s (d:Data),
   ren1 (up_ren s) (⇑ d) = ⇑ (ren1 s d).
 Proof. now asimpl. Qed.
+
+Lemma shift_permute : forall p σ,
+  p ⟨σ⟩ ⟨shift⟩ = p ⟨shift⟩ ⟨up_ren σ⟩.
+Proof. now asimpl. Qed.
+
+Lemma shift_permute_Data : forall (v:Data) σ,
+  ren1 shift (ren1 σ v) = ren1 (up_ren σ) (ren1 shift v).
+Proof. now asimpl. Qed.
+
+(** Autosubst should solve this? *)
+Lemma shift_permute_Action : forall (a:Act) σ,
+  ren1 shift (ren1 σ a) = ren1 (up_ren σ) (ren1 shift a).
+Proof.
+intros.
+unfold ren1, Ren_Act.
+now repeat rewrite renRen_Act.
+Qed.
 
 Lemma Shift_Shift_Swap_pr : forall p, (⇑ (⇑ p)) ⟨swap⟩ = ⇑ (⇑ p).
 Proof. now asimpl. Qed.
@@ -254,12 +266,6 @@ Qed.
 Lemma Shift_Swap : forall (p:proc), (⇑ p) ⟨swap⟩ = p ⟨up_ren shift⟩.
 Proof. asimpl. unfold core.funcomp. simpl. now asimpl. Qed.
 
-Lemma Shift_Decompose_Par : forall p q r, ⇑ p = q ‖ r -> exists q' r', q = ⇑ q' /\ r = ⇑ r'.
-Proof.
-intros p q r H. destruct p; inversion H.
-eexists. eexists. split. reflexivity. reflexivity.
-Qed.
-
 Lemma Invert_Shift : forall (c: Data) c' σ,
   ⇑ c = ren1 (up_ren σ) c' -> exists c'', c' = ⇑ c''.
 Proof.
@@ -273,31 +279,6 @@ destruct c'.
 - now exists v.
 Qed.
 
-Lemma Invert_Shift_Act : forall (α:Act) α' σ,
-  ⇑ α = ren1 (up_ren σ) α' -> exists α'', α' = ⇑ α''.
-Proof.
-intros α α' σ Heq.
-destruct α, α'; try destruct e; try destruct e0; inversion Heq.
-- apply Invert_Shift in H0, H1. destruct H0, H1. exists (ActIn (x ⋉ x0)). now subst.
-- apply Invert_Shift in H0, H1. destruct H0, H1. exists (FreeOut (x ⋉ x0)). now subst.
-- apply Invert_Shift in H0. destruct H0. exists (BoundOut x). now subst.
-- now exists tau_action.
-Qed.
-
-Lemma Invert_Shift_Simple : forall (α:Act) α',
-   α' = ⇑ α -> exists α'', α' = ⇑ α''.
-Proof.
-intros. symmetry in H.
-replace α' with (ren1 (up_ren ids) α') in H.
-eapply Invert_Shift_Act. exact H.
-assert (Heq: (pointwise_relation _ eq) (0 .: idsRen >> S) ids) by (intros [|n]; trivial).
-destruct α'; try destruct e.
-- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
-- cbn; repeat f_equal; destruct d, d0; try destruct n; try destruct n0; trivial.
-- cbn; repeat f_equal; destruct d; try destruct n; trivial.
-- trivial.
-Qed.
-
 Lemma Invert_Bound_Out : forall (α:Act) c,
    BoundOut c = ⇑ α -> exists d, c = ⇑ d /\ α = BoundOut d.
 Proof.
@@ -309,21 +290,15 @@ Lemma Up_Up_Swap : forall (p: proc) σ,
   p ⟨swap⟩ ⟨up_ren (up_ren σ)⟩ = p ⟨up_ren (up_ren σ)⟩ ⟨swap⟩.
 Proof. intros. asimpl. now simpl. Qed.
 
-Lemma shift_permute : forall p σ,
-  p ⟨σ⟩ ⟨shift⟩ = p ⟨shift⟩ ⟨up_ren σ⟩.
-Proof. now asimpl. Qed.
-
-Lemma shift_permute_Data : forall (v:Data) σ,
-  ren1 shift (ren1 σ v) = ren1 (up_ren σ) (ren1 shift v).
-Proof. now asimpl. Qed.
-
-(** Autosubst should solve this? *)
-Lemma shift_permute_Action : forall (a:Act) σ,
-  ren1 shift (ren1 σ a) = ren1 (up_ren σ) (ren1 shift a).
+Lemma Up_Up_Subst_Swap : forall (p: proc) σ1 σ2,
+  ((p ⟨swap⟩) [(up_Data_proc (up_Data_proc σ1)); (up_Data_Data (up_Data_Data σ2))])
+  =
+  (p [(up_Data_proc (up_Data_proc σ1)); (up_Data_Data (up_Data_Data σ2))] ⟨swap⟩).
 Proof.
-intros.
-unfold ren1, Ren_Act.
-now repeat rewrite renRen_Act.
+intros. asimpl. simpl. apply subst_proc_morphism.
+- intros [|[|n]]; now asimpl.
+- intros [|[|n]]; now asimpl.
+- trivial.
 Qed.
 
 Definition upn n sigma :=
