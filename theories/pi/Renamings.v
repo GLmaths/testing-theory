@@ -345,7 +345,7 @@ Proof.
 Qed.
 
 Lemma upnswap_neut: forall n (d:Data), 
-  (ren1 (upn n swap) (nvars (S (S n)) d)) = nvars (S (S n)) d.
+  (ren1 (upn n swap) (⇑ (⇑ (nvars n d)))) = (⇑ (⇑ (nvars n d))).
 Proof.
   induction n; intros.
   - simpl. now rewrite Shift_Shift_Swap_Data.
@@ -368,7 +368,7 @@ Proof.
 Qed.
 
 Lemma var0_shiftupn2: forall n,
-  nvars (S n) (var_Data 0) = ren1 (upn n swap) (nvars n (var_Data 0)).
+  ⇑ (nvars n (var_Data 0)) = ren1 (upn n swap) (nvars n (var_Data 0)).
 Proof.
   intros. 
   induction n.

@@ -288,31 +288,49 @@ Qed.
 
 Lemma TransitionShapeForBoundOutput : forall P Q c,
   lts P (BoundOut c) Q ->
-  exists n P' Q',
-  (P ≡* νs n (P' ‖ Q')).
+  exists n P' Q' G',
+  (P ≡* νs (S n) (nvars (S n) c ! (nvars n (var_Data 0)) • P' + G' ‖ Q')
+  /\ Q ≡* (νs n (P' ‖ Q'))
+  ).
   (* /\ (⇑ v) = (var_Data n). *)
   (* I know that: ⇑ LHS = n 
      want to prove: LHS = S n *)
 Proof.
 intros. dependent induction H.
-- destruct (IHlts (⇑ c) eq_refl) as [n (P & Q & Hind1)]. exists (S n), P, Q.
-  (* split. *)
-  * now rewrite Hind1.
-- exists 1, p1, 𝟘.
-  (* split. *)
-  * now rewrite cgr_par_nil.
-  (* * reflexivity. *)
-- destruct (IHlts c eq_refl) as (n & P & Q & IH1).
-  exists n, P, (Q ‖ nvars n q).
-  (* split. *)
-  * now rewrite IH1, <- cgr_par_assoc, <- n_extrusion.
-  (* * exact IH2. *)
-- destruct (IHlts c eq_refl) as (n & P & Q & IH1).
-  exists n, (P ‖ nvars n p), Q.
-  (* split. *)
-  * rewrite IH1. rewrite (cgr_par_com (_‖_)), <- cgr_par_assoc, <- n_extrusion.
-    now rewrite (cgr_par_com p), (cgr_par_com Q).
-  (* * exact IH2. *)
+- destruct (IHlts (⇑ c) eq_refl) as (n & P & Q & G' & HcongrP & HcongrQ).
+  exists (S n), (P ⟨ upn n swap ⟩), (Q ⟨ upn n swap ⟩),
+         (G' ⟨ upn n swap ⟩).
+  split.
+  + simpl.
+    rewrite <- upnswap_neut.
+    rewrite var0_shiftupn2.
+    change
+      ((ren1 (upn n swap) (⇑ (⇑ (nvars n c)))) !
+        ren1 (upn n swap) (nvars n (var_Data 0))
+        • P ⟨ upn n swap ⟩ + G' ⟨ upn n swap ⟩ ‖ Q ⟨ upn n swap ⟩)
+    with
+    ((⇑ (⇑ (nvars n c)) ! nvars n (var_Data 0) • P + G' ‖ Q) ⟨ upn n swap ⟩).
+    rewrite <- upn_νs.
+    rewrite shift_in_nvars.
+    rewrite HcongrP.
+    apply cgr_nu_nu.
+  + simpl. rewrite HcongrQ. now rewrite upn_νs.
+- destruct (TransitionShapeForFreeOutput _ _ _ _ H) as (p & g & r & n & cn & vn & H0 & H1 & H3 & H4).
+  rewrite Push_nvars_FreeOut in H3. inversion H3. rewrite H5, H6 in H0.
+  exists n. repeat eexists.
+  + simpl. rewrite shift_in_nvars. now rewrite H0.
+  + simpl. now rewrite H1.
+- destruct (IHlts c eq_refl) as (n & P & Q & G & HcongrP & HcongrQ).
+  exists n, P, (Q ‖ nvars n (⇑ q)). repeat eexists.
+  + rewrite HcongrP. simpl.
+    now rewrite <- cgr_par_assoc, <- n_extrusion, cgr_scope.
+  + rewrite HcongrQ.
+    now rewrite <- cgr_par_assoc, <- n_extrusion.
+- destruct (IHlts c eq_refl) as (n & P & Q & G & HcongrP & HcongrQ).
+  exists n, P, (Q ‖ nvars n (⇑ p)). repeat eexists.
+  + rewrite HcongrP. simpl. rewrite <- cgr_par_assoc, <- n_extrusion.
+    now rewrite cgr_scope, (cgr_par_com p), (cgr_par_com _ Q).
+  + rewrite HcongrQ. now rewrite <- cgr_par_assoc, <- n_extrusion, cgr_par_com.
 - apply GuardedDoesNoBoundOutput in H. contradiction.
 - apply GuardedDoesNoBoundOutput in H. contradiction.
 Qed.
@@ -896,17 +914,17 @@ induction n.
 - apply sts_res. exact IHn.
 Qed.
 
-Lemma Communication_Under_News: forall p1 q1 n m c v P1 P2 G1 G2 R1 R2,
-p1 ≡* νs n ((nvars n c) ! (nvars n v) • P1 + G1 ‖ R1) ->
+Lemma Communication_Under_News: forall p1 q1 n1 n2 m c v P1 P2 G1 G2 R1 R2,
+p1 ≡* νs n1 ((nvars n1 c) ! (nvars n2 v) • P1 + G1 ‖ R1) ->
 q1 ≡* νs m ((nvars m c) ? P2 + G2 ‖ R2) ->
 (p1 ‖ q1) ≡*
-νs n
+νs n1
   (νs m
-  ((nvars (m + n) c ! nvars (m + n) v • nvars m P1 + nvars m G1
-‖ nvars (m + n) c
-? P2 ⟨ upRen_Data_Data (upn m (Nat.iter n shift)) ⟩ +
-G2 ⟨ upn m (Nat.iter n shift) ⟩)
-‖ (R2 ⟨ upn m (Nat.iter n shift) ⟩ ‖ nvars m R1))).
+  ((nvars (m + n1) c ! nvars (m + n2) v • nvars m P1 + nvars m G1
+‖ nvars (m + n1) c
+? P2 ⟨ upRen_Data_Data (upn m (Nat.iter n1 shift)) ⟩ +
+G2 ⟨ upn m (Nat.iter n1 shift) ⟩)
+‖ (R2 ⟨ upn m (Nat.iter n1 shift) ⟩ ‖ nvars m R1))).
 Proof.
 intros.
 rewrite H, H0.
@@ -999,7 +1017,18 @@ dependent induction Transition.
     apply Communication_Under_News. exact Hcongr1. exact Hcongr2.
   + repeat eapply sts_nres. eapply sts_par. eapply sts_com.
   + rewrite (cgr_par_com q2). rewrite Hcongr1', Hcongr2'. apply Communicated_Under_News.
-- destruct (TransitionShapeForBoundOutput p1 p2 c Transition1) as (n & P1 & Hguard1).
+- destruct (TransitionShapeForBoundOutput p1 p2 c Transition1) as (n & P1 & Q1 & G1 & Hcongr1 & Hcongr1').
+  destruct (TransitionShapeForInput _ q2 _ 0 Transition2) as (P2 & G2 & R2 & m & c2' & v2' & Hcongr2 & Hcongr2' & Hact2 & Hguard2).
+  rewrite Push_nvars_ActIn in Hact2.
+  inversion Hact2.
+  rewrite H0 in Hcongr2.
+  eapply sts_cong.
+  + rewrite Hcongr1. simpl. rewrite shift_in_nvars.
+    rewrite cgr_scope_rev.
+    rewrite Hcongr2. eapply cgr_res.
+    apply Communication_Under_News. reflexivity. reflexivity.
+  + eapply sts_res. repeat eapply sts_nres. eapply sts_par. eapply sts_com.
+  + rewrite Hcongr1', Hcongr2', H1. now rewrite Communicated_Under_News.
 - destruct (TransitionShapeForBoundOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
   destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
   admit.
