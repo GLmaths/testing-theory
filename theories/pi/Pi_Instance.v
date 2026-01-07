@@ -162,122 +162,106 @@ Ltac finish_zero H := rewrite H, <- cgr_par_assoc.
 Ltac finish_Sn H :=  rewrite H, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
 
 Lemma TransitionShapeForInput : forall P Q c v,
-  lts P (ActIn (c ⋉ v)) Q -> exists P1 G R n cn vn,
-  (P ≡* νs n ((cn ? P1 + G) ‖ R)) /\
-  (Q ≡* νs n (P1[⋅; vn..] ‖ R))   /\
-  (ActIn (cn ⋉ vn)) = nvars n (ActIn (c ⋉ v)) /\
+  lts P (ActIn (c ⋉ v)) Q -> exists P1 G R n,
+  (P ≡* νs n (((nvars n c) ? P1 + G) ‖ R)) /\
+  (Q ≡* νs n (P1[⋅; (nvars n v)..] ‖ R))   /\
   ((exists L, P = g L) -> R = 𝟘 /\ n = 0).
 Proof.
 intros P Q c v.
 intro Transition. dependent induction Transition;
-try destruct (IHTransition c v eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H4).
-- exists P, 𝟘, 𝟘, 0, c, v. split; eauto with cgr.
-- destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H4).
-  exists P1, G, R, (S n), cn, vn. simpl. do 3 (try split).
-  + now rewrite H0.
-  + now rewrite H1.
-  + rewrite shift_in_nvars. now rewrite H3.
+try destruct (IHTransition c v eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
+- exists P, 𝟘, 𝟘, 0. split; eauto with cgr.
+- destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
+  exists P1, G, R, (S n). simpl. do 2 (try split).
+  + now rewrite shift_in_nvars, H0.
+  + now rewrite shift_in_nvars, H1.
   + not_a_guard.
 - destruct n.
-  + exists P1, G, (R ‖ q), 0, cn, vn. simpl. do 3 (try split).
+  + exists P1, G, (R ‖ q), 0. simpl. do 2 (try split).
     * now rewrite H0, <- cgr_par_assoc.
     * now rewrite H1, <- cgr_par_assoc.
-    * now rewrite H3.
     * not_a_guard.
-  + exists P1, G, (R ‖ nvars n (⇑ q)), (S n), cn, vn. simpl. do 3 (try split).
+  + exists P1, G, (R ‖ nvars n (⇑ q)), (S n). simpl. do 2 (try split).
     * now finish_Sn H0.
     * now finish_Sn H1.
-    * now rewrite H3.
     * not_a_guard.
 - destruct n; simpl in H0, H1.
-  + exists P1, G, (R ‖ p), 0, cn, vn. simpl. do 3 (try split).
+  + exists P1, G, (R ‖ p), 0. simpl. do 2 (try split).
     * now rewrite H0, cgr_par_com, cgr_par_assoc.
     * now rewrite H1, cgr_par_com, cgr_par_assoc.
-    * now rewrite H3.
     * not_a_guard.
-  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n), cn, vn. simpl. do 3 (try split).
+  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n). simpl. do 2 (try split).
     * finish_Sn H0. now rewrite cgr_par_com.
     * finish_Sn H1. now rewrite cgr_par_com.
-    * now rewrite H3.
     * not_a_guard.
 - destruct n.
-  + exists P1, (G + p2), R, 0, cn, vn. simpl. do 3 (try split).
-    * destruct H4. { now exists p1. } subst.
+  + exists P1, (G + p2), R, 0. simpl. do 2 (try split).
+    * destruct H3. { now exists p1. } subst.
       rewrite cgr_par_nil, <- cgr_choice_assoc. apply cgr_choice.
       now rewrite H0, cgr_par_nil.
     * now rewrite H1.
-    * now rewrite H3.
-    * intro. apply H4. now exists p1.
-  + destruct H4 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
+    * intro. apply H3. now exists p1.
+  + destruct H3 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
 - destruct n.
-  + exists P1, (G + p1), R, 0, cn, vn. simpl. do 3 (try split).
-    * destruct H4. { now exists p2. } subst.
+  + exists P1, (G + p1), R, 0. simpl. do 2 (try split).
+    * destruct H3. { now exists p2. } subst.
       rewrite cgr_par_nil, <- cgr_choice_assoc, cgr_choice_com.
       apply cgr_choice.
       now rewrite H0, cgr_par_nil.
     * now rewrite H1.
-    * now rewrite H3.
-    * intro. apply H4. now exists p2.
-  + destruct H4 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
+    * intro. apply H3. now exists p2.
+  + destruct H3 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Qed.
 
 Lemma TransitionShapeForFreeOutput : forall P Q c v,
-  lts P (FreeOut (c ⋉ v)) Q -> exists P1 G R n cn vn,
-  P ≡* νs n (cn ! vn • P1 + G ‖ R) /\
+  lts P (FreeOut (c ⋉ v)) Q -> exists P1 G R n,
+  P ≡* νs n ((nvars n c) ! (nvars n v) • P1 + G ‖ R) /\
   Q ≡* νs n (P1 ‖ R) /\
-  (FreeOut (cn ⋉ vn)) = nvars n (FreeOut (c ⋉ v)) /\
   ((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
 Proof.
 intros P Q c v Transition.
-dependent induction Transition; try destruct (IHTransition c v eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H2).
-- exists P, 𝟘, 𝟘, 0, c, v. repeat split; eauto with cgr.
-- destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & cn & vn & H0 & H1 & H3 & H2).
-    exists P1, G, R, (S n), cn, vn. do 3 (try split).
-  + now rewrite H0.
+dependent induction Transition; try destruct (IHTransition c v eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
+- exists P, 𝟘, 𝟘, 0. repeat split; eauto with cgr.
+- destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
+    exists P1, G, R, (S n). do 2 (try split).
+  + simpl. repeat rewrite shift_in_nvars. now rewrite H0.
   + simpl. now rewrite H1.
-  + rewrite H3. simpl. now rewrite shift_in_nvars.
   + not_a_guard.
 - destruct n.
-  + exists P1, G, (R ‖ q), 0, cn, vn. do 3 (try split).
+  + exists P1, G, (R ‖ q), 0. do 2 (try split).
     * now finish_zero H0.
     * now finish_zero H1.
-    * now rewrite H3.
     * not_a_guard.
-  + exists P1, G, (R ‖ nvars (S n) q), (S n), cn, vn. do 3 (try split).
+  + exists P1, G, (R ‖ nvars (S n) q), (S n). do 2 (try split).
     * now rewrite H0, n_extrusion, cgr_par_assoc.
     * now rewrite H1, n_extrusion, cgr_par_assoc.
-    * now rewrite H3.
     * not_a_guard.
 - destruct n; simpl in H0, H1.
-  + exists P1, G, (R ‖ p), 0, cn, vn. do 3 (try split).
+  + exists P1, G, (R ‖ p), 0. do 2 (try split).
     * now rewrite H0, cgr_par_com, cgr_par_assoc.
     * now rewrite H1, cgr_par_com, cgr_par_assoc.
-    * now rewrite H3.
     * not_a_guard.
-  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n), cn, vn. do 3 (try split).
+  + exists P1, G, (R ‖ nvars n (⇑ p)), (S n). do 2 (try split).
     * simpl. now rewrite H0, <- cgr_par_com, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
     * simpl. now rewrite H1, <- cgr_par_com, <- cgr_par_assoc, <- n_extrusion, cgr_scope.
-    * now rewrite H3.
     * not_a_guard.
 - destruct n.
-  + exists P1, (G + p2), R, 0, cn, vn. do 3 (try split).
-    * destruct H2. { now exists p1. } subst.
+  + exists P1, (G + p2), R, 0. do 2 (try split).
+    * destruct H3. { now exists p1. } subst.
       rewrite cgr_par_nil, <- cgr_choice_assoc. apply cgr_choice.
       now rewrite H0, cgr_par_nil.
     * now rewrite H1.
-    * now rewrite H3.
-    * intro. apply H2. now exists p1.
-  + destruct H2 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
+    * intro. apply H3. now exists p1.
+  + destruct H3 as [_ AbsHyp]. {now exists p1. } inversion AbsHyp.
 - destruct n.
-  + exists P1, (G + p1), R, 0, cn, vn. do 3 (try split).
-    * destruct H2. { now exists p2. } subst.
+  + exists P1, (G + p1), R, 0. do 2 (try split).
+    * destruct H3. { now exists p2. } subst.
       rewrite cgr_choice_com.
       rewrite cgr_par_nil. rewrite <- cgr_choice_assoc. apply cgr_choice.
       now rewrite H0, cgr_par_nil.
     * now rewrite H1.
-    * now rewrite H3.
-    * intro. apply H2. now exists p2.
-  + destruct H2 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
+    * intro. apply H3. now exists p2.
+  + destruct H3 as [_ AbsHyp]. {now exists p2. } inversion AbsHyp.
 Qed.
 
 Lemma GuardedDoesNoBoundOutput : forall p c q, not (lts (g p) (BoundOut c) q).
@@ -290,11 +274,7 @@ Lemma TransitionShapeForBoundOutput : forall P Q c,
   lts P (BoundOut c) Q ->
   exists n P' Q' G',
   (P ≡* νs (S n) (nvars (S n) c ! (nvars n (var_Data 0)) • P' + G' ‖ Q')
-  /\ Q ≡* (νs n (P' ‖ Q'))
-  ).
-  (* /\ (⇑ v) = (var_Data n). *)
-  (* I know that: ⇑ LHS = n 
-     want to prove: LHS = S n *)
+  /\ Q ≡* (νs n (P' ‖ Q'))).
 Proof.
 intros. dependent induction H.
 - destruct (IHlts (⇑ c) eq_refl) as (n & P & Q & G' & HcongrP & HcongrQ).
@@ -315,8 +295,7 @@ intros. dependent induction H.
     rewrite HcongrP.
     apply cgr_nu_nu.
   + simpl. rewrite HcongrQ. now rewrite upn_νs.
-- destruct (TransitionShapeForFreeOutput _ _ _ _ H) as (p & g & r & n & cn & vn & H0 & H1 & H3 & H4).
-  rewrite Push_nvars_FreeOut in H3. inversion H3. rewrite H5, H6 in H0.
+- destruct (TransitionShapeForFreeOutput _ _ _ _ H) as (p & g & r & n & H0 & H1 & ?).
   exists n. repeat eexists.
   + simpl. rewrite shift_in_nvars. now rewrite H0.
   + simpl. now rewrite H1.
@@ -990,48 +969,39 @@ dependent induction Transition.
 - apply sts_recursion.
 - apply sts_ifOne. assumption.
 - apply sts_ifZero. assumption.
-- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as (P1 & G1 & R1 & n & c1' & v1' & Hcongr1 & Hcongr1' & Hact1 & Hguard1).
-  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as (P2 & G2 & R2 & m & c2' & v2' & Hcongr2 & Hcongr2' & Hact2 & Hguard2).
-  rewrite Push_nvars_ActIn in Hact2.
-  inversion Hact2.
-  rewrite Push_nvars_FreeOut in Hact1.
-  inversion Hact1.
-  rewrite H0 in Hcongr2.
-  rewrite H2, H3 in Hcongr1.
-  rewrite H1 in Hcongr2'.
+(* lts_comL *)
+- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1)
+    as (P1 & G1 & R1 & n & Hcongr1 & Hcongr1' & _).
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2)
+    as (P2 & G2 & R2 & m & Hcongr2 & Hcongr2' & _).
   eapply sts_cong.
   + apply Communication_Under_News. exact Hcongr1. exact Hcongr2.
   + repeat eapply sts_nres. eapply sts_par. eapply sts_com.
   + rewrite Hcongr1', Hcongr2'. apply Communicated_Under_News.
-- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1) as (P1 & G1 & R1 & n & c1' & v1' & Hcongr1 & Hcongr1' & Hact1 & Hguard1).
-  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as (P2 & G2 & R2 & m & c2' & v2' & Hcongr2 & Hcongr2' & Hact2 & Hguard2).
-  rewrite Push_nvars_ActIn in Hact2.
-  inversion Hact2.
-  rewrite Push_nvars_FreeOut in Hact1.
-  inversion Hact1.
-  rewrite H0 in Hcongr2.
-  rewrite H2, H3 in Hcongr1.
-  rewrite H1 in Hcongr2'.
+(* lts_comR *)
+- destruct (TransitionShapeForFreeOutput p1 p2 c v Transition1)
+    as (P1 & G1 & R1 & n & Hcongr1 & Hcongr1' & _).
+  destruct (TransitionShapeForInput q1 q2 c v  Transition2)
+    as (P2 & G2 & R2 & m & Hcongr2 & Hcongr2' & _).
   eapply sts_cong.
   + rewrite cgr_par_com.
     apply Communication_Under_News. exact Hcongr1. exact Hcongr2.
   + repeat eapply sts_nres. eapply sts_par. eapply sts_com.
-  + rewrite (cgr_par_com q2). rewrite Hcongr1', Hcongr2'. apply Communicated_Under_News.
-- destruct (TransitionShapeForBoundOutput p1 p2 c Transition1) as (n & P1 & Q1 & G1 & Hcongr1 & Hcongr1').
-  destruct (TransitionShapeForInput _ q2 _ 0 Transition2) as (P2 & G2 & R2 & m & c2' & v2' & Hcongr2 & Hcongr2' & Hact2 & Hguard2).
-  rewrite Push_nvars_ActIn in Hact2.
-  inversion Hact2.
-  rewrite H0 in Hcongr2.
+  + rewrite (cgr_par_com q2). rewrite Hcongr1', Hcongr2'.
+    apply Communicated_Under_News.
+(* lts_close_l *)
+- destruct (TransitionShapeForBoundOutput p1 p2 c Transition1)
+    as (n & P1 & Q1 & G1 & Hcongr1 & Hcongr1').
+  destruct (TransitionShapeForInput _ q2 _ 0 Transition2)
+    as (P2 & G2 & R2 & m & Hcongr2 & Hcongr2' & _).
   eapply sts_cong.
   + rewrite Hcongr1. simpl. rewrite shift_in_nvars.
     rewrite cgr_scope_rev.
     rewrite Hcongr2. eapply cgr_res.
     apply Communication_Under_News. reflexivity. reflexivity.
   + eapply sts_res. repeat eapply sts_nres. eapply sts_par. eapply sts_com.
-  + rewrite Hcongr1', Hcongr2', H1. now rewrite Communicated_Under_News.
-- destruct (TransitionShapeForBoundOutput p1 p2 c v Transition1) as [G [R [n [H1 H2]]]].
-  destruct (TransitionShapeForInput q1 q2 c v  Transition2) as [P1 [G0 [S [m [H3 [H4 H5]]]]]].
-  admit.
+  + rewrite Hcongr1', Hcongr2'. now rewrite Communicated_Under_News.
+(* lts_close_r *)
 - now apply sts_res, IHTransition.
 - now apply sts_par, IHTransition.
 - eapply sts_cong.
