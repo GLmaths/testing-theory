@@ -250,8 +250,9 @@ intros p p' Hp q q' Hq.
 apply (cgr_fullpar _ _ _ _ Hp Hq).
 Qed.
 
-(* #[global] Instance gpr_choice_proper : Proper (cgr ==> cgr ==> cgr) gpr_choice.
-Proof. intros p p' Hp q q' Hq. apply cgr_fullchoice; assumption. Qed. *)
+Definition gpr_cgr p q := g p ≡* g q.
+#[global] Instance gpr_choice_proper : Proper (gpr_cgr ==> gpr_cgr ==> cgr) gpr_choice.
+Proof. intros p p' Hp q q' Hq. apply cgr_fullchoice; assumption. Qed.
 
 #[global] Instance pr_res_proper : Proper (cgr ==> cgr) pr_res.
 Proof. intros p p' Hp. apply cgr_res; assumption. Qed.
