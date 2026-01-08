@@ -323,7 +323,7 @@ Proof.
       eapply elem_of_union. right. eapply wt_s_set_from_pset_ispec; eassumption.
       eapply lem_dec in H4 as (Y0 & Z0 & Y_spec0 & Z_spec0 & eq).
       destruct Y0 using set_ind_L.
-      + destruct Z0 using set_ind_L.
+      * destruct Z0 using set_ind_L.
         ++ exfalso.
            assert (exists p, p ∈ ps') as (p & mem).
            destruct ps' using set_ind_L. contradiction.
@@ -335,7 +335,7 @@ Proof.
            eapply com0. eassumption. eassumption. intros t mem.
            eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
            set_solver. set_solver.
-      + destruct Z0 using set_ind_L.
+      * destruct Z0 using set_ind_L.
         ++ inversion hmx2; subst. now contradict nh.
            eapply com. eassumption. eassumption. intros t mem.
            eapply (wt_s_set_from_pset_ispec ps [μ] HAps).

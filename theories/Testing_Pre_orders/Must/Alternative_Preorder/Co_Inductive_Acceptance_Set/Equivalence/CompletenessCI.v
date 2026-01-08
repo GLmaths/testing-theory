@@ -49,7 +49,7 @@ Proof.
   cofix H2.
   intros ps q (hsub1 & hsub2).
   constructor.
-  - intros q' l. eapply H2, bhvx_preserved_by_tau; eauto.
+  - intros q' l. eapply H2, bhvx_preserved_by_reduction; eauto.
   - intros hterm hst.
     edestruct (hsub2 [] q) as (p' & hw & p'' & hstp' & stable & hsub0).
     eapply wt_nil. eassumption. intros p' mem. constructor.
@@ -57,7 +57,7 @@ Proof.
     exists p'. exists p''. repeat split; eauto.
   - intros μ q' ps' hcnv hw wtspec.
     eapply H2.
-    eapply bhvx_preserved_by_mu; eauto.
+    eapply bhvx_preserved_by_external_action; eauto.
     intros p0 mem0.
     edestruct (hcnv p0 mem0); eauto.
   - intros. edestruct (hsub1 []); eauto.
