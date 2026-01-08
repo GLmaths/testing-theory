@@ -28,7 +28,7 @@ Require Import Coq.Program.Equality Coq.Strings.String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 Require Import Relations.
 Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Clos_n.
+From Must Require Import Clos_n.
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
