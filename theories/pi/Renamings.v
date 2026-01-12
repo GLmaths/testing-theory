@@ -134,12 +134,13 @@ Instance Shift_Data : Shiftable Data := ren1 shift.
 Instance Shift_Act  : Shiftable Act := ren1 shift.
 Notation "⇑" := shift_op.
 
-Lemma Shift_Op_Injective : forall (d1 d2: Data),
+Lemma Shift_Data_Injective : forall (d1 d2: Data),
   ⇑ d1 = ⇑ d2 -> d1 = d2.
 Proof.
 unfold shift_op, Shift_Data, ren1, Ren_Data, ren_Data.
 intros. destruct d1, d2; inversion H; trivial.
 Qed.
+
 
 Definition nvars {A: Type} `{_ : Shiftable A} (n : nat) : A -> A :=
   Nat.iter n (⇑).

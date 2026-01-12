@@ -33,7 +33,7 @@ dependent induction transition.
   destruct (Invert_Shift _ _ _ Heq) as (d & Hd).
   exists d.
   rewrite Hd in Heq. rewrite permute_ren1 in Heq.
-  now apply Shift_Op_Injective in Heq.
+  now apply Shift_Data_Injective in Heq.
 - destruct p; inversion x. asimpl in x.
   destruct (IHtransition p3 _ _ _ H0 eq_refl) as (d & ?). exists d. exact H.
 - destruct p; inversion x. asimpl in x.
@@ -63,7 +63,7 @@ dependent induction transition.
   destruct (IHtransition p (⇑ c) (⇑ v) (up_ren σ) H0 HeqAct) as (c' & q' & Heq1 & Heq2 & Heq3).
   destruct (Invert_Shift _ _ _ Heq1) as (d & Hd).
   exists d, (ν q'). repeat split.
-  + rewrite Hd in Heq1. rewrite permute_ren1 in Heq1. now apply Shift_Op_Injective in Heq1.
+  + rewrite Hd in Heq1. rewrite permute_ren1 in Heq1. now apply Shift_Data_Injective in Heq1.
   + now rewrite Heq2.
   + rewrite Hd in Heq3. refine (eq_rect _ _ (lts_res _) _ _). apply Heq3. reflexivity.
 - destruct p; inversion x. asimpl in x.
@@ -100,8 +100,8 @@ dependent induction transition.
   destruct (Invert_Shift _ _ _ Heq1) as (d & Hd).
   destruct (Invert_Shift _ _ _ Heq2) as (w & Hw).
   exists d, w, (ν q'). repeat split.
-  + rewrite Hd in Heq1. rewrite permute_ren1 in Heq1. now apply Shift_Op_Injective in Heq1.
-  + rewrite Hw in Heq2. rewrite permute_ren1 in Heq2. now apply Shift_Op_Injective in Heq2.
+  + rewrite Hd in Heq1. rewrite permute_ren1 in Heq1. now apply Shift_Data_Injective in Heq1.
+  + rewrite Hw in Heq2. rewrite permute_ren1 in Heq2. now apply Shift_Data_Injective in Heq2.
   + now rewrite Heq3.
   + rewrite Hd, Hw in Heq4. refine (eq_rect _ _ (lts_res _) _ _). apply Heq4. reflexivity.
 - destruct p; inversion x. asimpl in x.
@@ -133,7 +133,7 @@ dependent induction transition.
   destruct p; inversion x.
   destruct (IHtransition _ (⇑ c) _ H0 eq_refl) as (c' & q' & Heq1 & Heq2 & Heq3).
   destruct (Invert_Shift _ _ _ Heq1) as (d & Hd). rewrite Hd in Heq1. rewrite permute_ren1 in Heq1.
-  apply Shift_Op_Injective in Heq1. rewrite Heq2. rewrite <- Up_Up_Swap.
+  apply Shift_Data_Injective in Heq1. rewrite Heq2. rewrite <- Up_Up_Swap.
   eexists. exists (ν (q' ⟨swap⟩)). repeat split.
   + exact Heq1.
   + rewrite Hd in Heq3. eapply res_bound; trivial.
@@ -142,7 +142,7 @@ dependent induction transition.
   destruct (Invert_Lts_FreeOut _ _ _ _ _ transition) as (c' & v' & q' & Heq1 & Heq2 & Heq3 & Heq4).
   destruct (Invert_Shift _ _ _ Heq1) as (d & Hd).
   rewrite Hd in Heq1. rewrite permute_ren1 in Heq1.
-  apply Shift_Op_Injective in Heq1. rewrite Heq3.
+  apply Shift_Data_Injective in Heq1. rewrite Heq3.
   assert (Hzero: v' = 0) by (destruct v'; try destruct n; now inversion Heq2).
   rewrite Hzero in Heq4.
   eexists. exists q'. repeat split.
