@@ -131,6 +131,8 @@ Next Obligation.
       eapply H1 in in_Set. eapply lts_refuses_spec2 ; eauto.
 Qed.
 
+
+(*
 Definition set_eq `(gLtsEqP : @LtsEq P A H gLtsP) `{!FiniteImagegLts P A} (ps : gset P) (qs : gset P) :=
   (forall p', p' ∈ ps -> exists q', q' ∈ qs /\ p' ⋍ q') /\ (forall q', q' ∈ qs -> exists p', p' ∈ ps /\ p' ⋍ q').
 
@@ -649,4 +651,4 @@ Next Obligation.
   + eapply (in_list_finite (lts_fw_tau_set p m)).
       intros (p0, m0) h%bool_decide_unpack.
       now eapply lts_fw_tau_set_spec1.
-Qed.
+Qed. *)

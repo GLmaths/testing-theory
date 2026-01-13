@@ -211,6 +211,20 @@ end.
 
 Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
 
+Definition subst_in_external_action (k : nat) (X : Data) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
+match μ with
+| ActIn (c ⋉ v) => ActIn (c ⋉ (subst_Data k X v))
+| ActOut (c ⋉ v) => ActOut (c ⋉ (subst_Data k X v))
+end.
+
+Definition subst_in_action (k : nat) (X : Data) (α : ActIO TypeOfActions) : (ActIO TypeOfActions) :=
+match α with
+| ActExt μ => ActExt (subst_in_external_action k X μ)
+| τ => τ
+end.
+
+Notation "α '*^' x1" := (subst_in_action 0 x1 α) (at level 30).
+
 Definition NewVar_in_Data (k : nat) (Y : Data) : Data := 
 match Y with
 | cst v => cst v
@@ -377,7 +391,7 @@ end.
 
 #[global] Hint Constructors lts:ccs.
 
-Fixpoint MatchEq (d : Data) (v : nat) P Q :=
+Fixpoint MatchEq (d : Data) (v : Value) P Q :=
 match v with 
 | 0 => Match d With zero=> P succ=> Q
 | S n'' => Match d With zero=> Q succ=> (MatchEq (bvar 0) n'' (NewVar 0 P) (NewVar 0 Q))
@@ -1518,6 +1532,32 @@ Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
 (* p performs α to some r and this is equivalent to q*)
 Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
 
+(* Lemma supress_subst_action p μ p' n k: lts (subst_in_proc k (cst n) p) (ActExt μ)  p'
+  -> exists p'' μ', p' = subst_in_proc k (cst n) p''
+      /\ μ = subst_in_external_action k (cst n) μ'
+      /\ lts p (ActExt μ') p''.
+Proof.
+  revert μ p' n k.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; intros; simpl in *; eauto.
+  - inversion H; subst.
+    + eapply Hp in H4 as (p'' & μ' & eq1 & eq2 & Tr); try lia.
+      subst. exists (p'' ‖ p2). exists μ'. repeat split; simpl; eauto.
+      eapply lts_parL; eauto.
+    + eapply Hp in H4 as (p'' & μ' & eq1 & eq2 & Tr); try lia.
+      subst. exists (p1 ‖ p''). exists μ'. repeat split; simpl; eauto.
+      eapply lts_parR; eauto.
+  - inversion H.
+  - inversion H.
+  - inversion H; subst.
+    + admit.
+    + admit. 
+  - destruct g0; simpl in *.
+    + inversion H.
+    + inversion H.
+    +  *)
+
 (* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
 Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
 Proof. 
@@ -2448,7 +2488,7 @@ Proof.
   + rewrite IHp1. rewrite IHp2. rewrite gmultiset_map_disj_union. eauto.
 Qed.
 
-Lemma eq_mo_gmultiset p m (* k *) :
+(* Lemma eq_mo_gmultiset p m (* k *) :
 moutputs_of (subst_in_proc 0 (cst m) p) = gmultiset_map (fun a => subst_TypeOfActions 0 (cst m) a) (moutputs_of p).
 Proof.
   dependent induction p; simpl in * ;eauto.
@@ -2458,7 +2498,7 @@ Proof.
     ++ destruct v.
        +++ simpl. 
   + eapply eq_gmo_gmultiset.
-Admitted.
+Admitted. *)
 
 Definition outputs_of p := dom (moutputs_of p).
 
