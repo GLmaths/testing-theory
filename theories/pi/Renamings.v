@@ -87,6 +87,14 @@ Qed.
 Definition injective (σ : nat -> nat) :=
   forall x y, σ x = σ y -> x = y.
 
+Lemma Injective_UpRen : forall (σ : nat -> nat),
+  injective σ -> injective (up_ren σ).
+Proof.
+intros σ Hinj.
+intros [|n0] [|n1] H; trivial; inversion H.
+apply Hinj in H1. now rewrite H1.
+Qed.
+
 Lemma Injective_Ren_Data : forall (σ : nat -> nat),
   injective σ -> forall d1 d2 : Data, ren1 σ d1 = ren1 σ d2 -> d1 = d2.
 Proof.
@@ -94,12 +102,49 @@ intros σ Hinj d1 d2 Heq.
 destruct d1, d2; inversion Heq; try reflexivity; now rewrite (Hinj n0 n).
 Qed.
 
-Lemma Injective_UpRen : forall (σ : nat -> nat),
-  injective σ -> injective (up_ren σ).
+Lemma Injective_Ren_Equation : forall (σ : nat -> nat),
+  injective σ -> forall e1 e2 : Equation, ren_Equation σ e1 = ren_Equation σ e2 -> e1 = e2.
 Proof.
-intros σ Hinj.
-intros [|n0] [|n1] H; trivial; inversion H.
-apply Hinj in H1. now rewrite H1.
+intros σ Hinj e1 e2 Heq. revert σ Hinj Heq. revert e2.
+induction e1; intros; destruct e2; inversion Heq; try reflexivity.
+- apply Injective_Ren_Data in H0, H1. now subst. exact Hinj. exact Hinj.
+- erewrite IHe1_1, IHe1_2. reflexivity.
+  exact Hinj. exact H1. exact Hinj. exact H0.
+- erewrite IHe1. reflexivity.
+  exact Hinj. exact H0.
+Qed.
+
+Lemma Injective_Ren_Proc : forall p1 p2 : proc, 
+  forall (σ : nat -> nat), injective σ -> p1 ⟨σ⟩ = p2 ⟨σ⟩ -> p1 = p2
+with Injective_Ren_GProc : forall g1 g2 : gproc, 
+  forall (σ : nat -> nat), injective σ -> g1 ⟨σ⟩ = g2 ⟨σ⟩ -> g1 = g2.
+Proof.
+intros p1. induction p1; intros; destruct p2; inversion H0.
+- exact H0.
+- f_equal.  unfold upRen_proc_proc, upRen_proc_Data in H2.
+  assert (Hrew: pointwise_relation _ eq (up_ren ⋅) ids) by now intros [|n].
+  rewrite Hrew in H2.
+  eapply IHp1. apply H. exact H2.
+- f_equal. eapply IHp1_1. apply H. exact H2.
+  eapply IHp1_2. apply H. exact H3.
+- f_equal. unfold upRen_Data_proc, upRen_Data_Data in H2.
+  eapply IHp1. apply Injective_UpRen. exact H. exact H2.
+- f_equal.
+  + now apply Injective_Ren_Equation in H2.
+  + eapply IHp1_1. exact H. exact H3.
+  + eapply IHp1_2. exact H. exact H4.
+- f_equal. eapply Injective_Ren_GProc. exact H. exact H2.
+- intro g1. induction g1; intros; destruct g2; inversion H0.
++ reflexivity.
++ reflexivity.
++ apply Injective_Ren_Data in H2, H3. apply Injective_Ren_Proc in H4. now subst.
+  exact H. exact H. exact H.
++ apply Injective_Ren_Data in H2. unfold upRen_Data_Data in H3.
+  apply Injective_Ren_Proc in H3. now subst.
+  apply Injective_UpRen. exact H. exact H.
++ apply Injective_Ren_Proc in H2. now subst. exact H.
++ erewrite IHg1_1, IHg1_2. reflexivity.
+  exact H. exact H3. exact H. exact H2.
 Qed.
 
 Lemma Shift_Injective : injective shift.
@@ -133,14 +178,6 @@ Instance Shift_gproc : Shiftable gproc := ren2 ids shift.
 Instance Shift_Data : Shiftable Data := ren1 shift.
 Instance Shift_Act  : Shiftable Act := ren1 shift.
 Notation "⇑" := shift_op.
-
-Lemma Shift_Data_Injective : forall (d1 d2: Data),
-  ⇑ d1 = ⇑ d2 -> d1 = d2.
-Proof.
-unfold shift_op, Shift_Data, ren1, Ren_Data, ren_Data.
-intros. destruct d1, d2; inversion H; trivial.
-Qed.
-
 
 Definition nvars {A: Type} `{_ : Shiftable A} (n : nat) : A -> A :=
   Nat.iter n (⇑).

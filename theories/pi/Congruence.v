@@ -300,18 +300,11 @@ Qed.
 (* TODO: matteo : exists? move to Renamings *)
 (* TODO: we need a stronger statement about injective renamings? *)
 Lemma Shift_Proc_Injective : forall (p1 p2: proc), ⇑ p1 = ⇑ p2 -> p1 = p2.
-Proof. (* is injective shift useful here? . *)
-Injective_UpRen
-
-intro p1. induction p1; intro p2; destruct p2; try discriminate; intro Heq; inversion Heq.
-- auto.
-- f_equal. admit.
-- f_equal; auto.
-- f_equal. admit.
-- admit.
-- admit. (* guards *) 
-Admitted.
-
+Proof.
+unfold shift_op, Shift_proc. intros.
+eapply Injective_Ren_Proc. apply Shift_Injective.
+exact H.
+Qed.
 
 Lemma cgr_step_shift_op_inv p q: p ≡ ⇑ q -> exists p', p = ⇑ p'.
 Proof.
