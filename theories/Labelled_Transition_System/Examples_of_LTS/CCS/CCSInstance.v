@@ -537,8 +537,8 @@ revert n p q r Hn. induction n as [|n]; intros p q r Hn;
 apply clos_n_S_inv in Hn as [Heq|[p' [Hpp' Hp'q]]]; [now inversion Heq|].
 dependent destruction Hpp';
 try solve[etransitivity; [|eapply IHn; eauto]; repeat constructor].
-- apply IHn. cgr_n_par_nil_l, Hp'q.
-- transitivity (g (t • q0 + r)). repeat constructor.  [repeat constructor| apply IHn]; trivial.
+- apply IHn, cgr_n_par_nil_l, Hp'q.
+- transitivity (g (t • q0 + r)) ; [repeat constructor| apply IHn]; trivial.
 - transitivity (g (c ? • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (c ! • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (q1 + p2 + r)); [repeat constructor| apply IHn]; trivial.
