@@ -32,32 +32,31 @@ From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransi
     Testing_Predicate DefinitionAS MustE.
 
 Section preorder.
-  Context `{outcome : E -> Prop}.
-  Context `{outcome_dec : forall e, Decision (outcome e)}.
+  Context `{outcome : T -> Prop}.
+  Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
   Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
   Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A outcome}.
-  Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
-  Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
+  Context `{gLtsT : !gLts T A, !FiniteImagegLts T A, gLtsEqT: !gLtsEq T A, !Testing_Predicate T A outcome}.
+  Context `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}.
+  Context `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}.
 
   Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
   Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
-  Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
+  Context `{@gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT}.
 
   Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
+  Context `{@Prop_of_Inter (P * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
   Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
-  Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
+  Context `{@Prop_of_Inter (Q * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
 
-  Context `{@PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsP)}.
-  Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
-  Context `{@AbsAction A H E FinA gLtsE Φ}.
-
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ outcome Testing_Predicate0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ outcome Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
+  Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
+  Context `{@AbsAction A H T FinA gLtsT Φ}.
+  Context `{it_conv : @test_convergence_spec T _ _ _ _ outcome Testing_Predicate0 t_conv}.
+  Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   (* ************************************************** *)
 

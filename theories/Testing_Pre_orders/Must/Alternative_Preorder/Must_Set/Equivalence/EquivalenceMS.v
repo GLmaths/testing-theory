@@ -255,9 +255,9 @@ Section must_set_acc_set.
     split; intros (pre1 & pre2); split; eauto; now eapply equivalence_bhv_acc_mst2.
   Qed.
 
-  Context `{attaboy : E -> Prop}.
-  Context `{attaboy_dec : forall e, Decision (attaboy e)}.
-  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A attaboy}.
+  Context `{outcome :  -> Prop}.
+  Context `{outcome_dec : forall e, Decision (outcome e)}.
+  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A outcome}.
   Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
   Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
 
@@ -266,15 +266,15 @@ Section must_set_acc_set.
   Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
   Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
 
-  Context `{@PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsP)}.
-  Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
+  Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
+  Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
   Context `{@AbsAction A H E FinA gLtsE Φ}.
 
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ attaboy Testing_Predicate0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ attaboy Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_conv : @test_convergence_spec E _ _ _ _ outcome Testing_Predicate0 gen_conv}.
+  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ E _ _ _ _ outcome Testing_Predicate0 gen_acc (fun x => 𝝳 (Φ x))}.
 
   Corollary equivalence_bhv_mst_ctx
-    (p : P) (q : Q) : (p, ∅) ≾ₘᵤₛₜ (q, ∅) <-> @pre_extensional P Q _ _ _ attaboy _ p q.
+    (p : P) (q : Q) : (p, ∅) ≾ₘᵤₛₜ (q, ∅) <-> @pre_extensional P Q _ _ _ outcome _ p q.
   Proof.
     erewrite pre_extensional_eq.
     rewrite equivalence_bhv_acc_mst.
