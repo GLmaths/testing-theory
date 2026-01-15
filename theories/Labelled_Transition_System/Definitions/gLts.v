@@ -40,19 +40,21 @@ Class ExtAction (A : Type) :=
       dual_dec a b: Decision (dual a b);
 
       (* Co-action of a non-blocking action is blocking, otherwise infinite non-blocking action sequence in FW *)
-      dual_blocks η ɣ :
-      non_blocking η → dual η ɣ → 
-        ¬ non_blocking ɣ ;
+      dual_blocks β η :
+      non_blocking η → dual β η → 
+        ¬ non_blocking β ;
+
+      (* dual is symmetric *)
+      duo_sym : Symmetric dual;
+
+      (* Constructive way to build a dual action *)
+      exists_dual μ : { η | dual μ η};
 
       (* Unique non-blocking action *)
-      co : A → A;
-      unique_nb η ɣ: non_blocking η → dual η ɣ → η = (co ɣ);
+      unique_nb η β: dual β η → η = proj1_sig (exists_dual β);
 
       (* Handy hypothesis *)
-      exists_duo_nb η : exists μ, dual η μ;
-      nb_not_nb η1 η2 ɣ : non_blocking η1 → dual η1 ɣ → dual η2 ɣ → non_blocking η2;
-      duo_sym : Symmetric dual;
-      (* Can we derive these hypothesis ?*)
+      (* nb_not_nb η1 η2 ɣ : non_blocking η1 → dual η1 ɣ → dual η2 ɣ → non_blocking η2; *)
     }.
 #[global] Existing Instance eqdec.
 #[global] Existing Instance countable.
@@ -60,7 +62,14 @@ Class ExtAction (A : Type) :=
 #[global] Existing Instance dual_dec.
 #[global] Existing Instance duo_sym.
 
-Definition blocking `{ExtAction A} (ɣ : A) := ¬ non_blocking ɣ.
+(* Definition of blocking action *)
+Notation "'blocking' β" := (¬ non_blocking β) (at level 30).
+
+(* Definition of the co-action *)
+Notation "'co' μ" := (proj1_sig (exists_dual μ)) (at level 30).
+
+(*Definition of the co-trace *)
+Notation "'coₜ' s" := (map (fun μ => (proj1_sig (exists_dual μ))) s) (at level 30).
 
 Class gLts (P A : Type) `{ExtAction A} :=
   MkgLts {
@@ -86,27 +95,37 @@ Notation "p ↛"      := (lts_refuses p τ) (at level 30, format "p  ↛").
 Notation "p ↛{ α }" := (lts_refuses p α) (at level 30, format "p  ↛{ α }").
 Notation "p ↛[ μ ]" := (lts_refuses p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
 
+
+
+(****************** Properties on gLts ****************************)
+
+
 Definition lts_exists_duo_decidable : 
-forall (A : Type) (H : ExtAction A) μ, Decision (∃ η' : A, non_blocking η' ∧ dual η' μ).
+forall (A : Type) (H : ExtAction A) μ, Decision (∃ η' : A, non_blocking η' ∧ dual μ η').
 Proof.
 intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
   + right. intro Hyp. destruct Hyp as (μ' & nb' & duo').
     assert (blocking μ).
     eapply dual_blocks; eauto. contradiction.
   + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
-    ++ assert { μ' | dual μ μ'} as (μ' & duo).
-       exact (choice (fun μ0 => dual μ μ0) (exists_duo_nb μ) ).
-       symmetry in duo.
-       destruct (decide (non_blocking μ')) as [nb'' | not_nb''].
-       +++ left. exists μ'; eauto.
-       +++ right. intro Hyp. destruct Hyp as (μ'' & nb'' & duo'').
-           assert (non_blocking μ'). eapply nb_not_nb; eauto. contradiction.
+    ++ left. exists (co μ) ; eauto.
+       split. eauto. exact (proj2_sig (exists_dual μ)).
     ++ right. intro imp. destruct imp as (η'' & nb'' & duo).
-       assert (η'' = (co μ)). eapply unique_nb; eauto. subst.
+       assert (η'' = co μ).
+       { eapply unique_nb; eauto. } subst.
        contradiction.
 Qed.
 
 #[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} μ 
-  : Decision (∃ η', non_blocking η' /\ dual η' μ).
+  : Decision (∃ η', non_blocking η' /\ dual μ η').
 Proof. exact (lts_exists_duo_decidable A H μ). Qed.
 
+
+Lemma dual_is_involutive `{ExtAction A} μ : μ = (co (co μ)).
+Proof.
+  assert (dual μ (co μ)) as duo.
+  { exact (proj2_sig (exists_dual μ)). }
+  symmetry in duo.
+  eapply unique_nb.
+  exact duo.
+Qed.

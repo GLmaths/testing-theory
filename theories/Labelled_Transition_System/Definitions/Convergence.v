@@ -48,6 +48,18 @@ Global Hint Constructors cnv:mdb.
 
 (* Properties on convergence in Lts *)
 
+Lemma terminate_then_wt_refuses  `{gLts P A} p : 
+  p ⤓ -> exists p', p ⟹ p' /\ p' ↛.
+Proof.
+  intros ht.
+  induction ht.
+  destruct (lts_refuses_decidable p τ).
+  - exists p; eauto with mdb.
+  - eapply lts_refuses_spec1 in n as (p'& l).
+    destruct (H2 p' l) as (p0 & w0 & st0).
+    exists p0; eauto with mdb.
+Qed.
+
 Lemma cnv_terminate `{M : gLts P A} p s : p ⇓ s -> p ⤓.
 Proof. by intros hcnv; now inversion hcnv. Qed.
 
@@ -187,7 +199,7 @@ Proof.
 Qed.
 
 Lemma cnv_drop_input_hd `{gLtsObaFW P A} p μ s :
-  (exists η, non_blocking η /\ dual η μ) -> p ⇓ μ :: s
+  (exists η, non_blocking η /\ dual μ η ) -> p ⇓ μ :: s
     -> p ⇓ s.
 Proof.
   intros Hyp hacnv. destruct Hyp as [η Hyp]. destruct Hyp as [nb duo].
@@ -199,7 +211,7 @@ Qed.
 
 (* fixme: it should be enought to have ltsOba + one of the feedback *)
 Lemma cnv_retract_lts_non_blocking_action `{gLtsObaFW P A} p q η μ s :
-  non_blocking η -> dual η μ -> p ⇓ s -> p ⟶[η] q -> q ⇓ μ :: s.
+  non_blocking η -> dual μ η -> p ⇓ s -> p ⟶[η] q -> q ⇓ μ :: s.
 Proof.
   intros nb duo hcnv l.
   eapply cnv_act.
@@ -220,7 +232,7 @@ Proof.
 Qed.
 
 Lemma cnv_retract_wt_non_blocking_action `{gLtsObaFW P A} p q η μ s :
-  non_blocking η -> dual η μ -> p ⇓ s -> p ⟹{η} q
+  non_blocking η -> dual μ η -> p ⇓ s -> p ⟹{η} q
     -> q ⇓ μ :: s.
 Proof.
   intros nb duo hcnv w.
@@ -231,7 +243,7 @@ Proof.
 Qed.
 
 Lemma cnv_input_swap `{gLtsObaFW P A} p μ1 μ2 s :
-  (exists η1, non_blocking η1 /\ dual η1 μ1) -> (exists η2, non_blocking η2 /\ dual η2 μ2) -> p ⇓ μ1 :: μ2 :: s 
+  (exists η1, non_blocking η1 /\ dual μ1 η1) -> (exists η2, non_blocking η2 /\ dual μ2 η2 ) -> p ⇓ μ1 :: μ2 :: s 
     -> p ⇓ μ2 :: μ1 :: s.
 Proof.
   intros BlocDuo1 BlocDuo2 hcnv. 
@@ -316,7 +328,7 @@ Proof.
 Qed.
 
 Lemma cnv_retract `{gLtsObaFW P A} p q s1 s2 s3:
-  Forall non_blocking s1 -> Forall2 dual s1 s3 -> p ⇓ s2 -> p ⟹[s1] q
+  Forall non_blocking s1 -> Forall2 dual s3 s1 -> p ⇓ s2 -> p ⟹[s1] q
     -> q ⇓ s3 ++ s2.
 Proof. 
   revert s2 s3 p q.
@@ -354,7 +366,7 @@ Proof.
 Qed.
 
 Lemma cnv_annhil `{gLtsObaFW P A} p μ η s1 s2 s3 :
-  Forall exist_co_nba s1 -> Forall exist_co_nba s2 -> non_blocking η -> dual η μ -> p ⇓ s1 ++ [μ] ++ s2 ++ [η] ++ s3
+  Forall exist_co_nba s1 -> Forall exist_co_nba s2 -> non_blocking η -> dual μ η -> p ⇓ s1 ++ [μ] ++ s2 ++ [η] ++ s3
     -> p ⇓ s1 ++ s2 ++ s3.
 Proof.
   intros his1 his2 nb duo hcnv.
@@ -363,9 +375,9 @@ Proof.
   assert (Forall non_blocking (s1' ++ [η] ++ s2')).
   eapply Forall_app. split; eauto.
   eapply Forall_app. split; eauto.
-  assert (Forall2 dual (s1' ++ [η] ++ s2') (s1 ++ [μ] ++ s2)).
-  eapply Forall2_app. assumption.
-  eapply Forall2_app. apply Forall2_cons. assumption. apply Forall2_nil. assumption.
+  assert (Forall2 dual (s1 ++ [μ] ++ s2) (s1' ++ [η] ++ s2')).
+  { eapply Forall2_app. assumption.
+  eapply Forall2_app. apply Forall2_cons. assumption. apply Forall2_nil. assumption. }
   edestruct (forward_s p (s1 ++ [μ] ++ s2)) as (t & w1 & w2); eauto.
   destruct w2 as (r & hwr & heqr).
   eapply (wt_non_blocking_action_perm _ ([η] ++ s1' ++ s2')) in hwr as (r0 & hwr0 & heqr0).
@@ -374,7 +386,7 @@ Proof.
   eapply cnv_preserved_by_eq. etrans. eapply heqr0. eapply heqr.
   assert (Forall non_blocking (s1' ++ s2')).
   eapply Forall_app. split; assumption.
-  assert (Forall2 dual (s1' ++ s2') (s1 ++ s2)).
+  assert (Forall2 dual (s1 ++ s2) (s1' ++ s2')).
   eapply Forall2_app; assumption.
   eapply cnv_retract; eauto.
   eapply cnv_wt_prefix. rewrite 3 app_assoc in hcnv.
@@ -403,7 +415,3 @@ Proof.
       eapply IHs'. inversion hcnv; eauto.
       intros. eapply hs2. eapply wt_push_left; eauto.
 Qed.
-
-
-
-

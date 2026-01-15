@@ -232,27 +232,27 @@ Proof.
     exists u. split. eassumption. transitivity r1; eauto.
 Qed.
 
-Lemma strip_delay_inp4 `{gLtsOba P A} {p q t μ} :
-  blocking μ -> p ⟶[μ] t -> t ⟿{lts_oba_mo p} q
-    -> ∃ r, p ⟿{lts_oba_mo p} r /\ r ⟶⋍[μ] q.
+Lemma strip_delay_inp4 `{gLtsOba P A} {p q t β} :
+  blocking β -> p ⟶[β] t -> t ⟿{lts_oba_mo p} q
+    -> ∃ r, p ⟿{lts_oba_mo p} r /\ r ⟶⋍[β] q.
 Proof.
   intros Not_nb hlp hwt.
   remember (lts_oba_mo p) as pmo.
-  revert p q t μ Not_nb hwt hlp Heqpmo.
+  revert p q t β Not_nb hwt hlp Heqpmo.
   induction pmo using gmultiset_ind; intros.
   - inversion hwt.
     + subst. exists p. split. eapply strip_nil. reflexivity. exists t. split. assumption. eauto.
     + multiset_solver.
   - assert (mem : x ∈ lts_oba_mo p) by multiset_solver.
     eapply lts_oba_mo_spec_bis2 in mem as (p1 & hlp1). destruct hlp1 as [nb hlp1].
-    assert (neq : μ ≠ x).  eapply BlockingAction_are_not_non_blocking; eauto.
+    assert (neq : β ≠ x).  eapply BlockingAction_are_not_non_blocking; eauto.
     edestruct (lts_oba_non_blocking_action_confluence nb neq hlp1 hlp) as (u & l2 & l3).
     destruct l3 as (u' & hlu & hequ).
     eapply strip_eq_step in hlu as h1; eauto. destruct h1 as (r & hwr & heqr).
     edestruct (strip_eq hwr u (symmetry hequ)) as (r' & hwu & heqr').
     eapply lts_oba_mo_spec2 in hlp1 as hmop.
     assert (hmoeq : pmo = lts_oba_mo p1) by multiset_solver.
-    destruct (IHpmo p1 r' u μ Not_nb hwu l2 hmoeq) as (pt & hwpt & hlpt).
+    destruct (IHpmo p1 r' u β Not_nb hwu l2 hmoeq) as (pt & hwpt & hlpt).
     exists pt. split. eapply strip_step; eauto.
     destruct hlpt as (r0 & hlpt & heqt0).
     exists r0. split. eassumption.
@@ -262,7 +262,7 @@ Qed.
 
 Lemma strip_delay_tau `{gLtsOba P A} {p q m t} :
   p ⟿{m} q -> p ⟶ t
-    -> (∃ η μ r, dual η μ /\ non_blocking η /\ p ⟶[η] r /\ r ⟶⋍[μ] t) \/ (∃ r w, q ⟶ r /\ t ⟿{m} w /\ w ⋍ r).
+    -> (∃ η μ r, dual μ η /\ non_blocking η /\ p ⟶[η] r /\ r ⟶⋍[μ] t) \/ (∃ r w, q ⟶ r /\ t ⟿{m} w /\ w ⋍ r).
 Proof.
   intros hr hl. revert t hl.
   induction hr as [| ? ? ? ? ? nb HypTr' ?]; intros.
@@ -335,9 +335,9 @@ Proof.
     etrans. eassumption. now symmetry.
 Qed.
 
-Lemma not_nb_with_strip_m `{gLtsOba P A} p1 m p'1 μ :
-  p1 ⟿{m} p'1 -> ¬ non_blocking μ
-    -> Forall (NotEq μ) (elements m).
+Lemma not_nb_with_strip_m `{gLtsOba P A} p1 m p'1 β :
+  p1 ⟿{m} p'1 -> blocking β
+    -> Forall (NotEq β) (elements m).
 Proof.
   intros stripped.
   dependent induction stripped.
@@ -348,7 +348,7 @@ Qed.
 
 Lemma woutpout_delay_tau `{gLtsOba P A} {p q m t} :
   p ⟿{m} q -> p ⟶ t 
-    -> (∃ η μ r t, non_blocking η /\ dual η μ /\ p ⟶[η] r /\ q ⟶[μ] t) \/ (∃ r, q ⟶ r).
+    -> (∃ η μ r t, non_blocking η /\ dual μ η /\ p ⟶[η] r /\ q ⟶[μ] t) \/ (∃ r, q ⟶ r).
 Proof.
   intros stripped Hstep. revert t Hstep.
   induction stripped as [ | ? ? ? ? ? nb Hstep_nb]; intros.
@@ -365,7 +365,7 @@ Proof.
        * right. eauto.
     ++ left. exists η. 
        exists μ. exists p2.
-       assert (¬ non_blocking μ) as not_nb.
+       assert (blocking μ) as not_nb.
        eapply dual_blocks; eauto.
        assert (Forall (NotEq μ) (elements m)) as simpl_in_l.
        eapply not_nb_with_strip_m; eauto.

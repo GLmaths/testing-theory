@@ -47,7 +47,7 @@ Proof.
 Qed.
 
 Inductive lts_multiset_step `{ExtAction A} : mb A -> Act A -> mb A -> Prop :=
-| lts_multiset_add m η μ (duo : dual η μ) (nb : non_blocking η) :
+| lts_multiset_add m η μ (duo : dual μ η) (nb : non_blocking η) :
    lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
 | lts_multiset_minus m η (nb : non_blocking η):  
    lts_multiset_step ({[+ η +]} ⊎ m) (ActExt η) m.
@@ -62,43 +62,19 @@ Proof.
   inversion Hstep as [ ? μ ? duo nb'|]; subst.
   + simpl in *. 
     assert (nb'' : non_blocking μ); eauto.
-    apply (dual_blocks μ η ) in nb''; eauto. contradiction.
+    apply dual_blocks in duo; eauto. contradiction.
   + eauto.
 Qed.
 
-Lemma blocking_action_in_ms `{ExtAction A}  mb1 μ mb2 :  
-  blocking μ -> lts_multiset_step mb1 (ActExt μ) mb2 
-    ->  ({[+ co μ +]} ⊎ mb1 = mb2 /\ (dual (co μ) μ /\ non_blocking (co μ))).
+Lemma blocking_action_in_ms `{ExtAction A}  mb1 β mb2 :  
+  blocking β -> lts_multiset_step mb1 (ActExt β) mb2 
+    ->  ({[+ co β +]} ⊎ mb1 = mb2 /\ (dual β (co β) /\ non_blocking (co β))).
 Proof.
   intros nb Hstep.
   inversion Hstep as [ ? η ? duo nb'|]; subst.
-  + assert (η =  co μ) as eq. eapply unique_nb;eauto. subst. eauto.
+  + assert (η =  co β) as eq. eapply unique_nb;eauto. subst. eauto.
   + contradiction.
 Qed.
-
-Definition lts_exists_duo_decidable : 
-forall (A : Type) (H : ExtAction A) μ, Decision (∃ η' : A, non_blocking η' ∧ dual η' μ).
-Proof.
-intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
-  + right. intro Hyp. destruct Hyp as (μ' & nb' & duo').
-    assert (blocking μ).
-    eapply dual_blocks; eauto. contradiction.
-  + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
-    ++ assert { μ' | dual μ μ'} as (μ' & duo).
-       exact (choice (fun μ0 => dual μ μ0) (exists_duo_nb μ) ).
-       symmetry in duo.
-       destruct (decide (non_blocking μ')) as [nb'' | not_nb''].
-       +++ left. exists μ'; eauto.
-       +++ right. intro Hyp. destruct Hyp as (μ'' & nb'' & duo'').
-           assert (non_blocking μ'). eapply nb_not_nb; eauto. contradiction.
-    ++ right. intro imp. destruct imp as (η'' & nb'' & duo).
-       assert (η'' = (co μ)). eapply unique_nb; eauto. subst.
-       contradiction.
-Qed.
-
-#[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} μ 
-  : Decision (∃ η', non_blocking η' /\ dual η' μ).
-Proof. exact (lts_exists_duo_decidable A H μ). Qed.
 
 Definition lts_multiset_step_decidable `{ExtAction A} m α m' : Decision (lts_multiset_step m α m').
 Proof.
@@ -107,13 +83,11 @@ Proof.
     - rename μ into η. destruct (decide ((m =  {[+ η +]} ⊎ m'))); subst.
       ++ left. eapply lts_multiset_minus; eauto.
       ++ right. intro. eapply non_blocking_action_in_ms in nb; eauto.
-    - destruct (decide (∃ η', non_blocking η' /\ dual η' μ)) as [exists_dual | not_exists_dual].
-      assert ({ η' | non_blocking η' ∧ dual η' μ}) as Hyp'.
-      exact (choice (fun η' => non_blocking η' ∧ dual η' μ) exists_dual).
-      destruct Hyp' as (η' & nb & duo).
-      ++ assert (η' = co μ) as eq. eapply unique_nb; eauto. subst.
-         destruct (decide (({[+ (co μ) +]} ⊎ m = m') )) as [eq | not_eq].
-         +++ subst. left. eauto with mdb. 
+    - destruct (decide (∃ η', non_blocking η' /\ dual μ η')) as [exists_dual | not_exists_dual].
+      ++ destruct (decide (({[+ (co μ) +]} ⊎ m = m') )) as [eq | not_eq].
+         +++ left. destruct exists_dual as (η' & nb & duo).
+             assert (η' = co μ) as eq'.
+             { eapply unique_nb; eauto. } subst. eauto with mdb. 
          +++ right. intro. eapply blocking_action_in_ms in not_nb as (eq'' & Hyp) ; eauto.
       ++ right. intro HypTr. 
          eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto; subst.
@@ -124,7 +98,7 @@ Definition lts_multiset_refuses `{ExtAction A} (m : mb A) (α : Act A): Prop :=
 match α with
     | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
                                                                         else True
-                                               else forall η', dual η' η -> blocking η'
+                                               else forall η', dual η η' -> blocking η'
     | τ => True
 end.
 
@@ -135,9 +109,9 @@ Proof.
     - rename μ into η. destruct (decide (η ∈ m)) as [in_mem | not_in_mem].
       ++ right. intro. eauto.
       ++ left. eauto. 
-    - destruct (decide (∃ η', non_blocking η' /\ dual η' μ)) as [exists_dual | not_exists_dual].
+    - destruct (decide (∃ η', non_blocking η' /\ dual μ η' )) as [exists_dual | not_exists_dual].
       ++ right. intro imp. destruct exists_dual as (η & nb & duo). destruct (imp η); eauto.
-      ++ left. unfold blocking. eauto.
+      ++ left. eauto.
   + left. simpl. eauto.
 Qed.
 
@@ -156,11 +130,11 @@ Next Obligation.
       ++ assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq. multiset_solver.
          exists (m ∖ {[+ η +]}). rewrite eq at 1. eapply lts_multiset_minus; eauto.
       ++ exfalso. eauto.
-    + destruct (decide (∃ η' : A, non_blocking η' ∧ dual η' μ)) as [exist | not_exists ].
+    + destruct (decide (∃ η' : A, non_blocking η' ∧ dual μ η')) as [exist | not_exists ].
       ++ exists ({[+ co μ +]} ⊎ m). destruct exist as (η & nb & duo).
-         eapply unique_nb in nb as eq; eauto;subst.
+         eapply unique_nb in duo as eq; eauto;subst.
          constructor; eauto.  
-      ++ exfalso. eapply not_refuses. unfold blocking. eauto.
+      ++ exfalso. eapply not_refuses. eauto.
   - simpl in *. exfalso. eauto.
 Qed.
 Next Obligation.
@@ -197,9 +171,9 @@ Proof.
   erewrite decide_True. fold mb_without_not_nb_on_list. reflexivity. eauto.
 Qed.
 
-Lemma lts_mb_nb_on_list_spec2 `{H : ExtAction A} μ l: 
-  blocking μ ->  
-    mb_without_not_nb_on_list (μ :: l) = mb_without_not_nb_on_list l.
+Lemma lts_mb_nb_on_list_spec2 `{H : ExtAction A} β l: 
+  blocking β ->  
+    mb_without_not_nb_on_list (β :: l) = mb_without_not_nb_on_list l.
 Proof.
   intro nb.
   unfold mb_without_not_nb_on_list at 1.
@@ -336,11 +310,11 @@ Proof.
     rewrite decide_True. reflexivity. eauto.
 Qed.
 
-Lemma lts_mb_nb_spec2 `{H : ExtAction A} μ m : 
-      blocking μ ->  
-        mb_without_not_nb (({[+ μ +]} : gmultiset A) ⊎ m : gmultiset A) = (mb_without_not_nb m : gmultiset A).
+Lemma lts_mb_nb_spec2 `{H : ExtAction A} β m : 
+      blocking β ->  
+        mb_without_not_nb (({[+ β +]} : gmultiset A) ⊎ m : gmultiset A) = (mb_without_not_nb m : gmultiset A).
 Proof.
-  revert μ.
+  revert β.
   induction m using gmultiset_ind.
   + intros μ nb.
     assert (eq : (({[+ μ +]} : gmultiset A) ⊎ ∅ : gmultiset A) = ({[+ μ +]} : gmultiset A)).

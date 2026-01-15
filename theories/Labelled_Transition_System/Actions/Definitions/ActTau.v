@@ -30,18 +30,18 @@ Import ListNotations.
 
 From stdpp Require Import decidable.
 
-  (* Actions := External Action ⊎ { τ }*)
+(* Actions := External Action ⊎ { τ }*)
 
-  Inductive Act (A: Type) :=
-    | ActExt (μ: A)
-    | τ
-   .
-  Arguments ActExt {_} _.
-  Arguments τ {_}.
+Inductive Act (A: Type) :=
+  | ActExt (μ: A)
+  | τ
+ .
+Arguments ActExt {_} _.
+Arguments τ {_}.
 
-  (* List Notation *)
-  Definition ε {A : Type} := [] : list A.
-  Definition trace A := list A.
+(* List Notation *)
+Definition ε {A : Type} := [] : list A.
+Definition trace A := list A.
 
-  #[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
-  Proof. solve_decision. Defined.
+#[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
+Proof. solve_decision. Defined.
