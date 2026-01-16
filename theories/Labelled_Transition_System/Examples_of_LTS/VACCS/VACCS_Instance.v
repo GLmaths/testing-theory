@@ -4418,9 +4418,9 @@ Next Obligation.
     assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ? })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ d0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
     eapply accepts_preserved_by_eq in accepts. exact accepts. symmetry. eauto.
-  - unfold blocking in H0. exfalso. eapply H0. exists (c0 ⋉ d0). eauto.
-  - unfold blocking in H. exfalso. eapply H. exists (c ⋉ d). eauto.
-  - unfold blocking in H. exfalso. eapply H. exists (c ⋉ d). eauto.
+  - exfalso. eapply H0. exists (c0 ⋉ d0). eauto.
+  - exfalso. eapply H. exists (c ⋉ d). eauto.
+  - exfalso. eapply H. exists (c ⋉ d). eauto.
 Qed.
 
 Definition PreAct := FinA.
@@ -4640,8 +4640,8 @@ Proof.
   intros. destruct μ'; destruct a; destruct c; simpl; eauto.
 Qed.
 
-Lemma simpl_blocking_Varc j k μ' : @blocking _ (@gLabel_nb TypeOfActions VACCS_Label) (VarC_action_add (j + k) μ') 
-  -> @blocking _ (@gLabel_nb TypeOfActions VACCS_Label)(VarC_action_add k μ').
+Lemma simpl_blocking_Varc j k μ' : ¬ (@non_blocking _ (@gLabel_nb TypeOfActions VACCS_Label) (VarC_action_add (j + k) μ'))
+  -> ¬ (@non_blocking _ (@gLabel_nb TypeOfActions VACCS_Label)(VarC_action_add k μ')).
 Proof.
   intros. destruct μ'; destruct a; destruct c; simpl; eauto.
   + intro imp; inversion imp; inversion H0.

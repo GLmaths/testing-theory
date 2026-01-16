@@ -73,12 +73,12 @@ Section eq_contextual.
   Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
   Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
 
-  Context `{@PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsP)}.
-  Context `{@PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (FW_gLts gLtsQ)}.
+  Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
+  Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
   Context `{@AbsAction A H E FinA gLtsE Φ}.
 
-  Context `{igen_conv : @gen_spec_conv E _ _ _ _ outcome Testing_Predicate0 co_of gen_conv}.
-  Context `{igen_acc : @gen_spec_acc PreA _ _ E _ _ _ _ outcome Testing_Predicate0 co_of gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_conv : @test_convergence_spec E _ _ _ _ outcome Testing_Predicate0 gen_conv}.
+  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ E _ _ _ _ outcome Testing_Predicate0 gen_acc (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
     @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).

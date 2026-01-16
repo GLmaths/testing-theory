@@ -4973,7 +4973,6 @@ Proof.
                 -- simpl in *. reflexivity.
                 -- exists (ActIn (c ⋉ v)). repeat split ;eauto.
                    eapply lts_refuses_spec2. exists (p^v). constructor.
-                   intro imp. inversion imp.
             +++ inversion H0.
          ++ destruct (decide (k < S n)); simpl.
             destruct c0.
@@ -4985,7 +4984,7 @@ Proof.
                 -- exists (ActIn (bvarC (n0 + k)⋉ v)). repeat split ;eauto.
                    eapply lts_refuses_spec2. exists (p^v).
                    replace (n0 + k)%nat with n by lia.
-                   constructor. simpl. replace (k + n0)%nat with (n0 + k)%nat by lia. eauto. intro imp. inversion imp.
+                   constructor. simpl. replace (k + n0)%nat with (n0 + k)%nat by lia. eauto.
             +++ inversion H.
     ** simpl in *.
        destruct pre_μ.
@@ -4995,7 +4994,6 @@ Proof.
             -- simpl in *. reflexivity.
             -- exists (ActOut (c ⋉ d)). repeat split ;eauto.
                eapply lts_refuses_spec2. exists p. constructor.
-               intro imp. inversion imp.
          ++ destruct (decide (k < S n)).
             +++ assert (c0 = bvarC (n - k)) by multiset_solver. subst.
                 exists (ActIn (bvarC (n - k) ⋉ d)). split.
@@ -5003,7 +5001,6 @@ Proof.
                 -- exists (ActOut (bvarC n ⋉ d)). repeat split ;eauto.
                    eapply lts_refuses_spec2. exists p. constructor. simpl. eauto with lia.
                    replace  (k + (n - k))%nat with n%nat by lia. eauto.
-                   intro imp. inversion imp.
             +++ inversion H.
        + simpl in *. subst. destruct c.
          ++ multiset_solver.

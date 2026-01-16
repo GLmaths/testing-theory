@@ -229,15 +229,15 @@ Fixpoint gen_test_raw Vs s p {struct s}:=
   | [] => p
   | ActIn (c ⋉ d) :: s' => match Vs with
                             | [] => (g 𝟘)     (*whatever*)
-                            | ActIn (c ⋉ d') :: s'' =>  (c ! d' • 𝟘) ‖ (gen_test_raw s'' s' p)
-                            | ActOut (c ⋉ d') :: s'' => (g 𝟘)     (*whatever*)
-                            end
-  | ActOut (c ⋉ d) :: s' => match Vs with
-                            | [] => 𝟘     (*whatever*)
                             | ActIn (c ⋉ d') :: s'' => (g 𝟘)
                             | ActOut (c ⋉ d') :: s'' => (c ? x • (If ( bvar 0 ==  NewVar_in_Data 0 d' )
                                    Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
                                    Else ①)) + (t • ①)
+                            end
+  | ActOut (c ⋉ d) :: s' => match Vs with
+                            | [] => (g 𝟘)     (*whatever*)
+                            | ActIn (c ⋉ d') :: s'' =>  (c ! d' • 𝟘) ‖ (gen_test_raw s'' s' p)
+                            | ActOut (c ⋉ d') :: s'' => (g 𝟘)     (*whatever*)
                             end
   end.
 
