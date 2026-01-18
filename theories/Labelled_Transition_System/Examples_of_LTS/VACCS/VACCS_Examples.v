@@ -53,7 +53,7 @@ Proof.
       * inversion l1.
     + intros. eauto. inversion H2.
     + intros. destruct μ1 as [ (*Input*) a | (*Output*) a ].
-      * inversion H3. subst. simpl in *. symmetry in H2.
+      * inversion H3. subst. simpl in *.
         eapply simplify_match_input in H2. subst.
         destruct (decide (good_VACCS e')).
         -- eapply m_now. eauto.
@@ -84,7 +84,7 @@ Proof.
                  assert (must q e1); eauto.
                  eapply must_preserved_by_synch_if_notoutcome; eauto.
                  simpl; eauto.
-           ++ intros. inversion H5; subst. simpl in *. symmetry in H2.
+           ++ intros. inversion H5; subst. simpl in *.
               eapply simplify_match_output in H2. subst. 
               eapply OBA_with_FB_Fourth_Axiom in H4 as (e'1 & HypTr'1 & equiv1); eauto.
               eapply must_eq_client; eauto.
@@ -107,7 +107,7 @@ Proof.
       * intros. eapply H0. eauto. eauto. eapply et. eauto.
       * intros. inversion H4.
     + inversion l1; subst.
-      symmetry in eq. eapply simplify_match_input in eq. subst.
+      eapply simplify_match_input in eq. subst.
       assert (must ((c ! (bvar 0) • 𝟘) ^ v) b2) as Mq'.
       { eapply must_preserved_by_synch_if_notoutcome ; eauto. simpl; eauto. }
       inversion Mq'.
@@ -123,7 +123,7 @@ Proof.
            ++ intros. inversion H4.
            ++ intros. inversion H5.
         -- inversion l0; subst.
-           symmetry in eq. eapply simplify_match_output in eq. subst.
+           eapply simplify_match_output in eq. subst.
            eapply OBA_with_FB_Fourth_Axiom in l2 as (e''1 & HypTr''1 & equiv''1) ; eauto.
            eapply must_preserved_by_lts_tau_clt in Mq; eauto.
            eapply m_step; eauto.
@@ -142,25 +142,25 @@ Proof.
     + inversion ex; subst. inversion H2; subst.
       * inversion l.
       * exists (q ▷ b2). eapply ParRight. eauto.
-      * inversion l1; subst. symmetry in eq.
+      * inversion l1; subst.
         eapply simplify_match_input in eq as eq'; subst.
-        symmetry in eq. eexists. eapply ParSync; eauto.
+        eexists. eapply ParSync; eauto.
         unfold q. eapply lts_input; eauto.
     + intros. eauto. inversion H2.
-    + intros. inversion H3; subst. symmetry in H2.
+    + intros. inversion H3; subst.
       eapply simplify_match_input in H2 as eq;subst.
       assert (¬ good_VACCS e') as not_happy'.
       { eapply unoutcome_preserved_by_lts_non_blocking_action; eauto.
         exists (c ⋉ v); eauto. }
       eapply m_step; eauto.
-      * symmetry in H2. assert (must ((c ! O • 𝟘) ^ v) e') as Mp'.
+      * assert (must ((c ! O • 𝟘) ^ v) e') as Mp'.
         { eapply (must_preserved_by_synch_if_notoutcome p _ e _) ; eauto.
           eapply m_step; eauto. eapply lts_input. }
         inversion Mp'. contradiction.
         inversion ex0. inversion H5; subst.
         -- inversion l.
         -- exists ((c ! 0 • 𝟘) ^ v ▷ b2). eapply ParRight; eauto.
-        -- inversion l1; subst. symmetry in eq. eapply simplify_match_output in eq as eq'; subst.
+        -- inversion l1; subst. eapply simplify_match_output in eq as eq'; subst.
            assert (e' ⟶[ActIn (c ⋉ O)] b2) as l'2; eauto.
            eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & n & equiv1 & equiv2 & eq1).
            edestruct (Congruence_Respects_Transition e') as (e'1 & Tr'1 & equiv'1). 
@@ -180,9 +180,9 @@ Proof.
            assert (¬ good_VACCS e1) as not_happy'''.
            { eapply unoutcome_preserved_by_lts_non_blocking_action_converse; eauto.
              unfold non_blocking; simpl. exists (c ⋉ v); eauto. }
-           assert (must q e1); eauto. symmetry in H2.
+           assert (must q e1); eauto.
            eapply must_preserved_by_synch_if_notoutcome; eauto.
-      * intros. inversion H6; subst. symmetry in H5.
+      * intros. inversion H6; subst.
         eapply simplify_match_output in H5 as eq; subst.
         assert (lts e ((c ⋉ v) !) e') as l2; eauto.
         eapply OBA_with_FB_Fourth_Axiom in l2 as (e'1 & HypTr'1 & equiv1); eauto.
