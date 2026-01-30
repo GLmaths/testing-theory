@@ -59,7 +59,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
 | cgr_nu_nu_step : forall p,
     (ν ν p) ≡ (ν ν (p ⟨swap⟩))
 | cgr_res_nil_step :
-    (ν 𝟘) ≡ 𝟘 (* TODO : this can be obtained from cgr_scope_free *)
+    (ν 𝟘) ≡ 𝟘
 | cgr_res_nil_rev_step :
     𝟘 ≡ (ν 𝟘)
 | cgr_res_step : forall p q,
@@ -69,21 +69,94 @@ Inductive cgr_step : proc -> proc -> Prop :=
     (ν (P ‖ (⇑ Q) )) ≡ ((ν P) ‖ Q)
 | cgr_scope_rev_step: forall (P Q:proc),
     ((ν P) ‖ Q) ≡ (ν (P ‖ (⇑ Q)))
-(* This rules is custom ; it's easily in the transitive closure of the standard
- congruence. It actually implies cgr_res_nil_step *)
-| cgr_scope_free: forall (p q : proc), p ≡ ⇑ q -> ν p ≡ q
-| cgr_scope_free_rev: forall (p q : proc), p ≡ ⇑ q -> q ≡ ν p
 where "p ≡ q" := (cgr_step p q).
 
 #[global] Hint Constructors cgr_step:cgr_step_structure.
+
+(* Alternative definition of congruence step, better suited to prove that it's
+  a congruence *)
+Reserved Notation "p ≡ₐ q" (at level 70).
+Reserved Notation "p ≡g q" (at level 70).
+Inductive altcgr : proc -> proc -> Prop :=
+| altcgr_refl_step : forall p, p ≡ₐ p
+| altcgr_par_nil_step : forall p, 
+    (p ‖ 𝟘) ≡ₐ p
+| altcgr_par_nil_rev_step : forall p,
+    p ≡ₐ (p ‖ 𝟘)
+| altcgr_par_com_step : forall p q,
+    (p ‖ q) ≡ₐ (q ‖ p)
+| altcgr_par_assoc_step : forall p q r,
+    ((p ‖ q) ‖ r) ≡ₐ (p ‖ (q ‖ r))
+| altcgr_par_assoc_rev_step : forall p q r,
+    (p ‖ (q  ‖ r)) ≡ₐ ((p ‖ q) ‖ r)
+| altcgr_recursion_step : forall p q,
+    p ≡ₐ q -> (rec p) ≡ₐ (rec q)
+| altcgr_par_step : forall p q r,
+    p ≡ₐ q ->
+    (p ‖ r) ≡ₐ (q ‖ r)
+| altcgr_if_left_step : forall C p q q',
+    q ≡ₐ q' ->
+    (If C Then p Else q) ≡ₐ (If C Then p Else q')
+| altcgr_if_right_step : forall C p p' q,
+    p ≡ₐ p' ->
+    (If C Then p Else q) ≡ₐ (If C Then p' Else q)
+| altcgr_nu_nu_step : forall p,
+    (ν ν p) ≡ₐ (ν ν (p ⟨swap⟩))
+| altcgr_res_nil_step :
+    (ν 𝟘) ≡ₐ 𝟘
+| altcgr_res_nil_rev_step :
+    g 𝟘 ≡ₐ (ν 𝟘)
+| altcgr_res_step : forall p q,
+    p ≡ₐ q ->
+    (ν p) ≡ₐ (ν q)
+| altcgr_scope_step: forall (P Q:proc),
+    (ν (P ‖ (⇑ Q) )) ≡ₐ ((ν P) ‖ Q)
+| altcgr_scope_rev_step: forall (P Q:proc),
+    ((ν P) ‖ Q) ≡ₐ (ν (P ‖ (⇑ Q)))
+(* This rules is custom ; it's easily in the transitive closure of the standard
+ congruence. It actually implies altcgr_res_nil_step *)
+ (*
+| altcgr_scope_free: forall (p q : proc), p ≡ₐ ⇑ q -> ν p ≡ₐ q
+| altcgr_scope_free_rev: forall (p q : proc), p ≡ₐ ⇑ q -> q ≡ₐ ν p
+*)
+| altcgr_guard : forall (g1 g2 : gproc), g1 ≡g g2 -> g g1 ≡ₐ g g2
+| altcgr_trans : forall (p q r : proc) , p ≡ₐ q -> q ≡ₐ r -> p ≡ₐ r
+
+with altcgr_gstep : gproc -> gproc -> Prop :=
+| galtcgr_tau_step : forall p q,
+    p ≡ₐ q ->
+    (t • p) ≡g (t • q)
+| galtcgr_input_step : forall c p q,
+    p ≡ₐ q ->
+    (c ? p) ≡g (c ? q)
+| galtcgr_output_step : forall c v p q,
+    p ≡ₐ q ->
+    (c ! v • p) ≡g (c ! v • q)
+| galtcgr_choice_step : forall p1 q1 p2,
+    p1 ≡g q1 ->
+    (p1 + p2) ≡g (q1 + p2)
+| galtcgr_trans : forall (p q r : gproc), p ≡g q -> q ≡g r -> p ≡g r
+| galtcgr_choice_nil_step : forall p,
+    (p + 𝟘) ≡g p
+| galtcgr_choice_nil_rev_step : forall p,
+    p ≡g (p + 𝟘)
+| galtcgr_choice_com_step : forall p q,
+    (p + q) ≡g (q + p)
+| galtcgr_choice_assoc_step : forall p q r,
+    ((p + q) + r) ≡g (p + (q + r))
+| galtcgr_choice_assoc_rev_step : forall p q r,
+    (p + (q + r)) ≡g ((p + q) + r)
+| galtcgr_refl_step : forall p, p ≡g p
+| galtcgr_sym_step : forall p q, q ≡g p -> p ≡g q
+where "p ≡ₐ q" := (altcgr p q)
+and "p ≡g q" := (altcgr_gstep p q).
+#[local] Hint Constructors altcgr:alt_step_structure.
 
 #[global] Instance cgr_refl_step_is_refl : Reflexive cgr_step.
 Proof. intro. apply cgr_refl_step. Qed.
 #[global] Instance cgr_symm_step : Symmetric cgr_step.
 Proof. intros p q hcgr. induction hcgr; try solve [constructor; try exact IHhcgr].
-- rewrite <- (Swap_Proc_Involutive p) at 2. apply cgr_nu_nu_step.
-- now constructor.
-- now constructor.
+rewrite <- (Swap_Proc_Involutive p) at 2. apply cgr_nu_nu_step.
 Qed.
 
 Infix "≡" := cgr_step (at level 70).
@@ -94,7 +167,8 @@ Infix "≡*" := cgr (at level 70).
 #[global] Instance cgr_refl : Reflexive cgr.
 Proof. intros. constructor. apply cgr_refl_step. Qed.
 #[global] Instance cgr_symm : Symmetric cgr.
-Proof. intros p q hcgr. induction hcgr. constructor. apply cgr_symm_step. exact H. eapply t_trans; eauto. Qed.
+Proof. intros p q hcgr. induction hcgr. constructor. apply cgr_symm_step.
+exact H. eapply t_trans; eauto. Qed.
 #[global] Instance cgr_trans : Transitive cgr.
 Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 
@@ -105,6 +179,17 @@ Proof. repeat split.
        + apply cgr_refl.
        + apply cgr_symm.
        + apply cgr_trans.
+Qed.
+
+(* Transitive closure of congruence on guards only *)
+Definition guardcgr  :=
+  clos_trans proc (fun p1 p2 => exists g1 g2, p1 = g g1 /\ p2 = g g2 /\ p1 ≡ p2).
+
+#[local] Instance guard_cgr_refl : Symmetric guardcgr.
+Proof.
+  intros x y H. induction H.
+  - constructor. decompose record H. eauto with *.
+  - econstructor 2; eauto with *.
 Qed.
 
 (*the relation ≡* respects all the rules that ≡ respected*)
@@ -170,19 +255,45 @@ intros. induction H.
 constructor.
 - apply cgr_tau_step. exact H.
 - eauto with cgr_eq.
-Qed. 
+Qed.
+
+(* Stronger statement : congruences under tau preserve guards *)
+Lemma guardcgr_tau : forall p q, p ≡* q -> guardcgr (t • p) (t • q).
+Proof.
+intros. induction H.
+constructor.
+- eexists; eexists; repeat split. apply cgr_tau_step. exact H.
+- econstructor 2; eauto with cgr_eq.
+Qed.
+
 Lemma cgr_input : forall c p q, p ≡* q -> (c ? p) ≡* (c ? q).
 Proof.
 intros. induction H.
 - constructor. now apply cgr_input_step.
 - eauto with cgr_eq.
 Qed.
+
+Lemma guardcgr_input : forall c p q, p ≡* q -> guardcgr (c ? p) (c ? q).
+Proof.
+intros. induction H.
+- constructor. eexists; eexists; repeat split. now apply cgr_input_step.
+- econstructor 2; eauto with cgr_eq.
+Qed.
+
 Lemma cgr_output : forall c v p q, p ≡* q -> (c ! v • p) ≡* (c ! v • q).
 Proof.
 intros. induction H.
 - constructor. now apply cgr_output_step.
 - eauto with cgr_eq.
 Qed.
+
+Lemma guardcgr_output : forall c v p q, p ≡* q -> guardcgr (c ! v • p) (c ! v • q).
+Proof.
+intros. induction H.
+- constructor. eexists; eexists; repeat split. now constructor.
+- econstructor 2; eauto with cgr_eq.
+Qed.
+
 Lemma cgr_res : forall p q, p ≡* q -> (ν p) ≡* (ν q).
 Proof.
 intros. induction H.
@@ -226,14 +337,28 @@ intros. induction H.
 - eauto with cgr_eq.
 Qed.
 
-Lemma cgr_n_par_l p p' q n: clos_n cgr_step n p p' ->
-  clos_n cgr_step n (p ‖ q) (p' ‖ q).
+Lemma cgr_n_par_l p p' q n: clos_n altcgr n p p' ->
+  clos_n altcgr n (p ‖ q) (p' ‖ q).
 Proof.
 induction 1 as [|n p p' p'' Hp' Hind].
 - constructor.
 - apply clos_n_step with (p' ‖ q).
   + now constructor.
   + apply IHHind.
+Qed.
+
+#[global] Instance altcgr_refl_step_is_refl : Reflexive altcgr.
+Proof. intro. apply altcgr_refl_step. Qed.
+
+#[global] Instance altcgr_grefl_step_is_refl : Reflexive altcgr_gstep.
+Proof. intro. constructor. Qed.
+
+#[local] Instance altcgr_symm_step : Symmetric altcgr.
+Proof. intros p q hcgr. induction hcgr; try solve [constructor; try exact IHhcgr];
+try solve[now (do 3 (try constructor))].
+- rewrite <- (Swap_Proc_Involutive p) at 2. apply altcgr_nu_nu_step.
+- constructor. now constructor.
+- econstructor; eauto.
 Qed.
 
 (* The lemmas on renaming suffice for all of the treatment, except recursive variables. *)
@@ -250,10 +375,6 @@ intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs. clear Hs s'. subst.
     apply cgr_nu_nu_step.
   - unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_step _ _).
   - unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_rev_step _ _).
-  - repeat (asimpl; simpl). apply cgr_scope_free. repeat (asimpl; simpl).
-    generalize (IHHq sp (0.: s >> S)). asimpl; simpl. trivial.
-  - repeat (asimpl; simpl). apply cgr_scope_free_rev. repeat (asimpl; simpl).
-    generalize (IHHq sp (0.: s >> S)). asimpl; simpl. trivial.
 Qed.
 
 Instance RenProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) ren2.
@@ -264,14 +385,12 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
-(* TODO? 
-Instance cgr_ren2 n : Proper ((eq) ==> (eq) ==> (cgr) ==> (clos_n cgr n)) ren2.
-Proof. Admitted. *)
 
+(*
 (* It takes two more steps to apply congruences on the right hand side of
   a parallel *)
-Lemma cgr_n_par_r p p' q n: clos_n cgr_step n p p' ->
-  clos_n cgr_step (S (S n)) (q ‖ p) (q ‖ p').
+Lemma cgr_n_par_r p p' q n: clos_n altcgr n p p' ->
+  clos_n altcgr (S (S n)) (q ‖ p) (q ‖ p').
 Proof.
 intro Hp. apply clos_n_step with (p ‖ q); [constructor|].
 replace (S n) with (n + 1)%nat by apply PeanoNat.Nat.add_1_r.
@@ -281,8 +400,8 @@ apply clos_n_trans with (p' ‖ q).
 Qed.
 
 
-Lemma cgr_n_nu p p' n: clos_n cgr_step n p p' ->
-  clos_n cgr_step n (ν p) (ν p').
+Lemma altcgr_n_nu p p' n: clos_n altcgr n p p' ->
+  clos_n altcgr n (ν p) (ν p').
 Proof.
 induction 1 as [|n p p' Hp' Hind].
 - constructor.
@@ -297,455 +416,161 @@ destruct q; unfold shift_op, Shift_proc; asimpl; trivial; try solve[intro H; inv
 destruct g0; unfold shift_op, Shift_gproc; asimpl; trivial; intro H; inversion H.
 Qed.
 
-(* TODO: matteo : exists? move to Renamings *)
-(* TODO: we need a stronger statement about injective renamings? *)
 Lemma Shift_Proc_Injective : forall (p1 p2: proc), ⇑ p1 = ⇑ p2 -> p1 = p2.
 Proof.
 unfold shift_op, Shift_proc. intros.
 eapply Injective_Ren_Proc. apply Shift_Injective.
 exact H.
 Qed.
+*)
 
-Lemma cgr_step_shift_op_inv p q: p ≡ ⇑ q -> exists p', p = ⇑ p'.
-Proof.
-unfold shift_op, Shift_proc.
-intro H; dependent induction H.
-- eauto.
-- now exists (q ‖ g 𝟘).
-- revert x. dependent inversion q; intro x; inversion x. eauto.
-- revert x. dependent inversion q; intro x; inversion x. subst.
-  now exists (p1 ‖ p0).
-- revert x. dependent inversion q; intro x; inversion x. subst.
-  revert H1. dependent inversion p1; intro y; inversion y. subst.
-  now exists ((p0 ‖ p) ‖ p2).
-- (* TODO: This should go through but is there a better way? Matteo*)
-Admitted.
+(* Equivalence between the two definitions *)
 
-Lemma clos_n_cgr_step_shift q p n:
-  clos_n cgr_step n (⇑ q) (⇑ p) <->
-  clos_n cgr_step n q p.
-Proof.
-split.
-- intro H; dependent induction H.
-  + replace q with p; [constructor|]. now apply Shift_Proc_Injective.
-    (* Matteo : same as Shift_Op_Injective for proc? *)
-  + assert(H' := H). apply symmetry, cgr_step_shift_op_inv in H as (y' & Hy').
-    apply clos_n_step with y'.
-    * subst. (* apply RenProperStep in H. *)
-      (* Matteo: use shift down? *)
-      (* TODO: maybe another way *)
-      admit.
-    * now apply IHclos_n.
-- intro H; dependent induction H.
-  + constructor.
-  + apply clos_n_step with (⇑y).
-    * now apply RenProperStep.
-    * now apply IHclos_n.
-Admitted.
+Scheme proc_ind2 := Induction for proc Sort Prop
+  with gproc_ind2 := Induction for gproc Sort Prop.
 
-Lemma clos_n_cgr_scope_free n p q :
-  clos_n cgr_step n p (⇑ q) -> clos_n cgr_step (S n) (ν p) q.
+Lemma cgr_step_altcgr p q: cgr_step p q -> altcgr p q.
 Proof.
-intro H. dependent induction H.
-- econstructor; [|constructor]. now apply cgr_scope_free.
-- apply clos_n_step with (ν y).
-  + subst. now constructor.
-  + now apply IHclos_n.
+revert q.
+induction p using proc_ind2 with (P0 :=
+  (fun gp => forall gq, cgr_step (g gp) (g gq) -> altcgr_gstep gp gq));
+intros q Hq;
+try (solve[inversion Hq; subst; eauto with *; do 2 try constructor; eauto]).
+inversion Hq; subst; eauto with *;
+try (solve[inversion Hq; subst; eauto with *; do 2 try constructor; eauto]).
+constructor. now apply IHp.
 Qed.
 
-(* Lemma clos_n_cgr_step_ren
- clos_n cgr_step n p q <->  clos_n cgr_step n (ren2 s s' p) (ren2 s s' q). *)
+Lemma cgr_altcgr p q: cgr p q -> altcgr p q.
+Proof. intro H. induction H; eauto using cgr_step_altcgr with *. Qed.
 
-Lemma cgr_n_par_guard p g0 n : (forall q, clos_n cgr_step n (p ‖ q) (g g0) ->
-  exists np nq,
-   (n >= (np + nq + 2)%nat /\ (clos_n cgr_step np p (g 𝟘) /\ clos_n cgr_step nq q (g g0)) \/
-   (n >= (np + nq + 2)%nat /\ clos_n cgr_step np p (g g0) /\ clos_n cgr_step nq q (g 𝟘)) \/
-   (n >= (np + 1)%nat /\ clos_n cgr_step np p (g g0) /\ q = g 𝟘))) /\
-  (clos_n cgr_step n (ν p) (g g0) ->
-    (exists np nq, n >= (np + nq + 1)%nat /\ clos_n cgr_step np p (g 𝟘) /\ clos_n cgr_step nq 𝟘 g0) \/
-    (exists np, n >= (np + 1)%nat /\ clos_n cgr_step np p (⇑ g0))).
-Proof.
-(* by strong induction *)
-revert p g0. induction n as [n IH] using lt_wf_ind; intros p g0.
-destruct n as [|n]; [split; [intro q|]; intros H; inversion H|].
-split; [intro q|]; intro H; apply clos_n_S_inv in H.
-- destruct H as [Heq | [p' [Hpp' Hp'q]]]; [inversion Heq|].
-  dependent destruction Hpp'.
-  + apply IH in Hp'q as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * exists (S np), nq. left. repeat split; [lia| |]; trivial.
-      apply clos_n_S, Hp.
-    * exists (S np), nq. right. left. repeat split; [lia| |]; trivial.
-      apply clos_n_S, Hp.
-    * inversion Hq; subst. exists (S np), 0. right; right.
-      repeat split; trivial.
-      -- lia.
-      -- apply clos_n_S, Hp.
-    * constructor.
-  + exists n, 0. right. right. repeat split; [lia|]; trivial.
-  + apply IH in Hp'q as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * apply IH in Hp as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists (S (S np')), (nq' + nq)%nat. left.
-         repeat split; [lia| |].
-         ++ apply clos_n_S, clos_n_S, Hp'.
-         ++ now apply clos_n_trans with (g 𝟘).
-      -- exists (np' + nq)%nat, (S (S nq')). right. left.
-         repeat split; [lia| |].
-         ++	now apply clos_n_trans with (g 𝟘).
-         ++ apply clos_n_S, clos_n_S, Hq'.
-      -- subst. exists (np' + nq)%nat, 0. right. right.
-         repeat split; [lia|]; trivial.
-         apply clos_n_trans with (g 𝟘); trivial.
-      -- lia.
-    * apply IH in Hp as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists np', nq'. left.
-         repeat split; [lia| |]; trivial.
-      -- exists np', nq'. right. left. repeat split; [lia| |]; trivial.
-      -- inversion Hq'; subst. exists np', 0. right; right.
-         repeat split; trivial. lia.
-      -- lia.
-    * apply IH in Hp as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists np', nq'. left. repeat split; [lia| |]; trivial.
-      -- exists np', nq'. right. left. repeat split; trivial. lia.
-      -- inversion Hq'; subst. exists np', 0. right; right.
-         repeat split; trivial. lia.
-      -- lia.
-    * lia.
-  + apply IH in Hp'q as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * exists nq, np. right. left. repeat split; trivial. lia.
-    * exists nq, np. left. repeat split; trivial. lia.
-    * inversion Hq; subst. exists 0, np. left. repeat split; trivial. lia. constructor.
-    * lia.
-  + apply IH in Hp'q as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * apply IH in Hq as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists (np + (2 + np'))%nat, nq'. left. repeat split; trivial. lia.
-         apply clos_n_trans with (g 𝟘 ‖ q0).
-         ++ apply cgr_n_par_l, Hp.
-         ++ apply clos_n_step with (q0 ‖ g 𝟘); [constructor|].
-            apply clos_n_step with q0; [constructor|]; trivial.
-      -- exists (np + S (S np'))%nat, nq'. right. left.
-         repeat split; trivial; [lia|].
-         apply clos_n_trans with (g 𝟘 ‖ q0).
-         ++ now apply cgr_n_par_l.
-         ++ apply clos_n_step with (q0 ‖ g 𝟘); [constructor|].
-            apply clos_n_step with q0; [constructor|]. trivial.
-      -- eexists (np + (2 + np'))%nat, 0; right; right.
-         repeat split; trivial; [lia|].
-         apply clos_n_trans with (g 𝟘 ‖ q0).
-         ++ now apply cgr_n_par_l.
-         ++ apply clos_n_step with (q0 ‖ g 𝟘); [constructor|].
-            apply clos_n_step with q0; [constructor|]. trivial.
-      -- lia.
-    * apply IH in Hq as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists (np + ((2 + np') + 1))%nat, nq'. right. left.
-         repeat split; trivial; [lia|].
-         apply clos_n_trans with (g g0 ‖ q0).
-         ++ now apply cgr_n_par_l.
-         ++ apply clos_n_trans with (g g0 ‖ g 𝟘).
-          ** now apply cgr_n_par_r.
-          ** eapply clos_n_step; [|constructor]. constructor.
-      -- exists (np + ((2 + np') + 1))%nat, nq'. right. left.
-         repeat split; trivial; [lia|].
-         apply clos_n_trans with (g g0 ‖ q0).
-         ++ now apply cgr_n_par_l.
-         ++ apply clos_n_trans with (g g0 ‖ g 𝟘).
-          ** now apply cgr_n_par_r.
-          ** eapply clos_n_step; [|constructor]. constructor.
-      -- exists (np + ((2 + np') + 1))%nat, 0. right. right. repeat split; trivial; [lia|].
-         apply clos_n_trans with (g g0 ‖ q0).
-         ++ now apply cgr_n_par_l.
-         ++ apply clos_n_trans with (g g0 ‖ g 𝟘).
-          ** now apply cgr_n_par_r.
-          ** eapply clos_n_step; [|constructor]. constructor.
-      -- lia.
-    * inversion Hq.
-    * lia.
-  + apply IH in Hp'q as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * apply IH in Hp as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists np', (nq' + S (S nq))%nat. left. repeat split; trivial; [lia|].
-         apply clos_n_trans with (g 𝟘 ‖ r).
-         ++ now apply cgr_n_par_l.
-         ++ apply clos_n_step with (r ‖ g 𝟘); [constructor|].
-            apply clos_n_step with r; [constructor|]. trivial.
-      -- exists np', (nq' + S (S nq))%nat. left. repeat split; trivial; [lia|].
-         apply clos_n_trans with (g 𝟘 ‖ r).
-         ++ now apply cgr_n_par_l.
-         ++ apply clos_n_step with (r ‖ g 𝟘); [constructor|].
-            apply clos_n_step with r; [constructor|]. trivial.
-      -- exists np', (S (S nq)). left. repeat split; trivial; [lia|].
-         inversion Hq'. apply clos_n_step with (r  ‖ g 𝟘);[constructor|].
-         apply clos_n_step with r;[constructor|]. trivial.
-      -- lia.
-    * apply IH in Hp as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists np', (nq' + (S (S nq) + 1))%nat. left. repeat split; trivial; [lia|].
-         apply clos_n_trans with (g g0 ‖ r); [now apply cgr_n_par_l|].
-         apply clos_n_trans with (g g0 ‖ g 𝟘); [now apply cgr_n_par_r|].
-         apply clos_n_step with (g g0); constructor.
-      -- exists np', (nq' + (2 + nq))%nat. right. left.
-         repeat split; trivial; [lia|].
-         apply clos_n_trans with (g 𝟘 ‖ r); [now apply cgr_n_par_l|].
-         apply clos_n_step with (r ‖ g 𝟘); [constructor|].
-         apply clos_n_step with r; [constructor|]. trivial.
-      -- exists np', (2 + nq)%nat. right. left.
-         repeat split; trivial; [lia|]. inversion Hq'; subst.
-         apply clos_n_step with (r ‖ g 𝟘); [constructor|].
-         apply clos_n_step with r; [constructor|]. trivial.
-      -- lia.
-    * inversion Hq; subst.
-      apply IH in Hp as (np' & nq' & [[Hnpq' [Hp' Hq']] | [[Hnpq' [Hp' Hq']] | [Hnpq' [Hp' Hq']]]]).
-      -- exists np', (S nq'). left. repeat split; trivial; [lia|].
-         apply clos_n_step with q0; [constructor|]. trivial.
-      -- exists np', (S nq')%nat. right. left. repeat split; trivial; [lia|].
-         apply clos_n_step with q0; [constructor|]. trivial.
-      -- exists np', 1. right. left. repeat split; trivial; [lia|].
-         inversion Hq'. apply clos_n_step with (g 𝟘); constructor.
-      -- lia.
-    * lia.
-  + apply IH in Hp'q as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * exists (S np), nq. left. repeat split; [lia| |]; trivial.
-      apply clos_n_step with q0; trivial.
-    * exists (S np), nq. right. left. repeat split; [lia| |]; trivial.
-      apply clos_n_step with q0; trivial.
-    * exists (S np), nq. right. right. repeat split; [lia| |]; trivial.
-      apply clos_n_step with q0; trivial.
-    * constructor.
-  + apply IH in Hp'q as [(np0 & nq0 & Hge & Hnp & Hg0)|(np0 & Hge & Hnp0)]; [| |lia].
-    * apply IH in Hnp as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-      -- exists (np + 1 + nq0)%nat, nq. right. left. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (g 𝟘); trivial.
-           eapply clos_n_trans with (ν (g 𝟘)).
-           ** apply cgr_n_nu, Hp.
-           ** econstructor; constructor.
-        ++ now apply clos_n_cgr_step_shift.
-      -- exists (np + 1)%nat, (nq + nq0)%nat. left. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (ν 𝟘); [|econstructor; constructor].
-           now apply cgr_n_nu.
-        ++ apply clos_n_trans with (g 𝟘); trivial.
-           now apply clos_n_cgr_step_shift.
-      -- exists (np + 1 + nq0)%nat, nq. right. right. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (g 𝟘); trivial.
-           apply clos_n_trans with (ν 𝟘); trivial.
-           ** now apply cgr_n_nu.
-           ** econstructor; constructor.
-        ++ now apply shift_nil.
-      -- lia.
-    * apply IH in Hnp0 as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-      -- exists (np + 1)%nat, nq. left. repeat split.
-         ++ lia.
-         ++ apply clos_n_trans with (ν 𝟘); trivial.
-           ** now apply cgr_n_nu.
-           ** econstructor; constructor.
-         ++ now apply clos_n_cgr_step_shift.
-      -- exists (np + 1)%nat, nq. right; left. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (ν g (⇑ g0)).
-          ** now apply cgr_n_nu.
-          ** eapply clos_n_step; now constructor.
-            (* Key use of the custom cgr_step rule *)
-        ++ now apply clos_n_cgr_step_shift.
-      -- exists (np + 1)%nat, 0. right. right. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (ν g (⇑ g0)).
-          ** now apply cgr_n_nu.
-          ** eapply clos_n_step; now constructor.
-        ++ admit. (* Matteo *)
-      -- lia.
-  + apply IH in Hp'q as [(np0 & nq0 & Hge & Hnp & Hg0)|(np & Hge & Hnp)]; [| |lia].
-    * assert(Hnp' : clos_n cgr_step (S np0) (⇑ p ‖ ⇑ q) (g 𝟘)). {
-        apply clos_n_step with p0; [now symmetry|trivial].
-      }
-      apply IH in Hnp' as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-      -- exists np, (nq + nq0)%nat. left. repeat split.
-        ++ lia.
-        ++ now apply clos_n_cgr_step_shift.
-        ++ apply clos_n_trans with (g 𝟘); trivial.
-           now apply clos_n_cgr_step_shift.
-      -- exists np, (nq + nq0)%nat. left. repeat split.
-        ++ lia.
-        ++ now apply clos_n_cgr_step_shift.
-        ++ apply clos_n_trans with (g 𝟘); trivial.
-           now apply clos_n_cgr_step_shift.
-      -- exists (np + nq0)%nat, nq. right. right. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (g 𝟘); trivial.
-           now apply clos_n_cgr_step_shift.
-        ++ admit. (* Matteo *)
-      -- lia.
-    * assert(Hnp' : clos_n cgr_step (S np) (⇑ p ‖ ⇑ q) (g (⇑ g0))). {
-        apply clos_n_step with p0; [now symmetry|trivial].
-      }
-      apply IH in Hnp' as (np' & nq' & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-      -- exists np', (nq')%nat. left. repeat split.
-        ++ lia.
-        ++ now apply clos_n_cgr_step_shift.
-        ++ now apply clos_n_cgr_step_shift.
-      -- exists np', nq'. right; left. repeat split.
-        ++ lia.
-        ++ now apply clos_n_cgr_step_shift.
-        ++ now apply clos_n_cgr_step_shift.
-      -- exists np', nq'. right. right. repeat split.
-        ++ lia.
-        ++ now apply clos_n_cgr_step_shift.
-        ++ admit. (* Matteo *)
-      -- lia.
-- destruct H as [Heq|[p' [Hpp' Hp'q]]]; [inversion Heq|].
-  dependent destruction Hpp'.
-  + apply IH in Hp'q as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-    * left. exists np, nq. repeat split; trivial. lia.
-    * right. exists np. split; trivial. lia.
-  + apply IH in Hp'q as (np' & nq' & [[Hnpq' [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * apply IH in Hp as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-      -- left. exists np, nq'. repeat split; trivial. lia.
-      -- left. exists np, nq'. repeat split; trivial. lia.
-    * apply IH in Hp as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-      -- left. exists np, nq. repeat split; trivial. lia.
-      -- right. exists (np)%nat. split. lia. eassumption.
-    * apply IH in Hp as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-      -- left. exists np, nq. repeat split; trivial. lia.
-      -- right. exists (np)%nat. split. lia. eassumption.
-    * lia.
-  + apply IH in Hp'q as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-    * apply IH in Hnp as [(np' & nq' & Hge' & Hp0 & _) |(np' & Hge' & Hp0)].
-      -- left. exists (np' + 1)%nat, nq. repeat split.
-        ++ lia. 
-        ++ apply clos_n_trans with (ν (g 𝟘)).
-          ** apply cgr_n_nu.
-             change (g 𝟘) with ((g 𝟘) ⟨ swap ⟩) in Hp0.
-             admit. (* Hp0 and somme ren2 lemma? *)
-          ** econstructor; constructor.
-        ++ trivial.
-      -- left. exists (np' + 1)%nat, nq. repeat split.
-        ++ lia. 
-        ++ apply clos_n_trans with (ν (g 𝟘)).
-          ** apply cgr_n_nu.
-             change (g (⇑ 𝟘)) with ((g 𝟘) ⟨ swap ⟩) in Hp0.
-             admit. (* Hp0 and somme ren2 lemma? *)
-          ** econstructor; constructor.
-        ++ trivial.
-      -- lia.
-    * apply IH in Hnp as [(np' & nq' & Hge' & Hp0 & Hg0) |(np' & Hge' & Hp0)].
-      -- left. exists (np' + 1)%nat, nq'. repeat split.
-        ++ lia. 
-        ++ apply clos_n_trans with (ν (g 𝟘)).
-          ** apply cgr_n_nu.
-             change (g 𝟘) with ((g 𝟘) ⟨ swap ⟩) in Hp0.
-             admit. (* Hp0 and somme ren2 lemma? *)
-          ** econstructor; constructor.
-        ++ now apply clos_n_cgr_step_shift.
-      -- right. exists (S np')%nat. split.
-        ++ lia. 
-        ++ (* swapping after a double shift does nothing *)
-           replace (g (⇑ (⇑ g0))) with (⇑ (⇑ (g g0)) ⟨ swap ⟩) in Hp0
-             by apply Shift_Shift_Swap_pr.
-           apply clos_n_cgr_scope_free.
-           admit. (* ren2 lemma with Hp0 *)
-      -- lia.
-  + left. exists 0, n. repeat split.
-    * lia.
-    * constructor.
-    * trivial.
-  + apply IH in Hp'q as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-    * left. exists (S np), nq. repeat split.
-      -- lia.
-      -- econstructor; eassumption.
-      -- eassumption.
-    * right. exists (S np). repeat split.
-      -- lia.
-      -- econstructor; eassumption.
-  + apply IH in Hp'q as (np' & nq' & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-    * apply IH in Hp as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-      -- right. exists (np + S (S nq'))%nat. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (𝟘 ‖ ⇑ Q).
-          ** now apply cgr_n_par_l.
-          ** apply clos_n_step with (⇑ Q ‖ 𝟘 ); [constructor|].
-             apply clos_n_step with (⇑ Q); [constructor|].
-             change (g (⇑ g0)) with (⇑ (g (g0))).
-             now apply clos_n_cgr_step_shift.
-      -- right. exists (np + S (S nq'))%nat. split. lia.
-         apply clos_n_trans with (𝟘 ‖ ⇑ Q); [now apply cgr_n_par_l|].
-         apply clos_n_step with (⇑ Q ‖ 𝟘); [constructor|].
-         apply clos_n_step with (⇑ Q); [constructor|].
-         change (g (⇑ g0)) with (⇑ (g (g0))).
-         now apply clos_n_cgr_step_shift.
-    * apply IH in Hp as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-      -- left. exists (S (S nq') + S np)%nat, nq. repeat split.
-        ++ lia.
-        ++ apply clos_n_trans with (P ‖ ⇑ (g 𝟘)).
-           ** apply cgr_n_par_r. now apply clos_n_cgr_step_shift.
-           ** eapply clos_n_step; [|eassumption]. constructor.
-        ++ assumption.
-      -- right. exists (S (S nq') + S np)%nat. split. lia.
-         apply clos_n_trans with (P ‖ ⇑ (g 𝟘)).
-         ++ apply cgr_n_par_r. now apply clos_n_cgr_step_shift.
-         ++ eapply clos_n_step; [|eassumption]. constructor.
-    * subst.
-      apply IH in Hp as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)]; [| |lia].
-      -- left. exists (S np), nq. repeat split.
-        ++ lia.
-        ++ apply clos_n_step with P; [constructor|trivial].
-        ++ trivial.
-      -- right. exists (S np). split. lia.
-         apply clos_n_step with P; [constructor|trivial].
-    * lia.
-Admitted.
+Scheme altcgr_ind2 := Induction for altcgr Sort Prop
+  with galtcgr_ind2 := Induction for altcgr_gstep Sort Prop.
 
-Lemma cgr_n_par_nil_l p q n: clos_n cgr_step n (g p ‖ g 𝟘) (g q) ->
-  clos_n cgr_step n (g p) (g q).
+Combined Scheme altcgr_mutind from altcgr_ind2,galtcgr_ind2.
+
+Lemma guardcgr_choice_step p1 q1 p2: guardcgr (g p1) (g q1) ->
+  guardcgr (g (p1 + p2)) (g (q1 + p2)).
 Proof.
-intro Hp. apply cgr_n_par_guard in Hp
-  as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
-- assert (Hle : (np + nq)%nat <= n) by lia.
-  unshelve eapply (clos_n_le _ Hle).
-  eapply clos_n_trans; eassumption.
-- apply (clos_n_le Hp). lia.
-- apply (clos_n_le Hp). lia.
+  intros H%clos_trans_tn1. apply clos_tn1_trans. dependent induction H.
+  - constructor. decompose record H; subst.
+    eexists; eexists; repeat split. now constructor.
+  - decompose record H; subst; clear H. inversion H2; subst.
+    econstructor 2; eauto.
+    eexists; eexists; repeat split. now constructor.
 Qed.
 
-Lemma cgr_n_nu_nil_l p q n: clos_n cgr_step n (ν p) (g q) ->
-  clos_n cgr_step n (p) (g (⇑ q)).
-Proof.
-intro Hp. apply cgr_n_par_guard in Hp
-  as [(np & nq & Hge & Hnp & Hnq)|(np & Hge & Hnp)].
-- assert (Hle : (np + nq)%nat <= n) by lia.
-(*   unshelve eapply (clos_n_le _ Hle).
-  eapply clos_n_trans; [eassumption|]. *)
-  admit. (* using hnq *)
-- unshelve eapply (clos_n_le _ Hge).
-  eapply clos_n_trans.
-  + exact Hnp.
-  + eapply clos_n_step. constructor. constructor.
-Admitted.
+Lemma guardcgr_cgr p q : guardcgr p q -> cgr p q.
+Proof. intro H. induction H; eauto with *; decompose record H; now constructor. Qed.
 
+(* The following goes through because we strengthen the conclusion on guards *)
+Lemma altcgr_cgr :
+  (forall p q, altcgr p q -> p ≡* q) /\
+  (forall gp gq, altcgr_gstep gp gq -> guardcgr gp gq).
+Proof.
+apply altcgr_mutind; try solve [repeat constructor; eauto with *]; intros.
+- now apply cgr_recursion.
+- now apply cgr_par.
+- now apply cgr_if_left.
+- now apply cgr_if_right.
+- now apply cgr_res.
+- now apply guardcgr_cgr.
+- eauto with *.
+- now apply guardcgr_tau.
+- now apply guardcgr_input.
+- now apply guardcgr_output.
+- now apply guardcgr_choice_step.
+- intros. now apply t_trans with (g q).
+- now symmetry.
+Qed.
+
+(* Being syntactically equivalent to a guard, hidden under parallels and unnecessary restrictions *)
+Fixpoint sguard (g0 : gproc) (p : proc) := match p with
+| (p ‖ q) => (sguard 𝟘 p /\ sguard g0 q) \/ (sguard 𝟘 q /\ sguard g0 p)
+| (ν p) => sguard (⇑ g0) p
+| g p => p ≡g g0
+| _ => False
+end.
+
+(* congruence is preserved by renamings *)
+Lemma ren2_altcgr:
+  (forall p1 p2, p1 ≡ₐ p2 -> forall s1 s2, ren2 s1 s2 p1 ≡ₐ ren2 s1 s2 p2) /\
+  (forall g1 g2, g1 ≡g g2 -> forall s1 s2, ren2 s1 s2 g1 ≡g ren2 s1 s2 g2).
+Proof.
+apply altcgr_mutind; intros; asimpl; simpl; try solve [constructor; eauto with *].
+- (* unification issue *)
+  generalize (altcgr_nu_nu_step (ren2 s1 (0 .: (1 .: (fun x : nat => S (S (s2 x))))) p)).
+  now asimpl.
+- generalize (altcgr_scope_step (ren2 s1 (0 .: s2 >> S) P) (ren2 s1 s2 Q)).
+  now asimpl.
+- generalize (altcgr_scope_rev_step (ren2 s1 (0 .: s2 >> S) P) (ren2 s1 s2 Q)).
+  now asimpl.
+- eapply altcgr_trans; eauto.
+- eapply galtcgr_trans; eauto.
+Qed.
+
+Lemma sguard_cgr_proper p g g': sguard g p -> g ≡g g' -> sguard g' p.
+Proof.
+revert g g'. induction p; simpl; intuition.
+- left. intuition. eauto with *.
+- right. intuition. eauto with *.
+- eapply IHp; [eassumption|]. now apply ren2_altcgr.
+- apply galtcgr_trans with g1; trivial.
+Qed.
+
+Lemma ren2_sguard p g s1 s2 : sguard g p -> sguard (ren2 s1 s2 g) (ren2 s1 s2 p).
+Proof.
+revert g s1 s2. induction p; intros g s1 s2; simpl; intuition.
+- left. split; [now apply (IHp1 𝟘)| now apply IHp2].
+- right. split; [now apply (IHp2 𝟘) | now apply IHp1].
+- revert H. rewrite <- permute_ren_guard. apply IHp; trivial.
+- now apply ren2_altcgr.
+Qed.
+
+Definition shift_down_proc := ren2 ids pred.
+Axiom shift_down_up_proc : forall p : proc, shift_down_proc (⇑ p) = p.
+Definition shift_down_gproc := ren2 ids pred : gproc -> gproc.
+Axiom shift_down_up_gproc : forall p : gproc, shift_down_gproc (⇑ p) = p.
+
+Instance RenProperAltcgr : Proper (eq ==> (eq) ==> altcgr ==> altcgr) ren2.
+Proof. intros ?????????. subst. now apply ren2_altcgr. Qed.
+
+Lemma altcgr_guard_proper (p0 p1 : proc) (g0 : gproc) : (p0 ≡ₐ p1) -> sguard g0 p0
+  -> sguard g0 p1.
+Proof.
+intro H. dependent induction H generalizing g0; simpl; try solve[constructor]; auto with *;
+intuition; simpl; eauto with *.
+- eapply sguard_cgr_proper; eauto.
+- replace (⇑ (⇑ g0)) with ((⇑ (⇑ g0)) ⟨ swap ⟩) by (now asimpl).
+  now apply ren2_sguard.
+- rewrite <- (shift_down_up_gproc g0), <- (shift_down_up_gproc 𝟘).
+  change (⇑ 𝟘) with 𝟘. now apply ren2_altcgr.
+- change 𝟘 with (⇑ 𝟘). now apply ren2_altcgr.
+- left. split; trivial.
+  rewrite <- (shift_down_up_gproc g0), <- (shift_down_up_proc Q).
+  now apply ren2_sguard.
+- right. split; trivial. change 𝟘 with (⇑ 𝟘) in H.
+  rewrite <- (shift_down_up_proc Q), <- (shift_down_up_gproc 𝟘).
+  now apply ren2_sguard.
+- left. split; trivial. now apply ren2_sguard.
+- right. split; trivial. change 𝟘 with (⇑ 𝟘). now apply ren2_sguard.
+- apply galtcgr_trans with g1; trivial. now apply galtcgr_sym_step.
+Qed.
+
+(* The congruence between guards, is no stronger than the congruence over guards *)
+Lemma altcgr_guard_rev g1 g2: g g1 ≡ₐ g g2 -> g1 ≡g g2.
+Proof.
+intro Ha. inversion Ha; subst; [constructor|auto|].
+apply (altcgr_guard_proper q (g g1) g2); [now symmetry|].
+apply (altcgr_guard_proper (g g2) q g2); [now symmetry|].
+constructor.
+Qed.
+
+(* Choice respects ≡* *)
 Lemma cgr_choice : forall p q r, g p ≡* g q -> p + r ≡* q + r.
 Proof.
-(* By induction on the __length__ of the cgr-derivation *)
-intros p q r H. apply clos_trans_clos_n in H as [n Hn].
-revert n p q r Hn. induction n as [|n]; intros p q r Hn;
-[inversion Hn; subst; reflexivity|].
-apply clos_n_S_inv in Hn as [Heq|[p' [Hpp' Hp'q]]]; [now inversion Heq|].
-dependent destruction Hpp';
-try solve[etransitivity; [|eapply IHn; eauto]; repeat constructor].
-- apply IHn, cgr_n_par_nil_l, Hp'q.
-- transitivity (g (t • q0 + r)); [repeat constructor| apply IHn]; trivial.
-- transitivity (g (c ? q0 + r)); [repeat constructor| apply IHn]; trivial.
-- transitivity (g (c ! v • q0 + r)); [repeat constructor| apply IHn]; trivial.
-- transitivity (g (q1 + p2 + r)); [repeat constructor| apply IHn]; trivial.
-- apply IHn. apply cgr_n_nu_nil_l in Hp'q. 
-  now apply clos_n_cgr_step_shift.
-- apply cgr_n_par_guard in Hp'q as [(np0 & nq & Hge & Hp0 & Hq)|(np0 & Hge & Hp0)].
-  + (* either p0 goes to 𝟘 at some point *)
-    transitivity (g(𝟘 + r)).
-    * apply IHn, clos_n_cgr_step_shift. eapply clos_n_le.
-      -- apply clos_n_step with p0; [now symmetry|exact Hp0].
-      -- lia.
-    * apply IHn. eapply clos_n_le; [exact Hq|lia].
-  + (* or p0 goes back to a guard *)
-    apply IHn, clos_n_cgr_step_shift. eapply clos_n_le.
-    * apply clos_n_step with p0; [now symmetry|exact Hp0].
-    * lia.
+intros p q r H%cgr_altcgr%altcgr_guard_rev.
+apply altcgr_cgr. now do 2 constructor.
 Qed.
 
 (* The if of processes respects ≡* *)
@@ -814,10 +639,6 @@ induction Hq;  intros; try solve [asimpl; auto with cgr_step_structure].
 - cbn. rewrite Up_Up_Subst_Swap. now apply cgr_nu_nu_step.
 - unfold subst2. simpl. rewrite Shift_Permute_Subst. exact (cgr_scope_step _ _).
 - unfold subst2. simpl. rewrite Shift_Permute_Subst. exact (cgr_scope_rev_step _ _).
-- unfold subst2. simpl. apply cgr_scope_free.
-  generalize(IHHq (up_Data_proc sp) (up_Data_Data s)). asimpl. trivial.
-- unfold subst2. simpl. apply cgr_scope_free_rev.
-  generalize(IHHq (up_Data_proc sp) (up_Data_Data s)). asimpl. trivial.
 Qed.
 
 Instance SubstProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) subst2.

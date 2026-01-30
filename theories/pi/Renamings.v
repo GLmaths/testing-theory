@@ -264,6 +264,11 @@ Lemma permute_ren : forall sp s Q,
   ⇑ (ren2 sp s Q).
 Proof. now asimpl. Qed.
 
+Lemma permute_ren_guard
+     : forall (sp s : nat -> nat) (Q : gproc),
+       ren2 (upRen_Data_proc sp) (upRen_Data_Data s) (⇑ Q) = ⇑ (ren2 sp s Q).
+Proof. now asimpl. Qed.
+
 Lemma permute_ren1 : forall s (d:Data),
   ren1 (up_ren s) (⇑ d) = ⇑ (ren1 s d).
 Proof. now asimpl. Qed.
