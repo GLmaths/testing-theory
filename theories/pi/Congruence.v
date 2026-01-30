@@ -1,6 +1,5 @@
 Require Import Coq.Program.Equality Lia Arith.
 Require Import Relations Morphisms.
-From Must Require Import Clos_n.
 From Must.pi Require Import Renamings.
 
 Reserved Notation "p ≡ q" (at level 70).
@@ -337,16 +336,6 @@ intros. induction H.
 - eauto with cgr_eq.
 Qed.
 
-Lemma cgr_n_par_l p p' q n: clos_n altcgr n p p' ->
-  clos_n altcgr n (p ‖ q) (p' ‖ q).
-Proof.
-induction 1 as [|n p p' p'' Hp' Hind].
-- constructor.
-- apply clos_n_step with (p' ‖ q).
-  + now constructor.
-  + apply IHHind.
-Qed.
-
 #[global] Instance altcgr_refl_step_is_refl : Reflexive altcgr.
 Proof. intro. apply altcgr_refl_step. Qed.
 
@@ -385,44 +374,6 @@ induction Hq as [p q base_case | p r q transitivity_case].
 - subst. now rewrite IHtransitivity_case.
 Qed.
 
-
-(*
-(* It takes two more steps to apply congruences on the right hand side of
-  a parallel *)
-Lemma cgr_n_par_r p p' q n: clos_n altcgr n p p' ->
-  clos_n altcgr (S (S n)) (q ‖ p) (q ‖ p').
-Proof.
-intro Hp. apply clos_n_step with (p ‖ q); [constructor|].
-replace (S n) with (n + 1)%nat by apply PeanoNat.Nat.add_1_r.
-apply clos_n_trans with (p' ‖ q).
-- apply cgr_n_par_l, Hp.
-- apply clos_n_step with (q ‖ p'); constructor.
-Qed.
-
-
-Lemma altcgr_n_nu p p' n: clos_n altcgr n p p' ->
-  clos_n altcgr n (ν p) (ν p').
-Proof.
-induction 1 as [|n p p' Hp' Hind].
-- constructor.
-- apply clos_n_step with (ν p').
-  + now constructor.
-  + apply IHclos_n.
-Qed.
-
-Lemma shift_nil (q : proc) : ⇑ q = 𝟘 -> q = 𝟘.
-Proof.
-destruct q; unfold shift_op, Shift_proc; asimpl; trivial; try solve[intro H; inversion H].
-destruct g0; unfold shift_op, Shift_gproc; asimpl; trivial; intro H; inversion H.
-Qed.
-
-Lemma Shift_Proc_Injective : forall (p1 p2: proc), ⇑ p1 = ⇑ p2 -> p1 = p2.
-Proof.
-unfold shift_op, Shift_proc. intros.
-eapply Injective_Ren_Proc. apply Shift_Injective.
-exact H.
-Qed.
-*)
 
 (* Equivalence between the two definitions *)
 
@@ -528,9 +479,13 @@ revert g s1 s2. induction p; intros g s1 s2; simpl; intuition.
 Qed.
 
 Definition shift_down_proc := ren2 ids pred.
-Axiom shift_down_up_proc : forall p : proc, shift_down_proc (⇑ p) = p.
+
+Lemma shift_down_up_proc : forall p : proc, shift_down_proc (⇑ p) = p.
+Proof. now asimpl. Qed.
+
 Definition shift_down_gproc := ren2 ids pred : gproc -> gproc.
-Axiom shift_down_up_gproc : forall p : gproc, shift_down_gproc (⇑ p) = p.
+Lemma shift_down_up_gproc : forall p : gproc, shift_down_gproc (⇑ p) = p.
+Proof. now asimpl. Qed.
 
 Instance RenProperAltcgr : Proper (eq ==> (eq) ==> altcgr ==> altcgr) ren2.
 Proof. intros ?????????. subst. now apply ren2_altcgr. Qed.
