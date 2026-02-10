@@ -7,7 +7,7 @@ bug-reports: "https://github.com/GLmaths/testing-theory/issues"
 doc: "https://GLmaths.github.io/testing-theory"
 maintainer: "gaetan.lopez@irif.fr"
 authors: [
-  "Gaëtan Lopez",
+  "Gaëtan Lopez"
   "Hugo Férée"
 ]
 license: "MIT"
@@ -31,5 +31,3 @@ tags: [
   "date:2026-02-10"
   "logpath:testing-theory"
 ]
-
-
