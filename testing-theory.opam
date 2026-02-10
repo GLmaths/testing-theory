@@ -1,0 +1,35 @@
+opam-version: "2.0"
+synopsis: "Rocq library must-testing"
+
+homepage: "https://github.com/GLmaths/testing-theory"
+dev-repo: "git+https://github.com/GLmaths/testing-theory.git"
+bug-reports: "https://github.com/GLmaths/testing-theory/issues"
+doc: "https://GLmaths.github.io/testing-theory"
+maintainer: "gaetan.lopez@irif.fr"
+authors: [
+  "Gaëtan Lopez",
+  "Hugo Férée"
+]
+license: "MIT"
+
+depends: [
+  "coq" {>= "8.20.1"}
+  "coq-stdpp" {>= "1.12.0"}
+  "coq-equations" {>="1.3.1"}
+  "coq-coqinduction" {>="1.20"}
+]
+
+build: [
+  [make "-j%{jobs}%"]
+]
+install: [
+  [make "install"]
+]
+
+
+tags: [
+  "date:2026-02-10"
+  "logpath:testing-theory"
+]
+
+
