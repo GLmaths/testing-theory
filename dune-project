@@ -4,12 +4,14 @@
 
 (name testing-theory)
 
-(generate_opam_files false)
+(generate_opam_files true)
+(source (github GLmaths/testing-theory))
 
-(source
- (github GLmaths/testing-theory))
-
-(authors "Gaëtan Lopez")
+(authors "Paul Laforgue"
+         "Léo Stefanesco"
+         "Peio Borthelle"
+         "Gaëtan Lopez"
+         "Hugo Férée")
 
 (maintainers "Gaëtan Lopez")
 
@@ -17,13 +19,16 @@
 
 (using coq 0.11)
 
-(documentation https:GLmaths.github.io/testing-theory)
+(documentation https://GLmaths.github.io/testing-theory)
 
 (package
  (name testing-theory)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends dune coq-stdpp coq-coinduction)
+ (synopsis "Coq library for characterisations of testing preorders")
+ (description "Coq library for characterisations of testing preorders")
+ (depends (coq(>= 8.20.1))
+          (coq-stdpp(>= 1.12.0))
+          (coq-coinduction(>= 1.20))
+          (coq-equations(>= 1.3.1)))
  (tags
   (topics "to describe" your project)))
 
