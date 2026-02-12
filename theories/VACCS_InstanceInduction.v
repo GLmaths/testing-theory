@@ -549,62 +549,6 @@ Scheme proc_gproc_ind := Induction for proc Sort Prop
   with gproc_proc_ind := Induction for gproc Sort Prop.
 
 
-(* Combined Scheme proc_gproc_mutind from proc_gproc_ind,gproc_proc_ind. (*not usefull with our situation *) *)
-
-(*Require Import FunInd.
-
-Function size2 (p : proc) :=
-  match p with
-  | p ‖ q  => S (size2 p + size2 q)
-  | pr_var _ => 1
-  | If C Then p Else q => S (size2 p + size2 q)
-  | rec x • p => S (size2 p)
-  | c ! v • 𝟘 => 1
-  | g ① => 1
-  | g 𝟘 => 0
-  | g (c ? p) => 0 (*S (size2 p)*)
-  | g (t • p) => 0 (*S (size2 p)*)
-  | g (p + q) => 0 (*S (size2 (g p) + size2 (g q))*)
-  end.
-
-Check size2_ind.
-
-Functional Scheme size_ind := Induction for size2 Sort Prop.
-
-Check size_ind.
-
-Function size3 (p : proc) :=
-  match p with
-  | p ‖ q  => S (size3 p + size3 q)
-  | pr_var _ => 1
-  | If C Then p Else q => S (size3 p + size3 q)
-  | rec x • p => S (size3 p)
-  | c ! v • 𝟘 => 1
-  | g p => gsize3 p
-  end
-
-with gsize3 p :=
-  match p with
-  | ① => 1
-  | 𝟘 => 0
-  | c ? p => S (size3 p)
-  | t • p => S (size3 p)
-  | p + q => S (gsize3 p + gsize3 q)
-end.
-
-Check size3_ind.
-
-(* error if size3 is Fixpoint *)
-Functional Scheme size33_ind := Induction for size3 Sort Prop.
-Functional Scheme gsize33_ind := Induction for gsize3 Sort Prop.
-Check size33_ind.
-
-
-Functional Scheme proc_size_ind3 := Induction for size3 Sort Prop
-with gproc_size_ind2 := Induction for gsize3 Sort Prop.
-
-Check proc_size_ind3. *)
-
 Definition PPS (P : proc -> Prop) (p : gproc) := P (g p).
 
 Lemma proc_gproc_myinduction : ∀ (P : proc → Prop),

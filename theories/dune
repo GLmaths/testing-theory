@@ -5,3 +5,8 @@
  (package must-testing)
  (synopsis "Must testing")
  (theories stdpp Coinduction))
+
+(documentation
+ (package must-testing))
+
+
