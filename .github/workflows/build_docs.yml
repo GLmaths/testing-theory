@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    name: Build docs
+    name: Build documentation
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-pages-artifact@master
         with:
           name: docs-artifact
-          path: docs
+          path: doc
       - name: Revert permissions
         # to avoid a warning at cleanup time
         if: ${{ always() }}
@@ -68,4 +68,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./docs
+          publish_dir: ./doc
