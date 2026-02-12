@@ -7,6 +7,9 @@ bug-reports: "https://github.com/GLmaths/testing-theory/issues"
 doc: "https://GLmaths.github.io/testing-theory"
 maintainer: "gaetan.lopez@irif.fr"
 authors: [
+  "Paul Laforgue"
+  "Léo Stefanesco"
+  "Peio Borthelle"
   "Gaëtan Lopez"
   "Hugo Férée"
 ]
