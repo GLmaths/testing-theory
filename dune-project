@@ -1,21 +1,23 @@
 (lang dune 3.21)
 
+(warnings (deprecated_coq_lang disabled))
+
 (name testing-theory)
 
 (generate_opam_files false)
 
 (source
- (github username/reponame))
+ (github GLmaths/testing-theory))
 
-(authors "Author Name")
+(authors "Gaëtan Lopez")
 
-(maintainers "Maintainer Name")
+(maintainers "Gaëtan Lopez")
 
-(license LICENSE)
+(license MIT)
 
-(using coq 0.8)
+(using coq 0.11)
 
-(documentation https://url/to/documentation)
+(documentation https:GLmaths.github.io/testing-theory)
 
 (package
  (name testing-theory)

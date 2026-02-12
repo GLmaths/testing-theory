@@ -4,7 +4,10 @@
  (name Must)
  (package testing-theory)
  (synopsis "Must testing")
- (theories stdpp Coinduction))
+ (theories stdpp Coinduction)
+ (coqdoc_header ../doc-config/header.html)
+ (coqdoc_footer ../doc-config/footer.html)
+ )
 
 (documentation
  (package testing-theory))
