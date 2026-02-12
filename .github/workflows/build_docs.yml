@@ -9,6 +9,8 @@ on:
   pull_request:
     paths-ignore:
       - "paper/**"
+  branches:
+      - main
 permissions:
   contents: write
 
