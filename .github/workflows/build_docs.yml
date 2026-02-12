@@ -40,6 +40,7 @@ jobs:
           before_script: |
             startGroup "Workaround permission issue"
               sudo chown -R 1000:1000 .  # <--
+              opam pin remove dune
             endGroup
           script: |
             startGroup "Build project"
