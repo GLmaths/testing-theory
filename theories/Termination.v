@@ -18,9 +18,9 @@ match goal with
 
 (* A tactic to try and prove termination.
   Should be complete in the absence of recusion. *)
-Ltac step_tac lts :=
+Ltac step_tac lts := 
 try match goal with |H : {[+ ?a +]} ⊎ ?m = ∅ |- _ =>
-  now (apply Lift.neq_multi_nil in H) end;
+  now (apply Lift.neq_multi_nil in H) end; 
 try discriminate; constructor; intros; repeat lts_inversion lts.
 
 Ltac term_tac lts := repeat (step_tac lts).
@@ -55,7 +55,7 @@ Context `{Lts A L}.
   must satisfy some property *)
 Reserved Notation "p ⤓_ Q " (at level 50).
 Inductive terminate_with (Q : ExtAct L -> Prop) (p : A) : Prop :=
-    twstep : (forall μ q, p ⟶[μ] q -> Q μ) ->
+    twstep : (forall μ q, p ⟶[μ] q -> Q μ) -> 
              (forall q : A, p ⟶ q -> q ⤓_ Q) -> p ⤓_ Q
 where "p ⤓_ Q" := (terminate_with Q p).
 
@@ -90,7 +90,7 @@ induction Hq as [q He' Ht' Hi'].
 constructor.
 intros (r & s) Hrs. lts_inversion idtac.
 - now apply Hi.
-- now apply Hi'. (* right tau *)
+- now apply Hi'. (* right tau *) 
 - (* communication is impossible *)
   destruct α1 as [μ1|]; [|simpl in *; tauto].
   destruct α2 as [μ2|]; [|simpl in *; tauto].

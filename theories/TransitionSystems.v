@@ -667,10 +667,9 @@ Proof.
     etrans; eassumption.
 Qed.
 
-Global Instance cnv_preserved_by_eq `{LtsEq A L}:
-  Proper ((eq_rel) ==> (=) ==> (impl)) cnv.
+Lemma cnv_preserved_by_eq `{LtsEq A L} p q s : p ⋍ q -> p ⇓ s -> q ⇓ s.
 Proof.
-  intros p q heq s s' Hs hcnv. subst s'. revert q heq.
+  intros heq hcnv. revert q heq.
   induction hcnv; intros.
   - eapply cnv_nil.
     eapply (terminate_preserved_by_eq H2 heq).
@@ -694,7 +693,7 @@ Proof.
     + intros r w.
       destruct (delay_wt_output (mk_lts_eq l) w) as (t & w0 & l1).
       destruct l1 as (r' & l2 & heq).
-      rewrite <- heq.
+      eapply cnv_preserved_by_eq. eassumption.
       eapply IHs'. eapply H7, w0.
       eassumption.
 Qed.
@@ -732,13 +731,13 @@ Proof.
     destruct l1 as (r' & l1 & heq).
     edestruct (eq_spec r' r2) as (r & hlr & heqr). exists r1. eauto.
     eapply (cnv_preserved_by_wt_nil _ r2); eauto.
-    rewrite <- heqr.
-    destruct (lts_oba_fw_feedback l1 hlr) as [(t0 & hlt0 & heqt0)| Heqr].
-    + rewrite <- heqt0.
-      eapply cnv_preserved_by_lts_tau.
-      eapply (cnv_preserved_by_wt_nil _ p); eauto. eassumption.
-    + rewrite <- Heqr.
-      eapply (cnv_preserved_by_wt_nil _ p); eauto.
+    eapply cnv_preserved_by_eq. eassumption.
+    destruct (lts_oba_fw_feedback l1 hlr) as [(t0 & hlt0 & heqt0)|].
+    eapply cnv_preserved_by_eq. eassumption.
+    eapply cnv_preserved_by_lts_tau.
+    eapply (cnv_preserved_by_wt_nil _ p); eauto. eassumption.
+    eapply cnv_preserved_by_eq. eassumption.
+    eapply (cnv_preserved_by_wt_nil _ p); eauto.
 Qed.
 
 Lemma cnv_retract_wt_output `{LtsObaFW A L} p q a s :
@@ -892,7 +891,8 @@ Proof.
   - intros r w2.
     edestruct (wt_input_swap) as (t & w' & heq').
     eapply wt_push_left. eapply w1. eapply w2.
-    rewrite <- heq'.
+    eapply cnv_preserved_by_eq.
+    eapply heq'.
     eapply (cnv_wt_prefix [ActIn a ; ActIn b]); eauto.
 Qed.
 
@@ -926,11 +926,11 @@ Proof.
     eapply cnv_preserved_by_wt_output; eauto. eapply cnv_nil. now inversion hcnv.
     intros t hw2.
     replace (ActOut a :: ActOut b :: s) with ([ActOut a ; ActOut b] ++ s) in hcnv.
-    + set (hw3 := wt_concat _ _ _ _ _ hw1 hw2). simpl in hw3.
-      eapply wt_output_swap in hw3 as (t' & hw4 & eq').
-      rewrite <- eq'.
-      eapply cnv_wt_prefix. eauto. eassumption.
-    + now simpl.
+    set (hw3 := wt_concat _ _ _ _ _ hw1 hw2). simpl in hw3.
+    eapply wt_output_swap in hw3 as (t' & hw4 & eq').
+    eapply cnv_preserved_by_eq. eassumption.
+    eapply cnv_wt_prefix. eauto. eassumption.
+    now simpl.
 Qed.
 
 Lemma cnv_output_perm `{LtsObaFW A L} p s1 s2 :
@@ -1034,7 +1034,7 @@ Proof.
   - inversion hos. destruct H5. subst. simpl.
     eapply push_wt_output in w as (q' & hwq' & heqq').
     eapply wt_split in hwq' as (t & w1 & w2).
-    rewrite <- heqq'.
+    eapply cnv_preserved_by_eq. eassumption.
     eapply cnv_retract_wt_output.
     eapply (IHs1 s2 p t H6 hcnv w1). eassumption.
 Qed.
@@ -1080,7 +1080,7 @@ Proof.
   destruct w2 as (t1 & hwt1 & heqt1).
   set (h := eq_spec_wt t t0 (symmetry heqt0) t1 _ hwt1).
   destruct h as (t2 & hwt2 & heqt2).
-  rewrite <- heqt1, <- heqt2.
+  eapply cnv_preserved_by_eq. etrans. eapply heqt2. eassumption.
   eapply (cnv_retract t0); eauto.
   eapply map_co_are_inputs_are_outputs. eassumption.
   eapply (cnv_wt_prefix (s1 ++ [ActOut a]) _ p).
@@ -1102,10 +1102,10 @@ Proof.
   eapply Permutation_cons_append.
   eapply wt_act; eassumption.
   destruct H3 as (t' & hwt' & heqt').
-  rewrite <- heqr'.
+  eapply cnv_preserved_by_eq. eapply heqr'.
   eapply (cnv_retract t); eauto.
   eapply map_co_are_inputs_are_outputs. eassumption.
-  rewrite <- heqt'.
+  eapply cnv_preserved_by_eq. eassumption.
   eapply (cnv_wt_prefix (s1 ++ [ActIn a]) _ p).
   now rewrite <- app_assoc.
   eassumption.
@@ -1135,7 +1135,7 @@ Proof.
   rewrite <- map_app in hwr1.
   rewrite app_assoc.
   replace ((s1 ++ s2) ++ s3) with (map co (map co (s1 ++ s2)) ++ s3).
-  rewrite <- heqr, <- heqr0.
+  eapply cnv_preserved_by_eq. etrans. eapply heqr0. eapply heqr.
   eapply cnv_retract.
   eapply map_co_are_inputs_are_outputs. eapply Forall_app. split; assumption.
   eapply cnv_wt_prefix. rewrite 3 app_assoc in hcnv.
@@ -1685,11 +1685,12 @@ Proof.
     eapply gmultiset_eq_pop_l. eapply IHhmo. eassumption. now symmetry.
 Qed.
 
-Global Instance fw_eq_id_mb `{LtsObaFB A L}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
+Lemma fw_eq_id_mb `{LtsOba A L} p q m : p ⋍ q -> fw_eq (p, m) (q, m).
 Proof.
-  intros p1 p2 heq M1 M HM; simpl. subst M1.
-  set (h := lts_oba_mo_eq heq). intros q q' Hp1 Hp2; simpl in *; split;
-  rewrite h in *; trivial. eapply (strip_eq_sim heq Hp1 Hp2).
+  intros heq p' q' hwp hwq. simpl in *.
+  set (h := lts_oba_mo_eq heq).
+  split. rewrite <- h in hwq. eapply (strip_eq_sim heq hwp hwq).
+  multiset_solver.
 Qed.
 
 (** The structural congruence is symmetric. *)
@@ -3209,19 +3210,11 @@ Qed.
     - destruct (H1' _ Hin) as (p & Hinp & Hp). eapply H2''; eauto.
     - destruct (H1'' _ Hin) as (p & Hinp & Hp). eapply H2'; eauto.
   Qed.
-
+  
   Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{Lts A L, !FiniteLts A L}
   (ps : gset A) s ps' (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   wt_set_from_pset_spec ps s ps' -> ps' ≡ wt_s_set_from_pset ps s hcnv.
   Proof.
     intro Hps'.
     eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
-  Qed.
-
-  Global Instance Proper_wt_set_from_pset_spec `{Lts A L, !FiniteLts A L} :
-    Proper ((≡) ==> (=) ==> (≡) ==> (iff)) wt_set_from_pset_spec.
-  Proof.
-    intros ps1 ps2 Hps s s' Hs ps1' ps2' Hps'.
-    unfold wt_set_from_pset_spec, wt_set_from_pset_spec1, wt_set_from_pset_spec2.
-    subst. setoid_rewrite Hps. setoid_rewrite Hps'. trivial.
   Qed.

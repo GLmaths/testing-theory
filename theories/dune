@@ -2,11 +2,9 @@
 
 (coq.theory
  (name Must)
- (package must-testing)
+ (package testing-theory)
  (synopsis "Must testing")
  (theories stdpp Coinduction))
 
 (documentation
  (package must-testing))
-
-

@@ -1,6 +1,6 @@
 (lang dune 3.21)
 
-(name must-testing)
+(name testing-theory)
 
 (generate_opam_files false)
 
@@ -18,7 +18,7 @@
 (documentation https://url/to/documentation)
 
 (package
- (name must-testing)
+ (name testing-theory)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends dune coq-stdpp coq-coinduction)
