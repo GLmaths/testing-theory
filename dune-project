@@ -1,6 +1,4 @@
-(lang dune 3.21)
-
-(warnings (deprecated_coq_lang disabled))
+(lang dune 3.17)
 
 (name testing-theory)
 
@@ -17,7 +15,7 @@
 
 (license MIT)
 
-(using coq 0.11)
+(using coq 0.10)
 
 (documentation https://GLmaths.github.io/testing-theory)
 

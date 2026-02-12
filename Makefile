@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := build
-DOCDIR := doc
+DOC_DIR := doc
+BUILD_DIR := _build/default/theories
 
 build:
 	dune build @all
@@ -11,14 +12,16 @@ clean:
 watch:
 	dune build @all --watch
 
-# Generate HTML documentation (if dune files define doc targets)
+# Generate HTML documentation
+# bypass dune 3.17, not mature enough
 doc:
-	dune build @doc
-	mkdir -p $(DOCDIR)
-	rm -Rf $(DOCDIR)/*
-	cp -r _build/default/theories/Must.html/* $(DOCDIR)
-	chmod +w $(DOCDIR)/* # allow overriding previously generated files
-	mv $(DOCDIR)/index.html $(DOCDIR)/indexpage.html 
-	cp doc-config/* $(DOCDIR)
+	# make sure dune build the files
+	dune build
+	mkdir -p $(DOC_DIR)
+	rm -Rf $(DOC_DIR)/*
+	coqdoc --toc --html -R $(BUILD_DIR) Must --with-header doc-config/header.html --with-footer doc-config/footer.html $(BUILD_DIR)/*.v -d $(DOC_DIR)
+	chmod +w $(DOC_DIR)
+	mv $(DOC_DIR)/index.html $(DOC_DIR)/indexpage.html 
+	cp doc-config/* $(DOC_DIR)
 
 .PHONY: build clean watch doc
