@@ -503,7 +503,6 @@ intros. dependent induction H.
 constructor. apply cgr_if_right_step. exact H. eauto with cgr_eq.
 Qed.
 
-
 Global Instance cgr_refl_step_is_refl' : Reflexive cgr_step.
 Proof. apply cgr_refl_step_is_refl. Qed.
 
@@ -773,7 +772,6 @@ revert q q' x.
 induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p; intros; simpl.
-
 (* all induction cases for proc (not guards) *)
 - apply cgr_fullpar.
   * apply Hp. simpl. auto with arith. assumption. 

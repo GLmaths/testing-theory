@@ -523,7 +523,7 @@ dependent induction hlts; intros p'' hcgr.
                          (⇑ (FreeOut (c' ⋉ n))) in H2 by now asimpl.
                  replace (var_Data (S n)) with (ren1 shift (var_Data n)) in H4 by now asimpl.
                  destruct (Invert_Lts_Input_Full _ _ _ _ _ H4) as (d & q' & H & Heq1 & Heq2).
-                 apply Shift_Op_Injective in H.
+                 apply Injective_Ren_Data in H; [|apply Shift_Injective].
                  eexists. split.
                  --- eapply lts_comL; [eauto with lts|]. rewrite H. apply Heq2.
                  --- rewrite Heq1. eauto with cgr.
@@ -532,7 +532,7 @@ dependent induction hlts; intros p'' hcgr.
                       (ren1 shift (FreeOut ((c' ⋉ v)))) in H2 by now asimpl.
               replace (cst v) with (ren1 shift (cst v)) in H4 by now asimpl.
               destruct (Invert_Lts_Input_Full _ _ _ _ _ H4) as (d & q' & H & Heq1 & Heq2).
-              apply Shift_Op_Injective in H.
+              apply Injective_Ren_Data in H; [|apply Shift_Injective].
               eexists. split.
               ** eapply lts_comL. eapply lts_res, H2. rewrite H. apply Heq2.
               ** rewrite Heq1. eauto with cgr.
@@ -551,14 +551,14 @@ dependent induction hlts; intros p'' hcgr.
            rewrite Hrew in H4.
            destruct (Invert_Lts_Input _ _ _ _ _ H4) as (c' & Hc').
            replace (ren1 (shift >> shift) c') with (⇑ (⇑ c')) in Hc' by now asimpl.
-           apply Shift_Op_Injective in Hc'. subst.
+           apply Injective_Ren_Data in Hc'; [|apply Shift_Injective]. subst.
            rewrite <- Hrew in H4. clear Hrew.
            apply swap_transition, proj1 in H4. specialize (H4 eq_refl).
            rewrite Shift_Shift_Swap_pr in H4. cbn in H4.
            rewrite Shift_Shift_Swap_Data in H4.
            change (var_Data 1) with (⇑ (var_Data 0)) in H4.
            destruct (Invert_Lts_Input_Full _ _ _ _ _ H4) as (d & q' & H & Heq1 & Heq2).
-           apply Shift_Op_Injective in H. rewrite <- H in Heq2.
+           apply Injective_Ren_Data in H; [|apply Shift_Injective]. rewrite <- H in Heq2.
            change (q' ⟨shift⟩) with (⇑ q') in Heq1.
            eexists. split.
            ++ eapply lts_close_l. eapply lts_res, H2. apply Heq2.
@@ -589,7 +589,7 @@ dependent induction hlts; intros p'' hcgr.
         -- case_eq (is_bound_out α); intro Hbound.
            ++ destruct (is_bound_exists α Hbound) as [c Hc]. subst α.
               destruct (Invert_Lts_BoundOut _ _ _ _ H1) as (d & v' & Hc' & Hv' & Htransition).
-              replace c with d by now apply Shift_Op_Injective in Hc'.
+              replace c with d by now (apply Injective_Ren_Data in Hc'; [|apply Shift_Injective]).
               subst.
               eexists. split.
               ** eapply lts_parR. apply Htransition. reflexivity.
