@@ -6,3 +6,4 @@ devenv.lock
 .lia.cache
 .nix/
 .vscode/
+.doc/

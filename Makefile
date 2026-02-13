@@ -19,7 +19,7 @@ doc:
 	dune build
 	mkdir -p $(DOC_DIR)
 	rm -Rf $(DOC_DIR)/*
-	coqdoc --toc --html -R $(BUILD_DIR) Must --with-header doc-config/header.html --with-footer doc-config/footer.html $(BUILD_DIR)/*.v -d $(DOC_DIR)
+	coqdoc --toc --html -R $(BUILD_DIR) Must --with-header doc-config/header.html --with-footer doc-config/footer.html `find $(BUILD_DIR) -name *.v` -d $(DOC_DIR)
 	chmod +w $(DOC_DIR)
 	mv $(DOC_DIR)/index.html $(DOC_DIR)/indexpage.html 
 	cp doc-config/* $(DOC_DIR)
