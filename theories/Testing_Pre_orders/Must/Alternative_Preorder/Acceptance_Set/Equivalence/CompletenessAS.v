@@ -964,6 +964,7 @@ Lemma stable_process_must_ta_or_empty_pre_action_set {P : Type} `{
           \/ (pre_co_actions_of p ⊆ E).
 Proof.
   intros.
+  (* Finite set hypothesis for (delta o phi) set*)
   remember ((pre_co_actions_of p) ∖ E) as D.
   destruct D as [|a D'] using set_ind_L.
   + right. set_solver.

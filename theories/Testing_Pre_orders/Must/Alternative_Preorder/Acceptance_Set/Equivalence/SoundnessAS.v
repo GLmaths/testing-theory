@@ -689,13 +689,16 @@ Proof.
     + assert (μ2 ∈ co_actions_of p') as some_co_action_of_p.
       { exists μ1. repeat split; eauto.
         eapply lts_refuses_spec2;eauto. }
+      (* The next line uses a property of delta *)
       eapply preactions_of_fin_test_spec1 in some_co_action_of_p.
       eapply preactions_of_spec in some_co_action_of_p.
       eapply sub in some_co_action_of_p.
       eapply preactions_of_spec in some_co_action_of_p.
+      (* The next line uses a property of delta *)
       eapply preactions_of_fin_test_spec2 in some_co_action_of_p as (μ' & mem' & eq').
       destruct mem' as (μ'1 & Tr & duo & b).
       assert (¬ t ↛[μ']) as Tr_Test.
+      (* The next line uses the property of phi *)
       { eapply abstraction_test_spec. exact not_nb. exact b. exact eq'. apply lts_refuses_spec2. eauto. }
       eapply lts_refuses_spec1 in Tr_Test as (t' & Tr').
       eapply lts_refuses_spec1 in Tr as (q' & Tr).
