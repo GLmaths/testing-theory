@@ -161,7 +161,7 @@ Lemma terminate_preserved_by_wt_non_blocking_action `{M: gLtsOba P A} p q η :
 Proof.
   intros nb ht w.
   dependent induction w.
-  - eapply IHw; eauto. eapply terminate_preserved_by_lts_tau; eauto.
+  - eapply IHw; eauto. eapply terminate_preserved_by_lts_tau ; eauto.
   - eapply terminate_preserved_by_wt_nil.
     eapply terminate_preserved_by_lts_non_blocking_action; eauto. assumption.
 Qed.

@@ -145,9 +145,9 @@ Lemma mustx_terminate_unoutcome' `{
 
   ps t :
   mustx ps t
-        -> forall p, p ∈ ps -> ¬ outcome t -> p ⤓.
+        -> ¬ outcome t -> forall p, p ∈ ps -> p ⤓.
 Proof.
-  intros hmx p mem not_happy.
+  intros hmx not_happy p mem.
   dependent induction hmx.
   + contradiction.
   + eapply tstep.
@@ -174,37 +174,18 @@ Proof.
   dependent induction hmx.
   - contradiction.
   - edestruct mustx_terminate_unoutcome as [happy | finish].
-    +  eauto with mdb.
+    + eauto with mdb.
     + contradiction.
-    + destruct (decide (non_blocking μ)) as [nb | not_nb];
-      destruct (decide (non_blocking μ')) as [nb' | not_nb'].
-      ++ exfalso. eapply dual_blocks; eauto.
-      ++ edestruct mustx_terminate_unoutcome; eauto with mdb. contradiction.
-         eapply cnv_act. eauto.
-         intros q w.
-         eapply cnv_nil.
-         eapply terminate_preserved_by_wt_non_blocking_action; eauto.
-      ++ edestruct mustx_terminate_unoutcome; eauto with mdb. contradiction.
-         eapply cnv_act. eauto.
-         intros q w.
-         assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
-         exists p. split; set_solver.
-         assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
-         set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
-         destruct (mustx_terminate_unoutcome _ _ hm).
-         +++ contradict nh.
-             eapply outcome_preserved_by_lts_non_blocking_action_converse; eassumption.
-         +++ eapply cnv_nil. eapply H6. set_solver.
-      ++ edestruct mustx_terminate_unoutcome; eauto with mdb. contradiction.
-         eapply cnv_act. eauto.
-         intros q w.
-         assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
-         exists p. split; set_solver.
-         assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
-         set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
-         destruct (mustx_terminate_unoutcome _ _ hm).
-         +++ contradiction.
-         +++ eapply cnv_nil. eapply H6. set_solver.
+    + edestruct mustx_terminate_unoutcome; eauto with mdb. contradiction.
+      eapply cnv_act. eauto.
+      intros q w.
+      assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
+      exists p. split; set_solver.
+      assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
+      set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
+      destruct (mustx_terminate_unoutcome _ _ hm).
+      +++ contradiction.
+      +++ eapply cnv_nil. eapply H6. set_solver.
 Qed.
 
 Lemma must_mu_either_outcome_cnv `{
@@ -583,7 +564,8 @@ Proof.
   intros l (halt1 & halt2).
   split.
   - intros s mem. eapply cnv_preserved_by_lts_tau; eauto.
-  - intros s q'' w st hcnv.
+  - (* bhvleqone_preserved_by_reduction *)
+    intros s q'' w st hcnv.
     destruct (halt2 s q'') as (p' & mem & p'' & hw & hst) (* & sub0) *); eauto with mdb.
 Qed.
 
@@ -613,12 +595,13 @@ Lemma bhvx_preserved_by_external_action `{
 Proof.
   intros lts__q ps1_spec (halt1 & halt2). split.
   - eapply bhvleqone_preserved_by_external_action; eauto.
-  -  intros s q0 wt st hcnv.
-     edestruct (halt2 (μ :: s) q0) as (t & mem & p0 & p1 & wta__t & sub); eauto with mdb.
-     intros p' mem'. eapply cnv_act; eauto.
-     intros p'' mem1. eapply hcnv, ps1_spec; eassumption.
-     eapply wt_pop in p1 as (r & w1 & w2).
-     exists r. repeat split. eapply ps1_spec; eassumption. eauto.
+  - (* bhvleqtwo_preserved_by_reduction *)
+    intros s q0 wt st hcnv.
+    edestruct (halt2 (μ :: s) q0) as (t & mem & p0 & p1 & wta__t & sub); eauto with mdb.
+    intros p' mem'. eapply cnv_act; eauto.
+    intros p'' mem1. eapply hcnv, ps1_spec; eassumption.
+    eapply wt_pop in p1 as (r & w1 & w2).
+    exists r. repeat split. eapply ps1_spec; eassumption. eauto.
 Qed.
 
 Lemma reverse_trace_inclusion `{
