@@ -207,7 +207,7 @@ Proof.
   destruct (lts_oba_fw_forward p η μ) as (r & l1 & l2). eassumption. eassumption.
   eapply cnv_preserved_by_lts_non_blocking_action. eassumption.
   eapply Hyp_conv_through_μ. eapply wt_act. eassumption. eapply wt_nil. eapply l2.
-Qed. 
+Qed.
 
 (* fixme: it should be enought to have ltsOba + one of the feedback *)
 Lemma cnv_retract_lts_non_blocking_action `{gLtsObaFW P A} p q η μ s :

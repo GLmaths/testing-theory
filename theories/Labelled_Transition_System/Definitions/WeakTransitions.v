@@ -228,9 +228,7 @@ Proof.
     + eapply lts_different_action_preserved_by_lts_non_blocking_action; eauto.
 Qed.
 
-(* Properties of weak transitions in Lts with Forwarder axioms*)
-
-Lemma delay_wt_non_blocking_action_nil `{gLtsObaFW P A} {p q r η} :
+Lemma delay_wt_non_blocking_action_nil `{gLtsOba P A} {p q r η} :
   non_blocking η -> p ⟶⋍[η] q -> q ⟹ r
     -> exists t, p ⟹ t /\ t ⟶⋍[η] r.
 Proof.
@@ -246,7 +244,7 @@ Proof.
     exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
 Qed.
 
-Lemma delay_wt_non_blocking_action `{gLtsObaFW P A} {p q r η s} :
+Lemma delay_wt_non_blocking_action `{gLtsOba P A} {p q r η s} :
   non_blocking η -> p ⟶⋍[η] q -> q ⟹[s] r
     -> exists t, p ⟹[s] t /\ t ⟶⋍[η] r.
 Proof.
@@ -267,6 +265,8 @@ Proof.
     destruct l5 as (t1' & hlt1' & heqt1'). exists t1'. split; eauto with mdb.
     etrans; eassumption.
 Qed.
+
+(* Properties of weak transitions in Lts with Forwarder axioms*)
 
 Lemma wt_non_blocking_action_swap `{gLtsObaFW P A} p q η1 η2 : 
   non_blocking η1 -> non_blocking η2 -> p ⟹[[η1 ; η2]] q
