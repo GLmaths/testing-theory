@@ -122,17 +122,6 @@ inversion Hstep; subst; clear Hstep.
 Qed.
 
 
-Lemma parallel_output_terminate M a b : (!a ∥ !b ▷ M) ⤓.
-Proof.
-constructor. intros (p, M') Hl. inversion Hl; subst.
-- repeat lts_inversion.
-- decompose record Hl. repeat lts_inversion.
-Qed.
-
-
-Example q_terminate : forall M, (!"a" ∥ (τ⋅ !"b" ⊕  τ⋅ !"c") ▷ M) ⤓.
-Proof. intro M. term_tac. Qed.
-
 Lemma choice_copre_l (p q : proc) :
   forall (PRE : Chain (copre_m (LtsP := MbLts))) (M : mb name),
     elem PRE {[τ⋅ p ⊕ τ⋅ q ▷ M]} (p ▷ M).
@@ -256,30 +245,30 @@ Defined.
 Global Instance Reflexive_cgr : Reflexive cgr.
 Proof. intro x. apply t_step, cgr_refl. Defined.
 
-Example code_hoisting_outputs : forall (M : mb name),
- {[ τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ M ]} ⩽ !"a" ∥ (τ⋅ !"b" ⊕ τ⋅ !"c") ▷ M.
+Example code_hoisting_outputs : forall (M : mb name) a p q,
+ {[ τ⋅ (!a ∥ p) ⊕ τ⋅ (!a ∥ q) ▷ M ]} ⩽ !a ∥ (τ⋅ p ⊕ τ⋅ q) ▷ M.
 Proof.
 unfold copre. coinduction PRE CIH.
 intros M. split.
-- intros q l. repeat lts_inversion.
+- intros r l. repeat lts_inversion.
   + apply choice_copre_l.
   + apply choice_copre_r.
 - intros. exfalso.
-  eapply (lts_stable_spec2 (!"a" ∥ (τ⋅ !"b" ⊕ τ⋅ !"c") ▷ M)); eauto.
-  exists (!"a" ∥ !"b" ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
+  eapply (lts_stable_spec2 (!a ∥ (τ⋅ p ⊕ τ⋅ q) ▷ M)); eauto.
+  exists (!a ∥ p ▷ M). eapply lts_fw_p, lts_parR, lts_choiceL, lts_tau.
 - intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
   + repeat lts_inversion.
     (* Here we can simplify modulo congruence. Replaces the infamous h2 *)
     setoid_rewrite cgr_par_nil_l; simpl.
     (* TODO: handling + should make this work in 1 step *)
-    setoid_replace ((τ⋅ ! "b" ⊕ τ⋅ ! "c")▷ M)
-              with ((τ⋅ (!"b" ∥ pr_nil) ⊕ τ⋅ (!"c" ∥ pr_nil))▷ M).
+    setoid_replace ((τ⋅ p ⊕ τ⋅ q)▷ M)
+              with ((τ⋅ (p ∥ pr_nil) ⊕ τ⋅ (q ∥ pr_nil))▷ M).
     2 : { apply fw_eq_id_mb; trivial. econstructor 2; repeat constructor. }
-    setoid_replace ((τ⋅ (!"b" ∥ pr_nil) ⊕ τ⋅ (!"c" ∥ pr_nil))▷ M)
-              with ((τ⋅ (pr_nil ∥ !"b") ⊕ τ⋅ (pr_nil ∥ !"c"))▷ M).
+    setoid_replace ((τ⋅ (p ∥ pr_nil) ⊕ τ⋅ (q ∥ pr_nil))▷ M)
+              with ((τ⋅ (pr_nil ∥ p) ⊕ τ⋅ (pr_nil ∥ q))▷ M).
     2 : { apply fw_eq_id_mb; trivial. constructor.
           constructor; constructor; apply cgr_par_com. }
-    assert (Hi : {[ (pr_nil ∥ !"b" ▷ M); (pr_nil ∥ !"c" ▷ M) ]} ⊆ ps'). {
+    assert (Hi : {[ (pr_nil ∥ p ▷ M); (pr_nil ∥ q ▷ M) ]} ⊆ ps'). {
       intros x mem%elem_of_union.
        destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
        - eapply Hw.
@@ -294,17 +283,22 @@ intros M. split.
      eapply union_difference_L in Hi.
      rewrite Hi. refine (coin_union_l _ _ _ _). (* TODO: why apply doesn't work here? *)
      apply choice_copre_rev.
-  + assert (Hin : τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ m ∈ ps').
+  + assert (Hin : τ⋅ (!a ∥ p) ⊕ τ⋅ (!a ∥ q) ▷ m ∈ ps').
     * eapply Hw; [now eapply elem_of_singleton|]. apply lts_to_wt. term_tac.
     * eapply union_difference_singleton_L in Hin.
       rewrite Hin. eapply coin_union_l, CIH.
-  + assert (Hin : τ⋅ (!"a" ∥ !"b") ⊕ τ⋅ (!"a" ∥ !"c") ▷ {[+ a +]} ⊎ M ∈ ps').
+  + assert (Hin : τ⋅ (!a ∥ p) ⊕ τ⋅ (!a ∥ q) ▷ {[+ a0 +]} ⊎ M ∈ ps').
     * eapply Hw.
       -- now eapply elem_of_singleton.
       -- apply lts_to_wt. term_tac.
     * eapply union_difference_singleton_L in Hin.
       rewrite Hin. eapply coin_union_l, CIH.
-- intros. eapply q_terminate.
+- intros. assert(Ht : (τ⋅ (! a ∥ p) ⊕ τ⋅ (! a ∥ q) ▷ M) ⤓)
+    by (apply H; set_tac).
+  constructor. intros x Hx. lts_inversion; [|term_tac].
+  lts_inversion; [inversion H3; term_tac|term_tac|].
+  lts_inversion; lts_inversion; apply Ht; constructor;
+  [apply lts_choiceL | apply lts_choiceR]; term_tac.
 Qed.
 
 Section Omega.
