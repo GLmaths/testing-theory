@@ -131,6 +131,15 @@ intros PRE M. eapply c_tau_.
 - constructor. apply lts_choiceL. constructor.
 Qed.
 
+Lemma choice_copre_l' (p q : proc) :
+  forall (PRE : Chain (copre_m)),
+    elem PRE {[τ⋅ p ⊕ τ⋅ q]} p.
+Proof.
+intros PRE. eapply c_tau_.
+- change (copre_ ?a ?b ?c) with (copre_m a b c); apply coin_refl.
+- apply lts_choiceL. constructor.
+Qed.
+
 Lemma choice_copre_r p q:
   forall (PRE : Chain (copre_m (LtsP := MbLts))) (M : mb name),
     elem PRE {[τ⋅ p ⊕ τ⋅ q ▷ M]} (q ▷ M).
@@ -138,6 +147,15 @@ Proof.
 intros PRE M. eapply c_tau_.
 - change (copre_ ?a ?b ?c) with (copre_m a b c). apply coin_refl.
 - constructor. apply lts_choiceR. constructor.
+Qed.
+
+Lemma choice_copre_r' p q:
+  forall (PRE : Chain (copre_m)),
+    elem PRE {[τ⋅ p ⊕ τ⋅ q]} q.
+Proof.
+intros PRE. eapply c_tau_.
+- change (copre_ ?a ?b ?c) with (copre_m a b c). apply coin_refl.
+- apply lts_choiceR. constructor.
 Qed.
 
 Lemma choice_copre_rev (p q : proc) :
@@ -170,6 +188,24 @@ Proof.
     * apply Hw with (p ▷ M). set_tac. apply lts_to_wt. term_tac.
     * eapply Hw with (q ▷ M). set_tac. apply lts_to_wt. term_tac.
 - intros Ht. constructor. intros (q', M') l.
+  inversion l; subst; repeat lts_inversion; apply Ht; set_tac.
+Qed.
+
+Lemma choice_copre_rev' (p q : proc) :
+  forall (PRE : Chain copre_m),
+    elem PRE ({[ p; q ]}) (τ⋅ p ⊕ τ⋅ q).
+Proof.
+  intro PRE; apply tower; clear PRE; [ intros P HP ??; eapply HP; eauto | ].
+  intros PRE CIH; split.
+- intros q' l.
+  inversion_clear l.
+  + repeat lts_inversion; apply coin_elem_of; set_tac.
+  + repeat lts_inversion. apply coin_elem_of; set_tac.
+- intros Ht Hs.
+  exfalso. eapply (lts_stable_spec2 (τ⋅ p ⊕ τ⋅ q)).
+  eexists. eapply lts_choiceL, lts_tau. assumption.
+- intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst; repeat lts_inversion.
+- intros Ht. constructor. intros q' l.
   inversion l; subst; repeat lts_inversion; apply Ht; set_tac.
 Qed.
 
@@ -244,6 +280,52 @@ Defined.
 
 Global Instance Reflexive_cgr : Reflexive cgr.
 Proof. intro x. apply t_step, cgr_refl. Defined.
+
+Example code_hoisting_output : forall (M : mb name) a p q,
+ {[ τ⋅ (!a ∥ p) ⊕ τ⋅ (!a ∥ q) ]} ⩽ !a ∥ (τ⋅ p ⊕ τ⋅ q).
+Proof.
+unfold copre. coinduction PRE CIH.
+intros M. split.
+- intros r l. repeat lts_inversion.
+  + apply choice_copre_l'.
+  + apply choice_copre_r'.
+- intros. exfalso.
+  eapply (lts_stable_spec2 (!a ∥ (τ⋅ p ⊕ τ⋅ q))); eauto.
+  exists (!a ∥ p). eapply lts_parR, lts_choiceL, lts_tau.
+- intros μ q' ps' H0 Hμ Hw. inversion Hμ; subst.
+  + repeat lts_inversion.
+    (* Here we can simplify modulo congruence. Replaces the infamous h2 *)
+    setoid_rewrite cgr_par_nil_l; simpl.
+    (* TODO: handling + should make this work in 1 step *)
+    setoid_replace ((τ⋅ p ⊕ τ⋅ q))
+              with ((τ⋅ (p ∥ pr_nil) ⊕ τ⋅ (q ∥ pr_nil))).
+    2 : { econstructor 2; repeat constructor. }
+    setoid_replace ((τ⋅ (p ∥ pr_nil) ⊕ τ⋅ (q ∥ pr_nil)))
+              with ((τ⋅ (pr_nil ∥ p) ⊕ τ⋅ (pr_nil ∥ q))).
+    2 : { constructor; constructor; constructor; apply cgr_par_com. }
+    assert (Hi : {[ (pr_nil ∥ p); (pr_nil ∥ q) ]} ⊆ ps'). {
+      intros x mem%elem_of_union.
+       destruct mem as [hl%elem_of_singleton | hr%elem_of_singleton]; subst.
+       - eapply Hw.
+        + now eapply elem_of_singleton.
+        + eapply wt_tau. apply lts_choiceL, lts_tau.
+          apply lts_to_wt. term_tac.
+       - eapply Hw.
+        + now eapply elem_of_singleton.
+        + eapply wt_tau. eapply lts_choiceR, lts_tau.
+          apply lts_to_wt. term_tac.
+     }
+     eapply union_difference_L in Hi.
+     rewrite Hi. refine (coin_union_l _ _ _ _). (* TODO: why apply doesn't work here? *)
+     apply choice_copre_rev'.
+  + assert (Hin : τ⋅ (!a ∥ p) ⊕ τ⋅ (!a ∥ q) ∈ ps').
+    * eapply Hw; [now eapply elem_of_singleton|]. apply lts_to_wt. term_tac.
+    * repeat lts_inversion.
+- intros. assert(Ht : (τ⋅ (! a ∥ p) ⊕ τ⋅ (! a ∥ q)) ⤓)
+    by (apply H; set_tac).
+  constructor. intros x Hx. repeat lts_inversion; apply Ht;
+  [apply lts_choiceL | apply lts_choiceR]; constructor.
+Qed.
 
 Example code_hoisting_outputs : forall (M : mb name) a p q,
  {[ τ⋅ (!a ∥ p) ⊕ τ⋅ (!a ∥ q) ▷ M ]} ⩽ !a ∥ (τ⋅ p ⊕ τ⋅ q) ▷ M.
