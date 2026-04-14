@@ -23,18 +23,18 @@
    SOFTWARE.
 *)
 
-
 From Coq.Unicode Require Import Utf8.
 From Coq.Lists Require Import List.
 Import ListNotations.
-
 From stdpp Require Import decidable.
 
 (********** Actions := External Action ⊎ { τ } **********)
 
 Inductive Act (A: Type) :=
+  (* External Action *)
   | ActExt (μ: A)
-  | τ
+  (* Silent Action / Computation Action / Reduction Action *)
+  | τ 
  .
 
 Arguments ActExt {_} _.
@@ -45,5 +45,6 @@ Definition trace A := list A.
 (* Empty Trace *)
 Definition ε {A : Type} := [] : list A. 
 
+(***************** EqDecision for Act *******************)
 #[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
 Proof. solve_decision. Defined.
