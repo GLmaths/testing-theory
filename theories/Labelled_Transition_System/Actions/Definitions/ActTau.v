@@ -1,8 +1,8 @@
 (*
-   Copyright (c) 2024 Nomadic Labs
-   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
-   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
-   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2026 Nomadic Labs
+   Copyright (c) 2026 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2026 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -30,18 +30,20 @@ Import ListNotations.
 
 From stdpp Require Import decidable.
 
-(* Actions := External Action ⊎ { τ }*)
+(********** Actions := External Action ⊎ { τ } **********)
 
 Inductive Act (A: Type) :=
   | ActExt (μ: A)
   | τ
  .
+
 Arguments ActExt {_} _.
 Arguments τ {_}.
 
-(* List Notation *)
-Definition ε {A : Type} := [] : list A.
+(****************** Trace Definition ********************)
 Definition trace A := list A.
+(* Empty Trace *)
+Definition ε {A : Type} := [] : list A. 
 
 #[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
 Proof. solve_decision. Defined.
