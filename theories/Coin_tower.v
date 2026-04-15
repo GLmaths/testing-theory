@@ -22,33 +22,28 @@
    SOFTWARE.
 *)
 
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Coq.Program.Equality.
+From Coq.Unicode Require Import Utf8.
+From Coq.Wellfounded Require Import Inverse_Image.
+From Coq.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 From Coinduction Require Import all.
-From Must Require Import TransitionSystems Must Soundness Equivalence Completeness.
-
+(* From Must Require Import TransitionSystems Must Soundness Equivalence Completeness. *)
+From Must Require Import gLts FiniteImageLTS Lts_OBA_FB ActTau Termination Convergence WeakTransitions
+Must MustE DefinitionAS SoundnessAS EquivalenceAS CompletenessAS.
 
 (* TODO: define me using the coinduction library *)
 
-Lemma cnv_wk `{@FiniteLts A L HL LtsP} {p a s} : p ⇓ a :: s -> p ⇓ [ a ] .
-Proof.
-  intros pw; depelim pw; constructor.
-  - assumption.
-  - intros q qw%H1; constructor.
-    eapply cnv_terminate, qw.
-Qed.
-
 Section copre.
-  Context `{@FiniteLts A L HL LtsP, @FiniteLts B L HL LtsQ}.
+  Context `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}.
+  Context `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
+  Context `{PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
 
-  Definition REL := gset A -> B -> Prop .
+  Definition REL := gset P -> Q -> Prop .
 
-  Record copre_ (FIX : REL) (ps : gset A) (q : B) : Prop := {
+  Record copre_ (FIX : REL) (ps : gset P) (q : Q) : Prop := {
     c_tau_ q' : q ⟶ q' -> FIX ps q'
   ; c_now_ : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
-            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ lts_outputs p' ⊆ lts_outputs q
+            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q
   ; c_step_ : forall μ q' ps', (forall p, p ∈ ps -> p ⇓ [μ]) ->
                          q ⟶[μ] q' -> wt_set_from_pset_spec ps [μ] ps' -> FIX ps' q'
   ; c_cnv_ : (forall p, p ∈ ps -> p ⤓) -> q ⤓
@@ -88,7 +83,7 @@ Section copre.
       -> exists p p', p ∈ ps
                 /\ p ⟹ p'
                 /\ p' ↛
-                /\ lts_outputs p' ⊆ lts_outputs q .
+                /\ pre_co_actions_of p' ⊆ pre_co_actions_of q .
   Proof.
     intros h%(gfp_pfp copre_m); intros; now apply h.(c_now_).
   Qed.
@@ -111,20 +106,20 @@ Section copre.
     intros h%(gfp_pfp copre_m); intros; now eapply h.(c_cnv_); eauto.
   Qed.
 
-  Lemma copre_if_prex (ps : gset A) (q : B) : ps ≼ₓ q -> ps ⩽ q.
+  Lemma copre_if_prex (ps : gset P) (q : Q) : ps ≼ₓ q -> ps ⩽ q.
   Proof.
     revert ps q; unfold copre.
     coinduction RR CIH.
     intros ps q (hsub1 & hsub2).
     constructor.
     - intros q' l.
-      eapply CIH, bhvx_preserved_by_tau; eauto.
+      eapply CIH, bhvx_preserved_by_reduction; eauto.
     - intros hterm hst.
       destruct (hsub2 [] q) as (p' & hw & hstp' & hsub0); eauto.
       + eapply wt_nil.
       + intros p' mem; constructor; now apply hterm.
     - intros μ q' ps' hcnv hw wtspec.
-      eapply CIH, bhvx_preserved_by_mu; eauto.
+      eapply CIH, bhvx_preserved_by_external_action; eauto.
       intros p0 mem0.
       now destruct (hcnv p0 mem0).
     - intros; edestruct (hsub1 []); eauto.
@@ -132,7 +127,7 @@ Section copre.
   Qed.
 
   Lemma co_preserved_by_wt_nil
-    (ps : gset A) (q q' : B) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
+    (ps : gset P) (q q' : Q) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
   Proof.
     intro hw.
     dependent induction hw; eauto.
@@ -142,15 +137,15 @@ Section copre.
   Qed.
 
 
-  Lemma prex1_if_copre (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ1 q.
+  Lemma prex1_if_copre (ps : gset P) (q : Q) : ps ⩽ q -> ps ≼ₓ1 q.
   Proof.
     intros hpq s; revert ps q hpq.
     dependent induction s;
       intros ps q hpq hcnv.
     + constructor; eapply (c_cnv hpq).
-      intros; now destruct (hcnv p H1).
-    + assert (q ⤓) by (now eapply (c_cnv hpq); intros; destruct (hcnv p H1)).
-      assert (hcnv0 : ∀ p : A, p ∈ ps → p ⇓ [a]) by (intros; now eapply cnv_wk, hcnv).
+      intros p hp; now destruct (hcnv p hp).
+    + assert (q ⤓) by (now eapply (c_cnv hpq); intros p hp; destruct (hcnv p hp)).
+      assert (hcnv0 : ∀ p : P, p ∈ ps → p ⇓ [a]) by (intros; now eapply cnv_wk, hcnv).
       eapply cnv_act; eauto.
       intros q' hw.
       eapply wt_decomp_one in hw as (q0' & q1' & q1 & hlt & hw0').
@@ -160,12 +155,12 @@ Section copre.
          eapply (c_step hpq); eauto.
          eapply (wt_s_set_from_pset_ispec ps [a] hcnv0); eauto.
       ++ intros p mem.
-         edestruct (wt_s_set_from_pset_ispec ps [a] hcnv0).
-         eapply H2 in mem as (p0 & hmem0%hcnv & hw0).
+         edestruct (wt_s_set_from_pset_ispec ps [a] hcnv0) as (TrSet_hyp1 & TrSet_hyp2).
+         eapply TrSet_hyp1 in mem as (p0 & hmem0%hcnv & hw0).
          inversion hmem0; subst. eauto.
   Qed.
 
-  Lemma prex2_if_copre (ps : gset A) (q : B) : ps ⩽ q -> ps ≼ₓ2 q.
+  Lemma prex2_if_copre (ps : gset P) (q : Q) : ps ⩽ q -> ps ≼ₓ2 q.
   Proof.
     intros hsub s; revert ps q hsub; dependent induction s; intros ps q hsub.
     + intros q' hw hstq' hcnv.
@@ -181,7 +176,7 @@ Section copre.
       eapply wt_split in hqq' as (q0 & hw0 & hw1).
       eapply wt_decomp_one in hw0 as (q0' & q1' & q1 & hlt & hw0').
       assert (ps ⩽ q0') as hpq' by (eapply co_preserved_by_wt_nil; eauto).
-      assert (hcnv' : ∀ p : A, p ∈ ps → p ⇓ [μ]) by (intros; now eapply cnv_wk, hcnv).
+      assert (hcnv' : ∀ p : P, p ∈ ps → p ⇓ [μ]) by (intros; now eapply cnv_wk, hcnv).
       set (ps' := wt_s_set_from_pset ps [μ] hcnv').
       assert (ps' ⩽ q1') as hpq''. {
         eapply (c_step hpq'); eauto.
@@ -189,19 +184,19 @@ Section copre.
       }
       assert (ps' ⩽ q0) as hp'q by (eapply co_preserved_by_wt_nil; eauto).
       edestruct (IHs ps' q0 hp'q _ hw1 hq) as (r & memr & p' & hwr & hst & hsub').
-      * intros.
-        edestruct (wt_s_set_from_pset_ispec ps [μ] hcnv').
-        eapply H2 in H1 as (p0 & hmem0 & hw0).
+      * intros p hp.
+        edestruct (wt_s_set_from_pset_ispec ps [μ] hcnv') as (TrSet_hyp1 & TrSet_hyp2).
+        eapply TrSet_hyp1 in hp as (p0 & hmem0 & hw0).
         eapply cnv_preserved_by_wt_act; eauto.
-      * edestruct (wt_s_set_from_pset_ispec ps [μ] hcnv').
-        eapply H1 in memr as (p0  & hmem0 & hw0).
+      * edestruct (wt_s_set_from_pset_ispec ps [μ] hcnv') as (TrSet_hyp1 & TrSet_hyp2).
+        eapply TrSet_hyp1 in memr as (p0  & hmem0 & hw0).
         exists p0; split; [ auto | ].
         exists p'; split; [ | split; eauto ].
         eapply wt_push_left; eauto.
   Qed.
 
 
-  Theorem eqx (X : gset A) (q : B) :
+  Theorem eqx (X : gset P) (q : Q) :
     X ≼ₓ q <-> X ⩽ q.
   Proof.
     split; [ eapply copre_if_prex | ].
@@ -211,53 +206,67 @@ End copre.
 
 Notation "p ⩽ q" := (copre p q) (at level 70).
 
+From Must Require Import Lts_OBA_FB Testing_Predicate InteractionBetweenLts
+ Lift MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
+ StateTransitionSystems Lts_OBA.
+
 Section eq_contextual.
 
-  Context `{LL : Label L}.
-  Context `{LtsA : !Lts A L, !FiniteLts A L}.
-  Context `{LtsB : !Lts B L, !FiniteLts B L}.
-  Context `{LtsE : !Lts E L, !FiniteLts E L}.
+  Context `{H : ExtAction A}.
+  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
+  Context `{gLtsT : !gLts T A, !FiniteImagegLts T A}.
 
-  Context `{@LtsObaFB A L LL LtsA LtsEqA LtsObaA}.
-  Context `{@LtsObaFB B L LL LtsB LtsEqB LtsObaB}.
-  Context `{@LtsObaFB E L LL LtsE LtsEqE LtsObaE}.
+  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
+  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
+  Context `{@gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT}.
 
-  Context `{good : E -> Prop}.
-  Context `{good_dec : forall e, Decision (good e)}.
-  Context `{!Good E L good}.
+  Context `{outcome : T -> Prop}.
+  Context `{outcome_dec : forall t, Decision (outcome t)}.
+  Context `{TP_instance : !Testing_Predicate T A outcome}.
 
   (* ************************************************** *)
+  Context `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}.
+  Context `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}.
+  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
+  Context `{@Prop_of_Inter (P * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
+  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
+  Context `{@Prop_of_Inter (Q * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
 
-  Context `{igen_conv : @gen_spec_conv  _ _ _ _ _ good Good0 gen_conv}.
-  Context `{igen_acc : @gen_spec_acc _ _ _ _ _ good Good0 gen_acc}.
+  Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
+  Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
+  Context `{@AbsAction A H T FinA gLtsT Φ}.
 
-  Theorem eq_ctx (p : A) (q : B) :
-    @pre_extensional A E _ _ _ good _ p q <-> {[ p ▷ (∅ : mb L) ]} ⩽ q ▷ (∅ : mb L).
+  Context `{igen_conv : @test_convergence_spec T _ _ _ _ outcome TP_instance gen_conv}.
+  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ _ outcome TP_instance gen_acc (fun x => 𝝳 (Φ x))}.
+
+  Theorem eq_ctx (p : P) (q : Q) :
+    @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
   Proof.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.
   Qed.
 End eq_contextual.
 
-
-Lemma coin_refl `{FiniteLts A L} {PRE : Chain copre_m} {p : A} : elem PRE {[ p ]} p.
+(* Lemma coin_refl `{gLtsP: @gLts P A H} `{@FiniteImagegLts P A H gLtsP}
+{PRE : Chain copre_m} {p : P} : elem PRE {[ p ]} p.
 Proof.
   apply (gfp_chain PRE).
   eapply eqx.
   eapply alt_set_singleton_iff.
   firstorder.
-Qed.
+Qed. *)
 
-Lemma wt_set_union `{FiniteLts A L} (X1 X2 : gset A) (s : trace L) {ps}
-  (Hcnv : ∀ p : A, p ∈ X1 ∪ X2 → p ⇓ s)
+Lemma wt_set_union `{FiniteImagegLts P A} (X1 X2 : gset P) (s : trace A) {ps}
+  (Hcnv : ∀ p : P, p ∈ X1 ∪ X2 → p ⇓ s)
   : wt_set_from_pset_spec (X1 ∪ X2) s ps
     -> exists ps1 ps2, wt_set_from_pset_spec X1 s ps1
                  /\ wt_set_from_pset_spec X2 s ps2
                  /\ (ps = ps1 ∪ ps2) .
 Proof.
   intros [Hw1 Hw2].
-  assert(Hcnv1 : ∀ p : A, p ∈ X1 → p ⇓ s) by (intros; apply Hcnv; set_solver).
-  assert(Hcnv2 : ∀ p : A, p ∈ X2 → p ⇓ s) by (intros; apply Hcnv; set_solver).
+  assert(Hcnv1 : ∀ p : P, p ∈ X1 → p ⇓ s) by (intros; apply Hcnv; set_solver).
+  assert(Hcnv2 : ∀ p : P, p ∈ X2 → p ⇓ s) by (intros; apply Hcnv; set_solver).
   exists (wt_s_set_from_pset X1 s Hcnv1).
   exists (wt_s_set_from_pset X2 s Hcnv2).
   do 2 (split; [apply wt_s_set_from_pset_ispec|]).
@@ -273,14 +282,15 @@ Proof.
     eapply Hw2; eauto; set_solver.
 Qed.
 
-Global Instance Proper_elem `{FiniteLts A L} {PRE : Chain copre_m} :
+(*
+Global Instance Proper_elem `{FiniteImagegLts P A} {PRE : Chain copre_m} :
   Proper ((≡) ==> (=) ==> (iff)) (elem PRE).
 Proof.
   intros ?? HX ?? <-.
   now rewrite (leibniz_equiv _ _ HX).
 Qed.
-
-Global Instance Proper_lts_outputs `{TransitionSystems.LtsOba A L}:
+*)
+Global Instance Proper_lts_outputs `{gLtsOba P A}:
   Proper ((eq_rel) ==> (=)) lts_outputs.
 Proof.
   intros μ μ' Heq. apply leibniz_equiv.
@@ -300,7 +310,7 @@ Qed.
 
 (* In the case of a Lts with equivalence relation, the right hand side can also
   be rewritten *)
-Global Instance Proper_eq_rel `{FiniteLts A L} `{!LtsEq A L}
+Global Instance Proper_eq_rel `{FiniteImagegLts A L} `{!LtsEq A L}
   `{!TransitionSystems.LtsOba A L} {PRE : Chain copre_m}:
   Proper ((≡) ==> (eq_rel) ==> (impl)) (elem PRE).
 Proof.
@@ -323,7 +333,7 @@ Proof.
     + intro ht. eapply terminate_preserved_by_eq2; eauto. now apply h.(c_cnv_).
 Qed.
 
-Lemma coin_union_l `{FiniteLts A L} {PRE : Chain copre_m}
+Lemma coin_union_l `{FiniteImagegLts A L} {PRE : Chain copre_m}
   : forall (X1 X2 : gset A) (q : A), elem PRE X1 q -> elem PRE (X1 ∪ X2) q.
 Proof.
   apply tower; clear PRE.
@@ -347,7 +357,7 @@ Proof.
       intros p i; now apply hp, elem_of_union_l.
 Qed.
 
-Lemma coin_union_r `{FiniteLts A L} {PRE : Chain copre_m}
+Lemma coin_union_r `{FiniteImagegLts A L} {PRE : Chain copre_m}
   : forall (X1 X2 : gset A) (q : A), elem PRE X2 q -> elem PRE (X1 ∪ X2) q.
 Proof.
   apply tower; clear PRE.
@@ -371,7 +381,7 @@ Proof.
       intros p i; now apply hp, elem_of_union_r.
 Qed.
 
-Lemma coin_elem_of `{FiniteLts A L} {PRE : Chain copre_m} (p : A) X: p ∈ X -> elem PRE X p.
+Lemma coin_elem_of `{FiniteImagegLts A L} {PRE : Chain copre_m} (p : A) X: p ∈ X -> elem PRE X p.
 Proof.
 intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
 apply coin_union_l, coin_refl.
@@ -384,7 +394,7 @@ solve[apply elem_of_union_l; set_tac] ||
 assumption ||
 now apply elem_of_singleton_2.
 
-Lemma coin_choose `{FiniteLts A L} {PRE : Chain copre_m}
+Lemma coin_choose `{FiniteImagegLts A L} {PRE : Chain copre_m}
   : forall {X : gset A} {q : A} {p : A}, p ∈ X -> elem PRE {[p]} q -> elem PRE X q.
 Proof.
   intros X q p Hin He.
@@ -393,7 +403,7 @@ Proof.
 Qed.
 
 (* TODO : should go with mb Lts construction *)
-Lemma fw_wt `{FiniteLts A L} (t : A) q m:
+Lemma fw_wt `{FiniteImagegLts A L} (t : A) q m:
   t ⟹ q -> (t ▷ m) ⟹ (q ▷ m).
 Proof.
 intro Ht. induction Ht.
@@ -406,7 +416,7 @@ intro Ht. induction Ht.
   + assumption.
 Qed.
 
-Lemma fw_wt_mb_com `{FiniteLts A L} (t : A) a q m:
+Lemma fw_wt_mb_com `{FiniteImagegLts A L} (t : A) a q m:
   t ⟹{ActIn a} q -> (t ▷ {[+ a +]} ⊎ m) ⟹ (q ▷ m).
 Proof.
 intro Ht. dependent induction Ht.
@@ -418,7 +428,7 @@ intro Ht. dependent induction Ht.
   + now apply fw_wt.
 Qed.
 
-Lemma fw_wt_left `{FiniteLts A L} (t : A) q0 (M : mb L) μ :
+Lemma fw_wt_left `{FiniteImagegLts A L} (t : A) q0 (M : mb L) μ :
   t ⟹{μ} q0 -> (t ▷ M) ⟹{μ} (q0 ▷ M).
 Proof.
 intros Ht.
@@ -431,7 +441,7 @@ dependent induction Ht.
   + now apply fw_wt.
 Qed.
 
-Lemma copre_fw_inv_l `{FiniteLts A L} {PRE : Chain (copre_m (A := A * mb L) (B := A * mb L))} (p t: A):
+Lemma copre_fw_inv_l `{FiniteImagegLts A L} {PRE : Chain (copre_m (A := A * mb L) (B := A * mb L))} (p t: A):
   (∀ μ p', p ⟶{μ} p' <-> (p' = t /\ μ = τ)) ->
   forall M (X : gset (A * mb L)) (q : A * mb L),
     elem PRE ({[t ▷ M]} ∪ {[p ▷ M]} ∪ X) q
@@ -508,7 +518,7 @@ Proof.
       * apply Ht. set_tac.
 Qed.
 
-Lemma copre_inv_l `{FiniteLts A L} {PRE : Chain copre_m} (p : A) X t q : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
+Lemma copre_inv_l `{FiniteImagegLts A L} {PRE : Chain copre_m} (p : A) X t q : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
   elem PRE ({[t]} ∪ X) q -> elem PRE ({[p]} ∪ X) q.
 Proof.
   intros Hpt Hinv; revert q.
@@ -560,19 +570,19 @@ Proof.
       * apply Ht; set_tac.
 Qed.
 
-Definition eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L} (X Y : gset A) :=
+Definition eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L} (X Y : gset A) :=
  (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
  (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
 
-Global Instance symmetric_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance symmetric_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
  Symmetric eq_rel_set.
 Proof. intros x y. unfold eq_rel_set. intuition. Qed.
 
-Global Instance reflexive_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance reflexive_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
  Reflexive eq_rel_set.
 Proof. intro X; split; intros x Hx; exists x; intuition. Qed.
 
-Global Instance equiv_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance equiv_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
  Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
 Proof.
 intros X X' HX Y Y' HY Heq. split; intros x Hx.
@@ -581,7 +591,7 @@ intros X X' HX Y Y' HY Heq. split; intros x Hx.
 Qed.
 
 Global Instance proper_singleton_elem_eq_rel_set
-  `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+  `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
   Proper ((eq_rel) ==> (eq_rel_set)) singleton.
 Proof.
   intros x y Hx. split; intros x' Hx'%elem_of_singleton;
@@ -589,7 +599,7 @@ Proof.
   now symmetry.
 Qed.
 
-Global Instance eq_rel_set_union `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance eq_rel_set_union `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
   Proper ((eq_rel_set) ==> (eq_rel_set) ==> (eq_rel_set)) union.
 Proof.
 intros X X' HX Y Y' HY.
@@ -597,7 +607,7 @@ split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
  (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
 Qed.
 
-Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
   forall {X X' s Y}, eq_rel_set X X' -> (∀ p : A, p ∈ X → p ⇓ s) ->
   wt_set_from_pset_spec X s Y
   -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
@@ -621,7 +631,7 @@ split; trivial. split.
 Qed.
 
 
-Global Instance Proper_eq_rel_set_l `{FiniteLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance Proper_eq_rel_set_l `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
   Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
 Proof.
 intros p p' HX ???; subst. apply eq_rel_set_union; trivial.
@@ -630,7 +640,7 @@ intros x Hx; subst; eexists; split; trivial. now symmetry.
 Qed.
 
 
-Global Instance copre_eq_rel_l `{TransitionSystems.LtsOba A L} `{!FiniteLts A L}
+Global Instance copre_eq_rel_l `{TransitionSystems.LtsOba A L} `{!FiniteImagegLts A L}
   {PRE : Chain copre_m}: Proper ((eq_rel_set) ==> (=) ==> (impl)) (elem PRE).
 Proof.
   intros X X' HXX' q q' ?; subst q'.

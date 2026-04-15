@@ -7,6 +7,8 @@
  (theories stdpp Coinduction)
  (flags (-w -deprecated-missing-stdlib)
         (-w -deprecated-from-Coq))
- (documentation
- (package testing-theory))
+)
+
+(documentation
+ (package testing-theory)
 )

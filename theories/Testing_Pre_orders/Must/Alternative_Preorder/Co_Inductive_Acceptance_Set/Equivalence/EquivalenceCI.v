@@ -33,9 +33,9 @@ Require Import Coq.Program.Wf Setoid.
 Require Import Coq.Program.Equality.
 From Coq.Logic Require Import ProofIrrelevance.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
-            Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
-              GeneralizeLtsOutputs Termination WeakTransitions Convergence  
+From Must Require Import gLts Lts_OBA_FB FiniteImageLTS
+            Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
+              Termination WeakTransitions Convergence  
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE.
 
@@ -55,30 +55,30 @@ Section eq_contextual.
   Context `{H : ExtAction A}.
   Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
   Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A}.
+  Context `{gLtsT : !gLts T A, !FiniteImagegLts T A}.
 
   Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
   Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
-  Context `{@gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE}.
+  Context `{@gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT}.
 
-  Context `{outcome : E -> Prop}.
-  Context `{outcome_dec : forall e, Decision (outcome e)}.
-  Context `{!Testing_Predicate E A outcome}.
+  Context `{outcome : T -> Prop}.
+  Context `{outcome_dec : forall t, Decision (outcome t)}.
+  Context `{TA_instance : !Testing_Predicate T A outcome}.
 
   (* ************************************************** *)
-  Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
-  Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
+  Context `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}.
+  Context `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}.
   Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
+  Context `{@Prop_of_Inter (P * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
   Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
-  Context `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}.
+  Context `{@Prop_of_Inter (Q * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
 
   Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
   Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
-  Context `{@AbsAction A H E FinA gLtsE Φ}.
+  Context `{@AbsAction A H T FinA gLtsT Φ}.
 
-  Context `{igen_conv : @test_convergence_spec E _ _ _ _ outcome Testing_Predicate0 gen_conv}.
-  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ E _ _ _ _ outcome Testing_Predicate0 gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_conv : @test_convergence_spec T _ _ _ _ outcome TA_instance gen_conv}.
+  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ _ outcome TA_instance gen_acc (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
     @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).

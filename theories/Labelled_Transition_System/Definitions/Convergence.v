@@ -63,6 +63,14 @@ Qed.
 Lemma cnv_terminate `{M : gLts P A} p s : p ⇓ s -> p ⤓.
 Proof. by intros hcnv; now inversion hcnv. Qed.
 
+Lemma cnv_wk `{gLtsP : gLts P A} {p : P}{a : A} {s} : p ⇓ a :: s -> p ⇓ [ a ] .
+Proof.
+  intros pw; depelim pw; constructor.
+  - assumption.
+  - intros q qw%H1; constructor.
+    eapply cnv_terminate, qw.
+Qed.
+
 Lemma cnv_preserved_by_lts_tau `{M : gLts P A} s p : p ⇓ s -> forall q, p ⟶ q -> q ⇓ s.
 Proof.
   intros hcnv q l.
