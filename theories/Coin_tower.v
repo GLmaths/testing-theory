@@ -206,7 +206,7 @@ End copre.
 
 Notation "p ⩽ q" := (copre p q) (at level 70).
 
-From Must Require Import Lts_OBA_FB Testing_Predicate InteractionBetweenLts
+From Must Require Import Bisimulation Lts_OBA_FB Testing_Predicate InteractionBetweenLts
  Lift MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
  StateTransitionSystems Lts_OBA.
 
@@ -293,25 +293,25 @@ Proof.
   now rewrite (leibniz_equiv _ _ HX).
 Qed.
 
-Require Import Relation_Definitions.
-
-Global Instance Proper_lts_outputs `{gLtsOba P A}
+Global Instance Proper_lts_pre_co_actions `{gLtsOba P A}
   `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}:
   Proper ((eq_rel) ==> (=)) pre_co_actions_of.
 Proof.
   intros μ μ' Heq. apply leibniz_equiv.
-  intros x. do 2 rewrite <- lts_oba_mo_spec1. now erewrite lts_oba_mo_eq; eauto.
-Qed.
+  intros x. split.
+  - intro Hyp. admit.
+  - intro Hyp. admit.
+Admitted.
 
-Global Instance Proper_lts_stable `{TransitionSystems.LtsOba A L}:
-  Proper ((eq_rel) ==> (=) ==> (impl)) lts_stable.
+Global Instance Proper_lts_stable `{gLtsOba P A}:
+  Proper ((eq_rel) ==> (=) ==> (impl)) lts_refuses.
 Proof.
   intros p p' Heq α α' ? Hs; subst α'.
-  case (decide (lts_stable p' α)); trivial. intro Hf.
-  apply lts_stable_spec1 in Hf as (q & Hq).
+  case (decide (lts_refuses p' α)); trivial. intro Hf.
+  apply lts_refuses_spec1 in Hf as (q & Hq).
   destruct (eq_spec p q α) as (r & Hr & Heqr).
   - eexists; split; eauto.
-  - contradict Hs. apply lts_stable_spec2. eexists; eauto.
+  - contradict Hs. apply lts_refuses_spec2. eexists; eauto.
 Qed.
 
 (* In the case of a Lts with equivalence relation, the right hand side can also
@@ -324,7 +324,7 @@ Proof.
   intros ?? HX ?? Heq. rewrite (leibniz_equiv _ _ HX). clear x HX.
   revert x0 y0 Heq y.
   apply tower; clear PRE.
-  - intros P HP h x0 y0 y Heq R HR; simpl in *; eapply HP; eauto. now apply Heq.
+  - intros P' HP h x0 y0 y Heq R HR; simpl in *; eapply HP; eauto. now apply Heq.
   - intros Hc Heq x0 y0 Hequiv y h. constructor.
     + intros q Hq.
       destruct (eq_spec x0 q τ) as (r & Hr & Heqr).
@@ -338,7 +338,7 @@ Proof.
       * exists y0. split; trivial.
       * eapply Heq; eauto. eapply h.(c_step_) with μ; eauto.
     + intro ht. eapply terminate_preserved_by_eq2; eauto. now apply h.(c_cnv_).
-Qed. *)
+Qed.
 
 Lemma coin_union_l `{@FiniteImagegLts P A H gLtsP}
   `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
@@ -497,18 +497,17 @@ Proof.
       * repeat rewrite elem_of_union in Hin.
         destruct Hin as [[Heqt | Heqp] | Hin].
         ++ apply elem_of_singleton_1 in Heqt. subst.
-           exists (p ▷ M). exists p2. repeat split; trivial.
+           exists (p ▷ M). exists p2. split; [ | split;[ | split ] ].
            -- set_tac.
            -- apply wt_tau with (t ▷ M); assumption.
            -- apply Hs'.
-           -- apply Hs'.
-           -- destruct p2. simpl. admit.
+           -- eapply Hout.
         ++ apply elem_of_singleton_1 in Heqp. subst.
-           exists (p ▷ M). exists p2. repeat split; trivial.
+           exists (p ▷ M). exists p2. split; [ | split;[ | split ] ].
            -- set_tac.
-           -- apply Hs'.
-           -- apply Hs'.
-           -- destruct p2. simpl. admit.
+           -- exact Hcnv.
+           -- exact Hs'.
+           -- exact Hout.
         ++ exists p1. exists p2; intuition.
            apply elem_of_union_r. set_tac.
     + intros μ q' ps' Hμ1 Hμ2 Hwt. eapply Hq; [| eassumption |].
@@ -545,7 +544,7 @@ Proof.
       * apply elem_of_singleton_1 in Heqp. subst.
         apply Ht. set_tac.
       * apply Ht. set_tac.
-Admitted.
+Qed.
 
 Lemma copre_inv_l `{@FiniteImagegLts P A H gLtsP}
   `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
@@ -601,19 +600,19 @@ Proof.
       * apply Ht; set_tac.
 Qed.
 
-Definition eq_rel_set `{FiniteImagegLts A L} `{!gLtsEq P A} (X Y : gset P) :=
+Definition eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A} (X Y : gset P) :=
  (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
  (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
 
-Global Instance symmetric_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance symmetric_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
  Symmetric eq_rel_set.
 Proof. intros x y. unfold eq_rel_set. intuition. Qed.
 
-Global Instance reflexive_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance reflexive_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
  Reflexive eq_rel_set.
 Proof. intro X; split; intros x Hx; exists x; intuition. Qed.
 
-Global Instance equiv_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance equiv_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
  Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
 Proof.
 intros X X' HX Y Y' HY Heq. split; intros x Hx.
@@ -622,7 +621,7 @@ intros X X' HX Y Y' HY Heq. split; intros x Hx.
 Qed.
 
 Global Instance proper_singleton_elem_eq_rel_set
-  `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
+  `{FiniteImagegLts P A} `{!gLtsEq P A}:
   Proper ((eq_rel) ==> (eq_rel_set)) singleton.
 Proof.
   intros x y Hx. split; intros x' Hx'%elem_of_singleton;
@@ -630,7 +629,7 @@ Proof.
   now symmetry.
 Qed.
 
-Global Instance eq_rel_set_union `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance eq_rel_set_union `{FiniteImagegLts P A} `{!gLtsEq P A}:
   Proper ((eq_rel_set) ==> (eq_rel_set) ==> (eq_rel_set)) union.
 Proof.
 intros X X' HX Y Y' HY.
@@ -638,15 +637,16 @@ split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
  (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
 Qed.
 
-Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
-  forall {X X' s Y}, eq_rel_set X X' -> (∀ p : A, p ∈ X → p ⇓ s) ->
+Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+  forall {X X' s Y}, eq_rel_set X X' -> (∀ p : P, p ∈ X → p ⇓ s) ->
   wt_set_from_pset_spec X s Y
   -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
 Proof.
 intros X X' s Y HXX' Hcnv Hwt.
-assert (hcnv' : ∀ p : A, p ∈ X' → p ⇓ s). {
+assert (hcnv' : ∀ p : P, p ∈ X' → p ⇓ s). {
   intros p Hp. apply HXX' in Hp as (p' & Hp' & Heqp').
-  rewrite Heqp'. now apply Hcnv.
+  (* TODO : Make Proper for Convergence and equiv *) (* rewrite Heqp'. *)
+  eapply cnv_preserved_by_eq. symmetry; exact Heqp'. now apply Hcnv.
 }
 unshelve eexists (wt_s_set_from_pset X' s hcnv').
 assert(Hps' := wt_s_set_from_pset_ispec X' s hcnv').
@@ -662,7 +662,7 @@ split; trivial. split.
 Qed.
 
 
-Global Instance Proper_eq_rel_set_l `{FiniteImagegLts A L} `{!TransitionSystems.LtsEq A L}:
+Global Instance Proper_eq_rel_set_l `{FiniteImagegLts P A} `{!gLtsEq P A}:
   Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
 Proof.
 intros p p' HX ???; subst. apply eq_rel_set_union; trivial.
@@ -671,12 +671,13 @@ intros x Hx; subst; eexists; split; trivial. now symmetry.
 Qed.
 
 
-Global Instance copre_eq_rel_l `{TransitionSystems.LtsOba A L} `{!FiniteImagegLts A L}
+Global Instance copre_eq_rel_l `{@gLtsOba P A H gLtsP gLtsEqP} `{!FiniteImagegLts P A}
+  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m}: Proper ((eq_rel_set) ==> (=) ==> (impl)) (elem PRE).
 Proof.
   intros X X' HXX' q q' ?; subst q'.
   revert X X' q HXX'. apply tower; clear PRE.
-  - intros P HP ???????; eapply HP; eauto.
+  - intros P' HP ???????; eapply HP; eauto.
   - intros PRE CIH X X' q hXX' h.
     constructor.
     + intros q' Hq'.
@@ -694,7 +695,8 @@ Proof.
       apply CIH with ps''; [now symmetry|].
       eapply h.(c_step_); eauto.
       intros p Hp. apply hXX' in Hp as (p'' & Hin & Heqp'').
-      rewrite Heqp''; auto with *.
+      (* TODO : Make Proper for Convergence and equiv *) (* rewrite Heqp''; auto with *. *)
+      eapply cnv_preserved_by_eq. symmetry; exact Heqp''. now apply hμ.
     + intros Ht.
       apply h.(c_cnv_); intros p0 Hin.
       apply hXX' in Hin as (p'' & Hin & Heqp'').
