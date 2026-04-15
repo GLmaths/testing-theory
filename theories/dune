@@ -2,9 +2,11 @@
 
 (coq.theory
  (name Must)
- (package must-testing)
+ (package testing-theory)
  (synopsis "Must testing")
- (theories stdpp)
+ (theories stdpp Coinduction)
  (flags (-w -deprecated-missing-stdlib)
         (-w -deprecated-from-Coq))
+ (documentation
+ (package testing-theory))
 )

@@ -36,10 +36,10 @@ From Must Require Import InputOutputActions ActTau Clos_n.
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 
 Parameter (Channel : Type).
-
+(*Exemple : Definition Channel := string.*)
 Parameter (channel_eq_dec : EqDecision Channel).
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-
+(* Coercion ActExt : ExtAct >-> Act. *)
 Parameter (channel_is_countable : Countable Channel).
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
 
@@ -219,7 +219,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
 
 (*...and sums (only for guards (by sanity))*)
 | cgr_choice_step : forall p1 q1 p2,
-    cgr_step (g p1) (g q1) -> 
+    cgr_step (g p1) (g q1) ->
     cgr_step (p1 + p2) (q1 + p2)
 .
 
@@ -314,31 +314,31 @@ apply cgr_choice_assoc_rev_step.
 Qed.
 Lemma cgr_recursion : forall x p q, p ≡* q -> (rec x • p) ≡* (rec x • q).
 Proof.
-intros. dependent induction H. 
-constructor. 
+intros. dependent induction H.
+constructor.
 apply cgr_recursion_step. exact H. eauto with cgr_eq.
 Qed.
 Lemma cgr_tau : forall p q, p ≡* q -> (t • p) ≡* (t • q).
 Proof.
-intros. dependent induction H. 
-constructor. 
+intros. dependent induction H.
+constructor.
 apply cgr_tau_step. exact H. eauto with cgr_eq.
-Qed. 
+Qed.
 Lemma cgr_input : forall c p q, p ≡* q -> (c ? • p) ≡* (c ? • q).
 Proof.
-intros. dependent induction H. 
+intros. dependent induction H.
 constructor.
 apply cgr_input_step. exact H. eauto with cgr_eq.
-Qed. 
+Qed.
 Lemma cgr_output : forall c p q, p ≡* q -> (c ! • p) ≡* (c ! • q).
 Proof.
-intros. dependent induction H. 
+intros. dependent induction H.
 constructor.
 apply cgr_output_step. exact H. eauto with cgr_eq.
 Qed.
 Lemma cgr_par : forall p q r, p ≡* q-> p ‖ r ≡* q ‖ r.
 Proof.
-intros. dependent induction H. 
+intros. dependent induction H.
 constructor.
 apply cgr_par_step. exact H. eauto with cgr_eq.
 Qed.
@@ -611,7 +611,7 @@ induction Transition.
         ** apply transitivity with (((t • x + x0) ‖ x1) ‖ q). apply cgr_par. exact H0.
         apply cgr_par_assoc.
         ** apply transitivity with (x ‖(x1) ‖ q). apply cgr_par. exact H1. apply cgr_par_assoc.
-    * exists x. exists x0. exists (x1 ‖ q). split. 
+    * exists x. exists x0. exists (x1 ‖ q). split.
         ** apply transitivity with ((rec x • x0 ‖ x1) ‖ q). apply cgr_par. exact H0. apply cgr_par_assoc.
         ** apply transitivity with ((pr_subst x x0 (rec x • x0) ‖ x1) ‖ q). apply cgr_par. exact H1. apply cgr_par_assoc.
   - destruct IHTransition as [IH|[IH|IH]]; [ left | right; left | right; right];  decompose record IH.
@@ -692,10 +692,10 @@ Qed.
 
 (* For the (LTS-transition), the transitable Guards and transitted terms, that performs a Tau ,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P = (g L))) -> 
+Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P = (g L))) ->
 (exists Q M, ((P ≡* ((t • Q) + M))) /\ (V ≡* (Q))).
 Proof.
-intros P V Hyp. 
+intros P V Hyp.
 destruct Hyp. rename H into Transition. dependent induction Transition.
 - exists p. exists 𝟘. split. 
   * apply cgr_choice_nil_rev.
@@ -722,7 +722,7 @@ induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p.
   - simpl. intro. apply cgr_fullpar.
-    apply Hp. simpl. auto with arith. assumption. 
+    apply Hp. simpl. auto with arith. assumption.
     apply Hp. simpl. auto with arith. assumption.
   - simpl. intro. destruct (decide (x = n)). exact H. reflexivity.
   - simpl. intro. destruct (decide (x = n)). reflexivity. apply cgr_recursion. apply Hp. simpl. auto. exact H.
@@ -732,8 +732,8 @@ destruct p.
     * intro. apply cgr_input. apply Hp. simpl. auto. exact H.
     * intro. apply cgr_output. apply Hp. simpl. auto. exact H.
     * intro. apply cgr_tau. apply Hp. simpl. auto. exact H.
-    * intro. simpl. apply cgr_fullchoice. 
-      assert (pr_subst x (g g0_1) q ≡* pr_subst x (g g0_1) q'). apply Hp. simpl. auto with arith. assumption. assumption. 
+    * intro. simpl. apply cgr_fullchoice.
+      assert (pr_subst x (g g0_1) q ≡* pr_subst x (g g0_1) q'). apply Hp. simpl. auto with arith. assumption. assumption.
       assert (pr_subst x (g g0_2) q ≡* pr_subst x (g g0_2) q'). apply Hp. simpl. auto with arith. assumption. assumption.
 Qed.
 
@@ -756,16 +756,16 @@ Proof.
   - constructor.
   - simpl. destruct (decide (n = x)). constructor. exact H. constructor. apply Hp. subst. simpl. auto.  exact H.
   - simpl. constructor. apply Hp. subst. simpl. auto. exact H.
-  - simpl. constructor. apply Hp. subst. simpl. auto. exact H. 
-  - simpl. constructor. apply Hp. subst. simpl. auto. exact H. 
+  - simpl. constructor. apply Hp. subst. simpl. auto. exact H.
+  - simpl. constructor. apply Hp. subst. simpl. auto. exact H.
   - simpl. constructor. apply Hp. subst. simpl. auto with arith. assumption.
-  - simpl. apply cgr_choice_step. 
+  - simpl. apply cgr_choice_step.
     assert (pr_subst n (g p1) q ≡ pr_subst n (g q1) q). apply Hp. subst. simpl. auto with arith. assumption. assumption.
 Qed.
 
 (* ≡* respects the substitution of his variable *)
 Lemma cgr_subst2 q p p' x : p ≡* p' → pr_subst x p q ≡* pr_subst x p' q.
-Proof. 
+Proof.
 intros hcgr. induction hcgr. constructor. now eapply cgr_step_subst2. apply transitivity with (pr_subst x y q).
 exact IHhcgr1. exact IHhcgr2.
 Qed.
@@ -792,7 +792,7 @@ Proof.
   intros p q α (p' & hcgr & l).
   revert q α l.
   dependent induction hcgr.
-  - dependent induction H. 
+  - dependent induction H.
 (* reasonning about all possible cases due to the structure of terms *)
     + intros. exists q.  split.  exact l. reflexivity. 
     + intros. exists (q ‖ 𝟘). split. apply lts_parL. exact l. auto with cgr (*par contexte parallele*). 
@@ -804,12 +804,12 @@ Proof.
       -- exists (p ‖ p2). split. apply lts_parR. exact l. auto with cgr.
       -- exists (q2 ‖ q). split. apply lts_parL. exact l. auto with cgr.
     + intros. dependent destruction l.
-      -- dependent destruction l2. 
+      -- dependent destruction l2.
          * exists ((p2 ‖ p0) ‖ r). split.
            apply lts_parL. eapply lts_comL. instantiate (1:= a). exact l1. exact l2. auto with cgr.
          * exists ((p2 ‖ q) ‖ q2). split. eapply lts_comL. instantiate (1:= a). apply lts_parL. exact l1.
            exact l2. apply cgr_par_assoc.
-      -- dependent destruction l1. 
+      -- dependent destruction l1.
          * exists ((q2 ‖ p2) ‖ r). split. apply lts_parL. eapply lts_comR. instantiate (1:= a). exact l1.
            exact l2. auto with cgr.
          * exists ((q2 ‖ q) ‖ q0). split. eapply lts_comR. instantiate (1:= a). exact l1. apply lts_parL.
@@ -823,20 +823,20 @@ Proof.
          * exists ((p ‖ p2) ‖ r). split. apply lts_parL. apply lts_parR. exact l. auto with cgr.
          * exists ((p ‖ q) ‖ q2). split. apply lts_parR. exact l. auto with cgr.
     + intros. dependent destruction l.
-      -- dependent destruction l1. 
+      -- dependent destruction l1.
          * exists (p2 ‖ (q ‖ q2)). split.
            eapply lts_comL. instantiate (1:= a). exact l1. apply lts_parR. exact l2. auto with cgr.
          * exists (p ‖ (q0 ‖ q2)). split. apply lts_parR. eapply lts_comL. instantiate (1:= a). exact l1.
            exact l2. auto with cgr.
-      -- dependent destruction l2. 
+      -- dependent destruction l2.
          * exists (p0 ‖ (q ‖ p2)). split. eapply lts_comR. instantiate (1:= a). apply lts_parR.  exact l1.
            exact l2. auto with cgr.
-         * exists (p ‖ (q2 ‖ p2)). split. apply lts_parR. eapply lts_comR. instantiate (1:= a). exact l1. 
+         * exists (p ‖ (q2 ‖ p2)). split. apply lts_parR. eapply lts_comR. instantiate (1:= a). exact l1.
            exact l2. auto with cgr.
       -- dependent destruction l.
          * exists (p2 ‖ (q2 ‖ r)). split. eapply lts_comL. instantiate (1:= a).  exact l1. apply lts_parL.
            exact l2. auto with cgr.
-         * exists (q2 ‖ (p2 ‖ r)). split. eapply lts_comR. instantiate (1:= a). apply lts_parL. exact l1. 
+         * exists (q2 ‖ (p2 ‖ r)). split. eapply lts_comR. instantiate (1:= a). apply lts_parL. exact l1.
            exact l2. auto with cgr.
          * exists (p2 ‖( q ‖ r)). split. apply lts_parL. exact l. auto with cgr.
          * exists (p ‖ (q2 ‖ r)). split. apply lts_parR. apply lts_parL. exact l. auto with cgr.
@@ -863,7 +863,7 @@ Proof.
     + intros. dependent destruction l. exists p.  split. apply lts_tau. constructor. exact H.
     + intros. dependent destruction l. exists p. split. apply lts_input. constructor. apply H.
     + intros. dependent destruction l. exists p. split. apply lts_output. constructor. apply H.
-    + intros. dependent destruction l. 
+    + intros. dependent destruction l.
       -- destruct (IHcgr_step p2 (ActExt (ActOut a))). exact l1. exists (x ‖ q2). split. eapply lts_comL. destruct H0. exact l.
          exact l2. destruct H0. auto with cgr.
       -- destruct (IHcgr_step q2 (ActExt (ActIn a))). exact l2. exists (x ‖ p2). split. eapply lts_comR. destruct H0. exact l1.
@@ -880,10 +880,10 @@ Qed.
 (* One side of the Harmony Lemma *)
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_sc P τ Q).
 Proof.
-intros P Q Reduction. 
+intros P Q Reduction.
 assert (((exists x P1 P2 M1 M2 S, ((P ≡* (((x ! • P1) + M1) ‖ ((x ? • P2) + M2)) ‖ S)) /\ (Q ≡* ((P1 ‖ P2) ‖ S)))
 \/ (exists P1 M1 S, (P ≡* (((t • P1) + M1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
-\/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S))))). 
+\/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S))))).
 apply ReductionShape. exact Reduction. destruct H.
 
 (*First case τ by communication *)
@@ -891,22 +891,22 @@ apply ReductionShape. exact Reduction. destruct H.
 - decompose record H. assert (lts ((((x ! • x0) + x2) ‖ ((x ? • x1) + x3)) ‖ x4) τ ((x0 ‖ x1) ‖ x4)).
   * apply lts_parL. eapply lts_comL. apply lts_choiceL. instantiate (1:= x). apply lts_output. apply lts_choiceL. apply lts_input.
   * assert (lts_sc1 P τ ((x0 ‖ x1) ‖ x4)). exists ((((x ! • x0) + x2) ‖ ((x ? • x1) + x3)) ‖ x4). split. exact H0. exact H1.
-    assert (lts_sc P τ ((x0 ‖ x1) ‖ x4)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4. 
+    assert (lts_sc P τ ((x0 ‖ x1) ‖ x4)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4.
     exists x5. split. exact H4. apply transitivity with ((x0 ‖ x1) ‖ x4). exact H5. symmetry. exact H2.
 
-- destruct H. 
+- destruct H.
 
 (*Second case τ by Tau Action *)
 
-  * decompose record H. assert (lts ((t • x + x0) ‖ x1) τ (x ‖ x1)). constructor. apply lts_choiceL. apply lts_tau.  
+  * decompose record H. assert (lts ((t • x + x0) ‖ x1) τ (x ‖ x1)). constructor. apply lts_choiceL. apply lts_tau.
     assert (lts_sc1 P τ (x ‖ x1)). exists ((t • x + x0) ‖ x1). split. exact H1. exact H0.
-    assert (lts_sc P τ (x ‖ x1)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4. 
+    assert (lts_sc P τ (x ‖ x1)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4.
     exists x2. split. exact H4. apply transitivity with (x ‖ x1). exact H5. symmetry. exact H2.
 
 (*Third case τ by rec *)
-  * decompose record H. assert (lts (rec x • x0 ‖ x1) τ (pr_subst x x0 (rec x • x0) ‖ x1)). constructor. apply lts_rec.  
+  * decompose record H. assert (lts (rec x • x0 ‖ x1) τ (pr_subst x x0 (rec x • x0) ‖ x1)). constructor. apply lts_rec.
     assert (lts_sc1 P τ ((pr_subst x x0 (rec x • x0) ‖ x1))). exists (rec x • x0 ‖ x1). split. exact H1. exact H0.
-    assert (lts_sc P τ (pr_subst x x0 (rec x • x0) ‖ x1)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4. 
+    assert (lts_sc P τ (pr_subst x x0 (rec x • x0) ‖ x1)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4.
     exists x2. split. exact H4. apply transitivity with (pr_subst x x0 (rec x • x0) ‖ x1). exact H5. symmetry. exact H2.
 Qed.
 
@@ -914,7 +914,7 @@ Qed.
 (* The More Stronger Harmony Lemma (in one side) is more stronger *)
 Lemma Congruence_Simplicity : (forall α , ((forall P Q, (((lts P α Q) -> (sts P Q)))) -> (forall P Q, ((lts_sc P α Q) -> (sts P Q))))).
 Proof.
-intros. destruct H0. destruct H0. eapply sts_cong. instantiate (1:=P). apply cgr_refl. instantiate (1:=x). apply H. exact H0. 
+intros. destruct H0. destruct H0. eapply sts_cong. instantiate (1:=P). apply cgr_refl. instantiate (1:=x). apply H. exact H0.
 exact H1.
 Qed.
 
@@ -935,7 +935,7 @@ reflexivity.
 Qed.
 Lemma InversionParallele2 : forall P Q R S, (P ‖ Q) ‖ (R ‖ S) ≡* (R ‖ P) ‖ (S ‖ Q).
 Proof.
-intros. 
+intros.
 apply transitivity with ((P ‖ R) ‖ (Q ‖ S)). apply InversionParallele.
 apply transitivity with ((R ‖ P) ‖ (Q ‖ S)). apply cgr_par. apply cgr_par_com.
 apply transitivity with ((Q ‖ S) ‖ (R ‖ P)). apply cgr_par_com.
@@ -961,18 +961,18 @@ dependent induction H.
     destruct (TransitionShapeForInput q1 q2 a). exact H0. destruct H4. destruct H4. destruct H4. destruct H5.
     eapply sts_cong. instantiate (1:=(((a ! • x) + x0) ‖ ((a ? • x2) + x3)) ‖ (x1 ‖ x4)).
     apply cgr_trans with ((((a ! • x) + x0) ‖ x1) ‖ (((a ? • x2) + x3) ‖ x4)). apply cgr_fullpar. exact H1. exact H4.
-    apply InversionParallele. 
+    apply InversionParallele.
     instantiate (1 := (x ‖ x2) ‖ (x1 ‖ x4)). apply sts_par. apply sts_com.
-    apply transitivity with ((x ‖ x1) ‖ (x2 ‖ x4)). apply InversionParallele. apply cgr_fullpar. 
+    apply transitivity with ((x ‖ x1) ‖ (x2 ‖ x4)). apply InversionParallele. apply cgr_fullpar.
     symmetry. exact H2. symmetry. exact H5.
   - destruct (TransitionShapeForOutput p1 p2 a). exact H. destruct H1. destruct H1. destruct H1. destruct H2.
     destruct (TransitionShapeForInput q1 q2 a). exact H0. destruct H4. destruct H4. destruct H4. destruct H5.
     eapply sts_cong. instantiate (1:=(((a ! • x) + x0) ‖ ((a ? • x2) + x3)) ‖ (x1 ‖ x4)).
     apply transitivity with (p1 ‖ q1). apply cgr_par_com.
     apply transitivity with ((((a ! • x) + x0) ‖ x1) ‖ (((a ? • x2) + x3) ‖ x4)).
-    apply cgr_fullpar. exact H1. exact H4. apply InversionParallele. 
+    apply cgr_fullpar. exact H1. exact H4. apply InversionParallele.
     instantiate (1 := (x ‖ x2) ‖ (x1 ‖ x4)). apply sts_par. apply sts_com.
-    apply transitivity with ((x ‖ x1) ‖ (x2 ‖ x4)). apply InversionParallele. apply transitivity with (p2 ‖ q2). apply cgr_fullpar. 
+    apply transitivity with ((x ‖ x1) ‖ (x2 ‖ x4)). apply InversionParallele. apply transitivity with (p2 ‖ q2). apply cgr_fullpar.
     symmetry. exact H2. symmetry. exact H5. apply cgr_par_com.
 - apply sts_par. apply IHlts. reflexivity.
 - eapply sts_cong. instantiate (1:= q1 ‖ p). apply cgr_par_com. instantiate (1:= q2 ‖ p).

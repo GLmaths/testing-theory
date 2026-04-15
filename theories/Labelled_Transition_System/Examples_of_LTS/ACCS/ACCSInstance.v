@@ -55,13 +55,16 @@ with gproc : Type :=
 | gpr_choice : gproc -> gproc -> gproc
 .
 
+Notation "'τ⋅' x" := (gpr_tau x) (at level 40).
 Notation pr_success := (g gpr_success).
 Notation pr_nil := (g gpr_nil).
 Notation pr_input a p := (g (gpr_input a p)).
 Notation pr_tau p := (g (gpr_tau p)).
 Notation pr_choice p q := (g (gpr_choice p q)).
+Notation "𝟘" := pr_nil.
+Notation "c ? P" := (gpr_input c P) (at level 50).
 
-Infix "&" := pr_par (at level 50).
+Infix "∥" := pr_par (at level 50).
 Infix "⊕" := pr_choice (at level 50).
 Notation "! a" := (pr_output a) (at level 20).
 
@@ -70,7 +73,7 @@ with gproc_dec (x y : gproc) : { x = y } + { x <> y }.
 Proof.
   decide equality; destruct (decide (n = n0)); eauto.
   decide equality; destruct (decide (n = n0)); eauto.
-Qed.
+Defined.
 
 #[global] Instance proc_eq_decision_instance : EqDecision proc.
 Proof. by exact proc_dec. Defined.
@@ -276,7 +279,7 @@ Proof. all: case p =>//= *; f_equal=>//. Qed.
 Proof.
   refine (inj_countable' encode_proc decode_proc _).
   apply encode_decide_procs.
-Qed.
+Defined.
 
 Lemma gset_nempty_ex (g : gset proc) : g ≠ ∅ -> {p | p ∈ g}.
 Proof.
@@ -305,7 +308,7 @@ Fixpoint lts_set_output p a : gset proc :=
       let ps1 := lts_set_output p1 a in
       let ps2 := lts_set_output p2 a in
       (* fixme: find a way to map over sets. *)
-      list_to_set (map (fun p => p & p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 & p) (elements ps2))
+      list_to_set (map (fun p => p ∥ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ∥ p) (elements ps2))
   end.
 
 Fixpoint lts_set_input_g g a : gset proc :=
@@ -322,7 +325,7 @@ Fixpoint lts_set_input p a : gset proc :=
   | pr_par p1 p2 =>
       let ps1 := lts_set_input p1 a in
       let ps2 := lts_set_input p2 a in
-      list_to_set (map (fun p => p & p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 & p) (elements ps2))
+      list_to_set (map (fun p => p ∥ p2) (elements ps1)) ∪ list_to_set (map (fun p => p1 ∥ p) (elements ps2))
   end.
 
 Fixpoint lts_set_tau_g gp : gset proc :=
@@ -338,22 +341,22 @@ Fixpoint lts_set_tau p : gset proc :=
   | pr_var _ | pr_output _ => ∅
   | pr_rec x p => {[ pr_subst x p (pr_rec x p) ]}
   | pr_par p1 p2 =>
-      let ps1_tau : gset proc := list_to_set (map (fun p => p & p2) (elements $ lts_set_tau p1)) in
-      let ps2_tau : gset proc := list_to_set (map (fun p => p1 & p) (elements $ lts_set_tau p2)) in
+      let ps1_tau : gset proc := list_to_set (map (fun p => p ∥ p2) (elements $ lts_set_tau p1)) in
+      let ps2_tau : gset proc := list_to_set (map (fun p => p1 ∥ p) (elements $ lts_set_tau p2)) in
       let ps_tau := ps1_tau ∪ ps2_tau in
       let acts1 := outputs_of p1 in
       let acts2 := outputs_of p2 in
       let ps1 :=
         flat_map (fun a =>
                     map
-                      (fun '(p1 , p2) => p1 & p2)
+                      (fun '(p1 , p2) => p1 ∥ p2)
                       (list_prod (elements $ lts_set_output p1 a) (elements $ lts_set_input p2 a)))
         (elements $ outputs_of p1) in
       let ps2 :=
         flat_map
           (fun a =>
              map
-               (fun '(p1 , p2) => p1 & p2)
+               (fun '(p1 , p2) => p1 ∥ p2)
                (list_prod (elements $ lts_set_input p1 a) (elements $ lts_set_output p2 a)))
           (elements $ outputs_of p2)
       in
@@ -494,15 +497,15 @@ Qed.
 
 Definition proc_stable p α := lts_set p α = ∅.
 
-Lemma lts_dec p α q : { lts p α q } + { ~ lts p α q }.
+Definition lts_dec p α q : { lts p α q } + { ~ lts p α q }.
 Proof.
   destruct (decide (q ∈ lts_set p α)).
   - eapply lts_set_spec0 in e. eauto.
   - right. intro l. now eapply lts_set_spec1 in l.
-Qed.
+Defined.
 
-Lemma proc_stable_dec p α : Decision (proc_stable p α).
-Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Qed.
+Definition proc_stable_dec p α : Decision (proc_stable p α).
+Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Defined.
 
 (* same as in ProcInstances *)
 #[global] Program Instance CCS_lts : Lts proc name := {|
@@ -510,17 +513,17 @@ Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Qed.
     lts_stable p := proc_stable p;
     lts_outputs := outputs_of;
     |}.
-Next Obligation. apply lts_dec. Qed.
+Next Obligation. apply lts_dec. Defined.
 Next Obligation.
   move=> /= ????. apply outputs_of_spec2. eauto.
 Qed.
 Next Obligation.
   intros. simpl. now eapply outputs_of_spec1 in H.
-Qed.
-Next Obligation. exact (proc_stable_dec). Qed.
+Defined.
+Next Obligation. exact (proc_stable_dec). Defined.
 Next Obligation.
   intros p [[a|a]|]; intro hs; eapply gset_nempty_ex in hs as (r & l); exists r; now eapply lts_set_spec0.
-Qed.
+Defined.
 Next Obligation.
   intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
 Qed.
@@ -538,7 +541,7 @@ Proof.
   - eapply (in_list_finite (elements (lts_set_tau p))).
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_tau_spec1.
-Qed.
+Defined.
 
 Require Import Relations.
 
@@ -661,11 +664,24 @@ Qed.
 #[global] Hint Constructors clos_trans:ccs.
 #[global] Hint Unfold cgr:ccs.
 
-Lemma cgr_par_left p1 p2 q : p1 ≡* p2 -> p1 & q ≡* p2 & q.
+Lemma cgr_par_left p1 p2 q : p1 ≡* p2 -> p1 ∥ q ≡* p2 ∥ q.
 Proof. induction 1; eauto with ccs. Qed.
 
-Lemma cgr_par_right p q1 q2 : q1 ≡* q2 -> p & q1 ≡* p & q2.
+Lemma cgr_par_right p q1 q2 : q1 ≡* q2 -> p ∥ q1 ≡* p ∥ q2.
 Proof. induction 1; eauto with ccs. Qed.
+
+Lemma cgr_choice_right (p q1 q2 : gproc) :
+  g q1 ≡* g q2 → p ⊕ q1 ≡* p ⊕ q2.
+Proof.
+intros H1.
+apply clos_trans_tn1 in H1.
+apply clos_tn1_trans.
+dependent induction H1.
+- constructor 1. eauto with ccs.
+- econstructor 2.
+  + apply cgr_choice; try eassumption; eauto with ccs.
+  + inversion_clear H.
+Abort.
 
 Lemma harmony_cgr : forall p q α, (exists r, p ≡* r /\ lts r α q) -> (exists r, lts p α r /\ r ≡* q).
 Proof.
@@ -677,16 +693,16 @@ Proof.
     + intros u α l. dependent induction l.
       ++ destruct (IHcgr_step1 _ _ l1) as (? & ? & ?); eauto with ccs.
          destruct (IHcgr_step2 _ _ l2) as (? & ? & ?); eauto with ccs.
-         exists (x & x0). split. eauto with ccs.
+         exists (x ∥ x0). split. eauto with ccs.
          etrans. eapply cgr_par_left. eassumption.
          etrans. eapply cgr_par_right. eassumption.
          reflexivity.
       ++ destruct (IHcgr_step1 _ _ l) as (? & ? & ?); eauto with ccs.
-         exists (x & r). split. eauto with ccs.
+         exists (x ∥ r). split. eauto with ccs.
          etrans. eapply cgr_par_left. eassumption.
          eapply cgr_par_right. now constructor.
       ++ destruct (IHcgr_step2 _ _ l) as (? & ? & ?); eauto with ccs.
-         exists (p & x). split. eauto with ccs.
+         exists (p ∥ x). split. eauto with ccs.
          etrans. eapply cgr_par_right. eassumption.
          eapply cgr_par_left. now constructor.
     + intros q α l. eexists. eauto with ccs.
@@ -694,8 +710,8 @@ Proof.
       inversion H4. eexists. eauto with ccs. inversion H3.
     + intros t α l. dependent induction l.
       ++ eexists. split; [eapply lts_com|]; eauto with ccs. now rewrite co_involution.
-      ++ exists (p & p2). eauto with ccs.
-      ++ exists (q2 & q). eauto with ccs.
+      ++ exists (p ∥ p2). eauto with ccs.
+      ++ exists (q2 ∥ q). eauto with ccs.
     + intros t α l. dependent induction l.
       ++ dependent induction l2; eexists; split; eauto with ccs.
       ++ eexists. split; eauto with ccs.
@@ -744,8 +760,8 @@ Proof.
   + eapply t_trans.
     constructor. eapply cgr_par_ass_rev.
     eapply cgr_par_left. eauto.
-  + transitivity (! a & (q2 & p)). eauto with ccs.
-    transitivity ((! a & q2) & p). eauto with ccs.
+  + transitivity (!a ∥ (q2 ∥ p)). eauto with ccs.
+    transitivity ((!a ∥ q2) ∥ p). eauto with ccs.
     symmetry. etrans. constructor. eapply cgr_par_com.
     symmetry. eapply cgr_par_left. eauto with ccs.
   + edestruct guarded_does_no_output; eauto.
@@ -760,11 +776,11 @@ Lemma aux0 (p q r : proc) (a : name) (α : ActIO name) :
 Proof.
   intros l1 l2.
   eapply output_shape in l1.
-  edestruct (harmony_cgr p (!a & r) α) as (t & l3 & l4).
-  exists (! a & q). split. now symmetry. eapply lts_parR. eassumption.
+  edestruct (harmony_cgr p (!a ∥ r) α) as (t & l3 & l4).
+  exists (!a ∥ q). split. now symmetry. eapply lts_parR. eassumption.
   exists t. split. eassumption.
-  edestruct (harmony_cgr t (pr_nil & r) (ActExt (ActOut a))) as (u & l5 & l6).
-  exists (!a & r). split. eassumption. eapply lts_parL, lts_output.
+  edestruct (harmony_cgr t (pr_nil ∥ r) (ActExt (ActOut a))) as (u & l5 & l6).
+  exists (!a ∥ r). split. eassumption. eapply lts_parL, lts_output.
   exists u. split; eauto with ccs.
   etrans; eauto with ccs.
 Qed.
@@ -777,12 +793,12 @@ Lemma aux1 (p q1 q2 : proc) (a : name) (μ : ExtAct name) :
 Proof.
   intros.
   eapply output_shape in H0.
-  edestruct (harmony_cgr (!a & q1) q2 (ActExt μ)) as (t & l3 & l4). eauto.
+  edestruct (harmony_cgr (!a ∥ q1) q2 (ActExt μ)) as (t & l3 & l4). eauto.
   inversion l3; subst.
   inversion H6. subst. now destruct H.
   exists q3. split. eassumption.
-  edestruct (harmony_cgr q2 (pr_nil & q3) (ActExt $ ActOut a)) as (r & l5 & l6).
-  exists (!a & q3). split. symmetry. eassumption. eapply lts_parL, lts_output.
+  edestruct (harmony_cgr q2 (pr_nil ∥ q3) (ActExt $ ActOut a)) as (r & l5 & l6).
+  exists (!a ∥ q3). split. symmetry. eassumption. eapply lts_parL, lts_output.
   exists r. split. eassumption. etrans; eauto with ccs.
 Qed.
 
@@ -792,7 +808,7 @@ Lemma aux2 (p q1 q2 : proc) (a : name) :
 Proof.
   intros l1 l2.
   eapply output_shape in l1.
-  edestruct (harmony_cgr (!a & q1) q2 τ) as (t & l & heq). eauto with ccs.
+  edestruct (harmony_cgr (!a ∥ q1) q2 τ) as (t & l & heq). eauto with ccs.
   dependent induction l.
   - inversion l0; subst. right.
     exists q0. split. eassumption.
@@ -800,8 +816,8 @@ Proof.
     etrans. constructor. eapply cgr_par_com. eassumption.
   - inversion l.
   - left. exists q0. split. eassumption.
-    edestruct (harmony_cgr q2 (pr_nil & q0) (ActExt $ ActOut a)) as (t' & l' & heq').
-    exists (!a & q0). split. now symmetry. eapply lts_parL. eapply lts_output.
+    edestruct (harmony_cgr q2 (pr_nil ∥ q0) (ActExt $ ActOut a)) as (t' & l' & heq').
+    exists (!a ∥ q0). split. now symmetry. eapply lts_parL. eapply lts_output.
     exists t'. split; eauto with ccs.
     symmetry. etrans. constructor. eapply cgr_par_nil_rev.
     etrans. constructor. eapply cgr_par_com.
@@ -875,8 +891,8 @@ Next Obligation. exact (eq_spec_inv). Qed.
 Next Obligation.
   intros p1 p2 p3 a l1 l2.
   eapply output_shape in l1.
-  edestruct (harmony_cgr p1 (pr_nil & p3) τ) as (t & l & heq).
-  exists (!a & p2). split. now symmetry.
+  edestruct (harmony_cgr p1 (pr_nil ∥ p3) τ) as (t & l & heq).
+  exists (!a ∥ p2). split. now symmetry.
   eapply lts_com. eapply lts_output. simpl in l2. eapply l2.
   exists t. split. eassumption.
   etrans. eassumption.
@@ -920,7 +936,7 @@ Lemma good_preserved_by_output p q a : good p -> lts p (ActExt $ ActOut a) q -> 
 Proof.
   intros hhp hl.
   eapply output_shape in hl.
-  eapply (good_preserved_by_cgr p (!a & q)) in hhp; eauto with ccs.
+  eapply (good_preserved_by_cgr p (!a ∥ q)) in hhp; eauto with ccs.
   inversion hhp; subst. destruct H0; eauto with ccs. inversion H.
   now symmetry.
 Qed.
@@ -1042,7 +1058,7 @@ Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs
 Fixpoint unroll_fw (xs : list name) : proc :=
   match xs with
   | [] => pr_nil
-  | x :: xs' => pr_input x pr_success & unroll_fw xs'
+  | x :: xs' => pr_input x pr_success ∥ unroll_fw xs'
   end.
 
 Definition FinA := name.
@@ -1091,9 +1107,9 @@ Lemma unroll_a_eq_perm (xs ys : list name) : xs ≡ₚ ys -> unroll_fw xs ≡* u
 Proof.
   intro hperm. dependent induction hperm; simpl; eauto with ccs.
   - eapply cgr_par_right; eauto with ccs.
-  - transitivity ((pr_input y pr_success & pr_input x pr_success) & unroll_fw l).
+  - transitivity ((pr_input y pr_success ∥ pr_input x pr_success) ∥ unroll_fw l).
     eauto with ccs.
-    transitivity ((pr_input x pr_success & pr_input y pr_success) & unroll_fw l).
+    transitivity ((pr_input x pr_success ∥ pr_input y pr_success) ∥ unroll_fw l).
     eauto with ccs. eauto with ccs.
 Qed.
 
@@ -1268,6 +1284,7 @@ Proof.
   intros hm. now eapply pre_extensional_eq, equivalence_bhv_acc_ctx.
 Qed.
 
+(*
 (* TODO: this lemma has nothing to do here ; and need proper name *)
 Lemma h2 : forall q q' X M,
     q ≡* q' -> (X : gset (proc * mb name)) ⩽ q ▷ M -> X ⩽ q' ▷ M.
@@ -1301,4 +1318,5 @@ Proof.
     eapply gmultiset_elem_of_disj_union in H as [hl1 | hr1].
     eapply elem_of_union. left. now eapply gmultiset_elem_of_dom.
     eapply elem_of_union. right. now eapply gmultiset_elem_of_dom.
-Qed. *)
+Qed.
+*)

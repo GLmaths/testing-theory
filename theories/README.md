@@ -1,4 +1,15 @@
-# Development for LTS, STS and testing pre-orders
+# Theories directory
+
+This folder hosts the Coq developments for the must-testing project, including ACCS-style systems and the pi-calculus formalisation.
+
+## Pi calculus (overview)
+See [pi/README.md](pi/README.md) for the module structure.
+- Renamings and notations: [pi/Renamings.v](pi/Renamings.v).
+- Structural congruence rules: [pi/Congruence.v](pi/Congruence.v).
+- Labelled transitions and renaming lemmas: [pi/LTS.v](pi/LTS.v) and [pi/LTS_Renamings.v](pi/LTS_Renamings.v).
+- Reduction semantics, shape lemmas, and Harmony Lemma proof: [pi/Pi_Instance.v](pi/Pi_Instance.v#L1).
+
+## ACCS+SEQ legacy notes
 
 ## Bar_Induction
 

@@ -1,27 +1,32 @@
-(lang dune 3.14)
+(lang dune 3.17)
 
-(name must-testing)
+(name testing-theory)
 
-(generate_opam_files false)
+(generate_opam_files true)
+(source (github GLmaths/testing-theory))
 
-(source
- (github username/reponame))
+(authors "Paul Laforgue"
+         "Léo Stefanesco"
+         "Peio Borthelle"
+         "Gaëtan Lopez"
+         "Hugo Férée")
 
-(authors "Author Name")
+(maintainers "Gaëtan Lopez")
 
-(maintainers "Maintainer Name")
+(license MIT)
 
-(license LICENSE)
+(using coq 0.10)
 
-(using coq 0.8)
-
-(documentation https://url/to/documentation)
+(documentation https://GLmaths.github.io/testing-theory)
 
 (package
- (name must-testing)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends dune coq-stdpp)
+ (name testing-theory)
+ (synopsis "Coq library for characterisations of testing preorders")
+ (description "Coq library for characterisations of testing preorders")
+ (depends (coq(>= 8.20.1))
+          (coq-stdpp(>= 1.12.0))
+          (coq-coinduction(>= 1.20))
+          (coq-equations(>= 1.3.1)))
  (tags
   (topics "to describe" your project)))
 

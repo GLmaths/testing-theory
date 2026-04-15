@@ -346,7 +346,7 @@ Proof.
     eapply elem_of_list_fmap. exists a. split; eauto.
     eapply gmultiset_elem_of_elements.
     now eapply norm_output_mem in e0.
-    rewrite e1, app_assoc, app_length.
+    rewrite e1, app_assoc, length_app.
     eapply elem_of_Permutation in mem as (s0 & eqp) .
     replace (length (s1 ++ s2)) with (length (b :: s0)).
     replace (length s') with (length s'').
@@ -528,19 +528,33 @@ Proof.
       intros q hw.
       eapply (wt_input_perm _ s1) in hw as (q0 & hw0 & heq0).
       eapply h2, cnv_prefix in hw0.
+      (* Debut *)
       eapply cnv_preserved_by_eq. eassumption.
       eapply (cnv_non_blocking_action_perm q0 s2 (map ActOut (elements mo))); eauto.
       admit. (* assumption. *)
       now symmetry.
       admit. (* eapply are_inputs_map_ActIn. *) now symmetry.
+      (* Fin *)
+      (*
+      rewrite <- heq0.
+      eapply cnv_output_perm. eassumption.
+      now symmetry. eassumption.
+      eapply are_inputs_map_ActIn. now symmetry. 
+      *)
     + intros q hw.
       eapply Hlength. eapply norm_length. eassumption.
       eapply wt_split in hw as (t & hw1 & hw2).
       eapply (wt_input_perm _ s1) in hw1 as (p0 & hwp0 & heqp0).
+      (* Debut *)
       eapply (wt_non_blocking_action_perm _ s2) in hw2 as (q0 & hwq0 & heqq0).
       eapply cnv_preserved_by_eq. eassumption.
+      (* Fin *)
+      (* 
+      eapply (wt_output_perm _ s2) in hw2 as (q0 & hwq0 & heqq0).
+      rewrite <- heqq0.
+      *)
       assert (t ⇓ s2 ++ s').
-      eapply cnv_preserved_by_eq. eassumption.
+      rewrite <- heqp0.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eapply are_outputs_map_ActOut. *) now symmetry.
@@ -571,19 +585,32 @@ Proof.
       intros q hw.
       eapply (wt_input_perm s1 (map ActIn (elements mi))) in hw as (q0 & hw0 & heq0).
       eapply h1, cnv_prefix in hw0.
+      (* Debut *)
       eapply cnv_preserved_by_eq. eassumption.
       eapply cnv_non_blocking_action_perm.
       admit. (* eapply are_outputs_map_ActOut. *) eassumption.
       eassumption.
       admit. (* eassumption. *) now symmetry.
+      (* Fin *)
+      (*
+      rewrite <- heq0.
+      eapply cnv_output_perm. eapply are_outputs_map_ActOut. eassumption.
+      eassumption. eassumption. now symmetry.
+      *)
     + intros q hw.
       eapply Hlength. eapply norm_length. eassumption.
       eapply wt_split in hw as (t & hw1 & hw2).
       eapply (wt_input_perm s1 (map ActIn (elements mi))) in hw1 as (p0 & hwp0 & heqp0).
+      (* Debut *)
       eapply (wt_non_blocking_action_perm s2 (map ActOut (elements mo))) in hw2 as (q0 & hwq0 & heqq0).
       eapply cnv_preserved_by_eq. eassumption.
+      (* Fin *)
+      (*
+      eapply (wt_output_perm s2 (map ActOut (elements mo))) in hw2 as (q0 & hwq0 & heqq0).
+      rewrite <- heqq0.
+      *)
       assert (t ⇓ map ActOut (elements mo) ++ ⟪ s' ⟫).
-      eapply cnv_preserved_by_eq. eassumption.
+      rewrite <- heqp0.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eassumption. *) now symmetry.
