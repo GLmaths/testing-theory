@@ -554,9 +554,9 @@ Proof.
       rewrite <- heqq0.
       *)
       assert (t ⇓ s2 ++ s').
-      rewrite <- heqp0.
+      (* rewrite <- heqp0. eapply cnv_wt_prefix; eassumption. *) admit.  
       eapply cnv_wt_prefix; eassumption.
-      eapply cnv_wt_prefix; eassumption.
+      (* eapply cnv_wt_prefix; eassumption. *)
       admit. (* eapply are_outputs_map_ActOut. *) now symmetry.
       admit. (* eapply are_inputs_map_ActIn. *) now symmetry.
 Admitted.
@@ -610,8 +610,7 @@ Proof.
       rewrite <- heqq0.
       *)
       assert (t ⇓ map ActOut (elements mo) ++ ⟪ s' ⟫).
-      rewrite <- heqp0.
-      eapply cnv_wt_prefix; eassumption.
+      (* rewrite <- heqp0. eapply cnv_wt_prefix; eassumption. *) admit.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eassumption. *) now symmetry.
       admit. (* eassumption. *) now symmetry.

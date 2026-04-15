@@ -543,8 +543,6 @@ Proof.
     now eapply elem_of_elements, lts_set_tau_spec1.
 Defined.
 
-Require Import Relations.
-
 Inductive cgr_step : proc -> proc -> Prop :=
 | cgr_refl : forall p, cgr_step p p
 | cgr_par : forall p q r t,
@@ -959,7 +957,7 @@ Fixpoint gen_test s p :=
   match s with
   | [] => p
   | ActIn a :: s' => gpr_input a (gen_test s' p) ⊕ gpr_tau pr_success
-  | ActOut a :: s' => ! a & gen_test s' p
+  | ActOut a :: s' => ! a ∥ gen_test s' p
   end.
 
 Lemma gen_test_lts_mu μ s p :
@@ -1282,7 +1280,7 @@ Proof.
   split.
   intros hm%pre_extensional_eq. now eapply equivalence_bhv_acc_ctx.
   intros hm. now eapply pre_extensional_eq, equivalence_bhv_acc_ctx.
-Qed.
+Qed.*)
 
 (*
 (* TODO: this lemma has nothing to do here ; and need proper name *)
