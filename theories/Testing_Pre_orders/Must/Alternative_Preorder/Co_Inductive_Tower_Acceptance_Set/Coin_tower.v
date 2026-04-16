@@ -642,23 +642,21 @@ Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
   wt_set_from_pset_spec X s Y
   -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
 Proof.
-intros X X' s Y HXX' Hcnv Hwt.
-assert (hcnv' : ∀ p : P, p ∈ X' → p ⇓ s). {
-  intros p Hp. apply HXX' in Hp as (p' & Hp' & Heqp').
-  (* TODO : Make Proper for Convergence and equiv *) (* rewrite Heqp'. *)
-  eapply cnv_preserved_by_eq. symmetry; exact Heqp'. now apply Hcnv.
-}
-unshelve eexists (wt_s_set_from_pset X' s hcnv').
-assert(Hps' := wt_s_set_from_pset_ispec X' s hcnv').
-split; trivial. split.
-- intros x Hx. apply Hwt in Hx as (p & Hin & Hp).
-  apply HXX' in Hin as (x' & Hx' & Heq').
-  eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
-  exists y; split; trivial. eapply Hps'; eauto. now symmetry.
-- intros x Hx. apply Hps' in Hx as (p & Hin & Hp).
-  apply HXX' in Hin as (x' & Hx' & Heq').
-  eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
-  exists y; split; trivial. eapply Hwt; eauto. now symmetry.
+  intros X X' s Y HXX' Hcnv Hwt.
+  assert (hcnv' : ∀ p : P, p ∈ X' → p ⇓ s).
+  { intros p Hp. apply HXX' in Hp as (p' & Hp' & Heqp').
+    rewrite Heqp'. now apply Hcnv. }
+  unshelve eexists (wt_s_set_from_pset X' s hcnv').
+  assert(Hps' := wt_s_set_from_pset_ispec X' s hcnv').
+  split; trivial. split.
+  - intros x Hx. apply Hwt in Hx as (p & Hin & Hp).
+    apply HXX' in Hin as (x' & Hx' & Heq').
+    eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
+    exists y; split; trivial. eapply Hps'; eauto. now symmetry.
+  - intros x Hx. apply Hps' in Hx as (p & Hin & Hp).
+    apply HXX' in Hin as (x' & Hx' & Heq').
+    eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
+    exists y; split; trivial. eapply Hwt; eauto. now symmetry.
 Qed.
 
 
@@ -695,8 +693,7 @@ Proof.
       apply CIH with ps''; [now symmetry|].
       eapply h.(c_step_); eauto.
       intros p Hp. apply hXX' in Hp as (p'' & Hin & Heqp'').
-      (* TODO : Make Proper for Convergence and equiv *) (* rewrite Heqp''; auto with *. *)
-      eapply cnv_preserved_by_eq. symmetry; exact Heqp''. now apply hμ.
+      rewrite Heqp''; auto with *.
     + intros Ht.
       apply h.(c_cnv_); intros p0 Hin.
       apply hXX' in Hin as (p'' & Hin & Heqp'').

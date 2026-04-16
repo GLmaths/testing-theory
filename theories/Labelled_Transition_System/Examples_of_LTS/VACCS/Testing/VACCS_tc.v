@@ -326,13 +326,13 @@ Proof.
   unfold gen_test.
   intros hq. induction s; [| simpl; destruct a ].
   + eauto with ccs.
-  + destruct a. simpl. destruct IHs. eexists; eauto with ccs.
-  + destruct a. simpl. destruct IHs. eexists; eauto with ccs.
+  + destruct a. simpl. destruct IHs. eexists; eauto with cgr.
+  + destruct a. simpl. destruct IHs. eexists; eauto with cgr.
 Qed.
 
 Lemma gen_test_gen_spec_out_lts_tau_ex_inst a s p :
   exists e', lts (gen_test (ActIn a :: s) p) τ e'.
-Proof. unfold gen_test. simpl. destruct a. eauto with ccs. Qed.
+Proof. unfold gen_test. simpl. destruct a. eauto with cgr. Qed.
 
 Lemma gen_test_gen_spec_out_lts_tau_good a s e p :
   lts (gen_test (ActIn a :: s) p) τ e -> good_VACCS e.
@@ -426,6 +426,6 @@ Defined.
 Next Obligation.
   intro H. intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
 Qed.
-Next Obligation. cbn. eauto with ccs. Qed.
+Next Obligation. cbn. eauto with cgr. Qed.
 Next Obligation. intros H e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 

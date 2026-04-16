@@ -567,3 +567,31 @@ Proof.
     eapply wt_s_set_from_pset_xs_ispec.
     eapply elem_of_elements; eassumption. eassumption.
 Qed.
+
+(* 
+Manque la def d'équivalence sur les set, à retrouver....
+
+Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !FiniteImageLts P A} :
+    Proper ((≡) ==> (=) ==> (≡) ==> (iff)) wt_set_from_pset_spec.
+  Proof.
+    intros ps1 ps2 Hps s s' Hs ps1' ps2' Hps'.
+    unfold wt_set_from_pset_spec, wt_set_from_pset_spec1, wt_set_from_pset_spec2.
+    subst. setoid_rewrite Hps. setoid_rewrite Hps'. trivial.
+  Qed.
+
+Lemma wt_set_from_pset_spec_unique `{FiniteImageLts P A} ps s ps' ps'' :
+    wt_set_from_pset_spec ps s ps' ->
+    wt_set_from_pset_spec ps s ps'' -> ps' ≡ ps''.
+  Proof.
+    intros [H1' H2'] [H1'' H2'']. apply set_equiv. intro x; split; intro Hin.
+    - destruct (H1' _ Hin) as (p & Hinp & Hp). eapply H2''; eauto.
+    - destruct (H1'' _ Hin) as (p & Hinp & Hp). eapply H2'; eauto.
+  Qed.
+  
+  Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{Lts A L, !FiniteLts A L}
+  (ps : gset A) s ps' (hcnv : forall p, p ∈ ps -> p ⇓ s) :
+  wt_set_from_pset_spec ps s ps' -> ps' ≡ wt_s_set_from_pset ps s hcnv.
+  Proof.
+    intro Hps'.
+    eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
+  Qed. *)

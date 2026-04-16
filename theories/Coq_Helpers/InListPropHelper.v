@@ -77,7 +77,7 @@ Section in_list_finite.
     intros ?%elem_of_Forall_to_sig_1; done.
   Qed.
 
-  Lemma in_list_finite (l : list A) : (∀ x, P x → x ∈ l) → Finite {x : A | P x}.
+  Definition in_list_finite (l : list A) : (∀ x, P x → x ∈ l) → Finite {x : A | P x}.
   Proof.
     intros Hl.
     assert (Forall P (filter P (remove_dups l))) as Hels.
@@ -91,6 +91,6 @@ Section in_list_finite.
         apply elem_of_remove_dups, Hl; apply (proj2_sig x). }
       replace x with (`x ↾ Hx'); last by apply sig_eq.
       done.
-  Qed.
+  Defined.
 
 End in_list_finite.

@@ -140,12 +140,12 @@ Global Hint Resolve fw_eq_equiv:mdb.
 
 (* Properties on our FW Equivalence *)
 
-Lemma fw_eq_id_mb `{gLtsOba P A} p q m : p ⋍ q -> fw_eq (p, m) (q, m).
+Global Instance fw_eq_id_mb `{gLtsObaFB P A}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
+(* p ⋍ q -> fw_eq (p, m) (q, m) *)
 Proof.
-  intros heq p' q' hwp hwq. simpl in *.
-  set (h := lts_oba_mo_eq heq).
-  split. rewrite <- h in hwq. eapply (strip_eq_sim heq hwp hwq).
-  multiset_solver.
+  intros p1 p2 heq M1 M HM; simpl. subst M1.
+  set (h := lts_oba_mo_eq heq). intros q q' Hp1 Hp2; simpl in *; split;
+  rewrite h in *; trivial. eapply (strip_eq_sim heq Hp1 Hp2).
 Qed.
 
 Definition lts_fw_sc

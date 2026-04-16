@@ -147,11 +147,11 @@ Qed.
 
 (* Properties on convergence in Lts with a Bissimulation *)
 
-Lemma cnv_preserved_by_eq `{gLtsEq P A} p q s : 
-  p ⋍ q -> p ⇓ s 
-    -> q ⇓ s.
-Proof.
-  intros heq hcnv. revert q heq.
+Global Instance cnv_preserved_by_eq `{gLtsEq P A}: 
+  Proper ((eq_rel) ==> (=) ==> (impl)) cnv.
+  (* p ⋍ q -> p ⇓ s -> q ⇓ s *)
+  Proof.
+  intros p q heq s s' Hs hcnv. subst s'. revert q heq.
   induction hcnv; intros.
   - eapply cnv_nil.
     eapply (terminate_preserved_by_eq H2 heq).
@@ -190,8 +190,7 @@ Proof.
     + intros r w.
       destruct (delay_wt_non_blocking_action nb (mk_lts_eq l) w) as (t & w0 & l1).
       destruct l1 as (r' & l2 & heq).
-      eapply cnv_preserved_by_eq. eassumption.
-      eapply IHs'. exact nb. eapply Hyp_conv_through_μ, w0.
+      rewrite<- heq. eapply IHs'. exact nb. eapply Hyp_conv_through_μ, w0.
       eassumption.
 Qed.
 
@@ -230,12 +229,12 @@ Proof.
     destruct l1 as (r' & l1 & heq).
     edestruct (eq_spec r' r2) as (r & hlr & heqr). exists r1. eauto.
     eapply (cnv_preserved_by_wt_nil _ r2); eauto.
-    eapply cnv_preserved_by_eq. eassumption.
-    destruct (lts_oba_fw_feedback nb duo l1 hlr) as [(t0 & hlt0 & heqt0)|].
-    eapply cnv_preserved_by_eq. eassumption.
+    rewrite <- heqr.
+    destruct (lts_oba_fw_feedback nb duo l1 hlr) as [(t0 & hlt0 & heqt0)| Heqr].
+    rewrite <- heqt0.
     eapply cnv_preserved_by_lts_tau.
     eapply (cnv_preserved_by_wt_nil _ p); eauto. eassumption.
-    eapply cnv_preserved_by_eq. eassumption.
+    rewrite<- Heqr.
     eapply (cnv_preserved_by_wt_nil _ p); eauto.
 Qed.
 
@@ -270,8 +269,7 @@ Proof.
   - intros r w2.
     edestruct (wt_input_swap) as (t & w' & heq'). exists η1. eauto.
     eapply wt_push_left. eapply w1. eapply w2.
-    eapply cnv_preserved_by_eq.
-    eapply heq'.
+    rewrite <- heq'.
     eapply (cnv_wt_prefix [μ1 ; μ2]); eauto.
 Qed.
 
@@ -310,7 +308,7 @@ Proof.
     replace (η1 :: η2 :: s) with ([η1 ; η2] ++ s) in hcnv.
     set (hw3 := wt_concat _ _ _ _ _ hw1 hw2). simpl in hw3.
     eapply wt_non_blocking_action_swap in hw3 as (t' & hw4 & eq').
-    eapply cnv_preserved_by_eq. eassumption.
+    rewrite <- eq'.
     eapply cnv_wt_prefix. eauto. eassumption.
     now simpl. now simpl. now simpl.
 Qed.
@@ -345,7 +343,7 @@ Proof.
   - inversion hos. subst. 
     eapply push_wt_non_blocking_action in w as (q' & hwq' & heqq').
     eapply wt_split in hwq' as (t & w1 & w2).
-    eapply cnv_preserved_by_eq. eassumption. subst.
+    rewrite <- heqq'. subst.
     eapply cnv_retract_wt_non_blocking_action; eauto. eauto.
 Qed.
 
@@ -369,7 +367,7 @@ Proof.
     edestruct (lts_oba_non_blocking_action_delay nb tr_nb l) as (p'_a & tr'_b & r' & tr'_nb & equiv').
     assert (p'_a ⇓ s1 ++ s2).
     { eapply IHs1; eauto. eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto. }
-    eapply cnv_preserved_by_eq; eauto.
+    rewrite<- equiv'.
     eapply cnv_retract_wt_non_blocking_action; eauto. eapply lts_to_wt; eauto.
 Qed.
 
@@ -390,8 +388,7 @@ Proof.
   destruct w2 as (r & hwr & heqr).
   eapply (wt_non_blocking_action_perm _ ([η] ++ s1' ++ s2')) in hwr as (r0 & hwr0 & heqr0).
   eapply wt_split in hwr0 as (r1 & hwr0 & hwr1).
-  rewrite app_assoc.
-  eapply cnv_preserved_by_eq. etrans. eapply heqr0. eapply heqr.
+  rewrite app_assoc. rewrite <- heqr, <- heqr0.
   assert (Forall non_blocking (s1' ++ s2')).
   eapply Forall_app. split; assumption.
   assert (Forall2 dual (s1 ++ s2) (s1' ++ s2')).

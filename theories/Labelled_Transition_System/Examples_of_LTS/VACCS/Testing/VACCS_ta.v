@@ -331,14 +331,14 @@ Lemma gen_test_gen_spec_out_lts_tau_ex s p :
 Proof.
   unfold gen_test.
   intros hq. induction s; [| simpl; destruct a ].
-  + eauto with ccs.
-  + destruct a. simpl. destruct IHs. eexists; eauto with ccs.
-  + destruct a. simpl. destruct IHs. eexists; eauto with ccs.
+  + eauto with cgr.
+  + destruct a. simpl. destruct IHs. eexists; eauto with cgr.
+  + destruct a. simpl. destruct IHs. eexists; eauto with cgr.
 Qed.
 
 Lemma gen_test_gen_spec_out_lts_tau_ex_inst a s p :
   exists e', lts (gen_test (ActIn a :: s) p) τ e'.
-Proof. unfold gen_test. simpl. destruct a. eauto with ccs. Qed.
+Proof. unfold gen_test. simpl. destruct a. eauto with cgr. Qed.
 
 Lemma gen_test_gen_spec_out_lts_tau_good a s e p :
   lts (gen_test (ActIn a :: s) p) τ e -> good_VACCS e.
@@ -395,9 +395,8 @@ Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))
 
 Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> (g (unroll_fw xs)) ≡* (g (unroll_fw ys)).
 Proof.
-  intro hperm. dependent induction hperm; simpl; eauto with ccs.
-  - reflexivity.
-  - destruct x; eauto. eapply cgr_fullchoice; eauto with ccs. reflexivity.
+  intro hperm. dependent induction hperm; simpl; eauto with cgr.
+  - destruct x; eauto. eapply cgr_fullchoice; eauto with cgr.
   - destruct y ; destruct x.
     + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.
       eapply cgr_choice_com. reflexivity. eapply cgr_choice_assoc.
@@ -489,7 +488,7 @@ Proof.
     + subst.
       set (h := elements_disj_union {[Inputs c]} X hn).
       cbn. assert (exists p, lts (unroll_fw ((Inputs c) :: elements X)) (ActExt $ ActIn (c ⋉ O)) p).
-      simpl. eauto with ccs.
+      simpl. eauto with cgr.
       destruct H0 as (r & hl).
       edestruct (eq_spec (g (unroll_fw (elements ({[(Inputs c)]} ∪ X)))) r (ActExt $ ActIn (c ⋉ O))) 
           as (p & hlt & heqt).

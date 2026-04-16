@@ -1,18 +1,15 @@
 From Must Require Import ACCSInstance TransitionSystems Coin_tower Termination
-                         Must Completeness Soundness Equivalence.
+                         Must CompletenessAS SoundnessAS EquivalenceAS GeneralizeLtsOutputs.
 From stdpp Require Import strings sets gmap base gmultiset.
 From Coq Require Import Relations.
-From Coq Require Import Program.Equality.
-From Must Require Import Must.
+From Coq.Program Require Import Equality.
 From Coinduction Require Import all.
-
-
 
 Ltac lts_inversion := Termination.lts_inversion lts; try discriminate.
 Ltac step_tac := Termination.step_tac lts; simpl.
 Ltac term_tac := repeat step_tac.
 
-
+(*
 (* Parallel composition in ACCS is similar to the parallel composition of LTSs *)
 Lemma accs_parallel_sim (p q : proc) :
   (p ∥ q) ≲ (p, q).
@@ -966,3 +963,4 @@ Qed.
 
 
 End Example_2_1.
+*)
