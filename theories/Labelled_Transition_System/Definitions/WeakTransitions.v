@@ -28,7 +28,6 @@ From Coq.Unicode Require Import Utf8.
 From Coq.Lists Require Import List.
 Import ListNotations.
 From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
 From Coq.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From Must Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW.
@@ -234,14 +233,17 @@ Lemma delay_wt_non_blocking_action_nil `{gLtsOba P A} {p q r η} :
 Proof.
   intros nb l w.
   revert p η nb l.
-  dependent induction w; intros p0 η nb (p' & hl & heq); eauto with mdb.
+  remember ([] : trace A) as s.
+  assert (Hnil : s = []) by trivial. revert Hnil. clear Heqs.
+  dependent induction w; intros Heqs p0 η nb (p' & hl & heq); subst; eauto with mdb.
   - exists p0. split; eauto with mdb. exists p'. split; eauto with mdb.
   - assert (p' ⟶⋍ q) as (r & hlr & heqr).
     { eapply eq_spec; eauto. }
     destruct (lts_oba_non_blocking_action_delay nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
-    edestruct (IHw JMeq_refl r' η) as (r0 & w0 & (r1 & l1' & heq1)).
-    exact nb. exists t'. split. eassumption. etrans; eassumption.
-    exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
+    destruct (IHw eq_refl r' η nb) as (r0 & w0 & (r1 & l1' & heq1)).
+    + eexists; split; eauto. etransitivity; eassumption.
+    + exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
+  - inversion Heqs.
 Qed.
 
 Lemma delay_wt_non_blocking_action `{gLtsOba P A} {p q r η s} :
