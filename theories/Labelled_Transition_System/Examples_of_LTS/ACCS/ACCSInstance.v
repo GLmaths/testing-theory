@@ -1273,6 +1273,50 @@ Next Obligation.
        +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
 Qed.
 
+From Must Require Import InteractionBetweenLts ParallelLTSConstruction 
+gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
+  ForwarderConstruction MultisetLTSConstruction.
+
+#[global] Program Instance ACCS_ggLts : @gLts proc (ExtAct name) gLabel_nb := ggLts gLabel_nb.
+
+#[global] Program Instance ACCS_ggLtsEq : @gLtsEq proc (ExtAct name) gLabel_nb ACCS_ggLts := 
+  ggLtsEq gLabel_nb.
+
+#[global] Program Instance ACCS_gLtsOBA : 
+  @gLtsOba proc (ExtAct name) gLabel_nb ACCS_ggLts ACCS_ggLtsEq := ggLtsOba_nb.
+
+#[global] Program Instance ACCS_gLtsOBAFB :
+  @gLtsObaFB proc (ExtAct name) gLabel_nb ACCS_ggLts ACCS_ggLtsEq ACCS_gLtsOBA := ggLtsObaFB_nb.
+
+#[global] Program Instance Interaction_between_parallel_ACCS :
+  @Prop_of_Inter proc proc (ExtAct name) parallel_inter gLabel_nb
+  ACCS_ggLts ACCS_ggLts :=  Inter_parallel_IO gLabel_nb.
+Next Obligation.
+  intros μ1 μ2 inter. unfold parallel_inter in inter.
+  unfold dual in inter. simpl in *. eauto.
+Defined.
+
+#[global] Program Instance Interaction_between_MB_and_ACCS :
+  (* @Prop_of_Inter proc (mb (ExtAct name)) (ExtAct name) fw_inter gLabel_nb
+  ACCS_ggLts (@MbgLts (ExtAct name) gLabel_nb)  *)
+  @Prop_of_Inter proc (@mb (ExtAct name) (@gLabel_nb name CCS_Name_label))
+    (ExtAct name) (@fw_inter (ExtAct name) (@gLabel_nb name CCS_Name_label))
+    (@gLabel_nb name CCS_Name_label)
+    (@ggLts name (@gLabel_nb name CCS_Name_label) proc _ _)
+    (@MbgLts (ExtAct name) (@gLabel_nb name CCS_Name_label))
+  :=  Inter_FW_IO gLabel_nb.
+Next Obligation.
+  intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
+Defined.
+
+#[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
+  @Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) parallel_inter gLabel_nb
+  ACCS_ggLts ACCS_ggLts :=  Inter_FW_parallel_IO gLabel_nb.
+  :=  Inter_FW_IO gLabel_nb.
+Next Obligation.
+  intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
+Defined.
+
 From Must Require Import EquivalenceAS.
 
 (* Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ q <-> p ▷ ∅ ≼ q ▷ (∅ : gmultiset name).
