@@ -23,13 +23,13 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
-From Coq.Program Require Import Wf Equality.
+From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From Must Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB FiniteImageLTS
     InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau.

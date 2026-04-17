@@ -23,7 +23,7 @@
    SOFTWARE.
 *)
 
-From Coq.Program Require Import Equality.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list 
                         finite base decidable finite gmap gmultiset.
 From Must Require Import ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate 
@@ -48,7 +48,7 @@ Proof.
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
 Qed.
 
-Section Lift.
+Section Lifting.
 Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
 Context `{!Testing_Predicate T A outcome}.
 
@@ -572,7 +572,7 @@ Proof.
 Qed.
 
 End FeedBack.
-End Lift.
+End Lifting.
 
 Lemma lift_fw_ctx_pre
   `{@gLtsObaFB P A H gLtsEqP gLtsObaP}
