@@ -793,7 +793,7 @@ end.
 Inductive lts : proc -> (ActIO TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) ((c ⋉ v) ?) (P^v)
+    lts (c ? P) ((c ⋉ v) ?) (P^v)
 | lts_output : forall {c v P},
     lts (c ! v • P) ((c ⋉ v) !) P
 

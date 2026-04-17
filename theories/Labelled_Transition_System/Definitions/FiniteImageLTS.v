@@ -26,7 +26,7 @@
 From Coq.Unicode Require Import Utf8.
 From Coq.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
-From Must Require Import InListPropHelper ActTau gLts Termination WeakTransitions Convergence.
+From Must Require Import InListPropHelper ActTau gLts Bisimulation Termination WeakTransitions Convergence Lts_OBA_FB.
 
 Class FiniteImagegLts P A `{gLts P A} :=
   MkFlts {
@@ -568,10 +568,106 @@ Proof.
     eapply elem_of_elements; eassumption. eassumption.
 Qed.
 
-(* 
-Manque la def d'équivalence sur les set, à retrouver....
+Definition eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A} (X Y : gset P) :=
+ (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
+ (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
 
-Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !FiniteImageLts P A} :
+Global Instance symmetric_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+ Symmetric eq_rel_set.
+Proof. intros x y. unfold eq_rel_set. intuition. Qed.
+
+Global Instance reflexive_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+ Reflexive eq_rel_set.
+Proof. intro X; split; intros x Hx; exists x; intuition. reflexivity. reflexivity. Qed.
+
+Global Instance equiv_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+ Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
+Proof.
+intros X X' HX Y Y' HY Heq. split; intros x Hx.
+- apply HX, Heq in Hx as (y & Hy & Heq'). apply HY in Hy. eauto.
+- apply HY, Heq in Hx as (y & Hy & Heq'). apply HX in Hy. eauto.
+Qed.
+
+Global Instance proper_singleton_elem_eq_rel_set
+  `{FiniteImagegLts P A} `{!gLtsEq P A}:
+  Proper ((eq_rel) ==> (eq_rel_set)) singleton.
+Proof.
+  intros x y Hx. split; intros x' Hx'%elem_of_singleton;
+  subst x'; [exists y|exists x]; split; eauto; try apply elem_of_singleton; trivial.
+  now symmetry.
+Qed.
+
+Global Instance eq_rel_set_union `{FiniteImagegLts P A} `{!gLtsEq P A}:
+  Proper ((eq_rel_set) ==> (eq_rel_set) ==> (eq_rel_set)) union.
+Proof.
+intros X X' HX Y Y' HY.
+split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
+ (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
+Qed.
+
+Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+  forall {X X' s Y}, eq_rel_set X X' -> (∀ p : P, p ∈ X → p ⇓ s) ->
+  wt_set_from_pset_spec X s Y
+  -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
+Proof.
+  intros X X' s Y HXX' Hcnv Hwt.
+  assert (hcnv' : ∀ p : P, p ∈ X' → p ⇓ s).
+  { intros p Hp. apply HXX' in Hp as (p' & Hp' & Heqp').
+    rewrite Heqp'. now apply Hcnv. }
+  unshelve eexists (wt_s_set_from_pset X' s hcnv').
+  assert(Hps' := wt_s_set_from_pset_ispec X' s hcnv').
+  split; trivial. split.
+  - intros x Hx. apply Hwt in Hx as (p & Hin & Hp).
+    apply HXX' in Hin as (x' & Hx' & Heq').
+    eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
+    exists y; split; trivial. eapply Hps'; eauto. now symmetry.
+  - intros x Hx. apply Hps' in Hx as (p & Hin & Hp).
+    apply HXX' in Hin as (x' & Hx' & Heq').
+    eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
+    exists y; split; trivial. eapply Hwt; eauto. now symmetry.
+Qed.
+
+Lemma wt_set_union `{FiniteImagegLts P A} (X1 X2 : gset P) (s : trace A) {ps}
+  (Hcnv : ∀ p : P, p ∈ X1 ∪ X2 → p ⇓ s)
+  : wt_set_from_pset_spec (X1 ∪ X2) s ps
+    -> exists ps1 ps2, wt_set_from_pset_spec X1 s ps1
+                 /\ wt_set_from_pset_spec X2 s ps2
+                 /\ (ps = ps1 ∪ ps2) .
+Proof.
+  intros [Hw1 Hw2].
+  assert(Hcnv1 : ∀ p : P, p ∈ X1 → p ⇓ s) by (intros; apply Hcnv; set_solver).
+  assert(Hcnv2 : ∀ p : P, p ∈ X2 → p ⇓ s) by (intros; apply Hcnv; set_solver).
+  exists (wt_s_set_from_pset X1 s Hcnv1).
+  exists (wt_s_set_from_pset X2 s Hcnv2).
+  do 2 (split; [apply wt_s_set_from_pset_ispec|]).
+  apply leibniz_equiv.
+  apply set_equiv. intro x; split; intro Hin.
+  - destruct (Hw1 _ Hin) as (p & Hinp%elem_of_union & Hp).
+    destruct Hinp as [Hin1 | Hin2].
+    + eapply elem_of_union_l, wt_s_set_from_pset_ispec; eauto.
+    + eapply elem_of_union_r, wt_s_set_from_pset_ispec; eauto.
+  - rewrite elem_of_union in Hin.
+    destruct Hin as [Hin | Hin];
+    apply wt_s_set_from_pset_ispec in Hin as (p & Hin & Hp);
+    eapply Hw2; eauto; set_solver.
+Qed.
+
+(* faster than set set_solver *)
+Ltac set_tac :=
+solve[apply elem_of_union_r; set_tac] ||
+solve[apply elem_of_union_l; set_tac] ||
+assumption ||
+now apply elem_of_singleton_2.
+
+Global Instance Proper_eq_rel_set_l `{FiniteImagegLts P A} `{!gLtsEq P A}:
+  Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
+Proof.
+intros p p' HX ???; subst. apply eq_rel_set_union; trivial.
+split; setoid_rewrite elem_of_singleton;
+intros x Hx; subst; eexists; split; trivial. now symmetry. reflexivity.
+Qed.
+
+Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !FiniteImagegLts P A} :
     Proper ((≡) ==> (=) ==> (≡) ==> (iff)) wt_set_from_pset_spec.
   Proof.
     intros ps1 ps2 Hps s s' Hs ps1' ps2' Hps'.
@@ -579,7 +675,7 @@ Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !FiniteImageLts P A} :
     subst. setoid_rewrite Hps. setoid_rewrite Hps'. trivial.
   Qed.
 
-Lemma wt_set_from_pset_spec_unique `{FiniteImageLts P A} ps s ps' ps'' :
+Lemma wt_set_from_pset_spec_unique `{FiniteImagegLts P A} `{!gLtsEq P A} ps s ps' ps'' :
     wt_set_from_pset_spec ps s ps' ->
     wt_set_from_pset_spec ps s ps'' -> ps' ≡ ps''.
   Proof.
@@ -587,11 +683,11 @@ Lemma wt_set_from_pset_spec_unique `{FiniteImageLts P A} ps s ps' ps'' :
     - destruct (H1' _ Hin) as (p & Hinp & Hp). eapply H2''; eauto.
     - destruct (H1'' _ Hin) as (p & Hinp & Hp). eapply H2'; eauto.
   Qed.
-  
-  Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{Lts A L, !FiniteLts A L}
-  (ps : gset A) s ps' (hcnv : forall p, p ∈ ps -> p ⇓ s) :
-  wt_set_from_pset_spec ps s ps' -> ps' ≡ wt_s_set_from_pset ps s hcnv.
-  Proof.
-    intro Hps'.
-    eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
-  Qed. *)
+
+(* Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{FiniteImagegLts P A} `{!gLtsEq P A}
+(ps : gset A) s ps' (hcnv : forall p, p ∈ ps -> p ⇓ s) :
+wt_set_from_pset_spec ps s ps' -> ps' ≡ wt_s_set_from_pset ps s hcnv.
+Proof.
+  intro Hps'.
+  eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
+Qed. *)

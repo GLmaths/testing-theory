@@ -529,7 +529,7 @@ Proof.
       eapply (wt_input_perm _ s1) in hw as (q0 & hw0 & heq0).
       eapply h2, cnv_prefix in hw0.
       (* Debut *)
-      eapply cnv_preserved_by_eq. eassumption.
+      rewrite<- heq0.
       eapply (cnv_non_blocking_action_perm q0 s2 (map ActOut (elements mo))); eauto.
       admit. (* assumption. *)
       now symmetry.
@@ -547,7 +547,7 @@ Proof.
       eapply (wt_input_perm _ s1) in hw1 as (p0 & hwp0 & heqp0).
       (* Debut *)
       eapply (wt_non_blocking_action_perm _ s2) in hw2 as (q0 & hwq0 & heqq0).
-      eapply cnv_preserved_by_eq. eassumption.
+      rewrite<- heqq0.
       (* Fin *)
       (* 
       eapply (wt_output_perm _ s2) in hw2 as (q0 & hwq0 & heqq0).
@@ -586,7 +586,7 @@ Proof.
       eapply (wt_input_perm s1 (map ActIn (elements mi))) in hw as (q0 & hw0 & heq0).
       eapply h1, cnv_prefix in hw0.
       (* Debut *)
-      eapply cnv_preserved_by_eq. eassumption.
+      rewrite<- heq0.
       eapply cnv_non_blocking_action_perm.
       admit. (* eapply are_outputs_map_ActOut. *) eassumption.
       eassumption.
@@ -603,7 +603,7 @@ Proof.
       eapply (wt_input_perm s1 (map ActIn (elements mi))) in hw1 as (p0 & hwp0 & heqp0).
       (* Debut *)
       eapply (wt_non_blocking_action_perm s2 (map ActOut (elements mo))) in hw2 as (q0 & hwq0 & heqq0).
-      eapply cnv_preserved_by_eq. eassumption.
+      rewrite<- heqq0.
       (* Fin *)
       (*
       eapply (wt_output_perm s2 (map ActOut (elements mo))) in hw2 as (q0 & hwq0 & heqq0).

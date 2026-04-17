@@ -1098,3 +1098,53 @@ Next Obligation.
       intros (p0, m0) h%bool_decide_unpack.
       now eapply lts_fw_tau_set_spec1.
 Qed.
+
+(****************** Random properties : TO BE CLASSIFIED ********************)
+From Must Require Import WeakTransitions.
+
+Lemma fw_wt `{@FiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  (t : P) q m:
+  t ⟹ q -> (t ▷ m) ⟹ (q ▷ m).
+Proof.
+intro Ht. induction Ht.
+- apply wt_nil.
+- apply wt_tau with (q  ▷ m).
+  + now constructor.
+  + assumption.
+- apply wt_act with (q ▷ m).
+  + now constructor.
+  + assumption.
+Qed.
+
+Lemma fw_wt_mb_com `{@FiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  (t : P) a q m:
+  non_blocking a -> t ⟹{co a} q -> (t ▷ {[+ a +]} ⊎ m) ⟹ (q ▷ m).
+Proof.
+intros nb Ht. dependent induction Ht.
+- apply wt_tau with (q ▷ {[+ a +]} ⊎ m).
+  + now constructor.
+  + apply IHHt; trivial.
+- apply wt_tau with (q  ▷ m).
+  + econstructor; eauto.
+    * split. exact (proj2_sig (exists_dual (co a))).
+      erewrite<- dual_is_involutive. exact nb.
+    * erewrite<- dual_is_involutive. eapply lts_multiset_minus. exact nb.
+  + now apply fw_wt.
+Qed.
+
+Lemma fw_wt_left `{@FiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+  (t : P) q0 (M : mb A) μ :
+  t ⟹{μ} q0 -> (t ▷ M) ⟹{μ} (q0 ▷ M).
+Proof.
+intros Ht.
+dependent induction Ht.
+- apply wt_tau with (q ▷ M).
+  + now constructor.
+  + apply IHHt; trivial.
+- apply wt_act with (q ▷ M).
+  + now constructor.
+  + now apply fw_wt.
+Qed.

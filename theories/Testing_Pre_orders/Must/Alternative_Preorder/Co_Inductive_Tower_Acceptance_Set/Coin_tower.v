@@ -258,32 +258,6 @@ Proof.
   firstorder.
 Qed.
 
-Lemma wt_set_union `{FiniteImagegLts P A} (X1 X2 : gset P) (s : trace A) {ps}
-  (Hcnv : ∀ p : P, p ∈ X1 ∪ X2 → p ⇓ s)
-  : wt_set_from_pset_spec (X1 ∪ X2) s ps
-    -> exists ps1 ps2, wt_set_from_pset_spec X1 s ps1
-                 /\ wt_set_from_pset_spec X2 s ps2
-                 /\ (ps = ps1 ∪ ps2) .
-Proof.
-  intros [Hw1 Hw2].
-  assert(Hcnv1 : ∀ p : P, p ∈ X1 → p ⇓ s) by (intros; apply Hcnv; set_solver).
-  assert(Hcnv2 : ∀ p : P, p ∈ X2 → p ⇓ s) by (intros; apply Hcnv; set_solver).
-  exists (wt_s_set_from_pset X1 s Hcnv1).
-  exists (wt_s_set_from_pset X2 s Hcnv2).
-  do 2 (split; [apply wt_s_set_from_pset_ispec|]).
-  apply leibniz_equiv.
-  apply set_equiv. intro x; split; intro Hin.
-  - destruct (Hw1 _ Hin) as (p & Hinp%elem_of_union & Hp).
-    destruct Hinp as [Hin1 | Hin2].
-    + eapply elem_of_union_l, wt_s_set_from_pset_ispec; eauto.
-    + eapply elem_of_union_r, wt_s_set_from_pset_ispec; eauto.
-  - rewrite elem_of_union in Hin.
-    destruct Hin as [Hin | Hin];
-    apply wt_s_set_from_pset_ispec in Hin as (p & Hin & Hp);
-    eapply Hw2; eauto; set_solver.
-Qed.
-
-
 Global Instance Proper_elem `{@FiniteImagegLts P A H gLtsP}
   `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m} :
@@ -400,13 +374,6 @@ intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
 apply coin_union_l, coin_refl.
 Qed.
 
-(* faster than set set_solver *)
-Ltac set_tac :=
-solve[apply elem_of_union_r; set_tac] ||
-solve[apply elem_of_union_l; set_tac] ||
-assumption ||
-now apply elem_of_singleton_2.
-
 Lemma coin_choose `{@FiniteImagegLts P A H gLtsP}
   `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m}
@@ -415,54 +382,6 @@ Proof.
   intros X q p Hin He.
   setoid_replace X with ({[p]} ∪ (X ∖ {[p]})) by now apply union_difference_singleton.
   now apply coin_union_l.
-Qed.
-
-(* TODO : should go with mb Lts construction *)
-Lemma fw_wt `{@FiniteImagegLts P A H gLtsP}
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  (t : P) q m:
-  t ⟹ q -> (t ▷ m) ⟹ (q ▷ m).
-Proof.
-intro Ht. induction Ht.
-- apply wt_nil.
-- apply wt_tau with (q  ▷ m).
-  + now constructor.
-  + assumption.
-- apply wt_act with (q ▷ m).
-  + now constructor.
-  + assumption.
-Qed.
-
-Lemma fw_wt_mb_com `{@FiniteImagegLts P A H gLtsP}
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  (t : P) a q m:
-  non_blocking a -> t ⟹{co a} q -> (t ▷ {[+ a +]} ⊎ m) ⟹ (q ▷ m).
-Proof.
-intros nb Ht. dependent induction Ht.
-- apply wt_tau with (q ▷ {[+ a +]} ⊎ m).
-  + now constructor.
-  + apply IHHt; trivial.
-- apply wt_tau with (q  ▷ m).
-  + econstructor; eauto.
-    * split. exact (proj2_sig (exists_dual (co a))).
-      erewrite<- dual_is_involutive. exact nb.
-    * erewrite<- dual_is_involutive. eapply lts_multiset_minus. exact nb.
-  + now apply fw_wt.
-Qed.
-
-Lemma fw_wt_left `{@FiniteImagegLts P A H gLtsP}
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  (t : P) q0 (M : mb A) μ :
-  t ⟹{μ} q0 -> (t ▷ M) ⟹{μ} (q0 ▷ M).
-Proof.
-intros Ht.
-dependent induction Ht.
-- apply wt_tau with (q ▷ M).
-  + now constructor.
-  + apply IHHt; trivial.
-- apply wt_act with (q ▷ M).
-  + now constructor.
-  + now apply fw_wt.
 Qed.
 
 Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP}
@@ -599,75 +518,6 @@ Proof.
         apply Ht; set_tac.
       * apply Ht; set_tac.
 Qed.
-
-Definition eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A} (X Y : gset P) :=
- (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
- (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
-
-Global Instance symmetric_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
- Symmetric eq_rel_set.
-Proof. intros x y. unfold eq_rel_set. intuition. Qed.
-
-Global Instance reflexive_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
- Reflexive eq_rel_set.
-Proof. intro X; split; intros x Hx; exists x; intuition. Qed.
-
-Global Instance equiv_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
- Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
-Proof.
-intros X X' HX Y Y' HY Heq. split; intros x Hx.
-- apply HX, Heq in Hx as (y & Hy & Heq'). apply HY in Hy. eauto.
-- apply HY, Heq in Hx as (y & Hy & Heq'). apply HX in Hy. eauto.
-Qed.
-
-Global Instance proper_singleton_elem_eq_rel_set
-  `{FiniteImagegLts P A} `{!gLtsEq P A}:
-  Proper ((eq_rel) ==> (eq_rel_set)) singleton.
-Proof.
-  intros x y Hx. split; intros x' Hx'%elem_of_singleton;
-  subst x'; [exists y|exists x]; split; eauto; try apply elem_of_singleton; trivial.
-  now symmetry.
-Qed.
-
-Global Instance eq_rel_set_union `{FiniteImagegLts P A} `{!gLtsEq P A}:
-  Proper ((eq_rel_set) ==> (eq_rel_set) ==> (eq_rel_set)) union.
-Proof.
-intros X X' HX Y Y' HY.
-split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
- (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
-Qed.
-
-Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
-  forall {X X' s Y}, eq_rel_set X X' -> (∀ p : P, p ∈ X → p ⇓ s) ->
-  wt_set_from_pset_spec X s Y
-  -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
-Proof.
-  intros X X' s Y HXX' Hcnv Hwt.
-  assert (hcnv' : ∀ p : P, p ∈ X' → p ⇓ s).
-  { intros p Hp. apply HXX' in Hp as (p' & Hp' & Heqp').
-    rewrite Heqp'. now apply Hcnv. }
-  unshelve eexists (wt_s_set_from_pset X' s hcnv').
-  assert(Hps' := wt_s_set_from_pset_ispec X' s hcnv').
-  split; trivial. split.
-  - intros x Hx. apply Hwt in Hx as (p & Hin & Hp).
-    apply HXX' in Hin as (x' & Hx' & Heq').
-    eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
-    exists y; split; trivial. eapply Hps'; eauto. now symmetry.
-  - intros x Hx. apply Hps' in Hx as (p & Hin & Hp).
-    apply HXX' in Hin as (x' & Hx' & Heq').
-    eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
-    exists y; split; trivial. eapply Hwt; eauto. now symmetry.
-Qed.
-
-
-Global Instance Proper_eq_rel_set_l `{FiniteImagegLts P A} `{!gLtsEq P A}:
-  Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
-Proof.
-intros p p' HX ???; subst. apply eq_rel_set_union; trivial.
-split; setoid_rewrite elem_of_singleton;
-intros x Hx; subst; eexists; split; trivial. now symmetry.
-Qed.
-
 
 Global Instance copre_eq_rel_l `{@gLtsOba P A H gLtsP gLtsEqP} `{!FiniteImagegLts P A}
   `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
