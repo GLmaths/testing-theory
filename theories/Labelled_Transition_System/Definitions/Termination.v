@@ -88,12 +88,8 @@ Proof. by inversion 1; eauto. Qed.
 
 Lemma terminate_preserved_by_eq `{gLtsEq P A} {p q} : p ⤓ -> p ⋍ q -> q ⤓.
 Proof.
-  intros ht. revert q.
-  induction ht. intros.
-  eapply tstep.
-  intros q' l.
-  edestruct eq_spec as (r & h2 & h3). eauto.
-  eapply H3; eauto.
+  intros ht. revert q. induction ht. intros. eapply tstep.
+  intros q' l. edestruct eq_spec as (r & h2 & h3); eauto.
 Qed.
 
 Lemma terminate_preserved_by_eq2 `{gLtsEq P A} {p q} : p ⋍ q -> p ⤓ -> q ⤓.

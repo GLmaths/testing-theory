@@ -28,8 +28,8 @@ From Coq.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InputOutputActions ActTau OldTransitionSystems Must VACCS_Instance VACCS_Good
-gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ParallelLTSConstruction ForwarderConstruction
-InteractionBetweenLts Testing_Predicate.
+gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ParallelLTSConstruction
+InteractionBetweenLts Testing_Predicate DefinitionAS.
 (************************************* Examples for VACCS *************************************)
 Parameter c : Channel.
 Parameter O : Value.
@@ -40,8 +40,14 @@ Definition p : proc := c ? x • (c ! O • 𝟘).
 
 Definition q : proc := c ? x • (c ! (bvar 0) • 𝟘).
 
-Lemma q_is_above_NIL : 
-  (@ctx_pre _ _ _ _ _ _ proc _ _ _ _ _ _ _ (g 𝟘) q). (* 𝟘 ⊑ₘᵤₛₜᵢ q *)
+Set Typeclasses Debug.
+Set Typeclasses Depth 1.
+Goal (g 𝟘 ≼ₐₛ q).
+constructor.
+- intros s Hs.
+
+
+Lemma q_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ q. (* 𝟘 ⊑ₘᵤₛₜᵢ q *)
 Proof.
   intros e Hyp.
   dependent induction Hyp.

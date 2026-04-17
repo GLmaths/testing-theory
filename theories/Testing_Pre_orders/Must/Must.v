@@ -47,10 +47,10 @@ Global Hint Constructors must_sts:mdb.
 (********************* Definition of Must_i decomposed with parallel computation definition *****************)
 
 Inductive must `{
-    gLtsP : @gLts P A H, 
-    gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome} 
+    gLtsP : @gLts P A H,
+    gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-    `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+    `{Prop_of_Inter P E A dual}
 
     (p : P) (e : E) : Prop :=
 | m_now : outcome e -> must p e
@@ -59,7 +59,7 @@ Inductive must `{
     (ex : ∃ t, (p, e) ⟶ t)
     (pt : forall p', p ⟶ p' -> must p' e)
     (et : forall e', e ⟶ e' -> must p e')
-    (com : forall p' e' μ1 μ2, parallel_inter μ1 μ2
+    (com : forall p' e' μ1 μ2, dual μ1 μ2
       -> p ⟶[μ1] p' 
         -> e ⟶[μ2] e'  
           -> must p' e')
@@ -73,23 +73,23 @@ Global Hint Constructors must:mdb.
 (****************** Must_i and Must decomposed with parallel computation definition are equivalent ****************)
 
 Lemma must_sts_iff_must `{
-  gLtsP : @gLts P A H, 
-  gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome}
+    gLtsP : @gLts P A H,
+    gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+    `{Prop_of_Inter P E A dual}
 
   (p : P) (e : E) :
   @must_sts P E _ outcome p e <-> p must_pass e.
 Proof.
   split.
-  - intro hm. dependent induction hm; eauto with mdb.
+  - intro hm. induction hm; eauto with mdb.
     eapply m_step; eauto with mdb.
     + eapply sts_refuses_spec1 in nst as ((p', e') & hl).
       exists (p', e'). now simpl in hl.
     + simpl in *; eauto with mdb.
     + simpl in *; eauto with mdb.
     + intros p' e' μ1 μ2 duo hl1 hl2.
-      eapply H1. simpl.
+      eapply H4. simpl.
       eapply (ParSync μ1 μ2); eauto.
   - intro hm. dependent induction hm; eauto with mdb.
     eapply m_sts_step; eauto with mdb.
@@ -107,12 +107,12 @@ Qed.
 (********************************* Definition of the contextual pre order with Must_i *********************************)
 
 Definition ctx_pre `{
-  gLtsP : gLts P A, 
-  gLtsQ : !gLts Q A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsQ : !gLts Q H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
-  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
+  `{Prop_of_Inter P E A dual}
+  `{Prop_of_Inter Q E A dual}
 
   (p : P) (q : Q) 
   := forall (e : E), p must_pass e -> q must_pass e.
@@ -125,10 +125,9 @@ Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre p q) (at level 70).
 (********************************************* Properties on Must_i **********************************************)
 
 Lemma must_eq_client `{
-  gLtsP : gLts P A, 
-  gLtsQ : ! gLts Q A, ! gLtsEq Q A, !Testing_Predicate Q A outcome}
-
-  `{@Prop_of_Inter P Q A parallel_inter H gLtsP gLtsQ} :
+  gLtsP : !@gLts P A H, 
+  gLtsQ : @gLtsEq Q A H, !Testing_Predicate Q A outcome}
+  {_ : Prop_of_Inter P Q A dual} :
 
   forall (p : P) (q r : Q), q ⋍ r -> p must_pass q -> p must_pass r.
 Proof.
@@ -160,10 +159,10 @@ Proof.
 Qed.
 
 Lemma must_eq_server `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq P A, ! gLtsEq E A, !Testing_Predicate E A outcome} 
+  gLtsP : !@gLtsEq P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome} 
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} :
+  {_ : Prop_of_Inter P E A dual} :
 
   forall (p q : P) (e : E), p ⋍ q -> p must_pass e -> q must_pass e.
 Proof.
@@ -192,20 +191,20 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_lts_tau_srv `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p1 p2 : P) (e : E) : 
   p1 must_pass e -> p1 ⟶ p2 -> p2 must_pass e.
 Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_weak_nil_srv `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p q : P) (e : E) : 
   p must_pass e -> p ⟹ q 
@@ -218,23 +217,23 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_lts_tau_clt `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p : P) (e1 e2 : E) : 
   p must_pass e1 -> ¬ outcome e1 -> e1 ⟶ e2 -> p must_pass e2.
 Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_synch_if_notoutcome `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p p' : P) (r r' : E) μ μ':
-  p must_pass r -> ¬ outcome r -> parallel_inter μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
+  p must_pass r -> ¬ outcome r -> dual μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
     -> p' must_pass r'.
 Proof.
   intros hm u inter l__p l__r.
@@ -244,10 +243,10 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p : P) (e1 e2 : E) : 
   p must_pass e2 -> e1 ⟶ e2 -> ¬ outcome e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
@@ -270,10 +269,10 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev_rev `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p : P) (e1 e2 : E) : 
   p must_pass e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> outcome e') -> p ⤓
@@ -297,10 +296,10 @@ Proof.
 Qed.
 
 Lemma must_terminate_unoutcome `{
-  gLtsP : gLts P A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : @gLts P A H,
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  {_ : Prop_of_Inter P T A dual}
 
   (p : P) (e : T) : p must_pass e -> ¬ outcome e -> p ⤓.
 Proof.
@@ -310,10 +309,10 @@ Proof.
 Qed.
 
 Lemma must_terminate_unoutcome' `{
-  gLtsP : gLts P A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : @gLts P A H,
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  {_ : Prop_of_Inter P T A dual}
 
   (p : P) (e : T) : p must_pass e -> outcome e \/ p ⤓.
 Proof. 
@@ -323,10 +322,10 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_lts_wk_clt `{
-  gLtsP : gLts P A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p : P) (e1 e2 : E) : 
   p must_pass e1 -> ¬ outcome e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ outcome e') -> e1 ⟹ e2 -> p must_pass e2.
@@ -345,15 +344,15 @@ Proof.
 Qed.
 
 Lemma must_preserved_by_wt_synch_if_notoutcome `{
-  gLtsP : gLts P A, 
-  gLtsE : !gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : Prop_of_Inter P E A dual}
 
   (p p' : P) (r r' : E) (μ : A) (μ' : A):
   p must_pass r 
     -> ¬ outcome r 
-      -> parallel_inter μ μ'
+      -> dual μ μ'
         -> p ⟹{μ} p' 
           -> r ⟶[μ'] r' 
             -> p' must_pass r'.
@@ -367,11 +366,11 @@ Proof.
 Qed.
 
 Lemma ctx_pre_not `{
-  gLtsP : gLts P A, 
-  gLtsQ : !gLts Q A, 
-  gLtsE : ! gLts E A, ! gLtsEq E A, !Testing_Predicate E A outcome}
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} 
-  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
+  gLtsP : @gLts P A H, 
+  gLtsQ : !gLts Q H, 
+  gLtsE : !gLtsEq E H, !Testing_Predicate E A outcome}
+  {_ : Prop_of_Inter P E A dual} 
+  {_ : Prop_of_Inter Q E A dual}
   (p : P) (q : Q) (e : E) :
   p ⊑ₘᵤₛₜᵢ q -> ¬ q must_pass e -> ¬ p must_pass e.
 Proof.

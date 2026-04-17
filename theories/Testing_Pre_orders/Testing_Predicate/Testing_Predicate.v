@@ -29,7 +29,7 @@ From stdpp Require Import finite gmap decidable.
 From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions CodePurification
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
-Class Testing_Predicate (P A : Type) (outcome : P -> Prop) `{gLts P A, !gLtsEq P A} := {
+Class Testing_Predicate (P A : Type) {H: ExtAction A} (outcome : P -> Prop) `{!gLtsEq P H} := {
     outcome_decidable e : Decision (outcome e);
     outcome_preserved_by_eq (p : P) q : outcome p -> p ⋍ q -> outcome q;
     outcome_preserved_by_lts_non_blocking_action p q η : non_blocking η -> p ⟶[η] q -> outcome p -> outcome q;

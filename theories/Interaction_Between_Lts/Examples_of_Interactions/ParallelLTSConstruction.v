@@ -29,11 +29,5 @@ From Must Require Import gLts InteractionBetweenLts.
 
 (**************************************** Parallel LTS of two LTS *************************************)
 
-Definition parallel_inter `{ExtAction A} μ1 μ2 := dual μ1 μ2. (* \/ dual μ2 μ1. *)
-
-#[global] Instance parallel_inter_sym `{ExtAction A} : Symmetric parallel_inter.
-Proof. intros μ1 μ2. intro Hyp. eapply duo_sym. assumption. Defined.
-
-#[global] Program Instance parallel_gLts {P1 P2 A : Type} `{H : ExtAction A} (M1: gLts P1 A) (M2: gLts P2 A)
-  `{Prop_of_Inter P1 P2 A parallel_inter} 
-: gLts (P1 * P2) A := inter_lts parallel_inter. 
+#[global] Program Instance parallel_gLts {P1 P2 A : Type}
+ `{Prop_of_Inter P1 P2 A dual} : gLts (P1 * P2) H := inter_lts dual.

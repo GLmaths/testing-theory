@@ -46,7 +46,7 @@ Class CountablegLts P A `{gLts P A} := MkClts {
 
 
 #[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
-Proof. constructor; first apply _. intros *; apply finite_countable. Qed.
+Proof. econstructor; first apply _. intros *; apply finite_countable. Qed.
 
 (******************************** Tools for Finite Image LTS ************************************)
 
@@ -57,12 +57,12 @@ Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
 Lemma lts_tau_set_spec : forall `{FiniteImagegLts P A} p q, q ∈ lts_tau_set p <-> p ⟶ q.
 Proof.
   intros. split.
-  intro mem. unfold lts_tau_set in mem.
-  eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
-  eapply bool_decide_unpack. eassumption.
-  intro. eapply elem_of_list_fmap.
-  exists (dexist q H2). split.
-  eauto. eapply elem_of_enum.
+  - intro mem. unfold lts_tau_set in mem.
+    eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
+    eapply bool_decide_unpack. simpl. eassumption.
+  - intro H2. eapply elem_of_list_fmap.
+    exists (dexist q H2). split.
+    eauto. eapply elem_of_enum.
 Qed.
 
 Definition lts_tau_set_from_pset_spec1 `{Countable P, gLts P A}
@@ -107,12 +107,12 @@ Lemma lts_extaction_set_spec : forall `{FiniteImagegLts P A} p μ q,
         q ∈ lts_extaction_set p μ <-> p ⟶[ μ ] q.
 Proof.
   intros. split.
-  intro mem. unfold lts_tau_set in mem.
-  eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
-  eapply bool_decide_unpack. eassumption.
-  intro. eapply elem_of_list_fmap.
-  exists (dexist q H2). split.
-  eauto. eapply elem_of_enum.
+  - intro mem. unfold lts_tau_set in mem.
+    eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
+    eapply bool_decide_unpack. eassumption.
+  - intro Hμ. eapply elem_of_list_fmap.
+    eexists (dexist q Hμ). split.
+    eauto. eapply elem_of_enum.
 Qed.
 
 Definition lts_extaction_set_from_pset_spec1 `{Countable P, gLts P A}
@@ -157,7 +157,7 @@ Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : terminate p) : gset P :=
 Lemma wt_set_nil_spec1 `{FiniteImagegLts P A} p q (tp : terminate p) :
   q ∈ wt_set_nil p tp -> p ⟹ q.
 Proof.
-  case tp. induction tp.
+  case tp. induction tp as [p H1 H2].
   intros t mem. simpl in mem.
   eapply elem_of_union in mem as [here | there].
   + eapply elem_of_singleton_1 in here. subst. eauto with mdb.
@@ -165,13 +165,13 @@ Proof.
     eapply elem_of_list_fmap in mem1 as (r & mem1 & eq). subst.
     eapply wt_tau; [|destruct (t (`r) (proj2_dsig r)) eqn:eqn0].
     ++ eapply (proj2_dsig r).
-    ++ eapply H3. eapply (proj2_dsig r). eassumption.
+    ++ eapply H2. eapply (proj2_dsig r). eassumption.
 Qed.
 
 Lemma wt_set_nil_spec2 `{FiniteImagegLts P A} p q : 
     forall (tp : terminate p), p ⟹ q -> q ∈ wt_set_nil p tp.
 Proof.
-  intros. revert tp. dependent induction H2; intros tp; destruct tp.
+  intros tp Htp. revert tp. dependent induction Htp; intros tp; destruct tp.
   + set_solver.
   + eapply elem_of_union. right.
     eapply elem_of_union_list.
@@ -180,7 +180,7 @@ Proof.
     split. eapply elem_of_list_fmap.
     exists qr. split. reflexivity.
     eapply elem_of_enum. simpl.
-    eapply IHwt. eauto.
+    eapply IHHtp. eauto.
 Qed.
 
 Lemma wt_nil_set_dec `{FiniteImagegLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q).
@@ -352,7 +352,7 @@ Lemma wt_nil_refuses_set_spec1 `{FiniteImagegLts P A}
   (p q : P) (ht : p ⤓) :
   q ∈ wt_nil_refuses_set p ht -> p ⟹ q /\ q ↛.
 Proof.
-  case ht. induction ht.
+  case ht. induction ht as [p H1 H2].
   intros ht mem.
   simpl in mem.
   case (lts_refuses_decidable p τ) in mem.
@@ -360,7 +360,7 @@ Proof.
   - eapply elem_of_union_list in mem as (g & mem1 & mem2).
     eapply elem_of_list_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
     simpl in mem2. case (ht t (proj2_dsig (t ↾ hw1))) eqn:eq.
-    edestruct (H3 t). now eapply bool_decide_unpack. eassumption.
+    edestruct (H2 t). now eapply bool_decide_unpack. eassumption.
     split; eauto with mdb. eapply wt_tau. eapply bool_decide_unpack.
     eassumption. eassumption.
 Qed.

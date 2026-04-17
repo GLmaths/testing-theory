@@ -48,7 +48,7 @@ Notation "p ⟹ q" := (wt p [] q) (at level 30).
 Notation "p ⟹{ μ } q" := (wt p [μ] q) (at level 30, format "p  ⟹{ μ }  q").
 Notation "p ⟹[ s ] q" := (wt p s q) (at level 30, format "p  ⟹[ s ]  q").
 
-Definition wt_sc `{gLts P A, !gLtsEq P A} p s q := ∃ r, p ⟹[s] r /\ r ⋍ q.
+Definition wt_sc `{gLtsEq P H} p s q := ∃ r, p ⟹[s] r /\ r ⋍ q.
 
 Notation "p ⟹⋍ q" := (wt_sc p [] q) (at level 30, format "p  ⟹⋍  q").
 Notation "p ⟹⋍{ μ } q" := (wt_sc p [μ] q) (at level 30, format "p  ⟹⋍{ μ }  q").
@@ -59,9 +59,11 @@ Notation "p ⟹⋍[ s ] q" := (wt_sc p s q) (at level 30, format "p  ⟹⋍[ s ]
 Lemma wt_pop `{gLts P A} p q μ s : p ⟹[μ :: s] q -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
 Proof.
   intro w.
-  dependent induction w; eauto with mdb.
-  destruct (IHw μ s JMeq_refl) as (r & w1 & w2).
-  exists r. eauto with mdb.
+  remember ([] : trace A) as s0 eqn:Hnil. revert s0 Hnil.
+  dependent induction w; eauto with mdb; intros; subst.
+  edestruct (IHw μ s) as (r & w1 & w2); eauto.
+  - exists r. eauto with mdb.
+  - exists q. eauto with mdb.
 Qed.
 
 Lemma wt_concat `{gLts P A} p q r s1 s2 :

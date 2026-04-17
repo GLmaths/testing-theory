@@ -52,7 +52,7 @@ Lemma terminate_then_wt_refuses  `{gLts P A} p :
   p ⤓ -> exists p', p ⟹ p' /\ p' ↛.
 Proof.
   intros ht.
-  induction ht.
+  induction ht as [p H1 H2].
   destruct (lts_refuses_decidable p τ).
   - exists p; eauto with mdb.
   - eapply lts_refuses_spec1 in n as (p'& l).
@@ -65,11 +65,10 @@ Proof. by intros hcnv; now inversion hcnv. Qed.
 
 Lemma cnv_preserved_by_lts_tau `{M : gLts P A} s p : p ⇓ s -> forall q, p ⟶ q -> q ⇓ s.
 Proof.
-  intros hcnv q l.
-  inversion hcnv; subst.
-  - eapply cnv_nil. inversion H0; eauto.
+  intros hcnv q l. destruct hcnv as [p p_cnv| μ p s p_cnv Hs].
+  - eapply cnv_nil. inversion p_cnv; eauto.
   - eapply cnv_act.
-    + inversion H0; eauto.
+    + inversion p_cnv; eauto.
     + eauto with mdb.
 Qed.
 
@@ -144,14 +143,14 @@ Lemma cnv_preserved_by_eq `{gLtsEq P A} p q s :
     -> q ⇓ s.
 Proof.
   intros heq hcnv. revert q heq.
-  induction hcnv; intros.
+  induction hcnv as [p p_cnv| p μ s p_cnv Hs Hμ]; intros q heq.
   - eapply cnv_nil.
-    eapply (terminate_preserved_by_eq H2 heq).
+    eapply (terminate_preserved_by_eq p_cnv heq).
   - eapply cnv_act.
-    + eapply (terminate_preserved_by_eq H2 heq).
+    + eapply (terminate_preserved_by_eq p_cnv heq).
     + intros t w.
       destruct (eq_spec_wt q p (symmetry heq) t [μ] w) as (t' & hlt' & heqt').
-      eapply (H4 t' hlt' t heqt').
+      eapply (Hμ t' hlt' t heqt').
 Qed.
 
 (* Properties on convergence in Lts with OBA axioms *)
@@ -398,10 +397,10 @@ Qed.
 
 Lemma cnv_prefix `{gLts P A} {p : P} {s1 s2} : p ⇓ s1 ++ s2 -> p ⇓ s1.
 Proof.
-  revert s2 p. induction s1; intros.
-  - eapply cnv_nil. now inversion H1.
-  - eapply cnv_act. now inversion H1.
-    intros q hw. inversion H1; subst. eauto.
+  revert s2 p. induction s1 as [|a s1]; intros s2 p Hcnv.
+  - eapply cnv_nil. now inversion Hcnv.
+  - eapply cnv_act. now inversion Hcnv.
+    intros q hw. inversion Hcnv; subst. eauto.
 Qed.
 
 Lemma cnv_jump `{gLts P A} s1 s2 p : p ⇓ s1 -> (forall q, p ⟹[s1] q -> q ⇓ s2) -> p ⇓ s1 ++ s2.
