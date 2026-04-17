@@ -26,7 +26,7 @@ From Coq.Lists Require Import List.
 Import ListNotations.
 From Coq.Program Require Import Wf Equality.
 From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
+
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 

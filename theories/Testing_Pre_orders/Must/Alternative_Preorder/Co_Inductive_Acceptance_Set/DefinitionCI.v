@@ -28,7 +28,7 @@ Require Import Coq.Lists.List.
 Import ListNotations.
 Require Import Coq.Program.Equality.
 Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Coq.Logic.JMeq.
+
 Require Import Coq.Program.Wf Setoid.
 Require Import Coq.Program.Equality.
 From Coq.Logic Require Import ProofIrrelevance.

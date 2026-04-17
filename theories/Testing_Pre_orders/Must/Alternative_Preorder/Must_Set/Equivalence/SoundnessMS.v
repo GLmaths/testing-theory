@@ -29,7 +29,7 @@ From Coq.Lists Require Import List.
 Import ListNotations.
 From Coq.Program Require Import Wf Equality.
 From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
+
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction

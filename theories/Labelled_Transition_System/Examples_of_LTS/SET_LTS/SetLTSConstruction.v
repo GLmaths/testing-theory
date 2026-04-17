@@ -28,7 +28,7 @@ From Coq.Unicode Require Import Utf8.
 From Coq.Lists Require Import List.
 Import ListNotations.
 From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
+
 From Coq.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
 From Must Require Import MultisetHelper gLts FiniteImageLTS ActTau Bisimulation.

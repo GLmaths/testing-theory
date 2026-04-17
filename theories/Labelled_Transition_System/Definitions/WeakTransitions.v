@@ -104,7 +104,7 @@ Lemma wt_decomp_one `{gLts P A} {μ p q} : p ⟹{μ} q -> ∃ r1 r2, p ⟹ r1 �
 Proof.
   intro w.
   dependent induction w; eauto with mdb.
-  destruct (IHw μ JMeq_refl) as (r1 & r2 & w1 & l' & w2).
+  destruct (IHw μ) as (r1 & r2 & w1 & l' & w2); [reflexivity|].
   exists r1, r2. eauto with mdb.
 Qed.
 
