@@ -31,15 +31,18 @@ From Stdlib.Program Require Import Wf Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import sets base countable finite gmap list finite decidable finite gmap.
-From Must Require Import gLts Bisimulation Lts_OBA WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
-      InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
-       Must Lift Subset_Act Convergence Termination Testing_Predicate DefinitionAS.
+From Must Require Import gLts Bisimulation Lts_OBA 
+WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
+InteractionBetweenLts MultisetLTSConstruction 
+ParallelLTSConstruction ForwarderConstruction
+Must Lift Subset_Act Convergence Termination 
+Testing_Predicate DefinitionAS.
 From Must Require Import ActTau.
 
 (** Test generators specification. **)
 
 Class test_spec (* {E A : Type} *)
-  `{gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  `{gLts T, !gLtsEq T EA, !Testing_Predicate T A outcome}
   (gen : list A -> T) := {
     (* 1 *) test_ungood : 
               forall s, ¬ outcome (gen s) ;
@@ -59,21 +62,21 @@ Class test_spec (* {E A : Type} *)
               gen (β :: s) ⟶[μ] t -> μ ≠ β -> outcome t ;
   }.
 
-Lemma test_spec_determinacy `{
-  @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_spec f} 
-  μ s e:
-  f (μ :: s) ⟶[μ] e -> e ⋍ f s.
+Lemma test_spec_determinacy 
+  `{gLtsOba T, !Testing_Predicate T A outcome, !test_spec f}
+  μ s t:
+  f (μ :: s) ⟶[μ] t -> t ⋍ f s.
 Proof.
   intro HypTr.
   destruct (decide (non_blocking μ)) as [nb | not_nb].
-  + assert (f (μ :: s) ⟶⋍[μ] f s) as (e' & Tr & Eq). eapply test_next_step.
-    assert (e' ⋍ e) as equiv. eapply lts_oba_non_blocking_action_deter; eauto.
+  + assert (f (μ :: s) ⟶⋍[μ] f s) as (t' & Tr & Eq). eapply test_next_step.
+    assert (t' ⋍ t) as equiv. eapply lts_oba_non_blocking_action_deter; eauto.
     etransitivity; eauto. symmetry; eauto.
   + eapply test_follows_trace_determinacy in not_nb as equiv; eauto.
 Qed.
 
 Class test_convergence_spec
-  `{gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
+  `{gLts T, !gLtsEq T EA, !Testing_Predicate T A outcome}
   (tconv : list A -> T) := {
     tconv_test_spec : test_spec tconv ;
     (* c1 *) tconv_does_no_external_action μ : tconv ε ↛[μ] ;
@@ -84,7 +87,7 @@ Class test_convergence_spec
 #[global] Existing Instance tconv_test_spec.
 
 Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
-  `{gLtsT : @gLts T A H, ! gLtsEq T A, !Testing_Predicate T A outcome}
+  `{gLtsT : gLts T, ! gLtsEq T EA, !Testing_Predicate T A outcome}
   (ta : gset PreAct -> list A -> T) (Γ : A -> PreAct)
     := {
     ta_test_spec (E : gset PreAct) : test_spec (ta E) ;
@@ -117,7 +120,7 @@ Definition union_of_pre_co_actions_without
 (* Facts about test generators. *)
 
 Lemma tconv_always_reduces `{
-  @gLtsOba T A H gLtsT gLtsEqT, !Testing_Predicate T A outcome, !test_convergence_spec tconv} s :
+  gLtsOba T , !Testing_Predicate T A outcome, !test_convergence_spec tconv} s :
   ∃ t, tconv s ⟶ t.
 Proof.
   induction s as [|μ s'].
@@ -132,10 +135,10 @@ Proof.
 Qed.
 
 Lemma terminate_must_test_conv_nil `{
-  gLtsP : gLts P A, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome, !test_convergence_spec tconv}
+  gLtsP : gLts P, 
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome, !test_convergence_spec tconv}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   (p : P) : 
   p ⤓ -> must p (tconv ε).
@@ -153,10 +156,11 @@ Proof.
 Qed.
 
 Lemma must_tconv_wt_mu `{
-  gLtsP : gLts P A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome, ! test_convergence_spec tconv}
+  gLtsP : gLts P, 
+  gLtsT : !gLts T EA, ! gLtsEq T EA,
+  !Testing_Predicate T A outcome, ! test_convergence_spec tconv}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   μ s (p q : P): 
   must p (tconv ((co μ) :: s)) -> 

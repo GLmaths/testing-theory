@@ -23,7 +23,7 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation.
 

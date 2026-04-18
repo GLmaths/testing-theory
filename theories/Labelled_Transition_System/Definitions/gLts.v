@@ -23,7 +23,7 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From Must Require Import ActTau.
 
@@ -86,7 +86,6 @@ Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
 
 Arguments gLts P {_} EA.
 
-
 #[global] Existing Instance lts_state_eqdec.
 #[global] Existing Instance lts_step_decidable.
 #[global] Existing Instance lts_refuses_decidable. 
@@ -98,7 +97,6 @@ Notation "p ⟶[ μ ] q" := (lts_step p (ActExt μ) q) (at level 30, format "p  
 Notation "p ↛"      := (lts_refuses p τ) (at level 30, format "p  ↛").
 Notation "p ↛{ α }" := (lts_refuses p α) (at level 30, format "p  ↛{ α }").
 Notation "p ↛[ μ ]" := (lts_refuses p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
-
 
 
 (****************** Properties on gLts ****************************)

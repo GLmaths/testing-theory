@@ -33,13 +33,13 @@ From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransit
 
 Inductive must_sts 
   `{Sts (P1 * P2), outcome : P2 -> Prop}
-  (p : P1) (e : P2) : Prop :=
-| m_sts_now : outcome e -> must_sts p e
+  (p : P1) (t : P2) : Prop :=
+| m_sts_now : outcome t -> must_sts p t
 | m_sts_step
-    (nh : ¬ outcome e)
-    (nst : ¬ sts_refuses (p, e))
-    (l : forall p' e', sts_step (p, e) (p', e') -> must_sts p' e')
-  : must_sts p e
+    (nh : ¬ outcome t)
+    (nst : ¬ sts_refuses (p, t))
+    (l : forall p' t', sts_step (p, t) (p', t') -> must_sts p' t')
+  : must_sts p t
 .
 
 Global Hint Constructors must_sts:mdb.
@@ -48,25 +48,25 @@ Global Hint Constructors must_sts:mdb.
 
 Inductive must `{
     gLtsP : @gLts P A H,
-    gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+    gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-    `{Prop_of_Inter P E A dual}
+    `{Prop_of_Inter P T A dual}
 
-    (p : P) (e : E) : Prop :=
-| m_now : outcome e -> must p e
+    (p : P) (t : T) : Prop :=
+| m_now : outcome t -> must p t
 | m_step
-    (nh : ¬ outcome e)
-    (ex : ∃ t, (p, e) ⟶ t)
-    (pt : forall p', p ⟶ p' -> must p' e)
-    (et : forall e', e ⟶ e' -> must p e')
-    (com : forall p' e' μ1 μ2, dual μ1 μ2
+    (nh : ¬ outcome t)
+    (ex : ∃ t', (p, t) ⟶ t')
+    (pt : forall p', p ⟶ p' -> must p' t)
+    (et : forall t', t ⟶ t' -> must p t')
+    (com : forall p' t' μ1 μ2, dual μ1 μ2
       -> p ⟶[μ1] p' 
-        -> e ⟶[μ2] e'  
-          -> must p' e')
-  : must p e
+        -> t ⟶[μ2] t'  
+          -> must p' t')
+  : must p t
 .
 
-Notation "p 'must_pass' e" := (must p e) (at level 70).
+Notation "p 'must_pass' t" := (must p t) (at level 70).
 
 Global Hint Constructors must:mdb.
 
@@ -74,33 +74,33 @@ Global Hint Constructors must:mdb.
 
 Lemma must_sts_iff_must `{
     gLtsP : @gLts P A H,
-    gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+    gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-    `{Prop_of_Inter P E A dual}
+    `{Prop_of_Inter P T A dual}
 
-  (p : P) (e : E) :
-  @must_sts P E _ outcome p e <-> p must_pass e.
+  (p : P) (t : T) :
+  @must_sts P T _ outcome p t <-> p must_pass t.
 Proof.
   split.
   - intro hm. induction hm; eauto with mdb.
     eapply m_step; eauto with mdb.
-    + eapply sts_refuses_spec1 in nst as ((p', e') & hl).
-      exists (p', e'). now simpl in hl.
+    + eapply sts_refuses_spec1 in nst as ((p', t') & hl).
+      exists (p', t'). now simpl in hl.
     + simpl in *; eauto with mdb.
     + simpl in *; eauto with mdb.
-    + intros p' e' μ1 μ2 duo hl1 hl2.
+    + intros p' t' μ1 μ2 duo hl1 hl2.
       eapply H4. simpl.
       eapply (ParSync μ1 μ2); eauto.
   - intro hm. dependent induction hm; eauto with mdb.
     eapply m_sts_step; eauto with mdb.
     + eapply sts_refuses_spec2.
-      destruct (decide (sts_refuses (p, e))).
+      destruct (decide (sts_refuses (p, t))).
       ++ exfalso.
-         destruct ex as ((p', e'), hl).
+         destruct ex as ((p', t'), hl).
          eapply sts_refuses_spec2 in s; eauto.
-         exists (p', e'). now simpl.
+         exists (p', t'). now simpl.
       ++ now eapply sts_refuses_spec1 in n.
-    + intros p' e' hl.
+    + intros p' t' hl.
       inversion hl; subst; eauto with mdb.
 Qed.
 
@@ -109,13 +109,13 @@ Qed.
 Definition ctx_pre `{
   gLtsP : @gLts P A H, 
   gLtsQ : !gLts Q H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{Prop_of_Inter P E A dual}
-  `{Prop_of_Inter Q E A dual}
+  `{Prop_of_Inter P T A dual}
+  `{Prop_of_Inter Q T A dual}
 
   (p : P) (q : Q) 
-  := forall (e : E), p must_pass e -> q must_pass e.
+  := forall (t : T), p must_pass t -> q must_pass t.
 
 Global Hint Unfold ctx_pre: mdb.
 
@@ -126,89 +126,89 @@ Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre p q) (at level 70).
 
 Lemma must_eq_client `{
   gLtsP : !@gLts P A H, 
-  gLtsQ : @gLtsEq Q A H, !Testing_Predicate Q A outcome}
-  {_ : Prop_of_Inter P Q A dual} :
+  gLtsT : @gLtsEq T A H, !Testing_Predicate T A outcome}
+  {_ : Prop_of_Inter P T A dual} :
 
-  forall (p : P) (q r : Q), q ⋍ r -> p must_pass q -> p must_pass r.
+  forall (p : P) (t t' : T), t ⋍ t' -> p must_pass t -> p must_pass t'.
 Proof.
-  intros p q r heq hm.
-  revert r heq.
+  intros p t t' heq hm.
+  revert t' heq.
   dependent induction hm; intros.
   - apply m_now. eapply outcome_preserved_by_eq; eauto.
   - apply m_step; eauto with mdb.
     + intro rh. eapply nh. eapply outcome_preserved_by_eq; eauto with mdb.
       now symmetry.
-    + destruct ex as (t & l).
+    + destruct ex as (t'' & l).
       inversion l; subst.
-      ++ exists (a2 ▷ r). eapply ParLeft; eauto.
+      ++ exists (a2 ▷ t'). eapply ParLeft; eauto.
       ++ symmetry in heq.
-         assert (r ⟶⋍ b2) as (t & l3 & l4).
+         assert (t' ⟶⋍ b2) as (t'' & l3 & l4).
          { eapply eq_spec; eauto. }
-         exists (p ▷ t). eapply ParRight; eauto.
+         exists (p ▷ t''). eapply ParRight; eauto.
       ++ symmetry in heq.
-         assert (r ⟶⋍[μ2] b2) as (t & l3 & l4).
+         assert (t' ⟶⋍[μ2] b2) as (t'' & l3 & l4).
          { eapply eq_spec; eauto. }
-         exists (a2 ▷ t). eapply ParSync; eauto.
-    + intros r' l.
-      assert (e ⟶⋍ r') as (t & l3 & l4).
+         exists (a2 ▷ t''). eapply ParSync; eauto.
+    + intros t'' l.
+      assert (t ⟶⋍ t'') as (t''' & l3 & l4).
       { eapply eq_spec; eauto. }
       eauto.
     + intros p' r' μ1 μ2 inter l__r l__p.
-      assert (e ⟶⋍[μ2] r') as (e' & l__e' & eq').
+      assert (t ⟶⋍[μ2] r') as (e' & l__e' & eq').
       { eapply eq_spec; eauto. } eauto.
 Qed.
 
 Lemma must_eq_server `{
   gLtsP : !@gLtsEq P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome} 
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome} 
 
-  {_ : Prop_of_Inter P E A dual} :
+  {_ : Prop_of_Inter P T A dual} :
 
-  forall (p q : P) (e : E), p ⋍ q -> p must_pass e -> q must_pass e.
+  forall (p q : P) (t : T), p ⋍ q -> p must_pass t -> q must_pass t.
 Proof.
-  intros p q e heq hm.
+  intros p q t heq hm.
   revert q heq.
   dependent induction hm; intros.
   - now apply m_now.
   - apply m_step; eauto with mdb.
-    + destruct ex as (t & l).
+    + destruct ex as (t' & l).
       inversion l; subst; eauto with mdb.
       ++ symmetry in heq.
-         assert (q ⟶⋍ a2) as (t & l3 & l4).
+         assert (q ⟶⋍ a2) as (q' & l3 & l4).
          { eapply eq_spec; eauto. }
-         exists (t ▷ e). eapply ParLeft; eauto.
+         exists (q' ▷ t). eapply ParLeft; eauto.
       ++ exists (q ▷ b2). eapply ParRight; eauto.
       ++ symmetry in heq.
-         assert (q ⟶⋍[μ1] a2) as (t & l3 & l4).
+         assert (q ⟶⋍[μ1] a2) as (q' & l3 & l4).
          { eapply eq_spec; eauto. }
-         exists (t ▷ b2). eapply ParSync; eauto.
+         exists (q' ▷ b2). eapply ParSync; eauto.
     + intros q' l.
-      assert (p ⟶⋍ q') as (t & l3 & l4).
+      assert (p ⟶⋍ q') as (p' & l3 & l4).
       { eapply eq_spec; eauto. } eauto.
     + intros q' e' μ1 μ2 inter l__e l__q.
-      assert (p ⟶⋍[μ1] q') as (t & l3 & l4).
+      assert (p ⟶⋍[μ1] q') as (p' & l3 & l4).
       { eapply eq_spec; eauto. } eauto.
 Qed.
 
 Lemma must_preserved_by_lts_tau_srv `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p1 p2 : P) (e : E) : 
-  p1 must_pass e -> p1 ⟶ p2 -> p2 must_pass e.
+  (p1 p2 : P) (t : T) : 
+  p1 must_pass t -> p1 ⟶ p2 -> p2 must_pass t.
 Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_weak_nil_srv `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p q : P) (e : E) : 
-  p must_pass e -> p ⟹ q 
-    -> q must_pass e.
+  (p q : P) (t : T) : 
+  p must_pass t -> p ⟹ q 
+    -> q must_pass t.
 Proof.
   intros hm w.
   dependent induction w; eauto with mdb.
@@ -218,25 +218,25 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p : P) (e1 e2 : E) : 
+  (p : P) (e1 e2 : T) : 
   p must_pass e1 -> ¬ outcome e1 -> e1 ⟶ e2 -> p must_pass e2.
 Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_synch_if_notoutcome `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p p' : P) (r r' : E) μ μ':
-  p must_pass r -> ¬ outcome r -> dual μ μ' -> p ⟶[μ] p' -> r ⟶[μ'] r' 
-    -> p' must_pass r'.
+  (p p' : P) (t t' : T) μ μ':
+  p must_pass t -> ¬ outcome t -> dual μ μ' -> p ⟶[μ] p' -> t ⟶[μ'] t' 
+    -> p' must_pass t'.
 Proof.
-  intros hm u inter l__p l__r.
+  intros hm u inter l__p l__t.
   inversion hm; subst.
   - contradiction.
   - eapply com; eauto with mdb.
@@ -244,55 +244,55 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p : P) (e1 e2 : E) : 
-  p must_pass e2 -> e1 ⟶ e2 -> ¬ outcome e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> e' ⋍ e2)
-    -> p must_pass e1.
+  (p : P) (t1 t2 : T) : 
+  p must_pass t2 -> t1 ⟶ t2 -> ¬ outcome t2 -> (forall μ, t1 ↛[μ]) -> (forall t', t1 ⟶ t' -> t' ⋍ t2)
+    -> p must_pass t1.
 Proof.
   intros must_hyp hyp_tr not_happy not_ext_action tau_determinacy.
-  revert e1 hyp_tr not_happy not_ext_action tau_determinacy.
+  revert t1 hyp_tr not_happy not_ext_action tau_determinacy.
   dependent induction must_hyp.
   - intros. contradiction.
-  - intros. destruct (decide (outcome e1)) as [happy' | not_happy'].
+  - intros. destruct (decide (outcome t1)) as [happy' | not_happy'].
     + now eapply m_now.
     + eapply m_step; eauto.
-      ++ exists (p ▷ e). eapply ParRight; eauto.
-      ++ intros. assert (e ⋍ e'). { symmetry; eauto. }
+      ++ exists (p ▷ t). eapply ParRight; eauto.
+      ++ intros. assert (t ⋍ t'). { symmetry; eauto. }
          eapply must_eq_client; eauto. eauto.
          eapply m_step; eauto.
-      ++ intros p' e' μ1 μ2 inter tr_server tr_client. 
-         assert (e1 ↛[μ2]); eauto.
-         assert (¬ e1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
+      ++ intros p' t' μ1 μ2 inter tr_server tr_client. 
+         assert (t1 ↛[μ2]); eauto.
+         assert (¬ t1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
 Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev_rev `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p : P) (e1 e2 : E) : 
-  p must_pass e2 -> e1 ⟶ e2 -> (forall μ, e1 ↛[μ]) -> (forall e', e1 ⟶ e' -> outcome e') -> p ⤓
-    -> p must_pass e1.
+  (p : P) (t1 t2 : T) : 
+  p must_pass t2 -> t1 ⟶ t2 -> (forall μ, t1 ↛[μ]) -> (forall t', t1 ⟶ t' -> outcome t') -> p ⤓
+    -> p must_pass t1.
 Proof.
   intros must_hyp hyp_tr not_ext_action happy_determinacy conv.
-  revert e1 e2 must_hyp hyp_tr not_ext_action happy_determinacy.
+  revert t1 t2 must_hyp hyp_tr not_ext_action happy_determinacy.
   dependent induction conv.
-  - intros. destruct (decide (outcome e1)) as [happy | not_happy].
+  - intros. destruct (decide (outcome t1)) as [happy | not_happy].
     + now eapply m_now.
     + eapply m_step; eauto.
-      ++ exists (p ▷ e2). eapply ParRight; eauto.
-      ++ intros. assert (must p e2).
+      ++ exists (p ▷ t2). eapply ParRight; eauto.
+      ++ intros. assert (must p t2).
       { eapply m_now; eauto. }
-      assert (must p' e2).
+      assert (must p' t2).
       { eapply must_preserved_by_lts_tau_srv; eauto. }
       assert (p' ⤓); eauto.
-      ++ intros. assert (outcome e'); eauto. now eapply m_now.
-      ++ intros. assert (e1 ↛[μ2]); eauto.
-         assert (¬ e1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
+      ++ intros. assert (outcome t'); eauto. now eapply m_now.
+      ++ intros. assert (t1 ↛[μ2]); eauto.
+         assert (¬ t1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
 Qed.
 
 Lemma must_terminate_unoutcome `{
@@ -301,7 +301,7 @@ Lemma must_terminate_unoutcome `{
 
   {_ : Prop_of_Inter P T A dual}
 
-  (p : P) (e : T) : p must_pass e -> ¬ outcome e -> p ⤓.
+  (p : P) (t : T) : p must_pass t -> ¬ outcome t -> p ⤓.
 Proof.
   intros hm. dependent induction hm.
   + contradiction.
@@ -314,48 +314,48 @@ Lemma must_terminate_unoutcome' `{
 
   {_ : Prop_of_Inter P T A dual}
 
-  (p : P) (e : T) : p must_pass e -> outcome e \/ p ⤓.
+  (p : P) (t : T) : p must_pass t -> outcome t \/ p ⤓.
 Proof. 
-  intros hm. destruct (decide (outcome e)) as [happy | not_happy].
+  intros hm. destruct (decide (outcome t)) as [happy | not_happy].
   + now left. 
   + right. eapply must_terminate_unoutcome; eauto.
 Qed.
 
 Lemma must_preserved_by_lts_wk_clt `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p : P) (e1 e2 : E) : 
-  p must_pass e1 -> ¬ outcome e1 -> (∀ e', e1 ⟹ e' -> e' ≠ e2 -> ¬ outcome e') -> e1 ⟹ e2 -> p must_pass e2.
+  (p : P) (t1 t2 : T) : 
+  p must_pass t1 -> ¬ outcome t1 -> (∀ t', t1 ⟹ t' -> t' ≠ t2 -> ¬ outcome t') -> t1 ⟹ t2 -> p must_pass t2.
 Proof.
   intros Hyp not_happy Hyp_not_happy wk_tr.
-  remember e2.
+  remember t2.
   dependent induction wk_tr. 
   + subst. eauto.
-  + subst. assert (∀ e' : E, q ⟹ e' → e' ≠ e2 → ¬ outcome e') as Hyp_final.
+  + subst. assert (∀ t' : T, q ⟹ t' → t' ≠ t2 → ¬ outcome t') as Hyp_final.
     {intros. eapply Hyp_not_happy. econstructor; eauto. eauto. }
     assert (must p q).
     {eapply must_preserved_by_lts_tau_clt; eauto. }
-    destruct (decide (q = e2)) as [ eq | not_eq].
+    destruct (decide (q = t2)) as [ eq | not_eq].
     ++ subst. eauto.
     ++ eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
 Qed.
 
 Lemma must_preserved_by_wt_synch_if_notoutcome `{
   gLtsP : @gLts P A H, 
-  gLtsE : ! gLtsEq E H, !Testing_Predicate E A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  {_ : Prop_of_Inter P E A dual}
+  {_ : Prop_of_Inter P T A dual}
 
-  (p p' : P) (r r' : E) (μ : A) (μ' : A):
-  p must_pass r 
-    -> ¬ outcome r 
+  (p p' : P) (t t' : T) (μ : A) (μ' : A):
+  p must_pass t 
+    -> ¬ outcome t 
       -> dual μ μ'
         -> p ⟹{μ} p' 
-          -> r ⟶[μ'] r' 
-            -> p' must_pass r'.
+          -> t ⟶[μ'] t' 
+            -> p' must_pass t'.
 Proof.
   intros hm u duo hwp hwr.
   dependent induction hwp.
@@ -368,11 +368,11 @@ Qed.
 Lemma ctx_pre_not `{
   gLtsP : @gLts P A H, 
   gLtsQ : !gLts Q H, 
-  gLtsE : !gLtsEq E H, !Testing_Predicate E A outcome}
-  {_ : Prop_of_Inter P E A dual} 
-  {_ : Prop_of_Inter Q E A dual}
-  (p : P) (q : Q) (e : E) :
-  p ⊑ₘᵤₛₜᵢ q -> ¬ q must_pass e -> ¬ p must_pass e.
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
+  {_ : Prop_of_Inter P T A dual} 
+  {_ : Prop_of_Inter Q T A dual}
+  (p : P) (q : Q) (t : T) :
+  p ⊑ₘᵤₛₜᵢ q -> ¬ q must_pass t -> ¬ p must_pass t.
 Proof.
   intros hpre not_must.
   intro Hyp. eapply hpre in Hyp.
