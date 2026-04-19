@@ -28,7 +28,7 @@ From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
-    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
+    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS Must.
 
 Section preorder.
@@ -125,7 +125,7 @@ Section preorder.
     unfold pre_extensional, ctx_pre.
   Proof.
     split; intros hpre t.
-    - rewrite <- 2 must_sts_iff_must, <- 2 must_extensional_iff_must_sts; eauto.
+    - rewrite <- 2 must_sts_iff_must, <- 2 must_extensional_iff_must_sts ; eauto.
     - rewrite -> 2 must_extensional_iff_must_sts, -> 2 must_sts_iff_must; eauto.
   Qed.
 

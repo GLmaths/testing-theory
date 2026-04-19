@@ -23,21 +23,20 @@
    SOFTWARE.
 *)
 
-From stdpp Require Import base decidable gmap finite.
-From Coq Require Import ssreflect.
-From Coq.Program Require Import Equality.
+From stdpp Require Import base decidable gmap finite gmultiset.
+From Stdlib Require Import ssreflect.
+From Stdlib.Program Require Import Equality.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS MustE EquivalenceAS.
-From stdpp Require Import gmultiset.
 
 Section application.
 
   Lemma nil_refuses
   {Q A : Type} {H : ExtAction A}
-  `{@gLtsOba Q A H gLtsQ gLtsEqQ}
-  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+  `{@gLtsOba Q A H gLtsEqQ}
+  `{!Prop_of_Inter Q (mb A) A fw_inter}
 
   (q : Q) (h : forall α, q ↛{α}) (m : mb A) : 
   lts_refuses (q, m) τ.
@@ -45,15 +44,15 @@ Section application.
     destruct (decide ((q, m) ↛)); eauto.
     eapply lts_refuses_spec1 in n as (q' & l').
     inversion l'; subst.
-    + edestruct lts_refuses_spec2; eauto.
+    + edestruct (@lts_refuses_spec2 Q); eauto.
     + inversion l.
-    + edestruct lts_refuses_spec2; eauto.
+    + edestruct (@lts_refuses_spec2 Q); eauto.
   Qed.
 
   Lemma nil_cnv
   {Q A : Type} {H : ExtAction A}
-  `{@gLtsOba Q A H gLtsQ gLtsEqQ}
-  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+  `{@gLtsOba Q A H gLtsEqQ}
+  `{!Prop_of_Inter Q (mb A) A fw_inter}
   (q : Q) (h : forall α, q ↛{α}) s m : 
   (q, m) ⇓ s.
   Proof.
@@ -65,12 +64,12 @@ Section application.
         ++ exfalso. eapply (@lts_refuses_spec2 (Q * mb A)).
            eauto. now eapply nil_refuses.
         ++ inversion l; subst.
-           +++ edestruct lts_refuses_spec2. eauto. eauto.
+           +++ edestruct (@lts_refuses_spec2 Q); eauto.
            +++ eapply cnv_preserved_by_wt_nil; eauto.
   Qed.
 
   CoInductive ionly_spec {P A : Type} {H : ExtAction A} 
-    `{@gLtsOba P A H gLtsQ gLtsEqQ} (p : P) : Prop :=
+    `{@gLtsOba P A H gLtsEqQ} (p : P) : Prop :=
   | mstep : (forall μ p', p ⟶[μ] p' -> exist_co_nba μ) 
         -> (forall α p', p ⟶{α} p' -> ionly_spec p') -> ionly_spec p.
 
@@ -89,8 +88,8 @@ Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil_empty_mb 
     {Q A : Type} {H : ExtAction A}
-    `{M : @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
-    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
+    `{!Prop_of_Inter Q (mb A) A fw_inter}
     p (pr : ionly_spec p) :
     (p, ∅) ⤓ -> forall t, (p, ∅) ⟹ t -> dom (lts_oba_mo t) = ∅.
   Proof.
@@ -112,8 +111,8 @@ Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil 
     {Q A : Type} {H : ExtAction A}
-    `{M : @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
-    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
+    `{!Prop_of_Inter Q (mb A) A fw_inter}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> forall t, (p, m) ⟹ t
       -> dom (lts_oba_mo t) ⊆ dom m.
@@ -149,8 +148,8 @@ Qed.
 
   Lemma ionly_nil_leq2_wt_nil 
     {Q A : Type} {H : ExtAction A}
-    `{M : @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
-    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
+    `{!Prop_of_Inter Q (mb A) A fw_inter}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> exists t, (p, m) ⟹ t /\ t ↛ /\ dom (lts_oba_mo t) ⊆ dom m.
   Proof.
@@ -160,8 +159,8 @@ Qed.
 
   Lemma ionly_wt
     {Q A : Type} {H : ExtAction A}
-    `{M : @gLtsOba Q A H gLtsQ gLtsEqQ}
-    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{@gLtsOba Q A H gLtsEqQ}
+    `{!Prop_of_Inter Q (mb A) A fw_inter}
     p (pr : ionly_spec p) m p' m' : 
     (p ▷ m) ⟹ (p' ▷ m') 
       -> ionly_spec p'.
@@ -178,12 +177,13 @@ Qed.
          eapply Hyp; eauto. eapply IHmem; eauto.
   Qed.
 
- (*  Lemma ionly_nil_leq2 {P Q A : Type} `{
-    @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP,
-    @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}
+(*
+ Lemma ionly_nil_leq2 {P Q A : Type} `{
+    @gLtsObaFB P A H gLtsEqP gLtsObaP,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
 
-    `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{!Prop_of_Inter P (mb A) A fw_inter}
+    `{!Prop_of_Inter Q (mb A) A fw_inter}
 
     (p : P) (pr : ionly_spec p) (q : Q) m (h : forall α, q ↛{α}) : 
     (p, m) ≼₂ (q, m).
@@ -245,7 +245,7 @@ Qed.
     `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
     `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
-    `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
+    `{!Prop_of_Inter Q (mb A) A fw_inter}
     `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
 
     `{@gen_spec_conv  _ _ _ _ _ outcome _ co_of gen_conv, 

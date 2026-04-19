@@ -22,17 +22,17 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Lists.List.
+From Stdlib Require ssreflect.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-Require Import Coq.Program.Equality.
-Require Import Coq.Wellfounded.Inverse_Image.
+From Stdlib.Program Require Import Equality Wf.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+From Stdlib Require Import Setoid.
+From Stdlib .Logic Require Import ProofIrrelevance.
 
-Require Import Coq.Program.Wf Setoid.
-Require Import Coq.Program.Equality.
-From Coq.Logic Require Import ProofIrrelevance.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
+
 From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence  
@@ -40,10 +40,10 @@ From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts
                Testing_Predicate DefinitionAS DefinitionCI.
 
 Lemma copre_if_prex
-  `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
-  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
-  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
-  (ps : gset A) (q : B) : ps ≼ₓ q -> ps ⩽ q.
+  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  (ps : gset P) (q : Q) : ps ≼ₓ q -> ps ⩽ q.
 Proof.
   revert ps q.
   cofix H2.

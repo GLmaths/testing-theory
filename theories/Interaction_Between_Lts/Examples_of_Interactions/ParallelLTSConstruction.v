@@ -29,5 +29,5 @@ From Must Require Import gLts InteractionBetweenLts.
 
 (**************************************** Parallel LTS of two LTS *************************************)
 
-#[global] Program Instance parallel_gLts {P1 P2 A : Type}
+#[global] Program Instance parallel_gLts {P1 P2}
  `{Prop_of_Inter P1 P2 A dual} : gLts (P1 * P2) H := inter_lts dual.

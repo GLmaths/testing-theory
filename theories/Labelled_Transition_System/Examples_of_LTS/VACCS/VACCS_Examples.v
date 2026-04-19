@@ -157,10 +157,9 @@ Proof.
       assert (¬ good_VACCS t') as not_happy'.
       { eapply unoutcome_preserved_by_lts_non_blocking_action; eauto.
         exists (c ⋉ v); eauto. }
-      eapply m_step; eauto. Check @must.
+      eapply m_step; eauto.
       * pose proof H4 as Mp'.
-        eapply (@must_preserved_by_synch_if_notoutcome proc _ _ _ _ VACCS_ggLtsEq good_VACCS 
-        _ _ p ((c ! O • 𝟘) ^ v) t t' (ActIn (c ⋉ v))) in Mp'; eauto. (* Ugly *)
+        eapply (must_preserved_by_synch_if_notoutcome p ((c ! O • 𝟘) ^ v) t t' (ActIn (c ⋉ v))) in Mp'; eauto.
         inversion Mp'. contradiction.
         inversion ex0. inversion H5; subst.
         -- inversion l.

@@ -23,9 +23,11 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Program Require Import Equality.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Program Require Import Equality.
+
 From stdpp Require Import finite gmap decidable.
+
 From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
@@ -35,7 +37,7 @@ Section must_sets.
 
   Local Open Scope positive.
 
-  Definition MUST `{gLts P A} 
+  Definition MUST `{gLts P A}
     (p : P) (G : gset A) :=
     forall p', p ⟹ p' -> exists μ p0, μ ∈ G /\ p' ⟹{μ} p0.
 

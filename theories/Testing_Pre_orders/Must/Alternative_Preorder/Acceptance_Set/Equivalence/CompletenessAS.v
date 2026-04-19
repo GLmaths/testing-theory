@@ -765,7 +765,7 @@ Lemma ta_tau_ex `{CC : Countable PreAct}`{
 Proof.
   intros nb Hyp Hyp' duo.
   assert (f E (s1 ++ [η] ++ s2 ++ [μ] ++ s3) ⟶⋍[η]
-            f E (s1 ++ s2 ++ [μ] ++ s3)) as (e1 & l1 & heq1). Check @f_gen_lts_mu_in_the_middle.
+            f E (s1 ++ s2 ++ [μ] ++ s3)) as (e1 & l1 & heq1).
   { eapply (@f_gen_lts_mu_in_the_middle T A _ _ _ _ _ (f E) _
             s1 (s2 ++ [μ] ++ s3) η); simpl in *; eauto. }
   assert (f E (s1 ++ s2 ++ [μ] ++ s3) ⟶⋍[μ]

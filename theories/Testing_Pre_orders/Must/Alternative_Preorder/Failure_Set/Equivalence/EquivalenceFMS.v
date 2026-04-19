@@ -23,9 +23,11 @@
    SOFTWARE.
 *)
 
+From Stdlib Require Import ssreflect.
+From Stdlib.Program Require Import Equality.
+
 From stdpp Require Import base decidable gmap finite.
-From Coq Require Import ssreflect.
-From Coq.Program Require Import Equality.
+
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
@@ -37,14 +39,12 @@ Section failure_must_set.
   Context `{Q : Type}.
   Context `{A : Type}.
   Context `{H : !ExtAction A}.
-  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
 
-  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
-  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
 
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
+  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
 
   Lemma equivalence_must_set_nfailure
     (p : P) (s : trace A) h1 (G : gset A) :
@@ -104,14 +104,12 @@ Section failure_must_set_pre.
   Context `{Q : Type}.
   Context `{A : Type}.
   Context `{H : !ExtAction A}.
-  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
 
-  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
-  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
 
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
+  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
 
   Theorem equivalence_pre_failure_must_set
 

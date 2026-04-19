@@ -385,7 +385,7 @@ Qed.
 
 Lemma must_set_if_must `{
   gLtsP : gLts P, !FiniteImagegLts P A, 
-  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
   `{!Prop_of_Inter P T A dual}
 
@@ -412,7 +412,7 @@ Qed.
 
 Lemma must_if_must_set_helper `{
   gLtsP : gLts P, !FiniteImagegLts P A,
-  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
   `{!Prop_of_Inter P T A dual}
 
@@ -450,7 +450,7 @@ Qed.
 
 Lemma must_if_must_set `{
   gLtsP : gLts P, !FiniteImagegLts P A,
-  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
   `{!Prop_of_Inter P T A dual}
 
@@ -461,7 +461,7 @@ Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
 
 Lemma must_set_iff_must `{
   gLtsP : gLts P, !FiniteImagegLts P A,
-  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
   `{!Prop_of_Inter P T A dual}
 
@@ -627,9 +627,9 @@ Lemma unoutcome_must_st_nleqx `{
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : @gLts T A H, !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -695,9 +695,9 @@ Lemma stability_nbhvleqtwo `{
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : @gLts T A H, !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -719,9 +719,9 @@ Lemma soundnessx `{
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : @gLts T A H, !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -777,9 +777,9 @@ Lemma soundness_fw `{
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : @gLts T A H, !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}

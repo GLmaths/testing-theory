@@ -27,7 +27,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
 From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
-    StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
+    StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS ParallelLTSConstruction.
 
 (********************************************* Definition of Must_i ********************************************)
 
@@ -50,7 +50,7 @@ Inductive must `{
     gLtsP : @gLts P A H,
     gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-    `{Prop_of_Inter P T A dual}
+    `{!Prop_of_Inter P T A dual}
 
     (p : P) (t : T) : Prop :=
 | m_now : outcome t -> must p t
@@ -111,8 +111,8 @@ Definition ctx_pre `{
   gLtsQ : !gLts Q H, 
   gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{Prop_of_Inter P T A dual}
-  `{Prop_of_Inter Q T A dual}
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
 
   (p : P) (q : Q) 
   := forall (t : T), p must_pass t -> q must_pass t.
