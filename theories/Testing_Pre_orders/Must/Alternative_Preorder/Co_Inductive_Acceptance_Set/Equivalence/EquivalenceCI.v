@@ -52,33 +52,32 @@ Qed.
 
 Section eq_contextual.
 
-  Context `{H : ExtAction A}.
-
-  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImageLts P A}.
-  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImageLts Q A}.
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImageLts T A}.
-
   Context `{outcome : T -> Prop}.
-  Context `{outcome_dec : forall e, Decision (outcome e)}.
-  Context `{!Testing_Predicate T A outcome}.
+  Context `{outcome_dec : forall t, Decision (outcome t)}.
+  Context `{P : Type}.
+  Context `{Q : Type}.
+  Context `{H : !ExtAction A}.
 
-  (* ************************************************** *)
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
+
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
+
   Context `{!Prop_of_Inter P (mb A) A fw_inter}.
   Context `{!Prop_of_Inter (P * mb A) T A dual}.
   Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
   Context `{!Prop_of_Inter (Q * mb A) T A dual}.
 
-  Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
+  Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
   Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
   Context `{@AbsAction A H T FinA _ Φ}.
-
-  Context `{igen_conv : @test_convergence_spec T _ _ _ outcome Testing_Predicate0 gen_conv}.
-  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{it_conv : @test_convergence_spec T _ _ _ outcome Testing_Predicate0 t_conv}.
+  Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ outcome _ p q. <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
+  @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A)]} ⩽ q ▷ (∅ : mb A).
   Proof.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.

@@ -29,7 +29,9 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality Wf.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Logic Require Import ProofIrrelevance.
+
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
+
 From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence  
