@@ -36,7 +36,8 @@ From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS.
 
-CoInductive copre `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
+CoInductive copre
+  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps : gset P) (q : Q) : Prop := {

@@ -40,12 +40,10 @@ Section preorder.
 
   Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
   Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
-  Context `{gLtsEqT: !gLtsEq T H, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
 
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
-
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
 
   Context `{!Prop_of_Inter P (mb A) A fw_inter}.
   Context `{!Prop_of_Inter (P * mb A) T A dual}.
