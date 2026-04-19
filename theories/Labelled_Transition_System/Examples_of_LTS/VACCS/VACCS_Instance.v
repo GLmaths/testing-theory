@@ -21,10 +21,10 @@
 *)
 
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InputOutputActions ActTau OldTransitionSystems.
@@ -4375,22 +4375,22 @@ From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeL
 
 #[global] Program Instance VACCS_ggLts : @gLts proc (ExtAct TypeOfActions) gLabel_nb := ggLts gLabel_nb.
 
-#[global] Program Instance VACCS_ggLtsEq : @gLtsEq proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLts := 
+#[global] Program Instance VACCS_ggLtsEq : @gLtsEq proc (ExtAct TypeOfActions) gLabel_nb := 
   ggLtsEq gLabel_nb.
 
 #[global] Program Instance VACCS_gLtsOBA : 
-  @gLtsOba proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLts VACCS_ggLtsEq := ggLtsOba_nb.
+  @gLtsOba proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLtsEq := ggLtsOba_nb.
 
 #[global] Program Instance VACCS_gLtsOBAFB :
-  @gLtsObaFB proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLts VACCS_ggLtsEq VACCS_gLtsOBA := ggLtsObaFB_nb.
+  @gLtsObaFB proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLtsEq VACCS_gLtsOBA := ggLtsObaFB_nb.
 
 From Must Require Import InteractionBetweenLts ParallelLTSConstruction.
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
-  @Prop_of_Inter proc proc (ExtAct TypeOfActions) parallel_inter gLabel_nb
+  @Prop_of_Inter proc proc (ExtAct TypeOfActions) dual gLabel_nb
   VACCS_ggLts VACCS_ggLts :=  Inter_parallel_IO gLabel_nb.
 Next Obligation.
-  intros μ1 μ2 inter. unfold parallel_inter in inter.
+  intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
 Defined.
 
@@ -4732,7 +4732,7 @@ Proof.
 Qed.
 
 #[global] Program Instance gPreExtAction : 
-  @PreExtAction (ExtAct TypeOfActions) gLabel_nb proc FinA PreAct EqPreAct CountPreAct 𝝳 Φ (ggLts gLabel_nb) :=
+  @PreExtAction proc (ExtAct TypeOfActions) gLabel_nb FinA PreAct EqPreAct CountPreAct 𝝳 Φ (ggLts gLabel_nb) :=
   {| pre_co_actions_of_fin p := fun pre_μ => (exists μ', pre_μ = Φ μ' /\ 
       μ' ∈ @co_actions_of proc (ExtAct TypeOfActions) (@gLabel_nb TypeOfActions VACCS_Label)
       (@ggLts TypeOfActions (@gLabel_nb TypeOfActions VACCS_Label) proc VACCS_Label VACCS_Lts) p) ;

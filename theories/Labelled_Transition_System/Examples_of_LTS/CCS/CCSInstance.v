@@ -24,11 +24,11 @@
 *)
 
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 From Must Require Import InputOutputActions ActTau Clos_n.
 
 (*************************************** Channels ******************************************)
@@ -1487,12 +1487,12 @@ From Must Require Import OldTransitionSystems.
 
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
 
-#[global] Program Instance CCS_ggLts : gLts proc (ExtAct Channel) := ggLts gLabel_b.
+#[global] Program Instance CCS_ggLts : @gLts proc (ExtAct Channel) gLabel_b := ggLts gLabel_b.
 
-#[global] Program Instance CCS_ggLtsEq : gLtsEq proc (ExtAct Channel) := 
+#[global] Program Instance CCS_ggLtsEq : @gLtsEq proc (ExtAct Channel) gLabel_b:= 
   ggLtsEq gLabel_b.
 
-#[global] Program Instance CCS_gLtsOBA : gLtsOba proc (ExtAct Channel) := ggLtsOba_b.
+#[global] Program Instance CCS_gLtsOBA : @gLtsOba proc (ExtAct Channel) gLabel_b CCS_ggLtsEq := ggLtsOba_b.
 
 #[global] Program Instance CCS_gLtsOBAFB : gLtsObaFB proc (ExtAct Channel) := ggLtsObaFB_b.
 

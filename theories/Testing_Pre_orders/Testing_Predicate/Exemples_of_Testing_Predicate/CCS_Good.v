@@ -23,7 +23,7 @@
    SOFTWARE.
 *)
 
-From Coq.Program Require Import Equality.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable decidable.
 From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must CCSInstance Testing_Predicate.
 
@@ -81,7 +81,7 @@ Proof.
 Qed.
 
 
-#[global] Program Instance CCS_Good : @Testing_Predicate proc (ExtAct Channel) good_CCS gLabel_b CCS_ggLts CCS_ggLtsEq.
+#[global] Program Instance CCS_Good : @Testing_Predicate proc (ExtAct Channel) gLabel_b good_CCS CCS_ggLtsEq.
 Next Obligation. 
  intros. eapply good_preserved_by_cgr; eassumption.
 Qed.

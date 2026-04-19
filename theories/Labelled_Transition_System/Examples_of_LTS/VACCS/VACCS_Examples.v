@@ -21,10 +21,10 @@
 *)
 
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InputOutputActions ActTau OldTransitionSystems Must VACCS_Instance VACCS_Good
@@ -40,14 +40,15 @@ Definition p : proc := c ? x • (c ! O • 𝟘).
 
 Definition q : proc := c ? x • (c ! (bvar 0) • 𝟘).
 
-Set Typeclasses Debug.
-Set Typeclasses Depth 1.
+(* Set Typeclasses Debug.
+Set Typeclasses Depth 1. (* to be remove *)*)
+(* Example of Proof *)
+(*
 Goal (g 𝟘 ≼ₐₛ q).
 constructor.
-- intros s Hs.
+- intros s Hs. *)
 
-
-Lemma q_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ q. (* 𝟘 ⊑ₘᵤₛₜᵢ q *)
+Lemma q_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros e Hyp.
   dependent induction Hyp.
@@ -61,13 +62,13 @@ Proof.
     + intros. destruct μ1 as [ (*Input*) a | (*Output*) a ].
       * inversion H3. subst. simpl in *.
         eapply simplify_match_input in H2. subst.
-        destruct (decide (good_VACCS e')).
+        destruct (decide (good_VACCS t')).
         -- eapply m_now. eauto.
         -- eapply m_step; eauto.
            ++ inversion ex. inversion H2; subst.
               ** inversion l.
               ** unfold lts_step in l; simpl in *.
-                 assert (lts e ((c ⋉ v) !) e') as HypTr; eauto.
+                 assert (lts (t%proc) ((c ⋉ v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr 
                     as [(e'' & HypTr' & e'0 & HypTr'0 & equiv')|(e'' & HypTr' & equiv'')]; eauto.
                  --- exists (c ! v • 𝟘 ▷ e''). eapply ParRight. eauto.

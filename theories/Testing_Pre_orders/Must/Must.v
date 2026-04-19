@@ -76,7 +76,7 @@ Lemma must_sts_iff_must `{
     gLtsP : @gLts P A H,
     gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-    `{Prop_of_Inter P T A dual}
+    `{!Prop_of_Inter P T A dual}
 
   (p : P) (t : T) :
   @must_sts P T _ outcome p t <-> p must_pass t.
@@ -89,7 +89,7 @@ Proof.
     + simpl in *; eauto with mdb.
     + simpl in *; eauto with mdb.
     + intros p' t' μ1 μ2 duo hl1 hl2.
-      eapply H4. simpl.
+      eapply H0. simpl.
       eapply (ParSync μ1 μ2); eauto.
   - intro hm. dependent induction hm; eauto with mdb.
     eapply m_sts_step; eauto with mdb.

@@ -23,7 +23,7 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From Must Require Import ActTau gLts.
 

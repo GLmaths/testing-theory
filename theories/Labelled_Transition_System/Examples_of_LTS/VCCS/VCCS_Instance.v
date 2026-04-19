@@ -4555,12 +4555,12 @@ Qed.
 
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
 
-#[global] Program Instance VCCS_ggLts : gLts proc (ExtAct TypeOfActions) := ggLts gLabel_b.
+#[global] Program Instance VCCS_ggLts : @gLts proc (ExtAct TypeOfActions) gLabel_b := ggLts gLabel_b.
 
-#[global] Program Instance VCCS_ggLtsEq : gLtsEq proc (ExtAct TypeOfActions) := 
+#[global] Program Instance VCCS_ggLtsEq : @gLtsEq proc (ExtAct TypeOfActions) gLabel_b := 
   ggLtsEq gLabel_b.
 
-#[global] Program Instance VCCS_gLtsOBA : gLtsOba proc (ExtAct TypeOfActions) := ggLtsOba_b.
+#[global] Program Instance VCCS_gLtsOBA : @gLtsOba proc (ExtAct TypeOfActions) gLabel_b VCCS_ggLtsEq := ggLtsOba_b.
 
 #[global] Program Instance VCCS_gLtsOBAFB : gLtsObaFB proc (ExtAct TypeOfActions) := ggLtsObaFB_b.
 
@@ -4569,10 +4569,10 @@ From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeL
 From Must Require Import InteractionBetweenLts ParallelLTSConstruction.
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
-  @Prop_of_Inter proc proc (ExtAct TypeOfActions) parallel_inter gLabel_b
+  @Prop_of_Inter proc proc (ExtAct TypeOfActions) dual gLabel_b
   VCCS_ggLts VCCS_ggLts :=  Inter_parallel_IO gLabel_b.
 Next Obligation.
-  intros μ1 μ2 inter. unfold parallel_inter in inter.
+  intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
 Defined.
 
@@ -4602,14 +4602,16 @@ Next Obligation.
     eapply TransitionShapeForInput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
     assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ? })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ d0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
-    eapply accepts_preserved_by_eq in accepts. exact accepts. symmetry. eauto.
+    eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) gLabel_b VCCS_ggLtsEq) in accepts.
+    exact accepts. symmetry. eauto.
   - simpl in *. inversion H1.
   - simpl in *. inversion H1.
   - inversion H1; subst. eapply lts_refuses_spec1 in H2 as (e' & Tr). simpl in *.
     eapply TransitionShapeForOutput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
     assert (¬ (Ѵ n ((VarC_add n c0 ! d0 • P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ! })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
-    eapply accepts_preserved_by_eq in accepts. exact accepts. symmetry. eauto.
+    eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) gLabel_b VCCS_ggLtsEq) in accepts.
+    exact accepts. symmetry. eauto.
 Qed.
 
 Inductive PreAct :=
@@ -5022,7 +5024,7 @@ Qed.
 
 
 #[global] Program Instance gPreExtAction : 
-  @PreExtAction (ExtAct TypeOfActions) gLabel_b proc FinA PreAct EqPreAct CountPreAct 𝝳 Φ VCCS_ggLts :=
+  @PreExtAction proc (ExtAct TypeOfActions) gLabel_b FinA PreAct EqPreAct CountPreAct 𝝳 Φ VCCS_ggLts :=
   {| pre_co_actions_of_fin p := fun pre_μ => (exists μ', pre_μ = Φ μ' /\ μ' ∈ co_actions_of p) ;
      pre_co_actions_of p := PreCoAct_of p ; |}.
 Next Obligation.
