@@ -20,12 +20,12 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Program Require Import Wf Equality.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Wf Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
@@ -231,7 +231,7 @@ Fixpoint gen_test_raw Vs s p {struct s}:=
                             | [] => (g 𝟘)     (*whatever*)
                             | ActIn (c ⋉ d') :: s'' => (c ? x • (If ( bvar 0 ==  NewVar_in_Data 0 d' )
                                    Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
-                                   Else ①)) + (t • ①)
+                                   Else ①)) + (𝛕 • ①)
                             | ActOut (c ⋉ d') :: s'' => (g 𝟘)
                             end
   | ActOut (c ⋉ d) :: s' => match Vs with
@@ -239,7 +239,7 @@ Fixpoint gen_test_raw Vs s p {struct s}:=
                             | ActIn (c ⋉ d') :: s'' => (g 𝟘)     (*whatever*)
                             | ActOut (c ⋉ d') :: s'' => 
                                   (c ! d' • (gen_test_raw s'' s' p))
-                                    + (t • ①)
+                                    + (𝛕 • ①)
                             end
   end.
 
@@ -391,7 +391,7 @@ Proof.
     - subst. inversion H3.
 Qed.
 
-Definition gen_conv s := gen_test s (t • ①).
+Definition gen_conv s := gen_test s (𝛕 • ①).
 
 Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
 | empty_list_is_always_defined : Well_Defined_Trace ε
