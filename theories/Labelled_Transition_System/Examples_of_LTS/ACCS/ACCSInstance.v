@@ -30,8 +30,8 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
-      CompletenessAS SoundnessAS DefinitionCI Normalisation GeneralizeLtsOutputs
-      MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction Testing_Predicate
+      CompletenessAS SoundnessAS DefinitionCI Normalisation MultisetLTSConstruction
+      GeneralizeLtsOutputs ForwarderConstruction ParallelLTSConstruction Testing_Predicate
       (* gLts *) (* Bisimulation *).
 
 Definition name := string.
@@ -1273,7 +1273,7 @@ Qed.
 
 From Must Require Import InteractionBetweenLts ParallelLTSConstruction 
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
-  ForwarderConstruction MultisetLTSConstruction.
+  ForwarderConstruction MultisetLTSConstruction FiniteImageLTS.
 
 #[global] Program Instance ACCS_ggLts : @gLts proc (ExtAct name) gLabel_nb := ggLts gLabel_nb.
 
@@ -1286,6 +1286,10 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
 #[global] Program Instance ACCS_gLtsOBAFB :
   @gLtsObaFB proc (ExtAct name) gLabel_nb ACCS_ggLtsEq ACCS_gLtsOBA := ggLtsObaFB_nb.
 
+#[global] Program Instance ACCS_gLtsFiniteImage :
+  @FiniteImagegLts proc (ExtAct name) gLabel_nb ACCS_ggLts := ggFiniteLts gLabel_nb.
+
+
 #[global] Program Instance Interaction_between_parallel_ACCS :
   @Prop_of_Inter proc proc (ExtAct name) dual gLabel_nb
   ACCS_ggLts ACCS_ggLts :=  Inter_parallel_IO gLabel_nb.
@@ -1295,8 +1299,6 @@ Next Obligation.
 Defined.
 
 #[global] Program Instance Interaction_between_MB_and_ACCS :
-  (* @Prop_of_Inter proc (mb (ExtAct name)) (ExtAct name) fw_inter gLabel_nb
-  ACCS_ggLts (@MbgLts (ExtAct name) gLabel_nb)  *)
   @Prop_of_Inter proc (@mb (ExtAct name) (@gLabel_nb name CCS_Name_label))
     (ExtAct name) (@fw_inter (ExtAct name) (@gLabel_nb name CCS_Name_label))
     (@gLabel_nb name CCS_Name_label)
@@ -1307,23 +1309,91 @@ Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
 Defined.
 
-(* #[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
-  @Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) dual gLabel_nb
-  ACCS_ggLts ACCS_ggLts :=  Inter_FW_parallel_IO gLabel_nb.
-  :=  Inter_FW_IO gLabel_nb.
+#[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
+  Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) dual :=  Inter_FW_parallel_IO gLabel_nb.
+
+From Must Require Import Subset_Act.
+
+Lemma PreCoEquiv (p : proc) (q : proc) (c : PreAct) : p ≡* q -> c ∈ mPreCoAct_of p -> c ∈ mPreCoAct_of q.
+Proof.
+  intros eq mem. revert c mem. dependent induction eq.
+  + dependent induction H; intros; simpl in *; subst; eauto; try multiset_solver.
+  + eauto.
+Qed.
+
+#[global] Program Instance gPreExtAction : 
+  @PreExtAction proc (ExtAct name) gLabel_nb FinA PreAct EqPreAct CountaPreAct 𝝳 Φ (ggLts gLabel_nb) :=
+  {| pre_co_actions_of_fin p := fun pre_μ => (exists μ', pre_μ = Φ μ' /\ 
+      μ' ∈ @co_actions_of proc (ExtAct name) (@gLabel_nb name _)
+      (@ggLts name (@gLabel_nb name (* VACCS_Label *) _) proc _ CCS_lts) p) ;
+     pre_co_actions_of p := PreCoAct_of p ; |}.
 Next Obligation.
-  intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
-Defined. *)
+  intros; simpl in *.
+  exists μ.  split ;eauto.
+Qed.
+Next Obligation.
+  intros; simpl in *.
+  destruct H as (μ' & eq & mem). subst. destruct μ'.
+  + exists (ActIn a). split; eauto.
+  + exists (ActOut a). split; eauto.
+Qed.
+Next Obligation.
+  intros. split.
+  - intros. destruct H as (μ & eq & mem).
+    destruct μ.
+    + destruct mem as (μ' & Tr & duo & b). symmetry in duo.
+      eapply simplify_match_input in duo. subst.
+      eapply lts_refuses_spec1 in Tr as (p' & Tr).
+      eapply output_shape in Tr as Eq.
+      assert (𝝳 (Φ (ActIn a)) ∈ PreCoAct_of (! a ∥ p')).
+      { eapply gmultiset_elem_of_dom. simpl. multiset_solver. }
+      eapply gmultiset_elem_of_dom. eapply PreCoEquiv. eauto.
+      eapply gmultiset_elem_of_dom. eauto.
+    + destruct mem as (μ' & Tr & duo & b).
+      destruct b. exists a; eauto.
+  - intros; subst. revert H.
+    induction p as (p & Hp) using
+        (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+    destruct p; intros;  apply gmultiset_elem_of_dom in H; simpl in *.
+    + apply gmultiset_elem_of_dom in H. simpl in H. assert (𝝳 pre_μ = n) by set_solver; subst.
+      exists (ActIn pre_μ). split.
+      * simpl; eauto.
+      * exists (ActOut pre_μ). repeat split.
+        -- eapply lts_refuses_spec2. exists 𝟘. eapply lts_output.
+        -- intro. inversion H0. inversion H1.
+    + eapply gmultiset_elem_of_disj_union in H. destruct H.
+      * apply gmultiset_elem_of_dom in H. eapply (Hp p1) in H; simpl ; eauto with lia.
+        destruct H as (μ & Hyp1 & μ' & Tr & duo & b). subst.
+        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
+        eapply lts_refuses_spec2. exists (p'1 ∥ p2). constructor. eauto. split; eauto.
+      * apply gmultiset_elem_of_dom in H. eapply (Hp p2) in H; simpl ; eauto with lia.
+        destruct H as (μ & Hyp1 & μ' & Tr & duo & b). subst.
+        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
+        eapply lts_refuses_spec2. exists (p1 ∥ p'2). constructor. eauto. split; eauto.
+    + simpl in H. inversion H.
+    + simpl in H. inversion H.
+    + destruct g0.
+      * simpl in H. inversion H.
+      * simpl in H. inversion H.
+      * simpl in H. inversion H.
+      * simpl in H. inversion H.
+      * simpl in H. inversion H.
+Qed.
 
-From Must Require Import EquivalenceAS.
+From Must Require Import EquivalenceAS MustE FiniteImageLTS.
 
-(*
-Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ (∅ : gmultiset name).
+Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
   split.
-  intros hm%pre_extensional_eq. now eapply equivalence_bhv_acc_ctx.
-  intros hm. now eapply pre_extensional_eq, equivalence_bhv_acc_ctx.
-Qed.*)
+  + intros hm%pre_extensional_eq. eapply (@equivalence_bhv_acc_ctx); eauto. exact ACCS_gLtsFiniteImage.
+    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
+    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
+    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
+  + intros hm. eapply pre_extensional_eq. eapply (@equivalence_bhv_acc_ctx) in hm; eauto.
+    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
+    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
+    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
+Qed.
 
 (*
 (* TODO: this lemma has nothing to do here ; and need proper name *)

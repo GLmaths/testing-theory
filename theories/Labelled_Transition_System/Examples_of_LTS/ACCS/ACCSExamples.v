@@ -1,7 +1,8 @@
 From Must Require Import ACCSInstance gLts Coin_tower Termination
                          Must CompletenessAS SoundnessAS EquivalenceAS
                          GeneralizeLtsOutputs InteractionBetweenLts ParallelLTSConstruction
-                         ForwarderConstruction Simulation ActTau.
+                         ForwarderConstruction Simulation ActTau MultisetLTSConstruction ActTau
+                         MultisetLTSConstruction InputOutputActions.
 From stdpp Require Import strings sets gmap base gmultiset.
 From Stdlib Require Import Relations.
 From Stdlib.Program Require Import Equality.
@@ -28,11 +29,11 @@ intros α r Hstep. inversion Hstep; subst.
   + apply hco.
 Qed.
 
-(*
+
 (* Parallel composition in ACCS with forwarders is similar to
   the parallel composition of LTSs (with forwarder on one side) *)
-Lemma accs_fw_parallel_sim (p q : proc) (M : gmultiset (ActExt name)):
-  ((p ∥ q) ▷ M) ≲ (p, (q ▷ M)).
+(* Lemma accs_fw_parallel_sim (p q : proc) M:
+  ((p ∥ q) ▷ M) ≲ (p , (q ▷ M)).
 Proof.
 revert M p q. cofix hco. intros M p q. constructor.
 intros α r Hstep. inversion Hstep; subst.
@@ -63,14 +64,13 @@ intros α r Hstep. inversion Hstep; subst.
   + exists (p, (q2, m)); split.
     * econstructor 2; simpl. constructor. eassumption.
     * apply hco.
-Qed.
+Qed. *)
 
 
 Derive Inversion_clear lts_inv with (forall p a q, lts p a q) Sort Prop.
-Derive Inversion_clear lts_step_inv with (forall p a q, lts_fw_step p a q)
-  Sort Prop.
+Derive Inversion_clear lts_step_inv with (forall p a q, inter_step p a q) Sort Prop.
 
-Hint Constructors lts_fw_step : lts.
+Hint Constructors inter_step : lts.
 Hint Constructors lts : lts.
 Hint Unfold lts_step : lts.
 Hint Extern 0 => simpl : lts.
@@ -82,53 +82,54 @@ revert p M. cofix hco. intros p M.
 constructor. intros α q Hq. lts_inversion.
 - lts_inversion.
   + inversion H1.
-  + inversion H4.
+  + inversion H3.
   + eexists; split; eauto with lts.
 - eexists; split; eauto with lts.
-- eexists; split; eauto with lts.
-- lts_inversion.
-  + inversion H4.
+- inversion l1; subst. (* lts_inversion. *)
+  + inversion H3.
   + eexists; split; eauto with lts.
 Qed.
 
-Lemma parallel_output_mb_similar μ (q : proc) (M : mb name):
-  (!μ ∥ q  ▷ M) ≲ (q ▷ {[+ μ +]} ⊎ M).
+Lemma parallel_output_mb_similar μ (q : proc) M:
+  (!μ ∥ q  ▷ M) ≲ (q ▷ {[+ ActOut μ +]} ⊎ M).
 Proof.
 revert q M. cofix hco. intros q M.
 constructor. intros α r Hstep.
 inversion Hstep; subst; clear Hstep.
 - lts_inversion.
   + inversion H1; subst. eexists; split; eauto.
-    * apply lts_fw_com. eauto.
+    * apply (ParSync (ActIn μ) (ActOut μ)); eauto. simpl. split. 
+      eauto. exists μ; eauto. eapply lts_multiset_minus; eauto. exists μ; eauto.
     * apply pr_nil_fw_similar.
   + lts_inversion. eexists; split; eauto.
-    * apply lts_fw_out_mb.
+    * eapply ParRight. eapply lts_multiset_minus. exists μ; eauto.
     * apply pr_nil_fw_similar.
-  + eexists; split; eauto.
-    now apply lts_fw_p.
-- eexists; split; eauto.
+  + eexists; split; eauto. eapply ParLeft; eauto.
+- (* eexists; split; eauto.
   replace ({[+ μ +]} ⊎ ({[+ a +]} ⊎ m)) with ({[+ a +]} ⊎ ({[+ μ +]} ⊎ m));
-  [constructor| clear hco; multiset_solver].
-- eexists; split; eauto.
+  [constructor| clear hco; multiset_solver]. *) admit.
+- (* eexists; split; eauto.
   replace ({[+ μ +]} ⊎ ({[+ a +]} ⊎ M)) with ({[+ a +]} ⊎ ({[+ μ +]} ⊎ M));
-  [constructor| clear hco; multiset_solver].
-- lts_inversion.
+  [constructor| clear hco; multiset_solver]. *) admit.
+  
+  
+(* - lts_inversion.
   + lts_inversion.
   + exists (q2 ▷ {[+ μ +]} ⊎ m); split.
     * replace ({[+ μ +]} ⊎ ({[+ a +]} ⊎ m)) with ({[+ a +]} ⊎ ({[+ μ +]} ⊎ m));
       [now constructor| clear hco; multiset_solver].
-    * apply hco.
-Qed.
+    * apply hco. *)
+Admitted.
 
 
-Lemma choice_copre_l (p q : proc) :
-  forall (PRE : Chain (copre_m (LtsP := MbLts))) (M : mb name),
+(* Lemma choice_copre_l (p q : proc) :
+  forall (PRE : Chain (copre_m (gLtsP := MbLts))) (M : mb name),
     elem PRE {[τ⋅ p ⊕ τ⋅ q ▷ M]} (p ▷ M).
 Proof.
 intros PRE M. eapply c_tau_.
 - change (copre_ ?a ?b ?c) with (copre_m a b c); apply coin_refl.
 - constructor. apply lts_choiceL. constructor.
-Qed.
+Qed. *)
 
 Lemma choice_copre_l' (p q : proc) :
   forall (PRE : Chain (copre_m)),
@@ -139,14 +140,14 @@ intros PRE. eapply c_tau_.
 - apply lts_choiceL. constructor.
 Qed.
 
-Lemma choice_copre_r p q:
+(* Lemma choice_copre_r p q:
   forall (PRE : Chain (copre_m (LtsP := MbLts))) (M : mb name),
     elem PRE {[τ⋅ p ⊕ τ⋅ q ▷ M]} (q ▷ M).
 Proof.
 intros PRE M. eapply c_tau_.
 - change (copre_ ?a ?b ?c) with (copre_m a b c). apply coin_refl.
 - constructor. apply lts_choiceR. constructor.
-Qed.
+Qed. *)
 
 Lemma choice_copre_r' p q:
   forall (PRE : Chain (copre_m)),
@@ -157,7 +158,7 @@ intros PRE. eapply c_tau_.
 - apply lts_choiceR. constructor.
 Qed.
 
-Lemma choice_copre_rev (p q : proc) :
+(* Lemma choice_copre_rev (p q : proc) :
   forall (PRE : Chain (copre_m (LtsP := MbLts))) M,
     elem PRE ({[ (p ▷ M); (q ▷ M) ]}) (τ⋅ p ⊕ τ⋅ q ▷ M).
 Proof.
@@ -188,7 +189,7 @@ Proof.
     * eapply Hw with (q ▷ M). set_tac. apply lts_to_wt. term_tac.
 - intros Ht. constructor. intros (q', M') l.
   inversion l; subst; repeat lts_inversion; apply Ht; set_tac.
-Qed.
+Qed. *)
 
 Lemma choice_copre_rev' (p q : proc) :
   forall (PRE : Chain copre_m),
