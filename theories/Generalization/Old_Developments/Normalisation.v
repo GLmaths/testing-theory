@@ -611,7 +611,7 @@ Proof.
   exists q''. split. eauto with mdb. transitivity q'; now symmetry.
 Qed.
 
-Lemma outputs_of_eq `{gLtsEq P A} 
+Lemma pre_act_of_eq `{gLtsEq P A} 
   `{ @PreExtAction P A _ FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
   p q : p ⋍ q -> pre_co_actions_of p ≡ pre_co_actions_of q.
 Proof.
@@ -627,10 +627,11 @@ Proof.
   eapply lts_outputs_spec1. eassumption. *) admit.
 Admitted.
 
-Lemma normalize_accs `{gLtsObaFW P A, !FiniteImageLts P A}
-  `{ @PreExtAction P A _ FinA PreA PreA_eq PreA_countable 𝝳 Φ _} (p : P) (s : trace A) h1 h2 :
-  (set_map pre_co_actions_of (wt_refuses_set p s h1) : gset PreA)
-  ≡ (set_map pre_co_actions_of (wt_refuses_set p (linorm s) h2) : gset PreA).
+(* Lemma normalize_accs `{gLtsObaFW P A, !FiniteImageLts P A}
+  `{!@PreExtAction P A _ FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
+  (p : P) (s : trace A) h1 h2 :
+  (set_map pre_co_actions_of (wt_refuses_set p s h1) : gset (gset PreA))
+  ≡ (set_map pre_co_actions_of (wt_refuses_set p (linorm s) h2) : gset (gset PreA)).
 Proof.
   intros.
   split.
@@ -657,30 +658,36 @@ Proof.
     eapply wt_refuses_set_spec2; split.
     eassumption.
     symmetry in st'. eapply stable_preserved_by_eq; eauto.
-Qed.
+Qed. *)
 
-Definition bhv_lin_pre_cond1 `{Lts P L, Lts Q L} (p : P) (q : Q) := forall s, p ⇓ linearize s -> q ⇓ linearize s.
+Definition bhv_lin_pre_cond1 `{gLts P H, gLts Q H} (p : P) (q : Q) := forall s, p ⇓ linearize s -> q ⇓ linearize s.
 
-Notation "p ⪷₁ q" := (bhv_lin_pre_cond1 p q) (at level 70).
+Notation "p ₁≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre_cond1 p q) (at level 70).
 
-Definition bhv_lin_pre_cond2 `{@Lts P L HL, @Lts Q L HL} (p : P) (q : Q) :=
+Definition bhv_lin_pre_cond2 `{
+  gLtsP : @gLts P A H, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  (p : P) (q : Q) :=
   forall nt q',
     p ⇓ linearize nt -> q ⟹[linearize nt] q' -> q' ↛ ->
-    ∃ p', p ⟹[linearize nt] p' /\ p' ↛ /\ lts_outputs p' ⊆ lts_outputs q'.
+    ∃ p', p ⟹[linearize nt] p' /\ p' ↛ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q'.
 
-Notation "p ⪷₂ q" := (bhv_lin_pre_cond2 p q) (at level 70).
+Notation "p ₂≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre_cond2 p q) (at level 70).
 
-Definition bhv_lin_pre `{@Lts P L HL, @Lts Q L HL} (p : P) (q : Q) := p ⪷₁ q /\ p ⪷₂ q.
+Definition bhv_lin_pre `{
+  gLtsP : @gLts P A H, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  gLtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  (p : P) (q : Q) := p ₁≼ₙₒᵣₘ₋ₐₛ q /\ p ₂≼ₙₒᵣₘ₋ₐₛ q.
 
-Notation "p ⪷ q" := (bhv_lin_pre p q) (at level 70).
+Notation "p ≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre p q) (at level 70).
 
-Lemma normalize_acnv_l `{LtsObaFW A L} (p : A) s : p ⇓ s -> p ⇓ ⟪ s ⟫.
+Lemma normalize_acnv_l `{gLtsObaFW P A} (p : P) s : p ⇓ s -> p ⇓ ⟪ s ⟫.
 Proof.
   revert p.
   induction s
     as (s & Hlength)
          using (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  destruct (norm_shape s).
+  (* destruct (norm_shape s).
   - eapply norm_nil in H3. subst. now simpl.
   - destruct H3
       as (mi & mo & s1 & s2 & s' & e0 & e1 & e3 & e4 & e5 & e6).
@@ -714,16 +721,16 @@ Proof.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eapply are_outputs_map_ActOut. *) now symmetry.
-      admit. (* eapply are_inputs_map_ActIn. *) now symmetry.
+      admit. (* eapply are_inputs_map_ActIn. *) now symmetry. *)
 Admitted.
 
-Lemma normalize_acnv_r `{LtsObaFW A L} (p : A) s : p ⇓ ⟪ s ⟫ -> p ⇓ s.
+Lemma normalize_acnv_r `{gLtsObaFW P A} (p : P) s : p ⇓ ⟪ s ⟫ -> p ⇓ s.
 Proof.
   revert p.
   induction s
     as (s & Hlength)
          using (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  destruct (norm_shape s).
+  (* destruct (norm_shape s).
   - eapply norm_nil in H3. subst. now simpl.
   - destruct H3
       as (mi & mo & s1 & s2 & s' & e0 & e1 & e3 & e4 & e5 & e6).
@@ -757,16 +764,16 @@ Proof.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eassumption. *) now symmetry.
-      admit. (* eassumption. *) now symmetry.
+      admit. (* eassumption. *) now symmetry. *)
 Admitted.
 
-Lemma normalize_acnv `{LtsObaFW A L} (p : A) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
-Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed. *)
+Lemma normalize_acnv `{gLtsObaFW P A} (p : P) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
+Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed.
 
-(* Lemma asyn_iff_bhv
-  `{@LtsObaFW P L IL LA LOA V, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP,
-    @LtsObaFW Q L IL LB LOB W, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ
-    !FiniteLts Q L, !FiniteLts Q L} : forall (p : P) (q : Q), p ⪷ q <-> p ≼ q.
+Lemma asyn_iff_bhv `{
+  @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
+  : forall (p : P) (q : Q), p ≼ₙₒᵣₘ₋ₐₛ q <-> p ≼ₐₛ q.
 Proof.
   intros p q. split.
   - intros (hl1 & hl2). split.
@@ -777,19 +784,15 @@ Proof.
       eapply normalize_acnv in hacnv.
       eapply normalize_wta_r in hw.
       destruct hw as (q0 & w0 & sc).
-      set (h0 := stable_preserved_by_eq q' q0 (symmetry sc) st).
+      set (h0 := stable_preserved_by_eq q' q0  st (symmetry sc)).
       destruct (hl2 (normalize s) q0 hacnv ltac:(eauto with mdb))
         as (p' & w' & sc' & sub). eassumption.
       eapply normalize_wta_l in w' as (p0 & wp0 & scp).
       exists p0. repeat split. eassumption.
-      eapply stable_preserved_by_eq. symmetry. eassumption. eassumption.
-      
-      eapply retrieve_a_better_pre_order; eauto.
-      intros. admit. (* eapply fw_does_all_input. *)
-      
-      rewrite (outputs_of_eq p0 p'), (outputs_of_eq q' q0); eauto with mdb.
-      now symmetry.
+      eapply stable_preserved_by_eq;eauto. symmetry. eassumption.
+      rewrite pre_act_of_eq; eauto. assert (q0 ⋍ q') as eq; eauto.
+      eapply pre_act_of_eq in eq. rewrite<- eq. exact sub.
   - intros (hl1 & hl2). split.
     + intros s hacnv. eauto.
     + intros nt q' hacnv w st. eauto.
-Admitted. *)
+Qed.
