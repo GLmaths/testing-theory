@@ -191,6 +191,9 @@ Proof.
   inversion l; subst; repeat lts_inversion; apply Ht; set_tac.
 Qed. *)
 
+
+(****************** Start here ****************)
+(*
 Lemma choice_copre_rev' (p q : proc) :
   forall (PRE : Chain copre_m),
     elem PRE ({[ p; q ]}) (τ⋅ p ⊕ τ⋅ q).
