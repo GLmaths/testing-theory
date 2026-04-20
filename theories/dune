@@ -4,8 +4,11 @@
  (name Must)
  (package testing-theory)
  (synopsis "Must testing")
- (theories stdpp Coinduction)
- )
+ (theories stdpp Stdlib Coinduction)
+ (flags (-w -deprecated-missing-stdlib)
+        (-w -deprecated-from-Coq))
+)
 
 (documentation
- (package testing-theory))
+ (package testing-theory)
+)
