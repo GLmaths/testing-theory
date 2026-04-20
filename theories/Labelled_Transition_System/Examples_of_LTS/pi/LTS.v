@@ -1,4 +1,4 @@
-From Must.pi Require Import Renamings.
+From Must Require Import Renamings.
 
 Parameter Eval_Eq : Equation -> (option bool).
 Parameter Eq_Subst_Spec : (nat -> nat) -> Prop.

@@ -1,8 +1,6 @@
-From Must.pi Require Import LTS.
-From Must.pi Require Import Renamings.
-From Must.pi Require Import Congruence.
-Require Import Coq.Program.Equality.
-Require Import Morphisms.
+From Must Require Import LTS Renamings Congruence.
+From Stdlib.Program Require Import Equality.
+From Stdlib Require Import Morphisms.
 
 Lemma is_bound_ren : forall α σ,
   is_bound_out α = is_bound_out (ren1 σ α).

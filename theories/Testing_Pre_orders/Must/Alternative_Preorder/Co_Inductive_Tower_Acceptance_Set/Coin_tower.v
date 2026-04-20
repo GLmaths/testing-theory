@@ -115,7 +115,7 @@ Section copre.
     intros ps q (hsub1 & hsub2).
     constructor.
     - intros q' l.
-      eapply CIH, bhvx_preserved_by_reduction; eauto.
+      eapply CIH, bhvx_preserved_by_reduction; eauto. split; eauto.
     - intros hterm hst.
       destruct (hsub2 [] q) as (p' & hw & hstp' & hsub0); eauto.
       + eapply wt_nil.
@@ -123,7 +123,7 @@ Section copre.
     - intros μ q' ps' hcnv hw wtspec.
       eapply CIH, bhvx_preserved_by_external_action; eauto.
       intros p0 mem0.
-      now destruct (hcnv p0 mem0).
+      now destruct (hcnv p0 mem0). split; eauto.
     - intros; edestruct (hsub1 []); eauto.
       intros; constructor; eauto.
   Qed.

@@ -65,6 +65,8 @@ Inductive mustx `{
 
 #[global] Hint Constructors mustx:mdb.
 
+Notation "X 'must_pass_x' t" := (mustx X t) (at level 70).
+
 Lemma mx_sub `{
   gLtsP : gLts P, !FiniteImagegLts P A,
   gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
@@ -514,6 +516,44 @@ Proof.
   now eapply must_if_must_set_helper.
 Qed.
 
+Definition ctx_pre__x `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A,
+  gLtsQ : !gLts Q H, !FiniteImagegLts Q A,
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
+
+  (X : gset P) (Y : gset Q) 
+  := forall (t : T), X must_pass_x t -> Y must_pass_x t.
+
+Global Hint Unfold ctx_pre__x : mdb.
+
+Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
+
+Lemma must_set_singleton_iff_must `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A,
+  gLtsQ : !gLts Q H, !FiniteImagegLts Q A,
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
+
+  (p : P) (q : Q) : 
+  p ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ⊑ₛₑₜ_ₘᵤₛₜᵢ {[ q ]}.
+Proof.
+  split. 
+  - intro must_hyp. intros t Hyp_set_p.
+    eapply must_if_must_set in Hyp_set_p.
+    eapply must_hyp in Hyp_set_p as Hyp_set_q.
+    eapply must_set_if_must in Hyp_set_q. exact Hyp_set_q.
+  - intro set_must_hyp. intros t Hyp_p.
+    eapply must_set_if_must in Hyp_p.
+    eapply set_must_hyp in Hyp_p as Hyp_q.
+    eapply must_if_must_set in Hyp_q. exact Hyp_q.
+Qed.
+
 (**************************************************************)
 
 Definition bhv_pre_cond1__x `{FiniteImagegLts P A, FiniteImagegLts Q A} (ps : gset P) (q : Q) :=
@@ -534,7 +574,14 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 
 #[global] Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
 
-Notation "ps ≼ₓ q" := (bhv_pre_cond1__x ps q /\ bhv_pre_cond2__x ps q) (at level 70).
+Definition bhv_pre__x `{
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
+    (ps : gset P) (q : Q) := 
+      (ps ≼ₓ1 q /\ ps ≼ₓ2 q).
+(* ≼ₐₛ *)
+
+Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
 
 Lemma alt_set_singleton_iff `{
   @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
@@ -763,9 +810,9 @@ Proof.
          replace ts with (wt_s_set_from_pset ps [μ] HA) in mem; eauto.
          subst. rewrite eq_nil in mem. inversion mem.
          eapply bhvleqone_preserved_by_external_action; eauto with mdb.
-         eapply bhvx_preserved_by_external_action; eauto with mdb.
+         eapply bhvx_preserved_by_external_action; eauto with mdb. split; eauto.
          exfalso.
-         edestruct (reverse_trace_inclusion ps q q' (μ)) as (p' & u); eauto.
+         edestruct (reverse_trace_inclusion ps q q' (μ)) as (p' & u); eauto. split; eauto.
          assert (p' ∈ ts) as mem.
          edestruct (u p' ltac:(set_solver)) as (r & mem & hw).
          eapply ts_spec; eauto.

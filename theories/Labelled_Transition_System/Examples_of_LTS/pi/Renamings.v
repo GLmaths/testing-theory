@@ -1,6 +1,6 @@
 Require Export signatures.pi.
 Require Export signatures.unscoped.
-Require Import Relations Morphisms.
+From Stdlib Require Import Relations Morphisms.
 Arguments core.funcomp _ _ _/.
 
 (** Notation for π calculus terms *)
