@@ -532,7 +532,7 @@ Global Hint Unfold ctx_pre__x : mdb.
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
 Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
 
-Lemma must_set_singleton_iff_must `{
+Lemma must_set_singleton_iff `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
   gLtsQ : !gLts Q H, !FiniteImagegLts Q A,
   gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
