@@ -23,10 +23,10 @@
    SOFTWARE.
 *)
 
-From Coq.Program Require Import Equality.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import decidable countable.
 From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must Testing_Predicate VCCS_Instance.
-From Coq.Wellfounded Require Import Inverse_Image.
 
 Inductive good_VCCS : proc -> Prop :=
 | good_success : good_VCCS ①
@@ -195,7 +195,7 @@ Proof.
   dependent induction hcgr; [eapply good_preserved_by_cgr_step|]; eauto.
 Qed.
 
-#[global] Program Instance VCCS_Good : @Testing_Predicate proc (ExtAct TypeOfActions) good_VCCS gLabel_b VCCS_ggLts VCCS_ggLtsEq.
+#[global] Program Instance VCCS_Good : @Testing_Predicate proc (ExtAct TypeOfActions) gLabel_b good_VCCS VCCS_ggLtsEq.
 Next Obligation. 
  intros. eapply good_preserved_by_cgr; eassumption.
 Qed.

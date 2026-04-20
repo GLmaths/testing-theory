@@ -22,27 +22,27 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Lists.List.
+From Stdlib Require ssreflect.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-Require Import Coq.Program.Equality.
-Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Coq.Logic.JMeq.
-Require Import Coq.Program.Wf Setoid.
-Require Import Coq.Program.Equality.
-From Coq.Logic Require Import ProofIrrelevance.
+From Stdlib.Program Require Import Equality Wf.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+From Stdlib.Logic Require Import ProofIrrelevance.
+
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
+
 From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence  
                InteractionBetweenLts
                DefinitionAS.
 
-CoInductive copre `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
-  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
-  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
-  (ps : gset A) (q : B) : Prop := {
+CoInductive copre
+  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  (ps : gset P) (q : Q) : Prop := {
     c_tau q' : q ⟶ q' -> copre ps q'
   ; c_now : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
             exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q
@@ -54,10 +54,10 @@ CoInductive copre `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
 Notation "p ⩽ q" := (copre p q) (at level 70).
 
 Lemma co_preserved_by_wt_nil
-  `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ}
-  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
-  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
-  (ps : gset A) (q q' : B) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
+  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  (ps : gset P) (q q' : Q) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
 Proof. intro hw. dependent induction hw; eauto. destruct 1. eauto. Qed.
 
 

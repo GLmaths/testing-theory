@@ -20,13 +20,12 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Program Require Import Wf Equality.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
+From Stdlib.Program Require Import Wf Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From Must Require Import gLts InputOutputActions OldTransitionSystems Subset_Act
@@ -125,7 +124,7 @@ Qed.
   (H : ExtAction (ExtAct A)) `{FiniteLts P A} : @FiniteImagegLts P (ExtAct A) H (ggLts H).
 
 #[global] Program Instance ggLtsEq {A : Type}
-  (H : ExtAction (ExtAct A)) `{LtsEq P A} : @gLtsEq P (ExtAct A) H (ggLts H).
+  (H : ExtAction (ExtAct A)) `{LtsEq P A} : @gLtsEq P (ExtAct A) H.
 Next Obligation.
   intros ? ? ? ? LtsP LtsEqP p q α Hyp.
   destruct α as [ μ |].
@@ -148,7 +147,7 @@ Definition mo_label_to_mo_output `{Countable A} (m : gmultiset A) : gmultiset (E
 
 
 #[global] Program Instance ggLtsOba_nb
-  `{LtsOba P A} : @gLtsOba P (ExtAct A) gLabel_nb (ggLts gLabel_nb) (ggLtsEq gLabel_nb) :=
+  `{LtsOba P A} : @gLtsOba P (ExtAct A) gLabel_nb (ggLtsEq gLabel_nb) :=
   {| lts_oba_mo p := mo_label_to_mo_output (OldTransitionSystems.lts_oba_mo p) |}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb l.
@@ -226,7 +225,7 @@ Qed.
 
 #[global] Program Instance ggLtsObaFB_nb
   `{LtsObaFB P A} : @gLtsObaFB P (ExtAct A) gLabel_nb 
-  (ggLts gLabel_nb) (ggLtsEq gLabel_nb) ggLtsOba_nb.
+  (ggLtsEq gLabel_nb) ggLtsOba_nb.
 Next Obligation.
   intros ? ? ? ? ? LtsOBAP ? ? ? ? ? ? nb dual l1 l2 ;simpl in *.
   destruct nb as (a & eq); subst. symmetry in dual.
@@ -236,7 +235,7 @@ Qed.
 
 #[global] Program Instance ggLtsObaFW_nb
   `{LtsObaFW P A} : @gLtsObaFW P (ExtAct A) gLabel_nb 
-  (ggLts gLabel_nb) (ggLtsEq gLabel_nb) ggLtsOba_nb.
+  (ggLtsEq gLabel_nb) ggLtsOba_nb.
 Next Obligation.
   intros ? ? ? ? ? ? ? p η μ ;simpl in *.
   destruct (decide (non_blocking_output η)) as [nb | not_nb].
@@ -257,7 +256,7 @@ Qed.
 #[global] Program Instance ggLtsOba_b
   `{LtsEqP : @LtsEq P A H LtsP} :
     @gLtsOba P (ExtAct A) (@gLabel_b A H) 
-    (@ggLts A gLabel_b P H LtsP) (@ggLtsEq A gLabel_b P H LtsP LtsEqP) := 
+    (@ggLtsEq A gLabel_b P H LtsP LtsEqP) := 
     {| lts_oba_mo p := empty |}.
 Next Obligation.
   intros. unfold non_blocking in H0. inversion H0.
@@ -286,14 +285,14 @@ Qed.
 
 #[global] Program Instance ggLtsObaFB_b
   `{LtsEqP : @LtsEq P A H LtsP} : @gLtsObaFB P (ExtAct A) gLabel_b 
-  (ggLts gLabel_b) (ggLtsEq gLabel_b) ggLtsOba_b.
+  (ggLtsEq gLabel_b) ggLtsOba_b.
 Next Obligation.
   intros ? ? ? ? ? LtsOBAP ? ? ? ? imp. inversion imp.
 Qed.
 
 #[global] Program Instance ggLtsObaFW_b
   `{LtsEqP : @LtsEq P A H LtsP} : @gLtsObaFW P (ExtAct A) gLabel_b 
-  (ggLts gLabel_b) (ggLtsEq gLabel_b) ggLtsOba_b.
+  (ggLtsEq gLabel_b) ggLtsOba_b.
 Next Obligation.
   intros ? ? ? ? ? ? ? ?. exists p1. intro imp. inversion imp.
 Qed.
@@ -351,8 +350,8 @@ Qed.
 
 #[global] Program Instance Inter_parallel_IO {A : Type} (H : ExtAction (ExtAct A))
   `{LtsP : @Lts P A L} `{LtsQ : @Lts Q A L} 
-    {ext_m : forall μ1 μ2, parallel_inter μ1 μ2 -> ext_act_match μ1 μ2}: 
-    @Prop_of_Inter P Q (ExtAct A) parallel_inter H (@ggLts A H P L LtsP) (@ggLts A H Q L LtsQ) :=
+    {ext_m : forall μ1 μ2, dual μ1 μ2 -> ext_act_match μ1 μ2}: 
+    @Prop_of_Inter P Q (ExtAct A) dual H (@ggLts A H P L LtsP) (@ggLts A H Q L LtsQ) :=
     {| lts_essential_actions_left p := set_map ActOut (lts_outputs p) ;
        lts_essential_actions_right q := set_map ActOut (lts_outputs q)|}.
 Next Obligation.
@@ -419,12 +418,10 @@ Defined.
 
 #[global] Program Instance Inter_FW_parallel_IO {A : Type} (H : ExtAction (ExtAct A))
   `{LtsP : @Lts P A L} `{LtsE : @Lts E A L}
-    {ext_m : forall μ1 μ2, parallel_inter μ1 μ2 -> ext_act_match μ1 μ2}
-    : @Prop_of_Inter (P * mb (ExtAct A)) E (ExtAct A) parallel_inter
+    {ext_m : forall μ1 μ2, dual μ1 μ2 -> ext_act_match μ1 μ2}
+    : @Prop_of_Inter (P * mb (ExtAct A)) E (ExtAct A) dual
       H (@FW_gLts P (ExtAct A) H (@ggLts A H P L LtsP) (@Inter_FW_IO A H P L LtsP ext_m)) (@ggLts A H E L LtsE):=
     {| lts_essential_actions_left p := set_map ActOut (lts_outputs p.1) ∪ (dom (mb_without_not_nb p.2)); 
-    (* (@Inter_FW_IO A H P L LtsP ext_m).(lts_essential_actions_left) p.1
-          ∪ (@Inter_FW_IO A H P L LtsP ext_m).(lts_essential_actions_right) p.2; *)
        lts_essential_actions_right q := set_map ActOut (lts_outputs q)|}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? (p , m) ? ?. simpl in *.
@@ -526,7 +523,7 @@ Proof.
 Qed.
 
 Lemma fw_does_all_input
-  `{@gLtsObaFW Q (ExtAct A) (@gLabel_nb A L) LtsQ LtsEqQ LtsObaQ} :
+  `{@gLtsObaFW Q (ExtAct A) (@gLabel_nb A L) LtsEqQ LtsObaQ} :
    forall (q' : Q) μ, ¬ is_output μ -> μ ∈ actions_of q'.
 Proof.
   intros q' μ not_nb. destruct μ as [ (* Input *) a | (* Output *) a].

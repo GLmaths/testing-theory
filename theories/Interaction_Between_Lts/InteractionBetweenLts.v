@@ -23,13 +23,13 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
-From Coq.Program Require Import Wf Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+From Stdlib.Logic Require Import JMeq ProofIrrelevance.
+From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
     WeakTransitions StateTransitionSystems Convergence Termination ActTau.
@@ -834,7 +834,7 @@ Definition inter_lts_refuses `{Prop_of_Inter S1 S2 A}
 #[global] Instance inter_lts 
   `(inter : A -> A -> Prop)
   `{Prop_of_Inter S1 S2 A inter} :
-  gLts (S1 * S2) A. 
+  gLts (S1 * S2) _.
 Proof.
   refine (MkgLts _ _ _ inter_step _ _ (λ s, inter_lts_refuses s.1 s.2) _ _ _).
   - intros [s1 s2] ℓ [s'1 s'2]. apply decide_inter_step.
@@ -867,7 +867,7 @@ Proof.
 Defined.
 
 #[global]
-Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!gLts S1 A} `{!gLts S2 A} 
+Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!gLts S1 H} `{!gLts S2 H} 
 `{M1: !CountablegLts S1 A} 
 `{M2: !CountablegLts S2 A} `{inter : A -> A -> Prop} 
 `{i : !Prop_of_Inter S1 S2 A inter}: CountablegLts (S1 * S2) A.

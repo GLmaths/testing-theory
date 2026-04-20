@@ -49,7 +49,7 @@ Class Sts (P: Type) := MkSts {
 Definition istep `{gLts A} p q := lts_step p τ q.
 
 #[global]
-Program Instance sts_of_lts {P A} `{H : ExtAction A} (M: gLts P A): Sts P :=
+Program Instance sts_of_lts {P} `(M: gLts P H): Sts P :=
   {|
     sts_step := istep;
     sts_refuses s := lts_refuses s τ;

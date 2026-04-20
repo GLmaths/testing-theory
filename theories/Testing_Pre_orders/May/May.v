@@ -44,15 +44,15 @@ Global Hint Constructors may_sts:mdb.
 
 Inductive may `{
     gLtsP : @gLts P A H, 
-    gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome} 
+    gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome} 
 
-    `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+    {PInter: Prop_of_Inter P T A dual}
 
     (p : P) (t : T) : Prop :=
 | may_now : outcome t -> may p t
 | may_server_step p' (nh : ¬ outcome t) (pt : p ⟶ p') (hmay : may p' t) : may p t
 | may_client_step t' (nh : ¬ outcome t) (et : t ⟶ t') (hmay : may p t') : may p t
-| may_com_step p' μ1 t' μ2 (nh : ¬ outcome t) (inter : parallel_inter μ1 μ2) 
+| may_com_step p' μ1 t' μ2 (nh : ¬ outcome t) (inter : dual μ1 μ2) 
           (trS : p ⟶[μ1] p') (trC : t ⟶[μ2] t') (hmay : may p' t') : may p t.
 
 Global Hint Constructors may:mdb.
@@ -63,9 +63,9 @@ Notation "p 'may_pass' t" := (may p t) (at level 70).
 
 Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  {_ : Prop_of_Inter P T A dual}
 
   (p : P) (t : T) :
   @may_sts P T _ outcome p t <-> may p t.
@@ -85,12 +85,12 @@ Qed.
 (********************************* Definition of the contextual pre order with May *********************************)
 
 Definition ctx_may_pre `{
-  gLtsP : gLts P A, 
-  gLtsQ : !gLts Q A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsQ : !gLts Q H, 
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} 
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter Q T A dual}
 
   (p : P) (q : Q) 
   := forall (t : T), p may_pass t -> q may_pass t.
@@ -102,10 +102,10 @@ Notation "p ⊑ₘₐᵧ q" := (ctx_may_pre p q) (at level 70).
 (********************************************* Properties on May **********************************************)
 
 Lemma may_eq_client `{
-  gLtsP : gLts P A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
+  {_ : Prop_of_Inter P T A dual} :
 
   forall (p : P) (t1 t2 : T), t1 ⋍ t2 -> p may_pass t1 -> p may_pass t2.
 Proof.
@@ -125,17 +125,17 @@ Proof.
 Qed.
 
 Lemma may_eq_server `{
-  gLtsP : gLts P A, ! gLtsEq P A,
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome} 
+  gLtsP : @gLtsEq P A H,
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome} 
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
+  {_ : Prop_of_Inter P T A dual} :
 
   forall (p1 p2 : P) (t : T), p1 ⋍ p2 -> p1 may_pass t -> p2 may_pass t.
 Proof.
   intros p q r heq hm.
   revert q heq.
   dependent induction hm; intros.
-  - apply may_now. exact H1.
+  - now apply may_now.
   - edestruct (eq_spec q p') as (q' & tr & eq).
     { exists p. split; eauto. now symmetry. }
     eapply may_server_step; eauto.
@@ -148,10 +148,10 @@ Proof.
 Qed.
 
 Lemma may_not_stable_or_outcome `{
-  gLtsP : gLts P A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : @gLts P A H, 
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  {_ : Prop_of_Inter P T A dual}
 
   (p : P) (t : T) : p may_pass t -> outcome t \/ ¬ t ↛ \/ (exists μ, ¬ t ↛[μ]). 
 Proof. 
@@ -161,11 +161,11 @@ Proof.
 Admitted.
 
 Lemma ctx_may_pre_not `{
-  gLtsP : gLts P A, 
-  gLtsQ : !gLts Q A, 
-  gLtsT : ! gLts T A, ! gLtsEq T A, !Testing_Predicate T A outcome}
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} 
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  gLtsP : @gLts P A H,
+  gLtsQ : !gLts Q H,
+  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter Q T A dual}
   (p : P) (q : Q) (t : T) :
   p ⊑ₘₐᵧ  q -> ¬ may q t -> ¬ may p t.
 Proof.

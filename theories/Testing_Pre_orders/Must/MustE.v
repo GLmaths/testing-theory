@@ -24,11 +24,11 @@
 *)
 
 From stdpp Require Import base decidable gmap finite.
-From Coq Require Import ssreflect.
-From Coq.Program Require Import Equality.
+From Stdlib Require Import ssreflect.
+From Stdlib.Program Require Import Equality.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
-    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
+    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS Must.
 
 Section preorder.
@@ -36,28 +36,28 @@ Section preorder.
   (** Extensional definition of Must *)
 
   Definition must_extensional {P : Type}
-    `{Sts (P * E), outcome : E -> Prop} 
-    (p : P) (e : E) : Prop :=
-    forall η : max_exec_from (p, e), exists n fex, mex_take_from n η = Some fex 
+    `{Sts (P * T), outcome : T -> Prop} 
+    (p : P) (t : T) : Prop :=
+    forall η : max_exec_from (p, t), exists n fex, mex_take_from n η = Some fex 
           /\ outcome (fex_from_last fex).2 .
 
-  Definition outcome_client {P : Type} `{Sts (P * E), outcome : E -> Prop} (s : (P * E)) := outcome s.2.
+  Definition outcome_client {P : Type} `{Sts (P * T), outcome : T -> Prop} (s : (P * T)) := outcome s.2.
 
-  #[global] Program Instance must_bar {P : Type} {E : Type} `{Sts (P * E)} (outcome : E -> Prop)
-    `{outcome_decidable : forall e, Decision (outcome e)}: Bar (P * E) :=
-    {| bar_pred '(p, e) := outcome e |}.
-  Next Obligation. intros. destruct x as (p, e). simpl. eauto. Defined.
+  #[global] Program Instance must_bar {P : Type} {T : Type} `{Sts (P * T)} (outcome : T -> Prop)
+    `{outcome_decidable : forall t, Decision (outcome t)}: Bar (P * T) :=
+    {| bar_pred '(p, t) := outcome t |}.
+  Next Obligation. intros. destruct x as (p, t). simpl. eauto. Defined.
 
   Lemma must_intensional_coincide {P : Type}
-    `{Sts (P * E), outcome : E -> Prop, outcome_decidable : 
-    forall (e : E), Decision (outcome e)}
-    (p : P) (e : E) : @intensional_pred (P * E) _ (must_bar outcome) (p, e) ↔ 
-    @must_sts P E _ outcome p e.
+    `{Sts (P * T), outcome : T -> Prop, outcome_decidable : 
+    forall (t : T), Decision (outcome t)}
+    (p : P) (t : T) : @intensional_pred (P * T) _ (must_bar outcome) (p, t) ↔ 
+    @must_sts P T _ outcome p t.
   Proof.
     split.
     - intros H1. dependent induction H1; subst.
       + rewrite /bar_pred /= in H1. now eapply m_sts_now.
-      + destruct (outcome_decidable e).
+      + destruct (outcome_decidable t).
         rewrite /bar_pred /= in H1.
         now eapply m_sts_now. eapply m_sts_step; eauto.
     - intros hm; dependent induction hm.
@@ -69,9 +69,9 @@ Section preorder.
   Qed.
 
   Lemma must_ext_pred_iff_must_extensional {P : Type}
-    `{StsPE : Sts (P * E), outcome : E -> Prop, outcome_decidable : forall (e : E), Decision (outcome e)}
-    (p : P) (e : E) : @extensional_pred _ _ (must_bar outcome) (p, e) <-> 
-    @must_extensional P E _ outcome p e.
+    `{StsPT : Sts (P * T), outcome : T -> Prop, outcome_decidable : forall (t : T), Decision (outcome t)}
+    (p : P) (t : T) : @extensional_pred _ _ (must_bar outcome) (p, t) <-> 
+    @must_extensional P T _ outcome p t.
   Proof. split; intros Hme η; destruct (Hme η) as (?&?&?&?).
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
@@ -79,21 +79,21 @@ Section preorder.
 
   Definition pre_extensional
     {P : Type} {Q : Type} 
-    `{Sts (P * E), Sts (Q * E), outcome : E -> Prop, outcome_decidable : forall (e : E), 
-    Decision (outcome e)}
+    `{Sts (P * T), Sts (Q * T), outcome : T -> Prop, outcome_decidable : forall (t : T), 
+    Decision (outcome t)}
     (p : P) (q : Q) : Prop :=
-    forall (e : E), @must_extensional P E _ outcome p e -> @must_extensional Q E _ outcome q e.
+    forall (t : T), @must_extensional P T _ outcome p t -> @must_extensional Q T _ outcome q t.
 
   (* ************************************************** *)
 
   Lemma must_extensional_iff_must_sts
     {P : Type}
-    `{outcome : E -> Prop, outcome_decidable : forall (e : E), Decision (outcome e)}
+    `{outcome : T -> Prop, outcome_decidable : forall (t : T), Decision (outcome t)}
     `{gLtsP : @gLts P A H, !FiniteImagegLts P A,
-    gLtsE : !gLts E A, !gLtsEq E A, !Testing_Predicate E A outcome,  !FiniteImagegLts E A}
-    `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE} (* à rajouter en context ? *)
-    (p : P) (e : E) : 
-    @must_extensional P E _ outcome p e <-> @must_sts P E _ outcome p e.
+      gLtsT : !gLtsEq T H, !FiniteImagegLts T A , !Testing_Predicate T A outcome}
+    `{!Prop_of_Inter P T A dual} (* à rajouter en context ? *)
+    (p : P) (t : T) : 
+    @must_extensional P T _ outcome p t <-> @must_sts P T _ outcome p t.
   Proof.
     split.
     - intros hm. destruct Testing_Predicate0.
@@ -105,27 +105,27 @@ Section preorder.
       eapply intensional_implies_extensional. eapply hm.
   Qed.
 
-  Notation "p ⊑ₑ q" := (pre_extensional p q) (at level 70).
+  Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional p q) (at level 70).
 
-  Context `{outcome : E -> Prop}.
-  Context `{outcome_dec : forall e, Decision (outcome e)}.
+  Context `{outcome : T -> Prop}.
+  Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
-  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsE : !gLts E A, !FiniteImagegLts E A, gLtsEqE: !gLtsEq E A, !Testing_Predicate E A outcome}.
-  Context `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}.
-  Context `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}.
+  Context `{gLtsP : !gLts P H, !FiniteImagegLts P A}.
+  Context `{gLtsQ : !gLts Q H, !FiniteImagegLts Q A}.
+  Context `{gLtsEqT: !gLtsEq T H, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
+  Context `{!Prop_of_Inter P T A dual}.
+  Context `{!Prop_of_Inter Q T A dual}.
 
   (* ************************************************** *)
 
   Lemma pre_extensional_eq (p : P) (q : Q) : 
-    @pre_extensional P Q _ _ _ outcome _ p q <-> p ⊑ₘᵤₛₜᵢ q.
+    @pre_extensional P Q _ _ _ outcome _ p q <-> p ⊑ₘᵤₛₜᵢ q. (* p ⊑ₘᵤₛₜ q ↔ p ⊑ₘᵤₛₜᵢ q *)
     unfold pre_extensional, ctx_pre.
   Proof.
-    split; intros hpre e.
-    - rewrite <- 2 must_sts_iff_must, <- 2 must_extensional_iff_must_sts; eauto.
+    split; intros hpre t.
+    - rewrite <- 2 must_sts_iff_must, <- 2 must_extensional_iff_must_sts ; eauto.
     - rewrite -> 2 must_extensional_iff_must_sts, -> 2 must_sts_iff_must; eauto.
   Qed.
 

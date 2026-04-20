@@ -115,7 +115,7 @@ Proof.
   + left. simpl. eauto.
 Qed.
 
-#[global] Program Instance MbgLts `{H : ExtAction A} : gLts (mb A) A :=
+#[global] Program Instance MbgLts `{H : ExtAction A} : gLts (mb A) H :=
 {|
     lts_step m α m' := lts_multiset_step m α m' ;
     lts_refuses p := lts_multiset_refuses p;

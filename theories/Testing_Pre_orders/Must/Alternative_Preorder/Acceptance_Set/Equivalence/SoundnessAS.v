@@ -23,13 +23,13 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Program Require Import Wf Equality.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
+From Stdlib.Program Require Import Wf Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
@@ -41,10 +41,10 @@ From Must Require Import ActTau.
 (* ************************************************************ *)
 
 Inductive mustx `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A, 
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{Prop_of_Inter P T A dual}
 
   (ps : gset P) (t : T) : Prop :=
 | mx_now (hh : outcome t) : mustx ps t
@@ -56,7 +56,7 @@ Inductive mustx `{
         mustx ps' t)
     (et : forall (t' : T), t ⟶ t' -> mustx ps t')
     (com : forall (t' : T) μ1 μ2 (ps' : gset P),
-        parallel_inter μ1 μ2 ->
+        dual μ1 μ2 ->
         lts_step t (ActExt μ2) t' ->
         wt_set_from_pset_spec1 ps [μ1] ps' -> 
         ps' ≠ ∅ ->
@@ -66,10 +66,10 @@ Inductive mustx `{
 #[global] Hint Constructors mustx:mdb.
 
 Lemma mx_sub `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   ps t : 
   mustx ps t 
@@ -83,20 +83,20 @@ Proof.
     + intros qs' hs hneq_nil.
       set (ps' := lts_tau_set_from_pset_ispec ps).
       destruct ps'.
-      eapply H1; eauto with mdb.
+      eapply H; eauto with mdb.
       ++ destruct (set_choose_or_empty qs') as [(q' & l'%hs)|].
-         intro eq_nil. destruct l' as (q & mem%sub & l%H5); set_solver.
+         intro eq_nil. destruct l' as (q & mem%sub & l%H3); set_solver.
          set_solver.
       ++ intros p (q & mem%sub & l)%hs. eauto.
     + intros t' μ μ' qs' hle duo hwqs hneq_nil.
-      eapply (H3 t' μ μ'); eauto. intros p' mem%hwqs. set_solver.
+      eapply (H1 t' μ μ'); eauto. intros p' mem%hwqs. set_solver.
 Qed.
 
 Lemma mx_mem `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome} 
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome} 
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   ps t : 
   mustx ps t 
@@ -119,10 +119,10 @@ Proof.
 Qed.
 
 Lemma mustx_terminate_unoutcome `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   ps t : 
   mustx ps t 
@@ -134,16 +134,16 @@ Proof.
   - right.
     intros p mem.
     eapply tstep. intros p' l.
-    edestruct (H1 {[p']}); [exists p; set_solver| | |]; set_solver.
+    edestruct (H {[p']}); [exists p; set_solver| | |]; set_solver.
 Qed.
 
 Lemma mustx_terminate_unoutcome' `{
-  @gLtsOba P A H gLtsP gLtsEqP, !FiniteImagegLts P A, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A, 
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
-  ps t :
+  ps (t : T) :
   mustx ps t
         -> ¬ outcome t -> forall p, p ∈ ps -> p ⤓.
 Proof.
@@ -151,22 +151,22 @@ Proof.
   dependent induction hmx.
   + contradiction.
   + eapply tstep.
-    intros q tr. eapply H2; eauto.
+    intros q tr. eapply H; eauto.
     assert (h1 : lts_tau_set_from_pset_spec1 ps {[q]}).
     exists p. assert (q0 = q);subst. set_solver. split; eauto. eauto.
     set_solver. set_solver.
 Qed.
 
 Lemma unoutcome_acnv_mu `{
-  @gLtsOba P A H gLtsP gLtsEqP, !FiniteImagegLts P A, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A, 
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   ps t t' :
   mustx ps t 
     -> forall μ μ' p, p ∈ ps 
-      -> parallel_inter μ μ'
+      -> dual μ μ'
         -> t ⟶[μ'] t' 
           -> ¬ outcome t -> ¬ outcome t' -> p ⇓ [μ].
 Proof.
@@ -185,21 +185,22 @@ Proof.
       set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
       destruct (mustx_terminate_unoutcome _ _ hm).
       +++ contradiction.
-      +++ eapply cnv_nil. eapply H6. set_solver.
+      +++ eapply cnv_nil. eapply H3. set_solver.
 Qed.
 
 Lemma must_mu_either_outcome_cnv `{
-  @gLtsOba P A H gLtsP EP, !FiniteImagegLts P A, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A, 
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   ps t t' :
   mustx ps t
     -> forall μ μ' p, p ∈ ps 
-      -> parallel_inter μ μ'
+      -> dual μ μ'
         -> t ⟶[μ'] t' 
-          -> outcome t \/ outcome t' (* ajout par rapport à Input/Output *) \/ p ⇓ [μ].
+          -> outcome t \/ outcome t' (* ajout par rapport à Input/Output *)
+                       \/ p ⇓ [μ].
 Proof.
   intros hmx μ μ' p mem inter l.
   destruct (decide (outcome t)); destruct (decide (outcome t')).
@@ -212,9 +213,9 @@ Qed.
 (* to rework , why ?*)
 Lemma mx_sum `{
   gLtsP : gLts P A, !FiniteImagegLts P A, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   ps1 ps2 t : mustx ps1 t 
     -> mustx ps2 t
@@ -235,11 +236,11 @@ Proof.
     set (Y := lts_tau_set_from_pset ps).
     set (Z := lts_tau_set_from_pset ps2).
     assert (ps' ⊆ lts_tau_set_from_pset ps ∪ lts_tau_set_from_pset ps2).
-    intros q mem. eapply H4 in mem as (q0 & mem & l).
+    intros q mem. eapply H2 in mem as (q0 & mem & l).
     eapply elem_of_union in mem. destruct mem.
     eapply elem_of_union. left. eapply lts_tau_set_from_pset_ispec; eassumption.
     eapply elem_of_union. right. eapply lts_tau_set_from_pset_ispec; eassumption.
-    eapply lem_dec in H6 as (Y' & Z' & Y_spec' & Z_spec' & eq).
+    eapply lem_dec in H4 as (Y' & Z' & Y_spec' & Z_spec' & eq).
     remember Y' as Y_'.
     remember Z' as Z_'.
     destruct Y_' using set_ind_L.
@@ -248,7 +249,7 @@ Proof.
          assert (exists p, p ∈ ps') as (p & mem).
          destruct ps' using set_ind_L. contradiction.
          exists x. set_solver.
-         eapply H4 in mem as (p0 & mem & l).
+         eapply H2 in mem as (p0 & mem & l).
          eapply elem_of_union in mem. destruct mem.
          eapply lts_tau_set_from_pset_ispec in l; set_solver.
          eapply lts_tau_set_from_pset_ispec in l; set_solver.
@@ -259,16 +260,16 @@ Proof.
     + destruct Z_' using set_ind_L.
       ++ assert (Y' = ps') by set_solver.
          assert (mustx ps t) by eauto with mdb.
-         inversion H8; subst. set_solver.
+         inversion H6; subst. set_solver.
          eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
       ++ subst.
          replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
-         eapply H1.
+         eapply H.
          intros t' mem. apply lts_tau_set_from_pset_ispec. set_solver. set_solver.
          inversion hmx2; subst. now contradiction nh.
          eapply pt0.
          intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
-  - intros t' l. eapply H2; eauto with mdb.
+  - intros t' l. eapply H0; eauto with mdb.
     inversion hmx2; subst; eauto with mdb. contradiction.
   - intros t' μ μ' ps' duo l ps'_spec neq_nil.
     destruct (outcome_decidable t'); eauto with mdb.
@@ -297,7 +298,7 @@ Proof.
     eapply elem_of_union in mem. destruct mem.
     eapply elem_of_union. left. eapply wt_s_set_from_pset_ispec; eassumption.
     eapply elem_of_union. right. eapply wt_s_set_from_pset_ispec; eassumption.
-    eapply lem_dec in H4 as (Y0 & Z0 & Y_spec0 & Z_spec0 & eq).
+    eapply lem_dec in H2 as (Y0 & Z0 & Y_spec0 & Z_spec0 & eq).
     destruct Y0 using set_ind_L.
     + destruct Z0 using set_ind_L.
       ++ exfalso.
@@ -317,7 +318,7 @@ Proof.
          eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
          set_solver. set_solver.
       ++ replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
-         eapply H3; eauto with mdb.
+         eapply H1; eauto with mdb.
          intros t'' mem.
          eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
          set_solver. set_solver.
@@ -329,10 +330,10 @@ Proof.
 Qed.
 
 Lemma mx_forall `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome} 
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome} 
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   ps t :
   ps ≠ ∅ 
@@ -345,14 +346,14 @@ Proof.
   - destruct (set_choose_or_empty X).
     eapply mx_sum; set_solver.
     assert (X = ∅) by set_solver.
-    rewrite H3, union_empty_r_L. set_solver.
+    rewrite H1, union_empty_r_L. set_solver.
 Qed.
 
 Lemma wt_nil_mx `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT} :
+  `{!Prop_of_Inter P T A dual} :
 
   forall p1 p2 e, mustx {[ p1 ]} e 
     -> p1 ⟹ p2 -> mustx {[ p2 ]} e.
@@ -368,12 +369,12 @@ Qed.
 
 Lemma wt_mu_mx `{
   gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsT : !gLts T EA, !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   p1 p2 t t' μ μ':
-  parallel_inter μ μ' -> ¬ outcome t -> mustx {[ p1 ]} t 
+  dual μ μ' -> ¬ outcome t -> mustx {[ p1 ]} t 
     -> t ⟶[μ'] t' -> p1 ⟹{μ} p2 -> mustx {[p2]} t'.
 Proof.
   intros duo nh hmx l w.
@@ -383,10 +384,10 @@ Proof.
 Qed.
 
 Lemma must_set_if_must `{
-  gLtsP : gLts P A, !FiniteImagegLts P A, 
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A, 
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   (p : P) (t : T) : p must_pass t -> mustx {[ p ]} t.
 Proof.
@@ -410,10 +411,10 @@ Proof.
 Qed.
 
 Lemma must_if_must_set_helper `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   (ps : gset P) (t : T) : 
   mustx ps t 
@@ -429,7 +430,7 @@ Proof.
       set (X' := list_to_set (lts_tau_set p) : gset P).
       assert (p' ∈ X').
       eapply lts_tau_set_spec, elem_of_list_to_set in hl; eauto.
-      eapply (H1 X'); eauto.
+      eapply (H X'); eauto.
       intros p0 mem0%elem_of_list_to_set%lts_tau_set_spec. set_solver. set_solver.
     + eauto with mdb.
     + intros p' e' μ μ' duo hlp hle.
@@ -439,7 +440,7 @@ Proof.
       assert (p' ∈ X').
       eapply elem_of_list_to_set, elem_of_list_fmap; eauto.
       exists (dexist p' hlp). split. eauto. eapply elem_of_enum.
-      eapply (H3 e' μ μ' X'). eassumption. eassumption.
+      eapply (H1 e' μ μ' X'). eassumption. eassumption.
       intros p0 mem0%elem_of_list_to_set.
       eapply elem_of_list_fmap in mem0 as ((r & l) & eq & mem'). subst.
       exists p. split; eauto.
@@ -448,10 +449,10 @@ Proof.
 Qed.
 
 Lemma must_if_must_set `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   (p : P) (t : T) : 
   mustx {[ p ]} t 
@@ -459,20 +460,20 @@ Lemma must_if_must_set `{
 Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
 
 Lemma must_set_iff_must `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   (p : P) (t : T) : 
   p must_pass t <-> mustx {[ p ]} t.
 Proof. split; [eapply must_set_if_must | eapply must_if_must_set]. Qed.
 
 Lemma must_set_for_all `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   (X : gset P) (t : T) : 
   X ≠ ∅ 
@@ -489,21 +490,21 @@ Proof.
       eapply mx_forall. eassumption.
       intros p' (p0 & mem%hm & hl)%xspec'. eapply must_set_iff_must.
       inversion mem; eauto with mdb.
-    + intros e' hl.
+    + intros t' hl.
       eapply mx_forall. eassumption.
       intros p' mem%hm. eapply must_set_iff_must.
       inversion mem; eauto with mdb. contradiction.
-    + intros e' μ μ' X' duo hle xspec' xneq_nil'.
+    + intros t' μ μ' X' duo hle xspec' xneq_nil'.
       eapply mx_forall. eassumption.
       intros p' (p0 & h%hm & hl)%xspec'. eapply must_set_iff_must.
       eapply must_preserved_by_wt_synch_if_notoutcome; eauto.
 Qed.
 
 Lemma must_set_iff_must_for_all `{
-  gLtsP : gLts P A, !FiniteImagegLts P A,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsP : gLts P, !FiniteImagegLts P A,
+  gLtsT : !gLtsEq T EA, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+  `{!Prop_of_Inter P T A dual}
 
   (X : gset P) (t : T) : 
   X ≠ ∅ -> (forall p, p ∈ X -> p must_pass t) <-> mustx X t.
@@ -521,8 +522,8 @@ Definition bhv_pre_cond1__x `{FiniteImagegLts P A, FiniteImagegLts Q A} (ps : gs
 Notation "ps ≼ₓ1 q" := (bhv_pre_cond1__x ps q) (at level 70).
 
 Definition bhv_pre_cond2__x `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
   (ps : gset P) (q : Q) :=
   forall s q',
     q ⟹[s] q' -> q' ↛ ->
@@ -536,8 +537,8 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 Notation "ps ≼ₓ q" := (bhv_pre_cond1__x ps q /\ bhv_pre_cond2__x ps q) (at level 70).
 
 Lemma alt_set_singleton_iff `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
@@ -550,15 +551,15 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_reduction `{
-  FiniteImagegLts P A, 
-  FiniteImagegLts Q A} 
+  @FiniteImagegLts P A H gLtsP, 
+  @FiniteImagegLts Q A H gLtsQ} 
   (ps : gset P) (q q' : Q) :
   ps ≼ₓ1 q -> q ⟶ q' -> ps ≼ₓ1 q'.
 Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 
 Lemma bhvx_preserved_by_reduction `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
 Proof.
   intros l (halt1 & halt2).
@@ -585,8 +586,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps0 : gset P) (q : Q) μ ps1 q' (htp : forall p, p ∈ ps0 -> terminate p) :
   q ⟶[μ] q' 
     -> wt_set_from_pset_spec ps0 [μ] ps1 
@@ -605,8 +606,8 @@ Proof.
 Qed.
 
 Lemma reverse_trace_inclusion `{
-  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  @FiniteImagegLts P A H gLtsP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
+  @FiniteImagegLts Q A H gLtsQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
   (ps : gset P) (q q' : Q) μ
   : ps ≼ₓ q -> (forall p, p ∈ ps -> p ⇓ [μ]) ->
     q ⟶[μ] q' -> exists p', wt_set_from_pset_spec1 ps [μ] {[ p' ]}.
@@ -622,18 +623,18 @@ Proof.
 Qed.
 
 Lemma unoutcome_must_st_nleqx `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-  PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
 
-  (X : gset P) (q : Q) t : 
+  (X : gset P) (q : Q) (t : T): 
   ¬ outcome t 
     -> mustx X t 
       -> (q, t) ↛
@@ -690,16 +691,16 @@ Proof.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-  PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  gLtsT : !gLts T A, !gLtsEq T A, !Testing_Predicate T A outcome}
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
 
   (X : gset P) (q : Q) t : 
   ¬ outcome t 
@@ -714,16 +715,16 @@ Proof.
 Qed.
 
 Lemma soundnessx `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-  PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
 
   (ps : gset P) (t : T) : 
   mustx ps t 
@@ -746,7 +747,7 @@ Proof.
       ++ eassumption.
       ++ eapply bhvleqone_preserved_by_reduction; eauto.
       ++ eauto with mdb.
-    + intros e' hle. eapply H6; eassumption.
+    + intros e' hle. eapply H1; eassumption.
     + intros q' e' μ μ' inter le lq.
       destruct (decide (outcome e')).
       ++ eapply m_now. assumption.
@@ -756,7 +757,7 @@ Proof.
          set (ts_spec := wt_s_set_from_pset_ispec ps [μ] HA).
          assert ((exists p, p ∈ ts) \/ ts ≡ ∅)%stdpp as [neq_nil | eq_nil]
           by (eapply set_choose_or_empty).
-         eapply H7; eauto with mdb.
+         eapply H2; eauto with mdb.
          destruct ts_spec. eassumption.
          intro eq_nil. destruct neq_nil as (t' & mem).
          replace ts with (wt_s_set_from_pset ps [μ] HA) in mem; eauto.
@@ -772,16 +773,16 @@ Proof.
 Qed.
 
 Lemma soundness_fw `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  @gLtsObaFW Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-  PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ,
-  @gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome }
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
 
   (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
@@ -790,27 +791,29 @@ Proof.
   now eapply must_set_iff_must. now eapply alt_set_singleton_iff.
 Qed.
 
-Lemma soundness `{
-  @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-  @gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome }
+Lemma soundness 
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A}
 
-  `{AbT : @AbsAction A H T FinA gLtsT Φ}
+  `{ !Testing_Predicate T A outcome }
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
-  `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}
+  `{AbT : @AbsAction A H T FinA _ Φ}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  `{@Prop_of_Inter (P * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}
+  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter Q T A dual}
 
-  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
-  `{@Prop_of_Inter (Q * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}
+  {_ : @Prop_of_Inter P (mb A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (P * mb A) T A dual H (inter_lts fw_inter) _}
 
-  `{PreAP : @PreExtAction A H (P * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter),
-    PreAQ : @PreExtAction A H (Q * mb A) FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter)}
+  {_ : @Prop_of_Inter Q (mb A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (Q * mb A) T A dual H (inter_lts fw_inter) _}
+
+  `{PreAP : @PreExtAction (P * mb A) A H  FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter),
+    PreAQ : @PreExtAction (Q * mb A) A H  FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter)}
   (p : P) (q : Q) : p ▷ ∅ ≼ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
-  intros halt e hm.
+  intros halt t hm.
   eapply Lift.must_iff_must_fw in hm.
   eapply Lift.must_iff_must_fw.
   now eapply (soundness_fw (p ▷ ∅) (q ▷ ∅)).

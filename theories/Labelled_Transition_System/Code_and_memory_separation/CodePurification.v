@@ -44,7 +44,7 @@ Notation "p ⟿⋍{ m } q" := (∃ r, p ⟿{m} r /\ r ⋍ q) (at level 30).
 
 (** Lemmas about strip. *)
 
-Lemma strip_eq `{@gLtsOba P A H gLtsP LOA} {e e' m} :
+Lemma strip_eq `{gLtsOba P A} {e e' m} :
   e ⟿{m} e' -> ∀ r, r ⋍ e
     -> r ⟿⋍{ m } e'.
 Proof.
@@ -385,7 +385,7 @@ Proof.
       edestruct (lts_oba_non_blocking_action_delay H1 H2 l) as (u & l2 & l3). eauto.
 Qed.
 
-Lemma aux3_ `{@gLtsOba P A H gLtsP LOA} {e e' m η} :
+Lemma aux3_ `{gLtsOba P A} {e e' m η} :
   e ⟿{{[+ η +]} ⊎ m} e' -> ∀ r, e ⟶[η] r
     -> r ⟿⋍{m} e'.
 Proof.

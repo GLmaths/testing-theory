@@ -228,7 +228,7 @@ Proof.
   eauto with ccs. symmetry. eauto with ccs.
 Qed.
 
-#[global] Program Instance VACCS_Good : @Testing_Predicate proc (ExtAct TypeOfActions) good_VACCS gLabel_nb VACCS_ggLts VACCS_ggLtsEq.
+#[global] Program Instance VACCS_Good : @Testing_Predicate proc (ExtAct TypeOfActions) gLabel_nb good_VACCS VACCS_ggLtsEq.
 Next Obligation. 
  intros. eapply good_preserved_by_cgr; eassumption.
 Qed.

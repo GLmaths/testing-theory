@@ -23,11 +23,13 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From Must Require Import ActTau gLts.
 
-Class gLtsEq (P A : Type) `{gLts P A} := {
+
+Class gLtsEq (P : Type) {A} `(H : !ExtAction A) := {
+    gLtsEq_gLts :: gLts P H;
     (* Equivalence relation *)
     eq_rel : P → P → Prop;
     eq_rel_eq : Equivalence eq_rel;
@@ -44,7 +46,7 @@ Defined.
 
 Infix "⋍" := eq_rel (at level 70).
 
-Definition lts_sc `{gLts P A, !gLtsEq P A} p α q := exists r, p ⟶{α} r /\ r ⋍ q.
+Definition lts_sc `{gLtsEq P H} p α q := exists r, p ⟶{α} r /\ r ⋍ q.
 
 Notation "p ⟶⋍ q" := (lts_sc p τ q) (at level 30, format "p  ⟶⋍  q").
 Notation "p ⟶⋍{ α } q" := (lts_sc p α q) (at level 30, format "p  ⟶⋍{ α }  q").
@@ -53,7 +55,7 @@ Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p 
 
 (* Bisimulation properties *)
 
-Lemma mk_lts_eq `{gLtsEq P A} {p α q} : p ⟶{α} q  → p ⟶⋍{α} q.
+Lemma mk_lts_eq `{gLtsEq P H} {p α q} : p ⟶{α} q  → p ⟶⋍{α} q.
 Proof. intro. exists q; split. eauto. reflexivity. Qed.
 
 Lemma refuses_preserved_by_eq `{gLtsEq P A} {p q μ} : p ↛[ μ ] -> p ⋍ q -> q ↛[ μ ].

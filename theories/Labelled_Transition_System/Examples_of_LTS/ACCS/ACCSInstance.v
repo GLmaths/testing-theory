@@ -23,10 +23,10 @@
    SOFTWARE.
 *)
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Must Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
@@ -269,7 +269,7 @@ decode_gproc (t: gen_tree (nat + (name + name))): gproc :=
   | _ => gpr_success (* arbitrary *)
   end.
 
-Require Import ssreflect.
+From Stdlib Require Import ssreflect.
 
 Lemma encode_decide_procs p : decode_proc (encode_proc p) = p
 with encode_decide_gprocs p : decode_gproc (encode_gproc p) = p.
@@ -616,8 +616,6 @@ Proof. repeat split.
        + eapply cgr_trans.
 Qed.
 
-Require Import Coq.Wellfounded.Inverse_Image.
-
 Lemma cgr_step_subst1 (p : proc) : forall q q' x, q ≡ q' → pr_subst x p q ≡ pr_subst x p q'.
 Proof.
   induction p as (p & Hp) using
@@ -948,7 +946,7 @@ Proof.
   eauto with ccs. eauto with ccs.
 Qed.
 
-#[global] Program Instance CCS_Good : @Testing_Predicate proc (ExtAct name) good gLabel_nb (* CCS_lts *) _ _ (* CCS_EqLTS *).
+#[global] Program Instance CCS_Good : @Testing_Predicate proc (ExtAct name) gLabel_nb good _ (* CCS_lts *) (* CCS_EqLTS *).
 Next Obligation. intros. eapply good_preserved_by_cgr; eassumption. Qed.
 Next Obligation. intros. simpl in *. destruct H as (a & eq); subst. eapply good_preserved_by_output; eassumption. Qed.
 Next Obligation. intros. simpl in *. destruct H as (a & eq); subst. eapply good_preserved_by_lts_output_converse; eassumption. Qed.
@@ -1009,7 +1007,7 @@ Proof.
   + left. exists a; eauto.
 Defined.
 
-#[global] Program Instance gen_conv_gen_test_inst : @test_spec proc (ExtAct name) gLabel_nb _ _ _ CCS_Good gen_conv.
+#[global] Program Instance gen_conv_gen_test_inst : @test_spec proc (ExtAct name) gLabel_nb _ _ CCS_Good gen_conv.
 Next Obligation.
   intros. eapply gen_test_ungood_if.
   intro imp. inversion imp.
@@ -1046,7 +1044,7 @@ Next Obligation.
     eapply H. exists a ; eauto.
 Qed.
 
-#[global] Program Instance gen_conv_gen_spec_conv_inst : @test_convergence_spec proc (ExtAct name) gLabel_nb _ _ _ CCS_Good gen_conv.
+#[global] Program Instance gen_conv_gen_spec_conv_inst : @test_convergence_spec proc (ExtAct name) gLabel_nb _ _ CCS_Good gen_conv.
 Next Obligation.
   intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
 Qed.
@@ -1319,7 +1317,8 @@ Defined.
 
 From Must Require Import EquivalenceAS.
 
-(* Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ q <-> p ▷ ∅ ≼ q ▷ (∅ : gmultiset name).
+(*
+Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ (∅ : gmultiset name).
 Proof.
   split.
   intros hm%pre_extensional_eq. now eapply equivalence_bhv_acc_ctx.

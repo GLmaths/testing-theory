@@ -22,27 +22,30 @@
    SOFTWARE.
 *)
 
-Require ssreflect.
-Require Import Coq.Unicode.Utf8.
-Require Import Coq.Lists.List.
+From Stdlib Require ssreflect.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-Require Import Coq.Program.Equality.
-Require Import Coq.Wellfounded.Inverse_Image.
-Require Import Coq.Logic.JMeq.
-Require Import Coq.Program.Wf Setoid.
-Require Import Coq.Program.Equality.
-From Coq.Logic Require Import ProofIrrelevance.
+From Stdlib.Program Require Import Equality Wf.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+From Stdlib Require Import Setoid.
+From Stdlib .Logic Require Import ProofIrrelevance.
+
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 From Must Require Import gLts Lts_OBA_FB FiniteImageLTS
             Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
               Termination WeakTransitions Convergence  
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE.
-
-Theorem eqx `{@FiniteImagegLts A L HL LtsP, @FiniteImagegLts B L HL LtsQ} 
-  `{PreAP : @PreExtAction L HL A FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP}
-  `{PreAQ : @PreExtAction L HL B FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
-  (X : gset A) (q : B) :
+(* From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
+            Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
+              GeneralizeLtsOutputs Termination WeakTransitions Convergence 
+              InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
+               Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE. *)
+Theorem eqx `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  (X : gset P) (q : Q) :
   X ≼ₓ q <-> X ⩽ q.
 Proof.
   split.
@@ -52,36 +55,32 @@ Qed.
 
 Section eq_contextual.
 
-  Context `{H : ExtAction A}.
-  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsT : !gLts T A, !FiniteImagegLts T A}.
-
-  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
-  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
-  Context `{@gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT}.
-
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
-  Context `{TA_instance : !Testing_Predicate T A outcome}.
+  Context `{P : Type}.
+  Context `{Q : Type}.
+  Context `{H : !ExtAction A}.
 
-  (* ************************************************** *)
-  Context `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}.
-  Context `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}.
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter (P * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
-  Context `{@Prop_of_Inter (Q * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
 
-  Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
-  Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
-  Context `{@AbsAction A H T FinA gLtsT Φ}.
+  Context `{!Prop_of_Inter P T A dual}.
+  Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{igen_conv : @test_convergence_spec T _ _ _ _ outcome TA_instance gen_conv}.
-  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ _ outcome TA_instance gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * mb A) T A dual}.
+  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * mb A) T A dual}.
+
+  Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
+  Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
+  Context `{@AbsAction A H T FinA _ Φ}.
+  Context `{it_conv : @test_convergence_spec T _ _ _ outcome Testing_Predicate0 t_conv}.
+  Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
+  @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A)]} ⩽ q ▷ (∅ : mb A).
   Proof.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.

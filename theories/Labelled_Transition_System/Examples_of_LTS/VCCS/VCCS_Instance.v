@@ -181,7 +181,7 @@ Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • P" := (gpr_output c v P) (at level 50).
 Notation "c ? x • P" := (gpr_input c P) (at level 50).
-Notation "'t' • P" := (gpr_tau P) (at level 50).
+Notation "'𝛕' • P" := (gpr_tau P) (at level 50).
 Notation "'ν' P" := (pr_restrict P) (at level 50).
 Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
@@ -224,7 +224,7 @@ match M with
 | 𝟘 => 𝟘
 | c ? x • p => c ? x • (subst_in_proc (S k) (Succ_bvar X) p)
 | c ! v • p => c ! (subst_Data k X v) • (subst_in_proc k X p)
-| t • p => t • (subst_in_proc k X p)
+| 𝛕 • p => 𝛕 • (subst_in_proc k X p)
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
 end.
 
@@ -265,7 +265,7 @@ match M with
 | 𝟘 => 𝟘
 | c ? x • p => c ? x • (NewVar (S k) p)
 | c ! v • p => c ! (NewVar_in_Data k v) • (NewVar k p)
-| t • p => t • (NewVar k p)
+| 𝛕 • p => 𝛕 • (NewVar k p)
 | p1 + p2 => (gNewVar k p1) + (gNewVar k p2)
 end.
 
@@ -299,7 +299,7 @@ match M with
 | 𝟘 => 𝟘
 | c ? x • p => (NewVar_in_ChannelData k c) ? x • (NewVarC k p)
 | c ! v • p => (NewVar_in_ChannelData k c) ! v • (NewVarC k p)
-| t • p => t • (NewVarC k p)
+| 𝛕 • p => 𝛕 • (NewVarC k p)
 | p1 + p2 => (gNewVarC k p1) + (gNewVarC k p2)
 end.
 
@@ -353,7 +353,7 @@ with gpr_subst id p q {struct p} := match p with
 | 𝟘 => 𝟘
 | c ? x • p => c ? x • (pr_subst id p (NewVar 0 q))
 | c ! v • p => c ! v • (pr_subst id p q)
-| t • p => t • (pr_subst id p q)
+| 𝛕 • p => 𝛕 • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
 
@@ -368,7 +368,7 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 
 (*The actions Tau*)
 | lts_tau : forall {P},
-    lts (t • P) τ P 
+    lts (𝛕 • P) τ P 
 | lts_recursion : forall {x P},
     lts (rec x • P) τ (pr_subst x P (rec x • P))
 
@@ -426,7 +426,7 @@ with gsize p :=
   | 𝟘 => 0
   | c ? x • p => S (size p)
   | c ! v • p => S (size p)
-  | t • p => S (size p)
+  | 𝛕 • p => S (size p)
   | p + q => S (gsize p + gsize q)
 end.
 
@@ -466,7 +466,7 @@ match M with
 | 𝟘 => 𝟘
 | c ? x • p => (VarSwap_in_ChannelData k0 c) ? x • (VarSwap_in_proc k0 p)
 | c ! v • p => (VarSwap_in_ChannelData k0 c) ! v • (VarSwap_in_proc k0 p)
-| t • p => t • (VarSwap_in_proc k0 p)
+| 𝛕 • p => 𝛕 • (VarSwap_in_proc k0 p)
 | p1 + p2 => (gVarSwap_in_proc k0 p1) + (gVarSwap_in_proc k0 p2)
 end.
 
@@ -526,7 +526,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step p q -> (rec x • p) ≡ (rec x • q)
 | cgr_tau_step : forall p q,
     cgr_step p q ->
-    cgr_step (t • p) (t • q)
+    cgr_step (𝛕 • p) (𝛕 • q)
 | cgr_input_step : forall c p q,
     cgr_step p q ->
     cgr_step (c ? x • p) (c ? x • q)
@@ -702,7 +702,7 @@ intros. dependent induction H.
 constructor. 
 apply cgr_recursion_step. exact H. eauto with cgr_eq.
 Qed.
-Lemma cgr_tau : forall p q, p ≡* q -> (t • p) ≡* (t • q).
+Lemma cgr_tau : forall p q, p ≡* q -> (𝛕 • p) ≡* (𝛕 • q).
 Proof.
 intros. dependent induction H. 
 constructor. 
@@ -946,7 +946,7 @@ try solve[etransitivity; [|eapply IHn; eauto]; repeat constructor].
 - admit. (* If Then Else / False case *)
 - apply IHn, cgr_n_par_nil_l, Hp'q.
 - admit. (* New Constructor case *)
-- transitivity (g (t • q0 + r)); [repeat constructor| apply IHn]; trivial.
+- transitivity (g (𝛕 • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (c ? x • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (c ! v • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (q1 + p2 + r)); [repeat constructor| apply IHn]; trivial.
@@ -1605,7 +1605,7 @@ Inductive sts : proc -> proc -> Prop :=
     sts (((c ! v • p1) + g1) ‖ ((c ? x • p2) + g2)) (p1 ‖ (p2 ^ v))
 (* Nothing more , something less *)
 | sts_tau : forall {p g},
-    sts ((t • p) + g) p
+    sts ((𝛕 • p) + g) p
 (* Resursion *)
 | sts_recursion : forall {x p},
     sts (rec x • p) (pr_subst x p (rec x • p))
@@ -1685,7 +1685,7 @@ Qed.
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 Lemma ReductionShape : forall P Q, sts P Q ->
 ((exists c v P1 P2 G1 G2 S n , ((P ≡* Ѵ  n (((c ! v • P1) + G1) ‖ ((c ? x • P2) + G2) ‖ S))) /\ (Q ≡* Ѵ  n ((P1 ‖ (P2^v)) ‖ S)))
-\/ (exists P1 G1 S n, (P ≡* Ѵ  n (((t • P1) + G1) ‖ S)) /\ (Q ≡* Ѵ  n (P1 ‖ S)))
+\/ (exists P1 G1 S n, (P ≡* Ѵ  n (((𝛕 • P1) + G1) ‖ S)) /\ (Q ≡* Ѵ  n (P1 ‖ S)))
 \/ (exists n P1 S n', (P ≡* Ѵ  n' ((rec n • P1) ‖ S)) /\ (Q ≡* Ѵ  n' (pr_subst n P1 (rec n • P1) ‖ S)))
 ).
 Proof.
@@ -1708,7 +1708,7 @@ Proof.
       + apply transitivity with (Ѵ x6 ((x1 ‖ x2 ^ x0) ‖ x5) ‖ q).
         apply cgr_par. eauto. etrans. eapply cgr_res_scope_n. eapply cgr_res_n. apply cgr_par_assoc.
     * right. left. exists x. exists x0. exists (x1 ‖ NewVarCn 0 x2 q). exists x2. split.
-      + apply transitivity with (Ѵ x2 ((t • x + x0) ‖ x1) ‖ q). apply cgr_par. auto. etrans.
+      + apply transitivity with (Ѵ x2 ((𝛕 • x + x0) ‖ x1) ‖ q). apply cgr_par. auto. etrans.
            eapply cgr_res_scope_n. eapply cgr_res_n. apply cgr_par_assoc.
       + apply transitivity with (Ѵ x2 (x ‖ x1) ‖ q). apply cgr_par. auto. etrans.
            eapply cgr_res_scope_n. eapply cgr_res_n. apply cgr_par_assoc.
@@ -1863,7 +1863,7 @@ Qed.
 (* For the (LTS-transition), the transitable Guards and transitted terms, that performs a Tau ,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P = (g L))) -> 
-(exists Q M, ((P ≡* ((t • Q) + M))) /\ (V ≡* Q)).
+(exists Q M, ((P ≡* ((𝛕 • Q) + M))) /\ (V ≡* Q)).
 Proof.
 intros P V Hyp. 
 destruct Hyp. rename H into Transition. dependent induction Transition.
@@ -1879,11 +1879,11 @@ destruct Hyp. rename H into Transition. dependent induction Transition.
 - inversion H0. inversion H.
 - inversion H0. inversion H.
 - edestruct IHTransition. reflexivity. exists p1. reflexivity. destruct H. destruct H.  exists x. 
-  exists (x0 + p2). split. apply cgr_trans with (((t • x) + x0) + p2).
+  exists (x0 + p2). split. apply cgr_trans with (((𝛕 • x) + x0) + p2).
   apply cgr_choice. assumption.
   apply cgr_choice_assoc. assumption.
 - edestruct IHTransition. reflexivity. exists p2. reflexivity. destruct H. destruct H.  exists x. 
-  exists (x0 + p1). split. apply cgr_trans with (((t • x) + x0) + p1). apply cgr_trans with (p2 + p1). 
+  exists (x0 + p1). split. apply cgr_trans with (((𝛕 • x) + x0) + p1). apply cgr_trans with (p2 + p1). 
   apply cgr_choice_com. apply cgr_choice. assumption. apply cgr_choice_assoc. assumption.
 Qed.
 
@@ -2812,7 +2812,7 @@ Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ
 Proof. 
 intros P Q Reduction. 
 assert ((exists c v P1 P2 G1 G2 S n, ((P ≡* Ѵ  n ((((c ! v • P1) + G1) ‖ ((c ? x • P2) + G2)) ‖ S))) /\ (Q ≡* Ѵ  n ((P1 ‖ (P2^v)) ‖ S)))
-\/ (exists P1 G1 S n, (P ≡* Ѵ  n (((t • P1) + G1) ‖ S)) /\ (Q ≡* Ѵ  n (P1 ‖ S)))
+\/ (exists P1 G1 S n, (P ≡* Ѵ  n (((𝛕 • P1) + G1) ‖ S)) /\ (Q ≡* Ѵ  n (P1 ‖ S)))
 \/ (exists n P1 S n', (P ≡* Ѵ  n' ((rec n • P1) ‖ S)) /\ (Q ≡* Ѵ  n' (pr_subst n P1 (rec n • P1) ‖ S)))
 ). 
 apply ReductionShape. exact Reduction.
@@ -2831,9 +2831,9 @@ destruct H as [IH|[IH|IH]];  decompose record IH.
 
 (*Second case τ by Tau Action *)
 
-- assert (lts (Ѵ x2 ((t • x + x0) ‖ x1)) τ (Ѵ x2 (x ‖ x1))). eapply lts_res_tau_n. constructor.
+- assert (lts (Ѵ x2 ((𝛕 • x + x0) ‖ x1)) τ (Ѵ x2 (x ‖ x1))). eapply lts_res_tau_n. constructor.
   apply lts_choiceL. apply lts_tau.
-  assert (sc_then_lts P τ (Ѵ x2 (x ‖ x1))). exists (Ѵ x2 ((t • x + x0) ‖ x1)). split. assumption.
+  assert (sc_then_lts P τ (Ѵ x2 (x ‖ x1))). exists (Ѵ x2 ((𝛕 • x + x0) ‖ x1)). split. assumption.
   eapply lts_res_tau_n. apply lts_parL. apply lts_choiceL. apply lts_tau.
   assert (lts_then_sc P τ (Ѵ x2 (x ‖ x1))). apply Congruence_Respects_Transition. assumption. destruct H3. destruct H3. 
   exists x3. split. assumption. apply transitivity with (Ѵ x2 (x ‖ x1)). assumption. symmetry. assumption.
@@ -3000,7 +3000,7 @@ Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof. 
 intros.
 dependent induction H.
-  - eapply sts_cong.  instantiate (1:=  ((t • P) + 𝟘)). apply cgr_choice_nil_rev. instantiate (1:=P).
+  - eapply sts_cong.  instantiate (1:=  ((𝛕 • P) + 𝟘)). apply cgr_choice_nil_rev. instantiate (1:=P).
     apply sts_tau. constructor. constructor.
   - apply sts_recursion.
   - eapply sts_cong.
@@ -3050,12 +3050,12 @@ dependent induction H.
     apply sts_par. apply IHlts. reflexivity. apply cgr_par_com.
   - destruct (TransitionShapeForTauAndGuard (g p1) q). split. assumption. exists p1. reflexivity.
     decompose record H0.
-    eapply sts_cong. instantiate (1:= ((t • x) + (x0 + p2))).
-    apply transitivity with (g (((t • x) + x0) + p2)). apply cgr_choice. assumption. apply cgr_choice_assoc.
+    eapply sts_cong. instantiate (1:= ((𝛕 • x) + (x0 + p2))).
+    apply transitivity with (g (((𝛕 • x) + x0) + p2)). apply cgr_choice. assumption. apply cgr_choice_assoc.
     instantiate (1:= x). apply sts_tau. symmetry. assumption.
   - destruct (TransitionShapeForTauAndGuard (g p2) q). split. assumption. exists p2. reflexivity.
-    decompose record H0. eapply sts_cong. instantiate (1:= ((t • x) + (x0 + p1))).
-    apply transitivity with (g (((t • x) + x0 ) + p1)). apply transitivity with (g (p2 + p1)). apply cgr_choice_com.
+    decompose record H0. eapply sts_cong. instantiate (1:= ((𝛕 • x) + (x0 + p1))).
+    apply transitivity with (g (((𝛕 • x) + x0 ) + p1)). apply transitivity with (g (p2 + p1)). apply cgr_choice_com.
     apply cgr_choice. assumption. apply cgr_choice_assoc. instantiate (1:= x). apply sts_tau.
     symmetry. assumption.
 Qed.
@@ -3101,7 +3101,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
                   -> Well_Defined_Input_in k (c ? x • p)
 | WD_output : forall k c v p, Well_Defined_Data k v 
                     -> Well_Defined_Input_in k p -> Well_Defined_Input_in k (c ! v • p)
-| WD_tau : forall k p,  Well_Defined_Input_in k p -> Well_Defined_Input_in k (t • p)
+| WD_tau : forall k p,  Well_Defined_Input_in k p -> Well_Defined_Input_in k (𝛕 • p)
 | WD_choice : forall k p1 p2,  Well_Defined_Input_in k (g p1) ->  Well_Defined_Input_in k (g p2) 
               ->  Well_Defined_Input_in k (p1 + p2).
 
@@ -3661,7 +3661,7 @@ encode_gproc (gp: gproc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) +
   | 𝟘 => GenNode 0 []
   | c ? x • p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
   | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ (c ⋉ v)); encode_proc p]
-  | t • p => GenNode 3 [encode_proc p]
+  | 𝛕 • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
   end.
 
@@ -3682,7 +3682,7 @@ decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + ChannelD
   | GenNode 0 [] => 𝟘
   | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? x • (decode_proc ep)
   | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (ChannelData_of a) ! (Data_of a) • (decode_proc ep)
-  | GenNode 3 [eq] => t • (decode_proc eq)
+  | GenNode 3 [eq] => 𝛕 • (decode_proc eq)
   | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
   | _ => ① 
   end.
@@ -3717,7 +3717,7 @@ Fixpoint moutputs_of_g (k : nat) (gp : gproc) : gmultiset (TypeOfActions) :=
   | (cstC c) ! v • p => {[+ ((cstC c) ⋉ v) +]}
   | (bvarC i) ! v • p => if decide(k < (S i)) then {[+ ((bvarC (i - k)) ⋉ v) +]}
                                             else ∅
-  | t • p => ∅
+  | 𝛕 • p => ∅
   | g1 + g2 => moutputs_of_g k g1 ⊎ moutputs_of_g k g2
   end.
 
@@ -4125,7 +4125,7 @@ Fixpoint lts_set_output_g (g : gproc) (a : TypeOfActions) : gset proc :=
   | 𝟘 => ∅
   | c ? x • p => ∅
   | c ! v • p => if decide(a = (c ⋉ v)) then {[ p ]} else ∅
-  | t • p => ∅
+  | 𝛕 • p => ∅
   | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
   end.
 
@@ -4152,7 +4152,7 @@ Fixpoint lts_set_input_g (g : gproc) (a : TypeOfActions) : gset proc :=
   | 𝟘 => ∅
   | c' ? x • p => if decide(ChannelData_of a = c') then {[ p^(Data_of a) ]} else ∅
   | c' ! v • p => ∅
-  | t • p => ∅
+  | 𝛕 • p => ∅
   | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
   end.
 
@@ -4181,7 +4181,7 @@ match gp with
   | 𝟘 => ∅
   | c ? x • p => ∅
   | c ! v • p => ∅
-  | t • p => {[ p ]}
+  | 𝛕 • p => {[ p ]}
   | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
 end.
 
@@ -4449,12 +4449,12 @@ Qed.
 
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
 
-#[global] Program Instance VCCS_ggLts : gLts proc (ExtAct TypeOfActions) := ggLts gLabel_b.
+#[global] Program Instance VCCS_ggLts : @gLts proc (ExtAct TypeOfActions) gLabel_b := ggLts gLabel_b.
 
-#[global] Program Instance VCCS_ggLtsEq : gLtsEq proc (ExtAct TypeOfActions) := 
+#[global] Program Instance VCCS_ggLtsEq : @gLtsEq proc (ExtAct TypeOfActions) gLabel_b := 
   ggLtsEq gLabel_b.
 
-#[global] Program Instance VCCS_gLtsOBA : gLtsOba proc (ExtAct TypeOfActions) := ggLtsOba_b.
+#[global] Program Instance VCCS_gLtsOBA : @gLtsOba proc (ExtAct TypeOfActions) gLabel_b VCCS_ggLtsEq := ggLtsOba_b.
 
 #[global] Program Instance VCCS_gLtsOBAFB : gLtsObaFB proc (ExtAct TypeOfActions) := ggLtsObaFB_b.
 
@@ -4463,10 +4463,10 @@ From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeL
 From Must Require Import InteractionBetweenLts ParallelLTSConstruction.
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
-  @Prop_of_Inter proc proc (ExtAct TypeOfActions) parallel_inter gLabel_b
+  @Prop_of_Inter proc proc (ExtAct TypeOfActions) dual gLabel_b
   VCCS_ggLts VCCS_ggLts :=  Inter_parallel_IO gLabel_b.
 Next Obligation.
-  intros μ1 μ2 inter. unfold parallel_inter in inter.
+  intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
 Defined.
 
@@ -4496,14 +4496,16 @@ Next Obligation.
     eapply TransitionShapeForInput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
     assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ? })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ d0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
-    eapply accepts_preserved_by_eq in accepts. exact accepts. symmetry. eauto.
+    eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) gLabel_b VCCS_ggLtsEq) in accepts.
+    exact accepts. symmetry. eauto.
   - simpl in *. inversion H1.
   - simpl in *. inversion H1.
   - inversion H1; subst. eapply lts_refuses_spec1 in H2 as (e' & Tr). simpl in *.
     eapply TransitionShapeForOutput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
     assert (¬ (Ѵ n ((VarC_add n c0 ! d0 • P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ! })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
-    eapply accepts_preserved_by_eq in accepts. exact accepts. symmetry. eauto.
+    eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) gLabel_b VCCS_ggLtsEq) in accepts.
+    exact accepts. symmetry. eauto.
 Qed.
 
 Inductive PreAct :=
@@ -4563,7 +4565,7 @@ Fixpoint mPreCoAct_of_g (k : nat) (gp : gproc) : gmultiset PreAct :=
   | (cstC c) ! v • p => {[+ Inputs_on (cstC c) +]}
   | (bvarC i) ! v • p => if decide(k < (S i)) then {[+ Inputs_on (bvarC (i - k)) +]}
                                               else ∅
-  | t • p => ∅
+  | 𝛕 • p => ∅
   | g1 + g2 => mPreCoAct_of_g k g1 ⊎ mPreCoAct_of_g k g2
   end.
 
@@ -4916,7 +4918,7 @@ Qed.
 
 
 #[global] Program Instance gPreExtAction : 
-  @PreExtAction (ExtAct TypeOfActions) gLabel_b proc FinA PreAct EqPreAct CountPreAct 𝝳 Φ VCCS_ggLts :=
+  @PreExtAction proc (ExtAct TypeOfActions) gLabel_b FinA PreAct EqPreAct CountPreAct 𝝳 Φ VCCS_ggLts :=
   {| pre_co_actions_of_fin p := fun pre_μ => (exists μ', pre_μ = Φ μ' /\ μ' ∈ co_actions_of p) ;
      pre_co_actions_of p := PreCoAct_of p ; |}.
 Next Obligation.

@@ -23,7 +23,7 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From Must Require Import ActTau.
 
@@ -71,7 +71,7 @@ Notation "'co' μ" := (proj1_sig (exists_dual μ)) (at level 30).
 (*Definition of the co-trace *)
 Notation "'coₜ' s" := (map (fun μ => (proj1_sig (exists_dual μ))) s) (at level 30).
 
-Class gLts (P A : Type) `{ExtAction A} :=
+Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
   MkgLts {
       lts_step: P → Act A → P → Prop;
       lts_state_eqdec: EqDecision P;
@@ -83,6 +83,9 @@ Class gLts (P A : Type) `{ExtAction A} :=
       lts_refuses_spec1 p α : ¬ lts_refuses p α → { q | lts_step p α q };
       lts_refuses_spec2 p α : { q | lts_step p α q } → ¬ lts_refuses p α;
     }.
+
+Arguments gLts P {_} EA.
+
 #[global] Existing Instance lts_state_eqdec.
 #[global] Existing Instance lts_step_decidable.
 #[global] Existing Instance lts_refuses_decidable. 
@@ -94,7 +97,6 @@ Notation "p ⟶[ μ ] q" := (lts_step p (ActExt μ) q) (at level 30, format "p  
 Notation "p ↛"      := (lts_refuses p τ) (at level 30, format "p  ↛").
 Notation "p ↛{ α }" := (lts_refuses p α) (at level 30, format "p  ↛{ α }").
 Notation "p ↛[ μ ]" := (lts_refuses p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
-
 
 
 (****************** Properties on gLts ****************************)

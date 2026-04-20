@@ -20,13 +20,13 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Program Require Import Wf Equality.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
+From Stdlib.Program Require Import Wf Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
@@ -231,7 +231,7 @@ Fixpoint gen_test_raw Vs s p {struct s}:=
                             | [] => (g 𝟘)     (*whatever*)
                             | ActIn (c ⋉ d') :: s'' => (c ? x • (If ( bvar 0 ==  NewVar_in_Data 0 d' )
                                    Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
-                                   Else ①)) + (t • ①)
+                                   Else ①)) + (𝛕 • ①)
                             | ActOut (c ⋉ d') :: s'' => (g 𝟘)
                             end
   | ActOut (c ⋉ d) :: s' => match Vs with

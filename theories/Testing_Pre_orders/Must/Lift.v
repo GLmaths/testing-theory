@@ -23,13 +23,13 @@
    SOFTWARE.
 *)
 
-From Coq.Program Require Import Equality.
-From stdpp Require Import base countable finite gmap list 
-                        finite base decidable finite gmap gmultiset.
-From Must Require Import ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate 
+From Stdlib.Program Require Import Equality.
+
+From stdpp Require Import base countable finite gmap list finite base decidable finite gmap gmultiset.
+
+From Must Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate 
   Must CodePurification Termination 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS.
-From Must Require Import ActTau.
 
 Lemma conv `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
@@ -48,12 +48,15 @@ Proof.
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
 Qed.
 
-Lemma must_non_blocking_action_swap_l_fw_eq `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT, !Testing_Predicate T A outcome}
+Section Lifting.
+Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
+Context `{!Testing_Predicate T A outcome}.
 
-  `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}
+Section Forwarder.
+Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Context `{_ : !Prop_of_Inter P T A dual}.
 
+Lemma must_non_blocking_action_swap_l_fw_eq
   (p1 p2 : P) (e1 e2 : T) (η : A) :
   non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> p1 must_pass e2
     -> p2 must_pass e1.
@@ -130,13 +133,8 @@ Proof.
          * exists e4. split. eassumption. etrans. eapply heqe4. now symmetry.
 Qed.
 
-Lemma must_non_blocking_action_swap_r_fw_eq`{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p1 p2 : P) (e1 e2 : E) (η : A) :
+Lemma must_non_blocking_action_swap_r_fw_eq
+  (p1 p2 : P) (e1 e2 : T) (η : A) :
   non_blocking η -> p1 ⟶⋍[η] p2 -> e1 ⟶⋍[η] e2 -> p2 must_pass e1
     -> p1 must_pass e2.
 Proof.
@@ -247,26 +245,16 @@ Proof.
          exists p4. split. eassumption. etrans. eapply heqp4. now symmetry.
 Qed.
 
-Lemma must_non_blocking_action_swap_l_fw `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p1 p2 : P) (e1 e2 : E) (η : A) :
+Lemma must_non_blocking_action_swap_l_fw
+  (p1 p2 : P) (e1 e2 : T) (η : A) :
   non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> p1 must_pass e2 
     -> p2 must_pass e1.
 Proof.
   intros. eapply must_non_blocking_action_swap_l_fw_eq; eauto; eexists; split; eauto; reflexivity.
 Qed.
 
-Lemma must_non_blocking_action_swap_r_fw `{
-  @gLtsObaFW P A H gLtsP gLtsEqP gLtsObaP, 
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p1 p2 : P) (e1 e2 : E) (η : A) :
+Lemma must_non_blocking_action_swap_r_fw
+  (p1 p2 : P) (e1 e2 : T) (η : A) :
   non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> p2 must_pass e1
     -> p1 must_pass e2.
 Proof.
@@ -274,14 +262,22 @@ Proof.
   eapply must_non_blocking_action_swap_r_fw_eq; eauto; eexists; split; eauto; reflexivity.
 Qed.
 
-Lemma nf_must_fw_l `{
-  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE Y V, !Testing_Predicate E A outcome}
+End Forwarder.
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+Section FeedBack.
 
-  m1 m2 (p : P) (e e' : E) : e ⟿{m1} e' -> (p, m1 ⊎ m2) must_pass e' -> (p, m2) must_pass e.
+Context `{@gLtsObaFB P A H gLtsEqP M}.
+Context `{!FiniteImagegLts P A}.
+
+Notation gLtsP := (gLtsEq_gLts (gLtsEq := gLtsEqP)).
+Notation gLtsT := (gLtsEq_gLts (gLtsEq := gLtsEqT)).
+
+Context `{_ : !Prop_of_Inter P (mb A) A fw_inter}.
+Context `{_ : !Prop_of_Inter (P * mb A) T A dual}.
+Context `{_ : !Prop_of_Inter P T A dual}.
+
+Lemma nf_must_fw_l
+  m1 m2 (p : P) (e e' : T) : e ⟿{m1} e' -> (p, m1 ⊎ m2) must_pass e' -> (p, m2) must_pass e.
 Proof.
   revert p e e' m2.
   induction m1 using gmultiset_ind; intros p e e' m2 hmo hm.
@@ -289,9 +285,10 @@ Proof.
     rewrite gmultiset_disj_union_left_id in hm.
     symmetry in eq. eapply must_eq_client; eauto.
     multiset_solver.
-  - assert (non_blocking x) as nb. eapply nb_with_strip; eauto. multiset_solver.
+  - assert (non_blocking x) as nb.
+    { eapply nb_with_strip in hmo. exact hmo. set_solver. }
     assert (x ∈ {[+ x +]} ⊎ m1) as mem by multiset_solver.
-    eapply aux0 in mem as (e0 & l0); eauto.
+    eapply (@aux0 T) in mem as (e0 & l0); eauto.
     eapply (aux3_) in hmo as (t & hwo & heq); eauto.
     eapply (must_non_blocking_action_swap_l_fw_eq ).
     exact nb. exists (p ▷ m2). split. 
@@ -303,14 +300,8 @@ Proof.
     now replace (m1 ⊎ ({[+ x +]} ⊎ m2)) with ({[+ x +]} ⊎ m1 ⊎ m2) by multiset_solver.
 Qed.
 
-Lemma nf_must_fw_r `{
-  @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A ,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-
-  (p : P) (e e' : E) m1 m2 : 
+Lemma nf_must_fw_r
+  (p : P) (e e' : T) m1 m2 :
   e ⟿{m1} e' -> (p, m2) must_pass e -> (p, m1 ⊎ m2) must_pass e'.
 Proof.
   intro hwo. revert p m2.
@@ -330,14 +321,8 @@ Proof.
        eapply IHhwo. eassumption.
 Qed.
 
-Lemma nf_must_fw `{
-  @gLtsObaFB P A H gLtsP M K, !FiniteImagegLts P A ,
-  @gLtsObaFB E A H gLtsE Y V , !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-
-  (p : P) (e e' : E) m : 
+Lemma nf_must_fw
+ (p : P) (e e' : T) m :
   e ⟿{m} e' -> (p, m) must_pass e' <-> (p, ∅) must_pass e.
 Proof.
   intros. split; intro hm.
@@ -345,27 +330,20 @@ Proof.
   - rewrite <- gmultiset_disj_union_right_id. eapply nf_must_fw_r; eassumption.
 Qed.
 
-Lemma must_to_must_fw `{
-  @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e : E) (m : mb A) :
+Lemma must_to_must_fw
+  (p : P) (e : T) (m : mb A) :
   p must_pass e -> m = lts_oba_mo e -> forall e', e ⟿{m} e' 
     -> (p, m) must_pass e'.
 Proof.
   intros hm. revert m.
-  dependent induction hm; intros m heq e' hmo.
+  induction hm as [p e Hgood| p e ngood ex pt Hpt et Het com Hcom]; intros m heq e' hmo.
   - eapply m_now. eapply woutpout_preserves_outcome; eauto.
   - eapply m_step; eauto with mdb.
-    + intro hh. destruct nh. eapply woutpout_preserves_outcome_converse; eauto.
+    + intro hh. destruct ngood. eapply woutpout_preserves_outcome_converse; eauto.
     + destruct ex as (t & l). inversion l; subst.
       ++ exists ((a2, lts_oba_mo e), e').
          eapply ParLeft. eapply ParLeft. assumption.
-      ++ edestruct (woutpout_delay_tau hmo l0).
+      ++ edestruct (woutpout_delay_tau hmo l0) as [H8| H8].
          +++ destruct H8 as (a & co_a & r & t & nb & duo & l1 & l2).
              eapply lts_oba_mo_spec2 in l1; eauto.
              exists (p, lts_oba_mo r, t). symmetry in duo.
@@ -388,19 +366,19 @@ Proof.
              eapply ParLeft. assumption.
     + intros (p', m') l.
       inversion l; subst. 
-      ++ eapply H5; eauto.
-      ++ inversion l0.
-      ++ assert (mem : μ2 ∈ ({[+ μ2 +]} ⊎ m')) by multiset_solver.
-         destruct eq as (duo & nb). symmetry in duo.
-         eapply non_blocking_action_in_ms in l2 as eq'; eauto; subst.
-         rewrite <- eq' in hmo.
-         eapply (aux0 μ2) in mem as (e0, l0); eauto.
-         eapply (aux3_) in hmo as (t & hwo & heq); eauto.
-         eapply must_eq_client. eassumption.
-         symmetry in duo.
-         eapply H7; eauto. 
-         eapply lts_oba_mo_spec2 in l0; eauto.
-         eapply (gmultiset_disj_union_inj_1 {[+ μ2 +]}). now rewrite <- l0.
+      * eauto.
+      * inversion l0.
+      * assert (mem : μ2 ∈ ({[+ μ2 +]} ⊎ m')) by multiset_solver.
+        destruct eq as (duo & nb). symmetry in duo.
+        eapply non_blocking_action_in_ms in l2 as eq'; eauto; subst.
+        rewrite <- eq' in hmo.
+        eapply (@aux0 _ _ _ _ _ _ e' _ μ2) in mem as (e0, l0); eauto.
+        -- eapply (@aux3_) in hmo as (t & hwo & heq); eauto.
+          ++ eapply must_eq_client. eassumption.
+             symmetry in duo.
+             eapply Hcom; eauto.
+             apply lts_oba_mo_spec2 in l0; eauto.
+             eapply (gmultiset_disj_union_inj_1 {[+ μ2 +]}). now rewrite <- l0.
     + intros e0 l0.
       edestruct (woutpout_preserves_mu hmo l0) as (e1 & t & l & hwo1 & heq1).
       eapply must_eq_client. symmetry. eassumption.
@@ -409,7 +387,7 @@ Proof.
       destruct (lts_oba_mo_strip e1) as (e2 & hwo2).
       eapply nf_must_fw_l. eapply hwo2.
       rewrite gmultiset_disj_union_right_id.
-      eapply H6; eauto with mdb.
+      eapply Het; eauto with mdb.
     + intros (p', m') e0 μ1 μ2 duo l1 l2.
       destruct (decide (non_blocking μ2)) as [ nb | not_nb]; simpl in *.
       ++ rename μ2 into η. subst. inversion l1; subst.
@@ -420,9 +398,9 @@ Proof.
              destruct (lts_oba_mo_strip e3) as (e3' & hwo3').
              eapply nf_must_fw_l. eapply hwo3'.
              rewrite gmultiset_disj_union_right_id.
-             eapply H7; eauto with mdb.
+             eapply Hcom; eauto with mdb.
          +++ exfalso. subst.
-             eapply lts_refuses_spec2.
+             eapply (@lts_refuses_spec2 T).
              exists e0. eassumption. eapply lts_oba_mo_strip_refuses; eauto.
        ++ destruct (decide (non_blocking μ1)) as [ nb1 | not_nb1];  simpl in *.
           +++ inversion l1; subst.
@@ -433,7 +411,7 @@ Proof.
                    destruct (lts_oba_mo_strip e3) as (e3' & hwo3').
                    eapply nf_must_fw_l. eapply hwo3'.
                    rewrite gmultiset_disj_union_right_id.
-                   eapply H7; eauto with mdb.
+                   eapply Hcom; eauto with mdb.
               ++++ eapply non_blocking_action_in_ms in nb1 as eq; eauto; subst.
                    assert (mem : μ1 ∈ lts_oba_mo e).
                    rewrite <- eq. multiset_solver.
@@ -454,7 +432,7 @@ Proof.
                    edestruct (lts_oba_mo_strip t) as (x & hwot).
                    eapply nf_must_fw_l. eassumption.
                    rewrite gmultiset_disj_union_right_id.
-                   eapply H6. eassumption. reflexivity. eassumption.
+                   eapply Het. eassumption. reflexivity. eassumption.
         +++ inversion l1; subst.
             ++++ assert (e ⟿{lts_oba_mo e} e') as hmo'; eauto.
                  eapply (woutpout_preserves_mu) in hmo 
@@ -465,21 +443,21 @@ Proof.
                  destruct (lts_oba_mo_strip t') as (t'_strip & stripped'').
                  rewrite eq in stripped''.
                  assert (e0_strip ⋍ t'_strip). eapply strip_eq_sim; eauto.
-                 assert (strip r (lts_oba_mo e ⊎ lts_oba_mo e0) t'_strip).
-                 eapply strip_union; eauto.
+                 assert (H5: strip r (lts_oba_mo e ⊎ lts_oba_mo e0) t'_strip).
+                 { eapply strip_union; eauto. }
                  assert (∀ η : A, non_blocking η → t'_strip ↛[η]).
                  rewrite<- eq in stripped''.
                  eapply lts_oba_mo_strip_refuses; eauto.
-                 assert (lts_oba_mo e ⊎ lts_oba_mo e0 = lts_oba_mo r).
-                 symmetry. eapply mo_stripped; eauto.
+                 assert (H7: lts_oba_mo e ⊎ lts_oba_mo e0 = lts_oba_mo r).
+                 { symmetry. eapply mo_stripped; eauto. }
                  destruct (lts_oba_mo_strip r) as (r_stripped & stripped''').
-                 assert ( t'_strip ⋍ r_stripped). rewrite H11 in H9. 
+                 assert ( t'_strip ⋍ r_stripped). rewrite H7 in H5.
                  eapply strip_m_deter; eauto.
                  assert (e0_strip ⋍ r_stripped). etransitivity; eauto.
                  eapply (nf_must_fw_l (lts_oba_mo e0) (lts_oba_mo e)); eauto.
-                 apply (H7 p' r μ1 μ2) ; eauto. multiset_solver.
+                 apply (Hcom p' r μ1 μ2) ; eauto. multiset_solver.
                  assert (lts_oba_mo e ⊎ lts_oba_mo e0 = lts_oba_mo e0 ⊎ lts_oba_mo e) as eq''.
-                 multiset_solver. rewrite<- eq''. eauto. rewrite H11.
+                 multiset_solver. rewrite<- eq''. eauto. rewrite H7.
                  eapply mo_stripped_equiv; eauto. symmetry; eauto.
             ++++ eapply blocking_action_in_ms in not_nb1 as (eq & duo' & nb'); subst ; eauto.
                  assert (non_blocking μ2).
@@ -488,33 +466,31 @@ Proof.
                  subst. eauto. contradiction.
 Qed.
 
-Lemma must_fw_to_must `{
-  @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e : E) : (p, ∅) must_pass e -> p must_pass e.
+Lemma must_fw_to_must
+  (p : P) (e : T) : (p, ∅ : gmultiset A) must_pass e -> p must_pass e.
 Proof.
-  intro hm.
-  dependent induction hm.
+  intro hm. remember (p ▷ (∅ : gmultiset A)) as p'. revert p Heqp'.
+  induction hm; intros p' Eq.
   * now eapply m_now.
   * eapply m_step; eauto with mdb.
-    - edestruct (lts_oba_mo_strip e) as (e' & hwo).
-      assert (must (p, lts_oba_mo e) e').
-      { eapply nf_must_fw; eauto with mdb. }
-      inversion H5; subst.
-      + exfalso. eapply woutpout_preserves_outcome_converse in H9; eauto.
+    - edestruct (lts_oba_mo_strip t) as (e' & hwo).
+      assert (hwo' : t ⟿{lts_oba_mo t} e'); eauto. subst. 
+      eapply (@nf_must_fw p' t e' (lts_oba_mo t)) in hwo'; eauto with mdb.
+
+      assert (p' ▷ (lts_oba_mo t : gmultiset A) must_pass e') as H11.
+
+      { eapply hwo'; subst ; eauto with mdb. }
+
+      inversion H11; subst.
+      + exfalso. eapply woutpout_preserves_outcome_converse in H5; eauto.
       + destruct ex0 as (((p0, m0), e0) & l).
         inversion l; subst.
         ++ inversion l0; subst.
-           +++ exists (p0 ▷ e). eapply ParLeft; eauto.
+           +++ exists (p0 ▷ t). eapply ParLeft; eauto.
            +++ inversion l1.
            +++ destruct eq as (duo & nb).
                eapply non_blocking_action_in_ms in nb as eq; subst; eauto.
-               assert (μ2 ∈ lts_oba_mo e) as mem. rewrite <- eq. set_solver.
+               assert (μ2 ∈ lts_oba_mo t) as mem. rewrite <- eq. set_solver.
                eapply lts_oba_mo_spec_bis2 in mem as (e'2 & nb' & l'2).
                exists (p0, e'2). eapply ParSync; eauto.
         ++ eapply woutpout_preserves_mu in l0 as (r0 & r1 & l0 & _); eauto.
@@ -528,7 +504,7 @@ Proof.
                ++++ exists (p0, r0). 
                     eapply ParSync ; eauto.
                ++++ eapply non_blocking_action_in_ms in n0 as eq' ; eauto ; subst.
-                    assert (μ1 ∈ lts_oba_mo e) as mem. rewrite <- eq'. set_solver.
+                    assert (μ1 ∈ lts_oba_mo t) as mem. rewrite <- eq'. set_solver.
                     eapply lts_oba_mo_spec_bis2 in mem as (e2 & nb' & l'2).
                     assert (neq : μ2 ≠ μ1). eapply BlockingAction_are_not_non_blocking; eauto.
                     edestruct (lts_oba_non_blocking_action_confluence nb' neq l'2 l0) as (e3 & l3 & l4).
@@ -543,19 +519,12 @@ Proof.
               ++++ eapply blocking_action_in_ms in n0 as (eq' & duo' & nb'); eauto; subst.
                    assert (μ2 = co μ1). { eapply unique_nb;eauto. }
                    subst. contradiction.
-    - intros p' l. eapply H8; eauto with mdb. eapply ParLeft; eauto.
-    - intros p' e' μ1 μ2 duo l1 l2. eapply H6; eauto with mdb. eapply ParLeft; eauto.
+    - intros p'' l. subst. eapply H2; eauto with mdb. eapply ParLeft; eauto.
+    - intros p'' e' μ1 μ2 duo l1 l2. eapply H4; eauto with mdb. subst. eapply ParLeft; eauto.
 Qed.
 
-Lemma must_iff_must_fw `{
-  @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE , !Testing_Predicate E A outcome}
-
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-
-  (p : P) (e : E) :
+Lemma must_iff_must_fw
+  (p : P) (e : T) :
   p must_pass e <-> (p, ∅) must_pass e.
 Proof.
   split; intro hm.
@@ -566,22 +535,22 @@ Proof.
   - eapply must_fw_to_must; eauto.
 Qed.
 
-Lemma lift_fw_ctx_pre `{
-    @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-    @gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-    @gLtsObaFB E A H gLtsE gLtsEqE gLtsObaE, !Testing_Predicate E A outcome}
+End FeedBack.
+End Lifting.
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
+Lemma lift_fw_ctx_pre
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate T A outcome}
 
-  `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
 
-  `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
+  {_ : @Prop_of_Inter P (mb A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (P * mb A) T A dual H (inter_lts fw_inter) _}
 
-  `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}
-
-  `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
-
-  `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
+  {_ : @Prop_of_Inter Q (mb A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (Q * mb A) T A dual H (inter_lts fw_inter) _}
 
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⊑ₘᵤₛₜᵢ (q, ∅).
 Proof.

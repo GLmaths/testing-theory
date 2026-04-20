@@ -28,7 +28,6 @@ From Coq.Unicode Require Import Utf8.
 From Coq.Lists Require Import List.
 Import ListNotations.
 From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Logic Require Import JMeq ProofIrrelevance.
 From Coq.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From Must Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW.
@@ -49,7 +48,7 @@ Notation "p ⟹ q" := (wt p [] q) (at level 30).
 Notation "p ⟹{ μ } q" := (wt p [μ] q) (at level 30, format "p  ⟹{ μ }  q").
 Notation "p ⟹[ s ] q" := (wt p s q) (at level 30, format "p  ⟹[ s ]  q").
 
-Definition wt_sc `{gLts P A, !gLtsEq P A} p s q := ∃ r, p ⟹[s] r /\ r ⋍ q.
+Definition wt_sc `{gLtsEq P H} p s q := ∃ r, p ⟹[s] r /\ r ⋍ q.
 
 Notation "p ⟹⋍ q" := (wt_sc p [] q) (at level 30, format "p  ⟹⋍  q").
 Notation "p ⟹⋍{ μ } q" := (wt_sc p [μ] q) (at level 30, format "p  ⟹⋍{ μ }  q").
@@ -60,9 +59,11 @@ Notation "p ⟹⋍[ s ] q" := (wt_sc p s q) (at level 30, format "p  ⟹⋍[ s ]
 Lemma wt_pop `{gLts P A} p q μ s : p ⟹[μ :: s] q -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
 Proof.
   intro w.
-  dependent induction w; eauto with mdb.
-  destruct (IHw μ s JMeq_refl) as (r & w1 & w2).
-  exists r. eauto with mdb.
+  remember ([] : trace A) as s0 eqn:Hnil. revert s0 Hnil.
+  dependent induction w; eauto with mdb; intros; subst.
+  edestruct (IHw μ s) as (r & w1 & w2); eauto.
+  - exists r. eauto with mdb.
+  - exists q. eauto with mdb.
 Qed.
 
 Lemma wt_concat `{gLts P A} p q r s1 s2 :
@@ -105,7 +106,7 @@ Lemma wt_decomp_one `{gLts P A} {μ p q} : p ⟹{μ} q -> ∃ r1 r2, p ⟹ r1 �
 Proof.
   intro w.
   dependent induction w; eauto with mdb.
-  destruct (IHw μ JMeq_refl) as (r1 & r2 & w1 & l' & w2).
+  destruct (IHw μ) as (r1 & r2 & w1 & l' & w2); [reflexivity|].
   exists r1, r2. eauto with mdb.
 Qed.
 
@@ -234,14 +235,17 @@ Lemma delay_wt_non_blocking_action_nil `{gLtsOba P A} {p q r η} :
 Proof.
   intros nb l w.
   revert p η nb l.
-  dependent induction w; intros p0 η nb (p' & hl & heq); eauto with mdb.
+  remember ([] : trace A) as s.
+  assert (Hnil : s = []) by trivial. revert Hnil. clear Heqs.
+  dependent induction w; intros Heqs p0 η nb (p' & hl & heq); subst; eauto with mdb.
   - exists p0. split; eauto with mdb. exists p'. split; eauto with mdb.
   - assert (p' ⟶⋍ q) as (r & hlr & heqr).
     { eapply eq_spec; eauto. }
     destruct (lts_oba_non_blocking_action_delay nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
-    edestruct (IHw JMeq_refl r' η) as (r0 & w0 & (r1 & l1' & heq1)).
-    exact nb. exists t'. split. eassumption. etrans; eassumption.
-    exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
+    destruct (IHw eq_refl r' η nb) as (r0 & w0 & (r1 & l1' & heq1)).
+    + eexists; split; eauto. etransitivity; eassumption.
+    + exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
+  - inversion Heqs.
 Qed.
 
 Lemma delay_wt_non_blocking_action `{gLtsOba P A} {p q r η s} :

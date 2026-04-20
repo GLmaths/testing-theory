@@ -23,12 +23,11 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation.
 
-Class gLtsOba (P A : Type) `{H : ExtAction A}
-            {LtsP : @gLts P A H} {Rel : @gLtsEq P A H LtsP} :=
+Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
   MkOba {
       (* Multiset of non-blocking action from a process *)
       lts_oba_mo (p : P) : gmultiset A;

@@ -24,8 +24,8 @@
 *)
 
 From stdpp Require Import base decidable gmap finite.
-From Coq Require Import ssreflect.
-From Coq.Program Require Import Equality.
+From Stdlib Require Import ssreflect.
+From Stdlib.Program Require Import Equality.
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
@@ -37,26 +37,24 @@ Section preorder.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
-  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsT : !gLts T A, !FiniteImagegLts T A, gLtsEqT: !gLtsEq T A, !Testing_Predicate T A outcome}.
-  Context `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}.
-  Context `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}.
 
-  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
-  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
-  Context `{@gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT}.
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
 
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter (P * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
-  Context `{@Prop_of_Inter (Q * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
+  Context `{!Prop_of_Inter P T A dual}.
+  Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
-  Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
-  Context `{@AbsAction A H T FinA gLtsT Φ}.
-  Context `{it_conv : @test_convergence_spec T _ _ _ _ outcome Testing_Predicate0 t_conv}.
-  Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * mb A) T A dual}.
+  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * mb A) T A dual}.
+
+  Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
+  Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
+  Context `{@AbsAction A H T FinA _ Φ}.
+  Context `{it_conv : @test_convergence_spec T _ _ _ outcome Testing_Predicate0 t_conv}.
+  Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   (* ************************************************** *)
 

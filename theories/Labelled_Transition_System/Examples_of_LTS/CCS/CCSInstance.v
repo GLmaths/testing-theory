@@ -24,11 +24,11 @@
 *)
 
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 From Must Require Import InputOutputActions ActTau Clos_n.
 
 (*************************************** Channels ******************************************)
@@ -80,7 +80,7 @@ Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! • P" := (gpr_output c P) (at level 50).
 Notation "c ? • P" := (gpr_input c P) (at level 50).
-Notation "'t' • P" := (gpr_tau P) (at level 50).
+Notation "'𝛕' • P" := (gpr_tau P) (at level 50).
 
 
 (*Definition for the size of a term : proc, to do induction on it in the future*)
@@ -98,7 +98,7 @@ with gsize p :=
   | 𝟘 => 0
   | c ! • p => S (size p)
   | c ? • p => S (size p)
-  | t • p => S (size p)
+  | 𝛕 • p => S (size p)
   | p + q => S (gsize p + gsize q)
   end.
 
@@ -120,8 +120,8 @@ with gpr_subst id p q {struct p} := match p with
     c ! • (pr_subst id p q)
 | c ? • p =>
     c ? • (pr_subst id p q)
-| t • p =>
-    t • (pr_subst id p q)
+| 𝛕 • p =>
+    𝛕 • (pr_subst id p q)
 | p1 + p2 =>
     (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
@@ -137,7 +137,7 @@ Inductive lts : proc -> ActIO Channel -> proc -> Prop :=
 
 (*The actions Tau*)
 | lts_tau : forall {p},
-    lts (t • p) τ p
+    lts (𝛕 • p) τ p
 | lts_rec : forall {x p},
     lts (rec x • p) τ (pr_subst x p (rec x • p))
 
@@ -206,7 +206,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step p q -> (rec x • p) ≡ (rec x • q)
 | cgr_tau_step : forall p q,
     cgr_step p q ->
-    cgr_step (t • p) (t • q)
+    cgr_step (𝛕 • p) (𝛕 • q)
 | cgr_input_step : forall c p q,
     cgr_step p q ->
     cgr_step (c ? • p) (c ? • q)
@@ -318,7 +318,7 @@ intros. dependent induction H.
 constructor.
 apply cgr_recursion_step. exact H. eauto with cgr_eq.
 Qed.
-Lemma cgr_tau : forall p q, p ≡* q -> (t • p) ≡* (t • q).
+Lemma cgr_tau : forall p q, p ≡* q -> (𝛕 • p) ≡* (𝛕 • q).
 Proof.
 intros. dependent induction H.
 constructor.
@@ -538,7 +538,7 @@ apply clos_n_S_inv in Hn as [Heq|[p' [Hpp' Hp'q]]]; [now inversion Heq|].
 dependent destruction Hpp';
 try solve[etransitivity; [|eapply IHn; eauto]; repeat constructor].
 - apply IHn, cgr_n_par_nil_l, Hp'q.
-- transitivity (g (t • q0 + r)) ; [repeat constructor| apply IHn]; trivial.
+- transitivity (g (𝛕 • q0 + r)) ; [repeat constructor| apply IHn]; trivial.
 - transitivity (g (c ? • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (c ! • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (q1 + p2 + r)); [repeat constructor| apply IHn]; trivial.
@@ -574,7 +574,7 @@ Inductive sts : proc -> proc -> Prop :=
     sts (((c ! • p1) + g1) ‖ ((c ? • p2) + g2)) (p1 ‖ p2)
 (* Nothing more , something less *)
 | sts_tau : forall {p g},
-    sts ((t • p) + g) p
+    sts ((𝛕 • p) + g) p
 (* Resursion *)
 | sts_rec : forall {x p},
     sts (rec x • p) (pr_subst x p (rec x • p))
@@ -595,7 +595,7 @@ Hint Constructors sts:ccs.
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 Lemma ReductionShape : forall P Q, P ➙ Q ->
 ((exists x P1 P2 M1 M2 S, ((P ≡* (((x ! • P1) + M1) ‖ ((x ? • P2) + M2)) ‖ S)) /\ (Q ≡*((P1 ‖ P2) ‖ S)))
-\/ (exists P1 M1 S, (P ≡* (((t • P1) + M1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
+\/ (exists P1 M1 S, (P ≡* (((𝛕 • P1) + M1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
 \/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))).
 Proof.
 intros P Q Transition.
@@ -608,7 +608,7 @@ induction Transition.
         ** apply transitivity with (((((x ! • x0) + x2) ‖ ((x ? • x1) + x3)) ‖ x4) ‖ q). apply cgr_par. exact H. apply cgr_par_assoc.
         ** apply transitivity with (((x0 ‖ x1) ‖ x4) ‖ q). apply cgr_par. exact H1.  apply cgr_par_assoc.
     * exists x. exists x0. exists (x1 ‖ q). split.
-        ** apply transitivity with (((t • x + x0) ‖ x1) ‖ q). apply cgr_par. exact H0.
+        ** apply transitivity with (((𝛕 • x + x0) ‖ x1) ‖ q). apply cgr_par. exact H0.
         apply cgr_par_assoc.
         ** apply transitivity with (x ‖(x1) ‖ q). apply cgr_par. exact H1. apply cgr_par_assoc.
     * exists x. exists x0. exists (x1 ‖ q). split.
@@ -692,8 +692,8 @@ Qed.
 
 (* For the (LTS-transition), the transitable Guards and transitted terms, that performs a Tau ,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P = (g L))) ->
-(exists Q M, ((P ≡* ((t • Q) + M))) /\ (V ≡* (Q))).
+Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P = (g L))) -> 
+(exists Q M, ((P ≡* ((𝛕 • Q) + M))) /\ (V ≡* (Q))).
 Proof.
 intros P V Hyp.
 destruct Hyp. rename H into Transition. dependent induction Transition.
@@ -706,10 +706,10 @@ destruct Hyp. rename H into Transition. dependent induction Transition.
 - inversion H0. inversion H.
 - inversion H0. inversion H.
 - edestruct (IHTransition ). reflexivity. exists p1. reflexivity. destruct H. destruct H.  exists x. 
-  exists (x0 + p2). split. apply cgr_trans with (((t • x) + x0) + p2). apply cgr_choice. exact H.
+  exists (x0 + p2). split. apply cgr_trans with (((𝛕 • x) + x0) + p2). apply cgr_choice. exact H.
   apply cgr_choice_assoc. exact H1.
 - edestruct (IHTransition ). reflexivity. exists p2. reflexivity. destruct H. destruct H.  exists x. 
-  exists (x0 + p1). split. apply cgr_trans with (((t • x) + x0) + p1). apply cgr_trans with (p2 + p1). 
+  exists (x0 + p1). split. apply cgr_trans with (((𝛕 • x) + x0) + p1). apply cgr_trans with (p2 + p1). 
   apply cgr_choice_com. apply cgr_choice. exact H. apply cgr_choice_assoc. exact H1.
 Qed.
 
@@ -882,8 +882,8 @@ Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_sc P τ Q).
 Proof.
 intros P Q Reduction.
 assert (((exists x P1 P2 M1 M2 S, ((P ≡* (((x ! • P1) + M1) ‖ ((x ? • P2) + M2)) ‖ S)) /\ (Q ≡* ((P1 ‖ P2) ‖ S)))
-\/ (exists P1 M1 S, (P ≡* (((t • P1) + M1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
-\/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S))))).
+\/ (exists P1 M1 S, (P ≡* (((𝛕 • P1) + M1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
+\/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S))))). 
 apply ReductionShape. exact Reduction. destruct H.
 
 (*First case τ by communication *)
@@ -898,9 +898,9 @@ apply ReductionShape. exact Reduction. destruct H.
 
 (*Second case τ by Tau Action *)
 
-  * decompose record H. assert (lts ((t • x + x0) ‖ x1) τ (x ‖ x1)). constructor. apply lts_choiceL. apply lts_tau.
-    assert (lts_sc1 P τ (x ‖ x1)). exists ((t • x + x0) ‖ x1). split. exact H1. exact H0.
-    assert (lts_sc P τ (x ‖ x1)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4.
+  * decompose record H. assert (lts ((𝛕 • x + x0) ‖ x1) τ (x ‖ x1)). constructor. apply lts_choiceL. apply lts_tau.  
+    assert (lts_sc1 P τ (x ‖ x1)). exists ((𝛕 • x + x0) ‖ x1). split. exact H1. exact H0.
+    assert (lts_sc P τ (x ‖ x1)). apply Congruence_Respects_Transition. exact H3. destruct H4. destruct H4. 
     exists x2. split. exact H4. apply transitivity with (x ‖ x1). exact H5. symmetry. exact H2.
 
 (*Third case τ by rec *)
@@ -954,7 +954,7 @@ Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof.
 intros.
 dependent induction H.
-  - eapply sts_cong. instantiate (1:=  ((t • p) + 𝟘)). apply cgr_choice_nil_rev. instantiate (1:=p).
+  - eapply sts_cong. instantiate (1:=  ((𝛕 • p) + 𝟘)). apply cgr_choice_nil_rev. instantiate (1:=p).
     apply sts_tau. apply cgr_refl.
   - apply sts_rec.
   - destruct (TransitionShapeForOutput p1 p2 a). exact H. destruct H1. destruct H1. destruct H1. destruct H2.
@@ -978,12 +978,12 @@ dependent induction H.
 - eapply sts_cong. instantiate (1:= q1 ‖ p). apply cgr_par_com. instantiate (1:= q2 ‖ p).
   apply sts_par. apply IHlts. reflexivity. apply cgr_par_com.
 - destruct (TransitionShapeForTauAndGuard (g p1) q). split. exact H. exists p1. reflexivity.
-  destruct H0. destruct H0. eapply sts_cong. instantiate (1:= (((t • x) + (x0 + p2)))).
-  apply transitivity with (g (((t • x) + x0 ) + p2)). apply cgr_choice. exact H0. apply cgr_choice_assoc.
+  destruct H0. destruct H0. eapply sts_cong. instantiate (1:= (((𝛕 • x) + (x0 + p2)))).
+  apply transitivity with (g (((𝛕 • x) + x0 ) + p2)). apply cgr_choice. exact H0. apply cgr_choice_assoc.
   instantiate (1:= x). apply sts_tau. symmetry. exact H1.
 - destruct (TransitionShapeForTauAndGuard (g p2) q). split. exact H. exists p2. reflexivity.
-  destruct H0. destruct H0. eapply sts_cong. instantiate (1:= (((t • x) + (x0 + p1)))).
-  apply transitivity with (g (((t • x) + x0 ) + p1)). apply transitivity with (g (p2 + p1)). apply cgr_choice_com.
+  destruct H0. destruct H0. eapply sts_cong. instantiate (1:= (((𝛕 • x) + (x0 + p1)))).
+  apply transitivity with (g (((𝛕 • x) + x0 ) + p1)). apply transitivity with (g (p2 + p1)). apply cgr_choice_com.
   apply cgr_choice. exact H0. apply cgr_choice_assoc. instantiate (1:= x). apply sts_tau. symmetry. exact H1.
 Qed.
 
@@ -1074,7 +1074,7 @@ encode_gproc (gp: gproc) : gen_tree (nat + Channel) :=
   | 𝟘 => GenNode 0 []
   | c ? • p => GenNode 2 [GenLeaf (inr $ c); encode_proc p]
   | c ! • p  => GenNode 5 [GenLeaf (inr $ c); encode_proc p]
-  | t • p => GenNode 3 [encode_proc p]
+  | 𝛕 • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
   end.
 
@@ -1093,7 +1093,7 @@ decode_gproc (t': gen_tree (nat + Channel)): gproc :=
   | GenNode 0 [] => 𝟘 
   | GenNode 2 [GenLeaf (inr c); ep] => c ? • (decode_proc ep)
   | GenNode 5 [GenLeaf (inr c) ; ep] => c ! • (decode_proc ep)
-  | GenNode 3 [eq] => t • (decode_proc eq)
+  | GenNode 3 [eq] => 𝛕 • (decode_proc eq)
   | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
   | _ => ① 
   end.
@@ -1124,7 +1124,7 @@ Fixpoint moutputs_of_g (gp : gproc) : gmultiset Channel :=
   | 𝟘 => ∅
   | c ?  • p => ∅
   | c !  • p => {[+ c +]}
-  | t • p => ∅
+  | 𝛕 • p => ∅
   | g1 + g2 => moutputs_of_g g1 ⊎ moutputs_of_g g2
   end.
 
@@ -1220,7 +1220,7 @@ Fixpoint lts_set_output_g (g : gproc) (a : Channel) : gset proc :=
   | 𝟘 => ∅
   | c ? • p => ∅
   | c ! • p => if decide(a = c) then {[ p ]} else ∅
-  | t • p => ∅
+  | 𝛕 • p => ∅
   | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
   end.
 
@@ -1242,7 +1242,7 @@ Fixpoint lts_set_input_g (g : gproc) (a : Channel) : gset proc :=
   | 𝟘 => ∅
   | c' ? • p => if decide (a = c') then {[ p ]} else ∅
   | c' ! • p => ∅
-  | t • p => ∅
+  | 𝛕 • p => ∅
   | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
   end.
 
@@ -1265,7 +1265,7 @@ match gp with
   | 𝟘 => ∅
   | c ? • p => ∅
   | c ! • p => ∅
-  | t • p => {[ p ]}
+  | 𝛕 • p => {[ p ]}
   | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
 end.
 
@@ -1487,12 +1487,12 @@ From Must Require Import OldTransitionSystems.
 
 From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
 
-#[global] Program Instance CCS_ggLts : gLts proc (ExtAct Channel) := ggLts gLabel_b.
+#[global] Program Instance CCS_ggLts : @gLts proc (ExtAct Channel) gLabel_b := ggLts gLabel_b.
 
-#[global] Program Instance CCS_ggLtsEq : gLtsEq proc (ExtAct Channel) := 
+#[global] Program Instance CCS_ggLtsEq : @gLtsEq proc (ExtAct Channel) gLabel_b:= 
   ggLtsEq gLabel_b.
 
-#[global] Program Instance CCS_gLtsOBA : gLtsOba proc (ExtAct Channel) := ggLtsOba_b.
+#[global] Program Instance CCS_gLtsOBA : @gLtsOba proc (ExtAct Channel) gLabel_b CCS_ggLtsEq := ggLtsOba_b.
 
 #[global] Program Instance CCS_gLtsOBAFB : gLtsObaFB proc (ExtAct Channel) := ggLtsObaFB_b.
 
