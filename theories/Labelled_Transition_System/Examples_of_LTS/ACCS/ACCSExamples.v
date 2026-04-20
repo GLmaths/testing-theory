@@ -1,10 +1,10 @@
 From Must Require Import ACCSInstance gLts Coin_tower Termination
                          Must CompletenessAS SoundnessAS EquivalenceAS
-                         GeneralizeLtsOutputs ParallelLTSConstruction
-                         ForwarderConstruction Simulation.
+                         GeneralizeLtsOutputs InteractionBetweenLts ParallelLTSConstruction
+                         ForwarderConstruction Simulation ActTau.
 From stdpp Require Import strings sets gmap base gmultiset.
-From Coq Require Import Relations.
-From Coq.Program Require Import Equality.
+From Stdlib Require Import Relations.
+From Stdlib.Program Require Import Equality.
 From Coinduction Require Import all.
 
 Ltac lts_inversion := Termination.lts_inversion lts; try discriminate.
@@ -28,9 +28,10 @@ intros α r Hstep. inversion Hstep; subst.
   + apply hco.
 Qed.
 
+(*
 (* Parallel composition in ACCS with forwarders is similar to
   the parallel composition of LTSs (with forwarder on one side) *)
-Lemma accs_fw_parallel_sim (p q : proc) (M : mb name):
+Lemma accs_fw_parallel_sim (p q : proc) (M : gmultiset (ActExt name)):
   ((p ∥ q) ▷ M) ≲ (p, (q ▷ M)).
 Proof.
 revert M p q. cofix hco. intros M p q. constructor.
@@ -965,3 +966,4 @@ Qed.
 
 End Example_2_1.
 
+*)

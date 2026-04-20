@@ -48,7 +48,7 @@ Goal (g 𝟘 ≼ₐₛ ccat).
 constructor.
 - intros s Hs. *)
 
-Lemma q_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ ccat.
+Lemma copycat_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros e Hyp.
   dependent induction Hyp.
@@ -68,13 +68,13 @@ Proof.
            ++ inversion ex. inversion H2; subst.
               ** inversion l.
               ** unfold lts_step in l; simpl in *.
-                 assert (lts e ((a ⋉ v) !) e') as HypTr; eauto.
+                 assert (lts t ((a ⋉ v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr 
-                    as [(e'' & HypTr' & e'0 & HypTr'0 & equiv')|(e'' & HypTr' & equiv'')]; eauto.
-                 --- exists (a ! v • 𝟘 ▷ e''). eapply ParRight. eauto.
+                    as [(t'' & HypTr' & t'0 & HypTr'0 & equiv')|(t'' & HypTr' & equiv'')]; eauto.
+                 --- exists (a ! v • 𝟘 ▷ t''). eapply ParRight. eauto.
                  --- assert (lts (a ! v • 𝟘) ((a ⋉ v) !) (g 𝟘)).
                      { eauto with cgr. }
-                      exists ((g 𝟘) ▷ e''). eapply ParSync; eauto.
+                      exists ((g 𝟘) ▷ t''). eapply ParSync; eauto.
                      simpl; eauto.
               ** inversion l1.
            ++ intros. inversion H2.
@@ -98,7 +98,7 @@ Proof.
       * inversion H3.
 Qed.
 
-Lemma NIL_is_above_ccat : ccat ⊑ₘᵤₛₜᵢ (g 𝟘).
+Lemma NIL_is_above_copycat : ccat ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros t Hyp.
   assert (must ccat t) as Mq; eauto.
@@ -123,24 +123,24 @@ Proof.
       * inversion ex0; subst. inversion H3; subst.
         -- inversion l.
         -- eapply (OBA_with_FB_First_Axiom t b2 b0) in l2 
-              as (e'' & HypTr'' & p'1 & HypTr'1 & equiv'1); eauto.
+              as (t'' & HypTr'' & p'1 & HypTr'1 & equiv'1); eauto.
            eapply m_step; eauto.
-           ++ exists ((g 𝟘) ▷ e''). eapply ParRight. eauto.
+           ++ exists ((g 𝟘) ▷ t''). eapply ParRight. eauto.
            ++ intros. inversion H4.
            ++ intros. inversion H5.
         -- inversion l0; subst.
            eapply simplify_match_output in eq. subst.
-           eapply OBA_with_FB_Fourth_Axiom in l2 as (e''1 & HypTr''1 & equiv''1) ; eauto.
+           eapply OBA_with_FB_Fourth_Axiom in l2 as (t''1 & HypTr''1 & equiv''1) ; eauto.
            eapply (@must_preserved_by_lts_tau_clt proc) in Mq; eauto.
            eapply m_step; eauto.
-           ++ exists ((g 𝟘) ▷ e''1). eapply ParRight. eauto.
+           ++ exists ((g 𝟘) ▷ t''1). eapply ParRight. eauto.
            ++ intros. inversion H4.
            ++ intros. inversion H5.
 Qed.
 
 Lemma copycat_is_above_constant : cst ⊑ₘᵤₛₜᵢ ccat.
 Proof.
-  intros e HypMust.
+  intros t HypMust.
   dependent induction HypMust.
   - now apply m_now.
   - eapply m_step; eauto.
@@ -158,11 +158,8 @@ Proof.
       { eapply unoutcome_preserved_by_lts_non_blocking_action; eauto.
         exists (a ⋉ v); eauto. }
       eapply m_step; eauto.
-      (* * assert (must ((a ! O • 𝟘) ^ v) e') as Mp'.
-        { eapply (must_preserved_by_synch_if_notoutcome cst _ e _) ; eauto.
-          eapply m_step; eauto. eapply lts_input. } *)
       * pose proof H4 as Mp'.
-        eapply (must_preserved_by_synch_if_notoutcome p ((a ! O • 𝟘) ^ v) t t' (ActIn (a ⋉ v))) in Mp'; eauto.
+        eapply (must_preserved_by_synch_if_notoutcome cst ((a ! O • 𝟘) ^ v) t t' (ActIn (a ⋉ v))) in Mp'; eauto.
         inversion Mp'. contradiction.
         inversion ex0. inversion H5; subst.
         -- inversion l.
@@ -170,10 +167,10 @@ Proof.
         -- inversion l1; subst. eapply simplify_match_output in eq as eq'; subst.
            assert (t' ⟶[ActIn (a ⋉ O)] b2) as l'2; eauto.
            eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & n & equiv1 & equiv2 & eq1).
-           edestruct (Congruence_Respects_Transition t') as (e'1 & Tr'1 & equiv'1). 
+           edestruct (Congruence_Respects_Transition t') as (t'1 & Tr'1 & equiv'1). 
            { exists (Ѵ n (((gpr_input a p1 + g1) ‖ r1))). split; eauto. eapply lts_res_ext_n. eapply lts_parL.
              eapply lts_choiceL. instantiate (2 := ActIn (a ⋉ v)). simpl. eapply lts_input. }
-           simpl. exists (g 𝟘 , e'1). eapply ParSync.
+           simpl. exists (g 𝟘 , t'1). eapply ParSync.
            ++ symmetry in H2. exact H2.
            ++ eapply lts_output.
            ++ eauto.
@@ -189,18 +186,18 @@ Proof.
            assert (¬ good_VACCS t1) as not_happy'''.
            { eapply unoutcome_preserved_by_lts_non_blocking_action_converse; eauto.
              unfold non_blocking; simpl. exists (a ⋉ v); eauto. }
-           assert (must q t1); eauto.
+           assert (must ccat t1); eauto.
            eapply must_preserved_by_synch_if_notoutcome; eauto.
       * intros. inversion H6; subst.
         eapply simplify_match_output in H5 as eq; subst.
         assert (lts t ((a ⋉ v) !) t') as l2; eauto.
-        eapply OBA_with_FB_Fourth_Axiom in l2 as (e'1 & HypTr'1 & equiv1); eauto.
-        eapply (@must_eq_client proc); eauto. assert (must p t) as Mp. eapply m_step; eauto.
-        assert (must p e'1) as Mp';eauto.
-        assert (must q e'1); eauto. eapply NIL_is_above_q. eauto.
+        eapply OBA_with_FB_Fourth_Axiom in l2 as (t'1 & HypTr'1 & equiv1); eauto.
+        eapply (@must_eq_client proc); eauto. assert (must cst t) as Mp. eapply m_step; eauto.
+        assert (must cst t'1) as Mp';eauto.
+        assert (must ccat t'1); eauto. eapply NIL_is_above_copycat. eauto.
 Qed.
 
-Lemma NIL_is_above_copycat : ccat ⊑ₘᵤₛₜᵢ (g 𝟘).
+Lemma NIL_is_above_constant : cst ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros e Hyp. eapply NIL_is_above_copycat. eapply copycat_is_above_constant. exact Hyp.
 Qed.
@@ -269,9 +266,9 @@ Qed.
 Lemma constant_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ cst.
 Proof.
   intros imp. assert ((g 𝟘) ⊑ₘᵤₛₜᵢ ccat) as HypMust.
-  { eapply q_is_above_NIL; eauto. }
+  { eapply copycat_is_above_NIL; eauto. }
   assert ((g 𝟘) ⊑ₘᵤₛₜᵢ cst) as imp'.
   { intros e HM. eapply imp. eapply HypMust. eauto. }
-  assert (¬ (g 𝟘) ⊑ₘᵤₛₜᵢ cst). { eapply p_is_not_above_NIL. }
+  assert (¬ (g 𝟘) ⊑ₘᵤₛₜᵢ cst). { eapply constant_is_not_above_NIL. }
   contradiction.
 Qed.

@@ -21,11 +21,13 @@
 *)
 
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+
 From stdpp Require Import base countable finite gmap list gmultiset strings.
+
 From Must Require Import InputOutputActions ActTau OldTransitionSystems Clos_n.
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)

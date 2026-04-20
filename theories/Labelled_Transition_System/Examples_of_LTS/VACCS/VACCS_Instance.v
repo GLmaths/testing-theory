@@ -936,7 +936,7 @@ try solve[etransitivity; [|eapply IHn; eauto]; repeat constructor].
 - admit. (* If Then Else case / False *)
 - apply IHn, cgr_n_par_nil_l, Hp'q.
 - admit. (* New Constructor case *)
-- transitivity (g (t • q0 + r)); [repeat constructor| apply IHn]; trivial.
+- transitivity (g (𝛕 • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (c ? x • q0 + r)); [repeat constructor| apply IHn]; trivial.
 - transitivity (g (q1 + p2 + r)); [repeat constructor| apply IHn]; trivial.
 Admitted.

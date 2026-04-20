@@ -23,10 +23,11 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
+
 From stdpp Require Import base countable strings sets gmap.
-From Must Require Import gLts Bisimulation Termination Lts_OBA.
-From Must Require Import MultisetHelper ActTau.
+
+From Must Require Import gLts Bisimulation Termination Lts_OBA MultisetHelper ActTau.
 
 (* Simulation *)
 CoInductive similar `{@gLts A L H} `{@gLts B L H}  (a : A) (b : B) : Prop :=
@@ -77,15 +78,15 @@ Section ParallelTermination.
 
 Context `{gLtsP : @gLts P A H}.
 Context `{gLtsQ : @gLts Q A H}.
-Context `{@Prop_of_Inter P Q A parallel_inter H gLtsP gLtsQ}.
+Context `{!Prop_of_Inter P Q A dual}.
 
 (* From Must Require Import InteractionBetweenLts. *)
 
-Local Instance gLtsPQ : gLts (P * Q) A := parallel_gLts gLtsP gLtsQ.
+Local Instance gLtsPQ : gLts (P * Q) H := parallel_gLts.
 
 (* The parallel composition of two states that may never interact *)
 Lemma parallel_termination_with R S (p : P) (q : Q) :
-  (forall μ μ', R μ -> S μ' -> not (parallel_inter μ μ')) ->
+  (forall μ μ', R μ -> S μ' -> ¬ (dual μ μ')) ->
   terminate_with R p ->
   terminate_with S q ->
     terminate (p, q).

@@ -1277,20 +1277,20 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
 
 #[global] Program Instance ACCS_ggLts : @gLts proc (ExtAct name) gLabel_nb := ggLts gLabel_nb.
 
-#[global] Program Instance ACCS_ggLtsEq : @gLtsEq proc (ExtAct name) gLabel_nb ACCS_ggLts := 
+#[global] Program Instance ACCS_ggLtsEq : @gLtsEq proc (ExtAct name) gLabel_nb := 
   ggLtsEq gLabel_nb.
 
 #[global] Program Instance ACCS_gLtsOBA : 
-  @gLtsOba proc (ExtAct name) gLabel_nb ACCS_ggLts ACCS_ggLtsEq := ggLtsOba_nb.
+  @gLtsOba proc (ExtAct name) gLabel_nb ACCS_ggLtsEq := ggLtsOba_nb.
 
 #[global] Program Instance ACCS_gLtsOBAFB :
-  @gLtsObaFB proc (ExtAct name) gLabel_nb ACCS_ggLts ACCS_ggLtsEq ACCS_gLtsOBA := ggLtsObaFB_nb.
+  @gLtsObaFB proc (ExtAct name) gLabel_nb ACCS_ggLtsEq ACCS_gLtsOBA := ggLtsObaFB_nb.
 
 #[global] Program Instance Interaction_between_parallel_ACCS :
-  @Prop_of_Inter proc proc (ExtAct name) parallel_inter gLabel_nb
+  @Prop_of_Inter proc proc (ExtAct name) dual gLabel_nb
   ACCS_ggLts ACCS_ggLts :=  Inter_parallel_IO gLabel_nb.
 Next Obligation.
-  intros μ1 μ2 inter. unfold parallel_inter in inter.
+  intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
 Defined.
 
@@ -1307,13 +1307,13 @@ Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
 Defined.
 
-#[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
-  @Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) parallel_inter gLabel_nb
+(* #[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
+  @Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) dual gLabel_nb
   ACCS_ggLts ACCS_ggLts :=  Inter_FW_parallel_IO gLabel_nb.
   :=  Inter_FW_IO gLabel_nb.
 Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
-Defined.
+Defined. *)
 
 From Must Require Import EquivalenceAS.
 

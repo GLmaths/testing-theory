@@ -32,16 +32,13 @@ From Stdlib Require Import Setoid.
 From Stdlib .Logic Require Import ProofIrrelevance.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import gLts Lts_OBA_FB FiniteImageLTS
-            Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
-              Termination WeakTransitions Convergence  
-               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
-               Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE.
-(* From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
+
+From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence 
               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
-               Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE. *)
+               Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE.
+
 Theorem eqx `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
   `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}

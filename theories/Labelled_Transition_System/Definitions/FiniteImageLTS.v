@@ -23,8 +23,8 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Program Require Import Equality.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From Must Require Import InListPropHelper ActTau gLts Bisimulation Termination WeakTransitions Convergence Lts_OBA_FB.
 
@@ -568,19 +568,19 @@ Proof.
     eapply elem_of_elements; eassumption. eassumption.
 Qed.
 
-Definition eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A} (X Y : gset P) :=
+Definition eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A} (X Y : gset P) :=
  (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
  (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
 
-Global Instance symmetric_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+Global Instance symmetric_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
  Symmetric eq_rel_set.
 Proof. intros x y. unfold eq_rel_set. intuition. Qed.
 
-Global Instance reflexive_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+Global Instance reflexive_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
  Reflexive eq_rel_set.
 Proof. intro X; split; intros x Hx; exists x; intuition. reflexivity. reflexivity. Qed.
 
-Global Instance equiv_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+Global Instance equiv_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
  Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
 Proof.
 intros X X' HX Y Y' HY Heq. split; intros x Hx.
@@ -589,7 +589,7 @@ intros X X' HX Y Y' HY Heq. split; intros x Hx.
 Qed.
 
 Global Instance proper_singleton_elem_eq_rel_set
-  `{FiniteImagegLts P A} `{!gLtsEq P A}:
+  `{gLtsEq P A} `{!FiniteImagegLts P A}:
   Proper ((eq_rel) ==> (eq_rel_set)) singleton.
 Proof.
   intros x y Hx. split; intros x' Hx'%elem_of_singleton;
@@ -597,7 +597,7 @@ Proof.
   now symmetry.
 Qed.
 
-Global Instance eq_rel_set_union `{FiniteImagegLts P A} `{!gLtsEq P A}:
+Global Instance eq_rel_set_union `{gLtsEq P A} `{!FiniteImagegLts P A}:
   Proper ((eq_rel_set) ==> (eq_rel_set) ==> (eq_rel_set)) union.
 Proof.
 intros X X' HX Y Y' HY.
@@ -605,7 +605,7 @@ split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
  (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
 Qed.
 
-Lemma wt_set_from_pset_spec_eq_rel_set `{FiniteImagegLts P A} `{!gLtsEq P A}:
+Lemma wt_set_from_pset_spec_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
   forall {X X' s Y}, eq_rel_set X X' -> (∀ p : P, p ∈ X → p ⇓ s) ->
   wt_set_from_pset_spec X s Y
   -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
@@ -659,7 +659,7 @@ solve[apply elem_of_union_l; set_tac] ||
 assumption ||
 now apply elem_of_singleton_2.
 
-Global Instance Proper_eq_rel_set_l `{FiniteImagegLts P A} `{!gLtsEq P A}:
+Global Instance Proper_eq_rel_set_l `{gLtsEq P A} `{!FiniteImagegLts P A}:
   Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
 Proof.
 intros p p' HX ???; subst. apply eq_rel_set_union; trivial.
@@ -675,7 +675,7 @@ Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !FiniteImagegLts P A} :
     subst. setoid_rewrite Hps. setoid_rewrite Hps'. trivial.
   Qed.
 
-Lemma wt_set_from_pset_spec_unique `{FiniteImagegLts P A} `{!gLtsEq P A} ps s ps' ps'' :
+Lemma wt_set_from_pset_spec_unique `{gLtsEq P A} `{!FiniteImagegLts P A} ps s ps' ps'' :
     wt_set_from_pset_spec ps s ps' ->
     wt_set_from_pset_spec ps s ps'' -> ps' ≡ ps''.
   Proof.
@@ -684,7 +684,8 @@ Lemma wt_set_from_pset_spec_unique `{FiniteImagegLts P A} `{!gLtsEq P A} ps s ps
     - destruct (H1'' _ Hin) as (p & Hinp & Hp). eapply H2'; eauto.
   Qed.
 
-(* Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{FiniteImagegLts P A} `{!gLtsEq P A}
+(*
+Lemma wt_set_from_pset_spec_is_wt_s_set_from_pset `{gLtsEq P A} `{!FiniteImagegLts P A}
 (ps : gset A) s ps' (hcnv : forall p, p ∈ ps -> p ⇓ s) :
 wt_set_from_pset_spec ps s ps' -> ps' ≡ wt_s_set_from_pset ps s hcnv.
 Proof.

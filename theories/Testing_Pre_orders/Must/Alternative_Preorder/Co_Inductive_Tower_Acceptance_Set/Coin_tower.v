@@ -22,11 +22,13 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Wellfounded Require Import Inverse_Image.
-From Coq.Program Require Import Equality.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Equality.
+
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 From Coinduction Require Import all.
+
 (* From Must Require Import TransitionSystems Must Soundness Equivalence Completeness. *)
 From Must Require Import gLts FiniteImageLTS Lts_OBA_FB ActTau Termination Convergence WeakTransitions
 Must MustE DefinitionAS SoundnessAS EquivalenceAS CompletenessAS.
@@ -35,8 +37,8 @@ Must MustE DefinitionAS SoundnessAS EquivalenceAS CompletenessAS.
 
 Section copre.
   Context `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}.
-  Context `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
-  Context `{PreAQ : @PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
+  Context `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
+  Context `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
 
   Definition REL := gset P -> Q -> Prop .
 
@@ -211,34 +213,32 @@ From Must Require Import Bisimulation Lts_OBA_FB Testing_Predicate InteractionBe
  StateTransitionSystems Lts_OBA.
 
 Section eq_contextual.
-
-  Context `{H : ExtAction A}.
-  Context `{gLtsP : !gLts P A, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q A, !FiniteImagegLts Q A}.
-  Context `{gLtsT : !gLts T A, !FiniteImagegLts T A}.
-
-  Context `{@gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}.
-  Context `{@gLtsObaFB Q A H gLtsQ gLtsEqQ gLtsObaQ}.
-  Context `{@gLtsObaFB T A H gLtsT gLtsEqT gLtsObaT}.
-
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
-  Context `{TP_instance : !Testing_Predicate T A outcome}.
+
+  Context `{P : Type}.
+  Context `{Q : Type}.
+  Context `{H : !ExtAction A}.
+
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
 
   (* ************************************************** *)
-  Context `{@Prop_of_Inter P T A parallel_inter H gLtsP gLtsT}.
-  Context `{@Prop_of_Inter Q T A parallel_inter H gLtsQ gLtsT}.
-  Context `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}.
-  Context `{@Prop_of_Inter (P * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
-  Context `{@Prop_of_Inter Q (mb A) A fw_inter H gLtsQ MbgLts}.
-  Context `{@Prop_of_Inter (Q * mb A) T A parallel_inter H (inter_lts fw_inter) gLtsT}.
+  Context `{!Prop_of_Inter P T A dual}.
+  Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{@PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
-  Context `{@PreExtAction A H Q FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
-  Context `{@AbsAction A H T FinA gLtsT Φ}.
+  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * mb A) T A dual}.
+  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * mb A) T A dual}.
 
-  Context `{igen_conv : @test_convergence_spec T _ _ _ _ outcome TP_instance gen_conv}.
-  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ _ outcome TP_instance gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
+  Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
+  Context `{@AbsAction A H T FinA _ Φ}.
+
+  Context `{igen_conv : @test_convergence_spec T _ _ _ outcome TP_instance gen_conv}.
+  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome TP_instance gen_acc (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
     @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
@@ -249,7 +249,7 @@ Section eq_contextual.
 End eq_contextual.
 
 Lemma coin_refl `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m} {p : P} : elem PRE {[ p ]} p.
 Proof.
   apply (gfp_chain PRE).
@@ -259,7 +259,7 @@ Proof.
 Qed.
 
 Global Instance Proper_elem `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m} :
   Proper ((≡) ==> (=) ==> (iff)) (elem PRE).
 Proof.
@@ -268,7 +268,7 @@ Proof.
 Qed.
 
 Global Instance Proper_lts_pre_co_actions `{gLtsOba P A}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}:
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}:
   Proper ((eq_rel) ==> (=)) pre_co_actions_of.
 Proof.
   intros μ μ' Heq. apply leibniz_equiv.
@@ -290,9 +290,9 @@ Qed.
 
 (* In the case of a Lts with equivalence relation, the right hand side can also
   be rewritten *)
-Global Instance Proper_eq_rel `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP} `{!gLtsEq P A}
-  `{!gLtsOba P A} {PRE : Chain copre_m}:
+Global Instance Proper_eq_rel `{@gLtsOba P A H gLtsEqP} `{!FiniteImagegLts P A}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
+   {PRE : Chain copre_m}:
   Proper ((≡) ==> (eq_rel) ==> (impl)) (elem PRE).
 Proof.
   intros ?? HX ?? Heq. rewrite (leibniz_equiv _ _ HX). clear x HX.
@@ -315,7 +315,7 @@ Proof.
 Qed.
 
 Lemma coin_union_l `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m}
   : forall (X1 X2 : gset P) (q : P), elem PRE X1 q -> elem PRE (X1 ∪ X2) q.
 Proof.
@@ -341,7 +341,7 @@ Proof.
 Qed.
 
 Lemma coin_union_r `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m}
   : forall (X1 X2 : gset P) (q : P), elem PRE X2 q -> elem PRE (X1 ∪ X2) q.
 Proof.
@@ -367,7 +367,7 @@ Proof.
 Qed.
 
 Lemma coin_elem_of `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m} (p : P) X: p ∈ X -> elem PRE X p.
 Proof.
 intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
@@ -375,7 +375,7 @@ apply coin_union_l, coin_refl.
 Qed.
 
 Lemma coin_choose `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m}
   : forall {X : gset P} {q : P} {p : P}, p ∈ X -> elem PRE {[p]} q -> elem PRE X q.
 Proof.
@@ -385,7 +385,7 @@ Proof.
 Qed.
 
 Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   {PRE : Chain (copre_m (P := P * mb A) (Q := P * mb A))} (p t: P):
   (∀ μ p', p ⟶{μ} p' <-> (p' = t /\ μ = τ)) ->
@@ -466,7 +466,7 @@ Proof.
 Qed.
 
 Lemma copre_inv_l `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   {PRE : Chain copre_m} (p : P) X t q : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
   elem PRE ({[t]} ∪ X) q -> elem PRE ({[p]} ∪ X) q.
 Proof.
@@ -519,8 +519,8 @@ Proof.
       * apply Ht; set_tac.
 Qed.
 
-Global Instance copre_eq_rel_l `{@gLtsOba P A H gLtsP gLtsEqP} `{!FiniteImagegLts P A}
-  `{PreAP : @PreExtAction A H P FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+Global Instance copre_eq_rel_l `{@gLtsOba P A H gLtsEqP} `{!FiniteImagegLts P A}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
   {PRE : Chain copre_m}: Proper ((eq_rel_set) ==> (=) ==> (impl)) (elem PRE).
 Proof.
   intros X X' HXX' q q' ?; subst q'.

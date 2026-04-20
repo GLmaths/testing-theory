@@ -23,14 +23,13 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Program Require Import Equality.
-From stdpp Require Import (* base *) countable (* list decidable finite gmap gmultiset. *) .
-From Must Require Import ForAllHelper MultisetHelper.
-From Must Require Import gLts Bisimulation Lts_OBA Lts_FW.
-From Must Require Import ActTau Termination WeakTransitions.
+From Stdlib.Program Require Import Equality.
+From stdpp Require Import countable.
+
+From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW ActTau Termination WeakTransitions.
 
 (************************************** Convergence **************************************)
 
@@ -67,7 +66,7 @@ Lemma cnv_wk `{gLtsP : gLts P A} {p : P}{a : A} {s} : p ⇓ a :: s -> p ⇓ [ a 
 Proof.
   intros pw; depelim pw; constructor.
   - assumption.
-  - intros q qw%H1; constructor.
+  - intros q qw%H0; constructor.
     eapply cnv_terminate, qw.
 Qed.
 
@@ -151,7 +150,7 @@ Global Instance cnv_preserved_by_eq `{gLtsEq P A}:
   (* p ⋍ q -> p ⇓ s -> q ⇓ s *)
   Proof.
   intros p q heq s s' Hs hcnv. subst s'. revert q heq.
-  induction hcnv; intros.
+  induction hcnv as [p p_cnv | p μ s p_cnv _ Hμ]; intros.
   - eapply cnv_nil.
     eapply (terminate_preserved_by_eq p_cnv heq).
   - eapply cnv_act.
