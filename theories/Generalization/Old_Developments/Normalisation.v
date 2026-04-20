@@ -119,7 +119,7 @@ Notation "⟪ s ⟫" := (linearize (normalize s)).
 
 Notation "⌈ nt ⌉" := (linearize nt).
 
-(* Lemma norm_nil `{ExtAction A} s M boo : normalize_loop s M boo = [] -> s = [].
+(* Lemma norm_nil `{ExtAction A} s M boo : normalize s = [] -> s = [].
 Proof.
   revert M boo.
   induction s
@@ -206,7 +206,7 @@ Proof.
 Qed.
 
 
-normalize_loop (a :: s) ∅ ∅ = []
+
 Lemma norm_nil `{ExtAction A} s : normalize s = [] -> s = [].
 Proof.
   dependent induction s.
@@ -520,7 +520,7 @@ Proof.
     now eapply norm_perm.
     eapply Permutation_length. now symmetry.
 Qed. *)
-
+*)
 From Stdlib Require Import Wellfounded.
 
 Theorem normalize_wta_r `{gLtsObaFW P A} : forall s (p : P) q, p ⟹[s] q -> p ⟹⋍[ ⟪s⟫] q.
@@ -533,7 +533,7 @@ Proof.
   - intros p q w. simpl. exists q. split. eauto with mdb. reflexivity.
   - intros p q w. destruct (decide (non_blocking a)) as [nb | b].
     + simpl. rewrite decide_True; eauto.
-  
+(*   
   
     destruct (norm_shape (e :: s)).
     now eapply norm_loop_nil in H3.
@@ -554,7 +554,7 @@ Proof.
     now symmetry. eapply wt_join_eq.
     eapply (wt_non_blocking_action_perm s2); eauto.
     admit. (* eassumption. *)
-    now symmetry.  eassumption.
+    now symmetry.  eassumption. *)
 Admitted.
 
 Lemma are_inputs_map_ActIn `{Label L} (s : list L) : are_inputs (map ActIn s).
@@ -569,7 +569,7 @@ Proof.
   eapply Forall_nil. eapply Forall_cons. now exists a. eassumption.
 Qed.
 
-Lemma normalize_wta_l `{LtsObaFW A L} : forall s (p : A) q, p ⟹[⟪s⟫] q -> p ⟹⋍[s] q.
+Lemma normalize_wta_l `{gLtsObaFW P A} : forall s (p : P) q, p ⟹[⟪s⟫] q -> p ⟹⋍[s] q.
 Proof.
    induction s
     as (s & Hlength)
@@ -578,7 +578,7 @@ Proof.
   destruct s.
   - intros p q w. simpl in w. exists q. split. eauto with mdb. reflexivity.
   - intros p q w.
-    destruct (norm_shape (e :: s)).
+    (* destruct (norm_shape (e :: s)).
     now eapply norm_loop_nil in H3.
     destruct H3
       as (mi & mo & s1 & s2 & s' & e0 & e1 & e3 & e4 & e5 & e6).
@@ -597,10 +597,10 @@ Proof.
     eapply wt_join_eq.
     eapply (wt_non_blocking_action_perm (map ActOut (elements mo))).
     admit. (* eapply are_outputs_map_ActOut. *)
-    now symmetry. eassumption. eauto.
+    now symmetry. eassumption. eauto. *) admit.
 Admitted.
 
-Lemma normalize_wta `{LtsObaFW A L} s (p : A) q : p ⟹⋍[⟪s⟫] q <-> p ⟹⋍[s] q.
+Lemma normalize_wta `{gLtsObaFW P A} s (p : P) q : p ⟹⋍[⟪s⟫] q <-> p ⟹⋍[s] q.
 Proof.
   split.
   intros (q' & w & sc).
@@ -611,23 +611,26 @@ Proof.
   exists q''. split. eauto with mdb. transitivity q'; now symmetry.
 Qed.
 
-Lemma outputs_of_eq `{LtsEq A L} p q : p ⋍ q -> lts_outputs p ≡ lts_outputs q.
+Lemma outputs_of_eq `{gLtsEq P A} 
+  `{ @PreExtAction P A _ FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
+  p q : p ⋍ q -> pre_co_actions_of p ≡ pre_co_actions_of q.
 Proof.
   intro heq.
   intros a. split.
-  intro lh. symmetry in heq.
+  intro lh. (* destruct a. symmetry in heq.
   eapply lts_outputs_spec2 in lh as (p' & hl).
   edestruct (eq_spec q p') as (q' & hl' & heq'). eauto.
   eapply lts_outputs_spec1. eassumption.
   intro lh.
   eapply lts_outputs_spec2 in lh as (q' & hl).
   edestruct (eq_spec p q') as (p' & hl' & heq'). eauto.
-  eapply lts_outputs_spec1. eassumption.
-Qed.
+  eapply lts_outputs_spec1. eassumption. *) admit.
+Admitted.
 
-Lemma normalize_accs `{LtsObaFW A L, !FiniteLts A L} (p : A) (s : trace (ExtAct L)) h1 h2 :
-  (set_map lts_outputs (wt_refuses_set p s h1) : gset (gset L))
-  ≡ (set_map lts_outputs (wt_refuses_set p (linorm s) h2) : gset (gset L)).
+Lemma normalize_accs `{gLtsObaFW P A, !FiniteImageLts P A}
+  `{ @PreExtAction P A _ FinA PreA PreA_eq PreA_countable 𝝳 Φ _} (p : P) (s : trace A) h1 h2 :
+  (set_map pre_co_actions_of (wt_refuses_set p s h1) : gset PreA)
+  ≡ (set_map pre_co_actions_of (wt_refuses_set p (linorm s) h2) : gset PreA).
 Proof.
   intros.
   split.
