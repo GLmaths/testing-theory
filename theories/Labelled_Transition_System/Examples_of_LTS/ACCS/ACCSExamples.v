@@ -90,6 +90,10 @@ constructor. intros α q Hq. lts_inversion.
   + eexists; split; eauto with lts.
 Qed.
 
+Ltac nb_inversion := match goal with
+| H : non_blocking (ActIn _) |- _ => inversion H
+ end.
+
 Lemma parallel_output_mb_similar μ (q : proc) M:
   (!μ ∥ q  ▷ M) ≲ (q ▷ {[+ ActOut μ +]} ⊎ M).
 Proof.
@@ -97,28 +101,43 @@ revert q M. cofix hco. intros q M.
 constructor. intros α r Hstep.
 inversion Hstep; subst; clear Hstep.
 - lts_inversion.
-  + inversion H1; subst. eexists; split; eauto.
+  + clear hco. inversion H1; subst. eexists; split; eauto.
     * apply (ParSync (ActIn μ) (ActOut μ)); eauto. simpl. split. 
       eauto. exists μ; eauto. eapply lts_multiset_minus; eauto. exists μ; eauto.
     * apply pr_nil_fw_similar.
-  + lts_inversion. eexists; split; eauto.
+  + clear hco. lts_inversion. eexists; split; eauto.
     * eapply ParRight. eapply lts_multiset_minus. exists μ; eauto.
     * apply pr_nil_fw_similar.
-  + eexists; split; eauto. eapply ParLeft; eauto.
-- (* eexists; split; eauto.
-  replace ({[+ μ +]} ⊎ ({[+ a +]} ⊎ m)) with ({[+ a +]} ⊎ ({[+ μ +]} ⊎ m));
-  [constructor| clear hco; multiset_solver]. *) admit.
-- (* eexists; split; eauto.
-  replace ({[+ μ +]} ⊎ ({[+ a +]} ⊎ M)) with ({[+ a +]} ⊎ ({[+ μ +]} ⊎ M));
-  [constructor| clear hco; multiset_solver]. *) admit.
-  
-  
-(* - lts_inversion.
+  + eexists; split. eapply ParLeft.
+    * clear hco. eauto.
+    * apply hco.
+- destruct α as [[β|η]|].
+  + eexists (_, {[+ ActOut μ +]} ⊎ ({[+ ActOut β +]} ⊎ M)); split.
+    * apply ParRight.
+      replace ({[+ ActOut μ +]} ⊎ ({[+ ActOut β +]} ⊎ M))
+        with ({[+ ActOut β +]} ⊎ ({[+ ActOut μ +]} ⊎ M)) by (clear hco; multiset_solver).
+      apply lts_multiset_add; [constructor|eexists; eauto].
+    * eapply blocking_action_in_ms in l as [Heq l]; [|intro H; now inversion H].
+      subst. apply hco.
+  + apply non_blocking_action_in_ms in l; [|econstructor; eauto].
+    * subst M. eexists (_, {[+ ActOut μ +]} ⊎ b2). split.
+      -- clear hco. constructor.
+         replace ({[+ ActOut μ +]} ⊎ ({[+ ActOut η +]} ⊎ b2))
+           with ({[+ ActOut η +]} ⊎ ({[+ ActOut μ +]} ⊎ b2)) by multiset_solver.
+         constructor. eexists; eauto.
+      -- apply hco.
+  + inversion l.
+- lts_inversion.
+  + lts_inversion. admit. admit.
   + lts_inversion.
-  + exists (q2 ▷ {[+ μ +]} ⊎ m); split.
-    * replace ({[+ μ +]} ⊎ ({[+ a +]} ⊎ m)) with ({[+ a +]} ⊎ ({[+ μ +]} ⊎ m));
-      [now constructor| clear hco; multiset_solver].
-    * apply hco. *)
+    * clear hco. lts_inversion. destruct eq. eapply dual_blocks in nb; eauto.
+        (* TODO: redéfinir blocking/non-blocking avec match *)
+         exfalso. apply nb. econstructor; eauto.
+    * exists (q2 ▷ {[+ ActOut μ +]} ⊎ b2); split.
+      -- clear hco. apply (ParSync μ1 μ2); eauto.
+        (* TODO: maybe redefine the communication rule to use multiset equivalence as assumption *)
+        admit.
+      -- apply hco.
 Admitted.
 
 
@@ -149,6 +168,13 @@ intros PRE M. eapply c_tau_.
 - constructor. apply lts_choiceR. constructor.
 Qed. *)
 
+Ltac set_tac :=
+solve[apply elem_of_union_r; set_tac] ||
+solve[apply elem_of_union_l; set_tac] ||
+assumption ||
+now apply elem_of_singleton_2.
+
+
 Lemma choice_copre_r' p q:
   forall (PRE : Chain (copre_m)),
     elem PRE {[τ⋅ p ⊕ τ⋅ q]} q.
@@ -157,9 +183,10 @@ intros PRE. eapply c_tau_.
 - change (copre_ ?a ?b ?c) with (copre_m a b c). apply coin_refl.
 - apply lts_choiceR. constructor.
 Qed.
-
-(* Lemma choice_copre_rev (p q : proc) :
-  forall (PRE : Chain (copre_m (LtsP := MbLts))) M,
+Existing Instance gLtsMBFinite.
+(* TODO: MbgLts is not finite image. Set Typeclasses Debug. *)
+Lemma choice_copre_rev (p q : proc) :
+  forall (PRE : Chain copre_m) M,
     elem PRE ({[ (p ▷ M); (q ▷ M) ]}) (τ⋅ p ⊕ τ⋅ q ▷ M).
 Proof.
   intro PRE; apply tower; clear PRE; [ intros P HP ???; eapply HP; eauto | ].
@@ -167,6 +194,7 @@ Proof.
 - intros (q', M') l.
   inversion_clear l.
   + repeat lts_inversion; apply coin_elem_of; set_tac.
+  + repeat lts_inversion.
   + repeat lts_inversion.
 - intros Ht Hs.
   exfalso. eapply (lts_stable_spec2 (τ⋅ p ⊕ τ⋅ q ▷ M)).
