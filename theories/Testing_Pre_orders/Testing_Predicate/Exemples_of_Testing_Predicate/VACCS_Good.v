@@ -23,10 +23,10 @@
    SOFTWARE.
 *)
 
-From Coq.Program Require Import Equality.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import countable decidable.
 From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must VACCS_Instance Testing_Predicate.
-From Coq.Wellfounded Require Import Inverse_Image.
 
 Inductive good_VACCS : proc -> Prop :=
 | good_success : good_VACCS ①

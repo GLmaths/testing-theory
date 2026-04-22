@@ -1328,9 +1328,11 @@ Qed.
       (@ggLts name (@gLabel_nb name (* VACCS_Label *) _) proc _ CCS_lts) p) ;
      pre_co_actions_of p := PreCoAct_of p ; |}.
 Next Obligation.
-  intros; simpl in *.
-  exists μ.  split ;eauto.
+  intros. left. eauto.
 Qed.
+Next Obligation.
+  intros. exists μ. split ;eauto.
+Defined.
 Next Obligation.
   intros; simpl in *.
   destruct H as (μ' & eq & mem). subst. destruct μ'.

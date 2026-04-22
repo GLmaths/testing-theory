@@ -419,12 +419,13 @@ Defined.
 #[global] Program Instance Inter_FW_parallel_IO {A : Type} (H : ExtAction (ExtAct A))
   `{LtsP : @Lts P A L} `{LtsE : @Lts E A L}
     {ext_m : forall μ1 μ2, dual μ1 μ2 -> ext_act_match μ1 μ2}
+    {prop : forall μ1, non_blocking μ1 -> non_blocking_output μ1 \/ all_blocking_action μ1}
     : @Prop_of_Inter (P * mb (ExtAct A)) E (ExtAct A) dual
       H (@FW_gLts P (ExtAct A) H (@ggLts A H P L LtsP) (@Inter_FW_IO A H P L LtsP ext_m)) (@ggLts A H E L LtsE):=
     {| lts_essential_actions_left p := set_map ActOut (lts_outputs p.1) ∪ (dom (mb_without_not_nb p.2)); 
        lts_essential_actions_right q := set_map ActOut (lts_outputs q)|}.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p , m) ? ?. simpl in *.
+  intros ? ? ? ? ? ? ? ? ? (p , m) ? ?. simpl in *.
   eapply elem_of_union in H0. destruct (decide (ξ ∈ dom (mb_without_not_nb m))).
   + eapply gmultiset_elem_of_dom in e.
     eapply lts_mb_nb_with_nb_spec1 in e as (nb & mem).
@@ -451,7 +452,7 @@ Next Obligation.
        destruct mem as (p' & l). exists (p' , m). eapply ParLeft. eauto.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? e ? Hyp ;simpl in *.
+  intros ? ? ? ? ? ? ? ? ? e ? Hyp ;simpl in *.
   unfold set_map in Hyp. simpl in *.
   eapply elem_of_list_to_set in Hyp.
   eapply elem_of_list_fmap in Hyp.
@@ -463,7 +464,7 @@ Next Obligation.
     apply elem_of_elements in mem. eapply lts_outputs_spec2 in mem. eauto.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p1 , m1) ? (p'1, m'1) ? ? ? Tr ? inter;simpl in *.
+  intros ? ? ? ? ? ? ? ? ? (p1 , m1) ? (p'1, m'1) ? ? ? Tr ? inter;simpl in *.
   eapply ext_m in inter. destruct μ2 as [ (*Input*) a | (*Output*) a].
   - symmetry in inter. eapply simplify_match_input in inter. subst. left.
     inversion Tr; subst.
@@ -476,19 +477,20 @@ Next Obligation.
         eapply non_blocking_action_in_ms in l; eauto. set_solver.
       * eapply blocking_action_in_ms in l as (eq & duo & nb);eauto.
         eapply ext_m in duo. eapply simplify_match_output in duo. subst.
-        rewrite duo in Tr, nb. admit.
+        rewrite duo in Tr, nb. eapply prop in nb. destruct nb.
+        inversion H1. inversion H2. inversion H1.
   - symmetry in inter. eapply simplify_match_output in inter. subst. right.
     eapply elem_of_list_to_set.
     eapply elem_of_list_fmap. exists a. split; eauto.
     eapply elem_of_elements. eapply lts_outputs_spec1. eauto.
-Admitted.
+Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ξ p ;simpl in *. destruct ξ as [ (*Input*) a | (*Output*) a].
+  intros ? ? ? ? ? ? ? ? ? ξ p ;simpl in *. destruct ξ as [ (*Input*) a | (*Output*) a].
   + exact empty. 
   + exact {[ ActIn a ]}.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? p q ? μ ? mem ? inter;simpl in *.
+  intros ? ? ? ? ? ? ? ? ? p q ? μ ? mem ? inter;simpl in *.
   unfold Inter_FW_parallel_IO_obligation_4. destruct ξ as [ (*Input*) a | (*Output*) a].
   - eapply elem_of_list_to_set in mem.
     eapply elem_of_list_fmap in mem. destruct mem as (? & eq & ?).
@@ -496,13 +498,13 @@ Next Obligation.
   - eapply ext_m in inter. symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ξ e;simpl in *.
+  intros ? ? ? ? ? ? ? ? ? ξ e;simpl in *.
   destruct ξ as [ a (* Input_case *) | a (* Ouput_case *)].
   + exact {[ ActOut a ]}.
   + exact {[ ActIn a ]}.
 Defined.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? p q ? μ (p1 , m1) mem ? inter;simpl in *.
+  intros ? ? ? ? ? ? ? ? ? p q ? μ (p1 , m1) mem ? inter;simpl in *.
   unfold Inter_FW_parallel_IO_obligation_6. symmetry in inter.
   destruct ξ as [ (*Input*) a | (*Output*) a].
   - eapply ext_m in inter. symmetry in inter. eapply simplify_match_input in inter. subst.
@@ -542,52 +544,4 @@ Proof.
   + exfalso. assert (non_blocking_output (ActOut a)).
     exists a; eauto. contradiction.
 Qed.
-
-(* Lemma retrieve_a_better_pre_order
-  `{@Lts P A L} `{@Lts Q A L} (p : P) (q : Q) :
-   (forall (q' : Q) μ, ¬ is_output μ -> μ ∈ actions_of q') -> 
-    (co_actions_of p ⊆ co_actions_of q
-      <-> lts_outputs p ⊆ lts_outputs q).
-Proof.
-  intro fw_b_action.
-  split.
-  + intro inclusion. intro a. intro mem. eapply lts_outputs_spec2 in mem as (p2 & l).
-    assert ((ActIn a) ∈ co_actions_of p) as mem.
-    { exists (ActOut a). repeat split.
-      - eapply lts_refuses_spec2. eauto.
-      - intro imp. unfold non_blocking in imp. simpl in *.
-        unfold all_blocking_action in imp. eauto. }
-    eapply inclusion in mem. destruct mem as (μ & Tr & duo & b).
-    eapply lts_refuses_spec1 in Tr as (q' & l').
-    simpl in *. symmetry in duo. eapply simplify_match_input in duo; subst.
-    eapply lts_outputs_spec1 in l'. eauto.
-  + intro inclusion.
-    intros μ mem. destruct μ as [ (* Input *) a | (* Output *) a].
-    ++ eapply fw_b_action. intro imp. inversion imp. inversion H1.
-    ++ eapply lts_stable_spec2. eapply lts_stable_spec1 in mem as (q' & Tr).
-       eapply lts_outputs_spec1 in Tr. eapply inclusion in Tr. eapply lts_outputs_spec2 in Tr; eauto.
-Qed.
-
-Lemma retrieve_a_better_pre_order_final
-  `{@gLtsObaFW P (ExtAct A) (@gLabel_nb A L) LtsP LtsEqP LtsObaP}
-  `{@gLtsObaFW Q (ExtAct A) (@gLabel_nb A L) LtsQ LtsEqQ LtsObaQ}
-    (p : P) (q : Q):
-    actions_of p ⊆ actions_of q
-      <-> dom (lts_oba_mo p) ⊆ dom (lts_oba_mo q).
-Proof.
-  split.
-  + intros inclusion μ mem. eapply gmultiset_elem_of_dom in mem.
-    eapply lts_oba_mo_spec_bis2 in mem as (p' & nb & Tr).
-    assert (μ ∈ actions_of p) as mem. { eapply lts_refuses_spec2; eauto. }
-    eapply inclusion in mem. eapply lts_refuses_spec1 in mem as (q' & Tr').
-    eapply gmultiset_elem_of_dom. eapply lts_oba_mo_spec_bis1; eauto.
-  + intros inclusion μ mem.
-    destruct μ as [ (* Input *) a | (* Output *) a].
-    ++ eapply fw_does_all_input. intro imp. inversion imp. inversion H1.
-    ++ eapply lts_refuses_spec2. eapply lts_refuses_spec1 in mem as (q' & Tr).
-       eapply lts_oba_mo_spec_bis1 in Tr;eauto. assert (ActOut a ∈ lts_oba_mo q) as mem'.
-       { multiset_solver. }
-       eapply lts_oba_mo_spec_bis2 in mem' as (q'' & nb & Tr''). eauto.
-       unfold non_blocking. simpl. exists a; eauto.
-Qed. *)
 

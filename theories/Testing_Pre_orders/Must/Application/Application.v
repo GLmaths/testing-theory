@@ -177,10 +177,9 @@ Qed.
          eapply Hyp; eauto. eapply IHmem; eauto.
   Qed.
 
-(*
  Lemma ionly_nil_leq2 {P Q A : Type} `{
-    @gLtsObaFB P A H gLtsEqP gLtsObaP,
-    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
+    @gLtsObaFB P A H gLtsEqP gLtsObaP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
 
     `{!Prop_of_Inter P (mb A) A fw_inter}
     `{!Prop_of_Inter Q (mb A) A fw_inter}
@@ -195,7 +194,7 @@ Qed.
       exists p'. split; eauto.
       split; eauto.
       intro μ. intro mem.
-      destruct (decide (non_blocking μ)) as [nb | not_nb].
+      (* destruct (decide (non_blocking μ)) as [nb | not_nb].
       + rename μ into η.
         eapply lts_refuses_spec1 in mem as (p'' & Tr).
         assert (η ∈ dom (lts_oba_mo p')) as mem'.
@@ -231,30 +230,33 @@ Qed.
         ++ eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto ; subst.
            edestruct (IHhw ({[+ co μ +]} ⊎ m) p) as (t' & hw' & hst' & hsub'); eauto.
            eapply H8, wt_act. eapply ParRight. eauto. eapply wt_nil.
-           exists t'. split. eapply wt_act; eauto. eapply ParRight. eauto. now split.
-  Qed.
+           exists t'. split. eapply wt_act; eauto. eapply ParRight. eauto. now split. *)
+  Admitted.
 
   Lemma input_only_leq_nil {P Q A : Type} `{
-    @gLtsObaFB P A H gLtsP gLtsEqP V, !FiniteImagegLts P A,
-    @gLtsObaFB Q A H gLtsQ gLtsEqQ W, !FiniteImagegLts Q A,
-    @gLtsObaFB E A H gLtsE gLtsEqE X, !FiniteImagegLts E A, !Testing_Predicate E A outcome, (∀ e : E, Decision (outcome e))}
+    @gLtsObaFB P A H gLtsEqP V, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsEqQ W, !FiniteImagegLts Q A,
+    @gLtsObaFB E A H gLtsEqE X, !FiniteImagegLts E A,
+    @AbsAction A H E FinA _ Φ, !Testing_Predicate E A outcome, (∀ e : E, Decision (outcome e))}
 
-    `{@Prop_of_Inter P E A parallel_inter H gLtsP gLtsE}
-    `{@Prop_of_Inter Q E A parallel_inter H gLtsQ gLtsE}
+    `{!Prop_of_Inter P E A dual}
+    `{!Prop_of_Inter Q E A dual}
 
-    `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-    `{@Prop_of_Inter (P * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+    `{!Prop_of_Inter P (mb A) A fw_inter}
+    `{!Prop_of_Inter (P * mb A) E A dual}
 
     `{!Prop_of_Inter Q (mb A) A fw_inter}
-    `{@Prop_of_Inter (Q * mb A) E A parallel_inter H (inter_lts fw_inter) gLtsE}
+    `{!Prop_of_Inter (Q * mb A) E A dual}
 
-    `{@gen_spec_conv  _ _ _ _ _ outcome _ co_of gen_conv, 
-    @gen_spec_acc (P * mb A) (Q * mb A) _ _ _ _ _ outcome _ co_of gen_acc _ _}
+    `{@PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ _}
+    `{@PreExtAction Q A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ _}
+
+    `{!test_convergence_spec tconv, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
 
     (p : P) (pr : ionly_spec p) (q : Q) (h : forall α, q ↛{α}) : 
     @pre_extensional _ _ _ _ _ outcome _ p q.
   Proof.
     now eapply equivalence_bhv_acc_ctx; split; intros ? ?; [eapply nil_cnv | eapply ionly_nil_leq2].
-  Qed. *)
+  Qed.
 
 End application.

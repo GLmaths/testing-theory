@@ -23,8 +23,8 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Program Require Import Equality.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From Must Require Import ActTau gLts InteractionBetweenLts.
 
@@ -273,6 +273,24 @@ Qed.
 
 Definition mb_without_not_nb `{ExtAction A} (m : mb A) : mb A :=
   mb_without_not_nb_on_list ((elements (m : mb A) : list A)).
+
+Lemma mb_list_union `{ExtAction A} l1 l2 :
+  mb_without_not_nb_on_list (l1 ++ l2) = (mb_without_not_nb_on_list l1) ⊎ (mb_without_not_nb_on_list l2).
+Proof.
+  induction l1.
+  + simpl. multiset_solver.
+  + simpl. destruct (decide(non_blocking a)).
+    - rewrite IHl1. multiset_solver.
+    - eauto.
+Qed.
+
+Lemma mb_union `{ExtAction A} (m1 m2 : mb A) :
+  mb_without_not_nb (m1 ⊎ m2) = mb_without_not_nb m1 ⊎  mb_without_not_nb m2.
+Proof.
+  assert (elements (m1 ⊎ m2) ≡ₚ elements m1 ++ elements m2) as eq by (eapply gmultiset_elements_disj_union).
+  eapply lts_mb_nb_on_list_perm in eq. unfold mb_without_not_nb. rewrite eq.
+  eapply mb_list_union.
+Qed.
 
 Lemma lts_mb_nb_spec0 `{H : ExtAction A}: 
       ((mb_without_not_nb (∅ : mb A)) : mb A) = (∅  : mb A).

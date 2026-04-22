@@ -50,7 +50,7 @@ Class ExtAction (A : Type) :=
       (* Constructive way to build a dual action *)
       exists_dual μ : { η | dual μ η};
 
-      (* Unique non-blocking action *)
+      (* Unique dual *)
       unique_nb η β: dual β η → η = proj1_sig (exists_dual β);
 
       (* Handy hypothesis *)
@@ -131,3 +131,30 @@ Proof.
   eapply unique_nb.
   exact duo.
 Qed.
+
+Lemma dual_trace_is_involutive `{ExtAction A} s : s = (coₜ (coₜ s)).
+Proof.
+  induction s.
+  + simpl ; eauto.
+  + rewrite map_cons. rewrite map_cons. rewrite<- IHs at 1. f_equal.
+    eapply dual_is_involutive.
+Qed.
+
+Lemma simpl_co_trace_singleton `{ExtAction A} l η : coₜ l = [η] -> l = [co η].
+Proof.
+  intro. destruct l.
+  + simpl in *. inversion H0.
+  + simpl in *. inversion H0; subst. f_equal. rewrite<- dual_is_involutive. eauto.
+    eapply map_eq_nil in H3. subst. simpl. eauto.
+Qed.
+
+Lemma dual_traces `{ExtAction A} s : Forall2 dual s (coₜ s).
+Proof.
+  induction s.
+  + simpl. eauto.
+  + simpl. constructor.
+    exact (proj2_sig (exists_dual a)).
+    exact IHs.
+Qed.
+
+

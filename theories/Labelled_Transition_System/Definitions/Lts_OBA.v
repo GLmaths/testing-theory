@@ -102,6 +102,16 @@ Qed.
 Definition exist_co_nba (* {A : Type} `{ExtAct A}  *)
       `{ExtAction A} (β : A) := exists (η : A), (non_blocking η /\ dual β η).
 
+Lemma co_nb_to_nb `{ExtAction A} l : Forall non_blocking (coₜ l) -> Forall exist_co_nba l.
+Proof.
+  intros.
+  induction l.
+  + constructor.
+  + constructor. simpl in *. inversion H0; subst.
+    exists (co a). split; eauto. exact (proj2_sig (exists_dual a)).
+    simpl in *. inversion H0; subst. eapply IHl. eauto.
+Qed.
+
 Lemma EquivDef_inv1 `{ExtAction A} (s1 : list A) :
   Forall exist_co_nba s1 
     → (exists s3, Forall non_blocking s3 /\ Forall2 dual s1 s3).

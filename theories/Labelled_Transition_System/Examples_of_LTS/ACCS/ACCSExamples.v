@@ -174,7 +174,7 @@ solve[apply elem_of_union_l; set_tac] ||
 assumption ||
 now apply elem_of_singleton_2.
 
-
+(*
 Lemma choice_copre_r' p q:
   forall (PRE : Chain (copre_m)),
     elem PRE {[τ⋅ p ⊕ τ⋅ q]} q.

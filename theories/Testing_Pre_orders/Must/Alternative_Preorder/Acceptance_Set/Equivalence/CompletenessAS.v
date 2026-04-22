@@ -603,9 +603,13 @@ Proof.
       rewrite 6 length_app. rewrite length_map in Hyp1. rewrite length_map in Hyp2.
       subst; lia.
     * subst. eapply cnv_annhil; eauto.
-      - admit.
-      - admit.
-      - admit.
+      - eapply co_nb_to_nb; eauto. 
+      - eapply co_nb_to_nb; eauto. 
+      - eapply simpl_co_trace_singleton in eq__s2. subst.
+        eapply simpl_co_trace_singleton in eq__s'2. subst.
+        assert (dual ν η) as duo'; eauto. eapply unique_nb in duo. subst.
+        symmetry in duo'. assert (ν = co (co ν)) as eq. eapply dual_is_involutive;eauto.
+        rewrite<- eq in hcnv. exact hcnv.
   + intros p' e' ν' ν inter hlp hle.
     destruct (inversion_tconv_external_action (coₜ s) ν e' hle)
       as [hg | (s1 & s2 & ν'' & heq & sc & eq & his)]; eauto with mdb. subst.
@@ -620,11 +624,37 @@ Proof.
       { eapply unique_nb. symmetry. exact inter. }
       rewrite<- dual_is_involutive in eq.
       subst. exact hlp.
-    * (*  eapply (cnv_drop_action_in_the_middle p (a :: s1) s2) in hlp; subst; eauto with mdb.
-      eapply must_eq_client. symmetry. eassumption. 
-      eapply Hlength; subst; eauto with mdb.
-      rewrite 2 length_app. simpl. lia. *) admit. (* Facile mais long *)
-Admitted.
+    * eapply (cnv_drop_action_in_the_middle p (coₜ (a :: s1)) (coₜ s2)) in hlp; subst; eauto with mdb.
+      eapply must_eq_client. symmetry. eassumption.
+
+      assert ((a :: s1) ++ ν'' :: s2 = [a] ++ s1 ++ [ν''] ++ s2) as eq by set_solver.
+      rewrite eq in heq. assert (coₜ s = [a] ++ s1 ++ [ν''] ++ s2); eauto.
+      eapply map_eq_app in heq as (l1 & l2 & eq1 & eq2 & eq3).
+      eapply map_eq_app in eq3 as (l'1 & l'2 & eq'1 & eq'2 & eq'3).
+      eapply map_eq_app in eq'3 as (l''1 & l''2 & eq''1 & eq''2 & eq''3). subst.
+      assert ((a :: coₜ l'1) = [a] ++ coₜ l'1) as eq' by set_solver.
+      rewrite eq'. rewrite<- eq2. rewrite<- map_app. rewrite<- map_app.
+      eapply Hlength; subst; eauto with mdb. eapply simpl_co_trace_singleton in eq''2; subst.
+      rewrite 2 length_app. simpl. eapply simpl_co_trace_singleton in eq2; subst.
+      simpl. rewrite<- Nat.succ_lt_mono. rewrite length_app. simpl. lia.
+      simpl in *. eapply simpl_co_trace_singleton in eq2. rewrite<- dual_trace_is_involutive in hlp.
+      rewrite<- dual_trace_is_involutive in hlp. subst. simpl.
+
+      exact hlp.
+
+      eapply co_nb_to_nb; eauto. rewrite<- dual_trace_is_involutive; eauto. inversion his. subst; eauto.
+      assert ((a :: s1) ++ ν'' :: s2 = [a] ++ s1 ++ [ν''] ++ s2) as eq by set_solver.
+      rewrite eq in heq. assert (coₜ s = [a] ++ s1 ++ [ν''] ++ s2); eauto.
+      eapply map_eq_app in heq as (l1 & l2 & eq1 & eq2 & eq3).
+      eapply map_eq_app in eq3 as (l'1 & l'2 & eq'1 & eq'2 & eq'3). subst.
+      eapply simpl_co_trace_singleton in eq2. subst. simpl in *.
+      rewrite<- dual_trace_is_involutive. assert (ν'' :: s2 = [ν''] ++  s2) as eq'' by set_solver.
+      rewrite eq'' in eq'3. eapply map_eq_app in eq'3 as (l'''1 & l'''2 & eq'''1 & eq'''2 & eq'''3). subst.
+      rewrite<- dual_trace_is_involutive. eapply simpl_co_trace_singleton in eq'''2. subst.
+      assert (co ν'' = ν'). symmetry in inter. eapply unique_nb in inter. symmetry ;eauto. subst.
+
+      exact hcnv.
+Qed.
 
 Lemma must_iff_cnv `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -1180,8 +1210,9 @@ Proof.
   destruct (must_ta_or_empty_pre_action_set_for_all_trace s p hacnv (pre_co_actions_of q')) as [|hm].
   + eauto.
   + eapply hpre in hm. contradict hm.
-    (* eapply not_must_ta_without_required_acc_set; set_solver. *) admit. (* Facil *)
-Admitted.
+    eapply (not_must_ta_without_required_acc_set _ _ s); eauto.
+    eapply dual_traces.
+Qed.
 
 Lemma completeness_fw {P Q : Type} `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A, @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ _,
@@ -1206,7 +1237,7 @@ From stdpp Require Import gmultiset.
   `{@PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts} 
   : @PreExtAction (P * mb A) A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ (FW_gLts gLtsP) := 
-  {| pre_co_actions_of p := pre_co_actions_of p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) p.2); 
+  {| pre_co_actions_of p := pre_co_actions_of p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) (mb_without_not_nb p.2)); 
      pre_co_actions_of_fin p := 
      fun pre_μ => ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Φ μ'); |}.
 Next Obligation.
@@ -1226,12 +1257,17 @@ Next Obligation.
    + destruct (decide (non_blocking μ'')) as [nb | not_nb].
      * assert (non_blocking μ''); eauto. eapply (non_blocking_action_in_ms m μ'' m') in nb; eauto. subst.
        eapply elem_of_union_r. eapply gmultiset_elem_of_dom. simpl.
-       assert (gmultiset_map (λ x : A, 𝝳 (Φ (co x))) ({[+ μ'' +]} ⊎ m') = 
-        gmultiset_map (λ x : A, 𝝳 (Φ (co x))) {[+ μ'' +]} ⊎ gmultiset_map (λ x : A, 𝝳 (Φ (co x))) m') as eq.
+       rewrite mb_union.
+       assert (gmultiset_map (λ x : A, 𝝳 (Φ (co x)))
+    (mb_without_not_nb {[+ μ'' +]} ⊎ mb_without_not_nb m') = 
+        gmultiset_map (λ x : A, 𝝳 (Φ (co x))) (mb_without_not_nb {[+ μ'' +]}) ⊎ gmultiset_map (λ x : A, 𝝳 (Φ (co x))) (mb_without_not_nb m')) as eq.
        by eapply gmultiset_map_disj_union.
-       rewrite eq. rewrite gmultiset_map_singleton.
+       rewrite eq. assert ((mb_without_not_nb ({[+ μ'' +]} : gmultiset A)) = ({[+ μ'' +]} : gmultiset A)) as eq'.
+       { unfold mb_without_not_nb. assert ((elements ({[+ μ'' +]} : gmultiset A)) = [μ'']) as eq'''. rewrite gmultiset_elements_singleton. eauto.
+         unfold mb. rewrite eq'''. simpl. rewrite decide_True;eauto. multiset_solver. } unfold mb. rewrite eq'.
+       rewrite gmultiset_map_singleton.
        assert (μ'' = (co μ')). { symmetry in duo. eapply unique_nb in duo; eauto. } subst.
-       assert (μ' = (co (co μ'))) as eq'. { eapply dual_is_involutive. } rewrite<- eq'. multiset_solver. 
+       assert (μ' = (co (co μ'))) as eq''''. { eapply dual_is_involutive. } rewrite<- eq''''. multiset_solver. 
      * assert (blocking μ''); eauto.
        eapply blocking_action_in_ms in not_nb as (eq & duo' & nb); eauto. subst.
        symmetry in duo. assert (μ' = co μ'').
@@ -1245,7 +1281,18 @@ Next Obligation.
      eapply lts_refuses_spec1 in tr as (p' & tr). exists (p' ▷ m).
      eapply ParLeft. exact tr.
    + eapply gmultiset_elem_of_dom in multiset_co_act. simpl in *.
-     admit.
+     induction m using gmultiset_ind.
+     ++ unfold mb_without_not_nb in multiset_co_act. unfold mb in multiset_co_act.
+        rewrite gmultiset_elements_empty in multiset_co_act. multiset_solver.
+     ++ eapply elem_of_gmultiset_map in multiset_co_act as (x0 & eq & eq').
+        assert (mb_without_not_nb ({[+ x +]} ⊎ X) = mb_without_not_nb ({[+ x +]} : gmultiset A) ⊎ (mb_without_not_nb X)) as eq''''.
+        { (* rewrite mb_union. *) admit. } rewrite eq'''' in eq'.
+        eapply gmultiset_elem_of_disj_union in eq'. destruct eq' as [case1 | case2].
+        -- destruct (decide (non_blocking x)) as [nb | b].
+           ** unfold mb_without_not_nb in case1. unfold mb in case1.
+              unfold mb in case1. (* rewrite gmultiset_elements_singleton. simpl. assert (x = x0) by multiset_solver. *) admit.
+           ** (* inversion case1. *) admit.
+        -- subst. admit.
 Admitted.
 
 Lemma completeness {P Q : Type} `{

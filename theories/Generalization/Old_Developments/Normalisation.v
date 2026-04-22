@@ -278,7 +278,7 @@ Proof.
                 ∧ elements M_nb ≡ₚ s1 ∧ length s2 ≤ length s) as (M_nb & s1 & s2 & eq & eq_trace & all_nb & permut & subeq_length).
       { eapply Hlength; eauto. }
       exists ({[+ a +]} ⊎  M_nb). exists (a :: s1), s2. repeat split.
-      - subst. admit.
+      - subst. admit. 
       - subst. eauto.
       - constructor;eauto.
       - subst. rewrite gmultiset_elements_disj_union. rewrite gmultiset_elements_singleton.
