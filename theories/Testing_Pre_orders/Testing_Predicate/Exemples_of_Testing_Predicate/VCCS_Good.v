@@ -26,8 +26,9 @@
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import decidable countable.
-From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must Testing_Predicate VCCS_Instance.
+From TestingTheory Require Import gLts InputOutputActions GeneralizeLtsOutputs Must Testing_Predicate VCCS_Instance.
 
+(** ** Testing Predicate for VCCS *)
 Inductive good_VCCS : proc -> Prop :=
 | good_success : good_VCCS ①
 | good_par : forall p q, good_VCCS p \/ good_VCCS q -> good_VCCS (p ‖ q)

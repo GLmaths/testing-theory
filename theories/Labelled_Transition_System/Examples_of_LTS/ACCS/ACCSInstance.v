@@ -29,11 +29,13 @@ From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
+From TestingTheory Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
       CompletenessAS SoundnessAS DefinitionCI Normalisation MultisetLTSConstruction
       GeneralizeLtsOutputs ForwarderConstruction ParallelLTSConstruction Testing_Predicate
       (* gLts *) (* Bisimulation *).
 
+
+(** *** ACCS properties *)
 Definition name := string.
 Definition name_eq_dec : forall (x y : name), { x = y } + { x <> y } := string_dec.
 
@@ -372,7 +374,7 @@ Proof.
       replace q with pr_nil by multiset_solver. eauto with ccs.
     + eapply name_eqb_spec1 in n0. rewrite n0 in mem. inversion mem.
   - eapply elem_of_union in mem as [mem | mem];
-      eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem); subst;
+      eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem); subst;
       rewrite elem_of_elements in mem; eauto with ccs.
 Qed.
 
@@ -387,10 +389,10 @@ Lemma lts_set_input_spec0 p a q : q ∈ lts_set_input p a -> lts p (ActExt $ Act
   dependent induction p; simpl in mem; try set_solver.
   + eapply elem_of_union in mem. destruct mem.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. eauto with ccs.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. eauto with ccs.
   + dependent induction g0; simpl in mem; try set_solver.
       ++ destruct (name_eq_dec a n).
@@ -416,22 +418,22 @@ Proof.
       ++ eapply elem_of_union in mem1.
          destruct mem1.
          eapply elem_of_union in H as [mem1 | mem2].
-         eapply elem_of_list_to_set, elem_of_list_fmap in mem1 as (t & eq & h); subst.
+         eapply elem_of_list_to_set, list_elem_of_fmap in mem1 as (t & eq & h); subst.
          rewrite elem_of_elements in h. eauto with ccs.
-         eapply elem_of_list_to_set, elem_of_list_fmap in mem2 as (t & eq & h); subst.
+         eapply elem_of_list_to_set, list_elem_of_fmap in mem2 as (t & eq & h); subst.
          rewrite elem_of_elements in h. eauto with ccs.
-         eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in H as (t & eq & h); subst.
-         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
-         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
-         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
-         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+         eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in H as (t & eq & h); subst.
+         eapply list_elem_of_In, list_elem_of_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply list_elem_of_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply list_elem_of_In in mem1. rewrite elem_of_elements in mem1.
+         eapply list_elem_of_In in mem2. rewrite elem_of_elements in mem2.
          eapply lts_set_output_spec0 in mem1.
          eapply lts_set_input_spec0 in mem2. eauto with ccs.
-      ++ eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem2 as (t & eq & h); subst.
-         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
-         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
-         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
-         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+      ++ eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in mem2 as (t & eq & h); subst.
+         eapply list_elem_of_In, list_elem_of_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply list_elem_of_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply list_elem_of_In in mem1. rewrite elem_of_elements in mem1.
+         eapply list_elem_of_In in mem2. rewrite elem_of_elements in mem2.
          eapply lts_set_input_spec0 in mem1.
          eapply lts_set_output_spec0 in mem2. eauto with ccs.
     + inversion mem.
@@ -447,27 +449,27 @@ Proof.
   destruct μ.
   - eapply elem_of_union. right.
     eapply elem_of_list_to_set.
-    rewrite elem_of_list_In in_flat_map.
+    rewrite list_elem_of_In in_flat_map.
     exists a. split.
-    + eapply elem_of_list_In, elem_of_elements.
+    + eapply list_elem_of_In, elem_of_elements.
       eapply outputs_of_spec2. eauto.
-    + eapply elem_of_list_In, elem_of_list_fmap.
+    + eapply list_elem_of_In, list_elem_of_fmap.
       exists (p2 , q2). split.
       ++ reflexivity.
-      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+      ++ eapply list_elem_of_In, in_prod_iff; split; eapply list_elem_of_In, elem_of_elements.
          eapply lts_set_input_spec1; eauto with ccs.
          eapply lts_set_output_spec1; eauto with ccs.
   - eapply elem_of_union. left.
     eapply elem_of_union. right.
     eapply elem_of_list_to_set.
-    rewrite elem_of_list_In in_flat_map.
+    rewrite list_elem_of_In in_flat_map.
     exists a. split.
-    + eapply elem_of_list_In, elem_of_elements.
+    + eapply list_elem_of_In, elem_of_elements.
       eapply outputs_of_spec2. eauto.
-    + eapply elem_of_list_In, elem_of_list_fmap.
+    + eapply list_elem_of_In, list_elem_of_fmap.
       exists (p2 , q2). split.
       ++ reflexivity.
-      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+      ++ eapply list_elem_of_In, in_prod_iff; split; eapply list_elem_of_In, elem_of_elements.
          eapply lts_set_output_spec1; eauto with ccs.
          eapply lts_set_input_spec1; eauto with ccs.
 Qed.
@@ -998,7 +1000,7 @@ Qed.
 
 Definition gen_conv s := gen_test s (pr_tau pr_success).
 
-From Must Require Import gLts InputOutputActions Bisimulation.
+From TestingTheory Require Import gLts InputOutputActions Bisimulation.
 
 #[global] Instance dec_output μ : Decision (∃ a : name, ActOut a = μ).
 Proof.
@@ -1065,7 +1067,7 @@ match μ with
 | ActOut c => c
 end.
 
-From Must Require Import DefinitionAS.
+From TestingTheory Require Import DefinitionAS.
 
 #[global] Program Instance gAbsAction {A : Type} 
   : @AbsAction (ExtAct name) gLabel_nb proc FinA _ Φ.
@@ -1271,7 +1273,7 @@ Next Obligation.
        +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
 Qed.
 
-From Must Require Import InteractionBetweenLts ParallelLTSConstruction 
+From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction 
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
   ForwarderConstruction MultisetLTSConstruction FiniteImageLTS.
 
@@ -1312,7 +1314,7 @@ Defined.
 #[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
   Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) dual :=  Inter_FW_parallel_IO gLabel_nb.
 
-From Must Require Import Subset_Act.
+From TestingTheory Require Import Subset_Act.
 
 Lemma PreCoEquiv (p : proc) (q : proc) (c : PreAct) : p ≡* q -> c ∈ mPreCoAct_of p -> c ∈ mPreCoAct_of q.
 Proof.
@@ -1382,7 +1384,7 @@ Next Obligation.
       * simpl in H. inversion H.
 Qed.
 
-From Must Require Import EquivalenceAS MustE FiniteImageLTS.
+From TestingTheory Require Import EquivalenceAS MustE FiniteImageLTS.
 
 Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.

@@ -28,7 +28,7 @@ From Stdlib.Program Require Import Equality.
 
 From stdpp Require Import base decidable gmap finite.
 
-From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS DefinitionMS MustE EquivalenceAS.
@@ -161,7 +161,7 @@ Section must_set_acc_set.
     intros μ mem_mu.
     assert (mem0 : μ ∈ actions_acc p s hcnv).
     eapply elem_of_union_list. eexists. split; eauto.
-    eapply elem_of_list_fmap.
+    eapply list_elem_of_fmap.
     exists p0. repeat split; eauto.
     eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
     eapply wt_push_nil_right, wt_push_nil_right; eauto.
@@ -207,7 +207,7 @@ Section must_set_acc_set.
     (* assert (exists p', p' ⟶[ μ ]).
     assert (is_output μ) as (a & heq). *)
     eapply elem_of_union_list in mem as (X & mem1 & mem2).
-    eapply elem_of_list_fmap in mem1 as (r & heq & mem1). subst.
+    eapply list_elem_of_fmap in mem1 as (r & heq & mem1). subst.
     (* eapply elem_of_map in mem2 as (a & heq & mem2). exists a. assumption. *)
     assert { r' | r ⟶[ μ ] r'} as (r' & HypTr). eapply lts_refuses_spec1. eauto.
     inversion hw'; subst.
@@ -258,7 +258,7 @@ Section must_set_acc_set.
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
 
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, Testing_Predicate0 :!Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.

@@ -25,12 +25,12 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable.
-From Must Require Import gLts Bisimulation Lts_OBA MultisetHelper.
+From TestingTheory Require Import gLts Bisimulation Lts_OBA MultisetHelper.
 
 
-(******************************************** Termination ***************************************************)
+(** ** Termination *)
 
-(* Inductive definition of terminate. *)
+(** *** Inductive definition of termination *)
 
 Reserved Notation "p ⤓" (at level 1).
 
@@ -41,13 +41,13 @@ where "p ⤓" := (terminate p).
 
 Global Hint Constructors terminate:mdb.
 
-(* Intensionnal definition of termination *)
+(** *** Intensional definition of termination *)
 Inductive terminate_i`{gLts P A} (p : P) : Prop :=
 | t_refuses' : p ↛ -> terminate_i p
 | tstep' : (exists p', p ⟶ p') -> (∀ q, p ⟶ q -> terminate_i q) -> terminate_i p.
 
 
-(* Intensionnal definition of termination and extensionnal definition is the same *)
+(** *** Equivalence betwenn the two definitions of termination *)
 
 
 Lemma terminate_i_to_terminate `{gLtsP : gLts P A} (p : P) : terminate_i p -> p ⤓.
@@ -74,9 +74,9 @@ Proof.
 Qed.
 
 
-(*************************************** Properties on termination **************************************)
+(** *** Properties on termination *)
 
-(* On LTS *)
+(** **** On LTS *)
 
 Lemma terminate_if_refuses `{gLts P A} p : p ↛ -> p ⤓.
 Proof. intro st. constructor. intros q l. exfalso. eapply lts_refuses_spec2; eauto. Qed.
@@ -84,7 +84,7 @@ Proof. intro st. constructor. intros q l. exfalso. eapply lts_refuses_spec2; eau
 Lemma terminate_preserved_by_lts_tau `{gLts P A} p q : p ⤓ -> p ⟶ q -> q ⤓.
 Proof. by inversion 1; eauto. Qed.
 
-(* On LTS with a bisimulation *)
+(** **** On LTS with a bisimulation *)
 
 Lemma terminate_preserved_by_eq `{gLtsEq P A} {p q} : p ⤓ -> p ⋍ q -> q ⤓.
 Proof.
@@ -95,7 +95,7 @@ Qed.
 Lemma terminate_preserved_by_eq2 `{gLtsEq P A} {p q} : p ⋍ q -> p ⤓ -> q ⤓.
 Proof. intros. eapply terminate_preserved_by_eq; eauto. Qed.
 
-(* On LTS with OBA axioms *)
+(** **** On LTS with OBA axioms *)
 
 Lemma terminate_preserved_by_lts_non_blocking_action `{gLtsOba P A} {p q η} : 
     non_blocking η  -> p ⟶[ η ] q -> p ⤓ -> q ⤓.

@@ -23,8 +23,8 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Logic Require Import ProofIrrelevance. 
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Logic Require Import ProofIrrelevance. 
 From stdpp Require Import list finite gmap gmultiset.
 
 Lemma sig_eq {A} (P : A → Prop) (x y : sig P) :
@@ -81,13 +81,13 @@ Section in_list_finite.
   Proof.
     intros Hl.
     assert (Forall P (filter P (remove_dups l))) as Hels.
-    { apply Forall_forall. intros ?. rewrite<- elem_of_list_In. rewrite elem_of_list_filter ; tauto. }
+    { apply Forall_forall. intros ?. rewrite<- list_elem_of_In. rewrite list_elem_of_filter ; tauto. }
     refine {| enum := Forall_to_sig (filter P (remove_dups (l : list A))) Hels |}.
-    - eapply Forall_to_sig_NoDup. eapply list_relations.NoDup_filter.
+    - eapply Forall_to_sig_NoDup. eapply list.NoDup_filter.
       eapply NoDup_remove_dups.
     - intros x.
       edestruct (elem_of_Forall_to_sig_2 _ Hels) as [Hx' ?].
-      { apply elem_of_list_filter; split; first apply (proj2_sig x).
+      { apply list_elem_of_filter; split; first apply (proj2_sig x).
         apply elem_of_remove_dups, Hl; apply (proj2_sig x). }
       replace x with (`x ↾ Hx'); last by apply sig_eq.
       done.

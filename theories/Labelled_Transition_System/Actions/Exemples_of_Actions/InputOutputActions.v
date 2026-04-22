@@ -23,17 +23,17 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Program Require Import Wf Equality.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Wf Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable list decidable finite gmap.
 
-From Must Require Import ActTau.
-(** Actions  *)
+From TestingTheory Require Import ActTau.
+(** ** Example: Input/Output actions over a set of channels *)
 
 Inductive ExtAct (A: Type) :=
 | ActIn (a : A)

@@ -23,10 +23,10 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Program Require Import Equality.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
-From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
 (********************************************* Definition of May *****************************************)
@@ -44,7 +44,7 @@ Global Hint Constructors may_sts:mdb.
 
 Inductive may `{
     gLtsP : @gLts P A H, 
-    gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome} 
+    gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT} 
 
     {PInter: Prop_of_Inter P T A dual}
 
@@ -63,7 +63,7 @@ Notation "p 'may_pass' t" := (may p t) (at level 70).
 
 Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
-  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -87,7 +87,7 @@ Qed.
 Definition ctx_may_pre `{
   gLtsP : @gLts P A H, 
   gLtsQ : !gLts Q H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
   {_ : Prop_of_Inter P T A dual}
   {_ : Prop_of_Inter Q T A dual}
@@ -103,7 +103,7 @@ Notation "p ⊑ₘₐᵧ q" := (ctx_may_pre p q) (at level 70).
 
 Lemma may_eq_client `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
   {_ : Prop_of_Inter P T A dual} :
 
@@ -126,7 +126,7 @@ Qed.
 
 Lemma may_eq_server `{
   gLtsP : @gLtsEq P A H,
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome} 
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT} 
 
   {_ : Prop_of_Inter P T A dual} :
 
@@ -149,7 +149,7 @@ Qed.
 
 Lemma may_not_stable_or_outcome `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -163,7 +163,7 @@ Admitted.
 Lemma ctx_may_pre_not `{
   gLtsP : @gLts P A H,
   gLtsQ : !gLts Q H,
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
   {_ : Prop_of_Inter P T A dual}
   {_ : Prop_of_Inter Q T A dual}
   (p : P) (q : Q) (t : T) :

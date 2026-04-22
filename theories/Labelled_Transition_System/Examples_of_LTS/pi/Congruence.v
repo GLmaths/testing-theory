@@ -2,7 +2,7 @@
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Lia Arith Relations Morphisms.
 
-From Must Require Import Renamings.
+From TestingTheory Require Import Renamings.
 
 Reserved Notation "p ≡ q" (at level 70).
 Inductive cgr_step : proc -> proc -> Prop :=

@@ -31,7 +31,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Logic Require Import JMeq ProofIrrelevance.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
+From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
     WeakTransitions StateTransitionSystems Convergence Termination ActTau.
 
 (************************************** Interaction between two LTS **************************************)
@@ -103,7 +103,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] s'2 ∧ inter ξ a)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_helper_right_rev `{Prop_of_Inter S1 S2 A inter} 
@@ -119,7 +119,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] s'2 ∧ inter ξ a)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_1_right `{Prop_of_Inter S1 S2 A inter} 
@@ -205,7 +205,7 @@ Proof.
      destruct Hyp_co_step as (μ & ess_act' & HypTr_right & duo). exists ξ. exists μ. split; eauto.
      instantiate (1:= []). eauto. intro. intro impossible. inversion impossible.
    + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_steps_spec_helper_essential_left_rev `{M12 : Prop_of_Inter S1 S2 A}
@@ -227,7 +227,7 @@ Proof.
        ∧ is_Some (search_co_steps_right s2 s'2 ξ (elements (lts_co_inter_action_right ξ s2)) s1))) as [case1 | case2].
    + intro Hyp. eauto.
    + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_steps_spec_1_essential_left `{M12 : Prop_of_Inter S1 S2 A}
@@ -278,7 +278,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[a] s'1 ∧ inter a ξ)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_helper_left_rev `{Prop_of_Inter S1 S2 A}
@@ -294,7 +294,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] s'1 ∧ inter μ ξ)).
   + eauto.
   + apply (IHl (lnot ++ [μ])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_1_left `{Prop_of_Inter S1 S2 A}
@@ -381,7 +381,7 @@ Proof.
      exists ξ. exists μ. split; eauto.
      instantiate (1:= []). eauto. intro. intro Hyp. inversion Hyp.
    + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_steps_spec_helper_essential_right_rev `{M12 : Prop_of_Inter S1 S2 A}
@@ -403,7 +403,7 @@ Proof.
           ∧ is_Some (search_co_steps_left s1 s'1 ξ (elements (lts_co_inter_action_left ξ s1)) s2 )))  as [case1 | case2].
    + intro Hyp. eauto.
    + apply (IHl (lnot ++ [ξ])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed. 
 
 Lemma search_steps_spec_1_essential_right `{M12 : Prop_of_Inter S1 S2 A}
@@ -487,7 +487,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ ¬lts_refuses s2 (ActExt a) ∧ inter ξ a)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_helper_right_not_refuses_rev `{Prop_of_Inter S1 S2 A inter} 
@@ -508,7 +508,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ ¬ s2 ↛[a] ∧ inter ξ a)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_1_right_not_refuses `{Prop_of_Inter S1 S2 A inter} 
@@ -632,7 +632,7 @@ Proof.
   - intros rest Hrest Hnots. simplify_list_eq.
     destruct (decide (inter_not_refuses_essential_left s1 s2 b)) as [case1 | case2]; [auto|].
     eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
-    intros x [Hin | ->%elem_of_list_singleton]%elem_of_app; [eauto|].
+    intros x [Hin | ->%list_elem_of_singleton]%elem_of_app; [eauto|].
     intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_refuses_spec2. exists s'1. assumption.
     destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_refuses_spec2. exists s'2. assumption.
     split; eauto. 
@@ -668,7 +668,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ ¬lts_refuses s1 (ActExt a) ∧ inter a ξ)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_helper_left_not_refuses_rev `{Prop_of_Inter S1 S2 A inter} 
@@ -690,7 +690,7 @@ Proof.
   destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ ¬ s1 ↛[a] ∧ inter a ξ )).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
-  intros x [Hin | Hin%elem_of_list_singleton]%elem_of_app; simplify_eq ; eauto. }
+  intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
 Lemma search_co_steps_spec_1_left_not_refuses `{Prop_of_Inter S1 S2 A inter} 
@@ -815,7 +815,7 @@ Proof.
   - intros rest Hrest Hnots. simplify_list_eq.
     destruct (decide (inter_not_refuses_essential_right s1 s2 b)) as [case1 | case2]; [auto|].
     eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
-    intros x [Hin | ->%elem_of_list_singleton]%elem_of_app; [eauto|].
+    intros x [Hin | ->%list_elem_of_singleton]%elem_of_app; [eauto|].
     intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_refuses_spec2. exists s'2. assumption.
     destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_refuses_spec2. exists s'1. assumption.
     split; eauto. 
@@ -874,6 +874,6 @@ Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!gLts S1 H} `{!gLts S2
 Proof.
   apply MkClts.
   -  eapply prod_countable.
-  - intros x ℓ. apply countable_sig. intros y.
+  - intros x ℓ. apply sig_countable. intros y.
     destruct (decide (bool_decide (x ⟶{ℓ} y))); [left | right]; done.
 Qed.

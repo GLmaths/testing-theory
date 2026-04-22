@@ -29,8 +29,8 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 From Coinduction Require Import all.
 
-(* From Must Require Import TransitionSystems Must Soundness Equivalence Completeness. *)
-From Must Require Import gLts FiniteImageLTS Lts_OBA_FB ActTau Termination Convergence WeakTransitions
+(* From TestingTheory Require Import TransitionSystems Must Soundness Equivalence Completeness. *)
+From TestingTheory Require Import gLts FiniteImageLTS Lts_OBA_FB ActTau Termination Convergence WeakTransitions
 Must MustE DefinitionAS SoundnessAS EquivalenceAS CompletenessAS.
 
 (* TODO: define me using the coinduction library *)
@@ -208,7 +208,7 @@ End copre.
 
 Notation "p ⩽ q" := (copre p q) (at level 70).
 
-From Must Require Import Bisimulation Lts_OBA_FB Testing_Predicate InteractionBetweenLts
+From TestingTheory Require Import Bisimulation Lts_OBA_FB Testing_Predicate InteractionBetweenLts
  Lift MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
  StateTransitionSystems Lts_OBA.
 
@@ -222,7 +222,7 @@ Section eq_contextual.
 
   Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
   Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
 
   (* ************************************************** *)
   Context `{!Prop_of_Inter P T A dual}.

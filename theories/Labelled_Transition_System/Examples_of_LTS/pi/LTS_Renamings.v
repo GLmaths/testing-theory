@@ -1,4 +1,4 @@
-From Must Require Import LTS Renamings Congruence.
+From TestingTheory Require Import LTS Renamings Congruence.
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Morphisms.
 

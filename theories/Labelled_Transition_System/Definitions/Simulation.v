@@ -27,9 +27,9 @@ From Stdlib.Unicode Require Import Utf8.
 
 From stdpp Require Import base countable strings sets gmap.
 
-From Must Require Import gLts Bisimulation Termination Lts_OBA MultisetHelper ActTau.
+From TestingTheory Require Import gLts Bisimulation Termination Lts_OBA MultisetHelper ActTau.
 
-(* Simulation *)
+(** ** Similarity *)
 CoInductive similar `{@gLts A L H} `{@gLts B L H}  (a : A) (b : B) : Prop :=
 | smi_step : (forall (α : Act L) a', a ⟶{α} a' -> exists b', b ⟶{α} b' /\ similar a' b') -> similar a b.
 Infix "≲" := (similar) (at level 20).
@@ -37,7 +37,7 @@ Infix "≲" := (similar) (at level 20).
 
 Section Similarity.
 
-(* Similarity preserves termination *)
+(** *** Similarity preserves termination *)
 Lemma similar_terminate `{@gLts A L H} `{@gLts B L H} (a : A) (b : B) :
   b ≲ a -> a ⤓ -> b ⤓.
 Proof.
@@ -72,15 +72,13 @@ Notation "p '⤓_' Q" := (terminate_with Q p).
 
 End TerminateWith.
 
-From Must Require Import InteractionBetweenLts ParallelLTSConstruction.
+From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction.
 
 Section ParallelTermination.
 
 Context `{gLtsP : @gLts P A H}.
 Context `{gLtsQ : @gLts Q A H}.
 Context `{!Prop_of_Inter P Q A dual}.
-
-(* From Must Require Import InteractionBetweenLts. *)
 
 Local Instance gLtsPQ : gLts (P * Q) H := parallel_gLts.
 

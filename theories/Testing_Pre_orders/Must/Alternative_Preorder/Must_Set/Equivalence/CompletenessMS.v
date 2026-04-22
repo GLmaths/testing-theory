@@ -32,7 +32,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import sets base countable finite gmap list finite decidable finite gmap.
 
-From Must Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
       InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
        Must Lift Subset_Act Convergence Termination Testing_Predicate DefinitionAS DefinitionMS.
 

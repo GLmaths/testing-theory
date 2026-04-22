@@ -1,12 +1,10 @@
 (include_subdirs qualified)
 
 (coq.theory
- (name Must)
+ (name TestingTheory)
  (package testing-theory)
- (synopsis "Must testing")
+ (synopsis "Testing theory for May and Must")
  (theories stdpp Stdlib Coinduction)
- (flags (-w -deprecated-missing-stdlib)
-        (-w -deprecated-from-Coq))
 )
 
 (documentation

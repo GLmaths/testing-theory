@@ -31,7 +31,7 @@ From Stdlib.Program Require Import Wf Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-From Must Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS.
 

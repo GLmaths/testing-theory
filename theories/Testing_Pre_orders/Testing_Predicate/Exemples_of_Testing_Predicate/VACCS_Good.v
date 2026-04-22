@@ -26,14 +26,18 @@
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import countable decidable.
-From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must VACCS_Instance Testing_Predicate.
+From TestingTheory Require Import gLts InputOutputActions GeneralizeLtsOutputs
+                                  Must VACCS_Instance Testing_Predicate.
 
+(** ** Testing Predicate for VACCS *)
 Inductive good_VACCS : proc -> Prop :=
 | good_success : good_VACCS ①
 | good_par : forall p q, good_VACCS p \/ good_VACCS q -> good_VACCS (p ‖ q)
 | good_choice : forall p q, good_VACCS (g p) \/ good_VACCS (g q) -> good_VACCS (p + q)
-| good_if_true : forall E p q, good_VACCS p -> Eval_Eq E = Some true -> good_VACCS (If E Then p Else q)
-| good_if_false : forall E p q, good_VACCS q -> Eval_Eq E = Some false -> good_VACCS (If E Then p Else q)
+| good_if_true : forall E p q, good_VACCS p ->
+    Eval_Eq E = Some true -> good_VACCS (If E Then p Else q)
+| good_if_false : forall E p q, good_VACCS q ->
+    Eval_Eq E = Some false -> good_VACCS (If E Then p Else q)
 | good_res : forall p, good_VACCS p -> good_VACCS (ν p).
 
 #[global] Hint Constructors good_VACCS:ccs.

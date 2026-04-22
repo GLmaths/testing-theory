@@ -10,7 +10,7 @@ Proof.
 Qed.
 
 
-(** ** Functor Instances
+(* Functor Instances
 
 Exemplary functor instances needed to make Autosubst's generation possible for functors.
 Two things are important:
@@ -19,7 +19,7 @@ Two things are important:
  *)
 
 (** *** List Instance *)
-Require Import List.
+From Stdlib Require Import List.
 
 Notation "'list_map'" := map.
 
@@ -129,7 +129,7 @@ Ltac check_no_evars :=
   | [|- ?x] => assert_fails (has_evar x)
   end.
 
-Require Import Setoid Morphisms.
+From Stdlib Require Import Setoid Morphisms.
 
 Lemma pointwise_forall {X Y:Type} (f g: X -> Y) :
   (pointwise_relation _ eq f g) -> forall x, f x = g x.

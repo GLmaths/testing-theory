@@ -2,11 +2,11 @@
 
 ## May
 
-Definition of May and Alternative pre orders.
+Definition of May and Alternative preorders.
 
 ## Must
 
-Definition of Must and Alternative pre orders.
+Definition of Must and Alternative preorders.
 
 ## Testing Predicate
 

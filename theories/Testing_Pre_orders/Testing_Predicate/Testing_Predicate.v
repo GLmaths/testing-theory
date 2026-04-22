@@ -26,10 +26,10 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
-From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions CodePurification
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions CodePurification
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
-Class Testing_Predicate (P A : Type) {H: ExtAction A} (outcome : P -> Prop) `{!gLtsEq P H} := {
+Class Testing_Predicate {P A : Type} {H: ExtAction A} (outcome : P -> Prop) `(!gLtsEq P H) := {
     outcome_decidable e : Decision (outcome e);
     outcome_preserved_by_eq (p : P) q : outcome p -> p ⋍ q -> outcome q;
     outcome_preserved_by_lts_non_blocking_action p q η : non_blocking η -> p ⟶[η] q -> outcome p -> outcome q;
@@ -39,21 +39,23 @@ Class Testing_Predicate (P A : Type) {H: ExtAction A} (outcome : P -> Prop) `{!g
 #[global] Instance outcome_dec `{Testing_Predicate P A outcome} e : Decision (outcome e).
 Proof. eapply outcome_decidable. Defined.
 
-Lemma unoutcome_preserved_by_eq `{gLtsEq P A, !Testing_Predicate P A outcome} p q :
+Lemma unoutcome_preserved_by_eq `{gLtsEq P A, !Testing_Predicate outcome _} p q :
   ~ outcome p -> q ⋍ p -> ~ outcome q.
 Proof.
   intros not_happy eq. intro happy.
   eapply outcome_preserved_by_eq in happy; eauto with mdb.
 Qed.
 
-Lemma unoutcome_preserved_by_lts_non_blocking_action `{gLtsEq P A, !Testing_Predicate P A outcome} p q η :
+Lemma unoutcome_preserved_by_lts_non_blocking_action
+  `{gLtsEq P A, !Testing_Predicate outcome _} p q η :
   non_blocking η -> p ⟶[η] q -> ~ outcome p -> ~ outcome q.
 Proof.
   intros nb l1 hp hq.
   eapply hp. eapply outcome_preserved_by_lts_non_blocking_action_converse; eauto with mdb.
 Qed.
 
-Lemma unoutcome_preserved_by_lts_non_blocking_action_converse `{gLtsEq P A, !Testing_Predicate P A outcome} p q η :
+Lemma unoutcome_preserved_by_lts_non_blocking_action_converse
+  `{L : gLtsEq P A, !Testing_Predicate outcome L} p q η :
   non_blocking η -> p ⟶[η] q -> ~ outcome q -> ~ outcome p.
 Proof.
   intros nb l1 hp hq.
@@ -61,7 +63,7 @@ Proof.
 Qed.
 
 Lemma unoutcome_preserved_by_wt_non_blocking_action 
-  `{gLtsOba P A, !Testing_Predicate P A outcome} 
+  `{gLtsOba P A, !Testing_Predicate outcome _} 
   r1 r2 s :
   Forall non_blocking s -> r1 ↛ -> ~ outcome r1 -> r1 ⟹[s] r2 -> ~ outcome r2.
 Proof.
@@ -75,7 +77,7 @@ Proof.
     eapply unoutcome_preserved_by_lts_non_blocking_action; eauto.
 Qed.
 
-Lemma woutpout_preserves_outcome `{gLtsOba P A, !Testing_Predicate P A outcome} e m e':
+Lemma woutpout_preserves_outcome `{gLtsOba P A, !Testing_Predicate outcome _} e m e':
   outcome e -> e ⟿{m} e'
     -> outcome e'.
 Proof.
@@ -85,7 +87,7 @@ Proof.
   + eapply IHstripped. eapply outcome_preserved_by_lts_non_blocking_action; eauto.
 Qed.
 
-Lemma woutpout_preserves_outcome_converse `{gLtsOba P A, !Testing_Predicate P A outcome} e m e':
+Lemma woutpout_preserves_outcome_converse `{gLtsOba P A, !Testing_Predicate outcome _} e m e':
   outcome e' -> e ⟿{m} e'
     -> outcome e.
 Proof.

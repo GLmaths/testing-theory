@@ -1,2 +1,2 @@
--R _build/default/theories/ Must
+-R _build/default/theories/ TestingTheory
 theories

@@ -28,12 +28,12 @@ From Stdlib.Program Require Import Wf Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From Must Require Import gLts InputOutputActions OldTransitionSystems Subset_Act
+From TestingTheory Require Import gLts InputOutputActions OldTransitionSystems Subset_Act
   FiniteImageLTS Bisimulation Lts_OBA Lts_OBA_FB Lts_FW InteractionBetweenLts
   MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction.
-(* From Must Require Import VCCS_Instance VACCS_Instance. *)
+(* From TestingTheory Require Import VCCS_Instance VACCS_Instance. *)
 (* Genarilization via essential actions, non_blocking actions *)
-From Must Require Import ActTau.
+From TestingTheory Require Import ActTau.
 
 Definition all_blocking_action `{Label A} (μ : ExtAct A) := False.
 
@@ -125,6 +125,13 @@ Qed.
 
 #[global] Program Instance ggLtsEq {A : Type}
   (H : ExtAction (ExtAct A)) `{LtsEq P A} : @gLtsEq P (ExtAct A) H.
+Next Obligation.
+  intros ? ? Hyp α LtsP LtsEqP p q.
+  apply (OldTransitionSystems.eq_rel p q).
+Defined.
+Next Obligation.
+  intros ? ? ? ? LtsP LtsEqP. destruct LtsEqP. now constructor.
+Qed.
 Next Obligation.
   intros ? ? ? ? LtsP LtsEqP p q α Hyp.
   destruct α as [ μ |].
@@ -358,7 +365,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? p ? Hyp ;simpl in *.
   unfold set_map in Hyp. simpl in *.
   eapply elem_of_list_to_set in Hyp.
-  eapply elem_of_list_fmap in Hyp.
+  eapply list_elem_of_fmap in Hyp.
   destruct ξ.
   + exfalso. destruct Hyp as (a' & eq & mem). inversion eq.
   + eapply lts_outputs_spec2. destruct Hyp as (a' & eq & mem).
@@ -368,7 +375,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? q ? Hyp ;simpl in *.
   unfold set_map in Hyp. simpl in *.
   eapply elem_of_list_to_set in Hyp.
-  eapply elem_of_list_fmap in Hyp.
+  eapply list_elem_of_fmap in Hyp.
   destruct ξ.
   + exfalso. destruct Hyp as (a' & eq & mem). inversion eq.
   + eapply lts_outputs_spec2. destruct Hyp as (a' & eq & mem).
@@ -379,11 +386,11 @@ Next Obligation.
   destruct μ1 as [ (*Input*) a | (*Output*) a].
   + right. eapply ext_m in inter. eapply simplify_match_input in inter. subst.
     eapply elem_of_list_to_set.
-    eapply elem_of_list_fmap. exists a. split; eauto. 
+    eapply list_elem_of_fmap. exists a. split; eauto. 
     eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
   + left. eapply ext_m in inter. eapply simplify_match_output in inter. subst.
     eapply elem_of_list_to_set.
-    eapply elem_of_list_fmap. exists a. split; eauto. 
+    eapply list_elem_of_fmap. exists a. split; eauto. 
     eapply elem_of_elements. eapply lts_outputs_spec1; eauto.
 Defined.
 Next Obligation.
@@ -396,7 +403,7 @@ Next Obligation.
   unfold Inter_parallel_IO_obligation_4.
   intros ? ? ? ? ? ? ? ? ? ? ? ? q mem l inter;simpl in *. 
   eapply elem_of_list_to_set in mem.
-  eapply elem_of_list_fmap in mem.
+  eapply list_elem_of_fmap in mem.
   destruct mem as ( a & eq & mem ); subst.
   eapply ext_m in inter. symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
@@ -410,7 +417,7 @@ Next Obligation.
   unfold Inter_parallel_IO_obligation_6.
   intros ? ? ? ? ? ? ? ? ? ? ? ? q mem l inter;simpl in *. 
   eapply elem_of_list_to_set in mem.
-  eapply elem_of_list_fmap in mem.
+  eapply list_elem_of_fmap in mem.
   destruct mem as ( a & eq & mem ); subst. symmetry in inter.
   eapply ext_m in inter. symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
@@ -442,7 +449,7 @@ Next Obligation.
     { destruct H0. exact H0.  contradiction. }
     unfold set_map in Hyp. simpl in *.
     eapply elem_of_list_to_set in Hyp.
-    eapply elem_of_list_fmap in Hyp.
+    eapply list_elem_of_fmap in Hyp.
     destruct ξ.
     ++ exfalso. destruct Hyp as (a' & eq & mem). inversion eq.
     ++ assert (a ∈ elements (lts_outputs p)) as mem.
@@ -455,7 +462,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? e ? Hyp ;simpl in *.
   unfold set_map in Hyp. simpl in *.
   eapply elem_of_list_to_set in Hyp.
-  eapply elem_of_list_fmap in Hyp.
+  eapply list_elem_of_fmap in Hyp.
   destruct ξ as [ (*Input*) a | (*Output*) a].
   + exfalso. decompose record Hyp. inversion H1.
   + assert (a ∈ elements (lts_outputs e)) as mem.
@@ -469,7 +476,7 @@ Next Obligation.
   - symmetry in inter. eapply simplify_match_input in inter. subst. left.
     inversion Tr; subst.
     + eapply elem_of_union. left. eapply elem_of_list_to_set.
-      eapply elem_of_list_fmap. exists a. split; eauto.
+      eapply list_elem_of_fmap. exists a. split; eauto.
       eapply elem_of_elements. eapply lts_outputs_spec1. eauto.
     + eapply elem_of_union. right. eapply gmultiset_elem_of_dom.
       destruct (decide (non_blocking (ActOut a))) as [nb | b].
@@ -481,7 +488,7 @@ Next Obligation.
         inversion H1. inversion H2. inversion H1.
   - symmetry in inter. eapply simplify_match_output in inter. subst. right.
     eapply elem_of_list_to_set.
-    eapply elem_of_list_fmap. exists a. split; eauto.
+    eapply list_elem_of_fmap. exists a. split; eauto.
     eapply elem_of_elements. eapply lts_outputs_spec1. eauto.
 Qed.
 Next Obligation.
@@ -493,7 +500,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? p q ? μ ? mem ? inter;simpl in *.
   unfold Inter_FW_parallel_IO_obligation_4. destruct ξ as [ (*Input*) a | (*Output*) a].
   - eapply elem_of_list_to_set in mem.
-    eapply elem_of_list_fmap in mem. destruct mem as (? & eq & ?).
+    eapply list_elem_of_fmap in mem. destruct mem as (? & eq & ?).
     inversion eq.
   - eapply ext_m in inter. symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.

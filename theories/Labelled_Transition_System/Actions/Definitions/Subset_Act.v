@@ -21,7 +21,7 @@
 *)
 
 From stdpp Require Import gmap.
-From Must Require Import gLts.
+From TestingTheory Require Import gLts.
 
 (**************************Definition of a Subset of A *************************************)
 
@@ -29,11 +29,11 @@ Definition subset_of (A : Type) := A -> Prop.
 
 (*************************** Examples of Subset ***********************)
 
-(* All actions *)
+(** ** All actions of a process (ready-set) *)
 Definition actions_of `{gLts P A} (p : P) : subset_of A :=
   fun μ => ¬ p ↛[μ].
 
-(* Only co - blocking action *)
+(* ** Blocking co-actions *)
 Definition co_actions_of `{gLts P A} (p : P) : subset_of A := 
   fun μ1 => exists μ2, ¬ p ↛[μ2] /\ dual μ2 μ1 /\ blocking μ1.
 

@@ -29,7 +29,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
-From Must Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation InputOutputActions 
+From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation InputOutputActions 
         CompletenessAS ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
@@ -222,7 +222,7 @@ Fixpoint gen_test_raw Vs s p {struct s}:=
   | [] => p
   | ActIn (c ⋉ d) :: s' => match Vs with
                             | [] => (g 𝟘)     (*whatever*)
-                            | ActIn (c ⋉ d') :: s'' => (c ? x • (If ( bvar 0 ==  NewVar_in_Data 0 d' )
+                            | ActIn (c ⋉ d') :: s'' => (c ? (If ( bvar 0 ==  NewVar_in_Data 0 d' )
                                    Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
                                    Else ①)) + (𝛕 • ①)
                             | ActOut (c ⋉ d') :: s'' => (g 𝟘)

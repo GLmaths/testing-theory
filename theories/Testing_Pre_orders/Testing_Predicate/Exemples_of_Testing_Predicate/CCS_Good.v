@@ -25,9 +25,10 @@
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable decidable.
-From Must Require Import gLts InputOutputActions GeneralizeLtsOutputs Must CCSInstance Testing_Predicate.
+From TestingTheory Require Import gLts InputOutputActions GeneralizeLtsOutputs Must CCSInstance Testing_Predicate.
 
-
+(** * Testing predicates *)
+(** ** Testing predicate for CCS *)
 Inductive good_CCS : proc -> Prop :=
 | good_success : good_CCS ①
 | good_par : forall p q, good_CCS p \/ good_CCS q -> good_CCS (p ‖ q)

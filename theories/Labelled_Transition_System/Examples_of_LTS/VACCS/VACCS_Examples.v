@@ -27,18 +27,20 @@ From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import InputOutputActions ActTau OldTransitionSystems Must VACCS_Instance VACCS_Good
+From TestingTheory Require Import InputOutputActions ActTau OldTransitionSystems Must VACCS_Instance VACCS_Good
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS.
-(************************************* Examples for VACCS *************************************)
+
+(** ** VACCS **)
+(** *** Applications *)
 Parameter a : Channel.
 Parameter O : Value.
 Parameter I : Value.
 Parameter (neq : O ≠ I).
 
-Definition cst : proc := a ? x • (a ! O • 𝟘).
+Definition cst : proc := a ? (a ! O • 𝟘).
 
-Definition ccat : proc := a ? x • (a ! (bvar 0) • 𝟘).
+Definition ccat : proc := a ? (a ! (bvar 0) • 𝟘).
 
 (* Set Typeclasses Debug.
 Set Typeclasses Depth 1. (* to be remove *)*)
@@ -202,7 +204,7 @@ Proof.
   intros e Hyp. eapply NIL_is_above_copycat. eapply copycat_is_above_constant. exact Hyp.
 Qed.
 
-Definition Test := (a ! I • 𝟘) ‖ (a ? x • (If (bvar 0 == I) Then ① Else (g 𝟘))).
+Definition Test := (a ! I • 𝟘) ‖ (a ? (If (bvar 0 == I) Then ① Else (g 𝟘))).
 
 Lemma this_Test_is_not_good : ¬ good_VACCS Test.
 Proof.
@@ -236,7 +238,7 @@ Proof.
   { eapply imp. eapply NIL_must_this_TEST. }
   inversion H.
   + eapply this_Test_is_not_good; eauto.
-  + assert (must ((a ! O • 𝟘)^I) ((g 𝟘) ‖ (a ? x • (If (bvar 0 == I) Then ① Else (g 𝟘))))) as Mp.
+  + assert (must ((a ! O • 𝟘)^I) ((g 𝟘) ‖ (a ? (If (bvar 0 == I) Then ① Else (g 𝟘))))) as Mp.
     { eapply com; eauto. 2: { eapply lts_input. } 2: { eapply lts_parL. eapply lts_output. }
     simpl; eauto. }
     simpl in Mp.

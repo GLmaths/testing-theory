@@ -24,7 +24,7 @@
 *)
 
 From Stdlib.Unicode Require Import Utf8.
-From Must Require Import gLts Bisimulation Lts_OBA.
+From TestingTheory Require Import gLts Bisimulation Lts_OBA.
 
 Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
   MkgLtsObaFW {
@@ -36,7 +36,7 @@ Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
         -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
     }.
 
-(* Properties on OBA FW *)
+(** ** Properties on forwarder LTSs *)
 
 Lemma lts_dual_non_blocking_enabled `{gLtsObaFW P A} (p : P) η β :
   non_blocking η → dual β η → exists p', p ⟶[ β ] p'.
