@@ -24,38 +24,12 @@
 *)
 
 From Stdlib.Unicode Require Import Utf8.
-From Must Require Import gLts Bisimulation Lts_OBA.
+From Must Require Import gLts.
 
-Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
-  MkgLtsObaFW {
-      lts_oba_fw_forward p1 η β :
-      ∃ p2, non_blocking η -> dual β η
-        -> p1 ⟶[ β ] p2 /\ p2 ⟶[ η ] p1 ;
-      lts_oba_fw_feedback {p1 p2 p3 η β } :
-      non_blocking η -> dual β η -> p1 ⟶[ η ] p2 -> p2 ⟶[ β ] p3 
-        -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
+Class gLtsCNenabled (P A : Type) `{gLts P A} :=
+  MkgLtsCNenabled {
+      co_non_blocking_enabled p1 η β : non_blocking η -> dual β η -> ∃ p2, p1 ⟶[ β ] p2;
     }.
 
-(* Properties on OBA FW *)
 
-Lemma lts_dual_non_blocking_enabled `{gLtsObaFW P A} (p : P) η β :
-  non_blocking η → dual β η → exists p', p ⟶[ β ] p'.
-Proof.
-  intros nb duo. edestruct (lts_oba_fw_forward p η) as (t & l1 & l2) ; eauto.
-Qed.
-
-Lemma lts_co_non_blocking_enabled `{gLtsObaFW P A} (p : P) :
-  ∀ η, non_blocking η → exists p', p ⟶[ co η ] p'.
-Proof.
-  intro η. intro nb.
-  destruct (exists_dual η) as (β & duo).
-  simpl. symmetry in duo.
-  eapply unique_nb in duo as eq; eauto; subst.
-  edestruct (lts_oba_fw_forward  p (co β)) as (t & l1 & l2); eauto.
-Qed.
-
-Lemma lts_ht_input_ex `{gLtsObaFW P A} (p : P) :
-  ∀ η, non_blocking η → ∃ β, exists p', p ⟶[ β ] p'.
-Proof.
-  intros. exists (co η). eapply lts_co_non_blocking_enabled; eauto.
-Qed.
+From Must Require Import Bisimulation Lts_OBA.

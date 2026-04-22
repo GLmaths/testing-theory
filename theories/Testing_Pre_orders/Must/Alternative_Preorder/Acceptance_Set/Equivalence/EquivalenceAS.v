@@ -53,21 +53,28 @@ Section preorder.
   Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
   Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
   Context `{@AbsAction A H T FinA _ Φ}.
-  Context `{it_conv : @test_convergence_spec T _ _ _ outcome Testing_Predicate0 t_conv}.
-  Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
+  Context `{ta_spec : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   (* ************************************************** *)
+  (** Equivalence between the inductive definition of the contextual preorder and
+      the alternative, inductive characterisation. *)
+  Theorem equivalence_acc_set_and_must_i (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼ₐₛ (q, ∅).
+  Proof.
+    split.
+    - intros hpre. now eapply lift_fw_ctx_pre, completeness_fw in hpre.
+    - intros hpre%soundness_fw.
+      now eapply lift_fw_ctx_pre.
+  Qed.
+
 
   (** Equivalence between the extensional definition of the contextual preorder and
       the alternative, inductive characterisation. *)
   Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
     @pre_extensional P Q _ _ _ outcome _ p q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
-    split.
-    - intros hpre%pre_extensional_eq.
-      now eapply lift_fw_ctx_pre, completeness_fw in hpre.
-    - intros hpre%soundness_fw.
-      now eapply pre_extensional_eq, lift_fw_ctx_pre.
+    rewrite pre_extensional_eq. apply equivalence_acc_set_and_must_i.
   Qed.
 
 End preorder.

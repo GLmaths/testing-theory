@@ -33,7 +33,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
+From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS.
 From Must Require Import ActTau.
@@ -670,9 +670,9 @@ Proof.
 Qed.
 
 Lemma unoutcome_must_st_nleqx `{
-  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  gLtsP : @gLts P A H, !gLtsEq P H, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
@@ -713,9 +713,8 @@ Proof.
     + eapply (lts_refuses_spec2 (q ▷ t)); eauto.
       exists (q , t''). eapply ParRight; eauto.
   - destruct (decide (non_blocking μ2)) as [nb | not_nb].
-    + destruct (lts_oba_fw_forward q μ2 μ1) as (q'' & Hyp).
-      eapply Hyp in nb as (tr1 & tr2); eauto.
-      eapply (lts_refuses_spec2 (q ▷ t)); eauto. exists (q'', t'').
+    + eapply (co_non_blocking_enabled q μ2) in nb as (q' & tr); eauto.
+      eapply (lts_refuses_spec2 (q ▷ t)); eauto. exists (q', t'').
       eapply ParSync; eauto.
     + assert (μ2 ∈ co_actions_of p') as some_co_action_of_p.
       { exists μ1. repeat split; eauto.
@@ -738,9 +737,9 @@ Proof.
 Qed.
 
 Lemma stability_nbhvleqtwo `{
-  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
@@ -762,9 +761,9 @@ Proof.
 Qed.
 
 Lemma soundnessx `{
-  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
@@ -775,7 +774,7 @@ Lemma soundnessx `{
 
   (ps : gset P) (t : T) : 
   mustx ps t 
-    -> forall (q : Q), ps ≼ₓ q 
+    -> forall (q : Q), ps ≼ₓ q
       -> q must_pass t.
 Proof.
   intros hmx q (halt1 & halt2).
@@ -819,10 +818,10 @@ Proof.
          set_solver.
 Qed.
 
-Lemma soundness_fw `{
-  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+Lemma soundness_co_nb_enabled `{
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
 
@@ -836,6 +835,28 @@ Proof.
   intros halt e hm.
   eapply (soundnessx {[p]}).
   now eapply must_set_iff_must. now eapply alt_set_singleton_iff.
+Qed.
+
+Lemma soundness_fw `{
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
+  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
+
+  `{AbT : @AbsAction A H T FinA _ Φ}
+
+  `{!Prop_of_Inter P T A dual}
+  `{!Prop_of_Inter Q T A dual}
+
+  (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
+Proof.
+  eapply soundness_co_nb_enabled.
+
+  (* FW is co-non-blocking enabled *)
+  Unshelve.
+  eapply MkgLtsCNenabled. intros.
+  destruct (lts_oba_fw_forward p1 η β) as (t & l1 & l2) ; eauto.
 Qed.
 
 Lemma soundness 

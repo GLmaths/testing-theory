@@ -1387,11 +1387,14 @@ From Must Require Import EquivalenceAS MustE FiniteImageLTS.
 Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
   split.
-  + intros hm%pre_extensional_eq. eapply (@equivalence_bhv_acc_ctx); eauto. exact ACCS_gLtsFiniteImage.
-    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
+  - intro Hyp. eapply @equivalence_acc_set_and_must_i; eauto.
+
+    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
     exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
     exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
-  + intros hm. eapply pre_extensional_eq. eapply (@equivalence_bhv_acc_ctx) in hm; eauto.
+
+  - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
+
     exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
     exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
     exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
