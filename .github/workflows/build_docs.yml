@@ -22,7 +22,7 @@ jobs:
       matrix:
         ocaml_version: ['default']
         coq_version:
-          - '8.20.1'
+          - '9.0.1'
 
     # Avoid running twice the action if it's triggered by a push on a PR from a branch on the repo.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
