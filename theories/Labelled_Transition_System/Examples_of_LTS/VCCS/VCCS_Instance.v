@@ -4451,7 +4451,7 @@ Qed.
      eq_trans x y z:= cgr_trans x y z;
      eq_spec p q α := Congruence_Respects_Transition p q α |}.
 
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
+From TestingTheory Require Import gLts Bisimulation InListPropHelper Lts_OBA Lts_FW Lts_OBA_FB FiniteImageLTS GeneralizeLtsOutputs.
 
 #[global] Program Instance VCCS_ggLts : @gLts proc (ExtAct TypeOfActions) gLabel_b := ggLts gLabel_b.
 
@@ -4464,14 +4464,55 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB Ge
 
 #[global] Program Instance VCCS_gLtsOBAFW : gLtsObaFW proc (ExtAct TypeOfActions) := ggLtsObaFW_b.
 
-From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction.
+#[global] Instance VCCS_finite : FiniteLts proc TypeOfActions.
+Proof.
+  constructor; [apply _|]. intros p ℓ. unfold dsig.
+  destruct ℓ as [[a|a]|].
+  - eapply (in_list_finite (elements (lts_set_input p a))).
+    intros q Htrans%bool_decide_unpack.
+    now eapply elem_of_elements, lts_set_input_spec1.
+  - eapply (in_list_finite (elements (lts_set_output p a))).
+    intros q Htrans%bool_decide_unpack.
+    now eapply elem_of_elements, lts_set_output_spec1.
+  - eapply (in_list_finite (elements (lts_set_tau p))).
+    intros q Htrans%bool_decide_unpack.
+    now eapply elem_of_elements, lts_set_tau_spec1.
+Defined.
 
-#[global] Program Instance Interaction_between_parallel_VACCS :
+#[global] Program Instance VACCS_gLtsFiniteImage :
+  @FiniteImagegLts proc (ExtAct TypeOfActions) gLabel_b VCCS_ggLts := ggFiniteLts gLabel_b.
+
+From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction MultisetLTSConstruction ForwarderConstruction.
+
+#[global] Program Instance Interaction_between_parallel_VCCS :
   @Prop_of_Inter proc proc (ExtAct TypeOfActions) dual gLabel_b
   VCCS_ggLts VCCS_ggLts :=  Inter_parallel_IO gLabel_b.
 Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
+Defined.
+
+#[global] Program Instance Interaction_between_MB_and_VCCS :
+  @Prop_of_Inter proc
+    (@mb (ExtAct TypeOfActions)
+       (@gLabel_b TypeOfActions VCCS_Label))
+    (ExtAct TypeOfActions)
+    (@fw_inter (ExtAct TypeOfActions)
+       (@gLabel_b TypeOfActions VCCS_Label))
+    (@gLabel_b TypeOfActions VCCS_Label)
+    (@ggLts TypeOfActions (@gLabel_b TypeOfActions VCCS_Label)
+       proc _ _)
+    (@MbgLts (ExtAct TypeOfActions)
+       (@gLabel_b TypeOfActions VCCS_Label)) :=  Inter_FW_IO gLabel_b.
+Next Obligation.
+  intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
+Defined.
+
+
+#[global] Program Instance Interaction_between_FW_VCCS_and_VCCS :
+  Prop_of_Inter (proc * mb (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=  Inter_FW_parallel_IO gLabel_b.
+Next Obligation.
+  intros b nb. inversion nb.
 Defined.
 
 From TestingTheory Require Import DefinitionAS.
@@ -4968,4 +5009,6 @@ Next Obligation.
     eapply (specPreAct1 0) in H. rewrite VarC_preaction_add_zero in H.
     destruct H. rewrite VarC_add_zero_ext in H. exists x. eauto.
 Qed.
+
+
 

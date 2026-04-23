@@ -3022,7 +3022,8 @@ Qed.
 #[global] Program Instance VACCS_LtsObaFB : LtsObaFB proc TypeOfActions :=
   {| lts_oba_fb_feedback p1 p2 p3 a := OBA_with_FB_Fourth_Axiom p1 p2 p3 a |}.
 
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ForwarderConstruction.
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
+  GeneralizeLtsOutputs ForwarderConstruction FiniteImageLTS.
 
 #[global] Program Instance VACCS_ggLts : @gLts proc (ExtAct TypeOfActions) gLabel_nb := ggLts gLabel_nb.
 
@@ -3035,7 +3036,29 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB Ge
 #[global] Program Instance VACCS_gLtsOBAFB :
   @gLtsObaFB proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLtsEq VACCS_gLtsOBA := ggLtsObaFB_nb.
 
-From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction.
+From TestingTheory Require Import InListPropHelper.
+
+#[global] Instance VACCS_finite : FiniteLts proc TypeOfActions.
+Proof.
+  constructor; [apply _|]. intros p ℓ. unfold dsig.
+  destruct ℓ as [[a|a]|].
+  - eapply (in_list_finite (elements (lts_set_input p a))).
+    intros q Htrans%bool_decide_unpack.
+    now eapply elem_of_elements, lts_set_input_spec1.
+  - eapply (in_list_finite (elements (lts_set_output p a))).
+    intros q Htrans%bool_decide_unpack.
+    now eapply elem_of_elements, lts_set_output_spec1.
+  - eapply (in_list_finite (elements (lts_set_tau p))).
+    intros q Htrans%bool_decide_unpack.
+    now eapply elem_of_elements, lts_set_tau_spec1.
+Defined.
+
+#[global] Program Instance VACCS_gLtsFiniteImage :
+  @FiniteImagegLts proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLts := ggFiniteLts gLabel_nb.
+
+From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction 
+gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
+  ForwarderConstruction MultisetLTSConstruction FiniteImageLTS.
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
   @Prop_of_Inter proc proc (ExtAct TypeOfActions) dual gLabel_nb
@@ -3043,6 +3066,29 @@ From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction.
 Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
+Defined.
+
+#[global] Program Instance Interaction_between_MB_and_VACCS :
+  @Prop_of_Inter proc
+    (@mb (ExtAct TypeOfActions)
+       (@gLabel_nb TypeOfActions VACCS_Label))
+    (ExtAct TypeOfActions)
+    (@fw_inter (ExtAct TypeOfActions)
+       (@gLabel_nb TypeOfActions VACCS_Label))
+    (@gLabel_nb TypeOfActions VACCS_Label)
+    (@ggLts TypeOfActions (@gLabel_nb TypeOfActions VACCS_Label)
+       proc _ _)
+    (@MbgLts (ExtAct TypeOfActions)
+       (@gLabel_nb TypeOfActions VACCS_Label)) :=  Inter_FW_IO gLabel_nb.
+Next Obligation.
+  intros μ1 μ2 inter. unfold dual in inter. simpl in *. eauto.
+Defined.
+
+
+#[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
+  Prop_of_Inter (proc * mb (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=  Inter_FW_parallel_IO gLabel_nb.
+Next Obligation.
+  intros b nb. left. eauto.
 Defined.
 
 From TestingTheory Require Import Must.
@@ -3420,6 +3466,5 @@ Next Obligation.
     eapply (specPreAct1 0) in H. rewrite VarC_preaction_add_zero in H.
     destruct H. rewrite VarC_add_zero_ext in H. exists x. destruct H. split ;eauto.
 Qed.
-
 
 
