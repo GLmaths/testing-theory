@@ -1164,17 +1164,17 @@ Lemma not_must_ta_without_required_acc_set {Q : Type} `{
 
   `{!Prop_of_Inter Q T A dual}
 
-  (q q' : Q) s' s (E : gset PreAct) :
+  (q q' : Q) s (E : gset PreAct) :
 
-  Forall2 dual s' s -> q ⟹[s'] q' -> q' ↛ -> ¬ must q (ta (E ∖ (pre_co_actions_of q')) s).
+  q ⟹[s] q' -> q' ↛ -> ¬ must q (ta (E ∖ (pre_co_actions_of q')) (coₜ s)).
 Proof.
-  intros inter_trace wt hst. revert inter_trace. revert s.
-  dependent induction wt; intros s' inter_trace hm. rename p into q.
-  - inversion inter_trace; subst. inversion hm as [happy | ]; subst.
+  intros wt hst.
+  dependent induction wt; intros hm. rename p into q.
+  - inversion hm as [happy | ]; subst.
     ++ contradict happy. eapply test_ungood.
     ++ destruct ex as (t & l). inversion l; subst.
        +++ eapply (lts_refuses_spec2 q τ); eauto with mdb.
-       +++ eapply (@lts_refuses_spec2 T), ta_does_no_tau; eauto.
+       +++ simpl in *. eapply (@lts_refuses_spec2 T), ta_does_no_tau; eauto.
        +++ destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
            ++++ exfalso. eapply (@lts_refuses_spec2 T).
                 eauto. eapply ta_does_no_non_blocking_actions ;eauto. 
@@ -1185,16 +1185,16 @@ Proof.
                 { eapply preactions_of_spec. eapply preactions_of_fin_test_spec1. exists μ1. repeat split; eauto.
                 eapply lts_refuses_spec2; eauto. }
                 contradiction.
-  - eapply (IHwt hst s' inter_trace), (must_preserved_by_lts_tau_srv p q _ hm l).
-  - inversion inter_trace as [| ? ? ? ? inter inter_trace']; subst.
-    assert (ta (E ∖ (pre_co_actions_of t)) (y :: l') ⟶⋍[y]
-              ta (E ∖ (pre_co_actions_of t)) l') as (e' & hle' & heqe')
+  - eapply (IHwt hst), (must_preserved_by_lts_tau_srv p q _ hm l).
+  - simpl in hm. assert (ta (E ∖ (pre_co_actions_of t)) (co μ :: coₜ s) ⟶⋍[co μ]
+              ta (E ∖ (pre_co_actions_of t)) (coₜ s)) as (e' & hle' & heqe')
     by eapply test_next_step.
-    assert (¬ outcome (ta (E ∖ pre_co_actions_of t) (y :: l'))).
+    assert (¬ outcome (ta (E ∖ pre_co_actions_of t) ((co μ :: coₜ s)))).
     { eapply test_ungood. }
-    eapply (IHwt hst l' inter_trace').
+    eapply (IHwt hst).
     eapply must_eq_client; eauto.
     eapply must_preserved_by_synch_if_notoutcome; eauto.
+    exact (proj2_sig (exists_dual μ)).
 Qed.
 
 Lemma completeness2 {P Q : Type} `{
@@ -1214,7 +1214,6 @@ Proof.
   + eauto.
   + eapply hpre in hm. contradict hm.
     eapply (not_must_ta_without_required_acc_set _ _ s); eauto.
-    eapply dual_traces.
 Qed.
 
 (** ** Completeness for forwarder LTS *)
