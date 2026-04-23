@@ -26,20 +26,21 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
-From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
-(********************************************* Alt-preorder of Must_i **********************************************)
+(* * Alternative preorder for Must based on acceptance-sets *)
 
+(** ** Label abstractions *)
 
-(********************************** Infinite Branching Lts to Finite Branching Lts **********************)
+(** Client-side condition for label abstractions **)
 Class AbsAction `{H : ExtAction A} {E FinA : Type} (LtsE : @gLts E A H) (Φ : A → FinA) :=
   MkAbsAction {
     abstraction_test_spec μ μ' e : blocking μ -> blocking μ' -> (Φ μ) = (Φ μ') -> ¬ e ↛[ μ ] -> ¬ e ↛[ μ' ]
   }.
 
 
-(********************************** PreCoAct modulo Finite Branching Lts on Test **********************)
+(** Server-side condition for label abstractions **)
 Class PreExtAction {P : Type} `{H : ExtAction A} {FinA: Type} `{Countable PreAct} 
   {𝝳 : FinA → PreAct} {Φ : A → FinA} {LtsP : @gLts P A H} :=
   MkPreExtAction {
@@ -54,11 +55,13 @@ Class PreExtAction {P : Type} `{H : ExtAction A} {FinA: Type} `{Countable PreAct
   }.
 
 
+(** ** Termination condition *)
 Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
   (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
 
 Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
+(** ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_cond2 `{
   LtsP : @gLts P A H, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP,
   LtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
@@ -69,6 +72,7 @@ Definition bhv_pre_cond2 `{
 
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
 
+(** ** Definition of the alternative preorder *)
 Definition bhv_pre `{PreA_countable : Countable PreA} `{
   LtsP : @gLts P A H, PreAP : @PreExtAction P A _ FiniteA PreA _ _ 𝝳 Φ LtsP,
   LtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A _ FiniteA PreA _ _ 𝝳 Φ LtsQ}

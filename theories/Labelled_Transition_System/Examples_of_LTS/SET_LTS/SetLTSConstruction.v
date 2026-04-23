@@ -28,16 +28,14 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
+
 From Stdlib.Program Require Import Wf Equality.
-
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
-
-From Must Require Import MultisetHelper gLts FiniteImageLTS ActTau Bisimulation Lts_OBA Lts_OBA_FB Lts_FW InListPropHelper.
-
-(* From Must Require Import MultisetHelper  Lts_OBA Lts_FW Lts_OBA_FB 
+From TestingTheory Require Import MultisetHelper gLts FiniteImageLTS ActTau Bisimulation.
+(* From TestingTheory Require Import MultisetHelper  Lts_OBA Lts_FW Lts_OBA_FB 
     InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau. *)
 
-(**************************************** Set LTS *************************************)
+(**************************************** LTS of Sets *************************************)
 
 
 Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)

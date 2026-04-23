@@ -1,6 +1,15 @@
 .DEFAULT_GOAL := build
 DOC_DIR := doc
 BUILD_DIR := _build/default/theories
+EXTRA_DIR := doc-config
+COQDOC_FLAGS:= \
+  --toc --toc-depth 2 --html --interpolate \
+  -d $(DOC_DIR) \
+	--no-lib-name \
+  --index indexpage \
+	--parse-comments \
+	-s \
+	--with-header $(EXTRA_DIR)/header.html --with-footer $(EXTRA_DIR)/footer.html
 
 build:
 	dune build @all
@@ -19,9 +28,8 @@ doc:
 	dune build
 	mkdir -p $(DOC_DIR)
 	rm -Rf $(DOC_DIR)/*
-	coqdoc --toc --html -R $(BUILD_DIR) Must --with-header doc-config/header.html --with-footer doc-config/footer.html `find $(BUILD_DIR) -name *.v` -d $(DOC_DIR)
+	rocq doc $(COQDOC_FLAGS) -R $(BUILD_DIR) TestingTheory `find $(BUILD_DIR) -name *.v | sort`
 	chmod +w $(DOC_DIR)
-	mv $(DOC_DIR)/index.html $(DOC_DIR)/indexpage.html 
-	cp doc-config/* $(DOC_DIR)
+	cp $(EXTRA_DIR)/* $(DOC_DIR)
 
 .PHONY: build clean watch doc

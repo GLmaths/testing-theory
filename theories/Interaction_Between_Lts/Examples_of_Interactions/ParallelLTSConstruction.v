@@ -25,9 +25,9 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base.
-From Must Require Import gLts InteractionBetweenLts.
+From TestingTheory Require Import gLts InteractionBetweenLts.
 
-(**************************************** Parallel LTS of two LTS *************************************)
+(** ** Parallel composition of two LTSs *)
 
 #[global] Program Instance parallel_gLts {P1 P2}
  `{Prop_of_Inter P1 P2 A dual} : gLts (P1 * P2) H := inter_lts dual.

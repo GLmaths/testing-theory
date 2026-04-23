@@ -23,14 +23,14 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Program Require Import Equality.
-From Must Require Import gLts StateTransitionSystems.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Program Require Import Equality.
+From TestingTheory Require Import gLts StateTransitionSystems.
 
 From stdpp Require Import base countable gmap list.
 
 (* For proving that Bar-induction is admissible *)
-From Coq.Logic Require ClassicalEpsilon.
+From Stdlib.Logic Require ClassicalEpsilon.
 
 CoInductive infinite_stream A: Type :=
    | S_Step : A -> infinite_stream A -> infinite_stream A.
@@ -356,7 +356,7 @@ Section stss.
     intros Hc. constructor.
     - eapply surcountable_countable; by apply _.
     - intros x. eapply surcountable_countable; [apply _|].
-      destruct x as [|]; apply countable_sig; intros ?; apply _.
+      destruct x as [|]; apply sig_countable; intros ?; apply _.
   Qed.
 End stss.
 

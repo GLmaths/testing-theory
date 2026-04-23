@@ -23,10 +23,10 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Program Require Import Equality.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
-From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
 
 (********************************************* Alt-preorder of May_i **********************************************)

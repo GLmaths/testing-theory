@@ -29,11 +29,11 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable.
 
-From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW ActTau Termination WeakTransitions.
+From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW ActTau Termination WeakTransitions.
 
-(************************************** Convergence **************************************)
+(** ** Convergence *)
 
-(* Convergence definition *)
+(** *** Definition *)
 
 Reserved Notation "p ⇓ s" (at level 70).
 
@@ -45,7 +45,7 @@ where "p ⇓ s" := (cnv p s).
 
 Global Hint Constructors cnv:mdb.
 
-(* Properties on convergence in Lts *)
+(** *** Properties on convergence in an LTS *)
 
 Lemma terminate_then_wt_refuses  `{gLts P A} p : 
   p ⤓ -> exists p', p ⟹ p' /\ p' ↛.
@@ -143,7 +143,7 @@ Proof.
   eapply IHw. eapply terminate_preserved_by_lts_tau; eauto. reflexivity.
 Qed.
 
-(* Properties on convergence in Lts with a Bissimulation *)
+(** *** Properties on convergence in an LTS with a Bissimulation*)
 
 Global Instance cnv_preserved_by_eq `{gLtsEq P A}: 
   Proper ((eq_rel) ==> (=) ==> (impl)) cnv.
@@ -160,7 +160,7 @@ Global Instance cnv_preserved_by_eq `{gLtsEq P A}:
       eapply (Hμ t' hlt' t heqt').
 Qed.
 
-(* Properties on convergence in Lts with OBA axioms *)
+(** *** Properties on convergence in an LTSwith OBA axioms *)
 
 Lemma terminate_preserved_by_wt_non_blocking_action `{M: gLtsOba P A} p q η : 
   non_blocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
@@ -172,7 +172,7 @@ Proof.
     eapply terminate_preserved_by_lts_non_blocking_action; eauto. assumption.
 Qed.
 
-(* Properties on convergence in Lts with Forwarder axioms *)
+(** *** Properties on convergence in an LTSwith Forwarder axioms *)
 
 Lemma cnv_preserved_by_lts_non_blocking_action `{gLtsObaFW P A} p q η s :
   non_blocking η -> p ⇓ s -> p ⟶[η] q

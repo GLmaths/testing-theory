@@ -23,13 +23,14 @@
    SOFTWARE.
 *)
 
-From Coq.Program Require Import Equality.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list 
                         finite base decidable finite gmap gmultiset.
-From Must Require Import MultisetHelper ForAllHelper gLts Bisimulation Lts_OBA.
+From TestingTheory Require Import MultisetHelper ForAllHelper gLts Bisimulation Lts_OBA.
 
 
-(****************************** Reduction to pure code, code purification **********************************)
+(** * Separating code from memory *)
+(** ** Striping a process from its mailbox *)
 
 Reserved Notation "p ⟿{ m } q" (at level 30, format "p  ⟿{ m }  q").
 
@@ -42,7 +43,7 @@ where "p ⟿{ m } q" := (strip p m q).
 
 Notation "p ⟿⋍{ m } q" := (∃ r, p ⟿{m} r /\ r ⋍ q) (at level 30).
 
-(** Lemmas about strip. *)
+(** ** Properties about strip *)
 
 Lemma strip_eq `{gLtsOba P A} {e e' m} :
   e ⟿{m} e' -> ∀ r, r ⋍ e

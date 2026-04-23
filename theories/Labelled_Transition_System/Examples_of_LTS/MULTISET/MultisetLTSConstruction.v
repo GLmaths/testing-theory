@@ -26,9 +26,9 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
-From Must Require Import ActTau gLts InteractionBetweenLts.
+From TestingTheory Require Import ActTau gLts InteractionBetweenLts.
 
-(************************************************ Mailbox LTS ********************************************)
+(** ** Mailbox LTS *)
 
 (** A mailbox is a multiset of actions *)
 
@@ -198,12 +198,12 @@ Proof.
                 f_equal. eauto.
            ++++ erewrite lts_mb_nb_on_list_spec2; eauto.
                 erewrite lts_mb_nb_on_list_spec2; eauto.
-       +++ assert (a0 ∈ a :: l1). eapply elem_of_list_In.
+       +++ assert (a0 ∈ a :: l1). eapply list_elem_of_In.
            symmetry in equiv.
            eapply Permutation_in ;eauto. set_solver.
            assert (a0 ∈ l1) as mem. set_solver.
            eapply elem_of_Permutation in mem as (l'1 & Hyp1).
-           assert (a ∈ a0 :: l2). eapply elem_of_list_In.
+           assert (a ∈ a0 :: l2). eapply list_elem_of_In.
            eapply Permutation_in ;eauto. set_solver.
            assert (a ∈ l2) as mem. set_solver.
            eapply elem_of_Permutation in mem as (l'2 & Hyp2). 

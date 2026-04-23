@@ -1,6 +1,6 @@
 (** Reflexive transitive closure with embedded length parameter *)
 
-From Coq Require Import Relations Program.Equality.
+From Stdlib Require Import Relations Program.Equality.
 From stdpp Require Import base.
 
 Set Implicit Arguments.

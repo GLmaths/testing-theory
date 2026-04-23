@@ -24,12 +24,9 @@
 *)
 
 From Stdlib.Unicode Require Import Utf8.
-From Must Require Import gLts.
+From TestingTheory Require Import gLts.
 
 Class gLtsCNenabled (P A : Type) `{gLts P A} :=
   MkgLtsCNenabled {
       co_non_blocking_enabled p1 η β : non_blocking η -> dual β η -> ∃ p2, p1 ⟶[ β ] p2;
     }.
-
-
-From Must Require Import Bisimulation Lts_OBA.

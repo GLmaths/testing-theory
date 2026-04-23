@@ -25,9 +25,11 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
-From Must Require Import ActTau gLts.
+From TestingTheory Require Import ActTau gLts.
 
+(** * Labelled transition systems *)
 
+(** ** LTSs equipped with a bissimulation *)
 Class gLtsEq (P : Type) {A} `(H : !ExtAction A) := {
     gLtsEq_gLts :: gLts P H;
     (* Equivalence relation *)
@@ -53,7 +55,7 @@ Notation "p ⟶⋍{ α } q" := (lts_sc p α q) (at level 30, format "p  ⟶⋍{ 
 Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p  ⟶⋍[ μ ]  q").
 
 
-(* Bisimulation properties *)
+(** *** Bisimulation properties *)
 
 Lemma mk_lts_eq `{gLtsEq P H} {p α q} : p ⟶{α} q  → p ⟶⋍{α} q.
 Proof. intro. exists q; split. eauto. reflexivity. Qed.

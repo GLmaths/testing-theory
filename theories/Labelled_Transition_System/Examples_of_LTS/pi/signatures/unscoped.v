@@ -1,4 +1,4 @@
-(** * Autosubst Header for Unnamed Syntax
+(* Autosubst Header for Unnamed Syntax
 
 Version: December 11, 2019.
  *)
@@ -16,7 +16,7 @@ Definition ap {X Y} (f : X -> Y) {x y : X} (p : x = y) : f x = f y :=
 Definition apc {X Y} {f g : X -> Y} {x y : X} (p : f = g) (q : x = y) : f x = g y :=
   match q with eq_refl => match p with eq_refl => eq_refl end end.
 
-(** ** Primitives of the Sigma Calculus. *)
+(* ** Primitives of the Sigma Calculus. *)
 
 Definition shift  := S.
 
@@ -33,10 +33,10 @@ Definition scons {X: Type} (x : X) (xi : nat -> X) :=
 #[ export ]
 Hint Opaque scons : rewrite.
 
-(** ** Type Class Instances for Notation
+(* ** Type Class Instances for Notation
 Required to make notation work. *)
 
-(** *** Type classes for renamings. *)
+(* *** Type classes for renamings. *)
 
 Class Ren1 (X1  : Type) (Y Z : Type) :=
   ren1 : X1 -> Y -> Z.
@@ -99,7 +99,7 @@ Class Var X Y :=
 
 #[export] Instance idsRen : Var nat nat := id.
 
-(** ** Proofs for the substitution primitives. *)
+(* ** Proofs for the substitution primitives. *)
 
 Arguments funcomp {X Y Z} (g)%_fscope (f)%_fscope.
 
@@ -162,10 +162,10 @@ Proof.
   apply H.
 Qed.
 
-(** ** Generic lifting of an allfv predicate *)
+(* ** Generic lifting of an allfv predicate *)
 Definition up_allfv (p: nat -> Prop) : nat -> Prop := scons True p.
 
-(** ** Notations for unscoped syntax *)
+(* ** Notations for unscoped syntax *)
 Module UnscopedNotations.
   Include RenNotations.
   Include SubstNotations.
@@ -183,7 +183,7 @@ Module UnscopedNotations.
   Open Scope subst_scope.
 End UnscopedNotations.
 
-(** ** Tactics for unscoped syntax *)
+(* ** Tactics for unscoped syntax *)
 
 (** Automatically does a case analysis on a natural number, useful for proofs with context renamings/context morphisms. *)
 Tactic Notation "auto_case" tactic(t) :=  (match goal with

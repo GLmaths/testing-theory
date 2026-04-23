@@ -21,14 +21,15 @@
 *)
 
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import InputOutputActions ActTau OldTransitionSystems Must CompletenessAS.
+From TestingTheory Require Import InputOutputActions ActTau OldTransitionSystems Must CompletenessAS.
 
+(** ** VACCS with sequentiation *)
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
 (* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
 
@@ -2804,11 +2805,11 @@ Proof.
   destruct p; intro p'; intro mem; simpl in mem; try set_solver.
   + eapply elem_of_union in mem. destruct mem.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. constructor.
        apply Hp. simpl. auto with arith. assumption.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. constructor.
        apply Hp. simpl. auto with arith. assumption.
   + assert (p' = pr_subst n p (rec n • p)). set_solver. subst.
@@ -2827,7 +2828,7 @@ Proof.
       ++ destruct (decide ((SKIP_SEQ p))).
         - assert (p' = p0). set_solver. subst. constructor. assumption.
         - eapply elem_of_list_to_set in mem.
-         eapply elem_of_list_fmap in mem as (q' & eq & mem). subst.
+         eapply list_elem_of_fmap in mem as (q' & eq & mem). subst.
          rewrite elem_of_elements in mem. constructor. apply Hp. simpl. auto with arith.
          assumption.
 Qed.
@@ -2860,11 +2861,11 @@ Proof.
   destruct p; intro p'; intro a; intro mem; simpl in mem; try set_solver.
   + eapply elem_of_union in mem. destruct mem.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. constructor.
        apply Hp. simpl. auto with arith. assumption.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. constructor.
        apply Hp. simpl. auto with arith. assumption.
   + dependent destruction g0; simpl in mem; try set_solver.
@@ -2875,7 +2876,7 @@ Proof.
         - constructor. apply Hp. simpl. auto with arith. assumption.
         - apply lts_choiceR. apply Hp. simpl. auto with arith. assumption.
       ++ eapply elem_of_list_to_set in mem.
-         eapply elem_of_list_fmap in mem as (q' & eq & mem). subst.
+         eapply list_elem_of_fmap in mem as (q' & eq & mem). subst.
          rewrite elem_of_elements in mem. constructor. apply Hp. simpl. auto with arith.
          assumption.
 Qed.
@@ -2884,7 +2885,7 @@ Lemma Same_Memory_for_input : forall g0 g1 p p1 a, ❲ g1, p1 ❳ ∈ ltsM_set_i
 Proof.
 intros. simpl in H.
 eapply elem_of_list_to_set in H.
-eapply elem_of_list_fmap in H as (q' & eq & H). dependent destruction eq.
+eapply list_elem_of_fmap in H as (q' & eq & H). dependent destruction eq.
 auto.
 Qed.
 
@@ -2893,7 +2894,7 @@ Lemma Simplification_for_input :  forall g0 g1 p p1 a, ❲ g1, p1 ❳ ∈ ltsM_s
 Proof.
 intros. simpl in H.
 eapply elem_of_list_to_set in H.
-eapply elem_of_list_fmap in H as (q' & eq & H). dependent destruction eq.
+eapply list_elem_of_fmap in H as (q' & eq & H). dependent destruction eq.
 rewrite elem_of_elements in H.
 assumption.
 Qed.
@@ -2916,7 +2917,7 @@ Qed.
 Lemma ltsM_set_input_spec1 p a q : ltsM p (ActExt $ ActIn a) q -> q ∈ ltsM_set_input p a.
 Proof.
   intro l. dependent destruction l. apply lts_set_input_spec1 in H.
-  simpl. eapply elem_of_list_to_set. eapply elem_of_list_fmap. exists q. split. auto.
+  simpl. eapply elem_of_list_to_set. eapply list_elem_of_fmap. exists q. split. auto.
   eapply elem_of_elements. assumption.
 Qed.
 
@@ -2927,9 +2928,9 @@ Proof.
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intro q; intro a; intro mem ; simpl in mem; try now inversion mem.
   - eapply elem_of_union in mem as [mem | mem].
-    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+    * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_parL. apply Hp. simpl. auto with arith. rewrite elem_of_elements in mem. assumption.
-    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+    * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_parR. apply Hp. simpl. auto with arith. rewrite elem_of_elements in mem. assumption.
   - dependent destruction g0; try now inversion mem; simpl in mem.
     case (TypeOfActions_dec a (c ⋉ d)) in mem.
@@ -2942,7 +2943,7 @@ Proof.
         apply Hp. simpl. auto with arith. assumption.
       * eapply lts_choiceR.
         apply Hp. simpl. auto with arith. assumption.
-    + simpl in mem. eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem).
+    + simpl in mem. eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem).
       rewrite eq. constructor. apply Hp. simpl. auto with arith. set_solver.
 Qed.
 
@@ -2955,60 +2956,60 @@ Proof.
   + eapply elem_of_union in mem. destruct mem as [mem1 | mem2].
     ++ eapply elem_of_union in mem1.
           destruct mem1 as [mem1 | mem2].
-          eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem1 as (t' & eq & mem1); subst.
-          eapply elem_of_list_In, elem_of_list_fmap in mem1 as (t1 & eq' & mem1). subst.
+          eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in mem1 as (t' & eq & mem1); subst.
+          eapply list_elem_of_In, list_elem_of_fmap in mem1 as (t1 & eq' & mem1). subst.
           rewrite elem_of_elements in mem1. eapply elem_of_union in mem1.
           destruct mem1.
-          - eapply elem_of_list_to_set in H. eapply elem_of_list_fmap in H.
+          - eapply elem_of_list_to_set in H. eapply list_elem_of_fmap in H.
             destruct H. destruct H. rewrite elem_of_elements in H0.
             eapply lts_set_input_spec0 in H0. destruct t'. econstructor.
             instantiate (1 := p1 ‖ p2). instantiate (1 := d). instantiate (1 := c).
-            eapply elem_of_list_In in eq.
+            eapply list_elem_of_In in eq.
             eapply gmultiset_elem_of_elements in eq.
             assert (g' = gmultiset_difference g' {[+ c ⋉ d +]} ⊎ {[+ c ⋉ d +]}).
             multiset_solver.
             rewrite H1 at 1. econstructor. instantiate (1 := g'). subst. constructor. constructor. assumption.
-          - eapply elem_of_list_to_set in H. eapply elem_of_list_fmap in H.
+          - eapply elem_of_list_to_set in H. eapply list_elem_of_fmap in H.
             destruct H. destruct H. rewrite elem_of_elements in H0.
             eapply lts_set_input_spec0 in H0. destruct t'. econstructor.
             instantiate (1 := p1 ‖ p2). instantiate (1 := d). instantiate (1 := c).
-            eapply elem_of_list_In in eq.
+            eapply list_elem_of_In in eq.
             eapply gmultiset_elem_of_elements in eq.
             assert (g' = gmultiset_difference g' {[+ c ⋉ d +]} ⊎ {[+ c ⋉ d +]}).
             multiset_solver.
             rewrite H1 at 1. econstructor. instantiate (1 := g'). subst. constructor. constructor. assumption.
-          - eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem2 as (t' & eq & mem1); subst.
-            eapply elem_of_list_In, elem_of_list_fmap in mem1 as (t1 & eq' & mem1). subst.
+          - eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in mem2 as (t' & eq & mem1); subst.
+            eapply list_elem_of_In, list_elem_of_fmap in mem1 as (t1 & eq' & mem1). subst.
             rewrite elem_of_elements in mem1. eapply elem_of_union in mem1. destruct mem1.
               * rename H into mem1.
-                eapply elem_of_list_to_set in mem1. eapply elem_of_list_fmap in mem1.
+                eapply elem_of_list_to_set in mem1. eapply list_elem_of_fmap in mem1.
                 destruct mem1. destruct H. rewrite elem_of_elements in H0.
                 eapply lts_set_output_spec0 in H0.
                 subst. destruct t'. eapply ltsM_send.
                 constructor. assumption.
               * rename H into mem1.
-                eapply elem_of_list_to_set in mem1. eapply elem_of_list_fmap in mem1.
+                eapply elem_of_list_to_set in mem1. eapply list_elem_of_fmap in mem1.
                 destruct mem1. destruct H. rewrite elem_of_elements in H0.
                 eapply lts_set_output_spec0 in H0.
                 subst. destruct t'. eapply ltsM_send.
                 constructor. assumption.
-     ++ eapply elem_of_list_to_set, elem_of_list_fmap in mem2 as (p' & eq & mem2); subst.
+     ++ eapply elem_of_list_to_set, list_elem_of_fmap in mem2 as (p' & eq & mem2); subst.
         rewrite elem_of_elements in mem2. eapply elem_of_union in mem2. destruct mem2.
-        * rename H into mem1. eapply elem_of_list_to_set, elem_of_list_fmap in mem1 as (p & eq & mem1); subst.
+        * rename H into mem1. eapply elem_of_list_to_set, list_elem_of_fmap in mem1 as (p & eq & mem1); subst.
           rewrite elem_of_elements in mem1. eapply lts_set_tau_spec0 in mem1.
           constructor. constructor. assumption.
-        * rename H into mem2. eapply elem_of_list_to_set, elem_of_list_fmap in mem2 as (p & eq & mem2); subst.
+        * rename H into mem2. eapply elem_of_list_to_set, list_elem_of_fmap in mem2 as (p & eq & mem2); subst.
           rewrite elem_of_elements in mem2. eapply lts_set_tau_spec0 in mem2.
           constructor. constructor. assumption.
    + set_solver.
    + eapply elem_of_union in mem. destruct mem.
       ++ set_solver.
-      ++ rename H into mem. eapply elem_of_list_to_set, elem_of_list_fmap in mem as (p' & eq & mem); subst.
+      ++ rename H into mem. eapply elem_of_list_to_set, list_elem_of_fmap in mem as (p' & eq & mem); subst.
          rewrite elem_of_elements in mem. assert (p' = pr_subst n p (rec n • p)).
          set_solver. subst. constructor. constructor.
    + eapply elem_of_union in mem. destruct mem.
       ++ set_solver.
-      ++ rename H into mem. eapply elem_of_list_to_set , elem_of_list_fmap in mem as (p' & eq & mem); subst.
+      ++ rename H into mem. eapply elem_of_list_to_set , list_elem_of_fmap in mem as (p' & eq & mem); subst.
          rewrite elem_of_elements in mem.
          destruct (decide (Eval_Eq e = Some true)).
          rewrite e0 in mem. assert (p' = p1).
@@ -3021,21 +3022,21 @@ Proof.
     + set_solver.
     + eapply elem_of_union in mem. destruct mem as [mem1 | mem3].
       eapply elem_of_union in mem1. destruct mem1 as [mem1 | mem2].
-      * eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem1 as (t' & eq & mem1); subst.
-        eapply elem_of_list_In, elem_of_list_fmap in mem1 as (t1 & eq' & mem1). subst.
+      * eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in mem1 as (t' & eq & mem1); subst.
+        eapply list_elem_of_In, list_elem_of_fmap in mem1 as (t1 & eq' & mem1). subst.
         rewrite elem_of_elements in mem1. eapply (lts_set_input_spec0 g0 t')  in mem1.
         destruct t'.
         econstructor. instantiate (1 := g0). instantiate (1 := d). instantiate (1 := c).
         assert (g' = gmultiset_difference g' {[+ c ⋉ d +]} ⊎  {[+ c ⋉ d +]}).
-        eapply elem_of_list_In in eq. rewrite gmultiset_elem_of_elements in eq.
+        eapply list_elem_of_In in eq. rewrite gmultiset_elem_of_elements in eq.
         multiset_solver. rewrite H at 1. econstructor. econstructor.
         assumption.
-      * eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem2 as (t' & eq & mem2); subst.
-        eapply elem_of_list_In, elem_of_list_fmap in mem2 as (t1 & eq' & mem2). subst.
+      * eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in mem2 as (t' & eq & mem2); subst.
+        eapply list_elem_of_In, list_elem_of_fmap in mem2 as (t1 & eq' & mem2). subst.
         rewrite elem_of_elements in mem2. eapply (lts_set_output_spec0 g0 t') in mem2.
         destruct t'.
         econstructor. assumption.
-      * eapply elem_of_list_to_set, elem_of_list_fmap in mem3 as (t' & eq & mem3); subst.
+      * eapply elem_of_list_to_set, list_elem_of_fmap in mem3 as (t' & eq & mem3); subst.
         rewrite elem_of_elements in mem3. eapply (lts_set_tau_spec0 g0) in mem3.
         econstructor. assumption.
 Qed.
@@ -3067,26 +3068,26 @@ Proof.
   intro l. dependent induction l ; simpl.
   - eapply elem_of_union. right.
     eapply elem_of_list_to_set.
-    eapply elem_of_list_fmap. exists q. split. auto.
+    eapply list_elem_of_fmap. exists q. split. auto.
     apply elem_of_elements. eapply lts_set_tau_spec1. assumption.
   - eapply elem_of_union. left.
     eapply elem_of_union. right.
     eapply elem_of_list_to_set.
 
-    rewrite elem_of_list_In. rewrite in_flat_map. exists (c ⋉ v).
+    rewrite list_elem_of_In. rewrite in_flat_map. exists (c ⋉ v).
     split.
-    + eapply elem_of_list_In, elem_of_elements.
+    + eapply list_elem_of_In, elem_of_elements.
       eapply (outputs_of_spec1 p (c ⋉ v)). eauto.
-    + eapply elem_of_list_In. eapply elem_of_list_fmap. exists q.
+    + eapply list_elem_of_In. eapply list_elem_of_fmap. exists q.
       split. auto. eapply elem_of_elements.
       eapply lts_set_output_spec1. assumption.
   - eapply elem_of_union. left.
     eapply elem_of_union. left.
     eapply elem_of_list_to_set.
-    rewrite elem_of_list_In. rewrite in_flat_map. exists ((c ⋉ v)).
-    split. eapply elem_of_list_In. eapply gmultiset_elem_of_elements.
+    rewrite list_elem_of_In. rewrite in_flat_map. exists ((c ⋉ v)).
+    split. eapply list_elem_of_In. eapply gmultiset_elem_of_elements.
     dependent destruction l1. multiset_solver.
-    eapply elem_of_list_In. eapply elem_of_list_fmap.
+    eapply list_elem_of_In. eapply list_elem_of_fmap.
     exists (S2). split.
     dependent destruction l1.
     assert (gmultiset_difference (M2 ⊎ {[+ c ⋉ v +]}) {[+ c ⋉ v +]} = M2). multiset_solver.

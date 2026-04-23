@@ -23,11 +23,12 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import decidable.
 
+(** * Actions and traces *)
 (********** Actions := External Action ⊎ { τ } **********)
 
 Inductive Act (A: Type) :=

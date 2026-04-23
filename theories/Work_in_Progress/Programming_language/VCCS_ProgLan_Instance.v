@@ -21,18 +21,18 @@
 *)
 
 
-From Coq.Program Require Import Equality.
-From Coq.Strings Require Import String.
-From Coq Require Import Relations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Must Require Import InputOutputActions ActTau OldTransitionSystems.
-From Coq.Vectors Require Vector.
+From TestingTheory Require Import InputOutputActions ActTau OldTransitionSystems.
+From Stdlib.Vectors Require Vector.
 (* Module Import V := Coq.Vectors.Vector.
 Import V.VectorNotations. *)
 (* Require Import Coq.Lists.List.
 Import ListNotations. *)
-From Coq Require List.
+From Stdlib Require List.
 Import ListNotations.
 From stdpp Require Import vector list.
 
@@ -133,7 +133,7 @@ Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
 Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • P" := (gpr_output c v P) (at level 50).
-Notation "c ? x • P" := (gpr_input c P) (at level 50).
+Notation "c ? P" := (gpr_input c P) (at level 50).
 Notation "'t' • P" := (gpr_tau P) (at level 50).
 (* Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
@@ -203,7 +203,7 @@ with subst_in_gproc k X M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (subst_in_proc (S k) (Succ_bvar X) p)
+| c ? p => c ? (subst_in_proc (S k) (Succ_bvar X) p)
 | c ! v • p => c ! (subst_Data k X v) • (subst_in_proc k X p)
 | t • p => t • (subst_in_proc k X p)
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
@@ -274,7 +274,7 @@ with gNewVar k M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (NewVar (S k) p)
+| c ? p => c ? (NewVar (S k) p)
 | c ! v • p => c ! (NewVar_in_Data k v) • (NewVar k p)
 | t • p => t • (NewVar k p)
 | p1 + p2 => (gNewVar k p1) + (gNewVar k p2)
@@ -299,7 +299,7 @@ end
 with gpr_subst id p q {struct p} := match p with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? x • p => c ? x • (pr_subst id p (NewVar 0 q))
+| c ? p => c ? (pr_subst id p (NewVar 0 q))
 | c ! v • p => c ! v • (pr_subst id p q)
 | t • p => t • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
@@ -313,7 +313,7 @@ intros. exact 𝟘. Defined. (* Delta in VCCS_SEQ, I think *) *)
 Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? x • P) ((c ⋉ v) ?) (P^v)
+    lts (c ? P) ((c ⋉ v) ?) (P^v)
 | lts_output : forall {c v P},
     lts (c ! v • P) ((c ⋉ v) !) P
 
@@ -383,7 +383,7 @@ with gsize p :=
   match p with
   | ① => 1
   | 𝟘 => 0
-  | c ? x • p => S (size p)
+  | c ? p => S (size p)
   | c ! v • p => S (size p)
   | t • p => S (size p)
   | p + q => S (gsize p + gsize q)
@@ -451,7 +451,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (t • p) (t • q)
 | cgr_input_step : forall c p q,
     cgr_step p q ->
-    cgr_step (c ? x • p) (c ? x • q)
+    cgr_step (c ? p) (c ? q)
 | cgr_output_step : forall c v p q,
     cgr_step p q ->
     cgr_step (c ! v • p) (c ! v • q)
@@ -611,7 +611,7 @@ intros. dependent induction H.
 constructor. 
 apply cgr_tau_step. exact H. eauto with cgr_eq.
 Qed. 
-Lemma cgr_input : forall c p q, p ≡* q -> (c ? x • p) ≡* (c ? x • q).
+Lemma cgr_input : forall c p q, p ≡* q -> (c ? p) ≡* (c ? q).
 Proof.
 intros.
 dependent induction H. 
@@ -1365,8 +1365,8 @@ Qed.
 Inductive sts : proc -> proc -> Prop :=
 (*The axiomes*)
 (* Communication of channels output and input that have the same name *)
-| sts_com : forall {c v p1 g1 p2 g2}, (*Well_Defined_Input_in 0 (((c ! (cst v) • p1) + g1) ‖ ((c ? x • p2) + g2)) ->*)
-    sts (((c ! v • p1) + g1) ‖ ((c ? x • p2) + g2)) (p1 ‖ (p2 ^ v))
+| sts_com : forall {c v p1 g1 p2 g2}, (*Well_Defined_Input_in 0 (((c ! (cst v) • p1) + g1) ‖ ((c ? p2) + g2)) ->*)
+    sts (((c ! v • p1) + g1) ‖ ((c ? p2) + g2)) (p1 ‖ (p2 ^ v))
 (* Nothing more , something less *)
 | sts_tau : forall {p g}, (* Well_Defined_Input_in 0 (((t • p) + g)) -> *)
     sts ((t • p) + g) p
@@ -1389,7 +1389,7 @@ Inductive sts : proc -> proc -> Prop :=
 
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 Lemma ReductionShape : forall P Q, sts P Q ->
-((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! v • P1) + G1) ‖ ((c ? x • P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
+((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! v • P1) + G1) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
 \/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
 ).
@@ -1401,7 +1401,7 @@ induction Transition.
   - right. right. exists x. exists p. exists 𝟘. split; apply cgr_par_nil_rev.
   - destruct IHTransition as [IH|[IH|IH]];  decompose record IH. 
     * left. exists x. exists x0. exists x1. exists x2. exists x3. exists x4. exists (x5 ‖ q). split.
-        ** apply transitivity with (((((x ! x0 • x1) + x3) ‖ ((x ? l • x2) + x4)) ‖ x5) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
+        ** apply transitivity with (((((x ! x0 • x1) + x3) ‖ ((x ? x2) + x4)) ‖ x5) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
         ** apply transitivity with (((x1 ‖ x2^x0) ‖ x5) ‖ q). apply cgr_par. auto.  apply cgr_par_assoc. 
     * right. left. exists x. exists x0. exists (x1 ‖ q). split.
         ** apply transitivity with (((t • x + x0) ‖ x1) ‖ q). apply cgr_par. auto. apply cgr_par_assoc.
@@ -1421,12 +1421,12 @@ Qed.
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForInput : forall P Q c v, (lts P ((c ⋉ v) ?) Q) -> 
-(exists P1 G R, ((P ≡* ((c ? x • P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
+(exists P1 G R, ((P ≡* ((c ? P1 + G) ‖ R)) /\ (Q ≡* (P1^v ‖ R)) /\ ((exists L,P = (g L)) -> R = 𝟘))).
 Proof.
 intros P Q c v Transition.
  dependent induction Transition.
 - exists P. exists 𝟘. exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? x • P) + 𝟘). apply cgr_trans with (c ? x • P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
+  * apply cgr_trans with ((c ? P) + 𝟘). apply cgr_trans with (c ? P). apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
   * reflexivity.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists x1. split; try split.
@@ -1438,23 +1438,23 @@ intros P Q c v Transition.
   * assumption.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ q). split; try split.
-  * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
+  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ q). apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ p). split; try split.
-  * apply cgr_trans with ((((c ? l • x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
+  * apply cgr_trans with ((((c ? x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * apply cgr_trans with ((x^v ‖ x1) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p2). exists 𝟘. split ; try split.
-  * apply cgr_trans with ((c ? l • x) + (x0 + p2)). apply cgr_trans with (((c ? l • x) + x0) + p2).
-    apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? l • x) + x0) ‖ 𝟘).
+  * apply cgr_trans with ((c ? x) + (x0 + p2)). apply cgr_trans with (((c ? x) + x0) + p2).
+    apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H0. apply transitivity with (((c ? x) + x0) ‖ 𝟘).
     assumption. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p1. reflexivity. rewrite H2 in H1. assumption.
   * reflexivity.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p1). exists 𝟘. split; try split.
-  * apply cgr_trans with ((c ? l • x) + (x0 + p1)). apply cgr_trans with (((c ? l • x) + x0) + p1).
+  * apply cgr_trans with ((c ? x) + (x0 + p1)). apply cgr_trans with (((c ? x) + x0) + p1).
     apply cgr_trans with (p2 + p1). apply cgr_choice_com. apply cgr_choice. assert (x1 = 𝟘). apply H3. exists p2. reflexivity.
-    apply cgr_trans with (((c ? l • x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
+    apply cgr_trans with (((c ? x) + x0) ‖ x1). assumption. rewrite H2. apply cgr_par_nil. apply cgr_choice_assoc. apply cgr_par_nil_rev.
   * assert (x1 = 𝟘). apply H3. exists p2. reflexivity. rewrite <-H2. assumption. 
   * reflexivity.
 Qed.
@@ -1677,7 +1677,7 @@ Admitted.
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ Q).
 Proof. 
 intros P Q Reduction. 
-assert ((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! v • P1) + G1) ‖ ((c ? x • P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
+assert ((exists c v P1 P2 G1 G2 S, ((P ≡* (((c ! v • P1) + G1) ‖ ((c ? P2) + G2)) ‖ S)) /\ (Q ≡*((P1 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S, (P ≡* (((t • P1) + G1) ‖ S)) /\ (Q ≡* (P1 ‖ S)))
 \/ (exists n P1 S, (P ≡* ((rec n • P1) ‖ S)) /\ (Q ≡* (pr_subst n P1 (rec n • P1) ‖ S)))
 ). 
@@ -1686,11 +1686,11 @@ destruct H as [IH|[IH|IH]];  decompose record IH.
 
 (*First case τ by communication *)
 
-- assert (lts (((x ! x0 • x1) + x3) ‖ ((x ? l • x2) + x4) ‖ x5) τ (x1 ‖ (x2^x0) ‖ x5)).
+- assert (lts (((x ! x0 • x1) + x3) ‖ ((x ? x2) + x4) ‖ x5) τ (x1 ‖ (x2^x0) ‖ x5)).
   * apply lts_parL.   
     eapply lts_comL. apply lts_choiceL. instantiate (2:= x). instantiate (1:= x0).
     apply lts_output. apply lts_choiceL. apply lts_input.
-  * assert (sc_then_lts P τ ((x1 ‖ x2^x0) ‖ x5)). exists ((((x ! x0 • x1) + x3) ‖ ((x ? l • x2) + x4)) ‖ x5). split. assumption. assumption.
+  * assert (sc_then_lts P τ ((x1 ‖ x2^x0) ‖ x5)). exists ((((x ! x0 • x1) + x3) ‖ ((x ? x2) + x4)) ‖ x5). split. assumption. assumption.
     assert (lts_then_sc P τ ((x1 ‖ x2^x0) ‖ x5)). apply Congruence_Respects_Transition. assumption. destruct H3. destruct H3.
     exists x6. split. assumption. apply transitivity with ((x1 ‖ x2^x0) ‖ x5). assumption. symmetry. assumption.
 
@@ -1770,8 +1770,8 @@ dependent induction H.
   - apply sts_recursion.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption.  decompose record H1.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H4.
-    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? l • x2) + x3)) ‖ (x1 ‖ x4)).
-    apply cgr_trans with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? l • x2) + x3) ‖ x4)). apply cgr_fullpar. assumption. assumption.
+    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? x2) + x3)) ‖ (x1 ‖ x4)).
+    apply cgr_trans with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? x2) + x3) ‖ x4)). apply cgr_fullpar. assumption. assumption.
     apply InversionParallele. 
     instantiate (1 := (x ‖ (x2^v)) ‖ (x1 ‖ x4)). apply sts_par.
     apply sts_com. 
@@ -1779,9 +1779,9 @@ dependent induction H.
     symmetry. assumption. symmetry. assumption.
   - destruct (TransitionShapeForOutput p1 p2 c v). assumption. decompose record H1.
     destruct (TransitionShapeForInput q1 q2 c v). assumption. decompose record H4.
-    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? l • x2) + x3)) ‖ (x1 ‖ x4)).
+    eapply sts_cong. instantiate (1:=(((c ! v • x) + x0) ‖ ((c ? x2) + x3)) ‖ (x1 ‖ x4)).
     apply transitivity with (p1 ‖ q1). apply cgr_par_com.
-    apply transitivity with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? l • x2) + x3) ‖ x4)).
+    apply transitivity with ((((c ! v • x) + x0) ‖ x1) ‖ (((c ? x2) + x3) ‖ x4)).
     apply cgr_fullpar. assumption. assumption. apply InversionParallele. 
     instantiate (1 := (x ‖ (x2^v)) ‖ (x1 ‖ x4)). apply sts_par. apply sts_com.
     apply transitivity with ((x ‖ x1) ‖ ((x2^v) ‖ x4)). apply InversionParallele. apply transitivity with (p2 ‖ q2). apply cgr_fullpar. 
@@ -1837,7 +1837,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_success : forall k, Well_Defined_Input_in k (①)
 | WD_nil : forall k, Well_Defined_Input_in k (𝟘)
 | WD_input : forall k c p, Well_Defined_Input_in (S k) p
-                  -> Well_Defined_Input_in k (c ? x • p)
+                  -> Well_Defined_Input_in k (c ? p)
 | WD_output : forall k c v p, Well_Defined_Data k v 
                     -> Well_Defined_Input_in k p -> Well_Defined_Input_in k (c ! v • p)
 | WD_tau : forall k p,  Well_Defined_Input_in k p -> Well_Defined_Input_in k (t • p)
@@ -2352,7 +2352,7 @@ encode_gproc (gp: gproc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) +
   match gp with
   | ① => GenNode 1 []
   | 𝟘 => GenNode 0 []
-  | c ? x • p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
+  | c ? p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
   | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ (c ⋉ v)); encode_proc p]
   | t • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
@@ -2371,7 +2371,7 @@ encode_gproc (gp: gproc) : gen_tree (nat + ((Data + TypeOfActions) + Channel)) :
   match gp with
   | ① => GenNode 1 []
   | 𝟘 => GenNode 0 []
-  | c ? x • p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
+  | c ? p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
   | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ (c ⋉ v)); encode_proc p]
   | t • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
@@ -2401,7 +2401,7 @@ decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + Channel)
   match t' with
   | GenNode 1 [] => ①
   | GenNode 0 [] => 𝟘
-  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? x • (decode_proc ep)
+  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? (decode_proc ep)
   | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (Channel_of a) ! (Data_of a) • (decode_proc ep)
   | GenNode 3 [eq] => t • (decode_proc eq)
   | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
@@ -2423,7 +2423,7 @@ decode_gproc (t': gen_tree (nat + ((Data + TypeOfActions) + Channel))): gproc :=
   match t' with
   | GenNode 1 [] => ①
   | GenNode 0 [] => 𝟘
-  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? x • (decode_proc ep)
+  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? (decode_proc ep)
   | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (Channel_of a) ! (Data_of a) • (decode_proc ep)
   | GenNode 3 [eq] => t • (decode_proc eq)
   | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
@@ -2458,7 +2458,7 @@ Fixpoint moutputs_of_g (gp : gproc) : gmultiset (TypeOfActions) :=
   match gp with
   | ① => ∅
   | 𝟘 => ∅
-  | c ? x • p => ∅
+  | c ? p => ∅
   | c ! v • p => {[+ (c ⋉ v) +]}
   | t • p => ∅
   | g1 + g2 => moutputs_of_g g1 ⊎ moutputs_of_g g2
@@ -2599,7 +2599,7 @@ Fixpoint lts_set_output_g (g : gproc) (a : TypeOfActions) : gset proc :=
   match g with
   | ① => ∅
   | 𝟘 => ∅
-  | c ? x • p => ∅
+  | c ? p => ∅
   | c ! v • p => if decide(a = (c ⋉ v)) then {[ p ]} else ∅
   | t • p => ∅
   | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
@@ -2629,7 +2629,7 @@ Fixpoint lts_set_input_g (g : gproc) (a : TypeOfActions) : gset proc :=
  match g with
   | ① => ∅
   | 𝟘 => ∅
-  | c' ? x • p => if decide(Channel_of a = c') then {[ p^(Data_of a) ]} else ∅
+  | c' ? p => if decide(Channel_of a = c') then {[ p^(Data_of a) ]} else ∅
   | c' ! v • p => ∅
   | t • p => ∅
   | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
@@ -2657,7 +2657,7 @@ Fixpoint lts_set_tau_g (gp : gproc) : gset proc :=
 match gp with
   | ① => ∅
   | 𝟘 => ∅
-  | c ? x • p => ∅
+  | c ? p => ∅
   | c ! v • p => ∅
   | t • p => {[ p ]}
   | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
@@ -2706,9 +2706,9 @@ Proof.
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0));
   destruct p; intros q mem; simpl in mem;  try now inversion mem.
   - eapply elem_of_union in mem as [mem | mem]. 
-    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+    * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
       apply lts_parL. rewrite elem_of_elements in mem. eapply Hp. simpl ; lia. eauto. 
-    * eapply elem_of_list_to_set, elem_of_list_fmap in mem as (q' & eq & mem). subst.
+    * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
       apply lts_parR. eapply Hp. simpl; lia. rewrite elem_of_elements in mem.  exact mem.
   - case_eq (Eval_Eq e).
     * intros. destruct b.
@@ -2743,10 +2743,10 @@ Proof.
   dependent induction p; simpl in mem; try set_solver.
   + eapply elem_of_union in mem. destruct mem.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. eauto with ccs.
     ++ eapply elem_of_list_to_set in H.
-       eapply elem_of_list_fmap in H as (q' & eq & mem). subst.
+       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. eauto with ccs.
   + case_eq (Eval_Eq e).
     - intros. rewrite H in mem. destruct b.
@@ -2855,22 +2855,22 @@ Proof.
       ++ eapply elem_of_union in mem1.
          destruct mem1.
          eapply elem_of_union in H as [mem1 | mem2]. 
-         eapply elem_of_list_to_set, elem_of_list_fmap in mem1 as (t' & eq & h); subst.
+         eapply elem_of_list_to_set, list_elem_of_fmap in mem1 as (t' & eq & h); subst.
          rewrite elem_of_elements in h. eauto with ccs.
-         eapply elem_of_list_to_set, elem_of_list_fmap in mem2 as (t' & eq & h); subst.
+         eapply elem_of_list_to_set, list_elem_of_fmap in mem2 as (t' & eq & h); subst.
          rewrite elem_of_elements in h. eauto with ccs.
-         eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in H as (t' & eq & h); subst.
-         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
-         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
-         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
-         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+         eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in H as (t' & eq & h); subst.
+         eapply list_elem_of_In, list_elem_of_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply list_elem_of_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply list_elem_of_In in mem1. rewrite elem_of_elements in mem1.
+         eapply list_elem_of_In in mem2. rewrite elem_of_elements in mem2.
          eapply lts_set_output_spec0 in mem1.
          eapply lts_set_input_spec0 in mem2. destruct t'. eapply lts_comL. exact mem1. exact mem2.
-      ++ eapply elem_of_list_to_set, elem_of_list_In, in_flat_map in mem2 as (t' & eq & h); subst.
-         eapply elem_of_list_In, elem_of_list_fmap in h as ((t1 & t2) & eq' & h'). subst.
-         eapply elem_of_list_In, in_prod_iff in h' as (mem1 & mem2).
-         eapply elem_of_list_In in mem1. rewrite elem_of_elements in mem1.
-         eapply elem_of_list_In in mem2. rewrite elem_of_elements in mem2.
+      ++ eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in mem2 as (t' & eq & h); subst.
+         eapply list_elem_of_In, list_elem_of_fmap in h as ((t1 & t2) & eq' & h'). subst.
+         eapply list_elem_of_In, in_prod_iff in h' as (mem1 & mem2).
+         eapply list_elem_of_In in mem1. rewrite elem_of_elements in mem1.
+         eapply list_elem_of_In in mem2. rewrite elem_of_elements in mem2.
          eapply lts_set_input_spec0 in mem1.
          eapply lts_set_output_spec0 in mem2. destruct t'. eapply lts_comR. exact mem2. exact mem1.
     + inversion mem.
@@ -2893,26 +2893,26 @@ Proof.
   - eapply elem_of_union. left.
     eapply elem_of_union. right.
     eapply elem_of_list_to_set.
-    rewrite elem_of_list_In. rewrite in_flat_map.
+    rewrite list_elem_of_In. rewrite in_flat_map.
     exists (c ⋉ v). split.
-    + eapply elem_of_list_In, elem_of_elements.
+    + eapply list_elem_of_In, elem_of_elements.
       eapply outputs_of_spec1. eauto.
-    + eapply elem_of_list_In, elem_of_list_fmap.
+    + eapply list_elem_of_In, list_elem_of_fmap.
       exists (p2 , q2). split.
       ++ reflexivity.
-      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+      ++ eapply list_elem_of_In, in_prod_iff; split; eapply list_elem_of_In, elem_of_elements.
          eapply lts_set_output_spec1; eauto with ccs.
          eapply lts_set_input_spec1; eauto with ccs.
   - eapply elem_of_union. right.
     eapply elem_of_list_to_set.
-    rewrite elem_of_list_In. rewrite in_flat_map.
+    rewrite list_elem_of_In. rewrite in_flat_map.
     exists (c ⋉ v). split.
-    + eapply elem_of_list_In, elem_of_elements.
+    + eapply list_elem_of_In, elem_of_elements.
       eapply outputs_of_spec1. exact l1.
-    + eapply elem_of_list_In, elem_of_list_fmap.
+    + eapply list_elem_of_In, list_elem_of_fmap.
       exists (q2 , p2). split.
       ++ reflexivity.
-      ++ eapply elem_of_list_In, in_prod_iff; split; eapply elem_of_list_In, elem_of_elements.
+      ++ eapply list_elem_of_In, in_prod_iff; split; eapply list_elem_of_In, elem_of_elements.
          eapply lts_set_input_spec1; eauto with ccs.
          eapply lts_set_output_spec1; eauto with ccs.
 Qed.
@@ -2988,7 +2988,7 @@ Qed.
      eq_trans x y z:= cgr_trans x y z;
      eq_spec p q α := Congruence_Respects_Transition p q α |}.
 
-From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs.
 
 #[global] Program Instance VCCS_ggLts : gLts proc (ExtAct TypeOfActions) := ggLts gLabel_b.
 

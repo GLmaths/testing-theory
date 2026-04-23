@@ -26,29 +26,28 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
-From Must Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS ParallelLTSConstruction.
 
-(********************************************* Definition of Must_i ********************************************)
-
+ (** ** Inductive definition [must_sts] of Must based on the STS *)
 Inductive must_sts 
-  `{Sts (P1 * P2), outcome : P2 -> Prop}
+  `{Sts (P1 * P2)} (outcome : P2 -> Prop)
   (p : P1) (t : P2) : Prop :=
-| m_sts_now : outcome t -> must_sts p t
+| m_sts_now : outcome t -> must_sts outcome p t
 | m_sts_step
     (nh : ¬ outcome t)
     (nst : ¬ sts_refuses (p, t))
-    (l : forall p' t', sts_step (p, t) (p', t') -> must_sts p' t')
-  : must_sts p t
+    (l : forall p' t', sts_step (p, t) (p', t') -> must_sts outcome p' t')
+  : must_sts outcome p t
 .
 
 Global Hint Constructors must_sts:mdb.
 
-(********************* Definition of Must_i decomposed with parallel computation definition *****************)
+(** ** Inductive definition [must] of Must based on the LTS *)
 
 Inductive must `{
     gLtsP : @gLts P A H,
-    gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+    gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
     `{!Prop_of_Inter P T A dual}
 
@@ -70,27 +69,26 @@ Notation "p 'must_pass' t" := (must p t) (at level 70).
 
 Global Hint Constructors must:mdb.
 
-(****************** Must_i and Must decomposed with parallel computation definition are equivalent ****************)
+(** ** Equivalence of the two inductive definitions [must] and [must_sts] *)
 
 Lemma must_sts_iff_must `{
     gLtsP : @gLts P A H,
-    gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+    gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
     `{!Prop_of_Inter P T A dual}
 
   (p : P) (t : T) :
-  @must_sts P T _ outcome p t <-> p must_pass t.
+  must_sts outcome p t <-> p must_pass t.
 Proof.
   split.
   - intro hm. induction hm; eauto with mdb.
-    eapply m_step; eauto with mdb.
+    apply m_step; eauto with mdb.
     + eapply sts_refuses_spec1 in nst as ((p', t') & hl).
       exists (p', t'). now simpl in hl.
     + simpl in *; eauto with mdb.
     + simpl in *; eauto with mdb.
     + intros p' t' μ1 μ2 duo hl1 hl2.
-      eapply H0. simpl.
-      eapply (ParSync μ1 μ2); eauto.
+      apply H0, (ParSync μ1 μ2); eauto.
   - intro hm. dependent induction hm; eauto with mdb.
     eapply m_sts_step; eauto with mdb.
     + eapply sts_refuses_spec2.
@@ -104,12 +102,12 @@ Proof.
       inversion hl; subst; eauto with mdb.
 Qed.
 
-(********************************* Definition of the contextual pre order with Must_i *********************************)
+(** ** Definition of the contextual preorder based on [must] *)
 
 Definition ctx_pre `{
   gLtsP : @gLts P A H, 
   gLtsQ : !gLts Q H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -122,11 +120,11 @@ Global Hint Unfold ctx_pre: mdb.
 Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre p q) (at level 70).
 Notation "p ⋢ₘᵤₛₜᵢ q" := (¬ ctx_pre p q) (at level 70).
 
-(********************************************* Properties on Must_i **********************************************)
+(** ** Properties on [must] *)
 
 Lemma must_eq_client `{
   gLtsP : !@gLts P A H, 
-  gLtsT : @gLtsEq T A H, !Testing_Predicate T A outcome}
+  gLtsT : @gLtsEq T A H, !Testing_Predicate outcome _}
   {_ : Prop_of_Inter P T A dual} :
 
   forall (p : P) (t t' : T), t ⋍ t' -> p must_pass t -> p must_pass t'.
@@ -160,7 +158,7 @@ Qed.
 
 Lemma must_eq_server `{
   gLtsP : !@gLtsEq P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome} 
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _} 
 
   {_ : Prop_of_Inter P T A dual} :
 
@@ -192,7 +190,7 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_srv `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -202,7 +200,7 @@ Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_weak_nil_srv `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -218,7 +216,7 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -228,7 +226,7 @@ Proof. by inversion 1; eauto with mdb. Qed.
 
 Lemma must_preserved_by_synch_if_notoutcome `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -244,7 +242,7 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -270,7 +268,7 @@ Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev_rev `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -297,7 +295,7 @@ Qed.
 
 Lemma must_terminate_unoutcome `{
   gLtsP : @gLts P A H,
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -310,7 +308,7 @@ Qed.
 
 Lemma must_terminate_unoutcome' `{
   gLtsP : @gLts P A H,
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -323,7 +321,7 @@ Qed.
 
 Lemma must_preserved_by_lts_wk_clt `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -345,7 +343,7 @@ Qed.
 
 Lemma must_preserved_by_wt_synch_if_notoutcome `{
   gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : ! gLtsEq T H, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A dual}
 
@@ -368,7 +366,7 @@ Qed.
 Lemma ctx_pre_not `{
   gLtsP : @gLts P A H, 
   gLtsQ : !gLts Q H, 
-  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
   {_ : Prop_of_Inter P T A dual} 
   {_ : Prop_of_Inter Q T A dual}
   (p : P) (q : Q) (t : T) :

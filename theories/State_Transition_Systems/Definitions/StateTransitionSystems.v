@@ -23,11 +23,11 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
+From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
-From Must Require Import ActTau gLts FiniteImageLTS.
+From TestingTheory Require Import ActTau gLts FiniteImageLTS.
 
-(**************************************** State Transition System ******************************)
+(** * State Transition Systems *)
 
 (* Definition of a State Transition System (STS) *)
 Class Sts (P: Type) := MkSts {
@@ -44,7 +44,7 @@ Class Sts (P: Type) := MkSts {
 #[global] Existing Instance sts_step_decidable.
 #[global] Existing Instance sts_refuses_decidable.
 
-(* State Transition Systems are Labelled Transition Systems *)
+(** ** State Transition Systems are Labelled Transition Systems *)
 
 Definition istep `{gLts A} p q := lts_step p τ q.
 

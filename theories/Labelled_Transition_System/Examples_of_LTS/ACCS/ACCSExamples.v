@@ -1,4 +1,4 @@
-From Must Require Import ACCSInstance gLts Coin_tower Termination
+From TestingTheory Require Import ACCSInstance gLts Coin_tower Termination
                          Must CompletenessAS SoundnessAS EquivalenceAS
                          GeneralizeLtsOutputs InteractionBetweenLts ParallelLTSConstruction
                          ForwarderConstruction Simulation ActTau MultisetLTSConstruction ActTau
@@ -8,6 +8,9 @@ From Stdlib Require Import Relations.
 From Stdlib.Program Require Import Equality.
 From Coinduction Require Import all.
 
+(** * Examples *)
+(** ** ACCS *)
+(** *** Applications *)
 Ltac lts_inversion := Termination.lts_inversion lts; try discriminate.
 Ltac step_tac := Termination.step_tac lts; simpl.
 Ltac term_tac := repeat step_tac.

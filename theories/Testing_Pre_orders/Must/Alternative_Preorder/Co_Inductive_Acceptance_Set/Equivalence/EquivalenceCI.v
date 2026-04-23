@@ -33,7 +33,7 @@ From Stdlib .Logic Require Import ProofIrrelevance.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From Must Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
+From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence 
               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
@@ -60,7 +60,7 @@ Section eq_contextual.
 
   Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
   Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.

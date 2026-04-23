@@ -25,8 +25,8 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
-From Must Require Import ForAllHelper MultisetHelper gLts Bisimulation.
-
+From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation.
+(** ** TODO say what [gLtsOba] are *)
 Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
   MkOba {
       (* Multiset of non-blocking action from a process *)
@@ -65,7 +65,7 @@ Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
     }.
 
 
-(* Signification between mailbox and non_blocking *)
+(** *** Relationship between mailbox and non-blocking actions *)
 
 Lemma lts_oba_mo_non_blocking_spec1 `{gLtsOba P A} {p η} : 
   η ∈ lts_oba_mo p → non_blocking η.
@@ -97,7 +97,7 @@ Proof.
     ++ assert (μ ∉ g). set_solver. now eapply IHg.
 Qed.
 
-(* Relation between co_nba, non_blocking and dual *)
+(** *** Relationship between `co_nba`, `non_blocking` and `dual` *)
 
 Definition exist_co_nba (* {A : Type} `{ExtAct A}  *)
       `{ExtAction A} (β : A) := exists (η : A), (non_blocking η /\ dual β η).
@@ -148,7 +148,7 @@ Proof.
 Qed.
 
 
-(* Properties on LTS with OBA axioms *)
+(** *** Properties on LTS with OBA axioms *)
 
 Lemma lts_oba_mo_eq `{gLtsOba P A} {p q} :
   p ⋍ q → lts_oba_mo p = lts_oba_mo q.

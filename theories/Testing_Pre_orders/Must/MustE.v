@@ -26,17 +26,19 @@
 From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
-From Must Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
-    Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
+    Must Bar (* CompletenessAS SoundnessAS  *) Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS Must.
 
 Section preorder.
 
-  (** Extensional definition of Must *)
+ (** * Must preoder *)
+ (** ** Extensional definition of Must *)
+
 
   Definition must_extensional {P : Type}
-    `{Sts (P * T), outcome : T -> Prop} 
+    `{!Sts (P * T)} (outcome : T -> Prop)
     (p : P) (t : T) : Prop :=
     forall η : max_exec_from (p, t), exists n fex, mex_take_from n η = Some fex 
           /\ outcome (fex_from_last fex).2 .
@@ -84,16 +86,16 @@ Section preorder.
     (p : P) (q : Q) : Prop :=
     forall (t : T), @must_extensional P T _ outcome p t -> @must_extensional Q T _ outcome q t.
 
-  (* ************************************************** *)
+  (** ** Equivalence between the extensional and inductive definitions *)
 
   Lemma must_extensional_iff_must_sts
     {P : Type}
     `{outcome : T -> Prop, outcome_decidable : forall (t : T), Decision (outcome t)}
     `{gLtsP : @gLts P A H, !FiniteImagegLts P A,
-      gLtsT : !gLtsEq T H, !FiniteImagegLts T A , !Testing_Predicate T A outcome}
-    `{!Prop_of_Inter P T A dual} (* à rajouter en context ? *)
+      gLtsT : !gLtsEq T H, !FiniteImagegLts T A , !Testing_Predicate outcome _}
+    `{!Prop_of_Inter P T A dual}
     (p : P) (t : T) : 
-    @must_extensional P T _ outcome p t <-> @must_sts P T _ outcome p t.
+    must_extensional outcome p t <-> must_sts outcome p t.
   Proof.
     split.
     - intros hm. destruct Testing_Predicate0.
@@ -114,7 +116,7 @@ Section preorder.
   Context `{H : !ExtAction A}.
   Context `{gLtsP : !gLts P H, !FiniteImagegLts P A}.
   Context `{gLtsQ : !gLts Q H, !FiniteImagegLts Q A}.
-  Context `{gLtsEqT: !gLtsEq T H, !FiniteImagegLts T A, !Testing_Predicate T A outcome}.
+  Context `{gLtsEqT: !gLtsEq T H, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 

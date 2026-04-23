@@ -23,8 +23,8 @@
    SOFTWARE.
 *)
 
-From Coq.Unicode Require Import Utf8.
-From Coq.Program Require Import Equality.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable finite gmultiset.
 
 Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list B → Prop :=

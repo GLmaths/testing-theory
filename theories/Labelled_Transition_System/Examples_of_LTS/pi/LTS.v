@@ -1,4 +1,4 @@
-From Must Require Import Renamings.
+From TestingTheory Require Import Renamings.
 
 Parameter Eval_Eq : Equation -> (option bool).
 Parameter Eq_Subst_Spec : (nat -> nat) -> Prop.

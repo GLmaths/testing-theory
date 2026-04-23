@@ -32,10 +32,11 @@ From Stdlib.Program Require Import Wf Equality.
 
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 
-From Must Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB FiniteImageLTS
+From TestingTheory Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB FiniteImageLTS
     InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau.
 
-(**************************************** Forwarder LTS *************************************)
+(** * Operations on Ltss *)
+(** ** Forwarder LTS *)
 
 Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ2 μ1 /\ non_blocking μ1.
 
@@ -964,20 +965,20 @@ Proof.
   intros l.
   inversion l; subst.
   + eapply elem_of_app. left.
-    eapply elem_of_list_fmap.
+    eapply list_elem_of_fmap.
     exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
   + inversion l0.
   + assert (inter : fw_inter μ1 μ2). eauto.
     destruct eq as (duo & nb).
     eapply elem_of_app. right.
-    eapply elem_of_list_In.
+    eapply list_elem_of_In.
     eapply in_concat.
     exists (map (fun p => (p, m2))
          (map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ μ1))))
       ).
     split.
-    eapply elem_of_list_In.
-    eapply elem_of_list_fmap.
+    eapply list_elem_of_In.
+    eapply list_elem_of_fmap.
     exists (co μ1, map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ μ1)))).
     eapply (non_blocking_action_in_ms m1 μ2 m2) in nb as eq; subst; eauto.
     assert (μ2 = co μ1) as eq. eapply unique_nb; eauto. subst.
@@ -998,7 +999,7 @@ Proof.
     edestruct (lts_essential_actions_spec_interact _ _ _ _ _ _ l1 l2 inter) 
       as [ess_act | not_ess_act].
     ++ rewrite map_app.  eapply elem_of_app. right. 
-       eapply elem_of_list_In. 
+       eapply list_elem_of_In. 
        assert (lts_essential_actions_left p1 = 
        {[μ1]} ∪ lts_essential_actions_left p1 ∖ {[μ1]}) as eq''.
         eapply union_difference_singleton_L;eauto.
@@ -1011,7 +1012,7 @@ Proof.
        eapply lts_co_inter_action_spec_left ; eauto.
        rewrite map_app. 
        eapply elem_of_app. left. 
-       eapply elem_of_list_In. 
+       eapply list_elem_of_In. 
        assert (lts_co_inter_action_left (co μ1) p1 = 
        {[μ1]} ∪ lts_co_inter_action_left (co μ1) p1 ∖ {[μ1]}) as eq''.
         eapply union_difference_singleton_L;eauto.
@@ -1029,12 +1030,12 @@ Proof.
     erewrite gmultiset_elements_singleton in eq'.
     simpl in *.
     eapply elem_of_Permutation_proper; eauto. 
-    eapply elem_of_list_In. 
-    eapply in_or_app. left. eapply elem_of_list_In in eq. eauto.
-    ++ eapply elem_of_list_In.
-    eapply elem_of_list_fmap.
+    eapply list_elem_of_In. 
+    eapply in_or_app. left. eapply list_elem_of_In in eq. eauto.
+    ++ eapply list_elem_of_In.
+    eapply list_elem_of_fmap.
     eexists.  split. reflexivity.
-    eapply elem_of_list_fmap.
+    eapply list_elem_of_fmap.
     exists (dexist p2 l1). split. reflexivity. eapply elem_of_enum.
 Qed.
 
@@ -1048,9 +1049,9 @@ Proof.
   inversion l; subst.
   + unfold lts_fw_not_non_blocking_action_set.
     destruct (decide (dual β (co β) /\ non_blocking (co β))) as [(duo & nb) | case2].
-    - right. eapply elem_of_list_fmap.
+    - right. eapply list_elem_of_fmap.
       exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
-    - eapply elem_of_list_fmap.
+    - eapply list_elem_of_fmap.
       exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
   + eapply (blocking_action_in_ms m1 β m2) in not_nb as (eq & duo & nb); eauto; subst.
     unfold lts_fw_not_non_blocking_action_set.
@@ -1069,9 +1070,9 @@ Proof.
   inversion l; subst.
   + unfold lts_fw_non_blocking_action_set.
     destruct (decide (η ∈ m2)) as [in_mem | not_in_mem].
-    right. eapply elem_of_list_fmap. 
+    right. eapply list_elem_of_fmap. 
     exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum. 
-    eapply elem_of_list_fmap.
+    eapply list_elem_of_fmap.
     exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum. 
   + unfold lts_fw_non_blocking_action_set.
     eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst ; eauto.
@@ -1101,7 +1102,7 @@ Next Obligation.
 Qed.
 
 (****************** Random properties : TO BE CLASSIFIED ********************)
-From Must Require Import WeakTransitions.
+From TestingTheory Require Import WeakTransitions.
 
 Lemma fw_wt `{@FiniteImagegLts P A H gLtsP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}

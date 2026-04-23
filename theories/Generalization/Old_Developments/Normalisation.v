@@ -27,10 +27,10 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list decidable gmultiset hlist.
 
-From Must Require Import ActTau InputOutputActions FiniteImageLTS 
+From TestingTheory Require Import ActTau InputOutputActions FiniteImageLTS 
     gLts Bisimulation Lts_FW Convergence Termination WeakTransitions Must
     DefinitionAS Lts_OBA.
-(* From Must Require Import OldTransitionSystems GeneralizeLtsOutputs. *)
+(* From TestingTheory Require Import OldTransitionSystems GeneralizeLtsOutputs. *)
 Definition ntrace A `{ExtAction A} : Type := list (gmultiset A).
 (* Definition ntrace A `{ExtAction A} : Type := list (gmultiset A * gmultiset A * list A). *)
 (* mi = m_co_nb, mo = m_nb , m_other (* NEW *)*)
@@ -747,12 +747,12 @@ Proof.
     destruct a.
     exists (ActIn a). eapply elem_of_app. left.
     eapply elem_of_Permutation_proper. symmetry. eassumption.
-    eapply elem_of_list_fmap. exists a. split; eauto.
+    eapply list_elem_of_fmap. exists a. split; eauto.
     eapply gmultiset_elem_of_elements.
     now eapply norm_input_mem in e0.
     exists (ActOut a). eapply elem_of_app. right.
     eapply elem_of_Permutation_proper. symmetry. eassumption.
-    eapply elem_of_list_fmap. exists a. split; eauto.
+    eapply list_elem_of_fmap. exists a. split; eauto.
     eapply gmultiset_elem_of_elements.
     now eapply norm_output_mem in e0.
     rewrite e1, app_assoc, length_app.

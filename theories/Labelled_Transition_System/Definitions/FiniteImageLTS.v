@@ -26,8 +26,8 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
-From Must Require Import InListPropHelper ActTau gLts Bisimulation Termination WeakTransitions Convergence Lts_OBA_FB.
-
+From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Termination WeakTransitions Convergence Lts_OBA_FB.
+(** ** Finite Image LTSs *)
 Class FiniteImagegLts P A `{gLts P A} :=
   MkFlts {
       folts_states_countable: Countable P;
@@ -48,9 +48,7 @@ Class CountablegLts P A `{gLts P A} := MkClts {
 #[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
 Proof. econstructor; first apply _. intros *; apply finite_countable. Qed.
 
-(******************************** Tools for Finite Image LTS ************************************)
-
-(***************** Tau Set ***************************)
+(** *** Tau-set *)
 Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶ p')).
 
@@ -58,9 +56,9 @@ Lemma lts_tau_set_spec : forall `{FiniteImagegLts P A} p q, q ∈ lts_tau_set p 
 Proof.
   intros. split.
   - intro mem. unfold lts_tau_set in mem.
-    eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
+    eapply list_elem_of_fmap_1 in mem as ((r & l) & eq & mem). subst.
     eapply bool_decide_unpack. simpl. eassumption.
-  - intro H2. eapply elem_of_list_fmap.
+  - intro H2. eapply list_elem_of_fmap.
     exists (dexist q H2). split.
     eauto. eapply elem_of_enum.
 Qed.
@@ -87,7 +85,7 @@ Proof.
   split.
   - intros a mem.
     eapply elem_of_union_list in mem as (xs & mem1 & mem2).
-    eapply elem_of_list_fmap in mem1 as (p & heq0 & mem1).
+    eapply list_elem_of_fmap in mem1 as (p & heq0 & mem1).
     subst.  eapply elem_of_list_to_set in mem2.
     eapply lts_tau_set_spec in mem2. multiset_solver.
   - intros p q mem l.
@@ -98,7 +96,7 @@ Proof.
     + eapply lts_tau_set_spec in l. multiset_solver.
 Qed.
 
-(***************** External Action Set ***************************)
+(** *** External actions set *)
 
 Definition lts_extaction_set `{FiniteImagegLts P A} p μ : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶[ μ ] p')).
@@ -108,9 +106,9 @@ Lemma lts_extaction_set_spec : forall `{FiniteImagegLts P A} p μ q,
 Proof.
   intros. split.
   - intro mem. unfold lts_tau_set in mem.
-    eapply elem_of_list_fmap in mem as ((r & l) & eq & mem). subst.
+    eapply list_elem_of_fmap in mem as ((r & l) & eq & mem). subst.
     eapply bool_decide_unpack. eassumption.
-  - intro Hμ. eapply elem_of_list_fmap.
+  - intro Hμ. eapply list_elem_of_fmap.
     eexists (dexist q Hμ). split.
     eauto. eapply elem_of_enum.
 Qed.
@@ -137,7 +135,7 @@ Proof.
   split.
   - intros a mem.
     eapply elem_of_union_list in mem as (xs & mem1 & mem2).
-    eapply elem_of_list_fmap in mem1 as (p & heq0 & mem1).
+    eapply list_elem_of_fmap in mem1 as (p & heq0 & mem1).
     subst.  eapply elem_of_list_to_set in mem2.
     eapply lts_extaction_set_spec in mem2. multiset_solver.
   - intros p q mem l.
@@ -148,7 +146,7 @@ Proof.
     + eapply lts_extaction_set_spec in l. multiset_solver.
 Qed.
 
-(******** Weak Traces Sets **********)
+(** *** Weak traces sets **)
 Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : terminate p) : gset P :=
   let '(tstep _ f) := t in
   let k q := wt_set_nil (`q) (f (`q) (proj2_dsig q)) in
@@ -162,7 +160,7 @@ Proof.
   eapply elem_of_union in mem as [here | there].
   + eapply elem_of_singleton_1 in here. subst. eauto with mdb.
   + eapply elem_of_union_list in there as (ps & mem1 & mem2).
-    eapply elem_of_list_fmap in mem1 as (r & mem1 & eq). subst.
+    eapply list_elem_of_fmap in mem1 as (r & mem1 & eq). subst.
     eapply wt_tau; [|destruct (t (`r) (proj2_dsig r)) eqn:eqn0].
     ++ eapply (proj2_dsig r).
     ++ eapply H2. eapply (proj2_dsig r). eassumption.
@@ -177,7 +175,7 @@ Proof.
     eapply elem_of_union_list.
     set (qr := dexist q l).
     exists (wt_set_nil (`qr) (t0 (`qr) (proj2_dsig qr))).
-    split. eapply elem_of_list_fmap.
+    split. eapply list_elem_of_fmap.
     exists qr. split. reflexivity.
     eapply elem_of_enum. simpl.
     eapply IHHtp. eauto.
@@ -230,10 +228,10 @@ Lemma wt_set_mu_spec1 `{FiniteImagegLts P A}
 Proof.
   intros mem.
   eapply elem_of_union_list in mem as (g & mem1 & mem2).
-  eapply elem_of_list_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
+  eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
   eapply elem_of_union_list in mem2 as (g & mem3 & mem4).
-  eapply elem_of_list_fmap in mem3 as ((u & hlts) & eq & mem3). subst.
-  eapply elem_of_list_to_set, elem_of_list_fmap in mem4 as ((v & hw2) & eq & mem4). subst.
+  eapply list_elem_of_fmap in mem3 as ((u & hlts) & eq & mem3). subst.
+  eapply elem_of_list_to_set, list_elem_of_fmap in mem4 as ((v & hw2) & eq & mem4). subst.
   eapply wt_push_nil_left. eapply bool_decide_unpack. eassumption.
   eapply wt_act. eapply bool_decide_unpack. eassumption.
   eapply bool_decide_unpack. eassumption.
@@ -246,10 +244,10 @@ Proof.
   intros w.
   eapply wt_decomp_one in w as (p0 & p1 & hw1 & hlts & hw2).
   eapply elem_of_union_list. eexists. split.
-  eapply elem_of_list_fmap. exists (dexist p0 hw1). split. reflexivity. eapply elem_of_enum.
+  eapply list_elem_of_fmap. exists (dexist p0 hw1). split. reflexivity. eapply elem_of_enum.
   eapply elem_of_union_list. eexists. split.
-  eapply elem_of_list_fmap. exists (dexist p1 hlts). split. reflexivity. eapply elem_of_enum.
-  eapply elem_of_list_to_set, elem_of_list_fmap.
+  eapply list_elem_of_fmap. exists (dexist p1 hlts). split. reflexivity. eapply elem_of_enum.
+  eapply elem_of_list_to_set, list_elem_of_fmap.
   exists (dexist q hw2). split. reflexivity. eapply elem_of_enum.
 Qed.
 
@@ -296,7 +294,7 @@ Proof.
   revert p q hcnv. induction s; intros p q hcnv mem; simpl in *.
   - eapply wt_set_nil_spec1. eassumption.
   - eapply elem_of_union_list in mem as (g & mem1 & mem2).
-    eapply elem_of_list_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
+    eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
     eapply wt_push_left. eapply bool_decide_unpack. eassumption.
     eapply IHs. eassumption.
 Defined.
@@ -311,7 +309,7 @@ Proof.
   - eapply wt_pop in w as (t & w1 & w2).
     eapply elem_of_union_list.
     eexists. split.
-    + eapply elem_of_list_fmap.
+    + eapply list_elem_of_fmap.
       exists (dexist t w1). now split; [|eapply elem_of_enum].
     + now eapply IHs'.
 Defined.
@@ -358,7 +356,7 @@ Proof.
   case (lts_refuses_decidable p τ) in mem.
   - eapply elem_of_singleton_1 in mem. subst. eauto with mdb.
   - eapply elem_of_union_list in mem as (g & mem1 & mem2).
-    eapply elem_of_list_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
+    eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
     simpl in mem2. case (ht t (proj2_dsig (t ↾ hw1))) eqn:eq.
     edestruct (H2 t). now eapply bool_decide_unpack. eassumption.
     split; eauto with mdb. eapply wt_tau. eapply bool_decide_unpack.
@@ -374,7 +372,7 @@ Proof.
   - case (lts_refuses_decidable p τ); intro hst'.
     + exfalso. eapply (lts_refuses_spec2 p τ); eauto.
     + eapply elem_of_union_list.
-      eexists. split. eapply elem_of_list_fmap.
+      eexists. split. eapply list_elem_of_fmap.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
 Qed.
 
@@ -416,7 +414,7 @@ Lemma wt_refuses_set_spec1 `{FiniteImagegLts P A}
 Proof.
   intro mem.
   eapply elem_of_union_list in mem as (g & mem1 & mem2).
-  eapply elem_of_list_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
+  eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
   simpl in mem2.
   eapply wt_nil_refuses_set_spec1 in mem2.
   split. eapply wt_push_nil_right. eapply bool_decide_unpack. eassumption. firstorder.
@@ -429,7 +427,7 @@ Lemma wt_refuses_set_spec2 `{FiniteImagegLts P A}
 Proof.
   intros (hw & hst).
   eapply elem_of_union_list.
-  eexists. split. eapply elem_of_list_fmap.
+  eexists. split. eapply list_elem_of_fmap.
   exists (dexist q hw). split. reflexivity. eapply elem_of_enum.
   simpl. eapply wt_nil_refuses_set_spec2. eauto with mdb.
 Qed.
@@ -491,9 +489,9 @@ Fixpoint wt_s_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
   | [] => fun _ => ∅
   | p :: ps' =>
       fun ha =>
-        let pr := ha p (elem_of_list_here p ps') in
+        let pr := ha p (list_elem_of_here p ps') in
         let ys := wt_set p s pr in
-        let ha' := fun q mem => ha q (elem_of_list_further q p ps' mem) in
+        let ha' := fun q mem => ha q (list_elem_of_further q p ps' mem) in
         ys ∪ wt_s_set_from_pset_xs ps' s ha'
   end hcnv.
 
