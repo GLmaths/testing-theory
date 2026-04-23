@@ -38,3 +38,10 @@ Proof.
     + exists ({[x]} ∪ Y0), Z0. set_solver.
     + exists Y0, ({[x]} ∪ Z0). set_solver.
 Qed.
+
+Lemma exists_forall_in_gset `{Countable A} (ps : gset A) (P : A -> Prop) (Q : A -> Prop)
+  (h : forall p, p ∈ ps -> P p \/ Q p) : (exists p, p ∈ ps /\ P p)\/ (forall p, p ∈ ps -> Q p).
+Proof.
+  induction ps using set_ind_L. set_solver.
+  destruct IHps; destruct (h x); eauto; set_solver.
+Qed.

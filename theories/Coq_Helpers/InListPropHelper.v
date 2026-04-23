@@ -36,6 +36,13 @@ Proof.
   rewrite (proof_irrelevance _ Px Py); trivial.
 Qed.
 
+Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
+  (h : forall p, p ∈ ps -> P p \/ Q p) : Exists P ps \/ Forall Q ps.
+Proof.
+  induction ps as [|p ?]. eauto.
+  destruct IHps; destruct (h p); eauto; set_solver.
+Qed. 
+
 Section in_list_finite.
   Context `{!EqDecision A}.
   Context {P : A → Prop} `{!∀ x : A, ProofIrrel (P x)} `{∀ x, Decision (P x)}.

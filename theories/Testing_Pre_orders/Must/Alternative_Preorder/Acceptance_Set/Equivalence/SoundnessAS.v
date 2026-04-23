@@ -58,14 +58,13 @@ Inductive mustx
     (nh : ¬ outcome t)
     (ex : forall (p : P), p ∈ ps -> ∃ p', inter_step (p, t) τ p')
     (pt : forall ps',
-        lts_tau_set_from_pset_spec1 ps ps' -> ps' ≠ ∅ ->
+        lts_tau_set_from_pset_spec1 ps ps' -> ps' ≠ ∅ -> (* ps ⟶ ps' -> *)
         mustx ps' t)
     (et : forall (t' : T), t ⟶ t' -> mustx ps t')
     (com : forall (t' : T) μ1 μ2 (ps' : gset P),
         dual μ1 μ2 ->
         lts_step t (ActExt μ2) t' ->
-        wt_set_from_pset_spec1 ps [μ1] ps' ->
-        ps' ≠ ∅ ->
+        wt_set_from_pset_spec1 ps [μ1] ps' -> ps' ≠ ∅ -> (* ps ⟹{μ1} ps' -> *)
         mustx ps' t')
   : mustx ps t.
 
@@ -82,14 +81,14 @@ Proof.
   intros hmx. dependent induction hmx.
   - eauto with mdb.
   - intros qs sub.
-    apply mx_step; eauto with mdb.
+    eapply mx_step; eauto with mdb.
     + intros qs' hs hneq_nil.
       set (ps' := lts_tau_set_from_pset_ispec ps).
       destruct ps'.
       eapply H; eauto with mdb.
       ++ destruct (set_choose_or_empty qs') as [(q' & l'%hs)|].
-         intro eq_nil. destruct l' as (q & mem%sub & l%H3); set_solver.
-         set_solver.
+         * intro eq_nil. destruct l' as (q & mem%sub & l%H3); set_solver.
+         * set_solver.
       ++ intros p (q & mem%sub & l)%hs. eauto.
     + intros t' μ μ' qs' hle duo hwqs hneq_nil.
       eapply (H1 t' μ μ'); eauto. intros p' mem%hwqs. set_solver.
@@ -449,14 +448,14 @@ Qed.
 
 (** ** Condition on convergence *)
 
-Definition bhv_pre_cond1__x (ps : gset P) (q : Q) :=
-  forall s, (forall p, p ∈ ps -> p ⇓ s) -> q ⇓ s.
+Definition bhv_pre_cond1__x (ps : gset P) (qs : gset Q) :=
+  forall s, ps ⇓ s -> qs ⇓ s.
 
-Notation "ps ≼ₓ1 q" := (bhv_pre_cond1__x ps q) (at level 70).
+Notation "ps ≼ₓ1 qs" := (bhv_pre_cond1__x ps qs) (at level 70).
 
 Lemma bhvleqone_preserved_by_reduction
-  (ps : gset P) (q q' : Q) :
-  ps ≼ₓ1 q -> q ⟶ q' -> ps ≼ₓ1 q'.
+  (ps : gset P) (qs qs' : gset Q) :
+  ps ≼ₓ1 qs -> qs ⟶ qs' -> ps ≼ₓ1 qs'.
 Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 
 
@@ -465,26 +464,25 @@ Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 Definition bhv_pre_cond2__x `{
   PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
   PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
-  (ps : gset P) (q : Q) :=
-  forall s q',
+  (ps : gset P) (qs : gset Q) :=
+  forall q s q', q ∈ qs ->
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ ps -> p ⇓ s) ->
     exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
 
 Lemma bhvleqone_preserved_by_external_action
-  (ps0 ps1 : gset P) μ (q q' : Q) (htp : forall p, p ∈ ps0 -> terminate p) :
-  ps0 ≼ₓ1 q -> wt_set_from_pset_spec ps0 [μ] ps1  -> q ⟶[μ] q' -> ps1 ≼ₓ1 q'.
+  (ps0 ps1 : gset P) μ (qs qs' : gset Q) (htp : ps0 ⤓) :
+  ps0 ≼ₓ1 qs -> ps0 ⟹{μ} ps1  -> qs ⟶[μ] qs' -> ps1 ≼ₓ1 qs'.
 Proof.
   intros hleq hws l s hcnv.
   eapply cnv_preserved_by_wt_act.
-  eapply hleq.
-  intros p mem'. eapply cnv_act.
-  + eapply htp; eauto.
-  + intros. eapply hcnv, hws; eassumption.
+  eapply hleq. eapply cnv_act.
+  + eapply htp.
+  + intros qs'' wts. (* eapply hcnv, hws; eassumption. *) admit.
   + eauto with mdb.
-Qed.
+Admitted.
 
-Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
+Notation "ps ≼ₓ2 qs" := (bhv_pre_cond2__x ps qs) (at level 70).
 
 
 (** ** Alternative preorder on sets *)
@@ -492,8 +490,8 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 Definition bhv_pre__x `{
   PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
   PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
-    (ps : gset P) (q : Q) :=
-      (ps ≼ₓ1 q /\ ps ≼ₓ2 q).
+    (ps : gset P) (qs : gset Q) :=
+      (ps ≼ₓ1 qs /\ ps ≼ₓ2 qs).
 (* ≼ₐₛ *)
 
 Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
@@ -501,11 +499,11 @@ Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
 Lemma alt_set_singleton_iff `{
   PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
   PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
-  (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ q.
+  (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ {[ q ]}.
 Proof.
   split.
   - intros (hbhv1 & hbhv2). split.
-    + intros s mem. eapply hbhv1. set_solver.
+    + intros s mem. eapply hbhv1.  set_solver.
     + intros s q' w st hcnv. edestruct hbhv2; set_solver.
   - intros (h1 & h2). split.
     + intros s mem. eapply h1. set_solver.

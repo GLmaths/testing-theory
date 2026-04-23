@@ -32,24 +32,9 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
 From TestingTheory Require Import MultisetHelper ActTau gLts Bisimulation FiniteImageLTS Lts_OBA Lts_FW Lts_OBA_FB 
-    InListPropHelper.
+    InListPropHelper SetHelper.
 
 (**************************************** LTS of Sets *************************************)
-
-
-Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
-  (h : forall p, p ∈ ps -> P p \/ Q p) : Exists P ps \/ Forall Q ps.
-Proof.
-  induction ps as [|p ?]. eauto.
-  destruct IHps; destruct (h p); eauto; set_solver.
-Qed.
-
-Lemma exists_forall_in_gset `{Countable A} (ps : gset A) (P : A -> Prop) (Q : A -> Prop)
-  (h : forall p, p ∈ ps -> P p \/ Q p) : (exists p, p ∈ ps /\ P p)\/ (forall p, p ∈ ps -> Q p).
-Proof.
-  induction ps using set_ind_L. set_solver.
-  destruct IHps; destruct (h x); eauto; set_solver.
-Qed.
 
 Definition all_blocking_action_ext `{!ExtAction A} (μ : A) := False.
 
@@ -388,5 +373,74 @@ Next Obligation.
 Qed.
 
 
-(******************************* toSet construction ************************************)
+(******************************* toSet Properties ************************************)
+
+From TestingTheory Require Import Termination.
+
+Lemma tau_set_determinacy `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} X Y :
+  X ⟶ Y -> Y = lts_tau_set_from_pset X.
+Proof.
+  intro tr. destruct tr; eauto.
+Qed.
+
+Lemma ext_action_set_determinacy `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} X μ Y :
+  X ⟶[μ] Y -> Y = lts_extaction_set_from_pset X μ.
+Proof.
+  intro tr. destruct tr; eauto.
+Qed.
+
+Lemma termination_forall_if_termination_set `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
+  ps ⤓ -> forall p, p ∈ ps -> p ⤓.
+Proof.
+  intro hm. dependent induction hm.
+  intros p' mem. constructor.
+  intros p'' tr .
+  eapply H1.
+  + split. reflexivity. eapply lts_tau_set_from_pset_ispec in tr; set_solver.
+  + eapply lts_tau_set_from_pset_ispec; set_solver.
+Qed.
+
+Lemma termination_set_if_termination_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
+  ps ≠ ∅ -> (forall (p : P), p ∈ ps -> p ⤓) -> ps ⤓.
+Proof.
+  induction ps using set_ind_L.
+  + intro Imp. set_solver.
+  + intros not_empty hyp. constructor. intros p Hyp1.
+    admit.
+Admitted.
+
+Lemma termination_set_iff_termination_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
+  ps ≠ ∅ -> (forall (p : P), p ∈ ps -> p ⤓) <-> ps ⤓.
+Proof.
+  intros; split; [ eapply termination_set_if_termination_forall | eapply termination_forall_if_termination_set].
+  eauto.
+Qed.
+
+From TestingTheory Require Import Convergence.
+
+Lemma convergence_forall_if_convergence_set `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
+  ps ⇓ s -> forall p, p ∈ ps -> p ⇓ s.
+Proof.
+  intro hm. dependent induction hm.
+  + intros p' mem. constructor. admit.
+  + admit.
+Admitted.
+
+Lemma convergence_set_if_convergence_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
+  ps ≠ ∅ -> (forall (p : P), p ∈ ps -> p ⇓ s) -> ps ⇓ s.
+Proof.
+  induction ps using set_ind_L.
+  + intro Imp. set_solver.
+  + intros not_empty hyp. admit.
+Admitted.
+
+Lemma convergence_set_iff_convergence_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
+  ps ≠ ∅ -> (forall (p : P), p ∈ ps -> p ⇓ s) <-> ps ⇓ s.
+Proof.
+  intros; split; [ eapply convergence_set_if_convergence_forall | eapply convergence_forall_if_convergence_set].
+  eauto.
+Qed.
+
+
+
 
