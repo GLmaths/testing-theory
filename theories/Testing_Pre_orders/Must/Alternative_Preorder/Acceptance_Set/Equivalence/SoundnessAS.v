@@ -674,7 +674,6 @@ Lemma soundnessx
       -> q must_pass t.
 Proof.
   intros hmx q (halt1 & halt2).
-  assert(hmx' := hmx).
   dependent induction hmx.
   - eauto with mdb.
   - destruct (mustx_terminate_unoutcome ps t ltac:(eauto with mdb));
@@ -707,21 +706,20 @@ Proof.
               subst. rewrite eq_nil in mem. inversion mem.
            ++ eapply bhvleqone_preserved_by_external_action; eauto with mdb.
            ++ eapply bhvx_preserved_by_external_action; eauto with mdb. split; eauto.
-           ++ admit.
         -- edestruct (reverse_trace_inclusion ps q q' (μ)) as (p' & u); eauto.
            split; eauto.
            assert (p' ∈ ts) as mem. {
              edestruct (u p' ltac:(set_solver)) as (r & mem & hw).
              eapply ts_spec; eauto. }
            set_solver.
-Admitted.
+Qed.
 
 End Soundness.
 
 Lemma soundness_co_nb_enabled `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
+  gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
@@ -733,10 +731,9 @@ Lemma soundness_co_nb_enabled `{
   (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros halt e hm.
-(*   eapply (soundnessx {[p]}).
+  eapply (soundnessx {[p]}).
   now eapply must_set_iff_must. now eapply alt_set_singleton_iff.
-Qed. *)
-Admitted.
+Qed.
 
 
 Lemma soundness_fw `{
@@ -754,7 +751,6 @@ Lemma soundness_fw `{
   (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
   eapply soundness_co_nb_enabled.
-
   (* FW is co-non-blocking enabled *)
   Unshelve.
   eapply MkgLtsCNenabled. intros.
