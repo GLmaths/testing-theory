@@ -36,7 +36,7 @@
 </div>
 
 <div class="doc">
-<a id="lab44"></a><h2 class="section">LTSs with non-blocking actions <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts"><span class="id" title="record">gLts</span></a></span></h2>
+<a id="lab46"></a><h2 class="section">LTSs with non-blocking actions <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts"><span class="id" title="record">gLts</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -184,6 +184,11 @@ Properties on `gLts`
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
+<span class="id" title="keyword">Lemma</span> <a id="BlockingAction_are_not_non_blocking" class="idref" href="#BlockingAction_are_not_non_blocking"><span class="id" title="lemma">BlockingAction_are_not_non_blocking</span></a> `{<a id="H:67" class="idref" href="#H:67"><span class="id" title="binder">H</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#ExtAction"><span class="id" title="class">ExtAction</span></a> <a id="A:66" class="idref" href="#A:66"><span class="id" title="binder">A</span></a>} {<a id="8f8ec2b9799489305f2a0e0bf284887c" class="idref" href="#8f8ec2b9799489305f2a0e0bf284887c"><span class="id" title="binder">η</span></a> <a id="4f7b47ca0fd0f8304f3bac926931e407" class="idref" href="#4f7b47ca0fd0f8304f3bac926931e407"><span class="id" title="binder">β</span></a>} : <br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#non_blocking"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#8f8ec2b9799489305f2a0e0bf284887c"><span class="id" title="variable">η</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#:::'blocking'_x"><span class="id" title="notation">blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#4f7b47ca0fd0f8304f3bac926931e407"><span class="id" title="variable">β</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#4f7b47ca0fd0f8304f3bac926931e407"><span class="id" title="variable">β</span></a> <span class="id" title="notation">≠</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#8f8ec2b9799489305f2a0e0bf284887c"><span class="id" title="variable">η</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">nb1</span> <span class="id" title="var">nb2</span> <span class="id" title="var">eq</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">eq</span> <span class="id" title="tactic">in</span> <span class="id" title="var">nb2</span>. <span class="id" title="var">contradiction</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
 </div>
 </div>
 <div id="footer">
