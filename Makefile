@@ -7,7 +7,6 @@ COQDOC_FLAGS:= \
   -d $(DOC_DIR) \
 	--no-lib-name \
   --index indexpage \
-	--parse-comments \
 	-s \
 	--with-header $(EXTRA_DIR)/header.html --with-footer $(EXTRA_DIR)/footer.html
 
