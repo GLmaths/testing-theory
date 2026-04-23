@@ -30,7 +30,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
 From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation InputOutputActions 
-        CompletenessAS ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
+        Completeness ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
 match μ with 

@@ -27,9 +27,9 @@ From stdpp Require Import base decidable gmap finite gmultiset.
 From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
-    Must Bar CompletenessAS SoundnessAS Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
+    Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE EquivalenceAS.
+    Testing_Predicate DefinitionAS MustE Equivalence.
 
 Section application.
 

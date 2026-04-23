@@ -34,7 +34,7 @@ From Stdlib .Logic Require Import ProofIrrelevance.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
-            Subset_Act Must SoundnessAS CompletenessAS EquivalenceAS StateTransitionSystems
+            Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence 
               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE.

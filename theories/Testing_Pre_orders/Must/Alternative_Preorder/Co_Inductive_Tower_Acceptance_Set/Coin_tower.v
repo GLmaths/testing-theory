@@ -31,7 +31,7 @@ From Coinduction Require Import all.
 
 (* From TestingTheory Require Import TransitionSystems Must Soundness Equivalence Completeness. *)
 From TestingTheory Require Import gLts FiniteImageLTS Lts_OBA_FB ActTau Termination Convergence WeakTransitions
-Must MustE DefinitionAS SoundnessAS EquivalenceAS CompletenessAS.
+Must MustE DefinitionAS Soundness Equivalence Completeness.
 
 (* TODO: define me using the coinduction library *)
 

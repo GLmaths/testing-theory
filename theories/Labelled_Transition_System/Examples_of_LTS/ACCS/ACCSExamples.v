@@ -1,5 +1,5 @@
 From TestingTheory Require Import ACCSInstance gLts Coin_tower Termination
-                         Must CompletenessAS SoundnessAS EquivalenceAS
+                         Must Completeness Soundness Equivalence
                          GeneralizeLtsOutputs InteractionBetweenLts ParallelLTSConstruction
                          ForwarderConstruction Simulation ActTau MultisetLTSConstruction ActTau
                          MultisetLTSConstruction InputOutputActions.

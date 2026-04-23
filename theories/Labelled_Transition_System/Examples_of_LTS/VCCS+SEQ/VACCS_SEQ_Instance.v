@@ -27,7 +27,7 @@ From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From TestingTheory Require Import InputOutputActions ActTau OldTransitionSystems Must CompletenessAS.
+From TestingTheory Require Import InputOutputActions ActTau OldTransitionSystems Must Completeness.
 
 (** ** VACCS with sequentiation *)
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)

@@ -30,7 +30,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
-      CompletenessAS SoundnessAS DefinitionCI Normalisation MultisetLTSConstruction
+      Completeness Soundness DefinitionCI Normalisation MultisetLTSConstruction
       GeneralizeLtsOutputs ForwarderConstruction ParallelLTSConstruction Testing_Predicate
       (* gLts *) (* Bisimulation *).
 
@@ -1384,7 +1384,7 @@ Next Obligation.
       * simpl in H. inversion H.
 Qed.
 
-From TestingTheory Require Import EquivalenceAS MustE FiniteImageLTS.
+From TestingTheory Require Import Equivalence MustE FiniteImageLTS.
 
 Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.

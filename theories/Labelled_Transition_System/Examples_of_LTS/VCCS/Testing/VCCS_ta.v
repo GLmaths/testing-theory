@@ -31,7 +31,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
 From TestingTheory Require Import ActTau gLts VCCS_Instance VCCS_Good Bisimulation InputOutputActions 
-        CompletenessAS ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
+        Completeness ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
 Parameter O : Value.
 
