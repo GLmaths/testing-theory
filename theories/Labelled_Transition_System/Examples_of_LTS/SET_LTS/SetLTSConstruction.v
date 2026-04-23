@@ -31,9 +31,8 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
-From TestingTheory Require Import MultisetHelper gLts FiniteImageLTS ActTau Bisimulation.
-(* From TestingTheory Require Import MultisetHelper  Lts_OBA Lts_FW Lts_OBA_FB 
-    InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau. *)
+From TestingTheory Require Import MultisetHelper ActTau gLts Bisimulation FiniteImageLTS Lts_OBA Lts_FW Lts_OBA_FB 
+    InListPropHelper.
 
 (**************************************** LTS of Sets *************************************)
 
@@ -248,7 +247,7 @@ Proof.
       exists p; split; eauto. symmetry. eauto. exists q'. split.
       * simpl. unfold lts_extaction_set_from_pset. eapply elem_of_union_list.
         exists (list_to_set (lts_extaction_set q μ)). split.
-        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ apply list_elem_of_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
         ++ simpl. eapply elem_of_list_to_set.
            eapply lts_extaction_set_spec. exact tr''.
       * symmetry. exact equiv''.
@@ -258,7 +257,7 @@ Proof.
       exists p; split; eauto. symmetry. eauto. exists q'. split.
       * simpl. unfold lts_extaction_set_from_pset. eapply elem_of_union_list.
         exists (list_to_set (lts_extaction_set q μ)). split.
-        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ apply list_elem_of_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
         ++ simpl. eapply elem_of_list_to_set.
            eapply lts_extaction_set_spec. exact tr''.
       * symmetry. exact equiv''.
@@ -277,7 +276,7 @@ Proof.
       exists p; split; eauto. symmetry. eauto. exists q'. split.
       * simpl. unfold lts_tau_set_from_pset. eapply elem_of_union_list.
         exists (list_to_set (lts_tau_set q)). split.
-        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ apply list_elem_of_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
         ++ simpl. eapply elem_of_list_to_set.
            eapply lts_tau_set_spec. exact tr''.
       * symmetry. exact equiv''.
@@ -287,7 +286,7 @@ Proof.
       exists p; split; eauto. symmetry. eauto. exists q'. split.
       * simpl. unfold lts_tau_set_from_pset. eapply elem_of_union_list.
         exists (list_to_set (lts_tau_set q)). split.
-        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ apply list_elem_of_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
         ++ simpl. eapply elem_of_list_to_set.
            eapply lts_tau_set_spec. exact tr''.
       * symmetry. exact equiv''.
@@ -390,5 +389,4 @@ Qed.
 
 
 (******************************* toSet construction ************************************)
-
 
