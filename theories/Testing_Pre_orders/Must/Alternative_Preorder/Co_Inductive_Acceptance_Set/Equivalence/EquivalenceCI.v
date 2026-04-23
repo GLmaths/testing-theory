@@ -37,7 +37,7 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
             Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
               GeneralizeLtsOutputs Termination WeakTransitions Convergence 
               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
-               Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE.
+               Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE Lts_Finite_Output_Chain.
 
 Theorem eqx `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
   `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
@@ -58,9 +58,9 @@ Section eq_contextual.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
 
-  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
-  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.

@@ -33,7 +33,7 @@ From TestingTheory Require Import gLts InputOutputActions OldTransitionSystems S
   MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction.
 (* From TestingTheory Require Import VCCS_Instance VACCS_Instance. *)
 (* Genarilization via essential actions, non_blocking actions *)
-From TestingTheory Require Import ActTau.
+From TestingTheory Require Import ActTau Lts_Finite_Output_Chain.
 
 Definition all_blocking_action `{Label A} (μ : ExtAct A) := False.
 
@@ -139,61 +139,8 @@ Next Obligation.
   + exact (OldTransitionSystems.eq_spec p q τ Hyp).
 Qed.
 
-Definition label_to_output {A} (a : A) : ExtAct A := ActOut a.
-
-Definition mo_label_to_mo_output `{Countable A} (m : gmultiset A) : gmultiset (ExtAct A) :=
-    gmultiset_map label_to_output m.
-
-(* Definition set_label_to_mo_output `{Countable A}
-    (m : gset A) : gset (ExtAct A) :=
-    list_to_set (fmap label_to_output (elements m)).
- *)
-(* #[global] Instance output_in_gmultiset_dec `{Prop_of_Inter S1 S2 A} 
-  η x p1 :
-  Decision (η = label_to_output x ∧ x ∈ lts_oba_mo p1). *)
-
-
 #[global] Program Instance ggLtsOba_nb
-  `{LtsOba P A} : @gLtsOba P (ExtAct A) gLabel_nb (ggLtsEq gLabel_nb) :=
-  {| lts_oba_mo p := mo_label_to_mo_output (OldTransitionSystems.lts_oba_mo p) |}.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? nb l.
-  destruct η as [a | a].
-  + exfalso. inversion nb. inversion H2.
-  + eapply elem_of_gmultiset_map.
-    exists a. split.
-      ++ unfold label_to_output. eauto.
-      ++ eapply lts_oba_mo_spec1.
-         eapply lts_outputs_spec1.
-         exact l.
-Defined.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? Hyp. 
-  eapply elem_of_gmultiset_map in Hyp.
-  
-  assert ({ x : A | η = label_to_output x ∧ x ∈ OldTransitionSystems.lts_oba_mo p1}) as (a & eq & mem).
-  eapply choice; eauto. intros.
-  destruct (decide (η = label_to_output x)) as [eq | not_eq].
-  + destruct (decide (x ∈ OldTransitionSystems.lts_oba_mo p1)).
-    ++ left. split; eauto.
-    ++ right. intro Hyp'. destruct Hyp' as (eq' & imp). contradiction.
-  + right. intro Hyp'. destruct Hyp' as (eq' & imp). contradiction.
-  + eapply lts_oba_mo_spec1 in mem.
-    eapply lts_outputs_spec2 in mem as (q & l).
-    exists q. split.
-    ++ exists a. subst. eauto.
-    ++ rewrite eq. unfold label_to_output. exact l.
-Qed.
-Next Obligation.
-  unfold ggLtsOba_nb_obligation_1.
-  intros ? ? ? ? ? LtsOBAP ? ? ? nb Hyp;simpl in *.
-  destruct nb as (a & eq). subst.
-  assert (OldTransitionSystems.lts_oba_mo p = {[+ a +]} ⊎ OldTransitionSystems.lts_oba_mo q) as mem.
-  eapply OldTransitionSystems.lts_oba_mo_spec2. exact Hyp.
-  rewrite mem. simpl in *. unfold mo_label_to_mo_output at 1.
-  rewrite gmultiset_map_disj_union. rewrite gmultiset_map_singleton.
-  unfold label_to_output at 1. reflexivity.
-Qed.
+  `{LtsOba P A} : @gLtsOba P (ExtAct A) gLabel_nb (ggLtsEq gLabel_nb).
 Next Obligation. (* lts_oba_non_blocking_action_delay *)
   intros ? ? ? ? ? LtsOBAP ? ? ? ? ? nb l1 l2 ;simpl in *.
   destruct nb as (a & eq); subst. 
@@ -230,6 +177,61 @@ Next Obligation. (* lts_oba_non_blocking_action_deter_inv *)
   eapply lts_oba_output_deter_inv; eauto.
 Qed.
 
+
+Definition label_to_output {A} (a : A) : ExtAct A := ActOut a.
+
+Definition mo_label_to_mo_output `{Countable A} (m : gmultiset A) : gmultiset (ExtAct A) :=
+    gmultiset_map label_to_output m.
+
+(* Definition set_label_to_mo_output `{Countable A}
+    (m : gset A) : gset (ExtAct A) :=
+    list_to_set (fmap label_to_output (elements m)).
+ *)
+(* #[global] Instance output_in_gmultiset_dec `{Prop_of_Inter S1 S2 A} 
+  η x p1 :
+  Decision (η = label_to_output x ∧ x ∈ lts_oba_mo p1). *)
+
+#[global] Program Instance ggLtsOba_FiniteOutputChain_nb
+  `{LtsOba P A} : @FiniteOutputChain_LtsOba P (ExtAct A) gLabel_nb (ggLtsEq gLabel_nb) ggLtsOba_nb:=
+  {| lts_oba_mo p := mo_label_to_mo_output (OldTransitionSystems.lts_oba_mo p) |}.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? nb l.
+  destruct η as [a | a].
+  + exfalso. inversion nb. inversion H2.
+  + eapply elem_of_gmultiset_map.
+    exists a. split.
+      ++ unfold label_to_output. eauto.
+      ++ eapply lts_oba_mo_spec1.
+         eapply lts_outputs_spec1.
+         exact l.
+Defined.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? Hyp. 
+  eapply elem_of_gmultiset_map in Hyp.
+  
+  assert ({ x : A | η = label_to_output x ∧ x ∈ OldTransitionSystems.lts_oba_mo p1}) as (a & eq & mem).
+  eapply choice; eauto. intros.
+  destruct (decide (η = label_to_output x)) as [eq | not_eq].
+  + destruct (decide (x ∈ OldTransitionSystems.lts_oba_mo p1)).
+    ++ left. split; eauto.
+    ++ right. intro Hyp'. destruct Hyp' as (eq' & imp). contradiction.
+  + right. intro Hyp'. destruct Hyp' as (eq' & imp). contradiction.
+  + eapply lts_oba_mo_spec1 in mem.
+    eapply lts_outputs_spec2 in mem as (q & l).
+    exists q. split.
+    ++ exists a. subst. eauto.
+    ++ rewrite eq. unfold label_to_output. exact l.
+Defined.
+Next Obligation.
+  intros ? ? ? ? ? LtsOBAP ? ? ? nb Hyp;simpl in *.
+  destruct nb as (a & eq). subst.
+  assert (OldTransitionSystems.lts_oba_mo p = {[+ a +]} ⊎ OldTransitionSystems.lts_oba_mo q) as mem.
+  eapply OldTransitionSystems.lts_oba_mo_spec2. exact Hyp.
+  rewrite mem. simpl in *. unfold mo_label_to_mo_output at 1.
+  rewrite gmultiset_map_disj_union. rewrite gmultiset_map_singleton.
+  unfold label_to_output at 1. reflexivity.
+Qed.
+
 #[global] Program Instance ggLtsObaFB_nb
   `{LtsObaFB P A} : @gLtsObaFB P (ExtAct A) gLabel_nb 
   (ggLtsEq gLabel_nb) ggLtsOba_nb.
@@ -259,11 +261,30 @@ Next Obligation.
   eapply OldTransitionSystems.lts_oba_fw_feedback in l1; eauto.
 Qed.
 
-
 #[global] Program Instance ggLtsOba_b
   `{LtsEqP : @LtsEq P A H LtsP} :
     @gLtsOba P (ExtAct A) (@gLabel_b A H) 
-    (@ggLtsEq A gLabel_b P H LtsP LtsEqP) := 
+    (@ggLtsEq A gLabel_b P H LtsP LtsEqP).
+Next Obligation. (* lts_oba_non_blocking_action_delay *)
+  intros ? ? ? ? LtsOBAP ? ? ? ? ? mem. inversion mem.
+Qed.
+Next Obligation. (* lts_oba_non_blocking_action_confluence *)
+  intros ? ? ? ? ? LtsOBAP ? ? ? ? mem. inversion mem.
+Qed.
+Next Obligation. (* lts_oba_output_tau *)
+  intros ? ? ? ? LtsOBAP ? ? ? ? imp. inversion imp.
+Qed.
+Next Obligation. (* lts_oba_output_deter *)
+  intros ? ?  ? LtsOBAP ? ? ? ? ? imp. inversion imp.
+Qed.
+Next Obligation.
+  intros ? ?  ? LtsOBAP ? ? ? ? ? ? imp. inversion imp.
+Qed.
+
+#[global] Program Instance ggLtsOba_FiniteOutputChain_b
+  `{LtsEqP : @LtsEq P A H LtsP} :
+    @FiniteOutputChain_LtsOba P (ExtAct A) (@gLabel_b A H) 
+    (@ggLtsEq A gLabel_b P H LtsP LtsEqP) ggLtsOba_b:= 
     {| lts_oba_mo p := empty |}.
 Next Obligation.
   intros. unfold non_blocking in H0. inversion H0.
@@ -274,22 +295,6 @@ Qed.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? imp. inversion imp.
 Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? Hyp. inversion Hyp.
-Qed.
-Next Obligation. (* lts_oba_non_blocking_action_delay *)
-  intros ? ? ? ? ? LtsOBAP ? ? ? ? mem. inversion mem.
-Qed.
-Next Obligation. (* lts_oba_non_blocking_action_confluence *)
-  intros ? ? ? ? ? LtsOBAP ? ? ? mem. inversion mem.
-Qed.
-Next Obligation. (* lts_oba_output_tau *)
-  intros ? ? ? ? ? LtsOBAP ? ? ? imp. inversion imp.
-Qed.
-Next Obligation. (* lts_oba_output_deter *)
-  intros ? ? ? ? ? LtsOBAP ? ? ? ? imp. inversion imp.
-Qed.
-
 #[global] Program Instance ggLtsObaFB_b
   `{LtsEqP : @LtsEq P A H LtsP} : @gLtsObaFB P (ExtAct A) gLabel_b 
   (ggLtsEq gLabel_b) ggLtsOba_b.

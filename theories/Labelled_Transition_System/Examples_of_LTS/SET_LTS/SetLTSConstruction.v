@@ -32,7 +32,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
 From TestingTheory Require Import MultisetHelper ActTau gLts Bisimulation FiniteImageLTS Lts_OBA Lts_FW Lts_OBA_FB 
-    InListPropHelper.
+    InListPropHelper Lts_Finite_Output_Chain.
 
 (**************************************** LTS of Sets *************************************)
 
@@ -324,7 +324,27 @@ Qed.
 (* Set of a LTS respects OBA axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance SET_LTS_gLtsOba `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
-  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @gLtsOba (gset P) A H (SET_LTS_eq gLtsEqP):=
+  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @gLtsOba (gset P) A H (SET_LTS_eq gLtsEqP).
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+
+(* Set of a LTS respects FiniteOuputChain axioms , because empty set = non_blocking_action *)
+
+#[global] Program Instance SET_LTS_FiniteOutputChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @FiniteOutputChain_LtsOba (gset P) A H (SET_LTS_eq gLtsEqP) (@SET_LTS_gLtsOba P A H gLtsEqP _ ext_prop ):=
   {| lts_oba_mo p := empty |}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
@@ -334,21 +354,6 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
 (* Set of a LTS respects FB axioms , because empty set = non_blocking_action *)

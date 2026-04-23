@@ -32,7 +32,7 @@ From Stdlib.Program Require Import Wf Equality.
 
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 
-From TestingTheory Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB FiniteImageLTS
+From TestingTheory Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB FiniteImageLTS
     InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau.
 
 (** * Operations on Ltss *)
@@ -90,7 +90,7 @@ Qed.
 
 (** Definining an Forwarder Equivalence ≐ , between forwarders, using code purification *)
 
-Definition fw_eq `{gLtsOba P A} (p : P * mb A) (q : P * mb A) :=
+Definition fw_eq `{FiniteOutputChain_LtsOba P A} (p : P * mb A) (q : P * mb A) :=
   forall (p' q' : P),
     p.1 ⟿{lts_oba_mo p.1} p' ->
     q.1 ⟿{lts_oba_mo q.1} q' ->
@@ -101,7 +101,7 @@ Infix "≐" := fw_eq (at level 70).
 
 (** ≐ is reflexive. **)
 
-Lemma fw_eq_refl `{gLtsOba P A} : Reflexive fw_eq.
+Lemma fw_eq_refl `{FiniteOutputChain_LtsOba P A} : Reflexive fw_eq.
 Proof.
   intros p p1 q2 hw1 hw2. split; [eapply strip_m_deter|]; eauto.
 Qed.
@@ -110,7 +110,7 @@ Global Hint Resolve fw_eq_refl:mdb.
 
 (** ≐ is symmetric. **)
 
-Lemma fw_eq_symm `{gLtsOba P A} : Symmetric fw_eq.
+Lemma fw_eq_symm `{FiniteOutputChain_LtsOba P A} : Symmetric fw_eq.
 Proof.
   intros p q heq.
   intros q2 p2 hw1 hw2.
@@ -121,7 +121,7 @@ Global Hint Resolve fw_eq_symm:mdb.
 
 (** ≐ is transitive. **)
 
-Lemma fw_eq_trans `{gLtsOba P A} : Transitive fw_eq.
+Lemma fw_eq_trans `{FiniteOutputChain_LtsOba P A} : Transitive fw_eq.
 Proof.
   intros p q t.
   intros heq1 heq2 p2 t2 hwp hwt.
@@ -135,14 +135,14 @@ Global Hint Resolve fw_eq_trans:mdb.
 
 (** Congruence is an Equivalence. *)
 
-Lemma fw_eq_equiv `{gLtsOba P A} : Equivalence fw_eq.
+Lemma fw_eq_equiv `{FiniteOutputChain_LtsOba P A} : Equivalence fw_eq.
 Proof. constructor; eauto with mdb. Qed.
 
 Global Hint Resolve fw_eq_equiv:mdb.
 
 (* Properties on our FW Equivalence *)
 
-Global Instance fw_eq_id_mb `{gLtsObaFB P A}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
+Global Instance fw_eq_id_mb `{FiniteOutputChain_LtsOba P A}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
 (* p ⋍ q -> fw_eq (p, m) (q, m) *)
 Proof.
   intros p1 p2 heq M1 M HM; simpl. subst M1.
@@ -151,7 +151,7 @@ Proof.
 Qed.
 
 Definition lts_fw_sc
-  `{M1 : @gLtsOba P A H gLtsEqP}
+  `{M1 : @FiniteOutputChain_LtsOba P A H gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
   (p : P * mb A) α (q : P * mb A) :=
   exists r, ((FW_gLts gLtsP).(lts_step) p α r) /\ r ≐ q.
@@ -162,7 +162,7 @@ Notation "p ⟶≐[ μ ] q" := (lts_fw_sc p (ActExt μ) q) (at level 90, format 
 
 (* Properties on our FW Equivalence, to assert it is a simulation. *)
 
-Lemma fw_eq_blocking_action_simulation `{gLtsOba P A} {p q mp mq β q'} :
+Lemma fw_eq_blocking_action_simulation `{FiniteOutputChain_LtsOba P A} {p q mp mq β q'} :
   p ▷ mp ≐ q ▷ mq -> blocking β  -> q ⟶[β] q'
     -> exists p', p ⟶[β] p' /\ p' ▷ mp ≐ q' ▷ mq.
 Proof.
@@ -201,7 +201,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left_blocking_action 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
+   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (mb A) A fw_inter}
    p q q' mp mq β :
    p ▷ mp ≐ q ▷ mq -> blocking β -> q ⟶[β] q'
@@ -215,8 +215,8 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left_non_blocking_action
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
-   `{!Prop_of_Inter P (mb A) A fw_inter}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
+  `{!Prop_of_Inter P (mb A) A fw_inter}
   p q q' mp mq η :
   p ▷ mp ≐ q ▷ mq -> non_blocking η -> q ⟶[η] q' -> p ▷ mp ⟶≐[η] q' ▷ mq.
 Proof.
@@ -276,8 +276,8 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left_tau
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
-   `{!Prop_of_Inter P (mb A) A fw_inter}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
+  `{!Prop_of_Inter P (mb A) A fw_inter}
   (p : P) (q : P) q' (mp : mb A) (mq : mb A) :
   p ▷ mp ≐ q ▷ mq -> q ⟶ q'
     -> p ▷ mp ⟶≐ q' ▷ mq.
@@ -393,8 +393,8 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
-   `{!Prop_of_Inter P (mb A) A fw_inter}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
+  `{!Prop_of_Inter P (mb A) A fw_inter}
   p q q' α mp mq :
   p ▷ mp ≐ q ▷ mq -> q ⟶{α} q'
     -> p ▷ mp ⟶≐{α} q' ▷ mq.
@@ -407,8 +407,8 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_right_non_blocking_action 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
-   `{!Prop_of_Inter P (mb A) A fw_inter}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
+  `{!Prop_of_Inter P (mb A) A fw_inter}
   p q mp mq η :
   non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq
     -> p ▷ mp ⟶≐[η] q ▷ mq.
@@ -467,7 +467,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_right_blocking_action 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (mb A) A fw_inter}
    p q mp mq η μ:
   non_blocking η -> dual μ η -> p ▷ mp ≐ q ▷ mq 
@@ -485,7 +485,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_com_eq_spec 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (mb A) A fw_inter}
   p q q' mp mq β η:
   blocking β -> dual β η -> non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[β] q' 
@@ -562,7 +562,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec  
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (mb A) A fw_inter}
   (p : P) (q : P) (t : P) (mp : mb A) (mq : mb A) (mt : mb A) (α : Act A) :
   (p ▷ mp) ≐ (t ▷ mt) -> (t ▷ mt) ⟶{α} (q ▷ mq)
@@ -589,9 +589,9 @@ Qed.
 (* Our FW Equivalence ≐ is a bissimulation *)
 
 #[global] Program Instance FW_gLtsEq 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (mb A) A fw_inter}
-  : gLtsEq (P * mb A) _ :=
+  : gLtsEq (P * mb A) H :=
   {| eq_rel := fw_eq |}.
 Next Obligation. intros. split.
   + eapply fw_eq_refl.
@@ -599,54 +599,16 @@ Next Obligation. intros. split.
   + eapply fw_eq_trans.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? (p, mp) (q, mq) α ((t, mt) & heq & hl).
+  intros ? ? ? ? ? ? ? ? (p, mp) (q, mq) α ((t, mt) & heq & hl).
   eapply lts_fw_eq_spec; eauto.
 Qed.
 
 #[global] Program Instance FW_gLtsOba
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
-   `{!Prop_of_Inter P (mb A) A fw_inter}
-  : gLtsOba (P * mb A) :=
-  {| lts_oba_mo p := lts_oba_mo p.1 ⊎ mb_without_not_nb p.2 |}.
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
+  `{!Prop_of_Inter P (mb A) A fw_inter}
+  : gLtsOba (P * mb A).
 Next Obligation.
-  intros ? ? ? ? ? ? ? p1 η p2 nb Hstep; simpl in *.
-  inversion Hstep; subst; simpl in *.
-  + apply (lts_oba_mo_spec_bis1 a1 η a2) in nb; eauto. set_solver.
-  + apply (non_blocking_action_in_ms b1 η b2) in nb as eq ; subst;  eauto. 
-    assert (η ∈ mb_without_not_nb ({[+ η +]} ⊎ b2)).
-    eapply lts_mb_nb_with_nb_spec2; eauto; try multiset_solver.
-    set_solver.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? (p , mem) η mem_non_blocking; simpl in *.
-  rewrite gmultiset_elem_of_disj_union in mem_non_blocking. 
-  destruct (decide (η ∈ lts_oba_mo p)) as [non_blocking_in_p | non_blocking_not_in_p].
-  + eapply lts_oba_mo_spec_bis2 in non_blocking_in_p as (p' & nb & Hstep).
-    exists (p', mem). split.
-    ++ exact nb.
-    ++ eauto with mdb.
-  + destruct (decide (η ∈ mb_without_not_nb mem)) as [non_blocking_in_mem | non_blocking_not_in_mem].
-    eapply lts_mb_nb_with_nb_spec1 in non_blocking_in_mem as (nb & mem').
-    * exists (p , mem ∖ {[+ η +]}). split.
-      ++ exact nb.
-      ++ eapply ParRight. assert (mem = {[+ η +]} ⊎ mem ∖ {[+ η +]}) as eq. multiset_solver.
-         rewrite eq at 1. eapply lts_multiset_minus. exact nb. 
-    * exfalso. destruct mem_non_blocking; contradiction.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? nb Hstep ; simpl in *.
-  inversion Hstep; subst; simpl in *.
-  - apply (lts_oba_mo_spec2 a1 η a2) in nb; eauto. multiset_solver.
-  - apply (non_blocking_action_in_ms b1 η b2) in nb as eq; eauto; subst.
-    rewrite gmultiset_disj_union_assoc. 
-    assert ({[+ η +]} ⊎ lts_oba_mo a ⊎ mb_without_not_nb b2 = 
-    lts_oba_mo a ⊎ ({[+ η +]} ⊎ mb_without_not_nb b2)) as eq. multiset_solver.
-    rewrite eq.
-    erewrite gmultiset_eq_pop_l; eauto.
-    eapply lts_mb_nb_spec1;eauto.
-Qed.
-Next Obligation.
-intros ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q, mq), r as (r, mr).
+intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q, mq), r as (r, mr).
   inversion Hstep_nb; inversion Hstep; subst.
   - destruct (lts_oba_non_blocking_action_delay nb l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
     exists (t, mr). split; simpl in *. eauto with mdb.
@@ -690,7 +652,7 @@ intros ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q
     + exists (r ▷ mr). split. eapply ParRight. apply lts_multiset_minus; exact nb. reflexivity.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? ? nb not_eq Hstep_nb Hstep. 
+  intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb not_eq Hstep_nb Hstep. 
   destruct p as (p, mp), q1 as (q, mq), q2 as (r, mr).
   inversion Hstep_nb; subst.
   - inversion Hstep; subst.
@@ -725,7 +687,7 @@ Next Obligation.
 Qed.
 Next Obligation.
 Proof.
-  intros ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep.
+  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep.
   inversion Hstep_nb ;subst.
   - inversion Hstep ; subst.
     + edestruct (lts_oba_non_blocking_action_tau nb l l0) as
@@ -769,7 +731,7 @@ Proof.
          eapply ParRight. eapply lts_multiset_minus; eauto. reflexivity.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep_nb'.
+  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep_nb'.
   intros p2' p3' hwp2 hwp3; simpl in *.
   inversion Hstep_nb ; subst.
   - inversion Hstep_nb' ; subst.
@@ -805,7 +767,7 @@ Next Obligation.
       split.  eapply strip_m_deter; eauto. multiset_solver.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? (p1, mp1) (p2, mp2) (q1, mq1) (q2, mq2) η nb Hstep_nb Hstep_nb' equiv.
+  intros ? ? ? ? ? ? ? ? (p1, mp1) (p2, mp2) (q1, mq1) (q2, mq2) η nb Hstep_nb Hstep_nb' equiv.
   inversion Hstep_nb; subst;  intros p1' p2' hwp1 hwp2; simpl in *.
   - eapply lts_oba_mo_spec2 in l as hd1; eauto.
     edestruct (lts_oba_mo_strip q1) as (q1' & hwq1).
@@ -869,20 +831,64 @@ Next Obligation.
       multiset_solver.
 Qed.
 
+
+#[global] Program Instance FW_Finite_Output_Chain
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
+  `{!Prop_of_Inter P (mb A) A fw_inter}
+  : FiniteOutputChain_LtsOba (P * mb A) :=
+  {| lts_oba_mo p := lts_oba_mo p.1 ⊎ mb_without_not_nb p.2 |}.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? p1 η p2 nb Hstep; simpl in *.
+  inversion Hstep; subst; simpl in *.
+  + apply (lts_oba_mo_spec_bis1 a1 η a2) in nb; eauto. set_solver.
+  + apply (non_blocking_action_in_ms b1 η b2) in nb as eq ; subst;  eauto. 
+    assert (η ∈ mb_without_not_nb ({[+ η +]} ⊎ b2)).
+    eapply lts_mb_nb_with_nb_spec2; eauto; try multiset_solver.
+    set_solver.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? (p , mem) η mem_non_blocking; simpl in *.
+  rewrite gmultiset_elem_of_disj_union in mem_non_blocking. 
+  destruct (decide (η ∈ lts_oba_mo p)) as [non_blocking_in_p | non_blocking_not_in_p].
+  + eapply lts_oba_mo_spec_bis2 in non_blocking_in_p as (p' & nb & Hstep).
+    exists (p', mem). split.
+    ++ exact nb.
+    ++ eauto with mdb.
+  + destruct (decide (η ∈ mb_without_not_nb mem)) as [non_blocking_in_mem | non_blocking_not_in_mem].
+    eapply lts_mb_nb_with_nb_spec1 in non_blocking_in_mem as (nb & mem').
+    * exists (p , mem ∖ {[+ η +]}). split.
+      ++ exact nb.
+      ++ eapply ParRight. assert (mem = {[+ η +]} ⊎ mem ∖ {[+ η +]}) as eq. multiset_solver.
+         rewrite eq at 1. eapply lts_multiset_minus. exact nb. 
+    * exfalso. destruct mem_non_blocking; contradiction.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb Hstep ; simpl in *.
+  inversion Hstep; subst; simpl in *.
+  - apply (lts_oba_mo_spec2 a1 η a2) in nb; eauto. multiset_solver.
+  - apply (non_blocking_action_in_ms b1 η b2) in nb as eq; eauto; subst.
+    rewrite gmultiset_disj_union_assoc. 
+    assert ({[+ η +]} ⊎ lts_oba_mo a ⊎ mb_without_not_nb b2 = 
+    lts_oba_mo a ⊎ ({[+ η +]} ⊎ mb_without_not_nb b2)) as eq. multiset_solver.
+    rewrite eq.
+    erewrite gmultiset_eq_pop_l; eauto.
+    eapply lts_mb_nb_spec1;eauto.
+Qed.
+
 (* Forwarder of a LTS with OBA axioms respects FW axioms *)
 
 #[global] Program Instance FW_gLtsObaFW
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (mb A) A fw_inter}
   : gLtsObaFW (P * mb A) A.
 Next Obligation.
-  intros ? ? ? ? ? ? ? (p, m) η μ.
+  intros ? ? ? ? ? ? ? ? (p, m) η μ.
   exists (p, {[+ η +]} ⊎ m). split; eauto with mdb.
   eapply ParRight. eapply lts_multiset_add; eauto.
   eapply ParRight. eapply lts_multiset_minus; eauto.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η μ nb duo Hstep_nb Hstep.
+  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η μ nb duo Hstep_nb Hstep.
   inversion Hstep_nb; subst.
   + inversion Hstep; subst.
     ++ left. destruct (lts_oba_fb_feedback nb duo l l0) as (t & l1 & heq).

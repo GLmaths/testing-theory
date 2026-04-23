@@ -29,22 +29,6 @@ From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation.
 (** ** TODO say what [gLtsOba] are *)
 Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
   MkOba {
-      (* Multiset of non-blocking action from a process *)
-      lts_oba_mo (p : P) : gmultiset A;
-
-      (* Axioms on multiset of non-blocking action*)
-      lts_oba_mo_spec_bis1 p1 η p2 :
-      non_blocking η → p1 ⟶[ η ] p2 
-        → η ∈ lts_oba_mo p1; 
-      lts_oba_mo_spec_bis2 p1 η : 
-      η ∈ lts_oba_mo p1 
-        → {p2 | (non_blocking η /\ p1 ⟶[ η ] p2 ) } ; 
-
-      (* Finite mailbox *)
-      lts_oba_mo_spec2 p η : 
-      forall q, non_blocking η → p ⟶[ η ] q 
-        → lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
-
       (* Selinger axioms. *)
       lts_oba_non_blocking_action_delay {p q r η α} :
       non_blocking η → p ⟶[ η ] q → q ⟶{ α } r 
@@ -64,43 +48,10 @@ Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
         → p1 ⋍ p2
     }.
 
-
-(** *** Relationship between mailbox and non-blocking actions *)
-
-Lemma lts_oba_mo_non_blocking_spec1 `{gLtsOba P A} {p η} : 
-  η ∈ lts_oba_mo p → non_blocking η.
-Proof.
-  intro mem. apply lts_oba_mo_spec_bis2 in mem as (p2 & nb & tr). exact nb.
-Qed.
-
-Lemma lts_oba_mo_non_blocking_contra `{gLtsOba P A} {p β} : 
-  blocking β → β ∉ lts_oba_mo p.
-Proof.
-  intros not_nb mem. apply lts_oba_mo_non_blocking_spec1 in mem. contradiction.
-Qed.
-
-Lemma BlockingAction_are_not_non_blocking `{gLtsOba P A} {η β} : 
-  non_blocking η → blocking β → β ≠ η.
-Proof.
-  intros nb1 nb2 eq. rewrite eq in nb2. contradiction.
-Qed.
-
-Lemma not_in_mb_to_not_eq' `{gLtsOba P A} {μ p}: 
-  μ ∉ lts_oba_mo p 
-  -> Forall (NotEq μ) (elements (lts_oba_mo p)).
-Proof.
-  induction (lts_oba_mo p) using gmultiset_ind.
-  + constructor.
-  + intro not_in_mem.
-    eapply simpl_P_in_l. split.
-    ++ intro. subst. set_solver.
-    ++ assert (μ ∉ g). set_solver. now eapply IHg.
-Qed.
-
 (** *** Relationship between `co_nba`, `non_blocking` and `dual` *)
 
-Definition exist_co_nba (* {A : Type} `{ExtAct A}  *)
-      `{ExtAction A} (β : A) := exists (η : A), (non_blocking η /\ dual β η).
+Definition exist_co_nba `{ExtAction A} (β : A) := 
+    exists (η : A), (non_blocking η /\ dual β η).
 
 Lemma co_nb_to_nb `{ExtAction A} l : Forall non_blocking (coₜ l) -> Forall exist_co_nba l.
 Proof.
@@ -147,40 +98,7 @@ Proof.
   * apply EquivDef_inv1.
 Qed.
 
-
-(** *** Properties on LTS with OBA axioms *)
-
-Lemma lts_oba_mo_eq `{gLtsOba P A} {p q} :
-  p ⋍ q → lts_oba_mo p = lts_oba_mo q.
-Proof.
-  remember (lts_oba_mo p) as hmo.
-  revert p q Heqhmo.
-  induction hmo using gmultiset_ind; intros p q Heqhmo heq.
-  - eapply leibniz_equiv. intros η.
-    rewrite multiplicity_empty.
-    destruct (non_blocking_dec η).
-    destruct (decide (q ↛[η])) as [refuses | accepts ].
-    + destruct (decide (η ∈ lts_oba_mo q)).
-      ++ eapply lts_oba_mo_spec_bis2 in e as (t & hl).
-         eapply lts_refuses_spec2 in refuses. multiset_solver. destruct hl. now exists t.
-      ++ destruct (multiplicity η (lts_oba_mo q)) eqn:eq; multiset_solver.
-    + eapply lts_refuses_spec1 in accepts as (t & hl).
-      assert (p ⟶⋍[η] t) as (u & hlu & hequ).
-      { eapply eq_spec. eexists; split; eauto. }
-      eapply lts_oba_mo_spec_bis1 in hlu. multiset_solver. assumption.
-    + eapply lts_oba_mo_non_blocking_contra in n. instantiate (1 := q) in n. multiset_solver.
-  - assert {t | non_blocking x /\ p ⟶[x] t} as (t & nb & hlt).
-    { eapply lts_oba_mo_spec_bis2. multiset_solver. }
-    assert (q ⟶⋍[x] t) as (u & hlu & hequ).
-    { symmetry in heq. eapply eq_spec ; eauto. }
-    eapply lts_oba_mo_spec2 in hlu, hlt.
-    assert (x ∈ lts_oba_mo q) as mem by multiset_solver.
-    eapply gmultiset_disj_union_difference' in mem.
-    rewrite hlu.
-    assert (hmo = lts_oba_mo t).
-    { eapply gmultiset_disj_union_inj_1. etrans; eassumption. }
-    eapply gmultiset_eq_pop_l. eapply IHhmo. eassumption. now symmetry. assumption. assumption.
-Qed.
+(** *** Properties on gLtsOBA *)
 
 Lemma refuses_tau_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η : 
   non_blocking η → p ↛ → p ⟶[ η ] q → q ↛.

@@ -36,7 +36,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA
   InteractionBetweenLts MultisetLTSConstruction 
   ParallelLTSConstruction ForwarderConstruction
   Must Lift Subset_Act Convergence Termination 
-  Testing_Predicate DefinitionAS ActTau.
+  Testing_Predicate DefinitionAS ActTau Lts_Finite_Output_Chain.
 
 Import ListNotations.
 
@@ -1302,9 +1302,9 @@ Admitted.
 
 (** ** Completeness for LTSs that can be lifted to forwarders *)
 Lemma completeness {P Q : Type} `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A,
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
+  @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A,
   @AbsAction A H T FinA _ Φ, !Testing_Predicate outcome _}
 
   `{!Prop_of_Inter P T A dual}
