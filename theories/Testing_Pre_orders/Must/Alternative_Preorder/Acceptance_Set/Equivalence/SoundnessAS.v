@@ -33,25 +33,9 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB Lts_CN
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
-      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS.
-From TestingTheory Require Import ActTau.
-
-(* TODO: move *)
-Lemma lem_dec `{Countable A} (X Y Z : gset A) :
-    X ⊆ Y ∪ Z
-      -> exists Y' Z', Y' ⊆ Y /\ Z' ⊆ Z /\ (Y' ∪ Z' ≡ X)%stdpp.
-Proof.
-  induction X using set_ind_L; intros sub.
-  - exists ∅, ∅. set_solver.
-  - assert (sub0 : X ⊆ Y ∪ Z) by set_solver.
-    destruct (IHX sub0) as (Y0 & Z0 & sub1 & sub2 & eq).
-    assert (mem_dec : x ∈ Y \/ x ∈ Z). set_solver.
-    destruct mem_dec.
-    + exists ({[x]} ∪ Y0), Z0. set_solver.
-    + exists Y0, ({[x]} ∪ Z0). set_solver.
-Qed.
+      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS SetHelper.
 
 (** * Soundness *)
 
