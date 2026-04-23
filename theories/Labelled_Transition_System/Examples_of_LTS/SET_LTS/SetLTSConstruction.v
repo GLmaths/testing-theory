@@ -23,19 +23,21 @@
    SOFTWARE.
 *)
 
-From Coq Require ssreflect Setoid.
-From Coq.Unicode Require Import Utf8.
-From Coq.Lists Require Import List.
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
 Import ListNotations.
-From Coq.Wellfounded Require Import Inverse_Image.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+From Stdlib.Program Require Import Wf Equality.
 
-From Coq.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
-From Must Require Import MultisetHelper gLts FiniteImageLTS ActTau Bisimulation.
+
+From Must Require Import MultisetHelper gLts FiniteImageLTS ActTau Bisimulation Lts_OBA Lts_OBA_FB Lts_FW InListPropHelper.
+
 (* From Must Require Import MultisetHelper  Lts_OBA Lts_FW Lts_OBA_FB 
     InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau. *)
 
-(**************************************** Forwarder LTS *************************************)
+(**************************************** Set LTS *************************************)
 
 
 Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
@@ -52,7 +54,35 @@ Proof.
   destruct IHps; destruct (h x); eauto; set_solver.
 Qed.
 
-#[global] Program Instance SET_LTS `(gLtsP : @gLts P A H) `{!FiniteImagegLts P A} : @gLts (gset P) A H.
+Definition all_blocking_action_ext `{!ExtAction A} (μ : A) := False.
+
+#[global] Program Instance all_blocking_action_dec `{!ExtAction A} μ :
+    Decision (all_blocking_action_ext μ).
+Next Obligation.
+  intros. right. intro imp. inversion imp.
+Defined.
+
+(* #[global] Program Instance ExtAction_Blocking `{!ExtAction A} : ExtAction A:=
+   {| non_blocking η := all_blocking_action_ext η ;
+      dual μ1 μ2 := dual μ1 μ2 |}.
+Next Obligation.
+  intros ? ? ? ? nb ; simpl in *. inversion nb.
+Defined.
+Next Obligation.
+ intros A H μ; simpl in *.
+ intros μ' duo. eapply unique_nb in duo. subst.
+ symmetry. exact (proj2_sig (exists_dual μ)).
+Defined.
+Next Obligation.
+  intros. exists (proj1_sig (exists_dual μ)).
+  exact (proj2_sig (exists_dual μ)).
+Defined.
+Next Obligation.
+  intros. unfold ExtAction_Blocking_obligation_3.
+  simpl in *. eapply unique_nb. eauto.
+Defined. *)
+
+#[global] Program Instance SET_LTS `(gLtsP : @gLts P A H) `{!FiniteImagegLts P A} : @gLts (gset P) A H. (* ExtAction_Blocking *)
 Next Obligation.
   intros. destruct X.
   + exact (H1 = lts_extaction_set_from_pset H0 μ /\ H1 ≠ ∅).
@@ -132,523 +162,235 @@ Next Obligation.
 Qed.
 
 
-(*
-Definition set_eq `(gLtsEqP : @LtsEq P A H gLtsP) `{!FiniteImagegLts P A} (ps : gset P) (qs : gset P) :=
-  (forall p', p' ∈ ps -> exists q', q' ∈ qs /\ p' ⋍ q') /\ (forall q', q' ∈ qs -> exists p', p' ∈ ps /\ p' ⋍ q').
+(************** Properties of toSet(L) ***************)
 
-Infix "⋍ₛₑₜ" := set_eq (at level 70).
-
-#[global] Program Instance SET_LTS_eq `(gLtsP : @gLts P A H) `{!FiniteImagegLts P A} : @gLtsEq (gset P) A H (SET_LTS gLtsP) :=
-  {| eq_rel := fw_eq |}.
-Next Obligation.
-  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}  
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  : gLtsEq (gset P) A :=
-  {| eq_rel := fw_eq |}.
-Next Obligation. intros. split.
-  + eapply fw_eq_refl.
-  + eapply fw_eq_symm.
-  + eapply fw_eq_trans.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p, mp) (q, mq) α ((t, mt) & heq & hl).
-  eapply lts_fw_eq_spec; eauto.
+Lemma empty_refuses_all_action `{gLts P A} `{!FiniteImagegLts P A} α : (∅ : gset P) ↛{α}.
+Proof.
+  intros p Imp. inversion Imp.
 Qed.
 
-#[global] Program Instance FW_gLtsOba
-  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}  
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  : gLtsOba (P * mb A) A :=
-  {| lts_oba_mo p := lts_oba_mo p.1 ⊎ mb_without_not_nb p.2 |}.
+Definition eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A} (X Y : gset P) :=
+ (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
+ (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
+
+Infix "⋍ₛₑₜ" := eq_rel_set (at level 70).
+
+Global Instance symmetric_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+ Symmetric eq_rel_set.
+Proof. intros x y. unfold eq_rel_set. intuition. Qed.
+
+Global Instance reflexive_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+ Reflexive eq_rel_set.
+Proof. intro X; split; intros x Hx; exists x; intuition. reflexivity. reflexivity. Qed.
+
+Global Instance transitive_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+ Transitive eq_rel_set.
+Proof. intros X Y Z eq1 eq2. split; intros x Hx.
+  + eapply eq1 in Hx as (y' & mem & eq).
+    eapply eq2 in mem as (z'' & mem'' & eq'').
+    exists z''. split. eauto. etrans; eauto.
+  + eapply eq2 in Hx as (y' & mem & eq).
+    eapply eq1 in mem as (z'' & mem'' & eq'').
+    exists z''. split. eauto. etrans; eauto.
+Qed.
+
+Global Instance equivalence_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+ Equivalence eq_rel_set.
+Proof.
+  split.
+  + exact reflexive_eq_rel_set.
+  + exact symmetric_eq_rel_set.
+  + exact transitive_eq_rel_set.
+Qed.
+
+Global Instance equiv_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+ Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
+Proof.
+intros X X' HX Y Y' HY Heq. split; intros x Hx.
+- apply HX, Heq in Hx as (y & Hy & Heq'). apply HY in Hy. eauto.
+- apply HY, Heq in Hx as (y & Hy & Heq'). apply HX in Hy. eauto.
+Qed.
+
+Global Instance proper_singleton_elem_eq_rel_set
+  `{gLtsEq P A} `{!FiniteImagegLts P A}:
+  Proper ((eq_rel) ==> (eq_rel_set)) singleton.
+Proof.
+  intros x y Hx. split; intros x' Hx'%elem_of_singleton;
+  subst x'; [exists y|exists x]; split; eauto; try apply elem_of_singleton; trivial.
+  now symmetry.
+Qed.
+
+Lemma inv_eq_empty `{gLtsEq P A} `{!FiniteImagegLts P A} Y : ∅ ⋍ₛₑₜ Y -> Y = ∅.
+Proof.
+  intros (Hyp1 & Hyp2).
+  destruct Y using set_ind_L.
+  + reflexivity.
+  + assert (x ∈ {[x]} ∪ X) as Imp by set_solver.
+    eapply (Hyp2 x) in Imp as (x' & mem & eq).
+    inversion mem.
+Qed.
+
+Lemma inv_eq_non_empty `{gLtsEq P A} `{!FiniteImagegLts P A} X Y : X ≠ ∅ -> X ⋍ₛₑₜ Y -> Y ≠ ∅.
+Proof.
+  intros non_empty equiv.
+  intro Imp. subst. symmetry in equiv.
+  eapply inv_eq_empty in equiv. subst. eauto.
+Qed.
+
+Lemma ext_action_equiv_set `{gLtsEq P A} `{!FiniteImagegLts P A} X μ Y :
+  X ⋍ₛₑₜ Y -> lts_extaction_set_from_pset X μ ⋍ₛₑₜ lts_extaction_set_from_pset Y μ.
+Proof.
+  intros equiv.
+  destruct X using set_ind_L.
+  + eapply inv_eq_empty in equiv. subst. reflexivity.
+  + split.
+    - intros p' hyp. destruct (lts_extaction_set_from_pset_ispec ({[x]} ∪ X) μ) as (spec1 & spec2).
+      eapply spec1 in hyp as (p & mem & tr). destruct equiv as (Hyp_equiv1 & Hyp_equiv2).
+      eapply Hyp_equiv1 in mem as (q & mem' & equiv'). edestruct (eq_spec q p') as (q' & tr'' & equiv'').
+      exists p; split; eauto. symmetry. eauto. exists q'. split.
+      * simpl. unfold lts_extaction_set_from_pset. eapply elem_of_union_list.
+        exists (list_to_set (lts_extaction_set q μ)). split.
+        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ simpl. eapply elem_of_list_to_set.
+           eapply lts_extaction_set_spec. exact tr''.
+      * symmetry. exact equiv''.
+    - intros p' hyp. destruct (lts_extaction_set_from_pset_ispec Y μ) as (spec1 & spec2).
+      eapply spec1 in hyp as (p & mem & tr). destruct equiv as (Hyp_equiv1 & Hyp_equiv2).
+      eapply Hyp_equiv2 in mem as (q & mem' & equiv'). edestruct (eq_spec q p') as (q' & tr'' & equiv'').
+      exists p; split; eauto. symmetry. eauto. exists q'. split.
+      * simpl. unfold lts_extaction_set_from_pset. eapply elem_of_union_list.
+        exists (list_to_set (lts_extaction_set q μ)). split.
+        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ simpl. eapply elem_of_list_to_set.
+           eapply lts_extaction_set_spec. exact tr''.
+      * symmetry. exact equiv''.
+Qed.
+
+Lemma tau_action_equiv_set `{gLtsEq P A} `{!FiniteImagegLts P A} X Y :
+  X ⋍ₛₑₜ Y -> lts_tau_set_from_pset X ⋍ₛₑₜ lts_tau_set_from_pset Y.
+Proof.
+  intros equiv.
+  destruct X using set_ind_L.
+  + eapply inv_eq_empty in equiv. subst. reflexivity.
+  + split.
+    - intros p' hyp. destruct (lts_tau_set_from_pset_ispec ({[x]} ∪ X)) as (spec1 & spec2).
+      eapply spec1 in hyp as (p & mem & tr). destruct equiv as (Hyp_equiv1 & Hyp_equiv2).
+      eapply Hyp_equiv1 in mem as (q & mem' & equiv'). edestruct (eq_spec q p') as (q' & tr'' & equiv'').
+      exists p; split; eauto. symmetry. eauto. exists q'. split.
+      * simpl. unfold lts_tau_set_from_pset. eapply elem_of_union_list.
+        exists (list_to_set (lts_tau_set q)). split.
+        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ simpl. eapply elem_of_list_to_set.
+           eapply lts_tau_set_spec. exact tr''.
+      * symmetry. exact equiv''.
+    - intros p' hyp. destruct (lts_tau_set_from_pset_ispec Y) as (spec1 & spec2).
+      eapply spec1 in hyp as (p & mem & tr). destruct equiv as (Hyp_equiv1 & Hyp_equiv2).
+      eapply Hyp_equiv2 in mem as (q & mem' & equiv'). edestruct (eq_spec q p') as (q' & tr'' & equiv'').
+      exists p; split; eauto. symmetry. eauto. exists q'. split.
+      * simpl. unfold lts_tau_set_from_pset. eapply elem_of_union_list.
+        exists (list_to_set (lts_tau_set q)). split.
+        ++ apply elem_of_list_fmap. exists q. split; eauto. eapply elem_of_elements. eauto.
+        ++ simpl. eapply elem_of_list_to_set.
+           eapply lts_tau_set_spec. exact tr''.
+      * symmetry. exact equiv''.
+Qed.
+
+Lemma simulation_eq_set_rel `{gLtsEq P A} `{!FiniteImagegLts P A} X Y α Z :
+  X ⋍ₛₑₜ Y ∧ Y ⟶{α} Z → ∃ Y', X  ⟶{α} Y' ∧ Y' ⋍ₛₑₜ Z.
+Proof.
+  intros (eq & tr).
+  destruct α.
+  + destruct tr as (ext_action_set & non_empty). subst.
+    exists (lts_extaction_set_from_pset X μ).
+    split.
+    - split.
+      * eauto.
+      * eapply (ext_action_equiv_set X μ) in eq. intro Imp.
+        rewrite Imp in eq. eapply inv_eq_empty in eq. eauto.
+    - eapply ext_action_equiv_set; eauto.
+  + destruct tr as (tau_set & non_empty). subst.
+    exists (lts_tau_set_from_pset X).
+    split.
+    - split.
+      * eauto.
+      * eapply (tau_action_equiv_set X) in eq. intro Imp.
+        rewrite Imp in eq. eapply inv_eq_empty in eq. eauto.
+    - eapply tau_action_equiv_set; eauto.
+Qed.
+
+#[global] Program Instance SET_LTS_eq `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} : @gLtsEq (gset P) A H:=
+  {| eq_rel := eq_rel_set |}.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? p1 η p2 nb Hstep; simpl in *.
-  inversion Hstep; subst; simpl in *.
-  + apply (lts_oba_mo_spec_bis1 a1 η a2) in nb; eauto. set_solver.
-  + apply (non_blocking_action_in_ms b1 η b2) in nb as eq ; subst;  eauto. 
-    assert (η ∈ mb_without_not_nb ({[+ η +]} ⊎ b2)).
-    eapply lts_mb_nb_with_nb_spec2; eauto; try multiset_solver.
+  intros ? ? ? ? ? ? ? ? (Z & Hyp). eapply simulation_eq_set_rel;eauto.
+Qed.
+
+(* Set of a LTS respects OBA axioms , because empty set = non_blocking_action *)
+
+#[global] Program Instance SET_LTS_gLtsOba `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @gLtsOba (gset P) A H (SET_LTS_eq gLtsEqP):=
+  {| lts_oba_mo p := empty |}.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? mem. simpl in *. exists ∅. set_solver.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+
+(* Set of a LTS respects FB axioms , because empty set = non_blocking_action *)
+
+#[global] Program Instance SET_LTS_gLtsObaFB `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} 
+  : @gLtsObaFB (gset P) A H (SET_LTS_eq gLtsEqP) (@SET_LTS_gLtsOba P A H gLtsEqP _ ext_prop ). 
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+
+(* Set of a LTS respects FW axioms , because empty set = non_blocking_action *)
+
+#[global] Program Instance SET_LTS_gLtsObaFW `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} 
+  : @gLtsObaFW (gset P) A H (SET_LTS_eq gLtsEqP) (@SET_LTS_gLtsOba P A H gLtsEqP _ ext_prop ). 
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ?. exists empty. intro nb. eapply ext_prop in nb. inversion nb.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
+Qed.
+
+(********************************** toSet is a Finite Image LTS ************************)
+
+#[global] Program Instance gLtsMBFinite `{@FiniteImagegLts P A H gLtsP}
+  : @FiniteImagegLts (gset P) A H (SET_LTS gLtsP).
+Next Obligation. 
+  intros ? ? ? ? ? X α.
+  destruct α as [μ | ].
+  + simpl. eapply (in_list_finite ([lts_extaction_set_from_pset X μ])).
+    intros P' h%bool_decide_unpack. destruct h as (eq & not_empty). subst.
+    set_solver.
+  + simpl. eapply (in_list_finite ([lts_tau_set_from_pset X])).
+    intros P' h%bool_decide_unpack. destruct h as (eq & not_empty). subst.
     set_solver.
 Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p , mem) η mem_non_blocking; simpl in *.
-  rewrite gmultiset_elem_of_disj_union in mem_non_blocking. 
-  destruct (decide (η ∈ lts_oba_mo p)) as [non_blocking_in_p | non_blocking_not_in_p].
-  + eapply lts_oba_mo_spec_bis2 in non_blocking_in_p as (p' & nb & Hstep).
-    exists (p', mem). split.
-    ++ exact nb.
-    ++ eauto with mdb.
-  + destruct (decide (η ∈ mb_without_not_nb mem)) as [non_blocking_in_mem | non_blocking_not_in_mem].
-    eapply lts_mb_nb_with_nb_spec1 in non_blocking_in_mem as (nb & mem').
-    * exists (p , mem ∖ {[+ η +]}). split.
-      ++ exact nb.
-      ++ eapply ParRight. assert (mem = {[+ η +]} ⊎ mem ∖ {[+ η +]}) as eq. multiset_solver.
-         rewrite eq at 1. eapply lts_multiset_minus. exact nb. 
-    * exfalso. destruct mem_non_blocking; contradiction.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? nb Hstep ; simpl in *.
-  inversion Hstep; subst; simpl in *.
-  - apply (lts_oba_mo_spec2 a1 η a2) in nb; eauto. multiset_solver.
-  - apply (non_blocking_action_in_ms b1 η b2) in nb as eq; eauto; subst.
-    rewrite gmultiset_disj_union_assoc. 
-    assert ({[+ η +]} ⊎ lts_oba_mo a ⊎ mb_without_not_nb b2 = 
-    lts_oba_mo a ⊎ ({[+ η +]} ⊎ mb_without_not_nb b2)) as eq. multiset_solver.
-    rewrite eq.
-    erewrite gmultiset_eq_pop_l; eauto.
-    eapply lts_mb_nb_spec1;eauto.
-Qed.
-Next Obligation.
-intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q, mq), r as (r, mr).
-  inversion Hstep_nb (* as [a b c d e f| a b c d e f| a b c d e f] *) ; inversion Hstep; subst.
-  - destruct (lts_oba_non_blocking_action_delay nb l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
-    exists (t, mr). split; simpl in *. eauto with mdb.
-    exists (r0, mr). split. simpl in *. eauto with mdb.
-    now eapply fw_eq_id_mb.
-  - exists (p, mr). split; simpl in *. eauto with mdb.
-    exists (r, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - destruct (lts_oba_non_blocking_action_delay nb l l1) as (t & hlt0 & (r0 & hlr0 & heqr0)).
-    exists (t, mr). split. simpl in *. eauto with mdb.
-    exists (r0, mr). split. simpl in *. eauto with mdb.
-    now eapply fw_eq_id_mb.
-  - apply (non_blocking_action_in_ms mp η mr) in nb as eq; subst; eauto.
-    exists (r, {[+ η +]} ⊎ mr).
-    split. simpl in *. eauto with mdb.
-    exists (r, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - destruct α as [μ |]. 
-    + apply (non_blocking_action_in_ms mp η mq) in nb as eq; subst; eauto.
-      destruct ((decide (non_blocking μ))) as [nb' | not_nb'].
-      ++ apply (non_blocking_action_in_ms mq μ mr) in nb' as eq; subst; eauto.
-         replace ({[+ η +]} ⊎ ({[+ μ +]} ⊎ mr))
-         with ({[+ μ +]} ⊎ ({[+ η +]} ⊎ mr)) by multiset_solver.
-         exists (r, {[+ η +]} ⊎ mr). split.
-         * eapply ParRight. eapply lts_multiset_minus. exact nb'.
-         * exists (r, mr). split. eapply ParRight. eapply lts_multiset_minus. exact nb. reflexivity.
-      ++ apply (blocking_action_in_ms mq μ mr) in not_nb' as (eq & duo & nb'); subst; eauto.
-         exists (r, {[+ co μ +]} ⊎ ({[+ η +]} ⊎ mq)).
-         split.
-         * eapply ParRight. eapply lts_multiset_add; eauto.
-         * replace ({[+ co μ +]} ⊎ ({[+ η +]} ⊎ mq))
-           with ({[+ η +]} ⊎ ({[+ co μ +]} ⊎ mq)) by multiset_solver.
-           exists (r ▷ {[+ co μ +]} ⊎ mq). split. eapply ParRight. eapply lts_multiset_minus. exact nb. reflexivity.
-    + inversion l0.
-  - destruct eq as (duo & nb').
-    apply (non_blocking_action_in_ms mp η mq) in nb as eq_mem; subst; eauto.
-    apply (non_blocking_action_in_ms mq μ2 mr) in nb' as eq_mem; subst; eauto.
-    replace ({[+ η +]} ⊎ ({[+ μ2 +]} ⊎ mr))
-    with ({[+ μ2 +]} ⊎ ({[+ η +]} ⊎ mr)) by multiset_solver.
-    exists (r, ({[+ η +]} ⊎ mr)). split. eapply (ParSync μ1 μ2); eauto.
-    + split; eauto.
-    + apply lts_multiset_minus. exact nb'.
-    + exists (r ▷ mr). split. eapply ParRight. apply lts_multiset_minus; exact nb. reflexivity.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb not_eq Hstep_nb Hstep. 
-  destruct p as (p, mp), q1 as (q, mq), q2 as (r, mr).
-  inversion Hstep_nb; subst.
-  - inversion Hstep; subst.
-    + edestruct (lts_oba_non_blocking_action_confluence nb not_eq l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
-      exists (t, mr). split; simpl in *. eauto with mdb.
-      exists (r0, mr). split. simpl in *. eauto with mdb.
-      now eapply fw_eq_id_mb.
-    + exists (q, mr). split. simpl in *. eauto with mdb.
-      exists (q, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - inversion Hstep; subst.
-    + exists (r, mq). split; simpl in *. eauto with mdb.
-      exists (r, mq). split. simpl in *. eauto with mdb. reflexivity.
-    + eapply (non_blocking_action_in_ms mp η mq) in nb as eq; eauto ; subst.
-      destruct (decide (non_blocking μ)) as [nb' | not_nb'].
-      * eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ mq) μ mr) in nb' as eq; eauto ; subst.
-        assert (neq : η ≠ μ) by naive_solver.
-        assert (μ ∈ mq) as mem. multiset_solver.
-        assert (μ ∈ {[+ η +]} ⊎ mq) as mem'. multiset_solver.
-        eapply gmultiset_disj_union_difference' in mem. rewrite mem.
-        exists (r, mq ∖ {[+ μ +]}). split.
-        ++ eapply ParRight. eapply lts_multiset_minus; eauto.
-        ++ assert (η ∈ mr) as mem''. multiset_solver. 
-           assert (mr = {[+ η +]} ⊎ (mq ∖ {[+ μ +]})) as mem'''. multiset_solver.
-           rewrite mem'''. exists (r ▷ mq ∖ {[+ μ +]}). split. 
-           eapply ParRight. eapply lts_multiset_minus; eauto. reflexivity.
-      * eapply (blocking_action_in_ms ({[+ η +]} ⊎ mq) μ mr) in not_nb' as (eq & duo & nb'); eauto ; subst.
-        exists (r ▷ {[+ co μ +]} ⊎ mq). split.
-        ++ eapply ParRight. eapply lts_multiset_add; eauto.
-        ++ assert ({[+ co μ +]} ⊎ ({[+ η +]} ⊎ mq) = {[+ η +]} ⊎ ({[+ co μ +]} ⊎ mq)) as eq. multiset_solver.
-           rewrite eq. exists (r ▷ {[+ co μ +]} ⊎ mq). split. 
-           eapply ParRight. eapply lts_multiset_minus; eauto. reflexivity.
-Qed.
-Next Obligation.
-Proof.
-  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep.
-  inversion Hstep_nb ;subst.
-  - inversion Hstep ; subst.
-    + edestruct (lts_oba_non_blocking_action_tau nb l l0) as
-        [(t & hl1 & (t0 & hl0 & heq0)) | (μ & duo & t0 & hl0 & heq0)].
-      left. exists (t, m3).
-      split. simpl. eauto with mdb.
-      exists (t0, m3). split. simpl. eauto with mdb.
-      now eapply fw_eq_id_mb.
-      right. exists μ. split.  exact duo. exists (t0, m3). split. simpl. eauto with mdb.
-      now eapply fw_eq_id_mb.
-    + inversion l0.
-    + destruct eq as (duo' & nb').
-      assert (blocking μ1). eapply dual_blocks; eauto.
-      assert (neq : μ1 ≠ η). intro. subst. contradiction. 
-      edestruct (lts_oba_non_blocking_action_confluence nb neq l l1)
-        as (t & hl1 & (t1 & hl2 & heq1)).
-      left. exists (t, m3). split. eapply ParSync; eauto. split; eauto.
-      exists (t1, m3). split. simpl. eauto with mdb.
-      now eapply fw_eq_id_mb.
-  - eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto. 
-    inversion Hstep ; subst.
-    + left. exists (p3, m2).
-      split. simpl. eauto with mdb.
-      exists (p3, m2). split. eapply ParRight; eassumption. reflexivity.
-    + inversion l0.
-    + destruct eq as (duo & nb').
-      eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ m2) μ2 m3) in nb' as eq'; subst; eauto. 
-      destruct (decide (μ2 = η)) as [eq | not_eq]; subst.
-      ++ right. assert (m2 = m3) as eq_mem. multiset_solver. rewrite <-eq_mem in l2.  
-         exists μ1. split; eauto. exists (p3, m2). split. simpl. eauto with mdb. rewrite eq_mem. reflexivity.
-      ++ left. eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ m2) μ2 m3) in nb' as eq; subst; eauto.
-         assert (η ∈ m3). multiset_solver.
-         assert (η ∈ {[+ μ2 +]} ⊎ m3). multiset_solver.
-         assert (μ2 ∈ m2). multiset_solver.
-         assert (μ2 ∈ {[+ η +]} ⊎ m2). multiset_solver.
-         exists (p3, m2 ∖ {[+ μ2 +]}). split. eapply (ParSync μ1 μ2); eauto.
-         split; eauto. assert (m2 = {[+ μ2 +]} ⊎ (m2 ∖ {[+ μ2 +]})) as eq_mem. multiset_solver.
-         rewrite eq_mem at 1. eapply lts_multiset_minus; eauto.
-         assert (m3 = ({[+ η +]} ⊎ (m2 ∖ {[+ μ2 +]}))) as eq_mem'. multiset_solver.
-         rewrite eq_mem'. exists (p3 ▷ m2 ∖ {[+ μ2 +]}). split.
-         eapply ParRight. eapply lts_multiset_minus; eauto. reflexivity.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep_nb'.
-  intros p2' p3' hwp2 hwp3; simpl in *.
-  inversion Hstep_nb ; subst.
-  - inversion Hstep_nb' ; subst.
-    + eapply fw_eq_id_mb; eauto.
-      eapply lts_oba_non_blocking_action_deter; eauto.
-    + eapply (non_blocking_action_in_ms m2 η m3) in nb as eq; subst; eauto.
-      set (he1 := lts_oba_mo_spec2 _ _ _ nb l).
-      rewrite he1 in hwp3.
-      eapply strip_eq_step in hwp3 as (p0 & hw0 & heq0); eauto. split.
-      etrans. eapply strip_m_deter; eauto. eassumption.
-      assert (mb_without_not_nb ({[+ η +]} ⊎ m3) = {[+ η +]} ⊎ mb_without_not_nb m3) as eq.
-      eapply lts_mb_nb_spec1;eauto. rewrite eq.
-      rewrite he1.
-      rewrite gmultiset_disj_union_comm at 1.
-      rewrite <- 2 gmultiset_disj_union_assoc.
-      eapply gmultiset_eq_pop_l. multiset_solver.
-  - inversion Hstep_nb' ; subst.
-    + eapply (non_blocking_action_in_ms m3 η m2) in nb as eq; subst; eauto.
-      set (he1 := lts_oba_mo_spec2 _ _ _ nb l0).
-      rewrite he1 in hwp2.
-      eapply strip_eq_step in hwp2 as (p0 & hw0 & heq0); eauto. split.
-      etrans. symmetry. eassumption.
-      eapply strip_m_deter; eauto.
-      assert (mb_without_not_nb ({[+ η +]} ⊎ m2) = {[+ η +]} ⊎ mb_without_not_nb m2) as eq.
-      eapply lts_mb_nb_spec1;eauto. rewrite eq.
-      symmetry. rewrite he1.
-      rewrite gmultiset_disj_union_comm at 1.
-      rewrite <- 2 gmultiset_disj_union_assoc.
-      eapply gmultiset_eq_pop_l. multiset_solver.
-    + eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto.
-      eapply (non_blocking_action_in_ms ({[+ η +]} ⊎ m2) η m3) in nb as eq; subst; eauto.
-      assert (m3 = m2) by multiset_solver; subst.
-      split.  eapply strip_m_deter; eauto. multiset_solver.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p1, mp1) (p2, mp2) (q1, mq1) (q2, mq2) η nb Hstep_nb Hstep_nb' equiv.
-  inversion Hstep_nb; subst;  intros p1' p2' hwp1 hwp2; simpl in *.
-  - eapply lts_oba_mo_spec2 in l as hd1; eauto.
-    edestruct (lts_oba_mo_strip q1) as (q1' & hwq1).
-    inversion Hstep_nb'; subst.
-    + edestruct (lts_oba_mo_strip q2) as (q2' & hwq2).
-      edestruct (equiv q1' q2'); eauto; simpl in *.
-      eapply lts_oba_mo_spec2 in l0 as hd2; eauto.
-      split.
-      ++ rewrite hd1 in hwp1. rewrite hd2 in hwp2.
-         eapply strip_eq_step in hwp1, hwp2; eauto.
-         destruct hwp1 as (t1 & hwq1' & heq1').
-         destruct hwp2 as (t2 & hwq2' & heq2').
-         set (heq1 := strip_m_deter hwq1 hwq1').
-         set (heq2 := strip_m_deter hwq2 hwq2').
-         transitivity t1. now symmetry.
-         transitivity q1'. now symmetry.
-         transitivity q2'. now symmetry.
-         transitivity t2. now symmetry. eassumption.
-      ++ multiset_solver.
-    + edestruct (equiv q1' p2'); eauto; simpl in *.
-      split.
-      ++ rewrite hd1 in hwp1.
-         eapply strip_eq_step in hwp1; eauto.
-         destruct hwp1 as (t1 & hwq1' & heq1').
-         set (heq1 := strip_m_deter hwq1 hwq1').
-         transitivity t1. naive_solver.
-         transitivity q1'; naive_solver.
-      ++ rewrite hd1. symmetry.
-         rewrite gmultiset_disj_union_comm at 1.
-         eapply (non_blocking_action_in_ms mp2 η mq2) in nb as eq; eauto ; subst.
-         assert (mb_without_not_nb ({[+ η +]} ⊎ mq2) = {[+ η +]} ⊎ mb_without_not_nb mq2) as eq.
-         eapply lts_mb_nb_spec1;eauto. rewrite eq.
-         rewrite <- 2 gmultiset_disj_union_assoc.
-         eapply gmultiset_eq_pop_l. multiset_solver.
-  - inversion Hstep_nb'; subst.
-    + eapply lts_oba_mo_spec2 in l0 as hd1; eauto.
-      edestruct (lts_oba_mo_strip q2) as (q2' & hwq2).
-      edestruct (equiv p1' q2'); eauto; simpl in *.
-      split.
-      ++ rewrite hd1 in hwp2.
-         eapply strip_eq_step in hwp2; eauto.
-         destruct hwp2 as (t2 & hwq2' & heq2').
-         set (heq1 := strip_m_deter hwq2 hwq2').
-         transitivity q2'. naive_solver.
-         transitivity t2; naive_solver.
-      ++ rewrite hd1.
-         rewrite gmultiset_disj_union_comm at 1.
-         eapply (non_blocking_action_in_ms mp1 η mq1) in nb as eq; eauto; subst.
-         assert (mb_without_not_nb ({[+ η +]} ⊎ mq1) = {[+ η +]} ⊎ mb_without_not_nb mq1) as eq.
-         eapply lts_mb_nb_spec1;eauto. rewrite eq.
-         rewrite <- 2 gmultiset_disj_union_assoc.
-         eapply gmultiset_eq_pop_l. multiset_solver.
-    + eapply (non_blocking_action_in_ms mp1 η mq1) in nb as eq; subst; eauto.
-      assert (mb_without_not_nb ({[+ η +]} ⊎ mq1) = {[+ η +]} ⊎ mb_without_not_nb mq1) as eq.
-      eapply lts_mb_nb_spec1;eauto. rewrite eq.
-      edestruct (equiv p1' p2'); eauto; simpl in *.
-      eapply (non_blocking_action_in_ms mp2 η mq2) in nb as eq'; subst; eauto.
-      split. assumption.
-      assert (mb_without_not_nb ({[+ η +]} ⊎ mq2) = {[+ η +]} ⊎ mb_without_not_nb mq2) as eq''.
-      eapply lts_mb_nb_spec1;eauto. rewrite eq''.
-      multiset_solver.
-Qed.
-
-(* Forwarder of a LTS with OBA axioms respects FW axioms *)
-
-#[global] Program Instance FW_gLtsObaFW
-  `{M : @gLtsObaFB P A H gLtsP gLtsEqP gLtsObaP}
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  : gLtsObaFW (P * mb A) A.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p, m) η μ.
-  exists (p, {[+ η +]} ⊎ m). split; eauto with mdb.
-  eapply ParRight. eapply lts_multiset_add; eauto.
-  eapply ParRight. eapply lts_multiset_minus; eauto.
-Qed.
-Next Obligation.
-  intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η μ nb duo Hstep_nb Hstep.
-  inversion Hstep_nb; subst.
-  + inversion Hstep; subst.
-    ++ left. destruct (lts_oba_fb_feedback nb duo l l0) as (t & l1 & heq).
-       exists (t, m3). split. eapply ParLeft; assumption.
-       now eapply fw_eq_id_mb.
-    ++ right. simpl. unfold fw_eq.
-       intros p' q' strip_p strip_q. simpl in *.
-       assert ( blocking μ) as not_nb. eapply dual_blocks; eauto.
-       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst.
-       set (heq := lts_oba_mo_spec2 _ _ _ nb l).
-       rewrite heq in strip_p. rewrite heq. split.
-       +++ destruct (strip_mem_ex strip_p) as (e & l' & nb'').
-           destruct (strip_eq_step strip_p e l') as (t & hwo & heq'); eauto.
-           set (h := lts_oba_non_blocking_action_deter nb'' l l').
-           etrans. symmetry. eassumption.
-           symmetry. eapply strip_eq_sim; eassumption.
-       +++ assert (mb_without_not_nb ({[+ co μ +]} ⊎ m2) 
-              = {[+ co μ +]} ⊎ mb_without_not_nb m2) as eq''.
-           eapply lts_mb_nb_spec1;eauto. rewrite eq''.
-           rewrite <- gmultiset_disj_union_assoc.
-           rewrite gmultiset_disj_union_comm.
-           rewrite <- gmultiset_disj_union_assoc.
-           eapply gmultiset_eq_pop_l.
-           assert (η = co μ) as eq_nb. eapply unique_nb; eauto; subst. subst.
-           now rewrite gmultiset_disj_union_comm.
-       +++ assumption.
-  + inversion Hstep; subst.
-    ++ left. exists (p3, m3). split. eapply ParSync; eauto. split; eauto. reflexivity.
-    ++ right. 
-       eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto.
-       assert (blocking μ) as not_nb. eapply dual_blocks; eauto.
-       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst; eauto.
-       assert (η = co μ) as eq_nb. eapply unique_nb; eauto. subst.
-       reflexivity.
-Qed.
-
-(**********************************Forwarder Construction is a Finite Image LTS ************************)
-
-Definition lts_fw_not_non_blocking_action_set `{FiniteImagegLts P A} 
-  (p : P) (m : mb A) μ :=
-  if (decide (dual (co μ) μ /\ non_blocking (co μ))) 
-  then (p, {[+ (co μ) +]} ⊎ m) :: map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ)))
-  else map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ))).
-
-Definition lts_fw_non_blocking_action_set `{FiniteImagegLts P A} 
-  (p : P) (m : mb A) η :=
-  let ps := map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ η))) in
-  if (decide (η ∈ m)) then (p, m ∖ {[+ η +]}) :: ps else ps.
 
 
-Definition lts_fw_co_fin `{@FiniteImagegLts P A H M}
-  `{@Prop_of_Inter P (mb A) A fw_inter H M MbgLts}
-  (p : P) (η : A) (* : list (A * list P) *) :=
-  map (fun μ => (η, map proj1_sig (enum $ dsig (lts_step p (ActExt $ μ))))) 
-    (elements (lts_co_inter_action_left η p) ++ elements (lts_essential_actions_left p)).
+(******************************* toSet construction ************************************)
 
-Definition lts_fw_com_fin `{@FiniteImagegLts P A H M}
-  `{@Prop_of_Inter P (mb A) A fw_inter H M MbgLts}
-  (p : P) (m : list A) : list (A * list P) :=
-  concat (map (fun η => (lts_fw_co_fin p η)) m). (* flat_map (fun η => (lts_fw_co_fin p η)) m. *)
 
-Definition lts_fw_tau_set `{@FiniteImagegLts P A H M} 
-  `{@Prop_of_Inter P (mb A) A fw_inter H M MbgLts}
-  (p : P) (m : mb A) : list (P * mb A) :=
-  let xs := map (fun p' => (proj1_sig p', m)) (enum $ dsig (fun q => p ⟶ q)) in
-  let ys :=
-    concat (map
-              (fun '(a, ps) => map (fun p => (p, m ∖ {[+ a +]})) ps)
-              (lts_fw_com_fin p (elements m) ))
-    in xs ++ ys.
-
-Lemma lts_fw_tau_set_spec1 
-  `{gLtsP : @gLts P A H}
-  `{@FiniteImagegLts P A H gLtsP} 
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  p1 m1 p2 m2 :
-  (p1, m1) ⟶ (p2, m2) ->
-  (p2, m2) ∈ lts_fw_tau_set p1 m1.
-Proof.
-  intros l.
-  inversion l; subst.
-  + eapply elem_of_app. left.
-    eapply elem_of_list_fmap.
-    exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
-  + inversion l0.
-  + assert (inter : fw_inter μ1 μ2). eauto.
-    destruct eq as (duo & nb).
-    eapply elem_of_app. right.
-    eapply elem_of_list_In.
-    eapply in_concat.
-    exists (map (fun p => (p, m2))
-         (map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ μ1))))
-      ).
-    split.
-    eapply elem_of_list_In.
-    eapply elem_of_list_fmap.
-    exists (co μ1, map proj1_sig (enum $ dsig (lts_step p1 (ActExt $ μ1)))).
-    eapply (non_blocking_action_in_ms m1 μ2 m2) in nb as eq; subst; eauto.
-    assert (μ2 = co μ1) as eq. eapply unique_nb; eauto. subst.
-    split.
-    now replace (({[+ co μ1 +]} ⊎ m2) ∖ {[+ co μ1 +]}) with m2 by multiset_solver.
-    assert (elements ({[+ co μ1 +]} ⊎ m2) ≡ₚ 
-    elements (gmultiset_singleton (co μ1)) ++ elements (m2)) as equiv.
-    unfold singletonMS. eapply gmultiset_elements_disj_union.
-    assert (map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2)) ≡ₚ 
-    map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+(co μ1)+]} : gmultiset A) ++ elements m2))
-    as equiv2.
-    eapply Permutation_map. eauto.
-    erewrite gmultiset_elements_singleton in equiv2.
-    simpl in equiv2. 
-    assert (eq : co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) ∈ 
-    lts_fw_co_fin p1 (co μ1)).
-    unfold lts_fw_co_fin.
-    edestruct (lts_essential_actions_spec_interact _ _ _ _ _ _ l1 l2 inter) 
-      as [ess_act | not_ess_act].
-    ++ rewrite map_app.  eapply elem_of_app. right. 
-       eapply elem_of_list_In. 
-       assert (lts_essential_actions_left p1 = 
-       {[μ1]} ∪ lts_essential_actions_left p1 ∖ {[μ1]}) as eq''.
-        eapply union_difference_singleton_L;eauto.
-       rewrite eq''.
-       assert (elements ({[μ1]} ∪ (lts_essential_actions_left p1) ∖ {[μ1]}) ≡ₚ
-        μ1 :: elements ((lts_essential_actions_left p1) ∖ {[μ1]})) as eq'''.
-        eapply elements_union_singleton. set_solver. symmetry in eq'''.
-       eapply Permutation_in. eapply Permutation_map. exact eq'''. simpl. left. eauto.
-    ++ assert (μ1 ∈ lts_co_inter_action_left (co μ1) p1). eauto.
-       eapply lts_co_inter_action_spec_left ; eauto.
-       rewrite map_app. 
-       eapply elem_of_app. left. 
-       eapply elem_of_list_In. 
-       assert (lts_co_inter_action_left (co μ1) p1 = 
-       {[μ1]} ∪ lts_co_inter_action_left (co μ1) p1 ∖ {[μ1]}) as eq''.
-        eapply union_difference_singleton_L;eauto.
-       rewrite eq''.
-       assert (elements ({[μ1]} ∪ (lts_co_inter_action_left (co μ1) p1) ∖ {[μ1]}) ≡ₚ
-        μ1 :: elements ((lts_co_inter_action_left (co μ1) p1) ∖ {[μ1]})) as eq'''.
-       eapply elements_union_singleton. set_solver. symmetry in eq'''.
-       eapply Permutation_in. eapply Permutation_map. exact eq'''. simpl. left. eauto.
-    ++ unfold lts_fw_com_fin. 
-    rewrite<- flat_map_concat_map.
-    assert (eq' : flat_map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} ⊎ m2))
-    ≡ₚ flat_map (λ η : A, lts_fw_co_fin p1 η) (elements ({[+ co μ1 +]} : gmultiset A) 
-      ++ (elements m2))).
-    eapply Permutation_flat_map. eauto.
-    erewrite gmultiset_elements_singleton in eq'.
-    simpl in *.
-    eapply elem_of_Permutation_proper; eauto. 
-    eapply elem_of_list_In. 
-    eapply in_or_app. left. eapply elem_of_list_In in eq. eauto.
-    ++ eapply elem_of_list_In.
-    eapply elem_of_list_fmap.
-    eexists.  split. reflexivity.
-    eapply elem_of_list_fmap.
-    exists (dexist p2 l1). split. reflexivity. eapply elem_of_enum.
-Qed.
-
-Lemma lts_fw_input_set_spec1 `{@FiniteImagegLts P A H gLtsP}
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  p1 m1 p2 m2 μ :
-  (p1, m1) ⟶[μ] (p2, m2) -> blocking μ -> 
-    (p2, m2) ∈ lts_fw_not_non_blocking_action_set p1 m1 μ.
-Proof.
-  intros l not_nb.
-  inversion l; subst.
-  + unfold lts_fw_not_non_blocking_action_set.
-    destruct (decide (dual (co μ) μ /\ non_blocking (co μ))) as [(duo & nb) | case2].
-    - right. eapply elem_of_list_fmap.
-      exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
-    - eapply elem_of_list_fmap.
-      exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum.
-  + eapply (blocking_action_in_ms m1 μ m2) in not_nb as (eq & duo & nb); eauto; subst.
-    unfold lts_fw_not_non_blocking_action_set.
-    destruct (decide (dual (co μ) μ /\ non_blocking (co μ))) as [toto | impossible].
-    ++ left.
-    ++ assert (dual (co μ) μ ∧ non_blocking (co μ)); eauto. contradiction.
-Qed. 
-
-Lemma lts_fw_non_blocking_action_set_spec1 `{@FiniteImagegLts P A H gLtsP}
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  p1 m1 p2 m2 η :
-  (p1, m1) ⟶[η] (p2, m2) -> non_blocking η -> 
-    (p2, m2) ∈ lts_fw_non_blocking_action_set p1 m1 η.
-Proof.
-  intros l nb.
-  inversion l; subst.
-  + unfold lts_fw_non_blocking_action_set.
-    destruct (decide (η ∈ m2)) as [in_mem | not_in_mem].
-    right. eapply elem_of_list_fmap. 
-    exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum. 
-    eapply elem_of_list_fmap.
-    exists (dexist p2 l0). split. reflexivity. eapply elem_of_enum. 
-  + unfold lts_fw_non_blocking_action_set.
-    eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst ; eauto.
-    destruct (decide (η ∈ {[+ η +]} ⊎ m2)).
-    ++ replace (({[+ η +]} ⊎ m2) ∖ {[+ η +]}) with m2 by multiset_solver.
-       left.
-    ++ multiset_solver.
-Qed.
-
-#[global] Program Instance gLtsMBFinite `{@FiniteImagegLts P A H gLtsP} 
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  : FiniteImagegLts (P * mb A) A.
-Next Obligation. 
-  intros ? ? ? ? ? ? (p, m) α.
-  destruct α as [η | ].
-  + destruct (decide (non_blocking η)) as [nb | not_nb].
-    - eapply (in_list_finite (lts_fw_non_blocking_action_set p m η));
-      intros (p0, m0) h%bool_decide_unpack.
-      now eapply lts_fw_non_blocking_action_set_spec1.
-    - rename η into μ. 
-      eapply (in_list_finite (lts_fw_not_non_blocking_action_set p m μ)). simpl in *.
-      intros (p0, m0) h%bool_decide_unpack.
-      now eapply lts_fw_input_set_spec1. 
-  + eapply (in_list_finite (lts_fw_tau_set p m)).
-      intros (p0, m0) h%bool_decide_unpack.
-      now eapply lts_fw_tau_set_spec1.
-Qed. *)
