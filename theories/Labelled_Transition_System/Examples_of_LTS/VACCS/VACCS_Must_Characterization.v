@@ -15,19 +15,22 @@ Proof.
 
 
 
-    exact VACCS_gLtsFiniteImage. exact VACCS_gLtsFiniteImage. exact VACCS_gLtsOBAFB. exact VACCS_gLtsFiniteImage.
+    exact VACCS_gLtsFiniteImage. exact VACCS_gLtsFiniteImage. exact VACCS_gLtsFiniteImage.
     exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
     exact (@gAbsAction (ExtAct TypeOfActions)).
-    (* exact (gen_conv_gen_spec_conv_inst _).*) admit.
+    (* exact (gen_conv_gen_spec_conv_inst _)*) admit.
     (* exact gen_acc_gen_spec_acc_inst. *) admit.
+    exact VACCS_gLtsOBAFB. exact VACCS_FiniteOutputChains.
+
 
   - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
 
-    exact VACCS_gLtsFiniteImage. exact VACCS_gLtsFiniteImage. exact VACCS_gLtsOBAFB. exact VACCS_gLtsFiniteImage.
+    exact VACCS_gLtsFiniteImage. exact VACCS_gLtsFiniteImage. exact VACCS_gLtsFiniteImage.
     exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
     exact (@gAbsAction (ExtAct TypeOfActions)).
-    (* exact (gen_conv_gen_spec_conv_inst _).*) admit.
+    (* exact (gen_conv_gen_spec_conv_inst _)*) admit.
     (* exact gen_acc_gen_spec_acc_inst. *) admit.
+    exact VACCS_gLtsOBAFB. exact VACCS_FiniteOutputChains.
 Admitted.
 
 

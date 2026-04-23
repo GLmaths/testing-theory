@@ -3023,7 +3023,7 @@ Qed.
   {| lts_oba_fb_feedback p1 p2 p3 a := OBA_with_FB_Fourth_Axiom p1 p2 p3 a |}.
 
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
-  GeneralizeLtsOutputs ForwarderConstruction FiniteImageLTS.
+  GeneralizeLtsOutputs ForwarderConstruction FiniteImageLTS Lts_Finite_Output_Chain.
 
 #[global] Program Instance VACCS_ggLts : @gLts proc (ExtAct TypeOfActions) gLabel_nb := ggLts gLabel_nb.
 
@@ -3035,6 +3035,9 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
 
 #[global] Program Instance VACCS_gLtsOBAFB :
   @gLtsObaFB proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLtsEq VACCS_gLtsOBA := ggLtsObaFB_nb.
+
+#[global] Program Instance VACCS_FiniteOutputChains :
+  @FiniteOutputChain_LtsOba proc (ExtAct TypeOfActions) gLabel_nb VACCS_ggLtsEq VACCS_gLtsOBA := ggLtsOba_FiniteOutputChain_nb.
 
 From TestingTheory Require Import InListPropHelper.
 
