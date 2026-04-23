@@ -577,21 +577,12 @@ Proof.
   exists p0. intros p1' mem. replace p1' with p0 by set_solver. eauto.
 Qed.
 
-<<<<<<< HEAD
-Lemma unoutcome_must_st_nleqx `{
-  gLtsP : @gLts P A H, !gLtsEq P H, !FiniteImagegLts P A,
-  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
-  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
-=======
 End Preorder_for_sets.
->>>>>>> eef7739 (* Finish porting to rocq and fix warnings)
 
 Context `{
-  gLtsEqP : @gLtsEq P A EA, !FiniteImagegLts P A, gLtsObaP : !gLtsOba P, !gLtsObaFW P A,
+  gLtsEqP : @gLtsEq P A EA, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsEqQ : @gLtsEq Q A EA, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsEqQ : @gLtsEq Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A,
   PreAQ : !@PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
 
 Context `{AbT : @AbsAction A EA T FinA _ Φ}.
@@ -657,26 +648,9 @@ Proof.
       eapply ParSync; eauto. eauto.
 Qed.
 
-<<<<<<< HEAD
-Lemma stability_nbhvleqtwo `{
-  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
-  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
-  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
-
-  `{AbT : @AbsAction A H T FinA _ Φ}
-
-  `{!Prop_of_Inter P T A dual}
-  `{!Prop_of_Inter Q T A dual}
-
-  (X : gset P) (q : Q) t : 
-  ¬ outcome t 
-=======
 Lemma stability_nbhvleqtwo
   (X : gset P) (q : Q) t :
   ¬ outcome t
->>>>>>> eef7739 (* Finish porting to rocq and fix warnings)
     -> mustx X t
       -> X ≼ₓ2 q
         -> exists q', (q, t) ⟶{τ} q'.
@@ -687,31 +661,15 @@ Proof.
   - eapply lts_refuses_spec1 in n as (t' & hl). eauto.
 Qed.
 
-<<<<<<< HEAD
-Lemma soundnessx `{
-  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
-  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
-  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
-
-  `{AbT : @AbsAction A H T FinA _ Φ}
-
-  `{!Prop_of_Inter P T A dual}
-  `{!Prop_of_Inter Q T A dual}
-
-  (ps : gset P) (t : T) : 
-  mustx ps t 
-=======
 Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
 Hint Constructors mustx:mdb.
 Hint Unfold ctx_pre__x : mdb.
 
 (** ** Soundness for sets *)
+(* TODO: something is wrong with the assumptions of soundnessx *)
 Lemma soundnessx
   (ps : gset P) (t : T) :
   mustx ps t
->>>>>>> eef7739 (* Finish porting to rocq and fix warnings)
     -> forall (q : Q), ps ≼ₓ q
       -> q must_pass t.
 Proof.
@@ -758,13 +716,14 @@ Proof.
            set_solver.
 Admitted.
 
-<<<<<<< HEAD
+End Soundness.
+
 Lemma soundness_co_nb_enabled `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsQ : @gLts Q A H, !gLtsCNenabled Q A, !gLtsEq Q H, !FiniteImagegLts Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
   `{AbT : @AbsAction A H T FinA _ Φ}
 
@@ -772,23 +731,20 @@ Lemma soundness_co_nb_enabled `{
   `{!Prop_of_Inter Q T A dual}
 
   (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
-=======
-(** ** Soundness for forwarder LTSs *)
-Lemma soundness_fw (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
->>>>>>> eef7739 (* Finish porting to rocq and fix warnings)
 Proof.
   intros halt e hm.
-  eapply (soundnessx {[p]}).
+(*   eapply (soundnessx {[p]}).
   now eapply must_set_iff_must. now eapply alt_set_singleton_iff.
-Qed.
+Qed. *)
+Admitted.
 
-<<<<<<< HEAD
+
 Lemma soundness_fw `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
   PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  gLtsT : !gLtsEq T H, !Testing_Predicate T A outcome}
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
   `{AbT : @AbsAction A H T FinA _ Φ}
 
@@ -805,12 +761,7 @@ Proof.
   destruct (lts_oba_fw_forward p1 η β) as (t & l1 & l2) ; eauto.
 Qed.
 
-=======
-End Soundness.
-
-
 (** ** Soundness for LTSs that can be lifted to forwarders *)
->>>>>>> eef7739 (* Finish porting to rocq and fix warnings)
 Lemma soundness 
   `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}
   `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}
