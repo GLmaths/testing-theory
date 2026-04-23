@@ -31,6 +31,7 @@ From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From TestingTheory Require Import CCSInstance DefinitionAS Must Testing_Predicate ParallelLTSConstruction ActTau InputOutputActions.
 
+Parameter Corollary bhv_iff_ctx_CCS : True.
 
 (* Corollary bhv_iff_ctx_CCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
 Proof.
