@@ -77,7 +77,7 @@ Section eq_contextual.
   Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
-  @pre_extensional P Q _ _ _ outcome _ p q <-> {[ p ▷ (∅ : mb A)]} ⩽ q ▷ (∅ : mb A).
+  pre_extensional outcome p q <-> {[ p ▷ (∅ : mb A)]} ⩽ q ▷ (∅ : mb A).
   Proof.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.

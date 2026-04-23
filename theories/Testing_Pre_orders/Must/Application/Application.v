@@ -254,7 +254,7 @@ Qed.
     `{!test_convergence_spec tconv, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
 
     (p : P) (pr : ionly_spec p) (q : Q) (h : forall α, q ↛{α}) : 
-    @pre_extensional _ _ _ _ _ outcome _ p q.
+    pre_extensional outcome p q.
   Proof.
     now eapply equivalence_bhv_acc_ctx; split; intros ? ?; [eapply nil_cnv | eapply ionly_nil_leq2].
   Qed.

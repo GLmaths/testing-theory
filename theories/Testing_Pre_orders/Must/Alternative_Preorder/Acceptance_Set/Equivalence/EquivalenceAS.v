@@ -71,7 +71,7 @@ Section preorder.
 
   (** ** The inductive characterisation is equivalent to the inductive must preorder *)
   Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
-    @pre_extensional P Q _ _ _ outcome _ p q <-> (p, ∅) ≼ₐₛ (q, ∅).
+    pre_extensional outcome p q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
     rewrite pre_extensional_eq. apply equivalence_acc_set_and_must_i.
   Qed.

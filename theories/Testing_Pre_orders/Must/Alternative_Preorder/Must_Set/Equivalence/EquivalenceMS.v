@@ -271,7 +271,7 @@ Section must_set_acc_set.
   Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 gen_acc (fun x => 𝝳 (Φ x))}.
 
   Corollary equivalence_bhv_mst_ctx
-    (p : P) (q : Q) : (p, ∅) ≾ₘᵤₛₜ (q, ∅) <-> @pre_extensional P Q _ _ _ outcome _ p q.
+    (p : P) (q : Q) : (p, ∅) ≾ₘᵤₛₜ (q, ∅) <-> pre_extensional outcome p q.
   Proof.
     erewrite pre_extensional_eq.
     rewrite equivalence_bhv_acc_mst.

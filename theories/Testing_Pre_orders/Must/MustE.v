@@ -27,7 +27,7 @@ From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
-    Must Bar (* CompletenessAS SoundnessAS  *) Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
+    Must Bar Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS Must.
 
@@ -80,8 +80,8 @@ Section preorder.
   Qed.
 
   Definition pre_extensional
-    {P : Type} {Q : Type} 
-    `{Sts (P * T), Sts (Q * T), outcome : T -> Prop, outcome_decidable : forall (t : T), 
+    {P Q T: Type} (outcome : T -> Prop)
+    `{Sts (P * T), Sts (Q * T), outcome_decidable : forall (t : T), 
     Decision (outcome t)}
     (p : P) (q : Q) : Prop :=
     forall (t : T), @must_extensional P T _ outcome p t -> @must_extensional Q T _ outcome q t.
@@ -107,8 +107,6 @@ Section preorder.
       eapply intensional_implies_extensional. eapply hm.
   Qed.
 
-  Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional p q) (at level 70).
-
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.
@@ -120,11 +118,12 @@ Section preorder.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 
+  Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional outcome p q) (at level 70).
+
   (* ************************************************** *)
 
   Lemma pre_extensional_eq (p : P) (q : Q) : 
-    @pre_extensional P Q _ _ _ outcome _ p q <-> p ⊑ₘᵤₛₜᵢ q. (* p ⊑ₘᵤₛₜ q ↔ p ⊑ₘᵤₛₜᵢ q *)
-    unfold pre_extensional, ctx_pre.
+    p ⊑ₘᵤₛₜ q <-> p ⊑ₘᵤₛₜᵢ q.
   Proof.
     split; intros hpre t.
     - rewrite <- 2 must_sts_iff_must, <- 2 must_extensional_iff_must_sts ; eauto.
