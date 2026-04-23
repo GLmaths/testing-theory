@@ -36,8 +36,7 @@ Definition actions_of `{gLts P A} (p : P) : subset_of A :=
 (* ** Blocking co-actions *)
 Definition co_actions_of `{gLts P A} (p : P) : subset_of A := 
   fun μ1 => exists μ2, ¬ p ↛[μ2] /\ dual μ2 μ1 /\ blocking μ1.
-
-
+  
 (******************* Instantiations to use the usual notation of sets ***********************)
 
 Definition Union_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
@@ -89,3 +88,10 @@ repeat split; try set_solver.
 
 #[global] Instance TopSet_of_Actions {A : Type} : TopSet A (@subset_of A).
 repeat split ; try set_solver. Defined.
+
+
+(*** Definition of map for predicate-set ***)
+
+Definition map_co_actions_of `{gLts P A} {B : Type} (p : P) (Γ : A -> B) : subset_of B :=
+  fun pre_μ => ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Γ μ').
+
