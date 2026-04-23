@@ -20,7 +20,7 @@
 
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Relations Morphisms.
-From TestingTheory Require Import Renamings Congruence LTS LTS_Renamings.
+From TestingTheory Require Import Renamings pi.Congruence LTS LTS_Renamings.
 
 Parameter (channel_eq_dec : base.EqDecision Value).
 #[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
