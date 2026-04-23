@@ -92,6 +92,13 @@ repeat split ; try set_solver. Defined.
 
 (*** Definition of map for predicate-set ***)
 
-Definition map_co_actions_of `{gLts P A} {B : Type} (p : P) (Γ : A -> B) : subset_of B :=
-  fun pre_μ => ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Γ μ').
+Definition map_set {A : Type} {B : Type} (Γ : A -> B) (R : subset_of A)  : subset_of B :=
+  fun pre_μ => ∃ μ', μ' ∈ R /\ pre_μ = (Γ μ').
+
+Lemma map_gamma_of_action {A : Type} {B : Type} (Γ : A -> B) (R : subset_of A) μ : μ ∈ R ->  Γ μ ∈ map_set Γ R.
+Proof.
+  intros. simpl. exists μ. split; eauto.
+Qed.
+
+Definition map_co_action_set {A B : Type} `{gLts P A} (p : P) (Γ : A -> B) := map_set Γ (co_actions_of p).
 
