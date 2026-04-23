@@ -1,5 +1,8 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -20,33 +23,28 @@
    SOFTWARE.
 *)
 
-From stdpp Require Import gmap gmultiset.
+
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
+From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
+From TestingTheory Require Import CCSInstance DefinitionAS Must Testing_Predicate ParallelLTSConstruction ActTau InputOutputActions.
 
-From TestingTheory Require Import InputOutputActions OldTransitionSystems ActTau .
-From TestingTheory Require Export 
-  VCCS_ta VCCS_tc DefinitionAS Must ForwarderConstruction ParallelLTSConstruction
-  InteractionBetweenLts GeneralizeLtsOutputs Completeness Equivalence Soundness
-  Testing_Predicate Bisimulation gLts Lts_OBA VCCS_Instance FiniteImageLTS Lts_FW Lts_OBA.
 
-Parameter bhv_iff_ctx_VCCS : True.
-
-(* Corollary bhv_iff_ctx_VCCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
+(* Corollary bhv_iff_ctx_CCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
 Proof.
-  (* 
-  - intro Hyp. eapply @equivalence_fw_acc_set_and_must_i; eauto.
+  split.
+  - intro Hyp. eapply @equivalence_acc_set_and_must_i; eauto.
 
     exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
     exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
     exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
 
-  - intro Hyp. eapply @equivalence_acc_set_and_must_i; eauto.
+  - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
 
     exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
     exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
-    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst. *)
-Admitted. *)
+    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
+Qed. *)
 
