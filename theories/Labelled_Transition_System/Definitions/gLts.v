@@ -158,3 +158,8 @@ Proof.
 Qed.
 
 
+Lemma BlockingAction_are_not_non_blocking `{H : ExtAction A} {η β} : 
+  non_blocking η → blocking β → β ≠ η.
+Proof.
+  intros nb1 nb2 eq. rewrite eq in nb2. contradiction.
+Qed.

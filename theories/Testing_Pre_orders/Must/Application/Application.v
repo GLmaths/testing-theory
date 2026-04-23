@@ -29,7 +29,7 @@ From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE Equivalence.
+    Testing_Predicate DefinitionAS MustE Equivalence Lts_Finite_Output_Chain.
 
 Section application.
 
@@ -74,7 +74,7 @@ Section application.
         -> (forall α p', p ⟶{α} p' -> ionly_spec p') -> ionly_spec p.
 
   Lemma lts_non_blocking_ionly_spec {P A : Type}
-        `{gLtsOba P A} (p : P) (pr : ionly_spec p) : dom (lts_oba_mo p) = ∅.
+        `{FiniteOutputChain_LtsOba P A} (p : P) (pr : ionly_spec p) : dom (lts_oba_mo p) = ∅.
   Proof.
     eapply leibniz_equiv. intro a. split.
     + intros mem.
@@ -88,7 +88,7 @@ Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil_empty_mb 
     {Q A : Type} {H : ExtAction A}
-    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
+    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q}
     `{!Prop_of_Inter Q (mb A) A fw_inter}
     p (pr : ionly_spec p) :
     (p, ∅) ⤓ -> forall t, (p, ∅) ⟹ t -> dom (lts_oba_mo t) = ∅.
@@ -111,7 +111,7 @@ Qed.
 
   Lemma lts_non_blocking_ionly_spec_wt_nil 
     {Q A : Type} {H : ExtAction A}
-    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
+    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q}
     `{!Prop_of_Inter Q (mb A) A fw_inter}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> forall t, (p, m) ⟹ t
@@ -148,7 +148,7 @@ Qed.
 
   Lemma ionly_nil_leq2_wt_nil 
     {Q A : Type} {H : ExtAction A}
-    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ}
+    `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q}
     `{!Prop_of_Inter Q (mb A) A fw_inter}
     n p (pr : ionly_spec p) m :
     (p, m) ⤓ -> size m = n -> exists t, (p, m) ⟹ t /\ t ↛ /\ dom (lts_oba_mo t) ⊆ dom m.
@@ -178,8 +178,8 @@ Qed.
   Qed.
 
  Lemma ionly_nil_leq2 {P Q A : Type} `{
-    @gLtsObaFB P A H gLtsEqP gLtsObaP, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
+    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
 
     `{!Prop_of_Inter P (mb A) A fw_inter}
     `{!Prop_of_Inter Q (mb A) A fw_inter}
@@ -234,19 +234,19 @@ Qed.
   Admitted.
 
   Lemma input_only_leq_nil {P Q A : Type} `{
-    @gLtsObaFB P A H gLtsEqP V, !FiniteImagegLts P A,
-    @gLtsObaFB Q A H gLtsEqQ W, !FiniteImagegLts Q A,
-    @gLtsObaFB E A H gLtsEqE X, !FiniteImagegLts E A,
-    @AbsAction A H E FinA _ Φ, !Testing_Predicate outcome _, (∀ e : E, Decision (outcome e))}
+    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
+    @gLtsObaFB T A H gLtsEqE gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A,
+    @AbsAction A H T FinA _ Φ, !Testing_Predicate outcome _, (∀ t : T, Decision (outcome t))}
 
-    `{!Prop_of_Inter P E A dual}
-    `{!Prop_of_Inter Q E A dual}
+    `{!Prop_of_Inter P T A dual}
+    `{!Prop_of_Inter Q T A dual}
 
     `{!Prop_of_Inter P (mb A) A fw_inter}
-    `{!Prop_of_Inter (P * mb A) E A dual}
+    `{!Prop_of_Inter (P * mb A) T A dual}
 
     `{!Prop_of_Inter Q (mb A) A fw_inter}
-    `{!Prop_of_Inter (Q * mb A) E A dual}
+    `{!Prop_of_Inter (Q * mb A) T A dual}
 
     `{@PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ _}
     `{@PreExtAction Q A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ _}
