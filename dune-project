@@ -1,4 +1,4 @@
-(lang dune 3.21)
+(lang dune 3.17)
 
 (name testing-theory)
 
@@ -19,13 +19,11 @@
 
 (documentation https://GLmaths.github.io/testing-theory)
 
-(warnings (deprecated_coq_lang disabled))
-
 (package
  (name testing-theory)
  (synopsis "Coq library for characterisations of testing preorders")
  (description "Coq library for characterisations of testing preorders")
- (depends (rocq(>= 9.0.1))
+ (depends (rocq-prover (>= 9.0.0))
           (rocq-stdpp(>= 1.13.0))
           (coq-coinduction(>= 1.21))
           (coq-equations(>= 1.3.1)))
