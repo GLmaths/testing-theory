@@ -1387,26 +1387,6 @@ Next Obligation.
       * simpl in H. inversion H.
 Qed.
 
-From TestingTheory Require Import Equivalence MustE FiniteImageLTS.
-
-Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
-Proof.
-  split.
-  - intro Hyp. eapply @equivalence_acc_set_and_must_i; eauto.
-
-    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage.
-    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
-    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
-    exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteOutputChain_OBA.
-
-  - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
-
-    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage.
-    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
-    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
-    exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteOutputChain_OBA.
-Qed.
-
 (*
 (* TODO: this lemma has nothing to do here ; and need proper name *)
 Lemma h2 : forall q q' X M,
