@@ -42,14 +42,6 @@ Definition cst : proc := a ? (a ! O • 𝟘).
 
 Definition ccat : proc := a ? (a ! (bvar 0) • 𝟘).
 
-(* Set Typeclasses Debug.
-Set Typeclasses Depth 1. (* to be remove *)*)
-(* Example of Proof *)
-(*
-Goal (g 𝟘 ≼ₐₛ ccat).
-constructor.
-- intros s Hs. *)
-
 Lemma copycat_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros e Hyp.
