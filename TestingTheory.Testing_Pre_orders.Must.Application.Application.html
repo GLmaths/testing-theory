@@ -26,30 +26,6 @@
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
 <div class="code">
-<span class="comment">(*<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Nomadic&nbsp;Labs<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Paul&nbsp;Laforgue&nbsp;&lt;paul.laforgue@nomadic-labs.com&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Léo&nbsp;Stefanesco&nbsp;&lt;leo.stefanesco@mpi-sws.org&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;Gaëtan&nbsp;Lopez&nbsp;&lt;glopez@irif.fr&gt;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;Permission&nbsp;is&nbsp;hereby&nbsp;granted,&nbsp;free&nbsp;of&nbsp;charge,&nbsp;to&nbsp;any&nbsp;person&nbsp;obtaining&nbsp;a&nbsp;copy<br/>
-&nbsp;&nbsp;&nbsp;of&nbsp;this&nbsp;software&nbsp;and&nbsp;associated&nbsp;documentation&nbsp;files&nbsp;(the&nbsp;"Software"),&nbsp;to&nbsp;deal<br/>
-&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Software&nbsp;without&nbsp;restriction,&nbsp;including&nbsp;without&nbsp;limitation&nbsp;the&nbsp;rights<br/>
-&nbsp;&nbsp;&nbsp;to&nbsp;use,&nbsp;copy,&nbsp;modify,&nbsp;merge,&nbsp;publish,&nbsp;distribute,&nbsp;sublicense,&nbsp;and/or&nbsp;sell<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;of&nbsp;the&nbsp;Software,&nbsp;and&nbsp;to&nbsp;permit&nbsp;persons&nbsp;to&nbsp;whom&nbsp;the&nbsp;Software&nbsp;is<br/>
-&nbsp;&nbsp;&nbsp;furnished&nbsp;to&nbsp;do&nbsp;so,&nbsp;subject&nbsp;to&nbsp;the&nbsp;following&nbsp;conditions:<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;The&nbsp;above&nbsp;copyright&nbsp;notice&nbsp;and&nbsp;this&nbsp;permission&nbsp;notice&nbsp;shall&nbsp;be&nbsp;included&nbsp;in&nbsp;all<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;or&nbsp;substantial&nbsp;portions&nbsp;of&nbsp;the&nbsp;Software.<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;THE&nbsp;SOFTWARE&nbsp;IS&nbsp;PROVIDED&nbsp;"AS&nbsp;IS",&nbsp;WITHOUT&nbsp;WARRANTY&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;EXPRESS&nbsp;OR<br/>
-&nbsp;&nbsp;&nbsp;IMPLIED,&nbsp;INCLUDING&nbsp;BUT&nbsp;NOT&nbsp;LIMITED&nbsp;TO&nbsp;THE&nbsp;WARRANTIES&nbsp;OF&nbsp;MERCHANTABILITY,<br/>
-&nbsp;&nbsp;&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE&nbsp;AND&nbsp;NONINFRINGEMENT.&nbsp;IN&nbsp;NO&nbsp;EVENT&nbsp;SHALL&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;AUTHORS&nbsp;OR&nbsp;COPYRIGHT&nbsp;HOLDERS&nbsp;BE&nbsp;LIABLE&nbsp;FOR&nbsp;ANY&nbsp;CLAIM,&nbsp;DAMAGES&nbsp;OR&nbsp;OTHER<br/>
-&nbsp;&nbsp;&nbsp;LIABILITY,&nbsp;WHETHER&nbsp;IN&nbsp;AN&nbsp;ACTION&nbsp;OF&nbsp;CONTRACT,&nbsp;TORT&nbsp;OR&nbsp;OTHERWISE,&nbsp;ARISING&nbsp;FROM,<br/>
-&nbsp;&nbsp;&nbsp;OUT&nbsp;OF&nbsp;OR&nbsp;IN&nbsp;CONNECTION&nbsp;WITH&nbsp;THE&nbsp;SOFTWARE&nbsp;OR&nbsp;THE&nbsp;USE&nbsp;OR&nbsp;OTHER&nbsp;DEALINGS&nbsp;IN&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;SOFTWARE.<br/>
-*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">stdpp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">base</span> <span class="id" title="library">decidable</span> <span class="id" title="library">gmap</span> <span class="id" title="library">finite</span> <span class="id" title="library">gmultiset</span>.<br/>
@@ -233,43 +209,6 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> <span class="id" title="var">p'</span>. <span class="id" title="tactic">split</span>; <span class="id" title="tactic">eauto</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">eauto</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span> <span class="id" title="var">μ</span>. <span class="id" title="tactic">intro</span> <span class="id" title="var">mem</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;destruct&nbsp;(decide&nbsp;(non_blocking&nbsp;μ))&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">nb</span></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">not_nb</span></span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;rename&nbsp;μ&nbsp;into&nbsp;η.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_refuses_spec1&nbsp;in&nbsp;mem&nbsp;as&nbsp;(p''&nbsp;&amp;&nbsp;Tr).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(η&nbsp;∈&nbsp;dom&nbsp;(lts_oba_mo&nbsp;p'))&nbsp;as&nbsp;mem'.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;gmultiset_elem_of_dom.&nbsp;eapply&nbsp;lts_oba_mo_spec_bis1;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;hsub&nbsp;in&nbsp;mem'.&nbsp;eapply&nbsp;lts_refuses_spec2.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;gmultiset_elem_of_dom&nbsp;in&nbsp;mem'.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(m&nbsp;=&nbsp;{<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">η</span></span> <span class="inlinecode">+</span>}&nbsp;⊎&nbsp;(m&nbsp;∖&nbsp;{<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">η</span></span> <span class="inlinecode">+</span>}))&nbsp;as&nbsp;eq'.&nbsp;multiset_solver.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;eq'.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists&nbsp;(q&nbsp;▷&nbsp;(m&nbsp;∖&nbsp;{<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">η</span></span> <span class="inlinecode">+</span>})).&nbsp;eapply&nbsp;ParRight.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_multiset_minus;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;destruct&nbsp;p'&nbsp;as&nbsp;(p'&nbsp;,&nbsp;m').<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(ionly_spec&nbsp;p')&nbsp;as&nbsp;Hyp.&nbsp;eapply&nbsp;ionly_wt;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;Hyp&nbsp;as&nbsp;(only_receive&nbsp;&amp;&nbsp;Hyp').<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_refuses_spec1&nbsp;in&nbsp;mem&nbsp;as&nbsp;((p''&nbsp;,&nbsp;m'')&nbsp;&amp;&nbsp;Tr'').<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;Tr'';&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++&nbsp;assert&nbsp;(exist_co_nba&nbsp;μ)&nbsp;as&nbsp;(η&nbsp;&amp;&nbsp;nb&nbsp;&amp;&nbsp;duo).&nbsp;eapply&nbsp;only_receive;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_refuses_spec2.&nbsp;exists&nbsp;(q&nbsp;▷&nbsp;({<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">η</span></span> <span class="inlinecode">+</span>}&nbsp;⊎&nbsp;m)).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;ParRight.&nbsp;simpl&nbsp;in&nbsp;*.&nbsp;eapply&nbsp;lts_multiset_add;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++&nbsp;eapply&nbsp;blocking_action_in_ms&nbsp;in&nbsp;not_nb&nbsp;as&nbsp;(eq'&nbsp;&amp;&nbsp;duo'&nbsp;&amp;&nbsp;nb')&nbsp;;&nbsp;eauto&nbsp;;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_refuses_spec2.&nbsp;exists&nbsp;(q&nbsp;▷&nbsp;{<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">co</span></span> <span class="inlinecode"><span class="id" title="var">μ</span></span> <span class="inlinecode">+</span>}&nbsp;⊎&nbsp;m).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;ParRight.&nbsp;eapply&nbsp;lts_multiset_add;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;exfalso.&nbsp;eapply&nbsp;(@lts_refuses_spec2&nbsp;(Q&nbsp;*&nbsp;mb&nbsp;A)).&nbsp;eauto.&nbsp;now&nbsp;eapply&nbsp;nil_refuses.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;inversion&nbsp;hcnv;&nbsp;inversion&nbsp;l;&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;exfalso.&nbsp;eapply&nbsp;(@lts_refuses_spec2&nbsp;Q);&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;destruct&nbsp;(decide&nbsp;(non_blocking&nbsp;μ))&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">nb</span></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">not_nb</span></span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++&nbsp;assert&nbsp;(non_blocking&nbsp;μ).&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;non_blocking_action_in_ms&nbsp;in&nbsp;nb;&nbsp;eauto&nbsp;;&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edestruct&nbsp;(IHhw&nbsp;b2&nbsp;p)&nbsp;as&nbsp;(t'&nbsp;&amp;&nbsp;hw'&nbsp;&amp;&nbsp;hst'&nbsp;&amp;&nbsp;hsub');&nbsp;eauto&nbsp;with&nbsp;mdb.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;H8,&nbsp;wt_act.&nbsp;eapply&nbsp;ParRight.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_multiset_minus;&nbsp;eauto.&nbsp;eapply&nbsp;wt_nil.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists&nbsp;t'.&nbsp;split.&nbsp;eapply&nbsp;wt_act;&nbsp;eauto.&nbsp;eapply&nbsp;ParRight.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_multiset_minus;eauto.&nbsp;now&nbsp;split.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++&nbsp;eapply&nbsp;blocking_action_in_ms&nbsp;in&nbsp;not_nb&nbsp;as&nbsp;(eq&nbsp;&amp;&nbsp;duo&nbsp;&amp;&nbsp;nb);&nbsp;eauto&nbsp;;&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edestruct&nbsp;(IHhw&nbsp;({<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">co</span></span> <span class="inlinecode"><span class="id" title="var">μ</span></span> <span class="inlinecode">+</span>}&nbsp;⊎&nbsp;m)&nbsp;p)&nbsp;as&nbsp;(t'&nbsp;&amp;&nbsp;hw'&nbsp;&amp;&nbsp;hst'&nbsp;&amp;&nbsp;hsub');&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;H8,&nbsp;wt_act.&nbsp;eapply&nbsp;ParRight.&nbsp;eauto.&nbsp;eapply&nbsp;wt_nil.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists&nbsp;t'.&nbsp;split.&nbsp;eapply&nbsp;wt_act;&nbsp;eauto.&nbsp;eapply&nbsp;ParRight.&nbsp;eauto.&nbsp;now&nbsp;split.&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="id" title="var">Admitted</span>.<br/>
 
 <br/>

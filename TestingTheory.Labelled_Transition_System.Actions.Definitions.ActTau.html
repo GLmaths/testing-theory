@@ -26,30 +26,6 @@
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
 <div class="code">
-<span class="comment">(*<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;Nomadic&nbsp;Labs<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;Paul&nbsp;Laforgue&nbsp;&lt;paul.laforgue@nomadic-labs.com&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;Léo&nbsp;Stefanesco&nbsp;&lt;leo.stefanesco@mpi-sws.org&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;Gaëtan&nbsp;Lopez&nbsp;&lt;glopez@irif.fr&gt;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;Permission&nbsp;is&nbsp;hereby&nbsp;granted,&nbsp;free&nbsp;of&nbsp;charge,&nbsp;to&nbsp;any&nbsp;person&nbsp;obtaining&nbsp;a&nbsp;copy<br/>
-&nbsp;&nbsp;&nbsp;of&nbsp;this&nbsp;software&nbsp;and&nbsp;associated&nbsp;documentation&nbsp;files&nbsp;(the&nbsp;"Software"),&nbsp;to&nbsp;deal<br/>
-&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Software&nbsp;without&nbsp;restriction,&nbsp;including&nbsp;without&nbsp;limitation&nbsp;the&nbsp;rights<br/>
-&nbsp;&nbsp;&nbsp;to&nbsp;use,&nbsp;copy,&nbsp;modify,&nbsp;merge,&nbsp;publish,&nbsp;distribute,&nbsp;sublicense,&nbsp;and/or&nbsp;sell<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;of&nbsp;the&nbsp;Software,&nbsp;and&nbsp;to&nbsp;permit&nbsp;persons&nbsp;to&nbsp;whom&nbsp;the&nbsp;Software&nbsp;is<br/>
-&nbsp;&nbsp;&nbsp;furnished&nbsp;to&nbsp;do&nbsp;so,&nbsp;subject&nbsp;to&nbsp;the&nbsp;following&nbsp;conditions:<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;The&nbsp;above&nbsp;copyright&nbsp;notice&nbsp;and&nbsp;this&nbsp;permission&nbsp;notice&nbsp;shall&nbsp;be&nbsp;included&nbsp;in&nbsp;all<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;or&nbsp;substantial&nbsp;portions&nbsp;of&nbsp;the&nbsp;Software.<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;THE&nbsp;SOFTWARE&nbsp;IS&nbsp;PROVIDED&nbsp;"AS&nbsp;IS",&nbsp;WITHOUT&nbsp;WARRANTY&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;EXPRESS&nbsp;OR<br/>
-&nbsp;&nbsp;&nbsp;IMPLIED,&nbsp;INCLUDING&nbsp;BUT&nbsp;NOT&nbsp;LIMITED&nbsp;TO&nbsp;THE&nbsp;WARRANTIES&nbsp;OF&nbsp;MERCHANTABILITY,<br/>
-&nbsp;&nbsp;&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE&nbsp;AND&nbsp;NONINFRINGEMENT.&nbsp;IN&nbsp;NO&nbsp;EVENT&nbsp;SHALL&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;AUTHORS&nbsp;OR&nbsp;COPYRIGHT&nbsp;HOLDERS&nbsp;BE&nbsp;LIABLE&nbsp;FOR&nbsp;ANY&nbsp;CLAIM,&nbsp;DAMAGES&nbsp;OR&nbsp;OTHER<br/>
-&nbsp;&nbsp;&nbsp;LIABILITY,&nbsp;WHETHER&nbsp;IN&nbsp;AN&nbsp;ACTION&nbsp;OF&nbsp;CONTRACT,&nbsp;TORT&nbsp;OR&nbsp;OTHERWISE,&nbsp;ARISING&nbsp;FROM,<br/>
-&nbsp;&nbsp;&nbsp;OUT&nbsp;OF&nbsp;OR&nbsp;IN&nbsp;CONNECTION&nbsp;WITH&nbsp;THE&nbsp;SOFTWARE&nbsp;OR&nbsp;THE&nbsp;USE&nbsp;OR&nbsp;OTHER&nbsp;DEALINGS&nbsp;IN&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;SOFTWARE.<br/>
-*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
@@ -68,9 +44,9 @@
 
 <br/>
 <span class="id" title="keyword">Inductive</span> <a id="Act" class="idref" href="#Act"><span class="id" title="definition, inductive"><span id="Act_rect" class="id"><span id="Act_ind" class="id"><span id="Act_rec" class="id"><span id="Act_sind" class="id">Act</span></span></span></span></span></a> (<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>) :=<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;External&nbsp;Action&nbsp;*)</span><br/>
+&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;| <a id="ActExt" class="idref" href="#ActExt"><span class="id" title="constructor">ActExt</span></a> (<a id="6941aac8dfa5391e43b8a4017a2cdcaf" class="idref" href="#6941aac8dfa5391e43b8a4017a2cdcaf"><span class="id" title="binder">μ</span></a>: <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:1"><span class="id" title="variable">A</span></a>)<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;Silent&nbsp;Action&nbsp;/&nbsp;Computation&nbsp;Action&nbsp;/&nbsp;Reduction&nbsp;Action&nbsp;*)</span><br/>
+&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;| <a id="a788b57bb5319497a4de11f3392dcbc3" class="idref" href="#a788b57bb5319497a4de11f3392dcbc3"><span class="id" title="constructor">τ</span></a> <br/>
 &nbsp;.<br/>
 
@@ -79,13 +55,10 @@
 <span class="id" title="keyword">Arguments</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#a788b57bb5319497a4de11f3392dcbc3"><span class="id" title="constructor">τ</span></a> {<span class="id" title="var">_</span>}.<br/>
 
 <br/>
-<span class="comment">(******************&nbsp;Trace&nbsp;Definition&nbsp;********************)</span><br/>
 <span class="id" title="keyword">Definition</span> <a id="trace" class="idref" href="#trace"><span class="id" title="definition">trace</span></a> <a id="A:5" class="idref" href="#A:5"><span class="id" title="binder">A</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:5"><span class="id" title="variable">A</span></a>.<br/>
-<span class="comment">(*&nbsp;Empty&nbsp;Trace&nbsp;*)</span><br/>
 <span class="id" title="keyword">Definition</span> <a id="a06c34952043eb8035c521bac955bdcc" class="idref" href="#a06c34952043eb8035c521bac955bdcc"><span class="id" title="definition">ε</span></a> {<a id="A:6" class="idref" href="#A:6"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>} := <span class="id" title="notation">[]</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:6"><span class="id" title="variable">A</span></a>.<br/>
 
 <br/>
-<span class="comment">(*****************&nbsp;EqDecision&nbsp;for&nbsp;Act&nbsp;*******************)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="act_eqdec" class="idref" href="#act_eqdec"><span class="id" title="instance">act_eqdec</span></a> `{<a id="EqDecision0:8" class="idref" href="#EqDecision0:8"><span class="id" title="binder">EqDecision</span></a> <a id="A:7" class="idref" href="#A:7"><span class="id" title="binder"><span id="EqDecision0:8" class="id">A</span></span></a>} : <span class="id" title="abbreviation">EqDecision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#Act"><span class="id" title="inductive">Act</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:7"><span class="id" title="variable">A</span></a>).<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
 </div>

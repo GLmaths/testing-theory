@@ -26,30 +26,6 @@
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
 <div class="code">
-<span class="comment">(*<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Nomadic&nbsp;Labs<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Paul&nbsp;Laforgue&nbsp;&lt;paul.laforgue@nomadic-labs.com&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Léo&nbsp;Stefanesco&nbsp;&lt;leo.stefanesco@mpi-sws.org&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;Gaëtan&nbsp;Lopez&nbsp;&lt;glopez@irif.fr&gt;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;Permission&nbsp;is&nbsp;hereby&nbsp;granted,&nbsp;free&nbsp;of&nbsp;charge,&nbsp;to&nbsp;any&nbsp;person&nbsp;obtaining&nbsp;a&nbsp;copy<br/>
-&nbsp;&nbsp;&nbsp;of&nbsp;this&nbsp;software&nbsp;and&nbsp;associated&nbsp;documentation&nbsp;files&nbsp;(the&nbsp;"Software"),&nbsp;to&nbsp;deal<br/>
-&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Software&nbsp;without&nbsp;restriction,&nbsp;including&nbsp;without&nbsp;limitation&nbsp;the&nbsp;rights<br/>
-&nbsp;&nbsp;&nbsp;to&nbsp;use,&nbsp;copy,&nbsp;modify,&nbsp;merge,&nbsp;publish,&nbsp;distribute,&nbsp;sublicense,&nbsp;and/or&nbsp;sell<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;of&nbsp;the&nbsp;Software,&nbsp;and&nbsp;to&nbsp;permit&nbsp;persons&nbsp;to&nbsp;whom&nbsp;the&nbsp;Software&nbsp;is<br/>
-&nbsp;&nbsp;&nbsp;furnished&nbsp;to&nbsp;do&nbsp;so,&nbsp;subject&nbsp;to&nbsp;the&nbsp;following&nbsp;conditions:<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;The&nbsp;above&nbsp;copyright&nbsp;notice&nbsp;and&nbsp;this&nbsp;permission&nbsp;notice&nbsp;shall&nbsp;be&nbsp;included&nbsp;in&nbsp;all<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;or&nbsp;substantial&nbsp;portions&nbsp;of&nbsp;the&nbsp;Software.<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;THE&nbsp;SOFTWARE&nbsp;IS&nbsp;PROVIDED&nbsp;"AS&nbsp;IS",&nbsp;WITHOUT&nbsp;WARRANTY&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;EXPRESS&nbsp;OR<br/>
-&nbsp;&nbsp;&nbsp;IMPLIED,&nbsp;INCLUDING&nbsp;BUT&nbsp;NOT&nbsp;LIMITED&nbsp;TO&nbsp;THE&nbsp;WARRANTIES&nbsp;OF&nbsp;MERCHANTABILITY,<br/>
-&nbsp;&nbsp;&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE&nbsp;AND&nbsp;NONINFRINGEMENT.&nbsp;IN&nbsp;NO&nbsp;EVENT&nbsp;SHALL&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;AUTHORS&nbsp;OR&nbsp;COPYRIGHT&nbsp;HOLDERS&nbsp;BE&nbsp;LIABLE&nbsp;FOR&nbsp;ANY&nbsp;CLAIM,&nbsp;DAMAGES&nbsp;OR&nbsp;OTHER<br/>
-&nbsp;&nbsp;&nbsp;LIABILITY,&nbsp;WHETHER&nbsp;IN&nbsp;AN&nbsp;ACTION&nbsp;OF&nbsp;CONTRACT,&nbsp;TORT&nbsp;OR&nbsp;OTHERWISE,&nbsp;ARISING&nbsp;FROM,<br/>
-&nbsp;&nbsp;&nbsp;OUT&nbsp;OF&nbsp;OR&nbsp;IN&nbsp;CONNECTION&nbsp;WITH&nbsp;THE&nbsp;SOFTWARE&nbsp;OR&nbsp;THE&nbsp;USE&nbsp;OR&nbsp;OTHER&nbsp;DEALINGS&nbsp;IN&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;SOFTWARE.<br/>
-*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
@@ -193,11 +169,8 @@
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Tactics&nbsp;to&nbsp;help&nbsp;prove&nbsp;termination&nbsp;and&nbsp;related&nbsp;properties&nbsp;*)</span><br/>
 
 <br/>
-<span class="comment">(*&nbsp;Tactic&nbsp;that&nbsp;looks&nbsp;for&nbsp;lts/lts_step&nbsp;assumptions&nbsp;and&nbsp;inverts&nbsp;them&nbsp;to<br/>
-&nbsp;&nbsp;learn&nbsp;about&nbsp;the&nbsp;shape&nbsp;of&nbsp;the&nbsp;conclusion&nbsp;*)</span><br/>
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">lts_inversion</span> <span class="id" title="var">lts</span> :=<br/>
 <span class="id" title="tactic">try</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
 | <span class="id" title="var">H</span> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#lts_step"><span class="id" title="method">lts_step</span></a> ?<span class="id" title="var">p</span> ?<span class="id" title="var">a</span> ?<span class="id" title="var">q</span> |- <span class="id" title="var">_</span> =&gt;<br/>
@@ -210,8 +183,6 @@
 &nbsp;<span class="id" title="keyword">end</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;A&nbsp;tactic&nbsp;to&nbsp;try&nbsp;and&nbsp;prove&nbsp;termination.<br/>
-&nbsp;&nbsp;Should&nbsp;be&nbsp;complete&nbsp;in&nbsp;the&nbsp;absence&nbsp;of&nbsp;recusion.&nbsp;*)</span><br/>
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">step_tac</span> <span class="id" title="var">lts</span> :=<br/>
 <span class="id" title="tactic">try</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span> |<span class="id" title="var">H</span> : <span class="id" title="notation">{[+</span> ?<span class="id" title="var">a</span> <span class="id" title="notation">+]}</span> <span class="id" title="notation">⊎</span> ?<span class="id" title="var">m</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">∅</span> |- <span class="id" title="var">_</span> =&gt;<br/>
 &nbsp;&nbsp;<span class="id" title="var">now</span> (<span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Coq_Helpers.MultisetHelper.html#neq_multi_nil"><span class="id" title="lemma">neq_multi_nil</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>) <span class="id" title="keyword">end</span>;<br/>

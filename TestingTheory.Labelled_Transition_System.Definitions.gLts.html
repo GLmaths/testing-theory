@@ -26,30 +26,6 @@
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
 <div class="code">
-<span class="comment">(*<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Nomadic&nbsp;Labs<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Paul&nbsp;Laforgue&nbsp;&lt;paul.laforgue@nomadic-labs.com&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Léo&nbsp;Stefanesco&nbsp;&lt;leo.stefanesco@mpi-sws.org&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;Gaëtan&nbsp;Lopez&nbsp;&lt;glopez@irif.fr&gt;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;Permission&nbsp;is&nbsp;hereby&nbsp;granted,&nbsp;free&nbsp;of&nbsp;charge,&nbsp;to&nbsp;any&nbsp;person&nbsp;obtaining&nbsp;a&nbsp;copy<br/>
-&nbsp;&nbsp;&nbsp;of&nbsp;this&nbsp;software&nbsp;and&nbsp;associated&nbsp;documentation&nbsp;files&nbsp;(the&nbsp;"Software"),&nbsp;to&nbsp;deal<br/>
-&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Software&nbsp;without&nbsp;restriction,&nbsp;including&nbsp;without&nbsp;limitation&nbsp;the&nbsp;rights<br/>
-&nbsp;&nbsp;&nbsp;to&nbsp;use,&nbsp;copy,&nbsp;modify,&nbsp;merge,&nbsp;publish,&nbsp;distribute,&nbsp;sublicense,&nbsp;and/or&nbsp;sell<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;of&nbsp;the&nbsp;Software,&nbsp;and&nbsp;to&nbsp;permit&nbsp;persons&nbsp;to&nbsp;whom&nbsp;the&nbsp;Software&nbsp;is<br/>
-&nbsp;&nbsp;&nbsp;furnished&nbsp;to&nbsp;do&nbsp;so,&nbsp;subject&nbsp;to&nbsp;the&nbsp;following&nbsp;conditions:<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;The&nbsp;above&nbsp;copyright&nbsp;notice&nbsp;and&nbsp;this&nbsp;permission&nbsp;notice&nbsp;shall&nbsp;be&nbsp;included&nbsp;in&nbsp;all<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;or&nbsp;substantial&nbsp;portions&nbsp;of&nbsp;the&nbsp;Software.<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;THE&nbsp;SOFTWARE&nbsp;IS&nbsp;PROVIDED&nbsp;"AS&nbsp;IS",&nbsp;WITHOUT&nbsp;WARRANTY&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;EXPRESS&nbsp;OR<br/>
-&nbsp;&nbsp;&nbsp;IMPLIED,&nbsp;INCLUDING&nbsp;BUT&nbsp;NOT&nbsp;LIMITED&nbsp;TO&nbsp;THE&nbsp;WARRANTIES&nbsp;OF&nbsp;MERCHANTABILITY,<br/>
-&nbsp;&nbsp;&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE&nbsp;AND&nbsp;NONINFRINGEMENT.&nbsp;IN&nbsp;NO&nbsp;EVENT&nbsp;SHALL&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;AUTHORS&nbsp;OR&nbsp;COPYRIGHT&nbsp;HOLDERS&nbsp;BE&nbsp;LIABLE&nbsp;FOR&nbsp;ANY&nbsp;CLAIM,&nbsp;DAMAGES&nbsp;OR&nbsp;OTHER<br/>
-&nbsp;&nbsp;&nbsp;LIABILITY,&nbsp;WHETHER&nbsp;IN&nbsp;AN&nbsp;ACTION&nbsp;OF&nbsp;CONTRACT,&nbsp;TORT&nbsp;OR&nbsp;OTHERWISE,&nbsp;ARISING&nbsp;FROM,<br/>
-&nbsp;&nbsp;&nbsp;OUT&nbsp;OF&nbsp;OR&nbsp;IN&nbsp;CONNECTION&nbsp;WITH&nbsp;THE&nbsp;SOFTWARE&nbsp;OR&nbsp;THE&nbsp;USE&nbsp;OR&nbsp;OTHER&nbsp;DEALINGS&nbsp;IN&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;SOFTWARE.<br/>
-*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
@@ -75,22 +51,22 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual" class="idref" href="#dual"><span class="id" title="projection">dual</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#A:1"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#A:1"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <span class="id" title="keyword">Prop</span>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual_dec" class="idref" href="#dual_dec"><span class="id" title="projection">dual_dec</span></a> <a id="a:9" class="idref" href="#a:9"><span class="id" title="binder">a</span></a> <a id="b:10" class="idref" href="#b:10"><span class="id" title="binder">b</span></a>: <span class="id" title="class">Decision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#dual:8"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#a:9"><span class="id" title="variable">a</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#b:10"><span class="id" title="variable">b</span></a>);<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Co-action&nbsp;of&nbsp;a&nbsp;non-blocking&nbsp;action&nbsp;is&nbsp;blocking,&nbsp;otherwise&nbsp;infinite&nbsp;non-blocking&nbsp;action&nbsp;sequence&nbsp;in&nbsp;FW&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual_blocks" class="idref" href="#dual_blocks"><span class="id" title="projection">dual_blocks</span></a> <a id="f688bd0df31fca89f9a0438aff1191e1" class="idref" href="#f688bd0df31fca89f9a0438aff1191e1"><span class="id" title="binder">β</span></a> <a id="7c2e14a699100b535adbc4240ae4c20d" class="idref" href="#7c2e14a699100b535adbc4240ae4c20d"><span class="id" title="binder">η</span></a> :<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#non_blocking:5"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#7c2e14a699100b535adbc4240ae4c20d"><span class="id" title="variable">η</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#dual:8"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#f688bd0df31fca89f9a0438aff1191e1"><span class="id" title="variable">β</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#7c2e14a699100b535adbc4240ae4c20d"><span class="id" title="variable">η</span></a> <span class="id" title="notation">→</span> <br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">¬</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#non_blocking:5"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#f688bd0df31fca89f9a0438aff1191e1"><span class="id" title="variable">β</span></a> ;<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;dual&nbsp;is&nbsp;symmetric&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="duo_sym" class="idref" href="#duo_sym"><span class="id" title="projection">duo_sym</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Classes.RelationClasses.html#Symmetric"><span class="id" title="class">Symmetric</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#dual:8"><span class="id" title="method">dual</span></a>;<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Constructive&nbsp;way&nbsp;to&nbsp;build&nbsp;a&nbsp;dual&nbsp;action&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="exists_dual" class="idref" href="#exists_dual"><span class="id" title="projection">exists_dual</span></a> <a id="92bb74d3932762c48d4871fada859cc7" class="idref" href="#92bb74d3932762c48d4871fada859cc7"><span class="id" title="binder">μ</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">{</span></a> <a id="6f6fa701500691f7f751bd11d64ad182" class="idref" href="#6f6fa701500691f7f751bd11d64ad182"><span class="id" title="binder">η</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">|</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#dual:8"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#92bb74d3932762c48d4871fada859cc7"><span class="id" title="variable">μ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#6f6fa701500691f7f751bd11d64ad182"><span class="id" title="variable">η</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">}</span></a>;<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Unique&nbsp;dual&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="unique_nb" class="idref" href="#unique_nb"><span class="id" title="projection">unique_nb</span></a> <a id="e98ae8dcce2df2ccc50630d5e8a8efae" class="idref" href="#e98ae8dcce2df2ccc50630d5e8a8efae"><span class="id" title="binder">η</span></a> <a id="6c2ec6377e76aa6ba76ef80084405710" class="idref" href="#6c2ec6377e76aa6ba76ef80084405710"><span class="id" title="binder">β</span></a>: <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#dual:8"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#6c2ec6377e76aa6ba76ef80084405710"><span class="id" title="variable">β</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#e98ae8dcce2df2ccc50630d5e8a8efae"><span class="id" title="variable">η</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#e98ae8dcce2df2ccc50630d5e8a8efae"><span class="id" title="variable">η</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#proj1_sig"><span class="id" title="definition">proj1_sig</span></a> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#exists_dual:18"><span class="id" title="method">exists_dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#6c2ec6377e76aa6ba76ef80084405710"><span class="id" title="variable">β</span></a>);<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Handy&nbsp;hypothesis&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;nb_not_nb&nbsp;η1&nbsp;η2&nbsp;ɣ&nbsp;:&nbsp;non_blocking&nbsp;η1&nbsp;→&nbsp;dual&nbsp;η1&nbsp;ɣ&nbsp;→&nbsp;dual&nbsp;η2&nbsp;ɣ&nbsp;→&nbsp;non_blocking&nbsp;η2;&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Existing</span> <span class="id" title="keyword">Instance</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#eqdec"><span class="id" title="method">eqdec</span></a>.<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Existing</span> <span class="id" title="keyword">Instance</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#countable"><span class="id" title="method">countable</span></a>.<br/>
@@ -99,15 +75,12 @@
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Existing</span> <span class="id" title="keyword">Instance</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#duo_sym"><span class="id" title="method">duo_sym</span></a>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Definition&nbsp;of&nbsp;blocking&nbsp;action&nbsp;*)</span><br/>
 <span class="id" title="keyword">Notation</span> <a id=":::'blocking'_x" class="idref" href="#:::'blocking'_x"><span class="id" title="notation">&quot;</span></a>'blocking' β" := (<span class="id" title="notation">¬</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#non_blocking"><span class="id" title="method">non_blocking</span></a> <span class="id" title="var">β</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30).<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Definition&nbsp;of&nbsp;the&nbsp;co-action&nbsp;*)</span><br/>
 <span class="id" title="keyword">Notation</span> <a id=":::'co'_x" class="idref" href="#:::'co'_x"><span class="id" title="notation">&quot;</span></a>'co' μ" := (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#proj1_sig"><span class="id" title="definition">proj1_sig</span></a> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#exists_dual"><span class="id" title="method">exists_dual</span></a> <span class="id" title="var">μ</span>)) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30).<br/>
 
 <br/>
-<span class="comment">(*Definition&nbsp;of&nbsp;the&nbsp;co-trace&nbsp;*)</span><br/>
 <span class="id" title="keyword">Notation</span> <a id="8b25d1151096b8433ca7ad76f5be9709" class="idref" href="#8b25d1151096b8433ca7ad76f5be9709"><span class="id" title="notation">&quot;</span></a>'coₜ' s" := (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Lists.ListDef.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="keyword">fun</span> <a id="cc1e75c6f0d857f62fd72a8bc1c0288a" class="idref" href="#cc1e75c6f0d857f62fd72a8bc1c0288a"><span class="id" title="binder">μ</span></a> =&gt; (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#proj1_sig"><span class="id" title="definition">proj1_sig</span></a> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#exists_dual"><span class="id" title="method">exists_dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#cc1e75c6f0d857f62fd72a8bc1c0288a"><span class="id" title="variable">μ</span></a>))) <span class="id" title="var">s</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30).<br/>
 
 <br/>

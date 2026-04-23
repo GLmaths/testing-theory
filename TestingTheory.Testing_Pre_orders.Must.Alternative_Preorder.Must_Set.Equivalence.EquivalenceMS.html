@@ -26,30 +26,6 @@
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
 <div class="code">
-<span class="comment">(*<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Nomadic&nbsp;Labs<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Paul&nbsp;Laforgue&nbsp;&lt;paul.laforgue@nomadic-labs.com&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Léo&nbsp;Stefanesco&nbsp;&lt;leo.stefanesco@mpi-sws.org&gt;<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;Gaëtan&nbsp;Lopez&nbsp;&lt;glopez@irif.fr&gt;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;Permission&nbsp;is&nbsp;hereby&nbsp;granted,&nbsp;free&nbsp;of&nbsp;charge,&nbsp;to&nbsp;any&nbsp;person&nbsp;obtaining&nbsp;a&nbsp;copy<br/>
-&nbsp;&nbsp;&nbsp;of&nbsp;this&nbsp;software&nbsp;and&nbsp;associated&nbsp;documentation&nbsp;files&nbsp;(the&nbsp;"Software"),&nbsp;to&nbsp;deal<br/>
-&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Software&nbsp;without&nbsp;restriction,&nbsp;including&nbsp;without&nbsp;limitation&nbsp;the&nbsp;rights<br/>
-&nbsp;&nbsp;&nbsp;to&nbsp;use,&nbsp;copy,&nbsp;modify,&nbsp;merge,&nbsp;publish,&nbsp;distribute,&nbsp;sublicense,&nbsp;and/or&nbsp;sell<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;of&nbsp;the&nbsp;Software,&nbsp;and&nbsp;to&nbsp;permit&nbsp;persons&nbsp;to&nbsp;whom&nbsp;the&nbsp;Software&nbsp;is<br/>
-&nbsp;&nbsp;&nbsp;furnished&nbsp;to&nbsp;do&nbsp;so,&nbsp;subject&nbsp;to&nbsp;the&nbsp;following&nbsp;conditions:<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;The&nbsp;above&nbsp;copyright&nbsp;notice&nbsp;and&nbsp;this&nbsp;permission&nbsp;notice&nbsp;shall&nbsp;be&nbsp;included&nbsp;in&nbsp;all<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;or&nbsp;substantial&nbsp;portions&nbsp;of&nbsp;the&nbsp;Software.<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;THE&nbsp;SOFTWARE&nbsp;IS&nbsp;PROVIDED&nbsp;"AS&nbsp;IS",&nbsp;WITHOUT&nbsp;WARRANTY&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;EXPRESS&nbsp;OR<br/>
-&nbsp;&nbsp;&nbsp;IMPLIED,&nbsp;INCLUDING&nbsp;BUT&nbsp;NOT&nbsp;LIMITED&nbsp;TO&nbsp;THE&nbsp;WARRANTIES&nbsp;OF&nbsp;MERCHANTABILITY,<br/>
-&nbsp;&nbsp;&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE&nbsp;AND&nbsp;NONINFRINGEMENT.&nbsp;IN&nbsp;NO&nbsp;EVENT&nbsp;SHALL&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;AUTHORS&nbsp;OR&nbsp;COPYRIGHT&nbsp;HOLDERS&nbsp;BE&nbsp;LIABLE&nbsp;FOR&nbsp;ANY&nbsp;CLAIM,&nbsp;DAMAGES&nbsp;OR&nbsp;OTHER<br/>
-&nbsp;&nbsp;&nbsp;LIABILITY,&nbsp;WHETHER&nbsp;IN&nbsp;AN&nbsp;ACTION&nbsp;OF&nbsp;CONTRACT,&nbsp;TORT&nbsp;OR&nbsp;OTHERWISE,&nbsp;ARISING&nbsp;FROM,<br/>
-&nbsp;&nbsp;&nbsp;OUT&nbsp;OF&nbsp;OR&nbsp;IN&nbsp;CONNECTION&nbsp;WITH&nbsp;THE&nbsp;SOFTWARE&nbsp;OR&nbsp;THE&nbsp;USE&nbsp;OR&nbsp;OTHER&nbsp;DEALINGS&nbsp;IN&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;SOFTWARE.<br/>
-*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssreflect</span>.<br/>
@@ -80,11 +56,8 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{!<a class="idref" href="TestingTheory.Interaction_Between_Lts.InteractionBetweenLts.html#Prop_of_Inter"><span class="id" title="class">Prop_of_Inter</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.Q"><span class="id" title="variable">Q</span></a> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#mb"><span class="id" title="definition">mb</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a>) <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#fw_inter"><span class="id" title="definition">fw_inter</span></a>}.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;&nbsp;&nbsp;Definition&nbsp;actions_acc&nbsp;<br/>
-&nbsp;&nbsp;(p&nbsp;:&nbsp;P&nbsp;*&nbsp;mb&nbsp;A)&nbsp;s&nbsp;(h&nbsp;:&nbsp;p&nbsp;⇓&nbsp;s)&nbsp;:&nbsp;gset&nbsp;PreA&nbsp;:=&nbsp;oas&nbsp;p&nbsp;s&nbsp;h.&nbsp;*)</span><br/>
 
 <br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;**************************************************&nbsp;*)</span><br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="either_wperform_mu" class="idref" href="#either_wperform_mu"><span class="id" title="lemma">either_wperform_mu</span></a> <br/>
@@ -189,65 +162,15 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;&nbsp;&nbsp;Lemma&nbsp;nMust_out_acc_ex&nbsp;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(p&nbsp;:&nbsp;P&nbsp;*&nbsp;mb&nbsp;A)&nbsp;pt&nbsp;G&nbsp;s&nbsp;hcnv&nbsp;:<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;pt&nbsp;∈&nbsp;AFTER&nbsp;p&nbsp;s&nbsp;hcnv&nbsp;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;-&gt;&nbsp;~&nbsp;MUST&nbsp;pt&nbsp;(union_of_actions_without&nbsp;((elements&nbsp;(wt_refuses_set&nbsp;p&nbsp;s&nbsp;hcnv))&nbsp;,&nbsp;q'))&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;exists&nbsp;p',&nbsp;pt&nbsp;⟹&nbsp;p'&nbsp;/\&nbsp;p'&nbsp;↛&nbsp;/\&nbsp;lts_acc_set_of&nbsp;p'&nbsp;⊆&nbsp;lts_acc_set_of&nbsp;q'.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;mem*)</span><br/>
 
 <br/>
-<span class="comment">(*&nbsp;&nbsp;&nbsp;Lemma&nbsp;either_MUST_or_ex&nbsp;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(p&nbsp;:&nbsp;P&nbsp;*&nbsp;mb&nbsp;A)&nbsp;(q'&nbsp;:&nbsp;Q&nbsp;*&nbsp;mb&nbsp;A)&nbsp;&nbsp;s&nbsp;hcnv&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;MUST__s&nbsp;(AFTER&nbsp;p&nbsp;s&nbsp;hcnv)&nbsp;(union_of_actions_without&nbsp;((elements&nbsp;(wt_refuses_set&nbsp;p&nbsp;s&nbsp;hcnv))&nbsp;,&nbsp;q'))<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;\/&nbsp;(exists&nbsp;p',&nbsp;p&nbsp;⟹<span class="inlinecode"><span class="id" title="var">s</span></span>&nbsp;p'&nbsp;/\&nbsp;p'&nbsp;↛&nbsp;/\&nbsp;lts_acc_set_of&nbsp;p'&nbsp;⊆&nbsp;lts_acc_set_of&nbsp;q').<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(h1&nbsp;:&nbsp;forall&nbsp;p0,&nbsp;p0&nbsp;∈&nbsp;AFTER&nbsp;p&nbsp;s&nbsp;hcnv&nbsp;→&nbsp;p0&nbsp;⇓&nbsp;<span class="inlinecode"></span>).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;p0&nbsp;mem0.&nbsp;eapply&nbsp;cnv_nil,&nbsp;cnv_wt_s_terminate;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;(wt_set_spec1&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;mem0).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;(either_MUST__s&nbsp;(AFTER&nbsp;p&nbsp;s&nbsp;hcnv)&nbsp;((elements&nbsp;(wt_refuses_set&nbsp;p&nbsp;s&nbsp;hcnv))&nbsp;,&nbsp;q'))&nbsp;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;<span class="inlinecode"></span> <span class="inlinecode">|<span class="id" title="var">Hyp</span></span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;left.&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;right.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;nMusts_ex&nbsp;in&nbsp;Hyp&nbsp;as&nbsp;(pt&nbsp;&amp;&nbsp;mem&nbsp;&amp;&nbsp;hnm);&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;nMust_out_acc_ex&nbsp;in&nbsp;hnm&nbsp;as&nbsp;(pt'&nbsp;&amp;&nbsp;hw&nbsp;&amp;&nbsp;hst&nbsp;&amp;&nbsp;hsub);&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exists&nbsp;pt'.&nbsp;split;&nbsp;eauto.&nbsp;eapply&nbsp;wt_push_nil_right;&nbsp;eauto.&nbsp;now&nbsp;eapply&nbsp;wt_set_spec1&nbsp;in&nbsp;mem.<br/>
-&nbsp;&nbsp;Qed.&nbsp;*)</span><br/>
 
 <br/>
-<span class="comment">(*&nbsp;&nbsp;&nbsp;Lemma&nbsp;Must_out_acc_npre&nbsp;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(p&nbsp;:&nbsp;P&nbsp;*&nbsp;mb&nbsp;A)&nbsp;(q&nbsp;q'&nbsp;:&nbsp;Q&nbsp;*&nbsp;mb&nbsp;A)&nbsp;s&nbsp;hcnv&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;q&nbsp;⇓&nbsp;s&nbsp;-&gt;&nbsp;q&nbsp;⟹<span class="inlinecode"><span class="id" title="var">s</span></span>&nbsp;q'&nbsp;-&gt;&nbsp;q'&nbsp;↛&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;MUST__s&nbsp;(AFTER&nbsp;p&nbsp;s&nbsp;hcnv)&nbsp;(actions_acc&nbsp;p&nbsp;s&nbsp;hcnv&nbsp;∖&nbsp;lts_acc_set_of&nbsp;q')&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;~&nbsp;p&nbsp;≾₂&nbsp;q.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;hcnv'&nbsp;hw&nbsp;hst&nbsp;hm&nbsp;pre2.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;set&nbsp;(G&nbsp;:=&nbsp;actions_acc&nbsp;p&nbsp;s&nbsp;hcnv&nbsp;∖&nbsp;lts_acc_set_of&nbsp;q').<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(exists&nbsp;μ&nbsp;t,&nbsp;μ&nbsp;∈&nbsp;G&nbsp;/\&nbsp;q'&nbsp;⟹{μ}&nbsp;t)&nbsp;as&nbsp;(μ&nbsp;&amp;&nbsp;t&nbsp;&amp;&nbsp;mem&nbsp;&amp;&nbsp;hw').<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;(pre2&nbsp;s&nbsp;hcnv&nbsp;hcnv');&nbsp;eauto.&nbsp;eapply&nbsp;wt_set_spec2;&nbsp;eauto.&nbsp;eapply&nbsp;wt_nil.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;elem_of_difference&nbsp;in&nbsp;mem&nbsp;as&nbsp;(mem&nbsp;&amp;&nbsp;nmem).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;assert&nbsp;(exists&nbsp;p',&nbsp;p'&nbsp;⟶<span class="inlinecode"></span> <span class="inlinecode"><span class="id" title="var">μ</span></span> <span class="inlinecode"></span>).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(is_output&nbsp;μ)&nbsp;as&nbsp;(a&nbsp;&amp;&nbsp;heq).&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;elem_of_union_list&nbsp;in&nbsp;mem&nbsp;as&nbsp;(X&nbsp;&amp;&nbsp;mem1&nbsp;&amp;&nbsp;mem2).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;list_elem_of_fmap&nbsp;in&nbsp;mem1&nbsp;as&nbsp;(r&nbsp;&amp;&nbsp;heq&nbsp;&amp;&nbsp;mem1).&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;eapply&nbsp;elem_of_map&nbsp;in&nbsp;mem2&nbsp;as&nbsp;(a&nbsp;&amp;&nbsp;heq&nbsp;&amp;&nbsp;mem2).&nbsp;exists&nbsp;a.&nbsp;assumption.&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;{&nbsp;r'&nbsp;|&nbsp;r&nbsp;⟶<span class="inlinecode"></span> <span class="inlinecode"><span class="id" title="var">μ</span></span> <span class="inlinecode"></span>&nbsp;r'}&nbsp;as&nbsp;(r'&nbsp;&amp;&nbsp;HypTr).&nbsp;eapply&nbsp;lts_refuses_spec1.&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;hw';&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;lts_refuses_spec2&nbsp;in&nbsp;hst;&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;nmem.&nbsp;eapply&nbsp;lts_refuses_spec2.&nbsp;eauto.<br/>
-&nbsp;&nbsp;Qed.&nbsp;*)</span><br/>
 
 <br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;**************************************************&nbsp;*)</span><br/>
 
 <br/>
-&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{@<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#PreExtAction"><span class="id" title="class">PreExtAction</span></a> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.P"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#mb"><span class="id" title="definition">mb</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a>) <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.H"><span class="id" title="variable">H</span></a> <span class="id" title="var">FinA</span> <span class="id" title="var">PreA</span> <span class="id" title="var">PreA_eq</span> <span class="id" title="var">PreA_countable</span> 𝝳 <span class="id" title="var">Φ</span> <span class="id" title="var">_</span>}. <span class="comment">(*&nbsp;(FW_gLts&nbsp;gLtsP)&nbsp;*)</span><br/>
-&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{@<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#PreExtAction"><span class="id" title="class">PreExtAction</span></a> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#mb"><span class="id" title="definition">mb</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a>) <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.H"><span class="id" title="variable">H</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.FinA"><span class="id" title="variable">FinA</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.PreA"><span class="id" title="variable">PreA</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.PreA_eq"><span class="id" title="variable">PreA_eq</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.PreA_countable"><span class="id" title="variable">PreA_countable</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#39b553f4c26fd1993b78547844659909"><span class="id" title="variable">𝝳</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#43a70998e97e75a56a67fe9b0bae1f20"><span class="id" title="variable">Φ</span></a> <span class="id" title="var">_</span>}. <span class="comment">(*&nbsp;(FW_gLts&nbsp;gLtsQ)&nbsp;*)</span><br/>
-
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{@<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#PreExtAction"><span class="id" title="class">PreExtAction</span></a> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.P"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#mb"><span class="id" title="definition">mb</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a>) <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.H"><span class="id" title="variable">H</span></a> <span class="id" title="var">FinA</span> <span class="id" title="var">PreA</span> <span class="id" title="var">PreA_eq</span> <span class="id" title="var">PreA_countable</span> 𝝳 <span class="id" title="var">Φ</span> <span class="id" title="var">_</span>}. &nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{@<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#PreExtAction"><span class="id" title="class">PreExtAction</span></a> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#mb"><span class="id" title="definition">mb</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a>) <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.A"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.H"><span class="id" title="variable">H</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.FinA"><span class="id" title="variable">FinA</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.PreA"><span class="id" title="variable">PreA</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.PreA_eq"><span class="id" title="variable">PreA_eq</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.PreA_countable"><span class="id" title="variable">PreA_countable</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#39b553f4c26fd1993b78547844659909"><span class="id" title="variable">𝝳</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#43a70998e97e75a56a67fe9b0bae1f20"><span class="id" title="variable">Φ</span></a> <span class="id" title="var">_</span>}. 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="equivalence_bhv_acc_mst2" class="idref" href="#equivalence_bhv_acc_mst2"><span class="id" title="lemma">equivalence_bhv_acc_mst2</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;(<a id="p:81" class="idref" href="#p:81"><span class="id" title="binder">p</span></a> : <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.P"><span class="id" title="variable">P</span></a>) (<a id="q:82" class="idref" href="#q:82"><span class="id" title="binder">q</span></a> : <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#must_set_acc_set.Q"><span class="id" title="variable">Q</span></a>) :<br/>
@@ -256,9 +179,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span> <span class="id" title="var">hpre1</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intro</span> <span class="id" title="var">hpre2</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">s</span> <span class="id" title="var">q'</span> <span class="id" title="var">hcnv</span> <span class="id" title="var">hw</span> <span class="id" title="var">hst</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;edestruct&nbsp;(either_MUST_or_ex&nbsp;(p,&nbsp;∅)&nbsp;q'&nbsp;s&nbsp;hcnv).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;exfalso.&nbsp;eapply&nbsp;Must_out_acc_npre;&nbsp;eauto&nbsp;with&nbsp;mdb.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;set_solver.&nbsp;*)</span> <span class="id" title="var">admit</span>.<br/>
+ <span class="id" title="var">admit</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intro</span> <span class="id" title="var">hpre2</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">s</span> <span class="id" title="var">hcnv</span> <span class="id" title="var">hcnv'</span> <span class="id" title="var">G</span> <span class="id" title="var">hm</span> <span class="id" title="var">q'</span> <span class="id" title="var">mem</span>%<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#wt_set_spec1"><span class="id" title="lemma">wt_set_spec1</span></a> <span class="id" title="var">q0</span> <span class="id" title="var">hw</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="r:83" class="idref" href="#r:83"><span class="id" title="binder"><span id="r:84" class="id">r</span></span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <span class="id" title="var">q0</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.WeakTransitions.html#202cd232dc0ae9f4f6454a4649c38d86"><span class="id" title="notation">⟹</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#r:83"><span class="id" title="variable">r</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#r:83"><span class="id" title="variable">r</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#70a49f19788ca4f524394e57ded0ed30"><span class="id" title="notation">↛</span></a>) <span class="id" title="keyword">as</span> (<span class="id" title="var">qt</span> &amp; <span class="id" title="var">hw'</span> &amp; <span class="id" title="var">hstq'</span>).<br/>
@@ -273,7 +194,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">assert</span> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#39b553f4c26fd1993b78547844659909"><span class="id" title="variable">𝝳</span></a> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#43a70998e97e75a56a67fe9b0bae1f20"><span class="id" title="variable">Φ</span></a> <span class="id" title="var">μ</span>) <span class="id" title="notation">∈</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#pre_co_actions_of"><span class="id" title="method">pre_co_actions_of</span></a> <span class="id" title="var">qt</span>).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">eapply</span> <span class="id" title="var">hsubpt</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#preactions_of_spec"><span class="id" title="method">preactions_of_spec</span></a>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#preactions_of_fin_test_spec1"><span class="id" title="method">preactions_of_fin_test_spec1</span></a>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">admit</span>. }<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;exists&nbsp;qr.&nbsp;split;&nbsp;eauto.&nbsp;eapply&nbsp;wt_push_nil_left;&nbsp;eauto&nbsp;with&nbsp;mdb.&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">admit</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="var">Admitted</span>.<br/>
 
@@ -311,8 +232,7 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">erewrite</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.MustE.html#pre_extensional_eq"><span class="id" title="lemma">pre_extensional_eq</span></a>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.Equivalence.EquivalenceMS.html#equivalence_bhv_acc_mst"><span class="id" title="lemma">equivalence_bhv_acc_mst</span></a>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;rewrite&nbsp;&lt;-&nbsp;equivalence_bhv_acc_ctx.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;eapply&nbsp;pre_extensional_eq.&nbsp;*)</span> <span class="id" title="var">admit</span>.<br/>
+ <span class="id" title="var">admit</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="var">Admitted</span>.<br/>
 
 <br/>

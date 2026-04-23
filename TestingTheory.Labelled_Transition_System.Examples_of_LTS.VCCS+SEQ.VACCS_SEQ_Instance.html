@@ -26,27 +26,6 @@
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
 <div class="code">
-<span class="comment">(*<br/>
-&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Gaëtan&nbsp;Lopez&nbsp;&lt;gaetanlopez.maths@gmail.com&gt;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;Permission&nbsp;is&nbsp;hereby&nbsp;granted,&nbsp;free&nbsp;of&nbsp;charge,&nbsp;to&nbsp;any&nbsp;person&nbsp;obtaining&nbsp;a&nbsp;copy<br/>
-&nbsp;&nbsp;&nbsp;of&nbsp;this&nbsp;software&nbsp;and&nbsp;associated&nbsp;documentation&nbsp;files&nbsp;(the&nbsp;"Software"),&nbsp;to&nbsp;deal<br/>
-&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Software&nbsp;without&nbsp;restriction,&nbsp;including&nbsp;without&nbsp;limitation&nbsp;the&nbsp;rights<br/>
-&nbsp;&nbsp;&nbsp;to&nbsp;use,&nbsp;copy,&nbsp;modify,&nbsp;merge,&nbsp;publish,&nbsp;distribute,&nbsp;sublicense,&nbsp;and/or&nbsp;sell<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;of&nbsp;the&nbsp;Software,&nbsp;and&nbsp;to&nbsp;permit&nbsp;persons&nbsp;to&nbsp;whom&nbsp;the&nbsp;Software&nbsp;is<br/>
-&nbsp;&nbsp;&nbsp;furnished&nbsp;to&nbsp;do&nbsp;so,&nbsp;subject&nbsp;to&nbsp;the&nbsp;following&nbsp;conditions:<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;The&nbsp;above&nbsp;copyright&nbsp;notice&nbsp;and&nbsp;this&nbsp;permission&nbsp;notice&nbsp;shall&nbsp;be&nbsp;included&nbsp;in&nbsp;all<br/>
-&nbsp;&nbsp;&nbsp;copies&nbsp;or&nbsp;substantial&nbsp;portions&nbsp;of&nbsp;the&nbsp;Software.<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;THE&nbsp;SOFTWARE&nbsp;IS&nbsp;PROVIDED&nbsp;"AS&nbsp;IS",&nbsp;WITHOUT&nbsp;WARRANTY&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;EXPRESS&nbsp;OR<br/>
-&nbsp;&nbsp;&nbsp;IMPLIED,&nbsp;INCLUDING&nbsp;BUT&nbsp;NOT&nbsp;LIMITED&nbsp;TO&nbsp;THE&nbsp;WARRANTIES&nbsp;OF&nbsp;MERCHANTABILITY,<br/>
-&nbsp;&nbsp;&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE&nbsp;AND&nbsp;NONINFRINGEMENT.&nbsp;IN&nbsp;NO&nbsp;EVENT&nbsp;SHALL&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;AUTHORS&nbsp;OR&nbsp;COPYRIGHT&nbsp;HOLDERS&nbsp;BE&nbsp;LIABLE&nbsp;FOR&nbsp;ANY&nbsp;CLAIM,&nbsp;DAMAGES&nbsp;OR&nbsp;OTHER<br/>
-&nbsp;&nbsp;&nbsp;LIABILITY,&nbsp;WHETHER&nbsp;IN&nbsp;AN&nbsp;ACTION&nbsp;OF&nbsp;CONTRACT,&nbsp;TORT&nbsp;OR&nbsp;OTHERWISE,&nbsp;ARISING&nbsp;FROM,<br/>
-&nbsp;&nbsp;&nbsp;OUT&nbsp;OF&nbsp;OR&nbsp;IN&nbsp;CONNECTION&nbsp;WITH&nbsp;THE&nbsp;SOFTWARE&nbsp;OR&nbsp;THE&nbsp;USE&nbsp;OR&nbsp;OTHER&nbsp;DEALINGS&nbsp;IN&nbsp;THE<br/>
-&nbsp;&nbsp;&nbsp;SOFTWARE.<br/>
-*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Program</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="var">Equality</span>.<br/>
@@ -66,20 +45,14 @@
 
 </div>
 <div class="code">
-<span class="comment">(*&nbsp;ChannelType&nbsp;est&nbsp;le&nbsp;type&nbsp;des&nbsp;canaux,&nbsp;par&nbsp;exemple&nbsp;des&nbsp;chaînes&nbsp;de&nbsp;caractères*)</span><br/>
-<span class="comment">(*&nbsp;ValueType&nbsp;est&nbsp;le&nbsp;type&nbsp;des&nbsp;données&nbsp;transmises,&nbsp;par&nbsp;exemple&nbsp;des&nbsp;entiers,&nbsp;des&nbsp;chaînes&nbsp;de&nbsp;caractères,&nbsp;des&nbsp;programmes&nbsp;(?)&nbsp;*)</span><br/>
 
 <br/>
-<span class="comment">(*&nbsp;Coercion&nbsp;ActExt&nbsp;:&nbsp;ExtAct&nbsp;&gt;-&gt;&nbsp;Act.&nbsp;*)</span><br/>
 <span class="id" title="keyword">Parameter</span> (<span class="id" title="var">Channel</span> <span class="id" title="var">Value</span> : <span class="id" title="keyword">Type</span>).<br/>
-<span class="comment">(*Exemple&nbsp;:&nbsp;Definition&nbsp;Channel&nbsp;:=&nbsp;string.*)</span><br/>
-<span class="comment">(*Exemple&nbsp;:&nbsp;Definition&nbsp;Value&nbsp;:=&nbsp;nat.*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">Inductive</span> <span class="id" title="var">Data</span> :=<br/>
 | <span class="id" title="var">cst</span> : <span class="id" title="var">Value</span> -&gt; <span class="id" title="var">Data</span><br/>
-| <span class="id" title="var">bvar</span> : <span class="id" title="var">nat</span> -&gt; <span class="id" title="var">Data</span>. <span class="comment">(*&nbsp;variable&nbsp;as&nbsp;De&nbsp;Bruijn&nbsp;indices&nbsp;*)</span><br/>
-
+| <span class="id" title="var">bvar</span> : <span class="id" title="var">nat</span> -&gt; <span class="id" title="var">Data</span>. 
 <br/>
 <span class="id" title="keyword">Coercion</span> <span class="id" title="var">cst</span> : <span class="id" title="var">Value</span> &gt;-&gt; <span class="id" title="var">Data</span>.<br/>
 <span class="id" title="keyword">Coercion</span> <span class="id" title="var">bvar</span> : <span class="id" title="var">nat</span> &gt;-&gt; <span class="id" title="var">Data</span>.<br/>
@@ -98,7 +71,6 @@
 | <span class="id" title="var">Inequality</span> : <span class="id" title="var">A</span> -&gt; <span class="id" title="var">A</span> -&gt; <span class="id" title="var">Equation</span> <span class="id" title="var">A</span><br/>
 | <span class="id" title="var">Or</span> : <span class="id" title="var">Equation</span> <span class="id" title="var">A</span> -&gt; <span class="id" title="var">Equation</span> <span class="id" title="var">A</span> -&gt; <span class="id" title="var">Equation</span> <span class="id" title="var">A</span><br/>
 | <span class="id" title="var">Not</span> : <span class="id" title="var">Equation</span> <span class="id" title="var">A</span> -&gt; <span class="id" title="var">Equation</span> <span class="id" title="var">A</span>.<br/>
-<span class="comment">(*&nbsp;I&nbsp;have&nbsp;a&nbsp;Type&nbsp;Of&nbsp;Equation&nbsp;and&nbsp;I&nbsp;know&nbsp;how&nbsp;to&nbsp;evaluate&nbsp;it&nbsp;*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">Arguments</span>  <span class="id" title="var">tt</span>  {<span class="id" title="var">_</span>}.<br/>
@@ -114,45 +86,40 @@
 
 <br/>
 <span class="id" title="keyword">Parameter</span> (<span class="id" title="var">Eval_Eq</span> : <span class="id" title="var">Equation</span> <span class="id" title="var">Data</span> -&gt; (<span class="id" title="var">option</span> <span class="id" title="var">bool</span>)).<br/>
-<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">channel_eq_dec</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Channel</span>). <span class="comment">(*&nbsp;only&nbsp;here&nbsp;for&nbsp;the&nbsp;classes&nbsp;*)</span><br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">channel_eqdecision</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Channel</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">channel_eq_dec</span>. <span class="id" title="keyword">Defined</span>.<br/>
-<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">channel_is_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Channel</span>). <span class="comment">(*&nbsp;only&nbsp;here&nbsp;for&nbsp;the&nbsp;classes&nbsp;*)</span><br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">channel_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Channel</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">channel_is_countable</span>. <span class="id" title="keyword">Defined</span>.<br/>
-<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">value_eq_dec</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Value</span>). <span class="comment">(*&nbsp;only&nbsp;here&nbsp;for&nbsp;the&nbsp;classes&nbsp;*)</span><br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">value_eqdecision</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Value</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">value_eq_dec</span>. <span class="id" title="keyword">Defined</span>.<br/>
-<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">value_is_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Value</span>). <span class="comment">(*&nbsp;only&nbsp;here&nbsp;for&nbsp;the&nbsp;classes&nbsp;*)</span><br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">value_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Value</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">value_is_countable</span>. <span class="id" title="keyword">Defined</span>.<br/>
+<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">channel_eq_dec</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Channel</span>). #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">channel_eqdecision</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Channel</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">channel_eq_dec</span>. <span class="id" title="keyword">Defined</span>.<br/>
+<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">channel_is_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Channel</span>). #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">channel_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Channel</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">channel_is_countable</span>. <span class="id" title="keyword">Defined</span>.<br/>
+<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">value_eq_dec</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Value</span>). #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">value_eqdecision</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">Value</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">value_eq_dec</span>. <span class="id" title="keyword">Defined</span>.<br/>
+<span class="id" title="keyword">Parameter</span> (<span class="id" title="var">value_is_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Value</span>). #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">value_countable</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">Value</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">value_is_countable</span>. <span class="id" title="keyword">Defined</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Definition&nbsp;of&nbsp;processes*)</span><br/>
 <span class="id" title="keyword">Inductive</span> <span class="id" title="var">proc</span> : <span class="id" title="keyword">Type</span> :=<br/>
-<span class="comment">(*&nbsp;To&nbsp;parallele&nbsp;two&nbsp;processes*)</span><br/>
+<br/>
 | <span class="id" title="var">pr_par</span> : <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">proc</span><br/>
-<span class="comment">(*&nbsp;Variable&nbsp;in&nbsp;a&nbsp;process,&nbsp;for&nbsp;recursion&nbsp;and&nbsp;substitution*)</span><br/>
+<br/>
 | <span class="id" title="var">pr_var</span> : <span class="id" title="var">nat</span> -&gt; <span class="id" title="var">proc</span><br/>
-<span class="comment">(*&nbsp;recursion&nbsp;for&nbsp;process*)</span><br/>
+<br/>
 | <span class="id" title="var">pr_rec</span> : <span class="id" title="var">nat</span> -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">proc</span><br/>
-<span class="comment">(*&nbsp;If&nbsp;test&nbsp;*NEW&nbsp;term&nbsp;in&nbsp;comparison&nbsp;of&nbsp;CCS*&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">pr_if_then_else</span> : <span class="id" title="var">Equation</span> <span class="id" title="var">Data</span> -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">proc</span><br/>
-<span class="comment">(*&nbsp;The&nbsp;Process&nbsp;that&nbsp;does&nbsp;nothing&nbsp;without&nbsp;blocking&nbsp;state*)</span><br/>
+<br/>
 | <span class="id" title="var">pr_nil</span> : <span class="id" title="var">proc</span><br/>
-<span class="comment">(*The&nbsp;Guards*)</span><br/>
+<br/>
 | <span class="id" title="var">g</span> : <span class="id" title="var">gproc</span> -&gt; <span class="id" title="var">proc</span><br/>
 <br/>
 <span class="id" title="keyword">with</span> <span class="id" title="var">gproc</span> : <span class="id" title="keyword">Type</span> :=<br/>
-<span class="comment">(*&nbsp;Deadlock,&nbsp;no&nbsp;more&nbsp;computation&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">gpr_deadlock</span> : <span class="id" title="var">gproc</span><br/>
-<span class="comment">(*&nbsp;The&nbsp;Success&nbsp;operation*)</span><br/>
+<br/>
 | <span class="id" title="var">gpr_success</span> : <span class="id" title="var">gproc</span><br/>
-<span class="comment">(*An&nbsp;input&nbsp;is&nbsp;a&nbsp;name&nbsp;of&nbsp;a&nbsp;channel,&nbsp;an&nbsp;input&nbsp;variable,&nbsp;followed&nbsp;by&nbsp;a&nbsp;process*)</span><br/>
+<br/>
 | <span class="id" title="var">gpr_input</span> : <span class="id" title="var">Channel</span> -&gt;  <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">gproc</span><br/>
-<span class="comment">(*An&nbsp;output&nbsp;is&nbsp;a&nbsp;name&nbsp;of&nbsp;a&nbsp;channel,&nbsp;an&nbsp;ouput&nbsp;value,&nbsp;followed&nbsp;by&nbsp;a&nbsp;process*)</span><br/>
+<br/>
 | <span class="id" title="var">gpr_output</span> : <span class="id" title="var">Channel</span> -&gt; <span class="id" title="var">Data</span> -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">gproc</span><br/>
-<span class="comment">(*A&nbsp;tau&nbsp;action&nbsp;:&nbsp;does&nbsp;nothing&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">gpr_tau</span> : <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">gproc</span><br/>
-<span class="comment">(*&nbsp;To&nbsp;choose&nbsp;between&nbsp;two&nbsp;processes*)</span><br/>
+<br/>
 | <span class="id" title="var">gpr_choice</span> : <span class="id" title="var">gproc</span> -&gt; <span class="id" title="var">gproc</span> -&gt; <span class="id" title="var">gproc</span><br/>
-<span class="comment">(*Sequentiality&nbsp;for&nbsp;process*)</span><br/>
+<br/>
 | <span class="id" title="var">gpr_seq</span> : <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">gproc</span><br/>
 .<br/>
 
@@ -161,7 +128,6 @@
 <span class="id" title="keyword">Coercion</span> <span class="id" title="var">g</span> : <span class="id" title="var">gproc</span> &gt;-&gt; <span class="id" title="var">proc</span>.<br/>
 
 <br/>
-<span class="comment">(*Some&nbsp;notation&nbsp;to&nbsp;simplify&nbsp;the&nbsp;view&nbsp;of&nbsp;the&nbsp;code*)</span><br/>
 <span class="id" title="keyword">Notation</span> &quot;'δ'" := (<span class="id" title="var">gpr_deadlock</span>).<br/>
 <span class="id" title="keyword">Notation</span> &quot;①" := (<span class="id" title="var">gpr_success</span>).<br/>
 <span class="id" title="keyword">Notation</span> &quot;𝟘" := (<span class="id" title="var">pr_nil</span>).<br/>
@@ -177,8 +143,6 @@
 <span class="id" title="keyword">Notation</span> &quot;P ; Q" := (<span class="id" title="var">gpr_seq</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 50).<br/>
 
 <br/>
-<span class="comment">(*Notation&nbsp;with&nbsp;the&nbsp;De&nbsp;Brujin's&nbsp;indices&nbsp;for&nbsp;the&nbsp;variables*)</span><br/>
-<span class="comment">(*&nbsp;NewVar&nbsp;makes&nbsp;unrecognizable&nbsp;variable&nbsp;from&nbsp;the&nbsp;current&nbsp;environement*)</span><br/>
 <span class="id" title="keyword">Definition</span> <span class="id" title="var">NewVar_in_Data</span> (<span class="id" title="var">k</span> : <span class="id" title="var">nat</span>) (<span class="id" title="var">Y</span> : <span class="id" title="var">Data</span>) : <span class="id" title="var">Data</span> :=<br/>
 <span class="id" title="keyword">match</span> <span class="id" title="var">Y</span> <span class="id" title="keyword">with</span><br/>
 | <span class="id" title="var">cst</span> <span class="id" title="var">v</span> =&gt; <span class="id" title="var">cst</span> <span class="id" title="var">v</span><br/>
@@ -226,38 +190,8 @@
 <span class="id" title="keyword">end</span>.<br/>
 
 <br/>
-<span class="comment">(*Fixpoint&nbsp;Lift_in_Equation&nbsp;(k&nbsp;:&nbsp;nat)&nbsp;(E&nbsp;:&nbsp;Equation&nbsp;Data)&nbsp;:&nbsp;Equation&nbsp;Data&nbsp;:=<br/>
-match&nbsp;E&nbsp;with<br/>
-|&nbsp;tt&nbsp;=&gt;&nbsp;tt<br/>
-|&nbsp;ff&nbsp;=&gt;&nbsp;ff<br/>
-|&nbsp;D1&nbsp;⩽&nbsp;D2&nbsp;=&gt;&nbsp;(Lift_in_Data&nbsp;k&nbsp;D1)&nbsp;⩽&nbsp;(Lift_in_Data&nbsp;k&nbsp;D2)<br/>
-|&nbsp;e1&nbsp;∨&nbsp;e2&nbsp;=&gt;&nbsp;(Lift_in_Equation&nbsp;k&nbsp;e1)&nbsp;∨&nbsp;(Lift_in_Equation&nbsp;k&nbsp;e2)<br/>
-|&nbsp;non&nbsp;e&nbsp;=&gt;&nbsp;non&nbsp;(Lift_in_Equation&nbsp;k&nbsp;e)<br/>
-end.<br/>
-<br/>
-Fixpoint&nbsp;Lift&nbsp;(k&nbsp;:&nbsp;nat)&nbsp;(p&nbsp;:&nbsp;proc)&nbsp;{struct&nbsp;p}&nbsp;:&nbsp;proc&nbsp;:=<br/>
-match&nbsp;p&nbsp;with<br/>
-|&nbsp;P&nbsp;‖&nbsp;Q&nbsp;=&gt;&nbsp;(Lift&nbsp;k&nbsp;P)&nbsp;‖&nbsp;(Lift&nbsp;k&nbsp;Q)<br/>
-|&nbsp;pr_var&nbsp;i&nbsp;=&gt;&nbsp;pr_var&nbsp;i<br/>
-|&nbsp;rec&nbsp;x&nbsp;•&nbsp;P&nbsp;=&gt;&nbsp;&nbsp;rec&nbsp;x&nbsp;•&nbsp;(Lift&nbsp;k&nbsp;P)<br/>
-|&nbsp;If&nbsp;C&nbsp;Then&nbsp;P&nbsp;Else&nbsp;Q&nbsp;=&gt;&nbsp;If&nbsp;(Lift_in_Equation&nbsp;k&nbsp;C)&nbsp;Then&nbsp;(Lift&nbsp;k&nbsp;P)&nbsp;Else&nbsp;(Lift&nbsp;k&nbsp;Q)<br/>
-|&nbsp;g&nbsp;M&nbsp;=&gt;&nbsp;gLift&nbsp;k&nbsp;M<br/>
-end<br/>
-<br/>
-with&nbsp;gLift&nbsp;k&nbsp;M&nbsp;{struct&nbsp;M}&nbsp;:&nbsp;gproc&nbsp;:=<br/>
-match&nbsp;M&nbsp;with<br/>
-|&nbsp;δ&nbsp;=&gt;&nbsp;δ<br/>
-|&nbsp;①&nbsp;=&gt;&nbsp;①<br/>
-|&nbsp;𝟘&nbsp;=&gt;&nbsp;𝟘<br/>
-|&nbsp;c&nbsp;?&nbsp;p&nbsp;=&gt;&nbsp;c&nbsp;?&nbsp;(Lift&nbsp;(S&nbsp;k)&nbsp;p)<br/>
-|&nbsp;c&nbsp;!&nbsp;v&nbsp;•&nbsp;p&nbsp;=&gt;&nbsp;c&nbsp;!&nbsp;(Lift_in_Data&nbsp;k&nbsp;v)&nbsp;•&nbsp;(Lift&nbsp;k&nbsp;p)<br/>
-|&nbsp;t&nbsp;•&nbsp;p&nbsp;=&gt;&nbsp;t&nbsp;•&nbsp;(Lift&nbsp;k&nbsp;p)<br/>
-|&nbsp;p1&nbsp;+&nbsp;p2&nbsp;=&gt;&nbsp;(gLift&nbsp;k&nbsp;p1)&nbsp;+&nbsp;(gLift&nbsp;k&nbsp;p2)<br/>
-|&nbsp;P&nbsp;;&nbsp;Q&nbsp;=&gt;&nbsp;(Lift&nbsp;k&nbsp;P)&nbsp;;&nbsp;(Lift&nbsp;k&nbsp;Q)<br/>
-end.*)</span><br/>
 
 <br/>
-<span class="comment">(*Definition&nbsp;of&nbsp;the&nbsp;Substitution&nbsp;*)</span><br/>
 <span class="id" title="keyword">Definition</span> <span class="id" title="var">subst_Data</span> (<span class="id" title="var">k</span> : <span class="id" title="var">nat</span>) (<span class="id" title="var">X</span> : <span class="id" title="var">Data</span>) (<span class="id" title="var">Y</span> : <span class="id" title="var">Data</span>) : <span class="id" title="var">Data</span> :=<br/>
 <span class="id" title="keyword">match</span> <span class="id" title="var">Y</span> <span class="id" title="keyword">with</span><br/>
 | <span class="id" title="var">cst</span> <span class="id" title="var">v</span> =&gt; <span class="id" title="var">cst</span> <span class="id" title="var">v</span><br/>
@@ -283,7 +217,6 @@ end.*)</span><br/>
 <span class="id" title="keyword">end</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">subst_in_proc</span> (<span class="id" title="var">k</span> : <span class="id" title="var">nat</span>) (<span class="id" title="var">X</span> : <span class="id" title="var">Data</span>) (<span class="id" title="var">p</span> : <span class="id" title="var">proc</span>) {<span class="id" title="keyword">struct</span> <span class="id" title="var">p</span>} : <span class="id" title="var">proc</span> :=<br/>
 <span class="id" title="keyword">match</span> <span class="id" title="var">p</span> <span class="id" title="keyword">with</span><br/>
 | <span class="id" title="var">P</span> ‖ <span class="id" title="var">Q</span> =&gt; (<span class="id" title="var">subst_in_proc</span> <span class="id" title="var">k</span> <span class="id" title="var">X</span> <span class="id" title="var">P</span>) ‖ (<span class="id" title="var">subst_in_proc</span> <span class="id" title="var">k</span> <span class="id" title="var">X</span> <span class="id" title="var">Q</span>)<br/>
@@ -341,8 +274,7 @@ end.*)</span><br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">d</span>.<br/>
 - <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">auto</span>.<br/>
-- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">k</span> &lt; <span class="id" title="var">S</span> <span class="id" title="var">n</span>)). <span class="comment">(*&nbsp;case&nbsp;decide.&nbsp;*)</span><br/>
-&nbsp;&nbsp;* <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> = <span class="id" title="var">k</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">e</span> | <span class="id" title="var">e</span>].<br/>
+- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">k</span> &lt; <span class="id" title="var">S</span> <span class="id" title="var">n</span>)). &nbsp;&nbsp;* <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> = <span class="id" title="var">k</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">e</span> | <span class="id" title="var">e</span>].<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="var">exfalso</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">l</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">Nat.neq_succ_diag_l</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">e</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;-<span class="id" title="var">e</span> <span class="id" title="tactic">in</span> <span class="id" title="var">l</span>. <span class="id" title="var">lia</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> &lt; <span class="id" title="var">k</span>)).<br/>
@@ -351,10 +283,9 @@ end.*)</span><br/>
 &nbsp;&nbsp;* <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="var">lia</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> <span class="id" title="var">n</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">assert</span> ( 0 &lt; <span class="id" title="var">k</span>). <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;Search&nbsp;(if&nbsp;decide&nbsp;_&nbsp;then&nbsp;_&nbsp;else&nbsp;_).&nbsp;rewrite&nbsp;(decide_True&nbsp;_&nbsp;_&nbsp;H).*)</span> <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (0 &lt; <span class="id" title="var">k</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">assert</span> ( 0 &lt; <span class="id" title="var">k</span>). <span class="id" title="var">lia</span>.  <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (0 &lt; <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="tactic">auto</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">exfalso</span>. <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">arith</span>. <span class="comment">(*&nbsp;ou&nbsp;auto&nbsp;car&nbsp;Nat.pred&nbsp;0&nbsp;=&nbsp;0&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> &lt; <span class="id" title="var">k</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">exfalso</span>. <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">arith</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> &lt; <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="tactic">auto</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
@@ -378,8 +309,6 @@ end.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*Making&nbsp;a&nbsp;variable&nbsp;independent&nbsp;from&nbsp;the&nbsp;environment,&nbsp;makes&nbsp;the&nbsp;substitution&nbsp;non-effective&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">All_According</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">k</span> <span class="id" title="var">v</span>, <span class="id" title="var">subst_in_proc</span> <span class="id" title="var">k</span> <span class="id" title="var">v</span> (<span class="id" title="var">NewVar</span> <span class="id" title="var">k</span> <span class="id" title="var">p</span>) = <span class="id" title="var">p</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="var">revert</span> <span class="id" title="var">v</span>. <span class="id" title="var">revert</span> <span class="id" title="var">k</span>.<br/>
@@ -417,7 +346,6 @@ end.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Substitution&nbsp;for&nbsp;the&nbsp;Recursive&nbsp;Variable&nbsp;*)</span><br/>
 <span class="id" title="keyword">Fixpoint</span> <span class="id" title="var">pr_subst</span> (<span class="id" title="var">id</span> : <span class="id" title="var">nat</span>) (<span class="id" title="var">p</span> : <span class="id" title="var">proc</span>) (<span class="id" title="var">q</span> : <span class="id" title="var">proc</span>) : <span class="id" title="var">proc</span> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">p</span> <span class="id" title="keyword">with</span><br/>
 &nbsp;&nbsp;| <span class="id" title="var">p1</span> ‖ <span class="id" title="var">p2</span> =&gt; (<span class="id" title="var">pr_subst</span> <span class="id" title="var">id</span> <span class="id" title="var">p1</span> <span class="id" title="var">q</span>) ‖ (<span class="id" title="var">pr_subst</span> <span class="id" title="var">id</span> <span class="id" title="var">p2</span> <span class="id" title="var">q</span>)<br/>
@@ -525,17 +453,12 @@ end.*)</span><br/>
 <span class="id" title="keyword">Reserved Notation</span> &quot;p ≡ q" (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70).<br/>
 
 <br/>
-<span class="comment">(*Naïve&nbsp;definition&nbsp;of&nbsp;a&nbsp;relation&nbsp;≡&nbsp;that&nbsp;will&nbsp;become&nbsp;a&nbsp;congruence&nbsp;≡*&nbsp;by&nbsp;transitivity*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Inductive</span> <span class="id" title="var">cgr_step</span> : <span class="id" title="var">proc</span> -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="keyword">Prop</span> :=<br/>
-<span class="comment">(*&nbsp;&nbsp;Reflexivity&nbsp;of&nbsp;the&nbsp;Relation&nbsp;≡&nbsp;&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">cgr_refl_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span>, <span class="id" title="var">p</span> ≡ <span class="id" title="var">p</span><br/>
 <br/>
-<span class="comment">(*&nbsp;Rules&nbsp;for&nbsp;the&nbsp;Parallèle&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;|&nbsp;cgr_par_nil_step&nbsp;:&nbsp;forall&nbsp;p,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;‖&nbsp;𝟘&nbsp;≡&nbsp;p<br/>
-|&nbsp;cgr_par_nil_rev_step&nbsp;:&nbsp;forall&nbsp;p,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;p&nbsp;≡&nbsp;p&nbsp;‖&nbsp;𝟘&nbsp;*)</span><br/>
+<br/>
+<br/>
 | <span class="id" title="var">cgr_par_com_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">p</span> ‖ <span class="id" title="var">q</span> ≡ <span class="id" title="var">q</span> ‖ <span class="id" title="var">p</span><br/>
 | <span class="id" title="var">cgr_par_assoc_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span>,<br/>
@@ -543,7 +466,7 @@ end.*)</span><br/>
 | <span class="id" title="var">cgr_par_assoc_rev_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">p</span> ‖ (<span class="id" title="var">q</span>  ‖ <span class="id" title="var">r</span>) ≡ (<span class="id" title="var">p</span> ‖ <span class="id" title="var">q</span>) ‖ <span class="id" title="var">r</span><br/>
 <br/>
-<span class="comment">(*&nbsp;Rules&nbsp;for&nbsp;the&nbsp;Summation&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">cgr_choice_nil_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> (<span class="id" title="var">p</span> + <span class="id" title="var">δ</span>) <span class="id" title="var">p</span><br/>
 | <span class="id" title="var">cgr_choice_nil_rev_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span>,<br/>
@@ -555,7 +478,7 @@ end.*)</span><br/>
 | <span class="id" title="var">cgr_choice_assoc_rev_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> (<span class="id" title="var">p</span> + (<span class="id" title="var">q</span> + <span class="id" title="var">r</span>)) ((<span class="id" title="var">p</span> + <span class="id" title="var">q</span>) + <span class="id" title="var">r</span>)<br/>
 <br/>
-<span class="comment">(*The&nbsp;reduction&nbsp;is&nbsp;given&nbsp;to&nbsp;certain&nbsp;terms...*)</span><br/>
+<br/>
 | <span class="id" title="var">cgr_recursion_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> -&gt; (<span class="id" title="keyword">rec</span> <span class="id" title="var">x</span> • <span class="id" title="var">p</span>) ≡ (<span class="id" title="keyword">rec</span> <span class="id" title="var">x</span> • <span class="id" title="var">q</span>)<br/>
 | <span class="id" title="var">cgr_tau_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span>,<br/>
@@ -577,7 +500,7 @@ end.*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> <span class="id" title="var">p</span> <span class="id" title="var">p'</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">If</span> <span class="id" title="var">C</span> <span class="id" title="var">Then</span> <span class="id" title="var">p</span> <span class="id" title="var">Else</span> <span class="id" title="var">q</span>) ≡ (<span class="id" title="var">If</span> <span class="id" title="var">C</span> <span class="id" title="var">Then</span> <span class="id" title="var">p'</span> <span class="id" title="var">Else</span> <span class="id" title="var">q</span>)<br/>
 <br/>
-<span class="comment">(*...and&nbsp;sums&nbsp;(only&nbsp;for&nbsp;guards&nbsp;(by&nbsp;sanity))*)</span><br/>
+<br/>
 | <span class="id" title="var">cgr_choice_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p1</span> <span class="id" title="var">q1</span> <span class="id" title="var">p2</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> (<span class="id" title="var">g</span> <span class="id" title="var">p1</span>) (<span class="id" title="var">g</span> <span class="id" title="var">q1</span>) -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> (<span class="id" title="var">p1</span> + <span class="id" title="var">p2</span>) (<span class="id" title="var">q1</span> + <span class="id" title="var">p2</span>)<br/>
@@ -588,15 +511,14 @@ end.*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">g</span> (<span class="id" title="var">r</span> ; <span class="id" title="var">p</span>)) ≡ (<span class="id" title="var">g</span> (<span class="id" title="var">r</span> ; <span class="id" title="var">q</span>))<br/>
 <br/>
-<span class="comment">(*&nbsp;Rules&nbsp;for&nbsp;sequentiation&nbsp;*)</span><br/>
-<span class="comment">(*|&nbsp;cgr_seq_nil_step&nbsp;:&nbsp;forall&nbsp;P,&nbsp;cgr_step&nbsp;(δ&nbsp;;&nbsp;P)&nbsp;δ<br/>
-|&nbsp;cgr_seq_nil_rev_step&nbsp;:&nbsp;forall&nbsp;P,&nbsp;cgr_step&nbsp;δ&nbsp;(δ&nbsp;;&nbsp;P)*)</span><br/>
+<br/>
+<br/>
 | <span class="id" title="var">cgr_seq_assoc_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> ((<span class="id" title="var">p</span> ; <span class="id" title="var">q</span>) ; <span class="id" title="var">r</span>) (<span class="id" title="var">p</span> ; (<span class="id" title="var">q</span> ; <span class="id" title="var">r</span>))<br/>
 | <span class="id" title="var">cgr_seq_assoc_rev_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cgr_step</span> (<span class="id" title="var">p</span> ; (<span class="id" title="var">q</span> ; <span class="id" title="var">r</span>)) ((<span class="id" title="var">p</span> ; <span class="id" title="var">q</span>) ; <span class="id" title="var">r</span>)<br/>
 <br/>
-<span class="comment">(*&nbsp;Rules&nbsp;for&nbsp;sequentiation-analysis&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">cgr_seq_choice_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">G</span> <span class="id" title="var">G'</span> <span class="id" title="var">P</span>, <span class="id" title="var">cgr_step</span> ((<span class="id" title="var">G</span> + <span class="id" title="var">G'</span>) ; <span class="id" title="var">P</span>) ((<span class="id" title="var">G</span> ; <span class="id" title="var">P</span>) + (<span class="id" title="var">G'</span>; <span class="id" title="var">P</span>))<br/>
 | <span class="id" title="var">cgr_seq_choice_rev_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">G</span> <span class="id" title="var">G'</span> <span class="id" title="var">P</span>, <span class="id" title="var">cgr_step</span> (((<span class="id" title="var">g</span> <span class="id" title="var">G</span>) ; <span class="id" title="var">P</span>) + ((<span class="id" title="var">g</span> <span class="id" title="var">G'</span>); <span class="id" title="var">P</span>)) ((<span class="id" title="var">G</span> + <span class="id" title="var">G'</span>) ; <span class="id" title="var">P</span>)<br/>
 | <span class="id" title="var">cgr_seq_tau_step</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>, <span class="id" title="var">cgr_step</span> ((<span class="id" title="var">t</span> • <span class="id" title="var">P</span>) ; <span class="id" title="var">Q</span>) (<span class="id" title="var">t</span> • (<span class="id" title="var">P</span> ; <span class="id" title="var">Q</span>))<br/>
@@ -614,32 +536,25 @@ end.*)</span><br/>
 <span class="id" title="keyword">Infix</span> &quot;≡" := <span class="id" title="var">cgr_step</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70).<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≡&nbsp;is&nbsp;an&nbsp;reflexive*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_refl_step_is_refl</span> : <span class="id" title="var">Reflexive</span> <span class="id" title="var">cgr_step</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_refl_step</span>. <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≡&nbsp;is&nbsp;symmetric*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_symm_step</span> : <span class="id" title="var">Symmetric</span> <span class="id" title="var">cgr_step</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">hcgr</span>.<br/>
 <span class="id" title="tactic">induction</span> <span class="id" title="var">hcgr</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">econstructor</span> ; <span class="id" title="tactic">try</span> <span class="id" title="tactic">eauto</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Defining&nbsp;the&nbsp;transitive&nbsp;closure&nbsp;of&nbsp;≡&nbsp;*)</span><br/>
 <span class="id" title="keyword">Infix</span> &quot;≡" := <span class="id" title="var">cgr_step</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70).<br/>
-<span class="comment">(*&nbsp;Defining&nbsp;the&nbsp;transitive&nbsp;closure&nbsp;of&nbsp;≡&nbsp;*)</span><br/>
 <span class="id" title="keyword">Definition</span> <span class="id" title="var">cgr</span> := (<span class="id" title="var">clos_trans</span> <span class="id" title="var">proc</span> <span class="id" title="var">cgr_step</span>).<br/>
 
 <br/>
 <span class="id" title="keyword">Infix</span> &quot;≡*" := <span class="id" title="var">cgr</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70).<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≡*&nbsp;is&nbsp;reflexive*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_refl</span> : <span class="id" title="var">Reflexive</span> <span class="id" title="var">cgr</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_refl_step</span>. <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≡*&nbsp;is&nbsp;symmetric*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_symm</span> : <span class="id" title="var">Symmetric</span> <span class="id" title="var">cgr</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">hcgr</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">hcgr</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_symm_step</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">t_trans</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≡*&nbsp;is&nbsp;transitive*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_trans</span> : <span class="id" title="var">Transitive</span> <span class="id" title="var">cgr</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span> <span class="id" title="var">hcgr1</span> <span class="id" title="var">hcgr2</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">t_trans</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
 
@@ -647,8 +562,6 @@ end.*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Resolve</span> <span class="id" title="var">cgr_refl</span> <span class="id" title="var">cgr_symm</span> <span class="id" title="var">cgr_trans</span>:<span class="id" title="var">cgr_eq</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≡*&nbsp;is&nbsp;an&nbsp;equivence&nbsp;relation*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_is_eq_rel</span>  : <span class="id" title="var">Equivalence</span> <span class="id" title="var">cgr</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">split</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_refl</span>.<br/>
@@ -657,17 +570,6 @@ end.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*the&nbsp;relation&nbsp;≡*&nbsp;respects&nbsp;all&nbsp;the&nbsp;rules&nbsp;that&nbsp;≡&nbsp;respected*)</span><br/>
-<span class="comment">(*Lemma&nbsp;cgr_par_nil&nbsp;:&nbsp;forall&nbsp;p,&nbsp;p&nbsp;‖&nbsp;𝟘&nbsp;≡*&nbsp;p.<br/>
-Proof.<br/>
-constructor.<br/>
-apply&nbsp;cgr_par_nil_step.<br/>
-Qed.<br/>
-Lemma&nbsp;cgr_par_nil_rev&nbsp;:&nbsp;forall&nbsp;p,&nbsp;(g&nbsp;p)&nbsp;≡*&nbsp;p&nbsp;‖&nbsp;𝟘.<br/>
-Proof.<br/>
-constructor.<br/>
-apply&nbsp;cgr_par_nil_rev_step.<br/>
-Qed.&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_par_com</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span>, <span class="id" title="var">p</span> ‖ <span class="id" title="var">q</span> ≡* <span class="id" title="var">q</span> ‖ <span class="id" title="var">p</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">constructor</span>.<br/>
@@ -777,12 +679,6 @@ Qed.&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_seq_assoc_rev</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span>, (<span class="id" title="var">p</span> ; (<span class="id" title="var">q</span> ; <span class="id" title="var">r</span>)) ≡* ((<span class="id" title="var">p</span> ; <span class="id" title="var">q</span>) ; <span class="id" title="var">r</span>).<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_seq_assoc_rev_step</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*Lemma&nbsp;cgr_seq_nil&nbsp;:&nbsp;forall&nbsp;P,&nbsp;(δ&nbsp;;&nbsp;P)&nbsp;≡*&nbsp;δ.<br/>
-Proof.&nbsp;intros.&nbsp;constructor.&nbsp;apply&nbsp;cgr_seq_nil_step.<br/>
-Qed.<br/>
-Lemma&nbsp;cgr_seq_nil_rev&nbsp;:&nbsp;forall&nbsp;P,&nbsp;δ&nbsp;≡*&nbsp;(δ&nbsp;;&nbsp;P).<br/>
-Proof.&nbsp;intros.&nbsp;constructor.&nbsp;apply&nbsp;cgr_seq_nil_rev_step.<br/>
-Qed.*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_seq_choice</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">G</span> <span class="id" title="var">G'</span> <span class="id" title="var">P</span>, ((<span class="id" title="var">G</span> + <span class="id" title="var">G'</span>) ; <span class="id" title="var">P</span>) ≡* ((<span class="id" title="var">G</span> ; <span class="id" title="var">P</span>) + (<span class="id" title="var">G'</span>; <span class="id" title="var">P</span>)).<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_seq_choice_step</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
@@ -809,28 +705,24 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;'if'&nbsp;process&nbsp;respects&nbsp;≡*&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_full_if</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">C</span> <span class="id" title="var">p</span> <span class="id" title="var">p'</span> <span class="id" title="var">q</span> <span class="id" title="var">q'</span>, <span class="id" title="var">p</span> ≡* <span class="id" title="var">p'</span> -&gt; <span class="id" title="var">q</span> ≡* <span class="id" title="var">q'</span> -&gt; (<span class="id" title="var">If</span> <span class="id" title="var">C</span> <span class="id" title="var">Then</span> <span class="id" title="var">p</span> <span class="id" title="var">Else</span> <span class="id" title="var">q</span>) ≡* (<span class="id" title="var">If</span> <span class="id" title="var">C</span> <span class="id" title="var">Then</span> <span class="id" title="var">p'</span> <span class="id" title="var">Else</span> <span class="id" title="var">q'</span>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>.<br/>
 <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">If</span> <span class="id" title="var">C</span> <span class="id" title="var">Then</span> <span class="id" title="var">p</span> <span class="id" title="var">Else</span> <span class="id" title="var">q'</span>). <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_if_left</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">H0</span>.<br/>
 <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_if_right</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">H</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;sum&nbsp;of&nbsp;guards&nbsp;respects&nbsp;≡*&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_fullchoice</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">M1</span> <span class="id" title="var">M2</span> <span class="id" title="var">M3</span> <span class="id" title="var">M4</span>, <span class="id" title="var">g</span> <span class="id" title="var">M1</span> ≡* <span class="id" title="var">g</span> <span class="id" title="var">M2</span> -&gt; <span class="id" title="var">g</span> <span class="id" title="var">M3</span> ≡* <span class="id" title="var">g</span> <span class="id" title="var">M4</span> -&gt; <span class="id" title="var">M1</span> + <span class="id" title="var">M3</span> ≡* <span class="id" title="var">M2</span> + <span class="id" title="var">M4</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>.<br/>
 <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">g</span> (<span class="id" title="var">M2</span> + <span class="id" title="var">M3</span>)). <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_choice</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">g</span> (<span class="id" title="var">M3</span> + <span class="id" title="var">M2</span>)).<br/>
 <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_choice_com</span>. <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">g</span> (<span class="id" title="var">M4</span> + <span class="id" title="var">M2</span>)). <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_choice</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">H0</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_choice_com</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;parallele&nbsp;of&nbsp;process&nbsp;respects&nbsp;≡*&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_fullpar</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">M1</span> <span class="id" title="var">M2</span> <span class="id" title="var">M3</span> <span class="id" title="var">M4</span>, <span class="id" title="var">M1</span> ≡* <span class="id" title="var">M2</span> -&gt; <span class="id" title="var">M3</span> ≡* <span class="id" title="var">M4</span> -&gt; <span class="id" title="var">M1</span> ‖ <span class="id" title="var">M3</span> ≡* <span class="id" title="var">M2</span> ‖ <span class="id" title="var">M4</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>.<br/>
 <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">M2</span> ‖ <span class="id" title="var">M3</span>). <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_par</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">M3</span> ‖ <span class="id" title="var">M2</span>).<br/>
 <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_par_com</span>. <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">M4</span> ‖ <span class="id" title="var">M2</span>). <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_par</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">H0</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_par_com</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;sequentiation&nbsp;of&nbsp;process&nbsp;respects&nbsp;≡*&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_fullseq</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">M1</span> <span class="id" title="var">M2</span> <span class="id" title="var">M3</span> <span class="id" title="var">M4</span>, <span class="id" title="var">M1</span> ≡* <span class="id" title="var">M2</span> -&gt; <span class="id" title="var">M3</span> ≡* <span class="id" title="var">M4</span> -&gt; <span class="id" title="var">M1</span> ; <span class="id" title="var">M3</span> ≡* <span class="id" title="var">M2</span> ; <span class="id" title="var">M4</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>.<br/>
@@ -839,10 +731,10 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Resolve</span> <span class="comment">(*&nbsp;cgr_par_nil&nbsp;cgr_par_nil_rev*)</span> <span class="id" title="var">cgr_par_com</span> <span class="id" title="var">cgr_par_assoc</span> <span class="id" title="var">cgr_par_assoc_rev</span><br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Resolve</span>  <span class="id" title="var">cgr_par_com</span> <span class="id" title="var">cgr_par_assoc</span> <span class="id" title="var">cgr_par_assoc_rev</span><br/>
 <span class="id" title="var">cgr_choice_nil</span> <span class="id" title="var">cgr_choice_nil_rev</span> <span class="id" title="var">cgr_choice_com</span> <span class="id" title="var">cgr_choice_assoc</span> <span class="id" title="var">cgr_choice_assoc_rev</span><br/>
 <span class="id" title="var">cgr_recursion</span> <span class="id" title="var">cgr_tau</span> <span class="id" title="var">cgr_input</span> <span class="id" title="var">cgr_output</span> <span class="id" title="var">cgr_if_left</span> <span class="id" title="var">cgr_if_right</span> <span class="id" title="var">cgr_par</span> <span class="id" title="var">cgr_choice</span><br/>
-<span class="id" title="var">cgr_seq_left</span> <span class="id" title="var">cgr_seq_right</span> <span class="id" title="var">cgr_seq_assoc</span> <span class="id" title="var">cgr_seq_assoc_rev</span> <span class="comment">(*&nbsp;cgr_seq_nil&nbsp;cgr_seq_nil_rev&nbsp;*)</span><br/>
+<span class="id" title="var">cgr_seq_left</span> <span class="id" title="var">cgr_seq_right</span> <span class="id" title="var">cgr_seq_assoc</span> <span class="id" title="var">cgr_seq_assoc_rev</span> <br/>
 <span class="id" title="var">cgr_seq_choice</span> <span class="id" title="var">cgr_seq_choice_rev</span> <span class="id" title="var">cgr_seq_tau</span> <span class="id" title="var">cgr_seq_tau_rev</span> <span class="id" title="var">cgr_seq_input</span> <span class="id" title="var">cgr_seq_input_rev</span><br/>
 <span class="id" title="var">cgr_seq_output</span> <span class="id" title="var">cgr_seq_output_rev</span> <span class="id" title="var">cgr_full_if</span> <span class="id" title="var">cgr_fullchoice</span> <span class="id" title="var">cgr_fullpar</span> <span class="id" title="var">cgr_fullseq</span><br/>
 <span class="id" title="var">cgr_refl</span> <span class="id" title="var">cgr_symm</span> <span class="id" title="var">cgr_trans</span>:<span class="id" title="var">cgr</span>.<br/>
@@ -867,15 +759,14 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">end</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;Labelled&nbsp;Transition&nbsp;System&nbsp;(LTS-transition)&nbsp;*)</span><br/>
 <span class="id" title="keyword">Inductive</span> <span class="id" title="var">lts</span> : <span class="id" title="var">proc</span> -&gt; (<span class="id" title="var">ActIO</span> <span class="id" title="var">TypeOfActions</span>) -&gt; <span class="id" title="var">proc</span> -&gt; <span class="id" title="keyword">Prop</span> :=<br/>
-<span class="comment">(*The&nbsp;Input&nbsp;and&nbsp;the&nbsp;Output*)</span><br/>
+<br/>
 | <span class="id" title="var">lts_input</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">c</span> <span class="id" title="var">v</span> <span class="id" title="var">P</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">c</span> ? <span class="id" title="var">P</span>) ((<span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span>) ?) (<span class="id" title="var">P</span>^<span class="id" title="var">v</span>)<br/>
 | <span class="id" title="var">lts_output</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">c</span> <span class="id" title="var">v</span> <span class="id" title="var">P</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">c</span> ! <span class="id" title="var">v</span> • <span class="id" title="var">P</span>) ((<span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span>) !) <span class="id" title="var">P</span><br/>
 <br/>
-<span class="comment">(*The&nbsp;actions&nbsp;Tau*)</span><br/>
+<br/>
 | <span class="id" title="var">lts_tau</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">P</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">t</span> • <span class="id" title="var">P</span>) τ <span class="id" title="var">P</span><br/>
 | <span class="id" title="var">lts_recursion</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">x</span> <span class="id" title="var">P</span>},<br/>
@@ -885,33 +776,32 @@ Qed.*)</span><br/>
 | <span class="id" title="var">lts_ifZero</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">E</span>}, <span class="id" title="var">Eval_Eq</span> <span class="id" title="var">E</span> = <span class="id" title="var">Some</span> <span class="id" title="var">false</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">If</span> <span class="id" title="var">E</span> <span class="id" title="var">Then</span> <span class="id" title="var">p</span> <span class="id" title="var">Else</span> <span class="id" title="var">q</span>) τ <span class="id" title="var">q</span><br/>
 <br/>
-<span class="comment">(*&nbsp;Skip&nbsp;*)</span><br/>
-| <span class="id" title="var">lts_skip</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">P0</span> <span class="id" title="var">P</span>}, <span class="id" title="var">SKIP_SEQ</span> ( <span class="id" title="var">P0</span> )<span class="comment">(*&nbsp;P0&nbsp;≡*&nbsp;𝟘&nbsp;*)</span>-&gt; <span class="id" title="var">lts</span> (<span class="id" title="var">P0</span> ; <span class="id" title="var">P</span>) τ <span class="id" title="var">P</span><br/>
 <br/>
-<span class="comment">(*The&nbsp;decoration&nbsp;for&nbsp;the&nbsp;transition&nbsp;system...*)</span><br/>
-<span class="comment">(*...for&nbsp;the&nbsp;parallele*)</span><br/>
+| <span class="id" title="var">lts_skip</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">P0</span> <span class="id" title="var">P</span>}, <span class="id" title="var">SKIP_SEQ</span> ( <span class="id" title="var">P0</span> )-&gt; <span class="id" title="var">lts</span> (<span class="id" title="var">P0</span> ; <span class="id" title="var">P</span>) τ <span class="id" title="var">P</span><br/>
+<br/>
+<br/>
+<br/>
 | <span class="id" title="var">lts_parL</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">α</span> <span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">q</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> <span class="id" title="var">p1</span> <span class="id" title="var">α</span> <span class="id" title="var">p2</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">p1</span> ‖ <span class="id" title="var">q</span>) <span class="id" title="var">α</span> (<span class="id" title="var">p2</span> ‖ <span class="id" title="var">q</span>)<br/>
 | <span class="id" title="var">lts_parR</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">α</span> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span> <span class="id" title="var">p</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> <span class="id" title="var">q1</span> <span class="id" title="var">α</span> <span class="id" title="var">q2</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">p</span> ‖ <span class="id" title="var">q1</span>) <span class="id" title="var">α</span> (<span class="id" title="var">p</span> ‖ <span class="id" title="var">q2</span>)<br/>
-<span class="comment">(*...for&nbsp;the&nbsp;sum*)</span><br/>
+<br/>
 | <span class="id" title="var">lts_choiceL</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">q</span> <span class="id" title="var">α</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">g</span> <span class="id" title="var">p1</span>) <span class="id" title="var">α</span> <span class="id" title="var">q</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">p1</span> + <span class="id" title="var">p2</span>) <span class="id" title="var">α</span> <span class="id" title="var">q</span><br/>
 | <span class="id" title="var">lts_choiceR</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">q</span> <span class="id" title="var">α</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">g</span> <span class="id" title="var">p2</span>) <span class="id" title="var">α</span> <span class="id" title="var">q</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">p1</span> + <span class="id" title="var">p2</span>) <span class="id" title="var">α</span> <span class="id" title="var">q</span><br/>
-<span class="comment">(*...for&nbsp;the&nbsp;sequentiation*)</span><br/>
+<br/>
 | <span class="id" title="var">lts_seqL</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">α</span> <span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">q</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> <span class="id" title="var">p1</span> <span class="id" title="var">α</span> <span class="id" title="var">p2</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lts</span> (<span class="id" title="var">p1</span> ; <span class="id" title="var">q</span>) <span class="id" title="var">α</span> (<span class="id" title="var">p2</span> ; <span class="id" title="var">q</span>).<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;Labelled&nbsp;Transition&nbsp;System&nbsp;(LTS-transition&nbsp;for&nbsp;states)&nbsp;*)</span><br/>
 <span class="id" title="keyword">Inductive</span> <span class="id" title="var">ltsM</span> : <span class="id" title="var">States</span> -&gt; (<span class="id" title="var">ActIO</span> <span class="id" title="var">TypeOfActions</span>) -&gt; <span class="id" title="var">States</span> -&gt; <span class="id" title="keyword">Prop</span> :=<br/>
-<span class="comment">(*The&nbsp;Input&nbsp;and&nbsp;the&nbsp;Output*)</span><br/>
+<br/>
 | <span class="id" title="var">ltsM_input</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">c</span> <span class="id" title="var">v</span>}, <span class="id" title="var">lts</span> <span class="id" title="var">p</span> ((<span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span>) ?) <span class="id" title="var">q</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltsM</span> (❲<span class="id" title="var">M</span> , <span class="id" title="var">p</span>❳) ((<span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span>) ?) (❲<span class="id" title="var">M</span> , <span class="id" title="var">q</span>❳)<br/>
 | <span class="id" title="var">ltsM_output</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M</span> <span class="id" title="var">c</span> <span class="id" title="var">v</span> <span class="id" title="var">P</span>},<br/>
@@ -922,7 +812,7 @@ Qed.*)</span><br/>
 | <span class="id" title="var">ltsM_send</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M</span> <span class="id" title="var">c</span> <span class="id" title="var">v</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span>}, <span class="id" title="var">lts</span> <span class="id" title="var">p</span> ((<span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span>) !) <span class="id" title="var">q</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltsM</span> (❲<span class="id" title="var">M</span> , <span class="id" title="var">p</span>❳) τ (❲<span class="id" title="var">M</span> ⊎ {[+ <span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span> +]}, <span class="id" title="var">q</span>❳)<br/>
 <br/>
-<span class="comment">(*&nbsp;Communication&nbsp;of&nbsp;a&nbsp;channel&nbsp;output&nbsp;and&nbsp;input&nbsp;that&nbsp;have&nbsp;the&nbsp;same&nbsp;name*)</span><br/>
+<br/>
 | <span class="id" title="var">ltsM_com</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M1</span> <span class="id" title="var">M2</span> <span class="id" title="var">M2'</span> <span class="id" title="var">c</span> <span class="id" title="var">v</span> <span class="id" title="var">S1</span> <span class="id" title="var">S2</span> <span class="id" title="var">S2'</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltsM</span> (❲<span class="id" title="var">M1</span>, <span class="id" title="var">S1</span>❳) ((<span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span>) !) (❲ <span class="id" title="var">M2</span>, <span class="id" title="var">S2'</span> ❳) -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltsM</span> (❲ <span class="id" title="var">M1</span>, <span class="id" title="var">S1</span>❳) ((<span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span>) ?) (❲ <span class="id" title="var">M2'</span>, <span class="id" title="var">S2</span> ❳)-&gt;<br/>
@@ -941,30 +831,22 @@ Qed.*)</span><br/>
 &nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">j</span> &lt; <span class="id" title="var">S</span> <span class="id" title="var">n</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> ((<span class="id" title="var">S</span> <span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>))).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">auto</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">auto</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;-  <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">k</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. &nbsp;&nbsp;-  <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">j</span> &lt; <span class="id" title="var">S</span> <span class="id" title="var">n</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="tactic">auto</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span>(<span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">exfalso</span>. <span class="id" title="var">lia</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span>(<span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="var">lia</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---- <span class="id" title="tactic">auto</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---- <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">j</span> &lt; <span class="id" title="var">S</span> (<span class="id" title="var">Nat.pred</span> <span class="id" title="var">n</span>))).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---- <span class="id" title="var">lia</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">j</span> &lt; <span class="id" title="var">S</span> (<span class="id" title="var">Nat.pred</span> <span class="id" title="var">n</span>))).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">j</span> &lt; <span class="id" title="var">S</span> <span class="id" title="var">n</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**** <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**** <span class="id" title="tactic">assert</span> (<span class="id" title="var">n</span> ≠ 0). <span class="id" title="var">lia</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">n</span>. <span class="id" title="var">lia</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">auto</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">lia</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">S</span> <span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**** <span class="id" title="var">lia</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**** <span class="id" title="tactic">assert</span> (<span class="id" title="var">n</span> ≠ 0). <span class="id" title="var">lia</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">n</span>. <span class="id" title="var">lia</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">auto</span>. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = (<span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)%<span class="id" title="var">nat</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="var">lia</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> &lt; <span class="id" title="var">j</span> + <span class="id" title="var">S</span> <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**** <span class="id" title="var">lia</span>.<br/>
@@ -1050,7 +932,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">Congruence_Respects_Substitution</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">v</span> <span class="id" title="var">k</span>, <span class="id" title="var">p</span> ≡* <span class="id" title="var">q</span> -&gt; (<span class="id" title="var">subst_in_proc</span> <span class="id" title="var">k</span> <span class="id" title="var">v</span> <span class="id" title="var">p</span>) ≡* (<span class="id" title="var">subst_in_proc</span> <span class="id" title="var">k</span> <span class="id" title="var">v</span> <span class="id" title="var">q</span>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="var">revert</span> <span class="id" title="var">k</span>. <span class="id" title="var">revert</span> <span class="id" title="var">v</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>.<br/>
@@ -1134,7 +1015,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">NewVar_Respects_Congruence</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">p'</span> <span class="id" title="var">j</span>, <span class="id" title="var">p</span> ≡* <span class="id" title="var">p'</span> -&gt; <span class="id" title="var">NewVar</span> <span class="id" title="var">j</span> <span class="id" title="var">p</span> ≡* <span class="id" title="var">NewVar</span> <span class="id" title="var">j</span> <span class="id" title="var">p'</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="var">revert</span> <span class="id" title="var">j</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span> ; <span class="id" title="tactic">simpl</span> ; <span class="id" title="tactic">auto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cgr</span>.<br/>
@@ -1147,12 +1027,9 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Substition&nbsp;lemma,&nbsp;needed&nbsp;to&nbsp;contextualise&nbsp;the&nbsp;equivalence&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_subst1</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">q'</span> <span class="id" title="var">x</span> : <span class="id" title="var">q</span> ≡* <span class="id" title="var">q'</span> → <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> ≡* <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span> <span class="id" title="var">q'</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="var">revert</span> <span class="id" title="var">q</span> <span class="id" title="var">q'</span> <span class="id" title="var">x</span>.<br/>
-<span class="comment">(*&nbsp;Induction&nbsp;on&nbsp;the&nbsp;size&nbsp;of&nbsp;p*)</span><br/>
 <span class="id" title="tactic">induction</span> <span class="id" title="var">p</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">p</span> &amp; <span class="id" title="var">Hp</span>) <span class="id" title="keyword">using</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">well_founded_induction</span> (<span class="id" title="var">wf_inverse_image</span> <span class="id" title="var">_</span> <span class="id" title="var">nat</span> <span class="id" title="var">_</span> <span class="id" title="var">size</span> <span class="id" title="var">Nat.lt_wf_0</span>)).<br/>
 <span class="id" title="tactic">destruct</span> <span class="id" title="var">p</span>.<br/>
@@ -1219,7 +1096,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;≡&nbsp;respects&nbsp;the&nbsp;substitution&nbsp;of&nbsp;his&nbsp;variable*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_step_subst2</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">p'</span> <span class="id" title="var">q</span> <span class="id" title="var">x</span>, <span class="id" title="var">p</span> ≡ <span class="id" title="var">p'</span> → <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> ≡ <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p'</span> <span class="id" title="var">q</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">p</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">p</span> &amp; <span class="id" title="var">Hp</span>) <span class="id" title="keyword">using</span><br/>
@@ -1245,8 +1121,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;≡*&nbsp;respects&nbsp;the&nbsp;substitution&nbsp;of&nbsp;his&nbsp;variable&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_subst2</span> <span class="id" title="var">q</span> <span class="id" title="var">p</span> <span class="id" title="var">p'</span> <span class="id" title="var">x</span> : <span class="id" title="var">p</span> ≡* <span class="id" title="var">p'</span> → <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> ≡* <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p'</span> <span class="id" title="var">q</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span> <span class="id" title="var">hcgr</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">hcgr</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">eapply</span> <span class="id" title="var">cgr_step_subst2</span>. <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span> <span class="id" title="var">q</span>).<br/>
@@ -1254,7 +1128,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;≡&nbsp;respects&nbsp;the&nbsp;substitution&nbsp;/&nbsp;recursion&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">cgr_subst</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">x</span> : <span class="id" title="var">p</span> ≡ <span class="id" title="var">q</span> -&gt; <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span> (<span class="id" title="keyword">rec</span> <span class="id" title="var">x</span> • <span class="id" title="var">p</span>) ≡* <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">q</span> (<span class="id" title="keyword">rec</span> <span class="id" title="var">x</span> • <span class="id" title="var">q</span>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">intro</span> <span class="id" title="var">heq</span>.<br/>
@@ -1282,43 +1155,41 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;State&nbsp;Transition&nbsp;System&nbsp;(STS-reduction)&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Inductive</span> <span class="id" title="var">sts</span> : <span class="id" title="var">States</span> -&gt; <span class="id" title="var">States</span> -&gt; <span class="id" title="keyword">Prop</span> :=<br/>
-<span class="comment">(*The&nbsp;axiomes*)</span><br/>
-<span class="comment">(*&nbsp;Communication&nbsp;of&nbsp;channels&nbsp;output&nbsp;and&nbsp;input&nbsp;that&nbsp;have&nbsp;the&nbsp;same&nbsp;name&nbsp;*)</span><br/>
+<br/>
+<br/>
 | <span class="id" title="var">sts_com</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">c</span> <span class="id" title="var">v</span> <span class="id" title="var">M</span> <span class="id" title="var">p</span> <span class="id" title="var">g</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> (❲<span class="id" title="var">M</span> ⊎ {[+ <span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span> +]}, ((<span class="id" title="var">c</span> ? <span class="id" title="var">p</span>) + <span class="id" title="var">g</span>)❳) (❲<span class="id" title="var">M</span> , (<span class="id" title="var">p</span> ^ <span class="id" title="var">v</span>)❳)<br/>
-<span class="comment">(*&nbsp;Send&nbsp;Output&nbsp;to&nbsp;Memory&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_send</span>: <span class="id" title="keyword">forall</span> {<span class="id" title="var">c</span> <span class="id" title="var">v</span> <span class="id" title="var">M</span> <span class="id" title="var">p</span> <span class="id" title="var">g</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> (❲<span class="id" title="var">M</span>, ((<span class="id" title="var">c</span> ! <span class="id" title="var">v</span> • <span class="id" title="var">p</span>) + <span class="id" title="var">g</span>)❳) (❲<span class="id" title="var">M</span> ⊎ {[+ <span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span> +]}, <span class="id" title="var">p</span>❳)<br/>
-<span class="comment">(*&nbsp;Nothing&nbsp;more&nbsp;,&nbsp;something&nbsp;less&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_tau</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M</span> <span class="id" title="var">p</span> <span class="id" title="var">g</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> (❲<span class="id" title="var">M</span> , (<span class="id" title="var">t</span> • <span class="id" title="var">p</span>) + <span class="id" title="var">g</span>❳) (❲<span class="id" title="var">M</span> , <span class="id" title="var">p</span>❳)<br/>
-<span class="comment">(*&nbsp;Resursion&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_recursion</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> (❲<span class="id" title="var">M</span> , <span class="id" title="keyword">rec</span> <span class="id" title="var">x</span> • <span class="id" title="var">p</span>❳) (❲<span class="id" title="var">M</span> , <span class="id" title="var">pr_subst</span> <span class="id" title="var">x</span> <span class="id" title="var">p</span> (<span class="id" title="keyword">rec</span> <span class="id" title="var">x</span> • <span class="id" title="var">p</span>)❳)<br/>
-<span class="comment">(*If&nbsp;Yes*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_ifOne</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">E</span>}, <span class="id" title="var">Eval_Eq</span> <span class="id" title="var">E</span> = <span class="id" title="var">Some</span> <span class="id" title="var">true</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> (❲<span class="id" title="var">M</span> , <span class="id" title="var">If</span> <span class="id" title="var">E</span> <span class="id" title="var">Then</span> <span class="id" title="var">p</span> <span class="id" title="var">Else</span> <span class="id" title="var">q</span>❳) (❲<span class="id" title="var">M</span> , <span class="id" title="var">p</span>❳)<br/>
-<span class="comment">(*If&nbsp;No*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_ifZero</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">E</span>}, <span class="id" title="var">Eval_Eq</span> <span class="id" title="var">E</span> = <span class="id" title="var">Some</span> <span class="id" title="var">false</span> -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> (❲<span class="id" title="var">M</span> , <span class="id" title="var">If</span> <span class="id" title="var">E</span> <span class="id" title="var">Then</span> <span class="id" title="var">p</span> <span class="id" title="var">Else</span> <span class="id" title="var">q</span>❳) (❲<span class="id" title="var">M</span> , <span class="id" title="var">q</span>❳)<br/>
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;left&nbsp;parallele&nbsp;respect&nbsp;the&nbsp;Reduction&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_par</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M1</span> <span class="id" title="var">P1</span> <span class="id" title="var">M2</span> <span class="id" title="var">P2</span> <span class="id" title="var">P</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> ❲<span class="id" title="var">M1</span> , <span class="id" title="var">P1</span>❳ ❲<span class="id" title="var">M2</span> ,<span class="id" title="var">P2</span>❳ -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> ❲<span class="id" title="var">M1</span> , <span class="id" title="var">P1</span> ‖ <span class="id" title="var">P</span>❳ ❲<span class="id" title="var">M2</span> , <span class="id" title="var">P2</span> ‖ <span class="id" title="var">P</span>❳<br/>
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;left&nbsp;sequentiation&nbsp;respect&nbsp;the&nbsp;Reduction&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_seq</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">M1</span> <span class="id" title="var">P1</span> <span class="id" title="var">M2</span> <span class="id" title="var">P2</span> <span class="id" title="var">P</span> <span class="id" title="var">G</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> ❲<span class="id" title="var">M1</span> , <span class="id" title="var">P1</span>❳ ❲<span class="id" title="var">M2</span> ,<span class="id" title="var">P2</span>❳ -&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">sts</span> ❲<span class="id" title="var">M1</span> , (<span class="id" title="var">P1</span> ; <span class="id" title="var">P</span>) + <span class="id" title="var">G</span>❳ ❲<span class="id" title="var">M2</span> , <span class="id" title="var">P2</span> ; <span class="id" title="var">P</span>❳<br/>
 <br/>
-<span class="comment">(*&nbsp;Skip&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_skipSeq</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">G</span> <span class="id" title="var">M1</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>}, <span class="id" title="var">SKIP_SEQ</span> (<span class="id" title="var">P</span>) -&gt; <span class="id" title="var">sts</span> ❲<span class="id" title="var">M1</span> , (<span class="id" title="var">P</span> ; <span class="id" title="var">Q</span>) + <span class="id" title="var">G</span>❳ ❲<span class="id" title="var">M1</span> , <span class="id" title="var">Q</span>❳<br/>
 <br/>
-<span class="comment">(*The&nbsp;Congruence&nbsp;respects&nbsp;the&nbsp;Reduction&nbsp;*)</span><br/>
+<br/>
 | <span class="id" title="var">sts_cong</span> : <span class="id" title="keyword">forall</span> {<span class="id" title="var">S1</span> <span class="id" title="var">S2</span> <span class="id" title="var">S1'</span> <span class="id" title="var">S2'</span>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">S1</span> ≋ <span class="id" title="var">S1'</span> -&gt; <span class="id" title="var">sts</span> <span class="id" title="var">S1'</span> <span class="id" title="var">S2'</span> -&gt; <span class="id" title="var">S2'</span> ≋ <span class="id" title="var">S2</span> -&gt; <span class="id" title="var">sts</span> <span class="id" title="var">S1</span> <span class="id" title="var">S2</span><br/>
 .<br/>
@@ -1345,11 +1216,9 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;p&nbsp;'is&nbsp;equivalent&nbsp;some&nbsp;r&nbsp;'and&nbsp;r&nbsp;performs&nbsp;α&nbsp;to&nbsp;q&nbsp;*)</span><br/>
 <span class="id" title="keyword">Definition</span> <span class="id" title="var">sc_then_lts</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span> <span class="id" title="var">q</span> := <span class="id" title="tactic">exists</span> <span class="id" title="var">r</span>, <span class="id" title="var">p</span> ≡* <span class="id" title="var">r</span> /\ (<span class="id" title="var">lts</span> <span class="id" title="var">r</span> <span class="id" title="var">α</span> <span class="id" title="var">q</span>).<br/>
 
 <br/>
-<span class="comment">(*&nbsp;p&nbsp;performs&nbsp;α&nbsp;to&nbsp;some&nbsp;r&nbsp;and&nbsp;this&nbsp;is&nbsp;equivalent&nbsp;to&nbsp;q*)</span><br/>
 <span class="id" title="keyword">Definition</span> <span class="id" title="var">lts_then_sc</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span> <span class="id" title="var">q</span> := <span class="id" title="tactic">exists</span> <span class="id" title="var">r</span>, ((<span class="id" title="var">lts</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span> <span class="id" title="var">r</span>) /\ <span class="id" title="var">r</span> ≡* <span class="id" title="var">q</span>).<br/>
 
 <br/>
@@ -1363,16 +1232,12 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;p&nbsp;'is&nbsp;equivalent&nbsp;some&nbsp;r&nbsp;'and&nbsp;r&nbsp;performs&nbsp;α&nbsp;to&nbsp;q&nbsp;,&nbsp;the&nbsp;congruence&nbsp;and&nbsp;the&nbsp;Transition&nbsp;can&nbsp;be&nbsp;reversed&nbsp;:&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">Congruence_Respects_Transition</span>  : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">α</span>, <span class="id" title="var">sc_then_lts</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span> <span class="id" title="var">q</span> -&gt; <span class="id" title="var">lts_then_sc</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span> <span class="id" title="var">q</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
-<span class="comment">(*&nbsp;by&nbsp;induction&nbsp;on&nbsp;the&nbsp;congruence&nbsp;and&nbsp;the&nbsp;step&nbsp;then...*)</span><br/>
 &nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">α</span> (<span class="id" title="var">p'</span> &amp; <span class="id" title="var">hcgr</span> &amp; <span class="id" title="var">l</span>).<br/>
 &nbsp;&nbsp;<span class="id" title="var">revert</span> <span class="id" title="var">q</span> <span class="id" title="var">α</span> <span class="id" title="var">l</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">hcgr</span>.<br/>
 &nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>.<br/>
-<span class="comment">(*&nbsp;reasonning&nbsp;about&nbsp;all&nbsp;possible&nbsp;cases&nbsp;due&nbsp;to&nbsp;the&nbsp;structure&nbsp;of&nbsp;terms&nbsp;*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exists</span> <span class="id" title="var">q</span>. <span class="id" title="tactic">split</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">l</span>. <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cgr</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">l</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">exists</span> (<span class="id" title="var">p</span> ‖ <span class="id" title="var">p2</span>). <span class="id" title="tactic">split</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">lts_parR</span>. <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cgr</span>.<br/>
@@ -1499,11 +1364,9 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;p&nbsp;'is&nbsp;equivalent&nbsp;some&nbsp;r&nbsp;'and&nbsp;r&nbsp;performs&nbsp;α&nbsp;to&nbsp;q&nbsp;*)</span><br/>
 <span class="id" title="keyword">Definition</span> <span class="id" title="var">sc_then_ltsM</span> <span class="id" title="var">S</span> <span class="id" title="var">α</span> <span class="id" title="var">S'</span> := <span class="id" title="tactic">exists</span> <span class="id" title="var">R</span>, <span class="id" title="var">S</span> ≋ <span class="id" title="var">R</span> /\ (<span class="id" title="var">ltsM</span> <span class="id" title="var">R</span> <span class="id" title="var">α</span> <span class="id" title="var">S'</span>).<br/>
 
 <br/>
-<span class="comment">(*&nbsp;p&nbsp;performs&nbsp;α&nbsp;to&nbsp;some&nbsp;r&nbsp;and&nbsp;this&nbsp;is&nbsp;equivalent&nbsp;to&nbsp;q*)</span><br/>
 <span class="id" title="keyword">Definition</span> <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">S</span> <span class="id" title="var">α</span> <span class="id" title="var">S'</span> := <span class="id" title="tactic">exists</span> <span class="id" title="var">R</span>, ((<span class="id" title="var">ltsM</span> <span class="id" title="var">S</span> <span class="id" title="var">α</span> <span class="id" title="var">R</span>) /\ <span class="id" title="var">R</span> ≋ <span class="id" title="var">S'</span>).<br/>
 
 <br/>
@@ -1513,7 +1376,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;p&nbsp;'is&nbsp;equivalent&nbsp;some&nbsp;r&nbsp;'and&nbsp;r&nbsp;performs&nbsp;α&nbsp;to&nbsp;q&nbsp;,&nbsp;the&nbsp;congruence&nbsp;and&nbsp;the&nbsp;Transition&nbsp;can&nbsp;be&nbsp;reversed&nbsp;:&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">CongruenceStates_Respects_Transition</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">S</span> <span class="id" title="var">S'</span> <span class="id" title="var">α</span>, <span class="id" title="var">sc_then_ltsM</span> <span class="id" title="var">S</span> <span class="id" title="var">α</span> <span class="id" title="var">S'</span> -&gt; <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">S</span> <span class="id" title="var">α</span> <span class="id" title="var">S'</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span> <span class="id" title="var">S</span> <span class="id" title="var">S'</span> <span class="id" title="var">α</span> (<span class="id" title="var">R</span> &amp; <span class="id" title="var">hcgr</span> &amp; <span class="id" title="var">l</span>).<br/>
@@ -1552,14 +1414,11 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≋&nbsp;is&nbsp;reflexive*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_states_refl</span> : <span class="id" title="var">Reflexive</span> <span class="id" title="var">cgr_states</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">x</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≋&nbsp;is&nbsp;symmetric*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_states_symm</span> : <span class="id" title="var">Symmetric</span> <span class="id" title="var">cgr_states</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">hcgr</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">p</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">q</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">g0</span> = <span class="id" title="var">g1</span>). <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_states_simplified_memory</span> <span class="id" title="tactic">in</span> <span class="id" title="var">hcgr</span>. <span class="id" title="tactic">assumption</span>.<br/>
 <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">inversion</span> <span class="id" title="var">hcgr</span>. <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">symmetry</span>. <span class="id" title="tactic">assumption</span>. <span class="id" title="keyword">Qed</span>.<br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≋&nbsp;is&nbsp;transitive*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_states_trans</span> : <span class="id" title="var">Transitive</span> <span class="id" title="var">cgr_states</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span> <span class="id" title="var">hcgr1</span> <span class="id" title="var">hcgr2</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">p</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">q</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">r</span>.<br/>
 <span class="id" title="tactic">inversion</span> <span class="id" title="var">hcgr1</span>. <span class="id" title="tactic">inversion</span> <span class="id" title="var">hcgr2</span>. <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cgr</span>. <span class="id" title="keyword">Qed</span>.<br/>
@@ -1568,7 +1427,6 @@ Qed.*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Resolve</span> <span class="id" title="var">cgr_states_refl</span> <span class="id" title="var">cgr_states_symm</span> <span class="id" title="var">cgr_states_trans</span>:<span class="id" title="var">cgr_states_eq</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;relation&nbsp;≋&nbsp;is&nbsp;an&nbsp;equivence&nbsp;relation*)</span><br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">cgr_states_is_eq_rel</span>  : <span class="id" title="var">Equivalence</span> <span class="id" title="var">cgr_states</span>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">split</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_states_refl</span>.<br/>
@@ -1620,8 +1478,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;One&nbsp;side&nbsp;of&nbsp;the&nbsp;Harmony&nbsp;Lemma&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">Reduction_Implies_TausAndCong</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">S</span> <span class="id" title="var">S'</span>, (<span class="id" title="var">sts</span> <span class="id" title="var">S</span> <span class="id" title="var">S'</span>) -&gt; (<span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">S</span> τ <span class="id" title="var">S'</span>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span> <span class="id" title="var">Reduction</span>.<br/>
@@ -1648,8 +1504,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;The&nbsp;More&nbsp;Stronger&nbsp;Harmony&nbsp;Lemma&nbsp;(in&nbsp;one&nbsp;side)&nbsp;is&nbsp;more&nbsp;stronger&nbsp;*)</span><br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">Congruence_Simplicity</span> : (<span class="id" title="keyword">forall</span> <span class="id" title="var">α</span> , ((<span class="id" title="keyword">forall</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>, (((<span class="id" title="var">ltsM</span> <span class="id" title="var">P</span> <span class="id" title="var">α</span> <span class="id" title="var">Q</span>) -&gt; (<span class="id" title="var">sts</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>))))<br/>
 -&gt; (<span class="id" title="keyword">forall</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>, ((<span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">P</span> <span class="id" title="var">α</span> <span class="id" title="var">Q</span>) -&gt; (<span class="id" title="var">sts</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>))))).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
@@ -1690,7 +1544,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">Taus_Implies_Reduction</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>, (<span class="id" title="var">ltsM</span> <span class="id" title="var">P</span> τ <span class="id" title="var">Q</span>) -&gt; (<span class="id" title="var">sts</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>.<br/>
@@ -1780,7 +1633,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;One&nbsp;side&nbsp;of&nbsp;the&nbsp;Harmony&nbsp;Lemma*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">TausAndCong_Implies_Reduction</span>: <span class="id" title="keyword">forall</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>, (<span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">P</span> τ <span class="id" title="var">Q</span>) -&gt; (<span class="id" title="var">sts</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span> <span class="id" title="var">H</span>.<br/>
@@ -1788,7 +1640,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Important&nbsp;*)</span><br/>
 <span class="id" title="keyword">Theorem</span> <span class="id" title="var">HarmonyLemmaForCCSWithValuePassing</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>, (<span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">P</span> τ <span class="id" title="var">Q</span>) &lt;-&gt; (<span class="id" title="var">sts</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">split</span>.<br/>
@@ -1797,7 +1648,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Definition&nbsp;for&nbsp;Well&nbsp;Abstracted&nbsp;bvariable&nbsp;*)</span><br/>
 <span class="id" title="keyword">Inductive</span> <span class="id" title="var">Well_Defined_Data</span> : <span class="id" title="var">nat</span> -&gt; <span class="id" title="var">Data</span> -&gt; <span class="id" title="keyword">Prop</span> :=<br/>
 | <span class="id" title="var">bvar_is_defined_up_to_k</span>: <span class="id" title="keyword">forall</span> <span class="id" title="var">k</span> <span class="id" title="var">x</span>, (<span class="id" title="var">x</span> &lt; <span class="id" title="var">k</span>) -&gt; <span class="id" title="var">Well_Defined_Data</span> <span class="id" title="var">k</span> (<span class="id" title="var">bvar</span> <span class="id" title="var">x</span>)<br/>
 | <span class="id" title="var">cst_is_always_defined</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">k</span> <span class="id" title="var">v</span>, <span class="id" title="var">Well_Defined_Data</span> <span class="id" title="var">k</span> (<span class="id" title="var">cst</span> <span class="id" title="var">v</span>).<br/>
@@ -2100,7 +1950,7 @@ Qed.*)</span><br/>
 &nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> &lt; <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">assumption</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">NotK</span>. <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> <span class="id" title="var">n</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span> <span class="id" title="tactic">assumption</span>. <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;-- <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">NotK</span>. <span class="id" title="tactic">apply</span> <span class="id" title="tactic">transitivity</span> <span class="id" title="keyword">with</span> <span class="id" title="var">n</span>. <span class="id" title="var">lia</span>.  <span class="id" title="tactic">assumption</span>. <span class="id" title="var">lia</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
@@ -2118,22 +1968,18 @@ Qed.*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H0</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span>(<span class="id" title="var">n</span> &lt; <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">assumption</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;* <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = <span class="id" title="var">k</span>)). <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. &nbsp;&nbsp;* <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = <span class="id" title="var">k</span>)). <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span>(<span class="id" title="var">n</span> &lt; <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">assumption</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;* <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. &nbsp;&nbsp;* <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">constructor</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n</span> = <span class="id" title="var">k</span>)); <span class="id" title="tactic">try</span> <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span>(<span class="id" title="var">n</span> &lt; <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">assumption</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n0</span> = <span class="id" title="var">k</span>)); <span class="id" title="tactic">try</span> <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. &nbsp;&nbsp;&nbsp;&nbsp;** <span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n0</span> = <span class="id" title="var">k</span>)); <span class="id" title="tactic">try</span> <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H0</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">decide</span> (<span class="id" title="var">n0</span> &lt; <span class="id" title="var">k</span>)).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">assumption</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. <span class="comment">(*&nbsp;pas&nbsp;top&nbsp;*)</span><br/>
--- <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">IHe1</span>. <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">IHe2</span>. <span class="id" title="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--- <span class="id" title="tactic">constructor</span>. <span class="id" title="var">lia</span>. -- <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">IHe1</span>. <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">IHe2</span>. <span class="id" title="tactic">assumption</span>.<br/>
 -- <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">IHe</span>. <span class="id" title="tactic">assumption</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
@@ -2362,7 +2208,6 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Lemma&nbsp;to&nbsp;simplify&nbsp;the&nbsp;Data&nbsp;in&nbsp;Value&nbsp;for&nbsp;a&nbsp;transition&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">OutputWithValue</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">a</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q</span> -&gt; <span class="id" title="tactic">exists</span> <span class="id" title="var">c</span> <span class="id" title="var">d</span>, <span class="id" title="var">a</span> = <span class="id" title="var">c</span> ⋉ <span class="id" title="var">d</span>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">a</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>.<br/>
@@ -2394,13 +2239,11 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Peter&nbsp;Selinger&nbsp;Axioms&nbsp;(OutBuffered&nbsp;Agent&nbsp;with&nbsp;FeedBack)&nbsp;up&nbsp;to&nbsp;structural&nbsp;equivalence*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">OBA_with_FB_First_Axiom</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">r</span> <span class="id" title="var">a</span> <span class="id" title="var">α</span>,<br/>
 &nbsp;&nbsp;<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q</span> -&gt; <span class="id" title="var">ltsM</span> <span class="id" title="var">q</span> <span class="id" title="var">α</span> <span class="id" title="var">r</span> -&gt;<br/>
-&nbsp;&nbsp;(<span class="id" title="tactic">exists</span> <span class="id" title="var">r'</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span> <span class="id" title="var">r'</span> /\ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">r'</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">r</span>). <span class="comment">(*&nbsp;output-commutativity&nbsp;*)</span><br/>
-<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">exists</span> <span class="id" title="var">r'</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span> <span class="id" title="var">r'</span> /\ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">r'</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">r</span>). <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q</span>). <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">OutputWithValue</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>.<br/>
 <span class="id" title="var">decompose</span> <span class="id" title="var">record</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">subst</span>.<br/>
 <span class="id" title="tactic">assert</span> (<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> ((<span class="id" title="var">x</span> ⋉ <span class="id" title="var">x0</span>) !) <span class="id" title="var">q</span>). <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">r</span>.<br/>
@@ -2416,14 +2259,13 @@ Qed.*)</span><br/>
 &nbsp;&nbsp;<span class="id" title="var">μ</span> ≠ (<span class="id" title="var">ActOut</span> <span class="id" title="var">a</span>) -&gt;<br/>
 &nbsp;&nbsp;<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q1</span> -&gt;<br/>
 &nbsp;&nbsp;<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">ActExt</span> <span class="id" title="var">μ</span>) <span class="id" title="var">q2</span> -&gt;<br/>
-&nbsp;&nbsp;∃ <span class="id" title="var">r</span> : <span class="id" title="var">States</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">q1</span> (<span class="id" title="var">ActExt</span> <span class="id" title="var">μ</span>) <span class="id" title="var">r</span> ∧ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">q2</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">r</span>. <span class="comment">(*&nbsp;output-confluence&nbsp;&nbsp;*)</span><br/>
-<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;∃ <span class="id" title="var">r</span> : <span class="id" title="var">States</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">q1</span> (<span class="id" title="var">ActExt</span> <span class="id" title="var">μ</span>) <span class="id" title="var">r</span> ∧ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">q2</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">r</span>. <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q1</span>). <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H2</span>.<br/>
 <span class="id" title="tactic">inversion</span> <span class="id" title="var">H1</span>; <span class="id" title="tactic">subst</span>.<br/>
 - <span class="id" title="tactic">exists</span> ❲ <span class="id" title="var">M</span> , <span class="id" title="var">q</span> ❳. <span class="id" title="tactic">split</span>.<br/>
 &nbsp;&nbsp;* <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">assumption</span>.<br/>
 &nbsp;&nbsp;* <span class="id" title="tactic">exists</span> ❲ <span class="id" title="var">M</span>, <span class="id" title="var">q</span> ❳. <span class="id" title="tactic">split</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cgr</span>.<br/>
-- <span class="comment">(*&nbsp;replace&nbsp;M&nbsp;with&nbsp;(gmultiset_difference&nbsp;M0&nbsp;{<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">c</span></span> <span class="inlinecode">⋉</span> <span class="inlinecode"><span class="id" title="var">v</span></span> <span class="inlinecode">+</span>}&nbsp;⊎&nbsp;{<span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">c0</span></span> <span class="inlinecode">⋉</span> <span class="inlinecode"><span class="id" title="var">v0</span></span> <span class="inlinecode">+</span>})&nbsp;by&nbsp;multiset_solver.*)</span><br/>
+- <br/>
 &nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="tactic">exists</span> <span class="id" title="var">M'</span>, <span class="id" title="var">M</span> = <span class="id" title="var">M'</span> ⊎ {[+ <span class="id" title="var">c0</span> ⋉ <span class="id" title="var">v0</span> +]}). <span class="id" title="tactic">exists</span> (<span class="id" title="var">gmultiset_difference</span> <span class="id" title="var">M0</span> {[+ <span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span> +]}).<br/>
 &nbsp;&nbsp;<span class="id" title="var">multiset_solver</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="tactic">exists</span> <span class="id" title="var">M0'</span>, <span class="id" title="var">M0</span> = <span class="id" title="var">M0'</span> ⊎ {[+ <span class="id" title="var">c</span> ⋉ <span class="id" title="var">v</span> +]}). <span class="id" title="tactic">exists</span> (<span class="id" title="var">gmultiset_difference</span> <span class="id" title="var">M</span> {[+ <span class="id" title="var">c0</span> ⋉ <span class="id" title="var">v0</span> +]}).<br/>
@@ -2437,8 +2279,7 @@ Qed.*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">OBA_with_FB_Third_Axiom</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">p3</span> <span class="id" title="var">a</span>, <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltsM</span> <span class="id" title="var">p1</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">p2</span> → <span class="id" title="var">ltsM</span> <span class="id" title="var">p1</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">p3</span> -&gt; <span class="id" title="var">p2</span> ≋ <span class="id" title="var">p3</span>. <span class="comment">(*&nbsp;output-determinacy&nbsp;*)</span><br/>
-<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltsM</span> <span class="id" title="var">p1</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">p2</span> → <span class="id" title="var">ltsM</span> <span class="id" title="var">p1</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">p3</span> -&gt; <span class="id" title="var">p2</span> ≋ <span class="id" title="var">p3</span>. <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">ltsM</span> <span class="id" title="var">p1</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">p2</span>). <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H0</span>.<br/>
 <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">M0</span> = <span class="id" title="var">M</span>). <span class="id" title="var">multiset_solver</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>.<br/>
 <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cgr</span>.<br/>
@@ -2446,8 +2287,7 @@ Qed.*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">OBA_with_FB_Fourth_Axiom</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">p3</span> <span class="id" title="var">a</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">p1</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">p2</span> -&gt; <span class="id" title="var">ltsM</span> <span class="id" title="var">p2</span> (<span class="id" title="var">a</span> ?) <span class="id" title="var">p3</span> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">p1</span> τ <span class="id" title="var">p3</span>. <span class="comment">(*&nbsp;feedback&nbsp;*)</span><br/>
-<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&gt; <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">p1</span> τ <span class="id" title="var">p3</span>. <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H0</span>.<br/>
 <span class="id" title="tactic">exists</span> ❲ <span class="id" title="var">M</span>, <span class="id" title="var">q</span> ❳. <span class="id" title="tactic">split</span>. <span class="id" title="tactic">econstructor</span>.<br/>
 - <span class="id" title="tactic">instantiate</span> (1 := <span class="id" title="var">P</span>). <span class="id" title="tactic">constructor</span>.<br/>
@@ -2458,8 +2298,7 @@ Qed.*)</span><br/>
 <br/>
 <span class="id" title="keyword">Lemma</span> <span class="id" title="var">OBA_with_FB_Fifth_Axiom</span> : <span class="id" title="keyword">forall</span> <span class="id" title="var">p</span> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span> <span class="id" title="var">a</span>,<br/>
 &nbsp;&nbsp;<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q1</span> -&gt; <span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> τ <span class="id" title="var">q2</span> -&gt;<br/>
-&nbsp;&nbsp;(∃ <span class="id" title="var">q</span> : <span class="id" title="var">States</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">q1</span> τ <span class="id" title="var">q</span> /\ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">q2</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q</span>) \/ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">q1</span> (<span class="id" title="var">a</span> ?) <span class="id" title="var">q2</span>. <span class="comment">(*&nbsp;output-tau&nbsp;&nbsp;*)</span><br/>
-<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;(∃ <span class="id" title="var">q</span> : <span class="id" title="var">States</span>, <span class="id" title="var">ltsM</span> <span class="id" title="var">q1</span> τ <span class="id" title="var">q</span> /\ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">q2</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q</span>) \/ <span class="id" title="var">ltsM_then_sc</span> <span class="id" title="var">q1</span> (<span class="id" title="var">a</span> ?) <span class="id" title="var">q2</span>. <span class="id" title="keyword">Proof</span>.<br/>
 <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">ltsM</span> <span class="id" title="var">p</span> (<span class="id" title="var">a</span> !) <span class="id" title="var">q1</span>). <span class="id" title="tactic">assumption</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">a</span>.<br/>
 <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H0</span>.<br/>
 - <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">left</span>. <span class="id" title="tactic">eexists</span>. <span class="id" title="tactic">instantiate</span> (1 := ❲ <span class="id" title="var">M0</span>, <span class="id" title="var">q</span> ❳). <span class="id" title="tactic">split</span>.<br/>
@@ -2956,7 +2795,7 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">match</span> <span class="id" title="var">S</span> <span class="id" title="keyword">with</span><br/>
 &nbsp;&nbsp;| ❲ <span class="id" title="var">M</span>  , <span class="id" title="var">P</span> ❳ =&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ps_tau</span> : <span class="id" title="var">gset</span> <span class="id" title="var">States</span> := <span class="id" title="var">list_to_set</span> (<span class="id" title="var">map</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">p</span> =&gt; ❲ <span class="id" title="var">M</span>  , <span class="id" title="var">p</span> ❳) (<span class="id" title="var">elements</span> $ <span class="id" title="var">lts_set_tau</span> <span class="id" title="var">P</span>)) <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;let&nbsp;acts1&nbsp;:=&nbsp;outputs_of&nbsp;P&nbsp;in&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ps1</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">flat_map</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">a</span> =&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">map</span><br/>
@@ -3339,24 +3178,13 @@ Qed.*)</span><br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;Making&nbsp;VACCS&nbsp;Instance&nbsp;of&nbsp;each&nbsp;class&nbsp;*)</span><br/>
 
 <br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Program</span> <span class="id" title="keyword">Instance</span> <span class="id" title="var">VACCS_Label</span> : <span class="id" title="var">Label</span> <span class="id" title="var">TypeOfActions</span>.<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;{|&nbsp;label_eqdec&nbsp;:=&nbsp;TypeOfActions_dec&nbsp;;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;label_countable&nbsp;:=&nbsp;TypeOfActions_countable<br/>
-&nbsp;&nbsp;|}.&nbsp;*)</span><br/>
 
 <br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Program</span> <span class="id" title="keyword">Instance</span> <span class="id" title="var">VACCS_Lts</span> : <span class="id" title="var">Lts</span> <span class="id" title="var">States</span> <span class="id" title="var">TypeOfActions</span>.<br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">ltsM</span> <span class="id" title="var">X</span> <span class="id" title="var">X0</span> <span class="id" title="var">X1</span>). <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_step&nbsp;x&nbsp;ℓ&nbsp;y&nbsp;&nbsp;:=&nbsp;ltsM&nbsp;x&nbsp;ℓ&nbsp;y&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">ltsM_dec</span> <span class="id" title="var">a</span> <span class="id" title="var">α</span> <span class="id" title="var">b</span>). <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_state_eqdec&nbsp;:=&nbsp;proc_dec&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">outputs_of_State</span> <span class="id" title="var">X</span>). <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_outputs&nbsp;S&nbsp;:=&nbsp;outputs_of_State&nbsp;S&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> (<span class="id" title="var">outputsM_of_spec1</span> <span class="id" title="var">p1</span> <span class="id" title="var">x</span> <span class="id" title="var">p2</span>). <span class="id" title="tactic">apply</span> <span class="id" title="var">H</span>. <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_outputsM_spec1&nbsp;p1&nbsp;x&nbsp;p2&nbsp;:=&nbsp;outputs_of_spec1&nbsp;p1&nbsp;x&nbsp;p2&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> (<span class="id" title="var">outputs_of_spec2</span> <span class="id" title="var">p1</span> <span class="id" title="var">x</span>). <span class="id" title="tactic">assumption</span>. <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_outputs_spec2&nbsp;p1&nbsp;x&nbsp;:=&nbsp;outputs_of_spec2&nbsp;p1&nbsp;x&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">states_stable</span> <span class="id" title="var">X</span> <span class="id" title="var">X0</span>). <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_stable&nbsp;p&nbsp;α&nbsp;:=&nbsp;states_stable&nbsp;p&nbsp;α&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">states_stable_dec</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span>). <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_stable_decidable&nbsp;p&nbsp;α&nbsp;:=&nbsp;states_stable_dec&nbsp;p&nbsp;α&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> [[<span class="id" title="var">a</span>|<span class="id" title="var">a</span>]|]; <span class="id" title="tactic">unfold</span> <span class="id" title="var">VACCS_Lts_obligation_6</span> <span class="id" title="tactic">in</span> *; <span class="id" title="tactic">unfold</span> <span class="id" title="var">VACCS_Lts_obligation_1</span> <span class="id" title="tactic">in</span> *;<br/>
+<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">ltsM</span> <span class="id" title="var">X</span> <span class="id" title="var">X0</span> <span class="id" title="var">X1</span>). <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">ltsM_dec</span> <span class="id" title="var">a</span> <span class="id" title="var">α</span> <span class="id" title="var">b</span>). <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">outputs_of_State</span> <span class="id" title="var">X</span>). <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> (<span class="id" title="var">outputsM_of_spec1</span> <span class="id" title="var">p1</span> <span class="id" title="var">x</span> <span class="id" title="var">p2</span>). <span class="id" title="tactic">apply</span> <span class="id" title="var">H</span>. <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> (<span class="id" title="var">outputs_of_spec2</span> <span class="id" title="var">p1</span> <span class="id" title="var">x</span>). <span class="id" title="tactic">assumption</span>. <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">states_stable</span> <span class="id" title="var">X</span> <span class="id" title="var">X0</span>). <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">exact</span> (<span class="id" title="var">states_stable_dec</span> <span class="id" title="var">p</span> <span class="id" title="var">α</span>). <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> [[<span class="id" title="var">a</span>|<span class="id" title="var">a</span>]|]; <span class="id" title="tactic">unfold</span> <span class="id" title="var">VACCS_Lts_obligation_6</span> <span class="id" title="tactic">in</span> *; <span class="id" title="tactic">unfold</span> <span class="id" title="var">VACCS_Lts_obligation_1</span> <span class="id" title="tactic">in</span> *;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span> <span class="id" title="var">hs</span>;<span class="id" title="tactic">eapply</span> <span class="id" title="var">gset_nempty_ex</span> <span class="id" title="tactic">in</span> <span class="id" title="var">hs</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">r</span> &amp; <span class="id" title="var">l</span>); <span class="id" title="tactic">eapply</span> <span class="id" title="var">ltsM_set_spec0</span> <span class="id" title="tactic">in</span> <span class="id" title="var">l</span>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> <span class="id" title="var">r</span>; <span class="id" title="tactic">assumption</span>. <span class="id" title="keyword">Defined</span>.<br/>
 <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>.<br/>
@@ -3365,16 +3193,10 @@ Qed.*)</span><br/>
 
 <br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Program</span> <span class="id" title="keyword">Instance</span> <span class="id" title="var">VACCS_LtsEq</span> : <span class="id" title="var">LtsEq</span> <span class="id" title="var">States</span> <span class="id" title="var">TypeOfActions</span>.<br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">cgr_states</span>. <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;eq_rel&nbsp;x&nbsp;y&nbsp;&nbsp;:=&nbsp;cgr&nbsp;x&nbsp;y&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_states_refl</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;eq_rel_refl&nbsp;p&nbsp;:=&nbsp;cgr_refl&nbsp;p&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_states_symm</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;eq_symm&nbsp;p&nbsp;q&nbsp;:=&nbsp;cgr_symm&nbsp;p&nbsp;q&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">cgr_states_trans</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;eq_trans&nbsp;x&nbsp;y&nbsp;z:=&nbsp;cgr_trans&nbsp;x&nbsp;y&nbsp;z&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">CongruenceStates_Respects_Transition</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;eq_spec&nbsp;p&nbsp;q&nbsp;α&nbsp;:=&nbsp;CongruenceStates_Respects_Transition&nbsp;p&nbsp;q&nbsp;α&nbsp;*)</span><br/>
-
+<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">cgr_states</span>. <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_states_refl</span>. <span class="id" title="keyword">Qed</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">cgr_states_symm</span>. <span class="id" title="keyword">Qed</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">cgr_states_trans</span>. <span class="id" title="keyword">Qed</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">CongruenceStates_Respects_Transition</span>. <span class="id" title="keyword">Qed</span>. 
 <br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Program</span> <span class="id" title="keyword">Instance</span> <span class="id" title="var">VACCS_LtsOba</span> : <span class="id" title="var">LtsOba</span> <span class="id" title="var">States</span> <span class="id" title="var">TypeOfActions</span>.<br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">moutputs_of_State</span>. <span class="id" title="keyword">Defined</span>. <span class="comment">(*&nbsp;lts_oba_mo&nbsp;p&nbsp;:=&nbsp;moutputs_of&nbsp;p&nbsp;&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>.<br/>
+<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">moutputs_of_State</span>. <span class="id" title="keyword">Defined</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">VACCS_LtsOba_obligation_1</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">VACCS_Lts_obligation_3</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">outputs_of_State</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">gmultiset_elem_of_dom</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
@@ -3382,12 +3204,7 @@ Qed.*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">VACCS_LtsOba_obligation_1</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">outputs_of_State</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">eapply</span> <span class="id" title="var">mo_spec</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_First_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;lts_oba_output_commutativity&nbsp;p&nbsp;q&nbsp;r&nbsp;a&nbsp;α&nbsp;:=&nbsp;OBA_with_FB_First_Axiom&nbsp;p&nbsp;q&nbsp;r&nbsp;a&nbsp;α&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_Second_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;lts_oba_output_confluence&nbsp;p&nbsp;q1&nbsp;q2&nbsp;a&nbsp;μ&nbsp;:=&nbsp;OBA_with_FB_Second_Axiom&nbsp;p&nbsp;q1&nbsp;q2&nbsp;a&nbsp;μ&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_Fifth_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;lts_oba_output_tau&nbsp;p&nbsp;q1&nbsp;q2&nbsp;a&nbsp;:=&nbsp;OBA_with_FB_Fifth_Axiom&nbsp;p&nbsp;q1&nbsp;q2&nbsp;a&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_Third_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;lts_oba_output_deter&nbsp;p1&nbsp;p2&nbsp;p3&nbsp;a&nbsp;:=&nbsp;OBA_with_FB_Third_Axiom&nbsp;p1&nbsp;p2&nbsp;p3&nbsp;a&nbsp;*)</span><br/>
-<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">ExtraAxiom</span>. <span class="id" title="keyword">Qed</span>. <span class="comment">(*&nbsp;lts_oba_output_deter_inv&nbsp;p1&nbsp;p2&nbsp;q1&nbsp;q2&nbsp;a&nbsp;:=&nbsp;ExtraAxiom&nbsp;p1&nbsp;p2&nbsp;q1&nbsp;q2&nbsp;a&nbsp;*)</span><br/>
-
+<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_First_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_Second_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_Fifth_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">OBA_with_FB_Third_Axiom</span>. <span class="id" title="keyword">Qed</span>. <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">exact</span> <span class="id" title="var">ExtraAxiom</span>. <span class="id" title="keyword">Qed</span>. 
 <br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Program</span> <span class="id" title="keyword">Instance</span> <span class="id" title="var">VACCS_LtsObaFB</span> : <span class="id" title="var">LtsObaFB</span> <span class="id" title="var">States</span> <span class="id" title="var">TypeOfActions</span> :=<br/>
 &nbsp;&nbsp;{| <span class="id" title="var">lts_oba_fb_feedback</span> <span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">p3</span> <span class="id" title="var">a</span> := <span class="id" title="var">OBA_with_FB_Fourth_Axiom</span> <span class="id" title="var">p1</span> <span class="id" title="var">p2</span> <span class="id" title="var">p3</span> <span class="id" title="var">a</span> |}.<br/>
