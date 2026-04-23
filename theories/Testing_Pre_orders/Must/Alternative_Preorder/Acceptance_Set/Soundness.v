@@ -34,8 +34,8 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
-      Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
-      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS.
+      Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction 
+      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction.
 From TestingTheory Require Import ActTau.
 
 (* TODO: move *)
@@ -593,6 +593,36 @@ Context `{@Prop_of_Inter P T A dual EA _ _}.
 Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
 
+Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ :
+      p ⟶[co μ] p'-> t ⟶[μ] t' -> pre_co_actions_of p ⊆ pre_co_actions_of q
+        -> exists μ' q' t'', q ⟶[co μ'] q'/\ t ⟶[μ'] t''.
+Proof.
+  intros tr tr_co sub.
+  destruct (decide (non_blocking μ)) as [nb | not_nb].
+  + eapply (co_non_blocking_enabled q μ) in nb as (q' & tr'); eauto.
+    symmetry. exact (proj2_sig(exists_dual μ)).
+  + assert (μ ∈ co_actions_of p) as some_co_action_of_p.
+    { exists (co μ). repeat split; eauto.
+      eapply lts_refuses_spec2;eauto.
+      symmetry. exact (proj2_sig(exists_dual μ)). }
+    (* The next line uses a property of delta *)
+    eapply preactions_of_fin_test_spec1 in some_co_action_of_p.
+    eapply preactions_of_spec in some_co_action_of_p.
+    eapply sub in some_co_action_of_p.
+    eapply preactions_of_spec in some_co_action_of_p.
+    (* The next line uses a property of delta *)
+    eapply preactions_of_fin_test_spec2 in some_co_action_of_p as (μ' & mem' & eq').
+    destruct mem' as (μ'1 & Tr & duo & b).
+    assert (¬ t ↛[μ']) as Tr_Test.
+    (* The next line uses the property of phi *)
+    { eapply abstraction_test_spec. exact not_nb. exact b. exact eq'. apply lts_refuses_spec2. eauto. }
+    eapply lts_refuses_spec1 in Tr_Test as (t'' & Tr'').
+    eapply lts_refuses_spec1 in Tr as (q' & Tr).
+    exists μ'. exists q'. exists t''. split ;eauto.
+    eapply unique_nb in duo. subst. rewrite<- dual_is_involutive.
+    exact Tr.
+Qed.
+
 Lemma unoutcome_must_st_nleqx (X : gset P) (q : Q) (t : T):
   ¬ outcome t
     -> mustx X t
@@ -624,28 +654,10 @@ Proof.
     + eapply lts_refuses_spec2 in refuses_t. eauto. eauto with mdb.
     + eapply (lts_refuses_spec2 (q ▷ t)); eauto.
       exists (q , t''). eapply ParRight; eauto.
-  - destruct (decide (non_blocking μ2)) as [nb | not_nb].
-    + eapply (co_non_blocking_enabled q μ2) in nb as (q' & tr); eauto.
-      eapply (lts_refuses_spec2 (q ▷ t)); eauto. exists (q', t'').
-      eapply ParSync; eauto.
-    + assert (μ2 ∈ co_actions_of p') as some_co_action_of_p.
-      { exists μ1. repeat split; eauto.
-        eapply lts_refuses_spec2;eauto. }
-      (* The next line uses a property of delta *)
-      eapply preactions_of_fin_test_spec1 in some_co_action_of_p.
-      eapply preactions_of_spec in some_co_action_of_p.
-      eapply sub in some_co_action_of_p.
-      eapply preactions_of_spec in some_co_action_of_p.
-      (* The next line uses a property of delta *)
-      eapply preactions_of_fin_test_spec2 in some_co_action_of_p as (μ' & mem' & eq').
-      destruct mem' as (μ'1 & Tr & duo & b).
-      assert (¬ t ↛[μ']) as Tr_Test.
-      (* The next line uses the property of phi *)
-      { eapply abstraction_test_spec. exact not_nb. exact b. exact eq'. apply lts_refuses_spec2. eauto. }
-      eapply lts_refuses_spec1 in Tr_Test as (t' & Tr').
-      eapply lts_refuses_spec1 in Tr as (q' & Tr).
-      eapply (lts_refuses_spec2 (q,t)). exists (q', t').
-      eapply ParSync; eauto. eauto.
+  - assert (μ1 = co μ2). { eapply unique_nb; eauto. symmetry; eauto. } subst.
+    eapply communication_enabled in act_left as (μ'1 & q' & t''' & tr1 & tr2); eauto.
+    eapply (lts_refuses_spec2 (q ▷ t)); eauto. exists (q', t''').
+    eapply (ParSync (co μ'1)); eauto. symmetry. exact (proj2_sig(exists_dual μ'1)).
 Qed.
 
 Lemma stability_nbhvleqtwo
