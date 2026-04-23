@@ -182,7 +182,7 @@ Proof.
     eapply test_ungood. exact (proj2_sig (exists_dual μ)).
 Qed.
 
-(** *** Satisfying `tconv` implies convergence *)
+(** *** Satisfying [tconv] implies convergence *)
 
 Lemma cnv_if_must `{
   gLtsP : @gLts P A H, 
@@ -569,7 +569,7 @@ Proof.
        eapply ta_transition_to_good ; eauto.
 Qed.
 
-(** *** Convergence implies satisfying `tconv` *)
+(** *** Convergence implies satisfying [tconv] *)
 
 Lemma must_if_cnv `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
