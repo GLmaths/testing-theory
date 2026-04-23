@@ -31,7 +31,7 @@ From Coinduction Require Import all.
 
 (* From TestingTheory Require Import TransitionSystems Must Soundness Equivalence Completeness. *)
 From TestingTheory Require Import gLts FiniteImageLTS Lts_OBA_FB ActTau Termination Convergence WeakTransitions
-Must MustE DefinitionAS Soundness Equivalence Completeness.
+Must MustE DefinitionAS Soundness Equivalence Completeness Lts_Finite_Output_Chain.
 
 (* TODO: define me using the coinduction library *)
 
@@ -220,9 +220,9 @@ Section eq_contextual.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
 
-  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
-  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
+  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}.
+  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}.
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
 
   (* ************************************************** *)
   Context `{!Prop_of_Inter P T A dual}.

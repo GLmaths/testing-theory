@@ -29,7 +29,7 @@ From stdpp Require Import base countable finite gmap list
 From TestingTheory Require Import ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate 
   May CodePurification Termination 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS.
-From TestingTheory Require Import ActTau.
+From TestingTheory Require Import ActTau Lts_Finite_Output_Chain.
 
 Lemma may_non_blocking_action_swap_l_fw_eq `{
    @gLtsObaFW P A H gLtsEqP gLtsObaP, 
@@ -85,7 +85,7 @@ Proof.
 Qed.
 
 Lemma nf_may_fw_l `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P (mb A) A fw_inter}
@@ -134,7 +134,7 @@ Proof.
 Admitted.
 
 Lemma nf_may_fw `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A ,
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A ,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P (mb A) A fw_inter}
@@ -149,8 +149,8 @@ Proof.
 Qed.
 
 Lemma may_to_may_fw `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P (mb A) A fw_inter}
   {_ : Prop_of_Inter (P * mb A) T A dual}
@@ -187,8 +187,8 @@ Proof.
 Admitted.
 
 Lemma may_iff_may_fw `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P (mb A) A fw_inter}
   {_ : Prop_of_Inter (P * mb A) T A dual}
@@ -206,9 +206,9 @@ Proof.
 Qed.
 
 Lemma lift_fw_ctx_pre `{
-    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P (mb A) A fw_inter}
   {_ : Prop_of_Inter (P * mb A) T A dual}

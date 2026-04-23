@@ -33,7 +33,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB Lts_CN
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction MultisetLTSConstruction
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS.
 From TestingTheory Require Import ActTau.
@@ -666,7 +666,6 @@ Hint Constructors mustx:mdb.
 Hint Unfold ctx_pre__x : mdb.
 
 (** ** Soundness for sets *)
-(* TODO: something is wrong with the assumptions of soundnessx *)
 Lemma soundnessx
   (ps : gset P) (t : T) :
   mustx ps t
@@ -759,9 +758,9 @@ Qed.
 
 (** ** Soundness for LTSs that can be lifted to forwarders *)
 Lemma soundness 
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A}
 
   `{ !Testing_Predicate outcome _}
 

@@ -29,7 +29,7 @@ From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE.
+    Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain.
 
 Section preorder.
   Context `{outcome : T -> Prop}.
@@ -37,10 +37,10 @@ Section preorder.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
-
-  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
-  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
+  
+  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
+  Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
+  Context `{@gLtsOba T A H gLtsEqT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
@@ -57,7 +57,40 @@ Section preorder.
   Context `{ta_spec : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   (** * Main equivalence theorems *)
-  (** ** The inductive characterisation is equivalent to the extensional must preorder *)
+
+  Section FWⁿ.
+
+  Context `{!gLtsObaFW P A}.
+  Context `{!gLtsObaFW Q A}.
+  Context `{!gLtsObaFB T A}.
+
+  (** ** The inductive characterisation on FW is equivalent to the inductive must preorder *)
+  Theorem equivalence_fw_acc_set_and_must_i (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
+  Proof.
+    split.
+    - intros hpre. now eapply completeness_fw in hpre.
+    - now intros hpre%soundness_fw.
+  Qed.
+
+  (** ---- *)
+
+  (** ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
+  Theorem equivalence_fw_bhv_acc_ctx (p : P) (q : Q) :
+    pre_extensional outcome p q <-> p ≼ₐₛ q.
+  Proof.
+    rewrite pre_extensional_eq. eapply equivalence_fw_acc_set_and_must_i.
+  Qed.
+
+  End FWⁿ.
+  (** ---- *)
+  Section Lⁿ.
+
+  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+
+  (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
   Theorem equivalence_acc_set_and_must_i (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
@@ -69,11 +102,13 @@ Section preorder.
 
   (** ---- *)
 
-  (** ** The inductive characterisation is equivalent to the inductive must preorder *)
+  (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
   Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
     pre_extensional outcome p q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
     rewrite pre_extensional_eq. apply equivalence_acc_set_and_must_i.
   Qed.
+
+  End Lⁿ.
 
 End preorder.

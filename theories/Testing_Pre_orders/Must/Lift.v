@@ -27,7 +27,7 @@ From Stdlib.Program Require Import Equality.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap gmultiset.
 
-From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate 
+From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW Testing_Predicate 
   Must CodePurification Termination 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS.
 
@@ -269,9 +269,12 @@ Section FeedBack.
 
 Context `{@gLtsObaFB P A H gLtsEqP M}.
 Context `{!FiniteImagegLts P A}.
+Context `{!FiniteOutputChain_LtsOba P}.
 
 Notation gLtsP := (gLtsEq_gLts (gLtsEq := gLtsEqP)).
 Notation gLtsT := (gLtsEq_gLts (gLtsEq := gLtsEqT)).
+
+Context `{!FiniteOutputChain_LtsOba T}.
 
 Context `{_ : !Prop_of_Inter P (mb A) A fw_inter}.
 Context `{_ : !Prop_of_Inter (P * mb A) T A dual}.
@@ -540,9 +543,9 @@ End FeedBack.
 End Lifting.
 
 Lemma lift_fw_ctx_pre
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome gLtsEqT}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome gLtsEqT}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
