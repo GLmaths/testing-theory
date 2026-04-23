@@ -1,3 +1,5 @@
+[![Build doc](https://github.com/GLmaths/testing-theory/actions/workflows/build_docs.yml/badge.svg)](https://github.com/GLmaths/testing-theory/actions/workflows/build_docs.yml)
+
 # testing-theory
 
 This repository is the fork by G. Lopez of
@@ -14,7 +16,7 @@ A pi-calculus development in [theories/pi](theories/pi/README.md) including a pr
 ## Installation
 
 Install the dependencies automatically via opam:
-    `opam install . --deps-only`
+`opam install . --deps-only`
 
 Or install them manually (see `dune-project` for the list of dependencies).
 
