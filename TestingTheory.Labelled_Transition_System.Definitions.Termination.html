@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="https://github.com/GLmaths/testing-theory">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Nomadic&nbsp;Labs<br/>
+&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Paul&nbsp;Laforgue&nbsp;&lt;paul.laforgue@nomadic-labs.com&gt;<br/>
+&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2024&nbsp;Léo&nbsp;Stefanesco&nbsp;&lt;leo.stefanesco@mpi-sws.org&gt;<br/>
+&nbsp;&nbsp;&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;Gaëtan&nbsp;Lopez&nbsp;&lt;glopez@irif.fr&gt;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;Permission&nbsp;is&nbsp;hereby&nbsp;granted,&nbsp;free&nbsp;of&nbsp;charge,&nbsp;to&nbsp;any&nbsp;person&nbsp;obtaining&nbsp;a&nbsp;copy<br/>
+&nbsp;&nbsp;&nbsp;of&nbsp;this&nbsp;software&nbsp;and&nbsp;associated&nbsp;documentation&nbsp;files&nbsp;(the&nbsp;"Software"),&nbsp;to&nbsp;deal<br/>
+&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;Software&nbsp;without&nbsp;restriction,&nbsp;including&nbsp;without&nbsp;limitation&nbsp;the&nbsp;rights<br/>
+&nbsp;&nbsp;&nbsp;to&nbsp;use,&nbsp;copy,&nbsp;modify,&nbsp;merge,&nbsp;publish,&nbsp;distribute,&nbsp;sublicense,&nbsp;and/or&nbsp;sell<br/>
+&nbsp;&nbsp;&nbsp;copies&nbsp;of&nbsp;the&nbsp;Software,&nbsp;and&nbsp;to&nbsp;permit&nbsp;persons&nbsp;to&nbsp;whom&nbsp;the&nbsp;Software&nbsp;is<br/>
+&nbsp;&nbsp;&nbsp;furnished&nbsp;to&nbsp;do&nbsp;so,&nbsp;subject&nbsp;to&nbsp;the&nbsp;following&nbsp;conditions:<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;The&nbsp;above&nbsp;copyright&nbsp;notice&nbsp;and&nbsp;this&nbsp;permission&nbsp;notice&nbsp;shall&nbsp;be&nbsp;included&nbsp;in&nbsp;all<br/>
+&nbsp;&nbsp;&nbsp;copies&nbsp;or&nbsp;substantial&nbsp;portions&nbsp;of&nbsp;the&nbsp;Software.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;THE&nbsp;SOFTWARE&nbsp;IS&nbsp;PROVIDED&nbsp;"AS&nbsp;IS",&nbsp;WITHOUT&nbsp;WARRANTY&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;EXPRESS&nbsp;OR<br/>
+&nbsp;&nbsp;&nbsp;IMPLIED,&nbsp;INCLUDING&nbsp;BUT&nbsp;NOT&nbsp;LIMITED&nbsp;TO&nbsp;THE&nbsp;WARRANTIES&nbsp;OF&nbsp;MERCHANTABILITY,<br/>
+&nbsp;&nbsp;&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE&nbsp;AND&nbsp;NONINFRINGEMENT.&nbsp;IN&nbsp;NO&nbsp;EVENT&nbsp;SHALL&nbsp;THE<br/>
+&nbsp;&nbsp;&nbsp;AUTHORS&nbsp;OR&nbsp;COPYRIGHT&nbsp;HOLDERS&nbsp;BE&nbsp;LIABLE&nbsp;FOR&nbsp;ANY&nbsp;CLAIM,&nbsp;DAMAGES&nbsp;OR&nbsp;OTHER<br/>
+&nbsp;&nbsp;&nbsp;LIABILITY,&nbsp;WHETHER&nbsp;IN&nbsp;AN&nbsp;ACTION&nbsp;OF&nbsp;CONTRACT,&nbsp;TORT&nbsp;OR&nbsp;OTHERWISE,&nbsp;ARISING&nbsp;FROM,<br/>
+&nbsp;&nbsp;&nbsp;OUT&nbsp;OF&nbsp;OR&nbsp;IN&nbsp;CONNECTION&nbsp;WITH&nbsp;THE&nbsp;SOFTWARE&nbsp;OR&nbsp;THE&nbsp;USE&nbsp;OR&nbsp;OTHER&nbsp;DEALINGS&nbsp;IN&nbsp;THE<br/>
+&nbsp;&nbsp;&nbsp;SOFTWARE.<br/>
+*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">stdpp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">base</span> <span class="id" title="library">countable</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#"><span class="id" title="library">gLts</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#"><span class="id" title="library">Bisimulation</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#"><span class="id" title="library">Lts_OBA</span></a> <a class="idref" href="TestingTheory.Coq_Helpers.MultisetHelper.html#"><span class="id" title="library">MultisetHelper</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab31"></a><h2 class="section">Termination</h2>
+
+<div class="paragraph"> </div>
+
+<a id="lab32"></a><h3 class="section">Inductive definition of termination</h3>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Reserved Notation</span> &quot;p ⤓" (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 1).<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="terminate" class="idref" href="#terminate"><span class="id" title="definition, inductive"><span id="terminate_rect" class="id"><span id="terminate_ind" class="id"><span id="terminate_rec" class="id"><span id="terminate_sind" class="id">terminate</span></span></span></span></span></a> `{<a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">gLts</span></a> <a id="P:1" class="idref" href="#P:1"><span class="id" title="binder"><span id="H:4" class="id">P</span></span></a> <a id="A:2" class="idref" href="#A:2"><span class="id" title="binder"><span id="H:4" class="id">A</span></span></a>} (<a id="p:5" class="idref" href="#p:5"><span class="id" title="binder">p</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#P:1"><span class="id" title="variable">P</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="tstep" class="idref" href="#tstep"><span class="id" title="constructor">tstep</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="notation">∀</span> <a id="q:8" class="idref" href="#q:8"><span class="id" title="binder">q</span></a><span class="id" title="notation">,</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:5"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#d8d626f30b577df39b372ff2af8a8513"><span class="id" title="notation">⟶</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:8"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:8"><span class="id" title="variable">q</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:5"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a><br/>
+<br/>
+<span class="id" title="keyword">where</span> <a id="e7deb96d613faab85592761a6249134b" class="idref" href="#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">&quot;</span></a>p ⤓" := (<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate:7"><span class="id" title="inductive">terminate</span></a> <span class="id" title="var">p</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Global Hint Constructors</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate"><span class="id" title="inductive">terminate</span></a>:<span class="id" title="var">mdb</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab33"></a><h3 class="section">Intensional definition of termination</h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Inductive</span> <a id="terminate_i" class="idref" href="#terminate_i"><span class="id" title="definition, inductive"><span id="terminate_i_ind" class="id"><span id="terminate_i_sind" class="id">terminate_i</span></span></span></a>`{<a id="H:12" class="idref" href="#H:12"><span class="id" title="binder">gLts</span></a> <a id="P:9" class="idref" href="#P:9"><span class="id" title="binder"><span id="H:12" class="id">P</span></span></a> <a id="A:10" class="idref" href="#A:10"><span class="id" title="binder"><span id="H:12" class="id">A</span></span></a>} (<a id="p:13" class="idref" href="#p:13"><span class="id" title="binder">p</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#P:9"><span class="id" title="variable">P</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="t_refuses'" class="idref" href="#t_refuses'"><span class="id" title="constructor">t_refuses'</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:13"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#70a49f19788ca4f524394e57ded0ed30"><span class="id" title="notation">↛</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_i:14"><span class="id" title="inductive">terminate_i</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:13"><span class="id" title="variable">p</span></a><br/>
+| <a id="tstep'" class="idref" href="#tstep'"><span class="id" title="constructor">tstep'</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="p':16" class="idref" href="#p':16"><span class="id" title="binder">p'</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:13"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#d8d626f30b577df39b372ff2af8a8513"><span class="id" title="notation">⟶</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p':16"><span class="id" title="variable">p'</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="notation">∀</span> <a id="q:17" class="idref" href="#q:17"><span class="id" title="binder">q</span></a><span class="id" title="notation">,</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:13"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#d8d626f30b577df39b372ff2af8a8513"><span class="id" title="notation">⟶</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:17"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_i:14"><span class="id" title="inductive">terminate_i</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:17"><span class="id" title="variable">q</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_i:14"><span class="id" title="inductive">terminate_i</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:13"><span class="id" title="variable">p</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab34"></a><h3 class="section">Equivalence betwenn the two definitions of termination</h3>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_i_to_terminate" class="idref" href="#terminate_i_to_terminate"><span class="id" title="lemma">terminate_i_to_terminate</span></a> `{<a id="gLtsP:21" class="idref" href="#gLtsP:21"><span class="id" title="binder">gLtsP</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts"><span class="id" title="class">gLts</span></a> <a id="P:18" class="idref" href="#P:18"><span class="id" title="binder">P</span></a> <a id="A:19" class="idref" href="#A:19"><span class="id" title="binder">A</span></a>} (<a id="p:22" class="idref" href="#p:22"><span class="id" title="binder">p</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#P:18"><span class="id" title="variable">P</span></a>) : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_i"><span class="id" title="inductive">terminate_i</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:22"><span class="id" title="variable">p</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:22"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intro</span> <span class="id" title="var">Hyp</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">Hyp</span> <span class="id" title="keyword">as</span> [| <span class="id" title="var">p</span> <span class="id" title="var">witness</span> <span class="id" title="var">spec</span> <span class="id" title="var">Ind</span>].<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">q</span> <span class="id" title="var">l</span>. <span class="id" title="var">exfalso</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#lts_refuses_spec2"><span class="id" title="method">lts_refuses_spec2</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#tstep"><span class="id" title="constructor">tstep</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_to_terminate_i" class="idref" href="#terminate_to_terminate_i"><span class="id" title="lemma">terminate_to_terminate_i</span></a> `{<a id="gLtsP:26" class="idref" href="#gLtsP:26"><span class="id" title="binder">gLtsP</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts"><span class="id" title="class">gLts</span></a> <a id="P:23" class="idref" href="#P:23"><span class="id" title="binder">P</span></a> <a id="A:24" class="idref" href="#A:24"><span class="id" title="binder">A</span></a>} (<a id="p:27" class="idref" href="#p:27"><span class="id" title="binder">p</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#P:23"><span class="id" title="variable">P</span></a>) : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:27"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_i"><span class="id" title="inductive">terminate_i</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:27"><span class="id" title="variable">p</span></a> .<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intro</span> <span class="id" title="var">Hyp</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">Hyp</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">p</span> <span class="id" title="var">Hyp1</span> <span class="id" title="var">Hyp2</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="definition">decide</span> (<span class="id" title="var">p</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#70a49f19788ca4f524394e57ded0ed30"><span class="id" title="notation">↛</span></a>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">refuses</span> | <span class="id" title="var">not_refuses</span>].<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#t_refuses'"><span class="id" title="constructor">t_refuses'</span></a>. <span class="id" title="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#tstep'"><span class="id" title="constructor">tstep'</span></a>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#lts_refuses_spec1"><span class="id" title="method">lts_refuses_spec1</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">not_refuses</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">not_refuses</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">p'</span> &amp; <span class="id" title="var">tr</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">exists</span> <span class="id" title="var">p'</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">intro</span> <span class="id" title="var">p'</span>. <span class="id" title="tactic">intro</span> <span class="id" title="var">tr</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">Hyp2</span>. <span class="id" title="tactic">assumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_i_equal_terminate'" class="idref" href="#terminate_i_equal_terminate'"><span class="id" title="lemma">terminate_i_equal_terminate'</span></a> `{<a id="gLtsP:31" class="idref" href="#gLtsP:31"><span class="id" title="binder">gLtsP</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts"><span class="id" title="class">gLts</span></a> <a id="P:28" class="idref" href="#P:28"><span class="id" title="binder">P</span></a> <a id="A:29" class="idref" href="#A:29"><span class="id" title="binder">A</span></a>} (<a id="p:32" class="idref" href="#p:32"><span class="id" title="binder">p</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#P:28"><span class="id" title="variable">P</span></a>) : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:32"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_i"><span class="id" title="inductive">terminate_i</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:32"><span class="id" title="variable">p</span></a> .<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span> ; [<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_to_terminate_i"><span class="id" title="lemma">terminate_to_terminate_i</span></a> | <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_i_to_terminate"><span class="id" title="lemma">terminate_i_to_terminate</span></a>].<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab35"></a><h3 class="section">Properties on termination</h3>
+
+<div class="paragraph"> </div>
+
+<a id="lab36"></a><h4 class="section">On LTS</h4>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_if_refuses" class="idref" href="#terminate_if_refuses"><span class="id" title="lemma">terminate_if_refuses</span></a> `{<a id="H:36" class="idref" href="#H:36"><span class="id" title="binder">gLts</span></a> <a id="P:33" class="idref" href="#P:33"><span class="id" title="binder"><span id="H:36" class="id">P</span></span></a> <a id="A:34" class="idref" href="#A:34"><span class="id" title="binder"><span id="H:36" class="id">A</span></span></a>} <a id="p:37" class="idref" href="#p:37"><span class="id" title="binder">p</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:37"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#70a49f19788ca4f524394e57ded0ed30"><span class="id" title="notation">↛</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:37"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intro</span> <span class="id" title="var">st</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">q</span> <span class="id" title="var">l</span>. <span class="id" title="var">exfalso</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#lts_refuses_spec2"><span class="id" title="method">lts_refuses_spec2</span></a>; <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_preserved_by_lts_tau" class="idref" href="#terminate_preserved_by_lts_tau"><span class="id" title="lemma">terminate_preserved_by_lts_tau</span></a> `{<a id="H:41" class="idref" href="#H:41"><span class="id" title="binder">gLts</span></a> <a id="P:38" class="idref" href="#P:38"><span class="id" title="binder"><span id="H:41" class="id">P</span></span></a> <a id="A:39" class="idref" href="#A:39"><span class="id" title="binder"><span id="H:41" class="id">A</span></span></a>} <a id="p:42" class="idref" href="#p:42"><span class="id" title="binder">p</span></a> <a id="q:43" class="idref" href="#q:43"><span class="id" title="binder">q</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:42"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:42"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#d8d626f30b577df39b372ff2af8a8513"><span class="id" title="notation">⟶</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:43"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:43"><span class="id" title="variable">q</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">inversion</span> 1; <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab37"></a><h4 class="section">On LTS with a bisimulation</h4>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_preserved_by_eq" class="idref" href="#terminate_preserved_by_eq"><span class="id" title="lemma">terminate_preserved_by_eq</span></a> `{<a id="H0:47" class="idref" href="#H0:47"><span class="id" title="binder">gLtsEq</span></a> <a id="P:44" class="idref" href="#P:44"><span class="id" title="binder"><span id="H0:47" class="id">P</span></span></a> <a id="A:45" class="idref" href="#A:45"><span class="id" title="binder"><span id="H0:47" class="id">A</span></span></a>} {<a id="p:48" class="idref" href="#p:48"><span class="id" title="binder">p</span></a> <a id="q:49" class="idref" href="#q:49"><span class="id" title="binder">q</span></a>} : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:48"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:48"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#ee9eb61a0a1ed2336e3bf5499731d62a"><span class="id" title="notation">⋍</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:49"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:49"><span class="id" title="variable">q</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">ht</span>. <span class="id" title="var">revert</span> <span class="id" title="var">q</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">ht</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#tstep"><span class="id" title="constructor">tstep</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">q'</span> <span class="id" title="var">l</span>. <span class="id" title="var">edestruct</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#eq_spec"><span class="id" title="method">eq_spec</span></a> <span class="id" title="keyword">as</span> (<span class="id" title="var">r</span> &amp; <span class="id" title="var">h2</span> &amp; <span class="id" title="var">h3</span>); <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_preserved_by_eq2" class="idref" href="#terminate_preserved_by_eq2"><span class="id" title="lemma">terminate_preserved_by_eq2</span></a> `{<a id="H0:53" class="idref" href="#H0:53"><span class="id" title="binder">gLtsEq</span></a> <a id="P:50" class="idref" href="#P:50"><span class="id" title="binder"><span id="H0:53" class="id">P</span></span></a> <a id="A:51" class="idref" href="#A:51"><span class="id" title="binder"><span id="H0:53" class="id">A</span></span></a>} {<a id="p:54" class="idref" href="#p:54"><span class="id" title="binder">p</span></a> <a id="q:55" class="idref" href="#q:55"><span class="id" title="binder">q</span></a>} : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:54"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#ee9eb61a0a1ed2336e3bf5499731d62a"><span class="id" title="notation">⋍</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:55"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:54"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:55"><span class="id" title="variable">q</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_preserved_by_eq"><span class="id" title="lemma">terminate_preserved_by_eq</span></a>; <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab38"></a><h4 class="section">On LTS with OBA axioms</h4>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="terminate_preserved_by_lts_non_blocking_action" class="idref" href="#terminate_preserved_by_lts_non_blocking_action"><span class="id" title="lemma">terminate_preserved_by_lts_non_blocking_action</span></a> `{<a id="H0:60" class="idref" href="#H0:60"><span class="id" title="binder">gLtsOba</span></a> <a id="P:56" class="idref" href="#P:56"><span class="id" title="binder"><span id="H0:60" class="id">P</span></span></a> <a id="A:57" class="idref" href="#A:57"><span class="id" title="binder"><span id="H0:60" class="id">A</span></span></a>} {<a id="p:61" class="idref" href="#p:61"><span class="id" title="binder">p</span></a> <a id="q:62" class="idref" href="#q:62"><span class="id" title="binder">q</span></a> <a id="a18a51ff48b08440ebdbab7ef84513c9" class="idref" href="#a18a51ff48b08440ebdbab7ef84513c9"><span class="id" title="binder">η</span></a>} : <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#non_blocking"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#a18a51ff48b08440ebdbab7ef84513c9"><span class="id" title="variable">η</span></a>  <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:61"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#c0cef255f8559ff03ba6ca13049d7470"><span class="id" title="notation">⟶[</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#a18a51ff48b08440ebdbab7ef84513c9"><span class="id" title="variable">η</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#c0cef255f8559ff03ba6ca13049d7470"><span class="id" title="notation">]</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:62"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#p:61"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#q:62"><span class="id" title="variable">q</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#e7deb96d613faab85592761a6249134b"><span class="id" title="notation">⤓</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">nb</span> <span class="id" title="var">l</span> <span class="id" title="var">ht</span>. <span class="id" title="var">revert</span> <span class="id" title="var">q</span> <span class="id" title="var">η</span> <span class="id" title="var">nb</span> <span class="id" title="var">l</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">ht</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">p</span> <span class="id" title="var">Hyp1</span> <span class="id" title="var">Hyp2</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">q</span> <span class="id" title="var">a</span> <span class="id" title="var">nb</span> <span class="id" title="var">l1</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#tstep"><span class="id" title="constructor">tstep</span></a>. <span class="id" title="tactic">intros</span> <span class="id" title="var">q'</span> <span class="id" title="var">l2</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#lts_oba_non_blocking_action_delay"><span class="id" title="method">lts_oba_non_blocking_action_delay</span></a> <span class="id" title="var">nb</span> <span class="id" title="var">l1</span> <span class="id" title="var">l2</span>) <span class="id" title="keyword">as</span> (<span class="id" title="var">t</span> &amp; <span class="id" title="var">l3</span> &amp; <span class="id" title="var">l4</span>); <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">l4</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">q0</span> &amp; <span class="id" title="var">l0</span> &amp; <span class="id" title="var">eq0</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Termination.html#terminate_preserved_by_eq"><span class="id" title="lemma">terminate_preserved_by_eq</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <span class="id" title="var">Hyp2</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">l3</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">nb</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">l0</span>. <span class="id" title="var">eassumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Tactics&nbsp;to&nbsp;help&nbsp;prove&nbsp;termination&nbsp;and&nbsp;related&nbsp;properties&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;Tactic&nbsp;that&nbsp;looks&nbsp;for&nbsp;lts/lts_step&nbsp;assumptions&nbsp;and&nbsp;inverts&nbsp;them&nbsp;to<br/>
+&nbsp;&nbsp;learn&nbsp;about&nbsp;the&nbsp;shape&nbsp;of&nbsp;the&nbsp;conclusion&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">lts_inversion</span> <span class="id" title="var">lts</span> :=<br/>
+<span class="id" title="tactic">try</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+| <span class="id" title="var">H</span> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#lts_step"><span class="id" title="method">lts_step</span></a> ?<span class="id" title="var">p</span> ?<span class="id" title="var">a</span> ?<span class="id" title="var">q</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">solve</span>[<span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">discriminate</span> || <span class="id" title="tactic">tauto</span>]<br/>
+| <span class="id" title="var">H</span> : <span class="id" title="var">lts</span> ?<span class="id" title="var">p</span> ?<span class="id" title="var">a</span> ?<span class="id" title="var">q</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">discriminate</span> || <span class="id" title="tactic">tauto</span><br/>
+&nbsp;<span class="id" title="keyword">end</span>;<br/>
+<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+| <span class="id" title="var">H</span> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#lts_step"><span class="id" title="method">lts_step</span></a> ?<span class="id" title="var">p</span> ?<span class="id" title="var">a</span> ?<span class="id" title="var">q</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">clear</span> <span class="id" title="var">H</span><br/>
+| <span class="id" title="var">H</span> : <span class="id" title="var">lts</span> ?<span class="id" title="var">p</span> ?<span class="id" title="var">a</span> ?<span class="id" title="var">q</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">clear</span> <span class="id" title="var">H</span><br/>
+&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;A&nbsp;tactic&nbsp;to&nbsp;try&nbsp;and&nbsp;prove&nbsp;termination.<br/>
+&nbsp;&nbsp;Should&nbsp;be&nbsp;complete&nbsp;in&nbsp;the&nbsp;absence&nbsp;of&nbsp;recusion.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">step_tac</span> <span class="id" title="var">lts</span> :=<br/>
+<span class="id" title="tactic">try</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span> |<span class="id" title="var">H</span> : <span class="id" title="notation">{[+</span> ?<span class="id" title="var">a</span> <span class="id" title="notation">+]}</span> <span class="id" title="notation">⊎</span> ?<span class="id" title="var">m</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">∅</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="var">now</span> (<span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Coq_Helpers.MultisetHelper.html#neq_multi_nil"><span class="id" title="lemma">neq_multi_nil</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>) <span class="id" title="keyword">end</span>;<br/>
+<span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>; <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">repeat</span> <span class="id" title="var">lts_inversion</span> <span class="id" title="var">lts</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">term_tac</span> <span class="id" title="var">lts</span> := <span class="id" title="tactic">repeat</span> (<span class="id" title="var">step_tac</span> <span class="id" title="var">lts</span>).<br/>
+
+<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
