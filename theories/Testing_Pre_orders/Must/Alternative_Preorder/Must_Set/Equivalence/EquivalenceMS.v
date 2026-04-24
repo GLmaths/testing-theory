@@ -217,8 +217,12 @@ Section must_set_acc_set.
 
   (* ************************************************** *)
 
-  Context `{@PreExtAction (P * mb A) A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}. (* (FW_gLts gLtsP) *)
-  Context `{@PreExtAction (Q * mb A) A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}. (* (FW_gLts gLtsQ) *)
+  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A}.
+
+  Context `{CC : Countable PreAct}.
+
+  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
 
   Lemma equivalence_bhv_acc_mst2
     (p : P) (q : Q) :
@@ -241,11 +245,10 @@ Section must_set_acc_set.
       { eapply hm. eapply wt_set_spec2; eauto. eapply wt_nil. }
       exists μ. inversion hw0; subst.
       + exfalso. eapply lts_refuses_spec2 in hstpt; eauto.
-      + assert (𝝳 (Φ μ) ∈ pre_co_actions_of qt).
+      + (* assert (𝝳 (Φ μ) ∈ coR_abs qt).
         { eapply hsubpt. eapply preactions_of_spec. eapply preactions_of_fin_test_spec1.
-          admit. }
+          admit. } *) admit.
         (* exists qr. split; eauto. eapply wt_push_nil_left; eauto with mdb. *)
-        admit.
   Admitted.
 
   Theorem equivalence_bhv_acc_mst
@@ -258,24 +261,22 @@ Section must_set_acc_set.
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
 
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteImagegLts T A, Testing_Predicate0 :!Testing_Predicate outcome _}.
+  Context `{Testing_Predicate0 :!Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
   Context `{!Prop_of_Inter (P * mb A) T A dual}.
   Context `{!Prop_of_Inter (Q * mb A) T A dual}.
 
-  Context `{@AbsAction A H T FinA _ Φ}.
-
   Context `{igen_conv : @test_convergence_spec T _  _ _ outcome Testing_Predicate0 gen_conv}.
-  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_acc : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 gen_acc (fun x => 𝝳 (Φ x))}.
 
   Corollary equivalence_bhv_mst_ctx
     (p : P) (q : Q) : (p, ∅) ≾ₘᵤₛₜ (q, ∅) <-> pre_extensional outcome p q.
   Proof.
     erewrite pre_extensional_eq.
     rewrite equivalence_bhv_acc_mst.
-    (* rewrite <- equivalence_bhv_acc_ctx.
+    (* erewrite <- equivalence_bhv_acc_ctx.
     eapply pre_extensional_eq. *) admit.
   Admitted.
 

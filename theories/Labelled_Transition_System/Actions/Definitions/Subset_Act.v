@@ -95,7 +95,7 @@ repeat split ; try set_solver. Defined.
 Definition map_set {A : Type} {B : Type} (Γ : A -> B) (S : subset_of A)  : subset_of B :=
   fun pre_μ => ∃ μ', μ' ∈ S /\ pre_μ = (Γ μ').
 
-Lemma map_gamma_of_action {A : Type} {B : Type} (Γ : A -> B) (S : subset_of A) μ : μ ∈ S ->  Γ μ ∈ map_set Γ S.
+Lemma map_gamma_of_action {A : Type} {B : Type} (Γ : A -> B) (S : subset_of A) μ : μ ∈ S ->  (Γ μ) ∈ map_set Γ S.
 Proof.
   intros. simpl. exists μ. split; eauto.
 Qed.
@@ -103,8 +103,9 @@ Qed.
 Notation "'⌈' Γ '⌉' S" := (map_set Γ S) (at level 50).
 
 
-Definition coR_abs {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ (coR p).
+Definition coR_map {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ (coR p).
 
-(* Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B -> C) :
+(*
+Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B-> C) :
       μ ∈ map_set (fun x => Γ2 (Γ1 x)) S <-> μ ∈ map_set (Γ2 (map_set Γ1 S)). *)
 

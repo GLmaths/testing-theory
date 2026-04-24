@@ -479,8 +479,8 @@ Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 (** ** Condition on acceptance sets *)
 
 Definition bhv_pre_cond2__x `{
-  AbsPT : @AbsAction P T FinA PreAct A EA gLtsP _ Φ 𝝳,
-  AbsQT : @AbsAction Q T FinA PreAct A EA gLtsQ _ Φ 𝝳}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _ ,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _ }
   (ps : gset P) (q : Q) :=
   forall s q',
     q ⟹[s] q' -> q' ↛ ->
@@ -506,8 +506,8 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 (** ** Alternative preorder on sets *)
 
 Definition bhv_pre__x `{
-  AbsPT : @AbsAction P T FinA PreAct A EA gLtsP _ Φ 𝝳,
-  AbsQT : @AbsAction Q T FinA PreAct A EA gLtsQ _ Φ 𝝳}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
     (ps : gset P) (q : Q) :=
       (ps ≼ₓ1 q /\ ps ≼ₓ2 q).
 (* ≼ₐₛ *)
@@ -515,8 +515,8 @@ Definition bhv_pre__x `{
 Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
 
 Lemma alt_set_singleton_iff `{
-  AbsPT : @AbsAction P T FinA PreAct A EA gLtsP _ Φ 𝝳,
-  AbsQT : @AbsAction Q T FinA PreAct A EA gLtsQ _ Φ 𝝳}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _ }
   (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
@@ -529,8 +529,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_reduction `{
-  AbsPT : @AbsAction P T FinA PreAct A EA gLtsP _ Φ 𝝳,
-  AbsQT : @AbsAction Q T FinA PreAct A EA gLtsQ _ Φ 𝝳}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
 Proof.
   intros l (halt1 & halt2).
@@ -542,8 +542,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action `{
-  AbsPT : @AbsAction P T FinA PreAct A EA gLtsP _ Φ 𝝳,
-  AbsQT : @AbsAction Q T FinA PreAct A EA gLtsQ _ Φ 𝝳}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
   (ps0 : gset P) (q : Q) μ ps1 q' (htp : forall p, p ∈ ps0 -> terminate p) :
   q ⟶[μ] q'
     -> wt_set_from_pset_spec ps0 [μ] ps1
@@ -562,8 +562,8 @@ Proof.
 Qed.
 
 Lemma reverse_trace_inclusion `{
-  AbsPT : @AbsAction P T FinA PreAct A EA gLtsP _ Φ 𝝳,
-  AbsQT : @AbsAction Q T FinA PreAct A EA gLtsQ _ Φ 𝝳}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
   (ps : gset P) (q q' : Q) μ
   : ps ≼ₓ q -> (forall p, p ∈ ps -> p ⇓ [μ]) ->
     q ⟶[μ] q' -> exists p', wt_set_from_pset_spec1 ps [μ] {[ p' ]}.
@@ -582,9 +582,9 @@ End Preorder_for_sets.
 
 Context `{
   gLtsEqP : @gLtsEq P A EA, !FiniteImagegLts P A,
-  AbsPT : !@AbsAction P T FinA PreAct A EA _ _ Φ 𝝳,
   gLtsEqQ : @gLtsEq Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A,
-  AbsQT : !@AbsAction Q T FinA PreAct A EA _ _ Φ 𝝳}.
+  AbsPT : !@AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ ,
+  AbsQT : !@AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ }.
 
 Context `{@Prop_of_Inter Q T A dual EA _ _}.
 Context `{@Prop_of_Inter P T A dual EA _ _}.
@@ -604,10 +604,8 @@ Proof.
     { exists (co μ). repeat split; eauto.
       eapply lts_refuses_spec2;eauto.
       symmetry. exact (proj2_sig(exists_dual μ)). }
-    (* The next line uses a property of delta *)
     eapply (map_gamma_of_action (𝝳 ∘ Φ)) in some_co_action_of_p as mem.
     eapply sub in mem. destruct mem as (μ' & mem & eq).
-    (* The next line uses a property of delta *)
     eapply (map_gamma_of_action Φ) in mem as eq'. symmetry in eq.
     (* The next line uses a property of delta *)
     eapply (abstraction_prog_spec q) in eq' ;eauto.
@@ -730,9 +728,9 @@ Lemma soundness_co_nb_enabled `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
-
-  `{AbsPT : @AbsAction P T FinA PreAct A H _ _ Φ 𝝳}
-  `{AbsQT : @AbsAction Q T FinA PreAct A H _ _ Φ 𝝳}
+  
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -750,8 +748,8 @@ Lemma soundness_fw `{
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H _ _ Φ 𝝳}
-  `{AbsQT : @AbsAction Q T FinA PreAct A H _ _ Φ 𝝳}
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -782,8 +780,8 @@ Lemma soundness
   {_ : @Prop_of_Inter Q (mb A) A fw_inter H _ MbgLts}
   {_ : @Prop_of_Inter (Q * mb A) T A dual H (inter_lts fw_inter) _}
 
-  `{AbsPT : @AbsAction (P * mb A) T FinA PreAct A H _ _ Φ 𝝳}
-  `{AbsQT : @AbsAction (Q * mb A) T FinA PreAct A H _ _ Φ 𝝳}
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
 
   (p : P) (q : Q) : p ▷ ∅ ≼ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.

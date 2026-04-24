@@ -34,18 +34,19 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
-              GeneralizeLtsOutputs Termination WeakTransitions Convergence  
+              Termination WeakTransitions Convergence  
                InteractionBetweenLts
                DefinitionAS.
 
-CoInductive copre
+CoInductive copre 
   `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
-  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  `{@gLts T A H}
+  `{@AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{@AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
   (ps : gset P) (q : Q) : Prop := {
     c_tau q' : q ⟶ q' -> copre ps q'
   ; c_now : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
-            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q
+            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
   ; c_step : forall μ q' ps', (forall p, p ∈ ps -> p ⇓ [μ]) ->
                          q ⟶[μ] q' -> wt_set_from_pset_spec ps [μ] ps' -> copre ps' q'
   ; c_cnv : (forall p, p ∈ ps -> p ⤓) -> q ⤓
@@ -55,8 +56,9 @@ Notation "p ⩽ q" := (copre p q) (at level 70).
 
 Lemma co_preserved_by_wt_nil
   `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
-  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  `{@gLts T A H}
+  `{@AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{@AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
   (ps : gset P) (q q' : Q) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
 Proof. intro hw. dependent induction hw; eauto. destruct 1. eauto. Qed.
 

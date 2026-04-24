@@ -27,6 +27,10 @@ From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable gmap finite decidable gmultiset.
 From TestingTheory Require Import InputOutputActions ActTau.
 
+
+(*
+
+
 Class Label (L: Type) :=
   MkLabel {
       label_eqdec: EqDecision L;
@@ -127,3 +131,6 @@ Class LtsObaFW (A L : Type) `{LtsOba A L} :=
       lts_oba_fw_forward p1 a : ∃ p2, p1 ⇾[ActIn a] p2 /\ p2 ⇾[ActOut a] p1 ;
       lts_oba_fw_feedback {p1 p2 p3 a} : p1 ⇾[ActOut a] p2 -> p2 ⇾[ActIn a] p3 -> p1 ⇾≈ p3 \/ p1 ≈ p3 ;
     }.
+    
+    
+    *)

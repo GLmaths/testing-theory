@@ -65,7 +65,7 @@ End must_sets.
 
 Global Hint Unfold bhv_pre_ms:mdb.
 
-Notation "p 'MUST' L" := (MUST p L) (at level 70).
+Notation "p 'MUST' G" := (MUST p G) (at level 70).
 
 Notation "p ≾₁ q" := (bhv_pre_ms_cond1 p q) (at level 70).
 

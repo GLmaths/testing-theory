@@ -38,7 +38,7 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
               GeneralizeLtsOutputs Termination WeakTransitions Convergence  
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI.
-
+(*
 Lemma prex1_if_copre
   `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
@@ -117,3 +117,4 @@ Proof.
     split; eauto.
 Qed.
 
+*)
