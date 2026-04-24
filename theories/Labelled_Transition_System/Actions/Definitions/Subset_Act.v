@@ -100,10 +100,11 @@ Proof.
   intros. simpl. exists μ. split; eauto.
 Qed.
 
+Notation "'⌈' Γ '⌉' S" := (map_set Γ S) (at level 50).
+
+
+Definition coR_abs {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ (coR p).
+
 (* Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B -> C) :
       μ ∈ map_set (fun x => Γ2 (Γ1 x)) S <-> μ ∈ map_set (Γ2 (map_set Γ1 S)). *)
-
-Definition map_co_action_set {A B : Type} `{gLts P A} (p : P) (Γ : A -> B) := map_set Γ (coR p).
-
-
 

@@ -24,31 +24,38 @@
 *)
 
 From Stdlib.Unicode Require Import Utf8.
-From Stdlib.Program Require Import Equality.
+From Stdlib.Program Require Import Equality Basics.
 From stdpp Require Import finite gmap decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
-    StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
+    StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS Subset_Act.
 
 (* * Alternative preorder for Must based on acceptance-sets *)
 
 (** ** Label abstractions *)
 
-(** Client-side condition for label abstractions **)
-Class AbsAction {P T FinA : Type}  `{H : ExtAction A} (A : Type) (PreAct : Type) (gLtsP : gLts P H) (gLtsT : gLts T H)  (Φ : A → FinA) (𝝳 : FinA → PreAct) :=
+Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (gLtsP : gLts P H) (gLtsT : gLts T H) (Φ : A → FinA) (𝝳 : FinA → PreAct) :=
   MkAbsAction {
-    abstraction_test_spec μ μ' t : (Φ μ) = (Φ μ') -> μ ∈ (R t)-> μ' ∈ (R t)
-    abstraction_prog_spec μ μ' t : 𝝳 (Φ μ) = 𝝳 (Φ μ') -> (Φ μ) ∈ map_set Φ (coR p) -> (Φ μ') ∈ map_set Φ (coR p)
+    (** Client-side condition for label abstractions , Definition 5 (1) **)
+    abstraction_test_spec (t : T) (μ : A) (μ' : A) : (Φ μ) = (Φ μ') -> μ ∈ (R t)-> μ' ∈ (R t);
+    (** Server-side condition for label abstractions,  Definition 5 (2) **)
+    abstraction_prog_spec (p : P) μ μ' : 𝝳 (Φ μ) = 𝝳 (Φ μ') -> (Φ μ) ∈ map_set Φ (coR p) -> (Φ μ') ∈ map_set Φ (coR p);
   }.
 
+Arguments AbsAction {_} {_} {_} {_} A H gLtsP gLtsT Φ 𝝳.
 
-(** Server-side condition for label abstractions **)
-Class FinitaryAbsAction `{AbsAction A PreAct gLtsP gLtsT Φ 𝝳} `{Countable PreAct} :=
-  MkPreExtAction {
+
+(** ** Finitary Label abstractions *)
+
+Class FinitaryAbsAction {FinA PreAct: Type} P T (A : Type) (H : ExtAction A) {gLtsP : gLts P H} {gLtsT : gLts T H} (Φ : A → FinA) (𝝳 : FinA → PreAct)
+  `{Countable PreAct} :=
+  MkFinitaryAbsAction {
+      FinitaryAbsAction_Abs :: AbsAction A H gLtsP gLtsT Φ 𝝳;
+
+      (* 𝝳 (Φ (coR p)) is a finite set, called (coR_abs p) *)
       coR_abs : P -> gset PreAct;
-      preactions_of_spec1 (p : P) (pre_μ : PreAct) : pre_μ ∈ (coR_abs p) -> pre_μ ∈ map (fun x => 𝝳 (Φ μ)) (coR p);
-      preactions_of_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ map (fun x => 𝝳 (Φ μ)) (coR p) -> pre_μ ∈ (coR_abs p);
+      preactions_of_spec1 (p : P) (pre_μ : PreAct) : pre_μ ∈ (coR_abs p) -> pre_μ ∈ map_set (fun μ => 𝝳 (Φ μ)) (coR p);
+      preactions_of_spec2 (pre_μ : PreAct) (p : P) : pre_μ ∈ ⌈ (𝝳 ∘ Φ) ⌉ (coR p) -> pre_μ ∈ (coR_abs p);
   }.
-
 
 (** ** Termination condition *)
 Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
@@ -58,19 +65,19 @@ Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_cond2 `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ LtsQ}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H gLtsP gLtsT Φ 𝝳,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H gLtsQ gLtsT Φ 𝝳}
   (p : P) (q : Q) :=
-  forall s q',
+  forall (s : trace A) q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q')).
 
 Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
 
 (** ** Definition of the alternative preorder *)
-Definition bhv_pre `{PreA_countable : Countable PreA} `{
-  LtsP : @gLts P A H, PreAP : @PreExtAction P A _ FiniteA PreA _ _ 𝝳 Φ LtsP,
-  LtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A _ FiniteA PreA _ _ 𝝳 Φ LtsQ}
+Definition bhv_pre `{
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H gLtsP gLtsT Φ 𝝳,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H gLtsQ gLtsT Φ 𝝳}
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
 

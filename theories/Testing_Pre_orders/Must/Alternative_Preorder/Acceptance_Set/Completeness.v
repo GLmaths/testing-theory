@@ -36,7 +36,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA
   InteractionBetweenLts MultisetLTSConstruction 
   ParallelLTSConstruction ForwarderConstruction
   Must Lift Subset_Act Convergence Termination 
-  Testing_Predicate DefinitionAS ActTau Lts_Finite_Output_Chain.
+  Testing_Predicate DefinitionAS ActTau Lts_Finite_Output_Chain Subset_Act.
 
 Import ListNotations.
 
@@ -697,11 +697,11 @@ Qed.
 
 Lemma wt_acceptance_set_subseteq `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  PreActP : @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
+  AbsPT : @AbsAction P T FinA PreAct A H gLtsP gLtsT Φ 𝝳}
   μ s p q hacnv1 hacnv2 :
   p ⟹{μ} q ->
-  map pre_co_actions_of (elements (wt_refuses_set q s hacnv1)) ⊆
-    map pre_co_actions_of (elements (wt_refuses_set p (μ :: s) hacnv2)).
+  map (coR_abs (𝝳 ∘ Φ)) (elements (wt_refuses_set q s hacnv1)) ⊆
+    map (coR_abs (𝝳 ∘ Φ)) (elements (wt_refuses_set p (μ :: s) hacnv2)).
 Proof.
   intros.
   intros a in__a.
@@ -716,11 +716,11 @@ Qed.
 
 Lemma lts_tau_acceptance_set_subseteq `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  PreActP : @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
+  AbsPT : @AbsAction P T FinA PreAct A H gLtsP gLtsT Φ 𝝳}
   s p q hacnv1 hacnv2 :
   p ⟶ q ->
-  map pre_co_actions_of (elements $ wt_refuses_set q s hacnv1) ⊆
-    map pre_co_actions_of (elements $ wt_refuses_set p s hacnv2).
+  map (coR_abs (𝝳 ∘ Φ)) (elements $ wt_refuses_set q s hacnv1) ⊆
+    map (coR_abs (𝝳 ∘ Φ)) (elements $ wt_refuses_set p s hacnv2).
 Proof.
   intros.
   intros a in__a.
@@ -729,36 +729,6 @@ Proof.
     eapply wt_refuses_set_spec1 in in__t.
     destruct in__t. split; eauto with mdb. }
   set_solver.
-Qed.
-
-Definition oas `{
-  gLtsP : @gLts P A H, FiniteImagegLts P A,
-  PreActP : @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
-  (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct:=
-  let ps : list P := elements (wt_refuses_set p s hcnv) in
-  ⋃ map pre_co_actions_of ps.
-
-Lemma union_wt_acceptance_set_subseteq `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  PreActP : @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
-  μ s p q h1 h2 :
-  p ⟹{μ} q -> oas q s h1 ⊆ oas p (μ :: s) h2.
-Proof.
-  intros hw a (O & mem1 & mem2)%elem_of_union_list.
-  eapply elem_of_union_list.
-  exists O. split; eauto. eapply wt_acceptance_set_subseteq; eauto.
-Qed.
-
-Lemma union_acceptance_set_lts_tau_subseteq `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  PreActP : @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
-  s p q h1 h2 :
-  p ⟶ q -> oas q s h1 ⊆ oas p s h2.
-Proof.
-  intros l a (L & mem1 & mem2)%elem_of_union_list.
-  eapply elem_of_union_list.
-  exists L. split; eauto.
-  eapply lts_tau_acceptance_set_subseteq; eauto.
 Qed.
 
 Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
@@ -787,6 +757,36 @@ Proof.
       eapply must_eq_client. symmetry; eauto.
       eapply hmq. eauto with mdb. eauto with mdb.
     + eapply m_now. eapply test_side_effect_by_construction ;eauto.
+Qed.
+
+Definition oas `{
+  gLtsP : @gLts P A H, FiniteImagegLts P A,
+  AbsPT : @AbsAction P T FinA PreAct A H gLtsP gLtsT Φ 𝝳}
+  (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct:=
+  let ps : list P := elements (wt_refuses_set p s hcnv) in
+  ⋃ map (coR_abs (𝝳 ∘ Φ)) ps.
+
+Lemma union_wt_acceptance_set_subseteq `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A,
+  PreActP : @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
+  μ s p q h1 h2 :
+  p ⟹{μ} q -> oas q s h1 ⊆ oas p (μ :: s) h2.
+Proof.
+  intros hw a (O & mem1 & mem2)%elem_of_union_list.
+  eapply elem_of_union_list.
+  exists O. split; eauto. eapply wt_acceptance_set_subseteq; eauto.
+Qed.
+
+Lemma union_acceptance_set_lts_tau_subseteq `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A,
+  PreActP : @PreExtAction P A H FinA PreAct PreAct_eq PreAct_countable 𝝳 Φ gLtsP}
+  s p q h1 h2 :
+  p ⟶ q -> oas q s h1 ⊆ oas p s h2.
+Proof.
+  intros l a (L & mem1 & mem2)%elem_of_union_list.
+  eapply elem_of_union_list.
+  exists L. split; eauto.
+  eapply lts_tau_acceptance_set_subseteq; eauto.
 Qed.
 
 Lemma ta_tau_ex `{CC : Countable PreAct}`{
