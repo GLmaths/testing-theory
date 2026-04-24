@@ -34,24 +34,19 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 (** ** Label abstractions *)
 
 (** Client-side condition for label abstractions **)
-Class AbsAction `{H : ExtAction A} {E FinA : Type} (LtsE : @gLts E A H) (Φ : A → FinA) :=
+Class AbsAction {P T FinA : Type}  `{H : ExtAction A} (A : Type) (PreAct : Type) (gLtsP : gLts P H) (gLtsT : gLts T H)  (Φ : A → FinA) (𝝳 : FinA → PreAct) :=
   MkAbsAction {
-    abstraction_test_spec μ μ' e : blocking μ -> blocking μ' -> (Φ μ) = (Φ μ') -> ¬ e ↛[ μ ] -> ¬ e ↛[ μ' ]
+    abstraction_test_spec μ μ' t : (Φ μ) = (Φ μ') -> μ ∈ (R t)-> μ' ∈ (R t)
+    abstraction_prog_spec μ μ' t : 𝝳 (Φ μ) = 𝝳 (Φ μ') -> (Φ μ) ∈ map_set Φ (coR p) -> (Φ μ') ∈ map_set Φ (coR p)
   }.
 
 
 (** Server-side condition for label abstractions **)
-Class PreExtAction {P : Type} `{H : ExtAction A} {FinA: Type} `{Countable PreAct} 
-  {𝝳 : FinA → PreAct} {Φ : A → FinA} {LtsP : @gLts P A H} :=
+Class FinitaryAbsAction `{AbsAction A PreAct gLtsP gLtsT Φ 𝝳} `{Countable PreAct} :=
   MkPreExtAction {
-      pre_co_actions_of_fin : P -> FinA -> Prop ;
-
-      preactions_of_fin_test_spec1 (μ : A) (p : P) : μ ∈ co_actions_of p -> (Φ μ) ∈ (pre_co_actions_of_fin p);
-      preactions_of_fin_test_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p)
-            -> ∃ μ', μ' ∈ co_actions_of p /\ pre_μ = (Φ μ');
-
-      pre_co_actions_of : P -> gset PreAct;
-      preactions_of_spec (pre_μ : FinA) (p : P) : pre_μ ∈ (pre_co_actions_of_fin p) <-> (𝝳 pre_μ) ∈ (pre_co_actions_of p);
+      coR_abs : P -> gset PreAct;
+      preactions_of_spec1 (p : P) (pre_μ : PreAct) : pre_μ ∈ (coR_abs p) -> pre_μ ∈ map (fun x => 𝝳 (Φ μ)) (coR p);
+      preactions_of_spec2 (pre_μ : FinA) (p : P) : pre_μ ∈ map (fun x => 𝝳 (Φ μ)) (coR p) -> pre_μ ∈ (coR_abs p);
   }.
 
 
