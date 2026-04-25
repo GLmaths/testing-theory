@@ -841,6 +841,9 @@ Proof.
                eapply lts_refuses_spec1 in Tr'' as (e'' & Tr'').
                eapply lts_refuses_spec1 in Tr as (p'' & Tr).
                exists (p'', e''). eapply ParSync. exact duo. exact Tr. exact Tr''.
+               destruct mem as (μ & Tr & duo & b). eauto.
+               intro imp. eapply ta_does_no_non_blocking_actions in imp.
+               eapply (@lts_refuses_spec2 T). exists r. exact Tr'. eauto.
     + intros e l.
       exfalso. 
       assert ({q : T | ta E2 ε ⟶ q}) as impossible. eauto.
@@ -952,14 +955,18 @@ Proof.
          subst. eapply coR_abs_spec1 in co_set.
          destruct co_set as (μ'' & co_set & eq).
          assert ((Φ μ) ∈ ⌈ Φ ⌉ (coR p)) as mem.
-         { symmetry in eq; eapply abstraction_prog_spec; eauto.
+         { symmetry in eq; eapply abstraction_prog_spec; eauto. 
+           destruct co_set as (μ' & Tr' & duo & nb). exact nb.
+           intro imp. eapply ta_does_no_non_blocking_actions in imp.
+           eapply (@lts_refuses_spec2 T). exists r. exact Tr. eauto.
            eapply map_gamma_of_action. eauto. }
          destruct mem as (μ' & Tr' & eq').
          assert (blocking μ).
          { intro imp. eapply ta_does_no_non_blocking_actions in imp. 
            eapply (@lts_refuses_spec2 T). exists r. exact Tr. eauto. }
          assert (¬ (ta (coR_abs p ∖ E) ε) ↛[μ']) as Tr''.
-         { eapply abstraction_test_spec ; eauto. eapply lts_refuses_spec2; eauto. }
+         { eapply abstraction_test_spec in eq' ; eauto. destruct Tr' as (Tr'' & duo'' & b'' & bbbb).
+           eauto. eapply lts_refuses_spec2; eauto. }
          rewrite<- HeqD in Tr''.
          eapply lts_refuses_spec1 in Tr'' as (e'' & Tr'').
          destruct Tr' as (μ''' & Tr' & duo & b).

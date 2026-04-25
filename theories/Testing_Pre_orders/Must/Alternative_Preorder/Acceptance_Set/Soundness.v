@@ -612,12 +612,12 @@ Proof.
     destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo & b).
     (* The next line uses the property of phi *)
     assert (μ'' ∈ R t) as Tr_Test.
-    { eapply abstraction_test_spec; eauto. apply lts_refuses_spec2. eauto. }
+    { eapply abstraction_test_spec in eq';eauto. apply lts_refuses_spec2. eauto. }
     eapply lts_refuses_spec1 in Tr_Test as (t'' & Tr'').
     eapply lts_refuses_spec1 in tr' as (q' & tr').
     exists μ''. exists q'. exists t''. split ;eauto.
     eapply unique_nb in duo. subst. rewrite<- dual_is_involutive.
-    exact tr'.
+    exact tr'. destruct mem as (μ'' & Tr'' & duo & nb). exact nb.
 Qed.
 
 Lemma unoutcome_must_st_nleqx (X : gset P) (q : Q) (t : T):

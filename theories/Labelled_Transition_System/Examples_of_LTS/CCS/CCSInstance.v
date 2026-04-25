@@ -23,12 +23,6 @@
    SOFTWARE.
 *)
 
-
-From Stdlib.Program Require Import Equality.
-From Stdlib.Strings Require Import String.
-From stdpp Require Import base countable finite gmap list gmultiset strings.
-From Stdlib Require Import Relations.
-From Stdlib.Wellfounded Require Import Inverse_Image.
 From TestingTheory Require Import VCCS_Instance.
 
 Module Type CCS.
@@ -37,6 +31,17 @@ Module Type CCS.
 End CCS.
 
 
+
+(* From Stdlib.Program Require Import Equality.
+From Stdlib.Strings Require Import String.
+From Stdlib Require Import Relations.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+
+From stdpp Require Import base countable finite gmap list gmultiset strings.
+From TestingTheory Require Import InListPropHelper InputOutputActions ActTau OldTransitionSystems Must 
+      Completeness Soundness DefinitionCI Normalisation MultisetLTSConstruction
+      GeneralizeLtsOutputs ForwarderConstruction ParallelLTSConstruction Testing_Predicate
+      (* gLts *) (* Bisimulation *). *)
 (*
 
 Parameter Channel : Type.

@@ -36,9 +36,9 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLts T H}  :=
   MkAbsAction {
     (** Client-side condition for label abstractions , Definition 5 (1) **)
-    abstraction_test_spec (t : T) (μ : A) (μ' : A) : (Φ μ) = (Φ μ') -> μ ∈ (R t)-> μ' ∈ (R t);
+    abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
     (** Server-side condition for label abstractions,  Definition 5 (2) **)
-    abstraction_prog_spec (p : P) μ μ' : 𝝳 (Φ μ) = 𝝳 (Φ μ') -> (Φ μ) ∈ map_set Φ (coR p) -> (Φ μ') ∈ map_set Φ (coR p);
+    abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ map_set Φ (coR p) -> (Φ β') ∈ map_set Φ (coR p);
   }.
 
 Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_}.
@@ -91,13 +91,13 @@ From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
   `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts} 
   : @AbsAction (P * mb A) T FinA PreAct A H Φ 𝝳 (FW_gLts gLtsP) gLtsT.
 Next Obligation.
-  intros. eapply abstraction_test_spec ;eauto.
+  intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) μ μ' eq mem.
-  assert (Φ μ ∈ ⌈ Φ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
+  intros ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) β β' b b' eq mem.
+  assert (Φ β ∈ ⌈ Φ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
   destruct mem as (μ'' & mem & eq').
-  destruct mem as (μ''' & tr' & duo & b).
+  destruct mem as (μ''' & tr' & duo & b'').
   eapply lts_refuses_spec1 in tr' as ((p , m) & tr'').
   inversion tr'';subst.
   - admit.
@@ -105,7 +105,7 @@ Next Obligation.
     { eapply map_gamma_of_action. exists μ'''. repeat split ; eauto. eapply lts_refuses_spec2 ;eauto. }
     rewrite eq' in eq. eapply abstraction_prog_spec in eq; eauto.
     rewrite  *)
-  - destruct (decide (non_blocking μ''')) as [nb' | b'].
+  - destruct (decide (non_blocking μ''')) as [nb''' | b'''].
     * eapply non_blocking_action_in_ms in l; eauto. subst. admit.
     * eapply blocking_action_in_ms in l as (eq'' & duo'' & nb''); eauto.
       subst. eapply unique_nb in duo ; subst. contradiction.

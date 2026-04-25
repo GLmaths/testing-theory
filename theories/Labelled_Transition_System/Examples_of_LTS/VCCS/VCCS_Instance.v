@@ -5149,17 +5149,17 @@ Qed.
 
 #[global] Program Instance AbsVCCS : AbsAction (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ.
 Next Obligation.
-  intros. destruct μ; destruct μ'; destruct a; destruct a0.
-  - inversion H; subst.
-    eapply lts_refuses_spec1 in H0 as (e' & Tr).
+  intros. destruct β; destruct β'; destruct a; destruct a0.
+  - inversion H1; subst.
+    eapply lts_refuses_spec1 in H2 as (e' & Tr).
     eapply TransitionShapeForInput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
     assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ? })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ d0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
     eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) VCCS_ExtAction VCCS_gLtsEq) in accepts.
     exact accepts. symmetry. eauto.
-  - simpl in *. inversion H.
-  - simpl in *. inversion H.
-  - inversion H; subst. eapply lts_refuses_spec1 in H0 as (e' & Tr). simpl in *.
+  - simpl in *. inversion H1.
+  - simpl in *. inversion H1.
+  - inversion H1; subst. eapply lts_refuses_spec1 in H2 as (e' & Tr). simpl in *.
     eapply TransitionShapeForOutput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
     assert (¬ (Ѵ n ((VarC_add n c0 ! d0 • P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ! })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
@@ -5167,22 +5167,22 @@ Next Obligation.
     exact accepts. symmetry. eauto.
 Qed.
 Next Obligation.
-  - intros. destruct H0 as (μ'' & eq & mem). destruct μ.
+  - intros. destruct H2 as (μ'' & eq & mem). destruct β.
     + destruct a. simpl in *. destruct μ''.
-      * simpl in *. destruct a. inversion mem. subst. destruct μ'.
-        -- destruct a. simpl in *. inversion H; subst.
+      * simpl in *. destruct a. inversion mem. subst. destruct β'.
+        -- destruct a. simpl in *. inversion H1; subst.
            destruct eq as (μ'' & tr & duo & b).
            symmetry in duo. eapply simplify_match_input in duo. subst.
            exists (ActIn(c ⋉ d0)). split ;eauto. exists (ActOut (c ⋉ d0)).
            repeat split ;eauto.
-        -- destruct a. simpl in *. inversion H.
+        -- destruct a. simpl in *. inversion H1.
       * simpl in *. destruct a. inversion mem.
     + destruct a. simpl in *. destruct μ''.
       * simpl in *. destruct a. inversion mem.
       * simpl in *. destruct a. inversion mem. subst.
-        destruct μ'.
-        -- destruct a. simpl in *. inversion H; subst.
-        -- destruct a. simpl in *. inversion H; subst.
+        destruct β'.
+        -- destruct a. simpl in *. inversion H1; subst.
+        -- destruct a. simpl in *. inversion H1; subst.
            destruct eq as (μ'' & tr & duo & b).
            symmetry in duo. eapply simplify_match_output in duo. subst.
            exists (ActOut(c ⋉ d)). split ;eauto. exists (ActIn (c ⋉ d)).

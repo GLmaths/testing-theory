@@ -27,18 +27,21 @@ From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From TestingTheory Require Import InputOutputActions ActTau OldTransitionSystems Must VACCS_Instance VACCS_Good
+From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Good
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS.
 
 (** ** VACCS **)
 (** *** Applications *)
+
+Module Type VACCS_examples.
+Include VACCS_Testing.
 Parameter a : Channel.
 Parameter O : Value.
 Parameter I : Value.
 Parameter (neq : O ≠ I).
 
-Definition cst : proc := a ? (a ! O • 𝟘).
+Definition const : proc := a ? (a ! O • 𝟘).
 
 Definition ccat : proc := a ? (a ! (bvar 0) • 𝟘).
 
@@ -132,7 +135,7 @@ Proof.
            ++ intros. inversion H5.
 Qed.
 
-Lemma copycat_is_above_constant : cst ⊑ₘᵤₛₜᵢ ccat.
+Lemma copycat_is_above_constant : const ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros t HypMust.
   dependent induction HypMust.
@@ -153,7 +156,7 @@ Proof.
         exists (a ⋉ v); eauto. }
       eapply m_step; eauto.
       * pose proof H4 as Mp'.
-        eapply (must_preserved_by_synch_if_notoutcome cst ((a ! O • 𝟘) ^ v) t t' (ActIn (a ⋉ v))) in Mp'; eauto.
+        eapply (must_preserved_by_synch_if_notoutcome const ((a ! O • 𝟘) ^ v) t t' (ActIn (a ⋉ v))) in Mp'; eauto.
         inversion Mp'. contradiction.
         inversion ex0. inversion H5; subst.
         -- inversion l.
@@ -186,12 +189,12 @@ Proof.
         eapply simplify_match_output in H5 as eq; subst.
         assert (lts t ((a ⋉ v) !) t') as l2; eauto.
         eapply OBA_with_FB_Fourth_Axiom in l2 as (t'1 & HypTr'1 & equiv1); eauto.
-        eapply (@must_eq_client proc); eauto. assert (must cst t) as Mp. eapply m_step; eauto.
-        assert (must cst t'1) as Mp';eauto.
+        eapply (@must_eq_client proc); eauto. assert (must const t) as Mp. eapply m_step; eauto.
+        assert (must const t'1) as Mp';eauto.
         assert (must ccat t'1); eauto. eapply NIL_is_above_copycat. eauto.
 Qed.
 
-Lemma NIL_is_above_constant : cst ⊑ₘᵤₛₜᵢ (g 𝟘).
+Lemma NIL_is_above_constant : const ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros e Hyp. eapply NIL_is_above_copycat. eapply copycat_is_above_constant. exact Hyp.
 Qed.
@@ -223,10 +226,10 @@ Proof.
 Qed.
 
 
-Lemma constant_is_not_above_NIL : (g 𝟘) ⋢ₘᵤₛₜᵢ cst.
+Lemma constant_is_not_above_NIL : (g 𝟘) ⋢ₘᵤₛₜᵢ const.
 Proof.
   intro imp.
-  assert (must cst Test).
+  assert (must const Test).
   { eapply imp. eapply NIL_must_this_TEST. }
   inversion H.
   + eapply this_Test_is_not_good; eauto.
@@ -257,12 +260,14 @@ Proof.
        * inversion l1.
 Qed.
 
-Lemma constant_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ cst.
+Lemma constant_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ const.
 Proof.
   intros imp. assert ((g 𝟘) ⊑ₘᵤₛₜᵢ ccat) as HypMust.
   { eapply copycat_is_above_NIL; eauto. }
-  assert ((g 𝟘) ⊑ₘᵤₛₜᵢ cst) as imp'.
+  assert ((g 𝟘) ⊑ₘᵤₛₜᵢ const) as imp'.
   { intros e HM. eapply imp. eapply HypMust. eauto. }
-  assert (¬ (g 𝟘) ⊑ₘᵤₛₜᵢ cst). { eapply constant_is_not_above_NIL. }
+  assert ((g 𝟘) ⋢ₘᵤₛₜᵢ const). { eapply constant_is_not_above_NIL. }
   contradiction.
 Qed.
+
+End VACCS_examples.

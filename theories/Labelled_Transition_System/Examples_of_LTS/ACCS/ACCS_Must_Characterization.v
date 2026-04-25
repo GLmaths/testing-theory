@@ -34,23 +34,18 @@ From TestingTheory Require Import InListPropHelper InputOutputActions ActTau Mus
       GeneralizeLtsOutputs ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts  Testing_Predicate
       gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
       MultisetLTSConstruction Lts_Finite_Output_Chain.
-From TestingTheory Require Import MustE FiniteImageLTS ACCSInstance.
+From TestingTheory Require Import MustE FiniteImageLTS VACCS_Must_Characterization.
 
+Module Type ACCS_Must_Alt_Corollary.
+Include VACCS_Must_Alt_Corollary.
+
+Axiom Value_is_unit : Value = unit.
 
 Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
-  split.
-  - intro Hyp. eapply @equivalence_acc_set_and_must_i; eauto.
-
-    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage.
-    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
-    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
-    exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteOutputChain_OBA.
-
-  - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
-
-    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage.
-    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
-    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
-    exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteOutputChain_OBA.
+   eapply bhv_iff_ctx_VACCS.
 Qed.
+
+End ACCS_Must_Alt_Corollary.
+
+

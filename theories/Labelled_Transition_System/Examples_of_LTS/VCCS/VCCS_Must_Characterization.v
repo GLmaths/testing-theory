@@ -26,8 +26,8 @@ From Stdlib.Strings Require Import String.
 From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
-From TestingTheory Require Import InputOutputActions OldTransitionSystems ActTau .
-From TestingTheory Require Export 
+From TestingTheory Require Import InputOutputActions ActTau .
+From TestingTheory Require Import
   VCCS_ta_tc_gen DefinitionAS Must ForwarderConstruction ParallelLTSConstruction
   InteractionBetweenLts GeneralizeLtsOutputs Completeness Equivalence Soundness
   Testing_Predicate Bisimulation gLts Lts_OBA VCCS_Instance FiniteImageLTS Lts_FW Lts_OBA.
