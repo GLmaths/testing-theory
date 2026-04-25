@@ -40,3 +40,5 @@ Corollary bhv_iff_ctx_CCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ 
 Proof.
   (* eapply bhv_iff_ctx_VCCS. *) admit.
 Admitted.
+
+End CCS_Must_Alt_Corollary.

@@ -4661,12 +4661,12 @@ Next Obligation.
   eapply elem_of_list_to_set in Hyp.
   eapply list_elem_of_fmap in Hyp.
   destruct ξ as [ (*Input*) a | (*Output*) a].
-  + exfalso. (* decompose record Hyp. inversion H1. *) admit.
+  + exfalso. destruct Hyp as (a' & Imp & Hyp). inversion Hyp; subst. inversion Imp. inversion Imp.
   + assert (a ∈ elements (outputs_of e)) as mem.
     { destruct Hyp as (y & Hyp'); destruct Hyp' as (eq' & mem). 
       inversion eq'; subst. eauto. }
     apply elem_of_elements in mem. eapply outputs_of_spec2 in mem. eauto.
-Admitted.
+Qed.
 Next Obligation.
   intros (p1 , m1) ? (p'1, m'1) ? ? ? Tr ? inter;simpl in *.
   destruct μ2 as [ (*Input*) a | (*Output*) a].
