@@ -28,25 +28,34 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From TestingTheory Require Import InputOutputActions OldTransitionSystems ActTau .
 From TestingTheory Require Export 
-  VCCS_ta VCCS_tc DefinitionAS Must ForwarderConstruction ParallelLTSConstruction
+  VCCS_ta_tc_gen DefinitionAS Must ForwarderConstruction ParallelLTSConstruction
   InteractionBetweenLts GeneralizeLtsOutputs Completeness Equivalence Soundness
   Testing_Predicate Bisimulation gLts Lts_OBA VCCS_Instance FiniteImageLTS Lts_FW Lts_OBA.
 
-Parameter bhv_iff_ctx_VCCS : True.
 
-(* Corollary bhv_iff_ctx_VCCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
+Module Type VCCS_Must_Alt_Corollary.
+Include VCCS_ta_tc.
+
+Corollary bhv_iff_ctx_VCCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
-  (* 
-  - intro Hyp. eapply @equivalence_fw_acc_set_and_must_i; eauto.
-
-    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
-    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
-    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
-
+  split.
   - intro Hyp. eapply @equivalence_acc_set_and_must_i; eauto.
 
-    exact ACCS_gLtsFiniteImage. exact ACCS_gLtsFiniteImage. exact ACCS_gLtsOBAFB. exact ACCS_gLtsFiniteImage.
-    exact Interaction_between_FW_ACCS_and_ACCS. exact Interaction_between_FW_ACCS_and_ACCS.
-    exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst. *)
-Admitted. *)
+    exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage.
+    exact Interaction_between_FW_VCCS_and_VCCS. exact Interaction_between_FW_VCCS_and_VCCS.
+    (* exact gen_conv_gen_spec_conv_inst. *) admit.
+    (* exact gen_acc_gen_spec_acc_inst.*) admit.
+    exact VCCS_gLtsOBAFB. exact VCCS_gFiniteOutputChain_LtsOba.
+
+  - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
+
+    exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage.
+    exact Interaction_between_FW_VCCS_and_VCCS. exact Interaction_between_FW_VCCS_and_VCCS.
+    exact FinitaryAbsVCCS. exact FinitaryAbsVCCS.
+    (* exact gen_conv_gen_spec_conv_inst. *) admit.
+    (* exact gen_acc_gen_spec_acc_inst.*) admit.
+     exact VCCS_gLtsOBAFB. exact VCCS_gFiniteOutputChain_LtsOba.
+Admitted.
+
+End VCCS_Must_Alt_Corollary.
 

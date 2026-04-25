@@ -29,7 +29,21 @@ From Stdlib.Strings Require Import String.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
-From TestingTheory Require Import InputOutputActions ActTau Clos_n InListPropHelper.
+From TestingTheory Require Import VCCS_Instance.
+
+Module Type CCS.
+  Include VCCS.
+  Axiom Value_is_unit : Value = unit.
+End CCS.
+
+
+(*
+
+Parameter Channel : Type.
+
+Definition Value := unit.
+
+End M.
 
 (** ** CCS *)
 
@@ -2015,3 +2029,4 @@ Proof.
     exact (@gAbsAction (ExtAct name)). exact gen_conv_gen_spec_conv_inst . exact gen_acc_gen_spec_acc_inst.
 Qed. *)
 
+*)

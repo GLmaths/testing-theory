@@ -33,6 +33,10 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import ActTau gLts VCCS_Instance VCCS_Good Bisimulation InputOutputActions 
         Completeness ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
+
+Module Type VCCS_ta_tc.
+
+Include VCCS_Testing.
 Parameter O : Value.
 
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
@@ -110,7 +114,7 @@ destruct p; intros.
   { apply Hp. simpl. auto with arith. }
   rewrite eq1, eq2. auto.
 * simpl. f_equal. eapply Hp. simpl; eauto.
-* destruct g.
+* destruct g0.
   - simpl. auto.
   - simpl. auto.
   - simpl. assert (subst_in_proc (S k) (NewVar_in_Data 0 v) (NewVar (S k) p) = p) as eq.
@@ -123,9 +127,9 @@ destruct p; intros.
   - simpl. assert (subst_in_proc k v (NewVar k p) = p) as eq.
     { apply Hp. simpl. auto with arith. }
     rewrite eq. auto.
-  - simpl. assert (subst_in_proc k v (NewVar k (g g1)) = g g1) as eq1.
+  - simpl. assert (subst_in_proc k v (NewVar k (g g0_1)) = g g0_1) as eq1.
     { apply Hp. simpl. auto with arith. }
-    assert (subst_in_proc k v (NewVar k (g g2)) = g g2) as eq2.
+    assert (subst_in_proc k v (NewVar k (g g0_2)) = g g0_2) as eq2.
     { apply Hp. simpl. auto with arith. }
     dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
 Qed.
@@ -205,7 +209,7 @@ destruct p; simpl; intros.
   { apply Hp. simpl. auto with arith. }
   rewrite eq2, eq3. auto.
 * f_equal. eapply Hp. simpl; eauto.
-* destruct g; simpl.
+* destruct g0; simpl.
   - simpl. reflexivity.
   - simpl. reflexivity.
   - simpl. assert (S (i + S j%nat) = ((S i) + (S j))%nat) as eq1 by auto with arith.
@@ -220,9 +224,9 @@ destruct p; simpl; intros.
   - simpl. assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)) as eq.
     { apply Hp. simpl. auto with arith. } 
     rewrite eq. eauto.
-  - simpl. assert (NewVar (i + S j) (NewVar i (g g1)) = NewVar i (NewVar (i + j) (g g1))) as eq1.
+  - simpl. assert (NewVar (i + S j) (NewVar i (g g0_1)) = NewVar i (NewVar (i + j) (g g0_1))) as eq1.
     { apply Hp. simpl. auto with arith. } 
-    assert (NewVar (i + S j) (NewVar i (g g2)) = NewVar i (NewVar (i + j) (g g2))) as eq2.
+    assert (NewVar (i + S j) (NewVar i (g g0_2)) = NewVar i (NewVar (i + j) (g g0_2))) as eq2.
     { apply Hp. simpl. auto with arith. }
     simpl in eq1 , eq2. inversion eq1. inversion eq2. eauto.
 Qed.
@@ -498,7 +502,7 @@ Qed.
 Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs_on c ∈ G 
           -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c ⋉ v))) r.
 Proof.
-  remember G. revert g Heqg.
+  remember G. revert g0 Heqg0.
   induction G using set_ind_L; intros g0 Heqg0 mem.
   - subst. inversion mem.
   - assert (hn : {[x]} ## X) by set_solver.
@@ -543,7 +547,7 @@ Qed.
 Lemma gen_acc_gen_spec_acc_nil_mem_lts_output G c : Outputs_on c ∈ G 
           -> exists r v, lts (gen_acc G []) (ActExt $ ActOut ((c ⋉ v))) r.
 Proof.
-  remember G. revert g Heqg.
+  remember G. revert g0 Heqg0.
   induction G using set_ind_L; intros g0 Heqg0 mem.
   - subst. inversion mem.
   - assert (hn : {[x]} ## X) by set_solver.
@@ -587,7 +591,7 @@ Qed.
 
 #[global] Program Instance gen_acc_gen_spec_acc_inst
   {Hyp_WD : forall α s e L, lts (gen_acc L s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
-  : test_co_acceptance_set_spec PreAct gen_acc (fun x => 𝝳 (Φ x)).
+  : test_co_acceptance_set_spec PreAct gen_acc (fun x => 𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ x)).
 Next Obligation.
   intros. eapply gen_acc_gen_test_inst. intros. eapply Hyp_WD. eauto.
 Qed.
@@ -668,3 +672,51 @@ Next Obligation.
            ++++ inversion H4; subst. simpl in *. eapply good_preserved_by_cgr; eauto. constructor.
            ++++ eapply good_preserved_by_cgr. eapply IHg; eauto. eauto.
 Qed.
+
+Definition gen_conv s := gen_test s (𝛕 • ①).
+
+#[global] Program Instance gen_conv_gen_test_inst
+  {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
+: test_spec gen_conv.
+Next Obligation.
+  intros s hh. eapply gen_test_ungood_if; try eassumption.
+  intro hh0. inversion hh0.
+Qed.
+Next Obligation.
+  intros. eapply gen_test_lts_mu.
+Qed.
+Next Obligation.
+  intros. eapply gen_test_gen_spec_out_lts_tau_ex_inst.
+Qed.
+Next Obligation.
+  intros. eapply gen_test_gen_spec_out_lts_tau_good. simpl in H. eassumption.
+Qed.
+Next Obligation.
+  intros. unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
+Qed.
+Next Obligation.
+  intros Hyp_WD t'. intros.
+  simpl in *. assert (lts (gen_conv (β :: s)) (ActExt μ) t') as Hyp_tr; eauto.
+  eapply Hyp_WD in Hyp_tr as (WD_trace & WD_action) ; eauto.
+  assert (Well_Defined_ExtAction β) as Hyp.
+  { inversion WD_trace. subst; eauto. }
+  assert (Well_Defined_ExtAction μ) as Hyp'.
+  { inversion WD_action; subst; eauto.
+    + constructor.
+    + constructor. }
+  eapply gen_test_gen_spec_good_not_mu. exact Hyp. exact Hyp'. eauto. eauto.
+Qed.
+
+#[global] Program Instance gen_conv_gen_spec_conv_inst 
+  {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
+  : test_convergence_spec gen_conv.
+Next Obligation.
+  intro Hyp. eexact (@gen_conv_gen_test_inst Hyp).
+Defined.
+Next Obligation.
+  intro H. intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
+Qed.
+Next Obligation. cbn. eauto with ccs. Qed.
+Next Obligation. intros H e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
+
+End VCCS_ta_tc.

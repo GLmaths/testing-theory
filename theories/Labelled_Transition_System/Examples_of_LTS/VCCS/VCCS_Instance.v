@@ -34,7 +34,7 @@ From TestingTheory Require Import
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
   DefinitionAS Equivalence.
 
-Module Type VACCS.
+Module Type VCCS.
 (** ** VCCS *)
 
 (* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
@@ -4518,7 +4518,7 @@ Next Obligation.
   intros. simpl in *. inversion H.
 Qed.
 
-#[global] Program Instance VACCS_gLtsFiniteImage : FiniteImagegLts proc (ExtAct TypeOfActions).
+#[global] Program Instance VCCS_gLtsFiniteImage : FiniteImagegLts proc (ExtAct TypeOfActions).
 Next Obligation.
   intros. unfold dsig. destruct α as [[a|a]|].
   - eapply (in_list_finite (elements (lts_set_input p a))).
@@ -5147,7 +5147,7 @@ Proof.
           eapply lts_refuses_spec2. exists p'1. eapply lts_choiceR. eauto.
 Qed.
 
-#[global] Program Instance AbsActionVCCS : AbsAction (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ.
+#[global] Program Instance AbsVCCS : AbsAction (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ.
 Next Obligation.
   intros. destruct μ; destruct μ'; destruct a; destruct a0.
   - inversion H; subst.
@@ -5195,7 +5195,7 @@ Next Obligation.
            exact accepts. symmetry. eauto.
 Qed.
 
-#[global] Program Instance gPreExtAction : FinitaryAbsAction proc proc (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ :=
+#[global] Program Instance FinitaryAbsVCCS  : FinitaryAbsAction proc proc (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.
@@ -5234,4 +5234,4 @@ Next Obligation.
       eapply gmultiset_elem_of_dom. eauto.
 Qed.
 
-End VACCS.
+End VCCS.
