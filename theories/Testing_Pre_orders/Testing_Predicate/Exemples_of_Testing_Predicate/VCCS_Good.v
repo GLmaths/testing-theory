@@ -26,8 +26,12 @@
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import decidable countable.
-From TestingTheory Require Import gLts InputOutputActions GeneralizeLtsOutputs Must Testing_Predicate VCCS_Instance.
+From TestingTheory Require Import gLts InputOutputActions Must 
+Testing_Predicate VCCS_Instance.
 
+
+Module Type VCCS_Testing.
+Include VCCS.
 (** ** Testing Predicate for VCCS *)
 Inductive good_VCCS : proc -> Prop :=
 | good_success : good_VCCS ①
@@ -54,8 +58,8 @@ Proof.
         right. inversion 1; naive_solver.
     + right. inversion 1; naive_solver.
   - destruct IHe. left. eapply good_res. eauto. right. intro. inversion H. subst. eauto.
-  - dependent induction g; try (now right; inversion 1); try (now left; eauto with ccs).
-    destruct IHg1; destruct IHg2; try (now left; eauto with ccs).
+  - dependent induction g0; try (now right; inversion 1); try (now left; eauto with ccs).
+    destruct IHg0_1; destruct IHg0_2; try (now left; eauto with ccs).
     right. inversion 1; naive_solver.
 Qed.
 
@@ -73,14 +77,14 @@ Proof.
        +++ eapply good_if_true; eauto. eapply Hp. simpl; lia. eauto.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left.
-           assert (good_VCCS (VarSwap_in_proc k (g g1))) as eq1.
+           assert (good_VCCS (VarSwap_in_proc k (g g0_1))) as eq1.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
        +++ eapply good_choice. right.
-           assert (good_VCCS (VarSwap_in_proc k (g g2))) as eq2.
+           assert (good_VCCS (VarSwap_in_proc k (g g0_2))) as eq2.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
   + revert k. induction p as (p & Hp) using
@@ -94,7 +98,7 @@ Proof.
        +++ eapply good_if_true; eauto. eapply Hp. simpl; lia. eauto.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left. eapply Hp. simpl; lia. eauto.
        +++ eapply good_choice. right. eapply Hp. simpl; lia. eauto.
@@ -114,14 +118,14 @@ Proof.
        +++ eapply good_if_true; eauto. eapply Hp. simpl; lia. eauto.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left.
-           assert (good_VCCS (NewVarC k (g g1))) as eq1.
+           assert (good_VCCS (NewVarC k (g g0_1))) as eq1.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
        +++ eapply good_choice. right.
-           assert (good_VCCS (NewVarC k (g g2))) as eq2.
+           assert (good_VCCS (NewVarC k (g g0_2))) as eq2.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
   + revert k. induction p as (p & Hp) using
@@ -135,7 +139,7 @@ Proof.
        +++ eapply good_if_true; eauto. eapply Hp. simpl; lia. eauto.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left. eapply Hp. simpl; lia. eauto.
        +++ eapply good_choice. right. eapply Hp. simpl; lia. eauto.
@@ -196,7 +200,7 @@ Proof.
   dependent induction hcgr; [eapply good_preserved_by_cgr_step|]; eauto.
 Qed.
 
-#[global] Program Instance VCCS_Good : @Testing_Predicate proc (ExtAct TypeOfActions) gLabel_b good_VCCS VCCS_ggLtsEq.
+#[global] Program Instance VCCS_Good : Testing_Predicate good_VCCS _.
 Next Obligation. 
  intros. eapply good_preserved_by_cgr; eassumption.
 Qed.
@@ -207,4 +211,5 @@ Next Obligation.
  intros. unfold non_blocking in H.  simpl in *. inversion H.
 Qed.
 
+End VCCS_Testing.
 

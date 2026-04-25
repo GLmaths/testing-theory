@@ -39,6 +39,9 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
               InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE Lts_Finite_Output_Chain.
 
+
+
+(*
 Theorem eqx `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
   `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
@@ -83,3 +86,5 @@ Section eq_contextual.
     now rewrite equivalence_bhv_acc_ctx.
   Qed.
 End eq_contextual.
+
+*)

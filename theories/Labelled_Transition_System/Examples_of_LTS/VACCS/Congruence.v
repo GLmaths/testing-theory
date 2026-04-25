@@ -2,9 +2,11 @@ From stdpp Require Import base countable.
 From TestingTheory Require Import VACCS.
 From Stdlib Require Import Relations Program.Equality Wellfounded.Inverse_Image.
 
+Module Type VACCS_congruence.
+
+Include VACCS_proc.
 
 Reserved Notation "p ≡ q" (at level 70).
-
 (*Naïve definition of a relation ≡ that will become a congruence ≡* by transitivity*)
 Inductive cgr_step : proc -> proc -> Prop :=
 (*  Reflexivity of the Relation ≡  *)
@@ -441,7 +443,7 @@ revert g g'. induction p; simpl; intuition.
 - left. eauto with *.
 - right. eauto with *.
 - eapply IHp; [eassumption|]. now apply gNewVarC_altcgr.
-- apply galtcgr_trans with g0; trivial.
+- apply galtcgr_trans with g1; trivial.
 Qed.
 
 Lemma sguardNewVar g0 q:  sguard g0 q <-> sguard (⇑ g0) (NewVarC 0 q).
@@ -601,14 +603,14 @@ destruct p; intros; simpl.
   - eauto with cgr.
   - eapply cgr_res. apply Hp. simpl. auto with arith. eapply NewVarC_Respects_Congruence. assumption.
   (* all induction cases for guards *)
-  - destruct g; simpl.
+  - destruct g0; simpl.
     * reflexivity.
     * reflexivity.
     * apply cgr_input. apply Hp. simpl. auto with arith. apply NewVar_Respects_Congruence. assumption.
     * apply cgr_tau. apply Hp. simpl. auto with arith. assumption.
     * apply cgr_fullchoice. 
-      assert (pr_subst x (g g1) q ≡* pr_subst x (g g1) q'). apply Hp. simpl. auto with arith. assumption.
-      auto. assert (pr_subst x (g g2) q ≡* pr_subst x (g g2) q'). apply Hp. simpl. auto with arith. assumption.
+      assert (pr_subst x (g g0_1) q ≡* pr_subst x (g g0_1) q'). apply Hp. simpl. auto with arith. assumption.
+      auto. assert (pr_subst x (g g0_2) q ≡* pr_subst x (g g0_2) q'). apply Hp. simpl. auto with arith. assumption.
       auto. 
 Qed.
 
@@ -654,3 +656,5 @@ Qed.
 Hint Resolve cgr_is_eq_rel: ccs.
 Hint Constructors clos_trans:ccs.
 Hint Unfold cgr:ccs.
+
+End VACCS_congruence.

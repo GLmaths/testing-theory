@@ -30,6 +30,10 @@ From stdpp Require Import base countable finite gmap list decidable gmultiset hl
 From TestingTheory Require Import ActTau InputOutputActions FiniteImageLTS 
     gLts Bisimulation Lts_FW Convergence Termination WeakTransitions Must
     DefinitionAS Lts_OBA.
+
+
+(*
+
 (* From TestingTheory Require Import OldTransitionSystems GeneralizeLtsOutputs. *)
 Definition ntrace A `{ExtAction A} : Type := list (gmultiset A).
 (* Definition ntrace A `{ExtAction A} : Type := list (gmultiset A * gmultiset A * list A). *)
@@ -1028,4 +1032,4 @@ Proof.
   - intros (hl1 & hl2). split.
     + intros s hacnv. eauto.
     + intros nt q' hacnv w st. eauto.
-Qed.
+Qed. *)

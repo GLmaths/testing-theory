@@ -31,21 +31,22 @@ From Coinduction Require Import all.
 
 (* From TestingTheory Require Import TransitionSystems Must Soundness Equivalence Completeness. *)
 From TestingTheory Require Import gLts FiniteImageLTS Lts_OBA_FB ActTau Termination Convergence WeakTransitions
-Must MustE DefinitionAS Soundness Equivalence Completeness Lts_Finite_Output_Chain.
+Must MustE DefinitionAS Soundness Equivalence Completeness Lts_Finite_Output_Chain Subset_Act Bisimulation.
 
 (* TODO: define me using the coinduction library *)
 
 Section copre.
   Context `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}.
-  Context `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}.
-  Context `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}.
+  Context `{gLtsT : !gLtsEq T H}.
+  Context `{@AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }.
+  Context `{@AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }.
 
   Definition REL := gset P -> Q -> Prop .
 
   Record copre_ (FIX : REL) (ps : gset P) (q : Q) : Prop := {
     c_tau_ q' : q ⟶ q' -> FIX ps q'
   ; c_now_ : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
-            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q
+            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
   ; c_step_ : forall μ q' ps', (forall p, p ∈ ps -> p ⇓ [μ]) ->
                          q ⟶[μ] q' -> wt_set_from_pset_spec ps [μ] ps' -> FIX ps' q'
   ; c_cnv_ : (forall p, p ∈ ps -> p ⤓) -> q ⤓
@@ -85,7 +86,7 @@ Section copre.
       -> exists p p', p ∈ ps
                 /\ p ⟹ p'
                 /\ p' ↛
-                /\ pre_co_actions_of p' ⊆ pre_co_actions_of q .
+                /\ ⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q) .
   Proof.
     intros h%(gfp_pfp copre_m); intros; now apply h.(c_now_).
   Qed.
@@ -210,9 +211,9 @@ Notation "p ⩽ q" := (copre p q) (at level 70).
 
 From TestingTheory Require Import Bisimulation Lts_OBA_FB Testing_Predicate InteractionBetweenLts
  Lift MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
- StateTransitionSystems Lts_OBA.
+ StateTransitionSystems Lts_OBA DefinitionAS.
 
-Section eq_contextual.
+(* Section eq_contextual.
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
 
@@ -233,12 +234,12 @@ Section eq_contextual.
   Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
   Context `{!Prop_of_Inter (Q * mb A) T A dual}.
 
-  Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
-  Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
-  Context `{@AbsAction A H T FinA _ Φ}.
+  Context `{CC : Countable PreAct}.
+  Context `{!@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{!@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
 
   Context `{igen_conv : @test_convergence_spec T _ _ _ outcome TP_instance gen_conv}.
-  Context `{igen_acc : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome TP_instance gen_acc (fun x => 𝝳 (Φ x))}.
+  Context `{igen_acc : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome TP_instance gen_acc (fun x => 𝝳 (Φ x))}.
 
   Theorem eq_ctx (p : P) (q : Q) :
     pre_extensional outcome p q <-> {[ p ▷ (∅ : mb A) ]} ⩽ q ▷ (∅ : mb A).
@@ -246,10 +247,14 @@ Section eq_contextual.
     rewrite <- eqx, <- alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.
   Qed.
-End eq_contextual.
+End eq_contextual. *)
+
+
+(*
 
 Lemma coin_refl `{@FiniteImagegLts P A H gLtsP}
-  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
+  `{CC : Countable PreAct}
+  `{!@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }
   {PRE : Chain copre_m} {p : P} : elem PRE {[ p ]} p.
 Proof.
   apply (gfp_chain PRE).
@@ -548,4 +553,4 @@ Proof.
       apply h.(c_cnv_); intros p0 Hin.
       apply hXX' in Hin as (p'' & Hin & Heqp'').
       eapply terminate_preserved_by_eq2; [apply symmetry, Heqp''|auto with *].
-Qed.
+Qed.  *)

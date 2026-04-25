@@ -20,7 +20,7 @@
    SOFTWARE.
 *)
 
-
+(*
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
 From Stdlib Require Import Relations.
@@ -3186,4 +3186,4 @@ Next Obligation. exact ExtraAxiom. Qed. (* lts_oba_output_deter_inv p1 p2 q1 q2 
 
 #[global] Program Instance VACCS_LtsObaFB : LtsObaFB States TypeOfActions :=
   {| lts_oba_fb_feedback p1 p2 p3 a := OBA_with_FB_Fourth_Axiom p1 p2 p3 a |}.
-
+*)

@@ -34,7 +34,7 @@ From TestingTheory Require Import gLts InputOutputActions OldTransitionSystems S
 (* From TestingTheory Require Import VCCS_Instance VACCS_Instance. *)
 (* Genarilization via essential actions, non_blocking actions *)
 From TestingTheory Require Import ActTau Lts_Finite_Output_Chain.
-
+(*
 Definition all_blocking_action `{Label A} (μ : ExtAct A) := False.
 
 #[global] Program Instance all_blocking_action_dec `{Label A} μ :
@@ -557,3 +557,4 @@ Proof.
     exists a; eauto. contradiction.
 Qed.
 
+*)

@@ -479,13 +479,13 @@ Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 (** ** Condition on acceptance sets *)
 
 Definition bhv_pre_cond2__x `{
-  PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
-  PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _ ,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _ }
   (ps : gset P) (q : Q) :=
   forall s q',
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ ps -> p ⇓ s) ->
-    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (pre_co_actions_of p' ⊆ pre_co_actions_of q').
+    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q')).
 
 Lemma bhvleqone_preserved_by_external_action
   (ps0 ps1 : gset P) μ (q q' : Q) (htp : forall p, p ∈ ps0 -> terminate p) :
@@ -506,8 +506,8 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 (** ** Alternative preorder on sets *)
 
 Definition bhv_pre__x `{
-  PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsP,
-  PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳  Φ gLtsQ}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
     (ps : gset P) (q : Q) :=
       (ps ≼ₓ1 q /\ ps ≼ₓ2 q).
 (* ≼ₐₛ *)
@@ -515,8 +515,8 @@ Definition bhv_pre__x `{
 Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
 
 Lemma alt_set_singleton_iff `{
-  PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _ }
   (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ q.
 Proof.
   split.
@@ -529,8 +529,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_reduction `{
-  PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
   (ps : gset P) (q q' : Q) : q ⟶ q' -> ps ≼ₓ q -> ps ≼ₓ q'.
 Proof.
   intros l (halt1 & halt2).
@@ -542,8 +542,8 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action `{
-  PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
   (ps0 : gset P) (q : Q) μ ps1 q' (htp : forall p, p ∈ ps0 -> terminate p) :
   q ⟶[μ] q'
     -> wt_set_from_pset_spec ps0 [μ] ps1
@@ -562,8 +562,9 @@ Proof.
 Qed.
 
 Lemma reverse_trace_inclusion `{
-  PreAP : @PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  PreAQ : @PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}  (ps : gset P) (q q' : Q) μ
+  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
+  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
+  (ps : gset P) (q q' : Q) μ
   : ps ≼ₓ q -> (forall p, p ∈ ps -> p ⇓ [μ]) ->
     q ⟶[μ] q' -> exists p', wt_set_from_pset_spec1 ps [μ] {[ p' ]}.
 Proof.
@@ -581,11 +582,9 @@ End Preorder_for_sets.
 
 Context `{
   gLtsEqP : @gLtsEq P A EA, !FiniteImagegLts P A,
-  PreAP : !@PreExtAction P A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsEqQ : @gLtsEq Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A,
-  PreAQ : !@PreExtAction Q A EA FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
-
-Context `{AbT : @AbsAction A EA T FinA _ Φ}.
+  AbsPT : !@AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ ,
+  AbsQT : !@AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ }.
 
 Context `{@Prop_of_Inter Q T A dual EA _ _}.
 Context `{@Prop_of_Inter P T A dual EA _ _}.
@@ -594,33 +593,31 @@ Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
 Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
 
 Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ :
-      p ⟶[co μ] p'-> t ⟶[μ] t' -> pre_co_actions_of p ⊆ pre_co_actions_of q
+      p ⟶[co μ] p'-> t ⟶[μ] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
         -> exists μ' q' t'', q ⟶[co μ'] q'/\ t ⟶[μ'] t''.
 Proof.
   intros tr tr_co sub.
   destruct (decide (non_blocking μ)) as [nb | not_nb].
   + eapply (co_non_blocking_enabled q μ) in nb as (q' & tr'); eauto.
     symmetry. exact (proj2_sig(exists_dual μ)).
-  + assert (μ ∈ co_actions_of p) as some_co_action_of_p.
+  + assert (μ ∈ coR p) as some_co_action_of_p.
     { exists (co μ). repeat split; eauto.
       eapply lts_refuses_spec2;eauto.
       symmetry. exact (proj2_sig(exists_dual μ)). }
+    eapply (map_gamma_of_action (𝝳 ∘ Φ)) in some_co_action_of_p as mem.
+    eapply sub in mem. destruct mem as (μ' & mem & eq).
+    eapply (map_gamma_of_action Φ) in mem as eq'. symmetry in eq.
     (* The next line uses a property of delta *)
-    eapply preactions_of_fin_test_spec1 in some_co_action_of_p.
-    eapply preactions_of_spec in some_co_action_of_p.
-    eapply sub in some_co_action_of_p.
-    eapply preactions_of_spec in some_co_action_of_p.
-    (* The next line uses a property of delta *)
-    eapply preactions_of_fin_test_spec2 in some_co_action_of_p as (μ' & mem' & eq').
-    destruct mem' as (μ'1 & Tr & duo & b).
-    assert (¬ t ↛[μ']) as Tr_Test.
+    eapply (abstraction_prog_spec q) in eq' ;eauto.
+    destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo & b).
     (* The next line uses the property of phi *)
-    { eapply abstraction_test_spec. exact not_nb. exact b. exact eq'. apply lts_refuses_spec2. eauto. }
+    assert (μ'' ∈ R t) as Tr_Test.
+    { eapply abstraction_test_spec in eq';eauto. apply lts_refuses_spec2. eauto. }
     eapply lts_refuses_spec1 in Tr_Test as (t'' & Tr'').
-    eapply lts_refuses_spec1 in Tr as (q' & Tr).
-    exists μ'. exists q'. exists t''. split ;eauto.
+    eapply lts_refuses_spec1 in tr' as (q' & tr').
+    exists μ''. exists q'. exists t''. split ;eauto.
     eapply unique_nb in duo. subst. rewrite<- dual_is_involutive.
-    exact Tr.
+    exact tr'. destruct mem as (μ'' & Tr'' & duo & nb). exact nb.
 Qed.
 
 Lemma unoutcome_must_st_nleqx (X : gset P) (q : Q) (t : T):
@@ -729,12 +726,11 @@ End Soundness.
 
 Lemma soundness_co_nb_enabled `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
-  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
-  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
-
-  `{AbT : @AbsAction A H T FinA _ Φ}
+  
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -749,12 +745,11 @@ Qed.
 
 Lemma soundness_fw `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
-  PreAP : !@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
-  PreAQ : !@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbT : @AbsAction A H T FinA _ Φ}
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -776,8 +771,6 @@ Lemma soundness
 
   `{ !Testing_Predicate outcome _}
 
-  `{AbT : @AbsAction A H T FinA _ Φ}
-
   {_ : Prop_of_Inter P T A dual}
   {_ : Prop_of_Inter Q T A dual}
 
@@ -787,8 +780,9 @@ Lemma soundness
   {_ : @Prop_of_Inter Q (mb A) A fw_inter H _ MbgLts}
   {_ : @Prop_of_Inter (Q * mb A) T A dual H (inter_lts fw_inter) _}
 
-  `{PreAP : @PreExtAction (P * mb A) A H  FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter),
-    PreAQ : @PreExtAction (Q * mb A) A H  FinA PreA PreA_eq PreA_countable 𝝳 Φ (inter_lts fw_inter)}
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
+
   (p : P) (q : Q) : p ▷ ∅ ≼ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros halt t hm.

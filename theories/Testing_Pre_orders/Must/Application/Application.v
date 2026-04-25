@@ -31,6 +31,8 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction  ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS MustE Equivalence Lts_Finite_Output_Chain.
 
+(*
+
 Section application.
 
   Lemma nil_refuses
@@ -260,3 +262,5 @@ Qed.
   Qed.
 
 End application.
+
+*)

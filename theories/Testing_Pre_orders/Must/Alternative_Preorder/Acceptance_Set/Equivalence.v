@@ -50,11 +50,13 @@ Section preorder.
   Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
   Context `{!Prop_of_Inter (Q * mb A) T A dual}.
 
-  Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
-  Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
-  Context `{@AbsAction A H T FinA _ Φ}.
+
+  Context `{CC : Countable PreAct}.
+  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
-  Context `{ta_spec : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+  Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   (** * Main equivalence theorems *)
 

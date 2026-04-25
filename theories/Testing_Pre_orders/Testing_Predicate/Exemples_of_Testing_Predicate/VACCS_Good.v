@@ -29,6 +29,10 @@ From stdpp Require Import countable decidable.
 From TestingTheory Require Import gLts InputOutputActions GeneralizeLtsOutputs
                                   Must VACCS_Instance Testing_Predicate.
 
+
+Module Type VACCS_Testing.
+Include VACCS_lts.
+
 (** ** Testing Predicate for VACCS *)
 Inductive good_VACCS : proc -> Prop :=
 | good_success : good_VACCS ①
@@ -59,8 +63,8 @@ Proof.
   - destruct IHe. 
     + left. eapply good_res. eauto.
     + right. intro imp. inversion imp; eauto.
-  - dependent induction g; try (now right; inversion 1); try (now left; eauto with ccs).
-    destruct IHg1; destruct IHg2; try (now left; eauto with ccs).
+  - dependent induction g0; try (now right; inversion 1); try (now left; eauto with ccs).
+    destruct IHg0_1; destruct IHg0_2; try (now left; eauto with ccs).
     right. inversion 1; naive_solver.
 Qed.
 
@@ -79,14 +83,14 @@ Proof.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ inversion H.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left.
-           assert (good_VACCS (VarSwap_in_proc k (g g1))) as eq1.
+           assert (good_VACCS (VarSwap_in_proc k (g g0_1))) as eq1.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
        +++ eapply good_choice. right.
-           assert (good_VACCS (VarSwap_in_proc k (g g2))) as eq2.
+           assert (good_VACCS (VarSwap_in_proc k (g g0_2))) as eq2.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
   + revert k. induction p as (p & Hp) using
@@ -101,7 +105,7 @@ Proof.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ simpl in *. inversion H.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left. eapply Hp. simpl; lia. eauto.
        +++ eapply good_choice. right. eapply Hp. simpl; lia. eauto.
@@ -122,14 +126,14 @@ Proof.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ inversion H.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left.
-           assert (good_VACCS (NewVarC k (g g1))) as eq1.
+           assert (good_VACCS (NewVarC k (g g0_1))) as eq1.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
        +++ eapply good_choice. right.
-           assert (good_VACCS (NewVarC k (g g2))) as eq2.
+           assert (good_VACCS (NewVarC k (g g0_2))) as eq2.
            { eapply Hp. simpl; lia. eauto. }
            simpl in *; eauto.
   + revert k. induction p as (p & Hp) using
@@ -144,7 +148,7 @@ Proof.
        +++ eapply good_if_false; eauto. eapply Hp. simpl; lia. eauto.
     ++ inversion H.
     ++ dependent destruction H. eapply good_res. eapply Hp. simpl; lia. eauto.
-    ++ destruct g; intros; simpl in *; eauto; try now inversion H.
+    ++ destruct g0; intros; simpl in *; eauto; try now inversion H.
        dependent destruction H. destruct H.
        +++ eapply good_choice. left. eapply Hp. simpl; lia. eauto.
        +++ eapply good_choice. right. eapply Hp. simpl; lia. eauto.
@@ -232,7 +236,7 @@ Proof.
   eauto with ccs. symmetry. eauto with ccs.
 Qed.
 
-#[global] Program Instance VACCS_Good : @Testing_Predicate proc (ExtAct TypeOfActions) gLabel_nb good_VACCS VACCS_ggLtsEq.
+#[global] Program Instance VCCS_Good : Testing_Predicate good_VACCS VACCS_gLtsEq.
 Next Obligation. 
  intros. eapply good_preserved_by_cgr; eassumption.
 Qed.
@@ -247,4 +251,4 @@ Next Obligation.
   eapply good_preserved_by_non_bloking_actions_converse; eassumption.
 Qed.
 
-
+End VACCS_Testing.

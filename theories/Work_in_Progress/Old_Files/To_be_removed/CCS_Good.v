@@ -25,6 +25,8 @@
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable decidable.
+
+(*
 From TestingTheory Require Import gLts InputOutputActions GeneralizeLtsOutputs Must CCSInstance Testing_Predicate.
 
 (** * Testing predicates *)
@@ -92,3 +94,4 @@ Qed.
 Next Obligation.
  intros. unfold non_blocking in H.  simpl in *. inversion H.
 Qed.
+*)

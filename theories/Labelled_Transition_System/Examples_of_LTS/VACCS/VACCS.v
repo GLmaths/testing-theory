@@ -25,9 +25,11 @@ From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From TestingTheory Require Import Clos_n InputOutputActions OldTransitionSystems ActTau .
+From TestingTheory Require Import Clos_n InputOutputActions ActTau .
 
 (** * VACCS *)
+
+Module Type VACCS_proc.
 
 (** ** Definitions and properties of VACCS *)
 
@@ -932,3 +934,6 @@ Proof.
       assert (pr_subst n (NewVarC k (g g0_2)) (NewVarC k q) = NewVarC k (pr_subst n (g g0_2) q)) as eq2.
       { eapply Hp. simpl. lia. } inversion eq1. inversion eq2. eauto.
 Qed.
+
+End VACCS_proc.
+

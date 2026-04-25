@@ -30,11 +30,11 @@ Definition subset_of (A : Type) := A -> Prop.
 (*************************** Examples of Subset ***********************)
 
 (** ** All actions of a process (ready-set) *)
-Definition actions_of `{gLts P A} (p : P) : subset_of A :=
+Definition R `{gLts P A} (p : P) : subset_of A :=
   fun μ => ¬ p ↛[μ].
 
 (* ** Blocking co-actions *)
-Definition co_actions_of `{gLts P A} (p : P) : subset_of A := 
+Definition coR `{gLts P A} (p : P) : subset_of A := 
   fun μ1 => exists μ2, ¬ p ↛[μ2] /\ dual μ2 μ1 /\ blocking μ1.
   
 (******************* Instantiations to use the usual notation of sets ***********************)
@@ -92,13 +92,20 @@ repeat split ; try set_solver. Defined.
 
 (*** Definition of map for predicate-set ***)
 
-Definition map_set {A : Type} {B : Type} (Γ : A -> B) (R : subset_of A)  : subset_of B :=
-  fun pre_μ => ∃ μ', μ' ∈ R /\ pre_μ = (Γ μ').
+Definition map_set {A : Type} {B : Type} (Γ : A -> B) (S : subset_of A)  : subset_of B :=
+  fun pre_μ => ∃ μ', μ' ∈ S /\ pre_μ = (Γ μ').
 
-Lemma map_gamma_of_action {A : Type} {B : Type} (Γ : A -> B) (R : subset_of A) μ : μ ∈ R ->  Γ μ ∈ map_set Γ R.
+Lemma map_gamma_of_action {A : Type} {B : Type} (Γ : A -> B) (S : subset_of A) μ : μ ∈ S ->  (Γ μ) ∈ map_set Γ S.
 Proof.
   intros. simpl. exists μ. split; eauto.
 Qed.
 
-Definition map_co_action_set {A B : Type} `{gLts P A} (p : P) (Γ : A -> B) := map_set Γ (co_actions_of p).
+Notation "'⌈' Γ '⌉' S" := (map_set Γ S) (at level 50).
+
+
+Definition coR_map {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ (coR p).
+
+(*
+Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B-> C) :
+      μ ∈ map_set (fun x => Γ2 (Γ1 x)) S <-> μ ∈ map_set (Γ2 (map_set Γ1 S)). *)
 

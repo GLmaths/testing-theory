@@ -39,6 +39,8 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI.
 
+
+(*
 Lemma copre_if_prex
   `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
@@ -64,4 +66,4 @@ Proof.
     intros. constructor. eauto.
 Qed.
 
-
+*)

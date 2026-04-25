@@ -1,12 +1,17 @@
-From TestingTheory Require Import ACCSInstance gLts Coin_tower Termination
-                         Must Completeness Soundness Equivalence
-                         GeneralizeLtsOutputs InteractionBetweenLts ParallelLTSConstruction
-                         ForwarderConstruction Simulation ActTau MultisetLTSConstruction ActTau
-                         MultisetLTSConstruction InputOutputActions.
+
+
+
 From stdpp Require Import strings sets gmap base gmultiset.
 From Stdlib Require Import Relations.
 From Stdlib.Program Require Import Equality.
 From Coinduction Require Import all.
+
+(*
+From TestingTheory Require Import ACCSInstance gLts Coin_tower Termination
+                         Must Completeness Soundness Equivalence
+                         GeneralizeLtsOutputs InteractionBetweenLts ParallelLTSConstruction
+                         ForwarderConstruction Simulation ActTau MultisetLTSConstruction ActTau
+
 
 (** * Examples *)
 (** ** ACCS *)
@@ -161,7 +166,7 @@ intros PRE. eapply c_tau_.
 - change (copre_ ?a ?b ?c) with (copre_m a b c); apply coin_refl.
 - apply lts_choiceL. constructor.
 Qed.
-
+*)
 (* Lemma choice_copre_r p q:
   forall (PRE : Chain (copre_m (LtsP := MbLts))) (M : mb name),
     elem PRE {[τ⋅ p ⊕ τ⋅ q ▷ M]} (q ▷ M).
@@ -171,12 +176,13 @@ intros PRE M. eapply c_tau_.
 - constructor. apply lts_choiceR. constructor.
 Qed. *)
 
+(*
 Ltac set_tac :=
 solve[apply elem_of_union_r; set_tac] ||
 solve[apply elem_of_union_l; set_tac] ||
 assumption ||
 now apply elem_of_singleton_2.
-
+*)
 (*
 Lemma choice_copre_r' p q:
   forall (PRE : Chain (copre_m)),
