@@ -5029,7 +5029,7 @@ Proof.
     eapply IHj. destruct H as (μ'' & eq1 & eq2).
     destruct eq1 as (μ''' & eq'1 & duo & b).
     eapply lts_refuses_spec1 in eq'1 as (p' & tr).
-    Search VarC_preaction_add.
+    (* Search VarC_preaction_add. *)
     admit.
     
 (*     exists (VarC_preaction_add (j + k) (co μ')).

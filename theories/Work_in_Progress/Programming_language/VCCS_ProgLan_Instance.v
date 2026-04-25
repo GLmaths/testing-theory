@@ -27,6 +27,8 @@ From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import InputOutputActions ActTau OldTransitionSystems.
+
+(*
 From Stdlib.Vectors Require Vector.
 (* Module Import V := Coq.Vectors.Vector.
 Import V.VectorNotations. *)
@@ -1671,7 +1673,7 @@ Proof.
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. eauto with cgr.
 Admitted.
-
+*)
 (*
 (* One side of the Harmony Lemma *)
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ Q).

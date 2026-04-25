@@ -19,7 +19,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(*
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -27,10 +27,10 @@ Import ListNotations.
 From Stdlib.Program Require Import Wf Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
+
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
 
-(*
 From TestingTheory Require Import ActTau gLts CCS_Instance CCS_Good Bisimulation InputOutputActions 
         Completeness ParallelLTSConstruction InputOutputActions GeneralizeLtsOutputs.
 
@@ -127,7 +127,6 @@ destruct p; intros.
     { apply Hp. simpl. auto with arith. }
     dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
 Qed.
-
 
 Lemma Eval_simpl_true v : Eval_Eq (v == v) = Some true <-> v = v.
 Proof.
@@ -242,7 +241,6 @@ Fixpoint gen_test_raw Vs s p {struct s}:=
                                    Else ①)) + (t • ①)
                             end
   end.
-
 
 Definition gen_test s p := gen_test_raw s s p.
 
@@ -391,36 +389,16 @@ Proof.
 Qed.
 
 
+Definition gen_conv s := gen_test s (t • ①).
+
 Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
 | empty_list_is_always_defined : Well_Defined_Trace ε
 | cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
                                                     -> Well_Defined_Trace (a :: s).
 
-Parameter P : proc.
-Parameter not_good_P : ¬ good_VCCS P.
-(* Fixpoint unroll_fw (L : list proc * proc) : proc :=
-  match L with
-  | [] => (g 𝟘)
-  | x :: l => (c ? x • ①) ‖ unroll_fw l
-  end. *)
-
-(* Definition gen_acc (g : gset name) s := gen_test s (unroll_fw (elements g)). *)
-
-Definition gen_acc (L : list proc * proc) s := gen_test s P.
-
-(* Lemma unroll_a_eq_perm (xs ys : list name) : xs ≡ₚ ys -> unroll_fw xs ≡* unroll_fw ys.
-Proof.
-  intro hperm. dependent induction hperm; simpl; eauto with ccs.
-  - eapply cgr_par_right; eauto with ccs.
-  - transitivity ((pr_input y pr_success & pr_input x pr_success) & unroll_fw l).
-    eauto with ccs.
-    transitivity ((pr_input x pr_success & pr_input y pr_success) & unroll_fw l).
-    eauto with ccs. eauto with ccs.
-Qed. *)
-
-#[global] Program Instance gen_acc_gen_test_inst g 
-  {Hyp_WD : forall α s e, lts (gen_acc g s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α} 
-    : gen_spec co (fun s => gen_acc g s).
+#[global] Program Instance gen_acc_gen_test_inst 
+  {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
+: gen_spec co gen_conv.
 Next Obligation.
   intros. unfold parallel_inter. unfold dual. destruct μ; simpl; eauto.
 Qed.
@@ -434,7 +412,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros s hh. eapply gen_test_ungood_if; try eassumption.
-  exact not_good_P.
+  intro hh0. inversion hh0.
 Qed.
 Next Obligation.
   intros. eapply gen_test_lts_mu.
@@ -443,13 +421,13 @@ Next Obligation.
   intros. eapply gen_test_gen_spec_out_lts_tau_ex_inst.
 Qed.
 Next Obligation.
-  intros. simpl in *. eapply gen_test_gen_spec_out_lts_tau_good. simpl in H. eassumption.
+  intros. eapply gen_test_gen_spec_out_lts_tau_good. simpl in H. eassumption.
 Qed.
 Next Obligation.
-  intros. simpl in *. unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
+  intros. unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
 Qed.
 Next Obligation.
-  intros. simpl in *. assert (lts (gen_acc g (μ :: s)) (ActExt μ') e) as Hyp_tr; eauto.
+  intros. assert (lts (gen_conv (μ :: s)) (ActExt μ') e) as Hyp_tr; eauto.
   eapply Hyp_WD in Hyp_tr as (WD_trace & WD_action) ; eauto.
   assert (Well_Defined_ExtAction μ) as Hyp.
   { inversion WD_trace. subst; eauto. }
@@ -460,121 +438,15 @@ Next Obligation.
   eapply gen_test_gen_spec_good_not_mu. exact Hyp. exact Hyp'. eauto. eauto.
 Qed.
 
+#[global] Program Instance gen_conv_gen_spec_conv_inst 
+  {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
+  : gen_spec_conv co gen_conv.
+Next Obligation.
+  intro Hyp. eexact (@gen_acc_gen_test_inst Hyp).
+Defined.
+Next Obligation.
+  intro H. intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
+Qed.
+Next Obligation. cbn. eauto with ccs. Qed.
+Next Obligation. intros H e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed. *)
 
-(*
-Lemma gen_acc_does_not_output : forall g t a, ~ lts (unroll_fw g) (ActExt $ ActOut a) t.
-Proof.
-  intros g.
-  induction g as [| b g'].
-  - cbn. intros t a R. inversion R.
-  - cbn. intros t a R. inversion R; subst.
-    + inversion H3.
-    + eapply IHg', H3.
-Qed.
-
-Lemma gen_acc_does_not_tau : forall g t, ~ lts (unroll_fw g) τ t.
-Proof.
-  intros g.
-  induction g as [| b g'].
-  - cbn. intros t R. inversion R.
-  - cbn. intros t R.
-    inversion R; subst.
-    + inversion H1; subst. cbn in H2.
-      eapply gen_acc_does_not_output. eassumption.
-    + inversion H3.
-    + eapply IHg'. eassumption.
-Qed.
-
-Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp g a : a ∈ g -> exists r, lts (gen_acc g []) (ActExt $ ActIn a) r.
-Proof.
-  remember g. revert g0 Heqg0.
-  induction g using set_ind_L; intros g0 Heqg0 mem.
-  - subst. inversion mem.
-  - assert (hn : {[x]} ## X) by set_solver.
-    destruct (decide (x = a)).
-    + subst.
-      set (h := elements_disj_union {[a]} X hn).
-      cbn. assert (exists t, lts (unroll_fw (a :: elements X)) (ActExt $ ActIn a) t).
-      simpl. eauto with ccs.
-      destruct H0 as (r & hl).
-      edestruct
-        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-           (unroll_fw (elements ({[a]} ∪ X))) r (ActExt $ ActIn a)) as (t & hlt & heqt).
-      exists (unroll_fw (a :: elements X)).
-      split. eapply unroll_a_eq_perm.
-      replace (elements {[a]}) with [a] in h. eauto.
-      now rewrite elements_singleton.
-      simpl in *. eapply hl. eauto.
-    + assert (mem' : a ∈ X) by set_solver.
-      edestruct (IHg X eq_refl mem') as (r & hlr); eauto.
-      edestruct
-        (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-           (unroll_fw (elements ({[x]} ∪ X)))
-           (pr_par (pr_input x pr_success) r) (ActExt $ ActIn a)) as (t & hlt & heqt).
-      exists (unroll_fw (x :: elements X)).
-      split. eapply unroll_a_eq_perm.
-      set (h := elements_disj_union {[x]} X hn).
-      replace (elements {[x]}) with [x] in h. eauto.
-      now rewrite elements_singleton.
-      simpl in *. eauto with ccs. subst. eauto.
-Qed.
-
-#[global] Program Instance gen_acc_gen_spec_acc_inst : gen_spec_acc gen_acc.
-Next Obligation.
-  intros g. simpl. unfold proc_stable. cbn.
-  remember (lts_set_tau (unroll_fw (elements g))) as ps.
-  destruct ps using set_ind_L; eauto.
-  assert (mem : x ∈ lts_set_tau (unroll_fw (elements g))) by set_solver.
-  eapply lts_set_tau_spec0 in mem.
-  now eapply gen_acc_does_not_tau in mem.
-Qed.
-Next Obligation.
-  intros g a. simpl. unfold proc_stable. cbn.
-  remember (lts_set_output (unroll_fw (elements g)) a) as ps.
-  destruct ps using set_ind_L; eauto.
-  assert (mem : x ∈ lts_set_output (unroll_fw (elements g)) a) by set_solver.
-  eapply lts_set_output_spec0 in mem.
-  now eapply gen_acc_does_not_output in mem.
-Qed.
-Next Obligation.
-  intros g.
-  induction g using set_ind_L; intros.
-  - inversion H.
-  - edestruct
-      (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-         (unroll_fw (x :: elements X)) e (ActExt (ActIn a))) as (t & hlt & heqt).
-    ++ exists (gen_acc ({[x]} ∪ X) []).
-       split.
-       +++ eapply unroll_a_eq_perm.
-           assert (hn : {[x]} ## X) by set_solver.
-           set (h := elements_disj_union {[x]} X hn).
-           replace (elements {[x]}) with [x] in h. symmetry. eauto.
-           now rewrite elements_singleton.
-       +++ eassumption.
-    ++ cbn in hlt. inversion hlt; subst.
-       +++ inversion H5; subst. set_solver.
-       +++ set_solver.
-Qed.
-Next Obligation.
-  intros. eapply gen_acc_gen_spec_acc_nil_mem_lts_inp; eauto.
-Qed.
-Next Obligation.
-  intros a e' g. revert a e'.
-  induction g using set_ind_L; intros a e' hl.
-  - inversion hl.
-  - edestruct
-      (@eq_spec proc name CCS_Name_label CCS_lts CCS_EqLTS
-         (unroll_fw (x :: elements X)) e' (ActExt a)) as (t & hlt & heqt).
-    ++ exists (gen_acc ({[x]} ∪ X) []).
-       split; eauto.
-       eapply unroll_a_eq_perm.
-       assert (hn : {[x]} ## X) by set_solver.
-       set (h := elements_disj_union {[x]} X hn).
-       replace (elements {[x]}) with [x] in h
-           by now rewrite elements_singleton.
-       symmetry. eauto.
-    ++ simpl in hlt. inversion hlt; subst.
-       +++ inversion H4; subst.
-           eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
-       +++ eapply good_preserved_by_cgr; try eassumption. eauto with ccs.
-Qed. *) *)
