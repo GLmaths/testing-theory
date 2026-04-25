@@ -35,7 +35,6 @@ From TestingTheory Require Import gLts InputOutputActions OldTransitionSystems S
 (* Genarilization via essential actions, non_blocking actions *)
 From TestingTheory Require Import ActTau Lts_Finite_Output_Chain.
 
-
 (*
 
 Definition all_blocking_action `{Label A} (μ : ExtAct A) := False.
