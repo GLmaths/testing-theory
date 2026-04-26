@@ -3582,6 +3582,26 @@ Proof.
     ++ eapply (simpl_blocking_Varc 1). simpl ; eauto.
 Qed.
 
+Lemma delta_phi_newVarC j μ : VarC_preaction_add j ((𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) μ) = (𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) (VarC_action_add j μ).
+Proof.
+  destruct μ; destruct a; destruct c; eauto ; simpl.
+Qed.
+ 
+Lemma delta_phi_newVarC_inversion j μ μ' :
+  VarC_preaction_add j μ' = (𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) μ -> (exists μ'', μ = VarC_action_add j μ'' /\ μ' = (𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) μ'').
+Proof.
+  intro.
+  destruct μ; destruct a; destruct c; eauto ; simpl in *.
+  + destruct μ'; destruct c0; simpl in *; inversion H; subst.
+    exists (ActIn (c ⋉ d)). split ; eauto.
+  + destruct μ'; destruct c; simpl in *; inversion H; subst.
+    exists (ActIn (bvarC n0 ⋉ d)). split ; eauto.
+  + destruct μ'; destruct c0; simpl in *; inversion H; subst.
+    exists (ActOut (c ⋉ d)). split ; eauto.
+  + destruct μ'; destruct c; simpl in *; inversion H; subst.
+    exists (ActOut (bvarC n0 ⋉ d)). split ; eauto.
+Qed.
+
 Lemma VarC_action_add_co_rev_map j k μ' p : VarC_preaction_add (j + k) μ' ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR p)
                         -> VarC_preaction_add k μ' ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (Ѵ  j p)).
 Proof.
@@ -3589,30 +3609,17 @@ Proof.
   induction j.
   + simpl ;eauto.
   + intros; simpl in *. rewrite<- BigNew_reverse_def_one.
-    eapply IHj. destruct H as (μ'' & eq1 & eq2).
-    destruct eq1 as (μ''' & eq'1 & duo & b).
-    eapply lts_refuses_spec1 in eq'1 as (p' & tr).
-    
-    admit.
-    
-(*     exists (VarC_preaction_add (j + k) (co μ')).
-    assert (S (j + k) = 1 + (j+k))%nat by lia.
-    rewrite H in eq2.
-    rewrite<- (VarC_preaction_add_rev 1 (j + k)) in eq2.
-        assert (dual μ'' (VarC_action_add (S (j + k)) μ')); eauto.
-    eapply simpl_dual_VarC_add in eq2. subst.
-    repeat split.
-    ++ eapply lts_refuses_spec2. exists (ν p'). eapply lts_res_ext.
-       rewrite VarC_action_add_add; simpl; eauto.
-    ++ eapply (simpl_dual_VarC 1). simpl; eauto.
-    ++ eapply (simpl_blocking_Varc 1). simpl ; eauto. *)
-Admitted.
+    eapply IHj. destruct H as (μ & duo & eq).
+    assert (exists μ'', μ = VarC_action_add (S (j + k)) μ'' /\ μ' = (𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) μ'') as (μ'' & eq'' & eq''').
+    { eapply delta_phi_newVarC_inversion; eauto. } subst.
+    assert (S (j + k) = 1 + (j + k))%nat as eq'''' by lia.
+    rewrite eq'''' in duo. eapply VarC_action_add_co_rev in duo.
+    exists (VarC_action_add (j + k) μ''). split; eauto.
+    eapply delta_phi_newVarC.
+Qed.
 
 Lemma specPreAct1 k : ∀ (pre_μ : PreAct) (p : proc),
    pre_μ ∈ (λ p0 : proc, mPreCoAct_of k p0) p -> (VarC_preaction_add k pre_μ) ∈ ⌈ (𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) ⌉ (coR p).
-(*     → (VarC_preaction_add k pre_μ)
-      ∈ (λ (p0 : proc) (pre_μ0 : FinA),
-           ∃ μ' : ExtAct TypeOfActions, pre_μ0 = Φᴠᴄᴄꜱ (VarC_action_add k μ') ∧ (VarC_action_add k μ') ∈ coR p0) p. *)
 Proof.
   intros. simpl in *. revert k pre_μ H.
   induction p as (p & Hp) using
