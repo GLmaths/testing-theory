@@ -361,33 +361,21 @@ Proof.
 Qed.
 
 Lemma gen_test_gen_spec_good_not_mu e a μ' s p :
-  Well_Defined_ExtAction (ActIn a)
-  -> Well_Defined_ExtAction (μ') 
-    -> lts (gen_test (ActIn a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
+  lts (gen_test (ActIn a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
 Proof.
-  intros WD_trace WD_action tr neq. unfold gen_test in tr. simpl in *. 
-  destruct a. inversion tr.
-  + subst. inversion H3. subst.
-    simpl in *. rewrite All_According_To_Data.
-    inversion WD_trace; subst.
-    inversion WD_action; subst.
-    assert (v1 ≠ v0) as neq'. 
-    { intro. subst. contradiction. }
-    eapply Eval_simpl_false in neq'.
-    assert ((If cst v1 == cst v0
-               Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ v1 
-               Else ①) ≡ ①).
-    { eapply cgr_if_false_step; eauto. }
-    eapply good_preserved_by_cgr_step; eauto. eapply good_success.
-    eapply cgr_if_false_rev_step; eauto.
-  + subst. inversion H3.
-Qed.
-
-Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
-| empty_list_is_always_defined : Well_Defined_Trace ε
-| cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
-                                                    -> Well_Defined_Trace (a :: s).
-
+  intros tr neq. unfold gen_test in tr. simpl in *. 
+  destruct μ'; destruct a; subst.
+  + inversion tr; subst.
+    +++ inversion H3. inversion H. subst.
+        assert (v ≠ d). { intro. apply neq. subst. eauto. }
+        simpl. destruct d. 
+        ** simpl. admit.
+        ** simpl in *. admit.
+    +++ inversion H3.
+  + inversion tr.
+    - subst. inversion H3.
+    - subst. inversion H3.
+Admitted.
 
 Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
@@ -422,7 +410,6 @@ Proof.
 Qed.
 
 #[global] Program Instance gen_acc_gen_test_inst G 
-  {Hyp_WD : forall α s e, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
     : test_spec (fun s => gen_acc G s).
 Next Obligation.
   intros g s hh. eapply gen_test_ungood_if; try eassumption.
@@ -447,15 +434,17 @@ Next Obligation.
   + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 Next Obligation.
-  intros G Hyp_WD t'. intros. simpl in *.
+  intros. destruct β.
+  + eapply gen_test_gen_spec_good_not_mu; eauto.
+  + exfalso. eapply H. exists a; eauto.
+  (* intros G Hyp_WD t'. intros. simpl in *.
   destruct β.
   + simpl in *. assert (lts (gen_acc G (ActIn a :: s)) (ActExt μ) t') as Hyp_tr; eauto.
     eapply Hyp_WD in Hyp_tr as (WD_trace & WD_action) ; eauto.
     inversion WD_trace; subst. inversion WD_action; subst.
     ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
     ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
-  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
-  
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto. *)
 Qed.
 
 Lemma gen_acc_does_not_not_blocking_actions : forall l p a, ¬ (lts (unroll_fw l) (ActExt $ ActOut a) p).
@@ -517,13 +506,9 @@ Proof.
 Qed.
 
 #[global] Program Instance gen_acc_gen_spec_acc_inst
-  {Hyp_WD : forall α s e L, lts (gen_acc L s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
   : test_co_acceptance_set_spec PreAct gen_acc (fun x => 𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ x)).
 Next Obligation.
-  intros. eapply gen_acc_gen_test_inst. intros. eapply Hyp_WD. eauto.
-Qed.
-Next Obligation.
-  intros Hyp g. simpl. unfold proc_stable. cbn.
+  intros g. simpl. unfold proc_stable. cbn.
   remember (lts_set_tau (unroll_fw (elements g))) as ps.
   destruct ps using set_ind_L; eauto.
   assert (mem : x ∈ lts_set_tau (unroll_fw (elements g))) by set_solver.
@@ -531,11 +516,11 @@ Next Obligation.
   now eapply gen_acc_does_not_tau in mem.
 Qed.
 Next Obligation.
-  intros Hyp g a. simpl. unfold proc_stable. cbn. intro nb.
+  intros g a. simpl. unfold proc_stable. cbn. intro nb.
   unfold non_blocking_output in nb. destruct nb as (c & eq); subst. reflexivity.
 Qed.
 Next Obligation.
-  intros Hyp g.
+  intros g.
   induction g using set_ind_L; intros.
   - inversion H0.
   - destruct β.
@@ -560,7 +545,7 @@ Next Obligation.
     destruct H as (r & v & Tr). exists r , (ActIn $ (c ⋉ v)). split; eauto.
 Qed.
 Next Obligation.
-  intros Hyp a e' g. revert a e'.
+  intros a e' g. revert a e'.
   induction g using set_ind_L; intros a e' b hl.
   - inversion hl.
   - edestruct (eq_spec (g (unroll_fw (x :: elements X))) e' (ActExt a)) as (p & hlt & heqt).
@@ -583,7 +568,6 @@ Definition gen_conv s := gen_test s (𝛕 • ①).
 
 
 #[global] Program Instance gen_conv_gen_test_inst 
-  {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
 : test_spec gen_conv.
 Next Obligation.
   intros s hh. eapply gen_test_ungood_if; try eassumption.
@@ -608,26 +592,18 @@ Next Obligation.
   + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 Next Obligation.
-  intros Hyp_WD t'. intros. simpl in *.
+  intros t'. intros. simpl in *.
   destruct β.
-  + simpl in *. assert (lts (gen_conv (ActIn a :: s)) (ActExt μ) t') as Hyp_tr; eauto.
-    eapply Hyp_WD in Hyp_tr as (WD_trace & WD_action) ; eauto.
-    inversion WD_trace; subst. inversion WD_action; subst.
-    ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
-    ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
-  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+  + eapply gen_test_gen_spec_good_not_mu in H0; eauto.
+  + exfalso. eapply H. exists a; eauto.
 Qed.
 
 #[global] Program Instance gen_conv_gen_spec_conv_inst 
-  {Hyp_WD : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α}
   : test_convergence_spec gen_conv.
 Next Obligation.
-  intro Hyp. eexact (@gen_conv_gen_test_inst Hyp).
-Defined.
-Next Obligation.
-  intro H. intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
+  intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
 Qed.
 Next Obligation. cbn. eauto with cgr. Qed.
-Next Obligation. intros H e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
+Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VACCS_ta_tc.

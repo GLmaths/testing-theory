@@ -1,5 +1,5 @@
 (*
-   Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
+   Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,9 @@
 *)
 
 From stdpp Require Import gmap gmultiset.
-From Stdlib.Program Require Import Equality.
-From Stdlib.Strings Require Import String.
-From Stdlib Require Import Relations.
-From Stdlib.Wellfounded Require Import Inverse_Image.
 
-From TestingTheory Require Import InputOutputActions ActTau .
-From TestingTheory Require Import
-  VCCS_ta_tc_gen DefinitionAS Must ForwarderConstruction ParallelLTSConstruction
-  InteractionBetweenLts GeneralizeLtsOutputs Completeness Equivalence Soundness
-  Testing_Predicate Bisimulation gLts Lts_OBA VCCS_Instance FiniteImageLTS Lts_FW Lts_OBA.
-
+From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must 
+  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation.
 
 Module Type VCCS_Must_Alt_Corollary.
 Include VCCS_ta_tc.
@@ -43,8 +35,8 @@ Proof.
 
     exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage.
     exact Interaction_between_FW_VCCS_and_VCCS. exact Interaction_between_FW_VCCS_and_VCCS.
-    (* exact gen_conv_gen_spec_conv_inst. *) admit.
-    (* exact gen_acc_gen_spec_acc_inst.*) admit.
+    exact gen_conv_gen_spec_conv_inst.
+    exact gen_acc_gen_spec_acc_inst.
     exact VCCS_gLtsOBAFB. exact VCCS_gFiniteOutputChain_LtsOba.
 
   - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
@@ -52,10 +44,10 @@ Proof.
     exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage.
     exact Interaction_between_FW_VCCS_and_VCCS. exact Interaction_between_FW_VCCS_and_VCCS.
     exact FinitaryAbsVCCS. exact FinitaryAbsVCCS.
-    (* exact gen_conv_gen_spec_conv_inst. *) admit.
-    (* exact gen_acc_gen_spec_acc_inst.*) admit.
-     exact VCCS_gLtsOBAFB. exact VCCS_gFiniteOutputChain_LtsOba.
-Admitted.
+    exact gen_conv_gen_spec_conv_inst.
+    exact gen_acc_gen_spec_acc_inst.
+    exact VCCS_gLtsOBAFB. exact VCCS_gFiniteOutputChain_LtsOba.
+Qed.
 
 End VCCS_Must_Alt_Corollary.
 

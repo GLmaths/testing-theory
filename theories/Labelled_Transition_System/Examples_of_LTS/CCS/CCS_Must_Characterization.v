@@ -23,19 +23,10 @@
    SOFTWARE.
 *)
 
+From stdpp Require Import gmap gmultiset.
 
-From Stdlib.Program Require Import Equality.
-From Stdlib.Strings Require Import String.
-From Stdlib Require Import Relations.
-From Stdlib.Wellfounded Require Import Inverse_Image.
-
-From stdpp Require Import base countable finite gmap list gmultiset strings.
-From TestingTheory Require Import InListPropHelper InputOutputActions ActTau Must 
-      Completeness Soundness Equivalence  DefinitionAS MultisetLTSConstruction
-      GeneralizeLtsOutputs ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts  Testing_Predicate
-      gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
-      MultisetLTSConstruction Lts_Finite_Output_Chain.
-From TestingTheory Require Import MustE FiniteImageLTS VCCS_Must_Characterization.
+From TestingTheory Require Import VCCS_Must_Characterization DefinitionAS Equivalence Must 
+  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation.
 
 Module Type CCS_Must_Alt_Corollary.
 Include VCCS_Must_Alt_Corollary.
