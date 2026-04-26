@@ -36,22 +36,7 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction 
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction.
-From TestingTheory Require Import ActTau.
-
-(* TODO: move *)
-Lemma lem_dec `{Countable A} (X Y Z : gset A) :
-    X ⊆ Y ∪ Z
-      -> exists Y' Z', Y' ⊆ Y /\ Z' ⊆ Z /\ (Y' ∪ Z' ≡ X)%stdpp.
-Proof.
-  induction X using set_ind_L; intros sub.
-  - exists ∅, ∅. set_solver.
-  - assert (sub0 : X ⊆ Y ∪ Z) by set_solver.
-    destruct (IHX sub0) as (Y0 & Z0 & sub1 & sub2 & eq).
-    assert (mem_dec : x ∈ Y \/ x ∈ Z). set_solver.
-    destruct mem_dec.
-    + exists ({[x]} ∪ Y0), Z0. set_solver.
-    + exists Y0, ({[x]} ∪ Z0). set_solver.
-Qed.
+From TestingTheory Require Import ActTau InFiniteSetHelper.
 
 (** * Soundness *)
 
@@ -205,10 +190,10 @@ Proof.
     set (Y := lts_tau_set_from_pset ps).
     set (Z := lts_tau_set_from_pset ps2).
     assert (ps' ⊆ lts_tau_set_from_pset ps ∪ lts_tau_set_from_pset ps2).
-    intros q mem. eapply H2 in mem as (q0 & mem & l).
-    eapply elem_of_union in mem. destruct mem.
-    eapply elem_of_union. left. eapply lts_tau_set_from_pset_ispec; eassumption.
-    eapply elem_of_union. right. eapply lts_tau_set_from_pset_ispec; eassumption.
+    { intros q mem. eapply H2 in mem as (q0 & mem & l).
+      eapply elem_of_union in mem. destruct mem.
+      eapply elem_of_union. left. eapply lts_tau_set_from_pset_ispec; eassumption.
+      eapply elem_of_union. right. eapply lts_tau_set_from_pset_ispec; eassumption. }
     eapply lem_dec in H4 as (Y' & Z' & Y_spec' & Z_spec' & eq).
     remember Y' as Y_'.
     remember Z' as Z_'.
@@ -307,9 +292,9 @@ Proof.
   induction ps using set_ind_L.
   - set_solver.
   - destruct (set_choose_or_empty X).
-    eapply mx_sum; set_solver.
-    assert (X = ∅) by set_solver.
-    rewrite H1, union_empty_r_L. set_solver.
+    + eapply mx_sum; set_solver.
+    + assert (X = ∅) by set_solver.
+      rewrite H1, union_empty_r_L. set_solver.
 Qed.
 
 Lemma wt_nil_mx:

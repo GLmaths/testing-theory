@@ -32,24 +32,9 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
 From TestingTheory Require Import MultisetHelper ActTau gLts Bisimulation FiniteImageLTS Lts_OBA Lts_FW Lts_OBA_FB 
-    InListPropHelper Lts_Finite_Output_Chain.
+    InListPropHelper Lts_Finite_Output_Chain InFiniteSetHelper.
 
 (**************************************** LTS of Sets *************************************)
-
-
-Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
-  (h : forall p, p ∈ ps -> P p \/ Q p) : Exists P ps \/ Forall Q ps.
-Proof.
-  induction ps as [|p ?]. eauto.
-  destruct IHps; destruct (h p); eauto; set_solver.
-Qed.
-
-Lemma exists_forall_in_gset `{Countable A} (ps : gset A) (P : A -> Prop) (Q : A -> Prop)
-  (h : forall p, p ∈ ps -> P p \/ Q p) : (exists p, p ∈ ps /\ P p)\/ (forall p, p ∈ ps -> Q p).
-Proof.
-  induction ps using set_ind_L. set_solver.
-  destruct IHps; destruct (h x); eauto; set_solver.
-Qed.
 
 Definition all_blocking_action_ext `{!ExtAction A} (μ : A) := False.
 
@@ -408,8 +393,125 @@ Proof.
   intro tr. destruct tr; eauto.
 Qed.
 
-Lemma termination_forall_if_termination_set `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
-  ps ⤓ -> forall p, p ∈ ps -> p ⤓.
+Lemma empty_set_con `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} : ∅ ⤓.
+Proof.
+  constructor. intros X tr.
+  destruct tr as (eq & not_empty).
+  subst. unfold lts_tau_set_from_pset in not_empty.
+  rewrite elements_empty in not_empty. simpl in *.
+  exfalso. set_solver.
+Qed.
+
+Lemma conv_sub `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A}
+  ps :
+  ps ⤓
+    -> forall qs, qs ⊆ ps
+      -> qs ⤓.
+Proof.
+  intros hmx. dependent induction hmx.
+  constructor. intros. eapply H1. 
+  set (q' := lts_tau_set_from_pset_ispec qs).
+  destruct q'.
+  split.
+  + reflexivity.
+  + destruct (set_choose_or_empty q) as [(q' & l')|].
+    - intro eq_nil. destruct H3 as (eq & eq').
+      subst. eapply H4 in l' as (p' & mem' & tr').
+      eapply H2 in mem'. destruct (lts_tau_set_from_pset_ispec p) as (Hyp1 & Hyp2).
+      eapply Hyp2 in mem'. eapply mem' in tr'. set_solver.
+    - destruct H3. set_solver.
+  + intro p'. intro mem. destruct H3 as (eq & eq'). subst.
+    destruct (lts_tau_set_from_pset_ispec qs) as (Hyp1 & Hyp2).
+    eapply Hyp1 in mem as (p'' & mem & eq). eapply H2 in mem.
+    destruct (lts_tau_set_from_pset_ispec p) as (Hyp'1 & Hyp'2).
+    eapply Hyp'2; eauto.
+Qed.
+
+Lemma conv_sum `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (X : gset P) (Y : gset P) : X ⤓ -> Y ⤓ -> (X ∪ Y) ⤓.
+Proof.
+  intros conv1 conv2. revert Y conv2.
+  dependent induction conv1.
+  intros ps2 hmx2.
+  constructor. intros.
+  set (Y := lts_tau_set_from_pset p).
+  set (Z := lts_tau_set_from_pset ps2).
+  assert (q ⊆ lts_tau_set_from_pset p ∪ lts_tau_set_from_pset ps2).
+    { intros q' mem. destruct H2 as (eq1 & eq2). subst.
+      destruct (lts_tau_set_from_pset_ispec (p ∪ ps2)) as (Hyp1 & Hyp2).
+      eapply Hyp1 in mem as (q0 & mem & l).
+      eapply elem_of_union in mem. destruct mem.
+      eapply elem_of_union. left. eapply lts_tau_set_from_pset_ispec; eassumption.
+      eapply elem_of_union. right. eapply lts_tau_set_from_pset_ispec; eassumption. }
+  eapply lem_dec in H3 as (Y' & Z' & Y_spec' & Z_spec' & eq).
+  remember Y' as Y_'.
+  remember Z' as Z_'.
+  destruct Y_' using set_ind_L.
+    + destruct Z_' using set_ind_L.
+      ++ exfalso. destruct H2.
+         set_solver.
+      ++ assert (Y' = ∅) by set_solver.
+         assert (Z' = q) by set_solver. subst.
+         inversion hmx2; subst. 
+         destruct H2; subst. eapply H5. split.
+         +++ eapply leibniz_equiv. split.
+             ++++ eapply Z_spec'.
+             ++++ intros. destruct (lts_tau_set_from_pset_ispec ps2) as (Hyp1 & Hyp2).
+                  eapply Hyp1 in H7 as (p'' & ps4 & tr). rewrite H2.
+                  destruct (lts_tau_set_from_pset_ispec (p ∪ ps2)) as (Hyp'1 & Hyp'2).
+                  eapply Hyp'2. assert ( p'' ∈ p ∪ ps2 ) as mem''' by set_solver.
+                  exact mem'''. eauto.
+         +++ set_solver.
+    + destruct Z_' using set_ind_L.
+      ++ assert (Y' = q) by set_solver.
+         assert (p ⤓) by eauto with mdb.
+         inversion H5; subst. eapply H5. split.
+         +++ destruct H2. subst. intros. destruct (lts_tau_set_from_pset_ispec p) as (Hyp1 & Hyp2).
+             eapply leibniz_equiv. split.
+             ++++ eapply Y_spec'.
+             ++++ intros. destruct (lts_tau_set_from_pset_ispec p) as (Hyp'1 & Hyp'2).
+                  eapply Hyp1 in H7 as (p'' & ps4 & tr). rewrite H2.
+                  destruct (lts_tau_set_from_pset_ispec (p ∪ ps2)) as (Hyp''1 & Hyp''2).
+                  eapply Hyp''2. assert ( p'' ∈ p ∪ ps2 ) as mem''' by set_solver.
+                  exact mem'''. eauto.
+         +++ set_solver.
+      ++ subst.
+         replace q with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
+         eapply H1. split.
+         +++ eapply leibniz_equiv. split.
+             ++++ eapply Y_spec'.
+             ++++ intros. destruct (lts_tau_set_from_pset_ispec p) as (Hyp'1 & Hyp'2).
+                  eapply Hyp'1 in H5 as (p'' & ps4 & tr). admit.
+         +++ set_solver.
+Admitted.
+
+Lemma conv_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
+  (forall (p : P), p ∈ ps -> {[p]} ⤓) -> ps ⤓.
+Proof.
+  intro hm.
+  induction ps using set_ind_L.
+  - intros. eapply empty_set_con.
+  - destruct (set_choose_or_empty X).
+    + eapply conv_sum; set_solver.
+    + assert (X = ∅) by set_solver.
+      rewrite H2, union_empty_r_L. set_solver.
+Qed.
+
+Lemma conv_set_if_conv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (p : P) : p ⤓ -> {[ p ]} ⤓.
+Proof.
+  intro hm. dependent induction hm.
+  constructor. intros.
+  eapply conv_forall. intros.
+  destruct H2 as (eq & eq'). subst. unfold lts_tau_set_from_pset in H3.
+  rewrite elements_singleton in H3. simpl in *.
+  assert (list_to_set (lts_tau_set p) ∪ (∅ : gset P) = list_to_set (lts_tau_set p)) as eq by set_solver.
+  rewrite eq in H3. eapply elem_of_list_to_set in H3. eapply lts_tau_set_spec in H3.
+  eapply H1. eauto.
+Qed.
+
+Lemma conv_if_conv_set_helper  `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
+  ps ⤓
+    -> forall p, p ∈ ps
+      -> p ⤓.
 Proof.
   intro hm. dependent induction hm.
   intros p' mem. constructor.
@@ -419,20 +521,29 @@ Proof.
   + eapply lts_tau_set_from_pset_ispec; set_solver.
 Qed.
 
-Lemma termination_set_if_termination_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
-  ps ≠ ∅ -> (forall (p : P), p ∈ ps -> p ⤓) -> ps ⤓.
-Proof.
-  induction ps using set_ind_L.
-  + intro Imp. set_solver.
-  + intros not_empty hyp. constructor. intros p Hyp1.
-    admit.
-Admitted.
+Lemma conv_if_conv_set  `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (p : P) :
+  {[ p ]} ⤓
+    -> p ⤓.
+Proof. intros. eapply conv_if_conv_set_helper; set_solver. Qed.
 
-Lemma termination_set_iff_termination_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :
-  ps ≠ ∅ -> (forall (p : P), p ∈ ps -> p ⤓) <-> ps ⤓.
+Lemma conv_set_iff_conv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (p : P):
+  p ⤓ <-> {[ p ]} ⤓.
+Proof. split; [eapply conv_set_if_conv | eapply conv_if_conv_set]. Qed.
+
+Lemma conv_set_for_all `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (X : gset P) :
+  (forall p, p ∈ X -> p ⤓)
+      -> X ⤓.
 Proof.
-  intros; split; [ eapply termination_set_if_termination_forall | eapply termination_forall_if_termination_set].
-  eauto.
+  intros hm. eapply conv_forall.
+  intros. eapply hm in H0. eapply conv_set_iff_conv in H0. eauto.
+Qed.
+
+Lemma termination_set_iff_termination_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (X : gset P) :
+  (forall p, p ∈ X -> p ⤓) <-> X ⤓.
+Proof.
+  intros.
+  split. now eapply conv_set_for_all.
+  now eapply conv_if_conv_set_helper.
 Qed.
 
 From TestingTheory Require Import Convergence.
