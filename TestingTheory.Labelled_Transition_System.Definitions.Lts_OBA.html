@@ -31,13 +31,17 @@
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">stdpp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">gmap</span> <span class="id" title="library">gmultiset</span>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Coq_Helpers.ForAllHelper.html#"><span class="id" title="library">ForAllHelper</span></a> <a class="idref" href="TestingTheory.Coq_Helpers.MultisetHelper.html#"><span class="id" title="library">MultisetHelper</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#"><span class="id" title="library">gLts</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#"><span class="id" title="library">Bisimulation</span></a>.<br/>
+
+<br/>
 </div>
 
 <div class="doc">
-<a id="lab27"></a><h2 class="section">TODO say what <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#gLtsOba"><span class="id" title="record">gLtsOba</span></a></span> are</h2>
+<a id="lab28"></a><h2 class="section">Lts that respects the axioms NB-DELAY , NB-CONFLUENCE, NB-TAU, NB-DETERMINACY and BACKWARDS-NB-DETERMINACY</h2>
 
 </div>
 <div class="code">
+
+<br/>
 <span class="id" title="keyword">Class</span> <a id="gLtsOba" class="idref" href="#gLtsOba"><span class="id" title="record">gLtsOba</span></a> <a id="P:1" class="idref" href="#P:1"><span class="id" title="binder">P</span></a> {<a id="A:2" class="idref" href="#A:2"><span class="id" title="binder">A</span></a>} `{<a id="H:3" class="idref" href="#H:3"><span class="id" title="binder">H</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#ExtAction"><span class="id" title="class">ExtAction</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#A:2"><span class="id" title="variable">A</span></a>} {<a id="Rel:4" class="idref" href="#Rel:4"><span class="id" title="binder">Rel</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#gLtsEq"><span class="id" title="class">gLtsEq</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#P:1"><span class="id" title="variable">P</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#H:3"><span class="id" title="variable">H</span></a>} :=<br/>
 &nbsp;&nbsp;<span class="id" title="var">MkOba</span> {<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
@@ -63,7 +67,7 @@
 </div>
 
 <div class="doc">
-<a id="lab28"></a><h3 class="section">Relationship between `co_nba`, `non_blocking` and `dual`</h3>
+<a id="lab29"></a><h3 class="section">Relationship between `co_nba`, `non_blocking` and `dual`</h3>
 
 </div>
 <div class="code">
@@ -125,7 +129,7 @@
 </div>
 
 <div class="doc">
-<a id="lab29"></a><h3 class="section">Properties on gLtsOBA</h3>
+<a id="lab30"></a><h3 class="section">Properties on gLtsOBA</h3>
 
 </div>
 <div class="code">

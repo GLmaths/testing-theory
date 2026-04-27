@@ -40,7 +40,7 @@
 </div>
 
 <div class="doc">
-<a id="lab71"></a><h2 class="section">Label abstractions</h2>
+<a id="lab72"></a><h2 class="section">Label abstractions</h2>
 
 </div>
 <div class="code">
@@ -71,7 +71,7 @@ Server-side condition for label abstractions,  Definition 5 (2)
 </div>
 
 <div class="doc">
-<a id="lab72"></a><h2 class="section">Finitary Label abstractions</h2>
+<a id="lab73"></a><h2 class="section">Finitary Label abstractions</h2>
 
 </div>
 <div class="code">
@@ -92,7 +92,7 @@ Server-side condition for label abstractions,  Definition 5 (2)
 </div>
 
 <div class="doc">
-<a id="lab73"></a><h2 class="section">Termination condition</h2>
+<a id="lab74"></a><h2 class="section">Termination condition</h2>
 
 </div>
 <div class="code">
@@ -106,7 +106,7 @@ Server-side condition for label abstractions,  Definition 5 (2)
 </div>
 
 <div class="doc">
-<a id="lab74"></a><h2 class="section">Smyth preorder on acceptance sets</h2>
+<a id="lab75"></a><h2 class="section">Smyth preorder on acceptance sets</h2>
 
 </div>
 <div class="code">
@@ -125,7 +125,7 @@ Server-side condition for label abstractions,  Definition 5 (2)
 </div>
 
 <div class="doc">
-<a id="lab75"></a><h2 class="section">Definition of the alternative preorder</h2>
+<a id="lab76"></a><h2 class="section">Definition of the alternative preorder</h2>
 
 </div>
 <div class="code">
@@ -151,16 +151,17 @@ Server-side condition for label abstractions,  Definition 5 (2)
 <span class="id" title="keyword">Qed</span>.<br/>
 <span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">intros</span> ? ? ? ? ? ? ? ? ? ? ? ? (<span class="id" title="var">p1</span>, <span class="id" title="var">m1</span>) <span class="id" title="var">β</span> <span class="id" title="var">β'</span> <span class="id" title="var">b</span> <span class="id" title="var">b'</span> <span class="id" title="var">eq</span> <span class="id" title="var">mem</span>.<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="var">Φ</span> <span class="id" title="var">β</span> <span class="id" title="notation">∈</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#692abbc7d1ebc5c423fb48eda5939791"><span class="id" title="notation">⌈</span></a> <span class="id" title="var">Φ</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#692abbc7d1ebc5c423fb48eda5939791"><span class="id" title="notation">⌉</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#coR"><span class="id" title="definition">coR</span></a> (<span class="id" title="var">p1</span> <a class="idref" href="TestingTheory.Interaction_Between_Lts.InteractionBetweenLts.html#476347a006f8361b5d568be66f9405ee"><span class="id" title="notation">▷</span></a> <span class="id" title="var">m1</span>)) <span class="id" title="keyword">as</span> <span class="id" title="var">mem_h</span>; <span class="id" title="tactic">eauto</span>.<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">mem</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">μ''</span> &amp; <span class="id" title="var">mem</span> &amp; <span class="id" title="var">eq'</span>).<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">mem</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">μ'''</span> &amp; <span class="id" title="var">tr'</span> &amp; <span class="id" title="var">duo</span> &amp; <span class="id" title="var">b''</span>).<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#lts_refuses_spec1"><span class="id" title="method">lts_refuses_spec1</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">tr'</span> <span class="id" title="keyword">as</span> ((<span class="id" title="var">p</span> , <span class="id" title="var">m</span>) &amp; <span class="id" title="var">tr''</span>).<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">tr''</span>;<span class="id" title="tactic">subst</span>.<br/>
-&nbsp;&nbsp;- <span class="id" title="var">admit</span>.<br/>
-&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> (<span class="id" title="definition">decide</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#non_blocking"><span class="id" title="method">non_blocking</span></a> <span class="id" title="var">μ'''</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">nb'''</span> | <span class="id" title="var">b'''</span>].<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#non_blocking_action_in_ms"><span class="id" title="lemma">non_blocking_action_in_ms</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">l</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">subst</span>. <span class="id" title="var">admit</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#blocking_action_in_ms"><span class="id" title="lemma">blocking_action_in_ms</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">l</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">eq''</span> &amp; <span class="id" title="var">duo''</span> &amp; <span class="id" title="var">nb''</span>); <span class="id" title="tactic">eauto</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">subst</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#unique_nb"><span class="id" title="method">unique_nb</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">duo</span> ; <span class="id" title="tactic">subst</span>. <span class="id" title="var">contradiction</span>.<br/>
+
+<br/>
+ <span class="id" title="var">admit</span>.<br/>
+
+<br/>
+
+<br/>
+
+<br/>
+
+<br/>
 <span class="id" title="var">Admitted</span>.<br/>
 
 <br/>
@@ -219,8 +220,6 @@ Server-side condition for label abstractions,  Definition 5 (2)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#blocking_action_in_ms"><span class="id" title="lemma">blocking_action_in_ms</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Imp</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">mem'</span> &amp; <span class="id" title="var">duo'</span> &amp; <span class="id" title="var">nb'</span>); <span class="id" title="tactic">eauto</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#unique_nb"><span class="id" title="method">unique_nb</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">duo</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">subst</span>. <span class="id" title="var">contradiction</span>.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
-
-<br/>
 
 <br/>
 </div>

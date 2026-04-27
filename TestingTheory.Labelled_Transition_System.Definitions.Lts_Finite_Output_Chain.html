@@ -31,13 +31,17 @@
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">stdpp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">gmap</span> <span class="id" title="library">gmultiset</span>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Coq_Helpers.ForAllHelper.html#"><span class="id" title="library">ForAllHelper</span></a> <a class="idref" href="TestingTheory.Coq_Helpers.MultisetHelper.html#"><span class="id" title="library">MultisetHelper</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#"><span class="id" title="library">gLts</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#"><span class="id" title="library">Bisimulation</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#"><span class="id" title="library">Lts_OBA</span></a>.<br/>
+
+<br/>
 </div>
 
 <div class="doc">
-<a id="lab24"></a><h2 class="section">TODO say what <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#gLtsOba"><span class="id" title="record">gLtsOba</span></a></span> are</h2>
+<a id="lab25"></a><h2 class="section">Each program has a MailBox, which is finite and counts occurences of Value</h2>
 
 </div>
 <div class="code">
+
+<br/>
 <span class="id" title="keyword">Class</span> <a id="FiniteOutputChain_LtsOba" class="idref" href="#FiniteOutputChain_LtsOba"><span class="id" title="record">FiniteOutputChain_LtsOba</span></a> <a id="P:1" class="idref" href="#P:1"><span class="id" title="binder">P</span></a> {<a id="A:2" class="idref" href="#A:2"><span class="id" title="binder">A</span></a>} `{<a id="H:3" class="idref" href="#H:3"><span class="id" title="binder">H</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#ExtAction"><span class="id" title="class">ExtAction</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_Finite_Output_Chain.html#A:2"><span class="id" title="variable">A</span></a>} `{<a id="gLtsObaP:5" class="idref" href="#gLtsObaP:5"><span class="id" title="binder">gLtsObaP</span></a> : !@<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#gLtsOba"><span class="id" title="class">gLtsOba</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_Finite_Output_Chain.html#P:1"><span class="id" title="variable">P</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_Finite_Output_Chain.html#A:2"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_Finite_Output_Chain.html#H:3"><span class="id" title="variable">H</span></a> <a id="gLtsEqP:4" class="idref" href="#gLtsEqP:4"><span class="id" title="binder">gLtsEqP</span></a>} :=<br/>
 &nbsp;&nbsp;<span class="id" title="var">MkOba</span> {<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
@@ -61,7 +65,7 @@
 </div>
 
 <div class="doc">
-<a id="lab25"></a><h3 class="section">Relationship between mailbox and non-blocking actions</h3>
+<a id="lab26"></a><h3 class="section">Relationship between mailbox and non-blocking actions</h3>
 
 </div>
 <div class="code">
@@ -97,7 +101,7 @@
 </div>
 
 <div class="doc">
-<a id="lab26"></a><h3 class="section">Properties on LTS with OBA axioms</h3>
+<a id="lab27"></a><h3 class="section">Properties on LTS with OBA axioms</h3>
 
 </div>
 <div class="code">
