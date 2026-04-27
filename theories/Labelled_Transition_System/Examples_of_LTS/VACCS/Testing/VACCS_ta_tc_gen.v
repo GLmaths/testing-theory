@@ -360,22 +360,33 @@ Proof.
   eapply cgr_if_true_step. rewrite Eval_simpl_true; eauto. 
 Qed.
 
+Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
+| empty_list_is_always_defined : Well_Defined_Trace ε
+| cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
+                                                    -> Well_Defined_Trace (a :: s).
+
 Lemma gen_test_gen_spec_good_not_mu e a μ' s p :
-  lts (gen_test (ActIn a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
+  Well_Defined_ExtAction (ActIn a)
+  -> Well_Defined_ExtAction (μ') 
+    -> lts (gen_test (ActIn a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
 Proof.
-  intros tr neq. unfold gen_test in tr. simpl in *. 
-  destruct μ'; destruct a; subst.
-  + inversion tr; subst.
-    +++ inversion H3. inversion H. subst.
-        assert (v ≠ d). { intro. apply neq. subst. eauto. }
-        simpl. destruct d. 
-        ** simpl. admit.
-        ** simpl in *. admit.
-    +++ inversion H3.
-  + inversion tr.
-    - subst. inversion H3.
-    - subst. inversion H3.
-Admitted.
+  intros WD_trace WD_action tr neq. unfold gen_test in tr. simpl in *. 
+  destruct a. inversion tr.
+  + subst. inversion H3. subst.
+    simpl in *. rewrite All_According_To_Data.
+    inversion WD_trace; subst.
+    inversion WD_action; subst.
+    assert (v1 ≠ v0) as neq'. 
+    { intro. subst. contradiction. }
+    eapply Eval_simpl_false in neq'.
+    assert ((If cst v1 == cst v0
+               Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ v1 
+               Else ①) ≡ ①).
+    { eapply cgr_if_false_step; eauto. }
+    eapply good_preserved_by_cgr_step; eauto. eapply good_success.
+    eapply cgr_if_false_rev_step; eauto.
+  + subst. inversion H3.
+Qed.
 
 Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
@@ -384,6 +395,8 @@ Fixpoint unroll_fw (L : list PreAct) : gproc :=
   end.
 
 Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))).
+
+Parameter Hyp_WD_acc : forall α s e G, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α.
 
 Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> (g (unroll_fw xs)) ≡* (g (unroll_fw ys)).
 Proof.
@@ -434,17 +447,14 @@ Next Obligation.
   + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 Next Obligation.
-  intros. destruct β.
-  + eapply gen_test_gen_spec_good_not_mu; eauto.
-  + exfalso. eapply H. exists a; eauto.
-  (* intros G Hyp_WD t'. intros. simpl in *.
+  intros G t'. intros. simpl in *.
   destruct β.
   + simpl in *. assert (lts (gen_acc G (ActIn a :: s)) (ActExt μ) t') as Hyp_tr; eauto.
-    eapply Hyp_WD in Hyp_tr as (WD_trace & WD_action) ; eauto.
+    eapply Hyp_WD_acc in Hyp_tr as (WD_trace & WD_action) ; eauto.
     inversion WD_trace; subst. inversion WD_action; subst.
     ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
     ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
-  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto. *)
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 
 Lemma gen_acc_does_not_not_blocking_actions : forall l p a, ¬ (lts (unroll_fw l) (ActExt $ ActOut a) p).
@@ -566,6 +576,7 @@ Qed.
 
 Definition gen_conv s := gen_test s (𝛕 • ①).
 
+Parameter Hyp_WD_conv : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α.
 
 #[global] Program Instance gen_conv_gen_test_inst 
 : test_spec gen_conv.
@@ -594,7 +605,8 @@ Qed.
 Next Obligation.
   intros t'. intros. simpl in *.
   destruct β.
-  + eapply gen_test_gen_spec_good_not_mu in H0; eauto.
+  + eapply gen_test_gen_spec_good_not_mu in H0; eauto; eapply Hyp_WD_conv in H0 as (h & h0); eauto.
+    inversion h. subst;eauto. inversion h0 ; subst; eauto ;inversion h0;subst ;constructor.
   + exfalso. eapply H. exists a; eauto.
 Qed.
 

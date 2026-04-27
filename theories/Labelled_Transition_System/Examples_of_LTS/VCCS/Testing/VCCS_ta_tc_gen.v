@@ -369,24 +369,40 @@ Proof.
   + intros. inversion H; subst; inversion H4; subst; eauto. reflexivity.
 Qed.
 
-Lemma gen_test_gen_spec_good_not_mu e μ μ' s p :
-  (* Well_Defined_ExtAction (μ)
+Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
+| empty_list_is_always_defined : Well_Defined_Trace ε
+| cons_is_defined_up_to_data : forall a s, Well_Defined_ExtAction a -> Well_Defined_Trace s
+                                                    -> Well_Defined_Trace (a :: s).
+
+Lemma gen_test_gen_spec_good_not_mu e μ  μ' s p :
+  Well_Defined_ExtAction (μ)
   -> Well_Defined_ExtAction (μ') 
-    ->  *) lts (gen_test (μ :: s) p) (ActExt $ μ') e -> μ' ≠ μ -> good_VCCS e.
+    -> lts (gen_test (μ  :: s) p) (ActExt $ μ') e -> μ' ≠ μ -> good_VCCS e.
 Proof.
-  intros tr neq. unfold gen_test in tr. simpl in *. 
-  destruct μ; destruct a; subst.
-  + inversion tr; subst.
-    +++ inversion H3. inversion H. subst.
-        assert (v ≠ d). { intro. apply neq. subst. eauto. }
-        simpl. destruct d. 
-        ** simpl. admit.
-        ** simpl in *. admit.
-    +++ inversion H3.
+  intros WD_trace WD_action tr neq. unfold gen_test in tr. simpl in *. 
+  destruct μ; destruct a; subst. inversion tr;subst.
+  + inversion WD_trace; subst.
+    inversion WD_action; subst.
+    ++ simpl in *. inversion tr; subst.
+       +++ inversion H4.
+       +++ inversion H4.
+    ++ inversion tr; subst.
+       +++ inversion H3. subst.
+           simpl in *. assert (v0 ≠ v) as neq'. 
+           { intro. subst. contradiction. }
+           eapply Eval_simpl_false in neq'.
+           assert ((If cst v0 == cst v
+                      Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ v0
+                      Else ①) ≡ ①).
+           { eapply cgr_if_false_step; eauto. }
+           eapply good_preserved_by_cgr_step; eauto. eapply good_success.
+           eapply cgr_if_false_rev_step; eauto.
+       +++ subst. inversion H4.
+  + inversion H3.
   + inversion tr.
     - subst. inversion H3. subst. exfalso. eapply neq. eauto.
     - subst. inversion H3.
-Admitted.
+Qed.
 
 Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
@@ -397,6 +413,8 @@ Fixpoint unroll_fw (L : list PreAct) : gproc :=
 
 
 Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))).
+
+Parameter Hyp_WD_acc : forall α s e G, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α.
 
 Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> (g (unroll_fw xs)) ≡* (g (unroll_fw ys)).
 Proof.
@@ -455,7 +473,16 @@ Next Obligation.
   intros. simpl in *. unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
 Qed.
 Next Obligation.
-  intros. simpl in *. eapply gen_test_gen_spec_good_not_mu;eauto.
+  intros g t'. intros.
+  simpl in *. assert (lts (gen_acc g (β :: s)) (ActExt μ) t') as Hyp_tr; eauto.
+  eapply Hyp_WD_acc in Hyp_tr as (WD_trace & WD_action) ; eauto.
+  assert (Well_Defined_ExtAction β) as Hyp.
+  { inversion WD_trace. subst; eauto. }
+  assert (Well_Defined_ExtAction μ) as Hyp'.
+  { inversion WD_action; subst; eauto.
+    + constructor.
+    + constructor. }
+  eapply gen_test_gen_spec_good_not_mu. exact Hyp. exact Hyp'. eauto. eauto.
 Qed.
 
 Lemma gen_acc_does_not_tau : forall g r, ~ lts (unroll_fw g) τ r.
@@ -643,6 +670,7 @@ Next Obligation.
 Qed.
 
 Definition gen_conv s := gen_test s (𝛕 • ①).
+Parameter Hyp_WD_conv : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α.
 
 #[global] Program Instance gen_conv_gen_test_inst
 : test_spec gen_conv.
@@ -663,7 +691,16 @@ Next Obligation.
   intros. unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
 Qed.
 Next Obligation.
-  intros  t'. intros.  eapply gen_test_gen_spec_good_not_mu; eauto.
+  intros t'. intros.
+  simpl in *. assert (lts (gen_conv (β :: s)) (ActExt μ) t') as Hyp_tr; eauto.
+  eapply Hyp_WD_conv in Hyp_tr as (WD_trace & WD_action) ; eauto.
+  assert (Well_Defined_ExtAction β) as Hyp.
+  { inversion WD_trace. subst; eauto. }
+  assert (Well_Defined_ExtAction μ) as Hyp'.
+  { inversion WD_action; subst; eauto.
+    + constructor.
+    + constructor. }
+  eapply gen_test_gen_spec_good_not_mu. exact Hyp. exact Hyp'. eauto. eauto.
 Qed.
 
 #[global] Program Instance gen_conv_gen_spec_conv_inst
@@ -672,6 +709,7 @@ Next Obligation.
   intros [a|a]; simpl; unfold proc_stable; cbn; eauto.
 Qed.
 Next Obligation. cbn. eauto with ccs. Qed.
-Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
+Next Obligation. 
+ intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VCCS_ta_tc.
