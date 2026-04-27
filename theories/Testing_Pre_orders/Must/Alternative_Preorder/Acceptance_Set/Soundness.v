@@ -219,10 +219,11 @@ Proof.
       ++ subst.
          replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
          eapply H.
-         intros t' mem. apply lts_tau_set_from_pset_ispec. set_solver. set_solver.
-         inversion hmx2; subst. now contradiction nh.
-         eapply pt0.
-         intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+         +++ intros t' mem. apply lts_tau_set_from_pset_ispec. set_solver.
+         +++ set_solver.
+         +++ inversion hmx2; subst.
+             ++++ now contradiction nh.
+             ++++ eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
   - intros t' l. eapply H0; eauto with mdb.
     inversion hmx2; subst; eauto with mdb. contradiction.
   - intros t' μ μ' ps' duo l ps'_spec neq_nil.
@@ -267,20 +268,23 @@ Proof.
          eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
          set_solver. set_solver.
     + destruct Z0 using set_ind_L.
-      ++ inversion hmx2; subst. now contradict nh.
-         eapply com. eassumption. eassumption. intros t'' mem.
-         eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
-         set_solver. set_solver.
+      ++ inversion hmx2; subst.
+         +++ now contradict nh.
+         +++ eapply com. eassumption. eassumption. intros t'' mem.
+             eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
+             set_solver. set_solver.
       ++ replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
          eapply H1; eauto with mdb.
-         intros t'' mem.
-         eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
-         set_solver. set_solver.
-         inversion hmx2; subst. now contradict nh.
-         eapply com0. eassumption. eassumption.
-         intros t'' mem.
-         eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
-         set_solver. set_solver.
+         +++ intros t'' mem.
+             eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
+             set_solver.
+         +++ set_solver.
+         +++ inversion hmx2; subst.
+             ++++ now contradict nh.
+             ++++ eapply com0. eassumption. eassumption.
+                  intros t'' mem.
+                  eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
+                  set_solver. set_solver.
 Qed.
 
 Lemma mx_forall  ps t :
