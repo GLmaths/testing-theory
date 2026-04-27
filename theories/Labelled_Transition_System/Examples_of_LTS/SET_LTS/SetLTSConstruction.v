@@ -49,27 +49,18 @@ Next Obligation.
   intros. right. intro imp. inversion imp.
 Defined.
 
-(* #[global] Program Instance ExtAction_Blocking `{!ExtAction A} : ExtAction A:=
+(* Program Instance ExtAction_Blocking {A : Type} (H : ExtAction A) : ExtAction A:=
    {| non_blocking η := all_blocking_action_ext η ;
-      dual μ1 μ2 := dual μ1 μ2 |}.
+      dual μ1 μ2 := dual μ1 μ2;
+      duo_sym :=duo_sym ;
+      exists_dual μ := exists_dual μ;
+      unique_nb η β := unique_nb η β;|}.
 Next Obligation.
   intros ? ? ? ? nb ; simpl in *. inversion nb.
-Defined.
-Next Obligation.
- intros A H μ; simpl in *.
- intros μ' duo. eapply unique_nb in duo. subst.
- symmetry. exact (proj2_sig (exists_dual μ)).
-Defined.
-Next Obligation.
-  intros. exists (proj1_sig (exists_dual μ)).
-  exact (proj2_sig (exists_dual μ)).
-Defined.
-Next Obligation.
-  intros. unfold ExtAction_Blocking_obligation_3.
-  simpl in *. eapply unique_nb. eauto.
 Defined. *)
 
-#[global] Program Instance SET_LTS `(gLtsP : @gLts P A H) `{!FiniteImagegLts P A} : @gLts (gset P) A H. (* ExtAction_Blocking *)
+#[global] Program Instance SET_LTS `(gLtsP : !@gLts P A H)`{FiniteP : !@FiniteImagegLts P A H gLtsP} : 
+  gLts (gset P) H.
 Next Obligation.
   intros. destruct X.
   + exact (H1 = lts_extaction_set_from_pset H0 μ /\ H1 ≠ ∅).
@@ -90,14 +81,16 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros. simpl in *. unfold SET_LTS_obligation_3.
-  destruct α.
-  - assert (forall p', p' ∈ p -> (¬ lts_refuses p' (ActExt μ) \/ lts_refuses p' (ActExt μ))) as Hyp.
-    { intros. destruct (decide (p' ↛[μ])); [right|left];eauto. }
-    (* destruct (exists_forall_in_gset p _ _ Hyp). *) admit.
-  - assert (forall p', p' ∈ p -> (¬ lts_refuses p' τ \/ lts_refuses p' τ)) as Hyp.
-    { intros. destruct (decide (p' ↛)); [right|left];eauto. }
-    (* destruct (exists_forall_in_gset p _ _ Hyp). *) admit.
-Admitted.
+  pose proof (decide (∃ x, x ∈ p ∧ ¬ x ↛{α})) as Hdec.
+  destruct Hdec as [Hex | Hnot].
+  + right. intro. destruct Hex as (p' & mem & tr).
+    eapply H0 in mem. contradiction.
+  + left. intros. destruct (decide (p0 ↛{α})).
+    - eauto.
+    - assert (∃ x : P, x ∈ p ∧ ¬ x ↛{α}).
+      { exists p0. split ;eauto. }
+      contradiction.
+Qed.
 Next Obligation.
   unfold SET_LTS_obligation_3.
   unfold SET_LTS_obligation_1. intros. destruct α.
@@ -162,13 +155,13 @@ Definition eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A} (X Y : gset P) :=
 
 Infix "⋍ₛₑₜ" := eq_rel_set (at level 70).
 
-Global Instance symmetric_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
- Symmetric eq_rel_set.
-Proof. intros x y. unfold eq_rel_set. intuition. Qed.
-
 Global Instance reflexive_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
  Reflexive eq_rel_set.
 Proof. intro X; split; intros x Hx; exists x; intuition. reflexivity. reflexivity. Qed.
+
+Global Instance symmetric_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+ Symmetric eq_rel_set.
+Proof. intros x y. unfold eq_rel_set. intuition. Qed.
 
 Global Instance transitive_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
  Transitive eq_rel_set.
