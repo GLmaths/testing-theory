@@ -28,7 +28,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Good
-gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs ParallelLTSConstruction
+gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS.
 
 (** ** VACCS **)
