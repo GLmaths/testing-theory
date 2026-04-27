@@ -26,7 +26,9 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation.
-(** ** TODO say what [gLtsOba] are *)
+
+(** ** Lts that respects the axioms NB-DELAY , NB-CONFLUENCE, NB-TAU, NB-DETERMINACY and BACKWARDS-NB-DETERMINACY *)
+
 Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
   MkOba {
       (* Selinger axioms. *)

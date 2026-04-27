@@ -26,7 +26,9 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA.
-(** ** TODO say what [gLtsOba] are *)
+
+(** ** Each program has a MailBox, which is finite and counts occurences of Value *)
+
 Class FiniteOutputChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : !@gLtsOba P A H gLtsEqP} :=
   MkOba {
       (* Multiset of non-blocking action from a process *)

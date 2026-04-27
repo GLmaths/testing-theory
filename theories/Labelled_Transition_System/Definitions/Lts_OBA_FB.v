@@ -23,16 +23,9 @@
    SOFTWARE.
 *)
 
-From Stdlib Require ssreflect Setoid.
-From Stdlib.Unicode Require Import Utf8.
-From Stdlib.Lists Require Import List.
-Import ListNotations.
-From Stdlib.Wellfounded Require Import Inverse_Image.
-From Stdlib.Program Require Import Wf Equality.
-From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From TestingTheory Require Import ForAllHelper MultisetHelper gLts Lts_OBA Bisimulation.
+From TestingTheory Require Import gLts Lts_OBA Bisimulation.
 
-(** ** LTSs with feedback *)
+(** ** LTSs that respects the axiom FEEDBACK *)
 Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=
   MkgLtsObaFB {
       lts_oba_fb_feedback {p1 p2 p3 η β} :

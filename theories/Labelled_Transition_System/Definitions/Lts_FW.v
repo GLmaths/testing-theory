@@ -26,6 +26,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA.
 
+(** ** LTSs that respects the axioms FW-FEEDBACK and BOOMERANG *)
 Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
   MkgLtsObaFW {
       lts_oba_fw_forward p1 η β :
