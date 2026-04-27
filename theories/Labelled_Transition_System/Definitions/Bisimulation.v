@@ -29,7 +29,7 @@ From TestingTheory Require Import ActTau gLts.
 
 (** * Labelled transition systems *)
 
-(** ** LTSs equipped with a bissimulation *)
+(** ** LTSs equipped with a bisimulation *)
 Class gLtsEq (P : Type) {A} `(H : !ExtAction A) := {
     gLtsEq_gLts :: gLts P H;
     (* Equivalence relation *)
