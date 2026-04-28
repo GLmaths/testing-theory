@@ -40,12 +40,12 @@ From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
 
 (** * Soundness *)
 
-Section Soundness.
+
+Section Must_for_sets.
+
 Context `{EA : !ExtAction A}.
 Context `{gLtsT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
-
-Section Must_for_sets.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{Hinter : @Prop_of_Inter P T A dual EA gLtsP _}.
@@ -421,21 +421,21 @@ Qed.
 
 End Must_for_sets.
 
-Section Preorder_for_sets.
+Section Must_preorder_for_sets.
+Context `{EA : !ExtAction A}.
+Context `{gLtsT : !gLtsEq T EA}.
+Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{Hinter : @Prop_of_Inter P T A dual EA gLtsP _}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
-Context `{HinterQ : @Prop_of_Inter Q T A dual EA gLtsQ _}.
+Context `{HinterQ : !Prop_of_Inter Q T A dual}.
+
 
 (** ** Contextual preorder for sets *)
 Definition ctx_pre__x (X : gset P) (Y : gset Q) 
   := forall (t : T), mustx X t -> mustx Y t.
 
-Hint Unfold ctx_pre__x : mdb.
-
-Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
-Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
 
 (** ** Equivalence between the must preorder and the must preorder on sets *)
 Lemma must_set_singleton_iff (p : P) (q : Q) :
@@ -452,16 +452,35 @@ Proof.
     eapply must_if_must_set in Hyp_q. exact Hyp_q.
 Qed.
 
+End Must_for_sets.
+Section Soundness.
+Section Preorder_for_sets.
+
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{Hinter : !Prop_of_Inter P T A dual}.
+
+
+
+Hint Unfold ctx_pre__x : mdb.
+
+Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
+
+
+
 (** ** Condition on convergence *)
+
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
 
 Definition bhv_pre_cond1__x (ps : gset P) (qs : gset Q) :=
   forall s, (forall p, p ∈ ps -> p ⇓ s) -> (forall q, q ∈ qs -> q ⇓ s).
 
-Notation "ps ≼ₓ1 qs" := (bhv_pre_cond1__x ps qs) (at level 70).
+Notation "ps ₁≼ₛₑₜ_ₐₛ qs" := (bhv_pre_cond1__x ps qs) (at level 70).
 
 Lemma bhvleqone_preserved_by_reduction
   (ps : gset P) (qs qs' : gset Q) :
-  ps ≼ₓ1 qs -> qs ⟶ qs' -> ps ≼ₓ1 qs'.
+  ps ₁≼ₛₑₜ_ₐₛ qs -> qs ⟶ qs' -> ps ₁≼ₛₑₜ_ₐₛ qs'.
 Proof.
   intros halt1 l s mem. eauto.
   eapply convergence_set_iff_convergence_forall.
@@ -470,57 +489,43 @@ Proof.
   eapply halt1. eauto.
 Qed.
 
-
-(** ** Condition on acceptance sets *)
-
-Definition bhv_pre_cond2__x `{
-  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _ ,
-  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _ }
-  (ps : gset P) (qs : gset Q) :=
-  forall q s q', q ∈ qs ->
-    q ⟹[s] q' -> q' ↛ ->
-    (forall p, p ∈ ps -> p ⇓ s) ->
-    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q')).
-
 Lemma bhvleqone_preserved_by_external_action
-  (ps0 ps1 : gset P) μ (qs qs' : gset Q) (htp : forall p, p ∈ ps0 -> terminate p) :
-  ps0 ≼ₓ1 qs -> ps0 ⟹{μ} ps1  -> qs ⟶[μ] qs' -> ps1 ≼ₓ1 qs'.
+  (ps ps' : gset P) μ (qs qs' : gset Q) (htp : forall p, p ∈ ps -> terminate p) :
+  ps ₁≼ₛₑₜ_ₐₛ qs -> wt_set_from_pset_spec ps [μ] ps'  -> qs ⟶[μ] qs' -> ps' ₁≼ₛₑₜ_ₐₛ qs'.
 Proof.
   intros hleq hws l s hcnv.
   eapply convergence_set_iff_convergence_forall.
   eapply cnv_preserved_by_wt_act;eauto.
   eapply convergence_set_if_convergence_forall. eapply hleq.
-  
-  eapply convergence_forall_if_convergence_set.
-  eapply cnv_act.
-  eapply termination_set_for_all;eauto.
-  intros qs'' wk_tr.
-  eapply wk_tr_inv in wk_tr as Hyp. ;eauto.
-  
   intros p mem'. eapply cnv_act.
   + eapply htp; eauto.
   + intros. eapply hcnv, hws; eassumption.
   + eauto with mdb.
 Qed.
 
-Notation "ps ≼ₓ2 q" := (bhv_pre_cond2__x ps q) (at level 70).
+
+(** ** Condition on acceptance sets *)
+
+Definition bhv_pre_cond2__x 
+  (ps : gset P) (qs : gset Q) :=
+  forall q s q', q ∈ qs ->
+    q ⟹[s] q' -> q' ↛ ->
+    (forall p, p ∈ ps -> p ⇓ s) ->
+    exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+
+Notation "ps ₂≼ₛₑₜ_ₐₛ q" := (bhv_pre_cond2__x ps q) (at level 70).
 
 
 (** ** Alternative preorder on sets *)
 
-Definition bhv_pre__x `{
-  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
-  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _}
-    (ps : gset P) (q : Q) :=
-      (ps ≼ₓ1 q /\ ps ≼ₓ2 q).
-(* ≼ₐₛ *)
+Definition bhv_pre__x 
+    (ps : gset P) (qs : gset Q) :=
+      (ps ₁≼ₛₑₜ_ₐₛ qs /\ ps ₂≼ₛₑₜ_ₐₛ qs).
 
-Notation "ps ≼ₓ q" := (bhv_pre__x ps q) (at level 70).
+Notation "ps ≼ₛₑₜ_ₐₛ qs" := (bhv_pre__x ps qs) (at level 70).
 
-Lemma alt_set_singleton_iff `{
-  AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _,
-  AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _ }
-  (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₓ q.
+Lemma alt_set_singleton_iff 
+  (p : P) (q : Q) :  {[ p ]} ≼ₛₑₜ_ₐₛ {[ q ]}.  p ≼ₐₛ q <->
 Proof.
   split.
   - intros (hbhv1 & hbhv2). split.

@@ -65,7 +65,7 @@ Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsQ gLtsT,
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
@@ -76,7 +76,7 @@ Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
 
 (** ** Definition of the alternative preorder *)
 Definition bhv_pre `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsQ gLtsT,
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
