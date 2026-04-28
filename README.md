@@ -9,7 +9,7 @@ The code here will be developed througout Lopez PhD thesis.
 The work is lead by [Giovanni Bernardi](https://www.irif.fr/~gio/),
 with the help of [Hugo Férée](https://hugo.feree.fr/).
 
-A pi-calculus development in [theories/pi](theories/pi/README.md) including a proof of the Harmony Lemma (see [theories/pi/Pi_Instance.v](theories/pi/Pi_Instance.v#L984)) by
+A pi-calculus development in [theories/Labelled_Transition_System/Examples_of_LTS/pi](theories/Labelled_Transition_System/Examples_of_LTS/pi/README.md) including a proof of the Harmony Lemma (see [theories/Labelled_Transition_System/Examples_of_LTS/pi/Pi_Instance.v](theories/Labelled_Transition_System/Examples_of_LTS/pi/Pi_Instance.v#L984)) by
 [Matteo Manighetti](https://www.mmanighetti.io/).
 
 
