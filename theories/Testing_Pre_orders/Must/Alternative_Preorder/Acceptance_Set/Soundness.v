@@ -36,7 +36,7 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction 
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction.
-From TestingTheory Require Import ActTau InFiniteSetHelper.
+From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
 
 (** * Soundness *)
 
@@ -454,15 +454,21 @@ Qed.
 
 (** ** Condition on convergence *)
 
-Definition bhv_pre_cond1__x (ps : gset P) (q : Q) :=
-  forall s, (forall p, p ∈ ps -> p ⇓ s) -> q ⇓ s.
+Definition bhv_pre_cond1__x (ps : gset P) (qs : gset Q) :=
+  forall s, (forall p, p ∈ ps -> p ⇓ s) -> (forall q, q ∈ qs -> q ⇓ s).
 
-Notation "ps ≼ₓ1 q" := (bhv_pre_cond1__x ps q) (at level 70).
+Notation "ps ≼ₓ1 qs" := (bhv_pre_cond1__x ps qs) (at level 70).
 
 Lemma bhvleqone_preserved_by_reduction
-  (ps : gset P) (q q' : Q) :
-  ps ≼ₓ1 q -> q ⟶ q' -> ps ≼ₓ1 q'.
-Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
+  (ps : gset P) (qs qs' : gset Q) :
+  ps ≼ₓ1 qs -> qs ⟶ qs' -> ps ≼ₓ1 qs'.
+Proof.
+  intros halt1 l s mem. eauto.
+  eapply convergence_set_iff_convergence_forall.
+  eapply cnv_preserved_by_lts_tau; eauto.
+  eapply convergence_set_if_convergence_forall.
+  eapply halt1. eauto.
+Qed.
 
 
 (** ** Condition on acceptance sets *)
@@ -470,19 +476,27 @@ Proof. intros halt1 l s mem. eapply cnv_preserved_by_lts_tau; eauto. Qed.
 Definition bhv_pre_cond2__x `{
   AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 gLtsP _ ,
   AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 gLtsQ _ }
-  (ps : gset P) (q : Q) :=
-  forall s q',
+  (ps : gset P) (qs : gset Q) :=
+  forall q s q', q ∈ qs ->
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ ps -> p ⇓ s) ->
     exists p, p ∈ ps /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q')).
 
 Lemma bhvleqone_preserved_by_external_action
-  (ps0 ps1 : gset P) μ (q q' : Q) (htp : forall p, p ∈ ps0 -> terminate p) :
-  ps0 ≼ₓ1 q -> wt_set_from_pset_spec ps0 [μ] ps1  -> q ⟶[μ] q' -> ps1 ≼ₓ1 q'.
+  (ps0 ps1 : gset P) μ (qs qs' : gset Q) (htp : forall p, p ∈ ps0 -> terminate p) :
+  ps0 ≼ₓ1 qs -> ps0 ⟹{μ} ps1  -> qs ⟶[μ] qs' -> ps1 ≼ₓ1 qs'.
 Proof.
   intros hleq hws l s hcnv.
-  eapply cnv_preserved_by_wt_act.
-  eapply hleq.
+  eapply convergence_set_iff_convergence_forall.
+  eapply cnv_preserved_by_wt_act;eauto.
+  eapply convergence_set_if_convergence_forall. eapply hleq.
+  
+  eapply convergence_forall_if_convergence_set.
+  eapply cnv_act.
+  eapply termination_set_for_all;eauto.
+  intros qs'' wk_tr.
+  eapply wk_tr_inv in wk_tr as Hyp. ;eauto.
+  
   intros p mem'. eapply cnv_act.
   + eapply htp; eauto.
   + intros. eapply hcnv, hws; eassumption.
