@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 
 (** ** Label abstractions *)
 
-Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLts T H}  :=
+Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLtsEq T H} :=
   MkAbsAction {
     (** Client-side condition for label abstractions , Definition 5 (1) **)
     abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
@@ -46,7 +46,7 @@ Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_}.
 
 (** ** Finitary Label abstractions *)
 
-Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLts T H}
+Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLtsEq T H}
   `{Countable PreAct} :=
   MkFinitaryAbsAction {
       FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT;

@@ -425,7 +425,6 @@ End Must_for_sets.
 Section Must_preorder_for_sets.
 Context `{EA : !ExtAction A}.
 Context `{gLtsT : !gLtsEq T EA}.
-Context `{outcome : T -> Prop}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
@@ -462,11 +461,50 @@ End Must_preorder_for_sets.
 Global Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
 Global Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
 
+(** ** Condition on convergence *)
+
+Definition bhv_pre_cond1__x `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
+  (X : gset P) (Y : gset Q) :=
+  forall s, (forall p, p ∈ X -> p ⇓ s) -> (forall q, q ∈ Y -> q ⇓ s).
+
+Global Notation "X ₁≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
+
+(** ** Condition on acceptance sets *)
+
+Definition bhv_pre_cond2__x
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}
+  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}
+  (X : gset P) (Y : gset Q) :=
+  forall q s q', q ∈ Y ->
+    q ⟹[s] q' -> q' ↛ ->
+    (forall p, p ∈ X -> p ⇓ s) ->
+    exists p, p ∈ X /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+
+Global Notation "X ₂≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
+
+
+(** ** Alternative preorder on sets *)
+
+Definition bhv_pre__x 
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}
+  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}
+    (X : gset P) (Y : gset Q) :=
+      (X ₁≼ₛₑₜ_ₐₛ Y /\ X ₂≼ₛₑₜ_ₐₛ Y).
+
+Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
+
+#[global] Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
 
 Section Acceptance_Set_preorder_for_sets.
 
 Context `{EA : !ExtAction A}.
-Context `{gLtsT : @gLts T A EA}.
 Context `{gLtsEqT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
 
@@ -477,14 +515,6 @@ Context `{HinterQ : !Prop_of_Inter Q T A dual}.
 
 Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
 Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
-
-
-(** ** Condition on convergence *)
-
-Definition bhv_pre_cond1__x (ps : gset P) (qs : gset Q) :=
-  forall s, (forall p, p ∈ ps -> p ⇓ s) -> (forall q, q ∈ qs -> q ⇓ s).
-
-Notation "ps ₁≼ₛₑₜ_ₐₛ qs" := (bhv_pre_cond1__x ps qs) (at level 70).
 
 Lemma bhvleqone_preserved_by_reduction
   (ps : gset P) (qs qs' : gset Q) :
@@ -511,29 +541,8 @@ Proof.
   + eauto with mdb.
 Qed.
 
-
-(** ** Condition on acceptance sets *)
-
-Definition bhv_pre_cond2__x 
-  (X : gset P) (Y : gset Q) :=
-  forall q s q', q ∈ Y ->
-    q ⟹[s] q' -> q' ↛ ->
-    (forall p, p ∈ X -> p ⇓ s) ->
-    exists p, p ∈ X /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
-
-Notation "X ₂≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
-
-
-(** ** Alternative preorder on sets *)
-
-Definition bhv_pre__x 
-    (X : gset P) (Y : gset Q) :=
-      (X ₁≼ₛₑₜ_ₐₛ Y /\ X ₂≼ₛₑₜ_ₐₛ Y).
-
-Notation "X ≼ₛₑₜ_ₐₛ Y" := (bhv_pre__x X Y) (at level 70).
-
 Lemma alt_set_singleton_iff 
-  (p : P) (q : Q) : {[ p ]} ≼ₛₑₜ_ₐₛ {[ q ]}  <->  p ≼ₐₛ q.  
+  (p : P) (q : Q) : ({[ p ]} : gset P) ≼ₛₑₜ_ₐₛ ({[ q ]} : gset Q) <->  p ≼ₐₛ q.  
 Proof.
   split.
   - intros (hbhv1 & hbhv2). split.
@@ -662,10 +671,6 @@ Admitted.
 
 End Acceptance_Set_preorder_for_sets.
 
-#[global] Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
-Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
-Global Notation "X ₁≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
-Global Notation "X ₂≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
 
 Section SoundnessAS.
 
@@ -684,7 +689,7 @@ Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
 Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
   ¬ outcome t
     -> mustx X t
-      -> ∃ q, q ∈ Y /\ (q, t) ↛.
+      -> ∃ q, q ∈ Y /\ (q, t) ↛
         -> ¬ X ₂≼ₛₑₜ_ₐₛ Y.
 Proof.
   intros not_happy all_must refuses_tau_q hbhv2.
