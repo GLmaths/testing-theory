@@ -688,11 +688,11 @@ Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
 
 Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
   ¬ outcome t
-    -> mustx X t
-      -> ∃ q, q ∈ Y /\ (q, t) ↛
+    -> X must_pass_x t
+      -> (∃ q, q ∈ Y /\ (q, t) ↛)
         -> ¬ X ₂≼ₛₑₜ_ₐₛ Y.
 Proof.
-  intros not_happy all_must refuses_tau_q hbhv2.
+  intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
 
   assert (q ↛) as stable_q.
   { destruct (lts_refuses_decidable q τ) as [refuses_q | not_refuses_q].
@@ -703,7 +703,7 @@ Proof.
   assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
   { destruct (mustx_terminate_unoutcome X t all_must) as [|htps]; eauto with mdb. contradiction. }
 
-  destruct (hbhv2 [] q (wt_nil q) stable_q htX) as (p & mem & p' & wp & stp' & sub).
+  destruct (hbhv2 q [] q mem' (wt_nil q) stable_q htX) as (p & mem & p' & wp & stp' & sub).
 
   assert (mustx {[ p' ]} t) as must_p'.
   { eapply (wt_nil_mx p). eapply (mx_sub X t all_must). set_solver. eassumption. }
@@ -726,37 +726,34 @@ Qed.
 Lemma stability_nbhvleqtwo
   (X : gset P) (Y : gset Q) t :
   ¬ outcome t
-    -> mustx X t
-      -> X ₂≼ Y
-        -> forall (q : Q), q ∈ Y -> ∃ q', (q, t) ⟶{τ} q').
+    -> X must_pass_x t
+      -> X ₂≼ₛₑₜ_ₐₛ Y
+        -> forall (q : Q), q ∈ Y -> ∃ q', (q, t) ⟶{τ} q'.
 Proof.
-  intros nhg hmx hleq.
+  intros nhg hmx hleq q mem.
   destruct (lts_refuses_decidable (q, t) τ).
-  - exfalso. apply (unoutcome_must_st_nleqx X q t nhg hmx); eauto.
+  - exfalso. apply (unoutcome_must_st_nleqx X Y t nhg hmx); eauto.
   - eapply lts_refuses_spec1 in n as (t' & hl). eauto.
 Qed.
 
-Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
-Hint Constructors mustx:mdb.
-Hint Unfold ctx_pre__x : mdb.
 
 (** ** Soundness for sets *)
 Lemma soundnessx
-  (ps : gset P) (t : T) :
-  mustx ps t
-    -> forall (q : Q), ps ≼ₓ q
-      -> q must_pass t.
+  (X : gset P) (Y : gset Q) (t : T) :
+  X must_pass_x t
+    -> X ≼ₛₑₜ_ₐₛ Y
+      -> Y must_pass_x t.
 Proof.
-  intros hmx q (halt1 & halt2).
+  intros hmx (halt1 & halt2).
   dependent induction hmx.
   - eauto with mdb.
   - destruct (mustx_terminate_unoutcome ps t ltac:(eauto with mdb));
     [contradiction|].
-    assert (q_conv : q ⤓).
-    eapply cnv_terminate, halt1; intros; eapply cnv_nil.
+    assert (q_conv : Y ⤓).
+    eapply cnv_terminate , convergence_set_if_convergence_forall , halt1; intros; eapply cnv_nil.
     destruct (mustx_terminate_unoutcome ps t); eauto with mdb.
     induction q_conv as [q tq IHq_conv].
-    eapply m_step.
+    eapply mx_step.
     + eassumption.
     + eapply (stability_nbhvleqtwo ps); eauto with mdb.
     + intros q' l. eapply IHq_conv.
