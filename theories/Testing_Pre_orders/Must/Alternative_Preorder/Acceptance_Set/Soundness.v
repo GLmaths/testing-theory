@@ -756,8 +756,8 @@ Proof.
     eapply mx_step.
     + eassumption.
     + eapply (stability_nbhvleqtwo ps); eauto with mdb.
-    + intros q' l. eapply IHq_conv.
-      * eassumption.
+    + intros q' l not_empty. eapply IHq_conv.
+      * split;eauto. (* eassumption. *) admit.
       * eapply bhvleqone_preserved_by_reduction; eauto.
       * unfold bhv_pre_cond2__x. eauto with mdb.
     + intros e' hle. eapply H2; eauto with mdb.
