@@ -427,15 +427,16 @@ Context `{gLtsT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{Hinter : @Prop_of_Inter P T A dual EA gLtsP _}.
+Context `{HinterP : !Prop_of_Inter P T A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{HinterQ : !Prop_of_Inter Q T A dual}.
 
-
 (** ** Contextual preorder for sets *)
 Definition ctx_pre__x (X : gset P) (Y : gset Q) 
-  := forall (t : T), mustx X t -> mustx Y t.
+  := forall (t : T), (@mustx _ _ _ _ outcome _ _ _ _ X t) -> (@mustx _ _ _ _ outcome _ _ _ _ Y t).
 
+Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
 
 (** ** Equivalence between the must preorder and the must preorder on sets *)
 Lemma must_set_singleton_iff (p : P) (q : Q) :
@@ -452,26 +453,26 @@ Proof.
     eapply must_if_must_set in Hyp_q. exact Hyp_q.
 Qed.
 
-End Must_for_sets.
-Section Soundness.
-Section Preorder_for_sets.
-
-Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{Hinter : !Prop_of_Inter P T A dual}.
-
-
+End Must_preorder_for_sets.
 
 Hint Unfold ctx_pre__x : mdb.
 
-Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
-Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
+Section SoundnessAS.
 
+Context `{EA : !ExtAction A}.
+Context `{gLtsT : !gLtsEq T EA}.
+Context `{TP : @Testing_Predicate T A EA outcome _}.
 
-
-(** ** Condition on convergence *)
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{HinterP : !Prop_of_Inter P T A dual}.
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
+Context `{HinterQ : !Prop_of_Inter Q T A dual}.
 
 Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
 Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
+
+
+(** ** Condition on convergence *)
 
 Definition bhv_pre_cond1__x (ps : gset P) (qs : gset Q) :=
   forall s, (forall p, p ∈ ps -> p ⇓ s) -> (forall q, q ∈ qs -> q ⇓ s).
@@ -525,7 +526,7 @@ Definition bhv_pre__x
 Notation "ps ≼ₛₑₜ_ₐₛ qs" := (bhv_pre__x ps qs) (at level 70).
 
 Lemma alt_set_singleton_iff 
-  (p : P) (q : Q) :  {[ p ]} ≼ₛₑₜ_ₐₛ {[ q ]}.  p ≼ₐₛ q <->
+  (p : P) (q : Q) : p ≼ₐₛ q <-> {[ p ]} ≼ₛₑₜ_ₐₛ {[ q ]}.  
 Proof.
   split.
   - intros (hbhv1 & hbhv2). split.
