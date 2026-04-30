@@ -581,24 +581,24 @@ Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{HinterP : !Prop_of_Inter P T A dual}.
-Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A}.
 Context `{HinterQ : !Prop_of_Inter Q T A dual}.
 
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
 
 Lemma bhvleqone_preserved_by_reduction
   (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> lts_tau_set_from_pset_spec1 Y Y' -> Y' ≠ ∅ -> X ₁≼ₛₑₜ_ₐₛ Y'.
+  X ₁≼ₛₑₜ_ₐₛ Y -> lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
 Proof.
-  intros halt1 l not_empty s mem.
+  intros halt1 l (* not_empty *) s mem.
   intros. eapply l in H as (q' & mem' & tr').
   eapply cnv_preserved_by_lts_tau; eauto.
 Qed.
 
 Lemma bhvleqone_preserved_by_reduction_lts
   (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> Y ⟶ Y' -> Y' ≠ ∅ -> X ₁≼ₛₑₜ_ₐₛ Y'.
+  X ₁≼ₛₑₜ_ₐₛ Y -> Y ⟶ Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros; eapply bhvleqone_preserved_by_reduction;eauto.
   destruct H0. subst. eapply lts_tau_set_from_pset_ispec.
@@ -606,9 +606,9 @@ Qed.
 
 Lemma bhvleqone_preserved_by_external_action
   (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' -> Y' ≠ ∅ -> X' ₁≼ₛₑₜ_ₐₛ Y'.
+  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *) -> X' ₁≼ₛₑₜ_ₐₛ Y'.
 Proof.
-  intros hleq hws l not_empty s hcnv. intros.
+  intros hleq hws l (* not_empty *) s hcnv. intros.
   eapply l in H as (q' & mem' & wk_tr).
   eapply cnv_preserved_by_wt_act;eauto.
   eapply hleq.
@@ -624,7 +624,7 @@ Lemma bhvleqone_preserved_by_external_action_lts
 Proof.
   intros. eapply bhvleqone_preserved_by_external_action; eauto.
   intros q' mem'. eapply wk_tr_inv in mem' as (p' & hyp1 & hyp2).
-  eauto. eauto. intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+  eauto. eauto. (* intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
 Qed.
 
 Lemma alt_set_singleton_iff 
@@ -643,9 +643,9 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_reduction
-  (X : gset P) (Y Y' : gset Q) : lts_tau_set_from_pset_spec1 Y Y' -> Y' ≠ ∅ -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
+  (X : gset P) (Y Y' : gset Q) : lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
 Proof.
-  intros l not_empty (halt1 & halt2).
+  intros l (* not_empty *) (halt1 & halt2).
   split.
   - intros s mem. intros.
     eapply l in H as (q' & tr & mem'). eapply cnv_preserved_by_lts_tau; eauto.
@@ -664,12 +664,12 @@ Qed.
 
 Lemma bhvx_preserved_by_external_action
   (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
-  wt_set_from_pset_spec1 Y [μ] Y' -> Y' ≠ ∅
+  wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *)
     -> wt_set_from_pset_spec X [μ] X'
       -> X ≼ₛₑₜ_ₐₛ Y
         -> X' ≼ₛₑₜ_ₐₛ Y'.
 Proof.
-  intros lts__q not_empty ps1_spec (halt1 & halt2). split.
+  intros lts__q (* not_empty *) ps1_spec (halt1 & halt2). split.
   - eapply bhvleqone_preserved_by_external_action; eauto.
   - (* bhvleqtwo_preserved_by_ext_action *)
     intros q s q0 mem wt st hcnv. assert (wt_set_from_pset_spec1 Y [μ] Y') as tr'';eauto.
@@ -694,12 +694,12 @@ Proof.
   intros. eapply bhvx_preserved_by_external_action;eauto.
   + intros q mem. eapply wk_tr_inv in mem as (q' & wk_tr & eq).
     eauto. eauto.
-  + intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+  (* + intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
 Qed.
 
 Lemma bhvx_preserved_by_external_action_tr
   (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
-  lts_extaction_set_from_pset_spec1  Y μ Y' -> Y' ≠ ∅
+  lts_extaction_set_from_pset_spec1  Y μ Y' (* -> Y' ≠ ∅ *)
     -> wt_set_from_pset_spec X [μ] X'
       -> X ≼ₛₑₜ_ₐₛ Y
         -> X' ≼ₛₑₜ_ₐₛ Y'.
@@ -746,7 +746,6 @@ Proof.
       eapply stq0. set_solver.
     - eauto.
     - eapply witness_wk_tr in wp0 as (ps' & wk_tr' & mem'); eauto. 
-    (* * set_solver. *)
 Qed.
 
 Lemma reverse_trace_inclusion_tr
@@ -779,34 +778,10 @@ Proof.
 Qed.
 
 Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ :
-      p ⟶[co μ] p'-> t ⟶[μ] t' -> ⌈ (𝝳P ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q)
+      p ⟶[co μ] p'-> t ⟶[μ] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
         -> exists μ' q' t'', q ⟶[co μ'] q'/\ t ⟶[μ'] t''.
 Proof.
   intros tr tr_co sub.
-  destruct (decide (non_blocking μ)) as [nb | not_nb].
-  + eapply (co_non_blocking_enabled q μ) in nb as (q' & tr'); eauto.
-    symmetry. exact (proj2_sig(exists_dual μ)).
-  + assert (μ ∈ coR p) as some_co_action_of_p.
-    { exists (co μ). repeat split; eauto.
-      eapply lts_refuses_spec2;eauto.
-      symmetry. exact (proj2_sig(exists_dual μ)). }
-    eapply (map_gamma_of_action (𝝳P ∘ Φ)) in some_co_action_of_p as mem.
-    eapply sub in mem. destruct mem as (μ' & mem & eq).
-    
-    assert ((𝝳Q ∘ Φ) μ' ∈ ⌈ 𝝳P ∘ Φ ⌉ coR p) as Hyp.
-    { rewrite<- eq. eapply (map_gamma_of_action);eauto. }
-    assert ((𝝳Q ∘ Φ) μ' ∈ ⌈ 𝝳P ∘ Φ ⌉ coR p) as Hyp';eauto.
-    destruct Hyp as (μ'' & tr' & eq').
-    assert ((𝝳P ∘ Φ) μ = (𝝳P ∘ Φ) μ'').
-    { etrans. eauto. eauto. }
-    assert (Φ μ ∈ ⌈ Φ ⌉ coR p).
-    { eapply (map_gamma_of_action Φ). eauto. }
-    assert (blocking μ'').
-    { destruct tr' as (μ'''' & not_stable & duo & b);eauto. }
-    eapply (abstraction_prog_spec p) in H ;eauto.
-    
-    
-  (* intros tr tr_co sub.
   destruct (decide (non_blocking μ)) as [nb | not_nb].
   + eapply (co_non_blocking_enabled q μ) in nb as (q' & tr'); eauto.
     symmetry. exact (proj2_sig(exists_dual μ)).
@@ -827,8 +802,9 @@ Proof.
     eapply lts_refuses_spec1 in tr' as (q' & tr').
     exists μ''. exists q'. exists t''. split ;eauto.
     eapply unique_nb in duo. subst. rewrite<- dual_is_involutive.
-    exact tr'. destruct mem as (μ'' & Tr'' & duo & nb). exact nb. *)
-Admitted.
+    exact tr'. destruct mem as (μ'' & Tr'' & duo & nb). exact nb.
+    Unshelve.
+Qed.
 
 End Acceptance_Set_preorder_for_sets.
 
@@ -844,8 +820,8 @@ Context `{!Prop_of_Inter P T A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A}.
 Context `{!Prop_of_Inter Q T A dual}.
 
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
 
 Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
   ¬ outcome t
@@ -918,7 +894,7 @@ Proof.
     + intros q' l. eapply mustx_alt_iff_mustx_alt. eapply IHq_conv.
       * eassumption.
       * eapply bhvleqone_preserved_by_reduction_lts;eauto.
-        destruct l; eauto.
+        (* destruct l; eauto. *)
       * eapply bhvx_preserved_by_reduction_lts;eauto.
         split ;eauto.
     + intros e' hle. eapply mustx_alt_iff_mustx_alt. eapply H0; eauto with mdb.
@@ -950,7 +926,7 @@ Proof.
            ** intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
         ++ eapply bhvleqone_preserved_by_external_action;eauto.
            ** intros q'' mem. eapply wk_tr_inv in mem as (q''' & wt_tr & mem''');eauto.
-           ** intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+           (* ** intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
         ++ eapply bhvx_preserved_by_external_action_lts;eauto. split;eauto.
 Qed.
 
