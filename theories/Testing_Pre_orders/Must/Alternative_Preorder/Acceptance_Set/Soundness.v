@@ -897,8 +897,6 @@ Proof.
   - eapply lts_refuses_spec1 in n as (t' & hl). eauto.
 Qed.
 
-
-
 (** ** Soundness for sets *)
 Lemma soundnessx
   (X : gset P) (Y : gset Q) :
@@ -910,99 +908,51 @@ Proof.
   - destruct (mustx_terminate_unoutcome X t ltac:(eauto with mdb));
     [contradiction|].
     assert (q_conv : Y ⤓).
-    eapply cnv_terminate , convergence_set_if_convergence_forall , halt1; intros; eapply cnv_nil.
-    destruct (mustx_terminate_unoutcome X t); eauto with mdb.
+    { eapply cnv_terminate , convergence_set_if_convergence_forall , halt1; intros; eapply cnv_nil.
+      destruct (mustx_terminate_unoutcome X t); eauto with mdb. }
     induction q_conv as [q tq IHq_conv].
-    eapply mx_step.
+    eapply mustx_alt_iff_mustx_alt.
+    eapply mx_step_alt.
     + eassumption.
     + eapply (stability_nbhvleqtwo X); eauto with mdb.
-    + intros q' l not_empty. eapply IHq_conv.
+    + intros q' l. eapply mustx_alt_iff_mustx_alt. eapply IHq_conv.
       * eassumption.
-      * eapply bhvleqone_preserved_by_reduction;eauto.
-      * eapply bhvx_preserved_by_reduction;eauto.
+      * eapply bhvleqone_preserved_by_reduction_lts;eauto.
+        destruct l; eauto.
+      * eapply bhvx_preserved_by_reduction_lts;eauto.
         split ;eauto.
-    + intros e' hle. eapply H0; eauto with mdb.
+    + intros e' hle. eapply mustx_alt_iff_mustx_alt. eapply H0; eauto with mdb.
     + intros t' μ μ' q' inter lt lq.
-      destruct (decide (outcome t')).
-      * eapply mx_now_alt. assumption.
-      * assert (HA : forall p, p ∈ X -> p ⇓ [μ]).
-        { intros; eapply unoutcome_acnv_mu; eauto with mdb. }
-        set (ts := wt_s_set_from_pset X [μ] HA).
-        set (ts_spec := wt_s_set_from_pset_ispec X [μ] HA).
-        assert ((exists p, p ∈ ts) \/ ts ≡ ∅)%stdpp as [neq_nil | eq_nil]
-          by (eapply set_choose_or_empty).
-        -- eapply H1; eauto with mdb.
-           ++ destruct ts_spec; eauto with mdb. admit.
-(*            ++ intro eq_nil. destruct neq_nil as (t'' & mem).
-              replace ts with (wt_s_set_from_pset X [μ] HA) in mem; eauto.
-              subst. rewrite eq_nil in mem. inversion mem. *)
-           ++ eapply bhvleqone_preserved_by_external_action. eauto. ; eauto with mdb.
-           ++ eapply bhvx_preserved_by_external_action; eauto with mdb.
-              split; eauto.
-        -- edestruct (reverse_trace_inclusion X q q' (μ)) as (X' & u); eauto.
-           split; eauto.
-           --- (* eassumption. *) admit.
-           --- assert (X' ⊆ ts) as mem.
-               { admit. }
-               
-               (* { d edestruct (u X' ltac:(set_solver)) as (r & mem & hw).
-             eapply ts_spec; eauto. }
-           set_solver. *)
-Admitted.
-
-(** ** Soundness for sets *)
-Lemma soundnessx
-  (X : gset P) (Y : gset Q) :
-  X ≼ₛₑₜ_ₐₛ Y  -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
-Proof.
-  intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
-  dependent induction hmx; intros.
-  - eauto with mdb.
-  - destruct (mustx_terminate_unoutcome X t ltac:(eauto with mdb));
-    [contradiction|].
-    assert (q_conv : Y ⤓).
-    eapply cnv_terminate , convergence_set_if_convergence_forall , halt1; intros; eapply cnv_nil.
-    destruct (mustx_terminate_unoutcome X t); eauto with mdb.
-    induction q_conv as [q tq IHq_conv].
-    eapply mx_step.
-    + eassumption.
-    + eapply (stability_nbhvleqtwo X); eauto with mdb.
-    + intros q' l not_empty. eapply IHq_conv.
-      * (* eassumption. *) admit.
-      * eapply bhvleqone_preserved_by_reduction;eauto. (* eassumption. *) admit.
-      * eapply bhvx_preserved_by_reduction;eauto.
-        -- (* eassumption. *) admit.
-        -- split ;eauto.
-    + intros e' hle. eapply H0; eauto with mdb.
-    + intros t' μ μ' q' inter lt lq not_empty.
+      eapply mustx_alt_iff_mustx_alt.
       destruct (decide (outcome t')).
       * eapply mx_now. assumption.
       * assert (HA : forall p, p ∈ X -> p ⇓ [μ]).
         { intros; eapply unoutcome_acnv_mu; eauto with mdb. }
         set (ts := wt_s_set_from_pset X [μ] HA).
         set (ts_spec := wt_s_set_from_pset_ispec X [μ] HA).
-        assert ((exists p, p ∈ ts) \/ ts ≡ ∅)%stdpp as [neq_nil | eq_nil]
-          by (eapply set_choose_or_empty).
-        -- eapply H1; eauto with mdb.
-           ++ destruct ts_spec; eauto with mdb.
-           ++ intro eq_nil. destruct neq_nil as (t'' & mem).
-              replace ts with (wt_s_set_from_pset X [μ] HA) in mem; eauto.
-              subst. rewrite eq_nil in mem. inversion mem.
-           ++ eapply bhvleqone_preserved_by_external_action; eauto with mdb.
-              (* eassumption. *) admit.
-           ++ eapply bhvx_preserved_by_external_action; eauto with mdb.
-              --- (* eassumption. *) admit.
-              --- split; eauto.
-        -- edestruct (reverse_trace_inclusion X q q' (μ)) as (X' & u); eauto.
-           split; eauto.
-           --- (* eassumption. *) admit.
-           --- assert (X' ⊆ ts) as mem.
-               { admit. }
-               
-               (* { d edestruct (u X' ltac:(set_solver)) as (r & mem & hw).
-             eapply ts_spec; eauto. }
-           set_solver. *)
-Admitted.
+        eapply H1.
+        ++ eauto.
+        ++ eauto.
+        ++ eapply ts_spec.
+        ++ intro. assert (∀ p : P, p ∈ X → p ⇓ [μ]) as Hyp;eauto.
+           eapply reverse_trace_inclusion in Hyp;eauto.
+           ** destruct Hyp as (X' & wt_tr).
+              destruct X' using set_ind_L.
+              -- eapply empty_set_stable_wk_not_emp_list_inv in wt_tr. 
+                 eauto.
+              -- assert (x ∈ {[x]} ∪ X0) by set_solver.
+                 eapply wk_tr_inv in wt_tr as (p'' & wt_tr'' & mem'');eauto.
+                 assert (x ∈ wt_s_set_from_pset X [μ] HA).
+                 { eapply ts_spec;eauto. }
+                 set_solver.
+           ** split ;eauto.
+           ** intros q'' mem. eapply wk_tr_inv in mem as (q''' & wt_tr & mem''');eauto.
+           ** intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+        ++ eapply bhvleqone_preserved_by_external_action;eauto.
+           ** intros q'' mem. eapply wk_tr_inv in mem as (q''' & wt_tr & mem''');eauto.
+           ** intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+        ++ eapply bhvx_preserved_by_external_action_lts;eauto. split;eauto.
+Qed.
 
 End SoundnessAS.
 
