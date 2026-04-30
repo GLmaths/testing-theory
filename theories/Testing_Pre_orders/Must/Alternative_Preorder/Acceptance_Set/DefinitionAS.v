@@ -95,95 +95,25 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) β β' b b' eq mem.
-  
-  (* assert (
-  
-  
-  assert (Φ β ∈ ⌈ Φ ⌉ coR p1) as mem_h; eauto. admit.
-  eapply (abstraction_prog_spec p1 β β') in mem_h;eauto.
-  destruct mem_h as (β'' & eq' & mem').
-  exists β''. repeat split; eauto. destruct eq' as (μ & tr & duo & b'').
-  exists μ. repeat split; eauto. eapply lts_refuses_spec1 in tr as (p'' & tr).
-  eapply lts_refuses_spec2. exists (p'' ▷ m1). eapply ParLeft. eauto.
-  
-  
-  
+
   assert (Φ β ∈ ⌈ Φ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
   destruct mem as (μ'' & mem & eq').
   destruct mem as (μ''' & tr' & duo & b'').
   eapply lts_refuses_spec1 in tr' as ((p , m) & tr'').
   inversion tr'';subst.
-  - (* assert (Φ β' ∈ ⌈ Φ ⌉ coR p1).
-    { eapply (abstraction_prog_spec p1 β β') ;eauto. rewrite eq'.
-      exists μ'''. split ; eauto. subst. ex
-    exists μ'''. repeat split ;eauto. eapply lts_refuses_spec2.
-    eauto. *) admit.
-    (* assert (Φ μ'' ∈ ⌈ Φ ⌉ coR p1) as mem.
-    { eapply map_gamma_of_action. exists μ'''. repeat split ; eauto. eapply lts_refuses_spec2 ;eauto. }
-    rewrite eq' in eq. eapply abstraction_prog_spec in eq; eauto.
-    rewrite  *)
+  - assert (Φ β ∈ ⌈ Φ ⌉ coR p1) as mem_h'.
+    { rewrite eq'. eapply map_gamma_of_action. exists μ'''.
+      repeat split; eauto. eapply lts_refuses_spec2;eauto. }
+    eapply (abstraction_prog_spec p1 β β') in mem_h';eauto.
+    destruct mem_h' as (β'' & eq'' & mem').
+    exists β''. repeat split; eauto. destruct eq'' as (μ & tr & duo' & b''').
+    exists μ. repeat split; eauto. eapply lts_refuses_spec1 in tr as (p'' & tr).
+    eapply lts_refuses_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
   - destruct (decide (non_blocking μ''')) as [nb''' | b'''].
     * eapply non_blocking_action_in_ms in l; eauto.
        subst. admit.
     * eapply blocking_action_in_ms in l as (eq'' & duo'' & nb''); eauto.
-      subst. eapply unique_nb in duo ; subst. contradiction. *) admit.
-      
-      
-      (*
-destruct H2 as (μ' & mem & eq). exists μ'. repeat split; eauto.
-Qed.
-Next Obligation.
- intros. split.
- - intro mem. destruct p as (p , m). destruct mem as (μ' & mem & eq).
-   destruct mem as (μ'' & tr & duo & b). eapply lts_refuses_spec1 in tr as ((p',m') & tr).
-   inversion tr; subst.
-   + eapply elem_of_union_l. simpl. eapply preactions_of_spec.
-     eapply preactions_of_fin_test_spec1. exists μ''. repeat split; eauto.
-     eapply lts_refuses_spec2; eauto.
-   + destruct (decide (non_blocking μ'')) as [nb | not_nb].
-     * assert (non_blocking μ''); eauto. eapply (non_blocking_action_in_ms m μ'' m') in nb; eauto. subst.
-       eapply elem_of_union_r. eapply gmultiset_elem_of_dom. simpl.
-       rewrite mb_union.
-       assert (gmultiset_map (λ x : A, 𝝳 (Φ (co x)))
-    (mb_without_not_nb {[+ μ'' +]} ⊎ mb_without_not_nb m') = 
-        gmultiset_map (λ x : A, 𝝳 (Φ (co x))) (mb_without_not_nb {[+ μ'' +]}) ⊎ gmultiset_map (λ x : A, 𝝳 (Φ (co x))) (mb_without_not_nb m')) as eq.
-       by eapply gmultiset_map_disj_union.
-       rewrite eq. assert ((mb_without_not_nb ({[+ μ'' +]} : gmultiset A)) = ({[+ μ'' +]} : gmultiset A)) as eq'.
-       { unfold mb_without_not_nb. assert ((elements ({[+ μ'' +]} : gmultiset A)) = [μ'']) as eq'''. rewrite gmultiset_elements_singleton. eauto.
-         unfold mb. rewrite eq'''. simpl. rewrite decide_True;eauto. multiset_solver. } unfold mb. rewrite eq'.
-       rewrite gmultiset_map_singleton.
-       assert (μ'' = (co μ')). { symmetry in duo. eapply unique_nb in duo; eauto. } subst.
-       assert (μ' = (co (co μ'))) as eq''''. { eapply dual_is_involutive. } rewrite<- eq''''. multiset_solver. 
-     * assert (blocking μ''); eauto.
-       eapply blocking_action_in_ms in not_nb as (eq & duo' & nb); eauto. subst.
-       symmetry in duo. assert (μ' = co μ'').
-       { symmetry in duo. eapply unique_nb in duo. eauto. }
-       subst. contradiction.
- - intro mem. destruct p as (p , m). eapply elem_of_union in mem. destruct mem as [p_co_act | multiset_co_act].
-   + simpl in p_co_act. eapply preactions_of_spec in p_co_act.
-     eapply preactions_of_fin_test_spec2 in p_co_act as (μ' & mem & eq). simpl.
-     subst. exists μ'. destruct mem as (μ'' & tr & duo & b).
-     repeat split; eauto. exists μ''. repeat split; eauto. eapply lts_refuses_spec2.
-     eapply lts_refuses_spec1 in tr as (p' & tr). exists (p' ▷ m).
-     eapply ParLeft. exact tr.
-   + eapply gmultiset_elem_of_dom, elem_of_gmultiset_map in multiset_co_act. simpl in *.
-     induction m using gmultiset_ind.
-     ++ unfold mb_without_not_nb in multiset_co_act. unfold mb in multiset_co_act.
-        rewrite gmultiset_elements_empty in multiset_co_act.
-        simpl in multiset_co_act.
-        multiset_solver.
-     ++ destruct multiset_co_act as (x0 & eq & eq').
-        assert (mb_without_not_nb ({[+ x +]} ⊎ X) = mb_without_not_nb ({[+ x +]} : gmultiset A) ⊎ (mb_without_not_nb X)) as eq''''.
-        { (* rewrite mb_union. *) admit. } rewrite eq'''' in eq'.
-        eapply gmultiset_elem_of_disj_union in eq'. destruct eq' as [case1 | case2].
-        -- destruct (decide (non_blocking x)) as [nb | b].
-           ** unfold mb_without_not_nb in case1. unfold mb in case1.
-              unfold mb in case1. (* rewrite gmultiset_elements_singleton. simpl. assert (x = x0) by multiset_solver. *) admit.
-           ** (* inversion case1. *) admit.
-        -- subst. admit.
-Admitted. *)
-      
-      
+      subst. eapply unique_nb in duo ; subst. contradiction.
 Admitted.
 
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
