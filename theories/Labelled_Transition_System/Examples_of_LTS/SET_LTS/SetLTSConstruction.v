@@ -415,12 +415,34 @@ Proof.
   + eapply (@lts_refuses_spec2 (gset P));eauto. eapply empty_set_stable.
 Qed.
 
+Lemma empty_set_stable_wk_inv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} s ps ps' : ps' = ∅ -> ps ⟹[s] ps' -> ps = ∅.
+Proof.
+  intros eq_empty wk_tr. revert eq_empty. dependent induction wk_tr.
+  + eauto.
+  + intro. eapply IHwk_tr in eq_empty. subst.
+    inversion l; eauto. set_solver.
+  + intro. eapply IHwk_tr in eq_empty. subst.
+    inversion l; eauto. set_solver.
+Qed.
+
+Lemma empty_set_stable_wk_inv_nil `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} s ps : ps ⟹[s] ∅ -> ps = ∅.
+Proof.
+  eapply empty_set_stable_wk_inv; eauto.
+Qed.
+
 Lemma empty_set_stable_wk_not_emp_list `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} a s ps : ¬ ∅ ⟹[a :: s] ps.
 Proof.
   intro imp.
   inversion imp; subst.
   + eapply (@lts_refuses_spec2 (gset P));eauto. eapply empty_set_stable.
   + eapply (@lts_refuses_spec2 (gset P));eauto. eapply empty_set_stable.
+Qed.
+
+Lemma empty_set_stable_wk_not_emp_list_inv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} a s ps : ¬ ps ⟹[a :: s] ∅.
+Proof.
+  destruct ps using set_ind_L.
+  + intro imp. eapply empty_set_stable_wk_not_emp_list;eauto.
+  + intro imp. eapply empty_set_stable_wk_inv_nil in imp; set_solver.
 Qed.
 
 Lemma empty_set_wk_determinacy `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} ps : ∅ ⟹ ps -> ps = ∅.

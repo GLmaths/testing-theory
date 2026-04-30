@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 
 (** ** Label abstractions *)
 
-Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLts T H}  :=
+Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLtsEq T H} :=
   MkAbsAction {
     (** Client-side condition for label abstractions , Definition 5 (1) **)
     abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
@@ -46,7 +46,7 @@ Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_}.
 
 (** ** Finitary Label abstractions *)
 
-Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLts T H}
+Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLtsEq T H}
   `{Countable PreAct} :=
   MkFinitaryAbsAction {
       FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT;
@@ -65,7 +65,7 @@ Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsQ gLtsT,
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
@@ -76,7 +76,7 @@ Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70).
 
 (** ** Definition of the alternative preorder *)
 Definition bhv_pre `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsQ gLtsT,
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
     (p : P) (q : Q) := 
       p ≼₁ q /\ p ≼₂ q.
