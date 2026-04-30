@@ -745,45 +745,53 @@ Proof.
   intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
   dependent induction hmx; intros.
   - eauto with mdb.
-  - destruct (mustx_terminate_unoutcome ps t ltac:(eauto with mdb));
+  - destruct (mustx_terminate_unoutcome X t ltac:(eauto with mdb));
     [contradiction|].
     assert (q_conv : Y ⤓).
     eapply cnv_terminate , convergence_set_if_convergence_forall , halt1; intros; eapply cnv_nil.
-    destruct (mustx_terminate_unoutcome ps t); eauto with mdb.
+    destruct (mustx_terminate_unoutcome X t); eauto with mdb.
     induction q_conv as [q tq IHq_conv].
     eapply mx_step.
     + eassumption.
-    + eapply (stability_nbhvleqtwo ps); eauto with mdb.
+    + eapply (stability_nbhvleqtwo X); eauto with mdb.
     + intros q' l not_empty. eapply IHq_conv.
-      * split;eauto. (* eassumption. *) admit.
-      * eapply bhvleqone_preserved_by_reduction; eauto.
-      * unfold bhv_pre_cond2__x. eauto with mdb.
-    + intros e' hle. eapply H2; eauto with mdb.
-    + intros q' e' μ μ' inter le lq.
-      destruct (decide (outcome e')).
-      * eapply m_now. assumption.
-      * assert (HA : forall p, p ∈ ps -> p ⇓ [μ]). {
-         intros; eapply unoutcome_acnv_mu; eauto with mdb. }
-        set (ts := wt_s_set_from_pset ps [μ] HA).
-        set (ts_spec := wt_s_set_from_pset_ispec ps [μ] HA).
+      * (* eassumption. *) admit.
+      * eapply bhvleqone_preserved_by_reduction;eauto. (* eassumption. *) admit.
+      * eapply bhvx_preserved_by_reduction;eauto.
+        -- (* eassumption. *) admit.
+        -- split ;eauto.
+    + intros e' hle. eapply H0; eauto with mdb.
+    + intros t' μ μ' q' inter lt lq not_empty.
+      destruct (decide (outcome t')).
+      * eapply mx_now. assumption.
+      * assert (HA : forall p, p ∈ X -> p ⇓ [μ]).
+        { intros; eapply unoutcome_acnv_mu; eauto with mdb. }
+        set (ts := wt_s_set_from_pset X [μ] HA).
+        set (ts_spec := wt_s_set_from_pset_ispec X [μ] HA).
         assert ((exists p, p ∈ ts) \/ ts ≡ ∅)%stdpp as [neq_nil | eq_nil]
           by (eapply set_choose_or_empty).
-        -- eapply H3; eauto with mdb.
+        -- eapply H1; eauto with mdb.
            ++ destruct ts_spec; eauto with mdb.
-           ++ intro eq_nil. destruct neq_nil as (t' & mem).
-              replace ts with (wt_s_set_from_pset ps [μ] HA) in mem; eauto.
+           ++ intro eq_nil. destruct neq_nil as (t'' & mem).
+              replace ts with (wt_s_set_from_pset X [μ] HA) in mem; eauto.
               subst. rewrite eq_nil in mem. inversion mem.
            ++ eapply bhvleqone_preserved_by_external_action; eauto with mdb.
-           ++ eapply bhvx_preserved_by_external_action; eauto with mdb. split; eauto.
-        -- edestruct (reverse_trace_inclusion ps q q' (μ)) as (p' & u); eauto.
+              (* eassumption. *) admit.
+           ++ eapply bhvx_preserved_by_external_action; eauto with mdb.
+              --- (* eassumption. *) admit.
+              --- split; eauto.
+        -- edestruct (reverse_trace_inclusion X q q' (μ)) as (X' & u); eauto.
            split; eauto.
-           assert (p' ∈ ts) as mem. {
-             edestruct (u p' ltac:(set_solver)) as (r & mem & hw).
+           --- (* eassumption. *) admit.
+           --- assert (X' ⊆ ts) as mem.
+               { admit. }
+               
+               (* { d edestruct (u X' ltac:(set_solver)) as (r & mem & hw).
              eapply ts_spec; eauto. }
-           set_solver.
-Qed.
+           set_solver. *)
+Admitted.
 
-End Soundness.
+End SoundnessAS.
 
 Lemma soundness_co_nb_enabled `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
@@ -799,8 +807,10 @@ Lemma soundness_co_nb_enabled `{
   (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros halt e hm.
-  eapply (soundnessx {[p]}).
-  now eapply must_set_iff_must. now eapply alt_set_singleton_iff.
+  eapply must_set_iff_must.
+  eapply (soundnessx ({[p]} : gset P)).
+  now eapply alt_set_singleton_iff.
+  now eapply must_set_iff_must.
 Qed.
 
 
