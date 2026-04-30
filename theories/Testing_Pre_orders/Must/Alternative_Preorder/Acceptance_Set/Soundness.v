@@ -42,22 +42,22 @@ From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
 
 Inductive mustx `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _}
-  (ps : gset P) (t : T) : Prop :=
-| mx_now (hh : outcome t) : mustx ps t
+  (X : gset P) (t : T) : Prop :=
+| mx_now (hh : outcome t) : mustx X t
 | mx_step
     (nh : ¬ outcome t)
-    (ex : forall (p : P), p ∈ ps -> ∃ p', inter_step (p, t) τ p')
-    (pt : forall ps',
-        lts_tau_set_from_pset_spec1 ps ps' -> ps' ≠ ∅ ->
-        mustx ps' t)
-    (et : forall (t' : T), t ⟶ t' -> mustx ps t')
-    (com : forall (t' : T) μ1 μ2 (ps' : gset P),
+    (ex : forall (p : P), p ∈ X -> ∃ p', inter_step (p, t) τ p')
+    (pt : forall X',
+        lts_tau_set_from_pset_spec1 X X' -> X' ≠ ∅ ->
+        mustx X' t)
+    (et : forall (t' : T), t ⟶ t' -> mustx X t')
+    (com : forall (t' : T) μ1 μ2 (X' : gset P),
         dual μ1 μ2 ->
-        lts_step t (ActExt μ2) t' ->
-        wt_set_from_pset_spec1 ps [μ1] ps' ->
-        ps' ≠ ∅ ->
-        mustx ps' t')
-  : mustx ps t.
+        t ⟶[μ2] t' ->
+        wt_set_from_pset_spec1 X [μ1] X' ->
+        X' ≠ ∅ ->
+        mustx X' t')
+  : mustx X t.
 
 #[global] Hint Constructors mustx:mdb.
 Global Notation "X 'must_pass_x' t" := (mustx X t) (at level 70).
@@ -83,8 +83,8 @@ Proof.
   - intros qs sub.
     apply mx_step; eauto with mdb.
     + intros qs' hs hneq_nil.
-      set (ps' := lts_tau_set_from_pset_ispec ps).
-      destruct ps'.
+      set (X' := lts_tau_set_from_pset_ispec X).
+      destruct X'.
       eapply H; eauto with mdb.
       ++ destruct (set_choose_or_empty qs') as [(q' & l'%hs)|].
          intro eq_nil. destruct l' as (q & mem%sub & l%H3); set_solver.
@@ -122,7 +122,7 @@ Proof.
   + contradiction.
   + eapply tstep.
     intros q tr. eapply H; eauto.
-    assert (h1 : lts_tau_set_from_pset_spec1 ps {[q]}).
+    assert (h1 : lts_tau_set_from_pset_spec1 X {[q]}).
     exists p. assert (q0 = q);subst. set_solver. split; eauto. eauto.
     set_solver. set_solver.
 Qed.
@@ -143,7 +143,7 @@ Proof.
     + edestruct mustx_terminate_unoutcome; eauto with mdb. contradiction.
       eapply cnv_act. eauto.
       intros q w.
-      assert (h1 : wt_set_from_pset_spec1 ps [μ] {[q]}).
+      assert (h1 : wt_set_from_pset_spec1 X [μ] {[q]}).
       exists p. split; set_solver.
       assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
       set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
@@ -185,9 +185,9 @@ Proof.
     inversion hmx2; subst. contradiction.
     eapply ex0; eassumption.
   - intros.
-    set (Y := lts_tau_set_from_pset ps).
+    set (Y := lts_tau_set_from_pset X).
     set (Z := lts_tau_set_from_pset ps2).
-    assert (ps' ⊆ lts_tau_set_from_pset ps ∪ lts_tau_set_from_pset ps2).
+    assert (X' ⊆ lts_tau_set_from_pset X ∪ lts_tau_set_from_pset ps2).
     { intros q mem. eapply H2 in mem as (q0 & mem & l).
       eapply elem_of_union in mem. destruct mem.
       eapply elem_of_union. left. eapply lts_tau_set_from_pset_ispec; eassumption.
@@ -198,24 +198,24 @@ Proof.
     destruct Y_' using set_ind_L.
     + destruct Z_' using set_ind_L.
       ++ exfalso.
-         assert (exists p, p ∈ ps') as (p & mem).
-         destruct ps' using set_ind_L. contradiction.
+         assert (exists p, p ∈ X') as (p & mem).
+         destruct X' using set_ind_L. contradiction.
          exists x. set_solver.
          eapply H2 in mem as (p0 & mem & l).
          eapply elem_of_union in mem. destruct mem.
          eapply lts_tau_set_from_pset_ispec in l; set_solver.
          eapply lts_tau_set_from_pset_ispec in l; set_solver.
       ++ assert (Y' = ∅) by set_solver.
-         assert (Z' = ps') by set_solver. subst.
+         assert (Z' = X') by set_solver. subst.
          inversion hmx2; subst. set_solver.
          eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
     + destruct Z_' using set_ind_L.
-      ++ assert (Y' = ps') by set_solver.
-         assert (mustx ps t) by eauto with mdb.
+      ++ assert (Y' = X') by set_solver.
+         assert (mustx X t) by eauto with mdb.
          inversion H6; subst. set_solver.
          eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
       ++ subst.
-         replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
+         replace X' with (({[x]} ∪ X0) ∪ ({[x0]} ∪ X1)) by set_solver.
          eapply H.
          +++ intros t' mem. apply lts_tau_set_from_pset_ispec. set_solver.
          +++ set_solver.
@@ -226,16 +226,16 @@ Proof.
     inversion hmx2; subst; eauto with mdb. contradiction.
   - intros t' μ μ' ps' duo l ps'_spec neq_nil.
     destruct (outcome_decidable t'); eauto with mdb.
-    assert (HAps : forall p, p ∈ ps -> p ⇓ [μ]).
+    assert (HAX : forall p, p ∈ X -> p ⇓ [μ]).
     intros p0 mem0.
-    eapply cnv_act. edestruct (mustx_terminate_unoutcome ps); eauto with mdb.
+    eapply cnv_act. edestruct (mustx_terminate_unoutcome X); eauto with mdb.
     contradiction.
     intros p' hw. eapply cnv_nil.
     edestruct (mustx_terminate_unoutcome {[p']}). eapply com; eauto.
     intros j memj. eapply elem_of_singleton_1 in memj. subst.
     exists p0. split; eauto. set_solver.
     set_solver.
-    set (Y := wt_s_set_from_pset ps [μ] HAps).
+    set (Y := wt_s_set_from_pset X [μ] HAX).
     assert (HAX2 : forall p, p ∈ ps2 -> p ⇓ [μ]).
     intros p0 mem0.
     eapply cnv_act. edestruct (mustx_terminate_unoutcome ps2); eauto with mdb.
@@ -260,7 +260,7 @@ Proof.
          exists x. set_solver.
          eapply ps'_spec in mem as (p0 & mem & l').
          eapply elem_of_union in mem.
-         destruct mem; eapply (wt_s_set_from_pset_ispec ps [μ] HAps) in l'; set_solver.
+         destruct mem; eapply (wt_s_set_from_pset_ispec X [μ] HAX) in l'; set_solver.
       ++ inversion hmx2; subst. now contradict nh.
          eapply com0. eassumption. eassumption. intros t'' mem.
          eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
@@ -269,12 +269,12 @@ Proof.
       ++ inversion hmx2; subst.
          +++ now contradict nh.
          +++ eapply com. eassumption. eassumption. intros t'' mem.
-             eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
+             eapply (wt_s_set_from_pset_ispec X [μ] HAX).
              set_solver. set_solver.
-      ++ replace ps' with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
+      ++ replace ps' with (({[x]} ∪ X0) ∪ ({[x0]} ∪ X1)) by set_solver.
          eapply H1; eauto with mdb.
          +++ intros t'' mem.
-             eapply (wt_s_set_from_pset_ispec ps [μ] HAps).
+             eapply (wt_s_set_from_pset_ispec X [μ] HAX).
              set_solver.
          +++ set_solver.
          +++ inversion hmx2; subst.
@@ -739,13 +739,11 @@ Qed.
 
 (** ** Soundness for sets *)
 Lemma soundnessx
-  (X : gset P) (Y : gset Q) (t : T) :
-  X must_pass_x t
-    -> X ≼ₛₑₜ_ₐₛ Y
-      -> Y must_pass_x t.
+  (X : gset P) (Y : gset Q) :
+  X ≼ₛₑₜ_ₐₛ Y  -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
 Proof.
-  intros hmx (halt1 & halt2).
-  dependent induction hmx.
+  intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
+  dependent induction hmx; intros.
   - eauto with mdb.
   - destruct (mustx_terminate_unoutcome ps t ltac:(eauto with mdb));
     [contradiction|].
