@@ -38,28 +38,24 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
                InteractionBetweenLts
                DefinitionAS.
 
-CoInductive copre 
-  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{@gLts T A H}
-  `{@AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
-  `{@AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
-  (ps : gset P) (q : Q) : Prop := {
-    c_tau q' : q ⟶ q' -> copre ps q'
-  ; c_now : (forall p, p ∈ ps -> p ⤓) -> q ↛ ->
-            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳 ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
-  ; c_step : forall μ q' ps', (forall p, p ∈ ps -> p ⇓ [μ]) ->
-                         q ⟶[μ] q' -> wt_set_from_pset_spec ps [μ] ps' -> copre ps' q'
-  ; c_cnv : (forall p, p ∈ ps -> p ⤓) -> q ⤓
+CoInductive copre `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  (ps : gset P) (qs : gset Q) : Prop := {
+    c_tau qs' : wt_set_from_pset_spec1 qs [] qs' -> copre ps qs'
+  ; c_now : ps ⤓ -> qs ↛ -> forall q , q ∈ qs -> 
+            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q)
+  ; c_step : forall μ qs' ps', ps ⇓ [μ] ->
+                         wt_set_from_pset_spec1 qs [μ] qs' -> wt_set_from_pset_spec ps [μ] ps' -> copre ps' qs'
+  ; c_cnv : ps ⤓ -> qs ⤓
   }.
 
 Notation "p ⩽ q" := (copre p q) (at level 70).
 
-Lemma co_preserved_by_wt_nil
-  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{@gLts T A H}
-  `{@AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
-  `{@AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
-  (ps : gset P) (q q' : Q) : q ⟹ q' -> ps ⩽ q -> ps ⩽ q'.
-Proof. intro hw. dependent induction hw; eauto. destruct 1. eauto. Qed.
+Lemma co_preserved_by_wt_nil `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ⩽ qs -> ps ⩽ qs'.
+Proof. intros. eapply c_tau;eauto. Qed.
 
 

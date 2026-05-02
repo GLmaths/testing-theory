@@ -35,22 +35,35 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
-              GeneralizeLtsOutputs Termination WeakTransitions Convergence  
+              Termination WeakTransitions Convergence  
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
-               Testing_Predicate DefinitionAS DefinitionCI.
-(*
-Lemma prex1_if_copre
-  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
-  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
-  (ps : gset P) (q : Q) : ps ⩽ q -> ps ≼ₓ1 q.
+               Testing_Predicate DefinitionAS DefinitionCI SetLTSConstruction.
+
+Lemma equiv_termination `{gLtsP : @gLts P A H} p : p ⇓ [] <-> p ⤓.
+Proof.
+  split.
+  + intros. dependent induction H0; eauto.
+  + intros. constructor. eauto.
+Qed.
+
+Lemma prex1_if_copre `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  (ps : gset P) (qs : gset Q) : ps ⩽ qs -> ps ₁≼ₛₑₜ_ₐₛ qs.
 Proof.
   intros Hyp_PreO s hcnv.
-  revert ps q Hyp_PreO hcnv.
-  dependent induction s; intros ps q Hyp_PreO hcnv; destruct Hyp_PreO.
-  + constructor. eapply c_cnv.
-    intros p mem. now destruct (hcnv p mem).
-  + assert (q ⤓) by (now eapply c_cnv; intros; destruct (hcnv p H2)).
+  revert ps qs Hyp_PreO hcnv.
+  dependent induction s; intros ps qs Hyp_PreO hcnv; destruct Hyp_PreO.
+  + eapply convergence_forall_if_convergence_set.
+    eapply convergence_set_if_convergence_forall in hcnv.
+    constructor. eapply c_cnv. eapply equiv_termination. exact hcnv.
+  + eapply convergence_forall_if_convergence_set. constructor.
+    - eapply c_cnv. admit.
+    - intros. eapply IHs.
+    co_preserved_by_wt_nil;eauto. eassumption.
+  eapply termination_if_termination_set_helper. constructor.
+  
+   intros. assert (q ⤓) by (now eapply c_cnv; intros; destruct (hcnv p H2)).
     assert (hcnv0 : ∀ p : P, p ∈ ps → p ⇓ [a]).
     intros p' mem'%hcnv.
     constructor. now destruct mem'.
@@ -76,7 +89,7 @@ Lemma prex2_if_copre
   `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
   `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
-  (ps : gset P) (q : Q) : ps ⩽ q -> ps ≼ₓ2 q.
+  (ps : gset P) (q : Q) : ps ⩽ q -> ps ₂≼ₛₑₜ_ₐₛ q.
 Proof.
   revert ps q.
   intros ps q hsub s.
@@ -116,5 +129,3 @@ Proof.
     eapply wt_push_left; eassumption.
     split; eauto.
 Qed.
-
-*)

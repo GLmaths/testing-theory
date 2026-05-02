@@ -35,7 +35,7 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
             Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
-              GeneralizeLtsOutputs Termination WeakTransitions Convergence  
+              Termination WeakTransitions Convergence  
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI.
 

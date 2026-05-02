@@ -936,7 +936,7 @@ Lemma soundness_co_nb_enabled `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
-  
+
   `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
   `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
 
