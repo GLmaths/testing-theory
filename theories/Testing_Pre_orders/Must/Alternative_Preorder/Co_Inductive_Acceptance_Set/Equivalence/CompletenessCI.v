@@ -37,17 +37,16 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
             Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
               Termination WeakTransitions Convergence  
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
-               Testing_Predicate DefinitionAS DefinitionCI.
+               Testing_Predicate DefinitionAS DefinitionCI SetLTSConstruction.
 
 
-(*
-Lemma copre_if_prex
-  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
-  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
-  (ps : gset P) (q : Q) : ps ≼ₓ q -> ps ⩽ q.
+
+Lemma copre_if_prex `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  (ps : gset P) (qs : gset Q) : ps ≼ₛₑₜ_ₐₛ qs -> ps ⩽ qs.
 Proof.
-  revert ps q.
+  revert ps qs.
   cofix H2.
   intros ps q (hsub1 & hsub2).
   constructor.

@@ -43,8 +43,8 @@ CoInductive copre `{
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
   (ps : gset P) (qs : gset Q) : Prop := {
     c_tau qs' : wt_set_from_pset_spec1 qs [] qs' -> copre ps qs'
-  ; c_now : ps ⤓ -> qs ↛ -> forall q , q ∈ qs -> 
-            exists p p', p ∈ ps /\ p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q)
+  ; c_now : ps ⤓ -> forall q , q ∈ qs -> q ↛ ->
+            exists p , p ∈ ps /\ exists p', p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q)
   ; c_step : forall μ qs' ps', ps ⇓ [μ] ->
                          wt_set_from_pset_spec1 qs [μ] qs' -> wt_set_from_pset_spec ps [μ] ps' -> copre ps' qs'
   ; c_cnv : ps ⤓ -> qs ⤓
