@@ -584,8 +584,8 @@ Context `{HinterP : !Prop_of_Inter P T A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{HinterQ : !Prop_of_Inter Q T A dual}.
 
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
 
 Lemma bhvleqone_preserved_by_reduction
   (X : gset P) (Y Y' : gset Q) :
@@ -797,6 +797,22 @@ Proof.
   eapply lts_to_wt; eauto.
 Qed.
 
+End Acceptance_Set_preorder_for_sets.
+
+Section Properties_for_soundness.
+
+Context `{EA : !ExtAction A}.
+Context `{gLtsEqT : !gLtsEq T EA}.
+Context `{TP : @Testing_Predicate T A EA outcome _}.
+
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{HinterP : !Prop_of_Inter P T A dual}.
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
+Context `{HinterQ : !Prop_of_Inter Q T A dual}.
+
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
+
 Context `{!gLtsCNenabled Q A}.
 
 Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ :
@@ -827,7 +843,7 @@ Proof.
     exact tr'. destruct mem as (μ'' & Tr'' & duo & nb). exact nb.
 Qed.
 
-End Acceptance_Set_preorder_for_sets.
+End Properties_for_soundness.
 
 
 Section SoundnessAS.

@@ -659,7 +659,6 @@ Qed.
 
 Lemma witness_wk_tr `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} ps p s q : p ⟹[s] q -> p ∈ ps -> (exists qs, ps ⟹[s] qs /\ q ∈ qs).
 Proof.
-  
   intro wk_tr. revert ps. dependent induction wk_tr.
   + intros. exists ps. split;eauto. constructor.
   + intros. eapply lts_tau_set_from_pset_ispec in l as eq;eauto.

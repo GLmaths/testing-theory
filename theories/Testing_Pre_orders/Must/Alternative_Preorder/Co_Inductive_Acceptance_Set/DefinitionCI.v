@@ -39,8 +39,8 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
                DefinitionAS.
 
 CoInductive copre `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
   (ps : gset P) (qs : gset Q) : Prop := {
     c_tau qs' : wt_set_from_pset_spec1 qs [] qs' -> copre ps qs'
   ; c_now : ps ⤓ -> forall q , q ∈ qs -> q ↛ ->
