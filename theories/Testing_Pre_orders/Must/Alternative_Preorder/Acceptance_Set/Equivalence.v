@@ -37,7 +37,7 @@ Section preorder.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
-  
+
   Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
   Context `{@gLtsOba T A H gLtsEqT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.

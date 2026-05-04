@@ -42,27 +42,30 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
 
 
 Lemma copre_if_prex `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 gLtsQ gLtsT}
   (ps : gset P) (qs : gset Q) : ps ≼ₛₑₜ_ₐₛ qs -> ps ⩽ qs.
 Proof.
   revert ps qs.
   cofix H2.
-  intros ps q (hsub1 & hsub2).
+  intros ps qs (hsub1 & hsub2).
   constructor.
-  - intros q' l. eapply H2, bhvx_preserved_by_reduction; eauto. split; eauto.
-  - intros hterm hst.
-    edestruct (hsub2 [] q) as (p' & hw & p'' & hstp' & stable & hsub0).
-    eapply wt_nil. eassumption. intros p' mem. constructor.
-    eapply hterm. eauto.
-    exists p'. exists p''. repeat split; eauto.
+  - intros q' l. eapply H2, bhvx_preserved_by_reductions; eauto. split; eauto.
+  - intros hterm q' mem' hst.
+    edestruct (hsub2 q' [] q' mem') as (p' & hw & p'' & hstp' & stable & hsub0).
+    + eapply wt_nil.
+    + eassumption.
+    + intros p' mem. constructor. eapply termination_if_termination_set_helper; eauto.
+    + exists p'. split. eauto. exists p''. repeat split; eauto.
   - intros μ q' ps' hcnv hw wtspec.
-    eapply H2.
-    eapply bhvx_preserved_by_external_action; eauto.
-    intros p0 mem0.
-    edestruct (hcnv p0 mem0); eauto. split; eauto.
-  - intros. edestruct (hsub1 []); eauto.
-    intros. constructor. eauto.
+    eapply H2. eapply bhvx_preserved_by_external_action; eauto.
+    + eapply cnv_terminate in hcnv. eapply termination_if_termination_set_helper;eauto.
+    + split; eauto.
+  - intros. eapply termination_set_for_all. 
+    assert ((forall p, p ∈ ps -> p ⇓ []) -> (forall q, q ∈ qs -> q ⇓ [])) as Hyp_acc_1.
+    { exact (hsub1 []). }
+    erewrite<- equiv_termination in H0.
+    assert (∀ p : P, p ∈ ps → p ⇓ []) as conv_ps.
+    { eapply convergence_forall_if_convergence_set;eauto. }
+    intros. eapply Hyp_acc_1 in conv_ps;eauto. eapply equiv_termination; eauto.
 Qed.
-
-*)

@@ -39,16 +39,9 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
                InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
                Testing_Predicate DefinitionAS DefinitionCI SetLTSConstruction.
 
-Lemma equiv_termination `{gLtsP : @gLts P A H} p : p ⇓ [] <-> p ⤓.
-Proof.
-  split.
-  + intros. dependent induction H0; eauto.
-  + intros. constructor. eauto.
-Qed.
-
 Lemma prex1_if_copre `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
   (ps : gset P) (qs : gset Q) : ps ⩽ qs -> ps ₁≼ₛₑₜ_ₐₛ qs.
 Proof.
   intros Hyp_PreO s hcnv.
@@ -75,8 +68,8 @@ Proof.
 Qed.
 
 Lemma prex2_if_copre `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
   (ps : gset P) (qs : gset Q) : ps ⩽ qs -> ps ₂≼ₛₑₜ_ₐₛ qs.
 Proof.
   revert ps qs.

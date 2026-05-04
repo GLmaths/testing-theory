@@ -33,20 +33,19 @@ From Stdlib .Logic Require Import ProofIrrelevance.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS
-            Subset_Act Must Soundness Completeness Equivalence StateTransitionSystems
-              Termination WeakTransitions Convergence 
-              InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
-               Testing_Predicate DefinitionAS DefinitionCI SoundnessCI CompletenessCI MustE Lts_Finite_Output_Chain.
+From TestingTheory Require Import
+  ActTau Subset_Act gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
+  Termination WeakTransitions Convergence
+  InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction SetLTSConstruction
+  Must MustE Lift Testing_Predicate StateTransitionSystems
+  DefinitionAS Soundness Completeness Equivalence
+  DefinitionCI SoundnessCI CompletenessCI.
 
-
-
-(*
-Theorem eqx `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ} 
-  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP}
-  `{PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
-  (X : gset P) (q : Q) :
-  X ≼ₓ q <-> X ⩽ q.
+Theorem equivalence_co_inductive_acc_set_and_acc_set `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 gLtsQ gLtsT}
+  (X : gset P) (Y : gset Q) :
+  X ≼ₛₑₜ_ₐₛ Y <-> X ⩽ Y.
 Proof.
   split.
   - eapply copre_if_prex.
@@ -54,16 +53,15 @@ Proof.
 Qed.
 
 Section eq_contextual.
-
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
 
-  Context `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}.
-  Context `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}.
-  Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
+  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
+  Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
+  Context `{@gLtsOba T A H gLtsEqT, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
@@ -73,18 +71,71 @@ Section eq_contextual.
   Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
   Context `{!Prop_of_Inter (Q * mb A) T A dual}.
 
-  Context `{@PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
-  Context `{@PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}.
-  Context `{@AbsAction A H T FinA _ Φ}.
-  Context `{it_conv : @test_convergence_spec T _ _ _ outcome Testing_Predicate0 t_conv}.
-  Context `{ita : @test_co_acceptance_set_spec PreA _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+  Context `{CC : Countable PreAct}.
+  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
 
-  Theorem eq_ctx (p : P) (q : Q) :
-  pre_extensional outcome p q <-> {[ p ▷ (∅ : mb A)]} ⩽ q ▷ (∅ : mb A).
+  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
+  Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+
+  (** * Main equivalence theorems *)
+  Section FWⁿ.
+
+  Context `{!gLtsObaFW P A}.
+  Context `{!gLtsObaFW Q A}.
+  Context `{!gLtsObaFB T A}.
+
+  Theorem equivalence_fw_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset P)  ⩽ ({[ q ]} : gset Q).
   Proof.
-    rewrite <- eqx, <- alt_set_singleton_iff.
-    now rewrite equivalence_bhv_acc_ctx.
+    split.
+    - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set.
+      eapply alt_set_singleton_iff.
+      eapply equivalence_fw_acc_set_and_must_i. exact hpre.
+    - intros hpre. eapply equivalence_fw_acc_set_and_must_i.
+      eapply alt_set_singleton_iff. eapply equivalence_co_inductive_acc_set_and_acc_set. exact hpre.
   Qed.
-End eq_contextual.
 
-*)
+  (** ---- *)
+
+  (** ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
+  Theorem equivalence_fw_co_inductive_acc_set_and_must (p : P) (q : Q) :
+    pre_extensional outcome p q <-> ({[ p ]} : gset P)  ⩽ ({[ q ]} : gset Q).
+  Proof.
+    rewrite pre_extensional_eq. eapply equivalence_fw_co_inductive_acc_set_and_must_i.
+  Qed.
+
+  End FWⁿ.
+  (** ---- *)
+  Section Lⁿ.
+
+  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+
+  (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
+  Theorem equivalence_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * mb A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * mb A)).
+  Proof.
+    split.
+    - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set.
+      eapply alt_set_singleton_iff.
+      eapply equivalence_fw_acc_set_and_must_i.
+      destruct (lift_fw_ctx_pre p q) as (Hyp1 & Hyp2).
+      eapply Hyp1. exact hpre.
+    - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set in hpre. eapply alt_set_singleton_iff in hpre.
+      eapply lift_fw_ctx_pre. eapply equivalence_fw_acc_set_and_must_i;eauto.
+  Qed.
+
+  (** ---- *)
+
+  (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
+  Theorem equivalence_co_inductive_acc_set_and_must (p : P) (q : Q) :
+    pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * mb A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * mb A)).
+  Proof.
+    rewrite pre_extensional_eq. apply equivalence_co_inductive_acc_set_and_must_i.
+  Qed.
+
+  End Lⁿ.
+
+End eq_contextual.
