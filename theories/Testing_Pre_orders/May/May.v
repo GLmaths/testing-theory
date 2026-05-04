@@ -157,8 +157,12 @@ Lemma may_not_stable_or_outcome `{
 Proof. 
   intros hm. destruct (decide (outcome t)) as [happy | not_happy].
   + now left. 
-  + right. admit.
-Admitted.
+  + right. dependent induction hm. 
+    - contradiction. 
+    - exact (IHhm not_happy). 
+    - left. eapply lts_refuses_spec2; eauto.
+    - right. exists μ2. eapply lts_refuses_spec2; eauto.
+Qed.
 
 Lemma ctx_may_pre_not `{
   gLtsP : @gLts P A H,
@@ -174,21 +178,3 @@ Proof.
   contradiction.
 Qed.
 
-(********************************************* Alt-preorder of May_i **********************************************)
-
-
-(* Definition bhv_pre_cond1 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H} 
-  (p : P) (q : Q) := (* TODO *).
-
-Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70). *)
-
-(* Definition bhv_pre_cond2 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
-  (p : P) (q : Q) :=(* TODO *).
-
-Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). *)
-
-(* Definition bhv_pre `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
-    (p : P) (q : Q) := 
-      p ≼₁ q /\ p ≼₂ q.
-
-Notation "p ≼ q" := (bhv_pre p q) (at level 70). *)

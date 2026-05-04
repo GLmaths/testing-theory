@@ -42,6 +42,14 @@ Lemma may_non_blocking_action_swap_l_fw_eq `{
     -> p2 may_pass t1.
 Proof.
   intros nb tr_server tr_client hmay.
+  revert  t1 p2 η nb tr_server tr_client.
+  induction hmay; intros.
+  + eapply may_now. destruct tr_client as (t'1 & tr & equiv).
+    eapply outcome_preserved_by_lts_non_blocking_action_converse;eauto.
+    eapply outcome_preserved_by_eq; eauto. now symmetry.
+  + admit.
+  + admit.
+  + admit.
 Admitted.
 
 Lemma may_non_blocking_action_swap_r_fw_eq`{

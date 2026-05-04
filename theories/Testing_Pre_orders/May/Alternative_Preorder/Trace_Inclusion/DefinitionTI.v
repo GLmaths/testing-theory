@@ -32,18 +32,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 (********************************************* Alt-preorder of May_i **********************************************)
 
 
-(* Definition bhv_pre_cond1 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H} 
-  (p : P) (q : Q) := (* TODO *).
+Definition trace_inclusion `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
+    (p : P) (q : Q) := forall s, exists p', p ⟹[ s ] p' -> exists q' , q ⟹[ s ] q'.
 
-Notation "p ≼₁ q" := (bhv_pre_cond1 p q) (at level 70). *)
-
-(* Definition bhv_pre_cond2 `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
-  (p : P) (q : Q) :=(* TODO *).
-
-Notation "p ≼₂ q" := (bhv_pre_cond2 p q) (at level 70). *)
-
-(* Definition bhv_pre `{LtsP : @gLts P A H, LtsQ : @gLts Q A H}
-    (p : P) (q : Q) := 
-      p ≼₁ q /\ p ≼₂ q.
-
-Notation "p ≼ q" := (bhv_pre p q) (at level 70). *)
+Notation "p ≼ₜᵣₐ q" := (trace_inclusion p q) (at level 70).
