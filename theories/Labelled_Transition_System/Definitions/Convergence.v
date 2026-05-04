@@ -418,3 +418,10 @@ Proof.
       eapply IHs'. inversion hcnv; eauto.
       intros. eapply hs2. eapply wt_push_left; eauto.
 Qed.
+
+Lemma equiv_termination `{gLtsP : @gLts P A H} p : p ⇓ [] <-> p ⤓.
+Proof.
+  split.
+  + intros. dependent induction H0; eauto.
+  + intros. constructor. eauto.
+Qed.

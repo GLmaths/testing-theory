@@ -2,7 +2,6 @@
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
    Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
-   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,15 +22,37 @@
    SOFTWARE.
 *)
 
-From stdpp Require Import base decidable gmap finite.
-From Stdlib Require Import ssreflect.
-From Stdlib.Program Require Import Equality.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
-    Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
-    InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain.
+From Stdlib Require ssreflect.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
+Import ListNotations.
+From Stdlib.Program Require Import Equality Wf.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+From Stdlib Require Import Setoid.
+From Stdlib .Logic Require Import ProofIrrelevance.
 
-Section preorder.
+From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
+
+From TestingTheory Require Import
+  ActTau Subset_Act gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
+  Termination WeakTransitions Convergence
+  InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction SetLTSConstruction
+  Must MustE Lift Testing_Predicate StateTransitionSystems
+  DefinitionAS Soundness Completeness Equivalence
+  DefinitionCI SoundnessCI CompletenessCI.
+
+Theorem equivalence_co_inductive_acc_set_and_acc_set `{
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 gLtsQ gLtsT}
+  (X : gset P) (Y : gset Q) :
+  X ≼ₛₑₜ_ₐₛ Y <-> X ⩽ Y.
+Proof.
+  split.
+  - eapply copre_if_prex.
+  - intros hco. split. now eapply prex1_if_copre. now eapply prex2_if_copre.
+Qed.
+
+Section eq_contextual.
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.
@@ -50,7 +71,6 @@ Section preorder.
   Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
   Context `{!Prop_of_Inter (Q * mb A) T A dual}.
 
-
   Context `{CC : Countable PreAct}.
   Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
   Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
@@ -59,29 +79,30 @@ Section preorder.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   (** * Main equivalence theorems *)
-
   Section FWⁿ.
 
   Context `{!gLtsObaFW P A}.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
-  (** ** The inductive characterisation on FW is equivalent to the inductive must preorder *)
-  Theorem equivalence_fw_acc_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
+  Theorem equivalence_fw_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset P)  ⩽ ({[ q ]} : gset Q).
   Proof.
     split.
-    - intros hpre. now eapply completeness_fw in hpre.
-    - now intros hpre%soundness_fw.
+    - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set.
+      eapply alt_set_singleton_iff.
+      eapply equivalence_fw_acc_set_and_must_i. exact hpre.
+    - intros hpre. eapply equivalence_fw_acc_set_and_must_i.
+      eapply alt_set_singleton_iff. eapply equivalence_co_inductive_acc_set_and_acc_set. exact hpre.
   Qed.
 
   (** ---- *)
 
   (** ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
-  Theorem equivalence_fw_bhv_acc_ctx (p : P) (q : Q) :
-    pre_extensional outcome p q <-> p ≼ₐₛ q.
+  Theorem equivalence_fw_co_inductive_acc_set_and_must (p : P) (q : Q) :
+    pre_extensional outcome p q <-> ({[ p ]} : gset P)  ⩽ ({[ q ]} : gset Q).
   Proof.
-    rewrite pre_extensional_eq. eapply equivalence_fw_acc_set_and_must_i.
+    rewrite pre_extensional_eq. eapply equivalence_fw_co_inductive_acc_set_and_must_i.
   Qed.
 
   End FWⁿ.
@@ -93,24 +114,28 @@ Section preorder.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
   (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
-  Theorem equivalence_acc_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼ₐₛ (q, ∅).
+  Theorem equivalence_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * mb A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * mb A)).
   Proof.
     split.
-    - intros hpre. now eapply lift_fw_ctx_pre, completeness_fw in hpre.
-    - intros hpre%soundness_fw.
-      now eapply lift_fw_ctx_pre.
+    - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set.
+      eapply alt_set_singleton_iff.
+      eapply equivalence_fw_acc_set_and_must_i.
+      destruct (lift_fw_ctx_pre p q) as (Hyp1 & Hyp2).
+      eapply Hyp1. exact hpre.
+    - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set in hpre. eapply alt_set_singleton_iff in hpre.
+      eapply lift_fw_ctx_pre. eapply equivalence_fw_acc_set_and_must_i;eauto.
   Qed.
 
   (** ---- *)
 
   (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
-  Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
-    pre_extensional outcome p q <-> (p, ∅) ≼ₐₛ (q, ∅).
+  Theorem equivalence_co_inductive_acc_set_and_must (p : P) (q : Q) :
+    pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * mb A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * mb A)).
   Proof.
-    rewrite pre_extensional_eq. apply equivalence_acc_set_and_must_i.
+    rewrite pre_extensional_eq. apply equivalence_co_inductive_acc_set_and_must_i.
   Qed.
 
   End Lⁿ.
 
-End preorder.
+End eq_contextual.
