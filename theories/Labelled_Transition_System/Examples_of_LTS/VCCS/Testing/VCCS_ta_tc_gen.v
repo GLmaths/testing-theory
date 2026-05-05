@@ -58,83 +58,6 @@ match X with
 end.
 
 
-Lemma Succ_bvar_and_NewVar_in_Data_0 : forall v, NewVar_in_Data 0 v = Succ_bvar v.
-Proof.
-intros. induction v; simpl; reflexivity.
-Qed.
-
-
-Lemma All_According_To_Data : forall k v d, (subst_Data k v (NewVar_in_Data k d) = d).
-Proof.
-intros. destruct d. 
-- simpl. auto.
-- simpl. destruct (decide (k < S n)). (* case decide. *)
-  * simpl. destruct (decide (S n = k)) as [e | e].
-    ** exfalso. dependent destruction l. eapply Nat.neq_succ_diag_l. exact e. 
-       rewrite <-e in l. lia.
-    ** destruct (decide (S n < k)). 
-       *** lia.
-       *** auto.
-  * simpl. destruct (decide (n = k)).
-    ** lia. 
-    ** destruct n. 
-      -- assert ( 0 < k). lia. destruct (decide (0 < k)). 
-         *** auto. 
-         *** exfalso. auto with arith.
-      -- destruct (decide (S n < k)).
-        *** auto.
-        *** exfalso. lia.
-Qed.
-
-Lemma All_According_To_Eq : forall e k v, (subst_in_Equation k v (NewVar_in_Equation k e) = e).
-Proof.
-intros E. dependent induction E; intros.
-- simpl. rewrite All_According_To_Data. rewrite All_According_To_Data. eauto.
-Qed.
-
-Lemma All_According : forall p k v, subst_in_proc k v (NewVar k p) = p.
-Proof.
-intros. revert v. revert k.
-induction p as (p & Hp) using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-destruct p; intros. 
-* simpl. assert (subst_in_proc k v (NewVar k p1) = p1) as eq1.
-  { apply Hp. simpl. auto with arith. }
-  assert (subst_in_proc k v (NewVar k p2) = p2) as eq2.
-  { apply Hp. simpl. auto with arith. }
-  rewrite eq1, eq2. auto.
-* simpl. auto.
-* simpl. assert (subst_in_proc k v (NewVar k p) = p).
-  { apply Hp. simpl. auto with arith. }
-  rewrite H. auto.
-* simpl. rewrite All_According_To_Eq.
-  assert (subst_in_proc k v (NewVar k p1) = p1) as eq1.
-  { apply Hp. simpl. auto with arith. }
-  assert (subst_in_proc k v (NewVar k p2) = p2) as eq2.
-  { apply Hp. simpl. auto with arith. }
-  rewrite eq1, eq2. auto.
-* simpl. f_equal. eapply Hp. simpl; eauto.
-* destruct g0.
-  - simpl. auto.
-  - simpl. auto.
-  - simpl. assert (subst_in_proc (S k) (NewVar_in_Data 0 v) (NewVar (S k) p) = p) as eq.
-    { apply Hp. simpl. auto with arith. }
-    rewrite<- Succ_bvar_and_NewVar_in_Data_0. rewrite eq. auto.
-  - simpl. rewrite All_According_To_Data.
-    assert (subst_in_proc k v (NewVar k p) = p) as eq1.
-    { apply Hp. simpl. auto with arith. }
-    rewrite eq1. reflexivity.
-  - simpl. assert (subst_in_proc k v (NewVar k p) = p) as eq.
-    { apply Hp. simpl. auto with arith. }
-    rewrite eq. auto.
-  - simpl. assert (subst_in_proc k v (NewVar k (g g0_1)) = g g0_1) as eq1.
-    { apply Hp. simpl. auto with arith. }
-    assert (subst_in_proc k v (NewVar k (g g0_2)) = g g0_2) as eq2.
-    { apply Hp. simpl. auto with arith. }
-    dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
-Qed.
-
-
 Lemma Eval_simpl_true v : Eval_Eq (v == v) = Some true <-> v = v.
 Proof.
   split.
@@ -147,20 +70,7 @@ Proof.
   - intro e. simpl. rewrite decide_False; eauto.
 Qed.
 
-Lemma New_Var_And_NewVar_in_Data : forall j i e, NewVar_in_Data (i + S j) (NewVar_in_Data i e) = NewVar_in_Data i (NewVar_in_Data (i + j) e).
-Proof.
-  intros. revert j. induction e.
-  * intros. simpl. reflexivity.
-  * intros. simpl. destruct (decide (i < S n)); destruct (decide (i + j < S n)); simpl; auto.
-    - destruct (decide (i + S j < S (S n))); destruct ((decide (i < S (S n)))); simpl; auto with arith. exfalso. apply n0. auto with arith.
-      exfalso. apply n0. simpl. assert ((i + S j)%nat = S (i + j)%nat). auto with arith. rewrite H. auto with arith.
-    - destruct (decide (i + S j < S (S n))); destruct (decide (i < S n)); simpl; auto with arith. exfalso. apply n0. 
-      assert ((i + S j)%nat = S (i + j)%nat). auto with arith. rewrite H in l0. auto with arith. exfalso. apply n1. assumption. exfalso. apply n2.
-      assumption.
-    - exfalso. apply n0. assert (i <= i + j). auto with arith. destruct H. assumption. apply transitivity with (S m). auto with arith. assumption.
-    - destruct (decide (i + S j < S n)); destruct (decide (i < S n)); simpl; auto with arith. exfalso. apply n2. eauto with arith.
-      exfalso. apply n0. assumption.
-Qed.
+
 
 Lemma New_Var_And_NewVar_in_Trace : forall j i e, NewVar_in_trace (i + S j) (NewVar_in_trace i e) = NewVar_in_trace i (NewVar_in_trace (i + j) e).
 Proof.
@@ -179,57 +89,7 @@ Proof.
       rewrite eq1. eauto.
 Qed.
 
-Lemma New_Var_And_NewVar_in_eq : forall j i e, NewVar_in_Equation (i + S j) (NewVar_in_Equation i e) 
-                                  = NewVar_in_Equation i (NewVar_in_Equation (i + j) e).
-Proof.
-intros. induction e.
-* simpl. assert (NewVar_in_Data (i + S j) (NewVar_in_Data i a) = NewVar_in_Data i (NewVar_in_Data (i + j) a)). apply New_Var_And_NewVar_in_Data.
-  assert (NewVar_in_Data (i + S j) (NewVar_in_Data i a0) = NewVar_in_Data i (NewVar_in_Data (i + j) a0)). apply New_Var_And_NewVar_in_Data.
-  rewrite H , H0. auto.
-Qed.
 
-Lemma New_Var_And_NewVar : forall j i p, NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p).
-Proof.
-intros. revert j i. induction p as (p & Hp) using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-destruct p; simpl; intros.
-* assert (NewVar (i + S j) (NewVar i p1) = NewVar i (NewVar (i + j) p1)) as eq1.
-  { apply Hp. simpl. auto with arith. }
-  assert (NewVar (i + S j) (NewVar i p2) = NewVar i (NewVar (i + j) p2)) as eq2.
-  { apply Hp. simpl. auto with arith. }
-  rewrite eq1, eq2. auto.
-* reflexivity.
-* assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)) as eq.
-  { apply Hp. simpl. auto with arith. }
-  rewrite eq. auto.
-* rewrite New_Var_And_NewVar_in_eq.
-  assert (NewVar (i + S j) (NewVar i p1) = NewVar i (NewVar (i + j) p1)) as eq2.
-  { apply Hp. simpl. auto with arith. }
-  assert (NewVar (i + S j) (NewVar i p2) = NewVar i (NewVar (i + j) p2)) as eq3.
-  { apply Hp. simpl. auto with arith. }
-  rewrite eq2, eq3. auto.
-* f_equal. eapply Hp. simpl; eauto.
-* destruct g0; simpl.
-  - simpl. reflexivity.
-  - simpl. reflexivity.
-  - simpl. assert (S (i + S j%nat) = ((S i) + (S j))%nat) as eq1 by auto with arith.
-    rewrite eq1. assert (S (i + j) = (S i + j)%nat) as eq2 by auto with arith. rewrite eq2.
-    assert (NewVar (S i + S j) (NewVar (S i) p) = NewVar (S i) (NewVar (S i + j) p)) as eq.
-    { apply Hp. simpl. auto with arith. }
-    rewrite eq. auto.
-  - rewrite New_Var_And_NewVar_in_Data.
-    assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)) as eq1.
-    { eapply Hp. eauto with arith. }
-    rewrite eq1. reflexivity.
-  - simpl. assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)) as eq.
-    { apply Hp. simpl. auto with arith. } 
-    rewrite eq. eauto.
-  - simpl. assert (NewVar (i + S j) (NewVar i (g g0_1)) = NewVar i (NewVar (i + j) (g g0_1))) as eq1.
-    { apply Hp. simpl. auto with arith. } 
-    assert (NewVar (i + S j) (NewVar i (g g0_2)) = NewVar i (NewVar (i + j) (g g0_2))) as eq2.
-    { apply Hp. simpl. auto with arith. }
-    simpl in eq1 , eq2. inversion eq1. inversion eq2. eauto.
-Qed.
 
 Fixpoint gen_test_raw Vs s p {struct s}:=
   match s with
