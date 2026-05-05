@@ -351,7 +351,7 @@ Fixpoint pr_subst (id : nat) (p : proc) (q : proc) : proc :=
   match p with 
   | p1 ‖ p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q) 
   | pr_var id' => if decide (id = id') then q else p
-  | rec id' • p => if decide (id = id') then p else rec id' • (pr_subst id p q)
+  | rec id' • p' => if decide (id = id') then p else rec id' • (pr_subst id p' q)
   | If C Then P Else Q => If C Then (pr_subst id P q) Else (pr_subst id Q q)
   | ν P => ν (pr_subst id P (NewVarC 0 q))
   | g gp => g (gpr_subst id gp q)
@@ -365,7 +365,6 @@ with gpr_subst id p q {struct p} := match p with
 | 𝛕 • p => 𝛕 • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
-
 
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
@@ -538,7 +537,7 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (𝛕 • p) (𝛕 • q)
 | cgr_input_step : forall c p q,
     cgr_step p q ->
-    cgr_step (c ? (NewVar 0 p)) (c ? (NewVar 0 q))
+    cgr_step (c ? p) (c ? q)
 | cgr_output_step : forall c v p q,
     cgr_step p q ->
     cgr_step (c ! v • p) (c ! v • q)
@@ -1435,6 +1434,16 @@ intros.  revert j.  dependent induction H.
   - eauto with cgr.
 Qed.
 
+Lemma pr_subst_and_NewVar x p q : pr_subst x p (NewVar 0 q) = NewVar 0 (pr_subst x p q).
+Proof.
+  revert x q.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; intros; simpl.
+  + admit.
+  + destruct (decide( x = n));eauto.
+  + destruct (decide( x = n));eauto.
+
 (* Substition lemma, needed to contextualise the equivalence *)
 Lemma cgr_subst1 p q q' x : q ≡* q' → pr_subst x p q ≡* pr_subst x p q'.
 Proof.
@@ -1455,7 +1464,7 @@ destruct p; intros; simpl.
   - destruct g0; intros; simpl.
     * reflexivity.
     * reflexivity.
-    * (* pr_subst x p (NewVar 0 q) *)
+    * eapply Hp in H; simpl; eauto with lia. Search (pr_subst _ _ (NewVar _ _)). (* pr_subst x p (NewVar 0 q) *)
       (* apply cgr_input. apply Hp. simpl. auto with arith. apply NewVar_Respects_Congruence. assumption. *)
       admit.
     * apply cgr_output. apply Hp. simpl. auto. auto.
