@@ -312,14 +312,76 @@ Proof.
   exists p; set_solver.
 Qed.
 
-Lemma wt_mu_mx  p1 p2 t t' μ μ':
-  dual μ μ' -> ¬ outcome t -> mustx {[ p1 ]} t
+Lemma wt_nil_mx_set X X' t :
+  X must_pass_x t
+    -> X ⟹ X' -> X' must_pass_x t.
+Proof.
+  intros hmx wt_tr.
+  revert t hmx.
+  dependent induction wt_tr; subst; eauto with mdb; intros.
+  inversion hmx; subst; eauto with mdb.
+  eapply IHwt_tr ; eauto with mdb.
+  eapply pt; eauto with mdb.
+  + intros p2 mem. destruct l;subst.
+    destruct (lts_tau_set_from_pset_ispec X) as (Hyp1 & Hyp2).
+    eapply Hyp1 in mem;eauto.
+  + destruct l; eauto.
+Qed.
+
+Lemma wt_mu_mx p1 p2 t t' μ μ':
+  dual μ μ' -> ¬ outcome t -> {[ p1 ]} must_pass_x t
     -> t ⟶[μ'] t' -> p1 ⟹{μ} p2 -> {[p2]} must_pass_x t'.
 Proof.
   intros duo nh hmx l w.
   inversion hmx; subst.
   - contradiction.
   - eapply com; eauto with mdb. exists p1. set_solver.
+Qed.
+
+Lemma wt_mu_mx_set X X' t t' μ μ':
+  dual μ μ' -> ¬ outcome t -> X must_pass_x t
+    -> t ⟶[μ'] t' -> X ⟹{μ} X' -> X' must_pass_x t'.
+Proof.
+  intros duo nh hmx l w.
+  inversion hmx; subst.
+  - contradiction.
+  - eapply com; eauto with mdb.
+    + intros q mem.
+      eapply wk_tr_inv in w as (q'' & wt_tr & mem'');eauto.
+    + intro. subst.
+      eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+Qed.
+
+Lemma not_outcome_and_must_implies_convergence X t :
+  ¬ outcome t -> X must_pass_x t -> X ⤓.
+Proof.
+  intros not_happy hmx.
+  dependent induction hmx.
+  + contradiction.
+  + constructor.
+    intros X' tr.
+    eapply H.
+    * destruct tr; subst. eapply lts_tau_set_from_pset_ispec.
+    * destruct tr; eauto.
+    * eauto.
+Qed.
+
+Lemma not_outcome_must_implies_convergence_extaction X t t' μ' μ:
+  dual μ μ' -> ¬ outcome t -> ¬ outcome t' -> X must_pass_x t -> t ⟶[μ'] t' -> X ⇓ [μ].
+Proof.
+  intros duo not_happy not_happy' hmx tr_test.
+  inversion hmx; subst.
+  + contradiction.
+  + constructor.
+    * eapply not_outcome_and_must_implies_convergence; eauto.
+    * intros. constructor.
+      eapply not_outcome_and_must_implies_convergence.
+      - exact not_happy'.
+      - eapply com;eauto.
+        ++ intros q' mem.
+           eapply wk_tr_inv in H as (q'' & wt_tr & mem'');eauto.
+        ++ intro. subst.
+           eapply empty_set_stable_wk_not_emp_list_inv;eauto.
 Qed.
 
 Lemma must_set_if_must  (p : P) (t : T) : p must_pass t -> {[ p ]} must_pass_x t.
