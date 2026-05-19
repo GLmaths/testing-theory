@@ -26,7 +26,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
-From TestingTheory Require Import ActTau gLts InteractionBetweenLts.
+From TestingTheory Require Import ActTau gLts InteractionBetweenLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW.
 
 (** ** Mailbox LTS *)
 
@@ -432,3 +432,192 @@ Proof.
           mb_without_not_nb ({[+ μ +]} ⊎ m ∖ {[+ η +]})) as eq''''' by multiset_solver.
          rewrite eq'''''. f_equal. multiset_solver.
 Qed.
+
+Definition MB_eq `{H : ExtAction A} (M1 : mb A) (M2 : mb A) := M1 = M2.
+
+Lemma MB_eq_equiv `{H : ExtAction A} : Equivalence MB_eq.
+Proof.
+  unfold MB_eq. constructor.
+  + intro M. now reflexivity.
+  + intros M1 M2. now symmetry.
+  + intros M1 M2 M3. now (etrans; eauto).
+Qed.
+
+Global Hint Resolve MB_eq_equiv:mdb.
+
+#[global] Program Instance MbgLtsEq `{H : ExtAction A} : gLtsEq (mb A) H :=
+ {| eq_rel := MB_eq |}.
+Next Obligation.
+  unfold MB_eq.
+  intros ? ? M1 M2 ? (r & eq & tr).
+  subst. exists M2. split; eauto.
+Qed.
+
+Lemma delay_in_ms `{H : ExtAction A} η α M1 M2 M3 : non_blocking η -> M1 ⟶[ η ] M2 -> M2 ⟶{ α } M3 
+        → (∃ M'2, M1 ⟶{α} M'2 /\ M'2 ⟶⋍[ η ] M3).
+Proof.
+  destruct α.
+  + destruct (decide (non_blocking μ)) as [nb' | b'];intros nb tr_nb tr.
+    - eapply non_blocking_action_in_ms in tr_nb; eauto ; subst.
+      eapply non_blocking_action_in_ms in tr; eauto ; subst.
+      exists ({[+ η +]} ⊎ M3). split.
+      * assert ({[+ μ +]} ⊎ ({[+ η +]} ⊎ M3) = {[+ η +]} ⊎ ({[+ μ +]} ⊎ M3)) as eq by multiset_solver.
+        rewrite<- eq. eapply lts_multiset_minus;eauto.
+      * exists M3. split.
+        ++ eapply lts_multiset_minus;eauto.
+        ++ reflexivity.
+    - eapply non_blocking_action_in_ms in tr_nb; eauto ; subst.
+      eapply blocking_action_in_ms in tr as (eq & duo & nb'); eauto ; subst.
+      exists ({[+ co μ +]} ⊎ ({[+ η +]} ⊎ M2)). split.
+      * eapply lts_multiset_add;eauto.
+      * assert ({[+ co μ +]} ⊎ ({[+ η +]} ⊎ M2) = {[+ η +]} ⊎ ({[+ co μ +]} ⊎ M2)) as eq by multiset_solver.
+        rewrite eq. exists ({[+ co μ +]} ⊎ M2). split.
+        ++ eapply lts_multiset_minus;eauto.
+        ++ reflexivity.
+  + intros nb tr_nb tr. inversion tr.
+Qed.
+
+Lemma confluence_in_ms `{H : ExtAction A} M M1 M2 η μ : μ ≠ η -> M ⟶[ η ] M1 → M ⟶[ μ ] M2 
+        → ∃ M', M1 ⟶[ μ ] M' /\ M2 ⟶⋍[ η ] M'.
+Proof.
+  intros neq tr_nb tr.
+  destruct (decide (non_blocking μ)) as [nb' | b']; destruct (decide (non_blocking η)) as [nb | b].
+  + eapply non_blocking_action_in_ms in tr_nb; eauto ; subst.
+    eapply non_blocking_action_in_ms in tr; eauto ; subst.
+    assert (η ∈ M2) by multiset_solver.
+    assert (μ ∈ M1) by multiset_solver.
+    assert (exists M'2, M2 = {[+ η +]} ⊎ M'2) as (M'2 & eq2).
+    { exists (M2 ∖ {[+ η +]}). multiset_solver. }
+    assert (exists M'1, M1 = {[+ μ +]} ⊎ M'1) as (M'1 & eq1).
+    { exists (M1 ∖ {[+ μ +]}). multiset_solver. }
+    subst. assert (M'1 = M'2) by multiset_solver. subst.
+    exists M'2. split.
+    * eapply lts_multiset_minus; eauto.
+    * exists M'2. split.
+      - eapply lts_multiset_minus; eauto.
+      - reflexivity.
+  + eapply blocking_action_in_ms in tr_nb as (eq & duo & nb''); eauto ; subst.
+    eapply non_blocking_action_in_ms in tr; eauto ; subst.
+    exists ({[+ co η +]} ⊎ M2). split.
+    * assert ({[+ co η +]} ⊎ ({[+ μ +]} ⊎ M2) = {[+ μ +]} ⊎ ({[+ co η +]} ⊎ M2)) as eq by multiset_solver.
+      rewrite eq. eapply lts_multiset_minus; eauto.
+    * exists ({[+ co η +]} ⊎ M2). split.
+      - eapply lts_multiset_add; eauto.
+      - reflexivity. 
+  + eapply non_blocking_action_in_ms in tr_nb; eauto ; subst.
+    eapply blocking_action_in_ms in tr as (eq & duo & nb''); eauto ; subst.
+    exists ({[+ co μ +]} ⊎ M1). split.
+    * eapply lts_multiset_add; eauto.
+    * exists ({[+ co μ +]} ⊎ M1). split.
+      - assert ({[+ co μ +]} ⊎ ({[+ η +]} ⊎ M1) = {[+ η +]} ⊎ ({[+ co μ +]} ⊎ M1)) as eq by multiset_solver.
+        rewrite eq. eapply lts_multiset_minus; eauto.
+      - reflexivity.
+  + eapply blocking_action_in_ms in tr_nb as (eq' & duo' & nb''); eauto ; subst.
+    eapply blocking_action_in_ms in tr as (eq & duo & nb'''); eauto ; subst.
+    * exists ({[+ co μ +]} ⊎ ({[+ co η +]} ⊎ M)). split.
+      - eapply lts_multiset_add; eauto.
+      - exists ({[+ co μ +]} ⊎ ({[+ co η +]} ⊎ M)). split.
+        ++ assert ({[+ co μ +]} ⊎ ({[+ co η +]} ⊎ M) = {[+ co η +]} ⊎ ({[+ co μ +]} ⊎ M)) as eq by multiset_solver.
+           rewrite eq. eapply lts_multiset_add; eauto.
+        ++ reflexivity.
+Qed.
+
+Lemma nb_tau_in_ms `{H : ExtAction A} M M1 M2 η :
+      M ⟶[ η ] M1 -> M ⟶ M2 
+        → (∃ M', M1 ⟶ M' /\ M2 ⟶⋍[ η ] M') \/ (∃ β, (dual β η) /\ M1 ⟶⋍[ β ] M2).
+Proof.
+  intros ? tr_tau.
+  inversion tr_tau.
+Qed.
+
+Lemma deter_in_ms `{H : ExtAction A} M1 M2 M3 η :
+      M1 ⟶[ η ] M2 → M1 ⟶[ η ] M3 
+        → M2 ⋍ M3.
+Proof.
+  intros tr1 tr2.
+  destruct (decide (non_blocking η)) as [nb | b].
+  + eapply non_blocking_action_in_ms in tr1; eauto ; subst.
+    eapply non_blocking_action_in_ms in tr2; eauto ; subst.
+    assert (M3 = M2) as eq by multiset_solver. subst.
+    reflexivity.
+  + eapply blocking_action_in_ms in tr1 as (eq' & duo' & nb'); eauto ; subst.
+    eapply blocking_action_in_ms in tr2 as (eq'' & duo'' & nb''); eauto ; subst.
+Qed.
+
+Lemma inv_deter_in_ms `{H : ExtAction A} M1 M'1 M2 M3 η :
+      M1 ⟶[ η ] M2 -> M'1 ⟶[ η ] M3 
+        -> M2 ⋍ M3 -> M1 ⋍ M'1.
+Proof.
+  intros tr1 tr2 equiv. inversion equiv. subst.
+  destruct (decide (non_blocking η)) as [nb | b].
+  + eapply non_blocking_action_in_ms in tr1; eauto ; subst.
+    eapply non_blocking_action_in_ms in tr2; eauto ; subst.
+  + eapply blocking_action_in_ms in tr1 as (eq' & duo' & nb'); eauto ; subst.
+    eapply blocking_action_in_ms in tr2 as (eq'' & duo'' & nb''); eauto ; subst.
+    assert (M1 = M'1) by multiset_solver. subst.
+    reflexivity.
+Qed.
+
+#[global] Program Instance MbgLts_Oba`{H : ExtAction A} : gLtsOba (mb A). 
+Next Obligation.
+  intros. eapply delay_in_ms;eauto.
+Qed.
+Next Obligation.
+  intros. eapply confluence_in_ms;eauto.
+Qed.
+Next Obligation.
+  intros. eapply nb_tau_in_ms; eauto.
+Qed.
+Next Obligation.
+  intros. eapply deter_in_ms; eauto.
+Qed.
+Next Obligation.
+  intros. eapply inv_deter_in_ms; eauto.
+Qed.
+
+Lemma forward_in_ms `{H : ExtAction A} M1 η β :
+      ∃ M2, non_blocking η -> dual β η
+        -> M1 ⟶[ β ] M2 /\ M2 ⟶[ η ] M1.
+Proof.
+  exists ({[+ η +]} ⊎ M1).
+  intros nb duo. split.
+  + eapply lts_multiset_add;eauto.
+  + eapply lts_multiset_minus;eauto.
+Qed.
+
+Lemma forward_feedback_in_ms `{H : ExtAction A} M1 M2 M3 η β :
+      non_blocking η -> dual β η -> M1 ⟶[ η ] M2 -> M2 ⟶[ β ] M3 
+        -> M1 ⟶⋍ M3 \/ M1 ⋍ M3.
+Proof.
+  intros nb duo tr_nb tr. right.
+  eapply non_blocking_action_in_ms in tr_nb;eauto; subst.
+  eapply blocking_action_in_ms in tr as (eq'' & duo'' & nb''); eauto ; subst.
+  + assert (η = co β).
+    { eapply unique_nb; eauto. }
+    subst; eauto. reflexivity.
+  + eapply dual_blocks;eauto.
+Qed.
+
+#[global] Program Instance MbgLts_Oba_FW `{H : ExtAction A} : gLtsObaFW (mb A) A. 
+Next Obligation.
+  intros. eapply forward_in_ms; eauto.
+Qed.
+Next Obligation.
+  intros. eapply forward_feedback_in_ms;eauto.
+Qed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
