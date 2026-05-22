@@ -169,7 +169,7 @@ Proof.
 Qed.
 
 (* to rework , why ?*)
-Lemma mx_sum X X' t : mustx X t
+Lemma mx_sum X X' t : X must_pass_x t
     -> X' must_pass_x t
       -> (X ∪ X') must_pass_x t.
 Proof.
@@ -294,7 +294,11 @@ Proof.
   induction X using set_ind_L.
   - set_solver.
   - destruct (set_choose_or_empty X).
-    + eapply mx_sum; set_solver.
+    + eapply mx_sum.
+      * eapply hm. set_solver.
+      * eapply IHX.
+        -- set_solver.
+        -- intros. eapply hm. set_solver.
     + assert (X = ∅) by set_solver.
       rewrite H1, union_empty_r_L. set_solver.
 Qed.
@@ -451,6 +455,53 @@ Lemma must_set_for_all  (X : gset P) (t : T) :
     -> (forall p, p ∈ X -> p must_pass t)
       -> X must_pass_x t.
 Proof.
+(*   intros xneq_nil hm.
+  revert t xneq_nil hm.
+  induction X using set_ind_L.
+  + intros. set_solver.
+  + destruct (set_choose_or_empty X).
+    - intros. eapply mx_sum.
+      * assert (x must_pass t)as hm'.
+        { eapply hm. set_solver. }
+        clear H. clear IHX. clear H0.
+        clear xneq_nil. clear hm. clear X.
+        dependent induction hm'.
+        ++ eapply mx_now; eauto.
+        ++ eapply mx_step.
+           -- eauto.
+           -- intros. set_solver.
+           -- intros. intros. induction X' using set_ind_L.
+              ** set_solver.
+              ** destruct (set_choose_or_empty X).
+                 --- eapply mx_sum.
+                     +++ eapply H; eauto.
+                         admit. (* by lts_tau_set_from_pset_spec1 {[p]} ({[x]} ∪ X) *)
+                     +++ eapply IHX'.
+                         ++++ admit. (* by lts_tau_set_from_pset_spec1 {[p]} ({[x]} ∪ X) *)
+                         ++++ set_solver.
+                 --- assert (X = ∅) as H'' by set_solver.
+                     rewrite H'', union_empty_r_L.
+                     eapply H;eauto. admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+           -- intros ; set_solver.
+           -- intros. induction X' using set_ind_L.
+              ** set_solver.
+              ** destruct (set_choose_or_empty X).
+                 --- eapply mx_sum.
+                     +++ eapply H1; eauto.
+                         admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                     +++ eapply IHX'.
+                         ++++ admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                         ++++ set_solver.
+                 --- assert (X = ∅) as H'' by set_solver.
+                     rewrite H'', union_empty_r_L.
+                     eapply H1;eauto. admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+      * eapply IHX.
+        ++ set_solver.
+        ++ intros. eapply hm. set_solver.
+    - intros.
+      assert (X = ∅) as H1 by set_solver.
+      rewrite H1, union_empty_r_L.
+      admit. (* like in the base case *) *)
   intros xneq_nil hm.
   destruct (outcome_decidable t).
   - now eapply mx_now.
