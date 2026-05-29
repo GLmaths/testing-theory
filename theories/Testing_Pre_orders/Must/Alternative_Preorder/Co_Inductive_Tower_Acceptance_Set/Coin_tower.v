@@ -75,9 +75,9 @@ Section copre.
 
   Definition copre := gfp copre_m .
 
-  Notation "ps ⩽ qs" := (copre ps qs) (at level 70).
+  Notation "ps ⩽ₜₒᵥᵥₑᵣ qs" := (copre ps qs) (at level 70).
 
-  Lemma c_tau {ps qs qs'} : ps ⩽ qs -> wt_set_from_pset_spec1 qs [] qs' -> ps ⩽ qs' .
+  Lemma c_tau {ps qs qs'} : ps ⩽ₜₒᵥᵥₑᵣ qs -> wt_set_from_pset_spec1 qs [] qs' -> ps ⩽ₜₒᵥᵥₑᵣ qs' .
   Proof.
     intros h%(gfp_pfp copre_m); intros; now apply h.(c_tau_).
   Qed.
@@ -88,7 +88,7 @@ Section copre.
     intros h Ht. now apply h.(c_tau_). Qed.
 
   Lemma c_now {ps qs}
-    : ps ⩽ qs
+    : ps ⩽ₜₒᵥᵥₑᵣ qs
       -> ps ⤓
       -> forall q , q ∈ qs -> q ↛
       -> exists p, p ∈ ps
@@ -100,24 +100,24 @@ Section copre.
   Qed.
 
   Lemma c_step {ps ps' qs qs' μ}
-    : ps ⩽ qs
+    : ps ⩽ₜₒᵥᵥₑᵣ qs
       -> ps ⇓ [μ]
       -> wt_set_from_pset_spec1 qs [μ] qs'
       -> wt_set_from_pset_spec ps [μ] ps'
-      -> ps' ⩽ qs' .
+      -> ps' ⩽ₜₒᵥᵥₑᵣ qs' .
   Proof.
     intros h%(gfp_pfp copre_m); intros; now eapply h.(c_step_); eauto.
   Qed.
 
   Lemma c_cnv {ps qs}
-    : ps ⩽ qs
+    : ps ⩽ₜₒᵥᵥₑᵣ qs
       -> ps ⤓
       -> qs ⤓ .
   Proof.
     intros h%(gfp_pfp copre_m); intros; now eapply h.(c_cnv_); eauto.
   Qed.
 
-  Lemma copre_if_prex (ps : gset P) (qs : gset Q) : ps ≼ₛₑₜ_ₐₛ qs -> ps ⩽ qs.
+  Lemma copre_if_prex (ps : gset P) (qs : gset Q) : ps ≼ₛₑₜ_ₐₛ qs -> ps ⩽ₜₒᵥᵥₑᵣ qs.
   Proof.
     revert ps qs; unfold copre.
     coinduction RR CIH.
@@ -141,13 +141,13 @@ Section copre.
   Qed.
 
   Lemma co_preserved_by_wt_nil
-    (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ⩽ qs -> ps ⩽ qs'.
+    (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ⩽ₜₒᵥᵥₑᵣ qs -> ps ⩽ₜₒᵥᵥₑᵣ qs'.
   Proof.
     intros hw Hyp. eapply c_tau;eauto.
   Qed.
 
 
-  Lemma prex1_if_copre (ps : gset P) (qs : gset Q) : ps ⩽ qs -> ps ₁≼ₛₑₜ_ₐₛ qs.
+  Lemma prex1_if_copre (ps : gset P) (qs : gset Q) : ps ⩽ₜₒᵥᵥₑᵣ qs -> ps ₁≼ₛₑₜ_ₐₛ qs.
   Proof.
     intros hpq s; revert ps qs hpq.
     dependent induction s; intros ps qs hpq hcnv.
@@ -175,7 +175,7 @@ Section copre.
       ++ set_solver.
   Qed.
 
-  Lemma prex2_if_copre (ps : gset P) (qs : gset Q) : ps ⩽ qs -> ps ₂≼ₛₑₜ_ₐₛ qs.
+  Lemma prex2_if_copre (ps : gset P) (qs : gset Q) : ps ⩽ₜₒᵥᵥₑᵣ qs -> ps ₂≼ₛₑₜ_ₐₛ qs.
   Proof.
     intros hsub q s q' mem; revert ps qs q q' mem hsub ; dependent induction s; intros ps qs q q' mem hsub.
     + intros hw hstq' hcnv. revert ps qs mem hsub hstq' hcnv.
@@ -198,20 +198,20 @@ Section copre.
       change (μ :: s) with ([μ] ++ s) in hqq'.
       eapply wt_split in hqq' as (q0 & hw0 & hw1).
       eapply wt_decomp_one in hw0 as (q0' & q1' & q1 & hlt & hw0').
-      assert (ps ⩽ {[ q0' ]}).
+      assert (ps ⩽ₜₒᵥᵥₑᵣ {[ q0' ]}).
       { eapply co_preserved_by_wt_nil; eauto. intros q'' mem''.
         assert (q'' = q0') by set_solver. subst. eauto. }
       assert (hcnv' : ∀ p : P, p ∈ ps → p ⇓ [μ]) by (intros; now eapply cnv_wk, hcnv).
       assert (∀ p : P, p ∈ ps → p ⇓ [μ]) as hp_conv;eauto.
       eapply convergence_set_if_convergence_forall in hp_conv.
       set (ps' := wt_s_set_from_pset ps [μ] hcnv').
-      assert (ps' ⩽ {[ q1' ]}) as hpq''. {
+      assert (ps' ⩽ₜₒᵥᵥₑᵣ {[ q1' ]}) as hpq''. {
         eapply c_step;eauto.
         + intros q''' mem'''. assert (q''' = q1') by set_solver. subst.
           exists q0'. split. set_solver. eapply lts_to_wt;eauto.
         + eapply wt_s_set_from_pset_ispec.
       }
-      assert (ps' ⩽ {[ q0 ]}) as hp'q.
+      assert (ps' ⩽ₜₒᵥᵥₑᵣ {[ q0 ]}) as hp'q.
       { eapply co_preserved_by_wt_nil; eauto. intros q''' mem'''.
         assert (q''' = q0) by set_solver. subst. exists q1'. split;eauto. set_solver.
       }
@@ -233,14 +233,14 @@ Section copre.
 
 
   Theorem eqx (X : gset P) (Y : gset Q) :
-    X ≼ₛₑₜ_ₐₛ Y <-> X ⩽ Y.
+    X ≼ₛₑₜ_ₐₛ Y <-> X ⩽ₜₒᵥᵥₑᵣ Y.
   Proof.
     split; [ eapply copre_if_prex | ].
     intros hco; split; [ now eapply prex1_if_copre | now eapply prex2_if_copre ].
   Qed.
 End copre.
 
-Notation "X ⩽ Y" := (copre X Y) (at level 70).
+Notation "X ⩽ₜₒᵥᵥₑᵣ Y" := (copre X Y) (at level 70).
 
 Section eq_contextual.
   Context `{outcome : T -> Prop}.
@@ -271,13 +271,14 @@ Section eq_contextual.
   Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
-
-  (* Theorem eq_ctx (p : P) (q : Q) :
-    pre_extensional outcome p q <-> ({[ p ▷ (∅ : mb A) ]} : gset (P * mb A)) ⩽ ({[ q ▷ (∅ : mb A) ]} : gset (Q * mb A)).
+  Check @copre.
+  Theorem eq_ctx (p : P) (q : Q) :
+    pre_extensional outcome p q <-> 
+    (@copre (P * mb A) A _ _ _ (Q * mb A) _ _ _ _ Φ 𝝳 𝝳) ({[ p ▷ (∅ : mb A) ]} : gset (P * mb A))  ({[ q ▷ (∅ : mb A) ]} : gset (Q * mb A)).
   Proof.
-    rewrite <- eqx, <- alt_set_singleton_iff.
+    rewrite <- eqx. rewrite alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.
-  Qed. *)
+  Qed.
 End eq_contextual.
 
 (*
