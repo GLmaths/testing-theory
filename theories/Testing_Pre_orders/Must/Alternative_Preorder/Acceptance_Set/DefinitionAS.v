@@ -95,7 +95,6 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) β β' b b' eq mem.
-
   assert (Φ β ∈ ⌈ Φ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
   destruct mem as (μ'' & mem & eq').
   destruct mem as (μ''' & tr' & duo & b'').
@@ -111,7 +110,7 @@ Next Obligation.
     eapply lts_refuses_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
   - destruct (decide (non_blocking μ''')) as [nb''' | b'''].
     * eapply non_blocking_action_in_ms in l; eauto.
-       subst. admit.
+       subst.  admit.
     * eapply blocking_action_in_ms in l as (eq'' & duo'' & nb''); eauto.
       subst. eapply unique_nb in duo ; subst. contradiction.
 Admitted.
