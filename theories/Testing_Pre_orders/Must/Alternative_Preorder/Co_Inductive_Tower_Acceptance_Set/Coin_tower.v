@@ -51,7 +51,7 @@ Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   ; c_step_ : forall μ Y' X', X ⇓ [μ] ->
                          wt_set_from_pset_spec1 Y [μ] Y' -> wt_set_from_pset_spec X [μ] X' -> FIX X' Y'
   ; c_cnv_ : X ⤓ -> Y ⤓
-  }. Check c_tau_.
+  }.
   #[global] Arguments c_tau_ {_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FIX X Y}.
   #[global] Arguments c_now_ {_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FIX X Y}.
   #[global] Arguments c_step_ {_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FIX X Y}.
