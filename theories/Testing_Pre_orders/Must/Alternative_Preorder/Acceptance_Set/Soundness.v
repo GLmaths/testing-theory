@@ -741,7 +741,7 @@ Proof.
 Qed.
 
 Lemma alt_set_singleton_iff 
-  (p : P) (q : Q) : ({[ p ]} : gset P) ≼ₛₑₜ_ₐₛ ({[ q ]} : gset Q) <->  p ≼ₐₛ q.  
+  (p : P) (q : Q) : ({[ p ]} : gset P) ≼ₛₑₜ_ₐₛ ({[ q ]} : gset Q) <->  p ≼ₐₛ q.
 Proof.
   split.
   - intros (hbhv1 & hbhv2). split.
