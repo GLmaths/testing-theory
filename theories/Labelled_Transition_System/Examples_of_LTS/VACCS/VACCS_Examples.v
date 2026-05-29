@@ -27,7 +27,7 @@ From Stdlib Require Import Relations.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Good
+From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Characterization
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS.
 
@@ -35,9 +35,8 @@ InteractionBetweenLts Testing_Predicate DefinitionAS.
 (** *** Applications *)
 
 Module Type VACCS_examples.
-Include VACCS_Testing.
+Include VACCS_Must_Alt_Corollary.
 Parameter a : Channel.
-Parameter O : Value.
 Parameter I : Value.
 Parameter (neq : O ≠ I).
 
@@ -269,5 +268,12 @@ Proof.
   assert ((g 𝟘) ⋢ₘᵤₛₜᵢ const). { eapply constant_is_not_above_NIL. }
   contradiction.
 Qed.
+
+Lemma tau_compositionality_with_must (p : proc) (q : proc) : p ⊑ₘᵤₛₜᵢ q -> g (𝛕 • p) ⊑ₘᵤₛₜᵢ g (𝛕 • q).
+Proof.
+  intros hyp_must%bhv_iff_ctx_VACCS.
+  eapply bhv_iff_ctx_VACCS.
+  (* to be completed/finished *)
+Admitted.
 
 End VACCS_examples.
