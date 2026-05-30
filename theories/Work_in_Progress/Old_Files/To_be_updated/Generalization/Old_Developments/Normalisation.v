@@ -28,10 +28,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list decidable gmultiset hlist.
 
 From TestingTheory Require Import ActTau FiniteImageLTS 
-    gLts Bisimulation Lts_FW Convergence Termination WeakTransitions Lts_OBA. (* DefinitionAS  Must. *)
-
-
-(* Definition ntrace A `{ExtAction A} : Type := list (gmultiset A). *)
+    gLts Bisimulation Lts_FW Convergence Termination WeakTransitions Lts_OBA Subset_Act DefinitionAS Must.
 
 Definition ntrace A `{ExtAction A} : Type := (gmultiset A) * list A * (gmultiset A).
 (* Definition ntrace A `{ExtAction A} : Type := list (gmultiset A * gmultiset A * list A). *)
@@ -46,31 +43,19 @@ match s with
                                                                            else normalize_loop s count_co_nb (l_bb++[μ]) count_nb
 end.
 
-Definition normalize `{ExtAction A} (s : trace A) : ntrace A := normalize_loop s ∅ None.
+Definition normalize `{ExtAction A} (s : trace A) : ntrace A := normalize_loop s ∅ [] ∅.
 
-Fixpoint linearize `{ExtAction A} (nt : ntrace A) : trace A :=
+Definition linearize `{ExtAction A} (nt : ntrace A) : trace A :=
   match nt with
-  | [] => []
-  | M :: nt' => (elements M) ++ linearize nt'
+  | (M_co_nb , l , M_nb) => (elements M_co_nb) ++ l ++ (elements M_nb)
   end.
-(* Fixpoint linearize `{Label L} (nt : ntrace L) : trace (ExtAct L) :=
-  match nt with
-    | [] => []
-    | (mi, mo) :: nt' =>
-          let inputs := map ActIn (elements mi) in
-          let outputs := map ActOut (elements mo) in
-          inputs ++ outputs ++ linearize nt'
-  end. *)
 
 Definition linorm `{ExtAction A} s := linearize (normalize s).
 (* Definition linorm `{Label L}  s := linearize (normalize s). *)
 
 Notation "⟪ s ⟫" := (linearize (normalize s)).
 
-(* Notation "⌈ m_co_nb , m_nb , m_other ⌉₁" := ((elements m_co_nb) ++ (elements m_nb) ++ m_other). *)
-(* Notation "⌈ mi , mo ⌉₁" := (map ActIn (elements mi) ++ map ActOut (elements mo)). *)
-
-Notation "⌈ nt ⌉" := (linearize nt).
+(* Notation "⌈ nt ⌉" := (linearize nt). *)
 
 (* Lemma norm_nil `{ExtAction A} s M boo : normalize s = [] -> s = [].
 Proof.
@@ -89,7 +74,7 @@ Proof.
 Qed. unfold normalize.  *)
 
 
-Lemma norm_loop_nil `{ExtAction A} s M b_nb : M <> ∅ -> normalize_loop s M b_nb ≠ [].
+(* Lemma norm_loop_nil `{ExtAction A} s M b_nb : M <> ∅ -> normalize_loop s M b_nb ≠ [].
 Proof.
   revert M b_nb.
   induction s; eauto.
@@ -105,36 +90,39 @@ Proof.
         ++ eapply IHs. multiset_solver. 
         ++ eapply IHs. multiset_solver.
       * rewrite decide_False; eauto.
-Qed.
+Qed. *)
 
-Lemma norm_nil `{ExtAction A} : normalize [] = [].
+(* Lemma norm_nil `{ExtAction A} : normalize [] = [].
 Proof.
   subst.
   simpl. eauto.
-Qed.
+Qed. *)
 
-Lemma norm_nil_rev `{ExtAction A} s : normalize s = [] -> s = [].
+Lemma norm_nil_rev `{ExtAction A} s : ⟪ s ⟫ = [] <-> s = [].
 Proof.
-  dependent induction s.
-  - eauto.
-  - unfold normalize. intro eq.
-    simpl in eq. destruct (decide (non_blocking a)) as [nb | b].
-    + simpl. now eapply norm_loop_nil in eq.
-    + destruct (decide (exist_co_nba a)) as [co_nb | co_b].
-      * now eapply norm_loop_nil in eq.
-      * rewrite decide_True in eq; eauto. set_solver.
-Qed.
+  split.
+  - dependent induction s.
+    + simpl. eauto.
+    + intro Hyp. exfalso.
+      unfold normalize in Hyp. simpl in *.
+      destruct (decide (non_blocking a)) as [nb | b].
+      * simpl in *. admit.
+      * destruct (decide (exist_co_nba a)).
+        -- admit.
+        -- admit.
+  - intros; subst. simpl. eauto.
+Admitted.
 
-Lemma norm_singleton `{ExtAction A} μ : normalize [ μ ] = [{[+ μ +]} ].
+Lemma norm_singleton `{ExtAction A} μ : ⟪ [μ] ⟫ = [μ].
 Proof.
   simpl. unfold normalize. simpl. destruct (decide (non_blocking μ)) as [nb | b].
-  + rewrite decide_False; eauto.
+  + simpl. admit.
   + destruct (decide (exist_co_nba μ)) as [co_nb | co_b].
-    - rewrite decide_False; eauto.
-    - rewrite decide_True; eauto.
-Qed.
+    - simpl. admit.
+    - simpl. eauto.
+Admitted.
 
-Lemma norm_non_blocking_blocking_step `{ExtAction A} η β s :
+(* Lemma norm_non_blocking_blocking_step `{ExtAction A} η β s :
   non_blocking η -> blocking β -> normalize (η :: β :: s) = {[+ η +]} :: normalize (β :: s).
 Proof.
   intros. unfold normalize. simpl. rewrite decide_True; eauto.
@@ -142,9 +130,9 @@ Proof.
   destruct (decide (exist_co_nba β)) as [co_nb | co_b].
   + rewrite decide_False; eauto. (* simpl. now rewrite gmultiset_disj_union_right_id. *)
   + rewrite decide_False; eauto. rewrite decide_False; eauto.
-Qed.
+Qed. *)
 
-Lemma norm_co_non_blocking_co_blocking_step `{ExtAction A} β β' s :
+(* Lemma norm_co_non_blocking_co_blocking_step `{ExtAction A} β β' s :
   exist_co_nba β ->  ¬ exist_co_nba β' -> normalize (β :: β' :: s) = {[+ β +]} :: normalize (β' :: s).
 Proof.
   intros co_nb co_b. unfold normalize. simpl.
@@ -156,9 +144,9 @@ Proof.
   + eauto.
   + rewrite decide_False; eauto. rewrite decide_False; eauto.
     rewrite decide_False; eauto.
-Qed.
+Qed. *)
 
-Lemma norm_blocking_non_blocking_step `{ExtAction A} η β s :
+(* Lemma norm_blocking_non_blocking_step `{ExtAction A} η β s :
   blocking β -> non_blocking η -> normalize (β :: η :: s) = {[+ β +]} :: normalize (η :: s).
 Proof.
   intros. unfold normalize. simpl. rewrite decide_False; eauto.
@@ -166,9 +154,9 @@ Proof.
   + rewrite decide_True; eauto.
     rewrite decide_True; eauto. (* simpl. now rewrite gmultiset_disj_union_right_id. *)
   + rewrite decide_True; eauto.
-Qed.
+Qed. *)
 
-Lemma norm_loop_blocking_co_non_blocking_step `{ExtAction A} β s : blocking β -> exist_co_nba β -> normalize_loop s {[+ β +]} (Some false) = normalize (β :: s).
+(* Lemma norm_loop_blocking_co_non_blocking_step `{ExtAction A} β s : blocking β -> exist_co_nba β -> normalize_loop s {[+ β +]} (Some false) = normalize (β :: s).
 Proof.
   revert β.
   dependent induction s; intros.
@@ -184,11 +172,11 @@ Proof.
       * rewrite decide_False;eauto.
         rewrite decide_False;eauto.
         rewrite decide_True; eauto.
-Qed.
+Qed. *)
 
 Definition b_and_co_b `{ExtAction A} (β : A) : Prop := blocking β /\ ¬ exist_co_nba β.
 
-Lemma norm_blocking_co_blocking_step_eq `{ExtAction A} β s : blocking β -> ¬ exist_co_nba β -> normalize (β :: s) = {[+ β +]} :: normalize s.
+(* Lemma norm_blocking_co_blocking_step_eq `{ExtAction A} β s : blocking β -> ¬ exist_co_nba β -> normalize (β :: s) = {[+ β +]} :: normalize s.
 Proof.
   revert β. intros.
   dependent induction s; intros; unfold normalize; simpl.
@@ -196,51 +184,52 @@ Proof.
     rewrite decide_False;eauto.
   + rewrite decide_False; eauto.
     rewrite decide_False; eauto.
-Qed.
+Qed. *)
 
-Lemma norm_loop_blocking_step' `{ExtAction A} s β :
+(* Lemma norm_loop_blocking_step' `{ExtAction A} s β :
   blocking β -> ¬ (exist_co_nba β) -> normalize (β :: s) = {[+ β +]} :: normalize s.
 Proof.
   intros b co_b.
   unfold normalize. simpl. rewrite decide_False;eauto. rewrite decide_False;eauto.
-Qed.
+Qed. *)
 
 Lemma norm_non_blocking_step `{ExtAction A} η s :
   non_blocking η
-  -> exists M_nb s1 s2,
-      normalize (η :: s) = ({[+ η +]}  ⊎ M_nb) :: normalize s2 
-      /\ s = s1 ++ s2
+  -> exists s1 s2 s3,
+      ⟪ η :: s ⟫ = s1 ++ s2 ++ s3
       /\ Forall non_blocking s1
-      /\ (elements M_nb) ≡ₚ s1
-      /\ length s2 <= length s.
+      /\ Forall b_and_co_b s2
+      /\ Forall exist_co_nba s3
+      /\ η ∈ s1.
 Proof.
   revert η. induction s
     as (s & Hlength) using
          (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
   destruct s; intros η nb.
-  + exists ∅, [], []. repeat split.
-    * rewrite norm_singleton. rewrite norm_nil.
-      assert ({[+ η +]} ⊎ (∅ :gmultiset A) = {[+ η +]}) as eq by multiset_solver.
-      rewrite eq. reflexivity.
-    * constructor.
+  + exists [η], [], []. repeat split.
+    * rewrite norm_singleton. simpl. eauto.
+    * constructor;eauto.
     * eauto.
     * eauto.
+    * set_solver.
   + destruct (decide (non_blocking a)) as [nb' | b'].
-    * assert (∃ (M_nb : gmultiset A) (s1 : list A) (s2 : trace A),
-            normalize (η :: s) = {[+ η +]} ⊎ M_nb :: normalize s2
-            ∧ s = s1 ++ s2
-              ∧ Forall non_blocking s1
-                ∧ elements M_nb ≡ₚ s1 ∧ length s2 ≤ length s) as (M_nb & s1 & s2 & eq & eq_trace & all_nb & permut & subeq_length).
+    * assert (∃ s1 s2 s3 : list A,
+            ⟪ a :: s ⟫ = s1 ++ s2 ++ s3
+            ∧ Forall non_blocking s1
+              ∧ Forall b_and_co_b s2
+                ∧ Forall exist_co_nba s3 ∧ a ∈ s1) as (s1 & s2 & s3 & eq & all_co_nb & all_b_and_co_b & all_nb & mem).
       { eapply Hlength; eauto. }
+      admit.
+      (* exists (elements ({[+ a +]} ⊎ (list_to_set_disj s1))).
       exists ({[+ a +]} ⊎  M_nb). exists (a :: s1), s2. repeat split.
       - subst. admit. 
       - subst. eauto.
       - constructor;eauto.
       - subst. rewrite gmultiset_elements_disj_union. rewrite gmultiset_elements_singleton.
         simpl. eapply Permutation_skip. eauto.
-      - simpl. lia.
+      - simpl. lia. *)
     * destruct (decide (exist_co_nba a)) as [co_nb | co_b].
-      - exists ∅, [], (a :: s). repeat split.
+      (* - exists ∅, [], (a :: s). repeat split.
         ++ assert ({[+ η +]} ⊎ (∅ : gmultiset A) = {[+ η +]}) as eq by multiset_solver.
            rewrite eq. rewrite norm_non_blocking_blocking_step; eauto.
         ++ constructor.
@@ -251,10 +240,10 @@ Proof.
            rewrite eq. f_equal. fold normalize. rewrite norm_non_blocking_blocking_step; eauto.
         ++ constructor.
         ++ rewrite gmultiset_elements_empty. reflexivity.
-        ++ eauto.
+        ++ eauto. *)
 Admitted.
 
-Lemma norm_co_nb_step `{ExtAction A} β s :
+(* Lemma norm_co_nb_step `{ExtAction A} β s :
   exist_co_nba β
   -> exists M_co_nb s1 s2,
       normalize (β :: s) = ({[+ β +]}  ⊎ M_co_nb) :: normalize s2 
@@ -303,10 +292,10 @@ Proof.
         ++ constructor.
         ++ rewrite gmultiset_elements_empty. reflexivity.
         ++ eauto.
-Admitted.
+Admitted. *)
 
 
-(* Lemma norm_length `{ExtAction A} :
+(*Lemma norm_length `{ExtAction A} :
   forall s I O s' M l,
     normalize s = M :: l -> length  *)
 
@@ -497,37 +486,37 @@ Proof.
     + eauto.
 Qed. *)
 
-Lemma norm_shape_elements `{ExtAction A} s nt M:
+(* Lemma norm_shape_elements `{ExtAction A} s nt M:
     normalize s = nt -> M ∈ nt -> M <> ∅.
 Proof.
   revert nt M.
   dependent induction s.
   + intros nt M Hyp1 mem. rewrite norm_nil in Hyp1. subst. inversion mem.
   + intros nt M Hyp1 mem. admit.
-Admitted.
+Admitted. *)
 
-Lemma norm_same_shape_non_blocking `{ExtAction A} s : s <> [] -> Forall non_blocking s -> normalize s = [list_to_set_disj s].
+(* Lemma norm_same_shape_non_blocking `{ExtAction A} s : s <> [] -> Forall non_blocking s -> normalize s = [list_to_set_disj s].
 Proof.
   dependent induction s.
   + intro forall_nb. simpl. set_solver.
   + intros neq forall_nb. simpl. admit.
 Admitted.
-
-Lemma norm_same_shape_co_nb `{ExtAction A} s : s <> [] -> Forall exist_co_nba s -> normalize s = [list_to_set_disj s].
+ *)
+(* Lemma norm_same_shape_co_nb `{ExtAction A} s : s <> [] -> Forall exist_co_nba s -> normalize s = [list_to_set_disj s].
 Proof.
   dependent induction s.
   + intro forall_nb. simpl. set_solver.
   + intros neq forall_nb. simpl. admit.
-Admitted.
+Admitted. *)
 
-Lemma norm_same_shape_b_and_co_b `{ExtAction A} s : s <> [] -> Forall b_and_co_b s -> normalize s = [list_to_set_disj s].
+(* Lemma norm_same_shape_b_and_co_b `{ExtAction A} s : s <> [] -> Forall b_and_co_b s -> normalize s = [list_to_set_disj s].
 Proof.
   dependent induction s.
   + intro forall_nb. simpl. set_solver.
   + intros neq forall_nb. simpl. admit.
-Admitted.
+Admitted. *)
 
-Lemma norm_shape `{ExtAction A} : forall s,
+(* Lemma norm_shape `{ExtAction A} : forall s,
     normalize s = []
     \/ exists M s1 s2, normalize s = M :: normalize s2
                       /\ normalize s1 = [M]
@@ -574,7 +563,7 @@ Proof.
            ++ rewrite gmultiset_elements_singleton. reflexivity.
       * admit.
       * admit.
-Admitted.
+Admitted. *)
         
       
 (*               assert (list_to_set_disj s1
@@ -656,7 +645,7 @@ Admitted.
                   simpl. eauto. 
 Qed.*)
 
-Lemma norm_perm `{ExtAction A} : forall nt s1 s2,
+(* Lemma norm_perm `{ExtAction A} : forall nt s1 s2,
     normalize s1 = nt -> normalize s2 = nt -> s1 ≡ₚ s2.
 Proof.
   intros nt.
@@ -684,9 +673,9 @@ Proof.
     eapply Permutation_app_head.
     eapply Permutation_app_head.
     eapply (IHnt s03 s13 H7 eq_refl). *)
-Admitted.
+Admitted. *)
 
-Lemma norm_length `{ExtAction A} :
+(* Lemma norm_length `{ExtAction A} :
   forall s M s',
     normalize s = M :: normalize s' ->
     length s' < length s.
@@ -719,7 +708,7 @@ Proof.
     rewrite e0 in H. inversion H.
     now eapply norm_perm.
     eapply Permutation_length. now symmetry. *)
-Admitted.
+Admitted. *)
 
 From Stdlib Require Import Wellfounded.
 
@@ -799,21 +788,24 @@ Proof.
   exists q''. split. eauto with mdb. transitivity q'; now symmetry.
 Qed.
 
-Lemma pre_act_of_eq `{gLtsEq P A} 
-  `{ @PreExtAction P A _ FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
-  p q : p ⋍ q -> pre_co_actions_of p ≡ pre_co_actions_of q.
+Lemma pre_act_of_eq `{gLtsEq P A} `{Γ : A -> PreAct}
+  p q : p ⋍ q -> ⌈ Γ ⌉ (coR p) ≡ ⌈ Γ ⌉ (coR q).
 Proof.
-  intro heq.
-  intros a. split.
-  intro lh. (* destruct a. symmetry in heq.
-  eapply lts_outputs_spec2 in lh as (p' & hl).
-  edestruct (eq_spec q p') as (q' & hl' & heq'). eauto.
-  eapply lts_outputs_spec1. eassumption.
-  intro lh.
-  eapply lts_outputs_spec2 in lh as (q' & hl).
-  edestruct (eq_spec p q') as (p' & hl' & heq'). eauto.
-  eapply lts_outputs_spec1. eassumption. *) admit.
-Admitted.
+  intro equiv. split.
+  (* apply leibniz_equiv. intros Hyp. split. *)
+  - intro Hyp. destruct Hyp as (μ & mem_coR & eq);subst.
+    destruct mem_coR as (μ' & accepts & duo & b).
+    eapply accepts_preserved_by_eq in accepts;eauto.
+    assert (μ ∈ coR q) as mem.
+    { exists μ'. repeat split; eauto. }
+    eapply map_gamma_of_action;eauto.
+  - intro Hyp. destruct Hyp as (μ & mem_coR & eq);subst.
+    destruct mem_coR as (μ' & accepts & duo & b). symmetry in equiv.
+    eapply accepts_preserved_by_eq in accepts;eauto.
+    assert (μ ∈ coR p) as mem.
+    { exists μ'. repeat split; eauto. }
+    eapply map_gamma_of_action;eauto.
+Qed.
 
 (* Lemma normalize_accs `{gLtsObaFW P A, !FiniteImageLts P A}
   `{!@PreExtAction P A _ FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
@@ -853,18 +845,18 @@ Definition bhv_lin_pre_cond1 `{gLts P H, gLts Q H} (p : P) (q : Q) := forall s, 
 Notation "p ₁≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre_cond1 p q) (at level 70).
 
 Definition bhv_lin_pre_cond2 `{
-  gLtsP : @gLts P A H, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  gLtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
   (p : P) (q : Q) :=
   forall nt q',
     p ⇓ linearize nt -> q ⟹[linearize nt] q' -> q' ↛ ->
-    ∃ p', p ⟹[linearize nt] p' /\ p' ↛ /\ pre_co_actions_of p' ⊆ pre_co_actions_of q'.
+    ∃ p', p ⟹[linearize nt] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
 
 Notation "p ₂≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre_cond2 p q) (at level 70).
 
 Definition bhv_lin_pre `{
-  gLtsP : @gLts P A H, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsP,
-  gLtsQ : @gLts Q A H, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ gLtsQ}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
   (p : P) (q : Q) := p ₁≼ₙₒᵣₘ₋ₐₛ q /\ p ₂≼ₙₒᵣₘ₋ₐₛ q.
 
 Notation "p ≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre p q) (at level 70).
@@ -959,8 +951,8 @@ Lemma normalize_acnv `{gLtsObaFW P A} (p : P) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
 Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed.
 
 Lemma asyn_iff_bhv `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A, PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _,
-  @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, PreAQ : @PreExtAction Q A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
+  @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
+  @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
   : forall (p : P) (q : Q), p ≼ₙₒᵣₘ₋ₐₛ q <-> p ≼ₐₛ q.
 Proof.
   intros p q. split.
@@ -983,4 +975,4 @@ Proof.
   - intros (hl1 & hl2). split.
     + intros s hacnv. eauto.
     + intros nt q' hacnv w st. eauto.
-Qed. *)
+Qed.
