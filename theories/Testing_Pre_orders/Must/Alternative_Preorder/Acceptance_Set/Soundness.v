@@ -926,7 +926,7 @@ Context `{HinterQ : !Prop_of_Inter Q T A dual}.
 Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _}.
 Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
 
-Context `{!gLtsCNenabled Q A}.
+Context `{!gLtsCNenabled Q A}. 
 
 Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ :
       p ⟶[co μ] p'-> t ⟶[μ] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)

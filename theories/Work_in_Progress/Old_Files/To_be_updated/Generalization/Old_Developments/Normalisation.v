@@ -92,11 +92,11 @@ Proof.
       * rewrite decide_False; eauto.
 Qed. *)
 
-(* Lemma norm_nil `{ExtAction A} : normalize [] = [].
+Lemma norm_nil `{ExtAction A} : ⟪ [] ⟫ = [].
 Proof.
   subst.
   simpl. eauto.
-Qed. *)
+Qed.
 
 Lemma norm_nil_rev `{ExtAction A} s : ⟪ s ⟫ = [] <-> s = [].
 Proof.
@@ -1065,12 +1065,69 @@ Definition bhv_lin_pre `{
 
 Notation "p ≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre p q) (at level 70).
 
-Lemma normalize_acnv_l `{gLtsObaFW P A} (p : P) s : p ⇓ s -> p ⇓ ⟪ s ⟫.
+(* TODO : delte it : *)
+Lemma cnv_drop_input_trace `{gLtsObaFW P A} (p : P) s' s :
+  Forall exist_co_nba s' -> p ⇓ (s' ++ s)
+    -> p ⇓ s.
+Proof.
+  revert s' p. induction s'.
+  + intros; simpl ;eauto.
+  + intros. eapply IHs'.
+    * inversion H2; subst ;eauto.
+    * simpl in *. eapply cnv_drop_input_hd in H3;eauto.
+      inversion H2; eauto.
+Qed.
+
+(* faux : ( c ? x . c ! 0 || rec X.X, empty_set) et s = c ! 0 :: [ c ? 1] *)
+(* Lemma normalize_acnv_l `{gLtsObaFW P A} (p : P) s : p ⇓ s -> p ⇓ ⟪ s ⟫.
 Proof.
   revert p.
   induction s
     as (s & Hlength)
          using (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
+  destruct s; intros p Hyp_conv.
+  - rewrite norm_nil. exact Hyp_conv.
+  - destruct (decide (non_blocking a)) as [nb | b]; [| destruct (decide (exist_co_nba a)) as [co_nb | co_b] ].
+    * assert (non_blocking a);eauto.
+      eapply (norm_non_blocking_step a s) in nb as (s'3 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+      admit.
+    * assert (exist_co_nba a);eauto.
+      eapply (norm_co_nba_step a s) in co_nb as (s'1 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+      rewrite eq. 
+      assert (⟪ s ⟫ = s'1 ++ s2 ++ s3) as eq'.
+      { admit. }
+      assert (p ⇓ s) as Hyp_conv'.
+      { eapply cnv_drop_input_hd;eauto. }
+      eapply Hlength in Hyp_conv'; try (simpl; lia).
+      rewrite eq' in Hyp_conv'.
+      
+      
+      
+      destruct s1.
+      + inversion mem.
+      + simpl. constructor.
+        -- inversion Hyp_conv; eauto.
+        -- intros. assert (⟪ s ⟫ = s'1 ++ s2 ++ s3) as eq'.
+           { admit. }
+           assert (p ⇓ s).
+           { eapply cnv_drop_input_hd;eauto. }
+           
+             assert (Forall exist_co_nba [s]) ;eauto.
+        eapply Hlength.
+           eapply (cnv_input_perm q s1);eauto.
+      
+      { admit. }
+      eapply Hlength; try (simpl;lia).
+      rewrite eq'.
+      eapply cnv_prefix in Hyp_conv as Hyp_prefix.
+      symmetry in perm2. eapply cnv_input_perm in perm2 ; eauto.
+      assert (q ⇓ s'1).
+      { admit. }
+      rewrite eq in H2. admit. 
+    * assert (b_and_co_b a) as bcb.
+      { split; eauto. }
+      eapply (norm_b_and_co_b_step a s) in bcb as (s'2 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+      admit.
   (* destruct (norm_shape s).
   - eapply norm_nil in H3. subst. now simpl.
   - destruct H3
@@ -1106,18 +1163,41 @@ Proof.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eapply are_outputs_map_ActOut. *) now symmetry.
       admit. (* eapply are_inputs_map_ActIn. *) now symmetry. *)
-Admitted.
+Admitted. *)
 
-Lemma normalize_acnv_r `{gLtsObaFW P A} (p : P) s : p ⇓ ⟪ s ⟫ -> p ⇓ s.
+(* Lemma normalize_acnv_r `{gLtsObaFW P A} (p : P) s : p ⇓ ⟪ s ⟫ -> p ⇓ s.
 Proof.
   revert p.
   induction s
     as (s & Hlength)
          using (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  destruct (norm_shape s) as (s1 & s2 & s3 & eq & nb & bcb & co_nb & equiv).
-  destruct s; intros.
-  - simpl in *. eapply norm_nil in H3. subst. now simpl.
-  - destruct H3
+  destruct s. intros p Hyp.
+  - rewrite norm_nil in Hyp. eauto.
+  - intros p Hyp_conv. constructor;intros.
+    + inversion Hyp_conv; subst;eauto.
+    + destruct (decide (non_blocking a)) as [nb | b]; [| destruct (decide (exist_co_nba a)) as [co_nb | co_b] ].
+      * assert (non_blocking a);eauto.
+        eapply (norm_non_blocking_step a s) in nb as (s'3 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+        admit.
+      * assert (exist_co_nba a);eauto.
+        eapply (norm_co_nba_step a s) in co_nb as (s'1 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+        rewrite eq in Hyp_conv.
+        assert (⟪ s ⟫ = s'1 ++ s2 ++ s3) as eq'.
+        { admit. }
+        eapply Hlength; try (simpl;lia).
+        rewrite eq'.
+        eapply cnv_prefix in Hyp_conv as Hyp_prefix.
+        symmetry in perm2. eapply cnv_input_perm in perm2 ; eauto.
+        assert (q ⇓ s'1).
+        { admit. }
+        rewrite eq in H2. admit. 
+      * assert (b_and_co_b a) as bcb.
+        { split; eauto. }
+        eapply (norm_b_and_co_b_step a s) in bcb as (s'2 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+        admit.
+    
+    (* 
+  destruct H3
       as (mi & mo & s1 & s2 & s' & e0 & e1 & e3 & e4 & e5 & e6).
     intros p hacnv.
     rewrite e0 in hacnv.
@@ -1149,8 +1229,8 @@ Proof.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eassumption. *) now symmetry.
-      admit. (* eassumption. *) now symmetry.
-Admitted.*)
+      admit. (* eassumption. *) now symmetry. *)
+Admitted. *)
 
 (* Lemma normalize_acnv `{gLtsObaFW P A} (p : P) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
 Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed. *)
@@ -1162,19 +1242,47 @@ Lemma asyn_iff_bhv `{
 Proof.
   intros p q. split.
   - intros (hl1 & hl2). split.
-    + intros s hacnv. eapply normalize_acnv_l in hacnv.
+    + clear hl2. intros s hacnv. revert p q hl1 hacnv. induction s.
+      * intros; simpl ;eauto. rewrite<- norm_nil.
+        eapply hl1. rewrite norm_nil. exact hacnv.
+      * intros. constructor.
+        -- assert (p ⇓ []) as Hyp.
+           { constructor. inversion hacnv; subst ;eauto. }
+           rewrite<- norm_nil in Hyp. eapply hl1 in Hyp.
+           rewrite norm_nil in Hyp. inversion Hyp; subst; eauto.
+        -- intros.
+           assert (exists p', p ⟹{a} p') as (p' & wk_tr).
+           { admit. }
+           eapply IHs; eauto.
+           ++ intro. intros. eapply cnv_preserved_by_wt_act;eauto. 
+           ++ assert (p' ⇓ s) as Hyp_conv'.
+              { eapply cnv_preserved_by_wt_act ; eauto. }
+              exact Hyp_conv'.
       eapply hl1 in hacnv.
-      eapply normalize_acnv in hacnv. eapply hl1 in hacnv.
-      now eapply normalize_acnv in hacnv. *) admit.
+      eapply normalize_acnv_r in hacnv.
+      eauto.
     + intros s q' hacnv hw st.
-      eapply 
-      eapply normalize_acnv in hacnv.
-      eapply normalize_wta_r in hw.
-      destruct hw as (q0 & w0 & sc).
+      eapply normalize_acnv_l in hacnv as hacnv'.
+      eapply normalize_wta_r in hw as hw'.
+      destruct hw' as (q0 & w0 & sc).
       set (h0 := stable_preserved_by_eq q' q0  st (symmetry sc)).
-      destruct (hl2 (normalize s) q0 hacnv ltac:(eauto with mdb))
+      destruct (hl2 (normalize s) q0 hacnv' ltac:(eauto with mdb))
         as (p' & w' & sc' & sub). eassumption.
-      eapply normalize_wta_l in w' as (p0 & wp0 & scp).
+      
+      (* eapply normalize_wta_l in w' as (p0 & wp0 & scp). *)
+      
+      exists p'. repeat split.
+      * admit. (* eassumption. *)
+      * eapply stable_preserved_by_eq;eauto. reflexivity.
+      * rewrite pre_act_of_eq; eauto. assert (q0 ⋍ q') as eq; eauto.
+        eapply pre_act_of_eq in eq. rewrite<- eq. exact sub.
+        reflexivity.
+  - intros (hl1 & hl2). split.
+    + intros s hacnv. eauto.
+    + intros nt q' hacnv w st. eauto.
+Qed.
+
+      
       exists p0. repeat split. eassumption.
       eapply stable_preserved_by_eq;eauto. symmetry. eassumption.
       rewrite pre_act_of_eq; eauto. assert (q0 ⋍ q') as eq; eauto.

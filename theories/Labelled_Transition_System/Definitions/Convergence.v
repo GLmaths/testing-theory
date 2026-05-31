@@ -203,15 +203,32 @@ Proof.
   eapply cnv_preserved_by_wt_nil; eauto.
 Qed.
 
+
 Lemma cnv_drop_input_hd `{gLtsObaFW P A} p μ s :
   (exists η, non_blocking η /\ dual μ η ) -> p ⇓ μ :: s
     -> p ⇓ s.
 Proof.
   intros Hyp hacnv. destruct Hyp as [η Hyp]. destruct Hyp as [nb duo].
   inversion hacnv as [|p'  μ'  T  Hyp_p_conv Hyp_conv_through_μ];subst.
-  destruct (lts_oba_fw_forward p η μ) as (r & l1 & l2). eassumption. eassumption.
-  eapply cnv_preserved_by_lts_non_blocking_action. eassumption.
-  eapply Hyp_conv_through_μ. eapply wt_act. eassumption. eapply wt_nil. eapply l2.
+  destruct (lts_oba_fw_forward p η μ) as (r & l1 & l2).
+  + eassumption.
+  + eassumption.
+  + eapply cnv_preserved_by_lts_non_blocking_action.
+    - eassumption.
+    - eapply Hyp_conv_through_μ. eapply wt_act. eassumption. eapply wt_nil.
+    - eapply l2.
+Qed.
+
+Lemma cnv_drop_input_trace `{gLtsObaFW P A} (p : P) s' s :
+  Forall exist_co_nba s' -> p ⇓ (s' ++ s)
+    -> p ⇓ s.
+Proof.
+  revert s' p. induction s'.
+  + intros; simpl ;eauto.
+  + intros. eapply IHs'.
+    * inversion H2; subst ;eauto.
+    * simpl in *. eapply cnv_drop_input_hd in H3;eauto.
+      inversion H2; eauto.
 Qed.
 
 (* fixme: it should be enought to have ltsOba + one of the feedback *)
@@ -271,9 +288,9 @@ Proof.
     eapply (cnv_wt_prefix [μ1 ; μ2]); eauto.
 Qed.
 
-Lemma cnv_input_perm `{gLtsObaFW P A} p s1 s2 :
-  Forall exist_co_nba s1 -> s1 ≡ₚ s2 -> p ⇓ s1
-    -> p ⇓ s2.
+Lemma cnv_input_perm `{gLtsObaFW P A} p s1 s2 s :
+  Forall exist_co_nba s1 -> s1 ≡ₚ s2 -> p ⇓ s1 ++ s
+    -> p ⇓ s2 ++ s.
 Proof.
   intros his hp hcnv.
   revert p his hcnv.
@@ -290,6 +307,26 @@ Proof.
     eapply IHhp1. eapply are_actions_preserved_by_perm; eauto.
     eassumption.
 Qed.
+
+(* Lemma cnv_non_blocking_action_swap `{gLtsObaFW P A} p η μ :
+  non_blocking η  -> p ⇓ η :: μ
+    -> p ⇓ μ :: η.
+Proof.
+  intros nb1 nb2 hcnv.
+  eapply cnv_act.
+  - now inversion hcnv.
+  - intros q hw1.
+    eapply cnv_act.
+    eapply (cnv_terminate q []).
+    eapply cnv_preserved_by_wt_non_blocking_action; eauto. eapply cnv_nil. now inversion hcnv.
+    intros t hw2.
+    replace (η1 :: η2 :: s) with ([η1 ; η2] ++ s) in hcnv.
+    set (hw3 := wt_concat _ _ _ _ _ hw1 hw2). simpl in hw3.
+    eapply wt_non_blocking_action_swap in hw3 as (t' & hw4 & eq').
+    rewrite <- eq'.
+    eapply cnv_wt_prefix. eauto. eassumption.
+    now simpl. now simpl. now simpl.
+Qed. *)
 
 Lemma cnv_non_blocking_action_swap `{gLtsObaFW P A} p η1 η2 s :
   non_blocking η1 -> non_blocking η2 -> p ⇓ η1 :: η2 :: s
@@ -311,9 +348,9 @@ Proof.
     now simpl. now simpl. now simpl.
 Qed.
 
-Lemma cnv_non_blocking_action_perm `{gLtsObaFW P A} p s1 s2 :
-  Forall non_blocking s1 -> s1 ≡ₚ s2 -> p ⇓ s1
-    -> p ⇓ s2.
+Lemma cnv_non_blocking_action_perm `{gLtsObaFW P A} p s1 s2 s:
+  Forall non_blocking s1 -> s1 ≡ₚ s2 -> p ⇓ s1 ++ s
+    -> p ⇓ s2 ++ s.
 Proof.
   intros hos hp hcnv.
   revert p hos hcnv.
