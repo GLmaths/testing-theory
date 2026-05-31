@@ -131,7 +131,7 @@ Inductive Equation (A : Type) : Type :=
 
 Arguments  Equality {_} _ _.
 
-Notation "x == y" := (Equality x y) (at level 50).
+Notation "x == y" := (Equality x y) (at level 70).
 
 Definition Eval_Eq (E : Equation Data) : option bool :=
 match E with
