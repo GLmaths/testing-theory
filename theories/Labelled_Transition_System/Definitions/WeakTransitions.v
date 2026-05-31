@@ -325,6 +325,51 @@ Proof.
     exists q'. split; eauto with mdb.
 Qed.
 
+Lemma get_back_wt_co_non_blocking_action `{gLtsObaFW P A} (p : P) q s μ : 
+  (exists η, non_blocking η /\ dual μ η) -> p ⟹[s ++ [μ]] q
+    -> p ⟹⋍[[μ] ++ s] q.
+Proof.
+  revert p q μ. dependent induction s.
+  + intros; simpl in *; eauto. exists q. split; eauto. reflexivity.
+  + intros p q μ co_nb wk_tr. assert ((a :: s) ++ [μ] = a :: (s ++ [μ])) as eq.
+    { simpl. eauto. } rewrite eq in wk_tr.
+    eapply wt_pop in wk_tr as (p'' & wk_tr1 & wk_tr2).
+    eapply IHs in wk_tr2 as (p''' & wk_tr2 & eq''');eauto.
+    eapply wt_split in wk_tr2 as (p'''' & wk_tr2 & wk_tr'2).
+    assert (p ⟹⋍[[μ ; a]] p'''').
+    { eapply wt_input_swap;eauto. assert ([a; μ] = [a] ++ [μ]) as eq'''' by (simpl; eauto).
+    rewrite eq''''. eapply wt_concat;eauto. }
+    assert ([μ] ++ a :: s = [μ; a] ++ s) as eq1. { simpl. eauto. }
+    rewrite eq1. eapply wt_join_eq.
+    * exact H2.
+    * exists p'''; split;eauto.
+Qed.
+
+Lemma get_back_wt_co_non_blocking_trace `{gLtsObaFW P A} (p : P) q s s' :
+  Forall exist_co_nba s' -> p ⟹[s ++ s'] q
+    -> p ⟹⋍[s' ++ s] q.
+Proof.
+  revert p q s. dependent induction s'.
+  + intros p q s Hyp wk_tr; simpl in *; eauto. exists q. split.
+    * rewrite app_nil_r in wk_tr. eauto.
+    * reflexivity.
+  + intros p q s co_nb wk_tr. inversion co_nb; subst.
+    assert (s ++ a :: s' = ((s ++ [a]) ++ s')) as eq.
+    { rewrite<- app_assoc. simpl. eauto. }
+    rewrite eq in wk_tr. eapply wt_split in wk_tr as (p' & wk_tr1 & wk_tr2).
+    eapply get_back_wt_co_non_blocking_action in wk_tr1;eauto.
+    destruct wk_tr1 as (p'' & wk_tr' & equiv').
+    eapply wt_split in wk_tr' as (p1 & wk_tr1 & wk_tr'1).
+    symmetry in equiv'. eapply eq_spec_wt in equiv'; eauto.
+    eapply wt_join_eq_r in wk_tr'1 as (q' & wk_tr_q' & equiv'');eauto.
+    eapply IHs' in wk_tr_q';eauto.
+    assert ((a :: s') ++ s = [a] ++ (s' ++ s)) as eq' by (simpl;eauto).
+    rewrite eq'. eapply wt_join_eq_r;eauto.
+    destruct wk_tr_q' as (p'1 & wk_tr'1 & equiv1).
+    exists p'1. split; eauto.
+    etrans;eauto.
+Qed.
+
 Lemma wt_non_blocking_action_perm `{gLtsObaFW P A} {p q} s1 s2 :
   Forall non_blocking s1 -> s1 ≡ₚ s2 -> p ⟹[s1] q
     -> p ⟹⋍[s2] q.

@@ -195,31 +195,29 @@ Qed. *)
 
 Lemma norm_non_blocking_step `{ExtAction A} η s :
   non_blocking η
-  -> exists s1 s2 s3,
+  -> exists s'3 s1 s2 s3,
       ⟪ η :: s ⟫ = s1 ++ s2 ++ s3
-      /\ Forall non_blocking s1
+      /\ Forall exist_co_nba s1
       /\ Forall b_and_co_b s2
-      /\ Forall exist_co_nba s3
-      /\ η ∈ s1.
+      /\ Forall non_blocking s'3
+      /\ s ≡ₚ s1 ++ s2 ++ s'3
+      /\ η :: s'3 ≡ₚ s3
+      /\ η ∈ s3.
 Proof.
   revert η. induction s
     as (s & Hlength) using
          (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
   destruct s; intros η nb.
-  + exists [η], [], []. repeat split.
+  + exists [], [], [], [η]. repeat split.
     * rewrite norm_singleton. simpl. eauto.
     * constructor;eauto.
     * eauto.
     * eauto.
+    * eauto.
+    * eauto.
     * set_solver.
   + destruct (decide (non_blocking a)) as [nb' | b'].
-    * assert (∃ s1 s2 s3 : list A,
-            ⟪ a :: s ⟫ = s1 ++ s2 ++ s3
-            ∧ Forall non_blocking s1
-              ∧ Forall b_and_co_b s2
-                ∧ Forall exist_co_nba s3 ∧ a ∈ s1) as (s1 & s2 & s3 & eq & all_co_nb & all_b_and_co_b & all_nb & mem).
-      { eapply Hlength; eauto. }
-      admit.
+    * admit.
       (* exists (elements ({[+ a +]} ⊎ (list_to_set_disj s1))).
       exists ({[+ a +]} ⊎  M_nb). exists (a :: s1), s2. repeat split.
       - subst. admit. 
@@ -243,27 +241,31 @@ Proof.
         ++ eauto. *)
 Admitted.
 
-(* Lemma norm_co_nb_step `{ExtAction A} β s :
-  exist_co_nba β
-  -> exists M_co_nb s1 s2,
-      normalize (β :: s) = ({[+ β +]}  ⊎ M_co_nb) :: normalize s2 
-      /\ s = s1 ++ s2
-      /\ Forall exist_co_nba s1
-      /\ (elements M_co_nb) ≡ₚ s1
-      /\ length s2 <= length s.
+Lemma norm_co_nba_step `{ExtAction A} μ s :
+  exist_co_nba μ
+  -> exists s'1 s1 s2 s3,
+      ⟪ μ :: s ⟫ = s1 ++ s2 ++ s3
+      /\ Forall exist_co_nba s'1
+      /\ Forall b_and_co_b s2
+      /\ Forall non_blocking s3
+      /\ s ≡ₚ s'1 ++ s2 ++ s3
+      /\ μ :: s'1 ≡ₚ s1
+      /\ μ ∈ s1.
 Proof.
-  revert β. induction s
+  revert μ. induction s
     as (s & Hlength) using
          (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  destruct s; intros β co_nb.
-  + exists ∅, [], []. repeat split.
-    * rewrite norm_singleton. rewrite norm_nil.
-      assert ({[+ β +]} ⊎ (∅ :gmultiset A) = {[+ β +]}) as eq by multiset_solver.
-      rewrite eq. reflexivity.
+  destruct s; intros μ co_nb.
+  + exists [], [μ], [], []. repeat split.
+    * rewrite norm_singleton. simpl. reflexivity.
+    * eauto.
     * constructor.
     * eauto.
     * eauto.
-  + destruct (decide (non_blocking a)) as [nb' | b'].
+    * eauto.
+    * set_solver.
+  + admit.
+  (* destruct (decide (non_blocking a)) as [nb' | b'].
     * exists ∅, [], (a :: s). repeat split.
       - assert ({[+ β +]} ⊎ (∅ : gmultiset A) = {[+ β +]}) as eq by multiset_solver.
         rewrite eq. assert (blocking β) as b.
@@ -291,8 +293,111 @@ Proof.
            rewrite eq. rewrite norm_co_non_blocking_co_blocking_step; eauto.
         ++ constructor.
         ++ rewrite gmultiset_elements_empty. reflexivity.
+        ++ eauto. *)
+Admitted.
+
+Lemma norm_b_and_co_b_step `{ExtAction A} β s :
+  b_and_co_b β
+  -> exists s'2 s1 s2 s3,
+      ⟪ β :: s ⟫ = s1 ++ s2 ++ s3
+      /\ Forall exist_co_nba s1
+      /\ Forall b_and_co_b s'2
+      /\ Forall non_blocking s3
+      /\ s ≡ₚ s1 ++ s'2 ++ s3
+      /\ β :: s'2 = s2
+      /\ β ∈ s2.
+Proof.
+  revert β. induction s
+    as (s & Hlength) using
+         (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
+  destruct s; intros β bcb.
+  + exists [], [], [β], []. repeat split.
+    * rewrite norm_singleton. simpl. reflexivity.
+    * constructor.
+    * eauto.
+    * constructor.
+    * eauto.
+    * set_solver.
+  + admit.
+  (* destruct (decide (non_blocking a)) as [nb' | b'].
+    * exists ∅, [], (a :: s). repeat split.
+      - assert ({[+ β +]} ⊎ (∅ : gmultiset A) = {[+ β +]}) as eq by multiset_solver.
+        rewrite eq. assert (blocking β) as b.
+        { destruct co_nb as (β' & nb & duo). eapply dual_blocks in duo;eauto. }
+        rewrite norm_blocking_non_blocking_step; eauto.
+      - constructor.
+      - rewrite gmultiset_elements_empty. reflexivity.
+      - eauto.
+    * destruct (decide (exist_co_nba a)) as [co_nb' | co_b'].
+      - assert (∃ (M_co_nb : gmultiset A) (s1 : list A) (s2 : trace A),
+            normalize (β :: s) = {[+ β +]} ⊎ M_co_nb :: normalize s2
+            ∧ s = s1 ++ s2
+              ∧ Forall exist_co_nba s1
+                ∧ elements M_co_nb ≡ₚ s1 ∧ length s2 ≤ length s) as (M_co_nb & s1 & s2 & eq & eq_trace & all_co_nb & permut & subeq_length).
+        { eapply Hlength; eauto. }
+        exists ({[+ a +]} ⊎  M_co_nb). exists (a :: s1), s2. repeat split; subst.
+        ++ admit.
         ++ eauto.
-Admitted. *)
+        ++ constructor; eauto.
+        ++ rewrite gmultiset_elements_disj_union. rewrite gmultiset_elements_singleton.
+           simpl. eapply Permutation_skip. eauto.
+        ++ simpl. lia.
+      - exists ∅, [], (a :: s). repeat split.
+        ++ assert ({[+ β +]} ⊎ (∅ : gmultiset A) = {[+ β +]}) as eq by multiset_solver.
+           rewrite eq. rewrite norm_co_non_blocking_co_blocking_step; eauto.
+        ++ constructor.
+        ++ rewrite gmultiset_elements_empty. reflexivity.
+        ++ eauto. *)
+Admitted.
+
+Lemma norm_shape `{ExtAction A} s :
+      exists s1 s2 s3,
+      ⟪ s ⟫ = s1 ++ s2 ++ s3
+      /\ Forall exist_co_nba s1
+      /\ Forall b_and_co_b s2
+      /\ Forall non_blocking s3
+      /\ s ≡ₚ s1 ++ s2 ++ s3.
+Proof.
+  induction s
+    as (s & Hlength) using
+         (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
+  destruct s.
+  + exists [], [], []. repeat split.
+    * constructor. (* rewrite norm_singleton. *)
+    * constructor.
+    * eauto.
+    * constructor.
+  + admit.
+  (* destruct (decide (non_blocking a)) as [nb' | b'].
+    * exists ∅, [], (a :: s). repeat split.
+      - assert ({[+ β +]} ⊎ (∅ : gmultiset A) = {[+ β +]}) as eq by multiset_solver.
+        rewrite eq. assert (blocking β) as b.
+        { destruct co_nb as (β' & nb & duo). eapply dual_blocks in duo;eauto. }
+        rewrite norm_blocking_non_blocking_step; eauto.
+      - constructor.
+      - rewrite gmultiset_elements_empty. reflexivity.
+      - eauto.
+    * destruct (decide (exist_co_nba a)) as [co_nb' | co_b'].
+      - assert (∃ (M_co_nb : gmultiset A) (s1 : list A) (s2 : trace A),
+            normalize (β :: s) = {[+ β +]} ⊎ M_co_nb :: normalize s2
+            ∧ s = s1 ++ s2
+              ∧ Forall exist_co_nba s1
+                ∧ elements M_co_nb ≡ₚ s1 ∧ length s2 ≤ length s) as (M_co_nb & s1 & s2 & eq & eq_trace & all_co_nb & permut & subeq_length).
+        { eapply Hlength; eauto. }
+        exists ({[+ a +]} ⊎  M_co_nb). exists (a :: s1), s2. repeat split; subst.
+        ++ admit.
+        ++ eauto.
+        ++ constructor; eauto.
+        ++ rewrite gmultiset_elements_disj_union. rewrite gmultiset_elements_singleton.
+           simpl. eapply Permutation_skip. eauto.
+        ++ simpl. lia.
+      - exists ∅, [], (a :: s). repeat split.
+        ++ assert ({[+ β +]} ⊎ (∅ : gmultiset A) = {[+ β +]}) as eq by multiset_solver.
+           rewrite eq. rewrite norm_co_non_blocking_co_blocking_step; eauto.
+        ++ constructor.
+        ++ rewrite gmultiset_elements_empty. reflexivity.
+        ++ eauto. *)
+Admitted.
 
 
 (*Lemma norm_length `{ExtAction A} :
@@ -712,7 +817,55 @@ Admitted. *)
 
 From Stdlib Require Import Wellfounded.
 
-Theorem normalize_wta_r `{gLtsObaFW P A} : forall s (p : P) q, p ⟹[s] q -> p ⟹⋍[ ⟪s⟫] q.
+
+(* TODO : delted those lemma , already in weak_transition file *)
+Lemma get_back_wt_co_non_blocking_action `{gLtsObaFW P A} (p : P) q s μ : 
+  (exists η, non_blocking η /\ dual μ η) -> p ⟹[s ++ [μ]] q
+    -> p ⟹⋍[[μ] ++ s] q.
+Proof.
+  revert p q μ. dependent induction s.
+  + intros; simpl in *; eauto. exists q. split; eauto. reflexivity.
+  + intros p q μ co_nb wk_tr. assert ((a :: s) ++ [μ] = a :: (s ++ [μ])) as eq.
+    { simpl. eauto. } rewrite eq in wk_tr.
+    eapply wt_pop in wk_tr as (p'' & wk_tr1 & wk_tr2).
+    eapply IHs in wk_tr2 as (p''' & wk_tr2 & eq''');eauto.
+    eapply wt_split in wk_tr2 as (p'''' & wk_tr2 & wk_tr'2).
+    assert (p ⟹⋍[[μ ; a]] p'''').
+    { eapply wt_input_swap;eauto. assert ([a; μ] = [a] ++ [μ]) as eq'''' by (simpl; eauto).
+    rewrite eq''''. eapply wt_concat;eauto. }
+    assert ([μ] ++ a :: s = [μ; a] ++ s) as eq1. { simpl. eauto. }
+    rewrite eq1. eapply wt_join_eq.
+    * exact H2.
+    * exists p'''; split;eauto.
+Qed.
+
+Lemma get_back_wt_co_non_blocking_trace `{gLtsObaFW P A} (p : P) q s s' :
+  Forall exist_co_nba s' -> p ⟹[s ++ s'] q
+    -> p ⟹⋍[s' ++ s] q.
+Proof.
+  revert p q s. dependent induction s'.
+  + intros p q s Hyp wk_tr; simpl in *; eauto. exists q. split.
+    * rewrite app_nil_r in wk_tr. eauto.
+    * reflexivity.
+  + intros p q s co_nb wk_tr. inversion co_nb; subst.
+    assert (s ++ a :: s' = ((s ++ [a]) ++ s')) as eq.
+    { rewrite<- app_assoc. simpl. eauto. }
+    rewrite eq in wk_tr. eapply wt_split in wk_tr as (p' & wk_tr1 & wk_tr2).
+    eapply get_back_wt_co_non_blocking_action in wk_tr1;eauto.
+    destruct wk_tr1 as (p'' & wk_tr' & equiv').
+    eapply wt_split in wk_tr' as (p1 & wk_tr1 & wk_tr'1).
+    symmetry in equiv'. eapply eq_spec_wt in equiv'; eauto.
+    eapply wt_join_eq_r in wk_tr'1 as (q' & wk_tr_q' & equiv'');eauto.
+    eapply IHs' in wk_tr_q';eauto.
+    assert ((a :: s') ++ s = [a] ++ (s' ++ s)) as eq' by (simpl;eauto).
+    rewrite eq'. eapply wt_join_eq_r;eauto.
+    destruct wk_tr_q' as (p'1 & wk_tr'1 & equiv1).
+    exists p'1. split; eauto.
+    etrans;eauto.
+Qed.
+
+
+Theorem normalize_wta_r `{gLtsObaFW P A} : forall s (p : P) q, p ⟹[s] q -> p ⟹⋍[⟪s⟫] q.
 Proof.
   induction s
     as (s & Hlength)
@@ -720,33 +873,72 @@ Proof.
          (well_founded_induction (wf_inverse_image _ nat _ List.length PeanoNat.Nat.lt_wf_0)).
   destruct s.
   - intros p q w. simpl. exists q. split. eauto with mdb. reflexivity.
-  - admit. (* intros p q w. destruct (decide (non_blocking a)) as [nb | b].
-    + simpl. rewrite decide_True; eauto.
-(*   
-  
-    destruct (norm_shape (e :: s)).
-    now eapply norm_loop_nil in H3.
-    destruct H3
-      as (mi & mo & s1 & s2 & s' & e0 & e1 & e3 & e4 & e5 & e6).
-    subst.
-    rewrite e0.
-    simpl.
-    rewrite e1 in w.
-    eapply wt_split in w as (t & w1 & w2).
-    eapply wt_split in w2 as (r & w2 & w3).
-    assert (hl : length s' < length (e :: s)).
-    eapply norm_length in e0. eassumption.
-    set (h := Hlength s' hl r q w3).
-    eapply wt_join_eq.
-    eapply (wt_input_perm s1);eauto.
-    admit. (* eassumption. *)
-    now symmetry. eapply wt_join_eq.
-    eapply (wt_non_blocking_action_perm s2); eauto.
-    admit. (* eassumption. *)
-    now symmetry.  eassumption. *) *)
+  - intros p q wt_tr. assert (a :: s = [a] ++ s) as eq_trace.
+    { simpl; eauto. } rewrite eq_trace in wt_tr.
+    eapply wt_split in wt_tr as (p' & wt_tr1 & wt_tr2).
+    destruct (decide (non_blocking a)) as [nb | b].
+    + assert (non_blocking a);eauto.
+      eapply (norm_non_blocking_step a s) in nb as (s'3 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+      rewrite eq.
+      eapply Hlength in wt_tr2; try (simpl; lia).
+      assert (⟪ s ⟫ = s1 ++ s2 ++ s'3) as eq'.
+      { admit. }
+      destruct wt_tr2 as (p'' & wt_tr2 & equiv). rewrite eq' in wt_tr2.
+      eapply wt_split in wt_tr2 as (p''' & wt_tr2 & wt_tr2').
+      eapply wt_split in wt_tr2' as (p'''' & wt_tr2' & wt_tr2'').
+      assert (p ⟹⋍[(s1 ++ s2) ++ [a]] p'''') as wk_tr3.
+      { eapply push_wt_non_blocking_action;eauto. eapply wt_push_left;eauto.
+        eapply wt_concat; eauto. }
+      destruct wk_tr3 as (p4 & wk_tr3 & equiv'').
+      eapply wt_split in wk_tr3 as (p5 & wk_tr1 & wk_tr2). symmetry in equiv''.
+      eapply eq_spec_wt in equiv''; eauto.
+      eapply wt_join_eq_r in wk_tr2 as (p'5 & wk_tr2 & equiv5) ;eauto.
+      eapply wt_non_blocking_action_perm in wk_tr2 as (p''5 & wk_tr2 & equiv'5);eauto.
+      exists p''5. split.
+      ++ eapply wt_split in wk_tr1 as (p7 & wk_tr1' & wk_tr1'').
+         eapply wt_concat;eauto. eapply wt_concat;eauto.
+      ++ etrans; eauto. etrans; eauto.
+      ++ simpl. constructor; eauto.
+    + destruct (decide (exist_co_nba a)) as [co_nb | co_b].
+      * assert (exist_co_nba a);eauto.
+        eapply (norm_co_nba_step a s) in co_nb as (s'1 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+        rewrite eq.
+        eapply Hlength in wt_tr2; try (simpl; lia).
+        assert (⟪ s ⟫ = s'1 ++ s2 ++ s3) as eq'.
+        { admit. }
+        destruct wt_tr2 as (p'' & wt_tr2 & equiv). rewrite eq' in wt_tr2.
+        eapply wt_split in wt_tr2 as (p''' & wt_tr2 & wt_tr2').
+        eapply wt_join_eq.
+        ++ eapply (wt_input_perm (a :: s'1));eauto.
+           assert (a :: s'1 = [a] ++ s'1) as eq'';eauto. rewrite eq''.
+           eapply wt_concat.
+           ** exact wt_tr1.
+           ** exact wt_tr2.
+        ++ exists p''; eauto.
+      * assert (b_and_co_b a) as bcb.
+        { split; eauto. }
+        eapply (norm_b_and_co_b_step a s) in bcb as (s'2 & s1 & s2 & s3 & eq & cnb & bcb & nb & perm1 & perm2 & mem).
+        rewrite eq.
+        eapply Hlength in wt_tr2; try (simpl; lia).
+        assert (⟪ s ⟫ = s1 ++ s'2 ++ s3) as eq'.
+        { admit. }
+        destruct wt_tr2 as (p'' & wt_tr2 & equiv). rewrite eq' in wt_tr2.
+        eapply wt_split in wt_tr2 as (p''' & wt_tr2 & wt_tr2').
+        eapply wt_split in wt_tr2' as (p'''' & wt_tr2' & wt_tr2'').
+        assert (p ⟹⋍[s1 ++ [a]] p''') as (p3 & wk_tr3 & equiv3).
+        { eapply get_back_wt_co_non_blocking_trace;eauto.
+          simpl. eapply wt_push_left;eauto. }
+        eapply wt_split in wk_tr3 as (p'2 & wk_tr2' & wk_tr2'').
+        eapply wt_join_eq_r;eauto. subst.
+        assert (p''' ⟹[s'2 ++ s3] p'').
+        { eapply wt_concat;eauto. }
+        symmetry in equiv3. eapply eq_spec_wt in equiv3 as (p9 & wk_tr & equiv3); eauto.
+        assert ((a :: s'2) ++ s3 = [a] ++ (s'2 ++ s3)) as eq5.
+        { simpl. eauto. } rewrite eq5.
+        eapply wt_join_eq_r;eauto. exists p9. split ;eauto. etrans;eauto.
 Admitted.
 
-Lemma normalize_wta_l `{gLtsObaFW P A} : forall s (p : P) q, p ⟹[⟪s⟫] q -> p ⟹⋍[s] q.
+(* Lemma normalize_wta_l `{gLtsObaFW P A} : forall s (p : P) q, p ⟹[⟪s⟫] q -> p ⟹⋍[s] q.
 Proof.
    induction s
     as (s & Hlength)
@@ -754,7 +946,19 @@ Proof.
          (well_founded_induction (wf_inverse_image _ nat _ List.length PeanoNat.Nat.lt_wf_0)).
   destruct s.
   - intros p q w. simpl in w. exists q. split. eauto with mdb. reflexivity.
-  - intros p q w.
+  - intros p q wt_tr. destruct (decide (non_blocking a)) as [nb | b].
+    + eapply (norm_non_blocking_step a s) in nb as (s1 & s2 & s3 & eq & cnb & bcb & nb & perm & mem).
+      rewrite eq in wt_tr.
+      
+      Check wt_non_blocking_action_perm.
+      wt_non_blocking_action_perm (* qu'importe l'ordre des nb *)
+      push_wt_non_blocking_action (* mettre les nb à la fin *)
+      
+      wt_input_perm (* qu'importe l'ordre des co_nb *)
+      wt_input_swap (* mettre les co_nb au début *)
+      
+      
+      rewrite eq.
     (* destruct (norm_shape (e :: s)).
     now eapply norm_loop_nil in H3.
     destruct H3
@@ -775,9 +979,9 @@ Proof.
     eapply (wt_non_blocking_action_perm (map ActOut (elements mo))).
     admit. (* eapply are_outputs_map_ActOut. *)
     now symmetry. eassumption. eauto. *) admit.
-Admitted.
+Admitted. *)
 
-Lemma normalize_wta `{gLtsObaFW P A} s (p : P) q : p ⟹⋍[⟪s⟫] q <-> p ⟹⋍[s] q.
+(*Lemma normalize_wta `{gLtsObaFW P A} s (p : P) q : p ⟹⋍[⟪s⟫] q <-> p ⟹⋍[s] q.
 Proof.
   split.
   intros (q' & w & sc).
@@ -786,7 +990,7 @@ Proof.
   intros (q' & w & sc).
   eapply normalize_wta_r in w as (q'' & w & sc').
   exists q''. split. eauto with mdb. transitivity q'; now symmetry.
-Qed.
+Qed. *)
 
 Lemma pre_act_of_eq `{gLtsEq P A} `{Γ : A -> PreAct}
   p q : p ⋍ q -> ⌈ Γ ⌉ (coR p) ≡ ⌈ Γ ⌉ (coR q).
@@ -840,7 +1044,7 @@ Proof.
     symmetry in st'. eapply stable_preserved_by_eq; eauto.
 Qed. *)
 
-Definition bhv_lin_pre_cond1 `{gLts P H, gLts Q H} (p : P) (q : Q) := forall s, p ⇓ linearize s -> q ⇓ linearize s.
+Definition bhv_lin_pre_cond1 `{gLts P H, gLts Q H} (p : P) (q : Q) := forall norm_s, p ⇓ linearize norm_s -> q ⇓ linearize norm_s.
 
 Notation "p ₁≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre_cond1 p q) (at level 70).
 
@@ -848,9 +1052,9 @@ Definition bhv_lin_pre_cond2 `{
   gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
   (p : P) (q : Q) :=
-  forall nt q',
-    p ⇓ linearize nt -> q ⟹[linearize nt] q' -> q' ↛ ->
-    ∃ p', p ⟹[linearize nt] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+  forall norm_s q',
+    p ⇓ linearize norm_s -> q ⟹[linearize norm_s] q' -> q' ↛ ->
+    ∃ p', p ⟹[linearize norm_s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
 
 Notation "p ₂≼ₙₒᵣₘ₋ₐₛ q" := (bhv_lin_pre_cond2 p q) (at level 70).
 
@@ -910,8 +1114,9 @@ Proof.
   induction s
     as (s & Hlength)
          using (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  (* destruct (norm_shape s).
-  - eapply norm_nil in H3. subst. now simpl.
+  destruct (norm_shape s) as (s1 & s2 & s3 & eq & nb & bcb & co_nb & equiv).
+  destruct s; intros.
+  - simpl in *. eapply norm_nil in H3. subst. now simpl.
   - destruct H3
       as (mi & mo & s1 & s2 & s' & e0 & e1 & e3 & e4 & e5 & e6).
     intros p hacnv.
@@ -944,11 +1149,11 @@ Proof.
       eapply cnv_wt_prefix; eassumption.
       eapply cnv_wt_prefix; eassumption.
       admit. (* eassumption. *) now symmetry.
-      admit. (* eassumption. *) now symmetry. *)
-Admitted.
+      admit. (* eassumption. *) now symmetry.
+Admitted.*)
 
-Lemma normalize_acnv `{gLtsObaFW P A} (p : P) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
-Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed.
+(* Lemma normalize_acnv `{gLtsObaFW P A} (p : P) s : p ⇓ s <-> p ⇓ ⟪ s ⟫.
+Proof. split; [eapply normalize_acnv_l | eapply normalize_acnv_r]. Qed. *)
 
 Lemma asyn_iff_bhv `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
@@ -957,10 +1162,12 @@ Lemma asyn_iff_bhv `{
 Proof.
   intros p q. split.
   - intros (hl1 & hl2). split.
-    + intros s hacnv.
+    + intros s hacnv. eapply normalize_acnv_l in hacnv.
+      eapply hl1 in hacnv.
       eapply normalize_acnv in hacnv. eapply hl1 in hacnv.
-      now eapply normalize_acnv in hacnv.
+      now eapply normalize_acnv in hacnv. *) admit.
     + intros s q' hacnv hw st.
+      eapply 
       eapply normalize_acnv in hacnv.
       eapply normalize_wta_r in hw.
       destruct hw as (q0 & w0 & sc).
