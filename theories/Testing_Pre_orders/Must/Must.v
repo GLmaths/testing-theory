@@ -119,6 +119,7 @@ Global Hint Unfold ctx_pre: mdb.
 
 Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre p q) (at level 70).
 Notation "p ⋢ₘᵤₛₜᵢ q" := (¬ ctx_pre p q) (at level 70).
+Notation "p ≂ₘᵤₛₜᵢ q" := (q ⊑ₘᵤₛₜᵢ p /\ p ⊑ₘᵤₛₜᵢ q) (at level 70).
 
 (** ** Properties on [must] *)
 

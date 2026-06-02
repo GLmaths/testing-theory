@@ -259,21 +259,11 @@ Proof.
        * inversion l1.
 Qed.
 
-Lemma constant_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ const.
+Lemma NIL_is_equivalent_to_ccat : ccat ≂ₘᵤₛₜᵢ (g 𝟘).
 Proof.
-  intros imp. assert ((g 𝟘) ⊑ₘᵤₛₜᵢ ccat) as HypMust.
-  { eapply copycat_is_above_NIL; eauto. }
-  assert ((g 𝟘) ⊑ₘᵤₛₜᵢ const) as imp'.
-  { intros e HM. eapply imp. eapply HypMust. eauto. }
-  assert ((g 𝟘) ⋢ₘᵤₛₜᵢ const). { eapply constant_is_not_above_NIL. }
-  contradiction.
+  split.
+  + eapply copycat_is_above_NIL.
+  + eapply NIL_is_above_copycat.
 Qed.
-
-Lemma tau_compositionality_with_must (p : proc) (q : proc) : p ⊑ₘᵤₛₜᵢ q -> g (𝛕 • p) ⊑ₘᵤₛₜᵢ g (𝛕 • q).
-Proof.
-  intros hyp_must%bhv_iff_ctx_VACCS.
-  eapply bhv_iff_ctx_VACCS.
-  (* to be completed/finished *)
-Abort.
 
 End VACCS_examples.
