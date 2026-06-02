@@ -40,7 +40,7 @@ From TestingTheory Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_F
 
 Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ2 μ1 /\ non_blocking μ1.
 
-#[global] Program Instance FW_gLts {P A : Type} `(M: gLts P A) 
+#[global] Program Instance toFW {P A : Type} `(M: gLts P A) 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
     : gLts (P * MO A) _ := inter_lts fw_inter.
 
@@ -154,7 +154,7 @@ Definition lts_fw_sc
   `{M1 : @FiniteOutputChain_LtsOba P A H gLtsEqP gLtsObaP}
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
   (p : P * MO A) α (q : P * MO A) :=
-  exists r, ((FW_gLts gLtsP).(lts_step) p α r) /\ r ≐ q.
+  exists r, ((toFW gLtsP).(lts_step) p α r) /\ r ≐ q.
 
 Notation "p ⟶≐ q" := (lts_fw_sc p τ q) (at level 90, format "p  ⟶≐  q").
 Notation "p ⟶≐{ α } q" := (lts_fw_sc p α q) (at level 90, format "p  ⟶≐{ α }  q").
@@ -588,7 +588,7 @@ Qed.
 
 (* Our FW Equivalence ≐ is a bissimulation *)
 
-#[global] Program Instance FW_gLtsEq 
+#[global] Program Instance toFWEq 
   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A fw_inter}
   : gLtsEq (P * MO A) H :=
@@ -603,7 +603,7 @@ Next Obligation.
   eapply lts_fw_eq_spec; eauto.
 Qed.
 
-#[global] Program Instance FW_gLtsOba
+#[global] Program Instance toFWOba
   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A fw_inter}
   : gLtsOba (P * MO A).
@@ -877,7 +877,7 @@ Qed.
 
 (* Forwarder of a LTS with OBA axioms respects FW axioms *)
 
-#[global] Program Instance FW_gLtsObaFW
+#[global] Program Instance toFWObaFW
   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} `{!FiniteOutputChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A fw_inter}
   : gLtsObaFW (P * MO A) A.

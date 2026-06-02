@@ -875,7 +875,7 @@ Proof.
     eapply wq0 in mem as ( q & mem & wk_tr).
     destruct (h2 q [μ] x mem wk_tr) as (p1 & mem1 & p0 & wp0 & stp0) (* & subp0) *).
     - unfold lts_refuses in stq0. simpl in *. 
-      unfold SetLTSConstruction.SET_LTS_obligation_3 in stq0.
+      unfold SetLTSConstruction.toSET_obligation_3 in stq0.
       eapply stq0. set_solver.
     - eauto.
     - eapply witness_wk_tr in wp0 as (ps' & wk_tr' & mem'); eauto. 

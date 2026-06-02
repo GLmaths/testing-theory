@@ -89,7 +89,7 @@ From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 #[global] Program Instance PreActActionForFW
   `{@AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT}
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
-  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (FW_gLts gLtsP) gLtsT.
+  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (toFW gLtsP) gLtsT.
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
@@ -118,7 +118,7 @@ Admitted.
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
   `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _ }
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
-  : @FinitaryAbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (FW_gLts gLtsP) gLtsT _ _ :=
+  : @FinitaryAbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (toFW gLtsP) gLtsT _ _ :=
   {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) (MO_without_not_nb p.2));|}.
 Next Obligation.
   intros.

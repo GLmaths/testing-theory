@@ -59,7 +59,7 @@ Next Obligation.
   intros ? ? ? ? nb ; simpl in *. inversion nb.
 Defined. *)
 
-#[global] Program Instance SET_LTS `(gLtsP : !@gLts P A H)`{FiniteP : !@FiniteImagegLts P A H gLtsP} : 
+#[global] Program Instance toSET `(gLtsP : !@gLts P A H)`{FiniteP : !@FiniteImagegLts P A H gLtsP} : 
   gLts (gset P) H.
 Next Obligation.
   intros. destruct X.
@@ -67,7 +67,7 @@ Next Obligation.
   + exact (H1 = lts_tau_set_from_pset H0 /\ H1 ≠ ∅).
 Defined.
 Next Obligation.
-  intros; simpl in *. unfold SET_LTS_obligation_1.
+  intros; simpl in *. unfold toSET_obligation_1.
   destruct α.
   - destruct (decide (b = lts_extaction_set_from_pset a μ /\ b ≠ ∅)).
     + left. eauto.
@@ -80,7 +80,7 @@ Next Obligation.
   intros. exact (forall p, p ∈ H0 -> lts_refuses p X).
 Defined.
 Next Obligation.
-  intros. simpl in *. unfold SET_LTS_obligation_3.
+  intros. simpl in *. unfold toSET_obligation_3.
   pose proof (decide (∃ x, x ∈ p ∧ ¬ x ↛{α})) as Hdec.
   destruct Hdec as [Hex | Hnot].
   + right. intro. destruct Hex as (p' & mem & tr).
@@ -92,8 +92,8 @@ Next Obligation.
       contradiction.
 Qed.
 Next Obligation.
-  unfold SET_LTS_obligation_3.
-  unfold SET_LTS_obligation_1. intros. destruct α.
+  unfold toSET_obligation_3.
+  unfold toSET_obligation_1. intros. destruct α.
   - assert (forall p', p' ∈ p -> (¬ lts_refuses p' (ActExt μ) \/ lts_refuses p' (ActExt μ))) as Hyp.
     { intros. destruct (decide (p' ↛[μ])); [right|left];eauto. }
     exists (lts_extaction_set_from_pset p μ). split; eauto.
@@ -116,8 +116,8 @@ Next Obligation.
     + contradiction.
 Qed.
 Next Obligation.
-  unfold SET_LTS_obligation_3.
-  unfold SET_LTS_obligation_1. intros.
+  unfold toSET_obligation_3.
+  unfold toSET_obligation_1. intros.
   destruct α.
   - intro. destruct H0 as (p' & Hyp1 & Hyp2). subst.
     remember (lts_extaction_set_from_pset p μ).
@@ -298,7 +298,7 @@ Proof.
     - eapply tau_action_equiv_set; eauto.
 Qed.
 
-#[global] Program Instance SET_LTS_eq `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} : @gLtsEq (gset P) A H:=
+#[global] Program Instance toSET_eq `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} : @gLtsEq (gset P) A H:=
   {| eq_rel := eq_rel_set |}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? (Z & Hyp). eapply simulation_eq_set_rel;eauto.
@@ -306,8 +306,8 @@ Qed.
 
 (* Set of a LTS respects OBA axioms , because empty set = non_blocking_action *)
 
-#[global] Program Instance SET_LTS_gLtsOba `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
-  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @gLtsOba (gset P) A H (SET_LTS_eq gLtsEqP).
+#[global] Program Instance toSET_gLtsOba `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @gLtsOba (gset P) A H (toSET_eq gLtsEqP).
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
@@ -326,8 +326,8 @@ Qed.
 
 (* Set of a LTS respects FiniteOuputChain axioms , because empty set = non_blocking_action *)
 
-#[global] Program Instance SET_LTS_FiniteOutputChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
-  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @FiniteOutputChain_LtsOba (gset P) A H (SET_LTS_eq gLtsEqP) (@SET_LTS_gLtsOba P A H gLtsEqP _ ext_prop ):=
+#[global] Program Instance toSET_FiniteOutputChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} : @FiniteOutputChain_LtsOba (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ):=
   {| lts_oba_mo p := empty |}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
@@ -341,18 +341,18 @@ Qed.
 
 (* Set of a LTS respects FB axioms , because empty set = non_blocking_action *)
 
-#[global] Program Instance SET_LTS_gLtsObaFB `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+#[global] Program Instance toSET_gLtsObaFB `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} 
-  : @gLtsObaFB (gset P) A H (SET_LTS_eq gLtsEqP) (@SET_LTS_gLtsOba P A H gLtsEqP _ ext_prop ). 
+  : @gLtsObaFB (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ). 
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
 (* Set of a LTS respects FW axioms , because empty set = non_blocking_action *)
 
-#[global] Program Instance SET_LTS_gLtsObaFW `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+#[global] Program Instance toSET_gLtsObaFW `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall μ, non_blocking μ -> all_blocking_action_ext μ} 
-  : @gLtsObaFW (gset P) A H (SET_LTS_eq gLtsEqP) (@SET_LTS_gLtsOba P A H gLtsEqP _ ext_prop ). 
+  : @gLtsObaFW (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ). 
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ?. exists empty. intro nb. eapply ext_prop in nb. inversion nb.
 Qed.
@@ -363,7 +363,7 @@ Qed.
 (********************************** toSet is a Finite Image LTS ************************)
 
 #[global] Program Instance gLtsMBFinite `{@FiniteImagegLts P A H gLtsP}
-  : @FiniteImagegLts (gset P) A H (SET_LTS gLtsP).
+  : @FiniteImagegLts (gset P) A H (toSET gLtsP).
 Next Obligation. 
   intros ? ? ? ? ? X α.
   destruct α as [μ | ].
