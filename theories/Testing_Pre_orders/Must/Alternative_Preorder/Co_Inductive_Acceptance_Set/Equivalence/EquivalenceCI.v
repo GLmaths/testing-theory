@@ -66,10 +66,10 @@ Section eq_contextual.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * mb A) T A dual}.
-  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * mb A) T A dual}.
+  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
 
   Context `{CC : Countable PreAct}.
   Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
@@ -115,7 +115,7 @@ Section eq_contextual.
 
   (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
   Theorem equivalence_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * mb A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * mb A)).
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * MO A)).
   Proof.
     split.
     - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set.
@@ -131,7 +131,7 @@ Section eq_contextual.
 
   (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
   Theorem equivalence_co_inductive_acc_set_and_must (p : P) (q : Q) :
-    pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * mb A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * mb A)).
+    pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * MO A)).
   Proof.
     rewrite pre_extensional_eq. apply equivalence_co_inductive_acc_set_and_must_i.
   Qed.

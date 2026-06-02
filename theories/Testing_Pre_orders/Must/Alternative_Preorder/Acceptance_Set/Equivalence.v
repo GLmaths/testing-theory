@@ -45,10 +45,10 @@ Section preorder.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * mb A) T A dual}.
-  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * mb A) T A dual}.
+  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
 
 
   Context `{CC : Countable PreAct}.

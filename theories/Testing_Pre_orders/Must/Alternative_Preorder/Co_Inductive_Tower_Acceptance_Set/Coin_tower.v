@@ -268,10 +268,10 @@ Section eq_contextual.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{!Prop_of_Inter P (mb A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * mb A) T A dual}.
-  Context `{!Prop_of_Inter Q (mb A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * mb A) T A dual}.
+  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
 
   Context `{CC : Countable PreAct}.
   Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
@@ -286,7 +286,7 @@ Section eq_contextual.
 
   Theorem eq_ctx (p : P) (q : Q) :
     pre_extensional outcome p q <-> 
-    ({[ p ▷ (∅ : mb A) ]} : gset (P * mb A)) ⩽ₜₒᵥᵥₑᵣ ({[ q ▷ (∅ : mb A) ]} : gset (Q * mb A)).
+    ({[ p ▷ (∅ : MO A) ]} : gset (P * MO A)) ⩽ₜₒᵥᵥₑᵣ ({[ q ▷ (∅ : MO A) ]} : gset (Q * MO A)).
   Proof.
     rewrite <- eqx. rewrite alt_set_singleton_iff.
     now rewrite equivalence_bhv_acc_ctx.
@@ -468,10 +468,10 @@ Qed.
 Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
   `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts}
-  {PRE : Chain (copre_m (P := P * mb A) (Q := P * mb A))} (p t: P):
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  {PRE : Chain (copre_m (P := P * MO A) (Q := P * MO A))} (p t: P):
   (∀ μ p', p ⟶{μ} p' <-> (p' = t /\ μ = τ)) ->
-  forall M (X : gset (P * mb A)) (Y : gset (P * mb A)),
+  forall M (X : gset (P * MO A)) (Y : gset (P * MO A)),
     elem PRE ({[t ▷ M]} ∪ {[p ▷ M]} ∪ X) Y
     -> elem PRE ({[p ▷ M]} ∪ X) Y.
 Proof.

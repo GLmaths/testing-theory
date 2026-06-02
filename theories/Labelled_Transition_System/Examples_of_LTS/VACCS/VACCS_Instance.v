@@ -3192,9 +3192,9 @@ Next Obligation.
   symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 
-#[global] Program Instance Interaction_between_VACCS_and_MB: Prop_of_Inter proc (mb (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter :=
+#[global] Program Instance Interaction_between_VACCS_and_MB: Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter :=
     {| lts_essential_actions_left p := empty ;
-       lts_essential_actions_right m := dom (mb_without_not_nb m) ; 
+       lts_essential_actions_right m := dom (MO_without_not_nb m) ; 
        lts_co_inter_action_right m := fun x => empty |}.
 Next Obligation. 
   intros ? ? Hyp ;simpl in *.
@@ -3203,8 +3203,8 @@ Qed.
 Next Obligation.
   intros m ? Hyp ;simpl in *.
   eapply gmultiset_elem_of_dom in Hyp. 
-  assert (ξ ∈ mb_without_not_nb m) as mem. eauto.
-  eapply lts_mb_nb_with_nb_spec1 in mem as (nb & eq).
+  assert (ξ ∈ MO_without_not_nb m) as mem. eauto.
+  eapply lts_MO_nb_with_nb_spec1 in mem as (nb & eq).
   eapply gmultiset_disj_union_difference' in eq.
   exists (m ∖ {[+ ξ +]}). rewrite eq at 1.
   eapply lts_multiset_minus; eauto.
@@ -3214,9 +3214,9 @@ Next Obligation.
   right. destruct inter as (duo & nb).
   eapply non_blocking_action_in_ms in nb as eq'; eauto. 
   rewrite<- eq'.
-  assert (mb_without_not_nb ({[+ μ2 +]} ⊎ m') 
-  = {[+ μ2 +]} ⊎ (mb_without_not_nb m')) as eq.
-  eapply lts_mb_nb_spec1; eauto. rewrite eq.
+  assert (MO_without_not_nb ({[+ μ2 +]} ⊎ m') 
+  = {[+ μ2 +]} ⊎ (MO_without_not_nb m')) as eq.
+  eapply lts_MO_nb_spec1; eauto. rewrite eq.
   eapply gmultiset_elem_of_dom.
   multiset_solver.
 Defined.
@@ -3239,14 +3239,14 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance Interaction_between_FW_VACCS_and_VACCS :
-  Prop_of_Inter (proc * mb (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=
-    {| lts_essential_actions_left p := set_map ActOut (outputs_of p.1) ∪ (dom (mb_without_not_nb p.2)); 
+  Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=
+    {| lts_essential_actions_left p := set_map ActOut (outputs_of p.1) ∪ (dom (MO_without_not_nb p.2)); 
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
   intros (p , m) ? ?. simpl in *.
-  eapply elem_of_union in H. destruct (decide (ξ ∈ dom (mb_without_not_nb m))).
+  eapply elem_of_union in H. destruct (decide (ξ ∈ dom (MO_without_not_nb m))).
   + eapply gmultiset_elem_of_dom in e.
-    eapply lts_mb_nb_with_nb_spec1 in e as (nb & mem).
+    eapply lts_MO_nb_with_nb_spec1 in e as (nb & mem).
     assert ({ m'| m = {[+ ξ +]} ⊎ m'}) as (m' & eq).
     { exists (m ∖ {[+ ξ +]}). multiset_solver. }
     subst. exists (p , m'). eapply ParRight. eapply lts_multiset_minus; eauto.
@@ -3287,7 +3287,7 @@ Next Obligation.
       destruct (decide (non_blocking (ActOut a))) as [nb | b].
       * eapply non_blocking_action_in_ms in l; eauto.
         rewrite<- l. 
-        eapply lts_mb_nb_spec1 in nb. rewrite nb. multiset_solver.
+        eapply lts_MO_nb_spec1 in nb. rewrite nb. multiset_solver.
       * eapply blocking_action_in_ms in l as (eq & duo & nb);eauto.
         eapply simplify_match_output in duo. subst.
         rewrite duo in Tr, nb. destruct nb. inversion H0.

@@ -32,7 +32,7 @@ From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS.
 
 (** * Lifting an LTS to forwarders preserves Must *)
-Lemma conv `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts} (p : P) : 
+Lemma conv `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
   intro ht.
@@ -276,8 +276,8 @@ Notation gLtsT := (gLtsEq_gLts (gLtsEq := gLtsEqT)).
 
 Context `{!FiniteOutputChain_LtsOba T}.
 
-Context `{_ : !Prop_of_Inter P (mb A) A fw_inter}.
-Context `{_ : !Prop_of_Inter (P * mb A) T A dual}.
+Context `{_ : !Prop_of_Inter P (MO A) A fw_inter}.
+Context `{_ : !Prop_of_Inter (P * MO A) T A dual}.
 Context `{_ : !Prop_of_Inter P T A dual}.
 
 Lemma nf_must_fw_l
@@ -335,7 +335,7 @@ Proof.
 Qed.
 
 Lemma must_to_must_fw
-  (p : P) (e : T) (m : mb A) :
+  (p : P) (e : T) (m : MO A) :
   p must_pass e -> m = lts_oba_mo e -> forall e', e ⟿{m} e' 
     -> (p, m) must_pass e'.
 Proof.
@@ -550,11 +550,11 @@ Lemma lift_fw_ctx_pre
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
 
-  {_ : @Prop_of_Inter P (mb A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (P * mb A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter P (MO A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (P * MO A) T A dual H (inter_lts fw_inter) _}
 
-  {_ : @Prop_of_Inter Q (mb A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (Q * mb A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter Q (MO A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (Q * MO A) T A dual H (inter_lts fw_inter) _}
 
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⊑ₘᵤₛₜᵢ (q, ∅).
 Proof.

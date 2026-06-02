@@ -32,21 +32,21 @@ From TestingTheory Require Import ActTau gLts InteractionBetweenLts Bisimulation
 
 (** A mailbox is a multiset of actions *)
 
-Definition mb (A : Type) `{ExtAction A} := gmultiset A.
+Definition MO (A : Type) `{ExtAction A} := gmultiset A.
 
-Lemma Prop_for_nb `{ExtAction A} (η : A) (m : mb A) :
+Lemma Prop_for_nb `{ExtAction A} (η : A) (m : MO A) :
     non_blocking η -> (forall η', η' ∈ m -> non_blocking η')
       -> (forall η'', η'' ∈ ({[+ η +]} ⊎ m) -> non_blocking η'').
 Proof.
-  intros nb nb_for_mb.
+  intros nb nb_for_MO.
   intros η'' mem.
   destruct (decide (η'' ∈ m)) as [mem' | not_mem'].
-  + exact (nb_for_mb η'' mem').
+  + exact (nb_for_MO η'' mem').
   + assert (η'' = η). multiset_solver. subst.
     eauto.
 Qed.
 
-Inductive lts_multiset_step `{ExtAction A} : mb A -> Act A -> mb A -> Prop :=
+Inductive lts_multiset_step `{ExtAction A} : MO A -> Act A -> MO A -> Prop :=
 | lts_multiset_add m η μ (duo : dual μ η) (nb : non_blocking η) :
    lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
 | lts_multiset_minus m η (nb : non_blocking η):  
@@ -94,7 +94,7 @@ Proof.
   + right. inversion 1.
 Qed.
 
-Definition lts_multiset_refuses `{ExtAction A} (m : mb A) (α : Act A): Prop := 
+Definition lts_multiset_refuses `{ExtAction A} (m : MO A) (α : Act A): Prop := 
 match α with
     | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
                                                                         else True
@@ -115,7 +115,7 @@ Proof.
   + left. simpl. eauto.
 Qed.
 
-#[global] Program Instance MbgLts `{H : ExtAction A} : gLts (mb A) H :=
+#[global] Program Instance MbgLts `{H : ExtAction A} : gLts (MO A) H :=
 {|
     lts_step m α m' := lts_multiset_step m α m' ;
     lts_refuses p := lts_multiset_refuses p;
@@ -155,33 +155,33 @@ Qed.
 
 (*************************** Mailbox purification of blocking actions *********************************)
 
-Fixpoint mb_without_not_nb_on_list `{ExtAction A} (l : list A) : mb A:=
+Fixpoint MO_without_not_nb_on_list `{ExtAction A} (l : list A) : MO A:=
 match l with
-| [] => empty : mb A
-| η :: l' => if (decide (non_blocking η)) then {[+ η +]} ⊎ (mb_without_not_nb_on_list l')
-                                          else mb_without_not_nb_on_list l'
+| [] => empty : MO A
+| η :: l' => if (decide (non_blocking η)) then {[+ η +]} ⊎ (MO_without_not_nb_on_list l')
+                                          else MO_without_not_nb_on_list l'
 end.
 
-Lemma lts_mb_nb_on_list_spec1 `{H : ExtAction A} η l: 
+Lemma lts_MO_nb_on_list_spec1 `{H : ExtAction A} η l: 
   non_blocking η ->  
-    mb_without_not_nb_on_list (η :: l) = {[+ η +]} ⊎ mb_without_not_nb_on_list l.
+    MO_without_not_nb_on_list (η :: l) = {[+ η +]} ⊎ MO_without_not_nb_on_list l.
 Proof.
   intro nb.
-  unfold mb_without_not_nb_on_list at 1.
-  erewrite decide_True. fold mb_without_not_nb_on_list. reflexivity. eauto.
+  unfold MO_without_not_nb_on_list at 1.
+  erewrite decide_True. fold MO_without_not_nb_on_list. reflexivity. eauto.
 Qed.
 
-Lemma lts_mb_nb_on_list_spec2 `{H : ExtAction A} β l: 
+Lemma lts_MO_nb_on_list_spec2 `{H : ExtAction A} β l: 
   blocking β ->  
-    mb_without_not_nb_on_list (β :: l) = mb_without_not_nb_on_list l.
+    MO_without_not_nb_on_list (β :: l) = MO_without_not_nb_on_list l.
 Proof.
   intro nb.
-  unfold mb_without_not_nb_on_list at 1.
-  erewrite decide_False. fold mb_without_not_nb_on_list. reflexivity. eauto.
+  unfold MO_without_not_nb_on_list at 1.
+  erewrite decide_False. fold MO_without_not_nb_on_list. reflexivity. eauto.
 Qed.
 
-Lemma lts_mb_nb_on_list_perm `{H : ExtAction A} (l1 : list A) (l2 : list A) :
-  l1 ≡ₚ l2 -> mb_without_not_nb_on_list l1 = mb_without_not_nb_on_list l2.
+Lemma lts_MO_nb_on_list_perm `{H : ExtAction A} (l1 : list A) (l2 : list A) :
+  l1 ≡ₚ l2 -> MO_without_not_nb_on_list l1 = MO_without_not_nb_on_list l2.
 Proof.
   intro equiv.
   revert l1 l2 equiv.
@@ -193,11 +193,11 @@ Proof.
     ++ intros. destruct (decide (a = a0)) as [eq | not_eq].
        +++ subst. eapply Permutation_cons_inv in equiv.
            destruct (decide (non_blocking a0)) as [nb | not_nb].
-           ++++ erewrite lts_mb_nb_on_list_spec1; eauto.
-                erewrite lts_mb_nb_on_list_spec1; eauto.
+           ++++ erewrite lts_MO_nb_on_list_spec1; eauto.
+                erewrite lts_MO_nb_on_list_spec1; eauto.
                 f_equal. eauto.
-           ++++ erewrite lts_mb_nb_on_list_spec2; eauto.
-                erewrite lts_mb_nb_on_list_spec2; eauto.
+           ++++ erewrite lts_MO_nb_on_list_spec2; eauto.
+                erewrite lts_MO_nb_on_list_spec2; eauto.
        +++ assert (a0 ∈ a :: l1). eapply list_elem_of_In.
            symmetry in equiv.
            eapply Permutation_in ;eauto. set_solver.
@@ -214,68 +214,68 @@ Proof.
            etransitivity; eauto. symmetry in equiv. etransitivity; eauto.
            symmetry in Hyp'. etransitivity; eauto. symmetry ;eauto.
            eapply Permutation_cons_inv in eq'. eapply Permutation_cons_inv in eq'.
-           assert (mb_without_not_nb_on_list (a :: l'2) = mb_without_not_nb_on_list l2) as eq1.
+           assert (MO_without_not_nb_on_list (a :: l'2) = MO_without_not_nb_on_list l2) as eq1.
            symmetry in Hyp2. eapply IHl2; eauto. intros.
            assert (l1 ≡ₚ a0 :: l'2) as hyp1. etransitivity; eauto.
            eapply Permutation_cons; eauto. symmetry; eauto.
            assert (l1 ≡ₚ a0 :: l0) as hyp2. etransitivity; eauto.
            eapply IHl1 in hyp1. eapply IHl1 in hyp2.
-           unfold mb_without_not_nb_on_list in hyp1 at 2.
-           unfold mb_without_not_nb_on_list in hyp2 at 2.
+           unfold MO_without_not_nb_on_list in hyp1 at 2.
+           unfold MO_without_not_nb_on_list in hyp2 at 2.
            destruct (decide (non_blocking a0)) as [nb' | not_nb'].
-           ++++ fold mb_without_not_nb_on_list in hyp1.
-                fold mb_without_not_nb_on_list in hyp2.
-                assert ({[+ a0 +]} ⊎ mb_without_not_nb_on_list l'2 
-                    = {[+ a0 +]} ⊎ mb_without_not_nb_on_list l0) as eq''.
+           ++++ fold MO_without_not_nb_on_list in hyp1.
+                fold MO_without_not_nb_on_list in hyp2.
+                assert ({[+ a0 +]} ⊎ MO_without_not_nb_on_list l'2 
+                    = {[+ a0 +]} ⊎ MO_without_not_nb_on_list l0) as eq''.
                 rewrite<- hyp1. rewrite<- hyp2. eauto.
                 eapply gmultiset_disj_union_inj_1; eauto.
-           ++++ fold mb_without_not_nb_on_list in hyp1.
-                fold mb_without_not_nb_on_list in hyp2.
+           ++++ fold MO_without_not_nb_on_list in hyp1.
+                fold MO_without_not_nb_on_list in hyp2.
                 rewrite<- hyp1. rewrite<- hyp2. eauto.
-           ++++ assert (mb_without_not_nb_on_list l1 = mb_without_not_nb_on_list (a0 :: l'1)) as eq2.
+           ++++ assert (MO_without_not_nb_on_list l1 = MO_without_not_nb_on_list (a0 :: l'1)) as eq2.
                 eapply IHl1. eauto.
                 destruct (decide (non_blocking a)) as [nb | not_nb]; 
                 destruct (decide (non_blocking a0)) as [nb' | not_nb'].
-                +++++ rewrite (lts_mb_nb_on_list_spec1 a l1 nb).
-                      rewrite (lts_mb_nb_on_list_spec1 a0 l2 nb').
+                +++++ rewrite (lts_MO_nb_on_list_spec1 a l1 nb).
+                      rewrite (lts_MO_nb_on_list_spec1 a0 l2 nb').
                       rewrite<- eq1. 
-                      assert (mb_without_not_nb_on_list l1
-                        = mb_without_not_nb_on_list (a0 :: l'2)) as eq'''.
+                      assert (MO_without_not_nb_on_list l1
+                        = MO_without_not_nb_on_list (a0 :: l'2)) as eq'''.
                       eapply IHl1. etransitivity; eauto. eapply Permutation_cons;eauto.
                       symmetry; eauto. rewrite eq'''.
-                      rewrite (lts_mb_nb_on_list_spec1 a0 l'2 nb').
-                      rewrite (lts_mb_nb_on_list_spec1 a l'2 nb).
+                      rewrite (lts_MO_nb_on_list_spec1 a0 l'2 nb').
+                      rewrite (lts_MO_nb_on_list_spec1 a l'2 nb).
                       multiset_solver.
-                +++++ rewrite (lts_mb_nb_on_list_spec2 a0 l2 not_nb').
+                +++++ rewrite (lts_MO_nb_on_list_spec2 a0 l2 not_nb').
                       rewrite<- eq1.
-                      rewrite (lts_mb_nb_on_list_spec1 a l1 nb).
-                      rewrite (lts_mb_nb_on_list_spec1 a l'2 nb).
+                      rewrite (lts_MO_nb_on_list_spec1 a l1 nb).
+                      rewrite (lts_MO_nb_on_list_spec1 a l'2 nb).
                       f_equal.
-                      rewrite<- (lts_mb_nb_on_list_spec2 a0 l'2 not_nb').
+                      rewrite<- (lts_MO_nb_on_list_spec2 a0 l'2 not_nb').
                       eapply IHl1. etransitivity; eauto. eapply Permutation_cons;eauto.
                       symmetry; eauto.
-                +++++ rewrite (lts_mb_nb_on_list_spec1 a0 l2 nb').
+                +++++ rewrite (lts_MO_nb_on_list_spec1 a0 l2 nb').
                       rewrite<- eq1.
-                      rewrite (lts_mb_nb_on_list_spec2 a l1 not_nb).
-                      rewrite (lts_mb_nb_on_list_spec2 a l'2 not_nb).
-                      rewrite<- (lts_mb_nb_on_list_spec1 a0 l'2 nb').
+                      rewrite (lts_MO_nb_on_list_spec2 a l1 not_nb).
+                      rewrite (lts_MO_nb_on_list_spec2 a l'2 not_nb).
+                      rewrite<- (lts_MO_nb_on_list_spec1 a0 l'2 nb').
                       eapply IHl1.
                       etransitivity; eauto. eapply Permutation_cons;eauto.
                       symmetry; eauto.
-                +++++ rewrite (lts_mb_nb_on_list_spec2 a l1 not_nb).
-                      rewrite (lts_mb_nb_on_list_spec2 a0 l2 not_nb').
+                +++++ rewrite (lts_MO_nb_on_list_spec2 a l1 not_nb).
+                      rewrite (lts_MO_nb_on_list_spec2 a0 l2 not_nb').
                       rewrite<- eq1.
-                      rewrite (lts_mb_nb_on_list_spec2 a l'2 not_nb).
-                      rewrite<- (lts_mb_nb_on_list_spec2 a0 l'2 not_nb').
+                      rewrite (lts_MO_nb_on_list_spec2 a l'2 not_nb).
+                      rewrite<- (lts_MO_nb_on_list_spec2 a0 l'2 not_nb').
                       eapply IHl1. etransitivity; eauto.
                       eapply Permutation_cons;eauto. symmetry; eauto.
 Qed.
 
-Definition mb_without_not_nb `{ExtAction A} (m : mb A) : mb A :=
-  mb_without_not_nb_on_list ((elements (m : mb A) : list A)).
+Definition MO_without_not_nb `{ExtAction A} (m : MO A) : MO A :=
+  MO_without_not_nb_on_list ((elements (m : MO A) : list A)).
 
-Lemma mb_list_union `{ExtAction A} l1 l2 :
-  mb_without_not_nb_on_list (l1 ++ l2) = (mb_without_not_nb_on_list l1) ⊎ (mb_without_not_nb_on_list l2).
+Lemma MO_list_union `{ExtAction A} l1 l2 :
+  MO_without_not_nb_on_list (l1 ++ l2) = (MO_without_not_nb_on_list l1) ⊎ (MO_without_not_nb_on_list l2).
 Proof.
   induction l1.
   + simpl. multiset_solver.
@@ -284,92 +284,92 @@ Proof.
     - eauto.
 Qed.
 
-Lemma mb_union `{ExtAction A} (m1 m2 : mb A) :
-  mb_without_not_nb (m1 ⊎ m2) = mb_without_not_nb m1 ⊎  mb_without_not_nb m2.
+Lemma MO_union `{ExtAction A} (m1 m2 : MO A) :
+  MO_without_not_nb (m1 ⊎ m2) = MO_without_not_nb m1 ⊎  MO_without_not_nb m2.
 Proof.
   assert (elements (m1 ⊎ m2) ≡ₚ elements m1 ++ elements m2) as eq by (eapply gmultiset_elements_disj_union).
-  eapply lts_mb_nb_on_list_perm in eq. unfold mb_without_not_nb. rewrite eq.
-  eapply mb_list_union.
+  eapply lts_MO_nb_on_list_perm in eq. unfold MO_without_not_nb. rewrite eq.
+  eapply MO_list_union.
 Qed.
 
-Lemma lts_mb_nb_spec0 `{H : ExtAction A}: 
-      ((mb_without_not_nb (∅ : mb A)) : mb A) = (∅  : mb A).
+Lemma lts_MO_nb_spec0 `{H : ExtAction A}: 
+      ((MO_without_not_nb (∅ : MO A)) : MO A) = (∅  : MO A).
 Proof.
-  unfold mb_without_not_nb. 
-  assert (eq : elements (∅ : mb A) = []).
+  unfold MO_without_not_nb. 
+  assert (eq : elements (∅ : MO A) = []).
   multiset_solver. rewrite eq. simpl. reflexivity.
 Qed.
 
-Lemma lts_mb_nb_spec1 `{H : ExtAction A} η m : 
+Lemma lts_MO_nb_spec1 `{H : ExtAction A} η m : 
   non_blocking η -> 
-      (mb_without_not_nb (({[+ η +]} : gmultiset A) ⊎ m) : gmultiset A) 
-          = (({[+ η +]} : gmultiset A) ⊎ ((mb_without_not_nb m)  : gmultiset A)  : gmultiset A).
+      (MO_without_not_nb (({[+ η +]} : gmultiset A) ⊎ m) : gmultiset A) 
+          = (({[+ η +]} : gmultiset A) ⊎ ((MO_without_not_nb m)  : gmultiset A)  : gmultiset A).
 Proof.
   revert η.
   induction m using gmultiset_ind.
   + intros η nb.
     assert (eq : ({[+ η +]} ⊎ ∅ : gmultiset A) = ({[+ η +]} : gmultiset A)).
-    eapply gmultiset_disj_union_right_id. unfold mb in eq.
-    unfold mb.
+    eapply gmultiset_disj_union_right_id. unfold MO in eq.
+    unfold MO.
     rewrite eq. 
-    unfold mb_without_not_nb. 
+    unfold MO_without_not_nb. 
     assert (eq' : elements (∅ : gmultiset A) = []).
-    multiset_solver. unfold mb in eq'. unfold mb. rewrite eq'. simpl.
+    multiset_solver. unfold MO in eq'. unfold MO. rewrite eq'. simpl.
     rewrite gmultiset_disj_union_right_id. rewrite gmultiset_elements_singleton.
-    unfold mb_without_not_nb_on_list.
-    erewrite decide_True. unfold mb. rewrite gmultiset_disj_union_right_id. reflexivity. eauto.
+    unfold MO_without_not_nb_on_list.
+    erewrite decide_True. unfold MO. rewrite gmultiset_disj_union_right_id. reflexivity. eauto.
   + intros η nb.
-    unfold mb_without_not_nb.
+    unfold MO_without_not_nb.
     assert (elements ({[+ η +]} ⊎ ({[+ x +]} ⊎ m)) ≡ₚ 
           elements ({[+ η +]} : gmultiset A) ++ elements ({[+ x +]} ⊎ m)) as eq.
     eapply gmultiset_elements_disj_union.
-    erewrite lts_mb_nb_on_list_perm; eauto.
+    erewrite lts_MO_nb_on_list_perm; eauto.
     rewrite gmultiset_elements_singleton. simpl.
     rewrite decide_True. reflexivity. eauto.
 Qed.
 
-Lemma lts_mb_nb_spec2 `{H : ExtAction A} β m : 
+Lemma lts_MO_nb_spec2 `{H : ExtAction A} β m : 
       blocking β ->  
-        mb_without_not_nb (({[+ β +]} : gmultiset A) ⊎ m : gmultiset A) = (mb_without_not_nb m : gmultiset A).
+        MO_without_not_nb (({[+ β +]} : gmultiset A) ⊎ m : gmultiset A) = (MO_without_not_nb m : gmultiset A).
 Proof.
   revert β.
   induction m using gmultiset_ind.
   + intros μ nb.
     assert (eq : (({[+ μ +]} : gmultiset A) ⊎ ∅ : gmultiset A) = ({[+ μ +]} : gmultiset A)).
-    eapply gmultiset_disj_union_right_id. unfold mb in eq.
-    unfold mb.
+    eapply gmultiset_disj_union_right_id. unfold MO in eq.
+    unfold MO.
     rewrite eq.
-    unfold mb_without_not_nb. unfold mb.
+    unfold MO_without_not_nb. unfold MO.
     erewrite gmultiset_elements_singleton. simpl.
     rewrite decide_False. reflexivity. eauto.
   + intros μ nb.
-    unfold mb_without_not_nb.
+    unfold MO_without_not_nb.
     assert (elements ({[+ μ +]} ⊎ ({[+ x +]} ⊎ m)) ≡ₚ 
           elements ({[+ μ +]} : gmultiset A) ++ elements ({[+ x +]} ⊎ m)) as eq.
     eapply gmultiset_elements_disj_union.
-    rewrite (lts_mb_nb_on_list_perm (elements ({[+ μ +]} ⊎ ({[+ x +]} ⊎ m))) 
+    rewrite (lts_MO_nb_on_list_perm (elements ({[+ μ +]} ⊎ ({[+ x +]} ⊎ m))) 
     (elements ({[+ μ +]} : gmultiset A) ++ elements ({[+ x +]} ⊎ m))); eauto.
     rewrite  gmultiset_elements_singleton. simpl.
     rewrite decide_False. reflexivity. eauto.
 Qed.
 
-Lemma lts_mb_nb_with_nb_spec1 `{H : ExtAction A} η m :
-  η ∈ (mb_without_not_nb (m  : mb A) : mb A)
+Lemma lts_MO_nb_with_nb_spec1 `{H : ExtAction A} η m :
+  η ∈ (MO_without_not_nb (m  : MO A) : MO A)
     -> non_blocking η /\ η ∈ m.
 Proof.
     induction m as [|μ m] using gmultiset_ind.
     + intro mem.
       exfalso.
-      assert (η ∈ (mb_without_not_nb ∅ : mb A)) as eq. eauto.
-      erewrite lts_mb_nb_spec0 in eq.
+      assert (η ∈ (MO_without_not_nb ∅ : MO A)) as eq. eauto.
+      erewrite lts_MO_nb_spec0 in eq.
       multiset_solver.
     + intro mem.
       destruct (decide (non_blocking μ)) as [nb | not_nb].
-      ++ assert ((mb_without_not_nb (({[+ μ +]}  : mb A) ⊎ m) : mb A) = 
-          ((({[+ μ +]} : mb A) ⊎ mb_without_not_nb m) : mb A))
+      ++ assert ((MO_without_not_nb (({[+ μ +]}  : MO A) ⊎ m) : MO A) = 
+          ((({[+ μ +]} : MO A) ⊎ MO_without_not_nb m) : MO A))
                as eq'.
-         eapply (lts_mb_nb_spec1 μ m nb); eauto.
-         assert (η ∈ ({[+ μ +]} ⊎ mb_without_not_nb m : mb A)) as eq''.
+         eapply (lts_MO_nb_spec1 μ m nb); eauto.
+         assert (η ∈ ({[+ μ +]} ⊎ MO_without_not_nb m : MO A)) as eq''.
          rewrite<- eq'. eauto.
          eapply gmultiset_elem_of_disj_union in eq''.
          destruct eq'' as [eq | mem'].
@@ -377,26 +377,26 @@ Proof.
              split; eauto; try multiset_solver.
          +++ eapply IHm in mem' as (nb'' & mem'').
              split; eauto; try multiset_solver.
-      ++ assert (η ∈ (mb_without_not_nb m : mb A)) as mem'.
-         rewrite<- (lts_mb_nb_spec2 μ m not_nb); eauto.
+      ++ assert (η ∈ (MO_without_not_nb m : MO A)) as mem'.
+         rewrite<- (lts_MO_nb_spec2 μ m not_nb); eauto.
          eapply IHm in mem' as (nb & mem').
          split; eauto; try multiset_solver.
 Qed.
 
-Lemma lts_mb_nb_with_nb_spec2 `{H : ExtAction A} η m :
-    non_blocking η -> η ∈ m -> η ∈ mb_without_not_nb m.
+Lemma lts_MO_nb_with_nb_spec2 `{H : ExtAction A} η m :
+    non_blocking η -> η ∈ m -> η ∈ MO_without_not_nb m.
 Proof.
     intros nb mem.
     assert (m = {[+ η +]} ⊎ m ∖ {[+ η +]}) as eq. multiset_solver.
     rewrite eq.
-    unfold mb.
-    erewrite lts_mb_nb_spec1; eauto.
+    unfold MO.
+    erewrite lts_MO_nb_spec1; eauto.
     multiset_solver.
 Qed.
 
-Lemma lts_mb_nb_with_nb_diff `{H : ExtAction A} η m :
+Lemma lts_MO_nb_with_nb_diff `{H : ExtAction A} η m :
     non_blocking η -> η ∈ m -> 
-        (mb_without_not_nb (m ∖ {[+ η +]}) : mb A) = ((mb_without_not_nb m) ∖ {[+ η +]} : mb A).
+        (MO_without_not_nb (m ∖ {[+ η +]}) : MO A) = ((MO_without_not_nb m) ∖ {[+ η +]} : MO A).
 Proof.
     induction m as [|μ m] using gmultiset_ind.
     + intros nb mem.
@@ -405,15 +405,15 @@ Proof.
       eapply gmultiset_elem_of_disj_union in mem.
       destruct mem as [eq | mem'].
       ++ eapply gmultiset_elem_of_singleton in eq. subst.
-         assert (mb_without_not_nb ({[+ μ +]} ⊎ m) = {[+ μ +]} ⊎ mb_without_not_nb m) as eq'.
-         eapply lts_mb_nb_spec1; eauto.
+         assert (MO_without_not_nb ({[+ μ +]} ⊎ m) = {[+ μ +]} ⊎ MO_without_not_nb m) as eq'.
+         eapply lts_MO_nb_spec1; eauto.
          rewrite eq'. 
-         assert (({[+ μ +]} ⊎ mb_without_not_nb m) ∖ {[+ μ +]} = mb_without_not_nb m) 
+         assert (({[+ μ +]} ⊎ MO_without_not_nb m) ∖ {[+ μ +]} = MO_without_not_nb m) 
           as eq'' by multiset_solver.
          rewrite eq''. f_equal. multiset_solver.
       ++ eapply IHm in nb as Hyp; eauto.
-         eapply lts_mb_nb_with_nb_spec2 in nb as mem'' ; eauto.
-         assert ((({[+ μ +]} ⊎ m) ∖ {[+ η +]} : mb A) = (({[+ μ +]} ⊎ (m ∖ {[+ η +]})) : mb A))
+         eapply lts_MO_nb_with_nb_spec2 in nb as mem'' ; eauto.
+         assert ((({[+ μ +]} ⊎ m) ∖ {[+ η +]} : MO A) = (({[+ μ +]} ⊎ (m ∖ {[+ η +]})) : MO A))
            as eq.
          multiset_solver. 
          erewrite (gmultiset_disj_union_difference' η m) at 1; eauto.
@@ -424,31 +424,31 @@ Proof.
          assert (({[+ η +]} ⊎ ({[+ μ +]} ⊎ m ∖ {[+ η +]})) = 
               {[+ μ +]} ⊎ m) as eq'' by multiset_solver.
          rewrite eq''. rewrite<- eq'' at 2.
-         assert (mb_without_not_nb ({[+ η +]} ⊎ ({[+ μ +]} ⊎ m ∖ {[+ η +]})) = 
-         {[+ η +]} ⊎ mb_without_not_nb (({[+ μ +]} ⊎ m ∖ {[+ η +]}))) as eq''''. 
-         eapply lts_mb_nb_spec1; eauto.
+         assert (MO_without_not_nb ({[+ η +]} ⊎ ({[+ μ +]} ⊎ m ∖ {[+ η +]})) = 
+         {[+ η +]} ⊎ MO_without_not_nb (({[+ μ +]} ⊎ m ∖ {[+ η +]}))) as eq''''. 
+         eapply lts_MO_nb_spec1; eauto.
          rewrite eq''''. 
-         assert (({[+ η +]} ⊎ mb_without_not_nb ({[+ μ +]} ⊎ m ∖ {[+ η +]})) ∖ {[+ η +]} =
-          mb_without_not_nb ({[+ μ +]} ⊎ m ∖ {[+ η +]})) as eq''''' by multiset_solver.
+         assert (({[+ η +]} ⊎ MO_without_not_nb ({[+ μ +]} ⊎ m ∖ {[+ η +]})) ∖ {[+ η +]} =
+          MO_without_not_nb ({[+ μ +]} ⊎ m ∖ {[+ η +]})) as eq''''' by multiset_solver.
          rewrite eq'''''. f_equal. multiset_solver.
 Qed.
 
-Definition MB_eq `{H : ExtAction A} (M1 : mb A) (M2 : mb A) := M1 = M2.
+Definition MO_eq `{H : ExtAction A} (M1 : MO A) (M2 : MO A) := M1 = M2.
 
-Lemma MB_eq_equiv `{H : ExtAction A} : Equivalence MB_eq.
+Lemma MO_eq_equiv `{H : ExtAction A} : Equivalence MO_eq.
 Proof.
-  unfold MB_eq. constructor.
+  unfold MO_eq. constructor.
   + intro M. now reflexivity.
   + intros M1 M2. now symmetry.
   + intros M1 M2 M3. now (etrans; eauto).
 Qed.
 
-Global Hint Resolve MB_eq_equiv:mdb.
+Global Hint Resolve MO_eq_equiv:mdb.
 
-#[global] Program Instance MbgLtsEq `{H : ExtAction A} : gLtsEq (mb A) H :=
- {| eq_rel := MB_eq |}.
+#[global] Program Instance MbgLtsEq `{H : ExtAction A} : gLtsEq (MO A) H :=
+ {| eq_rel := MO_eq |}.
 Next Obligation.
-  unfold MB_eq.
+  unfold MO_eq.
   intros ? ? M1 M2 ? (r & eq & tr).
   subst. exists M2. split; eauto.
 Qed.
@@ -558,7 +558,7 @@ Proof.
     reflexivity.
 Qed.
 
-#[global] Program Instance MbgLts_Oba`{H : ExtAction A} : gLtsOba (mb A). 
+#[global] Program Instance MbgLts_Oba`{H : ExtAction A} : gLtsOba (MO A). 
 Next Obligation.
   intros. eapply delay_in_ms;eauto.
 Qed.
@@ -598,26 +598,10 @@ Proof.
   + eapply dual_blocks;eauto.
 Qed.
 
-#[global] Program Instance MbgLts_Oba_FW `{H : ExtAction A} : gLtsObaFW (mb A) A. 
+#[global] Program Instance MbgLts_Oba_FW `{H : ExtAction A} : gLtsObaFW (MO A) A. 
 Next Obligation.
   intros. eapply forward_in_ms; eauto.
 Qed.
 Next Obligation.
   intros. eapply forward_feedback_in_ms;eauto.
 Qed.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

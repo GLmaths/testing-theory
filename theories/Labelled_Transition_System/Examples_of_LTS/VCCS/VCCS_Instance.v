@@ -4596,9 +4596,9 @@ Next Obligation.
   symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 
-#[global] Program Instance Interaction_between_VCCS_and_MB: Prop_of_Inter proc (mb (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter :=
+#[global] Program Instance Interaction_between_VCCS_and_MB: Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter :=
     {| lts_essential_actions_left p := empty ;
-       lts_essential_actions_right m := dom (mb_without_not_nb m) ; 
+       lts_essential_actions_right m := dom (MO_without_not_nb m) ; 
        lts_co_inter_action_right m := fun x => empty |}.
 Next Obligation. 
   intros ? ? Hyp ;simpl in *.
@@ -4607,8 +4607,8 @@ Qed.
 Next Obligation.
   intros m ? Hyp ;simpl in *.
   eapply gmultiset_elem_of_dom in Hyp. 
-  assert (ξ ∈ mb_without_not_nb m) as mem. eauto.
-  eapply lts_mb_nb_with_nb_spec1 in mem as (nb & eq).
+  assert (ξ ∈ MO_without_not_nb m) as mem. eauto.
+  eapply lts_MO_nb_with_nb_spec1 in mem as (nb & eq).
   eapply gmultiset_disj_union_difference' in eq.
   exists (m ∖ {[+ ξ +]}). rewrite eq at 1.
   eapply lts_multiset_minus; eauto.
@@ -4633,14 +4633,14 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance Interaction_between_FW_VCCS_and_VCCS :
-  Prop_of_Inter (proc * mb (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=
-    {| lts_essential_actions_left p := set_map ActOut (outputs_of p.1) ∪ (dom (mb_without_not_nb p.2)); 
+  Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=
+    {| lts_essential_actions_left p := set_map ActOut (outputs_of p.1) ∪ (dom (MO_without_not_nb p.2)); 
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
   intros (p , m) ? mem. simpl in *.
-  eapply elem_of_union in mem. destruct (decide (ξ ∈ dom (mb_without_not_nb m))).
+  eapply elem_of_union in mem. destruct (decide (ξ ∈ dom (MO_without_not_nb m))).
   + eapply gmultiset_elem_of_dom in e.
-    eapply lts_mb_nb_with_nb_spec1 in e as (nb & mem').
+    eapply lts_MO_nb_with_nb_spec1 in e as (nb & mem').
     inversion nb.
   + assert (ξ ∈ @set_map TypeOfActions (gset TypeOfActions) _ (ExtAct TypeOfActions) (gset (ExtAct TypeOfActions)) _ _ _  ActOut (outputs_of p)) as Hyp.
     { destruct mem as [case1 | case2]. exact case1. contradiction. }

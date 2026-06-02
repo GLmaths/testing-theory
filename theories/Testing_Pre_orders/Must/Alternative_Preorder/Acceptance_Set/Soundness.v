@@ -1134,11 +1134,11 @@ Lemma soundness
   {_ : Prop_of_Inter P T A dual}
   {_ : Prop_of_Inter Q T A dual}
 
-  {_ : @Prop_of_Inter P (mb A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (P * mb A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter P (MO A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (P * MO A) T A dual H (inter_lts fw_inter) _}
 
-  {_ : @Prop_of_Inter Q (mb A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (Q * mb A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter Q (MO A) A fw_inter H _ MbgLts}
+  {_ : @Prop_of_Inter (Q * MO A) T A dual H (inter_lts fw_inter) _}
 
   `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
   `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }

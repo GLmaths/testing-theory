@@ -1258,11 +1258,11 @@ Lemma completeness {P Q : Type} `{
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
 
-  `{@Prop_of_Inter P (mb A) A fw_inter H _ MbgLts}
-  `{@Prop_of_Inter (P * mb A) T A dual H (FW_gLts _) _}
+  `{@Prop_of_Inter P (MO A) A fw_inter H _ MbgLts}
+  `{@Prop_of_Inter (P * MO A) T A dual H (FW_gLts _) _}
 
-  `{@Prop_of_Inter Q (mb A) A fw_inter H _ MbgLts}
-  `{@Prop_of_Inter (Q * mb A) T A dual H (FW_gLts _) _}
+  `{@Prop_of_Inter Q (MO A) A fw_inter H _ MbgLts}
+  `{@Prop_of_Inter (Q * MO A) T A dual H (FW_gLts _) _}
  
   `{CC : Countable PreAct}
   `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }

@@ -88,8 +88,8 @@ From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
 #[global] Program Instance PreActActionForFW
   `{@AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT}
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts} 
-  : @AbsAction (P * mb A) T FinA PreAct A H Φ 𝝳 (FW_gLts gLtsP) gLtsT.
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
+  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (FW_gLts gLtsP) gLtsT.
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
@@ -117,9 +117,9 @@ Admitted.
 
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
   `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _ }
-  `{@Prop_of_Inter P (mb A) A fw_inter H gLtsP MbgLts} 
-  : @FinitaryAbsAction (P * mb A) T FinA PreAct A H Φ 𝝳 (FW_gLts gLtsP) gLtsT _ _ :=
-  {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) (mb_without_not_nb p.2));|}.
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
+  : @FinitaryAbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (FW_gLts gLtsP) gLtsT _ _ :=
+  {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) (MO_without_not_nb p.2));|}.
 Next Obligation.
   intros.
   destruct p. eapply elem_of_union in H2. destruct H2 as [in_p | in_M] ; simpl in *.
@@ -137,15 +137,15 @@ Next Obligation.
     exists (co μ). split; eauto.
     exists μ. repeat split ;eauto.
     - eapply lts_refuses_spec2.
-      assert (μ ∈ mb_without_not_nb m) as mem';eauto. 
-      eapply lts_mb_nb_with_nb_spec1 in mem as (nb & mem).
+      assert (μ ∈ MO_without_not_nb m) as mem';eauto. 
+      eapply lts_MO_nb_with_nb_spec1 in mem as (nb & mem).
       exists (p , m ∖ {[+ μ +]}).
       eapply ParRight.
       assert (m = {[+ μ  +]} ⊎ (m ∖ {[+ μ +]})) as eq''' by multiset_solver.
       rewrite eq''' at 1.
       eapply lts_multiset_minus. exact nb. 
     - exact (proj2_sig (exists_dual μ)).
-    - eapply lts_mb_nb_with_nb_spec1 in mem as (nb & mem).
+    - eapply lts_MO_nb_with_nb_spec1 in mem as (nb & mem).
       eapply dual_blocks; eauto. symmetry. exact (proj2_sig (exists_dual μ)).
 Qed.
 Next Obligation.
@@ -164,12 +164,9 @@ Next Obligation.
       * assert (μ = co μ'). { eapply unique_nb; eauto. }
         subst. eauto.
       * eapply non_blocking_action_in_ms in l;eauto. subst.
-        eapply lts_mb_nb_with_nb_spec2;eauto.
+        eapply lts_MO_nb_with_nb_spec2;eauto.
         multiset_solver.
     - assert (blocking μ') as Imp; eauto.
       eapply blocking_action_in_ms in Imp as (mem' & duo' & nb'); eauto.
       eapply unique_nb in duo; eauto. subst. contradiction.
 Qed.
-
-
-
