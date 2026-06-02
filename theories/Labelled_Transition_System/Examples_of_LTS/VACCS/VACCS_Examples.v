@@ -274,6 +274,6 @@ Proof.
   intros hyp_must%bhv_iff_ctx_VACCS.
   eapply bhv_iff_ctx_VACCS.
   (* to be completed/finished *)
-Admitted.
+Abort.
 
 End VACCS_examples.
