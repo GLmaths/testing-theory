@@ -28,5 +28,5 @@ From TestingTheory Require Import gLts.
 
 Class gLtsCNenabled (P A : Type) `{gLts P A} :=
   MkgLtsCNenabled {
-      co_non_blocking_enabled p1 η β : non_blocking η -> dual β η -> ∃ p2, p1 ⟶[ β ] p2;
-    }.
+      cn_enabled p1 η β : non_blocking η -> dual β η -> ∃ p2, p1 ⟶[ β ] p2;
+  }.

@@ -88,7 +88,7 @@ Proof.
   intro HypTr.
   destruct (decide (non_blocking μ)) as [nb | not_nb].
   + assert (f (μ :: s) ⟶⋍[μ] f s) as (t' & Tr & Eq). eapply test_next_step.
-    assert (t' ⋍ t) as equiv. eapply lts_oba_non_blocking_action_deter; eauto.
+    assert (t' ⋍ t) as equiv. eapply nb_determinacy; eauto.
     etransitivity; eauto. symmetry; eauto.
   + eapply test_follows_trace_determinacy in not_nb as equiv; eauto.
 Qed.
@@ -140,7 +140,7 @@ Proof.
     + destruct IHs' as (e & l).
       destruct (test_next_step μ s') as (e' & hl' & heq).
       destruct (eq_spec e' e τ) as (e0 & hl0 & heqe0). eauto with mdb.
-      destruct (lts_oba_non_blocking_action_delay nb hl' hl0)
+      destruct (nb_delay nb hl' hl0)
         as (r & l1 & l2); eauto.
     + eapply test_tau_transition. exact not_nb.
 Qed.
@@ -222,11 +222,11 @@ Proof.
       as (t & hlt & heqt).
     edestruct (eq_spec t r) as (u & hlu & hequ).
     { eauto with mdb. }
-    destruct (lts_oba_non_blocking_action_delay nb hlt hlu)
+    destruct (nb_delay nb hlt hlu)
       as (v & l1 & (t' & l2 & heq')).
     exists v. split. eassumption.
     destruct (test_next_step ν (s' ++ s2)) as (w & hlw & heqw).
-    eapply lts_oba_non_blocking_action_deter_inv; try eassumption.
+    eapply backwards_nb_determinacy; try eassumption.
     etrans. eauto. etrans. eauto. etrans. eauto. now symmetry.
 Qed.
 
@@ -244,7 +244,7 @@ Proof.
       destruct HypTr as (e & HypTr & equiv).
       destruct HypTr' as (e' & HypTr' & equiv'); simpl in *.
       assert (e ⋍ e').
-      { eapply lts_oba_non_blocking_action_deter; eauto. } 
+      { eapply nb_determinacy; eauto. } 
       etransitivity. symmetry. exact equiv. etransitivity; eauto.
     + destruct HypTr as (e & HypTr & equiv).
       assert (e ⋍ f s2) as equiv'. 
@@ -257,7 +257,7 @@ Proof.
       destruct HypTr as (e & HypTr & equiv).
       destruct HypTr' as (e' & HypTr' & equiv').
       assert (e ⋍ e').
-      { eapply lts_oba_non_blocking_action_deter; eauto. }
+      { eapply nb_determinacy; eauto. }
       etransitivity. symmetry. exact equiv. etransitivity; eauto.
     + destruct HypTr as (e & HypTr & equiv).
       destruct (decide (non_blocking ν)) as [nb' | not_nb'].
@@ -266,7 +266,7 @@ Proof.
          destruct HypTr' as (e' & HypTr' & equiv').
          assert (μ <> ν) as not_eq.
          { intro imp. rewrite imp in not_nb. contradiction. }
-         destruct (lts_oba_non_blocking_action_confluence nb' not_eq HypTr' HypTr )
+         destruct (nb_confluence nb' not_eq HypTr' HypTr )
            as (t' & l2 & (t'' & l1 & heq)).
          assert (f (s' ++ μ :: s2) ⟶⋍[μ] f (s' ++ s2)) as HypTr''.
          { eapply f_gen_lts_mu_in_the_middle; eauto. }
@@ -278,7 +278,7 @@ Proof.
          assert (f (ν :: s' ++ s2) ⟶⋍[ν] f (s' ++ s2)) as (v' & hlv' & heqv').
          { eapply test_next_step. }
          assert (e ⋍ f (ν :: s' ++ s2)) as final. 
-         { eapply lts_oba_non_blocking_action_deter_inv; eauto.
+         { eapply backwards_nb_determinacy; eauto.
          etransitivity. exact heq. etransitivity. exact heq'. symmetry; eauto. }
          etransitivity. symmetry. exact equiv. eauto.
       ++ inversion his; subst. 
@@ -317,7 +317,7 @@ Proof.
     { eapply test_next_step; eauto. }
     destruct (decide (β' = ν)) as [eq' | neq'].
     + subst. contradiction. 
-    + edestruct (lts_oba_non_blocking_action_confluence nb neq' hl HypTr) 
+    + edestruct (nb_confluence nb neq' hl HypTr) 
       as (p' & HypTr''' & p'' & HypTr'' & equiv''').
       edestruct (eq_spec (f (s' ++ β :: s2)) p') as (t' & HypTr' & equiv'').
       { symmetry in equiv. eauto. }
@@ -352,7 +352,7 @@ Proof.
       { eapply test_next_step. }
       assert (μ <> ν) as not_eq.
       { intro. subst. contradiction. }
-      destruct (lts_oba_non_blocking_action_confluence nb not_eq hlv l)
+      destruct (nb_confluence nb not_eq hlv l)
            as (t' & l2 & (t'' & l1 & heq)).
       destruct (eq_spec (f s') t' (ActExt μ)) as (v' & hlv' & heqv').
       { exists v. split. symmetry; eauto. exact l2. }
@@ -395,8 +395,8 @@ Proof.
   - edestruct (test_next_step ν s') as (r & hlr & heqr).
     destruct (decide (ν = η)) as [eq | not_eq].
     + right. subst. exists ε, s', η. repeat split; simpl; eauto with mdb.
-      transitivity r; eauto. eapply (lts_oba_non_blocking_action_deter nb l hlr); eauto.
-    + destruct (lts_oba_non_blocking_action_confluence nb not_eq l hlr )
+      transitivity r; eauto. eapply (nb_determinacy nb l hlr); eauto.
+    + destruct (nb_confluence nb not_eq l hlr )
         as (t' & l2 & (t'' & l1 & heq)).
       destruct (eq_spec (f s') t'' (ActExt $ η)) as (v & hlv & heqv).
       { exists r. split; eauto with mdb. now symmetry. }
@@ -417,7 +417,7 @@ Proof.
             as (r' & hlr' & heqr'); eauto.
            edestruct (test_next_step ν (s1' ++ s2'))
             as (w & hlw & heqw).
-           eapply lts_oba_non_blocking_action_deter_inv; try eassumption.
+           eapply backwards_nb_determinacy; try eassumption.
            transitivity t''. symmetry. eassumption.
            transitivity v. now symmetry.
            transitivity (f (s1' ++ s2')). eassumption. now symmetry.
@@ -495,7 +495,7 @@ Proof.
     + destruct (decide (outcome t)) as [happy | not_happy].
       ++ left. exact happy.
       ++ edestruct (test_next_step μ' s') as (r & hlr & heqr).
-         destruct (lts_oba_non_blocking_action_tau nb hlr HypTr)
+         destruct (nb_tau nb hlr HypTr)
          as [(r1 & l1 & (r2 & l2 & heq))| HypTr''].
          +++ destruct (eq_spec (f s') r1 τ) as (v & hlv & heqv).
              exists r. split; eauto with mdb. now symmetry.
@@ -512,7 +512,7 @@ Proof.
                   exists η, μ, (μ' :: s1), s2, s3. repeat split; eauto.
                   repeat split; eauto.
                   edestruct (test_next_step μ') as (w & hlw & heqw).
-                  eapply lts_oba_non_blocking_action_deter_inv. exact nb.
+                  eapply backwards_nb_determinacy. exact nb.
                   eassumption. eassumption.
                   etrans. eassumption.
                   etrans. symmetry. eapply heqv.
@@ -734,7 +734,7 @@ Proof.
             (s1 ++ s2) s3 μ); simpl in *; eauto.
     eapply Forall_app. split; eauto. now rewrite <- app_assoc. }
   simpl in *. edestruct (eq_spec e1 e2) as (e' & l' & heq'). eauto.
-  destruct (lts_oba_fb_feedback nb duo l1 l') as (t & lt & heqt); eauto.
+  destruct (feedback nb duo l1 l') as (t & lt & heqt); eauto.
   exists t. split; eauto.
   rewrite <- app_assoc in heq2.
   transitivity e'. eauto.
@@ -762,13 +762,13 @@ Proof.
        destruct (decide (non_blocking μ)) as [nb'' | not_nb''].
        * destruct (decide (η = μ)) as [eq | not_eq]. 
          -- subst; eauto.
-         -- destruct (lts_oba_non_blocking_action_confluence nb'' not_eq hle1 l)
+         -- destruct (nb_confluence nb'' not_eq hle1 l)
               as (r1 & l1 & r2 & l2 & heq).
             edestruct (eq_spec (ta E1 s') r1) as (e' & hle' & heqe').
             symmetry in heqe1. eauto.
             eapply IHs' in hle' as (t' & hlt); eauto.
             edestruct (eq_spec e2 t') as (e2' & hle2' & heqe2'). eauto.
-            edestruct (lts_oba_non_blocking_action_delay nb'' hle2 hle2') as (v & l3 & l4).
+            edestruct (nb_delay nb'' hle2 hle2') as (v & l3 & l4).
             eauto with mdb.
        * assert (¬ non_blocking η) as imp.
            { eapply side_effect_by_blocking_action; eauto. }
@@ -889,7 +889,7 @@ Proof.
     * eapply m_step; eauto with mdb.
       + eapply test_ungood.
       + destruct (decide (non_blocking ν)) as [nb | not_nb].
-        ++ edestruct (lts_oba_fw_forward p ν (co ν)) as (p' & Hyp').
+        ++ edestruct (boomerang p ν (co ν)) as (p' & Hyp').
            assert (p ⟶[(co ν)] p').
            { eapply Hyp'; eauto. destruct (exists_dual ν) as (x & duo).
              symmetry. eauto. }
@@ -1142,7 +1142,7 @@ Proof.
       { exact (proj2_sig (exists_dual μ)). }
       destruct (decide (non_blocking (co μ))) as [nb | b].
       +++ inversion hcnv; subst.
-          destruct (lts_oba_fw_forward p (co μ) μ) as (p' & l0 & l1); eauto.
+          destruct (boomerang p (co μ) μ) as (p' & l0 & l1); eauto.
           rewrite map_cons.
           assert (ta ((oas p (μ :: s') hcnv) ∖ E) (co μ :: coₜ s')
                    ⟶⋍[co μ] ta ((oas p (μ :: s') hcnv) ∖ E) (coₜ s'))

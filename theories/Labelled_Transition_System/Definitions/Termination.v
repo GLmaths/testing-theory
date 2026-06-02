@@ -104,7 +104,7 @@ Proof.
   induction ht as [p Hyp1 Hyp2].
   intros q a nb l1.
   eapply tstep. intros q' l2.
-  destruct (lts_oba_non_blocking_action_delay nb l1 l2) as (t & l3 & l4); eauto.
+  destruct (nb_delay nb l1 l2) as (t & l3 & l4); eauto.
   destruct l4 as (q0 & l0 & eq0).
   eapply terminate_preserved_by_eq.
   eapply Hyp2. eapply l3. eapply nb. eapply l0. eassumption.

@@ -74,7 +74,7 @@ Proof.
       eapply nh, (outcome_preserved_by_eq e' e2); eauto.
       eapply outcome_preserved_by_lts_non_blocking_action; eauto.
     + destruct (exists_dual η) as (μ & duo). symmetry in duo.
-      destruct (lts_oba_fw_forward p2 η μ) as (p'2 & Hyp).
+      destruct (boomerang p2 η μ) as (p'2 & Hyp).
       destruct (Hyp nb duo) as (Tr1 & Tr2). 
       destruct le as (e'1 & Tr & eq).
       exists (p'2 , e'1). eapply ParSync; eauto.
@@ -82,13 +82,13 @@ Proof.
       destruct lp as (p0 & hlp0 & heqp0).
       edestruct (eq_spec p0 p' τ) as (p3 & hlp3 & heqp3).
       by (exists p2; split; [now symmetry | eassumption]).
-      destruct (lts_oba_non_blocking_action_delay nb hlp0 hlp3) as (t & l1 & l2).
+      destruct (nb_delay nb hlp0 hlp3) as (t & l1 & l2).
       destruct l2 as (p4 & hlp4 & heqp4).
       eapply must_eq_server. etrans. eapply heqp4. eassumption.
       eapply IHpt; eauto with mdb. exists p4. split. eassumption. reflexivity.
     + intros e' l.
       destruct le as (e0 & hle0 & heqe0).
-      destruct (lts_oba_non_blocking_action_tau nb hle0 l) as [(t & l0 & l1)| Hyp].
+      destruct (nb_tau nb hle0 l) as [(t & l0 & l1)| Hyp].
       ++ destruct (eq_spec e2 t τ) as (v & hlv & heqv).
          { exists e0. split; eauto. now symmetry. }
          eapply IHet. eassumption. eassumption. eassumption.
@@ -108,8 +108,8 @@ Proof.
       destruct (decide (μ2 = η)); subst; simpl in l2.
       ++ edestruct (eq_spec p0 p' (ActExt $ μ1)) as (p3 & hlp3 & heqp3).
          { exists p2. split. now symmetry. eassumption. }
-         assert (heqe' : e0 ⋍ e') by (eapply lts_oba_non_blocking_action_deter; eassumption).
-         destruct (lts_oba_fw_feedback nb duo hlp0 hlp3) as [(p3' & hlp3' & heqp3')|].
+         assert (heqe' : e0 ⋍ e') by (eapply nb_determinacy; eassumption).
+         destruct (fwd_feedback nb duo hlp0 hlp3) as [(p3' & hlp3' & heqp3')|].
          +++ eapply must_eq_client. eassumption.
              eapply must_eq_client. symmetry. eapply heqe0.
              eapply must_eq_server. transitivity p3; eassumption.
@@ -118,10 +118,10 @@ Proof.
              eapply (must_eq_client _ e2 e0). eapply (symmetry heqe0).
              eapply must_eq_server. transitivity p3; eassumption.
              eauto with mdb.
-      ++ destruct (lts_oba_non_blocking_action_confluence nb n hle0 l2)
+      ++ destruct (nb_confluence nb n hle0 l2)
           as (t & l3 & (e4 & hle4 & heqe4)).
          edestruct (eq_spec p0 p' (ActExt μ1)) as (p3 & hlp3 & heqp3). eauto with mdb.
-         destruct (lts_oba_non_blocking_action_delay nb hlp0 hlp3) 
+         destruct (nb_delay nb hlp0 hlp3) 
           as (r & l5 & (p4 & hlp4 & heqp4)).
          edestruct (eq_spec e2 t (ActExt μ2)) as (e3 & hle3 & heqe3).
          { exists e0. split. now symmetry. eassumption. }
@@ -156,9 +156,9 @@ Proof.
       inversion l; subst.
       ++ edestruct (eq_spec p0 p' τ) as (p3 & hlp3 & heqp3).
          exists p2. split. now symmetry. eassumption.
-         destruct (lts_oba_non_blocking_action_delay nb hlp0 hlp3) as (t & l1 & l2).
+         destruct (nb_delay nb hlp0 hlp3) as (t & l1 & l2).
          exists (t, e2). eapply ParLeft; eauto.
-      ++ destruct (lts_oba_non_blocking_action_tau nb hle0 l0) as [(t & l1 & l2) | m].
+      ++ destruct (nb_tau nb hle0 l0) as [(t & l1 & l2) | m].
          +++ edestruct (eq_spec e2 t τ) as (e2' & hle2' & heqe2').
              exists e0. split. now symmetry. eassumption.
              exists (p1, e2'). eapply ParRight; eauto.
@@ -167,11 +167,11 @@ Proof.
              exists e0. split. now symmetry. eassumption.
              exists (p0, e3). symmetry in duo. eapply ParSync; eauto.
       ++ destruct (decide (μ2 = η)); subst.
-             +++ assert (e0 ⋍ e') by (eapply (lts_oba_non_blocking_action_deter nb hle0 l2); eauto).
+             +++ assert (e0 ⋍ e') by (eapply (nb_determinacy nb hle0 l2); eauto).
                  simpl in eq. subst.
                  edestruct (eq_spec p0 p' (ActExt $ μ1)) as (p3 & hlp3 & heqp3).
                  exists p2. split. now symmetry. eassumption.
-                 destruct (lts_oba_fw_feedback nb eq hlp0 hlp3) as [(t & hlt & heqt)|]; subst; eauto with mdb.
+                 destruct (fwd_feedback nb eq hlp0 hlp3) as [(t & hlt & heqt)|]; subst; eauto with mdb.
                  exists (t, e2). eapply ParLeft; eauto.
                  assert (hm : must p' e0) by eauto with mdb.
                  eapply (must_eq_client p' e0 e2) in hm.
@@ -182,21 +182,21 @@ Proof.
                  etrans. symmetry. eassumption. eassumption.
                  inversion hm; subst. contradiction. eassumption.
                  etrans. symmetry. eassumption. now symmetry. eassumption.
-             +++ destruct (lts_oba_non_blocking_action_confluence nb n hle0 l2)
+             +++ destruct (nb_confluence nb n hle0 l2)
                     as (t & l3 & l4).
                   edestruct (eq_spec p0 p' (ActExt μ1)) as (p3 & hlp3 & heqp3).
                   exists p2. split. now symmetry. eassumption.
-                  destruct (lts_oba_non_blocking_action_delay nb hlp0 hlp3)
+                  destruct (nb_delay nb hlp0 hlp3)
                     as (r & l5 & l6).
                   edestruct (eq_spec e2 t (ActExt μ2)) as (e3 & hle3 & heqe3).
                   exists e0. split. now symmetry. eassumption.
                   exists (r, e3). eapply ParSync; eauto.
     + intros p' l.
-      destruct (lts_oba_non_blocking_action_tau nb hlp0 l) as [(t & l0 & l1)| Hyp].
-      ++ destruct (lts_oba_non_blocking_action_delay nb hlp0 l0) as (r & hl2 & hl3).
+      destruct (nb_tau nb hlp0 l) as [(t & l0 & l1)| Hyp].
+      ++ destruct (nb_delay nb hlp0 l0) as (r & hl2 & hl3).
          destruct l1 as (e3 & hle3 & heqe3).
          destruct hl3 as (u & hlu & hequ).
-         assert (heq : r ⋍ p'). eapply lts_oba_non_blocking_action_deter_inv; try eassumption.
+         assert (heq : r ⋍ p'). eapply backwards_nb_determinacy; try eassumption.
          etrans. eassumption. now symmetry.
          destruct (eq_spec p' u (ActExt $ η)) as (v & hlv & heqv).
          exists r. split. now symmetry. eassumption.
@@ -207,7 +207,7 @@ Proof.
          exists e0. eauto with mdb.
          exists u. split. eassumption. etrans. eapply hequ. now symmetry.
       ++ destruct Hyp as (μ & duo & u & hlu & hequ).
-         destruct (lts_oba_non_blocking_action_delay nb hlp0 hlu) as (r & hl2 & hl3).
+         destruct (nb_delay nb hlp0 hlu) as (r & hl2 & hl3).
          destruct (eq_spec p2 u (ActExt $ μ)) as (v & hlv & heqv).
          exists p0. split. now symmetry. eassumption.
          eapply must_eq_server. etrans. eapply heqv. eassumption.
@@ -217,7 +217,7 @@ Proof.
     + intros e' l.
       edestruct (eq_spec e0 e' τ) as (e3 & hle3 & heqe3).
       exists e2. split. now symmetry. eassumption.
-      destruct (lts_oba_non_blocking_action_delay nb hle0 hle3) as (t & l1 & l2).
+      destruct (nb_delay nb hle0 hle3) as (t & l1 & l2).
       destruct l2 as (e4 & hle4 & heqe4).
       eapply must_eq_client. etrans. eapply heqe4. eassumption.
       eapply IHet. eassumption. eassumption. exists e4. split. eassumption. reflexivity.
@@ -228,15 +228,15 @@ Proof.
          edestruct (eq_spec e0 e' (ActExt $ μ1)) as (e3 & hle3 & heqe3).
          exists e2. split. now symmetry. eassumption.
          symmetry in duo.
-         destruct (lts_oba_fb_feedback nb duo hle0 hle3) as (e3' & hle3' & heqe3').
-         assert (heqe' : p0 ⋍ p'). eapply lts_oba_non_blocking_action_deter; eassumption.
+         destruct (feedback nb duo hle0 hle3) as (e3' & hle3' & heqe3').
+         assert (heqe' : p0 ⋍ p'). eapply nb_determinacy; eassumption.
          eapply must_eq_server. eassumption.
          eapply must_eq_server. symmetry. eapply heqp0.
          eapply must_eq_client. etrans. eapply heqe3'. eassumption.
          eapply Het. eassumption.
-      ++ destruct (lts_oba_non_blocking_action_confluence nb not_eq hlp0 l1) as (t & l3 & l4).
+      ++ destruct (nb_confluence nb not_eq hlp0 l1) as (t & l3 & l4).
          edestruct (eq_spec e0 e' (ActExt μ1)) as (e3 & hle3 & heqe3); eauto.
-         destruct (lts_oba_non_blocking_action_delay nb hle0 hle3) as (r & l5 & l6).
+         destruct (nb_delay nb hle0 hle3) as (r & l5 & l6).
          edestruct (eq_spec p2 t (ActExt μ)) as (p3 & hlp3 & heqp3).
          exists p0. split. now symmetry. eassumption.
          eapply IHcom. eassumption. eassumption. eassumption. eassumption.
@@ -426,7 +426,7 @@ Proof.
                    destruct (eq_spec e1' e0 (ActExt $ μ2)) as (r & l4 & heq4). eauto.
                    edestruct (woutpout_preserves_mu hwoe1' l4) as (e2 & u' & le2 & hwoe2 & hequ').
                    symmetry in duo.
-                   destruct (lts_oba_fb_feedback nb'' duo l'' le2) as (t & hlt & heqt).
+                   destruct (feedback nb'' duo l'' le2) as (t & hlt & heqt).
                    eapply must_eq_client. eassumption.
                    rewrite <- gmultiset_disj_union_right_id.
                    eapply must_eq_client. symmetry. eassumption.
@@ -511,9 +511,9 @@ Proof.
                     assert (μ1 ∈ lts_oba_mo t) as mem. rewrite <- eq'. set_solver.
                     eapply lts_oba_mo_spec_bis2 in mem as (e2 & nb' & l'2).
                     assert (neq : μ2 ≠ μ1). eapply BlockingAction_are_not_non_blocking; eauto.
-                    edestruct (lts_oba_non_blocking_action_confluence nb' neq l'2 l0) as (e3 & l3 & l4).
+                    edestruct (nb_confluence nb' neq l'2 l0) as (e3 & l3 & l4).
                     assert (dual μ2 μ1) as duo. { symmetry. eauto. }
-                    destruct (lts_oba_fb_feedback nb' duo l'2 l3) as (e4 & l6 & _).
+                    destruct (feedback nb' duo l'2 l3) as (e4 & l6 & _).
                     exists (p0 ▷ e4). eapply ParRight; eauto.
           +++ inversion l1; subst.
               ++++ eapply woutpout_preserves_mu in hwo; eauto.

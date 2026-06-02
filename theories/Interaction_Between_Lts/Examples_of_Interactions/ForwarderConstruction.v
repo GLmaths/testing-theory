@@ -289,7 +289,7 @@ Proof.
   destruct (strip_delay_tau hwq l) as
     [(a & b & q1 & duo & nb  & l1 & l2) | (qt & q1 & hltqt & hwq1 & heq1)].
   - destruct l2 as (q'' & hlq1 & heq'').
-    edestruct (lts_oba_non_blocking_action_delay nb l1 hlq1) as (q2 & hlq & hlq2).
+    edestruct (nb_delay nb l1 hlq1) as (q2 & hlq & hlq2).
     assert (blocking b) as not_nb. eapply dual_blocks; eauto.
     edestruct (fw_eq_blocking_action_simulation heq not_nb hlq) as (p2 & hlp_inp & heqp2).
     assert (mem : a ∈ lts_oba_mo p ⊎ (mb_without_not_nb mp))
@@ -298,9 +298,9 @@ Proof.
     + assert {p1 | non_blocking a /\ p ⟶[a] p1} as (p1 & nb1 & tr1)
           by now eapply lts_oba_mo_spec_bis2.
       assert (neq : b ≠ a). now eapply BlockingAction_are_not_non_blocking. 
-      edestruct (lts_oba_non_blocking_action_confluence nb neq tr1 hlp_inp)
+      edestruct (nb_confluence nb neq tr1 hlp_inp)
         as (p'' & hlp1 & hlp2).
-      destruct (lts_oba_fb_feedback nb duo tr1 hlp1)
+      destruct (feedback nb duo tr1 hlp1)
         as (p' & hlp_tau & heqp').
       exists (p', mp). split. 
       eapply ParLeft. eauto with mdb.
@@ -503,8 +503,8 @@ Proof.
   eapply gmultiset_elem_of_disj_union in mem as [hleft | hright].
   - eapply lts_oba_mo_spec_bis2 in hleft as (p1 & nb & hl1).
     assert (neq : β ≠ η). eapply BlockingAction_are_not_non_blocking; eauto.
-    edestruct (lts_oba_non_blocking_action_confluence nb neq hl1 hl') as (p2 & hlp1 & hlp').
-    edestruct (lts_oba_fb_feedback nb duo hl1 hlp1) as (p3 & hlp & heqp3).
+    edestruct (nb_confluence nb neq hl1 hl') as (p2 & hlp1 & hlp').
+    edestruct (feedback nb duo hl1 hlp1) as (p3 & hlp & heqp3).
     exists (p3, mp). split.
     + eapply ParLeft. eauto with mdb.
     + intros ph qh hsph hsqh. simpl in *.
@@ -610,13 +610,13 @@ Qed.
 Next Obligation.
 intros ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q, mq), r as (r, mr).
   inversion Hstep_nb; inversion Hstep; subst.
-  - destruct (lts_oba_non_blocking_action_delay nb l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
+  - destruct (nb_delay nb l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
     exists (t, mr). split; simpl in *. eauto with mdb.
     exists (r0, mr). split. simpl in *. eauto with mdb.
     now eapply fw_eq_id_mb.
   - exists (p, mr). split; simpl in *. eauto with mdb.
     exists (r, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - destruct (lts_oba_non_blocking_action_delay nb l l1) as (t & hlt0 & (r0 & hlr0 & heqr0)).
+  - destruct (nb_delay nb l l1) as (t & hlt0 & (r0 & hlr0 & heqr0)).
     exists (t, mr). split. simpl in *. eauto with mdb.
     exists (r0, mr). split. simpl in *. eauto with mdb.
     now eapply fw_eq_id_mb.
@@ -656,7 +656,7 @@ Next Obligation.
   destruct p as (p, mp), q1 as (q, mq), q2 as (r, mr).
   inversion Hstep_nb; subst.
   - inversion Hstep; subst.
-    + edestruct (lts_oba_non_blocking_action_confluence nb not_eq l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
+    + edestruct (nb_confluence nb not_eq l l0) as (t & hlt0 & (r0 & hlr0 & heqr0)).
       exists (t, mr). split; simpl in *. eauto with mdb.
       exists (r0, mr). split. simpl in *. eauto with mdb.
       now eapply fw_eq_id_mb.
@@ -690,7 +690,7 @@ Proof.
   intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η nb Hstep_nb Hstep.
   inversion Hstep_nb ;subst.
   - inversion Hstep ; subst.
-    + edestruct (lts_oba_non_blocking_action_tau nb l l0) as
+    + edestruct (nb_tau nb l l0) as
         [(t & hl1 & (t0 & hl0 & heq0)) | (μ & duo & t0 & hl0 & heq0)].
       left. exists (t, m3).
       split. simpl. eauto with mdb.
@@ -702,7 +702,7 @@ Proof.
     + destruct eq as (duo' & nb').
       assert (blocking μ1). eapply dual_blocks; eauto.
       assert (neq : μ1 ≠ η). intro. subst. contradiction. 
-      edestruct (lts_oba_non_blocking_action_confluence nb neq l l1)
+      edestruct (nb_confluence nb neq l l1)
         as (t & hl1 & (t1 & hl2 & heq1)).
       left. exists (t, m3). split. eapply ParSync; eauto. split; eauto.
       exists (t1, m3). split. simpl. eauto with mdb.
@@ -736,7 +736,7 @@ Next Obligation.
   inversion Hstep_nb ; subst.
   - inversion Hstep_nb' ; subst.
     + eapply fw_eq_id_mb; eauto.
-      eapply lts_oba_non_blocking_action_deter; eauto.
+      eapply nb_determinacy; eauto.
     + eapply (non_blocking_action_in_ms m2 η m3) in nb as eq; subst; eauto.
       set (he1 := lts_oba_mo_spec2 _ _ _ nb l).
       rewrite he1 in hwp3.
@@ -891,7 +891,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η μ nb duo Hstep_nb Hstep.
   inversion Hstep_nb; subst.
   + inversion Hstep; subst.
-    ++ left. destruct (lts_oba_fb_feedback nb duo l l0) as (t & l1 & heq).
+    ++ left. destruct (feedback nb duo l l0) as (t & l1 & heq).
        exists (t, m3). split. eapply ParLeft; assumption.
        now eapply fw_eq_id_mb.
     ++ right. simpl. unfold fw_eq.
@@ -902,7 +902,7 @@ Next Obligation.
        rewrite heq in strip_p. rewrite heq. split.
        +++ destruct (strip_mem_ex strip_p) as (e & l' & nb'').
            destruct (strip_eq_step strip_p e l') as (t & hwo & heq'); eauto.
-           set (h := lts_oba_non_blocking_action_deter nb'' l l').
+           set (h := nb_determinacy nb'' l l').
            etrans. symmetry. eassumption.
            symmetry. eapply strip_eq_sim; eassumption.
        +++ assert (mb_without_not_nb ({[+ co μ +]} ⊎ m2) 

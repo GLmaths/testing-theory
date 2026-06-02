@@ -209,7 +209,7 @@ Lemma cnv_drop_input_hd `{gLtsObaFW P A} p μ s :
 Proof.
   intros Hyp hacnv. destruct Hyp as [η Hyp]. destruct Hyp as [nb duo].
   inversion hacnv as [|p'  μ'  T  Hyp_p_conv Hyp_conv_through_μ];subst.
-  destruct (lts_oba_fw_forward p η μ) as (r & l1 & l2). eassumption. eassumption.
+  destruct (boomerang p η μ) as (r & l1 & l2). eassumption. eassumption.
   eapply cnv_preserved_by_lts_non_blocking_action. eassumption.
   eapply Hyp_conv_through_μ. eapply wt_act. eassumption. eapply wt_nil. eapply l2.
 Qed.
@@ -228,7 +228,7 @@ Proof.
     edestruct (eq_spec r' r2) as (r & hlr & heqr). exists r1. eauto.
     eapply (cnv_preserved_by_wt_nil _ r2); eauto.
     rewrite <- heqr.
-    destruct (lts_oba_fw_feedback nb duo l1 hlr) as [(t0 & hlt0 & heqt0)| Heqr].
+    destruct (fwd_feedback nb duo l1 hlr) as [(t0 & hlt0 & heqt0)| Heqr].
     rewrite <- heqt0.
     eapply cnv_preserved_by_lts_tau.
     eapply (cnv_preserved_by_wt_nil _ p); eauto. eassumption.
@@ -254,8 +254,8 @@ Proof.
   intros BlocDuo1 BlocDuo2 hcnv. 
   destruct BlocDuo1 as (η1 & nb1 & duo1).
   destruct BlocDuo2 as (η2 & nb2 & duo2).
-  destruct (lts_oba_fw_forward p η1 μ1) as (t0 & l1 & l2). eassumption. eassumption.
-  destruct (lts_oba_fw_forward t0 η2 μ2) as (t1 & l3 & l4). eassumption. eassumption.
+  destruct (boomerang p η1 μ1) as (t0 & l1 & l2). eassumption. eassumption.
+  destruct (boomerang t0 η2 μ2) as (t1 & l3 & l4). eassumption. eassumption.
   inversion hcnv; subst.
   eapply cnv_act; eauto.
   intros q w1. eapply cnv_act.
@@ -360,9 +360,9 @@ Proof.
     { eapply dual_blocks; eauto. }
     assert (a' = co a) as eq_subst.
     { eapply unique_nb; eauto. } subst.
-    edestruct (lts_oba_fw_forward p (co a) a) as (p_a & Hyp).
+    edestruct (boomerang p (co a) a) as (p_a & Hyp).
     destruct (Hyp nb inter) as (tr_b & tr_nb).
-    edestruct (lts_oba_non_blocking_action_delay nb tr_nb l) as (p'_a & tr'_b & r' & tr'_nb & equiv').
+    edestruct (nb_delay nb tr_nb l) as (p'_a & tr'_b & r' & tr'_nb & equiv').
     assert (p'_a ⇓ s1 ++ s2).
     { eapply IHs1; eauto. eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto. }
     rewrite<- equiv'.

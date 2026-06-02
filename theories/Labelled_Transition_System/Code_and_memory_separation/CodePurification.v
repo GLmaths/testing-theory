@@ -70,7 +70,7 @@ Proof.
     + eapply gmultiset_elem_of_singleton in here. subst. firstorder.
     + edestruct IHhw as (p & HypTr & nb) ; eauto.
       eapply gmultiset_disj_union_difference' in there; eassumption.
-      edestruct (lts_oba_non_blocking_action_delay H2 H1 HypTr) as (u & l2 & l3).
+      edestruct (nb_delay H2 H1 HypTr) as (u & l2 & l3).
       eauto.
 Qed.
 
@@ -83,12 +83,12 @@ Proof.
   - multiset_solver.
   - intros r l.
     destruct (decide (η = η0)); subst.
-    + assert (eq_rel p2 r) by (eapply lts_oba_non_blocking_action_deter; eassumption).
+    + assert (eq_rel p2 r) by (eapply nb_determinacy; eassumption).
       eapply gmultiset_disj_union_inj_1 in x. subst.
       eapply strip_eq. eassumption. symmetry. assumption.
     + assert (m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
       assert (η ≠ η0) by set_solver.
-      edestruct (lts_oba_non_blocking_action_confluence H2 H4 H1 l)
+      edestruct (nb_confluence H2 H4 H1 l)
         as (t0 & l0 & (r1 & l1 & heq1)).
       eapply IHw in H3 as (t & hwo & heq); eauto.
       assert (mem : η0 ∈ m) by multiset_solver.
@@ -146,7 +146,7 @@ Proof.
   + edestruct (eq_spec p t) as (t' & l & equiv). exists p'. split; eauto.
     exists t'. repeat split; eauto. exists t'. split; eauto. constructor;eauto. reflexivity.
   + eapply InductionHyp in HypTr as (r & l & t' & hwo & heq).
-    edestruct (lts_oba_non_blocking_action_delay nb HypTr' l) as (u & l1 & (r' & lr' & heqr')).
+    edestruct (nb_delay nb HypTr' l) as (u & l1 & (r' & lr' & heqr')).
     edestruct (strip_eq hwo _ heqr') as (t0 & hwo0 & heq0).
     exists u. repeat split; eauto. exists t0. split; eauto. eapply strip_step; eassumption.
     etrans. eassumption. now symmetry.
@@ -163,7 +163,7 @@ Proof.
     exists p''. eauto.
   + intros.
     assert (neq : μ ≠ η /\ μ ∉ m) by now multiset_solver. destruct neq as [neq not_in].
-    edestruct (lts_oba_non_blocking_action_confluence nb neq HypTr' HypTr) as (r & l1 & l2). eauto.
+    edestruct (nb_confluence nb neq HypTr' HypTr) as (r & l1 & l2). eauto.
 Qed.
 
 Lemma strip_delay_m `{gLtsOba P A} {p q m t μ} :
@@ -178,7 +178,7 @@ Proof.
   - eapply strip_mem_ex in hwp as h0.
     destruct h0 as (e & hle). destruct hle as [hle nb].
     assert (neq : μ ≠ x /\ μ ∉ m) by now multiset_solver. destruct neq as [neq not_in].
-    edestruct (lts_oba_non_blocking_action_confluence nb neq hle hlp) as (u & l2 & l3).
+    edestruct (nb_confluence nb neq hle hlp) as (u & l2 & l3).
     destruct l3 as (v & hlv & heqv).
     eapply strip_eq_step in hle as h1; eauto. destruct h1 as (r & hwr & heqr).
     destruct (IHm _ _ _ _ not_in hwr l2) as (r0 & hwu).
@@ -247,7 +247,7 @@ Proof.
   - assert (mem : x ∈ lts_oba_mo p) by multiset_solver.
     eapply lts_oba_mo_spec_bis2 in mem as (p1 & hlp1). destruct hlp1 as [nb hlp1].
     assert (neq : β ≠ x).  eapply BlockingAction_are_not_non_blocking; eauto.
-    edestruct (lts_oba_non_blocking_action_confluence nb neq hlp1 hlp) as (u & l2 & l3).
+    edestruct (nb_confluence nb neq hlp1 hlp) as (u & l2 & l3).
     destruct l3 as (u' & hlu & hequ).
     eapply strip_eq_step in hlu as h1; eauto. destruct h1 as (r & hwr & heqr).
     edestruct (strip_eq hwr u (symmetry hequ)) as (r' & hwu & heqr').
@@ -269,19 +269,19 @@ Proof.
   induction hr as [| ? ? ? ? ? nb HypTr' ?]; intros.
   + right. edestruct (eq_spec p' t) as (p'' & l & equiv). symmetry in eq. exists p. split;eauto.
     exists p'', t. repeat split; eauto. eapply strip_nil. reflexivity. symmetry; eauto.
-  + edestruct (lts_oba_non_blocking_action_tau nb HypTr' hl) as [(r & l1 & l2)|].
+  + edestruct (nb_tau nb HypTr' hl) as [(r & l1 & l2)|].
     ++ eapply IHhr in l1 as [(b & c & r' & duo & nb' & l3 & l4) |(u, (w, (hu & hw & heq)))].
-       +++ edestruct (lts_oba_non_blocking_action_delay nb HypTr' l3) as (z & l6 & l7).
+       +++ edestruct (nb_delay nb HypTr' l3) as (z & l6 & l7).
            left. exists b, c , z. split. assumption. split. assumption. split. assumption.
            destruct l7 as (t0 & hlt0 & eqt0).
            destruct l4 as (t1 & hlt1 & eqt1).
            assert (t0 ⟶⋍[c] t1) as (t2 & hlt2 & eqt2).
            { eapply eq_spec; eauto. }
-           edestruct (lts_oba_non_blocking_action_delay nb hlt0 hlt2) as (w & lw1 & lw2).
+           edestruct (nb_delay nb hlt0 hlt2) as (w & lw1 & lw2).
            exists w. split. assumption.
            destruct l2 as (v1 & hlv1 & heqv1).
            destruct lw2 as (u1 & hlu1 & hequ1).
-           eapply (lts_oba_non_blocking_action_deter_inv η); try eassumption. 
+           eapply (backwards_nb_determinacy η); try eassumption. 
            etrans. eassumption.
            etrans. eassumption.
            etrans. eassumption.
@@ -306,7 +306,7 @@ Proof.
   + assert ((NotEq μ η) /\ (Forall (NotEq μ) (elements m))) as subeq_l.
     eapply simpl_P_in_l; eauto.
     destruct subeq_l as [neq Hyp].
-    edestruct (lts_oba_non_blocking_action_confluence nb neq Hstep_nb Hstep) as (r & l1 & l2). eauto.
+    edestruct (nb_confluence nb neq Hstep_nb Hstep) as (r & l1 & l2). eauto.
 Qed.
 
 Lemma nb_with_strip `{gLtsOba P A} p1 m p'1 η:
@@ -330,7 +330,7 @@ Proof.
   - edestruct (eq_spec p t) as (p'' & l & equiv). exists p'; eauto.
     exists p'', t. repeat split; eauto. constructor. eauto. reflexivity.
   - eapply IHstripped in Hstep as (r & t' & l & hwo & heq).
-    edestruct (lts_oba_non_blocking_action_delay nb Hstep_nb l) as (u & l1 & (r' & lr' & heqr')).
+    edestruct (nb_delay nb Hstep_nb l) as (u & l1 & (r' & lr' & heqr')).
     edestruct (strip_eq hwo _ heqr') as (t0 & hwo0 & heq0).
     exists u, t0. repeat split; eauto. eapply strip_step; eassumption.
     etrans. eassumption. now symmetry.
@@ -355,11 +355,11 @@ Proof.
   induction stripped as [ | ? ? ? ? ? nb Hstep_nb]; intros.
   + symmetry in eq. edestruct (eq_spec p' t) as (p'' & l & equiv). exists p; eauto.
     right. exists p''; eauto.
-  + edestruct (lts_oba_non_blocking_action_tau nb Hstep_nb Hstep) 
+  + edestruct (nb_tau nb Hstep_nb Hstep) 
     as [(r & l1 & l2)| (μ & duo & r & hlr & heq)].
     ++ eapply IHstripped in l1 as [(b & t' & r' & l3 & l4)|].
        * destruct l4 as (nb' & duo' & Hstep_nb' & Hstep').
-         edestruct (lts_oba_non_blocking_action_delay nb Hstep_nb Hstep_nb') as (z & l6 & l7).
+         edestruct (nb_delay nb Hstep_nb Hstep_nb') as (z & l6 & l7).
          left. 
          exists b. exists t'. exists z. exists l3.
          eauto.
@@ -383,7 +383,7 @@ Proof.
   - eapply gmultiset_elem_of_disj_union in mem as [here | there].
     + eapply gmultiset_elem_of_singleton in here. subst. firstorder.
     + eapply IHw in there as (q & l).
-      edestruct (lts_oba_non_blocking_action_delay H1 H2 l) as (u & l2 & l3). eauto.
+      edestruct (nb_delay H1 H2 l) as (u & l2 & l3). eauto.
 Qed.
 
 Lemma aux3_ `{gLtsOba P A} {e e' m η} :
@@ -395,12 +395,12 @@ Proof.
   - multiset_solver.
   - intros r l.
     destruct (decide (η = η0)); subst.
-    + assert (eq_rel p2 r) by (eapply lts_oba_non_blocking_action_deter; eassumption).
+    + assert (eq_rel p2 r) by (eapply nb_determinacy; eassumption).
       eapply gmultiset_disj_union_inj_1 in x. subst.
       eapply strip_eq. eassumption. symmetry. assumption.
     + assert (m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
       assert (η ≠ η0) as neq by set_solver.
-      edestruct (lts_oba_non_blocking_action_confluence H2 neq H1 l) as (t0 & l0 & (r1 & l1 & heq1)).
+      edestruct (nb_confluence H2 neq H1 l) as (t0 & l0 & (r1 & l1 & heq1)).
       eapply IHw in H3 as (t & hwo & heq); eauto.
       assert (mem : η0 ∈ m) by multiset_solver.
       eapply gmultiset_disj_union_difference' in mem. rewrite mem.
@@ -483,7 +483,4 @@ Proof.
       eapply lts_oba_mo_spec_bis1 in l; eauto. multiset_solver.
   - eapply lts_oba_mo_spec2 in H2. rewrite <- x in H2.
     eapply gmultiset_disj_union_inj_1 in H2. eauto. eassumption.
-Qed. 
-
-
-
+Qed.

@@ -241,7 +241,7 @@ Proof.
   - exists p0. split; eauto with mdb. exists p'. split; eauto with mdb.
   - assert (p' ⟶⋍ q) as (r & hlr & heqr).
     { eapply eq_spec; eauto. }
-    destruct (lts_oba_non_blocking_action_delay nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
+    destruct (nb_delay nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
     destruct (IHw eq_refl r' η nb) as (r0 & w0 & (r1 & l1' & heq1)).
     + eexists; split; eauto. etransitivity; eassumption.
     + exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
@@ -260,7 +260,7 @@ Proof.
     destruct (delay_wt_non_blocking_action_nil nb l w2) as (t & w4 & (q0' & l1' & heq')).
     assert (q0' ⟶⋍[μ] q1) as (r' & hr' & heqr').
     { eapply eq_spec; eauto. }
-    destruct (lts_oba_non_blocking_action_delay nb l1' hr') as (u & l2 & l3).
+    destruct (nb_delay nb l1' hr') as (u & l2 & l3).
     edestruct (eq_spec_wt q1 r' (symmetry heqr') r) as (t1 & w5 & l4); eauto with mdb.
     eapply wt_push_nil_left; eassumption.
     edestruct (IHs' u r') as (t2 & w6 & l5); eauto with mdb.
@@ -284,7 +284,7 @@ Proof.
   destruct (delay_wt_non_blocking_action nb1 (mk_lts_eq l1) h) as (r & w7 & (r1' & hlr1' & heqr1')).
   assert (r1' ⟶⋍[η2] r2) as (t' & hlt' & heqt').
   { eapply eq_spec; eauto. }
-  destruct (lts_oba_non_blocking_action_delay nb1 hlr1' hlt') as (u & hlu & (t0 & hlt0 & heqt0)); eauto.
+  destruct (nb_delay nb1 hlr1' hlt') as (u & hlu & (t0 & hlt0 & heqt0)); eauto.
   eapply wt_join_nil_eq_r.
   eapply (wt_push_nil_left w3).
   eapply (wt_push_nil_left w7).
@@ -301,7 +301,7 @@ Proof.
   destruct (wt_pop p q (μ1) [μ2] w) as (t & w1 & w2).
   eapply wt_decomp_one in w1 as (t1 & t2 & w3 & l1 & w4).
   eapply wt_decomp_one in w2 as (r1 & r2 & w5 & l2 & w6).
-  destruct (lts_oba_fw_forward t1 η2 μ2) as (t1' & l3 & l4); eauto.
+  destruct (boomerang t1 η2 μ2) as (t1' & l3 & l4); eauto.
   replace [μ2; μ1] with ([μ2] ++ [μ1]) by eauto.
   destruct (delay_wt_non_blocking_action nb (mk_lts_eq l4) (lts_to_wt l1)) as (r & l5 & l6).
   eapply wt_join_nil_eq_r.
@@ -315,7 +315,7 @@ Proof.
   assert (v' ⟶⋍[μ2] r2) as (t' & hlt' & heqt').
   { eapply eq_spec; eauto. }
   eapply (wt_join_nil_eq_r wv).
-  destruct (lts_oba_fw_feedback nb duo lv hlt') as [(t3 & hlt3 & heqt3)|]; subst; eauto with mdb.
+  destruct (fwd_feedback nb duo lv hlt') as [(t3 & hlt3 & heqt3)|]; subst; eauto with mdb.
   - eapply wt_join_nil_eq.
     exists t3. split; eauto with mdb.
     edestruct (eq_spec_wt r2 t') as (q' & hwq' & heqq').
@@ -379,7 +379,7 @@ Proof.
   eapply (wt_join_nil_eq_r w0).
   assert (v' ⟶⋍[μ] r2) as (r2' & hlr2' & heqr2').
   { eapply eq_spec; eauto. }
-  edestruct (lts_oba_fw_feedback nb duo hlv' hlr2') as [(t & hlt & heqt)| Hyp_equiv].
+  edestruct (fwd_feedback nb duo hlv' hlr2') as [(t & hlt & heqt)| Hyp_equiv].
   - eapply wt_join_nil_eq.
     exists t. split. eapply wt_tau; eauto with mdb. eassumption.
     eapply wt_join_nil_eq_r. eapply wt_nil.
@@ -422,7 +422,7 @@ Proof.
   - exists p. simpl. split ; eauto with mdb.
     exists p. split; eauto with mdb. reflexivity.
   - inversion nb as [|? ? nb' Hyp_nb_list']; subst. 
-    edestruct (lts_oba_fw_forward p y a) as (q & l0 & l1); eauto.
+    edestruct (boomerang p y a) as (q & l0 & l1); eauto.
     destruct (IHs1 lb q Hyp_nb_list') as (q' & w1 & w2); eauto.
     exists q'. split.
     + eauto with mdb.

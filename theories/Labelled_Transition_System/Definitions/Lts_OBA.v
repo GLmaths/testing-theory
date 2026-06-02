@@ -32,20 +32,20 @@ From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation.
 Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
   MkOba {
       (* Selinger axioms. *)
-      lts_oba_non_blocking_action_delay {p q r η α} :
+      nb_delay {p q r η α} :
       non_blocking η → p ⟶[ η ] q → q ⟶{ α } r 
         → (∃ t, p ⟶{α} t /\ t ⟶⋍[ η ] r) ;
-      lts_oba_non_blocking_action_confluence {p q1 q2 η μ} :
+      nb_confluence {p q1 q2 η μ} :
       non_blocking η → μ ≠ η → p ⟶[ η ] q1 → p ⟶[ μ ] q2 
         → ∃ r, q1 ⟶[ μ ] r /\ q2 ⟶⋍[ η ] r ; 
-      lts_oba_non_blocking_action_tau {p q1 q2 η} :
+      nb_tau {p q1 q2 η} :
       non_blocking η → p ⟶[ η ] q1 → p ⟶ q2 
         → (∃ t, q1 ⟶ t /\ q2 ⟶⋍[ η ] t) \/ (∃ β, (dual β η) /\ q1 ⟶⋍[ β ] q2) ; 
-      lts_oba_non_blocking_action_deter {p1 p2 p3 η} :
+      nb_determinacy {p1 p2 p3 η} :
       non_blocking η → p1 ⟶[ η ] p2 → p1 ⟶[ η ] p3 
         → p2 ⋍ p3 ;
       (* Extra axiom, it would be nice to remove it, not used that much. *)
-      lts_oba_non_blocking_action_deter_inv {p1 p2 q1 q2} η :
+      backwards_nb_determinacy {p1 p2 q1 q2} η :
       non_blocking η → p1 ⟶[ η ] q1 → p2 ⟶[ η ] q2 → q1 ⋍ q2 
         → p1 ⋍ p2
     }.
@@ -109,7 +109,7 @@ Proof.
   destruct (decide (q ↛)) as [ refuses | accepts ]. 
   + exact refuses. 
   + eapply lts_refuses_spec1 in accepts as (t & l').
-    destruct (lts_oba_non_blocking_action_delay nb l l') as (r & l1 & l2).
+    destruct (nb_delay nb l l') as (r & l1 & l2).
     assert (¬ p ↛).
     { eapply lts_refuses_spec2; eauto. } 
     contradiction.
@@ -120,7 +120,7 @@ Lemma lts_different_action_preserved_by_lts_non_blocking_action `{gLtsOba P A} p
   (exists t, p ⟶[μ] t) → p ⟶[η] q → (exists t, q ⟶[μ] t).
 Proof.
   intros nb neq (t & hl1) hl2.
-  edestruct (lts_oba_non_blocking_action_confluence nb neq hl2 hl1) as (r & l1 & l2). eauto.
+  edestruct (nb_confluence nb neq hl2 hl1) as (r & l1 & l2). eauto.
 Qed.
 
 Lemma refuses_action_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η μ :
@@ -131,7 +131,7 @@ Proof.
   destruct (decide (q ↛[μ])) as [ refuses | accepts ].
   + exact refuses. 
   + eapply lts_refuses_spec1 in accepts as (t & l').
-    destruct (lts_oba_non_blocking_action_delay nb l l') as (r & l1 & l2).
+    destruct (nb_delay nb l l') as (r & l1 & l2).
     assert (¬ p ↛[μ]).
     { eapply lts_refuses_spec2; eauto. } 
     contradiction.

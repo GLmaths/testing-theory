@@ -28,8 +28,7 @@ From TestingTheory Require Import gLts Lts_OBA Bisimulation.
 (** ** LTSs that respects the axiom FEEDBACK *)
 Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=
   MkgLtsObaFB {
-      lts_oba_fb_feedback {p1 p2 p3 η β} :
+      feedback {p1 p2 p3 η β} :
       non_blocking η -> dual β η -> p1 ⟶[ η ] p2 -> p2 ⟶[ β ] p3 
         -> p1 ⟶⋍ p3
     }.
-

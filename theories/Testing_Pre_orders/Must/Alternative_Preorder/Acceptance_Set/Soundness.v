@@ -934,7 +934,7 @@ Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ :
 Proof.
   intros tr tr_co sub.
   destruct (decide (non_blocking μ)) as [nb | not_nb].
-  + eapply (co_non_blocking_enabled q μ) in nb as (q' & tr'); eauto.
+  + eapply (cn_enabled q μ) in nb as (q' & tr'); eauto.
     symmetry. exact (proj2_sig(exists_dual μ)).
   + assert (μ ∈ coR p) as some_co_action_of_p.
     { exists (co μ). repeat split; eauto.
@@ -1120,7 +1120,7 @@ Proof.
   (* FW is co-non-blocking enabled *)
   Unshelve.
   eapply MkgLtsCNenabled. intros.
-  destruct (lts_oba_fw_forward p1 η β) as (t & l1 & l2) ; eauto.
+  destruct (boomerang p1 η β) as (t & l1 & l2) ; eauto.
 Qed.
 
 (** ** Soundness for LTSs that can be lifted to forwarders *)
