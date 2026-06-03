@@ -38,7 +38,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 Definition MUST `{
   gLtsP : @gLts P A H, CC : Countable PreAct, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _}
   (p : P) (G : gset PreAct) :=
-  forall p', p ⟹ p' -> exists β p0, ( 𝝳 ∘ Φ ) β ∈ G /\ p' ⟹{co β} p0. (* /\ blocking β. *)
+  forall p', p ⟹ p' -> exists β μ p0, ( 𝝳 ∘ Φ ) β ∈ G /\ p' ⟹{μ} p0 /\ dual μ β /\ blocking β.
 
 Definition MUST__s `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
