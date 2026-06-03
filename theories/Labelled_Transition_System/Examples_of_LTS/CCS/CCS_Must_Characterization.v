@@ -38,4 +38,9 @@ Proof.
    eapply bhv_iff_ctx_VCCS.
 Qed.
 
+Corollary bhv_iff_ctx_CCS_without_toFW (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
+Proof.
+   eapply bhv_iff_ctx_VCCS_without_toFW.
+Qed.
+
 End CCS_Must_Alt_Corollary.

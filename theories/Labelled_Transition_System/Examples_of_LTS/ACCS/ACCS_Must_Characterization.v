@@ -39,5 +39,3 @@ Proof.
 Qed.
 
 End ACCS_Must_Alt_Corollary.
-
-

@@ -118,9 +118,9 @@ Section preorder.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 
-  Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional outcome p q) (at level 70).
-
   (* ************************************************** *)
+
+  Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional outcome p q) (at level 70).
 
   Lemma pre_extensional_eq (p : P) (q : Q) : 
     p ⊑ₘᵤₛₜ q <-> p ⊑ₘᵤₛₜᵢ q.
@@ -131,3 +131,5 @@ Section preorder.
   Qed.
 
 End preorder.
+
+Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional _ p q) (at level 70).

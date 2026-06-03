@@ -45,12 +45,6 @@ Section preorder.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
-
-
   Context `{CC : Countable PreAct}.
   Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
   Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
@@ -91,6 +85,11 @@ Section preorder.
   Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+
+  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
 
   (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
   Theorem equivalence_acc_set_and_must_i (p : P) (q : Q) :

@@ -23,30 +23,21 @@
 From stdpp Require Import gmap gmultiset.
 
 From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must 
-  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation.
+  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation
+  ActTau InputOutputActions Convergence
+  gLts Lts_OBA FiniteImageLTS Testing_Predicate Completeness Lts_FW Lts_OBA_FB MultisetLTSConstruction.
 
 Module Type VCCS_Must_Alt_Corollary.
 Include VCCS_ta_tc.
 
 Corollary bhv_iff_ctx_VCCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
-  split.
-  - intro Hyp. eapply @equivalence_acc_set_and_must_i; eauto.
+  eapply equivalence_acc_set_and_must_i.
+Qed.
 
-    exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage.
-    exact Interaction_between_FW_VCCS_and_VCCS. exact Interaction_between_FW_VCCS_and_VCCS.
-    exact gen_conv_gen_spec_conv_inst.
-    exact gen_acc_gen_spec_acc_inst.
-    exact VCCS_gLtsOBAFB. exact VCCS_gFiniteOutputChain_LtsOba.
-
-  - intro Hyp. eapply @equivalence_acc_set_and_must_i in Hyp; eauto.
-
-    exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage. exact VCCS_gLtsFiniteImage.
-    exact Interaction_between_FW_VCCS_and_VCCS. exact Interaction_between_FW_VCCS_and_VCCS.
-    exact FinitaryAbsVCCS. exact FinitaryAbsVCCS.
-    exact gen_conv_gen_spec_conv_inst.
-    exact gen_acc_gen_spec_acc_inst.
-    exact VCCS_gLtsOBAFB. exact VCCS_gFiniteOutputChain_LtsOba.
+Corollary bhv_iff_ctx_VCCS_without_toFW (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
+Proof.
+  eapply equivalence_fw_acc_set_and_must_i.
 Qed.
 
 End VCCS_Must_Alt_Corollary.

@@ -29,7 +29,8 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import InputOutputActions ActTau Must VCCS_Must_Characterization
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
-InteractionBetweenLts Testing_Predicate DefinitionAS.
+InteractionBetweenLts Testing_Predicate DefinitionAS Convergence Termination
+MultisetLTSConstruction ForwarderConstruction InputOutputActions WeakTransitions Subset_Act.
 
 (** ** VCCS **)
 (** *** Applications *)
@@ -39,6 +40,30 @@ Include VCCS_Must_Alt_Corollary.
 Parameter a : Channel.
 Parameter I : Value.
 Parameter (neq : O ≠ I).
+
+Definition Ω := rec 0 • pr_var 0.
+
+Definition all_out_may_div := g ((a ! O • 𝟘) + (a ! I • Ω)).
+
+Definition one_out_div := g (a ! O • Ω).
+
+Lemma one_output_is_above_all_output : all_out_may_div ⋢ₘᵤₛₜᵢ one_out_div.
+Proof.
+  intros Imp%bhv_iff_ctx_VCCS_without_toFW.
+  destruct Imp as (Hyp_conv & Hyp_acc).
+Admitted.
+
+Definition all_out := g ((a ! O • 𝟘) + (a ! I • 𝟘)).
+
+Definition one_out := g (a ! O • 𝟘).
+
+Lemma one_output_is_above_all_output_conv : all_out ⊑ₘᵤₛₜᵢ one_out.
+Proof.
+  eapply bhv_iff_ctx_VCCS_without_toFW.
+  split.
+  + admit.
+  + admit.
+Admitted.
 
 Definition const : proc := g (a ? (a ! O • 𝟘)).
 

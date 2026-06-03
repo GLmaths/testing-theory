@@ -3002,7 +3002,7 @@ Next Obligation.
   + apply simplify_match_output in dual; subst. eauto.
 Defined.
 
-#[global] Program Instance VACCS_gLts : gLts proc VACCS_ExtAction := 
+(* #[global] Program Instance VACCS_gLts : gLts proc VACCS_ExtAction := 
   {| lts_step x ℓ y  := lts x ℓ y ;
      lts_state_eqdec := proc_dec ;
      lts_step_decidable p α q := lts_dec p α q ;
@@ -3015,11 +3015,20 @@ Next Obligation.
 Qed.
 Next Obligation.  
   intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
-Qed.
+Qed. *)
 
 #[global] Program Instance VACCS_gLtsEq : gLtsEq proc VACCS_ExtAction := 
-  {| eq_rel x y  := cgr x y;
-     eq_spec p q α := Congruence_Respects_Transition p q α |}.
+  {| eq_rel x y  := cgr x y;|}.
+Next Obligation.
+  eapply (@MkgLts proc (ExtAct TypeOfActions) VACCS_ExtAction lts proc_dec
+  lts_dec proc_stable proc_stable_dec).
+  + intros p [[a|a]|]; intro hs; eapply gset_nempty_ex in hs as (r & l) ; eapply lts_set_spec0 in l; 
+    exists r; assumption.
+  + intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
+Defined.
+Next Obligation.
+  eapply Congruence_Respects_Transition.
+Defined.
 
 #[global] Program Instance VACCS_gLtsOBA : gLtsOba proc.
 (*   {| lts_oba_output_commutativity p q r a α := OBA_with_FB_First_Axiom p q r a α;
@@ -3665,8 +3674,8 @@ Proof.
   * simpl in *. inversion H.
 Qed.
 
-
-#[global] Program Instance AbsVACCS : AbsAction (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ.
+#[global] Program Instance AbsVACCS : 
+@AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -3721,5 +3730,3 @@ Next Obligation.
 Qed.
 
 End VACCS_lts.
-
-

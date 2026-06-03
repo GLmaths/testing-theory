@@ -29,7 +29,8 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 
 From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW Testing_Predicate 
   Must CodePurification Termination 
-  InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS.
+  InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS
+  Convergence WeakTransitions.
 
 (** * Lifting an LTS to forwarders preserves Must *)
 Lemma conv `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
@@ -47,6 +48,41 @@ Proof.
     + exfalso. 
       destruct eq as (duo & nb).
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
+Qed.
+
+Lemma conv_lift `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
+  (p, ∅) ⤓ -> p ⤓.
+Proof.
+  intro ht.
+  dependent induction ht.
+  destruct (decide (p ↛)) as [refuses | accept].
+  - eapply tstep. intros p' l'.
+    apply lts_refuses_spec2 in refuses. now exfalso. eauto.
+  - eapply tstep. intros p' l'.
+    eapply H2;eauto. eapply ParLeft. eauto.
+Qed.
+
+Lemma p_trace_implies_toFW_p_trace `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} p μ q :
+  p ⟹{μ} q -> (p ▷ ∅) ⟹{μ} (q ▷ ∅).
+Proof.
+  intro Hyp. induction Hyp.
+  - econstructor.
+  - econstructor. eapply ParLeft; eauto.
+    eapply IHHyp;eauto.
+  - eapply wt_act. eapply ParLeft;eauto.
+    eapply IHHyp;eauto.
+Qed.
+
+Lemma conv_s_lift `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) s: 
+  (p, ∅) ⇓ s -> p ⇓ s.
+Proof.
+  intro ht.
+  dependent induction ht.
+  - constructor. eapply conv_lift;eauto.
+  - constructor.
+    + eapply conv_lift;eauto.
+    + intros. eapply H3;eauto.
+      eapply p_trace_implies_toFW_p_trace;eauto.
 Qed.
 
 Section Lifting.
