@@ -51,274 +51,254 @@ Definition oas `{CC : Countable PreAct}  `{
   let ps : list P := elements (wt_refuses_set p s hcnv) in
   ⋃ map coR_abs ps.
 
-(* From TestingTheory Require Import 
-    StateTransitionSystems DefinitionMS MustE Completeness Soundness Equivalence. *)
-
-
-(*   Context `{P : Type}.
-  Context `{Q : Type}.
-  Context `{A : Type}.
-  Context `{H : !ExtAction A}.
-
-  Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A}.
-  Context `{@gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A}.
-  Context `{gLtsT : @gLtsEq T A H}.
-
-  Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }. *)
-
   (* ************************************************** *)
 
-  Lemma either_wperform_mu `{gLts P A, !FiniteImagegLts P A}
-  (p : P) μ :
-    p ⤓ -> (exists q, p ⟹{μ} q) \/ ~ (exists q, p ⟹{μ} q).
-  Proof.
-    intro ht. induction ht.
-    destruct (lts_refuses_decidable p (ActExt μ)).
-    - assert (∀ x, x ∈ enum (dsig (lts_step p τ)) -> (∃ q0, `x ⟹{μ} q0) \/ ~ (∃ q0, `x ⟹{μ} q0))
-         as Hyp
-        by (intros (x & mem) _; set_solver).
-      edestruct (exists_forall_in _ _ _ Hyp) as [Hyp' | Hyp'].
-      + eapply Exists_exists in Hyp' as ((q' & pr) & mem & (q0 & hw)).
-        left. exists q0. eapply wt_tau; eauto. now eapply bool_decide_unpack.
-      + right. intros (q' & hw). inversion hw; subst.
-        ++ contradict Hyp'. intros n. rewrite Forall_forall in n.
-           eapply (n (dexist q l0)). eapply elem_of_enum. eauto.
-        ++ eapply (@lts_refuses_spec2 P); eauto.
-    - left. eapply lts_refuses_spec1 in n as (q & l). eauto with mdb.
-  Qed.
+Lemma either_wperform_mu `{gLts P A, !FiniteImagegLts P A}
+(p : P) μ :
+  p ⤓ -> (exists q, p ⟹{μ} q) \/ ~ (exists q, p ⟹{μ} q).
+Proof.
+  intro ht. induction ht.
+  destruct (lts_refuses_decidable p (ActExt μ)).
+  - assert (∀ x, x ∈ enum (dsig (lts_step p τ)) -> (∃ q0, `x ⟹{μ} q0) \/ ~ (∃ q0, `x ⟹{μ} q0))
+       as Hyp
+      by (intros (x & mem) _; set_solver).
+    edestruct (exists_forall_in _ _ _ Hyp) as [Hyp' | Hyp'].
+    + eapply Exists_exists in Hyp' as ((q' & pr) & mem & (q0 & hw)).
+      left. exists q0. eapply wt_tau; eauto. now eapply bool_decide_unpack.
+    + right. intros (q' & hw). inversion hw; subst.
+      ++ contradict Hyp'. intros n. rewrite Forall_forall in n.
+         eapply (n (dexist q l0)). eapply elem_of_enum. eauto.
+      ++ eapply (@lts_refuses_spec2 P); eauto.
+  - left. eapply lts_refuses_spec1 in n as (q & l). eauto with mdb.
+Qed.
 
-  Lemma either_wperform_mem `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A} (Γ : A -> PreAct)
+Lemma either_wperform_mem `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A} (Γ : A -> PreAct)
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  (p : P) (G : gset PreAct) (ht : p ⤓) :
+  (exists β μ p', ( 𝝳 ∘ Φ ) β ∈ G /\ p ⟹{μ} p' /\ dual μ β /\ blocking β)
+    \/ (forall β μ p', ( 𝝳 ∘ Φ ) β ∈ G -> dual μ β -> blocking β -> ~ p ⟹{μ} p').
+Proof.
+  induction G using set_ind_L. 
+  + set_solver. 
+  + admit. (* destruct IHG, (either_wperform_mu p x). ]; set_solver. *)
+Admitted.
+
+Lemma either_wperform_mem_set `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  (ps : gset P) (G : gset PreAct) (ht : forall p, p ∈ ps -> p ⤓) :
+  (exists p', p' ∈ ps /\ forall β μ p0, ( 𝝳 ∘ Φ ) β ∈ G -> dual μ β -> blocking β
+    -> ~ p' ⟹{μ} p0) 
+    \/ (forall p', p' ∈ ps -> exists β μ p0, ( 𝝳 ∘ Φ ) β ∈ G /\ p' ⟹{μ} p0 /\ dual μ β /\ blocking β).
+Proof.
+  induction ps using set_ind_L. 
+  + set_solver. 
+  + destruct IHps.
+    * intros. set_solver.
+    * left; set_solver.
+    * destruct (either_wperform_mem ( 𝝳 ∘ Φ ) x G); set_solver.
+Qed.
+
+Lemma either_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
     `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (p : P) (G : gset PreAct) (ht : p ⤓) :
-    (exists β μ p', ( 𝝳 ∘ Φ ) β ∈ G /\ p ⟹{μ} p' /\ dual μ β /\ blocking β)
-      \/ (forall β μ p', ( 𝝳 ∘ Φ ) β ∈ G -> dual μ β -> blocking β -> ~ p ⟹{μ} p').
-  Proof.
-    induction G using set_ind_L. 
-    + set_solver. 
-    + admit. (* destruct IHG, (either_wperform_mu p x). ]; set_solver. *)
-  Admitted.
+    (p : P) (G : gset PreAct) (hcnv : p ⇓ []) :
+    p MUST G \/ ~ p MUST G.
+Proof.
+  assert (∀ p0 : P, p0 ∈ wt_set p [] hcnv → p0 ⤓) as pre_Hyp.
+  intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
+  destruct (either_wperform_mem_set (wt_set p [] hcnv) G) 
+    as [Hyp|]; eauto.
+  - right. intro hm. destruct Hyp as (p' & mem%wt_set_spec1%hm & nhw). set_solver.
+  - left. intros p1 hw%(wt_set_spec2 _ p1 [] hcnv). set_solver.
+Qed.
 
-  Lemma either_wperform_mem_set `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (ps : gset P) (G : gset PreAct) (ht : forall p, p ∈ ps -> p ⤓) :
-    (exists p', p' ∈ ps /\ forall β μ p0, ( 𝝳 ∘ Φ ) β ∈ G -> dual μ β -> blocking β
-      -> ~ p' ⟹{μ} p0) 
-      \/ (forall p', p' ∈ ps -> exists β μ p0, ( 𝝳 ∘ Φ ) β ∈ G /\ p' ⟹{μ} p0 /\ dual μ β /\ blocking β).
-  Proof.
-    induction ps using set_ind_L. 
-    + set_solver. 
-    + destruct IHps.
-      * intros. set_solver.
-      * left; set_solver.
-      * destruct (either_wperform_mem ( 𝝳 ∘ Φ ) x G); set_solver.
-  Qed.
+Lemma either_ex_nMUST_or_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  (ps : gset P) (G : gset PreAct)
+    (ht : forall p, p ∈ ps -> p ⇓ []) :
+  (exists p, p ∈ ps /\ ~ p MUST G) 
+    \/ (forall p, p ∈ ps -> p MUST G).
+Proof.
+  induction ps using set_ind_L; [|edestruct IHps, (either_MUST x G)]; set_solver.
+Qed.
 
-  Lemma either_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-      `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-      (p : P) (G : gset PreAct) (hcnv : p ⇓ []) :
-      p MUST G \/ ~ p MUST G.
-  Proof.
-    assert (∀ p0 : P, p0 ∈ wt_set p [] hcnv → p0 ⤓) as pre_Hyp.
-    intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-    destruct (either_wperform_mem_set (wt_set p [] hcnv) G) 
-      as [Hyp|]; eauto.
-    - right. intro hm. destruct Hyp as (p' & mem%wt_set_spec1%hm & nhw). set_solver.
-    - left. intros p1 hw%(wt_set_spec2 _ p1 [] hcnv). set_solver.
-  Qed.
+Lemma either_MUST__s `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  (ps : gset P) (G : gset PreAct)  :
+  (forall p, p ∈ ps -> p ⇓ []) -> MUST__s ps G \/ ~ MUST__s ps G.
+Proof.
+  intros. edestruct (either_ex_nMUST_or_MUST ps G) as [Hyp |]; eauto.
+  right. intros hm. destruct Hyp as (p0 & mem0%hm & hnm). contradiction.
+Qed.
 
-  Lemma either_ex_nMUST_or_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (ps : gset P) (G : gset PreAct)
-      (ht : forall p, p ∈ ps -> p ⇓ []) :
-    (exists p, p ∈ ps /\ ~ p MUST G) 
-      \/ (forall p, p ∈ ps -> p MUST G).
-  Proof.
-    induction ps using set_ind_L; [|edestruct IHps, (either_MUST x G)]; set_solver.
-  Qed.
+Lemma nMusts_ex `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  (ps : gset P) (G : gset PreAct) :
+  (forall p, p ∈ ps -> p ⇓ []) -> ~ MUST__s ps G
+  -> exists p, p ∈ ps /\ ~ p MUST G.
+Proof. intros. edestruct (either_ex_nMUST_or_MUST ps G); set_solver. Qed.
 
-  Lemma either_MUST__s `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (ps : gset P) (G : gset PreAct)  :
-    (forall p, p ∈ ps -> p ⇓ []) -> MUST__s ps G \/ ~ MUST__s ps G.
-  Proof.
-    intros. edestruct (either_ex_nMUST_or_MUST ps G) as [Hyp |]; eauto.
-    right. intros hm. destruct Hyp as (p0 & mem0%hm & hnm). contradiction.
-  Qed.
-
-  Lemma nMusts_ex `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (ps : gset P) (G : gset PreAct) :
-    (forall p, p ∈ ps -> p ⇓ []) -> ~ MUST__s ps G
-    -> exists p, p ∈ ps /\ ~ p MUST G.
-  Proof. intros. edestruct (either_ex_nMUST_or_MUST ps G); set_solver. Qed.
-
-  Lemma nMust_ex `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (p : P) (G : gset PreAct) (hcnv : p ⇓ []) 
-    (hnm : ~ p MUST G) :
-    exists p', p ⟹ p' /\ forall β μ p0, (𝝳 ∘ Φ) β ∈ G -> dual μ β -> blocking β -> ~ p' ⟹{μ} p0.
-  Proof.
-    assert (∀ p0 : P, p0 ∈ wt_set p [] hcnv → p0 ⤓).
-    intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-    destruct (either_wperform_mem_set (wt_set p [] hcnv) G) as [Hyp|Hyp]; eauto.
-    - destruct Hyp as (p' & mem'%wt_set_spec1 & nhw). set_solver.
-    - edestruct hnm. intros p' mem. eapply Hyp. eapply wt_set_spec2; eauto.
-  Qed.
-
-  Lemma nMusts_nMust
-  `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+Lemma nMust_ex `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
   `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
   (p : P) (G : gset PreAct) (hcnv : p ⇓ []) 
-  (hnm : ~ MUST__s (wt_set p [] hcnv) G) : 
-  ¬ p MUST G.
-  Proof.
-    intro hm. eapply hnm. intros p' mem0%wt_set_spec1.
-    intros r hw. eapply hm. eapply wt_push_nil_left; eassumption.
-  Qed.
+  (hnm : ~ p MUST G) :
+  exists p', p ⟹ p' /\ forall β μ p0, (𝝳 ∘ Φ) β ∈ G -> dual μ β -> blocking β -> ~ p' ⟹{μ} p0.
+Proof.
+  assert (∀ p0 : P, p0 ∈ wt_set p [] hcnv → p0 ⤓).
+  intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
+  destruct (either_wperform_mem_set (wt_set p [] hcnv) G) as [Hyp|Hyp]; eauto.
+  - destruct Hyp as (p' & mem'%wt_set_spec1 & nhw). set_solver.
+  - edestruct hnm. intros p' mem. eapply Hyp. eapply wt_set_spec2; eauto.
+Qed.
 
-  Lemma nMust_out_acc_ex
-    `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (p : P) pt G s hcnv :
+Lemma nMusts_nMust
+`{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+`{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+(p : P) (G : gset PreAct) (hcnv : p ⇓ []) 
+(hnm : ~ MUST__s (wt_set p [] hcnv) G) : 
+¬ p MUST G.
+Proof.
+  intro hm. eapply hnm. intros p' mem0%wt_set_spec1.
+  intros r hw. eapply hm. eapply wt_push_nil_left; eassumption.
+Qed.
 
-    pt ∈ AFTER p s hcnv 
-    -> ~ pt MUST ((oas p s hcnv) ∖ G) ->
-    exists p', pt ⟹ p' /\ p' ↛ /\ (coR_abs p') ⊆ G.
-  Proof.
-    intros mem%wt_set_spec1 hnm.
-    eapply nMust_ex in hnm as (p' & hw' & nhw).
-    + assert (ht': p' ⤓)
-      by (eapply (cnv_wt_s_terminate p p' s hcnv), wt_push_nil_right; eauto).
-      eapply terminate_then_wt_refuses in ht' as (p0 & hw0 & hst).
-      exists p0. split. eapply wt_push_nil_left; eauto.
-      split; eauto.
-      intros pre_μ mem_mu.
-      assert (mem0 : pre_μ ∈ oas p s hcnv).
-      { eapply elem_of_union_list. eexists. split; eauto.
-        eapply list_elem_of_fmap.
-        exists p0. repeat split; eauto.
-        eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
-        eapply wt_push_nil_right, wt_push_nil_right; eauto. }
-      (* eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr). *)
-      { destruct (decide (pre_μ ∈ G)).
-        + eauto.
-        + exfalso. 
-          eapply coR_abs_spec1 in mem_mu as Hyp.
-          destruct Hyp as (μ & Hyp_co & eq). subst.
-          destruct Hyp_co as (μ' & tr & duo & b).
-          eapply lts_refuses_spec1 in tr as (p'' & tr'').
-          eapply (nhw $ μ); eauto.
-          unfold oas in mem0. set_solver.
-          eapply wt_push_nil_left; eauto with mdb. }
-     + constructor; eapply (cnv_wt_s_terminate p pt s hcnv); eauto.
-  Qed.
+Lemma nMust_out_acc_ex
+  `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  (p : P) pt G s hcnv :
 
-  Lemma either_MUST_or_ex
-    `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    (p : P) G s hcnv :
-    MUST__s (AFTER p s hcnv) ((oas p s hcnv) ∖ G)
-    \/ (exists p', p ⟹[s] p' /\ p' ↛ /\ (coR_abs p') ⊆ G).
-  Proof.
-    assert (h1 : forall p0, p0 ∈ AFTER p s hcnv → p0 ⇓ []).
-    intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
-    eapply (wt_set_spec1 _ _ _ _ mem0).
-    destruct (either_MUST__s (AFTER p s hcnv) ((oas p s hcnv) ∖ G))
-        as [ |Hyp].
-    + eauto.
-    + left. eauto.
-    + right.
-      eapply nMusts_ex in Hyp as (pt & mem & hnm); eauto.
-      eapply nMust_out_acc_ex in hnm as (pt' & hw & hst & hsub); eauto.
-      exists pt'. split; eauto. eapply wt_push_nil_right; eauto. now eapply wt_set_spec1 in mem.
-  Qed.
+  pt ∈ AFTER p s hcnv 
+  -> ~ pt MUST ((oas p s hcnv) ∖ G) ->
+  exists p', pt ⟹ p' /\ p' ↛ /\ (coR_abs p') ⊆ G.
+Proof.
+  intros mem%wt_set_spec1 hnm.
+  eapply nMust_ex in hnm as (p' & hw' & nhw).
+  + assert (ht': p' ⤓)
+    by (eapply (cnv_wt_s_terminate p p' s hcnv), wt_push_nil_right; eauto).
+    eapply terminate_then_wt_refuses in ht' as (p0 & hw0 & hst).
+    exists p0. split. eapply wt_push_nil_left; eauto.
+    split; eauto.
+    intros pre_μ mem_mu.
+    assert (mem0 : pre_μ ∈ oas p s hcnv).
+    { eapply elem_of_union_list. eexists. split; eauto.
+      eapply list_elem_of_fmap.
+      exists p0. repeat split; eauto.
+      eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
+      eapply wt_push_nil_right, wt_push_nil_right; eauto. }
+    (* eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr). *)
+    { destruct (decide (pre_μ ∈ G)).
+      + eauto.
+      + exfalso. 
+        eapply coR_abs_spec1 in mem_mu as Hyp.
+        destruct Hyp as (μ & Hyp_co & eq). subst.
+        destruct Hyp_co as (μ' & tr & duo & b).
+        eapply lts_refuses_spec1 in tr as (p'' & tr'').
+        eapply (nhw $ μ); eauto.
+        unfold oas in mem0. set_solver.
+        eapply wt_push_nil_left; eauto with mdb. }
+   + constructor; eapply (cnv_wt_s_terminate p pt s hcnv); eauto.
+Qed.
 
-  Lemma Must_out_acc_npre `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    `{@gLts Q A H, !FiniteImagegLts Q A}
-    `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ gLtsT _ _ }
-    (p : P) (q q' : Q) s hcnv :
-    q ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    MUST__s (AFTER p s hcnv) (oas p s hcnv ∖ coR_abs q') ->
-    ~ p ₂≾ₘᵤₛₜ q.
-  Proof.
-    intros hcnv' hw hst hm pre2.
-    set (G := (oas p s hcnv ∖ coR_abs q')).
-    assert (exists β μ t, (𝝳 ∘ Φ) β ∈ G /\ q' ⟹{μ} t /\ dual μ β /\ blocking β) as (β & μ & t & mem & hw' & duo & b).
-    { eapply (pre2 s hcnv hcnv'); eauto. eapply wt_set_spec2; eauto. eapply wt_nil. }
-    eapply elem_of_difference in mem as (mem & nmem).
-    
-    eapply elem_of_union_list in mem as (X & mem1 & mem2).
-    eapply list_elem_of_fmap in mem1 as (r & heq & mem1). subst.
-    
-    eapply coR_abs_spec1 in mem2 as Hyp.
-    destruct Hyp as (μ2 & Hyp_co & eq).
-    destruct Hyp_co as (μ'2 & tr & duo' & b').
-    (* symmetry in duo. eapply unique_nb in duo as eq'. subst. *)
-    
-    assert { r' | r ⟶[ μ'2 ] r'} as (r' & HypTr).
-    { eapply lts_refuses_spec1. eauto. }
-    inversion hw'; subst.
-    * eapply lts_refuses_spec2 in hst; eauto.
-    * eapply nmem.
-    
-      eapply coR_abs_spec2.
-      eapply map_gamma_of_action.
-      
-      exists μ. repeat split.
-      - eapply lts_refuses_spec2. eauto.
-      - exact duo.
-      - exact b.
-  Qed.
+Lemma either_MUST_or_ex
+  `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  (p : P) G s hcnv :
+  MUST__s (AFTER p s hcnv) ((oas p s hcnv) ∖ G)
+  \/ (exists p', p ⟹[s] p' /\ p' ↛ /\ (coR_abs p') ⊆ G).
+Proof.
+  assert (h1 : forall p0, p0 ∈ AFTER p s hcnv → p0 ⇓ []).
+  intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
+  eapply (wt_set_spec1 _ _ _ _ mem0).
+  destruct (either_MUST__s (AFTER p s hcnv) ((oas p s hcnv) ∖ G))
+      as [ |Hyp].
+  + eauto.
+  + left. eauto.
+  + right.
+    eapply nMusts_ex in Hyp as (pt & mem & hnm); eauto.
+    eapply nMust_out_acc_ex in hnm as (pt' & hw & hst & hsub); eauto.
+    exists pt'. split; eauto. eapply wt_push_nil_right; eauto. now eapply wt_set_spec1 in mem.
+Qed.
 
-  (* ************************************************** *)
+Lemma Must_out_acc_npre `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@gLts Q A H, !FiniteImagegLts Q A}
+  `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ gLtsT _ _ }
+  (p : P) (q q' : Q) s hcnv :
+  q ⇓ s -> q ⟹[s] q' -> q' ↛ ->
+  MUST__s (AFTER p s hcnv) (oas p s hcnv ∖ coR_abs q') ->
+  ~ p ₂≾ₘᵤₛₜ q.
+Proof.
+  intros hcnv' hw hst hm pre2.
+  set (G := (oas p s hcnv ∖ coR_abs q')).
+  assert (exists β μ t, (𝝳 ∘ Φ) β ∈ G /\ q' ⟹{μ} t /\ dual μ β /\ blocking β) as (β & μ & t & mem & hw' & duo & b).
+  { eapply (pre2 s hcnv hcnv'); eauto. eapply wt_set_spec2; eauto. eapply wt_nil. }
+  eapply elem_of_difference in mem as (mem & nmem).
+  
+  eapply elem_of_union_list in mem as (X & mem1 & mem2).
+  eapply list_elem_of_fmap in mem1 as (r & heq & mem1). subst.
+  
+  eapply coR_abs_spec1 in mem2 as Hyp.
+  destruct Hyp as (μ2 & Hyp_co & eq).
+  destruct Hyp_co as (μ'2 & tr & duo' & b').
+  (* symmetry in duo. eapply unique_nb in duo as eq'. subst. *)
+  
+  assert { r' | r ⟶[ μ'2 ] r'} as (r' & HypTr).
+  { eapply lts_refuses_spec1. eauto. }
+  inversion hw'; subst.
+  * eapply lts_refuses_spec2 in hst; eauto.
+  * eapply nmem.
+    eapply coR_abs_spec2.
+    eapply map_gamma_of_action.
+    exists μ. repeat split.
+    - eapply lts_refuses_spec2. eauto.
+    - exact duo.
+    - exact b.
+Qed.
 
-  Lemma equivalence_bhv_acc_mst2 `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
-    `{@gLts Q A H, !FiniteImagegLts Q A}
-    `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ gLtsT _ _ }
-    (p : P) (q : Q) :
-    p ≼₁ q -> p ₂≾ₘᵤₛₜ q <-> p ≼₂ q.
-  Proof.
-    intro hpre1.
-    split.
-    - intro hpre2. intros s q' hcnv hw hst.
-      edestruct (either_MUST_or_ex p (coR_abs q') s hcnv).
-      + exfalso. eapply (Must_out_acc_npre p q) in H4;eauto.
-      + destruct H4 as (p' & wt_tr & stable & sub). 
-        exists p'. repeat split; eauto. intros pre_μ mem.
-        eapply coR_abs_spec2 in mem. eapply sub in mem.
-        eapply coR_abs_spec1; eauto.
-    - intro hpre2.
-      intros s hcnv hcnv' G hm q' mem%wt_set_spec1 q0 hw.
-      assert (exists r, q0 ⟹ r /\ r ↛) as (qt & hw' & hstq').
-      { eapply terminate_then_wt_refuses, terminate_preserved_by_wt_nil; eauto.
-        eapply cnv_wt_s_terminate; eauto. }
-      edestruct (hpre2 s qt hcnv) as (pt & hwpt & hstpt & hsubpt); eauto.
-      eapply wt_push_nil_right; eauto. eapply wt_push_nil_right; eauto.
-      assert (exists β μ r, ( 𝝳 ∘ Φ ) β ∈ G /\ pt ⟹{μ} r /\ dual μ β /\ blocking β) as (β & μ & p0 & mem0 & hw0 & duo & b).
-      { eapply hm. eapply wt_set_spec2; eauto. eapply wt_nil. }
-      inversion hw0; subst.
-      + exfalso. eapply lts_refuses_spec2 in hstpt; eauto.
-     
-      + assert (( 𝝳 ∘ Φ) β ∈ coR_abs qt) as mem'.
-          { eapply coR_abs_spec2. eapply hsubpt.
-          eapply map_gamma_of_action. exists μ.
-          repeat split.
-          -- eapply lts_refuses_spec2 ;eauto.
-          -- exact duo. 
-          -- exact b. }
-             eapply coR_abs_spec1 in mem'. destruct mem' as (μ' & mem' & eq).
-             destruct mem' as (μ'' & tr & duo' & b').
-             exists μ'.  exists μ''. eapply lts_refuses_spec1 in tr as (qr & tr_qr).
-             exists qr. repeat split.
-             ++ rewrite<- eq; eauto.
-             ++ eapply wt_push_nil_left; eauto with mdb.
-             ++ exact duo'.
-             ++ exact b'.
-  Qed.
+(* ************************************************** *)
+
+Lemma equivalence_bhv_acc_mst2 `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@gLts Q A H, !FiniteImagegLts Q A}
+  `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ gLtsT _ _ }
+  (p : P) (q : Q) :
+  p ≼₁ q -> p ₂≾ₘᵤₛₜ q <-> p ≼₂ q.
+Proof.
+  intro hpre1.
+  split.
+  - intro hpre2. intros s q' hcnv hw hst.
+    edestruct (either_MUST_or_ex p (coR_abs q') s hcnv).
+    + exfalso. eapply (Must_out_acc_npre p q) in H4;eauto.
+    + destruct H4 as (p' & wt_tr & stable & sub). 
+      exists p'. repeat split; eauto. intros pre_μ mem.
+      eapply coR_abs_spec2 in mem. eapply sub in mem.
+      eapply coR_abs_spec1; eauto.
+  - intro hpre2.
+    intros s hcnv hcnv' G hm q' mem%wt_set_spec1 q0 hw.
+    assert (exists r, q0 ⟹ r /\ r ↛) as (qt & hw' & hstq').
+    { eapply terminate_then_wt_refuses, terminate_preserved_by_wt_nil; eauto.
+      eapply cnv_wt_s_terminate; eauto. }
+    edestruct (hpre2 s qt hcnv) as (pt & hwpt & hstpt & hsubpt); eauto.
+    eapply wt_push_nil_right; eauto. eapply wt_push_nil_right; eauto.
+    assert (exists β μ r, ( 𝝳 ∘ Φ ) β ∈ G /\ pt ⟹{μ} r /\ dual μ β /\ blocking β) as (β & μ & p0 & mem0 & hw0 & duo & b).
+    { eapply hm. eapply wt_set_spec2; eauto. eapply wt_nil. }
+    inversion hw0; subst.
+    + exfalso. eapply lts_refuses_spec2 in hstpt; eauto.
+    + assert (( 𝝳 ∘ Φ) β ∈ coR_abs qt) as mem'.
+        { eapply coR_abs_spec2. eapply hsubpt.
+        eapply map_gamma_of_action. exists μ.
+        repeat split.
+        -- eapply lts_refuses_spec2 ;eauto.
+        -- exact duo. 
+        -- exact b. }
+           eapply coR_abs_spec1 in mem'. destruct mem' as (μ' & mem' & eq).
+           destruct mem' as (μ'' & tr & duo' & b').
+           exists μ'.  exists μ''. eapply lts_refuses_spec1 in tr as (qr & tr_qr).
+           exists qr. repeat split.
+           ++ rewrite<- eq; eauto.
+           ++ eapply wt_push_nil_left; eauto with mdb.
+           ++ exact duo'.
+           ++ exact b'.
+Qed.
 
 Theorem equivalence_bhv_acc_mst `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
