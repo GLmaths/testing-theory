@@ -80,7 +80,9 @@ Lemma either_wperform_mem `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegL
 Proof.
   induction G using set_ind_L. 
   + set_solver. 
-  + admit. (* destruct IHG, (either_wperform_mu p x). ]; set_solver. *)
+  + destruct IHG. 
+    * set_solver. 
+    * (* use (either_wperform_mu p x) , but how ? Reformulate it ?*)
 Admitted.
 
 Lemma either_wperform_mem_set `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
