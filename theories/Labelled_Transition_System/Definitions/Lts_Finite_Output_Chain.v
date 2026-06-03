@@ -29,7 +29,7 @@ From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation 
 
 (** ** Each program has a MailBox, which is finite and counts occurences of Value *)
 
-Class FiniteOutputChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : !@gLtsOba P A H gLtsEqP} :=
+Class FiniteOutputChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P A H gLtsEqP} :=
   MkOba {
       (* Multiset of non-blocking action from a process *)
       lts_oba_mo (p : P) : gmultiset A;
