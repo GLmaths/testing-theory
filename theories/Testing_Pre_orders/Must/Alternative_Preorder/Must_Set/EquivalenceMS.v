@@ -319,7 +319,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain Equivalence Soundness Completeness.
 
-Section preorder.
+Section must_set_preorder.
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.
@@ -355,8 +355,8 @@ Section preorder.
   Context `{!gLtsObaFB T A}.
 
   (** ** The must-set characterisation on FW is equivalent to the extensional must preorder *)
-  Corollary equivalence_fw_must_set_and_must_e
-    (p : P) (q : Q) : p ≾ₘᵤₛₜ q <-> pre_extensional outcome p q.
+  Corollary equivalence_fw_must_set_and_must_e (p : P) (q : Q) :
+    p ≾ₘᵤₛₜ q <-> pre_extensional outcome p q.
   Proof.
     erewrite equivalence_fw_bhv_acc_ctx.
     rewrite equivalence_bhv_acc_mst;eauto.
@@ -364,12 +364,12 @@ Section preorder.
 
   (** ** The must-set characterisation on FW is equivalent to the inductive must preorder *)
   Corollary equivalence_fw_must_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> p ≾ₘᵤₛₜ q.
+    p ≾ₘᵤₛₜ q <-> p ⊑ₘᵤₛₜᵢ q.
   Proof.
     split.
-    - intros hpre. eapply completeness_fw in hpre.
-      now eapply equivalence_bhv_acc_mst.
     - intros hpre. eapply soundness_fw.
+      now eapply equivalence_bhv_acc_mst.
+    - intros hpre. eapply completeness_fw in hpre.
       now eapply equivalence_bhv_acc_mst.
   Qed.
 
@@ -404,4 +404,4 @@ Section preorder.
 
   End Lⁿ.
 
-End preorder.
+End must_set_preorder.
