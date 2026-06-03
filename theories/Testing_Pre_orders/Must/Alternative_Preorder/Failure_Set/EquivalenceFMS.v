@@ -153,7 +153,7 @@ Section failure_set_preorder.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
-  (** ** The must-set characterisation on FW is equivalent to the extensional must preorder *)
+  (** ** The failure divergence refinement is equivalent to the extensional must preorder on FWⁿ*)
   Corollary equivalence_fw_failure_set_and_must_e (p : P) (q : Q) :
     p ⋖ꜰᴀɪʟ q <-> pre_extensional outcome p q.
   Proof.
@@ -161,7 +161,7 @@ Section failure_set_preorder.
     rewrite equivalence_fw_must_set_and_must_e;eauto.
   Qed.
 
-  (** ** The must-set characterisation on FW is equivalent to the inductive must preorder *)
+  (** ** The failure divergence refinement is equivalent to the inductive must preorder on FWⁿ*)
   Corollary equivalence_fw_failure_set_and_must_i (p : P) (q : Q) :
      p ⋖ꜰᴀɪʟ q <-> p ⊑ₘᵤₛₜᵢ q .
   Proof.
@@ -177,7 +177,7 @@ Section failure_set_preorder.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
-  (** ** The must-set characterisation on toFW is equivalent to the inductive must preorder *)
+  (** ** The failure divergence refinement is equivalent to the inductive must preorder *)
   Corollary equivalence_failure_set_and_must_i (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
   Proof.
@@ -187,7 +187,7 @@ Section failure_set_preorder.
 
   (** ---- *)
 
-  (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
+  (** ** The failure divergence refinement is equivalent to the extensional must preorder *)
   Corollary equivalence_failure_set_and_must_e (p : P) (q : Q) :
     pre_extensional outcome p q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
   Proof.
