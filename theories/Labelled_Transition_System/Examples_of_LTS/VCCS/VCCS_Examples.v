@@ -1,4 +1,4 @@
-  (*
+   (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -160,7 +160,7 @@ Proof.
     * inversion l.
 Qed.
 
-Ltac prepare_mem mem :=
+Ltac compute_coR mem :=
   eapply coR_abs_spec2 in mem;
   eapply coR_abs_spec1;
   unfold all_out in mem;
@@ -169,6 +169,13 @@ Ltac prepare_mem mem :=
   eapply gmultiset_elem_of_dom;
   eapply gmultiset_elem_of_dom in mem;
   simpl in *.
+
+Ltac only_two_cases s q wt_tr H :=
+  edestruct (one_out_inv_wt s q wt_tr);
+  [| destruct H; [| inversion H]];
+  subst;
+  [ eapply one_out_wt_inv in wt_tr as eq; subst
+  | eapply one_out_wt_inv_s in wt_tr as eq; subst ].
 
 (*****************************************************************************************)
 (**************************  TO BE COMPLETED *****************************************)
@@ -185,20 +192,28 @@ Proof.
   + intros s Hyp_conv. clear.
     eapply one_out_converges_for_all.
   + intros s q stable wt_tr sub.
-    * edestruct (one_out_inv_wt s q wt_tr) ; [| destruct H; [|inversion H]] ; subst.
+    * only_two_cases s q wt_tr H.
       - exists all_out. repeat split.
         ++ constructor.
         ++ intros i mem.
-           eapply one_out_wt_inv in wt_tr; subst.
-           prepare_mem mem.
-           set_solver.
-      - exists (g 𝟘). repeat split.
-        ++ eapply lts_to_wt.
-           constructor. constructor.
-        ++ intros i mem.
-           eapply one_out_wt_inv_s in wt_tr; subst.
-           prepare_mem mem. multiset_solver.
+           (* Constructive benefit *)
+           compute_coR mem.
+           multiset_solver.
+      - exists (g 𝟘). repeat split. 
+        ++ eapply lts_to_wt. repeat constructor.
+        ++ (* Constructive benefit *)
+           intros i mem.
+           compute_coR mem.
+           multiset_solver.
 Qed.
+
+(* Usefull lemma / tactic *)
+(*
+apply bhv_iff_ctx_VCCS_without_toFW
+one_out_converges_for_all
+only_two_cases
+compute_coR
+ *)
 
 Definition const : proc := g (a ? (a ! O • 𝟘)).
 
