@@ -193,7 +193,7 @@ Abort.
 (*
 apply bhv_iff_ctx_VCCS_without_toFW
 one_out_converges_for_all
-only_two_cases
+only_two_cases s q wt_tr H
 compute_coR
  *)
 
