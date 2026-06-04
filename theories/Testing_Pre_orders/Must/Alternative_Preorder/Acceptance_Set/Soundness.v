@@ -501,14 +501,14 @@ Proof.
                          ++++ set_solver.
                  --- assert (X = ∅) as H'' by set_solver.
                      rewrite H'', union_empty_r_L.
-                     eapply H1;eauto. admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                     eapply H1;eauto. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
       * eapply IHX.
         ++ set_solver.
         ++ intros. eapply hm. set_solver.
     - intros.
       assert (X = ∅) as H1 by set_solver.
       rewrite H1, union_empty_r_L.
-      admit. (* like in the base case *) *)
+      (* like in the base case *) *)
   intros xneq_nil hm.
   destruct (outcome_decidable t).
   - now eapply mx_now.
