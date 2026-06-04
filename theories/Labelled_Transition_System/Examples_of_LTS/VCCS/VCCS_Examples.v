@@ -1,4 +1,4 @@
-(*
+  (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -160,6 +160,16 @@ Proof.
     * inversion l.
 Qed.
 
+Ltac prepare_mem mem :=
+  eapply coR_abs_spec2 in mem;
+  eapply coR_abs_spec1;
+  unfold all_out in mem;
+  simpl in *;
+  unfold PreCoAct_of in *;
+  eapply gmultiset_elem_of_dom;
+  eapply gmultiset_elem_of_dom in mem;
+  simpl in *.
+
 (*****************************************************************************************)
 (**************************  TO BE COMPLETED *****************************************)
 (*****************************************************************************************)
@@ -180,20 +190,14 @@ Proof.
         ++ constructor.
         ++ intros i mem.
            eapply one_out_wt_inv in wt_tr; subst.
-           eapply coR_abs_spec2 in mem.
-           eapply coR_abs_spec1. unfold all_out in mem.
-           simpl in *. unfold PreCoAct_of in *.
-           eapply gmultiset_elem_of_dom. eapply gmultiset_elem_of_dom in mem.
-           simpl in *. multiset_solver.
+           prepare_mem mem.
+           set_solver.
       - exists (g 𝟘). repeat split.
         ++ eapply lts_to_wt.
            constructor. constructor.
         ++ intros i mem.
            eapply one_out_wt_inv_s in wt_tr; subst.
-           eapply coR_abs_spec2 in mem.
-           eapply coR_abs_spec1. simpl in *.
-           unfold PreCoAct_of in *. eapply gmultiset_elem_of_dom. eapply gmultiset_elem_of_dom in mem.
-           simpl in *. multiset_solver.
+           prepare_mem mem. multiset_solver.
 Qed.
 
 Definition const : proc := g (a ? (a ! O • 𝟘)).
