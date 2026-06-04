@@ -377,3 +377,38 @@ Proof.
   intro Hyp. eapply hpre in Hyp.
   contradiction.
 Qed.
+
+(* The relation ⊑ₘᵤₛₜᵢ is reflexive *)
+#[global] Instance must_i_refl
+  `{
+  gLtsP : @gLts P A H, 
+  gLtsQ : !gLts Q H, 
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
+  {_ : Prop_of_Inter P T A dual} 
+  {_ : Prop_of_Inter Q T A dual} : Reflexive ctx_pre.
+Proof. intros p Hyp_test. eauto. Qed.
+
+(* The relation ⊑ₘᵤₛₜᵢ is transitive *)
+#[global] Instance must_i_transitive
+  `{
+  gLtsP : @gLts P A H, 
+  gLtsQ : !gLts Q H, 
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
+  {_ : Prop_of_Inter P T A dual} 
+  {_ : Prop_of_Inter Q T A dual} : Transitive ctx_pre.
+Proof.
+  intros p q r Hyp1 Hyp2. intros t Hyp_test. eapply Hyp2. eapply Hyp1. eauto.
+Qed.
+
+#[global] Instance must_i_preorder
+  `{
+  gLtsP : @gLts P A H, 
+  gLtsQ : !gLts Q H, 
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
+  {_ : Prop_of_Inter P T A dual} 
+  {_ : Prop_of_Inter Q T A dual} : PreOrder ctx_pre.
+Proof.
+  split.
+  + exact must_i_refl.
+  + exact must_i_transitive.
+Qed.
