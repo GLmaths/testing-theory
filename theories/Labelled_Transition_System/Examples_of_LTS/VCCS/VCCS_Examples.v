@@ -57,13 +57,144 @@ Definition all_out := g ((a ! O • 𝟘) + (a ! I • 𝟘)).
 
 Definition one_out := g (a ! O • 𝟘).
 
+Lemma NIL_converges : (g 𝟘) ⤓.
+Proof.
+  constructor.
+  intros p Imp. inversion Imp.
+Qed.
+
+Lemma NIL_wt_to_NIL s p : g 𝟘 ⟹[s] p -> p = g 𝟘.
+Proof.
+  intros Hyp. inversion Hyp;subst.
+  + reflexivity.
+  + inversion l.
+  + inversion l.
+Qed.
+
+Lemma NIL_converges_forall s : (g 𝟘) ⇓ s.
+Proof.
+  induction s.
+  + constructor. eapply NIL_converges.
+  + constructor.
+    * eapply NIL_converges.
+    * intros. eapply NIL_wt_to_NIL in H; subst; eauto.
+Qed.
+
+Lemma one_out_converges : one_out ⤓.
+Proof.
+  constructor. intros p Imp. inversion Imp.
+Qed.
+
+Lemma all_out_converges : all_out ⤓.
+Proof.
+  constructor. intros p Imp. repeat lts_inversion lts.
+Qed.
+
+Lemma one_out_wt_inv p : one_out ⟹ p -> p = one_out.
+Proof.
+  intros Hyp.
+  inversion Hyp;subst; eauto. inversion l.
+Qed.
+
+Lemma all_out_wt_inv p : all_out ⟹ p -> p = all_out.
+Proof.
+  intros Hyp.
+  dependent induction Hyp;subst; eauto. inversion l;subst;inversion H3.
+Qed.
+
+Lemma one_out_wt_inv_s a p : one_out ⟹{a} p -> p = g 𝟘.
+Proof.
+  intros Hyp.
+  inversion Hyp;subst.
+  + inversion l.
+  + inversion l; subst.
+    eapply NIL_wt_to_NIL in w ; subst ; eauto.
+Qed.
+
+Lemma all_out_wt_inv_s a p : all_out ⟹{a} p -> p = g 𝟘.
+Proof.
+  intros Hyp.
+  inversion Hyp;subst.
+  + inversion l; subst.
+    * inversion H3.
+    * inversion H3.
+  + inversion l; subst.
+    * inversion H3;subst.
+      eapply NIL_wt_to_NIL in w ;subst; eauto.
+    * inversion H3;subst.
+      eapply NIL_wt_to_NIL in w ;subst; eauto.
+Qed.
+
+Lemma all_out_converges_for_all s : all_out ⇓ s.
+Proof.
+  induction s.
+  + constructor. eapply all_out_converges.
+  + constructor.
+    * eapply all_out_converges.
+    * intros p wk_tr.
+      eapply all_out_wt_inv_s in wk_tr;subst.
+      eapply NIL_converges_forall; eauto.
+Qed.
+
+Lemma one_out_converges_for_all s : one_out ⇓ s.
+Proof.
+  induction s.
+  + constructor. eapply one_out_converges.
+  + constructor.
+    * eapply one_out_converges.
+    * intros p wk_tr.
+      eapply one_out_wt_inv_s in wk_tr;subst.
+      eapply NIL_converges_forall; eauto.
+Qed.
+
+Lemma one_out_inv_wt s q : one_out ⟹[s] q -> s = [] \/ s = [ActOut (a ⋉ O)] \/ False.
+Proof.
+  intros H.
+  inversion H; subst.
+  + left; eauto.
+  + inversion l.
+  + lts_inversion lts.
+    inversion w; subst.
+    * right. left; eauto.
+    * inversion l.
+    * inversion l.
+Qed.
+
+(*****************************************************************************************)
+(**************************  TO BE COMPLETED *****************************************)
+(*****************************************************************************************)
+
+(* Definition all_out := g ((a ! O • 𝟘) + (a ! I • 𝟘)). *)
+
+(* Definition one_out := g (a ! O • 𝟘). *)
+
 Lemma one_output_is_above_all_output_conv : all_out ⊑ₘᵤₛₜᵢ one_out.
 Proof.
   eapply bhv_iff_ctx_VCCS_without_toFW.
   split.
-  + admit.
-  + admit.
-Admitted.
+  + intros s Hyp_conv. clear.
+    eapply one_out_converges_for_all.
+  + intros s q stable wt_tr sub.
+    * edestruct (one_out_inv_wt s q wt_tr) ; [| destruct H; [|inversion H]] ; subst.
+      - exists all_out. repeat split.
+        ++ constructor.
+        ++ intros i mem.
+           eapply one_out_wt_inv in wt_tr; subst.
+           eapply coR_abs_spec2 in mem.
+           eapply coR_abs_spec1. unfold all_out in mem.
+           simpl in *. unfold PreCoAct_of in *.
+           eapply gmultiset_elem_of_dom. eapply gmultiset_elem_of_dom in mem.
+           simpl in *. multiset_solver.
+      - exists (g 𝟘). repeat split.
+        ++ eapply lts_to_wt.
+           constructor. constructor.
+        ++ intros i mem.
+           eapply one_out_wt_inv_s in wt_tr; subst.
+           eapply coR_abs_spec2 in mem.
+           eapply coR_abs_spec1. simpl in *.
+           unfold PreCoAct_of in *. eapply gmultiset_elem_of_dom. eapply gmultiset_elem_of_dom in mem.
+           simpl in *. multiset_solver.
+Qed.
 
 Definition const : proc := g (a ? (a ! O • 𝟘)).
 

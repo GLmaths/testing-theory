@@ -30,12 +30,17 @@ From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must
 Module Type VCCS_Must_Alt_Corollary.
 Include VCCS_ta_tc.
 
-Corollary bhv_iff_ctx_VCCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
+Notation "p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (@ctx_pre proc _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) proc 
+  (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) _ _ _ _ _ _ p q) (at level 70).
+Notation "p ᴠᴄᴄꜱ≼ₐₛ q" := (@bhv_pre proc _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) _ _ _ Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ VCCS_gLtsEq AbsVCCS proc (@gLtsEq_gLts proc _ _ VCCS_gLtsEq)
+ 𝝳ᴠᴄᴄꜱ AbsVCCS p q) (at level 70).
+
+Corollary bhv_iff_ctx_VCCS (p q : proc) : p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
   eapply equivalence_acc_set_and_must_i.
 Qed.
 
-Corollary bhv_iff_ctx_VCCS_without_toFW (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
+Corollary bhv_iff_ctx_VCCS_without_toFW (p q : proc) : p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ᴠᴄᴄꜱ≼ₐₛ q.
 Proof.
   eapply equivalence_fw_acc_set_and_must_i.
 Qed.

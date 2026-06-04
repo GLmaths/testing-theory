@@ -4448,7 +4448,7 @@ Next Obligation.
   + apply simplify_match_output in duo; subst. eauto.
 Defined.
 
-(* #[global] Program Instance VCCS_gLts : gLts proc VCCS_ExtAction := 
+#[global] Program Instance VCCS_gLts : gLts proc VCCS_ExtAction := 
   {| lts_step x ℓ y  := lts x ℓ y ;
      lts_state_eqdec := proc_dec ;
      lts_step_decidable p α q := lts_dec p α q ;
@@ -4456,22 +4456,22 @@ Defined.
      lts_refuses_decidable p α := proc_stable_dec p α 
     |}.
 Next Obligation.
-  intros p [[a|a]|]; intro hs. eapply gset_nempty_ex in hs as (r & l). ; eapply lts_set_spec0 in l; 
+  intros p [[a|a]|]; intro hs ;eapply gset_nempty_ex in hs as (r & l) ; eapply lts_set_spec0 in l; 
   exists r; assumption.
 Qed.
-Next Obligation.  
+Next Obligation.
   intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
-Qed. *)
+Qed.
 
 #[global] Program Instance VCCS_gLtsEq : gLtsEq proc VCCS_ExtAction := 
   {| eq_rel x y  := cgr x y; |}.
-Next Obligation.
+(* Next Obligation.
   eapply (@MkgLts proc (ExtAct TypeOfActions) VCCS_ExtAction lts proc_dec
   lts_dec proc_stable proc_stable_dec).
   + intros p [[a|a]|]; intro hs; eapply gset_nempty_ex in hs as (r & l) ; eapply lts_set_spec0 in l; 
     exists r; assumption.
   + intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
-Defined.
+Defined. *)
 Next Obligation.
   eapply Congruence_Respects_Transition.
 Defined.
@@ -5183,7 +5183,9 @@ Proof.
           eapply lts_refuses_spec2. exists p'1. eapply lts_choiceR. eauto.
 Qed.
 
-#[global] Program Instance AbsVCCS : @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ _ VCCS_gLtsEq.
+#[global] Program Instance AbsVCCS :
+  AbsAction (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ.
+  (* @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ _ VCCS_gLtsEq. *)
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -5231,7 +5233,8 @@ Next Obligation.
            exact accepts. symmetry. eauto.
 Qed.
 
-#[global] Program Instance FinitaryAbsVCCS  : FinitaryAbsAction proc proc (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ :=
+#[global] Program Instance FinitaryAbsVCCS :
+  FinitaryAbsAction proc proc (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.
