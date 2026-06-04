@@ -42,7 +42,7 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
 Lemma prex1_if_copre `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
-  (ps : gset P) (qs : gset Q) : ps ⩽ qs -> ps ₁≼ₛₑₜ_ₐₛ qs.
+  (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ₁≼ₛₑₜ_ₐₛ qs.
 Proof.
   intros Hyp_PreO s hcnv.
   revert ps qs Hyp_PreO hcnv.
@@ -70,7 +70,7 @@ Qed.
 Lemma prex2_if_copre `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P gLtsP gLtsT,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q gLtsQ gLtsT}
-  (ps : gset P) (qs : gset Q) : ps ⩽ qs -> ps ₂≼ₛₑₜ_ₐₛ qs.
+  (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ₂≼ₛₑₜ_ₐₛ qs.
 Proof.
   revert ps qs.
   intros ps qs hsub q s.
@@ -92,7 +92,7 @@ Proof.
     replace (μ :: s) with ([μ] ++ s) in H1 by eauto.
     eapply wt_split in H1 as (q0 & hw0 & hw1).
     eapply wt_decomp_one in hw0 as (q0' & q1' & q1 & hlt & hw0').
-    assert (ps ⩽ {[q0']}).
+    assert (ps ᶜᵒ≼ₐₛ {[q0']}).
     { eapply co_preserved_by_wt_nil; eauto. intros q'' mem''.
       assert (q0' = q'') by set_solver. subst. exists q. split;eauto. }
     assert (hcnv' : ∀ p : P, p ∈ ps → p ⇓ [μ]).
@@ -100,17 +100,17 @@ Proof.
       intros. constructor. eapply cnv_terminate.
       eapply cnv_preserved_by_wt_act; eauto. }
     set (ps' := wt_s_set_from_pset ps [μ] hcnv').
-    assert (ps ⩽ {[ q0' ]}).
+    assert (ps ᶜᵒ≼ₐₛ {[ q0' ]}).
     { eapply co_preserved_by_wt_nil; eauto. intros q'' mem''.
       assert (q0' = q'') by set_solver. subst. exists q''. split;eauto. eapply wt_nil. }
-    assert (ps' ⩽ {[ q1' ]}). 
+    assert (ps' ᶜᵒ≼ₐₛ {[ q1' ]}). 
     { destruct H4. eapply c_step.
       + eapply convergence_set_if_convergence_forall. exact hcnv'.
       + intros q''' mem'''.
         assert(q''' = q1') by set_solver. subst.
         exists q0'. split. set_solver. eapply lts_to_wt. exact hlt.
       + eapply wt_s_set_from_pset_ispec. }
-    assert (ps' ⩽ {[ q0 ]}).
+    assert (ps' ᶜᵒ≼ₐₛ {[ q0 ]}).
     { eapply co_preserved_by_wt_nil; eauto.
       intros q'' mem''. exists q1'. split. set_solver.
       assert (q'' = q0) by set_solver. subst. eauto. }

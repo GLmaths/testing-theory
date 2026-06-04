@@ -4464,14 +4464,8 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance VCCS_gLtsEq : gLtsEq proc VCCS_ExtAction := 
-  {| eq_rel x y  := cgr x y; |}.
-(* Next Obligation.
-  eapply (@MkgLts proc (ExtAct TypeOfActions) VCCS_ExtAction lts proc_dec
-  lts_dec proc_stable proc_stable_dec).
-  + intros p [[a|a]|]; intro hs; eapply gset_nempty_ex in hs as (r & l) ; eapply lts_set_spec0 in l; 
-    exists r; assumption.
-  + intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
-Defined. *)
+  {| gLtsEq_gLts := VCCS_gLts;
+     eq_rel x y  := cgr x y; |}.
 Next Obligation.
   eapply Congruence_Respects_Transition.
 Defined.
@@ -4541,7 +4535,8 @@ Next Obligation.
     now eapply elem_of_elements, lts_set_tau_spec1.
 Defined.
 
-#[global] Program Instance Interaction_between_parallel_VCCS : Prop_of_Inter proc proc (ExtAct TypeOfActions) dual :=
+#[global] Program Instance Interaction_between_parallel_VCCS :
+  @Prop_of_Inter proc proc (ExtAct TypeOfActions) dual VCCS_ExtAction (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) (@gLtsEq_gLts proc _ _ VCCS_gLtsEq):=
     {| lts_essential_actions_left p := set_map ActOut (outputs_of p) ;
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
@@ -4605,7 +4600,8 @@ Next Obligation.
   symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 
-#[global] Program Instance Interaction_between_VCCS_and_MB: Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter :=
+#[global] Program Instance Interaction_between_VCCS_and_MB: 
+    @Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter VCCS_ExtAction (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) _:=
     {| lts_essential_actions_left p := empty ;
        lts_essential_actions_right m := dom (MO_without_not_nb m) ; 
        lts_co_inter_action_right m := fun x => empty |}.
@@ -4642,7 +4638,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance Interaction_between_FW_VCCS_and_VCCS :
-  Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=
+  @Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual VCCS_ExtAction (toFW (@gLtsEq_gLts proc _ _ VCCS_gLtsEq)) _:=
     {| lts_essential_actions_left p := set_map ActOut (outputs_of p.1) ∪ (dom (MO_without_not_nb p.2)); 
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
@@ -5184,8 +5180,7 @@ Proof.
 Qed.
 
 #[global] Program Instance AbsVCCS :
-  AbsAction (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ.
-  (* @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ _ VCCS_gLtsEq. *)
+  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -5234,7 +5229,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance FinitaryAbsVCCS :
-  FinitaryAbsAction proc proc (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ :=
+  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq _ _ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.

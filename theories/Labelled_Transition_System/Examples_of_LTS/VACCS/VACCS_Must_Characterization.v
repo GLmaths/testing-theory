@@ -22,16 +22,50 @@
 
 From stdpp Require Import gmap gmultiset.
 
-From TestingTheory Require Import VACCS_ta_tc_gen DefinitionAS Equivalence Must 
-  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation
-  Completeness InputOutputActions Lts_OBA_FB MultisetLTSConstruction Lts_Finite_Output_Chain gLts.
+From TestingTheory Require Import VACCS_ta_tc_gen DefinitionAS Equivalence Must MustE
+  Completeness InputOutputActions Lts_OBA_FB MultisetLTSConstruction Lts_Finite_Output_Chain gLts
+  DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower Soundness SetLTSConstruction
+  StateTransitionSystems FiniteImageLTS ForwarderConstruction ParallelLTSConstruction
+  InteractionBetweenLts Bisimulation DefinitionCI EquivalenceCI.
+
+From Coinduction Require Import all.
 
 Module Type VACCS_Must_Alt_Corollary.
 Include VACCS_ta_tc.
 
-Corollary bhv_iff_ctx_VACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
+Notation "p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (@ctx_pre proc _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) proc 
+  (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) _ _ _ _ _ _ p q) (at level 70).
+
+Corollary must_iff_acceptance_set_VACCS (p q : proc) :
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
-  eapply equivalence_acc_set_and_must_i.
+  now rewrite equivalence_acc_set_and_must_i.
+Qed.
+
+Corollary must_iff_co_inductive_acceptance_VACCS (p q : proc) :
+   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> 
+   ({[ p ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))) 
+   ᶜᵒ≼ₐₛ ({[ q ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))).
+Proof.
+  now rewrite equivalence_co_inductive_acc_set_and_must_i.
+Qed.
+
+Corollary must_iff_tower_co_inductive_acceptance_VACCS (p q : proc) :
+   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> 
+   ({[ p ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))) 
+      ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))).
+Proof.
+  now rewrite equivalence_co_inductive_acceptance_and_must_i_singleton.
+Qed.
+
+Corollary must_iff_must_set_VACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘᵤₛₜ q ▷ ∅.
+Proof.
+  now rewrite equivalence_must_set_and_must_i.
+Qed.
+
+Corollary must_iff_failure_set_VACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
+Proof.
+  now rewrite equivalence_failure_set_and_must_i.
 Qed.
 
 End VACCS_Must_Alt_Corollary.

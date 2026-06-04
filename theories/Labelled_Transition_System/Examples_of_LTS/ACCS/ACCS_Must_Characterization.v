@@ -26,16 +26,44 @@
 From stdpp Require Import gmap gmultiset.
 
 From TestingTheory Require Import VACCS_Must_Characterization DefinitionAS Equivalence Must 
-  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation.
+  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
+  InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower.
 
 Module Type ACCS_Must_Alt_Corollary.
 Include VACCS_Must_Alt_Corollary.
 
 Axiom Value_is_unit : Value = unit.
 
-Corollary bhv_iff_ctx_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
+Corollary must_iff_acceptance_set_ACCS (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
-   eapply bhv_iff_ctx_VACCS.
+  eapply must_iff_acceptance_set_VACCS.
+Qed.
+
+Corollary must_iff_co_inductive_acceptance_ACCS (p q : proc) :
+   p ⊑ₘᵤₛₜᵢ q <-> 
+   ({[ p ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))) 
+   ᶜᵒ≼ₐₛ ({[ q ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))).
+Proof.
+  eapply must_iff_co_inductive_acceptance_VACCS.
+Qed.
+
+Corollary must_iff_tower_co_inductive_acceptance_ACCS (p q : proc) :
+   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> 
+   ({[ p ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))) 
+      ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))).
+Proof.
+  eapply must_iff_tower_co_inductive_acceptance_VACCS.
+Qed.
+
+Corollary must_iff_must_set_ACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘᵤₛₜ q ▷ ∅.
+Proof.
+  eapply must_iff_must_set_VACCS.
+Qed.
+
+Corollary must_iff_failure_set_ACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
+Proof.
+  eapply must_iff_failure_set_VACCS.
 Qed.
 
 End ACCS_Must_Alt_Corollary.

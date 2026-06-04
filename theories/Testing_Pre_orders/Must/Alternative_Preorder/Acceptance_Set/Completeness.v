@@ -684,7 +684,7 @@ Lemma completeness1 `{
     `{!Prop_of_Inter P T A dual}
     `{!Prop_of_Inter Q T A dual}
 
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼₁ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₁≼ₐₛ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cnv, hleq, must_iff_cnv. Qed.
 
 Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
@@ -1218,7 +1218,7 @@ Lemma completeness2 {P Q : Type} `{CC : Countable PreAct} `{
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
 
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼₂ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₂≼ₐₛ q.
 Proof.
   intros hpre s q' hacnv w st.
   destruct (must_ta_or_empty_pre_action_set_for_all_trace s p hacnv (coR_abs q')) as [(p' & w_tr & stable & sub)|hm].

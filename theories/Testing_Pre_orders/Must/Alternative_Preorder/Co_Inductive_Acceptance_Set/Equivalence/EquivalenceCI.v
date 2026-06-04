@@ -45,7 +45,7 @@ Theorem equivalence_co_inductive_acc_set_and_acc_set `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 gLtsQ gLtsT}
   (X : gset P) (Y : gset Q) :
-  X ≼ₛₑₜ_ₐₛ Y <-> X ⩽ Y.
+  X ≼ₛₑₜ_ₐₛ Y <-> X ᶜᵒ≼ₐₛ Y.
 Proof.
   split.
   - eapply copre_if_prex.
@@ -85,8 +85,9 @@ Section eq_contextual.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
+  (** ** The co-inductive acceptance set characterisation on FW is equivalent to the inductive must preorder *)
   Theorem equivalence_fw_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset P)  ⩽ ({[ q ]} : gset Q).
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset P) ᶜᵒ≼ₐₛ ({[ q ]} : gset Q).
   Proof.
     split.
     - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set.
@@ -98,9 +99,9 @@ Section eq_contextual.
 
   (** ---- *)
 
-  (** ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
+  (** ** The co-inductive acceptance set characterisation on FW is equivalent to the extensional must preorder *)
   Theorem equivalence_fw_co_inductive_acc_set_and_must (p : P) (q : Q) :
-    pre_extensional outcome p q <-> ({[ p ]} : gset P)  ⩽ ({[ q ]} : gset Q).
+    pre_extensional outcome p q <-> ({[ p ]} : gset P) ᶜᵒ≼ₐₛ ({[ q ]} : gset Q).
   Proof.
     rewrite pre_extensional_eq. eapply equivalence_fw_co_inductive_acc_set_and_must_i.
   Qed.
@@ -113,9 +114,9 @@ Section eq_contextual.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
-  (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
+  (** ** The co_inductive_acc_set characterisation on toFW is equivalent to the inductive must preorder *)
   Theorem equivalence_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * MO A)).
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₐₛ ({[ (q, ∅) ]}  : gset (Q * MO A)).
   Proof.
     split.
     - intros hpre. eapply equivalence_co_inductive_acc_set_and_acc_set.
@@ -129,9 +130,9 @@ Section eq_contextual.
 
   (** ---- *)
 
-  (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
+  (** ** The co_inductive_acc_set characterisation on toFW is equivalent to the extensional must preorder *)
   Theorem equivalence_co_inductive_acc_set_and_must (p : P) (q : Q) :
-    pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ⩽ ({[ (q, ∅) ]}  : gset (Q * MO A)).
+    pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₐₛ ({[ (q, ∅) ]}  : gset (Q * MO A)).
   Proof.
     rewrite pre_extensional_eq. apply equivalence_co_inductive_acc_set_and_must_i.
   Qed.

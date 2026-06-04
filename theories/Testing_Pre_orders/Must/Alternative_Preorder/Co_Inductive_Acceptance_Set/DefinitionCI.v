@@ -50,12 +50,12 @@ CoInductive copre `{
   ; c_cnv : ps ⤓ -> qs ⤓
   }.
 
-Notation "p ⩽ q" := (copre p q) (at level 70).
+Notation "ps ᶜᵒ≼ₐₛ qs" := (copre ps qs) (at level 70).
 
 Lemma co_preserved_by_wt_nil `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P  gLtsP gLtsT,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q  gLtsQ gLtsT}
-  (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ⩽ qs -> ps ⩽ qs'.
+  (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ᶜᵒ≼ₐₛ qs -> ps ᶜᵒ≼ₐₛ qs'.
 Proof. intros. eapply c_tau;eauto. Qed.
 
 

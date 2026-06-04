@@ -23,26 +23,54 @@
 From stdpp Require Import gmap gmultiset.
 
 From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must 
-  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation
+  ParallelLTSConstruction InteractionBetweenLts Bisimulation
   ActTau InputOutputActions Convergence
-  gLts Lts_OBA FiniteImageLTS Testing_Predicate Completeness Lts_FW Lts_OBA_FB MultisetLTSConstruction.
+  gLts Lts_OBA FiniteImageLTS Testing_Predicate Completeness Lts_FW Lts_OBA_FB MultisetLTSConstruction
+  DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower
+  SetLTSConstruction ForwarderConstruction DefinitionCI EquivalenceCI.
+
+From Coinduction Require Import all.
 
 Module Type VCCS_Must_Alt_Corollary.
 Include VCCS_ta_tc.
 
 Notation "p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (@ctx_pre proc _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) proc 
   (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) _ _ _ _ _ _ p q) (at level 70).
-Notation "p ᴠᴄᴄꜱ≼ₐₛ q" := (@bhv_pre proc _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) _ _ _ Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ VCCS_gLtsEq AbsVCCS proc (@gLtsEq_gLts proc _ _ VCCS_gLtsEq)
- 𝝳ᴠᴄᴄꜱ AbsVCCS p q) (at level 70).
 
-Corollary bhv_iff_ctx_VCCS (p q : proc) : p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
+Corollary must_iff_acceptance_set_VCCS (p q : proc) :
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
-  eapply equivalence_acc_set_and_must_i.
+  now rewrite equivalence_acc_set_and_must_i.
 Qed.
 
-Corollary bhv_iff_ctx_VCCS_without_toFW (p q : proc) : p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ᴠᴄᴄꜱ≼ₐₛ q.
+Corollary must_iff_acceptance_set_VCCS_without_toFW (p q : proc) :
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
 Proof.
-  eapply equivalence_fw_acc_set_and_must_i.
+  now rewrite equivalence_fw_acc_set_and_must_i.
+Qed.
+
+Corollary must_iff_co_inductive_acceptance_VCCS_without_toFW (p q : proc) :
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₐₛ {[ q ]}.
+Proof.
+  now rewrite equivalence_fw_co_inductive_acc_set_and_must_i.
+Qed.
+
+Corollary must_iff_tower_co_inductive_tower_acceptance_VCCS_without_toFW (p q : proc) :
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₜₒᵥᵥₑᵣ {[ q ]}.
+Proof.
+  now rewrite equivalence_fw_co_inductive_acceptance_and_must_i_singleton.
+Qed.
+
+Corollary must_iff_must_set_VCCS_without_toFW (p q : proc) :
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≾ₘᵤₛₜ q.
+Proof.
+  now rewrite<- equivalence_fw_must_set_and_must_i. 
+Qed.
+
+Corollary must_iff_failure_set_VCCS_without_toFW (p q : proc) :
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ⋖ꜰᴀɪʟ q.
+Proof.
+  now rewrite<- equivalence_fw_failure_set_and_must_i.
 Qed.
 
 End VCCS_Must_Alt_Corollary.

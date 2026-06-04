@@ -26,21 +26,48 @@
 From stdpp Require Import gmap gmultiset.
 
 From TestingTheory Require Import VCCS_Must_Characterization DefinitionAS Equivalence Must 
-  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation.
+  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation
+  DefinitionCI Coin_tower DefinitionMS DefinitionFMS.
+From Coinduction Require Import all.
 
 Module Type CCS_Must_Alt_Corollary.
 Include VCCS_Must_Alt_Corollary.
 
 Axiom Value_is_unit : Value = unit.
 
-Corollary bhv_iff_ctx_CCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
+Corollary must_iff_acceptance_set_CCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
-   eapply bhv_iff_ctx_VCCS.
+   eapply must_iff_acceptance_set_VCCS.
 Qed.
 
-Corollary bhv_iff_ctx_CCS_without_toFW (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
+Corollary must_iff_acceptance_set_CCS_without_toFW (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
 Proof.
-   eapply bhv_iff_ctx_VCCS_without_toFW.
+  eapply must_iff_acceptance_set_VCCS_without_toFW.
+Qed.
+
+Corollary must_iff_tower_co_inductive_acceptance_CCS_without_toFW (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₐₛ {[ q ]}.
+Proof.
+  eapply must_iff_co_inductive_acceptance_VCCS_without_toFW.
+Qed.
+
+Corollary must_iff_tower_co_inductive_tower_acceptance_CCS_without_toFW (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₜₒᵥᵥₑᵣ {[ q ]}.
+Proof.
+  eapply must_iff_tower_co_inductive_tower_acceptance_VCCS_without_toFW.
+Qed.
+
+Corollary must_iff_must_set_CCS_without_toFW (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> p ≾ₘᵤₛₜ q.
+Proof.
+  eapply must_iff_must_set_VCCS_without_toFW.
+Qed.
+
+Corollary must_iff_failure_set_CCS_without_toFW (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> p ⋖ꜰᴀɪʟ q.
+Proof.
+  eapply must_iff_failure_set_VCCS_without_toFW.
 Qed.
 
 End CCS_Must_Alt_Corollary.

@@ -263,7 +263,7 @@ Lemma equivalence_bhv_acc_mst2 `{CC : Countable PreAct} `{@gLts P A H, !FiniteIm
   `{@gLts Q A H, !FiniteImagegLts Q A}
   `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ gLtsT _ _ }
   (p : P) (q : Q) :
-  p ≼₁ q -> p ₂≾ₘᵤₛₜ q <-> p ≼₂ q.
+  p ₁≼ₐₛ q -> p ₂≾ₘᵤₛₜ q <-> p ₂≼ₐₛ q.
 Proof.
   intro hpre1.
   split.

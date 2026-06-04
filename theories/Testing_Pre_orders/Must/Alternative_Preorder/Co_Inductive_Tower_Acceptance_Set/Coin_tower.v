@@ -30,13 +30,14 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 From Coinduction Require Import all.
 
 From TestingTheory Require Import
-  ActTau Subset_Act gLts FiniteImageLTS Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB
+  ActTau Subset_Act gLts FiniteImageLTS Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW
   Termination Convergence WeakTransitions Bisimulation
   SetLTSConstruction
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
   Lift StateTransitionSystems
   Testing_Predicate Must MustE 
-  DefinitionAS Soundness Equivalence Completeness.
+  DefinitionAS Soundness Equivalence Completeness
+  DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS.
 
 (* TODO: define me using the coinduction library *)
 
@@ -57,30 +58,30 @@ Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   #[global] Arguments c_step_ {_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FIX X Y}.
   #[global] Arguments c_cnv_ {_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FIX X Y}.
 
-  Program Definition copre_m 
-  `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ } : mon (gset P -> gset Q -> Prop) := 
-  {| body := (@copre_ P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT) |} .
-  Next Obligation.
-    intros F1 F2 HF X Y h; constructor.
-    - intros; apply HF, h.(c_tau_); auto.
-    - exact h.(c_now_).
-    - intros; eapply HF, h.(c_step_); auto.
-      + exact H2.
-      + exact H3.
-      + exact H4.
-    - exact h.(c_cnv_).
-  Qed.
+Program Definition copre_m 
+`{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
+`{gLtsT : !gLtsEq T H}
+`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ } : mon (gset P -> gset Q -> Prop) := 
+{| body := (@copre_ P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT) |} .
+Next Obligation.
+  intros F1 F2 HF X Y h; constructor.
+  - intros; apply HF, h.(c_tau_); auto.
+  - exact h.(c_now_).
+  - intros; eapply HF, h.(c_step_); auto.
+    + exact H2.
+    + exact H3.
+    + exact H4.
+  - exact h.(c_cnv_).
+Qed.
 
-  Definition copre `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
-  `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ } := 
-  gfp (@copre_m P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT).
+Definition copre `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
+`{gLtsT : !gLtsEq T H}
+`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ } := 
+gfp (@copre_m P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT).
 
-  Notation "X ⩽ₜₒᵥᵥₑᵣ Y" := (copre X Y) (at level 70).
+Notation "X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y" := (copre X Y) (at level 70).
 
 Section copre.
   Context `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}.
@@ -90,7 +91,7 @@ Section copre.
 
   Definition REL := gset P -> gset Q -> Prop.
 
-  Lemma c_tau {X : gset P } { Y Y' : gset Q} : X ⩽ₜₒᵥᵥₑᵣ Y -> wt_set_from_pset_spec1 Y [] Y' -> X ⩽ₜₒᵥᵥₑᵣ Y' .
+  Lemma c_tau {X : gset P } { Y Y' : gset Q} : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> wt_set_from_pset_spec1 Y [] Y' -> X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y' .
   Proof.
     intros h%(gfp_pfp copre_m) ; intros; now apply h.(c_tau_).
   Qed.
@@ -101,7 +102,7 @@ Section copre.
     intros h Ht. now apply h.(c_tau_). Qed.
 
   Lemma c_now { X : gset P } { Y : gset Q}
-    : X ⩽ₜₒᵥᵥₑᵣ Y
+    : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y
       -> X ⤓
       -> forall q , q ∈ Y -> q ↛
       -> exists p, p ∈ X
@@ -114,24 +115,24 @@ Section copre.
   Qed.
 
   Lemma c_step { X X' : gset P } { Y Y' : gset Q} {μ}
-    : X ⩽ₜₒᵥᵥₑᵣ Y
+    : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y
       -> X ⇓ [μ]
       -> wt_set_from_pset_spec1 Y [μ] Y'
       -> wt_set_from_pset_spec X [μ] X'
-      -> X' ⩽ₜₒᵥᵥₑᵣ Y' .
+      -> X' ᶜᵒ≼ₜₒᵥᵥₑᵣ Y' .
   Proof.
     intros h%(gfp_pfp copre_m); intros; now eapply h.(c_step_); eauto.
   Qed.
 
   Lemma c_cnv { X : gset P } { Y : gset Q}
-    : X ⩽ₜₒᵥᵥₑᵣ Y
+    : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y
       -> X ⤓
       -> Y ⤓ .
   Proof.
     intros h%(gfp_pfp copre_m); intros; now eapply h.(c_cnv_); eauto.
   Qed.
 
-  Lemma copre_if_prex (X : gset P) (Y : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> X ⩽ₜₒᵥᵥₑᵣ Y.
+  Lemma copre_if_prex (X : gset P) (Y : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y.
   Proof.
     revert X Y; unfold copre.
     coinduction RR CIH.
@@ -155,13 +156,13 @@ Section copre.
   Qed.
 
   Lemma co_preserved_by_wt_nil
-    (X : gset P) (Y Y' : gset Q) : wt_set_from_pset_spec1 Y [] Y' -> X ⩽ₜₒᵥᵥₑᵣ Y -> X ⩽ₜₒᵥᵥₑᵣ Y'.
+    (X : gset P) (Y Y' : gset Q) : wt_set_from_pset_spec1 Y [] Y' -> X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y'.
   Proof.
     intros hw Hyp. eapply c_tau;eauto.
   Qed.
 
 
-  Lemma prex1_if_copre (X : gset P) (Y : gset Q) : X ⩽ₜₒᵥᵥₑᵣ Y -> X ₁≼ₛₑₜ_ₐₛ Y.
+  Lemma prex1_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₁≼ₛₑₜ_ₐₛ Y.
   Proof.
     intros hpq s; revert X Y hpq.
     dependent induction s; intros X Y hpq hcnv.
@@ -189,7 +190,7 @@ Section copre.
       ++ set_solver.
   Qed.
 
-  Lemma prex2_if_copre (X : gset P) (Y : gset Q) : X ⩽ₜₒᵥᵥₑᵣ Y -> X ₂≼ₛₑₜ_ₐₛ Y.
+  Lemma prex2_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₂≼ₛₑₜ_ₐₛ Y.
   Proof.
     intros hsub q s q' mem; revert X Y q q' mem hsub ; dependent induction s; intros X Y q q' mem hsub.
     + intros hw hstq' hcnv. revert X Y mem hsub hstq' hcnv.
@@ -212,20 +213,20 @@ Section copre.
       change (μ :: s) with ([μ] ++ s) in hqq'.
       eapply wt_split in hqq' as (q0 & hw0 & hw1).
       eapply wt_decomp_one in hw0 as (q0' & q1' & q1 & hlt & hw0').
-      assert (X ⩽ₜₒᵥᵥₑᵣ {[ q0' ]}).
+      assert (X ᶜᵒ≼ₜₒᵥᵥₑᵣ {[ q0' ]}).
       { eapply co_preserved_by_wt_nil; eauto. intros q'' mem''.
         assert (q'' = q0') by set_solver. subst. eauto. }
       assert (hcnv' : ∀ p : P, p ∈ X → p ⇓ [μ]) by (intros; now eapply cnv_wk, hcnv).
       assert (∀ p : P, p ∈ X → p ⇓ [μ]) as hp_conv;eauto.
       eapply convergence_set_if_convergence_forall in hp_conv.
       set (X' := wt_s_set_from_pset X [μ] hcnv').
-      assert (X' ⩽ₜₒᵥᵥₑᵣ {[ q1' ]}) as hpq''. {
+      assert (X' ᶜᵒ≼ₜₒᵥᵥₑᵣ {[ q1' ]}) as hpq''. {
         eapply c_step;eauto.
         + intros q''' mem'''. assert (q''' = q1') by set_solver. subst.
           exists q0'. split. set_solver. eapply lts_to_wt;eauto.
         + eapply wt_s_set_from_pset_ispec.
       }
-      assert (X' ⩽ₜₒᵥᵥₑᵣ {[ q0 ]}) as hp'q.
+      assert (X' ᶜᵒ≼ₜₒᵥᵥₑᵣ {[ q0 ]}) as hp'q.
       { eapply co_preserved_by_wt_nil; eauto. intros q''' mem'''.
         assert (q''' = q0) by set_solver. subst. exists q1'. split;eauto. set_solver.
       }
@@ -247,14 +248,14 @@ Section copre.
 
 
   Theorem eqx (X : gset P) (Y : gset Q) :
-    X ≼ₛₑₜ_ₐₛ Y <-> X ⩽ₜₒᵥᵥₑᵣ Y.
+    X ≼ₛₑₜ_ₐₛ Y <-> X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y.
   Proof.
     split; [ eapply copre_if_prex | ].
     intros hco; split; [ now eapply prex1_if_copre | now eapply prex2_if_copre ].
   Qed.
 End copre.
 
-Section eq_contextual.
+Section must_co_inductive_acceptance_preorder.
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.
@@ -268,11 +269,6 @@ Section eq_contextual.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 
-  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
-
   Context `{CC : Countable PreAct}.
   Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
   Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
@@ -280,19 +276,76 @@ Section eq_contextual.
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
+  (** * Main equivalence theorems *)
+
+  Section FWⁿ.
+
+  Context `{!gLtsObaFW P A}.
+  Context `{!gLtsObaFW Q A}.
+  Context `{!gLtsObaFB T A}.
+
+  (** ** The co-inductive-tower characterisation on FW is equivalent to the extensional must preorder *)
+  Corollary equivalence_fw_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
+    pre_extensional outcome p q <-> ({[ p ]} : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset Q).
+  Proof.
+    rewrite <- eqx. rewrite alt_set_singleton_iff.
+    rewrite equivalence_fw_bhv_acc_ctx;eauto.
+  Qed.
+
+  (** ** The co-inductive-towercharacterisation on FW is equivalent to the inductive must preorder *)
+  (* Corollary equivalence_fw_co_inductive_acceptance_and_must_i (X : gset P) (Y : gset Q) :
+    X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y <-> (X : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ (Y : gset Q).
+  Proof.
+    rewrite <- eqx. split. 
+    + admit. 
+    + eapply soundnessx.
+    Unshelve.
+    admit.
+  Admitted. *)
+
+  Corollary equivalence_fw_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset Q).
+  Proof.
+    rewrite <- eqx.
+    rewrite alt_set_singleton_iff.
+    eapply equivalence_fw_acc_set_and_must_i.
+  Qed.
+
+  End FWⁿ.
+  (** ---- *)
+  Section Lⁿ.
+  
+  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
+  
   Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
-  Theorem eq_ctx (p : P) (q : Q) :
-    pre_extensional outcome p q <-> 
-    ({[ p ▷ (∅ : MO A) ]} : gset (P * MO A)) ⩽ₜₒᵥᵥₑᵣ ({[ q ▷ (∅ : MO A) ]} : gset (Q * MO A)).
+  (** ** The co-inductive-tower characterisation on toFW is equivalent to the inductive must preorder *)
+  Corollary equivalence_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :
+    p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ (q, ∅) ]} : gset (Q * MO A)).
   Proof.
     rewrite <- eqx. rewrite alt_set_singleton_iff.
-    now rewrite equivalence_bhv_acc_ctx.
+    eapply equivalence_acc_set_and_must_i.
   Qed.
-End eq_contextual.
 
+  (** ---- *)
+
+  (** ** The co-inductive-tower characterisation on toFW is equivalent to the extensional must preorder *)
+  Corollary equivalence_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
+    pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ (q, ∅) ]} : gset (Q * MO A)).
+  Proof.
+    rewrite pre_extensional_eq.
+    rewrite <- eqx. rewrite alt_set_singleton_iff.
+    eapply equivalence_acc_set_and_must_i.
+  Qed.
+
+  End Lⁿ.
+
+End must_co_inductive_acceptance_preorder.
 
 Lemma coin_refl
   `{@FiniteImagegLts P A H gLtsP}
