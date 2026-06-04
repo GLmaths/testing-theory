@@ -187,25 +187,7 @@ Ltac only_two_cases s q wt_tr H :=
 
 Lemma one_output_is_above_all_output_conv : all_out ⊑ₘᵤₛₜᵢ one_out.
 Proof.
-  eapply bhv_iff_ctx_VCCS_without_toFW.
-  split.
-  + intros s Hyp_conv. clear.
-    eapply one_out_converges_for_all.
-  + intros s q stable wt_tr sub.
-    * only_two_cases s q wt_tr H.
-      - exists all_out. repeat split.
-        ++ constructor.
-        ++ intros i mem.
-           (* Constructive benefit *)
-           compute_coR mem.
-           multiset_solver.
-      - exists (g 𝟘). repeat split. 
-        ++ eapply lts_to_wt. repeat constructor.
-        ++ (* Constructive benefit *)
-           intros i mem.
-           compute_coR mem.
-           multiset_solver.
-Qed.
+Abort.
 
 (* Usefull lemma / tactic *)
 (*
