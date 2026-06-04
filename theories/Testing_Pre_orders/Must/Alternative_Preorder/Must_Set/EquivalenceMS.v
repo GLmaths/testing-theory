@@ -2,7 +2,7 @@
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
    Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
-   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -72,7 +72,36 @@ Proof.
   - left. eapply lts_refuses_spec1 in n as (q & l). eauto with mdb.
 Qed.
 
-Lemma either_wperform_mem `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A} (Γ : A -> PreAct)
+Lemma either_wperform_co_mu `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+(p : P) i :
+  p ⤓ -> (exists β μ q, ( 𝝳 ∘ Φ ) β = i /\ p ⟹{μ} q /\ dual μ β /\ blocking β) 
+            \/ ~ (exists β μ q, ( 𝝳 ∘ Φ ) β = i /\ p ⟹{μ} q /\ dual μ β /\ blocking β).
+Proof.
+  intro ht. induction ht.
+  destruct (decide (i ∈ (coR_abs p))) as [in_co | not_in_co].
+  - left. eapply coR_abs_spec1 in in_co.
+    destruct in_co as (β & mem & eq). subst. destruct mem as (μ & tr & duo & nb).
+    eapply lts_refuses_spec1 in tr as (q & l). exists β, μ , q.
+    repeat split ;eauto. eapply lts_to_wt;eauto.
+  - assert (∀ x, x ∈ enum (dsig (lts_step p τ)) 
+  -> (∃ β μ q0, ( 𝝳 ∘ Φ ) β = i /\ `x ⟹{μ} q0 /\ dual μ β /\ blocking β) \/ ~ (∃ β μ q0, ( 𝝳 ∘ Φ ) β = i /\ `x ⟹{μ} q0 /\ dual μ β /\ blocking β))
+       as Hyp
+      by (intros (x & mem) _; set_solver).
+    edestruct (exists_forall_in _ _ _ Hyp) as [Hyp' | Hyp'].
+    + eapply Exists_exists in Hyp' as ((q' & pr) & mem & (β & μ & q0 & eq & hw & duo & b)).
+      left. exists β , μ, q0. repeat split ;eauto. eapply wt_tau; eauto. now eapply bool_decide_unpack.
+    + right. intros (β & μ & q' & eq' & hw & duo & b). inversion hw; subst.
+      ++ contradict Hyp'. intros n. rewrite Forall_forall in n.
+         eapply (n (dexist q l)). eapply elem_of_enum.
+         exists β , μ , q'. eauto.
+      ++ assert ((𝝳 ∘ Φ) β ∈ coR_abs p).
+         { eapply coR_abs_spec2. eapply map_gamma_of_action.
+           exists μ. repeat split ;eauto. eapply (@lts_refuses_spec2 P); eauto. }
+         contradiction.
+Qed.
+
+Lemma either_wperform_mem `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
   `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
   (p : P) (G : gset PreAct) (ht : p ⤓) :
   (exists β μ p', ( 𝝳 ∘ Φ ) β ∈ G /\ p ⟹{μ} p' /\ dual μ β /\ blocking β)
@@ -82,8 +111,13 @@ Proof.
   + set_solver. 
   + destruct IHG. 
     * set_solver. 
-    * (* use (either_wperform_mu p x) , but how ? Reformulate it ?*)
-Admitted.
+    * destruct (either_wperform_co_mu p x) as [(β & μ & p' & eq & wt_tr & duo & b) | ].
+      - exact ht.
+      - left. exists β , μ , p'. subst. set_solver.
+      - right. intros. intro. eapply H4.
+        assert ((𝝳 ∘ Φ) β = x) by set_solver.
+        exists β , μ , p'. eauto.
+Qed.
 
 Lemma either_wperform_mem_set `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
   `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
@@ -97,7 +131,7 @@ Proof.
   + destruct IHps.
     * intros. set_solver.
     * left; set_solver.
-    * destruct (either_wperform_mem ( 𝝳 ∘ Φ ) x G); set_solver.
+    * destruct (either_wperform_mem x G); set_solver.
 Qed.
 
 Lemma either_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
