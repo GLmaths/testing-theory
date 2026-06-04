@@ -177,25 +177,27 @@ Ltac only_two_cases s q wt_tr H :=
   [ eapply one_out_wt_inv in wt_tr as eq; subst
   | eapply one_out_wt_inv_s in wt_tr as eq; subst ].
 
-(*****************************************************************************************)
-(**************************  TO BE COMPLETED *****************************************)
-(*****************************************************************************************)
-
-(* Definition all_out := g ((a ! O • 𝟘) + (a ! I • 𝟘)). *)
-
-(* Definition one_out := g (a ! O • 𝟘). *)
-
 Lemma one_output_is_above_all_output_conv : all_out ⊑ₘᵤₛₜᵢ one_out.
 Proof.
-Abort.
-
-(* Usefull lemma / tactic *)
-(*
-apply bhv_iff_ctx_VCCS_without_toFW
-one_out_converges_for_all
-only_two_cases s q wt_tr H
-compute_coR
- *)
+  apply bhv_iff_ctx_VCCS_without_toFW.
+  split.
+  + intros s Hyp_conv.
+    eapply one_out_converges_for_all.
+  + intros s q Hyp_conv wt_tr ostable.
+    only_two_cases s q wt_tr H.
+    - exists all_out.
+      repeat split.
+      ++ constructor.
+      ++ intros i mem.
+         compute_coR mem.
+         multiset_solver.
+   - exists (g 𝟘).
+      repeat split.
+      ++ eapply lts_to_wt. constructor. constructor.
+      ++ intros i mem.
+         compute_coR mem.
+         multiset_solver.
+Qed.
 
 Definition const : proc := g (a ? (a ! O • 𝟘)).
 
