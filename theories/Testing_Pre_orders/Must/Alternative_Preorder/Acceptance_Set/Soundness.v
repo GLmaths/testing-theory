@@ -541,7 +541,6 @@ End Must_for_sets.
 
 (** ** Contextual preorder for sets *)
 
-
 Section Must_preorder_for_sets.
 Context `{EA : !ExtAction A}.
 Context `{gLtsT : !gLtsEq T EA}.
@@ -552,13 +551,90 @@ Context `{HinterP : !Prop_of_Inter P T A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{HinterQ : !Prop_of_Inter Q T A dual}.
 
-Definition ctx_pre__x 
+Definition ctx_pre__x
   (X : gset P) (Y : gset Q) 
   := forall (t : T), X must_pass_x t -> Y must_pass_x t.
-
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
 Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
 
+Lemma set_must_union_right
+  (X : gset P) (Y Y' : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y' ->  X ⊑ₛₑₜ_ₘᵤₛₜᵢ (Y ∪ Y').
+Proof.
+  intros Hyp1 Hyp2.
+  intros t h_must.
+  - eapply mx_sum.
+    + eapply Hyp1; eauto.
+    + eapply Hyp2; eauto.
+Qed.
+
+Lemma set_must_empty (X : gset P) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ ∅.
+Proof.
+  intros t h_must.
+  induction h_must.
+  + now eapply mx_now.
+  + eapply mx_step;eauto.
+    * intros p mem. inversion mem.
+    * intros. destruct X' using set_ind_L.
+      - exfalso. eapply H3;eauto. 
+      - assert (x ∈ {[x]} ∪ X0) as mem'' by set_solver.
+        eapply H2 in mem'' as (p' & mem_imp & tr). inversion mem_imp.
+    * intros. destruct X' using set_ind_L.
+      - exfalso. eapply H5;eauto. 
+      - assert (x ∈ {[x]} ∪ X0) as mem'' by set_solver.
+        eapply H4 in mem'' as (p' & mem_imp & tr). inversion mem_imp.
+Qed.
+
+Lemma set_must_union_left_rev
+  (X : gset P) (Y Y' : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ (Y ∪ Y') -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
+Proof.
+  intros Hyp t h_must.
+  induction Y using set_ind_L.
+  - eapply set_must_empty;eauto.
+  - eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed.
+
+(* Lemma set_must_union_rev
+  (X1 X2 : gset P) (Y : gset Q) : X1 ∪ X2 ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X1 ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
+Proof.
+  induction Y using set_ind_L.
+  + intros. eapply set_must_empty;eauto.
+  + intro Hyp. intros t h_must. eapply Hyp.
+  + rewrite union_empty_r_L. eauto.
+  + intros. destruct Y using set_ind_L.
+    * intros t hyp. eapply set_must_empty;eauto.
+    * intros t h_must. eapply must_set_for_all.
+      - set_solver.
+      - intros. eapply 
+     intros.
+  - eapply set_must_empty;eauto.
+  - eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed. *)
+
+Lemma set_must_union_right_rev
+  (X : gset P) (Y Y' : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ (Y ∪ Y') -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y'.
+Proof.
+  intros Hyp t h_must.
+  induction Y' using set_ind_L.
+  - eapply set_must_empty;eauto.
+  - eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed.
+
+Lemma set_must_sub
+  (X : gset P) (Y : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> forall Y', Y' ⊆ Y ->  X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y'.
+Proof.
+  intros Hyp Y' sub t h_must.
+  destruct Y' using set_ind_L.
+  + eapply set_must_empty;eauto.
+  + eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed.
 
 (** ** Equivalence between the must preorder and the must preorder on sets *)
 Lemma must_set_singleton_iff (p : P) (q : Q) :
@@ -578,8 +654,35 @@ Qed.
 End Must_preorder_for_sets.
 
 #[global] Hint Unfold ctx_pre__x : mdb.
-Global Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
-Global Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
+Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
+
+(* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is reflexive *)
+#[global] Instance set_must_refl
+  `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _} : Reflexive ctx_pre__x.
+Proof. intros X t h_must. eauto. Qed.
+
+(* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is transitive *)
+#[global] Instance set_must_transitive
+  `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _} : Transitive ctx_pre__x.
+Proof.
+  intros X Y Z hcgr1 hcgr2. intros t h_must.
+  eapply hcgr2. eapply hcgr1; eauto.
+Qed.
+
+(* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is a preorder *)
+#[global] Instance set_must_x_preorder
+  `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _} : PreOrder ctx_pre__x.
+Proof.
+  split.
+  + exact set_must_refl.
+  + exact set_must_transitive.
+Qed.
+
+Notation "X ≂ₛₑₜ_ₘᵤₛₜᵢ Y" := (Y ⊑ₛₑₜ_ₘᵤₛₜᵢ X /\ X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y) (at level 70).
 
 Inductive mustx_alt `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _}
@@ -693,19 +796,138 @@ Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
 
 #[global] Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
 
+(* The relation ≼ₛₑₜ_ₐₛ is reflexive *)
+#[global] Instance bhv_pre__x_refl
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _} : Reflexive bhv_pre__x.
+Proof. intros. constructor;intro; intros; set_solver. Qed.
+
+(* The relation ≼ₛₑₜ_ₐₛ is transitive *)
+#[global] Instance bhv_pre__x_transitive
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _} : Transitive bhv_pre__x.
+Proof.
+  intros X Y Z hcgr1 hcgr2. split. 
+  + intro s. intros Hyp_conv. eapply hcgr2. eapply hcgr1. exact Hyp_conv. 
+  + intros z s z' mem wk_tr stable Hyp_conv.
+    destruct hcgr2 as (Hyp1_z & Hyp2_z).
+    assert (∀ y : P, y ∈ Y → y ⇓ s).
+    { eapply hcgr1. eauto. }
+    eapply (Hyp2_z z s z') in mem as (y & mem & y' & wk_tr_y & stable_y & Hyp_acc_y); eauto.
+    destruct hcgr1 as (Hyp1_y & Hyp2_y).
+    eapply (Hyp2_y y s y') in mem as (x & mem & x' & wk_tr_x & stable_x & Hyp_acc); eauto.
+    set_solver.
+Qed.
+
+(* The relation ≼ₛₑₜ_ₐₛ is a preorder *)
+#[global] Instance bhv_pre__x_preorder
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _} : PreOrder bhv_pre__x.
+Proof.
+  split.
+  + exact bhv_pre__x_refl.
+  + exact bhv_pre__x_transitive.
+Qed.
+
+
 Section Acceptance_Set_preorder_for_sets.
 
 Context `{EA : !ExtAction A}.
 Context `{gLtsEqT : !gLtsEq T EA}.
-Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{HinterP : !Prop_of_Inter P T A dual}.
-Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
-Context `{HinterQ : !Prop_of_Inter Q T A dual}.
-
 Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
+
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
+
+Lemma alt_set_union_right
+  (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y' ->  X ≼ₛₑₜ_ₐₛ (Y ∪ Y').
+Proof.
+  intros Hyp1 Hyp2. split.
+  - intros s Hyp_conv y mem.
+    eapply elem_of_union in mem. destruct mem as [mem_Y | mem_Y'].
+    + eapply Hyp1;eauto.
+    + eapply Hyp2;eauto.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply elem_of_union in mem. destruct mem as [mem_Y | mem_Y'].
+    * destruct Hyp1 as (Hyp1 & Hyp'1).
+      eapply Hyp'1 in wk_tr;eauto.
+    * destruct Hyp2 as (Hyp2 & Hyp'2).
+      eapply Hyp'2 in wk_tr;eauto.
+Qed.
+
+Lemma alt_set_empty (X : gset P) : X ≼ₛₑₜ_ₐₛ ∅.
+Proof.
+  split.
+  + intro p. intros. set_solver.
+  + intro p. intros. set_solver.
+Qed.
+
+Lemma alt_set_union_left_rev
+  (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ (Y ∪ Y') -> X ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros Hyp. split.
+  - intros s Hyp_conv y mem.
+    eapply Hyp ;eauto. set_solver.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply Hyp;eauto. set_solver.
+Qed.
+
+Lemma alt_set_union_right_rev
+  (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ (Y ∪ Y') -> X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros Hyp. split.
+  - intros s Hyp_conv y mem.
+    eapply Hyp ;eauto. set_solver.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply Hyp;eauto. set_solver.
+Qed.
+
+Lemma alt_set_sub
+  (X : gset P) (Y : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> forall Y', Y' ⊆ Y ->  X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros Hyp. split.
+  - intros s Hyp_conv y mem.
+    eapply Hyp;eauto.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply Hyp; eauto.
+Qed.
+
+Lemma alt_set_union_l (X1 X2 : gset P) (Y : gset Q) : X1 ≼ₛₑₜ_ₐₛ Y -> (X1 ∪ X2) ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros Hyp. split.
+  + intros s Hyp_conv. eapply Hyp.
+    intros; eauto. eapply Hyp_conv. set_solver.
+  + intros q s q' mem wt_tr stable Hyp_conv.
+    assert (∀ p : P, p ∈ X1 → p ⇓ s) as Hyp_conv'.
+    { intros. eapply Hyp_conv. set_solver. } destruct Hyp as (Hyp1 & Hyp2).
+    destruct (Hyp2 q s q' mem wt_tr stable Hyp_conv') as (p' & mem' & p'' & wt_tr' & stable' & sub').
+    exists p'. repeat split ;eauto. set_solver.
+Qed.
+
+Lemma alt_set_union_r (X1 X2 : gset P) (Y : gset Q) : X2 ≼ₛₑₜ_ₐₛ Y -> (X1 ∪ X2) ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros Hyp. split.
+  + intros s Hyp_conv. eapply Hyp.
+    intros; eauto. eapply Hyp_conv. set_solver.
+  + intros q s q' mem wt_tr stable Hyp_conv.
+    assert (∀ p : P, p ∈ X2 → p ⇓ s) as Hyp_conv'.
+    { intros. eapply Hyp_conv. set_solver. } destruct Hyp as (Hyp1 & Hyp2).
+    destruct (Hyp2 q s q' mem wt_tr stable Hyp_conv') as (p' & mem' & p'' & wt_tr' & stable' & sub').
+    exists p'. repeat split ;eauto. set_solver.
+Qed.
+
+Lemma alt_set_choose (p : P) (X : gset P) (Y : gset Q) : p ∈ X -> ({[p]} : gset P) ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros mem alt_p.
+  replace X with ({[p]} ∪ (X ∖ {[p]})).
+  + eapply alt_set_union_l. eauto.
+  + symmetry. eapply leibniz_equiv. eapply union_difference_singleton. eauto.
+Qed.
 
 Lemma bhvleqone_preserved_by_reduction
   (X : gset P) (Y Y' : gset Q) :
@@ -747,7 +969,7 @@ Proof.
   eauto. eauto. (* intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
 Qed.
 
-Lemma alt_set_singleton_iff 
+Lemma alt_set_singleton_iff
   (p : P) (q : Q) : ({[ p ]} : gset P) ≼ₛₑₜ_ₐₛ ({[ q ]} : gset Q) <->  p ≼ₐₛ q.
 Proof.
   split.

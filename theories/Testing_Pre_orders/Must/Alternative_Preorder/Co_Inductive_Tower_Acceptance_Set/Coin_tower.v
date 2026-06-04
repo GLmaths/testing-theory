@@ -285,22 +285,46 @@ Section must_co_inductive_acceptance_preorder.
   Context `{!gLtsObaFB T A}.
 
   (** ** The co-inductive-tower characterisation on FW is equivalent to the extensional must preorder *)
-  Corollary equivalence_fw_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
+  (* Corollary equivalence_fw_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
     pre_extensional outcome p q <-> ({[ p ]} : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset Q).
   Proof.
     rewrite <- eqx. rewrite alt_set_singleton_iff.
     rewrite equivalence_fw_bhv_acc_ctx;eauto.
   Qed.
-
+  From TestingTheory Require Import Lts_CN.
   (** ** The co-inductive-towercharacterisation on FW is equivalent to the inductive must preorder *)
-  (* Corollary equivalence_fw_co_inductive_acceptance_and_must_i (X : gset P) (Y : gset Q) :
-    X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y <-> (X : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ (Y : gset Q).
+  Corollary equivalence_fw_co_inductive_acceptance_and_must_i (X : gset P) (Y : gset Q) :
+    X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y <-> (X : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ (Y : gset Q).
   Proof.
     rewrite <- eqx. split. 
-    + admit. 
+    + induction Y using set_ind_L.
+      - intros. split.
+        * intros s h_conv t mem. inversion mem.
+        * intros q s q' mem. inversion mem.
+      - intros H'. eapply alt_set_union_right.
+        * eapply set_must_union_left_rev in H' as Hyp_Must;eauto.
+          (* clear H5. *) clear H'. clear IHY. clear H6.
+          induction X using set_ind_L.
+          ++ exfalso. eapply H5. eauto. 
+          ++ destruct X using set_ind_L.
+             ** rewrite union_empty_r_L.
+                rewrite union_empty_r_L in Hyp_Must.
+                eapply alt_set_singleton_iff.
+                eapply completeness_fw.
+                eapply must_set_singleton_iff;eauto.
+             ** eapply alt_set_union_l.
+                eapply alt_set_singleton_iff.
+                eapply completeness_fw.
+                eapply must_set_singleton_iff.
+                intros t hym_must. eapply Hyp_Must.
+                eapply mx_sum.
+             -- eauto.
+             -- 
+        * eapply IHY. eapply set_must_union_right_rev;eauto.
     + eapply soundnessx.
     Unshelve.
-    admit.
+    eapply MkgLtsCNenabled. intros. edestruct boomerang as (x & Hyp);eauto.
+    eapply Hyp in H6. exists x;eauto. destruct H6. eauto. symmetry. eauto.
   Admitted. *)
 
   Corollary equivalence_fw_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :
