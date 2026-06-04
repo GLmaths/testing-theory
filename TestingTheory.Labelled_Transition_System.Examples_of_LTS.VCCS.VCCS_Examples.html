@@ -214,17 +214,27 @@
 &nbsp;&nbsp;| <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.one_out_wt_inv_s"><span class="id" title="lemma">one_out_wt_inv_s</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">wt_tr</span> <span class="id" title="keyword">as</span> <span class="id" title="var">eq</span>; <span class="id" title="tactic">subst</span> ].<br/>
 
 <br/>
-
-<br/>
-
-<br/>
-
-<br/>
 <span class="id" title="keyword">Lemma</span> <a id="VCCS_examples.one_output_is_above_all_output_conv" class="idref" href="#VCCS_examples.one_output_is_above_all_output_conv"><span class="id" title="lemma">one_output_is_above_all_output_conv</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.all_out"><span class="id" title="definition">all_out</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Must.html#abf3a8cbe203d817129c6b65b8dd30c5"><span class="id" title="notation">⊑ₘᵤₛₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.one_out"><span class="id" title="definition">one_out</span></a>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
-<span class="id" title="keyword">Abort</span>.<br/>
-
-<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.bhv_iff_ctx_VCCS_without_toFW"><span class="id" title="lemma">bhv_iff_ctx_VCCS_without_toFW</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span> <span class="id" title="var">s</span> <span class="id" title="var">Hyp_conv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.one_out_converges_for_all"><span class="id" title="lemma">one_out_converges_for_all</span></a>.<br/>
+&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span> <span class="id" title="var">s</span> <span class="id" title="var">q</span> <span class="id" title="var">Hyp_conv</span> <span class="id" title="var">wt_tr</span> <span class="id" title="var">ostable</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">only_two_cases</span> <span class="id" title="var">s</span> <span class="id" title="var">q</span> <span class="id" title="var">wt_tr</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">exists</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.all_out"><span class="id" title="definition">all_out</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">intros</span> <span class="id" title="var">i</span> <span class="id" title="var">mem</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">compute_coR</span> <span class="id" title="var">mem</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">multiset_solver</span>.<br/>
+&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">exists</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.g"><span class="id" title="constructor">g</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#6656a9ab52e4613d8a55ec3e504304a7"><span class="id" title="notation">𝟘</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.WeakTransitions.html#lts_to_wt"><span class="id" title="lemma">lts_to_wt</span></a>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++ <span class="id" title="tactic">intros</span> <span class="id" title="var">i</span> <span class="id" title="var">mem</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">compute_coR</span> <span class="id" title="var">mem</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">multiset_solver</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
 <span class="id" title="keyword">Definition</span> <a id="VCCS_examples.const" class="idref" href="#VCCS_examples.const"><span class="id" title="definition">const</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.proc"><span class="id" title="inductive">proc</span></a> := <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.g"><span class="id" title="constructor">g</span></a> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.a"><span class="id" title="axiom">a</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#93d4393f276cd9977a673c13017d2aa9"><span class="id" title="notation">?</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#93d4393f276cd9977a673c13017d2aa9"><span class="id" title="notation">(</span></a><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.a"><span class="id" title="axiom">a</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#db6adc079ebbadf15f269553683d7a7f"><span class="id" title="notation">!</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#VCCS_examples.O"><span class="id" title="axiom">O</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#db6adc079ebbadf15f269553683d7a7f"><span class="id" title="notation">•</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#6656a9ab52e4613d8a55ec3e504304a7"><span class="id" title="notation">𝟘</span></a><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#93d4393f276cd9977a673c13017d2aa9"><span class="id" title="notation">)</span></a>).<br/>
