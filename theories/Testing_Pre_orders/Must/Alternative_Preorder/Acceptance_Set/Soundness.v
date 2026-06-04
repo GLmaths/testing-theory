@@ -455,7 +455,7 @@ Lemma must_set_for_all  (X : gset P) (t : T) :
     -> (forall p, p ∈ X -> p must_pass t)
       -> X must_pass_x t.
 Proof.
-(*   intros xneq_nil hm.
+(*  intros xneq_nil hm.
   revert t xneq_nil hm.
   induction X using set_ind_L.
   + intros. set_solver.
@@ -475,22 +475,29 @@ Proof.
               ** destruct (set_choose_or_empty X).
                  --- eapply mx_sum.
                      +++ eapply H; eauto.
-                         admit. (* by lts_tau_set_from_pset_spec1 {[p]} ({[x]} ∪ X) *)
+                         destruct H5 as (x' & mem).
+                         assert (x ∈ ({[x]} ∪ X)) by set_solver.
+                         eapply H2 in H5 as (p' & mem' & tr).
+                         assert (p' = p) by set_solver. subst ;eauto.
                      +++ eapply IHX'.
-                         ++++ admit. (* by lts_tau_set_from_pset_spec1 {[p]} ({[x]} ∪ X) *)
+                         ++++ intros q mem. exists p.
+                              assert (q ∈ ({[x]} ∪ X)) by set_solver.
+                              eapply H2 in H6 as (p' & mem' & tr).
+                              assert (p' = p) by set_solver. subst ;eauto.
                          ++++ set_solver.
                  --- assert (X = ∅) as H'' by set_solver.
                      rewrite H'', union_empty_r_L.
-                     eapply H;eauto. admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                     eapply H;eauto. assert (x ∈ ({[x]} ∪ X)) by set_solver.
+                     eapply H2 in H6 as (p' & mem' & tr'). assert (p' = p) by set_solver.
+                     subst ;eauto.
            -- intros ; set_solver.
            -- intros. induction X' using set_ind_L.
               ** set_solver.
               ** destruct (set_choose_or_empty X).
                  --- eapply mx_sum.
-                     +++ eapply H1; eauto.
-                         admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                     +++ (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
                      +++ eapply IHX'.
-                         ++++ admit. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                         ++++ (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
                          ++++ set_solver.
                  --- assert (X = ∅) as H'' by set_solver.
                      rewrite H'', union_empty_r_L.
