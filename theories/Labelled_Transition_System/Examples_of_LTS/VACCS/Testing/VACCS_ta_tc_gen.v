@@ -37,7 +37,6 @@ From TestingTheory Require Import ActTau gLts VACCS_Good Bisimulation InputOutpu
 Module Type VACCS_ta_tc.
 
 Include VACCS_Testing.
-Parameter O : Value.
 
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
 match μ with 

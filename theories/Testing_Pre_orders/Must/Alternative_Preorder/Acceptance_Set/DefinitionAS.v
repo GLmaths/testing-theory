@@ -89,8 +89,8 @@ From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
 #[global] Program Instance PreActActionForFW
   `{@AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT}
-  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
-  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (toFW gLtsP) gLtsT.
+  `{@Prop_of_Inter P (MO A) A fw_inter H _ MbgLts} 
+  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ gLtsT. (* (toFW gLtsP) *)
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
@@ -111,7 +111,12 @@ Next Obligation.
     eapply lts_refuses_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
   - destruct (decide (non_blocking μ''')) as [nb''' | b'''].
     * eapply non_blocking_action_in_ms in l; eauto.
-      subst. admit.
+      subst. exists μ''. split.
+      + exists μ'''. repeat split. 
+        -- eapply lts_refuses_spec2;eauto.
+        -- exact duo.
+        -- exact b''.
+      + rewrite<- eq'. admit.
     * eapply blocking_action_in_ms in l as (eq'' & duo'' & nb''); eauto.
       subst. eapply unique_nb in duo ; subst. contradiction.
 Admitted.

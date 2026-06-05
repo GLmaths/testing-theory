@@ -37,6 +37,7 @@ InteractionBetweenLts Testing_Predicate DefinitionAS.
 Module Type VACCS_examples.
 Include VACCS_Must_Alt_Corollary.
 Parameter a : Channel.
+Parameter O : Value.
 Parameter I : Value.
 Parameter (neq : O ≠ I).
 
