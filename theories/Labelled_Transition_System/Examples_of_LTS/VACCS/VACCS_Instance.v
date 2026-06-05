@@ -6,12 +6,14 @@ From TestingTheory Require Import
   gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
   DefinitionAS Equivalence.
-From TestingTheory Require Export VACCS.Congruence.
+From TestingTheory Require Export VACCS VACCS.Congruence.
 
 
-Module Type VACCS_lts.
+Section VACCS_lts.
 
-Include VACCS_congruence.
+Context `{VP : VACCS_Parameters}.
+Existing Instance VP.
+
 (* State Transition System (STS-reduction) *)
 Inductive sts : proc -> proc -> Prop :=
 (*The axiomes*)
@@ -110,7 +112,7 @@ Proof with auto with cgr.
     exists g2. exists 𝟘. exists 0. split.
     * simpl. etrans. eapply cgr_par_nil_rev. eapply cgr_fullpar; reflexivity.
     * simpl. etrans. eapply cgr_par_nil_rev. eapply cgr_fullpar; reflexivity.
-  - right. left. exists p. exists g0. exists 𝟘. exists 0. split.
+  - right. left. exists p. exists g. exists 𝟘. exists 0. split.
     * simpl. eapply cgr_par_nil_rev.
     * simpl. eapply cgr_par_nil_rev.
   - right. right. exists x. exists p. exists 𝟘. exists 0. split.
@@ -422,7 +424,7 @@ Proof.
   * assert (VarSwap_in_proc (S k) (VarSwap_in_proc (S k) p) = p) as eq.
     { eapply Hp. simpl. lia. }
     rewrite eq. eauto.
-  * destruct g0; simpl in *.
+  * destruct g; simpl in *.
     + eauto.
     + eauto.
     + rewrite Swap_Swap_Chan.
@@ -432,9 +434,9 @@ Proof.
     + assert (VarSwap_in_proc k (VarSwap_in_proc k p) = p) as eq.
       { eapply Hp. simpl. lia. }
       rewrite eq. eauto.
-    + assert (VarSwap_in_proc k (VarSwap_in_proc k (g g0_1)) = (g g0_1)) as eq1.
+    + assert (VarSwap_in_proc k (VarSwap_in_proc k (g g1)) = (g g1)) as eq1.
       { eapply Hp. simpl. lia. }
-      assert (VarSwap_in_proc k (VarSwap_in_proc k (g g0_2)) = (g g0_2)) as eq2.
+      assert (VarSwap_in_proc k (VarSwap_in_proc k (g g2)) = (g g2)) as eq2.
       { eapply Hp. simpl. lia. }
       inversion eq1. inversion eq2. rewrite H0. rewrite H1. rewrite H0. rewrite H1. eauto.
 Qed.
@@ -474,7 +476,7 @@ Proof.
   + dependent destruction H. rewrite VarC_action_add_add in H. simpl in H.
     eapply Hp in H; simpl ; try lia. replace (S (S (S k)))%nat with (1 + (S (S k)))%nat in H by lia.
     rewrite<- VarC_action_add_add in H. eapply lts_res_ext in H. eauto. 
-  + destruct g0.
+  + destruct g.
     * inversion H.
     * inversion H.
     * simpl in *. destruct c.
@@ -549,7 +551,7 @@ Proof.
                 rewrite decide_False; try lia. rewrite decide_False; try lia. eapply lts_output.
   + dependent destruction H. simpl in *. eapply Hp in H; try lia.
     eapply lts_res_ext. rewrite VarC_action_add_Swap. eauto.
-  + destruct g0.
+  + destruct g.
     * inversion H.
     * inversion H.
     * simpl in *. destruct c.
@@ -587,7 +589,7 @@ Proof.
     eapply lts_res_ext. rewrite NewVarCzero_and_add.
     assert (k = (0 + k))%nat as eq by lia. rewrite eq at 2.
     rewrite NewVarC_and_NewVarC_in_ChannelData. simpl. eapply Hp. lia. eauto.
-  + destruct g0; simpl in *.
+  + destruct g; simpl in *.
     * inversion H.
     * inversion H.
     * inversion H; subst. simpl. rewrite<- subst_and_NewVarC. eapply lts_input.
@@ -630,7 +632,7 @@ Proof.
   + inversion H.
   + inversion H; subst; simpl in *.
     eapply lts_res_tau. eapply Hp. lia. eauto.
-  + destruct g0; simpl in *.
+  + destruct g; simpl in *.
     * inversion H.
     * inversion H.
     * inversion H.
@@ -692,7 +694,7 @@ Proof.
   + f_equal. replace (S (j + k))%nat with ((S j) + k)%nat by lia.
     replace (S (j + S k))%nat with ((S j) + S k)%nat by lia.
     eapply Hp. lia.
-  + destruct g0; simpl in *.
+  + destruct g; simpl in *.
     - eauto.
     - eauto.
     - rewrite VarSwap_com_VarC_in_ChannelData.
@@ -702,9 +704,9 @@ Proof.
     - assert (NewVarC j (VarSwap_in_proc (j + k) p) = VarSwap_in_proc (j + S k) (NewVarC j p)) as eq.
       { eapply Hp. simpl. lia. }
       rewrite eq. eauto.
-    - assert (NewVarC j (VarSwap_in_proc (j + k) (g g0_1)) = VarSwap_in_proc (j + S k) (NewVarC j (g g0_1))) as eq1.
+    - assert (NewVarC j (VarSwap_in_proc (j + k) (g g1)) = VarSwap_in_proc (j + S k) (NewVarC j (g g1))) as eq1.
       { eapply Hp. simpl. lia. }
-      assert (NewVarC j (VarSwap_in_proc (j + k) (g g0_2)) = VarSwap_in_proc (j + S k) (NewVarC j (g g0_2))) as eq2.
+      assert (NewVarC j (VarSwap_in_proc (j + k) (g g2)) = VarSwap_in_proc (j + S k) (NewVarC j (g g2))) as eq2.
       { eapply Hp. simpl. lia. } inversion eq1. inversion eq2. eauto.
 Qed.
 
@@ -735,7 +737,7 @@ Proof.
   + eauto.
   + f_equal. replace k with (0 + k)%nat by lia. rewrite VarSwap_com_VarC.
     simpl in *. eapply Hp. eauto.
-  + destruct g0; simpl in *.
+  + destruct g; simpl in *.
     * eauto.
     * eauto.
     * rewrite NewVar_and_VarSwap.
@@ -747,11 +749,11 @@ Proof.
           = VarSwap_in_proc k (pr_subst n p q)) as eq.
       { eapply Hp. simpl. lia. }
       rewrite eq. eauto.
-    * assert (pr_subst n (VarSwap_in_proc k (g g0_1)) (VarSwap_in_proc k q) 
-                  = VarSwap_in_proc k (pr_subst n (g g0_1) q)) as eq1.
+    * assert (pr_subst n (VarSwap_in_proc k (g g1)) (VarSwap_in_proc k q) 
+                  = VarSwap_in_proc k (pr_subst n (g g1) q)) as eq1.
       { eapply Hp. simpl. lia. }
-      assert (pr_subst n (VarSwap_in_proc k (g g0_2)) (VarSwap_in_proc k q) 
-                  = VarSwap_in_proc k (pr_subst n (g g0_2) q)) as eq2.
+      assert (pr_subst n (VarSwap_in_proc k (g g2)) (VarSwap_in_proc k q) 
+                  = VarSwap_in_proc k (pr_subst n (g g2) q)) as eq2.
       { eapply Hp. simpl. lia. } inversion eq1. inversion eq2. eauto.
 Qed.
 
@@ -776,7 +778,7 @@ Proof.
   * inversion H.
   * dependent destruction H; simpl in *.
     eapply lts_res_tau. eapply Hp; simpl; eauto.
-  * destruct g0; simpl in *.
+  * destruct g; simpl in *.
     - inversion H.
     - inversion H.
     - inversion H.
@@ -833,11 +835,11 @@ Proof.
     eapply Hp in H2; subst; try lia. eauto.
   + eapply NewVarC_in_ChannelData_inv in H0. subst. reflexivity.
   + f_equal. eapply Hp in H0; eauto ; try lia.
-  + destruct g0; destruct g1; simpl in *; eauto; try (inversion Hyp).
+  + destruct g; destruct g0; simpl in *; eauto; try (inversion Hyp).
     - eapply Hp in H2; subst; eauto. eapply NewVarC_in_ChannelData_inv in H1. subst; eauto.
     - eapply Hp in H1; subst; eauto.
-    - assert (NewVarC k (g g0_1) = NewVarC k (g g1_1)); simpl; eauto. inversion H1; eauto.
-      assert (NewVarC k (g g0_2) = NewVarC k (g g1_2)); simpl; eauto. inversion H2; eauto.
+    - assert (NewVarC k (g g1) = NewVarC k (g g0_1)); simpl; eauto. inversion H1; eauto.
+      assert (NewVarC k (g g2) = NewVarC k (g g0_2)); simpl; eauto. inversion H2; eauto.
       eapply Hp in H; simpl ; try lia. eapply Hp in H3; simpl ; try lia. inversion H. inversion H3. subst. eauto.
 Qed.
 
@@ -895,17 +897,17 @@ Proof.
       exists μ. exists (ν p''). split. eapply NewVarC_in_ext_inv in H. eauto.
       simpl. eauto.
     + exists μ'0. exists (ν p''). split; eauto.
-  * destruct g0; simpl in *.
+  * destruct g; simpl in *.
     - inversion H.
     - inversion H.
     - inversion H; subst. exists (ActIn (c ⋉ v)). exists (p ^ v).
       split ;eauto. rewrite subst_and_NewVarC. eauto.
     - inversion H.
     - dependent destruction H; simpl in *.
-      + assert (lts (NewVarC k (g g0_1)) (ActExt μ) q) as Hyp; eauto.
+      + assert (lts (NewVarC k (g g1)) (ActExt μ) q) as Hyp; eauto.
         eapply Hp in Hyp as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
         exists μ'. exists p''. split; eauto.
-      + assert (lts (NewVarC k (g g0_2)) (ActExt μ) q) as Hyp; eauto.
+      + assert (lts (NewVarC k (g g2)) (ActExt μ) q) as Hyp; eauto.
         eapply Hp in Hyp as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
         exists μ'. exists p''. split; eauto.
 Qed.
@@ -942,16 +944,16 @@ Proof.
   * dependent destruction H; simpl in *.
     eapply Hp in H as (p'' & eq'') ; simpl; subst ; try lia.
     exists (ν p''). simpl ; eauto.
-  * destruct g0; simpl in *.
+  * destruct g; simpl in *.
     - inversion H.
     - inversion H.
     - inversion H.
     - inversion H; subst. exists p. auto.
     - dependent destruction H; simpl in *.
-      + assert (lts (NewVarC k (g g0_1)) τ q) as Hyp; eauto.
+      + assert (lts (NewVarC k (g g1)) τ q) as Hyp; eauto.
         eapply Hp in Hyp as (p'' & eq'') ; simpl; subst ; try lia.
         exists p''. split; eauto.
-      + assert (lts (NewVarC k (g g0_2)) τ q) as Hyp; eauto.
+      + assert (lts (NewVarC k (g g2)) τ q) as Hyp; eauto.
         eapply Hp in Hyp as (p'' & eq'') ; simpl; subst ; try lia.
         exists p''. split; eauto.
 Qed.
@@ -986,7 +988,7 @@ Proof.
     eapply NewVarC_ext_proc in H as (μ'' & p'' & eq1 & eq2). subst.
     eapply NewVarC_in_ext_inv in eq1. subst. assert (NewVarC k (ν p'') = NewVarC k p'); eauto.
     eapply NewVarC_inv in H. subst. eapply lts_res_ext. eapply Hp in H0; try lia. rewrite NewVarCzero_and_add. eauto.
-  * destruct g0; simpl in *.
+  * destruct g; simpl in *.
     - inversion H.
     - inversion H.
     - inversion H; subst. assert (NewVarC_in_ext k (ActIn (c ⋉ v)) = NewVarC_in_ext k μ') as Hyp; eauto.
@@ -994,9 +996,9 @@ Proof.
       eapply NewVarC_inv in H4. subst. eapply lts_input.
     - inversion H.
     - dependent destruction H; simpl in *.
-      + assert (lts (NewVarC k (g g0_1)) (ActExt (NewVarC_in_ext k μ')) (NewVarC k p')); eauto.
+      + assert (lts (NewVarC k (g g1)) (ActExt (NewVarC_in_ext k μ')) (NewVarC k p')); eauto.
         eapply Hp in H0; simpl; try lia. eapply lts_choiceL. eauto.
-      + assert (lts (NewVarC k (g g0_2)) (ActExt (NewVarC_in_ext k μ')) (NewVarC k p')); eauto.
+      + assert (lts (NewVarC k (g g2)) (ActExt (NewVarC_in_ext k μ')) (NewVarC k p')); eauto.
         eapply Hp in H0; simpl; try lia. eapply lts_choiceR. eauto.
 Qed.
 
@@ -1058,14 +1060,14 @@ Proof.
     eapply NewVarC_tau_proc in H as (p'' & eq); subst.
     assert (NewVarC k (ν p'') = NewVarC k p') as Hyp; eauto.
     eapply NewVarC_inv in Hyp. subst. eapply lts_res_tau. eapply Hp; eauto.
-  * destruct g0; simpl in *.
+  * destruct g; simpl in *.
     - inversion H.
     - inversion H.
     - inversion H.
     - dependent destruction H; simpl in *. eapply NewVarC_inv in x. subst. constructor.
     - dependent destruction H; simpl in *.
-      + assert (lts (NewVarC k (g g0_1)) τ (NewVarC k p')); eauto. eapply lts_choiceL. eapply Hp; simpl; eauto. lia.
-      + assert (lts (NewVarC k (g g0_2)) τ (NewVarC k p')); eauto. eapply lts_choiceR. eapply Hp; simpl; eauto. lia.
+      + assert (lts (NewVarC k (g g1)) τ (NewVarC k p')); eauto. eapply lts_choiceL. eapply Hp; simpl; eauto. lia.
+      + assert (lts (NewVarC k (g g2)) τ (NewVarC k p')); eauto. eapply lts_choiceR. eapply Hp; simpl; eauto. lia.
 Qed.
 
 
@@ -1197,23 +1199,23 @@ Proof.
          * assert (lts (NewVarC 0 q) τ q2); eauto. eapply NewVarC_tau_proc in l as (q'' & eq''); subst.
            eapply NewVarC_tau_proc_rev in H. exists ((ν p) ‖ q''). split.
            eapply lts_parR. eauto. eapply cgr_res_scope_rev.
-    + intros. exists q.  split. apply lts_choiceL.  assumption. auto with cgr.
+    + intros. exists q.  split. apply lts_choiceL.  assumption. reflexivity.
     + intros. dependent destruction l.
-      -- exists q. split. assumption. auto with cgr.
+      -- exists q. split. assumption. reflexivity.
       -- inversion l.
     + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceR. assumption. auto with cgr.
-      -- exists q0. split. apply lts_choiceL. assumption. auto with cgr.
+      -- exists q0. split. apply lts_choiceR. assumption. reflexivity.
+      -- exists q0. split. apply lts_choiceL. assumption. reflexivity.
     + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceL. apply lts_choiceL. assumption. auto with cgr.
+      -- exists q0. split. apply lts_choiceL. apply lts_choiceL. assumption. reflexivity.
       -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. apply lts_choiceR. assumption. auto with cgr.
-         * exists q0. split. apply lts_choiceR. assumption. auto with cgr.
+         * exists q0. split. apply lts_choiceL. apply lts_choiceR. assumption. reflexivity.
+         * exists q0. split. apply lts_choiceR. assumption. reflexivity.
     + intros. dependent destruction l.
       -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. assumption. auto with cgr.
-         * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. auto with cgr.
-      -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. auto with cgr.
+         * exists q0. split. apply lts_choiceL. assumption. reflexivity.
+         * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. reflexivity.
+      -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. reflexivity.
     + intros. dependent destruction l. exists (pr_subst x p (rec x • p)). split. apply lts_recursion. 
       apply cgr_subst. assumption.
     + intros. dependent destruction l. exists p.  split. apply lts_tau.
@@ -1250,7 +1252,7 @@ Proof.
       -- destruct (IHcgr_step q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
-    destruct H. destruct H0. eauto with cgr.
+    destruct H. destruct H0. etransitivity; eauto.
 Qed.
 
 Lemma lts_res_ext_n n p p' μ : lts p (ActExt (VarC_action_add n μ)) p' -> lts (Ѵ  n p) (ActExt μ) (Ѵ  n p').
@@ -1549,7 +1551,8 @@ Inductive Well_Defined_Data : nat -> Data -> Prop :=
 | cst_is_always_defined : forall k v, Well_Defined_Data k (cst v).
 
 Inductive Well_Defined_Condition : nat -> Equation Data -> Prop :=
-| equationOnValueXX : forall k x y, Well_Defined_Data k x -> Well_Defined_Data k y -> Well_Defined_Condition k (x == y).
+| equationOnValueXX : forall k x y, Well_Defined_Data k x ->
+    Well_Defined_Data k y -> Well_Defined_Condition k (x == y).
 
 Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_par : forall k p1 p2, Well_Defined_Input_in k p1 -> Well_Defined_Input_in k p2 
@@ -1601,7 +1604,7 @@ destruct p.
   ** apply Hp. simpl; auto with arith. assumption.
 - intros. constructor. dependent destruction H. apply Inequation_k_data. assumption.
 - intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
-- destruct g0.
+- destruct g.
   ** intros. constructor.
   ** intros. constructor.
   ** intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
@@ -1709,15 +1712,15 @@ destruct p.
   - apply Hp. simpl. auto with arith. assumption.
 * intros. simpl. dependent destruction H. constructor. apply ForData. assumption.
 * intros. simpl. dependent destruction H. constructor. apply Hp. simpl. auto with arith. assumption.
-* destruct g0.
+* destruct g.
   - intros. simpl. constructor.
   - intros. simpl. constructor.
   - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
   - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
   - intros. simpl. dependent destruction H. constructor.
-    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g0_1))). apply Hp.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g1))). apply Hp.
       simpl.  auto with arith. assumption. assumption.
-    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g0_2))). apply Hp.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g2))). apply Hp.
       simpl.  auto with arith. assumption. assumption.
 Qed.
 
@@ -1759,7 +1762,7 @@ destruct p; intros; simpl.
    - apply Hp. simpl. auto with arith. assumption.
 * constructor. dependent destruction H. apply WD_data_and_NewVar. assumption.
 * constructor. dependent destruction H. apply Hp. simpl. auto with arith. assumption.
-* destruct g0; intros; simpl.
+* destruct g; intros; simpl.
   - constructor.
   - constructor.
   - dependent destruction H. constructor. 
@@ -1768,10 +1771,10 @@ destruct p; intros; simpl.
   - constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
   - dependent destruction H. constructor.
     -- assert (S (k + i) = (S k + i)%nat). auto with arith. rewrite H1.
-       assert (Well_Defined_Input_in (S k + i) (NewVar i (g g0_1))).
+       assert (Well_Defined_Input_in (S k + i) (NewVar i (g g1))).
        apply Hp. simpl. auto with arith. assumption. assumption.
     -- assert (S (k + i) = (S k + i)%nat). auto with arith. rewrite H1.
-       assert (Well_Defined_Input_in (S k + i) (NewVar i (g g0_2))).
+       assert (Well_Defined_Input_in (S k + i) (NewVar i (g g2))).
        apply Hp. simpl. auto with arith. assumption. assumption.
 Qed.
 
@@ -1791,16 +1794,16 @@ destruct p; intros; simpl.
    - apply Hp. simpl. auto with arith. assumption.
 * constructor. dependent destruction H. eauto.
 * constructor. dependent destruction H. apply Hp. simpl. auto with arith. assumption.
-* destruct g0; intros; simpl.
+* destruct g; intros; simpl.
   - constructor.
   - constructor.
   - dependent destruction H. constructor. 
     apply Hp. simpl. auto with arith. eauto.
   - constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
   - dependent destruction H. constructor.
-    -- assert (Well_Defined_Input_in k (NewVarC i (g g0_1))).
+    -- assert (Well_Defined_Input_in k (NewVarC i (g g1))).
        apply Hp. simpl. auto with arith. assumption. assumption.
-    -- assert (Well_Defined_Input_in k (NewVarC i (g g0_2))).
+    -- assert (Well_Defined_Input_in k (NewVarC i (g g2))).
        apply Hp. simpl. auto with arith. assumption. assumption.
 Qed.
 
@@ -1827,7 +1830,7 @@ destruct p'.
     - simpl; auto with arith.
     - eapply WD_and_NewVarC. eauto.
     - eauto.
-* destruct g0.
+* destruct g.
   ** intros. simpl. constructor.
   ** intros. simpl. constructor.
   ** intros. simpl. constructor. dependent destruction H. apply Hp. 
@@ -1840,9 +1843,9 @@ destruct p'.
     - assumption.
     - dependent destruction H. assumption.
   ** intros. simpl. dependent destruction H. constructor.
-    - assert (Well_Defined_Input_in k (pr_subst x (g g0_1) p)). apply Hp. simpl; auto with arith. assumption.
+    - assert (Well_Defined_Input_in k (pr_subst x (g g1) p)). apply Hp. simpl; auto with arith. assumption.
       assumption. assumption.
-    - assert (Well_Defined_Input_in k (pr_subst x (g g0_2) p)). apply Hp. simpl; auto with arith. assumption.
+    - assert (Well_Defined_Input_in k (pr_subst x (g g2) p)). apply Hp. simpl; auto with arith. assumption.
       assumption. assumption.
 Qed.
 
@@ -1961,7 +1964,7 @@ Qed.
 Lemma cgr_par_nil_n n r :  Ѵ n 𝟘 ‖ r ≡* r.
 Proof.
   revert r. induction n.
-  - simpl. intros. eauto with cgr.
+  - simpl. intros. eauto with *.
   - simpl. intros. etrans. instantiate (1 := (𝟘 ‖ (ν Ѵ n 𝟘) ‖ r)).
     eapply cgr_par. symmetry. etrans. eapply cgr_par_com. eapply cgr_par_nil.
     etrans. eapply cgr_par. eapply cgr_par_com. etrans. eapply cgr_par.
@@ -2014,10 +2017,14 @@ Proof.
   destruct H3. inversion H3; subst.
   - inversion H9. subst. assert (ActOut (c ⋉ v) = ActOut (c ⋉ v)). eauto. exfalso. eapply H. eauto.
   - exists q3. split. assumption.
-    assert (lts ((c ! v • 𝟘) ‖ q3) ((c ⋉ v) !) (𝟘 ‖ q3)). constructor. constructor.
+    assert (lts ((c ! v • 𝟘) ‖ q3) ((c ⋉ v) !) (𝟘 ‖ q3)). {
+      constructor. constructor. }
     edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q3) ((c ⋉ v) !)).
-    exists ((c ! v • 𝟘) ‖ q3). split. eauto with cgr. assumption. destruct H6. exists x. split. assumption.
-    etrans. eauto. etrans. eapply cgr_par_com. eapply cgr_par_nil.
+    + exists ((c ! v • 𝟘) ‖ q3). split.
+      * eauto with *.
+      * assumption.
+    + destruct H6. exists x. split. assumption.
+      etrans. eauto. etrans. eapply cgr_par_com. eapply cgr_par_nil.
 Qed.
 
 Lemma OBA_with_FB_Third_Axiom : forall p1 p2 p3 a, 
@@ -2026,29 +2033,30 @@ Proof.
   intros. assert (lts p1 (a !) p2). assumption. apply OutputWithValue in H1.
   decompose record H1. subst. rename x into c. rename x0 into v.
   revert H0. revert p3. dependent induction H.
-  - intros. inversion H0. subst. eauto with cgr.
+  - intros. inversion H0. subst. eauto with *.
   - intros. inversion H2; subst.
     + eapply IHlts; eauto.
     + rewrite H in H8. inversion H8.
   - intros. inversion H2; subst.
     + rewrite H in H8. inversion H8.
     + eapply IHlts; eauto.
-  - intros. inversion H0;subst. eapply cgr_res. eapply (IHlts v (VarC_add 1 c)); eauto.
+  - intros. inversion H0;subst. eapply cgr_res.
+    eapply (IHlts (VarC_add 1 c) v); eauto.
   - intros. inversion H0;subst. 
-    * apply cgr_fullpar. eapply IHlts. eauto. eauto. assumption. eauto with cgr.
+    * apply cgr_fullpar. eapply IHlts. eauto. eauto. assumption. eauto with *.
     * apply TransitionShapeForOutputSimplified in H.
       apply TransitionShapeForOutputSimplified in H6.
        transitivity (p2 ‖ ((c ! v • 𝟘) ‖ q2)). eapply cgr_fullpar. 
       reflexivity. exact H6. etrans. symmetry. eapply cgr_par_assoc.
       eapply cgr_par. etrans. eapply cgr_par_com. symmetry. eauto.
   - intros. inversion H0 ; subst.
-      apply TransitionShapeForOutputSimplified in H.
+    + apply TransitionShapeForOutputSimplified in H.
       apply TransitionShapeForOutputSimplified in H6.
-       transitivity (((c ! v • 𝟘) ‖ p2) ‖ q2). eauto with cgr.
-       transitivity (( p2 ‖ (c ! v • 𝟘)) ‖ q2). eauto with cgr.
-       transitivity ( p2 ‖ ((c ! v • 𝟘) ‖ q2)). eauto with cgr. apply cgr_fullpar. reflexivity.
-      eauto with cgr.
-    * apply cgr_fullpar. reflexivity. eapply IHlts. eauto. eauto. assumption.
+      transitivity (((c ! v • 𝟘) ‖ p2) ‖ q2); [eauto with cgr|].
+      transitivity (( p2 ‖ (c ! v • 𝟘)) ‖ q2); [eauto with cgr|].
+      transitivity ( p2 ‖ ((c ! v • 𝟘) ‖ q2)); [eauto with cgr|].
+      apply cgr_fullpar; eauto with *.
+    + apply cgr_fullpar. reflexivity. eapply IHlts. eauto. eauto. assumption.
   - intros. exfalso. eapply guarded_does_no_output. eassumption.
   - intros. exfalso. eapply guarded_does_no_output. eassumption.
 Qed.
@@ -2066,7 +2074,7 @@ Proof.
   split; assumption. destruct H4. exists x. split. assumption. etrans. eauto. etrans.
   eapply cgr_par_com. eapply cgr_par_nil. 
 Qed.
-
+Hint Constructors Relation_Operators.clos_trans : cgr.
 Lemma OBA_with_FB_Fifth_Axiom : forall p q1 q2 a,
   lts p (a !) q1 -> lts p τ q2 ->
   (∃ q : proc, lts q1 τ q /\ lts_then_sc q2 (a !) q) \/ lts_then_sc q1 (a ?) q2. (* output-tau  *)
@@ -2074,15 +2082,21 @@ Proof.
   intros. assert (lts p (a !) q1). assumption. apply OutputWithValue in H1.
   decompose record H1. subst. rename x into c. rename x0 into v.
   eapply TransitionShapeForOutputSimplified in H.
-  edestruct (Congruence_Respects_Transition ((c ! v • 𝟘) ‖ q1) q2 τ). exists p. split. eauto with cgr. assumption.
-  destruct H2. dependent induction H2.
-  - inversion H2_; subst. right. exists q0. split. assumption. eauto with cgr. 
-  - inversion H2_0.
-  - inversion H2.
-  - left. exists q0. split. assumption. 
-    assert (lts ((c ! v • 𝟘) ‖ q0) ((c ⋉ v) !) (𝟘 ‖ q0)). constructor. constructor.
-    edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q0) ((c ⋉ v) !)). exists ((c ! v • 𝟘) ‖ q0).
-    split. eauto with cgr. assumption. destruct H5. exists x. split. assumption. eauto with cgr.
+  edestruct (Congruence_Respects_Transition ((c ! v • 𝟘) ‖ q1) q2 τ).
+  - exists p. split. eauto with *. assumption.
+  - destruct H2. dependent induction H2.
+    + inversion H2_; subst. right. exists q3; split. assumption.
+      rewrite <- H3. transitivity (q3 ‖ 𝟘); eauto with cgr.
+      (* eauto with cgr doesn't work anymore *)
+    + inversion H2_0.
+    + inversion H2.
+    + left. exists q3. split. assumption. 
+      assert (lts ((c ! v • 𝟘) ‖ q3) ((c ⋉ v) !) (𝟘 ‖ q3)). constructor. constructor.
+      edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q3) ((c ⋉ v) !)). exists ((c ! v • 𝟘) ‖ q3).
+      split.
+      * eauto with cgr. admit.
+      * assumption.
+      * destruct H5. exists x. split. assumption. eauto with cgr.
 Qed.
 
 Lemma ExtraAxiom : forall p1 p2 q1 q2 a,
@@ -2443,7 +2457,7 @@ Proof.
     rewrite eq1, eq2. eauto.
   + rewrite simpl_bvar_in_NewVar_ChannelData. eauto.
   + f_equal. eapply Hp. simpl; eauto.
-  + destruct g0; simpl in *.
+  + destruct g; simpl in *.
     - eauto.
     - eauto.
     - rewrite simpl_bvar_in_NewVar_ChannelData.
@@ -2453,9 +2467,9 @@ Proof.
     - assert ((NewVarC j (NewVarC j p)) = (NewVarC (S j) (NewVarC j p))) as eq.
       { eapply Hp. simpl. eauto. }
       rewrite eq. eauto.
-    - assert (NewVarC j (NewVarC j (g g0_1)) = NewVarC (S j) (NewVarC j (g g0_1))) as eq1.
+    - assert (NewVarC j (NewVarC j (g g1)) = NewVarC (S j) (NewVarC j (g g1))) as eq1.
       { eapply Hp. simpl. lia. }
-      assert (NewVarC j (NewVarC j (g g0_2)) = NewVarC (S j) (NewVarC j (g g0_2))) as eq2.
+      assert (NewVarC j (NewVarC j (g g2)) = NewVarC (S j) (NewVarC j (g g2))) as eq2.
       { eapply Hp. simpl. lia. }
       inversion eq1. inversion eq2. eauto.
 Qed.

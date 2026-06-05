@@ -29,25 +29,24 @@ From TestingTheory Require Import Clos_n InputOutputActions ActTau .
 
 (** * VACCS *)
 
-Module Type VACCS_proc.
+Section VACCS_proc.
 
 (** ** Definitions and properties of VACCS *)
 
-(* ChannelType is the type of channels *)
-(* ValueType is the type of data that can be transmitted over channels *)
+(****************************** Channels  and Values *************************)
+(** VACCS is parameterized over two countable sets. *)
+(** Channel is the type of channels *)
+(** Value is the type of data that can be transmitted over channels *)
 
+Class VACCS_Parameters :=
+  { Channel : Type;
+    Value : Type;
+    Channel_eq_dec :: EqDecision Channel;
+    Data_eq_dec :: EqDecision Value;
+    VACCS_Channels :: Countable Channel;
+    VACCS_Value :: Countable Value }.
 
-(*************************************** Channels ******************************************)
-Parameter (Channel : Type).
-(* Exemple : Definition Channel := string. *)
-
-Parameter (channel_eq_dec : EqDecision Channel).
-#[global] Instance channel_eqdecision : EqDecision Channel.
-  by exact channel_eq_dec. Defined.
-
-Parameter (channel_is_countable : Countable Channel).
-#[global] Instance channel_countable : Countable Channel.
-  by exact channel_is_countable. Defined.
+Context `{VP : VACCS_Parameters}.
 
 (* Values and their bound variables *)
 Inductive ChannelData :=
@@ -68,17 +67,7 @@ Qed.
   by exact ChannelData_dec . Defined.
 
 
-(*************************************** Values ******************************************)
-Parameter (Value : Type).
-(* Exemple : Definition Value := nat. *)
-
-Parameter (value_eq_dec : EqDecision Value).
-#[global] Instance value_eqdecision : EqDecision Value.
-  by exact value_eq_dec. Defined.
-
-Parameter (value_is_countable : Countable Value).
-#[global] Instance value_countable : Countable Value.
-  by exact value_is_countable. Defined.
+(********************************* Values ************************************)
 
 (* Values and their bound variables *)
 Inductive Data :=
@@ -97,7 +86,7 @@ Qed.
 
 #[global] Instance data_eqdecision : EqDecision Data. by exact Data_dec . Defined.
 
-(********************* Labels **********************)
+(********************************* Labels **********************************)
 (* Label of action (other than tau), here it is a channel's name with data *)
 Inductive TypeOfActions := 
 | act : ChannelData -> Data -> TypeOfActions.
@@ -226,7 +215,7 @@ with subst_in_gproc k X M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => c ? (subst_in_proc (S k) (Succ_bvar X) p)  (* Succ_bvar X = NewVar_in_Data 0 v *)
+| c ? p => c ? (subst_in_proc (S k) (Succ_bvar X) p)
 | 𝛕 • p => 𝛕 • (subst_in_proc k X p)
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
 end.
@@ -245,12 +234,6 @@ Definition NewVar_in_Equation (k : nat) (E : Equation Data) : Equation Data :=
 match E with
 | D1 == D2 => (NewVar_in_Data k D1) == (NewVar_in_Data k D2)
 end.
-
-(* Definition NewVar_in_ext (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
-match μ with
-| ActIn (c ⋉ v) => ActIn (c ⋉ (NewVar_in_Data k v))
-| ActOut (c ⋉ v) => ActOut (c ⋉ (NewVar_in_Data k v))
-end. *)
 
 Fixpoint NewVar (k : nat) (p : proc) {struct p} : proc :=
 match p with
@@ -408,7 +391,7 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
     lts (p1 + p2) α q
 .
 
-Global Hint Constructors lts : cgr.
+Hint Constructors lts : cgr.
 
 Fixpoint size (p : proc) := 
   match p with
@@ -466,22 +449,21 @@ match M with
 | p1 + p2 => (gVarSwap_in_proc k0 p1) + (gVarSwap_in_proc k0 p2)
 end.
 
-Lemma subst_equation E k v x: Eval_Eq E = Some x -> Eval_Eq (subst_in_Equation k v E) = Some x.
+Lemma subst_equation E k v x: Eval_Eq E = Some x ->
+  Eval_Eq (subst_in_Equation k v E) = Some x.
 Proof.
-  intros. destruct E. destruct d; destruct d0; simpl in *; eauto ; try inversion H.
-  destruct (decide (n = n0)).
-  - inversion H; subst.
-    destruct (decide (n0 = k)).
-    + subst. destruct v. 
-      rewrite decide_True; eauto.
-      rewrite decide_True; eauto.
-    + destruct (decide (n0 < k)).
-      * rewrite decide_True; eauto.
-      * rewrite decide_True; eauto.
-  - inversion H; subst.
+  intros. destruct E. destruct d; destruct d0; simpl in *;
+  eauto ; try discriminate.
+  destruct (decide (n = n0)); inversion H. subst.
+  case decide; intro; subst.
+  - destruct v; rewrite decide_True; eauto.
+  - destruct (decide (n0 < k)).
+    + rewrite decide_True; eauto.
+    + rewrite decide_True; eauto.
 Qed.
 
-Lemma NewVar_equation E k x : Eval_Eq E = Some x -> Eval_Eq (NewVar_in_Equation k E) = Some x.
+Lemma NewVar_equation E k x : Eval_Eq E = Some x ->
+  Eval_Eq (NewVar_in_Equation k E) = Some x.
 Proof.
   intros. destruct E. destruct d; destruct d0; simpl in *; eauto; try inversion H.
   destruct (decide (n = n0)).
@@ -492,45 +474,23 @@ Proof.
   - inversion H; subst.
 Qed.
 
-Lemma subst_and_VarSwap k k0 v p : subst_in_proc k v (VarSwap_in_proc k0 p) = (VarSwap_in_proc k0 (subst_in_proc k v p)).
+Lemma subst_and_VarSwap k k0 v p : subst_in_proc k v (VarSwap_in_proc k0 p) =
+  (VarSwap_in_proc k0 (subst_in_proc k v p)).
 Proof. 
   revert k k0 v.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  destruct p; intros; simpl in *.
-  + assert (subst_in_proc k v (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (subst_in_proc k v p1)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (subst_in_proc k v (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (subst_in_proc k v p2)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
-  + reflexivity.
-  + assert (subst_in_proc k v (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (subst_in_proc k v p)) as eq.
-    { eapply Hp. simpl. lia. }
-    rewrite eq. eauto.
-  + assert (subst_in_proc k v (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (subst_in_proc k v p1)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (subst_in_proc k v (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (subst_in_proc k v p2)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
-  + eauto.
-  + assert (subst_in_proc k v (VarSwap_in_proc (S k0) p) = VarSwap_in_proc (S k0) (subst_in_proc k v p)) as eq.
-    { eapply Hp. simpl. lia. }
-    rewrite eq. eauto.
-  + destruct g0; simpl in *.
-    * reflexivity.
-    * reflexivity.
-    * assert ((subst_in_proc (S k) (Succ_bvar v) (VarSwap_in_proc k0 p)) 
-          = (VarSwap_in_proc k0 (subst_in_proc (S k) (Succ_bvar v) p))) as eq.
-      { eapply Hp. simpl. lia. }
-      rewrite eq. eauto.
-   * assert (subst_in_proc k v (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (subst_in_proc k v p)) as eq.
-     { eapply Hp. simpl. lia. }
-     rewrite eq. eauto.
-   * assert (subst_in_proc k v (VarSwap_in_proc k0 (g g0_1)) = VarSwap_in_proc k0 (subst_in_proc k v (g g0_1))) as eq1.
-     { eapply Hp. simpl. lia. }
-     assert (subst_in_proc k v (VarSwap_in_proc k0 (g g0_2)) = VarSwap_in_proc k0 (subst_in_proc k v (g g0_2))) as eq2.
-     { eapply Hp. simpl. lia. } simpl in *. inversion eq1. inversion eq2.
-     rewrite H0 , H1. eauto.
+  destruct p; intros; simpl in *; repeat rewrite Hp by lia; eauto.
+  destruct g0; simpl in *; auto.
+  - rewrite Hp by lia. eauto.
+  - rewrite Hp by lia. eauto.
+  - assert (subst_in_proc k v (VarSwap_in_proc k0 (g g0_1)) =
+    VarSwap_in_proc k0 (subst_in_proc k v (g g0_1))) as eq1.
+   { eapply Hp. simpl. lia. }
+   assert (subst_in_proc k v (VarSwap_in_proc k0 (g g0_2)) =
+      VarSwap_in_proc k0 (subst_in_proc k v (g g0_2))) as eq2.
+   { eapply Hp. simpl. lia. } simpl in *. inversion eq1. inversion eq2.
+   rewrite H0 , H1. eauto.
 Qed.
 
 Lemma subst_and_NewVarC k j v q : subst_in_proc k v (NewVarC j q) = NewVarC j (subst_in_proc k v q).
@@ -538,79 +498,40 @@ Proof.
   revert k j v.
   induction q as (q & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  destruct q; intros; simpl in *.
-  + assert (subst_in_proc k v (NewVarC j q1) = NewVarC j (subst_in_proc k v q1)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (subst_in_proc k v (NewVarC j q2) = NewVarC j (subst_in_proc k v q2)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1 , eq2. eauto.
-  + eauto.
-  + assert (subst_in_proc k v (NewVarC j q) = NewVarC j (subst_in_proc k v q)) as eq.
+  destruct q; intros; simpl in *; repeat rewrite Hp by lia; eauto.
+  destruct g0; simpl in *; auto.
+  - assert ((subst_in_proc (S k) (Succ_bvar v) (NewVarC j p))
+      = (NewVarC j (subst_in_proc (S k) (Succ_bvar v) p))) as eq.
     { eapply Hp. simpl. lia. }
     rewrite eq. eauto.
-  + assert (subst_in_proc k v (NewVarC j q1) = NewVarC j (subst_in_proc k v q1)) as eq1.
+  - assert (subst_in_proc k v (NewVarC j p) = NewVarC j (subst_in_proc k v p)) as eq.
     { eapply Hp. simpl. lia. }
-    assert (subst_in_proc k v (NewVarC j q2) = NewVarC j (subst_in_proc k v q2)) as eq2.
+    rewrite eq. eauto.
+  - assert (subst_in_proc k v (NewVarC j (g g0_1)) =
+      NewVarC j (subst_in_proc k v (g g0_1))) as eq1.
     { eapply Hp. simpl. lia. }
-    rewrite eq1 , eq2. eauto.
-  + eauto.
-  + assert (subst_in_proc k v (NewVarC (S j) q) = NewVarC (S j) (subst_in_proc k v q)) as eq1.
-    { eapply Hp. simpl. eauto. }
-    rewrite eq1. eauto.
-  + destruct g0; simpl in *.
-    * eauto.
-    * eauto.
-    * assert ((subst_in_proc (S k) (Succ_bvar v) (NewVarC j p))
-        = (NewVarC j (subst_in_proc (S k) (Succ_bvar v) p))) as eq.
-      { eapply Hp. simpl. lia. }
-      rewrite eq. eauto.
-    * assert (subst_in_proc k v (NewVarC j p) = NewVarC j (subst_in_proc k v p)) as eq.
-      { eapply Hp. simpl. lia. }
-      rewrite eq. eauto.
-    * assert (subst_in_proc k v (NewVarC j (g g0_1)) = NewVarC j (subst_in_proc k v (g g0_1))) as eq1.
-      { eapply Hp. simpl. lia. }
-      assert (subst_in_proc k v (NewVarC j (g g0_2)) = NewVarC j (subst_in_proc k v (g g0_2))) as eq2.
-      { eapply Hp. simpl. lia. } inversion eq1. inversion eq2. eauto.
+    assert (subst_in_proc k v (NewVarC j (g g0_2)) =
+        NewVarC j (subst_in_proc k v (g g0_2))) as eq2.
+    { eapply Hp. simpl. lia. } inversion eq1. inversion eq2. eauto.
 Qed.
 
-Lemma NewVar_and_VarSwap j k0 p : (NewVar j (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVar j p)).
+Lemma NewVar_and_VarSwap j k0 p :
+  (NewVar j (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVar j p)).
 Proof.
   revert j k0.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  destruct p; intros; simpl in *.
-  + assert (NewVar j (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (NewVar j p1)) as eq1.
+  destruct p; intros; simpl in *; repeat rewrite Hp by lia; eauto.
+  destruct g0; simpl in *; auto.
+  - now rewrite Hp by lia.
+  - now rewrite Hp by lia.
+  - assert (NewVar j (VarSwap_in_proc k0 (g g0_1)) =
+      VarSwap_in_proc k0 (NewVar j (g g0_1))) as eq1.
     { eapply Hp. simpl. lia. }
-    assert (NewVar j (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (NewVar j p2)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
-  + reflexivity.
-  + assert (NewVar j (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVar j p)) as eq.
-    { eapply Hp. simpl. lia. }
-    rewrite eq. eauto.
-  + assert (NewVar j (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (NewVar j p1)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (NewVar j (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (NewVar j p2)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
-  + eauto.
-  + assert (NewVar j (VarSwap_in_proc (S k0) p) = VarSwap_in_proc (S k0) (NewVar j p)) as eq.
-    { eapply Hp. simpl. lia. }
-    rewrite eq. eauto.
-  + destruct g0; simpl in *.
-    * reflexivity.
-    * reflexivity.
-    * assert (NewVar (S j) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVar (S j) p)) as eq.
-      { eapply Hp. simpl. lia. }
-      rewrite eq. eauto.
-   * assert (NewVar j (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVar j p)) as eq.
-     { eapply Hp. simpl. lia. }
-     rewrite eq. eauto.
-   * assert (NewVar j (VarSwap_in_proc k0 (g g0_1)) = VarSwap_in_proc k0 (NewVar j (g g0_1))) as eq1.
-     { eapply Hp. simpl. lia. }
-     assert (NewVar j (VarSwap_in_proc k0 (g g0_2)) = VarSwap_in_proc k0 (NewVar j (g g0_2))) as eq2.
-     { eapply Hp. simpl. lia. } simpl in *. inversion eq1. inversion eq2.
-     rewrite H0 , H1. eauto.
+    assert (NewVar j (VarSwap_in_proc k0 (g g0_2)) =
+      VarSwap_in_proc k0 (NewVar j (g g0_2))) as eq2.
+    { eapply Hp. simpl. lia. } simpl in *. inversion eq1. inversion eq2.
+    rewrite H0 , H1. eauto.
 Qed.
 
 Lemma NewVar_and_NewVarC j k p : (NewVar k (NewVarC j p) = (NewVarC j (NewVar k p))).
@@ -619,39 +540,21 @@ Proof.
   (* Induction on the size of p*)
   induction p as (p & Hp) using
       (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros; destruct p ; simpl in *.
-  + assert (NewVar k (NewVarC j p1) = NewVarC j (NewVar k p1)) as eq1.
-    { eapply Hp; simpl ; lia. }
-    assert (NewVar k (NewVarC j p2) = NewVarC j (NewVar k p2)) as eq2.
-    { eapply Hp; simpl ; lia. }
-    rewrite eq1, eq2. eauto.
-  + eauto.
-  + assert (NewVar k (NewVarC j p) = NewVarC j (NewVar k p)) as eq.
+  intros; destruct p ; simpl in *; repeat rewrite Hp by lia; eauto.
+  destruct g0; simpl in *.
+  - eauto.
+  - eauto.
+  - assert (NewVar (S k) (NewVarC j p) = NewVarC j (NewVar (S k) p)) as eq.
     { eapply Hp; simpl ; lia. }
     rewrite eq. eauto.
-  + assert (NewVar k (NewVarC j p1) = NewVarC j (NewVar k p1)) as eq1.
-    { eapply Hp; simpl ; lia. }
-    assert (NewVar k (NewVarC j p2) = NewVarC j (NewVar k p2)) as eq2.
-    { eapply Hp; simpl ; lia. }
-    rewrite eq1, eq2. eauto.
-  + eauto.
-  + assert (NewVar k (NewVarC (S j) p) = NewVarC (S j) (NewVar k p)) as eq.
+  - assert (NewVar k (NewVarC j p) = NewVarC j (NewVar k p)) as eq.
     { eapply Hp; simpl ; lia. }
     rewrite eq. eauto.
-  + destruct g0; simpl in *.
-    * eauto.
-    * eauto.
-    * assert (NewVar (S k) (NewVarC j p) = NewVarC j (NewVar (S k) p)) as eq.
-      { eapply Hp; simpl ; lia. }
-      rewrite eq. eauto.
-    * assert (NewVar k (NewVarC j p) = NewVarC j (NewVar k p)) as eq.
-      { eapply Hp; simpl ; lia. }
-      rewrite eq. eauto.
-    * assert (NewVar k (NewVarC j (g g0_1)) = NewVarC j (NewVar k (g g0_1))) as eq1.
-      { eapply Hp; simpl ; lia. }
-      assert (NewVar k (NewVarC j (g g0_2)) = NewVarC j (NewVar k (g g0_2))) as eq2.
-      { eapply Hp; simpl ; lia. } inversion eq1. inversion eq2.
-      rewrite H0, H1. eauto.
+  - assert (NewVar k (NewVarC j (g g0_1)) = NewVarC j (NewVar k (g g0_1))) as eq1.
+    { eapply Hp; simpl ; lia. }
+    assert (NewVar k (NewVarC j (g g0_2)) = NewVarC j (NewVar k (g g0_2))) as eq2.
+    { eapply Hp; simpl ; lia. } inversion eq1. inversion eq2.
+    rewrite H0, H1. eauto.
 Qed.
 
 Lemma NewVar_in_ChannelData_and_VarSwap_in_ChannelData j k0 c :
@@ -687,41 +590,27 @@ Proof.
   revert j k0.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  destruct p; intros; simpl in *.
-  + assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p1)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p2)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
-  + reflexivity.
-  + assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p)) as eq.
-    { eapply Hp. simpl. lia. }
-    rewrite eq. eauto.
-  + assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p1)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p2)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
-  + rewrite NewVar_in_ChannelData_and_VarSwap_in_ChannelData. eauto.
-  + assert (S (S (S (j + k0))) = S (S (j + (S k0)))) as eq' by lia. rewrite eq'.
+  destruct p; intros; simpl in *; repeat rewrite Hp by lia; eauto.
+  - rewrite NewVar_in_ChannelData_and_VarSwap_in_ChannelData. eauto.
+  - assert (S (S (S (j + k0))) = S (S (j + (S k0)))) as eq' by lia. rewrite eq'.
     assert (NewVarC (S (S (j + (S k0)))) (VarSwap_in_proc (S k0) p)
         = VarSwap_in_proc (S k0) (NewVarC (S (S (j + (S k0)))) p)) as eq.
     { eapply Hp. simpl. lia. }
     rewrite eq. eauto.
-  + destruct g0; simpl in *.
-    * reflexivity.
-    * reflexivity.
-    * assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p)) as eq1.
+  - destruct g0; simpl in *.
+    + reflexivity.
+    + reflexivity.
+    + assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p)) as eq1.
       { eapply Hp. simpl. lia. } rewrite eq1.
       rewrite NewVar_in_ChannelData_and_VarSwap_in_ChannelData. eauto.
-   * assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p)) as eq.
-     { eapply Hp. simpl. lia. }
-     rewrite eq. eauto.
-   * assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 (g g0_1)) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) (g g0_1))) as eq1.
-     { eapply Hp. simpl. lia. }
-     assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 (g g0_2)) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) (g g0_2))) as eq2.
-     { eapply Hp. simpl. lia. } simpl in *. inversion eq1. inversion eq2.
-     rewrite H0 , H1. eauto.
+    + assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) p)) as eq.
+      { eapply Hp. simpl. lia. }
+      rewrite eq. eauto.
+    + assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 (g g0_1)) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) (g g0_1))) as eq1.
+      { eapply Hp. simpl. lia. }
+      assert (NewVarC (S (S (j + k0))) (VarSwap_in_proc k0 (g g0_2)) = VarSwap_in_proc k0 (NewVarC (S (S (j + k0))) (g g0_2))) as eq2.
+      { eapply Hp. simpl. lia. } simpl in *. inversion eq1. inversion eq2.
+      rewrite H0 , H1. eauto.
 Qed.
 
 Lemma NewVar_in_ChannelData_and_NewVar_in_ChannelData i j c :
@@ -746,18 +635,7 @@ Proof.
   revert i j.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  destruct p; intros; simpl in *.
-  + assert ((NewVarC (i + S j) (NewVarC i p1)) = (NewVarC i (NewVarC (i + j) p1))) as eq1.
-    { eapply Hp. simpl. lia. } rewrite eq1.
-    assert ((NewVarC (i + S j) (NewVarC i p2)) = (NewVarC i (NewVarC (i + j) p2))) as eq2.
-    { eapply Hp. simpl. lia. } rewrite eq2. eauto.
-  + eauto.
-  + assert ((NewVarC (i + S j) (NewVarC i p)) = (NewVarC i (NewVarC (i + j) p))) as eq.
-      { eapply Hp. simpl. eauto. } rewrite eq. eauto.
-  + assert ((NewVarC (i + S j) (NewVarC i p1)) = (NewVarC i (NewVarC (i + j) p1))) as eq1.
-    { eapply Hp. simpl. lia. } rewrite eq1.
-    assert ((NewVarC (i + S j) (NewVarC i p2)) = (NewVarC i (NewVarC (i + j) p2))) as eq2.
-    { eapply Hp. simpl. lia. } rewrite eq2. eauto.
+  destruct p; intros; simpl in *; repeat rewrite Hp by lia; eauto.
   + rewrite NewVar_in_ChannelData_and_NewVar_in_ChannelData. eauto.
   + assert (NewVarC (S (i + S j)) (NewVarC (S i) p) = NewVarC (S i) (NewVarC (S (i + j)) p)) as eq.
     { replace ((S (i + S j))) with ((S i) + S j)%nat; try lia.
@@ -872,7 +750,7 @@ Proof.
   + destruct g0; simpl.
     * eauto.
     * eauto.
-    * rewrite NewVar_and_NewVarC. rewrite NewVar_and_NewVarC.
+    * rewrite NewVar_and_NewVarC. rewrite NewVar_and_NewVarC. 
       assert ((pr_subst n (VarSwap_in_proc k p) (NewVarC k (NewVarC k (NewVar 0 q))))
         = (VarSwap_in_proc k (pr_subst n p (NewVarC k (NewVarC k (NewVar 0 q)))))) as eq1.
       { eapply Hp. simpl. lia. } rewrite eq1. eauto.
@@ -892,43 +770,16 @@ Proof.
   revert n k q.
   induction q0 as (q0 & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  destruct q0; intros; simpl in *.
-  + assert (pr_subst n (NewVarC k q0_1) (NewVarC k q) = NewVarC k (pr_subst n q0_1 q)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (pr_subst n (NewVarC k q0_2) (NewVarC k q) = NewVarC k (pr_subst n q0_2 q)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1 , eq2. eauto.
-  + destruct (decide(n0 = n)).
-    - eauto.
-    - simpl. eauto.
-  + destruct (decide(n0 = n)).
-    - eauto.
-    - simpl. assert (pr_subst n0 (NewVarC k q0) (NewVarC k q) = NewVarC k (pr_subst n0 q0 q)) as eq.
-    { eapply Hp. simpl. lia. }
-    rewrite eq. eauto.
-  + assert (pr_subst n (NewVarC k q0_1) (NewVarC k q) = NewVarC k (pr_subst n q0_1 q)) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert (pr_subst n (NewVarC k q0_2) (NewVarC k q) = NewVarC k (pr_subst n q0_2 q)) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1 , eq2. eauto.
-  + eauto.
+  destruct q0; intros; simpl in *; repeat rewrite Hp by lia; eauto.
+  + destruct (decide(n0 = n)); auto.
+  + destruct (decide(n0 = n)); eauto.
   + assert (NewVarC (0 + (S k)) (NewVarC 0 q) = NewVarC 0 (NewVarC ( 0 + k ) q)) as eq1.
     { rewrite NewVarC_and_NewVarC. eauto. }
     simpl in *. rewrite<- eq1.
-    assert (pr_subst n (NewVarC (S k) q0) (NewVarC (S k) (NewVarC 0 q))
-      = NewVarC (S k) (pr_subst n q0 (NewVarC 0 q))) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq2. eauto.
-  + destruct g0; simpl in *.
-    * eauto.
-    * eauto.
-    * simpl. rewrite NewVar_and_NewVarC.
-      assert ((pr_subst n (NewVarC k p) (NewVarC k (NewVar 0 q))) = (NewVarC k (pr_subst n p (NewVar 0 q)))) as eq.
-      { eapply Hp. simpl. lia. }
-      rewrite eq. eauto.
-    * assert (pr_subst n (NewVarC k p) (NewVarC k q) = NewVarC k (pr_subst n p q)) as eq.
-      { eapply Hp. simpl. lia. }
-      rewrite eq. eauto.
+    now rewrite Hp by lia.
+  + destruct g0; simpl in *; auto.
+    * simpl. rewrite NewVar_and_NewVarC, Hp; auto.
+    * now rewrite Hp by lia.
     * assert (pr_subst n (NewVarC k (g g0_1)) (NewVarC k q) = NewVarC k (pr_subst n (g g0_1) q)) as eq1.
       { eapply Hp. simpl. lia. }
       assert (pr_subst n (NewVarC k (g g0_2)) (NewVarC k q) = NewVarC k (pr_subst n (g g0_2) q)) as eq2.
@@ -937,3 +788,20 @@ Qed.
 
 End VACCS_proc.
 
+Global Arguments  Equality {_} _ _.
+Global Hint Constructors lts : cgr.
+Global Notation "c ⋉ v" := (act c v) (at level 50).
+Global Notation "x == y" := (Equality x y) (at level 70).
+Global Notation "①" := (gpr_success).
+Global Notation "𝟘" := (gpr_nil).
+Global Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
+Global Notation "P + Q" := (gpr_choice P Q).
+Global Notation "P ‖ Q" := (pr_par P Q) (at level 50).
+Global Notation "c ! v • 𝟘" := (pr_output c v) (at level 50).
+Global Notation "c ? P" := (gpr_input c P) (at level 50).
+Global Notation "'𝛕' • P" := (gpr_tau P) (at level 50).
+Global Notation "'ν' P" := (pr_restrict P) (at level 50).
+Global Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
+(at level 200, right associativity, format
+"'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
+Global Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
