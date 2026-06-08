@@ -26,15 +26,16 @@ From TestingTheory Require Import VACCS_ta_tc_gen DefinitionAS Equivalence Must 
   Completeness InputOutputActions Lts_OBA_FB MultisetLTSConstruction Lts_Finite_Output_Chain gLts
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower Soundness SetLTSConstruction
   StateTransitionSystems FiniteImageLTS ForwarderConstruction ParallelLTSConstruction
-  InteractionBetweenLts Bisimulation DefinitionCI EquivalenceCI.
+  InteractionBetweenLts Bisimulation DefinitionCI EquivalenceCI VACCS_ta_tc_gen.
 
 From Coinduction Require Import all.
 
-Module Type VACCS_Must_Alt_Corollary.
-Include VACCS_ta_tc.
-
 Notation "p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (@ctx_pre proc _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) proc 
   (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) _ _ _ _ _ _ p q) (at level 70).
+
+Section VACCS_Must_Alt_Corollary.
+
+Context `{VP : VACCS_Parameters}.
 
 Corollary must_iff_acceptance_set_VACCS (p q : proc) :
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.

@@ -74,7 +74,6 @@ Inductive Data :=
 | cst : Value -> Data
 | bvar : nat -> Data. (* variable as De Bruijn indices *) 
 
-Coercion cst : Value >-> Data.
 Coercion bvar : nat >-> Data.
 
 Lemma Data_dec : forall (x y : Data) , {x = y} + {x <> y}.

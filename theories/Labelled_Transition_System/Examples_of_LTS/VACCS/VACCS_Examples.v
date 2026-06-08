@@ -29,16 +29,21 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Characterization
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
-InteractionBetweenLts Testing_Predicate DefinitionAS.
+InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good.
 
 (** ** VACCS **)
 (** *** Applications *)
 
-Module Type VACCS_examples.
-Include VACCS_Must_Alt_Corollary.
+Section VACCS_examples.
+
+Context `{VP : VACCS_Parameters}.
+
+(* We assume that there is at least one channel and two values *)
 Parameter a : Channel.
-Parameter I : Value.
+Parameter I O : Value.
 Parameter (neq : O ≠ I).
+
+Coercion cst : Value >-> Data.
 
 Definition const : proc := a ? (a ! O • 𝟘).
 
@@ -49,22 +54,23 @@ Proof.
   intros e Hyp.
   dependent induction Hyp.
   - eapply m_now. eauto.
-  - eapply m_step; eauto.
-    + inversion ex; subst. inversion H2; subst.
+  - clear H2.
+    eapply m_step; eauto.
+    + inversion ex; subst. inversion H; subst.
       * inversion l.
       * exists (ccat ▷ b2). eapply ParRight. eauto.
       * inversion l1.
-    + intros. eauto. inversion H2.
+    + intros. eauto. inversion H.
     + intros. destruct μ1 as [ (*Input*) a | (*Output*) a ].
-      * inversion H3. subst. simpl in *.
-        eapply simplify_match_input in H2. subst.
+      * inversion H2. subst. simpl in *.
+        eapply simplify_match_input in H. subst.
         destruct (decide (good_VACCS t')).
         -- eapply m_now. eauto.
         -- eapply m_step; eauto.
-           ++ inversion ex. inversion H2; subst.
+           ++ inversion ex. inversion H; subst.
               ** inversion l.
               ** unfold lts_step in l; simpl in *.
-                 assert (lts t ((a ⋉ v) !) t') as HypTr; eauto.
+                 assert (lts e ((a ⋉ v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr 
                     as [(t'' & HypTr' & t'0 & HypTr'0 & equiv')|(t'' & HypTr' & equiv'')]; eauto.
                  --- exists (a ! v • 𝟘 ▷ t''). eapply ParRight. eauto.

@@ -1718,9 +1718,9 @@ destruct p.
   - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
   - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
   - intros. simpl. dependent destruction H. constructor.
-    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g1))). apply Hp.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k (cst v) (g1))). apply Hp.
       simpl.  auto with arith. assumption. assumption.
-    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g2))). apply Hp.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k (cst v) (g2))). apply Hp.
       simpl.  auto with arith. assumption. assumption.
 Qed.
 
@@ -2086,17 +2086,17 @@ Proof.
   - exists p. split. eauto with *. assumption.
   - destruct H2. dependent induction H2.
     + inversion H2_; subst. right. exists q3; split. assumption.
-      rewrite <- H3. transitivity (q3 ‖ 𝟘); eauto with cgr.
-      (* eauto with cgr doesn't work anymore *)
+      rewrite <- H3. transitivity (q3 ‖ 𝟘); eauto with *.
     + inversion H2_0.
     + inversion H2.
     + left. exists q3. split. assumption. 
       assert (lts ((c ! v • 𝟘) ‖ q3) ((c ⋉ v) !) (𝟘 ‖ q3)). constructor. constructor.
       edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q3) ((c ⋉ v) !)). exists ((c ! v • 𝟘) ‖ q3).
       split.
-      * eauto with cgr. admit.
+      * eauto with *.
       * assumption.
-      * destruct H5. exists x. split. assumption. eauto with cgr.
+      * destruct H5. exists x. split. assumption.
+        etransitivity; eauto. eauto with *.
 Qed.
 
 Lemma ExtraAxiom : forall p1 p2 q1 q2 a,
@@ -2107,7 +2107,7 @@ Proof.
   eapply TransitionShapeForOutputSimplified in H0.
   eapply TransitionShapeForOutputSimplified in H.
    transitivity ((c ! v • 𝟘) ‖ q1). assumption.
-   transitivity ((c ! v • 𝟘) ‖ q2). eauto with cgr. eauto with cgr.
+   transitivity ((c ! v • 𝟘) ‖ q2); eauto with *.
 Qed.
 
 Definition encode_channeldata (C : ChannelData) : gen_tree (nat + Channel) :=
@@ -2326,19 +2326,7 @@ decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + ChannelD
 
 Lemma encode_decide_procs p : decode_proc (encode_proc p) = p
 with encode_decide_gprocs p : decode_gproc (encode_gproc p) = p.
-Proof. all: case p. 
-* intros. simpl. rewrite (encode_decide_procs p0). rewrite (encode_decide_procs p1). reflexivity.
-* intros. simpl. reflexivity.
-* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
-* intros. simpl. rewrite (encode_decide_procs p0). rewrite (encode_decide_procs p1). reflexivity.
-* intros. simpl. reflexivity.
-* intros. simpl. rewrite (encode_decide_procs p0). eauto.
-* intros. simpl. rewrite (encode_decide_gprocs g0). reflexivity.
-* intros. simpl. reflexivity. 
-* intros. simpl. reflexivity. 
-* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
-* intros. simpl. rewrite (encode_decide_procs p0). reflexivity.
-* intros. simpl. rewrite (encode_decide_gprocs g0). rewrite (encode_decide_gprocs g1). reflexivity.
+Proof. all: case p; intros; simpl; repeat rewrite encode_decide_procs; auto with *.
 Qed.
 
 #[global] Instance proc_count : Countable proc.
@@ -2442,21 +2430,8 @@ Proof.
   revert j.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  destruct p; intros; simpl in *.
-  + assert ((NewVarC j (NewVarC j p1)) = (NewVarC (S j) (NewVarC j p1))) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert ((NewVarC j (NewVarC j p2)) = (NewVarC (S j) (NewVarC j p2))) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
-  + eauto.
-  + f_equal. eapply Hp. simpl; eauto.
-  + assert ((NewVarC j (NewVarC j p1)) = (NewVarC (S j) (NewVarC j p1))) as eq1.
-    { eapply Hp. simpl. lia. }
-    assert ((NewVarC j (NewVarC j p2)) = (NewVarC (S j) (NewVarC j p2))) as eq2.
-    { eapply Hp. simpl. lia. }
-    rewrite eq1, eq2. eauto.
+  destruct p; intros; simpl in *; repeat rewrite Hp by lia; trivial.
   + rewrite simpl_bvar_in_NewVar_ChannelData. eauto.
-  + f_equal. eapply Hp. simpl; eauto.
   + destruct g; simpl in *.
     - eauto.
     - eauto.
@@ -2848,7 +2823,7 @@ Proof.
     - intros. rewrite H in mem. exfalso. inversion mem.
   + eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_res_ext. rewrite elem_of_elements in mem. eapply IHp in mem. simpl. destruct a. eauto. 
-  + dependent induction g0; simpl in mem; try set_solver.
+  + dependent induction g; simpl in mem; try set_solver.
       ++ destruct (decide (ChannelData_of a = c)).
          +++ subst. eapply elem_of_singleton_1 in mem. subst. destruct a. simpl. apply lts_input.
          +++ destruct a. simpl in *. inversion mem.
@@ -2905,7 +2880,7 @@ Proof.
     + inversion mem.
     + eapply elem_of_list_to_set, list_elem_of_fmap in mem as (t' & eq & h); subst.
       eapply lts_res_tau. eapply IHp. eapply elem_of_elements. eauto.
-    + dependent induction g0; simpl in mem; try set_solver;
+    + dependent induction g; simpl in mem; try set_solver;
         try eapply elem_of_singleton_1 in mem; subst; eauto with cgr.
       eapply elem_of_union in mem as [mem1 | mem2]; eauto with cgr.
 Qed.

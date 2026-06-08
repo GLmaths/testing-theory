@@ -114,7 +114,12 @@ Proof. intros p q hcgr. induction hcgr. constructor. apply cgr_symm_step. exact 
 #[global] Instance cgr_trans : Transitive cgr.
 Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 
+Create HintDb cgr.
+Create HintDb cgr_eq.
+Hint Variables Transparent : cgr.
+
 Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+Hint Resolve cgr_refl cgr_symm cgr_trans:cgr.
 
 (* The relation ≡* is an equivence relation *)
 #[global] Instance cgr_is_eq_rel  : Equivalence cgr.
@@ -664,9 +669,9 @@ Global Infix "≡" := cgr_step (at level 70).
 Global Infix "≡*" := cgr (at level 70).
 Global Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
 
-#[global] Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
+#[export] Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
 cgr_par_nil cgr_par_nil_rev cgr_par_com cgr_par_assoc cgr_par_assoc_rev 
 cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc cgr_choice_assoc_rev
 cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice
 cgr_full_if cgr_fullchoice cgr_fullpar cgr_res_nil cgr_res_nil_rev cgr_res_swap cgr_res_swap_rev cgr_res
-cgr_res_scope cgr_res_scope_rev cgr_refl cgr_symm cgr_trans:cgr.
+cgr_res_scope cgr_res_scope_rev cgr_refl @cgr_symm cgr_trans:cgr.

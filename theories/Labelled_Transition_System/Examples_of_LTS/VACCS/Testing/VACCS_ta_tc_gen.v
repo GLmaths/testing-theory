@@ -30,14 +30,15 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
-From TestingTheory Require Import ActTau gLts VACCS_Good Bisimulation InputOutputActions 
-        Completeness ParallelLTSConstruction InputOutputActions.
+From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation
+  InputOutputActions Completeness ParallelLTSConstruction InputOutputActions.
+Export VACCS_Instance VACCS_Good.
 
+Section VACCS_ta_tc.
 
-Module Type VACCS_ta_tc.
+Context `{VP : VACCS_Parameters}.
 
-Include VACCS_Testing.
-Parameter O : Value.
+(* Parameter O : VP.Value. *)
 
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
 match μ with 
@@ -117,7 +118,7 @@ destruct p; intros.
 * simpl. assert (subst_in_proc k v (NewVar k p) = p).
   { apply Hp. simpl. auto with arith. }
   rewrite H. auto.
-* destruct g0.
+* destruct g.
   - simpl. auto.
   - simpl. auto.
   - simpl. assert (subst_in_proc (S k) (NewVar_in_Data 0 v) (NewVar (S k) p) = p) as eq.
@@ -126,9 +127,9 @@ destruct p; intros.
   - simpl. assert (subst_in_proc k v (NewVar k p) = p) as eq.
     { apply Hp. simpl. auto with arith. }
     rewrite eq. auto.
-  - simpl. assert (subst_in_proc k v (NewVar k (g g0_1)) = g g0_1) as eq1.
+  - simpl. assert (subst_in_proc k v (NewVar k (g g1)) = g g1) as eq1.
     { apply Hp. simpl. auto with arith. }
-    assert (subst_in_proc k v (NewVar k (g g0_2)) = g g0_2) as eq2.
+    assert (subst_in_proc k v (NewVar k (g g2)) = g g2) as eq2.
     { apply Hp. simpl. auto with arith. }
     dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
 Qed.
@@ -210,7 +211,7 @@ destruct p; simpl; intros.
 * assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)) as eq.
   { apply Hp. simpl. auto with arith. }
   rewrite eq. auto.
-* destruct g0; simpl.
+* destruct g; simpl.
   - simpl. reflexivity.
   - simpl. reflexivity.
   - simpl. assert (S (i + S j%nat) = ((S i) + (S j))%nat) as eq1 by auto with arith.
@@ -221,9 +222,9 @@ destruct p; simpl; intros.
   - simpl. assert (NewVar (i + S j) (NewVar i p) = NewVar i (NewVar (i + j) p)) as eq.
     { apply Hp. simpl. auto with arith. } 
     rewrite eq. eauto.
-  - simpl. assert (NewVar (i + S j) (NewVar i (g g0_1)) = NewVar i (NewVar (i + j) (g g0_1))) as eq1.
+  - simpl. assert (NewVar (i + S j) (NewVar i (g g1)) = NewVar i (NewVar (i + j) (g g1))) as eq1.
     { apply Hp. simpl. auto with arith. } 
-    assert (NewVar (i + S j) (NewVar i (g g0_2)) = NewVar i (NewVar (i + j) (g g0_2))) as eq2.
+    assert (NewVar (i + S j) (NewVar i (g g2)) = NewVar i (NewVar (i + j) (g g2))) as eq2.
     { apply Hp. simpl. auto with arith. }
     simpl in eq1 , eq2. inversion eq1. inversion eq2. eauto.
 Qed.
@@ -380,7 +381,7 @@ Proof.
     { intro. subst. contradiction. }
     eapply Eval_simpl_false in neq'.
     assert ((If cst v1 == cst v0
-               Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ v1 
+               Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ cst v1 
                Else ①) ≡ ①).
     { eapply cgr_if_false_step; eauto. }
     eapply good_preserved_by_cgr_step; eauto. eapply good_success.
@@ -400,8 +401,8 @@ Parameter Hyp_WD_acc : forall α s e G, lts (gen_acc G s) α e -> Well_Defined_T
 
 Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> (g (unroll_fw xs)) ≡* (g (unroll_fw ys)).
 Proof.
-  intro hperm. dependent induction hperm; simpl; eauto with cgr.
-  - destruct x; eauto. eapply cgr_fullchoice; eauto with cgr.
+  intro hperm. dependent induction hperm; simpl; eauto with *.
+  - destruct x; eauto. eapply cgr_fullchoice; eauto with *.
   - destruct y ; destruct x.
     + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.
       eapply cgr_choice_com. reflexivity. eapply cgr_choice_assoc.
@@ -483,7 +484,7 @@ Qed.
 Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs c ∈ G 
           -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c ⋉ v))) r.
 Proof.
-  remember G. revert g0 Heqg0 c.
+  remember G. revert g Heqg c.
   induction G using set_ind_L; intros g0 Heqg0 c mem.
   - intros. subst. inversion mem.
   - assert (hn : {[x]} ## X) by set_solver.
