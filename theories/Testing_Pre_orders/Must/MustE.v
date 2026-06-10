@@ -31,7 +31,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS Must.
 
-Section preorder.
+
 
  (** * Must preoder *)
  (** ** Extensional definition of Must *)
@@ -107,6 +107,8 @@ Section preorder.
       eapply intensional_implies_extensional. eapply hm.
   Qed.
 
+
+Section preorder.
   Context `{outcome : T -> Prop}.
   Context `{outcome_dec : forall t, Decision (outcome t)}.
   Context `{P : Type}.

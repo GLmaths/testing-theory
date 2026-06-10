@@ -152,7 +152,7 @@ Lemma terminate_must_test_conv_nil `{
   `{!Prop_of_Inter P T A dual}
 
   (p : P) : 
-  p ⤓ -> must p (tconv ε).
+  p ⤓ -> p must_pass (tconv ε).
 Proof.
   intros ht.
   induction ht.
@@ -174,8 +174,8 @@ Lemma must_tconv_wt_mu `{
   `{!Prop_of_Inter P T A dual}
 
   μ s (p q : P): 
-  must p (tconv ((co μ) :: s)) -> 
-    p ⟹{μ} q -> must q (tconv s).
+  p must_pass (tconv ((co μ) :: s)) -> 
+    p ⟹{μ} q -> q must_pass (tconv s).
 Proof.
   intros hm w.
   dependent induction w.
@@ -195,7 +195,7 @@ Lemma cnv_if_must `{
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _, !test_convergence_spec tconv}
   `{!Prop_of_Inter P T A dual}
   s (p : P) :
-  must p (tconv (coₜ s)) -> p ⇓ s.
+  p must_pass (tconv (coₜ s)) -> p ⇓ s.
 Proof.
   revert p.
   induction s as [|μ s']; intros p hm.
@@ -584,7 +584,7 @@ Lemma must_if_cnv `{
   `{!Prop_of_Inter P T A dual}
 
   s (p : P) :
-  p ⇓ s -> must p (tconv (coₜ s)).
+  p ⇓ s -> p must_pass (tconv (coₜ s)).
 Proof.
   revert p.
   induction s
@@ -672,7 +672,7 @@ Lemma must_iff_cnv `{
 
   `{!Prop_of_Inter P T A dual}
 
-  (p : P) s : must p (tconv (coₜ s)) <-> p ⇓ s.
+  (p : P) s : p must_pass (tconv (coₜ s)) <-> p ⇓ s.
 Proof. split; [eapply cnv_if_must | eapply must_if_cnv]; eauto. Qed.
 
 Lemma completeness1 `{
@@ -695,8 +695,8 @@ Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
   `{!Prop_of_Inter P T A dual}
 
   (p : P) β s E :
-  p ⤓ -> blocking β -> (forall q μ', dual μ' β -> p ⟹{μ'} q -> must q (ta E s)) 
-              -> must p (ta E (β :: s) : T).
+  p ⤓ -> blocking β -> (forall q μ', dual μ' β -> p ⟹{μ'} q -> q must_pass (ta E s)) 
+              -> p must_pass (ta E (β :: s) : T).
 Proof.
   intro tp. revert E β s. induction tp.
   intros E β s b hmq.
@@ -790,9 +790,9 @@ Lemma must_ta_monotonicity_nil {P : Type} `{CC : Countable PreAct} `{
   `{!Prop_of_Inter P T A dual}
 
   (p : P) E1 : 
-  must p (ta E1 ε) 
+  p must_pass (ta E1 ε) 
     -> forall E2, E1 ⊆ E2 
-      -> must p (ta E2 ε).
+      -> p must_pass (ta E2 ε).
 Proof.
   intros hm.
   assert (hpt : p ⤓)
@@ -872,9 +872,9 @@ Lemma must_ta_monotonicity {P : Type} `{CC : Countable PreAct} `{
   `{!Prop_of_Inter P T A dual}
 
   s (p : P) E1 : 
-  must p (ta E1 s) 
+  p must_pass (ta E1 s) 
     -> forall E2, E1 ⊆ E2 
-      -> must p (ta E2 s).
+      -> p must_pass (ta E2 s).
 Proof.
   revert p E1.
   induction s
@@ -936,7 +936,7 @@ Lemma stable_process_must_ta_or_empty_pre_action_set {P : Type} `{CC : Countable
   (p : P) (E : gset PreAct): 
 
   p ↛ 
-  -> must p (ta ((coR_abs p) ∖ E) ε)
+  -> p must_pass (ta ((coR_abs p) ∖ E) ε)
           \/ (coR_abs p ⊆ E).
 Proof.
   intros.
@@ -1065,7 +1065,7 @@ Lemma must_ta_or_empty_pre_action_set_for_empty_trace `{CC : Countable PreAct} {
   (p : P) (hcnv : p ⇓ ε) (E : gset PreAct):
 
   (exists p', p ⟹ p' /\ lts_refuses p' τ /\ coR_abs p' ⊆ E)
-  \/ must p (ta ((oas p ε hcnv) ∖ E) ε).
+  \/ p must_pass (ta ((oas p ε hcnv) ∖ E) ε).
 Proof.
   induction (cnv_terminate p ε hcnv) as (p, hpt, ihhp).
   destruct (decide (lts_refuses p τ)) as [st | (p'' & l)%lts_refuses_spec1].
@@ -1117,7 +1117,7 @@ Lemma must_ta_or_empty_pre_action_set_for_all_trace {P : Type} `{CC : Countable 
   s (p : P) (hcnv : p ⇓ s) (E : gset PreAct):
 
   (exists p', p ⟹[s] p' /\ lts_refuses p' τ /\ coR_abs p' ⊆ E) 
-      \/ must p (ta ((oas p s hcnv) ∖ E) (coₜ s)).
+      \/ p must_pass (ta ((oas p s hcnv) ∖ E) (coₜ s)).
 Proof.
   revert p hcnv E.
   induction s as [|μ s'].
@@ -1175,7 +1175,7 @@ Lemma not_must_ta_without_required_acc_set {Q : Type} `{CC : Countable PreAct} `
 
   (q q' : Q) s (E : gset PreAct) :
 
-  q ⟹[s] q' -> q' ↛ -> ¬ must q (ta (E ∖ (coR_abs q')) (coₜ s)).
+  q ⟹[s] q' -> q' ↛ -> ¬ q must_pass (ta (E ∖ (coR_abs q')) (coₜ s)).
 Proof.
   intros wt hst.
   dependent induction wt; intros hm. rename p into q.

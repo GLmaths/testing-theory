@@ -49,19 +49,19 @@ Proof.
 Qed.
 
 Corollary must_iff_tower_co_inductive_acceptance_ACCS (p q : proc) :
-   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> 
+   p ⊑ₘᵤₛₜᵢ q <-> 
    ({[ p ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))) 
       ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ▷ ∅ ]} : gset (proc * MO (ExtAct TypeOfActions))).
 Proof.
   eapply must_iff_tower_co_inductive_acceptance_VACCS.
 Qed.
 
-Corollary must_iff_must_set_ACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘᵤₛₜ q ▷ ∅.
+Corollary must_iff_must_set_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘᵤₛₜ q ▷ ∅.
 Proof.
   eapply must_iff_must_set_VACCS.
 Qed.
 
-Corollary must_iff_failure_set_ACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
+Corollary must_iff_failure_set_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
 Proof.
   eapply must_iff_failure_set_VACCS.
 Qed.
