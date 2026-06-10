@@ -36,9 +36,9 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct)
   {gLtsP : gLts P H} {gLtsT : gLtsEq T H} :=
   MkAbsAction {
-    (** Client-side condition for label abstractions , Definition 5 (1) **)
+    (** Test-side condition for label abstractions , Definition 5 (1) **)
     abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
-    (** Server-side condition for label abstractions,  Definition 5 (2) **)
+    (** Process-side condition for label abstractions,  Definition 5 (2) **)
     abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ map_set Φ (coR p) -> (Φ β') ∈ map_set Φ (coR p);
   }.
 
@@ -52,7 +52,7 @@ Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ
   MkFinitaryAbsAction {
       FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT;
 
-      (* 𝝳 (Φ (coR p)) is a finite set, called (coR_abs p) *)
+      (** 𝝳 (Φ (coR p)) is a finite set, called (coR_abs p) **)
       coR_abs : P -> gset PreAct;
       coR_abs_spec1 (p : P) (pre_μ : PreAct) : pre_μ ∈ (coR_abs p) -> pre_μ ∈ ⌈ (𝝳 ∘ Φ) ⌉ (coR p);
       coR_abs_spec2 (pre_μ : PreAct) (p : P) : pre_μ ∈ ⌈ (𝝳 ∘ Φ) ⌉ (coR p) -> pre_μ ∈ (coR_abs p);
@@ -89,8 +89,8 @@ From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
 #[global] Program Instance PreActActionForFW
   `{@AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT}
-  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
-  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (toFW gLtsP) gLtsT.
+  `{@Prop_of_Inter P (MO A) A fw_inter H _ MbgLts} 
+  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ gLtsT. (* (toFW gLtsP) *)
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
@@ -111,7 +111,12 @@ Next Obligation.
     eapply lts_refuses_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
   - destruct (decide (non_blocking μ''')) as [nb''' | b'''].
     * eapply non_blocking_action_in_ms in l; eauto.
-      subst. admit.
+      subst. exists μ''. split.
+      + exists μ'''. repeat split. 
+        -- eapply lts_refuses_spec2;eauto.
+        -- exact duo.
+        -- exact b''.
+      + rewrite<- eq'. admit.
     * eapply blocking_action_in_ms in l as (eq'' & duo'' & nb''); eauto.
       subst. eapply unique_nb in duo ; subst. contradiction.
 Admitted.

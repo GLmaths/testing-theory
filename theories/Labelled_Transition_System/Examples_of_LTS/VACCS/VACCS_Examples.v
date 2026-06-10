@@ -40,6 +40,7 @@ Context `{VP : VACCS_Parameters}.
 
 (* We assume that there is at least one channel and two values *)
 Parameter a : Channel.
+Parameter O : Value.
 Parameter I : Value.
 Parameter (neq : O ≠ I).
 
