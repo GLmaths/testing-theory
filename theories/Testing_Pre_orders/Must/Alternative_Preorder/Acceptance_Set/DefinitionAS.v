@@ -36,9 +36,9 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct)
   {gLtsP : gLts P H} {gLtsT : gLtsEq T H} :=
   MkAbsAction {
-    (** Client-side condition for label abstractions , Definition 5 (1) **)
+    (** Test-side condition for label abstractions , Definition 5 (1) **)
     abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
-    (** Server-side condition for label abstractions,  Definition 5 (2) **)
+    (** Process-side condition for label abstractions,  Definition 5 (2) **)
     abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ map_set Φ (coR p) -> (Φ β') ∈ map_set Φ (coR p);
   }.
 
@@ -52,7 +52,7 @@ Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ
   MkFinitaryAbsAction {
       FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT;
 
-      (* 𝝳 (Φ (coR p)) is a finite set, called (coR_abs p) *)
+      (** 𝝳 (Φ (coR p)) is a finite set, called (coR_abs p) **)
       coR_abs : P -> gset PreAct;
       coR_abs_spec1 (p : P) (pre_μ : PreAct) : pre_μ ∈ (coR_abs p) -> pre_μ ∈ ⌈ (𝝳 ∘ Φ) ⌉ (coR p);
       coR_abs_spec2 (pre_μ : PreAct) (p : P) : pre_μ ∈ ⌈ (𝝳 ∘ Φ) ⌉ (coR p) -> pre_μ ∈ (coR_abs p);
