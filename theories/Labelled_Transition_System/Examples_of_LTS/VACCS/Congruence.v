@@ -2,9 +2,9 @@ From stdpp Require Import base countable.
 From TestingTheory Require Import VACCS.
 From Stdlib Require Import Relations Program.Equality Wellfounded.Inverse_Image.
 
-Module Type VACCS_congruence.
+Section VACCS_congruence.
 
-Include VACCS_proc.
+Context `{VP : VACCS_Parameters}.
 
 Reserved Notation "p ≡ q" (at level 70).
 (*Naïve definition of a relation ≡ that will become a congruence ≡* by transitivity*)
@@ -114,7 +114,12 @@ Proof. intros p q hcgr. induction hcgr. constructor. apply cgr_symm_step. exact 
 #[global] Instance cgr_trans : Transitive cgr.
 Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 
+Create HintDb cgr.
+Create HintDb cgr_eq.
+Hint Variables Transparent : cgr.
+
 Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+Hint Resolve cgr_refl cgr_symm cgr_trans:cgr.
 
 (* The relation ≡* is an equivence relation *)
 #[global] Instance cgr_is_eq_rel  : Equivalence cgr.
@@ -443,7 +448,7 @@ revert g g'. induction p; simpl; intuition.
 - left. eauto with *.
 - right. eauto with *.
 - eapply IHp; [eassumption|]. now apply gNewVarC_altcgr.
-- apply galtcgr_trans with g1; trivial.
+- eapply galtcgr_trans; eauto.
 Qed.
 
 Lemma sguardNewVar g0 q:  sguard g0 q <-> sguard (⇑ g0) (NewVarC 0 q).
@@ -524,7 +529,7 @@ apply cgr_par_com.  transitivity (M4 ‖ M2). apply cgr_par. exact H0. apply cgr
 Qed.
 
 
-#[global] Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
+Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
 cgr_par_nil cgr_par_nil_rev cgr_par_com cgr_par_assoc cgr_par_assoc_rev 
 cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc cgr_choice_assoc_rev
 cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice
@@ -536,7 +541,7 @@ cgr_res_scope cgr_res_scope_rev cgr_refl cgr_symm cgr_trans:cgr.
 Lemma Congruence_Respects_Substitution : forall p q v k, p ≡* q -> (subst_in_proc k v p) ≡* (subst_in_proc k v q).
 Proof.
 intros. revert k. revert v. dependent induction H. 
-* dependent induction H; simpl; eauto with cgr.
+* dependent induction H; simpl; eauto 2 with cgr.
   - intros. eapply cgr_if_true; eapply subst_equation in H; eauto.
   - intros. eapply cgr_if_true_rev; eapply subst_equation in H; eauto.
   - intros. eapply cgr_if_false; eapply subst_equation in H; eauto.
@@ -603,15 +608,15 @@ destruct p; intros; simpl.
   - eauto with cgr.
   - eapply cgr_res. apply Hp. simpl. auto with arith. eapply NewVarC_Respects_Congruence. assumption.
   (* all induction cases for guards *)
-  - destruct g0; simpl.
+  - destruct g; simpl.
     * reflexivity.
     * reflexivity.
     * apply cgr_input. apply Hp. simpl. auto with arith. apply NewVar_Respects_Congruence. assumption.
     * apply cgr_tau. apply Hp. simpl. auto with arith. assumption.
     * apply cgr_fullchoice. 
-      assert (pr_subst x (g g0_1) q ≡* pr_subst x (g g0_1) q'). apply Hp. simpl. auto with arith. assumption.
-      auto. assert (pr_subst x (g g0_2) q ≡* pr_subst x (g g0_2) q'). apply Hp. simpl. auto with arith. assumption.
-      auto. 
+      assert (pr_subst x (g g1) q ≡* pr_subst x (g g1) q'). apply Hp. simpl. auto with arith. assumption.
+      auto. assert (pr_subst x (g g2) q ≡* pr_subst x (g g2) q'). apply Hp. simpl. auto with arith. assumption.
+      auto.
 Qed.
 
 (* ≡ respects the substitution (in recursion) of his variable *)
@@ -653,8 +658,20 @@ Proof.
   eapply cgr_subst1. constructor. apply cgr_recursion_step. exact heq.
 Qed.
 
-Hint Resolve cgr_is_eq_rel: ccs.
-Hint Constructors clos_trans:ccs.
-Hint Unfold cgr:ccs.
-
 End VACCS_congruence.
+
+Global Hint Resolve cgr_is_eq_rel: ccs.
+Global Hint Constructors clos_trans:ccs.
+Global Hint Unfold cgr:ccs.
+Global Hint Constructors cgr_step:cgr_step_structure.
+
+Global Infix "≡" := cgr_step (at level 70).
+Global Infix "≡*" := cgr (at level 70).
+Global Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+
+#[export] Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
+cgr_par_nil cgr_par_nil_rev cgr_par_com cgr_par_assoc cgr_par_assoc_rev 
+cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc cgr_choice_assoc_rev
+cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice
+cgr_full_if cgr_fullchoice cgr_fullpar cgr_res_nil cgr_res_nil_rev cgr_res_swap cgr_res_swap_rev cgr_res
+cgr_res_scope cgr_res_scope_rev cgr_refl @cgr_symm cgr_trans:cgr.

@@ -25,13 +25,10 @@
 
 From TestingTheory Require Import VACCS_Instance.
 
-Module Type ACCS.
-
-  Include VACCS_lts.
-
-  Axiom Value_is_unit : Value = unit.
-
-End ACCS.
+Instance ACCS_Parameters : VACCS_Parameters :=
+  { Channel := String.string;
+    Value := unit;
+    O := tt}.
 
 (* From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.

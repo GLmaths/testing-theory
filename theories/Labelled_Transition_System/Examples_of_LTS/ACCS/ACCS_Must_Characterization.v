@@ -29,10 +29,14 @@ From TestingTheory Require Import VACCS_Must_Characterization DefinitionAS Equiv
   ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
   InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower.
 
-Module Type ACCS_Must_Alt_Corollary.
-Include VACCS_Must_Alt_Corollary.
+Import VACCS.
 
-Axiom Value_is_unit : Value = unit.
+Section ACCS_Must_Alt_Corollary.
+
+Local Instance ACCS_Parameters : VACCS.VACCS_Parameters :=
+  { Channel := nat;
+    Value := unit;
+    O := tt}.
 
 Corollary must_iff_acceptance_set_ACCS (p q : proc) :
   p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
