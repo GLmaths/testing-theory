@@ -27,7 +27,8 @@ From TestingTheory Require Import VACCS_Instance.
 
 Instance ACCS_Parameters : VACCS_Parameters :=
   { Channel := String.string;
-    Value := unit}.
+    Value := unit;
+    O := tt}.
 
 (* From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.

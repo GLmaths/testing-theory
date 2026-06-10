@@ -25,14 +25,55 @@ From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
-From TestingTheory Require Import Clos_n InputOutputActions ActTau .
+From TestingTheory Require Import Clos_n InputOutputActions ActTau.
+
+(* Values and their bound variables *)
+Inductive Data (MyType : Type) :=
+| cst : MyType -> Data MyType
+| bvar : nat -> Data MyType. (* variable as De Bruijn indices *)
+
+Arguments bvar {_} _.
+Arguments cst {_} _.
+
+(* Coercion bvar : nat >-> ValueData. *)
+(* Coercion cst : MyType >-> ValueData. *)
+
+Lemma Data_dec `{Countable MyType} : forall (x y : Data MyType) , {x = y} + {x <> y}.
+Proof.
+decide equality. 
+* destruct (decide(m = m0)). left. assumption. right. assumption.
+* destruct (decide (n = n0)). left. assumption. right. assumption.
+Qed.
+
+#[global] Instance data_eqdecision `{Countable MyType} : EqDecision (Data MyType).
+  by exact Data_dec . Defined.
+
+Definition encode_data `{Countable MyType} (C : Data MyType) : gen_tree (nat + MyType) :=
+match C with
+  | cst c => GenLeaf (inr c)
+  | bvar i => GenLeaf (inl i)
+end.
+
+Definition decode_data `{Countable MyType} (tree : gen_tree (nat + MyType)) : Data MyType :=
+match tree with
+  | GenLeaf (inr c) => cst c
+  | GenLeaf (inl i) => bvar i
+  | _ => bvar 0
+end.
+
+Lemma encode_decide_datas `{Countable MyType} (c : Data MyType) : decode_data (encode_data c) = c.
+Proof. case c. 
+* intros. simpl. reflexivity.
+* intros. simpl. reflexivity.
+Qed.
+
+#[global] Instance data_countable `{Countable MyType} : Countable (Data MyType).
+Proof.
+  refine (inj_countable' encode_data decode_data _).
+  apply encode_decide_datas.
+Qed.
 
 (** * VACCS *)
-
-Section VACCS_proc.
-
-(** ** Definitions and properties of VACCS *)
-
 (****************************** Channels  and Values *************************)
 (** VACCS is parameterized over two countable sets. *)
 (** Channel is the type of channels *)
@@ -41,78 +82,31 @@ Section VACCS_proc.
 Class VACCS_Parameters :=
   { Channel : Type;
     Value : Type;
+    O : Value;
     Channel_eq_dec :: EqDecision Channel;
-    Data_eq_dec :: EqDecision Value;
+    ValueData_eq_dec :: EqDecision Value;
     VACCS_Channels :: Countable Channel;
     VACCS_Value :: Countable Value }.
 
+Section VACCS_proc.
+
+(** ** Definitions and properties of VACCS *)
+
 Context `{VP : VACCS_Parameters}.
 
-(* Values and their bound variables *)
-Inductive ChannelData :=
-| cstC : Channel -> ChannelData
-| bvarC : nat -> ChannelData. (* variable as De Bruijn indices *) 
+(********************************* Channels with free variables ************************************)
+Definition ChannelData := Data (VP.(Channel)).
 
-Coercion cstC : Channel >-> ChannelData.
-Coercion bvarC : nat >-> ChannelData.
-
-Lemma ChannelData_dec : forall (x y : ChannelData) , {x = y} + {x <> y}.
-Proof.
-decide equality. 
-* destruct (decide(c = c0)). left. assumption. right. assumption.
-* destruct (decide (n = n0)). left. assumption. right. assumption.
-Qed.
-
-#[global] Instance channeldata_eqdecision : EqDecision ChannelData.
-  by exact ChannelData_dec . Defined.
-
-
-(********************************* Values ************************************)
-
-(* Values and their bound variables *)
-Inductive Data :=
-| cst : Value -> Data
-| bvar : nat -> Data. (* variable as De Bruijn indices *) 
-
-Coercion bvar : nat >-> Data.
-
-Lemma Data_dec : forall (x y : Data) , {x = y} + {x <> y}.
-Proof.
-decide equality. 
-* destruct (decide(v = v0)). left. assumption. right. assumption.
-* destruct (decide (n = n0)). left. assumption. right. assumption.
-Qed.
-
-#[global] Instance data_eqdecision : EqDecision Data. by exact Data_dec . Defined.
+(********************************* Values with free variables ************************************)
+Definition ValueData := Data (VP.(Value)).
 
 (********************************* Labels **********************************)
 (* Label of action (other than tau), here it is a channel's name with data *)
-Inductive TypeOfActions := 
-| act : ChannelData -> Data -> TypeOfActions.
+Definition TypeOfActions := (ChannelData * ValueData)%type.
 
-Notation "c ⋉ v" := (act c v) (at level 50).
+Definition ChannelData_of (a : TypeOfActions) : ChannelData := fst a.
 
-Definition ChannelData_of (a : TypeOfActions) : ChannelData := 
-match a with 
-| c ⋉ v => c
-end.
-
-Definition Data_of (a : TypeOfActions) : Data := 
-match a with 
-| c ⋉ d => d
-end.
-
-(* Definition ChannelData_of_ext (μ : ExtAct TypeOfActions) : ChannelData := 
-match μ with 
-| ActIn (c ⋉ v) => c
-| ActOut (c ⋉ v) => c
-end.
-
-Definition Data_of_ext (μ : ExtAct TypeOfActions) : Data := 
-match μ with 
-| ActIn (c ⋉ v) => v
-| ActOut (c ⋉ v) => v
-end. *)
+Definition ValueData_of (a : TypeOfActions) : ValueData := snd a.
 
 Inductive Equation (A : Type) : Type :=
 | Equality : A -> A -> Equation A.
@@ -121,7 +115,7 @@ Arguments  Equality {_} _ _.
 
 Notation "x == y" := (Equality x y) (at level 70).
 
-Definition Eval_Eq (E : Equation Data) : option bool :=
+Definition Eval_Eq (E : Equation ValueData) : option bool :=
 match E with
 | cst t == cst t' => if (decide (t = t')) then (Some true)
                                           else (Some false)
@@ -140,10 +134,10 @@ Inductive proc : Type :=
 (* recursion for process *)
 | pr_rec : nat -> proc -> proc
 (* If test *NEW term in comparison of CCS* *)
-| pr_if_then_else : Equation Data -> proc -> proc -> proc
+| pr_if_then_else : Equation ValueData -> proc -> proc -> proc
 (* The Guards *)
 (* An output is a name of a channel, an ouput value, followed by a process *)
-| pr_output : ChannelData -> Data -> proc
+| pr_output : ChannelData -> ValueData -> proc
 (* Restriction of a channel *)
 | pr_restrict : proc -> proc
 | g : gproc -> proc
@@ -164,7 +158,6 @@ with gproc : Type :=
 Coercion pr_var : nat >-> proc.
 Coercion g : gproc >-> proc.
 
-
 (*Some notation to simplify the view of the code*)
 
 Notation "①" := (gpr_success).
@@ -181,25 +174,25 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 
 (*Definition of the Substitution *)
-Definition subst_Data (k : nat) (X : Data) (Y : Data) : Data := 
+Definition subst_Data (k : nat) (X : ValueData) (Y : ValueData) : ValueData := 
 match Y with
 | cst v => cst v
 | bvar i => if (decide(i = k)) then X (* else bvar i *) else if (decide(i < k)) then bvar i
                                                               else bvar (Nat.pred i)
 end.
 
-Definition subst_in_Equation (k : nat) (X : Data) (E : Equation Data) : Equation Data :=
+Definition subst_in_Equation (k : nat) (X : ValueData) (E : Equation ValueData) : Equation ValueData :=
 match E with 
 | D1 == D2 => (subst_Data k X D1) == (subst_Data k X D2)
 end.
 
-Definition Succ_bvar (X : Data) : Data :=
+Definition Succ_bvar (X : ValueData) : ValueData :=
 match X with
 | cst v => cst v
 | bvar i => bvar (S i)
 end.
 
-Fixpoint subst_in_proc (k : nat) (X : Data) (p : proc) {struct p} : proc :=
+Fixpoint subst_in_proc (k : nat) (X : ValueData) (p : proc) {struct p} : proc :=
 match p with
 | P ‖ Q => (subst_in_proc k X P) ‖ (subst_in_proc k X Q)
 | pr_var i => pr_var i
@@ -219,17 +212,15 @@ match M with
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
 end.
 
-
 Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
 
-
-Definition NewVar_in_Data (k : nat) (Y : Data) : Data := 
+Definition NewVar_in_Data (k : nat) (Y : ValueData) : ValueData := 
 match Y with
 | cst v => cst v
 | bvar i => if (decide(k < S i)) then bvar (S i) else bvar i
 end.
 
-Definition NewVar_in_Equation (k : nat) (E : Equation Data) : Equation Data :=
+Definition NewVar_in_Equation (k : nat) (E : Equation ValueData) : Equation ValueData :=
 match E with
 | D1 == D2 => (NewVar_in_Data k D1) == (NewVar_in_Data k D2)
 end.
@@ -258,8 +249,8 @@ end.
 
 Definition NewVar_in_ChannelData (k : nat) (Y : ChannelData) : ChannelData := 
 match Y with
-| cstC v => cstC v
-| bvarC i => if (decide(k < (S i))) then bvarC (S i) else bvarC i
+| cst v => cst v
+| bvar i => if (decide(k < (S i))) then bvar (S i) else bvar i
 end.
 
 Fixpoint NewVarC (k : nat) (p : proc) {struct p} : proc :=
@@ -286,13 +277,13 @@ end.
 
 Definition VarC_add (k : nat) (c : ChannelData) : ChannelData :=
 match c with
-| cstC c => cstC c
-| bvarC i => bvarC (k + i)
+| cst c => cst c
+| bvar i => bvar (k + i)
 end.
 
 Definition VarC_TypeOfActions_add (k : nat) (a : TypeOfActions) : TypeOfActions :=
 match a with
-| (c ⋉ v) => (VarC_add k c) ⋉ v
+| (c , v) => (VarC_add k c , v)
 end.
 
 Lemma VarC_TypeOfActions_add_add (k : nat) (i : nat) (a : TypeOfActions) :
@@ -305,8 +296,8 @@ Qed.
 
 Definition VarC_action_add (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
 match μ with
-| ActIn (c ⋉ v) => ActIn ((VarC_add k c) ⋉ v)
-| ActOut (c ⋉ v) => ActOut ((VarC_add k c) ⋉ v)
+| ActIn (c , v) => ActIn (VarC_add k c , v)
+| ActOut (c , v) => ActOut (VarC_add k c , v)
 end.
 
 Lemma VarC_action_add_add (k : nat) (i : nat) (μ : ExtAct TypeOfActions) :
@@ -343,9 +334,9 @@ end.
 Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 (* The Input and the Output *)
 | lts_input : forall {c v P},
-    lts (c ? P) ((c ⋉ v) ?) (P^v)
+    lts (c ? P) ((c , v) ?) (P^v)
 | lts_output : forall {c v},
-    lts (c ! v • 𝟘) ((c ⋉ v) !) 𝟘
+    lts (c ! v • 𝟘) ((c , v) !) 𝟘
 
 (* The actions Tau *)
 | lts_tau : forall {P},
@@ -365,12 +356,12 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 
 (* Communication of a channel output and input that have the same name *)
 | lts_comL : forall {c v p1 p2 q1 q2},
-    lts p1 ((c ⋉ v) !) p2 ->
-    lts q1 ((c ⋉ v) ?) q2 ->
+    lts p1 ((c , v) !) p2 ->
+    lts q1 ((c , v) ?) q2 ->
     lts (p1 ‖ q1) τ (p2 ‖ q2) 
 | lts_comR : forall {c v p1 p2 q1 q2},
-    lts p1 ((c ⋉ v) !) p2 ->
-    lts q1 ((c ⋉ v) ?) q2 ->
+    lts p1 ((c , v) !) p2 ->
+    lts q1 ((c , v) ?) q2 ->
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
 (* The decoration for the transition system...*)
@@ -414,16 +405,16 @@ end.
 
 Definition VarSwap_in_ChannelData (k0 : nat) (c : ChannelData) : ChannelData := 
 match c with
-| cstC v => cstC v
-| bvarC k => if (decide (k = k0)) then bvarC (S k0)
-                                  else if (decide (k = S k0)) then bvarC k0
-                                                              else bvarC k
+| cst v => cst v
+| bvar k => if (decide (k = k0)) then bvar (S k0)
+                                  else if (decide (k = S k0)) then bvar k0
+                                                              else bvar k
 end.
 
 Definition VarSwap_in_ext (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions := 
 match μ with
-| ActIn (c ⋉ v) => ActIn ((VarSwap_in_ChannelData k c) ⋉ v)
-| ActOut (c ⋉ v) => ActOut ((VarSwap_in_ChannelData k c) ⋉ v)
+| ActIn (c , v) => ActIn (VarSwap_in_ChannelData k c , v)
+| ActOut (c , v) => ActOut (VarSwap_in_ChannelData k c , v)
 end.
 
 Fixpoint VarSwap_in_proc (k0 : nat) (p : proc) {struct p} : proc :=
@@ -451,7 +442,7 @@ end.
 Lemma subst_equation E k v x: Eval_Eq E = Some x ->
   Eval_Eq (subst_in_Equation k v E) = Some x.
 Proof.
-  intros. destruct E. destruct d; destruct d0; simpl in *;
+  intros. destruct E. destruct v0; destruct v1; simpl in *;
   eauto ; try discriminate.
   destruct (decide (n = n0)); inversion H. subst.
   case decide; intro; subst.
@@ -464,7 +455,7 @@ Qed.
 Lemma NewVar_equation E k x : Eval_Eq E = Some x ->
   Eval_Eq (NewVar_in_Equation k E) = Some x.
 Proof.
-  intros. destruct E. destruct d; destruct d0; simpl in *; eauto; try inversion H.
+  intros. destruct E. destruct v; destruct v0; simpl in *; eauto; try inversion H.
   destruct (decide (n = n0)).
   - inversion H; subst.
     destruct (decide ((k < S n0))).
@@ -789,7 +780,6 @@ End VACCS_proc.
 
 Global Arguments  Equality {_} _ _.
 Global Hint Constructors lts : cgr.
-Global Notation "c ⋉ v" := (act c v) (at level 50).
 Global Notation "x == y" := (Equality x y) (at level 70).
 Global Notation "①" := (gpr_success).
 Global Notation "𝟘" := (gpr_nil).

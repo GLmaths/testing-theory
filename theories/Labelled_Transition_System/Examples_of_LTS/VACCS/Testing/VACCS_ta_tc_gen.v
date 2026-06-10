@@ -38,12 +38,10 @@ Section VACCS_ta_tc.
 
 Context `{VP : VACCS_Parameters}.
 
-(* Parameter O : VP.Value. *)
-
 Definition NewVar_in_label k (μ : ExtAct TypeOfActions) :=
 match μ with 
-| ActIn (c ⋉ d) => ActIn (c ⋉ (NewVar_in_Data k d))
-| ActOut (c ⋉ d) => ActOut (c ⋉ (NewVar_in_Data k d))
+| ActIn (c , d) => ActIn (c , (NewVar_in_Data k d))
+| ActOut (c , d) => ActOut (c , (NewVar_in_Data k d))
 end.
 
 Fixpoint NewVar_in_trace k s :=
@@ -52,18 +50,16 @@ match s with
 | a :: l => (NewVar_in_label k a) :: NewVar_in_trace k l
 end.
 
-Definition Succ_bvar_for k (X : Data) : Data :=
+Definition Succ_bvar_for k (X : ValueData) : ValueData :=
 match X with
 | cst v => cst v
 | bvar i => bvar (i + k)
 end.
 
-
 Lemma Succ_bvar_and_NewVar_in_Data_0 : forall v, NewVar_in_Data 0 v = Succ_bvar v.
 Proof.
 intros. induction v; simpl; reflexivity.
 Qed.
-
 
 Lemma All_According_To_Data : forall k v d, (subst_Data k v (NewVar_in_Data k d) = d).
 Proof.
@@ -229,20 +225,20 @@ destruct p; simpl; intros.
     simpl in eq1 , eq2. inversion eq1. inversion eq2. eauto.
 Qed.
 
-Fixpoint gen_test_raw Vs s p {struct s}:=
+Fixpoint gen_test_raw Vs (s : trace (ExtAct TypeOfActions)) p {struct s}:=
   match s with
   | [] => p
-  | ActIn (c ⋉ d) :: s' => match Vs with
+  | ActIn (c , v) :: s' => match Vs with
                             | [] => (g 𝟘)     (*whatever*)
-                            | ActIn (c ⋉ d') :: s'' => (c ? (If ( bvar 0 ==  NewVar_in_Data 0 d' )
+                            | ActIn (c , v') :: s'' => (c ? (If ( bvar 0 ==  NewVar_in_Data 0 v' )
                                    Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
                                    Else ①)) + (𝛕 • ①)
-                            | ActOut (c ⋉ d') :: s'' => (g 𝟘)
+                            | ActOut (c , v') :: s'' => (g 𝟘)
                             end
-  | ActOut (c ⋉ d) :: s' => match Vs with
+  | ActOut (c , v) :: s' => match Vs with
                             | [] => (g 𝟘)     (*whatever*)
-                            | ActIn (c ⋉ d') :: s'' => (g 𝟘)     (*whatever*)
-                            | ActOut (c ⋉ d') :: s'' => (c ! d' • 𝟘) ‖ (gen_test_raw s'' s' p)
+                            | ActIn (c , v') :: s'' => (g 𝟘)     (*whatever*)
+                            | ActOut (c , v') :: s'' => (c ! v' • 𝟘) ‖ (gen_test_raw s'' s' p)
                             end
   end.
 
@@ -269,8 +265,8 @@ Proof.
            ++ intros. subst. case_eq e.
               ** intros. destruct a. subst. simpl in H. inversion H. subst.
                  simpl. assert (k = 0+k)%nat as eq1 by eauto with arith.
-                 assert (subst_Data (S k) (Succ_bvar d) (NewVar_in_Data 0 (NewVar_in_Data k d1)) 
-                        = NewVar_in_Data 0 d1) as eq.
+                 assert (subst_Data (S k) (Succ_bvar d) (NewVar_in_Data 0 (NewVar_in_Data k v1)) 
+                        = NewVar_in_Data 0 v1) as eq.
                  { rewrite eq1 at 2. rewrite<- New_Var_And_NewVar_in_Data.
                    simpl in *. eapply All_According_To_Data. }
                  rewrite eq. assert (subst_in_proc (S k) (Succ_bvar d) (gen_test_raw
@@ -377,10 +373,10 @@ Proof.
     simpl in *. rewrite All_According_To_Data.
     inversion WD_trace; subst.
     inversion WD_action; subst.
-    assert (v1 ≠ v0) as neq'. 
+    assert (v ≠ v1) as neq'. 
     { intro. subst. contradiction. }
     eapply Eval_simpl_false in neq'.
-    assert ((If cst v1 == cst v0
+    assert ((If cst v == cst v1
                Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ cst v1 
                Else ①) ≡ ①).
     { eapply cgr_if_false_step; eauto. }
@@ -480,9 +476,8 @@ Proof.
       * eapply IHg'. eauto.
 Qed.
 
-
 Lemma gen_acc_gen_spec_acc_nil_mem_lts_inp G c : Inputs c ∈ G 
-          -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c ⋉ v))) r.
+          -> exists r v, lts (gen_acc G []) (ActExt $ ActIn ((c , v))) r.
 Proof.
   remember G. revert g Heqg c.
   induction G using set_ind_L; intros g0 Heqg0 c mem.
@@ -491,10 +486,10 @@ Proof.
     destruct (decide (x = Inputs c)).
     + subst.
       set (h := elements_disj_union {[Inputs c]} X hn).
-      cbn. assert (exists p, lts (unroll_fw ((Inputs c) :: elements X)) (ActExt $ ActIn (c ⋉ O)) p).
+      cbn. assert (exists p, lts (unroll_fw ((Inputs c) :: elements X)) (ActExt $ ActIn (c , cst O)) p).
       simpl. eauto with cgr.
       destruct H0 as (r & hl).
-      edestruct (eq_spec (g (unroll_fw (elements ({[Inputs c]} ∪ X)))) r (ActExt $ ActIn (c ⋉ O))) 
+      edestruct (eq_spec (g (unroll_fw (elements ({[Inputs c]} ∪ X)))) r (ActExt $ ActIn (c , cst O))) 
           as (p & hlt & heqt).
       exists (unroll_fw (Inputs c :: elements X)).
       split. eapply unroll_a_eq_perm.
@@ -507,7 +502,7 @@ Proof.
       * destruct hlr. unfold gen_acc in H0. unfold gen_test in H0.
         simpl in *.
         edestruct (eq_spec (g (unroll_fw (elements ({[Inputs c0]} ∪ X))))
-             r  (ActExt $ ActIn (c ⋉ x))) as (p & hlt & heqt).
+             r  (ActExt $ ActIn (c , x))) as (p & hlt & heqt).
         exists (g (unroll_fw (Inputs c0 :: elements X))).
         split. eapply unroll_a_eq_perm.
         set (h := elements_disj_union {[Inputs c0]} X hn).
@@ -553,7 +548,7 @@ Qed.
 Next Obligation.
   intros. destruct pβ.
   + eapply gen_acc_gen_spec_acc_nil_mem_lts_inp in H; eauto.
-    destruct H as (r & v & Tr). exists r , (ActIn $ (c ⋉ v)). split; eauto.
+    destruct H as (r & v & Tr). exists r , (ActIn $ (c , v)). split; eauto.
 Qed.
 Next Obligation.
   intros a e' g. revert a e'.
@@ -573,7 +568,6 @@ Next Obligation.
            ++++ inversion H4; subst. simpl in *. eapply good_preserved_by_cgr; eauto. constructor.
            ++++ eapply good_preserved_by_cgr. eapply IHg; eauto. eauto.
 Qed.
-
 
 Definition gen_conv s := gen_test s (𝛕 • ①).
 

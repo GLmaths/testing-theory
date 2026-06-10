@@ -224,7 +224,7 @@ Lemma good_preserved_by_non_bloking_actions p q a : good_VACCS p -> lts p (a !) 
 Proof.
   intros hhp hl. destruct a.
   eapply TransitionShapeForOutputSimplified in hl.
-  eapply (good_preserved_by_cgr p ((c ! d • 𝟘) ‖ q)) in hhp; eauto with ccs.
+  eapply (good_preserved_by_cgr p ((c ! v • 𝟘) ‖ q)) in hhp; eauto with ccs.
   inversion hhp; subst. destruct H0; eauto with ccs. inversion H.
 Qed.
 

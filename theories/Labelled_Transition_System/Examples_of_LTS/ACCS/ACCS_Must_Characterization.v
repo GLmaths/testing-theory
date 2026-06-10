@@ -35,7 +35,8 @@ Section ACCS_Must_Alt_Corollary.
 
 Local Instance ACCS_Parameters : VACCS.VACCS_Parameters :=
   { Channel := nat;
-    Value := unit}.
+    Value := unit;
+    O := tt}.
 
 Corollary must_iff_acceptance_set_ACCS (p q : proc) :
   p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
