@@ -34,90 +34,97 @@ From TestingTheory Require Import
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
   DefinitionAS Equivalence.
 
-Module Type VCCS.
-(** ** VCCS *)
-
-(* ChannelType est le type des canaux, par exemple des chaînes de caractères*)
-(* ValueType est le type des données transmises, par exemple des entiers, des chaînes de caractères, des programmes (?) *)
-
-(*************************************** Channels ******************************************)
-Parameter (Channel : Type).
-
-Parameter (channel_eq_dec : EqDecision Channel).
-#[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-
-Parameter (channel_is_countable : Countable Channel).
-#[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
-
 (* Values and their bound variables *)
-Inductive ChannelData :=
-| cstC : Channel -> ChannelData
-| bvarC : nat -> ChannelData. (* variable as De Bruijn indices *) 
+Inductive Data (MyType : Type) :=
+| cst : MyType -> Data MyType
+| bvar : nat -> Data MyType. (* variable as De Bruijn indices *)
 
-Coercion cstC : Channel >-> ChannelData.
-Coercion bvarC : nat >-> ChannelData.
+Arguments bvar {_} _.
+Arguments cst {_} _.
 
-Lemma ChannelData_dec : forall (x y : ChannelData) , {x = y} + {x <> y}.
+(* Coercion bvar : nat >-> Data. *)
+(* Coercion cst : MyType >-> Data. *)
+
+Lemma Data_dec `{Countable MyType} : forall (x y : Data MyType) , {x = y} + {x <> y}.
 Proof.
 decide equality. 
-* destruct (decide(c = c0)). left. assumption. right. assumption.
+* destruct (decide(m = m0)). left. assumption. right. assumption.
 * destruct (decide (n = n0)). left. assumption. right. assumption.
 Qed.
 
-#[global] Instance channeldata_eqdecision : EqDecision ChannelData. by exact ChannelData_dec . Defined.
+#[global] Instance data_eqdecision `{Countable MyType} : EqDecision (Data MyType).
+  by exact Data_dec . Defined.
 
-(*************************************** Values ******************************************)
-Parameter (Value : Type).
+Definition encode_data `{Countable MyType} (C : Data MyType) : gen_tree (nat + MyType) :=
+match C with
+  | cst c => GenLeaf (inr c)
+  | bvar i => GenLeaf (inl i)
+end.
 
-Parameter (value_eq_dec : EqDecision Value).
-#[global] Instance value_eqdecision : EqDecision Value. by exact value_eq_dec. Defined.
+Definition decode_data `{Countable MyType} (tree : gen_tree (nat + MyType)) : Data MyType :=
+match tree with
+  | GenLeaf (inr c) => cst c
+  | GenLeaf (inl i) => bvar i
+  | _ => bvar 0
+end.
 
-Parameter (value_is_countable : Countable Value).
-#[global] Instance value_countable : Countable Value. by exact value_is_countable. Defined.
-
-(* Values and their bound variables *)
-Inductive Data :=
-| cst : Value -> Data
-| bvar : nat -> Data. (* variable as De Bruijn indices *) 
-
-Coercion cst : Value >-> Data.
-Coercion bvar : nat >-> Data.
-
-Lemma Data_dec : forall (x y : Data) , {x = y} + {x <> y}.
-Proof.
-decide equality. 
-* destruct (decide(v = v0)). left. assumption. right. assumption.
-* destruct (decide (n = n0)). left. assumption. right. assumption.
+Lemma encode_decide_datas `{Countable MyType} (c : Data MyType) : decode_data (encode_data c) = c.
+Proof. case c. 
+* intros. simpl. reflexivity.
+* intros. simpl. reflexivity.
 Qed.
 
-#[global] Instance data_eqdecision : EqDecision Data. by exact Data_dec . Defined.
+#[global] Instance data_countable `{Countable MyType} : Countable (Data MyType).
+Proof.
+  refine (inj_countable' encode_data decode_data _).
+  apply encode_decide_datas.
+Qed.
 
-(* Labbels *)
-Inductive TypeOfActions := 
-| act : ChannelData -> Data -> TypeOfActions.
+(** * VCCS *)
+(****************************** Channels  and Values *************************)
+(** VCCS is parameterized over two countable sets. *)
+(** Channel is the type of channels *)
+(** Value is the type of data that can be transmitted over channels *)
 
-Notation "c ⋉ v" := (act c v) (at level 50).
+Class VCCS_Parameters :=
+  { Channel : Type;
+    Value : Type;
+    O : Value;
+    Channel_eq_dec :: EqDecision Channel;
+    ValueData_eq_dec :: EqDecision Value;
+    VACCS_Channels :: Countable Channel;
+    VACCS_Value :: Countable Value }.
 
-Definition ChannelData_of (a : TypeOfActions) : ChannelData := 
-match a with 
-| c ⋉ v => c
-end.
+Section VCCS_proc.
 
-Definition Data_of (a : TypeOfActions) : Data := 
-match a with 
-| c ⋉ d => d
-end.
+(** ** Definitions and properties of VACCS *)
+
+Context `{VP : VCCS_Parameters}.
+
+(********************************* Channels with free variables ************************************)
+Definition ChannelData := Data (VP.(Channel)).
+
+(********************************* Values with free variables ************************************)
+Definition ValueData := Data (VP.(Value)).
+
+(********************************* Labels **********************************)
+(* Label of action (other than tau), here it is a channel's name with data *)
+Definition TypeOfActions := (ChannelData * ValueData)%type.
+
+Definition ChannelData_of (a : TypeOfActions) : ChannelData := fst a.
+
+Definition ValueData_of (a : TypeOfActions) : ValueData := snd a.
 
 Definition ChannelData_of_ext (μ : ExtAct TypeOfActions) : ChannelData := 
 match μ with 
-| ActIn (c ⋉ v) => c
-| ActOut (c ⋉ v) => c
+| ActIn (c , v) => c
+| ActOut (c , v) => c
 end.
 
-Definition Data_of_ext (μ : ExtAct TypeOfActions) : Data := 
+Definition ValueData_of_ext (μ : ExtAct TypeOfActions) : ValueData := 
 match μ with 
-| ActIn (c ⋉ v) => v
-| ActOut (c ⋉ v) => v
+| ActIn (c , v) => v
+| ActOut (c , v) => v
 end.
 
 Inductive Equation (A : Type) : Type :=
@@ -127,8 +134,7 @@ Arguments  Equality {_} _ _.
 
 Notation "x == y" := (Equality x y) (at level 70).
 
-
-Definition Eval_Eq (E : Equation Data) : option bool :=
+Definition Eval_Eq (E : Equation ValueData) : option bool :=
 match E with
 | cst t == cst t' => if (decide (t = t')) then (Some true)
                                           else (Some false)
@@ -137,7 +143,6 @@ match E with
 | bvar i == bvar i' => if (decide (i = i')) then (Some true)
                                           else None
 end.
-
 
 (* Definition of processes*)
 Inductive proc : Type :=
@@ -148,7 +153,7 @@ Inductive proc : Type :=
 (* recursion for process*)
 | pr_rec : nat -> proc -> proc
 (* If test *NEW term in comparison of CCS* *)
-| pr_if_then_else : Equation Data -> proc -> proc -> proc
+| pr_if_then_else : Equation ValueData -> proc -> proc -> proc
 (* Restriction of a channel*)
 | pr_restrict : proc -> proc
 (*The Guards*)
@@ -162,7 +167,7 @@ with gproc : Type :=
 (*An input is a name of a channel, an input variable, followed by a process*)
 | gpr_input : ChannelData -> proc -> gproc
 (*An output is a name of a channel, an ouput value, followed by a process*)
-| gpr_output : ChannelData -> Data -> proc -> gproc
+| gpr_output : ChannelData -> ValueData -> proc -> gproc
 (*A tau action : does nothing *)
 | gpr_tau : proc -> gproc
 (* To choose between two processes*)
@@ -197,25 +202,25 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 
 (*Definition of the Substitution *)
-Definition subst_Data (k : nat) (X : Data) (Y : Data) : Data := 
+Definition subst_Data (k : nat) (X : ValueData) (Y : ValueData) : ValueData := 
 match Y with
 | cst v => cst v
 | bvar i => if (decide(i = k)) then X (* else bvar i *) else if (decide(i < k)) then bvar i
                                                               else bvar (Nat.pred i)
 end.
 
-Definition subst_in_Equation (k : nat) (X : Data) (E : Equation Data) : Equation Data :=
+Definition subst_in_Equation (k : nat) (X : ValueData) (E : Equation ValueData) : Equation ValueData :=
 match E with 
 | D1 == D2 => (subst_Data k X D1) == (subst_Data k X D2)
 end.
 
-Definition Succ_bvar (X : Data) : Data :=
+Definition Succ_bvar (X : ValueData) : ValueData :=
 match X with
 | cst v => cst v
 | bvar i => bvar (S i)
 end.
 
-Fixpoint subst_in_proc (k : nat) (X : Data) (p : proc) {struct p} : proc :=
+Fixpoint subst_in_proc (k : nat) (X : ValueData) (p : proc) {struct p} : proc :=
 match p with
 | P ‖ Q => (subst_in_proc k X P) ‖ (subst_in_proc k X Q)
 | pr_var i => pr_var i
@@ -239,21 +244,21 @@ end.
 
 Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
 
-Definition NewVar_in_Data (k : nat) (Y : Data) : Data := 
+Definition NewVar_in_Data (k : nat) (Y : ValueData) : ValueData := 
 match Y with
 | cst v => cst v
 | bvar i => if (decide(k < S i)) then bvar (S i) else bvar i
 end.
 
-Definition NewVar_in_Equation (k : nat) (E : Equation Data) : Equation Data :=
+Definition NewVar_in_Equation (k : nat) (E : Equation ValueData) : Equation ValueData :=
 match E with
 | D1 == D2 => (NewVar_in_Data k D1) == (NewVar_in_Data k D2)
 end.
 
 Definition NewVar_in_ext (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
 match μ with
-| ActIn (c ⋉ v) => ActIn (c ⋉ (NewVar_in_Data k v))
-| ActOut (c ⋉ v) => ActOut (c ⋉ (NewVar_in_Data k v))
+| ActIn (c , v) => ActIn (c , NewVar_in_Data k v)
+| ActOut (c , v) => ActOut (c , NewVar_in_Data k v)
 end.
 
 Fixpoint NewVar (k : nat) (p : proc) {struct p} : proc :=
@@ -280,14 +285,14 @@ end.
 
 Definition NewVar_in_ChannelData (k : nat) (Y : ChannelData) : ChannelData := 
 match Y with
-| cstC v => cstC v
-| bvarC i => if (decide(k < (S i))) then bvarC (S i) else bvarC i
+| cst v => cst v
+| bvar i => if (decide(k < (S i))) then bvar (S i) else bvar i
 end.
 
 Definition NewVarC_in_ext (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
 match μ with
-| ActIn (c ⋉ v) => ActIn ((NewVar_in_ChannelData k c) ⋉ v)
-| ActOut (c ⋉ v) => ActOut ((NewVar_in_ChannelData k c) ⋉ v)
+| ActIn (c , v) => ActIn (NewVar_in_ChannelData k c , v)
+| ActOut (c , v) => ActOut (NewVar_in_ChannelData k c , v)
 end.
 
 Fixpoint NewVarC (k : nat) (p : proc) {struct p} : proc :=
@@ -314,13 +319,13 @@ end.
 
 Definition VarC_add (k : nat) (c : ChannelData) : ChannelData :=
 match c with
-| cstC c => cstC c
-| bvarC i => bvarC (k + i)
+| cst c => cst c
+| bvar i => bvar (k + i)
 end.
 
 Definition VarC_TypeOfActions_add (k : nat) (a : TypeOfActions) : TypeOfActions :=
 match a with
-| (c ⋉ v) => (VarC_add k c) ⋉ v
+| (c , v) => (VarC_add k c , v)
 end.
 
 Lemma VarC_TypeOfActions_add_add (k : nat) (i : nat) (a : TypeOfActions) :
@@ -333,8 +338,8 @@ Qed.
 
 Definition VarC_action_add (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
 match μ with
-| ActIn (c ⋉ v) => ActIn ((VarC_add k c) ⋉ v)
-| ActOut (c ⋉ v) => ActOut ((VarC_add k c) ⋉ v)
+| ActIn ((c , v)) => ActIn ((VarC_add k c) , v)
+| ActOut ((c , v)) => ActOut ((VarC_add k c) , v)
 end.
 
 Lemma VarC_action_add_add (k : nat) (i : nat) (μ : ExtAct TypeOfActions) :
@@ -366,14 +371,13 @@ with gpr_subst id p q {struct p} := match p with
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
 
-
 (* The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 (*The Input and the Output*)
 | lts_input : forall {c v P},
-    lts (c ? P) ((c ⋉ v) ?) (P^v)
+    lts (c ? P) ((c , v) ?) (P^v)
 | lts_output : forall {c v P},
-    lts (c ! v • P) ((c ⋉ v) !) P
+    lts (c ! v • P) ((c , v) !) P
 
 (*The actions Tau*)
 | lts_tau : forall {P},
@@ -394,12 +398,12 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 
 (* Communication of a channel output and input that have the same name*)
 | lts_comL : forall {c v p1 p2 q1 q2},
-    lts p1 ((c ⋉ v) !) p2 ->
-    lts q1 ((c ⋉ v) ?) q2 ->
+    lts p1 ((c , v) !) p2 ->
+    lts q1 ((c , v) ?) q2 ->
     lts (p1 ‖ q1) τ (p2 ‖ q2) 
 | lts_comR : forall {c v p1 p2 q1 q2},
-    lts p1 ((c ⋉  v) !) p2 ->
-    lts q1 ((c ⋉ v) ?) q2 ->
+    lts p1 ((c ,  v) !) p2 ->
+    lts q1 ((c , v) ?) q2 ->
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
 (*The decoration for the transition system...*)
@@ -439,22 +443,22 @@ with gsize p :=
   | p + q => S (gsize p + gsize q)
 end.
 
-#[global] Hint Constructors lts:ccs.
+Hint Constructors lts:ccs.
 
 Reserved Notation "p ≡ q" (at level 70).
 
 Definition VarSwap_in_ChannelData (k0 : nat) (c : ChannelData) : ChannelData := 
 match c with
-| cstC v => cstC v
-| bvarC k => if (decide (k = k0)) then bvarC (S k0)
-                                  else if (decide (k = S k0)) then bvarC k0
-                                                              else bvarC k
+| cst v => cst v
+| bvar k => if (decide (k = k0)) then bvar (S k0)
+                                  else if (decide (k = S k0)) then bvar k0
+                                                              else bvar k
 end.
 
 Definition VarSwap_in_ext (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions := 
 match μ with
-| ActIn (c ⋉ v) => ActIn ((VarSwap_in_ChannelData k c) ⋉ v)
-| ActOut (c ⋉ v) => ActOut ((VarSwap_in_ChannelData k c) ⋉ v)
+| ActIn (c , v) => ActIn (VarSwap_in_ChannelData k c , v)
+| ActOut (c , v) => ActOut (VarSwap_in_ChannelData k c , v)
 end.
 
 Fixpoint VarSwap_in_proc (k0 : nat) (p : proc) {struct p} : proc :=
@@ -478,6 +482,29 @@ match M with
 | 𝛕 • p => 𝛕 • (VarSwap_in_proc k0 p)
 | p1 + p2 => (gVarSwap_in_proc k0 p1) + (gVarSwap_in_proc k0 p2)
 end.
+
+End VCCS_proc.
+
+Global Arguments  Equality {_} _ _.
+Global Hint Constructors lts : cgr.
+Global Notation "x == y" := (Equality x y) (at level 70).
+Global Notation "①" := (gpr_success).
+Global Notation "𝟘" := (gpr_nil).
+Global Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
+Global Notation "P + Q" := (gpr_choice P Q).
+Global Notation "P ‖ Q" := (pr_par P Q) (at level 50).
+Global Notation "c ! v • P" := (gpr_output c v P) (at level 50).
+Global Notation "c ? P" := (gpr_input c P) (at level 50).
+Global Notation "'𝛕' • P" := (gpr_tau P) (at level 50).
+Global Notation "'ν' P" := (pr_restrict P) (at level 50).
+Global Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
+(at level 200, right associativity, format
+"'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
+Global Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
+
+Section VCCS_congruence.
+
+Context `{VP : VCCS_Parameters}.
 
 (*Naïve definition of a relation ≡ that will become a congruence ≡* by transitivity*)
 (* reference : communicating and mobile systems : 
@@ -561,11 +588,9 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (p1 + p2) (q1 + p2)
 .
 
-
-#[global] Hint Constructors cgr_step:cgr_step_structure.
+Hint Constructors cgr_step:cgr_step_structure.
 
 Infix "≡" := cgr_step (at level 70).
-
 
 (* The relation ≡ is an reflexive*)
 #[global] Instance cgr_refl_step_is_refl : Reflexive cgr_step.
@@ -593,7 +618,7 @@ Proof. intros p q hcgr. induction hcgr. constructor. apply cgr_symm_step. exact 
 #[global] Instance cgr_trans : Transitive cgr.
 Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 
-#[global] Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
 
 (* The relation ≡* is an equivence relation*)
 #[global] Instance cgr_is_eq_rel  : Equivalence cgr.
@@ -602,7 +627,6 @@ Proof. repeat split.
        + apply cgr_symm.
        + apply cgr_trans.
 Qed.
-
 
 (*the relation ≡* respects all the rules that ≡ respected*)
 Lemma cgr_if_true : forall p q E, Eval_Eq E = Some true -> (If E Then p Else q) ≡* p.
@@ -985,7 +1009,7 @@ apply cgr_par_com. apply transitivity with (M4 ‖ M2). apply cgr_par. exact H0.
 Qed.
 
 
-#[global] Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
+Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
 cgr_par_nil cgr_par_nil_rev cgr_par_com cgr_par_assoc cgr_par_assoc_rev 
 cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc cgr_choice_assoc_rev
 cgr_recursion cgr_tau cgr_input cgr_output cgr_if_left cgr_if_right cgr_par cgr_choice
@@ -994,7 +1018,7 @@ cgr_res_scope cgr_res_scope_rev cgr_refl cgr_symm cgr_trans:cgr.
 
 Lemma subst_equation E k v x: Eval_Eq E = Some x -> Eval_Eq (subst_in_Equation k v E) = Some x.
 Proof.
-  intros. destruct E. destruct d; destruct d0; simpl in *; eauto ; try inversion H.
+  intros. destruct E. destruct v0; destruct v1; simpl in *; eauto ; try inversion H.
   destruct (decide (n = n0)).
   - inversion H; subst.
     destruct (decide (n0 = k)).
@@ -1010,7 +1034,7 @@ Qed.
 
 Lemma NewVar_equation E k x : Eval_Eq E = Some x -> Eval_Eq (NewVar_in_Equation k E) = Some x.
 Proof.
-  intros. destruct E. destruct d; destruct d0; simpl in *; eauto; try inversion H.
+  intros. destruct E. destruct v; destruct v0; simpl in *; eauto; try inversion H.
   destruct (decide (n = n0)).
   - inversion H; subst.
     destruct (decide ((k < S n0))).
@@ -1601,10 +1625,32 @@ Proof.
   eapply cgr_subst1. constructor. apply cgr_recursion_step. exact heq.
 Qed.
 
-#[global] Hint Resolve cgr_is_eq_rel: ccs.
-#[global] Hint Constructors clos_trans:ccs.
-#[global] Hint Unfold cgr:ccs.
+Hint Resolve cgr_is_eq_rel: ccs.
+Hint Constructors clos_trans:ccs.
+Hint Unfold cgr:ccs.
 
+End VCCS_congruence.
+
+Global Hint Resolve cgr_is_eq_rel: ccs.
+Global Hint Constructors clos_trans:ccs.
+Global Hint Unfold cgr:ccs.
+Global Hint Constructors cgr_step:cgr_step_structure.
+
+Global Infix "≡" := cgr_step (at level 70).
+Global Infix "≡*" := cgr (at level 70).
+Global Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+
+#[export] Hint Resolve cgr_if_true cgr_if_true_rev cgr_if_false cgr_if_false_rev
+cgr_par_nil cgr_par_nil_rev cgr_par_com cgr_par_assoc cgr_par_assoc_rev 
+cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc cgr_choice_assoc_rev
+cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice
+cgr_full_if cgr_fullchoice cgr_fullpar cgr_res_nil cgr_res_nil_rev cgr_res_swap cgr_res_swap_rev cgr_res
+cgr_res_scope cgr_res_scope_rev cgr_refl @cgr_symm cgr_trans:cgr.
+
+Section VCCS_lts.
+
+Context `{VP : VCCS_Parameters}.
+Existing Instance VP.
 
 (* State Transition System (STS-reduction) *)
 Inductive sts : proc -> proc -> Prop :=
@@ -1634,7 +1680,7 @@ Inductive sts : proc -> proc -> Prop :=
     p1 ≡* p2 -> sts p2 q2 -> q2 ≡* q1 -> sts p1 q1
 .
 
-#[global] Hint Constructors sts:ccs.
+Hint Constructors sts:ccs.
 
 Fixpoint Ѵ (n : nat) (P : proc) : proc :=
 match n with 
@@ -1750,7 +1796,7 @@ Qed.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForInput : forall P Q c v, (lts P ((c ⋉ v) ?) Q) -> 
+Lemma TransitionShapeForInput : forall P Q c v, (lts P ((c , v) ?) Q) -> 
 (exists P1 G R n, ((P ≡* Ѵ  n (((VarC_add n c) ? P1 + G) ‖ R)) /\ (Q ≡* Ѵ  n (P1^v ‖ R))
   /\ ((exists L,P = (g L)) -> R = 𝟘 /\ n = 0))).
 Proof.
@@ -1758,9 +1804,9 @@ intros P Q c v Transition.
  dependent induction Transition.
 - exists P. exists 𝟘. exists 𝟘. exists 0. repeat split.
   * simpl. destruct c.
-    + simpl. apply cgr_trans with ((c ? P) + 𝟘). apply cgr_trans with (c ? P).
+    + simpl. apply cgr_trans with ((cst c ? P) + 𝟘). apply cgr_trans with (cst c ? P).
       apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
-    + simpl. apply cgr_trans with (((bvarC n) ? P) + 𝟘). apply cgr_trans with ((bvarC n) ? P).
+    + simpl. apply cgr_trans with (((bvar n) ? P) + 𝟘). apply cgr_trans with ((bvar n) ? P).
       apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
 - destruct (IHTransition c v). reflexivity. decompose record H0.
@@ -1812,7 +1858,7 @@ Qed.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a OUPUT,
 are pretty all the same, up to ≡* *)
-Lemma TransitionShapeForOutput : forall P Q c v, (lts P ((c ⋉ v)!) Q) -> 
+Lemma TransitionShapeForOutput : forall P Q c v, (lts P (((c , v))!) Q) -> 
 (exists P1 G R n, ((P ≡* Ѵ  n (((VarC_add n c) ! v • P1 + G) ‖ R)) /\ (Q ≡* Ѵ  n (P1 ‖ R)) /\
 ((exists L,P = (g L)) -> R = 𝟘 /\ n = 0))).
 Proof.
@@ -1820,9 +1866,9 @@ intros P Q c v Transition.
 dependent induction Transition.
 - exists P. exists 𝟘. exists 𝟘. exists 0. repeat split.
   * simpl. destruct c; simpl.
-    + apply cgr_trans with ((c ! v • P) + 𝟘). apply cgr_trans with (c ! v • P).
+    + apply cgr_trans with ((cst c ! v • P) + 𝟘). apply cgr_trans with (cst c ! v • P).
       apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
-    + apply cgr_trans with (((bvarC n) ! v • P) + 𝟘). apply cgr_trans with ((bvarC n) ! v • P).
+    + apply cgr_trans with (((bvar n) ! v • P) + 𝟘). apply cgr_trans with ((bvar n) ! v • P).
       apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
 - destruct (IHTransition c v). reflexivity. decompose record H0. exists x. exists x0. exists x1. exists x2. repeat split.
@@ -2350,20 +2396,20 @@ Proof.
   eapply NewVarC_in_ChannelData_inv in H0 ; subst; eauto.
 Qed.
 
-Lemma NewVarC_in_ext_rev_Input c v μ' k : ActIn (c ⋉ v) = NewVarC_in_ext k μ' 
-    -> exists c' v', μ' = ActIn (c' ⋉ v') /\ v = v' /\ NewVar_in_ChannelData k c' = c.
+Lemma NewVarC_in_ext_rev_Input c v μ' k : ActIn ((c , v)) = NewVarC_in_ext k μ' 
+    -> exists c' v', μ' = ActIn (c' , v') /\ v = v' /\ NewVar_in_ChannelData k c' = c.
 Proof.
   destruct μ'; destruct c; destruct a; simpl in * ; intro Hyp; try (inversion Hyp); subst.
-  + exists c0. exists d. split ;eauto.
-  + exists c. exists d. split ;eauto.
+  + exists c0. exists v0. split ;eauto.
+  + exists c. exists v0. split ;eauto.
 Qed.
 
-Lemma NewVarC_in_ext_rev_Output c v μ' k : ActOut (c ⋉ v) = NewVarC_in_ext k μ' 
-    -> exists c' v', μ' = ActOut (c' ⋉ v') /\ v = v' /\ NewVar_in_ChannelData k c' = c.
+Lemma NewVarC_in_ext_rev_Output c v μ' k : ActOut ((c , v)) = NewVarC_in_ext k μ' 
+    -> exists c' v', μ' = ActOut (c' , v') /\ v = v' /\ NewVar_in_ChannelData k c' = c.
 Proof.
   destruct μ'; destruct c; destruct a; simpl in * ; intro Hyp; try (inversion Hyp); subst.
-  + exists c0. exists d. split ;eauto.
-  + exists c. exists d. split ;eauto.
+  + exists c0. exists v0. split ;eauto.
+  + exists c. exists v0. split ;eauto.
 Qed.
 
 Lemma NewVarC_inv p p' k : NewVarC k p = NewVarC k p' -> p = p'.
@@ -2392,20 +2438,20 @@ Lemma inversion_k_NewVarC k μ μ' : NewVarC_in_ext 0 μ = NewVarC_in_ext (S k) 
 Proof.
   intro Hyp.
   destruct μ; destruct a; destruct μ'; destruct a; destruct c; destruct c0; simpl in *; subst; try (inversion Hyp).
-    + subst. right. exists (ActIn (c0 ⋉ d0)). simpl; eauto.
+    + subst. right. exists (ActIn (cst c0 , v0)). simpl; eauto.
     + destruct (decide ((S k < S n))); inversion H0.
     + destruct (decide ((S k < S n0))).
       - subst. inversion H0. subst. right. inversion l.
-        ++ subst. exists (ActIn (k ⋉ d0)). simpl; eauto. rewrite decide_True; try lia. eauto.
-        ++ subst. assert (0 < n0); try lia. assert (0 < n0); try lia. eapply Nat.succ_pred_pos in H. exists (ActIn (Nat.pred n0 ⋉ d0)).
+        ++ subst. exists (ActIn (bvar k , v0)). simpl; eauto. rewrite decide_True; try lia. eauto.
+        ++ subst. assert (0 < n0); try lia. assert (0 < n0); try lia. eapply Nat.succ_pred_pos in H. exists (ActIn (bvar (Nat.pred n0) , v0)).
            simpl. rewrite decide_True; try lia. f_equal. f_equal. eapply Nat.succ_pred_pos in H2. eauto.
       - subst. inversion H0. subst. left; eauto.
     + subst. left. eauto.
     + destruct (decide ((S k < S n))); inversion H0.
     + destruct (decide ((S k < S n0))).
       - subst. inversion H0. subst. right. inversion l.
-        ++ subst. exists (ActOut (k ⋉ d0)). simpl; eauto. rewrite decide_True; try lia. eauto.
-        ++ subst. assert (0 < n0); try lia. assert (0 < n0); try lia. eapply Nat.succ_pred_pos in H. exists (ActOut (Nat.pred n0 ⋉ d0)).
+        ++ subst. exists (ActOut (bvar k , v0)). simpl; eauto. rewrite decide_True; try lia. eauto.
+        ++ subst. assert (0 < n0); try lia. assert (0 < n0); try lia. eapply Nat.succ_pred_pos in H. exists (ActOut (bvar (Nat.pred n0) , v0)).
            simpl. rewrite decide_True; try lia. f_equal. f_equal. eapply Nat.succ_pred_pos in H2. eauto.
       - subst. inversion H0. subst. left; eauto.
 Qed.
@@ -2442,9 +2488,9 @@ Proof.
   * destruct g0; simpl in *.
     - inversion H.
     - inversion H.
-    - inversion H; subst. exists (ActIn (c ⋉ v)). exists (p ^ v).
+    - inversion H; subst. exists (ActIn ((c , v))). exists (p ^ v).
       split ;eauto. rewrite subst_and_NewVarC. eauto.
-    - inversion H; subst. exists (ActOut (c ⋉ d)). exists p.
+    - inversion H; subst. exists (ActOut (c , v)). exists p.
       split ;eauto.
     - inversion H.
     - dependent destruction H; simpl in *.
@@ -2464,11 +2510,11 @@ Proof.
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
   * dependent destruction H; simpl in *.
-    - assert (lts (NewVarC k p1) ((c ⋉ v) !) p3); eauto. assert (lts (NewVarC k p2) ((c ⋉ v) ?) q2); eauto.
+    - assert (lts (NewVarC k p1) (((c , v)) !) p3); eauto. assert (lts (NewVarC k p2) (((c , v)) ?) q2); eauto.
       eapply NewVarC_ext_proc in H as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
       eapply NewVarC_ext_proc in H0 as (μ'' & p''' & eq'' & eq''') ; simpl; subst ; try lia.
       exists (p'' ‖  p'''). split; eauto.
-    - assert (lts (NewVarC k p2) ((c ⋉ v) !) p3); eauto. assert (lts (NewVarC k p1) ((c ⋉ v) ?) q2); eauto.
+    - assert (lts (NewVarC k p2) (((c , v)) !) p3); eauto. assert (lts (NewVarC k p1) (((c , v)) ?) q2); eauto.
       eapply NewVarC_ext_proc in H as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
       eapply NewVarC_ext_proc in H0 as (μ'' & p''' & eq'' & eq''') ; simpl; subst ; try lia.
       exists (p''' ‖  p''). split; eauto.
@@ -2532,10 +2578,10 @@ Proof.
   * destruct g0; simpl in *.
     - inversion H.
     - inversion H.
-    - inversion H; subst. assert (NewVarC_in_ext k (ActIn (c ⋉ v)) = NewVarC_in_ext k μ') as Hyp; eauto.
+    - inversion H; subst. assert (NewVarC_in_ext k (ActIn ((c , v))) = NewVarC_in_ext k μ') as Hyp; eauto.
       eapply NewVarC_in_ext_inv in Hyp. subst. rewrite subst_and_NewVarC in H4.
       eapply NewVarC_inv in H4. subst. eapply lts_input.
-    - inversion H; subst. assert (NewVarC_in_ext k (ActOut (c ⋉ d)) = NewVarC_in_ext k μ') as Hyp; eauto.
+    - inversion H; subst. assert (NewVarC_in_ext k (ActOut (c , v)) = NewVarC_in_ext k μ') as Hyp; eauto.
       eapply NewVarC_in_ext_inv in Hyp. subst.
       eapply NewVarC_inv in H5. subst. eapply lts_output.
     - inversion H.
@@ -2566,7 +2612,7 @@ Proof.
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
   * dependent destruction H; simpl in *; subst.
-    - assert (lts (NewVarC k p1) ((c ⋉ v) !) p3); eauto. assert (lts (NewVarC k p2) ((c ⋉ v) ?) q2); eauto.
+    - assert (lts (NewVarC k p1) (((c , v)) !) p3); eauto. assert (lts (NewVarC k p2) (((c , v)) ?) q2); eauto.
       eapply NewVarC_ext_proc in H as (μ' & p'' & eq1 & eq2); subst.
       eapply NewVarC_ext_proc in H0 as (μ'' & p''' & eq'1 & eq'2); subst.
       rewrite eq1 in H1. rewrite eq'1 in H2.
@@ -2576,7 +2622,7 @@ Proof.
       eapply NewVarC_inv in H. subst. eapply NewVarC_in_ext_rev_Output in eq1 as (c' & v' & eq'' & eq''' & eq'''').
       subst. eapply NewVarC_in_ext_rev_Input in eq'1 as (c'' & v'' & eq'' & eq''' & eq'''').
       subst. eapply NewVarC_in_ChannelData_inv in eq''''. subst. eapply lts_comL; eauto.
-    - assert (lts (NewVarC k p2) ((c ⋉ v) !) p3); eauto. assert (lts (NewVarC k p1) ((c ⋉ v) ?) q2); eauto.
+    - assert (lts (NewVarC k p2) (((c , v)) !) p3); eauto. assert (lts (NewVarC k p1) (((c , v)) ?) q2); eauto.
       eapply NewVarC_ext_proc in H as (μ' & p'' & eq1 & eq2); subst.
       eapply NewVarC_ext_proc in H0 as (μ'' & p''' & eq'1 & eq'2); subst.
       rewrite eq1 in H1. rewrite eq'1 in H2.
@@ -2725,12 +2771,12 @@ Proof.
            exists (ν p ‖ q'2). split. eapply lts_parR. eauto.
            eapply cgr_res_scope_rev.
       -- dependent destruction l.
-         * assert (lts (NewVarC 0 q) ((c ⋉ v) ?) q2) ;eauto.
+         * assert (lts (NewVarC 0 q) (((c , v)) ?) q2) ;eauto.
            eapply NewVarC_ext_proc in l2 as (μ' & p'' & eq1 & eq2); subst.
            rewrite eq1 in H. eapply NewVarC_in_ext_rev_Input in eq1 as (c' & v' & eq' & eq'' & eq'''); subst.
            simpl in *. exists ((ν p2) ‖ p''). split. eapply lts_comL. eapply lts_res_ext. rewrite NewVarCzero_and_add.
            eauto. eapply NewVarC_ext_proc_rev; eauto. eapply cgr_res_scope_rev.
-         * assert (lts (NewVarC 0 q) ((c ⋉ v) !) p2) ;eauto.
+         * assert (lts (NewVarC 0 q) (((c , v)) !) p2) ;eauto.
            eapply NewVarC_ext_proc in l1 as (μ' & p'' & eq1 & eq2); subst.
            rewrite eq1 in H. eapply NewVarC_in_ext_rev_Output in eq1 as (c' & v' & eq' & eq'' & eq'''); subst.
            simpl in *. exists ((ν q2) ‖ p''). split. eapply lts_comR. eapply NewVarC_ext_proc_rev; eauto.
@@ -2741,23 +2787,23 @@ Proof.
          * assert (lts (NewVarC 0 q) τ q2); eauto. eapply NewVarC_tau_proc in l as (q'' & eq''); subst.
            eapply NewVarC_tau_proc_rev in H. exists ((ν p) ‖ q''). split.
            eapply lts_parR. eauto. eapply cgr_res_scope_rev.
-    + intros. exists q.  split. apply lts_choiceL.  assumption. auto with cgr.
+    + intros. exists q.  split. apply lts_choiceL. assumption. auto with *.
     + intros. dependent destruction l.
-      -- exists q. split. assumption. auto with cgr.
+      -- exists q. split. assumption. auto with *.
       -- inversion l.
     + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceR. assumption. auto with cgr.
-      -- exists q0. split. apply lts_choiceL. assumption. auto with cgr.
+      -- exists q0. split. apply lts_choiceR. assumption. auto with *.
+      -- exists q0. split. apply lts_choiceL. assumption. auto with *.
     + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceL. apply lts_choiceL. assumption. auto with cgr.
+      -- exists q0. split. apply lts_choiceL. apply lts_choiceL. assumption. auto with *.
       -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. apply lts_choiceR. assumption. auto with cgr.
-         * exists q0. split. apply lts_choiceR. assumption. auto with cgr.
+         * exists q0. split. apply lts_choiceL. apply lts_choiceR. assumption. auto with *.
+         * exists q0. split. apply lts_choiceR. assumption. auto with *.
     + intros. dependent destruction l.
       -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. assumption. auto with cgr.
-         * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. auto with cgr.
-      -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. auto with cgr.
+         * exists q0. split. apply lts_choiceL. assumption. auto with *.
+         * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. auto with *.
+      -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. auto with *.
     + intros. dependent destruction l. exists (pr_subst x p (rec x • p)). split. apply lts_recursion. 
       apply cgr_subst. assumption.
     + intros. dependent destruction l. exists p.  split. apply lts_tau.
@@ -2767,10 +2813,10 @@ Proof.
     + intros. dependent destruction l. exists p. split. apply lts_output. 
       constructor. assumption.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step p2 ((c ⋉ v) ! )).  exact l1. destruct H0. exists (x ‖ q2).
+      -- destruct (IHcgr_step p2 (((c , v)) ! )).  exact l1. destruct H0. exists (x ‖ q2).
           split. eapply lts_comL. exact H0. assumption.
           apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step q2 ((c ⋉ v) ?)). assumption. destruct H0. exists (x ‖ p2).
+      -- destruct (IHcgr_step q2 (((c , v)) ?)). assumption. destruct H0. exists (x ‖ p2).
           split.  eapply lts_comR. exact l1. assumption.
           apply cgr_fullpar. assumption. reflexivity.
       -- destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
@@ -2796,7 +2842,7 @@ Proof.
       -- destruct (IHcgr_step q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
   - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
-    destruct H. destruct H0. eauto with cgr.
+    destruct H. destruct H0. eauto with *.
 Qed.
 
 Lemma lts_res_ext_n n p p' μ : lts p (ActExt (VarC_action_add n μ)) p' -> lts (Ѵ  n p) (ActExt μ) (Ѵ  n p').
@@ -3085,14 +3131,14 @@ Qed.
 
 (* (* Definition for Well Abstracted bvariable *)
 Inductive Well_Defined_ChannelData : nat -> ChannelData -> Prop :=
-| bvarC_is_defined_up_to_k: forall k x, (x < k) -> Well_Defined_ChannelData k (bvarC x)
-| cstC_is_always_defined : forall k x, Well_Defined_ChannelData k (cstC x). *)
+| bvar_is_defined_up_to_k: forall k x, (x < k) -> Well_Defined_ChannelData k (bvar x)
+| cst_is_always_defined : forall k x, Well_Defined_ChannelData k (cst x). *)
 
-Inductive Well_Defined_Data : nat -> Data -> Prop :=
+Inductive Well_Defined_Data : nat -> ValueData -> Prop :=
 | bvar_is_defined_up_to_k: forall k x, (x < k) -> Well_Defined_Data k (bvar x)
 | cst_is_always_defined : forall k x, Well_Defined_Data k (cst x).
 
-Inductive Well_Defined_Condition : nat -> Equation Data -> Prop :=
+Inductive Well_Defined_Condition : nat -> Equation ValueData -> Prop :=
 | equationOnValueXX : forall k x y, Well_Defined_Data k x -> Well_Defined_Data k y -> Well_Defined_Condition k (x == y).
 
 Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
@@ -3114,7 +3160,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_choice : forall k p1 p2,  Well_Defined_Input_in k (g p1) ->  Well_Defined_Input_in k (g p2) 
               ->  Well_Defined_Input_in k (p1 + p2).
 
-#[global] Hint Constructors Well_Defined_Input_in:ccs.
+Hint Constructors Well_Defined_Input_in:ccs.
 
 Lemma Inequation_k_data : forall k d, Well_Defined_Data k d -> Well_Defined_Data (S k) d.
 Proof.
@@ -3123,7 +3169,7 @@ Qed.
 
 Lemma Inequation_k_equation : forall k c, Well_Defined_Condition k c -> Well_Defined_Condition (S k) c.
 Proof.
-intros. dependent destruction c. destruct d; destruct d0.
+intros. dependent destruction c. destruct v; destruct v0.
 - constructor; constructor.
 - dependent destruction H. constructor. constructor. apply Inequation_k_data. assumption.
 - dependent destruction H. constructor. apply Inequation_k_data. assumption. constructor. 
@@ -3216,7 +3262,7 @@ Lemma ForEquation : forall k v e, Well_Defined_Condition (S k) e
                 -> Well_Defined_Condition k (subst_in_Equation k (cst v) e).
 Proof.
 intros. revert H. revert v. revert k. 
-- dependent destruction e. dependent induction d; dependent induction d0.
+- dependent destruction e. dependent induction v; dependent induction v0.
   * intros. simpl. constructor; constructor.
   * intros. simpl. destruct (decide (n = k)).
     ** constructor; constructor.
@@ -3265,9 +3311,9 @@ destruct p.
     -- apply Hp. simpl. auto. dependent destruction H. assumption.
   - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
   - intros. simpl. dependent destruction H. constructor.
-    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g0_1))). apply Hp.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k (cst v) (g0_1))). apply Hp.
       simpl.  auto with arith. assumption. assumption.
-    -- assert (Well_Defined_Input_in k (subst_in_proc k v (g0_2))). apply Hp.
+    -- assert (Well_Defined_Input_in k (subst_in_proc k (cst v) (g0_2))). apply Hp.
       simpl.  auto with arith. assumption. assumption.
 Qed.
 
@@ -3428,15 +3474,15 @@ intros. revert H. rename H0 into Reduction. dependent induction Reduction.
 Qed. *)
 
 Inductive Well_Defined_Action: (ActIO TypeOfActions) -> Prop :=
-| ActionOuput_with_value_is_always_defined : forall c v, Well_Defined_Action ((c ⋉ (cst v))!)
-| ActionInput_with_value_is_always_defined : forall c v, Well_Defined_Action ((c ⋉ (cst v))?)
+| ActionOuput_with_value_is_always_defined : forall c v, Well_Defined_Action ((c , (cst v))!)
+| ActionInput_with_value_is_always_defined : forall c v, Well_Defined_Action ((c , (cst v))?)
 | Tau_is_always_defined : Well_Defined_Action τ.
 
 Inductive Well_Defined_ExtAction: (ExtAct TypeOfActions) -> Prop :=
-| ExtActionOuput_with_value_is_always_defined : forall c v, Well_Defined_ExtAction (ActOut (c ⋉ (cst v)))
-| ExtActionInput_with_value_is_always_defined : forall c v, Well_Defined_ExtAction (ActIn (c ⋉ (cst v))).
+| ExtActionOuput_with_value_is_always_defined : forall c v, Well_Defined_ExtAction (ActOut (c , (cst v)))
+| ExtActionInput_with_value_is_always_defined : forall c v, Well_Defined_ExtAction (ActIn (c , (cst v))).
 
-Lemma Output_are_good : forall p1 p2 c d, Well_Defined_Input_in 0 p1 -> lts p1 ((c ⋉ d) !) p2 
+Lemma Output_are_good : forall p1 p2 c d, Well_Defined_Input_in 0 p1 -> lts p1 ((c , d) !) p2 
       -> exists v, d = cst v.
 Proof.
 intros. dependent induction H0. dependent destruction H. eapply Well_Def_Data_Is_a_value in H. destruct H.
@@ -3460,7 +3506,7 @@ intros. revert H. revert H0. rename H1 into Transition. dependent induction Tran
 * intros. apply ForRecursionSanity. dependent destruction H. assumption. assumption.
 * intros. inversion H1; subst. eapply IHTransition; eauto.
 * intros. inversion H1; subst. eapply IHTransition; eauto.
-* intros. inversion H; subst. constructor. eapply IHTransition; eauto. destruct μ; destruct a; destruct d; simpl in *.
+* intros. inversion H; subst. constructor. eapply IHTransition; eauto. destruct μ; destruct a; destruct v; simpl in *.
   + simpl. constructor.
   + simpl. inversion H0.
   + simpl. constructor.
@@ -3482,74 +3528,23 @@ intros. revert H. revert H0. rename H1 into Transition. dependent induction Tran
 * intros. dependent destruction H. apply IHTransition. assumption. assumption.
 Qed.
 
-Definition encode_channeldata (C : ChannelData) : gen_tree (nat + Channel) :=
-match C with
-  | cstC c => GenLeaf (inr c)
-  | bvarC i => GenLeaf (inl i)
-end.
-
-Definition decode_channeldata (tree : gen_tree (nat + Channel)) : ChannelData :=
-match tree with
-  | GenLeaf (inr c) => cstC c
-  | GenLeaf (inl i) => bvarC i
-  | _ => bvarC 0
-end.
-
-Lemma encode_decide_channeldatas c : decode_channeldata (encode_channeldata c) = c.
-Proof. case c. 
-* intros. simpl. reflexivity.
-* intros. simpl. reflexivity.
-Qed.
-
-#[global] Instance channeldata_countable : Countable ChannelData.
-Proof.
-  refine (inj_countable' encode_channeldata decode_channeldata _).
-  apply encode_decide_channeldatas.
-Qed.
-
-Definition encode_data (D : Data) : gen_tree (nat + Value) :=
-match D with
-  | cst v => GenLeaf (inr v)
-  | bvar i => GenLeaf (inl i)
-end.
-
-Definition decode_data (tree : gen_tree (nat + Value)) : Data :=
-match tree with
-  | GenLeaf (inr v) => cst v
-  | GenLeaf (inl i) => bvar i
-  | _ => bvar 0
-end.
-
-Lemma encode_decide_datas d : decode_data (encode_data d) = d.
-Proof. case d. 
-* intros. simpl. reflexivity.
-* intros. simpl. reflexivity.
-Qed.
-
-#[global] Instance data_countable : Countable Data.
-Proof.
-  refine (inj_countable' encode_data decode_data _).
-  apply encode_decide_datas.
-Qed.
-
 Lemma TypeOfActions_dec : forall (x y : TypeOfActions) , {x = y} + {x <> y}.
 Proof.
 decide equality. 
-* destruct (decide(d = d0)). left. assumption. right. assumption.
-* destruct (decide (c = c0)). left. assumption. right. assumption.
+* destruct (decide(b = v)). left. assumption. right. assumption.
+* destruct (decide (a = c)). left. assumption. right. assumption.
 Qed.
 
 #[global] Instance TypeOfActions_eqdecision : EqDecision TypeOfActions. by exact TypeOfActions_dec . Defined.
 
-
-Definition encode_TypeOfActions (a : TypeOfActions) : gen_tree (nat + (ChannelData + Data)) :=
+Definition encode_TypeOfActions (a : TypeOfActions) : gen_tree (nat + (ChannelData + ValueData)) :=
 match a with
-  | act c v => GenNode 0 [GenLeaf (inr (inl c)) ; GenLeaf (inr (inr v))]
+  | (c ,v)=> GenNode 0 [GenLeaf (inr (inl c)) ; GenLeaf (inr (inr v))]
 end.
 
-Definition decode_TypeOfActions (tree :gen_tree (nat + (ChannelData + Data))) : option TypeOfActions :=
+Definition decode_TypeOfActions (tree :gen_tree (nat + (ChannelData + ValueData))) : option TypeOfActions :=
 match tree with
-  | GenNode 0 [GenLeaf (inr (inl c)); GenLeaf (inr (inr v))] => Some (act c v)
+  | GenNode 0 [GenLeaf (inr (inl c)); GenLeaf (inr (inr v))] => Some (c , v)
   | _ => None
 end.
 
@@ -3566,13 +3561,13 @@ Proof.
 Qed.
 
 Definition encode_ExtAct_TypeOfActions (a : ExtAct TypeOfActions) : 
-    gen_tree (nat + (ChannelData + Data)) :=
+    gen_tree (nat + (ChannelData + ValueData)) :=
 match a with
   | ActIn a => GenNode 0 [encode_TypeOfActions a]
   | ActOut a => GenNode 1 [encode_TypeOfActions a]
 end.
 
-Definition decode_ExtAct_TypeOfActions_raw (tree :gen_tree (nat + (ChannelData + Data))) 
+Definition decode_ExtAct_TypeOfActions_raw (tree :gen_tree (nat + (ChannelData + ValueData))) 
   : option (ExtAct (option TypeOfActions)) :=
 match tree with
   | GenNode 0 [l] => Some (ActIn (decode_TypeOfActions l))
@@ -3590,7 +3585,7 @@ match a with
   | None => None
 end.
 
-Definition decode_ExtAct_TypeOfActions (tree :gen_tree (nat + (ChannelData + Data))) 
+Definition decode_ExtAct_TypeOfActions (tree :gen_tree (nat + (ChannelData + ValueData))) 
   : option (ExtAct TypeOfActions) := simpl_option (decode_ExtAct_TypeOfActions_raw tree).
 
 Lemma encode_decide_ExtAct_TypeOfActions a : 
@@ -3609,19 +3604,19 @@ Proof.
   intro. apply encode_decide_ExtAct_TypeOfActions.
 Qed.
 
-Lemma Equation_dec : forall (x y : Equation Data) , {x = y} + {x <> y}.
+Lemma Equation_dec : forall (x y : Equation ValueData) , {x = y} + {x <> y}.
 Proof.
 decide equality. apply Data_dec. apply Data_dec.
 Qed.
 
-#[global] Instance equation_dec : EqDecision (Equation Data). exact Equation_dec. Defined.
+#[global] Instance equation_dec : EqDecision (Equation ValueData). exact Equation_dec. Defined.
 
-Definition encode_equation (E : Equation Data) : gen_tree (nat + Data) :=
+Definition encode_equation (E : Equation ValueData) : gen_tree (nat + ValueData) :=
 match E with
   | D1 == D2 => GenNode 0 [GenLeaf (inr D1) ; GenLeaf (inr D2)]
 end.
 
-Definition decode_equation (tree : gen_tree (nat + Data)) : option (Equation Data) :=
+Definition decode_equation (tree : gen_tree (nat + ValueData)) : option (Equation ValueData) :=
 match tree with
   | GenNode 0 [GenLeaf (inr d); GenLeaf (inr d')] => Some (d == d')
   | _ => None
@@ -3634,7 +3629,7 @@ induction p.
 * simpl. reflexivity.
 Qed.
 
-#[global] Instance equation_countable : Countable (Equation Data).
+#[global] Instance equation_countable : Countable (Equation ValueData).
 Proof.
   refine (inj_countable encode_equation decode_equation _).
   apply encode_decide_equations.
@@ -3648,13 +3643,13 @@ decide equality.
 * destruct (decide(n = n0));eauto.
 * destruct (decide(e = e0));eauto. 
 * decide equality; destruct (decide(c = c0));eauto.
-  destruct (decide(d = d0));eauto.
+  destruct (decide(v = v0));eauto.
 Qed.
 
 #[global] Instance proc_eqdecision : EqDecision proc. by exact proc_dec. Defined.
 
 
-Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) + ChannelData)) :=
+Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation ValueData ) + TypeOfActions) + ChannelData)) :=
   match p with
   | p ‖ q  => GenNode 0 [encode_proc p; encode_proc q]
   | pr_var i => GenNode 2 [GenLeaf $ inl i]
@@ -3664,17 +3659,17 @@ Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation Data ) + TypeOfActi
   | g gp => GenNode 1 [encode_gproc gp]
   end
 with
-encode_gproc (gp: gproc) : gen_tree (nat + (((Equation Data ) + TypeOfActions) + ChannelData)) :=
+encode_gproc (gp: gproc) : gen_tree (nat + (((Equation ValueData ) + TypeOfActions) + ChannelData)) :=
   match gp with
   | ① => GenNode 1 []
   | 𝟘 => GenNode 0 []
   | c ? p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
-  | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ (c ⋉ v)); encode_proc p]
+  | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ ((c , v))); encode_proc p]
   | 𝛕 • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
   end.
 
-Fixpoint decode_proc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + ChannelData))) : proc :=
+Fixpoint decode_proc (t': gen_tree (nat + (((Equation ValueData ) + TypeOfActions) + ChannelData))) : proc :=
   match t' with
   | GenNode 0 [ep; eq] => (decode_proc ep) ‖ (decode_proc eq)
   | GenNode 2 [GenLeaf (inl i)] => pr_var i
@@ -3685,12 +3680,12 @@ Fixpoint decode_proc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + 
   | _ => ① 
   end
 with
-decode_gproc (t': gen_tree (nat + (((Equation Data ) + TypeOfActions) + ChannelData))): gproc :=
+decode_gproc (t': gen_tree (nat + (((Equation ValueData ) + TypeOfActions) + ChannelData))): gproc :=
   match t' with
   | GenNode 1 [] => ①
   | GenNode 0 [] => 𝟘
   | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? (decode_proc ep)
-  | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (ChannelData_of a) ! (Data_of a) • (decode_proc ep)
+  | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (ChannelData_of a) ! (ValueData_of a) • (decode_proc ep)
   | GenNode 3 [eq] => 𝛕 • (decode_proc eq)
   | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
   | _ => ① 
@@ -3723,8 +3718,8 @@ Fixpoint moutputs_of_g (k : nat) (gp : gproc) : gmultiset (TypeOfActions) :=
   | ① => ∅
   | 𝟘 => ∅
   | c ? p => ∅
-  | (cstC c) ! v • p => {[+ ((cstC c) ⋉ v) +]}
-  | (bvarC i) ! v • p => if decide(k < (S i)) then {[+ ((bvarC (i - k)) ⋉ v) +]}
+  | (cst c) ! v • p => {[+ ((cst c) , v) +]}
+  | (bvar i) ! v • p => if decide(k < (S i)) then {[+ ((bvar (i - k)) , v) +]}
                                             else ∅
   | 𝛕 • p => ∅
   | g1 + g2 => moutputs_of_g k g1 ⊎ moutputs_of_g k g2
@@ -4056,12 +4051,12 @@ Proof.
       ++ exfalso;inversion mem.
       ++ exfalso;inversion mem.
       ++ subst. destruct c.
-         +++ assert (a = c ⋉ d). multiset_solver. subst. exists p. 
-             eapply lts_res_ext_n. simpl. eauto with ccs.
+         +++ assert (a = (cst c , v)). multiset_solver. subst. exists p. 
+             eapply lts_res_ext_n. simpl. eauto with *.
          +++ destruct (decide (k < S n)).
-             ++++ assert (a = (n - k) ⋉ d). multiset_solver. subst.
+             ++++ assert (a = (bvar (n - k) , v)). multiset_solver. subst.
                   exists p. eapply lts_res_ext_n. simpl.
-                  replace (k + (n - k))%nat with n by lia. eauto with ccs.
+                  replace (k + (n - k))%nat with n by lia. eauto with *.
              ++++ exfalso. inversion mem.
       ++ exfalso;inversion mem.
       ++ destruct (decide (a ∈ moutputs_of k g0_2)) as [mem_right | not_mem_right].
@@ -4133,7 +4128,7 @@ Fixpoint lts_set_output_g (g : gproc) (a : TypeOfActions) : gset proc :=
   | ① => ∅
   | 𝟘 => ∅
   | c ? p => ∅
-  | c ! v • p => if decide(a = (c ⋉ v)) then {[ p ]} else ∅
+  | c ! v • p => if decide(a = ((c , v))) then {[ p ]} else ∅
   | 𝛕 • p => ∅
   | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
   end.
@@ -4159,7 +4154,7 @@ Fixpoint lts_set_input_g (g : gproc) (a : TypeOfActions) : gset proc :=
  match g with
   | ① => ∅
   | 𝟘 => ∅
-  | c' ? p => if decide(ChannelData_of a = c') then {[ p^(Data_of a) ]} else ∅
+  | c' ? p => if decide(ChannelData_of a = c') then {[ p^(ValueData_of a) ]} else ∅
   | c' ! v • p => ∅
   | 𝛕 • p => ∅
   | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
@@ -4194,7 +4189,7 @@ match gp with
   | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
 end.
 
-(* Context (Eval_Eq : Equation Data -> (option bool)). 
+(* Context (Eval_Eq : Equation ValueData -> (option bool)). 
 à implémenter si du temps *)
 
 Fixpoint lts_set_tau (p : proc) : gset proc :=
@@ -4253,9 +4248,9 @@ Proof.
   - eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_res_ext. rewrite elem_of_elements in mem. eapply Hp in mem. simpl. destruct a. eauto. simpl ; lia. 
   - destruct g0; simpl in mem;  try now inversion mem.
-    + case (TypeOfActions_dec a (c ⋉ d)) in mem.
+    + case (TypeOfActions_dec a (c , v)) in mem.
           +++ subst. rewrite decide_True in mem; eauto.
-              assert (q = p). set_solver. subst. eauto with ccs.
+              assert (q = p). set_solver. subst. eauto with *.
           +++ rewrite decide_False in mem; eauto. inversion mem.
     + eapply elem_of_union in mem as [mem | mem].
       ++ eapply lts_choiceL.
@@ -4267,9 +4262,7 @@ Qed.
 Lemma lts_set_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_set_output p a.
 Proof.
   intro l. dependent induction l; try set_solver.
-  - simpl. destruct (decide (c ⋉ v = c ⋉ v)) as [eq | not_eq]. 
-    + set_solver.
-    + exfalso. apply not_eq. reflexivity.
+  - simpl. rewrite decide_True;eauto. set_solver.
   - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
   - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
   - simpl in *. destruct a. try set_solver.
@@ -4282,10 +4275,10 @@ Proof.
   + eapply elem_of_union in mem. destruct mem.
     ++ eapply elem_of_list_to_set in H.
        eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
-       rewrite elem_of_elements in mem. eauto with ccs.
+       rewrite elem_of_elements in mem. eauto with *.
     ++ eapply elem_of_list_to_set in H.
        eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
-       rewrite elem_of_elements in mem. eauto with ccs.
+       rewrite elem_of_elements in mem. eauto with *.
   + case_eq (Eval_Eq e).
     - intros. rewrite H in mem. destruct b.
       ++ eapply lts_ifOne; eauto.
@@ -4297,12 +4290,12 @@ Proof.
       ++ destruct (decide (ChannelData_of a = c)).
          +++ subst. eapply elem_of_singleton_1 in mem. subst. destruct a. simpl. apply lts_input.
          +++ destruct a. simpl in *. inversion mem.
-      ++ eapply elem_of_union in mem. destruct mem; eauto with ccs.
+      ++ eapply elem_of_union in mem. destruct mem; eauto with *.
 Qed.
 
 Lemma lts_set_input_spec1 p a q : lts p (ActExt $ ActIn a) q -> q ∈ lts_set_input p a.
 Proof.
-  intro l. destruct a. destruct d.
+  intro l. destruct a. destruct v.
   + dependent induction l; try set_solver.
     ++ simpl. rewrite decide_True; eauto. set_solver.
     ++ simpl in *. rewrite H. eauto.
@@ -4322,9 +4315,9 @@ Proof.
          destruct mem1.
          eapply elem_of_union in H as [mem1 | mem2]. 
          eapply elem_of_list_to_set, list_elem_of_fmap in mem1 as (t' & eq & h); subst.
-         rewrite elem_of_elements in h. eauto with ccs.
+         rewrite elem_of_elements in h. eauto with *.
          eapply elem_of_list_to_set, list_elem_of_fmap in mem2 as (t' & eq & h); subst.
-         rewrite elem_of_elements in h. eauto with ccs.
+         rewrite elem_of_elements in h. eauto with *.
          eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in H as (t' & eq & h); subst.
          eapply list_elem_of_In, list_elem_of_fmap in h as ((t1 & t2) & eq' & h'). subst.
          eapply list_elem_of_In, in_prod_iff in h' as (mem1 & mem2).
@@ -4340,7 +4333,7 @@ Proof.
          eapply lts_set_input_spec0 in mem1.
          eapply lts_set_output_spec0 in mem2. destruct t'. eapply lts_comR. exact mem2. exact mem1.
     + inversion mem.
-    + eapply elem_of_singleton_1 in mem. subst; eauto with ccs.
+    + eapply elem_of_singleton_1 in mem. subst; eauto with *.
     + case_eq (Eval_Eq e); intros; rewrite H in mem.
       ++ destruct b.
          +++ eapply lts_ifOne; eauto.
@@ -4349,8 +4342,8 @@ Proof.
     + eapply elem_of_list_to_set, list_elem_of_fmap in mem as (t' & eq & h); subst.
       eapply lts_res_tau. eapply IHp. eapply elem_of_elements. eauto.
     + dependent induction g0; simpl in mem; try set_solver;
-        try eapply elem_of_singleton_1 in mem; subst; eauto with ccs.
-      eapply elem_of_union in mem as [mem1 | mem2]; eauto with ccs.
+        try eapply elem_of_singleton_1 in mem; subst; eauto with *.
+      eapply elem_of_union in mem as [mem1 | mem2]; eauto with *.
 Qed.
 
 Lemma lts_set_tau_spec1 p q : lts p τ q -> q ∈ lts_set_tau p.
@@ -4362,7 +4355,7 @@ Proof.
     eapply elem_of_union. right.
     eapply elem_of_list_to_set.
     rewrite list_elem_of_In. rewrite in_flat_map.
-    exists (c ⋉ v). split.
+    exists ((c , v)). split.
     + eapply list_elem_of_In, elem_of_elements.
       eapply outputs_of_spec1. eauto.
     + eapply list_elem_of_In, list_elem_of_fmap.
@@ -4374,7 +4367,7 @@ Proof.
   - eapply elem_of_union. right.
     eapply elem_of_list_to_set.
     rewrite list_elem_of_In. rewrite in_flat_map.
-    exists (c ⋉ v). split.
+    exists ((c , v)). split.
     + eapply list_elem_of_In, elem_of_elements.
       eapply outputs_of_spec1. exact l1.
     + eapply list_elem_of_In, list_elem_of_fmap.
@@ -4723,16 +4716,16 @@ Defined.
 
 Inductive FinA :=
 | Inputs (c : ChannelData)
-| Output (c : ChannelData) (v : Data)
+| Output (c : ChannelData) (v : ValueData)
 .
 
 Definition Φᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : FinA :=
 match μ with
-| ActIn (c ⋉ v) => Inputs c
-| ActOut (c ⋉ v) => Output c v
+| ActIn ((c , v)) => Inputs c
+| ActOut ((c , v)) => Output c v
 end.
 
-Lemma same_input_channel c v c' v' : Φᴠᴄᴄꜱ (ActIn (c ⋉ v)) =  Φᴠᴄᴄꜱ (ActIn (c' ⋉ v')) -> c = c'.
+Lemma same_input_channel c v c' v' : Φᴠᴄᴄꜱ (ActIn ((c , v))) =  Φᴠᴄᴄꜱ (ActIn (c' , v')) -> c = c'.
 Proof.
   simpl. intros. inversion H. eauto.
 Qed.
@@ -4788,11 +4781,11 @@ Fixpoint mPreCoAct_of_g (k : nat) (gp : gproc) : gmultiset PreAct :=
   match gp with
   | ① => ∅
   | 𝟘 => ∅
-  | (cstC c) ? p => {[+ Outputs_on (cstC c) +]}
-  | (bvarC i) ? p => if decide(k < (S i)) then {[+ Outputs_on (bvarC (i - k)) +]}
+  | (cst c) ? p => {[+ Outputs_on (cst c) +]}
+  | (bvar i) ? p => if decide(k < (S i)) then {[+ Outputs_on (bvar (i - k)) +]}
                                               else ∅
-  | (cstC c) ! v • p => {[+ Inputs_on (cstC c) +]}
-  | (bvarC i) ! v • p => if decide(k < (S i)) then {[+ Inputs_on (bvarC (i - k)) +]}
+  | (cst c) ! v • p => {[+ Inputs_on (cst c) +]}
+  | (bvar i) ! v • p => if decide(k < (S i)) then {[+ Inputs_on (bvar (i - k)) +]}
                                               else ∅
   | 𝛕 • p => ∅
   | g1 + g2 => mPreCoAct_of_g k g1 ⊎ mPreCoAct_of_g k g2
@@ -5054,13 +5047,13 @@ Proof.
   intro.
   destruct μ; destruct a; destruct c; eauto ; simpl in *.
   + destruct μ'; destruct c0; simpl in *; inversion H; subst.
-    exists (ActIn (c ⋉ d)). split ; eauto.
+    exists (ActIn (cst c , v)). split ; eauto.
   + destruct μ'; destruct c; simpl in *; inversion H; subst.
-    exists (ActIn (bvarC n0 ⋉ d)). split ; eauto.
+    exists (ActIn (bvar n0 , v)). split ; eauto.
   + destruct μ'; destruct c0; simpl in *; inversion H; subst.
-    exists (ActOut (c ⋉ d)). split ; eauto.
+    exists (ActOut (cst c , v)). split ; eauto.
   + destruct μ'; destruct c; simpl in *; inversion H; subst.
-    exists (ActOut (bvarC n0 ⋉ d)). split ; eauto.
+    exists (ActOut (bvar n0 , v)). split ; eauto.
 Qed.
 
 Lemma VarC_action_add_co_rev_map j k μ' p : VarC_preaction_add (j + k) μ' ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p)
@@ -5122,21 +5115,21 @@ Proof.
             +++ multiset_solver.
             +++ multiset_solver.
        + simpl in *. destruct c.
-         ++ simpl. assert ((VarC_add k c0) = c) by multiset_solver.
+         ++ simpl. assert ((VarC_add k c0) = cst c) by multiset_solver.
             destruct c0; simpl in *.
             +++ inversion H0. subst.
-                exists (ActOut (c ⋉ (bvar 0))). split.
-                -- exists (ActIn (c ⋉ (bvar 0))). repeat split ;eauto.
+                exists (ActOut (cst c , (bvar 0))). split.
+                -- exists (ActIn (cst c , (bvar 0))). repeat split ;eauto.
                    eapply lts_refuses_spec2. exists (p^(bvar 0)). constructor.
                 -- simpl. reflexivity.
             +++ inversion H0.
          ++ destruct (decide (k < S n)); simpl.
             destruct c0.
             +++ simpl in *. multiset_solver.
-            +++ simpl in *. assert (bvarC n0 = bvarC (n - k)) by multiset_solver.
+            +++ simpl in *. assert ((@bvar (@Channel VP) n0) = bvar (n - k)) by multiset_solver.
                 inversion H0.
-                exists (ActOut (bvarC (n0 + k)⋉ bvar 0)). split.
-                -- exists (ActIn (bvarC (n0 + k)⋉ (bvar 0))). repeat split ;eauto.
+                exists (ActOut (bvar (n0 + k), bvar 0)). split.
+                -- exists (ActIn (bvar (n0 + k), (bvar 0))). repeat split ;eauto.
                    eapply lts_refuses_spec2. exists (p^(bvar 0)).
                    replace (n0 + k)%nat with n by lia.
                    constructor.
@@ -5145,15 +5138,15 @@ Proof.
     ** simpl in *.
        destruct pre_μ.
        + simpl in *. subst. destruct c.
-         ++ assert (c0 = c) by multiset_solver. subst.
-            exists (ActIn (c ⋉ d)). split.
-            -- exists (ActOut (c ⋉ d)). repeat split ;eauto.
+         ++ assert (c0 = cst c) by multiset_solver. subst.
+            exists (ActIn (cst c , v)). split.
+            -- exists (ActOut (cst c , v)). repeat split ;eauto.
                eapply lts_refuses_spec2. exists p. constructor.
             -- simpl in *. reflexivity.
          ++ destruct (decide (k < S n)).
-            +++ assert (c0 = bvarC (n - k)) by multiset_solver. subst.
-                exists (ActIn (bvarC n ⋉ d)). split.
-                -- exists (ActOut (bvarC n ⋉ d)). repeat split ;eauto.
+            +++ assert (c0 = bvar (n - k)) by multiset_solver. subst.
+                exists (ActIn (bvar n , v)). split.
+                -- exists (ActOut (bvar n , v)). repeat split ;eauto.
                    eapply lts_refuses_spec2. exists p. constructor.
                 -- simpl in *. f_equal. f_equal. lia.
             +++ inversion H.
@@ -5186,15 +5179,15 @@ Next Obligation.
   - inversion H1; subst.
     eapply lts_refuses_spec1 in H2 as (e' & Tr).
     eapply TransitionShapeForInput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
-    assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ? })) as accepts.
-    { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ d0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
+    assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 , v0) ? })) as accepts.
+    { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ v0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
     eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) VCCS_ExtAction VCCS_gLtsEq) in accepts.
     exact accepts. symmetry. eauto.
   - simpl in *. inversion H1.
   - simpl in *. inversion H1.
   - inversion H1; subst. eapply lts_refuses_spec1 in H2 as (e' & Tr). simpl in *.
     eapply TransitionShapeForOutput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
-    assert (¬ (Ѵ n ((VarC_add n c0 ! d0 • P1 + G) ‖ R) ↛{ (c0 ⋉ d0) ! })) as accepts.
+    assert (¬ (Ѵ n ((VarC_add n c0 ! v0 • P1 + G) ‖ R) ↛{ (c0 , v0) ! })) as accepts.
     { eapply lts_refuses_spec2. exists (Ѵ n (P1 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
     eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) VCCS_ExtAction VCCS_gLtsEq) in accepts.
     exact accepts. symmetry. eauto.
@@ -5206,7 +5199,7 @@ Next Obligation.
         -- destruct a. simpl in *. inversion H1; subst.
            destruct eq as (μ'' & tr & duo & b).
            symmetry in duo. eapply simplify_match_input in duo. subst.
-           exists (ActIn(c ⋉ d0)). split ;eauto. exists (ActOut (c ⋉ d0)).
+           exists (ActIn(c , v0)). split ;eauto. exists (ActOut (c , v0)).
            repeat split ;eauto.
         -- destruct a. simpl in *. inversion H1.
       * simpl in *. destruct a. inversion mem.
@@ -5218,12 +5211,12 @@ Next Obligation.
         -- destruct a. simpl in *. inversion H1; subst.
            destruct eq as (μ'' & tr & duo & b).
            symmetry in duo. eapply simplify_match_output in duo. subst.
-           exists (ActOut(c ⋉ d)). split ;eauto. exists (ActIn (c ⋉ d)).
+           exists (ActOut(c , v)). split ;eauto. exists (ActIn (c , v)).
            repeat split ;eauto.
            eapply lts_refuses_spec1 in tr as (p' & Tr).
            eapply TransitionShapeForInput in Tr as (P1 & P2 & R & n & eq & eq' & Hyp).
-           assert (¬ (Ѵ n ((gpr_input (VarC_add n c) P1 + P2) ‖ R) ↛{ (c ⋉ d) ? })) as accepts.
-           { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ d ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
+           assert (¬ (Ѵ n ((gpr_input (VarC_add n c) P1 + P2) ‖ R) ↛{ (c , v) ? })) as accepts.
+           { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ v ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
            eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) VCCS_ExtAction VCCS_gLtsEq) in accepts.
            exact accepts. symmetry. eauto.
 Qed.
@@ -5245,7 +5238,7 @@ Next Obligation.
     eapply simplify_match_input in duo. subst.
     eapply lts_refuses_spec1 in Tr as (p' & Tr).
     eapply TransitionShapeForOutput in Tr as (P1 & P2 & R & n & eq & eq' & Hyp).
-    assert (𝝳ᴠᴄᴄꜱ  (Φᴠᴄᴄꜱ  (ActIn (c ⋉ d))) ∈ PreCoAct_of (Ѵ n ((VarC_add n c ! d • P1 + P2) ‖ R))).
+    assert (𝝳ᴠᴄᴄꜱ  (Φᴠᴄᴄꜱ  (ActIn (c , v))) ∈ PreCoAct_of (Ѵ n ((VarC_add n c ! v • P1 + P2) ‖ R))).
       { unfold PreCoAct_of. eapply gmultiset_elem_of_dom. rewrite mPreCoAct_of_res_n.
         simpl. destruct c; simpl.
         + multiset_solver.
@@ -5258,7 +5251,7 @@ Next Obligation.
       eapply simplify_match_output in duo. subst.
       eapply lts_refuses_spec1 in Tr as (p' & Tr).
       eapply TransitionShapeForInput in Tr as (P1 & P2 & R & n & eq & eq' & Hyp).
-      assert (𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (ActOut (c ⋉ d))) ∈ PreCoAct_of (Ѵ n ((gpr_input (VarC_add n c) P1 + P2) ‖ R))).
+      assert (𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (ActOut (c , v))) ∈ PreCoAct_of (Ѵ n ((gpr_input (VarC_add n c) P1 + P2) ‖ R))).
       { unfold PreCoAct_of. eapply gmultiset_elem_of_dom. rewrite mPreCoAct_of_res_n.
         simpl. destruct c.
         + simpl. multiset_solver.
@@ -5268,4 +5261,4 @@ Next Obligation.
       eapply gmultiset_elem_of_dom. eauto.
 Qed.
 
-End VCCS.
+End VCCS_lts.

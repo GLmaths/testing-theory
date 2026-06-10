@@ -27,15 +27,16 @@ From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must
   ActTau InputOutputActions Convergence
   gLts Lts_OBA FiniteImageLTS Testing_Predicate Completeness Lts_FW Lts_OBA_FB MultisetLTSConstruction
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower
-  SetLTSConstruction ForwarderConstruction DefinitionCI EquivalenceCI.
+  SetLTSConstruction ForwarderConstruction DefinitionCI EquivalenceCI VCCS_ta_tc_gen.
 
 From Coinduction Require Import all.
 
-Module Type VCCS_Must_Alt_Corollary.
-Include VCCS_ta_tc.
-
 Notation "p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (@ctx_pre proc _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) proc 
   (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) _ _ _ _ _ _ p q) (at level 70).
+
+Section VCCS_Must_Alt_Corollary.
+
+Context `{VP : VCCS_Parameters}.
 
 Corollary must_iff_acceptance_set_VCCS (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.

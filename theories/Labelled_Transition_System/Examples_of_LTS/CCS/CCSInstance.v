@@ -25,12 +25,10 @@
 
 From TestingTheory Require Import VCCS_Instance.
 
-Module Type CCS.
-  Include VCCS.
-  Axiom Value_is_unit : Value = unit.
-End CCS.
-
-
+Instance CCS_Parameters : VCCS_Parameters :=
+  { Channel := String.string;
+    Value := unit;
+    O := tt}.
 
 (* From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.

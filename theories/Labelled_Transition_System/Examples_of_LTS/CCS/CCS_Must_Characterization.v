@@ -26,14 +26,15 @@
 From stdpp Require Import gmap gmultiset.
 
 From TestingTheory Require Import VCCS_Must_Characterization DefinitionAS Equivalence Must 
-  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation
-  DefinitionCI Coin_tower DefinitionMS DefinitionFMS.
-From Coinduction Require Import all.
+  ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
+  InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower VCCS_Instance.
 
-Module Type CCS_Must_Alt_Corollary.
-Include VCCS_Must_Alt_Corollary.
+Section CCS_Must_Alt_Corollary.
 
-Axiom Value_is_unit : Value = unit.
+Local Instance CCS_Parameters : VCCS_Parameters :=
+  { Channel := nat;
+    Value := unit;
+    O := tt}.
 
 Corollary must_iff_acceptance_set_CCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.

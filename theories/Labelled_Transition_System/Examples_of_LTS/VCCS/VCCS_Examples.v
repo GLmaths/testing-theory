@@ -30,20 +30,22 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import InputOutputActions ActTau Must VCCS_Must_Characterization
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS Convergence Termination
-MultisetLTSConstruction ForwarderConstruction InputOutputActions WeakTransitions Subset_Act.
+MultisetLTSConstruction ForwarderConstruction InputOutputActions WeakTransitions Subset_Act VCCS_Instance
+VCCS_Good.
 
 (** ** VCCS **)
 (** *** Applications *)
+Section VCCS_examples.
 
-Module Type VCCS_examples.
-Include VCCS_Must_Alt_Corollary.
+Context `{VP : VCCS_Parameters}.
+
 Parameter a : Channel.
 Parameter I : Value.
 Parameter (neq : O ≠ I).
 
-Definition all_out := g ((a ! O • 𝟘) + (a ! I • 𝟘)).
+Definition all_out := g ((cst a ! cst O • 𝟘) + (cst a ! cst I • 𝟘)).
 
-Definition one_out := g (a ! O • 𝟘).
+Definition one_out := g (cst a ! cst O • 𝟘).
 
 Lemma NIL_converges : (g 𝟘) ⤓.
 Proof.
@@ -135,7 +137,7 @@ Proof.
       eapply NIL_converges_forall; eauto.
 Qed.
 
-Lemma one_out_inv_wt s q : one_out ⟹[s] q -> s = [] \/ s = [ActOut (a ⋉ O)] \/ False.
+Lemma one_out_inv_wt s q : one_out ⟹[s] q -> s = [] \/ s = [ActOut (cst a , cst O)] \/ False.
 Proof.
   intros H.
   inversion H; subst.
@@ -187,11 +189,11 @@ Proof.
          multiset_solver.
 Qed.
 
-Definition const : proc := g (a ? (a ! O • 𝟘)).
+Definition const : proc := g (cst a ? (cst a ! cst O • 𝟘)).
 
-Definition ccat : proc := g (a ? (a ! (bvar 0) • 𝟘)).
+Definition ccat : proc := g (cst a ? (cst a ! (bvar 0) • 𝟘)).
 
-Definition MyTest := g (a ! I • ①).
+Definition MyTest := g (cst a ! cst I • ①).
 
 Lemma MyTest_is_not_good : ¬ good_VCCS MyTest.
 Proof.
@@ -202,7 +204,7 @@ Lemma constant_must_MyTest : const must_pass MyTest.
 Proof.
   eapply m_step.
   - eapply MyTest_is_not_good.
-  - exists ((a ! O • 𝟘)^I ▷ (g ①)).
+  - exists ((cst a ! cst O • 𝟘)^(cst I) ▷ (g ①)).
     eapply ParSync.
     3 : { eapply lts_output. }
     2 : { eapply lts_input. }
@@ -218,7 +220,7 @@ Lemma copycat_must_MyTest : ccat must_pass MyTest.
 Proof.
   eapply m_step.
   - eapply MyTest_is_not_good.
-  - exists ((a ! 0 • 𝟘)^I ▷ (g ①)).
+  - exists ((cst a ! bvar 0 • 𝟘)^(cst I) ▷ (g ①)).
     eapply ParSync.
     3 : { eapply lts_output. }
     2 : { eapply lts_input. }
@@ -257,14 +259,14 @@ Proof.
   eapply constant_must_MyTest.
 Qed.
 
-Definition MySynchTest := g (a ! I • g (a ? (If (bvar 0 == O) Then (g ①) Else (g 𝟘)))).
+Definition MySynchTest := g (cst a ! cst I • g (cst a ? (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))).
 
 Lemma MySynchTest_is_not_good : ¬ good_VCCS MySynchTest.
 Proof.
   intro imp. inversion imp; subst.
 Qed.
 
-Lemma MySubTest_is_not_good : ¬ good_VCCS (a ? (If bvar 0 == O
+Lemma MySubTest_is_not_good : ¬ good_VCCS (cst a ? (If bvar 0 == cst O
                                                     Then ① 
                                                     Else 𝟘)).
 Proof.
@@ -275,17 +277,17 @@ Lemma copycat_must_not_pass_MySynchTest : ¬ ccat must_pass MySynchTest.
 Proof.
   intro Hyp. inversion Hyp; subst.
   + now eapply MySynchTest_is_not_good.
-  + assert (g (a ! (bvar 0) • 𝟘)^I must_pass g (a ? (If (bvar 0 == O) Then (g ①) Else (g 𝟘)))) as Imp.
+  + assert (g (cst a ! (bvar 0) • 𝟘)^(cst I) must_pass g (cst a ? (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))) as Imp.
     { eapply com. 3 : { constructor. } 2 : { constructor. } simpl; eauto. }
     simpl in Imp. inversion Imp;subst.
     * now eapply MySubTest_is_not_good.
-    * assert (g 𝟘 must_pass (If bvar 0 == O
+    * assert (g 𝟘 must_pass (If bvar 0 == cst O
                                   Then ① 
-                                  Else 𝟘)^I) as Imp'.
+                                  Else 𝟘)^(cst I)) as Imp'.
       { eapply com0; try constructor. simpl; eauto. }
-      assert (¬ g 𝟘 must_pass (If bvar 0 == O
+      assert (¬ g 𝟘 must_pass (If bvar 0 == cst O
                                   Then ① 
-                                  Else 𝟘)^I) as Hyp'.
+                                  Else 𝟘)^(cst I)) as Hyp'.
       { simpl. intro. eapply must_eq_client in H.
         2 : { eapply cgr_if_false. simpl. rewrite decide_False; eauto.
               intro H'. eapply neq; subst; eauto. }
@@ -329,14 +331,14 @@ Proof.
   eapply constant_must_MySynchTest.
 Qed.
 
-Definition MySynchTest2 := g (a ! I • g (a ? (If (bvar 0 == I) Then ① Else (g 𝟘)))).
+Definition MySynchTest2 := g (cst a ! cst I • g (cst a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘)))).
 
 Lemma MySynchTest2_is_not_good : ¬ good_VCCS MySynchTest2.
 Proof.
   intro imp. inversion imp; subst.
 Qed.
 
-Lemma MySubTest2_is_not_good : ¬ good_VCCS (a ? (If bvar 0 == I
+Lemma MySubTest2_is_not_good : ¬ good_VCCS (cst a ? (If bvar 0 == cst I
                                                     Then ① 
                                                     Else 𝟘)).
 Proof.
@@ -370,17 +372,17 @@ Lemma constant_must_not_pass_MySynchTest2 : ¬ const must_pass MySynchTest2.
 Proof.
   intro Hyp. inversion Hyp; subst.
   + now eapply MySynchTest_is_not_good.
-  + assert (g (a ! O • 𝟘)^I must_pass g (a ? (If (bvar 0 == I) Then (g ①) Else (g 𝟘)))) as Imp.
+  + assert (g (cst a ! cst O • 𝟘)^(cst I) must_pass g (cst a ? (If (bvar 0 == cst I) Then (g ①) Else (g 𝟘)))) as Imp.
     { eapply com. 3 : { constructor. } 2 : { constructor. } simpl; eauto. }
     simpl in Imp. inversion Imp;subst.
     * now eapply MySubTest_is_not_good.
-    * assert (g 𝟘 must_pass (If bvar 0 == I
+    * assert (g 𝟘 must_pass (If bvar 0 == cst I
                                   Then ① 
-                                  Else 𝟘)^O) as Imp'.
+                                  Else 𝟘)^(cst O)) as Imp'.
       { eapply com0; try constructor. simpl; eauto. }
-      assert (¬ g 𝟘 must_pass (If bvar 0 == I
+      assert (¬ g 𝟘 must_pass (If bvar 0 == cst I
                                   Then ① 
-                                  Else 𝟘)^O) as Hyp'.
+                                  Else 𝟘)^(cst O)) as Hyp'.
       { simpl. intro. eapply must_eq_client in H. 
         2 : { eapply cgr_if_false. simpl. rewrite decide_False; eauto. exact neq. }
       inversion H.
@@ -400,7 +402,7 @@ Proof.
   eapply copycat_must_MySynchTest2.
 Qed.
 
-Definition MySynchTest3 := g ((a ! O • 𝟘) + (𝛕 • ①)).
+Definition MySynchTest3 := g ((cst a ! cst O • 𝟘) + (𝛕 • ①)).
 
 Lemma MySynchTest3_is_not_good : ¬ good_VCCS MySynchTest3.
 Proof.
@@ -426,11 +428,11 @@ Lemma copycat_must_not_pass_MySynchTest3 : ¬ ccat must_pass MySynchTest3.
 Proof.
   intro Imp. inversion Imp; subst.
   + now eapply MySynchTest3_is_not_good.
-  + assert (g (a ! (bvar 0) • 𝟘)^O must_pass (g 𝟘)).
+  + assert (g (cst a ! (bvar 0) • 𝟘)^(cst O) must_pass (g 𝟘)).
     { eapply com; try constructor. 2 : { constructor. }
     simpl. eauto. }
     simpl in *.
-    assert (¬ g (a ! O • 𝟘) must_pass g 𝟘).
+    assert (¬ g (cst a ! cst O • 𝟘) must_pass g 𝟘).
     { intro Imp'; inversion Imp'; subst.
       * inversion H0.
       * inversion ex0. inversion H0;subst. inversion l. inversion l. inversion l2. }
@@ -449,11 +451,11 @@ Lemma constant_must_not_pass_MySynchTest3 : ¬ const must_pass MySynchTest3.
 Proof.
   intro Imp. inversion Imp; subst.
   + now eapply MySynchTest3_is_not_good.
-  + assert (g (a ! O • 𝟘)^O must_pass (g 𝟘)).
+  + assert (g (cst a ! cst O • 𝟘)^(cst O) must_pass (g 𝟘)).
     { eapply com; try constructor. 2 : { constructor. }
     simpl. eauto. }
     simpl in *.
-    assert (¬ g (a ! O • 𝟘) must_pass g 𝟘).
+    assert (¬ g (cst a ! cst O • 𝟘) must_pass g 𝟘).
     { intro Imp'; inversion Imp'; subst.
       * inversion H0.
       * inversion ex0. inversion H0;subst. inversion l. inversion l. inversion l2. }
