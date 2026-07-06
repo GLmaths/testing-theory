@@ -275,8 +275,7 @@ Proof.
   eapply coR_abs_spec1 in mem2 as Hyp.
   destruct Hyp as (μ2 & Hyp_co & eq).
   destruct Hyp_co as (μ'2 & tr & duo' & b').
-  (* symmetry in duo. eapply unique_nb in duo as eq'. subst. *)
-  
+
   assert { r' | r ⟶[ μ'2 ] r'} as (r' & HypTr).
   { eapply lts_refuses_spec1. eauto. }
   inversion hw'; subst.
@@ -320,20 +319,20 @@ Proof.
     inversion hw0; subst.
     + exfalso. eapply lts_refuses_spec2 in hstpt; eauto.
     + assert (( 𝝳 ∘ Φ) β ∈ coR_abs qt) as mem'.
-        { eapply coR_abs_spec2. eapply hsubpt.
-        eapply map_gamma_of_action. exists μ.
-        repeat split.
-        -- eapply lts_refuses_spec2 ;eauto.
-        -- exact duo. 
-        -- exact b. }
-           eapply coR_abs_spec1 in mem'. destruct mem' as (μ' & mem' & eq).
-           destruct mem' as (μ'' & tr & duo' & b').
-           exists μ'.  exists μ''. eapply lts_refuses_spec1 in tr as (qr & tr_qr).
-           exists qr. repeat split.
-           ++ rewrite<- eq; eauto.
-           ++ eapply wt_push_nil_left; eauto with mdb.
-           ++ exact duo'.
-           ++ exact b'.
+      { eapply coR_abs_spec2. eapply hsubpt.
+      eapply map_gamma_of_action. exists μ.
+      repeat split.
+      -- eapply lts_refuses_spec2 ;eauto.
+      -- exact duo. 
+      -- exact b. }
+      eapply coR_abs_spec1 in mem'. destruct mem' as (μ' & mem' & eq).
+      destruct mem' as (μ'' & tr & duo' & b').
+      exists μ'.  exists μ''. eapply lts_refuses_spec1 in tr as (qr & tr_qr).
+      exists qr. repeat split.
+      ++ rewrite<- eq; eauto.
+      ++ eapply wt_push_nil_left; eauto with mdb.
+      ++ exact duo'.
+      ++ exact b'.
 Qed.
 
 Theorem equivalence_bhv_acc_mst `{CC : Countable PreAct} `{
