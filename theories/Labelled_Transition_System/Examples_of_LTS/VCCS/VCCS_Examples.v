@@ -608,16 +608,36 @@ Proof.
               -- assert ((⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q')%stdpp.
                  { eapply Proper_lts_pre_co_actions in eq1. eauto. } 
                  rewrite H0. set_solver. 
-       ++ simpl in *. inversion w;subst.
+       ++ inversion w;subst.
           -- inversion w;subst.
-             ** admit.
+             ** exists ((If bvar 0 == cst O
+                                             Then ν ((bvar 0 ! cst I • 𝟘) ‖ P)
+                                             Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q)) ^ bvar n).
+                repeat split.
+                +++ eapply lts_to_wt. simpl. constructor.
+                +++ simpl. intros i mem. compute_coR_g mem. inversion mem.
              ** repeat lts_inversion lts.
           -- repeat lts_inversion lts.
           -- repeat lts_inversion lts. destruct μ; destruct a0; destruct c;simpl in *; inversion H4.
-Admitted.
+Qed.
 
-Lemma mem_inside_is_above_mem_outside : mem_inside ⊑ₘᵤₛₜᵢ mem_outside.
+Lemma mem_inside_is_above_mem_outside : mem_outside ⊑ₘᵤₛₜᵢ mem_inside.
 Proof.
+  apply must_iff_acceptance_set_VCCS_without_toFW.
+  split.
+  + intros s h_conv. dependent induction h_conv.
+    * constructor. constructor. intros. repeat lts_inversion lts.
+    * constructor.
+      - constructor. intros. repeat lts_inversion lts.
+      - intros. inversion H2;subst.
+        ++ repeat lts_inversion lts.
+        ++ repeat lts_inversion lts.
+           admit.
+  + intros s q' h_conv h_wk stable.
+    lts_inversion wt.
+    * admit.
+    * admit.
+    * admit.
 Admitted.
 
 End VCCS_examples.
