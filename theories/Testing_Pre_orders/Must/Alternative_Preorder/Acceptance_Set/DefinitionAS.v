@@ -176,3 +176,25 @@ Next Obligation.
       eapply blocking_action_in_ms in Imp as (mem' & duo' & nb'); eauto.
       eapply unique_nb in duo; eauto. subst. contradiction.
 Qed.
+
+
+Global Instance Proper_lts_pre_co_actions `{gLtsEq P A} `{Γ : A -> PreAct}:
+  Proper ((eq_rel) ==> (≡)) (fun p => ⌈ Γ ⌉ (coR p)).
+Proof.
+  intros p p' Heq. intro μ_phi. split.
+  (* apply leibniz_equiv. intros Hyp. split. *)
+  - intro Hyp. destruct Hyp as (μ & mem_coR & eq);subst.
+    destruct mem_coR as (μ' & accepts & duo & b).
+    eapply accepts_preserved_by_eq in accepts;eauto.
+    assert (μ ∈ coR p') as mem.
+    { exists μ'. repeat split; eauto. }
+    eapply map_gamma_of_action;eauto.
+  - intro Hyp. destruct Hyp as (μ & mem_coR & eq);subst.
+    destruct mem_coR as (μ' & accepts & duo & b). symmetry in Heq.
+    eapply accepts_preserved_by_eq in accepts;eauto.
+    assert (μ ∈ coR p) as mem.
+    { exists μ'. repeat split; eauto. }
+    eapply map_gamma_of_action;eauto.
+Qed.
+
+
