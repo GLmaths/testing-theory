@@ -304,7 +304,7 @@ End Forwarder.
 Section FeedBack.
 
 Context `{@gLtsObaFB P A H gLtsEqP M}.
-Context `{!FiniteImagegLts P A}.
+Context `{!CountablegLts P A}.
 Context `{!FiniteOutputChain_LtsOba P}.
 
 Notation gLtsP := (gLtsEq_gLts (gLtsEq := gLtsEqP)).
@@ -579,8 +579,8 @@ End FeedBack.
 End Lifting.
 
 Lemma lift_fw_ctx_pre
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !CountablegLts P A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !CountablegLts Q A}
   `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome gLtsEqT}
 
   `{!Prop_of_Inter P T A dual}

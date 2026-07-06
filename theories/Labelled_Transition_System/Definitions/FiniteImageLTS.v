@@ -28,14 +28,14 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Termination WeakTransitions Convergence Lts_OBA_FB.
 (** ** Finite Image LTSs *)
-Class FiniteImagegLts P A `{gLts P A} :=
+(* Class FiniteImagegLts P A `{gLts P A} :=
   MkFlts {
       folts_states_countable: Countable P;
       folts_next_states_finite p α : Finite (dsig (fun q => p ⟶{α} q));
 }.
 
 #[global] Existing Instance folts_states_countable.
-#[global] Existing Instance folts_next_states_finite.
+#[global] Existing Instance folts_next_states_finite. *)
 
 Class CountablegLts P A `{gLts P A} := MkClts {
     clts_states_countable: Countable P;
@@ -45,14 +45,14 @@ Class CountablegLts P A `{gLts P A} := MkClts {
 #[global] Existing Instance clts_next_states_countable.
 
 
-#[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
-Proof. econstructor; first apply _. intros *; apply finite_countable. Qed.
+(* #[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
+Proof. econstructor; first apply _. intros *; apply finite_countable. Qed. *)
 
 (** *** Tau-set *)
-Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
-  map proj1_sig (enum $ dsig (fun p' => p ⟶ p')).
+(* Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
+  map proj1_sig (enum $ dsig (fun p' => p ⟶ p')). *)
 
-Lemma lts_tau_set_spec : forall `{FiniteImagegLts P A} p q, q ∈ lts_tau_set p <-> p ⟶ q.
+(* Lemma lts_tau_set_spec : forall `{FiniteImagegLts P A} p q, q ∈ lts_tau_set p <-> p ⟶ q.
 Proof.
   intros. split.
   - intro mem. unfold lts_tau_set in mem.
@@ -61,7 +61,7 @@ Proof.
   - intro H2. eapply list_elem_of_fmap.
     exists (dexist q H2). split.
     eauto. eapply elem_of_enum.
-Qed.
+Qed. *)
 
 Definition lts_tau_set_from_pset_spec1 `{Countable P, gLts P A}
   (ps : gset P) (qs : gset P) :=
@@ -75,7 +75,7 @@ Definition lts_tau_set_from_pset_spec `{Countable P, gLts P A}
   (ps : gset P) (qs : gset P) :=
   lts_tau_set_from_pset_spec1 ps qs /\ lts_tau_set_from_pset_spec2 ps qs.
 
-Definition lts_tau_set_from_pset `{FiniteImagegLts P A} (ps : gset P) : gset P :=
+(* Definition lts_tau_set_from_pset `{FiniteImagegLts P A} (ps : gset P) : gset P :=
   ⋃ (map (fun p => list_to_set (lts_tau_set p)) (elements ps)).
 
 Lemma lts_tau_set_from_pset_ispec `{gLts P A, !FiniteImagegLts P A}
@@ -94,14 +94,14 @@ Proof.
     split.
     + multiset_solver.
     + eapply lts_tau_set_spec in l. multiset_solver.
-Qed.
+Qed. *)
 
 (** *** External actions set *)
 
-Definition lts_extaction_set `{FiniteImagegLts P A} p μ : list P :=
-  map proj1_sig (enum $ dsig (fun p' => p ⟶[ μ ] p')).
+(* Definition lts_extaction_set `{FiniteImagegLts P A} p μ : list P :=
+  map proj1_sig (enum $ dsig (fun p' => p ⟶[ μ ] p')). *)
 
-Lemma lts_extaction_set_spec : forall `{FiniteImagegLts P A} p μ q, 
+(* Lemma lts_extaction_set_spec : forall `{FiniteImagegLts P A} p μ q, 
         q ∈ lts_extaction_set p μ <-> p ⟶[ μ ] q.
 Proof.
   intros. split.
@@ -111,7 +111,7 @@ Proof.
   - intro Hμ. eapply list_elem_of_fmap.
     eexists (dexist q Hμ). split.
     eauto. eapply elem_of_enum.
-Qed.
+Qed. *)
 
 Definition lts_extaction_set_from_pset_spec1 `{Countable P, gLts P A}
   (ps : gset P) μ (qs : gset P) :=
@@ -125,10 +125,10 @@ Definition lts_extaction_set_from_pset_spec `{Countable P, gLts P A}
   (ps : gset P) μ (qs : gset P):=
   lts_extaction_set_from_pset_spec1 ps μ qs /\ lts_extaction_set_from_pset_spec2 ps μ qs.
 
-Definition lts_extaction_set_from_pset `{FiniteImagegLts P A} (ps : gset P) μ : gset P :=
-  ⋃ (map (fun p => list_to_set (lts_extaction_set p μ)) (elements ps)).
+(* Definition lts_extaction_set_from_pset `{FiniteImagegLts P A} (ps : gset P) μ : gset P :=
+  ⋃ (map (fun p => list_to_set (lts_extaction_set p μ)) (elements ps)). *)
 
-Lemma lts_extaction_set_from_pset_ispec `{gLts P A, !FiniteImagegLts P A}
+(* Lemma lts_extaction_set_from_pset_ispec `{gLts P A, !FiniteImagegLts P A}
   (ps : gset P) μ :
   lts_extaction_set_from_pset_spec ps μ (lts_extaction_set_from_pset ps μ).
 Proof.
@@ -144,15 +144,15 @@ Proof.
     split.
     + multiset_solver.
     + eapply lts_extaction_set_spec in l. multiset_solver.
-Qed.
+Qed. *)
 
 (** *** Weak traces sets **)
-Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : terminate p) : gset P :=
+(* Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : terminate p) : gset P :=
   let '(tstep _ f) := t in
   let k q := wt_set_nil (`q) (f (`q) (proj2_dsig q)) in
-  {[ p ]} ∪ ⋃ map k (enum $ dsig (fun x => p ⟶ x)).
+  {[ p ]} ∪ ⋃ map k (enum $ dsig (fun x => p ⟶ x)). *)
 
-Lemma wt_set_nil_spec1 `{FiniteImagegLts P A} p q (tp : terminate p) :
+(* Lemma wt_set_nil_spec1 `{FiniteImagegLts P A} p q (tp : terminate p) :
   q ∈ wt_set_nil p tp -> p ⟹ q.
 Proof.
   case tp. induction tp as [p H1 H2].
@@ -164,9 +164,9 @@ Proof.
     eapply wt_tau; [|destruct (t (`r) (proj2_dsig r)) eqn:eqn0].
     ++ eapply (proj2_dsig r).
     ++ eapply H2. eapply (proj2_dsig r). eassumption.
-Qed.
+Qed. *)
 
-Lemma wt_set_nil_spec2 `{FiniteImagegLts P A} p q : 
+(* Lemma wt_set_nil_spec2 `{FiniteImagegLts P A} p q : 
     forall (tp : terminate p), p ⟹ q -> q ∈ wt_set_nil p tp.
 Proof.
   intros tp Htp. revert tp. dependent induction Htp; intros tp; destruct tp.
@@ -179,17 +179,17 @@ Proof.
     exists qr. split. reflexivity.
     eapply elem_of_enum. simpl.
     eapply IHHtp. eauto.
-Qed.
+Qed. *)
 
-Lemma wt_nil_set_dec `{FiniteImagegLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q).
+(* Lemma wt_nil_set_dec `{FiniteImagegLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set_nil p ht)).
   - left. eapply (wt_set_nil_spec1 _ _ _ e).
   - right. intro wt. eapply n. now eapply wt_set_nil_spec2.
-Qed.
+Qed. *)
 
-Lemma wt_set_nil_fin_aux `{FiniteImagegLts P A}
+(* Lemma wt_set_nil_fin_aux `{FiniteImagegLts P A}
   (p : P) (ht : terminate p) (d : ∀ q, Decision (p ⟹ q)) : 
       Finite (dsig (fun q => p ⟹ q)).
 Proof.
@@ -197,16 +197,16 @@ Proof.
   eapply (in_list_finite (elements (wt_set_nil p ht))).
   intros q Htrans%bool_decide_unpack.
   now eapply elem_of_elements, wt_set_nil_spec2.
-Qed.
+Qed. *)
 
-Definition wt_set_nil_fin `{FiniteImagegLts P A}
+(* Definition wt_set_nil_fin `{FiniteImagegLts P A}
   (p : P) (ht : p ⤓) : Finite (dsig (fun q => p ⟹ q)) :=
-  wt_set_nil_fin_aux p ht (wt_nil_set_dec p ht).
+  wt_set_nil_fin_aux p ht (wt_nil_set_dec p ht). *)
 
 Lemma wt_push_nil_left_lts `{gLts P A} {p q r μ} : p ⟹ q -> q ⟶[μ] r -> p ⟹{μ} r.
 Proof. by intros w1 lts; dependent induction w1; eauto with mdb. Qed.
 
-Definition wt_set_mu
+(* Definition wt_set_mu
   `{FiniteImagegLts P A} (p : P)
   (μ : A) (s : trace A) (hcnv : p ⇓ μ :: s) : gset P :=
   let ht := cnv_terminate p (μ :: s) hcnv in
@@ -220,9 +220,9 @@ Definition wt_set_mu
                     let ts := @enum (dsig (fun q => (`r) ⟹ q)) _ (wt_set_nil_fin (`r) htr) in
                     list_to_set (map (fun t => (`t)) ts)
              ) (f (`t))
-    ) ps0.
+    ) ps0. *)
 
-Lemma wt_set_mu_spec1 `{FiniteImagegLts P A}
+(* Lemma wt_set_mu_spec1 `{FiniteImagegLts P A}
   (p q : P) (μ : A) (s : trace A) (hcnv : p ⇓ μ :: s) :
   q ∈ wt_set_mu p μ s hcnv -> p ⟹{μ} q.
 Proof.
@@ -249,18 +249,18 @@ Proof.
   eapply list_elem_of_fmap. exists (dexist p1 hlts). split. reflexivity. eapply elem_of_enum.
   eapply elem_of_list_to_set, list_elem_of_fmap.
   exists (dexist q hw2). split. reflexivity. eapply elem_of_enum.
-Qed.
+Qed. *)
 
-Lemma wt_mu_set_dec `{FiniteImagegLts P A} p μ s (hcnv : p ⇓ μ :: s) : 
+(* Lemma wt_mu_set_dec `{gLts P A} p μ s (hcnv : p ⇓ μ :: s) : 
     forall q, Decision (p ⟹{μ} q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set_mu p μ s hcnv)).
   - left. eapply  (wt_set_mu_spec1 p q μ s hcnv e).
   - right. intro wt. eapply n. now eapply wt_set_mu_spec2.
-Qed.
+Qed. *)
 
-Lemma wt_mu_set_fin_aux `{FiniteImagegLts P A}
+(* Lemma wt_mu_set_fin_aux `{FiniteImagegLts P A}
   (p : P) μ s (hcnv : p ⇓ μ :: s) (d : ∀ q, Decision (p ⟹{μ} q)) : 
     Finite (dsig (fun q => p ⟹{μ} q)).
 Proof.
@@ -268,13 +268,13 @@ Proof.
   eapply (in_list_finite (elements (wt_set_mu p μ s hcnv))).
   intros q Htrans%bool_decide_unpack.
   now eapply elem_of_elements, wt_set_mu_spec2.
-Qed.
+Qed. *)
 
-Definition wt_set_mu_fin `{FiniteImagegLts P A}
+(* Definition wt_set_mu_fin `{FiniteImagegLts P A}
   (p : P) μ s (hcnv : p ⇓ μ :: s) : Finite (dsig (fun q => p ⟹{μ} q)) :=
-  wt_mu_set_fin_aux p μ s hcnv (wt_mu_set_dec p μ s hcnv).
+  wt_mu_set_fin_aux p μ s hcnv (wt_mu_set_dec p μ s hcnv). *)
 
-Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : cnv p s) : gset P :=
+(* Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : cnv p s) : gset P :=
   match s as s0 return cnv p s0 -> gset P with
   | [] =>
       fun _ => wt_set_nil p (cnv_terminate p _ hcnv)
@@ -285,9 +285,9 @@ Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : cnv p s) : 
                  let hcnv := cnv_preserved_by_wt_act s' p μ f (`t) (proj2_dsig t) in
                  wt_set (`t) s' hcnv
           ) ts
-  end hcnv.
+  end hcnv. *)
 
-Lemma wt_set_spec1 `{FiniteImagegLts P A}
+(* Lemma wt_set_spec1 `{FiniteImagegLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
   q ∈ wt_set p s hcnv -> p ⟹[s] q.
 Proof.
@@ -297,9 +297,9 @@ Proof.
     eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
     eapply wt_push_left. eapply bool_decide_unpack. eassumption.
     eapply IHs. eassumption.
-Defined.
+Defined. *)
 
-Lemma wt_set_spec2 `{FiniteImagegLts P A}
+(* Lemma wt_set_spec2 `{FiniteImagegLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
   p ⟹[s] q -> q ∈ wt_set p s hcnv.
 Proof.
@@ -312,18 +312,18 @@ Proof.
     + eapply list_elem_of_fmap.
       exists (dexist t w1). now split; [|eapply elem_of_enum].
     + now eapply IHs'.
-Defined.
+Defined. *)
 
-Lemma wt_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
+(* Lemma wt_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
     forall q, Decision (p ⟹[s] q).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_set p s hcnv)).
   - left. eapply  (wt_set_spec1 p q s hcnv e).
   - right. intro wt. eapply n. now eapply wt_set_spec2.
-Qed.
+Qed. *)
 
-Lemma wt_set_fin_aux `{FiniteImagegLts P A}
+(* Lemma wt_set_fin_aux `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q)) : 
     Finite (dsig (fun q => p ⟹[s] q)).
 Proof.
@@ -331,22 +331,22 @@ Proof.
   eapply (in_list_finite (elements (wt_set p s hcnv))).
   intros q Htrans%bool_decide_unpack.
   now eapply elem_of_elements, wt_set_spec2.
-Qed.
+Qed. *)
 
-Definition wt_set_fin `{FiniteImagegLts P A}
+(* Definition wt_set_fin `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q)) :=
-  wt_set_fin_aux p s hcnv (wt_set_dec p s hcnv).
+  wt_set_fin_aux p s hcnv (wt_set_dec p s hcnv). *)
 
-Fixpoint wt_nil_refuses_set `{FiniteImagegLts P A} (p : P) (ht : p ⤓) : gset P :=
+(* Fixpoint wt_nil_refuses_set `{FiniteImagegLts P A} (p : P) (ht : p ⤓) : gset P :=
   match lts_refuses_decidable p τ with
   | left  _ => {[ p ]}
   | right _ =>
       let '(tstep _ f) := ht in
       let k p := wt_nil_refuses_set (`p) (f (`p) (proj2_dsig p)) in
       ⋃ map k (enum (dsig (fun q => p ⟶ q)))
-  end.
+  end. *)
 
-Lemma wt_nil_refuses_set_spec1 `{FiniteImagegLts P A}
+(* Lemma wt_nil_refuses_set_spec1 `{FiniteImagegLts P A}
   (p q : P) (ht : p ⤓) :
   q ∈ wt_nil_refuses_set p ht -> p ⟹ q /\ q ↛.
 Proof.
@@ -361,9 +361,9 @@ Proof.
     edestruct (H2 t). now eapply bool_decide_unpack. eassumption.
     split; eauto with mdb. eapply wt_tau. eapply bool_decide_unpack.
     eassumption. eassumption.
-Qed.
+Qed. *)
 
-Lemma wt_nil_refuses_set_spec2 `{FiniteImagegLts P A}
+(* Lemma wt_nil_refuses_set_spec2 `{FiniteImagegLts P A}
   (p q : P) (ht : p ⤓) :
   (p ⟹ q /\ q ↛) -> q ∈ wt_nil_refuses_set p ht.
 Proof.
@@ -374,18 +374,18 @@ Proof.
     + eapply elem_of_union_list.
       eexists. split. eapply list_elem_of_fmap.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
-Qed.
+Qed. *)
 
-Lemma wt_nil_refuses_set_dec `{FiniteImagegLts P A} p (ht : p ⤓) : 
+(* Lemma wt_nil_refuses_set_dec `{FiniteImagegLts P A} p (ht : p ⤓) : 
   forall q, Decision (p ⟹ q /\ q ↛).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_nil_refuses_set p ht)).
   - left. eapply (wt_nil_refuses_set_spec1 p q ht e).
   - right. intro wt. eapply n. now eapply wt_nil_refuses_set_spec2.
-Qed.
+Qed. *)
 
-Lemma wt_nil_refuses_set_fin_aux `{FiniteImagegLts P A}
+(* Lemma wt_nil_refuses_set_fin_aux `{FiniteImagegLts P A}
   (p : P) (ht : p ⤓) (d : ∀ q, Decision (p ⟹ q /\ q ↛)) : 
     Finite (dsig (fun q => p ⟹ q /\ q ↛)).
 Proof.
@@ -393,22 +393,22 @@ Proof.
   eapply (in_list_finite (elements (wt_nil_refuses_set p ht))).
   intros q Htrans%bool_decide_unpack.
   now eapply elem_of_elements, wt_nil_refuses_set_spec2.
-Qed.
+Qed. *)
 
-Definition wt_nil_refuses_set_fin `{FiniteImagegLts P A}
+(* Definition wt_nil_refuses_set_fin `{FiniteImagegLts P A}
   (p : P) (ht : p ⤓) : Finite (dsig (fun q => p ⟹ q /\ q ↛)) :=
-  wt_nil_refuses_set_fin_aux p ht (wt_nil_refuses_set_dec p ht).
+  wt_nil_refuses_set_fin_aux p ht (wt_nil_refuses_set_dec p ht). *)
 
 Lemma cnv_wt_s_terminate `{gLts P A}
   (p q : P) s (hcnv : p ⇓ s) : p ⟹[s] q -> q ⤓.
 Proof. eapply cnv_iff_prefix_terminate; eauto. Qed.
 
-Definition wt_refuses_set `{FiniteImagegLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
+(* Definition wt_refuses_set `{FiniteImagegLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
   let ps := @enum (dsig (fun q => p ⟹[s] q)) _ (wt_set_fin p s hcnv) in
   let k t := wt_nil_refuses_set (`t) (cnv_wt_s_terminate p (`t) s hcnv (proj2_dsig t)) in
   ⋃ map k ps.
-
-Lemma wt_refuses_set_spec1 `{FiniteImagegLts P A}
+ *)
+(* Lemma wt_refuses_set_spec1 `{FiniteImagegLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
   q ∈ wt_refuses_set p s hcnv -> p ⟹[s] q /\ q ↛.
 Proof.
@@ -419,9 +419,9 @@ Proof.
   eapply wt_nil_refuses_set_spec1 in mem2.
   split. eapply wt_push_nil_right. eapply bool_decide_unpack. eassumption. firstorder.
   firstorder.
-Qed.
+Qed. *)
 
-Lemma wt_refuses_set_spec2 `{FiniteImagegLts P A}
+(* Lemma wt_refuses_set_spec2 `{FiniteImagegLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
   (p ⟹[s] q /\ q ↛) -> q ∈ wt_refuses_set p s hcnv.
 Proof.
@@ -430,9 +430,9 @@ Proof.
   eexists. split. eapply list_elem_of_fmap.
   exists (dexist q hw). split. reflexivity. eapply elem_of_enum.
   simpl. eapply wt_nil_refuses_set_spec2. eauto with mdb.
-Qed.
+Qed. *)
 
-Lemma wt_refuses_set_fin_aux `{FiniteImagegLts P A}
+(* Lemma wt_refuses_set_fin_aux `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q /\ q ↛)) : 
   Finite (dsig (fun q => p ⟹[s] q /\ q ↛)).
 Proof.
@@ -441,22 +441,22 @@ Proof.
   intros q Htrans%bool_decide_unpack.
   now eapply elem_of_elements, wt_refuses_set_spec2.
 Qed.
+ *)
 
-
-Lemma wt_refuses_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
+(* Lemma wt_refuses_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
   forall q, Decision (p ⟹[s] q /\ q ↛).
 Proof.
   intro q.
   destruct (decide (q ∈ wt_refuses_set p s hcnv)).
   - left. eapply (wt_refuses_set_spec1 p q s hcnv e).
   - right. intro wt. eapply n. now eapply wt_refuses_set_spec2.
-Qed.
+Qed. *)
 
-Definition wt_refuses_set_fin `{FiniteImagegLts P A}
+(* Definition wt_refuses_set_fin `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)) :=
-  wt_refuses_set_fin_aux p s hcnv (wt_refuses_set_dec p s hcnv).
+  wt_refuses_set_fin_aux p s hcnv (wt_refuses_set_dec p s hcnv). *)
 
-Lemma wt_nil_set_refuses `{FiniteImagegLts P A} p hcnv :
+(* Lemma wt_nil_set_refuses `{FiniteImagegLts P A} p hcnv :
   lts_refuses p τ -> wt_set p [] hcnv = {[ p ]}.
 Proof.
   intros hst.
@@ -469,9 +469,9 @@ Proof.
     + exfalso. eapply lts_refuses_spec2; eauto.
   - intro mem. eapply wt_set_spec2. replace q with p.
     eauto with mdb. set_solver.
-Qed.
+Qed. *)
 
-Lemma wt_refuses_set_refuses_singleton `{FiniteImagegLts P A} p hcnv :
+(* Lemma wt_refuses_set_refuses_singleton `{FiniteImagegLts P A} p hcnv :
   lts_refuses p τ -> wt_refuses_set p [] hcnv = {[ p ]}.
 Proof.
   intro hst.
@@ -481,9 +481,9 @@ Proof.
     inversion w; subst. set_solver. exfalso. eapply lts_refuses_spec2; eauto.
   - eapply elem_of_singleton_1 in mem. subst.
     eapply wt_refuses_set_spec2. split; eauto with mdb.
-Qed.
+Qed. *)
 
-Fixpoint wt_s_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
+(* Fixpoint wt_s_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
   (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
   match ps as ps0 return (forall p, p ∈ ps0 -> p ⇓ s) -> gset P with
   | [] => fun _ => ∅
@@ -494,20 +494,20 @@ Fixpoint wt_s_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
         let ha' := fun q mem => ha q (list_elem_of_further q p ps' mem) in
         ys ∪ wt_s_set_from_pset_xs ps' s ha'
   end hcnv.
-
-Definition wt_set_from_pset_spec1_xs `{FiniteImagegLts P A}
+ *)
+Definition wt_set_from_pset_spec1_xs `{CountablegLts P A}
   (ps : list P) (s : trace A) (qs : gset P) :=
   forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹[s] q.
 
-Definition wt_set_from_pset_spec2_xs `{FiniteImagegLts P A}
+Definition wt_set_from_pset_spec2_xs `{CountablegLts P A}
   (ps : list P) (s : trace A) (qs : gset P) :=
   forall p q, p ∈ ps -> p ⟹[s] q -> q ∈ qs.
 
-Definition wt_set_from_pset_spec_xs `{FiniteImagegLts P A}
+Definition wt_set_from_pset_spec_xs `{CountablegLts P A}
   (ps : list P) (s : trace A) (qs : gset P) :=
   wt_set_from_pset_spec1_xs ps s qs /\ wt_set_from_pset_spec2_xs ps s qs.
 
-Lemma wt_s_set_from_pset_xs_ispec `{gLts P A, !FiniteImagegLts P A}
+(* Lemma wt_s_set_from_pset_xs_ispec `{gLts P A, !FiniteImagegLts P A}
   (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   wt_set_from_pset_spec_xs ps s (wt_s_set_from_pset_xs ps s hcnv).
 Proof.
@@ -527,9 +527,9 @@ Proof.
       inversion mem; subst.
       ++ left. eapply wt_set_spec2; eauto.
       ++ right. eapply IHps in hwp'; eauto.
-Qed.
+Qed. *)
 
-Lemma lift_cnv_elements `{gLts P A, !FiniteImagegLts P A}
+Lemma lift_cnv_elements `{gLts P A, !CountablegLts P A}
   (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   forall p, p ∈ (elements ps) -> p ⇓ s.
 Proof.
@@ -537,23 +537,23 @@ Proof.
   eapply hcnv. now eapply elem_of_elements.
 Qed.
 
-Definition wt_s_set_from_pset `{gLts P A, !FiniteImagegLts P A}
+(* Definition wt_s_set_from_pset `{gLts P A, !FiniteImagegLts P A}
   (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
-  wt_s_set_from_pset_xs (elements ps) s (lift_cnv_elements ps s hcnv).
+  wt_s_set_from_pset_xs (elements ps) s (lift_cnv_elements ps s hcnv). *)
 
 Definition wt_set_from_pset_spec1 `{Countable P, gLts P A}
   (ps : gset P) (s : trace A) (qs : gset P) :=
   forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹[s] q.
 
-Definition wt_set_from_pset_spec2 `{FiniteImagegLts P A}
+Definition wt_set_from_pset_spec2 `{CountablegLts P A}
   (ps : gset P) (s : trace A) (qs : gset P) :=
   forall p q, p ∈ ps -> p ⟹[s] q -> q ∈ qs.
 
-Definition wt_set_from_pset_spec `{FiniteImagegLts P A}
+Definition wt_set_from_pset_spec `{CountablegLts P A}
   (ps : gset P) (s : trace A) (qs : gset P) :=
   wt_set_from_pset_spec1 ps s qs /\ wt_set_from_pset_spec2 ps s qs.
 
-Lemma wt_s_set_from_pset_ispec `{gLts P A, !FiniteImagegLts P A}
+(* Lemma wt_s_set_from_pset_ispec `{gLts P A, !FiniteImagegLts P A}
   (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) :
   wt_set_from_pset_spec ps s (wt_s_set_from_pset ps s hcnv).
 Proof.
@@ -564,21 +564,21 @@ Proof.
   - intros p q mem hwp.
     eapply wt_s_set_from_pset_xs_ispec.
     eapply elem_of_elements; eassumption. eassumption.
-Qed.
+Qed. *)
 
-Definition eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A} (X Y : gset P) :=
+Definition eq_rel_set `{gLtsEq P A} `{!CountablegLts P A} (X Y : gset P) :=
  (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
  (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
 
-Global Instance symmetric_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+Global Instance symmetric_eq_rel_set `{gLtsEq P A} `{!CountablegLts P A}:
  Symmetric eq_rel_set.
 Proof. intros x y. unfold eq_rel_set. intuition. Qed.
 
-Global Instance reflexive_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+Global Instance reflexive_eq_rel_set `{gLtsEq P A} `{!CountablegLts P A}:
  Reflexive eq_rel_set.
 Proof. intro X; split; intros x Hx; exists x; intuition. reflexivity. reflexivity. Qed.
 
-Global Instance equiv_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+Global Instance equiv_eq_rel_set `{gLtsEq P A} `{!CountablegLts P A}:
  Proper ((≡) ==> (≡) ==> (impl)) eq_rel_set.
 Proof.
 intros X X' HX Y Y' HY Heq. split; intros x Hx.
@@ -587,7 +587,7 @@ intros X X' HX Y Y' HY Heq. split; intros x Hx.
 Qed.
 
 Global Instance proper_singleton_elem_eq_rel_set
-  `{gLtsEq P A} `{!FiniteImagegLts P A}:
+  `{gLtsEq P A} `{!CountablegLts P A}:
   Proper ((eq_rel) ==> (eq_rel_set)) singleton.
 Proof.
   intros x y Hx. split; intros x' Hx'%elem_of_singleton;
@@ -595,7 +595,7 @@ Proof.
   now symmetry.
 Qed.
 
-Global Instance eq_rel_set_union `{gLtsEq P A} `{!FiniteImagegLts P A}:
+Global Instance eq_rel_set_union `{gLtsEq P A} `{!CountablegLts P A}:
   Proper ((eq_rel_set) ==> (eq_rel_set) ==> (eq_rel_set)) union.
 Proof.
 intros X X' HX Y Y' HY.
@@ -603,7 +603,7 @@ split; setoid_rewrite elem_of_union; intros x [Hx|Hx];
  (apply HX in Hx || apply HY in Hx); destruct Hx as (y & Hy & Heq); eauto.
 Qed.
 
-Lemma wt_set_from_pset_spec_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
+(* Lemma wt_set_from_pset_spec_eq_rel_set `{gLtsEq P A} `{!CountablegLts P A}:
   forall {X X' s Y}, eq_rel_set X X' -> (∀ p : P, p ∈ X → p ⇓ s) ->
   wt_set_from_pset_spec X s Y
   -> exists Y', eq_rel_set Y Y' ∧ wt_set_from_pset_spec X' s Y'.
@@ -623,9 +623,9 @@ Proof.
     apply HXX' in Hin as (x' & Hx' & Heq').
     eapply eq_spec_wt in Hp as (y & Hy & Heq''); [|exact Heq'].
     exists y; split; trivial. eapply Hwt; eauto. now symmetry.
-Qed.
+Qed. *)
 
-Lemma wt_set_union `{FiniteImagegLts P A} (X1 X2 : gset P) (s : trace A) {ps}
+(* Lemma wt_set_union `{CountablegLts P A} (X1 X2 : gset P) (s : trace A) {ps}
   (Hcnv : ∀ p : P, p ∈ X1 ∪ X2 → p ⇓ s)
   : wt_set_from_pset_spec (X1 ∪ X2) s ps
     -> exists ps1 ps2, wt_set_from_pset_spec X1 s ps1
@@ -648,7 +648,7 @@ Proof.
     destruct Hin as [Hin | Hin];
     apply wt_s_set_from_pset_ispec in Hin as (p & Hin & Hp);
     eapply Hw2; eauto; set_solver.
-Qed.
+Qed. *)
 
 (* faster than set set_solver *)
 Ltac set_tac :=
@@ -657,7 +657,7 @@ solve[apply elem_of_union_l; set_tac] ||
 assumption ||
 now apply elem_of_singleton_2.
 
-Global Instance Proper_eq_rel_set_l `{gLtsEq P A} `{!FiniteImagegLts P A}:
+Global Instance Proper_eq_rel_set_l `{gLtsEq P A} `{!CountablegLts P A}:
   Proper ((eq_rel) ==> (=) ==> (eq_rel_set)) (fun p X => {[p]} ∪ X).
 Proof.
 intros p p' HX ???; subst. apply eq_rel_set_union; trivial.
@@ -665,7 +665,7 @@ split; setoid_rewrite elem_of_singleton;
 intros x Hx; subst; eexists; split; trivial. now symmetry. reflexivity.
 Qed.
 
-Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !FiniteImagegLts P A} :
+Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !CountablegLts P A} :
     Proper ((≡) ==> (=) ==> (≡) ==> (iff)) wt_set_from_pset_spec.
   Proof.
     intros ps1 ps2 Hps s s' Hs ps1' ps2' Hps'.
@@ -673,7 +673,7 @@ Global Instance Proper_wt_set_from_pset_spec `{gLts P A, !FiniteImagegLts P A} :
     subst. setoid_rewrite Hps. setoid_rewrite Hps'. trivial.
   Qed.
 
-Lemma wt_set_from_pset_spec_unique `{gLtsEq P A} `{!FiniteImagegLts P A} ps s ps' ps'' :
+Lemma wt_set_from_pset_spec_unique `{gLtsEq P A} `{!CountablegLts P A} ps s ps' ps'' :
     wt_set_from_pset_spec ps s ps' ->
     wt_set_from_pset_spec ps s ps'' -> ps' ≡ ps''.
   Proof.

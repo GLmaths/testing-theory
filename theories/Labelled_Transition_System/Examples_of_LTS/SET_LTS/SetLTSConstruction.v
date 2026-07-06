@@ -59,7 +59,7 @@ Next Obligation.
   intros ? ? ? ? nb ; simpl in *. inversion nb.
 Defined. *)
 
-#[global] Program Instance toSET `(gLtsP : !@gLts P A H)`{FiniteP : !@FiniteImagegLts P A H gLtsP} : 
+(* #[global] Program Instance toSET `(gLtsP : !@gLts P A H)`{FiniteP : !@CountablegLts P A H gLtsP} : 
   gLts (gset P) H.
 Next Obligation.
   intros. destruct X.
@@ -695,5 +695,5 @@ Lemma convergence_set_iff_convergence_forall `{gLtsP : @gLts P A H} `{!FiniteIma
   (forall (p : P), p ∈ ps -> p ⇓ s) <-> ps ⇓ s.
 Proof.
   intros; split; [ eapply convergence_set_if_convergence_forall | eapply convergence_forall_if_convergence_set].
-Qed.
+Qed. *)
 

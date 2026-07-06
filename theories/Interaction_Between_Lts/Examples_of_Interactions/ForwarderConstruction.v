@@ -927,7 +927,7 @@ Qed.
 
 (**********************************Forwarder Construction is a Finite Image LTS ************************)
 
-Definition lts_fw_not_non_blocking_action_set `{FiniteImagegLts P A} 
+(* Definition lts_fw_not_non_blocking_action_set `{FiniteImagegLts P A} 
   (p : P) (m : MO A) μ :=
   if (decide (dual μ (co μ) /\ non_blocking (co μ))) 
   then (p, {[+ (co μ) +]} ⊎ m) :: map (fun p => (proj1_sig p, m)) (enum $ dsig (lts_step p (ActExt $ μ)))
@@ -1106,11 +1106,11 @@ Next Obligation.
       intros (p0, m0) h%bool_decide_unpack.
       now eapply lts_fw_tau_set_spec1.
 Qed.
-
+ *)
 (****************** Random properties : TO BE CLASSIFIED ********************)
 From TestingTheory Require Import WeakTransitions.
 
-Lemma fw_wt `{@FiniteImagegLts P A H gLtsP}
+Lemma fw_wt `{@CountablegLts P A H gLtsP}
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
   (t : P) q m:
   t ⟹ q -> (t ▷ m) ⟹ (q ▷ m).
@@ -1125,7 +1125,7 @@ intro Ht. induction Ht.
   + assumption.
 Qed.
 
-Lemma fw_wt_MO_com `{@FiniteImagegLts P A H gLtsP}
+Lemma fw_wt_MO_com `{@CountablegLts P A H gLtsP}
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
   (t : P) a q m:
   non_blocking a -> t ⟹{co a} q -> (t ▷ {[+ a +]} ⊎ m) ⟹ (q ▷ m).
@@ -1142,7 +1142,7 @@ intros nb Ht. dependent induction Ht.
   + now apply fw_wt.
 Qed.
 
-Lemma fw_wt_left `{@FiniteImagegLts P A H gLtsP}
+Lemma fw_wt_left `{@CountablegLts P A H gLtsP}
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
   (t : P) q0 (M : MO A) μ :
   t ⟹{μ} q0 -> (t ▷ M) ⟹{μ} (q0 ▷ M).
