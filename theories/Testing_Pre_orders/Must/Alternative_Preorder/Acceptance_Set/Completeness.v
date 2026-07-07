@@ -989,7 +989,7 @@ Proof.
 Qed.
 
 Lemma wt_acceptance_set_subseteq `{CC : Countable PreAct} `{
-  gLtsP : @gLts P A H, FiniteImagegLts P A,
+  gLtsP : @gLts P A H, !CountablegLts P A,
   FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _}
   μ s p q hacnv1 hacnv2 :
   p ⟹{μ} q ->
