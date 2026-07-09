@@ -39,9 +39,7 @@ Section VCCS_examples.
 
 Context `{VP : VCCS_Parameters}.
 
-Parameter a : Channel.
-Parameter I : Value.
-Parameter (neq : O ≠ I).
+Context {a : Channel} {I : Value} {neq : O ≠ I}.
 
 Definition all_out := g ((cst a ! cst O • 𝟘) + (cst a ! cst I • 𝟘)).
 
@@ -81,38 +79,23 @@ Proof.
 Qed.
 
 Lemma one_out_wt_inv p : one_out ⟹ p -> p = one_out.
-Proof.
-  intros Hyp.
-  inversion Hyp;subst; eauto. inversion l.
-Qed.
+Proof. intros Hyp. inversion Hyp; subst; eauto. lts_inversion lts. Qed.
 
 Lemma all_out_wt_inv p : all_out ⟹ p -> p = all_out.
+Proof. intros Hyp. dependent induction Hyp;subst; eauto. repeat lts_inversion lts. Qed.
+
+Lemma one_out_wt_inv_s b p : one_out ⟹{b} p -> p = g 𝟘.
 Proof.
   intros Hyp.
-  dependent induction Hyp;subst; eauto. inversion l;subst;inversion H3.
+  inversion Hyp;subst; repeat lts_inversion lts.
+  + eapply NIL_wt_to_NIL in w ; subst ; eauto.
 Qed.
 
-Lemma one_out_wt_inv_s a p : one_out ⟹{a} p -> p = g 𝟘.
+Lemma all_out_wt_inv_s b p : all_out ⟹{b} p -> p = g 𝟘.
 Proof.
   intros Hyp.
-  inversion Hyp;subst.
-  + inversion l.
-  + inversion l; subst.
-    eapply NIL_wt_to_NIL in w ; subst ; eauto.
-Qed.
-
-Lemma all_out_wt_inv_s a p : all_out ⟹{a} p -> p = g 𝟘.
-Proof.
-  intros Hyp.
-  inversion Hyp;subst.
-  + inversion l; subst.
-    * inversion H3.
-    * inversion H3.
-  + inversion l; subst.
-    * inversion H3;subst.
-      eapply NIL_wt_to_NIL in w ;subst; eauto.
-    * inversion H3;subst.
-      eapply NIL_wt_to_NIL in w ;subst; eauto.
+  inversion Hyp; subst; repeat lts_inversion lts;
+  eapply NIL_wt_to_NIL in w ;subst; eauto.
 Qed.
 
 Lemma all_out_converges_for_all s : all_out ⇓ s.
@@ -142,12 +125,12 @@ Proof.
   intros H.
   inversion H; subst.
   + left; eauto.
-  + inversion l.
+  + lts_inversion lts.
   + lts_inversion lts.
     inversion w; subst.
     * right. left; eauto.
-    * inversion l.
-    * inversion l.
+    * lts_inversion lts.
+    * lts_inversion lts.
 Qed.
 
 Ltac compute_coR mem :=
@@ -167,7 +150,7 @@ Ltac only_two_cases s q wt_tr H :=
   [ eapply one_out_wt_inv in wt_tr as eq; subst
   | eapply one_out_wt_inv_s in wt_tr as eq; subst ].
 
-Lemma one_output_is_above_all_output_conv : all_out ⊑ₘᵤₛₜᵢ one_out.
+Example one_output_is_above_all_output_conv : all_out ⊑ₘᵤₛₜᵢ one_out.
 Proof.
   apply must_iff_acceptance_set_VCCS_without_toFW.
   split.
@@ -196,9 +179,7 @@ Definition ccat : proc := g (cst a ? (cst a ! (bvar 0) • 𝟘)).
 Definition MyTest := g (cst a ! cst I • ①).
 
 Lemma MyTest_is_not_good : ¬ good_VCCS MyTest.
-Proof.
-  intro imp. inversion imp; subst.
-Qed.
+Proof. intro imp. inversion imp; subst. Qed.
 
 Lemma constant_must_MyTest : const must_pass MyTest.
 Proof.
@@ -235,43 +216,26 @@ Qed.
 Lemma NIL_must_not_pass_MyTest : ¬ ((g 𝟘) must_pass MyTest).
 Proof.
   intro. inversion H.
-  + eapply MyTest_is_not_good; eauto.
-  + destruct ex as ((p',t') & tr_par).
-    inversion tr_par;subst.
-    * inversion l.
-    * inversion l.
-    * inversion l1.
+  - eapply MyTest_is_not_good; eauto.
+  - destruct ex as ((p',t') & tr_par).
+    inversion tr_par;subst; lts_inversion lts.
 Qed.
 
-Lemma NIL_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ g 𝟘.
-Proof.
-  intros Hyp.
-  eapply NIL_must_not_pass_MyTest.
-  eapply Hyp.
-  eapply copycat_must_MyTest.
-Qed.
+Example NIL_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ g 𝟘.
+Proof. intros Hyp. eapply NIL_must_not_pass_MyTest, Hyp, copycat_must_MyTest. Qed.
 
-Lemma NIL_is_not_above_constant : const ⋢ₘᵤₛₜᵢ g 𝟘.
-Proof.
-  intros Hyp.
-  eapply NIL_must_not_pass_MyTest.
-  eapply Hyp.
-  eapply constant_must_MyTest.
-Qed.
+Example NIL_is_not_above_constant : const ⋢ₘᵤₛₜᵢ g 𝟘.
+Proof. intros Hyp. eapply NIL_must_not_pass_MyTest, Hyp, constant_must_MyTest. Qed.
 
 Definition MySynchTest := g (cst a ! cst I • g (cst a ? (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))).
 
 Lemma MySynchTest_is_not_good : ¬ good_VCCS MySynchTest.
-Proof.
-  intro imp. inversion imp; subst.
-Qed.
+Proof. intro imp. inversion imp; subst. Qed.
 
 Lemma MySubTest_is_not_good : ¬ good_VCCS (cst a ? (If bvar 0 == cst O
                                                     Then ① 
                                                     Else 𝟘)).
-Proof.
-  intro imp. inversion imp; subst.
-Qed.
+Proof. intro imp. inversion imp; subst. Qed.
 
 Lemma copycat_must_not_pass_MySynchTest : ¬ ccat must_pass MySynchTest.
 Proof.
@@ -289,8 +253,7 @@ Proof.
                                   Then ① 
                                   Else 𝟘)^(cst I)) as Hyp'.
       { simpl. intro. eapply must_eq_client in H.
-        2 : { eapply cgr_if_false. simpl. rewrite decide_False; eauto.
-              intro H'. eapply neq; subst; eauto. }
+        2 : { eapply cgr_if_false. simpl. rewrite decide_False; eauto. }
       inversion H.
       - inversion H0.
       - inversion ex1. inversion H0;subst.
@@ -323,7 +286,7 @@ Proof.
       - eapply m_now. constructor.
 Qed.
 
-Lemma copycat_is_not_above_const : const ⋢ₘᵤₛₜᵢ ccat.
+Example copycat_is_not_above_const : const ⋢ₘᵤₛₜᵢ ccat.
 Proof.
   intros Hyp.
   eapply copycat_must_not_pass_MySynchTest.
@@ -384,7 +347,7 @@ Proof.
                                   Then ① 
                                   Else 𝟘)^(cst O)) as Hyp'.
       { simpl. intro. eapply must_eq_client in H. 
-        2 : { eapply cgr_if_false. simpl. rewrite decide_False; eauto. exact neq. }
+        2 : { eapply cgr_if_false. simpl. rewrite decide_False; eauto. }
       inversion H.
       - inversion H0.
       - inversion ex1. inversion H0;subst.
@@ -394,7 +357,7 @@ Proof.
       contradiction.
 Qed.
 
-Lemma const_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ const.
+Example const_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ const.
 Proof.
   intros Hyp.
   eapply constant_must_not_pass_MySynchTest2.
@@ -439,7 +402,7 @@ Proof.
     contradiction.
 Qed.
 
-Lemma copycat_is_not_NIL : g 𝟘 ⋢ₘᵤₛₜᵢ ccat.
+Example copycat_is_not_NIL : g 𝟘 ⋢ₘᵤₛₜᵢ ccat.
 Proof.
   intros Hyp.
   eapply copycat_must_not_pass_MySynchTest3.
@@ -462,7 +425,7 @@ Proof.
     contradiction.
 Qed.
 
-Lemma constant_is_not_NIL : g 𝟘 ⋢ₘᵤₛₜᵢ const.
+Example constant_is_not_NIL : g 𝟘 ⋢ₘᵤₛₜᵢ const.
 Proof.
   intros Hyp.
   eapply constant_must_not_pass_MySynchTest3.
@@ -480,15 +443,14 @@ Ltac compute_coR_g mem :=
   simpl; simpl in mem.
 
 
-Parameter P : proc.
-Parameter Q : proc.
+Context {P : proc} {Q : proc}.
 
 Definition mem_outside := ν (g (bvar 0 ! cst I • 𝟘) ‖ g (cst a ? (If (bvar 0 == cst O) Then P Else Q))).
 
 Definition mem_inside := g (cst a ? (If (bvar 0 == cst O) Then (ν ((bvar 0 ! cst I • 𝟘) ‖ P)) 
                                                          Else (ν ((bvar 0 ! cst I • 𝟘) ‖ Q)))).
 
-Lemma mem_outside_is_above_mem_inside : mem_inside ⊑ₘᵤₛₜᵢ mem_outside.
+Example mem_outside_is_above_mem_inside : mem_inside ⊑ₘᵤₛₜᵢ mem_outside.
 Proof.
   apply must_iff_acceptance_set_VCCS_without_toFW.
   split.
@@ -499,8 +461,8 @@ Proof.
       - intros. inversion H2;subst.
         ++ repeat lts_inversion lts.
         ++ repeat lts_inversion lts.
-           ** destruct μ; destruct a0; destruct c; simpl in *; inversion H7.
-           ** destruct μ; destruct a0; destruct c; simpl in *; inversion H6;subst.
+           ** destruct μ, a0, c; discriminate.
+           ** destruct μ, a0, c; try discriminate. simpl in *; inversion H6; subst.
               case_eq (Eval_Eq (v0 == cst O)).
               -- intros. destruct v0.
                  +++ destruct (decide (v = O)).
@@ -555,17 +517,15 @@ Proof.
                  +++ simpl in H3. inversion H3.
               -- intros. destruct v0.
                  +++ destruct (decide (v = O)).
-                     *** subst. simpl in *. rewrite decide_True in H3;eauto. inversion H3;subst.
-                     *** subst. simpl in *. rewrite decide_False in H3;eauto. inversion H3;subst.
+                     *** subst. simpl in *. rewrite decide_True in H3;eauto. discriminate.
+                     *** subst. simpl in *. rewrite decide_False in H3;eauto. discriminate.
                  +++ simpl in *. inversion w;subst.
                      *** destruct s.
                          --- constructor. constructor. intros. repeat lts_inversion lts.
                          --- constructor.
                              ++++ constructor. intros. repeat lts_inversion lts.
-                             ++++ intros. inversion H4; subst.
-                                  **** repeat lts_inversion lts.
-                                  **** repeat lts_inversion lts. 
-                                       destruct e; destruct a0; destruct c; simpl in *; inversion H10.
+                             ++++ intros. inversion H4; subst; repeat lts_inversion lts.
+                                  destruct e, a0, c; simpl in *; discriminate.
                      *** repeat lts_inversion lts.
   + intros s q' conv wk_tr stable.
     inversion wk_tr;subst.
@@ -574,8 +534,8 @@ Proof.
       - intros i mem. (compute_coR_g mem). set_solver.
     * inversion l. subst. repeat lts_inversion lts.
     * repeat lts_inversion lts.
-      - destruct μ; destruct a0; destruct c; inversion H.
-      - destruct μ; destruct a0; destruct c; inversion H;subst.
+      - destruct μ, a0, c; discriminate.
+      - destruct μ, a0, c; inversion H; subst.
         destruct v0.
         ++ destruct (decide(v = O)).
            ** subst. assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If cst O == cst O
@@ -611,14 +571,14 @@ Proof.
        ++ inversion w;subst.
           -- inversion w;subst.
              ** exists ((If bvar 0 == cst O
-                                             Then ν ((bvar 0 ! cst I • 𝟘) ‖ P)
-                                             Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q)) ^ bvar n).
+                         Then ν ((bvar 0 ! cst I • 𝟘) ‖ P)
+                         Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q)) ^ bvar n).
                 repeat split.
                 +++ eapply lts_to_wt. simpl. constructor.
                 +++ simpl. intros i mem. compute_coR_g mem. inversion mem.
              ** repeat lts_inversion lts.
           -- repeat lts_inversion lts.
-          -- repeat lts_inversion lts. destruct μ; destruct a0; destruct c;simpl in *; inversion H4.
+          -- repeat lts_inversion lts. destruct μ, a0, c; discriminate.
 Qed.
 
 Lemma mem_inside_is_above_mem_outside : mem_outside ⊑ₘᵤₛₜᵢ mem_inside.
@@ -638,6 +598,6 @@ Proof.
     * admit.
     * admit.
     * admit.
-Admitted.
+Abort.
 
 End VCCS_examples.

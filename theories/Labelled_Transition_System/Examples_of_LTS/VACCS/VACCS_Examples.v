@@ -30,7 +30,7 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Characterization
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
-Convergence WeakTransitions Subset_Act MultisetLTSConstruction.
+Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination.
 
 (** ** VACCS **)
 (** *** Applications *)
@@ -40,16 +40,13 @@ Section VACCS_examples.
 Context `{VP : VACCS_Parameters}.
 
 (* We assume that there is at least one channel and two values *)
-Parameter a : Channel.
-Parameter O : Value.
-Parameter I : Value.
-Parameter (neq : O ≠ I).
+Context {a : Channel} {O : Value} {I : Value} {neq : O ≠ I}.
 
 Definition const : proc := cst a ? (cst a ! cst O • 𝟘).
 
 Definition ccat : proc := cst a ? (cst a ! (bvar 0) • 𝟘).
 
-Lemma copycat_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ ccat.
+Example copycat_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros e Hyp.
   dependent induction Hyp.
@@ -57,11 +54,11 @@ Proof.
   - clear H2.
     eapply m_step; eauto.
     + inversion ex; subst. inversion H; subst.
-      * inversion l.
+      * lts_inversion lts.
       * exists (ccat ▷ b2). eapply ParRight. eauto.
       * inversion l1.
     + intros. eauto. inversion H.
-    + intros. destruct μ1 as [ (*Input*) a | (*Output*) a ].
+    + intros. destruct μ1 as [ (*Input*) b | (*Output*) b ].
       * inversion H2. subst. simpl in *.
         eapply simplify_match_input in H. subst.
         destruct (decide (good_VACCS t')).
@@ -79,7 +76,7 @@ Proof.
                       exists ((g 𝟘) ▷ t''). eapply ParSync; eauto.
                      simpl; eauto.
               ** inversion l1.
-           ++ intros. inversion H.
+           ++ intros. lts_inversion lts.
            ++ intros. unfold lts_step in H2; simpl in *.
               destruct (decide (good_VACCS t'0)) as [happy | not_happy].
               ** now eapply m_now.
@@ -97,10 +94,10 @@ Proof.
               eapply simplify_match_output in H. subst. 
               eapply OBA_with_FB_Fourth_Axiom in H3 as (e'1 & HypTr'1 & equiv1); eauto.
               eapply (@must_eq_client proc); eauto.
-      * inversion H2.
+      * lts_inversion lts.
 Qed.
 
-Lemma NIL_is_above_copycat : ccat ⊑ₘᵤₛₜᵢ (g 𝟘).
+Example NIL_is_above_copycat : ccat ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros t Hyp.
   assert (must ccat t) as Mq; eauto.
@@ -111,9 +108,9 @@ Proof.
     + eapply m_step.
       * eauto. 
       * exists ((g 𝟘) ▷ b2). eapply ParRight; eauto.
-      * intros. inversion H3.
+      * intros. lts_inversion lts.
       * intros. eapply H0. eauto. eauto. eapply et. eauto.
-      * intros. inversion H4.
+      * intros. lts_inversion lts.
     + inversion l1; subst.
       eapply simplify_match_input in eq. subst.
       assert (must ((cst a ! (bvar 0) • 𝟘) ^ v) b2) as Mq'.
@@ -122,25 +119,25 @@ Proof.
       * assert (good_VACCS t).
         { eapply outcome_preserved_by_lts_non_blocking_action_converse; eauto.
           eexists; eauto. } contradiction.
-      * inversion ex0; subst. inversion H3; subst.
-        -- inversion l.
+      * inversion ex0; subst. lts_inversion lts.
+        -- lts_inversion lts.
         -- eapply (OBA_with_FB_First_Axiom t b2 b0) in l2 
               as (t'' & HypTr'' & p'1 & HypTr'1 & equiv'1); eauto.
            eapply m_step; eauto.
            ++ exists ((g 𝟘) ▷ t''). eapply ParRight. eauto.
-           ++ intros. inversion H4.
-           ++ intros. inversion H5.
+           ++ intros. lts_inversion lts.
+           ++ intros. lts_inversion lts.
         -- inversion l0; subst.
            eapply simplify_match_output in eq. subst.
            eapply OBA_with_FB_Fourth_Axiom in l2 as (t''1 & HypTr''1 & equiv''1) ; eauto.
            eapply (@must_preserved_by_lts_tau_clt proc) in Mq; eauto.
            eapply m_step; eauto.
            ++ exists ((g 𝟘) ▷ t''1). eapply ParRight. eauto.
-           ++ intros. inversion H4.
-           ++ intros. inversion H5.
+           ++ intros. lts_inversion lts.
+           ++ intros. lts_inversion lts.
 Qed.
 
-Lemma copycat_is_above_constant : const ⊑ₘᵤₛₜᵢ ccat.
+Example copycat_is_above_constant : const ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros t HypMust.
   dependent induction HypMust.
@@ -199,7 +196,7 @@ Proof.
         assert (must ccat t'1); eauto. eapply NIL_is_above_copycat. eauto.
 Qed.
 
-Lemma NIL_is_above_constant : const ⊑ₘᵤₛₜᵢ (g 𝟘).
+Example NIL_is_above_constant : const ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros e Hyp. eapply NIL_is_above_copycat. eapply copycat_is_above_constant. exact Hyp.
 Qed.
@@ -207,11 +204,7 @@ Qed.
 Definition Test := (cst a ! cst I • 𝟘) ‖ (cst a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘))).
 
 Lemma this_Test_is_not_good : ¬ good_VACCS Test.
-Proof.
-  intro imp. inversion imp; subst. inversion H0; subst.
-  - inversion H.
-  - inversion H.
-Qed.
+Proof. intro imp. inversion imp; subst. inversion H0; subst; inversion H. Qed.
 
 Lemma NIL_must_this_TEST :  (g 𝟘) must_pass Test.
 Proof.
@@ -220,18 +213,14 @@ Proof.
   - exists (g 𝟘 ▷ (g 𝟘 ‖ ((If (bvar 0 == cst I) Then ① Else (g 𝟘))^(cst I)))).
     eapply ParRight. eapply lts_comL; eauto with cgr.
   - intros ? imp. inversion imp.
-  - intros. inversion H; subst.
-    + inversion H3; subst. simpl. inversion H2; subst.
-      constructor. constructor. right. constructor. constructor. simpl.
-      eapply decide_True; eauto.
-    + inversion H3.
-    + inversion H4.
-    + inversion H4.
-  - intros. inversion H0. 
+  - intros. inversion H; subst; repeat lts_inversion lts.
+    constructor. constructor. right. constructor. constructor. simpl.
+    eapply decide_True; eauto.
+  - intros. lts_inversion lts.
 Qed.
 
 
-Lemma constant_is_not_above_NIL : (g 𝟘) ⋢ₘᵤₛₜᵢ const.
+Example constant_is_not_above_NIL : (g 𝟘) ⋢ₘᵤₛₜᵢ const.
 Proof.
   intro imp.
   assert (must const Test).
@@ -255,17 +244,10 @@ Proof.
          - simpl in H7. rewrite decide_False in H7. inversion H7.
            eapply neq.
          - inversion H5.
-    ++ inversion ex0. inversion H0; subst.
-       * inversion l.
-       * inversion l; subst.
-         - inversion H3.
-         - inversion H4.
-         - inversion H5.
-         - inversion H5; subst. inversion H8. inversion H8.
-       * inversion l1.
+    ++ inversion ex0. repeat lts_inversion lts.
 Qed.
 
-Lemma NIL_is_equivalent_to_ccat : ccat ≂ₘᵤₛₜᵢ (g 𝟘).
+Example NIL_is_equivalent_to_ccat : ccat ≂ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   split.
   + eapply copycat_is_above_NIL.
