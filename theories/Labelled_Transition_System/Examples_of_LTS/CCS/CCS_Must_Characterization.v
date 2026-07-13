@@ -48,13 +48,13 @@ Proof.
 Qed.
 
 Corollary must_iff_tower_co_inductive_acceptance_CCS_without_toFW (p q : proc) :
-  p ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₐₛ {[ q ]}.
+  p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset proc) ᶜᵒ≼ₐₛ ({[ q ]} : gset proc).
 Proof.
   eapply must_iff_co_inductive_acceptance_VCCS_without_toFW.
 Qed.
 
 Corollary must_iff_tower_co_inductive_tower_acceptance_CCS_without_toFW (p q : proc) :
-  p ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₜₒᵥᵥₑᵣ {[ q ]}.
+  p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset proc) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset proc).
 Proof.
   eapply must_iff_tower_co_inductive_tower_acceptance_VCCS_without_toFW.
 Qed.

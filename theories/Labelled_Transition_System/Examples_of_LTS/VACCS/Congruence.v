@@ -415,11 +415,32 @@ Fixpoint sguard (g0 : gproc) (p : proc) := match p with
 | _ => False
 end.
 
-(* congruence is preserved by renamings *)
-Lemma gNewVarC_altcgr g g' : g ≡g g' -> gNewVarC 0 g ≡g gNewVarC 0 g'.
+(* congruence is preserved by renamings (mutual induction with the proc-level statement) *)
+Lemma NewVarC_altcgr_mut :
+  (forall p q, p ≡ₐ q -> forall j, (NewVarC j p) ≡ₐ (NewVarC j q)) /\
+  (forall g1 g2, g1 ≡g g2 -> forall j, (gNewVarC j g1) ≡g (gNewVarC j g2)).
 Proof.
+apply altcgr_mutind; intros; simpl; try solve [constructor; eauto with *].
+- replace (NewVarC (S (S j)) (VarSwap_in_proc 0 p)) with (VarSwap_in_proc 0 (NewVarC (S (S j)) p)).
+  + constructor.
+  + symmetry. replace (S (S j)) with (S (S (j + 0))) by lia.
+    apply NewVarC_and_VarSwap.
+- replace (NewVarC (S (S j)) (VarSwap_in_proc 0 p)) with (VarSwap_in_proc 0 (NewVarC (S (S j)) p)).
+  + constructor.
+  + symmetry. replace (S (S j)) with (S (S (j + 0))) by lia.
+    apply NewVarC_and_VarSwap.
+- replace (NewVarC (S j) (NewVarC 0 q)) with (NewVarC 0 (NewVarC j q)).
+  + constructor.
+  + symmetry. exact (NewVarC_and_NewVarC 0 j q).
+- replace (NewVarC (S j) (NewVarC 0 q)) with (NewVarC 0 (NewVarC j q)).
+  + constructor.
+  + symmetry. exact (NewVarC_and_NewVarC 0 j q).
+- eapply altcgr_trans; eauto.
+- eapply galtcgr_trans; eauto.
+Qed.
 
-Admitted.
+Lemma gNewVarC_altcgr g g' : g ≡g g' -> gNewVarC 0 g ≡g gNewVarC 0 g'.
+Proof. intro H. exact (proj2 NewVarC_altcgr_mut g g' H 0). Qed.
 
 (* 
 Pi-calculus version:
