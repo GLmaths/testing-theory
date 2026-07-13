@@ -56,15 +56,23 @@ Notation "p ⟹⋍[ s ] q" := (wt_sc p s q) (at level 30, format "p  ⟹⋍[ s ]
 
 (** *** Properties on weak transitions in LTSs *)
 
-Lemma wt_pop `{gLts P A} p q μ s : p ⟹[μ :: s] q -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
+(* The trace is kept as a variable and constrained by an equation, so that plain
+   induction applies: [dependent induction] on the non-variable index [μ :: s]
+   would go through [JMeq] and pull in the [Eqdep.Eq_rect_eq] axiom. *)
+Lemma wt_pop_gen `{gLts P A} p q s0 :
+  p ⟹[s0] q -> forall μ s, s0 = μ :: s -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
 Proof.
   intro w.
-  remember ([] : trace A) as s0 eqn:Hnil. revert s0 Hnil.
-  dependent induction w; eauto with mdb; intros; subst.
-  edestruct (IHw μ s) as (r & w1 & w2); eauto.
-  - exists r. eauto with mdb.
-  - exists q. eauto with mdb.
+  induction w as [ p | s0 p r q l w IH | ν s0 p r q l w IH ]; intros μ s Heq.
+  - discriminate.
+  - destruct (IH μ s Heq) as (t & w1 & w2).
+    exists t. split; eauto with mdb.
+  - inversion Heq; subst.
+    exists r. split; eauto with mdb.
 Qed.
+
+Lemma wt_pop `{gLts P A} p q μ s : p ⟹[μ :: s] q -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
+Proof. intro w. eapply wt_pop_gen; eauto. Qed.
 
 Lemma wt_concat `{gLts P A} p q r s1 s2 :
   p ⟹[s1] q -> q ⟹[s2] r -> p ⟹[s1 ++ s2] r.
@@ -90,7 +98,15 @@ Proof.
 Qed.
 
 Lemma wt_push_nil_left `{gLts P A} {p q r s} : p ⟹ q -> q ⟹[s] r -> p ⟹[s] r.
-Proof. by intros w1 w2; dependent induction w1; eauto with mdb. Qed.
+Proof.
+  intros w1 w2.
+  remember ([] : trace A) as s0 eqn:Hs.
+  revert Hs w2.
+  induction w1 as [ x | s1 x y z lt w1 IH | μ s1 x y z lt w1 IH ]; intros Hs w2.
+  - exact w2.
+  - eapply wt_tau; [exact lt | eapply IH; [exact Hs | exact w2]].
+  - discriminate.
+Qed.
 
 Lemma wt_push_nil_right `{gLts P A} p q r s : p ⟹[s] q -> q ⟹ r -> p ⟹[s] r.
 Proof.
@@ -102,16 +118,24 @@ Lemma wt_push_right `{gLts P A} p q r μ s :
   p ⟹[s] q -> q ⟹{μ} r -> p ⟹[s ++ [μ]] r.
 Proof. intros w1 w2. eapply wt_concat; eauto. Qed.
 
-Lemma wt_decomp_one `{gLts P A} {μ p q} : p ⟹{μ} q -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ] r2 ∧ r2 ⟹ q.
+(* Same treatment as [wt_pop]: the trace stays a variable, so no UIP axiom. *)
+Lemma wt_decomp_one_gen `{gLts P A} p q s0 :
+  p ⟹[s0] q -> forall μ, s0 = [μ] -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ] r2 ∧ r2 ⟹ q.
 Proof.
   intro w.
-  dependent induction w; eauto with mdb.
-  destruct (IHw μ) as (r1 & r2 & w1 & l' & w2); [reflexivity|].
-  exists r1, r2. eauto with mdb.
+  induction w as [ p | s0 p r q l w IH | ν s0 p r q l w IH ]; intros μ Heq.
+  - discriminate.
+  - destruct (IH μ Heq) as (r1 & r2 & w1 & l' & w2).
+    exists r1, r2. repeat split; eauto with mdb.
+  - inversion Heq; subst.
+    exists p, r. repeat split; eauto with mdb.
 Qed.
 
+Lemma wt_decomp_one `{gLts P A} {μ p q} : p ⟹{μ} q -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ] r2 ∧ r2 ⟹ q.
+Proof. intro w. eapply wt_decomp_one_gen; eauto. Qed.
+
 Lemma wt_join_nil `{gLts P A} {p q r} : p ⟹ q -> q ⟹ r -> p ⟹ r.
-Proof. intros w1 w2. dependent induction w1; eauto with mdb. Qed.
+Proof. intros w1 w2. eapply wt_push_nil_left; [exact w1 | exact w2]. Qed.
 
 Lemma lts_to_wt `{gLts P A} {p q μ} : p ⟶[μ] q -> p ⟹{μ} q.
 Proof. eauto with mdb. Qed.
@@ -233,19 +257,23 @@ Lemma delay_wt_non_blocking_action_nil `{gLtsOba P A} {p q r η} :
   non_blocking η -> p ⟶⋍[η] q -> q ⟹ r
     -> exists t, p ⟹ t /\ t ⟶⋍[η] r.
 Proof.
+  (* the trace is kept as a variable, constrained by an equation, so that plain
+     induction applies and no UIP axiom is pulled in *)
   intros nb l w.
-  revert p η nb l.
-  remember ([] : trace A) as s.
-  assert (Hnil : s = []) by trivial. revert Hnil. clear Heqs.
-  dependent induction w; intros Heqs p0 η nb (p' & hl & heq); subst; eauto with mdb.
-  - exists p0. split; eauto with mdb. exists p'. split; eauto with mdb.
-  - assert (p' ⟶⋍ q) as (r & hlr & heqr).
-    { eapply eq_spec; eauto. }
+  remember ([] : trace A) as s0 eqn:Hs.
+  revert p η nb l Hs.
+  induction w as [ x | s1 x y z lt w IH | μ s1 x y z lt w IH ];
+    intros p0 η nb (p' & hl & heq) Hs.
+  - exists p0. split; [eapply wt_nil |].
+    exists p'. split; [exact hl | exact heq].
+  - assert (p' ⟶⋍ y) as (r0 & hlr & heqr).
+    { eapply eq_spec. exists x. split; [exact heq | exact lt]. }
     destruct (nb_delay nb hl hlr) as (r' & l1 & (t' & l2 & heqt')).
-    destruct (IHw eq_refl r' η nb) as (r0 & w0 & (r1 & l1' & heq1)).
-    + eexists; split; eauto. etransitivity; eassumption.
-    + exists r0. split. eapply wt_tau; eassumption. exists r1. eauto with mdb.
-  - inversion Heqs.
+    destruct (IH r' η nb
+                (ex_intro _ t' (conj l2 (transitivity heqt' heqr))) Hs)
+      as (r1 & w1 & sc).
+    exists r1. split; [eapply wt_tau; [exact l1 | exact w1] | exact sc].
+  - discriminate.
 Qed.
 
 Lemma delay_wt_non_blocking_action `{gLtsOba P A} {p q r η s} :
