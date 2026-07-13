@@ -472,24 +472,635 @@ revert g g'. induction p; simpl; intuition.
 - eapply galtcgr_trans; eauto.
 Qed.
 
+Lemma NewVar_in_ChannelData_inj k c1 c2 :
+  NewVar_in_ChannelData k c1 = NewVar_in_ChannelData k c2 -> c1 = c2.
+Proof.
+  destruct c1, c2; simpl; intros H.
+  - exact H.
+  - destruct (decide (k < S n)); discriminate.
+  - destruct (decide (k < S n)); discriminate.
+  - destruct (decide (k < S n)); destruct (decide (k < S n0)); injection H as H; f_equal; lia.
+Qed.
+
+Lemma NewVarC_inj p1 : forall k p2, NewVarC k p1 = NewVarC k p2 -> p1 = p2.
+Proof.
+  induction p1 as (p1 & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p1; intros k p2 Heq; destruct p2; simpl in *; try discriminate.
+  + injection Heq as Heq1 Heq2.
+    f_equal.
+    * eapply Hp; [simpl; lia | exact Heq1].
+    * eapply Hp; [simpl; lia | exact Heq2].
+  + injection Heq as Heq.
+    subst.
+    reflexivity.
+  + injection Heq as Heq.
+    f_equal.
+    exact Heq.
+    eapply Hp; [simpl; lia | exact H].
+  + injection Heq as Heq1 Heq2.
+    subst.
+    f_equal.
+    * eapply Hp; [simpl; lia | exact Heq2].
+    * eapply Hp; [simpl; lia | exact H].
+  + injection Heq as Heq1 Heq2.
+    assert (c = c0) as Hc by (eapply NewVar_in_ChannelData_inj; exact Heq1).
+    subst. reflexivity.
+  + injection Heq as Heq.
+    f_equal.
+    eapply Hp; [simpl; lia | exact Heq].
+  + destruct g, g0; simpl in *; try discriminate.
+    * reflexivity.
+    * reflexivity.
+    * injection Heq as Heq1 Heq2.
+      assert (c = c0) as Hc by (eapply NewVar_in_ChannelData_inj; exact Heq1).
+      assert (p = p0) as Hpp by (eapply Hp; [simpl; lia | exact Heq2]).
+      subst.
+      reflexivity.
+    * injection Heq as Heq.
+      f_equal.
+      assert (p = p0) as Hpp by (eapply Hp; [simpl; lia | exact Heq]).
+      subst.
+      reflexivity.
+    * injection Heq as Heq1 Heq2.
+      assert (g g1 = g g0_1) as E1 by (eapply Hp; [simpl; lia | simpl; f_equal; exact Heq1]).
+      assert (g g2 = g g0_2) as E2 by (eapply Hp; [simpl; lia | simpl; f_equal; exact Heq2]).
+      injection E1 as E1.
+      injection E2 as E2.
+      subst.
+      reflexivity.
+Qed.
+
+Corollary gNewVarC_inj k g1 g2 : gNewVarC k g1 = gNewVarC k g2 -> g1 = g2.
+Proof.
+  intro H.
+  assert (g g1 = g g2) as E by (apply (NewVarC_inj (g g1) k (g g2)); simpl; f_equal; exact H).
+  injection E as E.
+  exact E.
+Qed.
+
+Lemma gNewVarC_swap_0_S k g0 : gNewVarC (S k) (gNewVarC 0 g0) = gNewVarC 0 (gNewVarC k g0).
+Proof.
+  pose proof (NewVarC_and_NewVarC 0 k (g g0)) as Heq.
+  simpl in Heq. injection Heq as Heq. exact Heq.
+Qed.
+
+Definition NewVar_in_ChannelData_down (k : nat) (Y : ChannelData) : ChannelData :=
+match Y with
+| cst v => cst v
+| bvar i => if (decide (k < i)) then bvar (Nat.pred i) else bvar i
+end.
+
+Fixpoint NewVarCdown (k : nat) (p : proc) {struct p} : proc :=
+match p with
+| P ‖ Q => (NewVarCdown k P) ‖ (NewVarCdown k Q)
+| pr_var i => pr_var i
+| rec x • P =>  rec x • (NewVarCdown k P)
+| If C Then P Else Q => If C Then (NewVarCdown k P) Else (NewVarCdown k Q)
+| c ! v • 𝟘 => (NewVar_in_ChannelData_down k c) ! v • 𝟘
+| ν P => ν (NewVarCdown (S k) P)
+| g M => gNewVarCdown k M
+end
+
+with gNewVarCdown k M {struct M} : gproc :=
+match M with
+| ① => ①
+| 𝟘 => 𝟘
+| c ? p => (NewVar_in_ChannelData_down k c) ? (NewVarCdown k p)
+| 𝛕 • p => 𝛕 • (NewVarCdown k p)
+| p1 + p2 => (gNewVarCdown k p1) + (gNewVarCdown k p2)
+end.
+
+Lemma NewVar_in_ChannelData_retract k c : NewVar_in_ChannelData_down k (NewVar_in_ChannelData k c) = c.
+Proof.
+  destruct c; simpl; auto.
+  destruct (decide (k < S n)).
+  - simpl. destruct (decide (k < S n)); [f_equal; lia | lia].
+  - simpl. destruct (decide (k < n)); [lia | reflexivity].
+Qed.
+
+Lemma NewVarC_retract p : forall k, NewVarCdown k (NewVarC k p) = p.
+Proof.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; intros k; simpl.
+  + assert (NewVarCdown k (NewVarC k p1) = p1) as H1 by (apply Hp; simpl; lia).
+    assert (NewVarCdown k (NewVarC k p2) = p2) as H2 by (apply Hp; simpl; lia).
+    rewrite H1, H2. reflexivity.
+  + reflexivity.
+  + assert (NewVarCdown k (NewVarC k p) = p) as H1 by (apply Hp; simpl; lia).
+    rewrite H1. reflexivity.
+  + assert (NewVarCdown k (NewVarC k p1) = p1) as H1 by (apply Hp; simpl; lia).
+    assert (NewVarCdown k (NewVarC k p2) = p2) as H2 by (apply Hp; simpl; lia).
+    rewrite H1, H2. reflexivity.
+  + assert (NewVar_in_ChannelData_down k (NewVar_in_ChannelData k c) = c) as Hc by (apply NewVar_in_ChannelData_retract).
+    rewrite Hc. reflexivity.
+  + assert (NewVarCdown (S k) (NewVarC (S k) p) = p) as H1 by (apply Hp; simpl; lia).
+    rewrite H1. reflexivity.
+  + destruct g; simpl; try reflexivity.
+    * assert (NewVar_in_ChannelData_down k (NewVar_in_ChannelData k c) = c) as Hc by (apply NewVar_in_ChannelData_retract).
+      assert (NewVarCdown k (NewVarC k p) = p) as Hpp by (apply Hp; simpl; lia).
+      rewrite Hc, Hpp. reflexivity.
+    * assert (NewVarCdown k (NewVarC k p) = p) as Hpp by (apply Hp; simpl; lia).
+      rewrite Hpp. reflexivity.
+    * assert (NewVarCdown k (NewVarC k (g g1)) = g g1) as H1 by (apply Hp; simpl; lia).
+      assert (NewVarCdown k (NewVarC k (g g2)) = g g2) as H2 by (apply Hp; simpl; lia).
+      simpl in H1, H2. injection H1 as H1. injection H2 as H2.
+      rewrite H1, H2. reflexivity.
+Qed.
+
+Corollary gNewVarC_retract k g0 : gNewVarCdown k (gNewVarC k g0) = g0.
+Proof.
+  assert (NewVarCdown k (NewVarC k (g g0)) = g g0) as H by (apply NewVarC_retract).
+  simpl in H. injection H as H. exact H.
+Qed.
+
+Lemma NewVar_in_ChannelData_and_VarSwap_in_ChannelData_le i k0 c : i <= k0 ->
+  VarSwap_in_ChannelData (S k0) (NewVar_in_ChannelData i c) = NewVar_in_ChannelData i (VarSwap_in_ChannelData k0 c).
+Proof.
+  intro Hle.
+  destruct c; simpl; auto.
+  destruct (decide (i < S n)).
+  - simpl.
+    destruct (decide (n = k0)).
+    + subst.
+      destruct (decide (S k0 = S k0)); try lia.
+      simpl.
+      destruct (decide (i < S (S k0))); [f_equal; lia | lia].
+    + destruct (decide (n = S k0)).
+      * subst.
+        destruct (decide (S (S k0) = S k0)); try lia.
+        destruct (decide (S (S k0) = S (S k0))); try lia.
+        simpl.
+        destruct (decide (i < S k0)); [f_equal; lia | lia].
+      * destruct (decide (S n = S k0)); try lia.
+        destruct (decide (S n = S (S k0))); try lia.
+        simpl.
+        destruct (decide (i < S n)); [f_equal; lia | lia].
+  - simpl.
+    destruct (decide (n = S k0)); try lia.
+    destruct (decide (n = S (S k0))); try lia.
+    destruct (decide (n = k0)); try lia.
+    simpl.
+    destruct (decide (i < S n)); [lia | reflexivity].
+Qed.
+
+Lemma NewVarC_and_VarSwap_le p : forall i k0, i <= k0 ->
+  VarSwap_in_proc (S k0) (NewVarC i p) = NewVarC i (VarSwap_in_proc k0 p).
+Proof.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; intros i k0 Hle; simpl.
+  + assert (VarSwap_in_proc (S k0) (NewVarC i p1) = NewVarC i (VarSwap_in_proc k0 p1)) as eq1.
+    { apply Hp; [simpl; lia | lia]. }
+    assert (VarSwap_in_proc (S k0) (NewVarC i p2) = NewVarC i (VarSwap_in_proc k0 p2)) as eq2.
+    { apply Hp; [simpl; lia | lia]. }
+    rewrite eq1, eq2. reflexivity.
+  + reflexivity.
+  + assert (VarSwap_in_proc (S k0) (NewVarC i p) = NewVarC i (VarSwap_in_proc k0 p)) as eq.
+    { apply Hp; [simpl; lia | lia]. }
+    rewrite eq. reflexivity.
+  + assert (VarSwap_in_proc (S k0) (NewVarC i p1) = NewVarC i (VarSwap_in_proc k0 p1)) as eq1.
+    { apply Hp; [simpl; lia | lia]. }
+    assert (VarSwap_in_proc (S k0) (NewVarC i p2) = NewVarC i (VarSwap_in_proc k0 p2)) as eq2.
+    { apply Hp; [simpl; lia | lia]. }
+    rewrite eq1, eq2. reflexivity.
+  + rewrite NewVar_in_ChannelData_and_VarSwap_in_ChannelData_le; auto.
+  + assert (VarSwap_in_proc (S (S k0)) (NewVarC (S i) p) = NewVarC (S i) (VarSwap_in_proc (S k0) p)) as eq.
+    { apply Hp; [simpl; lia | lia]. }
+    rewrite eq. reflexivity.
+  + destruct g; simpl.
+    * reflexivity.
+    * reflexivity.
+    * rewrite NewVar_in_ChannelData_and_VarSwap_in_ChannelData_le; auto.
+      assert (VarSwap_in_proc (S k0) (NewVarC i p) = NewVarC i (VarSwap_in_proc k0 p)) as eq.
+      { apply Hp; [simpl; lia | lia]. }
+      rewrite eq. reflexivity.
+    * assert (VarSwap_in_proc (S k0) (NewVarC i p) = NewVarC i (VarSwap_in_proc k0 p)) as eq.
+      { apply Hp; [simpl; lia | lia]. }
+      rewrite eq. reflexivity.
+    * assert (VarSwap_in_proc (S k0) (NewVarC i (g g1)) = NewVarC i (VarSwap_in_proc k0 (g g1))) as eq1.
+      { apply Hp; [simpl; lia | lia]. } inversion eq1.
+      assert (VarSwap_in_proc (S k0) (NewVarC i (g g2)) = NewVarC i (VarSwap_in_proc k0 (g g2))) as eq2.
+      { apply Hp; [simpl; lia | lia]. } inversion eq2.
+      rewrite H0, H1. reflexivity.
+Qed.
+
+Corollary gVarSwap_and_gNewVarC0 k0 g1 :
+  gVarSwap_in_proc (S k0) (gNewVarC 0 g1) = gNewVarC 0 (gVarSwap_in_proc k0 g1).
+Proof.
+  assert (VarSwap_in_proc (S k0) (NewVarC 0 (g g1)) = NewVarC 0 (VarSwap_in_proc k0 (g g1))) as H.
+  { apply NewVarC_and_VarSwap_le. lia. }
+  simpl in H. injection H as H. exact H.
+Qed.
+
+Lemma VarSwap_in_ChannelData_disjoint j k0 c :
+  VarSwap_in_ChannelData j (VarSwap_in_ChannelData (S (S (j+k0))) c) = VarSwap_in_ChannelData (S (S (j+k0))) (VarSwap_in_ChannelData j c).
+Proof.
+destruct c; simpl; auto.
+repeat match goal with
+| |- context[decide (?a = ?b)] => destruct (decide (a = b))
+end; try lia; try reflexivity.
+all: simpl; repeat match goal with
+| |- context[decide (?a = ?b)] => destruct (decide (a = b))
+end; try lia; try reflexivity.
+Qed.
+
+Lemma VarSwap_and_VarSwap_disjoint p : forall j k0,
+  VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p).
+Proof.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; intros j k0; simpl.
+  + assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p1) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p1)) as eq1.
+    { apply Hp. simpl. lia. }
+    assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p2) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p2)) as eq2.
+    { apply Hp. simpl. lia. }
+    rewrite eq1, eq2. reflexivity.
+  + reflexivity.
+  + assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p)) as eq.
+    { apply Hp. simpl. lia. }
+    rewrite eq. reflexivity.
+  + assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p1) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p1)) as eq1.
+    { apply Hp. simpl. lia. }
+    assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p2) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p2)) as eq2.
+    { apply Hp. simpl. lia. }
+    rewrite eq1, eq2. reflexivity.
+  + rewrite VarSwap_in_ChannelData_disjoint. reflexivity.
+  + assert (S (S (S (j + k0))) = S (S (S j + k0))) as eq' by lia. rewrite eq'.
+    assert (VarSwap_in_proc (S j) (VarSwap_in_proc (S (S (S j+k0))) p) = VarSwap_in_proc (S (S (S j+k0))) (VarSwap_in_proc (S j) p)) as eq.
+    { apply Hp. simpl. lia. }
+    rewrite eq. reflexivity.
+  + destruct g; simpl.
+    * reflexivity.
+    * reflexivity.
+    * rewrite VarSwap_in_ChannelData_disjoint.
+      assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p)) as eq.
+      { apply Hp. simpl. lia. }
+      rewrite eq. reflexivity.
+    * assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) p) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j p)) as eq.
+      { apply Hp. simpl. lia. }
+      rewrite eq. reflexivity.
+    * assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) (g g1)) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j (g g1))) as eq1.
+      { apply Hp. simpl. lia. } inversion eq1.
+      assert (VarSwap_in_proc j (VarSwap_in_proc (S (S (j+k0))) (g g2)) = VarSwap_in_proc (S (S (j+k0))) (VarSwap_in_proc j (g g2))) as eq2.
+      { apply Hp. simpl. lia. } inversion eq2.
+      rewrite H0, H1. reflexivity.
+Qed.
+
+Lemma VarSwap_in_ChannelData_invol k0 c : VarSwap_in_ChannelData k0 (VarSwap_in_ChannelData k0 c) = c.
+Proof.
+destruct c; simpl; auto.
+destruct (decide (n = k0)).
+- subst. simpl. destruct (decide (S k0 = k0)); try lia.
+  destruct (decide (S k0 = S k0)); try lia. reflexivity.
+- destruct (decide (n = S k0)).
+  + subst. simpl. destruct (decide (k0 = k0)); try lia. reflexivity.
+  + simpl. destruct (decide (n = k0)); try lia. destruct (decide (n = S k0)); try lia. reflexivity.
+Qed.
+
+Lemma VarSwap_in_proc_invol p : forall k0, VarSwap_in_proc k0 (VarSwap_in_proc k0 p) = p.
+Proof.
+induction p as (p & Hp) using
+  (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct p; intros k0; simpl.
++ assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 p1) = p1) as H1 by (apply Hp; simpl; lia).
+  assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 p2) = p2) as H2 by (apply Hp; simpl; lia).
+  rewrite H1, H2. reflexivity.
++ reflexivity.
++ assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 p) = p) as H1 by (apply Hp; simpl; lia).
+  rewrite H1. reflexivity.
++ assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 p1) = p1) as H1 by (apply Hp; simpl; lia).
+  assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 p2) = p2) as H2 by (apply Hp; simpl; lia).
+  rewrite H1, H2. reflexivity.
++ rewrite VarSwap_in_ChannelData_invol. reflexivity.
++ assert (VarSwap_in_proc (S k0) (VarSwap_in_proc (S k0) p) = p) as H1 by (apply Hp; simpl; lia).
+  rewrite H1. reflexivity.
++ destruct g; simpl; try reflexivity.
+  * rewrite VarSwap_in_ChannelData_invol.
+    assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 p) = p) as Hpp by (apply Hp; simpl; lia).
+    rewrite Hpp. reflexivity.
+  * assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 p) = p) as Hpp by (apply Hp; simpl; lia).
+    rewrite Hpp. reflexivity.
+  * assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 (g g1)) = g g1) as H1 by (apply Hp; simpl; lia).
+    assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 (g g2)) = g g2) as H2 by (apply Hp; simpl; lia).
+    simpl in H1, H2. injection H1 as H1. injection H2 as H2.
+    rewrite H1, H2. reflexivity.
+Qed.
+
+Corollary gVarSwap_in_proc_invol k0 g1 : gVarSwap_in_proc k0 (gVarSwap_in_proc k0 g1) = g1.
+Proof.
+assert (VarSwap_in_proc k0 (VarSwap_in_proc k0 (g g1)) = g g1) as H by (apply VarSwap_in_proc_invol).
+simpl in H. injection H as H. exact H.
+Qed.
+
+Lemma NewVar_in_ChannelData_down_and_VarSwap_in_ChannelData j k0 c :
+NewVar_in_ChannelData_down (S (S (j + k0))) (VarSwap_in_ChannelData k0 c)
+        = VarSwap_in_ChannelData k0 (NewVar_in_ChannelData_down (S (S (j + k0))) c).
+Proof.
+  destruct c.
+  + simpl. reflexivity.
+  + simpl. destruct (decide (n = k0)).
+    - subst. simpl. destruct (decide (S (S (j+k0)) < k0)); try lia.
+      rewrite decide_False; try lia. simpl.
+      destruct (decide (k0 = k0)); try lia. reflexivity.
+    - simpl. destruct (decide (n = S k0)); subst.
+      * simpl. destruct (decide (S (S (j+k0)) < S k0)); try lia.
+        rewrite decide_False; try lia. simpl.
+        destruct (decide (S k0 = k0)); try lia.
+        destruct (decide (S k0 = S k0)); try lia. reflexivity.
+      * destruct (decide (S (S (j+k0)) < n)).
+        ++ simpl. rewrite decide_True; try lia.
+           destruct (decide (Nat.pred n = k0)); try lia.
+           destruct (decide (Nat.pred n = S k0)); try lia.
+           reflexivity.
+        ++ simpl. destruct (decide (n = k0)); try lia.
+           destruct (decide (n = S k0)); try lia.
+           rewrite decide_False; try lia. reflexivity.
+Qed.
+
+Lemma NewVarCdown_and_VarSwap j k0 p : (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p)).
+Proof.
+  revert j k0.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; intros; simpl in *.
+  + assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p1)) as eq1.
+    { eapply Hp. simpl. lia. }
+    assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p2)) as eq2.
+    { eapply Hp. simpl. lia. }
+    rewrite eq1, eq2. eauto.
+  + reflexivity.
+  + assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p)) as eq.
+    { eapply Hp. simpl. lia. }
+    rewrite eq. eauto.
+  + assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p1) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p1)) as eq1.
+    { eapply Hp. simpl. lia. }
+    assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p2) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p2)) as eq2.
+    { eapply Hp. simpl. lia. }
+    rewrite eq1, eq2. eauto.
+  + rewrite NewVar_in_ChannelData_down_and_VarSwap_in_ChannelData. eauto.
+  + assert (S (S (S (j + k0))) = S (S (j + (S k0)))) as eq' by lia. rewrite eq'.
+    assert (NewVarCdown (S (S (j + (S k0)))) (VarSwap_in_proc (S k0) p)
+        = VarSwap_in_proc (S k0) (NewVarCdown (S (S (j + (S k0)))) p)) as eq.
+    { eapply Hp. simpl. lia. }
+    rewrite eq. eauto.
+  + destruct g; simpl in *.
+    * reflexivity.
+    * reflexivity.
+    * assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p)) as eq1.
+      { eapply Hp. simpl. lia. } rewrite eq1.
+      rewrite NewVar_in_ChannelData_down_and_VarSwap_in_ChannelData. eauto.
+    * assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 p) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) p)) as eq.
+      { eapply Hp. simpl. lia. }
+      rewrite eq. eauto.
+    * assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 (g g1)) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) (g g1))) as eq1.
+      { eapply Hp. simpl. lia. }
+      assert (NewVarCdown (S (S (j + k0))) (VarSwap_in_proc k0 (g g2)) = VarSwap_in_proc k0 (NewVarCdown (S (S (j + k0))) (g g2))) as eq2.
+      { eapply Hp. simpl. lia. } simpl in *. inversion eq1. inversion eq2.
+      rewrite H0, H1. eauto.
+Qed.
+
+Lemma NewVar_in_ChannelData_up_down i j c :
+  NewVar_in_ChannelData_down (i + S j) (NewVar_in_ChannelData i c) = NewVar_in_ChannelData i (NewVar_in_ChannelData_down (i+j) c).
+Proof.
+  destruct c.
+  simpl.
+  + eauto.
+  + simpl.
+    destruct (decide (i < S n)).
+    - simpl.
+      destruct (decide (i + j < n)).
+      * rewrite decide_True; try lia.
+        simpl.
+        rewrite decide_True; try lia.
+        f_equal; lia.
+      * rewrite decide_False; try lia.
+        simpl.
+        rewrite decide_True; try lia.
+        eauto.
+    - simpl.
+      rewrite decide_False; try lia.
+      destruct (decide (i + j < n)); try lia.
+      simpl.
+      destruct (decide (i < S n)); [lia | reflexivity].
+Qed.
+
+Lemma NewVarC_up_down i j p : NewVarCdown (i + S j) (NewVarC i p) = NewVarC i (NewVarCdown (i+j) p).
+Proof.
+  revert i j.
+  induction p as (p & Hp) using
+    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+  destruct p; intros; simpl in *.
+  + assert (NewVarCdown (i + S j) (NewVarC i p1) = NewVarC i (NewVarCdown (i+j) p1)) as eq1.
+    { eapply Hp. simpl. lia. } rewrite eq1.
+    assert (NewVarCdown (i + S j) (NewVarC i p2) = NewVarC i (NewVarCdown (i+j) p2)) as eq2.
+    { eapply Hp. simpl. lia. } rewrite eq2. eauto.
+  + eauto.
+  + assert (NewVarCdown (i + S j) (NewVarC i p) = NewVarC i (NewVarCdown (i+j) p)) as eq.
+    { eapply Hp. simpl. eauto. } rewrite eq. eauto.
+  + assert (NewVarCdown (i + S j) (NewVarC i p1) = NewVarC i (NewVarCdown (i+j) p1)) as eq1.
+    { eapply Hp. simpl. lia. } rewrite eq1.
+    assert (NewVarCdown (i + S j) (NewVarC i p2) = NewVarC i (NewVarCdown (i+j) p2)) as eq2.
+    { eapply Hp. simpl. lia. } rewrite eq2. eauto.
+  + rewrite NewVar_in_ChannelData_up_down. eauto.
+  + assert (NewVarCdown (S (i + S j)) (NewVarC (S i) p) = NewVarC (S i) (NewVarCdown (S (i+j)) p)) as eq.
+    { replace ((S (i + S j))) with ((S i) + S j)%nat; try lia.
+      replace (S (i + j)) with ((S i) + j)%nat; try lia. eapply Hp.
+      simpl. lia. } rewrite eq. eauto.
+  + destruct g; simpl.
+    * eauto.
+    * eauto.
+    * rewrite NewVar_in_ChannelData_up_down.
+      assert (NewVarCdown (i + S j) (NewVarC i p) = NewVarC i (NewVarCdown (i+j) p)) as eq.
+      { eapply Hp. simpl. eauto. } rewrite eq. eauto.
+    * assert (NewVarCdown (i + S j) (NewVarC i p) = NewVarC i (NewVarCdown (i+j) p)) as eq.
+      { eapply Hp. simpl. eauto. } rewrite eq. eauto.
+    * assert (NewVarCdown (i + S j) (NewVarC i (g g1)) = NewVarC i (NewVarCdown (i+j) (g g1))) as eq1.
+      { eapply Hp. simpl. lia. } inversion eq1.
+      assert (NewVarCdown (i + S j) (NewVarC i (g g2)) = NewVarC i (NewVarCdown (i+j) (g g2))) as eq2.
+      { eapply Hp. simpl. lia. } inversion eq2. eauto.
+Qed.
+
+Lemma NewVarCdown_altcgr_mut :
+  (forall p q, p ≡ₐ q -> forall j, (NewVarCdown j p) ≡ₐ (NewVarCdown j q)) /\
+  (forall g1 g2, g1 ≡g g2 -> forall j, (gNewVarCdown j g1) ≡g (gNewVarCdown j g2)).
+Proof.
+apply altcgr_mutind; intros; simpl.
+all: try solve [constructor; auto].
+- replace (NewVarCdown (S (S j)) (VarSwap_in_proc 0 p)) with (VarSwap_in_proc 0 (NewVarCdown (S (S j)) p)).
+  + constructor.
+  + symmetry. replace (S (S j)) with (S (S (j + 0))) by lia.
+    apply NewVarCdown_and_VarSwap.
+- replace (NewVarCdown (S (S j)) (VarSwap_in_proc 0 p)) with (VarSwap_in_proc 0 (NewVarCdown (S (S j)) p)).
+  + constructor.
+  + symmetry. replace (S (S j)) with (S (S (j + 0))) by lia.
+    apply NewVarCdown_and_VarSwap.
+- replace (NewVarCdown (S j) (NewVarC 0 q)) with (NewVarC 0 (NewVarCdown j q)).
+  + constructor.
+  + symmetry. exact (NewVarC_up_down 0 j q).
+- replace (NewVarCdown (S j) (NewVarC 0 q)) with (NewVarC 0 (NewVarCdown j q)).
+  + constructor.
+  + symmetry. exact (NewVarC_up_down 0 j q).
+- eapply altcgr_trans; eauto.
+- eapply galtcgr_trans; eauto.
+Qed.
+
+Corollary gNewVarC_altcgr_reflect k p g0 : gNewVarC k p ≡g gNewVarC k g0 -> p ≡g g0.
+Proof.
+  intro H.
+  apply (proj2 NewVarCdown_altcgr_mut) with (j:=k) in H.
+  rewrite (gNewVarC_retract k p) in H.
+  rewrite (gNewVarC_retract k g0) in H.
+  exact H.
+Qed.
+
+Lemma VarSwap_altcgr_mut :
+  (forall p q, p ≡ₐ q -> forall k0, (VarSwap_in_proc k0 p) ≡ₐ (VarSwap_in_proc k0 q)) /\
+  (forall g1 g2, g1 ≡g g2 -> forall k0, (gVarSwap_in_proc k0 g1) ≡g (gVarSwap_in_proc k0 g2)).
+Proof.
+apply altcgr_mutind; intros; simpl.
+all: try solve [constructor; auto].
+- replace (VarSwap_in_proc (S (S k0)) (VarSwap_in_proc 0 p)) with (VarSwap_in_proc 0 (VarSwap_in_proc (S (S k0)) p)).
+  + constructor.
+  + exact (VarSwap_and_VarSwap_disjoint p 0 k0).
+- replace (VarSwap_in_proc (S (S k0)) (VarSwap_in_proc 0 p)) with (VarSwap_in_proc 0 (VarSwap_in_proc (S (S k0)) p)).
+  + constructor.
+  + exact (VarSwap_and_VarSwap_disjoint p 0 k0).
+- replace (VarSwap_in_proc (S k0) (NewVarC 0 q)) with (NewVarC 0 (VarSwap_in_proc k0 q)).
+  + constructor.
+  + symmetry. apply NewVarC_and_VarSwap_le. lia.
+- replace (VarSwap_in_proc (S k0) (NewVarC 0 q)) with (NewVarC 0 (VarSwap_in_proc k0 q)).
+  + constructor.
+  + symmetry. apply NewVarC_and_VarSwap_le. lia.
+- eapply altcgr_trans; eauto.
+- eapply galtcgr_trans; eauto.
+Qed.
+
 Lemma sguardNewVar g0 q:  sguard g0 q <-> sguard (⇑ g0) (NewVarC 0 q).
 Proof.
-Admitted.
+split.
+- enough (forall q k g0, sguard g0 q -> sguard (gNewVarC k g0) (NewVarC k q)) as Hgen.
+  { intro H. apply Hgen. exact H. }
+  clear g0 q. induction q; intros k g0 H; simpl in *; auto.
+  + destruct H as [[H1 H2]|[H1 H2]].
+    * left. split.
+      -- replace (𝟘) with (gNewVarC k 𝟘) by reflexivity. now apply IHq1.
+      -- now apply IHq2.
+    * right. split.
+      -- replace (𝟘) with (gNewVarC k 𝟘) by reflexivity. now apply IHq2.
+      -- now apply IHq1.
+  + destruct H as [[H1 H2]|[H1 H2]].
+    * left. split; auto.
+    * right. split; auto.
+  + rewrite <- gNewVarC_swap_0_S. apply IHq. exact H.
+  + apply (proj2 NewVarC_altcgr_mut). exact H.
+- enough (forall q k g0, sguard (gNewVarC k g0) (NewVarC k q) -> sguard g0 q) as Hgen.
+  { intro H. apply (Hgen q 0 g0). exact H. }
+  clear g0 q. induction q; intros k g0 H; simpl in *; auto.
+  + destruct H as [[H1 H2]|[H1 H2]].
+    * left. split.
+      -- replace (𝟘) with (gNewVarC k 𝟘) in H1 by reflexivity. eapply IHq1; exact H1.
+      -- eapply IHq2; exact H2.
+    * right. split.
+      -- replace (𝟘) with (gNewVarC k 𝟘) in H1 by reflexivity. eapply IHq2; exact H1.
+      -- eapply IHq1; exact H2.
+  + destruct H as [[H1 H2]|[H1 H2]].
+    * left. split; auto. eapply IHq1; exact H2.
+    * right. split; auto. eapply IHq2; exact H2.
+  + rewrite <- gNewVarC_swap_0_S in H. eapply IHq; exact H.
+  + eapply gNewVarC_altcgr_reflect; exact H.
+Qed.
 
 Lemma NewVar_altcgr_gstep g g': g ≡g g' <-> (⇑ g) ≡g (⇑ g').
 Proof.
-Admitted.
+split.
+- intro H. apply (proj2 NewVarC_altcgr_mut). exact H.
+- apply gNewVarC_altcgr_reflect.
+Qed.
 (* similar to NewVar_Respects_Congruence *)
+
+Lemma sguard_VarSwap_gen : forall p k0 g1, sguard g1 p -> sguard (gVarSwap_in_proc k0 g1) (VarSwap_in_proc k0 p).
+Proof.
+induction p; intros k0 g1 H; simpl in *; auto.
+- destruct H as [[H1 H2]|[H1 H2]].
+  + left. split.
+    * replace (𝟘) with (gVarSwap_in_proc k0 𝟘) by reflexivity. now apply IHp1.
+    * now apply IHp2.
+  + right. split.
+    * replace (𝟘) with (gVarSwap_in_proc k0 𝟘) by reflexivity. now apply IHp2.
+    * now apply IHp1.
+- destruct H as [[H1 H2]|[H1 H2]].
+  + left. split; auto.
+  + right. split; auto.
+- rewrite <- gVarSwap_and_gNewVarC0. apply IHp. exact H.
+- apply (proj2 VarSwap_altcgr_mut). exact H.
+Qed.
 
 Lemma sguard_VarSwap_in_proc g p:
   sguard g p <-> sguard (gVarSwap_in_proc 0 g) (VarSwap_in_proc 0 p).
 Proof.
-Admitted.
+split.
+- apply sguard_VarSwap_gen.
+- intro H.
+  apply (sguard_VarSwap_gen (VarSwap_in_proc 0 p) 0 (gVarSwap_in_proc 0 g)) in H.
+  rewrite VarSwap_in_proc_invol in H.
+  rewrite gVarSwap_in_proc_invol in H.
+  exact H.
+Qed.
+
+Lemma NewVar_in_ChannelData_double_fixed k c :
+  VarSwap_in_ChannelData k (NewVar_in_ChannelData k (NewVar_in_ChannelData k c)) = NewVar_in_ChannelData k (NewVar_in_ChannelData k c).
+Proof.
+destruct c; simpl; auto.
+destruct (decide (k < S n)).
+- simpl. destruct (decide (k < S (S n))).
+  + simpl. destruct (decide (S (S n) = k)); try lia.
+    destruct (decide (S (S n) = S k)); try lia. reflexivity.
+  + lia.
+- simpl. destruct (decide (k < S n)); try lia.
+  destruct (decide (n = k)); try lia.
+  destruct (decide (n = S k)); try lia.
+  simpl. destruct (decide (n = k)); try lia.
+  destruct (decide (n = S k)); try lia. reflexivity.
+Qed.
+
+Lemma VarSwap_fixes_NewVarC_double p : forall k,
+  VarSwap_in_proc k (NewVarC k (NewVarC k p)) = NewVarC k (NewVarC k p).
+Proof.
+induction p as (p & Hp) using
+  (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
+destruct p; intros k; simpl.
++ assert (VarSwap_in_proc k (NewVarC k (NewVarC k p1)) = NewVarC k (NewVarC k p1)) as H1 by (apply Hp; simpl; lia).
+  assert (VarSwap_in_proc k (NewVarC k (NewVarC k p2)) = NewVarC k (NewVarC k p2)) as H2 by (apply Hp; simpl; lia).
+  rewrite H1, H2. reflexivity.
++ reflexivity.
++ assert (VarSwap_in_proc k (NewVarC k (NewVarC k p)) = NewVarC k (NewVarC k p)) as H1 by (apply Hp; simpl; lia).
+  rewrite H1. reflexivity.
++ assert (VarSwap_in_proc k (NewVarC k (NewVarC k p1)) = NewVarC k (NewVarC k p1)) as H1 by (apply Hp; simpl; lia).
+  assert (VarSwap_in_proc k (NewVarC k (NewVarC k p2)) = NewVarC k (NewVarC k p2)) as H2 by (apply Hp; simpl; lia).
+  rewrite H1, H2. reflexivity.
++ rewrite NewVar_in_ChannelData_double_fixed. reflexivity.
++ assert (VarSwap_in_proc (S k) (NewVarC (S k) (NewVarC (S k) p)) = NewVarC (S k) (NewVarC (S k) p)) as H1 by (apply Hp; simpl; lia).
+  rewrite H1. reflexivity.
++ destruct g; simpl; try reflexivity.
+  * rewrite NewVar_in_ChannelData_double_fixed.
+    assert (VarSwap_in_proc k (NewVarC k (NewVarC k p)) = NewVarC k (NewVarC k p)) as Hpp by (apply Hp; simpl; lia).
+    rewrite Hpp. reflexivity.
+  * assert (VarSwap_in_proc k (NewVarC k (NewVarC k p)) = NewVarC k (NewVarC k p)) as Hpp by (apply Hp; simpl; lia).
+    rewrite Hpp. reflexivity.
+  * assert (VarSwap_in_proc k (NewVarC k (NewVarC k (g g1))) = NewVarC k (NewVarC k (g g1))) as H1 by (apply Hp; simpl; lia).
+    assert (VarSwap_in_proc k (NewVarC k (NewVarC k (g g2))) = NewVarC k (NewVarC k (g g2))) as H2 by (apply Hp; simpl; lia).
+    simpl in H1, H2. injection H1 as H1. injection H2 as H2.
+    rewrite H1, H2. reflexivity.
+Qed.
 
 Lemma gVarSwap_NewVar_NewVar g0 :
   gVarSwap_in_proc 0 (⇑ (⇑ g0)) = ⇑ (⇑ g0).
 Proof.
-Admitted.
+assert (VarSwap_in_proc 0 (NewVarC 0 (NewVarC 0 (g g0))) = NewVarC 0 (NewVarC 0 (g g0))) as H by (apply VarSwap_fixes_NewVarC_double).
+simpl in H. injection H as H. exact H.
+Qed.
 
 Lemma altcgr_guard_proper (p0 p1 : proc) (g0 : gproc) : (p0 ≡ₐ p1) -> sguard g0 p0
   -> sguard g0 p1.
