@@ -35,8 +35,7 @@ Inductive Data (MyType : Type) :=
 Arguments bvar {_} _.
 Arguments cst {_} _.
 
-(* Coercion bvar : nat >-> ValueData. *)
-(* Coercion cst : MyType >-> ValueData. *)
+Local Coercion bvar : nat >-> Data.
 
 Lemma Data_dec `{Countable MyType} : forall (x y : Data MyType) , {x = y} + {x <> y}.
 Proof.
@@ -99,6 +98,9 @@ Definition ChannelData := Data (VP.(Channel)).
 
 (********************************* Values with free variables ************************************)
 Definition ValueData := Data (VP.(Value)).
+
+Definition cst_channel (c : Channel) : ChannelData := cst c.
+Definition cst_value (v : Value) : ValueData := cst v.
 
 (********************************* Labels **********************************)
 (* Label of action (other than tau), here it is a channel's name with data *)
@@ -777,6 +779,9 @@ Proof.
 Qed.
 
 End VACCS_proc.
+
+Local Coercion cst_channel : Channel >-> ChannelData.
+Local Coercion cst_value : Value >-> ValueData.
 
 Global Arguments  Equality {_} _ _.
 Global Hint Constructors lts : cgr.

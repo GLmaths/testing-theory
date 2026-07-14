@@ -31,8 +31,7 @@ From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must
 
 From Coinduction Require Import all.
 
-Notation "p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (@ctx_pre proc _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) proc 
-  (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) _ _ _ _ _ _ p q) (at level 70).
+Notation "p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
 
 Section VCCS_Must_Alt_Corollary.
 
@@ -51,13 +50,13 @@ Proof.
 Qed.
 
 Corollary must_iff_co_inductive_acceptance_VCCS_without_toFW (p q : proc) :
-  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₐₛ {[ q ]}.
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset proc) ᶜᵒ≼ₐₛ ({[ q ]} : gset proc).
 Proof.
   now rewrite equivalence_fw_co_inductive_acc_set_and_must_i.
 Qed.
 
 Corollary must_iff_tower_co_inductive_tower_acceptance_VCCS_without_toFW (p q : proc) :
-  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ᶜᵒ≼ₜₒᵥᵥₑᵣ {[ q ]}.
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset proc) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset proc).
 Proof.
   now rewrite equivalence_fw_co_inductive_acceptance_and_must_i_singleton.
 Qed.
@@ -65,7 +64,7 @@ Qed.
 Corollary must_iff_must_set_VCCS_without_toFW (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≾ₘᵤₛₜ q.
 Proof.
-  now rewrite<- equivalence_fw_must_set_and_must_i. 
+  now rewrite<- equivalence_fw_must_set_and_must_i.
 Qed.
 
 Corollary must_iff_failure_set_VCCS_without_toFW (p q : proc) :

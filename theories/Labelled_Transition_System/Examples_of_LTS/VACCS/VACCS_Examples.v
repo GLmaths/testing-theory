@@ -32,6 +32,11 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
 Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination.
 
+(* Local Coercion in VACCS.v does not propagate across files; redeclared here. *)
+Local Coercion bvar : nat >-> Data.
+Local Coercion cst_channel : Channel >-> ChannelData.
+Local Coercion cst_value : Value >-> ValueData.
+
 (** ** VACCS **)
 (** *** Applications *)
 
@@ -42,11 +47,11 @@ Context `{VP : VACCS_Parameters}.
 (* We assume that there is at least one channel and two values *)
 Context {a : Channel} {O : Value} {I : Value} {neq : O ≠ I}.
 
-Definition const : proc := cst a ? (cst a ! cst O • 𝟘).
+Definition const : proc := a ? (a ! O • 𝟘).
 
-Definition ccat : proc := cst a ? (cst a ! (bvar 0) • 𝟘).
+Definition ccat : proc := a ? (a ! (0) • 𝟘).
 
-Example copycat_is_above_NIL : g 𝟘 ⊑ₘᵤₛₜᵢ ccat.
+Example copycat_is_above_NIL : g 𝟘 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros e Hyp.
   dependent induction Hyp.
@@ -70,8 +75,8 @@ Proof.
                  assert (lts e ((cst a , v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr 
                     as [(t'' & HypTr' & t'0 & HypTr'0 & equiv')|(t'' & HypTr' & equiv'')]; eauto.
-                 --- exists (cst a ! v • 𝟘 ▷ t''). eapply ParRight. eauto.
-                 --- assert (lts (cst a ! v • 𝟘) ((cst a , v) !) (g 𝟘)).
+                 --- exists (a ! v • 𝟘 ▷ t''). eapply ParRight. eauto.
+                 --- assert (lts (a ! v • 𝟘) ((cst a , v) !) (g 𝟘)).
                      { eauto with cgr. }
                       exists ((g 𝟘) ▷ t''). eapply ParSync; eauto.
                      simpl; eauto.
@@ -97,7 +102,7 @@ Proof.
       * lts_inversion lts.
 Qed.
 
-Example NIL_is_above_copycat : ccat ⊑ₘᵤₛₜᵢ (g 𝟘).
+Example NIL_is_above_copycat : ccat ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros t Hyp.
   assert (must ccat t) as Mq; eauto.
@@ -137,7 +142,7 @@ Proof.
            ++ intros. lts_inversion lts.
 Qed.
 
-Example copycat_is_above_constant : const ⊑ₘᵤₛₜᵢ ccat.
+Example copycat_is_above_constant : const ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros t HypMust.
   dependent induction HypMust.
@@ -167,7 +172,7 @@ Proof.
            assert (t' ⟶[ActIn (cst a , cst O)] b2) as l'2; eauto.
            eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & n & equiv1 & equiv2 & eq1).
            edestruct (Congruence_Respects_Transition t') as (t'1 & Tr'1 & equiv'1). 
-           { exists (Ѵ n (((gpr_input (cst a) p1 + g1) ‖ r1))). split; eauto. eapply lts_res_ext_n. eapply lts_parL.
+           { exists (Ѵ n (((gpr_input (a) p1 + g1) ‖ r1))). split; eauto. eapply lts_res_ext_n. eapply lts_parL.
              eapply lts_choiceL. instantiate (2 := ActIn (cst a , v)). simpl. eapply lts_input. }
            simpl. exists (g 𝟘 , t'1). eapply ParSync.
            ++ symmetry in H2. exact H2.
@@ -196,7 +201,7 @@ Proof.
         assert (must ccat t'1); eauto. eapply NIL_is_above_copycat. eauto.
 Qed.
 
-Example NIL_is_above_constant : const ⊑ₘᵤₛₜᵢ (g 𝟘).
+Example NIL_is_above_constant : const ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros e Hyp. eapply NIL_is_above_copycat. eapply copycat_is_above_constant. exact Hyp.
 Qed.

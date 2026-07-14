@@ -1379,6 +1379,3 @@ Proof.
   eapply Lift.must_iff_must_fw.
   now eapply (soundness_fw (p ▷ ∅) (q ▷ ∅)).
 Qed.
-
-
-

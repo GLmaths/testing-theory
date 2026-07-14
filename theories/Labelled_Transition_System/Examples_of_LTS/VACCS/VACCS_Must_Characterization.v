@@ -30,8 +30,7 @@ From TestingTheory Require Import VACCS_ta_tc_gen DefinitionAS Equivalence Must 
 
 From Coinduction Require Import all.
 
-Notation "p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (@ctx_pre proc _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) proc 
-  (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) _ _ _ _ _ _ p q) (at level 70).
+Notation "p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
 
 Section VACCS_Must_Alt_Corollary.
 

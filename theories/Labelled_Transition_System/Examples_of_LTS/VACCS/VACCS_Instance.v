@@ -2922,12 +2922,12 @@ Next Obligation.
   + apply simplify_match_output in dual; subst. eauto.
 Defined.
 
-#[global] Program Instance VACCS_gLts : gLts proc VACCS_ExtAction := 
+Local Program Definition VACCS_gLts : gLts proc VACCS_ExtAction :=
   {| lts_step x ℓ y  := lts x ℓ y ;
      lts_state_eqdec := proc_dec ;
      lts_step_decidable p α q := lts_dec p α q ;
      lts_refuses p := proc_stable p;
-     lts_refuses_decidable p α := proc_stable_dec p α 
+     lts_refuses_decidable p α := proc_stable_dec p α
     |}.
 Next Obligation.
   intros p [[a|a]|]; intro hs;eapply gset_nempty_ex in hs as (r & l); eapply lts_set_spec0 in l; 
@@ -3588,8 +3588,7 @@ Proof.
 Qed.
 
 #[global] Program Instance AbsVACCS :
-  AbsAction (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ.
-(* @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq. *)
+  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -3619,7 +3618,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance FinitaryAbsVACCS :
-  FinitaryAbsAction proc proc (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ :=
+  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _ _ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.
