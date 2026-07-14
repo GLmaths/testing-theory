@@ -586,25 +586,4 @@ Proof.
           -- repeat lts_inversion lts. destruct μ, a0, c; discriminate.
 Qed.
 
-(*
-Lemma mem_inside_is_above_mem_outside : mem_outside ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ mem_inside.
-Proof.
-  apply must_iff_acceptance_set_VCCS_without_toFW.
-  split.
-  + intros s h_conv. dependent induction h_conv.
-    * constructor. constructor. intros. repeat lts_inversion lts.
-    * constructor.
-      - constructor. intros. repeat lts_inversion lts.
-      - intros. inversion H2;subst.
-        ++ repeat lts_inversion lts.
-        ++ repeat lts_inversion lts.
-           admit.
-  + intros s q' h_conv h_wk stable.
-    lts_inversion wt.
-    * admit.
-    * admit.
-    * admit.
-Abort.
-*)
-
 End VCCS_examples.
