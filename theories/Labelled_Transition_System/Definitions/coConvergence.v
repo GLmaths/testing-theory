@@ -394,3 +394,25 @@ Proof.
     + exact hp.
     + intros q w. exact (IHs1 his1' q (hclause q w)).
 Qed.
+
+(** *** From co-convergence to plain convergence on the dual action
+
+    [p ⇓ᶜᵒ [μ]] means "[p] is ready to respond to an observer's [μ]",
+    i.e. [p] is ready to itself perform [co μ] — exactly [p ⇓ [co μ]].
+    Only this direction is provable without [dual]'s global uniqueness
+    ([unique_nb]): [cocnv_act]'s clause quantifies over *every* action
+    dual to [μ], so a single witness [p ⟹{co μ} q] (built from
+    [exists_dual μ] alone, no uniqueness needed) instantiates it
+    directly. The converse would need [unique_nb] to pin an arbitrary
+    dual witness down to [co μ] specifically. *)
+Lemma cocnv_of_cnv_dual_rev `{EA : !ExtAction A} `{M : gLts P A} p μ : p ⇓ᶜᵒ [μ] -> p ⇓ [co μ].
+Proof.
+  intro hcocnv. eapply cnv_act.
+  - eapply cocnv_terminate; eauto.
+  - intros q w.
+    assert (hcowt : p ⟹ᶜᵒ{μ} q).
+    { eapply wt_to_cowt_dual with (s' := [co μ]); eauto.
+      constructor; [exact (proj2_sig (exists_dual μ)) | constructor]. }
+    eapply cocnv_preserved_by_cowt_act in hcowt; eauto.
+    eapply equiv_termination, equiv_cotermination; eauto.
+Qed.

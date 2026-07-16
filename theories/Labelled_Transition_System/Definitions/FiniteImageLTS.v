@@ -46,7 +46,7 @@ Class CountablegLts P A `{gLts P A} := MkClts {
 
 
 #[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
-Proof. econstructor; first apply _. intros *; apply finite_countable. Qed.
+Proof. econstructor; first apply _. intros *; apply finite_countable. Defined.
 
 (** *** Tau-set *)
 Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=

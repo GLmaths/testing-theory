@@ -1,7 +1,4 @@
 (*
-   Copyright (c) 2024 Nomadic Labs
-   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
-   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
    Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,7 +24,8 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Termination
-  WeakTransitions Convergence Lts_OBA_FB FiniteImageLTS coWeakTransition coConvergence.
+  WeakTransitions Convergence Lts_OBA_FB FiniteImageLTS coWeakTransition coConvergence
+  StateTransitionSystems.
 
 (** ** Co-Finite Image LTSs
 
@@ -62,6 +60,36 @@ Class coFiniteImagegLts P A `{gLts P A} :=
 #[global] Existing Instance cofolts_next_states_decidable.
 #[global] Existing Instance cofolts_next_states_finite.
 
+(** *** [coFiniteImagegLts] implies [CountablegLts] — mirrors
+    [FiniteImageLTS.v]'s [finite_countable_lts] ([FiniteImagegLts P A ->
+    CountablegLts P A]), sourced from [coFiniteImagegLts] instead: this is
+    what lets a bare [!coFiniteImagegLts P A] context satisfy
+    [StateTransitionSystems.CountableSts]/[Bar.v]'s bar-induction
+    machinery (via [csts_of_clts]), without needing the (structurally
+    unavailable, on the co side) full [FiniteImagegLts P A].
+
+    The literal-[α] successor set [{q | p⟶[α]q}] isn't itself one of
+    [coFiniteImagegLts]'s fields (only the *dual*-image at [α] is), but it
+    embeds into the dual-image at [co α]: any [q] with [p⟶[α]q] witnesses
+    membership there via [dual α (co α)] ([exists_dual] alone — no
+    [unique_nb] needed), and that dual-image set *is* [Finite]
+    ([cofolts_next_states_finite]) —
+    hence the literal set is too, as a decidable subtype of a finite type,
+    and [Finite -> Countable] ([finite_countable]) finishes it off. *)
+#[global] Instance CountablegLts_of_coFiniteImagegLts `{coFiniteImagegLts P A} : CountablegLts P A.
+Proof.
+  unshelve econstructor.
+  - exact cofolts_states_countable.
+  - intros p ℓ. destruct ℓ as [a|].
+    + unshelve eapply finite_countable.
+      eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => exists α', dual α' (co a) /\ p ⟶[α'] q))))).
+      intros q Hq. eapply bool_decide_unpack in Hq.
+      eapply list_elem_of_fmap.
+      exists (dexist q (ex_intro _ a (conj (proj2_sig (exists_dual a)) Hq))).
+      split; [reflexivity | eapply elem_of_enum].
+    + apply finite_countable.
+Defined.
+
 (** *** Tau-set
 
     Mirrors [lts_tau_set]/[lts_tau_set_spec] (FiniteImageLTS.v) verbatim,
@@ -79,6 +107,39 @@ Proof.
   - intro H2. eapply list_elem_of_fmap.
     exists (dexist q H2). split.
     eauto. eapply elem_of_enum.
+Qed.
+
+(** *** Tau-successors of a whole *set*
+
+    Mirrors [lts_tau_set_from_pset]/[_ispec] (FiniteImageLTS.v) verbatim,
+    sourced from [cowt_tau_set] (hence [coFiniteImagegLts]'s own
+    [cofolts_tau_next_states_finite]) instead of [FiniteImagegLts]/
+    [lts_tau_set]. Lets any [!coFiniteImagegLts P A]-only context build the
+    SET-level internal-reduction machinery natively, with no need to derive
+    [FiniteImagegLts P A] (and hence route through
+    [FiniteImageLTS.finite_countable_lts]/[StateTransitionSystems]) just
+    for the tau-only part — the [lts_tau_set_from_pset_spec]/[spec1]/
+    [spec2] statements themselves are already generic (bare [Countable P]),
+    so no new spec vocabulary is needed either. *)
+Definition cowt_tau_set_from_pset `{coFiniteImagegLts P A} (ps : gset P) : gset P :=
+  ⋃ (map (fun p => list_to_set (cowt_tau_set p)) (elements ps)).
+
+Lemma cowt_tau_set_from_pset_ispec `{coFiniteImagegLts P A}
+  (ps : gset P) :
+  lts_tau_set_from_pset_spec ps (cowt_tau_set_from_pset ps).
+Proof.
+  split.
+  - intros a mem.
+    eapply elem_of_union_list in mem as (xs & mem1 & mem2).
+    eapply list_elem_of_fmap in mem1 as (p & heq0 & mem1).
+    subst.  eapply elem_of_list_to_set in mem2.
+    eapply cowt_tau_set_spec in mem2. multiset_solver.
+  - intros p q mem l.
+    eapply elem_of_union_list.
+    exists (list_to_set (cowt_tau_set p)).
+    split.
+    + multiset_solver.
+    + eapply cowt_tau_set_spec in l. multiset_solver.
 Qed.
 
 (** *** [cowt] on the empty trace is exactly [wt] on the empty trace *)
@@ -442,4 +503,87 @@ Proof.
     inversion w; subst. set_solver. exfalso. eapply lts_refuses_spec2; eauto.
   - eapply elem_of_singleton_1 in mem. subst.
     eapply cowt_refuses_set_spec2. split; eauto with mdb.
+Qed.
+
+(** *** The set of states a whole *set* [P] reaches via a single co-weak
+    action — mirrors [wt_set_from_pset_spec1]/[spec2]/[spec]
+    (FiniteImageLTS.v's "from_pset" section), packaging the dual directly
+    into [⟹ᶜᵒ{μ}] (a single [μ], no separate [dual μ1 μ2] premise) instead of
+    the two-label [wt_set_from_pset_spec1 ps [μ1] qs] + [dual μ1 μ2] style. *)
+
+Definition cowt_set_from_pset_spec1 `{Countable P} `{gLts P A}
+  (ps : gset P) (μ : A) (qs : gset P) :=
+  forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹ᶜᵒ{μ} q.
+
+Definition cowt_set_from_pset_spec2 `{Countable P} `{gLts P A}
+  (ps : gset P) (μ : A) (qs : gset P) :=
+  forall p q, p ∈ ps -> p ⟹ᶜᵒ{μ} q -> q ∈ qs.
+
+Definition cowt_set_from_pset_spec `{Countable P} `{gLts P A}
+  (ps : gset P) (μ : A) (qs : gset P) :=
+  cowt_set_from_pset_spec1 ps μ qs /\ cowt_set_from_pset_spec2 ps μ qs.
+
+(** *** A concrete witness set for [cowt_set_from_pset_spec] — mirrors
+    [wt_s_set_from_pset]/[wt_s_set_from_pset_ispec] (FiniteImageLTS.v)
+    verbatim, restricted to a single action [μ] (so it is sourced from
+    [cowt_set_mu] instead of the general-trace [wt_set]). *)
+
+Fixpoint cowt_s_set_from_pset_mu_xs `{coFiniteImagegLts P A}
+  (ps : list P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) : gset P :=
+  match ps as ps0 return (forall p, p ∈ ps0 -> p ⇓ᶜᵒ [μ]) -> gset P with
+  | [] => fun _ => ∅
+  | p :: ps' =>
+      fun ha =>
+        let pr := ha p (list_elem_of_here p ps') in
+        let ys := cowt_set_mu p μ [] pr in
+        let ha' := fun q mem => ha q (list_elem_of_further q p ps' mem) in
+        ys ∪ cowt_s_set_from_pset_mu_xs ps' μ ha'
+  end hcocnv.
+
+Lemma cowt_s_set_from_pset_mu_xs_ispec `{coFiniteImagegLts P A}
+  (ps : list P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) :
+  (forall q, q ∈ cowt_s_set_from_pset_mu_xs ps μ hcocnv -> exists p, p ∈ ps /\ p ⟹ᶜᵒ{μ} q)
+  /\ (forall p q, p ∈ ps -> p ⟹ᶜᵒ{μ} q -> q ∈ cowt_s_set_from_pset_mu_xs ps μ hcocnv).
+Proof.
+  split.
+  - induction ps as [|p ps].
+    intros p mem. set_solver.
+    intros p' mem. simpl in *.
+    eapply elem_of_union in mem as [hl|hr].
+    exists p. split.
+    set_solver. now eapply cowt_set_mu_spec1 in hl.
+    eapply IHps in hr as (p0 & mem & hwp0).
+    exists p0. repeat split; set_solver.
+  - induction ps as [|p ps].
+    + intros p'. set_solver.
+    + intros p' q mem hwp'.
+      eapply elem_of_union.
+      inversion mem; subst.
+      ++ left. eapply cowt_set_mu_spec2; eauto.
+      ++ right. eapply IHps in hwp'; eauto.
+Qed.
+
+Lemma lift_cocnv_elements `{coFiniteImagegLts P A}
+  (ps : gset P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) :
+  forall p, p ∈ (elements ps) -> p ⇓ᶜᵒ [μ].
+Proof.
+  intros p mem.
+  eapply hcocnv. now eapply elem_of_elements.
+Qed.
+
+Definition cowt_s_set_from_pset `{coFiniteImagegLts P A}
+  (ps : gset P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) : gset P :=
+  cowt_s_set_from_pset_mu_xs (elements ps) μ (lift_cocnv_elements ps μ hcocnv).
+
+Lemma cowt_s_set_from_pset_ispec `{coFiniteImagegLts P A}
+  (ps : gset P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) :
+  cowt_set_from_pset_spec ps μ (cowt_s_set_from_pset ps μ hcocnv).
+Proof.
+  split.
+  - intros p mem.
+    eapply cowt_s_set_from_pset_mu_xs_ispec in mem as (p' & mem & hwp').
+    exists p'. split; set_solver.
+  - intros p q mem hwp.
+    eapply cowt_s_set_from_pset_mu_xs_ispec.
+    eapply elem_of_elements; eassumption. eassumption.
 Qed.
