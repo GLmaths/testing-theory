@@ -25,9 +25,11 @@
 
 From stdpp Require Import gmap gmultiset.
 
-From TestingTheory Require Import VACCS_Must_Characterization DefinitionAS Equivalence Must 
+From TestingTheory Require Import VACCS_Must_Characterization DefinitionAS Equivalence Must
   ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
   InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower.
+From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
+  TestSpecBridge VACCS_CoFiniteImage.
 
 Import VACCS.
 
@@ -68,6 +70,12 @@ Qed.
 Corollary must_iff_failure_set_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
 Proof.
   eapply must_iff_failure_set_VACCS.
+Qed.
+
+Corollary must_iff_co_acceptance_set_ACCS (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> (p ▷ ∅) ≼꜀ₒ₋ₐₛ (q ▷ ∅).
+Proof.
+  eapply must_iff_co_acceptance_set_VACCS.
 Qed.
 
 End ACCS_Must_Alt_Corollary.

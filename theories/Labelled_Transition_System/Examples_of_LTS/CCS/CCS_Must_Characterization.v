@@ -25,9 +25,11 @@
 
 From stdpp Require Import gmap gmultiset.
 
-From TestingTheory Require Import VCCS_Must_Characterization DefinitionAS Equivalence Must 
+From TestingTheory Require Import VCCS_Must_Characterization DefinitionAS Equivalence Must
   ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
   InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower VCCS_Instance.
+From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
+  TestSpecBridge VCCS_CoFiniteImage.
 
 Section CCS_Must_Alt_Corollary.
 
@@ -69,6 +71,12 @@ Corollary must_iff_failure_set_CCS_without_toFW (p q : proc) :
   p ⊑ₘᵤₛₜᵢ q <-> p ⋖ꜰᴀɪʟ q.
 Proof.
   eapply must_iff_failure_set_VCCS_without_toFW.
+Qed.
+
+Corollary must_iff_co_acceptance_set_CCS_without_toFW (p q : proc) :
+  p ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ q.
+Proof.
+  eapply must_iff_co_acceptance_set_VCCS_without_toFW.
 Qed.
 
 End CCS_Must_Alt_Corollary.

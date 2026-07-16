@@ -27,6 +27,8 @@ From TestingTheory Require Import VACCS_ta_tc_gen DefinitionAS Equivalence Must 
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower Soundness SetLTSConstruction
   StateTransitionSystems FiniteImageLTS ForwarderConstruction ParallelLTSConstruction
   InteractionBetweenLts Bisimulation DefinitionCI EquivalenceCI VACCS_ta_tc_gen.
+From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
+  TestSpecBridge VACCS_CoFiniteImage.
 
 From Coinduction Require Import all.
 
@@ -66,6 +68,12 @@ Qed.
 Corollary must_iff_failure_set_VACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
 Proof.
   now rewrite equivalence_failure_set_and_must_i.
+Qed.
+
+Corollary must_iff_co_acceptance_set_VACCS (p q : proc) :
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> (p ▷ ∅) ≼꜀ₒ₋ₐₛ (q ▷ ∅).
+Proof.
+  now rewrite equivalence_acc_set_and_must_i_co.
 Qed.
 
 End VACCS_Must_Alt_Corollary.

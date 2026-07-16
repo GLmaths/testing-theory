@@ -28,7 +28,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
-From TestingTheory Require Import 
+From TestingTheory Require Import
   ActTau InputOutputActions Clos_n InListPropHelper Subset_Act
   gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction

@@ -33,7 +33,7 @@ From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 
 From TestingTheory Require Import MultisetHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB FiniteImageLTS
-    InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau.
+    InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau coFiniteImage.
 
 (** * Operations on Ltss *)
 (** ** Forwarder LTS *)
@@ -1105,6 +1105,212 @@ Next Obligation.
   + eapply (in_list_finite (lts_fw_tau_set p m)).
       intros (p0, m0) h%bool_decide_unpack.
       now eapply lts_fw_tau_set_spec1.
+Qed.
+
+(**********************************Forwarder Construction is a Co-Finite Image LTS *********************)
+
+Lemma co_involution_generic `{ExtAction A} (x : A) : co (co x) = x.
+Proof.
+  symmetry.
+  eapply unique_nb.
+  eapply duo_sym.
+  eapply (proj2_sig (exists_dual x)).
+Qed.
+
+Lemma fw_dual_image_ext_iff `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p q : P) (m m' : MO A) (α : A) :
+  (exists α', dual α' α /\ inter_step (p ▷ m) (ActExt α') (q ▷ m'))
+  <-> ((m' = m /\ p ⟶[co α] q) \/ (q = p /\ m ⟶[co α] m')).
+Proof.
+  split.
+  - intros (α' & duo & Hstep).
+    assert (α' = co α) as ->.
+    { eapply unique_nb. eapply duo_sym. exact duo. }
+    inversion Hstep; subst.
+    + left. split; [reflexivity | assumption].
+    + right. split; [reflexivity | assumption].
+  - intros [(-> & Htr) | (-> & Htr)].
+    + exists (co α). split.
+      * eapply duo_sym, (proj2_sig (exists_dual α)).
+      * now constructor.
+    + exists (co α). split.
+      * eapply duo_sym, (proj2_sig (exists_dual α)).
+      * now constructor.
+Qed.
+
+Lemma fw_tau_image_iff `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p q : P) (m m' : MO A) :
+  inter_step (p ▷ m) τ (q ▷ m')
+  <-> ((m' = m /\ p ⟶ q) \/ (exists ν, non_blocking ν /\ m = {[+ ν +]} ⊎ m' /\ p ⟶[co ν] q)).
+Proof.
+  split.
+  - intro Hstep.
+    inversion Hstep; subst.
+    + left. split; [reflexivity | assumption].
+    + inversion l.
+    + right. exists μ2.
+      inversion l2; subst.
+      * exfalso. destruct eq as (duo2 & nb2). eapply dual_blocks in duo; eauto.
+      * destruct eq as (duo & nb').
+        assert (μ1 = co μ2) as ->.
+        { eapply unique_nb. eapply duo_sym. exact duo. }
+        split; [assumption | split; [reflexivity | exact l1]].
+  - intros [(-> & Htr) | (ν & nb & -> & Htr)].
+    + now constructor.
+    + eapply (ParSync (co ν) ν); eauto.
+      split; [eapply duo_sym, (proj2_sig (exists_dual ν)) | assumption].
+      now constructor.
+Qed.
+
+Lemma fw_ext_step_decidable `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p q : P) (m m' : MO A) (α : A) :
+  Decision ((m' = m /\ p ⟶[co α] q) \/ (q = p /\ m ⟶[co α] m')).
+Proof.
+  destruct (decide (m' = m)) as [Hm|Hm].
+  - destruct (decide (p ⟶[co α] q)) as [Hp|Hp].
+    + left. left. split; assumption.
+    + destruct (decide (q = p)) as [Hq|Hq].
+      * destruct (decide (m ⟶[co α] m')) as [Hm2|Hm2].
+        -- left. right. split; assumption.
+        -- right. intros [(_ & Hc) | (_ & Hc)]; contradiction.
+      * right. intros [(_ & Hc) | (Hc & _)]; contradiction.
+  - destruct (decide (q = p)) as [Hq|Hq].
+    + destruct (decide (m ⟶[co α] m')) as [Hm2|Hm2].
+      * left. right. split; assumption.
+      * right. intros [(Hc & _) | (_ & Hc)]; contradiction.
+    + right. intros [(Hc & _) | (Hc & _)]; contradiction.
+Defined.
+
+Lemma fw_dual_decidable `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p : P * MO A) (α : A) (q : P * MO A) :
+  Decision (exists α', dual α' α /\ p ⟶[α'] q).
+Proof.
+  destruct p as [p m], q as [q m'].
+  destruct (fw_ext_step_decidable p q m m' α) as [Hd|Hd].
+  - left. eapply fw_dual_image_ext_iff. exact Hd.
+  - right. intro Hc. eapply Hd. eapply fw_dual_image_ext_iff. exact Hc.
+Defined.
+
+Lemma fw_ms_dual_image_finite `{H : ExtAction A} (m : MO A) (α : A) :
+  Finite (dsig (fun m' => m ⟶[co α] m')).
+Proof.
+  destruct (decide (non_blocking α)) as [nb|nnb].
+  - eapply (in_list_finite [{[+ α +]} ⊎ m]).
+    intros m' Hm'%bool_decide_unpack.
+    inversion Hm'; subst.
+    eapply unique_nb in duo.
+    rewrite duo, co_involution_generic.
+    now left.
+    exfalso.
+    assert (blocking (co α)) as Hb.
+    { eapply dual_blocks; [exact nb | eapply duo_sym, (proj2_sig (exists_dual α))]. }
+    apply Hb.
+    exact nb0.
+  - destruct (decide (co α ∈ m)) as [Hmem|Hmem].
+    + eapply (in_list_finite [m ∖ {[+ co α +]}]).
+      intros m' Hm'%bool_decide_unpack.
+      inversion Hm'; subst.
+      * exfalso.
+        eapply unique_nb in duo.
+        rewrite duo, co_involution_generic in nb.
+        apply nnb.
+        exact nb.
+      * replace (({[+ co α +]} ⊎ m') ∖ {[+ co α +]}) with m' by multiset_solver.
+        now left.
+    + eapply (in_list_finite ([] : list (MO A))).
+      intros m' Hm'%bool_decide_unpack.
+      inversion Hm'; subst.
+      { exfalso.
+        eapply unique_nb in duo.
+        rewrite duo, co_involution_generic in nb.
+        apply nnb.
+        exact nb. }
+      exfalso.
+      apply Hmem.
+      multiset_solver.
+Qed.
+
+Definition fw_co_ext_set `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p : P) (m : MO A) (α : A) : list (P * MO A) :=
+  map (fun q => (proj1_sig q, m)) (enum (dsig (fun q => exists α', dual α' α /\ p ⟶[α'] q)))
+  ++ map (fun m' => (p, proj1_sig m'))
+     (@enum (dsig (fun m' => m ⟶[co α] m')) _ (fw_ms_dual_image_finite m α)).
+
+Lemma fw_co_ext_set_spec1 `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p q : P) (m m' : MO A) (α : A) :
+  (exists α', dual α' α /\ inter_step (p ▷ m) (ActExt α') (q ▷ m')) ->
+  (q, m') ∈ fw_co_ext_set p m α.
+Proof.
+  intro Hex.
+  eapply fw_dual_image_ext_iff in Hex.
+  unfold fw_co_ext_set.
+  destruct Hex as [(-> & Htr) | (-> & Htr)].
+  - eapply elem_of_app. left. eapply list_elem_of_fmap.
+    exists (dexist q (ex_intro _ (co α) (conj (duo_sym _ _ (proj2_sig (exists_dual α))) Htr))).
+    split. reflexivity. eapply elem_of_enum.
+  - eapply elem_of_app. right. eapply list_elem_of_fmap.
+    exists (dexist m' Htr). split. reflexivity. eapply elem_of_enum.
+Qed.
+
+Definition fw_co_tau_set `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p : P) (m : MO A) : list (P * MO A) :=
+  map (fun q => (proj1_sig q, m)) (enum (dsig (fun q => p ⟶ q)))
+  ++ concat (map (fun ν => map (fun q => (proj1_sig q, m ∖ {[+ ν +]}))
+                    (enum (dsig (fun q => exists α', dual α' ν /\ p ⟶[α'] q))))
+              (elements m)).
+
+Lemma fw_co_tau_set_spec1 `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  (p q : P) (m m' : MO A) :
+  inter_step (p ▷ m) τ (q ▷ m') ->
+  (q, m') ∈ fw_co_tau_set p m.
+Proof.
+  intro Hstep.
+  eapply fw_tau_image_iff in Hstep.
+  unfold fw_co_tau_set.
+  destruct Hstep as [(-> & Htr) | (ν & nb & -> & Htr)].
+  - eapply elem_of_app. left. eapply list_elem_of_fmap.
+    exists (dexist q Htr). split. reflexivity. eapply elem_of_enum.
+  - eapply elem_of_app. right.
+    eapply list_elem_of_In. eapply in_concat.
+    exists (map (fun q0 => (proj1_sig q0, ({[+ ν +]} ⊎ m') ∖ {[+ ν +]}))
+             (enum (dsig (fun q0 => exists α', dual α' ν /\ p ⟶[α'] q0)))).
+    split.
+    + eapply list_elem_of_In. eapply list_elem_of_fmap.
+      exists ν. split. reflexivity.
+      eapply gmultiset_elem_of_elements. multiset_solver.
+    + eapply list_elem_of_In. eapply list_elem_of_fmap.
+      exists (dexist q (ex_intro _ (co ν) (conj (duo_sym _ _ (proj2_sig (exists_dual ν))) Htr))).
+      split.
+      * replace (({[+ ν +]} ⊎ m') ∖ {[+ ν +]}) with m' by multiset_solver. reflexivity.
+      * eapply elem_of_enum.
+Qed.
+
+#[global] Program Instance gLtsMBCoFinite `{@coFiniteImagegLts P A H gLtsP}
+  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  : coFiniteImagegLts (P * MO A) A.
+Next Obligation.
+  intros ? ? ? ? ? ? (p, m).
+  eapply (in_list_finite (fw_co_tau_set p m)).
+  intros (q, m') h%bool_decide_unpack.
+  now eapply fw_co_tau_set_spec1.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? p α q.
+  eapply fw_dual_decidable.
+Qed.
+Next Obligation.
+  intros ? ? ? ? ? ? (p, m) α.
+  eapply (in_list_finite (fw_co_ext_set p m α)).
+  intros (q, m') h%bool_decide_unpack.
+  now eapply fw_co_ext_set_spec1.
 Qed.
 
 (****************** Random properties : TO BE CLASSIFIED ********************)
