@@ -23,18 +23,20 @@
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW
     coWeakTransition Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
-    MultisetLTSConstruction ForwarderConstruction May DefinitionTI CompletenessTI DefinitionTIco
+    MultisetLTSConstruction ForwarderConstruction May MayTestSpec DefinitionTI CompletenessTI DefinitionTIco
     SoundnessTIco CompletenessTIco.
 
 (** * The May preorder is co-trace inclusion
 
       [p ⊑ₘₐᵧ q  ↔  p ≼꜀ₒ₋ₜᵢ q]
 
-    Mirrors [EquivalenceTI.v]: soundness needs nothing of the LTSs,
-    completeness needs the forwarder axioms in full. As in
-    [CompletenessTIco.v], completeness here is a thin wrapper around
-    the plain [completeness_ti_fw]/[completeness_ti_fb], not a
-    re-derivation. *)
+    Mirrors [EquivalenceTI.v]'s shape, but built entirely from the
+    "_co" chain ([DefinitionTIco.v]/[SoundnessTIco.v]/[CompletenessTIco.v]):
+    soundness needs nothing of the LTSs, completeness needs the
+    forwarder axioms in full, via [completeness_core_co] — a genuine
+    induction on [may], not a wrapper around the plain
+    [completeness_ti_fw]/[completeness_ti_fb]. This file never
+    imports [EquivalenceTI.v] and never calls its theorems. *)
 
 (** ** Equivalence, for forwarders *)
 

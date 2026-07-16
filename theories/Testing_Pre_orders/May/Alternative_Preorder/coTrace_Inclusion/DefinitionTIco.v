@@ -23,7 +23,7 @@
 From Stdlib.Lists Require Import List.
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation WeakTransitions coWeakTransition
-    Testing_Predicate InteractionBetweenLts May DefinitionTI.
+    Testing_Predicate InteractionBetweenLts May.
 
 (** * Alternative preorder for May based on co-trace inclusion
 
@@ -85,28 +85,12 @@ Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
    not freshly generalised ones *)
 Context {PInter : Prop_of_Inter P T A dual}.
 
-(** ** [may] is preserved backwards along co-τ-transitions of the process
-
-    The co-trace analogue of [may_wt_nil_server]/[may_wt_tau_server]:
-    with an empty trace, [cowt] only ever uses its [cowt_nil]/[cowt_tau]
-    constructors (no dual action involved), so plain induction applies
-    exactly as in the non-co version. *)
-
-Lemma may_wt_nil_server_co (s : trace A) (p1 p2 : P) (t : T) :
-  p1 ⟹ᶜᵒ[s] p2 -> s = [] -> p2 may_pass t -> p1 may_pass t.
-Proof.
-  intro w.
-  induction w as [ p | s' p q r l w IH | μ μ' s' p q r duo l w IH ]; intros Hs hm.
-  - exact hm.
-  - destruct (decide (outcome t)) as [happy | nh].
-    + now apply may_now.
-    + eapply may_server_step; eauto.
-  - discriminate.
-Qed.
-
-Lemma may_wt_tau_server_co (p1 p2 : P) (t : T) :
-  p1 ⟹ᶜᵒ p2 -> p2 may_pass t -> p1 may_pass t.
-Proof. intros w hm. eapply may_wt_nil_server_co; eauto. Qed.
+(** [may_wt_nil_server_co]/[may_wt_tau_server_co] (the co-trace
+    analogues, for the *process* side — [DefinitionTIco.v] puts the
+    duality there, never on the test/client) and the plain
+    [may_wt_nil_client]/[may_wt_tau_client] (the client never carries
+    duality here, so these are unchanged) all live in [May.v], shared
+    with [DefinitionTI.v]. *)
 
 (** ** From a successful computation to a synchronising co-trace *)
 

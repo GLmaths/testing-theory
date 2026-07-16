@@ -23,7 +23,7 @@
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW
     Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
-    MultisetLTSConstruction ForwarderConstruction May DefinitionTI SoundnessTI CompletenessTI.
+    MultisetLTSConstruction ForwarderConstruction May DefinitionTI MayTestSpec SoundnessTI CompletenessTI.
 
 (** * The May preorder is trace inclusion
 
