@@ -7,5 +7,3 @@ devenv.lock
 .nix/
 .vscode/
 .doc/
-*.aux
-rocq_mcp_cache_*.v
