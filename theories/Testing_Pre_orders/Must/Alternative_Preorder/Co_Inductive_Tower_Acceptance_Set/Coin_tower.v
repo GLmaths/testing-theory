@@ -285,14 +285,15 @@ Section must_co_inductive_acceptance_preorder.
   Context `{!gLtsObaFB T A}.
 
   (** ** The co-inductive-tower characterisation on FW is equivalent to the extensional must preorder *)
-  (* Corollary equivalence_fw_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
+  Corollary equivalence_fw_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
     pre_extensional outcome p q <-> ({[ p ]} : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset Q).
   Proof.
     rewrite <- eqx. rewrite alt_set_singleton_iff.
     rewrite equivalence_fw_bhv_acc_ctx;eauto.
   Qed.
-  From TestingTheory Require Import Lts_CN.
+  
   (** ** The co-inductive-towercharacterisation on FW is equivalent to the inductive must preorder *)
+  (* From TestingTheory Require Import Lts_CN.
   Corollary equivalence_fw_co_inductive_acceptance_and_must_i (X : gset P) (Y : gset Q) :
     X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y <-> (X : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ (Y : gset Q).
   Proof.

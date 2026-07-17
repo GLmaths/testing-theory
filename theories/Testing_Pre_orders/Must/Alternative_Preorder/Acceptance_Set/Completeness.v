@@ -33,9 +33,9 @@ From stdpp Require Import sets base countable finite gmap list finite
 From stdpp Require gmultiset.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA
   WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
-  InteractionBetweenLts MultisetLTSConstruction 
+  InteractionBetweenLts MultisetLTSConstruction
   ParallelLTSConstruction ForwarderConstruction
-  Must Lift Subset_Act Convergence Termination 
+  Must Lift Subset_Act Convergence Termination
   Testing_Predicate DefinitionAS ActTau Lts_Finite_Output_Chain Subset_Act.
 
 Import ListNotations.
@@ -1110,7 +1110,7 @@ Qed.
 Lemma must_ta_or_empty_pre_action_set_for_all_trace {P : Type} `{CC : Countable PreAct} `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, FiniteAbs :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ ,
-  !Testing_Predicate outcome _, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))} 
+  !Testing_Predicate outcome _, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
 
   `{!Prop_of_Inter P T A dual}
 
@@ -1275,3 +1275,46 @@ Proof.
   intros hctx. eapply completeness_fw.
   now rewrite <- Lift.lift_fw_ctx_pre.
 Qed.
+
+From TestingTheory Require Import Soundness.
+
+Lemma completeness1_set `{
+    @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+    @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _,
+    ! test_convergence_spec tconv}
+
+    `{!Prop_of_Inter P T A dual}
+    `{!Prop_of_Inter Q T A dual}
+
+  (X : gset P) (Y : gset Q) :
+  X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ₁≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros hne hle s hcnv q mem.
+  assert (hmx : X must_pass_x (tconv (coₜ s))).
+  { eapply must_set_iff_must_for_all; eauto. intros p memp. eapply must_iff_cnv; eauto. }
+  eapply hle in hmx.
+  eapply must_iff_cnv. eapply must_if_must_set_helper; eauto.
+Qed.
+
+(*
+Lemma completeness2_set `{
+    @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
+    @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _,
+    ! test_convergence_spec tconv}
+
+    `{!Prop_of_Inter P T A dual}
+    `{!Prop_of_Inter Q T A dual}
+
+  (X : gset P) (Y : gset Q) :
+  X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ₂≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros hne hle s hcnv q mem.
+  assert (hmx : X must_pass_x (tconv (coₜ s))).
+  { eapply must_set_iff_must_for_all; eauto. intros p memp. eapply must_iff_cnv; eauto. }
+  eapply hle in hmx.
+  eapply must_iff_cnv. eapply must_if_must_set_helper; eauto.
+Qed.
+
+*)
