@@ -129,14 +129,16 @@ Arguments  Equality {_} _ _.
 
 Notation "x == y" := (Equality x y) (at level 70).
 
-Definition Eval_Eq (E : Equation ValueData) : option bool :=
+Definition Eval_Eq (n : nat) (E : Equation ValueData) : option bool :=
 match E with
 | cst t == cst t' => if (decide (t = t')) then (Some true)
                                           else (Some false)
-| bvar i == cst t => None
-| cst t == bvar i => None
+| bvar i == cst t => if (decide (n <= i)) then (Some false) else None
+| cst t == bvar i => if (decide (n <= i)) then (Some false) else None
 | bvar i == bvar i' => if (decide (i = i')) then (Some true)
-                                          else None
+                       else if (decide (n <= i)) then
+                              (if (decide (n <= i')) then (Some false) else None)
+                            else None
 end.
 
 (* Definition of processes*)
@@ -381,9 +383,9 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
     lts (rec x • P) τ (pr_subst x P (rec x • P))
 
 (*The actions for IF contructor*)
-| lts_ifOne : forall {p p' q α E}, Eval_Eq E = Some true -> lts p α p' ->  
+| lts_ifOne : forall {p p' q α E}, Eval_Eq 0 E = Some true -> lts p α p' ->
     lts (If E Then p Else q) α p'
-| lts_ifZero : forall {p q q' α E}, Eval_Eq E = Some false -> lts q α q' -> 
+| lts_ifZero : forall {p q q' α E}, Eval_Eq 0 E = Some false -> lts q α q' ->
     lts (If E Then p Else q) α q'
 
 (*The actions for process restriction*)
@@ -439,8 +441,6 @@ with gsize p :=
 end.
 
 Hint Constructors lts:ccs.
-
-Reserved Notation "p ≡ q" (at level 70).
 
 Definition VarSwap_in_ChannelData (k0 : nat) (c : ChannelData) : ChannelData := 
 match c with

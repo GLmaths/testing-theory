@@ -468,70 +468,42 @@ Proof.
         ++ repeat lts_inversion lts.
            ** destruct μ, a0, c; discriminate.
            ** destruct μ, a0, c; try discriminate. simpl in *; inversion H6; subst.
-              case_eq (Eval_Eq (v0 == cst O)).
-              -- intros. destruct v0.
-                 +++ destruct (decide (v = O)).
-                     *** subst. simpl in *. rewrite decide_True in H3;eauto. inversion H3;subst.
-                         assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If cst O == cst O
-                                   Then P ^ cst O 
-                                   Else Q ^ cst O))) ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖(P ^ cst O))).
-                         { eapply cgr_res. eapply cgr_fullpar. reflexivity. eapply cgr_if_true. simpl; eauto.
-                           rewrite decide_True. eauto. eauto. }
-                         assert (g (cst a ? (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P) 
-                                                             Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q)))
-                                                                    ⟹{ActIn (cst a ▷ cst O)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P) 
-                                                             Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q))) ^ (cst O))) as h_wk.
-                         { eapply lts_to_wt. eapply lts_input. } simpl in h_wk.
-                         assert ((If cst O == cst O
-                                    Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ cst O) 
-                                    Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ cst O)) ⇓ s).
-                         { eapply H0; eauto. }
-                         assert ((If cst O == cst O
-                                        Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ cst O)
-                                        Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ cst O)) ⋍ 
-                                 ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ cst O)).
-                         { eapply cgr_if_true; simpl; eauto. rewrite decide_True;eauto. } rewrite H7 in H5.
-                         inversion H2;subst; repeat lts_inversion lts.
-                         eapply eq_spec_wt in H4. simpl in *. 2 :{ instantiate (2:= []). eauto. }
-                         destruct H4 as (q' & tr_wk1 & eq1). eapply cnv_preserved_by_wt_nil in H5.
-                         2 : { exact tr_wk1. } rewrite eq1 in H5. eauto.
-                     *** subst. simpl in *. rewrite decide_False in H3;eauto. inversion H3;subst.
-                         assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If cst v == cst O
-                                   Then P ^ cst v
-                                   Else Q ^ cst v))) ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖(Q ^ cst v))).
-                         { eapply cgr_res. eapply cgr_fullpar. reflexivity. eapply cgr_if_false. simpl; eauto.
-                           rewrite decide_False. eauto. eauto. }
-                         assert (g (cst a ? (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P) 
-                                                             Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q)))
-                                                                    ⟹{ActIn (cst a ▷ cst v)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P) 
-                                                             Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q))) ^ (cst v))) as h_wk.
-                         { eapply lts_to_wt. eapply lts_input. } simpl in h_wk.
-                         assert ((If cst v == cst O
-                                    Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ cst v) 
-                                    Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ cst v)) ⇓ s).
-                         { eapply H0; eauto. }
-                         assert ((If cst v == cst O
-                                        Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ cst v)
-                                        Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ cst v)) ⋍ 
-                                 ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ cst v)).
-                         { eapply cgr_if_false; simpl; eauto. rewrite decide_False;eauto. } rewrite H7 in H5.
-                         inversion H2;subst; repeat lts_inversion lts.
-                         eapply eq_spec_wt in H4. simpl in *. 2 :{ instantiate (2:= []). eauto. }
-                         destruct H4 as (q' & tr_wk1 & eq1). eapply cnv_preserved_by_wt_nil in H5.
-                         2 : { exact tr_wk1. } rewrite eq1 in H5. eauto.
-                 +++ simpl in H3. inversion H3.
-              -- intros. destruct v0.
-                 +++ destruct (decide (v = O)).
-                     *** subst. simpl in *. rewrite decide_True in H3;eauto. discriminate.
-                     *** subst. simpl in *. rewrite decide_False in H3;eauto. discriminate.
-                 +++ simpl in *. inversion w;subst.
-                     *** destruct s.
-                         --- constructor. constructor. intros. repeat lts_inversion lts.
-                         --- constructor.
-                             ++++ constructor. intros. repeat lts_inversion lts.
-                             ++++ intros. inversion H4; subst; repeat lts_inversion lts.
-                                  destruct e, a0, c; simpl in *; discriminate.
-                     *** repeat lts_inversion lts.
+              destruct (Eval_Eq 0 (v0 == cst O)) as [b|] eqn:Hb; [destruct b|].
+              -- assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If v0 == cst O Then P ^ v0 Else Q ^ v0)))
+                           ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖ (P ^ v0))) as Hc1.
+                 { eapply cgr_res. eapply cgr_fullpar. reflexivity. eapply cgr_if_true. eauto. }
+                 assert (g (cst a ? (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                                                     Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q)))
+                                                                ⟹{ActIn (cst a ▷ v0)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                                                     Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q))) ^ (v0))) as h_wk.
+                 { eapply lts_to_wt. eapply lts_input. } simpl in h_wk.
+                 assert ((If v0 == cst O Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ v0)
+                                          Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ v0)) ⇓ s) as Hcv.
+                 { eapply H0; eauto. }
+                 assert ((If v0 == cst O Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ v0)
+                                          Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ v0))
+                           ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ v0)) as Hc2.
+                 { eapply cgr_if_true; eauto. } rewrite Hc2 in Hcv.
+                 destruct (eq_spec_wt _ _ Hc1 q nil w) as (r & Hr & Heqr).
+                 eapply cnv_preserved_by_wt_nil in Hcv. 2 : { exact Hr. } rewrite Heqr in Hcv. eauto.
+              -- assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If v0 == cst O Then P ^ v0 Else Q ^ v0)))
+                           ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖ (Q ^ v0))) as Hc1.
+                 { eapply cgr_res. eapply cgr_fullpar. reflexivity. eapply cgr_if_false. eauto. }
+                 assert (g (cst a ? (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                                                     Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q)))
+                                                                ⟹{ActIn (cst a ▷ v0)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                                                     Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q))) ^ (v0))) as h_wk.
+                 { eapply lts_to_wt. eapply lts_input. } simpl in h_wk.
+                 assert ((If v0 == cst O Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ v0)
+                                          Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ v0)) ⇓ s) as Hcv.
+                 { eapply H0; eauto. }
+                 assert ((If v0 == cst O Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ v0)
+                                          Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ v0))
+                           ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ v0)) as Hc2.
+                 { eapply cgr_if_false; eauto. } rewrite Hc2 in Hcv.
+                 destruct (eq_spec_wt _ _ Hc1 q nil w) as (r & Hr & Heqr).
+                 eapply cnv_preserved_by_wt_nil in Hcv. 2 : { exact Hr. } rewrite Heqr in Hcv. eauto.
+              -- destruct v0; simpl in Hb; [destruct (decide (v = O))|]; discriminate.
   + intros s q' conv wk_tr stable.
     inversion wk_tr;subst.
     * exists mem_inside. repeat split.
@@ -573,17 +545,20 @@ Proof.
               -- assert ((⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q')%stdpp.
                  { eapply Proper_lts_pre_co_actions in eq1. eauto. } 
                  rewrite H0. set_solver. 
-       ++ inversion w;subst.
-          -- inversion w;subst.
-             ** exists ((If bvar 0 == cst O
-                         Then ν ((bvar 0 ! cst I • 𝟘) ‖ P)
-                         Else ν ((bvar 0 ! cst I • 𝟘) ‖ Q)) ^ bvar n).
-                repeat split.
-                +++ eapply lts_to_wt. simpl. constructor.
-                +++ simpl. intros i mem. compute_coR_g mem. inversion mem.
-             ** repeat lts_inversion lts.
-          -- repeat lts_inversion lts.
-          -- repeat lts_inversion lts. destruct μ, a0, c; discriminate.
+       ++ assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If bvar 0 == cst O
+                                   Then P
+                                   Else Q) ^ n))
+                           ⋍ (If bvar n == cst O Then (ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ n))
+                                        Else (ν ((bvar 0 ! cst I • 𝟘) ‖ Q ^ n)))).
+              { etrans. eapply cgr_res. eapply cgr_fullpar. reflexivity. eapply cgr_if_false. reflexivity.
+                eapply cgr_if_false_rev. reflexivity. }
+              eapply eq_spec_wt in H0;eauto. destruct H0 as (q'' & wk_tr1 & eq1).
+              exists q''. repeat split;eauto.
+              ** eapply wt_push_left. eapply lts_to_wt. constructor. simpl. eauto.
+              ** symmetry in eq1. eapply stable_preserved_by_eq in eq1;eauto.
+              ** assert ((⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q')%stdpp.
+                 { eapply Proper_lts_pre_co_actions in eq1. eauto. }
+                 rewrite H0. set_solver.
 Qed.
 
 End VCCS_examples.

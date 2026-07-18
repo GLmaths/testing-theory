@@ -236,7 +236,7 @@ Qed.
       [if_not_true_never_outcome]. *)
 
 Lemma if_not_true_no_lts E P a t :
-  Eval_Eq E <> Some true -> ~ lts (If E Then P Else 𝟘) a t.
+  Eval_Eq 0 E <> Some true -> ~ lts (If E Then P Else 𝟘) a t.
 Proof.
   intros hne h. inversion h; subst.
   - contradiction.
@@ -244,7 +244,7 @@ Proof.
 Qed.
 
 Lemma if_not_true_never_outcome E P :
-  Eval_Eq E <> Some true -> never_outcome good_VACCS (If E Then P Else 𝟘).
+  Eval_Eq 0 E <> Some true -> never_outcome good_VACCS (If E Then P Else 𝟘).
 Proof.
   intros hne u t' hwt hgood.
   remember (If E Then P Else 𝟘) as p0 eqn:heq0.

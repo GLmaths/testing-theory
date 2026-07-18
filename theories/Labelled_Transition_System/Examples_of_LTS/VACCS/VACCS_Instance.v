@@ -1222,35 +1222,35 @@ Proof.
     + intros. dependent destruction l. exists (p^v). split. apply lts_input.
       apply Congruence_Respects_Substitution. constructor. apply H.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step p2 ((c , v) ! )).  exact l1. destruct H0. exists (x ‖ q2).
+      -- destruct (IHcgr_step eq_refl p2 ((c , v) ! )).  exact l1. destruct H0. exists (x ‖ q2).
           split. eapply lts_comL. exact H0. assumption.
           apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step q2 ((c , v) ?)). assumption. destruct H0. exists (x ‖ p2).
+      -- destruct (IHcgr_step eq_refl q2 ((c , v) ?)). assumption. destruct H0. exists (x ‖ p2).
           split.  eapply lts_comR. exact l1. assumption.
           apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step p2 α). assumption. destruct H0. eexists.
+      -- destruct (IHcgr_step eq_refl p2 α). assumption. destruct H0. eexists.
           split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
           assumption. reflexivity.
       -- eexists. split. instantiate (1:= (p ‖ q2)). apply lts_parR.
           assumption. apply cgr_par.
           constructor. assumption.
     + intros. inversion l; subst.
-      -- destruct (IHcgr_step p' (ActExt (VarC_action_add 1 μ))) as (q'1 & l' & equiv'). eauto.
+      -- destruct (IHcgr_step eq_refl p' (ActExt (VarC_action_add 1 μ))) as (q'1 & l' & equiv'). eauto.
          exists (ν q'1). split; eauto. eapply lts_res_ext. eauto. eapply cgr_res. eauto.
-      -- destruct (IHcgr_step p' τ) as (q'1 & l' & equiv'). eauto. exists (ν q'1). split.
-         eapply lts_res_tau. eauto. eapply cgr_res. eauto. 
+      -- destruct (IHcgr_step eq_refl p' τ) as (q'1 & l' & equiv'). eauto. exists (ν q'1). split.
+         eapply lts_res_tau. eauto. eapply cgr_res. eauto.
     + intros. dependent destruction l.
-      -- eexists. split. instantiate (1:= p'). apply lts_ifOne; eauto. reflexivity. 
-      -- destruct (IHcgr_step q'0 α) as (q'1 & l' & equiv'). eauto.
+      -- eexists. split. instantiate (1:= p'). apply lts_ifOne; eauto. reflexivity.
+      -- destruct (IHcgr_step eq_refl q'0 α) as (q'1 & l' & equiv'). eauto.
          eexists. split. apply lts_ifZero; eauto. eauto.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step p'0 α) as (p'1 & l' & equiv'). eauto.
+      -- destruct (IHcgr_step eq_refl p'0 α) as (p'1 & l' & equiv'). eauto.
          eexists. split. apply lts_ifOne; eauto. eauto.
-      -- eexists. split. instantiate (1:= q'). apply lts_ifZero; eauto. reflexivity. 
-    + intros. dependent destruction l. 
-      -- destruct (IHcgr_step q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
+      -- eexists. split. instantiate (1:= q'). apply lts_ifZero; eauto. reflexivity.
+    + intros. dependent destruction l.
+      -- destruct (IHcgr_step eq_refl q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
-  - intros. destruct (IHhcgr2 q α). assumption. destruct (IHhcgr1 x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
+  - intros. destruct (IHhcgr2 eq_refl q α). assumption. destruct (IHhcgr1 eq_refl x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. etransitivity; eauto.
 Qed.
 
@@ -2272,7 +2272,7 @@ match p with
   | P ‖ Q => (moutputs_of k P) ⊎ (moutputs_of k Q)
   | pr_var _ => ∅
   | rec _ • _ => ∅
-  | If E Then P Else Q => match (Eval_Eq E) with 
+  | If E Then P Else Q => match (Eval_Eq 0 E) with 
                           | Some true => moutputs_of k P
                           | Some false => moutputs_of k Q
                           | None => ∅
@@ -2300,7 +2300,7 @@ Proof.
       = moutputs_of (j + S (S k)) (VarSwap_in_proc j p2)) as eq2. 
     { eapply Hp. simpl. lia. }
     rewrite eq1, eq2. eauto. 
-  + case_eq (Eval_Eq e); intros; try multiset_solver.
+  + case_eq (Eval_Eq 0 e); intros; try multiset_solver.
     destruct b.
     ++ eapply Hp. simpl. lia.
     ++ eapply Hp. simpl. lia.
@@ -2335,7 +2335,7 @@ Proof.
       = moutputs_of j p2) as eq2. 
     { eapply Hp. simpl. lia. }
     rewrite eq1, eq2. eauto. 
-  + case_eq (Eval_Eq e); intros; try multiset_solver.
+  + case_eq (Eval_Eq 0 e); intros; try multiset_solver.
     destruct b.
     ++ eapply Hp. simpl. lia.
     ++ eapply Hp. simpl. lia.
@@ -2463,8 +2463,8 @@ Proof. intros. revert k. dependent induction H ; try multiset_solver; simpl in *
   replace (S k)%nat with (1 + k)%nat; eauto. rewrite<- NewVarCn_and_moutputs2. eauto.
 + intros. f_equal. replace (NewVarC 0 q) with (NewVarCn 0 1 q); eauto.
   replace (S k)%nat with (1 + k)%nat; eauto. rewrite<- NewVarCn_and_moutputs2. eauto.
-+ destruct (Eval_Eq C); eauto. destruct b; eauto.
-+ destruct (Eval_Eq C); eauto. destruct b; eauto.
++ destruct (Eval_Eq 0 C); eauto. destruct b; eauto.
++ destruct (Eval_Eq 0 C); eauto. destruct b; eauto.
 Qed.
 
 Lemma mo_equiv_spec : forall {p q k}, p ≡* q -> moutputs_of k p = moutputs_of k q.
@@ -2522,7 +2522,7 @@ Proof.
     contradict mem. intro mem. multiset_solver.
   + exfalso. multiset_solver.
   + exfalso. multiset_solver.
-  + simpl in *. case_eq (Eval_Eq e1); intros.
+  + simpl in *. case_eq (Eval_Eq 0 e1); intros.
     ++ rewrite H in mem. destruct b.
        +++ eapply IHe1 in mem as (e' & l & eq).
            exists e'. split ;eauto. eapply lts_res_ext_n. eapply lts_ifOne; eauto.
@@ -2622,7 +2622,7 @@ match p with
       (set_map (fun p => p ‖ p2) ps1) ∪ (set_map (fun p => p1 ‖ p) ps2)
   | pr_var _ => ∅
   | rec _ • _ => ∅
-  | If E Then A Else B => match (Eval_Eq E) with 
+  | If E Then A Else B => match (Eval_Eq 0 E) with 
                           | Some true => lts_set_output A a
                           | Some false => lts_set_output B a
                           | None => ∅
@@ -2650,7 +2650,7 @@ match p with
   | pr_var _ => ∅
   | rec _ • _ => ∅ 
   | c ! v • 𝟘 => ∅
-  | If E Then A Else B => match (Eval_Eq E) with 
+  | If E Then A Else B => match (Eval_Eq 0 E) with 
                           | Some true => lts_set_input A a
                           | Some false => lts_set_input B a
                           | None => ∅
@@ -2695,7 +2695,7 @@ match p with
   | c ! v • 𝟘 => ∅
   | pr_var _ => ∅
   | rec x • p => {[ pr_subst x p (rec x • p) ]}
-  | If C Then A Else B => match (Eval_Eq C) with 
+  | If C Then A Else B => match (Eval_Eq 0 C) with 
                           | Some true => lts_set_tau A
                           | Some false => lts_set_tau B
                           | None => ∅
@@ -2713,7 +2713,7 @@ Proof.
     apply lts_parL. apply IHp1. rewrite elem_of_elements in mem. set_solver.
     * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_parR. apply IHp2. rewrite elem_of_elements in mem. exact mem.
-  - case_eq (Eval_Eq e).
+  - case_eq (Eval_Eq 0 e).
     * intros. destruct b.
       ** rewrite H in mem. eapply lts_ifOne; eauto.
       ** rewrite H in mem. eapply lts_ifZero; eauto.
@@ -2747,7 +2747,7 @@ Proof.
     ++ eapply elem_of_list_to_set in H.
        eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
        rewrite elem_of_elements in mem. eauto with cgr.
-  + case_eq (Eval_Eq e).
+  + case_eq (Eval_Eq 0 e).
     - intros. rewrite H in mem. destruct b.
       ++ eapply lts_ifOne; eauto.
       ++ eapply lts_ifZero; eauto.
@@ -2803,7 +2803,7 @@ Proof.
          eapply lts_set_output_spec0 in mem2. destruct t'. eapply lts_comR. exact mem2. exact mem1.
     + inversion mem.
     + eapply elem_of_singleton_1 in mem. subst; eauto with cgr.
-    + case_eq (Eval_Eq e); intros; rewrite H in mem.
+    + case_eq (Eval_Eq 0 e); intros; rewrite H in mem.
       ++ destruct b.
          +++ eapply lts_ifOne; eauto.
          +++ eapply lts_ifZero; eauto.
@@ -2937,9 +2937,12 @@ Next Obligation.
   intros p [[a|a]|]; intros (q & mem); intro eq; eapply lts_set_spec1 in mem; set_solver.
 Qed.
 
-#[global] Program Instance VACCS_gLtsEq : gLtsEq proc VACCS_ExtAction := 
+#[global] Program Instance VACCS_gLtsEq : gLtsEq proc VACCS_ExtAction :=
   {| gLtsEq_gLts := VACCS_gLts ;
-     eq_rel x y  := cgr x y;|}.
+     eq_rel x y  := cgr 0 x y; |}.
+Next Obligation.
+  apply cgr_is_eq_rel.
+Defined.
 Next Obligation.
   eapply Congruence_Respects_Transition.
 Defined.
@@ -3302,7 +3305,7 @@ match p with
                                               else ∅
   | pr_var _ => ∅
   | rec _ • _ => ∅
-  | If E Then P Else Q => match (Eval_Eq E) with 
+  | If E Then P Else Q => match (Eval_Eq 0 E) with 
                           | Some true => mPreCoAct_of k P
                           | Some false => mPreCoAct_of k Q
                           | None => ∅
@@ -3342,7 +3345,7 @@ Proof.
     assert (mPreCoAct_of (k + S j) (NewVarC j p2) = mPreCoAct_of (k + j) p2) as eq2.
     { eapply Hp. simpl. lia. }
     rewrite eq1, eq2. eauto.
-  + case_eq (Eval_Eq e).
+  + case_eq (Eval_Eq 0 e).
     ++ intros. destruct b.
        +++ eauto with lia.
        +++ eauto with lia.
@@ -3371,7 +3374,7 @@ Proof.
     { eapply Hp; simpl; eauto. lia. }
     assert (mPreCoAct_of (j + S (S k)) p2 = mPreCoAct_of (j + S (S k)) (VarSwap_in_proc j p2)) as eq2.
     { eapply Hp; simpl; eauto. lia. } rewrite eq1, eq2. eauto.
-  + case_eq (Eval_Eq e).
+  + case_eq (Eval_Eq 0 e).
     ++ intros. destruct b.
        +++ eauto with lia.
        +++ eauto with lia.
@@ -3415,12 +3418,12 @@ Proof.
       - eapply gmultiset_elem_of_disj_union. right.
         replace (S k)%nat with (k + S 0)%nat by lia. rewrite PreCoAct_NewVarC.
         replace (k + 0)%nat with k%nat by lia. eauto.
-    * case_eq (Eval_Eq C).
+    * case_eq (Eval_Eq 0 C).
       ++ intros. destruct b.
          +++ rewrite H0 in mem; eauto.
          +++ rewrite H0 in mem; eauto.
       ++ intros. rewrite H0 in mem; eauto.
-    * case_eq (Eval_Eq C).
+    * case_eq (Eval_Eq 0 C).
       ++ intros. destruct b.
          +++ rewrite H0 in mem; eauto.
          +++ rewrite H0 in mem; eauto.
@@ -3558,7 +3561,7 @@ Proof.
        eapply lts_refuses_spec2. exists (p1 ‖ p'2). constructor. eauto. simpl. lia.
   * simpl in *. inversion H.
   * simpl in *. inversion H.
-  * case_eq (Eval_Eq e); intros; simpl in *. rewrite H0 in H. destruct b.
+  * case_eq (Eval_Eq 0 e); intros; simpl in *. rewrite H0 in H. destruct b.
     -- eapply (Hp p1) in H. destruct H as (μ' & eq & mem).
        exists μ'. split; eauto. destruct eq as (μ'' & Tr & duo & b).
        exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).

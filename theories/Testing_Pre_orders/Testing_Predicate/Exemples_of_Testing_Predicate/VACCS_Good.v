@@ -40,9 +40,9 @@ Inductive good_VACCS : proc -> Prop :=
 | good_par : forall p q, good_VACCS p \/ good_VACCS q -> good_VACCS (p ‖ q)
 | good_choice : forall p q, good_VACCS (g p) \/ good_VACCS (g q) -> good_VACCS (p + q)
 | good_if_true : forall E p q, good_VACCS p ->
-    Eval_Eq E = Some true -> good_VACCS (If E Then p Else q)
+    Eval_Eq 0 E = Some true -> good_VACCS (If E Then p Else q)
 | good_if_false : forall E p q, good_VACCS q ->
-    Eval_Eq E = Some false -> good_VACCS (If E Then p Else q)
+    Eval_Eq 0 E = Some false -> good_VACCS (If E Then p Else q)
 | good_res : forall p, good_VACCS p -> good_VACCS (ν p).
 
 Hint Constructors good_VACCS:ccs.
@@ -52,7 +52,7 @@ Proof.
   dependent induction e; try (now right; inversion 1).
   - destruct IHe1; destruct IHe2; try (now left; eauto with ccs).
     right. inversion 1; naive_solver.
-  - case_eq (Eval_Eq e1); intros.
+  - case_eq (Eval_Eq 0 e1); intros.
     + destruct b.
       * destruct IHe1; destruct IHe2; try (now left; eauto with ccs).
         right. inversion 1; naive_solver.
