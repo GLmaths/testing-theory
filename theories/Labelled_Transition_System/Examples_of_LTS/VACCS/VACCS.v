@@ -117,14 +117,16 @@ Arguments  Equality {_} _ _.
 
 Notation "x == y" := (Equality x y) (at level 70).
 
-Definition Eval_Eq (E : Equation ValueData) : option bool :=
+Definition Eval_Eq (n : nat) (E : Equation ValueData) : option bool :=
 match E with
 | cst t == cst t' => if (decide (t = t')) then (Some true)
                                           else (Some false)
-| bvar i == cst t => None
-| cst t == bvar i => None
+| bvar i == cst t => if (decide (n <= i)) then (Some false) else None
+| cst t == bvar i => if (decide (n <= i)) then (Some false) else None
 | bvar i == bvar i' => if (decide (i = i')) then (Some true)
-                                          else None
+                       else if (decide (n <= i)) then
+                              (if (decide (n <= i')) then (Some false) else None)
+                            else None
 end.
 
 (* Definition of processes *)
@@ -345,9 +347,9 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
     lts (𝛕 • P) τ P
 | lts_recursion : forall {x P},
     lts (rec x • P) τ (pr_subst x P (rec x • P))
-| lts_ifOne : forall {p p' q α E}, Eval_Eq E = Some true -> lts p α p' ->  
+| lts_ifOne : forall {p p' q α E}, Eval_Eq 0 E = Some true -> lts p α p' ->
     lts (If E Then p Else q) α p'
-| lts_ifZero : forall {p q q' α E}, Eval_Eq E = Some false -> lts q α q' -> 
+| lts_ifZero : forall {p q q' α E}, Eval_Eq 0 E = Some false -> lts q α q' ->
     lts (If E Then p Else q) α q'
 
 (* The actions for process restriction *)
@@ -441,30 +443,6 @@ match M with
 | p1 + p2 => (gVarSwap_in_proc k0 p1) + (gVarSwap_in_proc k0 p2)
 end.
 
-Lemma subst_equation E k v x: Eval_Eq E = Some x ->
-  Eval_Eq (subst_in_Equation k v E) = Some x.
-Proof.
-  intros. destruct E. destruct v0; destruct v1; simpl in *;
-  eauto ; try discriminate.
-  destruct (decide (n = n0)); inversion H. subst.
-  case decide; intro; subst.
-  - destruct v; rewrite decide_True; eauto.
-  - destruct (decide (n0 < k)).
-    + rewrite decide_True; eauto.
-    + rewrite decide_True; eauto.
-Qed.
-
-Lemma NewVar_equation E k x : Eval_Eq E = Some x ->
-  Eval_Eq (NewVar_in_Equation k E) = Some x.
-Proof.
-  intros. destruct E. destruct v; destruct v0; simpl in *; eauto; try inversion H.
-  destruct (decide (n = n0)).
-  - inversion H; subst.
-    destruct (decide ((k < S n0))).
-    + rewrite decide_True; eauto.
-    + rewrite decide_True; eauto.
-  - inversion H; subst.
-Qed.
 
 Lemma subst_and_VarSwap k k0 v p : subst_in_proc k v (VarSwap_in_proc k0 p) =
   (VarSwap_in_proc k0 (subst_in_proc k v p)).

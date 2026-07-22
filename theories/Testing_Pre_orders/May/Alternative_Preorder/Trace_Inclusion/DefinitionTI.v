@@ -73,45 +73,10 @@ Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
    not freshly generalised ones *)
 Context {PInter : Prop_of_Inter P T A dual}.
 
-(** ** [may] is preserved backwards along τ-transitions of the server
-
-    Stated with an explicit [s = []] side condition rather than [dependent
-    induction] on [p1 ⟹ p2], so that plain induction applies and no UIP axiom
-    creeps in. *)
-
-Lemma may_wt_nil_server (s : trace A) (p1 p2 : P) (t : T) :
-  p1 ⟹[s] p2 -> s = [] -> p2 may_pass t -> p1 may_pass t.
-Proof.
-  intro w.
-  induction w as [ p | s' p q r l w IH | μ s' p q r l w IH ]; intros Hs hm.
-  - exact hm.
-  - destruct (decide (outcome t)) as [happy | nh].
-    + now apply may_now.
-    + eapply may_server_step; eauto.
-  - discriminate.
-Qed.
-
-Lemma may_wt_tau_server (p1 p2 : P) (t : T) :
-  p1 ⟹ p2 -> p2 may_pass t -> p1 may_pass t.
-Proof. intros w hm. eapply may_wt_nil_server; eauto. Qed.
-
-(** ** [may] is preserved backwards along τ-transitions of the client *)
-
-Lemma may_wt_nil_client (r : P) (s : trace A) (t1 t2 : T) :
-  t1 ⟹[s] t2 -> s = [] -> r may_pass t2 -> r may_pass t1.
-Proof.
-  intro w.
-  induction w as [ t | s' t u v l w IH | μ s' t u v l w IH ]; intros Hs hm.
-  - exact hm.
-  - destruct (decide (outcome t)) as [happy | nh].
-    + now apply may_now.
-    + eapply may_client_step; eauto.
-  - discriminate.
-Qed.
-
-Lemma may_wt_tau_client (r : P) (t1 t2 : T) :
-  t1 ⟹ t2 -> r may_pass t2 -> r may_pass t1.
-Proof. intros w hm. eapply may_wt_nil_client; eauto. Qed.
+(** [may_wt_nil_server]/[may_wt_tau_server]/[may_wt_nil_client]/
+    [may_wt_tau_client] — "[may] is preserved backwards along
+    τ-transitions of the server/client" — now live in [May.v], shared
+    with [DefinitionTIco.v]. *)
 
 (** ** From a successful computation to a synchronising trace *)
 

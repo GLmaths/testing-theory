@@ -130,16 +130,27 @@ destruct p; intros.
     dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
 Qed.
 
-Lemma Eval_simpl_true v : Eval_Eq (v == v) = Some true <-> v = v.
+Lemma Eval_simpl_true n v : Eval_Eq n (v == v) = Some true <-> v = v.
 Proof.
   split.
   - intro e. inversion e. destruct v; rewrite decide_True in H0; eauto.
   - intro e. subst. simpl. destruct v; rewrite decide_True; eauto.
 Qed.
 
-Lemma Eval_simpl_false v1 v2 : v1 ≠ v2 ->  Eval_Eq (cst v1 == cst v2) = Some false.
+Lemma Eval_simpl_false n v1 v2 : v1 ≠ v2 ->  Eval_Eq n (cst v1 == cst v2) = Some false.
 Proof.
   - intro e. simpl. rewrite decide_False; eauto.
+Qed.
+
+Lemma Eval_simpl_false_gen (v1 v2 : ValueData) : v1 ≠ v2 -> Eval_Eq 0 (v1 == v2) = Some false.
+Proof.
+  intros neq. destruct v1 as [t1|i1], v2 as [t2|i2]; simpl.
+  - destruct (decide (t1 = t2)) as [->|]. contradiction (neq eq_refl). reflexivity.
+  - reflexivity.
+  - reflexivity.
+  - destruct (decide (i1 = i2)) as [->|].
+    + contradiction (neq eq_refl).
+    + reflexivity.
 Qed.
 
 Lemma New_Var_And_NewVar_in_Data : forall j i e, NewVar_in_Data (i + S j) (NewVar_in_Data i e) = NewVar_in_Data i (NewVar_in_Data (i + j) e).
@@ -363,21 +374,17 @@ Inductive Well_Defined_Trace : trace (ExtAct TypeOfActions) -> Prop :=
                                                     -> Well_Defined_Trace (a :: s).
 
 Lemma gen_test_gen_spec_good_not_mu e a μ' s p :
-  Well_Defined_ExtAction (ActIn a)
-  -> Well_Defined_ExtAction (μ') 
-    -> lts (gen_test (ActIn a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
+  lts (gen_test (ActIn a :: s) p) (ActExt $ μ') e -> μ' ≠ ActIn a -> good_VACCS e.
 Proof.
-  intros WD_trace WD_action tr neq. unfold gen_test in tr. simpl in *. 
+  intros tr neq. unfold gen_test in tr. simpl in *.
   destruct a. inversion tr.
   + subst. inversion H3. subst.
-    simpl in *. rewrite All_According_To_Data.
-    inversion WD_trace; subst.
-    inversion WD_action; subst.
-    assert (v ≠ v1) as neq'. 
+    simpl in *. rewrite All_According_To_Data in *.
+    assert (v0 ≠ v) as neq'.
     { intro. subst. contradiction. }
-    eapply Eval_simpl_false in neq'.
-    assert ((If cst v == cst v1
-               Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ cst v1 
+    eapply Eval_simpl_false_gen in neq'.
+    assert ((If v0 == v
+               Then gen_test_raw (NewVar_in_trace 0 s) s (NewVar 0 p) ^ v0
                Else ①) ≡ ①).
     { eapply cgr_if_false_step; eauto. }
     eapply good_preserved_by_cgr_step; eauto. eapply good_success.
@@ -392,8 +399,6 @@ Fixpoint unroll_fw (L : list PreAct) : gproc :=
   end.
 
 Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))).
-
-Parameter Hyp_WD_acc : forall α s e G, lts (gen_acc G s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α.
 
 Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> (g (unroll_fw xs)) ≡* (g (unroll_fw ys)).
 Proof.
@@ -446,11 +451,7 @@ Qed.
 Next Obligation.
   intros G t'. intros. simpl in *.
   destruct β.
-  + simpl in *. assert (lts (gen_acc G (ActIn a :: s)) (ActExt μ) t') as Hyp_tr; eauto.
-    eapply Hyp_WD_acc in Hyp_tr as (WD_trace & WD_action) ; eauto.
-    inversion WD_trace; subst. inversion WD_action; subst.
-    ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
-    ++ eapply gen_test_gen_spec_good_not_mu in H0; eauto. constructor.
+  + simpl in *. eapply gen_test_gen_spec_good_not_mu in H0; eauto.
   + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
 Qed.
 
@@ -571,9 +572,7 @@ Qed.
 
 Definition gen_conv s := gen_test s (𝛕 • ①).
 
-Parameter Hyp_WD_conv : forall α s e, lts (gen_conv s) α e -> Well_Defined_Trace s /\ Well_Defined_Action α.
-
-#[global] Program Instance gen_conv_gen_test_inst 
+#[global] Program Instance gen_conv_gen_test_inst
 : test_spec gen_conv.
 Next Obligation.
   intros s hh. eapply gen_test_ungood_if; try eassumption.
@@ -600,8 +599,7 @@ Qed.
 Next Obligation.
   intros t'. intros. simpl in *.
   destruct β.
-  + eapply gen_test_gen_spec_good_not_mu in H0; eauto; eapply Hyp_WD_conv in H0 as (h & h0); eauto.
-    inversion h. subst;eauto. inversion h0 ; subst; eauto ;inversion h0;subst ;constructor.
+  + eapply gen_test_gen_spec_good_not_mu in H0; eauto.
   + exfalso. eapply H. exists a; eauto.
 Qed.
 

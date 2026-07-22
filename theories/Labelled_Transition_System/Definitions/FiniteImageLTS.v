@@ -46,7 +46,7 @@ Class CountablegLts P A `{gLts P A} := MkClts {
 
 
 #[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
-Proof. econstructor; first apply _. intros *; apply finite_countable. Qed.
+Proof. econstructor; first apply _. intros *; apply finite_countable. Defined.
 
 (** *** Tau-set *)
 Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
@@ -564,6 +564,63 @@ Proof.
   - intros p q mem hwp.
     eapply wt_s_set_from_pset_xs_ispec.
     eapply elem_of_elements; eassumption. eassumption.
+Qed.
+
+(** *** The stable (refusing) derivatives of a whole gset, mirrors [wt_s_set_from_pset] *)
+
+Fixpoint wt_refuses_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
+  (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
+  match ps as ps0 return (forall p, p ∈ ps0 -> p ⇓ s) -> gset P with
+  | [] => fun _ => ∅
+  | p :: ps' =>
+      fun ha =>
+        let pr := ha p (list_elem_of_here p ps') in
+        let ys := wt_refuses_set p s pr in
+        let ha' := fun q mem => ha q (list_elem_of_further q p ps' mem) in
+        ys ∪ wt_refuses_set_from_pset_xs ps' s ha'
+  end hcnv.
+
+Lemma wt_refuses_set_from_pset_xs_spec1 `{gLts P A, !FiniteImagegLts P A}
+  (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) q :
+  q ∈ wt_refuses_set_from_pset_xs ps s hcnv -> exists p, p ∈ ps /\ p ⟹[s] q /\ q ↛.
+Proof.
+  revert hcnv. induction ps as [|p ps' IHps]; intros hcnv mem; simpl in *.
+  - set_solver.
+  - eapply elem_of_union in mem as [mem1 | mem2].
+    + eapply wt_refuses_set_spec1 in mem1 as (hw & hst). exists p. split; [set_solver|]; eauto.
+    + edestruct IHps as (p0 & mem0 & hw & hst); [exact mem2|].
+      exists p0. split; [set_solver|]; eauto.
+Qed.
+
+Lemma wt_refuses_set_from_pset_xs_spec2 `{gLts P A, !FiniteImagegLts P A}
+  (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) p q :
+  p ∈ ps -> p ⟹[s] q -> q ↛ -> q ∈ wt_refuses_set_from_pset_xs ps s hcnv.
+Proof.
+  revert hcnv. induction ps as [|p0 ps' IHps]; intros hcnv mem hw hst; simpl in *.
+  - set_solver.
+  - eapply elem_of_cons in mem as [-> | mem'].
+    + eapply elem_of_union. left. eapply wt_refuses_set_spec2; eauto.
+    + eapply elem_of_union. right. eapply IHps; eauto.
+Qed.
+
+Definition wt_refuses_set_from_pset `{gLts P A, !FiniteImagegLts P A}
+  (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
+  wt_refuses_set_from_pset_xs (elements ps) s (lift_cnv_elements ps s hcnv).
+
+Lemma wt_refuses_set_from_pset_spec1 `{gLts P A, !FiniteImagegLts P A}
+  (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) q :
+  q ∈ wt_refuses_set_from_pset ps s hcnv -> exists p, p ∈ ps /\ p ⟹[s] q /\ q ↛.
+Proof.
+  intro mem. eapply wt_refuses_set_from_pset_xs_spec1 in mem as (p & mem & hw & hst).
+  exists p. split; [eapply elem_of_elements; eauto|]; eauto.
+Qed.
+
+Lemma wt_refuses_set_from_pset_spec2 `{gLts P A, !FiniteImagegLts P A}
+  (ps : gset P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) p q :
+  p ∈ ps -> p ⟹[s] q -> q ↛ -> q ∈ wt_refuses_set_from_pset ps s hcnv.
+Proof.
+  intros mem hw hst. eapply wt_refuses_set_from_pset_xs_spec2; eauto.
+  eapply elem_of_elements; eauto.
 Qed.
 
 Definition eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A} (X Y : gset P) :=

@@ -625,7 +625,7 @@ Proof.
   - eapply cgr_par_nil.
 Qed.
 
-Local Instance Proper_par : Proper ((cgr) ==> (cgr) ==> (cgr)) pr_par.
+Local Instance Proper_par n : Proper ((cgr n) ==> (cgr n) ==> (cgr n)) pr_par.
 Proof.
   intros p p' Hp q q' Hq. eapply cgr_fullpar; eauto.
 Qed.

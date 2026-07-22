@@ -22,12 +22,14 @@
 
 From stdpp Require Import gmap gmultiset.
 
-From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must 
+From TestingTheory Require Import VCCS_ta_tc_gen DefinitionAS Equivalence Must
   ParallelLTSConstruction InteractionBetweenLts Bisimulation
   ActTau InputOutputActions Convergence
   gLts Lts_OBA FiniteImageLTS Testing_Predicate Completeness Lts_FW Lts_OBA_FB MultisetLTSConstruction
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower
   SetLTSConstruction ForwarderConstruction DefinitionCI EquivalenceCI VCCS_ta_tc_gen.
+From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
+  TestSpecBridge VCCS_CoFiniteImage.
 
 From Coinduction Require Import all.
 
@@ -71,6 +73,12 @@ Corollary must_iff_failure_set_VCCS_without_toFW (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ⋖ꜰᴀɪʟ q.
 Proof.
   now rewrite<- equivalence_fw_failure_set_and_must_i.
+Qed.
+
+Corollary must_iff_co_acceptance_set_VCCS_without_toFW (p q : proc) :
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ q.
+Proof.
+  now rewrite equivalence_fw_acc_set_and_must_i_co.
 Qed.
 
 End VCCS_Must_Alt_Corollary.

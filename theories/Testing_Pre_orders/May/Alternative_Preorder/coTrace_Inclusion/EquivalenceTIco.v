@@ -22,27 +22,25 @@
 
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW
-    Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
-    MultisetLTSConstruction ForwarderConstruction May DefinitionTI MayTestSpec SoundnessTI CompletenessTI.
+    coWeakTransition Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
+    MultisetLTSConstruction ForwarderConstruction May MayTestSpec DefinitionTI CompletenessTI DefinitionTIco
+    SoundnessTIco CompletenessTIco.
 
-(** * The May preorder is trace inclusion
+(** * The May preorder is co-trace inclusion
 
-      [p ⊑ₘₐᵧ q  ↔  p ≼ₜᵢ q]
+      [p ⊑ₘₐᵧ q  ↔  p ≼꜀ₒ₋ₜᵢ q]
 
-    Soundness ([SoundnessTI.v]) needs nothing of the LTSs: it merely replays an
-    existing computation.  Completeness ([CompletenessTI.v]) needs the *forwarder*
-    axioms, and needs them in full — the test attesting a trace may postpone its
-    own outputs (NB-DELAY forbids sequentialising them) and may even swallow a
-    dual pair by talking to itself, and only a forwarder can fill those gaps back
-    in (BOOMERANG for the pair, BOOMERANG + FWD-FEEDBACK to anticipate an input).
-
-    So the equivalence is a forwarder theorem.  It is not one about arbitrary
-    LTSs, and it could not be: on a raw LTS the statement is false, since [𝟘] and
-    [a?.𝟘] are May-equivalent while their raw traces differ. *)
+    Mirrors [EquivalenceTI.v]'s shape, but built entirely from the
+    "_co" chain ([DefinitionTIco.v]/[SoundnessTIco.v]/[CompletenessTIco.v]):
+    soundness needs nothing of the LTSs, completeness needs the
+    forwarder axioms in full, via [completeness_core_co] — a genuine
+    induction on [may], not a wrapper around the plain
+    [completeness_ti_fw]/[completeness_ti_fb]. This file never
+    imports [EquivalenceTI.v] and never calls its theorems. *)
 
 (** ** Equivalence, for forwarders *)
 
-Theorem equivalence_ti_fw `{
+Theorem equivalence_ti_co_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
@@ -53,21 +51,16 @@ Theorem equivalence_ti_fw `{
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
   (p : P) (q : Q) :
-  p ⊑ₘₐᵧ q <-> p ≼ₜᵢ q.
+  p ⊑ₘₐᵧ q <-> p ≼꜀ₒ₋ₜᵢ q.
 Proof.
   split.
-  - eapply completeness_ti_fw.
-  - eapply soundness_ti_fw.
+  - eapply completeness_ti_co_fw.
+  - eapply soundness_ti_co_fw.
 Qed.
 
-(** ** Equivalence, for feedback LTSs, through the forwarder construction
+(** ** Equivalence, for feedback LTSs, through the forwarder construction *)
 
-    The trace inclusion is read on the *lifted* processes.  That is not a
-    technicality: it is where the asynchrony lives.  [(𝟘, ∅)] already has the
-    trace [a?] — BOOMERANG absorbs the input into the buffer — which is exactly
-    why [𝟘] and [a?.𝟘] have the same traces here, as they must. *)
-
-Theorem equivalence_ti_fb `{
+Theorem equivalence_ti_co_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
     @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
@@ -83,16 +76,16 @@ Theorem equivalence_ti_fb `{
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
   (p : P) (q : Q) :
-  p ⊑ₘₐᵧ q <-> (p, ∅ : MO A) ≼ₜᵢ (q, ∅ : MO A).
+  p ⊑ₘₐᵧ q <-> (p, ∅ : MO A) ≼꜀ₒ₋ₜᵢ (q, ∅ : MO A).
 Proof.
   split.
-  - eapply completeness_ti_fb.
-  - eapply soundness_ti_fb.
+  - eapply completeness_ti_co_fb.
+  - eapply soundness_ti_co_fb.
 Qed.
 
 (** ** Corollary: the induced equivalences coincide *)
 
-Corollary may_equiv_iff_same_traces `{
+Corollary may_equiv_iff_same_cotraces `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
@@ -103,13 +96,13 @@ Corollary may_equiv_iff_same_traces `{
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
   (p : P) (q : Q) :
-  (p ⊑ₘₐᵧ q /\ q ⊑ₘₐᵧ p) <-> (∀ s, traces p s <-> traces q s).
+  (p ⊑ₘₐᵧ q /\ q ⊑ₘₐᵧ p) <-> (∀ s, traces_co p s <-> traces_co q s).
 Proof.
   split.
   - intros (hpq & hqp) s. split.
-    + now eapply (equivalence_ti_fw p q).
-    + now eapply (equivalence_ti_fw q p).
+    + now eapply (equivalence_ti_co_fw p q).
+    + now eapply (equivalence_ti_co_fw q p).
   - intro hsame. split.
-    + eapply equivalence_ti_fw. intros s hs. now eapply hsame.
-    + eapply equivalence_ti_fw. intros s hs. now eapply hsame.
+    + eapply equivalence_ti_co_fw. intros s hs. now eapply hsame.
+    + eapply equivalence_ti_co_fw. intros s hs. now eapply hsame.
 Qed.

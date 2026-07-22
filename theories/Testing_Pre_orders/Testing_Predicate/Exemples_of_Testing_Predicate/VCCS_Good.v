@@ -38,8 +38,8 @@ Inductive good_VCCS : proc -> Prop :=
 | good_success : good_VCCS ①
 | good_par : forall p q, good_VCCS p \/ good_VCCS q -> good_VCCS (p ‖ q)
 | good_choice : forall p q, good_VCCS (g p) \/ good_VCCS (g q) -> good_VCCS (p + q)
-| good_if_true : forall E p q, good_VCCS p -> Eval_Eq E = Some true -> good_VCCS (If E Then p Else q)
-| good_if_false : forall E p q, good_VCCS q -> Eval_Eq E = Some false -> good_VCCS (If E Then p Else q)
+| good_if_true : forall E p q, good_VCCS p -> Eval_Eq 0 E = Some true -> good_VCCS (If E Then p Else q)
+| good_if_false : forall E p q, good_VCCS q -> Eval_Eq 0 E = Some false -> good_VCCS (If E Then p Else q)
 | good_res : forall p, good_VCCS p -> good_VCCS (ν p).
 
 Hint Constructors good_VCCS:ccs.
@@ -49,7 +49,7 @@ Proof.
   dependent induction e; try (now right; inversion 1).
   - destruct IHe1; destruct IHe2; try (now left; eauto with ccs).
     right. inversion 1; naive_solver.
-  - case_eq (Eval_Eq e1); intros.
+  - case_eq (Eval_Eq 0 e1); intros.
     + destruct b.
       * destruct IHe1; destruct IHe2; try (now left; eauto with ccs).
         right. inversion 1; naive_solver.
@@ -186,7 +186,7 @@ Proof.
     left. eapply good_choice; eauto.
   + dependent destruction happy. destruct H. eapply good_par. left. eauto.
     eapply good_par. right. eauto.
-  + eapply good_res. eapply IHcong. inversion happy; subst. eauto.
+  + eapply good_res. eapply IHcong. inversion happy; subst. eauto. reflexivity.
   + dependent destruction happy. eapply good_if_true; eauto.
     eapply good_if_false; eauto.
   + dependent destruction happy. eapply good_if_true; eauto.

@@ -91,10 +91,10 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
   Lemma must_extensional_iff_must_sts
     {P : Type}
     `{outcome : T -> Prop, outcome_decidable : forall (t : T), Decision (outcome t)}
-    `{gLtsP : @gLts P A H, !FiniteImagegLts P A,
-      gLtsT : !gLtsEq T H, !FiniteImagegLts T A , !Testing_Predicate outcome _}
+    `{gLtsP : @gLts P A H, !CountablegLts P A,
+      gLtsT : !gLtsEq T H, !CountablegLts T A , !Testing_Predicate outcome _}
     `{!Prop_of_Inter P T A dual}
-    (p : P) (t : T) : 
+    (p : P) (t : T) :
     must_extensional outcome p t <-> must_sts outcome p t.
   Proof.
     split.
@@ -114,9 +114,9 @@ Section preorder.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
-  Context `{gLtsP : !gLts P H, !FiniteImagegLts P A}.
-  Context `{gLtsQ : !gLts Q H, !FiniteImagegLts Q A}.
-  Context `{gLtsEqT: !gLtsEq T H, !FiniteImagegLts T A, !Testing_Predicate outcome _}.
+  Context `{gLtsP : !gLts P H, !CountablegLts P A}.
+  Context `{gLtsQ : !gLts Q H, !CountablegLts Q A}.
+  Context `{gLtsEqT: !gLtsEq T H, !CountablegLts T A, !Testing_Predicate outcome _}.
   Context `{!Prop_of_Inter P T A dual}.
   Context `{!Prop_of_Inter Q T A dual}.
 

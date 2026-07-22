@@ -1157,32 +1157,28 @@ Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
 
 Context `{!gLtsCNenabled Q A}.
 
-Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ :
-      p ⟶[co μ] p'-> t ⟶[μ] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
-        -> exists μ' q' t'', q ⟶[co μ'] q'/\ t ⟶[μ'] t''.
+Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ1 μ2 :
+      dual μ1 μ2 -> p ⟶[μ1] p' -> t ⟶[μ2] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
+        -> exists ν1 ν2 q' t'', dual ν1 ν2 /\ q ⟶[ν1] q' /\ t ⟶[ν2] t''.
 Proof.
-  intros tr tr_co sub.
-  destruct (decide (non_blocking μ)) as [nb | not_nb].
-  + eapply (cn_enabled q μ) in nb as (q' & tr'); eauto.
-    exact (proj2_sig(exists_dual μ)).
-  + assert (μ ∈ coR p) as some_co_action_of_p.
-    { exists (co μ). repeat split; eauto.
-      eapply lts_refuses_spec2;eauto.
-      symmetry. exact (proj2_sig(exists_dual μ)). }
+  intros duo tr tr_co sub.
+  destruct (decide (non_blocking μ2)) as [nb | not_nb].
+  + eapply (cn_enabled q μ2 μ1) in nb as (q' & tr'); [| symmetry; exact duo].
+    exists μ1, μ2, q', t'. eauto.
+  + assert (μ2 ∈ coR p) as some_co_action_of_p.
+    { exists μ1. repeat split; eauto.
+      eapply lts_refuses_spec2;eauto. }
     eapply (map_gamma_of_action (𝝳 ∘ Φ)) in some_co_action_of_p as mem.
     eapply sub in mem. destruct mem as (μ' & mem & eq).
     eapply (map_gamma_of_action Φ) in mem as eq'. symmetry in eq.
-    (* The next line uses a property of delta *)
     eapply (abstraction_prog_spec q) in eq' ;eauto.
-    destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo & b).
-    (* The next line uses the property of phi *)
+    2:{ destruct mem as (ν & hmem & hdual & hblock). eauto. }
+    destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo2 & b).
     assert (μ'' ∈ R t) as Tr_Test.
     { eapply abstraction_test_spec in eq';eauto. apply lts_refuses_spec2. eauto. }
     eapply lts_refuses_spec1 in Tr_Test as (t'' & Tr'').
     eapply lts_refuses_spec1 in tr' as (q' & tr').
-    exists μ''. exists q'. exists t''. split ;eauto.
-    eapply unique_nb in duo. subst. rewrite<- dual_is_involutive.
-    exact tr'. destruct mem as (μ'' & Tr'' & duo & nb). exact nb.
+    exists μ''', μ'', q', t''. eauto.
 Qed.
 
 End Properties_for_soundness.
@@ -1233,10 +1229,9 @@ Proof.
     + eapply lts_refuses_spec2 in refuses_t. eauto. eauto with mdb.
     + eapply (lts_refuses_spec2 (q ▷ t)); eauto.
       exists (q , t''). eapply ParRight; eauto.
-  - assert (μ1 = co μ2). { eapply unique_nb; eauto. symmetry; eauto. } subst.
-    eapply communication_enabled in act_left as (μ'1 & q' & t''' & tr1 & tr2); eauto.
+  - eapply communication_enabled in act_left as (μ'1 & μ'2 & q' & t''' & duo & tr1 & tr2); eauto.
     eapply (lts_refuses_spec2 (q ▷ t)); eauto. exists (q', t''').
-    eapply (ParSync (co μ'1)); eauto. symmetry. exact (proj2_sig(exists_dual μ'1)).
+    eapply (ParSync (μ'1)); eauto.
 Qed.
 
 Lemma stability_nbhvleqtwo
@@ -1356,7 +1351,7 @@ Qed.
 Lemma soundness 
   `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
   `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !CountablegLts T A}
 
   `{ !Testing_Predicate outcome _}
 

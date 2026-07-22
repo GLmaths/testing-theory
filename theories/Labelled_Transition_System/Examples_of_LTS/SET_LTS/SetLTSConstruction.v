@@ -569,9 +569,10 @@ Proof.
   eapply termination_forall. intros.
   destruct H2 as (eq & eq'). subst. unfold lts_tau_set_from_pset in H3.
   rewrite elements_singleton in H3. simpl in *.
-  assert (list_to_set (lts_tau_set p) ∪ (∅ : gset P) = list_to_set (lts_tau_set p)) as eq by set_solver.
-  rewrite eq in H3. eapply elem_of_list_to_set in H3. eapply lts_tau_set_spec in H3.
-  eapply H1. eauto.
+  eapply elem_of_union in H3 as [H3 | H3].
+  - eapply elem_of_list_to_set in H3. eapply lts_tau_set_spec in H3.
+    eapply H1. eauto.
+  - set_solver.
 Qed.
 
 Lemma termination_if_termination_set_helper  `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) :

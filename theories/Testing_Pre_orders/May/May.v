@@ -20,9 +20,11 @@
    SOFTWARE.
 *)
 
+From Stdlib.Lists Require Import List.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import decidable.
-From TestingTheory Require Import gLts Bisimulation Testing_Predicate StateTransitionSystems InteractionBetweenLts.
+From TestingTheory Require Import ActTau gLts Bisimulation Testing_Predicate StateTransitionSystems InteractionBetweenLts
+    WeakTransitions coWeakTransition.
 
 (********************************************* Definition of May *****************************************)
 
@@ -173,4 +175,73 @@ Proof.
   intro Hyp. eapply hpre in Hyp.
   contradiction.
 Qed.
+
+(********************************* [may] and (co-)weak transitions **********************************************)
+
+(** [may] is preserved backwards along a pure-τ weak transition of the
+    server or the client — used by both the plain and the co-trace
+    characterisations of May ([DefinitionTI.v]/[DefinitionTIco.v]), so
+    it lives here rather than being duplicated in either. *)
+
+Section May_and_wt.
+
+Context `{gLtsP : @gLts P A H}.
+Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
+Context {PInter : Prop_of_Inter P T A dual}.
+
+Lemma may_wt_nil_server (s : trace A) (p1 p2 : P) (t : T) :
+  p1 ⟹[s] p2 -> s = [] -> p2 may_pass t -> p1 may_pass t.
+Proof.
+  intro w.
+  induction w as [ p | s' p q r l w IH | μ s' p q r l w IH ]; intros Hs hm.
+  - exact hm.
+  - destruct (decide (outcome t)) as [happy | nh].
+    + now apply may_now.
+    + eapply may_server_step; eauto.
+  - discriminate.
+Qed.
+
+Lemma may_wt_tau_server (p1 p2 : P) (t : T) :
+  p1 ⟹ p2 -> p2 may_pass t -> p1 may_pass t.
+Proof. intros w hm. eapply may_wt_nil_server; eauto. Qed.
+
+Lemma may_wt_nil_client (r : P) (s : trace A) (t1 t2 : T) :
+  t1 ⟹[s] t2 -> s = [] -> r may_pass t2 -> r may_pass t1.
+Proof.
+  intro w.
+  induction w as [ t | s' t u v l w IH | μ s' t u v l w IH ]; intros Hs hm.
+  - exact hm.
+  - destruct (decide (outcome t)) as [happy | nh].
+    + now apply may_now.
+    + eapply may_client_step; eauto.
+  - discriminate.
+Qed.
+
+Lemma may_wt_tau_client (r : P) (t1 t2 : T) :
+  t1 ⟹ t2 -> r may_pass t2 -> r may_pass t1.
+Proof. intros w hm. eapply may_wt_nil_client; eauto. Qed.
+
+(** The co-trace analogues, for the *process* side ([DefinitionTIco.v]
+    puts the duality there, never on the test/client — see that file).
+    With an empty trace, [cowt] only ever uses its
+    [cowt_nil]/[cowt_tau] constructors (no dual action involved), so
+    plain induction applies exactly as above. *)
+
+Lemma may_wt_nil_server_co (s : trace A) (p1 p2 : P) (t : T) :
+  p1 ⟹ᶜᵒ[s] p2 -> s = [] -> p2 may_pass t -> p1 may_pass t.
+Proof.
+  intro w.
+  induction w as [ p | s' p q r l w IH | μ μ' s' p q r duo l w IH ]; intros Hs hm.
+  - exact hm.
+  - destruct (decide (outcome t)) as [happy | nh].
+    + now apply may_now.
+    + eapply may_server_step; eauto.
+  - discriminate.
+Qed.
+
+Lemma may_wt_tau_server_co (p1 p2 : P) (t : T) :
+  p1 ⟹ᶜᵒ p2 -> p2 may_pass t -> p1 may_pass t.
+Proof. intros w hm. eapply may_wt_nil_server_co; eauto. Qed.
+
+End May_and_wt.
 
