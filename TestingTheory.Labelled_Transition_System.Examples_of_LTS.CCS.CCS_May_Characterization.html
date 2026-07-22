@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="https://github.com/GLmaths/testing-theory">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#"><span class="id" title="library">ActTau</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#"><span class="id" title="library">gLts</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#"><span class="id" title="library">Bisimulation</span></a> <a class="idref" href="TestingTheory.Interaction_Between_Lts.InteractionBetweenLts.html#"><span class="id" title="library">InteractionBetweenLts</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Testing_Predicate.html#"><span class="id" title="library">Testing_Predicate</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#"><span class="id" title="library">May</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.DefinitionTI.html#"><span class="id" title="library">DefinitionTI</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.MayTestSpec.html#"><span class="id" title="library">MayTestSpec</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.EquivalenceTI.html#"><span class="id" title="library">EquivalenceTI</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.coTrace_Inclusion.DefinitionTIco.html#"><span class="id" title="library">DefinitionTIco</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.coTrace_Inclusion.EquivalenceTIco.html#"><span class="id" title="library">EquivalenceTIco</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#"><span class="id" title="library">VCCS_Instance</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Exemples_of_Testing_Predicate.VCCS_Good.html#"><span class="id" title="library">VCCS_Good</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Testing.VCCS_test_trace_gen_may.html#"><span class="id" title="library">VCCS_test_trace_gen_may</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_May_Characterization.html#"><span class="id" title="library">VCCS_May_Characterization</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab91"></a><h1 class="section">The May preorder is trace inclusion, for CCS</h1>
+
+
+<div class="paragraph"> </div>
+
+    CCS is VCCS with a trivial <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.pi.signatures.prelude.html#Value"><span class="id" title="axiom">Value</span></a></span> — <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Testing.VCCS_test_trace_gen_may.html#gen_may"><span class="id" title="definition">gen_may</span></a></span>/<span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Testing.VCCS_test_trace_gen_may.html#VCCS_may_test_spec"><span class="id" title="instance">VCCS_may_test_spec</span></a></span> and
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.EquivalenceTI.html#equivalence_ti_fw"><span class="id" title="lemma">equivalence_ti_fw</span></a></span> were already built generically over <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#VCCS_Parameters"><span class="id" title="record">VCCS_Parameters</span></a></span>
+    (<span class="inlinecode"><span class="id" title="var">VCCS_test_trace_gen_may.v</span></span>/<span class="inlinecode"><span class="id" title="var">VCCS_May_Characterization.v</span></span>), so the CCS
+    characterisation is a direct specialisation, exactly as
+    <span class="inlinecode"><span class="id" title="var">CCS_Must_Characterization.v</span></span> specialises the Must side. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="CCS_May_Corollary" class="idref" href="#CCS_May_Corollary"><span class="id" title="section">CCS_May_Corollary</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Local Instance</span> <a id="CCS_Parameters" class="idref" href="#CCS_Parameters"><span class="id" title="instance">CCS_Parameters</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#VCCS_Parameters"><span class="id" title="class">VCCS_Parameters</span></a> :=<br/>
+&nbsp;&nbsp;{ <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#Channel"><span class="id" title="method">Channel</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#Value"><span class="id" title="method">Value</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#O"><span class="id" title="method">O</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>}.<br/>
+
+<br/>
+<span class="id" title="keyword">Corollary</span> <a id="may_iff_trace_inclusion_CCS" class="idref" href="#may_iff_trace_inclusion_CCS"><span class="id" title="lemma">may_iff_trace_inclusion_CCS</span></a> (<a id="p:1" class="idref" href="#p:1"><span class="id" title="binder">p</span></a> <a id="q:2" class="idref" href="#q:2"><span class="id" title="binder">q</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#proc"><span class="id" title="inductive">proc</span></a>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#p:1"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#63d88ac86ee1fe1b1a3a3e2965137f36"><span class="id" title="notation">⊑ₘₐᵧ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#q:2"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#p:1"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.DefinitionTI.html#5a7db192389822ee21179ee6958fcbf1"><span class="id" title="notation">≼ₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#q:2"><span class="id" title="variable">q</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_May_Characterization.html#may_iff_trace_inclusion_VCCS"><span class="id" title="lemma">may_iff_trace_inclusion_VCCS</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Corollary</span> <a id="may_iff_co_trace_inclusion_CCS" class="idref" href="#may_iff_co_trace_inclusion_CCS"><span class="id" title="lemma">may_iff_co_trace_inclusion_CCS</span></a> (<a id="p:3" class="idref" href="#p:3"><span class="id" title="binder">p</span></a> <a id="q:4" class="idref" href="#q:4"><span class="id" title="binder">q</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#proc"><span class="id" title="inductive">proc</span></a>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#p:3"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#63d88ac86ee1fe1b1a3a3e2965137f36"><span class="id" title="notation">⊑ₘₐᵧ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#q:4"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#p:3"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.coTrace_Inclusion.DefinitionTIco.html#23676ac6c320fec23a7f26ce1634e6d3"><span class="id" title="notation">≼꜀ₒ₋ₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#q:4"><span class="id" title="variable">q</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_May_Characterization.html#may_iff_co_trace_inclusion_VCCS"><span class="id" title="lemma">may_iff_co_trace_inclusion_VCCS</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.CCS.CCS_May_Characterization.html#CCS_May_Corollary"><span class="id" title="section">CCS_May_Corollary</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

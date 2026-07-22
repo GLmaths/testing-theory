@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="https://github.com/GLmaths/testing-theory">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">stdpp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">gmap</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#"><span class="id" title="library">gLts</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#"><span class="id" title="library">Bisimulation</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Testing_Predicate.html#"><span class="id" title="library">Testing_Predicate</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.Completeness.html#"><span class="id" title="library">Completeness</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#"><span class="id" title="library">CompletenessASco</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab286"></a><h2 class="section">Bridge between <span class="inlinecode"><span class="id" title="var">Completeness.v</span></span>'s and <span class="inlinecode"><span class="id" title="var">CompletenessASco.v</span></span>'s</h2>
+
+    identically-named, field-for-field-identical <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#test_spec"><span class="id" title="record">test_spec</span></a></span> /
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#test_convergence_spec"><span class="id" title="record">test_convergence_spec</span></a></span> / <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#test_co_acceptance_set_spec"><span class="id" title="record">test_co_acceptance_set_spec</span></a></span> classes.
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><span class="id" title="var">CompletenessASco.v</span></span>'s versions were ported from <span class="inlinecode"><span class="id" title="var">Completeness.v</span></span> (same
+    "co-acceptance-set" test machinery, unrelated to the co-*preorder*
+    machinery this whole port is otherwise about — the name collision is
+    coincidental) and kept the exact same field names, but as genuinely
+    separate nominal <span class="inlinecode"><span class="id" title="keyword">Class</span></span>es. Every calculus (VCCS/VACCS/ACCS/CCS) that
+    already has a concrete witness for the <span class="inlinecode"><span class="id" title="var">Completeness.v</span></span> versions (built
+    once, for the non-co characterization) can reuse it for the co
+    characterization *for free* via these three instances — no
+    calculus-specific work needed. Found interactively via rocq-mcp: a
+    calculus's own <span class="inlinecode"><span class="id" title="var">ta</span></span>/<span class="inlinecode"><span class="id" title="var">tconv</span></span> witness failed to satisfy
+    <span class="inlinecode"><span class="id" title="var">EquivalenceASco.v</span></span>'s <span class="inlinecode"><span class="id" title="keyword">Section</span></span> <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.MustE.html#preorder"><span class="id" title="section">preorder</span></a></span> Context with a "Could not
+    find an instance" error naming the <span class="inlinecode"><span class="id" title="library">CompletenessASco</span></span>-qualified
+    class, even though a structurally identical witness already existed.
+
+<div class="paragraph"> </div>
+
+    Field-by-field <span class="inlinecode"><span class="id" title="tactic">destruct</span></span> <span class="inlinecode"><span class="id" title="var">Hspec</span></span> <span class="inlinecode"><span class="id" title="keyword">as</span></span> <span class="inlinecode">[...]</span> rather than bare
+    <span class="inlinecode"><span class="id" title="tactic">exact</span></span> <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#test_ungood"><span class="id" title="projection">test_ungood</span></a></span>-style projection access: since both classes'
+    fields share literal names, a bare field name inside a proof building
+    the *target* (<span class="inlinecode"><span class="id" title="library">CompletenessASco</span></span>) record resolves to the target's own
+    (not-yet-built) projection, not the source <span class="inlinecode"><span class="id" title="var">Hspec</span></span>'s — a genuine
+    ambiguity, not just a display quirk (confirmed via rocq-mcp: "Hspec
+    has type Completeness.test_spec gen while it is expected to have type
+    test_spec ?gen"). Destructuring into fresh local names sidesteps the
+    ambiguity entirely. 
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="test_spec_of_plain" class="idref" href="#test_spec_of_plain"><span class="id" title="instance">test_spec_of_plain</span></a><br/>
+&nbsp;&nbsp;{<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a> <a id="A:2" class="idref" href="#A:2"><span class="id" title="binder">A</span></a>} `{<a id="H0:4" class="idref" href="#H0:4"><span class="id" title="binder">H0</span></a> : @<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#gLtsEq"><span class="id" title="class">gLtsEq</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#A:2"><span class="id" title="variable">A</span></a> <a id="H:3" class="idref" href="#H:3"><span class="id" title="binder">H</span></a>} `{<a id="Testing_Predicate0:6" class="idref" href="#Testing_Predicate0:6"><span class="id" title="binder">!</span></a><a id="Testing_Predicate0:6" class="idref" href="#Testing_Predicate0:6"><span class="id" title="binder">Testing_Predicate</span></a> <a id="outcome:5" class="idref" href="#outcome:5"><span class="id" title="binder"><span id="Testing_Predicate0:6" class="id">outcome</span></span></a> <a id="Testing_Predicate0:6" class="idref" href="#Testing_Predicate0:6"><span class="id" title="binder">_</span></a>}<br/>
+&nbsp;&nbsp;{<a id="gen:7" class="idref" href="#gen:7"><span class="id" title="binder">gen</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#A:2"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;(<a id="Hspec:8" class="idref" href="#Hspec:8"><span class="id" title="binder">Hspec</span></a> : <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.Completeness.html#test_spec"><span class="id" title="class">Completeness.test_spec</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#gen:7"><span class="id" title="variable">gen</span></a>)<br/>
+&nbsp;&nbsp;: <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#test_spec"><span class="id" title="class">CompletenessASco.test_spec</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#gen:7"><span class="id" title="variable">gen</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Hspec</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">tu</span> <span class="id" title="var">tn</span> <span class="id" title="var">tt</span> <span class="id" title="var">tr</span> <span class="id" title="var">tf</span> <span class="id" title="var">ts</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="var">unshelve</span> <span class="id" title="tactic">econstructor</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tu</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tn</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tt</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tr</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">eapply</span> <span class="id" title="var">tf</span>; <span class="id" title="var">eassumption</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">eapply</span> <span class="id" title="var">ts</span>; <span class="id" title="var">eassumption</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="test_co_acceptance_set_spec_of_plain" class="idref" href="#test_co_acceptance_set_spec_of_plain"><span class="id" title="instance">test_co_acceptance_set_spec_of_plain</span></a><br/>
+&nbsp;&nbsp;{<a id="PreAct:9" class="idref" href="#PreAct:9"><span class="id" title="binder">PreAct</span></a> <a id="T:10" class="idref" href="#T:10"><span class="id" title="binder">T</span></a> <a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a>} `{<a id="CC:13" class="idref" href="#CC:13"><span class="id" title="binder">CC</span></a> : <span class="id" title="class">Countable</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#PreAct:9"><span class="id" title="variable">PreAct</span></a>} `{<a id="H0:15" class="idref" href="#H0:15"><span class="id" title="binder">H0</span></a> : @<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#gLtsEq"><span class="id" title="class">gLtsEq</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#T:10"><span class="id" title="variable">T</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#A:11"><span class="id" title="variable">A</span></a> <a id="H:14" class="idref" href="#H:14"><span class="id" title="binder">H</span></a>} `{<a id="Testing_Predicate0:17" class="idref" href="#Testing_Predicate0:17"><span class="id" title="binder">!</span></a><a id="Testing_Predicate0:17" class="idref" href="#Testing_Predicate0:17"><span class="id" title="binder">Testing_Predicate</span></a> <a id="outcome:16" class="idref" href="#outcome:16"><span class="id" title="binder"><span id="Testing_Predicate0:17" class="id">outcome</span></span></a> <a id="Testing_Predicate0:17" class="idref" href="#Testing_Predicate0:17"><span class="id" title="binder">_</span></a>}<br/>
+&nbsp;&nbsp;{<a id="ta:18" class="idref" href="#ta:18"><span class="id" title="binder">ta</span></a> : <span class="id" title="definition">gset</span> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#PreAct:9"><span class="id" title="variable">PreAct</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#T:10"><span class="id" title="variable">T</span></a>} {<a id="d2f974a479ebcd81c5829843a3f7c760" class="idref" href="#d2f974a479ebcd81c5829843a3f7c760"><span class="id" title="binder">Γ</span></a> : <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#PreAct:9"><span class="id" title="variable">PreAct</span></a>}<br/>
+&nbsp;&nbsp;(<a id="Hspec:20" class="idref" href="#Hspec:20"><span class="id" title="binder">Hspec</span></a> : <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.Completeness.html#test_co_acceptance_set_spec"><span class="id" title="class">Completeness.test_co_acceptance_set_spec</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#PreAct:9"><span class="id" title="variable">PreAct</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#ta:18"><span class="id" title="variable">ta</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#d2f974a479ebcd81c5829843a3f7c760"><span class="id" title="variable">Γ</span></a>)<br/>
+&nbsp;&nbsp;: <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#test_co_acceptance_set_spec"><span class="id" title="class">CompletenessASco.test_co_acceptance_set_spec</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#PreAct:9"><span class="id" title="variable">PreAct</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#ta:18"><span class="id" title="variable">ta</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#d2f974a479ebcd81c5829843a3f7c760"><span class="id" title="variable">Γ</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Hspec</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">tts</span> <span class="id" title="var">tdt</span> <span class="id" title="var">tdnba</span> <span class="id" title="var">taig</span> <span class="id" title="var">thrt</span> <span class="id" title="var">ttg</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="var">unshelve</span> <span class="id" title="tactic">econstructor</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span> <span class="id" title="var">E</span>. <span class="id" title="tactic">exact</span> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#test_spec_of_plain"><span class="id" title="instance">test_spec_of_plain</span></a> (<span class="id" title="var">tts</span> <span class="id" title="var">E</span>)).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tdt</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tdnba</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">taig</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">thrt</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">ttg</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="test_convergence_spec_of_plain" class="idref" href="#test_convergence_spec_of_plain"><span class="id" title="instance">test_convergence_spec_of_plain</span></a><br/>
+&nbsp;&nbsp;{<a id="T:21" class="idref" href="#T:21"><span class="id" title="binder">T</span></a> <a id="A:22" class="idref" href="#A:22"><span class="id" title="binder">A</span></a>} `{<a id="H0:24" class="idref" href="#H0:24"><span class="id" title="binder">H0</span></a> : @<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#gLtsEq"><span class="id" title="class">gLtsEq</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#T:21"><span class="id" title="variable">T</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#A:22"><span class="id" title="variable">A</span></a> <a id="H:23" class="idref" href="#H:23"><span class="id" title="binder">H</span></a>} `{<a id="Testing_Predicate0:26" class="idref" href="#Testing_Predicate0:26"><span class="id" title="binder">!</span></a><a id="Testing_Predicate0:26" class="idref" href="#Testing_Predicate0:26"><span class="id" title="binder">Testing_Predicate</span></a> <a id="outcome:25" class="idref" href="#outcome:25"><span class="id" title="binder"><span id="Testing_Predicate0:26" class="id">outcome</span></span></a> <a id="Testing_Predicate0:26" class="idref" href="#Testing_Predicate0:26"><span class="id" title="binder">_</span></a>}<br/>
+&nbsp;&nbsp;{<a id="tconv:27" class="idref" href="#tconv:27"><span class="id" title="binder">tconv</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#A:22"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#T:21"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;(<a id="Hspec:28" class="idref" href="#Hspec:28"><span class="id" title="binder">Hspec</span></a> : <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.Completeness.html#test_convergence_spec"><span class="id" title="class">Completeness.test_convergence_spec</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#tconv:27"><span class="id" title="variable">tconv</span></a>)<br/>
+&nbsp;&nbsp;: <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.CompletenessASco.html#test_convergence_spec"><span class="id" title="class">CompletenessASco.test_convergence_spec</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#tconv:27"><span class="id" title="variable">tconv</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Hspec</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">ts</span> <span class="id" title="var">tdea</span> <span class="id" title="var">tcc</span> <span class="id" title="var">tctg</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="var">unshelve</span> <span class="id" title="tactic">econstructor</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> (<a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.TestSpecBridge.html#test_spec_of_plain"><span class="id" title="instance">test_spec_of_plain</span></a> <span class="id" title="var">ts</span>).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tdea</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tcc</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">exact</span> <span class="id" title="var">tctg</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
