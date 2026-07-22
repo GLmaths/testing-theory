@@ -35,10 +35,6 @@ From TestingTheory Require Import
   DefinitionAS Equivalence.
 From TestingTheory Require Export VCCS VCCS.Congruence.
 
-(* Local Coercion in VCCS.v does not propagate across files; redeclared here. *)
-Local Coercion bvar : nat >-> Data.
-Local Coercion cst_channel : Channel >-> ChannelData.
-Local Coercion cst_value : Value >-> ValueData.
 
 Section VCCS_lts.
 

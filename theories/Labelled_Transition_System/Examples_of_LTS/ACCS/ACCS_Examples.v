@@ -38,10 +38,6 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
   ACCSInstance ACCS_Must_Characterization Coin_tower Simulation ForwarderConstruction
   SetLTSConstruction FiniteImageLTS Soundness.
 
-(* Local Coercion in VACCS.v does not propagate across files; redeclared here. *)
-Local Coercion bvar : nat >-> Data.
-Local Coercion cst_channel : Channel >-> ChannelData.
-Local Coercion cst_value : Value >-> ValueData.
 
 Open Scope string_scope.
 

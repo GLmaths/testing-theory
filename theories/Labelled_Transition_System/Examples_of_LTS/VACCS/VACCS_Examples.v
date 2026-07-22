@@ -32,10 +32,6 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
 Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination.
 
-(* Local Coercion in VACCS.v does not propagate across files; redeclared here. *)
-Local Coercion bvar : nat >-> Data.
-Local Coercion cst_channel : Channel >-> ChannelData.
-Local Coercion cst_value : Value >-> ValueData.
 
 (** ** VACCS **)
 (** *** Applications *)

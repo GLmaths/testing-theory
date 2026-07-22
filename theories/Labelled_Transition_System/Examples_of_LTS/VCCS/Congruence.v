@@ -25,10 +25,6 @@ From stdpp Require Import base countable.
 From TestingTheory Require Import VCCS Clos_n.
 From Stdlib Require Import Relations Program.Equality Wellfounded.Inverse_Image.
 
-(* Local Coercion in VCCS.v does not propagate across files; redeclared here. *)
-Local Coercion bvar : nat >-> Data.
-Local Coercion cst_channel : Channel >-> ChannelData.
-Local Coercion cst_value : Value >-> ValueData.
 
 Section VCCS_congruence.
 

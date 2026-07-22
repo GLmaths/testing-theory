@@ -35,7 +35,7 @@ Inductive Data (MyType : Type) :=
 Arguments bvar {_} _.
 Arguments cst {_} _.
 
-Local Coercion bvar : nat >-> Data.
+#[warning="-uniform-inheritance"] Coercion bvar : nat >-> Data.
 
 Lemma Data_dec `{Countable MyType} : forall (x y : Data MyType) , {x = y} + {x <> y}.
 Proof.
@@ -480,8 +480,8 @@ end.
 
 End VCCS_proc.
 
-Local Coercion cst_channel : Channel >-> ChannelData.
-Local Coercion cst_value : Value >-> ValueData.
+Coercion cst_channel : Channel >-> ChannelData.
+Coercion cst_value : Value >-> ValueData.
 
 Global Arguments  Equality {_} _ _.
 Global Hint Constructors lts : cgr.

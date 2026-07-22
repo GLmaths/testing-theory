@@ -33,10 +33,6 @@ InteractionBetweenLts Testing_Predicate DefinitionAS Convergence Termination
 MultisetLTSConstruction ForwarderConstruction InputOutputActions WeakTransitions Subset_Act VCCS_Instance
 VCCS_Good.
 
-(* Local Coercion in VCCS.v does not propagate across files; redeclared here. *)
-Local Coercion bvar : nat >-> Data.
-Local Coercion cst_channel : Channel >-> ChannelData.
-Local Coercion cst_value : Value >-> ValueData.
 
 (** ** VCCS **)
 (** *** Applications *)
