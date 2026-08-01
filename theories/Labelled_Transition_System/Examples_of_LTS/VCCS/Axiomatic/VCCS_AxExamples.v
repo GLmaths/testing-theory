@@ -29,16 +29,16 @@
     [VCCS_Examples.v], [all_out ⊑ₘᵤₛₜᵢ one_out] takes a bespoke
     acceptance-set argument with two custom tactics ([compute_coR],
     [only_two_cases]) and a case analysis on the weak transitions.
-    Here it is **two rule applications** — the output-merge equation
-    followed by internal-choice elimination — and [soundness_ax] hands
-    back the semantic fact. *)
+    Here it is **one rule application** — a sum of two same-channel
+    outputs is below either of them — and [soundness_ax] hands back the
+    semantic fact. *)
 
 From Stdlib Require Import List.
 From stdpp Require Import base.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization
-  DefinitionAxiomatic SoundnessAx CompletenessAx EquivalenceAx.
+  DefinitionAxiomatic SoundnessAx CompletenessAx EquivalenceAx VCCS_AxRedundancy.
 
 Section VCCS_AxExamples.
 
@@ -58,11 +58,11 @@ Proof. repeat constructor. Qed.
 Lemma one_out_Static : Static one_out.
 Proof. repeat constructor. Qed.
 
-(** The derivation, by hand: two same-channel outputs *are* an internal
-    choice ([ax_output_merge_l]), and an internal choice is below either
-    branch ([ax_int_l]). *)
+(** The derivation, by hand: a sum of two same-channel outputs is below
+    either of them. That is [ax_output_below_l] ([VCCS_AxRedundancy.v]),
+    itself the [ax_swap_out] rule in disguise. *)
 Example ax_all_out_below_one_out : ax_pre all_out one_out.
-Proof. eapply ax_trans; [apply ax_output_merge_l | apply ax_int_l]. Qed.
+Proof. apply ax_output_below_l; repeat constructor. Qed.
 
 (** …and the semantic fact, for free. Compare
     [VCCS_Examples.one_output_is_above_all_output_conv]. *)

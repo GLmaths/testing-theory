@@ -170,23 +170,38 @@ Proof.
       * apply IH; [simpl; lia | exact HB].
 Qed.
 
+Lemma gStatic_tau_choice : forall M1 M2,
+  gStatic ((𝛕 • (g M1)) + (𝛕 • (g M2))) -> gStatic M1 /\ gStatic M2.
+Proof.
+  intros M1 M2 H. inversion H; subst.
+  match goal with HA : gStatic (𝛕 • (g M1)) |- _ => inversion HA; subst end.
+  match goal with HB : gStatic (𝛕 • (g M2)) |- _ => inversion HB; subst end.
+  match goal with HA : Static (g M1) |- _ => inversion HA; subst end.
+  match goal with HB : Static (g M2) |- _ => inversion HB; subst end.
+  split; assumption.
+Qed.
+
 (** Every leaf is derivably *above* the whole normal form — one
     [ax_int_l]/[ax_int_r] per level of the [⊕]-tree. This is how the
     matching argument discards the leaves it does not need. *)
 
-Lemma leaves_below : forall M, tau_nf M ->
+Lemma leaves_below : forall M, gStatic M -> tau_nf M ->
   forall A, A ∈ leaves M -> ax_pre (g M) (g A).
 Proof.
   induction M as (M & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ gsize Nat.lt_wf_0)).
-  intros HM A Hin. rewrite leaves_eq in Hin.
+  intros HgM HM A Hin. rewrite leaves_eq in Hin.
   destruct (gStableB M) eqn:E.
-  - assert (A = M) by set_solver. subst. apply ax_refl.
+  - assert (A = M) by set_solver. subst. apply ax_refl. constructor. exact HgM.
   - inversion HM as [? Hs | M1 M2 H1 H2]; subst.
     + exfalso. apply gStableB_spec in Hs. rewrite Hs in E. discriminate E.
-    + simpl in Hin. apply elem_of_app in Hin. destruct Hin as [Hin | Hin].
-      * eapply ax_trans; [apply ax_int_l | apply IH; [simpl; lia | exact H1 | exact Hin]].
-      * eapply ax_trans; [apply ax_int_r | apply IH; [simpl; lia | exact H2 | exact Hin]].
+    + destruct (gStatic_tau_choice M1 M2 HgM) as (Hgs1 & Hgs2).
+      simpl in Hin. apply elem_of_app in Hin. destruct Hin as [Hin | Hin].
+      * eapply ax_trans;
+          [apply ax_int_l | apply IH; [simpl; lia | exact Hgs1 | exact H1 | exact Hin]].
+      * eapply ax_trans;
+          [apply ax_int_r; constructor; assumption
+          | apply IH; [simpl; lia | exact Hgs2 | exact H2 | exact Hin]].
 Qed.
 
 Definition leafsum (M : gproc) : gproc := rebuild (leaves M).
@@ -408,7 +423,7 @@ Lemma ax_match_lists : forall lw ln,
   ax_pre (g (rebuild lw)) (g (rebuild ln)).
 Proof.
   intros lw ln Hsw Hsn Hbw Hbn H2.
-  induction H2 as [| w n lw ln Hwn H2 IH]; simpl; [apply ax_refl |].
+  induction H2 as [| w n lw ln Hwn H2 IH]; simpl; [apply ax_refl; repeat constructor |].
   inversion Hsw as [|? ? Hw Hsw']; subst.
   inversion Hsn as [|? ? Hn Hsn']; subst.
   inversion Hbw as [|? ? Hbw0 Hbw']; subst.
@@ -484,7 +499,9 @@ Proof.
       [apply (ax_tau_flatten_r (𝛕 • p0) (ichoice (p1 :: l1))); apply ichoice_gAllTau |].
     apply elem_of_cons in Hin. destruct Hin as [Heq | Hin].
     + subst. apply ax_int_l.
-    + eapply ax_trans; [apply ax_int_r | apply IH; assumption].
+    + eapply ax_trans;
+        [apply ax_int_r; [exact Hp0 | constructor; apply ichoice_gStatic; exact Hl]
+        | apply IH; assumption].
 Qed.
 
 Lemma ax_ichoice_glb : forall l q, l <> [] -> Forall Static l ->
@@ -1195,7 +1212,9 @@ Proof.
   - exact Hs.
   - intros p Hp. apply elem_of_app in Hp. destruct Hp as [Hp | Hp].
     + eapply ax_trans; [apply ax_int_l | apply ax_ichoice_below; assumption].
-    + eapply ax_trans; [apply ax_int_r | apply ax_ichoice_below; assumption].
+    + eapply ax_trans;
+        [apply ax_int_r; constructor; apply ichoice_gStatic; assumption
+        | apply ax_ichoice_below; assumption].
 Qed.
 
 (** ** The mirror, parametrised by an action set
@@ -1310,8 +1329,8 @@ Qed.
 Lemma ax_ichoice_singleton_l : forall p, ax_pre (g (ichoice [p])) p.
 Proof. intro p. simpl. apply ax_int_l. Qed.
 
-Lemma ax_ichoice_singleton_r : forall p, ax_pre p (g (ichoice [p])).
-Proof. intro p. simpl. apply ax_int_glb; apply ax_refl. Qed.
+Lemma ax_ichoice_singleton_r : forall p, Static p -> ax_pre p (g (ichoice [p])).
+Proof. intros p Hp. simpl. apply ax_int_glb; apply ax_refl; exact Hp. Qed.
 
 Lemma leaves_stable_self : forall A, gStable A -> leaves A = [A].
 Proof.
@@ -1356,7 +1375,7 @@ Proof.
     by (apply static_g; apply ichoice_gStatic; constructor; [exact HP | constructor]).
   eapply ax_trans with (q := g (c ? (g (ichoice [P])))).
   - apply ax_input. intro v. rewrite subst_ichoice_proc. simpl.
-    apply ax_ichoice_singleton_r.
+    apply ax_ichoice_singleton_r. apply Static_subst. exact HP.
   - apply ax_cgr; [| apply cgr_choice_nil_rev].
     apply static_g. constructor; [constructor; exact HI | constructor].
 Qed.
@@ -1368,7 +1387,7 @@ Proof.
   assert (HI : Static (g (ichoice [P])))
     by (apply static_g; apply ichoice_gStatic; constructor; [exact HP | constructor]).
   eapply ax_trans with (q := g (c ! v • (g (ichoice [P])))).
-  - apply ax_output. apply ax_ichoice_singleton_r.
+  - apply ax_output. apply ax_ichoice_singleton_r. exact HP.
   - apply ax_cgr; [| apply cgr_choice_nil_rev].
     apply static_g. constructor; [constructor; exact HI | constructor].
 Qed.
@@ -1377,7 +1396,7 @@ Lemma ax_mirror_success : ax_pre (g ①) (g (mirror ① [])).
 Proof. unfold mirror. simpl. apply ax_success_l. Qed.
 
 Lemma ax_mirror_nil : ax_pre (g 𝟘) (g (mirror 𝟘 [])).
-Proof. unfold mirror. simpl. apply ax_refl. Qed.
+Proof. unfold mirror. simpl. apply ax_refl. repeat constructor. Qed.
 
 (** ** Half the leaf case: wrapping every continuation in an [ichoice]
 
@@ -1454,9 +1473,12 @@ Proof.
   intros a Ha Hst Hleaf.
   destruct a as [ | | c P | c v P | P | A1 A2 ]; simpl.
   - apply ax_success_l.
-  - apply ax_refl.
-  - apply ax_input. intro v. simpl. apply ax_int_glb; apply ax_refl.
-  - apply ax_output. simpl. apply ax_int_glb; apply ax_refl.
+  - apply ax_refl. repeat constructor.
+  - inversion Ha; subst.
+    apply ax_input. intro v. simpl. apply ax_int_glb; apply ax_refl;
+      apply Static_subst; assumption.
+  - inversion Ha; subst.
+    apply ax_output. simpl. apply ax_int_glb; apply ax_refl; assumption.
   - simpl in Hst. contradiction.
   - exfalso. simpl in Hleaf.
     destruct (summands A1) as [|x l1] eqn:E1; [apply (summands_nonempty A1 E1) |].
@@ -1614,7 +1636,7 @@ Lemma ax_leaf_to_build : forall l, Forall gStatic l -> Forall gStable l ->
   Forall (fun a => summands a = [a]) l ->
   ax_pre (g (rebuild l)) (g (build (klist l))).
 Proof.
-  induction l as [|a l IH]; intros Hst Hsb Hlf; simpl; [apply ax_refl |].
+  induction l as [|a l IH]; intros Hst Hsb Hlf; simpl; [apply ax_refl; repeat constructor |].
   inversion Hst as [|? ? Ha Hst']; subst.
   inversion Hsb as [|? ? Hb Hsb']; subst.
   inversion Hlf as [|? ? Hl Hlf']; subst.
@@ -1636,7 +1658,8 @@ Proof.
       by (constructor; apply static_g; constructor; constructor; assumption).
     eapply ax_trans;
       [apply (ax_choice_stable (c ? P) (c ? (g (ichoice [P]))) (rebuild l) I I);
-       apply ax_input; intro w; simpl; apply ax_int_glb; apply ax_refl |].
+       apply ax_input; intro w; simpl; apply ax_int_glb; apply ax_refl;
+         apply Static_subst; assumption |].
     eapply ax_trans;
       [apply ax_cgr with (q := g (rebuild l + (c ? (g (ichoice [P])))));
          [apply static_g; constructor; assumption | apply cgr_choice_com] |].
@@ -1650,7 +1673,7 @@ Proof.
       by (constructor; apply static_g; constructor; constructor; assumption).
     eapply ax_trans;
       [apply (ax_choice_stable (c ! v • P) (c ! v • (g (ichoice [P]))) (rebuild l) I I);
-       apply ax_output; simpl; apply ax_int_glb; apply ax_refl |].
+       apply ax_output; simpl; apply ax_int_glb; apply ax_refl; assumption |].
     eapply ax_trans;
       [apply ax_cgr with (q := g (rebuild l + (c ! v • (g (ichoice [P])))));
          [apply static_g; constructor; assumption | apply cgr_choice_com] |].
@@ -1836,7 +1859,8 @@ Proof.
     + destruct (kfind_dup kl) as [(((k,l1),l2),r)|] eqn:E; [| reflexivity].
       exfalso. pose proof (kfind_dup_spec kl k l1 l2 r E) as Hp.
       apply Permutation_length in Hp. simpl in Hp. lia.
-    + split; [intros k0 p0; reflexivity | apply ax_refl].
+    + split; [intros k0 p0; reflexivity |].
+      apply ax_refl. constructor. apply build_gStatic. exact Hst.
   - destruct (kfind_dup kl) as [(((k,l1),l2),r)|] eqn:E.
     + pose proof (kfind_dup_spec kl k l1 l2 r E) as Hp.
       assert (Hst2 : Forall (fun p => Forall Static (snd p)) ((k,l1)::(k,l2)::r))
@@ -1863,7 +1887,8 @@ Proof.
       * eapply ax_trans; [| exact A5].
         apply (ax_merge_klist kl k l1 l2 r Hst Hb1 Hb2 Ha1 Ha2 Hstr Hp).
     + exists kl. split; [exact Hst |]. split; [exact Hne |]. split; [exact E |].
-      split; [intros k0 p0; reflexivity | apply ax_refl].
+      split; [intros k0 p0; reflexivity |].
+      apply ax_refl. constructor. apply build_gStatic. exact Hst.
 Qed.
 
 (** Concatenating association lists is summing the built sums — the step
@@ -2396,13 +2421,13 @@ Theorem ax_build_align : forall n kl kl', (length kl <= n)%nat ->
 Proof.
   induction n as [|n IH]; intros kl kl' Hlen Hs Hn Hs' Hn' Hd Hd' Hkeys Hmem.
   - destruct kl as [|(k,l) r]; [| simpl in Hlen; lia].
-    destruct kl' as [|(k',l') r']; [apply ax_refl |].
+    destruct kl' as [|(k',l') r']; [apply ax_refl; repeat constructor |].
     exfalso.
     assert (Hk : khas ((k',l')::r') k')
       by (exists l'; apply elem_of_cons; left; reflexivity).
     apply Hkeys in Hk. destruct Hk as (l0 & Hin). set_solver.
   - destruct kl as [|(k,l) r].
-    + destruct kl' as [|(k',l') r']; [apply ax_refl |].
+    + destruct kl' as [|(k',l') r']; [apply ax_refl; repeat constructor |].
       exfalso.
       assert (Hk : khas ((k',l')::r') k')
         by (exists l'; apply elem_of_cons; left; reflexivity).
@@ -2883,16 +2908,6 @@ Proof.
   - exfalso. apply He. apply (H (k,l)). apply elem_of_cons; left; reflexivity.
 Qed.
 
-Lemma gStatic_tau_choice : forall M1 M2,
-  gStatic ((𝛕 • (g M1)) + (𝛕 • (g M2))) -> gStatic M1 /\ gStatic M2.
-Proof.
-  intros M1 M2 H. inversion H; subst.
-  match goal with HA : gStatic (𝛕 • (g M1)) |- _ => inversion HA; subst end.
-  match goal with HB : gStatic (𝛕 • (g M2)) |- _ => inversion HB; subst end.
-  match goal with HA : Static (g M1) |- _ => inversion HA; subst end.
-  match goal with HB : Static (g M2) |- _ => inversion HB; subst end.
-  split; assumption.
-Qed.
 
 (** Every normal form is derivably below a duplicate-free association
     list carrying *all* of its continuations — and below every
@@ -2940,7 +2955,7 @@ Proof.
     assert (Hax1 : ax_pre (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) (g (build kl1)))
       by (eapply ax_trans; [apply ax_int_l | exact E1]).
     assert (Hax2 : ax_pre (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) (g (build kl2)))
-      by (eapply ax_trans; [apply ax_int_r | exact E2]).
+      by (eapply ax_trans; [apply ax_int_r; constructor; assumption | exact E2]).
     assert (HappS : Forall (fun p : act_key * list proc => Forall Static p.2) (kl1 ++ kl2))
       by (apply Forall_app; split; assumption).
     assert (HappN : Forall (fun p : act_key * list proc => p.2 <> []) (kl1 ++ kl2))
@@ -2964,7 +2979,9 @@ Proof.
         eapply ax_trans; [apply ax_int_l | apply F1; exists A; split; assumption].
       * eapply (ax_share_restrict S kl2 kl1 kl); try assumption.
         { intros k p. rewrite Hunion. tauto. }
-        { eapply ax_trans; [apply ax_int_r | apply F2; exists A; split; assumption]. }
+        { eapply ax_trans;
+            [apply ax_int_r; constructor; assumption
+            | apply F2; exists A; split; assumption]. }
 Qed.
 
 (* ------------------------------------------------------------------ *)
@@ -2999,10 +3016,13 @@ Proof.
     eapply ax_trans; [exact H1 |]. eapply ax_trans; [exact H2 |].
     eapply ax_trans; [exact H3 |]. exact H4.
   - eapply ax_cgr; [repeat constructor | apply cgr_choice_nil_rev].
-  - eapply ax_trans; [| apply ax_input_distrib_r].
-    apply ax_input. intro v. simpl. apply ax_int_glb; apply ax_refl.
-  - eapply ax_trans; [| apply ax_output_distrib_r].
-    apply ax_output. apply ax_int_glb; apply ax_refl.
+  - inversion Hs; subst.
+    eapply ax_trans; [| apply ax_input_distrib_r; assumption].
+    apply ax_input. intro v. simpl. apply ax_int_glb; apply ax_refl;
+      apply Static_subst; assumption.
+  - inversion Hs; subst.
+    eapply ax_trans; [| apply ax_output_distrib_r; assumption].
+    apply ax_output. apply ax_int_glb; apply ax_refl; assumption.
   - simpl in Hst. contradiction.
   - exfalso. simpl in Hleaf.
     assert (H1 := summands_nonempty A1). assert (H2 := summands_nonempty A2).
@@ -3108,7 +3128,7 @@ Theorem ax_build_to_list : forall (lw : list gproc) (kl : list (act_key * list p
   ax_pre (g (build kl)) (g (rebuild lw)).
 Proof.
   induction lw as [|w lw' IH]; intros kl Hkl Hdup Hi Hii.
-  - destruct kl as [|e kl']; [apply ax_refl |].
+  - destruct kl as [|e kl']; [apply ax_refl; repeat constructor |].
     exfalso. assert (He0 : e ∈ e :: kl') by (apply elem_of_cons; left; reflexivity).
     assert (H := Hii e He0). set_solver.
   - assert (Hw0 : w ∈ w :: lw') by (apply elem_of_cons; left; reflexivity).
@@ -3380,7 +3400,7 @@ Proof.
     etransitivity; [apply cgr_choice; apply cgr_choice_com |].
     apply cgr_choice_assoc. }
   eapply ax_trans.
-  { apply ax_int_glb; [apply ax_refl |].
+  { apply ax_int_glb; [apply ax_refl; repeat constructor; assumption |].
     eapply ax_cgr; [constructor; exact HsA' | exact Hcgr]. }
   eapply ax_trans; [apply (ax_swap_out c v v' P Q ((c ! v' • Q) + R) ((c ! v • P) + R)) |].
   apply ax_rem_dups.
@@ -3804,7 +3824,7 @@ Proof.
     { pose proof (summands_leaves N) as H. rewrite Forall_forall in H. exact (H a Ha). }
     destruct a as [ | | c P | c v P | P | A1 A2 ].
     + unfold mirror_look. simpl. apply ax_success_r.
-    + unfold mirror_look. simpl. apply ax_refl.
+    + unfold mirror_look. simpl. apply ax_refl. repeat constructor.
     + assert (HkSN : (c, None) ∈ SN)
         by (apply keylist_spec; exists (c ? P); split; [exact Ha | reflexivity]).
       assert (Hm := klook_mem (krestrict SN kl) (c,None) (Hkhas' _ HkSN)).

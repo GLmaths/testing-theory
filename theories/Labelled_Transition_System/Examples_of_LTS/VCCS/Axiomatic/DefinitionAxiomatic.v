@@ -240,31 +240,17 @@ Reserved Notation "⊢ p ⊑ q" (at level 70).
     is available precisely when it cannot disturb initial stability. *)
 
 Inductive ax_pre : proc -> proc -> Prop :=
-| ax_refl : forall p, ⊢ p ⊑ p
 | ax_trans : forall p q r, ⊢ p ⊑ q -> ⊢ q ⊑ r -> ⊢ p ⊑ r
 | ax_cgr : forall p q, Static q -> p ≡* q -> ⊢ p ⊑ q
 
 | ax_par : forall p p' q q', ⊢ p ⊑ p' -> ⊢ q ⊑ q' -> ⊢ (p ‖ q) ⊑ (p' ‖ q')
 | ax_res : forall p q, ⊢ p ⊑ q -> ⊢ (ν p) ⊑ (ν q)
-| ax_if : forall E p p' q q', ⊢ p ⊑ p' -> ⊢ q ⊑ q' ->
-    ⊢ (If E Then p Else q) ⊑ (If E Then p' Else q')
 | ax_input : forall (c : ChannelData) (p q : proc),
     (forall v, ⊢ p^v ⊑ q^v) -> ⊢ g (c ? p) ⊑ g (c ? q)
 | ax_output : forall (c : ChannelData) (v : ValueData) (p q : proc),
     ⊢ p ⊑ q -> ⊢ g (c ! v • p) ⊑ g (c ! v • q)
-| ax_tau : forall p q, ⊢ p ⊑ q -> ⊢ g (𝛕 • p) ⊑ g (𝛕 • q)
 
 | ax_int_l : forall p q, ⊢ g ((𝛕 • p) + (𝛕 • q)) ⊑ p
-| ax_int_r : forall p q, ⊢ g ((𝛕 • p) + (𝛕 • q)) ⊑ q
-
-| ax_output_merge_l : forall (c : ChannelData) (v v' : ValueData) (P Q : proc),
-    ⊢ g ((c ! v • P) + (c ! v' • Q)) ⊑ g ((𝛕 • (g (c ! v • P))) + (𝛕 • (g (c ! v' • Q))))
-| ax_output_merge_r : forall (c : ChannelData) (v v' : ValueData) (P Q : proc),
-    ⊢ g ((𝛕 • (g (c ! v • P))) + (𝛕 • (g (c ! v' • Q)))) ⊑ g ((c ! v • P) + (c ! v' • Q))
-| ax_input_merge_l : forall (c : ChannelData) (P Q : proc),
-    ⊢ g ((c ? P) + (c ? Q)) ⊑ g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q))))
-| ax_input_merge_r : forall (c : ChannelData) (P Q : proc),
-    ⊢ g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q)))) ⊑ g ((c ? P) + (c ? Q))
 
 | ax_expansion_l : forall M N, gStatic M -> gStatic N -> ⊢ (g M ‖ g N) ⊑ g ((ext M N + ext_r N M) + int M N)
 | ax_expansion_r : forall M N, gStatic M -> gStatic N -> ⊢ g ((ext M N + ext_r N M) + int M N) ⊑ (g M ‖ g N)
@@ -274,12 +260,8 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 | ax_input_distrib_l : forall (c : ChannelData) (P Q : proc),
     ⊢ g ((c ? P) + (c ? Q)) ⊑ g (c ? (g ((𝛕 • P) + (𝛕 • Q))))
-| ax_input_distrib_r : forall (c : ChannelData) (P Q : proc),
-    ⊢ g (c ? (g ((𝛕 • P) + (𝛕 • Q)))) ⊑ g ((c ? P) + (c ? Q))
 | ax_output_distrib_l : forall (c : ChannelData) (v : ValueData) (P Q : proc),
     ⊢ g ((c ! v • P) + (c ! v • Q)) ⊑ g (c ! v • (g ((𝛕 • P) + (𝛕 • Q))))
-| ax_output_distrib_r : forall (c : ChannelData) (v : ValueData) (P Q : proc),
-    ⊢ g (c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) ⊑ g ((c ! v • P) + (c ! v • Q))
 
 | ax_choice_stable : forall (gp gp' gq : gproc),
     gStable gp -> gStable gp' ->
@@ -415,5 +397,148 @@ Hint Constructors ax_pre : mdb.
 
 Lemma ax_cgr_sym : forall p q, Static p -> p ≡* q -> ⊢ q ⊑ p.
 Proof. intros p q Hsp Hcgr. apply ax_cgr; [exact Hsp | eapply cgr_symm; exact Hcgr]. Qed.
+
+(** ** Laws that are DERIVED, not primitive
+
+    Ten laws a Hennessy-style presentation would state as rules are
+    admissible from the twenty-six constructors above, and are proved
+    here instead. They keep their usual names, so the rest of the
+    development reads unchanged — the only difference is that each now
+    carries the [Static] side conditions its derivation needs, inherited
+    from [ax_cgr]'s own [Static q] condition.
+
+    The restriction is harmless: [ax_pre_static_preserved]
+    ([SoundnessAx.v]) keeps a derivation inside the [Static] fragment
+    once it starts there, and that fragment is the only one completeness
+    speaks about. Outside it the system is genuinely weaker than before
+    — [⊢ p ⊑ p] is no longer available for a recursive [p] — and nothing
+    in this development needs it to be.
+
+    ([ax_output_merge_l] is the eleventh such law; it is proved in
+    [VCCS_AxRedundancy.v] because its derivation needs [ax_drop_out],
+    hence [ax_swap_out], which is not available this early.) *)
+
+(** Reflexivity: [ax_cgr] at [cgr_refl]. *)
+Lemma ax_refl : forall p, Static p -> ⊢ p ⊑ p.
+Proof. intros p Hp. apply ax_cgr; [exact Hp | apply cgr_refl]. Qed.
+
+(** Right glb elimination: [ax_int_l] modulo commutativity of [+]. *)
+Lemma ax_int_r : forall p q, Static p -> Static q -> ⊢ g ((𝛕 • p) + (𝛕 • q)) ⊑ q.
+Proof.
+  intros p q Hp Hq.
+  eapply ax_trans;
+    [apply ax_cgr with (q := g ((𝛕 • q) + (𝛕 • p)));
+      [repeat constructor; assumption | apply cgr_choice_com]
+    | apply ax_int_l].
+Qed.
+
+(** The [𝛕]-prefix congruence: [ax_choice_tau] with the context [𝟘]. *)
+Lemma ax_tau : forall p q, Static p -> Static q -> ⊢ p ⊑ q ->
+  ⊢ g (𝛕 • p) ⊑ g (𝛕 • q).
+Proof.
+  intros p q Hp Hq Hax.
+  eapply ax_trans;
+    [apply ax_cgr with (q := g ((𝛕 • p) + 𝟘));
+      [repeat constructor; assumption | apply cgr_choice_nil_rev] |].
+  eapply ax_trans; [apply (ax_choice_tau p q 𝟘); exact Hax |].
+  apply ax_cgr; [repeat constructor; assumption | apply cgr_choice_nil].
+Qed.
+
+(** The [If] congruence: [Eval_Eq 0] never fails, so a conditional is
+    structurally congruent to one of its branches and [ax_cgr] suffices. *)
+Lemma ax_if : forall E p p' q q', Static p -> Static q -> Static p' -> Static q' ->
+  ⊢ p ⊑ p' -> ⊢ q ⊑ q' ->
+  ⊢ (If E Then p Else q) ⊑ (If E Then p' Else q').
+Proof.
+  intros E p p' q q' Hp Hq Hp' Hq' H1 H2.
+  destruct (Eval_Eq 0 E) as [b|] eqn:Hb; [| exfalso; exact (Eval_Eq_0_not_none E Hb)].
+  destruct b.
+  - eapply ax_trans; [apply ax_cgr; [exact Hp | apply cgr_if_true; exact Hb] |].
+    eapply ax_trans; [exact H1 |].
+    apply ax_cgr; [constructor; assumption | apply cgr_if_true_rev; exact Hb].
+  - eapply ax_trans; [apply ax_cgr; [exact Hq | apply cgr_if_false; exact Hb] |].
+    eapply ax_trans; [exact H2 |].
+    apply ax_cgr; [constructor; assumption | apply cgr_if_false_rev; exact Hb].
+Qed.
+
+(** **** Union closure
+
+    An internal choice is below the external sum of its branches. Two
+    rounds of [ax_tau_sep_l] + [ax_int_l] peel one [𝛕] each. This is the
+    engine behind the merge and distributivity laws' [_r] directions. *)
+Lemma ax_int_below_ext : forall (A B : gproc), gStatic A -> gStatic B ->
+  ⊢ g ((𝛕 • (g A)) + (𝛕 • (g B))) ⊑ g (A + B).
+Proof.
+  intros A B HA HB.
+  eapply ax_trans; [apply (ax_tau_sep_l (𝛕 • (g A)) B) |].
+  eapply ax_trans; [apply ax_int_l |].
+  eapply ax_trans;
+    [apply ax_cgr with (q := g (B + (𝛕 • (g A))));
+       [constructor; constructor; [exact HB | constructor; constructor; exact HA]
+       | apply cgr_choice_com] |].
+  eapply ax_trans; [apply (ax_tau_sep_l B A) |].
+  eapply ax_trans; [apply ax_int_l |].
+  apply ax_cgr with (q := g (A + B));
+    [constructor; constructor; assumption | apply cgr_choice_com].
+Qed.
+
+(** The merge equations, right to left: instances of union closure. *)
+Lemma ax_input_merge_r : forall c P Q, Static P -> Static Q ->
+  ⊢ g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q)))) ⊑ g ((c ? P) + (c ? Q)).
+Proof. intros c P Q HP HQ. apply ax_int_below_ext; constructor; assumption. Qed.
+
+Lemma ax_output_merge_r : forall c v v' P Q, Static P -> Static Q ->
+  ⊢ g ((𝛕 • (g (c ! v • P))) + (𝛕 • (g (c ! v' • Q))))
+    ⊑ g ((c ! v • P) + (c ! v' • Q)).
+Proof. intros c v v' P Q HP HQ. apply ax_int_below_ext; constructor; assumption. Qed.
+
+(** A sum of two same-channel inputs is below each of them — via
+    [ax_input_distrib_l] and glb elimination under the guard. *)
+Lemma ax_input_below_l : forall c P Q, Static P -> Static Q ->
+  ⊢ g ((c ? P) + (c ? Q)) ⊑ g (c ? P).
+Proof.
+  intros c P Q HP HQ.
+  eapply ax_trans; [apply ax_input_distrib_l |].
+  apply ax_input. intro v. simpl. apply ax_int_l.
+Qed.
+
+Lemma ax_input_below_r : forall c P Q, Static P -> Static Q ->
+  ⊢ g ((c ? P) + (c ? Q)) ⊑ g (c ? Q).
+Proof.
+  intros c P Q HP HQ.
+  eapply ax_trans; [apply ax_input_distrib_l |].
+  apply ax_input. intro v. simpl. apply ax_int_r; apply Static_subst; assumption.
+Qed.
+
+(** …so [ax_int_glb] assembles the internal choice. *)
+Lemma ax_input_merge_l : forall c P Q, Static P -> Static Q ->
+  ⊢ g ((c ? P) + (c ? Q)) ⊑ g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q)))).
+Proof.
+  intros c P Q HP HQ.
+  apply ax_int_glb; [apply ax_input_below_l | apply ax_input_below_r]; assumption.
+Qed.
+
+(** The distributivity laws, right to left: a guard over an internal
+    choice is below the guard over each branch, and union closure
+    rebuilds the sum. *)
+Lemma ax_input_distrib_r : forall c P Q, Static P -> Static Q ->
+  ⊢ g (c ? (g ((𝛕 • P) + (𝛕 • Q)))) ⊑ g ((c ? P) + (c ? Q)).
+Proof.
+  intros c P Q HP HQ.
+  eapply ax_trans; [| apply ax_input_merge_r; assumption].
+  apply ax_int_glb; apply ax_input; intro v; simpl.
+  - apply ax_int_l.
+  - apply ax_int_r; apply Static_subst; assumption.
+Qed.
+
+Lemma ax_output_distrib_r : forall c v P Q, Static P -> Static Q ->
+  ⊢ g (c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) ⊑ g ((c ! v • P) + (c ! v • Q)).
+Proof.
+  intros c v P Q HP HQ.
+  eapply ax_trans; [| apply ax_output_merge_r; assumption].
+  apply ax_int_glb; apply ax_output.
+  - apply ax_int_l.
+  - apply ax_int_r; assumption.
+Qed.
 
 End DefinitionAxiomatic.

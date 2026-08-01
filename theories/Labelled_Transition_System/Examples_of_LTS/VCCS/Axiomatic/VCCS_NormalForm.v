@@ -101,7 +101,7 @@ Proof.
     + eapply ax_trans; [apply ax_res_normalize_r; assumption | apply ax_res; eassumption].
   - (* g g, already a guarded sum — the constructor's own field is auto-named [g], shadowing the [g] coercion locally (harmless: not referenced here) *)
     inversion Hsp; subst.
-    exists g. repeat split; [assumption | apply ax_refl | apply ax_refl].
+    exists g. repeat split; [assumption | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
 Qed.
 
 (** ** The canonical normal form
@@ -245,8 +245,10 @@ Proof.
         exists (ν r). repeat split;
           [apply lts_res_tau; exact Hlr | apply ax_res; exact Hqr | apply ax_res; exact Hrq].
   - inversion Hsp; subst.
-    exists g. repeat split; [assumption | apply ax_refl | apply ax_refl |].
-    intros a q Hl. exists q. repeat split; [exact Hl | apply ax_refl | apply ax_refl].
+    exists g. repeat split; [assumption | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption |].
+    intros a q Hl. exists q.
+    assert (HSq : Static q) by (eapply Static_preserved_by_lts; [exact Hsp | exact Hl]).
+    repeat split; [exact Hl | apply ax_refl; exact HSq | apply ax_refl; exact HSq].
 Qed.
 
 Theorem canonical_normal_form : forall p, Static p ->

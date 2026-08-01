@@ -78,14 +78,14 @@ Proof.
   - apply ax_input_distrib_l.
 Qed.
 
-Lemma ax_collapse_input_ctx_r : forall c P Q R,
+Lemma ax_collapse_input_ctx_r : forall c P Q R, Static P -> Static Q ->
   ax_pre (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)) (g ((c ? P) + (c ? Q) + R)).
 Proof.
-  intros c P Q R.
+  intros c P Q R HP HQ.
   apply ax_choice_stable.
   - simpl. exact I.
   - simpl. split; exact I.
-  - apply ax_input_distrib_r.
+  - apply ax_input_distrib_r; assumption.
 Qed.
 
 Lemma ax_collapse_output_ctx_l : forall c v P Q R,
@@ -98,14 +98,14 @@ Proof.
   - apply ax_output_distrib_l.
 Qed.
 
-Lemma ax_collapse_output_ctx_r : forall c v P Q R,
+Lemma ax_collapse_output_ctx_r : forall c v P Q R, Static P -> Static Q ->
   ax_pre (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + R)) (g ((c ! v • P) + (c ! v • Q) + R)).
 Proof.
-  intros c v P Q R.
+  intros c v P Q R HP HQ.
   apply ax_choice_stable.
   - simpl. exact I.
   - simpl. split; exact I.
-  - apply ax_output_distrib_r.
+  - apply ax_output_distrib_r; assumption.
 Qed.
 
 (** ** Flattening a sum into its list of summands
@@ -241,7 +241,7 @@ Proof.
     + apply ax_cgr; [exact Hmid | apply pull_pair; exact Hp].
     + apply ax_collapse_input_ctx_l.
   - eapply ax_trans with (q := g ((c ? P) + (c ? Q) + rebuild l)).
-    + apply ax_collapse_input_ctx_r.
+    + apply ax_collapse_input_ctx_r; assumption.
     + apply ax_cgr_sym; [constructor; exact HM | apply pull_pair; exact Hp].
 Qed.
 
@@ -265,7 +265,7 @@ Proof.
     + apply ax_cgr; [exact Hmid | apply pull_pair; exact Hp].
     + apply ax_collapse_output_ctx_l.
   - eapply ax_trans with (q := g ((c ! v • P) + (c ! v • Q) + rebuild l)).
-    + apply ax_collapse_output_ctx_r.
+    + apply ax_collapse_output_ctx_r; assumption.
     + apply ax_cgr_sym; [constructor; exact HM | apply pull_pair; exact Hp].
 Qed.
 
@@ -1158,7 +1158,7 @@ Theorem tau_normalize_conts : forall n M, gStatic M ->
              /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hnorm.
-  - exists M. repeat split; [exact HM | | apply ax_refl | apply ax_refl].
+  - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
     apply find_tau_todo_none.
     destruct (find_tau_todo (summands M)) as [(q,r)|] eqn:E; [| reflexivity].
     exfalso.
@@ -1195,13 +1195,13 @@ Proof.
         simpl. lia. }
       assert (Hnorm2 : Forall tau_cont_norm (summands ((𝛕 • (g Y)) + rebuild r))).
       { simpl summands. constructor.
-        - exists Y. repeat split; [exact HYgst | exact HYnf | apply ax_refl | apply ax_refl].
+        - exists Y. repeat split; [exact HYgst | exact HYnf | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
         - apply tau_cont_norm_rebuild; assumption. }
       destruct (IH _ Hnew Hmeas2 Hnorm2) as (M' & HM'st & HM'nf & Hf & Hb).
       exists M'. repeat split; [exact HM'st | exact HM'nf | |].
       * eapply ax_trans; [exact Hfwd | exact Hf].
       * eapply ax_trans; [exact Hb | exact Hbwd].
-    + exists M. repeat split; [exact HM | | apply ax_refl | apply ax_refl].
+    + exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
       apply find_tau_todo_none. exact E.
 Qed.
 
@@ -1255,7 +1255,7 @@ Theorem tau_flatten_all : forall n M, gStatic M ->
              /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hnf.
-  - exists M. repeat split; [exact HM | | apply ax_refl | apply ax_refl].
+  - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
     apply find_unstable_tau_none; [| exact Hnf].
     destruct (find_unstable_tau (summands M)) as [(Y,r)|] eqn:E; [| reflexivity].
     exfalso. destruct (find_unstable_tau_spec _ _ _ E) as (Hperm & Hst).
@@ -1292,7 +1292,7 @@ Proof.
       exists M'. repeat split; [exact HM'st | exact HM'ok | |].
       * eapply ax_trans; [exact Hfwd | exact Hf].
       * eapply ax_trans; [exact Hb | exact Hbwd].
-    + exists M. repeat split; [exact HM | | apply ax_refl | apply ax_refl].
+    + exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
       apply find_unstable_tau_none; [exact E | exact Hnf].
 Qed.
 
@@ -1301,7 +1301,7 @@ Theorem tau_separate : forall n M, gStatic M ->
   exists M', gStatic M' /\ tau_nf M' /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hok.
-  - exists M. repeat split; [exact HM | | apply ax_refl | apply ax_refl].
+  - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
     apply tnf_stable. apply find_tau_none_stable.
     destruct (find_tau (summands M)) as [(p,r)|] eqn:E; [| reflexivity].
     exfalso. apply find_tau_spec in E.
@@ -1336,7 +1336,7 @@ Proof.
       * apply tnf_choice; [exact HM1nf | apply tnf_stable; exact HYst].
       * eapply ax_trans; [exact Hfwd | apply ax_choice_tau; exact Hf1].
       * eapply ax_trans; [apply ax_choice_tau; exact Hb1 | exact Hbwd].
-    + exists M. repeat split; [exact HM | | apply ax_refl | apply ax_refl].
+    + exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
       apply tnf_stable. apply find_tau_none_stable. exact E.
 Qed.
 
@@ -1464,7 +1464,7 @@ Proof.
       exists M'. repeat split; [exact HM'st | exact HM'can | | ].
       * eapply ax_trans; [exact Hfwd | exact Hf].
       * eapply ax_trans; [exact Hb | exact Hbwd].
-  - exists M. repeat split; [exact HM | exact E | apply ax_refl | apply ax_refl].
+  - exists M. repeat split; [exact HM | exact E | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
 Qed.
 
 End VCCS_Canonical.

@@ -52,7 +52,6 @@ Lemma ax_pre_static_preserved : forall p q, ax_pre p q -> Static p -> Static q.
 Proof.
   intros p q Hax.
   induction Hax; intro Hsp.
-  - exact Hsp.
   - apply IHHax2, IHHax1, Hsp.
   - exact H.
   - inversion Hsp; subst.
@@ -61,8 +60,6 @@ Proof.
     constructor.
     apply IHHax.
     assumption.
-  - inversion Hsp; subst.
-    constructor; [apply IHHax1 | apply IHHax2]; assumption.
   - inversion Hsp; subst.
     inversion H2; subst.
     constructor.
@@ -79,41 +76,9 @@ Proof.
     exact H1.
   - inversion Hsp; subst.
     inversion H0; subst.
-    constructor.
-    constructor.
-    apply IHHax.
-    exact H1.
-  - inversion Hsp; subst.
-    inversion H0; subst.
     inversion H3; subst.
     inversion H2; subst.
     exact H4.
-  - inversion Hsp; subst.
-    inversion H0; subst.
-    inversion H3; subst.
-    exact H1.
-  - inversion Hsp; subst.
-    inversion H0; subst.
-    inversion H2; subst.
-    inversion H3; subst.
-    repeat constructor; assumption.
-  - inversion Hsp; subst.
-    inversion H0; subst.
-    inversion H2; subst.
-    inversion H3; subst.
-    constructor.
-    constructor; [inversion H1 | inversion H4]; assumption.
-  - inversion Hsp; subst.
-    inversion H0; subst.
-    inversion H2; subst.
-    inversion H3; subst.
-    repeat constructor; assumption.
-  - inversion Hsp; subst.
-    inversion H0; subst.
-    inversion H2; subst.
-    inversion H3; subst.
-    constructor.
-    constructor; [inversion H1 | inversion H4]; assumption.
   - constructor.
     constructor.
     + constructor.
@@ -124,9 +89,7 @@ Proof.
   - constructor. apply resg_gStatic. assumption.
   - constructor. constructor. assumption.
   - inversion Hsp; subst; inversion H0; subst; inversion H2; subst; inversion H3; subst; repeat constructor; assumption.
-  - inversion Hsp; subst; inversion H0; subst; inversion H1; subst; inversion H2; subst; inversion H4; subst; inversion H5; subst; repeat constructor; assumption.
   - inversion Hsp; subst; inversion H0; subst; inversion H2; subst; inversion H3; subst; repeat constructor; assumption.
-  - inversion Hsp; subst; inversion H0; subst; inversion H1; subst; inversion H2; subst; inversion H4; subst; inversion H5; subst; repeat constructor; assumption.
   - (* ax_choice_stable: [gStatic gp'] comes from the IH on the premise,
        so the rule needs no [gStatic] side condition of its own. *)
     inversion Hsp; subst. inversion H2; subst.
@@ -212,7 +175,6 @@ Proof.
   intros p q Hsp Hsq Hax.
   revert Hsp Hsq.
   induction Hax; intros Hsp Hsq.
-  - reflexivity.
   - assert (Hq : Static q) by (eapply ax_pre_static_preserved; [exact Hax1 | exact Hsp]).
     transitivity q.
     + apply IHHax1; assumption.
@@ -229,11 +191,6 @@ Proof.
     apply must_i_res_compat; try assumption.
     apply IHHax; assumption.
   - inversion Hsp; subst.
-    inversion Hsq; subst.
-    apply must_i_if_compat.
-    + apply IHHax1; assumption.
-    + apply IHHax2; assumption.
-  - inversion Hsp; subst.
     inversion H2; subst.
     inversion Hsq; subst.
     inversion H4; subst.
@@ -246,26 +203,13 @@ Proof.
     inversion H2; subst.
     apply must_i_output_compat.
     apply IHHax; assumption.
-  - inversion Hsp; subst.
-    inversion H0; subst.
-    inversion Hsq; subst.
-    inversion H2; subst.
-    apply must_i_tau_compat.
-    apply IHHax; assumption.
   - apply must_i_int_choice_l.
-  - apply must_i_int_choice_r.
-  - apply must_i_output_merge_l.
-  - apply must_i_output_merge_r.
-  - apply must_i_input_merge_l.
-  - apply must_i_input_merge_r.
   - apply must_i_expansion_l.
   - apply must_i_expansion_r.
   - apply must_i_res_normalize_l.
   - apply must_i_res_normalize_r.
   - apply must_i_input_distrib_l.
-  - apply must_i_input_distrib_r.
   - apply must_i_output_distrib_l.
-  - apply must_i_output_distrib_r.
   - (* ax_choice_stable. NB: invert [H3 : gStatic (gp' + gq)], never
        [H4 : gStatic gp] — the latter's head is a bare variable, so
        [inversion] would case-split on [gp]'s shape instead. *)
