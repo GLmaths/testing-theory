@@ -39,7 +39,7 @@
     file's constructors syntactically identical to Hennessy's own rules. *)
 
 From TestingTheory Require Import VCCS VCCS_Instance Must VCCS_Static VCCS_Expansion
-  VCCS_ResNormalize VCCS_ReadySet.
+  VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet.
 
 Section DefinitionAxiomatic.
 
@@ -72,7 +72,65 @@ Reserved Notation "⊢ p ⊑ q" (at level 70).
       [VCCS_Precongruence.v]. Every one of these is sound.
     - [ax_int_l]/[ax_int_r]: [X⊕Y ⊑ X] (resp. [Y]), where [⊕] is
       definable as [𝛕•X + 𝛕•Y] — sound for free via [must]'s own [pt]
-      field ([must_i_int_choice_l]/[_r]).
+      field ([must_i_int_choice_l]/[_r]). These are glb *elimination*.
+    - [ax_int_glb]: the matching glb **introduction** — anything below
+      both [q1] and [q2] is below [q1 ⊕ q2]. Sound via
+      [VCCS_Precongruence.v]'s [must_i_int_glb_pre]. Without it the
+      system cannot establish [_ ⊑ 𝛕•q₁ + 𝛕•q₂] at all: an internal
+      choice is not [gStable], so [ax_choice_stable] does not apply to it
+      either, and every other rule with an internal choice on the right
+      is an elimination. Identified while working out what
+      [CompletenessAx.v] needs — completeness is exactly where a
+      right-hand internal choice has to be *built*, and it is the
+      standard glb-introduction rule of Hennessy's own system.
+    - [ax_choice_tau]: the exact complement of [ax_choice_stable] —
+      rewriting a **[𝛕]-summand's continuation** in place inside a sum.
+      Sound via [VCCS_Precongruence.v]'s [must_i_choice_tau_compat].
+      Between the two rules, every guard shape can be rewritten in
+      context: [①]/[𝟘]/input/output summands are [gStable] and go
+      through [ax_choice_stable], [𝛕]-summands through this rule. Both
+      avoid the [ax_choice] counterexample for the same underlying
+      reason — neither changes whether the rewritten summand is
+      *initially stable*: there a stable summand was replaced by an
+      unstable one, letting a fresh [𝛕] pre-empt its sibling; here the
+      summand is [𝛕]-guarded on both sides, so the sum's stability is
+      untouched.
+    - [ax_tau_flatten_l]/[_r]: flattening a nested internal choice,
+      [gAllTau Y -> X + 𝛕•(g Y) ≂ X + Y]. Sound via
+      [VCCS_Precongruence.v]'s [must_i_tau_flatten_l]/[_r]. The
+      [gAllTau Y] side condition ("every summand of [Y] is
+      [𝛕]-guarded") is essential: if [Y] had *external* summands,
+      moving it up would expose them at top level and change behaviour
+      — which is exactly the content of [ax_tau_sep_*] and of
+      [VCCS_MixedSumProbes.v]. Note [𝟘] deliberately does **not** count
+      as all-[𝛕]: [X + 𝛕•(g 𝟘)] has a [𝛕] into a deadlock, [X + 𝟘] does
+      not.
+
+      This is the rule that makes the normal-form construction
+      *terminate*. Separation ([ax_tau_sep_l]) recurses into [X + Y];
+      were [Y] itself a pure internal choice, its [𝛕]-summands would
+      re-enter the count and the natural measure (number of top-level
+      [𝛕]-summands) would not decrease. Flattening first forces every
+      [𝛕]-summand's continuation to be stable, after which separation
+      strictly decreases that measure.
+    - [ax_tau_sep_l]/[_r]: the [𝛕]-separation law,
+      [X + 𝛕•(g Y) ≂ 𝛕•(g (X + Y)) ⊕ 𝛕•(g Y)]. Sound via
+      [VCCS_Precongruence.v]'s [must_i_tau_sep_l]/[_r]. Iterating it
+      turns a *mixed* sum — external guards sitting beside a [𝛕]-guard —
+      into an internal choice of sums each one [𝛕] closer to stable,
+      eventually reaching the [⊕]-of-stable-sums shape
+      [CompletenessAx.v] matches on. [VCCS_Canonical.v]'s [canonical]
+      does not deliver that shape on its own, since it constrains only
+      *actions*, saying nothing about [𝛕]-guards.
+
+      Note carefully that [X] is carried **into the first branch**
+      ([X + Y]) rather than being made a branch of its own: the
+      tempting [X + 𝛕•(g Y) ≂ 𝛕•(g Y) ⊕ X] is **false**, and
+      [VCCS_MixedSumProbes.v] refutes it with a machine-checked
+      counterexample. Promoting [X] to its own [𝛕]-branch would put it
+      under [must]'s [pt] field, making it responsible for offering an
+      interaction by itself — which a stable [X] facing a stable test on
+      a disjoint channel cannot do.
     - [ax_output_merge_l]/[_r], [ax_input_merge_l]/[_r]: Hennessy's
       merge equations (both directions), sound via
       [must_i_output_merge_l]/[_r] and [must_i_input_merge_l]/[_r].
@@ -226,6 +284,128 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_choice_stable : forall (gp gp' gq : gproc),
     gStable gp -> gStable gp' ->
     ⊢ g gp ⊑ g gp' -> ⊢ g (gp + gq) ⊑ g (gp' + gq)
+
+| ax_int_glb : forall (p q1 q2 : proc),
+    ⊢ p ⊑ q1 -> ⊢ p ⊑ q2 -> ⊢ p ⊑ g ((𝛕 • q1) + (𝛕 • q2))
+
+| ax_choice_tau : forall (p p' : proc) (gq : gproc),
+    ⊢ p ⊑ p' -> ⊢ g ((𝛕 • p) + gq) ⊑ g ((𝛕 • p') + gq)
+
+| ax_tau_flatten_l : forall (X Y : gproc),
+    gAllTau Y -> ⊢ g (X + (𝛕 • (g Y))) ⊑ g (X + Y)
+| ax_tau_flatten_r : forall (X Y : gproc),
+    gAllTau Y -> ⊢ g (X + Y) ⊑ g (X + (𝛕 • (g Y)))
+
+| ax_tau_sep_l : forall (X Y : gproc),
+    ⊢ g (X + (𝛕 • (g Y))) ⊑ g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y)))
+| ax_tau_sep_r : forall (X Y : gproc),
+    ⊢ g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) ⊑ g (X + (𝛕 • (g Y)))
+
+(** *** Convexity of acceptance sets
+
+    Read the internal choice as offering the two *ready sets*
+    [A := ready X] and [B := ready ((X+Y)+Z)] — note [A ⊆ B]. This rule
+    says every set *between* them is also on offer: the intermediate
+    [C := ready (X+Y)] satisfies [A ⊆ C ⊆ B], and the rule makes [X+Y]
+    derivably above the choice. That is exactly the convex-closure
+    condition acceptance-tree semantics imposes on acceptance families
+    (the companion union-closure condition, [x ⊕ y ⊑ x + y], is
+    *derivable* here — see [ax_int_below_ext], [VCCS_Canonical.v] — so
+    it needs no rule of its own).
+
+    It is genuinely not derivable from the other rules, and completeness
+    fails without it. Witness: [M := (a•𝟘) ⊕ ((b•𝟘) + (c•𝟘))] and
+    [N := (a•𝟘) + (b•𝟘)] satisfy [M ⊑ₘᵤₛₜᵢ N], yet [N]'s ready set
+    [{a,b}] is neither contained in, nor a union of, [M]'s leaves'
+    ready sets [{a}] and [{b,c}] — and every other rule with a stable
+    sum on the right ([ax_choice_stable], the merge and distributivity
+    laws, [ax_cgr]) can only reproduce ready sets already assembled
+    from the left-hand side's own. Here the rule applies with
+    [X := a•𝟘], [Y := b•𝟘], [Z := c•𝟘] once union-closure has supplied
+    the leaf [(a•𝟘)+(b•𝟘)+(c•𝟘)].
+
+    No side conditions: soundness ([must_i_convex], [VCCS_Precongruence.v])
+    needs neither stability nor [Static]-ness of any of [X], [Y], [Z] —
+    every obligation of [X+Y] is met by [X]'s own or by [(X+Y)+Z]'s,
+    whichever side the transition came from. *)
+
+| ax_convex : forall (X Y Z : gproc),
+    ⊢ g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z)))) ⊑ g (X + Y)
+
+(** *** [①] is a [𝟘] on the server side
+
+    [must]'s outcome field inspects only the *test*, so a server enters
+    solely through its transitions — and [①] has none, exactly like
+    [𝟘]. Structural congruence can drop a [𝟘] summand
+    ([cgr_choice_nil]) but says nothing about [①], and no other rule
+    mentions [①] at all, so a normal form carrying an [①] summand would
+    otherwise be stuck. With these, [ax_choice_stable] turns the [①]
+    into a [𝟘] and [ax_cgr] drops it. Sound by [must_i_success_nil]
+    ([VCCS_Expansion.v]), which is three lines of [must_same_lts]. *)
+
+| ax_success_l : ⊢ g ① ⊑ g 𝟘
+| ax_success_r : ⊢ g 𝟘 ⊑ g ①
+
+(** *** Continuation sharing
+
+    Two branches of an internal choice that offer the same action may
+    pool their continuations there, keeping the *first* branch's ready
+    set. This is the uniformity condition of acceptance-tree normal
+    forms (one continuation function shared by every acceptance set),
+    and it is the only rule that lets a derivation take its ready set
+    from one leaf and its continuation from another.
+
+    Nothing else does that: [ax_int_l]/[_r] reach only a whole branch;
+    the merge and distributivity laws reduce the goal to itself; and
+    [ax_convex] *transfers* a restricted target but cannot introduce one
+    — with its [Y] empty it reduces, through [ax_int_glb], to its own
+    conclusion. Without this rule, `(a•P₁) ⊕ (a•P₂ + b•Q) ⊑ a•(P₁ ⊕ P₂)`
+    holds semantically but has no derivation.
+
+    Sound with no side conditions ([must_i_share_in_aux]/[_out_aux],
+    [VCCS_Precongruence.v]): every field of the conclusion comes from the
+    first branch alone except [com] at the shared action, where the two
+    branches' obligations are assembled by [ax_int_glb]'s semantic
+    counterpart. *)
+
+| ax_share_in : forall (c : ChannelData) (P Q : proc) (X' Y' : gproc),
+    ⊢ g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y'))))
+      ⊑ g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X')
+| ax_share_out : forall (c : ChannelData) (v : ValueData) (P Q : proc) (X' Y' : gproc),
+    ⊢ g ((𝛕 • (g ((c ! v • P) + X'))) + (𝛕 • (g ((c ! v • Q) + Y'))))
+      ⊑ g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + X')
+
+(** *** Cross-value swapping
+
+    [ax_share_out] pools at a guard the two branches *share*, i.e. at
+    the same channel AND the same value. That is not enough, because
+    VCCS's ready-set abstraction erases the value ([coR_abs_incl_iff],
+    [VCCS_ReadySet.v]): a leaf may offer [c!v] where the target offers
+    only [c!v']. Witness (all continuations [𝟘], [v ≠ v'], [w ≠ w']):
+
+      M := (c!v•𝟘 + d!w'•𝟘) ⊕ (c!v'•𝟘 + d!w•𝟘)     N := c!v'•𝟘 + d!w'•𝟘
+
+    [M ⊑ₘᵤₛₜᵢ N] holds — [N]'s ready set is a *transversal*, one summand
+    taken from each leaf — yet no leaf of [M] has its key set inside
+    [N]'s, so no other rule reaches it. (The merge equations relate
+    same-channel different-value pairs, but only when the pair is the
+    whole sum: merging turns a stable summand into an unstable one, so
+    applying it in a context would reintroduce the unsound [ax_choice].)
+
+    Guard from the *second* branch, residue from the *first*. Pooling at
+    different values ([c!v'•(P ⊕ Q) + X']) would be **unsound** — after
+    emitting [v'] the test sits in a state only [Q] was ever required to
+    survive. Sound with no side conditions ([must_i_swap_out_aux],
+    [VCCS_Precongruence.v]); the [ex] field is where value-genericity of
+    inputs ([lts_in_value_swap]) does the work.
+
+    The input analogue needs no rule: [ax_share_in] gives
+    [c?(P ⊕ Q) + X'], which [ax_input] + [ax_int_r] weakens to
+    [c?Q + X']. *)
+
+| ax_swap_out : forall (c : ChannelData) (v v' : ValueData) (P Q : proc) (X' Y' : gproc),
+    ⊢ g ((𝛕 • (g ((c ! v • P) + X'))) + (𝛕 • (g ((c ! v' • Q) + Y'))))
+      ⊑ g ((c ! v' • Q) + X')
 
 where "⊢ p ⊑ q" := (ax_pre p q).
 

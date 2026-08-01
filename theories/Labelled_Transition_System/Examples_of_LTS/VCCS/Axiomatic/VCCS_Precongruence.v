@@ -64,6 +64,511 @@ Proof.
     eapply lts_tau.
 Qed.
 
+(** ** Internal choice is the greatest lower bound, not merely a lower bound
+
+    [must_i_int_choice_l]/[_r] above say [𝛕X + 𝛕Y] is *below* each of [X]
+    and [Y] — glb *elimination*. The matching *introduction* rule is
+    [must_i_int_glb_pre] below: anything below both is below the internal
+    choice. Both directions are needed; without the introduction rule
+    there is no way at all to establish [_ ⊑ 𝛕q₁ + 𝛕q₂], since an
+    internal choice is not stable and so [must_i_choice_stable_compat]
+    ([VCCS_ReadySet.v]) does not apply to it either. (Found while
+    analysing what [CompletenessAx.v] needs; [DefinitionAxiomatic.v]
+    gained the corresponding [ax_int_glb].)
+
+    Proved by induction on *one* of the two given [must]-facts with the
+    other [revert]-ed first, so that it is carried into every generated
+    IH — the same idiom as the merge equations' "join" direction
+    ([must_i_input_join_branches] etc.) further down this file. Two
+    details worth noting: the [pt] field needs the original
+    [q1 must_pass t] back, which is recovered from the destructured
+    fields by [apply m_step; assumption] (a direct term application
+    fails to elaborate here); and the [com] field is *vacuous* because a
+    [𝛕]-guarded sum has no external transitions at all. *)
+
+Lemma must_i_int_glb : forall (q1 q2 : proc) t,
+  q1 must_pass t -> q2 must_pass t -> (g ((𝛕 • q1) + (𝛕 • q2))) must_pass t.
+Proof.
+  intros q1 q2 t Hm1 Hm2.
+  revert Hm2. revert q2.
+  induction Hm1 as [t Hout | p t nh ex pt IHpt et IHet com IHcom]; intros q2 Hm2.
+  - now apply m_now.
+  - assert (Hp : p must_pass t) by (apply m_step; assumption).
+    apply m_step.
+    + exact nh.
+    + exists (p, t). eapply ParLeft. apply lts_choiceL. apply lts_tau.
+    + intros p' Hp'. inversion Hp'; subst.
+      * inversion H3; subst. exact Hp.
+      * inversion H3; subst. exact Hm2.
+    + intros t' Ht'. apply IHet; [exact Ht' |].
+      inversion Hm2; subst.
+      * exfalso. apply nh. assumption.
+      * eapply et0. exact Ht'.
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst; inversion H3.
+Qed.
+
+Lemma must_i_int_glb_pre : forall (p q1 q2 : proc),
+  p ⊑ₘᵤₛₜᵢ q1 -> p ⊑ₘᵤₛₜᵢ q2 -> p ⊑ₘᵤₛₜᵢ (g ((𝛕 • q1) + (𝛕 • q2))).
+Proof.
+  intros p q1 q2 H1 H2 t Ht.
+  apply must_i_int_glb; [apply H1 | apply H2]; exact Ht.
+Qed.
+
+(** ** Separating [𝛕] from a mixed sum
+
+    [X + 𝛕•(g Y) ≂ₘᵤₛₜᵢ 𝛕•(g (X + Y)) ⊕ 𝛕•(g Y)] — the law that turns a
+    *mixed* sum (external guards sitting beside a [𝛕]-guard) into an
+    internal choice of sums that are one [𝛕]-guard closer to being
+    stable. Iterating it is what produces the [⊕]-of-stable-sums shape
+    that [CompletenessAx.v]'s matching argument needs;
+    [VCCS_Canonical.v]'s [canonical] alone does not deliver it, because
+    it says nothing about [𝛕]-guards.
+
+    Note what the law is **not**: it does *not* say the [𝛕]-guard's
+    external siblings can be turned into a second internal branch on
+    their own. [VCCS_MixedSumProbes.v] refutes that, machine-checked —
+    [X] has to be carried along *into the first branch* ([X + Y]), which
+    is exactly what keeps [X]'s offers available to satisfy the [ex]
+    field there. Dropping [X] would strengthen the requirement and
+    change the semantics.
+
+    The crux is [must_i_tau_sep_aux]: the left-hand side's obligations
+    plus [g Y]'s own obligations suffice for [g (X + Y)]. Its [ex] field
+    is the interesting one — it is discharged from *[Y]'s* interaction,
+    lifted through [lts_choiceR], precisely because the mixed sum's own
+    [ex] may have been satisfied by the [𝛕] alone and so says nothing
+    about [X]. *)
+
+Lemma must_i_tau_sep_aux : forall (X Y : gproc) t,
+  g (X + (𝛕 • (g Y))) must_pass t -> g Y must_pass t -> g (X + Y) must_pass t.
+Proof.
+  intros X Y t HL HY.
+  remember (g (X + (𝛕 • (g Y)))) as L eqn:EL.
+  revert EL HY.
+  induction HL as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL HY.
+  - now apply m_now.
+  - subst u.
+    apply m_step.
+    + exact nh.
+    + inversion HY; subst; [exfalso; apply nh; assumption |].
+      destruct ex0 as ((a2,b2) & Hstep). inversion Hstep; subst.
+      * exists (a2,b2). eapply ParLeft. apply lts_choiceR. exact l.
+      * exists (g (X + Y), b2). eapply ParRight. exact l.
+      * exists (a2,b2). eapply (ParSync μ1 μ2); [exact eq | apply lts_choiceR; exact l1 | exact l2].
+    + intros p' Hp'. inversion Hp'; subst.
+      * apply pt. apply lts_choiceL. exact H3.
+      * inversion HY; subst; [exfalso; apply nh; assumption | apply pt0; exact H3].
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
+      inversion HY; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
+      * eapply com; [exact Hdual | apply lts_choiceL; exact H3 | exact Ht'].
+      * inversion HY; subst; [exfalso; apply nh; assumption |].
+        eapply com0; [exact Hdual | exact H3 | exact Ht'].
+Qed.
+
+Lemma must_i_tau_sep_l : forall (X Y : gproc) t,
+  g (X + (𝛕 • (g Y))) must_pass t ->
+  g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) must_pass t.
+Proof.
+  intros X Y t HL.
+  inversion HL; subst.
+  - now apply m_now.
+  - assert (HY : g Y must_pass t) by (apply pt; apply lts_choiceR; apply lts_tau).
+    apply must_i_int_glb.
+    + apply must_i_tau_sep_aux; assumption.
+    + exact HY.
+Qed.
+
+Lemma must_i_tau_sep_r : forall (X Y : gproc) t,
+  g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) must_pass t ->
+  g (X + (𝛕 • (g Y))) must_pass t.
+Proof.
+  intros X Y t HR.
+  remember (g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y)))) as R eqn:ER.
+  revert ER.
+  induction HR as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intro ER.
+  - now apply m_now.
+  - subst u.
+    assert (HXY : g (X + Y) must_pass t) by (apply pt; apply lts_choiceL; apply lts_tau).
+    assert (HY : g Y must_pass t) by (apply pt; apply lts_choiceR; apply lts_tau).
+    apply m_step.
+    + exact nh.
+    + eexists. eapply ParLeft. apply lts_choiceR. apply lts_tau.
+    + intros p' Hp'. inversion Hp'; subst.
+      * inversion HXY; subst; [exfalso; apply nh; assumption |].
+        apply pt0. apply lts_choiceL. exact H3.
+      * inversion H3; subst. exact HY.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
+      * inversion HXY; subst; [exfalso; apply nh; assumption |].
+        eapply com0; [exact Hdual | apply lts_choiceL; exact H3 | exact Ht'].
+      * inversion H3.
+Qed.
+
+Corollary must_i_tau_sep_pre_l : forall (X Y : gproc),
+  g (X + (𝛕 • (g Y))) ⊑ₘᵤₛₜᵢ g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))).
+Proof. intros X Y t H. apply must_i_tau_sep_l. exact H. Qed.
+
+Corollary must_i_tau_sep_pre_r : forall (X Y : gproc),
+  g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) ⊑ₘᵤₛₜᵢ g (X + (𝛕 • (g Y))).
+Proof. intros X Y t H. apply must_i_tau_sep_r. exact H. Qed.
+
+(** ** Convexity of acceptance sets
+
+    [g X ⊕ g ((X+Y)+Z) ⊑ₘᵤₛₜᵢ g (X+Y)] — the internal choice between a
+    sum and a *larger* sum lies below every sum in between. This is the
+    convex-closure condition of acceptance-tree semantics, and
+    [DefinitionAxiomatic.v]'s [ax_convex] is exactly this rule; the
+    comment there records the counterexample showing it is not derivable
+    from the others, i.e. that completeness genuinely needs it.
+
+    The whole content is [must_i_convex_aux]: [X+Y] discharges each of
+    its obligations from *one* of the two hypotheses, chosen by which
+    side of the sum the transition came from — [X]'s from [g X]'s own
+    fact, [Y]'s from [g ((X+Y)+Z)]'s (where [Y] sits as
+    [lts_choiceL ∘ lts_choiceR]). [Z] is never inspected, which is why
+    it may be arbitrary; and no stability is needed anywhere, since even
+    a [𝛕] inside [X] or [Y] is covered by the corresponding hypothesis's
+    own [pt] field. *)
+
+Lemma must_i_convex_aux : forall (X Y Z : gproc) t,
+  g X must_pass t -> g ((X + Y) + Z) must_pass t -> g (X + Y) must_pass t.
+Proof.
+  intros X Y Z t HX HW.
+  remember (g X) as L eqn:EL.
+  revert EL HW.
+  induction HX as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL HW.
+  - now apply m_now.
+  - subst u.
+    apply m_step.
+    + exact nh.
+    + destruct ex as ((a2,b2) & Hstep). inversion Hstep; subst.
+      * exists (a2,b2). eapply ParLeft. apply lts_choiceL. exact l.
+      * exists (g (X + Y), b2). eapply ParRight. exact l.
+      * exists (a2,b2). eapply (ParSync μ1 μ2); [exact eq | apply lts_choiceL; exact l1 | exact l2].
+    + intros p' Hp'. inversion Hp'; subst.
+      * apply pt. exact H3.
+      * inversion HW; subst; [exfalso; apply nh; assumption |].
+        apply pt0. apply lts_choiceL. apply lts_choiceR. exact H3.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
+      inversion HW; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
+      * eapply com; [exact Hdual | exact H3 | exact Ht'].
+      * inversion HW; subst; [exfalso; apply nh; assumption |].
+        eapply com0; [exact Hdual | apply lts_choiceL; apply lts_choiceR; exact H3 | exact Ht'].
+Qed.
+
+Lemma must_i_convex : forall (X Y Z : gproc) t,
+  g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z)))) must_pass t -> g (X + Y) must_pass t.
+Proof.
+  intros X Y Z t H.
+  inversion H; subst.
+  - now apply m_now.
+  - apply must_i_convex_aux with (Z := Z).
+    + apply pt. apply lts_choiceL. apply lts_tau.
+    + apply pt. apply lts_choiceR. apply lts_tau.
+Qed.
+
+Corollary must_i_convex_pre : forall (X Y Z : gproc),
+  g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z)))) ⊑ₘᵤₛₜᵢ g (X + Y).
+Proof. intros X Y Z t Ht. apply must_i_convex with (Z := Z). exact Ht. Qed.
+
+(** ** Continuation sharing
+
+    Two branches of an internal choice that offer the *same* action may
+    pool their continuations there, keeping the first branch's ready set:
+
+      [(k•P + X') ⊕ (k•Q + Y')  ⊑ₘᵤₛₜᵢ  k•(P ⊕ Q) + X']
+
+    This is the *uniformity* condition of acceptance-tree normal forms —
+    the continuation function is shared by every acceptance set — and it
+    is what lets a derivation use one leaf for the ready set and another
+    for the continuation. Nothing else in the system does that:
+    [ax_int_l]/[_r] reach only a whole branch, the merge and
+    distributivity laws reduce the goal to itself, and [ax_convex]
+    *transfers* a restricted target but cannot introduce one (with its
+    [Y] empty it reduces, through [ax_int_glb], to its own conclusion).
+    [DefinitionAxiomatic.v] gains [ax_share_in]/[ax_share_out].
+
+    The proof is the file's usual [remember] + induct-on-one-fact idiom.
+    The [com] field is where the two hypotheses meet: a synchronisation
+    on [k] takes the target to [P ⊕ Q], and the two branches supply
+    [P]'s and [Q]'s obligations separately — [must_i_int_glb] assembles
+    them. Every other field comes from the first branch alone, which is
+    why the first branch's residue [X'] is the one that survives.
+
+    **No side conditions.** Neither stability nor [Static]-ness of
+    [X']/[Y'] is needed: a [𝛕] inside [X'] is handled by the first
+    branch's own [pt] field, and [Y'] is only ever consulted through the
+    second branch's [com]. *)
+
+Lemma must_i_share_in_aux : forall c P Q X' Y' t,
+  g ((c ? P) + X') must_pass t -> g ((c ? Q) + Y') must_pass t ->
+  g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X') must_pass t.
+Proof.
+  intros c P Q X' Y' t H1 H2.
+  remember (g ((c ? P) + X')) as L eqn:EL.
+  revert EL H2.
+  induction H1 as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL H2.
+  - now apply m_now.
+  - subst u.
+    apply m_step.
+    + exact nh.
+    + destruct ex as ((a2,b2) & Hstep). inversion Hstep; subst.
+      * inversion l; subst.
+        { inversion H4. }
+        { exists (a2, b2). eapply ParLeft. apply lts_choiceR. exact H4. }
+      * exists (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X'), b2).
+        eapply ParRight. exact l.
+      * inversion l1; subst.
+        { inversion H4; subst. eexists.
+          eapply ParSync; [exact eq | apply lts_choiceL; apply lts_input | exact l2]. }
+        { exists (a2,b2). eapply ParSync;
+            [exact eq | apply lts_choiceR; exact H4 | exact l2]. }
+    + intros p' Hp'. inversion Hp'; subst.
+      * inversion H4.
+      * apply pt. apply lts_choiceR. exact H4.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
+      inversion H2; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
+      * inversion H4; subst. simpl.
+        apply must_i_int_glb.
+        { eapply com; [exact Hdual | apply lts_choiceL; apply lts_input | exact Ht']. }
+        { inversion H2; subst; [exfalso; apply nh; assumption |].
+          eapply com0; [exact Hdual | apply lts_choiceL; apply lts_input | exact Ht']. }
+      * eapply com; [exact Hdual | apply lts_choiceR; exact H4 | exact Ht'].
+Qed.
+
+Lemma must_i_share_out_aux : forall c v P Q X' Y' t,
+  g ((c ! v • P) + X') must_pass t -> g ((c ! v • Q) + Y') must_pass t ->
+  g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + X') must_pass t.
+Proof.
+  intros c v P Q X' Y' t H1 H2.
+  remember (g ((c ! v • P) + X')) as L eqn:EL.
+  revert EL H2.
+  induction H1 as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL H2.
+  - now apply m_now.
+  - subst u.
+    apply m_step.
+    + exact nh.
+    + destruct ex as ((a2,b2) & Hstep). inversion Hstep; subst.
+      * inversion l; subst.
+        { inversion H4. }
+        { exists (a2, b2). eapply ParLeft. apply lts_choiceR. exact H4. }
+      * exists (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + X'), b2).
+        eapply ParRight. exact l.
+      * inversion l1; subst.
+        { inversion H4; subst. eexists.
+          eapply ParSync; [exact eq | apply lts_choiceL; apply lts_output | exact l2]. }
+        { exists (a2,b2). eapply ParSync;
+            [exact eq | apply lts_choiceR; exact H4 | exact l2]. }
+    + intros p' Hp'. inversion Hp'; subst.
+      * inversion H4.
+      * apply pt. apply lts_choiceR. exact H4.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
+      inversion H2; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
+      * inversion H4; subst.
+        apply must_i_int_glb.
+        { eapply com; [exact Hdual | apply lts_choiceL; apply lts_output | exact Ht']. }
+        { inversion H2; subst; [exfalso; apply nh; assumption |].
+          eapply com0; [exact Hdual | apply lts_choiceL; apply lts_output | exact Ht']. }
+      * eapply com; [exact Hdual | apply lts_choiceR; exact H4 | exact Ht'].
+Qed.
+
+Corollary must_i_share_in_pre : forall c P Q X' Y',
+  g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y'))))
+    ⊑ₘᵤₛₜᵢ g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X').
+Proof.
+  intros c P Q X' Y' t H. inversion H; subst.
+  - now apply m_now.
+  - apply must_i_share_in_aux with (Y' := Y') (Q := Q).
+    + apply pt. apply lts_choiceL. apply lts_tau.
+    + apply pt. apply lts_choiceR. apply lts_tau.
+Qed.
+
+Corollary must_i_share_out_pre : forall c v P Q X' Y',
+  g ((𝛕 • (g ((c ! v • P) + X'))) + (𝛕 • (g ((c ! v • Q) + Y'))))
+    ⊑ₘᵤₛₜᵢ g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + X').
+Proof.
+  intros c v P Q X' Y' t H. inversion H; subst.
+  - now apply m_now.
+  - apply must_i_share_out_aux with (Y' := Y') (Q := Q).
+    + apply pt. apply lts_choiceL. apply lts_tau.
+    + apply pt. apply lts_choiceR. apply lts_tau.
+Qed.
+
+(** ** Rewriting a [𝛕]-summand's continuation inside a sum
+
+    The exact complement of [must_i_choice_stable_compat]
+    ([VCCS_ReadySet.v]). Between them, *every* guard shape can have its
+    continuation rewritten in place inside a larger sum:
+    - [①]/[𝟘]/input/output summands are [gStable], so
+      [must_i_choice_stable_compat] applies (combined with
+      [must_i_input_compat]/[must_i_output_compat] to rewrite the
+      continuation itself);
+    - [𝛕]-summands are handled here.
+
+    Both stay clear of the [ax_choice] counterexample for the same
+    reason, from opposite sides: neither changes whether the rewritten
+    summand is *initially stable*. There the rewrite replaced a stable
+    summand by an unstable one, letting a fresh [𝛕] pre-empt the sibling
+    branch; here the summand is [𝛕]-guarded before *and* after, so the
+    sum's own stability is untouched and the sibling [gq] keeps exactly
+    the role it had.
+
+    Proof is a direct induction on the [must] derivation — no
+    acceptance-set machinery needed, unlike the stable case. The only
+    field doing real work is [pt]: the [𝛕]-reduct is [p'], recovered by
+    feeding the left-hand side's own [pt] (which yields [p must_pass t])
+    through the hypothesis [p ⊑ₘᵤₛₜᵢ p']. The [com] field never sees the
+    [𝛕]-summand at all, since a [𝛕]-guard has no external transitions. *)
+
+(** ** Flattening a nested internal choice
+
+    [gAllTau Y] says every summand of [Y] is [𝛕]-guarded — so [g Y] is a
+    pure internal choice, with no external offers of its own. In that
+    case a [𝛕] leading to it is redundant:
+
+      [gAllTau Y -> g (X + 𝛕•(g Y)) ≂ₘᵤₛₜᵢ g (X + Y)]
+
+    Note the side condition is essential and is exactly what
+    distinguishes this law from the τ-separation law above: if [Y] had
+    *external* summands, moving it up would expose them at top level,
+    which changes behaviour (that is precisely the content of
+    [must_i_tau_sep_*] and of [VCCS_MixedSumProbes.v]). Note also that
+    [𝟘] must **not** count as all-[𝛕]: [X + 𝛕•(g 𝟘)] has a [𝛕] into a
+    deadlock, whereas [X + 𝟘] does not, and the two differ.
+
+    This is what makes the normal-form construction *terminate*. After
+    separating a mixed sum with [must_i_tau_sep_l] one recurses into
+    [X + Y]; if [Y] could itself be a pure internal choice, its
+    [𝛕]-summands would re-enter the count and the obvious measure
+    (number of top-level [𝛕]-summands) would not decrease. Flattening
+    first ensures every [𝛕]-summand's continuation is *stable*, and then
+    separation strictly decreases that measure. *)
+
+Fixpoint gAllTau (M : gproc) : Prop :=
+match M with
+| 𝛕 • _ => True
+| M1 + M2 => gAllTau M1 /\ gAllTau M2
+| _ => False
+end.
+
+Lemma gAllTau_has_tau : forall Y, gAllTau Y -> exists r, lts (g Y) τ r.
+Proof.
+  induction Y; intro H; simpl in H; try contradiction.
+  - exists p. apply lts_tau.
+  - destruct H as (H1 & H2). destruct (IHY1 H1) as (r & Hr).
+    exists r. apply lts_choiceL. exact Hr.
+Qed.
+
+Lemma gAllTau_no_ext : forall Y, gAllTau Y -> forall mu r, ~ lts (g Y) (ActExt mu) r.
+Proof.
+  induction Y; intros H mu r Hl; simpl in H; try contradiction.
+  - inversion Hl.
+  - destruct H as (H1 & H2). inversion Hl; subst.
+    + eapply IHY1; eassumption.
+    + eapply IHY2; eassumption.
+Qed.
+
+(** An all-[𝛕] part of a sum inherits the whole sum's obligations: it
+    supplies its own [ex] (it always has a [𝛕]) and owes no [com] (it has
+    no external transitions). *)
+Lemma must_i_alltau_part : forall (X Y : gproc) t, gAllTau Y ->
+  g (X + Y) must_pass t -> g Y must_pass t.
+Proof.
+  intros X Y t HY Hm.
+  remember (g (X + Y)) as L eqn:EL.
+  revert EL.
+  induction Hm as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intro EL.
+  - now apply m_now.
+  - subst u.
+    apply m_step.
+    + exact nh.
+    + destruct (gAllTau_has_tau Y HY) as (r & Hr).
+      exists (r, t). eapply ParLeft. exact Hr.
+    + intros r Hr. apply pt. apply lts_choiceR. exact Hr.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity].
+    + intros r t' μ1 μ2 Hdual Hr Ht'.
+      exfalso. eapply gAllTau_no_ext; [exact HY | exact Hr].
+Qed.
+
+Lemma must_i_tau_flatten_l : forall (X Y : gproc) t, gAllTau Y ->
+  g (X + (𝛕 • (g Y))) must_pass t -> g (X + Y) must_pass t.
+Proof.
+  intros X Y t HY Hm.
+  remember (g (X + (𝛕 • (g Y)))) as L eqn:EL.
+  revert EL.
+  induction Hm as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intro EL.
+  - now apply m_now.
+  - subst u.
+    assert (HgY : g Y must_pass t) by (apply pt; apply lts_choiceR; apply lts_tau).
+    apply m_step.
+    + exact nh.
+    + destruct (gAllTau_has_tau Y HY) as (r & Hr).
+      exists (r, t). eapply ParLeft. apply lts_choiceR. exact Hr.
+    + intros r Hr. inversion Hr; subst.
+      * apply pt. apply lts_choiceL. exact H3.
+      * inversion HgY; subst; [exfalso; apply nh; assumption | apply pt0; exact H3].
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity].
+    + intros r t' μ1 μ2 Hdual Hr Ht'. inversion Hr; subst.
+      * eapply com; [exact Hdual | apply lts_choiceL; exact H3 | exact Ht'].
+      * exfalso. eapply gAllTau_no_ext; [exact HY | exact H3].
+Qed.
+
+Lemma must_i_tau_flatten_r : forall (X Y : gproc) t, gAllTau Y ->
+  g (X + Y) must_pass t -> g (X + (𝛕 • (g Y))) must_pass t.
+Proof.
+  intros X Y t HY Hm.
+  remember (g (X + Y)) as L eqn:EL.
+  revert EL.
+  induction Hm as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intro EL.
+  - now apply m_now.
+  - assert (HgY : g Y must_pass t)
+      by (apply (must_i_alltau_part X Y t HY); rewrite <- EL; apply m_step; assumption).
+    subst u.
+    apply m_step.
+    + exact nh.
+    + eexists. eapply ParLeft. apply lts_choiceR. apply lts_tau.
+    + intros r Hr. inversion Hr; subst.
+      * apply pt. apply lts_choiceL. exact H3.
+      * inversion H3; subst. exact HgY.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity].
+    + intros r t' μ1 μ2 Hdual Hr Ht'. inversion Hr; subst.
+      * eapply com; [exact Hdual | apply lts_choiceL; exact H3 | exact Ht'].
+      * inversion H3.
+Qed.
+
+Corollary must_i_tau_flatten_pre_l : forall (X Y : gproc), gAllTau Y ->
+  g (X + (𝛕 • (g Y))) ⊑ₘᵤₛₜᵢ g (X + Y).
+Proof. intros X Y HY t H. apply must_i_tau_flatten_l; assumption. Qed.
+
+Corollary must_i_tau_flatten_pre_r : forall (X Y : gproc), gAllTau Y ->
+  g (X + Y) ⊑ₘᵤₛₜᵢ g (X + (𝛕 • (g Y))).
+Proof. intros X Y HY t H. apply must_i_tau_flatten_r; assumption. Qed.
+
+Lemma must_i_choice_tau_compat : forall (p p' : proc) (gq : gproc),
+  p ⊑ₘᵤₛₜᵢ p' -> g ((𝛕 • p) + gq) ⊑ₘᵤₛₜᵢ g ((𝛕 • p') + gq).
+Proof.
+  intros p p' gq Hpre t Hm.
+  remember (g ((𝛕 • p) + gq)) as L eqn:EL.
+  revert EL.
+  induction Hm as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intro EL.
+  - now apply m_now.
+  - subst u.
+    apply m_step.
+    + exact nh.
+    + eexists. eapply ParLeft. apply lts_choiceL. apply lts_tau.
+    + intros r Hr. inversion Hr; subst.
+      * inversion H3; subst. apply Hpre. apply pt. apply lts_choiceL. apply lts_tau.
+      * apply pt. apply lts_choiceR. exact H3.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity].
+    + intros r t' μ1 μ2 Hdual Hr Ht'. inversion Hr; subst.
+      * inversion H3.
+      * eapply com; [exact Hdual | apply lts_choiceR; exact H3 | exact Ht'].
+Qed.
+
 (** ** Structural congruence is a (near-)free source of equations
 
     Since VCCS's [gLtsEq] instance takes [⋍ := ≡*] (structural congruence),
@@ -1342,6 +1847,88 @@ Proof.
   apply must_i_output_join_branches.
   - apply (must_i_output_compat c v (g ((𝛕 • P) + (𝛕 • Q))) P); [apply must_i_int_choice_l | exact Hm].
   - apply (must_i_output_compat c v (g ((𝛕 • P) + (𝛕 • Q))) Q); [apply must_i_int_choice_r | exact Hm].
+Qed.
+
+(** ** Cross-value swapping: taking a guard from one branch and the
+       residue from the other
+
+    [must_i_share_out_*] pools two branches' continuations at a guard
+    they *share*, i.e. at the same channel AND the same value.  That is
+    not enough for completeness, because VCCS's ready-set abstraction
+    ([coR_abs_incl_iff], [VCCS_ReadySet.v]) erases the value: a leaf may
+    offer [c!v] where the target offers only [c!v'].  Witness (all
+    continuations [𝟘], [v ≠ v'], [w ≠ w']):
+
+      M := (c!v•𝟘 + d!w'•𝟘) ⊕ (c!v'•𝟘 + d!w•𝟘)     N := c!v'•𝟘 + d!w'•𝟘
+
+    [M ⊑ₘᵤₛₜᵢ N] holds — [N]'s ready set is a *transversal*, one summand
+    taken from each leaf — yet no leaf of [M] has its key set inside
+    [N]'s, so neither [ax_int_l]/[_r], [ax_convex] nor [ax_share_out]
+    reaches it.  (The merge equations do relate same-channel
+    different-value pairs, but only when the pair is the whole sum:
+    merging turns a stable summand into an unstable one, so it cannot be
+    applied in a context without reintroducing the unsound [ax_choice].)
+
+    The law below closes exactly that gap.  Note the asymmetry: the
+    guard comes from the *second* branch, the residue from the *first*.
+    Pooling at different values ([c!v'•(P ⊕ Q) + X']) would be
+    **unsound** — after emitting [v'] the test sits in a state only [Q]
+    was ever required to survive.
+
+    The input analogue needs no rule: [ax_share_in] already gives
+    [c?(P ⊕ Q) + X'], which [ax_input] + [ax_int_r] weakens to
+    [c?Q + X']. *)
+
+Lemma must_i_swap_out_aux : forall c v v' P Q X' Y' t,
+  g ((c ! v • P) + X') must_pass t -> g ((c ! v' • Q) + Y') must_pass t ->
+  g ((c ! v' • Q) + X') must_pass t.
+Proof.
+  intros c v v' P Q X' Y' t H1 H2.
+  remember (g ((c ! v • P) + X')) as L eqn:EL.
+  revert EL H2.
+  induction H1 as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL H2.
+  - now apply m_now.
+  - subst u.
+    apply m_step.
+    + exact nh.
+    + destruct ex as ((a2,b2) & Hstep). inversion Hstep; subst.
+      * inversion l; subst.
+        { inversion H4. }
+        { exists (a2, b2). eapply ParLeft. apply lts_choiceR. exact H4. }
+      * exists (g ((c ! v' • Q) + X'), b2). eapply ParRight. exact l.
+      * inversion l1; subst.
+        { (* the moving branch is the [c!v] guard: the test must be
+             offering *some* input on [c], hence (value-genericity) the
+             one at [v'] too. *)
+          inversion H4; subst.
+          destruct μ2 as [a|a]; simpl in eq; [| contradiction]. subst a.
+          destruct (lts_in_value_swap t _ b2 l2 c v v' eq_refl) as (b2' & Hb2').
+          exists (Q, b2'). eapply ParSync;
+            [| apply lts_choiceL; apply lts_output | exact Hb2'].
+          simpl. reflexivity. }
+        { exists (a2,b2). eapply ParSync;
+            [exact eq | apply lts_choiceR; exact H4 | exact l2]. }
+    + intros p' Hp'. inversion Hp'; subst.
+      * inversion H4.
+      * apply pt. apply lts_choiceR. exact H4.
+    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
+      inversion H2; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
+      * inversion H4; subst.
+        inversion H2; subst; [exfalso; apply nh; assumption |].
+        eapply com0; [exact Hdual | apply lts_choiceL; apply lts_output | exact Ht'].
+      * eapply com; [exact Hdual | apply lts_choiceR; exact H4 | exact Ht'].
+Qed.
+
+Corollary must_i_swap_out_pre : forall c v v' P Q X' Y',
+  g ((𝛕 • (g ((c ! v • P) + X'))) + (𝛕 • (g ((c ! v' • Q) + Y'))))
+    ⊑ₘᵤₛₜᵢ g ((c ! v' • Q) + X').
+Proof.
+  intros c v v' P Q X' Y' t H. inversion H; subst.
+  - now apply m_now.
+  - apply must_i_swap_out_aux with (v := v) (P := P) (Y' := Y').
+    + apply pt. apply lts_choiceL. apply lts_tau.
+    + apply pt. apply lts_choiceR. apply lts_tau.
 Qed.
 
 End VCCS_Precongruence.

@@ -100,6 +100,36 @@ Proof.
     + intros mu p'. symmetry. apply Hext.
 Qed.
 
+(** ** [①] and [𝟘] are indistinguishable *as servers*
+
+    [must p t]'s outcome field inspects only the *test*; the server
+    enters solely through its transitions. [①] and [𝟘] have none at all
+    — no [lts] constructor mentions either — so they must-pass exactly
+    the same tests, and [must_same_lts] gives the equivalence in three
+    lines.
+
+    This is needed for completeness rather than for its own sake: a
+    normal form may carry [①]/[𝟘] summands, and the derivation has to be
+    able to discard them. Structural congruence removes a [𝟘] summand
+    ([cgr_choice_nil]) but says nothing about [①], and no other rule
+    mentions [①] at all — so [DefinitionAxiomatic.v] gains
+    [ax_success_l]/[ax_success_r] for this, after which
+    [ax_choice_stable] turns any [① ] summand into a [𝟘] and [ax_cgr]
+    drops it. *)
+
+Lemma must_i_success_nil : forall t, (g ①) must_pass t <-> (g 𝟘) must_pass t.
+Proof.
+  apply must_same_lts.
+  - intro p'. split; intro H; inversion H.
+  - intros mu p'. split; intro H; inversion H.
+Qed.
+
+Lemma must_i_success_nil_l : (g ①) ⊑ₘᵤₛₜᵢ (g 𝟘).
+Proof. intros t Ht. apply must_i_success_nil. exact Ht. Qed.
+
+Lemma must_i_success_nil_r : (g 𝟘) ⊑ₘᵤₛₜᵢ (g ①).
+Proof. intros t Ht. apply must_i_success_nil. exact Ht. Qed.
+
 (** ** [M]'s own prefixes race ahead of the untouched [N]
 
     The input case needs [gNewVar 0 N] (not [N] verbatim) to shift

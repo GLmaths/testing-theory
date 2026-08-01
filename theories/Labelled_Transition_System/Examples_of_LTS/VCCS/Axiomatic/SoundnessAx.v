@@ -133,6 +133,71 @@ Proof.
     assert (Hgp' : Static (g gp')) by (apply IHHax; constructor; assumption).
     inversion Hgp'; subst.
     constructor. constructor; assumption.
+  - (* ax_int_glb: both branches' [Static]-ness comes from the two IHs *)
+    constructor. constructor.
+    + constructor. apply IHHax1. exact Hsp.
+    + constructor. apply IHHax2. exact Hsp.
+  - (* ax_choice_tau. Again: invert only [gStatic (𝛕 • p)], never
+       [gStatic gq] — [gq] is a bare variable. *)
+    inversion Hsp; subst. inversion H0; subst. inversion H2; subst.
+    constructor. constructor.
+    + constructor. apply IHHax. assumption.
+    + assumption.
+  - (* ax_tau_flatten_l *)
+    inversion Hsp; subst. inversion H1; subst. inversion H4; subst. inversion H2; subst.
+    constructor. constructor; assumption.
+  - (* ax_tau_flatten_r *)
+    inversion Hsp; subst. inversion H1; subst.
+    constructor. constructor; [assumption | constructor; constructor; assumption].
+  - (* ax_tau_sep_l *)
+    inversion Hsp; subst. inversion H0; subst. inversion H3; subst. inversion H1; subst.
+    repeat constructor; assumption.
+  - (* ax_tau_sep_r *)
+    inversion Hsp; subst. inversion H0; subst. inversion H2; subst. inversion H3; subst.
+    inversion H1; subst. inversion H4; subst. inversion H5; subst.
+    constructor. constructor.
+    + assumption.
+    + constructor. constructor. assumption.
+  - (* ax_convex: [gStatic (X + Y)] is read off the *second* summand's
+       continuation [(X + Y) + Z]; the first one is not needed at all. *)
+    inversion Hsp; subst. inversion H0; subst. inversion H3; subst.
+    inversion H1; subst. inversion H4; subst.
+    constructor. assumption.
+  - (* ax_success_l *) repeat constructor.
+  - (* ax_success_r *) repeat constructor.
+  - (* ax_share_in: [Static P] and [gStatic X'] come from the first
+       branch, [Static Q] from the second. The [match goal] selections
+       keep this robust to [inversion]'s hypothesis numbering, which is
+       eight levels deep here. *)
+    inversion Hsp; subst. inversion H0; subst.
+    inversion H2; subst. inversion H3; subst.
+    inversion H1; subst. inversion H4; subst.
+    match goal with H : gStatic (c ? P + X') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? Q + Y') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? P) |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? Q) |- _ => inversion H; subst end.
+    apply static_g. constructor;
+      [constructor; apply static_g; constructor; constructor; assumption | assumption].
+  - (* ax_share_out *)
+    inversion Hsp; subst. inversion H0; subst.
+    inversion H2; subst. inversion H3; subst.
+    inversion H1; subst. inversion H4; subst.
+    match goal with H : gStatic (c ! v • P + X') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ! v • Q + Y') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ! v • P) |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ! v • Q) |- _ => inversion H; subst end.
+    apply static_g. constructor;
+      [constructor; apply static_g; constructor; constructor; assumption | assumption].
+  - (* ax_swap_out: [Static Q] from the second branch, [gStatic X'] from
+       the first -- the asymmetry the rule is about, read off the
+       [Static] derivation. *)
+    inversion Hsp; subst. inversion H0; subst.
+    inversion H2; subst. inversion H3; subst.
+    inversion H1; subst. inversion H4; subst.
+    match goal with H : gStatic (c ! v • P + X') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ! v' • Q + Y') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ! v' • Q) |- _ => inversion H; subst end.
+    apply static_g. constructor; [constructor; assumption | assumption].
 Qed.
 
 (** ** Soundness
@@ -201,10 +266,39 @@ Proof.
   - apply must_i_input_distrib_r.
   - apply must_i_output_distrib_l.
   - apply must_i_output_distrib_r.
-  - inversion Hsp; subst. inversion H2; subst.
-    inversion Hsq; subst. inversion H4; subst.
-    apply must_i_choice_stable_compat; try assumption; try (constructor; assumption).
-    apply IHHax; constructor; assumption.
+  - (* ax_choice_stable. NB: invert [H3 : gStatic (gp' + gq)], never
+       [H4 : gStatic gp] — the latter's head is a bare variable, so
+       [inversion] would case-split on [gp]'s shape instead. *)
+    inversion Hsp; subst. inversion H2; subst.
+    inversion Hsq; subst. inversion H3; subst.
+    apply must_i_choice_stable_compat.
+    + exact H.
+    + exact H0.
+    + constructor. exact H4.
+    + constructor. assumption.
+    + constructor. exact H5.
+    + apply IHHax; constructor; assumption.
+  - (* ax_int_glb *)
+    inversion Hsq; subst. inversion H0; subst.
+    inversion H2; subst. inversion H3; subst.
+    apply must_i_int_glb_pre.
+    + apply IHHax1; assumption.
+    + apply IHHax2; assumption.
+  - (* ax_choice_tau *)
+    inversion Hsp; subst. inversion H0; subst. inversion H2; subst.
+    inversion Hsq; subst. inversion H4; subst. inversion H6; subst.
+    apply must_i_choice_tau_compat.
+    apply IHHax; assumption.
+  - apply must_i_tau_flatten_pre_l. exact H.
+  - apply must_i_tau_flatten_pre_r. exact H.
+  - apply must_i_tau_sep_pre_l.
+  - apply must_i_tau_sep_pre_r.
+  - apply must_i_convex_pre.
+  - apply must_i_success_nil_l.
+  - apply must_i_success_nil_r.
+  - apply must_i_share_in_pre.
+  - apply must_i_share_out_pre.
+  - apply must_i_swap_out_pre.
 Qed.
 
 End SoundnessAx.
