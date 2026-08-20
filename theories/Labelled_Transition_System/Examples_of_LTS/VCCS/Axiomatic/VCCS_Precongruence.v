@@ -30,7 +30,7 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
-  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization.
+  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization VCCS_Erasure.
 
 Section VCCS_Precongruence.
 
@@ -1388,346 +1388,32 @@ Proof.
   - eapply must_i_int_choice_r. exact Hm.
 Qed.
 
-Lemma par_stable_iff : forall (p q : proc), (p‖q) ↛ <->
-  p ↛ /\ q ↛ /\ (forall (mu : ExtAct TypeOfActions) p' q', ~ (p ⟶[mu] p' /\ q ⟶[co mu] q')).
-Proof.
-  intros p q. split.
-  - intros Hst. repeat split.
-    + destruct (decide (p ↛)) as [Hd|Hd]; [exact Hd|].
-      exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-      eapply lts_refuses_spec2 in Hst. apply Hst. exists (r‖q). eapply lts_parL. exact Hl.
-    + destruct (decide (q ↛)) as [Hd|Hd]; [exact Hd|].
-      exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-      eapply lts_refuses_spec2 in Hst. apply Hst. exists (p‖r). eapply lts_parR. exact Hl.
-    + intros mu p' q' (Hl1 & Hl2).
-      destruct mu as [[c v]|[c v]]; simpl in Hl2.
-      * eapply lts_refuses_spec2 in Hst. apply Hst. exists (p'‖q'). eapply lts_comR; [exact Hl2 | exact Hl1].
-      * eapply lts_refuses_spec2 in Hst. apply Hst. exists (p'‖q'). eapply lts_comL; [exact Hl1 | exact Hl2].
-  - intros (Hp & Hq & Hc). destruct (decide ((p‖q) ↛)) as [Hd|Hd]; [exact Hd|].
-    exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-    inversion Hl; subst.
-    + eapply (Hc (ActOut (c,v)) p2 q2). split; assumption.
-    + eapply (Hc (ActIn (c,v)) q2 p2). split; assumption.
-    + eapply lts_refuses_spec2 in Hp. apply Hp. exists p2. exact H3.
-    + eapply lts_refuses_spec2 in Hq. apply Hq. exists q2. exact H3.
-Qed.
+(** ** [‖]-precongruence — via the erasure bridge
 
-(** Labelled refusal and [coR] compose for [‖] exactly as they did for
-    guarded choice — synchronisation only ever produces [τ], never an
-    external action, so it's invisible to [↛[mu]] for external [mu]; the
-    difference between [‖] and [+] is entirely in [τ]-stability
-    ([par_stable_iff] above vs [choice_stable_iff]), not in [coR]. *)
+    The original route to this went through the acceptance-set
+    characterisation: [par_stable_iff], [par_ext_stable_iff],
+    [par_coR_union], [par_wt_liftL]/[_R], [par_wt_transfer] (a full
+    trace-interleaving construction), [lts_in_refuse_channel_indep],
+    [par_nosync_transfer] (the raw/abstracted bridging lemma),
+    [par_coR_abs_mono] and [must_i_par_bhv_pre] — a checkpoint's worth of
+    lemmas, and three [Static] side conditions.
 
-Lemma par_ext_stable_iff : forall (p q : proc) (mu : ExtAct TypeOfActions), (p‖q) ↛[mu] <-> p ↛[mu] /\ q ↛[mu].
-Proof.
-  intros p q mu. split.
-  - intros Hst. split.
-    + destruct (decide (p ↛[mu])) as [Hd|Hd]; [exact Hd|].
-      exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-      eapply lts_refuses_spec2 in Hst. apply Hst. exists (r‖q). eapply lts_parL. exact Hl.
-    + destruct (decide (q ↛[mu])) as [Hd|Hd]; [exact Hd|].
-      exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-      eapply lts_refuses_spec2 in Hst. apply Hst. exists (p‖r). eapply lts_parR. exact Hl.
-  - intros (Hp & Hq). destruct (decide ((p‖q) ↛[mu])) as [Hd|Hd]; [exact Hd|].
-    exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-    inversion Hl; subst.
-    + eapply lts_refuses_spec2 in Hp. apply Hp. exists p2. exact H3.
-    + eapply lts_refuses_spec2 in Hq. apply Hq. exists q2. exact H3.
-Qed.
+    All of it is superseded by [VCCS_Erasure.v]: a **contextual**
+    preorder is better attacked by moving the context into the *test*
+    than by re-deriving the context's effect on a behavioural
+    characterisation.  The only obstruction is the outcome predicate, and
+    erasing the server's [①]s removes it.  The result is also *stronger*
+    — no [Static] anywhere. *)
 
-Lemma par_coR_union : forall p q mu1, mu1 ∈ coR (p‖q) <-> mu1 ∈ coR p \/ mu1 ∈ coR q.
-Proof.
-  intros p q mu1. unfold coR, elem_of, subset_of in *. simpl.
-  split.
-  - intros (mu2 & Hnr & Hd & Hb).
-    destruct (decide (p ↛[mu2])) as [Hd1|Hd1].
-    + right. exists mu2. repeat split; try assumption.
-      intro Hc. apply Hnr. apply par_ext_stable_iff. split; assumption.
-    + left. exists mu2. repeat split; try assumption.
-  - intros [(mu2 & Hnr & Hd & Hb) | (mu2 & Hnr & Hd & Hb)].
-    + exists mu2. repeat split; try assumption.
-      intro Hc. apply Hnr. apply par_ext_stable_iff in Hc. destruct Hc as (Hc1 & Hc2). exact Hc1.
-    + exists mu2. repeat split; try assumption.
-      intro Hc. apply Hnr. apply par_ext_stable_iff in Hc. destruct Hc as (Hc1 & Hc2). exact Hc2.
-Qed.
+Lemma must_i_par_compat : forall p p' r, p ⊑ₘᵤₛₜᵢ p' -> (p‖r) ⊑ₘᵤₛₜᵢ (p'‖r).
+Proof. exact must_i_par_compat_erasure. Qed.
 
-(** ** Trace-interleaving toolkit for [‖]'s weak transitions
+Lemma must_i_par_compat_r : forall p q q', q ⊑ₘᵤₛₜᵢ q' -> (p‖q) ⊑ₘᵤₛₜᵢ (p‖q').
+Proof. exact must_i_par_compat_r_erasure. Qed.
 
-    The combinatorial core needed for [‖]-precongruence's [cond2]: a
-    weak transition of [q‖r] decomposes into a trace [s_q] for [q] and
-    [s_r] for [r] (synchronised pairs cancelling out of the combined
-    trace, exactly as in a shuffle-with-cancellation), *and* — this is
-    the part that actually gets used — whatever process realises [q]'s
-    own trace [s_q] can be substituted for [q] and recombined with [r]
-    the same way, no matter how unrelated its internal derivation is to
-    [q]'s. This substitution property is what lets an acceptance-set
-    comparison of [p] against [q] (which only ever talks about full
-    traces, never individual steps) be turned into a fact about [p‖r]
-    versus [q‖r]. *)
-
-Lemma par_wt_liftL : forall (r p p' : proc) (s : trace (ExtAct TypeOfActions)),
-  p ⟹[s] p' -> (p ‖ r) ⟹[s] (p' ‖ r).
-Proof.
-  intros r p p' s Hwt.
-  induction Hwt.
-  - apply wt_nil.
-  - eapply wt_tau; [eapply lts_parL; exact l | exact IHHwt].
-  - eapply wt_act; [eapply lts_parL; exact l | exact IHHwt].
-Qed.
-
-Lemma par_wt_liftR : forall (p r r' : proc) (s : trace (ExtAct TypeOfActions)),
-  r ⟹[s] r' -> (p ‖ r) ⟹[s] (p ‖ r').
-Proof.
-  intros p r r' s Hwt.
-  induction Hwt.
-  - apply wt_nil.
-  - eapply wt_tau; [eapply lts_parR; exact l | exact IHHwt].
-  - eapply wt_act; [eapply lts_parR; exact l | exact IHHwt].
-Qed.
-
-Lemma par_wt_transfer : forall (s : trace (ExtAct TypeOfActions)) (qr t2 : proc),
-  qr ⟹[s] t2 ->
-  forall q r, qr = q ‖ r ->
-  exists q'' r'' s_q s_r,
-    t2 = q'' ‖ r'' /\ q ⟹[s_q] q'' /\ r ⟹[s_r] r'' /\
-    (forall p p'', p ⟹[s_q] p'' -> (p ‖ r) ⟹[s] (p'' ‖ r'')).
-Proof.
-  intros s qr t2 Hwt.
-  induction Hwt as [ x | s0 x y z l Hwt IH | mu0 s0 x y z l Hwt IH ]; intros q r Heq.
-  - subst. exists q, r, [], [].
-    repeat split; eauto with mdb.
-    intros p p'' Hp. eapply par_wt_liftL. exact Hp.
-  - subst. inversion l; subst.
-    destruct (IH p2 q2 eq_refl) as (q'' & r'' & s_q & s_r & Ht2 & Hq'' & Hr'' & Hsub).
-    exists q'', r'', (ActOut (c,v) :: s_q), (ActIn (c,v) :: s_r).
-    repeat split.
-    exact Ht2.
-    eapply wt_act; [exact H1 | exact Hq''].
-    eapply wt_act; [exact H2 | exact Hr''].
-    intros p pf Hp.
-    eapply wt_pop in Hp as (mid & Hp1 & Hp2).
-    eapply wt_decomp_one in Hp1 as (p1 & p2b & Hpp1 & Hpp2 & Hpp3).
-    eapply wt_push_nil_left; [eapply par_wt_liftL; exact Hpp1 | ].
-    eapply wt_push_nil_left; [eapply lts_to_wt_tau; eapply lts_comL; [exact Hpp2 | exact H2] | ].
-    eapply wt_push_nil_left; [eapply par_wt_liftL; exact Hpp3 | ].
-    eapply Hsub. exact Hp2.
-    destruct (IH q2 p2 eq_refl) as (q'' & r'' & s_q & s_r & Ht2 & Hq'' & Hr'' & Hsub).
-    exists q'', r'', (ActIn (c,v) :: s_q), (ActOut (c,v) :: s_r).
-    repeat split.
-    exact Ht2.
-    eapply wt_act; [exact H2 | exact Hq''].
-    eapply wt_act; [exact H1 | exact Hr''].
-    intros p pf Hp.
-    eapply wt_pop in Hp as (mid & Hp1 & Hp2).
-    eapply wt_decomp_one in Hp1 as (p1 & p2b & Hpp1 & Hpp2 & Hpp3).
-    eapply wt_push_nil_left; [eapply par_wt_liftL; exact Hpp1 | ].
-    eapply wt_push_nil_left; [eapply lts_to_wt_tau; eapply lts_comR; [exact H1 | exact Hpp2] | ].
-    eapply wt_push_nil_left; [eapply par_wt_liftL; exact Hpp3 | ].
-    eapply Hsub. exact Hp2.
-    destruct (IH p2 r eq_refl) as (q'' & r'' & s_q & s_r & Ht2 & Hq'' & Hr'' & Hsub).
-    exists q'', r'', s_q, s_r.
-    repeat split.
-    exact Ht2.
-    eapply wt_tau; [exact H3 | exact Hq''].
-    exact Hr''.
-    exact Hsub.
-    destruct (IH q q2 eq_refl) as (q'' & r'' & s_q & s_r & Ht2 & Hq'' & Hr'' & Hsub).
-    exists q'', r'', s_q, s_r.
-    repeat split.
-    exact Ht2.
-    exact Hq''.
-    eapply wt_tau; [exact H3 | exact Hr''].
-    intros p pf Hp.
-    eapply wt_push_nil_left; [eapply par_wt_liftR; eapply lts_to_wt_tau; exact H3 | ].
-    eapply Hsub. exact Hp.
-  - inversion l; subst.
-    discriminate H.
-    discriminate H.
-    discriminate H1.
-    discriminate H1.
-    discriminate H0.
-    injection H0 as -> ->.
-    destruct (IH p2 r eq_refl) as (q'' & r'' & s_q & s_r & Ht2 & Hq'' & Hr'' & Hsub).
-    exists q'', r'', (mu0 :: s_q), s_r.
-    repeat split.
-    exact Ht2.
-    eapply wt_act; [exact H | exact Hq''].
-    exact Hr''.
-    intros p pf Hp.
-    eapply wt_pop in Hp as (mid & Hp1 & Hp2).
-    eapply wt_decomp_one in Hp1 as (p1 & p2b & Hpp1 & Hpp2 & Hpp3).
-    eapply wt_push_nil_left; [eapply par_wt_liftL; exact Hpp1 | ].
-    eapply wt_push_left.
-    + eapply lts_to_wt. eapply lts_parL. exact Hpp2.
-    + eapply wt_push_nil_left; [eapply par_wt_liftL; exact Hpp3 | ].
-      eapply Hsub. exact Hp2.
-    + injection H0 as -> ->.
-      destruct (IH q q2 eq_refl) as (q'' & r'' & s_q & s_r & Ht2 & Hq'' & Hr'' & Hsub).
-      exists q'', r'', s_q, (mu0 :: s_r).
-      repeat split.
-      exact Ht2.
-      exact Hq''.
-      eapply wt_act; [exact H | exact Hr''].
-      intros p pf Hp.
-      eapply wt_push_left.
-      * eapply lts_to_wt. eapply lts_parR. exact H.
-      * eapply Hsub. exact Hp.
-    + discriminate H0.
-    + discriminate H0.
-Qed.
-
-(** ** Bridging the acceptance-set abstraction through [‖]
-
-    [cond2] only ever gives coR inclusion at the *abstracted* level
-    (dropping values, keeping channel+polarity — [Φᴠᴄᴄꜱ]/[𝝳ᴠᴄᴄꜱ], same
-    maps as for [ν]). To show a reconstructed pair is itself stable, a
-    raw "no synchronisation possible" fact has to be derived from that
-    abstracted bound. This is sound for the same reason the output-merge
-    equation (checkpoint 3) was sound: [lts_in_value_swap] shows a
-    process's ability to synchronise on a channel never depends on the
-    specific value, so losing the value when abstracting loses no real
-    distinguishing power for the "can these synchronise at all" question
-    — only for what happens in the continuation afterwards, which is
-    handled separately (recursively) by the acceptance-set comparison
-    itself, not by [coR]. *)
-
-Lemma lts_in_refuse_channel_indep : forall (r : proc) (c : ChannelData) (v v' : ValueData),
-  r ↛[ActIn (c,v)] -> r ↛[ActIn (c,v')].
-Proof.
-  intros r c v v' Hr.
-  destruct (decide (r ↛[ActIn (c,v')])) as [?|Hnr]; [assumption|].
-  exfalso.
-  eapply lts_refuses_spec1 in Hnr as (r' & Hl).
-  destruct (lts_in_value_swap r (ActIn (c,v')) r' Hl c v' v eq_refl) as (r'' & Hl').
-  eapply lts_refuses_spec2 in Hr. apply Hr. exists r''. exact Hl'.
-Qed.
-
-Lemma par_nosync_transfer : forall (p1 pp rr : proc),
-  (forall mu p' q', ~ (pp ⟶[mu] p' /\ rr ⟶[co mu] q')) ->
-  (forall x, x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p1) -> x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR pp)) ->
-  (forall mu p' q', ~ (p1 ⟶[mu] p' /\ rr ⟶[co mu] q')).
-Proof.
-  intros p1 pp rr Hns Hincl mu p' q' (Hp1 & Hrr).
-  unfold elem_of, subset_of, map_set in Hincl.
-  destruct mu as [[c v]|[c v]]; simpl in Hrr.
-  - assert (Hmem : ActOut (c,v) ∈ coR p1).
-    { unfold coR, elem_of, subset_of.
-      exists (ActIn (c,v)). repeat split.
-      - intro Hr. eapply lts_refuses_spec2 in Hr. apply Hr. exists p'. exact Hp1.
-      - intro F; exact F. }
-    destruct (Hincl (𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (ActOut (c,v)))) (ex_intro _ (ActOut (c,v)) (conj Hmem eq_refl)))
-      as (nu & Hnu & Heq).
-    destruct nu as [[c2 v2]|[c2 v2]]; simpl in Heq; try discriminate.
-    inversion Heq; subst.
-    unfold coR, elem_of, subset_of in Hnu.
-    destruct Hnu as (mu2 & Hnr & Hd & Hb).
-    destruct mu2 as [[c3 v3]|[c3 v3]]; simpl in Hd; try (exfalso; exact Hd).
-    inversion Hd; subst.
-    eapply lts_refuses_spec1 in Hnr as (p2 & Hl).
-    destruct (lts_in_value_swap pp (ActIn (c2,v2)) p2 Hl c2 v2 v eq_refl) as (p3 & Hl').
-    eapply (Hns (ActIn (c2,v)) p3 q').
-    split; [exact Hl' | simpl; exact Hrr].
-  - assert (Hmem : ActIn (c,v) ∈ coR p1).
-    { unfold coR, elem_of, subset_of.
-      exists (ActOut (c,v)). repeat split.
-      - intro Hr. eapply lts_refuses_spec2 in Hr. apply Hr. exists p'. exact Hp1.
-      - intro F; exact F. }
-    destruct (Hincl (𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (ActIn (c,v)))) (ex_intro _ (ActIn (c,v)) (conj Hmem eq_refl)))
-      as (nu & Hnu & Heq).
-    destruct nu as [[c2 v2]|[c2 v2]]; simpl in Heq; try discriminate.
-    inversion Heq; subst.
-    unfold coR, elem_of, subset_of in Hnu.
-    destruct Hnu as (mu2 & Hnr & Hd & Hb).
-    destruct mu2 as [[c3 v3]|[c3 v3]]; simpl in Hd; try (exfalso; exact Hd).
-    inversion Hd; subst.
-    assert (Hindep : rr ↛[ActIn (c2,v2)]).
-    { destruct (decide (rr ↛[ActIn (c2,v2)])) as [?|Hnr2]; [assumption|].
-      exfalso.
-      eapply lts_refuses_spec1 in Hnr2 as (q2 & Hl2).
-      eapply lts_refuses_spec1 in Hnr as (p2 & Hlp2).
-      eapply (Hns (ActOut (c2,v2)) p2 q2).
-      split; [exact Hlp2 | simpl; exact Hl2]. }
-    pose proof (lts_in_refuse_channel_indep rr c2 v2 v Hindep) as Hindep'.
-    eapply lts_refuses_spec2 in Hindep'. apply Hindep'. exists q'. exact Hrr.
-Qed.
-
-Lemma par_coR_abs_mono : forall (p1 pp rr : proc),
-  (forall x, x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p1) -> x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR pp)) ->
-  forall x, x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (p1 ‖ rr)) -> x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (pp ‖ rr)).
-Proof.
-  intros p1 pp rr Hincl x Hx.
-  unfold elem_of, subset_of, map_set in *.
-  destruct Hx as (nu & Hnu & Heq).
-  apply par_coR_union in Hnu.
-  destruct Hnu as [Hnu | Hnu].
-  - assert (Hx1 : x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p1)).
-    { exists nu. split; assumption. }
-    apply Hincl in Hx1. unfold elem_of, subset_of, map_set in Hx1.
-    destruct Hx1 as (nu' & Hnu' & Heq').
-    exists nu'. split; [apply par_coR_union; left; exact Hnu' | exact Heq'].
-  - exists nu. split; [apply par_coR_union; right; exact Hnu | exact Heq].
-Qed.
-
-(** ** [‖]-precongruence for [≼ₐₛ], and the [⊑ₘᵤₛₜᵢ] corollaries
-
-    Assembles [par_wt_transfer] (turn the given trace of the RHS into
-    matching traces of its two components, plus the substitution
-    property), [par_stable_iff] (transfer/reconstruct stability),
-    [par_nosync_transfer] (transfer the "no synchronisation possible"
-    side of stability across the acceptance-set comparison), and
-    [par_coR_abs_mono] (transfer the coR inclusion itself) into the full
-    [≼ₐₛ]-precongruence for one argument of [‖], then the other by
-    commutativity, then both together by transitivity. *)
-
-Lemma must_i_par_bhv_pre : forall p p' r, Static p -> Static p' -> Static r -> p ≼ₐₛ p' -> (p‖r) ≼ₐₛ (p'‖r).
-Proof.
-  intros p p' r Hsp Hsp' Hsr (Hc1 & Hc2).
-  split.
-  - intros s _. apply Static_converge. apply static_par; [exact Hsp' | exact Hsr].
-  - intros s t2 _ Hwt Hst.
-    destruct (par_wt_transfer s (p'‖r) t2 Hwt p' r eq_refl) as (q'' & r'' & s_q & s_r & Ht2 & Hq'' & Hr'' & Hsub).
-    subst t2.
-    apply par_stable_iff in Hst as (Hstq & Hstr & Hnosync).
-    destruct (Hc2 s_q q'' (Static_converge _ p Hsp) Hq'' Hstq) as (p1 & Hwp1 & Hstp1 & Hinclp1).
-    exists (p1 ‖ r'').
-    repeat split.
-    + apply Hsub. exact Hwp1.
-    + apply par_stable_iff. repeat split.
-      * exact Hstp1.
-      * exact Hstr.
-      * eapply par_nosync_transfer; [exact Hnosync | exact Hinclp1].
-    + intros x Hx. eapply par_coR_abs_mono; [exact Hinclp1 | exact Hx].
-Qed.
-
-Lemma must_i_par_compat : forall p p' r, Static p -> Static p' -> Static r -> p ⊑ₘᵤₛₜᵢ p' -> (p‖r) ⊑ₘᵤₛₜᵢ (p'‖r).
-Proof.
-  intros p p' r Hsp Hsp' Hsr Hpq.
-  apply must_iff_acceptance_set_VCCS_without_toFW.
-  apply must_i_par_bhv_pre; [exact Hsp | exact Hsp' | exact Hsr |].
-  apply must_iff_acceptance_set_VCCS_without_toFW. exact Hpq.
-Qed.
-
-Lemma must_i_par_compat_r : forall p q q', Static p -> Static q -> Static q' -> q ⊑ₘᵤₛₜᵢ q' -> (p‖q) ⊑ₘᵤₛₜᵢ (p‖q').
-Proof.
-  intros p q q' Hsp Hsq Hsq' Hqq'.
-  assert (Hcomm1 : (p‖q) ≡* (q‖p)) by (constructor; constructor).
-  assert (Hcomm2 : (q'‖p) ≡* (p‖q')) by (constructor; constructor).
-  apply must_i_cgr in Hcomm1 as (Hd1a & Hd1b).
-  apply must_i_cgr in Hcomm2 as (Hd2a & Hd2b).
-  intros t Hm.
-  apply Hd2b.
-  apply (must_i_par_compat q q' p Hsq Hsq' Hsp Hqq').
-  apply Hd1b. exact Hm.
-Qed.
-
-Lemma must_i_par_compat2 : forall p p' q q', Static p -> Static p' -> Static q -> Static q' ->
+Lemma must_i_par_compat2 : forall p p' q q',
   p ⊑ₘᵤₛₜᵢ p' -> q ⊑ₘᵤₛₜᵢ q' -> (p‖q) ⊑ₘᵤₛₜᵢ (p'‖q').
-Proof.
-  intros p p' q q' Hsp Hsp' Hsq Hsq' Hpp' Hqq' t Hm.
-  apply (must_i_par_compat_r p' q q' Hsp' Hsq Hsq' Hqq').
-  apply (must_i_par_compat p p' q Hsp Hsp' Hsq Hpp').
-  exact Hm.
-Qed.
+Proof. exact must_i_par_compat2_erasure. Qed.
 
 (** ** Prefix distributes over guarded choice: [a.P + a.Q ≂ a.(P ⊕ Q)]
 
