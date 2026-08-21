@@ -70,7 +70,7 @@ Qed.
 Proof.
   refine (inj_countable' encode_data decode_data _).
   apply encode_decide_datas.
-Qed.
+Defined.
 
 (** * VACCS *)
 (****************************** Channels  and Values *************************)

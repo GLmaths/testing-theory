@@ -992,3 +992,149 @@ Section TracePreorderConvergence.
   Qed.
 
 End TracePreorderConvergence.
+
+(** ** A feedback survives the normalisation
+
+    A feedback pairs a non-blocking action with one of its co-actions, that is
+    an action of class [CNB] with one of class [CIN].  They therefore always
+    sit in two *different* blocks of the normal form, whereas the normalisation
+    only permutes the actions *inside* a block.  So normalising can neither
+    create nor destroy a feedback: whether a trace admits one is an invariant
+    of [tequiv], hence of the normal form.
+
+    Two consequences: the simplified trace stays feedback-free once normalised,
+    and grouping the runs before consuming the feedbacks would not consume a
+    single one more. *)
+
+Section FeedbackInvariance.
+
+  Context `{H : !ExtAction A}.
+
+  (** *** Small facts about [Exists] *)
+
+  Lemma Exists_cons_iff (Q : A -> Prop) x l : Exists Q (x :: l) <-> Q x \/ Exists Q l.
+  Proof.
+    split.
+    - inversion 1; subst; [left; assumption | right; assumption].
+    - intros [h | h]; [now constructor | now apply Exists_cons_tl].
+  Qed.
+
+  Lemma Exists_swap (Q : A -> Prop) l1 x y l2 :
+    Exists Q (l1 ++ x :: y :: l2) <-> Exists Q (l1 ++ y :: x :: l2).
+  Proof.
+    induction l1 as [| c l1 IH]; simpl.
+    - rewrite 4 Exists_cons_iff. tauto.
+    - rewrite 2 Exists_cons_iff. tauto.
+  Qed.
+
+  Lemma Exists_mid (Q : A -> Prop) l1 y l2 : Q y -> Exists Q (l1 ++ y :: l2).
+  Proof.
+    intro h. induction l1 as [| c l1 IH]; simpl;
+      [now constructor | now apply Exists_cons_tl].
+  Qed.
+
+  Lemma Exists_decomp (Q : A -> Prop) l :
+    Exists Q l -> exists l1 y l2, l = l1 ++ y :: l2 /\ Q y.
+  Proof.
+    induction 1 as [x l hx | x l hl IH].
+    - exists [], x, l. split; [reflexivity | exact hx].
+    - destruct IH as (l1 & y & l2 & -> & hy).
+      exists (x :: l1), y, l2. split; [reflexivity | exact hy].
+  Qed.
+
+  (** *** [has_fb u]: the trace [u] admits a feedback *)
+
+  Definition dual_later (η : A) (l : trace A) : Prop := Exists (fun μ => dual μ η) l.
+
+  Fixpoint has_fb (u : trace A) : Prop :=
+    match u with
+    | [] => False
+    | x :: u' => (non_blocking x /\ dual_later x u') \/ has_fb u'
+    end.
+
+  Lemma has_fb_of_decomp (s1 : trace A) (η : A) s2 (μ : A) s3 :
+    non_blocking η -> dual μ η -> has_fb (s1 ++ η :: (s2 ++ μ :: s3)).
+  Proof.
+    intros nb d. induction s1 as [| c s1 IH]; simpl.
+    - left. split; [exact nb |]. unfold dual_later. now eapply Exists_mid.
+    - right. exact IH.
+  Qed.
+
+  Lemma has_fb_decomp (u : trace A) :
+    has_fb u ->
+    exists s1 η s2 μ s3, u = s1 ++ η :: (s2 ++ μ :: s3) /\ non_blocking η /\ dual μ η.
+  Proof.
+    induction u as [| x u IH]; simpl; [contradiction |].
+    intros [ (nb & hd) | h ].
+    - eapply Exists_decomp in hd as (l1 & μ & l2 & -> & d).
+      exists [], x, l1, μ, l2. repeat split; assumption.
+    - destruct (IH h) as (s1 & η & s2 & μ & s3 & -> & nb & d).
+      exists (x :: s1), η, s2, μ, s3. repeat split; assumption.
+  Qed.
+
+  (** *** Invariance *)
+
+  Lemma nb_nb_not_dual (x y : A) : non_blocking x -> non_blocking y -> ¬ dual y x.
+  Proof. intros nx ny d. exact (dual_blocks y x nx d ny). Qed.
+
+  Lemma has_fb_swap (s1 : trace A) (x y : A) s2 :
+    cls_tr x = cls_tr y -> cls_tr x ≠ COP ->
+    has_fb (s1 ++ x :: y :: s2) -> has_fb (s1 ++ y :: x :: s2).
+  Proof.
+    intros heq hne. induction s1 as [| c s1 IH]; simpl.
+    - destruct (cls_tr_same_class x y heq hne) as [ (nx & ny) | (ix & iy) ].
+      + unfold dual_later. rewrite 2 Exists_cons_iff.
+        intros [ (_ & [ dyx | hx ]) | [ (_ & hy) | h ] ].
+        * exfalso. exact (nb_nb_not_dual x y nx ny dyx).
+        * right. left. split; [exact nx | exact hx].
+        * left. split; [exact ny | right; exact hy].
+        * right. right. exact h.
+      + assert (bx : ¬ non_blocking x) by (intro nx; exact (nb_not_exist_co_nba x nx ix)).
+        assert (by_ : ¬ non_blocking y) by (intro ny; exact (nb_not_exist_co_nba y ny iy)).
+        intros [ (nx & _) | [ (ny & _) | h ] ].
+        * now exfalso.
+        * now exfalso.
+        * right. right. exact h.
+    - unfold dual_later. rewrite (Exists_swap (fun μ => dual μ c) s1 x y s2).
+      intros [ hc | h ]; [ left; exact hc | right; exact (IH h) ].
+  Qed.
+
+  Lemma has_fb_tequiv (s t : trace A) : tequiv cls_tr s t -> has_fb s -> has_fb t.
+  Proof.
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    - exact (fun h => h).
+    - intro h. eapply IH2, IH1, h.
+    - now eapply has_fb_swap.
+  Qed.
+
+  Corollary has_fb_nform (s t : trace A) :
+    nform cls_tr s = nform cls_tr t -> has_fb s -> has_fb t.
+  Proof. intro heq. eapply has_fb_tequiv, tequiv_of_nform, heq. Qed.
+
+  (** *** Consequences *)
+
+  (** The simplified trace admits no feedback, and neither does its normal
+      form, however the runs are linearised. *)
+  Corollary fbnf_no_fb (s : trace A) : ¬ has_fb (fbnf s).
+  Proof.
+    intro h. eapply has_fb_decomp in h as (s1 & η & s2 & μ & s3 & heq & nb & d).
+    exact (fbnf_feedback_free s s1 s2 s3 η μ heq nb d).
+  Qed.
+
+  Corollary fnf_no_fb (s : trace A) : ¬ has_fb (nlin (fnf s)).
+  Proof.
+    intro h. eapply fbnf_no_fb.
+    eapply has_fb_tequiv; [| exact h].
+    eapply tequiv_sym, tequiv_nform.
+  Qed.
+
+  (** Grouping the runs first exposes no new feedback: the two orders of
+      composition see exactly the same ones. *)
+  Corollary has_fb_norm (s : trace A) : has_fb s <-> has_fb (nlin (nform cls_tr s)).
+  Proof.
+    split; intro h.
+    - eapply has_fb_tequiv; [eapply tequiv_nform | exact h].
+    - eapply has_fb_tequiv; [eapply tequiv_sym, tequiv_nform | exact h].
+  Qed.
+
+End FeedbackInvariance.

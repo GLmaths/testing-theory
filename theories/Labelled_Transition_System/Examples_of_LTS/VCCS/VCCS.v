@@ -42,7 +42,7 @@ Proof.
 decide equality. 
 * destruct (decide(m = m0)). left. assumption. right. assumption.
 * destruct (decide (n = n0)). left. assumption. right. assumption.
-Qed.
+Defined.
 
 #[global] Instance data_eqdecision `{Countable MyType} : EqDecision (Data MyType).
   by exact Data_dec . Defined.
@@ -70,7 +70,7 @@ Qed.
 Proof.
   refine (inj_countable' encode_data decode_data _).
   apply encode_decide_datas.
-Qed.
+Defined.
 
 (** * VCCS *)
 (****************************** Channels  and Values *************************)

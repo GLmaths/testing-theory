@@ -2213,7 +2213,7 @@ Qed.
 Proof.
   eapply inj_countable with encode_ExtAct_TypeOfActions decode_ExtAct_TypeOfActions. 
   intro. apply encode_decide_ExtAct_TypeOfActions.
-Qed.
+Defined.
 
 Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation ValueData ) + TypeOfActions) + ChannelData)) :=
   match p with
