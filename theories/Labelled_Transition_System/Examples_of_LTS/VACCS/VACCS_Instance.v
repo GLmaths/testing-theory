@@ -2130,7 +2130,7 @@ Proof.
 decide equality. 
 * destruct (decide(b = v)). left. assumption. right. assumption.
 * destruct (decide (a = c)). left. assumption. right. assumption.
-Qed.
+Defined.
 
 #[global] Instance TypeOfActions_eqdecision : EqDecision TypeOfActions. by exact TypeOfActions_dec . Defined.
 

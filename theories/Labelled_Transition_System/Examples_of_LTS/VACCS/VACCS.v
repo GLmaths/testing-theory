@@ -42,7 +42,7 @@ Proof.
 decide equality. 
 * destruct (decide(m = m0)). left. assumption. right. assumption.
 * destruct (decide (n = n0)). left. assumption. right. assumption.
-Qed.
+Defined.
 
 #[global] Instance data_eqdecision `{Countable MyType} : EqDecision (Data MyType).
   by exact Data_dec . Defined.
