@@ -1500,3 +1500,26 @@ Proof.
     + intros x y. rewrite (coclassifier_eq kls x), (coclassifier_eq kls y). reflexivity.
   - eapply nlin_nform_same; [eapply cls_tr_cov_COP | eapply cls_tr_cov_part].
 Qed.
+
+(** * The preorder read on normalised traces on both sides
+
+    [bhv_pre_ti_fnf] quantifies over the normalised traces on both sides, in
+    the style of [bhv_pre_ti_nf]; [bhv_pre_ti_fnf_iff] shows it agrees with the
+    reading used above.  It is the stronger of the two to establish, and it
+    comes for free here: a normalised trace carries no feedback, so
+    [bp2_ff_included] applies to it directly. *)
+
+Theorem bp2_pre_ti_fnf (s : trace (ExtAct TypeOfActions)) :
+  (exists r, ((Bp2, mt) : st) ⟹[nlin (fnf s)] r) ->
+  exists r, ((g Q0, mt) : st) ⟹[nlin (fnf s)] r.
+Proof. exact (bp2_ff_included (nlin (fnf s)) (fnf_no_fb s)). Qed.
+
+Theorem feedback_free_strictly_weaker_nf :
+  (forall s, (exists r, ((Bp2, mt) : st) ⟹[nlin (fnf s)] r) ->
+             exists r, ((g Q0, mt) : st) ⟹[nlin (fnf s)] r)
+  /\ ¬ (forall s, (exists r, ((Bp2, mt) : st) ⟹[s] r) ->
+                  exists r, ((g Q0, mt) : st) ⟹[s] r).
+Proof.
+  split; [exact bp2_pre_ti_fnf |].
+  intro h. eapply q_does_not. eapply h. exact bp2_does.
+Qed.

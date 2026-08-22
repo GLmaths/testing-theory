@@ -1138,3 +1138,50 @@ Section FeedbackInvariance.
   Qed.
 
 End FeedbackInvariance.
+
+(** * [fnf] is idempotent
+
+    A trace that carries no feedback is its own simplification, so the
+    normalised traces are exactly the fixed points of [nlin ∘ fnf].  This is
+    what makes the two readings of the preorder on simplified traces agree:
+    quantifying over all traces on the left, or over the normalised ones on
+    both sides (see [bhv_pre_ti_fnf_iff]). *)
+
+Section FeedbackIdempotence.
+
+  Context `{H : !ExtAction A}.
+
+  Lemma has_fb_cons (x : A) (s : trace A) : has_fb s -> has_fb (x :: s).
+  Proof. intro h. simpl. now right. Qed.
+
+  (** [drop_fb] only ever fires on a real feedback. *)
+  Lemma drop_fb_some (s : trace A) : forall t, drop_fb s = Some t -> has_fb s.
+  Proof.
+    induction s as [| x s IH]; intros t heq; [discriminate |].
+    simpl in heq. destruct (decide (non_blocking x)) as [nb | nb].
+    - destruct (drop_dual x s) as [t0 |] eqn:e.
+      + eapply drop_dual_spec in e as (l1 & μ & l2 & -> & _ & d).
+        exact (has_fb_of_decomp [] x l1 μ l2 nb d).
+      + destruct (drop_fb s) as [t1 |] eqn:e1; [| discriminate].
+        eapply has_fb_cons, (IH t1 eq_refl).
+    - destruct (drop_fb s) as [t1 |] eqn:e1; [| discriminate].
+      eapply has_fb_cons, (IH t1 eq_refl).
+  Qed.
+
+  Lemma fb_iter_id n (s : trace A) : drop_fb s = None -> fb_iter n s = s.
+  Proof. intro h. destruct n; simpl; [reflexivity | now rewrite h]. Qed.
+
+  Theorem fbnf_id (s : trace A) : ¬ has_fb s -> fbnf s = s.
+  Proof.
+    intro h. unfold fbnf. eapply fb_iter_id.
+    destruct (drop_fb s) as [t |] eqn:e; [| reflexivity].
+    exfalso. eapply h, (drop_fb_some s t e).
+  Qed.
+
+  Theorem fnf_idem (s : trace A) : nlin (fnf (nlin (fnf s))) = nlin (fnf s).
+  Proof.
+    unfold fnf at 1. rewrite (fbnf_id (nlin (fnf s)) (fnf_no_fb s)).
+    unfold fnf. rewrite nform_nlin_nform. reflexivity.
+  Qed.
+
+End FeedbackIdempotence.

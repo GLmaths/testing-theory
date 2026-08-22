@@ -137,3 +137,38 @@ Section MayNormalForm.
   Qed.
 
 End MayNormalForm.
+
+(** ** Trace inclusion on simplified traces
+
+    The preorder of [FeedbackNotReversible.v]: like [bhv_pre_ti_nf], it
+    quantifies over normalised traces on *both* sides, the difference being
+    that the feedbacks have been consumed as well.
+
+    The two readings one may give it coincide -- quantifying over the
+    normalised traces on both sides, or over all traces on the left and their
+    normal form on the right.  One direction is [wt_fnf], the traces being
+    closed under simplification; the other is the idempotence of the normal
+    form ([fnf_idem]). *)
+
+Definition bhv_pre_ti_fnf `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :=
+  ∀ s : trace A, traces p (nlin (fnf s)) -> traces q (nlin (fnf s)).
+
+Notation "p ≼ₛ_ₜᵢ q" := (bhv_pre_ti_fnf p q) (at level 70).
+
+Section MaySimplified.
+
+  Context `{H : !ExtAction A}.
+  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
+
+  Theorem bhv_pre_ti_fnf_iff (p : P) (q : Q) :
+    p ≼ₛ_ₜᵢ q <-> (forall s, traces p s -> traces q (nlin (fnf s))).
+  Proof.
+    split.
+    - intros hpre s (r & w). eapply wt_fnf in w as (r' & w' & _).
+      eapply hpre. exists r'. exact w'.
+    - intros hpre s hs.
+      specialize (hpre (nlin (fnf s)) hs). rewrite fnf_idem in hpre. exact hpre.
+  Qed.
+
+End MaySimplified.
