@@ -922,3 +922,64 @@ Arguments nlin {A _} σ.
 Arguments block_wf {A _} cls b.
 Arguments nf_wf {A _} cls σ.
 Arguments tequiv {A} cls s t.
+
+(** * Two classifiers that split the actions the same way
+
+    [nform] only ever compares the class of an action with the class of the
+    block it may join, and refuses to merge [COP]: it depends on the classifier
+    only through the *partition* it induces, and through which part is [COP].
+    Two classifiers agreeing on those two things -- even if they permute the
+    names [CNB] and [CIN] -- therefore produce the same blocks, hence the same
+    normalised trace. *)
+
+Section SameShape.
+
+  Context `{H : !ExtAction A}.
+  Variables cls cls' : A -> act_class.
+  Hypothesis hcop : forall x, cls x = COP <-> cls' x = COP.
+  Hypothesis hpart : forall x y, cls x = cls y <-> cls' x = cls' y.
+
+  Lemma ncons_same_shape (μ : A) (σ σ' : ntrace A) :
+    nf_wf cls σ -> nf_wf cls' σ' -> map snd σ = map snd σ' ->
+    map snd (ncons cls μ σ) = map snd (ncons cls' μ σ').
+  Proof.
+    intros hw hw' hs.
+    destruct σ as [| (c, M) σ0]; destruct σ' as [| (c', M') σ0'];
+      simpl in hs; try discriminate; simpl.
+    - reflexivity.
+    - injection hs as hM hs0. subst M'.
+      inversion hw as [| b0 t0 hb hrest]; subst.
+      inversion hw' as [| b0' t0' hb' hrest']; subst.
+      destruct hb as (hne & hall). destruct hb' as (hne' & hall').
+      destruct (gmultiset_choose M hne) as (x & hx).
+      assert (ec : cls x = c) by (eapply hall; exact hx).
+      assert (ec' : cls' x = c') by (eapply hall'; exact hx).
+      destruct (decide (cls μ = c /\ cls μ ≠ COP)) as [(e1 & e2) | hn];
+        destruct (decide (cls' μ = c' /\ cls' μ ≠ COP)) as [(f1 & f2) | fn]; simpl.
+      + now rewrite hs0.
+      + exfalso. eapply fn. split.
+        * rewrite <- ec'. eapply hpart. rewrite ec. exact e1.
+        * intro k. eapply e2. eapply hcop. exact k.
+      + exfalso. eapply hn. split.
+        * rewrite <- ec. eapply hpart. rewrite ec'. exact f1.
+        * intro k. eapply f2. eapply hcop. exact k.
+      + now rewrite hs0.
+  Qed.
+
+  Lemma nform_same_shape s : map snd (nform cls s) = map snd (nform cls' s).
+  Proof.
+    induction s as [| μ s IH]; simpl; [reflexivity |].
+    eapply ncons_same_shape; [eapply nf_wf_nform | eapply nf_wf_nform | exact IH].
+  Qed.
+
+  Lemma nlin_shape (σ σ' : ntrace A) : map snd σ = map snd σ' -> nlin σ = nlin σ'.
+  Proof.
+    revert σ'. induction σ as [| (c, M) σ IH]; intros [| (c', M') σ'] hs;
+      simpl in hs; try discriminate; simpl; [reflexivity |].
+    injection hs as -> hs0. rewrite (IH σ' hs0). reflexivity.
+  Qed.
+
+  Theorem nlin_nform_same s : nlin (nform cls s) = nlin (nform cls' s).
+  Proof. eapply nlin_shape, nform_same_shape. Qed.
+
+End SameShape.
