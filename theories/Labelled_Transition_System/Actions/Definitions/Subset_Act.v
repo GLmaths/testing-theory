@@ -102,6 +102,11 @@ Qed.
 
 Notation "'⌈' Γ '⌉' S" := (map_set Γ S) (at level 50).
 
+(** The direct image is monotone: a bigger set has a bigger image. *)
+Lemma map_set_mono {A B : Type} (Γ : A -> B) (S S' : subset_of A) :
+  S ⊆ S' -> ⌈ Γ ⌉ S ⊆ ⌈ Γ ⌉ S'.
+Proof. intros h y (μ & hμ & ->). exists μ. split; [eapply h, hμ | reflexivity]. Qed.
+
 
 Definition coR_map {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ (coR p).
 
