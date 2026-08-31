@@ -2091,14 +2091,14 @@ Qed.
 
 Section Cond2Generic.
 
-  Context {T FinA PreAct : Type}.
-  Context {Φ : ExtAct TypeOfActions -> FinA} {𝝳P 𝝳Q : FinA -> PreAct}.
+  Context {T FA PA : Type}.
+  Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
 
   Theorem must_cond2_false :
-    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FinA PreAct Φ 𝝳P gLtsT AbsP
+    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
         st _ 𝝳Q AbsQ ((g Q0, mt) : st) ((Bp2, mt) : st).
   Proof.
     intro h.
@@ -2899,14 +2899,14 @@ Qed.
 (** And the failure of the condition itself, for an arbitrary abstraction. *)
 Section Cond2GenericPw.
 
-  Context {T FinA PreAct : Type}.
-  Context {Φ : ExtAct TypeOfActions -> FinA} {𝝳P 𝝳Q : FinA -> PreAct}.
+  Context {T FA PA : Type}.
+  Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
 
   Theorem must_cond2_false_Pw :
-    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FinA PreAct Φ 𝝳P gLtsT AbsP
+    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
         st _ 𝝳Q AbsQ ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof.
     intro h.
@@ -2915,28 +2915,6 @@ Section Cond2GenericPw.
     eapply pw_no_s_cnd2. exists p'. exact w.
   Qed.
 
-  (** The positive half in the abstracted form [bhv_pre_cond2] uses.  Both
-      sides must read the acceptance sets through the *same* abstraction --
-      the very restriction [SoundnessASco] already imposes on [𝝳] -- and the
-      step from the raw inclusion is then the monotonicity of the image. *)
-  Context (same_delta : forall x, 𝝳P x = 𝝳Q x).
-
-  Lemma abs_of_coR_sub (p q : st) :
-    coR p ⊆ coR q -> ⌈ (𝝳P ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q).
-  Proof.
-    intros hsub y hy.
-    eapply (map_set_mono (𝝳P ∘ Φ) (coR p) (coR q) hsub) in hy as (μ & hμ & ->).
-    exists μ. split; [exact hμ | eapply same_delta].
-  Qed.
-
-  Theorem pw_bp2_cond2_ff_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
-    ¬ has_fb s -> ((Bp2, mt) : st) ⟹[s] q' -> q' ↛ ->
-    exists p', ((Pw, mt) : st) ⟹[s] p' /\ p' ↛
-               /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q').
-  Proof.
-    intros hfb w hst. destruct (pw_bp2_cond2_ff s q' hfb w hst) as (p' & wp & hp & hsub).
-    exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
-  Qed.
 
 End Cond2GenericPw.
 
@@ -3908,14 +3886,14 @@ Qed.
 (** And the failure of the co-condition itself, for an arbitrary abstraction. *)
 Section CoCond2GenericPe.
 
-  Context {T FinA PreAct : Type}.
-  Context {Φ : ExtAct TypeOfActions -> FinA} {𝝳P 𝝳Q : FinA -> PreAct}.
+  Context {T FA PA : Type}.
+  Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
 
   Theorem co_must_cond2_false_Pe :
-    ¬ @bhv_pre_co_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FinA PreAct Φ 𝝳P gLtsT AbsP
+    ¬ @bhv_pre_co_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
         st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
   Proof.
     intro h.
@@ -3928,15 +3906,31 @@ Section CoCond2GenericPe.
       condition holds ([qe_cnv]) and its acceptance condition holds on every
       feedback-free co-trace ([pe_qe_co_cond2_ff]). *)
   Theorem co_must_false_Pe :
-    ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FinA PreAct Φ 𝝳P gLtsT AbsP
+    ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
         st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
   Proof. intros (_ & h2). eapply co_must_cond2_false_Pe, h2. Qed.
 
-  (** The positive halves in the abstracted form, under the same shared-[𝝳]
-      hypothesis as [pw_bp2_cond2_ff_abs]. *)
+
+End CoCond2GenericPe.
+
+(** * The positive results in the abstracted form
+
+    [bhv_pre_cond2] compares the acceptance sets through the image
+    [⌈ 𝝳 ∘ Φ ⌉], not raw.  Going from the raw inclusion proved above to that
+    form takes the monotonicity of the image ([map_set_mono]) plus the
+    hypothesis that the two sides read the labels through the *same* [𝝳] --
+    the restriction [SoundnessASco] already imposes on its own [𝝳].
+
+    No [AbsAction] instance is involved: these are statements about [map_set]
+    alone, so they live outside the sections above. *)
+
+Section AbstractedAcceptance.
+
+  Context {FA PA : Type}.
+  Context (Φ : ExtAct TypeOfActions -> FA) (𝝳P 𝝳Q : FA -> PA).
   Context (same_delta : forall x, 𝝳P x = 𝝳Q x).
 
-  Lemma co_abs_of_coR_sub (p q : st) :
+  Lemma abs_of_coR_sub (p q : st) :
     coR p ⊆ coR q -> ⌈ (𝝳P ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q).
   Proof.
     intros hsub y hy.
@@ -3944,22 +3938,34 @@ Section CoCond2GenericPe.
     exists μ. split; [exact hμ | eapply same_delta].
   Qed.
 
+  (** Feedback, on traces. *)
+  Theorem pw_bp2_cond2_ff_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
+    ¬ has_fb s -> ((Bp2, mt) : st) ⟹[s] q' -> q' ↛ ->
+    exists p', ((Pw, mt) : st) ⟹[s] p' /\ p' ↛
+               /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q').
+  Proof.
+    intros hfb w hst. destruct (pw_bp2_cond2_ff s q' hfb w hst) as (p' & wp & hp & hsub).
+    exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
+  Qed.
+
+  (** Echo, on traces. *)
   Theorem pe_qe_cond2_ef_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_echo s -> ((Qe, mt) : st) ⟹[s] q' -> q' ↛ ->
     exists p', ((Pe, mt) : st) ⟹[s] p' /\ p' ↛
                /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q').
   Proof.
     intros hec w hst. destruct (pe_qe_cond2_ef s q' hec w hst) as (p' & wp & hp & hsub).
-    exists p'. split; [exact wp | split; [exact hp | eapply co_abs_of_coR_sub, hsub]].
+    exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
   Qed.
 
+  (** Feedback, on co-traces -- the statement asked for. *)
   Theorem pe_qe_co_cond2_ff_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_fb s -> ((Qe, mt) : st) ⟹ᶜᵒ[s] q' -> q' ↛ ->
     exists p', ((Pe, mt) : st) ⟹ᶜᵒ[s] p' /\ p' ↛
                /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q').
   Proof.
     intros hfb w hst. destruct (pe_qe_co_cond2_ff s q' hfb w hst) as (p' & wp & hp & hsub).
-    exists p'. split; [exact wp | split; [exact hp | eapply co_abs_of_coR_sub, hsub]].
+    exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
   Qed.
 
-End CoCond2GenericPe.
+End AbstractedAcceptance.
