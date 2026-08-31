@@ -116,11 +116,11 @@ intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
        assert (η'' = co μ).
        { eapply unique_nb; eauto. } subst.
        contradiction.
-Qed.
+Defined.
 
 #[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} μ 
   : Decision (∃ η', non_blocking η' /\ dual μ η').
-Proof. exact (lts_exists_duo_decidable A H μ). Qed.
+Proof. exact (lts_exists_duo_decidable A H μ). Defined.
 
 
 Lemma dual_is_involutive `{ExtAction A} μ : μ = (co (co μ)).

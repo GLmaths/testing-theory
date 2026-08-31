@@ -2130,7 +2130,7 @@ Proof.
 decide equality. 
 * destruct (decide(b = v)). left. assumption. right. assumption.
 * destruct (decide (a = c)). left. assumption. right. assumption.
-Qed.
+Defined.
 
 #[global] Instance TypeOfActions_eqdecision : EqDecision TypeOfActions. by exact TypeOfActions_dec . Defined.
 
@@ -2213,7 +2213,7 @@ Qed.
 Proof.
   eapply inj_countable with encode_ExtAct_TypeOfActions decode_ExtAct_TypeOfActions. 
   intro. apply encode_decide_ExtAct_TypeOfActions.
-Qed.
+Defined.
 
 Fixpoint encode_proc (p: proc) : gen_tree (nat + (((Equation ValueData ) + TypeOfActions) + ChannelData)) :=
   match p with
