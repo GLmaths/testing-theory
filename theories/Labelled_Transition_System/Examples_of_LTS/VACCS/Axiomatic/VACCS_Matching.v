@@ -4835,23 +4835,45 @@ Qed.
     [phaseA_config_no_regeneration]'s hypothesis, which is why the two
     together look like a dichotomy. *)
 
-Lemma cfg_deliver_step : forall (l l0 : list TypeOfActions) c v (M : gproc) (Mc : proc),
+Lemma cfg_deliver_step_p : forall (l l0 : list TypeOfActions) c v (p pc : proc),
   Permutation l ((c,v) :: l0) ->
-  lts (g M) (ActExt (ActIn (c,v))) Mc ->
-  exists r, lts (msgs l ‖ g M) τ r /\ r ≡* (msgs l0 ‖ Mc).
+  lts p (ActExt (ActIn (c,v))) pc ->
+  exists r, lts (msgs l ‖ p) τ r /\ r ≡* (msgs l0 ‖ pc).
 Proof.
-  intros l l0 c v M Mc Hperm Hin.
-  assert (Hc : msgs l ‖ g M ≡* (msgs ((c,v) :: l0)) ‖ g M)
+  intros l l0 c v p pc Hperm Hin.
+  assert (Hc : msgs l ‖ p ≡* (msgs ((c,v) :: l0)) ‖ p)
     by (apply cgr_fullpar; [ apply msgs_perm; exact Hperm | apply cgr_refl ]).
-  assert (Hstep : lts ((msgs ((c,v) :: l0)) ‖ g M) τ (((g 𝟘) ‖ msgs l0) ‖ Mc)).
+  assert (Hstep : lts ((msgs ((c,v) :: l0)) ‖ p) τ (((g 𝟘) ‖ msgs l0) ‖ pc)).
   { simpl. eapply lts_comL; [ apply lts_parL; apply lts_output | exact Hin ]. }
-  destruct (Congruence_Respects_Transition (msgs l ‖ g M) (((g 𝟘) ‖ msgs l0) ‖ Mc) τ
+  destruct (Congruence_Respects_Transition (msgs l ‖ p) (((g 𝟘) ‖ msgs l0) ‖ pc) τ
               (ex_intro _ _ (conj Hc Hstep))) as (r & Hr & Hcr).
   exists r. split; [ exact Hr | ].
   eapply cgr_trans; [ exact Hcr | ].
   apply cgr_fullpar; [ | apply cgr_refl ].
   etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
 Qed.
+
+Theorem ax_below_cfg_descend_p : forall (l l0 : list TypeOfActions) c v
+    (p pc q : proc),
+  Permutation l ((c,v) :: l0) ->
+  lts p (ActExt (ActIn (c,v))) pc ->
+  ax_pre (msgs l0 ‖ pc) q ->
+  ax_pre (msgs l ‖ p) q.
+Proof.
+  intros l l0 c v p pc q Hperm Hin Hax.
+  destruct (cfg_deliver_step_p l l0 c v p pc Hperm Hin) as (r & Hr & Hcr).
+  eapply ax_trans; [ apply ax_tau_step; exact Hr | ].
+  eapply ax_trans; [ apply ax_cgr; exact Hcr | exact Hax ].
+Qed.
+
+(** Les versions à somme gardée en sont les instances : rien dans la
+    preuve n'inspecte la forme du processus. *)
+
+Lemma cfg_deliver_step : forall (l l0 : list TypeOfActions) c v (M : gproc) (Mc : proc),
+  Permutation l ((c,v) :: l0) ->
+  lts (g M) (ActExt (ActIn (c,v))) Mc ->
+  exists r, lts (msgs l ‖ g M) τ r /\ r ≡* (msgs l0 ‖ Mc).
+Proof. intros l l0 c v M Mc. apply cfg_deliver_step_p. Qed.
 
 (** ** The descent disjunct, reduced to a LOCAL condition
 
@@ -4942,12 +4964,7 @@ Theorem ax_below_cfg_descend : forall (l l0 : list TypeOfActions) c v
   lts (g M) (ActExt (ActIn (c,v))) Mc ->
   ax_pre (msgs l0 ‖ Mc) q ->
   ax_pre (msgs l ‖ g M) q.
-Proof.
-  intros l l0 c v M Mc q Hperm Hin Hax.
-  destruct (cfg_deliver_step l l0 c v M Mc Hperm Hin) as (r & Hr & Hcr).
-  eapply ax_trans; [ apply ax_tau_step; exact Hr | ].
-  eapply ax_trans; [ apply ax_cgr; exact Hcr | exact Hax ].
-Qed.
+Proof. intros l l0 c v M Mc q. apply ax_below_cfg_descend_p. Qed.
 
 (** ** La délivrance est réversible — le cas garde unique
 
@@ -6094,6 +6111,74 @@ Proof.
     + eapply gsum_no_out. exact Hl.
 Qed.
 
+(** ** …et il suffit de le vérifier sur les canaux DU SAC
+
+    L'inversion ne consulte le critère qu'au canal de la **première
+    entrée** du run.  Avec la prémisse [bag (ins r) ⊆ bag l] — que
+    [VACCS_NormalForm.fw_conservation_bounded] fournit dès que la trace
+    du forwarder n'a pas d'entrée — cette entrée est forcément un message
+    que le sac tenait, donc le critère n'a rien à dire des autres
+    canaux.
+
+    Gain : une somme dont une garde **hors du sac** rend son message
+    n'est plus rejetée.  [VACCS_DropProbes.MSelf] est exactement cela, et
+    son sac s'annule bel et bien. *)
+
+(** Le critère **exact** : ce que la preuve consulte n'est pas
+    l'empreinte [ochans] mais le fait qu'aucune continuation ne possède
+    un run rendant *le message même* qu'elle a reçu.  Noter qu'aucune
+    hypothèse [Static] n'est requise sous cette forme — elle ne servait
+    qu'à passer par [trace_out_in_ochans]. *)
+
+Lemma no_regen_of_own_channel_run : forall (M : gproc) (l : list TypeOfActions),
+  (forall z, ~ lts ((g M) : proc) τ z) ->
+  (forall c v P', In (c,v) l -> lts ((g M) : proc) (ActExt (ActIn (c,v))) P' ->
+     forall s q, P' ⟹[s] q -> ~ In (c,v) (outs s)) ->
+  forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
+              bag (ins r) ⊆ bag l -> ins r = [].
+Proof.
+  intros M l HstM Hcrit r q Hw Hsub Hbl.
+  inversion Hw as [ x Hx | s0 x y z Hl Hwt Hs Hx | mu s0 x y z Hl Hwt Hs Hx ]; subst.
+  - reflexivity.
+  - exfalso. eapply HstM. exact Hl.
+  - exfalso. destruct mu as [[c v]|[c v]].
+    + simpl in Hsub, Hbl.
+      assert (Hinl : ActOut (c,v) ∈ bag l)
+        by (eapply gmultiset_elem_of_subseteq;
+            [ apply gmultiset_elem_of_disj_union; left;
+              apply gmultiset_elem_of_singleton; reflexivity
+            | exact Hbl ]).
+      apply bag_elem in Hinl.
+      assert (Hmem : ActOut (c,v) ∈ bag (outs s0))
+        by (eapply gmultiset_elem_of_subseteq;
+            [ apply gmultiset_elem_of_disj_union; left;
+              apply gmultiset_elem_of_singleton; reflexivity
+            | exact Hsub ]).
+      apply bag_elem in Hmem.
+      eapply (Hcrit c v y Hinl Hl s0 q Hwt Hmem).
+    + eapply gsum_no_out. exact Hl.
+Qed.
+
+(** …et le critère syntaxique, décidable, en est le cas particulier :
+    [ochans] sur-approxime les émissions d'un run ([trace_out_in_ochans]),
+    et c'est là — et là seulement — que [Static] intervient. *)
+
+Lemma no_regen_of_own_channel_bag : forall (M : gproc) (l : list TypeOfActions),
+  (forall z, ~ lts ((g M) : proc) τ z) ->
+  Static ((g M) : proc) ->
+  (forall c v P', In (c,v) l -> lts ((g M) : proc) (ActExt (ActIn (c,v))) P' ->
+     ~ In c (ochans P')) ->
+  forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
+              bag (ins r) ⊆ bag l -> ins r = [].
+Proof.
+  intros M l HstM HStat Hcrit.
+  apply (no_regen_of_own_channel_run M l HstM).
+  intros c v P' Hinl Hin s q Hw Hout.
+  eapply (Hcrit c v P' Hinl Hin).
+  eapply trace_out_in_ochans; [ | exact Hw | exact Hout ].
+  eapply Static_preserved_by_lts; eassumption.
+Qed.
+
 (** ** Le même critère, sans τ-stabilité : voies d'entrée et de sortie DISJOINTES
 
     [no_regen_of_own_channel] ne fait qu'une **inversion** sur le premier
@@ -6318,6 +6403,123 @@ Proof.
   - reflexivity.
   - exists ((g 𝟘) : proc). apply lts_choiceR. apply lts_tau.
 Qed.
+
+(** ** …ET LE CRITÈRE SE RESTREINT AUX CANAUX DU SAC
+
+    [ochans p = []] est franchement plus fort que ce dont l'argument de
+    vidange a besoin.  Le bilan de [VACCS_Forwarder.fw_conservation]
+    le long d'une trace de sorties pures donne, une fois [bag l]
+    simplifié,
+
+        bag (outs r) = y.2 ⊎ bag (ins r)
+
+    et [VACCS_Forwarder.fw_conservation_bounded] ajoute que **tout ce que
+    le processus a consommé venait du sac initial**.  Une entrée du run
+    projeté est donc sur un canal **du sac**, et une sortie qui la
+    rembourse met ce même canal dans [ochans p].  Il suffit par
+    conséquent que les canaux du sac évitent [ochans p] — les émissions
+    du processus sur *d'autres* voies ne peuvent jamais rembourser ce
+    que la vidange réclame.
+
+    Comme la version non relative, ce critère **tolère les
+    [𝛕]-sommants** : rien ici ne demande la τ-stabilité, ni de la
+    configuration ni de la somme nue. *)
+
+Lemma MuteOn_of_ochans : forall (p : proc) (L : list ChannelData),
+  Static p -> (forall c, In c L -> ~ In c (ochans p)) -> MuteOn L p.
+Proof.
+  intros p L Hst Hdisj r q aa Hw Hin Hfst.
+  destruct aa as (c,u). simpl in Hfst.
+  eapply Hdisj; [ exact Hfst | ].
+  eapply trace_out_in_ochans; [ exact Hst | exact Hw | exact Hin ].
+Qed.
+
+Lemma drain_forced_no_output_bag : forall (l : list TypeOfActions) (p : proc) yy,
+  Static p ->
+  (forall c vv, In (c,vv) l -> ~ In c (ochans p)) ->
+  ((p ▷ bag l) ⟹[map ActOut l] yy) ->
+  yy.2 = (∅ : MO (ExtAct TypeOfActions)) /\ p ⟹[[]] yy.1.
+Proof.
+  intros l p yy Hst Hdisj Hw.
+  assert (Hproj : (p ▷ (∅ : MO (ExtAct TypeOfActions))) ⟹[[]] yy).
+  { eapply (fw_drain_project_on (map fst l) (map ActOut l) (p ▷ bag l) yy Hw).
+    - simpl. apply MuteOn_of_ochans; [ exact Hst | ].
+      intros c Hc Hoc.
+      apply in_map_iff in Hc as ((c0,u0) & Heq & Hin).
+      simpl in Heq. subst c0. eapply Hdisj; [ exact Hin | exact Hoc ].
+    - apply ins_map_out.
+    - intros aa Hin. rewrite outs_map_out in Hin.
+      apply in_map_iff. exists aa. split; [ reflexivity | exact Hin ].
+    - simpl. rewrite outs_map_out.
+      symmetry. apply gmultiset_disj_union_right_id. }
+  apply (fw_wt_noinput_proj [] (p ▷ (∅ : MO (ExtAct TypeOfActions))) yy Hproj);
+    reflexivity.
+Qed.
+
+Theorem msgs_cancel_no_output_bag : forall (l : list TypeOfActions) (M N : gproc),
+  gStatic M -> gStatic N ->
+  (forall c vv, In (c,vv) l -> ~ In c (ochans ((g M) : proc))) ->
+  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc).
+Proof.
+  intros l M N HM HN Hoc Hpre.
+  destruct (msgs_accept l l (g M) (g N) Hpre) as (Hc1 & Hc2).
+  apply must_iff_acceptance_set_VACCS. split.
+  - intros s _. apply fw_converge_static. apply static_g. exact HN.
+  - intros s yy _ Hwy Hsty.
+    assert (Hdrain : ((g N) ▷ bag l)
+                       ⟹[map ActOut l] ((g N) ▷ (∅ : MO (ExtAct TypeOfActions)))).
+    { replace (bag l) with (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
+        by (apply gmultiset.gmultiset_disj_union_right_id).
+      apply bag_wt_drain. }
+    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] yy)
+      by (eapply wt_concat; [ exact Hdrain | exact Hwy ]).
+    destruct (Hc2 (map ActOut l ++ s) yy
+                (fw_converge_static (map ActOut l ++ s) (g M) (bag l) (static_g M HM))
+                Hbig Hsty)
+      as (x & Hwx & Hstx & Hincl).
+    destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
+    destruct (drain_forced_no_output_bag l ((g M) : proc) z (static_g M HM) Hoc Hz1)
+      as (Ez2 & Ez1).
+    exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
+    destruct z as (z1,z2). simpl in Ez2, Ez1. subst z2.
+    replace s with (@nil (ExtAct TypeOfActions) ++ s) by reflexivity.
+    eapply wt_concat; [ apply fw_wt_lift; exact Ez1 | exact Hz2 ].
+Qed.
+
+
+Corollary ax_below_NF_no_output_bag : forall (n : nat) (l : list TypeOfActions) (M N : gproc),
+  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
+  (forall c vv, In (c,vv) l -> ~ In c (ochans ((g M) : proc))) ->
+  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+     BagSem l ((g M) : proc) L -> subbag l' l ->
+     forall c vv Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,vv))) Q' ->
+       ax_pre (msgs l'' ‖ ((c ! vv • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+  ax_pre (NF n l M) (NF n l N).
+Proof.
+  intros n l M N HM HN Hnf Hoc Hcfg Hrec.
+  eapply ax_below_NF_empty_sem; try eassumption.
+  eapply msgs_cancel_no_output_bag; eassumption.
+Qed.
+
+(** Et l'inclusion est **stricte** : une somme qui porte un [𝛕]-sommant
+    émettant sur une voie **étrangère au sac** échoue à [ochans _ = []]
+    et satisfait le critère relatif. *)
+
+Lemma no_output_bag_criterion_is_weaker :
+  forall (c d : ChannelData) (vv uu : ValueData), c <> d ->
+  ochans ((g ((c ? ((g 𝟘) : proc)) + (𝛕 • ((d ! vv • 𝟘) : proc)))) : proc) <> []
+  /\ (forall c' u', In (c',u') [(c,uu)] ->
+        ~ In c' (ochans ((g ((c ? ((g 𝟘) : proc)) + (𝛕 • ((d ! vv • 𝟘) : proc)))) : proc))).
+Proof.
+  intros c d vv uu Hcd. split.
+  - simpl. discriminate.
+  - intros c' u' Hin Hoc. simpl in Hin. destruct Hin as [He|[]].
+    injection He as He1 He2. subst c' u'.
+    simpl in Hoc. destruct Hoc as [He|[]]. congruence.
+Qed.
+
 
 (** ** LE RÉSIDU COMME DISJONCTION — les deux disjoints sont des théorèmes
 
@@ -6658,13 +6860,6 @@ Definition CfgDisjunctionLocal : Prop :=
           /\ lts ((g M) : proc) (ActExt (ActIn (c,v))) Mc
           /\ Mc ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (((c ! v • 𝟘) : proc) ‖ ((g N) : proc))).
 
-Theorem cfg_disjunction_of_local : CfgDisjunctionLocal -> CfgDisjunction.
-Proof.
-  intros HL l M N HM HN Htau Hsem.
-  destruct (HL l M N HM HN Htau Hsem) as [Hempty | (c & v & l0 & Mc & Hp & Hin & Hb)].
-  - left. exact Hempty.
-  - right. eapply descent_of_cont_below; eassumption.
-Qed.
 
 (** ** ATTENTION : [CfgDisjunctionLocal] est **FAUSSE**
 
@@ -6893,14 +7088,12 @@ Qed.
     convertibles sans être syntaxiquement égales, et [rewrite] rate.  Même
     précaution que pour [VACCS_NormalForm.disj_union_cancel_empty]. *)
 
-Lemma disj_union_sub_middle : forall (A : Type) (EqA : EqDecision A) (CA : Countable A)
-  (X Y Z W : gmultiset A), X ⊎ ∅ ⊎ ∅ = Y ⊎ Z ⊎ W -> Z ⊆ X.
-Proof.
-  intros A EqA CA X Y Z W H a.
-  apply (f_equal (multiplicity a)) in H.
-  rewrite !multiplicity_disj_union in H.
-  rewrite !multiplicity_empty in H. lia.
-Qed.
+(** …et la version qui tolère un troisième terme à gauche, pourvu qu'il
+    ne rencontre pas [Z].  C'est ce qui permet de relativiser au sac le
+    critère d'émission : le membre gauche du bilan porte alors les
+    sorties **propres** du processus, et il suffit qu'elles évitent les
+    voies du sac visé. *)
+
 
 (** The state reached by draining the right bag need not be **stable** —
     [bhv_pre_cond2] only needs *some* stable state, and its emissions are
@@ -6916,13 +7109,45 @@ Proof.
   eapply fw_terminate_static; [ exact HS | apply Nat.le_refl ].
 Qed.
 
-Theorem bag_incl_of_below : forall (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  ochans ((g M) : proc) = [] ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  bag l2 ⊆ bag l1.
+(** Le critère n'a jamais eu besoin d'interdire **toute** émission de la
+    gauche : il suffit que ses émissions évitent les voies du **sac de
+    droite**.  Les messages du processus sur d'autres voies ne peuvent
+    pas rembourser ce que la trace de vidange réclame, donc ils ne
+    faussent pas l'inclusion. *)
+
+(** Une annulation de multiensembles, énoncée au type **générique** :
+    à [MO (ExtAct TypeOfActions)] les deux élaborations de [⊎] que le
+    développement transporte sont convertibles sans être syntaxiquement
+    égales, donc [rewrite] rate ; génériquement il n'y a qu'une instance
+    et [multiplicity_disj_union] s'applique. *)
+
+Lemma sub_disj_cancel : forall (A : Type) (EqA : EqDecision A) (CA : Countable A)
+  (X Y Z : gmultiset A), Z ⊆ X ⊎ Y ->
+  (forall a, (0 < multiplicity a Z)%nat -> multiplicity a Y = 0%nat) -> Z ⊆ X.
 Proof.
-  intros l1 l2 M N HM HN Hoc Hpre.
+  intros A EqA CA X Y Z Hsub Hdisj a.
+  specialize (Hsub a). rewrite multiplicity_disj_union in Hsub.
+  destruct (decide ((multiplicity a Z = 0)%nat)) as [E|E]; [ lia | ].
+  rewrite (Hdisj a) in Hsub by lia. lia.
+Qed.
+
+(** ** L'inclusion des deux sacs, SANS AUCUN CRITÈRE
+
+    Vider le sac de droite et suivre à gauche donne, par le bilan de
+    [fw_conservation], une inclusion inconditionnelle : *le sac de droite
+    tient dans celui de gauche **augmenté de ce que le processus gauche a
+    émis** le long du run projeté*.  Autrement dit, chaque message que la
+    droite détient, la gauche le détient déjà ou sait le produire.
+
+    C'est la forme générale ; le critère relatif au sac en est le cas où
+    ces émissions évitent les voies du sac de droite. *)
+
+Theorem bag_incl_of_below_emit : forall (l1 l2 : list TypeOfActions) (M N : gproc),
+  gStatic M -> gStatic N ->
+  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
+  exists r q, ((g M) : proc) ⟹[r] q /\ bag l2 ⊆ bag l1 ⊎ bag (outs r).
+Proof.
+  intros l1 l2 M N HM HN Hpre.
   destruct (msgs_accept l1 l2 (g M) (g N) Hpre) as (Hc1 & Hc2).
   assert (Hdrain : (((g N) : proc) ▷ bag l2)
                      ⟹[map ActOut l2] (((g N) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))).
@@ -6930,37 +7155,140 @@ Proof.
       by (apply gmultiset.gmultiset_disj_union_right_id).
     apply bag_wt_drain. }
   destruct (fw_stable_reach ((g N) : proc) (∅ : MO (ExtAct TypeOfActions))
-              (static_g N HN)) as (y & Hwy & Hsty).
-  assert (Hbig : (((g N) : proc) ▷ bag l2) ⟹[map ActOut l2] y).
+              (static_g N HN)) as (yy & Hwy & Hsty).
+  assert (Hbig : (((g N) : proc) ▷ bag l2) ⟹[map ActOut l2] yy).
   { replace (map ActOut l2) with (map ActOut l2 ++ (@nil (ExtAct TypeOfActions)))
       by (rewrite app_nil_r; reflexivity).
     eapply wt_concat; [ exact Hdrain | exact Hwy ]. }
-  destruct (Hc2 (map ActOut l2) y
+  destruct (Hc2 (map ActOut l2) yy
               (fw_converge_static (map ActOut l2) (g M) (bag l1) (static_g M HM))
               Hbig Hsty)
     as (x & Hwx & Hstx & Hincl).
   destruct (fw_conservation _ _ _ Hwx) as (r & Hr & Hbal). simpl in Hbal.
-  assert (Houts : outs r = []).
-  { destruct (outs r) as [|cv u] eqn:E; [ reflexivity | exfalso ].
-    destruct cv as (c,v).
-    assert (Hin : In c (ochans ((g M) : proc))).
-    { eapply trace_out_in_ochans; [ apply static_g; exact HM | exact Hr | ].
-      rewrite E. left. reflexivity. }
-    rewrite Hoc in Hin. exact Hin. }
-  rewrite ins_map_out in Hbal. rewrite outs_map_out in Hbal.
-  rewrite Houts in Hbal. simpl in Hbal.
-  eapply disj_union_sub_middle. exact Hbal.
+  rewrite ins_map_out in Hbal. rewrite outs_map_out in Hbal. simpl in Hbal.
+  exists r, x.1. split; [ exact Hr | ]. multiset_solver.
+Qed.
+
+(** …et le critère relatif au sac en est le cas particulier : ses
+    émissions évitent alors les voies de [l2] ([trace_out_in_ochans]),
+    donc le terme correcteur s'annule sur ces messages. *)
+
+Theorem bag_incl_of_below_disj : forall (l1 l2 : list TypeOfActions) (M N : gproc),
+  gStatic M -> gStatic N ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
+  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
+  bag l2 ⊆ bag l1.
+Proof.
+  intros l1 l2 M N HM HN Hdisj Hpre.
+  destruct (bag_incl_of_below_emit l1 l2 M N HM HN Hpre) as (r & q & Hr & Hsub).
+  eapply sub_disj_cancel; [ exact Hsub | ].
+  intros a Hpos.
+  assert (Hin2 : a ∈ bag l2) by (apply elem_of_multiplicity; lia).
+  destruct (bag_out _ _ Hin2) as (cv & Ecv). destruct cv as (c,u). subst a.
+  apply not_elem_of_multiplicity. intro Hino.
+  eapply Hdisj; [ apply bag_elem; exact Hin2 | ].
+  eapply trace_out_in_ochans;
+    [ apply static_g; exact HM | exact Hr | apply bag_elem; exact Hino ].
+Qed.
+
+(** Lu à l'envers, le terme correcteur dit *quand* le sac de droite peut
+    déborder : uniquement si le processus gauche **émet**. *)
+
+Theorem emit_of_bag_incl_failure : forall (l1 l2 : list TypeOfActions) (M N : gproc),
+  gStatic M -> gStatic N ->
+  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
+  ~ (bag l2 ⊆ bag l1) ->
+  exists r q, ((g M) : proc) ⟹[r] q /\ outs r <> [].
+Proof.
+  intros l1 l2 M N HM HN Hpre Hno.
+  destruct (bag_incl_of_below_emit l1 l2 M N HM HN Hpre) as (r & q & Hr & Hsub).
+  exists r, q. split; [ exact Hr | ].
+  intro Ho. apply Hno. rewrite Ho in Hsub. simpl in Hsub. multiset_solver.
+Qed.
+
+(** ** ★ QUAND LA SOMME DROITE EST τ-LIBRE, LE BILAN EST UNE ÉGALITÉ
+
+    Le cas du résidu : la droite y est **stable**, donc sa somme est
+    τ-libre.  Alors l'état que la droite atteint après vidange est
+    [g N ▷ ∅], qui **n'émet rien du tout** (une somme gardée n'émet
+    jamais, [gsum_no_out], et le buffer est vide).  La condition
+    d'acceptation force donc l'état gauche à n'émettre rien non plus —
+    ni par son processus, ni par son buffer, qui est donc **vide**.
+
+    Le bilan de [fw_conservation_bounded] devient alors une **égalité** :
+
+        bag l1 ⊎ bag (outs r) = bag l2 ⊎ bag (ins r)
+
+    « ce que la gauche avait plus ce qu'elle a produit = ce que la droite
+    avait plus ce qu'elle a consommé ».  C'est nettement plus fort que
+    l'inclusion, et c'est disponible sans aucun critère. *)
+
+Theorem bag_balance_of_taufree_right : forall (l1 l2 : list TypeOfActions)
+    (p : proc) (N : gproc),
+  Static p -> gStatic N ->
+  (forall z, ~ lts ((g N) : proc) τ z) ->
+  ((msgs l1 ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
+  exists r q, p ⟹[r] q
+           /\ (forall c v z, ~ lts q (ActExt (ActOut (c,v))) z)
+           /\ (forall z, ~ lts q τ z)
+           /\ bag (ins r) ⊆ bag l1
+           /\ bag l1 ⊎ bag (outs r) = bag l2 ⊎ bag (ins r).
+Proof.
+  intros l1 l2 p N Hp HN HstN Hpre.
+  destruct (msgs_accept l1 l2 p (g N) Hpre) as (Hc1 & Hc2).
+  assert (Hdrain : (((g N) : proc) ▷ bag l2)
+                     ⟹[map ActOut l2] (((g N) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))).
+  { replace (bag l2) with (bag l2 ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
+      by (apply gmultiset.gmultiset_disj_union_right_id).
+    apply bag_wt_drain. }
+  assert (Hsty : (((g N) : proc) ▷ (∅ : MO (ExtAct TypeOfActions))) ↛).
+  { apply stable_of_no_step. intros z Hz.
+    destruct (fw_tau_shape _ _ _ Hz) as [(p' & Hp' & _)|(a & p' & m' & Hm & _ & _)].
+    - eapply HstN. exact Hp'.
+    - simpl in Hm. multiset_solver. }
+  destruct (Hc2 (map ActOut l2) _
+              (fw_converge_static (map ActOut l2) p (bag l1) Hp)
+              Hdrain Hsty)
+    as (x & Hwx & Hstx & Hincl).
+  destruct x as (px,mx).
+  assert (Hnoemit : forall d w z, ~ ((px ▷ mx) ⟶[ActOut (d,w)] z)).
+  { intros d w z Hz.
+    assert (Habs : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (px ▷ mx)))
+      by (apply coR_abs_pair_iff; exists w, z; exact Hz).
+    apply Hincl in Habs.
+    apply coR_abs_pair_iff in Habs as (w' & r' & Hr').
+    destruct (proj1 (fw_emits_iff ((g N) : proc) (∅ : MO (ExtAct TypeOfActions)) (d,w'))
+                (ex_intro _ r' Hr')) as [(p' & Hp')|Hin].
+    - eapply gsum_no_out. exact Hp'.
+    - eapply gmultiset_not_elem_of_empty. exact Hin. }
+  assert (Hbuf : mx = (∅ : MO (ExtAct TypeOfActions))).
+  { destruct (decide (mx = (∅ : MO (ExtAct TypeOfActions)))) as [E|E]; [ exact E | exfalso ].
+    apply gmultiset_choose in E as (zz & Hzz).
+    assert (Hoo : OutOnly mx)
+      by (eapply (OutOnly_wt _ _ (px,mx)); [ exact Hwx | simpl; apply outonly_of_bag ]).
+    destruct (Hoo zz Hzz) as ((d,w) & Ezz). subst zz.
+    destruct (proj2 (fw_emits_iff px mx (d,w)) (or_intror Hzz)) as (y & Hy).
+    eapply Hnoemit. exact Hy. }
+  destruct (fw_conservation_bounded _ _ _ Hwx) as (r & Hr & Hbal & Hsub).
+  simpl in Hbal, Hsub, Hr. rewrite ins_map_out in Hbal, Hsub.
+  rewrite outs_map_out in Hbal. rewrite Hbuf in Hbal, Hsub.
+  exists r, px. split; [ exact Hr | ]. split.
+  - intros c v z Hz. eapply (Hnoemit c v (z, mx)). apply ParLeft. exact Hz.
+  - split.
+    + intros z Hz. pose proof (no_step_of_stable (px ▷ mx) Hstx (z, mx)) as Hns.
+      apply Hns. apply ParLeft. exact Hz.
+    + split; [ multiset_solver | multiset_solver ].
 Qed.
 
 Corollary bag_split_of_below : forall (l1 l2 : list TypeOfActions) (M N : gproc),
   gStatic M -> gStatic N ->
-  ochans ((g M) : proc) = [] ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   exists d, Permutation l1 (l2 ++ d).
 Proof.
   intros l1 l2 M N HM HN Hoc Hpre.
   apply bag_sub_split.
-  exact (bag_incl_of_below l1 l2 M N HM HN Hoc Hpre).
+  exact (bag_incl_of_below_disj l1 l2 M N HM HN Hoc Hpre).
 Qed.
 
 (* ------------------------------------------------------------------ *)
@@ -7007,50 +7335,44 @@ Qed.
 (*  entirely in the drain phase: there the left carries [bag l2 ⊎ bag d] *)
 (*  while the trace only emits [l2]'s worth, so the run does not end at *)
 (*  [g M ▷ ∅] and [drain_forced_no_output] does not apply.  What does   *)
-(*  is [VACCS_Forwarder.fw_drain_project]: the same run, with the       *)
+(*  is [VACCS_Forwarder.fw_drain_project_on]: the same run, with the       *)
 (*  buffer emissions dropped, is a τ-run from the surplus alone —       *)
 (*  reaching the very same state.                                       *)
 (* ------------------------------------------------------------------ *)
 
-Lemma MuteRun_of_ochans : forall (p : proc), Static p -> ochans p = [] -> MuteRun p.
-Proof.
-  intros p Hst Hoc r q Hw.
-  destruct (outs r) as [|cv l0] eqn:E; [ reflexivity | exfalso ].
-  destruct cv as (c,v).
-  assert (Hin : In c (ochans p)).
-  { eapply trace_out_in_ochans; [ exact Hst | exact Hw | rewrite E; left; reflexivity ]. }
-  rewrite Hoc in Hin. exact Hin.
-Qed.
-
-Theorem msgs_cancel_surplus : forall (l d : list TypeOfActions) (M N : gproc),
+Theorem msgs_cancel_surplus_disj : forall (l d : list TypeOfActions) (M N : gproc),
   gStatic M -> gStatic N ->
-  ochans ((g M) : proc) = [] ->
+  (forall c u, In (c,u) l -> ~ In c (ochans ((g M) : proc))) ->
   ((msgs (l ++ d) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
   ((msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs nil ‖ ((g N) : proc))).
 Proof.
-  intros l d M N HM HN Hoc Hpre.
+  intros l d M N HM HN Hdisj Hpre.
   destruct (msgs_accept (l ++ d) l (g M) (g N) Hpre) as (Hc1 & Hc2).
   apply msgs_sound. split.
   - intros s _. apply fw_converge_static. apply static_g. exact HN.
-  - intros s y _ Hwy Hsty.
+  - intros s yy _ Hwy Hsty.
     assert (Hdrain : ((g N) ▷ bag l)
                        ⟹[map ActOut l] ((g N) ▷ (∅ : MO (ExtAct TypeOfActions)))).
     { replace (bag l) with (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
         by (apply gmultiset.gmultiset_disj_union_right_id).
       apply bag_wt_drain. }
     simpl in Hwy.
-    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] y)
+    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] yy)
       by (eapply wt_concat; [ exact Hdrain | exact Hwy ]).
-    destruct (Hc2 (map ActOut l ++ s) y
+    destruct (Hc2 (map ActOut l ++ s) yy
                 (fw_converge_static (map ActOut l ++ s) (g M) (bag (l ++ d))
                    (static_g M HM))
                 Hbig Hsty)
       as (x & Hwx & Hstx & Hincl).
     destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
     assert (Hproj : (((g M) : proc) ▷ bag d) ⟹[[]] z).
-    { eapply (fw_drain_project (map ActOut l) (((g M) : proc) ▷ bag (l ++ d)) z Hz1).
-      - simpl. apply MuteRun_of_ochans; [ apply static_g; exact HM | exact Hoc ].
+    { eapply (fw_drain_project_on (map fst l) (map ActOut l)
+                (((g M) : proc) ▷ bag (l ++ d)) z Hz1).
+      - simpl. apply MuteOn_of_ochans; [ apply static_g; exact HM | ].
+        intros c Hc. apply in_map_iff in Hc as ((c0,u0) & Ec & Hin0).
+        simpl in Ec. subst c0. eapply Hdisj. exact Hin0.
       - apply ins_map_out.
+      - rewrite outs_map_out. intros aa Hin. apply in_map. exact Hin.
       - simpl. rewrite outs_map_out. rewrite bag_app. reflexivity. }
     exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
     simpl.
@@ -7072,7 +7394,7 @@ Qed.
 
 Corollary msgs_cancel_of_below : forall (l1 l2 : list TypeOfActions) (M N : gproc),
   gStatic M -> gStatic N ->
-  ochans ((g M) : proc) = [] ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   exists d, Permutation l1 (l2 ++ d)
          /\ ((msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs nil ‖ ((g N) : proc))).
@@ -7086,7 +7408,7 @@ Proof.
   assert (Hshift : (msgs (l2 ++ d) ‖ ((g M) : proc))
                      ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))).
   { intros t Ht. apply Hpre. apply (proj2 (must_i_cgr _ _ Hcgr)). exact Ht. }
-  exact (msgs_cancel_surplus l2 d M N HM HN Hoc Hshift).
+  exact (msgs_cancel_surplus_disj l2 d M N HM HN Hoc Hshift).
 Qed.
 
 (* ------------------------------------------------------------------ *)
@@ -7147,69 +7469,362 @@ Proof.
   - apply Forall_app. apply app_eq_nil in Ho as (Ho1 & Ho2). split; auto.
 Qed.
 
-(** The peeling itself: a **prefix** of mute stable summands is discarded,
-    whatever the rest [r] is.  Below-[𝟘] is the case [r = []]; the general
-    form is a *derivable restriction* of a stable sum to its non-mute
-    summands — which is what [grestrict] and [ax_restrict] attempt with a
-    [BadK] certificate, obtained here from a syntactic, decidable
-    criterion instead. *)
+(** The peeling itself: a **prefix** of summands meeting [DropOk] is
+    discarded, whatever the rest [r] is.  Below-[𝟘] is the case [r = []];
+    the general form is a *derivable restriction* of a sum to its
+    non-droppable summands — ce que [grestrict] et [ax_restrict]
+    cherchent à faire avec un certificat [BadK], obtenu ici par un
+    critère syntaxique et décidable. *)
 
-Lemma ax_rebuild_drop : forall (l r : list gproc),
-  Forall gStatic l -> Forall (fun a => summands a = [a]) l ->
-  Forall gStable l -> Forall (fun a => gochans a = []) l ->
+(** ** ★ LE PELAGE, AU CRITÈRE [ochans] PAR GARDE
+
+    Le pelage « muet » que ce bloc remplace exigeait [gochans a = []] de
+    chaque sommant pelé, ce qui exclut le **copycat** — dont la continuation émet, précisément
+    sur la voie de sa propre garde.  Or [ax_drop_ochans] n'a jamais
+    demandé le silence : il suffit que la continuation n'émette **que
+    sur la voie de sa garde**.
+
+    [DropOk] est ce critère, et il exclut au passage les [𝛕]-sommants et
+    les sous-sommes, ce qui rend inutiles les hypothèses de stabilité et
+    de feuille que portait la version précédente. *)
+
+Definition DropOk (a : gproc) : Prop :=
+  match a with
+  | gpr_success => True
+  | gpr_nil => True
+  | gpr_input c P => forall d, In d (ochans P) -> d = c
+  | gpr_tau _ => False
+  | gpr_choice _ _ => False
+  end.
+
+Lemma ax_rebuild_drop_ochans : forall (l r : list gproc),
+  Forall gStatic l -> Forall DropOk l ->
   ax_pre ((g (rebuild (l ++ r))) : proc) ((g (rebuild r)) : proc).
 Proof.
-  induction l as [|a l IH]; intros r HSt HLf HSb HOc; simpl.
+  induction l as [|aa l IH]; intros r HSt HOk; simpl.
   - apply ax_refl.
   - inversion HSt as [|? ? HSt1 HSt2]; subst.
-    inversion HLf as [|? ? HLf1 HLf2]; subst.
-    inversion HSb as [|? ? HSb1 HSb2]; subst.
-    inversion HOc as [|? ? HOc1 HOc2]; subst.
+    inversion HOk as [|? ? HOk1 HOk2]; subst.
     assert (IHl : ax_pre ((g (rebuild (l ++ r))) : proc) ((g (rebuild r)) : proc))
       by (apply IH; assumption).
-    destruct a as [ | | c P | P | A B ].
-    + (* ① : the only use of [ax_success_l]'s residue here *)
-      eapply ax_trans; [ apply ax_success_l | ].
+    destruct aa as [ | | c P | P | A B ]; simpl in HOk1.
+    + eapply ax_trans; [ apply ax_success_l | ].
       eapply ax_trans; [ apply ax_cgr; apply cgr_nil_choice_l | ]. exact IHl.
     + eapply ax_trans; [ apply ax_cgr; apply cgr_nil_choice_l | ]. exact IHl.
     + eapply ax_trans; [ | exact IHl ].
-      apply ax_drop_ochans.
-      * inversion HSt1; assumption.
-      * simpl in HOc1. intros d Hd. rewrite HOc1 in Hd. contradiction.
-    + (* a 𝛕-summand is excluded by stability *)
-      simpl in HSb1. contradiction.
-    + (* a leaf is never a sum: both halves are non-empty *)
-      exfalso. simpl in HLf1.
-      assert (Hlen : length (summands A ++ summands B) = 1%nat)
-        by (rewrite HLf1; reflexivity).
-      rewrite length_app in Hlen.
-      assert (HA := summands_nonempty A). assert (HB := summands_nonempty B).
-      destruct (summands A); [ exact (HA eq_refl) | ].
-      destruct (summands B); [ exact (HB eq_refl) | ].
-      simpl in Hlen. lia.
+      apply ax_drop_ochans; [ inversion HSt1; assumption | exact HOk1 ].
+    + contradiction.
+    + contradiction.
 Qed.
 
-(** …and at an arbitrary position, the summands to discard being singled
-    out by a permutation.  The two [Forall]s about [gStatic] and about
-    leaves are *not* hypotheses: they are transported from [summands M]
-    across the permutation. *)
-
-Theorem ax_gsum_drop_mute : forall (M : gproc) (l r : list gproc),
-  gStatic M -> Permutation (summands M) (l ++ r) ->
-  Forall gStable l -> Forall (fun a => gochans a = []) l ->
+Theorem ax_gsum_drop_ochans : forall (M : gproc) (l r : list gproc),
+  gStatic M -> Permutation (summands M) (l ++ r) -> Forall DropOk l ->
   ax_pre ((g M) : proc) ((g (rebuild r)) : proc).
 Proof.
-  intros M l r HM Hperm HSb HOc.
+  intros M l r HM Hperm HOk.
   assert (HSt : Forall gStatic (l ++ r))
     by (apply perm_summands_gStatic with M; assumption).
-  assert (HLf : Forall (fun a => summands a = [a]) (l ++ r)).
-  { rewrite <- Hperm. apply summands_leaves. }
   apply Forall_app in HSt as (HSt1 & _).
-  apply Forall_app in HLf as (HLf1 & _).
   eapply ax_trans; [ apply ax_cgr | ].
   - transitivity (g (rebuild (summands M))); [ apply summands_cgr | ].
     apply (rebuild_perm (summands M) (l ++ r)). exact Hperm.
-  - apply ax_rebuild_drop; assumption.
+  - apply ax_rebuild_drop_ochans; assumption.
+Qed.
+
+(** Et l'instance qui motive le critère : une somme de **copycats** est
+    dérivablement sous [𝟘], ce que le pelage muet ne pouvait pas dire. *)
+
+Lemma gCopycats_DropOk : forall M, gCopycats M -> Forall DropOk (summands M).
+Proof.
+  induction M as [ | | c P | P | M1 IH1 M2 IH2 ]; intro HM; simpl in *.
+  - repeat constructor.
+  - repeat constructor.
+  - repeat constructor. subst P. simpl. intros d [He|[]]. congruence.
+  - contradiction.
+  - destruct HM as (H1 & H2). apply Forall_app. split; [ apply IH1 | apply IH2 ];
+      assumption.
+Qed.
+
+Lemma ax_copycats_below_nil : forall M,
+  gStatic M -> gCopycats M -> ax_pre ((g M) : proc) ((g 𝟘) : proc).
+Proof.
+  intros M HM HC.
+  apply (ax_gsum_drop_ochans M (summands M) []).
+  - exact HM.
+  - rewrite app_nil_r. reflexivity.
+  - apply gCopycats_DropOk. exact HC.
+Qed.
+
+(** Le critère muet en est un cas particulier : une garde silencieuse
+    n'émet sur aucune voie, donc *a fortiori* pas hors de la sienne. *)
+
+Lemma DropOk_of_mute : forall (aa : gproc),
+  summands aa = [aa] -> gStable aa -> gochans aa = [] -> DropOk aa.
+Proof.
+  intros aa Hlf Hsb Ho. destruct aa as [ | | c P | P | A B ]; simpl in *.
+  - exact I.
+  - exact I.
+  - intros d Hd. rewrite Ho in Hd. contradiction.
+  - contradiction.
+  - exfalso.
+    assert (Hlen : length (summands A ++ summands B) = 1%nat)
+      by (rewrite Hlf; reflexivity).
+    rewrite length_app in Hlen.
+    assert (HA := summands_nonempty A). assert (HB := summands_nonempty B).
+    destruct (summands A); [ exact (HA eq_refl) | ].
+    destruct (summands B); [ exact (HB eq_refl) | ].
+    simpl in Hlen. lia.
+Qed.
+
+Lemma msgs_nil_cgr : forall (l : list TypeOfActions),
+  ((msgs l) ‖ ((g 𝟘) : proc)) ≡* (msgs l).
+Proof. intro l. apply cgr_par_nil. Qed.
+
+(** ** ★ UNE GARDE COPYCAT SUR UNE VOIE DU SAC : LA DESCENTE SUFFIT
+
+    La délivrance d'un message du sac dans une garde **copycat** rend ce
+    message aussitôt — et le choix gardé **s'engage**, donc tout le reste
+    de la somme disparaît.  L'état atteint est donc `≡*` au **sac nu**,
+    et [ax_below_cfg_descend] ferme le but sans aucune hypothèse
+    sémantique ni appel récursif.
+
+    C'est le seul endroit du développement où l'engagement du choix
+    gardé — la source de presque tous les résultats négatifs — joue **en
+    faveur** de la dérivation. *)
+
+Definition ccatg (k : ChannelData) : gproc := k ? (k ! (bvar 0) • 𝟘).
+
+Lemma ccatg_gStatic : forall k, gStatic (ccatg k).
+Proof. intro k. unfold ccatg. repeat constructor. Qed.
+
+Lemma ccatg_lts_in : forall (c : ChannelData) (u : ValueData),
+  lts ((g (ccatg c)) : proc) (ActExt (ActIn (c,u))) ((c ! u • 𝟘) : proc).
+Proof.
+  intros c u. unfold ccatg.
+  assert (E : subst_in_proc 0 u (((c ! (bvar 0) • 𝟘)) : proc) = ((c ! u • 𝟘) : proc))
+    by reflexivity.
+  rewrite <- E. apply lts_input.
+Qed.
+
+(** La forme générale : il suffit que la garde **rende** le message.  Le
+    résidu [K] de cette ré-émission remplace alors toute la somme, et il
+    est un réduit de réduit de [g M] — donc **strictement plus petit**,
+    ce qu'aucune autre route de ce développement n'offre du côté gauche. *)
+
+Lemma cgr_swap_out : forall (A B C : proc),
+  (A ‖ (B ‖ C)) ≡* ((B ‖ A) ‖ C).
+Proof.
+  intros A B C.
+  transitivity ((A ‖ B) ‖ C).
+  - symmetry. apply cgr_par_assoc.
+  - apply cgr_fullpar; [ apply cgr_par_com | apply cgr_refl ].
+Qed.
+
+(* ------------------------------------------------------------------ *)
+(*  LE REJEU D'UN RUN DU PROCESSUS À L'INTÉRIEUR D'UNE CONFIGURATION    *)
+(*                                                                     *)
+(*  Les deux descentes ci-dessus traitent un renvoi précédé de pas      *)
+(*  INTERNES.  L'écart restant était le renvoi précédé d'autres         *)
+(*  DÉLIVRANCES : le run projeté par [fw_conservation_bounded] peut     *)
+(*  consommer plusieurs messages du sac avant de rendre le premier.     *)
+(*                                                                     *)
+(*  Le théorème général le couvre : *tout* run du processus se rejoue   *)
+(*  à l'intérieur de la configuration, le sac servant ses entrées et    *)
+(*  absorbant ses sorties.  Trois pas, un par constructeur de [wt] :    *)
+(*  un [τ] passe par [lts_parR], une entrée par la délivrance           *)
+(*  ([ax_below_cfg_descend_p]), une sortie par [≡*] seul — un processus *)
+(*  qui émet EST le message à côté de son résidu                        *)
+(*  ([TransitionShapeForOutputSimplified]), donc le message rejoint le  *)
+(*  sac sans qu'aucune transition ne soit requise.                      *)
+(*                                                                     *)
+(*  La seule hypothèse est que le sac initial contienne de quoi servir  *)
+(*  toutes les entrées : les sorties ne font qu'ajouter, donc           *)
+(*  l'invariant se maintient.                                          *)
+(* ------------------------------------------------------------------ *)
+
+
+Theorem ax_cfg_replay : forall (r : trace (ExtAct TypeOfActions)) (p q : proc),
+  p ⟹[r] q ->
+  forall (l : list TypeOfActions), bag (ins r) ⊆ bag l ->
+  exists lf, bag lf ⊎ bag (ins r) = bag l ⊎ bag (outs r)
+          /\ ax_pre (msgs l ‖ p) (msgs lf ‖ q).
+Proof.
+  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | mu s x y z Hl Hwt IH];
+    intros l Hsub.
+  - exists l. split; [ reflexivity | apply ax_refl ].
+  - destruct (IH l Hsub) as (lf & Hbal & Hax).
+    exists lf. split; [ exact Hbal | ].
+    eapply ax_trans; [ | exact Hax ].
+    apply ax_tau_step. apply lts_parR. exact Hl.
+  - destruct mu as [[c v]|[c v]].
+    + simpl in Hsub |- *.
+      assert (Hin : In (c,v) l).
+      { apply bag_elem. eapply gmultiset_elem_of_subseteq; [ | exact Hsub ].
+        apply gmultiset_elem_of_disj_union. left.
+        apply gmultiset_elem_of_singleton. reflexivity. }
+      apply in_split in Hin as (l1 & l2 & Heq).
+      assert (Hperm : Permutation l ((c,v) :: (l1 ++ l2))).
+      { rewrite Heq. symmetry. apply Permutation_middle. }
+      assert (Hbl : bag l = {[+ ActOut (c,v) +]} ⊎ bag (l1 ++ l2)).
+      { rewrite (bag_perm _ _ Hperm). reflexivity. }
+      assert (Hsub0 : bag (ins s) ⊆ bag (l1 ++ l2)).
+      { rewrite Hbl in Hsub. multiset_solver. }
+      destruct (IH (l1 ++ l2) Hsub0) as (lf & Hbal & Hax).
+      exists lf. split.
+      * rewrite Hbl. multiset_solver.
+      * eapply ax_below_cfg_descend_p; [ exact Hperm | exact Hl | exact Hax ].
+    + simpl in Hsub |- *.
+      assert (Hsub1 : bag (ins s) ⊆ bag ((c,v) :: l)) by (simpl; multiset_solver).
+      destruct (IH ((c,v) :: l) Hsub1) as (lf & Hbal & Hax).
+      exists lf. split.
+      * simpl in Hbal. multiset_solver.
+      * eapply ax_trans; [ | exact Hax ].
+        apply ax_cgr.
+        transitivity (msgs l ‖ (((c ! v • 𝟘) : proc) ‖ y)).
+        -- apply cgr_fullpar; [ apply cgr_refl | ].
+           apply (TransitionShapeForOutputSimplified _ _ _ _ Hl).
+        -- simpl. apply cgr_swap_out.
+Qed.
+
+(** …et quand le run **rend exactement ce qu'il a pris**, le sac est
+    restitué et la configuration passe sous son propre résidu.  C'est la
+    forme générale dont [cfg_return_below_residue_w] est le cas d'un
+    seul message rendu tout de suite après un τ-run. *)
+
+Corollary ax_cfg_replay_balanced : forall (r : trace (ExtAct TypeOfActions))
+    (p q : proc) (l : list TypeOfActions),
+  p ⟹[r] q -> bag (ins r) ⊆ bag l -> bag (outs r) = bag (ins r) ->
+  ax_pre (msgs l ‖ p) (msgs l ‖ q).
+Proof.
+  intros r p q l Hw Hsub Hbal.
+  destruct (ax_cfg_replay r p q Hw l Hsub) as (lf & Heq & Hax).
+  rewrite Hbal in Heq.
+  assert (Hlf : bag lf = bag l) by multiset_solver.
+  eapply ax_trans; [ exact Hax | ].
+  apply ax_cgr. apply cgr_fullpar; [ | apply cgr_refl ].
+  apply bag_msgs_eq. exact Hlf.
+Qed.
+
+(** ** ★ LE REJEU ATTERRIT SUR LE SAC DE DROITE
+
+    Les deux résultats se composent exactement.  Le bilan
+    ([bag_balance_of_taufree_right]) donne un run [r] du processus gauche
+    avec [bag l1 ⊎ bag (outs r) = bag l2 ⊎ bag (ins r)] ; le rejeu
+    ([ax_cfg_replay]) le joue dans la configuration et atterrit au sac
+    [lf] avec [bag lf ⊎ bag (ins r) = bag l1 ⊎ bag (outs r)].  Les deux
+    équations donnent **[bag lf = bag l2]**.
+
+    Autrement dit : *pour une somme droite τ-libre, la configuration
+    gauche est dérivablement sous une configuration **au sac de droite**,
+    dont le processus n'émet rien.*  Les deux sacs, que rien ne reliait
+    sans critère, sont ainsi **égalisés** par une dérivation.
+
+    Ce que cela ne donne pas : le rejeu **monte** dans le préordre, donc
+    l'hypothèse sémantique ne se transporte pas sur [msgs l2 ‖ q].  C'est
+    l'obstruction structurelle habituelle, et elle est intacte. *)
+
+Corollary ax_replay_to_right_bag : forall (l1 l2 : list TypeOfActions)
+    (p : proc) (N : gproc),
+  Static p -> gStatic N ->
+  (forall z, ~ lts ((g N) : proc) τ z) ->
+  ((msgs l1 ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
+  exists q, (forall c v z, ~ lts q (ActExt (ActOut (c,v))) z)
+         /\ (forall z, ~ lts q τ z)
+         /\ ax_pre (msgs l1 ‖ p) (msgs l2 ‖ q).
+Proof.
+  intros l1 l2 p N Hp HN HstN Hpre.
+  destruct (bag_balance_of_taufree_right l1 l2 p N Hp HN HstN Hpre)
+    as (r & q & Hr & Hno & Hst & Hsub & Hbal).
+  destruct (ax_cfg_replay r p q Hr l1 Hsub) as (lf & Hlf & Hax).
+  exists q. split; [ exact Hno | ]. split; [ exact Hst | ].
+  eapply ax_trans; [ exact Hax | ].
+  apply ax_cgr. apply cgr_fullpar; [ | apply cgr_refl ].
+  apply bag_msgs_eq. multiset_solver.
+Qed.
+
+(** ** LES DESCENTES EN SONT DES INSTANCES
+
+    Un renvoi est un run à deux actions — l'entrée, puis la sortie, avec
+    des pas internes entre les deux ([wt_push_nil_left]) — et il est
+    **équilibré** : ce qui est pris est exactement ce qui est rendu.
+    Toute la famille de descentes se dérive donc du rejeu. *)
+
+Theorem cfg_return_below_residue_w :
+  forall (l l0 : list TypeOfActions) (c : ChannelData) (u : ValueData)
+         (M : gproc) (Mc Mc' K : proc),
+    Permutation l ((c,u) :: l0) ->
+    lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
+    (Mc ⟹[[]] Mc') ->
+    lts Mc' (ActExt (ActOut (c,u))) K ->
+    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ K).
+Proof.
+  intros l l0 c u M Mc Mc' K Hperm Hin Hw Hout.
+  eapply (ax_cfg_replay_balanced [ActIn (c,u); ActOut (c,u)]).
+  - eapply wt_act; [ exact Hin | ].
+    eapply wt_push_nil_left; [ exact Hw | ].
+    eapply wt_act; [ exact Hout | apply wt_nil ].
+  - simpl. rewrite (bag_perm _ _ Hperm). simpl. multiset_solver.
+  - simpl. reflexivity.
+Qed.
+
+Theorem ax_below_cfg_descend_wreturn :
+  forall (l l0 : list TypeOfActions) (c : ChannelData) (u : ValueData)
+         (M : gproc) (Mc Mc' K q : proc),
+    Permutation l ((c,u) :: l0) ->
+    lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
+    (Mc ⟹[[]] Mc') ->
+    lts Mc' (ActExt (ActOut (c,u))) K ->
+    ax_pre (msgs l ‖ K) q ->
+    ax_pre (msgs l ‖ ((g M) : proc)) q.
+Proof.
+  intros l l0 c u M Mc Mc' K q Hperm Hin Hw Hout Hax.
+  eapply ax_trans; [ | exact Hax ].
+  eapply cfg_return_below_residue_w;
+    [ exact Hperm | exact Hin | exact Hw | exact Hout ].
+Qed.
+
+(** Et le renvoi *immédiat* est le cas [wt_nil]. *)
+
+Theorem ax_below_cfg_descend_return :
+  forall (l l0 : list TypeOfActions) (c : ChannelData) (u : ValueData)
+         (M : gproc) (Mc K q : proc),
+    Permutation l ((c,u) :: l0) ->
+    lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
+    lts Mc (ActExt (ActOut (c,u))) K ->
+    ax_pre (msgs l ‖ K) q ->
+    ax_pre (msgs l ‖ ((g M) : proc)) q.
+Proof.
+  intros l l0 c u M Mc K q Hperm Hin Hout Hax.
+  eapply ax_below_cfg_descend_wreturn;
+    [ exact Hperm | exact Hin | apply wt_nil | exact Hout | exact Hax ].
+Qed.
+
+Theorem cfg_return_below_residue :
+  forall (l l0 : list TypeOfActions) (c : ChannelData) (u : ValueData)
+         (M : gproc) (Mc K : proc),
+    Permutation l ((c,u) :: l0) ->
+    lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
+    lts Mc (ActExt (ActOut (c,u))) K ->
+    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ K).
+Proof.
+  intros l l0 c u M Mc K Hperm Hin Hout.
+  eapply cfg_return_below_residue_w;
+    [ exact Hperm | exact Hin | apply wt_nil | exact Hout ].
+Qed.
+
+(** …et le cas copycat en est l'instance [K := 𝟘], sans plus aucune
+    hypothèse de staticité. *)
+
+Theorem cfg_copycat_guard_below_bag :
+  forall (l l0 : list TypeOfActions) (c : ChannelData) (u : ValueData)
+         (M : gproc) (r : list gproc),
+    Permutation l ((c,u) :: l0) ->
+    Permutation (summands M) ((ccatg c) :: r) ->
+    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  intros l l0 c u M r Hperm Hsum.
+  eapply cfg_return_below_residue; [ exact Hperm | | apply lts_output ].
+  eapply summand_lts; [ rewrite Hsum; left; reflexivity | apply ccatg_lts_in ].
 Qed.
 
 (** The [𝟘] case: discard *everything*. *)
@@ -7219,11 +7834,14 @@ Corollary ax_gsum_below_nil : forall (M : gproc),
   ax_pre ((g M) : proc) ((g (𝟘 : gproc)) : proc).
 Proof.
   intros M HM HSb HOc.
-  apply (ax_gsum_drop_mute M (summands M) []).
+  apply (ax_gsum_drop_ochans M (summands M) []).
   - exact HM.
   - rewrite app_nil_r. reflexivity.
-  - apply gStable_summands; exact HSb.
-  - apply gochans_summands; exact HOc.
+  - assert (HLf := summands_leaves M).
+    assert (HSb' := gStable_summands M HSb).
+    assert (HOc' := gochans_summands M HOc).
+    rewrite Forall_forall in HLf, HSb', HOc' |- *.
+    intros aa Hin. apply DropOk_of_mute; auto.
 Qed.
 
 (* ------------------------------------------------------------------ *)
@@ -7504,7 +8122,7 @@ Qed.
 Theorem completeness_cfg_split_no_output :
   forall (l1 l2 : list TypeOfActions) (M N : gproc),
   gStatic M -> gStatic N ->
-  ochans ((g M) : proc) = [] ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   (forall z, ~ lts ((g N) : proc) τ z) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (forall d, Permutation l1 (l2 ++ d) ->
@@ -7540,7 +8158,8 @@ Qed.
 (* ------------------------------------------------------------------ *)
 
 Theorem ax_below_cfg_glb_split : forall (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> ochans ((g M) : proc) = [] ->
+  gStatic M -> gStatic N ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (exists q0, lts (msgs l2 ‖ ((g N) : proc)) τ q0) ->
   (forall q', lts (msgs l2 ‖ ((g N) : proc)) τ q' ->
@@ -7552,7 +8171,7 @@ Theorem ax_below_cfg_glb_split : forall (l1 l2 : list TypeOfActions) (M N : gpro
   ax_pre (msgs l1 ‖ ((g M) : proc)) (msgs l2 ‖ ((g N) : proc)).
 Proof.
   intros l1 l2 M N HM HN Hoc Hpre Hex Htau Hin Hrec.
-  assert (Hsub := bag_incl_of_below l1 l2 M N HM HN Hoc Hpre).
+  assert (Hsub := bag_incl_of_below_disj l1 l2 M N HM HN Hoc Hpre).
   apply ax_glb_tau; [ exact Hex | exact Htau | exact Hin | | ].
   - intros c v q'' Hq''.
     destruct (cfg_out_inv l2 N c v q'' Hq'') as (l0 & Hperm & _).
@@ -7779,7 +8398,7 @@ Qed.
 Theorem completeness_cfg_split_ok :
   forall (LOk Ok : proc -> Prop) (l1 l2 : list TypeOfActions) (M N : gproc),
   gStatic M -> gStatic N ->
-  ochans ((g M) : proc) = [] ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   (forall z, ~ lts ((g N) : proc) τ z) ->
   (forall l p, LOk p -> LOk (msgs l ‖ p)) ->
   (forall (c : ChannelData) (v : ValueData) (p : proc),
@@ -7803,7 +8422,7 @@ Proof.
   assert (Hshift : (msgs (l2 ++ d) ‖ ((g M) : proc))
                      ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))).
   { intros t Ht. apply Hpre. apply (proj2 (must_i_cgr _ _ Hcgr)). exact Ht. }
-  assert (Hcut := msgs_cancel_surplus l2 d M N HM HN Hoc Hshift).
+  assert (Hcut := msgs_cancel_surplus_disj l2 d M N HM HN Hoc Hshift).
   assert (Hcut' : (msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc)).
   { intros t Ht. apply (proj2 (must_i_cgr _ _ Hnil)). apply Hcut. exact Ht. }
   assert (Hsem : (((c ! v • 𝟘) : proc) ‖ (msgs d ‖ ((g M) : proc)))
@@ -7822,7 +8441,8 @@ Qed.
 
 Theorem completeness_cfg_glb_ok :
   forall (LOk Ok : proc -> Prop) (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> ochans ((g M) : proc) = [] ->
+  gStatic M -> gStatic N ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   (forall l p, LOk p -> LOk (msgs l ‖ p)) ->
   (forall (c : ChannelData) (v : ValueData) (p : proc),
      LOk p -> LOk (((c ! v • 𝟘) : proc) ‖ p)) ->
@@ -7883,7 +8503,8 @@ Qed.
 
 Theorem completeness_cfg_mute_ok :
   forall (LOk Ok : proc -> Prop) (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> ochans ((g M) : proc) = [] ->
+  gStatic M -> gStatic N ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   (forall l p, LOk p -> LOk (msgs l ‖ p)) ->
   (forall (c : ChannelData) (v : ValueData) (p : proc),
      LOk p -> LOk (((c ! v • 𝟘) : proc) ‖ p)) ->
@@ -7911,7 +8532,8 @@ Qed.
 Corollary completeness_cfg_mute_dom :
   forall (q0 : proc) (l1 l2 : list TypeOfActions) (M N : gproc),
   Static q0 -> domsim q0 (msgs l2 ‖ ((g N) : proc)) ->
-  gStatic M -> gStatic N -> ochans ((g M) : proc) = [] ->
+  gStatic M -> gStatic N ->
+  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (forall p' q', Static p' -> Static q' -> DomOk q0 q' ->
      p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
@@ -7953,6 +8575,9 @@ Proof.
   destruct (normal_form_nores_sim q Hq Hnr) as (l2 & N & HN & Hd).
   eapply ax_trans; [ | exact (ds_r Hd) ].
   eapply completeness_cfg_mute_dom; try eassumption.
+  - intros c u _ Hin.
+    assert (Hnil : In c (@nil ChannelData)) by (rewrite <- Hoc; exact Hin).
+    contradiction.
   - intros t Ht. apply (soundness_ax _ _ (ds_l Hd)). apply Hpre. exact Ht.
   - intros p' q' Hp' Hq' Hok Hpre'.
     eapply ax_below_of_domok; eassumption.
@@ -8432,6 +9057,9 @@ Proof.
   destruct (normal_form_deep q Hq Hnr) as (l2 & N & HN & HNd & Hd).
   eapply ax_trans; [ | exact (ds_r Hd) ].
   apply (completeness_cfg_mute_ok MuteSem (DomOkD q) l1 l2 M N); try assumption.
+  - intros c u _ Hin.
+    assert (Hnil : In c (@nil ChannelData)) by (rewrite <- Hoc; exact Hin).
+    contradiction.
   - intros l p Hp. apply MuteSem_bag. exact Hp.
   - intros c v p Hp. apply MuteSem_msg. exact Hp.
   - apply MuteSem_gsum; assumption.
@@ -9041,10 +9669,10 @@ Qed.
     The bag layer is the whole residue: Phase A ([ax_phaseA_direct] with
     [bigsum_certificate]) and the bare-sum step
     ([completeness_gsum_step_gen]) need **no** mutity — it enters only in
-    [bag_incl_of_below] and [msgs_cancel_surplus], i.e. in relating the
-    two bags.
+    [bag_incl_of_below_disj] and [msgs_cancel_surplus_disj], i.e. in
+    relating the two bags.
 
-    And [bag_incl_of_below]'s hypothesis is too strong for a reason worth
+    And even the bag-relative criterion is too strong for a reason worth
     naming: a left that emits only *after* a τ, like [g (𝛕 • (c!v•𝟘))],
     sits below [c!v•𝟘] while carrying an empty bag, so the *syntactic*
     inclusion [bag l2 ⊆ bag l1] genuinely fails.  What does not fail is
@@ -9144,8 +9772,8 @@ Qed.
         weak_out_of_below : p ⊑ₘᵤₛₜᵢ q -> q ⟶[(c,v)!] q' ->
           ∃ p1, p ⟹[[]] p1 ∧ emits_on c p1
 
-    This is the correct mutity-free replacement for [bag_incl_of_below]'s
-    first half, and it is exactly the shape a weak-output rule's existence
+    This is the correct criterion-free replacement for
+    [bag_incl_of_below_disj]'s first half, and it is exactly the shape a weak-output rule's existence
     premise needs. *)
 
 Lemma list_disj : forall {X : Type} (L : list X) (A B : X -> Prop),
@@ -9564,8 +10192,9 @@ Qed.
 
     - [ax_below_cfg_glb_split] takes the right apart the same way, but it
       discharges [ax_glb_tau]'s *strong* output premise through
-      [bag_incl_of_below], which needs the left to be **mute**
-      ([ochans (g M) = []]) *and* to be a configuration [msgs l ‖ g M];
+      [bag_incl_of_below_disj], which needs the left's emissions to avoid
+      the **right bag's** channels *and* the left to be a configuration
+      [msgs l ‖ g M];
     - [completeness_gsum_step_gen] has no mutity requirement but needs the
       right to be a **guarded sum**, where the output premises are vacuous
       ([gsum_no_out]).
@@ -10421,6 +11050,28 @@ Qed.
     Note the criterion is on the **sum** only: the left's own pending
     messages are allowed, since they go to the bag and never to [M1]. *)
 
+(** La décision du critère relatif au sac : un canal du sac est-il une
+    voie d'émission de la somme gauche ?  C'est [VACCS_Bad.MeetsBag] à un
+    [proc] quelconque, et [VACCS_Bad.meetsbag_dec] en est l'instance.  Écrite à la main plutôt que par
+    [Exists_dec], [Exists_exists] rendant [In] ou [∈] selon la portée —
+    piège déjà rencontré. *)
+
+Lemma bag_meets_dec : forall (l : list TypeOfActions) (P : proc),
+  (exists c u, In (c,u) l /\ In c (ochans P))
+  \/ (forall c u, In (c,u) l -> ~ In c (ochans P)).
+Proof.
+  induction l as [|a l IH]; intros P.
+  - right. intros c u Hin. inversion Hin.
+  - destruct a as (c0,u0).
+    destruct (in_dec (fun x y => decide (x = y)) c0 (ochans P)) as [Hin|Hno].
+    + left. exists c0, u0. split; [ left; reflexivity | exact Hin ].
+    + destruct (IH P) as [(c & u & Hc & Hoc)|Hall].
+      * left. exists c, u. split; [ right; exact Hc | exact Hoc ].
+      * right. intros c u [Heq|Hin] Hoc.
+        -- injection Heq as Hc Hu. apply Hno. rewrite Hc. exact Hoc.
+        -- eapply Hall; eassumption.
+Qed.
+
 Theorem completeness_of_emitting_left_step :
   (forall (q : proc) n1 l1 M1 n l M, Static q ->
      gStatic M1 -> gStatic M ->
@@ -10430,7 +11081,12 @@ Theorem completeness_of_emitting_left_step :
      (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
      (n <> 0%nat -> untrappedB n l = false) ->
      (n1 <> 0%nat -> untrappedB n1 l1 = false) ->
-     (n = 0%nat -> n1 = 0%nat -> ochans ((g M1) : proc) <> []) ->
+     (n = 0%nat -> n1 = 0%nat ->
+        exists c u, In (c,u) l /\ In c (ochans ((g M1) : proc))) ->
+     (n = 0%nat -> n1 = 0%nat ->
+        exists qq, (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
+                /\ (forall z, ~ lts qq τ z)
+                /\ ax_pre (msgs l1 ‖ ((g M1) : proc)) (msgs l ‖ qq)) ->
      (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
         p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
@@ -10440,7 +11096,17 @@ Proof.
   intros Hstep. apply completeness_of_trapped_both_step.
   intros q n1 l1 M1 n l M Hq HM1 HM Hsim Hno Hne Hdisj Htr Htr1 Hsem HR.
   destruct n as [|n']; [ destruct n1 as [|n1'] | ].
-  - destruct (ochans ((g M1) : proc)) eqn:Hoc.
+  - destruct (bag_meets_dec l ((g M1) : proc)) as [(c & u & Hcl & Hco)|Hall].
+    + assert (HtauM : forall z, ~ lts ((g M) : proc) τ z).
+      { intros z Hz. eapply (Hno (msgs l ‖ z)). apply lts_parR. exact Hz. }
+      assert (Hsem2 : (msgs l1 ‖ ((g M1) : proc))
+                        ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc))).
+      { intros t Ht. apply (soundness_ax _ _ (ds_l Hsim)). apply Hsem. exact Ht. }
+      apply (Hstep q 0%nat l1 M1 0%nat l M); try assumption.
+      * intros _ _. exists c, u. split; [ exact Hcl | exact Hco ].
+      * intros _ _.
+        exact (ax_replay_to_right_bag l1 l ((g M1) : proc) M
+                 (static_g M1 HM1) HM HtauM Hsem2).
     + assert (Heq : NF 0%nat l M = (msgs l ‖ ((g M) : proc))) by reflexivity.
       assert (Heq1 : NF 0%nat l1 M1 = (msgs l1 ‖ ((g M1) : proc))) by reflexivity.
       rewrite Heq, Heq1.
@@ -10451,19 +11117,37 @@ Proof.
       apply (completeness_cfg_mute_dom q l1 l M1 M); try assumption.
       intros p' q' Hp' Hq' Hok Hs.
       eapply ax_below_of_domok; eassumption.
-    + apply (Hstep q 0%nat l1 M1 0%nat l M); try assumption.
-      intros _ _. rewrite Hoc. discriminate.
   - apply (Hstep q (S n1') l1 M1 0%nat l M); try assumption.
-    intros _ Hc. discriminate.
+    + intros _ Hc. discriminate.
+    + intros _ Hc. discriminate.
   - apply (Hstep q n1 l1 M1 (S n') l M); try assumption.
-    intro Hc. discriminate.
+    + intro Hc. discriminate.
+    + intro Hc. discriminate.
 Qed.
 
 (** ** THE RESIDUE, AS A SINGLE NAMED OBLIGATION
 
     Everything above is a chain of reductions; [HardResidue] is what it
     all bottoms out on, and [completeness_of_residue] is the statement
-    that nothing else is missing. *)
+    that nothing else is missing.
+
+    Its last condition is **bag-relative**: not "the left sum can emit"
+    but "it can emit on a channel of the **right bag**" — which is
+    exactly [VACCS_Bad.MeetsBag l M1], the criterion the configuration
+    dichotomy [VACCS_Bad.cfg_derivable_or_hard_nc] uses.  Anything the
+    left emits *outside* the right's bag is now closed, by
+    [completeness_cfg_mute_dom] at its bag-relative criterion.
+
+    Sa **dernière** condition n'en est pas une : c'est un *cadeau*.  Au
+    cas sans bloc, la droite étant stable, [ax_replay_to_right_bag]
+    fournit gratuitement un [qq] **τ-stable et non émetteur** tel que
+    [⊢ msgs l1 ‖ g M1 ⊑ msgs l ‖ qq] — donc au **sac de droite**.  Celui
+    qui attaque le résidu part ainsi d'une comparaison à sacs **égaux**
+    dont le membre gauche ne peut ni bouger seul ni émettre.
+
+    Ce que ce cadeau ne contient pas, et c'est tout le problème :
+    l'hypothèse sémantique ne se transporte **pas** sur [msgs l ‖ qq],
+    le rejeu montant dans le préordre. *)
 
 Definition HardResidue : Prop :=
   forall (q : proc) n1 l1 M1 n l M, Static q ->
@@ -10474,7 +11158,12 @@ Definition HardResidue : Prop :=
      (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
      (n <> 0%nat -> untrappedB n l = false) ->
      (n1 <> 0%nat -> untrappedB n1 l1 = false) ->
-     (n = 0%nat -> n1 = 0%nat -> ochans ((g M1) : proc) <> []) ->
+     (n = 0%nat -> n1 = 0%nat ->
+        exists c u, In (c,u) l /\ In c (ochans ((g M1) : proc))) ->
+     (n = 0%nat -> n1 = 0%nat ->
+        exists qq, (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
+                /\ (forall z, ~ lts qq τ z)
+                /\ ax_pre (msgs l1 ‖ ((g M1) : proc)) (msgs l ‖ qq)) ->
      (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
         p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
@@ -11079,9 +11768,10 @@ Qed.
 
 (** * A DELIMITATION: THE TWO BAGS NEED NOT BE RELATED AT ALL
 
-    [bag_incl_of_below] gives [bag l ⊆ bag l1] under the **mute**
-    criterion [ochans (g M1) = []], and the whole [msgs_cancel] family
-    rests on it.  The criterion is not slack: without it the right's bag
+    [bag_incl_of_below_disj] gives [bag l ⊆ bag l1] under the bag-relative
+    criterion (the left's emissions avoid the right bag's channels), and
+    the whole [msgs_cancel] family rests on it.  The criterion is not
+    slack: without it the right's bag
     can be strictly larger, because the left's *process* may supply the
     missing message.
 
@@ -11137,6 +11827,20 @@ Proof.
     assert (Hm2 : ActOut (c,v) ∈ bag (@nil TypeOfActions))
       by (eapply gmultiset_elem_of_subseteq; eassumption).
     simpl in Hm2. eapply gmultiset_not_elem_of_empty. exact Hm2.
+Qed.
+
+(** …et le témoin **exerce** le terme correcteur : l'inclusion y échoue,
+    donc [emit_of_bag_incl_failure] impose au processus gauche d'émettre —
+    ce qu'il fait, après son [𝛕]. *)
+
+Corollary bag_incl_correction_is_needed : forall (c : ChannelData) (v : ValueData),
+  exists r q, ((g (𝛕 • ((c ! v • 𝟘) : proc))) : proc) ⟹[r] q /\ outs r <> [].
+Proof.
+  intros c v.
+  destruct (bag_incl_fails_without_mute c v) as (Hpre & _ & Hno).
+  eapply (emit_of_bag_incl_failure (@nil TypeOfActions) [(c,v)]
+            (𝛕 • ((c ! v • 𝟘) : proc)) (𝟘 : gproc));
+    [ repeat constructor | constructor | exact Hpre | exact Hno ].
 Qed.
 
 (** * THE TWO SPECIES OF τ OF A CONFIGURATION, NAMED
@@ -11613,6 +12317,334 @@ Proof.
     + apply (ax_par (c ! v • 𝟘) (c ! v • 𝟘) (ccat c) ((g (𝟘 : gproc)) : proc));
         [ apply ax_refl | apply ax_ccat_l ].
     + apply ax_cgr. simpl. apply cgr_refl.
+Qed.
+
+(** ** LE REJEU EST UN τ-RUN DE LA CONFIGURATION — donc un pas qui MONTE
+
+    [ax_cfg_replay] rejoue un run du processus à l'intérieur de la
+    configuration.  Le fait structurel qui explique *pourquoi* ce rejeu
+    ne peut jamais fermer le but est que ce rejeu est, au niveau du LTS,
+    un simple **τ-run de la configuration** (à [≡*] près) :
+
+    - un [τ] du processus est un [τ] de la configuration ([lts_parR]) ;
+    - une entrée est une **délivrance**, donc encore un [τ]
+      ([cfg_deliver_step_p]) ;
+    - et une sortie ne coûte **aucune** transition : un processus qui
+      émet EST le message à côté de son résidu
+      ([TransitionShapeForOutputSimplified]), donc le message rejoint le
+      sac par [≡*] seul.
+
+    Conséquence : l'état atteint est un τ-successeur, donc il passe
+    *plus* de tests que la configuration de départ ([must_i_tau_below]).
+    Le rejeu est un pas qui **monte** dans le préordre, et
+    [tau_successor_cannot_be_chosen] interdit de choisir un
+    τ-successeur en général — c'est l'explication uniforme du fait que
+    ni [ax_cfg_replay] ni [ax_replay_to_right_bag] ne transportent
+    l'hypothèse sémantique sur leur cible. *)
+
+Theorem cfg_replay_tau_run : forall (r : trace (ExtAct TypeOfActions)) (p q : proc),
+  p ⟹[r] q ->
+  forall (l : list TypeOfActions), bag (ins r) ⊆ bag l ->
+  exists lf z, bag lf ⊎ bag (ins r) = bag l ⊎ bag (outs r)
+            /\ (msgs l ‖ p) ⟹[[]] z
+            /\ z ≡* (msgs lf ‖ q).
+Proof.
+  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | mu s x y z Hl Hwt IH];
+    intros l Hsub.
+  - exists l, (msgs l ‖ x).
+    split; [ reflexivity | split; [ apply wt_nil | apply cgr_refl ]].
+  - destruct (IH l Hsub) as (lf & w & Hbal & Hrun & Hc).
+    exists lf, w. split; [ exact Hbal | split; [ | exact Hc ]].
+    assert (Hstep : lts (msgs l ‖ x) τ (msgs l ‖ y)) by (apply lts_parR; exact Hl).
+    eapply wt_tau; [ exact Hstep | exact Hrun ].
+  - destruct mu as [[c v]|[c v]].
+    + simpl in Hsub |- *.
+      assert (Hin : In (c,v) l).
+      { apply bag_elem. eapply gmultiset_elem_of_subseteq; [ | exact Hsub ].
+        apply gmultiset_elem_of_disj_union. left.
+        apply gmultiset_elem_of_singleton. reflexivity. }
+      apply in_split in Hin as (l1 & l2 & Heq).
+      assert (Hperm : Permutation l ((c,v) :: (l1 ++ l2))).
+      { rewrite Heq. symmetry. apply Permutation_middle. }
+      assert (Hbl : bag l = {[+ ActOut (c,v) +]} ⊎ bag (l1 ++ l2)).
+      { rewrite (bag_perm _ _ Hperm). reflexivity. }
+      assert (Hsub0 : bag (ins s) ⊆ bag (l1 ++ l2)).
+      { rewrite Hbl in Hsub. multiset_solver. }
+      destruct (IH (l1 ++ l2) Hsub0) as (lf & w & Hbal & Hrun & Hc).
+      destruct (cfg_deliver_step_p l (l1 ++ l2) c v x y Hperm Hl) as (rr & Hrr & Hcrr).
+      destruct (cgr_wt_transfer [] _ rr _ (cgr_symm _ _ _ Hcrr) Hrun) as (w' & Hw' & Hcw').
+      exists lf, w'. split; [ rewrite Hbl; multiset_solver | split ].
+      * eapply wt_tau; [ exact Hrr | exact Hw' ].
+      * transitivity w; [ apply cgr_symm; exact Hcw' | exact Hc ].
+    + simpl in Hsub |- *.
+      assert (Hsub1 : bag (ins s) ⊆ bag ((c,v) :: l)) by (simpl; multiset_solver).
+      destruct (IH ((c,v) :: l) Hsub1) as (lf & w & Hbal & Hrun & Hc).
+      assert (Hcg : (msgs l ‖ x) ≡* (msgs ((c,v) :: l) ‖ y)).
+      { transitivity (msgs l ‖ (((c ! v • 𝟘) : proc) ‖ y)).
+        - apply cgr_fullpar; [ apply cgr_refl | ].
+          apply (TransitionShapeForOutputSimplified _ _ _ _ Hl).
+        - simpl. apply cgr_swap_out. }
+      destruct (cgr_wt_transfer [] _ (msgs l ‖ x) _ (cgr_symm _ _ _ Hcg) Hrun)
+        as (w' & Hw' & Hcw').
+      exists lf, w'. split; [ simpl in Hbal; multiset_solver | split ].
+      * exact Hw'.
+      * transitivity w; [ apply cgr_symm; exact Hcw' | exact Hc ].
+Qed.
+
+(** Et pour un run **équilibré**, le sac est restitué : la configuration
+    τ-atteint (à [≡*] près) son propre résidu.  C'est la lecture LTS de
+    [ax_cfg_replay_balanced], et elle dit exactement pourquoi cette
+    dérivation ne se compose pas avec l'hypothèse sémantique. *)
+
+Corollary cfg_replay_balanced_tau : forall (r : trace (ExtAct TypeOfActions))
+    (p q : proc) (l : list TypeOfActions),
+  p ⟹[r] q -> bag (ins r) ⊆ bag l -> bag (outs r) = bag (ins r) ->
+  exists z, (msgs l ‖ p) ⟹[[]] z /\ z ≡* (msgs l ‖ q).
+Proof.
+  intros r p q l Hw Hsub Hbal.
+  destruct (cfg_replay_tau_run r p q Hw l Hsub) as (lf & z & Heq & Hrun & Hc).
+  rewrite Hbal in Heq.
+  assert (Hlf : bag lf = bag l) by multiset_solver.
+  exists z. split; [ exact Hrun | ].
+  transitivity (msgs lf ‖ q); [ exact Hc | ].
+  apply cgr_fullpar; [ | apply cgr_refl ].
+  apply bag_msgs_eq. exact Hlf.
+Qed.
+
+(** ** ★ LE RÉSIDU SE RAMÈNE À CHOISIR UN RÉSIDU D'ÉMISSION
+
+    Le rejeu ([ax_cfg_replay]) est un pas qui **monte**
+    ([cfg_replay_tau_run]), donc il ne compose pas avec l'hypothèse
+    sémantique.  Il existe pourtant une descente qui, elle, fait
+    décroître **le sac de droite** — et c'est la seule route du
+    développement qui décroisse du côté de la cible sans rien supposer
+    de la forme du membre gauche.
+
+    Le pas est élémentaire : un τ-run est un pas vers le haut
+    ([ax_tau_run]), et un processus qui émet **est** le message à côté
+    de son résidu ([TransitionShapeForOutputSimplified]).  Donc si l'un
+    des résidus d'émission faible du membre gauche, remis à côté de son
+    message, est sous la cible, le membre gauche l'est aussi. *)
+
+Theorem ax_below_of_out_residue : forall (p p1 p'' q : proc) c v,
+  p ⟹[[]] p1 -> lts p1 (ActExt (ActOut (c,v))) p'' ->
+  ax_pre ((c ! v • 𝟘) ‖ p'') q ->
+  ax_pre p q.
+Proof.
+  intros p p1 p'' q c v Hrun Hout Hax.
+  eapply ax_trans; [ apply ax_tau_run; exact Hrun | ].
+  eapply ax_trans; [ | exact Hax ].
+  apply ax_cgr. apply (TransitionShapeForOutputSimplified _ _ _ _ Hout).
+Qed.
+
+(** Lu à une configuration : le message émis rejoint le **sac de la
+    cible**, donc la comparaison se poursuit à un sac strictement plus
+    petit. *)
+
+Corollary ax_below_cfg_of_out_residue :
+  forall (l l0 : list TypeOfActions) c v (p p1 p'' Q : proc),
+  Permutation l ((c,v) :: l0) ->
+  p ⟹[[]] p1 -> lts p1 (ActExt (ActOut (c,v))) p'' ->
+  ax_pre p'' (msgs l0 ‖ Q) ->
+  ax_pre p (msgs l ‖ Q).
+Proof.
+  intros l l0 c v p p1 p'' Q Hperm Hrun Hout Hax.
+  eapply ax_below_of_out_residue; [ exact Hrun | exact Hout | ].
+  eapply ax_trans.
+  - apply (ax_par ((c ! v • 𝟘)) ((c ! v • 𝟘)) p'' (msgs l0 ‖ Q));
+      [ apply ax_refl | exact Hax ].
+  - apply ax_cgr.
+    transitivity (msgs ((c,v) :: l0) ‖ Q).
+    + simpl. symmetry. apply cgr_par_assoc.
+    + apply cgr_fullpar; [ | apply cgr_refl ].
+      apply msgs_perm. symmetry. exact Hperm.
+Qed.
+
+(** …et la prémisse récursive de [HardResidue] décharge le pas restant :
+    le résidu de la cible est atteint par une **transition** de la forme
+    normale, donc [domsim] le mesure contre le [q] d'origine.  Il ne
+    reste donc, du cas à sac non vide, que le **choix** d'un résidu
+    d'émission faible du membre gauche. *)
+
+Theorem ax_below_cfg_of_out_choice :
+  forall (q p : proc) (l l0 : list TypeOfActions) c v (M : gproc),
+    Static q -> Static p -> gStatic M ->
+    domsim q (msgs l ‖ ((g M) : proc)) ->
+    Permutation l ((c,v) :: l0) ->
+    (exists p1 p'', p ⟹[[]] p1
+                 /\ lts p1 (ActExt (ActOut (c,v))) p''
+                 /\ p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l0 ‖ ((g M) : proc))) ->
+    (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
+       p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
+    ax_pre p (msgs l ‖ ((g M) : proc)).
+Proof.
+  intros q p l l0 c v M Hq Hp HM Hdom Hperm (p1 & p'' & Hrun & Hout & Hsem) HR.
+  destruct (cfg_out_of_perm l l0 c v ((g M) : proc) Hperm) as (r0 & Hr0 & Hc0).
+  destruct (ds_s Hdom _ _ Hr0) as (r & Hlr & Hdr).
+  assert (Hsr : Static r) by (eapply Static_preserved_by_lts; [ exact Hq | exact Hlr ]).
+  assert (Hlt : (size r < size q)%nat)
+    by (eapply Static_lts_decrease; [ exact Hq | exact Hlr ]).
+  assert (Hp1 : Static p1) by (eapply Static_preserved_by_wt; [ exact Hp | exact Hrun ]).
+  assert (Hp2 : Static p'') by (eapply Static_preserved_by_lts; [ exact Hp1 | exact Hout ]).
+  assert (Hsem2 : p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ r).
+  { intros t Ht. apply (soundness_ax _ _ (ds_r Hdr)).
+    apply (proj1 (must_i_cgr _ _ Hc0)). apply Hsem. exact Ht. }
+  assert (Hax : ax_pre p'' r) by (apply HR; assumption).
+  eapply ax_below_cfg_of_out_residue;
+    [ exact Hperm | exact Hrun | exact Hout | ].
+  eapply ax_trans; [ exact Hax | ].
+  eapply ax_trans; [ exact (ds_l Hdr) | apply ax_cgr; exact Hc0 ].
+Qed.
+
+(** Le principe de choix correspondant, sous sa forme la plus nette.  La
+    sémantique donne bien que le membre gauche **émet faiblement** ce que
+    la cible émet ([weak_out_of_below], [res_list_v_nonempty]), et que le
+    **choix interne de tous** ses résidus est sous le résidu de la cible
+    ([ichoice_residues_below]) ; ce qu'elle ne donne pas est qu'**un**
+    résidu le soit — l'alternation ∀∃ habituelle, ici sous sa forme la
+    plus petite : elle ne porte plus sur un état témoin quelconque mais
+    sur un résidu d'émission, à un sac strictement plus petit.
+
+    Noter que les contre-exemples du dossier ne la réfutent pas : ils
+    interdisent de choisir un **τ-successeur**
+    ([tau_successor_cannot_be_chosen], [no_delivery_is_reversible]), pas
+    un résidu d'émission.  Sur [MCert] — le témoin de la branche
+    [SelfRetBag] — le bon choix existe et c'est celui que
+    [cfg_copycat_guard_below_bag] emprunte : délivrer le message dans la
+    garde copycat, qui le rend, puis l'émettre ; le résidu est [𝟘]. *)
+
+Definition OutChoice : Prop :=
+  forall (p : proc) (l l0 : list TypeOfActions) c v (M : gproc),
+    Static p -> gStatic M -> Permutation l ((c,v) :: l0) ->
+    p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc)) ->
+    exists p1 p'', p ⟹[[]] p1
+                /\ lts p1 (ActExt (ActOut (c,v))) p''
+                /\ p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l0 ‖ ((g M) : proc)).
+
+Corollary ax_below_cfg_of_OutChoice : OutChoice ->
+  forall (q p : proc) (l : list TypeOfActions) c v l0 (M : gproc),
+    Static q -> Static p -> gStatic M ->
+    domsim q (msgs l ‖ ((g M) : proc)) ->
+    Permutation l ((c,v) :: l0) ->
+    p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc)) ->
+    (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
+       p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
+    ax_pre p (msgs l ‖ ((g M) : proc)).
+Proof.
+  intros HC q p l c v l0 M Hq Hp HM Hdom Hperm Hsem HR.
+  eapply ax_below_cfg_of_out_choice;
+    [ exact Hq | exact Hp | exact HM | exact Hdom | exact Hperm | | exact HR ].
+  apply (HC p l l0 c v M Hp HM Hperm Hsem).
+Qed.
+
+(** ** UN MESSAGE EN ATTENTE REND SOURD À SA PROPRE VOIE
+
+    Un processus **τ-bloqué** qui peut émettre sur [c] refuse toute
+    entrée sur [c] : sinon le message et la garde se synchroniseraient.
+    C'est immédiat une fois l'asynchronie utilisée — un processus qui
+    émet **est** le message à côté de son résidu
+    ([TransitionShapeForOutputSimplified]) — et il faut y ajouter la
+    généricité en valeur des entrées ([lts_in_value_swap]) : le message
+    porte [w], la garde offre [v], et elles ne se rencontrent que parce
+    qu'une garde d'entrée reçoit **à toute valeur**. *)
+
+Lemma stuck_emit_refuses_in : forall (u u' z : proc) c w v,
+  (forall x, ~ lts u τ x) ->
+  lts u (ActExt (ActOut (c,w))) u' ->
+  ~ lts u (ActExt (ActIn (c,v))) z.
+Proof.
+  intros u u' z c w v Hst Hout Hin.
+  assert (Hc : u ≡* (((c ! w • 𝟘) : proc) ‖ u'))
+    by (apply (TransitionShapeForOutputSimplified _ _ _ _ Hout)).
+  destruct (cgr_lts_transfer u _ _ _ Hc Hin) as (z' & Hz' & _).
+  inversion Hz'; subst.
+  - inversion H3.
+  - destruct (lts_in_value_swap u' _ q2 H3 c v w eq_refl) as (q3 & Hq3).
+    assert (Htau : lts (((c ! w • 𝟘) : proc) ‖ u') τ
+                       (((g (𝟘 : gproc)) : proc) ‖ q3))
+      by (eapply lts_comL; [ apply lts_output | exact Hq3 ]).
+    destruct (cgr_lts_transfer _ u _ _ (cgr_symm _ _ _ Hc) Htau) as (x & Hx & _).
+    eapply Hst. exact Hx.
+Qed.
+
+(** Lu à une configuration : un client **τ-bloqué qui porte un message
+    sur [c] refuse [c]**, à toute valeur.  Comparer
+    [stable_cfg_refuses_bag], qui dit la même chose de la *composante
+    processus* d'une somme gardée ; celle-ci porte sur la configuration
+    entière, avec un processus quelconque, et à toute valeur.
+
+    C'est la raison structurelle pour laquelle les tentatives de
+    contre-exemple **à l'intérieur du résidu** échouent : [MeetsBag]
+    force la somme gauche à émettre sur une voie du **sac de droite**,
+    et un client τ-bloqué qui porte déjà ce message ne peut pas le
+    recevoir — l'émission ne lui sert donc à rien.  (C'est ce qui a fait
+    capoter la variante de [out_choice_is_false] où l'on tentait de
+    rendre les continuations de [P1]/[P2] émettrices sur la voie du sac
+    pour satisfaire [MeetsBag].) *)
+
+Corollary stuck_cfg_refuses_bag_in :
+  forall (l : list TypeOfActions) (P : proc) c w v z,
+  (forall x, ~ lts (msgs l ‖ P) τ x) -> In (c,w) l ->
+  ~ lts (msgs l ‖ P) (ActExt (ActIn (c,v))) z.
+Proof.
+  intros l P c w v z Hst Hin.
+  apply in_split in Hin as (l1 & l2 & Heq).
+  assert (Hperm : Permutation l ((c,w) :: (l1 ++ l2))).
+  { rewrite Heq. symmetry. apply Permutation_middle. }
+  destruct (cfg_out_of_perm l (l1 ++ l2) c w P Hperm) as (r0 & Hr0 & _).
+  eapply stuck_emit_refuses_in; [ exact Hst | exact Hr0 ].
+Qed.
+
+(** ** ★★ LE RÉSIDU SE RAMÈNE À UNE COMPARAISON **NUE**
+
+    Les deux outils de cette session se composent.  Le bilan
+    ([bag_balance_of_taufree_right]) donne un run du processus gauche au
+    bout duquel il est **τ-stable et non émetteur**, les deux sacs étant
+    équilibrés ; le rejeu ([ax_cfg_replay]) joue ce run *à l'intérieur de
+    la configuration* et y atterrit — **au sac de droite**, par
+    cancellation du bilan ([ax_replay_to_right_bag]).
+
+    Il ne reste alors qu'à comparer ce résidu [qq] à la somme droite
+    **nue** : la précongruence de [‖] ([ax_par]) remet le sac des deux
+    côtés d'un coup.  Autrement dit :
+
+      ⊢ qq ⊑ g M   ⟹   ⊢ msgs l1 ‖ p ⊑ msgs l ‖ g M
+
+    et la cible y est une **somme gardée nue**, forme pour laquelle
+    [completeness_gsum_step_gen] est close.  Le sac disparaît donc des
+    deux côtés, et le membre gauche perd toute structure : c'est la forme
+    la plus resserrée du résidu obtenue.
+
+    **Ce n'est pas une route, et il faut le dire.**  Le [qq] produit est
+    le témoin que [bhv_pre_cond2] rend à la trace de vidange — un témoin
+    **existentiel**, qu'on ne choisit pas — et
+    [VACCS_DropProbes.no_drain_witness_for_OCp] montre qu'il peut
+    n'exister **aucun** bon témoin : sur [OCp] les deux états atteints
+    par la vidange sont [𝟘 ‖ P1] et [𝟘 ‖ P2], dont aucun n'est sous [𝟘],
+    alors que l'inéquation est dérivable (par [ax_share_msg]).
+
+    Ce que le théorème dit, et qui reste vrai : **le sac et la structure
+    disparaissent** du résidu dès qu'un bon témoin existe.  Ce qu'il ne
+    dit pas, c'est qu'il en existe un. *)
+
+Theorem residue_reduces_to_bare :
+  forall (l1 l : list TypeOfActions) (p : proc) (M : gproc),
+  Static p -> gStatic M ->
+  (forall z, ~ lts ((g M) : proc) τ z) ->
+  (msgs l1 ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc)) ->
+  exists qq,
+    (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
+    /\ (forall z, ~ lts qq τ z)
+    /\ (ax_pre qq ((g M) : proc) ->
+        ax_pre (msgs l1 ‖ p) (msgs l ‖ ((g M) : proc))).
+Proof.
+  intros l1 l p M Hp HM Htau Hsem.
+  destruct (ax_replay_to_right_bag l1 l p M Hp HM Htau Hsem)
+    as (qq & Hno & Hnt & Hax).
+  exists qq. split; [ exact Hno | split; [ exact Hnt | ] ].
+  intros Hqq. eapply ax_trans; [ exact Hax | ].
+  apply (ax_par (msgs l) (msgs l) qq ((g M) : proc));
+    [ apply ax_refl | exact Hqq ].
 Qed.
 
 End VACCS_Matching.

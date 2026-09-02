@@ -73,7 +73,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   VACCS_Static VACCS_Erasure VACCS_Precongruence VACCS_Expansion VACCS_ReadySet
   VACCS_Copycat VACCS_Absorb VACCS_DefinitionAxiomatic VACCS_SoundnessAx
-  VACCS_Canonical VACCS_Matching VACCS_Forwarder VACCS_Residues.
+  VACCS_Canonical VACCS_Matching VACCS_Forwarder VACCS_Residues VACCS_NormalForm.
 
 Section VACCS_Bad.
 
@@ -1095,46 +1095,441 @@ Proof.
   inversion Hin.
 Qed.
 
-(** **Correction, seconde passe.**  [cfg_local_split] visait
-    [CfgDisjunctionLocal], que
-    [VACCS_DropProbes.CfgDisjunctionLocal_is_false] réfute — et sa
-    première obligation (cas [𝛕]-sommant ⟹ annulation du sac) est elle
-    aussi fausse
-    ([VACCS_DropProbes.tau_summand_cancellation_is_false]).  Elle est
-    remplacée par le découpage de la forme **à trois disjoints**, où le
-    cas [𝛕]-sommant reçoit son propre disjoint au lieu d'être renvoyé
-    vers l'annulation.
+(** ** Pourquoi il n'y a PAS de découpage — et ce qui reste
 
-    Les trois cas sont décidables ([lts_dec], [selfret_dec]) et
-    exhaustifs, et le troisième est **prouvé** — c'est
-    [cfg_local_of_no_return]. *)
+    Trois versions d'un théorème de découpage ont été écrites puis
+    retirées : elles scindaient [CfgDisjunctionLocal] (puis
+    [CfgDisjunctionLocal3]) en obligations à **un seul** disjoint, selon
+    un critère décidable, et les trois ont une obligation **fausse** —
+    [selfret_case_premise_is_false] ci-dessus, puis
+    [VACCS_DropProbes.tau_summand_cancellation_is_false] et
+    [VACCS_DropProbes.tau_branch_below_is_false].
 
-Theorem cfg_local3_split :
-  (forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
-     SelfRet M ->
-     (forall z, ~ lts ((g M) : proc) τ z) ->
-     (exists z, (((g M) : proc) ▷ bag l) ⟶ z) ->
-     ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-     (exists c v l0 Mc,
-        Permutation l ((c,v) :: l0)
-        /\ lts ((g M) : proc) (ActExt (ActIn (c,v))) Mc
-        /\ Mc ⊑ₘᵤₛₜᵢ (((c ! v • 𝟘) : proc) ‖ ((g N) : proc)))) ->
-  (forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
-     (exists z, lts ((g M) : proc) τ z) ->
-     (exists z, (((g M) : proc) ▷ bag l) ⟶ z) ->
-     ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-     (exists K, lts ((g M) : proc) τ K
-        /\ (msgs l ‖ K) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)))) ->
-  CfgDisjunctionLocal3.
+    Le bilan est consigné en fin de la section [MCert] de
+    [VACCS_DropProbes.v] : à l'intérieur de la classe « [g M] porte un
+    [𝛕]-sommant », les témoins se répartissent sur **trois** disjoints
+    différents, et les distinguer reviendrait à décider l'un d'eux.  **Le
+    choix du disjoint dépend de la sémantique, pas de la forme.**
+
+    Ce qui subsiste est le seul cas clos, et il vaut d'être énoncé pour
+    lui-même plutôt que comme branche d'un découpage : *pour une somme
+    gauche τ-stable, ou bien une continuation rend le message de sa
+    propre garde, ou bien le sac s'annule.*  Les deux branches sont
+    atteintes — [MCert] donne la première, [XProbe] la seconde
+    ([VACCS_DropProbes.XProbe_meets_criterion]) — et la dichotomie est
+    décidable par [selfret_dec]. *)
+
+Theorem cfg_no_selfret_cancels :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    (forall z, ~ lts ((g M) : proc) τ z) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    SelfRet M \/ (((g M) : proc) ⊑ₘᵤₛₜᵢ ((g N) : proc)).
 Proof.
-  intros HB HC l M N HM HN Htau Hsem.
-  destruct (lts_dec ((g M) : proc) τ) as [Hst | Hex].
-  - destruct (selfret_dec M) as [Hsr | Hno].
-    + right. left. eapply HB; eassumption.
-    + destruct (cfg_local_of_no_return l M N HM HN Hst Hno Hsem)
-        as [Ha | Hb]; [ left; exact Ha | right; left; exact Hb ].
-  - right. right. eapply HC; eassumption.
+  intros l M N HM HN Hst Hsem.
+  destruct (selfret_dec M) as [Hsr | Hno]; [ left; exact Hsr | right ].
+  eapply msgs_cancel_no_regen; try eassumption.
+  eapply no_regen_of_own_channel; try eassumption.
+  apply static_g. exact HM.
 Qed.
+
+(** ** …et la dichotomie atteint le niveau des DÉRIVATIONS
+
+    Discipline du dossier : une correction sémantique ne vaut que si une
+    dérivation la consomme.  Composée avec
+    [VACCS_Matching.ax_below_cfg_empty_sem], la dichotomie précédente
+    devient un énoncé sur [⊢] :
+
+    > pour une somme gauche τ-stable, **ou bien** une continuation rend le
+    > message de sa propre garde, **ou bien** l'inéquation de
+    > configuration est dérivable.
+
+    Le test est décidable ([selfret_dec]), donc la disjonction est
+    effective : elle dit exactement où s'arrête ce que le système sait
+    faire sans hypothèse.  Le résidu de la complétude est donc, à ce
+    niveau, [SelfRet M] ∨ « [g M] porte un [𝛕]-sommant » — les deux cas
+    dont [VACCS_DropProbes] montre qu'aucun critère syntaxique ne les
+    tranche. *)
+
+Theorem cfg_derivable_or_selfret :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    Forall tau_cont_nf (summands N) ->
+    (forall z, ~ lts ((g M) : proc) τ z) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+       BagSem l ((g M) : proc) L -> subbag l' l ->
+       forall c v Q' l'', subbag l'' l' ->
+         lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
+         ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+    SelfRet M \/ ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+Proof.
+  intros l M N HM HN Hnf Hst Hsem Hrec.
+  destruct (cfg_no_selfret_cancels l M N HM HN Hst Hsem) as [Hsr | Hbare].
+  - left. exact Hsr.
+  - right. apply ax_below_cfg_empty_sem; assumption.
+Qed.
+
+(* ===================================================================== *)
+(** * LE CRITÈRE RAFFINÉ : SEULES LES GARDES SUR LES CANAUX DU SAC COMPTENT
+
+    [SelfRet] est *suffisant* pour que le sac ne s'annule pas, jamais
+    nécessaire : [VACCS_DropProbes.MSelf] est [SelfRet] par une garde sur
+    un canal **absent du sac**, et son sac s'annule pourtant.  Le critère
+    regardait les mauvaises gardes.
+
+    La correction s'appuie sur
+    [VACCS_NormalForm.fw_conservation_bounded] : le long d'une trace sans
+    entrée, **tout ce que le processus consomme venait du sac initial**,
+    donc la première entrée du run projeté — la seule que l'inversion
+    consulte — porte sur un canal du sac.
+
+    [SelfRetBag l M] est donc [SelfRet] restreint aux canaux de [l], et
+    il est décidable pour la même raison : la condition ne porte que sur
+    les **sommants**, en nombre fini, et [ochans_subst] la rend
+    indépendante de la valeur reçue. *)
+
+Definition SelfRetOn (c : ChannelData) (a : gproc) : Prop :=
+  exists P, a = (c ? P) /\ In c (ochans P).
+
+Lemma selfret_on_dec : forall c a, Decision (SelfRetOn c a).
+Proof.
+  intros c a. destruct a as [ | | d P | p | M1 M2 ];
+    try (right; intros (P0 & Heq & _); discriminate).
+  destruct (decide (d = c)) as [Hd | Hd].
+  - subst d. destruct (in_dec (fun x y => decide (x = y)) c (ochans P)) as [Hin|Hno].
+    + left. exists P. split; [ reflexivity | exact Hin ].
+    + right. intros (P0 & Heq & Hin). injection Heq as Hp. subst P0. contradiction.
+  - right. intros (P0 & Heq & _). injection Heq as Hc Hp. congruence.
+Qed.
+
+Definition SelfRetBag (l : list TypeOfActions) (M : gproc) : Prop :=
+  exists c v, In (c,v) l /\ Exists (SelfRetOn c) (summands M).
+
+Lemma selfret_bag_dec : forall (l : list TypeOfActions) (M : gproc),
+  SelfRetBag l M
+  \/ (forall c v P', In (c,v) l -> lts ((g M) : proc) (ActExt (ActIn (c,v))) P' ->
+        ~ In c (ochans P')).
+Proof.
+  intros l M.
+  destruct (@Exists_dec TypeOfActions
+              (fun cv => Exists (SelfRetOn (fst cv)) (summands M))
+              (fun cv => @Exists_dec gproc (SelfRetOn (fst cv))
+                           (selfret_on_dec (fst cv)) (summands M))
+              l) as [Hex | Hno].
+  - left. apply Exists_exists in Hex. destruct Hex as (cv & Hin & Hex2).
+    apply list_elem_of_In in Hin. destruct cv as (c,v).
+    exists c, v. split; [ exact Hin | exact Hex2 ].
+  - right. intros c v P' Hinl Hl Hoc.
+    destruct (gsum_in_summand M c v P' Hl) as (P & Hins & Heq). subst P'.
+    rewrite ochans_subst in Hoc.
+    apply Hno. apply Exists_exists. exists (c,v). split.
+    + apply list_elem_of_In. exact Hinl.
+    + apply Exists_exists. exists (c ? P). split.
+      * apply list_elem_of_In. exact Hins.
+      * exists P. split; [ reflexivity | exact Hoc ].
+Qed.
+
+(** Il est bien **plus faible** que [SelfRet] — inclusion prouvée
+    ci-dessous, stricte par [VACCS_DropProbes.MSelf_not_selfretbag]. *)
+
+Lemma selfretbag_selfret : forall l M, SelfRetBag l M -> SelfRet M.
+Proof.
+  intros l M (c & v & Hin & Hex).
+  apply Exists_exists in Hex. destruct Hex as (aa & Hina & (P & Heq & Hoc)).
+  subst aa. apply list_elem_of_In in Hina.
+  exists c, v, (P ^ v). split.
+  - eapply summand_lts; [ exact Hina | apply lts_input ].
+  - rewrite ochans_subst. exact Hoc.
+Qed.
+
+(** ** Les deux dichotomies, dans leur version raffinée
+
+    Elles remplacent [cfg_no_selfret_cancels] et
+    [cfg_derivable_or_selfret] : même énoncé, avec le critère plus
+    faible, donc un cas **clos strictement plus grand**. *)
+
+Theorem cfg_no_selfretbag_cancels :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    (forall z, ~ lts ((g M) : proc) τ z) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    SelfRetBag l M \/ (((g M) : proc) ⊑ₘᵤₛₜᵢ ((g N) : proc)).
+Proof.
+  intros l M N HM HN Hst Hsem.
+  destruct (selfret_bag_dec l M) as [Hsr | Hno]; [ left; exact Hsr | right ].
+  eapply msgs_cancel_no_regen_bag; try eassumption.
+  eapply no_regen_of_own_channel_bag; try eassumption.
+  apply static_g. exact HM.
+Qed.
+
+Theorem cfg_derivable_or_selfretbag :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    Forall tau_cont_nf (summands N) ->
+    (forall z, ~ lts ((g M) : proc) τ z) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+       BagSem l ((g M) : proc) L -> subbag l' l ->
+       forall c v Q' l'', subbag l'' l' ->
+         lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
+         ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+    SelfRetBag l M \/ ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+Proof.
+  intros l M N HM HN Hnf Hst Hsem Hrec.
+  destruct (cfg_no_selfretbag_cancels l M N HM HN Hst Hsem) as [Hsr | Hbare].
+  - left. exact Hsr.
+  - right. apply ax_below_cfg_empty_sem; assumption.
+Qed.
+
+(** ** ★ LES DEUX CRITÈRES RELATIFS AU SAC, RÉUNIS EN UNE DICHOTOMIE
+
+    Deux routes ferment l'annulation du sac, et elles sont
+    **incomparables** :
+
+    - [cfg_derivable_or_selfretbag] — la somme gauche est τ-stable et
+      aucune de ses gardes **sur une voie du sac** ne rend son message
+      ([SelfRetBag]).  Les émissions sont permises ;
+    - [VACCS_Matching.msgs_cancel_no_output_bag] — la somme gauche
+      n'émet sur **aucune voie du sac**.  Les [𝛕]-sommants sont permis.
+
+    La seconde entraîne la négation de [SelfRetBag] (une garde
+    auto-rendante sur [c] met [c] dans [ochans] de la somme), mais pas
+    l'inverse : une somme τ-stable peut fort bien émettre sur une voie
+    du sac ([VACCS_DropProbes.MCert]).
+
+    Les deux tests étant décidables, on les enchaîne et l'on n'exhibe
+    que le **résidu** : une somme qui, *à la fois*, porte un
+    [𝛕]-sommant ou une garde auto-rendante, **et** peut émettre sur une
+    voie du sac. *)
+
+Lemma gochans_summand_in : forall (M a : gproc) (c : ChannelData),
+  In a (summands M) -> In c (gochans a) -> In c (gochans M).
+Proof.
+  induction M as [ | | d P | p | M1 IH1 M2 IH2 ]; intros a c Hin Hc; simpl in *;
+    try (destruct Hin as [He|[]]; subst a; exact Hc).
+  apply in_app_or in Hin as [H|H]; apply in_or_app;
+    [ left; eapply IH1 | right; eapply IH2 ]; eassumption.
+Qed.
+
+Definition MeetsBag (l : list TypeOfActions) (M : gproc) : Prop :=
+  exists c vv, In (c,vv) l /\ In c (ochans ((g M) : proc)).
+
+(** Une garde auto-rendante sur une voie du sac met cette voie dans
+    l'empreinte d'émission de la somme : [SelfRetBag] est donc un cas
+    particulier de [MeetsBag], ce qui simplifie l'énoncé du résidu. *)
+
+Lemma selfretbag_meets : forall l M, SelfRetBag l M -> MeetsBag l M.
+Proof.
+  intros l M (c & vv & Hin & Hex).
+  apply Exists_exists in Hex as (aa & Hina & (P & Heq & Hoc)).
+  exists c, vv. split; [ exact Hin | ].
+  apply list_elem_of_In in Hina.
+  simpl. eapply gochans_summand_in; [ exact Hina | ].
+  subst aa. simpl. exact Hoc.
+Qed.
+
+(** La décision est celle de [VACCS_Matching.bag_meets_dec], énoncée là
+    pour un [proc] quelconque : [MeetsBag] en est l'instance à [g M]. *)
+
+Lemma meetsbag_dec : forall (l : list TypeOfActions) (M : gproc),
+  MeetsBag l M \/ (forall c vv, In (c,vv) l -> ~ In c (ochans ((g M) : proc))).
+Proof. intros l M. exact (bag_meets_dec l ((g M) : proc)). Qed.
+
+(** La seconde route, au niveau des dérivations et à une configuration. *)
+
+Theorem cfg_derivable_of_disjoint :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    Forall tau_cont_nf (summands N) ->
+    (forall c vv, In (c,vv) l -> ~ In c (ochans ((g M) : proc))) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+       BagSem l ((g M) : proc) L -> subbag l' l ->
+       forall c v Q' l'', subbag l'' l' ->
+         lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
+         ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+Proof.
+  intros l M N HM HN Hnf Hdisj Hsem Hrec.
+  apply ax_below_cfg_empty_sem; try assumption.
+  eapply msgs_cancel_no_output_bag; eassumption.
+Qed.
+
+(** …et la dichotomie, dont le résidu est le seul cas non traité. *)
+
+Theorem cfg_derivable_or_hard :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    Forall tau_cont_nf (summands N) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+       BagSem l ((g M) : proc) L -> subbag l' l ->
+       forall c v Q' l'', subbag l'' l' ->
+         lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
+         ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+    SelfRetBag l M
+    \/ (MeetsBag l M /\ exists z, lts ((g M) : proc) τ z)
+    \/ ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+Proof.
+  intros l M N HM HN Hnf Hsem Hrec.
+  destruct (meetsbag_dec l M) as [Hm | Hdisj].
+  - destruct (lts_dec ((g M) : proc) τ) as [Hst | Htau].
+    + destruct (cfg_derivable_or_selfretbag l M N HM HN Hnf Hst Hsem Hrec)
+        as [Hsr | Hax].
+      * left. exact Hsr.
+      * right. right. exact Hax.
+    + right. left. split; assumption.
+  - right. right. eapply cfg_derivable_of_disjoint; eassumption.
+Qed.
+
+(** ** ★ LA CLASSE COPYCAT SORT DU RÉSIDU
+
+    Une somme de copycats est l'**archétype** du résidu : elle est
+    τ-stable, et chacune de ses gardes rend le message du sac, donc
+    [SelfRetBag] la retient dès que le sac touche l'une de ses voies.
+    Elle en sort néanmoins, et par une route qui ne cherche pas à
+    annuler le sac : la somme est simplement **remplacée par [𝟘]**.
+
+    - dans un sens, [ax_copycats_below_nil] (le pelage au critère
+      [VACCS_Matching.DropOk]) ;
+    - dans l'autre, [ax_ccat_r], qui est une règle du système.
+
+    Après quoi [ochans (g 𝟘) = []] et [cfg_derivable_of_disjoint]
+    s'applique sans rien demander de plus.
+
+    **Pourquoi cela ne se généralise pas.**  Il est tentant de peler
+    seulement les sommants copycats et de laisser un reste [R] disjoint
+    du sac.  Le pelage est correct, mais il fait *monter* dans le
+    préordre, donc l'hypothèse sémantique ne se transporte pas — et la
+    direction inverse, « ajouter un sommant copycat est invisible », est
+    **réfutée** — au niveau nu par
+    [VACCS_ChoiceProbes.choice_stable_congruence_is_unsound], et **sous
+    le sac** par [VACCS_DropProbes.copycat_summand_not_harmless], qui
+    est le même mécanisme sur [MCert] lui-même.  (La seconde ne découle
+    pas de la première : le sac change les résidus, et le dossier
+    consigne deux fois qu'un effet du sac ne s'affirme pas sans sonde.)
+    C'est pourquoi ce théorème demande que **tous** les sommants soient
+    des copycats. *)
+
+Theorem cfg_derivable_of_copycats :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    gCopycats M -> Forall tau_cont_nf (summands N) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+       BagSem l ((g M) : proc) L -> subbag l' l ->
+       forall c v Q' l'', subbag l'' l' ->
+         lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
+         ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+Proof.
+  intros l M N HM HN HC Hnf Hsem Hrec.
+  eapply ax_trans.
+  { apply ax_par; [ apply ax_refl | apply ax_copycats_below_nil; assumption ]. }
+  apply (cfg_derivable_of_disjoint l 𝟘 N); try assumption.
+  - repeat constructor.
+  - intros c vv _ Hoc. simpl in Hoc. contradiction.
+  - intros t Ht.
+    apply Hsem. apply (proj1 (msgs_copycats_equiv l M HC)).
+    apply (proj2 (must_i_cgr _ _ (msgs_nil_cgr l))). exact Ht.
+  - intros L l' HL HLs Hbag Hsub c vv Q' l'' Hsub2 Hlts.
+    eapply ax_trans; [ | eapply Hrec; try eassumption ].
+    + apply ax_par; [ apply ax_refl | ].
+      apply ax_par; [ apply ax_refl | apply ax_ccat_r; exact HC ].
+    + intros l0 Hl0 t Ht.
+      apply (Hbag l0 Hl0).
+      apply (proj1 (must_i_cgr _ _ (msgs_nil_cgr l0))).
+      apply (proj2 (msgs_copycats_equiv l0 M HC)). exact Ht.
+Qed.
+
+(** ** …et le test est DÉCIDABLE, donc la dichotomie se resserre
+
+    [gCopycats] ne compare une continuation qu'à un terme **concret**
+    ([c ! bvar 0 • 𝟘]), donc sa décision se réduit à [VACCS.Data_dec] sur
+    le canal et sur la valeur — aucune [EqDecision proc] n'est requise,
+    et c'est heureux : le développement n'en a pas. *)
+
+Lemma gcopycats_dec : forall M, gCopycats M \/ ~ gCopycats M.
+Proof.
+  induction M as [ | | c P | P | M1 IH1 M2 IH2 ]; simpl.
+  - left. exact I.
+  - left. exact I.
+  - destruct P as [ P1 P2 | n | n P1 | E P1 P2 | c' u' | P1 | Q ];
+      try (right; discriminate).
+    destruct (Data_dec c' c) as [Hc|Hc];
+      [ | right; intro He; injection He as He1 He2; congruence ].
+    destruct (Data_dec u' (bvar 0)) as [Hu|Hu];
+      [ | right; intro He; injection He as He1 He2; congruence ].
+    subst. left. reflexivity.
+  - right. intro H. exact H.
+  - destruct IH1 as [H1|H1]; destruct IH2 as [H2|H2].
+    + left. split; assumption.
+    + right. intros (A & B). contradiction.
+    + right. intros (A & B). contradiction.
+    + right. intros (A & B). contradiction.
+Qed.
+
+(** La dichotomie, avec la classe copycat retirée du premier disjoint.
+    Les **trois** tests qu'elle enchaîne sont décidables : [meetsbag_dec],
+    [lts_dec] et [gcopycats_dec]. *)
+
+Theorem cfg_derivable_or_hard_nc :
+  forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+    Forall tau_cont_nf (summands N) ->
+    ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+       BagSem l ((g M) : proc) L -> subbag l' l ->
+       forall c v Q' l'', subbag l'' l' ->
+         lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
+         ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+    (SelfRetBag l M /\ ~ gCopycats M)
+    \/ (MeetsBag l M /\ exists z, lts ((g M) : proc) τ z)
+    \/ ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+Proof.
+  intros l M N HM HN Hnf Hsem Hrec.
+  destruct (gcopycats_dec M) as [HC | HC].
+  - right. right. eapply cfg_derivable_of_copycats; eassumption.
+  - destruct (cfg_derivable_or_hard l M N HM HN Hnf Hsem Hrec) as [H|[H|H]].
+    + left. split; assumption.
+    + right. left. exact H.
+    + right. right. exact H.
+Qed.
+
+(** ** …et la garde copycat isolée : la descente, à cible quelconque
+
+    [VACCS_Matching.cfg_copycat_guard_below_bag] place la configuration
+    sous le **sac nu** sans hypothèse.  Pour une cible quelconque il
+    reste à franchir [msgs l ⊑ₘᵤₛₜᵢ msgs l ‖ g N], qui ne parle plus que
+    du sac et de la cible — plus du tout de [M].
+
+    Cette prémisse n'est **pas** conséquence de l'hypothèse : il faudrait
+    [msgs l ⊑ₘᵤₛₜᵢ msgs l ‖ g M], que
+    [VACCS_DropProbes.copycat_summand_not_harmless] réfute.  Elle est en
+    revanche gratuite à [N := 𝟘], et c'est le cas de
+    [VACCS_DropProbes.ax_MCert_bag_below_nil]. *)
+
+Theorem cfg_derivable_of_copycat_guard :
+  forall (l l0 : list TypeOfActions) (c : ChannelData) (u : ValueData)
+         (M N : gproc) (r : list gproc),
+    gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
+    Permutation l ((c,u) :: l0) ->
+    Permutation (summands M) ((ccatg c) :: r) ->
+    ((msgs l) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
+       BagSem l ((g (𝟘 : gproc)) : proc) L -> subbag l' l ->
+       forall c0 v0 Q' l'', subbag l'' l' ->
+         lts ((g L) : proc) (ActExt (ActIn (c0,v0))) Q' ->
+         ax_pre (msgs l'' ‖ ((c0 ! v0 • 𝟘) ‖ ((g (𝟘 : gproc)) : proc)))
+                (msgs l'' ‖ Q')) ->
+    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+Proof.
+  intros l l0 c u M N r HM HN Hnf Hperm Hsum Hsem Hrec.
+  eapply ax_trans;
+    [ eapply cfg_copycat_guard_below_bag; eassumption | ].
+  apply (cfg_derivable_of_disjoint l 𝟘 N); try assumption.
+  - repeat constructor.
+  - intros c0 vv _ Hoc. simpl in Hoc. contradiction.
+  - intros t Ht. apply Hsem.
+    apply (proj2 (must_i_cgr _ _ (msgs_nil_cgr l))). exact Ht.
+Qed.
+
+
+
+
 
 (** ** …et le refus SURVIT AU SAC
 

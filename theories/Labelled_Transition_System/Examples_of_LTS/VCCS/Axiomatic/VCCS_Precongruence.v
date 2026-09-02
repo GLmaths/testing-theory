@@ -30,7 +30,8 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
-  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization VCCS_Erasure.
+  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization VCCS_Erasure
+  VCCS_Shift.
 
 Section VCCS_Precongruence.
 
@@ -661,196 +662,124 @@ Proof.
       inversion Hp'.
 Qed.
 
-(** ** Weak transitions and stability under restriction
+(** ** [ν]-precongruence, par le PONT DE DÉCALAGE
 
-    Building blocks toward a [ν]-precongruence for the acceptance-set
-    characterisation [≼ₐₛ] (routed through since, unlike the output/τ
-    prefixes, [ν]'s transition target is a *descendant* of its argument,
-    not the argument itself — see the [VCCS_Precongruence] module
-    docstring in the plan/session notes for why direct [must]-induction
-    doesn't apply here). *)
+    La première rédaction passait par [≼ₐₛ] : [ν]'s transition target is a
+    *descendant* of its argument, not the argument itself, so a direct
+    [must]-induction does not apply — d'où toute une chaîne
+    ([res_wt_forward]/[res_wt_backward], [res_coR_iff], la commutation de
+    l'abstraction) et, avec elle, deux conditions [Static].
 
-Lemma res_wt_forward : forall p s0 q,
-  p ⟹[s0] q -> forall sx, s0 = List.map (VarC_action_add 1) sx -> (ν p) ⟹[sx] (ν q).
+    Le même geste que pour [‖] la rend inutile : **mettre le contexte dans
+    le test**.  [(ν p) | t] et [p | t↑] sont le *même système* —
+    [lts_res_tau] et [lts_res_ext] caractérisent les transitions de [ν]
+    dans les deux sens par inversion, et un test décalé [t↑] ne peut agir
+    que sur des canaux décalés, donc jamais se synchroniser sur le canal
+    restreint, ce qui est exactement ce que [ν] cache.  [VCCS_Shift.v]
+    transporte les transitions le long de [NewVarC] dans les deux sens, et
+    [NewVarC_respects_good] ([VCCS_Good.v]) dit que le prédicat de succès
+    ne voit pas le décalage.
+
+    Bénéfice mesuré : les deux conditions [Static] disparaissent, et avec
+    elles toute la chaîne acceptance-set du cas [ν] (≈190 lignes).
+
+    **Ce que cela ne change PAS, vérifié plutôt que supposé** :
+    [soundness_ax] garde [proof_irrelevance].  Ce n'est pas [ν] qui le
+    portait mais [ax_choice_stable], dont la correction
+    ([VCCS_ReadySet.must_i_choice_stable_compat]) passe toujours par
+    [≼ₐₛ] — et ne peut pas faire autrement, la congruence de somme
+    n'ayant pas de pont contextuel (il n'y a pas de composition de
+    contextes pour le [+] gardé). *)
+
+Lemma NewVar_in_action_at_zero : forall mu, NewVar_in_action 0 mu = VarC_action_add 1 mu.
+Proof. intros [[c v]|[c v]]; simpl; f_equal; f_equal; apply NewVarC_at_zero. Qed.
+
+Lemma NewVarC_act_at_zero : forall mu, NewVarC_act 0 (ActExt mu) = ActExt (VarC_action_add 1 mu).
+Proof. intros mu. rewrite NewVarC_act_ext. f_equal. apply NewVar_in_action_at_zero. Qed.
+
+Lemma dual_shift : forall (mu1 mu2 : ExtAct TypeOfActions), dual mu1 mu2 ->
+  dual (VarC_action_add 1 mu1) (VarC_action_add 1 mu2).
 Proof.
-  intros p s0 q Hw.
-  induction Hw; intros sx Heq.
-  - destruct sx; [| simpl in Heq; discriminate].
-    constructor.
-  - eapply wt_tau; [eapply lts_res_tau; exact l | eapply IHHw; exact Heq].
-  - destruct sx as [|μ_ext sx']; simpl in Heq; [discriminate|].
-    inversion Heq; subst.
-    eapply wt_act; [eapply lts_res_ext; exact l | eapply IHHw; reflexivity].
+  intros [[c v]|[c v]] [[d w]|[d w]] Hd; simpl in *;
+    try (exact (match Hd with end)); inversion Hd; subst; reflexivity.
 Qed.
 
-Lemma res_wt_backward : forall p s q,
-  (ν p) ⟹[s] q -> exists q', q = ν q' /\ p ⟹[List.map (VarC_action_add 1) s] q'.
+(** The inverse: a label dual to a shifted one is itself a shift.  This is
+    what lets the [com] field pull the *server*'s action back through [ν]. *)
+Lemma dual_shift_inv : forall (nu1 : ExtAct TypeOfActions) (mu2 : ExtAct TypeOfActions),
+  dual nu1 (VarC_action_add 1 mu2) -> exists mu1, nu1 = VarC_action_add 1 mu1 /\ dual mu1 mu2.
 Proof.
-  intros p s q Hw.
-  remember (ν p) as P eqn:HP.
-  revert p HP.
-  induction Hw; intros p0 HP; subst.
-  - exists p0.
-    split; [reflexivity | constructor].
-  - inversion l; subst.
-    edestruct IHHw as (q' & Hq' & Hw'); [reflexivity|].
-    exists q'.
-    split; [exact Hq' | eapply wt_tau; [exact H0 | exact Hw']].
-  - inversion l; subst.
-    edestruct IHHw as (q' & Hq' & Hw'); [reflexivity|].
-    exists q'.
-    split; [exact Hq' |].
-    simpl.
-    eapply wt_act; [exact H1 | exact Hw'].
+  intros nu1 [[c v]|[c v]] Hd; destruct nu1 as [[d w]|[d w]]; simpl in Hd;
+    try (exact (match Hd with end)); inversion Hd; subst.
+  - exists (ActOut (c, v)). split; reflexivity.
+  - exists (ActIn (c, v)). split; reflexivity.
 Qed.
 
-Lemma res_stable_iff : forall q, (ν q) ↛ <-> q ↛.
+Lemma res_bridge_fwd : forall (P t : proc), P must_pass t ->
+  forall p, P = ν p -> p must_pass (NewVarC 0 t).
 Proof.
-  intros q. split.
-  - intros Hst. destruct (decide (q ↛)) as [Hd|Hd]; [exact Hd|].
-    exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-    eapply lts_refuses_spec2 in Hst. apply Hst. exists (ν r). eapply lts_res_tau. exact Hl.
-  - intros Hst. destruct (decide ((ν q) ↛)) as [Hd|Hd]; [exact Hd|].
-    exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-    inversion Hl; subst.
-    eapply lts_refuses_spec2 in Hst. apply Hst. exists p'. exact H0.
+  intros P t Hm. induction Hm as [ P t Ho | P t Ho Hex Hpt IHpt Het IHet Hcom IHcom ];
+    intros p Heq; subst.
+  - apply m_now. apply NewVarC_respects_good. exact Ho.
+  - apply m_step.
+    + intro Hg. apply Ho. apply (NewVarC_respects_good 0). exact Hg.
+    + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
+      * inversion l; subst. exists (p' ▷ NewVarC 0 x2). eapply ParLeft. eassumption.
+      * exists (p ▷ NewVarC 0 x2). eapply ParRight. apply (lts_NewVarC _ _ _ l 0).
+      * inversion l1; subst.
+        exists (p' ▷ NewVarC 0 x2).
+        eapply ParSync; [ apply dual_shift; exact eq | eassumption | ].
+        pose proof (lts_NewVarC _ _ _ l2 0) as Hl2.
+        rewrite NewVarC_act_at_zero in Hl2. exact Hl2.
+    + intros p' Hp'. eapply (IHpt (ν p')); [ apply lts_res_tau; exact Hp' | reflexivity ].
+    + intros u Hu. destruct (lts_NewVarC_inv _ _ _ _ Hu) as (a0 & t' & Ha & Hu' & Hlt).
+      destruct a0 as [mu0|]; [ rewrite NewVarC_act_ext in Ha; discriminate Ha | ].
+      subst. eapply IHet; [ exact Hlt | reflexivity ].
+    + intros p' u nu1 nu2 Hd Hp' Hu.
+      destruct (lts_NewVarC_inv _ _ _ _ Hu) as (a0 & t' & Ha & Hu' & Hlt).
+      destruct a0 as [mu2|]; [ | simpl in Ha; discriminate Ha ].
+      rewrite NewVarC_act_at_zero in Ha. inversion Ha as [Ha']. clear Ha. subst.
+      destruct (dual_shift_inv nu1 mu2 Hd) as (mu1 & Hmu1 & Hdm). subst.
+      eapply (IHcom (ν p') t' mu1 mu2);
+        [ exact Hdm | apply lts_res_ext; exact Hp' | exact Hlt | reflexivity ].
 Qed.
 
-Lemma res_ext_stable_iff : forall p mu, (ν p) ↛[mu] <-> p ↛[VarC_action_add 1 mu].
+Lemma res_bridge_rev : forall (p T : proc), p must_pass T ->
+  forall t, T = NewVarC 0 t -> (ν p) must_pass t.
 Proof.
-  intros p mu. split.
-  - intros Hst. destruct (decide (p ↛[VarC_action_add 1 mu])) as [Hd|Hd]; [exact Hd|].
-    exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-    eapply lts_refuses_spec2 in Hst. apply Hst. exists (ν r). eapply lts_res_ext. exact Hl.
-  - intros Hst. destruct (decide ((ν p) ↛[mu])) as [Hd|Hd]; [exact Hd|].
-    exfalso. eapply lts_refuses_spec1 in Hd as (r & Hl).
-    inversion Hl; subst.
-    eapply lts_refuses_spec2 in Hst. apply Hst. exists p'. exact H1.
+  intros p T Hm. induction Hm as [ p T Ho | p T Ho Hex Hpt IHpt Het IHet Hcom IHcom ];
+    intros t Heq; subst.
+  - apply m_now. apply (NewVarC_respects_good 0). exact Ho.
+  - apply m_step.
+    + intro Hg. apply Ho. apply NewVarC_respects_good. exact Hg.
+    + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
+      * exists ((ν x1) ▷ t). eapply ParLeft. apply lts_res_tau. eassumption.
+      * destruct (lts_NewVarC_inv _ _ _ _ l) as (a0 & t' & Ha & Hu' & Hlt).
+        destruct a0 as [mu0|]; [ rewrite NewVarC_act_ext in Ha; discriminate Ha | ].
+        exists ((ν x1) ▷ t'). eapply ParRight. exact Hlt.
+      * destruct (lts_NewVarC_inv _ _ _ _ l2) as (a0 & t' & Ha & Hu' & Hlt).
+        destruct a0 as [mu2|]; [ | simpl in Ha; discriminate Ha ].
+        rewrite NewVarC_act_at_zero in Ha. inversion Ha as [Ha']. clear Ha. subst.
+        destruct (dual_shift_inv μ1 mu2 eq) as (mu1 & Hmu1 & Hdm). subst.
+        exists ((ν x1) ▷ t').
+        eapply ParSync; [ exact Hdm | apply lts_res_ext; exact l1 | exact Hlt ].
+    + intros x Hx. inversion Hx; subst. eapply IHpt; [ eassumption | reflexivity ].
+    + intros t' Ht'. eapply (IHet (NewVarC 0 t'));
+        [ apply (lts_NewVarC _ _ _ Ht' 0) | reflexivity ].
+    + intros x t' mu1 mu2 Hd Hx Ht'. inversion Hx; subst.
+      eapply (IHcom p' (NewVarC 0 t') (VarC_action_add 1 mu1) (VarC_action_add 1 mu2));
+        [ apply dual_shift; exact Hd | eassumption | | reflexivity ].
+      pose proof (lts_NewVarC _ _ _ Ht' 0) as Hl.
+      rewrite NewVarC_act_at_zero in Hl. exact Hl.
 Qed.
 
-(** ** The abstracted co-refusal set [coR] under restriction
-
-    [coR p := fun μ1 => ∃μ2, ¬p↛[μ2] ∧ dual μ2 μ1 ∧ blocking μ1]
-    (Subset_Act.v). Since [dual] (= [ext_act_match]) forces μ2 to be
-    exactly the complementary action of μ1 on the same channel/value,
-    and [res_ext_stable_iff] transports refusal of a *single* label
-    faithfully across [ν], the whole set transports too — in *both*
-    directions, giving a clean iff (not just the "outward" direction
-    [VarC_action_add_co_rev]/[VarC_action_add_co_rev_map] already proved
-    in [VCCS_Instance.v]). Monotonicity (all that
-    [must_i_res_compat]/[≼ₐₛ]-precongruence actually needs) is then a
-    one-line corollary. *)
-
-Lemma res_coR_iff : forall p mu1, mu1 ∈ coR (ν p) <-> (VarC_action_add 1 mu1) ∈ coR p.
+(** Et la condition [Static] disparaît : la route acceptance-set en
+    demandait deux. *)
+Lemma must_i_res_compat : forall (p q : proc), p ⊑ₘᵤₛₜᵢ q -> (ν p) ⊑ₘᵤₛₜᵢ (ν q).
 Proof.
-  intros p mu1.
-  unfold coR, elem_of, subset_of in *.
-  simpl.
-  split.
-  - intros (mu2 & Hnr & Hd & Hb).
-    exists (VarC_action_add 1 mu2).
-    repeat split.
-    + intro Hc. apply Hnr. apply res_ext_stable_iff. exact Hc.
-    + destruct mu2 as [x|x]; destruct mu1 as [y|y].
-      1: simpl in Hd |- *; exact (match Hd with end).
-      1: destruct x as [c v]; destruct y as [c' v']; simpl in Hd |- *; inversion Hd; subst; reflexivity.
-      1: destruct x as [c v]; destruct y as [c' v']; simpl in Hd |- *; inversion Hd; subst; reflexivity.
-      1: exact (match Hd with end).
-    + destruct mu1 as [z|z]; simpl in *; exact Hb.
-  - intros (mu2 & Hnr & Hd & Hb).
-    unfold elem_of, subset_of in *.
-    destruct mu1 as [[c1 v1]|[c1 v1]]; destruct mu2 as [[c2 v2]|[c2 v2]]; simpl in Hd, Hb |- *;
-      try (exact (match Hd with end)); inversion Hd; subst.
-    + exists (ActOut (c1,v1)). repeat split.
-      all: [> (intro Hc; apply Hnr; apply res_ext_stable_iff in Hc; simpl in Hc; exact Hc) | exact Hb].
-    + exists (ActIn (c1,v1)). repeat split.
-      all: [> (intro Hc; apply Hnr; apply res_ext_stable_iff in Hc; simpl in Hc; exact Hc) | exact Hb].
-Qed.
-
-Lemma res_coR_mono : forall p q,
-  (forall x, x ∈ coR p -> x ∈ coR q) -> forall y, y ∈ coR (ν p) -> y ∈ coR (ν q).
-Proof.
-  intros p q Hsub y Hy.
-  apply res_coR_iff. apply Hsub. apply res_coR_iff. exact Hy.
-Qed.
-
-(** ** Lifting [res_coR_iff] through VCCS's label abstraction [𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ]
-
-    [≼ₐₛ]'s [bhv_pre_cond2] (DefinitionAS.v) is stated over the *image*
-    [⌈𝝳∘Φ⌉(coR p')], not raw [coR p'] — abstracted-set inclusion does not
-    in general imply raw-set inclusion, so [res_coR_mono] alone isn't
-    enough. The fix: [𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ] commutes with the channel shift
-    ([VarC_action_add]/[VarC_preaction_add]) by direct computation — both
-    sides just extract-and-rewrap the channel component — so
-    [res_coR_iff] lifts through the abstraction essentially for free. *)
-
-Lemma Phi_delta_shift_commute : forall mu,
-  𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (VarC_action_add 1 mu)) = VarC_preaction_add 1 (𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ mu)).
-Proof.
-  intros [[c v]|[c v]]; reflexivity.
-Qed.
-
-Lemma res_coR_abs_iff : forall p x,
-  x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (ν p)) <-> (VarC_preaction_add 1 x) ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p).
-Proof.
-  intros p x. unfold elem_of, subset_of, map_set in *. simpl.
-  split.
-  - intros (mu1 & Hmu1 & Hx).
-    exists (VarC_action_add 1 mu1). split.
-    + apply res_coR_iff. exact Hmu1.
-    + rewrite Hx. symmetry. apply Phi_delta_shift_commute.
-  - intros (mu2 & Hmu2 & Heq).
-    destruct x as [cx|cx]; destruct mu2 as [[c2 v2]|[c2 v2]]; simpl in Heq; try discriminate; inversion Heq; subst.
-    + exists (ActIn (cx, v2)). split.
-      * apply res_coR_iff. simpl. exact Hmu2.
-      * reflexivity.
-    + exists (ActOut (cx, v2)). split.
-      * apply res_coR_iff. simpl. exact Hmu2.
-      * reflexivity.
-Qed.
-
-Lemma res_coR_abs_mono : forall p q,
-  (forall x, x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) -> x ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR q)) ->
-  forall y, y ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (ν p)) -> y ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (ν q)).
-Proof.
-  intros p q Hsub y Hy.
-  apply res_coR_abs_iff. apply Hsub. apply res_coR_abs_iff. exact Hy.
-Qed.
-
-(** ** [ν]-precongruence for [≼ₐₛ], and the [⊑ₘᵤₛₜᵢ] corollary
-
-    Assembles [Static_converge] (cond1, trivial on the [Static] fragment),
-    [res_wt_backward]/[res_wt_forward] (relate [(ν _) ⟹[s] _] to the
-    underlying process's own weak transitions), [res_stable_iff]
-    (transfer stability), and [res_coR_abs_mono] (transfer the
-    acceptance-set inclusion) into the full [≼ₐₛ]-precongruence for [ν],
-    then bridges to [⊑ₘᵤₛₜᵢ] via [must_iff_acceptance_set_VCCS_without_toFW]
-    (`VCCS_Must_Characterization.v`). *)
-
-Lemma must_i_res_bhv_pre : forall p q, Static p -> Static q -> p ≼ₐₛ q -> (ν p) ≼ₐₛ (ν q).
-Proof.
-  intros p q Hsp Hsq (Hc1 & Hc2).
-  split.
-  - intros s _. apply Static_converge. apply static_res. exact Hsq.
-  - intros s q'' _ Hwq Hstq.
-    destruct (res_wt_backward q s q'' Hwq) as (q''' & Hq'' & Hwq').
-    subst q''.
-    rewrite res_stable_iff in Hstq.
-    destruct (Hc2 (List.map (VarC_action_add 1) s) q''' (Static_converge _ p Hsp) Hwq' Hstq) as (p''' & Hwp' & Hstp & Hincl).
-    exists (ν p''').
-    repeat split.
-    + apply res_wt_forward with (s0 := List.map (VarC_action_add 1) s); [exact Hwp' | reflexivity].
-    + apply res_stable_iff. exact Hstp.
-    + intros x Hx.
-      eapply (res_coR_abs_mono p''' q'''); [exact Hincl | exact Hx].
-Qed.
-
-Lemma must_i_res_compat : forall p q, Static p -> Static q -> p ⊑ₘᵤₛₜᵢ q -> (ν p) ⊑ₘᵤₛₜᵢ (ν q).
-Proof.
-  intros p q Hsp Hsq Hpq.
-  apply must_iff_acceptance_set_VCCS_without_toFW.
-  apply must_i_res_bhv_pre; [exact Hsp | exact Hsq |].
-  apply must_iff_acceptance_set_VCCS_without_toFW. exact Hpq.
+  intros p q Hpq t Hm.
+  eapply res_bridge_rev; [ | reflexivity ].
+  apply Hpq. eapply res_bridge_fwd; [ exact Hm | reflexivity ].
 Qed.
 
 (** ** Precongruence for [If]

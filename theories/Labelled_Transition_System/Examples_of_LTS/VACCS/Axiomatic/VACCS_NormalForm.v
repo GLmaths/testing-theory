@@ -541,6 +541,49 @@ Proof.
   rewrite gmultiset_disj_union_right_id in Heq. subst y2. reflexivity.
 Qed.
 
+(** ** …et le critère n'a besoin de porter que sur les canaux DU SAC
+
+    `fw_drain_ins_from_bag` dit que, le long d'une trace sans entrée,
+    tout ce que le processus consomme venait du sac initial.  La
+    condition de non-régénération peut donc recevoir en prémisse
+    supplémentaire [bag (ins r) ⊆ bag l] — et c'est ce qui permettra de
+    ne la vérifier qu'aux canaux que le sac porte, au lieu de tous
+    ([VACCS_Matching.no_regen_of_own_channel_bag]).
+
+    La preuve est celle ci-dessus, avec [fw_conservation_bounded] à la
+    place de [fw_conservation] : le **même** [r] porte l'équation de
+    bilan et la borne, ce qui est indispensable — les deux énoncés
+    quantifient existentiellement sur [r]. *)
+
+Theorem drain_forced_no_regen_bag : forall (M : gproc) (l : list TypeOfActions) y,
+  (forall z, ~ lts (g M) τ z) ->
+  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
+               bag (ins r) ⊆ bag l -> ins r = []) ->
+  ((g M) ▷ bag l) ⟹[map ActOut l] y ->
+  y = ((g M) ▷ (∅ : MO (ExtAct TypeOfActions))).
+Proof.
+  intros M l y HstM Hno Hw.
+  destruct (fw_conservation_bounded (map ActOut l) ((g M) ▷ bag l) y Hw)
+    as (r & Hr & Heq & Hb).
+  simpl in Hr, Heq, Hb.
+  rewrite ins_map_out in Heq. rewrite outs_map_out in Heq. simpl in Heq.
+  rewrite ins_map_out in Hb. simpl in Hb.
+  apply disj_union_cancel_gen in Heq.
+  assert (Hsub : bag (ins r) ⊆ bag (outs r))
+    by (rewrite Heq; apply gmultiset_disj_union_subseteq_r).
+  assert (Hbl : bag (ins r) ⊆ bag l).
+  { etransitivity; [ apply gmultiset_disj_union_subseteq_l | ].
+    etransitivity; [ exact Hb | ].
+    replace (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) with (bag l)
+      by (symmetry; apply gmultiset.gmultiset_disj_union_right_id).
+    reflexivity. }
+  pose proof (Hno r y.1 Hr Hsub Hbl) as Hins.
+  destruct (gsum_run_no_input M r y.1 HstM Hr Hins) as (Er & Ey1).
+  subst r. simpl in Heq.
+  destruct y as (y1, y2). simpl in Ey1, Heq. subst y1.
+  rewrite gmultiset_disj_union_right_id in Heq. subst y2. reflexivity.
+Qed.
+
 (** So for a τ-stable, non-regenerating left the certificate holds at
     **every** buffer — above or below the bag — from the configuration
     hypothesis alone. *)
@@ -661,6 +704,39 @@ Proof.
     destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
     assert (Hz : z = ((g M) ▷ (∅ : MO (ExtAct TypeOfActions))))
       by (eapply drain_forced_no_regen; eassumption).
+    exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
+    rewrite <- Hz. exact Hz2.
+Qed.
+
+(** La même annulation, avec le critère restreint aux canaux du sac. *)
+
+Theorem msgs_cancel_no_regen_bag : forall (l : list TypeOfActions) (M N : gproc),
+  gStatic M -> gStatic N ->
+  (forall z, ~ lts ((g M) : proc) τ z) ->
+  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
+               bag (ins r) ⊆ bag l -> ins r = []) ->
+  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N).
+Proof.
+  intros l M N HM HN HstM Hno Hpre.
+  destruct (msgs_accept l l (g M) (g N) Hpre) as (Hc1 & Hc2).
+  apply must_iff_acceptance_set_VACCS. split.
+  - intros s _. apply fw_converge_static. apply static_g. exact HN.
+  - intros s y _ Hwy Hsty.
+    assert (Hdrain : ((g N) ▷ bag l)
+                       ⟹[map ActOut l] ((g N) ▷ (∅ : MO (ExtAct TypeOfActions)))).
+    { replace (bag l) with (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
+        by (apply gmultiset.gmultiset_disj_union_right_id).
+      apply bag_wt_drain. }
+    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] y)
+      by (eapply wt_concat; [ exact Hdrain | exact Hwy ]).
+    destruct (Hc2 (map ActOut l ++ s) y
+                (fw_converge_static (map ActOut l ++ s) (g M) (bag l) (static_g M HM))
+                Hbig Hsty)
+      as (x & Hwx & Hstx & Hincl).
+    destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
+    assert (Hz : z = ((g M) ▷ (∅ : MO (ExtAct TypeOfActions))))
+      by (eapply drain_forced_no_regen_bag; eassumption).
     exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
     rewrite <- Hz. exact Hz2.
 Qed.

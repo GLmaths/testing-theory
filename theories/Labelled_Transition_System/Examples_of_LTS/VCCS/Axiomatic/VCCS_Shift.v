@@ -25,7 +25,7 @@
     [NewVarC k] inserts a fresh channel binder at de Bruijn level [k].
     This file shows it is a *strong bisimulation* between [p] and
     [NewVarC k p], with labels shifted accordingly — the exact analogue of
-    [VACCS_Erasure.v]'s [lts_noone] / [lts_noone_inv], and proved the same
+    [VCCS_Erasure.v]'s [lts_noone] / [lts_noone_inv], and proved the same
     way (forward by induction on the derivation; backward with an explicit
     equation on the subject, so that [induction] applies).
 
@@ -33,13 +33,20 @@
 
         must (ν p) t  <->  must p (NewVarC 0 t)
 
-    which is to [ax_res] what [VACCS_Precongruence.v]'s parallel bridge is
+    which is to [ax_res] what [VCCS_Precongruence.v]'s parallel bridge is
     to [ax_par]: [(ν p) | t] and [p | t↑] are the same system, because
     [lts_res_ext] / [lts_res_tau] already characterise [ν]'s transitions in
     both directions, and a shifted test can only ever act on shifted
     channels — so it can never synchronise on the restricted one, which is
-    exactly what [ν] hides.  The bridge itself is *not* proved here; see
-    the plan file.
+    exactly what [ν] hides.  The bridge itself lives in
+    [VCCS_Precongruence.v], where it replaces the acceptance-set route
+    that [must_i_res_compat] used to take — and with it the [Static] side
+    conditions that route needed.
+
+    This is a **port** of [VACCS_Shift.v]: the two calculi differ here
+    only in the output, which is a *guard* with a continuation in VCCS
+    and an atomic message in VACCS.  Every proof carries over unchanged
+    apart from that one case.
 
     Note the two shifts the development uses are different functions —
     [NewVar_in_ChannelData k] ("insert a binder at level [k]") and
@@ -50,13 +57,13 @@
 From Stdlib Require Import Lia.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base.
-From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
-  gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
-  Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization VACCS_Erasure.
+From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
+  gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
+  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization VCCS_Erasure.
 
-Section VACCS_Shift.
+Section VCCS_Shift.
 
-Context `{VP : VACCS_Parameters}.
+Context `{VP : VCCS_Parameters}.
 
 (** ** Shifting a label *)
 
@@ -173,12 +180,12 @@ Qed.
 
     Every transition of [NewVarC k p] is the shift of a transition of [p],
     at a label that is itself a shift.  Same shape as
-    [VACCS_Erasure.lts_noone_inv_aux]: an explicit equation on the subject,
+    [VCCS_Erasure.lts_noone_inv_aux]: an explicit equation on the subject,
     and a local tactic recovering [p]'s constructor from it. *)
 
 Local Ltac dnvc p Heq :=
-  destruct p as [zp1 zp2|zn|zn zq0|zE zp1 zp2|zc0 zv0|zq0|zM];
-  [ | | | | | | destruct zM as [| |zc0 zq0|zq0|zM1 zM2] ];
+  destruct p as [zp1 zp2|zn|zn zq0|zE zp1 zp2|zq0|zM];
+  [ | | | | | destruct zM as [| |zc0 zq0|zc0 zv0 zq0|zq0|zM1 zM2] ];
   simpl in Heq; try discriminate Heq; inversion Heq; subst; try clear Heq.
 
 Lemma lts_NewVarC_inv_aux : forall P a q', lts P a q' ->
@@ -188,7 +195,7 @@ Proof.
   intros P a q' Hl. induction Hl; intros p0 k Heq.
   - dnvc p0 Heq. exists (ActExt (ActIn (zc0, v))), (zq0 ^ v).
     split; [ reflexivity | split; [ apply subst_and_NewVarC | apply lts_input ] ].
-  - dnvc p0 Heq. exists (ActExt (ActOut (zc0, zv0))), (g 𝟘).
+  - dnvc p0 Heq. exists (ActExt (ActOut (zc0, zv0))), zq0.
     split; [ reflexivity | split; [ reflexivity | apply lts_output ] ].
   - dnvc p0 Heq. exists τ, zq0. split; [ reflexivity | split; [ reflexivity | apply lts_tau ] ].
   - dnvc p0 Heq. exists τ, (pr_subst zn zq0 (rec zn • zq0)).
@@ -245,4 +252,4 @@ Lemma lts_NewVarC_inv : forall p k a q', lts (NewVarC k p) a q' ->
   exists a0 q, a = NewVarC_act k a0 /\ q' = NewVarC k q /\ lts p a0 q.
 Proof. intros p k a q' Hl. eapply lts_NewVarC_inv_aux; [ exact Hl | reflexivity ]. Qed.
 
-End VACCS_Shift.
+End VCCS_Shift.

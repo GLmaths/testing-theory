@@ -1665,6 +1665,339 @@ Proof.
     intros t Ht. apply (proj2 (must_i_cgr _ _ Hc)). apply Hb. exact Ht.
 Qed.
 
+(** ** (3) …et le TROISIÈME disjoint ne se laisse pas imposer non plus
+
+    La forme corrigée [CfgDisjunctionLocal3] ajoute le disjoint (C) — une
+    branche [𝛕] de la somme qui, sous le sac, est sous la cible.  Il
+    serait tentant d'y renvoyer *tout* le cas « [g M] porte un
+    [𝛕]-sommant ».  C'est faux, et le témoin est [PC], déjà au dossier :
+    ses deux branches ont des exigences contradictoires, donc **aucune**
+    n'est sous [𝟘] ([tau_successor_cannot_be_chosen]) alors que leur
+    conjonction l'est ([PC_below_nil]).
+
+    Ici c'est le disjoint (A) qui porte l'inéquation. *)
+
+Theorem tau_branch_below_is_false :
+  ~ (forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+       (exists z, lts ((g M) : proc) τ z) ->
+       (exists z, (((g M) : proc) ▷ bag l) ⟶ z) ->
+       ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+       (exists K, lts ((g M) : proc) τ K
+          /\ (msgs l ‖ K) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)))).
+Proof.
+  intro H.
+  assert (Htau : exists z, lts ((g PC) : proc) τ z).
+  { exists ((g P1) : proc). unfold PC. apply lts_choiceL. apply lts_tau. }
+  assert (Hsem : (msgs [] ‖ ((g PC) : proc)) ⊑ₘᵤₛₜᵢ (msgs [] ‖ ((g 𝟘) : proc))).
+  { apply must_i_par_compat_r. apply PC_below_nil. }
+  destruct (H [] PC 𝟘
+              ltac:(unfold PC, P1, P2, Ke; repeat constructor)
+              ltac:(constructor) Htau
+              ltac:(destruct Htau as (z & Hz); exists (z ▷ bag []);
+                    apply fw_tau_left; exact Hz)
+              Hsem)
+    as (K & Hk & Hb).
+  apply (proj2 tau_successor_cannot_be_chosen K Hk).
+  assert (Hc1 : (K : proc) ≡* (((g 𝟘) : proc) ‖ K))
+    by (symmetry; apply cgr_nil_par_l).
+  assert (Hc2 : (((g 𝟘) : proc) ‖ ((g 𝟘) : proc)) ≡* ((g 𝟘) : proc))
+    by apply cgr_par_nil.
+  intros t Ht.
+  apply (proj2 (must_i_cgr _ _ Hc2)).
+  apply Hb.
+  apply (proj2 (must_i_cgr _ _ Hc1)). exact Ht.
+Qed.
+
+(** ** Contrôle : la forme CORRIGÉE survit aux six témoins
+
+    [CfgDisjunctionLocal] avait été prise pour cible plusieurs sessions
+    sans avoir jamais été instanciée sur un [𝛕]-sommant.  Pour ne pas
+    répéter l'erreur, [VACCS_Matching.CfgDisjunctionLocal3] est vérifiée
+    sur les six témoins connus :
+
+    | témoin | disjoint |
+    |---|---|
+    | [𝛕 • 𝟘], [PC] | (A) — [PC_below_nil] |
+    | [MCert], [MTau] | (B) |
+    | [MFalse] | (C) |
+    | [XProbe] | (A) — [cfg_disjunction_at_XProbe] |
+
+    Les deux cas neufs sont ci-dessous ; les autres sont déjà au dossier
+    ([cfg_disjunction_local_at_MCert], [cfg_disjunction_at_XProbe]). *)
+
+Lemma cfg_local3_at_MFalse :
+  exists K, lts ((g MFalse) : proc) τ K
+    /\ (msgs [(cst a ▷ cst v)] ‖ K)
+         ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc)).
+Proof.
+  exists ((g MCert) : proc). split.
+  - unfold MFalse. apply lts_choiceR. apply lts_tau.
+  - apply MCert_below.
+Qed.
+
+Lemma cfg_local3_at_MTau :
+  exists c v0 l0 Mc,
+    Permutation [(cst a ▷ cst v)] ((c,v0) :: l0)
+    /\ lts ((g MTau) : proc) (ActExt (ActIn (c,v0))) Mc
+    /\ Mc ⊑ₘᵤₛₜᵢ (((c ! v0 • 𝟘) : proc) ‖ ((g 𝟘) : proc)).
+Proof.
+  exists (cst a), (cst v), [], ((cst a) ! (cst v) • 𝟘).
+  split; [ reflexivity | split ].
+  - unfold MTau. apply lts_choiceL. unfold MCert. apply lts_choiceL.
+    assert (E : ((cst a) ! cst v • 𝟘 : proc) = (((cst a) ! (bvar 0) • 𝟘) ^ (cst v)))
+      by reflexivity.
+    rewrite E. apply lts_input.
+  - assert (Hc : (((cst a ! cst v • 𝟘) : proc) ‖ ((g 𝟘) : proc))
+                   ≡* ((cst a ! cst v • 𝟘) : proc)) by apply cgr_par_nil.
+    intros t Ht. apply (proj1 (must_i_cgr _ _ Hc)). exact Ht.
+Qed.
+
+(** ** …et les deux branches de la dichotomie décidable sont atteintes
+
+    [VACCS_Bad.cfg_derivable_or_selfret] tranche par [SelfRet].  Les deux
+    issues se produisent, sur deux sommes du dossier :
+
+    - [MCert] **rend** le message de sa garde [a] (sa continuation est le
+      copycat), donc [SelfRet] — et de fait son sac ne s'annule pas
+      ([VACCS_Matching.bagsem_does_not_descend]) ;
+    - [MM] ne le rend pas : ses deux continuations n'émettent que sur
+      [e], ou rien.  Son sac s'annule donc **à tout [l] et toute cible**.
+
+    Le critère n'est donc ni trivialement vrai ni trivialement faux, et
+    il sépare précisément les deux comportements. *)
+
+Lemma MM_not_selfret : ~ SelfRet MM.
+Proof.
+  intros (c & v0 & P' & Hl & Hin).
+  destruct (gsum_in_summand _ c v0 P' Hl) as (P & Hins & Heq). subst P'.
+  rewrite ochans_subst in Hin.
+  unfold MM in Hins. simpl in Hins.
+  destruct Hins as [Heq | [Heq | []]]; injection Heq as Hc Hp; subst;
+    simpl in Hin.
+  - destruct Hin as [H|[]]. injection H as H. congruence.
+  - contradiction.
+Qed.
+
+Lemma MCert_selfret : SelfRet MCert.
+Proof.
+  exists (cst a), (cst v), ((cst a) ! (cst v) • 𝟘). split.
+  - unfold MCert. apply lts_choiceL.
+    assert (E : ((cst a) ! cst v • 𝟘 : proc) = (((cst a) ! (bvar 0) • 𝟘) ^ (cst v)))
+      by reflexivity.
+    rewrite E. apply lts_input.
+  - simpl. left. reflexivity.
+Qed.
+
+(** ** (4) …et la TROISIÈME obligation tombe aussi — le critère regarde
+       les mauvaises gardes
+
+    Des trois obligations du découpage, celle-ci — « [g M] τ-stable et
+    [SelfRet M] ⟹ une délivrance convient » — avait survécu aux six
+    témoins.  Elle est fausse, et la raison est nette : **[SelfRet M] ne
+    dit pas que la garde qui reçoit le message rend ce message**.  Le
+    témoin met la garde auto-rendante sur un canal **absent du sac** :
+
+      MSelf := ((b ? (b ! x • 𝟘)) + (b ? 𝟘)) + (a ? 𝟘)     sac [(a,v)]
+
+    - [SelfRet MSelf] ✓ par la garde [b] (continuation copycat) ;
+    - [g MSelf] est τ-stable ✓ ;
+    - l'hypothèse tient, et **gratuitement** : chaque canal gardé a une
+      garde morte, donc [below_nil_of_all_dead] donne
+      [g MSelf ⊑ₘᵤₛₜᵢ 𝟘], que [must_i_par_compat_r] relève sous le sac ;
+    - mais la seule délivrance est celle du message [a], dont la
+      continuation est [𝟘] — et [nil_not_below_msg_gen] interdit
+      [𝟘 ⊑ₘᵤₛₜᵢ (a!v•𝟘)].
+
+    **Piste que cela ouvre** : [SelfRet] est *suffisant* pour que le sac
+    ne s'annule pas, jamais nécessaire ([MSelf] l'illustre).  Le critère
+    naturel serait sa version **relative au sac** — « une garde sur un
+    canal *du sac* rend son message » — et [MSelf] y est correctement
+    classé (sa garde [a] ne rend rien).  Non tenté ; noter que
+    [no_regen_of_own_channel], sur lequel repose l'annulation, quantifie
+    pour l'instant sur **tous** les canaux. *)
+
+Definition MSelf : gproc :=
+  (((cst b) ? ((cst b) ! (bvar 0) • 𝟘)) + ((cst b) ? ((g 𝟘) : proc)))
+  + ((cst a) ? ((g 𝟘) : proc)).
+
+Lemma MSelf_no_tau : forall z, ~ lts ((g MSelf) : proc) τ z.
+Proof.
+  intros z Hz. unfold MSelf in Hz.
+  inversion Hz; subst; [ inversion H3; subst; inversion H4 | inversion H3 ].
+Qed.
+
+Lemma MSelf_selfret : SelfRet MSelf.
+Proof.
+  exists (cst b), (cst v), ((cst b) ! (cst v) • 𝟘). split.
+  - unfold MSelf. apply lts_choiceL. apply lts_choiceL.
+    assert (E : ((cst b) ! cst v • 𝟘 : proc) = (((cst b) ! (bvar 0) • 𝟘) ^ (cst v)))
+      by reflexivity.
+    rewrite E. apply lts_input.
+  - simpl. left. reflexivity.
+Qed.
+
+Lemma MSelf_below_nil : ((g MSelf) : proc) ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
+Proof.
+  apply below_nil_of_all_dead; [ apply MSelf_no_tau | ].
+  intros c P Hin. unfold MSelf in *. simpl in *.
+  destruct Hin as [H|[H|[H|[]]]]; injection H as Hc Hp; subst; auto.
+Qed.
+
+Lemma MSelf_in_a_inv : forall v0 Mc,
+  lts ((g MSelf) : proc) (ActExt (ActIn (cst a, v0))) Mc -> Mc = ((g 𝟘) : proc).
+Proof.
+  intros v0 Mc Hl.
+  destruct (gsum_in_summand _ _ v0 Mc Hl) as (P & Hins & Heq). subst Mc.
+  unfold MSelf in Hins. simpl in Hins.
+  destruct Hins as [H|[H|[H|[]]]].
+  - exfalso. injection H as Hc Hp. apply nab. symmetry. exact Hc.
+  - exfalso. injection H as Hc Hp. apply nab. symmetry. exact Hc.
+  - injection H as Hp. subst P. reflexivity.
+Qed.
+
+Lemma MSelf_cfg_tau :
+  exists z, (((g MSelf) : proc) ▷ bag [(cst a ▷ cst v)]) ⟶ z.
+Proof.
+  exists (((g 𝟘) : proc) ▷ (∅ : MO (ExtAct TypeOfActions))).
+  simpl. apply fw_tau_deliver.
+  unfold MSelf. apply lts_choiceR.
+  assert (E : ((g 𝟘) : proc) = (((g 𝟘) : proc) ^ (cst v))) by reflexivity.
+  rewrite E at 2. apply lts_input.
+Qed.
+
+Theorem selfret_descent_is_false :
+  ~ (forall (l : list TypeOfActions) (M N : gproc), gStatic M -> gStatic N ->
+       SelfRet M ->
+       (forall z, ~ lts ((g M) : proc) τ z) ->
+       (exists z, (((g M) : proc) ▷ bag l) ⟶ z) ->
+       ((msgs l ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
+       (exists c v0 l0 Mc,
+          Permutation l ((c,v0) :: l0)
+          /\ lts ((g M) : proc) (ActExt (ActIn (c,v0))) Mc
+          /\ Mc ⊑ₘᵤₛₜᵢ (((c ! v0 • 𝟘) : proc) ‖ ((g N) : proc)))).
+Proof.
+  intro H.
+  destruct (H [(cst a ▷ cst v)] MSelf 𝟘
+              ltac:(unfold MSelf; repeat constructor)
+              ltac:(constructor)
+              MSelf_selfret MSelf_no_tau MSelf_cfg_tau
+              ltac:(apply must_i_par_compat_r; apply MSelf_below_nil))
+    as (c0 & v0 & l0 & Mc & Hp & Hin & Hb).
+  apply Permutation_length_1_inv in Hp. injection Hp as Hp1 Hp2. subst c0 v0.
+  rewrite (MSelf_in_a_inv _ _ Hin) in Hb.
+  assert (Hc : (((cst a ! cst v • 𝟘) : proc) ‖ ((g 𝟘) : proc))
+                 ≡* ((cst a ! cst v • 𝟘) : proc)) by apply cgr_par_nil.
+  apply (nil_not_below_msg_gen (cst a) (cst v)).
+  intros t Ht. apply (proj2 (must_i_cgr _ _ Hc)). apply Hb. exact Ht.
+Qed.
+
+(** ** …et le critère RAFFINÉ classe [MSelf] correctement
+
+    [VACCS_Bad.SelfRetBag] ne regarde que les gardes sur les **canaux du
+    sac**.  [MSelf] y échappe — sa garde auto-rendante est sur [b], hors
+    du sac — donc [VACCS_Bad.cfg_no_selfretbag_cancels] lui donne
+    l'annulation, que [MSelf_below_nil] confirme indépendamment.
+
+    Avec [VACCS_Bad.selfretbag_selfret] (l'inclusion), cela rend
+    l'inclusion **stricte** : le cas clos de la dichotomie est
+    strictement plus grand qu'avec [SelfRet]. *)
+
+Lemma MSelf_not_selfretbag : ~ SelfRetBag [(cst a ▷ cst v)] MSelf.
+Proof.
+  intros (c & v0 & Hin & Hex).
+  simpl in Hin. destruct Hin as [Heq|[]]. injection Heq as Hc Hv. subst c v0.
+  apply Exists_exists in Hex. destruct Hex as (aa & Hina & (P & Heq & Hoc)).
+  subst aa. unfold MSelf in Hina. simpl in Hina.
+  destruct Hina as [H|[H|[H|[]]]].
+  - injection H as Hc Hp. congruence.
+  - injection H as Hc Hp. congruence.
+  - injection H as Hp. subst P. simpl in Hoc. contradiction.
+Qed.
+
+(** ** …et les deux branches de [VACCS_Bad.cfg_derivable_or_hard] sont
+    atteintes
+
+    [MCert] tombe dans le **résidu** — sa garde sur [a] rend le message
+    du sac ; [MSelf] est traité par l'*autre* route, celle du critère
+    d'émission ([VACCS_Bad.cfg_derivable_of_disjoint]), sans qu'aucune
+    τ-stabilité ne soit consultée : sa seule voie d'émission est [b], et
+    le sac est sur [a].
+
+    C'est une seconde raison, indépendante de
+    [MSelf_not_selfretbag], pour laquelle [MSelf] est du côté clos. *)
+
+Lemma MCert_selfretbag : SelfRetBag [(cst a ▷ cst v)] MCert.
+Proof.
+  exists (cst a), (cst v). split; [ left; reflexivity | ].
+  unfold MCert. simpl. left.
+  exists ((cst a) ! (bvar 0) • 𝟘). split; [ reflexivity | ].
+  simpl. left. reflexivity.
+Qed.
+
+(** …et pourtant [MCert] est dérivablement sous le **sac nu**, par la
+    descente à travers sa garde copycat
+    ([VACCS_Matching.cfg_copycat_guard_below_bag]) : le message revient
+    aussitôt et le choix gardé, en s'engageant, jette la garde sur [b].
+
+    C'est la contrepartie **dérivationnelle** de [MCert_below], qui
+    n'était jusqu'ici établi que sémantiquement — et c'est le premier
+    théorème du développement qui couvre génériquement le témoin de la
+    branche [SelfRetBag] du résidu. *)
+
+Lemma ax_MCert_bag_below_nil :
+  ax_pre ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))
+         ((msgs [(cst a ▷ cst v)]) ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  eapply (cfg_copycat_guard_below_bag _ [] (cst a) (cst v) _
+            [((cst b) ? ((cst e) ! (cst y) • 𝟘))]).
+  - reflexivity.
+  - unfold MCert, ccatg. reflexivity.
+Qed.
+
+
+Lemma MSelf_disjoint_from_bag : forall c' u',
+  In (c',u') [(cst a ▷ cst v)] -> ~ In c' (ochans ((g MSelf) : proc)).
+Proof.
+  intros c' u' Hin Hoc. simpl in Hin. destruct Hin as [He|[]].
+  injection He as He1 He2. subst c' u'.
+  simpl in Hoc. destruct Hoc as [He|[]]. congruence.
+Qed.
+
+
+
+(** ** Bilan : la disjonction ne se DÉCOUPE pas par un critère syntaxique
+
+    Trois tentatives successives de scinder
+    [VACCS_Matching.CfgDisjunctionLocal3] en obligations à **un seul**
+    disjoint, chacune réfutée par un petit terme :
+
+    | classe visée | disjoint imposé | témoin |
+    |---|---|---|
+    | [SelfRet M] ∨ [g M] a un [τ] | (B) | [𝛕 • 𝟘] ([VACCS_Bad.selfret_case_premise_is_false]) |
+    | [g M] a un [τ] | (A) | [MTau] ([tau_summand_cancellation_is_false]) |
+    | [g M] a un [τ] | (C) | [PC] |
+    | [g M] τ-stable, [SelfRet M] | (B) | [MSelf] |
+
+    Et la raison est structurelle : à l'intérieur de la classe « [g M]
+    porte un [𝛕]-sommant », les quatre témoins se répartissent sur
+    **trois** disjoints différents —
+
+    - [𝛕 • 𝟘] et [PC] : seul (A) ;
+    - [MFalse] : seul (C) ;
+    - [MTau] : (B) et (C), pas (A).
+
+    Distinguer [PC] de [MFalse] demanderait de savoir si *une* branche
+    est sous la cible — c'est-à-dire (C) lui-même.  **Le choix du
+    disjoint dépend donc de la sémantique et non de la forme**, ce qui
+    explique que le caractère classique de la disjonction ne soit pas un
+    artefact d'énoncé : elle n'est pas décidable par inspection de [M].
+
+    Corollaire de méthode : cesser de chercher un découpage syntaxique.
+    Ce qu'il faut est soit une **règle** qui consomme la conjonction des
+    branches (analogue à gauche de [ax_glb_tau], absent — cf.
+    [VACCS_Matching.cfg_tau_species]), soit un tout autre angle. *)
+
+
 (** ** Le client qui réfute le disjoint « source » *)
 
 Definition QCert : gproc := (𝛕 • ((g ①) : proc)) + ((cst e) ? ((g 𝟘) : proc)).
@@ -1940,6 +2273,459 @@ Proof.
   apply H.
   apply (proj1 (must_i_cgr _ _ (cgr_nil_par_l ((g MCert) : proc)))).
   exact Ht.
+Qed.
+
+
+(** ** ★ AJOUTER UNE SOMME À GARDE COPYCAT N'EST PAS INOFFENSIF — SOUS LE SAC
+
+    [VACCS_Matching.cfg_derivable_of_copycats] exige que **tous** les
+    sommants soient des copycats.  La tentation est de n'en peler que
+    quelques-uns et de laisser un reste ; il faudrait pour cela que
+    l'ajout d'un sommant copycat soit invisible, ce que
+    [VACCS_ChoiceProbes.choice_stable_congruence_is_unsound] réfute — mais
+    **au niveau nu**.  Or le dossier consigne deux fois qu'un effet du sac
+    ne doit pas être affirmé sans sonde : le sac change les résidus.
+
+    Voici donc la réfutation **sous le sac**, sur [MCert] lui-même : le
+    sac porte [(a,v)], la garde sur [a] est un copycat, la garde sur [b]
+    ne l'est pas, et ajouter la somme au sac fait **perdre** un test.
+
+    Le mécanisme est celui de [VACCS_ChoiceProbes] : le client émet sur
+    [b], la garde [b] de [MCert] **vole** ce message et répond sur [e],
+    que le client absorbe par une garde morte — après quoi plus rien ne
+    bouge.  Le sac seul, lui, n'a aucune garde et laisse le client
+    réussir tout seul. *)
+
+Definition ECont : proc := ((cst e) ! (cst y) • 𝟘).
+Definition Pcc : proc := (((cst b) ! (cst w) • 𝟘)) ‖ (TSg (cst e)).
+Definition TCC : proc := ((g ((cst a) ? Pcc)) : proc).
+
+Lemma nilnil_static : Static (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc)).
+Proof. repeat constructor. Qed.
+
+Lemma nil_not_good : ~ good_VACCS ((g (𝟘 : gproc)) : proc).
+Proof. intro H. inversion H. Qed.
+
+Lemma out_not_good : forall (c : ChannelData) (u : ValueData),
+  ~ good_VACCS ((c ! u • 𝟘) : proc).
+Proof. intros c u H. inversion H. Qed.
+
+Lemma nil_TSg_not_good :
+  ~ good_VACCS (((g (𝟘 : gproc)) : proc) ‖ (TSg (cst e))).
+Proof.
+  intro Hg. inversion Hg; subst.
+  match goal with H : _ \/ _ |- _ => destruct H end;
+    [ eapply nil_not_good; eassumption | eapply TSg_not_good; eassumption ].
+Qed.
+
+(** Le cœur : une fois le message [b] volé et la réponse [e] absorbée,
+    il ne reste que [𝟘] face à [𝟘]. *)
+
+Lemma e_sync_fails :
+  ~ ((((g (𝟘 : gproc)) : proc) ‖ ECont) must_pass
+       (((g (𝟘 : gproc)) : proc) ‖ (TSg (cst e)))).
+Proof.
+  intro Hm. inversion Hm; subst.
+  { exfalso. eapply nil_TSg_not_good; eassumption. }
+  assert (Hbad : (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc)) must_pass
+               (((g (𝟘 : gproc)) : proc) ‖ (subst_in_proc 0 (cst y) ((g (𝟘 : gproc)) : proc)))).
+  { eapply com with (μ1 := ActOut (cst e, cst y)) (μ2 := ActIn (cst e, cst y)).
+    - simpl. reflexivity.
+    - apply lts_parR. unfold ECont. apply lts_output.
+    - apply lts_parR. unfold TSg. apply lts_choiceR. apply lts_input. }
+  simpl in Hbad.
+  assert (Hbad2 : (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc)) must_pass
+                  ((g (𝟘 : gproc)) : proc)).
+  { eapply must_eq_client; [ apply cgr_par_nil | exact Hbad ]. }
+  eapply no_client_nil; [ apply nilnil_static | exact Hbad2 ].
+Qed.
+
+Lemma Pcc_not_good : ~ good_VACCS Pcc.
+Proof.
+  intro Hg. unfold Pcc in Hg. inversion Hg; subst.
+  match goal with H : _ \/ _ |- _ => destruct H end;
+    [ eapply out_not_good; eassumption | eapply TSg_not_good; eassumption ].
+Qed.
+
+Lemma Pcc_tau_inv : forall t', lts Pcc τ t' ->
+  t' = (((cst b) ! (cst w) • 𝟘) ‖ ((g (① : gproc)) : proc)).
+Proof.
+  intros t' Ht. unfold Pcc, TSg in Ht.
+  inversion Ht; subst;
+    repeat match goal with
+    | H : lts ((cst b ! cst w • 𝟘) : proc) τ _ |- _ => inversion H
+    | H : lts ((cst b ! cst w • 𝟘) : proc) (ActExt (ActIn _)) _ |- _ => inversion H
+    | H : lts ((cst b ! cst w • 𝟘) : proc) (ActExt (ActOut _)) _ |- _ =>
+        inversion H; subst; clear H
+    | H : lts ((g (_ + _)) : proc) _ _ |- _ => inversion H; subst; clear H
+    | H : lts ((𝛕 • _) : proc) (ActExt _) _ |- _ => inversion H
+    | H : lts ((𝛕 • _) : proc) τ _ |- _ => inversion H; subst; clear H
+    | H : lts ((cst e ? _) : proc) τ _ |- _ => inversion H
+    | H : lts ((cst e ? _) : proc) (ActExt (ActIn _)) _ |- _ =>
+        inversion H; subst; clear H
+    end;
+    try reflexivity; try congruence.
+  all: inversion H4; subst; try reflexivity; try congruence.
+Qed.
+
+(** Le sac seul passe le client : il n'a aucune garde, donc aucun [com] à
+    honorer, et le client réussit par son propre [𝛕]. *)
+
+Lemma must_nil_Pcc : ((g (𝟘 : gproc)) : proc) must_pass Pcc.
+Proof.
+  apply m_step.
+  - apply Pcc_not_good.
+  - exists (((g (𝟘 : gproc)) : proc) ▷ (((cst b) ! (cst w) • 𝟘) ‖ ((g (① : gproc)) : proc))).
+    apply ParRight. unfold Pcc. apply lts_parR. unfold TSg.
+    apply lts_choiceL. apply lts_tau.
+  - intros p' Hp'. exfalso. eapply nil_no_lts; exact Hp'.
+  - intros t' Ht'. rewrite (Pcc_tau_inv t' Ht'). apply m_now.
+    constructor. right. constructor.
+  - intros p' t' mu1 mu2 Hd Hp' Ht'. exfalso. eapply nil_no_lts; exact Hp'.
+Qed.
+
+(** …et la somme ajoutée le fait échouer, par sa garde sur [b]. *)
+
+Lemma b_sync_fails :
+  ~ ((((g (𝟘 : gproc)) : proc) ‖ ((g MCert) : proc)) must_pass Pcc).
+Proof.
+  intro Hm. inversion Hm; subst.
+  { exfalso. eapply Pcc_not_good; eassumption. }
+  assert (Hbad : (((g (𝟘 : gproc)) : proc)
+                    ‖ (subst_in_proc 0 (cst w) (((cst e) ! (cst y) • 𝟘) : proc)))
+                 must_pass (((g (𝟘 : gproc)) : proc) ‖ (TSg (cst e)))).
+  { eapply com with (μ1 := ActIn (cst b, cst w)) (μ2 := ActOut (cst b, cst w)).
+    - simpl. reflexivity.
+    - apply lts_parR. unfold MCert. apply lts_choiceR. apply lts_input.
+    - unfold Pcc. apply lts_parL. apply lts_output. }
+  simpl in Hbad. eapply e_sync_fails. unfold ECont. exact Hbad.
+Qed.
+
+Lemma subst_Pcc : forall X, subst_in_proc 0 X Pcc = Pcc.
+Proof. intro X. unfold Pcc, TSg. reflexivity. Qed.
+
+Lemma TCC_not_good : ~ good_VACCS TCC.
+Proof. intro H. unfold TCC in H. inversion H. Qed.
+
+Lemma msg_passes_TCC : (((cst a) ! (cst v) • 𝟘) : proc) must_pass TCC.
+Proof.
+  apply m_step.
+  - apply TCC_not_good.
+  - exists (((g (𝟘 : gproc)) : proc) ▷ (subst_in_proc 0 (cst v) Pcc)).
+    eapply ParSync with (μ1 := ActOut (cst a, cst v)) (μ2 := ActIn (cst a, cst v)).
+    + simpl. reflexivity.
+    + apply lts_output.
+    + unfold TCC. apply lts_input.
+  - intros p' Hp'. inversion Hp'.
+  - intros t' Ht'. exfalso. unfold TCC in Ht'. inversion Ht'.
+  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+    inversion Hp'; subst. unfold TCC in Ht'. inversion Ht'; subst.
+    rewrite subst_Pcc. apply must_nil_Pcc.
+Qed.
+
+Lemma msg_MCert_fails_TCC :
+  ~ (((((cst a) ! (cst v) • 𝟘) : proc) ‖ ((g MCert) : proc)) must_pass TCC).
+Proof.
+  intro Hm. inversion Hm; subst.
+  { exfalso. eapply TCC_not_good; eassumption. }
+  assert (Hbad : (((g (𝟘 : gproc)) : proc) ‖ ((g MCert) : proc))
+                 must_pass (subst_in_proc 0 (cst v) Pcc)).
+  { eapply com with (μ1 := ActOut (cst a, cst v)) (μ2 := ActIn (cst a, cst v)).
+    - simpl. reflexivity.
+    - apply lts_parL. apply lts_output.
+    - unfold TCC. apply lts_input. }
+  rewrite subst_Pcc in Hbad. eapply b_sync_fails. exact Hbad.
+Qed.
+
+Theorem copycat_summand_not_harmless :
+  ~ ((msgs [(cst a ▷ cst v)])
+       ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))).
+Proof.
+  intro Hpre.
+  assert (Hcgr : (msgs [(cst a ▷ cst v)]) ≡* (((cst a) ! (cst v) • 𝟘) : proc)).
+  { simpl. apply cgr_par_nil. }
+  assert (H1 : (msgs [(cst a ▷ cst v)]) must_pass TCC).
+  { apply (proj1 (must_i_cgr _ _ Hcgr)). apply msg_passes_TCC. }
+  pose proof (Hpre TCC H1) as H2.
+  eapply msg_MCert_fails_TCC.
+  assert (Hcgr2 : ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))
+                  ≡* ((((cst a) ! (cst v) • 𝟘) : proc) ‖ ((g MCert) : proc))).
+  { apply cgr_fullpar; [ exact Hcgr | apply cgr_refl ]. }
+  apply (proj2 (must_i_cgr _ _ Hcgr2)). exact H2.
+Qed.
+
+(** ** ★★ [VACCS_Matching.OutChoice] EST FAUX
+
+    Le résidu se ramène ([ax_below_cfg_of_out_choice]) au **choix** d'un
+    résidu d'émission faible du membre gauche : si l'un d'eux est sous
+    le résidu de la cible, la comparaison se poursuit à un sac
+    strictement plus petit.  Ce choix n'est **pas** fourni par la
+    sémantique, et le témoin est la paire contradictoire [P1]/[P2]
+    portée à côté d'un message.
+
+      MsgC := oc ! v • 𝟘
+      OCp  := 𝛕•(MsgC ‖ P1)  +  𝛕•(MsgC ‖ P2)
+
+    - [OCp] est **sous** la configuration cible [msgs [(oc,v)] ‖ 𝟘] :
+      c'est [ax_share_msg] — le message se factorise hors du choix
+      interne — suivi de [PC_below_nil] et de la précongruence de [‖].
+      Autrement dit, ce sont exactement les deux lois de mise en commun
+      du développement qui rendent l'inéquation vraie ;
+    - ses **seuls** résidus d'émission faible sont [P1] et [P2]
+      ([OCp_wt_nil_inv] : un τ engage l'une des deux branches, après
+      quoi rien ne bouge plus), et aucun des deux n'est sous [𝟘]
+      ([P1_not_below_nil], [P2_not_below_nil]).
+
+    C'est la même alternation ∀∃ que partout ailleurs — l'intersection
+    des tests de [P1] et [P2] est incluse dans celle de [𝟘] sans
+    qu'aucune des deux ne le soit — mais lue cette fois sur des
+    **résidus d'émission**, ce que les contre-exemples antérieurs
+    ([tau_successor_cannot_be_chosen], [no_delivery_is_reversible])
+    ne couvraient pas.
+
+    Noter enfin que l'instance **est dérivable** ([ax_OCp_below_msg]) :
+    ce n'est pas un témoin d'incomplétude, c'est la réfutation d'une
+    *route*.  Et la route qui marche est celle de [ax_share_msg], donc
+    la mise en commun, pas la descente. *)
+
+Context {oc : Channel} {noca : oc <> a} {nocb : oc <> b}.
+
+Definition MsgC : proc := (cst oc) ! (cst v) • 𝟘.
+Definition OCp : gproc :=
+  (𝛕 • (MsgC ‖ ((g P1) : proc))) + (𝛕 • (MsgC ‖ ((g P2) : proc))).
+
+Lemma OCp_below_msg :
+  ((g OCp) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (MsgC ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  intros t Ht.
+  apply (must_i_par_compat_r MsgC ((g PC) : proc) ((g (𝟘 : gproc)) : proc)).
+  - apply PC_below_nil.
+  - apply (soundness_ax _ _ (ax_share_msg (cst oc) (cst v)
+             ((g P1) : proc) ((g P2) : proc))).
+    exact Ht.
+Qed.
+
+Lemma MsgP1_no_tau : forall z, ~ lts (MsgC ‖ ((g P1) : proc)) τ z.
+Proof. intros z Hz. unfold MsgC, P1 in Hz. blast3. Qed.
+
+Lemma MsgP2_no_tau : forall z, ~ lts (MsgC ‖ ((g P2) : proc)) τ z.
+Proof. intros z Hz. unfold MsgC, P2 in Hz. blast3. Qed.
+
+Lemma OCp_tau_inv : forall z, lts ((g OCp) : proc) τ z ->
+  z = (MsgC ‖ ((g P1) : proc)) \/ z = (MsgC ‖ ((g P2) : proc)).
+Proof.
+  intros z Hz. unfold OCp in Hz.
+  inversion Hz; subst.
+  - inversion H3; subst. left. reflexivity.
+  - inversion H3; subst. right. reflexivity.
+Qed.
+
+Lemma OCp_no_ext : forall mu z, ~ lts ((g OCp) : proc) (ActExt mu) z.
+Proof.
+  intros mu z Hz. unfold OCp in Hz.
+  inversion Hz; subst; inversion H3.
+Qed.
+
+Lemma OCp_wt_nil_inv : forall p1, ((g OCp) : proc) ⟹[[]] p1 ->
+  p1 = ((g OCp) : proc)
+  \/ p1 = (MsgC ‖ ((g P1) : proc))
+  \/ p1 = (MsgC ‖ ((g P2) : proc)).
+Proof.
+  intros p1 Hw.
+  inversion Hw; subst.
+  - left. reflexivity.
+  - destruct (OCp_tau_inv _ l) as [Hy|Hy]; subst.
+    + right. left. eapply wt_nil_stable; [ | exact w0 ].
+      apply no_lts_stable. intros zz Hzz. eapply MsgP1_no_tau. exact Hzz.
+    + right. right. eapply wt_nil_stable; [ | exact w0 ].
+      apply no_lts_stable. intros zz Hzz. eapply MsgP2_no_tau. exact Hzz.
+Qed.
+
+Lemma OCp_static : Static ((g OCp) : proc).
+Proof. unfold OCp, MsgC, P1, P2, Ke. repeat constructor. Qed.
+
+Lemma msgC_cgr : (MsgC ‖ ((g (𝟘 : gproc)) : proc))
+  ≡* (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  simpl. transitivity (MsgC ‖ (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc))).
+  - apply cgr_fullpar; [ apply cgr_refl | apply cgr_par_nil_rev ].
+  - unfold MsgC. symmetry. apply cgr_par_assoc.
+Qed.
+
+Lemma NilP1_no_tau : forall z, ~ lts (((g (𝟘 : gproc)) : proc) ‖ ((g P1) : proc)) τ z.
+Proof. intros z Hz. unfold P1 in Hz. blast3. Qed.
+
+Lemma NilP2_no_tau : forall z, ~ lts (((g (𝟘 : gproc)) : proc) ‖ ((g P2) : proc)) τ z.
+Proof. intros z Hz. unfold P2 in Hz. blast3. Qed.
+
+Lemma NilPi_not_below_nil : forall (X : gproc),
+  ~ (((g X) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g (𝟘 : gproc)) : proc)) ->
+  ~ ((((g (𝟘 : gproc)) : proc) ‖ ((g X) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  intros X HX Hpre. apply HX. intros t Ht.
+  apply Hpre.
+  assert (Hn : (((g (𝟘 : gproc)) : proc) ‖ ((g X) : proc)) ≡* ((g X) : proc)).
+  { transitivity (((g X) : proc) ‖ ((g (𝟘 : gproc)) : proc)).
+    - apply cgr_par_com.
+    - apply cgr_par_nil. }
+  apply (proj1 (must_i_cgr _ _ Hn)). exact Ht.
+Qed.
+
+(** La sémantique de l'instance, et l'inversion de ses résidus
+    d'émission : un [τ] engage l'une des deux branches, après quoi il ne
+    reste qu'une émission, donc les résidus sont **exactement** [𝟘 ‖ P1]
+    et [𝟘 ‖ P2]. *)
+
+Lemma OCp_below_cfg :
+  ((g OCp) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ
+    (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  intros t Ht.
+  apply (proj2 (must_i_cgr _ _ msgC_cgr)).
+  apply OCp_below_msg. exact Ht.
+Qed.
+
+Lemma OCp_out_residue_inv : forall p1 p'',
+  ((g OCp) : proc) ⟹[[]] p1 ->
+  lts p1 (ActExt (ActOut ((cst oc), (cst v)))) p'' ->
+  p'' = (((g (𝟘 : gproc)) : proc) ‖ ((g P1) : proc))
+  \/ p'' = (((g (𝟘 : gproc)) : proc) ‖ ((g P2) : proc)).
+Proof.
+  intros p1 p'' Hrun Hout.
+  destruct (OCp_wt_nil_inv _ Hrun) as [Hp1|[Hp1|Hp1]]; subst.
+  - exfalso. eapply OCp_no_ext. exact Hout.
+  - left. unfold MsgC, P1 in Hout. inversion Hout; subst.
+    2: { inversion H3; subst; inversion H4. }
+    inversion H3; subst. reflexivity.
+  - right. unfold MsgC, P2 in Hout. inversion Hout; subst.
+    2: { inversion H3; subst; inversion H4. }
+    inversion H3; subst. reflexivity.
+Qed.
+
+Theorem OCp_no_good_out_residue : forall p1 p'',
+  ((g OCp) : proc) ⟹[[]] p1 ->
+  lts p1 (ActExt (ActOut ((cst oc), (cst v)))) p'' ->
+  ~ (p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [] ‖ ((g (𝟘 : gproc)) : proc))).
+Proof.
+  intros p1 p'' Hrun Hout Hres.
+  destruct (OCp_out_residue_inv p1 p'' Hrun Hout) as [Hq|Hq]; subst.
+  - eapply NilPi_not_below_nil; [ apply P1_not_below_nil | ].
+    intros t Ht.
+    assert (Hnil : (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc))
+                     ≡* ((g (𝟘 : gproc)) : proc)) by apply cgr_par_nil.
+    apply (proj2 (must_i_cgr _ _ Hnil)). simpl in Hres. apply Hres. exact Ht.
+  - eapply NilPi_not_below_nil; [ apply P2_not_below_nil | ].
+    intros t Ht.
+    assert (Hnil : (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc))
+                     ≡* ((g (𝟘 : gproc)) : proc)) by apply cgr_par_nil.
+    apply (proj2 (must_i_cgr _ _ Hnil)). simpl in Hres. apply Hres. exact Ht.
+Qed.
+
+Theorem out_choice_is_false : ~ OutChoice.
+Proof.
+  intros HC.
+  destruct (HC ((g OCp) : proc) [((cst oc), (cst v))] [] (cst oc) (cst v)
+               (𝟘 : gproc) OCp_static ltac:(constructor) (Permutation_refl _)
+               OCp_below_cfg)
+    as (p1 & p'' & Hrun & Hout & Hres).
+  eapply OCp_no_good_out_residue; [ exact Hrun | exact Hout | exact Hres ].
+Qed.
+
+(** Le contrôle : l'inéquation est bel et bien **dérivable**, par la
+    mise en commun.  Ce n'est donc pas un témoin d'incomplétude — c'est
+    la réfutation de la route « descendre par un résidu d'émission ». *)
+
+Lemma ax_OCp_below_msg :
+  ax_pre ((g OCp) : proc)
+         (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  eapply ax_trans;
+    [ apply (ax_share_msg (cst oc) (cst v) ((g P1) : proc) ((g P2) : proc)) | ].
+  eapply ax_trans.
+  - apply (ax_par MsgC MsgC ((g PC) : proc) ((g (𝟘 : gproc)) : proc));
+      [ apply ax_refl | apply ax_PC_below_nil ].
+  - apply ax_cgr. apply msgC_cgr.
+Qed.
+
+(** ** …ET AUCUN TÉMOIN DE VIDANGE NE MARCHE NON PLUS
+
+    [VACCS_Matching.residue_reduces_to_bare] ramène le résidu à une
+    comparaison **nue** : le rejeu produit un [qq] τ-stable non émetteur
+    et il suffirait que [⊢ qq ⊑ g M].  Ce [qq] est le témoin que
+    [bhv_pre_cond2] rend à la **trace de vidange** — et il est
+    existentiel, donc on ne le choisit pas.
+
+    Sur [OCp] la question se pose au plus simple : la trace de vidange
+    est [[oc!]], et les états qu'elle atteint sont *exactement*
+    [𝟘 ‖ P1] et [𝟘 ‖ P2] ([OCp_drain_inv] : le premier pas ne peut être
+    qu'un [τ] — [OCp_no_ext] — après quoi la branche est engagée et rien
+    ne bouge plus qu'une émission).  Aucun des deux n'est sous [𝟘].
+
+    Donc l'hypothèse de [residue_reduces_to_bare] n'est pas
+    **atteignable** ici, bien que l'inéquation soit dérivable
+    ([ax_OCp_below_msg]).  Le témoin qui réfute le choix d'un résidu
+    d'émission réfute donc aussi le choix d'un témoin de vidange, et par
+    le même mécanisme : [P1] et [P2] ont des exigences contradictoires,
+    donc leur *conjonction* est sous [𝟘] sans qu'aucun ne le soit. *)
+
+Lemma OCp_drain_inv : forall q,
+  ((g OCp) : proc) ⟹[[ActOut ((cst oc), (cst v))]] q ->
+  q = (((g (𝟘 : gproc)) : proc) ‖ ((g P1) : proc))
+  \/ q = (((g (𝟘 : gproc)) : proc) ‖ ((g P2) : proc)).
+Proof.
+  intros q Hw.
+  inversion Hw; subst.
+  - destruct (OCp_tau_inv _ l) as [Hy|Hy]; subst.
+    + inversion w0; subst.
+      * exfalso. eapply MsgP1_no_tau. eassumption.
+      * left. unfold MsgC, P1 in l0. inversion l0; subst.
+        2: { inversion H3; subst; inversion H4. }
+        inversion H3; subst.
+        eapply wt_nil_stable; [ | eassumption ].
+        apply no_lts_stable. intros zz Hzz. eapply NilP1_no_tau. exact Hzz.
+    + inversion w0; subst.
+      * exfalso. eapply MsgP2_no_tau. eassumption.
+      * right. unfold MsgC, P2 in l0. inversion l0; subst.
+        2: { inversion H3; subst; inversion H4. }
+        inversion H3; subst.
+        eapply wt_nil_stable; [ | eassumption ].
+        apply no_lts_stable. intros zz Hzz. eapply NilP2_no_tau. exact Hzz.
+  - exfalso. eapply OCp_no_ext. eassumption.
+Qed.
+
+Theorem no_drain_witness_for_OCp : forall q,
+  ((g OCp) : proc) ⟹[[ActOut ((cst oc), (cst v))]] q ->
+  ~ (q ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  intros q Hw. destruct (OCp_drain_inv q Hw) as [Hq|Hq]; subst.
+  - apply NilPi_not_below_nil. apply P1_not_below_nil.
+  - apply NilPi_not_below_nil. apply P2_not_below_nil.
+Qed.
+
+(** ** ★ LE TÉMOIN, EN UN SEUL ÉNONCÉ
+
+    [OCp] réfute les **deux** routes « choisir un témoin » de ce
+    développement, et il est en même temps **dérivable** — donc ce n'est
+    pas un témoin d'incomplétude mais la délimitation de deux stratégies.
+
+    La route qui marche est [ax_share_msg] : le message se factorise
+    hors du choix interne, et [PC_below_nil] fait le reste.  C'est la
+    **mise en commun**, pas la descente. *)
+
+Theorem OCp_refutes_the_choices :
+     ((g OCp) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ
+       (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc))
+  /\ ax_pre ((g OCp) : proc)
+       (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc))
+  /\ (forall p1 p'', ((g OCp) : proc) ⟹[[]] p1 ->
+        lts p1 (ActExt (ActOut ((cst oc), (cst v)))) p'' ->
+        ~ (p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [] ‖ ((g (𝟘 : gproc)) : proc))))
+  /\ (forall q, ((g OCp) : proc) ⟹[[ActOut ((cst oc), (cst v))]] q ->
+        ~ (q ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g (𝟘 : gproc)) : proc))).
+Proof.
+  split; [ exact OCp_below_cfg | ].
+  split; [ exact ax_OCp_below_msg | ].
+  split; [ exact OCp_no_good_out_residue | exact no_drain_witness_for_OCp ].
 Qed.
 
 End VACCS_DropProbes.

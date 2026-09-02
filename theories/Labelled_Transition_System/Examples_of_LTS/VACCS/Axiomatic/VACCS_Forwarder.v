@@ -298,40 +298,88 @@ match s with
 | ActOut a :: s' => a :: outs s'
 end.
 
+(** ** La forme SHARPE : le processus ne consomme que ce que le sac tenait
+
+    L'équation de bilan laisse volontairement du jeu — elle ne dit pas
+    *d'où* viennent les entrées du processus.  Or un message n'entre dans
+    le buffer que par [lts_multiset_add], qui exige une entrée dans la
+    trace ; une émission du processus, elle, part directement dans la
+    trace et n'est jamais remise au buffer.  Donc le buffer ne fait que
+    **décroître** le long d'une trace sans entrée, et tout ce que le
+    processus délivre en sortait.
+
+    L'invariant qui capture cela est [bag (ins r) ⊎ y.2 ⊆ x.2 ⊎ bag (ins s)]
+    — « ce qui a été consommé, plus ce qui reste, tient dans ce qu'on
+    avait plus ce qu'on a reçu ».  Chaque pas le préserve : une
+    délivrance déplace un message d'un membre à l'autre du membre gauche,
+    une absorption fait croître les deux membres également, une émission
+    du buffer fait décroître le gauche, et un pas propre du processus ne
+    touche ni l'un ni l'autre.
+
+    [fw_conservation] en est le premier conjoint. *)
+
+Lemma fw_conservation_bounded : forall (s : trace (ExtAct TypeOfActions))
+    (x y : proc * MO (ExtAct TypeOfActions)),
+  x ⟹[s] y -> exists r, x.1 ⟹[r] y.1 /\
+    (x.2 ⊎ bag (ins s) ⊎ bag (outs r) = y.2 ⊎ bag (outs s) ⊎ bag (ins r)) /\
+    (bag (ins r) ⊎ y.2 ⊆ x.2 ⊎ bag (ins s)).
+Proof.
+  intros s x y H.
+  induction H as [x|s x q y Hl Hw IH|mu s x q y Hl Hw IH].
+  - exists nil. split; [ apply wt_nil | simpl; split; multiset_solver ].
+  - destruct x as (p,m). destruct q as (p1,m1).
+    destruct IH as (r & Hr & Heq & Hsub). simpl in *.
+    destruct (fw_tau_shape p m (p1,m1) Hl) as [HA|HB].
+    + (* the process moves on its own *)
+      destruct HA as (p' & Hp' & E). inversion E; subst.
+      exists r. split; [ eapply wt_tau; [ exact Hp' | exact Hr ] | ].
+      simpl in *. split; multiset_solver.
+    + (* delivery: the buffer loses a message, the process gains an input *)
+      destruct HB as (a & p' & m' & Hm & Hp' & E). inversion E; subst.
+      exists (ActIn a :: r). split.
+      * eapply wt_act; [ exact Hp' | exact Hr ].
+      * simpl in *. split; multiset_solver.
+  - destruct x as (p,m). destruct q as (p1,m1).
+    destruct IH as (r & Hr & Heq & Hsub). simpl in *.
+    destruct (fw_ext_shape p m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    + (* the process acts visibly: the action is on both sides *)
+      destruct HA as (p' & Hp' & E). inversion E; subst.
+      exists (mu :: r). split.
+      * eapply wt_act; [ exact Hp' | exact Hr ].
+      * destruct mu as [a|a]; simpl in *; split; multiset_solver.
+    + (* absorption: the trace gains an input, the buffer gains the message *)
+      destruct HB as (a & Hmu & E). inversion E; subst.
+      exists r. split; [ exact Hr | simpl in *; split; multiset_solver ].
+    + (* emission: the buffer loses a message, the trace gains an output *)
+      destruct HC as (a & m' & Hmu & Hm & E). inversion E; subst.
+      exists r. split; [ exact Hr | simpl in *; split; multiset_solver ].
+Qed.
+
 Lemma fw_conservation : forall (s : trace (ExtAct TypeOfActions))
     (x y : proc * MO (ExtAct TypeOfActions)),
   x ⟹[s] y -> exists r, x.1 ⟹[r] y.1 /\
     x.2 ⊎ bag (ins s) ⊎ bag (outs r) = y.2 ⊎ bag (outs s) ⊎ bag (ins r).
 Proof.
   intros s x y H.
-  induction H as [x|s x q y Hl Hw IH|mu s x q y Hl Hw IH].
-  - exists nil. split; [ apply wt_nil | simpl; multiset_solver ].
-  - destruct x as (p,m). destruct q as (p1,m1).
-    destruct IH as (r & Hr & Heq). simpl in *.
-    destruct (fw_tau_shape p m (p1,m1) Hl) as [HA|HB].
-    + (* the process moves on its own *)
-      destruct HA as (p' & Hp' & E). inversion E; subst.
-      exists r. split; [ eapply wt_tau; [ exact Hp' | exact Hr ] | simpl in *; multiset_solver ].
-    + (* delivery: the buffer loses a message, the process gains an input *)
-      destruct HB as (a & p' & m' & Hm & Hp' & E). inversion E; subst.
-      exists (ActIn a :: r). split.
-      * eapply wt_act; [ exact Hp' | exact Hr ].
-      * simpl in *. multiset_solver.
-  - destruct x as (p,m). destruct q as (p1,m1).
-    destruct IH as (r & Hr & Heq). simpl in *.
-    destruct (fw_ext_shape p m mu (p1,m1) Hl) as [HA|[HB|HC]].
-    + (* the process acts visibly: the action is on both sides *)
-      destruct HA as (p' & Hp' & E). inversion E; subst.
-      exists (mu :: r). split.
-      * eapply wt_act; [ exact Hp' | exact Hr ].
-      * destruct mu as [a|a]; simpl in *; multiset_solver.
-    + (* absorption: the trace gains an input, the buffer gains the message *)
-      destruct HB as (a & Hmu & E). inversion E; subst.
-      exists r. split; [ exact Hr | simpl in *; multiset_solver ].
-    + (* emission: the buffer loses a message, the trace gains an output *)
-      destruct HC as (a & m' & Hmu & Hm & E). inversion E; subst.
-      exists r. split; [ exact Hr | simpl in *; multiset_solver ].
+  destruct (fw_conservation_bounded s x y H) as (r & Hr & Heq & _).
+  exists r. split; assumption.
 Qed.
+
+(** La lecture du conjoint supplémentaire, et **pourquoi il doit être un
+    conjoint** : sur une trace sans entrée il dit que *tout ce que le
+    processus consomme venait du sac initial*, ce qui est exactement ce
+    qui restreint aux canaux **du sac** le critère de non-régénération —
+    [VACCS_Matching.no_regen_of_own_channel_bag] l'applique au canal de
+    la *première* entrée du run, et celle-ci est forcément un message que
+    le sac tenait.
+
+    Mais le sortir en corollaire séparé ne sert à rien : les deux
+    consommateurs ([no_regen_of_own_channel_bag] et
+    [VACCS_Matching.drain_forced_no_output_bag]) ont besoin de la borne
+    **et** de l'équation de bilan pour le **même** [r], et l'existentiel
+    est interne à l'énoncé.  Deux invocations séparées donneraient deux
+    [r] différents.  C'est la raison pour laquelle le renforcement est un
+    conjoint de [fw_conservation_bounded] et non un lemme à part. *)
 
 (** ** A STABLE state with a mute process just drains its buffer
 
@@ -434,34 +482,13 @@ Qed.
     emits: the surplus messages are simply carried along, so the very same
     run is a [τ]-run from the surplus alone.
 
-    The hypothesis is [MuteRun] — "no run of this process ever emits" —
-    rather than the one-step "this process has no output": the property
-    has to survive every state the run visits, and in that form it is
-    preserved by transitions ([MuteRun_step]) while giving the one-step
-    fact for free ([MuteRun_no_out]).  In [VACCS_Matching.v] it is
-    discharged from [ochans p = []] by [trace_out_in_ochans]. *)
-
-Definition MuteRun (p : proc) : Prop :=
-  forall r q, p ⟹[r] q -> outs r = [].
-
-Lemma MuteRun_step : forall (p : proc) a q, MuteRun p -> lts p a q -> MuteRun q.
-Proof.
-  intros p a q Hm Hl r z Hw.
-  destruct a as [mu|].
-  - assert (Hbig : p ⟹[mu :: r] z) by (eapply wt_act; [ exact Hl | exact Hw ]).
-    specialize (Hm _ _ Hbig). destruct mu as [b|b]; simpl in Hm.
-    + exact Hm.
-    + discriminate Hm.
-  - apply (Hm r z). eapply wt_tau; [ exact Hl | exact Hw ].
-Qed.
-
-Lemma MuteRun_no_out : forall (p : proc) a q, MuteRun p ->
-  ~ lts p (ActExt (ActOut a)) q.
-Proof.
-  intros p a q Hm Hl.
-  assert (Hw : p ⟹[ActOut a :: nil] q) by (eapply wt_act; [ exact Hl | apply wt_nil ]).
-  specialize (Hm _ _ Hw). simpl in Hm. discriminate Hm.
-Qed.
+    L'hypothèse est [MuteOn] (plus bas) — « le processus n'émet, le long
+    d'aucun run, sur aucune voie de [L] » — plutôt que la version en un
+    pas « ce processus n'a pas de sortie » : la propriété doit survivre à
+    chaque état que le run visite, et sous cette forme elle est préservée
+    par les transitions ([MuteOn_step]) tout en donnant le fait en un pas
+    gratuitement ([MuteOn_no_out]).  Dans [VACCS_Matching.v] elle est
+    déchargée par [MuteOn_of_ochans]. *)
 
 (** A run whose trace carries no input, from a buffer that is exactly what
     the trace emits plus a surplus [m], is a [τ]-run from [m] alone — and
@@ -475,45 +502,6 @@ Qed.
     left.  A buffer emission, by contrast, is simply **dropped**: that is
     what makes the projection shorter than the run it projects. *)
 
-Lemma fw_drain_project : forall (s : trace (ExtAct TypeOfActions))
-    (x y : proc * MO (ExtAct TypeOfActions)),
-  x ⟹[s] y -> MuteRun x.1 -> ins s = [] ->
-  forall m, x.2 = bag (outs s) ⊎ m -> (x.1 ▷ m) ⟹[[]] y.
-Proof.
-  intros s x y Hw. induction Hw as [x|s x q y Hl Hwt IH|mu s x q y Hl Hwt IH];
-    intros Hmute Hins m Hbuf.
-  - simpl in Hbuf. destruct x as (p,k). simpl in *.
-    replace k with m in * by (rewrite Hbuf; multiset_solver).
-    apply wt_nil.
-  - destruct x as (p,k). destruct q as (p1,k1). simpl in *. subst k.
-    destruct (fw_tau_shape p _ (p1,k1) Hl) as [HA|HB].
-    + destruct HA as (p' & Hp' & E). inversion E; subst.
-      assert (Hm' : MuteRun p') by (eapply MuteRun_step; [ exact Hmute | exact Hp' ]).
-      specialize (IH Hm' Hins m eq_refl). simpl in IH.
-      eapply wt_tau; [ apply fw_tau_left; exact Hp' | exact IH ].
-    + destruct HB as (a & p' & m' & Hk & Hp' & E). inversion E; subst.
-      assert (Hm' : MuteRun p') by (eapply MuteRun_step; [ exact Hmute | exact Hp' ]).
-      destruct (fw_conservation _ _ _ Hwt) as (r & Hr & Hbal). simpl in Hbal.
-      assert (Houtr : outs r = []) by (eapply Hm'; exact Hr).
-      rewrite Hins, Houtr in Hbal. simpl in Hbal.
-      assert (Hsub : bag (outs s) ⊆ m') by multiset_solver.
-      assert (Hin : ActOut a ∈ m) by multiset_solver.
-      remember (m ∖ {[+ ActOut a +]}) as m2 eqn:Em2.
-      assert (Hsplit : m = {[+ ActOut a +]} ⊎ m2) by (rewrite Em2; multiset_solver).
-      assert (Hm2 : m' = bag (outs s) ⊎ m2) by (rewrite Em2; multiset_solver).
-      specialize (IH Hm' Hins _ Hm2). simpl in IH.
-      eapply wt_tau; [ | exact IH ].
-      rewrite Hsplit. apply fw_tau_deliver. exact Hp'.
-  - destruct x as (p,k). destruct q as (p1,k1). simpl in *. subst k.
-    destruct mu as [b|b]; simpl in Hins; [ discriminate Hins | ].
-    destruct (fw_ext_shape p _ (ActOut b) (p1,k1) Hl) as [HA|[HB|HC]].
-    + destruct HA as (p' & Hp' & _). exfalso. eapply MuteRun_no_out; eassumption.
-    + destruct HB as (a & Hcon & _). discriminate Hcon.
-    + destruct HC as (a & m'' & Ha & Hk & E). injection Ha as Ha. subst a.
-      inversion E; subst. simpl in Hk.
-      assert (Hm2 : m'' = bag (outs s) ⊎ m) by multiset_solver.
-      exact (IH Hmute Hins _ Hm2).
-Qed.
 
 (** ** The forwarder's offers
 
@@ -687,6 +675,109 @@ Proof.
   - apply gmultiset.gmultiset_elem_of_disj_union in H as [H|H].
     + left. apply gmultiset_elem_of_singleton in H. congruence.
     + right. apply IH. exact H.
+Qed.
+
+(** ** …et le critère se RELATIVISE au sac
+
+Interdire **toute** émission du processus est plus
+    que nécessaire.  Un run réalise exactement sa trace, donc si le
+    processus émet pendant la vidange, cette émission **est** l'une des
+    actions de la trace — donc sur une voie du sac.  Il suffit par
+    conséquent que ses émissions évitent les voies que la trace porte.
+
+    [MuteOn L] est ce critère, [L] étant fixé pendant toute l'induction
+    (la trace, elle, rétrécit, d'où l'hypothèse séparée
+    « les sorties de [s] sont dans [L] »). *)
+
+Definition MuteOn (L : list ChannelData) (p : proc) : Prop :=
+  forall r q aa, p ⟹[r] q -> In aa (outs r) -> ~ In (fst aa) L.
+
+Lemma MuteOn_step : forall L (p : proc) al q, MuteOn L p -> lts p al q -> MuteOn L q.
+Proof.
+  intros L p al q Hm Hl r z aa Hw Hin.
+  destruct al as [mu|].
+  - assert (Hbig : p ⟹[mu :: r] z) by (eapply wt_act; [ exact Hl | exact Hw ]).
+    eapply Hm; [ exact Hbig | ].
+    destruct mu as [bb|bb]; simpl; [ exact Hin | right; exact Hin ].
+  - eapply Hm; [ eapply wt_tau; [ exact Hl | exact Hw ] | exact Hin ].
+Qed.
+
+Lemma MuteOn_no_out : forall L (p : proc) aa q, MuteOn L p -> In (fst aa) L ->
+  ~ lts p (ActExt (ActOut aa)) q.
+Proof.
+  intros L p aa q Hm HinL Hl.
+  assert (Hw : p ⟹[ActOut aa :: nil] q) by (eapply wt_act; [ exact Hl | apply wt_nil ]).
+  eapply Hm; [ exact Hw | simpl; left; reflexivity | exact HinL ].
+Qed.
+
+(** La cancellation du bilan, avec un troisième terme à gauche toléré
+    pourvu qu'il **ne rencontre pas** le multiensemble visé.  Énoncée au
+    type générique : à [MO (ExtAct TypeOfActions)] les deux élaborations
+    de [⊎] que le développement transporte sont convertibles sans être
+    syntaxiquement égales. *)
+
+Lemma disj_union_sub_middle_disj :
+  forall (A : Type) (EqA : EqDecision A) (CA : Countable A)
+         (X Y Z W V : gmultiset A),
+  X ⊎ ∅ ⊎ W = Y ⊎ Z ⊎ V ->
+  (forall a, (0 < multiplicity a Z)%nat -> multiplicity a W = 0%nat) ->
+  Z ⊆ X.
+Proof.
+  intros A EqA CA X Y Z W V H Hd z0.
+  apply (f_equal (multiplicity z0)) in H.
+  rewrite !multiplicity_disj_union in H. rewrite !multiplicity_empty in H.
+  destruct (multiplicity z0 Z) as [|k] eqn:E; [ lia | ].
+  rewrite (Hd z0) in H; [ lia | rewrite E; lia ].
+Qed.
+
+Lemma fw_drain_project_on : forall (L : list ChannelData)
+    (s : trace (ExtAct TypeOfActions)) (x yy : proc * MO (ExtAct TypeOfActions)),
+  x ⟹[s] yy -> MuteOn L x.1 -> ins s = [] ->
+  (forall aa, In aa (outs s) -> In (fst aa) L) ->
+  forall m, x.2 = bag (outs s) ⊎ m -> (x.1 ▷ m) ⟹[[]] yy.
+Proof.
+  intros L s x yy Hw. induction Hw as [x|s x q yy Hl Hwt IH|mu s x q yy Hl Hwt IH];
+    intros Hmute Hins HL m Hbuf.
+  - simpl in Hbuf. destruct x as (p,k). simpl in *.
+    replace k with m in * by (rewrite Hbuf; multiset_solver).
+    apply wt_nil.
+  - destruct x as (p,k). destruct q as (p1,k1). simpl in *. subst k.
+    destruct (fw_tau_shape p _ (p1,k1) Hl) as [HA|HB].
+    + destruct HA as (p' & Hp' & E). inversion E; subst.
+      assert (Hm' : MuteOn L p') by (eapply MuteOn_step; [ exact Hmute | exact Hp' ]).
+      specialize (IH Hm' Hins HL m eq_refl). simpl in IH.
+      eapply wt_tau; [ apply fw_tau_left; exact Hp' | exact IH ].
+    + destruct HB as (aa & p' & m' & Hk & Hp' & E). inversion E; subst.
+      assert (Hm' : MuteOn L p') by (eapply MuteOn_step; [ exact Hmute | exact Hp' ]).
+      destruct (fw_conservation _ _ _ Hwt) as (r & Hr & Hbal). simpl in Hbal.
+      rewrite Hins in Hbal. simpl in Hbal.
+      assert (Hsub : bag (outs s) ⊆ m').
+      { eapply disj_union_sub_middle_disj; [ exact Hbal | ].
+        intros zz Hpos.
+        assert (Hin2 : zz ∈ bag (outs s)) by (apply elem_of_multiplicity; exact Hpos).
+        destruct (bag_out _ _ Hin2) as (cv & Ecv). subst zz.
+        apply not_elem_of_multiplicity. intro Hino.
+        eapply Hm'; [ exact Hr | apply bag_elem; exact Hino | ].
+        apply HL. apply bag_elem. exact Hin2. }
+      assert (Hin : ActOut aa ∈ m) by multiset_solver.
+      remember (m ∖ {[+ ActOut aa +]}) as m2 eqn:Em2.
+      assert (Hsplit : m = {[+ ActOut aa +]} ⊎ m2) by (rewrite Em2; multiset_solver).
+      assert (Hm2 : m' = bag (outs s) ⊎ m2) by (rewrite Em2; multiset_solver).
+      specialize (IH Hm' Hins HL _ Hm2). simpl in IH.
+      eapply wt_tau; [ | exact IH ].
+      rewrite Hsplit. apply fw_tau_deliver. exact Hp'.
+  - destruct x as (p,k). destruct q as (p1,k1). simpl in *. subst k.
+    destruct mu as [bb|bb]; simpl in Hins; [ discriminate Hins | ].
+    destruct (fw_ext_shape p _ (ActOut bb) (p1,k1) Hl) as [HA|[HB|HC]].
+    + destruct HA as (p' & Hp' & _). exfalso.
+      eapply MuteOn_no_out; [ exact Hmute | | exact Hp' ].
+      apply HL. simpl. left. reflexivity.
+    + destruct HB as (aa & Hcon & _). discriminate Hcon.
+    + destruct HC as (aa & m'' & Ha & Hk & E). injection Ha as Ha. subst aa.
+      inversion E; subst. simpl in Hk.
+      assert (Hm2 : m'' = bag (outs s) ⊎ m) by multiset_solver.
+      apply (IH Hmute Hins); [ | exact Hm2 ].
+      intros aa Hina. apply HL. simpl. right. exact Hina.
 Qed.
 
 (** ** Message bags *)

@@ -269,8 +269,8 @@ End DropRegression2.
     the guard *swallows* the message.  Here the **same** inequation comes
     out of the whole unequal-bag apparatus:
 
-        bag_incl_of_below      (the two bags, by draining the right one)
-      → msgs_cancel_surplus     (the common part cancelled, surplus left)
+        bag_incl_of_below_disj  (the two bags, by draining the right one)
+      → msgs_cancel_surplus_disj (the common part cancelled, surplus left)
       → cert_of_split           (the certificate at the shifted buffer)
       → ax_below_split_from_certificate   (Phase A, Phase B, bag restored)
 
@@ -283,9 +283,6 @@ Variable c : ChannelData.
 Variable v : ValueData.
 
 Definition Sink : gproc := c ? ((g 𝟘) : proc).
-
-Lemma sink_mute : ochans ((g Sink) : proc) = [].
-Proof. reflexivity. Qed.
 
 Lemma sink_cfg_sem :
   (msgs [(c, v)] ‖ ((g Sink) : proc))
@@ -305,7 +302,7 @@ Proof.
   apply completeness_cfg_split_no_output.
   - repeat constructor.
   - constructor.
-  - apply sink_mute.
+  - intros cc uu Hin. inversion Hin.
   - intros z Hz. inversion Hz.
   - apply sink_cfg_sem.
   - intros d Hperm cc vv Q' l' Hsub Hin. inversion Hin.
@@ -382,6 +379,168 @@ Proof.
 Qed.
 
 End StepRegression.
+
+
+(* ------------------------------------------------------------------ *)
+(*  A SUM OF COPYCATS IS DERIVABLY BELOW [𝟘]                           *)
+(*                                                                     *)
+(*  The mute peeling criterion cannot say this: a copycat's            *)
+(*  continuation *emits*, precisely on the channel of its own guard,   *)
+(*  so [ochans] of the sum is not empty.  The [DropOk] criterion of    *)
+(*  [VACCS_Matching.ax_gsum_drop_ochans] asks only that a              *)
+(*  continuation emit **nowhere but on its own guard's channel**, and  *)
+(*  that is exactly what a copycat does.                               *)
+(*                                                                     *)
+(*  This is the non-vacuity control for that criterion: the statement  *)
+(*  is true independently (a copycat is invisible), and the new        *)
+(*  peeling derives it — for a *sum*, which no single-guard rule       *)
+(*  reaches.                                                           *)
+(* ------------------------------------------------------------------ *)
+
+Section CopycatSumRegression.
+Context {ka kb : Channel}.
+
+Lemma two_ccats_gStatic : gStatic ((ccatg (cst ka)) + (ccatg (cst kb))).
+Proof. constructor; apply ccatg_gStatic. Qed.
+
+Lemma two_ccats_copycats : gCopycats ((ccatg (cst ka)) + (ccatg (cst kb))).
+Proof. simpl. split; reflexivity. Qed.
+
+Lemma ax_two_ccats_below_nil :
+  ax_pre ((g ((ccatg (cst ka)) + (ccatg (cst kb)))) : proc) ((g (𝟘 : gproc)) : proc).
+Proof.
+  apply ax_copycats_below_nil;
+    [ apply two_ccats_gStatic | apply two_ccats_copycats ].
+Qed.
+
+(** …et le critère muet ne peut pas le dire. *)
+
+Lemma two_ccats_not_mute :
+  ochans ((g ((ccatg (cst ka)) + (ccatg (cst kb)))) : proc) <> [].
+Proof. simpl. discriminate. Qed.
+
+Lemma two_ccats_below_nil_sound :
+  ((g ((ccatg (cst ka)) + (ccatg (cst kb)))) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g (𝟘 : gproc)) : proc).
+Proof. apply soundness_ax. apply ax_two_ccats_below_nil. Qed.
+
+End CopycatSumRegression.
+
+(* ------------------------------------------------------------------ *)
+(*  A RETURNING GUARD WITH A NON-TRIVIAL RESIDUE                       *)
+(*                                                                     *)
+(*  [cfg_return_below_residue] does not need the guard to be a         *)
+(*  copycat: it is enough that the continuation *returns* the bag      *)
+(*  message.  Here the continuation returns it **and keeps a guard on  *)
+(*  another channel**, so the residue is not [𝟘] and                   *)
+(*  [cfg_copycat_guard_below_bag] does not apply.                      *)
+(*                                                                     *)
+(*  Noter que la somme entière disparaît malgré tout — le choix gardé  *)
+(*  s'engage — et qu'il ne reste que ce que la garde choisie a laissé. *)
+(* ------------------------------------------------------------------ *)
+
+Lemma ax_return_residue_example :
+  forall (c d : ChannelData) (u : ValueData),
+  ax_pre ((msgs [(c,u)])
+            ‖ ((g (c ? (((c ! (bvar 0) • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc)))) : proc))
+         ((msgs [(c,u)])
+            ‖ ((((g (𝟘 : gproc)) : proc)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc))).
+Proof.
+  intros c d u.
+  eapply (cfg_return_below_residue _ [] c u _
+            (((c ! u • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc))).
+  - reflexivity.
+  - assert (E : subst_in_proc 0 u
+                  ((((c ! (bvar 0) • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc)) : proc)
+                = ((((c ! u • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc)) : proc))
+      by reflexivity.
+    rewrite <- E. apply lts_input.
+  - apply lts_parL. apply lts_output.
+Qed.
+
+(* ------------------------------------------------------------------ *)
+(*  …ET LE RENVOI PEUT ÊTRE DIFFÉRÉ                                     *)
+(*                                                                     *)
+(*  [cfg_return_below_residue_w] n'exige pas que la garde rende le      *)
+(*  message *immédiatement* : elle peut travailler d'abord.  Ici la     *)
+(*  continuation prend un [𝛕] avant de renvoyer, donc                   *)
+(*  [cfg_return_below_residue] ne s'applique pas —                      *)
+(*  [delayed_return_is_not_immediate] le machine-vérifie, une somme     *)
+(*  gardée n'émettant jamais ([gsum_no_out]).                          *)
+(* ------------------------------------------------------------------ *)
+
+Lemma ax_delayed_return_example :
+  forall (c : ChannelData) (u : ValueData),
+  ax_pre ((msgs [(c,u)])
+            ‖ ((g (c ? ((g (𝛕 • ((c ! (bvar 0) • 𝟘) : proc))) : proc))) : proc))
+         ((msgs [(c,u)]) ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  intros c u.
+  eapply (cfg_return_below_residue_w _ [] c u _
+            ((g (𝛕 • ((c ! u • 𝟘) : proc))) : proc)
+            ((c ! u • 𝟘) : proc)).
+  - reflexivity.
+  - assert (E : subst_in_proc 0 u ((g (𝛕 • ((c ! (bvar 0) • 𝟘) : proc))) : proc)
+                = ((g (𝛕 • ((c ! u • 𝟘) : proc))) : proc)) by reflexivity.
+    rewrite <- E. apply lts_input.
+  - eapply wt_tau; [ apply lts_tau | apply wt_nil ].
+  - apply lts_output.
+Qed.
+
+Lemma delayed_return_is_not_immediate :
+  forall (c : ChannelData) (u : ValueData) K,
+    ~ lts ((g (𝛕 • ((c ! u • 𝟘) : proc))) : proc) (ActExt (ActOut (c,u))) K.
+Proof. intros c u K H. eapply gsum_no_out. exact H. Qed.
+
+(* ------------------------------------------------------------------ *)
+(*  …ET LE REJEU COUVRE UN RENVOI PRÉCÉDÉ D'UNE AUTRE DÉLIVRANCE        *)
+(*                                                                     *)
+(*  C'était l'écart nommé : le run consomme DEUX messages du sac avant  *)
+(*  de les rendre.  Aucune des deux descentes ne l'atteint — elles ne   *)
+(*  traitent qu'un message, rendu après des pas internes seulement.     *)
+(*  [ax_cfg_replay_balanced] le fait, le sac servant les deux entrées   *)
+(*  puis absorbant les deux sorties.                                   *)
+(*                                                                     *)
+(*  Les valeurs sont prises constantes pour que les continuations       *)
+(*  soient closes : la substitution de l'entrée y est alors l'identité, *)
+(*  ce qui évite toute comptabilité de de Bruijn.                       *)
+(* ------------------------------------------------------------------ *)
+
+Lemma ax_replay_two_messages :
+  forall (a b : ChannelData) (UU WW : Value),
+  ax_pre (msgs [(a, cst UU); (b, cst WW)]
+            ‖ ((g (a ? ((g (b ? ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
+                          : proc))) : proc))
+         (msgs [(a, cst UU); (b, cst WW)]
+            ‖ ((((g (𝟘 : gproc)) : proc)) ‖ (((g (𝟘 : gproc)) : proc)))).
+Proof.
+  intros a b UU WW.
+  eapply (ax_cfg_replay_balanced
+            [ActIn (a, cst UU); ActIn (b, cst WW);
+             ActOut (a, cst UU); ActOut (b, cst WW)]).
+  - eapply wt_act.
+    { assert (E : subst_in_proc 0 (cst UU)
+                    ((g (b ? ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
+                       : proc)
+                  = ((g (b ? ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
+                       : proc))
+        by reflexivity.
+      rewrite <- E. apply lts_input. }
+    eapply wt_act.
+    { assert (E : subst_in_proc 0 (cst WW)
+                    ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)
+                  = ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc))
+        by reflexivity.
+      rewrite <- E. apply lts_input. }
+    simpl.
+    eapply (wt_act _ _ _ (((g (𝟘 : gproc)) : proc) ‖ ((b ! (cst WW) • 𝟘) : proc)) _);
+      [ apply lts_parL; apply lts_output | ].
+    eapply (wt_act _ _ _ (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc)) _);
+      [ apply lts_parR; apply lts_output | ].
+    apply wt_nil.
+  - simpl. multiset_solver.
+  - simpl. multiset_solver.
+Qed.
 
 End VACCS_AxExamples.
 
