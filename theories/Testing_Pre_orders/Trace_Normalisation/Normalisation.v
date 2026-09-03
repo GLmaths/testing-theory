@@ -93,7 +93,11 @@ Qed.
 
 (** ** Normalised traces and their linearisation *)
 
-Notation "⟪ s ⟫" := (nlin (nform cls_tr s)) (at level 30).
+(** [nf s] is the normal form of the trace [s]: the canonical linearisation of
+    its normalised trace. *)
+Definition nf `{ExtAction A} (s : trace A) : trace A := nlin (nform cls_tr s).
+
+Notation "⟪ s ⟫" := (nf s) (at level 30).
 
 (** ** Transfer of the LTS predicates along the normalisation *)
 
