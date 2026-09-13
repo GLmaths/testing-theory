@@ -54,7 +54,7 @@ Section VCCS_NormalForm.
 
 Context `{VP : VCCS_Parameters}.
 
-Theorem normal_form : forall p, Static p -> exists M, gStatic M /\ ax_pre p (g M) /\ ax_pre (g M) p.
+Theorem normal_form : forall p, Static p -> exists M, gStatic M /\ p ᴠᴄᴄꜱ⊑ₐₓ (g M) /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ p.
 Proof.
   induction p as (p & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
@@ -145,10 +145,10 @@ Qed.
 
 Lemma nf_if_case : forall (e : Equation ValueData) (p1 p2 : proc) M1 M2,
   Static p1 -> Static p2 ->
-  gStatic M1 -> ax_pre p1 (g M1) -> ax_pre (g M1) p1 -> step_dominated p1 M1 ->
-  gStatic M2 -> ax_pre p2 (g M2) -> ax_pre (g M2) p2 -> step_dominated p2 M2 ->
-  exists M, gStatic M /\ ax_pre (If e Then p1 Else p2) (g M)
-            /\ ax_pre (g M) (If e Then p1 Else p2)
+  gStatic M1 -> p1 ᴠᴄᴄꜱ⊑ₐₓ (g M1) -> (g M1) ᴠᴄᴄꜱ⊑ₐₓ p1 -> step_dominated p1 M1 ->
+  gStatic M2 -> p2 ᴠᴄᴄꜱ⊑ₐₓ (g M2) -> (g M2) ᴠᴄᴄꜱ⊑ₐₓ p2 -> step_dominated p2 M2 ->
+  exists M, gStatic M /\ (If e Then p1 Else p2) ᴠᴄᴄꜱ⊑ₐₓ (g M)
+            /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ (If e Then p1 Else p2)
             /\ step_dominated (If e Then p1 Else p2) M.
 Proof.
   intros e p1 p2 M1 M2 Hs1 Hs2 HM1 Hf1 Hb1 Hd1 HM2 Hf2 Hb2 Hd2.
@@ -175,8 +175,8 @@ Qed.
 
 Lemma nf_par_case : forall (p1 p2 : proc) M1 M2,
   Static p1 -> Static p2 ->
-  gStatic M1 -> ax_pre p1 (g M1) -> ax_pre (g M1) p1 -> step_dominated p1 M1 ->
-  gStatic M2 -> ax_pre p2 (g M2) -> ax_pre (g M2) p2 -> step_dominated p2 M2 ->
+  gStatic M1 -> p1 ᴠᴄᴄꜱ⊑ₐₓ (g M1) -> (g M1) ᴠᴄᴄꜱ⊑ₐₓ p1 -> step_dominated p1 M1 ->
+  gStatic M2 -> p2 ᴠᴄᴄꜱ⊑ₐₓ (g M2) -> (g M2) ᴠᴄᴄꜱ⊑ₐₓ p2 -> step_dominated p2 M2 ->
   step_dominated (p1 ‖ p2) ((ext M1 M2 + ext_r M2 M1) + int M1 M2).
 Proof.
   intros p1 p2 M1 M2 Hs1 Hs2 HM1 Hf1 Hb1 Hd1 HM2 Hf2 Hb2 Hd2.
@@ -211,7 +211,7 @@ Proof.
 Qed.
 
 Theorem normal_form_strong : forall p, Static p ->
-  exists M, gStatic M /\ ax_pre p (g M) /\ ax_pre (g M) p /\ step_dominated p M.
+  exists M, gStatic M /\ p ᴠᴄᴄꜱ⊑ₐₓ (g M) /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ p /\ step_dominated p M.
 Proof.
   induction p as (p & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
@@ -252,7 +252,7 @@ Proof.
 Qed.
 
 Theorem canonical_normal_form : forall p, Static p ->
-  exists M, gStatic M /\ canonical M /\ ax_pre p (g M) /\ ax_pre (g M) p.
+  exists M, gStatic M /\ canonical M /\ p ᴠᴄᴄꜱ⊑ₐₓ (g M) /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ p.
 Proof.
   intros p Hp.
   destruct (normal_form p Hp) as (M & HMst & Hf & Hb).
@@ -296,7 +296,7 @@ Qed.
     lexicographic combination survives both. *)
 
 Theorem full_normalize : forall p, Static p ->
-  exists M, gStatic M /\ tau_nf M /\ ax_pre p (g M) /\ ax_pre (g M) p.
+  exists M, gStatic M /\ tau_nf M /\ p ᴠᴄᴄꜱ⊑ₐₓ (g M) /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ p.
 Proof.
   induction p as (p & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).

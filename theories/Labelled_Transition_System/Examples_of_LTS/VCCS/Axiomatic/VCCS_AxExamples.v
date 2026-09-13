@@ -61,7 +61,7 @@ Proof. repeat constructor. Qed.
 (** The derivation, by hand: a sum of two same-channel outputs is below
     either of them. That is [ax_output_below_l] ([VCCS_AxRedundancy.v]),
     itself the [ax_swap_out] rule in disguise. *)
-Example ax_all_out_below_one_out : ax_pre all_out one_out.
+Example ax_all_out_below_one_out : all_out ᴠᴄᴄꜱ⊑ₐₓ one_out.
 Proof. apply ax_output_below_l; repeat constructor. Qed.
 
 (** …and the semantic fact, for free. Compare
@@ -73,7 +73,7 @@ Proof.
 Qed.
 
 (** Both directions at once. *)
-Example all_out_characterised : ax_pre all_out one_out <-> all_out ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ one_out.
+Example all_out_characterised : all_out ᴠᴄᴄꜱ⊑ₐₓ one_out <-> all_out ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ one_out.
 Proof. apply must_iff_ax_pre; [apply all_out_Static | apply one_out_Static]. Qed.
 
 (** ** Scope extrusion of a private memory cell
@@ -102,7 +102,7 @@ Proof. intros HP HQ. unfold mem_inside. repeat constructor; assumption. Qed.
     including the one [VCCS_Examples.v] proves by a page of
     acceptance-set reasoning. *)
 Example ax_mem_outside_above_mem_inside : Static P -> Static Q ->
-  mem_inside ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ mem_outside -> ax_pre mem_inside mem_outside.
+  mem_inside ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ mem_outside -> mem_inside ᴠᴄᴄꜱ⊑ₐₓ mem_outside.
 Proof.
   intros HP HQ Hpre.
   apply completeness_ax;

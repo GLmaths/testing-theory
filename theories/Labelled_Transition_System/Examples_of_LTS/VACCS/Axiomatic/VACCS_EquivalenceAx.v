@@ -71,7 +71,7 @@ Context `{VP : VACCS_Parameters}.
 
 Theorem must_iff_ax_pre_gen : forall (p q : proc),
   Static p -> Static q -> ResFree q -> MuteSem p ->
-  (ax_pre p q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq Hrq Hmu. split.
   - apply soundness_ax.
@@ -80,7 +80,7 @@ Qed.
 
 Corollary must_iff_ax_pre_muteSem : forall (p q : proc),
   Static p -> Static q -> NoResD q -> MuteSem p ->
-  (ax_pre p q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq Hnq Hmu.
   apply must_iff_ax_pre_gen; try assumption.
@@ -91,7 +91,7 @@ Qed.
 
 Corollary must_iff_ax_pre_muteG : forall (p q : proc),
   Static p -> Static q -> NoResD p -> NoResD q -> MuteG p ->
-  (ax_pre p q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq Hnp Hnq Hmu.
   apply must_iff_ax_pre_muteSem; try assumption.
@@ -107,7 +107,7 @@ Qed.
 
 Theorem must_eq_iff_ax_eq_muteSem : forall (p q : proc),
   Static p -> Static q -> NoResD p -> NoResD q -> MuteSem p -> MuteSem q ->
-  ((ax_pre p q /\ ax_pre q p) <-> p ≂ₘᵤₛₜᵢ q).
+  ((p ᴠᴀᴄᴄꜱ≂ₐₓ q) <-> p ≂ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq Hnp Hnq Hmp Hmq. split.
   - intros (H1 & H2). split; apply soundness_ax; assumption.
@@ -120,7 +120,7 @@ Qed.
 
 Corollary ax_pre_sound_and_complete_muteSem : forall (p q : proc),
   Static p -> Static q -> NoResD q -> MuteSem p ->
-  (ax_pre p q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q) /\ (p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q) /\ (p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q).
 Proof.
   intros p q Hp Hq Hnq Hmu.
   split; apply (must_iff_ax_pre_muteSem p q); assumption.
@@ -132,7 +132,7 @@ Qed.
 
 Corollary must_iff_ax_pre_ccat : forall (c : ChannelData) (q : proc),
   Static q -> NoResD q ->
-  (ax_pre (ccat c) q <-> (ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  ((ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> (ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros c q Hq Hnq.
   apply must_iff_ax_pre_muteSem; try assumption.
@@ -143,7 +143,7 @@ Qed.
 Corollary must_iff_ax_pre_cfg_ccat :
   forall (c : ChannelData) (l : list TypeOfActions) (M : gproc) (q : proc),
   gStatic M -> ochans ((g M) : proc) = [] -> Static q -> ResFree q ->
-  (ax_pre ((msgs l ‖ ((g M) : proc)) ‖ ccat c) q
+  (((msgs l ‖ ((g M) : proc)) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ q
      <-> ((msgs l ‖ ((g M) : proc)) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros c l M q HM Hoc Hq Hrq.
@@ -171,14 +171,14 @@ Qed.
 
 Theorem must_iff_ax_pre_mute_right : forall (p q : proc),
   Static p -> Static q -> NoResD q -> ochans q = [] ->
-  (ax_pre p q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof. exact must_iff_ax_pre_no_output. Qed.
 
 (** The equational form needs the criterion on both sides. *)
 Theorem must_eq_iff_ax_eq_mute : forall (p q : proc),
   Static p -> Static q ->
   NoResD p -> ochans p = [] -> NoResD q -> ochans q = [] ->
-  ((ax_pre p q /\ ax_pre q p) <-> p ≂ₘᵤₛₜᵢ q).
+  ((p ᴠᴀᴄᴄꜱ≂ₐₓ q) <-> p ≂ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq Hnp Hop Hnq Hoq. split.
   - intros (H1 & H2). split; apply soundness_ax; assumption.
@@ -191,12 +191,57 @@ Qed.
 
     No side condition at all beyond [Static].  This subsumes the whole
     [Harmless] / [Bad] / [BadK] line of work: those judgements are
-    *sufficient* conditions for [⊢ p ⊑ 𝟘], each provably incomplete, and
+    *sufficient* conditions for [p ᴠᴀᴄᴄꜱ⊑ₐₓ 𝟘], each provably incomplete, and
     the semantic fact now always has a derivation. *)
 
 Theorem must_iff_ax_below_nil_final : forall (p : proc), Static p ->
-  (ax_pre p ((g 𝟘) : proc) <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc) <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
 Proof. exact must_iff_ax_below_nil. Qed.
+
+(** * ★★★ THE CHARACTERISATION, UNCONDITIONAL
+
+    Every partial characterisation above is superseded: on the
+    recursion-free [Static] fragment the 30-rule system is **sound and
+    complete** for the asynchronous must-preorder, with no side
+    condition on either side.
+
+    Soundness holds for ALL VACCS processes, not merely [Static] ones
+    ([VACCS_SoundnessAx.soundness_ax]) — there is no [Static] invariant
+    to thread through a derivation, because every rule is sound
+    outright.  The [Static] restriction is needed only for
+    completeness, where the recursion measures [size] of the right-hand
+    side and [Static_lts_decrease] makes it decrease. *)
+
+Theorem must_iff_ax_pre : forall (p q : proc),
+  Static p -> Static q ->
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+Proof.
+  intros p q Hp Hq. split.
+  - apply soundness_ax.
+  - apply completeness_ax; assumption.
+Qed.
+
+Theorem must_eq_iff_ax_eq : forall (p q : proc),
+  Static p -> Static q ->
+  ((p ᴠᴀᴄᴄꜱ≂ₐₓ q) <-> p ≂ₘᵤₛₜᵢ q).
+Proof.
+  intros p q Hp Hq. split.
+  - intros (H1 & H2). split;
+      [ apply (proj1 (must_iff_ax_pre q p Hq Hp)); exact H2
+      | apply (proj1 (must_iff_ax_pre p q Hp Hq)); exact H1 ].
+  - intros (H1 & H2). split;
+      [ apply (proj2 (must_iff_ax_pre p q Hp Hq)); exact H2
+      | apply (proj2 (must_iff_ax_pre q p Hq Hp)); exact H1 ].
+Qed.
+
+Corollary ax_pre_sound_and_complete : forall (p q : proc),
+  Static p -> Static q ->
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q) /\ (p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q).
+Proof.
+  intros p q Hp Hq. split;
+    [ apply (proj1 (must_iff_ax_pre p q Hp Hq))
+    | apply (proj2 (must_iff_ax_pre p q Hp Hq)) ].
+Qed.
 
 
 End VACCS_EquivalenceAx.

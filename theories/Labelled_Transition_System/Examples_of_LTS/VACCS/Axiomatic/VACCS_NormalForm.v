@@ -1020,7 +1020,7 @@ Qed.
 Lemma BigNew_add : forall n m p, Ѵ (n + m) p = Ѵ n (Ѵ m p).
 Proof. induction n; intros m p; simpl; [ reflexivity | rewrite IHn; reflexivity ]. Qed.
 
-Lemma ax_res_n : forall n p q, ax_pre p q -> ax_pre (Ѵ n p) (Ѵ n q).
+Lemma ax_res_n : forall n p q, p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> (Ѵ n p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n q).
 Proof. induction n; intros p q H; simpl; [ exact H | apply ax_res; apply IHn; exact H ]. Qed.
 
 (** ** Merging two normal forms
@@ -1054,7 +1054,7 @@ Qed.
 (** ** The normal form *)
 
 Theorem normal_form : forall p, Static p ->
-  exists n l M, gStatic M /\ ax_pre p (NF n l M) /\ ax_pre (NF n l M) p.
+  exists n l M, gStatic M /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M) /\ (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof.
   intro p. induction p as [p IHp] using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
@@ -1070,10 +1070,10 @@ Proof.
     { subst N1 N2. constructor.
       - apply ext_gStatic; apply gStatic_gNewVarCn; assumption.
       - apply ext_r_gStatic; apply gStatic_gNewVarCn; assumption. }
-    assert (Hmid : ax_pre (NF n1 l1 M1 ‖ NF n2 l2 M2)
-                          (NF ((n1 + n2)%nat) (L2 ++ L1) (ext N2 N1 + ext_r N1 N2))
-                   /\ ax_pre (NF ((n1 + n2)%nat) (L2 ++ L1) (ext N2 N1 + ext_r N1 N2))
-                             (NF n1 l1 M1 ‖ NF n2 l2 M2)).
+    assert (Hmid : (NF n1 l1 M1 ‖ NF n2 l2 M2)
+                     ᴠᴀᴄᴄꜱ⊑ₐₓ (NF ((n1 + n2)%nat) (L2 ++ L1) (ext N2 N1 + ext_r N1 N2))
+                   /\ (NF ((n1 + n2)%nat) (L2 ++ L1) (ext N2 N1 + ext_r N1 N2))
+                        ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n1 l1 M1 ‖ NF n2 l2 M2)).
     { unfold NF at 3 4. split.
       - eapply ax_trans; [ apply ax_cgr; apply NF_par_step | ].
         apply ax_res_n.
@@ -1165,8 +1165,8 @@ Proof.
 Qed.
 
 Theorem normal_form_nores : forall p, Static p -> NoRes p ->
-  exists l M, gStatic M /\ ax_pre p (msgs l ‖ ((g M) : proc))
-                        /\ ax_pre (msgs l ‖ ((g M) : proc)) p.
+  exists l M, gStatic M /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc))
+                        /\ (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof.
   intro p. induction p as [p IHp] using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
@@ -1219,9 +1219,9 @@ Qed.
 Theorem completeness_nores_from_cfg :
   (forall l1 M1 l2 M2, gStatic M1 -> gStatic M2 ->
      (msgs l1 ‖ ((g M1) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g M2) : proc)) ->
-     ax_pre (msgs l1 ‖ ((g M1) : proc)) (msgs l2 ‖ ((g M2) : proc))) ->
+     (msgs l1 ‖ ((g M1) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g M2) : proc))) ->
   forall p q, Static p -> Static q -> NoRes p -> NoRes q ->
-    p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+    p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros H p q Hp Hq Hnp Hnq Hsem.
   destruct (normal_form_nores p Hp Hnp) as (l1 & M1 & HM1 & Ha1 & Hb1).
@@ -1250,7 +1250,7 @@ Qed.
     simulation, and the same works here.
 
         step_dominated p q  :=  ∀ a r, q ⟶{a} r ->
-                                ∃ r', p ⟶{a} r' ∧ ⊢ r ≂ r'
+                                ∃ r', p ⟶{a} r' ∧ r ᴠᴀᴄᴄꜱ≂ₐₓ r'
 
     Each transition of the normal form is matched by a transition of the
     **original** process, with [⊢]-equal targets.  A matched target is a
@@ -1272,9 +1272,9 @@ Qed.
     their targets need only [ax_refl]. *)
 
 Definition step_dominated (p q : proc) : Prop :=
-  forall a r, lts q a r -> exists r', lts p a r' /\ ax_pre r r' /\ ax_pre r' r.
+  forall a r, lts q a r -> exists r', lts p a r' /\ r ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ r.
 
-Definition dom (p q : proc) : Prop := ax_pre p q /\ ax_pre q p /\ step_dominated p q.
+Definition dom (p q : proc) : Prop := p ᴠᴀᴄᴄꜱ⊑ₐₓ q /\ q ᴠᴀᴄᴄꜱ⊑ₐₓ p /\ step_dominated p q.
 
 Lemma dom_refl : forall p, dom p p.
 Proof.
@@ -1374,13 +1374,13 @@ Proof. induction n; intros p q H; simpl; [exact H | apply dom_res; apply IHn; ex
 
 CoInductive domsim : proc -> proc -> Prop :=
 | DomSim : forall p q,
-    ax_pre p q -> ax_pre q p ->
+    p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> q ᴠᴀᴄᴄꜱ⊑ₐₓ p ->
     (forall a r, lts q a r -> exists r', lts p a r' /\ domsim r' r) ->
     domsim p q.
 
-Definition ds_l {p q} (H : domsim p q) : ax_pre p q :=
+Definition ds_l {p q} (H : domsim p q) : p ᴠᴀᴄᴄꜱ⊑ₐₓ q :=
   match H with DomSim _ _ a _ _ => a end.
-Definition ds_r {p q} (H : domsim p q) : ax_pre q p :=
+Definition ds_r {p q} (H : domsim p q) : q ᴠᴀᴄᴄꜱ⊑ₐₓ p :=
   match H with DomSim _ _ _ b _ => b end.
 Definition ds_s {p q} (H : domsim p q) :
   forall a r, lts q a r -> exists r', lts p a r' /\ domsim r' r :=
@@ -1538,7 +1538,7 @@ Proof.
 Qed.
 
 Corollary domsim_wt_reduct : forall p q s r, Static p -> domsim p q -> q ⟹[s] r ->
-  exists r', p ⟹[s] r' /\ Static r' /\ ax_pre r r' /\ ax_pre r' r.
+  exists r', p ⟹[s] r' /\ Static r' /\ r ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ r.
 Proof.
   intros p q s r Hp Hd Hw.
   destruct (domsim_wt q s r Hw p Hd) as (r' & Hr' & Hd').
@@ -1580,8 +1580,8 @@ Definition sd_u (p q : proc) : Prop :=
   forall (c : ChannelData) (R : proc),
     (forall v, lts q (ActExt (ActIn (c,v))) (subst_in_proc 0 v R)) ->
     exists R', (forall v, lts p (ActExt (ActIn (c,v))) (subst_in_proc 0 v R'))
-            /\ (forall v, ax_pre (subst_in_proc 0 v R) (subst_in_proc 0 v R'))
-            /\ (forall v, ax_pre (subst_in_proc 0 v R') (subst_in_proc 0 v R)).
+            /\ (forall v, (subst_in_proc 0 v R) ᴠᴀᴄᴄꜱ⊑ₐₓ (subst_in_proc 0 v R'))
+            /\ (forall v, (subst_in_proc 0 v R') ᴠᴀᴄᴄꜱ⊑ₐₓ (subst_in_proc 0 v R)).
 
 Definition dom_u (p q : proc) : Prop := dom p q /\ sd_u p q.
 
@@ -2589,11 +2589,11 @@ Proof.
 Qed.
 
 Corollary ax_NF_pad_l : forall n k l M,
-  ax_pre (NF n l M) (NF ((n + k)%nat) (map (shiftCn 0 k) l) (gNewVarCn 0 k M)).
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF ((n + k)%nat) (map (shiftCn 0 k) l) (gNewVarCn 0 k M)).
 Proof. intros. apply ax_cgr_sym. apply NF_pad. Qed.
 
 Corollary ax_NF_pad_r : forall n k l M,
-  ax_pre (NF ((n + k)%nat) (map (shiftCn 0 k) l) (gNewVarCn 0 k M)) (NF n l M).
+  (NF ((n + k)%nat) (map (shiftCn 0 k) l) (gNewVarCn 0 k M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
 Proof. intros. apply ax_cgr. apply NF_pad. Qed.
 
 

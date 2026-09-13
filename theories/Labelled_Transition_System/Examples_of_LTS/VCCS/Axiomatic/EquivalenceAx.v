@@ -53,7 +53,7 @@ Context `{VP : VCCS_Parameters}.
 (** ** The characterisation *)
 
 Theorem must_iff_ax_pre : forall (p q : proc), Static p -> Static q ->
-  (ax_pre p q <-> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  (p ᴠᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq. split.
   - intro Hax. apply soundness_ax; assumption.
@@ -62,7 +62,7 @@ Qed.
 
 (** Two-sided derivability is must-equivalence. *)
 Corollary must_eq_iff_ax_eq : forall (p q : proc), Static p -> Static q ->
-  (ax_pre p q /\ ax_pre q p) <-> (p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q /\ q ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ p).
+  (p ᴠᴄᴄꜱ≂ₐₓ q) <-> (p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q /\ q ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ p).
 Proof.
   intros p q Hp Hq. split.
   - intros (H1 & H2). split; apply must_iff_ax_pre; assumption.
@@ -75,7 +75,7 @@ Qed.
     finite derivation in the 36-constructor system, and conversely. *)
 
 Corollary ax_pre_sound_and_complete : forall (p q : proc),
-  Static p -> Static q -> (p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q) /\ (ax_pre p q -> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  Static p -> Static q -> (p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴄᴄꜱ⊑ₐₓ q) /\ (p ᴠᴄᴄꜱ⊑ₐₓ q -> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq.
   split; [apply completeness_ax | apply soundness_ax]; assumption.

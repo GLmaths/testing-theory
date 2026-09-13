@@ -257,8 +257,8 @@ Qed.
 Theorem ax_tau_sep_anywhere : forall M Y r,
   gStatic M ->
   Permutation (summands M) ((𝛕 • (g Y)) :: r) ->
-  ax_pre (g M) (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y))))
-  /\ ax_pre (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y)))) (g M).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y))))
+  /\ (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y)))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M Y r HM Hp.
   destruct (tau_mid_static M Y r HM Hp) as (HY & Hr & Hmid).
@@ -274,7 +274,7 @@ Qed.
 Theorem ax_tau_flatten_anywhere : forall M Y r,
   gStatic M -> gAllTau Y ->
   Permutation (summands M) ((𝛕 • (g Y)) :: r) ->
-  ax_pre (g M) (g (rebuild r + Y)) /\ ax_pre (g (rebuild r + Y)) (g M).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (rebuild r + Y)) /\ (g (rebuild r + Y)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M Y r HM HAT Hp.
   destruct (tau_mid_static M Y r HM Hp) as (HY & Hr & Hmid).
@@ -418,9 +418,9 @@ Qed.
 Theorem ax_tau_cont_anywhere : forall M q q' r,
   gStatic M -> Static q' ->
   Permutation (summands M) ((𝛕 • q) :: r) ->
-  ax_pre q q' -> ax_pre q' q ->
-  ax_pre (g M) (g ((𝛕 • q') + rebuild r))
-  /\ ax_pre (g ((𝛕 • q') + rebuild r)) (g M).
+  q ᴠᴀᴄᴄꜱ⊑ₐₓ q' -> q' ᴠᴀᴄᴄꜱ⊑ₐₓ q ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • q') + rebuild r))
+  /\ (g ((𝛕 • q') + rebuild r)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M q q' r HM Hq' Hp Hf Hb.
   destruct (tau_cont_mid_static M q r HM Hp) as (Hqst & Hrst & Hmid).
@@ -588,7 +588,7 @@ Qed.
     sub-terms [A], [B] are *not* immediate sub-terms of the argument. *)
 
 Lemma ax_int_below_ext : forall (A B : gproc),
-  ax_pre (g ((𝛕 • (g A)) + (𝛕 • (g B)))) (g (A + B)).
+  (g ((𝛕 • (g A)) + (𝛕 • (g B)))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (A + B)).
 Proof.
   intros A B.
   eapply ax_trans; [apply (ax_tau_sep_l (𝛕 • (g A)) B) |].
@@ -618,7 +618,7 @@ Qed.
     the two projections of the internal choice are exactly [ax_int_l] and
     [ax_int_r].
 
-    The *context* form [⊢ g ((c?(P ⊕ Q)) + R) ⊑ g (((c?P) + (c?Q)) + R)]
+    The *context* form [(g ((c?(P ⊕ Q)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (((c?P) + (c?Q)) + R))]
     is derivable too — see [VACCS_Matching.ax_input_split_ctx_r].  The
     same chain reaches [g (((c?P) + R) + ((c?Q) + R))], and what is left
     is the removal of the duplicated residue, which needs a case split on
@@ -627,8 +627,8 @@ Qed.
     either. *)
 
 Lemma ax_input_split_r : forall (c : ChannelData) (P Q : proc),
-  ax_pre ((g (c ? ((g ((𝛕 • P) + (𝛕 • Q))) : proc))) : proc)
-         ((g ((c ? P) + (c ? Q))) : proc).
+  ((g (c ? ((g ((𝛕 • P) + (𝛕 • Q))) : proc))) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ((c ? P) + (c ? Q))) : proc).
 Proof.
   intros c P Q.
   eapply ax_trans; [ | apply (ax_int_below_ext (c ? P) (c ? Q)) ].
@@ -698,7 +698,7 @@ Theorem tau_flatten_all : forall n M, gStatic M ->
   (tau_weight (summands M) <= n)%nat ->
   Forall tau_cont_nf (summands M) ->
   exists M', gStatic M' /\ Forall tau_cont_ok (summands M')
-             /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
+             /\ (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M') /\ (g M') ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hnf.
   - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
@@ -744,7 +744,7 @@ Qed.
 
 Theorem tau_separate : forall n M, gStatic M ->
   (ntaus (summands M) <= n)%nat -> Forall tau_cont_ok (summands M) ->
-  exists M', gStatic M' /\ tau_nf M' /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
+  exists M', gStatic M' /\ tau_nf M' /\ (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M') /\ (g M') ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hok.
   - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
@@ -816,7 +816,7 @@ Qed.
 
 Theorem ax_collapse_input_anywhere : forall (M : gproc) c P Q (l : list gproc),
   Permutation (summands M) ((c ? P) :: (c ? Q) :: l) ->
-  ax_pre (g M) (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)).
 Proof.
   intros M c P Q l Hperm.
   eapply ax_trans; [ apply ax_cgr; apply (pull_pair M _ _ l Hperm) | ].
@@ -1044,7 +1044,7 @@ Qed.
 
 Lemma canon_step : forall M a b r, gStatic M -> find_dup (summands M) = Some (a, b, r) ->
   exists M0, gStatic M0 /\ (gStable M -> gStable M0)
-             /\ nacts (summands M0) < nacts (summands M) /\ ax_pre (g M) (g M0).
+             /\ nacts (summands M0) < nacts (summands M) /\ (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M0).
 Proof.
   intros M a b r HM E.
   destruct (find_dup_spec (summands M) a b r E) as ((k & Hga & Hgb) & Hp).
@@ -1082,7 +1082,7 @@ Qed.
     right-hand side). *)
 
 Lemma canonicalize_n : forall n M, gStatic M -> nacts (summands M) <= n ->
-  exists M', gStatic M' /\ (gStable M -> gStable M') /\ canonical M' /\ ax_pre (g M) (g M').
+  exists M', gStatic M' /\ (gStable M -> gStable M') /\ canonical M' /\ (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M').
 Proof.
   induction n as [|n IH]; intros M HM Hn;
     destruct (find_dup (summands M)) as [((a,b),r)|] eqn:E.
@@ -1097,7 +1097,7 @@ Proof.
 Qed.
 
 Theorem canonicalize : forall M, gStatic M ->
-  exists M', gStatic M' /\ (gStable M -> gStable M') /\ canonical M' /\ ax_pre (g M) (g M').
+  exists M', gStatic M' /\ (gStable M -> gStable M') /\ canonical M' /\ (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M').
 Proof.
   intros M HM. eapply canonicalize_n; [exact HM | apply le_n].
 Qed.

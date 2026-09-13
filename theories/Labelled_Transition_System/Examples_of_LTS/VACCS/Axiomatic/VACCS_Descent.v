@@ -123,7 +123,7 @@ Qed.
 Theorem tau_summand_reduct : forall p n l M q,
   Static p -> dom p (NF n l M) -> In (𝛕 • q) (summands M) ->
   exists u, Static u /\ (size u < size p)%nat
-            /\ ax_pre (Ѵ n (msgs l ‖ q)) u /\ ax_pre u (Ѵ n (msgs l ‖ q)).
+            /\ (Ѵ n (msgs l ‖ q)) ᴠᴀᴄᴄꜱ⊑ₐₓ u /\ u ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n (msgs l ‖ q)).
 Proof.
   intros p n l M q Hp (_ & _ & Hs) Hin.
   destruct (Hs τ (Ѵ n (msgs l ‖ q)) (NF_lts_tau_summand n l M q Hin)) as (u & Hu & Ha & Hb).
@@ -134,7 +134,7 @@ Qed.
 Theorem in_summand_reduct : forall p n l M c0 P v,
   Static p -> dom p (NF n l M) -> In ((VarC_add n c0) ? P) (summands M) ->
   exists u, Static u /\ (size u < size p)%nat
-            /\ ax_pre (Ѵ n (msgs l ‖ (P ^ v))) u /\ ax_pre u (Ѵ n (msgs l ‖ (P ^ v))).
+            /\ (Ѵ n (msgs l ‖ (P ^ v))) ᴠᴀᴄᴄꜱ⊑ₐₓ u /\ u ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n (msgs l ‖ (P ^ v))).
 Proof.
   intros p n l M c0 P v Hp (_ & _ & Hs) Hin.
   destruct (Hs _ _ (NF_lts_in_summand n l M c0 P v Hin)) as (u & Hu & Ha & Hb).
@@ -172,9 +172,9 @@ Theorem in_summand_reduct_u : forall p n l M c0 P,
          /\ (forall v : ValueData, Static (subst_in_proc 0 v U))
          /\ (forall v : ValueData, (size (subst_in_proc 0 v U) < size p)%nat)
          /\ (forall v : ValueData,
-               ax_pre (Ѵ n (msgs l ‖ (subst_in_proc 0 v P))) (subst_in_proc 0 v U))
+               (Ѵ n (msgs l ‖ (subst_in_proc 0 v P))) ᴠᴀᴄᴄꜱ⊑ₐₓ (subst_in_proc 0 v U))
          /\ (forall v : ValueData,
-               ax_pre (subst_in_proc 0 v U) (Ѵ n (msgs l ‖ (subst_in_proc 0 v P)))).
+               (subst_in_proc 0 v U) ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n (msgs l ‖ (subst_in_proc 0 v P)))).
 Proof.
   intros p n l M c0 P Hp (_ & Hu) Hin.
   destruct (Hu c0 (Ѵ n ((NewVar 0 (msgs l)) ‖ P))
@@ -213,13 +213,13 @@ Qed.
 Theorem wrapped_premise_from_IH : forall q n l N c0 Q,
   Static q -> dom_u q (NF n l N) -> In ((VarC_add n c0) ? Q) (summands N) ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     ctx_pre p' q' -> ax_pre p' q') ->
+     ctx_pre p' q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
   forall X : proc,
     (forall v : ValueData, Static (subst_in_proc 0 v X)) ->
     (forall v : ValueData,
        ctx_pre (subst_in_proc 0 v X) (Ѵ n (msgs l ‖ subst_in_proc 0 v Q))) ->
     (forall v : ValueData,
-       ax_pre (subst_in_proc 0 v X) (Ѵ n (msgs l ‖ subst_in_proc 0 v Q))).
+       (subst_in_proc 0 v X) ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n (msgs l ‖ subst_in_proc 0 v Q))).
 Proof.
   intros q n l N c0 Q Hq Hd Hin IH X HXs HX v.
   destruct (in_summand_reduct_u q n l N c0 Q Hq Hd Hin)

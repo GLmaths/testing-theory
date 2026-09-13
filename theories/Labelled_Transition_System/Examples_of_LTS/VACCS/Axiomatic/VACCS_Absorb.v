@@ -33,7 +33,7 @@
     Nothing in the 25-rule system could derive even the simplest instance,
     [g (c ? 𝟘) ⊑ₘᵤₛₜᵢ g 𝟘] — checked rule by rule: [ax_input] and
     [ax_choice_input] preserve the guard, so they would need
-    [⊢ 𝟘 ⊑ (c ! v • 𝟘)], which is **false** (a test can be made to fail by
+    [𝟘 ᴠᴀᴄᴄꜱ⊑ₐₓ (c ! v • 𝟘)], which is **false** (a test can be made to fail by
     an extra pending message: [t := c ? (If x = v Then 𝟘 Else ①)] is passed
     by [𝟘] and failed by [c ! v • 𝟘]); [ax_ccat_l] and [ax_resp] both put a
     guard that *re-emits* on the left; every other rule with a bare input
@@ -158,9 +158,9 @@ Qed.
     quantifies over a **strict subclass** of clients (those that are
     τ-stuck, not good, and refuse [c ?]), while [⊑ₘᵤₛₜᵢ] quantifies over
     all of them.  Three candidates were tried and all three fail —
-    `∀v, ⊢ P^v ⊑ 𝟘` is too strong (it rejects the true
-    [c ? (d ? (c!x•𝟘)) ⊑ₘᵤₛₜᵢ 𝟘]), while `∀v, ⊢ (c!v•𝟘) ‖ P^v ⊑ (c!v•𝟘)`
-    and `∀v, ⊢ P^v ⊑ (c!v•𝟘)` are outright false.
+    `∀v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ 𝟘` is too strong (it rejects the true
+    [c ? (d ? (c!x•𝟘)) ⊑ₘᵤₛₜᵢ 𝟘]), while `∀v, ((c!v•𝟘) ‖ P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (c!v•𝟘)`
+    and `∀v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (c!v•𝟘)` are outright false.
 
     The right notion is a judgement, not a preorder, and it has to carry
     the set of channels the client is known to refuse — because chasing

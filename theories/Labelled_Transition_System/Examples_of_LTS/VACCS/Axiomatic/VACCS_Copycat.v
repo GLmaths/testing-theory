@@ -46,7 +46,7 @@
     one already being on the left: [ax_input] and [ax_choice_input]
     preserve the guard, [ax_int_glb] needs a [𝛕], and [ax_share_in] needs
     the left-hand side to be an internal choice of two sums each already
-    offering [c].  So [⊢ g 𝟘 ⊑ ccat c] is underivable without it, while
+    offering [c].  So [(g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (ccat c)] is underivable without it, while
     being semantically true — the system would be incomplete. *)
 
 From Stdlib.Program Require Import Equality.

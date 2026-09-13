@@ -1774,7 +1774,7 @@ Qed.
     them ([set_sim_clauses_hold_for_copre]), and it relates every
     semantically-below pair of configurations ([copre_st_of_sem]).  A
     rule with those clauses as premise would therefore derive
-    [⊢ p ⊑ q] from [p ⊑ₘᵤₛₜᵢ q] outright, trivialising completeness and
+    [p ᴠᴀᴄᴄꜱ⊑ₐₓ q] from [p ⊑ₘᵤₛₜᵢ q] outright, trivialising completeness and
     emptying the axiom system of content.
 
     So [set_sim_copre]/[set_sim_below_bag] are kept as what they really

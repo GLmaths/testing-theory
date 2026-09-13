@@ -48,7 +48,7 @@ Context `{VP : VCCS_Parameters}.
     ([VCCS_Parameters]'s distinguished value) supplies a witness value
     to instantiate the universal at. *)
 
-Lemma ax_pre_static_preserved : forall p q, ax_pre p q -> Static p -> Static q.
+Lemma ax_pre_static_preserved : forall p q, p ᴠᴄᴄꜱ⊑ₐₓ q -> Static p -> Static q.
 Proof.
   intros p q Hax.
   induction Hax; intro Hsp.
@@ -170,7 +170,7 @@ Qed.
     [ax_choice] — there is no such constructor, see
     [DefinitionAxiomatic.v]). *)
 
-Theorem soundness_ax : forall p q, Static p -> Static q -> ax_pre p q -> p ⊑ₘᵤₛₜᵢ q.
+Theorem soundness_ax : forall p q, Static p -> Static q -> p ᴠᴄᴄꜱ⊑ₐₓ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros p q Hsp Hsq Hax.
   revert Hsp Hsq.

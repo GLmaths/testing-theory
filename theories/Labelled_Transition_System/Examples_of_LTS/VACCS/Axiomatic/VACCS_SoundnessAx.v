@@ -22,7 +22,7 @@
 
 (** * Soundness of the VACCS proof system
 
-        [ax_pre p q -> p ⊑ₘᵤₛₜᵢ q]
+        [p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ⊑ₘᵤₛₜᵢ q]
 
     for **all** VACCS processes — no [Static] restriction, and no side
     condition on any rule.  That is a genuine simplification over VCCS,
@@ -48,7 +48,7 @@ Section VACCS_SoundnessAx.
 
 Context `{VP : VACCS_Parameters}.
 
-Theorem soundness_ax : forall (p q : proc), ax_pre p q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
+Theorem soundness_ax : forall (p q : proc), p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros p q Hax. induction Hax.
   (* ax_trans *)
@@ -125,7 +125,7 @@ Qed.
 
 (** The equational form. *)
 Corollary soundness_ax_eq : forall (p q : proc),
-  ax_pre p q -> ax_pre q p -> p ≂ₘᵤₛₜᵢ q.
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> q ᴠᴀᴄᴄꜱ⊑ₐₓ p -> p ≂ₘᵤₛₜᵢ q.
 Proof.
   intros p q H1 H2. split; apply soundness_ax; assumption.
 Qed.

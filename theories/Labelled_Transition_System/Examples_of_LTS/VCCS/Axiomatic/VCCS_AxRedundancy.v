@@ -54,7 +54,7 @@ Context `{VP : VCCS_Parameters}.
     is [ax_drop_out], and nothing weaker will do. *)
 
 Lemma ax_output_below_r : forall c v v' P Q, Static P -> Static Q ->
-  ax_pre (g ((c ! v • P) + (c ! v' • Q))) (g (c ! v' • Q)).
+  (g ((c ! v • P) + (c ! v' • Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ! v' • Q)).
 Proof.
   intros c v v' P Q HP HQ.
   eapply ax_trans.
@@ -67,7 +67,7 @@ Proof.
 Qed.
 
 Lemma ax_output_below_l : forall c v v' P Q, Static P -> Static Q ->
-  ax_pre (g ((c ! v • P) + (c ! v' • Q))) (g (c ! v • P)).
+  (g ((c ! v • P) + (c ! v' • Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ! v • P)).
 Proof.
   intros c v v' P Q HP HQ.
   eapply ax_trans.
@@ -79,8 +79,8 @@ Qed.
 (** …so [ax_int_glb] assembles the internal choice. *)
 
 Lemma ax_output_merge_l : forall c v v' P Q, Static P -> Static Q ->
-  ax_pre (g ((c ! v • P) + (c ! v' • Q)))
-         (g ((𝛕 • (g (c ! v • P))) + (𝛕 • (g (c ! v' • Q))))).
+  (g ((c ! v • P) + (c ! v' • Q)))
+    ᴠᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (c ! v • P))) + (𝛕 • (g (c ! v' • Q))))).
 Proof.
   intros c v v' P Q HP HQ.
   apply ax_int_glb; [apply ax_output_below_l | apply ax_output_below_r]; assumption.

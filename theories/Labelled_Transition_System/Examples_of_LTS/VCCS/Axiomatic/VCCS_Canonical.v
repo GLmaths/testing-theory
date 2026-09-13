@@ -69,7 +69,7 @@ Context `{VP : VCCS_Parameters}.
     [R] is unconstrained — in particular it may contain [𝛕]-guards. *)
 
 Lemma ax_collapse_input_ctx_l : forall c P Q R,
-  ax_pre (g ((c ? P) + (c ? Q) + R)) (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
+  (g ((c ? P) + (c ? Q) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
 Proof.
   intros c P Q R.
   apply ax_choice_stable.
@@ -79,7 +79,7 @@ Proof.
 Qed.
 
 Lemma ax_collapse_input_ctx_r : forall c P Q R, Static P -> Static Q ->
-  ax_pre (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)) (g ((c ? P) + (c ? Q) + R)).
+  (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? P) + (c ? Q) + R)).
 Proof.
   intros c P Q R HP HQ.
   apply ax_choice_stable.
@@ -89,7 +89,7 @@ Proof.
 Qed.
 
 Lemma ax_collapse_output_ctx_l : forall c v P Q R,
-  ax_pre (g ((c ! v • P) + (c ! v • Q) + R)) (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
+  (g ((c ! v • P) + (c ! v • Q) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
 Proof.
   intros c v P Q R.
   apply ax_choice_stable.
@@ -99,7 +99,7 @@ Proof.
 Qed.
 
 Lemma ax_collapse_output_ctx_r : forall c v P Q R, Static P -> Static Q ->
-  ax_pre (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + R)) (g ((c ! v • P) + (c ! v • Q) + R)).
+  (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ! v • P) + (c ! v • Q) + R)).
 Proof.
   intros c v P Q R HP HQ.
   apply ax_choice_stable.
@@ -224,8 +224,8 @@ Qed.
 Theorem ax_collapse_input_anywhere : forall M c P Q l,
   gStatic M ->
   Permutation (summands M) ((c ? P) :: (c ? Q) :: l) ->
-  ax_pre (g M) (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l))
-  /\ ax_pre (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)) (g M).
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l))
+  /\ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)) ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M c P Q l HM Hp.
   assert (Hall : Forall gStatic ((c ? P) :: (c ? Q) :: l))
@@ -248,8 +248,8 @@ Qed.
 Theorem ax_collapse_output_anywhere : forall M c v P Q l,
   gStatic M ->
   Permutation (summands M) ((c ! v • P) :: (c ! v • Q) :: l) ->
-  ax_pre (g M) (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l))
-  /\ ax_pre (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)) (g M).
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l))
+  /\ (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)) ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M c v P Q l HM Hp.
   assert (Hall : Forall gStatic ((c ! v • P) :: (c ! v • Q) :: l))
@@ -386,8 +386,8 @@ Qed.
     happens to be true — [μ] for an input is [(c,v)?] and so already
     carries the value, which pins the target [P^v] — but it is the wrong
     *shape* to consume: an input's continuation is a value-indexed
-    *family*, and [ax_input] is the omega rule [(∀v, ⊢ p^v ⊑ q^v) ->
-    ⊢ g (c?p) ⊑ g (c?q)]. Per-[μ] uniqueness would yield separate facts
+    *family*, and [ax_input] is the omega rule [(∀v, (p^v) ᴠᴄᴄꜱ⊑ₐₓ (q^v)) ->
+    (g (c?p)) ᴠᴄᴄꜱ⊑ₐₓ (g (c?q))]. Per-[μ] uniqueness would yield separate facts
     about each [P^v] with no way to reassemble them into the [∀v] family
     [ax_input] requires. Counting summands instead gives
     [CompletenessAx.v] a single matched input *summand*, from which the
@@ -536,8 +536,8 @@ Qed.
 Theorem ax_tau_sep_anywhere : forall M Y r,
   gStatic M ->
   Permutation (summands M) ((𝛕 • (g Y)) :: r) ->
-  ax_pre (g M) (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y))))
-  /\ ax_pre (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y)))) (g M).
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y))))
+  /\ (g ((𝛕 • (g (rebuild r + Y))) + (𝛕 • (g Y)))) ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M Y r HM Hp.
   destruct (tau_mid_static M Y r HM Hp) as (HY & Hr & Hmid).
@@ -553,7 +553,7 @@ Qed.
 Theorem ax_tau_flatten_anywhere : forall M Y r,
   gStatic M -> gAllTau Y ->
   Permutation (summands M) ((𝛕 • (g Y)) :: r) ->
-  ax_pre (g M) (g (rebuild r + Y)) /\ ax_pre (g (rebuild r + Y)) (g M).
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g (rebuild r + Y)) /\ (g (rebuild r + Y)) ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M Y r HM HAT Hp.
   destruct (tau_mid_static M Y r HM Hp) as (HY & Hr & Hmid).
@@ -697,9 +697,9 @@ Qed.
 Theorem ax_tau_cont_anywhere : forall M q q' r,
   gStatic M -> Static q' ->
   Permutation (summands M) ((𝛕 • q) :: r) ->
-  ax_pre q q' -> ax_pre q' q ->
-  ax_pre (g M) (g ((𝛕 • q') + rebuild r))
-  /\ ax_pre (g ((𝛕 • q') + rebuild r)) (g M).
+  q ᴠᴄᴄꜱ⊑ₐₓ q' -> q' ᴠᴄᴄꜱ⊑ₐₓ q ->
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝛕 • q') + rebuild r))
+  /\ (g ((𝛕 • q') + rebuild r)) ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M q q' r HM Hq' Hp Hf Hb.
   destruct (tau_cont_mid_static M q r HM Hp) as (Hqst & Hrst & Hmid).
@@ -726,7 +726,7 @@ Qed.
     [normal_form_strong] establishes it) purely for dependency order:
     [VCCS_NormalForm.v] imports this file. *)
 Definition step_dominated (p : proc) (M : gproc) : Prop :=
-  forall a q, lts (g M) a q -> exists r, lts p a r /\ ax_pre q r /\ ax_pre r q.
+  forall a q, lts (g M) a q -> exists r, lts p a r /\ q ᴠᴄᴄꜱ⊑ₐₓ r /\ r ᴠᴄᴄꜱ⊑ₐₓ q.
 
 Lemma summand_lts_tau : forall M q, (𝛕 • q) ∈ summands M -> lts (g M) τ q.
 Proof.
@@ -745,7 +745,7 @@ Qed.
 Lemma tau_summand_reduct : forall p M q r,
   Static p -> gStatic M -> step_dominated p M ->
   Permutation (summands M) ((𝛕 • q) :: r) ->
-  exists u, ax_pre q u /\ ax_pre u q /\ Static u /\ (size u < size p)%nat.
+  exists u, q ᴠᴄᴄꜱ⊑ₐₓ u /\ u ᴠᴄᴄꜱ⊑ₐₓ q /\ Static u /\ (size u < size p)%nat.
 Proof.
   intros p M q r Hp HM Hd Hperm.
   assert (Hin : (𝛕 • q) ∈ summands M) by (rewrite Hperm; left).
@@ -1074,7 +1074,7 @@ Qed.
     what the completeness proof consumes. *)
 
 Lemma ax_int_below_ext : forall (A B : gproc), gStatic A -> gStatic B ->
-  ax_pre (g ((𝛕 • (g A)) + (𝛕 • (g B)))) (g (A + B)).
+  (g ((𝛕 • (g A)) + (𝛕 • (g B)))) ᴠᴄᴄꜱ⊑ₐₓ (g (A + B)).
 Proof.
   intros A B HA HB.
   eapply ax_trans; [apply (ax_tau_sep_l (𝛕 • (g A)) B) |].
@@ -1105,7 +1105,7 @@ Qed.
 
 Definition tau_cont_norm (a : gproc) : Prop :=
 match a with
-| 𝛕 • q => exists Y, gStatic Y /\ tau_nf Y /\ ax_pre q (g Y) /\ ax_pre (g Y) q
+| 𝛕 • q => exists Y, gStatic Y /\ tau_nf Y /\ q ᴠᴄᴄꜱ⊑ₐₓ (g Y) /\ (g Y) ᴠᴄᴄꜱ⊑ₐₓ q
 | _ => True
 end.
 
@@ -1155,7 +1155,7 @@ Theorem tau_normalize_conts : forall n M, gStatic M ->
   (ntodo (summands M) <= n)%nat ->
   Forall tau_cont_norm (summands M) ->
   exists M', gStatic M' /\ Forall tau_cont_nf (summands M')
-             /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
+             /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ (g M') /\ (g M') ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hnorm.
   - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
@@ -1252,7 +1252,7 @@ Theorem tau_flatten_all : forall n M, gStatic M ->
   (tau_weight (summands M) <= n)%nat ->
   Forall tau_cont_nf (summands M) ->
   exists M', gStatic M' /\ Forall tau_cont_ok (summands M')
-             /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
+             /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ (g M') /\ (g M') ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hnf.
   - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
@@ -1298,7 +1298,7 @@ Qed.
 
 Theorem tau_separate : forall n M, gStatic M ->
   (ntaus (summands M) <= n)%nat -> Forall tau_cont_ok (summands M) ->
-  exists M', gStatic M' /\ tau_nf M' /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
+  exists M', gStatic M' /\ tau_nf M' /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ (g M') /\ (g M') ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hok.
   - exists M. repeat split; [exact HM | | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
@@ -1418,7 +1418,7 @@ Qed.
     *context* argument matters — see the header comment. *)
 
 Theorem canonicalize : forall M, gStatic M ->
-  exists M', gStatic M' /\ canonical M' /\ ax_pre (g M) (g M') /\ ax_pre (g M') (g M).
+  exists M', gStatic M' /\ canonical M' /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ (g M') /\ (g M') ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction M as (M & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ (fun M => nacts (summands M)) Nat.lt_wf_0)).

@@ -215,7 +215,7 @@ Definition fwdg (c : ChannelData) (p : proc) : gproc :=
     flatten with the expansion law.  Besides the mirror summand the
     expansion leaves [M]'s own guards, each carrying the copycat along. *)
 Lemma ax_fwd_intro : forall c M,
-  ax_pre (g M) (g ((ext M (c ? (c ! (bvar 0) • 𝟘))) + fwdg c M)).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((ext M (c ? (c ! (bvar 0) • 𝟘))) + fwdg c M)).
 Proof.
   intros c M.
   replace (fwdg c M) with (ext_r (c ? (c ! (bvar 0) • 𝟘)) M) by reflexivity.
@@ -227,8 +227,8 @@ Qed.
 (** Consuming it: the omega rule, at the premise [must_i_feed_below]
     supplies once the recursion has turned it into a derivation. *)
 Lemma ax_fwd_match : forall c M Q,
-  (forall v, ax_pre ((g M) ‖ (c ! v • 𝟘)) (Q ^ v)) ->
-  ax_pre (g (fwdg c M)) (g (c ? Q)).
+  (forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
+  (g (fwdg c M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
 Proof.
   intros c M Q H. unfold fwdg. apply ax_input. intro v.
   simpl. rewrite gproc_NewVar_cancel. apply H.
@@ -247,7 +247,7 @@ Qed.
     that [ext 𝟘 N] is [𝟘], so there is nothing left over. *)
 
 Theorem ax_nil_below_echo : forall c Q,
-  (forall v, ax_pre (c ! v • 𝟘) (Q ^ v)) -> ax_pre (g 𝟘) (g (c ? Q)).
+  (forall v, (c ! v • 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) -> (g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
 Proof.
   intros c Q H.
   eapply ax_trans; [ apply (ax_fwd_intro c 𝟘) | ].
@@ -267,8 +267,8 @@ Qed.
 
         ax_below_input_sem :
           gInputsOn c M ->
-          (∀ v, ((c!v•𝟘) ‖ g M) ⊑ₘᵤₛₜᵢ Q^v -> ⊢ (c!v•𝟘) ‖ g M ⊑ Q^v) ->
-          g M ⊑ₘᵤₛₜᵢ g (c ? Q) -> ⊢ g M ⊑ g (c ? Q)
+          (∀ v, ((c!v•𝟘) ‖ g M) ⊑ₘᵤₛₜᵢ Q^v -> ((c!v•𝟘) ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) ->
+          g M ⊑ₘᵤₛₜᵢ g (c ? Q) -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q))
 
     The recursion is on the *right-hand side*: `Q^v` is a reduct of
     `g (c ? Q)`, hence strictly smaller in `size` by
@@ -293,8 +293,8 @@ Qed.
     between them — which is why both must be quantified over the residue. *)
 
 Lemma ax_merge_into_fwd : forall (c : ChannelData) (A : proc) (M : gproc) (Q : proc),
-  (forall v, ax_pre ((g M) ‖ (c ! v • 𝟘)) (Q ^ v)) ->
-  ax_pre (g ((c ? A) + (fwdg c M))) (g (c ? Q)).
+  (forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
+  (g ((c ? A) + (fwdg c M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
 Proof.
   intros c A M Q H.
   eapply ax_trans; [ apply ax_cgr_sym; apply cgr_choice_nil | ].
@@ -310,7 +310,7 @@ Qed.
     [c] beside the mirror is simply absorbed by it. *)
 Lemma ax_merge_into_fwd_ctx :
   forall (c : ChannelData) (A : proc) (M R : gproc),
-  ax_pre (g (((c ? A) + (fwdg c M)) + R)) (g ((fwdg c M) + R)).
+  (g (((c ? A) + (fwdg c M)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((fwdg c M) + R)).
 Proof.
   intros c A M R.
   eapply ax_trans;
@@ -340,7 +340,7 @@ Fixpoint gInputsOn (c : ChannelData) (M : gproc) : Prop :=
 
 Lemma ax_ext_absorb : forall (c : ChannelData) (M : gproc), gInputsOn c M ->
   forall (N M0 R : gproc),
-  ax_pre (g ((ext M N) + ((fwdg c M0) + R))) (g ((fwdg c M0) + R)).
+  (g ((ext M N) + ((fwdg c M0) + R))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((fwdg c M0) + R)).
 Proof.
   intros c M. induction M as [ | | d p | p | M1 IH1 M2 IH2 ]; intros Hin N M0 R; simpl in *.
   - apply ax_cgr. etransitivity; [ apply cgr_choice_com | apply cgr_choice_nil ].
@@ -361,8 +361,8 @@ Qed.
 
 Theorem ax_below_input : forall (c : ChannelData) (M : gproc) (Q : proc),
   gInputsOn c M ->
-  (forall v, ax_pre ((g M) ‖ (c ! v • 𝟘)) (Q ^ v)) ->
-  ax_pre (g M) (g (c ? Q)).
+  (forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
 Proof.
   intros c M Q Hin H.
   eapply ax_trans; [ apply (ax_fwd_intro c M) | ].
@@ -382,9 +382,9 @@ Qed.
 Theorem ax_below_input_sem : forall (c : ChannelData) (M : gproc) (Q : proc),
   gInputsOn c M ->
   (forall v, ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ (Q ^ v) ->
-             ax_pre ((c ! v • 𝟘) ‖ (g M)) (Q ^ v)) ->
+             ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
   (g M) ⊑ₘᵤₛₜᵢ (g (c ? Q)) ->
-  ax_pre (g M) (g (c ? Q)).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
 Proof.
   intros c M Q Hin Hrec Hsem.
   apply (ax_below_input c M Q Hin). intro v.
@@ -398,12 +398,12 @@ Qed.
     The general case splits cleanly in two, and the second half is now
     done in full.
 
-    - **Phase A** (shape): [⊢ g M ⊑ g (mirrorN M N)], where [mirrorN M N]
+    - **Phase A** (shape): [(g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N))], where [mirrorN M N]
       is [N] with every continuation replaced by the mirror one.  This is
       where the copycats are introduced and [M]'s own guards absorbed, and
       it is the only part still open in general ([ax_phaseA_one_channel]
       settles it when everything lives on a single channel).
-    - **Phase B** (match): [⊢ g (mirrorN M N) ⊑ g N], summand by summand.
+    - **Phase B** (match): [(g (mirrorN M N)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N)], summand by summand.
 
     Phase B is *easy and completely general*, and the reason is worth
     stating: [mirrorN M N] has **exactly [N]'s guards**.  So every step is
@@ -435,13 +435,13 @@ Fixpoint mirror_ok (M : gproc) (N : gproc) : Prop :=
   match N with
   | gpr_success => True
   | gpr_nil => True
-  | gpr_input c Q => forall v, ax_pre ((g M) ‖ (c ! v • 𝟘)) (Q ^ v)
+  | gpr_input c Q => forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)
   | gpr_tau _ => False
   | gpr_choice N1 N2 => mirror_ok M N1 /\ mirror_ok M N2
   end.
 
 Lemma ax_mirrorN_match : forall (M N : gproc), mirror_ok M N ->
-  forall (R : gproc), ax_pre (g ((mirrorN M N) + R)) (g (N + R)).
+  forall (R : gproc), (g ((mirrorN M N) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (N + R)).
 Proof.
   intros M N. induction N as [ | | c Q | p | N1 IH1 N2 IH2 ]; intros Hok R; simpl in *.
   - apply ax_success_r.
@@ -463,7 +463,7 @@ Qed.
     [N]", read structurally. *)
 Lemma mirror_ok_of : forall (M N : gproc),
   (forall p, ~ lts (g N) τ p) ->
-  (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' -> ax_pre ((g M) ‖ (c ! v • 𝟘)) Q') ->
+  (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' -> ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
   mirror_ok M N.
 Proof.
   intros M N. induction N as [ | | c Q | p | N1 IH1 N2 IH2 ]; intros Hst Hrec; simpl in *.
@@ -490,7 +490,7 @@ Corollary mirror_ok_rec : forall (M N : gproc),
   (forall p, ~ lts (g N) τ p) ->
   (g M) ⊑ₘᵤₛₜᵢ (g N) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
+     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
   mirror_ok M N.
 Proof.
   intros M N Hst Hsem Hrec. apply mirror_ok_of; [ exact Hst | ].
@@ -507,11 +507,11 @@ Qed.
 
 Theorem ax_below_stable_sum : forall (M N : gproc),
   (forall p, ~ lts (g N) τ p) ->
-  ax_pre (g M) (g (mirrorN M N)) ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)) ->
   (g M) ⊑ₘᵤₛₜᵢ (g N) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (g M) (g N).
+     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
 Proof.
   intros M N Hst Hphase Hsem Hrec.
   eapply ax_trans; [ exact Hphase | ].
@@ -523,7 +523,7 @@ Qed.
 
 (** Phase A, settled when everything lives on one channel. *)
 Theorem ax_phaseA_one_channel : forall (c : ChannelData) (M : gproc),
-  gInputsOn c M -> ax_pre (g M) (g (fwdg c M)).
+  gInputsOn c M -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (fwdg c M)).
 Proof.
   intros c M Hin.
   eapply ax_trans; [ apply (ax_fwd_intro c M) | ].
@@ -534,7 +534,7 @@ Proof.
 Qed.
 
 Corollary ax_phaseA_single_summand : forall (c : ChannelData) (M : gproc) (Q : proc),
-  gInputsOn c M -> ax_pre (g M) (g (mirrorN M (c ? Q))).
+  gInputsOn c M -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M (c ? Q))).
 Proof. intros c M Q Hin. simpl. apply ax_phaseA_one_channel. exact Hin. Qed.
 
 (** * Reaching the mirror in one step, on all channels at once
@@ -547,7 +547,7 @@ Proof. intros c M Q Hin. simpl. apply ax_phaseA_one_channel. exact Hin. Qed.
         guardsN N  :=  N with every continuation replaced by the copycat
                        (and [①]/[𝟘] by [𝟘])
 
-    is a [gCopycats] sum, [⊢ g M ⊑ g M ‖ g (guardsN N)] is one [ax_par],
+    is a [gCopycats] sum, [(g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M ‖ g (guardsN N))] is one [ax_par],
     and [ax_expansion_l] flattens that in a single step.  The point that
     makes it fit exactly:
 
@@ -555,7 +555,7 @@ Proof. intros c M Q Hin. simpl. apply ax_phaseA_one_channel. exact Hin. Qed.
 
     — the expansion's *right* component **is** the mirror.  So
 
-        ax_mirror_reach : ⊢ g M ⊑ g (ext M (guardsN N) + mirrorN M N)
+        ax_mirror_reach : (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ext M (guardsN N) + mirrorN M N))
 
     with no side condition beyond [N] being stable.
 
@@ -563,7 +563,7 @@ Proof. intros c M Q Hin. simpl. apply ax_phaseA_one_channel. exact Hin. Qed.
 
     Exactly one obligation, and it is purely syntactic:
 
-        ⊢ g (ext M (guardsN N) + mirrorN M N) ⊑ g (mirrorN M N)
+        (g (ext M (guardsN N) + mirrorN M N)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N))
 
     i.e. *[M]'s own guards, which the expansion left beside the mirror, are
     absorbed by it*.  [ax_ext_absorb] does this when everything lives on
@@ -608,7 +608,7 @@ Proof.
 Qed.
 
 Theorem ax_mirror_reach : forall (M N : gproc), (forall p, ~ lts (g N) τ p) ->
-  ax_pre (g M) (g ((ext M (guardsN N)) + (mirrorN M N))).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((ext M (guardsN N)) + (mirrorN M N))).
 Proof.
   intros M N Hst.
   rewrite <- (ext_r_guardsN N M Hst).
@@ -627,11 +627,11 @@ Qed.
 
 Theorem ax_below_stable_sum_reduced : forall (M N : gproc),
   (forall p, ~ lts (g N) τ p) ->
-  ax_pre (g ((ext M (guardsN N)) + (mirrorN M N))) (g (mirrorN M N)) ->
+  (g ((ext M (guardsN N)) + (mirrorN M N))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)) ->
   (g M) ⊑ₘᵤₛₜᵢ (g N) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (g M) (g N).
+     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
 Proof.
   intros M N Hst Habs Hsem Hrec.
   eapply ax_below_stable_sum; [ exact Hst | | exact Hsem | exact Hrec ].
@@ -694,7 +694,7 @@ Fixpoint gGuardsIn (N : gproc) (M : gproc) : Prop :=
 
 Lemma ax_ext_absorb_gen : forall (N M0 M : gproc), gGuardsIn N M ->
   forall (G R : gproc),
-  ax_pre (g ((ext M G) + ((mirrorN M0 N) + R))) (g ((mirrorN M0 N) + R)).
+  (g ((ext M G) + ((mirrorN M0 N) + R))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((mirrorN M0 N) + R)).
 Proof.
   intros N M0 M. induction M as [ | | c p | p | M1 IH1 M2 IH2 ];
     intros Hin G R; simpl in *.
@@ -721,7 +721,7 @@ Proof.
 Qed.
 
 Theorem ax_absorb_into_mirror : forall (N M : gproc), gGuardsIn N M ->
-  ax_pre (g ((ext M (guardsN N)) + (mirrorN M N))) (g (mirrorN M N)).
+  (g ((ext M (guardsN N)) + (mirrorN M N))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)).
 Proof.
   intros N M Hin.
   eapply ax_trans; [ apply ax_cgr; apply cgr_fullchoice;
@@ -742,8 +742,8 @@ Theorem ax_below_stable_sum_full : forall (M N : gproc),
   (forall p, ~ lts (g N) τ p) -> gGuardsIn N M ->
   (g M) ⊑ₘᵤₛₜᵢ (g N) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (g M) (g N).
+     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
 Proof.
   intros M N Hst Hin Hsem Hrec.
   eapply ax_below_stable_sum_reduced; try eassumption.
@@ -766,9 +766,9 @@ Qed.
 
 Theorem ax_below_int_choice : forall (M N1 N2 : gproc),
   (g M) ⊑ₘᵤₛₜᵢ (g ((𝛕 • (g N1)) + (𝛕 • (g N2)))) ->
-  ((g M) ⊑ₘᵤₛₜᵢ (g N1) -> ax_pre (g M) (g N1)) ->
-  ((g M) ⊑ₘᵤₛₜᵢ (g N2) -> ax_pre (g M) (g N2)) ->
-  ax_pre (g M) (g ((𝛕 • (g N1)) + (𝛕 • (g N2)))).
+  ((g M) ⊑ₘᵤₛₜᵢ (g N1) -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N1)) ->
+  ((g M) ⊑ₘᵤₛₜᵢ (g N2) -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N2)) ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g N1)) + (𝛕 • (g N2)))).
 Proof.
   intros M N1 N2 Hsem H1 H2.
   apply ax_int_glb.
@@ -791,8 +791,8 @@ Theorem ax_below_tau_nf : forall (N : gproc), tau_nf N -> forall (M : gproc),
   (forall L, leafOf L N -> gGuardsIn L M) ->
   (g M) ⊑ₘᵤₛₜᵢ (g N) ->
   (forall L c v (Q' : proc), leafOf L N -> lts (g L) (ActExt (ActIn (c,v))) Q' ->
-      ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (g M) (g N).
+      ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
 Proof.
   intros N Hnf. induction Hnf as [ N Hst | N1 N2 Hnf1 IH1 Hnf2 IH2 ];
     intros M Hg Hsem Hrec.
@@ -866,9 +866,9 @@ Qed.
 
 Lemma ax_below_int_choice_p : forall (p : proc) (N1 N2 : gproc),
   p ⊑ₘᵤₛₜᵢ (g ((𝛕 • (g N1)) + (𝛕 • (g N2)))) ->
-  (p ⊑ₘᵤₛₜᵢ (g N1) -> ax_pre p (g N1)) ->
-  (p ⊑ₘᵤₛₜᵢ (g N2) -> ax_pre p (g N2)) ->
-  ax_pre p (g ((𝛕 • (g N1)) + (𝛕 • (g N2)))).
+  (p ⊑ₘᵤₛₜᵢ (g N1) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g N1)) ->
+  (p ⊑ₘᵤₛₜᵢ (g N2) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g N2)) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g N1)) + (𝛕 • (g N2)))).
 Proof.
   intros p N1 N2 Hsem H1 H2.
   apply ax_int_glb.
@@ -908,9 +908,9 @@ Qed.
 Theorem ax_below_tau_peel : forall (p : proc) (M Y : gproc) (r : list gproc),
   gStatic M -> Permutation (summands M) ((𝛕 • (g Y)) :: r) ->
   p ⊑ₘᵤₛₜᵢ (g M) ->
-  (p ⊑ₘᵤₛₜᵢ (g ((rebuild r) + Y)) -> ax_pre p (g ((rebuild r) + Y))) ->
-  (p ⊑ₘᵤₛₜᵢ (g Y) -> ax_pre p (g Y)) ->
-  ax_pre p (g M).
+  (p ⊑ₘᵤₛₜᵢ (g ((rebuild r) + Y)) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((rebuild r) + Y))) ->
+  (p ⊑ₘᵤₛₜᵢ (g Y) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g Y)) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros p M Y r HS Hperm Hsem H1 H2.
   destruct (ax_tau_sep_anywhere M Y r HS Hperm) as [Ha Hb].
@@ -922,8 +922,8 @@ Qed.
 Theorem ax_below_tau_flatten : forall (p : proc) (M Y : gproc) (r : list gproc),
   gStatic M -> gAllTau Y -> Permutation (summands M) ((𝛕 • (g Y)) :: r) ->
   p ⊑ₘᵤₛₜᵢ (g M) ->
-  (p ⊑ₘᵤₛₜᵢ (g ((rebuild r) + Y)) -> ax_pre p (g ((rebuild r) + Y))) ->
-  ax_pre p (g M).
+  (p ⊑ₘᵤₛₜᵢ (g ((rebuild r) + Y)) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((rebuild r) + Y))) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros p M Y r HS Hall Hperm Hsem H1.
   destruct (ax_tau_flatten_anywhere M Y r HS Hall Hperm) as [Ha Hb].
@@ -935,7 +935,7 @@ Qed.
 
     The two peeling steps are iterated exactly as [tau_flatten_all] and
     [tau_separate] iterate their rewrites — same searches, same measures,
-    same invariants — but driving the *goal* [⊢ p ⊑ g M] instead of
+    same invariants — but driving the *goal* [p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M)] instead of
     rewriting [M] into a [tau_nf].
 
     - [ax_below_mixed] separates, measure [ntaus].  Termination is bought
@@ -956,8 +956,8 @@ Qed.
 Lemma ax_below_mixed : forall n (M : gproc), gStatic M ->
   (ntaus (summands M) <= n)%nat -> Forall tau_cont_ok (summands M) ->
   forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
-  (forall (L : gproc), gStatic L -> gStable L -> p ⊑ₘᵤₛₜᵢ (g L) -> ax_pre p (g L)) ->
-  ax_pre p (g M).
+  (forall (L : gproc), gStatic L -> gStable L -> p ⊑ₘᵤₛₜᵢ (g L) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g L)) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hok p Hsem Hstab.
   - apply Hstab; [ exact HM | | exact Hsem ].
@@ -996,8 +996,8 @@ Qed.
 Theorem ax_below_gsum : forall (M : gproc), gStatic M ->
   Forall tau_cont_nf (summands M) ->
   forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
-  (forall (L : gproc), gStatic L -> gStable L -> p ⊑ₘᵤₛₜᵢ (g L) -> ax_pre p (g L)) ->
-  ax_pre p (g M).
+  (forall (L : gproc), gStatic L -> gStable L -> p ⊑ₘᵤₛₜᵢ (g L) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g L)) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M HM Hnf p Hsem Hstab.
   destruct (tau_flatten_all (tau_weight (summands M)) M HM (le_n _) Hnf)
@@ -1073,8 +1073,8 @@ Lemma ax_below_flatten_drive : forall n (M : gproc), gStatic M ->
   (tau_weight (summands M) <= n)%nat -> Forall tau_cont_nf (summands M) ->
   forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
   (forall (M' : gproc), gStatic M' -> Forall tau_cont_ok (summands M') ->
-      p ⊑ₘᵤₛₜᵢ (g M') -> ax_pre p (g M')) ->
-  ax_pre p (g M).
+      p ⊑ₘᵤₛₜᵢ (g M') -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M')) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M HM Hmeas Hnf p Hsem Hok.
   - apply Hok; [ exact HM | | exact Hsem ].
@@ -1117,8 +1117,8 @@ Qed.
 Theorem ax_below_gsum_drive : forall (M : gproc), gStatic M ->
   Forall tau_cont_nf (summands M) ->
   forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
-  (forall (L : gproc), gStatic L -> gStable L -> p ⊑ₘᵤₛₜᵢ (g L) -> ax_pre p (g L)) ->
-  ax_pre p (g M).
+  (forall (L : gproc), gStatic L -> gStable L -> p ⊑ₘᵤₛₜᵢ (g L) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g L)) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M HM Hnf p Hsem Hstab.
   eapply (ax_below_flatten_drive (tau_weight (summands M)) M HM (le_n _) Hnf p Hsem).
@@ -1238,8 +1238,8 @@ Lemma ax_below_mixed_inv : forall n (M : gproc) (M0 : proc), gStatic M ->
   InvR M0 M ->
   forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
   (forall (L : gproc), gStatic L -> gStable L -> InvR M0 L ->
-      p ⊑ₘᵤₛₜᵢ (g L) -> ax_pre p (g L)) ->
-  ax_pre p (g M).
+      p ⊑ₘᵤₛₜᵢ (g L) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g L)) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M M0 HM Hmeas Hok HInv p Hsem Hstab.
   - apply Hstab; [ exact HM | | exact HInv | exact Hsem ].
@@ -1283,8 +1283,8 @@ Lemma ax_below_flatten_drive_inv : forall n (M : gproc) (M0 : proc), gStatic M -
   InvR M0 M ->
   forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
   (forall (M' : gproc), gStatic M' -> Forall tau_cont_ok (summands M') ->
-      InvR M0 M' -> p ⊑ₘᵤₛₜᵢ (g M') -> ax_pre p (g M')) ->
-  ax_pre p (g M).
+      InvR M0 M' -> p ⊑ₘᵤₛₜᵢ (g M') -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M')) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   induction n as [|n IH]; intros M M0 HM Hmeas Hnf HInv p Hsem Hok.
   - apply Hok; [ exact HM | | exact HInv | exact Hsem ].
@@ -1331,8 +1331,8 @@ Theorem ax_below_gsum_inv : forall (M : gproc), gStatic M ->
   Forall tau_cont_nf (summands M) ->
   forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
   (forall (L : gproc), gStatic L -> gStable L -> InvR (g M) L ->
-      p ⊑ₘᵤₛₜᵢ (g L) -> ax_pre p (g L)) ->
-  ax_pre p (g M).
+      p ⊑ₘᵤₛₜᵢ (g L) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g L)) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M HM Hnf p Hsem Hstab.
   eapply (ax_below_flatten_drive_inv (tau_weight (summands M)) M (g M) HM (le_n _) Hnf
@@ -1384,8 +1384,8 @@ Qed.
 
     With [grestrict_guards] it is tempting to chain
 
-        ⊢ g M ⊑ g (grestrict N M)          (ax_restrict, certificate)
-        ⊢ g (grestrict N M) ⊑ g N          (ax_below_stable_sum_full)
+        (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (grestrict N M))          (ax_restrict, certificate)
+        (g (grestrict N M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N)          (ax_below_stable_sum_full)
 
     but the second step's *semantic* hypothesis is
     [g (grestrict N M) ⊑ₘᵤₛₜᵢ g N], and that is **not** implied by
@@ -1502,7 +1502,7 @@ Theorem ax_phaseA_general : forall (M N : gproc), (forall p, ~ lts (g N) τ p) -
   (forall p, ~ lts (g M) τ p) ->
   BadK (fun _ => False) (offers (mirrorN M N))
        (g ((ext M (guardsN N)) + (mirrorN M N))) ->
-  ax_pre (g M) (g (mirrorN M N)).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)).
 Proof.
   intros M N HstN HstM HB.
   eapply ax_trans; [ apply ax_mirror_reach; exact HstN | ].
@@ -1524,8 +1524,8 @@ Theorem ax_below_stable_sum_nogg : forall (M N : gproc),
        (g ((ext M (guardsN N)) + (mirrorN M N))) ->
   (g M) ⊑ₘᵤₛₜᵢ (g N) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (g M) (g N).
+     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
 Proof.
   intros M N HstN HstM HB Hsem Hrec.
   eapply ax_below_stable_sum; [ exact HstN | | exact Hsem | exact Hrec ].
@@ -2155,7 +2155,7 @@ Qed.
 Theorem ax_phaseA_direct : forall (P : proc) (N : gproc) (l : list TypeOfActions),
   Static P -> gStatic N -> (forall z, ~ lts (g N) τ z) ->
   (forall K, OutOnly K -> ((g (mirrorN P N)) ▷ K) ↛ -> Settles (chans K) (P ▷ K)) ->
-  ax_pre (msgs l ‖ P) (msgs l ‖ g (mirrorN P N)).
+  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN P N)).
 Proof.
   intros P N l HM HN HstN Hcert.
   apply (ax_settle_sim l l P (g (mirrorN P N)) (mirrorRel P N)
@@ -2178,7 +2178,7 @@ Theorem phaseA_config_no_regeneration : forall (M N : gproc) (l : list TypeOfAct
   (forall z, ~ lts (g M) τ z) ->
   (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = []) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  ax_pre (msgs l ‖ g M) (msgs l ‖ g (mirrorN M N)).
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN M N)).
 Proof.
   intros M N l HM HN HstN HstM Hno Hsem.
   apply ax_phaseA_direct; [ apply static_g; exact HM | exact HN | exact HstN | ].
@@ -2217,7 +2217,7 @@ Qed.
 Theorem ax_phaseA_settle : forall (M N : gproc), gStatic M -> gStatic N ->
   (forall p, ~ lts (g N) τ p) ->
   (g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) ->
-  ax_pre (g M) (g (mirrorN M N)).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)).
 Proof.
   intros M N HM HN HstN Hsem.
   eapply ax_trans; [ apply ax_mirror_reach; exact HstN | ].
@@ -2239,8 +2239,8 @@ Theorem ax_below_stable_sum_clean : forall (M N : gproc), gStatic M -> gStatic N
   (forall p, ~ lts (g N) τ p) ->
   (g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (g M) (g N).
+     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
 Proof.
   intros M N HM HN HstN Hsem Hrec.
   eapply ax_below_stable_sum; [ exact HstN | | exact Hsem | exact Hrec ].
@@ -2268,8 +2268,8 @@ Theorem ax_below_stable_config : forall (l : list TypeOfActions) (M N : gproc),
   (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (msgs l ‖ g M) (msgs l ‖ g N).
+     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros l M N HM HN HstN HstM Hpre Hrec.
   apply ax_par; [ apply ax_refl | ].
@@ -2283,8 +2283,8 @@ Theorem ax_below_stable_NF : forall (n : nat) (l : list TypeOfActions) (M N : gp
   (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
   (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ax_pre ((c ! v • 𝟘) ‖ (g M)) Q') ->
-  ax_pre (NF n l M) (NF n l N).
+     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN HstN HstM Hpre Hrec.
   unfold NF. apply ax_res_n. apply ax_below_stable_config; assumption.
@@ -2323,7 +2323,7 @@ Qed.
     fragment every configuration reaches a stable one.
 
     Note the direction this can and cannot be used in.  [ax_tau_run] gives
-    `⊢ p ⊑ p'`, so composing it with `⊢ p' ⊑ q` yields `⊢ p ⊑ q` — sound,
+    `p ᴠᴀᴄᴄꜱ⊑ₐₓ p'`, so composing it with `p' ᴠᴀᴄᴄꜱ⊑ₐₓ q` yields `p ᴠᴀᴄᴄꜱ⊑ₐₓ q` — sound,
     and it is how the copycat example
     `(c!v•𝟘) ‖ ((c?(c!v•𝟘)) + (d?(e!y•𝟘))) ⊑ (c!v•𝟘) ‖ 𝟘` is derived.  But
     the semantic side condition `p' ⊑ₘᵤₛₜᵢ q` does **not** follow from
@@ -2333,7 +2333,7 @@ Qed.
     needed for different stable states of `q` — the same ∀∃ alternation
     that defeated [Harmless] and [Bad]. *)
 
-Lemma ax_tau_run : forall (p p' : proc), p ⟹[[]] p' -> ax_pre p p'.
+Lemma ax_tau_run : forall (p p' : proc), p ⟹[[]] p' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ p'.
 Proof.
   intros p p' Hw. remember (nil : trace (ExtAct TypeOfActions)) as s eqn:Hs.
   induction Hw as [x|s0 x q y Hl Hwt IH|mu s0 x q y Hl Hwt IH].
@@ -2343,11 +2343,11 @@ Proof.
 Qed.
 
 Lemma ax_below_via_reduct : forall (p p' q : proc),
-  p ⟹[[]] p' -> ax_pre p' q -> ax_pre p q.
+  p ⟹[[]] p' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof. intros p p' q Hw H. eapply ax_trans; [ apply ax_tau_run; exact Hw | exact H ]. Qed.
 
 Theorem ax_config_leaf : forall (p : proc), Static p ->
-  exists p', p ⟹[[]] p' /\ p' ↛ /\ ax_pre p p' /\ Static p'.
+  exists p', p ⟹[[]] p' /\ p' ↛ /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ p' /\ Static p'.
 Proof.
   intros p HS.
   destruct (terminate_then_wt_refuses p (Static_terminate p HS)) as (p' & Hw & Hst).
@@ -2368,7 +2368,7 @@ Qed.
     satisfies. *)
 
 Lemma ax_ichoice_glb : forall (l : list proc) (q : proc), l <> nil ->
-  (forall p, In p l -> ax_pre q p) -> ax_pre q (g (ichoice l)).
+  (forall p, In p l -> q ᴠᴀᴄᴄꜱ⊑ₐₓ p) -> q ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice l)).
 Proof.
   induction l as [|p l IH]; intros q Hne Hall; [ contradiction | ].
   destruct l as [|p2 l2].
@@ -2382,7 +2382,7 @@ Proof.
 Qed.
 
 Lemma ax_ichoice_below : forall (l : list proc) (p : proc), In p l ->
-  ax_pre (g (ichoice l)) p.
+  (g (ichoice l)) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof. intros l p Hin. apply ax_tau_step. apply lts_ichoice. exact Hin. Qed.
 
 (** ** Restriction is FREE when no channel is lost
@@ -2428,7 +2428,7 @@ Lemma ax_restrict_keep : forall (M M' : gproc), gStatic M -> gStatic M' ->
   (forall c v p, lts (g M) (ActExt (ActIn (c,v))) p ->
                  exists w q, lts (g M') (ActExt (ActIn (c,w))) q) ->
   (forall p, ~ lts (g M) τ p) ->
-  ax_pre (g M) (g M').
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M').
 Proof.
   intros M M' HM HM' Hsub Hoff HstM.
   apply ax_restrict_settle; try assumption.
@@ -2485,7 +2485,7 @@ Proof.
 Qed.
 
 Lemma ax_dup_ctx : forall (A B R : gproc), gStatic A -> gStatic B -> gStatic R ->
-  ax_pre ((g ((A + R) + (B + R))) : proc) ((g ((A + B) + R)) : proc).
+  ((g ((A + R) + (B + R))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ((A + B) + R)) : proc).
 Proof.
   intros A B R HA HB HR.
   destruct (lts_dec ((g ((A + B) + R)) : proc) τ) as [Hst | (z & Hz)].
@@ -2505,8 +2505,8 @@ Qed.
 
 Theorem ax_input_split_ctx_r : forall (c : ChannelData) (P Q : proc) (R : gproc),
   Static P -> Static Q -> gStatic R ->
-  ax_pre ((g ((c ? ((g ((𝛕 • P) + (𝛕 • Q))) : proc)) + R)) : proc)
-         ((g (((c ? P) + (c ? Q)) + R)) : proc).
+  ((g ((c ? ((g ((𝛕 • P) + (𝛕 • Q))) : proc)) + R)) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (((c ? P) + (c ? Q)) + R)) : proc).
 Proof.
   intros c P Q R HP HQ HR.
   eapply ax_trans;
@@ -2537,7 +2537,7 @@ Qed.
 
 Theorem ax_phaseA_union : forall (M N : gproc), gStatic M -> gStatic N ->
   (forall p, ~ lts (g M) τ p) -> (forall p, ~ lts (g N) τ p) ->
-  ax_pre (g M) (g (mirrorN M (N + M))).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M (N + M))).
 Proof.
   intros M N HM HN HstM HstN.
   assert (HstNM : forall p, ~ lts (g (N + M)) τ p).
@@ -2574,13 +2574,13 @@ Qed.
 Theorem completeness_from_step :
   (forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre p q) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     p ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intro Hstep.
   assert (H : forall n q, (size q <= n)%nat ->
-                forall p, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q).
+                forall p, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q).
   { induction n as [|n IH]; intros q Hn p Hp Hq Hpre.
     - apply Hstep; try assumption.
       intros p' q' Hp' Hq' Hlt Hpre'. exfalso. lia.
@@ -2592,7 +2592,7 @@ Qed.
 Corollary ax_phaseA_union_config : forall (l : list TypeOfActions) (M N : gproc),
   gStatic M -> gStatic N ->
   (forall p, ~ lts (g M) τ p) -> (forall p, ~ lts (g N) τ p) ->
-  ax_pre (msgs l ‖ g M) (msgs l ‖ g (mirrorN M (N + M))).
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN M (N + M))).
 Proof.
   intros l M N HM HN HstM HstN.
   apply ax_par; [ apply ax_refl | apply ax_phaseA_union; assumption ].
@@ -2736,8 +2736,8 @@ Qed.
 
 Lemma ax_input_bag : forall (l : list TypeOfActions) (c : ChannelData) (P Q : proc),
   (forall l' v, subbag l' l ->
-     ax_pre (msgs l' ‖ (subst_in_proc 0 v P)) (msgs l' ‖ (subst_in_proc 0 v Q))) ->
-  ax_pre (msgs l ‖ g (c ? P)) (msgs l ‖ g (c ? Q)).
+     (msgs l' ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ (subst_in_proc 0 v Q))) ->
+  (msgs l ‖ g (c ? P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (c ? Q)).
 Proof.
   intros l c P Q H.
   apply (ax_input_ctx (bagctx l) c P Q (msgs l)
@@ -2753,8 +2753,8 @@ Qed.
 Lemma ax_choice_input_bag :
   forall (l : list TypeOfActions) (c : ChannelData) (P Q : proc) (G : gproc),
   (forall l' v, subbag l' l ->
-     ax_pre (msgs l' ‖ (subst_in_proc 0 v P)) (msgs l' ‖ (subst_in_proc 0 v Q))) ->
-  ax_pre (msgs l ‖ g ((c ? P) + G)) (msgs l ‖ g ((c ? Q) + G)).
+     (msgs l' ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ (subst_in_proc 0 v Q))) ->
+  (msgs l ‖ g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g ((c ? Q) + G)).
 Proof.
   intros l c P Q G H.
   apply (ax_choice_input_ctx (bagctx l) c P Q (msgs l) G
@@ -2776,15 +2776,15 @@ Qed.
     [VACCS_DropProbes.ax_PC_below_nil] delimit it). *)
 Lemma ax_input_distrib_bag : forall (l : list TypeOfActions) (c : ChannelData)
     (P Q : proc) (R : gproc),
-  ax_pre (msgs l ‖ g (((c ? P) + (c ? Q)) + R))
-         (msgs l ‖ g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
+  (msgs l ‖ g (((c ? P) + (c ? Q)) + R))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
 Proof. intros. apply ax_par; [ apply ax_refl | apply ax_input_distrib_l ]. Qed.
 
 (** The greatest lower bound, likewise at a bag. *)
 Lemma ax_int_glb_bag : forall (l : list TypeOfActions) (p q1 q2 : proc),
-  (forall l', subbag l' l -> ax_pre (msgs l' ‖ p) (msgs l' ‖ q1)) ->
-  (forall l', subbag l' l -> ax_pre (msgs l' ‖ p) (msgs l' ‖ q2)) ->
-  ax_pre (msgs l ‖ p) (msgs l ‖ g ((𝛕 • q1) + (𝛕 • q2))).
+  (forall l', subbag l' l -> (msgs l' ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ q1)) ->
+  (forall l', subbag l' l -> (msgs l' ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ q2)) ->
+  (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g ((𝛕 • q1) + (𝛕 • q2))).
 Proof.
   intros l p q1 q2 H1 H2.
   apply (ax_int_glb_ctx (bagctx l) p q1 q2 (msgs l)
@@ -2806,7 +2806,7 @@ Qed.
 
     The whole chain now lifts, and the point of lifting it is the shape of
     the **recursive premise**: it comes out as
-    [⊢ msgs l' ‖ ((c!v•𝟘) ‖ g M) ⊑ msgs l' ‖ Q'] — *wrapped*, at every
+    [(msgs l' ‖ ((c!v•𝟘) ‖ g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')] — *wrapped*, at every
     sub-bag [l'] — which is exactly what [VACCS_Descent.
     wrapped_premise_from_IH] discharges, and the sub-bags are exactly the
     states [domsim_wt] measures.  Compare [ax_below_stable_NF], whose
@@ -2816,7 +2816,7 @@ Qed.
     premise of its own, so one [ax_par] carries it into the context. *)
 
 Lemma ax_par_bag : forall (l : list TypeOfActions) (X Y : proc),
-  ax_pre X Y -> ax_pre (msgs l ‖ X) (msgs l ‖ Y).
+  X ᴠᴀᴄᴄꜱ⊑ₐₓ Y -> (msgs l ‖ X) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ Y).
 Proof. intros l X Y H. apply ax_par; [ apply ax_refl | exact H ]. Qed.
 
 Fixpoint mirror_ok_bag (l : list TypeOfActions) (P : proc) (N : gproc) : Prop :=
@@ -2824,14 +2824,14 @@ Fixpoint mirror_ok_bag (l : list TypeOfActions) (P : proc) (N : gproc) : Prop :=
   | gpr_success => True
   | gpr_nil => True
   | gpr_input c Q => forall l' v, subbag l' l ->
-      ax_pre (msgs l' ‖ (P ‖ (c ! v • 𝟘))) (msgs l' ‖ (subst_in_proc 0 v Q))
+      (msgs l' ‖ (P ‖ (c ! v • 𝟘))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ (subst_in_proc 0 v Q))
   | gpr_tau _ => False
   | gpr_choice N1 N2 => mirror_ok_bag l P N1 /\ mirror_ok_bag l P N2
   end.
 
 Lemma ax_mirrorN_match_bag : forall (l : list TypeOfActions) (P : proc) (N : gproc),
   mirror_ok_bag l P N ->
-  forall (R : gproc), ax_pre (msgs l ‖ g ((mirrorN P N) + R)) (msgs l ‖ g (N + R)).
+  forall (R : gproc), (msgs l ‖ g ((mirrorN P N) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (N + R)).
 Proof.
   intros l P N. induction N as [ | | c Q | p | N1 IH1 N2 IH2 ]; intros Hok R; simpl in *.
   - apply ax_par_bag. apply ax_success_r.
@@ -2852,7 +2852,7 @@ Qed.
 Lemma mirror_ok_bag_of : forall (l : list TypeOfActions) (P : proc) (N : gproc),
   (forall p, ~ lts (g N) τ p) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ (P ‖ (c ! v • 𝟘))) (msgs l' ‖ Q')) ->
+     (msgs l' ‖ (P ‖ (c ! v • 𝟘))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
   mirror_ok_bag l P N.
 Proof.
   intros l P N. induction N as [ | | c Q | p | N1 IH1 N2 IH2 ]; intros Hst Hrec; simpl in *.
@@ -2871,10 +2871,10 @@ Qed.
 
 Theorem ax_below_stable_sum_bag : forall (l : list TypeOfActions) (M N : gproc),
   (forall p, ~ lts (g N) τ p) ->
-  ax_pre (g M) (g (mirrorN M N)) ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) (msgs l' ‖ Q')) ->
-  ax_pre (msgs l ‖ g M) (msgs l ‖ g N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros l M N Hst HA Hrec.
   eapply ax_trans; [ apply ax_par_bag; exact HA | ].
@@ -2894,8 +2894,8 @@ Theorem ax_below_stable_config_bag : forall (l : list TypeOfActions) (M N : gpro
   (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) (msgs l' ‖ Q')) ->
-  ax_pre (msgs l ‖ g M) (msgs l ‖ g N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros l M N HM HN Hst Hstab Hsem Hrec.
   apply ax_below_stable_sum_bag; [ exact Hst | | exact Hrec ].
@@ -2909,8 +2909,8 @@ Theorem ax_below_stable_NF_bag : forall (n : nat) (l : list TypeOfActions) (M N 
   (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) (msgs l' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hst Hstab Hsem Hrec. unfold NF.
   apply ax_res_n. apply ax_below_stable_config_bag; assumption.
@@ -2949,14 +2949,14 @@ Definition PhaseA_config : Prop :=
   forall (M N : gproc) (l : list TypeOfActions),
     gStatic M -> gStatic N -> (forall p, ~ lts (g N) τ p) ->
     ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-    ax_pre (msgs l ‖ g M) (msgs l ‖ g (mirrorN M N)).
+    (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN M N)).
 
 Theorem ax_below_stable_sum_cfg : forall (l : list TypeOfActions) (P : proc) (N : gproc),
   (forall p, ~ lts (g N) τ p) ->
-  ax_pre (msgs l ‖ P) (msgs l ‖ g (mirrorN P N)) ->
+  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN P N)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ P)) (msgs l' ‖ Q')) ->
-  ax_pre (msgs l ‖ P) (msgs l ‖ g N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros l P N Hst HA Hrec.
   eapply ax_trans; [ exact HA | ].
@@ -3006,10 +3006,10 @@ Qed.
 Theorem ax_below_stable_split_bag :
   forall (l d : list TypeOfActions) (M N : gproc),
   (forall p, ~ lts (g N) τ p) ->
-  ax_pre (msgs l ‖ (msgs d ‖ g M)) (msgs l ‖ g (mirrorN (msgs d ‖ g M) N)) ->
+  (msgs l ‖ (msgs d ‖ g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN (msgs d ‖ g M) N)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ (msgs d ‖ g M))) (msgs l' ‖ Q')) ->
-  ax_pre (msgs (d ++ l) ‖ g M) (msgs l ‖ g N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ (msgs d ‖ g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (msgs (d ++ l) ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros l d M N Hst HA Hrec.
   eapply ax_trans; [ apply ax_cgr | apply ax_below_stable_sum_cfg; eassumption ].
@@ -3023,8 +3023,8 @@ Theorem ax_below_stable_NF_cfg : PhaseA_config ->
   (forall p, ~ lts (g N) τ p) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) (msgs l' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros HPA n l M N HM HN Hst Hsem Hrec. unfold NF.
   apply ax_res_n. apply ax_below_stable_sum_cfg; [ exact Hst | | exact Hrec ].
@@ -3035,7 +3035,7 @@ Lemma phaseA_config_of_stable : forall (M N : gproc) (l : list TypeOfActions),
   gStatic M -> gStatic N -> (forall p, ~ lts (g N) τ p) ->
   (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  ax_pre (msgs l ‖ g M) (msgs l ‖ g (mirrorN M N)).
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN M N)).
 Proof.
   intros M N l HM HN Hst Hstab Hsem.
   apply ax_par_bag. apply ax_phaseA_settle; [ exact HM | exact HN | exact Hst | ].
@@ -3066,8 +3066,8 @@ Theorem ax_below_stable_NF_no_regen :
   (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = []) ->
   ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) (msgs l' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN HstN HstM Hno Hsem Hrec. unfold NF.
   apply ax_res_n. apply ax_below_stable_sum_cfg; [ exact HstN | | exact Hrec ].
@@ -3085,7 +3085,7 @@ Definition BagSem (l : list TypeOfActions) (p : proc) (X : gproc) : Prop :=
   forall l', subbag l' l -> (msgs l' ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ g X).
 
 Definition BagBelow (l : list TypeOfActions) (p : proc) (X : gproc) : Prop :=
-  forall l', subbag l' l -> ax_pre (msgs l' ‖ p) (msgs l' ‖ g X).
+  forall l', subbag l' l -> (msgs l' ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ g X).
 
 Lemma BagBelow_mono : forall l l' p X, subbag l' l -> BagBelow l p X -> BagBelow l' p X.
 Proof. intros l l' p X Hs H l'' Hs''. apply H. eapply subbag_trans; eassumption. Qed.
@@ -3233,7 +3233,7 @@ Theorem ax_below_gsum_stable_cfg : PhaseA_config ->
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l (g M) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts (g L) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ (g M))) (msgs l'' ‖ Q')) ->
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
   BagBelow l (g M) N.
 Proof.
   intros HPA l M N HM HN Hnf Hsem Hrec.
@@ -3253,8 +3253,8 @@ Corollary ax_below_NF_cfg : PhaseA_config ->
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l (g M) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts (g L) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ (g M))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros HPA n l M N HM HN Hnf Hsem Hrec. unfold NF.
   apply ax_res_n.
@@ -3584,9 +3584,9 @@ Theorem ax_below_split_from_certificate :
      ((g (mirrorN ((msgs d) ‖ ((g M) : proc)) N)) ▷ K) ↛ ->
      Settles (chans K) (((g M) : proc) ▷ (bag d ⊎ K))) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ ((msgs d) ‖ ((g M) : proc))))
-            (msgs l' ‖ Q')) ->
-  ax_pre (msgs (d ++ l) ‖ g M) (msgs l ‖ g N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ ((msgs d) ‖ ((g M) : proc))))
+       ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (msgs (d ++ l) ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros l d M N HM HN HstN Hcert Hrec.
   apply ax_below_stable_split_bag; [ exact HstN | | exact Hrec ].
@@ -3621,7 +3621,7 @@ Qed.
     an emission included. *)
 
 Lemma ax_ichoice_some : forall (L : list proc) (x q : proc),
-  In x L -> ax_pre x q -> ax_pre (g (ichoice L)) q.
+  In x L -> x ᴠᴀᴄᴄꜱ⊑ₐₓ q -> (g (ichoice L)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros L x q Hin Hx. eapply ax_trans; [ apply ax_ichoice_below; exact Hin | exact Hx ].
 Qed.
@@ -3634,7 +3634,7 @@ Proof.
 Qed.
 
 Lemma ax_ichoice_of_taus : forall (L : list proc) (p : proc), L <> nil ->
-  (forall x, In x L -> p ⟹[[]] x) -> ax_pre p (g (ichoice L)).
+  (forall x, In x L -> p ⟹[[]] x) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice L)).
 Proof.
   intros L p Hne Hall. apply ax_ichoice_glb; [ exact Hne | ].
   intros x Hin. apply ax_tau_run. apply Hall. exact Hin.
@@ -3932,8 +3932,8 @@ Theorem ax_phaseA_ichoice : forall (L : list cfg) (N : gproc) (l : list TypeOfAc
   (forall z, ~ lts (g N) τ z) ->
   (forall K, OutOnly K -> ((g (mirrorN (g (ichoice_cfg L)) N)) ▷ K) ↛ ->
      exists c, In c L /\ Settles (chans K) ((cfg_proc c) ▷ K)) ->
-  ax_pre (msgs l ‖ g (ichoice_cfg L))
-         (msgs l ‖ g (mirrorN (g (ichoice_cfg L)) N)).
+  (msgs l ‖ g (ichoice_cfg L))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN (g (ichoice_cfg L)) N)).
 Proof.
   intros L N l Hall HN Hnt Hcert.
   apply ax_phaseA_direct; [ apply cfg_Static; exact Hall | exact HN | exact Hnt | ].
@@ -3952,8 +3952,8 @@ Theorem ax_below_stable_ichoice : forall (L : list cfg) (N : gproc) (l : list Ty
   (forall K, OutOnly K -> ((g (mirrorN (g (ichoice_cfg L)) N)) ▷ K) ↛ ->
      exists c, In c L /\ Settles (chans K) ((cfg_proc c) ▷ K)) ->
   (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ g (ichoice_cfg L))) (msgs l' ‖ Q')) ->
-  ax_pre (msgs l ‖ g (ichoice_cfg L)) (msgs l ‖ g N).
+     (msgs l' ‖ ((c ! v • 𝟘) ‖ g (ichoice_cfg L))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (msgs l ‖ g (ichoice_cfg L)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros L N l Hall HN Hnt Hcert Hrec.
   eapply ax_below_stable_sum_cfg; [ exact Hnt | | exact Hrec ].
@@ -4025,7 +4025,7 @@ Qed.
 
 Lemma ax_ichoice_of_cfg : forall (L : list cfg) (r : proc), L <> nil ->
   (forall c, In c L -> exists u, r ⟹[[]] u /\ u ≡* cfg_proc c) ->
-  ax_pre r (g (ichoice_cfg L)).
+  r ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice_cfg L)).
 Proof.
   intros L r Hne Hall. unfold ichoice_cfg.
   apply ax_ichoice_glb.
@@ -4099,7 +4099,7 @@ Qed.
 Theorem ax_cfg_below_ichoice : forall (p : proc) (l : list TypeOfActions) (L : list cfg),
   L <> nil ->
   (forall c, In c L -> (p ▷ bag l) ⟹[[]] (cfg_state c)) ->
-  ax_pre (msgs l ‖ p) (g (ichoice_cfg L)).
+  (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice_cfg L)).
 Proof.
   intros p l L Hne Hall. apply ax_ichoice_of_cfg; [ exact Hne | ].
   intros c Hc.
@@ -4749,12 +4749,12 @@ Qed.
 
 Theorem ax_below_cfg_glb : forall (l : list TypeOfActions) (M N : gproc),
   (exists q0, lts (msgs l ‖ g N) τ q0) ->
-  (forall q', lts (msgs l ‖ g N) τ q' -> ax_pre (msgs l ‖ g M) q') ->
+  (forall q', lts (msgs l ‖ g N) τ q' -> (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
   (forall c v q'', lts (msgs l ‖ g N) (ActExt (ActIn (c,v))) q'' ->
-     ax_pre ((c ! v • 𝟘) ‖ (msgs l ‖ g M)) q'') ->
+     ((c ! v • 𝟘) ‖ (msgs l ‖ g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
   (forall c v l0, Permutation l ((c,v) :: l0) ->
-     ax_pre (msgs l0 ‖ g M) (msgs l0 ‖ g N)) ->
-  ax_pre (msgs l ‖ g M) (msgs l ‖ g N).
+     (msgs l0 ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l0 ‖ g N)) ->
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
 Proof.
   intros l M N Hex Htau Hin Hrec.
   apply ax_glb_tau; [ exact Hex | exact Htau | exact Hin | | ].
@@ -4857,8 +4857,8 @@ Theorem ax_below_cfg_descend_p : forall (l l0 : list TypeOfActions) c v
     (p pc q : proc),
   Permutation l ((c,v) :: l0) ->
   lts p (ActExt (ActIn (c,v))) pc ->
-  ax_pre (msgs l0 ‖ pc) q ->
-  ax_pre (msgs l ‖ p) q.
+  (msgs l0 ‖ pc) ᴠᴀᴄᴄꜱ⊑ₐₓ q ->
+  (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros l l0 c v p pc q Hperm Hin Hax.
   destruct (cfg_deliver_step_p l l0 c v p pc Hperm Hin) as (r & Hr & Hcr).
@@ -4962,8 +4962,8 @@ Theorem ax_below_cfg_descend : forall (l l0 : list TypeOfActions) c v
     (M : gproc) (Mc q : proc),
   Permutation l ((c,v) :: l0) ->
   lts (g M) (ActExt (ActIn (c,v))) Mc ->
-  ax_pre (msgs l0 ‖ Mc) q ->
-  ax_pre (msgs l ‖ g M) q.
+  (msgs l0 ‖ Mc) ᴠᴀᴄᴄꜱ⊑ₐₓ q ->
+  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof. intros l l0 c v M Mc q. apply ax_below_cfg_descend_p. Qed.
 
 (** ** La délivrance est réversible — le cas garde unique
@@ -5335,10 +5335,10 @@ Lemma ax_phaseA_glb_bag : forall n (M N : gproc) (l : list TypeOfActions),
   (forall z, ~ lts ((g N) : proc) τ z) ->
   length l <= n ->
   (forall l', (forall q0, ~ lts (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
-      ax_pre (msgs l' ‖ ((g M) : proc))
-             (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
-  ax_pre (msgs l ‖ ((g M) : proc))
-         (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
+      (msgs l' ‖ ((g M) : proc))
+        ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
+  (msgs l ‖ ((g M) : proc))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
 Proof.
   induction n as [|n IH]; intros M N l HstN Hlen Hstable.
   - apply Hstable. intros q0 Hq0.
@@ -5364,10 +5364,10 @@ Qed.
 Corollary ax_phaseA_reduce_to_stable : forall (M N : gproc),
   (forall z, ~ lts ((g N) : proc) τ z) ->
   (forall l', (forall q0, ~ lts (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
-      ax_pre (msgs l' ‖ ((g M) : proc))
-             (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
-  forall l, ax_pre (msgs l ‖ ((g M) : proc))
-                   (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
+      (msgs l' ‖ ((g M) : proc))
+        ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
+  forall l, (msgs l ‖ ((g M) : proc))
+              ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
 Proof.
   intros M N HstN Hstable l.
   eapply (ax_phaseA_glb_bag (length l)); [ exact HstN | apply Nat.le_refl | exact Hstable ].
@@ -5395,18 +5395,18 @@ Definition PhaseA_stable_target : Prop :=
     (forall p, ~ lts ((g N) : proc) τ p) ->
     (forall q0, ~ lts (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
     (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)) ->
-    ax_pre (msgs l ‖ ((g M) : proc))
-           (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
+    (msgs l ‖ ((g M) : proc))
+      ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
 
 Lemma ax_phaseA_glb_sub : forall n (M N : gproc) (l : list TypeOfActions),
   (forall z, ~ lts ((g N) : proc) τ z) ->
   length l <= n ->
   (forall l', subbag l' l ->
      (forall q0, ~ lts (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
-      ax_pre (msgs l' ‖ ((g M) : proc))
-             (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
-  ax_pre (msgs l ‖ ((g M) : proc))
-         (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
+      (msgs l' ‖ ((g M) : proc))
+        ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
+  (msgs l ‖ ((g M) : proc))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
 Proof.
   induction n as [|n IH]; intros M N l HstN Hlen Hstable.
   - apply Hstable; [ apply subbag_refl | ]. intros q0 Hq0.
@@ -5440,8 +5440,8 @@ Theorem phaseA_of_stable_target : PhaseA_stable_target ->
     (forall z, ~ lts ((g N) : proc) τ z) ->
     (forall l', subbag l' l ->
         (msgs l' ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ ((g N) : proc))) ->
-    ax_pre (msgs l ‖ ((g M) : proc))
-           (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
+    (msgs l ‖ ((g M) : proc))
+      ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
 Proof.
   intros HST M N l HstN Hsem.
   eapply (ax_phaseA_glb_sub (length l)); [ exact HstN | apply Nat.le_refl | ].
@@ -5489,7 +5489,7 @@ Qed.
 Theorem phaseA_of_empty_bag_sem : forall (P : proc) (N : gproc) (l : list TypeOfActions),
   Static P -> gStatic N -> (forall z, ~ lts ((g N) : proc) τ z) ->
   P ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
-  ax_pre (msgs l ‖ P) (msgs l ‖ ((g (mirrorN P N)) : proc)).
+  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN P N)) : proc)).
 Proof.
   intros P N l HP HN HstN Hsem.
   apply ax_phaseA_direct; [ exact HP | exact HN | exact HstN | ].
@@ -5525,7 +5525,7 @@ Theorem ax_below_gsum_stable_cfg_uncond :
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
   BagBelow l ((g M) : proc) N.
 Proof.
   intros l M N HM HN Hnf Hsem Hrec.
@@ -5547,8 +5547,8 @@ Corollary ax_below_NF_cfg_uncond :
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hnf Hsem Hrec. unfold NF.
   apply ax_res_n.
@@ -5594,8 +5594,8 @@ Theorem ax_below_cfg_stable_left : forall (l : list TypeOfActions) (M N : gproc)
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
 Proof.
   intros l M N HM HN Hnf HstM Hpre Hrec.
   apply (ax_below_gsum_stable_cfg_uncond l M N HM HN Hnf
@@ -5611,8 +5611,8 @@ Corollary ax_below_NF_stable_left :
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hnf HstM Hpre Hrec. unfold NF. apply ax_res_n.
   eapply ax_below_cfg_stable_left; eassumption.
@@ -5657,8 +5657,8 @@ Definition CfgUnstableLeft : Prop :=
     (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
        BagSem l ((g M) : proc) L -> subbag l' l ->
        forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-         ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+         (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
 
 Theorem ax_below_NF_all : CfgUnstableLeft ->
   forall (n : nat) (l : list TypeOfActions) (M N : gproc),
@@ -5667,8 +5667,8 @@ Theorem ax_below_NF_all : CfgUnstableLeft ->
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros HU n l M N HM HN Hnf Hpre Hrec. unfold NF. apply ax_res_n.
   destruct (fw_tau_dec ((g M) : proc) l) as [Hno | Hex].
@@ -5694,8 +5694,8 @@ Theorem ax_below_bare : forall (M N : gproc), gStatic M -> gStatic N ->
   (forall (L : gproc), gStatic L -> gStable L ->
      forall c v Q', lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
        (((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q') ->
-       ax_pre ((c ! v • 𝟘) ‖ ((g M) : proc)) Q') ->
-  ax_pre ((g M) : proc) ((g N) : proc).
+       ((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
 Proof.
   intros M N HM HN Hnf Hsem Hrec.
   apply ax_below_gsum_inv; try assumption.
@@ -5712,8 +5712,8 @@ Corollary ax_below_cfg_nil_bag : forall (M N : gproc), gStatic M -> gStatic N ->
   (forall (L : gproc), gStatic L -> gStable L ->
      forall c v Q', lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
        (((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q') ->
-       ax_pre ((c ! v • 𝟘) ‖ ((g M) : proc)) Q') ->
-  ax_pre (msgs [] ‖ ((g M) : proc)) (msgs [] ‖ ((g N) : proc)).
+       ((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  (msgs [] ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [] ‖ ((g N) : proc)).
 Proof.
   intros M N HM HN Hnf Hsem Hrec.
   assert (HcM : ((g M) : proc) ≡* (msgs [] ‖ ((g M) : proc))) by (apply ax_nil_par).
@@ -5741,8 +5741,8 @@ Theorem ax_below_bare_inv : forall (M N : gproc), gStatic M -> gStatic N ->
   (forall (L : gproc), gStatic L -> gStable L -> InvR ((g N) : proc) L ->
      forall c v Q', lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
        (((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q') ->
-       ax_pre ((c ! v • 𝟘) ‖ ((g M) : proc)) Q') ->
-  ax_pre ((g M) : proc) ((g N) : proc).
+       ((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
 Proof.
   intros M N HM HN Hnf Hsem Hrec.
   apply ax_below_gsum_inv; try assumption.
@@ -5754,7 +5754,7 @@ Proof.
 Qed.
 
 Example ax_below_bare_ccat : forall c : ChannelData,
-  ax_pre ((g ((c ? (c ! (bvar 0) • 𝟘)))) : proc) ((g 𝟘) : proc).
+  ((g ((c ? (c ! (bvar 0) • 𝟘)))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   intro c.
   apply ax_below_bare_inv.
@@ -5801,10 +5801,10 @@ Qed.
 
 Lemma ax_glb_gsum : forall (p : proc) (N : gproc),
   (exists q0, lts ((g N) : proc) τ q0) ->
-  (forall q', lts ((g N) : proc) τ q' -> ax_pre p q') ->
+  (forall q', lts ((g N) : proc) τ q' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
   (forall c v q'', lts ((g N) : proc) (ActExt (ActIn (c,v))) q'' ->
-     ax_pre ((c ! v • 𝟘) ‖ p) q'') ->
-  ax_pre p ((g N) : proc).
+     ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
 Proof.
   intros p N Hex Htau Hin. apply ax_glb_tau; try assumption.
   - intros c v q'' Hl. exfalso. eapply gsum_no_out. exact Hl.
@@ -5834,11 +5834,11 @@ Theorem ax_below_stable_gsum_gen : forall (P : proc) (N : gproc),
   Static P -> gStatic N -> (forall z, ~ lts ((g N) : proc) τ z) ->
   P ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
   (forall c v Q', lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' ->
-     ax_pre (((c ! v • 𝟘) : proc) ‖ P) Q') ->
-  ax_pre P ((g N) : proc).
+     (((c ! v • 𝟘) : proc) ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
+  P ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
 Proof.
   intros P N HP HN HstN Hsem Hrec.
-  assert (Hmain : ax_pre (msgs [] ‖ P) (msgs [] ‖ ((g N) : proc))).
+  assert (Hmain : (msgs [] ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [] ‖ ((g N) : proc))).
   { apply ax_below_stable_sum_cfg; [ exact HstN | | ].
     - apply phaseA_of_empty_bag_sem; assumption.
     - intros c v Q' l'' Hs'' Hl. apply subbag_nil_inv in Hs''. subst l''.
@@ -5857,8 +5857,8 @@ Theorem completeness_gsum_step_gen : forall (P : proc) (N : gproc),
   Static P -> gStatic N ->
   P ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
   (forall p' q', Static p' -> Static q' -> (size q' < size ((g N) : proc))%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre P ((g N) : proc).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  P ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
 Proof.
   intros P N HP HN Hsem IH.
   assert (HsN : Static ((g N) : proc)) by (apply static_g; exact HN).
@@ -5908,9 +5908,9 @@ Qed.
 
 Theorem NF_pad_to_common_depth :
   (forall n l1 M l2 N, gStatic M -> gStatic N ->
-     (NF n l1 M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (NF n l2 N) -> ax_pre (NF n l1 M) (NF n l2 N)) ->
+     (NF n l1 M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (NF n l2 N) -> (NF n l1 M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l2 N)) ->
   forall n1 l1 M n2 l2 N, gStatic M -> gStatic N ->
-    (NF n1 l1 M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (NF n2 l2 N) -> ax_pre (NF n1 l1 M) (NF n2 l2 N).
+    (NF n1 l1 M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (NF n2 l2 N) -> (NF n1 l1 M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n2 l2 N).
 Proof.
   intros H n1 l1 M n2 l2 N HM HN Hsem.
   assert (HcA : NF ((n1 + n2)%nat) (map (shiftCn 0 n2) l1) (gNewVarCn 0 n2 M)
@@ -5989,8 +5989,8 @@ Theorem ax_below_cfg_empty_sem : forall (l : list TypeOfActions) (M N : gproc),
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
 Proof.
   intros l M N HM HN Hnf Hsem Hrec.
   apply (ax_below_gsum_stable_cfg_uncond l M N HM HN Hnf
@@ -6005,8 +6005,8 @@ Corollary ax_below_NF_empty_sem :
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hnf Hsem Hrec. unfold NF. apply ax_res_n.
   eapply ax_below_cfg_empty_sem; eassumption.
@@ -6038,8 +6038,8 @@ Theorem ax_below_NF_no_regen : forall (n : nat) (l : list TypeOfActions) (M N : 
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hnf HstM Hno Hcfg Hrec.
   eapply ax_below_NF_empty_sem; try eassumption.
@@ -6361,8 +6361,8 @@ Corollary ax_below_NF_no_return : forall (n : nat) (l : list TypeOfActions) (M N
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hnf HstM Hcrit Hcfg Hrec.
   eapply ax_below_NF_no_regen; try eassumption.
@@ -6383,8 +6383,8 @@ Corollary ax_below_NF_no_output : forall (n : nat) (l : list TypeOfActions) (M N
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hnf Hoc Hcfg Hrec.
   eapply ax_below_NF_empty_sem; try eassumption.
@@ -6495,8 +6495,8 @@ Corollary ax_below_NF_no_output_bag : forall (n : nat) (l : list TypeOfActions) 
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c vv Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,vv))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! vv • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
-  ax_pre (NF n l M) (NF n l N).
+       (msgs l'' ‖ ((c ! vv • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
 Proof.
   intros n l M N HM HN Hnf Hoc Hcfg Hrec.
   eapply ax_below_NF_empty_sem; try eassumption.
@@ -6987,11 +6987,11 @@ Theorem cfg_unstable_of_disjunction : CfgDisjunction ->
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
   (forall p', lts (msgs l ‖ ((g M) : proc)) τ p' ->
      p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)) ->
-     ax_pre p' (msgs l ‖ ((g N) : proc))) ->
-  ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc))) ->
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
 Proof.
   intros HD l M N HM HN Hnf Hex Hsem Hrec Hdesc.
   destruct (HD l M N HM HN Hex Hsem) as [Hempty | (p' & Hstep & Hle)].
@@ -7012,11 +7012,11 @@ Corollary cfg_unstable_of_source : CfgDisjunctionSource ->
   (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
      BagSem l ((g M) : proc) L -> subbag l' l ->
      forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) (msgs l'' ‖ Q')) ->
+       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
   (forall p', lts (msgs l ‖ ((g M) : proc)) τ p' ->
      p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)) ->
-     ax_pre p' (msgs l ‖ ((g N) : proc))) ->
-  ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc))) ->
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
 Proof.
   intro HS. apply cfg_unstable_of_disjunction.
   apply cfg_disjunction_of_source. exact HS.
@@ -7313,8 +7313,8 @@ Theorem completeness_cfg_no_output : forall (l : list TypeOfActions) (M N : gpro
   ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
   (forall p' q', Static p' -> Static q' ->
      (size q' < size ((g N) : proc))%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g N) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
 Proof.
   intros l M N HM HN Hoc Hsem IH.
   apply ax_par; [ apply ax_refl | ].
@@ -7499,13 +7499,13 @@ Definition DropOk (a : gproc) : Prop :=
 
 Lemma ax_rebuild_drop_ochans : forall (l r : list gproc),
   Forall gStatic l -> Forall DropOk l ->
-  ax_pre ((g (rebuild (l ++ r))) : proc) ((g (rebuild r)) : proc).
+  ((g (rebuild (l ++ r))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (rebuild r)) : proc).
 Proof.
   induction l as [|aa l IH]; intros r HSt HOk; simpl.
   - apply ax_refl.
   - inversion HSt as [|? ? HSt1 HSt2]; subst.
     inversion HOk as [|? ? HOk1 HOk2]; subst.
-    assert (IHl : ax_pre ((g (rebuild (l ++ r))) : proc) ((g (rebuild r)) : proc))
+    assert (IHl : ((g (rebuild (l ++ r))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (rebuild r)) : proc))
       by (apply IH; assumption).
     destruct aa as [ | | c P | P | A B ]; simpl in HOk1.
     + eapply ax_trans; [ apply ax_success_l | ].
@@ -7519,7 +7519,7 @@ Qed.
 
 Theorem ax_gsum_drop_ochans : forall (M : gproc) (l r : list gproc),
   gStatic M -> Permutation (summands M) (l ++ r) -> Forall DropOk l ->
-  ax_pre ((g M) : proc) ((g (rebuild r)) : proc).
+  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (rebuild r)) : proc).
 Proof.
   intros M l r HM Hperm HOk.
   assert (HSt : Forall gStatic (l ++ r))
@@ -7546,7 +7546,7 @@ Proof.
 Qed.
 
 Lemma ax_copycats_below_nil : forall M,
-  gStatic M -> gCopycats M -> ax_pre ((g M) : proc) ((g 𝟘) : proc).
+  gStatic M -> gCopycats M -> ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   intros M HM HC.
   apply (ax_gsum_drop_ochans M (summands M) []).
@@ -7647,7 +7647,7 @@ Theorem ax_cfg_replay : forall (r : trace (ExtAct TypeOfActions)) (p q : proc),
   p ⟹[r] q ->
   forall (l : list TypeOfActions), bag (ins r) ⊆ bag l ->
   exists lf, bag lf ⊎ bag (ins r) = bag l ⊎ bag (outs r)
-          /\ ax_pre (msgs l ‖ p) (msgs lf ‖ q).
+          /\ (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs lf ‖ q).
 Proof.
   intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | mu s x y z Hl Hwt IH];
     intros l Hsub.
@@ -7694,7 +7694,7 @@ Qed.
 Corollary ax_cfg_replay_balanced : forall (r : trace (ExtAct TypeOfActions))
     (p q : proc) (l : list TypeOfActions),
   p ⟹[r] q -> bag (ins r) ⊆ bag l -> bag (outs r) = bag (ins r) ->
-  ax_pre (msgs l ‖ p) (msgs l ‖ q).
+  (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ q).
 Proof.
   intros r p q l Hw Hsub Hbal.
   destruct (ax_cfg_replay r p q Hw l Hsub) as (lf & Heq & Hax).
@@ -7730,7 +7730,7 @@ Corollary ax_replay_to_right_bag : forall (l1 l2 : list TypeOfActions)
   ((msgs l1 ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   exists q, (forall c v z, ~ lts q (ActExt (ActOut (c,v))) z)
          /\ (forall z, ~ lts q τ z)
-         /\ ax_pre (msgs l1 ‖ p) (msgs l2 ‖ q).
+         /\ (msgs l1 ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ q).
 Proof.
   intros l1 l2 p N Hp HN HstN Hpre.
   destruct (bag_balance_of_taufree_right l1 l2 p N Hp HN HstN Hpre)
@@ -7756,7 +7756,7 @@ Theorem cfg_return_below_residue_w :
     lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
     (Mc ⟹[[]] Mc') ->
     lts Mc' (ActExt (ActOut (c,u))) K ->
-    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ K).
+    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ K).
 Proof.
   intros l l0 c u M Mc Mc' K Hperm Hin Hw Hout.
   eapply (ax_cfg_replay_balanced [ActIn (c,u); ActOut (c,u)]).
@@ -7774,8 +7774,8 @@ Theorem ax_below_cfg_descend_wreturn :
     lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
     (Mc ⟹[[]] Mc') ->
     lts Mc' (ActExt (ActOut (c,u))) K ->
-    ax_pre (msgs l ‖ K) q ->
-    ax_pre (msgs l ‖ ((g M) : proc)) q.
+    (msgs l ‖ K) ᴠᴀᴄᴄꜱ⊑ₐₓ q ->
+    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros l l0 c u M Mc Mc' K q Hperm Hin Hw Hout Hax.
   eapply ax_trans; [ | exact Hax ].
@@ -7791,8 +7791,8 @@ Theorem ax_below_cfg_descend_return :
     Permutation l ((c,u) :: l0) ->
     lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
     lts Mc (ActExt (ActOut (c,u))) K ->
-    ax_pre (msgs l ‖ K) q ->
-    ax_pre (msgs l ‖ ((g M) : proc)) q.
+    (msgs l ‖ K) ᴠᴀᴄᴄꜱ⊑ₐₓ q ->
+    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros l l0 c u M Mc K q Hperm Hin Hout Hax.
   eapply ax_below_cfg_descend_wreturn;
@@ -7805,7 +7805,7 @@ Theorem cfg_return_below_residue :
     Permutation l ((c,u) :: l0) ->
     lts ((g M) : proc) (ActExt (ActIn (c,u))) Mc ->
     lts Mc (ActExt (ActOut (c,u))) K ->
-    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ K).
+    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ K).
 Proof.
   intros l l0 c u M Mc K Hperm Hin Hout.
   eapply cfg_return_below_residue_w;
@@ -7820,7 +7820,7 @@ Theorem cfg_copycat_guard_below_bag :
          (M : gproc) (r : list gproc),
     Permutation l ((c,u) :: l0) ->
     Permutation (summands M) ((ccatg c) :: r) ->
-    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g (𝟘 : gproc)) : proc)).
+    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (𝟘 : gproc)) : proc)).
 Proof.
   intros l l0 c u M r Hperm Hsum.
   eapply cfg_return_below_residue; [ exact Hperm | | apply lts_output ].
@@ -7831,7 +7831,7 @@ Qed.
 
 Corollary ax_gsum_below_nil : forall (M : gproc),
   gStatic M -> gStable M -> ochans ((g M) : proc) = [] ->
-  ax_pre ((g M) : proc) ((g (𝟘 : gproc)) : proc).
+  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
 Proof.
   intros M HM HSb HOc.
   apply (ax_gsum_drop_ochans M (summands M) []).
@@ -7896,7 +7896,7 @@ Qed.
 
 Theorem ax_below_nil_noresd : forall (p : proc),
   Static p -> NoResD p -> ochans p = [] ->
-  ax_pre p ((g (𝟘 : gproc)) : proc).
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
 Proof.
   intro p. induction p as [p IHp] using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
@@ -8008,7 +8008,7 @@ Qed.
 
 Theorem ax_below_nil_of_mute_reduct : forall (p x : proc),
   Static p -> NoResD p -> p ⟹[[]] x -> ochans x = [] ->
-  ax_pre p ((g (𝟘 : gproc)) : proc).
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
 Proof.
   intros p x Hst Hnr Hw Hoc.
   eapply ax_trans; [ apply ax_tau_run; exact Hw | ].
@@ -8127,9 +8127,9 @@ Theorem completeness_cfg_split_no_output :
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (forall d, Permutation l1 (l2 ++ d) ->
      forall c v Q' l', subbag l' l2 -> lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' ->
-       ax_pre (msgs l' ‖ ((c ! v • 𝟘) ‖ ((msgs d) ‖ ((g M) : proc))))
-              (msgs l' ‖ Q')) ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) (msgs l2 ‖ ((g N) : proc)).
+       (msgs l' ‖ ((c ! v • 𝟘) ‖ ((msgs d) ‖ ((g M) : proc))))
+         ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
 Proof.
   intros l1 l2 M N HM HN Hoc HstN Hpre Hrec.
   destruct (msgs_cancel_of_below l1 l2 M N HM HN Hoc Hpre) as (d & Hperm & Hcut).
@@ -8163,12 +8163,12 @@ Theorem ax_below_cfg_glb_split : forall (l1 l2 : list TypeOfActions) (M N : gpro
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (exists q0, lts (msgs l2 ‖ ((g N) : proc)) τ q0) ->
   (forall q', lts (msgs l2 ‖ ((g N) : proc)) τ q' ->
-     ax_pre (msgs l1 ‖ ((g M) : proc)) q') ->
+     (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
   (forall c v q'', lts (msgs l2 ‖ ((g N) : proc)) (ActExt (ActIn (c,v))) q'' ->
-     ax_pre (((c ! v • 𝟘) : proc) ‖ (msgs l1 ‖ ((g M) : proc))) q'') ->
+     (((c ! v • 𝟘) : proc) ‖ (msgs l1 ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
   (forall c v l1' l2', Permutation l1 ((c,v) :: l1') -> Permutation l2 ((c,v) :: l2') ->
-     ax_pre (msgs l1' ‖ ((g M) : proc)) (msgs l2' ‖ ((g N) : proc))) ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) (msgs l2 ‖ ((g N) : proc)).
+     (msgs l1' ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2' ‖ ((g N) : proc))) ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
 Proof.
   intros l1 l2 M N HM HN Hoc Hpre Hex Htau Hin Hrec.
   assert (Hsub := bag_incl_of_below_disj l1 l2 M N HM HN Hoc Hpre).
@@ -8219,14 +8219,14 @@ Qed.
 (* ------------------------------------------------------------------ *)
 
 Definition DomOk (q0 q' : proc) : Prop :=
-  exists r', Static r' /\ (size r' < size q0)%nat /\ ax_pre q' r' /\ ax_pre r' q'.
+  exists r', Static r' /\ (size r' < size q0)%nat /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
 
 Lemma ax_below_of_domok : forall (q0 p q' : proc),
   Static p -> DomOk q0 q' ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' ->
   (forall p1 q1, Static p1 -> Static q1 -> (size q1 < size q0)%nat ->
-     p1 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q1 -> ax_pre p1 q1) ->
-  ax_pre p q'.
+     p1 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q1 -> p1 ᴠᴀᴄᴄꜱ⊑ₐₓ q1) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
 Proof.
   intros q0 p q' Hp (r' & Hr' & Hlt & Hqr & Hrq) Hpre IH.
   eapply ax_trans; [ | exact Hrq ].
@@ -8408,8 +8408,8 @@ Theorem completeness_cfg_split_ok :
      lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' -> Ok (msgs l' ‖ Q')) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (forall p' q', Static p' -> LOk p' -> Static q' -> Ok q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) (msgs l2 ‖ ((g N) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
 Proof.
   intros LOk Ok l1 l2 M N HM HN Hoc HstN HLbag HLmsg HLbase HOkin Hpre IH.
   assert (Hnil : (msgs nil ‖ ((g N) : proc)) ≡* ((g N) : proc)).
@@ -8452,8 +8452,8 @@ Theorem completeness_cfg_glb_ok :
   (exists z, lts (msgs l2 ‖ ((g N) : proc)) τ z) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (forall p' q', Static p' -> LOk p' -> Static q' -> Ok q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) (msgs l2 ‖ ((g N) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
 Proof.
   intros LOk Ok l1 l2 M N HM HN Hoc HLbag HLmsg HLbase HOk1 HOk2 Hex Hpre IH.
   assert (HStl : Static (msgs l1 ‖ ((g M) : proc)))
@@ -8515,8 +8515,8 @@ Theorem completeness_cfg_mute_ok :
      lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' -> Ok (msgs l' ‖ Q')) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (forall p' q', Static p' -> LOk p' -> Static q' -> Ok q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) (msgs l2 ‖ ((g N) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
 Proof.
   intros LOk Ok l1 l2 M N HM HN Hoc HLbag HLmsg HLbase HOk1 HOk2 HOk3 Hpre IH.
   destruct (lts_dec (msgs l2 ‖ ((g N) : proc)) τ) as [Hno|Hyes].
@@ -8536,8 +8536,8 @@ Corollary completeness_cfg_mute_dom :
   (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
   ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
   (forall p' q', Static p' -> Static q' -> DomOk q0 q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) (msgs l2 ‖ ((g N) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
 Proof.
   intros q0 l1 l2 M N Hq0 Hd HM HN Hoc Hpre IH.
   apply (completeness_cfg_mute_ok (fun _ => True) (DomOk q0) l1 l2 M N);
@@ -8568,8 +8568,8 @@ Theorem completeness_step_mute :
   Static q -> NoRes q -> gStatic M -> ochans ((g M) : proc) = [] ->
   (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) q.
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros q l1 M Hq Hnr HM Hoc Hpre IH.
   destruct (normal_form_nores_sim q Hq Hnr) as (l2 & N & HN & Hd).
@@ -8604,8 +8604,8 @@ Qed.
 
 Definition MuteNF (p : proc) : Prop :=
   exists l M, gStatic M /\ ochans ((g M) : proc) = []
-           /\ ax_pre p (msgs l ‖ ((g M) : proc))
-           /\ ax_pre (msgs l ‖ ((g M) : proc)) p.
+           /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc))
+           /\ (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 
 Lemma MuteNF_gsum : forall (M : gproc),
   gStatic M -> ochans ((g M) : proc) = [] -> MuteNF ((g M) : proc).
@@ -8628,8 +8628,8 @@ Theorem completeness_step_of_mute_nf :
   Static q -> NoRes q -> MuteNF p ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre p q.
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hq Hnr (l1 & M & HM & Hoc & Hpm & Hmp) Hpre IH.
   eapply ax_trans; [ exact Hpm | ].
@@ -8881,9 +8881,9 @@ Qed.
     into one).
 
     The widening is not cosmetic: **the copycat is in the class.**
-    [ax_ccat_l] gives [⊢ ccat c ⊑ g 𝟘] and [must_i_ccat_r] gives
+    [ax_ccat_l] gives [(ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] and [must_i_ccat_r] gives
     [g 𝟘 ⊑ₘᵤₛₜᵢ ccat c]; what [MuteNF] would additionally require is the
-    converse *derivation* [⊢ g 𝟘 ⊑ ccat c].  And the copycat is precisely
+    converse *derivation* [(g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (ccat c)].  And the copycat is precisely
     the shape the syntactic criterion [MuteG] excludes — it is what makes
     VACCS's must-preorder coarser than VCCS's.
 
@@ -8894,7 +8894,7 @@ Qed.
 
 Definition MuteSem (p : proc) : Prop :=
   exists l M, gStatic M /\ ochans ((g M) : proc) = []
-           /\ ax_pre p (msgs l ‖ ((g M) : proc))
+           /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc))
            /\ (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ p.
 
 Lemma MuteSem_of_MuteNF : forall p, MuteNF p -> MuteSem p.
@@ -8973,7 +8973,7 @@ Qed.
 
 Definition DomOkD (q0 q' : proc) : Prop :=
   exists r', Static r' /\ NoResD r' /\ (size r' < size q0)%nat
-             /\ ax_pre q' r' /\ ax_pre r' q'.
+             /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
 
 Lemma domokd_of_domsim : forall (q0 q : proc) a r,
   Static q0 -> NoResD q0 -> domsim q0 q -> lts q a r -> DomOkD q0 r.
@@ -9050,8 +9050,8 @@ Theorem completeness_step_deep :
   Static q -> NoResD q -> gStatic M -> ochans ((g M) : proc) = [] ->
   (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> MuteSem p' -> Static q' -> NoResD q' ->
-     (size q' < size q)%nat -> p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre (msgs l1 ‖ ((g M) : proc)) q.
+     (size q' < size q)%nat -> p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros q l1 M Hq Hnr HM Hoc Hpre IH.
   destruct (normal_form_deep q Hq Hnr) as (l2 & N & HN & HNd & Hd).
@@ -9077,7 +9077,7 @@ Qed.
 
 Theorem completeness_deep :
   forall (q p : proc), Static q -> NoResD q -> Static p -> MuteSem p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intro q. induction q as [q IHq] using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
@@ -9098,7 +9098,7 @@ Corollary completeness_deep_cfg :
   forall (l : list TypeOfActions) (M : gproc) (q : proc),
   Static q -> NoResD q -> gStatic M -> ochans ((g M) : proc) = [] ->
   (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  ax_pre (msgs l ‖ ((g M) : proc)) q.
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros l M q Hq Hnr HM Hoc Hpre.
   apply completeness_deep; try assumption.
@@ -9122,7 +9122,7 @@ Qed.
 
 Corollary completeness_mute_deep :
   forall (p q : proc), Static p -> Static q -> NoResD p -> NoResD q ->
-  ochans p = [] -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  ochans p = [] -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hnp Hnq Hoc Hpre.
   apply completeness_deep; try assumption.
@@ -9244,7 +9244,7 @@ Qed.
 
 Theorem completeness_muteG : forall (p q : proc),
   Static p -> Static q -> NoResD p -> NoResD q -> MuteG p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hnp Hnq Hmu Hpre.
   apply completeness_deep; try assumption.
@@ -9256,7 +9256,7 @@ Qed.
     that way against a member is itself a member. *)
 
 Lemma MuteSem_transport : forall (p q : proc),
-  ax_pre q p -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> MuteSem p -> MuteSem q.
+  q ᴠᴀᴄᴄꜱ⊑ₐₓ p -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> MuteSem p -> MuteSem q.
 Proof.
   intros p q Hqp Hpq (l & M & HM & Hoc & Hpm & Hmp).
   exists l, M. split; [ exact HM | ]. split; [ exact Hoc | ].
@@ -9324,7 +9324,7 @@ Qed.
     **copycat** is in it, and [MuteG] rejects it (its guard's
     continuation emits, on its own channel).  [ax_ccat_l] supplies the
     [⊢] half, [must_i_ccat_r] the semantic half — and the *converse*
-    derivation [⊢ g 𝟘 ⊑ ccat c], which [MuteNF] would need, is not used
+    derivation [(g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (ccat c)], which [MuteNF] would need, is not used
     anywhere. *)
 
 Lemma MuteSem_ccat : forall c, MuteSem (ccat c).
@@ -9347,7 +9347,7 @@ Qed.
     [⊢]-equal to — the recursion then runs there. *)
 
 Definition ResFree (q : proc) : Prop :=
-  exists q', Static q' /\ NoResD q' /\ ax_pre q q' /\ ax_pre q' q.
+  exists q', Static q' /\ NoResD q' /\ q ᴠᴀᴄᴄꜱ⊑ₐₓ q' /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 
 Lemma ResFree_of_NoResD : forall q, Static q -> NoResD q -> ResFree q.
 Proof.
@@ -9379,7 +9379,7 @@ Qed.
 
 Corollary completeness_muteSem : forall (p q : proc),
   Static p -> Static q -> NoResD q -> MuteSem p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hnq Hmu Hpre. apply completeness_deep; assumption.
 Qed.
@@ -9414,8 +9414,8 @@ Qed.
 Lemma ax_tau_only_below : forall (q X Y : proc),
   lts q τ X ->
   (forall a z, lts q (ActExt a) z -> False) ->
-  ax_pre X Y ->
-  ax_pre q ((g ((𝛕 • Y) : gproc)) : proc).
+  X ᴠᴀᴄᴄꜱ⊑ₐₓ Y ->
+  q ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ((𝛕 • Y) : gproc)) : proc).
 Proof.
   intros q X Y Hl Hnoext HXY. apply ax_glb_tau.
   - exists Y. apply lts_tau.
@@ -9430,8 +9430,8 @@ Lemma ax_tau_only_above : forall (q X Y : proc),
   lts q τ X ->
   (forall z, lts q τ z -> z = X) ->
   (forall a z, lts q (ActExt a) z -> False) ->
-  ax_pre Y X ->
-  ax_pre ((g ((𝛕 • Y) : gproc)) : proc) q.
+  Y ᴠᴀᴄᴄꜱ⊑ₐₓ X ->
+  ((g ((𝛕 • Y) : gproc)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros q X Y Hl Hdet Hnoext HYX. apply ax_glb_tau.
   - exists X. exact Hl.
@@ -9512,8 +9512,8 @@ Qed.
 Lemma resfree_list : forall (L : list proc),
   (forall x, In x L -> ResFree x) ->
   exists L', (forall x', In x' L' -> Static x' /\ NoResD x')
-          /\ (forall x, In x L -> exists x', In x' L' /\ ax_pre x x' /\ ax_pre x' x)
-          /\ (forall x', In x' L' -> exists x, In x L /\ ax_pre x x' /\ ax_pre x' x)
+          /\ (forall x, In x L -> exists x', In x' L' /\ x ᴠᴀᴄᴄꜱ⊑ₐₓ x' /\ x' ᴠᴀᴄᴄꜱ⊑ₐₓ x)
+          /\ (forall x', In x' L' -> exists x, In x L /\ x ᴠᴀᴄᴄꜱ⊑ₐₓ x' /\ x' ᴠᴀᴄᴄꜱ⊑ₐₓ x)
           /\ (L <> nil -> L' <> nil).
 Proof.
   induction L as [|x L IH]; intro Hall.
@@ -9640,7 +9640,7 @@ Qed.
     The input is where it stops, and the obstruction is already on record
     in this development.  [ax_input] is the **omega rule**: it consumes
     one *open* continuation, so retiring the ν under an input guard needs
-    a single open [Q] with [⊢ ν (P ^ v) ≂ Q ^ v] **at every [v]** — a
+    a single open [Q] with [(ν (P ^ v)) ᴠᴀᴄᴄꜱ≂ₐₓ (Q ^ v)] **at every [v]** — a
     *uniform* family.  Building [Q] means normalising [ν P] open, and
     normalisation is **not** substitution-equivariant:
     [VACCS_NormalForm.if_open_branch_depends_on_value] machine-checks
@@ -9656,7 +9656,7 @@ Qed.
 
 Corollary completeness_resfree : forall (p q : proc),
   Static p -> Static q -> ResFree q -> MuteSem p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq (q' & Hq' & Hnq' & Hqq' & Hq'q) Hmu Hpre.
   eapply ax_trans; [ | exact Hq'q ].
@@ -9824,7 +9824,7 @@ Qed.
 (** * THE FIFTH PREMISE, FIXED: COMPARE THE RESIDUES **COLLECTIVELY**
 
     The output premise of a weak-output [glb] rule was stated
-    per-residue — [⊢ p'' ⊑ q''] for each emission residue — and that is
+    per-residue — [p'' ᴠᴀᴄᴄꜱ⊑ₐₓ q''] for each emission residue — and that is
     *not* semantically implied: [must] does not travel backwards along the
     server's τ's, so knowing that **one** residue passes a test says
     nothing about [p] itself, and [p ⊑ q] cannot be invoked.
@@ -10164,12 +10164,12 @@ Theorem ax_glb_weak_of_sem : forall (p q : proc) n,
   Static p -> Static q -> (size p < n)%nat ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (exists q0, lts q τ q0) ->
-  (forall q', lts q τ q' -> ax_pre p q') ->
+  (forall q', lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
   (forall c v q'', lts q (ActExt (ActIn (c,v))) q'' ->
-     ax_pre (((c ! v • 𝟘) : proc) ‖ p) q'') ->
+     (((c ! v • 𝟘) : proc) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
   (forall c v q'', lts q (ActExt (ActOut (c, v))) q'' ->
-     ax_pre (g (ichoice (res_list_v n c v p))) q'') ->
-  ax_pre p q.
+     (g (ichoice (res_list_v n c v p))) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q n Hp Hq Hn Hpre Hex Htau Hin Hout.
   apply (ax_glb_weak p q n); try assumption.
@@ -10215,8 +10215,8 @@ Theorem completeness_step_glb_weak : forall (p q : proc),
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (exists q0, lts q τ q0) ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre p q.
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hpre Hex HR.
   apply (ax_glb_weak_of_sem p q (S (size p))); try assumption.
@@ -10251,9 +10251,9 @@ Theorem completeness_step_of_stable_case : forall (p q : proc),
   Static p -> Static q ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ((forall z, ~ lts q τ z) -> ax_pre p q) ->
-  ax_pre p q.
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  ((forall z, ~ lts q τ z) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hpre HR Hstable.
   destruct (lts_dec q τ) as [Hno | (z & Hz)].
@@ -10273,9 +10273,9 @@ Theorem completeness_of_stable_step :
   (forall p q, Static p -> Static q -> (forall z, ~ lts q τ z) ->
      p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre p q) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     p ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Hstep. apply completeness_from_step.
   intros p q Hp Hq Hpre HR.
@@ -10308,9 +10308,9 @@ Theorem completeness_of_stable_NF_step :
      (forall z, ~ lts (NF n l M) τ z) ->
      p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre p (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Hstep. apply completeness_of_stable_step.
   intros p q Hp Hq Hno Hpre HR.
@@ -10371,8 +10371,8 @@ Lemma stable_bare_gsum_of_domsim : forall (p q : proc) (M : gproc),
   (forall z, ~ lts ((g M) : proc) τ z) ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre p ((g M) : proc).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g M) : proc).
 Proof.
   intros p q M Hp Hq HM Hsim Hno Hpre HR.
   assert (HsemM : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g M) : proc)).
@@ -10394,8 +10394,8 @@ Lemma stable_NF_empty_bag : forall (p q : proc) n (M : gproc),
   (forall z, ~ lts (NF n [] M) τ z) ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre p (NF n [] M).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n [] M).
 Proof.
   intros p q n M Hp Hq HM Hsim Hno Hpre HR.
   assert (Hdn := domsim_NF_nil n M).
@@ -10423,9 +10423,9 @@ Theorem completeness_of_stable_bag_step :
      l <> [] ->
      p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre p (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Hstep. apply completeness_of_stable_NF_step.
   intros p q n l M Hp Hq HM Hsim Hno Hpre HR.
@@ -10511,7 +10511,7 @@ Proof.
     by (eapply res_list_v_nonempty; try eassumption; lia).
   assert (Hb : (g (ichoice (res_list_v (S (size p)) c v p))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q')
     by (eapply ichoice_residues_below; try eassumption; lia).
-  assert (Hax : ax_pre p'' (g (ichoice (res_list_v (S (size p)) c v p))))
+  assert (Hax : p'' ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice (res_list_v (S (size p)) c v p))))
     by (apply ax_ichoice_glb; [ exact Hne | intros y Hy; apply ax_cgr_sym;
           eapply res_list_v_stable_uniq; [ exact Hst | exact Hop | exact Hy ] ]).
   intros t Ht. apply Hb. apply (soundness_ax _ _ Hax). exact Ht.
@@ -10574,8 +10574,8 @@ Theorem stable_bag_stable_left : forall (p q : proc) (l : list TypeOfActions) (M
   (forall z, ~ lts p τ z) ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-  ax_pre p (msgs l ‖ ((g M) : proc)).
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc)).
 Proof.
   intros p q l M Hp Hq HM Hsim Hno Hstp Hpre HR.
   assert (HstM : forall z, ~ lts ((g M) : proc) τ z).
@@ -10648,8 +10648,8 @@ Theorem completeness_step_left_collapse : forall (p q p0 : proc),
   lts p τ p0 ->
   (forall q', lts p τ q' -> p0 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q') ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (p0 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p0 q) ->
-  ax_pre p q.
+  (p0 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p0 ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q p0 Hnoext Hp0 Hall Hpre HR.
   eapply ax_trans; [ apply ax_tau_step; exact Hp0 | ].
@@ -10662,8 +10662,8 @@ Corollary completeness_step_left_det : forall (p q p0 : proc),
   lts p τ p0 ->
   (forall q', lts p τ q' -> q' = p0) ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (p0 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p0 q) ->
-  ax_pre p q.
+  (p0 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p0 ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q p0 Hnoext Hp0 Huniq Hpre HR.
   eapply completeness_step_left_collapse; try eassumption.
@@ -10686,7 +10686,7 @@ Proof.
 Qed.
 
 Corollary ax_ichoice_singleton_step : forall (x q : proc),
-  x ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre x q -> ax_pre (g (ichoice [x])) q.
+  x ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> x ᴠᴀᴄᴄꜱ⊑ₐₓ q -> (g (ichoice [x])) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros x q Hsem Hax.
   eapply (completeness_step_left_det _ _ x).
@@ -10708,11 +10708,11 @@ Qed.
       which is exactly [left_tau_collapse]'s premise, so
       [ichoice (tau_list p) ⊑ₘᵤₛₜᵢ p];
     - [ax_ichoice_of_taus] gives the derivation the other way,
-      [⊢ p ⊑ ichoice (tau_list p)].
+      [p ᴠᴀᴄᴄꜱ⊑ₐₓ (ichoice (tau_list p))].
 
     Together: a [p] with a [τ] and no external transition is
     **must-equivalent to the internal choice of its τ-successors**, and
-    the goal [⊢ p ⊑ q] may be replaced by [⊢ ichoice (tau_list p) ⊑ q]
+    the goal [p ᴠᴀᴄᴄꜱ⊑ₐₓ q] may be replaced by [(ichoice (tau_list p)) ᴠᴀᴄᴄꜱ⊑ₐₓ q]
     with its semantic side established.  The replacement costs nothing in
     the recursion, which measures the right-hand side only.
 
@@ -10743,7 +10743,7 @@ Proof.
 Qed.
 
 Lemma ax_left_ichoice : forall (p : proc),
-  (exists z, lts p τ z) -> ax_pre p (g (ichoice (tau_list p))).
+  (exists z, lts p τ z) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice (tau_list p))).
 Proof.
   intros p Hex. apply ax_ichoice_of_taus.
   - apply tau_list_nonempty. exact Hex.
@@ -10766,8 +10766,8 @@ Theorem completeness_step_left_ichoice : forall (p q : proc),
   (forall a z, ~ lts p (ActExt a) z) ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   ((g (ichoice (tau_list p))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     ax_pre (g (ichoice (tau_list p))) q) ->
-  ax_pre p q.
+     (g (ichoice (tau_list p))) ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hex Hnoext Hpre HR.
   eapply ax_trans; [ apply ax_left_ichoice; exact Hex | ].
@@ -10787,7 +10787,7 @@ Qed.
     form, and [soundness_ax] transports the hypothesis back.
 
     One care is needed, and it is why the case split is redone here
-    rather than reused: [⊢ p ≂ NF n1 l1 M1] does **not** transport
+    rather than reused: [p ᴠᴀᴄᴄꜱ≂ₐₓ (NF n1 l1 M1)] does **not** transport
     "[p] has a τ" (a normal form may be stable where [p] is not —
     [g (𝛕•𝟘 + 𝛕•𝟘) ≂ₘᵤₛₜᵢ 𝟘]).  So the τ-stability test is taken on the
     normal form itself, and its stable branch is closed by
@@ -10803,9 +10803,9 @@ Theorem completeness_of_hard_NF_step :
      (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
      (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre (NF n1 l1 M1) (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Hstep. apply completeness_of_stable_bag_step.
   intros p q n l M Hp Hq HM Hsim Hno Hne Hpre HR.
@@ -10938,9 +10938,9 @@ Theorem completeness_of_trapped_NF_step :
      (n <> 0%nat -> untrappedB n l = false) ->
      (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre (NF n1 l1 M1) (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Hstep. apply completeness_of_hard_NF_step.
   intros q n1 l1 M1 n l M Hq HM1 HM Hsim Hno Hne Hdisj Hsem HR.
@@ -11007,9 +11007,9 @@ Theorem completeness_of_trapped_both_step :
      (n1 <> 0%nat -> untrappedB n1 l1 = false) ->
      (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre (NF n1 l1 M1) (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Hstep. apply completeness_of_trapped_NF_step.
   intros q n1 l1 M1 n l M Hq HM1 HM Hsim Hno Hne Hdisj Htr Hsem HR.
@@ -11086,12 +11086,12 @@ Theorem completeness_of_emitting_left_step :
      (n = 0%nat -> n1 = 0%nat ->
         exists qq, (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
                 /\ (forall z, ~ lts qq τ z)
-                /\ ax_pre (msgs l1 ‖ ((g M1) : proc)) (msgs l ‖ qq)) ->
+                /\ (msgs l1 ‖ ((g M1) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ qq)) ->
      (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre (NF n1 l1 M1) (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Hstep. apply completeness_of_trapped_both_step.
   intros q n1 l1 M1 n l M Hq HM1 HM Hsim Hno Hne Hdisj Htr Htr1 Hsem HR.
@@ -11141,7 +11141,7 @@ Qed.
     Sa **dernière** condition n'en est pas une : c'est un *cadeau*.  Au
     cas sans bloc, la droite étant stable, [ax_replay_to_right_bag]
     fournit gratuitement un [qq] **τ-stable et non émetteur** tel que
-    [⊢ msgs l1 ‖ g M1 ⊑ msgs l ‖ qq] — donc au **sac de droite**.  Celui
+    [(msgs l1 ‖ g M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ qq)] — donc au **sac de droite**.  Celui
     qui attaque le résidu part ainsi d'une comparaison à sacs **égaux**
     dont le membre gauche ne peut ni bouger seul ni émettre.
 
@@ -11163,14 +11163,14 @@ Definition HardResidue : Prop :=
      (n = 0%nat -> n1 = 0%nat ->
         exists qq, (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
                 /\ (forall z, ~ lts qq τ z)
-                /\ ax_pre (msgs l1 ‖ ((g M1) : proc)) (msgs l ‖ qq)) ->
+                /\ (msgs l1 ‖ ((g M1) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ qq)) ->
      (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
      (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-     ax_pre (NF n1 l1 M1) (NF n l M).
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
 
 Theorem completeness_of_residue : HardResidue ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof. exact completeness_of_emitting_left_step. Qed.
 
 (** What the semantics does give about the residue's unstable left: the
@@ -11211,8 +11211,8 @@ Qed.
     [ax_tau_step], so the two are must-equivalent ([share_msgs_eq]). *)
 
 Lemma ax_choice_tau2 : forall (p1 p2 q1 q2 : proc),
-  ax_pre p1 q1 -> ax_pre p2 q2 ->
-  ax_pre (g ((𝛕 • p1) + (𝛕 • p2))) (g ((𝛕 • q1) + (𝛕 • q2))).
+  p1 ᴠᴀᴄᴄꜱ⊑ₐₓ q1 -> p2 ᴠᴀᴄᴄꜱ⊑ₐₓ q2 ->
+  (g ((𝛕 • p1) + (𝛕 • p2))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • q1) + (𝛕 • q2))).
 Proof.
   intros p1 p2 q1 q2 H1 H2.
   eapply ax_trans; [ apply (ax_choice_tau p1 q1 (𝛕 • p2) H1) | ].
@@ -11222,8 +11222,8 @@ Proof.
 Qed.
 
 Lemma ax_share_msgs : forall (l : list TypeOfActions) (X Y : proc),
-  ax_pre (g ((𝛕 • (msgs l ‖ X)) + (𝛕 • (msgs l ‖ Y))))
-         (msgs l ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc)).
+  (g ((𝛕 • (msgs l ‖ X)) + (𝛕 • (msgs l ‖ Y))))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc)).
 Proof.
   induction l as [|cv l IH]; intros X Y; simpl.
   - eapply ax_trans;
@@ -11238,8 +11238,8 @@ Proof.
 Qed.
 
 Corollary ax_share_msgs_rev : forall (l : list TypeOfActions) (X Y : proc),
-  ax_pre (msgs l ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc))
-         (g ((𝛕 • (msgs l ‖ X)) + (𝛕 • (msgs l ‖ Y)))).
+  (msgs l ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (msgs l ‖ X)) + (𝛕 • (msgs l ‖ Y)))).
 Proof.
   intros l X Y. apply ax_int_glb.
   - apply ax_par;
@@ -11270,8 +11270,8 @@ Qed.
 
 Lemma ax_share_msgs_ichoice : forall (l : list TypeOfActions) (L : list proc),
   L <> nil ->
-  ax_pre (g (ichoice (map (fun x => msgs l ‖ x) L)))
-         (msgs l ‖ ((g (ichoice L)) : proc)).
+  (g (ichoice (map (fun x => msgs l ‖ x) L)))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (ichoice L)) : proc)).
 Proof.
   intros l L. induction L as [|x L IH]; intro Hne; [ contradiction | ].
   destruct L as [|y L'].
@@ -11291,8 +11291,8 @@ Qed.
 
 Lemma ax_share_msgs_ichoice_rev : forall (l : list TypeOfActions) (L : list proc),
   L <> nil ->
-  ax_pre (msgs l ‖ ((g (ichoice L)) : proc))
-         (g (ichoice (map (fun x => msgs l ‖ x) L))).
+  (msgs l ‖ ((g (ichoice L)) : proc))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice (map (fun x => msgs l ‖ x) L))).
 Proof.
   intros l L Hne. apply ax_ichoice_glb.
   - destruct L as [|x L]; [ contradiction | discriminate ].
@@ -11318,8 +11318,8 @@ Qed.
 Lemma ax_cfg_noext_ichoice : forall (l : list TypeOfActions) (p : proc),
   (exists z, lts p τ z) ->
   (forall a z, ~ lts p (ActExt a) z) ->
-  ax_pre (msgs l ‖ p)
-         (g (ichoice (map (fun x => msgs l ‖ x) (tau_list p)))).
+  (msgs l ‖ p)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice (map (fun x => msgs l ‖ x) (tau_list p)))).
 Proof.
   intros l p Hex Hnoext.
   eapply ax_trans;
@@ -11346,8 +11346,8 @@ Theorem completeness_step_cfg_noext :
   (forall a z, ~ lts p (ActExt a) z) ->
   (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   ((g (ichoice (map (fun x => msgs l ‖ x) (tau_list p)))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-   ax_pre (g (ichoice (map (fun x => msgs l ‖ x) (tau_list p)))) q) ->
-  ax_pre (msgs l ‖ p) q.
+   (g (ichoice (map (fun x => msgs l ‖ x) (tau_list p)))) ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros l p q Hex Hnoext Hpre HR.
   eapply ax_trans; [ apply ax_cfg_noext_ichoice; assumption | ].
@@ -11363,8 +11363,8 @@ Corollary completeness_step_cfg_alltau :
   (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   ((g (ichoice (map (fun x => msgs l ‖ x) (tau_list ((g M) : proc)))))
      ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-   ax_pre (g (ichoice (map (fun x => msgs l ‖ x) (tau_list ((g M) : proc))))) q) ->
-  ax_pre (msgs l ‖ ((g M) : proc)) q.
+   (g (ichoice (map (fun x => msgs l ‖ x) (tau_list ((g M) : proc))))) ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros l M q HAT.
   apply completeness_step_cfg_noext.
@@ -11450,7 +11450,7 @@ Proof.
 Qed.
 
 Lemma leaves_below : forall M, gStatic M -> tau_nf M ->
-  forall A, In A (leaves M) -> ax_pre ((g M) : proc) ((g A) : proc).
+  forall A, In A (leaves M) -> ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g A) : proc).
 Proof.
   induction M as (M & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ gsize Nat.lt_wf_0)).
@@ -11473,7 +11473,7 @@ Lemma leafsum_gStatic : forall M, gStatic M -> gStatic (leafsum M).
 Proof. intros M HM. apply rebuild_gStatic. apply leaves_gStatic. exact HM. Qed.
 
 Lemma ax_leafsum : forall M, gStatic M -> tau_nf M ->
-  ax_pre ((g M) : proc) ((g (leafsum M)) : proc).
+  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (leafsum M)) : proc).
 Proof.
   induction M as (M & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ gsize Nat.lt_wf_0)).
@@ -11483,9 +11483,9 @@ Proof.
   - inversion HM as [? Hs | M1 M2 H1 H2]; subst.
     + exfalso. apply gStableB_spec in Hs. rewrite Hs in E. discriminate E.
     + destruct (gStatic_tau_choice M1 M2 HMst) as (Hg1 & Hg2).
-      assert (Hl1 : ax_pre ((g M1) : proc) ((g (leafsum M1)) : proc))
+      assert (Hl1 : ((g M1) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (leafsum M1)) : proc))
         by (apply IH; [simpl; lia | exact Hg1 | exact H1]).
-      assert (Hl2 : ax_pre ((g M2) : proc) ((g (leafsum M2)) : proc))
+      assert (Hl2 : ((g M2) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (leafsum M2)) : proc))
         by (apply IH; [simpl; lia | exact Hg2 | exact H2]).
       eapply ax_trans;
         [apply (ax_choice_tau ((g M1) : proc) ((g (leafsum M1)) : proc)
@@ -11509,7 +11509,7 @@ Qed.
 
 Corollary ax_cfg_leafsum : forall (l : list TypeOfActions) (M : gproc),
   gStatic M -> tau_nf M ->
-  ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g (leafsum M)) : proc)).
+  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (leafsum M)) : proc)).
 Proof.
   intros l M HM Hnf.
   apply ax_par; [ apply ax_refl | apply ax_leafsum; assumption ].
@@ -11617,7 +11617,7 @@ Proof.
 Qed.
 
 Theorem ax_M_below : forall M, gStatic M -> tau_nf M ->
-  exists B, gStatic B /\ gStable B /\ canonical B /\ ax_pre ((g M) : proc) ((g B) : proc).
+  exists B, gStatic B /\ gStable B /\ canonical B /\ ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g B) : proc).
 Proof.
   intros M HM Hnf.
   destruct (canonicalize (leafsum M) (leafsum_gStatic M HM))
@@ -11634,7 +11634,7 @@ Qed.
 Corollary ax_cfg_M_below : forall (l : list TypeOfActions) (M : gproc),
   gStatic M -> tau_nf M ->
   exists B, gStatic B /\ gStable B /\ canonical B /\
-    ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g B) : proc)).
+    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g B) : proc)).
 Proof.
   intros l M HM Hnf.
   destruct (ax_M_below M HM Hnf) as (B & HBst & HBstable & HBcan & HB).
@@ -11668,8 +11668,8 @@ Qed.
 Theorem ax_convex_anywhere : forall (W A : gproc) (Y Z : list gproc),
   gStatic A -> Forall gStatic Y -> Forall gStatic Z ->
   Permutation (summands W) (summands A ++ (Y ++ Z)) ->
-  ax_pre (g ((𝛕 • ((g A) : proc)) + (𝛕 • ((g W) : proc))))
-         (g (A + rebuild Y)).
+  (g ((𝛕 • ((g A) : proc)) + (𝛕 • ((g W) : proc))))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (g (A + rebuild Y)).
 Proof.
   intros W A Y Z HA HY HZ Hperm.
   assert (Hcgr : ((g W) : proc) ≡* ((g ((A + rebuild Y) + rebuild Z)) : proc)).
@@ -11718,7 +11718,7 @@ Theorem ax_leaf_convex : forall (M A : gproc) (Y Z : list gproc),
   gStatic M -> tau_nf M -> In A (leaves M) ->
   Forall gStatic Y -> Forall gStatic Z ->
   Permutation (summands (leafsum M)) (summands A ++ (Y ++ Z)) ->
-  ax_pre ((g M) : proc) ((g (A + rebuild Y)) : proc).
+  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (A + rebuild Y)) : proc).
 Proof.
   intros M A Y Z HM Hnf Hin HY HZ Hperm.
   assert (HA : gStatic A).
@@ -11739,7 +11739,7 @@ Corollary ax_leaf_convex_rest : forall (M A : gproc),
   gStatic M -> tau_nf M -> In A (leaves M) ->
   exists R, Forall gStatic R /\
     forall (Y Z : list gproc), Permutation R (Y ++ Z) ->
-      ax_pre ((g M) : proc) ((g (A + rebuild Y)) : proc).
+      ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (A + rebuild Y)) : proc).
 Proof.
   intros M A HM Hnf Hin.
   destruct (leafsum_split M A HM Hin) as (R & Hperm & HR).
@@ -11757,7 +11757,7 @@ Corollary ax_cfg_leaf_convex_rest : forall (l : list TypeOfActions) (M A : gproc
   gStatic M -> tau_nf M -> In A (leaves M) ->
   exists R, Forall gStatic R /\
     forall (Y Z : list gproc), Permutation R (Y ++ Z) ->
-      ax_pre (msgs l ‖ ((g M) : proc)) (msgs l ‖ ((g (A + rebuild Y)) : proc)).
+      (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (A + rebuild Y)) : proc)).
 Proof.
   intros l M A HM Hnf Hin.
   destruct (ax_leaf_convex_rest M A HM Hnf Hin) as (R & HR & Hall).
@@ -11999,7 +11999,7 @@ Theorem completeness_of_gsum_class :
     (forall x, Static x -> Ok x -> (forall z, ~ lts x τ z) ->
        exists M, gStatic M /\ domsim x ((g M) : proc)) ->
     forall (n : nat) (q p : proc), (size q < n)%nat ->
-    Static p -> Static q -> Ok q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+    Static p -> Static q -> Ok q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros Ok Hcl Hgs.
   induction n as [ | n IH ]; intros q p Hn Hp Hq Hok Hpre; [ lia | ].
@@ -12085,7 +12085,7 @@ Qed.
 
 Theorem completeness_no_stable_emit : forall (p q : proc),
   Static p -> Static q -> NoResD q -> NoStableEmit q ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hnr Hns Hpre.
   apply (completeness_of_gsum_class (fun x => NoResD x /\ NoStableEmit x)
@@ -12193,7 +12193,7 @@ Qed.
 
 Theorem completeness_no_output_right : forall (p q : proc),
   Static p -> Static q -> NoResD q -> ochans q = [] ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hnr Hoc Hpre.
   eapply completeness_no_stable_emit; try eassumption.
@@ -12202,7 +12202,7 @@ Qed.
 
 Corollary must_iff_ax_pre_no_output : forall (p q : proc),
   Static p -> Static q -> NoResD q -> ochans q = [] ->
-  (ax_pre p q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
 Proof.
   intros p q Hp Hq Hnr Hoc. split.
   - apply soundness_ax.
@@ -12222,7 +12222,7 @@ Qed.
     all. *)
 
 Corollary ax_of_below_nil : forall (p : proc),
-  Static p -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc) -> ax_pre p ((g 𝟘) : proc).
+  Static p -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   intros p Hp Hpre.
   apply completeness_no_output_right; try assumption.
@@ -12232,7 +12232,7 @@ Proof.
 Qed.
 
 Corollary must_iff_ax_below_nil : forall (p : proc), Static p ->
-  (ax_pre p ((g 𝟘) : proc) <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
+  (p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc) <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
 Proof.
   intros p Hp. split; [ apply soundness_ax | apply ax_of_below_nil; assumption ].
 Qed.
@@ -12300,7 +12300,7 @@ Theorem residue_instance_derivable : forall (c : ChannelData) (v : ValueData),
   /\ ochans (ccat c) <> []
   /\ (forall z, ~ lts (msgs [(c ▷ v)]) τ z)
   /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(c ▷ v)])
-  /\ ax_pre ((c ! v • 𝟘) ‖ ccat c) (msgs [(c ▷ v)]).
+  /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(c ▷ v)]).
 Proof.
   intros c v. split; [ | split; [ | split; [ | split ]]].
   - unfold ccat. eexists. eapply lts_comL; [ apply lts_output | apply lts_input ].
@@ -12428,8 +12428,8 @@ Qed.
 
 Theorem ax_below_of_out_residue : forall (p p1 p'' q : proc) c v,
   p ⟹[[]] p1 -> lts p1 (ActExt (ActOut (c,v))) p'' ->
-  ax_pre ((c ! v • 𝟘) ‖ p'') q ->
-  ax_pre p q.
+  ((c ! v • 𝟘) ‖ p'') ᴠᴀᴄᴄꜱ⊑ₐₓ q ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p p1 p'' q c v Hrun Hout Hax.
   eapply ax_trans; [ apply ax_tau_run; exact Hrun | ].
@@ -12445,8 +12445,8 @@ Corollary ax_below_cfg_of_out_residue :
   forall (l l0 : list TypeOfActions) c v (p p1 p'' Q : proc),
   Permutation l ((c,v) :: l0) ->
   p ⟹[[]] p1 -> lts p1 (ActExt (ActOut (c,v))) p'' ->
-  ax_pre p'' (msgs l0 ‖ Q) ->
-  ax_pre p (msgs l ‖ Q).
+  p'' ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l0 ‖ Q) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ Q).
 Proof.
   intros l l0 c v p p1 p'' Q Hperm Hrun Hout Hax.
   eapply ax_below_of_out_residue; [ exact Hrun | exact Hout | ].
@@ -12475,8 +12475,8 @@ Theorem ax_below_cfg_of_out_choice :
                  /\ lts p1 (ActExt (ActOut (c,v))) p''
                  /\ p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l0 ‖ ((g M) : proc))) ->
     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-       p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-    ax_pre p (msgs l ‖ ((g M) : proc)).
+       p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+    p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc)).
 Proof.
   intros q p l l0 c v M Hq Hp HM Hdom Hperm (p1 & p'' & Hrun & Hout & Hsem) HR.
   destruct (cfg_out_of_perm l l0 c v ((g M) : proc) Hperm) as (r0 & Hr0 & Hc0).
@@ -12489,7 +12489,7 @@ Proof.
   assert (Hsem2 : p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ r).
   { intros t Ht. apply (soundness_ax _ _ (ds_r Hdr)).
     apply (proj1 (must_i_cgr _ _ Hc0)). apply Hsem. exact Ht. }
-  assert (Hax : ax_pre p'' r) by (apply HR; assumption).
+  assert (Hax : p'' ᴠᴀᴄᴄꜱ⊑ₐₓ r) by (apply HR; assumption).
   eapply ax_below_cfg_of_out_residue;
     [ exact Hperm | exact Hrun | exact Hout | ].
   eapply ax_trans; [ exact Hax | ].
@@ -12528,8 +12528,8 @@ Corollary ax_below_cfg_of_OutChoice : OutChoice ->
     Permutation l ((c,v) :: l0) ->
     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc)) ->
     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-       p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> ax_pre p' q') ->
-    ax_pre p (msgs l ‖ ((g M) : proc)).
+       p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+    p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc)).
 Proof.
   intros HC q p l c v l0 M Hq Hp HM Hdom Hperm Hsem HR.
   eapply ax_below_cfg_of_out_choice;
@@ -12608,7 +12608,7 @@ Qed.
     **nue** : la précongruence de [‖] ([ax_par]) remet le sac des deux
     côtés d'un coup.  Autrement dit :
 
-      ⊢ qq ⊑ g M   ⟹   ⊢ msgs l1 ‖ p ⊑ msgs l ‖ g M
+      qq ᴠᴀᴄᴄꜱ⊑ₐₓ (g M)   ⟹   (msgs l1 ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g M)
 
     et la cible y est une **somme gardée nue**, forme pour laquelle
     [completeness_gsum_step_gen] est close.  Le sac disparaît donc des
@@ -12635,8 +12635,8 @@ Theorem residue_reduces_to_bare :
   exists qq,
     (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
     /\ (forall z, ~ lts qq τ z)
-    /\ (ax_pre qq ((g M) : proc) ->
-        ax_pre (msgs l1 ‖ p) (msgs l ‖ ((g M) : proc))).
+    /\ (qq ᴠᴀᴄᴄꜱ⊑ₐₓ ((g M) : proc) ->
+        (msgs l1 ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc))).
 Proof.
   intros l1 l p M Hp HM Htau Hsem.
   destruct (ax_replay_to_right_bag l1 l p M Hp HM Htau Hsem)
@@ -12645,6 +12645,607 @@ Proof.
   intros Hqq. eapply ax_trans; [ exact Hax | ].
   apply (ax_par (msgs l) (msgs l) qq ((g M) : proc));
     [ apply ax_refl | exact Hqq ].
+Qed.
+
+(** ** THE EMITTING RIGHT-HAND SIDE, CLOSED BY POOLING
+
+    [out_choice_is_false] refutes choosing ONE weak output residue of the
+    left ([OutChoice]).  What the semantics does give, freely, is the
+    INTERNAL CHOICE of *all* of them ([ichoice_residues_below]) — and
+    that is enough, because [ax_share_msg] factors the emitted message
+    out of a choice.  The chain:
+
+      p ᴠᴀᴄᴄꜱ⊑ₐₓ (⊕ᵢ (msgs [(c,v)] ‖ rᵢ))     ax_ichoice_glb + ax_below_of_out_residue
+           ⊑ msgs [(c,v)] ‖ ⊕ᵢ rᵢ        ax_share_msgs_ichoice   ← the pooling law
+           ⊑ msgs [(c,v)] ‖ q''          ax_par + the recursive call
+           ≂ q                            ax_cgr, since a process that emits
+                                          IS the message beside its residue
+                                          ([TransitionShapeForOutputSimplified])
+
+    Every step but the third is unconditional; the third recurses at
+    [q''], a strict reduct of [q].  This is the route the file's negative
+    results kept pointing at — pooling, never descent. *)
+
+Lemma ax_msg_bag_one : forall (c : ChannelData) (v : ValueData) (r : proc),
+  ((c ! v • 𝟘) ‖ r) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(c, v)] ‖ r).
+Proof.
+  intros c v r. simpl. apply ax_cgr.
+  apply cgr_fullpar; [ apply cgr_symm; apply cgr_par_nil | reflexivity ].
+Qed.
+
+Theorem ax_below_of_out_pool : forall (p q q'' : proc) (c : ChannelData) (v : ValueData) n,
+  Static p -> Static q -> (size p < n)%nat ->
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
+  lts q (ActExt (ActOut (c,v))) q'' ->
+  (g (ichoice (res_list_v n c v p))) ᴠᴀᴄᴄꜱ⊑ₐₓ q'' ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
+Proof.
+  intros p q q'' c v n Hp Hq Hn Hpre Hout Hrec.
+  assert (Hne : res_list_v n c v p <> nil) by (eapply res_list_v_nonempty; eassumption).
+  assert (H1 : p ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice (map (fun x => msgs [(c,v)] ‖ x) (res_list_v n c v p))))).
+  { apply ax_ichoice_glb.
+    - destruct (res_list_v n c v p); [ contradiction | simpl; discriminate ].
+    - intros y Hy. apply in_map_iff in Hy. destruct Hy as (r & Heq & Hr). subst y.
+      destruct (res_list_v_sound n p c v r Hr) as (p1 & Hrun & Ho).
+      eapply ax_below_of_out_residue; [ exact Hrun | exact Ho | ].
+      apply ax_msg_bag_one. }
+  assert (H2 : (g (ichoice (map (fun x => msgs [(c,v)] ‖ x) (res_list_v n c v p))))
+                 ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(c,v)] ‖ ((g (ichoice (res_list_v n c v p))) : proc)))
+    by (apply ax_share_msgs_ichoice; exact Hne).
+  assert (H3 : (msgs [(c,v)] ‖ ((g (ichoice (res_list_v n c v p))) : proc))
+                 ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(c,v)] ‖ q''))
+    by (apply ax_par; [ apply ax_refl | exact Hrec ]).
+  assert (H4 : (msgs [(c,v)] ‖ q'') ᴠᴀᴄᴄꜱ⊑ₐₓ q).
+  { apply ax_cgr. simpl.
+    etransitivity; [ apply cgr_fullpar; [ apply cgr_par_nil | reflexivity ] | ].
+    apply cgr_symm. apply TransitionShapeForOutputSimplified. exact Hout. }
+  eapply ax_trans; [ exact H1 | ].
+  eapply ax_trans; [ exact H2 | ].
+  eapply ax_trans; [ exact H3 | exact H4 ].
+Qed.
+
+(** …and the recursive premise is discharged by the outer induction on
+    [size q]: the residue [q''] is a reduct of [q] ([Static_lts_decrease]),
+    and the left-hand side of the call is [Static] ([res_list_v_Static]).
+    So a right-hand side that EMITS needs no side condition at all. *)
+Theorem completeness_step_out_emit : forall (p q : proc) (c : ChannelData) (v : ValueData) q'',
+  Static p -> Static q ->
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> lts q (ActExt (ActOut (c,v))) q'' ->
+  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
+Proof.
+  intros p q c v q'' Hp Hq Hpre Hout HIH.
+  assert (Hq'' : Static q'') by (eapply Static_preserved_by_lts; [ exact Hq | exact Hout ]).
+  assert (Hlt : (size q'' < size q)%nat) by (eapply Static_lts_decrease; [ exact Hq | exact Hout ]).
+  assert (Hst : Static ((g (ichoice (res_list_v (S (size p)) c v p))) : proc))
+    by (apply static_g; apply ichoice_gStatic; apply res_list_v_Static; exact Hp).
+  assert (Hsem : (g (ichoice (res_list_v (S (size p)) c v p))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'')
+    by (eapply ichoice_residues_below; [ exact Hp | exact Hq | lia | exact Hpre | exact Hout ]).
+  apply (ax_below_of_out_pool p q q'' c v (S (size p)));
+    [ exact Hp | exact Hq | lia | exact Hpre | exact Hout | ].
+  apply HIH; [ exact Hst | exact Hq'' | exact Hlt | exact Hsem ].
+Qed.
+
+(** "Does this process emit at all?" is decidable, because its pending
+    outputs form a FINITE multiset ([lts_oba_mo]) — the same finiteness
+    [emits_on_dec] rests on, read at the trivial channel set. *)
+Lemma emits_any_dec : forall (u : proc),
+  (exists c (v : ValueData) q, lts u (ActExt (ActOut (c,v))) q)
+  \/ (forall c (v : ValueData) q, ~ lts u (ActExt (ActOut (c,v))) q).
+Proof.
+  intros u.
+  destruct (emits_in_set_dec (fun _ => True) (fun c => or_introl I) u)
+    as [ (c & _ & v & q & Hl) | Hno ].
+  - left. exists c, v, q. exact Hl.
+  - right. intros c v q Hl. eapply (Hno c I). exists v, q. exact Hl.
+Qed.
+
+(** ** …hence completeness reduces to a right-hand side that is τ-STABLE
+       AND EMITS NOTHING
+
+    Three decidable tests exhaust the shapes of the right:
+    [lts_dec] for a τ ([completeness_step_glb_weak] closes it),
+    [emits_any_dec] for an output ([completeness_step_out_emit] closes
+    it), and what is left is a state with no transition but inputs.
+
+    Note what this does to [HardResidue]: its right-hand side is
+    [Ѵⁿ (msgs l ‖ g M)] with [l <> []], and at [n = 0] such a
+    configuration EMITS ([cfg_out_of_perm]).  So only the case with a
+    restriction block over a TRAPPED bag survives — see
+    [residue_needs_a_trapped_block] below. *)
+Theorem completeness_of_mute_stable_step :
+  (forall p q, Static p -> Static q -> (forall z, ~ lts q τ z) ->
+     (forall c (v : ValueData) q'', ~ lts q (ActExt (ActOut (c,v))) q'') ->
+     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
+     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     p ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
+Proof.
+  intros Hstep. apply completeness_of_stable_step.
+  intros p q Hp Hq Hno Hpre HIH.
+  destruct (emits_any_dec q) as [ (c & v & q'' & Hout) | Hmute ].
+  - eapply completeness_step_out_emit; eassumption.
+  - eapply Hstep; eassumption.
+Qed.
+
+(** …and here is what that costs [HardResidue].  Its right-hand side is
+    [NF n l M] with [l <> []]; at [n = 0] such a configuration EMITS
+    (its bag does — [cfg_out_of_perm]), so
+    [completeness_step_out_emit] closes it outright.  Only a right-hand
+    side whose bag sits under a RESTRICTION BLOCK — a trapped message,
+    which cannot escape ([untrappedB], and
+    [VACCS_DropProbes.trapped_message_is_not_deletable]) — survives. *)
+Theorem residue_needs_a_trapped_block : forall n (l : list TypeOfActions) (M : gproc),
+  l <> nil ->
+  (forall c (v : ValueData) q, ~ lts (NF n l M) (ActExt (ActOut (c,v))) q) ->
+  n <> 0.
+Proof.
+  intros n l M Hne Hno Hn0. subst n.
+  destruct l as [ | (c,v) l0 ]; [ contradiction | ].
+  destruct (cfg_out_of_perm ((c,v)::l0) l0 c v ((g M) : proc) (reflexivity _))
+    as (r & Hr & _).
+  eapply Hno. unfold NF. simpl. exact Hr.
+Qed.
+
+(** ** …AND THE RESIDUE BECOMES A TRAPPED MESSAGE UNDER A BLOCK
+
+    [domsim] carries both stability ([domsim_stable]) and muteness
+    ([domsim_mute]) from [q] to its normal form, so the case left by
+    [completeness_of_mute_stable_step] may be assumed AT a normal form
+    [NF n l M].  There:
+
+    - [l = []] is already closed — [stable_NF_empty_bag] takes the whole
+      restriction block off with [resgn], leaving a bare guarded sum;
+    - [l <> []] forces [n <> 0] ([residue_needs_a_trapped_block]), i.e.
+      the bag sits under a RESTRICTION BLOCK and its messages are
+      TRAPPED: they cannot escape ([VarC_action_add 1] never yields
+      [bvar 0]), cannot be supplied from outside, and cannot be deleted
+      either ([VACCS_DropProbes.trapped_message_is_not_deletable]).
+
+    So the residue is exactly that, and — unlike [HardResidue] — it puts
+    **no condition whatever on the left-hand side**. *)
+Lemma domsim_mute : forall (p q : proc), domsim p q ->
+  (forall c (v : ValueData) z, ~ lts p (ActExt (ActOut (c,v))) z) ->
+  (forall c (v : ValueData) z, ~ lts q (ActExt (ActOut (c,v))) z).
+Proof.
+  intros p q Hs Hmu c v z Hz.
+  destruct (ds_s Hs (ActExt (ActOut (c,v))) z Hz) as (r' & Hl & _). eapply Hmu. exact Hl.
+Qed.
+
+(** And muteness FORCES the trapping: an untrapped bag comes out of the
+    block by scope extrusion ([NF_extrude]) and then emits, so a mute
+    normal form with a non-empty bag has every message on a channel the
+    block hides.  The condition is therefore free, and it is handed to
+    the consumer below. *)
+Lemma mute_NF_forces_trapped : forall n (l : list TypeOfActions) (M : gproc),
+  l <> nil ->
+  (forall c (v : ValueData) q, ~ lts (NF n l M) (ActExt (ActOut (c,v))) q) ->
+  untrappedB n l = false.
+Proof.
+  intros n l M Hne Hno.
+  destruct (untrappedB n l) eqn:E; [ | reflexivity ].
+  exfalso.
+  destruct (untrappedB_inv n l E) as (l0 & Hl0).
+  destruct l0 as [ | (c0,v0) l1 ]; [ subst l; contradiction | ].
+  destruct (cfg_out_of_perm ((c0,v0) :: l1) l1 c0 v0 (Ѵ n ((g M) : proc))
+              (reflexivity _)) as (r & Hr & _).
+  destruct (Congruence_Respects_Transition (NF n l M) r
+              (ActExt (ActOut (c0,v0)))) as (r' & Hl & _).
+  - exists (msgs ((c0,v0) :: l1) ‖ (Ѵ n ((g M) : proc))). split.
+    + subst l. apply NF_extrude.
+    + exact Hr.
+  - eapply Hno. exact Hl.
+Qed.
+
+Theorem completeness_of_trapped_mute_step :
+  (forall (p q : proc) n l M, Static p -> Static q -> gStatic M ->
+     domsim q (NF n l M) ->
+     (forall z, ~ lts (NF n l M) τ z) ->
+     (forall c (v : ValueData) z, ~ lts (NF n l M) (ActExt (ActOut (c,v))) z) ->
+     l <> nil -> n <> 0 -> untrappedB n l = false ->
+     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
+     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
+        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+     p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
+  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
+Proof.
+  intros Hstep. apply completeness_of_mute_stable_step.
+  intros p q Hp Hq Hno Hmute Hpre HR.
+  destruct (normal_form_strong_sim q Hq) as (n & l & M & HM & Hsim).
+  assert (Hno' : forall z, ~ lts (NF n l M) τ z)
+    by (eapply domsim_stable; [ exact Hsim | exact Hno ]).
+  assert (Hmu' : forall c (v : ValueData) z, ~ lts (NF n l M) (ActExt (ActOut (c,v))) z)
+    by (eapply domsim_mute; [ exact Hsim | exact Hmute ]).
+  eapply ax_trans; [ | exact (ds_r Hsim) ].
+  destruct l as [ | x l0 ].
+  - eapply stable_NF_empty_bag; eassumption.
+  - eapply Hstep; try eassumption.
+    + discriminate.
+    + apply (residue_needs_a_trapped_block n (x :: l0) M);
+        [ discriminate | exact Hmu' ].
+    + apply (mute_NF_forces_trapped n (x :: l0) M);
+        [ discriminate | exact Hmu' ].
+Qed.
+
+(** ** SAME TRANSITIONS ⟹ DERIVABLY EQUAL — and it needs NO new rule
+
+    [must_same_lts] ([VACCS_Expansion.v]) says two processes with
+    identical one-step transitions pass the same tests.  Turning that
+    into a *derivation* looked as though it needed a rule: [ax_sub_tau]
+    only asks for an inclusion but pays for it with a [τ], and
+    [ax_restrict_keep] handles the τ-stable case but only for GUARDED
+    SUMS.  Neither covers "τ-stable, same transitions, arbitrary
+    [proc]".
+
+    It is derivable from [ax_settle_sim], at the rigid relation "same
+    buffer, the two processes".  The equality of transitions is used
+    twice, once in each direction:
+
+    - the STEP clauses need [q]'s transitions to be [p]'s, so that
+      whatever the right does the left can copy; after which the two
+      sides sit at the SAME state and the pair drops onto the diagonal;
+    - the STABLE clause needs [p]'s to be [q]'s, so that a stable
+      [q ▷ m] forces [p ▷ m] stable ([fw_stable_iff]) with the same
+      emissions ([fw_emits_iff]), and [Settles_here] closes.
+
+    The buffer moves — absorb and emit — keep the pair in the
+    off-diagonal family with equal buffers, exactly as in
+    [VACCS_Cond2.restrict_by_settle]. *)
+
+Definition same_lts_rel (p q : proc)
+  (x y : proc * MO (ExtAct TypeOfActions)) : Prop :=
+  x = y \/ (exists m, x = (p ▷ m) /\ y = (q ▷ m)).
+
+Lemma same_lts_settle_sim : forall (p q : proc),
+  (forall al z, lts p al z -> lts q al z) ->
+  (forall al z, lts q al z -> lts p al z) ->
+  SettleSim (same_lts_rel p q).
+Proof.
+  intros p q Hpq Hqp. split; [ | split ].
+  - intros x y y' Hr Hl. destruct Hr as [Heq | (m & Hx & Hy)].
+    + subst x. exists y'.
+      split; [ eapply wt_tau; [ exact Hl | apply wt_nil ] | left; reflexivity ].
+    + subst x y. destruct (fw_tau_shape q m y' Hl) as
+        [ (q' & Hq' & Heq) | (a & q' & m' & Hm & Hq' & Heq) ].
+      * subst y'. exists ((q' ▷ m)). split; [ | left; reflexivity ].
+        eapply wt_tau; [ apply fw_tau_left; apply Hqp; exact Hq' | apply wt_nil ].
+      * subst y' m. exists ((q' ▷ m')). split; [ | left; reflexivity ].
+        eapply wt_tau; [ apply fw_tau_deliver; apply Hqp; exact Hq' | apply wt_nil ].
+  - intros x y mu y' Hr Hl. destruct Hr as [Heq | (m & Hx & Hy)].
+    + subst x. exists y'.
+      split; [ eapply wt_act; [ exact Hl | apply wt_nil ] | left; reflexivity ].
+    + subst x y. destruct (fw_ext_shape q m mu y' Hl) as
+        [ (q' & Hq' & Heq) | [ (a & Hmu & Heq) | (a & m' & Hmu & Hm & Heq) ] ].
+      * subst y'. exists ((q' ▷ m)). split; [ | left; reflexivity ].
+        eapply wt_act; [ apply ParLeft; apply Hqp; exact Hq' | apply wt_nil ].
+      * subst mu y'. exists ((p ▷ ({[+ ActOut a +]} ⊎ m))). split.
+        -- eapply wt_act; [ apply fw_input_always | apply wt_nil ].
+        -- right. exists ({[+ ActOut a +]} ⊎ m). split; reflexivity.
+      * subst mu y' m. exists ((p ▷ m')). split.
+        -- eapply wt_act; [ apply fw_emit | apply wt_nil ].
+        -- right. exists m'. split; reflexivity.
+  - intros x y Hr Hst. destruct Hr as [Heq | (m & Hx & Hy)].
+    + subst x. apply Settles_here; [ exact Hst | ].
+      intros d w r Hr. exists w, r. exact Hr.
+    + subst x y. apply Settles_here.
+      * apply stable_of_no_step. apply fw_stable_iff.
+        destruct (proj1 (fw_stable_iff q m) (no_step_of_stable _ Hst)) as (H1 & H2).
+        split.
+        -- intros z Hz. eapply H1. apply Hpq. exact Hz.
+        -- intros a Ha z Hz. eapply H2; [ exact Ha | apply Hpq; exact Hz ].
+      * intros d w r Hr.
+        assert (Hex : exists y, (q ▷ m) ⟶[ActOut (d,w)] y).
+        { apply fw_emits_iff.
+          destruct (proj1 (fw_emits_iff p m (d,w)) (ex_intro _ r Hr))
+            as [ (p' & Hp') | Hin ].
+          - left. exists p'. apply Hpq. exact Hp'.
+          - right. exact Hin. }
+        destruct Hex as (yy & Hyy). exists w, yy. exact Hyy.
+Qed.
+
+Theorem ax_same_lts : forall (p q : proc), Static p -> Static q ->
+  (forall al z, lts p al z -> lts q al z) ->
+  (forall al z, lts q al z -> lts p al z) ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
+Proof.
+  intros p q Hp Hq Hpq Hqp.
+  eapply ax_trans; [ apply ax_cgr; apply ax_nil_par | ].
+  eapply ax_trans; [ | apply ax_cgr; apply cgr_nil_par_l ].
+  apply (ax_settle_sim [] [] p q (same_lts_rel p q));
+    [ exact Hp | exact Hq | apply same_lts_settle_sim; assumption | ].
+  right. exists (bag []). split; reflexivity.
+Qed.
+
+(** *** The control: a TRAPPED message no guard can consume IS deletable
+
+    Contrast [VACCS_DropProbes.trapped_message_is_not_deletable], where
+    a SIBLING guard on the restricted channel can consume the message,
+    so the configuration has a [τ] and the two sides are separated.
+    Here nothing can consume it: the emission never escapes the block
+    ([VarC_action_add 1] never yields [bvar 0]) and there is no guard at
+    all, so **neither side has any transition whatever** and
+    [ax_same_lts] identifies them in both directions.
+
+    The message is rigid in general ([msg_not_below_nil],
+    [nil_not_below_msg_gen]), so this is a fact the rest of the system
+    does not reach: [ax_par] would need the message itself to be below
+    [𝟘], and no congruence drops it. *)
+
+Lemma msg_nil_lts_inv : forall (c : ChannelData) (v : ValueData) al z,
+  lts ((c ! v • 𝟘) ‖ ((g (𝟘 : gproc)) : proc)) al z -> al = ActExt (ActOut (c,v)).
+Proof.
+  intros c v al z Hz. inversion Hz; subst;
+    try (exfalso; eapply nil_no_lts; eassumption);
+    inversion H3; subst; reflexivity.
+Qed.
+
+Lemma res_trapped_no_lts : forall (v : ValueData) al z,
+  ~ lts (ν (((bvar 0) ! v • 𝟘) ‖ ((g (𝟘 : gproc)) : proc))) al z.
+Proof.
+  intros v al z Hz. inversion Hz; subst.
+  - assert (Hc := msg_nil_lts_inv (bvar 0) v (ActExt (VarC_action_add 1 μ)) p' H0).
+    injection Hc as Hc. destruct μ as [(d,w)|(d,w)]; simpl in Hc; try discriminate Hc.
+    injection Hc as Hc1 Hc2. destruct d; simpl in Hc1; discriminate Hc1.
+  - assert (Hc := msg_nil_lts_inv (bvar 0) v τ p' H0). discriminate Hc.
+Qed.
+
+Lemma res_nil_no_lts : forall al z, ~ lts (ν ((g (𝟘 : gproc)) : proc)) al z.
+Proof.
+  intros al z Hz. inversion Hz; subst; eapply nil_no_lts; eassumption.
+Qed.
+
+Theorem ax_trapped_msg_deletable : forall (v : ValueData),
+  (ν (((bvar 0) ! v • 𝟘) ‖ ((g (𝟘 : gproc)) : proc)))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (ν ((g (𝟘 : gproc)) : proc))
+  /\ (ν ((g (𝟘 : gproc)) : proc))
+       ᴠᴀᴄᴄꜱ⊑ₐₓ (ν (((bvar 0) ! v • 𝟘) ‖ ((g (𝟘 : gproc)) : proc))).
+Proof.
+  intro v. split; apply ax_same_lts;
+    try (repeat constructor);
+    try (intros al z Hz; exfalso; eapply res_trapped_no_lts; exact Hz);
+    try (intros al z Hz; exfalso; eapply res_nil_no_lts; exact Hz).
+Qed.
+
+(** * ★ COMPLETENESS FOR VACCS
+
+    The residue was: a right-hand side [Ѵⁿ (msgs l ‖ g M)] that is
+    τ-stable and MUTE, with a non-empty bag trapped under the block.
+    The observation that closes it:
+
+    >  such a configuration has EXACTLY the transitions of a restriction
+    >  block over a GUARDED SUM.
+
+    Indeed its only transitions are the inputs of [M] — a bag has no
+    input ([msgs_no_input]), a synchronisation would be a [τ]
+    (excluded by stability), and an emission of the bag does not survive
+    the block (that IS the muteness).  And the input of [M] with the bag
+    pushed into the continuation has the SAME target, by
+    [NewVar_subst_cancel].  So [bagify] below builds that guarded sum,
+    [ax_same_lts] identifies the two, [resgn] takes the block off, and
+    [stable_bare_gsum_of_domsim] closes.
+
+    Nothing here is a new rule: [ax_same_lts] is derived from
+    [ax_settle_sim], and [resgn] from [ax_res_normalize]. *)
+
+(** ** Inverting a transition under a block of restrictions
+
+    [lts_res_ext_n] and [lts_res_tau_n] ([VACCS_Instance.v]) build such
+    transitions; this is the missing inversion, and it is what lets the
+    two sides be compared under the block rather than inside it — inside,
+    the bag emits and the two are NOT equivalent. *)
+
+Lemma VarC_action_add_revert : forall k n mu,
+  VarC_action_add (k + n) mu = VarC_action_add k (VarC_action_add n mu).
+Proof.
+  intros k n mu. destruct mu as [(c,v)|(c,v)]; simpl; f_equal; f_equal;
+    apply VarC_add_revert_def.
+Qed.
+
+Lemma lts_res_n_shape : forall n (p : proc) al z, lts (Ѵ n p) al z ->
+  exists p', z = Ѵ n p' /\
+    match al with
+    | τ => lts p τ p'
+    | ActExt mu => lts p (ActExt (VarC_action_add n mu)) p'
+    end.
+Proof.
+  induction n as [|n IH]; intros p al z Hz.
+  - exists z. split; [ reflexivity | ].
+    destruct al as [mu|]; [ rewrite VarC_add_zero_ext | ]; exact Hz.
+  - simpl in Hz. inversion Hz; subst.
+    + destruct (IH p (ActExt (VarC_action_add 1 μ)) p' H0) as (p'' & Heq & Hl).
+      exists p''. split; [ simpl; rewrite Heq; reflexivity | ].
+      assert (Hr : VarC_action_add (S n) μ = VarC_action_add n (VarC_action_add 1 μ)).
+      { replace (S n) with ((n + 1)%nat) by lia. apply VarC_action_add_revert. }
+      rewrite Hr. exact Hl.
+    + destruct (IH p τ p' H0) as (p'' & Heq & Hl).
+      exists p''. split; [ simpl; rewrite Heq; reflexivity | ]. exact Hl.
+Qed.
+
+(** ** Pushing the bag into the continuations
+
+    [bagify l M] is [M] with the bag prefixed to every continuation.  The
+    value binder of an input guard sits between the bag and the
+    continuation, so the bag is shifted by [NewVar 0] and the
+    substitution of the received value puts it back
+    ([NewVar_subst_cancel]) — which is why the targets coincide exactly
+    rather than up to [≡*]. *)
+
+Fixpoint bagify (l : list TypeOfActions) (M : gproc) : gproc :=
+match M with
+| gpr_success => gpr_success
+| gpr_nil => gpr_nil
+| gpr_input c P => gpr_input c ((NewVar 0 (msgs l)) ‖ P)
+| gpr_tau p => gpr_tau ((msgs l) ‖ p)
+| gpr_choice M1 M2 => gpr_choice (bagify l M1) (bagify l M2)
+end.
+
+Lemma bagify_lts_fwd : forall l (M : gproc) al y,
+  lts ((g M) : proc) al y -> lts ((g (bagify l M)) : proc) al (msgs l ‖ y).
+Proof.
+  intros l M. induction M as [ | | c P | p | M1 IH1 M2 IH2 ]; intros al y Hy;
+    simpl; try (inversion Hy; fail).
+  - inversion Hy; subst. simpl.
+    assert (Hc : subst_in_proc 0 v ((NewVar 0 (msgs l)) ‖ P)
+                 = (msgs l ‖ subst_in_proc 0 v P)).
+    { simpl. f_equal. apply NewVar_subst_cancel. }
+    rewrite <- Hc. apply lts_input.
+  - inversion Hy; subst. apply lts_tau.
+  - inversion Hy; subst.
+    + apply lts_choiceL. apply IH1. exact H3.
+    + apply lts_choiceR. apply IH2. exact H3.
+Qed.
+
+Lemma bagify_lts_bwd : forall l (M : gproc) al z,
+  lts ((g (bagify l M)) : proc) al z ->
+  exists y, z = (msgs l ‖ y) /\ lts ((g M) : proc) al y.
+Proof.
+  intros l M. induction M as [ | | c P | p | M1 IH1 M2 IH2 ]; intros al z Hz;
+    simpl in Hz; try (inversion Hz; fail).
+  - inversion Hz; subst. exists (subst_in_proc 0 v P). split.
+    + simpl. f_equal. apply NewVar_subst_cancel.
+    + apply lts_input.
+  - inversion Hz; subst. exists p. split; [ reflexivity | apply lts_tau ].
+  - inversion Hz; subst.
+    + destruct (IH1 al z H3) as (y & Heq & Hl). exists y. split;
+        [ exact Heq | apply lts_choiceL; exact Hl ].
+    + destruct (IH2 al z H3) as (y & Heq & Hl). exists y. split;
+        [ exact Heq | apply lts_choiceR; exact Hl ].
+Qed.
+
+Lemma bagify_gStatic : forall l (M : gproc), gStatic M -> gStatic (bagify l M).
+Proof.
+  intros l M. induction M as [ | | c P | p | M1 IH1 M2 IH2 ]; intro HM;
+    simpl; try constructor.
+  - inversion HM; subst. constructor.
+    + apply Static_NewVar. apply msgs_Static.
+    + exact H0.
+  - inversion HM; subst. constructor; [ apply msgs_Static | exact H0 ].
+  - inversion HM; subst. apply IH1. exact H1.
+  - inversion HM; subst. apply IH2. exact H2.
+Qed.
+
+(** ** Under the block, the two have the SAME transitions
+
+    The backward inclusion is unconditional.  The forward one is where
+    muteness and stability earn their place: a bag emission would be a
+    transition of the whole (excluded by muteness) and a synchronisation
+    would be a [τ] (excluded by stability), so every transition comes
+    from [M] alone — and [bagify_lts_fwd] matches it, target included. *)
+
+Lemma trapped_bagify_lts_bwd : forall n l (M : gproc) al z,
+  lts (Ѵ n (((g (bagify l M)) : proc))) al z ->
+  lts (Ѵ n (msgs l ‖ ((g M) : proc))) al z.
+Proof.
+  intros n l M al z Hz.
+  destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
+  destruct al as [mu|].
+  - destruct (bagify_lts_bwd l M _ _ Hl) as (y & Heq2 & Hy). subst z'.
+    apply lts_res_ext_n. apply lts_parR. exact Hy.
+  - destruct (bagify_lts_bwd l M _ _ Hl) as (y & Heq2 & Hy). subst z'.
+    apply lts_res_tau_n. apply lts_parR. exact Hy.
+Qed.
+
+Lemma trapped_bagify_lts_fwd : forall n l (M : gproc) al z,
+  (forall y, ~ lts (Ѵ n (msgs l ‖ ((g M) : proc))) τ y) ->
+  (forall c (v : ValueData) y,
+     ~ lts (Ѵ n (msgs l ‖ ((g M) : proc))) (ActExt (ActOut (c,v))) y) ->
+  lts (Ѵ n (msgs l ‖ ((g M) : proc))) al z ->
+  lts (Ѵ n (((g (bagify l M)) : proc))) al z.
+Proof.
+  intros n l M al z Hno Hmu Hz.
+  assert (Hz0 := Hz).
+  destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
+  destruct al as [mu|].
+  - inversion Hl; subst.
+    + exfalso.
+      destruct (msgs_lts_inv l _ _ H3) as (c0 & v0 & l0 & Emu & _ & _).
+      destruct mu as [(d,w)|(d,w)]; simpl in Emu; [ discriminate Emu | ].
+      eapply (Hmu d w). exact Hz0.
+    + apply lts_res_ext_n. apply bagify_lts_fwd. exact H3.
+  - exfalso. eapply Hno. exact Hz0.
+Qed.
+
+Theorem ax_trapped_NF_bagify : forall n l (M : gproc),
+  gStatic M ->
+  (forall y, ~ lts (NF n l M) τ y) ->
+  (forall c (v : ValueData) y, ~ lts (NF n l M) (ActExt (ActOut (c,v))) y) ->
+  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n ((g (bagify l M)) : proc))
+  /\ (Ѵ n ((g (bagify l M)) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
+Proof.
+  intros n l M HM Hno Hmu.
+  assert (HsL : Static (NF n l M)) by (apply Static_NF; exact HM).
+  assert (HsR : Static (Ѵ n ((g (bagify l M)) : proc)))
+    by (apply Static_res_n; apply static_g; apply bagify_gStatic; exact HM).
+  unfold NF in *.
+  split; apply ax_same_lts; try assumption.
+  - intros al z Hz. eapply trapped_bagify_lts_fwd; eassumption.
+  - intros al z Hz. eapply trapped_bagify_lts_bwd; eassumption.
+  - intros al z Hz. eapply trapped_bagify_lts_bwd; eassumption.
+  - intros al z Hz. eapply trapped_bagify_lts_fwd; eassumption.
+Qed.
+
+(** …and since the targets coincide exactly, the two are related by
+    [domsim], not merely by [⊢].  That is what lets the recursion keep
+    measuring against the original [q]. *)
+Lemma domsim_trapped_bagify : forall n l (M : gproc),
+  gStatic M ->
+  (forall y, ~ lts (NF n l M) τ y) ->
+  (forall c (v : ValueData) y, ~ lts (NF n l M) (ActExt (ActOut (c,v))) y) ->
+  domsim (NF n l M) (Ѵ n ((g (bagify l M)) : proc)).
+Proof.
+  intros n l M HM Hno Hmu.
+  destruct (ax_trapped_NF_bagify n l M HM Hno Hmu) as (A1 & A2).
+  apply DomSim; [ exact A1 | exact A2 | ].
+  intros a r Hr. exists r. split; [ | apply domsim_refl ].
+  unfold NF. eapply trapped_bagify_lts_bwd. exact Hr.
+Qed.
+
+(** ** The last step: a mute τ-stable normal form *)
+Theorem completeness_trapped_step : forall (p q : proc) n l (M : gproc),
+  Static p -> Static q -> gStatic M ->
+  domsim q (NF n l M) ->
+  (forall y, ~ lts (NF n l M) τ y) ->
+  (forall c (v : ValueData) y, ~ lts (NF n l M) (ActExt (ActOut (c,v))) y) ->
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
+  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
+Proof.
+  intros p q n l M Hp Hq HM Hsim Hno Hmu Hpre HR.
+  assert (Hd1 : domsim (NF n l M) (Ѵ n ((g (bagify l M)) : proc)))
+    by (apply domsim_trapped_bagify; assumption).
+  assert (Hd2 : domsim (NF n l M) ((g (resgn n (bagify l M))) : proc))
+    by (eapply domsim_trans; [ exact Hd1 | apply domsim_resgn ]).
+  assert (Hd3 : domsim q ((g (resgn n (bagify l M))) : proc))
+    by (eapply domsim_trans; [ exact Hsim | exact Hd2 ]).
+  eapply ax_trans; [ | exact (ds_r Hd2) ].
+  eapply stable_bare_gsum_of_domsim;
+    [ exact Hp | exact Hq | apply resgn_gStatic; apply bagify_gStatic; exact HM
+    | exact Hd3 | | exact Hpre | exact HR ].
+  eapply domsim_stable; [ exact Hd2 | exact Hno ].
+Qed.
+
+(** ** ★★★ COMPLETENESS
+
+    Every case of the right-hand side is now closed, by three decidable
+    tests:
+
+    | the right-hand side… | closed by |
+    |---|---|
+    | has a [τ] | [completeness_step_glb_weak] |
+    | EMITS | [completeness_step_out_emit] — pooling, via [ax_share_msg] |
+    | τ-stable and mute, empty bag | [stable_NF_empty_bag] |
+    | τ-stable and mute, trapped bag | [completeness_trapped_step] |
+
+    and [completeness_of_trapped_mute_step] chains them. *)
+Theorem completeness_ax : forall (p q : proc), Static p -> Static q ->
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
+Proof.
+  apply completeness_of_trapped_mute_step.
+  intros p q n l M Hp Hq HM Hsim Hno Hmu _ _ _ Hpre HR.
+  eapply completeness_trapped_step; eassumption.
 Qed.
 
 End VACCS_Matching.

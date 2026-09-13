@@ -59,7 +59,7 @@
     invariant: the two *bridges* ([VACCS_Precongruence.v]) prove
     [‖]- and [ν]-precongruence with no hypothesis on the operands at all,
     and every other rule was already unconditional.  So [VACCS_SoundnessAx.v]
-    proves [⊢ p ⊑ q -> p ⊑ₘᵤₛₜᵢ q] outright. *)
+    proves [p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ⊑ₘᵤₛₜᵢ q] outright. *)
 
 From stdpp Require Import base gmultiset sets gmap.
 From TestingTheory Require Import MultisetLTSConstruction.
@@ -73,12 +73,20 @@ Section VACCS_DefinitionAxiomatic.
 
 Context `{VP : VACCS_Parameters}.
 
+(** The axiomatic preorder is written [p ᴠᴀᴄᴄꜱ⊑ₐₓ q], named like the semantic
+    preorder it characterises, [p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q].  The token is reserved here
+    and bound to the inductive by the [where] clause below, so the rules
+    themselves read in the notation.  A [where]-bound notation is
+    section-local like any other, so it is declared again, globally, at the
+    end of this file. *)
+Reserved Notation "p ᴠᴀᴄᴄꜱ⊑ₐₓ q" (at level 70).
+
 Inductive ax_pre : proc -> proc -> Prop :=
 
 (** *** Preorder and free equations *)
 
-| ax_trans : forall p q r, ax_pre p q -> ax_pre q r -> ax_pre p r
-| ax_cgr : forall p q, p ≡* q -> ax_pre p q
+| ax_trans : forall p q r, p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> q ᴠᴀᴄᴄꜱ⊑ₐₓ r -> p ᴠᴀᴄᴄꜱ⊑ₐₓ r
+| ax_cgr : forall p q, p ≡* q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q
 
 (** *** Congruence, one rule per operator
 
@@ -87,11 +95,11 @@ Inductive ax_pre : proc -> proc -> Prop :=
     There is deliberately no rule for [+] beyond the two guard-preserving
     ones below. *)
 
-| ax_par : forall p p' q q', ax_pre p p' -> ax_pre q q' -> ax_pre (p ‖ q) (p' ‖ q')
-| ax_res : forall p q, ax_pre p q -> ax_pre (ν p) (ν q)
+| ax_par : forall p p' q q', p ᴠᴀᴄᴄꜱ⊑ₐₓ p' -> q ᴠᴀᴄᴄꜱ⊑ₐₓ q' -> (p ‖ q) ᴠᴀᴄᴄꜱ⊑ₐₓ (p' ‖ q')
+| ax_res : forall p q, p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> (ν p) ᴠᴀᴄᴄꜱ⊑ₐₓ (ν q)
 (** The omega rule, stated **with an inert context already in place**.
 
-    The bare form [(∀v, ⊢ p^v ⊑ q^v) -> ⊢ g (c?p) ⊑ g (c?q)] is the case
+    The bare form [(∀v, p^v ᴠᴀᴄᴄꜱ⊑ₐₓ q^v) -> g (c?p) ᴠᴀᴄᴄꜱ⊑ₐₓ g (c?q)] is the case
     where the context is [𝟘], and is derived immediately below.  The
     context version is what the completeness recursion needs: a message
     bag sits *outside* the guard and cannot be moved inside it (a guard
@@ -107,8 +115,8 @@ Inductive ax_pre : proc -> proc -> Prop :=
     (forall X, Rc X -> forall z, ~ lts X τ z) ->
     (forall X, Rc X -> forall a z, ~ lts X (ActExt (ActIn a)) z) ->
     (forall X, Rc X -> forall mu X', lts X (ActExt mu) X' -> Rc X') ->
-    (forall X, Rc X -> forall v, ax_pre (X ‖ (p^v)) (X ‖ (q^v))) ->
-    Rc B -> ax_pre (B ‖ g (c ? p)) (B ‖ g (c ? q))
+    (forall X, Rc X -> forall v, (X ‖ (p^v)) ᴠᴀᴄᴄꜱ⊑ₐₓ (X ‖ (q^v))) ->
+    Rc B -> (B ‖ g (c ? p)) ᴠᴀᴄᴄꜱ⊑ₐₓ (B ‖ g (c ? q))
 
 (** *** Rewriting a summand's continuation, in an arbitrary context
 
@@ -122,10 +130,10 @@ Inductive ax_pre : proc -> proc -> Prop :=
     (forall X, Rc X -> forall z, ~ lts X τ z) ->
     (forall X, Rc X -> forall a z, ~ lts X (ActExt (ActIn a)) z) ->
     (forall X, Rc X -> forall mu X', lts X (ActExt mu) X' -> Rc X') ->
-    (forall X, Rc X -> forall v, ax_pre (X ‖ (P^v)) (X ‖ (Q^v))) ->
-    Rc B -> ax_pre (B ‖ g ((c ? P) + G)) (B ‖ g ((c ? Q) + G))
+    (forall X, Rc X -> forall v, (X ‖ (P^v)) ᴠᴀᴄᴄꜱ⊑ₐₓ (X ‖ (Q^v))) ->
+    Rc B -> (B ‖ g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (B ‖ g ((c ? Q) + G))
 | ax_choice_tau : forall (p p' : proc) (gq : gproc),
-    ax_pre p p' -> ax_pre (g ((𝛕 • p) + gq)) (g ((𝛕 • p') + gq))
+    p ᴠᴀᴄᴄꜱ⊑ₐₓ p' -> (g ((𝛕 • p) + gq)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • p') + gq))
 
 (** *** Internal computation, and the greatest lower bound
 
@@ -144,14 +152,14 @@ Inductive ax_pre : proc -> proc -> Prop :=
     process the premise quantifies over a finite, computable set of
     reducts, so nothing infinitary is smuggled in. *)
 
-| ax_tau_step : forall p p', lts p τ p' -> ax_pre p p'
+| ax_tau_step : forall p p', lts p τ p' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ p'
 | ax_int_glb_ctx : forall (Rc : proc -> Prop) (p q1 q2 B : proc),
     (forall X, Rc X -> forall z, ~ lts X τ z) ->
     (forall X, Rc X -> forall a z, ~ lts X (ActExt (ActIn a)) z) ->
     (forall X, Rc X -> forall mu X', lts X (ActExt mu) X' -> Rc X') ->
-    (forall X, Rc X -> ax_pre (X ‖ p) (X ‖ q1)) ->
-    (forall X, Rc X -> ax_pre (X ‖ p) (X ‖ q2)) ->
-    Rc B -> ax_pre (B ‖ p) (B ‖ g ((𝛕 • q1) + (𝛕 • q2)))
+    (forall X, Rc X -> (X ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (X ‖ q1)) ->
+    (forall X, Rc X -> (X ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (X ‖ q2)) ->
+    Rc B -> (B ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (B ‖ g ((𝛕 • q1) + (𝛕 • q2)))
 
 (** *** Managing [𝛕]-summands
 
@@ -163,13 +171,13 @@ Inductive ax_pre : proc -> proc -> Prop :=
     deadlock and [X + 𝟘] does not). *)
 
 | ax_tau_sep_l : forall (X Y : gproc),
-    ax_pre (g (X + (𝛕 • (g Y)))) (g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))))
+    (g (X + (𝛕 • (g Y)))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))))
 | ax_tau_sep_r : forall (X Y : gproc),
-    ax_pre (g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y)))) (g (X + (𝛕 • (g Y))))
+    (g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y)))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (X + (𝛕 • (g Y))))
 | ax_tau_flatten_l : forall (X Y : gproc),
-    gAllTau Y -> ax_pre (g (X + (𝛕 • (g Y)))) (g (X + Y))
+    gAllTau Y -> (g (X + (𝛕 • (g Y)))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (X + Y))
 | ax_tau_flatten_r : forall (X Y : gproc),
-    gAllTau Y -> ax_pre (g (X + Y)) (g (X + (𝛕 • (g Y))))
+    gAllTau Y -> (g (X + Y)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (X + (𝛕 • (g Y))))
 
 (** *** Acceptance-family closure
 
@@ -179,7 +187,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     [ax_tau_sep_l] and [ax_int_l]. *)
 
 | ax_convex : forall (X Y Z : gproc),
-    ax_pre (g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z))))) (g (X + Y))
+    (g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z))))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (X + Y))
 
 (** *** Acceptance-tree uniformity
 
@@ -189,8 +197,8 @@ Inductive ax_pre : proc -> proc -> Prop :=
     an output twin; VACCS does not, there being no output guard. *)
 
 | ax_share_in : forall (c : ChannelData) (P Q : proc) (X' Y' : gproc),
-    ax_pre (g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y')))))
-           (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X'))
+    (g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y')))))
+      ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X'))
 
 (** *** [①] is a [𝟘] on the server side
 
@@ -202,10 +210,10 @@ Inductive ax_pre : proc -> proc -> Prop :=
 (** Stated with a residue, for the same reason as [ax_input_distrib_l]
     below: the two rules that rewrite inside a sum preserve the rewritten
     summand's *guard*, and [①]/[𝟘] are not guards.  Taking [R := 𝟘] and
-    using [ax_cgr] recovers the bare form [⊢ g ① ≂ g 𝟘]. *)
+    using [ax_cgr] recovers the bare form [g ① ᴠᴀᴄᴄꜱ≂ₐₓ g 𝟘]. *)
 
-| ax_success_l : forall R, ax_pre (g (① + R)) (g (𝟘 + R))
-| ax_success_r : forall R, ax_pre (g (𝟘 + R)) (g (① + R))
+| ax_success_l : forall R, (g (① + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (𝟘 + R))
+| ax_success_r : forall R, (g (𝟘 + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (① + R))
 
 (** *** Prefix distributes over choice — in an arbitrary context
 
@@ -225,17 +233,17 @@ Inductive ax_pre : proc -> proc -> Prop :=
     using [ax_cgr] recovers the context-free form. *)
 
 | ax_input_distrib_l : forall (c : ChannelData) (P Q : proc) (R : gproc),
-    ax_pre (g (((c ? P) + (c ? Q)) + R)) (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R))
+    (g (((c ? P) + (c ? Q)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R))
 
 (** *** Flattening the static operators
 
     The expansion law is pure interleaving — no synchronisation term,
     because two guarded sums can never synchronise in VACCS. *)
 
-| ax_expansion_l : forall M N, ax_pre (g M ‖ g N) (g (ext M N + ext_r N M))
-| ax_expansion_r : forall M N, ax_pre (g (ext M N + ext_r N M)) (g M ‖ g N)
-| ax_res_normalize_l : forall M, ax_pre (ν (g M)) (g (resg M))
-| ax_res_normalize_r : forall M, ax_pre (g (resg M)) (ν (g M))
+| ax_expansion_l : forall M N, (g M ‖ g N) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ext M N + ext_r N M))
+| ax_expansion_r : forall M N, (g (ext M N + ext_r N M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M ‖ g N)
+| ax_res_normalize_l : forall M, (ν (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (resg M))
+| ax_res_normalize_r : forall M, (g (resg M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (ν (g M))
 
 (** *** Absorbing an input — the one genuinely asynchronous rule family
 
@@ -275,7 +283,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 | ax_input_drop : forall (c : ChannelData) (P : proc) (G : gproc),
     (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v P)) ->
-    ax_pre (g ((c ? P) + G)) (g G)
+    (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G)
 
 (** The converse direction — a copycat may be *introduced* — is a separate
     rule, and [Harmless] says nothing about it.  Stated for a whole **sum**
@@ -288,7 +296,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     step: [ax_par] with this rule, then [ax_expansion_l], produces one
     mirror summand per channel at once. *)
 
-| ax_ccat_r : forall M, gCopycats M -> ax_pre (g 𝟘) (g M)
+| ax_ccat_r : forall M, gCopycats M -> (g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M)
 
 (** *** Joint removal: restricting a stable sum's channel set
 
@@ -343,13 +351,13 @@ Inductive ax_pre : proc -> proc -> Prop :=
          (proc * MO (ExtAct TypeOfActions)) -> Prop),
     Static p -> Static q -> SettleSim R ->
     R (p ▷ bag l) (q ▷ bag l') ->
-    ax_pre (msgs l ‖ p) (msgs l' ‖ q)
+    (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ q)
 
 | ax_restrict : forall (M M' : gproc),
     (forall al q, lts (g M') al q -> lts (g M) al q) ->
     (forall p, ~ lts (g M) τ p) ->
     BadK (fun _ => False) (offers M') (g M) ->
-    ax_pre (g M) (g M')
+    (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M')
 
 (** An **unstable right-hand side**, taken apart without separating it.
 
@@ -368,14 +376,14 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 | ax_glb_tau : forall (p q : proc),
     (exists q0, lts q τ q0) ->
-    (forall q', lts q τ q' -> ax_pre p q') ->
+    (forall q', lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
     (forall c v q'', lts q (ActExt (ActIn (c,v))) q'' ->
-       ax_pre ((c ! v • 𝟘) ‖ p) q'') ->
+       ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
     (forall c v q'', lts q (ActExt (ActOut (c,v))) q'' ->
        exists p'', lts p (ActExt (ActOut (c,v))) p'') ->
     (forall c v p'' q'', lts p (ActExt (ActOut (c,v))) p'' ->
-       lts q (ActExt (ActOut (c,v))) q'' -> ax_pre p'' q'') ->
-    ax_pre p q
+       lts q (ActExt (ActOut (c,v))) q'' -> p'' ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
+    p ᴠᴀᴄᴄꜱ⊑ₐₓ q
 
 (** *** τ makes you safe — the complement of [ax_restrict]
 
@@ -398,7 +406,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_sub_tau : forall (p q : proc),
     (forall al z, lts q al z -> lts p al z) ->
     (exists z, lts q τ z) ->
-    ax_pre p q
+    p ᴠᴀᴄᴄꜱ⊑ₐₓ q
 
 (** *** The same, with the emissions matched only WEAKLY
 
@@ -427,14 +435,14 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 | ax_glb_weak : forall (p q : proc) (n : nat),
     (exists q0, lts q τ q0) ->
-    (forall q', lts q τ q' -> ax_pre p q') ->
+    (forall q', lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
     (forall c v q'', lts q (ActExt (ActIn (c,v))) q'' ->
-       ax_pre ((c ! v • 𝟘) ‖ p) q'') ->
+       ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
     (forall c v q'', lts q (ActExt (ActOut (c,v))) q'' ->
        res_list_v n c v p <> nil) ->
     (forall c v q'', lts q (ActExt (ActOut (c,v))) q'' ->
-       ax_pre (g (ichoice (res_list_v n c v p))) q'') ->
-    ax_pre p q
+       (g (ichoice (res_list_v n c v p))) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
+    p ᴠᴀᴄᴄꜱ⊑ₐₓ q
 
 (** ** THE MESSAGE-LAYER POOLING RULE
 
@@ -451,22 +459,21 @@ Inductive ax_pre : proc -> proc -> Prop :=
     must-equivalent. *)
 
 | ax_share_msg : forall (c : ChannelData) (v : ValueData) (X Y : proc),
-    ax_pre (g ((𝛕 • (((c ! v • 𝟘) : proc) ‖ X))
+    (g ((𝛕 • (((c ! v • 𝟘) : proc) ‖ X))
              + (𝛕 • (((c ! v • 𝟘) : proc) ‖ Y))))
-           (((c ! v • 𝟘) : proc) ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc))
-.
+      ᴠᴀᴄᴄꜱ⊑ₐₓ (((c ! v • 𝟘) : proc) ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc))
+where "p ᴠᴀᴄᴄꜱ⊑ₐₓ q" := (ax_pre p q).
 
-Notation "⊢ p ≂ q" := (ax_pre p q /\ ax_pre q p) (at level 70).
 
 (** ** Derived rules
 
     Each is admissible from the twenty-nine above; they are recorded here
     rather than as constructors so that the rule set stays minimal. *)
 
-Lemma ax_refl : forall p, ax_pre p p.
+Lemma ax_refl : forall p, p ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof. intros p. apply ax_cgr. apply cgr_refl. Qed.
 
-Lemma ax_cgr_sym : forall p q, p ≡* q -> ax_pre q p.
+Lemma ax_cgr_sym : forall p q, p ≡* q -> q ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof. intros p q H. apply ax_cgr. apply cgr_symm. exact H. Qed.
 
 (** The bare omega rules: the context of [ax_input_ctx] /
@@ -489,7 +496,7 @@ Lemma ax_restrict_settle : forall (M M' : gproc),
   gStatic M -> gStatic M' ->
   (forall m, OutOnly m -> ((g M') ▷ m) ↛ ->
      Settles (emits ((g M') ▷ m)) ((g M) ▷ m)) ->
-  ax_pre (g M) (g M').
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M').
 Proof.
   intros M M' Hsub HM HM' Hcert.
   eapply ax_trans; [ apply ax_cgr; apply ax_nil_par | ].
@@ -502,7 +509,7 @@ Proof.
 Qed.
 
 Lemma ax_input : forall (c : ChannelData) (p q : proc),
-  (forall v, ax_pre (p^v) (q^v)) -> ax_pre (g (c ? p)) (g (c ? q)).
+  (forall v, (p^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (q^v)) -> (g (c ? p)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? q)).
 Proof.
   intros c p q H.
   eapply ax_trans; [ apply ax_cgr; apply ax_nil_par | ].
@@ -516,7 +523,7 @@ Proof.
 Qed.
 
 Lemma ax_int_glb : forall (p q1 q2 : proc),
-  ax_pre p q1 -> ax_pre p q2 -> ax_pre p (g ((𝛕 • q1) + (𝛕 • q2))).
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ q1 -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q2 -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • q1) + (𝛕 • q2))).
 Proof.
   intros p q1 q2 H1 H2.
   eapply ax_trans; [ apply ax_cgr; apply ax_nil_par | ].
@@ -531,7 +538,7 @@ Proof.
 Qed.
 
 Lemma ax_choice_input : forall (c : ChannelData) (P Q : proc) (G : gproc),
-  (forall v, ax_pre (P^v) (Q^v)) -> ax_pre (g ((c ? P) + G)) (g ((c ? Q) + G)).
+  (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) -> (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? Q) + G)).
 Proof.
   intros c P Q G H.
   eapply ax_trans; [ apply ax_cgr; apply ax_nil_par | ].
@@ -546,10 +553,10 @@ Qed.
 
 (** The guarded-sum instance of [ax_tau_step]: an internal choice is
     below each of its branches. *)
-Lemma ax_int_l : forall p q, ax_pre (g ((𝛕 • p) + (𝛕 • q))) p.
+Lemma ax_int_l : forall p q, (g ((𝛕 • p) + (𝛕 • q))) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof. intros p q. apply ax_tau_step. apply lts_choiceL. apply lts_tau. Qed.
 
-Lemma ax_int_r : forall p q, ax_pre (g ((𝛕 • p) + (𝛕 • q))) q.
+Lemma ax_int_r : forall p q, (g ((𝛕 • p) + (𝛕 • q))) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q. eapply ax_trans; [ | apply (ax_int_l q p) ].
   apply ax_cgr. apply cgr_choice_com.
@@ -557,7 +564,7 @@ Qed.
 
 (** A [𝛕] prefix on its own: the context of [ax_choice_tau] is [𝟘], and
     [≡*] removes it on both sides. *)
-Lemma ax_tau : forall p p', ax_pre p p' -> ax_pre (g (𝛕 • p)) (g (𝛕 • p')).
+Lemma ax_tau : forall p p', p ᴠᴀᴄᴄꜱ⊑ₐₓ p' -> (g (𝛕 • p)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (𝛕 • p')).
 Proof.
   intros p p' H.
   eapply ax_trans; [ apply ax_cgr_sym; apply cgr_choice_nil | ].
@@ -568,8 +575,8 @@ Qed.
 (** [Eval_Eq 0 E] is never [None] ([VACCS_Precongruence.Eval_Eq_0_not_none]),
     so a conditional is always structurally congruent to one of its
     branches and needs no rule of its own. *)
-Lemma ax_if : forall E p p' q q', ax_pre p p' -> ax_pre q q' ->
-  ax_pre (If E Then p Else q) (If E Then p' Else q').
+Lemma ax_if : forall E p p' q q', p ᴠᴀᴄᴄꜱ⊑ₐₓ p' -> q ᴠᴀᴄᴄꜱ⊑ₐₓ q' ->
+  (If E Then p Else q) ᴠᴀᴄᴄꜱ⊑ₐₓ (If E Then p' Else q').
 Proof.
   intros E p p' q q' Hp Hq.
   destruct (Eval_Eq 0 E) as [[|]|] eqn:HE;
@@ -587,9 +594,9 @@ Qed.
     The copycat, the responder and the plain swallow are now instances.
     Note [ax_resp] is obtained here at a *constant* channel only because
     its statement mentions [ccat (cst a)]; the underlying fact
-    [⊢ resp a V ⊑ g 𝟘] holds at any channel. *)
+    [resp a V ᴠᴀᴄᴄꜱ⊑ₐₓ g 𝟘] holds at any channel. *)
 
-Lemma ax_ccat_l : forall c, ax_pre (ccat c) (g 𝟘).
+Lemma ax_ccat_l : forall c, (ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘).
 Proof.
   intro c. unfold ccat.
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil_rev | ].
@@ -597,7 +604,7 @@ Proof.
 Qed.
 
 Lemma ax_resp : forall (a : Channel) (V : ValueData),
-  ax_pre (resp a V) (ccat (cst a)).
+  (resp a V) ᴠᴀᴄᴄꜱ⊑ₐₓ (ccat (cst a)).
 Proof.
   intros a V. eapply ax_trans; [ | apply ax_ccat_r; reflexivity ].
   unfold resp.
@@ -606,7 +613,7 @@ Proof.
 Qed.
 
 Lemma ax_swallow : forall (c : ChannelData) (G : gproc),
-  ax_pre (g ((c ? (g 𝟘)) + G)) (g G).
+  (g ((c ? (g 𝟘)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c G. apply ax_input_drop. intro v. simpl. apply bad_nil_any.
 Qed.
@@ -624,7 +631,7 @@ Qed.
 
 Lemma ax_drop_ochans : forall (c : ChannelData) (P : proc) (G : gproc),
   Static P -> (forall d, In d (ochans P) -> d = c) ->
-  ax_pre (g ((c ? P) + G)) (g G).
+  (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c P G HSt Hsub. apply ax_input_drop. intro v.
   apply ochans_sub_Bad.
@@ -633,14 +640,14 @@ Proof.
 Qed.
 
 Corollary ax_drop_no_output : forall (c : ChannelData) (P : proc) (G : gproc),
-  Static P -> ochans P = [] -> ax_pre (g ((c ? P) + G)) (g G).
+  Static P -> ochans P = [] -> (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c P G HSt Hoc. apply ax_drop_ochans; [ exact HSt | ].
   intros d Hd. rewrite Hoc in Hd. contradiction.
 Qed.
 
 Example ax_drop_nested_sink : forall (c d : ChannelData) (G : gproc),
-  ax_pre (g ((c ? ((g (d ? ((g 𝟘) : proc))) : proc)) + G)) (g G).
+  (g ((c ? ((g (d ? ((g 𝟘) : proc))) : proc)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c d G. apply ax_drop_no_output.
   - repeat constructor.
@@ -651,7 +658,7 @@ Qed.
     continuation [c ! bvar₀ • 𝟘] a pour empreinte d'émission [[c]]. *)
 
 Example ax_drop_copycat : forall (c : ChannelData) (G : gproc),
-  ax_pre (g ((c ? (((c ! (bvar 0) • 𝟘)) : proc)) + G)) (g G).
+  (g ((c ? (((c ! (bvar 0) • 𝟘)) : proc)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c G. apply ax_drop_ochans.
   - repeat constructor.
@@ -667,7 +674,7 @@ Qed.
 
 Lemma ax_drop_tau : forall (c : ChannelData) (P : proc) (G : gproc),
   (exists z, lts ((g G) : proc) τ z) ->
-  ax_pre ((g ((c ? P) + G)) : proc) ((g G) : proc).
+  ((g ((c ? P) + G)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g G) : proc).
 Proof.
   intros c P G Htau. apply ax_sub_tau; [ | exact Htau ].
   intros al z Hz. apply lts_choiceR. exact Hz.
@@ -690,9 +697,9 @@ Qed.
 
 Lemma ax_input_drop_upto :
   forall (c : ChannelData) (P Q : proc) (G : gproc),
-  (forall v : ValueData, ax_pre (subst_in_proc 0 v P) (subst_in_proc 0 v Q)) ->
+  (forall v : ValueData, (subst_in_proc 0 v P) ᴠᴀᴄᴄꜱ⊑ₐₓ (subst_in_proc 0 v Q)) ->
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v Q)) ->
-  ax_pre (g ((c ? P) + G)) (g G).
+  (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c P Q G Hpq HQ.
   eapply ax_trans; [ apply ax_choice_input with (Q := Q); exact Hpq | ].
@@ -702,7 +709,7 @@ Qed.
 Lemma ax_input_drop_int_l :
   forall (c : ChannelData) (A B : proc) (G : gproc),
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v A)) ->
-  ax_pre (g ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G)) (g G).
+  (g ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c A B G HA. apply ax_input_drop. intro v. simpl.
   eapply bad_step; [ apply lts_choiceL; apply lts_tau | apply HA ].
@@ -711,10 +718,27 @@ Qed.
 Lemma ax_input_drop_int_r :
   forall (c : ChannelData) (A B : proc) (G : gproc),
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v B)) ->
-  ax_pre (g ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G)) (g G).
+  (g ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c A B G HB. apply ax_input_drop. intro v. simpl.
   eapply bad_step; [ apply lts_choiceR; apply lts_tau | apply HB ].
 Qed.
 
 End VACCS_DefinitionAxiomatic.
+
+(** ** Notations for the axiomatic preorder
+
+    [p ᴠᴀᴄᴄꜱ⊑ₐₓ q] and [p ᴠᴀᴄᴄꜱ≂ₐₓ q], after the semantic [p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q];
+    VCCS has [p ᴠᴄᴄꜱ⊑ₐₓ q].  The calculus prefix is not decoration: the two
+    developments each define their own [ax_pre], and notations are global,
+    so an unprefixed token would clash as soon as one file imports both.
+
+    They are declared here, *outside* the section: a [Notation] inside a
+    [Section] is discharged at [End], which is why an earlier in-section
+    notation was usable only within this file.  A turnstile form is not an
+    option in these files: stdpp's [base] claims a bare [x ⊑ y] for
+    [sqsubseteq], and a notation reusing that symbol parses its inner
+    variable at level 200, swallowing the [⊑]. *)
+
+Notation "p ᴠᴀᴄᴄꜱ⊑ₐₓ q" := (ax_pre p q) (at level 70).
+Notation "p ᴠᴀᴄᴄꜱ≂ₐₓ q" := (p ᴠᴀᴄᴄꜱ⊑ₐₓ q /\ q ᴠᴀᴄᴄꜱ⊑ₐₓ p) (at level 70).

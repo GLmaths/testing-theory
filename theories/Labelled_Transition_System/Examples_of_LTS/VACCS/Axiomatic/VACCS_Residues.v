@@ -60,7 +60,7 @@ Context `{VP : VACCS_Parameters}.
 
     Ported from VCCS's [CompletenessAx.v].  The singleton case is
     [𝛕•p + 𝛕•p], not [𝛕•p]: the obvious version would need Milner's first
-    [𝛕]-law, [⊢ g (𝛕 • p) ≂ p], which this system does not have (no rule
+    [𝛕]-law, [(g (𝛕 • p)) ᴠᴀᴄᴄꜱ≂ₐₓ p], which this system does not have (no rule
     has a lone [𝛕]-guard on either side).  Duplicating sidesteps the
     question, and it is what makes [VACCS_Matching.ax_ichoice_below] hold
     at a singleton. *)

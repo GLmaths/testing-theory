@@ -325,12 +325,12 @@ Qed.
     derivation route provably passes through a *false* intermediate.
 
     `ax_input_drop` discards the [b]-summand at once ([𝟘] is harmless at
-    any set), leaving the goal [⊢ g (a ? PP) ⊑ g 𝟘] — and that is not
+    any set), leaving the goal [(g (a ? PP)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] — and that is not
     merely underivable, it is **unsound**: [PP_passes_UU] plus
     [below_nil_iff] give [g (a ? PP) ⋢ₘᵤₛₜᵢ g 𝟘].  The two guards have to
     go together, which is [must_i_restrict]'s shape and not any rule's.
 
-    Whether the 24-rule system derives [⊢ g MM ⊑ g 𝟘] by some other route
+    Whether the 24-rule system derives [(g MM) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] by some other route
     is open; showing it does not would need an invariant over
     derivations, in the style of the [ax_choice] unsoundness argument but
     harder, and is not attempted. *)
@@ -381,7 +381,7 @@ Qed.
 
     [ax_input_drop] and its up-to form [ax_input_drop_upto] are the only
     rules that discard a summand, and both ask for a target [Q] with
-    [⊢ P^v ⊑ Q^v] and [Q^v] harmless.  **No such [Q] exists here**, and
+    [(P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)] and [Q^v] harmless.  **No such [Q] exists here**, and
     the reason is one line: the semantic predicate is *downward closed*
     along [⊑ₘᵤₛₜᵢ], so a harmless [Q] above [PP] would make [PP] harmless —
     and [PP_passes_UU] says it is not.
@@ -490,7 +490,7 @@ Proof. apply BadK_below_nil. exact MM_BadK. Qed.
     condition is vacuous; [g MM] is stable; and [MM_BadK] certifies it,
     transported to [offers 𝟘] by [BadK_mono]. *)
 
-Theorem MM_derivable : ax_pre (g MM) ((g 𝟘) : proc).
+Theorem MM_derivable : (g MM) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   apply ax_restrict.
   - intros al q Hl. inversion Hl.
@@ -886,7 +886,7 @@ Proof.
   - inversion H3; subst. apply P2_not_below_nil.
 Qed.
 
-(** …and yet [⊢ g PC ⊑ g 𝟘] IS derivable — by [ax_share_in]
+(** …and yet [(g PC) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] IS derivable — by [ax_share_in]
 
     The negative result above says no *single* τ-successor works.  It does
     not say the inequation is out of reach, and it is not: the rule that
@@ -907,7 +907,7 @@ Qed.
     ([ax_tau_step]).  Whether the existing pooling rules suffice in
     general is exactly the remaining open question. *)
 
-Lemma ax_PC_below_nil : ax_pre ((g PC) : proc) ((g 𝟘) : proc).
+Lemma ax_PC_below_nil : ((g PC) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   unfold PC, P1, P2.
   eapply ax_trans.
@@ -1232,7 +1232,7 @@ Qed.
 
       MDc := a ? (P1 ⊕ P2)        PCfgC := msgs [(a,v)] ‖ g MDc
 
-    - the merge is **derivable**: [⊢ PCfg ⊑ PCfgC] ([ax_PCfg_merge]);
+    - the merge is **derivable**: [PCfg ᴠᴀᴄᴄꜱ⊑ₐₓ PCfgC] ([ax_PCfg_merge]);
     - the delivery is now **deterministic** ([PCfgC_step_inv]) — one
       guard, one successor;
     - and that successor **is** below the target, because it is
@@ -1252,7 +1252,7 @@ Qed.
 Definition MDc : gproc := (cst a) ? ((g PC) : proc).
 Definition PCfgC : proc := msgs [(cst a ▷ cst v)] ‖ g MDc.
 
-Lemma ax_PCfg_merge : ax_pre PCfg PCfgC.
+Lemma ax_PCfg_merge : PCfg ᴠᴀᴄᴄꜱ⊑ₐₓ PCfgC.
 Proof.
   unfold PCfg, PCfgC. apply ax_par; [ apply ax_refl | ].
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil_rev | ].
@@ -1277,7 +1277,7 @@ Proof.
 Qed.
 
 Theorem canonical_delivery_is_deterministic_and_works :
-  ax_pre PCfg PCfgC
+  PCfg ᴠᴀᴄᴄꜱ⊑ₐₓ PCfgC
   /\ (forall p', lts PCfgC τ p' -> p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
 Proof.
   split; [ apply ax_PCfg_merge | ].
@@ -1945,8 +1945,8 @@ Qed.
     branche [SelfRetBag] du résidu. *)
 
 Lemma ax_MCert_bag_below_nil :
-  ax_pre ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))
-         ((msgs [(cst a ▷ cst v)]) ‖ ((g (𝟘 : gproc)) : proc)).
+  ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((msgs [(cst a ▷ cst v)]) ‖ ((g (𝟘 : gproc)) : proc)).
 Proof.
   eapply (cfg_copycat_guard_below_bag _ [] (cst a) (cst v) _
             [((cst b) ? ((cst e) ! (cst y) • 𝟘))]).
@@ -2636,8 +2636,8 @@ Qed.
     la réfutation de la route « descendre par un résidu d'émission ». *)
 
 Lemma ax_OCp_below_msg :
-  ax_pre ((g OCp) : proc)
-         (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc)).
+  ((g OCp) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc)).
 Proof.
   eapply ax_trans;
     [ apply (ax_share_msg (cst oc) (cst v) ((g P1) : proc) ((g P2) : proc)) | ].
@@ -2651,7 +2651,7 @@ Qed.
 
     [VACCS_Matching.residue_reduces_to_bare] ramène le résidu à une
     comparaison **nue** : le rejeu produit un [qq] τ-stable non émetteur
-    et il suffirait que [⊢ qq ⊑ g M].  Ce [qq] est le témoin que
+    et il suffirait que [qq ᴠᴀᴄᴄꜱ⊑ₐₓ (g M)].  Ce [qq] est le témoin que
     [bhv_pre_cond2] rend à la **trace de vidange** — et il est
     existentiel, donc on ne le choisit pas.
 
@@ -2715,8 +2715,8 @@ Qed.
 Theorem OCp_refutes_the_choices :
      ((g OCp) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ
        (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc))
-  /\ ax_pre ((g OCp) : proc)
-       (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc))
+  /\ ((g OCp) : proc)
+       ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc))
   /\ (forall p1 p'', ((g OCp) : proc) ⟹[[]] p1 ->
         lts p1 (ActExt (ActOut ((cst oc), (cst v)))) p'' ->
         ~ (p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [] ‖ ((g (𝟘 : gproc)) : proc))))
@@ -2726,6 +2726,175 @@ Proof.
   split; [ exact OCp_below_cfg | ].
   split; [ exact ax_OCp_below_msg | ].
   split; [ exact OCp_no_good_out_residue | exact no_drain_witness_for_OCp ].
+Qed.
+
+(* ================================================================== *)
+(*  OÙ EXACTEMENT [ax_settle_sim] MANQUE — la clause 2, et rien d'autre *)
+(*                                                                    *)
+(*  [ax_settle_sim] est la seule règle dont la prémisse soit « presque *)
+(*  la sémantique » : elle demande une [SettleSim], dont les trois     *)
+(*  clauses sont                                                      *)
+(*                                                                    *)
+(*    1.  y ⟶τ y'  →  ∃x', x ⟹[[]] x' ∧ R x' y'                        *)
+(*    2.  y ⟶[μ] y' →  ∃x', x ⟹{μ}  x' ∧ R x' y'                      *)
+(*    3.  y ↛       →  Settles (emits y) x                            *)
+(*                                                                    *)
+(*  Prise pour [R] la relation sémantique elle-même :                 *)
+(*                                                                    *)
+(*    — la clause 1 VAUT, et gratuitement : un τ du serveur est déjà   *)
+(*      un pas [⊑ₘᵤₛₜᵢ] ([must_i_tau_below]), donc [x' := x] convient  *)
+(*      ([below_tau_target], et [below_tau_run_target] pour un run) ;  *)
+(*    — la clause 3 VAUT : c'est [must_i_cond2_nil], la lecture de     *)
+(*      [bhv_pre_cond2] à la trace vide ;                             *)
+(*    — la clause 2 ÉCHOUE, et [settle_clause2_fails_at_OCp] en donne  *)
+(*      le témoin.                                                    *)
+(*                                                                    *)
+(*  C'est donc la clause 2 — « épingler la gauche à un état après une  *)
+(*  action visible » — qui fait à la fois la NON-VACUITÉ de la règle   *)
+(*  et son INCOMPLÉTUDE.  Cela recoupe l'objection générale déjà       *)
+(*  consignée : une prémisse de simulation n'est non vide que si elle  *)
+(*  épingle la gauche à un état unique.                               *)
+(*                                                                    *)
+(*  CONSÉQUENCE POUR [HardResidue], et c'est l'énoncé le plus net      *)
+(*  obtenu de la question ouverte :                                   *)
+(*                                                                    *)
+(*    [HardResidue] est vrai SI ET SEULEMENT SI les autres règles      *)
+(*    couvrent exactement les échecs de la clause 2.                   *)
+(*                                                                    *)
+(*  Sur [OCp], l'échec EST couvert — par [ax_share_msg]                *)
+(*  ([ax_OCp_below_msg]).  Savoir si tout échec l'est est la question. *)
+(* ================================================================== *)
+
+(** Clause 1, gratuite : un τ de la cible ne coûte rien, [x' := x]. *)
+Lemma below_tau_target : forall (p q q' : proc),
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'.
+Proof.
+  intros p q q' Hpq Hτ t Ht.
+  apply (must_i_tau_below _ _ Hτ). apply Hpq. exact Ht.
+Qed.
+
+Lemma below_tau_run_target : forall (p q q' : proc),
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> q ⟹[[]] q' -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'.
+Proof.
+  intros p q q' Hpq Hrun t Ht.
+  eapply must_preserved_by_weak_nil_srv; [ | exact Hrun ].
+  apply Hpq. exact Ht.
+Qed.
+
+Lemma below_of_tau_run : forall (p q : proc), p ⟹[[]] q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
+Proof.
+  intros p q H t Ht. eapply must_preserved_by_weak_nil_srv; [ exact Ht | exact H ].
+Qed.
+
+(** Clause 2 : le témoin.  La cible émet [(oc,v)] et son résidu est
+    [msgs [] ‖ g 𝟘] ; AUCUN état que la gauche atteint sur la même
+    action ne se place sous ce résidu — les résidus d'émission de [OCp]
+    sont [𝟘 ‖ P1] et [𝟘 ‖ P2] ([OCp_out_residue_inv]), aux exigences
+    contradictoires.  Un τ-run APRÈS l'émission n'aide pas : il monte
+    dans le préordre ([below_of_tau_run]), donc il ne peut pas rattraper
+    un résidu déjà trop fort. *)
+Theorem settle_clause2_fails_at_OCp :
+  ((g OCp) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ
+    (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc))
+  /\ (forall x, ((g OCp) : proc) ⟹{ActOut ((cst oc), (cst v))} x ->
+        ~ (x ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ
+             (msgs ([] : list TypeOfActions) ‖ ((g (𝟘 : gproc)) : proc)))).
+Proof.
+  split; [ apply OCp_below_cfg | ].
+  intros x Hx Hbad.
+  destruct (wt_decomp_one Hx) as (r1 & r2 & Hrun1 & Hstep & Hrun2).
+  eapply OCp_no_good_out_residue; [ exact Hrun1 | exact Hstep | ].
+  intros t Ht. apply Hbad. apply (below_of_tau_run _ _ Hrun2). exact Ht.
+Qed.
+
+(** ** THE POOLING ROUTE, EXERCISED ON THE VERY WITNESS THAT REFUTES THE
+       DESCENT
+
+    [out_choice_is_false] shows no single weak output residue of [g OCp]
+    is below the target's residue, so
+    [VACCS_Matching.ax_below_cfg_of_out_choice] cannot fire here.  But
+    [VACCS_Matching.ax_below_of_out_pool] takes the INTERNAL CHOICE of
+    all of them, and that goes through: below, the residue list is shown
+    to contain both [𝟘 ‖ P1] and [𝟘 ‖ P2], their internal choice is
+    below [𝟘] (because [PC] is — [ax_PC_below_nil]), and the pooling law
+    [ax_share_msg] does the rest inside [ax_below_of_out_pool].
+
+    So [ax_OCp_below_msg] (which applies [ax_share_msg] by hand) is
+    re-derived by the GENERIC route.  A control on the hardest instance
+    the file has, and the reason the file's negative results kept
+    pointing at pooling rather than descent. *)
+
+Lemma dup3_below_PC :
+  ((g ((𝛕 • ((g P1) : proc)) + ((𝛕 • ((g P2) : proc)) + (𝛕 • ((g P2) : proc))))) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g PC) : proc).
+Proof.
+  apply ax_sub_tau.
+  - intros al z Hz. unfold PC in Hz. inversion Hz; subst.
+    + apply lts_choiceL. exact H3.
+    + apply lts_choiceR. apply lts_choiceL. exact H3.
+  - exists ((g P1) : proc). apply lts_choiceL. apply lts_tau.
+Qed.
+
+(** The internal choice of [OCp]'s two output residues is below [𝟘] —
+    although NEITHER member is ([NilPi_not_below_nil]).  That asymmetry
+    is the whole point: [ichoice] is the conjunction, and it is the
+    conjunction that the semantics constrains. *)
+Lemma ax_residues_below_nil :
+  ((g (VACCS_Residues.ichoice
+      [(((g (𝟘 : gproc)) : proc) ‖ ((g P1) : proc));
+       (((g (𝟘 : gproc)) : proc) ‖ ((g P2) : proc))])) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
+Proof.
+  eapply ax_trans; [ | apply ax_PC_below_nil ].
+  eapply ax_trans; [ | apply dup3_below_PC ].
+  apply ax_cgr. simpl.
+  apply cgr_fullchoice.
+  - apply cgr_tau. apply cgr_nil_par_l.
+  - apply cgr_fullchoice; apply cgr_tau; apply cgr_nil_par_l.
+Qed.
+
+Lemma OCp_res_list_has_both : forall n, (size ((g OCp) : proc) < n)%nat ->
+  In (((g (𝟘 : gproc)) : proc) ‖ ((g P1) : proc))
+     (VACCS_Residues.res_list_v n (cst oc) (cst v) ((g OCp) : proc))
+  /\ In (((g (𝟘 : gproc)) : proc) ‖ ((g P2) : proc))
+     (VACCS_Residues.res_list_v n (cst oc) (cst v) ((g OCp) : proc)).
+Proof.
+  intros n Hn. split.
+  - eapply VACCS_Residues.res_list_v_complete;
+      [ apply OCp_static | exact Hn | | ].
+    + eapply wt_tau; [ apply lts_choiceL; apply lts_tau | apply wt_nil ].
+    + unfold MsgC. apply lts_parL. apply lts_output.
+  - eapply VACCS_Residues.res_list_v_complete;
+      [ apply OCp_static | exact Hn | | ].
+    + eapply wt_tau; [ apply lts_choiceR; apply lts_tau | apply wt_nil ].
+    + unfold MsgC. apply lts_parL. apply lts_output.
+Qed.
+
+Theorem ax_OCp_below_msg_by_pooling :
+  ((g OCp) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc), (cst v))] ‖ ((g (𝟘 : gproc)) : proc)).
+Proof.
+  destruct (cfg_out_of_perm [((cst oc),(cst v))] [] (cst oc) (cst v)
+              ((g (𝟘 : gproc)) : proc) (reflexivity _)) as (r & Hr & Hrc).
+  destruct (OCp_res_list_has_both (S (size ((g OCp) : proc)))
+              (Nat.lt_succ_diag_r _)) as (Hin1 & Hin2).
+  eapply (ax_below_of_out_pool ((g OCp) : proc) _ r (cst oc) (cst v)
+            (S (size ((g OCp) : proc)))).
+  - apply OCp_static.
+  - repeat constructor.
+  - lia.
+  - apply OCp_below_cfg.
+  - exact Hr.
+  - eapply ax_trans.
+    + apply (ichoice_ax_mono _ [(((g (𝟘 : gproc)) : proc) ‖ ((g P1) : proc));
+                                (((g (𝟘 : gproc)) : proc) ‖ ((g P2) : proc))]).
+      * discriminate.
+      * intros z Hz. simpl in Hz. destruct Hz as [Hz|[Hz|[]]]; subst z.
+        -- eexists. split; [ exact Hin1 | apply ax_refl ].
+        -- eexists. split; [ exact Hin2 | apply ax_refl ].
+    + eapply ax_trans; [ apply ax_residues_below_nil | ].
+      apply ax_cgr. apply cgr_symm.
+      etransitivity; [ exact Hrc | ]. simpl. apply cgr_nil_par_l.
 Qed.
 
 End VACCS_DropProbes.
@@ -3136,7 +3305,7 @@ Qed.
     lui seul, qui reste à prouver. *)
 
 Lemma phaseA_holds_on_regen_probe :
-  ax_pre PR ((msgs lr) ‖ ((g (mirrorN ((g MR) : proc) 𝟘)) : proc)).
+  PR ᴠᴀᴄᴄꜱ⊑ₐₓ ((msgs lr) ‖ ((g (mirrorN ((g MR) : proc) 𝟘)) : proc)).
 Proof.
   simpl.
   eapply ax_trans; [ apply ax_tau_step; exact PR_tau_b | ].
@@ -4455,8 +4624,8 @@ End VACCS_DrainProbe.
     does not remove the [ν] but pushes it into each guard's continuation.
     Removing it there means rewriting **under an input guard**, i.e.
     feeding the omega rule [ax_input], which consumes a *single open*
-    continuation: from [⊢ ν P ≂ P'] between two open terms one would need
-    [∀ v, ⊢ (ν P)^v ≂ P'^v].
+    continuation: from [(ν P) ᴠᴀᴄᴄꜱ≂ₐₓ P'] between two open terms one would need
+    [∀ v, ((ν P)^v) ᴠᴀᴄᴄꜱ≂ₐₓ (P'^v)].
 
     So the route wants a **substitution lemma for [ax_pre]**, proved by
     induction on the derivation.  That proof cannot work: its
@@ -4516,7 +4685,7 @@ Qed.
 (** Read at the rule: [ax_tau_step]'s premise does not survive the
     substitution its conclusion would have to survive. *)
 Corollary ax_tau_step_not_substitutive :
-  ax_pre SP ((g ①) : proc)
+  SP ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ①) : proc)
   /\ ~ lts (subst_in_proc 0 (cst sv) SP) τ
           (subst_in_proc 0 (cst sv) ((g ①) : proc)).
 Proof.
@@ -4524,3 +4693,133 @@ Proof.
 Qed.
 
 End VACCS_SubstProbe.
+
+(** * Localising the gap in [SettleSim]: clause 2 fails ONLY on outputs
+
+    [ax_settle_sim] is the only rule general enough to carry
+    [HardResidue], and its premise is a [SettleSim].  So the question
+    "is [HardResidue] true?" reduces to: how far is the *semantic*
+    relation itself from being a [SettleSim]?
+
+    Its three clauses split cleanly, and this section pins the split
+    down.  Writing [FwBelow x y] for "every test [x] passes, [y]
+    passes" at the FORWARDER type — which is the level [SettleSim]
+    lives at:
+
+    - clause 1 (the right takes a [τ]): TRUE, by answering with zero
+      steps — [settle_clause1_holds];
+    - clause 2 at an INPUT: TRUE, unconditionally —
+      [settle_clause2_holds_for_inputs].  This is where the forwarder
+      is essential: a *bare* process need not offer the input at all
+      ([g 𝟘 ⊑ₘᵤₛₜᵢ ccat c]), but a forwarder state absorbs ANY input
+      into its buffer ([fw_input_always]), so a matching answer always
+      exists;
+    - clause 2 at an OUTPUT: FALSE — [settle_clause2_fails_at_OCp].
+
+    Hence [settle_clause2_only_fails_on_outputs]: for the semantic
+    relation, clause 2 can only fail on an output.  Together with
+    clause 3 ([VACCS_Cond2.must_i_cond2_nil], which holds for the
+    relation itself), the residue is therefore exactly this: the
+    right-hand side emits, and no weak output residue of the left is
+    below the corresponding residue of the right.
+
+    That is [OutChoice], machine-refuted in [out_choice_is_false] — so
+    the residue is real.  But on [OCp], the very witness that refutes
+    it, the failure IS covered, by [ax_share_msg] (see
+    [ax_OCp_below_msg]).  **[HardResidue] is true iff the other rules
+    cover exactly the clause-2-on-output failures.** *)
+
+Section VACCS_Clause2.
+
+Context `{VP : VACCS_Parameters}.
+
+(** The semantic preorder, read at the forwarder type.  [ctx_pre] would
+    do, but spelling it out avoids any instance ambiguity — the pair
+    type carries both [VACCS_gLts] and the forwarder instance. *)
+Definition FwBelow (x y : proc * MO (ExtAct TypeOfActions)) : Prop :=
+  forall e : proc, x must_pass e -> y must_pass e.
+
+(** Adding the same pending message on both sides preserves the
+    relation.  [fw_msg_swap] moves the message from the buffer to the
+    client on either side, so this is two rewrites and nothing else. *)
+Lemma fw_below_add_msg : forall (a : TypeOfActions) (p q : proc)
+    (m m' : MO (ExtAct TypeOfActions)),
+  FwBelow (p ▷ m) (q ▷ m') ->
+  FwBelow (p ▷ ({[+ ActOut a +]} ⊎ m)) (q ▷ ({[+ ActOut a +]} ⊎ m')).
+Proof.
+  intros [c v] p q m m' H e Hm.
+  apply fw_msg_swap. apply H. apply fw_msg_swap. exact Hm.
+Qed.
+
+(** …and if the right-hand side CONSUMES the message instead of storing
+    it, the left is still below: the buffered message makes the right's
+    delivery available, and a server [τ] only weakens
+    ([must_preserved_by_lts_tau_srv]).  This is the forwarder-level
+    counterpart of [VACCS_Matching.must_i_feed_below]. *)
+Lemma fw_below_feed : forall (a : TypeOfActions) (p q q' : proc)
+    (m m' : MO (ExtAct TypeOfActions)),
+  FwBelow (p ▷ m) (q ▷ m') -> lts q (ActExt (ActIn a)) q' ->
+  FwBelow (p ▷ ({[+ ActOut a +]} ⊎ m)) (q' ▷ m').
+Proof.
+  intros a p q q' m m' H Hin e Hm.
+  assert (H1 : (q ▷ ({[+ ActOut a +]} ⊎ m')) must_pass e).
+  { apply (fw_below_add_msg a p q m m' H). exact Hm. }
+  eapply must_preserved_by_lts_tau_srv; [ exact H1 | ].
+  apply fw_tau_deliver. exact Hin.
+Qed.
+
+(** ** Clause 2 at an input: TRUE, with no side condition
+
+    The left answers by ABSORBING the input into its own buffer, which
+    is available at every forwarder state whatever the process does
+    ([fw_input_always]).  [fw_ext_shape] then leaves exactly the two
+    cases the two lemmas above cover. *)
+Theorem settle_clause2_holds_for_inputs :
+  forall (p q : proc) (m m' : MO (ExtAct TypeOfActions)) (a : TypeOfActions) y',
+  FwBelow (p ▷ m) (q ▷ m') ->
+  (q ▷ m') ⟶[ActIn a] y' ->
+  exists x', (p ▷ m) ⟹{ActIn a} x' /\ FwBelow x' y'.
+Proof.
+  intros p q m m' a y' H Hstep.
+  exists (p ▷ ({[+ ActOut a +]} ⊎ m)).
+  split.
+  - eapply wt_act; [ apply fw_input_always | apply wt_nil ].
+  - destruct (fw_ext_shape q m' (ActIn a) y' Hstep) as
+      [ (q' & Hq & Heq) | [ (b & Hb & Heq) | (b & m2 & Hb & _ & _) ] ].
+    + subst y'. eapply fw_below_feed; [ exact H | exact Hq ].
+    + injection Hb as Hb. subst b. subst y'.
+      apply (fw_below_add_msg a p q m m' H).
+    + discriminate Hb.
+Qed.
+
+(** ** Clause 1: TRUE, by answering with zero steps *)
+Theorem settle_clause1_holds :
+  forall (x y y' : proc * MO (ExtAct TypeOfActions)),
+  FwBelow x y -> y ⟶ y' -> exists x', x ⟹[[]] x' /\ FwBelow x' y'.
+Proof.
+  intros x y y' H Hstep. exists x. split; [ apply wt_nil | ].
+  intros e Hm. eapply must_preserved_by_lts_tau_srv; [ | exact Hstep ].
+  apply H. exact Hm.
+Qed.
+
+(** ** The localisation
+
+    For the semantic relation, clause 2 can only fail on an OUTPUT.
+    With clause 1 (above) and clause 3
+    ([VACCS_Cond2.must_i_cond2_nil]) both holding, that is the whole
+    gap between the preorder and a [SettleSim] — and hence, since
+    [ax_settle_sim] is the rule that would carry [HardResidue], the
+    whole open question. *)
+Theorem settle_clause2_only_fails_on_outputs :
+  forall (x y : proc * MO (ExtAct TypeOfActions)) mu y',
+  FwBelow x y -> y ⟶[mu] y' ->
+  (exists x', x ⟹{mu} x' /\ FwBelow x' y')
+  \/ (exists a, mu = ActOut a).
+Proof.
+  intros [p m] [q m'] mu y' H Hstep.
+  destruct mu as [a|a].
+  - left. eapply settle_clause2_holds_for_inputs; [ exact H | exact Hstep ].
+  - right. exists a. reflexivity.
+Qed.
+
+End VACCS_Clause2.

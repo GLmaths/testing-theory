@@ -186,7 +186,7 @@ Qed.
     matching argument discards the leaves it does not need. *)
 
 Lemma leaves_below : forall M, gStatic M -> tau_nf M ->
-  forall A, A ∈ leaves M -> ax_pre (g M) (g A).
+  forall A, A ∈ leaves M -> (g M) ᴠᴄᴄꜱ⊑ₐₓ (g A).
 Proof.
   induction M as (M & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ gsize Nat.lt_wf_0)).
@@ -216,7 +216,7 @@ Proof. intros M HM. apply rebuild_gStatic. apply leaves_gStatic. exact HM. Qed.
     commutation in between, because the rule only ever rewrites the
     leftmost summand. *)
 
-Lemma ax_leafsum : forall M, gStatic M -> tau_nf M -> ax_pre (g M) (g (leafsum M)).
+Lemma ax_leafsum : forall M, gStatic M -> tau_nf M -> (g M) ᴠᴄᴄꜱ⊑ₐₓ (g (leafsum M)).
 Proof.
   induction M as (M & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ gsize Nat.lt_wf_0)).
@@ -229,9 +229,9 @@ Proof.
     + inversion HMst; subst.
       inversion H3; subst. inversion H4; subst.
       inversion H0; subst. inversion H5; subst.
-      assert (Hl1 : ax_pre (g M1) (g (leafsum M1)))
+      assert (Hl1 : (g M1) ᴠᴄᴄꜱ⊑ₐₓ (g (leafsum M1)))
         by (apply IH; [simpl; lia | exact H6 | exact H1]).
-      assert (Hl2 : ax_pre (g M2) (g (leafsum M2)))
+      assert (Hl2 : (g M2) ᴠᴄᴄꜱ⊑ₐₓ (g (leafsum M2)))
         by (apply IH; [simpl; lia | exact H7 | exact H2]).
       eapply ax_trans; [apply (ax_choice_tau (g M1) (g (leafsum M1)) (𝛕 • (g M2))); exact Hl1 |].
       eapply ax_trans;
@@ -351,7 +351,7 @@ Qed.
 Theorem ax_convex_anywhere : forall W A Y Z,
   gStatic A -> Forall gStatic Y -> Forall gStatic Z ->
   Permutation (summands W) (summands A ++ (Y ++ Z)) ->
-  ax_pre (g ((𝛕 • (g A)) + (𝛕 • (g W)))) (g (A + rebuild Y)).
+  (g ((𝛕 • (g A)) + (𝛕 • (g W)))) ᴠᴄᴄꜱ⊑ₐₓ (g (A + rebuild Y)).
 Proof.
   intros W A Y Z HA HY HZ Hperm.
   assert (HrY : gStatic (rebuild Y)) by (apply rebuild_gStatic; exact HY).
@@ -419,8 +419,8 @@ Qed.
 Lemma ax_match_lists : forall lw ln,
   Forall gStatic lw -> Forall gStatic ln ->
   Forall gStable lw -> Forall gStable ln ->
-  Forall2 (fun w n => ax_pre (g w) (g n)) lw ln ->
-  ax_pre (g (rebuild lw)) (g (rebuild ln)).
+  Forall2 (fun w n => (g w) ᴠᴄᴄꜱ⊑ₐₓ (g n)) lw ln ->
+  (g (rebuild lw)) ᴠᴄᴄꜱ⊑ₐₓ (g (rebuild ln)).
 Proof.
   intros lw ln Hsw Hsn Hbw Hbn H2.
   induction H2 as [| w n lw ln Hwn H2 IH]; simpl; [apply ax_refl; repeat constructor |].
@@ -452,7 +452,7 @@ Qed.
     Two design points:
     - The singleton case is [(𝛕 • p) + (𝛕 • p)] rather than the obvious
       [𝛕 • p], so that [ax_int_l]/[ax_int_glb] apply directly. The
-      obvious version would need [⊢ g (𝛕 • p) ≂ p] (Milner's first
+      obvious version would need [(g (𝛕 • p)) ᴠᴄᴄꜱ≂ₐₓ p] (Milner's first
       [𝛕]-law), which is *not* evidently derivable here — no rule has a
       lone [𝛕]-guard on either side. Duplicating sidesteps the question;
       it does not arise from [full_normalize] either, whose [⊕]-nodes are
@@ -489,7 +489,7 @@ Proof.
 Qed.
 
 Lemma ax_ichoice_below : forall l p, Forall Static l -> p ∈ l ->
-  ax_pre (g (ichoice l)) p.
+  (g (ichoice l)) ᴠᴄᴄꜱ⊑ₐₓ p.
 Proof.
   induction l as [|p0 l IH]; intros p Hst Hin; [set_solver |].
   inversion Hst as [|? ? Hp0 Hl]; subst.
@@ -505,7 +505,7 @@ Proof.
 Qed.
 
 Lemma ax_ichoice_glb : forall l q, l <> [] -> Forall Static l ->
-  (forall p, p ∈ l -> ax_pre q p) -> ax_pre q (g (ichoice l)).
+  (forall p, p ∈ l -> q ᴠᴄᴄꜱ⊑ₐₓ p) -> q ᴠᴄᴄꜱ⊑ₐₓ (g (ichoice l)).
 Proof.
   induction l as [|p0 l IH]; intros q Hne Hst Hall; [contradiction |].
   inversion Hst as [|? ? Hp0 Hl]; subst.
@@ -704,7 +704,7 @@ Qed.
 Lemma ax_ichoice_same_elems : forall l l', l <> [] -> l' <> [] ->
   Forall Static l -> Forall Static l' ->
   (forall p, p ∈ l <-> p ∈ l') ->
-  ax_pre (g (ichoice l)) (g (ichoice l')).
+  (g (ichoice l)) ᴠᴄᴄꜱ⊑ₐₓ (g (ichoice l')).
 Proof.
   intros l l' Hne Hne' Hst Hst' Hiff.
   apply ax_ichoice_glb; [exact Hne' | exact Hst' |].
@@ -716,7 +716,7 @@ Qed.
     [after M mu] is a list of *reducts*. That is enough for an output
     summand, whose continuation is a closed term. It is **not** enough
     for an input: [ax_input] is the omega rule
-    [(∀v, ⊢ P^v ⊑ Q^v) -> ⊢ g (c?P) ⊑ g (c?Q)], so the left-hand side
+    [(∀v, (P^v) ᴠᴄᴄꜱ⊑ₐₓ (Q^v)) -> (g (c?P)) ᴠᴄᴄꜱ⊑ₐₓ (g (c?Q))], so the left-hand side
     needs an *open* [P] whose every instance [P^v] is "M after [(c,v)?]".
     Such a [P] can only be built by collecting the leaves' input
     continuations **before** substitution — which is what [in_conts]
@@ -1027,7 +1027,7 @@ Qed.
     derivation aims at is built *from the right-hand side's own
     summands*: each guard is kept and its continuation replaced by the
     corresponding "[M] after that action". [ax_match_lists] then reduces
-    [⊢ g (mirror) ⊑ g N] to the two premises [out_cont_below] and
+    [(g (mirror)) ᴠᴄᴄꜱ⊑ₐₓ (g N)] to the two premises [out_cont_below] and
     [in_cont_below] supply, one per summand.
 
     Building the mirror from [N] rather than from [M]'s leaves has a
@@ -1187,8 +1187,8 @@ Qed.
 
 Lemma ax_ichoice_app_l : forall l1 l2, l1 <> [] -> l2 <> [] ->
   Forall Static l1 -> Forall Static l2 ->
-  ax_pre (g (ichoice (l1 ++ l2)))
-         (g ((𝛕 • (g (ichoice l1))) + (𝛕 • (g (ichoice l2))))).
+  (g (ichoice (l1 ++ l2)))
+    ᴠᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (ichoice l1))) + (𝛕 • (g (ichoice l2))))).
 Proof.
   intros l1 l2 H1 H2 Hs1 Hs2.
   assert (Hs : Forall Static (l1 ++ l2)) by (apply Forall_app; split; assumption).
@@ -1201,8 +1201,8 @@ Qed.
 
 Lemma ax_ichoice_app_r : forall l1 l2, l1 <> [] -> l2 <> [] ->
   Forall Static l1 -> Forall Static l2 ->
-  ax_pre (g ((𝛕 • (g (ichoice l1))) + (𝛕 • (g (ichoice l2)))))
-         (g (ichoice (l1 ++ l2))).
+  (g ((𝛕 • (g (ichoice l1))) + (𝛕 • (g (ichoice l2)))))
+    ᴠᴄᴄꜱ⊑ₐₓ (g (ichoice (l1 ++ l2))).
 Proof.
   intros l1 l2 H1 H2 Hs1 Hs2.
   assert (Hs : Forall Static (l1 ++ l2)).
@@ -1220,7 +1220,7 @@ Qed.
 (** ** The mirror, parametrised by an action set
 
     [mirror_summand] above reads the guards off [N]. The derivation of
-    [⊢ g M ⊑ g (mirror …)] runs by induction on [M]'s own [⊕]-tree, and
+    [(g M) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror …))] runs by induction on [M]'s own [⊕]-tree, and
     at an [⊕]-node the two branches contribute *different* action sets —
     so the mirror has to be parametrised by the set explicitly rather
     than read off a right-hand side. [mirror M S] is that version;
@@ -1326,10 +1326,10 @@ Qed.
     mirrors to itself with its continuation wrapped in a one-element
     [ichoice]. *)
 
-Lemma ax_ichoice_singleton_l : forall p, ax_pre (g (ichoice [p])) p.
+Lemma ax_ichoice_singleton_l : forall p, (g (ichoice [p])) ᴠᴄᴄꜱ⊑ₐₓ p.
 Proof. intro p. simpl. apply ax_int_l. Qed.
 
-Lemma ax_ichoice_singleton_r : forall p, Static p -> ax_pre p (g (ichoice [p])).
+Lemma ax_ichoice_singleton_r : forall p, Static p -> p ᴠᴄᴄꜱ⊑ₐₓ (g (ichoice [p])).
 Proof. intros p Hp. simpl. apply ax_int_glb; apply ax_refl; exact Hp. Qed.
 
 Lemma leaves_stable_self : forall A, gStable A -> leaves A = [A].
@@ -1368,7 +1368,7 @@ Qed.
     (with the [𝟘]) that has to be shown [Static], not the guard alone. *)
 
 Lemma ax_mirror_guard_in : forall c P, Static P ->
-  ax_pre (g (c ? P)) (g (mirror (c ? P) [(c, None)])).
+  (g (c ? P)) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror (c ? P) [(c, None)])).
 Proof.
   intros c P HP. unfold mirror. simpl. rewrite in_conts_guard.
   assert (HI : Static (g (ichoice [P])))
@@ -1381,7 +1381,7 @@ Proof.
 Qed.
 
 Lemma ax_mirror_guard_out : forall c v P, Static P ->
-  ax_pre (g (c ! v • P)) (g (mirror (c ! v • P) [(c, Some v)])).
+  (g (c ! v • P)) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror (c ! v • P) [(c, Some v)])).
 Proof.
   intros c v P HP. unfold mirror. simpl. rewrite out_conts_guard.
   assert (HI : Static (g (ichoice [P])))
@@ -1392,10 +1392,10 @@ Proof.
     apply static_g. constructor; [constructor; exact HI | constructor].
 Qed.
 
-Lemma ax_mirror_success : ax_pre (g ①) (g (mirror ① [])).
+Lemma ax_mirror_success : (g ①) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror ① [])).
 Proof. unfold mirror. simpl. apply ax_success_l. Qed.
 
-Lemma ax_mirror_nil : ax_pre (g 𝟘) (g (mirror 𝟘 [])).
+Lemma ax_mirror_nil : (g 𝟘) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror 𝟘 [])).
 Proof. unfold mirror. simpl. apply ax_refl. repeat constructor. Qed.
 
 (** ** Half the leaf case: wrapping every continuation in an [ichoice]
@@ -1468,7 +1468,7 @@ Proof. intro a. destruct a as [ | | c P | c v P | P | A1 A2 ]; simpl; exact I. Q
     concatenation of two non-empty lists, so it is never a singleton. *)
 
 Lemma ax_wrap_summand : forall a, gStatic a -> gStable a -> summands a = [a] ->
-  ax_pre (g a) (g (wrap_summand a)).
+  (g a) ᴠᴄᴄꜱ⊑ₐₓ (g (wrap_summand a)).
 Proof.
   intros a Ha Hst Hleaf.
   destruct a as [ | | c P | c v P | P | A1 A2 ]; simpl.
@@ -1489,7 +1489,7 @@ Qed.
 
 Definition wrapsum (A : gproc) : gproc := rebuild (map wrap_summand (summands A)).
 
-Lemma ax_wrapsum : forall A, gStatic A -> gStable A -> ax_pre (g A) (g (wrapsum A)).
+Lemma ax_wrapsum : forall A, gStatic A -> gStable A -> (g A) ᴠᴄᴄꜱ⊑ₐₓ (g (wrapsum A)).
 Proof.
   intros A HA Hst. unfold wrapsum.
   assert (HF : forall x, x ∈ summands A -> gStatic x).
@@ -1550,7 +1550,7 @@ Theorem ax_merge_anywhere : forall M k l1 l2 l,
   gStatic M -> l1 <> [] -> l2 <> [] -> Forall Static l1 -> Forall Static l2 ->
   Forall gStatic l ->
   Permutation (summands M) (kguard k l1 :: kguard k l2 :: l) ->
-  ax_pre (g M) (g (kguard k (l1 ++ l2) + rebuild l)).
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g (kguard k (l1 ++ l2) + rebuild l)).
 Proof.
   intros M (c, [v0|]) l1 l2 l HM H1 H2 Hs1 Hs2 Hl Hperm; simpl in Hperm |- *.
   - eapply ax_trans;
@@ -1634,7 +1634,7 @@ Qed.
 
 Lemma ax_leaf_to_build : forall l, Forall gStatic l -> Forall gStable l ->
   Forall (fun a => summands a = [a]) l ->
-  ax_pre (g (rebuild l)) (g (build (klist l))).
+  (g (rebuild l)) ᴠᴄᴄꜱ⊑ₐₓ (g (build (klist l))).
 Proof.
   induction l as [|a l IH]; intros Hst Hsb Hlf; simpl; [apply ax_refl; repeat constructor |].
   inversion Hst as [|? ? Ha Hst']; subst.
@@ -1719,7 +1719,7 @@ Theorem ax_merge_klist : forall kl k l1 l2 rest,
   Forall Static l1 -> Forall Static l2 ->
   Forall (fun p => Forall Static (snd p)) rest ->
   Permutation kl ((k, l1) :: (k, l2) :: rest) ->
-  ax_pre (g (build kl)) (g (build ((k, l1 ++ l2) :: rest))).
+  (g (build kl)) ᴠᴄᴄꜱ⊑ₐₓ (g (build ((k, l1 ++ l2) :: rest))).
 Proof.
   intros kl k l1 l2 rest Hkl H1 H2 Hs1 Hs2 Hrest Hperm.
   set (kg := fun p : act_key * list proc => kguard (fst p) (snd p)).
@@ -1852,7 +1852,7 @@ Theorem kcollapse : forall n kl, (length kl <= n)%nat ->
     /\ Forall (fun p => snd p <> []) kl'
     /\ kfind_dup kl' = None
     /\ (forall k0 p0, kmem kl' k0 p0 <-> kmem kl k0 p0)
-    /\ ax_pre (g (build kl)) (g (build kl')).
+    /\ (g (build kl)) ᴠᴄᴄꜱ⊑ₐₓ (g (build kl')).
 Proof.
   induction n as [|n IH]; intros kl Hlen Hst Hne.
   - exists kl. split; [exact Hst |]. split; [exact Hne |]. split.
@@ -1916,13 +1916,13 @@ Proof. intros P kl1 kl2 H1 H2. apply Forall_app. split; assumption. Qed.
 
 (** ** Restricting to an action set
 
-    The induction that derives [⊢ g M ⊑ g (build …)] must carry the
+    The induction that derives [(g M) ᴠᴄᴄꜱ⊑ₐₓ (g (build …))] must carry the
     target's **action set** as a parameter. A first attempt without it —
     letting every node produce the sum of *all* its actions and applying
     [ax_convex] only at the very end — does not work: convexity needs
     its first branch to be a sub-sum of the middle term, i.e. the
     restriction of the big sum to the chosen leaf's action set, and
-    [leaves_below] does not give [⊢ g M ⊑ g (that restriction)] (a
+    [leaves_below] does not give [(g M) ᴠᴄᴄꜱ⊑ₐₓ (g (that restriction))] (a
     leaf's own continuations are strictly poorer than [M]'s at the same
     action, so the leaf is *not* below the restriction).
 
@@ -1995,8 +1995,8 @@ Theorem ax_share_anywhere : forall B1 B2 k l1 l2 r1 r2,
   Forall gStatic r1 -> Forall gStatic r2 ->
   Permutation (summands B1) (kguard k l1 :: r1) ->
   Permutation (summands B2) (kguard k l2 :: r2) ->
-  ax_pre (g ((𝛕 • (g B1)) + (𝛕 • (g B2))))
-         (g (kguard k (l1 ++ l2) + rebuild r1)).
+  (g ((𝛕 • (g B1)) + (𝛕 • (g B2))))
+    ᴠᴄᴄꜱ⊑ₐₓ (g (kguard k (l1 ++ l2) + rebuild r1)).
 Proof.
   intros B1 B2 (c, [v|]) l1 l2 r1 r2 HB1 HB2 H1 H2 Hs1 Hs2 Hr1 Hr2 Hp1 Hp2;
     simpl in Hp1, Hp2 |- *.
@@ -2053,8 +2053,8 @@ Theorem ax_share_klist : forall kl1 kl2 k l1 l2 r1 r2,
   Forall (fun p => Forall Static (snd p)) r1 ->
   Forall (fun p => Forall Static (snd p)) r2 ->
   Permutation kl1 ((k, l1) :: r1) -> Permutation kl2 ((k, l2) :: r2) ->
-  ax_pre (g ((𝛕 • (g (build kl1))) + (𝛕 • (g (build kl2)))))
-         (g (build ((k, l1 ++ l2) :: r1))).
+  (g ((𝛕 • (g (build kl1))) + (𝛕 • (g (build kl2)))))
+    ᴠᴄᴄꜱ⊑ₐₓ (g (build ((k, l1 ++ l2) :: r1))).
 Proof.
   intros kl1 kl2 k l1 l2 r1 r2 Hk1 Hk2 H1 H2 Hs1 Hs2 Hr1 Hr2 Hp1 Hp2.
   set (kg := fun p : act_key * list proc => kguard (fst p) (snd p)).
@@ -2106,7 +2106,7 @@ Qed.
 
     Keeping the *second* list fixed across rounds is what makes the
     iteration's measure work: pooling does not shrink [kl2], and
-    [⊢ q ⊑ build (kl2 minus k)] is not available, so the recursion must
+    [q ᴠᴄᴄꜱ⊑ₐₓ (build (kl2 minus k))] is not available, so the recursion must
     shrink a separate worklist instead. *)
 
 Definition khas (kl : list (act_key * list proc)) (k : act_key) : Prop :=
@@ -2126,14 +2126,14 @@ Lemma kshare_step : forall kl1 kl2 k l1 l2 r1 r2 q,
   Forall (fun p => Forall Static (snd p)) r2 ->
   Forall (fun p => snd p <> []) r1 ->
   Permutation kl1 ((k, l1) :: r1) -> Permutation kl2 ((k, l2) :: r2) ->
-  ax_pre q (g (build kl1)) -> ax_pre q (g (build kl2)) ->
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build kl1)) -> q ᴠᴄᴄꜱ⊑ₐₓ (g (build kl2)) ->
   Forall (fun p => Forall Static (snd p)) ((k, l1 ++ l2) :: r1)
   /\ Forall (fun p => snd p <> []) ((k, l1 ++ l2) :: r1)
   /\ (forall k0, khas ((k, l1 ++ l2) :: r1) k0 <-> khas kl1 k0)
   /\ (forall k0 p0, kmem kl1 k0 p0 -> kmem ((k, l1 ++ l2) :: r1) k0 p0)
   /\ (forall p0, p0 ∈ l2 -> kmem ((k, l1 ++ l2) :: r1) k p0)
   /\ (forall k0 p0, kmem ((k, l1 ++ l2) :: r1) k0 p0 -> kmem kl1 k0 p0 \/ kmem kl2 k0 p0)
-  /\ ax_pre q (g (build ((k, l1 ++ l2) :: r1))).
+  /\ q ᴠᴄᴄꜱ⊑ₐₓ (g (build ((k, l1 ++ l2) :: r1))).
 Proof.
   intros kl1 kl2 k l1 l2 r1 r2 q Hk1 Hk2 H1 H2 Hs1 Hs2 Hr1 Hr2 Hn1 Hp1 Hp2 Hq1 Hq2.
   assert (Hst' : Forall (fun p => Forall Static (snd p)) ((k, l1 ++ l2) :: r1))
@@ -2179,7 +2179,7 @@ Qed.
     Pool every key the two branches share, one round at a time. The
     recursion is on a **worklist** of `kl2`-entries rather than on `kl2`
     itself: pooling leaves `kl2` untouched (it must, since
-    [⊢ q ⊑ build kl2] has to stay available to re-form the internal
+    [q ᴠᴄᴄꜱ⊑ₐₓ (build kl2)] has to stay available to re-form the internal
     choice each round), so the measure has to live somewhere else.
 
     The result keeps the first list's key set exactly, contains
@@ -2202,7 +2202,7 @@ Theorem kshare_iter : forall (todo kl1 kl2 : list (act_key * list proc)) (q : pr
   Forall (fun p => Forall Static (snd p)) kl2 ->
   Forall (fun p => snd p <> []) kl2 ->
   (forall e, e ∈ todo -> exists r, Permutation kl2 (e :: r)) ->
-  ax_pre q (g (build kl1)) -> ax_pre q (g (build kl2)) ->
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build kl1)) -> q ᴠᴄᴄꜱ⊑ₐₓ (g (build kl2)) ->
   exists kl,
     Forall (fun p => Forall Static (snd p)) kl
     /\ Forall (fun p => snd p <> []) kl
@@ -2211,7 +2211,7 @@ Theorem kshare_iter : forall (todo kl1 kl2 : list (act_key * list proc)) (q : pr
     /\ (forall e, e ∈ todo -> khas kl1 (fst e) ->
           forall p0, p0 ∈ snd e -> kmem kl (fst e) p0)
     /\ (forall k0 p0, kmem kl k0 p0 -> kmem kl1 k0 p0 \/ kmem kl2 k0 p0)
-    /\ ax_pre q (g (build kl)).
+    /\ q ᴠᴄᴄꜱ⊑ₐₓ (g (build kl)).
 Proof.
   induction todo as [|e todo IH]; intros kl1 kl2 q Hst1 Hne1 Hst2 Hne2 Htodo Hq1 Hq2.
   - exists kl1. split; [exact Hst1 |]. split; [exact Hne1 |].
@@ -2373,7 +2373,7 @@ Qed.
 
 Lemma ax_kguard_same_elems : forall k l l', l <> [] -> l' <> [] ->
   Forall Static l -> Forall Static l' -> (forall p, p ∈ l <-> p ∈ l') ->
-  ax_pre (g (kguard k l)) (g (kguard k l')).
+  (g (kguard k l)) ᴠᴄᴄꜱ⊑ₐₓ (g (kguard k l')).
 Proof.
   intros (c,[v|]) l l' H1 H2 Hs1 Hs2 Hiff; simpl.
   - apply ax_output. apply ax_ichoice_same_elems; assumption.
@@ -2417,7 +2417,7 @@ Theorem ax_build_align : forall n kl kl', (length kl <= n)%nat ->
   kfind_dup kl = None -> kfind_dup kl' = None ->
   (forall k, khas kl k <-> khas kl' k) ->
   (forall k p, kmem kl k p <-> kmem kl' k p) ->
-  ax_pre (g (build kl)) (g (build kl')).
+  (g (build kl)) ᴠᴄᴄꜱ⊑ₐₓ (g (build kl')).
 Proof.
   induction n as [|n IH]; intros kl kl' Hlen Hs Hn Hs' Hn' Hd Hd' Hkeys Hmem.
   - destruct kl as [|(k,l) r]; [| simpl in Hlen; lia].
@@ -2649,14 +2649,14 @@ Theorem ax_M_below_leaf : forall A, gStatic A -> gStable A ->
     /\ Forall (fun p : act_key * list proc => p.2 <> []) kl
     /\ kfind_dup kl = None
     /\ (forall k p, kmem kl k p <-> p ∈ conts_at A k)
-    /\ ax_pre (g A) (g (build kl)).
+    /\ (g A) ᴠᴄᴄꜱ⊑ₐₓ (g (build kl)).
 Proof.
   intros A Hs Hst.
   assert (Hls : Forall gStatic (summands A)) by (apply summands_gStatic; exact Hs).
   assert (Hlb : Forall gStable (summands A)).
   { apply Forall_forall. intros x Hx. eapply gStable_summands; eassumption. }
   assert (Hlf := summands_leaves A).
-  assert (Hstep : ax_pre (g A) (g (build (klist (summands A))))).
+  assert (Hstep : (g A) ᴠᴄᴄꜱ⊑ₐₓ (g (build (klist (summands A))))).
   { eapply ax_trans.
     - eapply ax_cgr; [| apply summands_cgr].
       constructor. apply rebuild_gStatic. exact Hls.
@@ -2756,9 +2756,9 @@ Qed.
 Lemma ax_convex_build : forall S1 S (kl : list (act_key * list proc)) q,
   Forall (fun p : act_key * list proc => Forall Static p.2) kl ->
   (forall k, k ∈ S1 -> k ∈ S) ->
-  ax_pre q (g (build (krestrict S1 kl))) ->
-  ax_pre q (g (build kl)) ->
-  ax_pre q (g (build (krestrict S kl))).
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S1 kl))) ->
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build kl)) ->
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S kl))).
 Proof.
   intros S1 S kl q Hst Hsub H1 H2.
   set (Y := map (fun p : act_key * list proc => kguard p.1 p.2) (kexclude S1 (krestrict S kl))).
@@ -2826,10 +2826,10 @@ Lemma ax_share_restrict : forall S (klA klB klfull : list (act_key * list proc))
   Forall (fun p : act_key * list proc => p.2 <> []) klfull ->
   kfind_dup klfull = None ->
   (forall k p, kmem klfull k p <-> kmem klA k p \/ kmem klB k p) ->
-  ax_pre q (g (build (krestrict S klA))) ->
-  ax_pre q (g (build klB)) ->
-  ax_pre q (g (build klfull)) ->
-  ax_pre q (g (build (krestrict S klfull))).
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S klA))) ->
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build klB)) ->
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build klfull)) ->
+  q ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S klfull))).
 Proof.
   intros S klA klB klfull q HA1 HA2 HB1 HB2 HF1 HF2 Hdup Hunion HrA HB Hfull.
   set (S' := map fst (krestrict S klA)).
@@ -2843,7 +2843,7 @@ Proof.
     as (klsh & Hsh1 & Hsh2 & Hshkeys & Hshmono & Hshpool & Hshinv & Hshax).
   destruct (kcollapse (length klsh) klsh (le_n _) Hsh1 Hsh2)
     as (klsh' & Hc1 & Hc2 & Hcdup & Hcmem & Hcax).
-  assert (Hax1 : ax_pre q (g (build klsh'))) by (eapply ax_trans; [exact Hshax | exact Hcax]).
+  assert (Hax1 : q ᴠᴄᴄꜱ⊑ₐₓ (g (build klsh'))) by (eapply ax_trans; [exact Hshax | exact Hcax]).
   assert (HkeyS' : forall k, khas klsh k <-> k ∈ S').
   { intro k. rewrite Hshkeys. apply khas_kkeys. }
   assert (Hmem : forall k p, kmem klsh' k p <-> kmem (krestrict S' klfull) k p).
@@ -2856,7 +2856,7 @@ Proof.
       + apply Hshmono. apply kmem_krestrict. split; [apply HsubS; exact Hk | exact H'].
       + destruct H' as (l & Hl & Hp).
         apply (Hshpool (k,l) Hl); [simpl; apply khas_kkeys; exact Hk | exact Hp]. }
-  assert (Halign : ax_pre (g (build klsh')) (g (build (krestrict S' klfull)))).
+  assert (Halign : (g (build klsh')) ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S' klfull)))).
   { apply (ax_build_align (length klsh')); try assumption.
     - apply le_n.
     - apply krestrict_Forall; exact HF1.
@@ -2930,9 +2930,9 @@ Theorem ax_M_below : forall M, tau_nf M -> gStatic M ->
     /\ Forall (fun p : act_key * list proc => p.2 <> []) kl
     /\ kfind_dup kl = None
     /\ (forall k p, kmem kl k p <-> p ∈ conts_at M k)
-    /\ ax_pre (g M) (g (build kl))
+    /\ (g M) ᴠᴄᴄꜱ⊑ₐₓ (g (build kl))
     /\ (forall S, (exists A, A ∈ leaves M /\ (forall k, conts_at A k <> [] -> k ∈ S)) ->
-          ax_pre (g M) (g (build (krestrict S kl)))).
+          (g M) ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S kl)))).
 Proof.
   intros M Htnf. induction Htnf as [A Hstb | M1 M2 Ht1 IH1 Ht2 IH2]; intro Hs.
   - destruct (ax_M_below_leaf A Hs Hstb) as (kl & H1 & H2 & H3 & H4 & H5).
@@ -2952,9 +2952,9 @@ Proof.
   - destruct (gStatic_tau_choice M1 M2 Hs) as (Hs1 & Hs2).
     destruct (IH1 Hs1) as (kl1 & A1 & B1 & C1 & D1 & E1 & F1).
     destruct (IH2 Hs2) as (kl2 & A2 & B2 & C2 & D2 & E2 & F2).
-    assert (Hax1 : ax_pre (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) (g (build kl1)))
+    assert (Hax1 : (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) ᴠᴄᴄꜱ⊑ₐₓ (g (build kl1)))
       by (eapply ax_trans; [apply ax_int_l | exact E1]).
-    assert (Hax2 : ax_pre (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) (g (build kl2)))
+    assert (Hax2 : (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) ᴠᴄᴄꜱ⊑ₐₓ (g (build kl2)))
       by (eapply ax_trans; [apply ax_int_r; constructor; assumption | exact E2]).
     assert (HappS : Forall (fun p : act_key * list proc => Forall Static p.2) (kl1 ++ kl2))
       by (apply Forall_app; split; assumption).
@@ -2964,7 +2964,7 @@ Proof.
       as (kl & G1 & G2 & G3 & G4 & G5).
     assert (Hunion : forall k p, kmem kl k p <-> kmem kl1 k p \/ kmem kl2 k p).
     { intros k p. rewrite G4. apply kmem_app. }
-    assert (Hfull : ax_pre (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) (g (build kl))).
+    assert (Hfull : (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) ᴠᴄᴄꜱ⊑ₐₓ (g (build kl))).
     { eapply ax_trans; [apply ax_int_glb; [exact Hax1 | exact Hax2] |].
       eapply ax_trans; [apply ax_int_below_ext; apply build_gStatic; assumption |].
       eapply ax_trans; [| exact G5].
@@ -3000,17 +3000,17 @@ Qed.
     [①] it goes through [ax_success_l]/[_r], which is the second place
     those rules are needed. *)
 Lemma ax_dup_guard : forall a, gStatic a -> gStable a -> summands a = [a] ->
-  ax_pre (g a) (g (a + a)).
+  (g a) ᴠᴄᴄꜱ⊑ₐₓ (g (a + a)).
 Proof.
   intros a Hs Hst Hleaf.
   destruct a as [ | | c P | c v P | P | A1 A2 ].
-  - assert (H1 : ax_pre (g (𝟘 : gproc)) (g ((𝟘 : gproc) + 𝟘))).
+  - assert (H1 : (g (𝟘 : gproc)) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝟘 : gproc) + 𝟘))).
     { eapply ax_cgr; [repeat constructor | apply cgr_choice_nil_rev]. }
-    assert (H2 : ax_pre (g ((𝟘 : gproc) + 𝟘)) (g ((① : gproc) + 𝟘))).
+    assert (H2 : (g ((𝟘 : gproc) + 𝟘)) ᴠᴄᴄꜱ⊑ₐₓ (g ((① : gproc) + 𝟘))).
     { apply (ax_choice_stable 𝟘 ① 𝟘); [exact I | exact I | apply ax_success_r]. }
-    assert (H3 : ax_pre (g ((① : gproc) + 𝟘)) (g ((𝟘 : gproc) + ①))).
+    assert (H3 : (g ((① : gproc) + 𝟘)) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝟘 : gproc) + ①))).
     { eapply ax_cgr; [repeat constructor | apply cgr_choice_com]. }
-    assert (H4 : ax_pre (g ((𝟘 : gproc) + ①)) (g ((① : gproc) + ①))).
+    assert (H4 : (g ((𝟘 : gproc) + ①)) ᴠᴄᴄꜱ⊑ₐₓ (g ((① : gproc) + ①))).
     { apply (ax_choice_stable 𝟘 ① ①); [exact I | exact I | apply ax_success_r]. }
     eapply ax_trans; [apply ax_success_l |].
     eapply ax_trans; [exact H1 |]. eapply ax_trans; [exact H2 |].
@@ -3035,7 +3035,7 @@ Qed.
     the shape: [ax_choice_stable] only rewrites the leftmost summand, so
     the target is pulled to the front first ([pull_one]). *)
 Lemma ax_add_dups : forall X a, gStatic X -> gStable X -> a ∈ summands X ->
-  ax_pre (g X) (g (a + X)).
+  (g X) ᴠᴄᴄꜱ⊑ₐₓ (g (a + X)).
 Proof.
   intros X a Hs Hst Hin.
   assert (Hsa : gStatic a).
@@ -3125,7 +3125,7 @@ Theorem ax_build_to_list : forall (lw : list gproc) (kl : list (act_key * list p
   (forall w, w ∈ lw -> w = (𝟘 : gproc) \/
        exists e : act_key * list proc, e ∈ kl /\ w = kguard e.1 e.2) ->
   (forall e : act_key * list proc, e ∈ kl -> kguard e.1 e.2 ∈ lw) ->
-  ax_pre (g (build kl)) (g (rebuild lw)).
+  (g (build kl)) ᴠᴄᴄꜱ⊑ₐₓ (g (rebuild lw)).
 Proof.
   induction lw as [|w lw' IH]; intros kl Hkl Hdup Hi Hii.
   - destruct kl as [|e kl']; [apply ax_refl; repeat constructor |].
@@ -3178,7 +3178,7 @@ Proof.
         destruct (kfind_dup_pick ke kl le r Hdup Hpick) as (Hdr & Hpr).
         assert (Hklr : Forall (fun p : act_key * list proc => Forall Static p.2) r).
         { rewrite Hperm in Hkl. inversion Hkl; assumption. }
-        assert (HIH : ax_pre (g (build r)) (g (rebuild lw'))).
+        assert (HIH : (g (build r)) ᴠᴄᴄꜱ⊑ₐₓ (g (rebuild lw'))).
         { apply IH; try assumption.
           - intros x Hx. destruct (Hi' x Hx) as [Hx0 | ((k',l') & He' & Hx0)];
               [left; exact Hx0 |].
@@ -3328,17 +3328,17 @@ Qed.
 (* sum: [ax_swap_out] makes exactly that derivable.                    *)
 
 Lemma ax_dup_guard_rev : forall a, gStatic a -> gStable a -> summands a = [a] ->
-  ax_pre (g (a + a)) (g a).
+  (g (a + a)) ᴠᴄᴄꜱ⊑ₐₓ (g a).
 Proof.
   intros a Hs Hst Hleaf.
   destruct a as [ | | c P | c v P | P | A1 A2 ].
-  - assert (H1 : ax_pre (g ((① : gproc) + ①)) (g ((𝟘 : gproc) + ①))).
+  - assert (H1 : (g ((① : gproc) + ①)) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝟘 : gproc) + ①))).
     { apply (ax_choice_stable ① 𝟘 ①); [exact I | exact I | apply ax_success_l]. }
-    assert (H2 : ax_pre (g ((𝟘 : gproc) + ①)) (g ((① : gproc) + 𝟘))).
+    assert (H2 : (g ((𝟘 : gproc) + ①)) ᴠᴄᴄꜱ⊑ₐₓ (g ((① : gproc) + 𝟘))).
     { eapply ax_cgr; [repeat constructor | apply cgr_choice_com]. }
-    assert (H3 : ax_pre (g ((① : gproc) + 𝟘)) (g ((𝟘 : gproc) + 𝟘))).
+    assert (H3 : (g ((① : gproc) + 𝟘)) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝟘 : gproc) + 𝟘))).
     { apply (ax_choice_stable ① 𝟘 𝟘); [exact I | exact I | apply ax_success_l]. }
-    assert (H4 : ax_pre (g ((𝟘 : gproc) + 𝟘)) (g (𝟘 : gproc))).
+    assert (H4 : (g ((𝟘 : gproc) + 𝟘)) ᴠᴄᴄꜱ⊑ₐₓ (g (𝟘 : gproc))).
     { eapply ax_cgr; [repeat constructor | apply cgr_choice_nil]. }
     eapply ax_trans; [exact H1 |]. eapply ax_trans; [exact H2 |].
     eapply ax_trans; [exact H3 |]. eapply ax_trans; [exact H4 |].
@@ -3357,7 +3357,7 @@ Proof.
 Qed.
 
 Lemma ax_rem_dups : forall X a, gStatic X -> gStable X -> a ∈ summands X ->
-  ax_pre (g (a + X)) (g X).
+  (g (a + X)) ᴠᴄᴄꜱ⊑ₐₓ (g X).
 Proof.
   intros X a Hs Hst Hin.
   assert (Hsa : gStatic a).
@@ -3389,7 +3389,7 @@ Qed.
     [ax_swap_out], then remove the duplicate it leaves behind. *)
 Lemma ax_drop_out : forall c v v' P Q R,
   Static P -> Static Q -> gStatic R -> gStable R ->
-  ax_pre (g ((c ! v • P) + ((c ! v' • Q) + R))) (g ((c ! v' • Q) + R)).
+  (g ((c ! v • P) + ((c ! v' • Q) + R))) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ! v' • Q) + R)).
 Proof.
   intros c v v' P Q R HP HQ HR HRb.
   assert (HsA' : gStatic ((c ! v' • Q) + ((c ! v • P) + R)))
@@ -3486,7 +3486,7 @@ Theorem ax_drop_keys : forall n (kl : list (act_key * list proc)) (S : list act_
   Forall (fun p : act_key * list proc => p.2 <> []) kl ->
   kfind_dup kl = None ->
   (forall k, khas kl k -> exists k', k' ∈ S /\ khas kl k' /\ kabs k' = kabs k) ->
-  ax_pre (g (build kl)) (g (build (krestrict S kl))).
+  (g (build kl)) ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S kl))).
 Proof.
   induction n as [|n IH]; intros kl S Hlen HS1 HS2 Hdup Hcov.
   - destruct (kexclude S kl) as [|e rest] eqn:E; [| simpl in Hlen; lia].
@@ -3732,10 +3732,10 @@ Theorem ax_stable_step : forall M N,
   gStatic M -> tau_nf M -> gStatic N -> gStable N ->
   (g M) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) ->
   (forall c Q, (c ? Q) ∈ summands N -> forall v,
-      ax_pre ((g (ichoice (in_conts M c))) ^ v) (Q ^ v)) ->
+      ((g (ichoice (in_conts M c))) ^ v) ᴠᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
   (forall c v Q, (c ! v • Q) ∈ summands N ->
-      ax_pre (g (ichoice (out_conts M c v))) Q) ->
-  ax_pre (g M) (g N).
+      (g (ichoice (out_conts M c v))) ᴠᴄᴄꜱ⊑ₐₓ Q) ->
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g N).
 Proof.
   intros M N HsM Htnf HsN HstN Hpre Hinp Houtp.
   assert (HSM : Static (g M)) by (constructor; exact HsM).
@@ -3752,7 +3752,7 @@ Proof.
     rewrite E. apply elem_of_cons; left; reflexivity. }
   set (SN := keylist (summands N)).
   set (S0 := keylist (summands A) ++ SN).
-  assert (Hstep1 : ax_pre (g M) (g (build (krestrict S0 kl)))).
+  assert (Hstep1 : (g M) ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict S0 kl)))).
   { apply K6. exists A. split; [exact HA |].
     intros k Hk. apply elem_of_app. left. apply conts_at_key; assumption. }
   assert (HsubS : forall k, k ∈ SN -> k ∈ S0)
@@ -3767,7 +3767,7 @@ Proof.
       apply khas_krestrict. split; [apply HsubS; exact Hk'N | apply HNkey; exact Hk'N].
     - exists k. split; [exact HkN |]. split; [| reflexivity].
       apply khas_krestrict. split; [apply elem_of_app; right; exact HkN | exact Hkkl]. }
-  assert (Hstep2 : ax_pre (g (build (krestrict S0 kl))) (g (build (krestrict SN kl)))).
+  assert (Hstep2 : (g (build (krestrict S0 kl))) ᴠᴄᴄꜱ⊑ₐₓ (g (build (krestrict SN kl)))).
   { rewrite <- (krestrict_sub SN S0 kl HsubS).
     apply (ax_drop_keys (length (kexclude SN (krestrict S0 kl)))).
     - apply le_n.
@@ -3804,8 +3804,8 @@ Proof.
     apply elem_of_map_any. exists a. split; [exact Ha |].
     unfold mirror_look. rewrite Hg.
     rewrite (klook_spec (krestrict SN kl) k l Hdup' He). reflexivity. }
-  assert (Hstep3 : ax_pre (g (build (krestrict SN kl)))
-                          (g (rebuild (map (mirror_look (krestrict SN kl)) (summands N))))).
+  assert (Hstep3 : (g (build (krestrict SN kl)))
+                     ᴠᴄᴄꜱ⊑ₐₓ (g (rebuild (map (mirror_look (krestrict SN kl)) (summands N))))).
   { apply ax_build_to_list; assumption. }
   destruct (lw_props (map (mirror_look (krestrict SN kl)) (summands N))
               (krestrict SN kl) HK1' Hi) as (Hlw1 & Hlw2 & _).
@@ -3909,7 +3909,7 @@ Qed.
     [gsize], which is fine because [⊕]-branches are strict subterms and
     need no renormalisation. *)
 Theorem completeness_ax_bounded : forall n p q,
-  Static p -> Static q -> tbound n q -> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  Static p -> Static q -> tbound n q -> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intro n. induction n as [n IHn] using (well_founded_induction lt_wf).
   intros p q Hp Hq Htb Hpre.
@@ -3926,7 +3926,7 @@ Proof.
   eapply ax_trans; [exact HpM |]. eapply ax_trans; [| exact HNq].
   assert (Hstable : forall N' M', gStatic N' -> gStable N' -> Static (g N') ->
       tbound n (g N') -> gStatic M' -> tau_nf M' -> Static (g M') ->
-      (g M') ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N') -> ax_pre (g M') (g N')).
+      (g M') ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N') -> (g M') ᴠᴄᴄꜱ⊑ₐₓ (g N')).
   { intros N' M' HsN' HstN' HSN' HtbN' HsM' HtnfM' HSM' Hp'.
     apply ax_stable_step; try assumption.
     - intros c Q HQ v.
@@ -3973,7 +3973,7 @@ Proof.
   assert (Hinner : forall m N', gsize N' <= m -> gStatic N' -> tau_nf N' ->
       Static (g N') -> tbound n (g N') ->
       forall M', gStatic M' -> tau_nf M' -> Static (g M') ->
-      (g M') ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N') -> ax_pre (g M') (g N')).
+      (g M') ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N') -> (g M') ᴠᴄᴄꜱ⊑ₐₓ (g N')).
   { induction m as [|m IHm]; intros N' Hsz HsN' HtnfN' HSN' HtbN' M' HsM' HtnfM' HSM' Hp';
       destruct HtnfN' as [Nx HstN' | N1 N2 Ht1 Ht2].
     - apply Hstable; assumption.
@@ -4002,7 +4002,7 @@ Qed.
 
 (** ** Completeness of [ax_pre] for the [Static] fragment *)
 Theorem completeness_ax : forall p q,
-  Static p -> Static q -> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ax_pre p q.
+  Static p -> Static q -> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq Hpre.
   eapply completeness_ax_bounded; [exact Hp | exact Hq | | exact Hpre].

@@ -75,7 +75,7 @@
 
     - [p ⊑ₘᵤₛₜᵢ q] — machine-checked here, via [soundness_ax] applied to
       the one-rule derivation, and
-    - [⊢ p ⊑ q] — likewise machine-checked, in one rule application.
+    - [p ᴠᴄᴄꜱ⊑ₐₓ q] — likewise machine-checked, in one rule application.
 
     What is *documented but not machine-checked* is the third leg:
     that no other rule of the system reaches the same inequation. Those
@@ -144,7 +144,7 @@ Ltac st := repeat constructor.
 Definition p1 : proc := g ((a ? (g 𝟘)) + (a ? (g ①)) + (b ! v • 𝟘)).
 Definition q1 : proc := g ((a ? (g ((𝛕 • (g 𝟘)) + (𝛕 • (g ①))))) + (b ! v • 𝟘)).
 
-Example ax_1 : ax_pre p1 q1.
+Example ax_1 : p1 ᴠᴄᴄꜱ⊑ₐₓ q1.
 Proof. apply ax_collapse_input_ctx_l. Qed.
 
 Example sem_1 : p1 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q1.
@@ -161,7 +161,7 @@ Proof. apply soundness_ax; [st | st | apply ax_1]. Qed.
 Definition p2 : proc := g (a ! v • 𝟘).
 Definition q2 : proc := g ((𝛕 • (g (a ! v • 𝟘))) + (𝛕 • (g (a ! v • 𝟘)))).
 
-Example ax_2 : ax_pre p2 q2.
+Example ax_2 : p2 ᴠᴄᴄꜱ⊑ₐₓ q2.
 Proof. apply ax_int_glb; apply ax_refl; st. Qed.
 
 Example sem_2 : p2 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q2.
@@ -184,7 +184,7 @@ Definition p3 : proc := g ((a ! v • 𝟘) + (𝛕 • (g (b ! w • 𝟘)))).
 Definition q3 : proc :=
   g ((𝛕 • (g ((a ! v • 𝟘) + (b ! w • 𝟘)))) + (𝛕 • (g (b ! w • 𝟘)))).
 
-Example ax_3 : ax_pre p3 q3.
+Example ax_3 : p3 ᴠᴄᴄꜱ⊑ₐₓ q3.
 Proof. apply ax_tau_sep_l. Qed.
 
 Example sem_3 : p3 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q3.
@@ -205,7 +205,7 @@ Definition Y4 : gproc := (𝛕 • (g 𝟘)) + (𝛕 • (g ①)).
 Definition p4 : proc := g ((a ! v • 𝟘) + (𝛕 • (g Y4))).
 Definition q4 : proc := g ((a ! v • 𝟘) + Y4).
 
-Example ax_4 : ax_pre p4 q4.
+Example ax_4 : p4 ᴠᴄᴄꜱ⊑ₐₓ q4.
 Proof. apply ax_tau_flatten_l. simpl. split; exact I. Qed.
 
 Example sem_4 : p4 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q4.
@@ -222,7 +222,7 @@ Definition p5 : proc :=
   g ((𝛕 • (g ((a ! v • 𝟘) + (a ! w • 𝟘)))) + (b ! v • 𝟘)).
 Definition q5 : proc := g ((𝛕 • (g (a ! v • 𝟘))) + (b ! v • 𝟘)).
 
-Example ax_5 : ax_pre p5 q5.
+Example ax_5 : p5 ᴠᴄᴄꜱ⊑ₐₓ q5.
 Proof. apply ax_choice_tau. apply ax_output_below_l; st. Qed.
 
 Example sem_5 : p5 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q5.
@@ -247,7 +247,7 @@ Definition C6 : gproc := c ! v • 𝟘.
 Definition p6 : proc := g ((𝛕 • (g A6)) + (𝛕 • (g ((A6 + B6) + C6)))).
 Definition q6 : proc := g (A6 + B6).
 
-Example ax_6 : ax_pre p6 q6.
+Example ax_6 : p6 ᴠᴄᴄꜱ⊑ₐₓ q6.
 Proof. apply ax_convex. Qed.
 
 Example sem_6 : p6 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q6.
@@ -261,13 +261,13 @@ Proof. apply soundness_ax; [st | st | apply ax_6]. Qed.
     at all**, and [≡*] does not relate it to [𝟘], so any normal form
     carrying an [①] summand was stuck. *)
 
-Example ax_7l : ax_pre (g ①) (g (𝟘 : gproc)).
+Example ax_7l : (g ①) ᴠᴄᴄꜱ⊑ₐₓ (g (𝟘 : gproc)).
 Proof. apply ax_success_l. Qed.
 
 Example sem_7l : (g ① : proc) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g (𝟘 : gproc)).
 Proof. apply soundness_ax; [st | st | apply ax_7l]. Qed.
 
-Example ax_7r : ax_pre (g (𝟘 : gproc)) (g ①).
+Example ax_7r : (g (𝟘 : gproc)) ᴠᴄᴄꜱ⊑ₐₓ (g ①).
 Proof. apply ax_success_r. Qed.
 
 Example sem_7r : (g (𝟘 : gproc) : proc) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g ①).
@@ -293,7 +293,7 @@ Definition p8 : proc :=
 Definition q8 : proc :=
   g ((a ? (g ((𝛕 • (g 𝟘)) + (𝛕 • (g ①))))) + (b ! v • 𝟘)).
 
-Example ax_8 : ax_pre p8 q8.
+Example ax_8 : p8 ᴠᴄᴄꜱ⊑ₐₓ q8.
 Proof. apply ax_share_in. Qed.
 
 Example sem_8 : p8 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q8.
@@ -304,7 +304,7 @@ Definition p8' : proc :=
 Definition q8' : proc :=
   g ((a ! v • (g ((𝛕 • 𝟘) + (𝛕 • (g ①))))) + (b ! v • 𝟘)).
 
-Example ax_8' : ax_pre p8' q8'.
+Example ax_8' : p8' ᴠᴄᴄꜱ⊑ₐₓ q8'.
 Proof. apply ax_share_out. Qed.
 
 Example sem_8' : p8' ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q8'.
@@ -338,7 +338,7 @@ Definition p9 : proc :=
   g ((𝛕 • (g ((a ! v • 𝟘) + (b ! w • 𝟘)))) + (𝛕 • (g ((a ! w • 𝟘) + (b ! v • 𝟘))))).
 Definition q9 : proc := g ((a ! w • 𝟘) + (b ! w • 𝟘)).
 
-Example ax_9 : ax_pre p9 q9.
+Example ax_9 : p9 ᴠᴄᴄꜱ⊑ₐₓ q9.
 Proof. apply ax_swap_out. Qed.
 
 Example sem_9 : p9 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q9.
