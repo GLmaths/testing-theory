@@ -51,6 +51,7 @@
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import List Permutation PeanoNat Lia.
 From stdpp Require Import base sets gmap.
+From TestingTheory Require Import VACCS_Residues.
 From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization

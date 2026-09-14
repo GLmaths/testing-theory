@@ -344,59 +344,7 @@ Proof.
     rewrite Eg. apply wt_nil.
 Qed.
 
-Theorem surplus_settles_drain : forall (M N : gproc) (l k : list TypeOfActions),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall a, ActOut a ∈ bag k -> forall r, ~ lts (g N) (ActExt (ActIn a)) r) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall y, ((g M) ▷ bag l) ⟹[map ActOut l] y ->
-             y = ((g M) ▷ (∅ : MO (ExtAct TypeOfActions)))) ->
-  Settles (chans (bag k)) ((g M) ▷ bag k).
-Proof.
-  intros M N l k HM HN HstN Hnoc Hsem Hdrain.
-  assert (Hnostep : forall x, ~ (((g N) ▷ bag k) ⟶ x)).
-  { apply fw_stable_iff. split; [ exact HstN | ].
-    intros a Hin q Hq. eapply Hnoc; [ exact Hin | exact Hq ]. }
-  assert (Hsty : ((g N) ▷ bag k) ↛) by (apply stable_of_no_step; exact Hnostep).
-  destruct (msgs_accept l l (g M) (g N) Hsem) as (Hc1 & Hc2).
-  destruct (Hc2 (map ActOut l ++ feed k) ((g N) ▷ bag k)
-              (fw_converge_static (map ActOut l ++ feed k) (g M) (bag l) (static_g M HM))
-              (drain_refill_run N l k) Hsty)
-    as (x & Hwx & Hstx & Hincl).
-  apply wt_split in Hwx as (y & Hwy & Hwx2).
-  specialize (Hdrain y Hwy). subst y.
-  exists x. split.
-  - pose proof (fw_feed_inv_list k ((g M) ▷ (∅ : MO (ExtAct TypeOfActions))) x Hwx2) as H.
-    simpl in H.
-    match goal with H0 : (?p ▷ @disj_union ?T ?d (bag k) ?e) ⟹[_] _ |- _ =>
-      assert (Eg : @disj_union T d (bag k) e = bag k)
-        by (apply gmultiset_disj_union_right_id)
-    end.
-    rewrite Eg in H. exact H.
-  - split; [ exact Hstx | ].
-    intros d w r Hr.
-    assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
-      by (apply coR_abs_pair_iff; exists w, r; exact Hr).
-    apply Hincl in Hin. apply coR_abs_pair_iff in Hin.
-    eapply emits_gsum_chans. exact Hin.
-Qed.
 
-(** The multiset form, as for [certificate_config]. *)
-
-Corollary certificate_drain : forall (M N : gproc) (l : list TypeOfActions),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall y, ((g M) ▷ bag l) ⟹[map ActOut l] y ->
-             y = ((g M) ▷ (∅ : MO (ExtAct TypeOfActions)))) ->
-  forall m, OutOnly m ->
-    (forall a, ActOut a ∈ m -> forall r, ~ lts (g N) (ActExt (ActIn a)) r) ->
-    Settles (chans m) ((g M) ▷ m).
-Proof.
-  intros M N l HM HN HstN Hsem Hdrain m Hout Hnoc.
-  destruct (outonly_bag m Hout) as (k & Hk). subst m.
-  eapply surplus_settles_drain; eassumption.
-Qed.
 
 (** ** REGENERATION IS THE ONLY OBSTRUCTION
 
@@ -541,123 +489,8 @@ Proof.
   rewrite gmultiset_disj_union_right_id in Heq. subst y2. reflexivity.
 Qed.
 
-(** ** …et le critère n'a besoin de porter que sur les canaux DU SAC
 
-    `fw_drain_ins_from_bag` dit que, le long d'une trace sans entrée,
-    tout ce que le processus consomme venait du sac initial.  La
-    condition de non-régénération peut donc recevoir en prémisse
-    supplémentaire [bag (ins r) ⊆ bag l] — et c'est ce qui permettra de
-    ne la vérifier qu'aux canaux que le sac porte, au lieu de tous
-    ([VACCS_Matching.no_regen_of_own_channel_bag]).
 
-    La preuve est celle ci-dessus, avec [fw_conservation_bounded] à la
-    place de [fw_conservation] : le **même** [r] porte l'équation de
-    bilan et la borne, ce qui est indispensable — les deux énoncés
-    quantifient existentiellement sur [r]. *)
-
-Theorem drain_forced_no_regen_bag : forall (M : gproc) (l : list TypeOfActions) y,
-  (forall z, ~ lts (g M) τ z) ->
-  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
-               bag (ins r) ⊆ bag l -> ins r = []) ->
-  ((g M) ▷ bag l) ⟹[map ActOut l] y ->
-  y = ((g M) ▷ (∅ : MO (ExtAct TypeOfActions))).
-Proof.
-  intros M l y HstM Hno Hw.
-  destruct (fw_conservation_bounded (map ActOut l) ((g M) ▷ bag l) y Hw)
-    as (r & Hr & Heq & Hb).
-  simpl in Hr, Heq, Hb.
-  rewrite ins_map_out in Heq. rewrite outs_map_out in Heq. simpl in Heq.
-  rewrite ins_map_out in Hb. simpl in Hb.
-  apply disj_union_cancel_gen in Heq.
-  assert (Hsub : bag (ins r) ⊆ bag (outs r))
-    by (rewrite Heq; apply gmultiset_disj_union_subseteq_r).
-  assert (Hbl : bag (ins r) ⊆ bag l).
-  { etransitivity; [ apply gmultiset_disj_union_subseteq_l | ].
-    etransitivity; [ exact Hb | ].
-    replace (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) with (bag l)
-      by (symmetry; apply gmultiset.gmultiset_disj_union_right_id).
-    reflexivity. }
-  pose proof (Hno r y.1 Hr Hsub Hbl) as Hins.
-  destruct (gsum_run_no_input M r y.1 HstM Hr Hins) as (Er & Ey1).
-  subst r. simpl in Heq.
-  destruct y as (y1, y2). simpl in Ey1, Heq. subst y1.
-  rewrite gmultiset_disj_union_right_id in Heq. subst y2. reflexivity.
-Qed.
-
-(** So for a τ-stable, non-regenerating left the certificate holds at
-    **every** buffer — above or below the bag — from the configuration
-    hypothesis alone. *)
-
-Corollary certificate_no_regeneration : forall (M N : gproc) (l : list TypeOfActions),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ lts (g M) τ z) ->
-  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = []) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  forall m, OutOnly m ->
-    (forall a, ActOut a ∈ m -> forall r, ~ lts (g N) (ActExt (ActIn a)) r) ->
-    Settles (chans m) ((g M) ▷ m).
-Proof.
-  intros M N l HM HN HstN HstM Hno Hsem m Hout Hnoc.
-  eapply certificate_drain; try eassumption.
-  intros y Hy. eapply drain_forced_no_regen; eassumption.
-Qed.
-
-(** ** CANCELLATION, FOR A STABLE CONFIGURATION
-
-    A common message bag can be *cancelled* on both sides — provided the
-    left configuration is stable, i.e. [M] refuses everything the bag
-    holds.
-
-    There is no cancellation in general ([VACCS_DropProbes.nil_not_below_msg]
-    is the obstruction: a pending message is observable, so adding one to
-    both sides is not a conservative move).  What rescues the stable case
-    is that the client can **drain the bag first**: read the acceptance
-    condition at a trace of the form [map ActOut l ++ s].  The right can
-    always empty its buffer along that prefix ([bag_wt_drain]); the left
-    must match it, and [fw_out_run_drain] says a stable configuration
-    with a mute process has *only* the draining run — so after the prefix
-    the left is at exactly [g M ▷ ∅], and the rest of the trace reads off
-    the bare acceptance condition.
-
-    This is what makes Phase A lift to a configuration: with the bag
-    cancelled, the whole mirror/restrict/match chain applies to [g M] and
-    [g N] and is carried back under [msgs l ‖ ·] by [ax_par]. *)
-
-Theorem msgs_cancel : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N).
-Proof.
-  intros l M N HM HN HstM Hpre.
-  destruct (msgs_accept l l (g M) (g N) Hpre) as (Hc1 & Hc2).
-  apply must_iff_acceptance_set_VACCS. split.
-  - intros s _. apply fw_converge_static. apply static_g. exact HN.
-  - intros s y _ Hwy Hsty.
-    assert (Hdrain : ((g N) ▷ bag l) ⟹[map ActOut l] ((g N) ▷ (∅ : MO (ExtAct TypeOfActions)))).
-    { replace (bag l) with (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
-        by (apply gmultiset.gmultiset_disj_union_right_id).
-      apply bag_wt_drain. }
-    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] y)
-      by (eapply wt_concat; [ exact Hdrain | exact Hwy ]).
-    destruct (Hc2 (map ActOut l ++ s) y
-                (fw_converge_static (map ActOut l ++ s) (g M) (bag l) (static_g M HM))
-                Hbig Hsty)
-      as (x & Hwx & Hstx & Hincl).
-    destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
-    destruct (fw_out_run_drain (map ActOut l) ((g M) ▷ bag l) z Hz1 (ins_map_out l))
-      as (Hz11 & Hz12).
-    + intros a p' Hp'. simpl in Hp'. destruct a as (d,w). eapply gsum_no_output. exact Hp'.
-    + exact HstM.
-    + rewrite outs_map_out in Hz12. simpl in Hz12, Hz11.
-      assert (Hz2e : z.2 = ∅).
-      { apply (gmultiset.gmultiset_disj_union_inj_1 (bag l)).
-        etransitivity; [ exact Hz12 | ].
-        symmetry. apply gmultiset.gmultiset_disj_union_right_id. }
-      exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
-      destruct z as (z1,z2). simpl in *. subst z1. subst z2. exact Hz2.
-Qed.
 
 (** ** …AND WITHOUT STABILITY, IF THE SUM DOES NOT REGENERATE
 
@@ -708,38 +541,6 @@ Proof.
     rewrite <- Hz. exact Hz2.
 Qed.
 
-(** La même annulation, avec le critère restreint aux canaux du sac. *)
-
-Theorem msgs_cancel_no_regen_bag : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall z, ~ lts ((g M) : proc) τ z) ->
-  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
-               bag (ins r) ⊆ bag l -> ins r = []) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N).
-Proof.
-  intros l M N HM HN HstM Hno Hpre.
-  destruct (msgs_accept l l (g M) (g N) Hpre) as (Hc1 & Hc2).
-  apply must_iff_acceptance_set_VACCS. split.
-  - intros s _. apply fw_converge_static. apply static_g. exact HN.
-  - intros s y _ Hwy Hsty.
-    assert (Hdrain : ((g N) ▷ bag l)
-                       ⟹[map ActOut l] ((g N) ▷ (∅ : MO (ExtAct TypeOfActions)))).
-    { replace (bag l) with (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
-        by (apply gmultiset.gmultiset_disj_union_right_id).
-      apply bag_wt_drain. }
-    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] y)
-      by (eapply wt_concat; [ exact Hdrain | exact Hwy ]).
-    destruct (Hc2 (map ActOut l ++ s) y
-                (fw_converge_static (map ActOut l ++ s) (g M) (bag l) (static_g M HM))
-                Hbig Hsty)
-      as (x & Hwx & Hstx & Hincl).
-    destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
-    assert (Hz : z = ((g M) ▷ (∅ : MO (ExtAct TypeOfActions))))
-      by (eapply drain_forced_no_regen_bag; eassumption).
-    exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
-    rewrite <- Hz. exact Hz2.
-Qed.
 
 (** ** Lifting a run into a larger guarded sum
 
@@ -2596,56 +2397,5 @@ Corollary ax_NF_pad_r : forall n k l M,
   (NF ((n + k)%nat) (map (shiftCn 0 k) l) (gNewVarCn 0 k M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
 Proof. intros. apply ax_cgr. apply NF_pad. Qed.
 
-
-(** * THE ν-FREE NORMAL FORM, REACHED BY THE SIMULATION
-
-    [normal_form_nores] gives [n = 0] — a **bare configuration** — and
-    [normal_form_strong_sim] gives a [domsim]; neither gives both, and the
-    outer recursion needs both: the first so that the configuration
-    machinery applies, the second so that its recursive calls can be
-    measured against the *original* process ([VACCS_Matching.DomOk]).
-
-    The proof is [normal_form_nores]'s, with each [ax_trans] of a pair of
-    [⊢]-facts replaced by one [domsim_trans] — the combinators
-    ([domsim_cgr], [domsim_par], [domsim_expansion], [domsim_refl]) line
-    up one for one with the rules the original used. *)
-
-Theorem normal_form_nores_sim : forall p, Static p -> NoRes p ->
-  exists l M, gStatic M /\ domsim p (msgs l ‖ ((g M) : proc)).
-Proof.
-  intro p. induction p as [p IHp] using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros Hs Hnr. destruct p as [p1 p2|x|x p0|E p1 p2|c v|p0|M].
-  - inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-    destruct (IHp p1 ltac:(simpl; lia) H1 Hn1) as (l1 & M1 & HM1 & Hd1).
-    destruct (IHp p2 ltac:(simpl; lia) H2 Hn2) as (l2 & M2 & HM2 & Hd2).
-    exists (l1 ++ l2), (ext M1 M2 + ext_r M2 M1).
-    split; [ constructor; [ apply ext_gStatic | apply ext_r_gStatic ]; assumption | ].
-    assert (Hc : ((msgs l1 ‖ ((g M1) : proc)) ‖ (msgs l2 ‖ ((g M2) : proc)))
-                 ≡* (msgs (l1 ++ l2) ‖ (((g M1) : proc) ‖ ((g M2) : proc)))).
-    { etransitivity; [ apply cgr_par_exchange | ].
-      apply cgr_fullpar; [ symmetry; apply msgs_app | reflexivity ]. }
-    eapply domsim_trans; [ apply domsim_par; [ exact Hd1 | exact Hd2 ] | ].
-    eapply domsim_trans; [ apply domsim_cgr; exact Hc | ].
-    apply domsim_par; [ apply domsim_refl | apply domsim_expansion ].
-  - inversion Hs.
-  - inversion Hs.
-  - destruct (Eval_Eq 0 E) as [[|]|] eqn:HE;
-      [ | | exfalso; eapply Eval_Eq_0_not_none; exact HE ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-      destruct (IHp p1 ltac:(simpl; lia) H1 Hn1) as (l & M & HM & Hd).
-      exists l, M. split; [ exact HM | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_true; exact HE | exact Hd ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-      destruct (IHp p2 ltac:(simpl; lia) H3 Hn2) as (l & M & HM & Hd).
-      exists l, M. split; [ exact HM | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_false; exact HE | exact Hd ].
-  - exists [(c,v)], 𝟘. split; [ constructor | ]. simpl.
-    apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | ].
-    apply cgr_fullpar; [ apply cgr_par_nil_rev | reflexivity ].
-  - simpl in Hnr. contradiction.
-  - inversion Hs; subst. exists [], M. split; [ assumption | ]. simpl.
-    apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
-Qed.
 
 End VACCS_NormalForm.

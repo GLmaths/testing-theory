@@ -56,6 +56,49 @@ Section VACCS_Residues.
 
 Context `{VP : VACCS_Parameters}.
 
+(** ** The summands of a guarded sum, and how they carry its transitions *)
+
+Fixpoint summands (M : gproc) : list gproc :=
+match M with
+| M1 + M2 => summands M1 ++ summands M2
+| b => [b]
+end.
+
+Lemma summand_lts : forall (M a : gproc), In a (summands M) ->
+  forall al q, lts (g a) al q -> lts (g M) al q.
+Proof.
+  induction M as [ | | c p | p | M1 IH1 M2 IH2 ]; intros a Hin al q Hl; simpl in Hin.
+  - destruct Hin as [He|[]]; subst; exact Hl.
+  - destruct Hin as [He|[]]; subst; exact Hl.
+  - destruct Hin as [He|[]]; subst; exact Hl.
+  - destruct Hin as [He|[]]; subst; exact Hl.
+  - apply in_app_or in Hin. destruct Hin as [H1|H2].
+    + apply lts_choiceL. eapply IH1; eassumption.
+    + apply lts_choiceR. eapply IH2; eassumption.
+Qed.
+
+Lemma gsum_in_summand : forall (M : gproc) c w p',
+  lts (g M) (ActExt (ActIn (c,w))) p' ->
+  exists P, In (c ? P) (summands M) /\ p' = P ^ w.
+Proof.
+  induction M as [ | | d P | P | M1 IH1 M2 IH2 ]; intros c w p' Hl;
+    inversion Hl; subst.
+  - exists P. split; [ left; reflexivity | reflexivity ].
+  - destruct (IH1 c w p' H3) as (P & Hin & He).
+    exists P. split; [ apply in_or_app; left; exact Hin | exact He ].
+  - destruct (IH2 c w p' H3) as (P & Hin & He).
+    exists P. split; [ apply in_or_app; right; exact Hin | exact He ].
+Qed.
+
+Lemma gsum_tau_summand : forall (M : gproc) X,
+  lts (g M) τ X -> In (𝛕 • X) (summands M).
+Proof.
+  induction M as [ | | d P | P | M1 IH1 M2 IH2 ]; intros X Hl; inversion Hl; subst.
+  - left. reflexivity.
+  - apply in_or_app. left. apply IH1. exact H3.
+  - apply in_or_app. right. apply IH2. exact H3.
+Qed.
+
 (** ** n-ary internal choice
 
     Ported from VCCS's [CompletenessAx.v].  The singleton case is
@@ -90,55 +133,6 @@ Proof.
   - destruct Hin as [E|Hin].
     + subst p0. apply lts_choiceL. apply lts_tau.
     + apply lts_choiceR. apply IH. exact Hin.
-Qed.
-
-(** ** The n-ary join
-
-    [ichoice] turns a conjunction of obligations into a process only if
-    "all members pass [t]" gives "[ichoice L] passes [t]".  The binary
-    case is [must_i_int_glb]; the n-ary one needs the asymmetric shape
-    [𝛕•x + M] with [M] all-τ, since [ichoice (x :: l)] is *not* of the
-    form [𝛕•_ + 𝛕•_].  [gAllTau_no_ext] is what makes its [com] field
-    vacuous. *)
-
-Lemma must_i_tau_join_gen : forall (x : proc) (M : gproc) t,
-  gAllTau M -> x must_pass t -> ((g M) : proc) must_pass t ->
-  (g (((𝛕 • x) + M) : gproc)) must_pass t.
-Proof.
-  intros x M t HM Hm1. revert HM. revert M.
-  induction Hm1 as [t Hout | p t nh ex pt IHpt et IHet com IHcom];
-    intros M HM Hm2.
-  - now apply m_now.
-  - assert (Hp : p must_pass t) by (apply m_step; assumption).
-    apply m_step.
-    + exact nh.
-    + exists (p, t). eapply ParLeft. apply lts_choiceL. apply lts_tau.
-    + intros p' Hp'. inversion Hp'; subst.
-      * inversion H3; subst. exact Hp.
-      * inversion Hm2; subst.
-        { exfalso. apply nh. assumption. }
-        eapply pt0. exact H3.
-    + intros t' Ht'. apply IHet; [ exact Ht' | exact HM | ].
-      inversion Hm2; subst.
-      * exfalso. apply nh. assumption.
-      * eapply et0. exact Ht'.
-    + intros p' t' mu1 mu2 Hdual Hp' Ht'. inversion Hp'; subst.
-      * inversion H3.
-      * exfalso. eapply gAllTau_no_ext; [ exact HM | exact H3 ].
-Qed.
-
-Lemma ichoice_must : forall (L : list proc) t, L <> nil ->
-  (forall x, In x L -> x must_pass t) -> (g (ichoice L)) must_pass t.
-Proof.
-  induction L as [|x L IH]; intros t Hne Hall; [ contradiction | ].
-  destruct L as [|y L'].
-  - simpl. apply must_i_int_glb; apply Hall; left; reflexivity.
-  - assert (Hrec : (g (ichoice (y :: L'))) must_pass t).
-    { apply IH; [ discriminate | ]. intros z Hz. apply Hall. right. exact Hz. }
-    simpl. apply must_i_tau_join_gen.
-    + apply (ichoice_gAllTau (y :: L')). discriminate.
-    + apply Hall. left. reflexivity.
-    + exact Hrec.
 Qed.
 
 (** ** Enumerating the reducts
@@ -223,50 +217,6 @@ Proof.
   - eapply reach_list_complete; eassumption.
   - unfold res_v. apply list_elem_of_In. apply elem_of_elements.
     apply lts_set_spec1. exact Hr.
-Qed.
-
-(** ** The weak-emission glb law, with its collecting premise discharged
-
-    [must_i_glb_weak] is stated over an abstract [W]; the intended [W] is
-    the internal choice of the residues, and with it the collecting
-    premise holds once and for all. *)
-
-Lemma ichoice_res_collect : forall n c v (p : proc) t,
-  res_list_v n c v p <> nil ->
-  (forall p1 p'', p ⟹[[]] p1 ->
-     lts p1 (ActExt (ActOut (c,v))) p'' -> p'' must_pass t) ->
-  (g (ichoice (res_list_v n c v p))) must_pass t.
-Proof.
-  intros n c v p t Hne Hall. apply ichoice_must; [ exact Hne | ].
-  intros x Hx. apply res_list_v_sound in Hx as (p1 & Hp1 & Ho).
-  eapply Hall; [ exact Hp1 | exact Ho ].
-Qed.
-
-(** Compare [must_i_glb_gen], whose output premise asks [p] to emit
-    itself.  The two output premises here are, at a constant value,
-    exactly what the preorder supplies:
-    [VACCS_Matching.res_list_v_nonempty] for the first,
-    [VACCS_Matching.ichoice_residues_below] for the second.
-
-    Note the law needs neither [Static] nor a bound on [n]: those enter
-    only when the premises are *discharged*, not when they are used. *)
-
-Theorem must_i_glb_res : forall (p q : proc) n,
-  (exists q0, lts q τ q0) ->
-  (forall q', lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q') ->
-  (forall c v q'', lts q (ActExt (ActIn (c,v))) q'' ->
-     ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'') ->
-  (forall c v q'', lts q (ActExt (ActOut (c,v))) q'' ->
-     res_list_v n c v p <> nil) ->
-  (forall c v q'', lts q (ActExt (ActOut (c,v))) q'' ->
-     (g (ichoice (res_list_v n c v p))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'') ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
-Proof.
-  intros p q n Htau0 Htau Hin Hne Hout.
-  apply (must_i_glb_weak p q (fun c v => g (ichoice (res_list_v n c v p))));
-    try assumption.
-  intros c v q'' t Hq'' Hall.
-  apply ichoice_res_collect; [ eapply Hne; exact Hq'' | exact Hall ].
 Qed.
 
 End VACCS_Residues.

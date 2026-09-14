@@ -139,45 +139,7 @@ Qed.
     [ex] may have been satisfied by the [𝛕] alone and so says nothing
     about [X]. *)
 
-Lemma must_i_tau_sep_aux : forall (X Y : gproc) t,
-  g (X + (𝛕 • (g Y))) must_pass t -> g Y must_pass t -> g (X + Y) must_pass t.
-Proof.
-  intros X Y t HL HY.
-  remember (g (X + (𝛕 • (g Y)))) as L eqn:EL.
-  revert EL HY.
-  induction HL as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL HY.
-  - now apply m_now.
-  - subst u.
-    apply m_step.
-    + exact nh.
-    + inversion HY; subst; [exfalso; apply nh; assumption |].
-      destruct ex0 as ((a2,b2) & Hstep). inversion Hstep; subst.
-      * exists (a2,b2). eapply ParLeft. apply lts_choiceR. exact l.
-      * exists (g (X + Y), b2). eapply ParRight. exact l.
-      * exists (a2,b2). eapply (ParSync μ1 μ2); [exact eq | apply lts_choiceR; exact l1 | exact l2].
-    + intros p' Hp'. inversion Hp'; subst.
-      * apply pt. apply lts_choiceL. exact H3.
-      * inversion HY; subst; [exfalso; apply nh; assumption | apply pt0; exact H3].
-    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
-      inversion HY; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
-    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
-      * eapply com; [exact Hdual | apply lts_choiceL; exact H3 | exact Ht'].
-      * inversion HY; subst; [exfalso; apply nh; assumption |].
-        eapply com0; [exact Hdual | exact H3 | exact Ht'].
-Qed.
 
-Lemma must_i_tau_sep_l : forall (X Y : gproc) t,
-  g (X + (𝛕 • (g Y))) must_pass t ->
-  g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) must_pass t.
-Proof.
-  intros X Y t HL.
-  inversion HL; subst.
-  - now apply m_now.
-  - assert (HY : g Y must_pass t) by (apply pt; apply lts_choiceR; apply lts_tau).
-    apply must_i_int_glb.
-    + apply must_i_tau_sep_aux; assumption.
-    + exact HY.
-Qed.
 
 Lemma must_i_tau_sep_r : forall (X Y : gproc) t,
   g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) must_pass t ->
@@ -205,9 +167,6 @@ Proof.
       * inversion H3.
 Qed.
 
-Corollary must_i_tau_sep_pre_l : forall (X Y : gproc),
-  g (X + (𝛕 • (g Y))) ⊑ₘᵤₛₜᵢ g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))).
-Proof. intros X Y t H. apply must_i_tau_sep_l. exact H. Qed.
 
 Corollary must_i_tau_sep_pre_r : forall (X Y : gproc),
   g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) ⊑ₘᵤₛₜᵢ g (X + (𝛕 • (g Y))).
@@ -231,47 +190,8 @@ Proof. intros X Y t H. apply must_i_tau_sep_r. exact H. Qed.
     a [𝛕] inside [X] or [Y] is covered by the corresponding hypothesis's
     own [pt] field. *)
 
-Lemma must_i_convex_aux : forall (X Y Z : gproc) t,
-  g X must_pass t -> g ((X + Y) + Z) must_pass t -> g (X + Y) must_pass t.
-Proof.
-  intros X Y Z t HX HW.
-  remember (g X) as L eqn:EL.
-  revert EL HW.
-  induction HX as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL HW.
-  - now apply m_now.
-  - subst u.
-    apply m_step.
-    + exact nh.
-    + destruct ex as ((a2,b2) & Hstep). inversion Hstep; subst.
-      * exists (a2,b2). eapply ParLeft. apply lts_choiceL. exact l.
-      * exists (g (X + Y), b2). eapply ParRight. exact l.
-      * exists (a2,b2). eapply (ParSync μ1 μ2); [exact eq | apply lts_choiceL; exact l1 | exact l2].
-    + intros p' Hp'. inversion Hp'; subst.
-      * apply pt. exact H3.
-      * inversion HW; subst; [exfalso; apply nh; assumption |].
-        apply pt0. apply lts_choiceL. apply lts_choiceR. exact H3.
-    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
-      inversion HW; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
-    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
-      * eapply com; [exact Hdual | exact H3 | exact Ht'].
-      * inversion HW; subst; [exfalso; apply nh; assumption |].
-        eapply com0; [exact Hdual | apply lts_choiceL; apply lts_choiceR; exact H3 | exact Ht'].
-Qed.
 
-Lemma must_i_convex : forall (X Y Z : gproc) t,
-  g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z)))) must_pass t -> g (X + Y) must_pass t.
-Proof.
-  intros X Y Z t H.
-  inversion H; subst.
-  - now apply m_now.
-  - apply must_i_convex_aux with (Z := Z).
-    + apply pt. apply lts_choiceL. apply lts_tau.
-    + apply pt. apply lts_choiceR. apply lts_tau.
-Qed.
 
-Corollary must_i_convex_pre : forall (X Y Z : gproc),
-  g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z)))) ⊑ₘᵤₛₜᵢ g (X + Y).
-Proof. intros X Y Z t Ht. apply must_i_convex with (Z := Z). exact Ht. Qed.
 
 (** ** Continuation sharing
 
@@ -302,53 +222,7 @@ Proof. intros X Y Z t Ht. apply must_i_convex with (Z := Z). exact Ht. Qed.
     branch's own [pt] field, and [Y'] is only ever consulted through the
     second branch's [com]. *)
 
-Lemma must_i_share_in_aux : forall c P Q X' Y' t,
-  g ((c ? P) + X') must_pass t -> g ((c ? Q) + Y') must_pass t ->
-  g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X') must_pass t.
-Proof.
-  intros c P Q X' Y' t H1 H2.
-  remember (g ((c ? P) + X')) as L eqn:EL.
-  revert EL H2.
-  induction H1 as [t Hout | u t nh ex pt IHpt et IHet com IHcom]; intros EL H2.
-  - now apply m_now.
-  - subst u.
-    apply m_step.
-    + exact nh.
-    + destruct ex as ((a2,b2) & Hstep). inversion Hstep; subst.
-      * inversion l; subst.
-        { inversion H4. }
-        { exists (a2, b2). eapply ParLeft. apply lts_choiceR. exact H4. }
-      * exists (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X'), b2).
-        eapply ParRight. exact l.
-      * inversion l1; subst.
-        { inversion H4; subst. eexists.
-          eapply ParSync; [exact eq | apply lts_choiceL; apply lts_input | exact l2]. }
-        { exists (a2,b2). eapply ParSync;
-            [exact eq | apply lts_choiceR; exact H4 | exact l2]. }
-    + intros p' Hp'. inversion Hp'; subst.
-      * inversion H4.
-      * apply pt. apply lts_choiceR. exact H4.
-    + intros t' Ht'. apply IHet; [exact Ht' | reflexivity |].
-      inversion H2; subst; [exfalso; apply nh; assumption | eapply et0; exact Ht'].
-    + intros p' t' μ1 μ2 Hdual Hp' Ht'. inversion Hp'; subst.
-      * inversion H4; subst. simpl.
-        apply must_i_int_glb.
-        { eapply com; [exact Hdual | apply lts_choiceL; apply lts_input | exact Ht']. }
-        { inversion H2; subst; [exfalso; apply nh; assumption |].
-          eapply com0; [exact Hdual | apply lts_choiceL; apply lts_input | exact Ht']. }
-      * eapply com; [exact Hdual | apply lts_choiceR; exact H4 | exact Ht'].
-Qed.
 
-Corollary must_i_share_in_pre : forall c P Q X' Y',
-  g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y'))))
-    ⊑ₘᵤₛₜᵢ g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X').
-Proof.
-  intros c P Q X' Y' t H. inversion H; subst.
-  - now apply m_now.
-  - apply must_i_share_in_aux with (Y' := Y') (Q := Q).
-    + apply pt. apply lts_choiceL. apply lts_tau.
-    + apply pt. apply lts_choiceR. apply lts_tau.
-Qed.
 
 Fixpoint gAllTau (M : gproc) : Prop :=
 match M with
@@ -1800,38 +1674,6 @@ Qed.
     by [must_i_int_glb].  Everything else transfers through
     [lts_choiceR]. *)
 
-Lemma must_i_input_distrib_ctx_l :
-  forall (c : ChannelData) (P Q : proc) (R : gproc) (t : proc),
-  (g ((c ? P + (c ? Q)) + R)) must_pass t ->
-  (g ((c ? (𝛕 • P + (𝛕 • Q))) + R)) must_pass t.
-Proof.
-  intros c P Q R t Hm. remember (g ((c ? P + (c ? Q)) + R)) as p0 eqn:Heq.
-  induction Hm; subst.
-  - apply m_now. assumption.
-  - apply m_step.
-    + assumption.
-    + destruct ex as (u & Hu). inversion Hu; subst; unfold lts_step in *; simpl in *.
-      * inversion l; subst.
-        -- inversion H6; subst; inversion H7.
-        -- eexists. eapply ParLeft. apply lts_choiceR. eassumption.
-      * eexists. eapply ParRight. eassumption.
-      * inversion l1; subst.
-        -- inversion H6; subst;
-             (inversion H7; subst; eexists; eapply ParSync;
-               [ exact eq | apply lts_choiceL; apply lts_input | exact l2 ]).
-        -- eexists. eapply ParSync; [ exact eq | apply lts_choiceR; eassumption | exact l2 ].
-    + intros p' Hp'. inversion Hp'; subst.
-      * inversion H6.
-      * apply pt. apply lts_choiceR. assumption.
-    + intros t' Ht'. eapply H0; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hl1 Hl2. inversion Hl1; subst.
-      * inversion H6; subst. simpl. apply must_i_int_glb.
-        -- eapply com;
-             [ exact Hd | apply lts_choiceL; apply lts_choiceL; apply lts_input | exact Hl2 ].
-        -- eapply com;
-             [ exact Hd | apply lts_choiceL; apply lts_choiceR; apply lts_input | exact Hl2 ].
-      * eapply com; [ exact Hd | apply lts_choiceR; eassumption | exact Hl2 ].
-Qed.
 
 (** ** A server's own internal step only decreases
 
@@ -1917,215 +1759,13 @@ Qed.
     input.  Every one of them has a [Q]-counterpart with the *same*
     label, which is why all five [must] fields transfer. *)
 
-Lemma must_i_input_ctx : forall (R : proc -> Prop) (c : ChannelData) (P Q : proc),
-  (forall B, R B -> (forall q, ~ lts B τ q)) ->
-  (forall B, R B -> (forall a q, ~ lts B (ActExt (ActIn a)) q)) ->
-  (forall B, R B -> forall mu B', lts B (ActExt mu) B' -> R B') ->
-  (forall B, R B -> forall v,
-     (B ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (B ‖ (subst_in_proc 0 v Q))) ->
-  forall B, R B -> (B ‖ g (c ? P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (B ‖ g (c ? Q)).
-Proof.
-  intros R c P Q Hnt Hni Hcl HPQ B HB t Hm.
-  remember (B ‖ g (c ? P)) as S eqn:HS.
-  revert HS. revert B HB. induction Hm as [ S t Ho | S t Ho Hex Hpt IHpt Het IHet Hcom IHcom ];
-    intros B HB HS; subst.
-  - now apply m_now.
-  - apply m_step.
-    + exact Ho.
-    + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
-      * inversion l; subst.
-        -- match goal with HH : lts (g (c ? P)) (ActExt (ActIn _)) _ |- _ =>
-             inversion HH; subst end.
-           match goal with HB' : lts B (ActExt (ActOut _)) _ |- _ =>
-             eexists; eapply ParLeft; eapply lts_comL; [ exact HB' | apply lts_input ] end.
-        -- exfalso.
-           match goal with HH : lts B (ActExt (ActIn _)) _ |- _ =>
-             eapply Hni; [ exact HB | exact HH ] end.
-        -- exfalso.
-           match goal with HH : lts B τ _ |- _ => eapply Hnt; [ exact HB | exact HH ] end.
-        -- match goal with HH : lts (g (c ? P)) τ _ |- _ => inversion HH end.
-      * exists (B ‖ (g (c ? Q)) ▷ x2). eapply ParRight. eassumption.
-      * inversion l1; subst.
-        -- match goal with HB' : lts B (ActExt μ1) ?p2 |- _ =>
-             exists ((p2 ‖ (g (c ? Q))) ▷ x2);
-             eapply ParSync; [ exact eq | apply lts_parL; exact HB' | exact l2 ] end.
-        -- match goal with HH : lts (g (c ? P)) (ActExt μ1) _ |- _ =>
-             inversion HH; subst end.
-           exists ((B ‖ (subst_in_proc 0 v Q)) ▷ x2).
-           eapply ParSync; [ exact eq | apply lts_parR; apply lts_input | exact l2 ].
-    + intros x Hx. inversion Hx; subst.
-      * match goal with HH : lts (g (c ? Q)) (ActExt (ActIn _)) _ |- _ =>
-          inversion HH; subst end.
-        match goal with HB' : lts B (ActExt (ActOut _)) ?B2 |- _ =>
-          apply (HPQ B2 (Hcl B HB _ B2 HB'));
-          apply Hpt; eapply lts_comL; [ exact HB' | apply lts_input ] end.
-      * exfalso.
-        match goal with HH : lts B (ActExt (ActIn _)) _ |- _ =>
-          eapply Hni; [ exact HB | exact HH ] end.
-      * exfalso.
-        match goal with HH : lts B τ _ |- _ => eapply Hnt; [ exact HB | exact HH ] end.
-      * match goal with HH : lts (g (c ? Q)) τ _ |- _ => inversion HH end.
-    + intros t' Ht'. eapply IHet; [ exact Ht' | exact HB | reflexivity ].
-    + intros x t' mu1 mu2 Hd Hx Ht'. inversion Hx; subst.
-      * match goal with HB' : lts B (ActExt mu1) ?B2 |- _ =>
-          eapply (IHcom (B2 ‖ (g (c ? P))) t' mu1 mu2 Hd (lts_parL HB') Ht' B2
-                   (Hcl B HB _ B2 HB') eq_refl) end.
-      * match goal with HH : lts (g (c ? Q)) (ActExt mu1) _ |- _ =>
-          inversion HH; subst end.
-        apply (HPQ B HB v).
-        eapply Hcom; [ exact Hd | apply lts_parR; apply lts_input | exact Ht' ].
-Qed.
-
-(** The same with a context [G] beside the guard — the configuration-level
+(** Input congruence with a context [G] beside the guard — the configuration-level
     counterpart of [must_i_choice_input_compat].  [G]'s own transitions
     reach *literally the same* state on both sides, so they are discharged
     by the given [must] fact directly; only the guard's own input consults
-    the premise.  Between them, [must_i_input_ctx] and this cover both
-    places the matching needs an omega step: [ax_fwd_match] (no context)
-    and [ax_choice_input] (with one). *)
-Lemma must_i_choice_input_ctx :
-  forall (R : proc -> Prop) (c : ChannelData) (P Q : proc) (G : gproc),
-  (forall B, R B -> (forall q, ~ lts B τ q)) ->
-  (forall B, R B -> (forall a q, ~ lts B (ActExt (ActIn a)) q)) ->
-  (forall B, R B -> forall mu B', lts B (ActExt mu) B' -> R B') ->
-  (forall B, R B -> forall v,
-     (B ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (B ‖ (subst_in_proc 0 v Q))) ->
-  forall B, R B -> (B ‖ g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (B ‖ g ((c ? Q) + G)).
-Proof.
-  intros R c P Q G Hnt Hni Hcl HPQ B HB t Hm.
-  remember (B ‖ g ((c ? P) + G)) as S eqn:HS.
-  revert HS. revert B HB. induction Hm as [ S t Ho | S t Ho Hex Hpt IHpt Het IHet Hcom IHcom ];
-    intros B HB HS; subst.
-  - now apply m_now.
-  - apply m_step.
-    + exact Ho.
-    + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
-      * inversion l; subst.
-        -- match goal with HH : lts (g ((c ? P) + G)) (ActExt (ActIn _)) _ |- _ =>
-             inversion HH; subst end.
-           ++ match goal with HH : lts (g (c ? P)) (ActExt (ActIn _)) _ |- _ =>
-                inversion HH; subst end.
-              match goal with HB' : lts B (ActExt (ActOut _)) ?p2 |- _ =>
-                exists ((p2 ‖ (subst_in_proc 0 v Q)) ▷ x2); eapply ParLeft;
-                eapply lts_comL; [ exact HB' | apply lts_choiceL; apply lts_input ] end.
-           ++ match goal with HB' : lts B (ActExt (ActOut _)) ?p2 |- _ =>
-                match goal with HG : lts (g G) (ActExt (ActIn _)) ?q2 |- _ =>
-                  exists ((p2 ‖ q2) ▷ x2); eapply ParLeft;
-                  eapply lts_comL; [ exact HB' | apply lts_choiceR; exact HG ] end end.
-        -- exfalso.
-           match goal with HH : lts B (ActExt (ActIn _)) _ |- _ =>
-             eapply Hni; [ exact HB | exact HH ] end.
-        -- exfalso.
-           match goal with HH : lts B τ _ |- _ => eapply Hnt; [ exact HB | exact HH ] end.
-        -- match goal with HH : lts (g ((c ? P) + G)) τ _ |- _ => inversion HH; subst end.
-           ++ match goal with HH : lts (g (c ? P)) τ _ |- _ => inversion HH end.
-           ++ match goal with HG : lts (g G) τ ?q2 |- _ =>
-                exists ((B ‖ q2) ▷ x2); eapply ParLeft; apply lts_parR;
-                apply lts_choiceR; exact HG end.
-      * exists (B ‖ (g ((c ? Q) + G)) ▷ x2). eapply ParRight. eassumption.
-      * inversion l1; subst.
-        -- match goal with HB' : lts B (ActExt μ1) ?p2 |- _ =>
-             exists ((p2 ‖ (g ((c ? Q) + G))) ▷ x2);
-             eapply ParSync; [ exact eq | apply lts_parL; exact HB' | exact l2 ] end.
-        -- match goal with HH : lts (g ((c ? P) + G)) (ActExt μ1) _ |- _ =>
-             inversion HH; subst end.
-           ++ match goal with HH : lts (g (c ? P)) (ActExt μ1) _ |- _ =>
-                inversion HH; subst end.
-              exists ((B ‖ (subst_in_proc 0 v Q)) ▷ x2).
-              eapply ParSync;
-                [ exact eq | apply lts_parR; apply lts_choiceL; apply lts_input | exact l2 ].
-           ++ match goal with HG : lts (g G) (ActExt μ1) ?q2 |- _ =>
-                exists ((B ‖ q2) ▷ x2);
-                eapply ParSync;
-                  [ exact eq | apply lts_parR; apply lts_choiceR; exact HG | exact l2 ] end.
-    + intros x Hx. inversion Hx; subst.
-      * match goal with HH : lts (g ((c ? Q) + G)) (ActExt (ActIn _)) _ |- _ =>
-          inversion HH; subst end.
-        -- match goal with HH : lts (g (c ? Q)) (ActExt (ActIn _)) _ |- _ =>
-             inversion HH; subst end.
-           match goal with HB' : lts B (ActExt (ActOut _)) ?B2 |- _ =>
-             apply (HPQ B2 (Hcl B HB _ B2 HB'));
-             apply Hpt; eapply lts_comL;
-               [ exact HB' | apply lts_choiceL; apply lts_input ] end.
-        -- match goal with HB' : lts B (ActExt (ActOut _)) _ |- _ =>
-             match goal with HG : lts (g G) (ActExt (ActIn _)) _ |- _ =>
-               apply Hpt; eapply lts_comL;
-                 [ exact HB' | apply lts_choiceR; exact HG ] end end.
-      * exfalso.
-        match goal with HH : lts B (ActExt (ActIn _)) _ |- _ =>
-          eapply Hni; [ exact HB | exact HH ] end.
-      * exfalso.
-        match goal with HH : lts B τ _ |- _ => eapply Hnt; [ exact HB | exact HH ] end.
-      * match goal with HH : lts (g ((c ? Q) + G)) τ _ |- _ => inversion HH; subst end.
-        -- match goal with HH : lts (g (c ? Q)) τ _ |- _ => inversion HH end.
-        -- match goal with HG : lts (g G) τ _ |- _ =>
-             apply Hpt; apply lts_parR; apply lts_choiceR; exact HG end.
-    + intros t' Ht'. eapply IHet; [ exact Ht' | exact HB | reflexivity ].
-    + intros x t' mu1 mu2 Hd Hx Ht'. inversion Hx; subst.
-      * match goal with HB' : lts B (ActExt mu1) ?B2 |- _ =>
-          eapply (IHcom (B2 ‖ (g ((c ? P) + G))) t' mu1 mu2 Hd (lts_parL HB') Ht' B2
-                   (Hcl B HB _ B2 HB') eq_refl) end.
-      * match goal with HH : lts (g ((c ? Q) + G)) (ActExt mu1) _ |- _ =>
-          inversion HH; subst end.
-        -- match goal with HH : lts (g (c ? Q)) (ActExt mu1) _ |- _ =>
-             inversion HH; subst end.
-           apply (HPQ B HB v).
-           eapply Hcom;
-             [ exact Hd | apply lts_parR; apply lts_choiceL; apply lts_input | exact Ht' ].
-        -- match goal with HG : lts (g G) (ActExt mu1) _ |- _ =>
-             eapply Hcom;
-               [ exact Hd | apply lts_parR; apply lts_choiceR; exact HG | exact Ht' ] end.
-Qed.
-
-(** The greatest-lower-bound law, likewise with an inert context in place.
-
-    Only [com] needs the context's own moves: an internal choice has no
-    external transition of its own, so the *only* way the pair can act
-    visibly is [B] emitting — and that lands on the same statement at
-    [B'], which the [must] induction supplies.  [ex] is unconditional
-    (the internal choice always has its own [τ]) and [pt] is the two
-    premises. *)
-Lemma must_i_int_glb_ctx : forall (R : proc -> Prop) (p q1 q2 : proc),
-  (forall B, R B -> (forall z, ~ lts B τ z)) ->
-  (forall B, R B -> (forall a z, ~ lts B (ActExt (ActIn a)) z)) ->
-  (forall B, R B -> forall mu B', lts B (ActExt mu) B' -> R B') ->
-  (forall B, R B -> (B ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (B ‖ q1)) ->
-  (forall B, R B -> (B ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (B ‖ q2)) ->
-  forall B, R B -> (B ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (B ‖ g ((𝛕 • q1) + (𝛕 • q2))).
-Proof.
-  intros R p q1 q2 Hnt Hni Hcl H1 H2 B HB t Hm.
-  remember (B ‖ p) as S eqn:HS.
-  revert HS. revert B HB. induction Hm as [ S t Ho | S t Ho Hex Hpt IHpt Het IHet Hcom IHcom ];
-    intros B HB HS; subst.
-  - now apply m_now.
-  - apply m_step.
-    + exact Ho.
-    + exists ((B ‖ q1) ▷ t). eapply ParLeft. apply lts_parR.
-      apply lts_choiceL. apply lts_tau.
-    + intros x Hx. inversion Hx; subst.
-      * match goal with HH : lts (g ((𝛕 • q1) + (𝛕 • q2))) (ActExt (ActIn _)) _ |- _ =>
-          inversion HH; subst end;
-        match goal with HH : lts (g (𝛕 • _)) (ActExt (ActIn _)) _ |- _ => inversion HH end.
-      * exfalso.
-        match goal with HH : lts B (ActExt (ActIn _)) _ |- _ =>
-          eapply Hni; [ exact HB | exact HH ] end.
-      * exfalso.
-        match goal with HH : lts B τ _ |- _ => eapply Hnt; [ exact HB | exact HH ] end.
-      * match goal with HH : lts (g ((𝛕 • q1) + (𝛕 • q2))) τ _ |- _ =>
-          inversion HH; subst end;
-        match goal with HH : lts (g (𝛕 • _)) τ _ |- _ => inversion HH; subst end.
-        -- apply (H1 B HB). apply m_step; assumption.
-        -- apply (H2 B HB). apply m_step; assumption.
-    + intros t' Ht'. eapply IHet; [ exact Ht' | exact HB | reflexivity ].
-    + intros x t' mu1 mu2 Hd Hx Ht'. inversion Hx; subst.
-      * match goal with HB' : lts B (ActExt mu1) ?B2 |- _ =>
-          eapply (IHcom (B2 ‖ p) t' mu1 mu2 Hd (lts_parL HB') Ht' B2
-                   (Hcl B HB _ B2 HB') eq_refl) end.
-      * match goal with HH : lts (g ((𝛕 • q1) + (𝛕 • q2))) (ActExt mu1) _ |- _ =>
-          inversion HH; subst end;
-        match goal with HH : lts (g (𝛕 • _)) (ActExt mu1) _ |- _ => inversion HH end.
-Qed.
-
+    the premise.  It is the semantic side of the rule
+    [ax_choice_input_bag]; the bare omega rule is its [G := 𝟘],
+    empty-bag instance. *)
 
 (** ** An unstable right-hand side, WITHOUT separating it
 
@@ -2187,116 +1827,6 @@ Proof.
       eapply (proj2 (must_i_cgr _ _ Hc2)). exact Hm2.
 Qed.
 
-
-(** The same law with **emissions allowed** on the right, at the price of
-    the obvious premise: an emission of [q] must be answered by one of
-    [p] whose target is again above.  [must_i_glb_tau] is the case where
-    [q] never emits, which makes that premise vacuous — true of every
-    guarded sum, false of a configuration carrying a bag.  With this
-    version the law applies to a *configuration* on the right as well:
-    the bag's own emissions are matched by the left's, at a strictly
-    smaller bag. *)
-
-Lemma must_i_glb_gen : forall (p q : proc),
-  (exists q0, lts q τ q0) ->
-  (forall q', lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q') ->
-  (forall c v q'', lts q (ActExt (ActIn (c,v))) q'' ->
-     ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'') ->
-  (forall c v q'', lts q (ActExt (ActOut (c,v))) q'' ->
-     exists p'', lts p (ActExt (ActOut (c,v))) p'' /\ p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'') ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
-Proof.
-  intros p q (q0 & Hq0) Htau Hin Hout t Hm.
-  induction Hm as [p0 t0 Hg | p0 t0 Hnh Hex Hpt IHpt Het IHet Hcom IHcom].
-  - apply m_now. exact Hg.
-  - assert (Hmpt : p0 must_pass t0) by (apply m_step; assumption).
-    apply m_step.
-    + exact Hnh.
-    + exists (q0, t0). apply ParLeft. exact Hq0.
-    + intros q' Hq'. apply (Htau q' Hq'). exact Hmpt.
-    + intros t' Ht'. apply IHet; assumption.
-    + intros q'' t' mu1 mu2 Hdual Hq'' Ht'.
-      destruct mu1 as [(c,v)|(c,v)].
-      * destruct mu2 as [(d,w)|(d,w)]; simpl in Hdual; [ inversion Hdual | ].
-        injection Hdual as E1 E2. subst d w.
-        apply (Hin c v q'' Hq'').
-        apply TransitionShapeForOutputSimplified in Ht' as Hcgr.
-        assert (Hm2 : p0 must_pass ((c ! v • 𝟘) ‖ t')).
-        { eapply must_eq_client; [ exact Hcgr | exact Hmpt ]. }
-        apply must_msg_swap in Hm2.
-        assert (Hc2 : (p0 ‖ (c ! v • 𝟘)) ≡* ((c ! v • 𝟘) ‖ p0)) by (apply cgr_par_com).
-        eapply (proj2 (must_i_cgr _ _ Hc2)). exact Hm2.
-      * destruct mu2 as [(d,w)|(d,w)]; simpl in Hdual; [ | inversion Hdual ].
-        injection Hdual as E1 E2. subst d w.
-        destruct (Hout c v q'' Hq'') as (p'' & Hp'' & Hsub).
-        apply Hsub. eapply Hcom; [ | exact Hp'' | exact Ht' ]. reflexivity.
-Qed.
-
-(** ** …and the same law with the emissions matched only WEAKLY
-
-    [must_i_glb_gen]'s output premise asks [p] to emit [(c,v)] *itself*,
-    and that premise is **not** a semantic consequence of [p ⊑ q]
-    ([VACCS_Matching.glb_output_premise_not_semantic]: a server [τ] only
-    ever weakens, so [g (𝛕 • (c!v•𝟘))] sits below [c!v•𝟘] while offering
-    no emission at all).  What *is* a consequence is the weak form —
-    [VACCS_Matching.weak_out_of_below].
-
-    The price is that the weak residues cannot be compared one by one:
-    [must (W c v) t] has to follow from *all* of them passing [t]
-    ([Hcollect]), which is why the intended [W c v] is the **internal
-    choice** of the residues at [(c,v)]
-    ([VACCS_Matching.ichoice_residues_below]).
-
-    Only the [com]-output case differs from [must_i_glb_gen], and it is
-    where the weak step is spent: [must_preserved_by_weak_nil_srv] carries
-    [must p0 t0] along the server's own [τ]s to the state that actually
-    emits, and *that* state's [com] field discharges the residue.  The
-    [m_now] branch of its inversion is impossible, [t0] not being good. *)
-
-Lemma must_i_glb_weak : forall (p q : proc) (W : ChannelData -> ValueData -> proc),
-  (exists q0, lts q τ q0) ->
-  (forall q', lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q') ->
-  (forall c v q'', lts q (ActExt (ActIn (c,v))) q'' ->
-     ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'') ->
-  (forall c v q'' t, lts q (ActExt (ActOut (c,v))) q'' ->
-     (forall p1 p'', p ⟹[[]] p1 ->
-        lts p1 (ActExt (ActOut (c,v))) p'' -> p'' must_pass t) ->
-     (W c v) must_pass t) ->
-  (forall c v q'', lts q (ActExt (ActOut (c,v))) q'' ->
-     (W c v) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'') ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
-Proof.
-  intros p q W (q0 & Hq0) Htau Hin Hcollect Hout t Hm.
-  induction Hm as [p0 t0 Hg | p0 t0 Hnh Hex Hpt IHpt Het IHet Hcom IHcom].
-  - apply m_now. exact Hg.
-  - assert (Hmpt : p0 must_pass t0) by (apply m_step; assumption).
-    apply m_step.
-    + exact Hnh.
-    + exists (q0, t0). apply ParLeft. exact Hq0.
-    + intros q' Hq'. apply (Htau q' Hq'). exact Hmpt.
-    + intros t' Ht'. apply IHet; assumption.
-    + intros q'' t' mu1 mu2 Hdual Hq'' Ht'.
-      destruct mu1 as [(c,v)|(c,v)].
-      * destruct mu2 as [(d,w)|(d,w)]; simpl in Hdual; [ inversion Hdual | ].
-        injection Hdual as E1 E2. subst d w.
-        apply (Hin c v q'' Hq'').
-        apply TransitionShapeForOutputSimplified in Ht' as Hcgr.
-        assert (Hm2 : p0 must_pass ((c ! v • 𝟘) ‖ t')).
-        { eapply must_eq_client; [ exact Hcgr | exact Hmpt ]. }
-        apply must_msg_swap in Hm2.
-        assert (Hc2 : (p0 ‖ (c ! v • 𝟘)) ≡* ((c ! v • 𝟘) ‖ p0)) by (apply cgr_par_com).
-        eapply (proj2 (must_i_cgr _ _ Hc2)). exact Hm2.
-      * destruct mu2 as [(d,w)|(d,w)]; simpl in Hdual; [ | inversion Hdual ].
-        injection Hdual as E1 E2. subst d w.
-        apply (Hout c v q'' Hq'').
-        apply (Hcollect c v q'' t' Hq'').
-        intros p1 p'' Hp1 Ho.
-        assert (Hm1 : p1 must_pass t0)
-          by (eapply must_preserved_by_weak_nil_srv; [ exact Hmpt | exact Hp1 ]).
-        inversion Hm1; subst.
-        { exfalso. apply Hnh. assumption. }
-        { eapply com; [ | exact Ho | exact Ht' ]. reflexivity. }
-Qed.
 
 (** ** τ MAKES YOU SAFE: fewer transitions plus one [τ] puts you above
 

@@ -41,7 +41,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Shift VACCS_Precongruence VACCS_Expansion VACCS_ResNormalize
   VACCS_Copycat VACCS_Absorb VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_NormalForm
-  VACCS_Forwarder VACCS_Cond2 VACCS_ReadySet VACCS_Canonical VACCS_Descent VACCS_Matching
+  VACCS_Forwarder VACCS_Cond2 VACCS_ReadySet VACCS_Canonical VACCS_Descent VACCS_Matching VACCS_DerivedRules
   VACCS_Bad.
 Import ListNotations.
 
@@ -100,7 +100,7 @@ Example ax_swallow_nil : forall c, (g (c ? (g 𝟘))) ᴠᴀᴄᴄꜱ⊑ₐₓ (
 Proof.
   intro c.
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil_rev | ].
-  apply ax_input_drop. intro v. simpl. apply bad_nil_any.
+  apply ax_input_drop; [ repeat constructor | ]. intro v. simpl. apply bad_nil_any.
 Qed.
 
 Example swallow_nil : forall c, (g (c ? (g 𝟘))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
@@ -162,42 +162,9 @@ Proof. apply soundness_ax. Qed.
 Section SplitRegression.
 Context {c : Channel} {v : Value}.
 
-Definition Swallow : gproc := (cst c) ? (g 𝟘).
-Definition dm : list TypeOfActions := [((cst c) ▷ (cst v))].
 
-Lemma swallow_settles : forall K : MO (ExtAct TypeOfActions),
-  Settles (chans K) (((g Swallow) : proc) ▷ (bag dm ⊎ K)).
-Proof.
-  intro K.
-  assert (EB : bag dm ⊎ K = {[+ ActOut ((cst c) ▷ (cst v)) +]} ⊎ K).
-  { simpl. f_equal. apply (right_id_L (∅ : MO (ExtAct TypeOfActions))
-                            (@disj_union (MO (ExtAct TypeOfActions)) _)). }
-  rewrite EB.
-  exists (((g 𝟘) : proc) ▷ K). split.
-  - eapply wt_tau; [ | apply wt_nil ].
-    apply fw_tau_deliver. unfold Swallow.
-    assert (E : (g 𝟘 : proc) = ((g 𝟘) ^ (cst v))) by reflexivity.
-    rewrite E at 2. apply lts_input.
-  - split.
-    + apply stable_of_no_step. apply fw_stable_iff. split.
-      * intros z Hz. inversion Hz.
-      * intros a Hin z Hz. inversion Hz.
-    + intros d w r Hr. eapply emits_gsum_chans. exists w, r. exact Hr.
-Qed.
 
-Theorem ax_swallow_split : (msgs (dm ++ []) ‖ g Swallow) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [] ‖ g 𝟘).
-Proof.
-  apply ax_below_split_from_certificate with (N := 𝟘).
-  - unfold Swallow. repeat constructor.
-  - constructor.
-  - intros p Hp. inversion Hp.
-  - intros K Hout Hst. apply swallow_settles.
-  - intros c0 v0 Q' l' Hs Hl. inversion Hl.
-Qed.
 
-Corollary ax_swallow_split_sound :
-  (msgs (dm ++ []) ‖ g Swallow) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [] ‖ g 𝟘).
-Proof. apply soundness_ax. apply ax_swallow_split. Qed.
 
 End SplitRegression.
 
@@ -231,7 +198,7 @@ Example ax_nested_drop_nil :
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil_rev | ].
-  apply ax_nested_sibling_drop.
+  apply ax_nested_sibling_drop; repeat constructor.
 Qed.
 
 Corollary nested_drop_nil_sound :
@@ -282,103 +249,12 @@ Section SplitChainRegression.
 Variable c : ChannelData.
 Variable v : ValueData.
 
-Definition Sink : gproc := c ? ((g 𝟘) : proc).
 
-Lemma sink_cfg_sem :
-  (msgs [(c, v)] ‖ ((g Sink) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [] ‖ ((g (𝟘 : gproc)) : proc)).
-Proof.
-  assert (Hc : ((g (𝟘 : gproc)) : proc) ≡* (msgs [] ‖ ((g (𝟘 : gproc)) : proc))).
-  { simpl. symmetry. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ]. }
-  intros t Ht.
-  apply (proj2 (must_i_cgr _ _ Hc)).
-  apply (unstable_delivery_below_nil c v). exact Ht.
-Qed.
 
-Theorem ax_sink_split :
-  (msgs [(c, v)] ‖ ((g Sink) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [] ‖ ((g (𝟘 : gproc)) : proc)).
-Proof.
-  apply completeness_cfg_split_no_output.
-  - repeat constructor.
-  - constructor.
-  - intros cc uu Hin. inversion Hin.
-  - intros z Hz. inversion Hz.
-  - apply sink_cfg_sem.
-  - intros d Hperm cc vv Q' l' Hsub Hin. inversion Hin.
-Qed.
 
 End SplitChainRegression.
 
 
-(** * REGRESSION: THE STEP ITSELF, WITH A VACUOUS INDUCTION HYPOTHESIS
-
-    [completeness_step_of_mute_nf] is the head result of the
-    configuration chain, and it takes an induction hypothesis it cannot
-    normally be exercised without.  There is one place where that
-    hypothesis is **vacuous**: [gsize 𝟘 = 0], so [size (g 𝟘) = 0] and no
-    process is strictly smaller.
-
-    So at [q := 𝟘] the whole step runs on its own, and it re-derives —
-    through [normal_form_nores_sim], [DomOk], Phase A, Phase B and the
-    bag machinery — the inequation [VACCS_Bad.unstable_delivery_below_nil]
-    establishes by a direct [must] argument.  That is the non-vacuity
-    control the head result was missing. *)
-
-Section StepRegression.
-Variable c : ChannelData.
-Variable v : ValueData.
-
-Theorem ax_sink_step :
-  (msgs [(c, v)] ‖ ((g (c ? ((g 𝟘) : proc))) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
-Proof.
-  apply completeness_step_of_mute_nf.
-  - repeat constructor.
-  - simpl. exact I.
-  - apply MuteNF_cfg; [ repeat constructor | reflexivity ].
-  - apply unstable_delivery_below_nil.
-  - intros p' q' _ _ Hlt _. simpl in Hlt. lia.
-Qed.
-
-
-(** …and the same fact from the **restricted recursion**, which needs no
-    induction hypothesis supplied by hand: [completeness_deep_cfg] is a
-    closed theorem.  [VACCS_Bad.unstable_delivery_below_nil] establishes
-    the inequation independently, so this is a control, not a definition. *)
-
-Theorem ax_sink_deep :
-  (msgs [(c, v)] ‖ ((g (c ? ((g 𝟘) : proc))) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
-Proof.
-  apply completeness_deep_cfg.
-  - repeat constructor.
-  - simpl. exact I.
-  - repeat constructor.
-  - reflexivity.
-  - apply unstable_delivery_below_nil.
-Qed.
-
-(** A second control, where the recursion is **not** vacuous: the right
-    has an input transition, so the theorem really descends through
-    [completeness_step_deep]'s recursive premise. *)
-
-Theorem ax_guard_deep :
-  (msgs [] ‖ ((g (c ? ((g 𝟘) : proc))) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? ((g 𝟘) : proc))) : proc).
-Proof.
-  assert (Hc : (msgs [] ‖ ((g (c ? ((g 𝟘) : proc))) : proc))
-                 ≡* ((g (c ? ((g 𝟘) : proc))) : proc)).
-  { simpl. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ]. }
-  apply completeness_deep_cfg.
-  - repeat constructor.
-  - simpl. exact I.
-  - repeat constructor.
-  - reflexivity.
-  - exact (proj2 (must_i_cgr _ _ Hc)).
-Qed.
-
-End StepRegression.
 
 
 (* ------------------------------------------------------------------ *)
@@ -634,14 +510,12 @@ End VACCS_AxExamples.
     [VACCS_Bad.ax_unstable_delivery_below_nil] derives its inequation by
     a hand-picked [ax_tau_step]; [ax_sink_split] above derives the same
     one by running the whole different-bags machinery.  With
-    [must_iff_ax_below_nil] neither is needed: the semantic fact — which
+    [completeness_ax] neither is needed: the semantic fact — which
     [VACCS_Bad.unstable_delivery_below_nil] establishes by a direct
     [must] argument — *is* the derivation.
 
-    This is the point of the theorem, and the reason it is worth having
-    even though it does not close the residue: below [𝟘] there is no gap
-    between the preorder and the system, for **any** [Static] left-hand
-    side. *)
+    Between [Static] processes there is no gap between the preorder and
+    the system. *)
 
 Section CompletenessBelowNil.
 
@@ -653,17 +527,16 @@ Corollary ax_sink_from_semantics :
             ‖ ((g ((cst ca) ? ((g 𝟘) : proc))) : proc))
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
-  apply ax_of_below_nil.
-  - repeat constructor.
-  - apply unstable_delivery_below_nil.
+  apply completeness_ax;
+    [ repeat constructor | repeat constructor | apply unstable_delivery_below_nil ].
 Qed.
 
-(** The copycat too: [ax_ccat_l] is a *rule*, and here the same
-    inequation falls out of its semantic content instead. *)
+(** The copycat too: the inequation falls out of its semantic content. *)
 Corollary ax_ccat_from_semantics : (ccat (cst ca)) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
-  apply ax_of_below_nil;
-    [ unfold ccat; apply static_g; apply ccat_gStatic | apply must_i_ccat_l ].
+  apply completeness_ax;
+    [ unfold ccat; apply static_g; apply ccat_gStatic | repeat constructor
+    | apply must_i_ccat_l ].
 Qed.
 
 End CompletenessBelowNil.

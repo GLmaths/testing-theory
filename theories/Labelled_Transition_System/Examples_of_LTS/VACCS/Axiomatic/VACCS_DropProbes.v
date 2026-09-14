@@ -76,6 +76,7 @@
 From Stdlib Require Import List Permutation Lia.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base gmultiset.
+From TestingTheory Require Import VACCS_Residues.
 From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Characterization
   gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
   InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
@@ -83,7 +84,7 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
   VACCS_Static VACCS_Erasure VACCS_Precongruence VACCS_Expansion VACCS_ResNormalize
   VACCS_Copycat VACCS_Absorb VACCS_DefinitionAxiomatic VACCS_SoundnessAx
   VACCS_NormalForm VACCS_Canonical VACCS_ReadySet VACCS_Bad VACCS_Forwarder VACCS_Cond2
-  VACCS_Descent VACCS_Matching.
+  VACCS_Descent VACCS_Matching VACCS_DerivedRules.
 Import ListNotations.
 
 Section VACCS_DropProbes.
@@ -493,6 +494,8 @@ Proof. apply BadK_below_nil. exact MM_BadK. Qed.
 Theorem MM_derivable : (g MM) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   apply ax_restrict.
+  - unfold MM, PP; repeat constructor.
+  - repeat constructor.
   - intros al q Hl. inversion Hl.
   - apply MM_no_tau.
   - eapply BadK_mono; [ exact MM_BadK | intros c0 [] | intros c0 [] ].
@@ -921,10 +924,11 @@ Proof.
                            ((g 𝟘) : proc) ((cst a) ? ((g 𝟘) : proc))).
     intro v0. simpl. apply ax_int_r. }
   eapply ax_trans.
-  { apply (ax_input_drop (cst b) ((g 𝟘) : proc) ((cst a) ? ((g 𝟘) : proc))).
+  { apply (ax_input_drop (cst b) ((g 𝟘) : proc) ((cst a) ? ((g 𝟘) : proc)));
+      [ repeat constructor | ].
     intro v0. simpl. apply bad_nil_any. }
   eapply ax_trans; [ apply ax_cgr_sym; apply cgr_choice_nil | ].
-  apply (ax_input_drop (cst a) ((g 𝟘) : proc) 𝟘).
+  apply (ax_input_drop (cst a) ((g 𝟘) : proc) 𝟘); [ repeat constructor | ].
   intro v0. simpl. apply bad_nil_any.
 Qed.
 

@@ -61,18 +61,14 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Shift VACCS_Precongruence VACCS_Expansion VACCS_ResNormalize
-  VACCS_Copycat VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_ReadySet VACCS_Forwarder.
+  VACCS_Copycat VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_ReadySet VACCS_Forwarder
+  VACCS_Residues.
 Import ListNotations.
 
 Section VACCS_Canonical.
 
 Context `{VP : VACCS_Parameters}.
 
-Fixpoint summands (M : gproc) : list gproc :=
-match M with
-| M1 + M2 => summands M1 ++ summands M2
-| b => [b]
-end.
 
 Fixpoint rebuild (l : list gproc) : gproc :=
 match l with

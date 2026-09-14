@@ -66,7 +66,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Erasure VACCS_Precongruence VACCS_Residues VACCS_Expansion VACCS_ReadySet VACCS_Cond2
   VACCS_Copycat VACCS_Absorb VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_Canonical
   VACCS_ResNormalize VACCS_Shift VACCS_NormalForm Termination DefinitionCI
-  SetLTSConstruction FiniteImageLTS Lts_Finite_Output_Chain.
+  SetLTSConstruction FiniteImageLTS Lts_Finite_Output_Chain VACCS_GlbStable.
 
 Section VACCS_Matching.
 
@@ -1126,220 +1126,18 @@ Proof.
   exact (ax_below_mixed (ntaus (summands M')) M' HM' (le_n _) Hok' p Hs' Hstab).
 Qed.
 
-(** ** The invariant itself
 
-    [InvR M₀ L] is the two-component fact the drivers thread: every input
-    transition of [g L] is reached from [M₀] by a single visible step, and
-    every [𝛕]-continuation of [L] is [τ]-reachable from [M₀].  The second
-    component is what makes the first inductive — it is *states* that
-    survive the peel on the [𝛕]-branch, and *transitions* on the other. *)
 
-Lemma summand_lts : forall (M a : gproc), In a (summands M) ->
-  forall al q, lts (g a) al q -> lts (g M) al q.
-Proof.
-  induction M as [ | | c p | p | M1 IH1 M2 IH2 ]; intros a Hin al q Hl; simpl in Hin.
-  - destruct Hin as [He|[]]; subst; exact Hl.
-  - destruct Hin as [He|[]]; subst; exact Hl.
-  - destruct Hin as [He|[]]; subst; exact Hl.
-  - destruct Hin as [He|[]]; subst; exact Hl.
-  - apply in_app_or in Hin. destruct Hin as [H1|H2].
-    + apply lts_choiceL. eapply IH1; eassumption.
-    + apply lts_choiceR. eapply IH2; eassumption.
-Qed.
-
-Lemma rebuild_lts_inv : forall (l : list gproc) al q, lts (g (rebuild l)) al q ->
-  exists a, In a l /\ lts (g a) al q.
-Proof.
-  induction l as [|a l IH]; intros al q Hl; simpl in Hl.
-  - inversion Hl.
-  - inversion Hl; subst.
-    + exists a. split; [ left; reflexivity | assumption ].
-    + destruct (IH al q H3) as (b & Hb & Hlb). exists b. split; [ right; exact Hb | exact Hlb ].
-Qed.
-
-Lemma wt_nil_push : forall (p q : proc), p ⟹[[]] q ->
-  forall s r, q ⟹[s] r -> p ⟹[s] r.
-Proof.
-  intros p q H. remember (@nil (ExtAct TypeOfActions)) as s0 eqn:Hs.
-  induction H as [x|s1 x y z Hl Hw IH|mu s1 x y z Hl Hw IH]; intros s r Hr; subst.
-  - exact Hr.
-  - eapply wt_tau; [ exact Hl | apply IH; [ reflexivity | exact Hr ] ].
-  - discriminate.
-Qed.
-
-Lemma rebuild_summands_in : forall (l : list gproc),
-  Forall (fun a => summands a = [a]) l ->
-  forall x, In x (summands (rebuild l)) -> In x l \/ x = 𝟘.
-Proof.
-  induction l as [|a l IH]; intros Hlv x Hin; simpl in *.
-  - destruct Hin as [He|[]]; right; symmetry; exact He.
-  - inversion Hlv as [|? ? Ha Hlv']; subst.
-    apply in_app_or in Hin. destruct Hin as [H1|H2].
-    + rewrite Ha in H1. destruct H1 as [He|[]]; left; left; exact He.
-    + destruct (IH Hlv' x H2) as [Hl|Hz]; [ left; right; exact Hl | right; exact Hz ].
-Qed.
 
 Definition InvR (M0 : proc) (L : gproc) : Prop :=
   (forall c v Q, lts (g L) (ActExt (ActIn (c,v))) Q -> M0 ⟹[[ActIn (c,v)]] Q)
   /\ (forall Y, In (𝛕 • (g Y)) (summands L) -> M0 ⟹[[]] (g Y)).
 
-Lemma InvR_self : forall (M : gproc), InvR (g M) M.
-Proof.
-  intro M. split.
-  - intros c v Q Hl. eapply wt_act; [ exact Hl | apply wt_nil ].
-  - intros Y Hin. eapply wt_tau; [ | apply wt_nil ].
-    eapply summand_lts; [ exact Hin | apply lts_tau ].
-Qed.
 
-Lemma InvR_tau_cont : forall M0 (Y : gproc), M0 ⟹[[]] (g Y) -> InvR M0 Y.
-Proof.
-  intros M0 Y HY. split.
-  - intros c v Q Hl. eapply wt_nil_push; [ exact HY | eapply wt_act; [ exact Hl | apply wt_nil ] ].
-  - intros Z Hin. eapply wt_nil_push; [ exact HY | ].
-    eapply wt_tau; [ eapply summand_lts; [ exact Hin | apply lts_tau ] | apply wt_nil ].
-Qed.
 
-(** The preservation lemma: one peel, both branches. *)
-Lemma InvR_peel : forall M0 (M Y : gproc) (r : list gproc),
-  InvR M0 M -> Forall (fun a => summands a = [a]) r ->
-  Permutation (summands M) ((𝛕 • (g Y)) :: r) ->
-  M0 ⟹[[]] (g Y) /\ InvR M0 (rebuild r + Y).
-Proof.
-  intros M0 M Y r [Hin1 Hin2] Hlv Hperm.
-  assert (Htrans : forall x, In x ((𝛕 • (g Y)) :: r) -> In x (summands M)).
-  { intros x Hx. eapply Permutation_in; [ apply Permutation_sym; exact Hperm | exact Hx ]. }
-  assert (HY : M0 ⟹[[]] (g Y)) by (apply Hin2; apply Htrans; left; reflexivity).
-  split; [ exact HY | ]. split.
-  - intros c v Q Hl. simpl in Hl. inversion Hl; subst.
-    + destruct (rebuild_lts_inv r _ _ H3) as (a & Ha & Hla).
-      eapply Hin1. eapply summand_lts; [ apply Htrans; right; exact Ha | exact Hla ].
-    + eapply wt_nil_push; [ exact HY | eapply wt_act; [ exact H3 | apply wt_nil ] ].
-  - intros Z Hin. simpl in Hin. apply in_app_or in Hin. destruct Hin as [H1|H2].
-    + destruct (rebuild_summands_in r Hlv _ H1) as [Hr|Hz]; [| discriminate Hz ].
-      apply Hin2. apply Htrans. right. exact Hr.
-    + eapply wt_nil_push; [ exact HY | ].
-      eapply wt_tau; [ eapply summand_lts; [ exact H2 | apply lts_tau ] | apply wt_nil ].
-Qed.
 
-(** ** The invariant, threaded through both drivers
 
-    Same proofs as [ax_below_mixed] and [ax_below_flatten_drive], with
-    [InvR M₀ ·] carried along: [InvR_peel] supplies it for both branches
-    of a peel and [InvR_tau_cont] for the [𝛕]-continuation handed to the
-    handler, so the handler now receives it at every leaf.
 
-    [ax_below_gsum_inv] starts the thread at [M₀ := g M] via [InvR_self].
-    Together with [InvR_reduct_smaller] it gives the outer recursion its
-    measure: every input-reduct of every leaf is strictly smaller than the
-    guarded sum the driver started from. *)
-
-Lemma ax_below_mixed_inv : forall n (M : gproc) (M0 : proc), gStatic M ->
-  (ntaus (summands M) <= n)%nat -> Forall tau_cont_ok (summands M) ->
-  InvR M0 M ->
-  forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
-  (forall (L : gproc), gStatic L -> gStable L -> InvR M0 L ->
-      p ⊑ₘᵤₛₜᵢ (g L) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g L)) ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
-Proof.
-  induction n as [|n IH]; intros M M0 HM Hmeas Hok HInv p Hsem Hstab.
-  - apply Hstab; [ exact HM | | exact HInv | exact Hsem ].
-    apply find_tau_none_stable.
-    destruct (find_tau (summands M)) as [(q,r)|] eqn:E; [| reflexivity].
-    exfalso. apply find_tau_spec in E.
-    rewrite (ntaus_perm _ _ E) in Hmeas. simpl in Hmeas. lia.
-  - destruct (find_tau (summands M)) as [(q,r)|] eqn:E.
-    + apply find_tau_spec in E.
-      assert (Hokperm : Forall tau_cont_ok ((𝛕 • q) :: r))
-        by (eapply tau_cont_ok_perm; eassumption).
-      inversion Hokperm as [|? ? Hp0 Hokr]; subst.
-      destruct Hp0 as (Y & Hpy & HYst). subst q.
-      assert (Hlv : Forall (fun a => summands a = [a]) ((𝛕 • (g Y)) :: r)).
-      { apply Forall_forall. intros x Hx. pose proof (summands_leaves M) as Hsl.
-        rewrite Forall_forall in Hsl. apply Hsl. rewrite E. exact Hx. }
-      inversion Hlv as [|? ? _ Hlvr]; subst.
-      destruct (tau_mid_static M Y r HM E) as (HYgst & Hrgst & _).
-      destruct (InvR_peel M0 M Y r HInv Hlvr E) as (HYreach & HInv2).
-      assert (Hnew : gStatic (rebuild r + Y))
-        by (constructor; [apply rebuild_gStatic; exact Hrgst | exact HYgst]).
-      assert (Hmeas2 : ntaus (summands (rebuild r + Y)) <= n).
-      { simpl. rewrite ntaus_app.
-        rewrite (ntaus_summands_rebuild r Hlvr).
-        rewrite (gStable_ntaus_zero Y HYst).
-        rewrite (ntaus_perm _ _ E) in Hmeas. simpl in Hmeas. lia. }
-      assert (Hok2 : Forall tau_cont_ok (summands (rebuild r + Y))).
-      { simpl. apply Forall_app. split.
-        - apply tau_cont_ok_rebuild; assumption.
-        - apply tau_cont_ok_stable. exact HYst. }
-      eapply ax_below_tau_peel; [ exact HM | exact E | exact Hsem | | ].
-      * intro Hs1. exact (IH (rebuild r + Y) M0 Hnew Hmeas2 Hok2 HInv2 p Hs1 Hstab).
-      * intro Hs2. apply Hstab;
-          [ exact HYgst | exact HYst | apply InvR_tau_cont; exact HYreach | exact Hs2 ].
-    + apply Hstab;
-        [ exact HM | apply find_tau_none_stable; exact E | exact HInv | exact Hsem ].
-Qed.
-
-Lemma ax_below_flatten_drive_inv : forall n (M : gproc) (M0 : proc), gStatic M ->
-  (tau_weight (summands M) <= n)%nat -> Forall tau_cont_nf (summands M) ->
-  InvR M0 M ->
-  forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
-  (forall (M' : gproc), gStatic M' -> Forall tau_cont_ok (summands M') ->
-      InvR M0 M' -> p ⊑ₘᵤₛₜᵢ (g M') -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M')) ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
-Proof.
-  induction n as [|n IH]; intros M M0 HM Hmeas Hnf HInv p Hsem Hok.
-  - apply Hok; [ exact HM | | exact HInv | exact Hsem ].
-    apply find_unstable_tau_none; [| exact Hnf].
-    destruct (find_unstable_tau (summands M)) as [(Y,r)|] eqn:E; [| reflexivity].
-    exfalso. destruct (find_unstable_tau_spec _ _ _ E) as (Hperm & Hst).
-    rewrite (tau_weight_perm _ _ Hperm) in Hmeas. simpl in Hmeas.
-    destruct Y; simpl in *; try discriminate Hst; lia.
-  - destruct (find_unstable_tau (summands M)) as [(Y,r)|] eqn:E.
-    + destruct (find_unstable_tau_spec _ _ _ E) as (Hperm & Hstb).
-      assert (Hnfperm : Forall tau_cont_nf ((𝛕 • (g Y)) :: r))
-        by (eapply tau_cont_nf_perm; eassumption).
-      inversion Hnfperm as [|? ? Hhd Hnfr]; subst.
-      destruct Hhd as (Y0 & HY0 & HnfY). injection HY0 as HY0. subst Y0.
-      assert (HAT : gAllTau Y).
-      { destruct (tau_nf_gAllTau_or_stable Y HnfY) as [Hs|Ha]; [| exact Ha].
-        exfalso. apply gStableB_spec in Hs. rewrite Hstb in Hs. discriminate Hs. }
-      assert (Hlv : Forall (fun a => summands a = [a]) ((𝛕 • (g Y)) :: r)).
-      { apply Forall_forall. intros x Hx. pose proof (summands_leaves M) as Hsl.
-        rewrite Forall_forall in Hsl. apply Hsl. rewrite Hperm. exact Hx. }
-      inversion Hlv as [|? ? _ Hlvr]; subst.
-      destruct (tau_mid_static M Y r HM Hperm) as (HYgst & Hrgst & _).
-      destruct (InvR_peel M0 M Y r HInv Hlvr Hperm) as (HYreach & HInv2).
-      assert (Hnew : gStatic (rebuild r + Y))
-        by (constructor; [apply rebuild_gStatic; exact Hrgst | exact HYgst]).
-      assert (Hmeas2 : tau_weight (summands (rebuild r + Y)) <= n).
-      { simpl. rewrite tau_weight_app. rewrite (tau_weight_summands_rebuild r Hlvr).
-        rewrite (tau_weight_perm _ _ Hperm) in Hmeas. simpl in Hmeas.
-        inversion HnfY as [? Hs | A B HA HB]; subst.
-        - exfalso. apply gStableB_spec in Hs. rewrite Hstb in Hs. discriminate Hs.
-        - simpl in *. lia. }
-      assert (Hnf2 : Forall tau_cont_nf (summands (rebuild r + Y))).
-      { simpl. apply Forall_app. split.
-        - apply tau_cont_nf_rebuild; assumption.
-        - apply tau_cont_nf_of_tau_nf. exact HnfY. }
-      eapply ax_below_tau_flatten; [ exact HM | exact HAT | exact Hperm | exact Hsem | ].
-      intro Hs1. exact (IH (rebuild r + Y) M0 Hnew Hmeas2 Hnf2 HInv2 p Hs1 Hok).
-    + apply Hok;
-        [ exact HM | apply find_unstable_tau_none; [exact E | exact Hnf]
-        | exact HInv | exact Hsem ].
-Qed.
-
-Theorem ax_below_gsum_inv : forall (M : gproc), gStatic M ->
-  Forall tau_cont_nf (summands M) ->
-  forall (p : proc), p ⊑ₘᵤₛₜᵢ (g M) ->
-  (forall (L : gproc), gStatic L -> gStable L -> InvR (g M) L ->
-      p ⊑ₘᵤₛₜᵢ (g L) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ (g L)) ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
-Proof.
-  intros M HM Hnf p Hsem Hstab.
-  eapply (ax_below_flatten_drive_inv (tau_weight (summands M)) M (g M) HM (le_n _) Hnf
-            (InvR_self M) p Hsem).
-  intros M' HM' Hok' HInv' Hs'.
-  exact (ax_below_mixed_inv (ntaus (summands M')) M' (g M) HM' (le_n _) Hok' HInv' p Hs' Hstab).
-Qed.
 
 (** The measure, delivered. *)
 Corollary InvR_reduct_smaller : forall (M0 : proc) (L : gproc), Static M0 -> InvR M0 L ->
@@ -1493,43 +1291,6 @@ Proof.
     inversion eq; subst.
     eapply (Hem c2); [ eapply offers_mirrorN; exact l1 | ].
     exists v2, b2. exact l2.
-Qed.
-
-(** Phase A, in general — no [gGuardsIn], no restriction on which
-    channels [M] offers. *)
-
-Theorem ax_phaseA_general : forall (M N : gproc), (forall p, ~ lts (g N) τ p) ->
-  (forall p, ~ lts (g M) τ p) ->
-  BadK (fun _ => False) (offers (mirrorN M N))
-       (g ((ext M (guardsN N)) + (mirrorN M N))) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)).
-Proof.
-  intros M N HstN HstM HB.
-  eapply ax_trans; [ apply ax_mirror_reach; exact HstN | ].
-  apply ax_restrict; [ | | exact HB ].
-  - intros al q Hl. apply lts_choiceR. exact Hl.
-  - intros p Hl. inversion Hl; subst.
-    + eapply ext_no_tau; [ exact HstM | eassumption ].
-    + eapply mirrorN_no_tau; [ exact HstN | eassumption ].
-Qed.
-
-(** …and the whole stable case, with [gGuardsIn] gone.  Compare
-    [ax_below_stable_sum_full], which needed it: the only hypothesis left
-    beyond the recursion is a [BadK] derivation, whose semantic content
-    [bigsum_sembadk] shows is always available. *)
-
-Theorem ax_below_stable_sum_nogg : forall (M N : gproc),
-  (forall p, ~ lts (g N) τ p) -> (forall p, ~ lts (g M) τ p) ->
-  BadK (fun _ => False) (offers (mirrorN M N))
-       (g ((ext M (guardsN N)) + (mirrorN M N))) ->
-  (g M) ⊑ₘᵤₛₜᵢ (g N) ->
-  (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
-Proof.
-  intros M N HstN HstM HB Hsem Hrec.
-  eapply ax_below_stable_sum; [ exact HstN | | exact Hsem | exact Hrec ].
-  apply ax_phaseA_general; assumption.
 Qed.
 
 (** * Feeding a surplus channel cannot help — the engine of the kill list
@@ -1832,72 +1593,6 @@ Proof.
     intros a Hin q Hq. eapply ext_no_input; [ | exact Hq ]. apply Hnoc. exact Hin.
 Qed.
 
-(** * PHASE A DIRECTLY, BY A SETTLING SIMULATION — no copycats, no big sum
-
-    Every route to Phase A so far has gone through the big sum
-    [ext M (guardsN N) + mirrorN M N]: add a sum of copycats
-    ([ax_ccat_r]), flatten with the expansion law, then restrict away the
-    surplus.  That construction has a cost the drain analysis makes
-    precise — the mirror's guards are *copycats*, which **re-emit** the
-    message they consumed, so [VACCS_NormalForm.drain_forced_of_no_output]
-    does not apply to it and the certificate is unavailable below the bag.
-
-    [ax_settle_sim] makes the detour unnecessary.  Phase A is an
-    inequation between two **configurations**, and the rule proves such
-    inequations from any [SettleSim] — so the mirror can be compared with
-    [g M] *directly*, at the forwarder, with no intermediate term.
-
-    ** The relation, and why it needs no [≡*]
-
-    Three families, and the states are pinned exactly:
-
-    - [F0] — before the mirror commits: [g M ▷ K] versus [mirror ▷ K].
-    - [F1] — after it commits — **at most once**, guarded choice committing,
-      so the mirror fires and is gone: the right holds the message *in
-      its process*, the left still has it *in its buffer* —
-      [p ▷ ({a} ⊎ K)] versus [(p ‖ a-message) ▷ K].  This is the
-      syntactic shadow of [VACCS_Cond2.fw_msg_swap]: a pending output is
-      part of the configuration, not of the process, and may sit on
-      either side.
-    - [F2] — after the message leaves: [p ▷ K] versus [(p ‖ 𝟘) ▷ K].
-
-    [F2] is what keeps [≡*] out of the relation.  Emitting the message
-    turns the right into [p ‖ 𝟘], which is *not* [p]; rather than closing
-    the relation under structural congruence — which would drag
-    [Congruence_Respects_Transition] through all three clauses — the
-    residual [𝟘] is simply carried, and it is inert
-    ([lts_par_nil_inv]), so the family is closed.
-
-    ** What each clause costs
-
-    Both step clauses are pure case analysis on [fw_tau_shape] /
-    [fw_ext_shape] and the two parallel-inversion lemmas; the mirror
-    committing lands in [F1] whether it was fed by a *delivery* (the left
-    answers with **no step at all** — the message it holds is the one the
-    right just moved) or by an *environment input* (the left absorbs it
-    into its buffer).  And [F1]/[F2]'s stable clauses are **free**: the
-    right's stability forces the left's, and the two emit on exactly the
-    same channels, the message contributing its own either way.
-
-    So the *entire* semantic content of Phase A is [F0]'s stable clause —
-    the certificate [Settles (chans K) (g M ▷ K)] — and it is now about
-    **[g M] itself**, not about a construction.  Its three known regions:
-    free when [M] refuses [chans K] ([VACCS_Cond2.Settles_gsum_stable]),
-    supplied by [VACCS_NormalForm.certificate_config] above the bag, and
-    by [VACCS_NormalForm.surplus_settles_drain] below it — where the
-    remaining obstruction, regeneration, is now a property of [M]'s own
-    continuations rather than an artefact of the mirror. *)
-
-Lemma mirrorN_lts_in_shape : forall (P : proc) (N : gproc) c v r,
-  lts (g (mirrorN P N)) (ActExt (ActIn (c,v))) r ->
-  r = (P ‖ (c ! v • 𝟘)).
-Proof.
-  intros P N. induction N as [ | | d Q | Q | N1 IH1 N2 IH2 ]; intros c v r Hl;
-    simpl in Hl; inversion Hl; subst.
-  - unfold fwdg. simpl. f_equal. apply NewVar_subst_cancel.
-  - eapply IH1. eassumption.
-  - eapply IH2. eassumption.
-Qed.
 
 Lemma lts_par_nil_inv : forall (p : proc) a z,
   lts (p ‖ (g 𝟘 : proc)) a z -> exists p', z = (p' ‖ (g 𝟘 : proc)) /\ lts p a p'.
@@ -1928,271 +1623,14 @@ Proof.
   induction l as [|a l IH]; simpl; [ apply OutOnly_empty | apply OutOnly_add; exact IH ].
 Qed.
 
-Definition mirrorRel (P : proc) (N : gproc)
-  : (proc * MO (ExtAct TypeOfActions)) -> (proc * MO (ExtAct TypeOfActions)) -> Prop :=
-  fun x y =>
-    (exists K, OutOnly K /\ x = (P ▷ K) /\ y = ((g (mirrorN P N)) ▷ K))
-    \/ (exists p a K, OutOnly K /\ x = (p ▷ ({[+ ActOut a +]} ⊎ K))
-                   /\ y = ((p ‖ ((fst a) ! (snd a) • 𝟘)) ▷ K))
-    \/ (exists p K, OutOnly K /\ x = (p ▷ K) /\ y = ((p ‖ (g 𝟘 : proc)) ▷ K)).
 
-Lemma mirrorRel_tau : forall (P : proc) (N : gproc), (forall z, ~ lts (g N) τ z) ->
-  forall x y y', mirrorRel P N x y -> y ⟶ y' ->
-  exists x', x ⟹[[]] x' /\ mirrorRel P N x' y'.
-Proof.
-  intros P N HstN x y y' HR Hl.
-  destruct HR as [ (K & HoK & Ex & Ey) | [ (p & a & K & HoK & Ex & Ey) | (p & K & HoK & Ex & Ey) ] ].
-  - subst x y. destruct (fw_tau_shape (g (mirrorN P N)) K y' Hl) as [HA|HB].
-    + destruct HA as (p' & Hp' & _). exfalso. eapply mirrorN_no_tau; eassumption.
-    + destruct HB as (b & p' & K' & HK & Hp' & E). subst y'.
-      destruct b as (c,v).
-      pose proof (mirrorN_lts_in_shape P N c v p' Hp') as Es. subst p'.
-      exists (P ▷ K). split; [ apply wt_nil | ].
-      right. left. exists P, (c,v), K'.
-      split; [ rewrite HK in HoK; eapply OutOnly_sub; exact HoK | ].
-      split; [ | reflexivity ]. rewrite HK. reflexivity.
-  - subst x y. destruct (fw_tau_shape (p ‖ ((fst a) ! (snd a) • 𝟘)) K y' Hl) as [HA|HB].
-    + destruct HA as (p'' & Hp'' & E). subst y'.
-      destruct (lts_par_msg_inv p a τ p'' Hp'')
-        as [ (p1 & Ez & Hp1) | [ (Ea & _) | (p1 & _ & Ez & Hp1) ] ].
-      * subst p''. exists (p1 ▷ ({[+ ActOut a +]} ⊎ K)). split.
-        -- eapply wt_tau; [ apply fw_tau_left; exact Hp1 | apply wt_nil ].
-        -- right. left. exists p1, a, K. split; [ exact HoK | split; reflexivity ].
-      * discriminate Ea.
-      * subst p''. exists (p1 ▷ K). split.
-        -- eapply wt_tau; [ apply fw_tau_deliver; exact Hp1 | apply wt_nil ].
-        -- right. right. exists p1, K. split; [ exact HoK | split; reflexivity ].
-    + destruct HB as (b & p'' & K' & HK & Hp'' & E). subst y'.
-      destruct (lts_par_msg_inv p a (ActExt (ActIn b)) p'' Hp'')
-        as [ (p1 & Ez & Hp1) | [ (Ea & _) | (p1 & Ea & _ & _) ] ].
-      * subst p''. exists (p1 ▷ ({[+ ActOut a +]} ⊎ K')). split.
-        -- eapply wt_tau; [ | apply wt_nil ].
-           replace ({[+ ActOut a +]} ⊎ K) with ({[+ ActOut b +]} ⊎ ({[+ ActOut a +]} ⊎ K')).
-           ++ apply fw_tau_deliver. exact Hp1.
-           ++ rewrite HK. rewrite !(assoc_L (@disj_union (MO (ExtAct TypeOfActions)) _)).
-              f_equal. apply (comm_L (@disj_union (MO (ExtAct TypeOfActions)) _)).
-        -- right. left. exists p1, a, K'.
-           split; [ rewrite HK in HoK; eapply OutOnly_sub; exact HoK | split; reflexivity ].
-      * discriminate Ea.
-      * discriminate Ea.
-  - subst x y. destruct (fw_tau_shape (p ‖ (g 𝟘 : proc)) K y' Hl) as [HA|HB].
-    + destruct HA as (p'' & Hp'' & E). subst y'.
-      destruct (lts_par_nil_inv p τ p'' Hp'') as (p1 & Ez & Hp1). subst p''.
-      exists (p1 ▷ K). split.
-      * eapply wt_tau; [ apply fw_tau_left; exact Hp1 | apply wt_nil ].
-      * right. right. exists p1, K. split; [ exact HoK | split; reflexivity ].
-    + destruct HB as (b & p'' & K' & HK & Hp'' & E). subst y'.
-      destruct (lts_par_nil_inv p (ActExt (ActIn b)) p'' Hp'') as (p1 & Ez & Hp1). subst p''.
-      exists (p1 ▷ K'). split.
-      * eapply wt_tau; [ | apply wt_nil ]. rewrite HK. apply fw_tau_deliver. exact Hp1.
-      * right. right. exists p1, K'.
-        split; [ rewrite HK in HoK; eapply OutOnly_sub; exact HoK | split; reflexivity ].
-Qed.
 
-Lemma mirrorRel_ext : forall (P : proc) (N : gproc),
-  forall x y mu y', mirrorRel P N x y -> y ⟶[mu] y' ->
-  exists x', x ⟹{mu} x' /\ mirrorRel P N x' y'.
-Proof.
-  intros P N x y mu y' HR Hl.
-  destruct HR as [ (K & HoK & Ex & Ey) | [ (p & a & K & HoK & Ex & Ey) | (p & K & HoK & Ex & Ey) ] ].
-  - subst x y. destruct (fw_ext_shape (g (mirrorN P N)) K mu y' Hl) as [HA|[HB|HC]].
-    + destruct HA as (p' & Hp' & E). subst y'.
-      destruct mu as [(c,v)|(c,v)]; [ | exfalso; eapply gsum_no_output; exact Hp' ].
-      pose proof (mirrorN_lts_in_shape P N c v p' Hp') as Es. subst p'.
-      exists (P ▷ ({[+ ActOut (c,v) +]} ⊎ K)). split.
-      * eapply wt_act; [ apply fw_input_always | apply wt_nil ].
-      * right. left. exists P, (c,v), K. split; [ exact HoK | split; reflexivity ].
-    + destruct HB as (b & Hb & E). subst mu y'.
-      exists (P ▷ ({[+ ActOut b +]} ⊎ K)). split.
-      * eapply wt_act; [ apply fw_input_always | apply wt_nil ].
-      * left. exists ({[+ ActOut b +]} ⊎ K).
-        split; [ apply OutOnly_add; exact HoK | split; reflexivity ].
-    + destruct HC as (b & K' & Hb & HK & E). subst mu y'.
-      exists (P ▷ K'). split.
-      * eapply wt_act; [ | apply wt_nil ]. rewrite HK. apply fw_emit.
-      * left. exists K'.
-        split; [ rewrite HK in HoK; eapply OutOnly_sub; exact HoK | split; reflexivity ].
-  - subst x y.
-    destruct (fw_ext_shape (p ‖ ((fst a) ! (snd a) • 𝟘)) K mu y' Hl) as [HA|[HB|HC]].
-    + destruct HA as (p'' & Hp'' & E). subst y'.
-      destruct (lts_par_msg_inv p a (ActExt mu) p'' Hp'')
-        as [ (p1 & Ez & Hp1) | [ (Ea & Ez) | (p1 & Ea & _ & _) ] ].
-      * subst p''. exists (p1 ▷ ({[+ ActOut a +]} ⊎ K)). split.
-        -- eapply wt_act; [ apply fw_ext_left; exact Hp1 | apply wt_nil ].
-        -- right. left. exists p1, a, K. split; [ exact HoK | split; reflexivity ].
-      * injection Ea as Ea. subst mu p''. exists (p ▷ K). split.
-        -- eapply wt_act; [ apply fw_emit | apply wt_nil ].
-        -- right. right. exists p, K. split; [ exact HoK | split; reflexivity ].
-      * discriminate Ea.
-    + destruct HB as (b & Hb & E). subst mu y'.
-      exists (p ▷ ({[+ ActOut a +]} ⊎ ({[+ ActOut b +]} ⊎ K))). split.
-      * eapply wt_act; [ | apply wt_nil ].
-        replace ({[+ ActOut a +]} ⊎ ({[+ ActOut b +]} ⊎ K))
-           with ({[+ ActOut b +]} ⊎ ({[+ ActOut a +]} ⊎ K)).
-        -- apply fw_input_always.
-        -- rewrite !(assoc_L (@disj_union (MO (ExtAct TypeOfActions)) _)).
-           f_equal. apply (comm_L (@disj_union (MO (ExtAct TypeOfActions)) _)).
-      * right. left. exists p, a, ({[+ ActOut b +]} ⊎ K).
-        split; [ apply OutOnly_add; exact HoK | split; reflexivity ].
-    + destruct HC as (b & K' & Hb & HK & E). subst mu y'.
-      exists (p ▷ ({[+ ActOut a +]} ⊎ K')). split.
-      * eapply wt_act; [ | apply wt_nil ].
-        replace ({[+ ActOut a +]} ⊎ K)
-           with ({[+ ActOut b +]} ⊎ ({[+ ActOut a +]} ⊎ K')).
-        -- apply fw_emit.
-        -- rewrite HK. rewrite !(assoc_L (@disj_union (MO (ExtAct TypeOfActions)) _)).
-           f_equal. apply (comm_L (@disj_union (MO (ExtAct TypeOfActions)) _)).
-      * right. left. exists p, a, K'.
-        split; [ rewrite HK in HoK; eapply OutOnly_sub; exact HoK | split; reflexivity ].
-  - subst x y. destruct (fw_ext_shape (p ‖ (g 𝟘 : proc)) K mu y' Hl) as [HA|[HB|HC]].
-    + destruct HA as (p'' & Hp'' & E). subst y'.
-      destruct (lts_par_nil_inv p (ActExt mu) p'' Hp'') as (p1 & Ez & Hp1). subst p''.
-      exists (p1 ▷ K). split.
-      * eapply wt_act; [ apply fw_ext_left; exact Hp1 | apply wt_nil ].
-      * right. right. exists p1, K. split; [ exact HoK | split; reflexivity ].
-    + destruct HB as (b & Hb & E). subst mu y'.
-      exists (p ▷ ({[+ ActOut b +]} ⊎ K)). split.
-      * eapply wt_act; [ apply fw_input_always | apply wt_nil ].
-      * right. right. exists p, ({[+ ActOut b +]} ⊎ K).
-        split; [ apply OutOnly_add; exact HoK | split; reflexivity ].
-    + destruct HC as (b & K' & Hb & HK & E). subst mu y'.
-      exists (p ▷ K'). split.
-      * eapply wt_act; [ | apply wt_nil ]. rewrite HK. apply fw_emit.
-      * right. right. exists p, K'.
-        split; [ rewrite HK in HoK; eapply OutOnly_sub; exact HoK | split; reflexivity ].
-Qed.
 
-Lemma mirrorRel_stable : forall (P : proc) (N : gproc),
-  (forall K, OutOnly K -> ((g (mirrorN P N)) ▷ K) ↛ -> Settles (chans K) (P ▷ K)) ->
-  forall x y, mirrorRel P N x y -> y ↛ -> Settles (emits y) x.
-Proof.
-  intros P N Hcert x y HR Hst.
-  destruct HR as [ (K & HoK & Ex & Ey) | [ (p & a & K & HoK & Ex & Ey) | (p & K & HoK & Ex & Ey) ] ]; subst x y.
-  - eapply Settles_mono; [ | apply Hcert; assumption ].
-    intros d Hd. apply emits_gsum_iff. exact Hd.
-  - pose proof (no_step_of_stable _ Hst) as Hns.
-    apply fw_stable_iff in Hns as (Hpm & Hrefus).
-    assert (Hptau : forall z, ~ lts p τ z).
-    { intros z Hz. eapply Hpm. eapply lts_parL. exact Hz. }
-    assert (Hpa : forall z, ~ lts p (ActExt (ActIn a)) z).
-    { intros z Hz. destruct a as (c,v). eapply Hpm.
-      eapply lts_comR; [ apply lts_output | exact Hz ]. }
-    apply Settles_here.
-    + apply stable_of_no_step. apply fw_stable_iff. split; [ exact Hptau | ].
-      intros b Hin q Hq.
-      apply gmultiset_elem_of_disj_union in Hin as [Hin|Hin].
-      * apply gmultiset_elem_of_singleton in Hin. injection Hin as Hin. subst b.
-        eapply Hpa. exact Hq.
-      * eapply Hrefus; [ exact Hin | eapply lts_parL; exact Hq ].
-    + intros d w r Hr.
-      destruct (fw_ext_shape p ({[+ ActOut a +]} ⊎ K) (ActOut (d,w)) r Hr) as [HA|[HB|HC]].
-      * destruct HA as (p' & Hp' & _). exists w. eexists.
-        apply fw_ext_left. eapply lts_parL. exact Hp'.
-      * destruct HB as (b & Hb & _). discriminate Hb.
-      * destruct HC as (b & K'' & Hb & HK & _). injection Hb as Hb. subst b.
-        assert (Hin : ActOut (d,w) ∈ ({[+ ActOut a +]} ⊎ K)).
-        { rewrite HK. apply gmultiset_elem_of_disj_union. left.
-          apply gmultiset_elem_of_singleton. reflexivity. }
-        apply gmultiset_elem_of_disj_union in Hin as [Hin|Hin].
-        -- apply gmultiset_elem_of_singleton in Hin. injection Hin as Hin. subst a.
-           exists w. eexists. apply fw_ext_left. eapply lts_parR. apply lts_output.
-        -- exists w. apply fw_emit_of_mem. exact Hin.
-  - pose proof (no_step_of_stable _ Hst) as Hns.
-    apply fw_stable_iff in Hns as (Hpm & Hrefus).
-    apply Settles_here.
-    + apply stable_of_no_step. apply fw_stable_iff. split.
-      * intros z Hz. eapply Hpm. eapply lts_parL. exact Hz.
-      * intros b Hin q Hq. eapply Hrefus; [ exact Hin | eapply lts_parL; exact Hq ].
-    + intros d w r Hr.
-      destruct (fw_ext_shape p K (ActOut (d,w)) r Hr) as [HA|[HB|HC]].
-      * destruct HA as (p' & Hp' & _). exists w. eexists.
-        apply fw_ext_left. eapply lts_parL. exact Hp'.
-      * destruct HB as (b & Hb & _). discriminate Hb.
-      * destruct HC as (b & K'' & Hb & HK & _). injection Hb as Hb. subst b.
-        exists w. apply fw_emit_of_mem. rewrite HK.
-        apply gmultiset_elem_of_disj_union. left.
-        apply gmultiset_elem_of_singleton. reflexivity.
-Qed.
 
-Theorem mirrorRel_settle_sim : forall (P : proc) (N : gproc), (forall z, ~ lts (g N) τ z) ->
-  (forall K, OutOnly K -> ((g (mirrorN P N)) ▷ K) ↛ -> Settles (chans K) (P ▷ K)) ->
-  SettleSim (mirrorRel P N).
-Proof.
-  intros P N HstN Hcert. split; [ | split ].
-  - apply mirrorRel_tau. exact HstN.
-  - apply mirrorRel_ext.
-  - apply mirrorRel_stable. exact Hcert.
-Qed.
 
 (** Phase A at a configuration, from the certificate for [g M] alone. *)
 
-(** **The residue, stated where it lives.**  The certificate below is the
-    only semantic content of Phase A, and by the general objection
-    recorded at [VACCS_Cond2.set_sim_clauses_hold_for_copre] it cannot be
-    weakened to an existential over a set: a simulation premise is
-    non-vacuous only if it pins the left to a single state.  So it must
-    hold at *this* [P].
 
-    Worth recording as evidence rather than as a claim: in every instance
-    examined by hand, the certificate and the semantic hypothesis fail
-    **together**.  Taking [N := 𝟘] (so the mirror is stable at every
-    buffer) and [K := {c!v}]:
-
-    - [P := ccat c] settles (deliver, re-emit on [c ∈ chans K]) — and
-      [ccat c ⊑ₘᵤₛₜᵢ 𝟘] holds;
-    - [P := g (c ? (e!y•𝟘))] does not (the delivery escapes to [e]) —
-      and neither does the hypothesis, since [P] passes the τ-stuck
-      non-good client [(c!v•𝟘) ‖ (e?①)];
-    - [P := g (c ? 𝟘)] settles, and the hypothesis holds
-      ([VACCS_Bad.unstable_delivery_below_nil], exercised end to end in
-      [VACCS_AxExamples.ax_swallow_split]).
-
-    That coincidence is what a proof would have to explain: from a
-    *failure* to settle, build a τ-stuck non-good client that the left
-    passes and the right fails.  That construction is the remaining
-    work. *)
-
-Theorem ax_phaseA_direct : forall (P : proc) (N : gproc) (l : list TypeOfActions),
-  Static P -> gStatic N -> (forall z, ~ lts (g N) τ z) ->
-  (forall K, OutOnly K -> ((g (mirrorN P N)) ▷ K) ↛ -> Settles (chans K) (P ▷ K)) ->
-  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN P N)).
-Proof.
-  intros P N l HM HN HstN Hcert.
-  apply (ax_settle_sim l l P (g (mirrorN P N)) (mirrorRel P N)
-           HM (static_g _ (mirrorN_gStatic P N HM HN))).
-  - apply mirrorRel_settle_sim; assumption.
-  - left. exists (bag l). split; [ apply outonly_of_bag | split; reflexivity ].
-Qed.
-
-(** And the certificate is available outright when [M] itself never
-    emits — by [VACCS_NormalForm.certificate_no_regeneration], which is
-    where [drain_forced_of_no_output] is cashed in.  The refusal side
-    condition comes from the mirror's stability: a mirror guard sits on
-    every channel [N] offers ([offers_mirrorN]), and an input's
-    availability is value-independent ([lts_in_value_swap]), so a message
-    on such a channel would give the mirror a [τ]. *)
-
-Theorem phaseA_config_no_regeneration : forall (M N : gproc) (l : list TypeOfActions),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ lts (g M) τ z) ->
-  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = []) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN M N)).
-Proof.
-  intros M N l HM HN HstN HstM Hno Hsem.
-  apply ax_phaseA_direct; [ apply static_g; exact HM | exact HN | exact HstN | ].
-  intros K Hout Hst.
-  eapply certificate_no_regeneration; try eassumption.
-  intros a Hin r Hr. destruct a as (c,w).
-  destruct (offers_mirrorN M N c w r Hr) as (w0 & r0 & Hr0).
-  destruct (lts_in_value_swap (g (mirrorN M N)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
-    as (r1 & Hr1).
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-            ((g (mirrorN M N)) ▷ K) τ); [ | exact Hst ].
-  apply gmultiset_disj_union_difference' in Hin.
-  rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
-Qed.
 
 Theorem restrict_bigsum : forall (M N : gproc), gStatic M -> gStatic N ->
   (forall p, ~ lts (g N) τ p) ->
@@ -2207,88 +1645,9 @@ Proof.
     | apply bigsum_certificate; assumption ].
 Qed.
 
-(** * PHASE A, AS A DERIVATION — no [gGuardsIn], no [BadK]
 
-    [ax_mirror_reach] reaches the whole expansion, [ax_restrict_settle]
-    cuts it down to the mirror, and the certificate is
-    [bigsum_certificate].  Nothing is assumed about which channels [M]
-    offers. *)
 
-Theorem ax_phaseA_settle : forall (M N : gproc), gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)).
-Proof.
-  intros M N HM HN HstN Hsem.
-  eapply ax_trans; [ apply ax_mirror_reach; exact HstN | ].
-  apply ax_restrict_settle.
-  - intros al q Hl. apply lts_choiceR. exact Hl.
-  - apply bigsum_gStatic; assumption.
-  - apply mirrorN_gStatic; [ apply static_g; assumption | assumption ].
-  - apply bigsum_certificate; assumption.
-Qed.
 
-(** * THE STABLE CASE OF COMPLETENESS, with only the recursion left
-
-    Compare [ax_below_stable_sum_full] (needs [gGuardsIn]) and
-    [ax_below_stable_sum_nogg] (needs a [BadK] certificate).  Here the
-    only hypotheses beyond [Static]-ness and stability of [N] are the
-    semantic one and the recursive call. *)
-
-Theorem ax_below_stable_sum_clean : forall (M N : gproc), gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) ->
-  (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g N).
-Proof.
-  intros M N HM HN HstN Hsem Hrec.
-  eapply ax_below_stable_sum; [ exact HstN | | exact Hsem | exact Hrec ].
-  apply ax_phaseA_settle; assumption.
-Qed.
-
-(** ** THE STABLE CASE AT THE FULL NORMAL FORM
-
-    The message layer costs nothing once the bag can be cancelled.
-    [VACCS_NormalForm.msgs_cancel] removes a common bag from a *stable*
-    configuration, after which the whole mirror / restrict / match chain
-    above applies to the bare sums and [ax_par] carries the result back
-    under [msgs l ‖ ·]; [ax_res_n] then carries it under the restriction
-    block, so the statement holds at [NF n l M] — the forwarder state
-    that VACCS normal forms actually have.
-
-    Note what is *not* assumed: nothing about which channels [M] offers
-    (that went with [ax_restrict_settle]), and nothing relating the two
-    bags (they are literally the same, which for two stable
-    configurations is forced — [VACCS_NormalForm.bags_agree]). *)
-
-Theorem ax_below_stable_config : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
-  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros l M N HM HN HstN HstM Hpre Hrec.
-  apply ax_par; [ apply ax_refl | ].
-  apply ax_below_stable_sum_clean; try assumption.
-  eapply msgs_cancel; eassumption.
-Qed.
-
-Theorem ax_below_stable_NF : forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall c v Q', lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q' -> ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN HstN HstM Hpre Hrec.
-  unfold NF. apply ax_res_n. apply ax_below_stable_config; assumption.
-Qed.
 
 (** *** CAVEAT: the recursive premise sits at the WRONG LEVEL for the measure
 
@@ -2333,14 +1692,6 @@ Qed.
     needed for different stable states of `q` — the same ∀∃ alternation
     that defeated [Harmless] and [Bad]. *)
 
-Lemma ax_tau_run : forall (p p' : proc), p ⟹[[]] p' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ p'.
-Proof.
-  intros p p' Hw. remember (nil : trace (ExtAct TypeOfActions)) as s eqn:Hs.
-  induction Hw as [x|s0 x q y Hl Hwt IH|mu s0 x q y Hl Hwt IH].
-  - apply ax_refl.
-  - eapply ax_trans; [ apply ax_tau_step; exact Hl | apply IH; exact Hs ].
-  - discriminate Hs.
-Qed.
 
 Lemma ax_below_via_reduct : forall (p p' q : proc),
   p ⟹[[]] p' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
@@ -2385,43 +1736,6 @@ Lemma ax_ichoice_below : forall (l : list proc) (p : proc), In p l ->
   (g (ichoice l)) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof. intros l p Hin. apply ax_tau_step. apply lts_ichoice. exact Hin. Qed.
 
-(** ** Restriction is FREE when no channel is lost
-
-    [ax_restrict_settle]'s certificate is normally the hard part — it is
-    where the semantic hypothesis enters, and where the surplus-guard
-    problem lives.  But when the target [M'] still offers **every channel**
-    the source offers, the certificate costs nothing: a stable
-    [g M' ▷ m] then forces [g M ▷ m] stable too (an input's availability
-    is value-independent, [lts_in_value_swap]), and a stable configuration
-    whose process is a guarded sum settles at itself, emitting exactly the
-    buffer's channels.
-
-    So restriction may always *merge* or *reorder*, and only *dropping a
-    channel* needs an argument.  This is the [Settles]-side counterpart of
-    [VACCS_Absorb.must_i_restrict_same].
-
-    It is also what makes the "big mirror" route's restriction step free:
-    a mirror built over [offers M ∪ offers N] keeps all of [M]'s channels
-    by construction, so [g BIG] restricts to it with no semantic input at
-    all — the whole difficulty then concentrates in discarding the surplus
-    mirror summands afterwards. *)
-
-Lemma certificate_free : forall (M M' : gproc),
-  (forall c v p, lts (g M) (ActExt (ActIn (c,v))) p ->
-                 exists w q, lts (g M') (ActExt (ActIn (c,w))) q) ->
-  (forall p, ~ lts (g M) τ p) ->
-  forall m, ((g M') ▷ m) ↛ -> Settles (emits ((g M') ▷ m)) ((g M) ▷ m).
-Proof.
-  intros M M' Hoff HstM m Hst.
-  assert (Hns : forall z, ~ (((g M') ▷ m) ⟶ z)) by (apply no_step_of_stable; exact Hst).
-  apply fw_stable_iff in Hns as (Hst1 & Hst2).
-  apply Settles_gsum_chans. apply Settles_gsum_stable.
-  apply stable_of_no_step. apply fw_stable_iff. split; [ exact HstM | ].
-  intros a Ha q Hq. destruct a as (c,v).
-  destruct (Hoff c v q Hq) as (w & r & Hr).
-  destruct (lts_in_value_swap (g M') (ActIn (c,w)) r Hr c w v eq_refl) as (r2 & Hr2).
-  eapply Hst2; [ exact Ha | exact Hr2 ].
-Qed.
 
 Lemma ax_restrict_keep : forall (M M' : gproc), gStatic M -> gStatic M' ->
   (forall al q, lts (g M') al q -> lts (g M) al q) ->
@@ -2430,9 +1744,13 @@ Lemma ax_restrict_keep : forall (M M' : gproc), gStatic M -> gStatic M' ->
   (forall p, ~ lts (g M) τ p) ->
   (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M').
 Proof.
-  intros M M' HM HM' Hsub Hoff HstM.
-  apply ax_restrict_settle; try assumption.
-  intros m _ Hst. apply certificate_free; assumption.
+  intros M M' HM HM' Hsub Hoff HstM. apply ax_glb_settle.
+  - intros l Hl. apply Settles_gsum_stable. apply stable_of_no_step.
+    apply fw_stable_iff. split; [ exact HstM | ].
+    intros a Ha q Hq. destruct a as (c,v). apply bag_elem in Ha.
+    apply (Hl c v Ha). destruct (Hoff c v q Hq) as (w & r & Hr). exists w, r. exact Hr.
+  - intros X HX. exfalso. eapply HstM. apply Hsub. eapply summand_lts; [ exact HX | apply lts_tau ].
+  - intros c Q HQ v. apply ax_deliver. apply Hsub. eapply summand_lts; [ exact HQ | apply lts_input ].
 Qed.
 
 (** ** Removing a duplicated residue — where [ax_sub_tau] and
@@ -2607,165 +1925,12 @@ Qed.
     laws the matching actually needs, with the premise quantified over
     sub-bags only, which is precisely the range [domsim_wt] measures. *)
 
-Lemma msgs_lts_inv : forall l mu r, lts (msgs l) (ActExt mu) r ->
-  exists c v l', mu = ActOut (c,v) /\ Permutation l ((c,v) :: l') /\ r ≡* msgs l'.
-Proof.
-  induction l as [|cv l IH]; intros mu r H; simpl in H.
-  - inversion H.
-  - inversion H; subst.
-    + match goal with HH : lts (_ ! _ • 𝟘) (ActExt mu) ?p2 |- _ =>
-        inversion HH; subst end.
-      exists (fst cv), (snd cv), l.
-      split; [ reflexivity | ]. split.
-      * rewrite <- surjective_pairing. reflexivity.
-      * etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
-    + match goal with HH : lts (msgs l) (ActExt mu) ?q2 |- _ =>
-        destruct (IH mu q2 HH) as (c0 & v0 & l'' & Emu & Hperm & Hcgr) end.
-      exists c0, v0, (cv :: l''). split; [ exact Emu | ]. split.
-      * etransitivity; [ apply perm_skip; exact Hperm | apply perm_swap ].
-      * simpl. apply cgr_fullpar; [ reflexivity | exact Hcgr ].
-Qed.
-
-Lemma msgs_no_tau : forall l q, ~ lts (msgs l) τ q.
-Proof.
-  induction l as [|cv l IH]; intros q H; simpl in H.
-  - inversion H.
-  - inversion H; subst.
-    + match goal with HH : lts (msgs l) (ActExt (ActIn _)) _ |- _ =>
-        eapply msgs_no_input; exact HH end.
-    + match goal with HH : lts (_ ! _ • 𝟘) (ActExt (ActIn _)) _ |- _ => inversion HH end.
-    + match goal with HH : lts (_ ! _ • 𝟘) τ _ |- _ => inversion HH end.
-    + eapply IH; eassumption.
-Qed.
-
-Definition subbag (l' l : list TypeOfActions) : Prop :=
-  exists l1, Permutation l (l1 ++ l').
-
-Lemma subbag_refl : forall l, subbag l l.
-Proof. intro l. exists []. reflexivity. Qed.
-
-Lemma subbag_trans : forall l1 l2 l3, subbag l3 l2 -> subbag l2 l1 -> subbag l3 l1.
-Proof.
-  intros l1 l2 l3 (a & Ha) (b & Hb). exists (b ++ a).
-  rewrite Hb, Ha. rewrite <- app_assoc. reflexivity.
-Qed.
-
-Lemma subbag_cons : forall a l' l, Permutation l (a :: l') -> subbag l' l.
-Proof. intros a l' l H. exists [a]. simpl. exact H. Qed.
-
-Definition bagctx (l : list TypeOfActions) (B : proc) : Prop :=
-  exists l', subbag l' l /\ B ≡* msgs l'.
-
-Lemma bagctx_no_tau : forall l B, bagctx l B -> forall q, ~ lts B τ q.
-Proof.
-  intros l B (l' & _ & Hc) q Hq.
-  assert (Hsc : sc_then_lts (msgs l') τ q)
-    by (exists B; split; [ symmetry; exact Hc | exact Hq ]).
-  apply Congruence_Respects_Transition in Hsc as (r' & Hl & _).
-  eapply msgs_no_tau; exact Hl.
-Qed.
-
-Lemma bagctx_no_input : forall l B, bagctx l B -> forall a q, ~ lts B (ActExt (ActIn a)) q.
-Proof.
-  intros l B (l' & _ & Hc) a q Hq.
-  assert (Hsc : sc_then_lts (msgs l') (ActExt (ActIn a)) q)
-    by (exists B; split; [ symmetry; exact Hc | exact Hq ]).
-  apply Congruence_Respects_Transition in Hsc as (r' & Hl & _).
-  destruct a as (c0,v0). eapply msgs_no_input; exact Hl.
-Qed.
-
-Lemma bagctx_closed : forall l B, bagctx l B ->
-  forall mu B', lts B (ActExt mu) B' -> bagctx l B'.
-Proof.
-  intros l B (l' & Hs & Hc) mu B' Hq.
-  assert (Hsc : sc_then_lts (msgs l') (ActExt mu) B')
-    by (exists B; split; [ symmetry; exact Hc | exact Hq ]).
-  apply Congruence_Respects_Transition in Hsc as (r' & Hl & Hr).
-  destruct (msgs_lts_inv l' mu r' Hl) as (c0 & v0 & l'' & _ & Hperm & Hc2).
-  exists l''. split.
-  - eapply subbag_trans; [ eapply subbag_cons; exact Hperm | exact Hs ].
-  - etransitivity; [ symmetry; exact Hr | exact Hc2 ].
-Qed.
-
-Lemma must_i_input_bag : forall (l : list TypeOfActions) (c : ChannelData) (P Q : proc),
-  (forall l' v, subbag l' l ->
-     (msgs l' ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ (subst_in_proc 0 v Q))) ->
-  (msgs l ‖ g (c ? P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g (c ? Q)).
-Proof.
-  intros l c P Q HPQ.
-  apply (must_i_input_ctx (bagctx l) c P Q
-           (bagctx_no_tau l) (bagctx_no_input l) (bagctx_closed l)).
-  - intros B (l' & Hs & Hc) v t Ht.
-    assert (H1 : (B ‖ (subst_in_proc 0 v P)) ≡* (msgs l' ‖ (subst_in_proc 0 v P)))
-      by (apply cgr_fullpar; [ exact Hc | reflexivity ]).
-    assert (H2 : (msgs l' ‖ (subst_in_proc 0 v Q)) ≡* (B ‖ (subst_in_proc 0 v Q)))
-      by (apply cgr_fullpar; [ symmetry; exact Hc | reflexivity ]).
-    apply (proj2 (must_i_cgr _ _ H2)).
-    apply (HPQ l' v Hs).
-    apply (proj2 (must_i_cgr _ _ H1)). exact Ht.
-  - exists l. split; [ apply subbag_refl | reflexivity ].
-Qed.
-
-Lemma must_i_choice_input_bag :
-  forall (l : list TypeOfActions) (c : ChannelData) (P Q : proc) (G : gproc),
-  (forall l' v, subbag l' l ->
-     (msgs l' ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ (subst_in_proc 0 v Q))) ->
-  (msgs l ‖ g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g ((c ? Q) + G)).
-Proof.
-  intros l c P Q G HPQ.
-  apply (must_i_choice_input_ctx (bagctx l) c P Q G
-           (bagctx_no_tau l) (bagctx_no_input l) (bagctx_closed l)).
-  - intros B (l' & Hs & Hc) v t Ht.
-    assert (H1 : (B ‖ (subst_in_proc 0 v P)) ≡* (msgs l' ‖ (subst_in_proc 0 v P)))
-      by (apply cgr_fullpar; [ exact Hc | reflexivity ]).
-    assert (H2 : (msgs l' ‖ (subst_in_proc 0 v Q)) ≡* (B ‖ (subst_in_proc 0 v Q)))
-      by (apply cgr_fullpar; [ symmetry; exact Hc | reflexivity ]).
-    apply (proj2 (must_i_cgr _ _ H2)).
-    apply (HPQ l' v Hs).
-    apply (proj2 (must_i_cgr _ _ H1)). exact Ht.
-  - exists l. split; [ apply subbag_refl | reflexivity ].
-Qed.
-
 (** ** …and at the level of [⊢]
 
-    The same instantiation applied to the *rules* [ax_input_ctx] and
-    [ax_choice_input_ctx].  These are the forms the matching consumes:
-    a summand's continuation may be rewritten **beside a message bag**,
-    provided the rewrite is derivable at every sub-bag — and the sub-bags
-    are exactly the states [domsim_wt] measures. *)
-
-Lemma ax_input_bag : forall (l : list TypeOfActions) (c : ChannelData) (P Q : proc),
-  (forall l' v, subbag l' l ->
-     (msgs l' ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ (subst_in_proc 0 v Q))) ->
-  (msgs l ‖ g (c ? P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (c ? Q)).
-Proof.
-  intros l c P Q H.
-  apply (ax_input_ctx (bagctx l) c P Q (msgs l)
-           (bagctx_no_tau l) (bagctx_no_input l) (bagctx_closed l)).
-  - intros X (l' & Hs & Hc) v.
-    eapply ax_trans;
-      [ apply ax_cgr; apply cgr_fullpar; [ exact Hc | reflexivity ] | ].
-    eapply ax_trans; [ apply (H l' v Hs) | ].
-    apply ax_cgr_sym. apply cgr_fullpar; [ exact Hc | reflexivity ].
-  - exists l. split; [ apply subbag_refl | reflexivity ].
-Qed.
-
-Lemma ax_choice_input_bag :
-  forall (l : list TypeOfActions) (c : ChannelData) (P Q : proc) (G : gproc),
-  (forall l' v, subbag l' l ->
-     (msgs l' ‖ (subst_in_proc 0 v P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ (subst_in_proc 0 v Q))) ->
-  (msgs l ‖ g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g ((c ? Q) + G)).
-Proof.
-  intros l c P Q G H.
-  apply (ax_choice_input_ctx (bagctx l) c P Q (msgs l) G
-           (bagctx_no_tau l) (bagctx_no_input l) (bagctx_closed l)).
-  - intros X (l' & Hs & Hc) v.
-    eapply ax_trans;
-      [ apply ax_cgr; apply cgr_fullpar; [ exact Hc | reflexivity ] | ].
-    eapply ax_trans; [ apply (H l' v Hs) | ].
-    apply ax_cgr_sym. apply cgr_fullpar; [ exact Hc | reflexivity ].
-  - exists l. split; [ apply subbag_refl | reflexivity ].
-Qed.
+    [ax_choice_input_bag] is itself a rule of the system: a summand's
+    continuation may be rewritten **beside a message bag**, provided the
+    rewrite is derivable at every sub-bag — and the sub-bags are exactly
+    the states [domsim_wt] measures. *)
 
 (** Pooling two **same-channel** guards is free at a bag: the law is a
     closed inequation, so [ax_par] carries it into any context.  This is
@@ -2774,32 +1939,46 @@ Qed.
     is the open part of the unstable case
     ([VACCS_DropProbes.tau_successor_cannot_be_chosen] and
     [VACCS_DropProbes.ax_PC_below_nil] delimit it). *)
-Lemma ax_input_distrib_bag : forall (l : list TypeOfActions) (c : ChannelData)
-    (P Q : proc) (R : gproc),
-  (msgs l ‖ g (((c ? P) + (c ? Q)) + R))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
-Proof. intros. apply ax_par; [ apply ax_refl | apply ax_input_distrib_l ]. Qed.
 
-(** The greatest lower bound, likewise at a bag. *)
+Lemma ax_choice_tau2 : forall (p1 p2 q1 q2 : proc),
+  p1 ᴠᴀᴄᴄꜱ⊑ₐₓ q1 -> p2 ᴠᴀᴄᴄꜱ⊑ₐₓ q2 ->
+  (g ((𝛕 • p1) + (𝛕 • p2))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • q1) + (𝛕 • q2))).
+Proof.
+  intros p1 p2 q1 q2 H1 H2.
+  eapply ax_trans; [ apply (ax_choice_tau p1 q1 (𝛕 • p2) H1) | ].
+  eapply ax_trans; [ apply ax_cgr; apply cgr_choice_com | ].
+  eapply ax_trans; [ apply (ax_choice_tau p2 q2 (𝛕 • q1) H2) | ].
+  apply ax_cgr. apply cgr_choice_com.
+Qed.
+
+Lemma ax_share_msgs : forall (l : list TypeOfActions) (X Y : proc),
+  (g ((𝛕 • (msgs l ‖ X)) + (𝛕 • (msgs l ‖ Y))))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc)).
+Proof.
+  induction l as [|cv l IH]; intros X Y; simpl.
+  - eapply ax_trans;
+      [ apply ax_choice_tau2; apply ax_cgr; apply cgr_nil_par_l | ].
+    apply ax_cgr_sym. apply cgr_nil_par_l.
+  - destruct cv as (c, v).
+    eapply ax_trans;
+      [ apply ax_choice_tau2; apply ax_cgr; apply cgr_par_assoc | ].
+    eapply ax_trans; [ apply ax_share_msg | ].
+    eapply ax_trans; [ apply ax_par; [ apply ax_refl | apply IH ] | ].
+    apply ax_cgr. apply cgr_par_assoc_rev.
+Qed.
+
+(** The greatest lower bound, likewise at a bag: the bare rule
+    [ax_int_glb] builds the internal choice of the two configurations, and
+    [ax_share_msgs] factors the common bag out of it. *)
 Lemma ax_int_glb_bag : forall (l : list TypeOfActions) (p q1 q2 : proc),
   (forall l', subbag l' l -> (msgs l' ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ q1)) ->
   (forall l', subbag l' l -> (msgs l' ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ q2)) ->
   (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g ((𝛕 • q1) + (𝛕 • q2))).
 Proof.
   intros l p q1 q2 H1 H2.
-  apply (ax_int_glb_ctx (bagctx l) p q1 q2 (msgs l)
-           (bagctx_no_tau l) (bagctx_no_input l) (bagctx_closed l)).
-  - intros X (l' & Hs & Hc).
-    eapply ax_trans;
-      [ apply ax_cgr; apply cgr_fullpar; [ exact Hc | reflexivity ] | ].
-    eapply ax_trans; [ apply (H1 l' Hs) | ].
-    apply ax_cgr_sym. apply cgr_fullpar; [ exact Hc | reflexivity ].
-  - intros X (l' & Hs & Hc).
-    eapply ax_trans;
-      [ apply ax_cgr; apply cgr_fullpar; [ exact Hc | reflexivity ] | ].
-    eapply ax_trans; [ apply (H2 l' Hs) | ].
-    apply ax_cgr_sym. apply cgr_fullpar; [ exact Hc | reflexivity ].
-  - exists l. split; [ apply subbag_refl | reflexivity ].
+  eapply ax_trans;
+    [ apply ax_int_glb; [ apply (H1 l (subbag_refl l)) | apply (H2 l (subbag_refl l)) ]
+    | apply ax_share_msgs ].
 Qed.
 
 (** ** Phase B, and the stable case, AT A CONFIGURATION
@@ -2819,102 +1998,11 @@ Lemma ax_par_bag : forall (l : list TypeOfActions) (X Y : proc),
   X ᴠᴀᴄᴄꜱ⊑ₐₓ Y -> (msgs l ‖ X) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ Y).
 Proof. intros l X Y H. apply ax_par; [ apply ax_refl | exact H ]. Qed.
 
-Fixpoint mirror_ok_bag (l : list TypeOfActions) (P : proc) (N : gproc) : Prop :=
-  match N with
-  | gpr_success => True
-  | gpr_nil => True
-  | gpr_input c Q => forall l' v, subbag l' l ->
-      (msgs l' ‖ (P ‖ (c ! v • 𝟘))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ (subst_in_proc 0 v Q))
-  | gpr_tau _ => False
-  | gpr_choice N1 N2 => mirror_ok_bag l P N1 /\ mirror_ok_bag l P N2
-  end.
 
-Lemma ax_mirrorN_match_bag : forall (l : list TypeOfActions) (P : proc) (N : gproc),
-  mirror_ok_bag l P N ->
-  forall (R : gproc), (msgs l ‖ g ((mirrorN P N) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (N + R)).
-Proof.
-  intros l P N. induction N as [ | | c Q | p | N1 IH1 N2 IH2 ]; intros Hok R; simpl in *.
-  - apply ax_par_bag. apply ax_success_r.
-  - apply ax_refl.
-  - apply ax_choice_input_bag. intros l' v Hs. unfold fwdg. simpl.
-    rewrite NewVar_subst_cancel. apply Hok. exact Hs.
-  - contradiction.
-  - destruct Hok as [Hok1 Hok2].
-    eapply ax_trans; [ apply ax_par_bag; apply ax_cgr; apply cgr_choice_assoc | ].
-    eapply ax_trans; [ apply (IH1 Hok1 ((mirrorN P N2) + R)) | ].
-    eapply ax_trans; [ apply ax_par_bag; apply ax_cgr; apply cgr_swap3 | ].
-    eapply ax_trans; [ apply (IH2 Hok2 (N1 + R)) | ].
-    apply ax_par_bag. apply ax_cgr.
-    etransitivity; [ apply cgr_swap3 | ].
-    apply cgr_symm. apply cgr_choice_assoc.
-Qed.
 
-Lemma mirror_ok_bag_of : forall (l : list TypeOfActions) (P : proc) (N : gproc),
-  (forall p, ~ lts (g N) τ p) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ (P ‖ (c ! v • 𝟘))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  mirror_ok_bag l P N.
-Proof.
-  intros l P N. induction N as [ | | c Q | p | N1 IH1 N2 IH2 ]; intros Hst Hrec; simpl in *.
-  - exact I.
-  - exact I.
-  - intros l' v Hs. apply Hrec; [ exact Hs | apply lts_input ].
-  - exfalso. eapply Hst. apply lts_tau.
-  - split.
-    + apply IH1.
-      * intros q Hq. eapply Hst. apply lts_choiceL. exact Hq.
-      * intros c v Q' l' Hs Hl. apply Hrec; [ exact Hs | apply lts_choiceL; exact Hl ].
-    + apply IH2.
-      * intros q Hq. eapply Hst. apply lts_choiceR. exact Hq.
-      * intros c v Q' l' Hs Hl. apply Hrec; [ exact Hs | apply lts_choiceR; exact Hl ].
-Qed.
 
-Theorem ax_below_stable_sum_bag : forall (l : list TypeOfActions) (M N : gproc),
-  (forall p, ~ lts (g N) τ p) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M N)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros l M N Hst HA Hrec.
-  eapply ax_trans; [ apply ax_par_bag; exact HA | ].
-  eapply ax_trans; [ apply ax_par_bag; apply ax_cgr_sym; apply cgr_choice_nil | ].
-  eapply ax_trans;
-    [ apply (ax_mirrorN_match_bag l M N) with (R := 𝟘)
-    | apply ax_par_bag; apply ax_cgr; apply cgr_choice_nil ].
-  apply mirror_ok_bag_of; [ exact Hst | ].
-  intros c v Q' l' Hs Hl.
-  eapply ax_trans; [ apply ax_par_bag; apply ax_cgr; apply cgr_par_com | ].
-  apply Hrec; [ exact Hs | exact Hl ].
-Qed.
 
-Theorem ax_below_stable_config_bag : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros l M N HM HN Hst Hstab Hsem Hrec.
-  apply ax_below_stable_sum_bag; [ exact Hst | | exact Hrec ].
-  apply ax_phaseA_settle; [ exact HM | exact HN | exact Hst | ].
-  eapply msgs_cancel; [ exact HM | exact HN | exact Hstab | exact Hsem ].
-Qed.
 
-Theorem ax_below_stable_NF_bag : forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hst Hstab Hsem Hrec. unfold NF.
-  apply ax_res_n. apply ax_below_stable_config_bag; assumption.
-Qed.
 
 (** ** THE SAME, WITH THE LEFT CONFIGURATION UNSTABLE — modulo ONE assumption
 
@@ -2945,134 +2033,12 @@ Qed.
     *copycats*, which regenerate by construction.  That is the residue,
     and it is the whole of it. *)
 
-Definition PhaseA_config : Prop :=
-  forall (M N : gproc) (l : list TypeOfActions),
-    gStatic M -> gStatic N -> (forall p, ~ lts (g N) τ p) ->
-    ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-    (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN M N)).
 
-Theorem ax_below_stable_sum_cfg : forall (l : list TypeOfActions) (P : proc) (N : gproc),
-  (forall p, ~ lts (g N) τ p) ->
-  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN P N)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ P)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros l P N Hst HA Hrec.
-  eapply ax_trans; [ exact HA | ].
-  eapply ax_trans; [ apply ax_par_bag; apply ax_cgr_sym; apply cgr_choice_nil | ].
-  eapply ax_trans;
-    [ apply (ax_mirrorN_match_bag l P N) with (R := 𝟘)
-    | apply ax_par_bag; apply ax_cgr; apply cgr_choice_nil ].
-  apply mirror_ok_bag_of; [ exact Hst | ].
-  intros c v Q' l' Hs Hl.
-  eapply ax_trans; [ apply ax_par_bag; apply ax_cgr; apply cgr_par_com | ].
-  apply Hrec; [ exact Hs | exact Hl ].
-Qed.
 
-(** ** COMPARING CONFIGURATIONS WITH DIFFERENT BAGS
 
-    Everything above compares two configurations at a **common** bag,
-    because the omega rules at a bag are congruences and a congruence
-    needs the same context on both sides.  That is where the second open
-    point lived: two normal forms carry bags [l1] and [l2], and
-    [VACCS_NormalForm.bags_agree] forces [l1 = l2] only when *both* sides
-    are τ-free — and the two witnesses
-    ([VACCS_Bad.unstable_delivery_below_nil],
-    [VACCS_DropProbes.msg_below_tau_msg]) show that cannot be weakened.
 
-    Generalising the mirror from a guarded sum to an **arbitrary** left
-    process removes the difficulty on one side.  [msgs_app] splits the
-    left's bag, and the surplus is absorbed into the *process*:
 
-        msgs (d ++ l) ‖ g M  ≡*  msgs l ‖ (msgs d ‖ g M)
 
-    so the comparison runs at the common bag [l] with left [msgs d ‖ g M].
-    That covers every case where the left's bag **contains** the right's.
-
-    The symmetric case — surplus on the *right* — is not handled this way
-    and remains open: Phase B matches the right summand by summand and so
-    needs it to be a guarded sum, which [msgs e ‖ g N] is not. *)
-
-Lemma cgr_par_shift : forall (A B C : proc), ((A ‖ B) ‖ C) ≡* (B ‖ (A ‖ C)).
-Proof.
-  intros A B C.
-  etransitivity; [ apply cgr_par_assoc | ].
-  etransitivity; [ apply cgr_par_com | ].
-  etransitivity; [ apply cgr_par_assoc | ].
-  apply cgr_fullpar; [ reflexivity | apply cgr_par_com ].
-Qed.
-
-Theorem ax_below_stable_split_bag :
-  forall (l d : list TypeOfActions) (M N : gproc),
-  (forall p, ~ lts (g N) τ p) ->
-  (msgs l ‖ (msgs d ‖ g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN (msgs d ‖ g M) N)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ (msgs d ‖ g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (msgs (d ++ l) ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros l d M N Hst HA Hrec.
-  eapply ax_trans; [ apply ax_cgr | apply ax_below_stable_sum_cfg; eassumption ].
-  etransitivity; [ apply cgr_fullpar; [ apply msgs_app | reflexivity ] | ].
-  apply cgr_par_shift.
-Qed.
-
-Theorem ax_below_stable_NF_cfg : PhaseA_config ->
-  forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros HPA n l M N HM HN Hst Hsem Hrec. unfold NF.
-  apply ax_res_n. apply ax_below_stable_sum_cfg; [ exact Hst | | exact Hrec ].
-  apply HPA; assumption.
-Qed.
-
-Lemma phaseA_config_of_stable : forall (M N : gproc) (l : list TypeOfActions),
-  gStatic M -> gStatic N -> (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ ((g M ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN M N)).
-Proof.
-  intros M N l HM HN Hst Hstab Hsem.
-  apply ax_par_bag. apply ax_phaseA_settle; [ exact HM | exact HN | exact Hst | ].
-  eapply msgs_cancel; [ exact HM | exact HN | exact Hstab | exact Hsem ].
-Qed.
-
-(** ** THE STABLE-LEAF STEP AT AN UNSTABLE CONFIGURATION
-
-    Putting the two together: [ax_below_stable_sum_cfg] needs Phase A at
-    the configuration and nothing else, and
-    [phaseA_config_no_regeneration] supplies it.  So the stable-leaf step
-    holds with **no τ-stability requirement on the left configuration at
-    all** — the hypothesis [ax_below_stable_NF_bag] carried — under the
-    single condition that [M] never gives back everything it took —
-    i.e. that no run of [g M] re-emits the whole of what it consumed.
-
-    That condition is exactly non-regeneration
-    ([VACCS_NormalForm.drain_forced_of_no_output]), and it is now a
-    property of the process being compared rather than of the mirror
-    construction: the copycats that used to break the drain argument are
-    gone, [ax_phaseA_direct] not building any. *)
-
-Theorem ax_below_stable_NF_no_regen :
-  forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall z, ~ lts (g M) τ z) ->
-  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = []) ->
-  ((msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ g N)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN HstN HstM Hno Hsem Hrec. unfold NF.
-  apply ax_res_n. apply ax_below_stable_sum_cfg; [ exact HstN | | exact Hrec ].
-  apply phaseA_config_no_regeneration; assumption.
-Qed.
 
 (** ** The τ-layer, at a configuration
 
@@ -3226,41 +2192,7 @@ Qed.
     Phase B, the omega rules at a bag and the bag bookkeeping are all
     inside. *)
 
-Theorem ax_below_gsum_stable_cfg : PhaseA_config ->
-  forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  BagSem l (g M) N ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l (g M) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts (g L) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  BagBelow l (g M) N.
-Proof.
-  intros HPA l M N HM HN Hnf Hsem Hrec.
-  apply ax_below_gsum_bag; try assumption.
-  intros L HL HstL HsemL l' Hs'.
-  assert (HtauL : forall p, ~ lts (g L) τ p).
-  { intros p Hp. eapply stable_no_lts; [ apply gStable_iff; exact HstL | exact Hp ]. }
-  apply ax_below_stable_sum_cfg; [ exact HtauL | | ].
-  - apply HPA; [ exact HM | exact HL | exact HtauL | apply HsemL; exact Hs' ].
-  - intros c v Q' l'' Hs'' Hl. eapply Hrec; eassumption.
-Qed.
 
-Corollary ax_below_NF_cfg : PhaseA_config ->
-  forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  BagSem l (g M) N ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l (g M) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts (g L) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ (g M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros HPA n l M N HM HN Hnf Hsem Hrec. unfold NF.
-  apply ax_res_n.
-  apply (ax_below_gsum_stable_cfg HPA l M N HM HN Hnf Hsem Hrec l).
-  apply subbag_refl.
-Qed.
 
 
 (** * MOVING A PENDING MESSAGE FROM THE BUFFER INTO THE PROCESS
@@ -3559,41 +2491,6 @@ Proof.
 Qed.
 
 
-(** * THE CONFIGURATION STEP AT DIFFERENT BAGS, FROM ONE CERTIFICATE
-
-    Assembling the two: [Settles_msgs_to_buffer] turns a certificate
-    stated at the **shifted buffer** [bag d ⊎ K] for the plain sum [g M]
-    into one for the left-hand side [msgs d ‖ g M] at [K], which is what
-    [ax_phaseA_direct] consumes; [ax_below_stable_split_bag] then puts the
-    surplus back into the bag.
-
-    Note what the hypothesis says, and that it is exactly the residue.
-    [Settles (chans K) (g M ▷ (bag d ⊎ K))] asks the left to settle
-    emitting **only within [chans K]** — so it must absorb the whole of
-    [d], since a state still carrying those messages emits on [chans d]
-    too.  That is the unstable-left case, and nothing else: were the left
-    configuration stable, [VACCS_NormalForm.bags_agree] would force
-    [d = []] and the hypothesis would degenerate to
-    [VACCS_NormalForm.certificate_config]. *)
-
-Theorem ax_below_split_from_certificate :
-  forall (l d : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall K, OutOnly K ->
-     ((g (mirrorN ((msgs d) ‖ ((g M) : proc)) N)) ▷ K) ↛ ->
-     Settles (chans K) (((g M) : proc) ▷ (bag d ⊎ K))) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ ((msgs d) ‖ ((g M) : proc))))
-       ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (msgs (d ++ l) ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros l d M N HM HN HstN Hcert Hrec.
-  apply ax_below_stable_split_bag; [ exact HstN | | exact Hrec ].
-  apply ax_phaseA_direct; [ | exact HN | exact HstN | ].
-  - constructor; [ apply msgs_Static | apply static_g; exact HM ].
-  - intros K Hout Hst. apply Settles_msgs_to_buffer. apply Hcert; assumption.
-Qed.
 
 
 (** * THE PRINCIPLE THE SET-BASED ROUTE RUNS ON
@@ -3918,47 +2815,8 @@ Proof.
     + simpl. constructor; [ constructor; assumption | apply IH; assumption ].
 Qed.
 
-Lemma cfg_Static : forall (L : list cfg),
-  Forall (fun c => Static (cfg_proc c)) L -> Static (g (ichoice_cfg L)).
-Proof.
-  intros L Hall. apply static_g. unfold ichoice_cfg. apply ichoice_gStatic.
-  apply Forall_forall. intros x Hx.
-  apply in_map_iff in Hx as (c & Ec & Hc). subst x.
-  rewrite Forall_forall in Hall. apply Hall. exact Hc.
-Qed.
 
-Theorem ax_phaseA_ichoice : forall (L : list cfg) (N : gproc) (l : list TypeOfActions),
-  Forall (fun c => Static (cfg_proc c)) L -> gStatic N ->
-  (forall z, ~ lts (g N) τ z) ->
-  (forall K, OutOnly K -> ((g (mirrorN (g (ichoice_cfg L)) N)) ▷ K) ↛ ->
-     exists c, In c L /\ Settles (chans K) ((cfg_proc c) ▷ K)) ->
-  (msgs l ‖ g (ichoice_cfg L))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g (mirrorN (g (ichoice_cfg L)) N)).
-Proof.
-  intros L N l Hall HN Hnt Hcert.
-  apply ax_phaseA_direct; [ apply cfg_Static; exact Hall | exact HN | exact Hnt | ].
-  intros K HK Hst.
-  destruct (Hcert K HK Hst) as (c & Hc & HS).
-  unfold ichoice_cfg. eapply Settles_ichoice; [ apply in_map; exact Hc | exact HS ].
-Qed.
 
-(** The stable step at a set-shaped left: Phase A above, Phase B and the
-    wrapped recursive premise unchanged.  Only the certificate differs
-    from [ax_below_stable_sum_cfg], and it differs by being existential. *)
-
-Theorem ax_below_stable_ichoice : forall (L : list cfg) (N : gproc) (l : list TypeOfActions),
-  Forall (fun c => Static (cfg_proc c)) L -> gStatic N ->
-  (forall p, ~ lts (g N) τ p) ->
-  (forall K, OutOnly K -> ((g (mirrorN (g (ichoice_cfg L)) N)) ▷ K) ↛ ->
-     exists c, In c L /\ Settles (chans K) ((cfg_proc c) ▷ K)) ->
-  (forall c v Q' l', subbag l' l -> lts (g N) (ActExt (ActIn (c,v))) Q' ->
-     (msgs l' ‖ ((c ! v • 𝟘) ‖ g (ichoice_cfg L))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (msgs l ‖ g (ichoice_cfg L)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros L N l Hall HN Hnt Hcert Hrec.
-  eapply ax_below_stable_sum_cfg; [ exact Hnt | | exact Hrec ].
-  apply ax_phaseA_ichoice; assumption.
-Qed.
 
 
 (** The same at an arbitrary trace, via [VACCS_Cond2.copre_step_trace]:
@@ -4699,36 +3557,6 @@ Proof.
 Qed.
 
 
-(** ** [ax_glb_tau] at a CONFIGURATION
-
-    The rule's two output premises are read through [msgs_lts_inv]: an
-    emission of [msgs l ‖ g N] always comes from the **bag** — never from
-    [N], which is a guarded sum ([gsum_no_out]) — so it is a message of
-    [l] leaving, and the residue is [msgs l0 ‖ g N] for a permutation
-    [l ≡ₚ (c,v) :: l0].  The left, carrying the *same* bag, has the
-    matching emission ([cfg_out_of_perm]), and the two residues sit at
-    permutation-equal bags, so the recursive premise at [l0] covers them
-    up to [ax_cgr].
-
-    Hence: a right-hand **configuration** with a deliverable message is
-    taken apart by the rule, and the recursion decreases in two
-    independent ways — on the reducts (the τ premise) and on the bag (the
-    output premise).  Only the input premise leaves the configuration
-    shape, and there in the asynchronous form the recursion is expecting
-    ([must_i_feed_below]). *)
-
-Lemma cfg_out_inv : forall (l : list TypeOfActions) (N : gproc) c v q'',
-  lts (msgs l ‖ g N) (ActExt (ActOut (c,v))) q'' ->
-  exists l0, Permutation l ((c,v) :: l0) /\ q'' ≡* (msgs l0 ‖ g N).
-Proof.
-  intros l N c v q'' Hl. inversion Hl; subst.
-  - destruct (msgs_lts_inv l _ _ H3) as (c0 & v0 & l0 & Emu & Hperm & Hcgr).
-    injection Emu as E1 E2. subst c0 v0.
-    exists l0. split; [ exact Hperm | ].
-    apply cgr_fullpar; [ exact Hcgr | apply cgr_refl ].
-  - exfalso. eapply gsum_no_out. eassumption.
-Qed.
-
 Lemma cfg_out_of_perm : forall (l l0 : list TypeOfActions) c v (P : proc),
   Permutation l ((c,v) :: l0) ->
   exists r, lts (msgs l ‖ P) (ActExt (ActOut (c,v))) r /\ r ≡* (msgs l0 ‖ P).
@@ -4746,35 +3574,6 @@ Proof.
   apply cgr_fullpar; [ | apply cgr_refl ].
   etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
 Qed.
-
-Theorem ax_below_cfg_glb : forall (l : list TypeOfActions) (M N : gproc),
-  (exists q0, lts (msgs l ‖ g N) τ q0) ->
-  (forall q', lts (msgs l ‖ g N) τ q' -> (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (forall c v q'', lts (msgs l ‖ g N) (ActExt (ActIn (c,v))) q'' ->
-     ((c ! v • 𝟘) ‖ (msgs l ‖ g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
-  (forall c v l0, Permutation l ((c,v) :: l0) ->
-     (msgs l0 ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l0 ‖ g N)) ->
-  (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ g N).
-Proof.
-  intros l M N Hex Htau Hin Hrec.
-  apply ax_glb_tau; [ exact Hex | exact Htau | exact Hin | | ].
-  - intros c v q'' Hq''.
-    destruct (cfg_out_inv l N c v q'' Hq'') as (l0 & Hperm & _).
-    destruct (cfg_out_of_perm l l0 c v (g M) Hperm) as (r & Hr & _).
-    exists r. exact Hr.
-  - intros c v p'' q'' Hp'' Hq''.
-    destruct (cfg_out_inv l M c v p'' Hp'') as (l1 & Hp1 & Hcp).
-    destruct (cfg_out_inv l N c v q'' Hq'') as (l0 & Hp0 & Hcq).
-    assert (Hpp : Permutation l1 l0).
-    { apply (Permutation_cons_inv (a := (c,v))).
-      etransitivity; [ symmetry; exact Hp1 | exact Hp0 ]. }
-    eapply ax_trans; [ apply ax_cgr; exact Hcp | ].
-    eapply ax_trans; [ apply (Hrec c v l1 Hp1) | ].
-    apply ax_cgr_sym.
-    eapply cgr_trans; [ exact Hcq | ].
-    apply cgr_fullpar; [ apply msgs_perm; symmetry; exact Hpp | apply cgr_refl ].
-Qed.
-
 
 (** ** THE RESIDUE, NAMED — everything rests on one [Settles] statement
 
@@ -4808,12 +3607,6 @@ Definition CertAll : Prop :=
     forall K, OutOnly K -> ((g (mirrorN (g M) N)) ▷ K) ↛ ->
       Settles (chans K) ((g M) ▷ K).
 
-Theorem phaseA_config_of_cert : CertAll -> PhaseA_config.
-Proof.
-  intros Hcert M N l HM HN Hnt Hsem.
-  apply ax_phaseA_direct; [ apply static_g; exact HM | exact HN | exact Hnt | ].
-  intros K HK Hst. eapply Hcert; eassumption.
-Qed.
 
 
 (** ** The descent step, at a configuration
@@ -5257,559 +4050,20 @@ Proof.
   exact (proj2 (msgs_copycats_delivery l l0 M c v Mc HM Hp Hlts) t Hm).
 Qed.
 
-(** ** LA CIBLE INSTABLE EST GRATUITE — Phase A se réduit aux cibles stables
 
-    Les gardes du miroir sont [fwdg c P = c ? ((NewVar 0 P) ‖ (c ! bvar₀ • 𝟘))] :
-    **le miroir rend le message qu'il consomme**.  Sa délivrance
-    reconstitue donc exactement la configuration de départ, ce qui rend
-    les prémisses de [ax_below_cfg_glb] libres :
 
-    | transition de la cible | état atteint | prémisse |
-    |---|---|---|
-    | τ (délivrance d'un message du sac) | ≂ [msgs l ‖ g M] | réflexivité (via [ax_cgr]) |
-    | entrée sur [c] | ≂ [(c!v•𝟘) ‖ (msgs l ‖ g M)] | réflexivité |
-    | sortie d'un message du sac | la cible au sac plus petit | récurrence |
 
-    D'où : **tant que la cible a un τ, Phase A ne coûte rien**, et la
-    récurrence sur la taille du sac ramène tout au cas où la cible est
-    τ-stable.  Aucune hypothèse sémantique n'intervient dans cette
-    réduction — c'est [ax_glb_tau] qui fait tout le travail, en faisant
-    descendre la **droite** pendant que la gauche reste en place.
 
-    C'est le premier progrès sur ce trou obtenu par une **règle** et non
-    par un certificat de pose.  Il retire du problème le cas « le sac
-    porte un message sur un canal que [N] offre », qui passait jusqu'ici
-    par [ax_phaseA_settle].
 
-    **Caveat, à ne pas gommer** : l'hypothèse est demandée à *tous* les
-    sous-sacs, parce que la prémisse de sortie descend le long du sac.
-    Si le consommateur a besoin d'un fait sémantique
-    ([msgs l ‖ g M ⊑ₘᵤₛₜᵢ msgs l ‖ g N]), il lui faudra à chaque
-    sous-sac — et ce fait ne se transporte pas d'un sac à un sous-sac
-    (pas d'annulation en général : [VACCS_DropProbes.nil_not_below_msg]).
-    Ce que la réduction élimine est donc le cas *instable* de la cible,
-    pas la dépendance sémantique du cas stable. *)
 
-Lemma mir_tau_inv : forall (M N : gproc) (l : list TypeOfActions) q',
-  (forall z, ~ lts ((g N) : proc) τ z) ->
-  lts (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q' ->
-  exists c v l0, Permutation l ((c,v) :: l0) /\
-     q' ≡* (msgs l0 ‖ (((g M) : proc) ‖ ((c ! v • 𝟘) : proc))).
-Proof.
-  intros M N l q' HstN Hl. inversion Hl; subst.
-  - destruct (msgs_lts_inv l _ _ H1) as (c0 & v0 & l0 & Emu & Hperm & Hcgr).
-    injection Emu as E1 E2. subst c0 v0.
-    pose proof (mirrorN_lts_in_shape ((g M) : proc) N c v q2 H2) as Es. subst q2.
-    exists c, v, l0. split; [ exact Hperm | ].
-    apply cgr_fullpar; [ exact Hcgr | apply cgr_refl ].
-  - exfalso. eapply msgs_no_input; eassumption.
-  - exfalso. eapply msgs_no_tau; eassumption.
-  - exfalso. eapply (mirrorN_no_tau ((g M) : proc) N HstN); eassumption.
-Qed.
 
-Lemma mir_in_inv : forall (M N : gproc) (l : list TypeOfActions) c v q'',
-  lts (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) (ActExt (ActIn (c,v))) q'' ->
-  q'' = (msgs l ‖ (((g M) : proc) ‖ ((c ! v • 𝟘) : proc))).
-Proof.
-  intros M N l c v q'' Hl. inversion Hl; subst.
-  - exfalso. eapply msgs_no_input; eassumption.
-  - f_equal. eapply mirrorN_lts_in_shape. eassumption.
-Qed.
 
-Lemma cgr_par_rot : forall (X Y Z : proc), (X ‖ (Y ‖ Z)) ≡* (Z ‖ (X ‖ Y)).
-Proof.
-  intros X Y Z. etransitivity; [ apply cgr_par_assoc_rev | apply cgr_par_com ].
-Qed.
 
-Lemma cgr_bag_pull : forall (l l0 : list TypeOfActions) c v (P : proc),
-  Permutation l ((c,v) :: l0) ->
-  (msgs l ‖ P) ≡* (msgs l0 ‖ (P ‖ ((c ! v • 𝟘) : proc))).
-Proof.
-  intros l l0 c v P Hperm.
-  etransitivity; [ apply cgr_fullpar; [ apply msgs_perm; exact Hperm | apply cgr_refl ] | ].
-  simpl. etransitivity; [ apply cgr_par_assoc | ].
-  apply cgr_symm. apply cgr_par_rot.
-Qed.
 
-Lemma ax_phaseA_glb_bag : forall n (M N : gproc) (l : list TypeOfActions),
-  (forall z, ~ lts ((g N) : proc) τ z) ->
-  length l <= n ->
-  (forall l', (forall q0, ~ lts (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
-      (msgs l' ‖ ((g M) : proc))
-        ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
-  (msgs l ‖ ((g M) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
-Proof.
-  induction n as [|n IH]; intros M N l HstN Hlen Hstable.
-  - apply Hstable. intros q0 Hq0.
-    destruct (mir_tau_inv M N l q0 HstN Hq0) as (c & v & l0 & Hperm & _).
-    apply Permutation_length in Hperm. simpl in Hperm. lia.
-  - destruct (lts_dec (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ)
-      as [Hno | [q0 Hq0]].
-    + apply Hstable. exact Hno.
-    + apply ax_below_cfg_glb.
-      * exists q0. exact Hq0.
-      * intros q' Hq'.
-        destruct (mir_tau_inv M N l q' HstN Hq') as (c & v & l0 & Hperm & Hcgr).
-        apply ax_cgr.
-        etransitivity; [ apply (cgr_bag_pull l l0 c v ((g M) : proc) Hperm) | ].
-        apply cgr_symm. exact Hcgr.
-      * intros c v q'' Hq''.
-        rewrite (mir_in_inv M N l c v q'' Hq'').
-        apply ax_cgr. apply cgr_symm. apply cgr_par_rot.
-      * intros c v l0 Hperm. apply IH; [ exact HstN | | exact Hstable ].
-        apply Permutation_length in Hperm. simpl in Hperm. lia.
-Qed.
 
-Corollary ax_phaseA_reduce_to_stable : forall (M N : gproc),
-  (forall z, ~ lts ((g N) : proc) τ z) ->
-  (forall l', (forall q0, ~ lts (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
-      (msgs l' ‖ ((g M) : proc))
-        ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
-  forall l, (msgs l ‖ ((g M) : proc))
-              ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
-Proof.
-  intros M N HstN Hstable l.
-  eapply (ax_phaseA_glb_bag (length l)); [ exact HstN | apply Nat.le_refl | exact Hstable ].
-Qed.
 
-(** ** LE RÉSIDU, NOMMÉ : Phase A à cible STABLE
 
-    La récurrence de [ax_phaseA_glb_bag] ne visite que des **sous-sacs**
-    ([Permutation l ((c,v)::l0)], donc [subbag l0 l] par [subbag_cons]),
-    et le site d'appel réel fournit précisément l'hypothèse sémantique
-    sur tous les sous-sacs : c'est [BagSem], la prémisse que
-    [ax_below_gsum_bag] passe à son gestionnaire de feuilles stables.
-    Il n'y a donc pas de circularité, et le résidu se nomme :
 
-    [PhaseA_stable_target] est [PhaseA_config] **plus l'hypothèse que la
-    cible est τ-stable** — c'est-à-dire qu'aucun message du sac n'est sur
-    un canal que [N] offre.  C'est strictement plus petit, et dans ce cas
-    [msgs l ‖ g N] est stable lui aussi, de sorte que
-    [VACCS_NormalForm.certificate_at_bag] donne gratuitement le
-    certificat **au sac** ; les buffers en dessous du sac, eux, sont
-    désormais traités par la récurrence elle-même. *)
-
-Definition PhaseA_stable_target : Prop :=
-  forall (M N : gproc) (l : list TypeOfActions),
-    (forall p, ~ lts ((g N) : proc) τ p) ->
-    (forall q0, ~ lts (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
-    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)) ->
-    (msgs l ‖ ((g M) : proc))
-      ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
-
-Lemma ax_phaseA_glb_sub : forall n (M N : gproc) (l : list TypeOfActions),
-  (forall z, ~ lts ((g N) : proc) τ z) ->
-  length l <= n ->
-  (forall l', subbag l' l ->
-     (forall q0, ~ lts (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ q0) ->
-      (msgs l' ‖ ((g M) : proc))
-        ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ ((g (mirrorN ((g M) : proc) N)) : proc))) ->
-  (msgs l ‖ ((g M) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
-Proof.
-  induction n as [|n IH]; intros M N l HstN Hlen Hstable.
-  - apply Hstable; [ apply subbag_refl | ]. intros q0 Hq0.
-    destruct (mir_tau_inv M N l q0 HstN Hq0) as (c & v & l0 & Hperm & _).
-    apply Permutation_length in Hperm. simpl in Hperm. lia.
-  - destruct (lts_dec (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)) τ)
-      as [Hno | [q0 Hq0]].
-    + apply Hstable; [ apply subbag_refl | exact Hno ].
-    + apply ax_below_cfg_glb.
-      * exists q0. exact Hq0.
-      * intros q' Hq'.
-        destruct (mir_tau_inv M N l q' HstN Hq') as (c & v & l0 & Hperm & Hcgr).
-        apply ax_cgr.
-        etransitivity; [ apply (cgr_bag_pull l l0 c v ((g M) : proc) Hperm) | ].
-        apply cgr_symm. exact Hcgr.
-      * intros c v q'' Hq''.
-        rewrite (mir_in_inv M N l c v q'' Hq'').
-        apply ax_cgr. apply cgr_symm. apply cgr_par_rot.
-      * intros c v l0 Hperm. apply IH; [ exact HstN | | ].
-        -- apply Permutation_length in Hperm. simpl in Hperm. lia.
-        -- intros l'' Hsub Hst. apply Hstable; [ | exact Hst ].
-           eapply subbag_trans;
-             [ exact Hsub | apply (subbag_cons (c,v) l0 l Hperm) ].
-Qed.
-
-(** Et la réduction : le cas à cible stable suffit, l'hypothèse
-    sémantique étant demandée exactement sous la forme que [BagSem]
-    fournit. *)
-Theorem phaseA_of_stable_target : PhaseA_stable_target ->
-  forall (M N : gproc) (l : list TypeOfActions),
-    (forall z, ~ lts ((g N) : proc) τ z) ->
-    (forall l', subbag l' l ->
-        (msgs l' ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ ((g N) : proc))) ->
-    (msgs l ‖ ((g M) : proc))
-      ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN ((g M) : proc) N)) : proc)).
-Proof.
-  intros HST M N l HstN Hsem.
-  eapply (ax_phaseA_glb_sub (length l)); [ exact HstN | apply Nat.le_refl | ].
-  intros l' Hsub Hst. apply HST; [ exact HstN | exact Hst | apply Hsem; exact Hsub ].
-Qed.
-
-(** ** PHASE A EST PROUVÉE — l'hypothèse [PhaseA_config] disparaît
-
-    Le certificat de [ax_phaseA_direct] est demandé à **tous** les
-    buffers où le miroir est stable.  [VACCS_Cond2.certificate_N_refuses]
-    le fournit exactement là — pour tout buffer dont [N] refuse les
-    canaux — **à partir du fait sémantique au sac VIDE** :
-
-        certificate_N_refuses : … -> (g M) ⊑ₘᵤₛₜᵢ (g N) ->
-          ∀ m, OutOnly m -> (N refuse les canaux de m) ->
-          Settles (chans m) ((g M) ▷ m)
-
-    Et « le miroir est stable en [m] » **est** « [N] refuse les canaux de
-    [m] », parce que le miroir a une garde sur [c] dès que [N] en a une
-    ([offers_mirrorN]) et que la disponibilité d'une entrée ne dépend pas
-    de la valeur ([lts_in_value_swap]).
-
-    Pourquoi cela ne contredit pas [VACCS_DropProbes.CertAll_is_false] :
-    ce contre-exemple ne suppose l'inéquation qu'au sac [[(a,v)]], pas au
-    sac vide — et au sac vide elle est **fausse** pour lui
-    ([g MCert ⋢ₘᵤₛₜᵢ g 𝟘], le client [(b!w•𝟘) ‖ (e?①)] les sépare).  Le
-    certificat n'était donc pas réfuté sous cette hypothèse-ci.
-
-    Or le fait au sac vide est précisément ce que [BagSem] fournit :
-    [subbag [] l] vaut toujours.  D'où [sem_at_empty], puis les versions
-    **inconditionnelles** de [ax_below_gsum_stable_cfg] et
-    [ax_below_NF_cfg] : tout le côté droit à une configuration ne dépend
-    plus d'aucune hypothèse ouverte. *)
-
-Lemma mirror_refuses_of_N : forall (P : proc) (N : gproc) c v,
-  (forall r, ~ lts ((g (mirrorN P N)) : proc) (ActExt (ActIn (c,v))) r) ->
-  forall q, ~ lts ((g N) : proc) (ActExt (ActIn (c,v))) q.
-Proof.
-  intros P N c v Hno q Hq.
-  destruct (offers_mirrorN P N c v q Hq) as (w & r & Hr).
-  destruct (lts_in_value_swap _ _ _ Hr c w v eq_refl) as (r' & Hr').
-  eapply Hno. exact Hr'.
-Qed.
-
-Theorem phaseA_of_empty_bag_sem : forall (P : proc) (N : gproc) (l : list TypeOfActions),
-  Static P -> gStatic N -> (forall z, ~ lts ((g N) : proc) τ z) ->
-  P ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
-  (msgs l ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g (mirrorN P N)) : proc)).
-Proof.
-  intros P N l HP HN HstN Hsem.
-  apply ax_phaseA_direct; [ exact HP | exact HN | exact HstN | ].
-  intros K Hout Hst.
-  eapply certificate_N_refuses;
-    [ exact HP | exact HN | exact HstN | exact Hsem | exact Hout | ].
-  intros a Hin r Hr. destruct a as (c,v).
-  pose proof (no_step_of_stable _ Hst) as Hns.
-  rewrite fw_stable_iff in Hns. destruct Hns as (_ & Hin2).
-  eapply (mirror_refuses_of_N P N c v); [ | exact Hr ].
-  intros r' Hr'. eapply Hin2; [ exact Hin | exact Hr' ].
-Qed.
-
-(** [BagSem] quantifie sur les sous-sacs, et [subbag [] l] vaut toujours :
-    le fait au sac vide est donc gratuit. *)
-Lemma sem_at_empty : forall (l : list TypeOfActions) (M L : gproc),
-  BagSem l ((g M) : proc) L -> ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g L) : proc).
-Proof.
-  intros l M L H.
-  assert (Hnil : subbag ([] : list TypeOfActions) l)
-    by (exists l; rewrite app_nil_r; reflexivity).
-  specialize (H [] Hnil). simpl in H.
-  intros t Hm.
-  apply (proj1 (must_i_cgr _ _ (ax_nil_par ((g L) : proc))) t).
-  apply H.
-  apply (proj2 (must_i_cgr _ _ (ax_nil_par ((g M) : proc))) t). exact Hm.
-Qed.
-
-Theorem ax_below_gsum_stable_cfg_uncond :
-  forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  BagSem l ((g M) : proc) N ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  BagBelow l ((g M) : proc) N.
-Proof.
-  intros l M N HM HN Hnf Hsem Hrec.
-  apply ax_below_gsum_bag; try assumption.
-  intros L HL HstL HsemL l' Hs'.
-  assert (HtauL : forall p, ~ lts ((g L) : proc) τ p).
-  { intros p Hp. eapply stable_no_lts; [ apply gStable_iff; exact HstL | exact Hp ]. }
-  apply ax_below_stable_sum_cfg; [ exact HtauL | | ].
-  - apply phaseA_of_empty_bag_sem;
-      [ apply static_g; exact HM | exact HL | exact HtauL
-      | eapply sem_at_empty; exact HsemL ].
-  - intros c v Q' l'' Hs'' Hl. eapply Hrec; eassumption.
-Qed.
-
-Corollary ax_below_NF_cfg_uncond :
-  forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  BagSem l ((g M) : proc) N ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hnf Hsem Hrec. unfold NF.
-  apply ax_res_n.
-  apply (ax_below_gsum_stable_cfg_uncond l M N HM HN Hnf Hsem Hrec l).
-  apply subbag_refl.
-Qed.
-
-(** ** `BagSem` DISPARAÎT DE L'INTERFACE — quand la gauche est τ-stable
-
-    `BagSem` (l'inéquation à **tous** les sous-sacs) est strictement plus
-    forte que l'inéquation au sac, et même **fausse** en général :
-    `VACCS_DropProbes.MCert_below` la vérifie au sac `[(a,v)]` et la
-    viole au sac vide.
-
-    Mais quand la configuration gauche est **τ-stable**, elle est
-    gratuite, en deux coups déjà sur disque :
-
-    - `VACCS_NormalForm.msgs_cancel` retire le sac — c'est là que la
-      stabilité sert, via l'argument de vidange ;
-    - `must_i_par_compat_r` le remet à n'importe quel sous-sac, `⊑ₘᵤₛₜᵢ`
-      étant une précongruence pour `‖` **sans condition** (les deux ponts
-      `must`-niveau de `VACCS_Erasure` / `VACCS_Shift`).
-
-    D'où [ax_below_cfg_stable_left] et [ax_below_NF_stable_left], dont
-    l'hypothèse sémantique est l'inéquation **au sac courant** — celle
-    que `completeness_from_NF` fournit. *)
-
-Lemma bagsem_of_cancel : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall z, ~ (((g M) ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  BagSem l ((g M) : proc) N.
-Proof.
-  intros l M N HM HN HstM Hpre l' _.
-  apply must_i_par_compat_r.
-  eapply msgs_cancel; eassumption.
-Qed.
-
-Theorem ax_below_cfg_stable_left : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  (forall z, ~ (((g M) ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
-Proof.
-  intros l M N HM HN Hnf HstM Hpre Hrec.
-  apply (ax_below_gsum_stable_cfg_uncond l M N HM HN Hnf
-           (bagsem_of_cancel l M N HM HN HstM Hpre) Hrec l).
-  apply subbag_refl.
-Qed.
-
-Corollary ax_below_NF_stable_left :
-  forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  (forall z, ~ (((g M) ▷ bag l) ⟶ z)) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hnf HstM Hpre Hrec. unfold NF. apply ax_res_n.
-  eapply ax_below_cfg_stable_left; eassumption.
-Qed.
-
-(** ** LE RÉSIDU, ISOLÉ PAR UN CAS : gauche τ-stable / gauche instable
-
-    « La configuration gauche a-t-elle un τ ? » est **décidable**
-    ([fw_tau_dec]) : un τ du forwarder est soit un τ du processus
-    ([lts_dec]), soit une délivrance d'un message du sac (récurrence sur
-    le sac).  Le cas stable est complet ([ax_below_cfg_stable_left]) ;
-    l'autre est nommé [CfgUnstableLeft], et [ax_below_NF_all] montre que
-    c'est **tout ce qui manque** au niveau de la forme normale. *)
-
-Lemma fw_tau_dec : forall (p : proc) (l : list TypeOfActions),
-  (forall z, ~ ((p ▷ bag l) ⟶ z)) \/ (exists z, ((p ▷ bag l) ⟶ z)).
-Proof.
-  intros p l. destruct (lts_dec p τ) as [Hnt | [q Hq]].
-  - induction l as [|a l IH]; simpl.
-    + left. apply fw_stable_iff. split; [ exact Hnt | ].
-      intros b Hb. exfalso. eapply gmultiset.gmultiset_not_elem_of_empty. exact Hb.
-    + destruct (lts_dec p (ActExt (ActIn a))) as [Hna | [r Hr]].
-      * destruct IH as [Hno | [z Hz]].
-        -- left. apply fw_stable_iff. split; [ exact Hnt | ].
-           intros b Hb. apply gmultiset.gmultiset_elem_of_disj_union in Hb.
-           destruct Hb as [Hb | Hb].
-           ++ apply gmultiset.gmultiset_elem_of_singleton in Hb.
-              injection Hb as Hb. subst b. exact Hna.
-           ++ rewrite fw_stable_iff in Hno. destruct Hno as (_ & Hno2).
-              apply Hno2. exact Hb.
-        -- right. exists ((z.1) ▷ ({[+ ActOut a +]} ⊎ z.2)).
-           apply (fw_tau_add (p ▷ bag l) z ({[+ ActOut a +]}) Hz).
-      * right. eexists. apply fw_tau_deliver. exact Hr.
-  - right. eexists. apply fw_tau_left. exact Hq.
-Qed.
-
-Definition CfgUnstableLeft : Prop :=
-  forall (l : list TypeOfActions) (M N : gproc),
-    gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-    (exists z, (((g M) : proc) ▷ bag l) ⟶ z) ->
-    ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-    (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-       BagSem l ((g M) : proc) L -> subbag l' l ->
-       forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-         (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-    (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
-
-Theorem ax_below_NF_all : CfgUnstableLeft ->
-  forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros HU n l M N HM HN Hnf Hpre Hrec. unfold NF. apply ax_res_n.
-  destruct (fw_tau_dec ((g M) : proc) l) as [Hno | Hex].
-  - eapply ax_below_cfg_stable_left; eassumption.
-  - eapply HU; eassumption.
-Qed.
-
-(** ** LE CAS NU (SAC VIDE) EST COMPLET, SANS RÉSIDU
-
-    Assembler le pilote τ nu ([ax_below_gsum_inv]) et l'étape de feuille
-    stable nue ([ax_below_stable_sum_clean], dont Phase A est déchargée
-    par [ax_phaseA_settle] à partir de l'inéquation elle-même) donne la
-    comparaison de deux sommes gardées **sans aucune hypothèse ouverte**,
-    et donc le cas du sac vide par [ax_nil_par].
-
-    C'est le témoin que l'architecture fonctionne de bout en bout dès que
-    le sac ne s'en mêle pas : tout ce que [CfgUnstableLeft] laisse ouvert
-    tient au sac, pas au reste. *)
-
-Theorem ax_below_bare : forall (M N : gproc), gStatic M -> gStatic N ->
-  Forall tau_cont_nf (summands N) ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
-  (forall (L : gproc), gStatic L -> gStable L ->
-     forall c v Q', lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q') ->
-       ((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
-Proof.
-  intros M N HM HN Hnf Hsem Hrec.
-  apply ax_below_gsum_inv; try assumption.
-  intros L HL HstL _ Hsem'.
-  assert (HtauL : forall p, ~ lts ((g L) : proc) τ p).
-  { intros p Hp. eapply stable_no_lts; [ apply gStable_iff; exact HstL | exact Hp ]. }
-  apply ax_below_stable_sum_clean; try assumption.
-  intros c v Q' Hl Hs. eapply Hrec; eassumption.
-Qed.
-
-Corollary ax_below_cfg_nil_bag : forall (M N : gproc), gStatic M -> gStatic N ->
-  Forall tau_cont_nf (summands N) ->
-  ((msgs [] ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [] ‖ ((g N) : proc))) ->
-  (forall (L : gproc), gStatic L -> gStable L ->
-     forall c v Q', lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q') ->
-       ((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
-  (msgs [] ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [] ‖ ((g N) : proc)).
-Proof.
-  intros M N HM HN Hnf Hsem Hrec.
-  assert (HcM : ((g M) : proc) ≡* (msgs [] ‖ ((g M) : proc))) by (apply ax_nil_par).
-  assert (HcN : ((g N) : proc) ≡* (msgs [] ‖ ((g N) : proc))) by (apply ax_nil_par).
-  eapply ax_trans; [ apply ax_cgr_sym; exact HcM | ].
-  eapply ax_trans; [ | apply ax_cgr; exact HcN ].
-  apply ax_below_bare; try assumption.
-  intros t Ht.
-  apply (proj1 (must_i_cgr _ _ HcN) t). apply Hsem.
-  apply (proj2 (must_i_cgr _ _ HcM) t). exact Ht.
-Qed.
-
-(** *** La version qui garde [InvR] — et le contrôle de non-vacuité
-
-    Le pilote τ fournit en plus [InvR (g N) L] : toute transition
-    d'entrée d'une feuille est atteignable depuis la cible.  La garder
-    dans la prémisse récursive n'a l'air de rien, mais c'est elle qui la
-    rend **vide** quand la cible n'a pas d'entrée — d'où le contrôle
-    ci-dessous, qui re-dérive [ax_ccat_l] *par la machinerie générale*
-    (pilote τ, feuille stable, Phase A, Phase B) au lieu de la règle. *)
-
-Theorem ax_below_bare_inv : forall (M N : gproc), gStatic M -> gStatic N ->
-  Forall tau_cont_nf (summands N) ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
-  (forall (L : gproc), gStatic L -> gStable L -> InvR ((g N) : proc) L ->
-     forall c v Q', lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q') ->
-       ((c ! v • 𝟘) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
-Proof.
-  intros M N HM HN Hnf Hsem Hrec.
-  apply ax_below_gsum_inv; try assumption.
-  intros L HL HstL HInv Hsem'.
-  assert (HtauL : forall p, ~ lts ((g L) : proc) τ p).
-  { intros p Hp. eapply stable_no_lts; [ apply gStable_iff; exact HstL | exact Hp ]. }
-  apply ax_below_stable_sum_clean; try assumption.
-  intros c v Q' Hl Hs. eapply Hrec; eassumption.
-Qed.
-
-Example ax_below_bare_ccat : forall c : ChannelData,
-  ((g ((c ? (c ! (bvar 0) • 𝟘)))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
-Proof.
-  intro c.
-  apply ax_below_bare_inv.
-  - repeat constructor.
-  - constructor.
-  - simpl. repeat constructor.
-  - apply must_i_ccat_l.
-  - intros L HL HstL HInv c0 v Q' Hl Hs. exfalso.
-    destruct HInv as (HInv1 & _).
-    pose proof (HInv1 c0 v Q' Hl) as Hw.
-    inversion Hw; subst.
-    + inversion l.
-    + inversion l.
-Qed.
-
-(** ** LA COUCHE τ SANS LES PILOTES : `ax_glb_tau` fait tout, et sans `tau_cont_nf`
-
-    Les pilotes τ portés depuis VCCS ([ax_below_gsum_inv] et ses
-    variantes) exigent `Forall tau_cont_nf (summands N)` — que les
-    continuations des `𝛕`-sommants soient des **sommes gardées**.  C'est
-    faux pour une forme normale VACCS, dont les continuations sont des
-    `p ‖ g N` ou des `Ѵⁿ (msgs l ‖ g M)`.
-
-    `ax_glb_tau` s'en passe.  Sur une **somme gardée** à droite ses deux
-    prémisses de sortie sont **vides** ([gsum_no_out]), et il ne reste
-    que :
-
-    - les τ-réduits, avec `p ⊑ₘᵤₛₜᵢ q ⊑ₘᵤₛₜᵢ q'` par [must_i_tau_below] ;
-    - les entrées, avec [must_i_feed_below].
-
-    Les deux descendent sur `size` ([Static_lts_decrease]), donc un seul
-    pas de récursion externe suffit.  Le cas stable est
-    [ax_below_stable_sum_clean], dont Phase A est déchargée par
-    [ax_phaseA_settle] à partir de l'inéquation elle-même.
-
-    Résultat : un **pas de complétude complet** à droite somme gardée,
-    sans `tau_cont_nf`, sans sac, sans hypothèse ouverte — seulement
-    l'hypothèse de récurrence sur `size q`.
-
-    Réserve honnête : la gauche doit être une somme gardée, et la
-    prémisse d'entrée en produit une qui ne l'est pas
-    ([(c!v•𝟘) ‖ g M]) ; la renormaliser ramène le sac, et donc
-    [CfgUnstableLeft]. *)
-
-Lemma ax_glb_gsum : forall (p : proc) (N : gproc),
-  (exists q0, lts ((g N) : proc) τ q0) ->
-  (forall q', lts ((g N) : proc) τ q' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (forall c v q'', lts ((g N) : proc) (ActExt (ActIn (c,v))) q'' ->
-     ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
-Proof.
-  intros p N Hex Htau Hin. apply ax_glb_tau; try assumption.
-  - intros c v q'' Hl. exfalso. eapply gsum_no_out. exact Hl.
-  - intros c v p'' q'' _ Hl. exfalso. eapply gsum_no_out. exact Hl.
-Qed.
 
 (** ** The stable case for a GUARDED SUM, at an arbitrary left
 
@@ -5824,11 +4078,6 @@ Qed.
     [l' = []], which collapses [ax_below_stable_sum_cfg]'s sub-bag
     quantifier. *)
 
-Lemma subbag_nil_inv : forall l', subbag l' [] -> l' = [].
-Proof.
-  intros l' (l1 & Hp).
-  apply Permutation_nil in Hp. destruct l1; simpl in Hp; [ exact Hp | discriminate ].
-Qed.
 
 Theorem ax_below_stable_gsum_gen : forall (P : proc) (N : gproc),
   Static P -> gStatic N -> (forall z, ~ lts ((g N) : proc) τ z) ->
@@ -5837,52 +4086,14 @@ Theorem ax_below_stable_gsum_gen : forall (P : proc) (N : gproc),
      (((c ! v • 𝟘) : proc) ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ Q') ->
   P ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
 Proof.
-  intros P N HP HN HstN Hsem Hrec.
-  assert (Hmain : (msgs [] ‖ P) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [] ‖ ((g N) : proc))).
-  { apply ax_below_stable_sum_cfg; [ exact HstN | | ].
-    - apply phaseA_of_empty_bag_sem; assumption.
-    - intros c v Q' l'' Hs'' Hl. apply subbag_nil_inv in Hs''. subst l''.
-      simpl. eapply ax_trans; [ apply ax_cgr_sym; apply ax_nil_par | ].
-      eapply ax_trans; [ apply (Hrec c v Q' Hl) | apply ax_cgr; apply ax_nil_par ]. }
-  simpl in Hmain.
-  eapply ax_trans; [ apply ax_cgr; apply ax_nil_par | ].
-  eapply ax_trans; [ exact Hmain | apply ax_cgr_sym; apply ax_nil_par ].
+  intros P N HP HN HstN Hsem Hrec. apply ax_glb_settle.
+  - intros l Hl.
+    apply (certificate_N_refuses P N HP HN HstN Hsem (bag l) (outonly_of_bag l)).
+    intros a Ha r Hr. destruct a as (c,v). apply bag_elem in Ha.
+    apply (Hl c v Ha). exists v, r. exact Hr.
+  - intros X HX. exfalso. eapply HstN. eapply summand_lts; [ exact HX | apply lts_tau ].
+  - intros c Q HQ v. apply Hrec. eapply summand_lts; [ exact HQ | apply lts_input ].
 Qed.
-
-(** Hence the whole step for a guarded-sum right-hand side, at an
-    arbitrary left: stable by the above, unstable by [ax_glb_gsum] (whose
-    output premises are vacuous — a guarded sum never emits). *)
-
-Theorem completeness_gsum_step_gen : forall (P : proc) (N : gproc),
-  Static P -> gStatic N ->
-  P ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
-  (forall p' q', Static p' -> Static q' -> (size q' < size ((g N) : proc))%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  P ᴠᴀᴄᴄꜱ⊑ₐₓ ((g N) : proc).
-Proof.
-  intros P N HP HN Hsem IH.
-  assert (HsN : Static ((g N) : proc)) by (apply static_g; exact HN).
-  destruct (lts_dec ((g N) : proc) τ) as [Hno | [q0 Hq0]].
-  - apply ax_below_stable_gsum_gen; try assumption.
-    intros c v Q' Hl. apply IH.
-    + constructor; [ constructor | exact HP ].
-    + eapply Static_preserved_by_lts; [ exact HsN | exact Hl ].
-    + eapply Static_lts_decrease; [ exact HsN | exact Hl ].
-    + eapply must_i_feed_below; [ exact Hsem | exact Hl ].
-  - apply ax_glb_gsum.
-    + exists q0. exact Hq0.
-    + intros q' Hl. apply IH.
-      * exact HP.
-      * eapply Static_preserved_by_lts; [ exact HsN | exact Hl ].
-      * eapply Static_lts_decrease; [ exact HsN | exact Hl ].
-      * intros t Ht. apply (must_i_tau_below _ _ Hl t). apply Hsem. exact Ht.
-    + intros c v q'' Hl. apply IH.
-      * constructor; [ constructor | exact HP ].
-      * eapply Static_preserved_by_lts; [ exact HsN | exact Hl ].
-      * eapply Static_lts_decrease; [ exact HsN | exact Hl ].
-      * eapply must_i_feed_below; [ exact Hsem | exact Hl ].
-Qed.
-
 
 (** ** Vers une cible QUELCONQUE : la réduction, et ce qu'elle laisse
 
@@ -5961,90 +4172,9 @@ Proof.
   - intros (p'' & H). inversion H.
 Qed.
 
-(** ** CE QUE L'ARGUMENT DE VIDANGE SERT VRAIMENT À PRODUIRE
 
-    [ax_below_cfg_stable_left] passait par [msgs_cancel] — l'argument de
-    vidange, qui est du `≼ₐₛ` pur — pour retirer le sac.  Mais le seul
-    usage qu'il en fait est d'obtenir l'inéquation **au sac vide** ; tout
-    le reste (la remettre à chaque sous-sac) est [must_i_par_compat_r],
-    et `⊑ₘᵤₛₜᵢ` est une précongruence pour `‖` **sans condition**.
 
-    En isolant les deux, on obtient un théorème plus général : la
-    stabilité de la gauche n'est plus une hypothèse, l'inéquation au sac
-    vide la remplace — et [msgs_cancel] devient un simple *moyen* de
-    l'obtenir, parmi d'autres.
 
-    Le cas gauche-stable en est l'instance :
-    [ax_below_cfg_stable_left = msgs_cancel + ax_below_cfg_empty_sem]. *)
-
-Lemma bagsem_of_empty_sem : forall (l : list TypeOfActions) (M N : gproc),
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) -> BagSem l ((g M) : proc) N.
-Proof.
-  intros l M N Hsem l' _. apply must_i_par_compat_r. exact Hsem.
-Qed.
-
-Theorem ax_below_cfg_empty_sem : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
-Proof.
-  intros l M N HM HN Hnf Hsem Hrec.
-  apply (ax_below_gsum_stable_cfg_uncond l M N HM HN Hnf
-           (bagsem_of_empty_sem l M N Hsem) Hrec l).
-  apply subbag_refl.
-Qed.
-
-Corollary ax_below_NF_empty_sem :
-  forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hnf Hsem Hrec. unfold NF. apply ax_res_n.
-  eapply ax_below_cfg_empty_sem; eassumption.
-Qed.
-
-(** ** …et le cas GAUCHE INSTABLE, sous non-régénération
-
-    [ax_below_NF_stable_left] exige que la **configuration**
-    [(g M ▷ bag l)] soit τ-stable — c'est-à-dire que [M] refuse tout ce
-    que le sac contient — parce que c'est ce dont [msgs_cancel] a besoin
-    pour retirer le sac.
-
-    [VACCS_NormalForm.msgs_cancel_no_regen] obtient la même annulation
-    d'une autre prémisse : que [M] ne **régénère** pas (aucun run ne rend
-    tout ce qu'il a pris sans avoir rien pris), la τ-stabilité demandée
-    n'étant plus que celle de la **somme nue** [g M], gratuite pour une
-    somme [gStable].  D'où le cas gauche instable, qui est précisément
-    celui que [ax_below_NF_stable_left] ne peut pas atteindre.
-
-    C'est un fragment strict de [CfgUnstableLeft], pas sa totalité : la
-    sonde régénérante de `VACCS_DropProbes.v` viole la prémisse par
-    construction, et c'est là que la disjonction reste ouverte. *)
-
-Theorem ax_below_NF_no_regen : forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  (forall z, ~ lts ((g M) : proc) τ z) ->
-  (forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = []) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hnf HstM Hno Hcfg Hrec.
-  eapply ax_below_NF_empty_sem; try eassumption.
-  eapply msgs_cancel_no_regen; eassumption.
-Qed.
 
 (** ** …et la prémisse de non-régénération est SYNTAXIQUE
 
@@ -6124,60 +4254,7 @@ Qed.
     n'est plus rejetée.  [VACCS_DropProbes.MSelf] est exactement cela, et
     son sac s'annule bel et bien. *)
 
-(** Le critère **exact** : ce que la preuve consulte n'est pas
-    l'empreinte [ochans] mais le fait qu'aucune continuation ne possède
-    un run rendant *le message même* qu'elle a reçu.  Noter qu'aucune
-    hypothèse [Static] n'est requise sous cette forme — elle ne servait
-    qu'à passer par [trace_out_in_ochans]. *)
 
-Lemma no_regen_of_own_channel_run : forall (M : gproc) (l : list TypeOfActions),
-  (forall z, ~ lts ((g M) : proc) τ z) ->
-  (forall c v P', In (c,v) l -> lts ((g M) : proc) (ActExt (ActIn (c,v))) P' ->
-     forall s q, P' ⟹[s] q -> ~ In (c,v) (outs s)) ->
-  forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
-              bag (ins r) ⊆ bag l -> ins r = [].
-Proof.
-  intros M l HstM Hcrit r q Hw Hsub Hbl.
-  inversion Hw as [ x Hx | s0 x y z Hl Hwt Hs Hx | mu s0 x y z Hl Hwt Hs Hx ]; subst.
-  - reflexivity.
-  - exfalso. eapply HstM. exact Hl.
-  - exfalso. destruct mu as [[c v]|[c v]].
-    + simpl in Hsub, Hbl.
-      assert (Hinl : ActOut (c,v) ∈ bag l)
-        by (eapply gmultiset_elem_of_subseteq;
-            [ apply gmultiset_elem_of_disj_union; left;
-              apply gmultiset_elem_of_singleton; reflexivity
-            | exact Hbl ]).
-      apply bag_elem in Hinl.
-      assert (Hmem : ActOut (c,v) ∈ bag (outs s0))
-        by (eapply gmultiset_elem_of_subseteq;
-            [ apply gmultiset_elem_of_disj_union; left;
-              apply gmultiset_elem_of_singleton; reflexivity
-            | exact Hsub ]).
-      apply bag_elem in Hmem.
-      eapply (Hcrit c v y Hinl Hl s0 q Hwt Hmem).
-    + eapply gsum_no_out. exact Hl.
-Qed.
-
-(** …et le critère syntaxique, décidable, en est le cas particulier :
-    [ochans] sur-approxime les émissions d'un run ([trace_out_in_ochans]),
-    et c'est là — et là seulement — que [Static] intervient. *)
-
-Lemma no_regen_of_own_channel_bag : forall (M : gproc) (l : list TypeOfActions),
-  (forall z, ~ lts ((g M) : proc) τ z) ->
-  Static ((g M) : proc) ->
-  (forall c v P', In (c,v) l -> lts ((g M) : proc) (ActExt (ActIn (c,v))) P' ->
-     ~ In c (ochans P')) ->
-  forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) ->
-              bag (ins r) ⊆ bag l -> ins r = [].
-Proof.
-  intros M l HstM HStat Hcrit.
-  apply (no_regen_of_own_channel_run M l HstM).
-  intros c v P' Hinl Hin s q Hw Hout.
-  eapply (Hcrit c v P' Hinl Hin).
-  eapply trace_out_in_ochans; [ | exact Hw | exact Hout ].
-  eapply Static_preserved_by_lts; eassumption.
-Qed.
 
 (** ** Le même critère, sans τ-stabilité : voies d'entrée et de sortie DISJOINTES
 
@@ -6353,43 +4430,7 @@ Proof.
   eapply msgs_cancel_no_output; eassumption.
 Qed.
 
-Corollary ax_below_NF_no_return : forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  (forall z, ~ lts ((g M) : proc) τ z) ->
-  (forall c v P', lts ((g M) : proc) (ActExt (ActIn (c,v))) P' -> ~ In c (ochans P')) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hnf HstM Hcrit Hcfg Hrec.
-  eapply ax_below_NF_no_regen; try eassumption.
-  eapply no_regen_of_own_channel; [ exact HstM | apply static_g; exact HM | exact Hcrit ].
-Qed.
 
-(** …et la variante qui **n'exige plus la τ-stabilité** : la somme gauche
-    peut porter des [𝛕]-sommants, pourvu qu'elle n'émette jamais.  C'est
-    la seule des trois formes de non-régénération qui se passe de la
-    τ-stabilité de bout en bout — les deux autres alimentent
-    [VACCS_NormalForm.msgs_cancel_no_regen], qui la réclame pour son
-    propre compte via [drain_forced_no_regen]. *)
-
-Corollary ax_below_NF_no_output : forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  ochans ((g M) : proc) = [] ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hnf Hoc Hcfg Hrec.
-  eapply ax_below_NF_empty_sem; try eassumption.
-  eapply msgs_cancel_no_output; eassumption.
-Qed.
 
 (** Et le critère n'est pas vide sur le cas qu'il vise : voici une somme
     qui le satisfait **et** porte un [𝛕]-sommant, donc que
@@ -6404,104 +4445,10 @@ Proof.
   - exists ((g 𝟘) : proc). apply lts_choiceR. apply lts_tau.
 Qed.
 
-(** ** …ET LE CRITÈRE SE RESTREINT AUX CANAUX DU SAC
-
-    [ochans p = []] est franchement plus fort que ce dont l'argument de
-    vidange a besoin.  Le bilan de [VACCS_Forwarder.fw_conservation]
-    le long d'une trace de sorties pures donne, une fois [bag l]
-    simplifié,
-
-        bag (outs r) = y.2 ⊎ bag (ins r)
-
-    et [VACCS_Forwarder.fw_conservation_bounded] ajoute que **tout ce que
-    le processus a consommé venait du sac initial**.  Une entrée du run
-    projeté est donc sur un canal **du sac**, et une sortie qui la
-    rembourse met ce même canal dans [ochans p].  Il suffit par
-    conséquent que les canaux du sac évitent [ochans p] — les émissions
-    du processus sur *d'autres* voies ne peuvent jamais rembourser ce
-    que la vidange réclame.
-
-    Comme la version non relative, ce critère **tolère les
-    [𝛕]-sommants** : rien ici ne demande la τ-stabilité, ni de la
-    configuration ni de la somme nue. *)
-
-Lemma MuteOn_of_ochans : forall (p : proc) (L : list ChannelData),
-  Static p -> (forall c, In c L -> ~ In c (ochans p)) -> MuteOn L p.
-Proof.
-  intros p L Hst Hdisj r q aa Hw Hin Hfst.
-  destruct aa as (c,u). simpl in Hfst.
-  eapply Hdisj; [ exact Hfst | ].
-  eapply trace_out_in_ochans; [ exact Hst | exact Hw | exact Hin ].
-Qed.
-
-Lemma drain_forced_no_output_bag : forall (l : list TypeOfActions) (p : proc) yy,
-  Static p ->
-  (forall c vv, In (c,vv) l -> ~ In c (ochans p)) ->
-  ((p ▷ bag l) ⟹[map ActOut l] yy) ->
-  yy.2 = (∅ : MO (ExtAct TypeOfActions)) /\ p ⟹[[]] yy.1.
-Proof.
-  intros l p yy Hst Hdisj Hw.
-  assert (Hproj : (p ▷ (∅ : MO (ExtAct TypeOfActions))) ⟹[[]] yy).
-  { eapply (fw_drain_project_on (map fst l) (map ActOut l) (p ▷ bag l) yy Hw).
-    - simpl. apply MuteOn_of_ochans; [ exact Hst | ].
-      intros c Hc Hoc.
-      apply in_map_iff in Hc as ((c0,u0) & Heq & Hin).
-      simpl in Heq. subst c0. eapply Hdisj; [ exact Hin | exact Hoc ].
-    - apply ins_map_out.
-    - intros aa Hin. rewrite outs_map_out in Hin.
-      apply in_map_iff. exists aa. split; [ reflexivity | exact Hin ].
-    - simpl. rewrite outs_map_out.
-      symmetry. apply gmultiset_disj_union_right_id. }
-  apply (fw_wt_noinput_proj [] (p ▷ (∅ : MO (ExtAct TypeOfActions))) yy Hproj);
-    reflexivity.
-Qed.
-
-Theorem msgs_cancel_no_output_bag : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c vv, In (c,vv) l -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc).
-Proof.
-  intros l M N HM HN Hoc Hpre.
-  destruct (msgs_accept l l (g M) (g N) Hpre) as (Hc1 & Hc2).
-  apply must_iff_acceptance_set_VACCS. split.
-  - intros s _. apply fw_converge_static. apply static_g. exact HN.
-  - intros s yy _ Hwy Hsty.
-    assert (Hdrain : ((g N) ▷ bag l)
-                       ⟹[map ActOut l] ((g N) ▷ (∅ : MO (ExtAct TypeOfActions)))).
-    { replace (bag l) with (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
-        by (apply gmultiset.gmultiset_disj_union_right_id).
-      apply bag_wt_drain. }
-    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] yy)
-      by (eapply wt_concat; [ exact Hdrain | exact Hwy ]).
-    destruct (Hc2 (map ActOut l ++ s) yy
-                (fw_converge_static (map ActOut l ++ s) (g M) (bag l) (static_g M HM))
-                Hbig Hsty)
-      as (x & Hwx & Hstx & Hincl).
-    destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
-    destruct (drain_forced_no_output_bag l ((g M) : proc) z (static_g M HM) Hoc Hz1)
-      as (Ez2 & Ez1).
-    exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
-    destruct z as (z1,z2). simpl in Ez2, Ez1. subst z2.
-    replace s with (@nil (ExtAct TypeOfActions) ++ s) by reflexivity.
-    eapply wt_concat; [ apply fw_wt_lift; exact Ez1 | exact Hz2 ].
-Qed.
 
 
-Corollary ax_below_NF_no_output_bag : forall (n : nat) (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  (forall c vv, In (c,vv) l -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c vv Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,vv))) Q' ->
-       (msgs l'' ‖ ((c ! vv • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l N).
-Proof.
-  intros n l M N HM HN Hnf Hoc Hcfg Hrec.
-  eapply ax_below_NF_empty_sem; try eassumption.
-  eapply msgs_cancel_no_output_bag; eassumption.
-Qed.
+
+
 
 (** Et l'inclusion est **stricte** : une somme qui porte un [𝛕]-sommant
     émettant sur une voie **étrangère au sac** échoue à [ochans _ = []]
@@ -6593,57 +4540,6 @@ Corollary cont_returns_dec :
   \/ (exists K, lts Mc (ActExt (ActOut (c,v))) K).
 Proof. intros Mc c v. apply lts_dec. Qed.
 
-(** ** …et le second disjoint devient SANS CIBLE
-
-    [descent_of_cont_below] asks for [Mc ⊑ₘᵤₛₜᵢ ((c!v•𝟘) ‖ g N)], which
-    still mentions the target.  There is a stronger and much more
-    tractable route: make the delivery **reversible**, so the successor
-    lands *below the source* — and then it is below anything the source
-    is below, target included.
-
-    Concretely, when the guard returns the message ([Mc ⟶[(c,v)!] K]),
-    the successor is [≂ msgs l ‖ K] — the message is back in the bag —
-    so [K ⊑ₘᵤₛₜᵢ g M] suffices, by [must_i_par_compat_r] under the bag.
-
-    That premise mentions **only the left-hand side**, and [K] is a
-    reduct of a reduct of [g M].  It is what the copycat class satisfies
-    ([K = 𝟘] and [VACCS_Copycat.must_i_nil_below_copycats]), and it is
-    the shape a recursion can discharge. *)
-
-Theorem descent_of_residue_below_source :
-  forall (l l0 : list TypeOfActions) (c : ChannelData) (v : ValueData)
-         (M : gproc) (Mc K q : proc),
-  Permutation l ((c,v) :: l0) ->
-  lts ((g M) : proc) (ActExt (ActIn (c,v))) Mc ->
-  lts Mc (ActExt (ActOut (c,v))) K ->
-  K ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g M) : proc) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q) ->
-  exists p', lts ((msgs l ‖ (g M)) : proc) τ p' /\ p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
-Proof.
-  intros l l0 c v M Mc K q Hperm Hin Hout HK Hq.
-  destruct (cfg_deliver_step l l0 c v M Mc Hperm Hin) as (r & Hr & Hcr).
-  exists r. split; [ exact Hr | ].
-  intros t Hm. apply Hq.
-  assert (Hsh : Mc ≡* (((c ! v • 𝟘) : proc) ‖ K))
-    by (eapply TransitionShapeForOutputSimplified; exact Hout).
-  assert (H1 : (msgs l0 ‖ Mc) must_pass t)
-    by (exact (proj2 (must_i_cgr _ _ Hcr) t Hm)).
-  assert (Hc1 : (msgs l0 ‖ Mc) ≡* (msgs l0 ‖ (((c ! v • 𝟘) : proc) ‖ K)))
-    by (apply cgr_fullpar; [ reflexivity | exact Hsh ]).
-  assert (H2 : (msgs l0 ‖ (((c ! v • 𝟘) : proc) ‖ K)) must_pass t)
-    by (exact (proj2 (must_i_cgr _ _ Hc1) t H1)).
-  assert (H3 : (msgs l0 ‖ (((c ! v • 𝟘) : proc) ‖ ((g M) : proc))) must_pass t)
-    by (exact (must_i_par_compat_r (msgs l0) _ _
-                 (must_i_par_compat_r ((c ! v • 𝟘) : proc) _ _ HK) t H2)).
-  assert (Hc2 : (msgs l0 ‖ (((c ! v • 𝟘) : proc) ‖ ((g M) : proc)))
-                ≡* (msgs l ‖ ((g M) : proc))).
-  { eapply cgr_trans;
-      [ | apply cgr_fullpar; [ apply msgs_perm; apply Permutation_sym; exact Hperm
-                             | reflexivity ] ].
-    simpl. eapply cgr_trans; [ apply cgr_par_assoc_rev | ].
-    apply cgr_fullpar; [ apply cgr_par_com | reflexivity ]. }
-  exact (proj2 (must_i_cgr _ _ Hc2) t H3).
-Qed.
 
 (** ⚠ **[CfgDisjunctionSource] et [CfgDisjunctionSourceBag] sont FAUSSES**
     — [VACCS_DropProbes.cfg_disjunction_source_is_false] et
@@ -6673,14 +4569,6 @@ Definition CfgDisjunctionSource : Prop :=
           /\ lts Mc (ActExt (ActOut (c,v))) K
           /\ K ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g M) : proc)).
 
-Theorem cfg_disjunction_of_source : CfgDisjunctionSource -> CfgDisjunction.
-Proof.
-  intros HS l M N HM HN Htau Hsem.
-  destruct (HS l M N HM HN Htau Hsem)
-    as [Hempty | (c & v & l0 & Mc & K & Hp & Hin & Hout & HK)].
-  - left. exact Hempty.
-  - right. eapply descent_of_residue_below_source; eassumption.
-Qed.
 
 (** [CfgDisjunctionSource]'s second disjunct is satisfied outright by the
     **copycat** class: such a guard's residue after returning the message
@@ -6979,109 +4867,9 @@ Proof.
   eapply local_disjunct_of_returning; eassumption.
 Qed.
 
-Theorem cfg_unstable_of_disjunction : CfgDisjunction ->
-  forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  (exists z, (((g M) : proc) ▷ bag l) ⟶ z) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (forall p', lts (msgs l ‖ ((g M) : proc)) τ p' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)) ->
-     p' ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc))) ->
-  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
-Proof.
-  intros HD l M N HM HN Hnf Hex Hsem Hrec Hdesc.
-  destruct (HD l M N HM HN Hex Hsem) as [Hempty | (p' & Hstep & Hle)].
-  - eapply ax_below_cfg_empty_sem; eassumption.
-  - eapply ax_trans; [ apply ax_tau_step; exact Hstep | ].
-    apply Hdesc; assumption.
-Qed.
 
-(** La même conclusion à partir de la forme la plus forte des trois, dont
-    les deux disjoints portent sur des objets strictement plus petits que
-    la configuration **et** ne parlent que d'un seul côté à la fois. *)
 
-Corollary cfg_unstable_of_source : CfgDisjunctionSource ->
-  forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> Forall tau_cont_nf (summands N) ->
-  (exists z, (((g M) : proc) ▷ bag l) ⟶ z) ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall (L : gproc) (l' : list TypeOfActions), gStatic L -> gStable L ->
-     BagSem l ((g M) : proc) L -> subbag l' l ->
-     forall c v Q' l'', subbag l'' l' -> lts ((g L) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l'' ‖ ((c ! v • 𝟘) ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l'' ‖ Q')) ->
-  (forall p', lts (msgs l ‖ ((g M) : proc)) τ p' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc)) ->
-     p' ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc))) ->
-  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
-Proof.
-  intro HS. apply cfg_unstable_of_disjunction.
-  apply cfg_disjunction_of_source. exact HS.
-Qed.
 
-(** * L'APPARIEMENT DES SACS — une INCLUSION, pas une égalité
-
-    [VACCS_NormalForm.bags_agree] égalise les deux sacs, mais au prix de
-    deux hypothèses de stabilité, toutes deux nécessaires.  Ce qui vaut
-    sans elles est l'inclusion **dans un seul sens**, et c'est la bonne :
-
-        bag l2 ⊆ bag l1
-
-    « la droite ne peut pas porter plus de messages que la gauche ».  Le
-    sens inverse est faux — [VACCS_Bad.unstable_delivery_below_nil] met un
-    sac à un message sous un sac vide, la garde avalant le message au lieu
-    de l'émettre.
-
-    Preuve : lire [bhv_pre_cond2] à la trace qui **vide le sac de droite**.
-    La droite atteint [g N ▷ ∅], stable ; la gauche doit suivre sur la même
-    trace, et l'équation de bilan de [fw_conservation] donne alors
-    [bag l1 = x.2 ⊎ bag l2 ⊎ bag (ins r)] dès que la gauche n'émet rien
-    d'elle-même ([ochans (g M) = []], via [trace_out_in_ochans]).
-
-    Et l'inclusion se lit en liste : [l1 ≡ₚ l2 ++ d].  La comparaison
-    devient donc
-
-        msgs l2 ‖ (msgs d ‖ g M)   contre   msgs l2 ‖ g N
-
-    — **même sac des deux côtés**, ce qui est exactement la forme que
-    [ax_below_stable_sum_cfg] et [ax_below_split_from_certificate]
-    consomment, le surplus [d] passant dans le processus de gauche. *)
-
-Lemma bag_sub_cancel : forall (a : TypeOfActions) (X Y : MO (ExtAct TypeOfActions)),
-  {[+ ActOut a +]} ⊎ X ⊆ {[+ ActOut a +]} ⊎ Y -> X ⊆ Y.
-Proof.
-  intros a X Y H. intro x. specialize (H x).
-  assert (E1 : multiplicity x ({[+ ActOut a +]} ⊎ X)
-               = (multiplicity x ({[+ ActOut a +]}) + multiplicity x X)%nat)
-    by (apply gmultiset.multiplicity_disj_union).
-  assert (E2 : multiplicity x ({[+ ActOut a +]} ⊎ Y)
-               = (multiplicity x ({[+ ActOut a +]}) + multiplicity x Y)%nat)
-    by (apply gmultiset.multiplicity_disj_union).
-  rewrite E1, E2 in H. lia.
-Qed.
-
-Lemma bag_sub_split : forall (l2 l1 : list TypeOfActions),
-  bag l2 ⊆ bag l1 -> exists d, Permutation l1 (l2 ++ d).
-Proof.
-  induction l2 as [|a l2 IH]; intros l1 Hsub.
-  - exists l1. reflexivity.
-  - assert (Hmem : ActOut a ∈ bag l1).
-    { eapply gmultiset_elem_of_subseteq; [ | exact Hsub ].
-      simpl. apply gmultiset_elem_of_disj_union. left.
-      apply gmultiset_elem_of_singleton. reflexivity. }
-    apply bag_elem in Hmem. apply in_split in Hmem as (u1 & u2 & E). subst l1.
-    assert (Hp : Permutation (u1 ++ a :: u2) (a :: (u1 ++ u2)))
-      by (symmetry; apply Permutation_middle).
-    assert (Hb : bag (u1 ++ a :: u2) = bag (a :: (u1 ++ u2)))
-      by (apply bag_perm; exact Hp).
-    rewrite Hb in Hsub. simpl in Hsub.
-    apply bag_sub_cancel in Hsub.
-    destruct (IH (u1 ++ u2) Hsub) as (d & Hd).
-    exists d. etransitivity; [ exact Hp | ]. simpl. apply perm_skip. exact Hd.
-Qed.
 
 (** Énoncé au type **générique** à dessein : à [MO (ExtAct TypeOfActions)]
     les deux élaborations de [⊎] que le développement transporte sont
@@ -7115,21 +4903,6 @@ Qed.
     pas rembourser ce que la trace de vidange réclame, donc ils ne
     faussent pas l'inclusion. *)
 
-(** Une annulation de multiensembles, énoncée au type **générique** :
-    à [MO (ExtAct TypeOfActions)] les deux élaborations de [⊎] que le
-    développement transporte sont convertibles sans être syntaxiquement
-    égales, donc [rewrite] rate ; génériquement il n'y a qu'une instance
-    et [multiplicity_disj_union] s'applique. *)
-
-Lemma sub_disj_cancel : forall (A : Type) (EqA : EqDecision A) (CA : Countable A)
-  (X Y Z : gmultiset A), Z ⊆ X ⊎ Y ->
-  (forall a, (0 < multiplicity a Z)%nat -> multiplicity a Y = 0%nat) -> Z ⊆ X.
-Proof.
-  intros A EqA CA X Y Z Hsub Hdisj a.
-  specialize (Hsub a). rewrite multiplicity_disj_union in Hsub.
-  destruct (decide ((multiplicity a Z = 0)%nat)) as [E|E]; [ lia | ].
-  rewrite (Hdisj a) in Hsub by lia. lia.
-Qed.
 
 (** ** L'inclusion des deux sacs, SANS AUCUN CRITÈRE
 
@@ -7169,27 +4942,6 @@ Proof.
   exists r, x.1. split; [ exact Hr | ]. multiset_solver.
 Qed.
 
-(** …et le critère relatif au sac en est le cas particulier : ses
-    émissions évitent alors les voies de [l2] ([trace_out_in_ochans]),
-    donc le terme correcteur s'annule sur ces messages. *)
-
-Theorem bag_incl_of_below_disj : forall (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  bag l2 ⊆ bag l1.
-Proof.
-  intros l1 l2 M N HM HN Hdisj Hpre.
-  destruct (bag_incl_of_below_emit l1 l2 M N HM HN Hpre) as (r & q & Hr & Hsub).
-  eapply sub_disj_cancel; [ exact Hsub | ].
-  intros a Hpos.
-  assert (Hin2 : a ∈ bag l2) by (apply elem_of_multiplicity; lia).
-  destruct (bag_out _ _ Hin2) as (cv & Ecv). destruct cv as (c,u). subst a.
-  apply not_elem_of_multiplicity. intro Hino.
-  eapply Hdisj; [ apply bag_elem; exact Hin2 | ].
-  eapply trace_out_in_ochans;
-    [ apply static_g; exact HM | exact Hr | apply bag_elem; exact Hino ].
-Qed.
 
 (** Lu à l'envers, le terme correcteur dit *quand* le sac de droite peut
     déborder : uniquement si le processus gauche **émet**. *)
@@ -7280,16 +5032,6 @@ Proof.
     + split; [ multiset_solver | multiset_solver ].
 Qed.
 
-Corollary bag_split_of_below : forall (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  exists d, Permutation l1 (l2 ++ d).
-Proof.
-  intros l1 l2 M N HM HN Hoc Hpre.
-  apply bag_sub_split.
-  exact (bag_incl_of_below_disj l1 l2 M N HM HN Hoc Hpre).
-Qed.
 
 (* ------------------------------------------------------------------ *)
 (*  Obstacle (5), the grey-zone-free half: a configuration step at a   *)
@@ -7307,23 +5049,6 @@ Qed.
 (*  handed over to [completeness_gsum_step_gen] (measure [size] of the     *)
 (*  right-hand sum) instead of being taken as a per-summand premise.   *)
 (* ------------------------------------------------------------------ *)
-
-Theorem completeness_cfg_no_output : forall (l : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> ochans ((g M) : proc) = [] ->
-  ((msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  (forall p' q', Static p' -> Static q' ->
-     (size q' < size ((g N) : proc))%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g N) : proc)).
-Proof.
-  intros l M N HM HN Hoc Hsem IH.
-  apply ax_par; [ apply ax_refl | ].
-  apply completeness_gsum_step_gen; try assumption.
-  - apply static_g. exact HM.
-  - eapply msgs_cancel_no_output; eassumption.
-Qed.
-
-(* ------------------------------------------------------------------ *)
 (*  Obstacle (4), cashed in: the SURPLUS is cancelled, not just bounded *)
 (*                                                                     *)
 (*  [bag_split_of_below] reads the inclusion of the two bags as a list  *)
@@ -7338,78 +5063,7 @@ Qed.
 (*  is [VACCS_Forwarder.fw_drain_project_on]: the same run, with the       *)
 (*  buffer emissions dropped, is a τ-run from the surplus alone —       *)
 (*  reaching the very same state.                                       *)
-(* ------------------------------------------------------------------ *)
 
-Theorem msgs_cancel_surplus_disj : forall (l d : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs (l ++ d) ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))) ->
-  ((msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs nil ‖ ((g N) : proc))).
-Proof.
-  intros l d M N HM HN Hdisj Hpre.
-  destruct (msgs_accept (l ++ d) l (g M) (g N) Hpre) as (Hc1 & Hc2).
-  apply msgs_sound. split.
-  - intros s _. apply fw_converge_static. apply static_g. exact HN.
-  - intros s yy _ Hwy Hsty.
-    assert (Hdrain : ((g N) ▷ bag l)
-                       ⟹[map ActOut l] ((g N) ▷ (∅ : MO (ExtAct TypeOfActions)))).
-    { replace (bag l) with (bag l ⊎ (∅ : MO (ExtAct TypeOfActions))) at 1
-        by (apply gmultiset.gmultiset_disj_union_right_id).
-      apply bag_wt_drain. }
-    simpl in Hwy.
-    assert (Hbig : ((g N) ▷ bag l) ⟹[map ActOut l ++ s] yy)
-      by (eapply wt_concat; [ exact Hdrain | exact Hwy ]).
-    destruct (Hc2 (map ActOut l ++ s) yy
-                (fw_converge_static (map ActOut l ++ s) (g M) (bag (l ++ d))
-                   (static_g M HM))
-                Hbig Hsty)
-      as (x & Hwx & Hstx & Hincl).
-    destruct (wt_split _ _ _ _ Hwx) as (z & Hz1 & Hz2).
-    assert (Hproj : (((g M) : proc) ▷ bag d) ⟹[[]] z).
-    { eapply (fw_drain_project_on (map fst l) (map ActOut l)
-                (((g M) : proc) ▷ bag (l ++ d)) z Hz1).
-      - simpl. apply MuteOn_of_ochans; [ apply static_g; exact HM | ].
-        intros c Hc. apply in_map_iff in Hc as ((c0,u0) & Ec & Hin0).
-        simpl in Ec. subst c0. eapply Hdisj. exact Hin0.
-      - apply ins_map_out.
-      - rewrite outs_map_out. intros aa Hin. apply in_map. exact Hin.
-      - simpl. rewrite outs_map_out. rewrite bag_app. reflexivity. }
-    exists x. split; [ | split; [ exact Hstx | exact Hincl ] ].
-    simpl.
-    replace s with (@nil (ExtAct TypeOfActions) ++ s) by reflexivity.
-    eapply wt_concat; [ exact Hproj | exact Hz2 ].
-Qed.
-
-(** The two halves together: a comparison at *unequal* bags is a
-    comparison at the **empty** bag, with the surplus carried on the
-    left.  That is the shape the configuration machinery consumes, and
-    it needs no stability hypothesis on either side beyond [g N] being
-    τ-free.
-
-    Note the surplus is genuinely non-empty in general —
-    [VACCS_Bad.unstable_delivery_below_nil] puts a one-message bag below
-    an empty one, the guard swallowing the message rather than emitting
-    it — so the reverse inclusion is false and this really is the best
-    one can ask for. *)
-
-Corollary msgs_cancel_of_below : forall (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  exists d, Permutation l1 (l2 ++ d)
-         /\ ((msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs nil ‖ ((g N) : proc))).
-Proof.
-  intros l1 l2 M N HM HN Hoc Hpre.
-  destruct (bag_split_of_below l1 l2 M N HM HN Hoc Hpre) as (d & Hperm).
-  exists d. split; [ exact Hperm | ].
-  assert (Hcgr : (msgs (l2 ++ d) ‖ ((g M) : proc)) ≡* (msgs l1 ‖ ((g M) : proc))).
-  { apply cgr_fullpar; [ | apply cgr_refl ].
-    apply msgs_perm. apply Permutation_sym. exact Hperm. }
-  assert (Hshift : (msgs (l2 ++ d) ‖ ((g M) : proc))
-                     ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))).
-  { intros t Ht. apply Hpre. apply (proj2 (must_i_cgr _ _ Hcgr)). exact Ht. }
-  exact (msgs_cancel_surplus_disj l2 d M N HM HN Hoc Hshift).
-Qed.
 
 (* ------------------------------------------------------------------ *)
 (*  [ochans (g M) = []] REACHES THE DERIVATIONS                        *)
@@ -7497,40 +5151,6 @@ Definition DropOk (a : gproc) : Prop :=
   | gpr_choice _ _ => False
   end.
 
-Lemma ax_rebuild_drop_ochans : forall (l r : list gproc),
-  Forall gStatic l -> Forall DropOk l ->
-  ((g (rebuild (l ++ r))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (rebuild r)) : proc).
-Proof.
-  induction l as [|aa l IH]; intros r HSt HOk; simpl.
-  - apply ax_refl.
-  - inversion HSt as [|? ? HSt1 HSt2]; subst.
-    inversion HOk as [|? ? HOk1 HOk2]; subst.
-    assert (IHl : ((g (rebuild (l ++ r))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (rebuild r)) : proc))
-      by (apply IH; assumption).
-    destruct aa as [ | | c P | P | A B ]; simpl in HOk1.
-    + eapply ax_trans; [ apply ax_success_l | ].
-      eapply ax_trans; [ apply ax_cgr; apply cgr_nil_choice_l | ]. exact IHl.
-    + eapply ax_trans; [ apply ax_cgr; apply cgr_nil_choice_l | ]. exact IHl.
-    + eapply ax_trans; [ | exact IHl ].
-      apply ax_drop_ochans; [ inversion HSt1; assumption | exact HOk1 ].
-    + contradiction.
-    + contradiction.
-Qed.
-
-Theorem ax_gsum_drop_ochans : forall (M : gproc) (l r : list gproc),
-  gStatic M -> Permutation (summands M) (l ++ r) -> Forall DropOk l ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (rebuild r)) : proc).
-Proof.
-  intros M l r HM Hperm HOk.
-  assert (HSt : Forall gStatic (l ++ r))
-    by (apply perm_summands_gStatic with M; assumption).
-  apply Forall_app in HSt as (HSt1 & _).
-  eapply ax_trans; [ apply ax_cgr | ].
-  - transitivity (g (rebuild (summands M))); [ apply summands_cgr | ].
-    apply (rebuild_perm (summands M) (l ++ r)). exact Hperm.
-  - apply ax_rebuild_drop_ochans; assumption.
-Qed.
-
 (** Et l'instance qui motive le critère : une somme de **copycats** est
     dérivablement sous [𝟘], ce que le pelage muet ne pouvait pas dire. *)
 
@@ -7543,16 +5163,6 @@ Proof.
   - contradiction.
   - destruct HM as (H1 & H2). apply Forall_app. split; [ apply IH1 | apply IH2 ];
       assumption.
-Qed.
-
-Lemma ax_copycats_below_nil : forall M,
-  gStatic M -> gCopycats M -> ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
-Proof.
-  intros M HM HC.
-  apply (ax_gsum_drop_ochans M (summands M) []).
-  - exact HM.
-  - rewrite app_nil_r. reflexivity.
-  - apply gCopycats_DropOk. exact HC.
 Qed.
 
 (** Le critère muet en est un cas particulier : une garde silencieuse
@@ -7576,9 +5186,6 @@ Proof.
     simpl in Hlen. lia.
 Qed.
 
-Lemma msgs_nil_cgr : forall (l : list TypeOfActions),
-  ((msgs l) ‖ ((g 𝟘) : proc)) ≡* (msgs l).
-Proof. intro l. apply cgr_par_nil. Qed.
 
 (** ** ★ UNE GARDE COPYCAT SUR UNE VOIE DU SAC : LA DESCENTE SUFFIT
 
@@ -7829,21 +5436,6 @@ Qed.
 
 (** The [𝟘] case: discard *everything*. *)
 
-Corollary ax_gsum_below_nil : forall (M : gproc),
-  gStatic M -> gStable M -> ochans ((g M) : proc) = [] ->
-  ((g M) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
-Proof.
-  intros M HM HSb HOc.
-  apply (ax_gsum_drop_ochans M (summands M) []).
-  - exact HM.
-  - rewrite app_nil_r. reflexivity.
-  - assert (HLf := summands_leaves M).
-    assert (HSb' := gStable_summands M HSb).
-    assert (HOc' := gochans_summands M HOc).
-    rewrite Forall_forall in HLf, HSb', HOc' |- *.
-    intros aa Hin. apply DropOk_of_mute; auto.
-Qed.
-
 (* ------------------------------------------------------------------ *)
 (*  …AND AT THE LEVEL OF PROCESSES, ON THE ν-FREE FRAGMENT             *)
 (*                                                                     *)
@@ -7892,51 +5484,6 @@ Proof.
   - simpl in Hnr. destruct Hnr as (Hn1 & Hn2). inversion Hl; subst.
     + eapply IH1; eassumption.
     + eapply IH2; eassumption.
-Qed.
-
-Theorem ax_below_nil_noresd : forall (p : proc),
-  Static p -> NoResD p -> ochans p = [] ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
-Proof.
-  intro p. induction p as [p IHp] using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros Hst Hnr Hoc. destruct p as [p1 p2|x|x p0|E p1 p2|c v|p0|M].
-  - (* parallel: [ax_par], then [𝟘 ‖ 𝟘 ≡* 𝟘] *)
-    inversion Hst; subst. simpl in Hnr, Hoc.
-    destruct Hnr as (Hn1 & Hn2). apply app_eq_nil in Hoc as (Ho1 & Ho2).
-    eapply ax_trans; [ apply ax_par | ].
-    + apply (IHp p1 ltac:(simpl; lia)); assumption.
-    + apply (IHp p2 ltac:(simpl; lia)); assumption.
-    + apply ax_cgr. apply cgr_par_nil.
-  - inversion Hst.
-  - inversion Hst.
-  - (* conditional: [Eval_Eq 0] never fails, so [≡*] one branch *)
-    inversion Hst; subst. simpl in Hnr, Hoc.
-    destruct Hnr as (Hn1 & Hn2). apply app_eq_nil in Hoc as (Ho1 & Ho2).
-    destruct (Eval_Eq 0 E) as [[|]|] eqn:HE;
-      [ | | exfalso; eapply Eval_Eq_0_not_none; exact HE ].
-    + eapply ax_trans; [ apply ax_cgr; apply cgr_if_true; exact HE | ].
-      apply (IHp p1 ltac:(simpl; lia)); assumption.
-    + eapply ax_trans; [ apply ax_cgr; apply cgr_if_false; exact HE | ].
-      apply (IHp p2 ltac:(simpl; lia)); assumption.
-  - (* a message is excluded by the criterion itself *)
-    simpl in Hoc. discriminate Hoc.
-  - (* a restriction is excluded by [NoResD] — see the header *)
-    simpl in Hnr. contradiction.
-  - (* a guarded sum: stable, or peel its own [τ] *)
-    destruct (lts_dec ((g M) : proc) τ) as [Hno|(X & HX)].
-    + apply ax_gsum_below_nil; [ inversion Hst; assumption | | exact Hoc ].
-      apply gStable_iff. apply no_lts_stable. exact Hno.
-    + eapply ax_trans; [ apply ax_tau_step; exact HX | ].
-      apply (IHp X).
-      * unfold ltof. eapply Static_lts_decrease; [ exact Hst | exact HX ].
-      * eapply Static_preserved_by_lts; [ exact Hst | exact HX ].
-      * eapply noresd_tau_target; [ exact Hnr | exact HX ].
-      * assert (Hsub := lts_ochans_target _ _ _ Hst HX).
-        destruct (ochans X) as [|d l0] eqn:E; [ reflexivity | exfalso ].
-        assert (Hin : In d (ochans ((g M) : proc)))
-          by (apply Hsub; left; reflexivity).
-        rewrite Hoc in Hin. exact Hin.
 Qed.
 
 (** …and the criterion need only hold *somewhere along an internal run*.
@@ -8006,18 +5553,6 @@ Proof.
     + eapply noresd_lts_target; [ exact Hst | exact Hnr | exact Hl ].
 Qed.
 
-Theorem ax_below_nil_of_mute_reduct : forall (p x : proc),
-  Static p -> NoResD p -> p ⟹[[]] x -> ochans x = [] ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
-Proof.
-  intros p x Hst Hnr Hw Hoc.
-  eapply ax_trans; [ apply ax_tau_run; exact Hw | ].
-  apply ax_below_nil_noresd.
-  - eapply Static_preserved_by_wt; [ exact Hst | exact Hw ].
-  - eapply noresd_wt_target; [ exact Hst | exact Hnr | exact Hw ].
-  - exact Hoc.
-Qed.
-
 (** So the criterion [ochans p = []] now has *four* consumers: the bag
     cancellation ([drain_forced_no_output], [msgs_cancel_no_output]),
     [VACCS_Bad.no_output_below_nil] semantically,
@@ -8042,105 +5577,8 @@ Qed.
 (*  the shifted buffer.  Nothing here needs [ochans (g M) = []]: that   *)
 (*  hypothesis is used only to *produce* the split, by                  *)
 (*  [msgs_cancel_of_below].                                             *)
-(* ------------------------------------------------------------------ *)
 
-Theorem surplus_settles_split : forall (M N : gproc) (d k : list TypeOfActions),
-  gStatic M -> gStatic N ->
-  (forall p, ~ lts ((g N) : proc) τ p) ->
-  (forall a, ActOut a ∈ bag k -> forall r, ~ lts ((g N) : proc) (ActExt (ActIn a)) r) ->
-  ((msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs nil ‖ ((g N) : proc))) ->
-  Settles (chans (bag k)) (((g M) : proc) ▷ (bag k ⊎ bag d)).
-Proof.
-  intros M N d k HM HN HstN Hnoc Hsem.
-  assert (Hsty : (((g N) : proc) ▷ bag k) ↛).
-  { assert (Hnostep : forall x, ~ ((((g N) : proc) ▷ bag k) ⟶ x)).
-    { apply fw_stable_iff. split; [ exact HstN | ].
-      intros a Hin q Hq. eapply Hnoc; [ exact Hin | exact Hq ]. }
-    destruct (decide (lts_refuses (((g N) : proc) ▷ bag k) τ)) as [Hy|Hn]; [ exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
-  assert (Hwq : (((g N) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))
-                  ⟹[feed k] (((g N) : proc) ▷ bag k)).
-  { replace (feed k) with (feed k ++ []) by (rewrite app_nil_r; reflexivity).
-    apply fw_wt_feed_list.
-    replace (bag k ⊎ (∅ : MO (ExtAct TypeOfActions))) with (bag k)
-      by (symmetry; apply gmultiset.gmultiset_disj_union_right_id).
-    apply wt_nil. }
-  destruct (msgs_accept d nil (g M) (g N) Hsem) as (Hc1 & Hc2). simpl in Hc2.
-  destruct (Hc2 (feed k) (((g N) : proc) ▷ bag k)
-              (fw_converge_static (feed k) (g M) (bag d) (static_g M HM)) Hwq Hsty)
-    as (x & Hwx & Hstx & Hincl).
-  exists x. split.
-  - pose proof (fw_feed_inv_list k (((g M) : proc) ▷ bag d) x Hwx) as H.
-    simpl in H. exact H.
-  - split; [ exact Hstx | ].
-    intros dd w r Hr.
-    assert (Hin : (Inputs dd) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
-      by (apply coR_abs_pair_iff; exists w, r; exact Hr).
-    apply Hincl in Hin. apply coR_abs_pair_iff in Hin.
-    eapply emits_gsum_chans. exact Hin.
-Qed.
 
-(** …in the form the theorem asks for: the buffer is an arbitrary
-    [OutOnly] one, and "[N] refuses it" is read off the *mirror*'s
-    stability ([mirror_refuses_of_N]). *)
-
-Lemma cert_of_split : forall (d : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N -> (forall p, ~ lts ((g N) : proc) τ p) ->
-  ((msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs nil ‖ ((g N) : proc))) ->
-  forall K, OutOnly K ->
-    ((g (mirrorN ((msgs d) ‖ ((g M) : proc)) N)) ▷ K) ↛ ->
-    Settles (chans K) (((g M) : proc) ▷ (bag d ⊎ K)).
-Proof.
-  intros d M N HM HN HstN Hsem K Hout Hstm.
-  destruct (outonly_bag K Hout) as (k & Hk). subst K.
-  assert (Hnoc : forall a, ActOut a ∈ bag k ->
-                   forall r, ~ lts ((g N) : proc) (ActExt (ActIn a)) r).
-  { intros a Hin r Hr.
-    assert (Hns : forall z, ~ ((g (mirrorN ((msgs d) ‖ ((g M) : proc)) N) ▷ bag k) ⟶ z))
-      by (apply no_step_of_stable; exact Hstm).
-    apply fw_stable_iff in Hns as (_ & Hrefuse).
-    destruct a as (c,v).
-    eapply (mirror_refuses_of_N _ N c v (Hrefuse (c,v) Hin)); exact Hr. }
-  replace (bag d ⊎ bag k) with (bag k ⊎ bag d)
-    by (apply (comm_L (@disj_union (MO (ExtAct TypeOfActions)) _))).
-  apply (surplus_settles_split M N d k); assumption.
-Qed.
-
-(** * THE UNEQUAL-BAG STEP, FOR A MUTE LEFT-HAND SUM
-
-    Everything meets here.  [msgs_cancel_of_below] produces the split
-    [l1 ≡ₚ l2 ++ d] *and* the cancelled inequation; [cert_of_split] turns
-    that inequation into the certificate; [ax_below_split_from_certificate]
-    runs Phase A, Phase B and puts the surplus back into the bag.
-
-    The only hypothesis left is the **recursion** — one call per input
-    transition of [g N], at every sub-bag — which is the shape
-    [VACCS_Descent.wrapped_premise_from_IH] discharges, with [domsim_wt]
-    supplying the measure.  It is stated over *every* legal split, since
-    [d] is produced by the theorem rather than supplied by the caller. *)
-
-Theorem completeness_cfg_split_no_output :
-  forall (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  (forall z, ~ lts ((g N) : proc) τ z) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  (forall d, Permutation l1 (l2 ++ d) ->
-     forall c v Q' l', subbag l' l2 -> lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' ->
-       (msgs l' ‖ ((c ! v • 𝟘) ‖ ((msgs d) ‖ ((g M) : proc))))
-         ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l' ‖ Q')) ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
-Proof.
-  intros l1 l2 M N HM HN Hoc HstN Hpre Hrec.
-  destruct (msgs_cancel_of_below l1 l2 M N HM HN Hoc Hpre) as (d & Hperm & Hcut).
-  assert (Hcgr : (msgs l1 ‖ ((g M) : proc)) ≡* (msgs (d ++ l2) ‖ ((g M) : proc))).
-  { apply cgr_fullpar; [ | apply cgr_refl ].
-    apply msgs_perm. transitivity (l2 ++ d); [ exact Hperm | apply Permutation_app_comm ]. }
-  eapply ax_trans; [ apply ax_cgr; exact Hcgr | ].
-  apply ax_below_split_from_certificate; try assumption.
-  - apply cert_of_split; assumption.
-  - apply Hrec. exact Hperm.
-Qed.
 
 
 (* ------------------------------------------------------------------ *)
@@ -8155,44 +5593,6 @@ Qed.
 (*  ([gsum_no_out]), so every emission of [msgs l2 ‖ g N] comes from    *)
 (*  its bag; the inclusion [bag l2 ⊆ bag l1] then puts the same message *)
 (*  in the left's bag, and the left emits it too.                       *)
-(* ------------------------------------------------------------------ *)
-
-Theorem ax_below_cfg_glb_split : forall (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  (exists q0, lts (msgs l2 ‖ ((g N) : proc)) τ q0) ->
-  (forall q', lts (msgs l2 ‖ ((g N) : proc)) τ q' ->
-     (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (forall c v q'', lts (msgs l2 ‖ ((g N) : proc)) (ActExt (ActIn (c,v))) q'' ->
-     (((c ! v • 𝟘) : proc) ‖ (msgs l1 ‖ ((g M) : proc))) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
-  (forall c v l1' l2', Permutation l1 ((c,v) :: l1') -> Permutation l2 ((c,v) :: l2') ->
-     (msgs l1' ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2' ‖ ((g N) : proc))) ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
-Proof.
-  intros l1 l2 M N HM HN Hoc Hpre Hex Htau Hin Hrec.
-  assert (Hsub := bag_incl_of_below_disj l1 l2 M N HM HN Hoc Hpre).
-  apply ax_glb_tau; [ exact Hex | exact Htau | exact Hin | | ].
-  - intros c v q'' Hq''.
-    destruct (cfg_out_inv l2 N c v q'' Hq'') as (l0 & Hperm & _).
-    assert (Hmem : ActOut (c,v) ∈ bag l1).
-    { eapply gmultiset.gmultiset_elem_of_subseteq; [ | exact Hsub ].
-      rewrite (bag_perm l2 ((c,v) :: l0) Hperm). simpl.
-      apply gmultiset.gmultiset_elem_of_disj_union. left.
-      apply gmultiset_elem_of_singleton. reflexivity. }
-    apply bag_elem in Hmem. apply in_split in Hmem as (u1 & u2 & Eu).
-    assert (Hp1 : Permutation l1 ((c,v) :: (u1 ++ u2))).
-    { rewrite Eu. symmetry. apply Permutation_middle. }
-    destruct (cfg_out_of_perm l1 (u1 ++ u2) c v ((g M) : proc) Hp1) as (r & Hr & _).
-    exists r. exact Hr.
-  - intros c v p'' q'' Hp'' Hq''.
-    destruct (cfg_out_inv l1 M c v p'' Hp'') as (l1' & Hp1 & Hcp).
-    destruct (cfg_out_inv l2 N c v q'' Hq'') as (l2' & Hp2 & Hcq).
-    eapply ax_trans; [ apply ax_cgr; exact Hcp | ].
-    eapply ax_trans; [ apply (Hrec c v l1' l2' Hp1 Hp2) | ].
-    apply ax_cgr_sym. exact Hcq.
-Qed.
-
 (* ------------------------------------------------------------------ *)
 (*  THE MEASURE GLUE: [DomOk]                                          *)
 (*                                                                     *)
@@ -8220,51 +5620,6 @@ Qed.
 
 Definition DomOk (q0 q' : proc) : Prop :=
   exists r', Static r' /\ (size r' < size q0)%nat /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
-
-Lemma ax_below_of_domok : forall (q0 p q' : proc),
-  Static p -> DomOk q0 q' ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' ->
-  (forall p1 q1, Static p1 -> Static q1 -> (size q1 < size q0)%nat ->
-     p1 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q1 -> p1 ᴠᴀᴄᴄꜱ⊑ₐₓ q1) ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
-Proof.
-  intros q0 p q' Hp (r' & Hr' & Hlt & Hqr & Hrq) Hpre IH.
-  eapply ax_trans; [ | exact Hrq ].
-  apply IH; try assumption.
-  intros t Ht. apply (soundness_ax _ _ Hqr). apply Hpre. exact Ht.
-Qed.
-
-Lemma domok_of_domsim : forall (q0 q : proc) a r,
-  Static q0 -> domsim q0 q -> lts q a r -> DomOk q0 r.
-Proof.
-  intros q0 q a r Hst Hd Hl.
-  destruct (ds_s Hd a r Hl) as (r' & Hr' & Hds).
-  exists r'. split; [ | split; [ | split ] ].
-  - eapply Static_preserved_by_lts; [ exact Hst | exact Hr' ].
-  - eapply Static_lts_decrease; [ exact Hst | exact Hr' ].
-  - exact (ds_r Hds).
-  - exact (ds_l Hds).
-Qed.
-
-
-(** The two closures the restatement will need.
-
-    [DomOk_cgr] because the output branch applies the hypothesis to
-    [msgs l2' ‖ g N], which is only [≡*]-equal to the reduct; and
-    [domok_of_domsim_wt] because the split branch applies it to
-    [msgs l' ‖ Q'], reached by *emitting a sub-bag and then inputting* —
-    a whole trace, not one step.  A trace carrying at least one action
-    still shrinks a [Static] process ([wt_act_size_lt]), which is exactly
-    why the [mu :: s] shape is the right hypothesis. *)
-
-Lemma DomOk_cgr : forall (q0 q1 q2 : proc),
-  DomOk q0 q1 -> q1 ≡* q2 -> DomOk q0 q2.
-Proof.
-  intros q0 q1 q2 (r' & Hr' & Hlt & Hqr & Hrq) Hc.
-  exists r'. split; [ exact Hr' | ]. split; [ exact Hlt | ]. split.
-  - eapply ax_trans; [ apply ax_cgr_sym; exact Hc | exact Hqr ].
-  - eapply ax_trans; [ exact Hrq | apply ax_cgr; exact Hc ].
-Qed.
 
 Lemma domok_of_domsim_wt : forall (q0 q : proc) mu s r,
   Static q0 -> domsim q0 q -> q ⟹[mu :: s] r -> DomOk q0 r.
@@ -8303,70 +5658,12 @@ Proof.
     exists r'. split; [ eapply wt_act; [ exact Hy' | exact Hr' ] | exact Hcr ].
 Qed.
 
-Lemma cfg_emit_prefix : forall (u l' : list TypeOfActions) (P : proc),
-  exists r, (msgs (u ++ l') ‖ P) ⟹[map ActOut u] r /\ r ≡* (msgs l' ‖ P).
-Proof.
-  induction u as [|a u IH]; intros l' P; simpl.
-  - exists (msgs l' ‖ P). split; [ apply wt_nil | reflexivity ].
-  - destruct a as (c,v).
-    destruct (cfg_out_of_perm ((c,v) :: (u ++ l')) (u ++ l') c v P
-                (reflexivity _)) as (r0 & Hr0 & Hc0).
-    destruct (IH l' P) as (r1 & Hr1 & Hc1).
-    assert (Hc0' : (msgs (u ++ l') ‖ P) ≡* r0) by (symmetry; exact Hc0).
-    destruct (cgr_wt_transfer (map ActOut u) (msgs (u ++ l') ‖ P) r0 r1 Hc0' Hr1)
-      as (r2 & Hr2 & Hc2).
-    exists r2. split.
-    + eapply wt_act; [ exact Hr0 | exact Hr2 ].
-    + etransitivity; [ symmetry; exact Hc2 | exact Hc1 ].
-Qed.
-
 Lemma domok_of_domsim_wt' : forall (q0 q : proc) s r,
   Static q0 -> domsim q0 q -> q ⟹[s] r -> s <> [] -> DomOk q0 r.
 Proof.
   intros q0 q s r Hst Hd Hw Hs. destruct s as [|mu s0]; [ contradiction | ].
   eapply domok_of_domsim_wt; eassumption.
 Qed.
-
-Lemma cfg_reach_subbag : forall (l' l : list TypeOfActions) (P : proc),
-  subbag l' l ->
-  exists u r, (msgs l ‖ P) ⟹[map ActOut u] r /\ r ≡* (msgs l' ‖ P).
-Proof.
-  intros l' l P (u & Hp).
-  destruct (cfg_emit_prefix u l' P) as (r0 & Hr0 & Hc0).
-  assert (Hc : (msgs l ‖ P) ≡* (msgs (u ++ l') ‖ P)).
-  { apply cgr_fullpar; [ apply msgs_perm; exact Hp | apply cgr_refl ]. }
-  assert (Hc' : (msgs (u ++ l') ‖ P) ≡* (msgs l ‖ P)) by (symmetry; exact Hc).
-  destruct (cgr_wt_transfer (map ActOut u) (msgs (u ++ l') ‖ P) (msgs l ‖ P) r0
-              Hc' Hr0) as (r & Hr & Hcr).
-  exists u, r. split; [ exact Hr | ].
-  etransitivity; [ symmetry; exact Hcr | exact Hc0 ].
-Qed.
-
-(** …so the state [completeness_cfg_split_dom] recurses on really is
-    admissible: it is [⊢]-equal to a strictly smaller reduct of the
-    original process.  This is the last of the three [DomOk] facts the
-    restatement needs. *)
-
-Lemma domok_of_subbag_input : forall (q0 : proc) (l2 l' : list TypeOfActions)
-    (N : gproc) c v Q',
-  Static q0 -> domsim q0 (msgs l2 ‖ ((g N) : proc)) ->
-  subbag l' l2 -> lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' ->
-  DomOk q0 (msgs l' ‖ Q').
-Proof.
-  intros q0 l2 l' N c v Q' Hst Hd Hsub Hin.
-  destruct (cfg_reach_subbag l' l2 ((g N) : proc) Hsub) as (u & r & Hr & Hcr).
-  assert (Hstep : lts (msgs l' ‖ ((g N) : proc)) (ActExt (ActIn (c,v)))
-                      (msgs l' ‖ Q')) by (apply lts_parR; exact Hin).
-  assert (Hcr' : (msgs l' ‖ ((g N) : proc)) ≡* r) by (symmetry; exact Hcr).
-  destruct (cgr_lts_transfer _ r _ _ Hcr' Hstep) as (x & Hx & Hcx).
-  assert (Hbig : (msgs l2 ‖ ((g N) : proc))
-                   ⟹[map ActOut u ++ (ActIn (c,v) :: nil)] x).
-  { eapply wt_concat; [ exact Hr | eapply wt_act; [ exact Hx | apply wt_nil ] ]. }
-  eapply DomOk_cgr; [ | symmetry; exact Hcx ].
-  eapply domok_of_domsim_wt'; [ exact Hst | exact Hd | exact Hbig | ].
-  destruct u as [|a u0]; simpl; discriminate.
-Qed.
-
 
 (* ------------------------------------------------------------------ *)
 (*  THE STEP, RESTATED OVER [DomOk] — and finally in the shape          *)
@@ -8381,261 +5678,6 @@ Qed.
 (*    the output branch      → [DomOk_cgr] on [cfg_out_of_perm]'s target*)
 (*    the split branch       → [domok_of_subbag_input]                  *)
 (* ------------------------------------------------------------------ *)
-
-(** The three theorems are stated over **two abstract predicates** — one
-    per side — rather than over [DomOk] and over nothing:
-
-      [LOk] the class the left-hand side is allowed to stay in, with the
-            two closures the four recursive call sites need (add a bag,
-            add one message), plus its base at [g M];
-      [Ok]  the class the right-hand side's reducts land in.
-
-    That is what lets the same proof serve both the unrestricted frame of
-    [completeness_from_step] ([LOk := fun _ => True], [Ok := DomOk q0])
-    and the **restricted recursion** further down ([LOk := MuteNF],
-    [Ok := DomOkD q0]) without duplicating a line. *)
-
-Theorem completeness_cfg_split_ok :
-  forall (LOk Ok : proc -> Prop) (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  (forall z, ~ lts ((g N) : proc) τ z) ->
-  (forall l p, LOk p -> LOk (msgs l ‖ p)) ->
-  (forall (c : ChannelData) (v : ValueData) (p : proc),
-     LOk p -> LOk (((c ! v • 𝟘) : proc) ‖ p)) ->
-  LOk ((g M) : proc) ->
-  (forall l' c v Q', subbag l' l2 ->
-     lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' -> Ok (msgs l' ‖ Q')) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  (forall p' q', Static p' -> LOk p' -> Static q' -> Ok q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
-Proof.
-  intros LOk Ok l1 l2 M N HM HN Hoc HstN HLbag HLmsg HLbase HOkin Hpre IH.
-  assert (Hnil : (msgs nil ‖ ((g N) : proc)) ≡* ((g N) : proc)).
-  { simpl. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ]. }
-  apply completeness_cfg_split_no_output; try assumption.
-  intros d Hperm c v Q' l' Hsub Hin.
-  assert (Hcgr : (msgs (l2 ++ d) ‖ ((g M) : proc)) ≡* (msgs l1 ‖ ((g M) : proc))).
-  { apply cgr_fullpar; [ | apply cgr_refl ].
-    apply msgs_perm. apply Permutation_sym. exact Hperm. }
-  assert (Hshift : (msgs (l2 ++ d) ‖ ((g M) : proc))
-                     ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))).
-  { intros t Ht. apply Hpre. apply (proj2 (must_i_cgr _ _ Hcgr)). exact Ht. }
-  assert (Hcut := msgs_cancel_surplus_disj l2 d M N HM HN Hoc Hshift).
-  assert (Hcut' : (msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc)).
-  { intros t Ht. apply (proj2 (must_i_cgr _ _ Hnil)). apply Hcut. exact Ht. }
-  assert (Hsem : (((c ! v • 𝟘) : proc) ‖ (msgs d ‖ ((g M) : proc)))
-                   ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q')
-    by (eapply must_i_feed_below; [ exact Hcut' | exact Hin ]).
-  apply IH.
-  - constructor; [ apply msgs_Static | constructor ].
-    + repeat constructor.
-    + constructor; [ apply msgs_Static | apply static_g; exact HM ].
-  - apply HLbag. apply HLmsg. apply HLbag. exact HLbase.
-  - constructor; [ apply msgs_Static | ].
-    eapply Static_preserved_by_lts; [ apply static_g; exact HN | exact Hin ].
-  - apply (HOkin l' c v Q'); assumption.
-  - apply must_i_par_compat_r. exact Hsem.
-Qed.
-
-Theorem completeness_cfg_glb_ok :
-  forall (LOk Ok : proc -> Prop) (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  (forall l p, LOk p -> LOk (msgs l ‖ p)) ->
-  (forall (c : ChannelData) (v : ValueData) (p : proc),
-     LOk p -> LOk (((c ! v • 𝟘) : proc) ‖ p)) ->
-  LOk ((g M) : proc) ->
-  (forall a r, lts (msgs l2 ‖ ((g N) : proc)) a r -> Ok r) ->
-  (forall q1 q2, Ok q1 -> q1 ≡* q2 -> Ok q2) ->
-  (exists z, lts (msgs l2 ‖ ((g N) : proc)) τ z) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  (forall p' q', Static p' -> LOk p' -> Static q' -> Ok q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
-Proof.
-  intros LOk Ok l1 l2 M N HM HN Hoc HLbag HLmsg HLbase HOk1 HOk2 Hex Hpre IH.
-  assert (HStl : Static (msgs l1 ‖ ((g M) : proc)))
-    by (constructor; [ apply msgs_Static | apply static_g; exact HM ]).
-  assert (HStr : Static (msgs l2 ‖ ((g N) : proc)))
-    by (constructor; [ apply msgs_Static | apply static_g; exact HN ]).
-  apply ax_below_cfg_glb_split; try assumption.
-  - intros q' Hq'. apply IH.
-    + exact HStl.
-    + apply HLbag. exact HLbase.
-    + eapply Static_preserved_by_lts; [ exact HStr | exact Hq' ].
-    + eapply HOk1. exact Hq'.
-    + intros t Ht. eapply must_i_tau_below; [ exact Hq' | ]. apply Hpre. exact Ht.
-  - intros c v q'' Hq''. apply IH.
-    + constructor; [ repeat constructor | exact HStl ].
-    + apply HLmsg. apply HLbag. exact HLbase.
-    + eapply Static_preserved_by_lts; [ exact HStr | exact Hq'' ].
-    + eapply HOk1. exact Hq''.
-    + eapply must_i_feed_below; [ exact Hpre | exact Hq'' ].
-  - intros c v l1' l2' Hp1 Hp2.
-    destruct (msgs_cancel_of_below l1 l2 M N HM HN Hoc Hpre) as (d & Hdd & Hcut).
-    assert (Hnil : (msgs nil ‖ ((g N) : proc)) ≡* ((g N) : proc)).
-    { simpl. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ]. }
-    assert (Hcut' : (msgs d ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g N) : proc)).
-    { intros t Ht. apply (proj2 (must_i_cgr _ _ Hnil)). apply Hcut. exact Ht. }
-    assert (Hsplit : Permutation l1' (l2' ++ d)).
-    { apply (Permutation_cons_inv (a := (c,v))).
-      etransitivity; [ symmetry; exact Hp1 | ].
-      etransitivity; [ exact Hdd | ].
-      etransitivity; [ apply Permutation_app_tail; exact Hp2 | reflexivity ]. }
-    assert (Hcgr : (msgs l1' ‖ ((g M) : proc))
-                     ≡* (msgs l2' ‖ (msgs d ‖ ((g M) : proc)))).
-    { etransitivity; [ apply cgr_fullpar;
-        [ apply msgs_perm; exact Hsplit | apply cgr_refl ] | ].
-      etransitivity; [ apply cgr_fullpar; [ apply msgs_app | apply cgr_refl ] | ].
-      apply cgr_par_assoc. }
-    apply IH.
-    + constructor; [ apply msgs_Static | apply static_g; exact HM ].
-    + apply HLbag. exact HLbase.
-    + constructor; [ apply msgs_Static | apply static_g; exact HN ].
-    + destruct (cfg_out_of_perm l2 l2' c v ((g N) : proc) Hp2) as (r & Hr & Hcr).
-      eapply HOk2; [ | exact Hcr ]. eapply HOk1. exact Hr.
-    + intros t Ht.
-      assert (Hw := must_i_par_compat_r (msgs l2') _ _ Hcut').
-      apply Hw. apply (proj2 (must_i_cgr _ _ Hcgr)). exact Ht.
-Qed.
-
-Theorem completeness_cfg_mute_ok :
-  forall (LOk Ok : proc -> Prop) (l1 l2 : list TypeOfActions) (M N : gproc),
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  (forall l p, LOk p -> LOk (msgs l ‖ p)) ->
-  (forall (c : ChannelData) (v : ValueData) (p : proc),
-     LOk p -> LOk (((c ! v • 𝟘) : proc) ‖ p)) ->
-  LOk ((g M) : proc) ->
-  (forall a r, lts (msgs l2 ‖ ((g N) : proc)) a r -> Ok r) ->
-  (forall q1 q2, Ok q1 -> q1 ≡* q2 -> Ok q2) ->
-  (forall l' c v Q', subbag l' l2 ->
-     lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' -> Ok (msgs l' ‖ Q')) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  (forall p' q', Static p' -> LOk p' -> Static q' -> Ok q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
-Proof.
-  intros LOk Ok l1 l2 M N HM HN Hoc HLbag HLmsg HLbase HOk1 HOk2 HOk3 Hpre IH.
-  destruct (lts_dec (msgs l2 ‖ ((g N) : proc)) τ) as [Hno|Hyes].
-  - apply (completeness_cfg_split_ok LOk Ok l1 l2 M N); try assumption.
-    intros z Hz. eapply (Hno (msgs l2 ‖ z)). apply lts_parR. exact Hz.
-  - apply (completeness_cfg_glb_ok LOk Ok l1 l2 M N); assumption.
-Qed.
-
-(** …and the unrestricted instance, which is what [completeness_step_mute]
-    consumes: nothing is asked of the left ([LOk := fun _ => True]) and the
-    right's reducts are measured by [DomOk]. *)
-
-Corollary completeness_cfg_mute_dom :
-  forall (q0 : proc) (l1 l2 : list TypeOfActions) (M N : gproc),
-  Static q0 -> domsim q0 (msgs l2 ‖ ((g N) : proc)) ->
-  gStatic M -> gStatic N ->
-  (forall c u, In (c,u) l2 -> ~ In c (ochans ((g M) : proc))) ->
-  ((msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l2 ‖ ((g N) : proc))) ->
-  (forall p' q', Static p' -> Static q' -> DomOk q0 q' ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l2 ‖ ((g N) : proc)).
-Proof.
-  intros q0 l1 l2 M N Hq0 Hd HM HN Hoc Hpre IH.
-  apply (completeness_cfg_mute_ok (fun _ => True) (DomOk q0) l1 l2 M N);
-    try assumption; try (intros; exact I).
-  - intros a r Hr. eapply domok_of_domsim; eassumption.
-  - intros q1 q2 H1 H2. eapply DomOk_cgr; eassumption.
-  - intros l' c v Q' Hsub Hin. eapply domok_of_subbag_input; eassumption.
-  - intros p' q' Hp' _ Hq' Hok Hs. apply IH; assumption.
-Qed.
-
-(** * THE STEP, IN THE SHAPE THE OUTER RECURSION CONSUMES
-
-    Everything lines up here.  [normal_form_nores_sim] turns the ν-free
-    right-hand side into a **bare configuration** *and* hands over the
-    [domsim] that measures its reducts against the **original** [q];
-    [ax_below_of_domok] spends that measure; and what is left is exactly
-    [completeness_from_step]'s hypothesis, restricted to a left-hand side
-    that is a mute configuration.
-
-    The left is *not* normalised: it is taken already in configuration
-    form with [ochans (g M) = []].  Producing that from an arbitrary
-    [Static p] is the remaining gap — and it is the residue this
-    development has been circling since the [Harmless]/[Bad] family, not
-    a missing piece of plumbing. *)
-
-Theorem completeness_step_mute :
-  forall (q : proc) (l1 : list TypeOfActions) (M : gproc),
-  Static q -> NoRes q -> gStatic M -> ochans ((g M) : proc) = [] ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros q l1 M Hq Hnr HM Hoc Hpre IH.
-  destruct (normal_form_nores_sim q Hq Hnr) as (l2 & N & HN & Hd).
-  eapply ax_trans; [ | exact (ds_r Hd) ].
-  eapply completeness_cfg_mute_dom; try eassumption.
-  - intros c u _ Hin.
-    assert (Hnil : In c (@nil ChannelData)) by (rewrite <- Hoc; exact Hin).
-    contradiction.
-  - intros t Ht. apply (soundness_ax _ _ (ds_l Hd)). apply Hpre. exact Ht.
-  - intros p' q' Hp' Hq' Hok Hpre'.
-    eapply ax_below_of_domok; eassumption.
-Qed.
-
-
-(** * THE RESIDUE, NAMED ON THE LEFT-HAND SIDE: [MuteNF]
-
-    [completeness_step_mute] takes its left already as a **mute
-    configuration**.  Naming that property of [p] alone turns the step
-    into exactly [completeness_from_step]'s hypothesis, conditional on
-    one predicate:
-
-        MuteNF p := p is ⊢-equal to some [msgs l ‖ g M] with
-                    [ochans (g M) = []]
-
-    i.e. *p normalises to a configuration whose guarded sum can never
-    emit*.  [MuteNF_gsum] and [MuteNF_cfg] show it is not vacuous, and
-    [VACCS_Bad.no_output_below_nil] says what it means semantically: such
-    a [p], stripped of its bag, sits below [𝟘].
-
-    That is the residue — the same one the [Harmless]/[Bad]/[BadK] family
-    was built for and shown not to capture. *)
-
-Definition MuteNF (p : proc) : Prop :=
-  exists l M, gStatic M /\ ochans ((g M) : proc) = []
-           /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc))
-           /\ (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
-
-Lemma MuteNF_gsum : forall (M : gproc),
-  gStatic M -> ochans ((g M) : proc) = [] -> MuteNF ((g M) : proc).
-Proof.
-  intros M HM Hoc. exists nil, M. split; [ exact HM | ]. split; [ exact Hoc | ].
-  assert (Hc : ((g M) : proc) ≡* (msgs nil ‖ ((g M) : proc))).
-  { simpl. symmetry. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ]. }
-  split; [ apply ax_cgr; exact Hc | apply ax_cgr_sym; exact Hc ].
-Qed.
-
-Lemma MuteNF_cfg : forall (l : list TypeOfActions) (M : gproc),
-  gStatic M -> ochans ((g M) : proc) = [] -> MuteNF (msgs l ‖ ((g M) : proc)).
-Proof.
-  intros l M HM Hoc. exists l, M.
-  split; [ exact HM | ]. split; [ exact Hoc | ]. split; apply ax_refl.
-Qed.
-
-Theorem completeness_step_of_mute_nf :
-  forall (p q : proc),
-  Static q -> NoRes q -> MuteNF p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hq Hnr (l1 & M & HM & Hoc & Hpm & Hmp) Hpre IH.
-  eapply ax_trans; [ exact Hpm | ].
-  apply completeness_step_mute; try assumption.
-  intros t Ht. apply Hpre. apply (soundness_ax _ _ Hmp). exact Ht.
-Qed.
 
 
 (** * A SYNTACTIC SUFFICIENT CONDITION FOR [MuteNF]
@@ -8670,82 +5712,6 @@ Proof.
     + apply ochans_NewVar.
     + f_equal; apply gochans_gNewVar.
 Qed.
-
-Lemma gochans_ext_nil : forall M N,
-  gochans M = [] -> gochans N = [] -> gochans (ext M N) = [].
-Proof.
-  induction M as [ | | c P | P | M1 IH1 M2 IH2 ]; intros N HM HN; simpl in *.
-  - reflexivity.
-  - reflexivity.
-  - rewrite HM. simpl. rewrite gochans_gNewVar. exact HN.
-  - rewrite HM. simpl. exact HN.
-  - apply app_eq_nil in HM as (H1 & H2). rewrite IH1, IH2; auto.
-Qed.
-
-Lemma gochans_ext_r_nil : forall N M,
-  gochans N = [] -> gochans M = [] -> gochans (ext_r N M) = [].
-Proof.
-  induction N as [ | | c Q | Q | N1 IH1 N2 IH2 ]; intros M HN HM; simpl in *.
-  - reflexivity.
-  - reflexivity.
-  - rewrite HN. rewrite gochans_gNewVar. rewrite HM. reflexivity.
-  - rewrite HN. rewrite HM. reflexivity.
-  - apply app_eq_nil in HN as (H1 & H2). rewrite IH1, IH2; auto.
-Qed.
-
-Theorem normal_form_nores_mute : forall p, Static p -> NoRes p -> ochans p = [] ->
-  exists M, gStatic M /\ ochans ((g M) : proc) = []
-         /\ domsim p (msgs nil ‖ ((g M) : proc)).
-Proof.
-  intro p. induction p as [p IHp] using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros Hs Hnr Hoc. destruct p as [p1 p2|x|x p0|E p1 p2|c v|p0|M].
-  - inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-    simpl in Hoc. apply app_eq_nil in Hoc as (Ho1 & Ho2).
-    destruct (IHp p1 ltac:(simpl; lia) H1 Hn1 Ho1) as (M1 & HM1 & Hm1 & Hd1).
-    destruct (IHp p2 ltac:(simpl; lia) H2 Hn2 Ho2) as (M2 & HM2 & Hm2 & Hd2).
-    exists (ext M1 M2 + ext_r M2 M1).
-    split; [ constructor; [ apply ext_gStatic | apply ext_r_gStatic ]; assumption | ].
-    split.
-    { simpl. simpl in Hm1, Hm2.
-      rewrite (gochans_ext_nil M1 M2 Hm1 Hm2).
-      rewrite (gochans_ext_r_nil M2 M1 Hm2 Hm1). reflexivity. }
-    assert (Hc : ((msgs nil ‖ ((g M1) : proc)) ‖ (msgs nil ‖ ((g M2) : proc)))
-                 ≡* (msgs nil ‖ (((g M1) : proc) ‖ ((g M2) : proc)))).
-    { etransitivity; [ apply cgr_par_exchange | ].
-      apply cgr_fullpar; [ symmetry; apply (msgs_app nil nil) | reflexivity ]. }
-    eapply domsim_trans; [ apply domsim_par; [ exact Hd1 | exact Hd2 ] | ].
-    eapply domsim_trans; [ apply domsim_cgr; exact Hc | ].
-    apply domsim_par; [ apply domsim_refl | apply domsim_expansion ].
-  - inversion Hs.
-  - inversion Hs.
-  - simpl in Hoc. apply app_eq_nil in Hoc as (Ho1 & Ho2).
-    destruct (Eval_Eq 0 E) as [[|]|] eqn:HE;
-      [ | | exfalso; eapply Eval_Eq_0_not_none; exact HE ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-      destruct (IHp p1 ltac:(simpl; lia) H1 Hn1 Ho1) as (M & HM & Hm & Hd).
-      exists M. split; [ exact HM | ]. split; [ exact Hm | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_true; exact HE | exact Hd ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-      destruct (IHp p2 ltac:(simpl; lia) H3 Hn2 Ho2) as (M & HM & Hm & Hd).
-      exists M. split; [ exact HM | ]. split; [ exact Hm | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_false; exact HE | exact Hd ].
-  - (* a pending message is exactly what the criterion excludes *)
-    simpl in Hoc. discriminate Hoc.
-  - simpl in Hnr. contradiction.
-  - inversion Hs; subst. exists M. split; [ assumption | ].
-    split; [ exact Hoc | ]. simpl.
-    apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
-Qed.
-
-Corollary MuteNF_of_mute : forall p, Static p -> NoRes p -> ochans p = [] -> MuteNF p.
-Proof.
-  intros p Hs Hnr Hoc.
-  destruct (normal_form_nores_mute p Hs Hnr Hoc) as (M & HM & Hm & Hd).
-  exists nil, M. split; [ exact HM | ]. split; [ exact Hm | ].
-  split; [ exact (ds_l Hd) | exact (ds_r Hd) ].
-Qed.
-
 
 (** * THE LEFT-HAND CLASS IS STABLE UNDER THE RECURSION
 
@@ -8806,71 +5772,6 @@ Proof.
         assumption.
 Qed.
 
-Lemma gNoResD_ext : forall M N, gNoResD M -> gNoResD N -> gNoResD (ext M N).
-Proof.
-  induction M as [ | | c P | P | M1 IH1 M2 IH2 ]; intros N HM HN; simpl in *.
-  - exact I.
-  - exact I.
-  - split; [ exact HM | apply gNoResD_gNewVar; exact HN ].
-  - split; [ exact HM | exact HN ].
-  - destruct HM as (H1 & H2). split; [ apply IH1 | apply IH2 ]; assumption.
-Qed.
-
-Lemma gNoResD_ext_r : forall N M, gNoResD N -> gNoResD M -> gNoResD (ext_r N M).
-Proof.
-  induction N as [ | | c Q | Q | N1 IH1 N2 IH2 ]; intros M HN HM; simpl in *.
-  - exact I.
-  - exact I.
-  - split; [ apply gNoResD_gNewVar; exact HM | exact HN ].
-  - split; [ exact HM | exact HN ].
-  - destruct HN as (H1 & H2). split; [ apply IH1 | apply IH2 ]; assumption.
-Qed.
-
-(** …so the normal form of a deeply ν-free process has a deeply ν-free
-    guarded sum, and every reduct of it is deeply ν-free again.  That is
-    the right-hand half of the class the restricted recursion needs. *)
-
-Theorem normal_form_deep : forall p, Static p -> NoResD p ->
-  exists l M, gStatic M /\ gNoResD M /\ domsim p (msgs l ‖ ((g M) : proc)).
-Proof.
-  intro p. induction p as [p IHp] using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros Hs Hnr. destruct p as [p1 p2|x|x p0|E p1 p2|c v|p0|M].
-  - inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-    destruct (IHp p1 ltac:(simpl; lia) H1 Hn1) as (l1 & M1 & HM1 & Hd1 & Hs1).
-    destruct (IHp p2 ltac:(simpl; lia) H2 Hn2) as (l2 & M2 & HM2 & Hd2 & Hs2).
-    exists (l1 ++ l2), (ext M1 M2 + ext_r M2 M1).
-    split; [ constructor; [ apply ext_gStatic | apply ext_r_gStatic ]; assumption | ].
-    split; [ split; [ apply gNoResD_ext | apply gNoResD_ext_r ]; assumption | ].
-    assert (Hc : ((msgs l1 ‖ ((g M1) : proc)) ‖ (msgs l2 ‖ ((g M2) : proc)))
-                 ≡* (msgs (l1 ++ l2) ‖ (((g M1) : proc) ‖ ((g M2) : proc)))).
-    { etransitivity; [ apply cgr_par_exchange | ].
-      apply cgr_fullpar; [ symmetry; apply msgs_app | reflexivity ]. }
-    eapply domsim_trans; [ apply domsim_par; [ exact Hs1 | exact Hs2 ] | ].
-    eapply domsim_trans; [ apply domsim_cgr; exact Hc | ].
-    apply domsim_par; [ apply domsim_refl | apply domsim_expansion ].
-  - inversion Hs.
-  - inversion Hs.
-  - destruct (Eval_Eq 0 E) as [[|]|] eqn:HE;
-      [ | | exfalso; eapply Eval_Eq_0_not_none; exact HE ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-      destruct (IHp p1 ltac:(simpl; lia) H1 Hn1) as (l & M & HM & Hdd & Hd).
-      exists l, M. split; [ exact HM | ]. split; [ exact Hdd | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_true; exact HE | exact Hd ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-      destruct (IHp p2 ltac:(simpl; lia) H3 Hn2) as (l & M & HM & Hdd & Hd).
-      exists l, M. split; [ exact HM | ]. split; [ exact Hdd | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_false; exact HE | exact Hd ].
-  - exists [(c,v)], 𝟘. split; [ constructor | ]. split; [ exact I | ]. simpl.
-    apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | ].
-    apply cgr_fullpar; [ apply cgr_par_nil_rev | reflexivity ].
-  - simpl in Hnr. contradiction.
-  - inversion Hs; subst. exists [], M. split; [ assumption | ].
-    split; [ exact Hnr | ]. simpl.
-    apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
-Qed.
-
-
 (** * THE LEFT-HAND CLASS, WEAKENED: [MuteSem]
 
     [MuteNF] asks for [⊢] in **both** directions between [p] and its mute
@@ -8897,65 +5798,6 @@ Definition MuteSem (p : proc) : Prop :=
            /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc))
            /\ (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ p.
 
-Lemma MuteSem_of_MuteNF : forall p, MuteNF p -> MuteSem p.
-Proof.
-  intros p (l & M & HM & Hoc & Hpm & Hmp).
-  exists l, M. split; [ exact HM | ]. split; [ exact Hoc | ].
-  split; [ exact Hpm | ]. apply soundness_ax. exact Hmp.
-Qed.
-
-Lemma MuteSem_gsum : forall (M : gproc),
-  gStatic M -> ochans ((g M) : proc) = [] -> MuteSem ((g M) : proc).
-Proof.
-  intros M HM Hoc. apply MuteSem_of_MuteNF. apply MuteNF_gsum; assumption.
-Qed.
-
-Lemma MuteSem_cfg : forall (l : list TypeOfActions) (M : gproc),
-  gStatic M -> ochans ((g M) : proc) = [] -> MuteSem (msgs l ‖ ((g M) : proc)).
-Proof.
-  intros l M HM Hoc. apply MuteSem_of_MuteNF. apply MuteNF_cfg; assumption.
-Qed.
-
-Lemma MuteSem_msg : forall (c : ChannelData) (v : ValueData) (p : proc),
-  MuteSem p -> MuteSem (((c ! v • 𝟘) : proc) ‖ p).
-Proof.
-  intros c v p (l & M & HM & Hoc & Hpm & Hmp).
-  exists ((c,v) :: l), M. split; [ exact HM | ]. split; [ exact Hoc | ].
-  assert (Hc : (((c ! v • 𝟘) : proc) ‖ (msgs l ‖ ((g M) : proc)))
-                 ≡* (msgs ((c,v) :: l) ‖ ((g M) : proc))).
-  { simpl. symmetry. apply cgr_par_assoc. }
-  split.
-  - eapply ax_trans; [ apply ax_par; [ apply ax_refl | exact Hpm ] | ].
-    apply ax_cgr. exact Hc.
-  - intros t Ht.
-    apply (must_i_par_compat_r ((c ! v • 𝟘) : proc) _ _ Hmp).
-    apply (proj1 (must_i_cgr _ _ Hc)). exact Ht.
-Qed.
-
-Lemma MuteSem_bag : forall (l : list TypeOfActions) (p : proc),
-  MuteSem p -> MuteSem (msgs l ‖ p).
-Proof.
-  induction l as [|a l IH]; intros p Hp; simpl.
-  - destruct Hp as (l0 & M & HM & Hoc & Hpm & Hmp).
-    exists l0, M. split; [ exact HM | ]. split; [ exact Hoc | ].
-    assert (Hc : (((g (𝟘 : gproc)) : proc) ‖ p) ≡* p).
-    { etransitivity; [ apply cgr_par_com | apply cgr_par_nil ]. }
-    split.
-    + eapply ax_trans; [ apply ax_cgr; exact Hc | exact Hpm ].
-    + intros t Ht. apply (proj1 (must_i_cgr _ _ Hc)). apply Hmp. exact Ht.
-  - destruct a as (c,v).
-    assert (Hrec : MuteSem (msgs l ‖ p)) by (apply IH; exact Hp).
-    assert (Hm := MuteSem_msg c v (msgs l ‖ p) Hrec).
-    destruct Hm as (l0 & M & HM & Hoc & Hpm & Hmp).
-    exists l0, M. split; [ exact HM | ]. split; [ exact Hoc | ].
-    assert (Hc : ((((c ! v • 𝟘) : proc) ‖ msgs l) ‖ p)
-                   ≡* (((c ! v • 𝟘) : proc) ‖ (msgs l ‖ p)))
-      by (apply cgr_par_assoc).
-    split.
-    + eapply ax_trans; [ apply ax_cgr; exact Hc | exact Hpm ].
-    + intros t Ht. apply (proj1 (must_i_cgr _ _ Hc)). apply Hmp. exact Ht.
-Qed.
-
 (** * THE RESTRICTED RECURSION
 
     [completeness_from_step]'s frame is unrestricted: its recursive
@@ -8974,29 +5816,6 @@ Qed.
 Definition DomOkD (q0 q' : proc) : Prop :=
   exists r', Static r' /\ NoResD r' /\ (size r' < size q0)%nat
              /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
-
-Lemma domokd_of_domsim : forall (q0 q : proc) a r,
-  Static q0 -> NoResD q0 -> domsim q0 q -> lts q a r -> DomOkD q0 r.
-Proof.
-  intros q0 q a r Hst Hnr Hd Hl.
-  destruct (ds_s Hd a r Hl) as (r' & Hr' & Hds).
-  exists r'. split; [ | split; [ | split; [ | split ] ] ].
-  - eapply Static_preserved_by_lts; [ exact Hst | exact Hr' ].
-  - eapply noresd_lts_target; [ exact Hst | exact Hnr | exact Hr' ].
-  - eapply Static_lts_decrease; [ exact Hst | exact Hr' ].
-  - exact (ds_r Hds).
-  - exact (ds_l Hds).
-Qed.
-
-Lemma DomOkD_cgr : forall (q0 q1 q2 : proc),
-  DomOkD q0 q1 -> q1 ≡* q2 -> DomOkD q0 q2.
-Proof.
-  intros q0 q1 q2 (r' & Hr' & Hnr & Hlt & Hqr & Hrq) Hc.
-  exists r'. split; [ exact Hr' | ]. split; [ exact Hnr | ].
-  split; [ exact Hlt | ]. split.
-  - eapply ax_trans; [ apply ax_cgr_sym; exact Hc | exact Hqr ].
-  - eapply ax_trans; [ exact Hrq | apply ax_cgr; exact Hc ].
-Qed.
 
 Lemma domokd_of_domsim_wt : forall (q0 q : proc) mu s r,
   Static q0 -> NoResD q0 -> domsim q0 q -> q ⟹[mu :: s] r -> DomOkD q0 r.
@@ -9017,120 +5836,6 @@ Proof.
   intros q0 q s r Hst Hnr Hd Hw Hs. destruct s as [|mu s0]; [ contradiction | ].
   eapply domokd_of_domsim_wt; eassumption.
 Qed.
-
-Lemma domokd_of_subbag_input : forall (q0 : proc) (l2 l' : list TypeOfActions)
-    (N : gproc) c v Q',
-  Static q0 -> NoResD q0 -> domsim q0 (msgs l2 ‖ ((g N) : proc)) ->
-  subbag l' l2 -> lts ((g N) : proc) (ActExt (ActIn (c,v))) Q' ->
-  DomOkD q0 (msgs l' ‖ Q').
-Proof.
-  intros q0 l2 l' N c v Q' Hst Hnr Hd Hsub Hin.
-  destruct (cfg_reach_subbag l' l2 ((g N) : proc) Hsub) as (u & r & Hr & Hcr).
-  assert (Hstep : lts (msgs l' ‖ ((g N) : proc)) (ActExt (ActIn (c,v)))
-                      (msgs l' ‖ Q')) by (apply lts_parR; exact Hin).
-  assert (Hcr' : (msgs l' ‖ ((g N) : proc)) ≡* r) by (symmetry; exact Hcr).
-  destruct (cgr_lts_transfer _ r _ _ Hcr' Hstep) as (x & Hx & Hcx).
-  assert (Hbig : (msgs l2 ‖ ((g N) : proc))
-                   ⟹[map ActOut u ++ (ActIn (c,v) :: nil)] x).
-  { eapply wt_concat; [ exact Hr | eapply wt_act; [ exact Hx | apply wt_nil ] ]. }
-  eapply DomOkD_cgr; [ | symmetry; exact Hcx ].
-  eapply domokd_of_domsim_wt';
-    [ exact Hst | exact Hnr | exact Hd | exact Hbig | ].
-  destruct u as [|a u0]; simpl; discriminate.
-Qed.
-
-(** The step, in the restricted frame.  Compare [completeness_step_mute]:
-    the recursive premise now *gets* [MuteNF p'] and [NoResD q'] as well,
-    and the proof *supplies* them at the four call sites — the left ones
-    from [MuteSem_gsum]/[MuteSem_msg]/[MuteSem_bag], the right ones from
-    [normal_form_deep]'s [gNoResD N] carried through [DomOkD]. *)
-
-Theorem completeness_step_deep :
-  forall (q : proc) (l1 : list TypeOfActions) (M : gproc),
-  Static q -> NoResD q -> gStatic M -> ochans ((g M) : proc) = [] ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (forall p' q', Static p' -> MuteSem p' -> Static q' -> NoResD q' ->
-     (size q' < size q)%nat -> p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (msgs l1 ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros q l1 M Hq Hnr HM Hoc Hpre IH.
-  destruct (normal_form_deep q Hq Hnr) as (l2 & N & HN & HNd & Hd).
-  eapply ax_trans; [ | exact (ds_r Hd) ].
-  apply (completeness_cfg_mute_ok MuteSem (DomOkD q) l1 l2 M N); try assumption.
-  - intros c u _ Hin.
-    assert (Hnil : In c (@nil ChannelData)) by (rewrite <- Hoc; exact Hin).
-    contradiction.
-  - intros l p Hp. apply MuteSem_bag. exact Hp.
-  - intros c v p Hp. apply MuteSem_msg. exact Hp.
-  - apply MuteSem_gsum; assumption.
-  - intros a r Hr. eapply domokd_of_domsim; eassumption.
-  - intros q1 q2 H1 H2. eapply DomOkD_cgr; eassumption.
-  - intros l' c v Q' Hsub Hin. eapply domokd_of_subbag_input; eassumption.
-  - intros t Ht. apply (soundness_ax _ _ (ds_l Hd)). apply Hpre. exact Ht.
-  - intros p' q' Hp' Hlp' Hq' (r' & Hr' & Hnrr & Hlt & Hqr & Hrq) Hs.
-    eapply ax_trans; [ | exact Hrq ].
-    apply IH; try assumption.
-    intros t Ht. apply (soundness_ax _ _ Hqr). apply Hs. exact Ht.
-Qed.
-
-(** …and the recursion itself, on [size q], **inside the class**. *)
-
-Theorem completeness_deep :
-  forall (q p : proc), Static q -> NoResD q -> Static p -> MuteSem p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intro q. induction q as [q IHq] using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros p Hq Hnr Hp Hm Hpre.
-  destruct Hm as (l1 & M & HM & Hoc & Hpm & Hmp).
-  eapply ax_trans; [ exact Hpm | ].
-  apply completeness_step_deep; try assumption.
-  - intros t Ht. apply Hpre. apply Hmp. exact Ht.
-  - intros p' q' Hsp' Hmp' Hsq' Hnq' Hlt Hs.
-    apply (IHq q' Hlt p' Hsq' Hnq' Hsp' Hmp' Hs).
-Qed.
-
-(** The usable form: **a mute configuration below any deeply ν-free
-    [Static] process is derivably below it** — no side condition, no
-    induction hypothesis to supply. *)
-
-Corollary completeness_deep_cfg :
-  forall (l : list TypeOfActions) (M : gproc) (q : proc),
-  Static q -> NoResD q -> gStatic M -> ochans ((g M) : proc) = [] ->
-  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros l M q Hq Hnr HM Hoc Hpre.
-  apply completeness_deep; try assumption.
-  - constructor; [ apply msgs_Static | apply static_g; exact HM ].
-  - apply MuteSem_cfg; assumption.
-Qed.
-
-Lemma NoResD_NoRes : forall p, NoResD p -> NoRes p.
-Proof.
-  induction p as [p1 IH1 p2 IH2 | i | x P IH | C P IH1 Q IH2 | c v | P IH | M];
-    intros H; simpl in *; try exact I.
-  - destruct H as (H1 & H2). split; [ apply IH1 | apply IH2 ]; assumption.
-  - apply IH. exact H.
-  - destruct H as (H1 & H2). split; [ apply IH1 | apply IH2 ]; assumption.
-  - contradiction.
-Qed.
-
-(** …and its process-level reading, where both sides are given as plain
-    [Static] terms: a ν-free process that can never emit is derivably
-    below any ν-free process it is semantically below. *)
-
-Corollary completeness_mute_deep :
-  forall (p q : proc), Static p -> Static q -> NoResD p -> NoResD q ->
-  ochans p = [] -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hnp Hnq Hoc Hpre.
-  apply completeness_deep; try assumption.
-  apply MuteSem_of_MuteNF.
-  apply MuteNF_of_mute; try assumption.
-  apply NoResD_NoRes. exact Hnp.
-Qed.
-
 
 (** * WIDENING THE LEFT-HAND CLASS: [MuteG]
 
@@ -9170,87 +5875,6 @@ Proof.
   - exact Hoc.
 Qed.
 
-(** …and the normal form carries the three invariants at once: [gStatic],
-    deep ν-freedom, and mutity of the sum.  Same proof as
-    [normal_form_deep] with one more conjunct, the [‖] case going through
-    [gochans_ext_nil]/[gochans_ext_r_nil] exactly as
-    [normal_form_nores_mute] does. *)
-
-Theorem normal_form_deep_mute : forall p, Static p -> NoResD p -> MuteG p ->
-  exists l M, gStatic M /\ gNoResD M /\ ochans ((g M) : proc) = []
-           /\ domsim p (msgs l ‖ ((g M) : proc)).
-Proof.
-  intro p. induction p as [p IHp] using
-    (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros Hs Hnr Hmu. destruct p as [p1 p2|x|x p0|E p1 p2|c v|p0|M].
-  - inversion Hs; subst. destruct Hnr as (Hn1 & Hn2).
-    destruct Hmu as (Hu1 & Hu2).
-    destruct (IHp p1 ltac:(simpl; lia) H1 Hn1 Hu1)
-      as (l1 & M1 & HM1 & Hd1 & Hm1 & Hs1).
-    destruct (IHp p2 ltac:(simpl; lia) H2 Hn2 Hu2)
-      as (l2 & M2 & HM2 & Hd2 & Hm2 & Hs2).
-    exists (l1 ++ l2), (ext M1 M2 + ext_r M2 M1).
-    split; [ constructor; [ apply ext_gStatic | apply ext_r_gStatic ]; assumption | ].
-    split; [ split; [ apply gNoResD_ext | apply gNoResD_ext_r ]; assumption | ].
-    split.
-    { simpl. simpl in Hm1, Hm2.
-      rewrite (gochans_ext_nil M1 M2 Hm1 Hm2).
-      rewrite (gochans_ext_r_nil M2 M1 Hm2 Hm1). reflexivity. }
-    assert (Hc : ((msgs l1 ‖ ((g M1) : proc)) ‖ (msgs l2 ‖ ((g M2) : proc)))
-                 ≡* (msgs (l1 ++ l2) ‖ (((g M1) : proc) ‖ ((g M2) : proc)))).
-    { etransitivity; [ apply cgr_par_exchange | ].
-      apply cgr_fullpar; [ symmetry; apply msgs_app | reflexivity ]. }
-    eapply domsim_trans; [ apply domsim_par; [ exact Hs1 | exact Hs2 ] | ].
-    eapply domsim_trans; [ apply domsim_cgr; exact Hc | ].
-    apply domsim_par; [ apply domsim_refl | apply domsim_expansion ].
-  - inversion Hs.
-  - inversion Hs.
-  - destruct (Eval_Eq 0 E) as [[|]|] eqn:HE;
-      [ | | exfalso; eapply Eval_Eq_0_not_none; exact HE ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2). destruct Hmu as (Hu1 & Hu2).
-      destruct (IHp p1 ltac:(simpl; lia) H1 Hn1 Hu1) as (l & M & HM & Hdd & Hm & Hd).
-      exists l, M. split; [ exact HM | ]. split; [ exact Hdd | ].
-      split; [ exact Hm | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_true; exact HE | exact Hd ].
-    + inversion Hs; subst. destruct Hnr as (Hn1 & Hn2). destruct Hmu as (Hu1 & Hu2).
-      destruct (IHp p2 ltac:(simpl; lia) H3 Hn2 Hu2) as (l & M & HM & Hdd & Hm & Hd).
-      exists l, M. split; [ exact HM | ]. split; [ exact Hdd | ].
-      split; [ exact Hm | ].
-      eapply domsim_trans; [ apply domsim_cgr; apply cgr_if_false; exact HE | exact Hd ].
-  - exists [(c,v)], 𝟘. split; [ constructor | ]. split; [ exact I | ].
-    split; [ reflexivity | ]. simpl.
-    apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | ].
-    apply cgr_fullpar; [ apply cgr_par_nil_rev | reflexivity ].
-  - simpl in Hnr. contradiction.
-  - inversion Hs; subst. exists [], M. split; [ assumption | ].
-    split; [ exact Hnr | ]. split; [ exact Hmu | ]. simpl.
-    apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
-Qed.
-
-Corollary MuteNF_of_muteG : forall p,
-  Static p -> NoResD p -> MuteG p -> MuteNF p.
-Proof.
-  intros p Hs Hnr Hmu.
-  destruct (normal_form_deep_mute p Hs Hnr Hmu) as (l & M & HM & _ & Hoc & Hd).
-  exists l, M. split; [ exact HM | ]. split; [ exact Hoc | ].
-  split; [ exact (ds_l Hd) | exact (ds_r Hd) ].
-Qed.
-
-(** ** Completeness on the fragment, at the process level
-
-    Both sides plain [Static] terms; the left's guarded sums mute, both
-    sides deeply ν-free.  [completeness_mute_deep] is the instance at
-    [ochans p = []], which [MuteG_of_mute] shows is strictly stronger. *)
-
-Theorem completeness_muteG : forall (p q : proc),
-  Static p -> Static q -> NoResD p -> NoResD q -> MuteG p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hnp Hnq Hmu Hpre.
-  apply completeness_deep; try assumption.
-  apply MuteSem_of_MuteNF. apply MuteNF_of_muteG; assumption.
-Qed.
-
 (** [MuteSem] transports along the *same* asymmetric pair it is defined
     by — [⊢] one way, the semantics the other — so any process squeezed
     that way against a member is itself a member. *)
@@ -9263,39 +5887,6 @@ Proof.
   split.
   - eapply ax_trans; [ exact Hqp | exact Hpm ].
   - intros t Ht. apply Hpq. apply Hmp. exact Ht.
-Qed.
-
-(** …and it is **closed under parallel composition**.  Both halves are
-    the expansion law read in its two directions: [ax_expansion_l] for
-    the derivation, [must_i_expansion_r] for the semantics — and mutity
-    survives because [gochans_ext_nil]/[gochans_ext_r_nil] say the
-    expansion of two mute sums is mute.
-
-    So a mute process beside any number of copycats is in the class. *)
-
-Lemma MuteSem_par : forall (p q : proc),
-  MuteSem p -> MuteSem q -> MuteSem (p ‖ q).
-Proof.
-  intros p q (lp & Mp & HMp & Hop & Hpm & Hmp) (lq & Mq & HMq & Hoq & Hqm & Hmq).
-  exists (lp ++ lq), (ext Mp Mq + ext_r Mq Mp).
-  split; [ constructor; [ apply ext_gStatic | apply ext_r_gStatic ]; assumption | ].
-  split.
-  { simpl. simpl in Hop, Hoq.
-    rewrite (gochans_ext_nil Mp Mq Hop Hoq).
-    rewrite (gochans_ext_r_nil Mq Mp Hoq Hop). reflexivity. }
-  assert (Hc : ((msgs lp ‖ ((g Mp) : proc)) ‖ (msgs lq ‖ ((g Mq) : proc)))
-               ≡* (msgs (lp ++ lq) ‖ (((g Mp) : proc) ‖ ((g Mq) : proc)))).
-  { etransitivity; [ apply cgr_par_exchange | ].
-    apply cgr_fullpar; [ symmetry; apply msgs_app | reflexivity ]. }
-  split.
-  - eapply ax_trans; [ apply ax_par; [ exact Hpm | exact Hqm ] | ].
-    eapply ax_trans; [ apply ax_cgr; exact Hc | ].
-    apply ax_par; [ apply ax_refl | apply ax_expansion_l ].
-  - intros t Ht.
-    apply (must_i_par_compat2 _ _ _ _ Hmp Hmq).
-    apply (proj1 (must_i_cgr _ _ Hc)).
-    apply (must_i_par_compat_r (msgs (lp ++ lq)) _ _ (must_i_expansion_r Mp Mq)).
-    exact Ht.
 Qed.
 
 (** Two consequences of [MuteSem_transport], both by [ax_cgr]: the class
@@ -9320,24 +5911,6 @@ Proof.
   - eapply MuteSem_cgr; [ apply cgr_if_false; exact HE | exact Hq ].
 Qed.
 
-(** The class is genuinely wider than the syntactic criterion: the
-    **copycat** is in it, and [MuteG] rejects it (its guard's
-    continuation emits, on its own channel).  [ax_ccat_l] supplies the
-    [⊢] half, [must_i_ccat_r] the semantic half — and the *converse*
-    derivation [(g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (ccat c)], which [MuteNF] would need, is not used
-    anywhere. *)
-
-Lemma MuteSem_ccat : forall c, MuteSem (ccat c).
-Proof.
-  intro c. exists [], 𝟘. split; [ constructor | ]. split; [ reflexivity | ].
-  assert (Hc : (msgs nil ‖ ((g (𝟘 : gproc)) : proc)) ≡* ((g (𝟘 : gproc)) : proc)).
-  { simpl. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ]. }
-  split.
-  - eapply ax_trans; [ apply ax_ccat_l | apply ax_cgr_sym; exact Hc ].
-  - intros t Ht. apply (must_i_ccat_r c).
-    apply (proj2 (must_i_cgr _ _ Hc)). exact Ht.
-Qed.
-
 (** * THE RIGHT-HAND CLASS, WEAKENED TOO: [ResFree]
 
     Deep ν-freedom is asked of the right because [normal_form_deep] has
@@ -9349,41 +5922,6 @@ Qed.
 Definition ResFree (q : proc) : Prop :=
   exists q', Static q' /\ NoResD q' /\ q ᴠᴀᴄᴄꜱ⊑ₐₓ q' /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 
-Lemma ResFree_of_NoResD : forall q, Static q -> NoResD q -> ResFree q.
-Proof.
-  intros q Hq Hnr. exists q. split; [ exact Hq | ]. split; [ exact Hnr | ].
-  split; apply ax_refl.
-Qed.
-
-(** It is strictly weaker: [ax_res_normalize_l]/[_r] retire a ν over a
-    guarded sum, so e.g. [ν (g 𝟘)] is [ResFree] and not [NoResD].
-
-    It does **not** retire ν in general, and it is worth being precise
-    about why: [resg] pushes the ν into each guard's *continuation*
-    ([resg (c ? p) = c' ? (ν p)]), so one application makes the spine
-    ν-free and leaves ν's underneath.  Eliminating them all needs the
-    construction re-applied inside continuations — a fuelled recursion on
-    [size] — and, on top of that, a treatment of a **message under a ν**
-    ([ν ((bvar 0) ! v • 𝟘 ‖ g M)]), which no law of the system moves. *)
-
-Lemma ResFree_res_nil : ResFree (ν ((g (𝟘 : gproc)) : proc)).
-Proof.
-  exists ((g (𝟘 : gproc)) : proc). split; [ repeat constructor | ].
-  split; [ exact I | ].
-  split; [ apply (ax_res_normalize_l 𝟘) | apply (ax_res_normalize_r 𝟘) ].
-Qed.
-
-(** Completeness on the class, at the process level.  Note what is *not*
-    asked: nothing about [p] beyond [MuteSem], in particular no ν-freedom
-    — [p] enters only through its mute configuration. *)
-
-Corollary completeness_muteSem : forall (p q : proc),
-  Static p -> Static q -> NoResD q -> MuteSem p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hnq Hmu Hpre. apply completeness_deep; assumption.
-Qed.
-
 (** [ResFree] is closed under parallel composition — [ax_par] on both
     sides, and [NoResD] of a product is [NoResD] of the factors. *)
 
@@ -9393,182 +5931,6 @@ Proof.
   exists (p' ‖ q'). split; [ constructor; assumption | ].
   split; [ split; assumption | ].
   split; apply ax_par; assumption.
-Qed.
-
-(** * A ν CASE BEYOND [resg]: THE CLOSED HANDSHAKE
-
-    [resg] retires a ν over a guarded sum by pushing it into the guards'
-    continuations, so it never removes ν outright.  There is a second,
-    independent way in, and it is [ax_glb_tau]: a process whose *whole*
-    behaviour is one deterministic internal step is [⊢]-equal to a bare
-    [𝛕]-guard, **in both directions** — [ax_tau_step] one way, and
-    [ax_glb_tau] the other, its output and input premises being vacuous.
-
-    That is exactly the shape of a ν-block containing a closed
-    handshake, [ν ((bvar 0) ! v • 𝟘 ‖ g ((bvar 0) ? P))]: the message
-    cannot escape (its channel is the restricted one) and cannot be
-    supplied from outside, so the only thing that can happen is the
-    delivery.  It is the case no law of the system moves — and here it
-    is, moved. *)
-
-Lemma ax_tau_only_below : forall (q X Y : proc),
-  lts q τ X ->
-  (forall a z, lts q (ActExt a) z -> False) ->
-  X ᴠᴀᴄᴄꜱ⊑ₐₓ Y ->
-  q ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ((𝛕 • Y) : gproc)) : proc).
-Proof.
-  intros q X Y Hl Hnoext HXY. apply ax_glb_tau.
-  - exists Y. apply lts_tau.
-  - intros q' Hq'. inversion Hq'; subst.
-    eapply ax_trans; [ apply ax_tau_step; exact Hl | exact HXY ].
-  - intros c v q'' Hq''. inversion Hq''.
-  - intros c v q'' Hq''. inversion Hq''.
-  - intros c v p'' q'' Hp'' Hq''. inversion Hq''.
-Qed.
-
-Lemma ax_tau_only_above : forall (q X Y : proc),
-  lts q τ X ->
-  (forall z, lts q τ z -> z = X) ->
-  (forall a z, lts q (ActExt a) z -> False) ->
-  Y ᴠᴀᴄᴄꜱ⊑ₐₓ X ->
-  ((g ((𝛕 • Y) : gproc)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros q X Y Hl Hdet Hnoext HYX. apply ax_glb_tau.
-  - exists X. exact Hl.
-  - intros q' Hq'. rewrite (Hdet q' Hq').
-    eapply ax_trans; [ apply ax_tau_step; apply lts_tau | exact HYX ].
-  - intros c v q'' Hq''. exfalso. eapply Hnoext. exact Hq''.
-  - intros c v q'' Hq''. exfalso. eapply Hnoext. exact Hq''.
-  - intros c v p'' q'' Hp'' Hq''. exfalso. eapply Hnoext. exact Hq''.
-Qed.
-
-Lemma ResFree_tau_only : forall (q X : proc),
-  lts q τ X ->
-  (forall z, lts q τ z -> z = X) ->
-  (forall a z, lts q (ActExt a) z -> False) ->
-  ResFree X -> ResFree q.
-Proof.
-  intros q X Hl Hdet Hnoext (X' & HsX' & HnX' & HXX' & HX'X).
-  exists ((g ((𝛕 • X') : gproc)) : proc).
-  split; [ apply static_g; constructor; exact HsX' | ].
-  split; [ exact HnX' | ].
-  split.
-  - eapply ax_tau_only_below; eassumption.
-  - eapply ax_tau_only_above; eassumption.
-Qed.
-
-(** …and the instance, machine-checked: the **closed handshake**.  Its
-    only transition is the delivery — the message cannot escape (its
-    channel is the restricted one, and [VarC_action_add 1] never produces
-    [bvar 0]) and the guard cannot be fed from outside — so [ν] comes off
-    it, which [resg] alone never does. *)
-
-Lemma ResFree_handshake : forall (P : proc) (v : ValueData),
-  ResFree (ν (((g (𝟘 : gproc)) : proc) ‖ (subst_in_proc 0 v P))) ->
-  ResFree (ν ((((bvar 0) ! v • 𝟘) : proc)
-               ‖ ((g (((bvar 0) ? P) : gproc)) : proc))).
-Proof.
-  intros P v HX.
-  eapply ResFree_tau_only; [ | | | exact HX ].
-  - apply lts_res_tau. eapply lts_comL; [ apply lts_output | apply lts_input ].
-  - intros z Hz. inversion Hz; subst. inversion H0; subst.
-    + inversion H2; subst. inversion H3; subst. reflexivity.
-    + inversion H2.
-    + inversion H4.
-    + inversion H4.
-  - intros a z Hz. inversion Hz; subst. inversion H1; subst.
-    + inversion H4; subst. destruct a as [[c0 v0]|[c0 v0]]; simpl in *.
-      * discriminate.
-      * injection H as H H'. destruct c0 as [j|c1]; simpl in H; discriminate.
-    + inversion H4; subst. destruct a as [[c0 v1]|[c0 v1]]; simpl in *.
-      * injection H as H H'. destruct c0 as [j|c1]; simpl in H; discriminate.
-      * discriminate.
-Qed.
-
-(** …and the deterministic hypothesis is not needed either.  A process
-    with **no visible transition at all** is [⊢]-equal to the *internal
-    choice of its τ-reducts* — [ax_ichoice_glb] and [ax_tau_step] one
-    way, [ax_glb_tau] and [ax_ichoice_below] the other.  So a closed ν
-    block is retired whatever its internal branching, provided its
-    reducts are.
-
-    The reducts are collected as a **list** through [lts_set], which the
-    VACCS instance exposes as a [gset] — no choice principle is needed,
-    and [resfree_list] turns "every reduct is [ResFree]" into an actual
-    list of ν-free counterparts (an elimination of [Prop]-existentials
-    into a [Prop] goal, so no sort violation). *)
-
-Lemma ichoice_NoResD : forall (L : list proc),
-  Forall NoResD L -> gNoResD (ichoice L).
-Proof.
-  induction L as [|p L IH]; intros Hall.
-  { exact I. }
-  inversion Hall as [|? ? Hp Hrest]; subst.
-  destruct L as [|p2 L2]; simpl.
-  { split; exact Hp. }
-  split; [ exact Hp | apply IH; exact Hrest ].
-Qed.
-
-Lemma resfree_list : forall (L : list proc),
-  (forall x, In x L -> ResFree x) ->
-  exists L', (forall x', In x' L' -> Static x' /\ NoResD x')
-          /\ (forall x, In x L -> exists x', In x' L' /\ x ᴠᴀᴄᴄꜱ⊑ₐₓ x' /\ x' ᴠᴀᴄᴄꜱ⊑ₐₓ x)
-          /\ (forall x', In x' L' -> exists x, In x L /\ x ᴠᴀᴄᴄꜱ⊑ₐₓ x' /\ x' ᴠᴀᴄᴄꜱ⊑ₐₓ x)
-          /\ (L <> nil -> L' <> nil).
-Proof.
-  induction L as [|x L IH]; intro Hall.
-  { exists nil. split; [ contradiction | ]. split; [ contradiction | ].
-    split; [ contradiction | ]. intro Hne. contradiction. }
-  destruct (Hall x (or_introl eq_refl)) as (x' & Hsx' & Hnx' & H1 & H2).
-  destruct (IH (fun y Hy => Hall y (or_intror Hy))) as (L' & Hst & Hfw & Hbw & _).
-  exists (x' :: L').
-  split; [ intros z [Hz|Hz]; [ subst; split; assumption | apply Hst; exact Hz ] | ].
-  split.
-  { intros y [Hy|Hy].
-    { subst. exists x'. split; [ left; reflexivity | split; assumption ]. }
-    destruct (Hfw y Hy) as (y' & Hy' & Ha & Hb).
-    exists y'. split; [ right; exact Hy' | split; assumption ]. }
-  split.
-  { intros z [Hz|Hz].
-    { subst. exists x. split; [ left; reflexivity | split; assumption ]. }
-    destruct (Hbw z Hz) as (y & Hy & Ha & Hb).
-    exists y. split; [ right; exact Hy | split; assumption ]. }
-  intro Hne. discriminate.
-Qed.
-
-Lemma ResFree_tau_closed : forall (q : proc),
-  (exists z, lts q τ z) ->
-  (forall a z, lts q (ActExt a) z -> False) ->
-  (forall x, lts q τ x -> ResFree x) ->
-  ResFree q.
-Proof.
-  intros q (z0 & Hz0) Hnoext Hres.
-  assert (Hne : tau_list q <> nil).
-  { intro He. assert (Hin : In z0 (tau_list q)) by (apply tau_list_spec; exact Hz0).
-    rewrite He in Hin. contradiction. }
-  destruct (resfree_list (tau_list q)
-              (fun x Hx => Hres x (proj1 (tau_list_spec q x) Hx)))
-    as (L' & Hst & Hfw & Hbw & Hne').
-  exists ((g (ichoice L')) : proc).
-  split.
-  { apply static_g. apply ichoice_gStatic. apply Forall_forall.
-    intros z Hz. apply Hst. exact Hz. }
-  split.
-  { apply ichoice_NoResD. apply Forall_forall.
-    intros z Hz. apply Hst. exact Hz. }
-  split.
-  { apply ax_ichoice_glb; [ apply Hne'; exact Hne | ].
-    intros y Hy. destruct (Hbw y Hy) as (x & Hx & Ha & Hb).
-    eapply ax_trans; [ apply ax_tau_step; apply tau_list_spec; exact Hx | exact Ha ]. }
-  apply ax_glb_tau.
-  { exists z0. exact Hz0. }
-  { intros q' Hq'.
-    assert (Hin : In q' (tau_list q)) by (apply tau_list_spec; exact Hq').
-    destruct (Hfw q' Hin) as (y' & Hy' & Ha & Hb).
-    eapply ax_trans; [ apply ax_ichoice_below; exact Hy' | exact Hb ]. }
-  { intros c v q'' Hq''. exfalso. eapply Hnoext. exact Hq''. }
-  { intros c v q'' Hq''. exfalso. eapply Hnoext. exact Hq''. }
-  { intros c v p'' q'' Hp'' Hq''. exfalso. eapply Hnoext. exact Hq''. }
 Qed.
 
 (** The two remaining structural closures, both by [ax_cgr]: a
@@ -9604,37 +5966,13 @@ Proof.
          | eapply ax_trans; [ exact H2 | apply ax_cgr_sym; exact Hc ] ].
 Qed.
 
-Lemma ResFree_cgr : forall (p q : proc), p ≡* q -> ResFree q -> ResFree p.
-Proof.
-  intros p q Hc (q' & Hs & Hn & H1 & H2). exists q'.
-  split; [ exact Hs | ]. split; [ exact Hn | ].
-  split; [ eapply ax_trans; [ apply ax_cgr; exact Hc | exact H1 ]
-         | eapply ax_trans; [ exact H2 | apply ax_cgr_sym; exact Hc ] ].
-Qed.
-
-(** A fully closed instance, end to end: the handshake whose continuation
-    is [𝟘].  Its residue [ν (𝟘 ‖ 𝟘)] has *no transition at all*, which
-    neither [ResFree_tau_only] nor [ResFree_tau_closed] covers — but it
-    is structurally congruent to [ν (g 𝟘)], which [resg] retires
-    ([ResFree_res_nil]).  So the ν comes off the whole term, with nothing
-    assumed. *)
-
-Lemma ResFree_handshake_nil : forall (v : ValueData),
-  ResFree (ν ((((bvar 0) ! v • 𝟘) : proc)
-               ‖ ((g (((bvar 0) ? ((g (𝟘 : gproc)) : proc)) : gproc)) : proc))).
-Proof.
-  intro v. apply ResFree_handshake.
-  eapply ResFree_cgr; [ | apply ResFree_res_nil ].
-  apply cgr_res. apply cgr_par_nil.
-Qed.
-
 (** * WHY THE LAST ν CASE IS NOT PLUMBING
 
     What is left is a block with **both** visible and internal actions,
     e.g. [ν (g M)] where [M] guards a non-restricted channel.  The route
     is [resg], which turns it into a guarded sum whose guards carry
     [ν P] as continuations, and then rewriting those continuations in
-    place — [ax_choice_tau] for a [𝛕]-guard, [ax_choice_input_ctx] for an
+    place — [ax_choice_tau] for a [𝛕]-guard, [ax_choice_input_bag] for an
     input.
 
     The input is where it stops, and the obstruction is already on record
@@ -9650,19 +5988,6 @@ Qed.
     [dom_u]/[sd_u] give uniform *transition* families, which is what made
     [normal_form_strong_u] possible; they do **not** give uniform
     [⊢]-equalities, and that is exactly the half needed here. *)
-
-(** The top-level statement the two weakenings deliver: [Static] on both
-    sides, [MuteSem] on the left, [ResFree] on the right. *)
-
-Corollary completeness_resfree : forall (p q : proc),
-  Static p -> Static q -> ResFree q -> MuteSem p ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq (q' & Hq' & Hnq' & Hqq' & Hq'q) Hmu Hpre.
-  eapply ax_trans; [ | exact Hq'q ].
-  apply completeness_muteSem; try assumption.
-  intros t Ht. apply (soundness_ax _ _ Hqq'). apply Hpre. exact Ht.
-Qed.
 
 (** * A NEW ROUTE: THE RIGHT'S OUTPUTS ARE **WEAKLY** MATCHED ON THE LEFT
 
@@ -10151,31 +6476,6 @@ Proof.
   rewrite Hnil in Hin. inversion Hin.
 Qed.
 
-(** ** [ax_glb_weak] in use: the non-emptiness premise, discharged
-
-    The consumer of the rule, and what it buys over [ax_glb_tau]: **no
-    premise at all about the left-hand side emitting**.  [ax_glb_tau]
-    requires a *strong* emission of [p] to match each emission of [q],
-    which [glb_output_premise_not_semantic] shows is not implied by the
-    preorder; here the corresponding premise is the non-emptiness of the
-    residue list, and the preorder implies it outright. *)
-
-Theorem ax_glb_weak_of_sem : forall (p q : proc) n,
-  Static p -> Static q -> (size p < n)%nat ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (exists q0, lts q τ q0) ->
-  (forall q', lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  (forall c v q'', lts q (ActExt (ActIn (c,v))) q'' ->
-     (((c ! v • 𝟘) : proc) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
-  (forall c v q'', lts q (ActExt (ActOut (c, v))) q'' ->
-     (g (ichoice (res_list_v n c v p))) ᴠᴀᴄᴄꜱ⊑ₐₓ q'') ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q n Hp Hq Hn Hpre Hex Htau Hin Hout.
-  apply (ax_glb_weak p q n); try assumption.
-  intros c v q'' Hq''. eapply res_list_v_nonempty; eassumption.
-Qed.
-
 Lemma res_list_v_Static : forall n c v (p : proc), Static p ->
   Forall Static (res_list_v n c v p).
 Proof.
@@ -10183,104 +6483,6 @@ Proof.
   apply res_list_v_sound in Hx as (p1 & Hp1 & Ho).
   eapply Static_preserved_by_lts;
     [ eapply Static_preserved_by_wt; [ exact Hst | exact Hp1 ] | exact Ho ].
-Qed.
-
-(** ** A COMPLETENESS STEP FOR ANY RIGHT-HAND SIDE WITH A [τ]
-
-    And with **no condition on either side**.  Compare what the
-    development had before:
-
-    - [ax_below_cfg_glb_split] takes the right apart the same way, but it
-      discharges [ax_glb_tau]'s *strong* output premise through
-      [bag_incl_of_below_disj], which needs the left's emissions to avoid
-      the **right bag's** channels *and* the left to be a configuration
-      [msgs l ‖ g M];
-    - [completeness_gsum_step_gen] has no mutity requirement but needs the
-      right to be a **guarded sum**, where the output premises are vacuous
-      ([gsum_no_out]).
-
-    Here neither is needed.  Every premise of [ax_glb_weak_of_sem] is
-    discharged from the preorder alone, at a **strictly smaller
-    right-hand side** ([Static_lts_decrease]):
-
-    - the τ premise by [must_i_tau_below] (a server's own [τ] only ever
-      decreases it), so [p ⊑ₘᵤₛₜᵢ q ⊑ₘᵤₛₜᵢ q'];
-    - the input premise by [must_i_feed_below] — the asynchronous reading,
-      where the left keeps the message *pending* rather than consuming it;
-    - the output premise by [ichoice_residues_below], the collective
-      comparison of the weak residues. *)
-
-Theorem completeness_step_glb_weak : forall (p q : proc),
-  Static p -> Static q ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (exists q0, lts q τ q0) ->
-  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hpre Hex HR.
-  apply (ax_glb_weak_of_sem p q (S (size p))); try assumption.
-  - lia.
-  - intros q' Hq'. apply HR.
-    + exact Hp.
-    + eapply Static_preserved_by_lts; [ exact Hq | exact Hq' ].
-    + eapply Static_lts_decrease; [ exact Hq | exact Hq' ].
-    + intros t Ht. eapply must_i_tau_below; [ exact Hq' | ]. apply Hpre. exact Ht.
-  - intros c v q'' Hq''. apply HR.
-    + repeat constructor. exact Hp.
-    + eapply Static_preserved_by_lts; [ exact Hq | exact Hq'' ].
-    + eapply Static_lts_decrease; [ exact Hq | exact Hq'' ].
-    + eapply must_i_feed_below; [ exact Hpre | exact Hq'' ].
-  - intros c v q'' Hq''. apply HR.
-    + apply static_g. apply ichoice_gStatic. apply res_list_v_Static. exact Hp.
-    + eapply Static_preserved_by_lts; [ exact Hq | exact Hq'' ].
-    + eapply Static_lts_decrease; [ exact Hq | exact Hq'' ].
-    + eapply ichoice_residues_below; try eassumption. lia.
-Qed.
-
-(** ** …so the step reduces to a STABLE right-hand side
-
-    "Does [q] have a [τ]?" is decidable ([VACCS_Absorb.lts_dec]) and the
-    unstable branch is closed outright, so the completeness step needs
-    only the **stable** right-hand side — the case where [ax_glb_weak] has
-    nothing to take apart and the mirror / Phase A machinery takes over,
-    which is why that machinery still asks the right to be a guarded
-    sum. *)
-
-Theorem completeness_step_of_stable_case : forall (p q : proc),
-  Static p -> Static q ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  ((forall z, ~ lts q τ z) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hpre HR Hstable.
-  destruct (lts_dec q τ) as [Hno | (z & Hz)].
-  - apply Hstable. exact Hno.
-  - eapply completeness_step_glb_weak; try eassumption. exists z. exact Hz.
-Qed.
-
-(** ** COMPLETENESS REDUCES TO THE STABLE RIGHT-HAND SIDE
-
-    Unconditionally.  Every other shape of right-hand side — a
-    configuration whose bag can be delivered, an internal choice, a mixed
-    sum, anything at all with an internal move — is handled by
-    [ax_glb_weak], and the recursion it needs is exactly the one
-    [completeness_from_step] provides. *)
-
-Theorem completeness_of_stable_step :
-  (forall p q, Static p -> Static q -> (forall z, ~ lts q τ z) ->
-     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     p ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_from_step.
-  intros p q Hp Hq Hpre HR.
-  eapply completeness_step_of_stable_case; try eassumption.
-  intros Hno. eapply Hstep; eassumption.
 Qed.
 
 (** ** …and the stable case may be assumed AT A NORMAL FORM
@@ -10301,25 +6503,6 @@ Proof.
   intros p q Hs Hst z Hz.
   destruct (ds_s Hs τ z Hz) as (r' & Hl & _). eapply Hst. exact Hl.
 Qed.
-
-Theorem completeness_of_stable_NF_step :
-  (forall (p q : proc) n l M, Static p -> Static q -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_stable_step.
-  intros p q Hp Hq Hno Hpre HR.
-  destruct (normal_form_strong_sim q Hq) as (n & l & M & HM & Hsim).
-  eapply ax_trans; [ | exact (ds_r Hsim) ].
-  eapply Hstep; try eassumption.
-  eapply domsim_stable; [ exact Hsim | exact Hno ].
-Qed.
-
 
 (** ** THE RESTRICTION BLOCK IS NOT AN OBSTACLE WHEN THE BAG IS EMPTY
 
@@ -10353,13 +6536,6 @@ Proof.
   - eapply domsim_trans; [ apply domsim_res; apply IH | apply domsim_resg ].
 Qed.
 
-Lemma domsim_NF_nil : forall n M, domsim (NF n [] M) ((g (resgn n M)) : proc).
-Proof.
-  intros n M. unfold NF.
-  eapply domsim_trans; [ | apply domsim_resgn ].
-  apply domsim_res_n. apply domsim_cgr. apply cgr_symm. apply ax_nil_par.
-Qed.
-
 (** The stable case at a bare guarded sum, with the measure routed through
     [domsim]: the recursive premise is about a reduct of [g M], while the
     induction hypothesis is at [size q] for the **original** [q], and
@@ -10386,215 +6562,6 @@ Proof.
   - eapply Static_preserved_by_lts; [ exact Hq | exact Hr' ].
   - eapply Static_lts_decrease; [ exact Hq | exact Hr' ].
   - eapply must_i_feed_below; [ exact Hpre | exact Hr' ].
-Qed.
-
-Lemma stable_NF_empty_bag : forall (p q : proc) n (M : gproc),
-  Static p -> Static q -> gStatic M ->
-  domsim q (NF n [] M) ->
-  (forall z, ~ lts (NF n [] M) τ z) ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n [] M).
-Proof.
-  intros p q n M Hp Hq HM Hsim Hno Hpre HR.
-  assert (Hdn := domsim_NF_nil n M).
-  assert (Hd : domsim q ((g (resgn n M)) : proc))
-    by (eapply domsim_trans; [ exact Hsim | exact Hdn ]).
-  assert (Hst : forall z, ~ lts ((g (resgn n M)) : proc) τ z)
-    by (eapply domsim_stable; [ exact Hdn | exact Hno ]).
-  eapply ax_trans; [ | exact (ds_r Hdn) ].
-  eapply stable_bare_gsum_of_domsim; try eassumption.
-  apply resgn_gStatic. exact HM.
-Qed.
-
-(** ** COMPLETENESS REDUCES TO A STABLE RIGHT-HAND SIDE CARRYING A MESSAGE
-
-    The restriction block is gone from the statement: with an empty bag it
-    is removed by [resg], whatever its depth.  So the single remaining
-    case is a **pending message** on the right — the one thing a VACCS
-    normal form has that a guarded sum cannot express, an output being an
-    atomic message and never a guard. *)
-
-Theorem completeness_of_stable_bag_step :
-  (forall (p q : proc) n l M, Static p -> Static q -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     l <> [] ->
-     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_stable_NF_step.
-  intros p q n l M Hp Hq HM Hsim Hno Hpre HR.
-  destruct l as [|a l'].
-  - eapply stable_NF_empty_bag; eassumption.
-  - apply (Hstep p q n (a :: l') M); try assumption. discriminate.
-Qed.
-
-(** ** A τ-STABLE LEFT MUST CARRY THE RIGHT'S MESSAGES
-
-    The remaining case has a right-hand side that **emits**, and message
-    rigidity ([nil_not_below_msg_gen]) says the left must be able to emit
-    too.  [weak_out_of_below] gives that only *weakly* and only at the
-    channel; [res_list_v_nonempty] sharpens it to the exact **value**, and
-    when the left is τ-stable a weak emission is a strong one
-    ([wt_nil_stable]).  [TransitionShapeForOutputSimplified] then splits
-    the left as the message beside its residue — asynchrony again: a
-    process that emits *is* the message in parallel with what is left.
-
-    This is the bridge the bagged stable case needs without assuming the
-    left ν-free: iterated over the right's bag it should give
-    [p ≡* msgs l ‖ p0], which is the shape [ax_below_stable_sum_cfg]
-    consumes.  The iteration needs one more ingredient — the residues at a
-    fixed [(c,v)] are unique up to [≡*], which is VACCS's output
-    determinacy — and is not done here. *)
-
-Lemma stable_left_extract : forall (p q : proc) c (v : ValueData) q',
-  Static p -> Static q -> (forall z, ~ lts p τ z) ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  lts q (ActExt (ActOut (c,v))) q' ->
-  exists p'', lts p (ActExt (ActOut (c,v))) p''
-           /\ p ≡* (((c ! v • 𝟘) : proc) ‖ p'').
-Proof.
-  intros p q c v q' Hp Hq Hst Hpre Hout.
-  assert (Hne : res_list_v (S (size p)) c v p <> nil)
-    by (eapply res_list_v_nonempty; try eassumption; lia).
-  destruct (res_list_v (S (size p)) c v p) as [|x L] eqn:E; [ contradiction | ].
-  assert (Hin : In x (res_list_v (S (size p)) c v p)) by (rewrite E; left; reflexivity).
-  apply res_list_v_sound in Hin as (p1 & Hp1 & Ho).
-  assert (Hpp : p1 = p)
-    by (eapply wt_nil_stable; [ apply no_lts_stable; exact Hst | exact Hp1 ]).
-  subst p1. exists x. split; [ exact Ho | ].
-  apply TransitionShapeForOutputSimplified. exact Ho.
-Qed.
-
-(** ** A τ-STABLE LEFT DECOMPOSES AS THE RIGHT'S BAG BESIDE A RESIDUE
-
-    [stable_left_extract] peels one message; iterating it over the right's
-    whole bag gives [p ≡* msgs l ‖ p0] — and, crucially, the **cancelled**
-    semantics [p0 ⊑ₘᵤₛₜᵢ Q] for free, so no drain argument and no
-    [msgs_cancel] is needed.
-
-    The per-step transfer is [stable_residue_below]: on a τ-stable left
-    the residues of a given emission are unique up to [≡*] — that is
-    VACCS's **output determinacy** ([OBA_with_FB_Third_Axiom]) — so the
-    internal choice of the residue list, which [ichoice_residues_below]
-    places below the right's residue, is [⊢]-above the single residue
-    [p''] ([ax_ichoice_glb] fed by [ax_cgr_sym]).  Without determinacy one
-    would only know that *some* residue works, which is the usual ∀∃ gap;
-    here the calculus closes it. *)
-
-Lemma res_list_v_stable_uniq : forall n c (v : ValueData) (p p'' : proc),
-  (forall z, ~ lts p τ z) ->
-  lts p (ActExt (ActOut (c,v))) p'' ->
-  forall x, In x (res_list_v n c v p) -> x ≡* p''.
-Proof.
-  intros n c v p p'' Hst Ho x Hx.
-  apply res_list_v_sound in Hx as (p1 & Hp1 & Hx).
-  assert (Hpp : p1 = p)
-    by (eapply wt_nil_stable; [ apply no_lts_stable; exact Hst | exact Hp1 ]).
-  subst p1. eapply OBA_with_FB_Third_Axiom; [ exact Hx | exact Ho ].
-Qed.
-
-Lemma stable_residue_below : forall (p q : proc) c (v : ValueData) q' p'',
-  Static p -> Static q -> (forall z, ~ lts p τ z) ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  lts q (ActExt (ActOut (c,v))) q' ->
-  lts p (ActExt (ActOut (c,v))) p'' ->
-  p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'.
-Proof.
-  intros p q c v q' p'' Hp Hq Hst Hpre Hoq Hop.
-  assert (Hne : res_list_v (S (size p)) c v p <> nil)
-    by (eapply res_list_v_nonempty; try eassumption; lia).
-  assert (Hb : (g (ichoice (res_list_v (S (size p)) c v p))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q')
-    by (eapply ichoice_residues_below; try eassumption; lia).
-  assert (Hax : p'' ᴠᴀᴄᴄꜱ⊑ₐₓ (g (ichoice (res_list_v (S (size p)) c v p))))
-    by (apply ax_ichoice_glb; [ exact Hne | intros y Hy; apply ax_cgr_sym;
-          eapply res_list_v_stable_uniq; [ exact Hst | exact Hop | exact Hy ] ]).
-  intros t Ht. apply Hb. apply (soundness_ax _ _ Hax). exact Ht.
-Qed.
-
-Lemma stable_left_decompose : forall (l : list TypeOfActions) (p Q : proc),
-  Static p -> Static Q -> (forall z, ~ lts p τ z) ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ Q) ->
-  exists p0, Static p0 /\ (forall z, ~ lts p0 τ z)
-          /\ p ≡* (msgs l ‖ p0) /\ p0 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ Q.
-Proof.
-  induction l as [|a l0 IH]; intros p Q Hp HQ Hst Hpre.
-  - exists p. split; [ exact Hp | ]. split; [ exact Hst | ].
-    split; [ apply ax_nil_par | ].
-    intros t Ht. apply (proj1 (must_i_cgr Q (msgs [] ‖ Q) (ax_nil_par Q))).
-    apply Hpre. exact Ht.
-  - destruct a as (c,v).
-    assert (HsQ : Static (msgs ((c,v) :: l0) ‖ Q))
-      by (constructor; [ apply msgs_Static | exact HQ ]).
-    assert (Hstep : lts (msgs ((c,v) :: l0) ‖ Q) (ActExt (ActOut (c,v)))
-                        (((g (𝟘 : gproc) : proc) ‖ msgs l0) ‖ Q)).
-    { simpl. apply lts_parL. apply lts_parL. apply lts_output. }
-    destruct (stable_left_extract p (msgs ((c,v) :: l0) ‖ Q) c v _
-                Hp HsQ Hst Hpre Hstep) as (p'' & Hop & Hcp).
-    assert (Hsp'' : Static p'')
-      by (eapply Static_preserved_by_lts; [ exact Hp | exact Hop ]).
-    assert (Hst'' : forall z, ~ lts p'' τ z).
-    { intros z Hz.
-      assert (Hz2 : lts (((c ! v • 𝟘) : proc) ‖ p'') τ (((c ! v • 𝟘) : proc) ‖ z))
-        by (apply lts_parR; exact Hz).
-      destruct (cgr_lts_transfer _ p τ _ (cgr_symm _ _ _ Hcp) Hz2) as (y & Hy & _).
-      eapply Hst. exact Hy. }
-    assert (Hbelow : p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l0 ‖ Q)).
-    { assert (Hb1 : p'' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (((g (𝟘 : gproc) : proc) ‖ msgs l0) ‖ Q))
-        by (exact (stable_residue_below p (msgs ((c,v) :: l0) ‖ Q) c v
-                     (((g (𝟘 : gproc) : proc) ‖ msgs l0) ‖ Q) p''
-                     Hp HsQ Hst Hpre Hstep Hop)).
-      intros t Ht.
-      apply (proj1 (must_i_cgr (msgs l0 ‖ Q) (((g (𝟘 : gproc) : proc) ‖ msgs l0) ‖ Q)
-                     (cgr_fullpar _ _ _ _ _ (ax_nil_par (msgs l0)) (cgr_refl _ Q)))).
-      apply Hb1. exact Ht. }
-    destruct (IH p'' Q Hsp'' HQ Hst'' Hbelow) as (p0 & Hs0 & Hst0 & Hc0 & Hb0).
-    exists p0. split; [ exact Hs0 | ]. split; [ exact Hst0 | ].
-    split; [ | exact Hb0 ].
-    etransitivity; [ exact Hcp | ].
-    etransitivity;
-      [ apply (cgr_fullpar _ _ _ _ _ (cgr_refl _ ((c ! v • 𝟘) : proc)) Hc0) | ].
-    simpl. apply cgr_par_assoc_rev.
-Qed.
-
-(** Hence the bagged stable case for a **τ-stable left**, with nothing
-    else asked of it — no ν-freeness, no normal form, no bag of its own
-    known in advance.  The decomposition supplies both the common bag and
-    the cancelled semantics Phase A needs. *)
-
-Theorem stable_bag_stable_left : forall (p q : proc) (l : list TypeOfActions) (M : gproc),
-  Static p -> Static q -> gStatic M ->
-  domsim q (msgs l ‖ ((g M) : proc)) ->
-  (forall z, ~ lts (msgs l ‖ ((g M) : proc)) τ z) ->
-  (forall z, ~ lts p τ z) ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc)).
-Proof.
-  intros p q l M Hp Hq HM Hsim Hno Hstp Hpre HR.
-  assert (HstM : forall z, ~ lts ((g M) : proc) τ z).
-  { intros z Hz. eapply (Hno (msgs l ‖ z)). apply lts_parR. exact Hz. }
-  assert (Hsem : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc))).
-  { intros t Ht. apply (soundness_ax _ _ (ds_l Hsim)). apply Hpre. exact Ht. }
-  destruct (stable_left_decompose l p ((g M) : proc) Hp (static_g M HM) Hstp Hsem)
-    as (p0 & Hs0 & Hst0 & Hc0 & Hb0).
-  eapply ax_trans; [ apply ax_cgr; exact Hc0 | ].
-  apply ax_below_stable_sum_cfg; [ exact HstM | | ].
-  - apply phaseA_of_empty_bag_sem; [ exact Hs0 | exact HM | exact HstM | exact Hb0 ].
-  - intros c v Q' l' Hsub Hin.
-    eapply (ax_below_of_domok q).
-    + constructor; [ apply msgs_Static | ].
-      constructor; [ constructor | exact Hs0 ].
-    + eapply domok_of_subbag_input; eassumption.
-    + apply must_i_par_compat_r.
-      eapply must_i_feed_below; [ exact Hb0 | exact Hin ].
-    + exact HR.
 Qed.
 
 (** ** THE RESIDUE
@@ -10775,56 +6742,6 @@ Proof.
   apply (left_ichoice_below p Hex Hnoext). exact Ht.
 Qed.
 
-(** ** …AND THE LEFT MAY BE ASSUMED TO BE A NORMAL FORM TOO
-
-    [completeness_of_stable_NF_step] puts the *right* into normal form,
-    at the cost of a [domsim] — because the recursion measures the right
-    and the reducts of the normal form must be measured against the
-    original [q].
-
-    On the left it is far cheaper: nothing measures the left, so plain
-    [normal_form] suffices.  [ax_trans] moves the goal onto the normal
-    form, and [soundness_ax] transports the hypothesis back.
-
-    One care is needed, and it is why the case split is redone here
-    rather than reused: [p ᴠᴀᴄᴄꜱ≂ₐₓ (NF n1 l1 M1)] does **not** transport
-    "[p] has a τ" (a normal form may be stable where [p] is not —
-    [g (𝛕•𝟘 + 𝛕•𝟘) ≂ₘᵤₛₜᵢ 𝟘]).  So the τ-stability test is taken on the
-    normal form itself, and its stable branch is closed by
-    [stable_bag_stable_left], which asks nothing of the left beyond
-    stability. *)
-
-Theorem completeness_of_hard_NF_step :
-  (forall (q : proc) n1 l1 M1 n l M, Static q ->
-     gStatic M1 -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     l <> [] ->
-     (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_stable_bag_step.
-  intros p q n l M Hp Hq HM Hsim Hno Hne Hpre HR.
-  destruct (normal_form p Hp) as (n1 & l1 & M1 & HM1 & Hp1 & Hp2).
-  assert (Hs1 : Static (NF n1 l1 M1)) by (apply Static_NF; exact HM1).
-  assert (Hsem1 : (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
-  { intros t Ht. apply Hpre. apply (soundness_ax _ _ Hp2). exact Ht. }
-  eapply ax_trans; [ exact Hp1 | ].
-  destruct n as [|n'].
-  - destruct (lts_dec (NF n1 l1 M1) τ) as [Hst | (z & Hz)].
-    + assert (Heq : NF 0%nat l M = (msgs l ‖ ((g M) : proc))) by reflexivity.
-      rewrite Heq. rewrite Heq in Hsim, Hno.
-      apply (stable_bag_stable_left (NF n1 l1 M1) q l M); assumption.
-    + apply (Hstep q n1 l1 M1 0%nat l M); try assumption.
-      right. exists z. exact Hz.
-  - apply (Hstep q n1 l1 M1 (S n') l M); try assumption.
-    left. discriminate.
-Qed.
-
 (** ** THE RESTRICTION BLOCK GOES WHEN NO MESSAGE IS TRAPPED
 
     [stable_NF_empty_bag] removes the block when the bag is *empty*.
@@ -10867,27 +6784,6 @@ Proof.
   induction n as [|n IH]; intro a; simpl; [ reflexivity | rewrite IH; reflexivity ].
 Qed.
 
-Lemma untrappedC_inv : forall n c, untrappedC n c = true ->
-  exists c0, Nat.iter n (NewVar_in_ChannelData 0) c0 = c.
-Proof.
-  intros n [j|a] H.
-  - simpl in H. exists (cst j). apply iter_shift_cst.
-  - simpl in H. apply Nat.leb_le in H.
-    exists (bvar (a - n)). rewrite iter_shift_bvar. f_equal. lia.
-Qed.
-
-Lemma untrappedB_inv : forall n l, untrappedB n l = true ->
-  exists l0, l = map (shiftCn 0 n) l0.
-Proof.
-  intros n. induction l as [|cv l IH]; intro H.
-  - exists []. reflexivity.
-  - simpl in H. apply andb_prop in H as (H1 & H2).
-    destruct (untrappedC_inv n (fst cv) H1) as (c0 & Hc0).
-    destruct (IH H2) as (l0 & Hl0).
-    exists ((c0, snd cv) :: l0). simpl. rewrite <- Hl0.
-    unfold shiftCn. simpl. rewrite Hc0. destruct cv. reflexivity.
-Qed.
-
 Lemma untrappedC_shift : forall n c0,
   untrappedC n (Nat.iter n (NewVar_in_ChannelData 0) c0) = true.
 Proof.
@@ -10925,46 +6821,6 @@ Proof.
   apply domsim_par; [ apply domsim_refl | apply domsim_resgn ].
 Qed.
 
-(** So the residue's restriction block is only ever in the way when the
-    bag really is trapped. *)
-
-Theorem completeness_of_trapped_NF_step :
-  (forall (q : proc) n1 l1 M1 n l M, Static q ->
-     gStatic M1 -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     l <> [] ->
-     (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
-     (n <> 0%nat -> untrappedB n l = false) ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_hard_NF_step.
-  intros q n1 l1 M1 n l M Hq HM1 HM Hsim Hno Hne Hdisj Hsem HR.
-  destruct (untrappedB n l) eqn:Hu.
-  - destruct (untrappedB_inv n l Hu) as (l0 & Hl0). subst l.
-    assert (Hd : domsim (NF n (map (shiftCn 0 n) l0) M) (NF 0%nat l0 (resgn n M)))
-      by apply domsim_NF_extrude.
-    assert (HR0 : gStatic (resgn n M)) by (apply resgn_gStatic; exact HM).
-    assert (Hs0 : domsim q (NF 0%nat l0 (resgn n M)))
-      by (eapply domsim_trans; [ exact Hsim | exact Hd ]).
-    assert (Hno0 : forall z, ~ lts (NF 0%nat l0 (resgn n M)) τ z)
-      by (eapply domsim_stable; [ exact Hd | exact Hno ]).
-    assert (Hne0 : l0 <> []) by (intro Hc; subst l0; apply Hne; reflexivity).
-    eapply ax_trans; [ | apply (ds_r Hd) ].
-    destruct (lts_dec (NF n1 l1 M1) τ) as [Hst | (z & Hz)].
-    + apply (stable_bag_stable_left (NF n1 l1 M1) q l0 (resgn n M));
-        try assumption.
-      apply Static_NF; exact HM1.
-    + apply (Hstep q n1 l1 M1 0%nat l0 (resgn n M)); try assumption.
-      * right. exists z. exact Hz.
-      * intro Hc. exfalso. apply Hc. reflexivity.
-  - apply (Hstep q n1 l1 M1 n l M); try assumption. intro. exact Hu.
-Qed.
-
 (** The criterion is neither vacuous nor trivial: [bvar 1] survives one
     binder and comes out of the block, [bvar 0] does not. *)
 
@@ -10986,58 +6842,6 @@ Example untrapped_criterion_bites : forall (v : ValueData),
   untrappedB 1 [((bvar 0) : ChannelData, v)] = false.
 Proof. intro v. reflexivity. Qed.
 
-(** ** …AND THE LEFT'S BLOCK GOES THE SAME WAY
-
-    The left is extruded exactly as the right was, and the τ-existence
-    disjunct — which does *not* transport along [⊢] — costs nothing here
-    because the case split is simply **redone after** the extrusion:
-    when [n ≠ 0] the disjunct is the left one and no test is needed; when
-    [n = 0] the right is already [msgs l ‖ g M], so a stable extruded
-    left is closed by [stable_bag_stable_left] and an unstable one feeds
-    the step. *)
-
-Theorem completeness_of_trapped_both_step :
-  (forall (q : proc) n1 l1 M1 n l M, Static q ->
-     gStatic M1 -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     l <> [] ->
-     (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
-     (n <> 0%nat -> untrappedB n l = false) ->
-     (n1 <> 0%nat -> untrappedB n1 l1 = false) ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_trapped_NF_step.
-  intros q n1 l1 M1 n l M Hq HM1 HM Hsim Hno Hne Hdisj Htr Hsem HR.
-  destruct (untrappedB n1 l1) eqn:Hu1.
-  - destruct (untrappedB_inv n1 l1 Hu1) as (l1' & Hl1). subst l1.
-    assert (Hd1 : domsim (NF n1 (map (shiftCn 0 n1) l1') M1)
-                         (NF 0%nat l1' (resgn n1 M1)))
-      by apply domsim_NF_extrude.
-    assert (HRg : gStatic (resgn n1 M1)) by (apply resgn_gStatic; exact HM1).
-    assert (HsL : Static (NF 0%nat l1' (resgn n1 M1))) by (apply Static_NF; exact HRg).
-    assert (HsemL : (NF 0%nat l1' (resgn n1 M1)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
-    { intros t Ht. apply Hsem. apply (soundness_ax _ _ (ds_r Hd1)). exact Ht. }
-    eapply ax_trans; [ apply (ds_l Hd1) | ].
-    destruct n as [|n'].
-    + assert (Heq : NF 0%nat l M = (msgs l ‖ ((g M) : proc))) by reflexivity.
-      destruct (lts_dec (NF 0%nat l1' (resgn n1 M1)) τ) as [Hst | (z & Hz)].
-      * rewrite Heq. rewrite Heq in Hsim, Hno.
-        apply (stable_bag_stable_left (NF 0%nat l1' (resgn n1 M1)) q l M);
-          assumption.
-      * apply (Hstep q 0%nat l1' (resgn n1 M1) 0%nat l M); try assumption.
-        -- right. exists z. exact Hz.
-        -- intro Hc. exfalso. apply Hc. reflexivity.
-    + apply (Hstep q 0%nat l1' (resgn n1 M1) (S n') l M); try assumption.
-      * left. discriminate.
-      * intro Hc. exfalso. apply Hc. reflexivity.
-  - apply (Hstep q n1 l1 M1 n l M); try assumption. intro. exact Hu1.
-Qed.
-
 (** ** …AND A MUTE LEFT IS ALREADY DONE
 
     When both blocks are gone the two sides are bare configurations, and
@@ -11050,148 +6854,6 @@ Qed.
     Note the criterion is on the **sum** only: the left's own pending
     messages are allowed, since they go to the bag and never to [M1]. *)
 
-(** La décision du critère relatif au sac : un canal du sac est-il une
-    voie d'émission de la somme gauche ?  C'est [VACCS_Bad.MeetsBag] à un
-    [proc] quelconque, et [VACCS_Bad.meetsbag_dec] en est l'instance.  Écrite à la main plutôt que par
-    [Exists_dec], [Exists_exists] rendant [In] ou [∈] selon la portée —
-    piège déjà rencontré. *)
-
-Lemma bag_meets_dec : forall (l : list TypeOfActions) (P : proc),
-  (exists c u, In (c,u) l /\ In c (ochans P))
-  \/ (forall c u, In (c,u) l -> ~ In c (ochans P)).
-Proof.
-  induction l as [|a l IH]; intros P.
-  - right. intros c u Hin. inversion Hin.
-  - destruct a as (c0,u0).
-    destruct (in_dec (fun x y => decide (x = y)) c0 (ochans P)) as [Hin|Hno].
-    + left. exists c0, u0. split; [ left; reflexivity | exact Hin ].
-    + destruct (IH P) as [(c & u & Hc & Hoc)|Hall].
-      * left. exists c, u. split; [ right; exact Hc | exact Hoc ].
-      * right. intros c u [Heq|Hin] Hoc.
-        -- injection Heq as Hc Hu. apply Hno. rewrite Hc. exact Hoc.
-        -- eapply Hall; eassumption.
-Qed.
-
-Theorem completeness_of_emitting_left_step :
-  (forall (q : proc) n1 l1 M1 n l M, Static q ->
-     gStatic M1 -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     l <> [] ->
-     (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
-     (n <> 0%nat -> untrappedB n l = false) ->
-     (n1 <> 0%nat -> untrappedB n1 l1 = false) ->
-     (n = 0%nat -> n1 = 0%nat ->
-        exists c u, In (c,u) l /\ In c (ochans ((g M1) : proc))) ->
-     (n = 0%nat -> n1 = 0%nat ->
-        exists qq, (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
-                /\ (forall z, ~ lts qq τ z)
-                /\ (msgs l1 ‖ ((g M1) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ qq)) ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_trapped_both_step.
-  intros q n1 l1 M1 n l M Hq HM1 HM Hsim Hno Hne Hdisj Htr Htr1 Hsem HR.
-  destruct n as [|n']; [ destruct n1 as [|n1'] | ].
-  - destruct (bag_meets_dec l ((g M1) : proc)) as [(c & u & Hcl & Hco)|Hall].
-    + assert (HtauM : forall z, ~ lts ((g M) : proc) τ z).
-      { intros z Hz. eapply (Hno (msgs l ‖ z)). apply lts_parR. exact Hz. }
-      assert (Hsem2 : (msgs l1 ‖ ((g M1) : proc))
-                        ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc))).
-      { intros t Ht. apply (soundness_ax _ _ (ds_l Hsim)). apply Hsem. exact Ht. }
-      apply (Hstep q 0%nat l1 M1 0%nat l M); try assumption.
-      * intros _ _. exists c, u. split; [ exact Hcl | exact Hco ].
-      * intros _ _.
-        exact (ax_replay_to_right_bag l1 l ((g M1) : proc) M
-                 (static_g M1 HM1) HM HtauM Hsem2).
-    + assert (Heq : NF 0%nat l M = (msgs l ‖ ((g M) : proc))) by reflexivity.
-      assert (Heq1 : NF 0%nat l1 M1 = (msgs l1 ‖ ((g M1) : proc))) by reflexivity.
-      rewrite Heq, Heq1.
-      assert (Hsem2 : (msgs l1 ‖ ((g M1) : proc))
-                        ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc))).
-      { intros t Ht. apply (soundness_ax _ _ (ds_l Hsim)). apply Hsem. exact Ht. }
-      rewrite Heq in Hsim.
-      apply (completeness_cfg_mute_dom q l1 l M1 M); try assumption.
-      intros p' q' Hp' Hq' Hok Hs.
-      eapply ax_below_of_domok; eassumption.
-  - apply (Hstep q (S n1') l1 M1 0%nat l M); try assumption.
-    + intros _ Hc. discriminate.
-    + intros _ Hc. discriminate.
-  - apply (Hstep q n1 l1 M1 (S n') l M); try assumption.
-    + intro Hc. discriminate.
-    + intro Hc. discriminate.
-Qed.
-
-(** ** THE RESIDUE, AS A SINGLE NAMED OBLIGATION
-
-    Everything above is a chain of reductions; [HardResidue] is what it
-    all bottoms out on, and [completeness_of_residue] is the statement
-    that nothing else is missing.
-
-    Its last condition is **bag-relative**: not "the left sum can emit"
-    but "it can emit on a channel of the **right bag**" — which is
-    exactly [VACCS_Bad.MeetsBag l M1], the criterion the configuration
-    dichotomy [VACCS_Bad.cfg_derivable_or_hard_nc] uses.  Anything the
-    left emits *outside* the right's bag is now closed, by
-    [completeness_cfg_mute_dom] at its bag-relative criterion.
-
-    Sa **dernière** condition n'en est pas une : c'est un *cadeau*.  Au
-    cas sans bloc, la droite étant stable, [ax_replay_to_right_bag]
-    fournit gratuitement un [qq] **τ-stable et non émetteur** tel que
-    [(msgs l1 ‖ g M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ qq)] — donc au **sac de droite**.  Celui
-    qui attaque le résidu part ainsi d'une comparaison à sacs **égaux**
-    dont le membre gauche ne peut ni bouger seul ni émettre.
-
-    Ce que ce cadeau ne contient pas, et c'est tout le problème :
-    l'hypothèse sémantique ne se transporte **pas** sur [msgs l ‖ qq],
-    le rejeu montant dans le préordre. *)
-
-Definition HardResidue : Prop :=
-  forall (q : proc) n1 l1 M1 n l M, Static q ->
-     gStatic M1 -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     l <> [] ->
-     (n <> 0%nat \/ (exists z, lts (NF n1 l1 M1) τ z)) ->
-     (n <> 0%nat -> untrappedB n l = false) ->
-     (n1 <> 0%nat -> untrappedB n1 l1 = false) ->
-     (n = 0%nat -> n1 = 0%nat ->
-        exists c u, In (c,u) l /\ In c (ochans ((g M1) : proc))) ->
-     (n = 0%nat -> n1 = 0%nat ->
-        exists qq, (forall c v z, ~ lts qq (ActExt (ActOut (c,v))) z)
-                /\ (forall z, ~ lts qq τ z)
-                /\ (msgs l1 ‖ ((g M1) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ qq)) ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     (NF n1 l1 M1) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
-
-Theorem completeness_of_residue : HardResidue ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof. exact completeness_of_emitting_left_step. Qed.
-
-(** What the semantics does give about the residue's unstable left: the
-    right's bag is non-empty, so the right emits, and a left below it
-    must be able to emit too — **weakly**, which is exactly where the
-    τ-stable case ([stable_left_extract]) and the unstable one part
-    company, weak emission being strong only for a stable process. *)
-
-Lemma residue_left_weak_emits : forall (p : proc) l M c v,
-  Static p -> gStatic M -> In (c,v) l ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc)) ->
-  exists p1, p ⟹[[]] p1 /\ emits_on c p1.
-Proof.
-  intros p M0 M c v Hp HM Hin Hpre.
-  apply in_split in Hin as (l1 & l2 & Hl).
-  assert (Hperm : Permutation M0 ((c,v) :: (l1 ++ l2))).
-  { rewrite Hl. symmetry. apply Permutation_middle. }
-  destruct (cfg_out_of_perm M0 (l1 ++ l2) c v ((g M) : proc) Hperm) as (r & Hr & _).
-  eapply weak_out_of_below; [ exact Hp | | exact Hpre | exact Hr ].
-  apply Static_NF with (n := 0%nat) (l := M0) (M := M). exact HM.
-Qed.
 
 (** ** THE POOLING LAW, LIFTED TO A WHOLE BAG
 
@@ -11209,33 +6871,6 @@ Qed.
 
     The reverse direction is derivable from [ax_int_glb] and
     [ax_tau_step], so the two are must-equivalent ([share_msgs_eq]). *)
-
-Lemma ax_choice_tau2 : forall (p1 p2 q1 q2 : proc),
-  p1 ᴠᴀᴄᴄꜱ⊑ₐₓ q1 -> p2 ᴠᴀᴄᴄꜱ⊑ₐₓ q2 ->
-  (g ((𝛕 • p1) + (𝛕 • p2))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • q1) + (𝛕 • q2))).
-Proof.
-  intros p1 p2 q1 q2 H1 H2.
-  eapply ax_trans; [ apply (ax_choice_tau p1 q1 (𝛕 • p2) H1) | ].
-  eapply ax_trans; [ apply ax_cgr; apply cgr_choice_com | ].
-  eapply ax_trans; [ apply (ax_choice_tau p2 q2 (𝛕 • q1) H2) | ].
-  apply ax_cgr. apply cgr_choice_com.
-Qed.
-
-Lemma ax_share_msgs : forall (l : list TypeOfActions) (X Y : proc),
-  (g ((𝛕 • (msgs l ‖ X)) + (𝛕 • (msgs l ‖ Y))))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc)).
-Proof.
-  induction l as [|cv l IH]; intros X Y; simpl.
-  - eapply ax_trans;
-      [ apply ax_choice_tau2; apply ax_cgr; apply cgr_nil_par_l | ].
-    apply ax_cgr_sym. apply cgr_nil_par_l.
-  - destruct cv as (c, v).
-    eapply ax_trans;
-      [ apply ax_choice_tau2; apply ax_cgr; apply cgr_par_assoc | ].
-    eapply ax_trans; [ apply ax_share_msg | ].
-    eapply ax_trans; [ apply ax_par; [ apply ax_refl | apply IH ] | ].
-    apply ax_cgr. apply cgr_par_assoc_rev.
-Qed.
 
 Corollary ax_share_msgs_rev : forall (l : list TypeOfActions) (X Y : proc),
   (msgs l ‖ ((g ((𝛕 • X) + (𝛕 • Y))) : proc))
@@ -11889,64 +7524,6 @@ Proof.
   apply cgr_fullpar; [ exact Hcgr | reflexivity ].
 Qed.
 
-(** * PAR LE FORWARDER : LE SAC PASSE DANS LE TEST
-
-    The forwarder's reading of a configuration is [p ▷ bag l] — a process
-    beside a **buffer** — and [fw_msg_swap] says a buffered message may
-    sit on either side of the barrier.  Syntactically that is
-    [must_msg_swap], and iterated over a whole bag it gives
-
-      (msgs l ‖ p) must_pass e  <->  p must_pass (msgs l ‖ e)
-
-    so a configuration's bag can always be **moved into the test**.
-
-    Read at the preorder, this is the sharpest statement of the
-    cancellation problem this development has:
-
-      msgs l ‖ p ⊑ₘᵤₛₜᵢ msgs l' ‖ q
-        <->  ∀e, p passes (msgs l ‖ e) -> q passes (msgs l' ‖ e)
-
-    — the two sides are compared on *different* tests, each carrying its
-    own bag.  At a **common** bag it degenerates to "[p ⊑ₘᵤₛₜᵢ q]
-    restricted to the tests that carry the bag", so cancelling the bag is
-    exactly extending that restricted preorder to all tests; and
-    [bag_incl_fails_without_mute] shows the extension is not free.
-
-    Nothing here is new semantics — it is the same fact as
-    [msgs_buffer_iff] — but it is the first time the residue is written
-    with the bags on the **test** side, where the delivery is the
-    forwarder's primitive step rather than an emergent one
-    ([cfg_tau_species]). *)
-
-Lemma must_msgs_swap : forall (l : list TypeOfActions) (p e : proc),
-  ((msgs l ‖ p) must_pass e) <-> (p must_pass (msgs l ‖ e)).
-Proof.
-  induction l as [|cv l IH]; intros p e; simpl.
-  - split; intro Hm.
-    + eapply must_eq_client; [ apply cgr_symm; apply cgr_nil_par_l | ].
-      apply (proj2 (must_i_cgr _ _ (cgr_nil_par_l p))). exact Hm.
-    + apply (proj1 (must_i_cgr _ _ (cgr_nil_par_l p))).
-      eapply must_eq_client; [ apply cgr_nil_par_l | exact Hm ].
-  - destruct cv as (c, v).
-    assert (Hc : ((((c ! v • 𝟘) : proc) ‖ msgs l) ‖ p)
-                   ≡* ((msgs l ‖ p) ‖ ((c ! v • 𝟘) : proc))).
-    { etransitivity; [ apply cgr_par_assoc | apply cgr_par_com ]. }
-    assert (Hd : (msgs l ‖ (((c ! v • 𝟘) : proc) ‖ e))
-                   ≡* ((((c ! v • 𝟘) : proc) ‖ msgs l) ‖ e)).
-    { etransitivity; [ apply cgr_par_assoc_rev | ].
-      apply cgr_fullpar; [ apply cgr_par_com | reflexivity ]. }
-    split; intro Hm.
-    + assert (Hs : ((msgs l ‖ p) ‖ ((c ! v • 𝟘) : proc)) must_pass e)
-        by (apply (proj2 (must_i_cgr _ _ Hc)); exact Hm).
-      apply (proj1 (must_msg_swap c v (msgs l ‖ p) e)) in Hs.
-      apply IH in Hs.
-      eapply must_eq_client; [ exact Hd | exact Hs ].
-    + assert (Hs : p must_pass (msgs l ‖ (((c ! v • 𝟘) : proc) ‖ e)))
-        by (eapply must_eq_client; [ apply cgr_symm; exact Hd | exact Hm ]).
-      apply IH in Hs.
-      apply (proj2 (must_msg_swap c v (msgs l ‖ p) e)) in Hs.
-      apply (proj1 (must_i_cgr _ _ Hc)). exact Hs.
-Qed.
 
 Corollary msgs_below_tests : forall (l l' : list TypeOfActions) (p q : proc),
   ((msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ q))
@@ -11970,79 +7547,6 @@ Corollary msgs_cancel_is_extension : forall (l : list TypeOfActions) (p q : proc
 Proof. intros l p q. apply msgs_below_tests. Qed.
 
 (* ===================================================================== *)
-(** * A COMPLETENESS SCHEMA, AND WHAT IT ISOLATES
-
-    Every reduction of the chain above narrows the open case to a
-    right-hand side that is **stable with a non-empty bag**
-    ([HardResidue]).  Turned around, that says the bag is the *whole*
-    difficulty — and the schema below is the exact statement of it.
-
-    Two of the three cases a completeness step must handle are already
-    closed **unconditionally**:
-
-    - [q] has a τ — [ax_glb_weak_of_sem] takes it apart, its output
-      premises fed by [ichoice_residues_below];
-    - [q] is a bare guarded sum — [ax_below_stable_gsum_gen].
-
-    So completeness holds outright on **any** class of right-hand sides
-    that is closed under transitions and whose *stable* members are
-    [⊢]-equal to a bare guarded sum.  Nothing else is needed, and the
-    left-hand side is never constrained.
-
-    That is the honest position: the residue is not a missing lemma about
-    [p], it is the single question of whether a stable [q] can be brought
-    to a bare guarded sum — i.e. whether its bag can be emptied. *)
-
-Theorem completeness_of_gsum_class :
-  forall (Ok : proc -> Prop),
-    (forall x a y, Static x -> Ok x -> lts x a y -> Ok y) ->
-    (forall x, Static x -> Ok x -> (forall z, ~ lts x τ z) ->
-       exists M, gStatic M /\ domsim x ((g M) : proc)) ->
-    forall (n : nat) (q p : proc), (size q < n)%nat ->
-    Static p -> Static q -> Ok q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Ok Hcl Hgs.
-  induction n as [ | n IH ]; intros q p Hn Hp Hq Hok Hpre; [ lia | ].
-  destruct (lts_dec q τ) as [Hno | (q0 & Hq0)].
-  - destruct (Hgs q Hq Hok Hno) as (M & HM & Hd).
-    assert (HnoM : forall z, ~ lts ((g M) : proc) τ z)
-      by (eapply domsim_stable; eassumption).
-    assert (HsemM : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g M) : proc)).
-    { intros t Ht. apply (soundness_ax _ _ (ds_l Hd)). apply Hpre. exact Ht. }
-    eapply ax_trans; [ | exact (ds_r Hd) ].
-    apply ax_below_stable_gsum_gen; try assumption.
-    intros c v Q' Hl.
-    destruct (ds_s Hd _ _ Hl) as (r' & Hr' & Hdr).
-    eapply ax_trans; [ | exact (ds_l Hdr) ].
-    eapply IH.
-    + assert (size r' < size q)%nat by (eapply Static_lts_decrease; eassumption). lia.
-    + constructor; [ constructor | exact Hp ].
-    + eapply Static_preserved_by_lts; [ exact Hq | exact Hr' ].
-    + eapply Hcl; eassumption.
-    + eapply must_i_feed_below; [ exact Hpre | exact Hr' ].
-  - apply (ax_glb_weak_of_sem p q (S (size p))); try assumption.
-    + lia.
-    + exists q0. exact Hq0.
-    + intros q' Hq'. eapply IH.
-      * assert (size q' < size q)%nat by (eapply Static_lts_decrease; eassumption). lia.
-      * exact Hp.
-      * eapply Static_preserved_by_lts; [ exact Hq | exact Hq' ].
-      * eapply Hcl; eassumption.
-      * intros t Ht. eapply must_i_tau_below; [ exact Hq' | ]. apply Hpre. exact Ht.
-    + intros c v q'' Hq''. eapply IH.
-      * assert (size q'' < size q)%nat by (eapply Static_lts_decrease; eassumption). lia.
-      * repeat constructor. exact Hp.
-      * eapply Static_preserved_by_lts; [ exact Hq | exact Hq'' ].
-      * eapply Hcl; eassumption.
-      * eapply must_i_feed_below; [ exact Hpre | exact Hq'' ].
-    + intros c v q'' Hq''. eapply IH.
-      * assert (size q'' < size q)%nat by (eapply Static_lts_decrease; eassumption). lia.
-      * apply static_g. apply ichoice_gStatic. apply res_list_v_Static. exact Hp.
-      * eapply Static_preserved_by_lts; [ exact Hq | exact Hq'' ].
-      * eapply Hcl; eassumption.
-      * eapply ichoice_residues_below; try eassumption. lia.
-Qed.
-
 (** ** The instance: a right-hand side that never sits on a message
 
     [NoStableEmit q] says no **stable** state reachable from [q] can
@@ -12059,44 +7563,6 @@ Qed.
 Definition NoStableEmit (q : proc) : Prop :=
   forall s x, q ⟹[s] x -> (forall z, ~ lts x τ z) ->
     forall c v r, ~ lts x (ActExt (ActOut (c,v))) r.
-
-Lemma NoStableEmit_lts : forall x a y, NoStableEmit x -> lts x a y -> NoStableEmit y.
-Proof.
-  intros x a y H Hl s z Hw Hst c v r Hout.
-  destruct a as [ mu | ].
-  - eapply (H (mu :: s) z); [ eapply wt_act; eassumption | exact Hst | exact Hout ].
-  - eapply (H s z); [ eapply wt_tau; eassumption | exact Hst | exact Hout ].
-Qed.
-
-Lemma NoStableEmit_gsum : forall q, Static q -> NoResD q -> NoStableEmit q ->
-  (forall z, ~ lts q τ z) -> exists M, gStatic M /\ domsim q ((g M) : proc).
-Proof.
-  intros q Hq Hnr Hns Hno.
-  destruct (normal_form_nores_sim q Hq (NoResD_NoRes _ Hnr)) as (l & M & HM & Hd).
-  destruct l as [ | a l' ].
-  - exists M. split; [ exact HM | ].
-    eapply domsim_trans; [ exact Hd | apply domsim_cgr; simpl; apply cgr_nil_par_l ].
-  - exfalso. destruct a as (c, v).
-    destruct (cfg_out_of_perm ((c ▷ v) :: l') l' c v ((g M) : proc)
-                (Permutation_refl _)) as (r & Hout & _).
-    destruct (ds_s Hd _ _ Hout) as (r' & Hr' & _).
-    eapply (Hns [] q (wt_nil q) Hno c v r'). exact Hr'.
-Qed.
-
-Theorem completeness_no_stable_emit : forall (p q : proc),
-  Static p -> Static q -> NoResD q -> NoStableEmit q ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hnr Hns Hpre.
-  apply (completeness_of_gsum_class (fun x => NoResD x /\ NoStableEmit x)
-           ltac:(intros x a y Hst (H1 & H2) Hl; split;
-                 [ eapply noresd_lts_target; eassumption
-                 | eapply NoStableEmit_lts; eassumption ])
-           ltac:(intros x Hst (H1 & H2) Hno; eapply NoStableEmit_gsum; eassumption)
-           (S (size q)) q p); try assumption.
-  - lia.
-  - split; assumption.
-Qed.
 
 (** ** The schema's reach is *exactly* [NoStableEmit] — and it stops there
 
@@ -12176,67 +7642,6 @@ Proof.
   eapply gsum_class_no_stable_emit; eassumption.
 Qed.
 
-(** ** …and the syntactic form
-
-    [ochans q = []] — "q can never emit along any run" — is decidable,
-    and it implies the semantic criterion outright. *)
-
-Lemma mute_NoStableEmit : forall q, Static q -> ochans q = [] -> NoStableEmit q.
-Proof.
-  intros q Hq Hoc s x Hw Hst c v r Hout.
-  assert (Hsx : Static x) by (eapply Static_preserved_by_wt; eassumption).
-  assert (Hin : In c (ochans x))
-    by (eapply lts_ochans_out; [ exact Hsx | exact Hout | reflexivity ]).
-  assert (Hin2 : In c (ochans q)) by (eapply wt_ochans; eassumption).
-  rewrite Hoc in Hin2. contradiction.
-Qed.
-
-Theorem completeness_no_output_right : forall (p q : proc),
-  Static p -> Static q -> NoResD q -> ochans q = [] ->
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hnr Hoc Hpre.
-  eapply completeness_no_stable_emit; try eassumption.
-  apply mute_NoStableEmit; assumption.
-Qed.
-
-Corollary must_iff_ax_pre_no_output : forall (p q : proc),
-  Static p -> Static q -> NoResD q -> ochans q = [] ->
-  (p ᴠᴀᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
-Proof.
-  intros p q Hp Hq Hnr Hoc. split.
-  - apply soundness_ax.
-  - apply completeness_no_output_right; assumption.
-Qed.
-
-(** ** The instance that matters: [𝟘]
-
-    [VACCS_Bad.below_nil_iff] reads [p ⊑ₘᵤₛₜᵢ 𝟘] as "p passes no τ-stuck,
-    non-good client", and the whole [Harmless] / [Bad] / [BadK] line of
-    work consists of **sufficient** conditions for deriving it — each one
-    provably incomplete ([VACCS_DropProbes.no_Bad_target],
-    [bad_not_closed_under_par], and the two ∀∃ counterexamples).
-
-    They are all subsumed: below [𝟘] the preorder and the proof system
-    coincide **exactly**, for every [Static p], with no side condition at
-    all. *)
-
-Corollary ax_of_below_nil : forall (p : proc),
-  Static p -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
-Proof.
-  intros p Hp Hpre.
-  apply completeness_no_output_right; try assumption.
-  - apply static_g. constructor.
-  - simpl. exact I.
-  - reflexivity.
-Qed.
-
-Corollary must_iff_ax_below_nil : forall (p : proc), Static p ->
-  (p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc) <-> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
-Proof.
-  intros p Hp. split; [ apply soundness_ax | apply ax_of_below_nil; assumption ].
-Qed.
-
 (* ===================================================================== *)
 (** * DEUX SONDES SUR LE RÉSIDU
 
@@ -12294,30 +7699,6 @@ Qed.
     chaque instance.  Mais cela dit que la classe n'est pas un artefact
     de la réduction — elle est habitée, et par des cas que le système
     atteint. *)
-
-Theorem residue_instance_derivable : forall (c : ChannelData) (v : ValueData),
-     (exists z, lts ((c ! v • 𝟘) ‖ ccat c) τ z)
-  /\ ochans (ccat c) <> []
-  /\ (forall z, ~ lts (msgs [(c ▷ v)]) τ z)
-  /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(c ▷ v)])
-  /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(c ▷ v)]).
-Proof.
-  intros c v. split; [ | split; [ | split; [ | split ]]].
-  - unfold ccat. eexists. eapply lts_comL; [ apply lts_output | apply lts_input ].
-  - simpl. discriminate.
-  - intros z Hz. simpl in Hz.
-    inversion Hz; subst; try (inversion H3; fail); try (inversion H4; fail);
-      inversion H2.
-  - assert (Hc : ((c ! v • 𝟘) : proc) ≡* (msgs [(c ▷ v)]))
-      by (simpl; apply cgr_symm; apply cgr_par_nil).
-    intros t Ht.
-    apply (proj2 (must_i_cgr _ _ Hc)).
-    apply (proj2 (ccat_delivery_equiv c v)). exact Ht.
-  - eapply ax_trans.
-    + apply (ax_par (c ! v • 𝟘) (c ! v • 𝟘) (ccat c) ((g (𝟘 : gproc)) : proc));
-        [ apply ax_refl | apply ax_ccat_l ].
-    + apply ax_cgr. simpl. apply cgr_refl.
-Qed.
 
 (** ** LE REJEU EST UN τ-RUN DE LA CONFIGURATION — donc un pas qui MONTE
 
@@ -12741,54 +8122,6 @@ Proof.
   - right. intros c v q Hl. eapply (Hno c I). exists v, q. exact Hl.
 Qed.
 
-(** ** …hence completeness reduces to a right-hand side that is τ-STABLE
-       AND EMITS NOTHING
-
-    Three decidable tests exhaust the shapes of the right:
-    [lts_dec] for a τ ([completeness_step_glb_weak] closes it),
-    [emits_any_dec] for an output ([completeness_step_out_emit] closes
-    it), and what is left is a state with no transition but inputs.
-
-    Note what this does to [HardResidue]: its right-hand side is
-    [Ѵⁿ (msgs l ‖ g M)] with [l <> []], and at [n = 0] such a
-    configuration EMITS ([cfg_out_of_perm]).  So only the case with a
-    restriction block over a TRAPPED bag survives — see
-    [residue_needs_a_trapped_block] below. *)
-Theorem completeness_of_mute_stable_step :
-  (forall p q, Static p -> Static q -> (forall z, ~ lts q τ z) ->
-     (forall c (v : ValueData) q'', ~ lts q (ActExt (ActOut (c,v))) q'') ->
-     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     p ᴠᴀᴄᴄꜱ⊑ₐₓ q) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_stable_step.
-  intros p q Hp Hq Hno Hpre HIH.
-  destruct (emits_any_dec q) as [ (c & v & q'' & Hout) | Hmute ].
-  - eapply completeness_step_out_emit; eassumption.
-  - eapply Hstep; eassumption.
-Qed.
-
-(** …and here is what that costs [HardResidue].  Its right-hand side is
-    [NF n l M] with [l <> []]; at [n = 0] such a configuration EMITS
-    (its bag does — [cfg_out_of_perm]), so
-    [completeness_step_out_emit] closes it outright.  Only a right-hand
-    side whose bag sits under a RESTRICTION BLOCK — a trapped message,
-    which cannot escape ([untrappedB], and
-    [VACCS_DropProbes.trapped_message_is_not_deletable]) — survives. *)
-Theorem residue_needs_a_trapped_block : forall n (l : list TypeOfActions) (M : gproc),
-  l <> nil ->
-  (forall c (v : ValueData) q, ~ lts (NF n l M) (ActExt (ActOut (c,v))) q) ->
-  n <> 0.
-Proof.
-  intros n l M Hne Hno Hn0. subst n.
-  destruct l as [ | (c,v) l0 ]; [ contradiction | ].
-  destruct (cfg_out_of_perm ((c,v)::l0) l0 c v ((g M) : proc) (reflexivity _))
-    as (r & Hr & _).
-  eapply Hno. unfold NF. simpl. exact Hr.
-Qed.
-
 (** ** …AND THE RESIDUE BECOMES A TRAPPED MESSAGE UNDER A BLOCK
 
     [domsim] carries both stability ([domsim_stable]) and muteness
@@ -12814,149 +8147,8 @@ Proof.
   destruct (ds_s Hs (ActExt (ActOut (c,v))) z Hz) as (r' & Hl & _). eapply Hmu. exact Hl.
 Qed.
 
-(** And muteness FORCES the trapping: an untrapped bag comes out of the
-    block by scope extrusion ([NF_extrude]) and then emits, so a mute
-    normal form with a non-empty bag has every message on a channel the
-    block hides.  The condition is therefore free, and it is handed to
-    the consumer below. *)
-Lemma mute_NF_forces_trapped : forall n (l : list TypeOfActions) (M : gproc),
-  l <> nil ->
-  (forall c (v : ValueData) q, ~ lts (NF n l M) (ActExt (ActOut (c,v))) q) ->
-  untrappedB n l = false.
-Proof.
-  intros n l M Hne Hno.
-  destruct (untrappedB n l) eqn:E; [ | reflexivity ].
-  exfalso.
-  destruct (untrappedB_inv n l E) as (l0 & Hl0).
-  destruct l0 as [ | (c0,v0) l1 ]; [ subst l; contradiction | ].
-  destruct (cfg_out_of_perm ((c0,v0) :: l1) l1 c0 v0 (Ѵ n ((g M) : proc))
-              (reflexivity _)) as (r & Hr & _).
-  destruct (Congruence_Respects_Transition (NF n l M) r
-              (ActExt (ActOut (c0,v0)))) as (r' & Hl & _).
-  - exists (msgs ((c0,v0) :: l1) ‖ (Ѵ n ((g M) : proc))). split.
-    + subst l. apply NF_extrude.
-    + exact Hr.
-  - eapply Hno. exact Hl.
-Qed.
 
-Theorem completeness_of_trapped_mute_step :
-  (forall (p q : proc) n l M, Static p -> Static q -> gStatic M ->
-     domsim q (NF n l M) ->
-     (forall z, ~ lts (NF n l M) τ z) ->
-     (forall c (v : ValueData) z, ~ lts (NF n l M) (ActExt (ActOut (c,v))) z) ->
-     l <> nil -> n <> 0 -> untrappedB n l = false ->
-     p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
-     (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
-        p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
-     p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M)) ->
-  forall p q, Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros Hstep. apply completeness_of_mute_stable_step.
-  intros p q Hp Hq Hno Hmute Hpre HR.
-  destruct (normal_form_strong_sim q Hq) as (n & l & M & HM & Hsim).
-  assert (Hno' : forall z, ~ lts (NF n l M) τ z)
-    by (eapply domsim_stable; [ exact Hsim | exact Hno ]).
-  assert (Hmu' : forall c (v : ValueData) z, ~ lts (NF n l M) (ActExt (ActOut (c,v))) z)
-    by (eapply domsim_mute; [ exact Hsim | exact Hmute ]).
-  eapply ax_trans; [ | exact (ds_r Hsim) ].
-  destruct l as [ | x l0 ].
-  - eapply stable_NF_empty_bag; eassumption.
-  - eapply Hstep; try eassumption.
-    + discriminate.
-    + apply (residue_needs_a_trapped_block n (x :: l0) M);
-        [ discriminate | exact Hmu' ].
-    + apply (mute_NF_forces_trapped n (x :: l0) M);
-        [ discriminate | exact Hmu' ].
-Qed.
 
-(** ** SAME TRANSITIONS ⟹ DERIVABLY EQUAL — and it needs NO new rule
-
-    [must_same_lts] ([VACCS_Expansion.v]) says two processes with
-    identical one-step transitions pass the same tests.  Turning that
-    into a *derivation* looked as though it needed a rule: [ax_sub_tau]
-    only asks for an inclusion but pays for it with a [τ], and
-    [ax_restrict_keep] handles the τ-stable case but only for GUARDED
-    SUMS.  Neither covers "τ-stable, same transitions, arbitrary
-    [proc]".
-
-    It is derivable from [ax_settle_sim], at the rigid relation "same
-    buffer, the two processes".  The equality of transitions is used
-    twice, once in each direction:
-
-    - the STEP clauses need [q]'s transitions to be [p]'s, so that
-      whatever the right does the left can copy; after which the two
-      sides sit at the SAME state and the pair drops onto the diagonal;
-    - the STABLE clause needs [p]'s to be [q]'s, so that a stable
-      [q ▷ m] forces [p ▷ m] stable ([fw_stable_iff]) with the same
-      emissions ([fw_emits_iff]), and [Settles_here] closes.
-
-    The buffer moves — absorb and emit — keep the pair in the
-    off-diagonal family with equal buffers, exactly as in
-    [VACCS_Cond2.restrict_by_settle]. *)
-
-Definition same_lts_rel (p q : proc)
-  (x y : proc * MO (ExtAct TypeOfActions)) : Prop :=
-  x = y \/ (exists m, x = (p ▷ m) /\ y = (q ▷ m)).
-
-Lemma same_lts_settle_sim : forall (p q : proc),
-  (forall al z, lts p al z -> lts q al z) ->
-  (forall al z, lts q al z -> lts p al z) ->
-  SettleSim (same_lts_rel p q).
-Proof.
-  intros p q Hpq Hqp. split; [ | split ].
-  - intros x y y' Hr Hl. destruct Hr as [Heq | (m & Hx & Hy)].
-    + subst x. exists y'.
-      split; [ eapply wt_tau; [ exact Hl | apply wt_nil ] | left; reflexivity ].
-    + subst x y. destruct (fw_tau_shape q m y' Hl) as
-        [ (q' & Hq' & Heq) | (a & q' & m' & Hm & Hq' & Heq) ].
-      * subst y'. exists ((q' ▷ m)). split; [ | left; reflexivity ].
-        eapply wt_tau; [ apply fw_tau_left; apply Hqp; exact Hq' | apply wt_nil ].
-      * subst y' m. exists ((q' ▷ m')). split; [ | left; reflexivity ].
-        eapply wt_tau; [ apply fw_tau_deliver; apply Hqp; exact Hq' | apply wt_nil ].
-  - intros x y mu y' Hr Hl. destruct Hr as [Heq | (m & Hx & Hy)].
-    + subst x. exists y'.
-      split; [ eapply wt_act; [ exact Hl | apply wt_nil ] | left; reflexivity ].
-    + subst x y. destruct (fw_ext_shape q m mu y' Hl) as
-        [ (q' & Hq' & Heq) | [ (a & Hmu & Heq) | (a & m' & Hmu & Hm & Heq) ] ].
-      * subst y'. exists ((q' ▷ m)). split; [ | left; reflexivity ].
-        eapply wt_act; [ apply ParLeft; apply Hqp; exact Hq' | apply wt_nil ].
-      * subst mu y'. exists ((p ▷ ({[+ ActOut a +]} ⊎ m))). split.
-        -- eapply wt_act; [ apply fw_input_always | apply wt_nil ].
-        -- right. exists ({[+ ActOut a +]} ⊎ m). split; reflexivity.
-      * subst mu y' m. exists ((p ▷ m')). split.
-        -- eapply wt_act; [ apply fw_emit | apply wt_nil ].
-        -- right. exists m'. split; reflexivity.
-  - intros x y Hr Hst. destruct Hr as [Heq | (m & Hx & Hy)].
-    + subst x. apply Settles_here; [ exact Hst | ].
-      intros d w r Hr. exists w, r. exact Hr.
-    + subst x y. apply Settles_here.
-      * apply stable_of_no_step. apply fw_stable_iff.
-        destruct (proj1 (fw_stable_iff q m) (no_step_of_stable _ Hst)) as (H1 & H2).
-        split.
-        -- intros z Hz. eapply H1. apply Hpq. exact Hz.
-        -- intros a Ha z Hz. eapply H2; [ exact Ha | apply Hpq; exact Hz ].
-      * intros d w r Hr.
-        assert (Hex : exists y, (q ▷ m) ⟶[ActOut (d,w)] y).
-        { apply fw_emits_iff.
-          destruct (proj1 (fw_emits_iff p m (d,w)) (ex_intro _ r Hr))
-            as [ (p' & Hp') | Hin ].
-          - left. exists p'. apply Hpq. exact Hp'.
-          - right. exact Hin. }
-        destruct Hex as (yy & Hyy). exists w, yy. exact Hyy.
-Qed.
-
-Theorem ax_same_lts : forall (p q : proc), Static p -> Static q ->
-  (forall al z, lts p al z -> lts q al z) ->
-  (forall al z, lts q al z -> lts p al z) ->
-  p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
-Proof.
-  intros p q Hp Hq Hpq Hqp.
-  eapply ax_trans; [ apply ax_cgr; apply ax_nil_par | ].
-  eapply ax_trans; [ | apply ax_cgr; apply cgr_nil_par_l ].
-  apply (ax_settle_sim [] [] p q (same_lts_rel p q));
-    [ exact Hp | exact Hq | apply same_lts_settle_sim; assumption | ].
-  right. exists (bag []). split; reflexivity.
-Qed.
 
 (** *** The control: a TRAPPED message no guard can consume IS deletable
 
@@ -13010,24 +8202,17 @@ Qed.
 
 (** * ★ COMPLETENESS FOR VACCS
 
-    The residue was: a right-hand side [Ѵⁿ (msgs l ‖ g M)] that is
-    τ-stable and MUTE, with a non-empty bag trapped under the block.
-    The observation that closes it:
+    A right-hand side that does not emit is, up to [domsim], a BARE
+    GUARDED SUM.  Under the restriction block of its normal form
+    [Ѵⁿ (msgs l ‖ g M)] the bag never emits, so every transition is an
+    input of [M] or a delivery of a message of the bag into [M]; the
+    guarded sum [saturate l M] below lists both kinds as summands and has
+    exactly the same transitions ([ax_same_lts]), and [resgn] removes the
+    block.  A bare guarded sum is then closed by [ax_glb_tau] if it has a
+    [τ] and by the stable case otherwise.
 
-    >  such a configuration has EXACTLY the transitions of a restriction
-    >  block over a GUARDED SUM.
-
-    Indeed its only transitions are the inputs of [M] — a bag has no
-    input ([msgs_no_input]), a synchronisation would be a [τ]
-    (excluded by stability), and an emission of the bag does not survive
-    the block (that IS the muteness).  And the input of [M] with the bag
-    pushed into the continuation has the SAME target, by
-    [NewVar_subst_cancel].  So [bagify] below builds that guarded sum,
-    [ax_same_lts] identifies the two, [resgn] takes the block off, and
-    [stable_bare_gsum_of_domsim] closes.
-
-    Nothing here is a new rule: [ax_same_lts] is derived from
-    [ax_settle_sim], and [resgn] from [ax_res_normalize]. *)
+    No new rule: [ax_same_lts] is derived from [ax_settle_sim], and
+    [resgn] from [ax_res_normalize]. *)
 
 (** ** Inverting a transition under a block of restrictions
 
@@ -13126,126 +8311,283 @@ Proof.
   - inversion HM; subst. apply IH2. exact H2.
 Qed.
 
-(** ** Under the block, the two have the SAME transitions
+(** ** A mute normal form IS a bare guarded sum
 
-    The backward inclusion is unconditional.  The forward one is where
-    muteness and stability earn their place: a bag emission would be a
-    transition of the whole (excluded by muteness) and a synchronisation
-    would be a [τ] (excluded by stability), so every transition comes
-    from [M] alone — and [bagify_lts_fwd] matches it, target included. *)
+    Under the restriction block of a mute normal form, the bag never
+    emits, so every transition is either an input of [M] or a delivery
+    of a message of the bag into [M].  [saturate l M] lists both as
+    summands of one guarded sum — [bagify l M] for the inputs (the bag
+    pushed into each continuation) and one [𝛕]-summand per possible
+    delivery — and has literally the same transitions.  [resgn] then
+    removes the block, so the right-hand side is a bare guarded sum and
+    [ax_glb_tau] / the stable case close it. *)
 
-Lemma trapped_bagify_lts_bwd : forall n l (M : gproc) al z,
-  lts (Ѵ n (((g (bagify l M)) : proc))) al z ->
+Fixpoint msg_outs (l : list (ChannelData * ValueData)) : list ((ChannelData * ValueData) * proc) :=
+match l with
+| [] => []
+| cv :: l' => (cv, ((g 𝟘 : proc) ‖ msgs l'))
+               :: map (fun x => (fst x, ((cv.1 ! cv.2 • 𝟘) ‖ snd x))) (msg_outs l')
+end.
+
+Lemma msg_outs_fwd : forall l c v B,
+  lts (msgs l) (ActExt (ActOut (c,v))) B -> In ((c,v), B) (msg_outs l).
+Proof.
+  induction l as [|cv l IH]; intros c v B H; simpl in H.
+  - inversion H.
+  - inversion H; subst.
+    + left. match goal with HH : lts (_ ! _ • 𝟘) _ _ |- _ => inversion HH; subst end.
+      destruct cv; reflexivity.
+    + right. apply in_map_iff.
+      match goal with HH : lts (msgs l) _ ?q2 |- _ =>
+        exists ((c,v), q2); split; [ reflexivity | apply IH; exact HH ] end.
+Qed.
+
+Lemma msg_outs_bwd : forall l a B,
+  In (a, B) (msg_outs l) -> lts (msgs l) (ActExt (ActOut a)) B.
+Proof.
+  induction l as [|cv l IH]; intros a B H; simpl in H.
+  - contradiction.
+  - destruct H as [H|H].
+    + injection H as <- <-. destruct cv as (c,v). simpl. apply lts_parL. apply lts_output.
+    + apply in_map_iff in H as ((a',B') & Heq & Hin). simpl in Heq. injection Heq as <- <-.
+      simpl. apply lts_parR. apply IH. exact Hin.
+Qed.
+
+Fixpoint deliv1 (a : ChannelData * ValueData) (B : proc) (M : gproc) : gproc :=
+match M with
+| gpr_input c P => if Data_dec c a.1 then gpr_tau (B ‖ subst_in_proc 0 a.2 P) else gpr_nil
+| gpr_choice M1 M2 => gpr_choice (deliv1 a B M1) (deliv1 a B M2)
+| _ => gpr_nil
+end.
+
+Fixpoint delivs (os : list ((ChannelData * ValueData) * proc)) (M : gproc) : gproc :=
+match os with
+| [] => gpr_nil
+| x :: os' => gpr_choice (deliv1 x.1 x.2 M) (delivs os' M)
+end.
+
+Definition saturate (l : list (ChannelData * ValueData)) (M : gproc) : gproc :=
+  gpr_choice (bagify l M) (delivs (msg_outs l) M).
+
+Lemma deliv1_lts_bwd : forall a B M al z,
+  lts ((g (deliv1 a B M)) : proc) al z ->
+  al = τ /\ exists R, lts ((g M) : proc) (ActExt (ActIn a)) R /\ z = (B ‖ R).
+Proof.
+  intros (c,v) B M. induction M as [ | | c' P | P | M1 IH1 M2 IH2 ]; intros al z Hz;
+    simpl in Hz; try (inversion Hz; fail).
+  - destruct (Data_dec c' c) as [->|Hne]; [ | inversion Hz ].
+    inversion Hz; subst. split; [ reflexivity | ].
+    exists (subst_in_proc 0 v P). split; [ apply lts_input | reflexivity ].
+  - inversion Hz; subst.
+    + destruct (IH1 _ _ H3) as (-> & R & HR & ->). split; [ reflexivity | ].
+      exists R. split; [ apply lts_choiceL; exact HR | reflexivity ].
+    + destruct (IH2 _ _ H3) as (-> & R & HR & ->). split; [ reflexivity | ].
+      exists R. split; [ apply lts_choiceR; exact HR | reflexivity ].
+Qed.
+
+Lemma deliv1_lts_fwd : forall a B M R,
+  lts ((g M) : proc) (ActExt (ActIn a)) R -> lts ((g (deliv1 a B M)) : proc) τ (B ‖ R).
+Proof.
+  intros (c,v) B M. induction M as [ | | c' P | P | M1 IH1 M2 IH2 ]; intros R HR;
+    simpl; try (inversion HR; fail).
+  - inversion HR; subst. simpl. destruct (Data_dec c c) as [_|Hne]; [ apply lts_tau | congruence ].
+  - inversion HR; subst.
+    + apply lts_choiceL. apply IH1. exact H3.
+    + apply lts_choiceR. apply IH2. exact H3.
+Qed.
+
+Lemma delivs_lts_bwd : forall os M al z,
+  lts ((g (delivs os M)) : proc) al z ->
+  al = τ /\ exists a B R, In (a,B) os /\ lts ((g M) : proc) (ActExt (ActIn a)) R /\ z = (B ‖ R).
+Proof.
+  induction os as [|x os IH]; intros M al z Hz; simpl in Hz; [ inversion Hz | ].
+  inversion Hz; subst.
+  - destruct (deliv1_lts_bwd _ _ _ _ _ H3) as (-> & R & HR & ->). split; [ reflexivity | ].
+    exists x.1, x.2, R. split; [ left; destruct x; reflexivity | split; [ exact HR | reflexivity ] ].
+  - destruct (IH _ _ _ H3) as (-> & a & B & R & Hin & HR & ->). split; [ reflexivity | ].
+    exists a, B, R. split; [ right; exact Hin | split; [ exact HR | reflexivity ] ].
+Qed.
+
+Lemma delivs_lts_fwd : forall os M a B R,
+  In (a,B) os -> lts ((g M) : proc) (ActExt (ActIn a)) R ->
+  lts ((g (delivs os M)) : proc) τ (B ‖ R).
+Proof.
+  induction os as [|x os IH]; intros M a B R Hin HR; simpl in Hin; [ contradiction | simpl ].
+  destruct Hin as [Hx|Hin].
+  - subst x. apply lts_choiceL. apply deliv1_lts_fwd. exact HR.
+  - apply lts_choiceR. eapply IH; eassumption.
+Qed.
+
+Lemma saturate_body_bwd : forall l M al z,
+  lts ((g (saturate l M)) : proc) al z -> lts (msgs l ‖ ((g M) : proc)) al z.
+Proof.
+  intros l M al z Hz. unfold saturate in Hz. inversion Hz; subst.
+  - destruct (bagify_lts_bwd l M _ _ H3) as (y & -> & Hy). apply lts_parR. exact Hy.
+  - destruct (delivs_lts_bwd _ _ _ _ H3) as (-> & (c,v) & B & R & Hin & HR & ->).
+    eapply lts_comL; [ apply msg_outs_bwd; exact Hin | exact HR ].
+Qed.
+
+Lemma saturate_body_fwd : forall l M al z,
+  lts (msgs l ‖ ((g M) : proc)) al z ->
+  (exists d w, al = ActExt (ActOut (d,w))) \/ lts ((g (saturate l M)) : proc) al z.
+Proof.
+  intros l M al z Hz. inversion Hz; subst.
+  - right. unfold saturate. apply lts_choiceR.
+    eapply delivs_lts_fwd; [ apply msg_outs_fwd; exact H1 | exact H4 ].
+  - exfalso. match goal with HH : lts (msgs l) ((_ ▷ _) ?) _ |- _ =>
+      eapply msgs_no_input; exact HH end.
+  - match goal with HH : lts (msgs l) _ _ |- _ => rename HH into Hm end.
+    destruct al as [mu|].
+    + destruct (msgs_lts_inv l mu _ Hm) as (c0 & v0 & l0 & -> & _ & _).
+      left. exists c0, v0. reflexivity.
+    + exfalso. eapply msgs_no_tau. exact Hm.
+  - right. unfold saturate. apply lts_choiceL. apply bagify_lts_fwd.
+    match goal with HH : lts (g M) _ _ |- _ => exact HH end.
+Qed.
+
+Lemma trapped_saturate_lts_bwd : forall n l (M : gproc) al z,
+  lts (Ѵ n (((g (saturate l M)) : proc))) al z ->
   lts (Ѵ n (msgs l ‖ ((g M) : proc))) al z.
 Proof.
   intros n l M al z Hz.
   destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
   destruct al as [mu|].
-  - destruct (bagify_lts_bwd l M _ _ Hl) as (y & Heq2 & Hy). subst z'.
-    apply lts_res_ext_n. apply lts_parR. exact Hy.
-  - destruct (bagify_lts_bwd l M _ _ Hl) as (y & Heq2 & Hy). subst z'.
-    apply lts_res_tau_n. apply lts_parR. exact Hy.
+  - apply lts_res_ext_n. apply saturate_body_bwd. exact Hl.
+  - apply lts_res_tau_n. apply saturate_body_bwd. exact Hl.
 Qed.
 
-Lemma trapped_bagify_lts_fwd : forall n l (M : gproc) al z,
-  (forall y, ~ lts (Ѵ n (msgs l ‖ ((g M) : proc))) τ y) ->
+Lemma trapped_saturate_lts_fwd : forall n l (M : gproc) al z,
   (forall c (v : ValueData) y,
      ~ lts (Ѵ n (msgs l ‖ ((g M) : proc))) (ActExt (ActOut (c,v))) y) ->
   lts (Ѵ n (msgs l ‖ ((g M) : proc))) al z ->
-  lts (Ѵ n (((g (bagify l M)) : proc))) al z.
+  lts (Ѵ n (((g (saturate l M)) : proc))) al z.
 Proof.
-  intros n l M al z Hno Hmu Hz.
-  assert (Hz0 := Hz).
+  intros n l M al z Hmu Hz. assert (Hz0 := Hz).
   destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
   destruct al as [mu|].
-  - inversion Hl; subst.
-    + exfalso.
-      destruct (msgs_lts_inv l _ _ H3) as (c0 & v0 & l0 & Emu & _ & _).
-      destruct mu as [(d,w)|(d,w)]; simpl in Emu; [ discriminate Emu | ].
-      eapply (Hmu d w). exact Hz0.
-    + apply lts_res_ext_n. apply bagify_lts_fwd. exact H3.
-  - exfalso. eapply Hno. exact Hz0.
+  - destruct (saturate_body_fwd l M _ _ Hl) as [ (d & w & E) | Hs ].
+    + exfalso. destruct mu as [(d0,w0)|(d0,w0)]; simpl in E; [ discriminate E | ].
+      eapply (Hmu d0 w0). exact Hz0.
+    + apply lts_res_ext_n. exact Hs.
+  - destruct (saturate_body_fwd l M _ _ Hl) as [ (d & w & E) | Hs ]; [ discriminate E | ].
+    apply lts_res_tau_n. exact Hs.
 Qed.
 
-Theorem ax_trapped_NF_bagify : forall n l (M : gproc),
-  gStatic M ->
-  (forall y, ~ lts (NF n l M) τ y) ->
-  (forall c (v : ValueData) y, ~ lts (NF n l M) (ActExt (ActOut (c,v))) y) ->
-  (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n ((g (bagify l M)) : proc))
-  /\ (Ѵ n ((g (bagify l M)) : proc)) ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
+Lemma deliv1_gStatic : forall a B M, Static B -> gStatic M -> gStatic (deliv1 a B M).
 Proof.
-  intros n l M HM Hno Hmu.
+  intros (c,v) B M HB. induction M as [ | | c' P | P | M1 IH1 M2 IH2 ]; intro HM; simpl;
+    try constructor.
+  - destruct (Data_dec c' c); constructor. constructor; [ exact HB | ].
+    apply Static_subst. inversion HM; assumption.
+  - apply IH1. inversion HM; assumption.
+  - apply IH2. inversion HM; assumption.
+Qed.
+
+Lemma saturate_gStatic : forall l M, gStatic M -> gStatic (saturate l M).
+Proof.
+  intros l M HM. unfold saturate. constructor; [ apply bagify_gStatic; exact HM | ].
+  assert (Hos : forall a B, In (a,B) (msg_outs l) -> Static B).
+  { intros a B Hin. eapply Static_preserved_by_lts;
+      [ apply msgs_Static | apply msg_outs_bwd; exact Hin ]. }
+  induction (msg_outs l) as [|x os IH]; simpl; [ constructor | constructor ].
+  - apply deliv1_gStatic; [ | exact HM ]. destruct x as (a,B). apply (Hos a B). left. reflexivity.
+  - apply IH. intros a B Hin. apply (Hos a B). right. exact Hin.
+Qed.
+
+Lemma domsim_trapped_saturate : forall n l (M : gproc), gStatic M ->
+  (forall c (v : ValueData) y, ~ lts (NF n l M) (ActExt (ActOut (c,v))) y) ->
+  domsim (NF n l M) (Ѵ n ((g (saturate l M)) : proc)).
+Proof.
+  intros n l M HM Hmu.
   assert (HsL : Static (NF n l M)) by (apply Static_NF; exact HM).
-  assert (HsR : Static (Ѵ n ((g (bagify l M)) : proc)))
-    by (apply Static_res_n; apply static_g; apply bagify_gStatic; exact HM).
-  unfold NF in *.
-  split; apply ax_same_lts; try assumption.
-  - intros al z Hz. eapply trapped_bagify_lts_fwd; eassumption.
-  - intros al z Hz. eapply trapped_bagify_lts_bwd; eassumption.
-  - intros al z Hz. eapply trapped_bagify_lts_bwd; eassumption.
-  - intros al z Hz. eapply trapped_bagify_lts_fwd; eassumption.
+  assert (HsR : Static (Ѵ n ((g (saturate l M)) : proc)))
+    by (apply Static_res_n; apply static_g; apply saturate_gStatic; exact HM).
+  unfold NF in *. apply DomSim.
+  - apply ax_same_lts; try assumption.
+    + intros al z Hz. eapply trapped_saturate_lts_fwd; eassumption.
+    + intros al z Hz. eapply trapped_saturate_lts_bwd; eassumption.
+  - apply ax_same_lts; try assumption.
+    + intros al z Hz. eapply trapped_saturate_lts_bwd; eassumption.
+    + intros al z Hz. eapply trapped_saturate_lts_fwd; eassumption.
+  - intros a r Hr. exists r. split; [ | apply domsim_refl ].
+    eapply trapped_saturate_lts_bwd. exact Hr.
 Qed.
 
-(** …and since the targets coincide exactly, the two are related by
-    [domsim], not merely by [⊢].  That is what lets the recursion keep
-    measuring against the original [q]. *)
-Lemma domsim_trapped_bagify : forall n l (M : gproc),
-  gStatic M ->
-  (forall y, ~ lts (NF n l M) τ y) ->
-  (forall c (v : ValueData) y, ~ lts (NF n l M) (ActExt (ActOut (c,v))) y) ->
-  domsim (NF n l M) (Ѵ n ((g (bagify l M)) : proc)).
+(** A bare guarded sum with a [τ]: [ax_glb_sum], each premise a
+    recursive call at a strictly smaller reduct measured by [domsim]. *)
+Lemma tau_bare_gsum_of_domsim : forall (p q : proc) (M : gproc),
+  Static p -> Static q -> domsim q ((g M) : proc) ->
+  (exists z, lts ((g M) : proc) τ z) ->
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
+  (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
+     p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
+  p ᴠᴀᴄᴄꜱ⊑ₐₓ ((g M) : proc).
 Proof.
-  intros n l M HM Hno Hmu.
-  destruct (ax_trapped_NF_bagify n l M HM Hno Hmu) as (A1 & A2).
-  apply DomSim; [ exact A1 | exact A2 | ].
-  intros a r Hr. exists r. split; [ | apply domsim_refl ].
-  unfold NF. eapply trapped_bagify_lts_bwd. exact Hr.
+  intros p q M Hp Hq Hsim Htau Hpre HR. apply ax_glb_tau.
+  - destruct Htau as (z & Hz). exists z. apply gsum_tau_summand. exact Hz.
+  - intros X HX.
+    assert (Hl : lts ((g M) : proc) τ X)
+      by (eapply summand_lts; [ exact HX | apply lts_tau ]).
+    destruct (ds_s Hsim _ _ Hl) as (r' & Hr' & Hd).
+    eapply ax_trans; [ | exact (ds_l Hd) ]. apply HR.
+    + exact Hp.
+    + eapply Static_preserved_by_lts; [ exact Hq | exact Hr' ].
+    + eapply Static_lts_decrease; [ exact Hq | exact Hr' ].
+    + intros t Ht. eapply must_i_tau_below; [ exact Hr' | ]. apply Hpre. exact Ht.
+  - intros c Q HQ v.
+    assert (Hl : lts ((g M) : proc) (ActExt (ActIn (c,v))) (subst_in_proc 0 v Q))
+      by (eapply summand_lts; [ exact HQ | apply lts_input ]).
+    destruct (ds_s Hsim _ _ Hl) as (r' & Hr' & Hd).
+    eapply ax_trans; [ | exact (ds_l Hd) ]. apply HR.
+    + constructor; [ constructor | exact Hp ].
+    + eapply Static_preserved_by_lts; [ exact Hq | exact Hr' ].
+    + eapply Static_lts_decrease; [ exact Hq | exact Hr' ].
+    + eapply must_i_feed_below; [ exact Hpre | exact Hr' ].
 Qed.
 
-(** ** The last step: a mute τ-stable normal form *)
-Theorem completeness_trapped_step : forall (p q : proc) n l (M : gproc),
+Theorem completeness_mute_NF_step : forall (p q : proc) n l (M : gproc),
   Static p -> Static q -> gStatic M ->
   domsim q (NF n l M) ->
-  (forall y, ~ lts (NF n l M) τ y) ->
   (forall c (v : ValueData) y, ~ lts (NF n l M) (ActExt (ActOut (c,v))) y) ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
      p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
   p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M).
 Proof.
-  intros p q n l M Hp Hq HM Hsim Hno Hmu Hpre HR.
-  assert (Hd1 : domsim (NF n l M) (Ѵ n ((g (bagify l M)) : proc)))
-    by (apply domsim_trapped_bagify; assumption).
-  assert (Hd2 : domsim (NF n l M) ((g (resgn n (bagify l M))) : proc))
-    by (eapply domsim_trans; [ exact Hd1 | apply domsim_resgn ]).
-  assert (Hd3 : domsim q ((g (resgn n (bagify l M))) : proc))
+  intros p q n l M Hp Hq HM Hsim Hmu Hpre HR.
+  assert (Hd2 : domsim (NF n l M) ((g (resgn n (saturate l M))) : proc))
+    by (eapply domsim_trans; [ apply domsim_trapped_saturate; assumption
+                             | apply domsim_resgn ]).
+  assert (Hd3 : domsim q ((g (resgn n (saturate l M))) : proc))
     by (eapply domsim_trans; [ exact Hsim | exact Hd2 ]).
   eapply ax_trans; [ | exact (ds_r Hd2) ].
-  eapply stable_bare_gsum_of_domsim;
-    [ exact Hp | exact Hq | apply resgn_gStatic; apply bagify_gStatic; exact HM
-    | exact Hd3 | | exact Hpre | exact HR ].
-  eapply domsim_stable; [ exact Hd2 | exact Hno ].
+  destruct (lts_dec ((g (resgn n (saturate l M))) : proc) τ) as [ Hno | (z & Hz) ].
+  - eapply stable_bare_gsum_of_domsim;
+      [ exact Hp | exact Hq | apply resgn_gStatic; apply saturate_gStatic; exact HM
+      | exact Hd3 | exact Hno | exact Hpre | exact HR ].
+  - eapply tau_bare_gsum_of_domsim;
+      [ exact Hp | exact Hq | exact Hd3 | exists z; exact Hz | exact Hpre | exact HR ].
 Qed.
 
 (** ** ★★★ COMPLETENESS
 
-    Every case of the right-hand side is now closed, by three decidable
-    tests:
-
     | the right-hand side… | closed by |
     |---|---|
-    | has a [τ] | [completeness_step_glb_weak] |
     | EMITS | [completeness_step_out_emit] — pooling, via [ax_share_msg] |
-    | τ-stable and mute, empty bag | [stable_NF_empty_bag] |
-    | τ-stable and mute, trapped bag | [completeness_trapped_step] |
+    | does not emit | [completeness_mute_NF_step] — a bare guarded sum |
 
-    and [completeness_of_trapped_mute_step] chains them. *)
+    [emits_any_dec] decides between the two, and [completeness_from_step]
+    supplies the recursion on the size of the right-hand side. *)
 Theorem completeness_ax : forall (p q : proc), Static p -> Static q ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof.
-  apply completeness_of_trapped_mute_step.
-  intros p q n l M Hp Hq HM Hsim Hno Hmu _ _ _ Hpre HR.
-  eapply completeness_trapped_step; eassumption.
+  apply completeness_from_step. intros p q Hp Hq Hpre HR.
+  destruct (emits_any_dec q) as [ (c & v & q'' & Hout) | Hmute ].
+  - eapply completeness_step_out_emit; eassumption.
+  - destruct (normal_form_strong_sim q Hq) as (n & l & M & HM & Hsim).
+    eapply ax_trans; [ | exact (ds_r Hsim) ].
+    eapply completeness_mute_NF_step; try eassumption.
+    eapply domsim_mute; [ exact Hsim | exact Hmute ].
 Qed.
 
 End VACCS_Matching.

@@ -1546,18 +1546,6 @@ Proof.
     apply IH; [ eapply Static_preserved_by_lts; [ exact Hst | exact Hl ] | exact Hd ].
 Qed.
 
-Lemma wt_ochans : forall s (p q : proc), Static p -> p ⟹[s] q ->
-  forall d, In d (ochans q) -> In d (ochans p).
-Proof.
-  intros s p q Hst Hw. induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH];
-    intros d Hd.
-  - exact Hd.
-  - eapply lts_ochans_target; [ exact Hst | exact Hl | ].
-    apply IH; [ eapply Static_preserved_by_lts; [ exact Hst | exact Hl ] | exact Hd ].
-  - eapply lts_ochans_target; [ exact Hst | exact Hl | ].
-    apply IH; [ eapply Static_preserved_by_lts; [ exact Hst | exact Hl ] | exact Hd ].
-Qed.
-
 (** ** [ochans p ⊆ S] certifie [Bad S p]
 
     Le champ [ex] de [must] réclame un pas de la paire ; si le serveur

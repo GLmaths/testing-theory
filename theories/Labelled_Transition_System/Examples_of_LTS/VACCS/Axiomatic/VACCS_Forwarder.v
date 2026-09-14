@@ -851,4 +851,62 @@ Proof.
 Qed.
 
 
+(** ** Message bags as inert contexts
+
+    A bag's transitions are exactly "emit one message, leaving the rest",
+    so the family of bags reachable from [msgs l] — the sub-bags, up to
+    [≡*] — is inert and closed under its own moves.  This is what makes
+    [ax_choice_input_bag] (a rule of [VACCS_DefinitionAxiomatic]) sound:
+    [must_i_choice_input_bag] instantiates [must_i_choice_input_ctx] at it. *)
+
+Lemma msgs_lts_inv : forall l mu r, lts (msgs l) (ActExt mu) r ->
+  exists c v l', mu = ActOut (c,v) /\ Permutation l ((c,v) :: l') /\ r ≡* msgs l'.
+Proof.
+  induction l as [|cv l IH]; intros mu r H; simpl in H.
+  - inversion H.
+  - inversion H; subst.
+    + match goal with HH : lts (_ ! _ • 𝟘) (ActExt mu) ?p2 |- _ =>
+        inversion HH; subst end.
+      exists (fst cv), (snd cv), l.
+      split; [ reflexivity | ]. split.
+      * rewrite <- surjective_pairing. reflexivity.
+      * etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
+    + match goal with HH : lts (msgs l) (ActExt mu) ?q2 |- _ =>
+        destruct (IH mu q2 HH) as (c0 & v0 & l'' & Emu & Hperm & Hcgr) end.
+      exists c0, v0, (cv :: l''). split; [ exact Emu | ]. split.
+      * etransitivity; [ apply perm_skip; exact Hperm | apply perm_swap ].
+      * simpl. apply cgr_fullpar; [ reflexivity | exact Hcgr ].
+Qed.
+
+Lemma msgs_no_tau : forall l q, ~ lts (msgs l) τ q.
+Proof.
+  induction l as [|cv l IH]; intros q H; simpl in H.
+  - inversion H.
+  - inversion H; subst.
+    + match goal with HH : lts (msgs l) (ActExt (ActIn _)) _ |- _ =>
+        eapply msgs_no_input; exact HH end.
+    + match goal with HH : lts (_ ! _ • 𝟘) (ActExt (ActIn _)) _ |- _ => inversion HH end.
+    + match goal with HH : lts (_ ! _ • 𝟘) τ _ |- _ => inversion HH end.
+    + eapply IH; eassumption.
+Qed.
+
+Definition subbag (l' l : list TypeOfActions) : Prop :=
+  exists l1, Permutation l (l1 ++ l').
+
+Lemma subbag_refl : forall l, subbag l l.
+Proof. intro l. exists []. reflexivity. Qed.
+
+Lemma subbag_trans : forall l1 l2 l3, subbag l3 l2 -> subbag l2 l1 -> subbag l3 l1.
+Proof.
+  intros l1 l2 l3 (a & Ha) (b & Hb). exists (b ++ a).
+  rewrite Hb, Ha. rewrite <- app_assoc. reflexivity.
+Qed.
+
+
+
+
+
+
+
+
 End VACCS_Forwarder.

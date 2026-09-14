@@ -42,7 +42,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Shift VACCS_Precongruence VACCS_Expansion VACCS_ResNormalize
   VACCS_Copycat VACCS_Absorb VACCS_Forwarder VACCS_Cond2 VACCS_Residues
-  VACCS_DefinitionAxiomatic.
+  VACCS_GlbStable VACCS_DefinitionAxiomatic.
 
 Section VACCS_SoundnessAx.
 
@@ -59,66 +59,43 @@ Proof.
   - apply must_i_par_compat2; assumption.
   (* ax_res *)
   - apply must_i_res_compat; assumption.
-  (* ax_input_ctx *)
-  - eapply must_i_input_ctx; eassumption.
-  (* ax_choice_input_ctx *)
-  - eapply must_i_choice_input_ctx; eassumption.
-  (* ax_choice_tau *)
-  - apply must_i_choice_tau_compat. assumption.
   (* ax_tau_step *)
   - apply must_i_tau_below. assumption.
-  (* ax_int_glb_ctx *)
-  - eapply must_i_int_glb_ctx; eassumption.
-  (* ax_tau_sep_l *)
-  - apply must_i_tau_sep_pre_l.
-  (* ax_tau_sep_r *)
-  - apply must_i_tau_sep_pre_r.
-  (* ax_tau_flatten_l *)
-  - apply must_i_tau_flatten_pre_l. assumption.
-  (* ax_tau_flatten_r *)
-  - apply must_i_tau_flatten_pre_r. assumption.
-  (* ax_convex *)
-  - apply must_i_convex_pre.
-  (* ax_share_in *)
-  - apply must_i_share_in_pre.
-  (* ax_success_l *)
-  - apply must_i_success_ctx_l.
-  (* ax_success_r *)
-  - apply must_i_success_ctx_r.
-  (* ax_input_distrib_l *)
-  - intros t Hm. apply must_i_input_distrib_ctx_l. exact Hm.
-  (* ax_expansion_l *)
-  - apply must_i_expansion_l.
-  (* ax_expansion_r *)
-  - apply must_i_expansion_r.
-  (* ax_res_normalize_l *)
-  - apply must_i_res_normalize_l.
-  (* ax_res_normalize_r *)
-  - apply must_i_res_normalize_r.
-  (* ax_input_drop *)
-  - apply must_i_input_drop_bad. assumption.
-  (* ax_ccat_r *)
-  - apply must_i_nil_below_copycats. assumption.
-  (* ax_settle_sim *)
-  - eapply settle_sim_below_bag; eassumption.
-  (* ax_restrict *)
-  - apply must_i_restrict_badk; assumption.
+  (* ax_same_lts *)
+  - intro t. apply (proj1 (must_same_lts p q
+      (fun p' => conj (H τ p') (H0 τ p'))
+      (fun mu p' => conj (H (ActExt mu) p') (H0 (ActExt mu) p')) t)).
   (* ax_glb_tau *)
-  - eapply must_i_glb_gen; try eassumption.
-    intros c v q'' Hq''.
-    match goal with
-    | Hex : forall c v q'', lts _ (ActExt (ActOut (c,v))) q'' -> exists _, _ |- _ =>
-        destruct (Hex c v q'' Hq'') as (p'' & Hp'')
-    end.
-    exists p''. split; [ exact Hp'' | ].
-    match goal with
-    | Hall : forall c v p'' q'', lts _ (ActExt (ActOut (c,v))) p'' -> _ |- _ =>
-        eapply Hall; [ exact Hp'' | exact Hq'' ]
-    end.
-  (* ax_sub_tau *)
-  - apply must_i_sub_tau; assumption.
-  (* ax_glb_weak *)
-  - eapply must_i_glb_res; eassumption.
+  - apply must_i_glb_tau.
+    + match goal with Hex : exists X, In (𝛕 • X) (summands M) |- _ =>
+        destruct Hex as (X1 & HX1) end.
+      exists X1. eapply summand_lts; [ exact HX1 | apply lts_tau ].
+    + intros (c,v) q'' Hq''. eapply gsum_no_out. exact Hq''.
+    + intros q' Hq'. match goal with
+        IH : forall X, In (𝛕 • X) (summands M) -> _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ X |- _ =>
+          apply IH; apply gsum_tau_summand; exact Hq' end.
+    + intros c v q'' Hq''. destruct (gsum_in_summand _ _ _ _ Hq'') as (Q & HQ & ->).
+      match goal with
+        IH : forall c Q, In (c ? Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
+          apply IH; exact HQ end.
+  (* ax_glb_settle *)
+  - destruct (lts_dec ((g M) : proc) τ) as [ Hno | (X0 & HX0) ].
+    + apply must_i_glb_stable; [ exact Hno | | ].
+      * assumption.
+      * intros c v q'' Hq''. destruct (gsum_in_summand _ _ _ _ Hq'') as (Q & HQ & ->).
+        match goal with
+          IH : forall c Q, In (c ? Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
+            apply IH; exact HQ end.
+    + apply must_i_glb_tau.
+      * exists X0. exact HX0.
+      * intros (c,v) q'' Hq''. eapply gsum_no_out. exact Hq''.
+      * intros q' Hq'. match goal with
+          IH : forall X, In (𝛕 • X) (summands M) -> _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ X |- _ =>
+            apply IH; apply gsum_tau_summand; exact Hq' end.
+      * intros c v q'' Hq''. destruct (gsum_in_summand _ _ _ _ Hq'') as (Q & HQ & ->).
+        match goal with
+          IH : forall c Q, In (c ? Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
+            apply IH; exact HQ end.
   (* ax_share_msg *)
   - apply must_i_share_msg_pre.
 Qed.
