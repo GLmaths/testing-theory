@@ -37,7 +37,7 @@
 </div>
 
 <div class="doc">
-<a id="lab185"></a><h1 class="section">Alternative preorder for May based on co-trace inclusion</h1>
+<a id="lab786"></a><h1 class="section">Alternative preorder for May based on co-trace inclusion</h1>
 
 
 <div class="paragraph"> </div>
@@ -48,7 +48,7 @@
     <span class="inlinecode"><span class="id" title="var">DefinitionAS.v</span></span> to <span class="inlinecode"><span class="id" title="var">DefinitionASco.v</span></span>. The duality lives on the
     process being compared (the "co" is not on the test/client side:
     it is the process that answers a trace with duals), never on the
-    test <span class="inlinecode"><span class="id" title="var">t</span></span>: <span class="inlinecode"><span class="id" title="var">t</span></span> always performs its half of the computation
+    test <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a></span>: <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a></span> always performs its half of the computation
     literally. Unlike <span class="inlinecode"><span class="id" title="var">DefinitionTI.v</span></span>'s <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.DefinitionTI.html#may_iff_wt"><span class="id" title="lemma">may_iff_wt</span></a></span> (which relies on
     the canonical dual <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Exemples_of_Actions.InputOutputActions.html#co"><span class="id" title="definition">co</span></a>ₜ</span>/<span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#unique_nb"><span class="id" title="projection">unique_nb</span></a></span>), this file never picks a
     canonical dual witness: <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.coWeakTransition.html#cowt"><span class="id" title="inductive">cowt</span></a></span>'s own constructors only need *some*
@@ -56,7 +56,7 @@
     <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#may_com_step"><span class="id" title="constructor">may_com_step</span></a></span>'s own <span class="inlinecode"><span class="id" title="var">inter</span></span> field. 
 <div class="paragraph"> </div>
 
-<a id="lab186"></a><h2 class="section">Co-traces of a process</h2>
+<a id="lab787"></a><h2 class="section">Co-traces of a process</h2>
 
 
 <div class="paragraph"> </div>
@@ -76,7 +76,7 @@
 </div>
 
 <div class="doc">
-<a id="lab187"></a><h2 class="section">Definition of the alternative preorder: co-trace inclusion</h2>
+<a id="lab788"></a><h2 class="section">Definition of the alternative preorder: co-trace inclusion</h2>
 
 </div>
 <div class="code">
@@ -96,7 +96,7 @@
 </div>
 
 <div class="doc">
-<a id="lab188"></a><h2 class="section"><span class="inlinecode">≼꜀ₒ₋ₜᵢ</span> is a preorder</h2>
+<a id="lab789"></a><h2 class="section"><span class="inlinecode">≼꜀ₒ₋ₜᵢ</span> is a preorder</h2>
 
 </div>
 <div class="code">
@@ -117,13 +117,13 @@
 </div>
 
 <div class="doc">
-<a id="lab189"></a><h1 class="section">Characterisation of <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#may"><span class="id" title="inductive">may</span></a></span> in terms of co-traces</h1>
+<a id="lab790"></a><h1 class="section">Characterisation of <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#may"><span class="id" title="inductive">may</span></a></span> in terms of co-traces</h1>
 
 
 <div class="paragraph"> </div>
 
     The bridge between the contextual predicate <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#may"><span class="id" title="inductive">may</span></a></span> and co-traces:
-    <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> <span class="inlinecode"><span class="id" title="var">may_pass</span></span> <span class="inlinecode"><span class="id" title="var">t</span></span> holds exactly when the process answers some trace
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> <span class="inlinecode"><span class="id" title="var">may_pass</span></span> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a></span> holds exactly when the process answers some trace
     <span class="inlinecode"><span class="id" title="var">s</span></span> with duals (co-weakly) and the client performs that very
     trace <span class="inlinecode"><span class="id" title="var">s</span></span> literally, reaching a successful state. 
 </div>
@@ -149,7 +149,7 @@
     with <span class="inlinecode"><span class="id" title="var">DefinitionTI.v</span></span>. 
 <div class="paragraph"> </div>
 
-<a id="lab190"></a><h2 class="section">From a successful computation to a synchronising co-trace</h2>
+<a id="lab791"></a><h2 class="section">From a successful computation to a synchronising co-trace</h2>
 
 </div>
 <div class="code">
@@ -184,7 +184,7 @@
 </div>
 
 <div class="doc">
-<a id="lab191"></a><h2 class="section">From a synchronising co-trace to a successful computation</h2>
+<a id="lab792"></a><h2 class="section">From a synchronising co-trace to a successful computation</h2>
 
 </div>
 <div class="code">
@@ -216,7 +216,7 @@
 </div>
 
 <div class="doc">
-<a id="lab192"></a><h2 class="section">The characterisation</h2>
+<a id="lab793"></a><h2 class="section">The characterisation</h2>
 
 </div>
 <div class="code">

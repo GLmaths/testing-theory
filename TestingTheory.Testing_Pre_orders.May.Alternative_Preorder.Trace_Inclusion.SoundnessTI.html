@@ -36,7 +36,7 @@
 </div>
 
 <div class="doc">
-<a id="lab177"></a><h1 class="section">Soundness of the trace-inclusion preorder for May</h1>
+<a id="lab778"></a><h1 class="section">Soundness of the trace-inclusion preorder for May</h1>
 
 
 <div class="paragraph"> </div>
@@ -49,15 +49,15 @@
 
 <div class="paragraph"> </div>
 
-    The argument is purely about traces. If <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> passes a test <span class="inlinecode"><span class="id" title="var">t</span></span>, then by
-    <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.DefinitionTI.html#may_to_wt"><span class="id" title="lemma">may_to_wt</span></a></span> the pair <span class="inlinecode">(<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a>,</span> <span class="inlinecode"><span class="id" title="var">t</span>)</span> has a successful computation whose server
+    The argument is purely about traces. If <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> passes a test <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a></span>, then by
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.DefinitionTI.html#may_to_wt"><span class="id" title="lemma">may_to_wt</span></a></span> the pair <span class="inlinecode">(<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a>,</span> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a>)</span> has a successful computation whose server
     projection is some trace <span class="inlinecode"><span class="id" title="var">s</span></span>, the client following the co-trace <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Exemples_of_Actions.InputOutputActions.html#co"><span class="id" title="definition">co</span></a>ₜ</span> <span class="inlinecode"><span class="id" title="var">s</span></span>.
     Trace inclusion hands us the *same* trace <span class="inlinecode"><span class="id" title="var">s</span></span> on the <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.q"><span class="id" title="variable">q</span></a></span> side, and <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.DefinitionTI.html#wt_to_may"><span class="id" title="lemma">wt_to_may</span></a></span>
-    replays the very same computation with <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.q"><span class="id" title="variable">q</span></a></span> in place of <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> — the client <span class="inlinecode"><span class="id" title="var">t</span></span> is
+    replays the very same computation with <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.q"><span class="id" title="variable">q</span></a></span> in place of <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> — the client <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a></span> is
     untouched, so it still reaches the same successful state. 
 <div class="paragraph"> </div>
 
-<a id="lab178"></a><h2 class="section">Soundness, for arbitrary LTSs</h2>
+<a id="lab779"></a><h2 class="section">Soundness, for arbitrary LTSs</h2>
 
 </div>
 <div class="code">
@@ -87,7 +87,7 @@
 </div>
 
 <div class="doc">
-<a id="lab179"></a><h2 class="section">Soundness, for forwarders</h2>
+<a id="lab780"></a><h2 class="section">Soundness, for forwarders</h2>
 
 
 <div class="paragraph"> </div>
@@ -116,7 +116,7 @@
 </div>
 
 <div class="doc">
-<a id="lab180"></a><h2 class="section">Soundness, for feedback LTSs, through the forwarder construction</h2>
+<a id="lab781"></a><h2 class="section">Soundness, for feedback LTSs, through the forwarder construction</h2>
 
 
 <div class="paragraph"> </div>
@@ -125,7 +125,7 @@
     so <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.Alternative_Preorder.Trace_Inclusion.SoundnessTI.html#soundness_ti_fw"><span class="id" title="lemma">soundness_ti_fw</span></a></span> does not apply to it directly. But it can be turned into
     one: <span class="inlinecode"><a class="idref" href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFW"><span class="id" title="instance">toFW</span></a></span> <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Trace_Normalisation.RestrictedSimulation.html#EchoAcceptanceSimulation.gLtsP"><span class="id" title="variable">gLtsP</span></a></span> equips <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.MustE.html#preorder.P"><span class="id" title="variable">P</span></a></span> <span class="inlinecode">*</span> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#MO"><span class="id" title="definition">MO</span></a></span> <span class="inlinecode"><span class="id" title="var">A</span></span> with a <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#gLtsObaFW"><span class="id" title="record">gLtsObaFW</span></a></span> structure
     (<span class="inlinecode"><a class="idref" href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFWObaFW"><span class="id" title="instance">toFWObaFW</span></a></span>), and the forwarder construction is transparent for <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.May.html#may"><span class="id" title="inductive">may</span></a></span>
-    (<span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.LiftMay.html#may_iff_may_fw"><span class="id" title="lemma">may_iff_may_fw</span></a></span> : <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> <span class="inlinecode"><span class="id" title="var">may_pass</span></span> <span class="inlinecode"><span class="id" title="var">t</span></span> <span class="inlinecode">&lt;-&gt;</span> <span class="inlinecode">(<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a>,</span> <span class="inlinecode">∅)</span> <span class="inlinecode"><span class="id" title="var">may_pass</span></span> <span class="inlinecode"><span class="id" title="var">t</span></span>), hence for the
+    (<span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.May.LiftMay.html#may_iff_may_fw"><span class="id" title="lemma">may_iff_may_fw</span></a></span> : <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a></span> <span class="inlinecode"><span class="id" title="var">may_pass</span></span> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a></span> <span class="inlinecode">&lt;-&gt;</span> <span class="inlinecode">(<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.ACCS.ACCS_Examples.html#Code_Hoisting_FW.p"><span class="id" title="variable">p</span></a>,</span> <span class="inlinecode">∅)</span> <span class="inlinecode"><span class="id" title="var">may_pass</span></span> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_MixedSumProbes.html#VCCS_MixedSumProbes.MixedSumProbe.t"><span class="id" title="variable">t</span></a></span>), hence for the
     contextual preorder itself (<span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Lift.html#lift_fw_ctx_pre"><span class="id" title="lemma">lift_fw_ctx_pre</span></a></span>).
 
 <div class="paragraph"> </div>

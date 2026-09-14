@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="https://github.com/GLmaths/testing-theory">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab130"></a><h1 class="section">Redundant rules of the VACCS system</h1>
+
+
+<div class="paragraph"> </div>
+
+    The system of <span class="inlinecode"><span class="id" title="var">VACCS_DefinitionAxiomatic.v</span></span> has **nine** rules:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_trans"><span class="id" title="constructor">ax_trans</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_cgr"><span class="id" title="constructor">ax_cgr</span></a></span> — preorder and structural congruence;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_par"><span class="id" title="constructor">ax_par</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_res"><span class="id" title="constructor">ax_res</span></a></span> — congruence for <span class="inlinecode">‖</span> and <span class="inlinecode"><span class="id" title="var">ν</span></span>;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_tau_step"><span class="id" title="constructor">ax_tau_step</span></a></span> — a server's own internal move only decreases it;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_same_lts"><span class="id" title="constructor">ax_same_lts</span></a></span> — two processes with the same transitions;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_glb_tau"><span class="id" title="constructor">ax_glb_tau</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_glb_settle"><span class="id" title="constructor">ax_glb_settle</span></a></span> — below a guarded sum, read off its
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Must.html#must"><span class="id" title="inductive">must</span></a></span> fields (with a <span class="inlinecode">𝛕</span>-branch; or settling against any bag);
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_share_msg"><span class="id" title="constructor">ax_share_msg</span></a></span> — two branches carrying the same pending message
+      pool their residues, the message factoring out of the choice.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+    Every other law of earlier versions of the system is now a lemma, with
+    the same statement, proved from these nine:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> from <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_same_lts"><span class="id" title="constructor">ax_same_lts</span></a></span>: <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_success_l"><span class="id" title="constructor">ax_success_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_expansion_l"><span class="id" title="constructor">ax_expansion_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>,
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_res_normalize_l"><span class="id" title="constructor">ax_res_normalize_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>;
+
+</li>
+<li> from <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_glb_tau"><span class="id" title="constructor">ax_glb_tau</span></a></span> and <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_glb_settle"><span class="id" title="constructor">ax_glb_settle</span></a></span> (joined as the lemma
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_glb_sum"><span class="id" title="lemma">ax_glb_sum</span></a></span>, and through <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_Matching.html#ax_below_gsum"><span class="id" title="lemma">ax_below_gsum</span></a></span>, whose <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_Forwarder.html#Settles"><span class="id" title="definition">Settles</span></a></span> premise
+      is discharged by one internal run of the left-hand side to a stable,
+      silent state receiving only on channels the sum offers):
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_int_glb"><span class="id" title="constructor">ax_int_glb</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_choice_tau"><span class="id" title="constructor">ax_choice_tau</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_tau_sep_l"><span class="id" title="constructor">ax_tau_sep_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>,
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_tau_flatten_l"><span class="id" title="constructor">ax_tau_flatten_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_convex"><span class="id" title="constructor">ax_convex</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_share_in"><span class="id" title="constructor">ax_share_in</span></a></span>,
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_input_distrib_l"><span class="id" title="constructor">ax_input_distrib_l</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_ccat_r"><span class="id" title="lemma">ax_ccat_r</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_choice_input"><span class="id" title="lemma">ax_choice_input</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_input"><span class="id" title="constructor">ax_input</span></a></span>,
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_sub_tau"><span class="id" title="lemma">ax_sub_tau</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_drop_tau"><span class="id" title="lemma">ax_drop_tau</span></a></span>;
+
+</li>
+<li> from <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_tau_step"><span class="id" title="constructor">ax_tau_step</span></a></span>: <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_int_l"><span class="id" title="constructor">ax_int_l</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_int_r"><span class="id" title="lemma">ax_int_r</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_tau_run"><span class="id" title="lemma">ax_tau_run</span></a></span>;
+
+</li>
+<li> from <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_cgr"><span class="id" title="constructor">ax_cgr</span></a></span> and the rest: <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_refl"><span class="id" title="lemma">ax_refl</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_tau"><span class="id" title="lemma">ax_tau</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_if"><span class="id" title="lemma">ax_if</span></a></span>;
+
+</li>
+<li> as corollaries of completeness (<span class="inlinecode"><span class="id" title="var">VACCS_DerivedRules.v</span></span>), under
+      <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#gStatic"><span class="id" title="inductive">gStatic</span></a></span> side conditions: <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DerivedRules.html#ax_input_drop"><span class="id" title="lemma">ax_input_drop</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DerivedRules.html#ax_restrict"><span class="id" title="lemma">ax_restrict</span></a></span>.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+    Independence of the nine is not proved.  <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_share_msg"><span class="id" title="constructor">ax_share_msg</span></a></span> is the one
+    rule whose conclusion is a parallel composition built from a guarded
+    sum, which none of the others can produce; <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_same_lts"><span class="id" title="constructor">ax_same_lts</span></a></span> and
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Axiomatic.VACCS_DefinitionAxiomatic.html#ax_glb_settle"><span class="id" title="constructor">ax_glb_settle</span></a></span> are the only rules with semantic (LTS-level) premises. 
+</div>
+<div class="code">
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

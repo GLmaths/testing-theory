@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="https://github.com/GLmaths/testing-theory">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab606"></a><h1 class="section">The inequational theory characterises the must-preorder</h1>
+
+
+<div class="paragraph"> </div>
+
+    The tie-in corollary, in the style of <span class="inlinecode"><span class="id" title="var">VCCS_Must_Characterization.v</span></span>:
+    on the recursion-free (<span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a></span>) fragment of VCCS, the proof system
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_pre"><span class="id" title="inductive">ax_pre</span></a></span> of <span class="inlinecode"><span class="id" title="var">DefinitionAxiomatic.v</span></span> is *exactly* the must-preorder.
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.SoundnessAx.html#soundness_ax"><span class="id" title="lemma">soundness_ax</span></a></span> (<span class="inlinecode"><span class="id" title="var">SoundnessAx.v</span></span>): every derivation is valid;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.CompletenessAx.html#completeness_ax"><span class="id" title="lemma">completeness_ax</span></a></span> (<span class="inlinecode"><span class="id" title="var">CompletenessAx.v</span></span>): every valid inequation is
+      derivable.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+    The rule set this holds of is not the one a naive reading of
+    Hennessy &amp; Ingólfsdóttir suggests. Eleven corrections were needed,
+    each recorded at its own constructor in <span class="inlinecode"><span class="id" title="var">DefinitionAxiomatic.v</span></span>:
+    the sum-congruence rule <span class="inlinecode"><span class="id" title="var">ax_choice</span></span> is **unsound** and was removed,
+    and ten rules were missing — <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_choice_stable"><span class="id" title="constructor">ax_choice_stable</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_int_glb"><span class="id" title="constructor">ax_int_glb</span></a></span>,
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_tau_sep_l"><span class="id" title="constructor">ax_tau_sep_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_choice_tau"><span class="id" title="constructor">ax_choice_tau</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_tau_flatten_l"><span class="id" title="constructor">ax_tau_flatten_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>,
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_convex"><span class="id" title="constructor">ax_convex</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_success_l"><span class="id" title="constructor">ax_success_l</span></a></span>/<span class="inlinecode"><span class="id" title="var">_r</span></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_share_in"><span class="id" title="constructor">ax_share_in</span></a></span>/<span class="inlinecode"><span class="id" title="var">_out</span></span> and
+    <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#ax_swap_out"><span class="id" title="constructor">ax_swap_out</span></a></span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">List</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">stdpp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">base</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#"><span class="id" title="library">VCCS</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#"><span class="id" title="library">VCCS_Instance</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Must.html#"><span class="id" title="library">Must</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#"><span class="id" title="library">ActTau</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Exemples_of_Actions.InputOutputActions.html#"><span class="id" title="library">InputOutputActions</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#"><span class="id" title="library">gLts</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Bisimulation.html#"><span class="id" title="library">Bisimulation</span></a> <a class="idref" href="TestingTheory.Interaction_Between_Lts.InteractionBetweenLts.html#"><span class="id" title="library">InteractionBetweenLts</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Testing_Predicate.html#"><span class="id" title="library">Testing_Predicate</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Exemples_of_Testing_Predicate.VCCS_Good.html#"><span class="id" title="library">VCCS_Good</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.WeakTransitions.html#"><span class="id" title="library">WeakTransitions</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#"><span class="id" title="library">Subset_Act</span></a> <a class="idref" href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Acceptance_Set.DefinitionAS.html#"><span class="id" title="library">DefinitionAS</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.Convergence.html#"><span class="id" title="library">Convergence</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#"><span class="id" title="library">VCCS_Static</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Must_Characterization.html#"><span class="id" title="library">VCCS_Must_Characterization</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#"><span class="id" title="library">DefinitionAxiomatic</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.SoundnessAx.html#"><span class="id" title="library">SoundnessAx</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.CompletenessAx.html#"><span class="id" title="library">CompletenessAx</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="EquivalenceAx" class="idref" href="#EquivalenceAx"><span class="id" title="section">EquivalenceAx</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Context</span> `{<a id="EquivalenceAx.VP" class="idref" href="#EquivalenceAx.VP"><span class="id" title="variable">VP</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#VCCS_Parameters"><span class="id" title="class">VCCS_Parameters</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab607"></a><h2 class="section">The characterisation</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="must_iff_ax_pre" class="idref" href="#must_iff_ax_pre"><span class="id" title="lemma">must_iff_ax_pre</span></a> : <span class="id" title="notation">forall</span> <span class="id" title="notation">(</span><a id="p:2" class="idref" href="#p:2"><span class="id" title="binder">p</span></a> <a id="q:3" class="idref" href="#q:3"><span class="id" title="binder">q</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#proc"><span class="id" title="inductive">proc</span></a><span class="id" title="notation">),</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:2"><span class="id" title="variable">p</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:3"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:2"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#79699d0443a25bb45aed98f0443af75d"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₐₓ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:3"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:2"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Must_Characterization.html#f6f89681fc933c6edf15541582660526"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:3"><span class="id" title="variable">q</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">Hp</span> <span class="id" title="var">Hq</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span> <span class="id" title="var">Hax</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.SoundnessAx.html#soundness_ax"><span class="id" title="lemma">soundness_ax</span></a>; <span class="id" title="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span> <span class="id" title="var">Hpre</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.CompletenessAx.html#completeness_ax"><span class="id" title="lemma">completeness_ax</span></a>; <span class="id" title="tactic">assumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Two-sided derivability is must-equivalence. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Corollary</span> <a id="must_eq_iff_ax_eq" class="idref" href="#must_eq_iff_ax_eq"><span class="id" title="lemma">must_eq_iff_ax_eq</span></a> : <span class="id" title="notation">forall</span> <span class="id" title="notation">(</span><a id="p:4" class="idref" href="#p:4"><span class="id" title="binder">p</span></a> <a id="q:5" class="idref" href="#q:5"><span class="id" title="binder">q</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#proc"><span class="id" title="inductive">proc</span></a><span class="id" title="notation">),</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:4"><span class="id" title="variable">p</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:5"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:4"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#6c5315cea95b939698e29a87a7801c66"><span class="id" title="notation">ᴠᴄᴄꜱ≂ₐₓ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:5"><span class="id" title="variable">q</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:4"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Must_Characterization.html#f6f89681fc933c6edf15541582660526"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:5"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:5"><span class="id" title="variable">q</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Must_Characterization.html#f6f89681fc933c6edf15541582660526"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:4"><span class="id" title="variable">p</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">Hp</span> <span class="id" title="var">Hq</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span> (<span class="id" title="var">H1</span> &amp; <span class="id" title="var">H2</span>). <span class="id" title="tactic">split</span>; <span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#must_iff_ax_pre"><span class="id" title="lemma">must_iff_ax_pre</span></a>; <span class="id" title="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span> (<span class="id" title="var">H1</span> &amp; <span class="id" title="var">H2</span>). <span class="id" title="tactic">split</span>; <span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#must_iff_ax_pre"><span class="id" title="lemma">must_iff_ax_pre</span></a>; <span class="id" title="tactic">assumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab608"></a><h2 class="section">Decidability-flavoured restatement</h2>
+
+
+<div class="paragraph"> </div>
+
+    Every semantic fact about the <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a></span> fragment is reachable by a
+    finite derivation in the 36-constructor system, and conversely. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Corollary</span> <a id="ax_pre_sound_and_complete" class="idref" href="#ax_pre_sound_and_complete"><span class="id" title="lemma">ax_pre_sound_and_complete</span></a> : <span class="id" title="notation">forall</span> <span class="id" title="notation">(</span><a id="p:6" class="idref" href="#p:6"><span class="id" title="binder">p</span></a> <a id="q:7" class="idref" href="#q:7"><span class="id" title="binder">q</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#proc"><span class="id" title="inductive">proc</span></a><span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.VCCS_Static.html#Static"><span class="id" title="inductive">Static</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:7"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Must_Characterization.html#f6f89681fc933c6edf15541582660526"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:7"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#79699d0443a25bb45aed98f0443af75d"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₐₓ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:7"><span class="id" title="variable">q</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.DefinitionAxiomatic.html#79699d0443a25bb45aed98f0443af75d"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₐₓ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:7"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Must_Characterization.html#f6f89681fc933c6edf15541582660526"><span class="id" title="notation">ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#q:7"><span class="id" title="variable">q</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">p</span> <span class="id" title="var">q</span> <span class="id" title="var">Hp</span> <span class="id" title="var">Hq</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>; [<span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.CompletenessAx.html#completeness_ax"><span class="id" title="lemma">completeness_ax</span></a> | <span class="id" title="tactic">apply</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.SoundnessAx.html#soundness_ax"><span class="id" title="lemma">soundness_ax</span></a>]; <span class="id" title="tactic">assumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Axiomatic.EquivalenceAx.html#EquivalenceAx"><span class="id" title="section">EquivalenceAx</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
