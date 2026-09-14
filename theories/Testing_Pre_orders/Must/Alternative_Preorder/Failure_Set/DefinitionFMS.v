@@ -48,7 +48,7 @@ Definition fail_pre_ms_cond2 `{ CC : Countable PreAct,
   (p : P) (q : Q) :=
   forall s G, Failure q s G -> Failure p s G.
 
-Notation "p ₂⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond1 p q) (at level 70).
+Notation "p ₂⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond2 p q) (at level 70).
 
 Definition fail_pre_ms `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _ ,
