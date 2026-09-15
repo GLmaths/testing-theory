@@ -38,7 +38,7 @@ From stdpp Require Import base countable option gmap.
     Syntax (Definition 3.1), substitutions, tuple evaluation and pattern
     matching (Tables 1-2), with their decidability and countability.  The
     LTSs are built on top of it, in [Applicative_process_algebra.v] and
-    [PAL_Template_LTS.v]. *)
+    [PAL_Alt_LTS.v]. *)
 
 Section PAL_Syntax.
   Context {Val : Type} `{Countable Val}.

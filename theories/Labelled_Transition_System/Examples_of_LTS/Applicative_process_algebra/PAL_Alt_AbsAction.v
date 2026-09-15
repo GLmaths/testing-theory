@@ -21,37 +21,35 @@
 *)
 
 From Stdlib.Unicode Require Import Utf8.
-From stdpp Require Import base tactics decidable countable list.
-From TestingTheory Require Import ActTau gLts Subset_Act InputOutputActions
-  LabelAbstraction PAL_Syntax PAL_Template_LTS.
+From stdpp Require Import base tactics decidable countable.
+From TestingTheory Require Import ActTau gLts Subset_Act DefinitionAS
+  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi.
 
-(* * Label abstractions of the alternative LTS of PAL
+(* * Label abstraction of the alternative LTS of PAL, as in [DefinitionAS]
 
-   The labels are tuples of values, and [≈ᴛᴇꜱᴛ] and [≈ᴘʀᴏ] are equality. *)
+   [Φᴀᴘᴀʟ] ([PAL_Alt_Phi.v]) maps a label to its event, and [𝝳ᴇᴠ] is the
+   identity on events. Condition (1) is [Φ_test_spec], and condition (2)
+   holds as [𝝳ᴇᴠ] is injective.
 
-Section PAL_T_LA.
+   This abstraction is not finitary, and no abstraction of these labels is:
+   the co-actions of [in(?x).𝟘] have pairwise distinct events [EvOut ⟨v⟩]
+   ([PAL_Alt_Abs.Φ_coR_p_formal], [PAL_Alt_Abs.prog_spec_injective], and
+   [PAL_Label_Dilemma.no_labelling] for any labelling). *)
+
+Section PAL_Alt_AbsAction.
   Context (Val : Type) `{Countable Val}.
 
   Notation term := (term Val).
-  Notation PALT_Act := (PALT_Act Val).
+  Notation Event := (Event Val).
 
-  #[local] Existing Instance PALT_gLts.
+  Definition 𝝳ᴇᴠ (e : Event) : Event := e.
 
-  Lemma R_eq_test_spec (μ μ' : PALT_Act) : μ = μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ'.
-  Proof. by intros <-. Qed.
-
-  Lemma R_eq_prog_spec (μ μ' : PALT_Act) : μ = μ' → (co𝐏 μ : subset_of term) ⊆ co𝐏 μ'.
-  Proof. by intros <-. Qed.
-
-  #[global] Instance gLtsLAtest_PALT : @gLtsLAtest term PALT_Act (PALT_ExtAction Val) (PALT_gLts Val) :=
-    {| LA_test := eq;
-       LA_test_eq := eq_equivalence;
-       LA_test_dec := PALT_Act_eqdec Val;
-       LA_test_spec := R_eq_test_spec |}.
-
-  #[global] Instance gLtsLAprog_PALT : @gLtsLAprog term PALT_Act (PALT_ExtAction Val) (PALT_gLts Val) :=
-    {| LA_prog := eq;
-       LA_prog_eq := eq_equivalence;
-       LA_prog_dec := PALT_Act_eqdec Val;
-       LA_prog_spec := R_eq_prog_spec |}.
-End PAL_T_LA.
+  #[global] Instance AbsPALA :
+    @AbsAction term term Event Event (PALA_Act Val) (PALA_ExtAction Val) (Φᴀᴘᴀʟ Val) 𝝳ᴇᴠ
+      (PALA_gLts Val) (PALA_gLtsEq Val).
+  Proof.
+    split.
+    - intros t β β' _ _ e h. exact (Φ_test_spec Val t β β' e h).
+    - intros p β β' _ _ e h. unfold 𝝳ᴇᴠ in e. by rewrite <- e.
+  Qed.
+End PAL_Alt_AbsAction.

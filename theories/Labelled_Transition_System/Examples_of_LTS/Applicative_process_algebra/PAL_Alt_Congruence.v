@@ -23,23 +23,27 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics relations countable.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
-  PAL_Syntax PAL_Template_LTS.
+  PAL_Syntax PAL_Alt_LTS.
 
-(* * Structural congruence for PAL with templates
+(* * Structural congruence for the alternative LTS of PAL
 
    As for VCCS: [𝟘] is a unit of [‖] and [□], both are commutative and
    associative, [⊕] and [|ₖ] are commutative, and a conditional whose guard
    evaluates is its branch. For the left merge, [E ⌊ 𝟘 ≡ E] and [𝟘 ⌊ E ≡ 𝟘]
-   (laws LM4 and LM3; note that [𝟘 ⌊ E] has no transition). The congruence is closed under the static
-   contexts only: prefixes are left untouched ([out(t).E] tests [E = 𝟘]
-   syntactically in rule IR5, and the bodies of [in], [read] and [rec] are
-   only exposed by substitution, identically on both sides). *)
+   (laws LM4 and LM3; note that [𝟘 ⌊ E] has no transition). The congruence is
+   closed under the static contexts and under the prefixes [in(t)], [read(t)]
+   and [out(t)]:
+   - under [in(t)] and [read(t)], the body is exposed by a substitution of
+     values, which preserves the congruence ([cgr_step_subst]);
+   - under [out(t)], only between bodies different from [𝟘], as rule IR5
+     tests [E = 𝟘] syntactically ([out(t).(𝟘 ‖ 𝟘)] has a τ, [out(t).𝟘] an output).
+   It is not closed under [rec]. *)
 
-Section PAL_T_Congruence.
+Section PAL_Alt_Congruence.
   Context (Val : Type) `{Countable Val}.
 
   Notation term := (term Val).
-  Notation step := (lts_step_t Val).
+  Notation step := (lts_step_a Val).
 
   Open Scope pal_scope.
   Inductive cgr_step : term → term → Prop :=
@@ -79,7 +83,11 @@ Section PAL_T_Congruence.
     | cgr_if_l be E E' F : cgr_step E E' → cgr_step (IF be THEN E ELSE F) (IF be THEN E' ELSE F)
     | cgr_if_r be E F F' : cgr_step F F' → cgr_step (IF be THEN E ELSE F) (IF be THEN E ELSE F')
     | cgr_eval_l E E' F : cgr_step E E' → cgr_step (eval( E ) • F) (eval( E' ) • F)
-    | cgr_eval_r E F F' : cgr_step F F' → cgr_step (eval( E ) • F) (eval( E ) • F').
+    | cgr_eval_r E F F' : cgr_step F F' → cgr_step (eval( E ) • F) (eval( E ) • F')
+    (* prefixes *)
+    | cgr_in t E E' : cgr_step E E' → cgr_step (in( t ) • E) (in( t ) • E')
+    | cgr_read t E E' : cgr_step E E' → cgr_step (read( t ) • E) (read( t ) • E')
+    | cgr_out t E E' : E ≠ 𝟘 → E' ≠ 𝟘 → cgr_step E E' → cgr_step (out( t ) • E) (out( t ) • E').
   Close Scope pal_scope.
 
   (** The structural congruence. *)
@@ -118,31 +126,30 @@ Section PAL_T_Congruence.
   Lemma cgr_par_lift E E' F F' : cgr E E' → cgr F F' → cgr (t_par E F) (t_par E' F').
   Proof. intros h1 h2. etransitivity; [apply cgr_par_l_lift, h1 | apply cgr_par_r_lift, h2]. Qed.
 
-  Lemma co_t_involutive (μ : PALT_Act Val) : co_t Val (co_t Val μ) = μ.
-  Proof. by destruct μ. Qed.
-
   (** Synchronisations read from the other side. *)
-  Lemma tir12_sym E1 E2 mu E1' E2' :
-    step E1 (ActExt (co_t Val mu)) E1' → step E2 (ActExt mu) E2' → step (t_par E1 E2) τ (t_par E1' E2').
-  Proof. intros h1 h2. eapply (tir12 _ _ _ (co_t Val mu)); [exact h1 | by rewrite co_t_involutive]. Qed.
+  Lemma air12_sym E1 E2 mu1 mu2 E1' E2' :
+    step E1 (ActExt mu1) E1' → step E2 (ActExt mu2) E2' → PALA_dual Val mu2 mu1 →
+    step (t_par E1 E2) τ (t_par E1' E2').
+  Proof. intros h1 h2 hd. eapply air12; [exact h1 | exact h2 | by symmetry]. Qed.
 
-  Lemma tir13_sym E1 E2 mu E1' E2' :
-    step E1 (ActExt (co_t Val mu)) E1' → step E2 (ActExt mu) E2' → step (t_cmerge E1 E2) τ (t_par E1' E2').
-  Proof. intros h1 h2. eapply (tir13 _ _ _ (co_t Val mu)); [exact h1 | by rewrite co_t_involutive]. Qed.
+  Lemma air13_sym E1 E2 mu1 mu2 E1' E2' :
+    step E1 (ActExt mu1) E1' → step E2 (ActExt mu2) E2' → PALA_dual Val mu2 mu1 →
+    step (t_cmerge E1 E2) τ (t_par E1' E2').
+  Proof. intros h1 h2 hd. eapply air13; [exact h1 | exact h2 | by symmetry]. Qed.
 
   (** Steps in contexts, for any label. *)
   Lemma step_par_l E F α E' : step E α E' → step (t_par E F) α (t_par E' F).
-  Proof. destruct α; [apply tar5_l | apply tir9_l]. Qed.
+  Proof. destruct α; [apply aar5_l | apply air9_l]. Qed.
   Lemma step_par_r E F α F' : step F α F' → step (t_par E F) α (t_par E F').
-  Proof. destruct α; [apply tar5_r | apply tir9_r]. Qed.
+  Proof. destruct α; [apply aar5_r | apply air9_r]. Qed.
 
   Lemma no_step_nil α q : ¬ step t_nil α q.
   Proof. inversion 1. Qed.
 
-  Local Hint Constructors lts_step_t cgr_step : pal_cgr.
+  Local Hint Constructors lts_step_a cgr_step : pal_cgr.
   Local Hint Resolve cgr_once cgr_refl cgr_par_l_lift cgr_par_r_lift cgr_choice_l_lift cgr_choice_r_lift
     cgr_lmerge_l_lift cgr_cmerge_l_lift cgr_cmerge_r_lift cgr_par_lift
-    tir12_sym tir13_sym step_par_l step_par_r : pal_cgr.
+    air12_sym air13_sym step_par_l step_par_r : pal_cgr.
 
   Local Ltac invert_steps :=
     repeat match goal with
@@ -157,6 +164,35 @@ Section PAL_T_Congruence.
         let r0 := fresh "r" in let h0 := fresh "h" in let c0 := fresh "c" in
         destruct (IH _ _ h) as (r0 & h0 & c0); clear IH
     end.
+
+  (** ** Substitution of values *)
+
+  (** A guard which evaluates has no variable. *)
+  Lemma subst_bexp_eval (σ : vsubst Val) be b : eval_bexp be = Some b → subst_bexp σ be = be.
+  Proof.
+    revert b. induction be as [| | e1 e2 | b1 IH1 b2 IH2 | b1 IH1 b2 IH2 | b1 IH1]; intros b h; cbn in *;
+      try done.
+    - destruct e1, e2; by try discriminate.
+    - destruct (eval_bexp b1) as [r1|] eqn:h1, (eval_bexp b2) as [r2|] eqn:h2; try discriminate.
+      by rewrite (IH1 r1), (IH2 r2).
+    - destruct (eval_bexp b1) as [r1|] eqn:h1, (eval_bexp b2) as [r2|] eqn:h2; try discriminate.
+      by rewrite (IH1 r1), (IH2 r2).
+    - destruct (eval_bexp b1) as [r1|] eqn:h1; try discriminate. by rewrite (IH1 r1).
+  Qed.
+
+  Lemma subst_term_nil (σ : vsubst Val) E : subst_term σ E = t_nil → E = t_nil.
+  Proof. by destruct E. Qed.
+
+  Lemma cgr_step_subst (σ : vsubst Val) E E' : cgr_step E E' → cgr_step (subst_term σ E) (subst_term σ E').
+  Proof.
+    intros h. revert σ. induction h; intros σ; cbn;
+      try (match goal with hb : eval_bexp ?be = Some _ |- _ =>
+             rewrite (subst_bexp_eval σ be _ hb) end);
+      eauto using cgr_step.
+    apply cgr_out; [| | apply IHh]; intros e; apply subst_term_nil in e; contradiction.
+  Qed.
+
+  Local Hint Resolve cgr_step_subst : pal_cgr.
 
   (** One congruence step is a strong simulation. *)
   Lemma cgr_step_simulation p r :
@@ -176,7 +212,7 @@ Section PAL_T_Congruence.
       destruct (IH _ _ hy) as (z' & hz & cz). exists z'. split; [done | by etransitivity].
   Qed.
 
-  Lemma PALT_cgr_spec p q (α : Act (PALT_Act Val)) :
+  Lemma PALA_cgr_spec p q (α : Act (PALA_Act Val)) :
     (∃ r, cgr p r ∧ step r α q) → (∃ r, step p α r ∧ cgr r q).
   Proof.
     intros (r & hpr & hs). symmetry in hpr.
@@ -185,14 +221,14 @@ Section PAL_T_Congruence.
 
   (** ** [gLtsEq]/[gLtsOba]/[gLtsObaFW]/[gLtsObaFB]; the last three are vacuous, no action being non-blocking *)
 
-  #[global] Instance PALT_gLtsEq : gLtsEq term (PALT_ExtAction Val) := {|
-    gLtsEq_gLts := PALT_gLts Val;
+  #[global] Instance PALA_gLtsEq : gLtsEq term (PALA_ExtAction Val) := {|
+    gLtsEq_gLts := PALA_gLts Val;
     eq_rel := cgr;
     eq_rel_eq := cgr_equivalence;
-    eq_spec := PALT_cgr_spec;
+    eq_spec := PALA_cgr_spec;
   |}.
 
-  #[global] Instance PALT_gLtsOba : gLtsOba term (H:=PALT_ExtAction Val) (Rel:=PALT_gLtsEq).
+  #[global] Instance PALA_gLtsOba : gLtsOba term (H:=PALA_ExtAction Val) (Rel:=PALA_gLtsEq).
   Proof.
     unshelve econstructor.
     - intros p q r eta alpha nb Hl1 Hl2. destruct nb.
@@ -202,16 +238,16 @@ Section PAL_T_Congruence.
     - intros p1 p2 q1 q2 eta nb Hl1 Hl2 Heq. destruct nb.
   Defined.
 
-  #[global] Instance PALT_gLtsObaFW : gLtsObaFW term (PALT_Act Val).
+  #[global] Instance PALA_gLtsObaFW : gLtsObaFW term (PALA_Act Val).
   Proof.
     unshelve econstructor.
     - intros p1 eta beta. exists p1. intro nb. destruct nb.
     - intros p1 p2 p3 eta beta nb Hdual Hl1 Hl2. destruct nb.
   Defined.
 
-  #[global] Instance PALT_gLtsObaFB : gLtsObaFB term (PALT_Act Val).
+  #[global] Instance PALA_gLtsObaFB : gLtsObaFB term (PALA_Act Val).
   Proof.
     unshelve econstructor.
     intros p1 p2 p3 eta beta nb Hdual Hl1 Hl2. destruct nb.
   Defined.
-End PAL_T_Congruence.
+End PAL_Alt_Congruence.

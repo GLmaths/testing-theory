@@ -23,12 +23,12 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate InteractionBetweenLts Must
-  PAL_Syntax PAL_Template_LTS PAL_Template_Congruence PAL_Good.
+  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Good.
 
 (** * The Must preorder of PAL
 
-    [Must.must] and [Must.ctx_pre] instantiated with the LTS with templates
-    ([PAL_Template_LTS]) and the testing predicate [good_PAL]. *)
+    [Must.must] and [Must.ctx_pre] instantiated with the alternative LTS
+    ([PAL_Alt_LTS]) and the testing predicate [good_PAL]. *)
 
 Section PAL_Must.
   Context (Val : Type) `{Countable Val}.
@@ -37,11 +37,11 @@ Section PAL_Must.
 
   (** [p] must pass the test [t]. *)
   Definition must_PAL (p t : term) : Prop :=
-    must (gLtsP := PALT_gLts Val) (gLtsT := PALT_gLtsEq Val) (outcome := good_PAL Val) p t.
+    must (gLtsP := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val) (outcome := good_PAL Val) p t.
 
   (** The Must preorder: [q] passes every test that [p] must pass. *)
   Definition must_pre_PAL (p q : term) : Prop :=
-    ctx_pre (gLtsP := PALT_gLts Val) (gLtsQ := PALT_gLts Val) (gLtsT := PALT_gLtsEq Val)
+    ctx_pre (gLtsP := PALA_gLts Val) (gLtsQ := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val)
       (outcome := good_PAL Val) p q.
 
   Lemma must_pre_PAL_spec p q : must_pre_PAL p q ↔ ∀ t, must_PAL p t → must_PAL q t.

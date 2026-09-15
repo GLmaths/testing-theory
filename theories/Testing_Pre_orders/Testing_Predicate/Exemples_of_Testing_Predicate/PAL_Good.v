@@ -23,7 +23,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base decidable countable.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate
-  PAL_Syntax PAL_Template_LTS PAL_Template_Congruence.
+  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence.
 
 (** * Testing predicate for PAL
 
@@ -84,8 +84,8 @@ Section PAL_Good.
   Lemma good_cgr p q : cgr Val p q → good_PAL p → good_PAL q.
   Proof. induction 1; eauto using good_cgr_step. Qed.
 
-  (** For the LTS with templates, where [⋍] is the structural congruence. *)
-  #[global] Instance PALT_Good : @Testing_Predicate term (PALT_Act Val) (PALT_ExtAction Val) good_PAL (PALT_gLtsEq Val).
+  (** For the alternative LTS, where [⋍] is the structural congruence. *)
+  #[global] Instance PALA_Good : @Testing_Predicate term (PALA_Act Val) (PALA_ExtAction Val) good_PAL (PALA_gLtsEq Val).
   Proof.
     split.
     - apply _.
