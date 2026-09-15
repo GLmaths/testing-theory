@@ -36,7 +36,15 @@ Definition R `{gLts P A} (p : P) : subset_of A :=
 (* ** Blocking co-actions *)
 Definition coR `{gLts P A} (p : P) : subset_of A := 
   fun μ1 => exists μ2, ¬ p ↛[μ2] /\ dual μ2 μ1 /\ blocking μ1.
-  
+
+(** ** All processes accepting an action *)
+Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
+  fun p => ¬ p ↛[μ].
+
+(** ** All processes accepting a co-action of an action *)
+Definition co𝐏 `{gLts P A} (μ : A) : subset_of P :=
+  fun p => exists μ', dual μ' μ /\ ¬ p ↛[μ'].
+
 (******************* Instantiations to use the usual notation of sets ***********************)
 
 Definition Union_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
