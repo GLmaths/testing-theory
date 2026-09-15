@@ -2821,7 +2821,9 @@ Next Obligation.
   exists (InputOutputActions.co μ).
   symmetry. eapply dual_co.
 Defined.
-Next Obligation. 
+
+#[global] Instance VCCS_UniqueDual : UniqueDual (ExtAct TypeOfActions).
+Proof.
   intros η β duo; simpl; subst.
   simpl in *.
   destruct β as [ (* Input *) a' | (* Output *) a' ].

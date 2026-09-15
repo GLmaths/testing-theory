@@ -48,11 +48,9 @@ Qed.
 Lemma lts_co_non_blocking_enabled `{gLtsObaFW P A} (p : P) :
   ∀ η, non_blocking η → exists p', p ⟶[ co η ] p'.
 Proof.
-  intro η. intro nb.
-  destruct (exists_dual η) as (β & duo).
-  simpl. symmetry in duo.
-  eapply unique_nb in duo as eq; eauto; subst.
-  edestruct (boomerang p (co β)) as (t & l1 & l2); eauto.
+  intros η nb.
+  eapply lts_dual_non_blocking_enabled; eauto.
+  symmetry. exact (proj2_sig (exists_dual η)).
 Qed.
 
 Lemma lts_ht_input_ex `{gLtsObaFW P A} (p : P) :

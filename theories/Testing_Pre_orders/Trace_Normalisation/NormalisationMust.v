@@ -80,6 +80,7 @@ Notation "p ≼ₙ_ₐₛ q" := (bhv_pre_nf p q) (at level 70).
 Section Normalised_preorder.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
   Context `{gLtsT : !gLtsEq T H}.

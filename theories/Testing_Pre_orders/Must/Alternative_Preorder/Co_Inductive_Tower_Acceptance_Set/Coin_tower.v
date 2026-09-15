@@ -261,6 +261,7 @@ Section must_co_inductive_acceptance_preorder.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
 
   Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
@@ -524,7 +525,7 @@ Proof.
   now apply coin_union_l.
 Qed.
 
-Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP}
+Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP} {unique_nb : UniqueDual A}
   `{gLtsT : !gLtsEq T H}
   `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}

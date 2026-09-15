@@ -83,8 +83,9 @@ Section PAL_T.
     dual_blocks := λ _ _ nb _, match nb with end;
     duo_sym := ext_act_match_sym;
     exists_dual := PALT_exists_dual;
-    unique_nb := PALT_unique_nb;
   |}.
+
+  #[global] Instance PALT_UniqueDual : UniqueDual PALT_Act := PALT_unique_nb.
 
   Lemma ext_act_match_det_t (μ ξ : PALT_Act) : ext_act_match μ ξ → μ = co_t ξ.
   Proof.

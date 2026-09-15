@@ -54,6 +54,7 @@ Notation "p ≼ₙ_꜀ₒ₋ₜᵢ q" := (bhv_pre_ti_co_nf p q) (at level 70).
 Section OneProcess.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
   (** *** Traces *)
@@ -111,6 +112,7 @@ End OneProcess.
 Section MayNormalForm.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
 
@@ -150,7 +152,7 @@ End MayNormalForm.
     closed under simplification; the other is the idempotence of the normal
     form ([fnf_idem]). *)
 
-Definition bhv_pre_ti_fnf `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :=
+Definition bhv_pre_ti_fnf `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} {unique_nb : UniqueDual A} (p : P) (q : Q) :=
   ∀ s : trace A, traces p (nlin (fnf s)) -> traces q (nlin (fnf s)).
 
 Notation "p ≼ₛ_ₜᵢ q" := (bhv_pre_ti_fnf p q) (at level 70).
@@ -158,6 +160,7 @@ Notation "p ≼ₛ_ₜᵢ q" := (bhv_pre_ti_fnf p q) (at level 70).
 Section MaySimplified.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
 

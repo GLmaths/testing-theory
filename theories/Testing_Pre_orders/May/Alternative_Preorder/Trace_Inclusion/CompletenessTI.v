@@ -215,6 +215,7 @@ End Forwarder_absorption.
 Section Completeness_ti.
 
 Context `{gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
+Context {unique_nb : UniqueDual A}.
 Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
 Context {QInter : Prop_of_Inter Q T A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
@@ -224,9 +225,13 @@ Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 Lemma never_outcome_false_of_may (q : Q) (t : T) :
   q may_pass t -> ¬ never_outcome outcome t.
 Proof.
-  intros hm nt.
-  eapply may_to_wt in hm as (s0 & q0 & e & _ & wc & happy).
-  eapply nt; eauto.
+  intros hm.
+  induction hm as [ p t happy | p t p' nh pt hm IH | p t t' nh et hm IH
+                  | p t p' μ1 t' μ2 nh inter trS trC hm IH ]; intro nt.
+  - exact (nt [] t (wt_nil t) happy).
+  - exact (IH nt).
+  - apply IH. intros u t2 w. exact (nt u t2 (wt_tau u t t' t2 et w)).
+  - apply IH. intros u t2 w. exact (nt (μ2 :: u) t2 (wt_act μ2 u t t' t2 trC w)).
 Qed.
 
 (** ** The core of completeness
@@ -324,7 +329,7 @@ End Completeness_ti.
 Theorem completeness_ti_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P T A dual}
   {_ : Prop_of_Inter Q T A dual}
@@ -355,7 +360,7 @@ Qed.
 Theorem completeness_ti_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}

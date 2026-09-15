@@ -68,6 +68,7 @@ Proof. split; [exact bhv_pre_ti_refl | exact bhv_pre_ti_transitive]. Qed.
 Section May_and_traces.
 
 Context `{gLtsP : @gLts P A H}.
+Context {unique_nb : UniqueDual A}.
 Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
 (* non-generalising binder: the [gLts] instances must be [gLtsP] and [gLtsT],
    not freshly generalised ones *)

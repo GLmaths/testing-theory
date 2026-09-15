@@ -47,12 +47,12 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
 
 (** ** Classifying the actions of a trace *)
 
-Definition cls_tr `{ExtAction A} (μ : A) : act_class :=
+Definition cls_tr `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) : act_class :=
   if decide (non_blocking μ) then CNB
   else if decide (exist_co_nba μ) then CIN
   else COP.
 
-Lemma cls_tr_CNB `{ExtAction A} (μ : A) : cls_tr μ = CNB <-> non_blocking μ.
+Lemma cls_tr_CNB `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) : cls_tr μ = CNB <-> non_blocking μ.
 Proof.
   unfold cls_tr. split.
   - destruct (decide (non_blocking μ)) as [nb | b]; [now intros _ |].
@@ -60,7 +60,7 @@ Proof.
   - intro nb. now rewrite decide_True.
 Qed.
 
-Lemma cls_tr_CIN `{ExtAction A} (μ : A) : cls_tr μ = CIN <-> exist_co_nba μ.
+Lemma cls_tr_CIN `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) : cls_tr μ = CIN <-> exist_co_nba μ.
 Proof.
   unfold cls_tr. split.
   - destruct (decide (non_blocking μ)) as [nb | b]; [discriminate |].
@@ -70,7 +70,7 @@ Proof.
     rewrite decide_True; [reflexivity | now exists η].
 Qed.
 
-Lemma cls_tr_COP `{ExtAction A} (μ : A) :
+Lemma cls_tr_COP `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) :
   cls_tr μ = COP <-> (blocking μ /\ ¬ exist_co_nba μ).
 Proof.
   unfold cls_tr. split.
@@ -81,7 +81,7 @@ Qed.
 
 (** Actions of the same non-opaque class are either both non-blocking, or both
     admit a non-blocking co-action. *)
-Lemma cls_tr_same_class `{ExtAction A} (μ ν : A) :
+Lemma cls_tr_same_class `{ExtAction A} {unique_nb : UniqueDual A} (μ ν : A) :
   cls_tr μ = cls_tr ν -> cls_tr μ ≠ COP ->
   (non_blocking μ /\ non_blocking ν) \/ (exist_co_nba μ /\ exist_co_nba ν).
 Proof.
@@ -95,7 +95,7 @@ Qed.
 
 (** [nf s] is the normal form of the trace [s]: the canonical linearisation of
     its normalised trace. *)
-Definition nf `{ExtAction A} (s : trace A) : trace A := nlin (nform cls_tr s).
+Definition nf `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) : trace A := nlin (nform cls_tr s).
 
 Notation "⟪ s ⟫" := (nf s) (at level 30).
 
@@ -104,6 +104,7 @@ Notation "⟪ s ⟫" := (nf s) (at level 30).
 Section Transfer.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
   (** *** Weak transitions *)
@@ -235,7 +236,7 @@ Qed.
 (** *** [tequiv] is the symmetric part of the preorders that the normalisation
     quotients by *)
 
-Lemma trace_leq_of_tequiv `{ExtAction A} (s t : trace A) : tequiv cls_tr s t -> s ⊑ₜ t.
+Lemma trace_leq_of_tequiv `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) : tequiv cls_tr s t -> s ⊑ₜ t.
 Proof.
   induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
   - constructor.
@@ -245,10 +246,10 @@ Proof.
     + now eapply tl_anticipate.
 Qed.
 
-Lemma trace_pre_of_tequiv `{ExtAction A} (s t : trace A) : tequiv cls_tr s t -> s ≼ₜ t.
+Lemma trace_pre_of_tequiv `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) : tequiv cls_tr s t -> s ≼ₜ t.
 Proof. intro h. eapply tp_leq, trace_leq_of_tequiv, h. Qed.
 
-Corollary trace_leq_nform `{ExtAction A} (s : trace A) : s ⊑ₜ ⟪ s ⟫ /\ ⟪ s ⟫ ⊑ₜ s.
+Corollary trace_leq_nform `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) : s ⊑ₜ ⟪ s ⟫ /\ ⟪ s ⟫ ⊑ₜ s.
 Proof.
   split; eapply trace_leq_of_tequiv;
     [eapply tequiv_nform | eapply tequiv_sym, tequiv_nform].
@@ -323,7 +324,7 @@ End TracePreorderSoundness.
     [NormalForm.v], so the measure argument of Proposition 4.7 of Boreale,
     De Nicola and Pugliese applies verbatim. *)
 
-Lemma cls_pre_of_trace_leq `{ExtAction A} (s t : trace A) : s ⊑ₜ t -> cls_pre cls_tr s t.
+Lemma cls_pre_of_trace_leq `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) : s ⊑ₜ t -> cls_pre cls_tr s t.
 Proof.
   induction 1
     as [ s | s t u h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 η μ s2 nb duo ].
@@ -334,7 +335,7 @@ Proof.
   - eapply (cp_erase _ s1 η [μ] s2). now eapply cls_tr_CNB.
 Qed.
 
-Lemma cls_pre_of_trace_pre `{ExtAction A} (s t : trace A) : s ≼ₜ t -> cls_pre cls_tr s t.
+Lemma cls_pre_of_trace_pre `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) : s ≼ₜ t -> cls_pre cls_tr s t.
 Proof.
   induction 1 as [ s t hle | s t u h1 IH1 h2 IH2 | s1 η s2 nb ].
   - now eapply cls_pre_of_trace_leq.
@@ -342,7 +343,7 @@ Proof.
   - eapply (cp_erase _ s1 η [] s2). now eapply cls_tr_CNB.
 Qed.
 
-Theorem nform_iff_trace_leq `{ExtAction A} (s t : trace A) :
+Theorem nform_iff_trace_leq `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) :
   nform cls_tr s = nform cls_tr t <-> (s ⊑ₜ t /\ t ⊑ₜ s).
 Proof.
   split.
@@ -352,7 +353,7 @@ Proof.
     split; now eapply cls_pre_of_trace_leq.
 Qed.
 
-Theorem nform_iff_trace_pre `{ExtAction A} (s t : trace A) :
+Theorem nform_iff_trace_pre `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) :
   nform cls_tr s = nform cls_tr t <-> (s ≼ₜ t /\ t ≼ₜ s).
 Proof.
   split.
@@ -393,7 +394,7 @@ Proof.
 Qed.
 
 (** All the non-blocking actions can be deleted. *)
-Lemma trace_pre_drop_nb `{ExtAction A} (s : trace A) :
+Lemma trace_pre_drop_nb `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
   s ≼ₜ filter (fun μ => cls_tr μ ≠ CNB) s.
 Proof.
   induction s as [| μ s IH].
@@ -409,7 +410,7 @@ Qed.
 
 (** An action admitting a non-blocking co-action can be pulled in front of a
     whole run of such actions. *)
-Lemma trace_pre_move_cin `{ExtAction A} (l1 : trace A) (μ : A) (l2 : trace A) :
+Lemma trace_pre_move_cin `{ExtAction A} {unique_nb : UniqueDual A} (l1 : trace A) (μ : A) (l2 : trace A) :
   Forall (fun ν => cls_tr ν = CIN) l1 -> μ :: (l1 ++ l2) ≼ₜ l1 ++ μ :: l2.
 Proof.
   induction l1 as [| ν l1 IH]; intro hl1; simpl.
@@ -420,7 +421,7 @@ Proof.
     + exact (trace_pre_app_l [ν] _ _ (IH hl1)).
 Qed.
 
-Lemma trace_pre_sort `{ExtAction A} (u : trace A) :
+Lemma trace_pre_sort `{ExtAction A} {unique_nb : UniqueDual A} (u : trace A) :
   Forall (fun μ => cls_tr μ ≠ CNB) u -> u ≼ₜ csimpl cls_tr u.
 Proof.
   induction u as [| μ u IH]; intro hu.
@@ -444,7 +445,7 @@ Proof.
       * unfold csimpl. eapply trace_pre_move_cin, Forall_filter_self.
 Qed.
 
-Theorem trace_pre_csimpl `{ExtAction A} (s : trace A) : s ≼ₜ csimpl cls_tr s.
+Theorem trace_pre_csimpl `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) : s ≼ₜ csimpl cls_tr s.
 Proof.
   eapply tp_trans; [eapply trace_pre_drop_nb |].
   rewrite <- (csimpl_filter_no_nb cls_tr s).
@@ -452,7 +453,7 @@ Proof.
 Qed.
 
 (** Nothing strictly simpler lies below [csimpl s]. *)
-Theorem trace_simplification `{ExtAction A} (s : trace A) :
+Theorem trace_simplification `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
   s ≼ₜ csimpl cls_tr s
   /\ forall t, csimpl cls_tr s ≼ₜ t
               -> tmeasure cls_tr t = tmeasure cls_tr (csimpl cls_tr s).
@@ -464,6 +465,7 @@ Qed.
 Section Simplification.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
   (** Testing along [s] is subsumed by testing along the simplified trace. *)
@@ -508,7 +510,7 @@ Proof.
   rewrite 2 app_assoc. now eapply tl_feedback.
 Qed.
 
-Lemma trace_leq_move_cin `{ExtAction A} (l1 : trace A) (μ : A) (l2 : trace A) :
+Lemma trace_leq_move_cin `{ExtAction A} {unique_nb : UniqueDual A} (l1 : trace A) (μ : A) (l2 : trace A) :
   Forall (fun ν => cls_tr ν = CIN) l1 -> μ :: (l1 ++ l2) ⊑ₜ l1 ++ μ :: l2.
 Proof.
   induction l1 as [| ν l1 IH]; intro hl1; simpl.
@@ -519,7 +521,7 @@ Proof.
     + exact (trace_leq_app_l [ν] _ _ (IH hl1)).
 Qed.
 
-Theorem trace_leq_tsort `{ExtAction A} (s : trace A) : s ⊑ₜ tsort cls_tr s.
+Theorem trace_leq_tsort `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) : s ⊑ₜ tsort cls_tr s.
 Proof.
   induction s as [| x s IH]; [constructor |]. unfold tsort in *.
   destruct (cls_tr x) eqn:e.
@@ -552,7 +554,7 @@ Qed.
 
 (** From a trace of minimal measure no feedback can ever fire, so the length is
     preserved along the whole preorder. *)
-Lemma trace_leq_length `{ExtAction A} (u t : trace A) :
+Lemma trace_leq_length `{ExtAction A} {unique_nb : UniqueDual A} (u t : trace A) :
   u ⊑ₜ t -> tmeasure cls_tr u = length u -> length t = length u.
 Proof.
   induction 1
@@ -578,10 +580,10 @@ Proof.
 Qed.
 
 (** A trace is [⊑ₜ]-least when nothing below it is strictly simpler. *)
-Definition trace_min `{ExtAction A} (u : trace A) : Prop :=
+Definition trace_min `{ExtAction A} {unique_nb : UniqueDual A} (u : trace A) : Prop :=
   forall t, u ⊑ₜ t -> tmeasure cls_tr t = tmeasure cls_tr u.
 
-Lemma trace_min_of_measure `{ExtAction A} (u : trace A) :
+Lemma trace_min_of_measure `{ExtAction A} {unique_nb : UniqueDual A} (u : trace A) :
   tmeasure cls_tr u = length u -> trace_min u.
 Proof.
   intros hm t hle.
@@ -590,7 +592,7 @@ Proof.
   pose proof (tmeasure_ge_length cls_tr t). lia.
 Qed.
 
-Theorem trace_simplification_leq `{ExtAction A} (s : trace A) :
+Theorem trace_simplification_leq `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
   s ⊑ₜ tsort cls_tr s /\ tsort cls_tr s ≡ₚ s /\ trace_min (tsort cls_tr s).
 Proof.
   repeat split.
@@ -600,7 +602,7 @@ Proof.
 Qed.
 
 (** No feedback is left in a sorted trace. *)
-Corollary tsort_feedback_free `{ExtAction A} (s s1 s2 s3 : trace A) (η μ : A) :
+Corollary tsort_feedback_free `{ExtAction A} {unique_nb : UniqueDual A} (s s1 s2 s3 : trace A) (η μ : A) :
   tsort cls_tr s = s1 ++ η :: (s2 ++ μ :: s3) -> non_blocking η -> dual μ η -> False.
 Proof.
   intros heq nb duo.
@@ -615,6 +617,7 @@ Qed.
 Section SimplificationLeq.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
   (** Contrary to [wt_csimpl], the state that is reached is preserved: the
@@ -676,7 +679,7 @@ Proof. eapply (fb_normal_exists_aux (length s) s). lia. Qed.
 
 (** Consuming the feedbacks and then sorting yields a least trace that carries
     no feedback at all, not even between actions that are far apart. *)
-Theorem trace_simplification_full `{ExtAction A} (s : trace A) :
+Theorem trace_simplification_full `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
   ∃ t, s ⊑ₜ t
      /\ trace_min t
      /\ length t <= length s
@@ -694,7 +697,7 @@ Qed.
 (** A trace performing a feedback -- even between two distant actions -- is
     subsumed by a strictly shorter least trace.  This is the trace-level
     reading of the law TO3 of Boreale, De Nicola and Pugliese. *)
-Corollary trace_simplification_strict `{ExtAction A} (s1 s2 s3 : trace A) (η μ : A) :
+Corollary trace_simplification_strict `{ExtAction A} {unique_nb : UniqueDual A} (s1 s2 s3 : trace A) (η μ : A) :
   non_blocking η -> dual μ η ->
   ∃ t, (s1 ++ η :: (s2 ++ μ :: s3)) ⊑ₜ t
      /\ trace_min t
@@ -719,6 +722,7 @@ Qed.
 Section FeedbackNormalForm.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
 
   (** Erase the first action of [l] that is a co-action of [η]. *)
   Fixpoint drop_dual (η : A) (l : trace A) : option (trace A) :=
@@ -871,6 +875,7 @@ End FeedbackNormalForm.
 Section FeedbackNormalFormLts.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
   Corollary wt_fbnf (p q : P) s : p ⟹[s] q -> p ⟹⋍[fbnf s] q.
@@ -1013,6 +1018,7 @@ End TracePreorderConvergence.
 Section FeedbackInvariance.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
 
   (** *** Small facts about [Exists] *)
 
@@ -1154,6 +1160,7 @@ End FeedbackInvariance.
 Section FeedbackIdempotence.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
 
   Lemma has_fb_cons (x : A) (s : trace A) : has_fb s -> has_fb (x :: s).
   Proof. intro h. simpl. now right. Qed.

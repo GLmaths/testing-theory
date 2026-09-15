@@ -88,14 +88,14 @@ Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
 #[global] Program Instance PreActActionForFW
-  `{@AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT}
+  `{@AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A fw_inter H _ MbgLts} 
   : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ gLtsT. (* (toFW gLtsP) *)
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) β β' b b' eq mem.
+  intros ? ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) β β' b b' eq mem.
   assert (Φ β ∈ ⌈ Φ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
   destruct mem as (μ'' & mem & eq').
   destruct mem as (μ''' & tr' & duo & b'').
@@ -122,7 +122,7 @@ Next Obligation.
 Admitted.
 
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _ } {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
   : @FinitaryAbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (toFW gLtsP) gLtsT _ _ :=
   {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) (MO_without_not_nb p.2));|}.

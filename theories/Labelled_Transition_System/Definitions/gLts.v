@@ -51,7 +51,7 @@ Class ExtAction (A : Type) :=
       exists_dual μ : { η | dual μ η};
 
       (* Unique dual *)
-      unique_nb η β: dual β η → η = proj1_sig (exists_dual β);
+      (* unique_nb η β: dual β η → η = proj1_sig (exists_dual β); *)
 
       (* Handy hypothesis *)
       (* nb_not_nb η1 η2 ɣ : non_blocking η1 → dual η1 ɣ → dual η2 ɣ → non_blocking η2; *)
@@ -70,6 +70,13 @@ Notation "'co' μ" := (proj1_sig (exists_dual μ)) (at level 30).
 
 (*Definition of the co-trace *)
 Notation "'coₜ' s" := (map (fun μ => (proj1_sig (exists_dual μ))) s) (at level 30).
+
+(* Uniqueness of the dual, no longer a field of [ExtAction]. It is taken as a
+   hypothesis [{unique_nb : UniqueDual A}] where it is still needed; the goal
+   is to remove these hypotheses one by one. *)
+Definition UniqueDual (A : Type) `{ExtAction A} :=
+  forall η β, dual β η → η = proj1_sig (exists_dual β).
+Existing Class UniqueDual.
 
 Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
   MkgLts {
@@ -103,7 +110,7 @@ Notation "p ↛[ μ ]" := (lts_refuses p (ActExt μ)) (at level 30, format "p  �
 
 
 Definition lts_exists_duo_decidable : 
-forall (A : Type) (H : ExtAction A) μ, Decision (∃ η' : A, non_blocking η' ∧ dual μ η').
+forall (A : Type) (H : ExtAction A) {unique_nb : UniqueDual A} μ, Decision (∃ η' : A, non_blocking η' ∧ dual μ η').
 Proof.
 intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
   + right. intro Hyp. destruct Hyp as (μ' & nb' & duo').
@@ -118,12 +125,12 @@ intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
        contradiction.
 Defined.
 
-#[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} μ 
+#[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} {unique_nb : UniqueDual A} μ 
   : Decision (∃ η', non_blocking η' /\ dual μ η').
 Proof. exact (lts_exists_duo_decidable A H μ). Defined.
 
 
-Lemma dual_is_involutive `{ExtAction A} μ : μ = (co (co μ)).
+Lemma dual_is_involutive `{ExtAction A} {unique_nb : UniqueDual A} μ : μ = (co (co μ)).
 Proof.
   assert (dual μ (co μ)) as duo.
   { exact (proj2_sig (exists_dual μ)). }
@@ -132,7 +139,7 @@ Proof.
   exact duo.
 Qed.
 
-Lemma dual_trace_is_involutive `{ExtAction A} s : s = (coₜ (coₜ s)).
+Lemma dual_trace_is_involutive `{ExtAction A} {unique_nb : UniqueDual A} s : s = (coₜ (coₜ s)).
 Proof.
   induction s.
   + simpl ; eauto.
@@ -140,7 +147,7 @@ Proof.
     eapply dual_is_involutive.
 Qed.
 
-Lemma simpl_co_trace_singleton `{ExtAction A} l η : coₜ l = [η] -> l = [co η].
+Lemma simpl_co_trace_singleton `{ExtAction A} {unique_nb : UniqueDual A} l η : coₜ l = [η] -> l = [co η].
 Proof.
   intro. destruct l.
   + simpl in *. inversion H0.

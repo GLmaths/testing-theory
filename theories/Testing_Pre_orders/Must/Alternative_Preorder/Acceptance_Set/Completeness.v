@@ -579,7 +579,7 @@ Qed.
 
 Lemma must_if_cnv `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _, !test_convergence_spec tconv} 
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _, !test_convergence_spec tconv} {unique_nb : UniqueDual A} 
 
   `{!Prop_of_Inter P T A dual}
 
@@ -668,7 +668,7 @@ Qed.
 Lemma must_iff_cnv `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _, 
-  !test_convergence_spec tconv}
+  !test_convergence_spec tconv} {unique_nb : UniqueDual A}
 
   `{!Prop_of_Inter P T A dual}
 
@@ -679,7 +679,7 @@ Lemma completeness1 `{
     @gLtsObaFW P A H gLtsEqP gLtsObaP,
     @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
     @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _,
-    ! test_convergence_spec tconv}
+    ! test_convergence_spec tconv} {unique_nb : UniqueDual A}
 
     `{!Prop_of_Inter P T A dual}
     `{!Prop_of_Inter Q T A dual}
@@ -1110,7 +1110,7 @@ Qed.
 Lemma must_ta_or_empty_pre_action_set_for_all_trace {P : Type} `{CC : Countable PreAct} `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, FiniteAbs :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ ,
-  !Testing_Predicate outcome _, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
+  !Testing_Predicate outcome _, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))} {unique_nb : UniqueDual A}
 
   `{!Prop_of_Inter P T A dual}
 
@@ -1213,7 +1213,7 @@ Lemma completeness2 {P Q : Type} `{CC : Countable PreAct} `{
   !FiniteImagegLts P A, FiniteAbsP :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ ,
   !FiniteImagegLts Q A, FiniteAbsQ :@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ ,
   !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))}
+  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))} {unique_nb : UniqueDual A}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -1236,7 +1236,7 @@ Lemma completeness_fw {P Q : Type} `{CC : Countable PreAct} `{
   !FiniteImagegLts P A, FiniteAbsP :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ ,
   !FiniteImagegLts Q A, FiniteAbsQ :@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ ,
   !Testing_Predicate outcome _, !test_convergence_spec tconv,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))}
+  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))} {unique_nb : UniqueDual A}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -1253,7 +1253,7 @@ Lemma completeness {P Q : Type} `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
   @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !CountablegLts T A,
-  !Testing_Predicate outcome _}
+  !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   `{!Prop_of_Inter P T A dual}
   `{!Prop_of_Inter Q T A dual}
@@ -1282,7 +1282,7 @@ Lemma completeness1_set `{
     @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
     @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
     @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _,
-    ! test_convergence_spec tconv}
+    ! test_convergence_spec tconv} {unique_nb : UniqueDual A}
 
     `{!Prop_of_Inter P T A dual}
     `{!Prop_of_Inter Q T A dual}

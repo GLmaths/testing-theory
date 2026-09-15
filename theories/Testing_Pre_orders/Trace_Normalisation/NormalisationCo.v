@@ -761,12 +761,12 @@ End CoFeedbackNormal.
     and [cls_tr ∘ co] is a classifier.  This is the only statement of this file
     that uses [unique_nb]. *)
 
-Definition cls_co `{ExtAction A} (μ : A) : act_class := cls_tr (co μ).
+Definition cls_co `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) : act_class := cls_tr (co μ).
 
-Lemma dual_unique `{ExtAction A} (μ μ' : A) : dual μ' μ -> μ' = co μ.
+Lemma dual_unique `{ExtAction A} {unique_nb : UniqueDual A} (μ μ' : A) : dual μ' μ -> μ' = co μ.
 Proof. intro duo. eapply unique_nb. now symmetry. Qed.
 
-#[global] Instance CoClassifier_cls_co `{ExtAction A} : CoClassifier (cls_co (A := A)).
+#[global] Instance CoClassifier_cls_co `{ExtAction A} {unique_nb : UniqueDual A} : CoClassifier (cls_co (A := A)).
 Proof.
   split; intro μ; unfold cls_co.
   - rewrite cls_tr_CNB. split.

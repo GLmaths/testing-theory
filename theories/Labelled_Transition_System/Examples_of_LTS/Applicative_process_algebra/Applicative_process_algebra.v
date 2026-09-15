@@ -458,8 +458,9 @@ Section PAL.
     dual_blocks := PAL_dual_blocks;
     duo_sym := ext_act_match_sym;
     exists_dual := PAL_exists_dual;
-    unique_nb := PAL_unique_nb;
   |}.
+
+  #[global] Instance PAL_UniqueDual : UniqueDual PAL_Act := PAL_unique_nb.
 
   Definition PAL_lts_refuses (p : term) (alpha : Act PAL_Act) : Prop := all_steps p alpha = [].
 

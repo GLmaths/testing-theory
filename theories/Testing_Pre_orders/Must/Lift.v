@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA 
   Convergence WeakTransitions.
 
 (** * Lifting an LTS to forwarders preserves Must *)
-Lemma conv `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
+Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
   intro ht.
@@ -50,7 +50,7 @@ Proof.
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
 Qed.
 
-Lemma conv_lift `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
+Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
   (p, ∅) ⤓ -> p ⤓.
 Proof.
   intro ht.
@@ -62,7 +62,7 @@ Proof.
     eapply H2;eauto. eapply ParLeft. eauto.
 Qed.
 
-Lemma p_trace_implies_toFW_p_trace `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} p μ q :
+Lemma p_trace_implies_toFW_p_trace `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} p μ q :
   p ⟹{μ} q -> (p ▷ ∅) ⟹{μ} (q ▷ ∅).
 Proof.
   intro Hyp. induction Hyp.
@@ -73,7 +73,7 @@ Proof.
     eapply IHHyp;eauto.
 Qed.
 
-Lemma conv_s_lift `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) s: 
+Lemma conv_s_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) s: 
   (p, ∅) ⇓ s -> p ⇓ s.
 Proof.
   intro ht.
@@ -312,6 +312,7 @@ Notation gLtsT := (gLtsEq_gLts (gLtsEq := gLtsEqT)).
 
 Context `{!FiniteOutputChain_LtsOba T}.
 
+Context {unique_nb : UniqueDual A}.
 Context `{_ : !Prop_of_Inter P (MO A) A fw_inter}.
 Context `{_ : !Prop_of_Inter (P * MO A) T A dual}.
 Context `{_ : !Prop_of_Inter P T A dual}.
@@ -579,7 +580,7 @@ End FeedBack.
 End Lifting.
 
 Lemma lift_fw_ctx_pre
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
   `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
   `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome gLtsEqT}
 

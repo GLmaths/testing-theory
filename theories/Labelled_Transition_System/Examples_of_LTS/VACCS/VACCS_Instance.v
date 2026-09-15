@@ -2914,7 +2914,9 @@ Next Obligation.
  exists (InputOutputActions.co μ).
  symmetry. eapply dual_co.
 Defined.
-Next Obligation.
+
+#[global] Instance VACCS_UniqueDual : UniqueDual (ExtAct TypeOfActions).
+Proof.
   intros μ1 μ2 dual; subst.
   simpl in *.
   destruct μ2 as [ (* Input *) a' | (* Output *) a' ].
@@ -3156,7 +3158,7 @@ Next Obligation.
   intros ? ? ? ? m mem l inter;simpl in *.
   unfold Interaction_between_VACCS_and_MB_obligation_4.
   destruct inter as (duo & nb). rewrite decide_True; eauto.
-  assert (μ = co ξ). { eapply unique_nb. symmetry. exact duo. }
+  assert (μ = co ξ). { eapply VACCS_UniqueDual. symmetry. exact duo. }
   subst; set_solver.
 Defined.
 Next Obligation.

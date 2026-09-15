@@ -238,7 +238,7 @@ Qed.
 
 Lemma nf_may_fw_l `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
@@ -267,7 +267,7 @@ Qed.
 
 Lemma nf_may_fw_r `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A ,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
@@ -423,7 +423,7 @@ Qed.
 
 Lemma nf_may_fw `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A ,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
@@ -438,7 +438,7 @@ Qed.
 
 Lemma may_to_may_fw `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
@@ -586,7 +586,7 @@ Qed.
 
 Lemma may_fw_to_may_gen `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
@@ -677,7 +677,7 @@ Qed.
 
 Lemma may_fw_to_may `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
@@ -691,7 +691,7 @@ Qed.
 
 Lemma may_iff_may_fw `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
@@ -711,7 +711,7 @@ Qed.
 Lemma lift_fw_ctx_pre `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}

@@ -42,6 +42,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Pr
 Section Soundness_ti.
 
 Context `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H}.
+Context {unique_nb : UniqueDual A}.
 Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
 (* non-generalising binders: the [gLts] instances are [gLtsP], [gLtsQ], [gLtsT] *)
 Context {PInter : Prop_of_Inter P T A dual}.
@@ -71,7 +72,7 @@ End Soundness_ti.
 Theorem soundness_ti_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P T A dual}
   {_ : Prop_of_Inter Q T A dual}
@@ -95,7 +96,7 @@ Proof. eapply soundness_ti. Qed.
 Theorem soundness_ti_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A dual}
