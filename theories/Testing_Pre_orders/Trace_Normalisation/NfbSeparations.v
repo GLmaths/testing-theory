@@ -145,8 +145,8 @@ Section NfbNotMust.
   Context {T FA PA : Type}.
   Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
   Context (same_delta : forall x, 𝝳P x = 𝝳Q x).
 
   (** ** Acceptance sets on traces: [Pw] against [Bp2] *)
@@ -192,7 +192,7 @@ Section NfbNotMust.
   Theorem co_as_nfb_not_co_as :
     @bhv_pre_co_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
       st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st)
-    /\ ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
+    /\ ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P gLtsT _ AbsP
          st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
   Proof. split; [exact pe_qe_co_as_nfb | exact (co_must_false_Pe AbsP AbsQ)]. Qed.
 

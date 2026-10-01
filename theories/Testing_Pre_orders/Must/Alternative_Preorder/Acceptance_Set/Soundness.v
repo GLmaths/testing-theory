@@ -41,7 +41,7 @@ From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
 (** * Soundness *)
 
 Inductive mustx `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
-  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
   (X : gset P) (t : T) : Prop :=
 | mx_now (hh : outcome t) : mustx X t
 | mx_step
@@ -69,7 +69,7 @@ Context `{gLtsT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{Hinter : @Prop_of_Inter P T A dual EA gLtsP _}.
+Context `{Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}.
 
 (** ** Must predicate for Sets *)
 
@@ -547,9 +547,9 @@ Context `{gLtsT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{HinterP : !Prop_of_Inter P T A dual}.
+Context `{HinterP : !Prop_of_Inter P T A A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
-Context `{HinterQ : !Prop_of_Inter Q T A dual}.
+Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
 
 Definition ctx_pre__x
   (X : gset P) (Y : gset Q) 
@@ -660,13 +660,13 @@ Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
 (* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is reflexive *)
 #[global] Instance set_must_refl
   `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
-  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _} : Reflexive ctx_pre__x.
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _} : Reflexive ctx_pre__x.
 Proof. intros X t h_must. eauto. Qed.
 
 (* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is transitive *)
 #[global] Instance set_must_transitive
   `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
-  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _} : Transitive ctx_pre__x.
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _} : Transitive ctx_pre__x.
 Proof.
   intros X Y Z hcgr1 hcgr2. intros t h_must.
   eapply hcgr2. eapply hcgr1; eauto.
@@ -675,7 +675,7 @@ Qed.
 (* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is a preorder *)
 #[global] Instance set_must_x_preorder
   `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
-  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _} : PreOrder ctx_pre__x.
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _} : PreOrder ctx_pre__x.
 Proof.
   split.
   + exact set_must_refl.
@@ -685,7 +685,7 @@ Qed.
 Notation "X ≂ₛₑₜ_ₘᵤₛₜᵢ Y" := (Y ⊑ₛₑₜ_ₘᵤₛₜᵢ X /\ X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y) (at level 70).
 
 Inductive mustx_alt `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
-  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
   (X : gset P) (t : T) : Prop :=
 | mx_now_alt (hh : outcome t) : mustx_alt X t
 | mx_step_alt
@@ -706,7 +706,7 @@ Inductive mustx_alt `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing
 Global Notation "X 'must_alt_pass_x' t" := (mustx_alt X t) (at level 70).
 
 Lemma mustx_alt_iff_mustx_alt `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
-  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A dual EA gLtsP _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
   (X : gset P) (t : T) :
   X must_pass_x t <-> X must_alt_pass_x t.
 Proof.
@@ -770,8 +770,8 @@ Definition bhv_pre_cond2__x
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}
-  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}
+  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
   (X : gset P) (Y : gset Q) :=
   forall q s q', q ∈ Y ->
     q ⟹[s] q' -> q' ↛ ->
@@ -787,8 +787,8 @@ Definition bhv_pre__x
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}
-  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}
+  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
     (X : gset P) (Y : gset Q) :=
       (X ₁≼ₛₑₜ_ₐₛ Y /\ X ₂≼ₛₑₜ_ₐₛ Y).
 
@@ -800,14 +800,14 @@ Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
 #[global] Instance bhv_pre__x_refl
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _} : Reflexive bhv_pre__x.
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : Reflexive bhv_pre__x.
 Proof. intros. constructor;intro; intros; set_solver. Qed.
 
 (* The relation ≼ₛₑₜ_ₐₛ is transitive *)
 #[global] Instance bhv_pre__x_transitive
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _} : Transitive bhv_pre__x.
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : Transitive bhv_pre__x.
 Proof.
   intros X Y Z hcgr1 hcgr2. split. 
   + intro s. intros Hyp_conv. eapply hcgr2. eapply hcgr1. exact Hyp_conv. 
@@ -825,7 +825,7 @@ Qed.
 #[global] Instance bhv_pre__x_preorder
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _} : PreOrder bhv_pre__x.
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : PreOrder bhv_pre__x.
 Proof.
   split.
   + exact bhv_pre__x_refl.
@@ -839,10 +839,10 @@ Context `{EA : !ExtAction A}.
 Context `{gLtsEqT : !gLtsEq T EA}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}.
 
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}.
 
 Lemma alt_set_union_right
   (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y' ->  X ≼ₛₑₜ_ₐₛ (Y ∪ Y').
@@ -1148,12 +1148,12 @@ Context `{gLtsEqT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{HinterP : !Prop_of_Inter P T A dual}.
+Context `{HinterP : !Prop_of_Inter P T A A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
-Context `{HinterQ : !Prop_of_Inter Q T A dual}.
+Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
 
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
 
 Context `{!gLtsCNenabled Q A}.
 
@@ -1191,12 +1191,12 @@ Context `{gLtsEqT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{!Prop_of_Inter P T A dual}.
+Context `{!Prop_of_Inter P T A A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A}.
-Context `{!Prop_of_Inter Q T A dual}.
+Context `{!Prop_of_Inter Q T A A dual}.
 
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
 
 Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
   ¬ outcome t
@@ -1311,11 +1311,11 @@ Lemma soundness_co_nb_enabled `{
   gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
 
-  `{!Prop_of_Inter P T A dual}
-  `{!Prop_of_Inter Q T A dual}
+  `{!Prop_of_Inter P T A A dual}
+  `{!Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
@@ -1332,11 +1332,11 @@ Lemma soundness_fw `{
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
 
-  `{!Prop_of_Inter P T A dual}
-  `{!Prop_of_Inter Q T A dual}
+  `{!Prop_of_Inter P T A A dual}
+  `{!Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
@@ -1355,17 +1355,17 @@ Lemma soundness
 
   `{ !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
-  {_ : @Prop_of_Inter P (MO A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (P * MO A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter P (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (P * MO A) T A A dual H (inter_lts fw_inter) H _}
 
-  {_ : @Prop_of_Inter Q (MO A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (Q * MO A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter Q (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (Q * MO A) T A A dual H (inter_lts fw_inter) H _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
 
   (p : P) (q : Q) : p ▷ ∅ ≼ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.

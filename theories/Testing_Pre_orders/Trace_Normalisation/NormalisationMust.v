@@ -59,8 +59,8 @@ Notation "p ₁≼ₙ_ₐₛ q" := (bhv_pre_nf_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets, on normalised traces *)
 Definition bhv_pre_nf_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
   (p : P) (q : Q) :=
   forall (σ : ntrace A) q',
     p ⇓ nlin σ -> q ⟹[nlin σ] q' -> q' ↛ ->
@@ -70,8 +70,8 @@ Notation "p ₂≼ₙ_ₐₛ q" := (bhv_pre_nf_cond2 p q) (at level 70).
 
 (** ** The alternative preorder on normalised traces *)
 Definition bhv_pre_nf `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
     (p : P) (q : Q) :=
       p ₁≼ₙ_ₐₛ q /\ p ₂≼ₙ_ₐₛ q.
 
@@ -84,8 +84,8 @@ Section Normalised_preorder.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
   Context `{gLtsT : !gLtsEq T H}.
-  Context `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT}.
-  Context `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}.
+  Context `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _}.
+  Context `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}.
 
   (** Every trace can be replaced by its normal form. *)
   Lemma bhv_pre_cond1_nf (p : P) (q : Q) : p ₁≼ₙ_ₐₛ q <-> p ₁≼ₐₛ q.
@@ -138,8 +138,8 @@ Notation "p ₁≼ₙ_꜀ₒ₋ₐₛ q" := (bhv_pre_co_nf_cond1 p q) (at level 
 
 (** ** Smyth preorder on co-acceptance sets, on normalised co-traces *)
 Definition bhv_pre_co_nf_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
   (p : P) (q : Q) :=
   forall (σ : ntrace A) q',
     p ⇓ᶜᵒ nlin σ -> q ⟹ᶜᵒ[nlin σ] q' -> q' ↛ ->
@@ -149,8 +149,8 @@ Notation "p ₂≼ₙ_꜀ₒ₋ₐₛ q" := (bhv_pre_co_nf_cond2 p q) (at level 
 
 (** ** The alternative co-preorder on normalised co-traces *)
 Definition bhv_pre_co_nf `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
     (p : P) (q : Q) :=
       p ₁≼ₙ_꜀ₒ₋ₐₛ q /\ p ₂≼ₙ_꜀ₒ₋ₐₛ q.
 
@@ -162,8 +162,8 @@ Section Normalised_co_preorder.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
   Context `{gLtsT : !gLtsEq T H}.
-  Context `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT}.
-  Context `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}.
+  Context `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _}.
+  Context `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
   Lemma bhv_pre_co_cond1_nf (p : P) (q : Q) : p ₁≼ₙ_꜀ₒ₋ₐₛ q <-> p ₁≼꜀ₒ₋ₐₛ q.

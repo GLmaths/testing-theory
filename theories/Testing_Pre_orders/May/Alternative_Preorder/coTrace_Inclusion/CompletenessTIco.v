@@ -60,7 +60,7 @@ Section Completeness_ti_co.
 
 Context `{gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
 Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
-Context {QInter : Prop_of_Inter Q T A dual}.
+Context {QInter : Prop_of_Inter Q T A A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
 (** ** The core of completeness, co-native
@@ -161,8 +161,8 @@ Theorem completeness_ti_co_fw `{
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -186,13 +186,13 @@ Theorem completeness_ti_co_fb `{
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
     @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  {_ : Prop_of_Inter Q (MO A) A fw_inter}
-  {_ : Prop_of_Inter (Q * MO A) T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter Q (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (Q * MO A) T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 

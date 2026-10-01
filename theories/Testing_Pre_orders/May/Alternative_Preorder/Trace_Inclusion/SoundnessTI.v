@@ -45,8 +45,8 @@ Context `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H}.
 Context {unique_nb : UniqueDual A}.
 Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
 (* non-generalising binders: the [gLts] instances are [gLtsP], [gLtsQ], [gLtsT] *)
-Context {PInter : Prop_of_Inter P T A dual}.
-Context {QInter : Prop_of_Inter Q T A dual}.
+Context {PInter : Prop_of_Inter P T A A dual}.
+Context {QInter : Prop_of_Inter Q T A A dual}.
 
 Theorem soundness_ti (p : P) (q : Q) : p ≼ₜᵢ q -> p ⊑ₘₐᵧ q.
 Proof.
@@ -74,8 +74,8 @@ Theorem soundness_ti_fw `{
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) :
   p ≼ₜᵢ q -> p ⊑ₘₐᵧ q.
@@ -98,13 +98,13 @@ Theorem soundness_ti_fb `{
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
     @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  {_ : Prop_of_Inter Q (MO A) A fw_inter}
-  {_ : Prop_of_Inter (Q * MO A) T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter Q (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (Q * MO A) T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) :
   (p, ∅ : MO A) ≼ₜᵢ (q, ∅ : MO A) -> p ⊑ₘₐᵧ q.

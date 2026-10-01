@@ -78,7 +78,7 @@ Section ParallelTermination.
 
 Context `{gLtsP : @gLts P A H}.
 Context `{gLtsQ : @gLts Q A H}.
-Context `{!Prop_of_Inter P Q A dual}.
+Context `{!Prop_of_Inter P Q A A dual}.
 
 Local Instance gLtsPQ : gLts (P * Q) H := parallel_gLts.
 

@@ -26,15 +26,18 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality Basics.
 From stdpp Require Import finite gmap decidable gmultiset.
-From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
+From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS Subset_Act.
 
 (* * Alternative preorder for Must based on acceptance-sets *)
 
 (** ** Label abstractions *)
 
+(* The tests act over [A]; the processes may act over another alphabet
+   [Aproc], linked to [A] by [sync] (on one alphabet, [sync] is [dual]). *)
 Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct)
-  {gLtsP : gLts P H} {gLtsT : gLtsEq T H} :=
+  {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
+  {SA : SyncAction Aproc A} :=
   MkAbsAction {
     (** Test-side condition for label abstractions , Definition 5 (1) **)
     abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
@@ -42,15 +45,16 @@ Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A →
     abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ map_set Φ (coR p) -> (Φ β') ∈ map_set Φ (coR p);
   }.
 
-Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_}.
+Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_} {_} {_} {_}.
 
 
 (** ** Finitary Label abstractions *)
 
-Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct) {gLtsP : gLts P H} {gLtsT : gLtsEq T H}
-  `{Countable PreAct} :=
+Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct)
+  {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
+  {SA : SyncAction Aproc A} `{Countable PreAct} :=
   MkFinitaryAbsAction {
-      FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT;
+      FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H Φ 𝝳 Aproc Hp gLtsP gLtsT SA;
 
       (** 𝝳 (Φ (coR p)) is a finite set, called (coR_abs p) **)
       coR_abs : P -> gset PreAct;
@@ -66,8 +70,8 @@ Notation "p ₁≼ₐₛ q" := (bhv_pre_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
@@ -77,8 +81,8 @@ Notation "p ₂≼ₐₛ q" := (bhv_pre_cond2 p q) (at level 70).
 
 (** ** Definition of the alternative preorder *)
 Definition bhv_pre `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
     (p : P) (q : Q) := 
       p ₁≼ₐₛ q /\ p ₂≼ₐₛ q.
 
@@ -88,9 +92,9 @@ Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
 #[global] Program Instance PreActActionForFW
-  `{@AbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT} {unique_nb : UniqueDual A}
-  `{@Prop_of_Inter P (MO A) A fw_inter H _ MbgLts} 
-  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ gLtsT. (* (toFW gLtsP) *)
+  `{@AbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _} {unique_nb : UniqueDual A}
+  `{@Prop_of_Inter P (MO A) A A fw_inter H _ H MbgLts} 
+  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _. (* (toFW gLtsP) *)
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
@@ -122,9 +126,9 @@ Next Obligation.
 Admitted.
 
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _ } {unique_nb : UniqueDual A}
-  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} 
-  : @FinitaryAbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 (toFW gLtsP) gLtsT _ _ :=
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _ } {unique_nb : UniqueDual A}
+  `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} 
+  : @FinitaryAbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ _ (toFW gLtsP) gLtsT _ _ _ :=
   {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) (MO_without_not_nb p.2));|}.
 Next Obligation.
   intros.

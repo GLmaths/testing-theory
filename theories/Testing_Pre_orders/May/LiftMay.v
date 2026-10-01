@@ -28,7 +28,7 @@ Lemma may_non_blocking_action_swap_l_fw_eq `{
    @gLtsObaFW P A H gLtsEqP gLtsObaP, 
   !@gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p1 p2 : P) (t1 t2 : T) (η : A) :
   non_blocking η -> p1 ⟶⋍[η] p2 -> t1 ⟶⋍[η] t2 -> p1 may_pass t2
@@ -113,7 +113,7 @@ Lemma may_non_blocking_action_swap_r_fw_eq`{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, 
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p1 p2 : P) (t1 t2 : T) (η : A) :
   non_blocking η -> p1 ⟶⋍[η] p2 -> t1 ⟶⋍[η] t2 -> p2 may_pass t1
@@ -213,7 +213,7 @@ Lemma may_non_blocking_action_swap_l_fw `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, 
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p1 p2 : P) (t1 t2 : T) (η : A) :
   non_blocking η -> p1 ⟶[η] p2 -> t1 ⟶[η] t2 -> p1 may_pass t2 
@@ -226,7 +226,7 @@ Lemma may_non_blocking_action_swap_r_fw `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, 
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p1 p2 : P) (t1 t2 : T) (η : A) :
   non_blocking η -> p1 ⟶[η] p2 -> t1 ⟶[η] t2 -> may p2 t1
@@ -240,8 +240,8 @@ Lemma nf_may_fw_l `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
 
   m1 m2 (p : P) (t t' : T) : t ⟿{m1} t' -> (p, m1 ⊎ m2) may_pass t' -> (p, m2) may_pass t.
 Proof.
@@ -269,8 +269,8 @@ Lemma nf_may_fw_r `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A ,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
 
   (p : P) (t t' : T) m1 m2 : 
   t ⟿{m1} t' -> (p, m2) may_pass t -> (p, m1 ⊎ m2) may_pass t'.
@@ -425,8 +425,8 @@ Lemma nf_may_fw `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A ,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
 
   (p : P) (t t' : T) m : 
   t ⟿{m} t' -> (p, m) may_pass t' <-> (p, ∅) may_pass t.
@@ -440,9 +440,9 @@ Lemma may_to_may_fw `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p : P) (t : T) (m : MO A) :
   p may_pass t -> m = lts_oba_mo t -> forall t', t ⟿{m} t' 
@@ -588,9 +588,9 @@ Lemma may_fw_to_may_gen `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p : P) (m : gmultiset A) (t0 t : T) :
   t0 ⟿{m} t -> (p, m) may_pass t -> p may_pass t0.
@@ -679,9 +679,9 @@ Lemma may_fw_to_may `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p : P) (t : T) :
   (p, ∅ : gmultiset A) may_pass t -> p may_pass t.
@@ -693,9 +693,9 @@ Lemma may_iff_may_fw `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p : P) (t : T) :
   p may_pass t <-> (p, ∅) may_pass t.
@@ -713,15 +713,15 @@ Lemma lift_fw_ctx_pre `{
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
     @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
 
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  {_ : Prop_of_Inter Q (MO A) A fw_inter}
-  {_ : Prop_of_Inter (Q * MO A) T A dual}
+  {_ : Prop_of_Inter Q (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (Q * MO A) T A A dual}
 
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) : p ⊑ₘₐᵧ q <-> (p, ∅) ⊑ₘₐᵧ (q, ∅).
 Proof.

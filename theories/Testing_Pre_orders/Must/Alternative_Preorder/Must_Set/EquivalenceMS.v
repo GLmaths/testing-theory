@@ -39,14 +39,14 @@ From TestingTheory Require Import
 
 Definition oas_all `{CC : Countable PreAct}  `{
   gLtsP : @gLts P A H, FiniteImagegLts P A,
-  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _}
+  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
   let ps : list P := elements (wt_set p s hcnv) in
   ⋃ map coR_abs ps.
 
 Definition oas `{CC : Countable PreAct}  `{
   gLtsP : @gLts P A H, FiniteImagegLts P A,
-  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 gLtsP gLtsT _ _}
+  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
   let ps : list P := elements (wt_refuses_set p s hcnv) in
   ⋃ map coR_abs ps.
@@ -73,7 +73,7 @@ Proof.
 Qed.
 
 Lemma either_wperform_co_mu `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
 (p : P) i :
   p ⤓ -> (exists β μ q, ( 𝝳 ∘ Φ ) β = i /\ p ⟹{μ} q /\ dual μ β /\ blocking β) 
             \/ ~ (exists β μ q, ( 𝝳 ∘ Φ ) β = i /\ p ⟹{μ} q /\ dual μ β /\ blocking β).
@@ -102,7 +102,7 @@ Proof.
 Qed.
 
 Lemma either_wperform_mem `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (p : P) (G : gset PreAct) (ht : p ⤓) :
   (exists β μ p', ( 𝝳 ∘ Φ ) β ∈ G /\ p ⟹{μ} p' /\ dual μ β /\ blocking β)
     \/ (forall β μ p', ( 𝝳 ∘ Φ ) β ∈ G -> dual μ β -> blocking β -> ~ p ⟹{μ} p').
@@ -120,7 +120,7 @@ Proof.
 Qed.
 
 Lemma either_wperform_mem_set `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (ps : gset P) (G : gset PreAct) (ht : forall p, p ∈ ps -> p ⤓) :
   (exists p', p' ∈ ps /\ forall β μ p0, ( 𝝳 ∘ Φ ) β ∈ G -> dual μ β -> blocking β
     -> ~ p' ⟹{μ} p0) 
@@ -135,7 +135,7 @@ Proof.
 Qed.
 
 Lemma either_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+    `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
     (p : P) (G : gset PreAct) (hcnv : p ⇓ []) :
     p MUST G \/ ~ p MUST G.
 Proof.
@@ -148,7 +148,7 @@ Proof.
 Qed.
 
 Lemma either_ex_nMUST_or_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (ps : gset P) (G : gset PreAct)
     (ht : forall p, p ∈ ps -> p ⇓ []) :
   (exists p, p ∈ ps /\ ~ p MUST G) 
@@ -158,7 +158,7 @@ Proof.
 Qed.
 
 Lemma either_MUST__s `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (ps : gset P) (G : gset PreAct)  :
   (forall p, p ∈ ps -> p ⇓ []) -> MUST__s ps G \/ ~ MUST__s ps G.
 Proof.
@@ -167,14 +167,14 @@ Proof.
 Qed.
 
 Lemma nMusts_ex `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (ps : gset P) (G : gset PreAct) :
   (forall p, p ∈ ps -> p ⇓ []) -> ~ MUST__s ps G
   -> exists p, p ∈ ps /\ ~ p MUST G.
 Proof. intros. edestruct (either_ex_nMUST_or_MUST ps G); set_solver. Qed.
 
 Lemma nMust_ex `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (p : P) (G : gset PreAct) (hcnv : p ⇓ []) 
   (hnm : ~ p MUST G) :
   exists p', p ⟹ p' /\ forall β μ p0, (𝝳 ∘ Φ) β ∈ G -> dual μ β -> blocking β -> ~ p' ⟹{μ} p0.
@@ -188,7 +188,7 @@ Qed.
 
 Lemma nMusts_nMust
 `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-`{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+`{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
 (p : P) (G : gset PreAct) (hcnv : p ⇓ []) 
 (hnm : ~ MUST__s (wt_set p [] hcnv) G) : 
 ¬ p MUST G.
@@ -199,7 +199,7 @@ Qed.
 
 Lemma nMust_out_acc_ex
   `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (p : P) pt G s hcnv :
 
   pt ∈ AFTER p s hcnv 
@@ -236,7 +236,7 @@ Qed.
 
 Lemma either_MUST_or_ex
   `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (p : P) G s hcnv :
   MUST__s (AFTER p s hcnv) ((oas p s hcnv) ∖ G)
   \/ (exists p', p ⟹[s] p' /\ p' ↛ /\ (coR_abs p') ⊆ G).
@@ -255,9 +255,9 @@ Proof.
 Qed.
 
 Lemma Must_out_acc_npre `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   `{@gLts Q A H, !FiniteImagegLts Q A}
-  `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (p : P) (q q' : Q) s hcnv :
   q ⇓ s -> q ⟹[s] q' -> q' ↛ ->
   MUST__s (AFTER p s hcnv) (oas p s hcnv ∖ coR_abs q') ->
@@ -292,9 +292,9 @@ Qed.
 (* ************************************************** *)
 
 Lemma equivalence_bhv_acc_mst2 `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
   `{@gLts Q A H, !FiniteImagegLts Q A}
-  `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ gLtsT _ _ }
+  `{@FinitaryAbsAction Q T FinA PreAct A _ Φ 𝝳 _ _ _ gLtsT _ _ _ }
   (p : P) (q : Q) :
   p ₁≼ₐₛ q -> p ₂≾ₘᵤₛₜ q <-> p ₂≼ₐₛ q.
 Proof.
@@ -338,8 +338,8 @@ Qed.
 Theorem equivalence_bhv_acc_mst `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
   gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A,
-  FinAbsPT : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsT _ _,
-  FinAbsQT : @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ gLtsT _ _}
+  FinAbsPT : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _,
+  FinAbsQT : @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _}
   (p : P) (q : Q) :
   p ≾ₘᵤₛₜ q <-> p ≼ₐₛ q.
   Proof.
@@ -366,18 +366,18 @@ Section must_set_preorder.
   Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
   Context `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
-  Context `{!Prop_of_Inter P T A dual}.
-  Context `{!Prop_of_Inter Q T A dual}.
+  Context `{!Prop_of_Inter P T A A dual}.
+  Context `{!Prop_of_Inter Q T A A dual}.
 
-  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
+  Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
 
   Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
 
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.

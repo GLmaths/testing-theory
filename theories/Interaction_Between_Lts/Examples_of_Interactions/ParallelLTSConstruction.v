@@ -25,16 +25,16 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base.
-From TestingTheory Require Import gLts InteractionBetweenLts.
+From TestingTheory Require Import ActTau gLts FiniteImageLTS InteractionBetweenLts StateTransitionSystems.
 
 (** ** Parallel composition of two LTSs *)
 
 #[global] Program Instance parallel_gLts {P1 P2}
- `{Prop_of_Inter P1 P2 A dual} : gLts (P1 * P2) H := inter_lts dual.
+ {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1} : gLts (P1 * P2) H := inter_lts dual.
 
 Definition reverse_dual `{H : !ExtAction A} μ1 μ2 := dual μ2 μ1.
 
-#[global] Program Instance Inter_rev_parallel `{Prop_of_Inter P1 P2 A dual} : Prop_of_Inter P2 P1 A reverse_dual.
+#[global] Program Instance Inter_rev_parallel {P1 P2} {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1} : Prop_of_Inter P2 P1 A A reverse_dual.
 Next Obligation.
   intros. destruct H2. exact (lts_essential_actions_right X).
 Defined.
@@ -68,4 +68,34 @@ Next Obligation.
 Defined.
 
  #[global] Program Instance parallel_gLts_inv {P1 P2}
- `{Prop_of_Inter P1 P2 A dual} : gLts (P2 * P1) H := inter_lts reverse_dual.
+ {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1} : gLts (P2 * P1) H := inter_lts reverse_dual.
+
+(** ** The computations of [p ∥ t], as a state transition system
+
+    The [Sts] that [must] runs on, in the one-alphabet development.  It is
+    found (hint below) before the generic [sts_of_lts], so that
+    for [P1 = P2] the search does not pick the reversed composition
+    [parallel_gLts_inv] instead; and its step is [inter_step] itself, so that
+    [inversion] sees through it as it did through [(p, t) ⟶ t']. *)
+Definition parallel_sts {P1 P2} {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1} : Sts (P1 * P2) :=
+  let S0 := sts_of_lts parallel_gLts in
+  {| sts_step x y := inter_step x τ y;
+     sts_state_eqdec := @sts_state_eqdec _ S0;
+     sts_step_decidable := @sts_step_decidable _ S0;
+     sts_refuses := @sts_refuses _ S0;
+     sts_refuses_decidable := @sts_refuses_decidable _ S0;
+     sts_refuses_spec1 := @sts_refuses_spec1 _ S0;
+     sts_refuses_spec2 := @sts_refuses_spec2 _ S0 |}.
+
+(* Found by first finding the interaction: the two LTSs of [p ∥ t] are then
+   the ones the interaction is stated for (e.g. [gLtsEq_gLts VCCS_gLtsEq]),
+   as in the lemmas about [must], and not whatever [gLts] instance a separate
+   search would pick (e.g. [VCCS_gLts]). *)
+#[global] Hint Extern 1 (Sts (?P1 * ?P2)) =>
+  let PI := constr:(_ : Prop_of_Inter P1 P2 _ _ dual) in
+  exact (@parallel_sts P1 P2 _ _ _ _ PI) : typeclass_instances.
+(** [parallel_sts] is [sts_of_lts parallel_gLts] up to computation, so it is
+    countable when the parallel LTS is. *)
+#[global] Instance parallel_csts {P1 P2} {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1}
+  (M : CountablegLts (P1 * P2) A) : CountableSts (P1 * P2) | 1 :=
+  csts_of_clts M.

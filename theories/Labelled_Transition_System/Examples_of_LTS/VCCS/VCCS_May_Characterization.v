@@ -32,7 +32,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
     (VACCS/ACCS, see [VACCS_May_Characterization.v]) — so this is a direct
     instance of [equivalence_ti_fw]/[equivalence_ti_co_fw], self-testing
     ([Interaction_between_parallel_VCCS] already supplies
-    [Prop_of_Inter proc proc dual]). Both the plain and co-trace
+    [Prop_of_Inter proc proc dual dual]). Both the plain and co-trace
     characterisations reuse the very same [gen_may]/[VCCS_may_test_spec] —
     [EquivalenceTIco.v]'s theorems take exactly the same [gen]/[may_test_spec]
     typeclasses as [EquivalenceTI.v]'s, so no separate generator is needed. *)

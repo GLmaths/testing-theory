@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA 
   Convergence WeakTransitions.
 
 (** * Lifting an LTS to forwarders preserves Must *)
-Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
+Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
   intro ht.
@@ -50,7 +50,7 @@ Proof.
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
 Qed.
 
-Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
+Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   (p, ∅) ⤓ -> p ⤓.
 Proof.
   intro ht.
@@ -62,7 +62,7 @@ Proof.
     eapply H2;eauto. eapply ParLeft. eauto.
 Qed.
 
-Lemma p_trace_implies_toFW_p_trace `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} p μ q :
+Lemma p_trace_implies_toFW_p_trace `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} p μ q :
   p ⟹{μ} q -> (p ▷ ∅) ⟹{μ} (q ▷ ∅).
 Proof.
   intro Hyp. induction Hyp.
@@ -73,7 +73,7 @@ Proof.
     eapply IHHyp;eauto.
 Qed.
 
-Lemma conv_s_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) s: 
+Lemma conv_s_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) s: 
   (p, ∅) ⇓ s -> p ⇓ s.
 Proof.
   intro ht.
@@ -91,7 +91,7 @@ Context `{!Testing_Predicate outcome gLtsEqT}.
 
 Section Forwarder.
 Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
-Context `{_ : !Prop_of_Inter P T A dual}.
+Context `{_ : !Prop_of_Inter P T A A dual}.
 
 Lemma must_non_blocking_action_swap_l_fw_eq
   (p1 p2 : P) (e1 e2 : T) (η : A) :
@@ -313,9 +313,9 @@ Notation gLtsT := (gLtsEq_gLts (gLtsEq := gLtsEqT)).
 Context `{!FiniteOutputChain_LtsOba T}.
 
 Context {unique_nb : UniqueDual A}.
-Context `{_ : !Prop_of_Inter P (MO A) A fw_inter}.
-Context `{_ : !Prop_of_Inter (P * MO A) T A dual}.
-Context `{_ : !Prop_of_Inter P T A dual}.
+Context `{_ : !Prop_of_Inter P (MO A) A A fw_inter}.
+Context `{_ : !Prop_of_Inter (P * MO A) T A A dual}.
+Context `{_ : !Prop_of_Inter P T A A dual}.
 
 Lemma nf_must_fw_l
   m1 m2 (p : P) (e e' : T) : e ⟿{m1} e' -> (p, m1 ⊎ m2) must_pass e' -> (p, m2) must_pass e.
@@ -351,7 +351,7 @@ Proof.
   - rewrite gmultiset_disj_union_left_id. eapply must_eq_client; eauto.
   - assert (must (q, {[+ η +]} ⊎ m2) p2).
     -- dependent induction hm; subst. 
-      + eapply m_now. eapply outcome_preserved_by_lts_non_blocking_action; eassumption.
+      + eapply m_now. exact (outcome_preserved_by_lts_non_blocking_action _ _ _ H2 H3 H10).
       + assert (non_blocking η) as nb. eauto.
         edestruct (exists_dual η) as (μ & duo). symmetry in duo.
         eapply com; eauto.
@@ -584,14 +584,14 @@ Lemma lift_fw_ctx_pre
   `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
   `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome gLtsEqT}
 
-  `{!Prop_of_Inter P T A dual}
-  `{!Prop_of_Inter Q T A dual}
+  `{!Prop_of_Inter P T A A dual}
+  `{!Prop_of_Inter Q T A A dual}
 
-  {_ : @Prop_of_Inter P (MO A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (P * MO A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter P (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (P * MO A) T A A dual H (inter_lts fw_inter) H _}
 
-  {_ : @Prop_of_Inter Q (MO A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (Q * MO A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter Q (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (Q * MO A) T A A dual H (inter_lts fw_inter) H _}
 
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⊑ₘᵤₛₜᵢ (q, ∅).
 Proof.

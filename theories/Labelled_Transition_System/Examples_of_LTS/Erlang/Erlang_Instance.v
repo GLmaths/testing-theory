@@ -491,7 +491,7 @@ Defined.
 (** ** Interaction with the forwarder multiset: the axioms required by [toFW] *)
 
 #[global] Program Instance Erl_Inter_MO :
-  Prop_of_Inter sys (MO erl_act) erl_act fw_inter :=
+  Prop_of_Inter sys (MO erl_act) erl_act erl_act fw_inter :=
   {| lts_essential_actions_left S := empty ;
      lts_essential_actions_right m := dom (MO_without_not_nb m) ;
      lts_co_inter_action_right m := fun x => empty |}.
@@ -534,7 +534,7 @@ Qed.
 
 (** ** Interaction of two systems: parallel composition *)
 
-#[global] Program Instance Erl_Inter_par : Prop_of_Inter sys sys erl_act dual :=
+#[global] Program Instance Erl_Inter_par : Prop_of_Inter sys sys erl_act erl_act dual :=
   {| lts_essential_actions_left S := dom (erl_mo S) ;
      lts_essential_actions_right S := dom (erl_mo S) |}.
 Next Obligation. intros S ξ hin. by apply erl_out_of_dom. Defined.

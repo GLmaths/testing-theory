@@ -44,12 +44,12 @@ Section preorder.
   Context `{@gLtsOba T A H gLtsEqT, !Testing_Predicate outcome _}.
   Context `{!CountablegLts T A}.
 
-  Context `{!Prop_of_Inter P T A dual}.
-  Context `{!Prop_of_Inter Q T A dual}.
+  Context `{!Prop_of_Inter P T A A dual}.
+  Context `{!Prop_of_Inter Q T A A dual}.
 
   Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
 
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
@@ -91,10 +91,10 @@ Section preorder.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
-  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
+  Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
   (* [completeness_fw_co] instantiated at the forwarder-pair type [P * MO
      A] needs [coFiniteImagegLts (P * MO A) A]. Unlike [FiniteImagegLts

@@ -72,7 +72,7 @@ Lemma accepts_input_any_value (p : proc) c v w :
   ¬ p ↛[ActIn (c , v)] → ¬ p ↛[ActIn (c , w)].
 Proof.
   intros acc.
-  exact (@abstraction_test_spec _ _ _ _ _ _ _ _ _ _ AbsVCCS p
+  exact (@abstraction_test_spec _ _ _ _ _ _ _ _ _ _ _ _ _ AbsVCCS p
            (ActIn (c , v)) (ActIn (c , w)) (λ h, h) (λ h, h) eq_refl acc).
 Qed.
 

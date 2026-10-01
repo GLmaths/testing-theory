@@ -96,7 +96,7 @@ Lemma accepts_input_any_value (p : proc) c v w :
 Proof.
   intros acc.
   assert (∀ a, ¬ @non_blocking _ VACCS_ExtAction (ActIn a)) as b by (intros a [? h]; discriminate h).
-  exact (@abstraction_test_spec _ _ _ _ _ _ _ _ _ _ AbsVACCS p
+  exact (@abstraction_test_spec _ _ _ _ _ _ _ _ _ _ _ _ _ AbsVACCS p
            (ActIn (c , v)) (ActIn (c , w)) (b _) (b _) eq_refl acc).
 Qed.
 

@@ -50,7 +50,7 @@ Section PAL_Alt_CoTraceHypotheses.
   Definition hyp_coFiniteImage : coFiniteImagegLts term (PALA_Act Val) := _.
   Definition hyp_gLtsObaFW : gLtsObaFW term (PALA_Act Val) := _.
   Definition hyp_gLtsObaFB : gLtsObaFB term (PALA_Act Val) := _.
-  Definition hyp_Prop_of_Inter : Prop_of_Inter term term (PALA_Act Val) dual := _.
+  Definition hyp_Prop_of_Inter : Prop_of_Inter term term (PALA_Act Val) (PALA_Act Val) dual := _.
 
   (** The testing predicate and the events. *)
   Definition hyp_Testing_Predicate : Testing_Predicate (good_PAL Val) (PALA_gLtsEq Val) := _.
@@ -59,7 +59,7 @@ Section PAL_Alt_CoTraceHypotheses.
   (** The label abstraction, without finiteness. *)
   Definition hyp_AbsAction :
     @AbsAction term term (Event Val) (Event Val) (PALA_Act Val) (PALA_ExtAction Val)
-      (Φᴀᴘᴀʟ Val) (𝝳ᴇᴠ Val) (PALA_gLts Val) (PALA_gLtsEq Val) := AbsPALA Val.
+      (Φᴀᴘᴀʟ Val) (𝝳ᴇᴠ Val) _ _ (PALA_gLts Val) (PALA_gLtsEq Val) _ := AbsPALA Val.
 
   (** The tests, in the co variants of the classes ([TestSpecBridge]). *)
   Definition hyp_test_convergence_spec : CompletenessASco.test_convergence_spec (t_conv Val) :=

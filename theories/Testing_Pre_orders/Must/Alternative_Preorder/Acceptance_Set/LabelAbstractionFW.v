@@ -39,7 +39,7 @@ Definition LA_prog_FW {A : Type} {H : ExtAction A} (R : relation A) : relation A
 
 Section LA_prog_FW.
   Context {P A : Type} {H : ExtAction A} {unique_nb : UniqueDual A} {gLtsP : gLts P H} {LAp : gLtsLAprog P H}
-    `{!Prop_of_Inter P (MO A) A fw_inter}.
+    `{!Prop_of_Inter P (MO A) A A fw_inter}.
 
   Lemma LA_prog_FW_equivalence : Equivalence (LA_prog_FW (LA_prog P)).
   Proof.

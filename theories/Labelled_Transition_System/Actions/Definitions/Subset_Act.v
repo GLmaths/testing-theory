@@ -21,7 +21,7 @@
 *)
 
 From stdpp Require Import gmap.
-From TestingTheory Require Import gLts.
+From TestingTheory Require Import gLts SyncActions.
 
 (**************************Definition of a Subset of A *************************************)
 
@@ -34,8 +34,11 @@ Definition R `{gLts P A} (p : P) : subset_of A :=
   fun μ => ¬ p ↛[μ].
 
 (* ** Blocking co-actions *)
-Definition coR `{gLts P A} (p : P) : subset_of A := 
-  fun μ1 => exists μ2, ¬ p ↛[μ2] /\ dual μ2 μ1 /\ blocking μ1.
+(* Two alphabets: the process over [Aproc], the co-actions over [Atest],
+   linked by [sync]; on one alphabet [sync] is [dual]. *)
+Definition coR `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+  (p : P) : subset_of Atest :=
+  fun μ1 => exists μ2, ¬ p ↛[μ2] /\ sync μ2 μ1 /\ blocking μ1.
 
 (** ** All processes accepting an action *)
 Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
@@ -122,3 +125,6 @@ Definition coR_map {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ 
 Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B-> C) :
       μ ∈ map_set (fun x => Γ2 (Γ1 x)) S <-> μ ∈ map_set (Γ2 (map_set Γ1 S)). *)
 
+Lemma coR_intro `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+  (p : P) (μ : Aproc) (η : Atest) : ¬ p ↛[μ] → sync μ η → blocking η → η ∈ coR p.
+Proof. intros ha hs hb. by exists μ. Qed.

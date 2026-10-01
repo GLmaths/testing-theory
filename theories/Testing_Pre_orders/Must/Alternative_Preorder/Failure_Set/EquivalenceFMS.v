@@ -35,7 +35,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 
 Lemma equivalence_must_set_nfailure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _}
+  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _}
   (p : P) (s : trace A) h1 (G : gset PreAct) : MUST__s (AFTER p s h1) G <->  ¬ Failure p s G.
 Proof.
   split.
@@ -62,7 +62,7 @@ Qed.
 
 Lemma equivalence_nmust_set_failure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _}
+  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _}
   (p : P) (s : trace A) h1 (G : gset PreAct) :
   ¬ MUST__s (AFTER p s h1) G
     <-> Failure p s G.
@@ -89,9 +89,9 @@ Qed.
 
 Theorem equivalence_failure_set_must_set `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _,
+  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A,
-  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _
+  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _
   }
   (p : P) (q : Q) : p ≾ₘᵤₛₜ q <-> p ⋖ꜰᴀɪʟ q.
 Proof.
@@ -130,18 +130,18 @@ Section failure_set_preorder.
   Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
   Context `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
-  Context `{!Prop_of_Inter P T A dual}.
-  Context `{!Prop_of_Inter Q T A dual}.
+  Context `{!Prop_of_Inter P T A A dual}.
+  Context `{!Prop_of_Inter Q T A A dual}.
 
-  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
+  Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
 
   Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
 
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.

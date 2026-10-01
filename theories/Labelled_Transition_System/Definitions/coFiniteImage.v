@@ -23,7 +23,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
-From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Termination
+From TestingTheory Require Import InListPropHelper ActTau gLts SyncActions Bisimulation Termination
   WeakTransitions Convergence Lts_OBA_FB FiniteImageLTS coWeakTransition coConvergence
   StateTransitionSystems.
 
@@ -47,12 +47,17 @@ From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Term
    (InteractionBetweenLts.v): decidability of the atomic relation the class
    is built on is simply *postulated* as a field, to be discharged by whoever
    instantiates the class for a concrete LTS. *)
-Class coFiniteImagegLts P A `{gLts P A} :=
+(* Two alphabets: the process over [Aproc], the trace over [A], linked by
+   [sync] — on one alphabet, [sync] is [dual].  [coFiniteImagegLts P A]
+   keeps naming the trace alphabet [A]; the process side is found by
+   instance search. *)
+Class coFiniteImagegLts (P A : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp}
+  {Ht : ExtAction A} {SA : SyncAction Aproc A} :=
   MkCoFlts {
       cofolts_states_countable :: Countable P;
       cofolts_tau_next_states_finite p : Finite (dsig (fun q => p ⟶ q));
-      cofolts_next_states_decidable p α q : Decision (exists α', dual α' α /\ p ⟶[α'] q);
-      cofolts_next_states_finite p α : Finite (dsig (fun q => exists α', dual α' α /\ p ⟶[α'] q));
+      cofolts_next_states_decidable p (α : A) q : Decision (exists α', sync α' α /\ p ⟶[α'] q);
+      cofolts_next_states_finite p (α : A) : Finite (dsig (fun q => exists α', sync α' α /\ p ⟶[α'] q));
 }.
 
 #[global] Existing Instance cofolts_states_countable.
@@ -76,13 +81,14 @@ Class coFiniteImagegLts P A `{gLts P A} :=
     ([cofolts_next_states_finite]) —
     hence the literal set is too, as a decidable subtype of a finite type,
     and [Finite -> Countable] ([finite_countable]) finishes it off. *)
-#[global] Instance CountablegLts_of_coFiniteImagegLts `{coFiniteImagegLts P A} : CountablegLts P A.
+#[global] Instance CountablegLts_of_coFiniteImagegLts `{H : ExtAction A} `{gLtsP : !gLts P H}
+  `{!coFiniteImagegLts P A} : CountablegLts P A.
 Proof.
   unshelve econstructor.
   - exact cofolts_states_countable.
   - intros p ℓ. destruct ℓ as [a|].
     + unshelve eapply finite_countable.
-      eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => exists α', dual α' (co a) /\ p ⟶[α'] q))))).
+      eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => exists α', sync α' (co a) /\ p ⟶[α'] q))))).
       intros q Hq. eapply bool_decide_unpack in Hq.
       eapply list_elem_of_fmap.
       exists (dexist q (ex_intro _ a (conj (proj2_sig (exists_dual a)) Hq))).
@@ -90,15 +96,22 @@ Proof.
     + apply finite_countable.
 Defined.
 
+Section coFiniteImage_sets.
+
+(* Two alphabets throughout: the empty co-trace does not tell the trace
+   alphabet, so it is fixed here once and for all. *)
+Context `{gLtsP : @gLts P Aproc Hp} `{Ht : ExtAction A} `{SA : !SyncAction Aproc A}.
+Context `{CFI : !coFiniteImagegLts P A}.
+
 (** *** Tau-set
 
     Mirrors [lts_tau_set]/[lts_tau_set_spec] (FiniteImageLTS.v) verbatim,
     sourced from [coFiniteImagegLts]'s [cofolts_tau_next_states_finite]
     instead of [FiniteImagegLts]. *)
-Definition cowt_tau_set `{coFiniteImagegLts P A} p : list P :=
+Definition cowt_tau_set p : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶ p')).
 
-Lemma cowt_tau_set_spec : forall `{coFiniteImagegLts P A} p q, q ∈ cowt_tau_set p <-> p ⟶ q.
+Lemma cowt_tau_set_spec : forall p q, q ∈ cowt_tau_set p <-> p ⟶ q.
 Proof.
   intros. split.
   - intro mem. unfold cowt_tau_set in mem.
@@ -121,10 +134,10 @@ Qed.
     for the tau-only part — the [lts_tau_set_from_pset_spec]/[spec1]/
     [spec2] statements themselves are already generic (bare [Countable P]),
     so no new spec vocabulary is needed either. *)
-Definition cowt_tau_set_from_pset `{coFiniteImagegLts P A} (ps : gset P) : gset P :=
+Definition cowt_tau_set_from_pset (ps : gset P) : gset P :=
   ⋃ (map (fun p => list_to_set (cowt_tau_set p)) (elements ps)).
 
-Lemma cowt_tau_set_from_pset_ispec `{coFiniteImagegLts P A}
+Lemma cowt_tau_set_from_pset_ispec
   (ps : gset P) :
   lts_tau_set_from_pset_spec ps (cowt_tau_set_from_pset ps).
 Proof.
@@ -144,23 +157,16 @@ Qed.
 
 (** *** [cowt] on the empty trace is exactly [wt] on the empty trace *)
 
-Lemma cowt_iff_wt_nil `{gLts P A} p q : p ⟹ᶜᵒ q <-> p ⟹ q.
-Proof.
-  split.
-  - intro w. eapply cowt_to_wt_dual in w as (s' & hf & w'). inversion hf; subst. exact w'.
-  - intro w. exact (wt_to_cowt_dual p [] q w [] (ForAllHelper.Forall2_nil _)).
-Qed.
-
 (* Mirrors [wt_set_nil] (FiniteImageLTS.v) verbatim, sourced from
    [coFiniteImagegLts]'s own [cofolts_tau_next_states_finite]/
    [cofolts_states_countable] fields instead of [FiniteImagegLts], so this
    cluster never needs [FiniteImagegLts P A] as a sibling assumption. *)
-Fixpoint cowt_set_nil `{coFiniteImagegLts P A} (p : P) (t : terminate p) : gset P :=
+Fixpoint cowt_set_nil (p : P) (t : terminate p) : gset P :=
   let '(tstep _ f) := t in
   let k q := cowt_set_nil (`q) (f (`q) (proj2_dsig q)) in
   {[ p ]} ∪ ⋃ map k (enum $ dsig (fun x => p ⟶ x)).
 
-Lemma cowt_set_nil_spec1 `{coFiniteImagegLts P A} p q (tp : terminate p) :
+Lemma cowt_set_nil_spec1 p q (tp : terminate p) :
   q ∈ cowt_set_nil p tp -> p ⟹ᶜᵒ q.
 Proof.
   intro mem. eapply cowt_iff_wt_nil.
@@ -176,12 +182,12 @@ Proof.
     ++ eapply H2. eapply (proj2_dsig r). eassumption.
 Qed.
 
-Lemma cowt_set_nil_spec2 `{coFiniteImagegLts P A} p q :
+Lemma cowt_set_nil_spec2 p q :
     forall (tp : terminate p), p ⟹ᶜᵒ q -> q ∈ cowt_set_nil p tp.
 Proof.
   intros tp Htp%cowt_iff_wt_nil. revert tp. dependent induction Htp; intros tp; destruct tp.
   + set_solver.
-  + eapply elem_of_union. right.
+  + simpl. eapply elem_of_union. right.
     eapply elem_of_union_list.
     set (qr := dexist q l).
     exists (cowt_set_nil (`qr) (t0 (`qr) (proj2_dsig qr))).
@@ -191,7 +197,7 @@ Proof.
     eapply IHHtp. eauto.
 Qed.
 
-Lemma cowt_nil_set_dec `{coFiniteImagegLts P A} p (ht : p ⤓) : forall q, Decision (p ⟹ᶜᵒ q).
+Lemma cowt_nil_set_dec p (ht : p ⤓) : forall q, Decision (p ⟹ᶜᵒ q).
 Proof.
   intro q.
   destruct (decide (q ∈ cowt_set_nil p ht)).
@@ -199,7 +205,7 @@ Proof.
   - right. intro w. eapply n. eapply cowt_set_nil_spec2. exact w.
 Qed.
 
-Lemma cowt_set_nil_fin_aux `{coFiniteImagegLts P A}
+Lemma cowt_set_nil_fin_aux
   (p : P) (ht : terminate p) (d : ∀ q, Decision (p ⟹ᶜᵒ q)) :
       Finite (dsig (fun q => p ⟹ᶜᵒ q)).
 Proof.
@@ -209,17 +215,17 @@ Proof.
   eapply elem_of_elements, cowt_set_nil_spec2. exact Htrans.
 Qed.
 
-Definition cowt_set_nil_fin `{coFiniteImagegLts P A}
-  (p : P) (ht : p ⤓) : Finite (dsig (fun q => p ⟹ᶜᵒ q)) :=
+Definition cowt_set_nil_fin
+  (p : P) (ht : p ⤓) : Finite (@dsig P (fun q => p ⟹ᶜᵒ q) (cowt_nil_set_dec p ht)) :=
   cowt_set_nil_fin_aux p ht (cowt_nil_set_dec p ht).
 
 (** *** The set of states reachable by a single co-weak action *)
 
-Definition cowt_extaction_set `{coFiniteImagegLts P A} p μ : list P :=
-  map proj1_sig (enum $ dsig (fun q => exists μ', dual μ' μ /\ p ⟶[μ'] q)).
+Definition cowt_extaction_set p μ : list P :=
+  map proj1_sig (enum $ dsig (fun q => exists μ', sync μ' μ /\ p ⟶[μ'] q)).
 
-Lemma cowt_extaction_set_spec `{coFiniteImagegLts P A} p μ q :
-  q ∈ cowt_extaction_set p μ <-> exists μ', dual μ' μ /\ p ⟶[μ'] q.
+Lemma cowt_extaction_set_spec p μ q :
+  q ∈ cowt_extaction_set p μ <-> exists μ', sync μ' μ /\ p ⟶[μ'] q.
 Proof.
   unfold cowt_extaction_set. split.
   - intro mem. eapply list_elem_of_fmap in mem as ((r & l) & eq & mem). subst.
@@ -229,19 +235,19 @@ Proof.
     eauto. eapply elem_of_enum.
 Qed.
 
-Lemma cowt_push_nil_left_lts `{gLts P A} {p q r μ} :
-  p ⟹ᶜᵒ q -> (exists μ', dual μ' μ /\ q ⟶[μ'] r) -> p ⟹ᶜᵒ{μ} r.
+Lemma cowt_push_nil_left_lts {p q r μ} :
+  p ⟹ᶜᵒ q -> (exists μ', sync μ' μ /\ q ⟶[μ'] r) -> p ⟹ᶜᵒ{μ} r.
 Proof. intros w (μ' & duo & l). eapply cowt_push_nil_left; eauto. eapply lts_to_cowt; eauto. Qed.
 
 Definition cowt_set_mu
-  `{coFiniteImagegLts P A} (p : P)
+  (p : P)
   (μ : A) (s : trace A) (hcocnv : p ⇓ᶜᵒ μ :: s) : gset P :=
   let ht := cocnv_terminate p (μ :: s) hcocnv in
   let ps0 := @enum (dsig (fun q => p ⟹ᶜᵒ q)) _ (cowt_set_nil_fin p ht) in
-  let f p : list (dsig (fun x => exists μ', dual μ' μ /\ p ⟶[μ'] x)) :=
-    enum (dsig (fun x => exists μ', dual μ' μ /\ p ⟶[μ'] x)) in
+  let f p : list (dsig (fun x => exists μ', sync μ' μ /\ p ⟶[μ'] x)) :=
+    enum (dsig (fun x => exists μ', sync μ' μ /\ p ⟶[μ'] x)) in
   ⋃ map (fun t : dsig (fun q => p ⟹ᶜᵒ q) =>
-           ⋃ map (fun r : dsig (fun x => exists μ', dual μ' μ /\ (`t) ⟶[μ'] x) =>
+           ⋃ map (fun r : dsig (fun x => exists μ', sync μ' μ /\ (`t) ⟶[μ'] x) =>
                     let w := cowt_push_nil_left_lts (proj2_dsig t) (proj2_dsig r) in
                     let hcocnv' := cocnv_preserved_by_cowt_act s p μ hcocnv (`r) w in
                     let htr := cocnv_terminate (`r) s hcocnv' in
@@ -250,7 +256,7 @@ Definition cowt_set_mu
              ) (f (`t))
     ) ps0.
 
-Lemma cowt_set_mu_spec1 `{coFiniteImagegLts P A}
+Lemma cowt_set_mu_spec1
   (p q : P) (μ : A) (s : trace A) (hcocnv : p ⇓ᶜᵒ μ :: s) :
   q ∈ cowt_set_mu p μ s hcocnv -> p ⟹ᶜᵒ{μ} q.
 Proof.
@@ -267,7 +273,7 @@ Proof.
   eapply bool_decide_unpack. eassumption.
 Qed.
 
-Lemma cowt_set_mu_spec2 `{coFiniteImagegLts P A}
+Lemma cowt_set_mu_spec2
   (p q : P) (μ : A) (s : trace A) (hcocnv : p ⇓ᶜᵒ μ :: s) :
   p ⟹ᶜᵒ{μ} q -> q ∈ cowt_set_mu p μ s hcocnv.
 Proof.
@@ -281,7 +287,7 @@ Proof.
   exists (dexist q hw2). split. reflexivity. eapply elem_of_enum.
 Qed.
 
-Lemma cowt_mu_set_dec `{coFiniteImagegLts P A} p μ s (hcocnv : p ⇓ᶜᵒ μ :: s) :
+Lemma cowt_mu_set_dec p μ s (hcocnv : p ⇓ᶜᵒ μ :: s) :
     forall q, Decision (p ⟹ᶜᵒ{μ} q).
 Proof.
   intro q.
@@ -290,7 +296,7 @@ Proof.
   - right. intro w. eapply n. now eapply cowt_set_mu_spec2.
 Qed.
 
-Lemma cowt_mu_set_fin_aux `{coFiniteImagegLts P A}
+Lemma cowt_mu_set_fin_aux
   (p : P) μ s (hcocnv : p ⇓ᶜᵒ μ :: s) (d : ∀ q, Decision (p ⟹ᶜᵒ{μ} q)) :
     Finite (dsig (fun q => p ⟹ᶜᵒ{μ} q)).
 Proof.
@@ -300,13 +306,14 @@ Proof.
   now eapply elem_of_elements, cowt_set_mu_spec2.
 Qed.
 
-Definition cowt_set_mu_fin `{coFiniteImagegLts P A}
-  (p : P) μ s (hcocnv : p ⇓ᶜᵒ μ :: s) : Finite (dsig (fun q => p ⟹ᶜᵒ{μ} q)) :=
+Definition cowt_set_mu_fin
+  (p : P) μ s (hcocnv : p ⇓ᶜᵒ μ :: s) :
+  Finite (@dsig P (fun q => p ⟹ᶜᵒ{μ} q) (cowt_mu_set_dec p μ s hcocnv)) :=
   cowt_mu_set_fin_aux p μ s hcocnv (cowt_mu_set_dec p μ s hcocnv).
 
 (** *** The set of states reachable along a whole co-weak trace *)
 
-Fixpoint cowt_set `{coFiniteImagegLts P A}
+Fixpoint cowt_set
   (p : P) (s : trace A) (hcocnv : cocnv p s) : gset P :=
   match s as s0 return cocnv p s0 -> gset P with
   | [] =>
@@ -320,7 +327,7 @@ Fixpoint cowt_set `{coFiniteImagegLts P A}
           ) ts
   end hcocnv.
 
-Lemma cowt_set_spec1 `{coFiniteImagegLts P A}
+Lemma cowt_set_spec1
   (p q : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) :
   q ∈ cowt_set p s hcocnv -> p ⟹ᶜᵒ[s] q.
 Proof.
@@ -332,7 +339,7 @@ Proof.
     eapply IHs. eassumption.
 Defined.
 
-Lemma cowt_set_spec2 `{coFiniteImagegLts P A}
+Lemma cowt_set_spec2
   (p q : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) :
   p ⟹ᶜᵒ[s] q -> q ∈ cowt_set p s hcocnv.
 Proof.
@@ -347,7 +354,7 @@ Proof.
     + now eapply IHs'.
 Defined.
 
-Lemma cowt_set_dec `{coFiniteImagegLts P A} p s (hcocnv : p ⇓ᶜᵒ s) :
+Lemma cowt_set_dec p s (hcocnv : p ⇓ᶜᵒ s) :
     forall q, Decision (p ⟹ᶜᵒ[s] q).
 Proof.
   intro q.
@@ -356,7 +363,7 @@ Proof.
   - right. intro w. eapply n. now eapply cowt_set_spec2.
 Qed.
 
-Lemma cowt_set_fin_aux `{coFiniteImagegLts P A}
+Lemma cowt_set_fin_aux
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) (d : ∀ q, Decision (p ⟹ᶜᵒ[s] q)) :
     Finite (dsig (fun q => p ⟹ᶜᵒ[s] q)).
 Proof.
@@ -366,8 +373,8 @@ Proof.
   now eapply elem_of_elements, cowt_set_spec2.
 Qed.
 
-Definition cowt_set_fin `{coFiniteImagegLts P A}
-  (p : P) s (hcocnv : p ⇓ᶜᵒ s) : Finite (dsig (fun q => p ⟹ᶜᵒ[s] q)) :=
+Definition cowt_set_fin
+  (p : P) s (hcocnv : p ⇓ᶜᵒ s) : Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q) (cowt_set_dec p s hcocnv)) :=
   cowt_set_fin_aux p s hcocnv (cowt_set_dec p s hcocnv).
 
 (** *** The set of stable states reachable along a whole co-weak trace
@@ -377,11 +384,11 @@ Definition cowt_set_fin `{coFiniteImagegLts P A}
     it only needs [⟶]/[⟹]/[⤓], and [cowt]'s nil case coincides with [wt]'s
     ([cowt_iff_wt_nil]). *)
 
-Lemma cocnv_cowt_s_terminate `{gLts P A}
+Lemma cocnv_cowt_s_terminate
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) : p ⟹ᶜᵒ[s] q -> q ⤓.
 Proof. eapply cocnv_iff_prefix_terminate; eauto. Qed.
 
-Fixpoint cowt_nil_refuses_set `{coFiniteImagegLts P A} (p : P) (ht : p ⤓) : gset P :=
+Fixpoint cowt_nil_refuses_set (p : P) (ht : p ⤓) : gset P :=
   match lts_refuses_decidable p τ with
   | left  _ => {[ p ]}
   | right _ =>
@@ -390,7 +397,7 @@ Fixpoint cowt_nil_refuses_set `{coFiniteImagegLts P A} (p : P) (ht : p ⤓) : gs
       ⋃ map k (enum (dsig (fun q => p ⟶ q)))
   end.
 
-Lemma cowt_nil_refuses_set_spec1 `{coFiniteImagegLts P A}
+Lemma cowt_nil_refuses_set_spec1
   (p q : P) (ht : p ⤓) :
   q ∈ cowt_nil_refuses_set p ht -> p ⟹ᶜᵒ q /\ q ↛.
 Proof.
@@ -410,7 +417,7 @@ Proof.
   split; [eapply cowt_iff_wt_nil; exact w | exact hst].
 Qed.
 
-Lemma cowt_nil_refuses_set_spec2 `{coFiniteImagegLts P A}
+Lemma cowt_nil_refuses_set_spec2
   (p q : P) (ht : p ⤓) :
   (p ⟹ᶜᵒ q /\ q ↛) -> q ∈ cowt_nil_refuses_set p ht.
 Proof.
@@ -423,13 +430,13 @@ Proof.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
 Qed.
 
-Definition cowt_refuses_set `{coFiniteImagegLts P A}
+Definition cowt_refuses_set
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) : gset P :=
   let ps := @enum (dsig (fun q => p ⟹ᶜᵒ[s] q)) _ (cowt_set_fin p s hcocnv) in
   let k t := cowt_nil_refuses_set (`t) (cocnv_cowt_s_terminate p (`t) s hcocnv (proj2_dsig t)) in
   ⋃ map k ps.
 
-Lemma cowt_refuses_set_spec1 `{coFiniteImagegLts P A}
+Lemma cowt_refuses_set_spec1
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) :
   q ∈ cowt_refuses_set p s hcocnv -> p ⟹ᶜᵒ[s] q /\ q ↛.
 Proof.
@@ -443,7 +450,7 @@ Proof.
   firstorder.
 Qed.
 
-Lemma cowt_refuses_set_spec2 `{coFiniteImagegLts P A}
+Lemma cowt_refuses_set_spec2
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) :
   (p ⟹ᶜᵒ[s] q /\ q ↛) -> q ∈ cowt_refuses_set p s hcocnv.
 Proof.
@@ -454,7 +461,7 @@ Proof.
   simpl. eapply cowt_nil_refuses_set_spec2. eauto with mdb.
 Qed.
 
-Lemma cowt_refuses_set_fin_aux `{coFiniteImagegLts P A}
+Lemma cowt_refuses_set_fin_aux
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) (d : ∀ q, Decision (p ⟹ᶜᵒ[s] q /\ q ↛)) :
   Finite (dsig (fun q => p ⟹ᶜᵒ[s] q /\ q ↛)).
 Proof.
@@ -464,7 +471,7 @@ Proof.
   now eapply elem_of_elements, cowt_refuses_set_spec2.
 Qed.
 
-Lemma cowt_refuses_set_dec `{coFiniteImagegLts P A} p s (hcocnv : p ⇓ᶜᵒ s) :
+Lemma cowt_refuses_set_dec p s (hcocnv : p ⇓ᶜᵒ s) :
   forall q, Decision (p ⟹ᶜᵒ[s] q /\ q ↛).
 Proof.
   intro q.
@@ -473,11 +480,12 @@ Proof.
   - right. intro w. eapply n. now eapply cowt_refuses_set_spec2.
 Qed.
 
-Definition cowt_refuses_set_fin `{coFiniteImagegLts P A}
-  (p : P) s (hcocnv : p ⇓ᶜᵒ s) : Finite (dsig (fun q => p ⟹ᶜᵒ[s] q /\ q ↛)) :=
+Definition cowt_refuses_set_fin
+  (p : P) s (hcocnv : p ⇓ᶜᵒ s) :
+  Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q /\ q ↛) (cowt_refuses_set_dec p s hcocnv)) :=
   cowt_refuses_set_fin_aux p s hcocnv (cowt_refuses_set_dec p s hcocnv).
 
-Lemma cowt_nil_set_refuses `{coFiniteImagegLts P A} p hcocnv :
+Lemma cowt_nil_set_refuses p hcocnv :
   lts_refuses p τ -> cowt_set p [] hcocnv = {[ p ]}.
 Proof.
   intros hst.
@@ -492,7 +500,7 @@ Proof.
     eapply cowt_iff_wt_nil. eauto with mdb. set_solver.
 Qed.
 
-Lemma cowt_refuses_set_refuses_singleton `{coFiniteImagegLts P A} p hcocnv :
+Lemma cowt_refuses_set_refuses_singleton p hcocnv :
   lts_refuses p τ -> cowt_refuses_set p [] hcocnv = {[ p ]}.
 Proof.
   intro hst.
@@ -511,15 +519,15 @@ Qed.
     into [⟹ᶜᵒ{μ}] (a single [μ], no separate [dual μ1 μ2] premise) instead of
     the two-label [wt_set_from_pset_spec1 ps [μ1] qs] + [dual μ1 μ2] style. *)
 
-Definition cowt_set_from_pset_spec1 `{Countable P} `{gLts P A}
+Definition cowt_set_from_pset_spec1 `{Countable P} 
   (ps : gset P) (μ : A) (qs : gset P) :=
   forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹ᶜᵒ{μ} q.
 
-Definition cowt_set_from_pset_spec2 `{Countable P} `{gLts P A}
+Definition cowt_set_from_pset_spec2 `{Countable P} 
   (ps : gset P) (μ : A) (qs : gset P) :=
   forall p q, p ∈ ps -> p ⟹ᶜᵒ{μ} q -> q ∈ qs.
 
-Definition cowt_set_from_pset_spec `{Countable P} `{gLts P A}
+Definition cowt_set_from_pset_spec `{Countable P} 
   (ps : gset P) (μ : A) (qs : gset P) :=
   cowt_set_from_pset_spec1 ps μ qs /\ cowt_set_from_pset_spec2 ps μ qs.
 
@@ -528,7 +536,7 @@ Definition cowt_set_from_pset_spec `{Countable P} `{gLts P A}
     verbatim, restricted to a single action [μ] (so it is sourced from
     [cowt_set_mu] instead of the general-trace [wt_set]). *)
 
-Fixpoint cowt_s_set_from_pset_mu_xs `{coFiniteImagegLts P A}
+Fixpoint cowt_s_set_from_pset_mu_xs
   (ps : list P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) : gset P :=
   match ps as ps0 return (forall p, p ∈ ps0 -> p ⇓ᶜᵒ [μ]) -> gset P with
   | [] => fun _ => ∅
@@ -540,7 +548,7 @@ Fixpoint cowt_s_set_from_pset_mu_xs `{coFiniteImagegLts P A}
         ys ∪ cowt_s_set_from_pset_mu_xs ps' μ ha'
   end hcocnv.
 
-Lemma cowt_s_set_from_pset_mu_xs_ispec `{coFiniteImagegLts P A}
+Lemma cowt_s_set_from_pset_mu_xs_ispec
   (ps : list P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) :
   (forall q, q ∈ cowt_s_set_from_pset_mu_xs ps μ hcocnv -> exists p, p ∈ ps /\ p ⟹ᶜᵒ{μ} q)
   /\ (forall p q, p ∈ ps -> p ⟹ᶜᵒ{μ} q -> q ∈ cowt_s_set_from_pset_mu_xs ps μ hcocnv).
@@ -563,7 +571,7 @@ Proof.
       ++ right. eapply IHps in hwp'; eauto.
 Qed.
 
-Lemma lift_cocnv_elements `{coFiniteImagegLts P A}
+Lemma lift_cocnv_elements
   (ps : gset P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) :
   forall p, p ∈ (elements ps) -> p ⇓ᶜᵒ [μ].
 Proof.
@@ -571,11 +579,11 @@ Proof.
   eapply hcocnv. now eapply elem_of_elements.
 Qed.
 
-Definition cowt_s_set_from_pset `{coFiniteImagegLts P A}
+Definition cowt_s_set_from_pset
   (ps : gset P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) : gset P :=
   cowt_s_set_from_pset_mu_xs (elements ps) μ (lift_cocnv_elements ps μ hcocnv).
 
-Lemma cowt_s_set_from_pset_ispec `{coFiniteImagegLts P A}
+Lemma cowt_s_set_from_pset_ispec
   (ps : gset P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) :
   cowt_set_from_pset_spec ps μ (cowt_s_set_from_pset ps μ hcocnv).
 Proof.
@@ -587,3 +595,5 @@ Proof.
     eapply cowt_s_set_from_pset_mu_xs_ispec.
     eapply elem_of_elements; eassumption. eassumption.
 Qed.
+
+End coFiniteImage_sets.

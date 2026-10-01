@@ -137,7 +137,7 @@ Section PAL_Label_Dilemma.
 
   Context {A : Type} {EA : ExtAction A} {gLtsT : gLtsEq term EA}.
   Context {FinA PreAct : Type} `{Countable PreAct} (Φ : A → FinA) (𝝳 : FinA → PreAct).
-  Context {Fin : @FinitaryAbsAction term term FinA PreAct A EA Φ 𝝳 gLtsEq_gLts gLtsT _ _}.
+  Context {Fin : @FinitaryAbsAction term term FinA PreAct A EA Φ 𝝳 _ _ gLtsEq_gLts gLtsT _ _ _}.
   Context (outcome : term → Prop) {TP : Testing_Predicate outcome gLtsT} (gen : list A → term)
     {TS : @test_spec term A EA gLtsT outcome TP gen}.
 
@@ -151,7 +151,7 @@ Section PAL_Label_Dilemma.
     (∃ μ1 μ2 : A, dual μ1 μ2 ∧ p ⟶[μ1] p' ∧ t ⟶[μ2] t') ↔ PAL_sync p t p' t').
 
   (** The fields used, with their instances given explicitly. *)
-  Definition Abs : @AbsAction term term FinA PreAct A EA Φ 𝝳 gLtsEq_gLts gLtsT := Fin.(FinitaryAbsAction_Abs).
+  Definition Abs : @AbsAction term term FinA PreAct A EA Φ 𝝳 _ _ gLtsEq_gLts gLtsT _ := Fin.(FinitaryAbsAction_Abs).
 
   Lemma accepts_of_step (p q : term) (μ : A) : p ⟶[μ] q → μ ∈ R p.
   Proof. intros h. exact (lts_refuses_spec2 p (ActExt μ) (exist _ q h)). Qed.

@@ -51,6 +51,8 @@ Example copycat_is_above_NIL : g 𝟘 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ccat.
 Proof.
   intros e Hyp.
   dependent induction Hyp.
+  (* the induction hypotheses keep the names the proof expects *)
+  all: try rename H1 into H2, H0 into H1, H into H0.
   - eapply m_now. eauto.
   - clear H2.
     eapply m_step; eauto.

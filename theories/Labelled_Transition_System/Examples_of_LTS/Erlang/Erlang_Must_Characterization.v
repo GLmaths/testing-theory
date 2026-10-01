@@ -61,7 +61,7 @@ Context `{EP : Erlang_Program}.
 
 (** ** An Erlang system interacting with an observer *)
 
-#[global] Program Instance Erl_Inter_test : Prop_of_Inter sys proc erl_act dual :=
+#[global] Program Instance Erl_Inter_test : Prop_of_Inter sys proc erl_act erl_act dual :=
   {| lts_essential_actions_left S := dom (erl_mo S) ;
      lts_essential_actions_right q := set_map ActOut (outputs_of q) |}.
 Next Obligation. intros S ξ hin. by apply erl_out_of_dom. Defined.
@@ -109,7 +109,7 @@ Defined.
 (** ** An Erlang forwarder interacting with an observer *)
 
 #[global] Program Instance Erl_Inter_FW_test :
-  Prop_of_Inter (sys * MO erl_act) proc erl_act dual :=
+  Prop_of_Inter (sys * MO erl_act) proc erl_act erl_act dual :=
   {| lts_essential_actions_left p := dom (erl_mo p.1) ∪ dom (MO_without_not_nb p.2) ;
      lts_essential_actions_right q := set_map ActOut (outputs_of q) |}.
 Next Obligation.
@@ -181,11 +181,11 @@ Defined.
 
 #[global] Program Instance Erl_AbsAction_FW :
   @AbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq.
+    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
 Next Obligation.
   intros t β β' hb hb' heq hmem.
   eapply (@abstraction_test_spec proc proc FinA PreAct erl_act VACCS_ExtAction
-            Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq AbsVACCS t β β'); eassumption.
+            Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
 Qed.
 Next Obligation.
   intros p β β' _ _ heq hmem. unfold 𝝳ᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
@@ -197,7 +197,7 @@ Qed.
 
 #[global] Program Instance Erl_FinitaryAbsAction_FW :
   @FinitaryAbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq _ _ :=
+    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ _ _ :=
   {| FinitaryAbsAction_Abs := Erl_AbsAction_FW ;
      coR_abs p := coR_abs p.1
                   ∪ dom (gmultiset_map (fun x => 𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ (co x)))

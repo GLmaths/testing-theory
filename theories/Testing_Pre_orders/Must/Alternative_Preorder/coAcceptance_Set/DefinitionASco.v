@@ -24,22 +24,25 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality Basics.
 From stdpp Require Import finite gmap decidable gmultiset.
-From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act
+From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA Subset_Act
     coWeakTransition Testing_Predicate
     StateTransitionSystems InteractionBetweenLts coConvergence Termination 
     DefinitionAS FiniteImageLTS Subset_Act.
 
 
 (** ** Termination condition *)
-Definition bhv_pre_co_cond1 `{gLts P A, gLts Q A} 
-  (p : P) (q : Q) := forall s, p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s.
+(* Two alphabets: the processes over [Aproc], the co-traces over the test
+   alphabet [A], linked by [sync]; on one alphabet [sync] is [dual]. *)
+Definition bhv_pre_co_cond1 `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc Hp}
+  `{Ht : ExtAction A} `{SA : !SyncAction Aproc A}
+  (p : P) (q : Q) := forall (s : trace A), p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s.
 
 Notation "p ₁≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_co_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
+  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
     p ⇓ᶜᵒ s -> q ⟹ᶜᵒ[s] q' -> q' ↛ ->
@@ -49,8 +52,8 @@ Notation "p ₂≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond2 p q) (at level 70).
 
 (** ** Definition of the alternative preorder *)
 Definition bhv_pre_co `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
+  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
     (p : P) (q : Q) :=
       p ₁≼꜀ₒ₋ₐₛ q /\ p ₂≼꜀ₒ₋ₐₛ q.
 

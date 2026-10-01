@@ -3056,7 +3056,7 @@ Next Obligation.
 Defined.
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
-  Prop_of_Inter proc proc (ExtAct TypeOfActions) dual :=
+  Prop_of_Inter proc proc (ExtAct TypeOfActions) (ExtAct TypeOfActions) dual :=
   {| lts_essential_actions_left p := set_map ActOut (outputs_of p) ;
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
@@ -3120,7 +3120,7 @@ Next Obligation.
   symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 
-#[global] Program Instance Interaction_between_VACCS_and_MB: Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter :=
+#[global] Program Instance Interaction_between_VACCS_and_MB: Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) (ExtAct TypeOfActions) fw_inter :=
     {| lts_essential_actions_left p := empty ;
        lts_essential_actions_right m := dom (MO_without_not_nb m) ; 
        lts_co_inter_action_right m := fun x => empty |}.
@@ -3167,7 +3167,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance Interaction_between_FW_VACCS_and_VACCS :
-  Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=
+  Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) (ExtAct TypeOfActions) dual :=
     {| lts_essential_actions_left p := set_map ActOut (outputs_of p.1) ∪ (dom (MO_without_not_nb p.2)); 
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
@@ -3593,7 +3593,7 @@ Proof.
 Qed.
 
 #[global] Program Instance AbsVACCS :
-  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq.
+  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -3623,7 +3623,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance FinitaryAbsVACCS :
-  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _ _ :=
+  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _ _ _ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.

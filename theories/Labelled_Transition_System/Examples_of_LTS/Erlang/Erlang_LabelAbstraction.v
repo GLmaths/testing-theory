@@ -52,12 +52,12 @@ Context `{EP : Erlang_Program}.
 (** ** The abstraction of VACCS is one for Erlang *)
 
 #[global] Program Instance Erl_AbsAction :
-  @AbsAction sys proc FinA PreAct erl_act VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq.
+  @AbsAction sys proc FinA PreAct erl_act VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
 Next Obligation.
   (* the test side is the one of VACCS, which does not mention the processes *)
   intros t β β' hb hb' heq hmem.
   eapply (@abstraction_test_spec proc proc FinA PreAct erl_act VACCS_ExtAction
-            Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq AbsVACCS t β β'); eassumption.
+            Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
 Qed.
 Next Obligation.
   (* [𝝳ᴠᴀᴄᴄꜱ] is the identity, so the hypothesis /is/ the conclusion *)
@@ -81,7 +81,7 @@ Proof.
 Qed.
 
 #[global] Program Instance Erl_FinitaryAbsAction :
-  @FinitaryAbsAction sys proc FinA PreAct erl_act VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ VACCS_gLtsEq _ _ :=
+  @FinitaryAbsAction sys proc FinA PreAct erl_act VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ _ _ :=
   {| coR_abs := coR_abs_erl |}.
 Next Obligation.
   intros S pre_μ hmem.

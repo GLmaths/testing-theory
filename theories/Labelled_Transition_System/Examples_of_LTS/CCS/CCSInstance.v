@@ -1541,8 +1541,8 @@ gLts Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
   ForwarderConstruction MultisetLTSConstruction FiniteImageLTS.
 
 #[global] Program Instance Interaction_between_parallel_CCS :
-  @Prop_of_Inter proc proc (ExtAct Channel) dual gLabel_b
-  CCS_ggLts CCS_ggLts :=  Inter_parallel_IO gLabel_b.
+  @Prop_of_Inter proc proc (ExtAct Channel) (ExtAct Channel) dual gLabel_b
+  CCS_ggLts gLabel_b CCS_ggLts :=  Inter_parallel_IO gLabel_b.
 Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
@@ -1551,9 +1551,9 @@ Defined.
 
 #[global] Program Instance Interaction_between_MB_and_CCS :
   @Prop_of_Inter proc (@mb (ExtAct Channel) (@gLabel_b Channel CCS_Label))
-    (ExtAct Channel) (@fw_inter (ExtAct Channel) (@gLabel_b Channel CCS_Label))
+    (ExtAct Channel) (ExtAct Channel) (@fw_inter (ExtAct Channel) (@gLabel_b Channel CCS_Label))
     (@gLabel_b Channel CCS_Label)
-    (@ggLts Channel (@gLabel_b Channel CCS_Label) proc _ _)
+    (@ggLts Channel (@gLabel_b Channel CCS_Label) proc _ _) (@gLabel_b Channel CCS_Label)
     (@MbgLts (ExtAct Channel) (@gLabel_b Channel CCS_Label))
   :=  Inter_FW_IO gLabel_b.
 Next Obligation.
@@ -1561,7 +1561,7 @@ Next Obligation.
 Defined.
 
 #[global] Program Instance Interaction_between_FW_CCS_and_CCS :
-  Prop_of_Inter (proc * mb (ExtAct Channel)) proc (ExtAct Channel) dual :=  Inter_FW_parallel_IO gLabel_b.
+  Prop_of_Inter (proc * mb (ExtAct Channel)) proc (ExtAct Channel) (ExtAct Channel) dual :=  Inter_FW_parallel_IO gLabel_b.
 Next Obligation.
   intros μ1 nb. inversion nb.
 Defined.

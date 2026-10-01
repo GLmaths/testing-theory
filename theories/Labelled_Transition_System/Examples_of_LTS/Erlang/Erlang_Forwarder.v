@@ -83,7 +83,7 @@ Context `{EP : Erlang_Program}.
 (** ** Interaction between a forwarder and a test *)
 
 #[global] Program Instance Erl_Inter_FW :
-  Prop_of_Inter (sys * MO erl_act) sys erl_act dual :=
+  Prop_of_Inter (sys * MO erl_act) sys erl_act erl_act dual :=
   {| lts_essential_actions_left p := dom (erl_mo p.1) ∪ dom (MO_without_not_nb p.2) ;
      lts_essential_actions_right S := dom (erl_mo S) |}.
 Next Obligation.

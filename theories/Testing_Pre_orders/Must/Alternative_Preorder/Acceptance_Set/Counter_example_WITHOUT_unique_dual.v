@@ -206,7 +206,7 @@ Proof. apply step_swap. Qed.
 Section Tests.
 
 Context `{gLtsT : !gLtsEq T EA_NU} `{!Testing_Predicate outcome _}.
-Context `{!Prop_of_Inter st T ABC dual}.
+Context `{!Prop_of_Inter st T ABC ABC dual}.
 
 Lemma must_swap (s : st) (t : T) :
   s must_pass t → swap_st s must_pass t.
@@ -282,7 +282,7 @@ Theorem completeness1_fails_without_unique_dual :
   ¬ UniqueDual ABC
   (* [p0 ⊑ₘᵤₛₜᵢ q0], for tests of any LTS *)
   ∧ (∀ `{gLtsT : !gLtsEq T EA_NU} `{!Testing_Predicate outcome _}
-       `{!Prop_of_Inter st T ABC dual},
+       `{!Prop_of_Inter st T ABC ABC dual},
        p0 ⊑ₘᵤₛₜᵢ q0)
   (* but not [p0 ₁≼ₐₛ q0] *)
   ∧ ¬ (p0 ₁≼ₐₛ q0).
@@ -298,7 +298,7 @@ Qed.
 Definition idA (x : ABC) : ABC := x.
 
 #[global] Program Instance AbsAction_id `{gLtsT : !gLtsEq T EA_NU} :
-  @AbsAction st T ABC ABC ABC EA_NU idA idA st_gLts gLtsT.
+  @AbsAction st T ABC ABC ABC EA_NU idA idA _ _ st_gLts gLtsT _.
 Next Obligation. intros T gLtsT t β β' b b' e mem. unfold idA in e. subst. exact mem. Qed.
 Next Obligation. intros T gLtsT p β β' b b' e mem. unfold idA in *. subst. exact mem. Qed.
 
@@ -412,7 +412,7 @@ Theorem completeness2_fails_without_unique_dual :
   ¬ UniqueDual ABC
   (* [p1 ⊑ₘᵤₛₜᵢ q1], for tests of any LTS *)
   ∧ (∀ `{gLtsT : !gLtsEq T EA_NU} `{!Testing_Predicate outcome _}
-       `{!Prop_of_Inter st T ABC dual},
+       `{!Prop_of_Inter st T ABC ABC dual},
        p1 ⊑ₘᵤₛₜᵢ q1)
   (* both converge on every trace [p1] converges on *)
   ∧ (p1 ₁≼ₐₛ q1)

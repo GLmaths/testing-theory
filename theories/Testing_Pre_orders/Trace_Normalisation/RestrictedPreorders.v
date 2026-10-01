@@ -72,8 +72,8 @@ Definition bhv_pre_cond1_nfb `{gLts P A, gLts Q A} (p : P) (q : Q) :=
 Notation "p ₁≼ₐₛⁿᶠᵇ q" := (bhv_pre_cond1_nfb p q) (at level 70).
 
 Definition bhv_pre_cond2_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
   (p : P) (q : Q) :=
   ∀ (s : trace A) q',
     ¬ has_fb s -> p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
@@ -82,8 +82,8 @@ Definition bhv_pre_cond2_nfb `{
 Notation "p ₂≼ₐₛⁿᶠᵇ q" := (bhv_pre_cond2_nfb p q) (at level 70).
 
 Definition bhv_pre_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
   (p : P) (q : Q) :=
   p ₁≼ₐₛⁿᶠᵇ q /\ p ₂≼ₐₛⁿᶠᵇ q.
 
@@ -97,8 +97,8 @@ Definition bhv_pre_co_cond1_nfb `{gLts P A, gLts Q A} (p : P) (q : Q) :=
 Notation "p ₁≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond1_nfb p q) (at level 70).
 
 Definition bhv_pre_co_cond2_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
   (p : P) (q : Q) :=
   ∀ (s : trace A) q',
     ¬ has_fb s -> p ⇓ᶜᵒ s -> q ⟹ᶜᵒ[s] q' -> q' ↛ ->
@@ -107,8 +107,8 @@ Definition bhv_pre_co_cond2_nfb `{
 Notation "p ₂≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond2_nfb p q) (at level 70).
 
 Definition bhv_pre_co_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}
+  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
   (p : P) (q : Q) :=
   p ₁≼꜀ₒ₋ₐₛⁿᶠᵇ q /\ p ₂≼꜀ₒ₋ₐₛⁿᶠᵇ q.
 
@@ -133,15 +133,15 @@ Lemma bhv_pre_cond1_nfb_of_cond1 `{gLts P A, gLts Q A} (p : P) (q : Q) :
   p ₁≼ₐₛ q -> p ₁≼ₐₛⁿᶠᵇ q.
 Proof. intros h s _ hs. eapply h, hs. Qed.
 
-Lemma bhv_pre_co_cond1_nfb_of_co_cond1 `{gLts P A, gLts Q A} (p : P) (q : Q) :
-  p ₁≼꜀ₒ₋ₐₛ q -> p ₁≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+Lemma bhv_pre_co_cond1_nfb_of_co_cond1 `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :
+  bhv_pre_co_cond1 (A := A) p q -> p ₁≼꜀ₒ₋ₐₛⁿᶠᵇ q.
 Proof. intros h s _ hs. eapply h, hs. Qed.
 
 Section WeakerMust.
 
   Context `{
-    gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsT,
-    gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsT}.
+    gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
+    gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}.
 
   Lemma bhv_pre_cond2_nfb_of_cond2 (p : P) (q : Q) : p ₂≼ₐₛ q -> p ₂≼ₐₛⁿᶠᵇ q.
   Proof. intros h s q' _ hc w hst. eapply h; eassumption. Qed.

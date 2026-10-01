@@ -661,7 +661,7 @@ Section PAL_Alt.
       intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply co_next_a_spec.
   Defined.
 
-  (** ** [Prop_of_Inter term term PALA_Act PALA_dual] *)
+  (** ** [Prop_of_Inter term term PALA_Act PALA_Act PALA_dual] *)
 
   Definition PALA_essential_actions (p : term) : gset PALA_Act :=
     list_to_set (map AOut (collect_out_a p)).
@@ -694,7 +694,7 @@ Section PAL_Alt.
     PALA_dual μ ξ → μ ∈ (list_to_set (co_labels ξ) : gset PALA_Act).
   Proof. intros hx. apply elem_of_list_to_set, list_elem_of_In. by apply co_labels_spec. Qed.
 
-  #[global] Instance PALA_Prop_of_Inter : Prop_of_Inter term term PALA_Act PALA_dual := {|
+  #[global] Instance PALA_Prop_of_Inter : Prop_of_Inter term term PALA_Act PALA_Act PALA_dual := {|
     inter_dec := PALA_dual_dec;
     lts_essential_actions_left := PALA_essential_actions;
     lts_essential_action_spec_left := PALA_essential_action_spec;

@@ -72,7 +72,7 @@ Context {unique_nb : UniqueDual A}.
 Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
 (* non-generalising binder: the [gLts] instances must be [gLtsP] and [gLtsT],
    not freshly generalised ones *)
-Context {PInter : Prop_of_Inter P T A dual}.
+Context {PInter : Prop_of_Inter P T A A dual}.
 
 (** [may_wt_nil_server]/[may_wt_tau_server]/[may_wt_nil_client]/
     [may_wt_tau_client] — "[may] is preserved backwards along

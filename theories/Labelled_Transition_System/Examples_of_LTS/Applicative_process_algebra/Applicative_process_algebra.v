@@ -602,7 +602,7 @@ Section PAL.
       apply list_elem_of_In. apply all_steps_complete. apply PAL_co_next_iff. exact Hq.
   Defined.
 
-  (** ** [Prop_of_Inter term term PAL_Act ext_act_match]
+  (** ** [Prop_of_Inter term term PAL_Act PAL_Act ext_act_match]
 
       PAL interacting with itself.  The "essential actions" of a process
       are exactly its [ActOut ot] steps — i.e. [collect_out p] wrapped
@@ -688,7 +688,7 @@ Section PAL.
     ext_act_match xi mu -> mu ∈ ({[comp_act xi]} : gset PAL_Act).
   Proof. intro Hx. apply ext_act_match_sym in Hx. apply (PAL_co_inter_action_spec mu xi Hx). Qed.
 
-  #[global] Instance PAL_Prop_of_Inter : Prop_of_Inter term term PAL_Act ext_act_match := {|
+  #[global] Instance PAL_Prop_of_Inter : Prop_of_Inter term term PAL_Act PAL_Act ext_act_match := {|
     inter_dec := ext_act_match_dec;
     lts_essential_actions_left := PAL_essential_actions;
     lts_essential_action_spec_left := PAL_essential_action_spec;

@@ -28,7 +28,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation
+From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation
   Lts_OBA Lts_FW WeakTransitions.
 
 (** ** Co-weak transitions
@@ -43,10 +43,14 @@ From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimu
 
 (** *** Definition of co-weak transitions *)
 
-Inductive cowt `{gLts P A} : P -> trace A -> P -> Prop :=
+(* Two alphabets: the process over [Aproc], the trace over [Atest], linked by
+   [sync].  On one alphabet, [sync] is [dual] ([SyncAction_of_dual], found
+   automatically). *)
+Inductive cowt `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+  : P -> trace Atest -> P -> Prop :=
 | cowt_nil p : cowt p [] p
 | cowt_tau s p q t (l : p ⟶ q) (w : cowt q s t) : cowt p s t
-| cowt_act μ μ' s p q t (duo : dual μ' μ) (l : p ⟶[μ'] q) (w : cowt q s t) : cowt p (μ :: s) t
+| cowt_act μ μ' s p q t (duo : sync μ' μ) (l : p ⟶[μ'] q) (w : cowt q s t) : cowt p (μ :: s) t
 .
 
 Global Hint Constructors cowt:mdb.
@@ -55,7 +59,9 @@ Notation "p ⟹ᶜᵒ q" := (cowt p [] q) (at level 30).
 Notation "p ⟹ᶜᵒ{ μ } q" := (cowt p [μ] q) (at level 30, format "p  ⟹ᶜᵒ{ μ }  q").
 Notation "p ⟹ᶜᵒ[ s ] q" := (cowt p s q) (at level 30, format "p  ⟹ᶜᵒ[ s ]  q").
 
-Definition cowt_sc `{gLtsEq P H} p s q := ∃ r, p ⟹ᶜᵒ[s] r /\ r ⋍ q.
+Definition cowt_sc `{Hp : ExtAction Aproc} `{gLtsEqP : !gLtsEq P Hp} `{Ht : ExtAction Atest}
+  `{SA : !SyncAction Aproc Atest} p s q :=
+  ∃ r, p ⟹ᶜᵒ[s] r /\ r ⋍ q.
 
 Notation "p ⟹ᶜᵒ⋍ q" := (cowt_sc p [] q) (at level 30, format "p  ⟹ᶜᵒ⋍  q").
 Notation "p ⟹ᶜᵒ⋍{ μ } q" := (cowt_sc p [μ] q) (at level 30, format "p  ⟹ᶜᵒ⋍{ μ }  q").
@@ -63,9 +69,14 @@ Notation "p ⟹ᶜᵒ⋍[ s ] q" := (cowt_sc p s q) (at level 30, format "p  ⟹
 
 (** *** Properties on co-weak transitions in LTSs *)
 
+Section cowt_structure.
+
+(* Two alphabets throughout: these lemmas only move along the trace. *)
+Context `{gLtsP : @gLts P Aproc Hp} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+
 (* As for [wt_pop_gen], the trace is kept as a variable and constrained by an
    equation so that plain induction applies. *)
-Lemma cowt_pop_gen `{gLts P A} p q s0 :
+Lemma cowt_pop_gen p q s0 :
   p ⟹ᶜᵒ[s0] q -> forall μ s, s0 = μ :: s -> ∃ t, p ⟹ᶜᵒ{μ} t /\ t ⟹ᶜᵒ[s] q.
 Proof.
   intro w.
@@ -77,14 +88,14 @@ Proof.
     exists r. split; eauto with mdb.
 Qed.
 
-Lemma cowt_pop `{gLts P A} p q μ s : p ⟹ᶜᵒ[μ :: s] q -> ∃ t, p ⟹ᶜᵒ{μ} t /\ t ⟹ᶜᵒ[s] q.
+Lemma cowt_pop p q μ s : p ⟹ᶜᵒ[μ :: s] q -> ∃ t, p ⟹ᶜᵒ{μ} t /\ t ⟹ᶜᵒ[s] q.
 Proof. intro w. eapply cowt_pop_gen; eauto. Qed.
 
-Lemma cowt_concat `{gLts P A} p q r s1 s2 :
+Lemma cowt_concat p q r s1 s2 :
   p ⟹ᶜᵒ[s1] q -> q ⟹ᶜᵒ[s2] r -> p ⟹ᶜᵒ[s1 ++ s2] r.
 Proof. intros w1 w2. dependent induction w1; simpl; eauto with mdb. Qed.
 
-Lemma cowt_push_left `{gLts P A} {p q r μ s} :
+Lemma cowt_push_left {p q r μ s} :
   p ⟹ᶜᵒ{μ} q -> q ⟹ᶜᵒ[s] r -> p ⟹ᶜᵒ[μ :: s] r.
 Proof.
   intros w1 w2.
@@ -92,7 +103,7 @@ Proof.
   eapply cowt_concat; eauto.
 Qed.
 
-Lemma cowt_split `{gLts P A} p q s1 s2 :
+Lemma cowt_split p q s1 s2 :
   p ⟹ᶜᵒ[s1 ++ s2] q -> ∃ r, p ⟹ᶜᵒ[s1] r /\ r ⟹ᶜᵒ[s2] q.
 Proof.
   revert p q.
@@ -103,10 +114,10 @@ Proof.
     exists r'. split. eapply cowt_push_left; eauto. assumption.
 Qed.
 
-Lemma cowt_push_nil_left `{gLts P A} {p q r s} : p ⟹ᶜᵒ q -> q ⟹ᶜᵒ[s] r -> p ⟹ᶜᵒ[s] r.
+Lemma cowt_push_nil_left {p q r s} : p ⟹ᶜᵒ q -> q ⟹ᶜᵒ[s] r -> p ⟹ᶜᵒ[s] r.
 Proof.
   intros w1 w2.
-  remember ([] : trace A) as s0 eqn:Hs.
+  remember ([] : trace Atest) as s0 eqn:Hs.
   revert Hs w2.
   induction w1 as [ x | s1 x y z lt w1 IH | μ μ' s1 x y z duo lt w1 IH ]; intros Hs w2.
   - exact w2.
@@ -114,19 +125,19 @@ Proof.
   - discriminate.
 Qed.
 
-Lemma cowt_push_nil_right `{gLts P A} p q r s : p ⟹ᶜᵒ[s] q -> q ⟹ᶜᵒ r -> p ⟹ᶜᵒ[s] r.
+Lemma cowt_push_nil_right p q r s : p ⟹ᶜᵒ[s] q -> q ⟹ᶜᵒ r -> p ⟹ᶜᵒ[s] r.
 Proof.
-  intros w1 w2. replace s with (s ++ ([] : trace A)).
+  intros w1 w2. replace s with (s ++ ([] : trace Atest)).
   eapply cowt_concat; eauto. eapply app_nil_r.
 Qed.
 
-Lemma cowt_push_right `{gLts P A} p q r μ s :
+Lemma cowt_push_right p q r μ s :
   p ⟹ᶜᵒ[s] q -> q ⟹ᶜᵒ{μ} r -> p ⟹ᶜᵒ[s ++ [μ]] r.
 Proof. intros w1 w2. eapply cowt_concat; eauto. Qed.
 
 (* Same treatment as [cowt_pop]: the trace stays a variable, so no UIP axiom. *)
-Lemma cowt_decomp_one_gen `{gLts P A} p q s0 :
-  p ⟹ᶜᵒ[s0] q -> forall μ, s0 = [μ] -> ∃ r1 r2 μ', p ⟹ᶜᵒ r1 ∧ dual μ' μ ∧ r1 ⟶[μ'] r2 ∧ r2 ⟹ᶜᵒ q.
+Lemma cowt_decomp_one_gen p q s0 :
+  p ⟹ᶜᵒ[s0] q -> forall μ, s0 = [μ] -> ∃ r1 r2 μ', p ⟹ᶜᵒ r1 ∧ sync μ' μ ∧ r1 ⟶[μ'] r2 ∧ r2 ⟹ᶜᵒ q.
 Proof.
   intro w.
   induction w as [ p | s0 p r q l w IH | ν ν' s0 p r q duo l w IH ]; intros μ Heq.
@@ -137,22 +148,59 @@ Proof.
     exists p, r, ν'. repeat split; eauto with mdb.
 Qed.
 
-Lemma cowt_decomp_one `{gLts P A} {μ p q} :
-  p ⟹ᶜᵒ{μ} q -> ∃ r1 r2 μ', p ⟹ᶜᵒ r1 ∧ dual μ' μ ∧ r1 ⟶[μ'] r2 ∧ r2 ⟹ᶜᵒ q.
+Lemma cowt_decomp_one {μ p q} :
+  p ⟹ᶜᵒ{μ} q -> ∃ r1 r2 μ', p ⟹ᶜᵒ r1 ∧ sync μ' μ ∧ r1 ⟶[μ'] r2 ∧ r2 ⟹ᶜᵒ q.
 Proof. intro w. eapply cowt_decomp_one_gen; eauto. Qed.
 
-Lemma cowt_join_nil `{gLts P A} {p q r} : p ⟹ᶜᵒ q -> q ⟹ᶜᵒ r -> p ⟹ᶜᵒ r.
+Lemma cowt_join_nil {p q r} : p ⟹ᶜᵒ q -> q ⟹ᶜᵒ r -> p ⟹ᶜᵒ r.
 Proof. intros w1 w2. eapply cowt_push_nil_left; [exact w1 | exact w2]. Qed.
 
-Lemma lts_to_cowt `{gLts P A} {p q μ μ'} : dual μ' μ -> p ⟶[μ'] q -> p ⟹ᶜᵒ{μ} q.
+Lemma lts_to_cowt {p q μ μ'} : sync μ' μ -> p ⟶[μ'] q -> p ⟹ᶜᵒ{μ} q.
 Proof. eauto with mdb. Qed.
 
-Lemma lts_to_cowt_tau `{gLts P A} {p q} : p ⟶ q -> p ⟹ᶜᵒ q.
+Lemma lts_to_cowt_tau {p q} : p ⟶ q -> p ⟹ᶜᵒ q.
 Proof. intros tr'. eapply cowt_tau;eauto. constructor. Qed.
+
+(** Reading a co-trace back as a trace of the process, and back. *)
+
+Lemma cowt_to_wt p s q :
+  p ⟹ᶜᵒ[s] q → ∃ s', Forall2 sync s' s ∧ p ⟹[s'] q.
+Proof.
+  induction 1 as [ p | s p q t l w IH | μ μ' s p q t hs l w IH ].
+  - exists []. split; constructor.
+  - destruct IH as (s' & hf & w'). exists s'. split; [exact hf | eauto with mdb].
+  - destruct IH as (s' & hf & w'). exists (μ' :: s'). split.
+    + by constructor.
+    + eauto with mdb.
+Qed.
+
+Lemma wt_to_cowt p s' q :
+  p ⟹[s'] q → ∀ s, Forall2 sync s' s → p ⟹ᶜᵒ[s] q.
+Proof.
+  induction 1 as [ p | s' p q t l w IH | μ s' p q t l w IH ]; intros s hf.
+  - inversion hf; subst. constructor.
+  - eapply cowt_tau; eauto.
+  - inversion hf as [| x y la lb hxy hrest]; subst.
+    eapply cowt_act; [exact hxy | exact l | by apply IH].
+Qed.
+
+Lemma cowt_iff_wt_nil p q : p ⟹ᶜᵒ q <-> p ⟹ q.
+Proof.
+  split.
+  - intros w. apply cowt_to_wt in w as (s' & hf & w').
+    by inversion hf; subst.
+  - intros w. eapply wt_to_cowt; [exact w | constructor].
+Qed.
+
+End cowt_structure.
 
 (** *** Properties on co-weak transitions in LTSs with a Bisimulation *)
 
-Lemma eq_spec_cowt `{gLtsEq P A} p p' : p ⋍ p' -> forall q s, p ⟹ᶜᵒ[s] q -> p' ⟹ᶜᵒ⋍[s] q.
+Section cowt_structure_eq.
+
+Context `{gLtsEqP : @gLtsEq P Aproc Hp} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+
+Lemma eq_spec_cowt p p' : p ⋍ p' -> forall q s, p ⟹ᶜᵒ[s] q -> p' ⟹ᶜᵒ⋍[s] q.
 Proof.
   intros heq q s w.
   revert p' heq.
@@ -168,32 +216,32 @@ Proof.
     exists u. eauto with mdb.
 Qed.
 
-Lemma lts_sc_to_cowt_sc `{gLtsEq P A} {p q μ μ'} : dual μ' μ -> p ⟶⋍[μ'] q -> p ⟹ᶜᵒ⋍{ μ } q.
+Lemma lts_sc_to_cowt_sc {p q μ μ'} : sync μ' μ -> p ⟶⋍[μ'] q -> p ⟹ᶜᵒ⋍{ μ } q.
 Proof. intros duo (p' & tr' & eq). exists p'. split. eapply lts_to_cowt; eauto. eauto with mdb. Qed.
 
-Lemma lts_sc_to_cowt_tau_sc `{gLtsEq P A} {p q} : p ⟶⋍ q -> p ⟹ᶜᵒ⋍ q.
+Lemma lts_sc_to_cowt_tau_sc {p q} : p ⟶⋍ q -> p ⟹ᶜᵒ⋍ q.
 Proof. intros (p' & tr' & eq). exists p'. split. eapply cowt_tau;eauto. eapply cowt_nil. eauto with mdb. Qed.
 
-Lemma cowt_join_nil_eq `{gLtsEq P A} {p q r} : p ⟹ᶜᵒ⋍ q -> q ⟹ᶜᵒ⋍ r -> p ⟹ᶜᵒ⋍ r.
+Lemma cowt_join_nil_eq {p q r} : p ⟹ᶜᵒ⋍ q -> q ⟹ᶜᵒ⋍ r -> p ⟹ᶜᵒ⋍ r.
 Proof.
   intros (q' & hwq' & heqq') (r' & hwr' & heqr').
   destruct (eq_spec_cowt _ _ (symmetry heqq') r' [] hwr') as (r1 & hwr1 & heqr1).
   exists r1. split. eapply (cowt_push_nil_left hwq' hwr1). etrans; eassumption.
 Qed.
 
-Lemma cowt_join_nil_eq_l `{gLtsEq P A} {p q r s} : p ⟹ᶜᵒ⋍ q -> q ⟹ᶜᵒ[s] r -> p ⟹ᶜᵒ⋍[s] r.
+Lemma cowt_join_nil_eq_l {p q r s} : p ⟹ᶜᵒ⋍ q -> q ⟹ᶜᵒ[s] r -> p ⟹ᶜᵒ⋍[s] r.
 Proof.
   intros (q' & hwq' & heqq') w2.
   destruct (eq_spec_cowt _ _ (symmetry heqq') r s w2) as (r1 & hwr1 & heqr1).
   exists r1. split. eapply (cowt_push_nil_left hwq' hwr1). eassumption.
 Qed.
 
-Lemma cowt_join_nil_eq_r `{gLtsEq P A} {p q r s} : p ⟹ᶜᵒ[s] q -> q ⟹ᶜᵒ⋍ r -> p ⟹ᶜᵒ⋍[s] r.
+Lemma cowt_join_nil_eq_r {p q r s} : p ⟹ᶜᵒ[s] q -> q ⟹ᶜᵒ⋍ r -> p ⟹ᶜᵒ⋍[s] r.
   intros w1 (r' & hwr' & heqr').
   exists r'. split. eapply cowt_push_nil_right; eauto. eassumption.
 Qed.
 
-Lemma cowt_join_eq `{gLtsEq P A} {p q r s1 s2} : p ⟹ᶜᵒ⋍[s1] q -> q ⟹ᶜᵒ⋍[s2] r -> p ⟹ᶜᵒ⋍[s1 ++ s2] r.
+Lemma cowt_join_eq {p q r s1 s2} : p ⟹ᶜᵒ⋍[s1] q -> q ⟹ᶜᵒ⋍[s2] r -> p ⟹ᶜᵒ⋍[s1 ++ s2] r.
   revert p q r s2.
 Proof.
   induction s1; intros p q r s2 (q' & hwq' & heqq') w2; simpl in *.
@@ -206,20 +254,22 @@ Proof.
     exists t'. split. eapply (cowt_push_left w0 hwt'). eassumption.
 Qed.
 
-Lemma cowt_join_eq_l `{gLtsEq P A} {p q r s1 s2} : p ⟹ᶜᵒ⋍[s1] q -> q ⟹ᶜᵒ[s2] r -> p ⟹ᶜᵒ⋍[s1 ++ s2] r.
+Lemma cowt_join_eq_l {p q r s1 s2} : p ⟹ᶜᵒ⋍[s1] q -> q ⟹ᶜᵒ[s2] r -> p ⟹ᶜᵒ⋍[s1 ++ s2] r.
 Proof.
   intros (q' & hwq' & heqq') w2.
   destruct (eq_spec_cowt _ _ (symmetry heqq') r s2 w2) as (r1 & hwr1 & heqr1).
   exists r1. split. eapply cowt_concat; eassumption. eassumption.
 Qed.
 
-Lemma cowt_join_eq_r `{gLtsEq P A} {p q r s1 s2} :
+Lemma cowt_join_eq_r {p q r s1 s2} :
   p ⟹ᶜᵒ[s1] q -> q ⟹ᶜᵒ⋍[s2] r
     -> p ⟹ᶜᵒ⋍[s1 ++ s2] r.
 Proof.
   intros w1 (r' & hwr' & heqr').
   exists r'. split. eapply cowt_concat; eassumption. eassumption.
 Qed.
+
+End cowt_structure_eq.
 
 (** *** From [cowt] to [wt] and back, along an explicit dual trace
 

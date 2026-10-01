@@ -1303,8 +1303,8 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
 
 
 #[global] Program Instance Interaction_between_parallel_ACCS :
-  @Prop_of_Inter proc proc (ExtAct name) dual gLabel_nb
-  ACCS_ggLts ACCS_ggLts :=  Inter_parallel_IO gLabel_nb.
+  @Prop_of_Inter proc proc (ExtAct name) (ExtAct name) dual gLabel_nb
+  ACCS_ggLts gLabel_nb ACCS_ggLts :=  Inter_parallel_IO gLabel_nb.
 Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
@@ -1312,9 +1312,9 @@ Defined.
 
 #[global] Program Instance Interaction_between_MB_and_ACCS :
   @Prop_of_Inter proc (@mb (ExtAct name) (@gLabel_nb name CCS_Name_label))
-    (ExtAct name) (@fw_inter (ExtAct name) (@gLabel_nb name CCS_Name_label))
+    (ExtAct name) (ExtAct name) (@fw_inter (ExtAct name) (@gLabel_nb name CCS_Name_label))
     (@gLabel_nb name CCS_Name_label)
-    (@ggLts name (@gLabel_nb name CCS_Name_label) proc _ _)
+    (@ggLts name (@gLabel_nb name CCS_Name_label) proc _ _) (@gLabel_nb name CCS_Name_label)
     (@MbgLts (ExtAct name) (@gLabel_nb name CCS_Name_label))
   :=  Inter_FW_IO gLabel_nb.
 Next Obligation.
@@ -1322,7 +1322,7 @@ Next Obligation.
 Defined.
 
 #[global] Program Instance Interaction_between_FW_ACCS_and_ACCS :
-  Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) dual :=  Inter_FW_parallel_IO gLabel_nb.
+  Prop_of_Inter (proc * mb (ExtAct name)) proc (ExtAct name) (ExtAct name) dual :=  Inter_FW_parallel_IO gLabel_nb.
 
 From TestingTheory Require Import Subset_Act.
 
