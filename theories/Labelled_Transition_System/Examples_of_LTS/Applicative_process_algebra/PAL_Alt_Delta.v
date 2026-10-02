@@ -175,7 +175,7 @@ Section PAL_Alt_Delta.
   Lemma R_prog_a_spec μ μ' : R_prog_a μ μ' → (co𝐏 μ : subset_of term) ⊆ co𝐏 μ'.
   Proof. apply 𝝳_kernel. Qed.
 
-  #[global] Instance gLtsLAprog_PALA : @gLtsLAprog term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) :=
+  #[global] Instance gLtsLAprog_PALA : @gLtsLAprog term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) PALA_Act (PALA_ExtAction Val) _ :=
     {| LA_prog := R_prog_a;
        LA_prog_eq := R_prog_a_equivalence;
        LA_prog_dec := R_prog_a_dec;

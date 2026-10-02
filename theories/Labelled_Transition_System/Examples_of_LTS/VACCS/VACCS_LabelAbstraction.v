@@ -119,7 +119,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance gLtsLAprog_VACCS :
-  @gLtsLAprog proc _ VACCS_ExtAction (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) :=
+  @gLtsLAprog proc _ VACCS_ExtAction (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) _ VACCS_ExtAction _ :=
   {| LA_prog := R_prog_vaccs |}.
 Next Obligation. exact (proj_equivalence _ _ R_prog_vaccs_proj). Qed.
 Next Obligation. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; apply _. Defined.

@@ -51,7 +51,7 @@ Section PAL_LA.
        LA_test_dec := λ μ μ', decide (μ = μ');
        LA_test_spec := λ μ μ' h, match h with eq_refl => λ _ h', h' end |}.
 
-  #[global] Instance gLtsLAprog_PAL : @gLtsLAprog term PAL_Act (PAL_ExtAction Val) (PAL_gLts Val) :=
+  #[global] Instance gLtsLAprog_PAL : @gLtsLAprog term PAL_Act (PAL_ExtAction Val) (PAL_gLts Val) PAL_Act (PAL_ExtAction Val) _ :=
     {| LA_prog := eq;
        LA_prog_eq := eq_equivalence;
        LA_prog_dec := λ μ μ', decide (μ = μ');
@@ -134,10 +134,10 @@ Section PAL_LA.
     (∀ μ μ', R μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ') → ∀ μ μ', R μ μ' → μ = μ'.
   Proof. intros sound μ μ' h. by apply PAL_𝐏_incl, sound. Qed.
 
-  Lemma PAL_co𝐏_incl (μ μ' : PAL_Act) : (co𝐏 μ : subset_of term) ⊆ co𝐏 μ' → μ = μ'.
+  Lemma PAL_co𝐏_incl (μ μ' : PAL_Act) : (co𝐏 (Aproc := PAL_Act) μ : subset_of term) ⊆ co𝐏 (Aproc := PAL_Act) μ' → μ = μ'.
   Proof.
     intros incl.
-    assert (∀ (ν : PAL_Act) (p : term), p ∈ co𝐏 ν ↔ p ∈ 𝐏 (comp_act Val ν)) as co_iff.
+    assert (∀ (ν : PAL_Act) (p : term), p ∈ co𝐏 (Aproc := PAL_Act) ν ↔ p ∈ 𝐏 (comp_act Val ν)) as co_iff.
     { intros [a|a] p; split.
       - intros (μ'' & duo & acc). symmetry in duo.
         first [apply simplify_match_input in duo | apply simplify_match_output in duo].
@@ -153,6 +153,6 @@ Section PAL_LA.
   Qed.
 
   Lemma PAL_LA_prog_maximal (R : relation PAL_Act) :
-    (∀ μ μ', R μ μ' → (co𝐏 μ : subset_of term) ⊆ co𝐏 μ') → ∀ μ μ', R μ μ' → μ = μ'.
+    (∀ μ μ', R μ μ' → (co𝐏 (Aproc := PAL_Act) μ : subset_of term) ⊆ co𝐏 (Aproc := PAL_Act) μ') → ∀ μ μ', R μ μ' → μ = μ'.
   Proof. intros sound μ μ' h. by apply PAL_co𝐏_incl, sound. Qed.
 End PAL_LA.

@@ -45,8 +45,11 @@ Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
   fun p => ¬ p ↛[μ].
 
 (** ** All processes accepting a co-action of an action *)
-Definition co𝐏 `{gLts P A} (μ : A) : subset_of P :=
-  fun p => exists μ', dual μ' μ /\ ¬ p ↛[μ'].
+(* As [coR]: the processes over [Aproc], the action [μ] over [Atest], linked
+   by [sync]; on one alphabet [sync] is [dual]. *)
+Definition co𝐏 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+  (μ : Atest) : subset_of P :=
+  fun p => exists μ', sync μ' μ /\ ¬ p ↛[μ'].
 
 (******************* Instantiations to use the usual notation of sets ***********************)
 

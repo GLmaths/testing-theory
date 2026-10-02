@@ -85,7 +85,7 @@ Section LA_prog_FW.
   Qed.
 
   (** Like [PreActActionForFW]: a process-side label abstraction of [P] yields one of [toFW(P)]. *)
-  Definition gLtsLAprog_FW : @gLtsLAprog (P * MO A) A H (toFW gLtsP) :=
+  Definition gLtsLAprog_FW : @gLtsLAprog (P * MO A) A H (toFW gLtsP) A H _ :=
     {| LA_prog := LA_prog_FW (LA_prog P);
        LA_prog_eq := LA_prog_FW_equivalence;
        LA_prog_dec := LA_prog_FW_dec;
@@ -107,5 +107,5 @@ End LA_prog_FW.
 
 (** Used as an instance only on state types of the form [_ * MO _]: a plain
     [Instance] would also match an unknown state type and loop. *)
-#[global] Hint Extern 10 (@gLtsLAprog (_ * MO _) _ _ _) =>
+#[global] Hint Extern 10 (@gLtsLAprog (_ * MO _) _ _ _ _ _ _) =>
   simple apply @gLtsLAprog_FW : typeclass_instances.

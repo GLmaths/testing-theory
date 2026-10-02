@@ -24,7 +24,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses Classes.Morphisms.
 From Stdlib.Logic Require Import ConstructiveEpsilon.
 From stdpp Require Import base tactics finite gmap decidable relations countable.
-From TestingTheory Require Import ActTau gLts Bisimulation Subset_Act.
+From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act.
 
 (* * Label abstractions as equivalences on actions *)
 
@@ -50,7 +50,10 @@ Proof. exact LA_test_eq. Defined.
 Proof. exact LA_test_dec. Defined.
 
 (** ** LTSs equipped with a process-side label abstraction *)
-Class gLtsLAprog (P : Type) {A : Type} (H : ExtAction A) {gLtsP : gLts P H} :=
+(* The relation is on the actions of the tests, [A]; the processes act over
+   [Aproc], linked to [A] by [sync] (on one alphabet, [sync] is [dual]). *)
+Class gLtsLAprog (P : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp}
+  {A : Type} (H : ExtAction A) {SA : SyncAction Aproc A} :=
   MkgLtsLAprog {
     LA_prog : A → A → Prop;
     LA_prog_eq : Equivalence LA_prog;
@@ -59,15 +62,15 @@ Class gLtsLAprog (P : Type) {A : Type} (H : ExtAction A) {gLtsP : gLts P H} :=
     LA_prog_spec μ μ' : LA_prog μ μ' → (co𝐏 μ : subset_of P) ⊆ co𝐏 μ';
   }.
 
-Arguments gLtsLAprog P {_} H {_}.
-Arguments LA_prog P {_ _ _ _} μ μ'.
+Arguments gLtsLAprog P {_ _ _ _} H {_}.
+Arguments LA_prog P {_ _ _ _ _ _ _} μ μ'.
 
 Notation "μ ≈ᴘʀᴏ μ'" := (LA_prog _ μ μ') (at level 70).
 
-#[global] Instance LA_prog_equivalence `{gLtsLAprog P A} : Equivalence (LA_prog P).
+#[global] Instance LA_prog_equivalence `{gLtsLAprog P (A := A)} : Equivalence (LA_prog P).
 Proof. exact LA_prog_eq. Defined.
 
-#[global] Instance LA_prog_decision `{gLtsLAprog P A} : RelDecision (LA_prog P).
+#[global] Instance LA_prog_decision `{gLtsLAprog P (A := A)} : RelDecision (LA_prog P).
 Proof. exact LA_prog_dec. Defined.
 
 (** ** Properties of test-side label abstractions *)
@@ -108,7 +111,8 @@ End LA_test_properties.
 
 (** ** Properties of process-side label abstractions *)
 Section LA_prog_properties.
-  Context {P A : Type} {H : ExtAction A} {gLtsP : gLts P H} {LAp : gLtsLAprog P H}.
+  Context {P Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}.
+  Context {gLtsP : gLts P Hp} {LAp : gLtsLAprog P H}.
 
   Lemma coP_preserved_by_LA_prog (p : P) μ μ' :
     μ ≈ᴘʀᴏ μ' → p ∈ co𝐏 μ → p ∈ co𝐏 μ'.
@@ -139,7 +143,9 @@ Section LA_eq_rel.
   Lemma 𝐏_preserved_by_eq (s s' : S) μ : s ∈ 𝐏 μ → s ⋍ s' → s' ∈ 𝐏 μ.
   Proof. apply accepts_preserved_by_eq. Qed.
 
-  Lemma co𝐏_preserved_by_eq (s s' : S) μ : s ∈ co𝐏 μ → s ⋍ s' → s' ∈ co𝐏 μ.
+  Context {Atest : Type} {Ht : ExtAction Atest} {SA : SyncAction A Atest}.
+
+  Lemma co𝐏_preserved_by_eq (s s' : S) (μ : Atest) : s ∈ co𝐏 μ → s ⋍ s' → s' ∈ co𝐏 μ.
   Proof.
     intros (μ'' & duo & accepts) eq. exists μ''. split; [done |].
     by eapply accepts_preserved_by_eq.
@@ -350,7 +356,8 @@ End Canonical.
 
 (** ** The canonical surjections of the label abstractions *)
 Section Canonical_LA.
-  Context {P T A : Type} {H : ExtAction A} {gLtsP : gLts P H} {gLtsT : gLts T H}
+  Context {P T Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}
+    {gLtsP : gLts P Hp} {gLtsT : gLts T H}
     {LAp : gLtsLAprog P H} {LAt : gLtsLAtest T H}.
 
   #[local] Existing Instance LA_equiv_equivalence.
