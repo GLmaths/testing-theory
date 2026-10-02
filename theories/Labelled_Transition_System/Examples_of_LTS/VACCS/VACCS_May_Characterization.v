@@ -53,7 +53,7 @@ Qed.
 Corollary may_iff_co_trace_inclusion_VACCS (p q : proc) :
   p ᴠᴀᴄᴄꜱ⊑ₘₐᵧ q <-> (p, ∅ : MO (ExtAct TypeOfActions)) ≼꜀ₒ₋ₜᵢ (q, ∅ : MO (ExtAct TypeOfActions)).
 Proof.
-  eapply (equivalence_ti_co_fb (gen := gen_may)).
+  eapply (equivalence_ti_co_trace_fb (gen := gen_may)).
 Qed.
 
 End VACCS_May_Corollary.

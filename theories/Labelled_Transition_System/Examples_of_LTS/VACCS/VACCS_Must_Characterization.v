@@ -73,7 +73,7 @@ Qed.
 Corollary must_iff_co_acceptance_set_VACCS (p q : proc) :
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> (p ▷ ∅) ≼꜀ₒ₋ₐₛ (q ▷ ∅).
 Proof.
-  now rewrite equivalence_acc_set_and_must_i_co.
+  now rewrite equivalence_acc_set_and_must_i_co_trace.
 Qed.
 
 End VACCS_Must_Alt_Corollary.

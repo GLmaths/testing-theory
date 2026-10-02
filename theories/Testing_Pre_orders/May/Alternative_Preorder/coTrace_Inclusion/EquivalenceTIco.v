@@ -40,7 +40,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
 
 (** ** Equivalence, for forwarders *)
 
-Theorem equivalence_ti_co_fw `{
+Theorem equivalence_ti_co_trace_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
@@ -60,7 +60,7 @@ Qed.
 
 (** ** Equivalence, for feedback LTSs, through the forwarder construction *)
 
-Theorem equivalence_ti_co_fb `{
+Theorem equivalence_ti_co_trace_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
     @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
@@ -100,9 +100,9 @@ Corollary may_equiv_iff_same_cotraces `{
 Proof.
   split.
   - intros (hpq & hqp) s. split.
-    + now eapply (equivalence_ti_co_fw p q).
-    + now eapply (equivalence_ti_co_fw q p).
+    + now eapply (equivalence_ti_co_trace_fw p q).
+    + now eapply (equivalence_ti_co_trace_fw q p).
   - intro hsame. split.
-    + eapply equivalence_ti_co_fw. intros s hs. now eapply hsame.
-    + eapply equivalence_ti_co_fw. intros s hs. now eapply hsame.
+    + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
+    + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
 Qed.

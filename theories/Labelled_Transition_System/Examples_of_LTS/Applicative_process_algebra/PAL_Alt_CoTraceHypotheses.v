@@ -29,7 +29,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
 
 (* * What the alternative LTS of PAL provides for [EquivalenceASco]
 
-   [EquivalenceASco.equivalence_fw_acc_set_and_must_i_co] states
+   [EquivalenceASco.equivalence_fw_acc_set_and_must_i_co_trace] states
    [p ⊑ₘᵤₛₜᵢ q ↔ p ≼꜀ₒ₋ₐₛ q]. Every hypothesis of its section is available
    here, and the only missing one is [FinitaryAbsAction].
 

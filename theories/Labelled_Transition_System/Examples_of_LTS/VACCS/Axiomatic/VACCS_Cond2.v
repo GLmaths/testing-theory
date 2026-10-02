@@ -1871,7 +1871,7 @@ Qed.
 (** ** The repository's OWN completeness tests, read at the forwarder
 
     The generic completeness proof for acceptance sets
-    ([Acceptance_Set/Completeness.v]) builds two tests: one for
+    ([coAcceptance_Set/Completeness.v]) builds two tests: one for
     convergence — useless here, since [Static] processes always converge
     ([Static_converge]) — and one for an acceptance set, specified by
     [test_co_acceptance_set_spec] and instantiated for VACCS in

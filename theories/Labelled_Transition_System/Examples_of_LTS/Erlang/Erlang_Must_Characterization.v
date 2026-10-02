@@ -259,7 +259,7 @@ Notation "p ᴇʀʟ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 7
     the inclusion of co-acceptance sets. *)
 Corollary must_iff_co_acceptance_set_Erlang (S T : sys) :
   S ᴇʀʟ⊑ₘᵤₛₜᵢ T ↔ (S ▷ ∅) ≼꜀ₒ₋ₐₛ (T ▷ ∅).
-Proof. now rewrite equivalence_acc_set_and_must_i_co. Qed.
+Proof. now rewrite equivalence_acc_set_and_must_i_co_trace. Qed.
 
 (** The same, on traces rather than co-traces. *)
 Corollary must_iff_acceptance_set_Erlang (S T : sys) :

@@ -70,7 +70,7 @@ Context (ta : gset PreAct → list Atest → T)
 
 (** ** The co-acceptance-set preorder is the must preorder, on forwarders *)
 
-Theorem equivalence_fw_acc_set_and_must_i_co_sync (p : P) (q : Q) :
+Theorem equivalence_fw_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   p ⊆ₘᵤₛₜᵢ q ↔
   p ≼꜀ₒ₋ₐₛ q.
 Proof.

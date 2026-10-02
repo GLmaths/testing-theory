@@ -63,7 +63,7 @@ Section preorder.
   Context `{!gLtsObaFB T A}.
 
   (** ** The inductive characterisation on FW is equivalent to the inductive must preorder *)
-  Theorem equivalence_fw_acc_set_and_must_i_co (p : P) (q : Q) :
+  Theorem equivalence_fw_acc_set_and_must_i_co_trace (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ q.
   Proof.
     split.
@@ -74,10 +74,10 @@ Section preorder.
   (** ---- *)
 
   (** ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
-  Theorem equivalence_fw_bhv_acc_ctx_co (p : P) (q : Q) :
+  Theorem equivalence_fw_bhv_acc_ctx_co_trace (p : P) (q : Q) :
     pre_extensional outcome p q <-> p ≼꜀ₒ₋ₐₛ q.
   Proof.
-    rewrite pre_extensional_eq. eapply equivalence_fw_acc_set_and_must_i_co.
+    rewrite pre_extensional_eq. eapply equivalence_fw_acc_set_and_must_i_co_trace.
   Qed.
 
   End FWⁿ.
@@ -107,7 +107,7 @@ Section preorder.
   Context `{!coFiniteImagegLts (Q * MO A) A}.
 
   (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
-  Theorem equivalence_acc_set_and_must_i_co (p : P) (q : Q) :
+  Theorem equivalence_acc_set_and_must_i_co_trace (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼꜀ₒ₋ₐₛ (q, ∅).
   Proof.
     split.
@@ -119,10 +119,10 @@ Section preorder.
   (** ---- *)
 
   (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
-  Theorem equivalence_bhv_acc_ctx_co (p : P) (q : Q) :
+  Theorem equivalence_bhv_acc_ctx_co_trace (p : P) (q : Q) :
     pre_extensional outcome p q <-> (p, ∅) ≼꜀ₒ₋ₐₛ (q, ∅).
   Proof.
-    rewrite pre_extensional_eq. apply equivalence_acc_set_and_must_i_co.
+    rewrite pre_extensional_eq. apply equivalence_acc_set_and_must_i_co_trace.
   Qed.
 
   End Lⁿ.

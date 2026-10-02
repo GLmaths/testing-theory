@@ -30,7 +30,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
     [VCCS_gLtsOBAFW] ([VCCS_Instance.v]) already makes [proc] a forwarder
     LTS on its own — no [▷ ∅] lift needed, unlike the feedback calculi
     (VACCS/ACCS, see [VACCS_May_Characterization.v]) — so this is a direct
-    instance of [equivalence_ti_fw]/[equivalence_ti_co_fw], self-testing
+    instance of [equivalence_ti_fw]/[equivalence_ti_co_trace_fw], self-testing
     ([Interaction_between_parallel_VCCS] already supplies
     [Prop_of_Inter proc proc dual dual]). Both the plain and co-trace
     characterisations reuse the very same [gen_may]/[VCCS_may_test_spec] —
@@ -52,7 +52,7 @@ Qed.
 Corollary may_iff_co_trace_inclusion_VCCS (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘₐᵧ q <-> p ≼꜀ₒ₋ₜᵢ q.
 Proof.
-  eapply (equivalence_ti_co_fw (gen := gen_may)).
+  eapply (equivalence_ti_co_trace_fw (gen := gen_may)).
 Qed.
 
 End VCCS_May_Corollary.
