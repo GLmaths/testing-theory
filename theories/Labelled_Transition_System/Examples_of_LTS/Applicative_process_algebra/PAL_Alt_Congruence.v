@@ -88,7 +88,6 @@ Section PAL_Alt_Congruence.
     | cgr_in t E E' : cgr_step E E' → cgr_step (in( t ) • E) (in( t ) • E')
     | cgr_read t E E' : cgr_step E E' → cgr_step (read( t ) • E) (read( t ) • E')
     | cgr_out t E E' : E ≠ 𝟘 → E' ≠ 𝟘 → cgr_step E E' → cgr_step (out( t ) • E) (out( t ) • E').
-  Close Scope pal_scope.
 
   (** The structural congruence. *)
   Definition cgr : term → term → Prop := rtc cgr_step.
@@ -108,39 +107,39 @@ Section PAL_Alt_Congruence.
   (** Lifting [cgr] through the static contexts. *)
   Local Ltac lift C := intros h; induction h as [|x y z hxy _ IH]; [reflexivity | eapply rtc_l; [apply C, hxy | exact IH]].
 
-  Lemma cgr_par_l_lift E E' F : cgr E E' → cgr (t_par E F) (t_par E' F).
+  Lemma cgr_par_l_lift E E' F : cgr E E' → cgr (E ‖ F) (E' ‖ F).
   Proof. lift cgr_par_l. Qed.
-  Lemma cgr_par_r_lift E F F' : cgr F F' → cgr (t_par E F) (t_par E F').
+  Lemma cgr_par_r_lift E F F' : cgr F F' → cgr (E ‖ F) (E ‖ F').
   Proof. lift cgr_par_r. Qed.
-  Lemma cgr_choice_l_lift E E' F : cgr E E' → cgr (t_echoice E F) (t_echoice E' F).
+  Lemma cgr_choice_l_lift E E' F : cgr E E' → cgr (E □ F) (E' □ F).
   Proof. lift cgr_choice_l. Qed.
-  Lemma cgr_lmerge_l_lift E E' F : cgr E E' → cgr (t_lmerge E F) (t_lmerge E' F).
+  Lemma cgr_lmerge_l_lift E E' F : cgr E E' → cgr (E ⌊ F) (E' ⌊ F).
   Proof. lift cgr_lmerge_l. Qed.
-  Lemma cgr_cmerge_l_lift E E' F : cgr E E' → cgr (t_cmerge E F) (t_cmerge E' F).
+  Lemma cgr_cmerge_l_lift E E' F : cgr E E' → cgr (E |ₖ F) (E' |ₖ F).
   Proof. lift cgr_cmerge_l. Qed.
-  Lemma cgr_cmerge_r_lift E F F' : cgr F F' → cgr (t_cmerge E F) (t_cmerge E F').
+  Lemma cgr_cmerge_r_lift E F F' : cgr F F' → cgr (E |ₖ F) (E |ₖ F').
   Proof. lift cgr_cmerge_r. Qed.
-  Lemma cgr_choice_r_lift E F F' : cgr F F' → cgr (t_echoice E F) (t_echoice E F').
+  Lemma cgr_choice_r_lift E F F' : cgr F F' → cgr (E □ F) (E □ F').
   Proof. lift cgr_choice_r. Qed.
 
-  Lemma cgr_par_lift E E' F F' : cgr E E' → cgr F F' → cgr (t_par E F) (t_par E' F').
+  Lemma cgr_par_lift E E' F F' : cgr E E' → cgr F F' → cgr (E ‖ F) (E' ‖ F').
   Proof. intros h1 h2. etransitivity; [apply cgr_par_l_lift, h1 | apply cgr_par_r_lift, h2]. Qed.
 
   (** Synchronisations read from the other side. *)
-  Lemma air12_sym E1 E2 mu1 mu2 E1' E2' :
-    step E1 (ActExt mu1) E1' → step E2 (ActExt mu2) E2' → PALA_dual Val mu2 mu1 →
-    step (t_par E1 E2) τ (t_par E1' E2').
+  Lemma air12_sym E1 E2 μ1 μ2 E1' E2' :
+    step E1 (ActExt μ1) E1' → step E2 (ActExt μ2) E2' → PALA_dual Val μ2 μ1 →
+    step (E1 ‖ E2) τ (E1' ‖ E2').
   Proof. intros h1 h2 hd. eapply air12; [exact h1 | exact h2 | by symmetry]. Qed.
 
-  Lemma air13_sym E1 E2 mu1 mu2 E1' E2' :
-    step E1 (ActExt mu1) E1' → step E2 (ActExt mu2) E2' → PALA_dual Val mu2 mu1 →
-    step (t_cmerge E1 E2) τ (t_par E1' E2').
+  Lemma air13_sym E1 E2 μ1 μ2 E1' E2' :
+    step E1 (ActExt μ1) E1' → step E2 (ActExt μ2) E2' → PALA_dual Val μ2 μ1 →
+    step (E1 |ₖ E2) τ (E1' ‖ E2').
   Proof. intros h1 h2 hd. eapply air13; [exact h1 | exact h2 | by symmetry]. Qed.
 
   (** Steps in contexts, for any label. *)
-  Lemma step_par_l E F α E' : step E α E' → step (t_par E F) α (t_par E' F).
+  Lemma step_par_l E F α E' : step E α E' → step (E ‖ F) α (E' ‖ F).
   Proof. destruct α; [apply aar5_l | apply air9_l]. Qed.
-  Lemma step_par_r E F α F' : step F α F' → step (t_par E F) α (t_par E F').
+  Lemma step_par_r E F α F' : step F α F' → step (E ‖ F) α (E ‖ F').
   Proof. destruct α; [apply aar5_r | apply air9_r]. Qed.
 
   Lemma no_step_nil α q : ¬ step t_nil α q.
@@ -231,23 +230,23 @@ Section PAL_Alt_Congruence.
   #[global] Instance PALA_gLtsOba : gLtsOba term (H:=PALA_ExtAction Val) (Rel:=PALA_gLtsEq).
   Proof.
     unshelve econstructor.
-    - intros p q r eta alpha nb Hl1 Hl2. destruct nb.
-    - intros p q1 q2 eta mu nb Hne Hl1 Hl2. destruct nb.
-    - intros p q1 q2 eta nb Hl1 Hl2. destruct nb.
-    - intros p1 p2 p3 eta nb Hl1 Hl2. destruct nb.
-    - intros p1 p2 q1 q2 eta nb Hl1 Hl2 Heq. destruct nb.
+    - intros p q r η α nb Hl1 Hl2. destruct nb.
+    - intros p q1 q2 η μ nb Hne Hl1 Hl2. destruct nb.
+    - intros p q1 q2 η nb Hl1 Hl2. destruct nb.
+    - intros p1 p2 p3 η nb Hl1 Hl2. destruct nb.
+    - intros p1 p2 q1 q2 η nb Hl1 Hl2 Heq. destruct nb.
   Defined.
 
   #[global] Instance PALA_gLtsObaFW : gLtsObaFW term (PALA_Act Val).
   Proof.
     unshelve econstructor.
-    - intros p1 eta beta. exists p1. intro nb. destruct nb.
-    - intros p1 p2 p3 eta beta nb Hdual Hl1 Hl2. destruct nb.
+    - intros p1 η β. exists p1. intro nb. destruct nb.
+    - intros p1 p2 p3 η β nb Hdual Hl1 Hl2. destruct nb.
   Defined.
 
   #[global] Instance PALA_gLtsObaFB : gLtsObaFB term (PALA_Act Val).
   Proof.
     unshelve econstructor.
-    intros p1 p2 p3 eta beta nb Hdual Hl1 Hl2. destruct nb.
+    intros p1 p2 p3 η β nb Hdual Hl1 Hl2. destruct nb.
   Defined.
 End PAL_Alt_Congruence.

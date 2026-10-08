@@ -60,12 +60,12 @@ Notation "p ⟹⋍[ s ] q" := (wt_sc p s q) (at level 30, format "p  ⟹⋍[ s ]
    induction applies: [dependent induction] on the non-variable index [μ :: s]
    would go through [JMeq] and pull in the [Eqdep.Eq_rect_eq] axiom. *)
 Lemma wt_pop_gen `{gLts P A} p q s0 :
-  p ⟹[s0] q -> forall μ s, s0 = μ :: s -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
+  p ⟹[s0] q -> forall μ1 s, s0 = μ1 :: s -> ∃ t, p ⟹{μ1} t /\ t ⟹[s] q.
 Proof.
   intro w.
-  induction w as [ p | s0 p r q l w IH | ν s0 p r q l w IH ]; intros μ s Heq.
+  induction w as [ p | s0 p r q l w IH | μ2 s0 p r q l w IH ]; intros μ1 s Heq.
   - discriminate.
-  - destruct (IH μ s Heq) as (t & w1 & w2).
+  - destruct (IH μ1 s Heq) as (t & w1 & w2).
     exists t. split; eauto with mdb.
   - inversion Heq; subst.
     exists r. split; eauto with mdb.
@@ -120,12 +120,12 @@ Proof. intros w1 w2. eapply wt_concat; eauto. Qed.
 
 (* Same treatment as [wt_pop]: the trace stays a variable, so no UIP axiom. *)
 Lemma wt_decomp_one_gen `{gLts P A} p q s0 :
-  p ⟹[s0] q -> forall μ, s0 = [μ] -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ] r2 ∧ r2 ⟹ q.
+  p ⟹[s0] q -> forall μ1, s0 = [μ1] -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ1] r2 ∧ r2 ⟹ q.
 Proof.
   intro w.
-  induction w as [ p | s0 p r q l w IH | ν s0 p r q l w IH ]; intros μ Heq.
+  induction w as [ p | s0 p r q l w IH | μ2 s0 p r q l w IH ]; intros μ1 Heq.
   - discriminate.
-  - destruct (IH μ Heq) as (r1 & r2 & w1 & l' & w2).
+  - destruct (IH μ1 Heq) as (r1 & r2 & w1 & l' & w2).
     exists r1, r2. repeat split; eauto with mdb.
   - inversion Heq; subst.
     exists p, r. repeat split; eauto with mdb.
@@ -221,7 +221,7 @@ Lemma refuses_tau_preserved_by_wt_non_blocking_action `{gLtsOba P A} p q s :
 Proof.
   intros s_spec hst hw.
   induction hw; eauto.
-  - eapply lts_refuses_spec2 in hst. now exfalso. eauto.
+  - exfalso. apply hst, lts_performs_spec2. eauto.
   - inversion s_spec; subst.
     eapply IHhw. eassumption. eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
 Qed. 
@@ -231,7 +231,7 @@ Lemma refuses_tau_action_preserved_by_wt_non_blocking_action `{gLtsOba P A} p q 
 Proof.
   intros s_spec hst_tau hst_inp hw.
   induction hw; eauto.
-  - eapply lts_refuses_spec2 in hst_tau. now exfalso. eauto.
+  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
   - inversion s_spec; subst. eapply IHhw. 
     + assumption.
     + eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
@@ -245,7 +245,7 @@ Lemma lts_input_preserved_by_wt_output `{gLtsOba P A} p q s μ :
 Proof.
   intros s_spec1 s_spec2 hst_tau hst_inp hw.
   induction hw; eauto.
-  - eapply lts_refuses_spec2 in hst_tau. now exfalso. eauto.
+  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
   - inversion s_spec1; subst. inversion s_spec2; subst. eapply IHhw. 
     + eassumption.
     + eassumption.

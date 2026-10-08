@@ -194,20 +194,20 @@ Section NormalForm.
 
   Definition nf_wf (σ : ntrace A) : Prop := Forall block_wf σ.
 
-  Lemma nf_wf_ncons μ σ : nf_wf σ -> nf_wf (ncons μ σ).
+  Lemma nf_wf_ncons μ1 σ : nf_wf σ -> nf_wf (ncons μ1 σ).
   Proof.
     intro hwf. destruct σ as [| (c , M) σ']; simpl.
     - constructor; [| constructor]. split; [multiset_solver |].
-      intros ν hν. assert (hνμ : ν = μ) by multiset_solver. now rewrite hνμ.
+      intros μ2 hν. assert (hνμ : μ2 = μ1) by multiset_solver. now rewrite hνμ.
     - inversion hwf as [| b σ0 hb hσ']; subst.
-      destruct (decide (cls μ = c /\ cls μ ≠ COP)) as [(heq & _) | hne].
+      destruct (decide (cls μ1 = c /\ cls μ1 ≠ COP)) as [(heq & _) | hne].
       + constructor; [| exact hσ'].
         destruct hb as (hne0 & hall). split; [multiset_solver |].
-        intros ν hν. eapply gmultiset_elem_of_disj_union in hν as [hν | hν].
-        * assert (hνμ : ν = μ) by multiset_solver. rewrite hνμ. exact heq.
+        intros μ2 hν. eapply gmultiset_elem_of_disj_union in hν as [hν | hν].
+        * assert (hνμ : μ2 = μ1) by multiset_solver. rewrite hνμ. exact heq.
         * now eapply hall.
       + constructor; [| exact hwf]. split; [multiset_solver |].
-        intros ν hν. assert (hνμ : ν = μ) by multiset_solver. now rewrite hνμ.
+        intros μ2 hν. assert (hνμ : μ2 = μ1) by multiset_solver. now rewrite hνμ.
   Qed.
 
   Lemma nf_wf_nform s : nf_wf (nform s).
@@ -221,15 +221,15 @@ Section NormalForm.
   Inductive tequiv : trace A -> trace A -> Prop :=
   | te_refl s : tequiv s s
   | te_trans s t u : tequiv s t -> tequiv t u -> tequiv s u
-  | te_swap s1 μ ν s2 :
-    cls μ = cls ν -> cls μ ≠ COP ->
-    tequiv (s1 ++ μ :: ν :: s2) (s1 ++ ν :: μ :: s2).
+  | te_swap s1 μ1 μ2 s2 :
+    cls μ1 = cls μ2 -> cls μ1 ≠ COP ->
+    tequiv (s1 ++ μ1 :: μ2 :: s2) (s1 ++ μ2 :: μ1 :: s2).
 
   (* hints are added after the section *)
 
   Lemma tequiv_sym s t : tequiv s t -> tequiv t s.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply te_trans; eassumption.
     - eapply te_swap; [now symmetry | now rewrite <- heq].
@@ -237,7 +237,7 @@ Section NormalForm.
 
   Lemma tequiv_app_l u s t : tequiv s t -> tequiv (u ++ s) (u ++ t).
   Proof.
-    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply te_trans; eassumption.
     - rewrite 2 app_assoc. eapply te_swap; eassumption.
@@ -245,7 +245,7 @@ Section NormalForm.
 
   Lemma tequiv_app_r u s t : tequiv s t -> tequiv (s ++ u) (t ++ u).
   Proof.
-    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply te_trans; eassumption.
     - rewrite <- 2 app_assoc. simpl. eapply te_swap; eassumption.
@@ -257,14 +257,14 @@ Section NormalForm.
   (** Inside a run of actions of a same non-opaque class every permutation is
       reachable by consecutive swaps. *)
   Lemma tequiv_perm_class c s1 s2 u v :
-    c ≠ COP -> Forall (fun μ => cls μ = c) s1 -> s1 ≡ₚ s2 ->
+    c ≠ COP -> Forall (fun μ1 => cls μ1 = c) s1 -> s1 ≡ₚ s2 ->
     tequiv (u ++ s1 ++ v) (u ++ s2 ++ v).
   Proof.
     intros hc hall hp. revert u hall.
-    induction hp as [| μ l1 l2 hp IH | μ ν l | l1 l2 l3 hp1 IH1 hp2 IH2 ]; intros u hall.
+    induction hp as [| μ1 l1 l2 hp IH | μ1 μ2 l | l1 l2 l3 hp1 IH1 hp2 IH2 ]; intros u hall.
     - constructor.
     - eapply Forall_cons_1 in hall as (hμ & hl1).
-      specialize (IH (u ++ [μ]) hl1).
+      specialize (IH (u ++ [μ1]) hl1).
       rewrite <- !app_assoc in IH. simpl in IH. exact IH.
     - eapply Forall_cons_1 in hall as (hν & hrest).
       eapply Forall_cons_1 in hrest as (hμ & hl).
@@ -276,16 +276,16 @@ Section NormalForm.
 
   (** *** [nform] is invariant under [tequiv] *)
 
-  Lemma ncons_comm μ ν σ :
-    cls μ = cls ν -> cls μ ≠ COP -> ncons μ (ncons ν σ) = ncons ν (ncons μ σ).
+  Lemma ncons_comm μ1 μ2 σ :
+    cls μ1 = cls μ2 -> cls μ1 ≠ COP -> ncons μ1 (ncons μ2 σ) = ncons μ2 (ncons μ1 σ).
   Proof.
     intros heq hne.
-    assert (hne' : cls ν ≠ COP) by now rewrite <- heq.
+    assert (hne' : cls μ2 ≠ COP) by now rewrite <- heq.
     destruct σ as [| (c , M) σ' ]; simpl.
     - rewrite 2 decide_True by (split; [now rewrite heq | assumption]).
       rewrite heq. f_equal. f_equal. multiset_solver.
-    - destruct (decide (cls ν = c /\ cls ν ≠ COP)) as [ (heqc & _) | hnc ];
-        destruct (decide (cls μ = c /\ cls μ ≠ COP)) as [ (heqc' & _) | hnc' ];
+    - destruct (decide (cls μ2 = c /\ cls μ2 ≠ COP)) as [ (heqc & _) | hnc ];
+        destruct (decide (cls μ1 = c /\ cls μ1 ≠ COP)) as [ (heqc' & _) | hnc' ];
         simpl.
       + rewrite 2 decide_True by (split; assumption).
         f_equal. f_equal. multiset_solver.
@@ -297,7 +297,7 @@ Section NormalForm.
 
   Lemma nform_tequiv s t : tequiv s t -> nform s = nform t.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - reflexivity.
     - now transitivity (nform t).
     - rewrite 2 nform_app. simpl. now rewrite ncons_comm.
@@ -305,17 +305,17 @@ Section NormalForm.
 
   (** *** A trace is [tequiv] to the linearisation of its normal form *)
 
-  Lemma nlin_ncons μ σ :
-    nf_wf σ -> tequiv (μ :: nlin σ) (nlin (ncons μ σ)).
+  Lemma nlin_ncons μ1 σ :
+    nf_wf σ -> tequiv (μ1 :: nlin σ) (nlin (ncons μ1 σ)).
   Proof.
     intro hwf. destruct σ as [| (c , M) σ' ]; simpl.
     - rewrite gmultiset_elements_singleton. constructor.
     - eapply Forall_cons_1 in hwf as (hb & hσ'). destruct hb as (hne0 & hall).
-      destruct (decide (cls μ = c /\ cls μ ≠ COP)) as [ (heqc & hnc) | hnc ]; simpl.
-      + eapply (tequiv_perm_class c (μ :: elements M) (elements ({[+ μ +]} ⊎ M)) [] (nlin σ')).
+      destruct (decide (cls μ1 = c /\ cls μ1 ≠ COP)) as [ (heqc & hnc) | hnc ]; simpl.
+      + eapply (tequiv_perm_class c (μ1 :: elements M) (elements ({[+ μ1 +]} ⊎ M)) [] (nlin σ')).
         * now rewrite <- heqc.
         * constructor; [exact heqc |].
-          eapply Forall_forall. intros ν hν. eapply hall.
+          eapply Forall_forall. intros μ2 hν. eapply hall.
           rewrite <- gmultiset_elem_of_elements. now eapply elem_of_of_In.
         * rewrite gmultiset_elements_disj_union, gmultiset_elements_singleton.
           reflexivity.
@@ -347,7 +347,7 @@ Section NormalForm.
 
   Lemma tequiv_perm s t : tequiv s t -> s ≡ₚ t.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - reflexivity.
     - etransitivity; eassumption.
     - eapply Permutation_app_head. constructor.
@@ -366,9 +366,9 @@ End NormalForm.
     Used to relate the normalisation of co-traces with the normalisation of
     traces, through the involution [co]. *)
 Lemma tequiv_map {A B : Type} (f : A -> B) (c1 : A -> act_class) (c2 : B -> act_class) s t :
-  (forall μ, c2 (f μ) = c1 μ) -> tequiv c1 s t -> tequiv c2 (map f s) (map f t).
+  (forall μ1, c2 (f μ1) = c1 μ1) -> tequiv c1 s t -> tequiv c2 (map f s) (map f t).
 Proof.
-  intro hf. induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+  intro hf. induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
   - constructor.
   - eapply te_trans; eassumption.
   - rewrite 2 map_app. simpl. eapply te_swap.
@@ -679,10 +679,10 @@ Section Measure.
 
   Lemma cls_pre_of_tequiv s t : tequiv cls s t -> cls_pre s t.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply cp_trans; eassumption.
-    - destruct (cls μ) eqn:hμ.
+    - destruct (cls μ1) eqn:hμ.
       + eapply cp_delay. exact hμ.
       + eapply cp_anticipate. now rewrite <- heq.
       + now exfalso.
@@ -842,17 +842,17 @@ Section Measure.
   Proof.
     induction s as [| x s IH]; [reflexivity |]. unfold tsort in *.
     destruct (cls x) eqn:e.
-    - rewrite (filter_cons_False (fun ν => cls ν = CIN) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_False (fun ν => cls ν = COP) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_True (fun ν => cls ν = CNB) x s e).
+    - rewrite (filter_cons_False (fun μ => cls μ = CIN) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_False (fun μ => cls μ = COP) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_True (fun μ => cls μ = CNB) x s e).
       rewrite perm_middle3, IH. reflexivity.
-    - rewrite (filter_cons_True (fun ν => cls ν = CIN) x s e).
-      rewrite (filter_cons_False (fun ν => cls ν = COP) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_False (fun ν => cls ν = CNB) x s) by (rewrite e; discriminate).
+    - rewrite (filter_cons_True (fun μ => cls μ = CIN) x s e).
+      rewrite (filter_cons_False (fun μ => cls μ = COP) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_False (fun μ => cls μ = CNB) x s) by (rewrite e; discriminate).
       rewrite <- app_comm_cons, IH. reflexivity.
-    - rewrite (filter_cons_False (fun ν => cls ν = CIN) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_True (fun ν => cls ν = COP) x s e).
-      rewrite (filter_cons_False (fun ν => cls ν = CNB) x s) by (rewrite e; discriminate).
+    - rewrite (filter_cons_False (fun μ => cls μ = CIN) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_True (fun μ => cls μ = COP) x s e).
+      rewrite (filter_cons_False (fun μ => cls μ = CNB) x s) by (rewrite e; discriminate).
       rewrite <- app_comm_cons, perm_middle2, IH. reflexivity.
   Qed.
 

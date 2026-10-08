@@ -21,7 +21,7 @@
 *)
 
 From stdpp Require Import gmap.
-From TestingTheory Require Import gLts SyncActions.
+From TestingTheory Require Import ActTau gLts SyncActions.
 
 (**************************Definition of a Subset of A *************************************)
 
@@ -31,25 +31,25 @@ Definition subset_of (A : Type) := A -> Prop.
 
 (** ** All actions of a process (ready-set) *)
 Definition R `{gLts P A} (p : P) : subset_of A :=
-  fun μ => ¬ p ↛[μ].
+  fun μ => p ⟶[μ].
 
 (* ** Blocking co-actions *)
 (* Two alphabets: the process over [Aproc], the co-actions over [Atest],
    linked by [sync]; on one alphabet [sync] is [dual]. *)
 Definition coR `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (p : P) : subset_of Atest :=
-  fun μ1 => exists μ2, ¬ p ↛[μ2] /\ sync μ2 μ1 /\ blocking μ1.
+  fun μ1 => exists μ2, p ⟶[μ2] /\ sync μ2 μ1 /\ blocking μ1.
 
 (** ** All processes accepting an action *)
 Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
-  fun p => ¬ p ↛[μ].
+  fun p => p ⟶[μ].
 
 (** ** All processes accepting a co-action of an action *)
 (* As [coR]: the processes over [Aproc], the action [μ] over [Atest], linked
    by [sync]; on one alphabet [sync] is [dual]. *)
 Definition co𝐏 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (μ : Atest) : subset_of P :=
-  fun p => exists μ', sync μ' μ /\ ¬ p ↛[μ'].
+  fun p => exists μ', sync μ' μ /\ p ⟶[μ'].
 
 (******************* Instantiations to use the usual notation of sets ***********************)
 
@@ -126,8 +126,8 @@ Definition coR_map {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ 
 
 (*
 Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B-> C) :
-      μ ∈ map_set (fun x => Γ2 (Γ1 x)) S <-> μ ∈ map_set (Γ2 (map_set Γ1 S)). *)
+      μ ∈ ⌈ (fun x => Γ2 (Γ1 x)) ⌉ S <-> μ ∈ map_set (Γ2 (⌈ Γ1 ⌉ S)). *)
 
 Lemma coR_intro `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
-  (p : P) (μ : Aproc) (η : Atest) : ¬ p ↛[μ] → sync μ η → blocking η → η ∈ coR p.
+  (p : P) (μ : Aproc) (β : Atest) : p ⟶[μ] → sync μ β → blocking β → β ∈ coR p.
 Proof. intros ha hs hb. by exists μ. Qed.

@@ -154,10 +154,10 @@ Qed.
     — it must hold for outputs too, so both cases of [gen_may_lts_mu] do
     real work. *)
 
-Lemma gen_may_lts_mu mu s :
-  (gen_may (mu :: s)) ⟶⋍[mu] (gen_may s).
+Lemma gen_may_lts_mu μ s :
+  (gen_may (μ :: s)) ⟶⋍[μ] (gen_may s).
 Proof.
-  intros. destruct mu as [ (c , v) | (c , v) ].
+  intros. destruct μ as [ (c , v) | (c , v) ].
   - unfold gen_may. simpl in *.
     eexists. split.
     + eapply lts_choiceL. eapply lts_input.
@@ -185,10 +185,10 @@ Proof. intro h. eapply Relation_Operators.t_step. exact h. Qed.
 
 (** ** Determinacy on the expected trace element ([may_test_spec] field 3) *)
 
-Lemma gen_may_follows_trace_determinacy beta s t :
-  blocking beta -> lts (gen_may (beta :: s)) (ActExt beta) t -> t ⋍ gen_may s.
+Lemma gen_may_follows_trace_determinacy β s t :
+  blocking β -> lts (gen_may (β :: s)) (ActExt β) t -> t ⋍ gen_may s.
 Proof.
-  intros hb hl. destruct beta as [a|a].
+  intros hb hl. destruct β as [a|a].
   - eapply cgr_to_eqrel. eapply gen_may_mu_uniq. eauto.
   - exfalso. eapply hb. simpl. unfold non_blocking_output, is_output. exists a; eauto.
 Qed.
@@ -202,9 +202,9 @@ Qed.
 
 Lemma gen_may_ungood s : ~ good_VACCS (gen_may s).
 Proof.
-  induction s as [|mu s' IH].
+  induction s as [|μ s' IH].
   - unfold gen_may. simpl. intro hg. inversion hg.
-  - destruct mu as [(c,v)|(c,v)].
+  - destruct μ as [(c,v)|(c,v)].
     + unfold gen_may. simpl. intro hg. inversion hg; subst.
       destruct H0 as [h|h]; inversion h.
     + unfold gen_may. simpl. intro hg. inversion hg; subst.
@@ -218,8 +218,8 @@ Qed.
 Lemma DEAD_no_lts_tau : forall t, ~ lts (g 𝟘) τ t.
 Proof. intros t h. inversion h. Qed.
 
-Lemma DEAD_no_lts_mu : forall mu t, ~ lts (g 𝟘) (ActExt mu) t.
-Proof. intros mu t h. inversion h. Qed.
+Lemma DEAD_no_lts_mu : forall μ t, ~ lts (g 𝟘) (ActExt μ) t.
+Proof. intros μ t h. inversion h. Qed.
 
 Lemma DEAD_never_outcome : never_outcome good_VACCS (g 𝟘).
 Proof.
@@ -260,9 +260,9 @@ Qed.
       Restricted to inputs: this is only ever consumed by the
       [blocking β]-guarded fields below, and outputs are never blocking. *)
 
-Lemma gen_may_step_dichotomy a s alpha t :
-  lts (gen_may (ActIn a :: s)) alpha t ->
-  (alpha = ActExt (ActIn a) /\ t ≡ gen_may s) \/ never_outcome good_VACCS t.
+Lemma gen_may_step_dichotomy a s α t :
+  lts (gen_may (ActIn a :: s)) α t ->
+  (α = ActExt (ActIn a) /\ t ≡ gen_may s) \/ never_outcome good_VACCS t.
 Proof.
   unfold gen_may. destruct a as (c,v); simpl; intro hl; inversion hl; subst.
   { inversion H3; subst.
@@ -280,12 +280,12 @@ Qed.
 
 (** ** Deviation is fatal ([may_test_spec] field 4) *)
 
-Lemma gen_may_deviation_is_fatal beta mu s t :
-  blocking beta -> lts (gen_may (beta :: s)) (ActExt mu) t -> mu <> beta -> never_outcome good_VACCS t.
+Lemma gen_may_deviation_is_fatal β μ s t :
+  blocking β -> lts (gen_may (β :: s)) (ActExt μ) t -> μ <> β -> never_outcome good_VACCS t.
 Proof.
   intros hb hl hneq.
-  destruct beta as [a|a].
-  - destruct (gen_may_step_dichotomy a s (ActExt mu) t hl) as [[heq _]|hno].
+  destruct β as [a|a].
+  - destruct (gen_may_step_dichotomy a s (ActExt μ) t hl) as [[heq _]|hno].
     + injection heq as ->. contradiction.
     + exact hno.
   - exfalso. eapply hb. simpl. unfold non_blocking_output, is_output. exists a; eauto.
@@ -293,11 +293,11 @@ Qed.
 
 (** ** A silent move on a blocking head is fatal ([may_test_spec] field 7) *)
 
-Lemma gen_may_tau_on_blocking_is_fatal beta s t :
-  blocking beta -> lts (gen_may (beta :: s)) τ t -> never_outcome good_VACCS t.
+Lemma gen_may_tau_on_blocking_is_fatal β s t :
+  blocking β -> lts (gen_may (β :: s)) τ t -> never_outcome good_VACCS t.
 Proof.
   intros hb hl.
-  destruct beta as [a|a].
+  destruct β as [a|a].
   - destruct (gen_may_step_dichotomy a s τ t hl) as [[heq _]|hno].
     + discriminate.
     + exact hno.

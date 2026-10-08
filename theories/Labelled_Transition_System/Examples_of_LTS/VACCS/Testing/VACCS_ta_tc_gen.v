@@ -524,7 +524,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros g a. simpl. unfold proc_stable. cbn. intro nb.
-  unfold non_blocking_output in nb. destruct nb as (c & eq); subst. reflexivity.
+  unfold non_blocking_output in nb. destruct nb as (c & eq); subst. intros H. now apply H.
 Qed.
 Next Obligation.
   intros g.

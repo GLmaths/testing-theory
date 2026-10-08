@@ -27,14 +27,14 @@ From TestingTheory Require Import ActTau InputOutputActions PAL_Syntax
 
 (* * The alternative LTS of PAL has the τ-transitions of PAL
 
-   [Applicative_process_algebra.lts_step] labels an input with the received
+   [Applicative_process_algebra.pal_step] labels an input with the received
    tuple only; [PAL_Alt_LTS.lts_step_a] also records the template of the
    pattern. Outputs have the same labels in both. *)
 
 Section PAL_Alt_Tau.
   Context (Val : Type) `{Countable Val}.
 
-  Notation old := (Applicative_process_algebra.lts_step Val).
+  Notation old := (Applicative_process_algebra.pal_step Val).
   Notation new := (lts_step_a Val).
 
   (** From the new LTS to the old one: forget the templates. *)
@@ -50,13 +50,13 @@ Section PAL_Alt_Tau.
     - eapply ar1; [eassumption | by apply template_tuple_match].
     - eapply ar2; [eassumption | by apply template_tuple_match].
     - by apply ar3.
-    - destruct mu; by eapply ar4_l.
-    - destruct mu; by eapply ar4_r.
-    - destruct mu; by eapply ar5_l.
-    - destruct mu; by eapply ar5_r.
-    - destruct mu; by eapply ar6.
-    - destruct mu; by eapply ar7.
-    - destruct mu; by eapply ar8.
+    - destruct μ; by eapply ar4_l.
+    - destruct μ; by eapply ar4_r.
+    - destruct μ; by eapply ar5_l.
+    - destruct μ; by eapply ar5_r.
+    - destruct μ; by eapply ar6.
+    - destruct μ; by eapply ar7.
+    - destruct μ; by eapply ar8.
     - apply ir1.
     - apply ir2.
     - by eapply ir3.
@@ -72,10 +72,10 @@ Section PAL_Alt_Tau.
     - by apply ir10_l.
     - by apply ir10_r.
     - by apply ir11.
-    - destruct mu1 as [l1|a1], mu2 as [l2|a2]; simpl in *; try contradiction; subst.
+    - destruct μ1 as [l1|a1], μ2 as [l2|a2]; simpl in *; try contradiction; subst.
       + by eapply (ir12 _ _ _ (ActIn (ltuple Val l1))).
       + by eapply (ir12 _ _ _ (ActOut (ltuple Val l2))).
-    - destruct mu1 as [l1|a1], mu2 as [l2|a2]; simpl in *; try contradiction; subst.
+    - destruct μ1 as [l1|a1], μ2 as [l2|a2]; simpl in *; try contradiction; subst.
       + by eapply (ir13 _ _ _ (ActIn (ltuple Val l1))).
       + by eapply (ir13 _ _ _ (ActOut (ltuple Val l2))).
   Qed.
@@ -99,13 +99,13 @@ Section PAL_Alt_Tau.
         exists (label_of Val it ot); split; [exact ho |];
         rewrite <- ho at 2 3; apply aar2; [done | by rewrite ht] end.
     - by apply aar3.
-    - destruct mu; simpl in *; [destruct IHlts_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar4_l.
-    - destruct mu; simpl in *; [destruct IHlts_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar4_r.
-    - destruct mu; simpl in *; [destruct IHlts_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar5_l.
-    - destruct mu; simpl in *; [destruct IHlts_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar5_r.
-    - destruct mu; simpl in *; [destruct IHlts_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar6.
-    - destruct mu; simpl in *; [destruct IHlts_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar7.
-    - destruct mu; simpl in *; [destruct IHlts_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar8.
+    - destruct μ; simpl in *; [destruct IHpal_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar4_l.
+    - destruct μ; simpl in *; [destruct IHpal_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar4_r.
+    - destruct μ; simpl in *; [destruct IHpal_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar5_l.
+    - destruct μ; simpl in *; [destruct IHpal_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar5_r.
+    - destruct μ; simpl in *; [destruct IHpal_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar6.
+    - destruct μ; simpl in *; [destruct IHpal_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar7.
+    - destruct μ; simpl in *; [destruct IHpal_step as (l & hl & h'); exists l; split; [done |] |]; by eapply aar8.
     - apply air1.
     - apply air2.
     - by eapply air3.
@@ -121,12 +121,12 @@ Section PAL_Alt_Tau.
     - by apply air10_l.
     - by apply air10_r.
     - by apply air11.
-    - destruct mu as [ot|ot]; simpl in *.
-      + destruct IHlts_step1 as (l & hl & h1'). eapply air12; [exact h1' | exact IHlts_step2 | exact hl].
-      + destruct IHlts_step2 as (l & hl & h2'). eapply air12; [exact IHlts_step1 | exact h2' | exact hl].
-    - destruct mu as [ot|ot]; simpl in *.
-      + destruct IHlts_step1 as (l & hl & h1'). eapply air13; [exact h1' | exact IHlts_step2 | exact hl].
-      + destruct IHlts_step2 as (l & hl & h2'). eapply air13; [exact IHlts_step1 | exact h2' | exact hl].
+    - destruct μ as [ot|ot]; simpl in *.
+      + destruct IHpal_step1 as (l & hl & h1'). eapply air12; [exact h1' | exact IHpal_step2 | exact hl].
+      + destruct IHpal_step2 as (l & hl & h2'). eapply air12; [exact IHpal_step1 | exact h2' | exact hl].
+    - destruct μ as [ot|ot]; simpl in *.
+      + destruct IHpal_step1 as (l & hl & h1'). eapply air13; [exact h1' | exact IHpal_step2 | exact hl].
+      + destruct IHpal_step2 as (l & hl & h2'). eapply air13; [exact IHpal_step1 | exact h2' | exact hl].
   Qed.
 
   (** The τ-transitions coincide. *)

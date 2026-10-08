@@ -90,7 +90,7 @@ Proof.
                  assert (¬ good_VACCS e1) as not_happy''.
                  { eapply unoutcome_preserved_by_lts_non_blocking_action_converse; eauto.
                    unfold non_blocking; simpl. exists (cst a , v); eauto. }
-                 assert (must ccat e1); eauto.
+                 assert (ccat must_pass e1); eauto.
                  eapply must_preserved_by_synch_if_notoutcome; eauto.
                  simpl; eauto.
            ++ intros. inversion H4; subst. simpl in *.
@@ -103,7 +103,7 @@ Qed.
 Example NIL_is_above_copycat : ccat ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros t Hyp.
-  assert (must ccat t) as Mq; eauto.
+  assert (ccat must_pass t) as Mq; eauto.
   dependent induction Hyp.
   - now eapply m_now.
   - inversion ex. inversion H2; subst.
@@ -116,7 +116,7 @@ Proof.
       * intros. lts_inversion lts.
     + inversion l1; subst.
       eapply simplify_match_input in eq. subst.
-      assert (must ((cst a ! (bvar 0) • 𝟘) ^ v) b2) as Mq'.
+      assert (((cst a ! (bvar 0) • 𝟘) ^ v) must_pass b2) as Mq'.
       { eapply must_preserved_by_synch_if_notoutcome ; eauto. simpl; eauto. }
       inversion Mq'.
       * assert (good_VACCS t).
@@ -188,15 +188,15 @@ Proof.
            assert (¬ good_VACCS t1) as not_happy'''.
            { eapply unoutcome_preserved_by_lts_non_blocking_action_converse; eauto.
              unfold non_blocking; simpl. exists (cst a , v); eauto. }
-           assert (must ccat t1); eauto.
+           assert (ccat must_pass t1); eauto.
            eapply must_preserved_by_synch_if_notoutcome; eauto.
       * intros. inversion H6; subst.
         eapply simplify_match_output in H5 as eq; subst.
         assert (lts t ((cst a , v) !) t') as l2; eauto.
         eapply OBA_with_FB_Fourth_Axiom in l2 as (t'1 & HypTr'1 & equiv1); eauto.
-        eapply (@must_eq_client proc); eauto. assert (must const t) as Mp. eapply m_step; eauto.
-        assert (must const t'1) as Mp';eauto.
-        assert (must ccat t'1); eauto. eapply NIL_is_above_copycat. eauto.
+        eapply (@must_eq_client proc); eauto. assert (const must_pass t) as Mp. eapply m_step; eauto.
+        assert (const must_pass t'1) as Mp';eauto.
+        assert (ccat must_pass t'1); eauto. eapply NIL_is_above_copycat. eauto.
 Qed.
 
 Example NIL_is_above_constant : const ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
@@ -226,11 +226,11 @@ Qed.
 Example constant_is_not_above_NIL : (g 𝟘) ⋢ₘᵤₛₜᵢ const.
 Proof.
   intro imp.
-  assert (must const Test).
+  assert (const must_pass Test).
   { eapply imp. eapply NIL_must_this_TEST. }
   inversion H.
   + eapply this_Test_is_not_good; eauto.
-  + assert (must ((cst a ! cst O • 𝟘)^(cst I)) ((g 𝟘) ‖ (cst a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘))))) as Mp.
+  + assert (((cst a ! cst O • 𝟘)^(cst I)) must_pass ((g 𝟘) ‖ (cst a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘))))) as Mp.
     { eapply com; eauto. 2: { eapply lts_input. } 2: { eapply lts_parL. eapply lts_output. }
     simpl; eauto. }
     simpl in Mp.

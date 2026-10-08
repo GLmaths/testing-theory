@@ -129,20 +129,20 @@ Qed.
 
 (** ** The visible steps *)
 
-Lemma fw_ext_shape : forall (p : proc) (m : MO (ExtAct TypeOfActions)) mu x,
-  (p ▷ m) ⟶[mu] x ->
-    (exists p', lts p (ActExt mu) p' /\ x = (p' ▷ m))
-  \/ (exists a, mu = ActIn a /\ x = (p ▷ ({[+ ActOut a +]} ⊎ m)))
-  \/ (exists a m', mu = ActOut a /\ m = {[+ ActOut a +]} ⊎ m' /\ x = (p ▷ m')).
+Lemma fw_ext_shape : forall (p : proc) (m : MO (ExtAct TypeOfActions)) μ x,
+  (p ▷ m) ⟶[μ] x ->
+    (exists p', lts p (ActExt μ) p' /\ x = (p' ▷ m))
+  \/ (exists a, μ = ActIn a /\ x = (p ▷ ({[+ ActOut a +]} ⊎ m)))
+  \/ (exists a m', μ = ActOut a /\ m = {[+ ActOut a +]} ⊎ m' /\ x = (p ▷ m')).
 Proof.
-  intros p m mu x H. inversion H; subst.
+  intros p m μ x H. inversion H; subst.
   - left. exists a2. split; [ exact l | reflexivity ].
   - inversion l; subst.
     + right. left. destruct η as [b|b]; simpl in *.
       * destruct nb as (z & Hz). discriminate Hz.
-      * destruct mu as [a|a]; simpl in duo; [ | exact (match duo with end) ]. subst.
+      * destruct μ as [a|a]; simpl in duo; [ | exact (match duo with end) ]. subst.
         exists b. split; reflexivity.
-    + right. right. destruct mu as [a|a]; simpl in nb.
+    + right. right. destruct μ as [a|a]; simpl in nb.
       * destruct nb as (z & Hz). discriminate Hz.
       * exists a, b2. split; [ reflexivity | split; reflexivity ].
 Qed.
@@ -166,9 +166,9 @@ Proof.
   apply (lts_multiset_minus m (ActOut a)). simpl. eexists; reflexivity.
 Qed.
 
-Lemma fw_ext_left : forall (p p' : proc) (m : MO (ExtAct TypeOfActions)) mu,
-  lts p (ActExt mu) p' -> (p ▷ m) ⟶[mu] (p' ▷ m).
-Proof. intros p p' m mu H. eapply ParLeft. exact H. Qed.
+Lemma fw_ext_left : forall (p p' : proc) (m : MO (ExtAct TypeOfActions)) μ,
+  lts p (ActExt μ) p' -> (p ▷ m) ⟶[μ] (p' ▷ m).
+Proof. intros p p' m μ H. eapply ParLeft. exact H. Qed.
 
 (** ** Weak transitions: feeding the buffer
 
@@ -237,15 +237,15 @@ Lemma fw_buffer_bounded : forall (s : trace (ExtAct TypeOfActions))
   x ⟹[s] y -> y.2 ⊆ x.2 ⊎ bag (ins s).
 Proof.
   intros s x y H.
-  induction H as [x|s x q y Hl Hw IH|mu s x q y Hl Hw IH]; simpl.
+  induction H as [x|s x q y Hl Hw IH|μ s x q y Hl Hw IH]; simpl.
   - multiset_solver.
   - destruct x as (p,m). destruct q as (p1,m1).
     destruct (fw_tau_shape p m (p1,m1) Hl) as [(p' & _ & E)|(a & p' & m' & Hm & _ & E)];
       inversion E; subst; simpl in *; multiset_solver.
   - destruct x as (p,m). destruct q as (p1,m1).
-    destruct (fw_ext_shape p m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape p m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + destruct HA as (p' & _ & E). inversion E; subst. simpl in *.
-      destruct mu as [a|a]; simpl; multiset_solver.
+      destruct μ as [a|a]; simpl; multiset_solver.
     + destruct HB as (a & Hmu & E). inversion E; subst. simpl in *. multiset_solver.
     + destruct HC as (a & m' & Hmu & Hm & E). inversion E; subst. simpl in *. multiset_solver.
 Qed.
@@ -325,7 +325,7 @@ Lemma fw_conservation_bounded : forall (s : trace (ExtAct TypeOfActions))
     (bag (ins r) ⊎ y.2 ⊆ x.2 ⊎ bag (ins s)).
 Proof.
   intros s x y H.
-  induction H as [x|s x q y Hl Hw IH|mu s x q y Hl Hw IH].
+  induction H as [x|s x q y Hl Hw IH|μ s x q y Hl Hw IH].
   - exists nil. split; [ apply wt_nil | simpl; split; multiset_solver ].
   - destruct x as (p,m). destruct q as (p1,m1).
     destruct IH as (r & Hr & Heq & Hsub). simpl in *.
@@ -341,12 +341,12 @@ Proof.
       * simpl in *. split; multiset_solver.
   - destruct x as (p,m). destruct q as (p1,m1).
     destruct IH as (r & Hr & Heq & Hsub). simpl in *.
-    destruct (fw_ext_shape p m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape p m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + (* the process acts visibly: the action is on both sides *)
       destruct HA as (p' & Hp' & E). inversion E; subst.
-      exists (mu :: r). split.
+      exists (μ :: r). split.
       * eapply wt_act; [ exact Hp' | exact Hr ].
-      * destruct mu as [a|a]; simpl in *; split; multiset_solver.
+      * destruct μ as [a|a]; simpl in *; split; multiset_solver.
     + (* absorption: the trace gains an input, the buffer gains the message *)
       destruct HB as (a & Hmu & E). inversion E; subst.
       exists r. split; [ exact Hr | simpl in *; split; multiset_solver ].
@@ -404,12 +404,12 @@ Lemma fw_out_run_drain : forall (s : trace (ExtAct TypeOfActions))
   y.1 = x.1 /\ (bag (outs s) ⊎ y.2 = x.2).
 Proof.
   intros s x y H.
-  induction H as [x|s x q y Hl Hw IH|mu s x q y Hl Hw IH];
+  induction H as [x|s x q y Hl Hw IH|μ s x q y Hl Hw IH];
     intros Hins Hno Hst.
   - split; [ reflexivity | simpl; multiset_solver ].
   - exfalso. eapply Hst. exact Hl.
   - destruct x as (p,m). destruct q as (p1,m1). simpl in *.
-    destruct mu as [a|a]; simpl in Hins; [ discriminate Hins | ].
+    destruct μ as [a|a]; simpl in Hins; [ discriminate Hins | ].
     destruct (fw_ext_shape p m (ActOut a) (p1,m1) Hl) as [HA|[HB|HC]].
     + destruct HA as (p' & Hp' & _). exfalso. eapply Hno. exact Hp'.
     + destruct HB as (b & Hb & _). discriminate Hb.
@@ -422,24 +422,20 @@ Proof.
       split; [ exact Hy1 | ]. simpl. multiset_solver.
 Qed.
 
-(** Moving between the two ways of saying "no internal step".  The
-    generic [lts_refuses] is decidable on this instance, so the two forms
-    are interchangeable; going through [decide] is the workaround already
-    on record for this concrete [gLts]. *)
+(** Moving between the two ways of saying "no internal step". *)
 
 Lemma stable_of_no_step : forall (x : proc * MO (ExtAct TypeOfActions)),
   (forall z, ~ (x ⟶ z)) -> x ↛.
 Proof.
-  intros x H. destruct (decide (lts_refuses x τ)) as [Hy|Hn]; [ exact Hy | ].
-  exfalso. apply lts_refuses_spec1 in Hn as (q & Hq). eapply H. exact Hq.
+  intros x H. intros Hn.
+  exfalso. apply lts_performs_spec1 in Hn as (q & Hq). eapply H. exact Hq.
 Qed.
 
 Lemma no_step_of_stable : forall (x : proc * MO (ExtAct TypeOfActions)),
   x ↛ -> forall z, ~ (x ⟶ z).
 Proof.
   intros x H z Hz.
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ x τ);
-    [ exists z; exact Hz | exact H ].
+  apply H, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ x τ). exists z; exact Hz.
 Qed.
 
 Lemma bag_out : forall (l : list TypeOfActions) z,
@@ -562,7 +558,7 @@ Lemma fw_wt_noinput_proj : forall (s : trace (ExtAct TypeOfActions))
     (x y : proc * MO (ExtAct TypeOfActions)),
   x ⟹[s] y -> x.2 = ∅ -> ins s = nil -> y.2 = ∅ /\ x.1 ⟹[s] y.1.
 Proof.
-  intros s x y H. induction H as [x|s x q y Hl Hw IH|mu s x q y Hl Hw IH];
+  intros s x y H. induction H as [x|s x q y Hl Hw IH|μ s x q y Hl Hw IH];
     intros Hm Hs; simpl in *.
   - split; [exact Hm | apply wt_nil].
   - destruct x as (p,m). destruct q as (p1,m1). simpl in *.
@@ -574,13 +570,13 @@ Proof.
       destruct HB as (a & p' & m' & Hmeq & _ & _). exfalso.
       subst m. multiset_solver.
   - destruct x as (p,m). destruct q as (p1,m1). simpl in *.
-    destruct (fw_ext_shape p m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape p m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + destruct HA as (p' & Hp' & E). inversion E; subst.
-      destruct mu as [a|a]; simpl in Hs; [ discriminate Hs | ].
+      destruct μ as [a|a]; simpl in Hs; [ discriminate Hs | ].
       destruct (IH eq_refl Hs) as (H1 & H2). simpl in *.
       split; [exact H1 | eapply wt_act; [exact Hp' | exact H2]].
     + (* absorption is impossible: the trace has no input *)
-      destruct HB as (a & Hmu & E). subst mu. simpl in Hs. discriminate Hs.
+      destruct HB as (a & Hmu & E). subst μ. simpl in Hs. discriminate Hs.
     + (* emission is impossible: the buffer is empty *)
       destruct HC as (a & m' & Hmu & Hmeq & E). exfalso.
       subst m. multiset_solver.
@@ -695,10 +691,10 @@ Definition MuteOn (L : list ChannelData) (p : proc) : Prop :=
 Lemma MuteOn_step : forall L (p : proc) al q, MuteOn L p -> lts p al q -> MuteOn L q.
 Proof.
   intros L p al q Hm Hl r z aa Hw Hin.
-  destruct al as [mu|].
-  - assert (Hbig : p ⟹[mu :: r] z) by (eapply wt_act; [ exact Hl | exact Hw ]).
+  destruct al as [μ|].
+  - assert (Hbig : p ⟹[μ :: r] z) by (eapply wt_act; [ exact Hl | exact Hw ]).
     eapply Hm; [ exact Hbig | ].
-    destruct mu as [bb|bb]; simpl; [ exact Hin | right; exact Hin ].
+    destruct μ as [bb|bb]; simpl; [ exact Hin | right; exact Hin ].
   - eapply Hm; [ eapply wt_tau; [ exact Hl | exact Hw ] | exact Hin ].
 Qed.
 
@@ -736,7 +732,7 @@ Lemma fw_drain_project_on : forall (L : list ChannelData)
   (forall aa, In aa (outs s) -> In (fst aa) L) ->
   forall m, x.2 = bag (outs s) ⊎ m -> (x.1 ▷ m) ⟹[[]] yy.
 Proof.
-  intros L s x yy Hw. induction Hw as [x|s x q yy Hl Hwt IH|mu s x q yy Hl Hwt IH];
+  intros L s x yy Hw. induction Hw as [x|s x q yy Hl Hwt IH|μ s x q yy Hl Hwt IH];
     intros Hmute Hins HL m Hbuf.
   - simpl in Hbuf. destruct x as (p,k). simpl in *.
     replace k with m in * by (rewrite Hbuf; multiset_solver).
@@ -767,7 +763,7 @@ Proof.
       eapply wt_tau; [ | exact IH ].
       rewrite Hsplit. apply fw_tau_deliver. exact Hp'.
   - destruct x as (p,k). destruct q as (p1,k1). simpl in *. subst k.
-    destruct mu as [bb|bb]; simpl in Hins; [ discriminate Hins | ].
+    destruct μ as [bb|bb]; simpl in Hins; [ discriminate Hins | ].
     destruct (fw_ext_shape p _ (ActOut bb) (p1,k1) Hl) as [HA|[HB|HC]].
     + destruct HA as (p' & Hp' & _). exfalso.
       eapply MuteOn_no_out; [ exact Hmute | | exact Hp' ].
@@ -859,20 +855,20 @@ Qed.
     [ax_choice_input_bag] (a rule of [VACCS_DefinitionAxiomatic]) sound:
     [must_i_choice_input_bag] instantiates [must_i_choice_input_ctx] at it. *)
 
-Lemma msgs_lts_inv : forall l mu r, lts (msgs l) (ActExt mu) r ->
-  exists c v l', mu = ActOut (c,v) /\ Permutation l ((c,v) :: l') /\ r ≡* msgs l'.
+Lemma msgs_lts_inv : forall l μ r, lts (msgs l) (ActExt μ) r ->
+  exists c v l', μ = ActOut (c,v) /\ Permutation l ((c,v) :: l') /\ r ≡* msgs l'.
 Proof.
-  induction l as [|cv l IH]; intros mu r H; simpl in H.
+  induction l as [|cv l IH]; intros μ r H; simpl in H.
   - inversion H.
   - inversion H; subst.
-    + match goal with HH : lts (_ ! _ • 𝟘) (ActExt mu) ?p2 |- _ =>
+    + match goal with HH : lts (_ ! _ • 𝟘) (ActExt μ) ?p2 |- _ =>
         inversion HH; subst end.
       exists (fst cv), (snd cv), l.
       split; [ reflexivity | ]. split.
       * rewrite <- surjective_pairing. reflexivity.
       * etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
-    + match goal with HH : lts (msgs l) (ActExt mu) ?q2 |- _ =>
-        destruct (IH mu q2 HH) as (c0 & v0 & l'' & Emu & Hperm & Hcgr) end.
+    + match goal with HH : lts (msgs l) (ActExt μ) ?q2 |- _ =>
+        destruct (IH μ q2 HH) as (c0 & v0 & l'' & Emu & Hperm & Hcgr) end.
       exists c0, v0, (cv :: l''). split; [ exact Emu | ]. split.
       * etransitivity; [ apply perm_skip; exact Hperm | apply perm_swap ].
       * simpl. apply cgr_fullpar; [ reflexivity | exact Hcgr ].

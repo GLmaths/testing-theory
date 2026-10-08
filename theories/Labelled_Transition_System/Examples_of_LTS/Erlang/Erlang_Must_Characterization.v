@@ -206,47 +206,47 @@ Next Obligation.
   intros p pre_mu hmem. destruct p as (p, m). simpl in *.
   apply elem_of_union in hmem. destruct hmem as [in_p | in_M].
   + change (pre_mu ∈ coR_abs p) in in_p. eapply coR_abs_spec1 in in_p.
-    destruct in_p as (mu & mem & eq). subst.
-    exists mu. split.
-    - destruct mem as (mu2 & tr & duo & b).
-      eapply lts_refuses_spec1 in tr as (p2 & tr).
-      exists mu2. repeat split; eauto.
-      eapply lts_refuses_spec2. exists (p2 ▷ m).
+    destruct in_p as (μ & mem & eq). subst.
+    exists μ. split.
+    - destruct mem as (μ2 & tr & duo & b).
+      eapply lts_performs_spec1 in tr as (p2 & tr).
+      exists μ2. repeat split; eauto.
+      eapply lts_performs_spec2. exists (p2 ▷ m).
       eapply ParLeft. exact tr.
     - eauto.
   + simpl in *. eapply gmultiset_elem_of_dom, elem_of_gmultiset_map in in_M.
-    destruct in_M as (mu & eq & mem).
-    exists (co mu). split; eauto.
-    exists mu. repeat split; eauto.
-    - eapply lts_refuses_spec2.
-      assert (mu ∈ MO_without_not_nb m) as mem2; eauto.
-      apply (lts_MO_nb_with_nb_spec1 mu m) in mem as (nb & mem).
-      exists (p, m ∖ {[+ mu +]}).
+    destruct in_M as (μ & eq & mem).
+    exists (co μ). split; eauto.
+    exists μ. repeat split; eauto.
+    - eapply lts_performs_spec2.
+      assert (μ ∈ MO_without_not_nb m) as mem2; eauto.
+      apply (lts_MO_nb_with_nb_spec1 μ m) in mem as (nb & mem).
+      exists (p, m ∖ {[+ μ +]}).
       eapply ParRight.
-      assert (m = {[+ mu +]} ⊎ (m ∖ {[+ mu +]})) as eqm by multiset_solver.
+      assert (m = {[+ μ +]} ⊎ (m ∖ {[+ μ +]})) as eqm by multiset_solver.
       rewrite eqm at 1.
       eapply lts_multiset_minus. exact nb.
-    - exact (proj2_sig (exists_dual mu)).
-    - apply (lts_MO_nb_with_nb_spec1 mu m) in mem as (nb & mem).
-      eapply dual_blocks; eauto. symmetry. exact (proj2_sig (exists_dual mu)).
+    - exact (proj2_sig (exists_dual μ)).
+    - apply (lts_MO_nb_with_nb_spec1 μ m) in mem as (nb & mem).
+      eapply dual_blocks; eauto. symmetry. exact (proj2_sig (exists_dual μ)).
 Qed.
 Next Obligation.
-  intros pre_mu p hmem. destruct hmem as (mu & mem & eq). subst.
-  destruct p as (p, m). destruct mem as (mu2 & tr & duo & b).
-  eapply lts_refuses_spec1 in tr as ((p2 , m2) & eq).
+  intros pre_mu p hmem. destruct hmem as (μ & mem & eq). subst.
+  destruct p as (p, m). destruct mem as (μ2 & tr & duo & b).
+  eapply lts_performs_spec1 in tr as ((p2 , m2) & eq).
   inversion eq; subst; simpl in *.
   + eapply elem_of_union. left.
-    change (𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ mu) ∈ coR_abs p). eapply coR_abs_spec2.
-    exists mu. repeat split; eauto. exists mu2. repeat split; eauto.
-    eapply lts_refuses_spec2. eauto.
+    change (𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ μ) ∈ coR_abs p). eapply coR_abs_spec2.
+    exists μ. repeat split; eauto. exists μ2. repeat split; eauto.
+    eapply lts_performs_spec2. eauto.
   + eapply elem_of_union. right.
     eapply gmultiset_elem_of_dom, elem_of_gmultiset_map.
-    destruct (decide (non_blocking mu2)) as [nb2 | b2].
-    - exists mu2. split; eauto.
-      * assert (mu = co mu2) as ->; [| eauto]. eapply VACCS_UniqueDual; eauto.
+    destruct (decide (non_blocking μ2)) as [nb2 | b2].
+    - exists μ2. split; eauto.
+      * assert (μ = co μ2) as ->; [| eauto]. eapply VACCS_UniqueDual; eauto.
       * eapply non_blocking_action_in_ms in l; eauto. subst.
-        apply (lts_MO_nb_with_nb_spec2 mu2 _ nb2). multiset_solver.
-    - assert (blocking mu2) as Imp; eauto.
+        apply (lts_MO_nb_with_nb_spec2 μ2 _ nb2). multiset_solver.
+    - assert (blocking μ2) as Imp; eauto.
       eapply blocking_action_in_ms in Imp as (mem2 & duo2 & nb2); eauto.
       eapply VACCS_UniqueDual in duo; eauto. subst. contradiction.
 Qed.

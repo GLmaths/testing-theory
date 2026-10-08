@@ -73,7 +73,7 @@ Section PAL_Label_Dilemma.
 
   Notation term := (PAL_Syntax.term Val).
   Notation eot := (eot Val).
-  Notation old := (Applicative_process_algebra.lts_step Val).
+  Notation old := (Applicative_process_algebra.pal_step Val).
   Open Scope pal_scope.
 
 
@@ -89,7 +89,7 @@ Section PAL_Label_Dilemma.
   Definition out_val (v : Val) : term := out( [! ve_val v] ) • 𝟘.
 
   Lemma p_any_in u : old p_any (ActExt (ActIn [of_val u])) (out_val u).
-  Proof. exact (ar1 Val [f_formal 0] (t_out [f_actual (ve_var 0)] t_nil) [if_formal 0] [of_val u] eq_refl ltac:(repeat constructor)). Qed.
+  Proof. exact (ar1 Val [? 0] (out( [! (ve_var 0)] ) • t_nil) [if_formal 0] [of_val u] eq_refl ltac:(repeat constructor)). Qed.
 
   Lemma p_any_in_inv ot q : old p_any (ActExt (ActIn ot)) q → ∃ u, ot = [of_val u] ∧ q = out_val u.
   Proof.
@@ -104,7 +104,7 @@ Section PAL_Label_Dilemma.
   Proof. inversion 1. Qed.
 
   Lemma in_val_in v : old (in_val v) (ActExt (ActIn [of_val v])) t_nil.
-  Proof. exact (ar1 Val [f_actual (ve_val v)] t_nil [if_val v] [of_val v] eq_refl ltac:(repeat constructor)). Qed.
+  Proof. exact (ar1 Val [! (ve_val v)] t_nil [if_val v] [of_val v] eq_refl ltac:(repeat constructor)). Qed.
 
   Lemma in_val_in_inv v ot q : old (in_val v) (ActExt (ActIn ot)) q → ot = [of_val v].
   Proof.
@@ -154,7 +154,7 @@ Section PAL_Label_Dilemma.
   Definition Abs : @AbsAction term term FinA PreAct A EA Φ 𝝳 _ _ gLtsEq_gLts gLtsT _ := Fin.(FinitaryAbsAction_Abs).
 
   Lemma accepts_of_step (p q : term) (μ : A) : p ⟶[μ] q → μ ∈ R p.
-  Proof. intros h. exact (lts_refuses_spec2 p (ActExt μ) (exist _ q h)). Qed.
+  Proof. intros h. exact (lts_performs_spec2 p (ActExt μ) (exist _ q h)). Qed.
 
   (** [c] is a label by which [out(!v).𝟘] synchronises with [in(?x).out(!x).𝟘]. *)
   Definition spec (v : Val) (c : A) : Prop :=
@@ -177,7 +177,7 @@ Section PAL_Label_Dilemma.
     assert (c' ∈ R (out_val v)) as hacc.
     { apply (Abs.(abstraction_test_spec) (out_val v) c c' (hblock c) (hblock c') e).
       by eapply accepts_of_step. }
-    apply lts_refuses_spec1 in hacc as (t' & ht').
+    apply lts_performs_spec1 in hacc as (t' & ht').
     destruct (proj1 (hsync p_any (out_val v) (out_val w) t')) as (ot & [[h1 h2] | [h1 h2]]).
     - exists a', c'. done.
     - apply p_any_in_inv in h1 as (u & -> & hq). apply out_val_inj in hq.
@@ -191,12 +191,12 @@ Section PAL_Label_Dilemma.
   Proof.
     intros hne hc hc' e hin.
     apply (Abs.(abstraction_prog_spec) (in_val v) c c' (hblock c) (hblock c') e) in hin as (x & hx & ex).
-    destruct hx as (μ2 & acc & hd & _). apply lts_refuses_spec1 in acc as (q & hq).
+    destruct hx as (μ2 & acc & hd & _). apply lts_performs_spec1 in acc as (q & hq).
     destruct hc' as (a' & hd' & ha' & hstep').
     assert (x ∈ R (out_val w)) as hacc.
     { apply (Abs.(abstraction_test_spec) (out_val w) c' x (hblock c') (hblock x) ex).
       by eapply accepts_of_step. }
-    apply lts_refuses_spec1 in hacc as (t' & ht').
+    apply lts_performs_spec1 in hacc as (t' & ht').
     destruct (proj1 (hsync (in_val v) (out_val w) q t')) as (ot & [[h1 h2] | [h1 h2]]).
     - exists μ2, x. done.
     - apply in_val_in_inv in h1 as ->. apply out_val_out_inv in h2. injection h2. congruence.

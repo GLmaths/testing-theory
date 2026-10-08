@@ -395,14 +395,14 @@ Proof.
 Qed.
 
 Global Instance Proper_lts_stable `{gLtsEq P A}:
-  Proper ((eq_rel) ==> (=) ==> (impl)) lts_refuses.
+  Proper ((eq_rel) ==> (=) ==> (impl)) (λ p α, p ↛{α}).
 Proof.
-  intros p p' Heq α α' ? Hs; subst α'.
-  case (decide (lts_refuses p' α)); trivial. intro Hf.
-  apply lts_refuses_spec1 in Hf as (q & Hq).
+  intros p p' Heq α α' ? Hs; subst α'; cbn in *.
+  intros Hf.
+  apply lts_performs_spec1 in Hf as (q & Hq).
   destruct (eq_spec p q α) as (r & Hr & Heqr).
   - eexists; split; eauto.
-  - contradict Hs. apply lts_refuses_spec2. eexists; eauto.
+  - contradict Hs. apply lts_performs_spec2. eexists; eauto.
 Qed.
 
 (* In the case of a Lts with equivalence relation, the right hand side can also

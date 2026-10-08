@@ -78,18 +78,18 @@ Section LA_test_properties.
   Context {T A : Type} {H : ExtAction A} {gLtsT : gLts T H} {LAt : gLtsLAtest T H}.
 
   Lemma accepts_preserved_by_LA_test (t : T) μ μ' :
-    μ ≈ᴛᴇꜱᴛ μ' → ¬ t ↛[μ] → ¬ t ↛[μ'].
+    μ ≈ᴛᴇꜱᴛ μ' → t ⟶[μ] → t ⟶[μ'].
   Proof. intros eq. exact (LA_test_spec μ μ' eq t). Qed.
 
   Lemma accepts_LA_test_iff (t : T) μ μ' :
-    μ ≈ᴛᴇꜱᴛ μ' → ¬ t ↛[μ] ↔ ¬ t ↛[μ'].
+    μ ≈ᴛᴇꜱᴛ μ' → t ⟶[μ] ↔ t ⟶[μ'].
   Proof. intros eq. split; apply accepts_preserved_by_LA_test; [done | by symmetry]. Qed.
 
   Lemma refuses_preserved_by_LA_test (t : T) μ μ' :
     μ ≈ᴛᴇꜱᴛ μ' → t ↛[μ] → t ↛[μ'].
   Proof.
-    intros eq refuses. destruct (decide (t ↛[μ'])) as [| accepts]; [done |].
-    exfalso. eapply (accepts_preserved_by_LA_test t μ' μ); [by symmetry | exact accepts | exact refuses].
+    intros eq refuses accepts.
+    apply refuses. eapply (accepts_preserved_by_LA_test t μ' μ); [by symmetry | exact accepts].
   Qed.
 
   Lemma refuses_LA_test_iff (t : T) μ μ' :
@@ -101,7 +101,7 @@ Section LA_test_properties.
   Proof. apply accepts_preserved_by_LA_test. Qed.
 
   #[global] Instance Proper_accepts_LA_test (t : T) :
-    Proper (LA_test T ==> iff) (λ μ, ¬ t ↛[μ]).
+    Proper (LA_test T ==> iff) (λ μ, t ⟶[μ]).
   Proof. intros μ μ' eq. by apply accepts_LA_test_iff. Qed.
 
   #[global] Instance Proper_refuses_LA_test (t : T) :
@@ -122,11 +122,11 @@ Section LA_prog_properties.
     μ ≈ᴘʀᴏ μ' → p ∈ co𝐏 μ ↔ p ∈ co𝐏 μ'.
   Proof. intros eq. split; apply coP_preserved_by_LA_prog; [done | by symmetry]. Qed.
 
-  Lemma coR_preserved_by_LA_prog (p : P) μ μ' :
-    μ ≈ᴘʀᴏ μ' → blocking μ' → μ ∈ coR p → μ' ∈ coR p.
+  Lemma coR_preserved_by_LA_prog (p : P) μ β' :
+    μ ≈ᴘʀᴏ β' → blocking β' → μ ∈ coR p → β' ∈ coR p.
   Proof.
     intros eq b' (μ2 & accepts & duo & b).
-    destruct (coP_preserved_by_LA_prog p μ μ' eq) as (μ'' & duo' & accepts');
+    destruct (coP_preserved_by_LA_prog p μ β' eq) as (μ'' & duo' & accepts');
       [by exists μ2 |].
     by exists μ''.
   Qed.

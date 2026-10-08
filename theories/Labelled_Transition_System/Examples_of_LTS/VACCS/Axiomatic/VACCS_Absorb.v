@@ -136,7 +136,7 @@ Proof.
         -- eexists. eapply ParSync; [ exact eq | eassumption | exact l2 ].
     + intros p' Hp'. apply pt. apply lts_choiceR. exact Hp'.
     + intros t' Ht'. eapply H0; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hl1 Hl2.
+    + intros p' t' μ1 μ2 Hd Hl1 Hl2.
       eapply com; [ exact Hd | apply lts_choiceR; exact Hl1 | exact Hl2 ].
 Qed.
 
@@ -323,7 +323,7 @@ Qed.
 
 (** A transition either exists or does not — constructively, because the
     VACCS [gLts] instance exposes [lts_set] as a [gset], whose equality
-    with [∅] is decidable.  (The generic [lts_refuses_spec1]/[_spec2] both
+    with [∅] is decidable.  (The generic [lts_performs_spec1]/[_spec2] both
     misbehave on this instance — one times out — so go through [lts_set]
     directly, as elsewhere in this development.  The [Unshelve] is the
     usual instance-resolution quirk after [set_choose_L].) *)
@@ -400,7 +400,7 @@ Proof.
         -- eexists. eapply ParSync; [ exact eq | eassumption | exact l2 ].
     + intros p' Hp'. apply pt. apply lts_choiceR. exact Hp'.
     + intros t' Ht'. eapply H0; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hl1 Hl2.
+    + intros p' t' μ1 μ2 Hd Hl1 Hl2.
       eapply com; [ exact Hd | apply lts_choiceR; exact Hl1 | exact Hl2 ].
 Qed.
 
@@ -589,7 +589,7 @@ Proof.
         -- eexists. eapply ParSync; [ exact eq | eassumption | exact l2 ].
     + intros p' Hp'. apply pt. apply lts_choiceR. exact Hp'.
     + intros t' Ht'. eapply H0; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hl1 Hl2.
+    + intros p' t' μ1 μ2 Hd Hl1 Hl2.
       eapply com; [ exact Hd | apply lts_choiceR; exact Hl1 | exact Hl2 ].
 Qed.
 
@@ -645,7 +645,7 @@ Proof.
       * eexists. eapply ParRight. exact Ht2.
     + intros p' Hp'. exfalso. eapply Hst. apply Hsub. exact Hp'.
     + intros t' Ht'. eapply H0; [ exact Ht' | reflexivity | exact Hsub | exact Hst | exact Hex ].
-    + intros p' t' mu1 mu2 Hd Hl1 Hl2.
+    + intros p' t' μ1 μ2 Hd Hl1 Hl2.
       eapply com; [ exact Hd | apply Hsub; exact Hl1 | exact Hl2 ].
 Qed.
 
@@ -732,7 +732,7 @@ Proof.
               destruct Hsc as (r & Hr & _). eexists. eapply ParRight. exact Hr.
     + intros p' Hp'. unfold lts_step in *; simpl in *. inversion Hp'.
     + intros t' Ht'. eapply H0; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hl1 Hl2. unfold lts_step in *; simpl in *. inversion Hl1.
+    + intros p' t' μ1 μ2 Hd Hl1 Hl2. unfold lts_step in *; simpl in *. inversion Hl1.
 Qed.
 
 (** ** The restriction that IS sound on its own
@@ -815,7 +815,7 @@ Definition emits_on (c : ChannelData) (u : proc) : Prop :=
   exists v q, lts u ((c ▷ v)!) q.
 
 Definition emitsb (c : ChannelData) (u : proc) : bool :=
-  existsb (fun eta => match eta with
+  existsb (fun η => match η with
                       | ActOut (d,_) => bool_decide (d = c)
                       | _ => false end)
           (elements (lts_oba_mo u)).
@@ -823,8 +823,8 @@ Definition emitsb (c : ChannelData) (u : proc) : bool :=
 Lemma emits_on_dec : forall c u, emits_on c u \/ ~ emits_on c u.
 Proof.
   intros c u. destruct (emitsb c u) eqn:E.
-  - left. unfold emitsb in E. apply existsb_exists in E as (eta & Hin & Hb).
-    destruct eta as [[d x]|[d x]]; [ discriminate Hb | ].
+  - left. unfold emitsb in E. apply existsb_exists in E as (η & Hin & Hb).
+    destruct η as [[d x]|[d x]]; [ discriminate Hb | ].
     apply bool_decide_eq_true in Hb. subst d.
     apply list_elem_of_In in Hin. apply gmultiset_elem_of_elements in Hin.
     destruct (lts_oba_mo_spec_bis2 u (ActOut (c,x)) Hin) as (q & Hnb & Hl).
@@ -834,7 +834,7 @@ Proof.
     { unfold non_blocking. simpl. unfold non_blocking_output. exists (c ▷ v). reflexivity. }
     pose proof (lts_oba_mo_spec_bis1 u (ActOut (c,v)) q Hnb Hl) as Hmem.
     unfold emitsb in E.
-    assert (Hex : existsb (fun eta => match eta with
+    assert (Hex : existsb (fun η => match η with
                       | ActOut (d,_) => bool_decide (d = c)
                       | _ => false end) (elements (lts_oba_mo u)) = true).
     { apply existsb_exists. exists (ActOut (c,v)). split.
@@ -972,11 +972,11 @@ Lemma list_find_out : forall (D : chset), (forall c, D c \/ ~ D c) ->
   (exists c v, In (ActOut (c,v)) l /\ D c)
   \/ (forall c v, In (ActOut (c,v)) l -> ~ D c).
 Proof.
-  intros D Hdec. induction l as [|eta l IH].
+  intros D Hdec. induction l as [|η l IH].
   - right. intros c v []. 
   - destruct IH as [(c & v & Hin & Hd) | Hno].
     + left. exists c, v. split; [ right; exact Hin | exact Hd ].
-    + destruct eta as [[d x]|[d x]].
+    + destruct η as [[d x]|[d x]].
       * right. intros c v [He|Hin]; [ discriminate He | exact (Hno c v Hin) ].
       * destruct (Hdec d) as [Hd|Hd].
         -- left. exists d, x. split; [ left; reflexivity | exact Hd ].
@@ -1140,7 +1140,7 @@ Fixpoint grestrict (N M : gproc) : gproc :=
 match M with
 | gpr_input c P => if offersb N c then gpr_input c P else 𝟘
 | gpr_tau _ => 𝟘
-| gpr_choice M1 M2 => gpr_choice (grestrict N M1) (grestrict N M2)
+| gpr_choice M1 M2 => (grestrict N M1) + (grestrict N M2)
 | _ => M
 end.
 
@@ -1325,7 +1325,7 @@ Qed.
 Lemma wt_pchans : forall s (p q : proc), Static p -> p ⟹[s] q ->
   forall d, In d (pchans q) -> In d (pchans p).
 Proof.
-  intros s p q Hst Hw. induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH];
+  intros s p q Hst Hw. induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH];
     intros d Hd.
   - exact Hd.
   - eapply lts_pchans_target; [ exact Hst | exact Hl | ].
@@ -1537,7 +1537,7 @@ Qed.
 Lemma wt_ichans : forall s (p q : proc), Static p -> p ⟹[s] q ->
   forall d, In d (ichans q) -> In d (ichans p).
 Proof.
-  intros s p q Hst Hw. induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH];
+  intros s p q Hst Hw. induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH];
     intros d Hd.
   - exact Hd.
   - eapply lts_ichans_target; [ exact Hst | exact Hl | ].

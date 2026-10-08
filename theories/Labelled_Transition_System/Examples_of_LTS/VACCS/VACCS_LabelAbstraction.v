@@ -92,7 +92,7 @@ Definition repr_vaccs (x : TestA_vaccs) : ExtAct TypeOfActions :=
 
 (** Input acceptance does not depend on the value. *)
 Lemma accepts_input_any_value (p : proc) c v w :
-  ¬ p ↛[ActIn (c , v)] → ¬ p ↛[ActIn (c , w)].
+  p ⟶[ActIn (c , v)] → p ⟶[ActIn (c , w)].
 Proof.
   intros acc.
   assert (∀ a, ¬ @non_blocking _ VACCS_ExtAction (ActIn a)) as b by (intros a [? h]; discriminate h).

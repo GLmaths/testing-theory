@@ -58,7 +58,8 @@ Lemma either_wperform_mu `{gLts P A, !FiniteImagegLts P A}
   p ⤓ -> (exists q, p ⟹{μ} q) \/ ~ (exists q, p ⟹{μ} q).
 Proof.
   intro ht. induction ht.
-  destruct (lts_refuses_decidable p (ActExt μ)).
+  destruct (decide (p ⟶[μ])) as [Hnst | Hst].
+  - left. eapply lts_performs_spec1 in Hnst as (q & l). eauto with mdb.
   - assert (∀ x, x ∈ enum (dsig (lts_step p τ)) -> (∃ q0, `x ⟹{μ} q0) \/ ~ (∃ q0, `x ⟹{μ} q0))
        as Hyp
       by (intros (x & mem) _; set_solver).
@@ -67,9 +68,8 @@ Proof.
       left. exists q0. eapply wt_tau; eauto. now eapply bool_decide_unpack.
     + right. intros (q' & hw). inversion hw; subst.
       ++ contradict Hyp'. intros n. rewrite Forall_forall in n.
-         eapply (n (dexist q l0)). eapply elem_of_enum. eauto.
-      ++ eapply (@lts_refuses_spec2 P); eauto.
-  - left. eapply lts_refuses_spec1 in n as (q & l). eauto with mdb.
+         eapply (n (dexist q l)). eapply elem_of_enum. eauto.
+      ++ apply Hst, (@lts_performs_spec2 P); eauto.
 Qed.
 
 Lemma either_wperform_co_mu `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
@@ -82,7 +82,7 @@ Proof.
   destruct (decide (i ∈ (coR_abs p))) as [in_co | not_in_co].
   - left. eapply coR_abs_spec1 in in_co.
     destruct in_co as (β & mem & eq). subst. destruct mem as (μ & tr & duo & nb).
-    eapply lts_refuses_spec1 in tr as (q & l). exists β, μ , q.
+    eapply lts_performs_spec1 in tr as (q & l). exists β, μ , q.
     repeat split ;eauto. eapply lts_to_wt;eauto.
   - assert (∀ x, x ∈ enum (dsig (lts_step p τ)) 
   -> (∃ β μ q0, ( 𝝳 ∘ Φ ) β = i /\ `x ⟹{μ} q0 /\ dual μ β /\ blocking β) \/ ~ (∃ β μ q0, ( 𝝳 ∘ Φ ) β = i /\ `x ⟹{μ} q0 /\ dual μ β /\ blocking β))
@@ -97,7 +97,7 @@ Proof.
          exists β , μ , q'. eauto.
       ++ assert ((𝝳 ∘ Φ) β ∈ coR_abs p).
          { eapply coR_abs_spec2. eapply map_gamma_of_action.
-           exists μ. repeat split ;eauto. eapply (@lts_refuses_spec2 P); eauto. }
+           exists μ. repeat split ;eauto. eapply (@lts_performs_spec2 P); eauto. }
          contradiction.
 Qed.
 
@@ -220,14 +220,14 @@ Proof.
       exists p0. repeat split; eauto.
       eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
       eapply wt_push_nil_right, wt_push_nil_right; eauto. }
-    (* eapply lts_refuses_spec1 in mem_mu as (p'0 & HypTr). *)
+    (* eapply lts_performs_spec1 in mem_mu as (p'0 & HypTr). *)
     { destruct (decide (pre_μ ∈ G)).
       + eauto.
       + exfalso. 
         eapply coR_abs_spec1 in mem_mu as Hyp.
         destruct Hyp as (μ & Hyp_co & eq). subst.
         destruct Hyp_co as (μ' & tr & duo & b).
-        eapply lts_refuses_spec1 in tr as (p'' & tr'').
+        eapply lts_performs_spec1 in tr as (p'' & tr'').
         eapply (nhw $ μ); eauto.
         unfold oas in mem0. set_solver.
         eapply wt_push_nil_left; eauto with mdb. }
@@ -277,14 +277,14 @@ Proof.
   destruct Hyp_co as (μ'2 & tr & duo' & b').
 
   assert { r' | r ⟶[ μ'2 ] r'} as (r' & HypTr).
-  { eapply lts_refuses_spec1. eauto. }
+  { eapply lts_performs_spec1. eauto. }
   inversion hw'; subst.
-  * eapply lts_refuses_spec2 in hst; eauto.
+  * exfalso; apply hst, lts_performs_spec2; eauto.
   * eapply nmem.
     eapply coR_abs_spec2.
     eapply map_gamma_of_action.
     exists μ. repeat split.
-    - eapply lts_refuses_spec2. eauto.
+    - eapply lts_performs_spec2. eauto.
     - exact duo.
     - exact b.
 Qed.
@@ -317,17 +317,17 @@ Proof.
     assert (exists β μ r, ( 𝝳 ∘ Φ ) β ∈ G /\ pt ⟹{μ} r /\ dual μ β /\ blocking β) as (β & μ & p0 & mem0 & hw0 & duo & b).
     { eapply hm. eapply wt_set_spec2; eauto. eapply wt_nil. }
     inversion hw0; subst.
-    + exfalso. eapply lts_refuses_spec2 in hstpt; eauto.
+    + exfalso. apply hstpt, lts_performs_spec2; eauto.
     + assert (( 𝝳 ∘ Φ) β ∈ coR_abs qt) as mem'.
       { eapply coR_abs_spec2. eapply hsubpt.
       eapply map_gamma_of_action. exists μ.
       repeat split.
-      -- eapply lts_refuses_spec2 ;eauto.
+      -- eapply lts_performs_spec2 ;eauto.
       -- exact duo. 
       -- exact b. }
       eapply coR_abs_spec1 in mem'. destruct mem' as (μ' & mem' & eq).
       destruct mem' as (μ'' & tr & duo' & b').
-      exists μ'.  exists μ''. eapply lts_refuses_spec1 in tr as (qr & tr_qr).
+      exists μ'.  exists μ''. eapply lts_performs_spec1 in tr as (qr & tr_qr).
       exists qr. repeat split.
       ++ rewrite<- eq; eauto.
       ++ eapply wt_push_nil_left; eauto with mdb.

@@ -66,7 +66,7 @@ Section Smyth.
   Context `{QM : QuantumModel}.
   Context (XM : ∀ P : Prop, P ∨ ¬ P).
   Context (W_total : ∀ a b : W, W_le a b ∨ W_le b a).
-  Context (W_dense : ∀ a b : W, prob_lt a b → ∃ c, prob_lt a c ∧ prob_lt c b).
+  Context (W_dense : ∀ a b : W, a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b).
 
   #[local] Instance lq_DenseWeights : DenseWeights := {| prob_dense := W_dense |}.
 

@@ -25,7 +25,7 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
-From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation.
+From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation.
 
 (** ** Lts that respects the axioms NB-DELAY , NB-CONFLUENCE, NB-TAU, NB-DETERMINACY and BACKWARDS-NB-DETERMINACY *)
 
@@ -106,13 +106,13 @@ Lemma refuses_tau_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η :
   non_blocking η → p ↛ → p ⟶[ η ] q → q ↛.
 Proof.
   intros nb st l.
-  destruct (decide (q ↛)) as [ refuses | accepts ]. 
-  + exact refuses. 
-  + eapply lts_refuses_spec1 in accepts as (t & l').
+  destruct (decide (q ⟶)) as [ accepts | refuses ].
+  + eapply lts_performs_spec1 in accepts as (t & l').
     destruct (nb_delay nb l l') as (r & l1 & l2).
-    assert (¬ p ↛).
-    { eapply lts_refuses_spec2; eauto. } 
+    assert (p ⟶).
+    { eapply lts_performs_spec2; eauto. }
     contradiction.
+  + exact refuses.
 Qed.
 
 Lemma lts_different_action_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η μ :
@@ -128,11 +128,11 @@ Lemma refuses_action_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η 
   p ↛[μ] → p ⟶[η] q → q ↛[μ] .
 Proof.
   intros nb st l.
-  destruct (decide (q ↛[μ])) as [ refuses | accepts ].
-  + exact refuses. 
-  + eapply lts_refuses_spec1 in accepts as (t & l').
+  destruct (decide (q ⟶[μ])) as [ accepts | refuses ].
+  + eapply lts_performs_spec1 in accepts as (t & l').
     destruct (nb_delay nb l l') as (r & l1 & l2).
-    assert (¬ p ↛[μ]).
-    { eapply lts_refuses_spec2; eauto. } 
+    assert (p ⟶[μ]).
+    { eapply lts_performs_spec2; eauto. }
     contradiction.
+  + exact refuses.
 Qed.

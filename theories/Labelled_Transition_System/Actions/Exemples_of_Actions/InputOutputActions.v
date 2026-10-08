@@ -84,13 +84,13 @@ Proof. by destruct l1 as [[?|?]|], l2 as [[?|?]|]; eauto; intros ->. Qed.
 Proof. solve_decision. Defined.
 #[global] Instance act_eqdec `{EqDecision L} : EqDecision (Act L).
 Proof. solve_decision. Defined.
-#[global] Instance ext_act_match_dec `{EqDecision L} : ∀ (ℓ1 ℓ2: ExtAct L), Decision (ext_act_match ℓ1 ℓ2).
+#[global] Instance ext_act_match_dec `{EqDecision L} : ∀ (α1 α2: ExtAct L), Decision (ext_act_match α1 α2).
 Proof.
   intros [l1|l1] [l2|l2]; [by right; intros ? | | | by right; intros ?];
     destruct (decide (l1 = l2)); eauto.
 Defined.
 
-#[global] Instance act_match_dec `{EqDecision L} : ∀ (ℓ1 ℓ2: Act (ExtAct L)), Decision (act_match ℓ1 ℓ2).
+#[global] Instance act_match_dec `{EqDecision L} : ∀ (α1 α2: Act (ExtAct L)), Decision (act_match α1 α2).
 Proof. intros [l1|] [l2|]; try by (right; eauto). simpl. apply _. Defined.
 
 Definition is_input {A} (μ : ExtAct A) := ∃ a, μ = ActIn a.

@@ -77,12 +77,12 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{FS : !FwSync Aproc Ate
 Lemma inr_spec (η : Atest) : non_blocking η →
     non_blocking (inr η : Aproc + Atest)
   ∧ (∀ a : Aproc + Atest, sync a η ↔ dual a (inr η))
-  ∧ (∀ ν, dual ν η → sync (inr η : Aproc + Atest) ν).
+  ∧ (∀ μ, dual μ η → sync (inr η : Aproc + Atest) μ).
 Proof.
   intros nb. split_and!.
   - exact nb.
   - intros a. split; intro h; exact h.
-  - intros ν hd. simpl. by symmetry.
+  - intros μ hd. simpl. by symmetry.
 Qed.
 
 End FwSyncFacts.

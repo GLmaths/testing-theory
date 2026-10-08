@@ -92,15 +92,15 @@ Qed.
 Lemma fw_nil_stable_iff : forall (p : proc), (p ▷ ∅) ↛ <-> p ↛.
 Proof.
   intro p. split.
-  - intro H. destruct (decide (lts_refuses p τ)) as [Hy|Hn]; [exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (q & Hq).
-    apply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ (p ▷ ∅) τ); [ | exact H ].
+  - intro H. intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (q & Hq).
+    apply H, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ (p ▷ ∅) τ).
     exists (q ▷ ∅). apply fw_tau_left. exact Hq.
-  - intro H. destruct (decide (lts_refuses (p ▷ ∅) τ)) as [Hy|Hn]; [exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as ((p1,m1) & Hq).
+  - intro H. intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as ((p1,m1) & Hq).
     destruct (fw_tau_shape p ∅ (p1,m1) Hq) as [HA|HB].
     + destruct HA as (p' & Hp' & E).
-      apply (@lts_refuses_spec2 proc _ _ _ p τ); [ | exact H ].
+      apply H, (@lts_performs_spec2 proc _ _ _ p τ).
       exists p'. exact Hp'.
     + destruct HB as (a & p' & m' & Hm & _ & _). eapply empty_not_disj. exact Hm.
 Qed.
@@ -130,22 +130,22 @@ Proof.
   assert (Hin : (Inputs c) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (p1 ▷ ∅))).
   { exists (ActIn (c,v)). split; [ | reflexivity ].
     exists (ActOut (c,v)). repeat split.
-    + intro Hst2. eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-                            (p1 ▷ ∅) (ActExt (ActOut (c,v)))); [ | exact Hst2 ].
+    + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+                            (p1 ▷ ∅) (ActExt (ActOut (c,v)))).
       exists (r ▷ ∅). apply fw_ext_left. exact Hr.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb. }
-  apply Hincl in Hin. destruct Hin as (mu & Hmu & Heq).
-  destruct mu as [[c0 v0]|[c0 v0]]; simpl in Heq.
+  apply Hincl in Hin. destruct Hin as (μ & Hmu & Heq).
+  destruct μ as [[c0 v0]|[c0 v0]]; simpl in Heq.
   - inversion Heq; subst.
-    destruct Hmu as (mu2 & Hnr & Hd & _).
-    destruct mu2 as [[d w]|[d w]]; simpl in Hd; [ exact (match Hd with end) | ].
+    destruct Hmu as (μ2 & Hnr & Hd & _).
+    destruct μ2 as [[d w]|[d w]]; simpl in Hd; [ exact (match Hd with end) | ].
     inversion Hd; subst.
-    apply lts_refuses_spec1 in Hnr as ((r1,m2) & Hr1).
+    apply lts_performs_spec1 in Hnr as ((r1,m2) & Hr1).
     destruct (fw_ext_shape q1 ∅ (ActOut (c0,v0)) (r1,m2) Hr1) as [HA|[HB|HC]].
     + destruct HA as (r' & Hr' & _). exists v0, r'. exact Hr'.
     + destruct HB as (b & Hb & _). discriminate Hb.
     + destruct HC as (b & m' & _ & Hm & _). exfalso. eapply empty_not_disj. exact Hm.
-  - exfalso. destruct Hmu as (mu2 & _ & _ & Hb).
+  - exfalso. destruct Hmu as (μ2 & _ & _ & Hb).
     unfold non_blocking_output, is_output in Hb. apply Hb. eexists; reflexivity.
 Qed.
 
@@ -208,10 +208,10 @@ Proof.
     destruct x as (p1,m1). simpl in *. apply IH; [ exact HSx | lia ].
 Qed.
 
-Lemma fw_static_ext : forall (p : proc) (m : MO (ExtAct TypeOfActions)) mu x,
-  Static p -> (p ▷ m) ⟶[mu] x -> Static x.1.
+Lemma fw_static_ext : forall (p : proc) (m : MO (ExtAct TypeOfActions)) μ x,
+  Static p -> (p ▷ m) ⟶[μ] x -> Static x.1.
 Proof.
-  intros p m mu x HS Hl. destruct (fw_ext_shape p m mu x Hl) as [HA|[HB|HC]].
+  intros p m μ x HS Hl. destruct (fw_ext_shape p m μ x Hl) as [HA|[HB|HC]].
   - destruct HA as (r & Hr & E). subst x. simpl. eapply Static_preserved_by_lts; eassumption.
   - destruct HB as (a & _ & E). subst x. simpl. exact HS.
   - destruct HC as (a & m' & _ & _ & E). subst x. simpl. exact HS.
@@ -220,7 +220,7 @@ Qed.
 Lemma fw_static_wt : forall s (x y : proc * MO (ExtAct TypeOfActions)),
   Static x.1 -> x ⟹[s] y -> Static y.1.
 Proof.
-  intros s x y HS Hw. induction Hw as [z|s1 z r w Hl Hwt IH|mu s1 z r w Hl Hwt IH].
+  intros s x y HS Hw. induction Hw as [z|s1 z r w Hl Hwt IH|μ s1 z r w Hl Hwt IH].
   - exact HS.
   - apply IH. destruct (fw_static_tau z.1 z.2 r) as (Hr & _); [ exact HS | | exact Hr ].
     destruct z as (z1,z2). exact Hl.
@@ -230,12 +230,12 @@ Qed.
 Theorem fw_converge_static : forall s (p : proc) (m : MO (ExtAct TypeOfActions)),
   Static p -> (p ▷ m) ⇓ s.
 Proof.
-  induction s as [|mu s IH]; intros p m HS.
+  induction s as [|μ s IH]; intros p m HS.
   - apply cnv_nil. eapply fw_terminate_static; [ exact HS | apply le_n ].
   - apply cnv_act.
     + eapply fw_terminate_static; [ exact HS | apply le_n ].
     + intros q Hq. destruct q as (q1,m1).
-      apply IH. eapply (fw_static_wt [mu] (p ▷ m) (q1 ▷ m1)); [ exact HS | exact Hq ].
+      apply IH. eapply (fw_static_wt [μ] (p ▷ m) (q1 ▷ m1)); [ exact HS | exact Hq ].
 Qed.
 
 (** ** The condition itself
@@ -269,18 +269,18 @@ Proof.
   assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x)).
   { exists (ActIn (d,w)). split; [ | reflexivity ].
     exists (ActOut (d,w)). repeat split.
-    + intro Hst2. eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-                            x (ActExt (ActOut (d,w)))); [ | exact Hst2 ].
+    + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+                            x (ActExt (ActOut (d,w)))).
       exists r. exact Hr.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb. }
-  apply Hincl in Hin. destruct Hin as (mu & Hmu & Heq).
-  destruct mu as [[d0 w0]|[d0 w0]]; simpl in Heq.
+  apply Hincl in Hin. destruct Hin as (μ & Hmu & Heq).
+  destruct μ as [[d0 w0]|[d0 w0]]; simpl in Heq.
   - inversion Heq; subst.
-    destruct Hmu as (mu2 & Hnr & Hd & _).
-    destruct mu2 as [[e1 x1]|[e1 x1]]; simpl in Hd; [ exact (match Hd with end) | ].
+    destruct Hmu as (μ2 & Hnr & Hd & _).
+    destruct μ2 as [[e1 x1]|[e1 x1]]; simpl in Hd; [ exact (match Hd with end) | ].
     inversion Hd; subst.
-    apply lts_refuses_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
-  - exfalso. destruct Hmu as (mu2 & _ & _ & Hb).
+    apply lts_performs_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
+  - exfalso. destruct Hmu as (μ2 & _ & _ & Hb).
     unfold non_blocking_output, is_output in Hb. apply Hb. eexists; reflexivity.
 Qed.
 
@@ -310,7 +310,7 @@ Lemma fw_feed_inv : forall (x y : proc * MO (ExtAct TypeOfActions)) a,
   x ⟹[[ActIn a]] y -> (x.1 ▷ ({[+ ActOut a +]} ⊎ x.2)) ⟹[[]] y.
 Proof.
   intros x y a Hw. remember [ActIn a] as s0 eqn:Hs. revert a Hs.
-  induction Hw as [z|s1 z r w Hl Hwt IH|mu s1 z r w Hl Hwt IH]; intros a Hs.
+  induction Hw as [z|s1 z r w Hl Hwt IH|μ s1 z r w Hl Hwt IH]; intros a Hs.
   - discriminate Hs.
   - specialize (IH a Hs).
     destruct (fw_tau_shape z.1 z.2 r) as [HA|HB]; [ destruct z as (z1,z2); exact Hl | | ].
@@ -319,7 +319,7 @@ Proof.
     + destruct HB as (b & p' & m' & Hm & Hp' & E). subst r. simpl in *.
       eapply wt_tau; [ | exact IH ].
       rewrite Hm. rewrite mo_swap. apply fw_tau_deliver. exact Hp'.
-  - injection Hs as Hmu Hs1. subst mu s1.
+  - injection Hs as Hmu Hs1. subst μ s1.
     destruct (fw_ext_shape z.1 z.2 (ActIn a) r) as [HA|[HB|HC]];
       [ destruct z as (z1,z2); exact Hl | | | ].
     + destruct HA as (p' & Hp' & E). subst r. simpl in *.
@@ -395,9 +395,8 @@ Proof.
     { apply fw_stable_iff. split; [ exact HstN | ].
       intros a Hin q Hq. apply gmultiset_elem_of_singleton in Hin.
       injection Hin as Hin. subst a. eapply Hnoc. exact Hq. }
-    destruct (decide (lts_refuses ((g N) ▷ ({[+ ActOut (c,v) +]} : MO (ExtAct TypeOfActions))) τ))
-      as [Hy|Hn]; [ exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (x & Hx). eapply Hnostep. exact Hx. }
+    intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (x & Hx). eapply Hnostep. exact Hx. }
   destruct (must_i_cond2_fed (g M) (g N) c v (static_g M HM) (static_g N HN) Hsem
               ((g N) ▷ ({[+ ActOut (c,v) +]} : MO (ExtAct TypeOfActions)))
               (wt_nil _) Hsty) as (x & Hwx & Hstx & Hincl).
@@ -496,19 +495,19 @@ Lemma coR_abs_pair_iff : forall (x : proc * MO (ExtAct TypeOfActions)) d,
   (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x) <-> (exists w r, x ⟶[ActOut (d,w)] r).
 Proof.
   intros x d. split.
-  - intros (mu & Hmu & Heq). destruct mu as [[d0 w0]|[d0 w0]]; simpl in Heq.
+  - intros (μ & Hmu & Heq). destruct μ as [[d0 w0]|[d0 w0]]; simpl in Heq.
     + inversion Heq; subst.
-      destruct Hmu as (mu2 & Hnr & Hd & _).
-      destruct mu2 as [[e1 x1]|[e1 x1]]; simpl in Hd; [ exact (match Hd with end) | ].
+      destruct Hmu as (μ2 & Hnr & Hd & _).
+      destruct μ2 as [[e1 x1]|[e1 x1]]; simpl in Hd; [ exact (match Hd with end) | ].
       inversion Hd; subst.
-      apply lts_refuses_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
-    + exfalso. destruct Hmu as (mu2 & _ & _ & Hb).
+      apply lts_performs_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
+    + exfalso. destruct Hmu as (μ2 & _ & _ & Hb).
       unfold non_blocking_output, is_output in Hb. apply Hb. eexists; reflexivity.
   - intros (w & r & Hr).
     exists (ActIn (d,w)). split; [ | reflexivity ].
     exists (ActOut (d,w)). repeat split.
-    + intro Hst2. eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-                            x (ActExt (ActOut (d,w)))); [ | exact Hst2 ].
+    + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+                            x (ActExt (ActOut (d,w)))).
       exists r. exact Hr.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb.
 Qed.
@@ -518,7 +517,7 @@ Definition SettleSim
   (R : (proc * MO (ExtAct TypeOfActions)) -> (proc * MO (ExtAct TypeOfActions)) -> Prop)
   : Prop :=
   (forall x y y', R x y -> y ⟶ y' -> exists x', x ⟹[[]] x' /\ R x' y')
-  /\ (forall x y mu y', R x y -> y ⟶[mu] y' -> exists x', x ⟹{mu} x' /\ R x' y')
+  /\ (forall x y μ y', R x y -> y ⟶[μ] y' -> exists x', x ⟹{μ} x' /\ R x' y')
   /\ (forall x y, R x y -> y ↛ -> Settles (emits y) x).
 
 (** Two closure facts that make a [SettleSim] modular: the diagonal is
@@ -529,7 +528,7 @@ Definition SettleSim
     have to be.
 
     Worth keeping in view when designing such a relation: the step
-    clauses answer with **weak** transitions ([⟹[[]]] and [⟹{mu}]), so
+    clauses answer with **weak** transitions ([⟹[[]]] and [⟹{μ}]), so
     the left is free to take internal moves while mimicking the right.
     That is not a technicality — it is exactly what lets a configuration
     whose bag can be *regenerated* by a continuation keep up with a right
@@ -540,7 +539,7 @@ Proof.
   split; [ | split ].
   - intros x y y' Hxy Hl. subst x. exists y'.
     split; [ eapply wt_tau; [ exact Hl | apply wt_nil ] | reflexivity ].
-  - intros x y mu y' Hxy Hl. subst x. exists y'.
+  - intros x y μ y' Hxy Hl. subst x. exists y'.
     split; [ eapply wt_act; [ exact Hl | apply wt_nil ] | reflexivity ].
   - intros x y Hxy Hst. subst x. apply Settles_here; [ exact Hst | ].
     intros d w r Hr. exists w, r. exact Hr.
@@ -553,9 +552,9 @@ Proof.
   - intros x y y' [H|H] Hl.
     + destruct (A1 x y y' H Hl) as (x' & Hw & HR). exists x'. split; [ exact Hw | left; exact HR ].
     + destruct (B1 x y y' H Hl) as (x' & Hw & HR). exists x'. split; [ exact Hw | right; exact HR ].
-  - intros x y mu y' [H|H] Hl.
-    + destruct (A2 x y mu y' H Hl) as (x' & Hw & HR). exists x'. split; [ exact Hw | left; exact HR ].
-    + destruct (B2 x y mu y' H Hl) as (x' & Hw & HR). exists x'. split; [ exact Hw | right; exact HR ].
+  - intros x y μ y' [H|H] Hl.
+    + destruct (A2 x y μ y' H Hl) as (x' & Hw & HR). exists x'. split; [ exact Hw | left; exact HR ].
+    + destruct (B2 x y μ y' H Hl) as (x' & Hw & HR). exists x'. split; [ exact Hw | right; exact HR ].
   - intros x y [H|H] Hst; [ apply A3 | apply B3 ]; assumption.
 Qed.
 
@@ -564,7 +563,7 @@ Lemma settle_sim_run : forall R, SettleSim R -> forall s y y' x,
   exists x', x ⟹[s] x' /\ x' ↛ /\ (forall d, emits x' d -> emits y' d).
 Proof.
   intros R (H1 & H2 & H3) s y y' x HR Hw. revert x HR.
-  induction Hw as [z|s1 z r w Hl Hwt IH|mu s1 z r w Hl Hwt IH]; intros x HR Hst.
+  induction Hw as [z|s1 z r w Hl Hwt IH|μ s1 z r w Hl Hwt IH]; intros x HR Hst.
   - destruct (H3 x z HR Hst) as (x' & Hwx & Hstx & He).
     exists x'. split; [ exact Hwx | ]. split; [ exact Hstx | ].
     intros d (w0 & r0 & Hr0). eapply He. exact Hr0.
@@ -573,7 +572,7 @@ Proof.
     exists x'. split; [ | split; [ exact Hstx | exact He ] ].
     replace s1 with ([] ++ s1) by reflexivity.
     eapply wt_concat; [ exact Hwx1 | exact Hwx ].
-  - destruct (H2 x z mu r HR Hl) as (x1 & Hwx1 & HR1).
+  - destruct (H2 x z μ r HR Hl) as (x1 & Hwx1 & HR1).
     destruct (IH x1 HR1 Hst) as (x' & Hwx & Hstx & He).
     exists x'. split; [ | split; [ exact Hstx | exact He ] ].
     eapply wt_push_left; [ exact Hwx1 | exact Hwx ].
@@ -626,7 +625,7 @@ Lemma fw_tau_run_add : forall (x y : proc * MO (ExtAct TypeOfActions)) k,
   x ⟹[[]] y -> (x.1 ▷ (k ⊎ x.2)) ⟹[[]] (y.1 ▷ (k ⊎ y.2)).
 Proof.
   intros x y k Hw. remember ([] : trace (ExtAct TypeOfActions)) as s0 eqn:Hs.
-  induction Hw as [z|s1 z r w Hl Hwt IH|mu s1 z r w Hl Hwt IH].
+  induction Hw as [z|s1 z r w Hl Hwt IH|μ s1 z r w Hl Hwt IH].
   - destruct z as (z1,z2). apply wt_nil.
   - eapply wt_tau; [ | apply IH; exact Hs ]. apply fw_tau_add. exact Hl.
   - discriminate Hs.
@@ -703,18 +702,18 @@ Proof.
            exists (p' ▷ m0). split; [ | left; reflexivity ].
            eapply wt_tau; [ | apply wt_nil ]. rewrite Hm.
            apply fw_tau_deliver. apply Hsub. exact Hp'.
-    + intros x y mu y' HR Hl. destruct HR as [He | (m & Ex & Ey)].
+    + intros x y μ y' HR Hl. destruct HR as [He | (m & Ex & Ey)].
       * subst x. exists y'. split; [ eapply wt_act; [ exact Hl | apply wt_nil ] | ].
         left. reflexivity.
-      * subst x y. destruct (fw_ext_shape (g M') m mu y' Hl) as [HA|[HB|HC]].
+      * subst x y. destruct (fw_ext_shape (g M') m μ y' Hl) as [HA|[HB|HC]].
         -- destruct HA as (p' & Hp' & E). subst y'.
            exists (p' ▷ m). split; [ | left; reflexivity ].
            eapply wt_act; [ | apply wt_nil ]. apply fw_ext_left. apply Hsub. exact Hp'.
-        -- destruct HB as (a & Ha & E). subst mu y'.
+        -- destruct HB as (a & Ha & E). subst μ y'.
            exists ((g M) ▷ ({[+ ActOut a +]} ⊎ m)). split.
            ++ eapply wt_act; [ apply fw_input_always | apply wt_nil ].
            ++ right. exists ({[+ ActOut a +]} ⊎ m). split; reflexivity.
-        -- destruct HC as (a & m0 & Ha & Hm & E). subst mu y'.
+        -- destruct HC as (a & m0 & Ha & Hm & E). subst μ y'.
            exists ((g M) ▷ m0). split.
            ++ eapply wt_act; [ | apply wt_nil ]. rewrite Hm. apply fw_emit.
            ++ right. exists m0. split; reflexivity.
@@ -812,13 +811,13 @@ Proof.
   exists (y1 ▷ (k ⊎ y2)). split.
   { apply (fw_tau_run_add (x1 ▷ x2) (y1 ▷ y2) k). exact Hw. }
   assert (Hsty : forall z, ~ ((y1 ▷ y2) ⟶ z)).
-  { intros z Hz. eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-                           (y1 ▷ y2) τ); [ | exact Hst ].
+  { intros z Hz. apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+                           (y1 ▷ y2) τ).
     exists z. exact Hz. }
   apply fw_stable_iff in Hsty as (Hty & Hry). simpl in Hty, Hry.
   split.
-  - destruct (decide (lts_refuses ((y1 : proc) ▷ (k ⊎ y2)) τ)) as [Hy|Hn]; [ exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz).
+  - intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (z & Hz).
     eapply (proj2 (fw_stable_iff y1 (k ⊎ y2))); [ | exact Hz ].
     split; [ exact Hty | ].
     intros a Hin q Hq. apply gmultiset_elem_of_disj_union in Hin.
@@ -867,8 +866,8 @@ Proof.
   { assert (Hnostep : forall x, ~ (((g N) ▷ bag l) ⟶ x)).
     { apply fw_stable_iff. split; [ exact HstN | ].
       intros a Hin q Hq. eapply Hnoc; [ exact Hin | exact Hq ]. }
-    destruct (decide (lts_refuses ((g N) ▷ bag l) τ)) as [Hy|Hn]; [ exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
+    intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
   assert (Hwq : ((g N) ▷ (∅ : MO (ExtAct TypeOfActions))) ⟹[feed l] ((g N) ▷ bag l)).
   { replace (feed l) with (feed l ++ []) by (rewrite app_nil_r; reflexivity).
     apply fw_wt_feed_list.
@@ -1021,8 +1020,8 @@ Proof.
     { apply fw_stable_iff. split.
       - intros q Hq. inversion Hq.
       - intros a Hin q Hq. inversion Hq. }
-    destruct (decide (lts_refuses (((g 𝟘) : proc) ▷ bag l) τ)) as [Hy|Hn]; [ exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
+    intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
   assert (Hwq : (((g 𝟘) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))
                   ⟹[feed l] (((g 𝟘) : proc) ▷ bag l)).
   { replace (feed l) with (feed l ++ []) by (rewrite app_nil_r; reflexivity).
@@ -1071,10 +1070,9 @@ Lemma wt_nil_stable_fw : forall (x y : proc * MO (ExtAct TypeOfActions)),
   x ↛ -> x ⟹[[]] y -> y = x.
 Proof.
   intros x y Hst Hw. remember ([] : trace (ExtAct TypeOfActions)) as s0 eqn:Hs.
-  induction Hw as [z|s1 z r w Hl Hwt IH|mu s1 z r w Hl Hwt IH].
+  induction Hw as [z|s1 z r w Hl Hwt IH|μ s1 z r w Hl Hwt IH].
   - reflexivity.
-  - exfalso. eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ z τ);
-      [ | exact Hst ]. exists r. exact Hl.
+  - exfalso. apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ z τ). exists r. exact Hl.
   - discriminate Hs.
 Qed.
 
@@ -1103,10 +1101,8 @@ Proof.
     { apply fw_stable_iff. split.
       - intros z Hz. inversion Hz.
       - intros a Hin z Hz. exfalso. eapply gmultiset_not_elem_of_empty. exact Hin. }
-    destruct (decide (lts_refuses (((g ((cst c) ? P)) : proc)
-                                    ▷ (∅ : MO (ExtAct TypeOfActions))) τ))
-      as [Hok|Hn]; [ exact Hok | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
+    intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
   assert (Hwy : (q ▷ ({[+ ActOut (cst d, cst w) +]} : MO (ExtAct TypeOfActions)))
                   ⟹[[]] (((g ((cst c) ? P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))).
   { eapply wt_tau; [ | apply wt_nil ].
@@ -1131,10 +1127,8 @@ Proof.
       - intros a Hin z Hz. apply gmultiset_elem_of_singleton in Hin.
         injection Hin as Hin. subst a. unfold p in Hz. inversion Hz; subst.
         apply Hcd. reflexivity. }
-    destruct (decide (lts_refuses (p ▷ ({[+ ActOut (cst d, cst w) +]}
-                                          : MO (ExtAct TypeOfActions))) τ))
-      as [Hok|Hn]; [ exact Hok | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
+    intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
   pose proof (wt_nil_stable_fw _ _ Hstp Hwx) as Hxe. subst x.
   destruct (Hincl (cst d)) as (w0 & r0 & Hr0).
   { exists (cst w). apply fw_emit_of_mem.
@@ -1182,19 +1176,19 @@ Proof.
            exists (p' ▷ m0). split; [ | left; reflexivity ].
            eapply wt_tau; [ | apply wt_nil ]. rewrite Hm.
            apply fw_tau_deliver. apply Hsub. exact Hp'.
-    + intros x y mu y' HR Hl. destruct HR as [He | (m & Hout & Ex & Ey)].
+    + intros x y μ y' HR Hl. destruct HR as [He | (m & Hout & Ex & Ey)].
       * subst x. exists y'. split; [ eapply wt_act; [ exact Hl | apply wt_nil ] | ].
         left. reflexivity.
-      * subst x y. destruct (fw_ext_shape (g M') m mu y' Hl) as [HA|[HB|HC]].
+      * subst x y. destruct (fw_ext_shape (g M') m μ y' Hl) as [HA|[HB|HC]].
         -- destruct HA as (p' & Hp' & E). subst y'.
            exists (p' ▷ m). split; [ | left; reflexivity ].
            eapply wt_act; [ | apply wt_nil ]. apply fw_ext_left. apply Hsub. exact Hp'.
-        -- destruct HB as (a & Ha & E). subst mu y'.
+        -- destruct HB as (a & Ha & E). subst μ y'.
            exists ((g M) ▷ ({[+ ActOut a +]} ⊎ m)). split.
            ++ eapply wt_act; [ apply fw_input_always | apply wt_nil ].
            ++ right. exists ({[+ ActOut a +]} ⊎ m).
               split; [ apply OutOnly_add; exact Hout | split; reflexivity ].
-        -- destruct HC as (a & m0 & Ha & Hm & E). subst mu y'.
+        -- destruct HC as (a & m0 & Ha & Hm & E). subst μ y'.
            exists ((g M) ▷ m0). split.
            ++ eapply wt_act; [ | apply wt_nil ]. rewrite Hm. apply fw_emit.
            ++ right. exists m0.
@@ -1511,16 +1505,16 @@ Qed.
     **below** each member, one good element suffices. *)
 
 Lemma copre_step_single :
-  forall (X Y : gset (proc * MO (ExtAct TypeOfActions))) y y' mu,
+  forall (X Y : gset (proc * MO (ExtAct TypeOfActions))) y y' μ,
   X ᶜᵒ≼ₐₛ Y ->
-  (forall x, x ∈ X -> x ⇓ [mu]) ->
-  y ∈ Y -> y ⟶[mu] y' ->
-  exists X', FiniteImageLTS.wt_set_from_pset_spec X [mu] X'
+  (forall x, x ∈ X -> x ⇓ [μ]) ->
+  y ∈ Y -> y ⟶[μ] y' ->
+  exists X', FiniteImageLTS.wt_set_from_pset_spec X [μ] X'
         /\ X' ᶜᵒ≼ₐₛ ({[ y' ]} : gset (proc * MO (ExtAct TypeOfActions))).
 Proof.
-  intros X Y y y' mu Hco Hcnv Hy Hl.
-  exists (FiniteImageLTS.wt_s_set_from_pset X [mu] Hcnv).
-  pose proof (FiniteImageLTS.wt_s_set_from_pset_ispec X [mu] Hcnv) as Hspec.
+  intros X Y y y' μ Hco Hcnv Hy Hl.
+  exists (FiniteImageLTS.wt_s_set_from_pset X [μ] Hcnv).
+  pose proof (FiniteImageLTS.wt_s_set_from_pset_ispec X [μ] Hcnv) as Hspec.
   split; [ exact Hspec | ].
   eapply c_step; [ exact Hco | | | exact Hspec ].
   - apply SetLTSConstruction.convergence_set_if_convergence_forall. exact Hcnv.
@@ -1529,17 +1523,17 @@ Proof.
 Qed.
 
 Theorem copre_settles_after :
-  forall (l l' : list TypeOfActions) (p q : proc) mu y', Static p ->
+  forall (l l' : list TypeOfActions) (p q : proc) μ y', Static p ->
   ((msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ q)) ->
-  ((q ▷ bag l') ⟶[mu] y') -> y' ↛ ->
-  exists x, (p ▷ bag l) ⟹{mu} x /\ Settles (emits y') x.
+  ((q ▷ bag l') ⟶[μ] y') -> y' ↛ ->
+  exists x, (p ▷ bag l) ⟹{μ} x /\ Settles (emits y') x.
 Proof.
-  intros l l' p q mu y' Hp Hsem Hl Hst.
+  intros l l' p q μ y' Hp Hsem Hl Hst.
   assert (Hcnv : forall x, x ∈ ({[ (p ▷ bag l) ]} : gset (proc * MO (ExtAct TypeOfActions))) ->
-                   x ⇓ [mu]).
+                   x ⇓ [μ]).
   { intros x Hx. apply elem_of_singleton_1 in Hx. subst x.
     apply fw_converge_static. exact Hp. }
-  destruct (copre_step_single _ _ (q ▷ bag l') y' mu
+  destruct (copre_step_single _ _ (q ▷ bag l') y' μ
               (msgs_copre l l' p q Hsem) Hcnv
               (elem_of_singleton_2 _ _ eq_refl) Hl)
     as (X' & (Hs1 & Hs2) & Hco').
@@ -1592,17 +1586,17 @@ Lemma copre_step_trace :
   exists X', FiniteImageLTS.wt_set_from_pset_spec1 X s X'
         /\ X' ᶜᵒ≼ₐₛ ({[ y' ]} : gset (proc * MO (ExtAct TypeOfActions))).
 Proof.
-  induction s as [|mu s IH]; intros X Y y y' Hco HSt Hy Hw.
+  induction s as [|μ s IH]; intros X Y y y' Hco HSt Hy Hw.
   - exists X. split.
     + intros z Hz. exists z. split; [ exact Hz | apply wt_nil ].
     + eapply c_tau; [ exact Hco | ].
       intros z Hz. apply elem_of_singleton_1 in Hz. subst z.
       exists y. split; [ exact Hy | exact Hw ].
   - apply wt_pop in Hw as (y1 & Hw1 & Hw2).
-    assert (Hcnv : forall x, x ∈ X -> x ⇓ [mu]).
+    assert (Hcnv : forall x, x ∈ X -> x ⇓ [μ]).
     { intros x Hx. destruct x as (x1,x2). apply fw_converge_static. apply (HSt _ Hx). }
-    set (X1 := FiniteImageLTS.wt_s_set_from_pset X [mu] Hcnv).
-    pose proof (FiniteImageLTS.wt_s_set_from_pset_ispec X [mu] Hcnv) as Hspec1.
+    set (X1 := FiniteImageLTS.wt_s_set_from_pset X [μ] Hcnv).
+    pose proof (FiniteImageLTS.wt_s_set_from_pset_ispec X [μ] Hcnv) as Hspec1.
     assert (Hco1 : X1 ᶜᵒ≼ₐₛ ({[ y1 ]} : gset (proc * MO (ExtAct TypeOfActions)))).
     { eapply c_step; [ exact Hco | | | exact Hspec1 ].
       - apply SetLTSConstruction.convergence_set_if_convergence_forall. exact Hcnv.
@@ -1679,7 +1673,7 @@ Qed.
     instances, whereas [copre] wants [FiniteImageLTS]'s own — and the two
     do not unify.  Stating everything together lets unification pick one.
     (This is the same family of traps recorded for [⤓] and for
-    [lts_refuses_spec1/2].) *)
+    [lts_performs_spec1/2].) *)
 
 Lemma set_sim_copre :
   forall (R : gset (proc * MO (ExtAct TypeOfActions)) ->
@@ -1687,10 +1681,10 @@ Lemma set_sim_copre :
   (forall X Y, R X Y -> forall y, y ∈ Y -> Static (fst y)) ->
   (forall X Y Y', R X Y ->
      (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[]] z) -> R X Y') ->
-  (forall X Y mu X' Y', R X Y ->
-     (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[mu]] z) ->
-     (forall z, z ∈ X' -> exists x, x ∈ X /\ x ⟹[[mu]] z) ->
-     (forall x z, x ∈ X -> x ⟹[[mu]] z -> z ∈ X') ->
+  (forall X Y μ X' Y', R X Y ->
+     (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[μ]] z) ->
+     (forall z, z ∈ X' -> exists x, x ∈ X /\ x ⟹[[μ]] z) ->
+     (forall x z, x ∈ X -> x ⟹[[μ]] z -> z ∈ X') ->
      R X' Y') ->
   (forall X Y y, R X Y -> y ∈ Y -> y ↛ ->
      exists x, x ∈ X /\ Settles (emits y) x) ->
@@ -1707,7 +1701,7 @@ Proof.
     intros a Ha. destruct a as [d].
     apply coR_abs_pair_iff. apply coR_abs_pair_iff in Ha.
     destruct Ha as (w & r & Hr). eapply Hem. exact Hr.
-  - intros mu Y' X' _ HY' (Hs1 & Hs2). apply CH.
+  - intros μ Y' X' _ HY' (Hs1 & Hs2). apply CH.
     eapply Hstep; [ exact H | exact HY' | exact Hs1 | exact Hs2 ].
   - intros _. apply SetLTSConstruction.termination_forall. intros z Hz.
     apply SetLTSConstruction.termination_set_if_termination.
@@ -1738,10 +1732,10 @@ Theorem set_sim_below_bag :
   (forall X Y, R X Y -> forall y, y ∈ Y -> Static (fst y)) ->
   (forall X Y Y', R X Y ->
      (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[]] z) -> R X Y') ->
-  (forall X Y mu X' Y', R X Y ->
-     (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[mu]] z) ->
-     (forall z, z ∈ X' -> exists x, x ∈ X /\ x ⟹[[mu]] z) ->
-     (forall x z, x ∈ X -> x ⟹[[mu]] z -> z ∈ X') ->
+  (forall X Y μ X' Y', R X Y ->
+     (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[μ]] z) ->
+     (forall z, z ∈ X' -> exists x, x ∈ X /\ x ⟹[[μ]] z) ->
+     (forall x z, x ∈ X -> x ⟹[[μ]] z -> z ∈ X') ->
      R X' Y') ->
   (forall X Y y, R X Y -> y ∈ Y -> y ↛ ->
      exists x, x ∈ X /\ Settles (emits y) x) ->
@@ -1809,12 +1803,12 @@ Theorem set_sim_clauses_hold_for_copre :
      (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[]] z) ->
      (X ᶜᵒ≼ₐₛ Y' /\ (forall x, x ∈ X -> Static (fst x))
                  /\ (forall y, y ∈ Y' -> Static (fst y))))
-  /\ (forall (X Y X' Y' : gset (proc * MO (ExtAct TypeOfActions))) mu,
+  /\ (forall (X Y X' Y' : gset (proc * MO (ExtAct TypeOfActions))) μ,
      (X ᶜᵒ≼ₐₛ Y /\ (forall x, x ∈ X -> Static (fst x))
                 /\ (forall y, y ∈ Y -> Static (fst y))) ->
-     (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[mu]] z) ->
-     (forall z, z ∈ X' -> exists x, x ∈ X /\ x ⟹[[mu]] z) ->
-     (forall x z, x ∈ X -> x ⟹[[mu]] z -> z ∈ X') ->
+     (forall z, z ∈ Y' -> exists y, y ∈ Y /\ y ⟹[[μ]] z) ->
+     (forall z, z ∈ X' -> exists x, x ∈ X /\ x ⟹[[μ]] z) ->
+     (forall x z, x ∈ X -> x ⟹[[μ]] z -> z ∈ X') ->
      (X' ᶜᵒ≼ₐₛ Y' /\ (forall x, x ∈ X' -> Static (fst x))
                   /\ (forall y, y ∈ Y' -> Static (fst y))))
   /\ (forall (X Y : gset (proc * MO (ExtAct TypeOfActions))) y,
@@ -1829,7 +1823,7 @@ Proof.
     + exact HX.
     + intros z Hz. destruct (Hspec z Hz) as (y & Hy & Hw).
       eapply fw_static_wt; [ apply (HY _ Hy) | exact Hw ].
-  - intros X Y X' Y' mu (Hco & HX & HY) HY' HX'1 HX'2. split; [ | split ].
+  - intros X Y X' Y' μ (Hco & HX & HY) HY' HX'1 HX'2. split; [ | split ].
     + eapply c_step; [ exact Hco | | exact HY' | split; [ exact HX'1 | exact HX'2 ] ].
       apply SetLTSConstruction.convergence_set_if_convergence_forall.
       intros x Hx. destruct x as (x1,x2). apply fw_converge_static. apply (HX _ Hx).
@@ -1905,7 +1899,7 @@ Qed.
 
 Lemma settles_or_test :
   forall (p : proc * MO (ExtAct TypeOfActions)) s E (hcnv : p ⇓ s),
-  (exists x, p ⟹[s] x /\ lts_refuses x τ /\ coR_abs x ⊆ E)
+  (exists x, p ⟹[s] x /\ (x ↛) /\ coR_abs x ⊆ E)
   \/ p must_pass (gen_acc ((oas p s hcnv) ∖ E) (coₜ s)).
 Proof.
   intros. exact (must_ta_or_empty_pre_action_set_for_all_trace s p hcnv E).

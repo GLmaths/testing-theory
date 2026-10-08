@@ -231,7 +231,7 @@ Proof.
     + intros y Hy. destruct (lts_noone_inv _ _ _ Hy) as (x & Hx & Hlx).
       subst y. apply IHpt. exact Hlx.
     + intros t' Ht'. apply IHet. exact Ht'.
-    + intros y t' mu1 mu2 Hd Hy Ht'.
+    + intros y t' μ1 μ2 Hd Hy Ht'.
       destruct (lts_noone_inv _ _ _ Hy) as (x & Hx & Hlx).
       subst y. eapply IHcom; eassumption.
 Qed.
@@ -252,7 +252,7 @@ Proof.
         eexists. eapply ParSync; eassumption.
     + intros p' Hp'. eapply IHpt; [ apply lts_noone; exact Hp' | reflexivity ].
     + intros t' Ht'. eapply IHet; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hp' Ht'.
+    + intros p' t' μ1 μ2 Hd Hp' Ht'.
       eapply IHcom; [ exact Hd | apply lts_noone; exact Hp' | exact Ht' | reflexivity ].
 Qed.
 
@@ -267,8 +267,8 @@ Proof. intros t Hm. apply must_noone_rev. exact Hm. Qed.
 
 (** ** Reading off the polarity of a [dual] pair *)
 
-Lemma dual_shape : forall (mu1 mu2 : ExtAct TypeOfActions), dual mu1 mu2 ->
-  (exists a, mu1 = ActOut a /\ mu2 = ActIn a) \/ (exists a, mu1 = ActIn a /\ mu2 = ActOut a).
+Lemma dual_shape : forall (μ1 μ2 : ExtAct TypeOfActions), dual μ1 μ2 ->
+  (exists a, μ1 = ActOut a /\ μ2 = ActIn a) \/ (exists a, μ1 = ActIn a /\ μ2 = ActOut a).
 Proof.
   intros [a|a] [b|b] Hd; simpl in Hd; try (exact (match Hd with end)); subst;
     [ right | left ]; eexists; split; reflexivity.
@@ -326,7 +326,7 @@ Proof.
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         eapply (IHpt (p ‖ noone r1)); [ apply lts_parR; apply lts_noone; exact Hlr1 | reflexivity ].
       * eapply IHet; [ eassumption | reflexivity ].
-    + intros p' u mu1 mu2 Hd Hp' Hu. inversion Hu; subst.
+    + intros p' u μ1 μ2 Hd Hp' Hu. inversion Hu; subst.
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         destruct (dual_shape _ _ Hd) as [(a & Ha1 & Ha2)|(a & Ha1 & Ha2)]; subst.
         -- destruct a as (c0,v0).
@@ -335,7 +335,7 @@ Proof.
         -- destruct a as (c0,v0).
            eapply (IHpt (p' ‖ noone r1));
              [ eapply lts_comR; [ apply lts_noone; exact Hlr1 | exact Hp' ] | reflexivity ].
-      * eapply (IHcom (p' ‖ noone r) _ mu1 mu2);
+      * eapply (IHcom (p' ‖ noone r) _ μ1 μ2);
           [ exact Hd | apply lts_parL; exact Hp' | eassumption | reflexivity ].
 Qed.
 
@@ -379,8 +379,8 @@ Proof.
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         eapply (IHet (noone r1 ‖ t)); [ apply lts_parL; apply lts_noone; exact Hlr1 | reflexivity ].
     + intros t' Ht'. eapply (IHet (noone r ‖ t')); [ apply lts_parR; exact Ht' | reflexivity ].
-    + intros y t' mu1 mu2 Hd Hy Ht'. inversion Hy; subst.
-      * eapply (IHcom p2 (noone r ‖ t') mu1 mu2);
+    + intros y t' μ1 μ2 Hd Hy Ht'. inversion Hy; subst.
+      * eapply (IHcom p2 (noone r ‖ t') μ1 μ2);
           [ exact Hd | eassumption | apply lts_parR; exact Ht' | reflexivity ].
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         eapply (IHet (noone r1 ‖ t')); [ | reflexivity ].

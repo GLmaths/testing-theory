@@ -234,9 +234,9 @@ Proof.
       * exists ((g M : proc) ▷ z). apply ParRight. exact Hz.
     + intros p' Hp'. exfalso. exact (Hst p' Hp').
     + intros t' Ht'. exact (IHet t' Ht' Hcert Hin eq_refl).
-    + intros p' t' mu1 mu2 Hdual Hp' Ht'.
-      destruct mu1 as [ (c,v) | (c,v) ].
-      * destruct mu2 as [ (d,w) | (d,w) ]; simpl in Hdual; [ inversion Hdual | ].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'.
+      destruct μ1 as [ (c,v) | (c,v) ].
+      * destruct μ2 as [ (d,w) | (d,w) ]; simpl in Hdual; [ inversion Hdual | ].
         inversion Hdual; subst.
         apply (Hin d w p' Hp').
         assert (H1 : p must_pass ((d ! w • 𝟘) ‖ t')).

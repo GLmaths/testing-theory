@@ -62,14 +62,14 @@ Section LA_prog_FW.
   Proof.
     intros [<- | (hR & hnb & bco & bco')]; [done |].
     intros [p m] (μ'' & duo & acc).
-    apply lts_refuses_spec1 in acc as ((p', m') & tr).
+    apply lts_performs_spec1 in acc as ((p', m') & tr).
     inversion tr as [? ? ? ? l | ? ? ? ? l |]; subst.
     - (* the process moves *)
       assert (p ∈ co𝐏 μ) as mem.
-      { exists μ''. split; [done |]. eapply lts_refuses_spec2. by exists p'. }
+      { exists μ''. split; [done |]. eapply lts_performs_spec2. by exists p'. }
       destruct (coP_preserved_by_LA_prog p μ μ' hR mem) as (μ3 & duo3 & acc3).
-      apply lts_refuses_spec1 in acc3 as (p3 & tr3).
-      exists μ3. split; [done |]. eapply lts_refuses_spec2.
+      apply lts_performs_spec1 in acc3 as (p3 & tr3).
+      exists μ3. split; [done |]. eapply lts_performs_spec2.
       exists (p3, m'). by eapply ParLeft.
     - (* the multiset moves *)
       destruct (decide (non_blocking μ'')) as [nb | b].
@@ -79,7 +79,7 @@ Section LA_prog_FW.
         rewrite <- (unique_nb μ μ'' duo) in nb''.
         apply hnb in nb''.
         exists (co μ'). split; [symmetry; exact (proj2_sig (exists_dual μ')) |].
-        eapply lts_refuses_spec2. exists (p', {[+ μ' +]} ⊎ m).
+        eapply lts_performs_spec2. exists (p', {[+ μ' +]} ⊎ m).
         eapply ParRight. eapply lts_multiset_add; [| exact nb''].
         symmetry. exact (proj2_sig (exists_dual μ')).
   Qed.
@@ -94,14 +94,14 @@ Section LA_prog_FW.
   (** The relation of [P] is kept unchanged when it relates distinct actions
       only if they have the same blocking status and blocking duals. *)
   Lemma LA_prog_FW_same :
-    (∀ μ μ', LA_prog P μ μ' → μ ≠ μ' →
-       (non_blocking μ ↔ non_blocking μ') ∧ blocking (co μ) ∧ blocking (co μ')) →
-    ∀ μ μ', LA_prog_FW (LA_prog P) μ μ' ↔ LA_prog P μ μ'.
+    (∀ η η', LA_prog P η η' → η ≠ η' →
+       (non_blocking η ↔ non_blocking η') ∧ blocking (co η) ∧ blocking (co η')) →
+    ∀ η η', LA_prog_FW (LA_prog P) η η' ↔ LA_prog P η η'.
   Proof.
-    intros cond μ μ'. split.
+    intros cond η η'. split.
     - intros [<- | (hR & _)]; [reflexivity | done].
-    - intros hR. destruct (decide (μ = μ')) as [<- | neq]; [by left | right].
-      destruct (cond μ μ' hR neq) as (hnb & b & b'). by split_and!.
+    - intros hR. destruct (decide (η = η')) as [<- | neq]; [by left | right].
+      destruct (cond η η' hR neq) as (hnb & b & b'). by split_and!.
   Qed.
 End LA_prog_FW.
 

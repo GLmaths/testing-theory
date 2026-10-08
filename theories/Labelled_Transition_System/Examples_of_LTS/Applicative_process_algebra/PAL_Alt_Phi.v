@@ -156,19 +156,19 @@ Section PAL_Alt_Phi.
   Definition abs_R (p : term) : gset Event :=
     list_to_set (map EvIn (collect_in_a p) ++ map EvOut (collect_out_a Val p)).
 
-  Lemma abs_R_spec p e : e ∈ abs_R p ↔ ∃ μ, ¬ p ↛[μ] ∧ Φᴀᴘᴀʟ μ = e.
+  Lemma abs_R_spec p e : e ∈ abs_R p ↔ ∃ μ, p ⟶[μ] ∧ Φᴀᴘᴀʟ μ = e.
   Proof.
     unfold abs_R. rewrite elem_of_list_to_set, list_elem_of_In, in_app_iff, !in_map_iff. split.
     - intros [(tp & <- & hin) | (ot & <- & hin)].
       + rewrite <- (ltemplate_label_witness tp) in hin.
         destruct (collect_in_a_step p _ hin) as (q & hq).
         exists (AIn _ (label_witness tp)). split.
-        * intros href. eapply lts_refuses_spec2; [| exact href]. by exists q.
+        * apply lts_performs_spec2. by exists q.
         * cbn [Φᴀᴘᴀʟ]. by rewrite ltemplate_label_witness.
       + destruct (collect_out_witnesses_a Val p ot hin) as [q hq].
         exists (AOut _ ot). split; [| done].
-        intros href. eapply lts_refuses_spec2; [| exact href]. by exists q.
-    - intros (μ & acc & <-). apply lts_refuses_spec1 in acc as (q & hq).
+        apply lts_performs_spec2. by exists q.
+    - intros (μ & acc & <-). apply lts_performs_spec1 in acc as (q & hq).
       destruct μ as [l|ot]; simpl.
       + left. exists (ltemplate l). split; [done | by eapply in_step_in_collect_in_a].
       + right. exists ot. split; [done | by eapply out_step_in_collect_out_a].
@@ -177,13 +177,13 @@ Section PAL_Alt_Phi.
   (** ** The kernel of [Φ] is the largest [≈ᴛᴇꜱᴛ] *)
 
   (** Test side: labels with the same event are accepted by the same processes. *)
-  Lemma Φ_test_spec (t : term) μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' → ¬ t ↛[μ] → ¬ t ↛[μ'].
+  Lemma Φ_test_spec (t : term) μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' → t ⟶[μ] → t ⟶[μ'].
   Proof.
-    intros e acc href. apply lts_refuses_spec1 in acc as (q & hq).
+    intros e acc. apply lts_performs_spec1 in acc as (q & hq).
     destruct μ as [l|ot], μ' as [l'|ot']; simpl in e; try discriminate; injection e as e.
     - destruct (in_retarget t l l' q hq (eq_sym e)) as (q' & hq').
-      eapply lts_refuses_spec2; [| exact href]. by exists q'.
-    - subst. eapply lts_refuses_spec2; [| exact href]. by exists q.
+      apply lts_performs_spec2. by exists q'.
+    - subst. apply lts_performs_spec2. by exists q.
   Qed.
 
   (** The pattern of template [tp], whose formal fields bind [i], [i+1], ... *)
@@ -233,17 +233,17 @@ Section PAL_Alt_Phi.
     | AOut _ ot => out( eot_to_tuple ot ) • 𝟘
     end.
 
-  Lemma probe_accepts μ : ¬ probe μ ↛[μ].
+  Lemma probe_accepts μ : probe μ ⟶[μ].
   Proof.
-    intros href. eapply lts_refuses_spec2; [| exact href].
+    apply lts_performs_spec2.
     destruct μ as [l|ot]; simpl; eexists.
     - apply aar1; [apply eval_pattern_from | apply template_of_it_from].
     - apply aar3, eval_out_eot_to_tuple.
   Qed.
 
-  Lemma probe_only μ μ' : ¬ probe μ ↛[μ'] → Φᴀᴘᴀʟ μ' = Φᴀᴘᴀʟ μ.
+  Lemma probe_only μ μ' : probe μ ⟶[μ'] → Φᴀᴘᴀʟ μ' = Φᴀᴘᴀʟ μ.
   Proof.
-    intros acc. apply lts_refuses_spec1 in acc as (q & hq).
+    intros acc. apply lts_performs_spec1 in acc as (q & hq).
     destruct μ as [l|ot]; unfold probe in hq; simpl in hq; inversion hq; subst.
     - match goal with hev : eval_in_tuple _ = Some _ |- _ =>
         rewrite eval_pattern_from in hev; injection hev as <- end.
@@ -254,7 +254,7 @@ Section PAL_Alt_Phi.
       done.
   Qed.
 
-  Lemma Φ_complete μ μ' : (∀ t : term, ¬ t ↛[μ] → ¬ t ↛[μ']) → Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ'.
+  Lemma Φ_complete μ μ' : (∀ t : term, t ⟶[μ] → t ⟶[μ']) → Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ'.
   Proof. intros h. symmetry. apply probe_only, h, probe_accepts. Qed.
 
   Theorem Φ_kernel μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' ↔ (𝐏 μ : subset_of term) ⊆ 𝐏 μ'.

@@ -223,7 +223,7 @@ Section Characterisation.
   Context `{QM : QuantumModel} `{SC : !Countable St}.
   Context (XM : ∀ P : Prop, P ∨ ¬ P).
   Context (W_strict : ∀ a b, W_le (W_add a b) a → b = W_zero).
-  Context (W_dense : ∀ a b : W, prob_lt a b → ∃ c, prob_lt a c ∧ prob_lt c b).
+  Context (W_dense : ∀ a b : W, a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b).
 
   (** For non-zero memories: [(P, ρ)] is below [(Q, σ)] for the almost-sure
       must of lqCCS iff, up to the abstraction, the co-acceptance sets of

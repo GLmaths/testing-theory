@@ -43,7 +43,7 @@
       needed once stated this way.
 
     Worked out by hand from the primitives: [coR p := fun μ1 => ∃μ2,
-    ¬p↛[μ2] ∧ dual μ2 μ1 ∧ blocking μ1] ([Subset_Act.v]), VCCS's
+    p performs [μ2] ∧ dual μ2 μ1 ∧ blocking μ1] ([Subset_Act.v]), VCCS's
     [dual := ext_act_match] and [non_blocking := all_blocking_action :=
     False] (so [blocking] is unconditionally [True],
     [VCCS_Instance.v]), and VCCS's label abstraction [Φᴠᴄᴄꜱ]/[𝝳ᴠᴄᴄꜱ]
@@ -51,7 +51,7 @@
     label's *value* component entirely, keeping only channel+polarity
     ([Inputs_on c]/[Outputs_on c] in [PreAct]). Concretely this gives,
     for *any* [proc] (no [gStable]/[Static] needed): [Outputs_on c ∈
-    ⌈𝝳∘Φ⌉(coR p) <-> ∃v, ¬p↛[ActIn (c,v)]] (dual of "[p] can input on
+    ⌈𝝳∘Φ⌉(coR p) <-> ∃v, p performs [ActIn (c,v)]] (dual of "[p] can input on
     [c]") and symmetrically for [Inputs_on c]/output — i.e. the
     abstracted ready set of *any* process is exactly a pair of
     (channel-indexed) input/output capability predicates, with the
@@ -59,7 +59,7 @@
     input on [c] at some value" reduces further, structurally, to
     [has_input c M]. *)
 
-From stdpp Require Import base sets gmap.
+From stdpp Require Import decidable base sets gmap.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation WeakTransitions Convergence VCCS_Static
   VCCS_Precongruence Subset_Act DefinitionAS VCCS_Must_Characterization.
@@ -85,26 +85,27 @@ Proof.
   induction M; simpl.
   - split.
     + intros _. exact I.
-    + intros _. destruct (decide ((g ①) ↛)) as [Hd|Hd].
+    + intros _. destruct (decide ((g ①) ⟶)) as [Hd | Hd].
+      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
-      * exfalso. apply lts_refuses_spec1 in Hd as (r & Hl). inversion Hl.
   - split.
     + intros _. exact I.
-    + intros _. destruct (decide ((g 𝟘) ↛)) as [Hd|Hd].
+    + intros _. destruct (decide ((g 𝟘) ⟶)) as [Hd | Hd].
+      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
-      * exfalso. apply lts_refuses_spec1 in Hd as (r & Hl). inversion Hl.
   - split.
     + intros _. exact I.
-    + intros _. destruct (decide ((g (c ? p)) ↛)) as [Hd|Hd].
+    + intros _. destruct (decide ((g (c ? p)) ⟶)) as [Hd | Hd].
+      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
-      * exfalso. apply lts_refuses_spec1 in Hd as (r & Hl). inversion Hl.
   - split.
     + intros _. exact I.
-    + intros _. destruct (decide ((g (c ! v • p)) ↛)) as [Hd|Hd].
+    + intros _. destruct (decide ((g (c ! v • p)) ⟶)) as [Hd | Hd].
+      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
-      * exfalso. apply lts_refuses_spec1 in Hd as (r & Hl). inversion Hl.
   - split.
-    + intro H. exfalso. pose proof (lts_set_spec1 (𝛕 • p) τ p lts_tau) as Hmem. rewrite H in Hmem. set_solver.
+    + intro H. apply H. intro Heq. unfold proc_stable in Heq.
+      pose proof (lts_set_spec1 (𝛕 • p) τ p lts_tau) as Hmem. rewrite Heq in Hmem. set_solver.
     + intro H. destruct H.
   - split; intro H.
     + apply choice_stable_iff in H as (H1 & H2). split; [apply IHM1 | apply IHM2]; assumption.
@@ -114,28 +115,28 @@ Qed.
 (** ** The abstracted ready set of an arbitrary process, value-erased *)
 
 Lemma coR_abs_Outputs_on_iff : forall (p : proc) c,
-  Outputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, ~ p ↛[ActIn (c,v)].
+  Outputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActIn (c,v)].
 Proof.
   intros p c. unfold coR, elem_of, subset_of, map_set in *; simpl.
   split.
-  - intros (mu1 & (mu2 & Hnr & Hd & _) & Heq).
-    destruct mu2 as [[c1 v1]|[c1 v1]]; simpl in Hd.
-    + apply simplify_match_input in Hd. subst mu1. simpl in Heq. inversion Heq; subst. exists v1. exact Hnr.
-    + apply simplify_match_output in Hd. subst mu1. simpl in Heq. discriminate Heq.
+  - intros (μ1 & (μ2 & Hnr & Hd & _) & Heq).
+    destruct μ2 as [[c1 v1]|[c1 v1]]; simpl in Hd.
+    + apply simplify_match_input in Hd. subst μ1. simpl in Heq. inversion Heq; subst. exists v1. exact Hnr.
+    + apply simplify_match_output in Hd. subst μ1. simpl in Heq. discriminate Heq.
   - intros (v & Hnr).
     exists (ActOut (c,v)). split; [| reflexivity].
     exists (ActIn (c,v)). split; [exact Hnr | split; [apply simplify_match_input; reflexivity | exact (fun H => H)]].
 Qed.
 
 Lemma coR_abs_Inputs_on_iff : forall (p : proc) c,
-  Inputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, ~ p ↛[ActOut (c,v)].
+  Inputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActOut (c,v)].
 Proof.
   intros p c. unfold coR, elem_of, subset_of, map_set in *; simpl.
   split.
-  - intros (mu1 & (mu2 & Hnr & Hd & _) & Heq).
-    destruct mu2 as [[c1 v1]|[c1 v1]]; simpl in Hd.
-    + apply simplify_match_input in Hd. subst mu1. simpl in Heq. discriminate Heq.
-    + apply simplify_match_output in Hd. subst mu1. simpl in Heq. inversion Heq; subst. exists v1. exact Hnr.
+  - intros (μ1 & (μ2 & Hnr & Hd & _) & Heq).
+    destruct μ2 as [[c1 v1]|[c1 v1]]; simpl in Hd.
+    + apply simplify_match_input in Hd. subst μ1. simpl in Heq. discriminate Heq.
+    + apply simplify_match_output in Hd. subst μ1. simpl in Heq. inversion Heq; subst. exists v1. exact Hnr.
   - intros (v & Hnr).
     exists (ActIn (c,v)). split; [| reflexivity].
     exists (ActOut (c,v)). split; [exact Hnr | split; [apply simplify_match_output; reflexivity | exact (fun H => H)]].
@@ -169,7 +170,7 @@ match M with
 | _ => False
 end.
 
-Lemma has_input_iff : forall M c, (exists v, ~ (g M) ↛[ActIn (c,v)]) <-> has_input c M.
+Lemma has_input_iff : forall M c, (exists v, (g M) ⟶[ActIn (c,v)]) <-> has_input c M.
 Proof.
   induction M; intro c0; simpl.
   - split.
@@ -189,15 +190,15 @@ Proof.
     + intros [].
   - split.
     + intros (v & Hnr).
-      destruct (decide ((g M1) ↛[ActIn (c0,v)])) as [Hd1|Hd1].
-      * right. apply IHM2. exists v. intro Hd2. apply Hnr. apply choice_ext_stable_iff. split; assumption.
+      destruct (decide ((g M1) ⟶[ActIn (c0,v)])) as [Hd1 | Hd1].
       * left. apply IHM1. exists v. exact Hd1.
+      * right. apply IHM2. exists v. apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hd2. revert Hnr. apply choice_ext_stable_iff. split; assumption.
     + intros [H1|H2].
-      * apply IHM1 in H1 as (v & Hnr). exists v. intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). apply Hnr. exact Hc1.
-      * apply IHM2 in H2 as (v & Hnr). exists v. intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). apply Hnr. exact Hc2.
+      * apply IHM1 in H1 as (v & Hnr). exists v. apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). revert Hnr. exact Hc1.
+      * apply IHM2 in H2 as (v & Hnr). exists v. apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). revert Hnr. exact Hc2.
 Qed.
 
-Lemma has_output_iff : forall M c, (exists v, ~ (g M) ↛[ActOut (c,v)]) <-> has_output c M.
+Lemma has_output_iff : forall M c, (exists v, (g M) ⟶[ActOut (c,v)]) <-> has_output c M.
 Proof.
   induction M; intro c0; simpl.
   - split.
@@ -217,12 +218,12 @@ Proof.
     + intros [].
   - split.
     + intros (v & Hnr).
-      destruct (decide ((g M1) ↛[ActOut (c0,v)])) as [Hd1|Hd1].
-      * right. apply IHM2. exists v. intro Hd2. apply Hnr. apply choice_ext_stable_iff. split; assumption.
+      destruct (decide ((g M1) ⟶[ActOut (c0,v)])) as [Hd1 | Hd1].
       * left. apply IHM1. exists v. exact Hd1.
+      * right. apply IHM2. exists v. apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hd2. revert Hnr. apply choice_ext_stable_iff. split; assumption.
     + intros [H1|H2].
-      * apply IHM1 in H1 as (v & Hnr). exists v. intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). apply Hnr. exact Hc1.
-      * apply IHM2 in H2 as (v & Hnr). exists v. intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). apply Hnr. exact Hc2.
+      * apply IHM1 in H1 as (v & Hnr). exists v. apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). revert Hnr. exact Hc1.
+      * apply IHM2 in H2 as (v & Hnr). exists v. apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). revert Hnr. exact Hc2.
 Qed.
 
 (** ** The [≼ₐₛ]-level ready-set inclusion, restated structurally *)
@@ -287,14 +288,14 @@ Lemma wt_nil_stable : forall (p q : proc), p ↛ -> p ⟹[[]] q -> q = p.
 Proof.
   intros p q Hst Hwt. inversion Hwt; subst.
   - reflexivity.
-  - exfalso. pose proof (lts_set_spec1 p τ q0 l) as Hmem. rewrite Hst in Hmem. set_solver.
+  - exfalso. apply Hst, lts_performs_spec2. exists q0. exact l.
 Qed.
 
-Lemma wt_cons_stable : forall (p r : proc) mu s, p ↛ -> p ⟹[mu :: s] r ->
-  exists q, p ⟶[mu] q /\ q ⟹[s] r.
+Lemma wt_cons_stable : forall (p r : proc) μ s, p ↛ -> p ⟹[μ :: s] r ->
+  exists q, p ⟶[μ] q /\ q ⟹[s] r.
 Proof.
-  intros p r mu s Hst Hwt. inversion Hwt; subst.
-  - exfalso. pose proof (lts_set_spec1 p τ q l) as Hmem. rewrite Hst in Hmem. set_solver.
+  intros p r μ s Hst Hwt. inversion Hwt; subst.
+  - exfalso. apply Hst, lts_performs_spec2. exists q. exact l.
   - exists q. split; [exact l | exact w].
 Qed.
 
@@ -306,9 +307,9 @@ Qed.
 Lemma choice_wt_decomp_sharp : forall gp gq s r, (g (gp + gq)) ⟹[s] r ->
   (s = [] /\ r = g (gp + gq))
   \/ (exists q1, (g gp) ⟶ q1 /\ q1 ⟹[s] r)
-  \/ (exists q1 mu s', s = mu :: s' /\ (g gp) ⟶[mu] q1 /\ q1 ⟹[s'] r)
+  \/ (exists q1 μ s', s = μ :: s' /\ (g gp) ⟶[μ] q1 /\ q1 ⟹[s'] r)
   \/ (exists q1, (g gq) ⟶ q1 /\ q1 ⟹[s] r)
-  \/ (exists q1 mu s', s = mu :: s' /\ (g gq) ⟶[mu] q1 /\ q1 ⟹[s'] r).
+  \/ (exists q1 μ s', s = μ :: s' /\ (g gq) ⟶[μ] q1 /\ q1 ⟹[s'] r).
 Proof.
   intros gp gq s r Hwt. inversion Hwt; subst.
   - left. split; reflexivity.
@@ -342,8 +343,8 @@ Proof.
     constructor; [inversion Hsp' | inversion Hsq]; assumption.
   - intros s r Hconv Hwt Hstable.
     apply choice_wt_decomp_sharp in Hwt
-      as [(Hs & Hr) | [(q1 & Hl & Hw) | [(q1 & mu & s' & Hs & Hl & Hw)
-        | [(q1 & Hl & Hw) | (q1 & mu & s' & Hs & Hl & Hw)]]]].
+      as [(Hs & Hr) | [(q1 & Hl & Hw) | [(q1 & μ & s' & Hs & Hl & Hw)
+        | [(q1 & Hl & Hw) | (q1 & μ & s' & Hs & Hl & Hw)]]]].
     + (* no step taken: the choice itself is the witness, on both sides *)
       subst s r. exists (g (gp + gq)). repeat split.
       * apply wt_nil.
@@ -355,14 +356,13 @@ Proof.
         rewrite (wt_nil_stable (g gp) p0 (proj2 (gStable_iff gp) Hstp) Hw0) in Hincl0.
         exact Hincl0.
     + (* [gp'] takes a [𝛕]: impossible, [gp'] is stable *)
-      exfalso. pose proof (lts_set_spec1 (g gp') τ q1 Hl) as Hmem.
-      rewrite (proj2 (gStable_iff gp') Hstp') in Hmem. set_solver.
-    + (* [gp'] takes the first visible step: appeal to the hypothesis at [mu :: s'] *)
+      exfalso. apply (proj2 (gStable_iff gp') Hstp'), lts_performs_spec2. exists q1. exact Hl.
+    + (* [gp'] takes the first visible step: appeal to the hypothesis at [μ :: s'] *)
       subst s.
-      assert (Hwp' : (g gp') ⟹[mu :: s'] r) by (eapply wt_act; [exact Hl | exact Hw]).
-      destruct (Hc2 (mu :: s') r (Static_converge (mu :: s') (g gp) Hsp) Hwp' Hstable)
+      assert (Hwp' : (g gp') ⟹[μ :: s'] r) by (eapply wt_act; [exact Hl | exact Hw]).
+      destruct (Hc2 (μ :: s') r (Static_converge (μ :: s') (g gp) Hsp) Hwp' Hstable)
         as (r0 & Hw0 & Hst0 & Hincl0).
-      destruct (wt_cons_stable (g gp) r0 mu s' (proj2 (gStable_iff gp) Hstp) Hw0)
+      destruct (wt_cons_stable (g gp) r0 μ s' (proj2 (gStable_iff gp) Hstp) Hw0)
         as (q0 & Hl0 & Hw0').
       exists r0. repeat split.
       * eapply choice_wt_liftL_step_act; [exact Hl0 | exact Hw0'].

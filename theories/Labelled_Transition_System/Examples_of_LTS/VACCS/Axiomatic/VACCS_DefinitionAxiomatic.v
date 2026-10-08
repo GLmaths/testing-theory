@@ -284,7 +284,7 @@ Qed.
 Lemma ax_tau_run : forall (p p' : proc), p ⟹[[]] p' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ p'.
 Proof.
   intros p p' Hw. remember (nil : trace (ExtAct TypeOfActions)) as s eqn:Hs.
-  induction Hw as [x|s0 x q y Hl Hwt IH|mu s0 x q y Hl Hwt IH].
+  induction Hw as [x|s0 x q y Hl Hwt IH|μ s0 x q y Hl Hwt IH].
   - apply ax_refl.
   - eapply ax_trans; [ apply ax_tau_step; exact Hl | apply IH; exact Hs ].
   - discriminate Hs.

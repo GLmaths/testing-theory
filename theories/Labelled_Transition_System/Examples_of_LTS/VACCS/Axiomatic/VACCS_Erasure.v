@@ -248,7 +248,7 @@ Proof.
     + intros y Hy. destruct (lts_noone_inv _ _ _ Hy) as (x & Hx & Hlx).
       subst y. apply IHpt. exact Hlx.
     + intros t' Ht'. apply IHet. exact Ht'.
-    + intros y t' mu1 mu2 Hd Hy Ht'.
+    + intros y t' μ1 μ2 Hd Hy Ht'.
       destruct (lts_noone_inv _ _ _ Hy) as (x & Hx & Hlx).
       subst y. eapply IHcom; eassumption.
 Qed.
@@ -269,7 +269,7 @@ Proof.
         eexists. eapply ParSync; eassumption.
     + intros p' Hp'. eapply IHpt; [ apply lts_noone; exact Hp' | reflexivity ].
     + intros t' Ht'. eapply IHet; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hp' Ht'.
+    + intros p' t' μ1 μ2 Hd Hp' Ht'.
       eapply IHcom; [ exact Hd | apply lts_noone; exact Hp' | exact Ht' | reflexivity ].
 Qed.
 
@@ -287,8 +287,8 @@ Proof. intros t Hm. apply must_noone_rev. exact Hm. Qed.
     [dual] is [ext_act_match], which pairs [ActIn a] with [ActOut a].
     These three tiny lemmas save unfolding it by hand at every use. *)
 
-Lemma dual_shape : forall (mu1 mu2 : ExtAct TypeOfActions), dual mu1 mu2 ->
-  (exists a, mu1 = ActOut a /\ mu2 = ActIn a) \/ (exists a, mu1 = ActIn a /\ mu2 = ActOut a).
+Lemma dual_shape : forall (μ1 μ2 : ExtAct TypeOfActions), dual μ1 μ2 ->
+  (exists a, μ1 = ActOut a /\ μ2 = ActIn a) \/ (exists a, μ1 = ActIn a /\ μ2 = ActOut a).
 Proof.
   intros [a|a] [b|b] Hd; simpl in Hd; try (exact (match Hd with end)); subst;
     [ right | left ]; eexists; split; reflexivity.

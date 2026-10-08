@@ -77,12 +77,12 @@ Context `{gLtsP : @gLts P Aproc Hp} `{Ht : ExtAction Atest} `{SA : !SyncAction A
 (* As for [wt_pop_gen], the trace is kept as a variable and constrained by an
    equation so that plain induction applies. *)
 Lemma cowt_pop_gen p q s0 :
-  p ⟹ᶜᵒ[s0] q -> forall μ s, s0 = μ :: s -> ∃ t, p ⟹ᶜᵒ{μ} t /\ t ⟹ᶜᵒ[s] q.
+  p ⟹ᶜᵒ[s0] q -> forall μ1 s, s0 = μ1 :: s -> ∃ t, p ⟹ᶜᵒ{μ1} t /\ t ⟹ᶜᵒ[s] q.
 Proof.
   intro w.
-  induction w as [ p | s0 p r q l w IH | ν ν' s0 p r q duo l w IH ]; intros μ s Heq.
+  induction w as [ p | s0 p r q l w IH | μ2 μ2' s0 p r q duo l w IH ]; intros μ1 s Heq.
   - discriminate.
-  - destruct (IH μ s Heq) as (t & w1 & w2).
+  - destruct (IH μ1 s Heq) as (t & w1 & w2).
     exists t. split; eauto with mdb.
   - inversion Heq; subst.
     exists r. split; eauto with mdb.
@@ -137,15 +137,15 @@ Proof. intros w1 w2. eapply cowt_concat; eauto. Qed.
 
 (* Same treatment as [cowt_pop]: the trace stays a variable, so no UIP axiom. *)
 Lemma cowt_decomp_one_gen p q s0 :
-  p ⟹ᶜᵒ[s0] q -> forall μ, s0 = [μ] -> ∃ r1 r2 μ', p ⟹ᶜᵒ r1 ∧ sync μ' μ ∧ r1 ⟶[μ'] r2 ∧ r2 ⟹ᶜᵒ q.
+  p ⟹ᶜᵒ[s0] q -> forall μ1, s0 = [μ1] -> ∃ r1 r2 μ1', p ⟹ᶜᵒ r1 ∧ sync μ1' μ1 ∧ r1 ⟶[μ1'] r2 ∧ r2 ⟹ᶜᵒ q.
 Proof.
   intro w.
-  induction w as [ p | s0 p r q l w IH | ν ν' s0 p r q duo l w IH ]; intros μ Heq.
+  induction w as [ p | s0 p r q l w IH | μ2 μ2' s0 p r q duo l w IH ]; intros μ1 Heq.
   - discriminate.
-  - destruct (IH μ Heq) as (r1 & r2 & μ' & w1 & duo' & l' & w2).
-    exists r1, r2, μ'. repeat split; eauto with mdb.
+  - destruct (IH μ1 Heq) as (r1 & r2 & μ1' & w1 & duo' & l' & w2).
+    exists r1, r2, μ1'. repeat split; eauto with mdb.
   - inversion Heq; subst.
-    exists p, r, ν'. repeat split; eauto with mdb.
+    exists p, r, μ2'. repeat split; eauto with mdb.
 Qed.
 
 Lemma cowt_decomp_one {μ p q} :
@@ -313,7 +313,7 @@ Lemma refuses_tau_preserved_by_cowt_non_blocking_action `{gLtsOba P A} p q s :
 Proof.
   intros s_spec hst hw.
   induction hw; eauto.
-  - exfalso. eapply lts_refuses_spec2; eauto.
+  - exfalso. apply hst, lts_performs_spec2. eauto.
   - inversion s_spec; subst.
     eapply IHhw. eassumption. eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
 Qed.
@@ -323,7 +323,7 @@ Lemma refuses_tau_action_preserved_by_cowt_non_blocking_action `{gLtsOba P A} p 
 Proof.
   intros s_spec hst_tau hst_inp hw.
   induction hw; eauto.
-  - exfalso. eapply lts_refuses_spec2; eauto.
+  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
   - inversion s_spec; subst.
     eapply IHhw; eauto.
     + eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
@@ -331,13 +331,13 @@ Proof.
 Qed.
 
 Lemma lts_input_preserved_by_cowt_output `{gLtsOba P A} p q s μ :
-  Forall co_non_blocking s -> Forall (fun a => forall ν, dual ν a -> ν <> μ) s
+  Forall co_non_blocking s -> Forall (fun a => forall μ2, dual μ2 a -> μ2 <> μ) s
     -> p ↛ -> (exists t, p ⟶[μ] t) -> p ⟹ᶜᵒ[s] q
       -> (exists t, q ⟶[μ] t).
 Proof.
   intros s_spec1 s_spec2 hst_tau hst_inp hw.
   induction hw; eauto.
-  - exfalso. eapply lts_refuses_spec2; eauto.
+  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
   - inversion s_spec1; inversion s_spec2; subst.
     eapply IHhw.
     + eassumption.
@@ -442,7 +442,7 @@ Proof.
 Qed.
 
 Lemma cowt_input_swap `{gLtsObaFW P A} p q μ1 μ2 :
-  (exists η2, non_blocking η2 /\ (forall ν, dual ν μ2 -> dual ν η2)) -> p ⟹ᶜᵒ[[μ1 ; μ2]] q
+  (exists η2, non_blocking η2 /\ (forall μ3, dual μ3 μ2 -> dual μ3 η2)) -> p ⟹ᶜᵒ[[μ1 ; μ2]] q
     -> p ⟹ᶜᵒ⋍[[μ2; μ1]] q.
 Proof.
   intros BlocDuo w.
@@ -514,7 +514,7 @@ Proof.
 Qed.
 
 Lemma cowt_input_perm `{gLtsObaFW P A} {p q} s1 s2 :
-  Forall (fun β => exists η2, non_blocking η2 /\ (forall ν, dual ν β -> dual ν η2)) s1 -> s1 ≡ₚ s2
+  Forall (fun β => exists η2, non_blocking η2 /\ (forall μ, dual μ β -> dual μ η2)) s1 -> s1 ≡ₚ s2
     -> p ⟹ᶜᵒ[s1] q
     -> p ⟹ᶜᵒ⋍[s2] q.
 Proof.

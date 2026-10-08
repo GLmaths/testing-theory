@@ -561,7 +561,7 @@ Lemma fw_sub_lift : forall (M K : gproc),
   \/ (exists m, x = ((g M) ▷ m) /\ ((g K) ▷ x0.2) ⟹[s] ((g K) ▷ m)).
 Proof.
   intros M K Hsub s x0 x Hw.
-  induction Hw as [z|s0 z q y Hl Hwt IH|mu s0 z q y Hl Hwt IH]; intros Heq.
+  induction Hw as [z|s0 z q y Hl Hwt IH|μ s0 z q y Hl Hwt IH]; intros Heq.
   - right. destruct z as (p,m). simpl in *. subst p.
     exists m. split; [ reflexivity | apply wt_nil ].
   - left. destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
@@ -571,7 +571,7 @@ Proof.
     + destruct HB as (a & p' & m' & Hm & Hp' & E). inversion E; subst.
       eapply wt_tau; [ | exact Hwt ]. apply fw_tau_deliver. apply Hsub. exact Hp'.
   - destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
-    destruct (fw_ext_shape (g M) m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape (g M) m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + left. destruct HA as (p' & Hp' & E). inversion E; subst.
       eapply wt_act; [ | exact Hwt ]. apply ParLeft. apply Hsub. exact Hp'.
     + destruct HB as (a & Hmu & E). inversion E; subst.
@@ -597,7 +597,7 @@ Lemma fw_sub_lift_gen : forall (M K : gproc),
   \/ (exists m, x = ((g M) ▷ m) /\ forall X : proc, (X ▷ x0.2) ⟹[s] (X ▷ m)).
 Proof.
   intros M K Hsub s x0 x Hw.
-  induction Hw as [z|s0 z q y Hl Hwt IH|mu s0 z q y Hl Hwt IH]; intros Heq.
+  induction Hw as [z|s0 z q y Hl Hwt IH|μ s0 z q y Hl Hwt IH]; intros Heq.
   - right. destruct z as (p,m). simpl in *. subst p.
     exists m. split; [ reflexivity | intro X; apply wt_nil ].
   - left. destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
@@ -607,7 +607,7 @@ Proof.
     + destruct HB as (a & p' & m' & Hm & Hp' & E). inversion E; subst.
       eapply wt_tau; [ | exact Hwt ]. apply fw_tau_deliver. apply Hsub. exact Hp'.
   - destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
-    destruct (fw_ext_shape (g M) m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape (g M) m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + left. destruct HA as (p' & Hp' & E). inversion E; subst.
       eapply wt_act; [ | exact Hwt ]. apply ParLeft. apply Hsub. exact Hp'.
     + destruct HB as (a & Hmu & E). inversion E; subst.
@@ -652,14 +652,14 @@ Lemma nil_buf_run : forall s (x0 y : proc * MO (ExtAct TypeOfActions)),
   y = (((g 𝟘) : proc) ▷ bufafter s x0.2).
 Proof.
   intros s x0 y Hw.
-  induction Hw as [z|s0 z q y Hl Hwt IH|mu s0 z q y Hl Hwt IH]; intros Heq.
+  induction Hw as [z|s0 z q y Hl Hwt IH|μ s0 z q y Hl Hwt IH]; intros Heq.
   - destruct z as (p,m). simpl in *. subst p. reflexivity.
   - exfalso. destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
     destruct (fw_tau_shape ((g 𝟘) : proc) m (p1,m1) Hl) as [HA|HB].
     + destruct HA as (p' & Hp' & _). eapply nil_no_lts. exact Hp'.
     + destruct HB as (a & p' & m' & _ & Hp' & _). eapply nil_no_lts. exact Hp'.
   - destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
-    destruct (fw_ext_shape ((g 𝟘) : proc) m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape ((g 𝟘) : proc) m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + exfalso. destruct HA as (p' & Hp' & _). eapply nil_no_lts. exact Hp'.
     + destruct HB as (a & Hmu & E). inversion E; subst.
       specialize (IH eq_refl). simpl in IH. exact IH.
@@ -1327,7 +1327,7 @@ Qed.
 Lemma domsim_wt : forall q s r, q ⟹[s] r ->
   forall p, domsim p q -> exists r', p ⟹[s] r' /\ domsim r' r.
 Proof.
-  intros q s r Hw. induction Hw as [q0 | s0 q0 q1 r0 Hl Hw IH | mu s0 q0 q1 r0 Hl Hw IH];
+  intros q s r Hw. induction Hw as [q0 | s0 q0 q1 r0 Hl Hw IH | μ s0 q0 q1 r0 Hl Hw IH];
     intros p Hd.
   - exists p. split; [ apply wt_nil | exact Hd ].
   - destruct (ds_s Hd _ _ Hl) as (y & Hy & Hy2).

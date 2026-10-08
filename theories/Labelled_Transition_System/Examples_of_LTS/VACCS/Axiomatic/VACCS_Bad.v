@@ -165,7 +165,7 @@ Proof.
       [ reflexivity | exact Hl | apply lts_input ].
   - intros q Hq. exfalso. eapply Hst. exact Hq.
   - intros t' Ht'. exfalso. eapply probe_no_tau. exact Ht'.
-  - intros p'' t' mu1 mu2 Hd Hl1 Hl2.
+  - intros p'' t' μ1 μ2 Hd Hl1 Hl2.
     inversion Hl2; subst. apply m_now. simpl. apply good_success.
 Qed.
 
@@ -242,7 +242,7 @@ Proof.
         apply ParRight. exact Ht'.
       * intros p' Hp'. inversion Hp'.
       * intros t' Ht'. eapply H0; [ exact Ht' | exact HB | reflexivity ].
-      * intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+      * intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
 (** The sound half, restated: a [Bad] process at [∅] really is below
@@ -303,14 +303,14 @@ Proof.
       * exists z1. exact Hz1.
       * intros p' Hp'. apply Hpt. apply lts_choiceL. exact Hp'.
       * intros t' Ht'. exfalso. eapply Hst. exact Ht'.
-      * intros p' t' mu1 mu2 Hd Hp' Ht'.
+      * intros p' t' μ1 μ2 Hd Hp' Ht'.
         eapply Hcom; [ exact Hd | apply lts_choiceL; exact Hp' | exact Ht' ].
     + right. apply m_step.
       * exact Ho.
       * exists z2. exact Hz2.
       * intros p' Hp'. apply Hpt. apply lts_choiceR. exact Hp'.
       * intros t' Ht'. exfalso. eapply Hst. exact Ht'.
-      * intros p' t' mu1 mu2 Hd Hp' Ht'.
+      * intros p' t' μ1 μ2 Hd Hp' Ht'.
         eapply Hcom; [ exact Hd | apply lts_choiceR; exact Hp' | exact Ht' ].
 Qed.
 
@@ -697,7 +697,7 @@ Proof.
   - intros t' Ht'. unfold TSg in Ht'. inversion Ht'; subst.
     + inversion H3; subst. apply m_now. simpl. constructor.
     + inversion H3.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
 Lemma msg_fails_TSg : forall (c : ChannelData) (v : ValueData),
@@ -860,7 +860,7 @@ Proof.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. rewrite (TD_tau_inv c v t' Ht').
     apply m_now. apply good_par. right. constructor.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
 (** Le refus vaut dès qu'**un sommant** est mort : [must]'s [com] doit les
@@ -1188,10 +1188,10 @@ Proof.
   - match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
 Qed.
 
-Lemma bag_nil_ext_inv : forall (l : list TypeOfActions) mu q,
-  lts (msgs l ‖ ((g 𝟘) : proc)) (ActExt mu) q -> exists c v, mu = ActOut (c,v).
+Lemma bag_nil_ext_inv : forall (l : list TypeOfActions) μ q,
+  lts (msgs l ‖ ((g 𝟘) : proc)) (ActExt μ) q -> exists c v, μ = ActOut (c,v).
 Proof.
-  intros l mu q H. inversion H; subst.
+  intros l μ q H. inversion H; subst.
   - match goal with H2 : lts (msgs l) _ _ |- _ =>
       apply msgs_lts_inv in H2 as (c0 & v0 & l' & He & _ & _) end.
     exists c0, v0. exact He.
@@ -1245,9 +1245,9 @@ Proof.
   - intros p' Hp'. exfalso. eapply bag_nil_no_tau; eassumption.
   - intros t' Ht'. rewrite (TD_tau_inv d w t' Ht').
     apply m_now. apply good_par. right. constructor.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
-    destruct (bag_nil_ext_inv l mu1 p' Hp') as (c & v & Emu). subst mu1.
-    destruct mu2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
+    destruct (bag_nil_ext_inv l μ1 p' Hp') as (c & v & Emu). subst μ1.
+    destruct μ2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
     apply m_now. eapply TD_in_good. exact Ht'.
 Qed.
 
@@ -1479,7 +1479,7 @@ Proof.
     + exists (p, t). apply ParLeft. apply lts_tau.
     + intros p' Hp'. inversion Hp'; subst. apply m_step; assumption.
     + exact IHet.
-    + intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+    + intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
 Lemma must_i_tau_prefix_l : forall (X : proc),

@@ -297,10 +297,10 @@ Qed.
 
 (** ** The LTS *)
 
-Definition erl_refuses (S : sys) (α : Act erl_act) : Prop := erl_succ S α = [].
+Definition erl_performs (S : sys) (α : Act erl_act) : Prop := erl_succ S α ≠ [].
 
-#[global] Instance erl_refuses_dec S α : Decision (erl_refuses S α).
-Proof. unfold erl_refuses. apply _. Defined.
+#[global] Instance erl_performs_dec S α : Decision (erl_performs S α).
+Proof. unfold erl_performs. apply _. Defined.
 
 Definition erl_step_dec S α T : Decision (S ⟶ₑ{α} T).
 Proof.
@@ -309,16 +309,16 @@ Proof.
   - right. intros hl. apply h. by apply erl_succ_complete.
 Defined.
 
-Definition erl_refuses_spec1 S α : ¬ erl_refuses S α → { T | S ⟶ₑ{α} T }.
+Definition erl_performs_spec1 S α : erl_performs S α → { T | S ⟶ₑ{α} T }.
 Proof.
-  intros h. unfold erl_refuses in h.
+  intros h. unfold erl_performs in h.
   destruct (erl_succ S α) as [| T l] eqn:heq; [done |].
   exists T. apply erl_succ_sound. rewrite heq. apply elem_of_cons. by left.
 Defined.
 
-Definition erl_refuses_spec2 S α : { T | S ⟶ₑ{α} T } → ¬ erl_refuses S α.
+Definition erl_performs_spec2 S α : { T | S ⟶ₑ{α} T } → erl_performs S α.
 Proof.
-  intros (T & hl) heq. unfold erl_refuses in heq.
+  intros (T & hl) heq.
   apply erl_succ_complete in hl. rewrite heq in hl. by inversion hl.
 Defined.
 
@@ -326,10 +326,10 @@ Defined.
   {| lts_step S α T := S ⟶ₑ{α} T ;
      lts_state_eqdec := _ ;
      lts_step_decidable S α T := erl_step_dec S α T ;
-     lts_refuses := erl_refuses ;
-     lts_refuses_decidable S α := erl_refuses_dec S α |}.
-Next Obligation. intros. by apply erl_refuses_spec1. Defined.
-Next Obligation. intros. by apply erl_refuses_spec2. Defined.
+     lts_performs S α := erl_performs S α ;
+     lts_performs_decidable S α := erl_performs_dec S α |}.
+Next Obligation. intros. by apply erl_performs_spec1. Defined.
+Next Obligation. intros. by apply erl_performs_spec2. Defined.
 
 (** The structural congruence is equality: parallel composition is multiset
     union, which is associative, commutative and has [∅] as a unit. *)
@@ -474,13 +474,13 @@ Proof.
   rewrite erl_mo_union, erl_mo_msg. multiset_solver.
 Qed.
 
-Lemma erl_dom_out S ξ : ξ ∈ dom (erl_mo S) → ∃ p v, ξ = out_act p v ∧ CMsg p v ∈ S.
+Lemma erl_dom_out S μ : μ ∈ dom (erl_mo S) → ∃ p v, μ = out_act p v ∧ CMsg p v ∈ S.
 Proof. intros hin%gmultiset_elem_of_dom. by apply erl_mo_elem_of. Qed.
 
-Lemma erl_out_of_dom S ξ : ξ ∈ dom (erl_mo S) → { T | S ⟶ₑ[ξ] T }.
+Lemma erl_out_of_dom S μ : μ ∈ dom (erl_mo S) → { T | S ⟶ₑ[μ] T }.
 Proof.
   intros hin.
-  destruct ξ as [[[p | k] [v | k']] | [[p | k] [v | k']]];
+  destruct μ as [[[p | k] [v | k']] | [[p | k] [v | k']]];
     try (by exfalso; apply erl_dom_out in hin as (p' & v' & heq & _); discriminate heq).
   exists (S ∖ ⟪p, v⟫).
   apply erl_dom_out in hin as (p' & v' & heq & hmem). injection heq as -> ->.

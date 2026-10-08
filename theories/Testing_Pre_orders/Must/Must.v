@@ -36,7 +36,7 @@ Inductive must_sts
 | m_sts_now : outcome t -> must_sts outcome p t
 | m_sts_step
     (nh : ¬ outcome t)
-    (nst : ¬ sts_refuses (p, t))
+    (nst : sts_performs (p, t))
     (l : forall p' t', sts_step (p, t) (p', t') -> must_sts outcome p' t')
   : must_sts outcome p t
 .
@@ -221,7 +221,7 @@ Proof.
   split.
   - intro hm. induction hm; eauto with mdb.
     apply m_step; eauto with mdb.
-    + eapply sts_refuses_spec1 in nst as ((p', t') & hl).
+    + eapply sts_performs_spec1 in nst as ((p', t') & hl).
       exists (p', t'). now simpl in hl.
     + simpl in *; eauto with mdb.
     + simpl in *; eauto with mdb.
@@ -229,12 +229,8 @@ Proof.
       apply H0, (ParSync μ1 μ2); eauto.
   - intro hm. dependent induction hm; eauto with mdb.
     eapply m_sts_step; eauto with mdb.
-    + eapply sts_refuses_spec2.
-      destruct (decide (sts_refuses (p, t))).
-      ++ exfalso.
-         destruct ex as ((p', t'), hl).
-         eapply sts_refuses_spec2 in s; eauto.
-      ++ now eapply sts_refuses_spec1 in n.
+    + destruct ex as ((p', t'), hl).
+      eapply sts_performs_spec2. by exists (p', t').
     + intros p' t' hl.
       inversion hl; subst; eauto with mdb.
 Qed.
@@ -410,7 +406,7 @@ Proof.
          eapply m_step; eauto.
       ++ intros p' t' μ1 μ2 inter tr_server tr_client.
          assert (t1 ↛[μ2]); eauto.
-         assert (¬ t1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
+         assert (t1 ⟶[μ2]). eapply lts_performs_spec2; eauto. contradiction.
 Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev_rev `{
@@ -430,14 +426,14 @@ Proof.
     + now eapply m_now.
     + eapply m_step; eauto.
       ++ exists (p, t2). by apply par_step_right.
-      ++ intros. assert (must p t2).
+      ++ intros. assert (p must_pass t2).
       { eapply m_now; eauto. }
-      assert (must p' t2).
+      assert (p' must_pass t2).
       { eapply must_preserved_by_lts_tau_srv; eauto. }
       eauto.
       ++ intros. assert (outcome t'); eauto. now eapply m_now.
       ++ intros. assert (t1 ↛[μ2]); eauto.
-         assert (¬ t1 ↛[μ2]). eapply lts_refuses_spec2; eauto. contradiction.
+         assert (t1 ⟶[μ2]). eapply lts_performs_spec2; eauto. contradiction.
 Qed.
 
 Lemma must_terminate_unoutcome `{
@@ -481,7 +477,7 @@ Proof.
   + subst. eauto.
   + subst. assert (∀ t' : T, q ⟹ t' → t' ≠ t2 → ¬ outcome t') as Hyp_final.
     {intros. eapply Hyp_not_happy. econstructor; eauto. eauto. }
-    assert (must p q).
+    assert (p must_pass q).
     {eapply must_preserved_by_lts_tau_clt; eauto. }
     destruct (decide (q = t2)) as [ eq | not_eq].
     ++ subst. eauto.

@@ -112,36 +112,36 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros. destruct X.
-  + exact (∀ p, p ∈ H → ∀ μ', sync μ' μ → lts_refuses p (ActExt μ')).
-  + exact (∀ p, p ∈ H → lts_refuses p τ).
+  + exact (¬ ∀ p, p ∈ H → ∀ μ', sync μ' μ → (p ↛[μ'])).
+  + exact (¬ ∀ p, p ∈ H → (p ↛)).
 Defined.
 Next Obligation.
   intros. simpl in *. unfold coToSET_obligation_3.
-  destruct α as [η |].
+  destruct α as [η |]; apply not_dec.
   - destruct (cowt_extaction_set_from_pset_ispec p η) as (Espec1 & Espec2).
     destruct (decide (cowt_extaction_set_from_pset p η = ∅)) as [Hemp | Hnemp].
     + left. intros p' mem μ hsy.
-      destruct (lts_refuses_decidable p' (ActExt μ)); eauto.
-      exfalso. eapply lts_refuses_spec1 in n as (q & tr).
+      intros n.
+      exfalso. eapply lts_performs_spec1 in n as (q & tr).
       assert (q ∈ cowt_extaction_set_from_pset p η) by (eapply Espec2; eauto).
       set_solver.
     + right. intro Hall.
       apply Hnemp. apply leibniz_equiv. intros q. split; [| set_solver].
       intros mem. eapply Espec1 in mem as (p' & memp & μ & hsy & tr).
       pose proof (Hall p' memp μ hsy) as memp'.
-      exfalso. eapply (lts_refuses_spec2 p' (ActExt μ) (exist _ q tr)). eauto.
+      exfalso. apply memp', (lts_performs_spec2 p' (ActExt μ) (exist _ q tr)).
   - destruct (cowt_tau_set_from_pset_ispec p) as (Tspec1 & Tspec2).
     destruct (decide (cowt_tau_set_from_pset p = ∅)) as [Hemp | Hnemp].
     + left. intros p' mem.
-      destruct (lts_refuses_decidable p' τ); eauto.
-      exfalso. eapply lts_refuses_spec1 in n as (q & tr).
+      intros n.
+      exfalso. eapply lts_performs_spec1 in n as (q & tr).
       assert (q ∈ cowt_tau_set_from_pset p) by (eapply Tspec2; eauto).
       set_solver.
     + right. intro Hall.
       apply Hnemp. apply leibniz_equiv. intros q. split; [| set_solver].
       intros mem. eapply Tspec1 in mem as (p' & memp & tr).
       eapply Hall in memp.
-      exfalso. eapply (lts_refuses_spec2 p' τ (exist _ q tr)). eauto.
+      exfalso. apply memp, (lts_performs_spec2 p' τ (exist _ q tr)).
 Qed.
 Next Obligation.
   intros. simpl in *. unfold coToSET_obligation_3 in H.
@@ -150,8 +150,8 @@ Next Obligation.
   - exists (cowt_extaction_set_from_pset p η). split; eauto.
     intro Hemp.
     apply H. intros p' mem μ hsy.
-    destruct (lts_refuses_decidable p' (ActExt μ)); eauto.
-    exfalso. eapply lts_refuses_spec1 in n as (q & tr).
+    intros n.
+    exfalso. eapply lts_performs_spec1 in n as (q & tr).
     assert (q ∈ cowt_extaction_set_from_pset p η) as Hin.
     { destruct (cowt_extaction_set_from_pset_ispec p η) as (_ & Hspec2).
       eapply Hspec2; eauto. }
@@ -159,8 +159,8 @@ Next Obligation.
   - exists (cowt_tau_set_from_pset p). split; eauto.
     intro Hemp.
     apply H. intros p' mem.
-    destruct (lts_refuses_decidable p' τ); eauto.
-    exfalso. eapply lts_refuses_spec1 in n as (q & tr).
+    intros n.
+    exfalso. eapply lts_performs_spec1 in n as (q & tr).
     assert (q ∈ cowt_tau_set_from_pset p) as Hin.
     { destruct (cowt_tau_set_from_pset_ispec p) as (_ & Hspec2).
       eapply Hspec2; eauto. }
@@ -175,13 +175,13 @@ Next Obligation.
     intros mem. eapply cowt_extaction_set_from_pset_ispec in mem
       as (p' & memp & μ & hsy & tr).
     pose proof (Hall p' memp μ hsy) as memp'.
-    exfalso. eapply (lts_refuses_spec2 p' (ActExt μ) (exist _ q tr)). eauto.
+    exfalso. apply memp', (lts_performs_spec2 p' (ActExt μ) (exist _ q tr)).
   - destruct H as (X' & Heq & Hne). subst.
     intro Hall.
     apply Hne. apply leibniz_equiv. intros q. split; [| set_solver].
     intros mem. eapply cowt_tau_set_from_pset_ispec in mem as (p' & memp & tr).
     eapply Hall in memp.
-    exfalso. eapply (lts_refuses_spec2 p' τ (exist _ q tr)). eauto.
+    exfalso. apply memp, (lts_performs_spec2 p' τ (exist _ q tr)).
 Qed.
 
 
@@ -321,7 +321,7 @@ Qed.
 (** ** Co-convergence and co-traces on [coToSET] *)
 
 Lemma co_empty_set_stable α : (∅ : gset P) ↛{ α }.
-Proof. destruct α; intros p mem; exfalso; set_solver. Qed.
+Proof. destruct α; intros Imp; apply Imp; intros p mem; exfalso; set_solver. Qed.
 
 Lemma co_empty_set_stable_wk_not_emp_list
   (a : Atest) (s : trace Atest) (ps : gset P) :
@@ -329,8 +329,8 @@ Lemma co_empty_set_stable_wk_not_emp_list
 Proof.
   intro imp.
   inversion imp; subst.
-  + eapply (@lts_refuses_spec2 (gset P)); eauto. eapply co_empty_set_stable.
-  + eapply (@lts_refuses_spec2 (gset P)); eauto. eapply co_empty_set_stable.
+  + eapply co_empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
+  + eapply co_empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
 Qed.
 
 Lemma co_empty_set_conv (s : trace Atest) : (∅ : gset P) ⇓ s.

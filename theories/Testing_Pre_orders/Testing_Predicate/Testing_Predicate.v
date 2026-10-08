@@ -69,7 +69,7 @@ Lemma unoutcome_preserved_by_wt_non_blocking_action
 Proof.
   intros s_spec hst hng hw.
   induction hw; eauto.
-  - eapply lts_refuses_spec2 in hst. now exfalso. eauto.
+  - exfalso. apply hst, lts_performs_spec2. eauto.
   - inversion s_spec; subst.
     inversion s_spec; subst.
     eapply IHhw. eassumption.

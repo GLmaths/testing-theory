@@ -162,12 +162,14 @@ Proof.
     - exists all_out.
       repeat split.
       ++ constructor.
+      ++ intros Hp. apply Hp. reflexivity.
       ++ intros i mem.
          compute_coR mem.
          multiset_solver.
    - exists (g 𝟘).
       repeat split.
       ++ eapply lts_to_wt. constructor. constructor.
+      ++ intros Hp. apply Hp. reflexivity.
       ++ intros i mem.
          compute_coR mem.
          multiset_solver.
@@ -504,6 +506,7 @@ Proof.
     inversion wk_tr;subst.
     * exists mem_inside. repeat split.
       - constructor.
+      - intros Hp. apply Hp. reflexivity.
       - intros i mem. (compute_coR_g mem). set_solver.
     * inversion l. subst. repeat lts_inversion lts.
     * repeat lts_inversion lts.

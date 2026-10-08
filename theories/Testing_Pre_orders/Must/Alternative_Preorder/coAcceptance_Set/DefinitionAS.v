@@ -42,7 +42,7 @@ Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A →
     (** Test-side condition for label abstractions , Definition 5 (1) **)
     abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
     (** Process-side condition for label abstractions,  Definition 5 (2) **)
-    abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ map_set Φ (coR p) -> (Φ β') ∈ map_set Φ (coR p);
+    abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ ⌈ Φ ⌉ (coR p) -> (Φ β') ∈ ⌈ Φ ⌉ (coR p);
   }.
 
 Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_} {_} {_} {_}.
@@ -102,22 +102,22 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) β β' b b' eq mem.
   assert (Φ β ∈ ⌈ Φ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
   destruct mem as (μ'' & mem & eq').
-  destruct mem as (μ''' & tr' & duo & b'').
-  eapply lts_refuses_spec1 in tr' as ((p , m) & tr'').
+  destruct mem as (η''' & tr' & duo & b'').
+  eapply lts_performs_spec1 in tr' as ((p , m) & tr'').
   inversion tr'';subst.
   - assert (Φ β ∈ ⌈ Φ ⌉ coR p1) as mem_h'.
-    { rewrite eq'. eapply map_gamma_of_action. exists μ'''.
-      repeat split; eauto. eapply lts_refuses_spec2;eauto. }
+    { rewrite eq'. eapply map_gamma_of_action. exists η'''.
+      repeat split; eauto. eapply lts_performs_spec2;eauto. }
     eapply (abstraction_prog_spec p1 β β') in mem_h';eauto.
     destruct mem_h' as (β'' & eq'' & mem').
     exists β''. repeat split; eauto. destruct eq'' as (μ & tr & duo' & b''').
-    exists μ. repeat split; eauto. eapply lts_refuses_spec1 in tr as (p'' & tr).
-    eapply lts_refuses_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
-  - destruct (decide (non_blocking μ''')) as [nb''' | b'''].
+    exists μ. repeat split; eauto. eapply lts_performs_spec1 in tr as (p'' & tr).
+    eapply lts_performs_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
+  - destruct (decide (non_blocking η''')) as [nb''' | b'''].
     * eapply non_blocking_action_in_ms in l; eauto.
       subst. exists μ''. split.
-      + exists μ'''. repeat split. 
-        -- eapply lts_refuses_spec2;eauto.
+      + exists η'''. repeat split. 
+        -- eapply lts_performs_spec2;eauto.
         -- exact duo.
         -- exact b''.
       + rewrite<- eq'. admit.
@@ -137,16 +137,16 @@ Next Obligation.
     destruct in_p as (μ & mem & eq). subst.
     exists μ. split.
     - destruct mem as (μ' & tr & duo & b).
-      eapply lts_refuses_spec1 in tr as (p' & tr).
+      eapply lts_performs_spec1 in tr as (p' & tr).
       exists μ'. repeat split; eauto.
-      eapply lts_refuses_spec2. exists (p' ▷ m).
+      eapply lts_performs_spec2. exists (p' ▷ m).
       eapply ParLeft. exact tr.
     - eauto.
   + simpl in *. eapply gmultiset_elem_of_dom, elem_of_gmultiset_map in in_M.
     destruct in_M as (μ & eq & mem).
     exists (co μ). split; eauto.
     exists μ. repeat split ;eauto.
-    - eapply lts_refuses_spec2.
+    - eapply lts_performs_spec2.
       assert (μ ∈ MO_without_not_nb m) as mem';eauto. 
       eapply lts_MO_nb_with_nb_spec1 in mem as (nb & mem).
       exists (p , m ∖ {[+ μ +]}).
@@ -161,12 +161,12 @@ Qed.
 Next Obligation.
   intros. destruct H2 as (μ & mem & eq). subst.
   destruct p. destruct mem as (μ' & tr & duo & b).
-  eapply lts_refuses_spec1 in tr as ((p' , m') & eq).
+  eapply lts_performs_spec1 in tr as ((p' , m') & eq).
   inversion eq; subst; simpl in *.
   + eapply elem_of_union. left.
     eapply coR_abs_spec2.
     exists μ. repeat split ;eauto. exists μ'. repeat split; eauto.
-    eapply lts_refuses_spec2. eauto.
+    eapply lts_performs_spec2. eauto.
   + eapply elem_of_union. right.
     eapply gmultiset_elem_of_dom, elem_of_gmultiset_map.
     destruct (decide (non_blocking μ')) as [nb' | b'].

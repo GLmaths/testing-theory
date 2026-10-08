@@ -108,10 +108,10 @@ with gsize p :=
 Fixpoint pr_subst id p q :=
   match p with
   | pr_output _ => p
-  | pr_par p1 p2 => pr_par (pr_subst id p1 q) (pr_subst id p2 q)
+  | pr_par p1 p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q)
   | pr_var id' => if decide (id = id') then q else p
   | pr_rec id' p' =>
-    if decide (id = id') then p else pr_rec id' (pr_subst id p' q)
+    if decide (id = id') then p else rec id' • (pr_subst id p' q)
   | g gp => g (gpr_subst id gp q)
 end
 
@@ -123,7 +123,7 @@ with gpr_subst id p q {struct p} := match p with
 | gpr_tau p =>
     gpr_tau (pr_subst id p q)
 | gpr_choice p1 p2 =>
-    gpr_choice (gpr_subst id p1 q) (gpr_subst id p2 q)
+    (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
 
 Inductive lts : proc -> ActIO name -> proc -> Prop :=
@@ -136,13 +136,13 @@ Inductive lts : proc -> ActIO name -> proc -> Prop :=
 | lts_com : forall {μ p1 p2 q1 q2},
     lts p1 (ActExt μ) p2 ->
     lts q1 (ActExt (co μ)) q2 ->
-    lts (pr_par p1 q1) τ (pr_par p2 q2)
+    lts (p1 ‖ q1) τ (p2 ‖ q2)
 | lts_parL : forall {α p1 p2 q},
     lts p1 α p2 ->
-    lts (pr_par p1 q) α (pr_par p2 q)
+    lts (p1 ‖ q) α (p2 ‖ q)
 | lts_parR : forall {α p q1 q2},
     lts q1 α q2 ->
-    lts (pr_par p q1) α (pr_par p q2)
+    lts (p ‖ q1) α (p ‖ q2)
 | lts_choiceL : forall {p1 p2 q α},
     lts (g p1) α q ->
     lts (pr_choice p1 p2) α q
@@ -150,7 +150,7 @@ Inductive lts : proc -> ActIO name -> proc -> Prop :=
     lts (g p2) α q ->
     lts (pr_choice p1 p2) α q
 | lts_rec : forall {x p},
-    lts (pr_rec x p) τ (pr_subst x p (pr_rec x p))
+    lts (rec x • p) τ (pr_subst x p (rec x • p))
 .
 
 #[global] Hint Constructors lts:ccs.
@@ -180,11 +180,11 @@ Proof.
   + cbn in mem.
     destruct (decide (a ∈ moutputs_of e1)).
     destruct (IHe1 a e) as (e1' & lts__e1 & eq).
-    exists (pr_par e1' e2). repeat split; eauto with ccs.
+    exists (e1' ‖ e2). repeat split; eauto with ccs.
     multiset_solver.
     destruct (decide (a ∈ moutputs_of e2)).
     destruct (IHe2 a e) as (e2' & lts__e2 & eq).
-    exists (pr_par e1 e2'). repeat split; eauto with ccs.
+    exists (e1 ‖ e2'). repeat split; eauto with ccs.
     multiset_solver.
     contradict mem. intro mem. multiset_solver.
     + exfalso. multiset_solver.
@@ -261,10 +261,10 @@ encode_gproc (gp: gproc) : gen_tree (nat + (name + name)) :=
 Fixpoint decode_proc (t: gen_tree (nat + (name + name))) : proc :=
   match t with
   | GenLeaf (inr ( inl a)) => pr_output a
-  | GenNode 0 [ep; eq] => pr_par (decode_proc ep) (decode_proc eq)
+  | GenNode 0 [ep; eq] => (decode_proc ep) ‖ (decode_proc eq)
   | GenNode 1 [egp] => g $ decode_gproc egp
   | GenNode 2 [GenLeaf (inl x)] => pr_var x
-  | GenNode 3 [GenLeaf (inl x); egq] => pr_rec x (decode_proc egq)
+  | GenNode 3 [GenLeaf (inl x); egq] => rec x • (decode_proc egq)
   | _ => g gpr_success (* arbitrary *)
   end
 with
@@ -274,7 +274,7 @@ decode_gproc (t: gen_tree (nat + (name + name))): gproc :=
   | GenNode 1 [] => gpr_nil
   | GenNode 2 [GenLeaf (inr (inr a)); ep] => gpr_input a (decode_proc ep)
   | GenNode 3 [eq] => gpr_tau (decode_proc eq)
-  | GenNode 4 [egp; egq] => gpr_choice (decode_gproc egp) (decode_gproc egq)
+  | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
   | _ => gpr_success (* arbitrary *)
   end.
 
@@ -348,7 +348,7 @@ Fixpoint lts_set_tau p : gset proc :=
   match p with
   | g gp => lts_set_tau_g gp
   | pr_var _ | pr_output _ => ∅
-  | pr_rec x p => {[ pr_subst x p (pr_rec x p) ]}
+  | pr_rec x p => {[ pr_subst x p (rec x • p) ]}
   | pr_par p1 p2 =>
       let ps1_tau : gset proc := list_to_set (map (fun p => p ∥ p2) (elements $ lts_set_tau p1)) in
       let ps2_tau : gset proc := list_to_set (map (fun p => p1 ∥ p) (elements $ lts_set_tau p2)) in
@@ -518,7 +518,7 @@ Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Defined.
 
 (* same as in ProcInstances *)
 #[global] Program Instance CCS_lts : Lts proc name := {|
-    lts_step x ℓ y  := lts x ℓ y;
+    lts_step x α y  := lts x α y;
     lts_stable p := proc_stable p;
     lts_outputs := outputs_of;
     |}.
@@ -539,8 +539,8 @@ Qed.
 
 #[global] Instance CCS_finite : FiniteLts proc name.
 Proof.
-  constructor; [apply _|]. intros p ℓ. unfold dsig.
-  destruct ℓ as [[a|a]|].
+  constructor; [apply _|]. intros p α. unfold dsig.
+  destruct α as [[a|a]|].
   - eapply (in_list_finite (elements (lts_set_input p a))).
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_input_spec1.
@@ -557,19 +557,19 @@ Inductive cgr_step : proc -> proc -> Prop :=
 | cgr_par : forall p q r t,
     cgr_step p q ->
     cgr_step r t ->
-    cgr_step (pr_par p r) (pr_par q t)
+    cgr_step (p ‖ r) (q ‖ t)
 | cgr_par_nil : forall p,
-    cgr_step (pr_par p pr_nil) p
+    cgr_step (p ‖ pr_nil) p
 | cgr_par_nil_rev : forall p,
-    cgr_step p (pr_par p pr_nil)
+    cgr_step p (p ‖ pr_nil)
 | cgr_par_com : forall p q,
-    cgr_step (pr_par p q) (pr_par q p)
+    cgr_step (p ‖ q) (q ‖ p)
 | cgr_par_ass : forall p q r,
-    cgr_step (pr_par (pr_par p q) r) (pr_par p (pr_par q r))
+    cgr_step ((p ‖ q) ‖ r) (p ‖ (q ‖ r))
 | cgr_par_ass_rev : forall p q r,
-    cgr_step (pr_par p (pr_par q r)) (pr_par (pr_par p q) r)
+    cgr_step (p ‖ (q ‖ r)) ((p ‖ q) ‖ r)
 | cgr_rec : forall x p q,
-    cgr_step p q -> cgr_step (pr_rec x p) (pr_rec x q)
+    cgr_step p q -> cgr_step (rec x • p) (rec x • q)
 | cgr_tau : forall p q,
     cgr_step p q ->
     cgr_step (pr_tau p) (pr_tau q)
@@ -587,12 +587,12 @@ Inductive cgr_step : proc -> proc -> Prop :=
     cgr_step (pr_choice p q) (pr_choice q p)
 | cgr_choice_ass : forall p q r,
     cgr_step
-      (pr_choice (gpr_choice p q) r)
-      (pr_choice p (gpr_choice q r))
+      (pr_choice (p + q) r)
+      (pr_choice p (q + r))
 | cgr_choice_ass_rev : forall p q r,
     cgr_step
-      (pr_choice p (gpr_choice q r))
-      (pr_choice (gpr_choice p q) r)
+      (pr_choice p (q + r))
+      (pr_choice (p + q) r)
 .
 
 #[global] Hint Constructors cgr_step:ccs.
@@ -657,7 +657,7 @@ Qed.
 Lemma cgr_subst2 q p p' x : p ≡* p' → pr_subst x p q ≡* pr_subst x p' q.
 Proof. intros hcgr. induction hcgr. constructor. now eapply cgr_step_subst2. eauto with ccs. Qed.
 
-Lemma cgr_subst p q x : p ≡ q -> pr_subst x p (pr_rec x p) ≡* pr_subst x q (pr_rec x q).
+Lemma cgr_subst p q x : p ≡ q -> pr_subst x p (rec x • p) ≡* pr_subst x q (rec x • q).
 Proof.
   intro heq.
   etrans.
@@ -726,7 +726,7 @@ Proof.
       ++ dependent induction l; eexists; split; eauto with ccs.
       ++ eexists. split; eauto with ccs.
     + intros t α l. inversion l; subst.
-      exists (pr_subst x p (pr_rec x p)). split. eauto with ccs. now eapply cgr_subst.
+      exists (pr_subst x p (rec x • p)). split. eauto with ccs. now eapply cgr_subst.
     + intros t α l. inversion l; subst; eexists; split; eauto with ccs.
     + intros t α l. inversion l; subst; eexists; split; eauto with ccs.
     + intros t α l. dependent induction l.
@@ -757,7 +757,7 @@ Qed.
 Next Obligation. reflexivity. Qed.
 
 Lemma output_shape p q a :
-  lts p (ActExt $ ActOut a) q -> pr_par (pr_output a) q ≡* p.
+  lts p (ActExt $ ActOut a) q -> (pr_output a) ‖ q ≡* p.
 Proof.
   intros l.
   dependent induction l.
@@ -907,7 +907,7 @@ Qed.
 
 Inductive good : proc -> Prop :=
 | good_success : good pr_success
-| good_par : forall p q, good p \/ good q -> good (pr_par p q)
+| good_par : forall p q, good p \/ good q -> good (p ‖ q)
 | good_choice : forall p q, good (g p) \/ good (g q) -> good (pr_choice p q).
 
 #[global] Hint Constructors good:ccs.
@@ -1080,8 +1080,8 @@ From TestingTheory Require Import DefinitionAS.
   : @AbsAction (ExtAct name) gLabel_nb proc FinA _ Φ.
 Next Obligation.
   intros. destruct μ; destruct μ'.
-  - simpl in H1. subst. eapply lts_refuses_spec1 in H2 as (e' & Tr).
-    eapply lts_refuses_spec2. eauto.
+  - simpl in H1. subst. eapply lts_performs_spec1 in H2 as (e' & Tr).
+    eapply lts_performs_spec2. eauto.
   - exfalso. eapply H0. exists a0. eauto.
   - exfalso. eapply H. exists a. eauto.
   - exfalso. eapply H. exists a. eauto.
@@ -1209,7 +1209,7 @@ Proof.
       simpl in *. eapply hl. eauto.
     + assert (mem' : a ∈ X) by set_solver.
       edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
-      edestruct (eq_spec (unroll_fw (elements ({[x]} ∪ X))) (pr_par (pr_input x pr_success) r) 
+      edestruct (eq_spec (unroll_fw (elements ({[x]} ∪ X))) ((pr_input x pr_success) ‖ r) 
         (ActExt $ ActIn a)) as (t & hlt & heqt).
       exists (unroll_fw (x :: elements X)).
       split. eapply unroll_a_eq_perm.
@@ -1357,7 +1357,7 @@ Next Obligation.
     destruct μ.
     + destruct mem as (μ' & Tr & duo & b). symmetry in duo.
       eapply simplify_match_input in duo. subst.
-      eapply lts_refuses_spec1 in Tr as (p' & Tr).
+      eapply lts_performs_spec1 in Tr as (p' & Tr).
       eapply output_shape in Tr as Eq.
       assert (𝝳 (Φ (ActIn a)) ∈ PreCoAct_of (! a ∥ p')).
       { eapply gmultiset_elem_of_dom. simpl. multiset_solver. }
@@ -1373,17 +1373,17 @@ Next Obligation.
       exists (ActIn pre_μ). split.
       * simpl; eauto.
       * exists (ActOut pre_μ). repeat split.
-        -- eapply lts_refuses_spec2. exists 𝟘. eapply lts_output.
+        -- eapply lts_performs_spec2. exists 𝟘. eapply lts_output.
         -- intro. inversion H0. inversion H1.
     + eapply gmultiset_elem_of_disj_union in H. destruct H.
       * apply gmultiset_elem_of_dom in H. eapply (Hp p1) in H; simpl ; eauto with lia.
         destruct H as (μ & Hyp1 & μ' & Tr & duo & b). subst.
-        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-        eapply lts_refuses_spec2. exists (p'1 ∥ p2). constructor. eauto. split; eauto.
+        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_performs_spec1 in Tr as (p'1 & Tr).
+        eapply lts_performs_spec2. exists (p'1 ∥ p2). constructor. eauto. split; eauto.
       * apply gmultiset_elem_of_dom in H. eapply (Hp p2) in H; simpl ; eauto with lia.
         destruct H as (μ & Hyp1 & μ' & Tr & duo & b). subst.
-        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-        eapply lts_refuses_spec2. exists (p1 ∥ p'2). constructor. eauto. split; eauto.
+        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_performs_spec1 in Tr as (p'2 & Tr).
+        eapply lts_performs_spec2. exists (p1 ∥ p'2). constructor. eauto. split; eauto.
     + simpl in H. inversion H.
     + simpl in H. inversion H.
     + destruct g0.

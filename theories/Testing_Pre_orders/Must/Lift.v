@@ -38,9 +38,7 @@ Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO 
 Proof.
   intro ht.
   induction ht.
-  destruct (decide ((p, ∅) ↛)) as [refuses | accept].
-  - eapply tstep. intros (p', m') l'.
-    apply lts_refuses_spec2 in refuses. now exfalso. eauto.
+  destruct (decide ((p, ∅) ⟶)) as [accept | refuses].
   - eapply tstep. intros (p', m') l'.
     inversion l'; subst.
     + eapply H2; eauto.
@@ -48,6 +46,8 @@ Proof.
     + exfalso. 
       destruct eq as (duo & nb).
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
+  - eapply tstep. intros (p', m') l'.
+    exfalso. apply refuses, lts_performs_spec2. eauto.
 Qed.
 
 Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
@@ -55,11 +55,11 @@ Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P
 Proof.
   intro ht.
   dependent induction ht.
-  destruct (decide (p ↛)) as [refuses | accept].
-  - eapply tstep. intros p' l'.
-    apply lts_refuses_spec2 in refuses. now exfalso. eauto.
+  destruct (decide (p ⟶)) as [accept | refuses].
   - eapply tstep. intros p' l'.
     eapply H2;eauto. eapply ParLeft. eauto.
+  - eapply tstep. intros p' l'.
+    exfalso. apply refuses, lts_performs_spec2. eauto.
 Qed.
 
 Lemma p_trace_implies_toFW_p_trace `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} p μ q :
@@ -209,7 +209,7 @@ Proof.
                  exists p2. split. now symmetry. eassumption.
                  destruct (fwd_feedback nb eq hlp0 hlp3) as [(t & hlt & heqt)|]; subst; eauto with mdb.
                  exists (t, e2). eapply ParLeft; eauto.
-                 assert (hm : must p' e0) by eauto with mdb.
+                 assert (hm : p' must_pass e0) by eauto with mdb.
                  eapply (must_eq_client p' e0 e2) in hm.
                  eapply (must_eq_server p' p1 e2) in hm.
                  assert (¬ outcome e2).
@@ -349,7 +349,7 @@ Proof.
   dependent induction hwo; intros q m2 hm.
   rename p into e, q into p.
   - rewrite gmultiset_disj_union_left_id. eapply must_eq_client; eauto.
-  - assert (must (q, {[+ η +]} ⊎ m2) p2).
+  - assert ((q, {[+ η +]} ⊎ m2) must_pass p2).
     -- dependent induction hm; subst. 
       + eapply m_now. exact (outcome_preserved_by_lts_non_blocking_action _ _ _ H2 H3 H10).
       + assert (non_blocking η) as nb. eauto.
@@ -441,8 +441,8 @@ Proof.
              rewrite gmultiset_disj_union_right_id.
              eapply Hcom; eauto with mdb.
          +++ exfalso. subst.
-             eapply (@lts_refuses_spec2 T).
-             exists e0. eassumption. eapply lts_oba_mo_strip_refuses; eauto.
+             generalize (lts_performs_spec2 e' _ (exist _ e0 l2)).
+             eapply lts_oba_mo_strip_refuses; eauto.
        ++ destruct (decide (non_blocking μ1)) as [ nb1 | not_nb1];  simpl in *.
           +++ inversion l1; subst.
               ++++ rewrite <- gmultiset_disj_union_right_id.
@@ -538,8 +538,8 @@ Proof.
            exists (p0 ▷ r0). eapply ParRight; eauto.
         ++ destruct (decide (non_blocking μ2)); destruct (decide (non_blocking μ1)). 
            +++ exfalso. eapply dual_blocks. eauto. symmetry; eauto. eauto.
-           +++ exfalso. eapply (lts_refuses_spec2 e').
-               exists e0. exact l2. eapply lts_oba_mo_strip_refuses; eauto.
+           +++ exfalso. generalize (lts_performs_spec2 e' _ (exist _ e0 l2)).
+               eapply lts_oba_mo_strip_refuses; eauto.
            +++ eapply woutpout_preserves_mu in l2 as (r0 & r1 & l0 & _); eauto.
                inversion l1; subst.
                ++++ exists (p0, r0). 

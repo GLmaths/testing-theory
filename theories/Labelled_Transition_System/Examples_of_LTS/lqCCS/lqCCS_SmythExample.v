@@ -102,7 +102,7 @@ Proof. inversion 1 as [? ? ? Hg| | | | | | | |]; subst. inversion Hg; subst. eau
 Section Example.
   Context `{QM : QuantumModel}.
   Context (W_strict : ∀ a b, W_le (W_add a b) a → b = W_zero).
-  Context (W_dense : ∀ a b : W, prob_lt a b → ∃ c, prob_lt a c ∧ prob_lt c b).
+  Context (W_dense : ∀ a b : W, a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b).
   Context (M : meas) (q : qubit) (ρ : St) (k0 k1 : Out (meas_of M [q])).
   Context (Houts : outs (meas_of M [q]) = [k0; k1]).
   Context (Hcode : code _ k0 ≠ code _ k1).
@@ -144,7 +144,7 @@ Section Example.
   Lemma eval_qes : eval_qubits qes = Some [q].
   Proof. done. Qed.
 
-  Lemma tr_pos b : prob_lt W_zero (tr (wk b)).
+  Lemma tr_pos b : W_zero <ₚ (tr (wk b)).
   Proof.
     split; [apply W_zero_le|]. intros Hle. assert (Hz : tr (wk b) = W_zero).
     { apply (W_strict W_zero). by rewrite W_add_zero. }
@@ -617,7 +617,7 @@ Section Example.
       exfalso. apply (Hst (SPair 1 10)). eapply shape_move0. constructor.
   Qed.
 
-  Lemma lt_le_W a b c : prob_lt a b → W_le b c → prob_lt a c.
+  Lemma lt_le_W a b c : a <ₚ b → W_le b c → a <ₚ c.
   Proof.
     intros [Hab Hba] Hbc. split; [by etrans|]. intros Hca. apply Hba. by etrans.
   Qed.
@@ -633,7 +633,7 @@ Section Example.
 
   Lemma succ_shape s0 s1 :
     (∃ ch, s0 = (true, ch, true)) ∨ (∃ ch, s1 = (true, ch, true)) →
-    prob_lt W_zero (dmass_of conf_good (Shape s0 s1)).
+    W_zero <ₚ (dmass_of conf_good (Shape s0 s1)).
   Proof.
     unfold Shape, dmass_of. cbn [foldr fst snd].
     intros [(ch & ->)|(ch & ->)].
@@ -645,7 +645,7 @@ Section Example.
       + apply le_add_l'.
   Qed.
 
-  Lemma corr_positive r : is_run Δc0 r → ∃ n, prob_lt W_zero (succ_mass r n).
+  Lemma corr_positive r : is_run Δc0 r → ∃ n, W_zero <ₚ (succ_mass r n).
   Proof.
     intros Hr.
     destruct (run_stable (csize (Pcorr, Tbr)) Δc0 r) as [n Hn]; [|done|].

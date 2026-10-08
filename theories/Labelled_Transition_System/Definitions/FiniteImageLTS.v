@@ -39,7 +39,7 @@ Class FiniteImagegLts P A `{gLts P A} :=
 
 Class CountablegLts P A `{gLts P A} := MkClts {
     clts_states_countable: Countable P;
-    clts_next_states_countable: ∀ x ℓ, Countable (dsig (fun y => x ⟶{ℓ} y));
+    clts_next_states_countable: ∀ x α, Countable (dsig (fun y => x ⟶{α} y));
 }.
 #[global] Existing Instance clts_states_countable.
 #[global] Existing Instance clts_next_states_countable.
@@ -147,12 +147,12 @@ Proof.
 Qed.
 
 (** *** Weak traces sets **)
-Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : terminate p) : gset P :=
+Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : p ⤓) : gset P :=
   let '(tstep _ f) := t in
   let k q := wt_set_nil (`q) (f (`q) (proj2_dsig q)) in
   {[ p ]} ∪ ⋃ map k (enum $ dsig (fun x => p ⟶ x)).
 
-Lemma wt_set_nil_spec1 `{FiniteImagegLts P A} p q (tp : terminate p) :
+Lemma wt_set_nil_spec1 `{FiniteImagegLts P A} p q (tp : p ⤓) :
   q ∈ wt_set_nil p tp -> p ⟹ q.
 Proof.
   case tp. induction tp as [p H1 H2].
@@ -167,7 +167,7 @@ Proof.
 Qed.
 
 Lemma wt_set_nil_spec2 `{FiniteImagegLts P A} p q : 
-    forall (tp : terminate p), p ⟹ q -> q ∈ wt_set_nil p tp.
+    forall (tp : p ⤓), p ⟹ q -> q ∈ wt_set_nil p tp.
 Proof.
   intros tp Htp. revert tp. dependent induction Htp; intros tp; destruct tp.
   + set_solver.
@@ -190,7 +190,7 @@ Proof.
 Qed.
 
 Lemma wt_set_nil_fin_aux `{FiniteImagegLts P A}
-  (p : P) (ht : terminate p) (d : ∀ q, Decision (p ⟹ q)) : 
+  (p : P) (ht : p ⤓) (d : ∀ q, Decision (p ⟹ q)) : 
       Finite (dsig (fun q => p ⟹ q)).
 Proof.
   unfold dsig.
@@ -274,8 +274,8 @@ Definition wt_set_mu_fin `{FiniteImagegLts P A}
   (p : P) μ s (hcnv : p ⇓ μ :: s) : Finite (dsig (fun q => p ⟹{μ} q)) :=
   wt_mu_set_fin_aux p μ s hcnv (wt_mu_set_dec p μ s hcnv).
 
-Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : cnv p s) : gset P :=
-  match s as s0 return cnv p s0 -> gset P with
+Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : p ⇓ s) : gset P :=
+  match s as s0 return p ⇓ s0 -> gset P with
   | [] =>
       fun _ => wt_set_nil p (cnv_terminate p _ hcnv)
   | μ :: s' =>
@@ -338,12 +338,12 @@ Definition wt_set_fin `{FiniteImagegLts P A}
   wt_set_fin_aux p s hcnv (wt_set_dec p s hcnv).
 
 Fixpoint wt_nil_refuses_set `{FiniteImagegLts P A} (p : P) (ht : p ⤓) : gset P :=
-  match lts_refuses_decidable p τ with
-  | left  _ => {[ p ]}
-  | right _ =>
+  match decide (p ⟶) with
+  | left _ =>
       let '(tstep _ f) := ht in
       let k p := wt_nil_refuses_set (`p) (f (`p) (proj2_dsig p)) in
       ⋃ map k (enum (dsig (fun q => p ⟶ q)))
+  | right _ => {[ p ]}
   end.
 
 Lemma wt_nil_refuses_set_spec1 `{FiniteImagegLts P A}
@@ -353,14 +353,14 @@ Proof.
   case ht. induction ht as [p H1 H2].
   intros ht mem.
   simpl in mem.
-  case (lts_refuses_decidable p τ) in mem.
-  - eapply elem_of_singleton_1 in mem. subst. eauto with mdb.
+  case (decide (p ⟶)) in mem.
   - eapply elem_of_union_list in mem as (g & mem1 & mem2).
     eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
     simpl in mem2. case (ht t (proj2_dsig (t ↾ hw1))) eqn:eq.
     edestruct (H2 t). now eapply bool_decide_unpack. eassumption.
     split; eauto with mdb. eapply wt_tau. eapply bool_decide_unpack.
     eassumption. eassumption.
+  - eapply elem_of_singleton_1 in mem. subst. eauto with mdb.
 Qed.
 
 Lemma wt_nil_refuses_set_spec2 `{FiniteImagegLts P A}
@@ -368,12 +368,12 @@ Lemma wt_nil_refuses_set_spec2 `{FiniteImagegLts P A}
   (p ⟹ q /\ q ↛) -> q ∈ wt_nil_refuses_set p ht.
 Proof.
   intros (hw & hst). dependent induction hw; case ht; induction ht; intros ht; simpl.
-  - case (lts_refuses_decidable p τ); set_solver.
-  - case (lts_refuses_decidable p τ); intro hst'.
-    + exfalso. eapply (lts_refuses_spec2 p τ); eauto.
+  - case (decide (p ⟶)); set_solver.
+  - case (decide (p ⟶)); intro hst'.
     + eapply elem_of_union_list.
       eexists. split. eapply list_elem_of_fmap.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
+    + exfalso. apply hst', (lts_performs_spec2 p τ). eauto.
 Qed.
 
 Lemma wt_nil_refuses_set_dec `{FiniteImagegLts P A} p (ht : p ⤓) : 
@@ -457,7 +457,7 @@ Definition wt_refuses_set_fin `{FiniteImagegLts P A}
   wt_refuses_set_fin_aux p s hcnv (wt_refuses_set_dec p s hcnv).
 
 Lemma wt_nil_set_refuses `{FiniteImagegLts P A} p hcnv :
-  lts_refuses p τ -> wt_set p [] hcnv = {[ p ]}.
+  (p ↛) -> wt_set p [] hcnv = {[ p ]}.
 Proof.
   intros hst.
   eapply leibniz_equiv.
@@ -466,19 +466,19 @@ Proof.
     eapply wt_set_spec1 in mem.
     inversion mem; subst.
     + set_solver.
-    + exfalso. eapply lts_refuses_spec2; eauto.
+    + exfalso. apply hst, lts_performs_spec2. eauto.
   - intro mem. eapply wt_set_spec2. replace q with p.
     eauto with mdb. set_solver.
 Qed.
 
 Lemma wt_refuses_set_refuses_singleton `{FiniteImagegLts P A} p hcnv :
-  lts_refuses p τ -> wt_refuses_set p [] hcnv = {[ p ]}.
+  (p ↛) -> wt_refuses_set p [] hcnv = {[ p ]}.
 Proof.
   intro hst.
   eapply leibniz_equiv.
   intro q. split; intro mem.
   - eapply wt_refuses_set_spec1 in mem as (w & hst').
-    inversion w; subst. set_solver. exfalso. eapply lts_refuses_spec2; eauto.
+    inversion w; subst. set_solver. exfalso. apply hst, lts_performs_spec2. eauto.
   - eapply elem_of_singleton_1 in mem. subst.
     eapply wt_refuses_set_spec2. split; eauto with mdb.
 Qed.
@@ -624,8 +624,8 @@ Proof.
 Qed.
 
 Definition eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A} (X Y : gset P) :=
- (forall x, x ∈ X -> exists y, y ∈ Y ∧ eq_rel x y) ∧
- (forall y, y ∈ Y -> exists x, x ∈ X ∧ eq_rel y x).
+ (forall x, x ∈ X -> exists y, y ∈ Y ∧ x ⋍ y) ∧
+ (forall y, y ∈ Y -> exists x, x ∈ X ∧ y ⋍ x).
 
 Global Instance symmetric_eq_rel_set `{gLtsEq P A} `{!FiniteImagegLts P A}:
  Symmetric eq_rel_set.

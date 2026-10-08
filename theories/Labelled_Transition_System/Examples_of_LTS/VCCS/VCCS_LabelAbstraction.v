@@ -69,7 +69,7 @@ Definition repr_vccs (x : FinA) : ExtAct TypeOfActions :=
 
 (** Input acceptance does not depend on the value. *)
 Lemma accepts_input_any_value (p : proc) c v w :
-  ¬ p ↛[ActIn (c , v)] → ¬ p ↛[ActIn (c , w)].
+  p ⟶[ActIn (c , v)] → p ⟶[ActIn (c , w)].
 Proof.
   intros acc.
   exact (@abstraction_test_spec _ _ _ _ _ _ _ _ _ _ _ _ _ AbsVCCS p

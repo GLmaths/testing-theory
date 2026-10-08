@@ -94,63 +94,45 @@ Proof.
   + right. inversion 1.
 Qed.
 
-Definition lts_multiset_refuses `{ExtAction A} (m : MO A) (α : Act A): Prop := 
+Definition lts_multiset_performs `{ExtAction A} (m : MO A) (α : Act A) : Prop :=
 match α with
-    | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
-                                                                        else True
-                                               else forall η', dual η η' -> blocking η'
-    | τ => True
+    | ActExt μ => if (decide (non_blocking μ)) then μ ∈ m
+                                               else ∃ η, non_blocking η ∧ dual μ η
+    | τ => False
 end.
 
-Definition lts_multiset_refuses_decidable `{ExtAction A} {unique_nb : UniqueDual A} m α : Decision (lts_multiset_refuses m α).
+Definition lts_multiset_performs_decidable `{ExtAction A} {unique_nb : UniqueDual A} m α : Decision (lts_multiset_performs m α).
 Proof.
-  destruct α as [μ |].
-  + simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
-    - rename μ into η. destruct (decide (η ∈ m)) as [in_mem | not_in_mem].
-      ++ right. intro. eauto.
-      ++ left. eauto. 
-    - destruct (decide (∃ η', non_blocking η' /\ dual μ η' )) as [exists_dual | not_exists_dual].
-      ++ right. intro imp. destruct exists_dual as (η & nb & duo). destruct (imp η); eauto.
-      ++ left. eauto.
-  + left. simpl. eauto.
+  destruct α as [μ |]; simpl.
+  + destruct (decide (non_blocking μ)); apply _.
+  + apply _.
 Qed.
 
 #[global] Program Instance MbgLts `{H : ExtAction A} {unique_nb : UniqueDual A} : gLts (MO A) H :=
 {|
     lts_step m α m' := lts_multiset_step m α m' ;
-    lts_refuses p := lts_multiset_refuses p;
+    lts_performs m α := lts_multiset_performs m α;
     lts_step_decidable m α m' := lts_multiset_step_decidable m α m';
-    lts_refuses_decidable m α := lts_multiset_refuses_decidable m α;
+    lts_performs_decidable m α := lts_multiset_performs_decidable m α;
   |}.
 Next Obligation.
-  intros ? ? ? m α not_refuses; simpl in *.
-  destruct α.
-  - simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
-    + rename μ into η. destruct (decide (η ∈ m)).
-      ++ assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq. multiset_solver.
-         exists (m ∖ {[+ η +]}). rewrite eq at 1. eapply lts_multiset_minus; eauto.
-      ++ exfalso. eauto.
-    + destruct (decide (∃ η' : A, non_blocking η' ∧ dual μ η')) as [exist | not_exists ].
-      ++ exists ({[+ co μ +]} ⊎ m). destruct exist as (η & nb & duo).
-         eapply unique_nb in duo as eq; eauto;subst.
-         constructor; eauto.  
-      ++ exfalso. eapply not_refuses. eauto.
-  - simpl in *. exfalso. eauto.
+  intros ? ? ? m α accepts; simpl in *.
+  destruct α as [μ |]; [| contradiction].
+  simpl in accepts. destruct (decide (non_blocking μ)) as [nb | not_nb].
+  - rename μ into η.
+    assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq by multiset_solver.
+    exists (m ∖ {[+ η +]}). rewrite eq at 1. eapply lts_multiset_minus; eauto.
+  - exists ({[+ co μ +]} ⊎ m).
+    destruct accepts as (η & nb & duo).
+    eapply unique_nb in duo as eq; eauto; subst.
+    constructor; eauto.
 Qed.
 Next Obligation.
-  intros ? ? ? m α not_refuses; simpl in *.
-  destruct α.
-  + intro refuses. simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
-    ++ destruct (decide (μ ∈ m)) as [in_mem | not_in_mem]. 
-      +++ eauto. 
-      +++ destruct not_refuses as (q & HypTr). 
-          eapply non_blocking_action_in_ms in nb;eauto; subst. 
-          multiset_solver.
-    ++ destruct not_refuses as (q & HypTr).
-       eapply blocking_action_in_ms in not_nb as Hyp;eauto; subst.
-       destruct Hyp as (eq & duo & nb). subst.
-       eapply refuses in duo as not_nb'. eauto.
-  + intro impossible. destruct not_refuses as (q & HypTr). inversion HypTr.
+  intros ? ? ? m α (q & HypTr); simpl in *.
+  destruct α as [μ |]; [| inversion HypTr].
+  simpl. destruct (decide (non_blocking μ)) as [nb | not_nb].
+  - eapply non_blocking_action_in_ms in nb; eauto. subst. multiset_solver.
+  - eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto.
 Qed.
 
 (*************************** Mailbox purification of blocking actions *********************************)

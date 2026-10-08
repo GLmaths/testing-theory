@@ -151,15 +151,15 @@ Lemma may_not_stable_or_outcome `{
 
   {_ : Prop_of_Inter P T A A dual}
 
-  (p : P) (t : T) : p may_pass t -> outcome t \/ ¬ t ↛ \/ (exists μ, ¬ t ↛[μ]). 
+  (p : P) (t : T) : p may_pass t -> outcome t \/ t ⟶ \/ (exists μ, t ⟶[μ]). 
 Proof. 
   intros hm. destruct (decide (outcome t)) as [happy | not_happy].
   + now left. 
   + right. dependent induction hm. 
     - contradiction. 
     - exact (IHhm not_happy). 
-    - left. eapply lts_refuses_spec2; eauto.
-    - right. exists μ2. eapply lts_refuses_spec2; eauto.
+    - left. eapply lts_performs_spec2; eauto.
+    - right. exists μ2. eapply lts_performs_spec2; eauto.
 Qed.
 
 Lemma ctx_may_pre_not `{

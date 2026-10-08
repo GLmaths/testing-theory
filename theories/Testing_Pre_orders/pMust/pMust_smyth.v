@@ -109,7 +109,7 @@ Section Smyth.
 
   Lemma ctx_pre_sm_as `{!DenseWeights} p q :
     (∀ t w, w <ₚ dmass (compose q t) → w <ₚ dmass (compose p t)) →
-    ctx_pre_sm p q → ctx_pre_as p q.
+    ctx_pre_sm p q → p ⊑ₐₛ q.
   Proof.
     intros Hmass Hpq t Hp. exact (smyth_le_pmust_as _ _ (Hmass t) (Hpq t) Hp).
   Qed.

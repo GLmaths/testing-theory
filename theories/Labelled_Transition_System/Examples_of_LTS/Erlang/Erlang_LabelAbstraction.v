@@ -68,13 +68,13 @@ Qed.
     messages in transit *)
 
 Definition coR_abs_erl (S : sys) : gset PreAct :=
-  set_map (λ ξ, 𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ ξ)) (dom (erl_mo S)).
+  set_map (λ μ, 𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ μ)) (dom (erl_mo S)).
 
 Lemma coR_abs_erl_spec S pre_μ :
   pre_μ ∈ coR_abs_erl S ↔ ∃ p v, pre_μ = Inputs (cst p) ∧ CMsg p v ∈ S.
 Proof.
   unfold coR_abs_erl. split.
-  - intros (ξ & -> & hin)%elem_of_map_1.
+  - intros (μ & -> & hin)%elem_of_map_1.
     apply erl_dom_out in hin as (p & v & -> & hmem). by exists p, v.
   - intros (p & v & -> & hmem).
     apply (elem_of_map_2_alt _ _ (out_act p v)); [by apply erl_out_dom | done].
@@ -88,7 +88,7 @@ Next Obligation.
   apply coR_abs_erl_spec in hmem as (p & v & -> & hin).
   exists (in_act p v). split; [| done].
   exists (out_act p v). repeat split.
-  - apply lts_refuses_spec2. exists (S ∖ ⟪p, v⟫).
+  - apply lts_performs_spec2. exists (S ∖ ⟪p, v⟫).
     assert (S = ⟪p, v⟫ ⊎ (S ∖ ⟪p, v⟫)) as heq by multiset_solver.
     rewrite heq at 1. apply ErlOut.
   - by intros (a & heq).
@@ -98,7 +98,7 @@ Next Obligation.
   apply coR_abs_erl_spec.
   destruct μ as [a | a]; [| exfalso; apply hb; by exists a].
   symmetry in hduo. apply simplify_match_input in hduo as ->.
-  apply lts_refuses_spec1 in haccept as (T & hl).
+  apply lts_performs_spec1 in haccept as (T & hl).
   apply erl_out_shape in hl as (p & v & -> & ->).
   exists p, v. split; [done | multiset_solver].
 Qed.

@@ -62,15 +62,15 @@ Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 Context `{!gLtsObaFWSync P Aproc Atest} `{!Prop_of_Inter P T (Aproc + Atest) Atest sync}.
 
 Lemma must_non_blocking_action_swap_l_fw_sync_eq
-  (p1 p2 : P) (e1 e2 : T) (ν : Atest) :
-  non_blocking ν →
-  p1 ⟶⋍[inr ν] p2 → e1 ⟶⋍[ν] e2 → p1 must_pass e2 → p2 must_pass e1.
+  (p1 p2 : P) (e1 e2 : T) (η3 : Atest) :
+  non_blocking η3 →
+  p1 ⟶⋍[inr η3] p2 → e1 ⟶⋍[η3] e2 → p1 must_pass e2 → p2 must_pass e1.
 Proof.
   intros nbν lp le hm.
-  destruct (inr_spec ν nbν) as (nbγ & hiff & hdν).
-  set (γ := inr ν) in *.
-  destruct (fsync_total ν nbν) as (μ0 & hμ0).
-  assert (hsyco : sync (inl μ0 : Aproc + Atest) ν) by exact hμ0.
+  destruct (inr_spec η3 nbν) as (nbγ & hiff & hdν).
+  set (γ := inr η3) in *.
+  destruct (fsync_total η3 nbν) as (μ0 & hμ0).
+  assert (hsyco : sync (inl μ0 : Aproc + Atest) η3) by exact hμ0.
   revert e1 p2 lp le.
   induction hm as [p e happy | p1 e2 nh ex Hpt IHpt Het IHet Hcom IHcom];
     intros e1 p2 lp le.
@@ -86,8 +86,8 @@ Proof.
       eapply outcome_preserved_by_lts_non_blocking_action;
         [exact nbν | exact hle' | exact h].
     + (* [fw_boomerang]: [p2] can take back what [p1] has emitted, as the
-         process reception [inl μ0], which synchronises with [ν] *)
-      destruct (fw_boomerang p2 ν μ0 nbν hμ0) as (p'2 & Tr1 & Tr2).
+         process reception [inl μ0], which synchronises with [η3] *)
+      destruct (fw_boomerang p2 η3 μ0 nbν hμ0) as (p'2 & Tr1 & Tr2).
       destruct le as (e'1 & Tr & eq).
       exists (p'2, e'1). eapply TauSync; [exact hsyco | exact Tr1 | exact Tr].
     + intros p' l.
@@ -112,18 +112,18 @@ Proof.
          destruct lp as (p0 & hlp0 & heqp0).
          eapply must_eq_server; [exact heqp0 |].
          eapply Hcom; [| exact hlp0 | exact hlv].
-         (* [inr_spec]'s third clause: a dual of [ν] on the observer side
+         (* [inr_spec]'s third clause: a dual of [η3] on the observer side
             is answered by [γ] itself *)
          by apply hdν.
     + intros p' e' μ1 μ2 hsy2 l1 l2.
       destruct lp as (p0 & hlp0 & heqp0).
       destruct le as (e0 & hle0 & heqe0).
-      destruct (decide (μ2 = ν)) as [-> | n]; simpl in l2.
+      destruct (decide (μ2 = η3)) as [-> | n]; simpl in l2.
       ++ edestruct (eq_spec p0 p' (ActExt μ1)) as (p3 & hlp3 & heqp3).
          { exists p2. split; [by symmetry | exact l1]. }
          assert (heqe' : e0 ⋍ e')
            by (eapply nb_determinacy; [exact nbν | exact hle0 | exact l2]).
-         destruct (sync_fwd_feedback ν μ1 nbν hsy2 hlp0 hlp3) as [(p3' & hlp3' & heqp3') |].
+         destruct (sync_fwd_feedback η3 μ1 nbν hsy2 hlp0 hlp3) as [(p3' & hlp3' & heqp3') |].
          +++ eapply must_eq_client; [etrans; [by symmetry; exact heqe0 | exact heqe'] |].
              eapply must_eq_server; [etrans; [exact heqp3' | exact heqp3] |].
              by apply Hpt.
@@ -145,9 +145,9 @@ Proof.
 Qed.
 
 Lemma must_non_blocking_action_swap_l_fw_sync
-  (p1 p2 : P) (e1 e2 : T) (ν : Atest) :
-  non_blocking ν →
-  p1 ⟶[inr ν] p2 → e1 ⟶[ν] e2 → p1 must_pass e2 → p2 must_pass e1.
+  (p1 p2 : P) (e1 e2 : T) (η : Atest) :
+  non_blocking η →
+  p1 ⟶[inr η] p2 → e1 ⟶[η] e2 → p1 must_pass e2 → p2 must_pass e1.
 Proof.
   intros. eapply must_non_blocking_action_swap_l_fw_sync_eq;
     eauto; eexists; split; eauto; reflexivity.
@@ -180,15 +180,15 @@ Proof.
   + intros p' l. eapply IHtp; [exact l | by eapply cocnv_preserved_by_lts_tau].
   + intros e' l.
     destruct (inversion_tconv_tau_action s e' l)
-      as [hu | (η & ν & s1 & s2 & s3 & eqs & sc & i0 & i1 & i2 & duo)];
+      as [hu | (η & μ2 & s1 & s2 & s3 & eqs & sc & i0 & i1 & i2 & duo)];
       [by apply m_now |].
     eapply must_eq_client; [by symmetry |].
     subst. eapply Hlength.
     * rewrite 6 length_app. simpl. lia.
     * by eapply cocnv_annhil_fw.
-  + intros p' e' μ ν hsy hlp hle.
-    destruct (inversion_tconv_external_action s ν e' hle)
-      as [hg | (s1 & s2 & ν'' & heq & sc & eq & his)]; [by apply m_now |].
+  + intros p' e' μ1 μ2 hsy hlp hle.
+    destruct (inversion_tconv_external_action s μ2 e' hle)
+      as [hg | (s1 & s2 & μ2'' & heq & sc & eq & his)]; [by apply m_now |].
     subst.
     eapply must_eq_client; [by symmetry |].
     eapply Hlength.
@@ -246,9 +246,9 @@ Qed.
     [f_gen_lts_mu_in_the_middle] are the observer-only lemmas of
     [CompletenessASco.v], reused here over [Atest].  The one step that changes
     is the synchronisation witness: where the homogeneous proof made [p] accept
-    [co ν] for the non-blocking [ν] of the trace, here [fsync_total] picks a
-    process reception [μ] answering [ν], and [fw_boomerang] makes [p] accept
-    [inl μ]. *)
+    [co μ2] for the non-blocking [μ2] of the trace, here [fsync_total] picks a
+    process reception [μ1] answering [μ2], and [fw_boomerang] makes [p] accept
+    [inl μ1]. *)
 
 Lemma must_ta_monotonicity_sync {P : Type} `{CC : Countable PreAct} `{
   Hp : ExtAction Aproc, Ht : ExtAction Atest, FS : !FwSync Aproc Atest,
@@ -265,26 +265,26 @@ Proof.
   revert p E1.
   induction s as (s & Hlength) using
     (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  destruct s as [| ν s']; intros p E1 hm E2 hsub.
+  destruct s as [| μ1 s']; intros p E1 hm E2 hsub.
   - eapply must_ta_monotonicity_nil; eauto.
   - assert (htp : p ⤓) by (eapply must_terminate_unoutcome, test_ungood; eauto).
     induction htp.
     inversion hm as [hg | nh ex pt et com].
-    * exfalso. by eapply (test_ungood (test_spec := ta_test_spec E1) (ν :: s')).
+    * exfalso. by eapply (test_ungood (test_spec := ta_test_spec E1) (μ1 :: s')).
     * apply m_step.
       + apply test_ungood.
-      + destruct (decide (non_blocking ν)) as [nb | not_nb].
-        (* [fw_boomerang]: the forwarder receives [ν] as a process action *)
-        ++ destruct (fw_boomerang_total p ν nb) as (μ0 & p' & hsyco & tr_b & _).
-           assert (ta E2 (ν :: s') ⟶⋍[ν] ta E2 s') as (t' & tr' & eq')
+      + destruct (decide (non_blocking μ1)) as [nb | not_nb].
+        (* [fw_boomerang]: the forwarder receives [μ1] as a process action *)
+        ++ destruct (fw_boomerang_total p μ1 nb) as (μ0 & p' & hsyco & tr_b & _).
+           assert (ta E2 (μ1 :: s') ⟶⋍[μ1] ta E2 s') as (t' & tr' & eq')
              by eapply (test_next_step (test_spec := ta_test_spec E2)).
            exists (p', t'). eapply TauSync; [exact hsyco | exact tr_b | exact tr'].
-        ++ assert (∃ e', ta E2 (ν :: s') ⟶ e') as (e' & tr')
+        ++ assert (∃ e', ta E2 (μ1 :: s') ⟶ e') as (e' & tr')
              by (eapply (test_tau_transition (test_spec := ta_test_spec E2)); eauto).
            exists (p, e'). by eapply TauRight.
       + intros p' l. eapply H0; eauto.
       + intros e' l.
-        edestruct (inversion_ta_tau_action (ν :: s') E2 e' l) as [hg | Hyp];
+        edestruct (inversion_ta_tau_action (μ1 :: s') E2 e' l) as [hg | Hyp];
           [by apply m_now |].
         destruct Hyp as (η & μ & s1 & s2 & s3 & heqs & sc & himu & his1 & his2 & duo).
         eapply (must_eq_client p (ta E2 (s1 ++ s2 ++ s3))); [by symmetry |].
@@ -294,7 +294,7 @@ Proof.
         ++ eapply must_eq_client; [eapply heqt |]. eapply et. by rewrite heqs.
         ++ exact hsub.
       + intros p' e' μ η hsy l1 l2.
-        edestruct (inversion_ta_external_action (ν :: s') η e' E2) as [hg | Hyp];
+        edestruct (inversion_ta_external_action (μ1 :: s') η e' E2) as [hg | Hyp];
           [exact l2 | by apply m_now |].
         destruct Hyp as (s1 & s2 & η''' & heqs & heq & eq & his1). subst.
         eapply must_eq_client; [by symmetry |].
@@ -348,18 +348,11 @@ Notation coRa := (coR_abs (FinitaryAbsAction := FiniteAbs)).
 
 Lemma must_ta_or_empty_pre_action_set_for_empty_trace_co_sync
   (p : P) (hcocnv : p ⇓ᶜᵒ ε) (E : gset PreAct) :
-  (∃ p', p ⟹ p' ∧ lts_refuses p' τ ∧ coRa p' ⊆ E)
+  (∃ p', p ⟹ p' ∧ (p' ↛) ∧ coRa p' ⊆ E)
   ∨ p must_pass (ta ((cooas p ε hcocnv) ∖ E) ε).
 Proof.
   induction (cocnv_terminate p ε hcocnv) as (p, hpt, ihhp).
-  destruct (decide (lts_refuses p τ)) as [st | (p'' & l)%lts_refuses_spec1].
-  + destruct (stable_process_must_ta_or_empty_pre_action_set p E st) as [Hyp | Hyp].
-    ++ right. assert (cooas p ε hcocnv = coRa p) as eq.
-       { unfold cooas.
-         rewrite cowt_refuses_set_refuses_singleton, elements_singleton; [| exact st].
-         simpl. by rewrite union_empty_r_L. }
-       rewrite eq. exact Hyp.
-    ++ left. exists p. split; [constructor | split; [exact st | exact Hyp]].
+  destruct (decide (p ⟶)) as [(p'' & l)%lts_performs_spec1 | st].
   + assert (∀ q0 : P,
          q0 ∈ cowt_tau_set p
          → (∃ p' : P, q0 ⟹ p' ∧ p' ↛ ∧ coRa p' ⊆ E)
@@ -380,36 +373,42 @@ Proof.
         eapply must_ta_monotonicity_sync; [exact hm |].
         eapply difference_mono_r, union_acceptance_set_lts_tau_cowt_subseteq, l0.
       * intros e' l'. exfalso.
-        eapply (@lts_refuses_spec2 T); [by exists e' | eapply ta_does_no_tau; eauto].
-      * intros p0 e0 μ' η hsy lp le.
+        eapply ta_does_no_tau, (@lts_performs_spec2 T); [eauto.. | by exists e'].
+      * intros p0 e0 μ1' η hsy lp le.
         destruct (decide (non_blocking η)) as [nb | not_nb].
         ++ exfalso.
-           eapply (@lts_refuses_spec2 T); [by exists e0 |].
-           eapply ta_does_no_non_blocking_actions; eauto.
+           eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); [eauto.. | by exists e0].
         ++ apply m_now. eapply ta_transition_to_good; eauto.
+  + destruct (stable_process_must_ta_or_empty_pre_action_set p E st) as [Hyp | Hyp].
+    ++ right. assert (cooas p ε hcocnv = coRa p) as eq.
+       { unfold cooas.
+         rewrite cowt_refuses_set_refuses_singleton, elements_singleton; [| exact st].
+         simpl. by rewrite union_empty_r_L. }
+       rewrite eq. exact Hyp.
+    ++ left. exists p. split; [constructor | split; [exact st | exact Hyp]].
 Qed.
 
 (** *** ... and then for an arbitrary co-trace
 
     The non-blocking case is the one that changes: [fw_boomerang] makes [p]
-    receive the trace's [ν] and give it back as [inr ν], and
+    receive the trace's [μ2] and give it back as [inr μ2], and
     [must_non_blocking_action_swap_l_fw_sync] moves it from the process side
-    to [ν] on the observer side. *)
+    to [μ2] on the observer side. *)
 
 Lemma must_ta_or_empty_pre_action_set_for_all_trace_co_sync
   s (p : P) (hcocnv : p ⇓ᶜᵒ s) (E : gset PreAct) :
-  (∃ p', p ⟹ᶜᵒ[s] p' ∧ lts_refuses p' τ ∧ coRa p' ⊆ E)
+  (∃ p', p ⟹ᶜᵒ[s] p' ∧ (p' ↛) ∧ coRa p' ⊆ E)
   ∨ p must_pass (ta ((cooas p s hcocnv) ∖ E) s).
 Proof.
   revert p hcocnv E.
-  induction s as [| ν s' IHs'].
+  induction s as [| μ1 s' IHs'].
   - intros p hcocnv E.
     destruct (must_ta_or_empty_pre_action_set_for_empty_trace_co_sync p hcocnv E)
       as [(p' & w & st & sub) | hm].
     + left. exists p'. split; [by eapply cowt_iff_wt_nil | by split].
     + right. exact hm.
   - intros p hcocnv E.
-    set (ps := cowt_set_mu p ν s' hcocnv).
+    set (ps := cowt_set_mu p μ1 s' hcocnv).
     inversion hcocnv as [| ? ? ? conv Hyp_conv]; subst.
     assert (hcocnv0 : ∀ p', p' ∈ ps → p' ⇓ᶜᵒ s')
       by (intros ? mem%cowt_set_mu_spec1; eauto).
@@ -425,14 +424,14 @@ Proof.
         as (p1 & ?%cowt_set_mu_spec1 & ? & r & (? & ?)%cowt_refuses_set_spec1 & ?).
       exists r. split; [by eapply cowt_push_left | by split].
     + right.
-      destruct (decide (non_blocking ν)) as [nb | b].
-      ++ destruct (fw_boomerang_total p ν nb) as (μ0 & p'' & hsyco & l0 & l1).
-         assert (ta ((cooas p (ν :: s') hcocnv) ∖ E) (ν :: s')
-                  ⟶⋍[ν] ta ((cooas p (ν :: s') hcocnv) ∖ E) s')
+      destruct (decide (non_blocking μ1)) as [nb | b].
+      ++ destruct (fw_boomerang_total p μ1 nb) as (μ0 & p'' & hsyco & l0 & l1).
+         assert (ta ((cooas p (μ1 :: s') hcocnv) ∖ E) (μ1 :: s')
+                  ⟶⋍[μ1] ta ((cooas p (μ1 :: s') hcocnv) ∖ E) s')
            as (e' & hle' & heqe')
            by eapply (test_next_step (test_spec := ta_test_spec _)).
          eapply (must_non_blocking_action_swap_l_fw_sync
-                   outcome p'' p _ e' ν nb l1 hle').
+                   outcome p'' p _ e' μ1 nb l1 hle').
          eapply (must_eq_client _ _ _ (symmetry heqe')).
          edestruct (Hyp p'') as (h & hm).
          { eapply cowt_set_mu_spec2. eapply lts_to_cowt; [exact hsyco | exact l0]. }

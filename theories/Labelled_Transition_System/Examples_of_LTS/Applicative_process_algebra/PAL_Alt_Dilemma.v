@@ -41,7 +41,7 @@ Section PAL_Alt_Dilemma.
   Context {Val : Type} `{Countable Val} (inj : nat → Val) `{!Inj eq eq inj}.
 
   Notation term := (PAL_Syntax.term Val).
-  Notation old := (Applicative_process_algebra.lts_step Val).
+  Notation old := (Applicative_process_algebra.pal_step Val).
   Notation new := (lts_step_a Val).
 
   (** The synchronisations of the alternative LTS are those of PAL. *)

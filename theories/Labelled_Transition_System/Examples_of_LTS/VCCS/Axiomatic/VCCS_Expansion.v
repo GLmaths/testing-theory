@@ -68,7 +68,7 @@ Context `{VP : VCCS_Parameters}.
 
 Lemma must_same_lts_dir : forall (p q : proc),
   (forall p', p ⟶ p' <-> q ⟶ p') ->
-  (forall mu p', p ⟶[mu] p' <-> q ⟶[mu] p') ->
+  (forall μ p', p ⟶[μ] p' <-> q ⟶[μ] p') ->
   forall t, p must_pass t -> q must_pass t.
 Proof.
   intros p q Htau Hext t Hm.
@@ -90,14 +90,14 @@ Qed.
 
 Lemma must_same_lts : forall (p q : proc),
   (forall p', p ⟶ p' <-> q ⟶ p') ->
-  (forall mu p', p ⟶[mu] p' <-> q ⟶[mu] p') ->
+  (forall μ p', p ⟶[μ] p' <-> q ⟶[μ] p') ->
   forall t, p must_pass t <-> q must_pass t.
 Proof.
   intros p q Htau Hext t. split.
   - apply must_same_lts_dir; assumption.
   - apply must_same_lts_dir.
     + intro p'. symmetry. apply Htau.
-    + intros mu p'. symmetry. apply Hext.
+    + intros μ p'. symmetry. apply Hext.
 Qed.
 
 (** ** [①] and [𝟘] are indistinguishable *as servers*
@@ -121,7 +121,7 @@ Lemma must_i_success_nil : forall t, (g ①) must_pass t <-> (g 𝟘) must_pass 
 Proof.
   apply must_same_lts.
   - intro p'. split; intro H; inversion H.
-  - intros mu p'. split; intro H; inversion H.
+  - intros μ p'. split; intro H; inversion H.
 Qed.
 
 Lemma must_i_success_nil_l : (g ①) ⊑ₘᵤₛₜᵢ (g 𝟘).
@@ -421,9 +421,9 @@ Qed.
     [𝛕•_]-guarded summands) — needed to discharge [int]'s contribution
     when comparing *external*-labelled transitions. *)
 
-Lemma int_input_no_ext : forall c p N mu tgt, ~ lts (g (int_input c p N)) (ActExt mu) tgt.
+Lemma int_input_no_ext : forall c p N μ tgt, ~ lts (g (int_input c p N)) (ActExt μ) tgt.
 Proof.
-  induction N; intros mu tgt Hc; simpl in Hc.
+  induction N; intros μ tgt Hc; simpl in Hc.
   - inversion Hc.
   - inversion Hc.
   - inversion Hc.
@@ -434,9 +434,9 @@ Proof.
     + eapply IHN2; exact H3.
 Qed.
 
-Lemma int_output_no_ext : forall c v p N mu tgt, ~ lts (g (int_output c v p N)) (ActExt mu) tgt.
+Lemma int_output_no_ext : forall c v p N μ tgt, ~ lts (g (int_output c v p N)) (ActExt μ) tgt.
 Proof.
-  induction N; intros mu tgt Hc; simpl in Hc.
+  induction N; intros μ tgt Hc; simpl in Hc.
   - inversion Hc.
   - inversion Hc.
   - destruct (decide (c=c0)); subst; inversion Hc.
@@ -447,9 +447,9 @@ Proof.
     + eapply IHN2; exact H3.
 Qed.
 
-Lemma int_no_ext : forall M N mu tgt, ~ lts (g (int M N)) (ActExt mu) tgt.
+Lemma int_no_ext : forall M N μ tgt, ~ lts (g (int M N)) (ActExt μ) tgt.
 Proof.
-  induction M; intros N mu tgt Hc; simpl in Hc.
+  induction M; intros N μ tgt Hc; simpl in Hc.
   - inversion Hc.
   - inversion Hc.
   - eapply int_input_no_ext; exact Hc.
@@ -504,7 +504,7 @@ Proof.
   - intro p'. split.
     + intro H. apply lts_choice3_iff. apply expansion_lts_iff in H as [H|[H|(Ha&H)]]; auto.
     + intro H. apply expansion_lts_iff. apply lts_choice3_iff in H as [H|[H|H]]; auto.
-  - intros mu p'. split.
+  - intros μ p'. split.
     + intro H. apply lts_choice3_iff. apply expansion_lts_iff in H as [H|[H|(Ha&H)]]; auto. discriminate Ha.
     + intro H. apply expansion_lts_iff. apply lts_choice3_iff in H as [H|[H|H]]; auto.
       exfalso. eapply int_no_ext. exact H.

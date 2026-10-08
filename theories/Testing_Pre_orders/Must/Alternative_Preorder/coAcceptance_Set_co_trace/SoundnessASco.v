@@ -80,7 +80,7 @@ Context `{CFI : !coFiniteImagegLts P Atest}.
 (** ** Must predicate for sets *)
 
 Lemma mx_sub X t :
-  mustx X t → ∀ X', X' ⊆ X → mustx X' t.
+  X must_pass_x t → ∀ X', X' ⊆ X → X' must_pass_x t.
 Proof.
   intros hmx. dependent induction hmx.
   - intros. by apply mx_now.
@@ -101,11 +101,11 @@ Proof.
 Qed.
 
 Lemma mx_mem X t :
-  mustx X t → ∀ p, p ∈ X → mustx ({[ p ]} : gset P) t.
+  X must_pass_x t → ∀ p, p ∈ X → ({[ p ]} : gset P) must_pass_x t.
 Proof. intros hmx p mem. eapply mx_sub; set_solver. Qed.
 
 Lemma mustx_terminate_unoutcome X t :
-  mustx X t → outcome t ∨ ∀ p, p ∈ X → p ⤓.
+  X must_pass_x t → outcome t ∨ ∀ p, p ∈ X → p ⤓.
 Proof.
   intros hmx.
   induction hmx.
@@ -117,7 +117,7 @@ Proof.
 Qed.
 
 Lemma mustx_terminate_unoutcome' X (t : T) :
-  mustx X t → ¬ outcome t → ∀ p, p ∈ X → p ⤓.
+  X must_pass_x t → ¬ outcome t → ∀ p, p ∈ X → p ⤓.
 Proof.
   intros hmx not_happy p mem.
   dependent induction hmx.
@@ -130,14 +130,14 @@ Proof.
 Qed.
 
 Lemma unoutcome_acnv_mu X t t' :
-  mustx X t →
+  X must_pass_x t →
   ∀ (η : Atest) p, p ∈ X → t ⟶[η] t' →
   ¬ outcome t → ¬ outcome t' → p ⇓ᶜᵒ [η].
 Proof.
   intros hmx η p mem l not_happy not_happy'.
   dependent induction hmx.
   - contradiction.
-  - assert (hmX : mustx X t) by (apply mx_step; assumption).
+  - assert (hmX : X must_pass_x t) by (apply mx_step; assumption).
     destruct (mustx_terminate_unoutcome X t hmX) as [happy | finish].
     + contradiction.
     + eapply cocnv_act.
@@ -153,7 +153,7 @@ Proof.
 Qed.
 
 Lemma must_mu_either_outcome_cnv X t t' :
-  mustx X t →
+  X must_pass_x t →
   ∀ (η : Atest) p, p ∈ X → t ⟶[η] t' →
   outcome t ∨ outcome t' ∨ p ⇓ᶜᵒ [η].
 Proof.
@@ -167,7 +167,7 @@ Qed.
 
 (** *** The union of two sets that pass an observer passes it *)
 
-Lemma mx_sum X X' t : mustx X t → mustx X' t → mustx (X ∪ X') t.
+Lemma mx_sum X X' t : X must_pass_x t → X' must_pass_x t → (X ∪ X') must_pass_x t.
 Proof.
   intros hmx1 hmx2. revert X' hmx2.
   dependent induction hmx1.
@@ -199,7 +199,7 @@ Proof.
          intros q mem. eapply cowt_tau_set_from_pset_ispec. set_solver.
     + destruct Z_' using set_ind_L.
       ++ assert (hY : Y' = X') by set_solver.
-         assert (hmX : mustx X t) by (apply mx_step; assumption).
+         assert (hmX : X must_pass_x t) by (apply mx_step; assumption).
          inversion hmX as [hh | nh1 ex1 pt1 et1 com1]; subst; [contradiction |].
          eapply pt1; [| exact hne].
          intros q mem. eapply cowt_tau_set_from_pset_ispec. set_solver.
@@ -218,7 +218,7 @@ Proof.
     assert (HAX : ∀ p, p ∈ X → p ⇓ᶜᵒ [η]).
     { intros p0 mem0.
       eapply cocnv_act.
-      - assert (hmX : mustx X t) by (apply mx_step; assumption).
+      - assert (hmX : X must_pass_x t) by (apply mx_step; assumption).
         destruct (mustx_terminate_unoutcome X t hmX) as [happy | finish];
           [contradiction | by eapply finish].
       - intros p' hw. eapply cocnv_nil.
@@ -270,7 +270,7 @@ Qed.
 (** *** From singletons to arbitrary sets, and back to [must] *)
 
 Lemma mx_forall X t :
-  X ≠ ∅ → (∀ p, p ∈ X → mustx ({[p]} : gset P) t) → mustx X t.
+  X ≠ ∅ → (∀ p, p ∈ X → ({[p]} : gset P) must_pass_x t) → X must_pass_x t.
 Proof.
   intros neq_nil hm.
   induction X using set_ind_L.
@@ -286,8 +286,8 @@ Proof.
 Qed.
 
 Lemma wt_nil_mx :
-  ∀ p1 p2 t, mustx ({[ p1 ]} : gset P) t → p1 ⟹ p2 →
-    mustx ({[ p2 ]} : gset P) t.
+  ∀ p1 p2 t, ({[ p1 ]} : gset P) must_pass_x t → p1 ⟹ p2 →
+    ({[ p2 ]} : gset P) must_pass_x t.
 Proof.
   intros p1 p2 e hmx wt.
   dependent induction wt; subst; [assumption |].
@@ -300,7 +300,7 @@ Proof.
 Qed.
 
 Lemma wt_nil_mx_set (X : gset P) (X' : gset P) t :
-  mustx X t → wt_set_from_pset_spec1 X [] X' → mustx X' t.
+  X must_pass_x t → wt_set_from_pset_spec1 X [] X' → X' must_pass_x t.
 Proof.
   intros hmx wt_tr.
   destruct (set_choose_or_empty X') as [(x' & mem) | Hemp].
@@ -330,8 +330,8 @@ Proof.
 Qed.
 
 Lemma co_wt_mu_mx p1 p2 t t' (η : Atest) :
-  ¬ outcome t → mustx ({[ p1 ]} : gset P) t →
-  t ⟶[η] t' → p1 ⟹ᶜᵒ[[η]] p2 → mustx ({[p2]} : gset P) t'.
+  ¬ outcome t → ({[ p1 ]} : gset P) must_pass_x t →
+  t ⟶[η] t' → p1 ⟹ᶜᵒ[[η]] p2 → ({[p2]} : gset P) must_pass_x t'.
 Proof.
   intros nh hmx l w.
   inversion hmx; subst.
@@ -340,9 +340,9 @@ Proof.
 Qed.
 
 Lemma wt_mu_mx_set X X' t t' (η : Atest) :
-  ¬ outcome t → mustx X t →
+  ¬ outcome t → X must_pass_x t →
   t ⟶[η] t' → cowt_set_from_pset_spec1 X η X' → X' ≠ ∅ →
-  mustx X' t'.
+  X' must_pass_x t'.
 Proof.
   intros nh hmx l w hne.
   inversion hmx; subst.
@@ -351,7 +351,7 @@ Proof.
 Qed.
 
 Lemma must_set_if_must (p : P) (t : T) :
-  p must_pass t → mustx ({[ p ]} : gset P) t.
+  p must_pass t → ({[ p ]} : gset P) must_pass_x t.
 Proof.
   intro hm. dependent induction hm.
   - by apply mx_now.
@@ -372,7 +372,7 @@ Proof.
 Qed.
 
 Lemma must_if_must_set_helper (X : gset P) (t : T) :
-  mustx X t → ∀ p, p ∈ X → p must_pass t.
+  X must_pass_x t → ∀ p, p ∈ X → p must_pass t.
 Proof.
   intro hm. dependent induction hm.
   - intros. by apply m_now.
@@ -417,15 +417,15 @@ Proof.
 Qed.
 
 Lemma must_if_must_set (p : P) (t : T) :
-  mustx ({[ p ]} : gset P) t → p must_pass t.
+  ({[ p ]} : gset P) must_pass_x t → p must_pass t.
 Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
 
 Lemma must_set_iff_must (p : P) (t : T) :
-  p must_pass t ↔ mustx ({[ p ]} : gset P) t.
+  p must_pass t ↔ ({[ p ]} : gset P) must_pass_x t.
 Proof. split; [eapply must_set_if_must | eapply must_if_must_set]. Qed.
 
 Lemma must_set_for_all (X : gset P) (t : T) :
-  X ≠ ∅ → (∀ p, p ∈ X → p must_pass t) → mustx X t.
+  X ≠ ∅ → (∀ p, p ∈ X → p must_pass t) → X must_pass_x t.
 Proof.
   intros xneq_nil hm.
   destruct (outcome_decidable t).
@@ -452,7 +452,7 @@ Proof.
 Qed.
 
 Lemma must_set_iff_must_for_all (X : gset P) (t : T) :
-  X ≠ ∅ → ((∀ p, p ∈ X → p must_pass t) ↔ mustx X t).
+  X ≠ ∅ → ((∀ p, p ∈ X → p must_pass t) ↔ X must_pass_x t).
 Proof.
   intros.
   split; [now eapply must_set_for_all | now eapply must_if_must_set_helper].
@@ -470,7 +470,7 @@ Definition ctx_pre__x `{gLtsP : @gLts P Aproc Hp, CP : !Countable P,
     STSP : !ParSts P T gLtsP gLtsT, !ParStsSpec P T gLtsP gLtsT SA STSP,
     STSQ : !ParSts Q T gLtsQ gLtsT, !ParStsSpec Q T gLtsQ gLtsT SA STSQ}
   (X : gset P) (Y : gset Q) :=
-  ∀ (t : T), mustx X t → mustx Y t.
+  ∀ (t : T), X must_pass_x t → Y must_pass_x t.
 
 Section Must_preorder_for_sets_sync.
 
@@ -713,7 +713,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_external_action_co
   (X X' : gset P) (η : Atest) (Y Y' : gset Q)
-  (htp : ∀ p, p ∈ X → terminate p) :
+  (htp : ∀ p, p ∈ X → p ⤓) :
   X ₁≼ Y → cowt_set_from_pset_spec X η X' →
   cowt_set_from_pset_spec1 Y η Y' → X' ₁≼ Y'.
 Proof.
@@ -729,7 +729,7 @@ Qed.
 
 Lemma bhvx_preserved_by_external_action_co
   (X X' : gset P) (η : Atest) (Y Y' : gset Q)
-  (htp : ∀ p, p ∈ X → terminate p) :
+  (htp : ∀ p, p ∈ X → p ⤓) :
   cowt_set_from_pset_spec1 Y η Y' →
   cowt_set_from_pset_spec X η X' →
   X ≼ Y → X' ≼ Y'.
@@ -813,7 +813,7 @@ Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
 Lemma communication_enabled_co (p : P) p' (q : Q) (t : T) t' μ1 (η : Atest) :
   sync μ1 η → p ⟶[μ1] p' → t ⟶[η] t' →
   ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q) →
-  ∃ ν1 ν2 q' t'', sync ν1 ν2 ∧ q ⟶[ν1] q' ∧ t ⟶[ν2] t''.
+  ∃ μ3 μ4 q' t'', sync μ3 μ4 ∧ q ⟶[μ3] q' ∧ t ⟶[μ4] t''.
 Proof.
   intros hsy tr tr_co sub.
   destruct (decide (non_blocking η)) as [nb | not_nb].
@@ -821,7 +821,7 @@ Proof.
     exists β, η, q', t'. eauto.
   + assert (hco : η ∈ coR p).
     { eapply coR_intro; [| exact hsy | exact not_nb].
-      eapply lts_refuses_spec2. by eexists. }
+      eapply lts_performs_spec2. by eexists. }
     eapply (map_gamma_of_action (𝝳 ∘ Φ)) in hco as mem.
     eapply sub in mem. destruct mem as (η' & mem & eq).
     simpl in eq. symmetry in eq.
@@ -830,13 +830,13 @@ Proof.
       by (eapply map_gamma_of_action; exact memq).
     eapply (abstraction_prog_spec (AbsAction := AbsQT) q η' η bη' not_nb eq)
       in hmapq as (η'' & memq'' & eq'').
-    destruct memq'' as (ν & hnref & hsyν & bη'').
+    destruct memq'' as (μ2 & hnref & hsyν & bη'').
     assert (Tr_Test : η'' ∈ R t).
     { eapply (abstraction_test_spec (AbsAction := AbsQT) t η η'' not_nb bη'' eq'').
-      eapply lts_refuses_spec2. by eexists. }
-    eapply lts_refuses_spec1 in Tr_Test as (t'' & Tr'').
-    eapply lts_refuses_spec1 in hnref as (q' & tr').
-    exists ν, η'', q', t''. eauto.
+      eapply lts_performs_spec2. by eexists. }
+    eapply lts_performs_spec1 in Tr_Test as (t'' & Tr'').
+    eapply lts_performs_spec1 in hnref as (q' & tr').
+    exists μ2, η'', q', t''. eauto.
 Qed.
 
 End Properties_for_soundness_sync.
@@ -863,60 +863,60 @@ Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 
 (** The composition is an [Sts], so "the composition is stuck" is
-    [sts_refuses], not a [τ]-refusal of an LTS. *)
+    [¬ sts_performs], not a [τ]-refusal of an LTS. *)
 
 Lemma unoutcome_must_st_nleqx_co (X : gset P) (Y : gset Q) (t : T) :
-  ¬ outcome t → mustx X t →
+  ¬ outcome t → X must_pass_x t →
   (∃ q, q ∈ Y ∧ ¬ (∃ y, sts_step (Sts := par_sts) (q, t) y)) →
   ¬ (X ₂≼ Y).
 Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
   assert (stable_q : q ↛).
-  { destruct (lts_refuses_decidable q τ) as [refuses_q | not_refuses_q].
-    - exact refuses_q.
-    - exfalso. eapply lts_refuses_spec1 in not_refuses_q as (q' & l).
-      apply refuses_tau_q. exists (q', t). by apply par_step_left. }
+  { destruct (decide (q ⟶)) as [not_refuses_q | refuses_q].
+    - exfalso. eapply lts_performs_spec1 in not_refuses_q as (q' & l).
+      apply refuses_tau_q. exists (q', t). by apply par_step_left.
+    - exact refuses_q. }
   assert (htX : ∀ p, p ∈ X → p ⇓ᶜᵒ []).
   { destruct (mustx_terminate_unoutcome outcome X t all_must) as [hc | htps];
       [contradiction |].
     intros p mem. apply cocnv_nil. by apply htps. }
   assert (w0 : q ⟹ᶜᵒ q) by constructor.
   destruct (hbhv2 q [] q mem' w0 stable_q htX) as (p & mem & p' & wp & stp' & sub).
-  assert (must_p' : mustx ({[ p' ]} : gset P) t).
+  assert (must_p' : ({[ p' ]} : gset P) must_pass_x t).
   { eapply (wt_nil_mx outcome p). eapply (mx_sub outcome X t all_must).
     set_solver. eapply cowt_iff_wt_nil. eassumption. }
   destruct must_p'; [contradiction |].
   edestruct (ex p') as ((p'' , t'') & HypTr). now eapply elem_of_singleton.
   pose proof (par_view_of _ _ _ HypTr) as hv. inversion hv; subst.
-  - eapply lts_refuses_spec2 in stp'; eauto.
+  - exfalso; apply stp', lts_performs_spec2; eauto.
   - apply refuses_tau_q. exists (q, t''). by apply par_step_right.
   - edestruct (communication_enabled_co Φ 𝝳 p' p'' q t t'' μ η hs l1 l2 sub)
-      as (ν1 & ν2 & q' & t3 & hsy' & tr1 & tr2).
+      as (μ1 & μ2 & q' & t3 & hsy' & tr1 & tr2).
     apply refuses_tau_q. exists (q', t3). by eapply par_step_sync.
 Qed.
 
 Lemma stability_nbhvleqtwo_co (X : gset P) (Y : gset Q) t :
-  ¬ outcome t → mustx X t → X ₂≼ Y →
+  ¬ outcome t → X must_pass_x t → X ₂≼ Y →
   ∀ (q : Q), q ∈ Y → ∃ y, sts_step (Sts := par_sts) (q, t) y.
 Proof.
   intros nhg hmx hleq q mem.
-  destruct (decide (sts_refuses (Sts := par_sts) (q, t))) as [h | h].
+  destruct (decide (sts_performs (Sts := par_sts) (q, t))) as [h | h].
+  - destruct (sts_performs_spec1 (Sts := par_sts) (q, t) h) as (y & hy). by exists y.
   - exfalso.
     eapply (unoutcome_must_st_nleqx_co X Y t nhg hmx); [| exact hleq].
     exists q. split; [exact mem |].
     intros (y & hy).
-    eapply (sts_refuses_spec2 (Sts := par_sts) (q, t)); [by exists y | exact h].
-  - destruct (sts_refuses_spec1 (Sts := par_sts) (q, t) h) as (y & hy). by exists y.
+    apply h, (sts_performs_spec2 (Sts := par_sts) (q, t)). by exists y.
 Qed.
 
 (** ** Soundness, on sets *)
 
-Lemma soundnessx_co (X : gset P) (Y : gset Q) : X ≼ Y → ctx_pre__x X Y.
+Lemma soundnessx_co (X : gset P) (Y : gset Q) : X ≼ Y → X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
 Proof.
   intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
   dependent induction hmx; intros Y halt1 halt2.
   - intros. by apply mx_now.
-  - assert (hmX : mustx X t) by (apply mx_step; assumption).
+  - assert (hmX : X must_pass_x t) by (apply mx_step; assumption).
     assert (HX0 : ∀ p, p ∈ X → p ⇓ᶜᵒ []).
     { intros p mem. eapply cocnv_nil.
       destruct (mustx_terminate_unoutcome outcome X t hmX) as [c | h];
@@ -925,7 +925,7 @@ Proof.
     { intros q mem. eapply cocnv_terminate. eapply halt1; eauto. }
     assert (Y_conv : Y ⤓).
     { eapply co_termination_set_for_all. exact HYterm. }
-    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ₁≼ Y0 → X ₂≼ Y0 → mustx Y0 t).
+    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ₁≼ Y0 → X ₂≼ Y0 → Y0 must_pass_x t).
     { intros Y0 conv0. induction conv0 as [Y0 tY0 IHY0]. intros hb1 hb2.
       eapply mx_step.
       - exact nh.
@@ -953,7 +953,7 @@ Proof.
             eapply (unoutcome_acnv_mu outcome X t t' hmX η p mem ltr nh not_ot'). }
           destruct (cowt_s_set_from_pset_ispec X η HA)
             as (Xfull_spec1 & Xfull_spec2).
-          assert (htX : ∀ p, p ∈ X → terminate p).
+          assert (htX : ∀ p, p ∈ X → p ⤓).
           { destruct (mustx_terminate_unoutcome outcome X t hmX) as [c | h];
               [contradiction | exact h]. }
           edestruct (reverse_trace_inclusion_co Φ 𝝳 X Y0 Y0' η

@@ -147,7 +147,7 @@ Proof.
     rewrite <- E. apply lts_input.
   - intros p' Hp'. unfold Kc in Hp'. blast2.
   - intros t' Ht'. unfold T2 in Ht'. blast2.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold Kc in Hp'. unfold T2 in Ht'. blast2.
     apply m_now. apply good_par. right. apply good_par. right. apply good_success.
 Qed.
@@ -163,7 +163,7 @@ Proof.
     + unfold TT, T2. apply lts_parR. apply lts_parL. apply lts_output.
   - intros p' Hp'. unfold S1, GQ in Hp'. blast2.
   - intros t' Ht'. exfalso. eapply TT_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold S1, GQ in Hp'. unfold TT in Ht'. blast2.
     exact level2.
 Qed.

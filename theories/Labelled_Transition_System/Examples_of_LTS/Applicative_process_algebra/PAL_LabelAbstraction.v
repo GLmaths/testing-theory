@@ -85,17 +85,17 @@ Section PAL_LA.
   Definition single_in (ot : eot Val) : term := t_in (eot_to_tuple ot) (t_nil).
   Definition single_out (ot : eot Val) : term := t_out (eot_to_tuple ot) (t_nil).
 
-  Lemma single_in_accepts ot : ¬ single_in ot ↛[ActIn ot].
+  Lemma single_in_accepts ot : single_in ot ⟶[ActIn ot].
   Proof.
-    apply lts_refuses_spec2.
+    apply lts_performs_spec2.
     exists (subst_term (build_subst (eot_to_eit ot) ot) (t_nil)).
     apply ar1; [apply eval_in_eot_to_tuple | by apply tuple_match_eot_to_eit].
   Qed.
 
-  Lemma single_in_only ot μ : ¬ single_in ot ↛[μ] → μ = ActIn ot.
+  Lemma single_in_only ot μ : single_in ot ⟶[μ] → μ = ActIn ot.
   Proof.
-    intros acc. apply lts_refuses_spec1 in acc as (q & tr).
-    change (Applicative_process_algebra.lts_step Val (single_in ot) (ActExt μ) q) in tr.
+    intros acc. apply lts_performs_spec1 in acc as (q & tr).
+    change (Applicative_process_algebra.pal_step Val (single_in ot) (ActExt μ) q) in tr.
     inversion tr; subst.
     match goal with
     | ev : eval_in_tuple _ = Some _, hm : tuple_match _ _ |- _ =>
@@ -104,16 +104,16 @@ Section PAL_LA.
     end.
   Qed.
 
-  Lemma single_out_accepts ot : ¬ single_out ot ↛[ActOut ot].
+  Lemma single_out_accepts ot : single_out ot ⟶[ActOut ot].
   Proof.
-    apply lts_refuses_spec2. exists (t_nil).
+    apply lts_performs_spec2. exists (t_nil).
     apply ar3, eval_out_eot_to_tuple.
   Qed.
 
-  Lemma single_out_only ot μ : ¬ single_out ot ↛[μ] → μ = ActOut ot.
+  Lemma single_out_only ot μ : single_out ot ⟶[μ] → μ = ActOut ot.
   Proof.
-    intros acc. apply lts_refuses_spec1 in acc as (q & tr).
-    change (Applicative_process_algebra.lts_step Val (single_out ot) (ActExt μ) q) in tr.
+    intros acc. apply lts_performs_spec1 in acc as (q & tr).
+    change (Applicative_process_algebra.pal_step Val (single_out ot) (ActExt μ) q) in tr.
     inversion tr; subst.
     match goal with
     | ev : eval_out_tuple _ = Some _ |- _ =>
@@ -134,22 +134,22 @@ Section PAL_LA.
     (∀ μ μ', R μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ') → ∀ μ μ', R μ μ' → μ = μ'.
   Proof. intros sound μ μ' h. by apply PAL_𝐏_incl, sound. Qed.
 
-  Lemma PAL_co𝐏_incl (μ μ' : PAL_Act) : (co𝐏 (Aproc := PAL_Act) μ : subset_of term) ⊆ co𝐏 (Aproc := PAL_Act) μ' → μ = μ'.
+  Lemma PAL_co𝐏_incl (μ1 μ1' : PAL_Act) : (co𝐏 (Aproc := PAL_Act) μ1 : subset_of term) ⊆ co𝐏 (Aproc := PAL_Act) μ1' → μ1 = μ1'.
   Proof.
     intros incl.
-    assert (∀ (ν : PAL_Act) (p : term), p ∈ co𝐏 (Aproc := PAL_Act) ν ↔ p ∈ 𝐏 (comp_act Val ν)) as co_iff.
+    assert (∀ (μ2 : PAL_Act) (p : term), p ∈ co𝐏 (Aproc := PAL_Act) μ2 ↔ p ∈ 𝐏 (comp_act Val μ2)) as co_iff.
     { intros [a|a] p; split.
-      - intros (μ'' & duo & acc). symmetry in duo.
+      - intros (μ1'' & duo & acc). symmetry in duo.
         first [apply simplify_match_input in duo | apply simplify_match_output in duo].
         by subst.
       - intros acc. exists (comp_act Val (ActIn a)). split; [done | done].
-      - intros (μ'' & duo & acc). symmetry in duo.
+      - intros (μ1'' & duo & acc). symmetry in duo.
         first [apply simplify_match_input in duo | apply simplify_match_output in duo].
         by subst.
       - intros acc. exists (comp_act Val (ActOut a)). split; [done | done]. }
-    assert (comp_act Val μ = comp_act Val μ') as eq.
+    assert (comp_act Val μ1 = comp_act Val μ1') as eq.
     { apply PAL_𝐏_incl. intros p acc. apply co_iff, incl, co_iff, acc. }
-    destruct μ, μ'; simpl in eq; congruence.
+    destruct μ1, μ1'; simpl in eq; congruence.
   Qed.
 
   Lemma PAL_LA_prog_maximal (R : relation PAL_Act) :

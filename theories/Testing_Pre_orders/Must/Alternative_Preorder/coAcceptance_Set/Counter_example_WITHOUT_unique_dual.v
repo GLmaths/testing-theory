@@ -130,24 +130,24 @@ Definition next (s : st) (α : Act ABC) : list st :=
 
 Definition st_step (s : st) (α : Act ABC) (s' : st) : Prop := s' ∈ next s α.
 
-Lemma st_refuses_spec1 s α : ¬ next s α = [] → { s' | st_step s α s' }.
+Lemma st_performs_spec1 s α : next s α ≠ [] → { s' | st_step s α s' }.
 Proof.
   unfold st_step. destruct (next s α) as [|x l]; intro h.
   - exfalso. by apply h.
   - exists x. set_solver.
 Qed.
 
-Lemma st_refuses_spec2 s α : { s' | st_step s α s' } → ¬ next s α = [].
+Lemma st_performs_spec2 s α : { s' | st_step s α s' } → next s α ≠ [].
 Proof. intros [s' h] e. unfold st_step in h. rewrite e in h. set_solver. Qed.
 
 #[global] Instance st_gLts : gLts st EA_NU := {|
     lts_step := st_step;
     lts_state_eqdec := _;
     lts_step_decidable s α s' := decide (s' ∈ next s α);
-    lts_refuses s α := next s α = [];
-    lts_refuses_decidable s α := decide (next s α = []);
-    lts_refuses_spec1 := st_refuses_spec1;
-    lts_refuses_spec2 := st_refuses_spec2;
+    lts_performs s α := next s α ≠ [];
+    lts_performs_decidable s α := decide (next s α ≠ []);
+    lts_performs_spec1 := st_performs_spec1;
+    lts_performs_spec2 := st_performs_spec2;
   |}.
 
 #[global] Program Instance st_gLtsEq : gLtsEq st EA_NU := {|
@@ -332,7 +332,7 @@ Proof.
 Qed.
 
 Lemma nil_stable : nil ↛.
-Proof. reflexivity. Qed.
+Proof. intros H. now apply H. Qed.
 
 Lemma p1_wt_la_inv p' : p1 ⟹[[la]] p' → p' = dz.
 Proof.

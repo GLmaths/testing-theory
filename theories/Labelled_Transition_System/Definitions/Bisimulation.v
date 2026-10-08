@@ -62,28 +62,25 @@ Proof. intro. exists q; split. eauto. reflexivity. Qed.
 
 Lemma refuses_preserved_by_eq `{gLtsEq P A} {p q μ} : p ↛[ μ ] -> p ⋍ q -> q ↛[ μ ].
 Proof.
-  intros stable_p eq. destruct (decide (q ↛[μ])) as [ tauto | imp].
-  + eauto.
-  + eapply lts_refuses_spec1 in imp as (q' & HypTr).
-    edestruct (eq_spec p q') as (p' & HypTr' & eq'); eauto.
-    assert( ¬ p ↛[μ] ). { eapply lts_refuses_spec2; eauto. }
-    contradiction.
+  intros stable_p eq imp.
+  eapply lts_performs_spec1 in imp as (q' & HypTr).
+  edestruct (eq_spec p q') as (p' & HypTr' & eq'); eauto.
+  apply stable_p, lts_performs_spec2. eauto.
 Qed.
 
-Lemma accepts_preserved_by_eq `{gLtsEq P A} {p q μ} : ¬ p ↛[ μ ] -> p ⋍ q -> ¬ q ↛[ μ ].
+Lemma accepts_preserved_by_eq `{gLtsEq P A} {p q μ} : p ⟶[μ] -> p ⋍ q -> q ⟶[μ].
 Proof.
   intros stable_p eq. symmetry in eq.
-  eapply lts_refuses_spec1 in stable_p as (p' & HypTr').
+  eapply lts_performs_spec1 in stable_p as (p' & HypTr').
   edestruct (eq_spec q p') as (q' & HypTr'' & eq'') ; eauto.
-  eapply lts_refuses_spec2; eauto.
+  eapply lts_performs_spec2; eauto.
 Qed.
 
 Lemma stable_preserved_by_eq `{gLtsEq P A} p q : p ↛ -> p ⋍ q -> q ↛.
 Proof.
-  intros heq hst.
-  destruct (lts_refuses_decidable q τ). eassumption.
-  eapply lts_refuses_spec1 in n as (q' & hl).
+  intros heq hst Hq.
+  eapply lts_performs_spec1 in Hq as (q' & hl).
   edestruct (eq_spec p q') as (p' & hl' & heq'). eauto.
-  exfalso. eapply lts_refuses_spec2; eauto.
+  apply heq, lts_performs_spec2. eauto.
 Qed.
 

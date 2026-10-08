@@ -54,7 +54,7 @@ Definition fail_pre_ms `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ ,
   gLtsQ : @gLts Q A H, @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ }
   (p : P) (q : Q) :=
-  fail_pre_ms_cond1 p q /\ fail_pre_ms_cond2 p q.
+  p ₁⋖ꜰᴀɪʟ q /\ p ₂⋖ꜰᴀɪʟ q.
 
 Global Hint Unfold fail_pre_ms:mdb. 
 

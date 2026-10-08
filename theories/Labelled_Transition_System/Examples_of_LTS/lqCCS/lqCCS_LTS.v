@@ -60,10 +60,10 @@ Definition gLts_of_succs {S A} `{EA : ExtAction A} `{EqDecision S}
   (f : S → Act A → list S) : gLts S EA :=
   {| lts_step p α q := q ∈ f p α;
      lts_step_decidable p α q := (_ : Decision (q ∈ f p α));
-     lts_refuses p α := f p α = [];
-     lts_refuses_decidable p α := _;
-     lts_refuses_spec1 p α Hl := list_witness (f p α) Hl;
-     lts_refuses_spec2 p α '(exist _ q Hq) := ltac:(intros E; rewrite E in Hq; set_solver) |}.
+     lts_performs p α := f p α ≠ [];
+     lts_performs_decidable p α := _;
+     lts_performs_spec1 p α Hl := list_witness (f p α) Hl;
+     lts_performs_spec2 p α '(exist _ q Hq) := ltac:(intros E; rewrite E in Hq; set_solver) |}.
 
 (** ** Alphabets *)
 
@@ -375,14 +375,14 @@ Section LTSs.
   Definition ess_right (Q : proc) : gset tact :=
     list_to_set (acts Q ≫= λ '(a, _), test_ess a).
 
-  Lemma ess_left_step x ξ : ξ ∈ ess_left x → ∃ y, x ⟶[ξ] y.
+  Lemma ess_left_step x μ : μ ∈ ess_left x → ∃ y, x ⟶[μ] y.
   Proof.
     destruct x as [P ρ]. unfold ess_left. rewrite elem_of_list_to_set, list_elem_of_fmap.
     intros ([[c v] P'] & -> & Hin). apply prog_outs_spec in Hin as (t & Hs).
     exists (P', ρ). apply pstep_out. exists P'. split; [done|]. by exists (LAct t (AOut c v)).
   Qed.
 
-  Lemma ess_right_step Q ξ : ξ ∈ ess_right Q → ∃ Q', Q ⟶[ξ] Q'.
+  Lemma ess_right_step Q μ : μ ∈ ess_right Q → ∃ Q', Q ⟶[μ] Q'.
   Proof.
     unfold ess_right. rewrite elem_of_list_to_set, list_elem_of_bind.
     intros ([a Q0] & Hξ & Hacts). apply acts_spec in Hacts as (Hni & t & Hs).
@@ -395,11 +395,11 @@ Section LTSs.
       exists (subst Q0 x (VNat k)). apply tstep_meas. split; [done|]. eauto.
   Qed.
 
-  Lemma step_witness {S A} `{EA : ExtAction A} `{gL : !gLts S EA} p (ξ : A) :
-    (∃ q, p ⟶[ξ] q) → {q | p ⟶[ξ] q}.
+  Lemma step_witness {S A} `{EA : ExtAction A} `{gL : !gLts S EA} p (μ : A) :
+    (∃ q, p ⟶[μ] q) → {q | p ⟶[μ] q}.
   Proof.
-    intros Hex. apply lts_refuses_spec1. intros Hr.
-    destruct Hex as (q & Hq). eapply lts_refuses_spec2; [|exact Hr]. by exists q.
+    intros Hex. apply lts_performs_spec1.
+    destruct Hex as (q & Hq). apply lts_performs_spec2. by exists q.
   Qed.
 
   #[global] Instance lqCCS_Prop_of_Inter :

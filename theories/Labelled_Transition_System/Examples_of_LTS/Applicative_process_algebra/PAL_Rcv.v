@@ -134,20 +134,20 @@ Section PAL_Rcv.
   #[global] Instance PALR_step_dec p α q : Decision (lts_step_r p α q).
   Proof. unfold lts_step_r. apply _. Defined.
 
-  Definition PALR_refuses (p : term) (α : Act PALR_Act) : Prop := PALA_refuses Val p (to_a α).
+  Definition PALR_performs (p : term) (α : Act PALR_Act) : Prop := PALA_performs Val p (to_a α).
 
-  #[global] Instance PALR_refuses_dec p α : Decision (PALR_refuses p α).
-  Proof. unfold PALR_refuses. apply _. Defined.
+  #[global] Instance PALR_performs_dec p α : Decision (PALR_performs p α).
+  Proof. unfold PALR_performs. apply _. Defined.
 
-  Definition PALR_refuses_spec1 p α : ¬ PALR_refuses p α → {q | lts_step_r p α q} :=
-    PALA_refuses_spec1 Val p (to_a α).
+  Definition PALR_performs_spec1 p α : PALR_performs p α → {q | lts_step_r p α q} :=
+    PALA_performs_spec1 Val p (to_a α).
 
-  Definition PALR_refuses_spec2 p α : {q | lts_step_r p α q} → ¬ PALR_refuses p α :=
-    PALA_refuses_spec2 Val p (to_a α).
+  Definition PALR_performs_spec2 p α : {q | lts_step_r p α q} → PALR_performs p α :=
+    PALA_performs_spec2 Val p (to_a α).
 
   #[global] Instance PALR_gLts : gLts term PALR_ExtAction :=
     @MkgLts term PALR_Act PALR_ExtAction lts_step_r term_eqdec PALR_step_dec
-      PALR_refuses PALR_refuses_dec PALR_refuses_spec1 PALR_refuses_spec2.
+      PALR_performs PALR_performs_dec PALR_performs_spec1 PALR_performs_spec2.
 
   (** The structural congruence of the alternative LTS is a bisimulation here too. *)
   Lemma PALR_cgr_spec p q (α : Act PALR_Act) :
@@ -216,13 +216,13 @@ Section PAL_Rcv.
       end.
   Proof.
     split.
-    - intros (μ2 & acc & hd & _). apply lts_refuses_spec1 in acc as (q & hq).
+    - intros (μ2 & acc & hd & _). apply lts_performs_spec1 in acc as (q & hq).
       destruct η as [l | l], μ2 as [l2 | l2]; cbn in hd; try done; subst; by exists q.
     - destruct η as [l | l]; intros (q & hq).
       + exists (ROut l). split_and!; [| done | intros []].
-        apply lts_refuses_spec2. by exists q.
+        apply lts_performs_spec2. by exists q.
       + exists (RIn l). split_and!; [| done | intros []].
-        apply lts_refuses_spec2. by exists q.
+        apply lts_performs_spec2. by exists q.
   Qed.
 
   #[global] Program Instance AbsPALR :
@@ -288,7 +288,7 @@ End PAL_Rcv.
 
 (** The τ of [PAL_Rcv] are those of PAL. *)
 Lemma PALR_tau_iff_PAL {Val : Type} `{Countable Val} (p q : term Val) :
-  lts_step_r Val p τ q ↔ Applicative_process_algebra.lts_step Val p τ q.
+  lts_step_r Val p τ q ↔ Applicative_process_algebra.pal_step Val p τ q.
 Proof. apply (tau_iff Val). Qed.
 
 (** A process and a test communicate along [dual] exactly when they

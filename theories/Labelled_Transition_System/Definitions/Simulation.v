@@ -87,7 +87,7 @@ Lemma parallel_termination_with R S (p : P) (q : Q) :
   (forall μ μ', R μ -> S μ' -> ¬ (dual μ μ')) ->
   terminate_with R p ->
   terminate_with S q ->
-    terminate (p, q).
+    (p, q) ⤓.
 Proof.
 intros Hm Hp Hq. revert q Hq.
 induction Hp as [p He Ht Hi]. intros q Hq.

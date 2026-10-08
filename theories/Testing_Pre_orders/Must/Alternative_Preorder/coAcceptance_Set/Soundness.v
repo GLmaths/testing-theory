@@ -211,7 +211,7 @@ Proof.
          eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
     + destruct Z_' using set_ind_L.
       ++ assert (Y' = X') by set_solver.
-         assert (mustx X t) by eauto with mdb.
+         assert (X must_pass_x t) by eauto with mdb.
          inversion H6; subst. set_solver.
          eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
       ++ subst.
@@ -555,7 +555,7 @@ Definition ctx_pre__x
   (X : gset P) (Y : gset Q) 
   := forall (t : T), X must_pass_x t -> Y must_pass_x t.
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
-Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre__x X Y) (at level 70).
 
 Lemma set_must_union_right
   (X : gset P) (Y Y' : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y' ->  X ⊑ₛₑₜ_ₘᵤₛₜᵢ (Y ∪ Y').
@@ -655,7 +655,7 @@ End Must_preorder_for_sets.
 
 #[global] Hint Unfold ctx_pre__x : mdb.
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
-Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre__x X Y) (at level 70).
 
 (* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is reflexive *)
 #[global] Instance set_must_refl
@@ -947,7 +947,7 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_external_action
-  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
   X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *) -> X' ₁≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros hleq hws l (* not_empty *) s hcnv. intros.
@@ -961,7 +961,7 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_external_action_lts
-  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
   X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> Y ⟹{μ} Y' -> X' ₁≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros. eapply bhvleqone_preserved_by_external_action; eauto.
@@ -1025,7 +1025,7 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action
-  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
   wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *)
     -> wt_set_from_pset_spec X [μ] X'
       -> X ≼ₛₑₜ_ₐₛ Y
@@ -1047,7 +1047,7 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action_lts
-  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
   Y ⟹{μ} Y'
     -> wt_set_from_pset_spec X [μ] X'
       -> X ≼ₛₑₜ_ₐₛ Y
@@ -1060,7 +1060,7 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action_tr
-  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
   lts_extaction_set_from_pset_spec1  Y μ Y' (* -> Y' ≠ ∅ *)
     -> wt_set_from_pset_spec X [μ] X'
       -> X ≼ₛₑₜ_ₐₛ Y
@@ -1072,7 +1072,7 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action_tr_lts
-  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> terminate p) :
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
   Y ⟶[μ] Y'
     -> wt_set_from_pset_spec X [μ] X'
       -> X ≼ₛₑₜ_ₐₛ Y
@@ -1103,9 +1103,8 @@ Proof.
   + assert (x ∈ ({[x]} ∪ X0)) as mem by set_solver.
     eapply wq0 in mem as ( q & mem & wk_tr).
     destruct (h2 q [μ] x mem wk_tr) as (p1 & mem1 & p0 & wp0 & stp0) (* & subp0) *).
-    - unfold lts_refuses in stq0. simpl in *. 
-      unfold SetLTSConstruction.toSET_obligation_3 in stq0.
-      eapply stq0. set_solver.
+    - simpl in *. unfold SetLTSConstruction.toSET_obligation_3 in stq0.
+      intros Hp. apply stq0. intros Hall. eapply Hall; [| exact Hp]. set_solver.
     - eauto.
     - eapply witness_wk_tr in wp0 as (ps' & wk_tr' & mem'); eauto. 
 Qed.
@@ -1159,7 +1158,7 @@ Context `{!gLtsCNenabled Q A}.
 
 Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ1 μ2 :
       dual μ1 μ2 -> p ⟶[μ1] p' -> t ⟶[μ2] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
-        -> exists ν1 ν2 q' t'', dual ν1 ν2 /\ q ⟶[ν1] q' /\ t ⟶[ν2] t''.
+        -> exists μ4 μ5 q' t'', dual μ4 μ5 /\ q ⟶[μ4] q' /\ t ⟶[μ5] t''.
 Proof.
   intros duo tr tr_co sub.
   destruct (decide (non_blocking μ2)) as [nb | not_nb].
@@ -1167,17 +1166,17 @@ Proof.
     exists μ1, μ2, q', t'. eauto.
   + assert (μ2 ∈ coR p) as some_co_action_of_p.
     { exists μ1. repeat split; eauto.
-      eapply lts_refuses_spec2;eauto. }
+      eapply lts_performs_spec2;eauto. }
     eapply (map_gamma_of_action (𝝳 ∘ Φ)) in some_co_action_of_p as mem.
     eapply sub in mem. destruct mem as (μ' & mem & eq).
     eapply (map_gamma_of_action Φ) in mem as eq'. symmetry in eq.
     eapply (abstraction_prog_spec q) in eq' ;eauto.
-    2:{ destruct mem as (ν & hmem & hdual & hblock). eauto. }
+    2:{ destruct mem as (μ3 & hmem & hdual & hblock). eauto. }
     destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo2 & b).
     assert (μ'' ∈ R t) as Tr_Test.
-    { eapply abstraction_test_spec in eq';eauto. apply lts_refuses_spec2. eauto. }
-    eapply lts_refuses_spec1 in Tr_Test as (t'' & Tr'').
-    eapply lts_refuses_spec1 in tr' as (q' & tr').
+    { eapply abstraction_test_spec in eq';eauto. apply lts_performs_spec2. eauto. }
+    eapply lts_performs_spec1 in Tr_Test as (t'' & Tr'').
+    eapply lts_performs_spec1 in tr' as (q' & tr').
     exists μ''', μ'', q', t''. eauto.
 Qed.
 
@@ -1207,10 +1206,10 @@ Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
 
   assert (q ↛) as stable_q.
-  { destruct (lts_refuses_decidable q τ) as [refuses_q | not_refuses_q].
-    - exact refuses_q.
-    - exfalso. eapply lts_refuses_spec1 in not_refuses_q as (q' & l).
-      eapply (lts_refuses_spec2 (q ▷ t)); eauto. exists (q' ▷ t). eapply ParLeft. exact l. }
+  { destruct (decide (q ⟶)) as [not_refuses_q | refuses_q].
+    - exfalso. eapply lts_performs_spec1 in not_refuses_q as (q' & l).
+      apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q' ▷ t). eapply ParLeft. exact l.
+    - exact refuses_q. }
 
   assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
   { destruct (mustx_terminate_unoutcome X t all_must) as [|htps]; eauto with mdb. contradiction. }
@@ -1224,13 +1223,13 @@ Proof.
   edestruct (ex p') as ((p'' , t'') & HypTr). now eapply elem_of_singleton.
 
   inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
-  - eapply lts_refuses_spec2 in stp'; eauto.
-  - destruct (lts_refuses_decidable t τ) as [refuses_t | not_refuses_t].
-    + eapply lts_refuses_spec2 in refuses_t. eauto. eauto with mdb.
-    + eapply (lts_refuses_spec2 (q ▷ t)); eauto.
+  - exfalso; apply stp', lts_performs_spec2; eauto.
+  - destruct (decide (t ⟶)) as [not_refuses_t | refuses_t].
+    + apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)).
       exists (q , t''). eapply ParRight; eauto.
+    + exfalso. apply refuses_t, lts_performs_spec2. eauto with mdb.
   - eapply communication_enabled in act_left as (μ'1 & μ'2 & q' & t''' & duo & tr1 & tr2); eauto.
-    eapply (lts_refuses_spec2 (q ▷ t)); eauto. exists (q', t''').
+    apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q', t''').
     eapply (ParSync (μ'1)); eauto.
 Qed.
 
@@ -1242,9 +1241,9 @@ Lemma stability_nbhvleqtwo
         -> forall (q : Q), q ∈ Y -> ∃ q', (q, t) ⟶{τ} q'.
 Proof.
   intros nhg hmx hleq q mem.
-  destruct (lts_refuses_decidable (q, t) τ).
+  destruct (decide ((q, t) ⟶)) as [Hp | Hst].
+  - eapply lts_performs_spec1 in Hp as (t' & hl). eauto.
   - exfalso. apply (unoutcome_must_st_nleqx X Y t nhg hmx); eauto.
-  - eapply lts_refuses_spec1 in n as (t' & hl). eauto.
 Qed.
 
 (** ** Soundness for sets *)

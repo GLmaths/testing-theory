@@ -882,13 +882,13 @@ Qed.
    `{!Prop_of_Inter P (MO A) A A fw_inter}
   : gLtsObaFW (P * MO A) A.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? (p, m) η μ.
+  intros ? ? ? ? ? ? ? ? ? (p, m) η β.
   exists (p, {[+ η +]} ⊎ m). split; eauto with mdb.
   eapply ParRight. eapply lts_multiset_add; eauto.
   eapply ParRight. eapply lts_multiset_minus; eauto.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η μ nb duo Hstep_nb Hstep.
+  intros ? ? ? ? ? ? ? ? ? (p1, m1) (p2, m2) (p3, m3) η β nb duo Hstep_nb Hstep.
   inversion Hstep_nb; subst.
   + inversion Hstep; subst.
     ++ left. destruct (feedback nb duo l l0) as (t & l1 & heq).
@@ -896,8 +896,8 @@ Next Obligation.
        now eapply fw_eq_id_MO.
     ++ right. simpl. unfold fw_eq.
        intros p' q' strip_p strip_q. simpl in *.
-       assert ( blocking μ) as not_nb. eapply dual_blocks; eauto.
-       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst.
+       assert ( blocking β) as not_nb. eapply dual_blocks; eauto.
+       eapply (blocking_action_in_ms m2 β m3) in not_nb as (eq & duo' & nb'); subst.
        set (heq := lts_oba_mo_spec2 _ _ _ nb l).
        rewrite heq in strip_p. rewrite heq. split.
        +++ destruct (strip_mem_ex strip_p) as (e & l' & nb'').
@@ -905,23 +905,23 @@ Next Obligation.
            set (h := nb_determinacy nb'' l l').
            etrans. symmetry. eassumption.
            symmetry. eapply strip_eq_sim; eassumption.
-       +++ assert (MO_without_not_nb ({[+ co μ +]} ⊎ m2) 
-              = {[+ co μ +]} ⊎ MO_without_not_nb m2) as eq''.
+       +++ assert (MO_without_not_nb ({[+ co β +]} ⊎ m2) 
+              = {[+ co β +]} ⊎ MO_without_not_nb m2) as eq''.
            eapply lts_MO_nb_spec1;eauto. rewrite eq''.
            rewrite <- gmultiset_disj_union_assoc.
            rewrite gmultiset_disj_union_comm.
            rewrite <- gmultiset_disj_union_assoc.
            eapply gmultiset_eq_pop_l.
-           assert (η = co μ) as eq_nb. eapply unique_nb; eauto; subst. subst.
+           assert (η = co β) as eq_nb. eapply unique_nb; eauto; subst. subst.
            now rewrite gmultiset_disj_union_comm.
        +++ assumption.
   + inversion Hstep; subst.
     ++ left. exists (p3, m3). split. eapply ParSync; eauto. split; eauto. reflexivity.
     ++ right. 
        eapply (non_blocking_action_in_ms m1 η m2) in nb as eq; subst; eauto.
-       assert (blocking μ) as not_nb. eapply dual_blocks; eauto.
-       eapply (blocking_action_in_ms m2 μ m3) in not_nb as (eq & duo' & nb'); subst; eauto.
-       assert (η = co μ) as eq_nb. eapply unique_nb; eauto. subst.
+       assert (blocking β) as not_nb. eapply dual_blocks; eauto.
+       eapply (blocking_action_in_ms m2 β m3) in not_nb as (eq & duo' & nb'); subst; eauto.
+       assert (η = co β) as eq_nb. eapply unique_nb; eauto. subst.
        reflexivity.
 Qed.
 
@@ -1143,7 +1143,7 @@ Lemma fw_tau_image_iff `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : Uniq
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
   (p q : P) (m m' : MO A) :
   inter_step (p ▷ m) τ (q ▷ m')
-  <-> ((m' = m /\ p ⟶ q) \/ (exists ν, non_blocking ν /\ m = {[+ ν +]} ⊎ m' /\ p ⟶[co ν] q)).
+  <-> ((m' = m /\ p ⟶ q) \/ (exists η3, non_blocking η3 /\ m = {[+ η3 +]} ⊎ m' /\ p ⟶[co η3] q)).
 Proof.
   split.
   - intro Hstep.
@@ -1157,10 +1157,10 @@ Proof.
         assert (μ1 = co μ2) as ->.
         { eapply unique_nb. eapply duo_sym. exact duo. }
         split; [assumption | split; [reflexivity | exact l1]].
-  - intros [(-> & Htr) | (ν & nb & -> & Htr)].
+  - intros [(-> & Htr) | (η3 & nb & -> & Htr)].
     + now constructor.
-    + eapply (ParSync (co ν) ν); eauto.
-      split; [eapply duo_sym, (proj2_sig (exists_dual ν)) | assumption].
+    + eapply (ParSync (co η3) η3); eauto.
+      split; [eapply duo_sym, (proj2_sig (exists_dual η3)) | assumption].
       now constructor.
 Qed.
 
@@ -1262,8 +1262,8 @@ Definition fw_co_tau_set `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : Un
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
   (p : P) (m : MO A) : list (P * MO A) :=
   map (fun q => (proj1_sig q, m)) (enum (dsig (fun q => p ⟶ q)))
-  ++ concat (map (fun ν => map (fun q => (proj1_sig q, m ∖ {[+ ν +]}))
-                    (enum (dsig (fun q => exists α', sync α' ν /\ p ⟶[α'] q))))
+  ++ concat (map (fun μ => map (fun q => (proj1_sig q, m ∖ {[+ μ +]}))
+                    (enum (dsig (fun q => exists α', sync α' μ /\ p ⟶[α'] q))))
               (elements m)).
 
 Lemma fw_co_tau_set_spec1 `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
@@ -1275,21 +1275,21 @@ Proof.
   intro Hstep.
   eapply fw_tau_image_iff in Hstep.
   unfold fw_co_tau_set.
-  destruct Hstep as [(-> & Htr) | (ν & nb & -> & Htr)].
+  destruct Hstep as [(-> & Htr) | (μ & nb & -> & Htr)].
   - eapply elem_of_app. left. eapply list_elem_of_fmap.
     exists (dexist q Htr). split. reflexivity. eapply elem_of_enum.
   - eapply elem_of_app. right.
     eapply list_elem_of_In. eapply in_concat.
-    exists (map (fun q0 => (proj1_sig q0, ({[+ ν +]} ⊎ m') ∖ {[+ ν +]}))
-             (enum (dsig (fun q0 => exists α', sync α' ν /\ p ⟶[α'] q0)))).
+    exists (map (fun q0 => (proj1_sig q0, ({[+ μ +]} ⊎ m') ∖ {[+ μ +]}))
+             (enum (dsig (fun q0 => exists α', sync α' μ /\ p ⟶[α'] q0)))).
     split.
     + eapply list_elem_of_In. eapply list_elem_of_fmap.
-      exists ν. split. reflexivity.
+      exists μ. split. reflexivity.
       eapply gmultiset_elem_of_elements. multiset_solver.
     + eapply list_elem_of_In. eapply list_elem_of_fmap.
-      exists (dexist q (ex_intro _ (co ν) (conj (duo_sym _ _ (proj2_sig (exists_dual ν))) Htr))).
+      exists (dexist q (ex_intro _ (co μ) (conj (duo_sym _ _ (proj2_sig (exists_dual μ))) Htr))).
       split.
-      * replace (({[+ ν +]} ⊎ m') ∖ {[+ ν +]}) with m' by multiset_solver. reflexivity.
+      * replace (({[+ μ +]} ⊎ m') ∖ {[+ μ +]}) with m' by multiset_solver. reflexivity.
       * eapply elem_of_enum.
 Qed.
 

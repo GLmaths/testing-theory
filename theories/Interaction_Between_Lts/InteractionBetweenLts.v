@@ -106,7 +106,7 @@ Fixpoint search_co_steps_right `{Prop_of_Inter S1 S2 A1 A2 inter}
   match candidates with
   | [] => None
   | μ :: xs =>
-    if decide (ξ ∈ lts_essential_actions_left s1 /\ lts_step s2 (ActExt μ) s'2  /\ inter ξ μ) 
+    if decide (ξ ∈ lts_essential_actions_left s1 /\ s2 ⟶[μ] s'2  /\ inter ξ μ) 
       then Some μ
       else search_co_steps_right s2 s'2 ξ xs s1
   end.
@@ -281,7 +281,7 @@ Fixpoint search_co_steps_left `{Prop_of_Inter S1 S2 A1 A2}
   match candidates with 
   | [] => None
   | μ :: xs =>
-    if decide (ξ ∈ lts_essential_actions_right s2 /\ lts_step s1 (ActExt μ) s'1  /\ inter μ ξ)
+    if decide (ξ ∈ lts_essential_actions_right s2 /\ s1 ⟶[μ] s'1  /\ inter μ ξ)
       then Some μ
       else search_co_steps_left s1 s'1 ξ xs s2
   end.
@@ -454,14 +454,14 @@ Qed.
 
 
 Definition decide_inter_step `{M12 : Prop_of_Inter S1 S2 A A inter}
-            (s1: S1) (s2: S2) ℓ s'1 s'2:
-  Decision (inter_step (s1, s2) ℓ (s'1, s'2)).
+            (s1: S1) (s2: S2) α s'1 s'2:
+  Decision (inter_step (s1, s2) α (s'1, s'2)).
 Proof.
-  destruct (decide (lts_step s1 ℓ s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
+  destruct (decide (s1 ⟶{α} s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
   { simplify_eq. left. by constructor. }
-  destruct (decide (lts_step s2 ℓ s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
+  destruct (decide (s2 ⟶{α} s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
   { simplify_eq. left. by constructor. }
-  destruct ℓ.
+  destruct α.
   { right. intros contra; inversion contra; simplify_eq; eauto. }
   destruct (search_steps_essential_left s1 s2 s'1 s'2 (elements $ lts_essential_actions_left s1)) as [ξ|] eqn:Hpar1.
   { apply search_steps_spec_2_essential_left in Hpar1 as (μ & ess_act & step_left & step_right & duo). 
@@ -479,377 +479,377 @@ Proof.
     inversion Hc. simplify_eq.
 Defined.
 
-Definition inter_not_refuses_essential_left
+Definition inter_performs_essential_left
   `{Prop_of_Inter S1 S2 A1 A2}
           (s1: S1) (s2 : S2) (ξ : A1) :=
-        ¬lts_refuses s1 (ActExt $ ξ) ∧ (∃ μ, ¬lts_refuses s2 (ActExt $ μ) 
+        s1 ⟶[ξ] ∧ (∃ μ, s2 ⟶[μ] 
           ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1). 
 
-Fixpoint search_co_steps_right_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter} 
+Fixpoint search_co_steps_right_performs `{Prop_of_Inter S1 S2 A1 A2 inter} 
   (s2: S2) ξ candidates (s1 : S1) :=
   match candidates with
   | [] => None
   | μ :: xs =>
-    if decide (ξ ∈ lts_essential_actions_left s1 /\ ¬lts_refuses s2 (ActExt μ) /\ inter ξ μ) 
+    if decide (ξ ∈ lts_essential_actions_left s1 /\ s2 ⟶[μ] /\ inter ξ μ) 
       then Some μ
-      else search_co_steps_right_not_refuses s2 ξ xs s1
+      else search_co_steps_right_performs s2 ξ xs s1
   end.
 
-Lemma search_co_steps_spec_helper_right_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter}
+Lemma search_co_steps_spec_helper_right_performs `{Prop_of_Inter S1 S2 A1 A2 inter}
   lnot (s2 : S2) l (ξ : A1) (s1 : S1) :
   (elements $ lts_co_inter_action_right ξ s2) = lnot ++ l →
-  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧  ¬lts_refuses s2 (ActExt μ) ∧ inter ξ μ)) →
-  is_Some $ search_co_steps_right_not_refuses s2 ξ l s1 ->
-  { μ | (ξ ∈ lts_essential_actions_left s1 ∧  ¬lts_refuses s2 (ActExt μ) ∧ inter ξ μ)}.
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧  s2 ⟶[μ] ∧ inter ξ μ)) →
+  is_Some $ search_co_steps_right_performs s2 ξ l s1 ->
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧  s2 ⟶[μ] ∧ inter ξ μ)}.
 Proof.
   revert lnot. induction l; intros lnot.
   { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc. done. }
   {intros Helems Hnots. simpl.
-  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ ¬lts_refuses s2 (ActExt a) ∧ inter ξ a)).
+  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] ∧ inter ξ a)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
   intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
-Lemma search_co_steps_spec_helper_right_not_refuses_rev `{Prop_of_Inter S1 S2 A1 A2 inter} 
+Lemma search_co_steps_spec_helper_right_performs_rev `{Prop_of_Inter S1 S2 A1 A2 inter} 
   lnot (s2 : S2) l ξ (s1 : S1) :
   (elements $ lts_co_inter_action_right ξ s2) = lnot ++ l →
-  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧ ¬lts_refuses s2 (ActExt μ) ∧ inter ξ μ)) →
-  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ ¬lts_refuses s2 (ActExt μ) ∧ inter ξ μ)}  
-  -> is_Some $ search_co_steps_right_not_refuses s2 ξ l s1.
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ)) →
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ)}  
+  -> is_Some $ search_co_steps_right_performs s2 ξ l s1.
 Proof.
   revert lnot. induction l; intros lnot.
   { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc as (μ & ess_act & Hstep & duo).
-   eapply lts_refuses_spec1 in Hstep as (s'2 & Hstep); eauto.
+   eapply lts_performs_spec1 in Hstep as (s'2 & Hstep); eauto.
    eapply (lts_co_inter_action_spec_right s2 s'2 ξ μ s1) in Hstep as Hyp; eauto.
    simplify_list_eq.
    eapply elem_of_elements in Hyp. eapply Hnots; eauto.
-   repeat split; eauto. eapply lts_refuses_spec2. eauto. }
+   repeat split; eauto. eapply lts_performs_spec2. eauto. }
   { intros Helems Hnots. simpl.
-  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ ¬ s2 ↛[a] ∧ inter ξ a)).
+  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] ∧ inter ξ a)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
   intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
-Lemma search_co_steps_spec_1_right_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter} 
+Lemma search_co_steps_spec_1_right_performs `{Prop_of_Inter S1 S2 A1 A2 inter} 
   (s2 : S2) ξ s1:
-  is_Some $ search_co_steps_right_not_refuses s2 ξ (elements $ lts_co_inter_action_right ξ s2) s1 ->
-  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ ¬ s2 ↛[μ] ∧ inter ξ μ)}.
-Proof. apply (search_co_steps_spec_helper_right_not_refuses []); [done| intros ??; set_solver]. Qed.
+  is_Some $ search_co_steps_right_performs s2 ξ (elements $ lts_co_inter_action_right ξ s2) s1 ->
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ)}.
+Proof. apply (search_co_steps_spec_helper_right_performs []); [done| intros ??; set_solver]. Qed.
 
-Lemma search_co_steps_spec_1_right_not_refuses_rev `{Prop_of_Inter S1 S2 A1 A2}
+Lemma search_co_steps_spec_1_right_performs_rev `{Prop_of_Inter S1 S2 A1 A2}
   (s2 : S2) ξ s1:
-  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ ¬ s2 ↛[μ] ∧ inter ξ μ)} 
-  -> is_Some $ search_co_steps_right_not_refuses s2 ξ (elements $ lts_co_inter_action_right ξ s2) s1.
-Proof. apply (search_co_steps_spec_helper_right_not_refuses_rev []); [done| intros ??; set_solver]. Qed.
+  { μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ)} 
+  -> is_Some $ search_co_steps_right_performs s2 ξ (elements $ lts_co_inter_action_right ξ s2) s1.
+Proof. apply (search_co_steps_spec_helper_right_performs_rev []); [done| intros ??; set_solver]. Qed.
 
-Lemma search_co_steps_spec_2_right_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter}
+Lemma search_co_steps_spec_2_right_performs `{Prop_of_Inter S1 S2 A1 A2 inter}
   μ s2 l ξ s1:
-  search_co_steps_right_not_refuses s2 ξ l s1 = Some μ →
-  (ξ ∈ lts_essential_actions_left s1 ∧ ¬ s2 ↛[μ] ∧ inter ξ μ).
+  search_co_steps_right_performs s2 ξ l s1 = Some μ →
+  (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ).
 Proof.
   induction l; [done|]. simpl.
-  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ ¬ s2 ↛[a] ∧ inter ξ a)) ; [|eauto].
+  destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] ∧ inter ξ a)) ; [|eauto].
   intros ?. simplify_eq. done.
 Qed.
 
-#[local] Instance dec_co_act_refuses_essential_left `{Prop_of_Inter S1 S2 A1 A2}
+#[local] Instance dec_co_act_performs_essential_left `{Prop_of_Inter S1 S2 A1 A2}
        (s1: S1) (s2 : S2) (ξ : A1)
-      : Decision (inter_not_refuses_essential_left s1 s2 ξ).
+      : Decision (inter_performs_essential_left s1 s2 ξ).
 Proof.
-  destruct (decide (is_Some $ search_co_steps_right_not_refuses s2 ξ 
+  destruct (decide (is_Some $ search_co_steps_right_performs s2 ξ 
   (elements $ lts_co_inter_action_right ξ s2) s1)) as [wit | not_wit].
   + left. 
-    eapply search_co_steps_spec_1_right_not_refuses in wit.
+    eapply search_co_steps_spec_1_right_performs in wit.
     destruct wit as (μ' & h1 & h2 & h3). repeat split; eauto.
-    eapply lts_essential_action_spec_left in h1. eapply lts_refuses_spec2; eauto.
+    eapply lts_essential_action_spec_left in h1. eapply lts_performs_spec2; eauto.
   + right. intros (μ' & h1 & h2 & h3 & h4).
-    assert ({ μ | (ξ ∈ lts_essential_actions_left s1 ∧ ¬ s2 ↛[μ] ∧ inter ξ μ)}) as wit.
-    eauto. eapply search_co_steps_spec_1_right_not_refuses_rev in wit.
+    assert ({ μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ)}) as wit.
+    eauto. eapply search_co_steps_spec_1_right_performs_rev in wit.
     contradiction.
 Qed.
 
-Lemma transition_to_not_refuses_essential_left `{Prop_of_Inter S1 S2 A1 A2}
+Lemma transition_to_performs_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (s'2 : S2) (ξ : A1) : 
   { μ | s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1} 
-  -> { μ | ¬lts_refuses s2 (ActExt $ μ) ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}.
+  -> { μ | s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}.
 Proof.
   intro Hyp. destruct Hyp as [μ [HypTr2 [inter_prop ess_act]]]. eexists.
-  repeat split; eauto. eapply lts_refuses_spec2. exists s'2. eauto.
+  repeat split; eauto. eapply lts_performs_spec2. exists s'2. eauto.
 Qed.
 
-Lemma not_refuses_to_transition_essential_left `{Prop_of_Inter S1 S2 A1 A2}
+Lemma performs_to_transition_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (* (s'2 : S2) *) (ξ : A1) : 
-  { μ | ¬lts_refuses s2 (ActExt $ μ) ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1} 
+  { μ | s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1} 
   -> {s'2 & { μ | s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}}.
 Proof.
-  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_refuses_spec1 in HypNotStable2. 
+  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_performs_spec1 in HypNotStable2. 
   destruct HypNotStable2 as [s'2 HypTr2]. eexists. eexists. repeat split; eauto.
 Qed.
 
 Definition com_with_ess_left `{Prop_of_Inter S1 S2 A1 A2} 
     (s1 : S1) (s2 : S2) (ξ : A1) (μ : A2)
- := ¬ s2 ↛[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1.
+ := s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1.
 
 Lemma some_witness1_right' `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (ξ : A1) : 
-  (∃ μ : A2, ¬ s2 ↛[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1) 
-  -> { μ | ¬ s2 ↛[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}.
+  (∃ μ : A2, s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1) 
+  -> { μ | s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}.
 Proof.
   intro Hyp. exact (choice (com_with_ess_left s1 s2 ξ) Hyp).
 Qed.
 
 Lemma some_witness1_right `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (ξ : A1) : 
-  (∃ μ : A2, ¬ s2 ↛[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1) 
+  (∃ μ : A2, s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1) 
   -> { μ & { s'2 | s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}}.
 Proof.
   intro Hyp.
   eapply some_witness1_right' in Hyp.
-  destruct Hyp as (μ & not_refuses & inter_h & ess_act).
-  eapply lts_refuses_spec1 in not_refuses.
-  destruct not_refuses as (s'2 & HypTr).
+  destruct Hyp as (μ & Hperf & inter_h & ess_act).
+  eapply lts_performs_spec1 in Hperf.
+  destruct Hperf as (s'2 & HypTr).
   exists μ. exists s'2. repeat split; eauto.
 Qed.
 
-Fixpoint inter_lts_refuses_helper_essential_left
+Fixpoint inter_lts_performs_helper_essential_left
   `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) (l: list A1) : bool :=
   match l with
-  | [] => true
+  | [] => false
   | ξ::bs =>
-      if decide (inter_not_refuses_essential_left s1 s2 ξ)
-        then false 
-        else inter_lts_refuses_helper_essential_left s1 s2 bs
+      if decide (inter_performs_essential_left s1 s2 ξ)
+        then true 
+        else inter_lts_performs_helper_essential_left s1 s2 bs
   end.
 
-Lemma inter_sts_refuses_helper_spec_1_essential_left `{Prop_of_Inter S1 S2 A1 A2}
+Lemma inter_sts_performs_helper_spec_1_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) (l: list A1) :
-  inter_lts_refuses_helper_essential_left s1 s2 l = false → {s' | inter_tau_step (s1, s2) s'}.
+  inter_lts_performs_helper_essential_left s1 s2 l = true → {s' | inter_tau_step (s1, s2) s'}.
 Proof.
   induction l as [| ξ l ]; [done|].
-  simpl. destruct (decide (inter_not_refuses_essential_left s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
-  destruct Hyp as [not_refuses1 act_founded]. eapply some_witness1_right in act_founded.
+  simpl. destruct (decide (inter_performs_essential_left s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
+  destruct Hyp as [Hperf1 act_founded]. eapply some_witness1_right in act_founded.
   destruct act_founded as (μ & s'2 & HypTr2 & duo & ess_act).
-  apply lts_refuses_spec1 in not_refuses1 as [s'1 HypTr1].
+  apply lts_performs_spec1 in Hperf1 as [s'1 HypTr1].
   exists (s'1, s'2). eapply TauSync. exact duo. exact HypTr1. exact HypTr2.
 Qed.
 
-Lemma inter_sts_refuses_helper_spec_2_essential_left `{Prop_of_Inter S1 S2 A1 A2}
+Lemma inter_sts_performs_helper_spec_2_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) ξ μ s'1 s'2 :
   s1 ⟶[ξ] s'1 → s2 ⟶[μ] s'2 → inter ξ μ → ξ ∈ lts_essential_actions_left s1 →
-  inter_lts_refuses_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1) = false.
+  inter_lts_performs_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1) = true.
 Proof.
   intros Hs1 Hs2 duo ess_act.
   assert (∀ l rest,
              (elements $ lts_essential_actions_left s1) = rest ++ l →
              (∀ ξ, ξ ∈ rest → ¬ (s1 ⟶[ξ] s'1 ∧ (exists μ, s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1 ))) →
-             inter_lts_refuses_helper_essential_left s1 s2 l = false) as Hccl.
+             inter_lts_performs_helper_essential_left s1 s2 l = true) as Hccl.
   induction l as [| b l IHl].
   - intros rest Hrest Hnots. (* pose proof (lts_essential_action_spec_left _ ξ ess_act Hs1) as Hin.  *)
     simplify_list_eq.
     exfalso. eapply Hnots; eauto. set_solver.
   - intros rest Hrest Hnots. simplify_list_eq.
-    destruct (decide (inter_not_refuses_essential_left s1 s2 b)) as [case1 | case2]; [auto|].
+    destruct (decide (inter_performs_essential_left s1 s2 b)) as [case1 | case2]; [auto|].
     eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
     intros x [Hin | ->%list_elem_of_singleton]%elem_of_app; [eauto|].
-    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_refuses_spec2. exists s'1. assumption.
-    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_refuses_spec2. exists s'2. assumption.
+    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_performs_spec2. exists s'1. assumption.
+    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_performs_spec2. exists s'2. assumption.
     split; eauto. 
   - apply (Hccl _ []); eauto. set_solver.
 Qed.
 
-Definition inter_not_refuses_essential_right
+Definition inter_performs_essential_right
   `{Prop_of_Inter S1 S2 A1 A2}
           (s1: S1) (s2 : S2) (ξ : A2) :=
-        ¬lts_refuses s2 (ActExt $ ξ) ∧ (∃ μ, ¬lts_refuses s1 (ActExt $ μ) ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2). 
+        s2 ⟶[ξ] ∧ (∃ μ, s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2). 
 
-Fixpoint search_co_steps_left_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter} 
+Fixpoint search_co_steps_left_performs `{Prop_of_Inter S1 S2 A1 A2 inter} 
   (s1: S1) ξ candidates (s2 : S2) :=
   match candidates with
   | [] => None
   | μ :: xs =>
-    if decide (ξ ∈ lts_essential_actions_right s2 /\ ¬lts_refuses s1 (ActExt μ) /\ inter μ ξ) 
+    if decide (ξ ∈ lts_essential_actions_right s2 /\ s1 ⟶[μ] /\ inter μ ξ) 
       then Some μ
-      else search_co_steps_left_not_refuses s1 ξ xs s2
+      else search_co_steps_left_performs s1 ξ xs s2
   end.
 
-Lemma search_co_steps_spec_helper_left_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter}
+Lemma search_co_steps_spec_helper_left_performs `{Prop_of_Inter S1 S2 A1 A2 inter}
   lnot (s1 : S1) l (ξ : A2) (s2 : S2) :
   (elements $ lts_co_inter_action_left ξ s1) = lnot ++ l →
-  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧  ¬lts_refuses s1 (ActExt μ) 
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧  s1 ⟶[μ] 
   ∧ inter μ ξ)) →
-  is_Some $ search_co_steps_left_not_refuses s1 ξ l s2 ->
-  { μ | (ξ ∈ lts_essential_actions_right s2 ∧  ¬lts_refuses s1 (ActExt μ) ∧ inter μ ξ )}.
+  is_Some $ search_co_steps_left_performs s1 ξ l s2 ->
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧  s1 ⟶[μ] ∧ inter μ ξ )}.
 Proof.
   revert lnot. induction l; intros lnot.
   { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc. done. }
   {intros Helems Hnots. simpl.
-  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ ¬lts_refuses s1 (ActExt a) ∧ inter a ξ)).
+  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[a] ∧ inter a ξ)).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
   intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
-Lemma search_co_steps_spec_helper_left_not_refuses_rev `{Prop_of_Inter S1 S2 A1 A2 inter} 
+Lemma search_co_steps_spec_helper_left_performs_rev `{Prop_of_Inter S1 S2 A1 A2 inter} 
   lnot (s1 : S1) l ξ (s2 : S2) :
   (elements $ lts_co_inter_action_left ξ s1) = lnot ++ l →
-  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧ ¬lts_refuses s1 (ActExt μ) 
+  (∀ μ, μ ∈ lnot → ¬ (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] 
   ∧ inter μ ξ )) →
-  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ ¬lts_refuses s1 (ActExt μ) ∧ inter μ ξ )}  
-  -> is_Some $ search_co_steps_left_not_refuses s1 ξ l s2.
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] ∧ inter μ ξ )}  
+  -> is_Some $ search_co_steps_left_performs s1 ξ l s2.
 Proof.
   revert lnot. induction l; intros lnot.
   { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc as (μ & ess_act & Hstep & duo).
-   eapply lts_refuses_spec1 in Hstep as (s'1 & Hstep); eauto.
+   eapply lts_performs_spec1 in Hstep as (s'1 & Hstep); eauto.
    eapply (lts_co_inter_action_spec_left s1 s'1 ξ μ s2) in Hstep as Hyp; eauto.
    simplify_list_eq.
    eapply elem_of_elements in Hyp. eapply Hnots; eauto.
-   repeat split; eauto. eapply lts_refuses_spec2. eauto. }
+   repeat split; eauto. eapply lts_performs_spec2. eauto. }
   { intros Helems Hnots. simpl.
-  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ ¬ s1 ↛[a] ∧ inter a ξ )).
+  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[a] ∧ inter a ξ )).
   + eauto.
   + apply (IHl (lnot ++ [a])); [by simplify_list_eq|].
   intros x [Hin | Hin%list_elem_of_singleton]%elem_of_app; simplify_eq ; eauto. }
 Qed.
 
-Lemma search_co_steps_spec_1_left_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter} 
+Lemma search_co_steps_spec_1_left_performs `{Prop_of_Inter S1 S2 A1 A2 inter} 
   (s1 : S1) ξ s2:
-  is_Some $ search_co_steps_left_not_refuses s1 ξ (elements $ lts_co_inter_action_left ξ s1) s2 ->
-  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ ¬ s1 ↛[μ] ∧ inter μ ξ )}.
-Proof. apply (search_co_steps_spec_helper_left_not_refuses []); [done| intros ??; set_solver]. Qed.
+  is_Some $ search_co_steps_left_performs s1 ξ (elements $ lts_co_inter_action_left ξ s1) s2 ->
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] ∧ inter μ ξ )}.
+Proof. apply (search_co_steps_spec_helper_left_performs []); [done| intros ??; set_solver]. Qed.
 
-Lemma search_co_steps_spec_1_left_not_refuses_rev `{Prop_of_Inter S1 S2 A1 A2}
+Lemma search_co_steps_spec_1_left_performs_rev `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) ξ s2:
-  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ ¬ s1 ↛[μ] ∧ inter μ ξ )} 
-  -> is_Some $ search_co_steps_left_not_refuses s1 ξ 
+  { μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] ∧ inter μ ξ )} 
+  -> is_Some $ search_co_steps_left_performs s1 ξ 
       (elements $ lts_co_inter_action_left ξ s1) s2.
-Proof. apply (search_co_steps_spec_helper_left_not_refuses_rev []); [done| intros ??; set_solver]. Qed.
+Proof. apply (search_co_steps_spec_helper_left_performs_rev []); [done| intros ??; set_solver]. Qed.
 
-Lemma search_co_steps_spec_2_left_not_refuses `{Prop_of_Inter S1 S2 A1 A2 inter}
+Lemma search_co_steps_spec_2_left_performs `{Prop_of_Inter S1 S2 A1 A2 inter}
   μ s1 l ξ s2:
-  search_co_steps_left_not_refuses s1 ξ l s2 = Some μ →
-  (ξ ∈ lts_essential_actions_right s2 ∧ ¬ s1 ↛[μ] ∧ inter μ ξ).
+  search_co_steps_left_performs s1 ξ l s2 = Some μ →
+  (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] ∧ inter μ ξ).
 Proof.
   induction l; [done|]. simpl.
-  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ ¬ s1 ↛[a] ∧ inter a ξ )) ; [|eauto].
+  destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[a] ∧ inter a ξ )) ; [|eauto].
   intros ?. simplify_eq. done.
 Qed.
 
-#[local] Instance dec_co_act_refuses_essential_right `{Prop_of_Inter S1 S2 A1 A2}
+#[local] Instance dec_co_act_performs_essential_right `{Prop_of_Inter S1 S2 A1 A2}
        (s1: S1) (s2 : S2) (ξ : A2)
-      : Decision (inter_not_refuses_essential_right (* M1 M2 *) s1 s2 ξ).
+      : Decision (inter_performs_essential_right (* M1 M2 *) s1 s2 ξ).
 Proof. 
-  destruct (decide (is_Some $ search_co_steps_left_not_refuses s1 ξ 
+  destruct (decide (is_Some $ search_co_steps_left_performs s1 ξ 
   (elements $ lts_co_inter_action_left ξ s1) s2)) as [wit | not_wit].
   + left. 
-    eapply search_co_steps_spec_1_left_not_refuses in wit.
+    eapply search_co_steps_spec_1_left_performs in wit.
     destruct wit as (μ' & h1 & h2 & h3). repeat split; eauto.
-    eapply lts_essential_action_spec_right in h1. eapply lts_refuses_spec2; eauto.
+    eapply lts_essential_action_spec_right in h1. eapply lts_performs_spec2; eauto.
   + right. intros ( h1 & μ'  & h2 & h3 & h4).
-    assert ({ μ | (ξ ∈ lts_essential_actions_right s2 ∧ ¬ s1 ↛[μ] ∧ inter μ ξ)}) as wit.
-    eauto. eapply search_co_steps_spec_1_left_not_refuses_rev in wit.
+    assert ({ μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] ∧ inter μ ξ)}) as wit.
+    eauto. eapply search_co_steps_spec_1_left_performs_rev in wit.
     contradiction.
 Qed.
 
-Lemma transition_to_not_refuses_essential_right `{Prop_of_Inter S1 S2 A1 A2}
+Lemma transition_to_performs_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (s'1 : S1) (ξ : A2) : 
   { μ | s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2} 
-  -> { μ | ¬lts_refuses s1 (ActExt $ μ) ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}.
+  -> { μ | s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}.
 Proof.
   intro Hyp. destruct Hyp as [μ [HypTr2 [inter_prop ess_act]]].  eexists. repeat split; eauto. 
-  eapply lts_refuses_spec2. exists s'1. eauto.
+  eapply lts_performs_spec2. exists s'1. eauto.
 Qed.
 
-Lemma not_refuses_to_transition_essential_right `{Prop_of_Inter S1 S2 A1 A2}
+Lemma performs_to_transition_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (* (s'2 : S2) *) (ξ : A2) : 
-  { μ | ¬lts_refuses s1 (ActExt $ μ) ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2} 
+  { μ | s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2} 
   -> {s'1 & { μ | s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}}.
 Proof.
-  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_refuses_spec1 in HypNotStable2. 
+  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_performs_spec1 in HypNotStable2. 
   destruct HypNotStable2 as [s'2 HypTr2]. eexists. eexists. repeat split; eauto.
 Qed.
 
 Definition com_with_ess_right `{Prop_of_Inter S1 S2 A1 A2} 
     (s1 : S1) (s2 : S2) (ξ : A2) (μ : A1)
- := ¬ s1 ↛[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2.
+ := s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2.
 
 Lemma some_witness1_left' `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (ξ : A2) : 
-  (∃ μ : A1, ¬ s1 ↛[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2)
-  -> { μ | ¬ s1 ↛[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}.
+  (∃ μ : A1, s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2)
+  -> { μ | s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}.
 Proof.
   intro Hyp. exact (choice (com_with_ess_right s1 s2 ξ) Hyp).
 Qed.
 
 Lemma some_witness1_left `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (ξ : A2) : 
-  (∃ μ : A1, ¬ s1 ↛[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2)
+  (∃ μ : A1, s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2)
   -> { μ & { s'1 | s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}}.
 Proof.
   intro Hyp.
   eapply some_witness1_left' in Hyp.
-  destruct Hyp as (μ & not_refuses & inter_h & ess_act).
-  eapply lts_refuses_spec1 in not_refuses.
-  destruct not_refuses as (s'1 & HypTr).
+  destruct Hyp as (μ & Hperf & inter_h & ess_act).
+  eapply lts_performs_spec1 in Hperf.
+  destruct Hperf as (s'1 & HypTr).
   exists μ. exists s'1. repeat split; eauto.
 Qed.
 
-Fixpoint inter_lts_refuses_helper_essential_right (* {S1 S2 A: Type} `{ExtAction A} {M1: gLts S1 A} {M2: gLts S2 A} *)
+Fixpoint inter_lts_performs_helper_essential_right (* {S1 S2 A: Type} `{ExtAction A} {M1: gLts S1 A} {M2: gLts S2 A} *)
   `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) (l: list A2) : bool :=
   match l with
-  | [] => true
+  | [] => false
   | ξ::bs =>
-      if decide (inter_not_refuses_essential_right s1 s2 ξ)
-        then false 
-        else inter_lts_refuses_helper_essential_right s1 s2 bs
+      if decide (inter_performs_essential_right s1 s2 ξ)
+        then true 
+        else inter_lts_performs_helper_essential_right s1 s2 bs
   end.
 
-Lemma inter_sts_refuses_helper_spec_1_essential_right `{Prop_of_Inter S1 S2 A1 A2}
+Lemma inter_sts_performs_helper_spec_1_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) (l: list A2) :
-  inter_lts_refuses_helper_essential_right s1 s2 l = false → {s' | inter_tau_step (s1, s2) s'}.
+  inter_lts_performs_helper_essential_right s1 s2 l = true → {s' | inter_tau_step (s1, s2) s'}.
 Proof.
   induction l as [| ξ l ]; [done|].
-  simpl. destruct (decide (inter_not_refuses_essential_right s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
-  destruct Hyp as [not_refuses1 act_founded]. eapply some_witness1_left in act_founded.
+  simpl. destruct (decide (inter_performs_essential_right s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
+  destruct Hyp as [Hperf1 act_founded]. eapply some_witness1_left in act_founded.
   destruct act_founded as (μ & s'1 & HypTr1 & duo & ess_act).
-  apply lts_refuses_spec1 in not_refuses1 as [s'2 HypTr2].
+  apply lts_performs_spec1 in Hperf1 as [s'2 HypTr2].
   exists (s'1, s'2). eapply TauSync. exact duo. exact HypTr1. exact HypTr2.
 Qed.
 
-Lemma inter_sts_refuses_helper_spec_2_essential_right `{Prop_of_Inter S1 S2 A1 A2}
+Lemma inter_sts_performs_helper_spec_2_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) μ ξ s'1 s'2 :
   s1 ⟶[μ] s'1 → s2 ⟶[ξ] s'2 → inter μ ξ → ξ ∈ lts_essential_actions_right s2 →
-  inter_lts_refuses_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2) = false.
+  inter_lts_performs_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2) = true.
 Proof.
   intros Hs1 Hs2 duo ess_act.
   assert (∀ l rest,
              (elements $ lts_essential_actions_right s2) = rest ++ l →
              (∀ ξ, ξ ∈ rest → ¬ (s2 ⟶[ξ] s'2 ∧ (exists μ, s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2 ))) →
-             inter_lts_refuses_helper_essential_right s1 s2 l = false) as Hccl.
+             inter_lts_performs_helper_essential_right s1 s2 l = true) as Hccl.
   induction l as [| b l IHl].
   - intros rest Hrest Hnots.
     simplify_list_eq.
     exfalso. eapply Hnots; eauto. set_solver.
   - intros rest Hrest Hnots. simplify_list_eq.
-    destruct (decide (inter_not_refuses_essential_right s1 s2 b)) as [case1 | case2]; [auto|].
+    destruct (decide (inter_performs_essential_right s1 s2 b)) as [case1 | case2]; [auto|].
     eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
     intros x [Hin | ->%list_elem_of_singleton]%elem_of_app; [eauto|].
-    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_refuses_spec2. exists s'2. assumption.
-    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_refuses_spec2. exists s'1. assumption.
+    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_performs_spec2. exists s'2. assumption.
+    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_performs_spec2. exists s'1. assumption.
     split; eauto. 
   - apply (Hccl _ []); eauto. set_solver.
 Qed.
 
-Definition inter_lts_refuses `{Prop_of_Inter S1 S2 A A}
-  (s1: S1) (s2: S2) (ℓ : Act A): Prop :=
-  lts_refuses s1 ℓ ∧ lts_refuses s2 ℓ ∧
-    match ℓ with
-    | τ => inter_lts_refuses_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1)
-        ∧ inter_lts_refuses_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2)
-    | _ => True
+Definition inter_lts_performs `{Prop_of_Inter S1 S2 A A}
+  (s1: S1) (s2: S2) (α : Act A): Prop :=
+  s1 ⟶{α} ∨ s2 ⟶{α} ∨
+    match α with
+    | τ => inter_lts_performs_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1)
+        ∨ inter_lts_performs_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2)
+    | _ => False
     end.
 
 (* The labelled composition only makes sense on one alphabet. *)
@@ -858,36 +858,36 @@ Definition inter_lts_refuses `{Prop_of_Inter S1 S2 A A}
   `{!@Prop_of_Inter S1 S2 A A inter H M1 H M2} :
   gLts (S1 * S2) H.
 Proof.
-  refine (MkgLts _ _ _ inter_step _ _ (λ s, inter_lts_refuses s.1 s.2) _ _ _).
-  - intros [s1 s2] ℓ [s'1 s'2]. apply decide_inter_step.
-  - intros ??. unfold inter_lts_refuses.
-    apply and_dec; [apply _|apply and_dec; [apply _|]]. destruct α; apply _.
-  - intros [a b] ℓ Hns. simpl in Hns. unfold inter_lts_refuses in Hns.
-    destruct (decide (lts_refuses a ℓ)) as [|Hns1]; cycle 1.
-    { apply lts_refuses_spec1 in Hns1 as [s' ?]. refine ((s', b) ↾ _). by constructor. }
-    destruct (decide (lts_refuses b ℓ)) as [|Hns2]; cycle 1.
-    { apply lts_refuses_spec1 in Hns2 as [s' ?]. refine ((a, s') ↾ _). by constructor. }
-    destruct ℓ as [n|]; [exfalso; by apply Hns|].
-    destruct (inter_lts_refuses_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1; cycle 1.
-    { apply inter_sts_refuses_helper_spec_1_essential_left in Hs1 as (s' & hs).
+  refine (MkgLts _ _ _ inter_step _ _ (λ s α, inter_lts_performs s.1 s.2 α) _ _ _).
+  - intros [s1 s2] α [s'1 s'2]. apply decide_inter_step.
+  - intros ??. unfold inter_lts_performs.
+    apply or_dec; [apply _|apply or_dec; [apply _|]]. destruct α; apply _.
+  - intros [a b] α Hp. unfold inter_lts_performs in Hp. simpl in Hp.
+    destruct (decide (a ⟶{α})) as [Hp1|Hn1].
+    { apply lts_performs_spec1 in Hp1 as [s' ?]. refine ((s', b) ↾ _). by constructor. }
+    destruct (decide (b ⟶{α})) as [Hp2|Hn2].
+    { apply lts_performs_spec1 in Hp2 as [s' ?]. refine ((a, s') ↾ _). by constructor. }
+    destruct α as [μ|]; [exfalso; by destruct Hp as [|[|]]|].
+    destruct (inter_lts_performs_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1.
+    { apply inter_sts_performs_helper_spec_1_essential_left in Hs1 as (s' & hs).
       exists s'. by apply inter_tau_step_inter_step. }
-    destruct (inter_lts_refuses_helper_essential_right a b (elements (lts_essential_actions_right b))) eqn:Hs2; cycle 1.
-    { apply inter_sts_refuses_helper_spec_1_essential_right in Hs2 as (s' & hs).
-      exists s'. by apply inter_tau_step_inter_step. } 
-    exfalso. apply Hns; eauto.
-  - intros [s1 s2] ℓ [[s'1 s'2] Hstep].
-    unfold inter_lts_refuses. rewrite !not_and_l.
+    destruct (inter_lts_performs_helper_essential_right a b (elements (lts_essential_actions_right b))) eqn:Hs2.
+    { apply inter_sts_performs_helper_spec_1_essential_right in Hs2 as (s' & hs).
+      exists s'. by apply inter_tau_step_inter_step. }
+    exfalso. destruct Hp as [|[|[|]]]; done.
+  - intros [s1 s2] α [[s'1 s'2] Hstep].
+    unfold inter_lts_performs.
     inversion Hstep; simplify_eq; simpl.
-    + pose proof (lts_refuses_spec2 _ _ (s'1 ↾ l)). eauto.
-    + pose proof (lts_refuses_spec2 _ _ (s'2 ↾ l)). eauto.
+    + left. exact (lts_performs_spec2 _ _ (s'1 ↾ l)).
+    + right; left. exact (lts_performs_spec2 _ _ (s'2 ↾ l)).
     + eapply lts_essential_actions_spec_interact in eq as where_is_the_essential_action; eauto.
       destruct where_is_the_essential_action as [ ess_act1 | ess_act2].
-      ++ assert (inter_lts_refuses_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1) = false) as Hccl; cycle 1.
-        { right; right. intros [??]. by rewrite Hccl in *. }
-        eapply inter_sts_refuses_helper_spec_2_essential_left; eauto.
-      ++ assert (inter_lts_refuses_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2) = false) as Hccl; cycle 1.
-        { right; right. intros [??]. by rewrite Hccl in *. }
-        eapply inter_sts_refuses_helper_spec_2_essential_right; eauto.
+      ++ assert (inter_lts_performs_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1) = true) as Hccl
+           by (eapply inter_sts_performs_helper_spec_2_essential_left; eauto).
+         right; right; left. by rewrite Hccl.
+      ++ assert (inter_lts_performs_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2) = true) as Hccl
+           by (eapply inter_sts_performs_helper_spec_2_essential_right; eauto).
+         right; right; right. by rewrite Hccl.
 Defined.
 
 #[global]
@@ -898,8 +898,8 @@ Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!gLts S1 H} `{!gLts S2
 Proof.
   apply MkClts.
   -  eapply prod_countable.
-  - intros x ℓ. apply sig_countable. intros y.
-    destruct (decide (bool_decide (x ⟶{ℓ} y))); [left | right]; done.
+  - intros x α. apply sig_countable. intros y.
+    destruct (decide (bool_decide (x ⟶{α} y))); [left | right]; done.
 Qed.
 
 (** ** The computations of the composition, over two alphabets
@@ -940,54 +940,48 @@ Defined.
    and makes the search go through all the interactions in scope. *)
 #[local] Instance inter_tau_step_dec : RelDecision inter_tau_step := decide_inter_tau_step.
 
-(** [p ∥ t] cannot compute. *)
-Definition inter_tau_refuses (x : S1 * S2) : Prop :=
-  lts_refuses x.1 τ ∧ lts_refuses x.2 τ
-  ∧ inter_lts_refuses_helper_essential_left x.1 x.2 (elements $ lts_essential_actions_left x.1) = true
-  ∧ inter_lts_refuses_helper_essential_right x.1 x.2 (elements $ lts_essential_actions_right x.2) = true.
+(** [p ∥ t] can compute. *)
+Definition inter_tau_performs (x : S1 * S2) : Prop :=
+  x.1 ⟶ ∨ x.2 ⟶
+  ∨ inter_lts_performs_helper_essential_left x.1 x.2 (elements $ lts_essential_actions_left x.1) = true
+  ∨ inter_lts_performs_helper_essential_right x.1 x.2 (elements $ lts_essential_actions_right x.2) = true.
 
-#[global] Instance inter_tau_refuses_dec x : Decision (inter_tau_refuses x).
-Proof. unfold inter_tau_refuses. apply _. Defined.
+#[global] Instance inter_tau_performs_dec x : Decision (inter_tau_performs x).
+Proof. unfold inter_tau_performs. apply _. Defined.
 
-Lemma inter_tau_refuses_spec1 x : ¬ inter_tau_refuses x → { y | inter_tau_step x y }.
+Lemma inter_tau_performs_spec1 x : inter_tau_performs x → { y | inter_tau_step x y }.
 Proof.
-  destruct x as (a, b). intros Hns. unfold inter_tau_refuses in Hns. simpl in Hns.
-  destruct (decide (lts_refuses a τ)) as [|Hns1]; cycle 1.
-  { apply lts_refuses_spec1 in Hns1 as [s' ?]. exists (s', b). by apply TauLeft. }
-  destruct (decide (lts_refuses b τ)) as [|Hns2]; cycle 1.
-  { apply lts_refuses_spec1 in Hns2 as [s' ?]. exists (a, s'). by apply TauRight. }
-  destruct (inter_lts_refuses_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1; cycle 1.
-  { by apply inter_sts_refuses_helper_spec_1_essential_left in Hs1. }
-  destruct (inter_lts_refuses_helper_essential_right a b (elements (lts_essential_actions_right b))) eqn:Hs2; cycle 1.
-  { by apply inter_sts_refuses_helper_spec_1_essential_right in Hs2. }
-  exfalso. apply Hns. by split_and!.
+  destruct x as (a, b). intros Hp. unfold inter_tau_performs in Hp. simpl in Hp.
+  destruct (decide (a ⟶)) as [Hp1|].
+  { apply lts_performs_spec1 in Hp1 as [s' ?]. exists (s', b). by apply TauLeft. }
+  destruct (decide (b ⟶)) as [Hp2|].
+  { apply lts_performs_spec1 in Hp2 as [s' ?]. exists (a, s'). by apply TauRight. }
+  destruct (inter_lts_performs_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1.
+  { by apply inter_sts_performs_helper_spec_1_essential_left in Hs1. }
+  destruct (inter_lts_performs_helper_essential_right a b (elements (lts_essential_actions_right b))) eqn:Hs2.
+  { by apply inter_sts_performs_helper_spec_1_essential_right in Hs2. }
+  exfalso. destruct Hp as [|[|[Hh|Hh]]]; [done | done | congruence | congruence].
 Defined.
 
-Lemma inter_tau_refuses_spec2 x : { y | inter_tau_step x y } → ¬ inter_tau_refuses x.
+Lemma inter_tau_performs_spec2 x : { y | inter_tau_step x y } → inter_tau_performs x.
 Proof.
   destruct x as (s1, s2).
-  intros ((s'1, s'2) & Hstep) (hr1 & hr2 & hl & hr). simpl in *.
+  intros ((s'1, s'2) & Hstep). unfold inter_tau_performs. simpl.
   inversion Hstep; simplify_eq.
-  - by apply (lts_refuses_spec2 _ _ (s'1 ↾ l)).
-  - by apply (lts_refuses_spec2 _ _ (s'2 ↾ l)).
+  - left. exact (lts_performs_spec2 _ _ (s'1 ↾ l)).
+  - right; left. exact (lts_performs_spec2 _ _ (s'2 ↾ l)).
   - eapply lts_essential_actions_spec_interact in hs as where_ess; eauto.
     destruct where_ess as [ess1 | ess2].
-    + assert (inter_lts_refuses_helper_essential_left s1 s2
-                (elements $ lts_essential_actions_left s1) = false)
-        by (eapply inter_sts_refuses_helper_spec_2_essential_left; eauto).
-      congruence.
-    + assert (inter_lts_refuses_helper_essential_right s1 s2
-                (elements $ lts_essential_actions_right s2) = false)
-        by (eapply inter_sts_refuses_helper_spec_2_essential_right; eauto).
-      congruence.
+    + right; right; left. eapply inter_sts_performs_helper_spec_2_essential_left; eauto.
+    + right; right; right. eapply inter_sts_performs_helper_spec_2_essential_right; eauto.
 Qed.
 
 (* Not an instance: on one alphabet, [must] reads the composition through
    [parallel_sts] (see [ParallelLTSConstruction.v]). *)
 Definition inter_tau_sts : Sts (S1 * S2) :=
   {| sts_step := inter_tau_step;
-     sts_refuses := inter_tau_refuses;
-     sts_refuses_spec1 := inter_tau_refuses_spec1;
-     sts_refuses_spec2 := inter_tau_refuses_spec2 |}.
+     sts_performs := inter_tau_performs;
+     sts_performs_spec1 := inter_tau_performs_spec1;
+     sts_performs_spec2 := inter_tau_performs_spec2 |}.
 
 End Inter_tau_sts.

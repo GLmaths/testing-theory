@@ -85,25 +85,30 @@ Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
 
       lts_step_decidable a α b : Decision (lts_step a α b);
 
-      lts_refuses : P → Act A → Prop;
-      lts_refuses_decidable p α : Decision (lts_refuses p α);
-      lts_refuses_spec1 p α : ¬ lts_refuses p α → { q | lts_step p α q };
-      lts_refuses_spec2 p α : { q | lts_step p α q } → ¬ lts_refuses p α;
+      lts_performs : P → Act A → Prop;
+      lts_performs_decidable p α : Decision (lts_performs p α);
+      lts_performs_spec1 p α : lts_performs p α → { q | lts_step p α q };
+      lts_performs_spec2 p α : { q | lts_step p α q } → lts_performs p α;
     }.
 
 Arguments gLts P {_} EA.
 
 #[global] Existing Instance lts_state_eqdec.
 #[global] Existing Instance lts_step_decidable.
-#[global] Existing Instance lts_refuses_decidable. 
+#[global] Existing Instance lts_performs_decidable.
 
 Notation "p ⟶ q"      := (lts_step p τ q) (at level 30, format "p  ⟶  q").
 Notation "p ⟶{ α } q" := (lts_step p α q) (at level 30, format "p  ⟶{ α }  q").
 Notation "p ⟶[ μ ] q" := (lts_step p (ActExt μ) q) (at level 30, format "p  ⟶[ μ ]  q").
 
-Notation "p ↛"      := (lts_refuses p τ) (at level 30, format "p  ↛").
-Notation "p ↛{ α }" := (lts_refuses p α) (at level 30, format "p  ↛{ α }").
-Notation "p ↛[ μ ]" := (lts_refuses p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
+Notation "p ⟶"      := (lts_performs p τ) (at level 30, format "p  ⟶").
+Notation "p ⟶{ α }" := (lts_performs p α) (at level 30, format "p  ⟶{ α }").
+Notation "p ⟶[ μ ]" := (lts_performs p (ActExt μ)) (at level 30, format "p  ⟶[ μ ]").
+
+Notation "p ↛"      := (¬ lts_performs p τ) (at level 30, format "p  ↛").
+Notation "p ↛{ α }" := (¬ lts_performs p α) (at level 30, format "p  ↛{ α }").
+Notation "p ↛[ μ ]" := (¬ lts_performs p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
+
 
 
 (** Properties on `gLts`*)

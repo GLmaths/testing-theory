@@ -166,7 +166,7 @@ Proof.
     + unfold UU. apply lts_parL. apply lts_output.
   - intros p' Hp'. unfold PP in Hp'. blast3.
   - intros t' Ht'. exfalso. eapply UU_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold PP in Hp'. unfold UU in Ht'. blast3.
     apply m_step.
     + intro Hg. inversion Hg; subst.
@@ -178,7 +178,7 @@ Proof.
       rewrite <- E. apply lts_input.
     + intros p' Hp'. blast3.
     + intros t' Ht'. blast3.
-    + intros p' t' mu1' mu2' Hd2 Hp' Ht'. blast3.
+    + intros p' t' μ1' μ2' Hd2 Hp' Ht'. blast3.
       apply m_now. apply good_par. right. apply good_success.
 Qed.
 
@@ -362,7 +362,7 @@ Proof.
     + unfold TT2. apply lts_parL. apply lts_output.
   - intros p' Hp'. blast3.
   - intros t' Ht'. exfalso. eapply TT2_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     inversion Hp'; subst.
     unfold TT2 in Ht'. inversion Ht'; subst.
     + inversion H3; subst.
@@ -564,7 +564,7 @@ Proof.
     rewrite <- E. apply lts_input.
   - intros p' Hp'. blast3.
   - intros t' Ht'. blast3.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. blast3.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. blast3.
     apply m_now. apply good_par. right. apply good_par. right. apply good_success.
 Qed.
 
@@ -583,7 +583,7 @@ Proof.
     + apply lts_parR. apply lts_parL. apply lts_output.
   - intros p' Hp'. blast3.
   - intros t' Ht'. blast3.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. blast3.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. blast3.
     exact level3.
 Qed.
 
@@ -601,7 +601,7 @@ Proof.
     + unfold TT3. apply lts_parL. apply lts_output.
   - intros p' Hp'. unfold MC in Hp'. blast3.
   - intros t' Ht'. exfalso. eapply TT3_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. unfold MC in Hp'. unfold TT3 in Ht'. blast3.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. unfold MC in Hp'. unfold TT3 in Ht'. blast3.
     exact level2b.
 Qed.
 
@@ -656,7 +656,7 @@ Proof.
       [ simpl; reflexivity | apply lts_output | apply lts_input ].
   - intros p' Hp'. unfold MSG in Hp'. blast3.
   - intros t' Ht'. exfalso. eapply SINK_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold MSG in Hp'. inversion Hp'; subst.
     unfold SINK in Ht'. inversion Ht'; subst.
     apply m_now. simpl. constructor.
@@ -684,7 +684,7 @@ Proof.
   - intros t' Ht'. unfold TSINK in Ht'. inversion Ht'; subst.
     + inversion H3; subst. apply m_now. simpl. constructor.
     + inversion H3.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. blast3.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. blast3.
 Qed.
 
 Lemma MSG_fails_TSINK : ~ (MSG must_pass TSINK).
@@ -799,7 +799,7 @@ Proof.
     + unfold UU. apply lts_parL. apply lts_output.
   - intros p' Hp'. unfold P1 in Hp'. blast3.
   - intros t' Ht'. exfalso. eapply UU_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold P1 in Hp'. unfold UU in Ht'. blast3.
     apply m_step.
     + intro Hg. inversion Hg; subst.
@@ -811,7 +811,7 @@ Proof.
       rewrite <- E. apply lts_input.
     + intros p' Hp'. blast3.
     + intros t' Ht'. blast3.
-    + intros p' t' mu1' mu2' Hd2 Hp' Ht'. blast3.
+    + intros p' t' μ1' μ2' Hd2 Hp' Ht'. blast3.
       apply m_now. apply good_par. right. apply good_success.
 Qed.
 
@@ -836,7 +836,7 @@ Proof.
     + unfold UU2. apply lts_parL. apply lts_output.
   - intros p' Hp'. unfold P2 in Hp'. blast3.
   - intros t' Ht'. exfalso. eapply UU2_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold P2 in Hp'. unfold UU2 in Ht'. blast3.
     apply m_step.
     + intro Hg. inversion Hg; subst.
@@ -848,7 +848,7 @@ Proof.
       rewrite <- E. apply lts_input.
     + intros p' Hp'. blast3.
     + intros t' Ht'. blast3.
-    + intros p' t' mu1' mu2' Hd2 Hp' Ht'. blast3.
+    + intros p' t' μ1' μ2' Hd2 Hp' Ht'. blast3.
       apply m_now. apply good_par. right. apply good_success.
 Qed.
 
@@ -966,7 +966,7 @@ Proof.
     + exists (((c ! z • 𝟘) : proc) ▷ t). eapply ParLeft. apply lts_tau.
     + intros x Hx. inversion Hx; subst. apply m_step; assumption.
     + intros t' Ht'. eapply IHet; [ exact Ht' | reflexivity ].
-    + intros x t' mu1 mu2 Hd Hx Ht'. inversion Hx.
+    + intros x t' μ1 μ2 Hd Hx Ht'. inversion Hx.
 Qed.
 
 
@@ -1421,9 +1421,9 @@ Proof.
     + match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
     + match goal with H2 : lts ((g 𝟘) : proc) τ _ |- _ => inversion H2 end.
     + match goal with H2 : lts (g (_ ? _)) τ _ |- _ => inversion H2 end.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     inversion Hp'; subst.
-    destruct mu2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
+    destruct μ2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
     apply m_now. inversion Ht'; subst.
     + match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
     + match goal with H2 : lts (g (_ ? _)) _ _ |- _ => inversion H2; subst end.
@@ -1445,13 +1445,13 @@ Proof.
     + unfold UCert. apply lts_parL. apply lts_output.
   - intros p' Hp'. exfalso. eapply MCert_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply UCert_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
-    destruct mu2 as [a2|a2].
-    + destruct mu1 as [a1|a1]; simpl in Hd; try contradiction.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
+    destruct μ2 as [a2|a2].
+    + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction.
       exfalso. destruct a1 as (c1,v1).
       unfold MCert in Hp'. inversion Hp'; subst;
         match goal with H : lts (g (_ ? _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
-    + destruct mu1 as [a1|a1]; simpl in Hd; try contradiction. subst a1.
+    + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction. subst a1.
       destruct a2 as (c2,v2).
       destruct (UCert_out_inv _ _ _ Ht') as (Ec & Ev & Et). subst c2 v2 t'.
       destruct (MCert_in_inv _ _ _ Hp') as [ (Ec & Ep) | (Ec & Ep) ].
@@ -1513,11 +1513,11 @@ Proof.
     apply ParLeft. unfold MTau. apply lts_choiceR. apply lts_tau.
   - intros p' Hp'. apply MTau_tau_inv in Hp'. subst p'. apply MCert_passes_UCert.
   - intros t' Ht'. exfalso. eapply UCert_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
-    destruct mu2 as [a2|a2].
-    + destruct mu1 as [a1|a1]; simpl in Hd; try contradiction.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
+    destruct μ2 as [a2|a2].
+    + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction.
       exfalso. destruct a1 as (c1,v1). eapply gsum_no_out. exact Hp'.
-    + destruct mu1 as [a1|a1]; simpl in Hd; try contradiction. subst a1.
+    + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction. subst a1.
       destruct a2 as (c2,v2).
       destruct (UCert_out_inv _ _ _ Ht') as (Ec & Ev & Et). subst c2 v2 t'.
       destruct (MTau_in_inv _ _ _ Hp') as [ (Ec & Ep) | (Ec & Ep) ].
@@ -1619,11 +1619,11 @@ Proof.
     apply ParLeft. unfold MFalse. apply lts_choiceR. apply lts_tau.
   - intros p' Hp'. apply MFalse_tau_inv in Hp'. subst p'. apply MCert_passes_UCert.
   - intros t' Ht'. exfalso. eapply UCert_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
-    destruct mu2 as [a2|a2].
-    + destruct mu1 as [a1|a1]; simpl in Hd; try contradiction.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
+    destruct μ2 as [a2|a2].
+    + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction.
       exfalso. destruct a1 as (c1,v1). eapply gsum_no_out. exact Hp'.
-    + destruct mu1 as [a1|a1]; simpl in Hd; try contradiction. subst a1.
+    + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction. subst a1.
       destruct a2 as (c2,v2).
       destruct (UCert_out_inv _ _ _ Ht') as (Ec & Ev & Et). subst c2 v2 t'.
       destruct (MFalse_in_inv _ _ _ Hp') as (Ec & Ep).
@@ -2065,7 +2065,7 @@ Proof.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. rewrite (TCert2_tau_inv t' Ht').
     apply m_now. apply good_par. right. constructor.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
 Lemma TCert_in_inv : forall c0 v0 t', lts TCert (ActExt (ActIn (c0,v0))) t' ->
@@ -2090,9 +2090,9 @@ Proof.
       rewrite E at 2. apply lts_input.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. exfalso. eapply TCert_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     inversion Hp'; subst.
-    destruct mu2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
+    destruct μ2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
     destruct (TCert_in_inv _ _ _ Ht') as (_ & Et'). subst t'.
     apply nil_passes_TCert2.
 Qed.
@@ -2385,7 +2385,7 @@ Proof.
   - intros p' Hp'. exfalso. eapply nil_no_lts; exact Hp'.
   - intros t' Ht'. rewrite (Pcc_tau_inv t' Ht'). apply m_now.
     constructor. right. constructor.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. exfalso. eapply nil_no_lts; exact Hp'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. exfalso. eapply nil_no_lts; exact Hp'.
 Qed.
 
 (** …et la somme ajoutée le fait échouer, par sa garde sur [b]. *)
@@ -2422,7 +2422,7 @@ Proof.
     + unfold TCC. apply lts_input.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. exfalso. unfold TCC in Ht'. inversion Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     inversion Hp'; subst. unfold TCC in Ht'. inversion Ht'; subst.
     rewrite subst_Pcc. apply must_nil_Pcc.
 Qed.
@@ -2524,9 +2524,9 @@ Proof.
   - inversion H3; subst. right. reflexivity.
 Qed.
 
-Lemma OCp_no_ext : forall mu z, ~ lts ((g OCp) : proc) (ActExt mu) z.
+Lemma OCp_no_ext : forall μ z, ~ lts ((g OCp) : proc) (ActExt μ) z.
 Proof.
-  intros mu z Hz. unfold OCp in Hz.
+  intros μ z Hz. unfold OCp in Hz.
   inversion Hz; subst; inversion H3.
 Qed.
 
@@ -3070,7 +3070,7 @@ Proof.
       rewrite <- E at 2. apply lts_input.
   - intros p' Hp'. exfalso. eapply InnerS_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply InnerT_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold InnerT in Ht'. inversion Ht'; subst.
     + exfalso. blastR.
     + inversion H3; subst.
@@ -3092,10 +3092,10 @@ Proof.
     + unfold TRr, InnerT. apply lts_parL. apply lts_output.
   - intros p' Hp'. exfalso. eapply SAr_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply TRr_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold TRr in Ht'. inversion Ht'; subst.
     + inversion H3; subst.
-      destruct mu1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
+      destruct μ1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
       unfold SAr, PAr in Hp'. blastR. exact inner_passes.
     + inversion H3; subst.
       apply m_now. apply good_par. right. apply good_success.
@@ -3198,7 +3198,7 @@ Proof.
       rewrite <- E at 2. apply lts_input.
   - intros p' Hp'. exfalso. eapply PInner_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply CTInner_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold CTInner in Ht'. inversion Ht'; subst.
     + exfalso. blastR.
     + inversion H3; subst.
@@ -3222,12 +3222,12 @@ Proof.
     + unfold CTr, TRr, CTInner. apply lts_parR. apply lts_parL. apply lts_output.
   - intros p' Hp'. exfalso. eapply PAr_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply CTr_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold CTr, TRr in Ht'. inversion Ht'; subst.
     + exfalso. blastR.
     + inversion H3; subst.
       * inversion H4; subst.
-        destruct mu1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
+        destruct μ1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
         unfold PAr in Hp'. blastR. exact pinner_passes.
       * inversion H4; subst.
         apply m_now. apply good_par. right. apply good_par. right. apply good_success.
@@ -3258,14 +3258,14 @@ Proof.
     + unfold UR, CTr. apply lts_parL. apply lts_output.
   - intros p' Hp'. exfalso. eapply MR_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply UR_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold UR, TRr in Ht'. inversion Ht'; subst.
     + inversion H3; subst.
-      destruct mu1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
+      destruct μ1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
       unfold MR in Hp'. blastR. exact PAr_passes_CTr.
     + inversion H3; subst.
       * inversion H4; subst.
-        destruct mu1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
+        destruct μ1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
         exfalso. unfold MR in Hp'. blastR.
       * inversion H4; subst.
         exfalso. unfold MR in Hp'. blastR.
@@ -3480,7 +3480,7 @@ Proof.
       rewrite <- E at 2. apply lts_input.
   - intros p' Hp'. exfalso. eapply XIa_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply XIt_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold XIt in Ht'. inversion Ht'; subst.
     + exfalso. blastX.
     + inversion H3; subst. apply m_now. simpl. apply good_par. right. apply good_success.
@@ -3500,7 +3500,7 @@ Proof.
       rewrite <- E at 2. apply lts_input.
   - intros p' Hp'. exfalso. eapply XIb_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply XIt_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold XIt in Ht'. inversion Ht'; subst.
     + exfalso. blastX.
     + inversion H3; subst. apply m_now. simpl. apply good_par. right. apply good_success.
@@ -3576,10 +3576,10 @@ Proof.
     + unfold XTa, XIt. apply lts_parL. apply lts_output.
   - intros p' Hp'. exfalso. eapply XSA_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply XTa_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold XTa in Ht'. inversion Ht'; subst.
     + inversion H3; subst.
-      destruct mu1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
+      destruct μ1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
       unfold XSA, XA in Hp'. blastX. exact XIa_passes.
     + inversion H3; subst. apply m_now. apply good_par. right. apply good_success.
 Qed.
@@ -3596,10 +3596,10 @@ Proof.
     + unfold XTb, XIt. apply lts_parL. apply lts_output.
   - intros p' Hp'. exfalso. eapply XSB_no_tau. exact Hp'.
   - intros t' Ht'. exfalso. eapply XTb_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold XTb in Ht'. inversion Ht'; subst.
     + inversion H3; subst.
-      destruct mu1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
+      destruct μ1 as [x1|x1]; simpl in Hd; try contradiction. subst x1.
       unfold XSB, XB in Hp'. blastX. exact XIb_passes.
     + inversion H3; subst. apply m_now. apply good_par. right. apply good_success.
 Qed.
@@ -3852,7 +3852,7 @@ Proof.
     + exact Hcl.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. exfalso. eapply TL_no_tau. exact Ht'.
-  - intros mu1 mu2 p' t' Hdual Hp' Ht'. inversion Hp'; subst.
+  - intros μ1 μ2 p' t' Hdual Hp' Ht'. inversion Hp'; subst.
     destruct t' as [a2|a2]; simpl in Hdual; try contradiction.
     subst a2. inversion Ht'; subst.
     + inversion H3; subst. simpl. apply inner_must.
@@ -4409,12 +4409,12 @@ Qed.
 
 (** ** The side without it: it answers *)
 
-Lemma TrIn_ext_inv : forall mu z, lts TrIn (ActExt mu) z ->
-  mu = ActOut (cst te, cst ty) /\ z = ν ((g 𝟘) : proc).
+Lemma TrIn_ext_inv : forall μ z, lts TrIn (ActExt μ) z ->
+  μ = ActOut (cst te, cst ty) /\ z = ν ((g 𝟘) : proc).
 Proof.
-  intros mu z Hz. unfold TrIn in Hz. inversion Hz; subst.
+  intros μ z Hz. unfold TrIn in Hz. inversion Hz; subst.
   inversion H1; subst.
-  destruct mu as [ [c1 v1] | [c1 v1] ]; simpl in *; try discriminate.
+  destruct μ as [ [c1 v1] | [c1 v1] ]; simpl in *; try discriminate.
   match goal with H : ActOut _ = ActOut _ |- _ => inversion H; subst end.
   split; [ | reflexivity ].
   f_equal. f_equal. eapply varc_add_cst_inv. symmetry. exact H2.
@@ -4461,9 +4461,9 @@ Proof.
     + apply TrT2_in.
   - intros p' Hp'. exfalso. eapply TrIn_no_tau; eassumption.
   - intros t' Ht'. exfalso. eapply TrT2_no_tau; eassumption.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
-    destruct (TrIn_ext_inv _ _ Hp') as (Hmu & Hz). subst mu1.
-    destruct mu2 as [ [c2 v2] | [c2 v2] ]; simpl in Hd; try contradiction.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
+    destruct (TrIn_ext_inv _ _ Hp') as (Hmu & Hz). subst μ1.
+    destruct μ2 as [ [c2 v2] | [c2 v2] ]; simpl in Hd; try contradiction.
     inversion Hd; subst.
     unfold TrT2 in Ht'. inversion Ht'; subst.
     + inversion H3.
@@ -4490,17 +4490,17 @@ Qed.
 (** The [bvar 0] guard is invisible from outside — that is exactly what
     makes the message trapped, and it is why the only surviving offer is
     the one on the constant channel [ta]. *)
-Lemma TrS2_ext_inv : forall mu z, lts TrS2 (ActExt mu) z ->
-  (exists w, mu = ActIn (cst ta, w)) /\ z = TrIn.
+Lemma TrS2_ext_inv : forall μ z, lts TrS2 (ActExt μ) z ->
+  (exists w, μ = ActIn (cst ta, w)) /\ z = TrIn.
 Proof.
-  intros mu z Hz. unfold TrS2 in Hz. inversion Hz; subst.
+  intros μ z Hz. unfold TrS2 in Hz. inversion Hz; subst.
   unfold TrM in H1. inversion H1; subst.
   - inversion H4; subst.
-    destruct mu as [ [c1 v1] | [c1 v1] ]; simpl in *; try discriminate.
+    destruct μ as [ [c1 v1] | [c1 v1] ]; simpl in *; try discriminate.
     match goal with H : ActIn _ = ActIn _ |- _ => inversion H; subst end.
     destruct c1; simpl in *; discriminate.
   - inversion H4; subst.
-    destruct mu as [ [c1 v1] | [c1 v1] ]; simpl in *; try discriminate.
+    destruct μ as [ [c1 v1] | [c1 v1] ]; simpl in *; try discriminate.
     match goal with H : ActIn _ = ActIn _ |- _ => inversion H; subst end.
     assert (Hc : c1 = cst ta) by (eapply varc_add_cst_inv; symmetry; eassumption).
     subst c1. split; [ exists v1; reflexivity | unfold TrIn; simpl; reflexivity ].
@@ -4528,9 +4528,9 @@ Proof.
     + apply TrT_out.
   - intros p' Hp'. exfalso. eapply TrS2_no_tau; eassumption.
   - intros t' Ht'. exfalso. eapply TrT_no_tau; eassumption.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
-    destruct (TrS2_ext_inv _ _ Hp') as ((w & Hmu) & Hz). subst mu1 p'.
-    destruct mu2 as [ [c2 v2] | [c2 v2] ]; simpl in Hd; try contradiction.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
+    destruct (TrS2_ext_inv _ _ Hp') as ((w & Hmu) & Hz). subst μ1 p'.
+    destruct μ2 as [ [c2 v2] | [c2 v2] ]; simpl in Hd; try contradiction.
     inversion Hd; subst.
     destruct (TrT_out_inv _ _ _ Ht') as (_ & _ & Ht2). subst t'.
     apply TrIn_passes.
@@ -4815,13 +4815,13 @@ Qed.
     [ax_settle_sim] is the rule that would carry [HardResidue], the
     whole open question. *)
 Theorem settle_clause2_only_fails_on_outputs :
-  forall (x y : proc * MO (ExtAct TypeOfActions)) mu y',
-  FwBelow x y -> y ⟶[mu] y' ->
-  (exists x', x ⟹{mu} x' /\ FwBelow x' y')
-  \/ (exists a, mu = ActOut a).
+  forall (x y : proc * MO (ExtAct TypeOfActions)) μ y',
+  FwBelow x y -> y ⟶[μ] y' ->
+  (exists x', x ⟹{μ} x' /\ FwBelow x' y')
+  \/ (exists a, μ = ActOut a).
 Proof.
-  intros [p m] [q m'] mu y' H Hstep.
-  destruct mu as [a|a].
+  intros [p m] [q m'] μ y' H Hstep.
+  destruct μ as [a|a].
   - left. eapply settle_clause2_holds_for_inputs; [ exact H | exact Hstep ].
   - right. exists a. reflexivity.
 Qed.

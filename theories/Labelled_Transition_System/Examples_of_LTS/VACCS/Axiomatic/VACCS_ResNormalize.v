@@ -109,7 +109,7 @@ Proof.
   intros M t.
   apply must_same_lts.
   - intro p'. apply resg_lts_iff.
-  - intros mu p'. apply resg_lts_iff.
+  - intros μ p'. apply resg_lts_iff.
 Qed.
 
 Corollary must_i_res_normalize_l : forall M, (ν (g M)) ⊑ₘᵤₛₜᵢ g (resg M).

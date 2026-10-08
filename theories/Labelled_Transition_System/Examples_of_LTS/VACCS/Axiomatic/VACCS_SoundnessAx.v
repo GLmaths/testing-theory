@@ -64,7 +64,7 @@ Proof.
   (* ax_same_lts *)
   - intro t. apply (proj1 (must_same_lts p q
       (fun p' => conj (H τ p') (H0 τ p'))
-      (fun mu p' => conj (H (ActExt mu) p') (H0 (ActExt mu) p')) t)).
+      (fun μ p' => conj (H (ActExt μ) p') (H0 (ActExt μ) p')) t)).
   (* ax_glb_tau *)
   - apply must_i_glb_tau.
     + match goal with Hex : exists X, In (𝛕 • X) (summands M) |- _ =>

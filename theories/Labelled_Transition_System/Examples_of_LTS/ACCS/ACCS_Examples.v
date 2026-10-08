@@ -385,8 +385,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      eapply (lts_refuses_spec2 (g (𝛕 • p + 𝛕 • q)) τ);
-        [exists p; apply lts_choiceL; constructor | exact hst].
+      apply hst, (lts_performs_spec2 (g (𝛕 • p + 𝛕 • q)) τ). exists p; apply lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -490,8 +489,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      eapply (lts_refuses_spec2 ((g (𝛕 • p + 𝛕 • q)) ▷ M) τ);
-        [eexists (p ▷ M); eapply ParLeft, lts_choiceL; constructor | exact hst].
+      apply hst, (lts_performs_spec2 ((g (𝛕 • p + 𝛕 • q)) ▷ M) τ). eexists (p ▷ M); eapply ParLeft, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -529,16 +527,16 @@ Qed.
 
 Section Omega.
 
-Definition omega : proc := pr_rec 0 (pr_var 0). (* rec X. X *)
+Definition omega : proc := rec 0 • (pr_var 0). (* rec X. X *)
 
 Lemma omega_lts_omega : omega ⟶ omega.
 Proof.
-  replace (omega ⟶ omega) with (omega ⟶ (pr_subst 0 (pr_var 0) (pr_rec 0 (pr_var 0)))).
+  replace (omega ⟶ omega) with (omega ⟶ (pr_subst 0 (pr_var 0) (rec 0 • (pr_var 0)))).
   - eapply lts_recursion.
   - simpl. reflexivity.
 Qed.
 
-Lemma omega_diverges : ¬ terminate omega.
+Lemma omega_diverges : ¬ omega ⤓.
 Proof.
 intro Ht. dependent induction Ht.
 eapply H0.
@@ -573,7 +571,7 @@ End Omega.
 
 (* In ACCS, recursion unfolding steps are "invertible" τ steps *)
 Lemma rec_inv (n : nat) (p : proc) : forall α p',
-  (pr_rec n p) ⟶{α} p' <-> (p' = pr_subst n p (pr_rec n p) /\ α = τ).
+  (rec n • p) ⟶{α} p' <-> (p' = pr_subst n p (rec n • p) /\ α = τ).
 Proof.
 intros α p'. split; intro Hs.
 - inversion Hs; subst. eauto.
@@ -582,7 +580,7 @@ Qed.
 
 (* Remark : proofs using the definition of must are not always difficult *)
 Lemma musts_choice (p q : gproc) (t : proc) :
-  must (g p) t -> must (g q) t -> must (g (p + q)) t.
+  (g p) must_pass t -> (g q) must_pass t -> (g (p + q)) must_pass t.
 Proof.
 intros Hp Hq.
 dependent induction Hp; [now constructor|].
@@ -1327,12 +1325,10 @@ Proof.
       intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
       destruct hc; subst c.
-      * eapply (lts_refuses_spec2
-                  (wctx ((ws ++ repeat true n)%list) (cproc Crel) ▷ M) τ);
-          [ eexists; eapply ParLeft, wctx_lift_tau, reliableW_unfold | exact hst ].
-      * eapply (lts_refuses_spec2
-                  (wctx ((ws ++ repeat true n)%list) (cproc Cbody) ▷ M) τ);
-          [ eexists; eapply ParLeft, wctx_lift_tau, rbody_end | exact hst ].
+      * apply hst, (lts_performs_spec2
+                  (wctx ((ws ++ repeat true n)%list) (cproc Crel) ▷ M) τ). eexists; eapply ParLeft, wctx_lift_tau, reliableW_unfold.
+      * apply hst, (lts_performs_spec2
+                  (wctx ((ws ++ repeat true n)%list) (cproc Cbody) ▷ M) τ). eexists; eapply ParLeft, wctx_lift_tau, rbody_end.
     + (* weak μ descendants of the right *)
       intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
@@ -1637,8 +1633,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      eapply (lts_refuses_spec2 (g 𝟘 ‖ C) τ);
-        [ eexists; eapply lts_parR, lts_choiceL; constructor | exact hst ].
+      apply hst, (lts_performs_spec2 (g 𝟘 ‖ C) τ). eexists; eapply lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -1690,8 +1685,7 @@ Proof.
            eapply wt_tau; [ eapply gl_to_wq | exact hq ].
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      eapply (lts_refuses_spec2 (Wo ‖ C) τ);
-        [ eexists; eapply lts_parR, lts_choiceL; constructor | exact hst ].
+      apply hst, (lts_performs_spec2 (Wo ‖ C) τ). eexists; eapply lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -1864,8 +1858,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      eapply (lts_refuses_spec2 ((g 𝟘 ‖ C) ▷ M) τ);
-        [ eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor | exact hst ].
+      apply hst, (lts_performs_spec2 ((g 𝟘 ‖ C) ▷ M) τ). eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -1961,8 +1954,7 @@ Proof.
            eapply wt_tau; [ eapply ParLeft, gl_to_wq | exact hq ].
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      eapply (lts_refuses_spec2 ((Wo ‖ C) ▷ M) τ);
-        [ eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor | exact hst ].
+      apply hst, (lts_performs_spec2 ((Wo ‖ C) ▷ M) τ). eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.

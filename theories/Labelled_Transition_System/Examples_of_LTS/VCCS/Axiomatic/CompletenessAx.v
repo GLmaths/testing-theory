@@ -269,8 +269,7 @@ Proof.
     + exfalso.
       assert (Hl : lts (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) τ (g M1))
         by (apply lts_choiceL; apply lts_tau).
-      pose proof (lts_set_spec1 _ _ _ Hl) as Hmem.
-      rewrite Hst in Hmem. set_solver.
+      apply Hst, lts_performs_spec2. eexists. exact Hl.
     + inversion l; subst.
       * inversion H5; subst.
         destruct (IH M1 ltac:(simpl; lia) H1 r w Hst) as (A & Hin & Heq).
@@ -551,7 +550,7 @@ Proof.
   - intro Hwt. inversion Hwt; subst.
     + exfalso.
       assert (Hl : lts (g (ichoice (p0 :: l))) τ p0) by (apply ichoice_lts_tau; set_solver).
-      pose proof (lts_set_spec1 _ _ _ Hl) as Hmem. rewrite Hst in Hmem. set_solver.
+      apply Hst, lts_performs_spec2. eexists. exact Hl.
     + exists q. split; [apply ichoice_lts_tau; exact l0 | exact w].
     + exfalso. eapply gAllTau_no_ext; [apply ichoice_gAllTau | exact l0].
   - intros (p & Hin & Hwp).
@@ -584,59 +583,59 @@ Proof.
         apply IH; [simpl; lia | exact H2 | exact Hin].
 Qed.
 
-Lemma leaves_wt_cons : forall M, tau_nf M -> forall mu s r,
-  (g M) ⟹[mu :: s] r ->
-  exists A p, A ∈ leaves M /\ lts (g A) (ActExt mu) p /\ p ⟹[s] r.
+Lemma leaves_wt_cons : forall M, tau_nf M -> forall μ s r,
+  (g M) ⟹[μ :: s] r ->
+  exists A p, A ∈ leaves M /\ lts (g A) (ActExt μ) p /\ p ⟹[s] r.
 Proof.
   induction M as (M & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ gsize Nat.lt_wf_0)).
-  intros HM mu s r Hwt.
+  intros HM μ s r Hwt.
   inversion HM as [? Hs | M1 M2 H1 H2]; subst.
-  - destruct (wt_cons_stable (g M) r mu s (proj2 (gStable_iff M) Hs) Hwt) as (q & Hl & Hw).
+  - destruct (wt_cons_stable (g M) r μ s (proj2 (gStable_iff M) Hs) Hwt) as (q & Hl & Hw).
     exists M, q. repeat split; [| exact Hl | exact Hw].
     rewrite leaves_eq. rewrite (proj2 (gStableB_spec M) Hs). set_solver.
   - assert (E : gStableB ((𝛕 • (g M1)) + (𝛕 • (g M2))) = false) by reflexivity.
     rewrite leaves_eq. rewrite E.
     inversion Hwt; subst.
     + inversion l; subst; inversion H5; subst.
-      * destruct (IH M1 ltac:(simpl; lia) H1 mu s r w) as (A & p & Hin & Hl & Hw).
+      * destruct (IH M1 ltac:(simpl; lia) H1 μ s r w) as (A & p & Hin & Hl & Hw).
         exists A, p. repeat split; [apply elem_of_app; left; exact Hin | exact Hl | exact Hw].
-      * destruct (IH M2 ltac:(simpl; lia) H2 mu s r w) as (A & p & Hin & Hl & Hw).
+      * destruct (IH M2 ltac:(simpl; lia) H2 μ s r w) as (A & p & Hin & Hl & Hw).
         exists A, p. repeat split; [apply elem_of_app; right; exact Hin | exact Hl | exact Hw].
     + exfalso. inversion l; subst; inversion H5.
 Qed.
 
-(** ** "[M] after [mu]", and the recursion's semantic engine
+(** ** "[M] after [μ]", and the recursion's semantic engine
 
-    [after M mu] lists every [mu]-reduct of every leaf — computable
+    [after M μ] lists every [μ]-reduct of every leaf — computable
     because VCCS's [gLts] instance gives [lts_set] as a [gset]. Wrapped
-    in [ichoice] it realises exactly [M]'s behaviour after [mu]
+    in [ichoice] it realises exactly [M]'s behaviour after [μ]
     ([after_wt_stable]), and so may be plugged into [must_i_shift].
 
     [after_below_reduct] is the payoff and the whole point of this
-    section: for any single [mu]-reduct [qa] of the right-hand side,
+    section: for any single [μ]-reduct [qa] of the right-hand side,
 
-        g (ichoice (after M mu)) ⊑ₘᵤₛₜᵢ qa
+        g (ichoice (after M μ)) ⊑ₘᵤₛₜᵢ qa
 
     which is precisely the premise the completeness recursion needs
     before descending into a matched summand's continuation. The
     right-hand side needs no normal form and no stability: one
-    transition [g N ⟶[mu] qa] suffices, since [wt_act] turns any run of
-    [qa] into a run of [g N] over [mu :: s]. *)
+    transition [g N ⟶[μ] qa] suffices, since [wt_act] turns any run of
+    [qa] into a run of [g N] over [μ :: s]. *)
 
-Fixpoint after_list (ls : list gproc) (mu : ExtAct TypeOfActions) : list proc :=
+Fixpoint after_list (ls : list gproc) (μ : ExtAct TypeOfActions) : list proc :=
 match ls with
 | [] => []
-| A :: ls' => elements (lts_set (g A) (ActExt mu)) ++ after_list ls' mu
+| A :: ls' => elements (lts_set (g A) (ActExt μ)) ++ after_list ls' μ
 end.
 
-Definition after (M : gproc) (mu : ExtAct TypeOfActions) : list proc :=
-  after_list (leaves M) mu.
+Definition after (M : gproc) (μ : ExtAct TypeOfActions) : list proc :=
+  after_list (leaves M) μ.
 
-Lemma after_list_spec : forall ls mu p,
-  p ∈ after_list ls mu <-> exists A, A ∈ ls /\ lts (g A) (ActExt mu) p.
+Lemma after_list_spec : forall ls μ p,
+  p ∈ after_list ls μ <-> exists A, A ∈ ls /\ lts (g A) (ActExt μ) p.
 Proof.
-  induction ls as [|A ls IH]; intros mu p; simpl; split.
+  induction ls as [|A ls IH]; intros μ p; simpl; split.
   - intro H. set_solver.
   - intros (B & Hin & _). set_solver.
   - intro H. apply elem_of_app in H. destruct H as [H | H].
@@ -649,44 +648,44 @@ Proof.
       (* [simpl] has already unfolded [lts_set] into its [ActIn]/[ActOut]
          match, so [apply lts_set_spec1] no longer unifies; build the
          term and close by conversion instead. *)
-      pose proof (lts_set_spec1 (g A) (ActExt mu) p Hl) as Hm. exact Hm.
+      pose proof (lts_set_spec1 (g A) (ActExt μ) p Hl) as Hm. exact Hm.
     + right. apply IH. exists B. split; assumption.
 Qed.
 
-Lemma after_Static : forall M mu, gStatic M -> Forall Static (after M mu).
+Lemma after_Static : forall M μ, gStatic M -> Forall Static (after M μ).
 Proof.
-  intros M mu HM. apply Forall_forall. intros p Hp.
+  intros M μ HM. apply Forall_forall. intros p Hp.
   apply after_list_spec in Hp. destruct Hp as (A & Hin & Hl).
   eapply Static_preserved_by_lts; [| exact Hl].
   apply static_g. pose proof (leaves_gStatic M HM) as HF.
   rewrite Forall_forall in HF. apply HF. exact Hin.
 Qed.
 
-Lemma after_wt_stable : forall M mu s r p0 l, tau_nf M -> after M mu = p0 :: l -> r ↛ ->
-  ((g (ichoice (after M mu))) ⟹[s] r <-> (g M) ⟹[mu :: s] r).
+Lemma after_wt_stable : forall M μ s r p0 l, tau_nf M -> after M μ = p0 :: l -> r ↛ ->
+  ((g (ichoice (after M μ))) ⟹[s] r <-> (g M) ⟹[μ :: s] r).
 Proof.
-  intros M mu s r p0 l HM Heq Hst. rewrite Heq. split.
+  intros M μ s r p0 l HM Heq Hst. rewrite Heq. split.
   - intro Hwt. apply ichoice_wt_stable in Hwt; [| exact Hst].
     destruct Hwt as (p & Hin & Hwp).
     rewrite <- Heq in Hin. apply after_list_spec in Hin.
     destruct Hin as (A & HinA & Hl).
     eapply wt_push_nil_left; [apply leaves_reach; eassumption |].
     eapply wt_act; [exact Hl | exact Hwp].
-  - intro Hwt. destruct (leaves_wt_cons M HM mu s r Hwt) as (A & p & HinA & Hl & Hwp).
+  - intro Hwt. destruct (leaves_wt_cons M HM μ s r Hwt) as (A & p & HinA & Hl & Hwp).
     apply ichoice_wt_stable; [exact Hst |].
     exists p. split; [| exact Hwp].
     rewrite <- Heq. apply after_list_spec. exists A. split; assumption.
 Qed.
 
-Theorem after_below_reduct : forall M N mu p0 l qa,
+Theorem after_below_reduct : forall M N μ p0 l qa,
   gStatic M -> tau_nf M -> Static qa ->
-  after M mu = p0 :: l ->
-  lts (g N) (ActExt mu) qa ->
+  after M μ = p0 :: l ->
+  lts (g N) (ActExt μ) qa ->
   g M ⊑ₘᵤₛₜᵢ g N ->
-  g (ichoice (after M mu)) ⊑ₘᵤₛₜᵢ qa.
+  g (ichoice (after M μ)) ⊑ₘᵤₛₜᵢ qa.
 Proof.
-  intros M N mu p0 l qa HMst HM Hqa Heq Hl Hpre.
-  apply must_i_shift with (p := g M) (q := g N) (a := mu).
+  intros M N μ p0 l qa HMst HM Hqa Heq Hl Hpre.
+  apply must_i_shift with (p := g M) (q := g N) (a := μ).
   - apply static_g. exact HMst.
   - exact Hqa.
   - intros s r Hst. eapply after_wt_stable; eassumption.
@@ -697,7 +696,7 @@ Qed.
 (** Two [ichoice]s over lists with the same *elements* are [⊢]-equal —
     multiplicity and order are invisible, since both directions are just
     [ax_ichoice_glb] fed by [ax_ichoice_below]. This is what lets the
-    set-based [after M mu] (built from [lts_set], so duplicate-free) be
+    set-based [after M μ] (built from [lts_set], so duplicate-free) be
     exchanged for a syntactically collected list of continuations, which
     is what [ax_input]'s omega rule needs. *)
 
@@ -713,7 +712,7 @@ Qed.
 
 (** ** Syntactic continuations, and why they are needed
 
-    [after M mu] is a list of *reducts*. That is enough for an output
+    [after M μ] is a list of *reducts*. That is enough for an output
     summand, whose continuation is a closed term. It is **not** enough
     for an input: [ax_input] is the omega rule
     [(∀v, (P^v) ᴠᴄᴄꜱ⊑ₐₓ (Q^v)) -> (g (c?P)) ᴠᴄᴄꜱ⊑ₐₓ (g (c?Q))], so the left-hand side
@@ -1118,7 +1117,7 @@ Qed.
 Lemma wt_length_bound : forall s p r, Static p -> p ⟹[s] r -> (length s <= size p)%nat.
 Proof.
   intros s p r Hst Hwt. revert Hst.
-  induction Hwt as [p | s p q t Hl Hwt IH | mu s p q t Hl Hwt IH]; intro Hst; simpl.
+  induction Hwt as [p | s p q t Hl Hwt IH | μ s p q t Hl Hwt IH]; intro Hst; simpl.
   - lia.
   - assert (Hq : Static q) by (eapply Static_preserved_by_lts; eassumption).
     assert (Hlt : (size q < size p)%nat) by (eapply Static_lts_decrease; eassumption).
@@ -1169,14 +1168,14 @@ Qed.
 Lemma tbound_tau : forall n (p p' : proc), lts p τ p' -> tbound n p -> tbound n p'.
 Proof. intros n p p' Hl Hb s r Hwt. eapply Hb. eapply wt_tau; eassumption. Qed.
 
-Lemma tbound_step : forall n N A mu Q, tau_nf N -> A ∈ leaves N ->
-  lts (g A) (ActExt mu) Q -> tbound (S n) (g N) -> tbound n Q.
+Lemma tbound_step : forall n N A μ Q, tau_nf N -> A ∈ leaves N ->
+  lts (g A) (ActExt μ) Q -> tbound (S n) (g N) -> tbound n Q.
 Proof.
-  intros n N A mu Q Hnf Hin Hl Hb s r Hwt.
-  assert (Hg : (g N) ⟹[mu :: s] r).
+  intros n N A μ Q Hnf Hin Hl Hb s r Hwt.
+  assert (Hg : (g N) ⟹[μ :: s] r).
   { eapply wt_push_nil_left; [apply leaves_reach; eassumption |].
     eapply wt_act; [exact Hl | exact Hwt]. }
-  pose proof (Hb (mu :: s) r Hg) as H. simpl in H. lia.
+  pose proof (Hb (μ :: s) r Hg) as H. simpl in H. lia.
 Qed.
 
 (** [ichoice] turns list concatenation into binary internal choice —
@@ -3280,16 +3279,16 @@ Proof.
     + left. eapply IH1. rewrite E1. discriminate.
 Qed.
 
-Lemma after_nonempty_from_trace : forall M N mu q,
+Lemma after_nonempty_from_trace : forall M N μ q,
   Static (g M) -> Static (g N) -> tau_nf M ->
-  (g M) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) -> lts (g N) (ActExt mu) q -> after M mu <> [].
+  (g M) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) -> lts (g N) (ActExt μ) q -> after M μ <> [].
 Proof.
-  intros M N mu q HsM HsN Htnf Hpre Hlts.
-  assert (Hwt : (g N) ⟹[[mu]] q) by (eapply wt_act; [exact Hlts | apply wt_nil]).
-  destruct (must_i_trace_incl _ _ HsM HsN Hpre [mu] q Hwt) as (p' & Hp').
-  destruct (leaves_wt_cons M Htnf mu [] p' Hp') as (A & p & HA & Hlts2 & _).
+  intros M N μ q HsM HsN Htnf Hpre Hlts.
+  assert (Hwt : (g N) ⟹[[μ]] q) by (eapply wt_act; [exact Hlts | apply wt_nil]).
+  destruct (must_i_trace_incl _ _ HsM HsN Hpre [μ] q Hwt) as (p' & Hp').
+  destruct (leaves_wt_cons M Htnf μ [] p' Hp') as (A & p & HA & Hlts2 & _).
   intro Hc.
-  assert (Hin : p ∈ after M mu) by (apply after_list_spec; exists A; split; assumption).
+  assert (Hin : p ∈ after M μ) by (apply after_list_spec; exists A; split; assumption).
   rewrite Hc in Hin. set_solver.
 Qed.
 
@@ -3877,11 +3876,11 @@ Qed.
 Lemma tbound_mono : forall n m p, n <= m -> tbound n p -> tbound m p.
 Proof. intros n m p Hnm H s r Hwt. assert (H2 := H s r Hwt). lia. Qed.
 
-Lemma tbound_zero_no_act : forall p mu q, tbound 0 p -> lts p (ActExt mu) q -> False.
+Lemma tbound_zero_no_act : forall p μ q, tbound 0 p -> lts p (ActExt μ) q -> False.
 Proof.
-  intros p mu q Htb Hlts.
-  assert (Hwt : p ⟹[[mu]] q) by (eapply wt_act; [exact Hlts | apply wt_nil]).
-  assert (H := Htb [mu] q Hwt). simpl in H. lia.
+  intros p μ q Htb Hlts.
+  assert (Hwt : p ⟹[[μ]] q) by (eapply wt_act; [exact Hlts | apply wt_nil]).
+  assert (H := Htb [μ] q Hwt). simpl in H. lia.
 Qed.
 
 Lemma summand_in_Static : forall N c Q, gStatic N -> (c ? Q) ∈ summands N -> Static Q.

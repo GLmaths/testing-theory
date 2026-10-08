@@ -52,11 +52,11 @@ Definition cls_tr `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) : act_class
   else if decide (exist_co_nba μ) then CIN
   else COP.
 
-Lemma cls_tr_CNB `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) : cls_tr μ = CNB <-> non_blocking μ.
+Lemma cls_tr_CNB `{ExtAction A} {unique_nb : UniqueDual A} (η : A) : cls_tr η = CNB <-> non_blocking η.
 Proof.
   unfold cls_tr. split.
-  - destruct (decide (non_blocking μ)) as [nb | b]; [now intros _ |].
-    destruct (decide (exist_co_nba μ)); discriminate.
+  - destruct (decide (non_blocking η)) as [nb | b]; [now intros _ |].
+    destruct (decide (exist_co_nba η)); discriminate.
   - intro nb. now rewrite decide_True.
 Qed.
 
@@ -70,22 +70,22 @@ Proof.
     rewrite decide_True; [reflexivity | now exists η].
 Qed.
 
-Lemma cls_tr_COP `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) :
-  cls_tr μ = COP <-> (blocking μ /\ ¬ exist_co_nba μ).
+Lemma cls_tr_COP `{ExtAction A} {unique_nb : UniqueDual A} (β : A) :
+  cls_tr β = COP <-> (blocking β /\ ¬ exist_co_nba β).
 Proof.
   unfold cls_tr. split.
-  - destruct (decide (non_blocking μ)) as [nb | b]; [discriminate |].
-    destruct (decide (exist_co_nba μ)) as [i | ni]; [discriminate | now intros _].
+  - destruct (decide (non_blocking β)) as [nb | b]; [discriminate |].
+    destruct (decide (exist_co_nba β)) as [i | ni]; [discriminate | now intros _].
   - intros (b & ni). now rewrite decide_False, decide_False.
 Qed.
 
 (** Actions of the same non-opaque class are either both non-blocking, or both
     admit a non-blocking co-action. *)
-Lemma cls_tr_same_class `{ExtAction A} {unique_nb : UniqueDual A} (μ ν : A) :
-  cls_tr μ = cls_tr ν -> cls_tr μ ≠ COP ->
-  (non_blocking μ /\ non_blocking ν) \/ (exist_co_nba μ /\ exist_co_nba ν).
+Lemma cls_tr_same_class `{ExtAction A} {unique_nb : UniqueDual A} (η μ : A) :
+  cls_tr η = cls_tr μ -> cls_tr η ≠ COP ->
+  (non_blocking η /\ non_blocking μ) \/ (exist_co_nba η /\ exist_co_nba μ).
 Proof.
-  intros heq hne. destruct (cls_tr μ) eqn:hμ.
+  intros heq hne. destruct (cls_tr η) eqn:hμ.
   - left. split; [now eapply cls_tr_CNB | eapply cls_tr_CNB; now rewrite <- heq].
   - right. split; [now eapply cls_tr_CIN | eapply cls_tr_CIN; now rewrite <- heq].
   - now exfalso.
@@ -112,19 +112,19 @@ Section Transfer.
   Lemma wt_tequiv (p q : P) s t : tequiv cls_tr s t -> p ⟹[s] q -> p ⟹⋍[t] q.
   Proof.
     intro hte. revert p q.
-    induction hte as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ]; intros p q w.
+    induction hte as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ]; intros p q w.
     - exists q. split; [exact w | reflexivity].
     - destruct (IH1 p q w) as (r & w1 & heqr).
       destruct (IH2 p r w1) as (r' & w2 & heqr').
       exists r'. split; [exact w2 | etransitivity; eassumption].
     - eapply wt_split in w as (r & w1 & w2).
-      replace (μ :: ν :: s2) with ([μ ; ν] ++ s2) in w2 by reflexivity.
+      replace (μ1 :: μ2 :: s2) with ([μ1 ; μ2] ++ s2) in w2 by reflexivity.
       eapply wt_split in w2 as (r' & w3 & w4).
-      assert (hsw : r ⟹⋍[[ν ; μ]] r').
-      { destruct (cls_tr_same_class μ ν heq hne) as [ (nb1 & nb2) | (i1 & i2) ].
+      assert (hsw : r ⟹⋍[[μ2 ; μ1]] r').
+      { destruct (cls_tr_same_class μ1 μ2 heq hne) as [ (nb1 & nb2) | (i1 & i2) ].
         - eapply wt_non_blocking_action_swap; eassumption.
         - eapply wt_input_swap; [exact i2 | exact w3]. }
-      replace (s1 ++ ν :: μ :: s2) with (s1 ++ ([ν ; μ] ++ s2)) by reflexivity.
+      replace (s1 ++ μ2 :: μ1 :: s2) with (s1 ++ ([μ2 ; μ1] ++ s2)) by reflexivity.
       eapply wt_join_eq_r; [exact w1 |].
       eapply wt_join_eq_l; eassumption.
   Qed.
@@ -134,14 +134,14 @@ Section Transfer.
   Lemma cnv_tequiv (p : P) s t : tequiv cls_tr s t -> p ⇓ s -> p ⇓ t.
   Proof.
     intro hte. revert p.
-    induction hte as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ]; intros p hcnv.
+    induction hte as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ]; intros p hcnv.
     - exact hcnv.
     - eapply IH2, IH1, hcnv.
     - eapply cnv_jump.
       + eapply cnv_prefix. exact hcnv.
       + intros r w.
-        assert (hr : r ⇓ μ :: ν :: s2) by (eapply cnv_wt_prefix; eassumption).
-        destruct (cls_tr_same_class μ ν heq hne) as [ (nb1 & nb2) | (i1 & i2) ].
+        assert (hr : r ⇓ μ1 :: μ2 :: s2) by (eapply cnv_wt_prefix; eassumption).
+        destruct (cls_tr_same_class μ1 μ2 heq hne) as [ (nb1 & nb2) | (i1 & i2) ].
         * eapply cnv_non_blocking_action_swap; eassumption.
         * eapply cnv_input_swap; eassumption.
   Qed.
@@ -221,7 +221,7 @@ Notation "s ⊑ₜ t" := (trace_leq s t) (at level 70).
     the three laws of [trace_leq], deletion does not preserve the state that is
     reached, hence the weaker conclusion of [wt_trace_pre] below. *)
 Inductive trace_pre `{ExtAction A} : trace A -> trace A -> Prop :=
-| tp_leq s t : trace_leq s t -> trace_pre s t
+| tp_leq s t : s ⊑ₜ t -> trace_pre s t
 | tp_trans s t u : trace_pre s t -> trace_pre t u -> trace_pre s u
 | tp_drop s1 η s2 : non_blocking η -> trace_pre (s1 ++ η :: s2) (s1 ++ s2).
 
@@ -238,10 +238,10 @@ Qed.
 
 Lemma trace_leq_of_tequiv `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) : tequiv cls_tr s t -> s ⊑ₜ t.
 Proof.
-  induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+  induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
   - constructor.
   - eapply tl_trans; eassumption.
-  - destruct (cls_tr_same_class μ ν heq hne) as [ (nb1 & nb2) | (i1 & i2) ].
+  - destruct (cls_tr_same_class μ1 μ2 heq hne) as [ (nb1 & nb2) | (i1 & i2) ].
     + now eapply tl_delay.
     + now eapply tl_anticipate.
 Qed.
@@ -395,53 +395,53 @@ Qed.
 
 (** All the non-blocking actions can be deleted. *)
 Lemma trace_pre_drop_nb `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
-  s ≼ₜ filter (fun μ => cls_tr μ ≠ CNB) s.
+  s ≼ₜ filter (fun μ1 => cls_tr μ1 ≠ CNB) s.
 Proof.
-  induction s as [| μ s IH].
+  induction s as [| μ1 s IH].
   - constructor. constructor.
-  - destruct (decide (cls_tr μ = CNB)) as [h | h].
-    + rewrite (filter_cons_False (fun ν => cls_tr ν ≠ CNB) μ s)
+  - destruct (decide (cls_tr μ1 = CNB)) as [h | h].
+    + rewrite (filter_cons_False (fun μ2 => cls_tr μ2 ≠ CNB) μ1 s)
         by (intro hne; exact (hne h)).
       eapply tp_trans; [| exact IH].
-      eapply (tp_drop [] μ s). now eapply cls_tr_CNB.
-    + rewrite (filter_cons_True (fun ν => cls_tr ν ≠ CNB) μ s h).
-      exact (trace_pre_app_l [μ] s _ IH).
+      eapply (tp_drop [] μ1 s). now eapply cls_tr_CNB.
+    + rewrite (filter_cons_True (fun μ2 => cls_tr μ2 ≠ CNB) μ1 s h).
+      exact (trace_pre_app_l [μ1] s _ IH).
 Qed.
 
 (** An action admitting a non-blocking co-action can be pulled in front of a
     whole run of such actions. *)
-Lemma trace_pre_move_cin `{ExtAction A} {unique_nb : UniqueDual A} (l1 : trace A) (μ : A) (l2 : trace A) :
-  Forall (fun ν => cls_tr ν = CIN) l1 -> μ :: (l1 ++ l2) ≼ₜ l1 ++ μ :: l2.
+Lemma trace_pre_move_cin `{ExtAction A} {unique_nb : UniqueDual A} (l1 : trace A) (μ1 : A) (l2 : trace A) :
+  Forall (fun μ2 => cls_tr μ2 = CIN) l1 -> μ1 :: (l1 ++ l2) ≼ₜ l1 ++ μ1 :: l2.
 Proof.
-  induction l1 as [| ν l1 IH]; intro hl1; simpl.
+  induction l1 as [| μ2 l1 IH]; intro hl1; simpl.
   - constructor. constructor.
   - eapply Forall_cons_1 in hl1 as (hν & hl1).
     eapply tp_trans.
-    + eapply tp_leq. eapply (tl_anticipate [] μ ν (l1 ++ l2)). now eapply cls_tr_CIN.
-    + exact (trace_pre_app_l [ν] _ _ (IH hl1)).
+    + eapply tp_leq. eapply (tl_anticipate [] μ1 μ2 (l1 ++ l2)). now eapply cls_tr_CIN.
+    + exact (trace_pre_app_l [μ2] _ _ (IH hl1)).
 Qed.
 
 Lemma trace_pre_sort `{ExtAction A} {unique_nb : UniqueDual A} (u : trace A) :
-  Forall (fun μ => cls_tr μ ≠ CNB) u -> u ≼ₜ csimpl cls_tr u.
+  Forall (fun μ1 => cls_tr μ1 ≠ CNB) u -> u ≼ₜ csimpl cls_tr u.
 Proof.
-  induction u as [| μ u IH]; intro hu.
+  induction u as [| μ1 u IH]; intro hu.
   - constructor. constructor.
   - eapply Forall_cons_1 in hu as (hμ & hu). unfold csimpl.
-    destruct (decide (cls_tr μ = CIN)) as [h | h].
-    + rewrite (filter_cons_True (fun ν => cls_tr ν = CIN) μ u h).
-      rewrite (filter_cons_False (fun ν => cls_tr ν = COP) μ u)
+    destruct (decide (cls_tr μ1 = CIN)) as [h | h].
+    + rewrite (filter_cons_True (fun μ2 => cls_tr μ2 = CIN) μ1 u h).
+      rewrite (filter_cons_False (fun μ2 => cls_tr μ2 = COP) μ1 u)
         by (rewrite h; discriminate).
-      exact (trace_pre_app_l [μ] u (csimpl cls_tr u) (IH hu)).
-    + assert (hcop : cls_tr μ = COP).
-      { destruct (cls_tr μ) eqn:e.
+      exact (trace_pre_app_l [μ1] u (csimpl cls_tr u) (IH hu)).
+    + assert (hcop : cls_tr μ1 = COP).
+      { destruct (cls_tr μ1) eqn:e.
         - exfalso. now eapply hμ.
         - exfalso. now eapply h.
         - reflexivity. }
-      rewrite (filter_cons_False (fun ν => cls_tr ν = CIN) μ u)
+      rewrite (filter_cons_False (fun μ2 => cls_tr μ2 = CIN) μ1 u)
         by (rewrite hcop; discriminate).
-      rewrite (filter_cons_True (fun ν => cls_tr ν = COP) μ u hcop).
-      eapply tp_trans with (t := μ :: csimpl cls_tr u).
-      * exact (trace_pre_app_l [μ] u (csimpl cls_tr u) (IH hu)).
+      rewrite (filter_cons_True (fun μ2 => cls_tr μ2 = COP) μ1 u hcop).
+      eapply tp_trans with (t := μ1 :: csimpl cls_tr u).
+      * exact (trace_pre_app_l [μ1] u (csimpl cls_tr u) (IH hu)).
       * unfold csimpl. eapply trace_pre_move_cin, Forall_filter_self.
 Qed.
 
@@ -510,44 +510,44 @@ Proof.
   rewrite 2 app_assoc. now eapply tl_feedback.
 Qed.
 
-Lemma trace_leq_move_cin `{ExtAction A} {unique_nb : UniqueDual A} (l1 : trace A) (μ : A) (l2 : trace A) :
-  Forall (fun ν => cls_tr ν = CIN) l1 -> μ :: (l1 ++ l2) ⊑ₜ l1 ++ μ :: l2.
+Lemma trace_leq_move_cin `{ExtAction A} {unique_nb : UniqueDual A} (l1 : trace A) (μ1 : A) (l2 : trace A) :
+  Forall (fun μ2 => cls_tr μ2 = CIN) l1 -> μ1 :: (l1 ++ l2) ⊑ₜ l1 ++ μ1 :: l2.
 Proof.
-  induction l1 as [| ν l1 IH]; intro hl1; simpl.
+  induction l1 as [| μ2 l1 IH]; intro hl1; simpl.
   - constructor.
   - eapply Forall_cons_1 in hl1 as (hν & hl1).
     eapply tl_trans.
-    + eapply (tl_anticipate [] μ ν (l1 ++ l2)). now eapply cls_tr_CIN.
-    + exact (trace_leq_app_l [ν] _ _ (IH hl1)).
+    + eapply (tl_anticipate [] μ1 μ2 (l1 ++ l2)). now eapply cls_tr_CIN.
+    + exact (trace_leq_app_l [μ2] _ _ (IH hl1)).
 Qed.
 
 Theorem trace_leq_tsort `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) : s ⊑ₜ tsort cls_tr s.
 Proof.
   induction s as [| x s IH]; [constructor |]. unfold tsort in *.
   destruct (cls_tr x) eqn:e.
-  - rewrite (filter_cons_False (fun ν => cls_tr ν = CIN) x s) by (rewrite e; discriminate).
-    rewrite (filter_cons_False (fun ν => cls_tr ν = COP) x s) by (rewrite e; discriminate).
-    rewrite (filter_cons_True (fun ν => cls_tr ν = CNB) x s e).
-    eapply tl_trans with (t := x :: (filter (fun ν => cls_tr ν = CIN) s
-                                     ++ filter (fun ν => cls_tr ν = COP) s
-                                     ++ filter (fun ν => cls_tr ν = CNB) s)).
+  - rewrite (filter_cons_False (fun μ => cls_tr μ = CIN) x s) by (rewrite e; discriminate).
+    rewrite (filter_cons_False (fun μ => cls_tr μ = COP) x s) by (rewrite e; discriminate).
+    rewrite (filter_cons_True (fun μ => cls_tr μ = CNB) x s e).
+    eapply tl_trans with (t := x :: (filter (fun μ => cls_tr μ = CIN) s
+                                     ++ filter (fun μ => cls_tr μ = COP) s
+                                     ++ filter (fun μ => cls_tr μ = CNB) s)).
     + exact (trace_leq_app_l [x] s _ IH).
     + rewrite 2 app_assoc.
       exact (trace_leq_delay_run []
-               (filter (fun ν => cls_tr ν = CIN) s ++ filter (fun ν => cls_tr ν = COP) s)
-               (filter (fun ν => cls_tr ν = CNB) s) x (proj1 (cls_tr_CNB x) e)).
-  - rewrite (filter_cons_True (fun ν => cls_tr ν = CIN) x s e).
-    rewrite (filter_cons_False (fun ν => cls_tr ν = COP) x s) by (rewrite e; discriminate).
-    rewrite (filter_cons_False (fun ν => cls_tr ν = CNB) x s) by (rewrite e; discriminate).
+               (filter (fun μ => cls_tr μ = CIN) s ++ filter (fun μ => cls_tr μ = COP) s)
+               (filter (fun μ => cls_tr μ = CNB) s) x (proj1 (cls_tr_CNB x) e)).
+  - rewrite (filter_cons_True (fun μ => cls_tr μ = CIN) x s e).
+    rewrite (filter_cons_False (fun μ => cls_tr μ = COP) x s) by (rewrite e; discriminate).
+    rewrite (filter_cons_False (fun μ => cls_tr μ = CNB) x s) by (rewrite e; discriminate).
     rewrite <- app_comm_cons.
     exact (trace_leq_app_l [x] s _ IH).
-  - rewrite (filter_cons_False (fun ν => cls_tr ν = CIN) x s) by (rewrite e; discriminate).
-    rewrite (filter_cons_True (fun ν => cls_tr ν = COP) x s e).
-    rewrite (filter_cons_False (fun ν => cls_tr ν = CNB) x s) by (rewrite e; discriminate).
+  - rewrite (filter_cons_False (fun μ => cls_tr μ = CIN) x s) by (rewrite e; discriminate).
+    rewrite (filter_cons_True (fun μ => cls_tr μ = COP) x s e).
+    rewrite (filter_cons_False (fun μ => cls_tr μ = CNB) x s) by (rewrite e; discriminate).
     rewrite <- app_comm_cons.
-    eapply tl_trans with (t := x :: (filter (fun ν => cls_tr ν = CIN) s
-                                     ++ filter (fun ν => cls_tr ν = COP) s
-                                     ++ filter (fun ν => cls_tr ν = CNB) s)).
+    eapply tl_trans with (t := x :: (filter (fun μ => cls_tr μ = CIN) s
+                                     ++ filter (fun μ => cls_tr μ = COP) s
+                                     ++ filter (fun μ => cls_tr μ = CNB) s)).
     + exact (trace_leq_app_l [x] s _ IH).
     + eapply trace_leq_move_cin, Forall_filter_self.
 Qed.
@@ -738,23 +738,23 @@ Section FeedbackNormalForm.
 
   Lemma drop_dual_spec η l : forall t,
     drop_dual η l = Some t ->
-    exists l1 μ l2, l = l1 ++ μ :: l2 /\ t = l1 ++ l2 /\ dual μ η.
+    exists l1 μ1 l2, l = l1 ++ μ1 :: l2 /\ t = l1 ++ l2 /\ dual μ1 η.
   Proof.
-    induction l as [| ν l IH]; intros t heq; [discriminate |].
-    simpl in heq. destruct (decide (dual ν η)) as [d | d].
+    induction l as [| μ2 l IH]; intros t heq; [discriminate |].
+    simpl in heq. destruct (decide (dual μ2 η)) as [d | d].
     - injection heq. intro hl. subst t.
-      exists [], ν, l. repeat split. exact d.
+      exists [], μ2, l. repeat split. exact d.
     - destruct (drop_dual η l) as [t0 |] eqn:e; [| discriminate].
       injection heq. intro hl. subst t.
-      destruct (IH t0 eq_refl) as (l1 & μ & l2 & -> & -> & dμ).
-      exists (ν :: l1), μ, l2. repeat split. exact dμ.
+      destruct (IH t0 eq_refl) as (l1 & μ1 & l2 & -> & -> & dμ).
+      exists (μ2 :: l1), μ1, l2. repeat split. exact dμ.
   Qed.
 
   Lemma drop_dual_none η l :
-    drop_dual η l = None -> Forall (fun μ => ¬ dual μ η) l.
+    drop_dual η l = None -> Forall (fun μ1 => ¬ dual μ1 η) l.
   Proof.
-    induction l as [| ν l IH]; intro heq; [constructor |].
-    simpl in heq. destruct (decide (dual ν η)) as [d | d]; [discriminate |].
+    induction l as [| μ2 l IH]; intro heq; [constructor |].
+    simpl in heq. destruct (decide (dual μ2 η)) as [d | d]; [discriminate |].
     destruct (drop_dual η l) as [t0 |] eqn:e; [discriminate |].
     constructor; [exact d | exact (IH eq_refl)].
   Qed.
@@ -1111,7 +1111,7 @@ Section FeedbackInvariance.
 
   Lemma has_fb_tequiv (s t : trace A) : tequiv cls_tr s t -> has_fb s -> has_fb t.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - exact (fun h => h).
     - intro h. eapply IH2, IH1, h.
     - now eapply has_fb_swap.

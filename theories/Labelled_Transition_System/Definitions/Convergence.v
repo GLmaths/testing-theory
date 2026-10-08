@@ -52,11 +52,11 @@ Lemma terminate_then_wt_refuses  `{gLts P A} p :
 Proof.
   intros ht.
   induction ht as [p H1 H2].
-  destruct (lts_refuses_decidable p τ).
-  - exists p; eauto with mdb.
-  - eapply lts_refuses_spec1 in n as (p'& l).
+  destruct (decide (p ⟶)) as [Hp | Hst].
+  - eapply lts_performs_spec1 in Hp as (p'& l).
     destruct (H2 p' l) as (p0 & w0 & st0).
     exists p0; eauto with mdb.
+  - exists p; eauto with mdb.
 Qed.
 
 Lemma cnv_terminate `{M : gLts P A} p s : p ⇓ s -> p ⤓.

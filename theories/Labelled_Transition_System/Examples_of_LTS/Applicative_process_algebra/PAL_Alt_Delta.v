@@ -79,7 +79,7 @@ Section PAL_Alt_Delta.
     end.
 
   Lemma co𝐏_iff (μ : PALA_Act) (p : term) :
-    p ∈ (co𝐏 μ : subset_of term) ↔ ∃ μ', PALA_dual Val μ' μ ∧ ¬ p ↛[μ'].
+    p ∈ (co𝐏 μ : subset_of term) ↔ ∃ μ', PALA_dual Val μ' μ ∧ p ⟶[μ'].
   Proof. done. Qed.
 
   (** ** The kernel of [𝝳] is the largest [≈ᴘʀᴏ] *)
@@ -132,15 +132,15 @@ Section PAL_Alt_Delta.
   Proof.
     apply co𝐏_iff. destruct μ as [l|ot]; simpl.
     - exists (AOut _ (ltuple l)). split; [done |].
-      apply PALA_refuses_spec2. eexists. apply aar3, eval_out_eot_to_tuple.
+      apply PALA_performs_spec2. eexists. apply aar3, eval_out_eot_to_tuple.
     - exists (AIn _ (exact_label Val ot)). split; [apply ltuple_exact_label |].
-      apply PALA_refuses_spec2. eexists.
+      apply PALA_performs_spec2. eexists.
       apply aar1; [apply eval_in_eot_to_tuple | apply template_of_eot_to_eit].
   Qed.
 
   Lemma coprobe_only μ μ' : coprobe μ ∈ (co𝐏 μ' : subset_of term) → 𝝳ᴀᴘᴀʟ μ' = 𝝳ᴀᴘᴀʟ μ.
   Proof.
-    rewrite co𝐏_iff. intros (μ'' & hd & acc). apply lts_refuses_spec1 in acc as (q & hq).
+    rewrite co𝐏_iff. intros (μ'' & hd & acc). apply lts_performs_spec1 in acc as (q & hq).
     destruct μ as [l|ot]; unfold coprobe in hq; simpl in hq; inversion hq; subst.
     - match goal with hev : eval_out_tuple _ = Some _ |- _ =>
         rewrite eval_out_eot_to_tuple in hev; injection hev as <- end.

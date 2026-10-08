@@ -169,18 +169,18 @@ Section PAL_Alt_Abs.
   Lemma coR_p_formal v : AOut _ (tuple1 v) ∈ (coR p_formal : subset_of PALA_Act).
   Proof.
     exists (AIn _ [lf_formal Val v]). split_and!; [| done | intros []].
-    apply PALA_refuses_spec2. eexists. by apply aar1.
+    apply PALA_performs_spec2. eexists. by apply aar1.
   Qed.
 
   Lemma coR_p_val v : AOut _ (tuple1 v) ∈ (coR (p_val v) : subset_of PALA_Act).
   Proof.
     exists (AIn _ [lf_val Val v]). split_and!; [| done | intros []].
-    apply PALA_refuses_spec2. eexists. by apply aar1.
+    apply PALA_performs_spec2. eexists. by apply aar1.
   Qed.
 
   Lemma coR_p_val_only v μ : μ ∈ (coR (p_val v) : subset_of PALA_Act) → μ = AOut _ (tuple1 v).
   Proof.
-    intros (μ2 & acc & hd & _). apply lts_refuses_spec1 in acc as (q & hq).
+    intros (μ2 & acc & hd & _). apply lts_performs_spec1 in acc as (q & hq).
     unfold p_val in hq. cbn in hq. inversion hq; subst.
     match goal with hev : eval_in_tuple _ = Some _ |- _ => cbn in hev; injection hev as <- end.
     match goal with ht : template_of _ _ = _ |- _ =>
@@ -217,9 +217,9 @@ Section PAL_Alt_Abs.
     - done.
     - exists β. split; [| done].
       exists (AOut _ (tuple1 v)). split_and!; [| done | intros []].
-      apply PALA_refuses_spec2. eexists. by apply aar3.
+      apply PALA_performs_spec2. eexists. by apply aar3.
     - intros (x & (μ2 & acc & hd & _) & ex).
-      apply lts_refuses_spec1 in acc as (q & hq). unfold p in hq. cbn in hq. inversion hq; subst.
+      apply lts_performs_spec1 in acc as (q & hq). unfold p in hq. cbn in hq. inversion hq; subst.
       destruct x as [l|o]; cbn in hd, ex; [| discriminate].
       injection ex as ex.
       destruct l as [|[u|u|] [|]]; cbn in ex, hd; try discriminate.

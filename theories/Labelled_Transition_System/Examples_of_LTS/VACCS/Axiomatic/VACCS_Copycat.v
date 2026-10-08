@@ -110,7 +110,7 @@ Proof.
                  assert (¬ good_VACCS e1) as not_happy''.
                  { eapply unoutcome_preserved_by_lts_non_blocking_action_converse; eauto.
                    unfold non_blocking; simpl. exists (c , v); eauto. }
-                 assert (must (ccat c) e1); eauto.
+                 assert ((ccat c) must_pass e1); eauto.
                  eapply must_preserved_by_synch_if_notoutcome; eauto.
                  simpl; eauto.
            ++ intros. inversion H4; subst. simpl in *.
@@ -123,7 +123,7 @@ Qed.
 Lemma must_i_ccat_l : forall c, (ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros c t Hyp.
-  assert (must (ccat c) t) as Mq; eauto.
+  assert ((ccat c) must_pass t) as Mq; eauto.
   dependent induction Hyp.
   - now eapply m_now.
   - inversion ex. inversion H2; subst.
@@ -136,7 +136,7 @@ Proof.
       * intros. lts_inversion lts.
     + inversion l1; subst.
       eapply simplify_match_input in eq. subst.
-      assert (must ((c ! (bvar 0) • 𝟘) ^ v) b2) as Mq'.
+      assert (((c ! (bvar 0) • 𝟘) ^ v) must_pass b2) as Mq'.
       { eapply must_preserved_by_synch_if_notoutcome ; eauto. simpl; eauto. }
       inversion Mq'.
       * assert (good_VACCS t).
@@ -246,16 +246,16 @@ Proof.
            assert (¬ good_VACCS t1) as not_happyB.
            { eapply unoutcome_preserved_by_lts_non_blocking_action_converse; eauto.
              unfold non_blocking; simpl. exists (cst a , v); eauto. }
-           assert (must (ccat (cst a)) t1); eauto.
+           assert ((ccat (cst a)) must_pass t1); eauto.
            eapply must_preserved_by_synch_if_notoutcome; eauto.
       * intros. inversion H6; subst.
         eapply simplify_match_output in H5 as eq; subst.
         assert (lts t ((cst a , v) !) t') as l2; eauto.
         eapply OBA_with_FB_Fourth_Axiom in l2 as (t'1 & HypTr'1 & equiv1); eauto.
         eapply (@must_eq_client proc); eauto.
-        assert (must resp t) as Mp. eapply m_step; eauto.
-        assert (must resp t'1) as Mp';eauto.
-        assert (must (ccat (cst a)) t'1); eauto.
+        assert (resp must_pass t) as Mp. eapply m_step; eauto.
+        assert (resp must_pass t'1) as Mp';eauto.
+        assert ((ccat (cst a)) must_pass t'1); eauto.
         apply (must_i_ccat_l (cst a)). exact H8.
 Qed.
 
@@ -304,10 +304,10 @@ Proof.
 Qed.
 
 Lemma gCopycats_lts : forall M, gCopycats M ->
-  forall mu p, lts (g M) (ActExt mu) p ->
-  exists c v, mu = ActIn (c,v) /\ p = (c ! v • 𝟘).
+  forall μ p, lts (g M) (ActExt μ) p ->
+  exists c v, μ = ActIn (c,v) /\ p = (c ! v • 𝟘).
 Proof.
-  induction M as [ | | c q | q | M1 IH1 M2 IH2 ]; intros Hc mu p Hl; simpl in *;
+  induction M as [ | | c q | q | M1 IH1 M2 IH2 ]; intros Hc μ p Hl; simpl in *;
     inversion Hl; subst.
   - exists c, v. split; reflexivity.
   - destruct Hc as [Hc1 Hc2]. eapply IH1; eassumption.
@@ -328,9 +328,9 @@ Proof.
       * inversion l1.
     + intros p' Hp'. exfalso. eapply gCopycats_no_tau; eassumption.
     + intros t' Ht'. eapply H0; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hl1 Hl2.
-      destruct (gCopycats_lts M Hcop mu1 p' Hl1) as (c & v & Hmu & Hp). subst.
-      destruct mu2 as [[c2 v2]|[c2 v2]]; simpl in Hd; try (exfalso; exact Hd).
+    + intros p' t' μ1 μ2 Hd Hl1 Hl2.
+      destruct (gCopycats_lts M Hcop μ1 p' Hl1) as (c & v & Hmu & Hp). subst.
+      destruct μ2 as [[c2 v2]|[c2 v2]]; simpl in Hd; try (exfalso; exact Hd).
       inversion Hd; subst.
       assert (Horig : (g 𝟘) must_pass t) by (apply m_step; assumption).
       assert (Hsh : t ≡* ((c2 ! v2 • 𝟘) ‖ t'))

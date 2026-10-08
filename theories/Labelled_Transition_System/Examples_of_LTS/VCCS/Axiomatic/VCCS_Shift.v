@@ -70,8 +70,8 @@ Context `{VP : VCCS_Parameters}.
 Definition NewVarC_TOA (k : nat) (a : TypeOfActions) : TypeOfActions :=
   match a with (c,v) => (NewVar_in_ChannelData k c, v) end.
 
-Definition NewVar_in_action (k : nat) (mu : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
-  match mu with
+Definition NewVar_in_action (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
+  match μ with
   | ActIn x  => ActIn (NewVarC_TOA k x)
   | ActOut x => ActOut (NewVarC_TOA k x)
   end.
@@ -83,8 +83,8 @@ Definition NewVarC_act (k : nat) (a : ActIO TypeOfActions) : ActIO TypeOfActions
   | τ => τ
   end.
 
-Lemma NewVarC_act_ext : forall k mu,
-  NewVarC_act k (ActExt mu) = ActExt (NewVar_in_action k mu).
+Lemma NewVarC_act_ext : forall k μ,
+  NewVarC_act k (ActExt μ) = ActExt (NewVar_in_action k μ).
 Proof. intros k [x|x]; reflexivity. Qed.
 
 (** The two shifts of the development coincide at level [0]. *)
@@ -138,9 +138,9 @@ Proof.
       inversion Heq; f_equal; lia.
 Qed.
 
-Lemma NewVar_in_action_inv : forall k mu mu0,
-  VarC_action_add 1 mu = NewVar_in_action (S k) mu0 ->
-  exists mu1, mu = NewVar_in_action k mu1 /\ mu0 = VarC_action_add 1 mu1.
+Lemma NewVar_in_action_inv : forall k μ μ0,
+  VarC_action_add 1 μ = NewVar_in_action (S k) μ0 ->
+  exists μ1, μ = NewVar_in_action k μ1 /\ μ0 = VarC_action_add 1 μ1.
 Proof.
   intros k [[c v]|[c v]] [[c0 v0]|[c0 v0]] Heq; simpl in Heq; inversion Heq; subst;
     match goal with H : VarC_add 1 c = _ |- _ =>
@@ -206,16 +206,16 @@ Proof.
   - dnvc p0 Heq. destruct (IHHl _ _ eq_refl) as (a0 & q & Ha & Hq & Hlq).
     exists a0, q. split; [ exact Ha | split; [ exact Hq | eapply lts_ifZero; eassumption ] ].
   - dnvc p0 Heq. destruct (IHHl zq0 (S k) eq_refl) as (a0 & q & Ha & Hq & Hlq).
-    destruct a0 as [mu0|]; [ | simpl in Ha; discriminate Ha ].
+    destruct a0 as [μ0|]; [ | simpl in Ha; discriminate Ha ].
     simpl in Ha. inversion Ha as [Ha']. clear Ha.
-    assert (Ha2 : VarC_action_add 1 μ = NewVar_in_action (S k) mu0)
-      by (destruct mu0; simpl in Ha' |- *; congruence).
-    destruct (NewVar_in_action_inv k μ mu0 Ha2) as (mu1 & Hmu1 & Hmu2). subst.
-    exists (ActExt mu1), (ν q).
-    split; [ destruct mu1; reflexivity
+    assert (Ha2 : VarC_action_add 1 μ = NewVar_in_action (S k) μ0)
+      by (destruct μ0; simpl in Ha' |- *; congruence).
+    destruct (NewVar_in_action_inv k μ μ0 Ha2) as (μ1 & Hmu1 & Hmu2). subst.
+    exists (ActExt μ1), (ν q).
+    split; [ destruct μ1; reflexivity
            | split; [ simpl; f_equal; exact Hq | apply lts_res_ext; exact Hlq ] ].
   - dnvc p0 Heq. destruct (IHHl zq0 (S k) eq_refl) as (a0 & q & Ha & Hq & Hlq).
-    destruct a0 as [mu0|]; [ simpl in Ha; destruct mu0; discriminate Ha | ].
+    destruct a0 as [μ0|]; [ simpl in Ha; destruct μ0; discriminate Ha | ].
     exists τ, (ν q).
     split; [ reflexivity | split; [ simpl; f_equal; exact Hq | apply lts_res_tau; exact Hlq ] ].
   - dnvc p0 Heq. destruct (IHHl1 _ _ eq_refl) as (b1 & r1 & Hb1 & Hr1 & Hlr1).

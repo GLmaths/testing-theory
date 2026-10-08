@@ -535,7 +535,7 @@ Section Converse.
   Context `{QM : QuantumModel}.
   Context (XM : ∀ P : Prop, P ∨ ¬ P).
   Context (W_strict : ∀ a b, W_le (W_add a b) a → b = W_zero).
-  Context (W_dense : ∀ a b : W, prob_lt a b → ∃ c, prob_lt a c ∧ prob_lt c b).
+  Context (W_dense : ∀ a b : W, a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b).
 
   Lemma W_add_mono_r a b c : W_le b c → W_le (W_add a b) (W_add a c).
   Proof. intros Hbc. rewrite !(W_add_comm a). by apply W_add_mono. Qed.
@@ -789,7 +789,7 @@ Section Converse.
       assert (E : chain_run (dpoint C ρ) l (length l) = Δf).
       { unfold chain_run. apply nth_length_last. }
       rewrite <- E. apply (run_mass _ _ _ Hrun). }
-    assert (Hsm : prob_lt s m).
+    assert (Hsm : s <ₚ m).
     { split.
       - rewrite <- Hmf. apply dmass_of_le.
       - intros Hms. apply Hfz. apply (W_strict s).

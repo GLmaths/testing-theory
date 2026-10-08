@@ -211,7 +211,7 @@ Section Bridge.
   Corollary lq_must_as_iff_must
     (XM : ∀ P : Prop, P ∨ ¬ P)
     (W_strict : ∀ a b, W_le (W_add a b) a → b = W_zero)
-    (W_dense : ∀ a b : W, prob_lt a b → ∃ c, prob_lt a c ∧ prob_lt c b)
+    (W_dense : ∀ a b : W, a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b)
     P ρ Q :
     nonzero ρ →
     (P, ρ) must_as Q ↔ must (outcome := good) (P, ρ) Q.

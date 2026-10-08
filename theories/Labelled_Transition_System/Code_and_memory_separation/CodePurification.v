@@ -26,7 +26,7 @@
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list 
                         finite base decidable finite gmap gmultiset.
-From TestingTheory Require Import MultisetHelper ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain.
+From TestingTheory Require Import ActTau MultisetHelper ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain.
 
 
 (** * Separating code from memory *)
@@ -83,7 +83,7 @@ Proof.
   - multiset_solver.
   - intros r l.
     destruct (decide (η = η0)); subst.
-    + assert (eq_rel p2 r) by (eapply nb_determinacy; eassumption).
+    + assert (p2 ⋍ r) by (eapply nb_determinacy; eassumption).
       eapply gmultiset_disj_union_inj_1 in x. subst.
       eapply strip_eq. eassumption. symmetry. assumption.
     + assert (m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
@@ -395,7 +395,7 @@ Proof.
   - multiset_solver.
   - intros r l.
     destruct (decide (η = η0)); subst.
-    + assert (eq_rel p2 r) by (eapply nb_determinacy; eassumption).
+    + assert (p2 ⋍ r) by (eapply nb_determinacy; eassumption).
       eapply gmultiset_disj_union_inj_1 in x. subst.
       eapply strip_eq. eassumption. symmetry. assumption.
     + assert (m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
@@ -456,7 +456,7 @@ Proof.
           eapply lts_oba_mo_spec_bis2 in mem. destruct mem as (p2 & nb & l).
           eapply Hyp in nb. symmetry in eq. edestruct (eq_spec r' p2) as (r'' & l' & equiv').
           exists r; split; eauto. 
-          assert (¬ r' ↛[η]). eapply lts_refuses_spec2; exists r''; eauto. contradiction.
+          assert (r' ⟶[η]). eapply lts_performs_spec2; exists r''; eauto. contradiction.
     ++ multiset_solver.
   + intros r r' stripped Hyp.
     assert (exists r'', r ⟶[x] r'') as (r'' & HypTr).
@@ -477,10 +477,10 @@ Proof.
   intros w.
   dependent induction w.
   - intros η nb.
-    destruct (decide (p ↛[η])) as [refuses | accepts].
-    + eapply refuses_preserved_by_eq; eauto.
-    + eapply lts_refuses_spec1 in accepts as (q & l).
+    destruct (decide (p ⟶[η])) as [accepts | refuses].
+    + eapply lts_performs_spec1 in accepts as (q & l).
       eapply lts_oba_mo_spec_bis1 in l; eauto. multiset_solver.
+    + eapply refuses_preserved_by_eq; eauto.
   - eapply lts_oba_mo_spec2 in H2. rewrite <- x in H2.
     eapply gmultiset_disj_union_inj_1 in H2. eauto. eassumption.
 Qed.

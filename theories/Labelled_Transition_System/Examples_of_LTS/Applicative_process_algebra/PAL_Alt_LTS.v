@@ -250,19 +250,19 @@ Section PAL_Alt.
         eval_out_tuple t = Some ot →
         lts_step_a (out( t ) • 𝟘) (ActExt (AOut ot)) 𝟘
     (* AR4, + symmetric *)
-    | aar4_l E1 E2 mu E1' : lts_step_a E1 (ActExt mu) E1' → lts_step_a (E1 □ E2) (ActExt mu) E1'
-    | aar4_r E1 E2 mu E2' : lts_step_a E2 (ActExt mu) E2' → lts_step_a (E1 □ E2) (ActExt mu) E2'
+    | aar4_l E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 □ E2) (ActExt μ) E1'
+    | aar4_r E1 E2 μ E2' : lts_step_a E2 (ActExt μ) E2' → lts_step_a (E1 □ E2) (ActExt μ) E2'
     (* AR5, + symmetric *)
-    | aar5_l E1 E2 mu E1' : lts_step_a E1 (ActExt mu) E1' → lts_step_a (E1 ‖ E2) (ActExt mu) (E1' ‖ E2)
-    | aar5_r E1 E2 mu E2' : lts_step_a E2 (ActExt mu) E2' → lts_step_a (E1 ‖ E2) (ActExt mu) (E1 ‖ E2')
+    | aar5_l E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 ‖ E2) (ActExt μ) (E1' ‖ E2)
+    | aar5_r E1 E2 μ E2' : lts_step_a E2 (ActExt μ) E2' → lts_step_a (E1 ‖ E2) (ActExt μ) (E1 ‖ E2')
     (* AR6 *)
-    | aar6 E1 E2 mu E1' : lts_step_a E1 (ActExt mu) E1' → lts_step_a (E1 ⌊ E2) (ActExt mu) (E1' ‖ E2)
+    | aar6 E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 ⌊ E2) (ActExt μ) (E1' ‖ E2)
     (* AR7 *)
-    | aar7 be E1 E2 mu E1' :
-        eval_bexp be = Some true → lts_step_a E1 (ActExt mu) E1' → lts_step_a (IF be THEN E1 ELSE E2) (ActExt mu) E1'
+    | aar7 be E1 E2 μ E1' :
+        eval_bexp be = Some true → lts_step_a E1 (ActExt μ) E1' → lts_step_a (IF be THEN E1 ELSE E2) (ActExt μ) E1'
     (* AR8 *)
-    | aar8 be E1 E2 mu E2' :
-        eval_bexp be = Some false → lts_step_a E2 (ActExt mu) E2' → lts_step_a (IF be THEN E1 ELSE E2) (ActExt mu) E2'
+    | aar8 be E1 E2 μ E2' :
+        eval_bexp be = Some false → lts_step_a E2 (ActExt μ) E2' → lts_step_a (IF be THEN E1 ELSE E2) (ActExt μ) E2'
     (* IR1 *)
     | air1 : lts_step_a Ω τ Ω
     (* IR2 *)
@@ -290,12 +290,12 @@ Section PAL_Alt.
     (* IR11 *)
     | air11 E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 ⌊ E2) τ (E1' ⌊ E2)
     (* IR12: synchronisation along dual labels *)
-    | air12 E1 E2 mu1 mu2 E1' E2' :
-        lts_step_a E1 (ActExt mu1) E1' → lts_step_a E2 (ActExt mu2) E2' → PALA_dual mu1 mu2 →
+    | air12 E1 E2 μ1 μ2 E1' E2' :
+        lts_step_a E1 (ActExt μ1) E1' → lts_step_a E2 (ActExt μ2) E2' → PALA_dual μ1 μ2 →
         lts_step_a (E1 ‖ E2) τ (E1' ‖ E2')
     (* IR13 *)
-    | air13 E1 E2 mu1 mu2 E1' E2' :
-        lts_step_a E1 (ActExt mu1) E1' → lts_step_a E2 (ActExt mu2) E2' → PALA_dual mu1 mu2 →
+    | air13 E1 E2 μ1 μ2 E1' E2' :
+        lts_step_a E1 (ActExt μ1) E1' → lts_step_a E2 (ActExt μ2) E2' → PALA_dual μ1 μ2 →
         lts_step_a (E1 |ₖ E2) τ (E1' ‖ E2').
   Close Scope pal_scope.
 
@@ -560,7 +560,7 @@ Section PAL_Alt.
     - apply in_or_app. left. apply in_map_iff. by exists E1'.
     - apply in_or_app. right. apply in_or_app. left. apply in_map_iff. by exists E2'.
     - apply in_map_iff. by exists E1'.
-    - destruct mu1 as [l1|a1], mu2 as [l2|a2]; simpl in *; try contradiction.
+    - destruct μ1 as [l1|a1], μ2 as [l2|a2]; simpl in *; try contradiction.
       + pose proof (out_step_in_collect_out_a E2 a2 E2' ltac:(assumption)) as ha.
         apply in_or_app; right; apply in_or_app; right; apply in_or_app; right.
         apply in_flat_map. exists a2. split; [done |].
@@ -573,7 +573,7 @@ Section PAL_Alt.
         apply in_flat_map. exists E1'. split; [exact IHlts_step_a1 |].
         apply in_map_iff. exists E2'. split; [done |].
         apply in_flat_map. exists l2. split; [by apply labels_of_spec | exact IHlts_step_a2].
-    - destruct mu1 as [l1|a1], mu2 as [l2|a2]; simpl in *; try contradiction.
+    - destruct μ1 as [l1|a1], μ2 as [l2|a2]; simpl in *; try contradiction.
       + pose proof (out_step_in_collect_out_a E2 a2 E2' ltac:(assumption)) as ha.
         apply in_or_app; right; apply in_or_app; right; apply in_or_app; right.
         apply in_flat_map. exists a2. split; [done |].
@@ -590,7 +590,7 @@ Section PAL_Alt.
 
   (** ** [gLts] instance *)
 
-  Definition PALA_refuses (p : term) (α : Act PALA_Act) : Prop := all_steps_a p α = [].
+  Definition PALA_performs (p : term) (α : Act PALA_Act) : Prop := all_steps_a p α ≠ [].
 
   #[global] Instance PALA_step_dec p α q : Decision (lts_step_a p α q).
   Proof.
@@ -599,25 +599,25 @@ Section PAL_Alt.
     - right. intros h. by apply hnin, all_steps_a_complete.
   Defined.
 
-  #[global] Instance PALA_refuses_dec p α : Decision (PALA_refuses p α).
-  Proof. unfold PALA_refuses. destruct (all_steps_a p α); [left | right]; done. Defined.
+  #[global] Instance PALA_performs_dec p α : Decision (PALA_performs p α).
+  Proof. unfold PALA_performs. destruct (all_steps_a p α); [right; intros hne; by apply hne | left; discriminate]. Defined.
 
-  Definition PALA_refuses_spec1 p α : ¬ PALA_refuses p α → {q | lts_step_a p α q}.
+  Definition PALA_performs_spec1 p α : PALA_performs p α → {q | lts_step_a p α q}.
   Proof.
-    unfold PALA_refuses. intros hne.
+    unfold PALA_performs. intros hne.
     destruct (all_steps_a p α) as [|q l] eqn:e; [done |].
     exists q. apply all_steps_a_sound. rewrite e. by left.
   Defined.
 
-  Definition PALA_refuses_spec2 p α : {q | lts_step_a p α q} → ¬ PALA_refuses p α.
+  Definition PALA_performs_spec2 p α : {q | lts_step_a p α q} → PALA_performs p α.
   Proof.
-    intros [q h] href. unfold PALA_refuses in href.
+    intros [q h] href.
     apply all_steps_a_complete in h. by rewrite href in h.
   Defined.
 
   #[global] Instance PALA_gLts : gLts term PALA_ExtAction :=
     @MkgLts term PALA_Act PALA_ExtAction lts_step_a term_eqdec PALA_step_dec
-      PALA_refuses PALA_refuses_dec PALA_refuses_spec1 PALA_refuses_spec2.
+      PALA_performs PALA_performs_dec PALA_performs_spec1 PALA_performs_spec2.
 
   (** ** [FiniteImagegLts]/[coFiniteImagegLts] *)
 
@@ -690,8 +690,8 @@ Section PAL_Alt.
       exists a1. split; [done | by eapply out_step_in_collect_out_a].
   Qed.
 
-  Lemma PALA_co_inter_action_spec (μ ξ : PALA_Act) :
-    PALA_dual μ ξ → μ ∈ (list_to_set (co_labels ξ) : gset PALA_Act).
+  Lemma PALA_co_inter_action_spec (μ2 μ1 : PALA_Act) :
+    PALA_dual μ2 μ1 → μ2 ∈ (list_to_set (co_labels μ1) : gset PALA_Act).
   Proof. intros hx. apply elem_of_list_to_set, list_elem_of_In. by apply co_labels_spec. Qed.
 
   #[global] Instance PALA_Prop_of_Inter : Prop_of_Inter term term PALA_Act PALA_Act PALA_dual := {|

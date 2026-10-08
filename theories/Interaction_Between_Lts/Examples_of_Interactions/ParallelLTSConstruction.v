@@ -82,10 +82,10 @@ Definition parallel_sts {P1 P2} {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H
   {| sts_step x y := inter_step x τ y;
      sts_state_eqdec := @sts_state_eqdec _ S0;
      sts_step_decidable := @sts_step_decidable _ S0;
-     sts_refuses := @sts_refuses _ S0;
-     sts_refuses_decidable := @sts_refuses_decidable _ S0;
-     sts_refuses_spec1 := @sts_refuses_spec1 _ S0;
-     sts_refuses_spec2 := @sts_refuses_spec2 _ S0 |}.
+     sts_performs := @sts_performs _ S0;
+     sts_performs_decidable := @sts_performs_decidable _ S0;
+     sts_performs_spec1 := @sts_performs_spec1 _ S0;
+     sts_performs_spec2 := @sts_performs_spec2 _ S0 |}.
 
 (* Found by first finding the interaction: the two LTSs of [p ∥ t] are then
    the ones the interaction is stated for (e.g. [gLtsEq_gLts VCCS_gLtsEq]),

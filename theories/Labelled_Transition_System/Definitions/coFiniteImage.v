@@ -86,7 +86,7 @@ Class coFiniteImagegLts (P A : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLts
 Proof.
   unshelve econstructor.
   - exact cofolts_states_countable.
-  - intros p ℓ. destruct ℓ as [a|].
+  - intros p α. destruct α as [a|].
     + unshelve eapply finite_countable.
       eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => exists α', sync α' (co a) /\ p ⟶[α'] q))))).
       intros q Hq. eapply bool_decide_unpack in Hq.
@@ -161,12 +161,12 @@ Qed.
    [coFiniteImagegLts]'s own [cofolts_tau_next_states_finite]/
    [cofolts_states_countable] fields instead of [FiniteImagegLts], so this
    cluster never needs [FiniteImagegLts P A] as a sibling assumption. *)
-Fixpoint cowt_set_nil (p : P) (t : terminate p) : gset P :=
+Fixpoint cowt_set_nil (p : P) (t : p ⤓) : gset P :=
   let '(tstep _ f) := t in
   let k q := cowt_set_nil (`q) (f (`q) (proj2_dsig q)) in
   {[ p ]} ∪ ⋃ map k (enum $ dsig (fun x => p ⟶ x)).
 
-Lemma cowt_set_nil_spec1 p q (tp : terminate p) :
+Lemma cowt_set_nil_spec1 p q (tp : p ⤓) :
   q ∈ cowt_set_nil p tp -> p ⟹ᶜᵒ q.
 Proof.
   intro mem. eapply cowt_iff_wt_nil.
@@ -183,7 +183,7 @@ Proof.
 Qed.
 
 Lemma cowt_set_nil_spec2 p q :
-    forall (tp : terminate p), p ⟹ᶜᵒ q -> q ∈ cowt_set_nil p tp.
+    forall (tp : p ⤓), p ⟹ᶜᵒ q -> q ∈ cowt_set_nil p tp.
 Proof.
   intros tp Htp%cowt_iff_wt_nil. revert tp. dependent induction Htp; intros tp; destruct tp.
   + set_solver.
@@ -206,7 +206,7 @@ Proof.
 Qed.
 
 Lemma cowt_set_nil_fin_aux
-  (p : P) (ht : terminate p) (d : ∀ q, Decision (p ⟹ᶜᵒ q)) :
+  (p : P) (ht : p ⤓) (d : ∀ q, Decision (p ⟹ᶜᵒ q)) :
       Finite (dsig (fun q => p ⟹ᶜᵒ q)).
 Proof.
   unfold dsig.
@@ -314,8 +314,8 @@ Definition cowt_set_mu_fin
 (** *** The set of states reachable along a whole co-weak trace *)
 
 Fixpoint cowt_set
-  (p : P) (s : trace A) (hcocnv : cocnv p s) : gset P :=
-  match s as s0 return cocnv p s0 -> gset P with
+  (p : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) : gset P :=
+  match s as s0 return p ⇓ᶜᵒ s0 -> gset P with
   | [] =>
       fun _ => cowt_set_nil p (cocnv_terminate p _ hcocnv)
   | μ :: s' =>
@@ -389,12 +389,12 @@ Lemma cocnv_cowt_s_terminate
 Proof. eapply cocnv_iff_prefix_terminate; eauto. Qed.
 
 Fixpoint cowt_nil_refuses_set (p : P) (ht : p ⤓) : gset P :=
-  match lts_refuses_decidable p τ with
-  | left  _ => {[ p ]}
-  | right _ =>
+  match decide (p ⟶) with
+  | left _ =>
       let '(tstep _ f) := ht in
       let k p := cowt_nil_refuses_set (`p) (f (`p) (proj2_dsig p)) in
       ⋃ map k (enum (dsig (fun q => p ⟶ q)))
+  | right _ => {[ p ]}
   end.
 
 Lemma cowt_nil_refuses_set_spec1
@@ -406,14 +406,14 @@ Proof.
   { revert q mem.
     case ht. induction ht as [p H1 H2].
     intros ht q mem. simpl in mem.
-    case (lts_refuses_decidable p τ) in mem.
-    - eapply elem_of_singleton_1 in mem. subst. eauto with mdb.
+    case (decide (p ⟶)) in mem.
     - eapply elem_of_union_list in mem as (g & mem1 & mem2).
       eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
       simpl in mem2. case (ht t (proj2_dsig (t ↾ hw1))) eqn:eq.
       edestruct (H2 t). now eapply bool_decide_unpack. eassumption.
       split; eauto with mdb. eapply wt_tau. eapply bool_decide_unpack.
-      eassumption. eassumption. }
+      eassumption. eassumption.
+    - eapply elem_of_singleton_1 in mem. subst. eauto with mdb. }
   split; [eapply cowt_iff_wt_nil; exact w | exact hst].
 Qed.
 
@@ -422,12 +422,12 @@ Lemma cowt_nil_refuses_set_spec2
   (p ⟹ᶜᵒ q /\ q ↛) -> q ∈ cowt_nil_refuses_set p ht.
 Proof.
   intros (hw%cowt_iff_wt_nil & hst). dependent induction hw; case ht; induction ht; intros ht; simpl.
-  - case (lts_refuses_decidable p τ); set_solver.
-  - case (lts_refuses_decidable p τ); intro hst'.
-    + exfalso. eapply (lts_refuses_spec2 p τ); eauto.
+  - case (decide (p ⟶)); set_solver.
+  - case (decide (p ⟶)); intro hst'.
     + eapply elem_of_union_list.
       eexists. split. eapply list_elem_of_fmap.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
+    + exfalso. apply hst', (lts_performs_spec2 p τ). eauto.
 Qed.
 
 Definition cowt_refuses_set
@@ -486,7 +486,7 @@ Definition cowt_refuses_set_fin
   cowt_refuses_set_fin_aux p s hcocnv (cowt_refuses_set_dec p s hcocnv).
 
 Lemma cowt_nil_set_refuses p hcocnv :
-  lts_refuses p τ -> cowt_set p [] hcocnv = {[ p ]}.
+  (p ↛) -> cowt_set p [] hcocnv = {[ p ]}.
 Proof.
   intros hst.
   eapply leibniz_equiv.
@@ -495,20 +495,20 @@ Proof.
     eapply cowt_set_spec1 in mem. eapply cowt_iff_wt_nil in mem.
     inversion mem; subst.
     + set_solver.
-    + exfalso. eapply lts_refuses_spec2; eauto.
+    + exfalso. apply hst, lts_performs_spec2. eauto.
   - intro mem. eapply cowt_set_spec2. replace q with p.
     eapply cowt_iff_wt_nil. eauto with mdb. set_solver.
 Qed.
 
 Lemma cowt_refuses_set_refuses_singleton p hcocnv :
-  lts_refuses p τ -> cowt_refuses_set p [] hcocnv = {[ p ]}.
+  (p ↛) -> cowt_refuses_set p [] hcocnv = {[ p ]}.
 Proof.
   intro hst.
   eapply leibniz_equiv.
   intro q. split; intro mem.
   - eapply cowt_refuses_set_spec1 in mem as (w & hst').
     eapply cowt_iff_wt_nil in w.
-    inversion w; subst. set_solver. exfalso. eapply lts_refuses_spec2; eauto.
+    inversion w; subst. set_solver. exfalso. apply hst, lts_performs_spec2. eauto.
   - eapply elem_of_singleton_1 in mem. subst.
     eapply cowt_refuses_set_spec2. split; eauto with mdb.
 Qed.

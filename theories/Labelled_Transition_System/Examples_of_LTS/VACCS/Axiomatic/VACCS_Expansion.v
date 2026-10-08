@@ -57,7 +57,7 @@ Context `{VP : VACCS_Parameters}.
 
 Lemma must_same_lts_dir : forall (p q : proc),
   (forall p', p ⟶ p' <-> q ⟶ p') ->
-  (forall mu p', p ⟶[mu] p' <-> q ⟶[mu] p') ->
+  (forall μ p', p ⟶[μ] p' <-> q ⟶[μ] p') ->
   forall t, p must_pass t -> q must_pass t.
 Proof.
   intros p q Htau Hext t Hm.
@@ -79,14 +79,14 @@ Qed.
 
 Lemma must_same_lts : forall (p q : proc),
   (forall p', p ⟶ p' <-> q ⟶ p') ->
-  (forall mu p', p ⟶[mu] p' <-> q ⟶[mu] p') ->
+  (forall μ p', p ⟶[μ] p' <-> q ⟶[μ] p') ->
   forall t, p must_pass t <-> q must_pass t.
 Proof.
   intros p q Htau Hext t. split.
   - apply must_same_lts_dir; assumption.
   - apply must_same_lts_dir.
     + intro p'. symmetry. apply Htau.
-    + intros mu p'. symmetry. apply Hext.
+    + intros μ p'. symmetry. apply Hext.
 Qed.
 
 (** ** A guarded sum never emits
@@ -291,7 +291,7 @@ Proof.
   - intro p'. split.
     + intro H. apply lts_choice2_iff. apply expansion_lts_iff. exact H.
     + intro H. apply expansion_lts_iff. apply lts_choice2_iff. exact H.
-  - intros mu p'. split.
+  - intros μ p'. split.
     + intro H. apply lts_choice2_iff. apply expansion_lts_iff. exact H.
     + intro H. apply expansion_lts_iff. apply lts_choice2_iff. exact H.
 Qed.
@@ -345,7 +345,7 @@ Proof.
     + apply lts_choiceR. assumption.
     + inversion H4.
     + apply lts_choiceR. assumption.
-  - intros mu p'. split; intro H; inversion H; subst.
+  - intros μ p'. split; intro H; inversion H; subst.
     + inversion H4.
     + apply lts_choiceR. assumption.
     + inversion H4.

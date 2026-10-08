@@ -153,9 +153,9 @@ Qed.
 
 (** *** Cancelling an action of the trace against its dual *)
 
-Lemma cocnv_annhil_base_fw p (η ν : Atest) s2 s3 :
-  Forall non_blocking s2 → non_blocking η → dual ν η →
-  p ⇓ᶜᵒ ([η] ++ s2 ++ [ν] ++ s3) → p ⇓ᶜᵒ (s2 ++ s3).
+Lemma cocnv_annhil_base_fw p (η μ1 : Atest) s2 s3 :
+  Forall non_blocking s2 → non_blocking η → dual μ1 η →
+  p ⇓ᶜᵒ ([η] ++ s2 ++ [μ1] ++ s3) → p ⇓ᶜᵒ (s2 ++ s3).
 Proof.
   intros his2 nbη duo hc.
   (* [η] names the non-blocking action [γ := inr η] of the process;
@@ -168,17 +168,17 @@ Proof.
   { exists p. split; [| reflexivity]. eapply wt_act; [exact l2 | apply wt_nil]. }
   simpl in hc.
   inversion hc as [| p' η' rest hp hclause]; subst.
-  assert (ht : t ⇓ᶜᵒ (s2 ++ [ν] ++ s3)) by (by eapply hclause).
+  assert (ht : t ⇓ᶜᵒ (s2 ++ [μ1] ++ s3)) by (by eapply hclause).
   destruct w2 as (p' & w2 & heqp').
   apply wt_decomp_one in w2 as (r1 & r2 & wr1 & lη & wr2).
   assert (r1cowt : t ⟹ᶜᵒ r1) by (apply (cowt_iff_wt_nil); exact wr1).
-  assert (hr1 : r1 ⇓ᶜᵒ (s2 ++ ν :: s3))
+  assert (hr1 : r1 ⇓ᶜᵒ (s2 ++ μ1 :: s3))
     by (eapply cocnv_preserved_by_cowt_nil; eauto).
   (* [inr_spec]'s third clause: dualising [η] on the observer side is
      answered by [γ] itself on the process side *)
-  assert (hsyγν : sync γ ν) by (by apply hdν).
+  assert (hsyγν : sync γ μ1) by (by apply hdν).
   assert (hr2 : r2 ⇓ᶜᵒ (s2 ++ s3))
-    by (eapply (cocnv_drop_action_in_the_middle_fw r1 s2 s3 ν his2 hr1 r2 γ);
+    by (eapply (cocnv_drop_action_in_the_middle_fw r1 s2 s3 μ1 his2 hr1 r2 γ);
         [exact hsyγν | exact lη]).
   assert (r2cowt : r2 ⟹ᶜᵒ p') by (apply (cowt_iff_wt_nil); exact wr2).
   assert (hp' : p' ⇓ᶜᵒ (s2 ++ s3))
@@ -186,9 +186,9 @@ Proof.
   eapply cocnv_eq_preserved; [exact heqp' | exact hp'].
 Qed.
 
-Lemma cocnv_annhil_fw p (η ν : Atest) s1 s2 s3 :
-  Forall non_blocking s1 → Forall non_blocking s2 → non_blocking η → dual ν η →
-  p ⇓ᶜᵒ (s1 ++ [η] ++ s2 ++ [ν] ++ s3) → p ⇓ᶜᵒ (s1 ++ s2 ++ s3).
+Lemma cocnv_annhil_fw p (η μ : Atest) s1 s2 s3 :
+  Forall non_blocking s1 → Forall non_blocking s2 → non_blocking η → dual μ η →
+  p ⇓ᶜᵒ (s1 ++ [η] ++ s2 ++ [μ] ++ s3) → p ⇓ᶜᵒ (s1 ++ s2 ++ s3).
 Proof.
   intros his1 his2 nbη duo. revert p.
   induction s1 as [| a s1' IH]; intros p hc; simpl in *.

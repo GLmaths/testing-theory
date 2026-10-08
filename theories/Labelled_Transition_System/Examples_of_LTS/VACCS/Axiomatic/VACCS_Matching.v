@@ -78,7 +78,7 @@ Context `{VP : VACCS_Parameters}.
 Lemma wt_nil_stable : forall (p q : proc), p ↛ -> p ⟹[[]] q -> q = p.
 Proof.
   intros p q Hst H. remember (@nil (ExtAct TypeOfActions)) as s eqn:Hs.
-  induction H as [x|s x r y Hl Hw IH|mu s x r y Hl Hw IH]; subst.
+  induction H as [x|s x r y Hl Hw IH|μ s x r y Hl Hw IH]; subst.
   - reflexivity.
   - exfalso. eapply stable_no_lts; [ exact Hst | exact Hl ].
   - discriminate.
@@ -426,7 +426,7 @@ Fixpoint mirrorN (P : proc) (N : gproc) : gproc :=
   | gpr_nil => gpr_nil
   | gpr_input c _ => fwdg c P
   | gpr_tau p => gpr_tau p
-  | gpr_choice N1 N2 => gpr_choice (mirrorN P N1) (mirrorN P N2)
+  | gpr_choice N1 N2 => (mirrorN P N1) + (mirrorN P N2)
   end.
 
 (** The premise Phase B needs at each of [N]'s summands: the recursive
@@ -579,7 +579,7 @@ Fixpoint guardsN (N : gproc) : gproc :=
   | gpr_nil => gpr_nil
   | gpr_input c _ => gpr_input c (c ! (bvar 0) • 𝟘)
   | gpr_tau p => gpr_tau p
-  | gpr_choice N1 N2 => gpr_choice (guardsN N1) (guardsN N2)
+  | gpr_choice N1 N2 => (guardsN N1) + (guardsN N2)
   end.
 
 Lemma guardsN_copycats : forall N, (forall p, ~ lts (g N) τ p) -> gCopycats (guardsN N).
@@ -1033,7 +1033,7 @@ Qed.
 
 Lemma wt_size_le : forall (p : proc) s q, Static p -> p ⟹[s] q -> (size q <= size p)%nat.
 Proof.
-  intros p s q HS H. induction H as [x|s0 x r y Hl Hw IH|mu s0 x r y Hl Hw IH].
+  intros p s q HS H. induction H as [x|s0 x r y Hl Hw IH|μ s0 x r y Hl Hw IH].
   - lia.
   - assert (Hlt : (size r < size x)%nat) by (eapply Static_lts_decrease; eassumption).
     assert (HSr : Static r) by (eapply Static_preserved_by_lts; eassumption).
@@ -1043,16 +1043,16 @@ Proof.
     specialize (IH HSr). lia.
 Qed.
 
-Lemma wt_act_size_lt : forall (p : proc) mu s q, Static p -> p ⟹[mu :: s] q ->
+Lemma wt_act_size_lt : forall (p : proc) μ s q, Static p -> p ⟹[μ :: s] q ->
   (size q < size p)%nat.
 Proof.
-  intros p mu s q HS H. remember (mu :: s) as s0 eqn:Hs.
-  revert mu s Hs HS.
-  induction H as [x|s1 x r y Hl Hw IH|mu1 s1 x r y Hl Hw IH]; intros mu s Hs HS.
+  intros p μ s q HS H. remember (μ :: s) as s0 eqn:Hs.
+  revert μ s Hs HS.
+  induction H as [x|s1 x r y Hl Hw IH|μ1 s1 x r y Hl Hw IH]; intros μ s Hs HS.
   - discriminate.
   - assert (Hlt : (size r < size x)%nat) by (eapply Static_lts_decrease; eassumption).
     assert (HSr : Static r) by (eapply Static_preserved_by_lts; eassumption).
-    specialize (IH mu s Hs HSr). lia.
+    specialize (IH μ s Hs HSr). lia.
   - assert (Hlt : (size r < size x)%nat) by (eapply Static_lts_decrease; eassumption).
     assert (HSr : Static r) by (eapply Static_preserved_by_lts; eassumption).
     assert (Hle : (size y <= size r)%nat) by (eapply wt_size_le; eassumption). lia.
@@ -1384,8 +1384,8 @@ Proof.
   destruct (grestrict_offers N M c HM HN) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (grestrict N M)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-            ((g (grestrict N M)) ▷ m) τ); [ | exact Hst ].
+  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+            ((g (grestrict N M)) ▷ m) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
 Qed.
@@ -1475,8 +1475,8 @@ Proof.
   destruct (offers_mirrorN M N c w r Hr) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (mirrorN M N)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-            ((g (mirrorN M N)) ▷ m) τ); [ | exact Hst ].
+  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+            ((g (mirrorN M N)) ▷ m) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
 Qed.
@@ -1536,8 +1536,8 @@ Proof.
   destruct (offers_mirrorN M N c w r Hr) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (mirrorN M N)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-            ((g (mirrorN M N)) ▷ (m ⊎ bag l)) τ); [ | exact Hst ].
+  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+            ((g (mirrorN M N)) ▷ (m ⊎ bag l)) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
 Qed.
@@ -2411,20 +2411,20 @@ Proof.
     + exists p1, q1, m'. split; [ reflexivity | split; [ reflexivity | exact Hc1 ] ].
 Qed.
 
-Lemma step_cgr_ext : forall x y mu x1, Rcgr x y -> x ⟶[mu] x1 ->
-  exists y1, y ⟶[mu] y1 /\ Rcgr x1 y1.
+Lemma step_cgr_ext : forall x y μ x1, Rcgr x y -> x ⟶[μ] x1 ->
+  exists y1, y ⟶[μ] y1 /\ Rcgr x1 y1.
 Proof.
-  intros x y mu x1 (p & q & m & Ex & Ey & Hc) Hl. subst x y.
-  destruct (fw_ext_shape p m mu x1 Hl) as [HA|[HB|HC]].
+  intros x y μ x1 (p & q & m & Ex & Ey & Hc) Hl. subst x y.
+  destruct (fw_ext_shape p m μ x1 Hl) as [HA|[HB|HC]].
   - destruct HA as (p1 & Hp1 & E). subst x1.
-    destruct (cgr_lts_transfer p q (ActExt mu) p1 Hc Hp1) as (q1 & Hq1 & Hc1).
+    destruct (cgr_lts_transfer p q (ActExt μ) p1 Hc Hp1) as (q1 & Hq1 & Hc1).
     exists (q1 ▷ m). split; [ apply fw_ext_left; exact Hq1 | ].
     exists p1, q1, m. split; [ reflexivity | split; [ reflexivity | exact Hc1 ] ].
-  - destruct HB as (b & Hb & E). subst mu x1.
+  - destruct HB as (b & Hb & E). subst μ x1.
     exists (q ▷ ({[+ ActOut b +]} ⊎ m)). split; [ apply fw_input_always | ].
     exists p, q, ({[+ ActOut b +]} ⊎ m).
     split; [ reflexivity | split; [ reflexivity | exact Hc ] ].
-  - destruct HC as (b & m' & Hb & HK & E). subst mu x1.
+  - destruct HC as (b & m' & Hb & HK & E). subst μ x1.
     exists (q ▷ m'). split.
     + rewrite HK. apply fw_emit.
     + exists p, q, m'. split; [ reflexivity | split; [ reflexivity | exact Hc ] ].
@@ -2748,19 +2748,19 @@ Qed.
     since an emission cannot be replayed backwards. *)
 
 Theorem copre_settles_ichoice_after :
-  forall (l l' : list TypeOfActions) (p q : proc) mu y', Static p ->
+  forall (l l' : list TypeOfActions) (p q : proc) μ y', Static p ->
   ((msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ q)) ->
-  ((q ▷ bag l') ⟶[mu] y') -> y' ↛ ->
+  ((q ▷ bag l') ⟶[μ] y') -> y' ↛ ->
   exists L : list cfg,
-    (forall c, In c L -> (p ▷ bag l) ⟹{mu} (cfg_state c))
+    (forall c, In c L -> (p ▷ bag l) ⟹{μ} (cfg_state c))
     /\ Settles (emits y') ((g (ichoice_cfg L)) ▷ (∅ : MO (ExtAct TypeOfActions))).
 Proof.
-  intros l l' p q mu y' Hp Hsem Hl Hst.
+  intros l l' p q μ y' Hp Hsem Hl Hst.
   assert (Hcnv : forall x, x ∈ ({[ (p ▷ bag l) ]} : gset (proc * MO (ExtAct TypeOfActions))) ->
-                   x ⇓ [mu]).
+                   x ⇓ [μ]).
   { intros x Hx. apply elem_of_singleton_1 in Hx. subst x.
     apply fw_converge_static. exact Hp. }
-  destruct (copre_step_single _ _ (q ▷ bag l') y' mu
+  destruct (copre_step_single _ _ (q ▷ bag l') y' μ
               (msgs_copre l l' p q Hsem) Hcnv
               (elem_of_singleton_2 _ _ eq_refl) Hl)
     as (X' & (Hs1 & Hs2) & Hco').
@@ -2939,7 +2939,7 @@ Lemma cfg_tau_run_transfer : forall (x y : proc * MO (ExtAct TypeOfActions)),
   exists p' l' r', y = (p' ▷ bag l') /\ r ⟹[[]] r' /\ r' ≡* (msgs l' ‖ p').
 Proof.
   intros x y Hw. remember (nil : trace (ExtAct TypeOfActions)) as s eqn:Hs.
-  induction Hw as [x0|s0 x0 q0 y0 Hl Hwt IH|mu s0 x0 q0 y0 Hl Hwt IH];
+  induction Hw as [x0|s0 x0 q0 y0 Hl Hwt IH|μ s0 x0 q0 y0 Hl Hwt IH];
     intros p l r Ex Hcgr.
   - subst x0. exists p, l, r.
     split; [ reflexivity | split; [ apply wt_nil | exact Hcgr ] ].
@@ -3009,8 +3009,8 @@ Proof.
   { assert (Hnostep : forall x, ~ (((g N) ▷ bag k) ⟶ x)).
     { apply fw_stable_iff. split; [ exact HstN | ].
       intros a Hin q Hq. eapply Hnoc; [ exact Hin | exact Hq ]. }
-    destruct (decide (lts_refuses ((g N) ▷ bag k) τ)) as [Hy|Hn]; [ exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
+    intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
   destruct (copre_settles_ichoice_along (map ActOut l ++ feed k) l l p (g N)
               ((g N) ▷ bag k) Hp Hsem (drain_refill_run N l k) Hsty)
     as (L & HL & HS).
@@ -3248,17 +3248,17 @@ Proof.
   intros P K L HP HL Hesc x Ht. induction Ht as [x Hacc IH]. intros Hw.
   apply m_step.
   - apply probes_not_good.
-  - destruct (decide (lts_refuses x τ)) as [Hs|Hn].
+  - destruct (decide (x ⟶)) as [Hn | Hs].
+    + apply lts_performs_spec1 in Hn as (z & Hz).
+      exists (z, (g (probes L) : proc)). apply ParLeft. exact Hz.
     + destruct (escapes_in_pchans P K HP Hesc x Hw Hs) as (d & w & r & Hr & Hnot & Hin).
       exists (r, (g ① : proc)).
       eapply (ParSync (ActOut (d,w)) (ActIn (d,w)));
         [ reflexivity | exact Hr | apply probes_in; apply HL; assumption ].
-    + apply lts_refuses_spec1 in Hn as (z & Hz).
-      exists (z, (g (probes L) : proc)). apply ParLeft. exact Hz.
   - intros x' Hx'. apply IH; [ exact Hx' | ].
     eapply wt_push_nil_right; [ exact Hw | eapply wt_tau; [ exact Hx' | apply wt_nil ] ].
   - intros t' Ht'. exfalso. eapply probes_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hdual Hp' Ht'.
+  - intros p' t' μ1 μ2 Hdual Hp' Ht'.
     apply m_now. rewrite (probes_lts_target L _ _ Ht'). constructor.
 Qed.
 
@@ -3825,14 +3825,14 @@ Proof.
       * inversion H3.
       * inversion H3.
     + intros t' Hstep. exact (IHet t' Hstep Hreg Hrendu Hsym eq_refl).
-    + intros p' t' mu1 mu2 Hdual Hp Ht. inversion Hp; subst.
+    + intros p' t' μ1 μ2 Hdual Hp Ht. inversion Hp; subst.
       * inversion H3; subst.
         destruct Hreg as [Pr HPr].
         assert (HPt : Pr must_pass t') by (eapply com; [ exact Hdual | exact HPr | exact Ht ]).
         assert (HG : ((c ? P) : proc) must_pass t') by (eapply Hrendu; [ exact HPr | exact HPt ]).
         exact (proj2 (must_i_cgr _ _ (ax_nil_par ((c ? P) : proc))) t' HG).
       * inversion H3; subst.
-        destruct mu2 as [a2|a2]; simpl in Hdual; try contradiction. subst a2.
+        destruct μ2 as [a2|a2]; simpl in Hdual; try contradiction. subst a2.
         assert (Hc : t ≡* ((c ! v0 • 𝟘) ‖ t'))
           by (eapply TransitionShapeForOutputSimplified; exact Ht).
         assert (Ha : (P ^ v) must_pass ((c ! v0 • 𝟘) ‖ t'))
@@ -4203,11 +4203,11 @@ Lemma trace_out_in_ochans : forall s (p q : proc) c v, Static p ->
   p ⟹[s] q -> In (c,v) (outs s) -> In c (ochans p).
 Proof.
   intros s p q c v Hst Hw. revert Hst.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros Hst Hin.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros Hst Hin.
   - simpl in Hin. contradiction.
   - eapply lts_ochans_target; [ exact Hst | exact Hl | ].
     eapply IH; [ eapply Static_preserved_by_lts; eassumption | exact Hin ].
-  - destruct mu as [[d w]|[d w]]; simpl in Hin.
+  - destruct μ as [[d w]|[d w]]; simpl in Hin.
     + eapply lts_ochans_target; [ exact Hst | exact Hl | ].
       eapply IH; [ eapply Static_preserved_by_lts; eassumption | exact Hin ].
     + destruct Hin as [He|Hin].
@@ -4224,10 +4224,10 @@ Lemma no_regen_of_own_channel : forall (M : gproc),
   forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = [].
 Proof.
   intros M HstM HStat Hcrit r q Hw Hsub.
-  inversion Hw as [ x Hx | s0 x y z Hl Hwt Hs Hx | mu s0 x y z Hl Hwt Hs Hx ]; subst.
+  inversion Hw as [ x Hx | s0 x y z Hl Hwt Hs Hx | μ s0 x y z Hl Hwt Hs Hx ]; subst.
   - reflexivity.
   - exfalso. eapply HstM. exact Hl.
-  - exfalso. destruct mu as [[c v]|[c v]].
+  - exfalso. destruct μ as [[c v]|[c v]].
     + simpl in Hsub.
       assert (Hmem : ActOut (c,v) ∈ bag (outs s0))
         by (eapply gmultiset_elem_of_subseteq;
@@ -4289,11 +4289,11 @@ Lemma trace_in_in_ichans : forall s (p q : proc) c v, Static p ->
   p ⟹[s] q -> In (c,v) (ins s) -> In c (ichans p).
 Proof.
   intros s p q c v Hst Hw. revert Hst.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros Hst Hin.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros Hst Hin.
   - simpl in Hin. contradiction.
   - eapply lts_ichans_target; [ exact Hst | exact Hl | ].
     eapply IH; [ eapply Static_preserved_by_lts; eassumption | exact Hin ].
-  - destruct mu as [[d w]|[d w]]; simpl in Hin.
+  - destruct μ as [[d w]|[d w]]; simpl in Hin.
     + destruct Hin as [He|Hin].
       * injection He as He1 He2. subst d w.
         eapply lts_ichans_in; [ exact Hst | exact Hl | reflexivity ].
@@ -5256,14 +5256,14 @@ Theorem ax_cfg_replay : forall (r : trace (ExtAct TypeOfActions)) (p q : proc),
   exists lf, bag lf ⊎ bag (ins r) = bag l ⊎ bag (outs r)
           /\ (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs lf ‖ q).
 Proof.
-  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | mu s x y z Hl Hwt IH];
+  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | μ s x y z Hl Hwt IH];
     intros l Hsub.
   - exists l. split; [ reflexivity | apply ax_refl ].
   - destruct (IH l Hsub) as (lf & Hbal & Hax).
     exists lf. split; [ exact Hbal | ].
     eapply ax_trans; [ | exact Hax ].
     apply ax_tau_step. apply lts_parR. exact Hl.
-  - destruct mu as [[c v]|[c v]].
+  - destruct μ as [[c v]|[c v]].
     + simpl in Hsub |- *.
       assert (Hin : In (c,v) l).
       { apply bag_elem. eapply gmultiset_elem_of_subseteq; [ | exact Hsub ].
@@ -5543,7 +5543,7 @@ Lemma noresd_wt_target : forall s (p q : proc),
   Static p -> NoResD p -> p ⟹[s] q -> NoResD q.
 Proof.
   intros s p q Hst Hnr Hw. revert Hst Hnr.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros Hst Hnr.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros Hst Hnr.
   - exact Hnr.
   - apply IH.
     + eapply Static_preserved_by_lts; [ exact Hst | exact Hl ].
@@ -5621,11 +5621,11 @@ Qed.
 Definition DomOk (q0 q' : proc) : Prop :=
   exists r', Static r' /\ (size r' < size q0)%nat /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
 
-Lemma domok_of_domsim_wt : forall (q0 q : proc) mu s r,
-  Static q0 -> domsim q0 q -> q ⟹[mu :: s] r -> DomOk q0 r.
+Lemma domok_of_domsim_wt : forall (q0 q : proc) μ s r,
+  Static q0 -> domsim q0 q -> q ⟹[μ :: s] r -> DomOk q0 r.
 Proof.
-  intros q0 q mu s r Hst Hd Hw.
-  destruct (domsim_wt q (mu :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
+  intros q0 q μ s r Hst Hd Hw.
+  destruct (domsim_wt q (μ :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
   exists r'. split; [ | split; [ | split ] ].
   - eapply Static_preserved_by_wt; [ exact Hst | exact Hr' ].
   - eapply wt_act_size_lt; [ exact Hst | exact Hr' ].
@@ -5648,12 +5648,12 @@ Lemma cgr_wt_transfer : forall s (p p' r : proc), p ≡* p' -> p ⟹[s] r ->
   exists r', p' ⟹[s] r' /\ r ≡* r'.
 Proof.
   intros s p p' r Hc Hw. revert p' Hc.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros p' Hc.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros p' Hc.
   - exists p'. split; [ apply wt_nil | exact Hc ].
   - destruct (cgr_lts_transfer x p' τ y Hc Hl) as (y' & Hy' & Hcy).
     destruct (IH y' Hcy) as (r' & Hr' & Hcr).
     exists r'. split; [ eapply wt_tau; [ exact Hy' | exact Hr' ] | exact Hcr ].
-  - destruct (cgr_lts_transfer x p' (ActExt mu) y Hc Hl) as (y' & Hy' & Hcy).
+  - destruct (cgr_lts_transfer x p' (ActExt μ) y Hc Hl) as (y' & Hy' & Hcy).
     destruct (IH y' Hcy) as (r' & Hr' & Hcr).
     exists r'. split; [ eapply wt_act; [ exact Hy' | exact Hr' ] | exact Hcr ].
 Qed.
@@ -5661,7 +5661,7 @@ Qed.
 Lemma domok_of_domsim_wt' : forall (q0 q : proc) s r,
   Static q0 -> domsim q0 q -> q ⟹[s] r -> s <> [] -> DomOk q0 r.
 Proof.
-  intros q0 q s r Hst Hd Hw Hs. destruct s as [|mu s0]; [ contradiction | ].
+  intros q0 q s r Hst Hd Hw Hs. destruct s as [|μ s0]; [ contradiction | ].
   eapply domok_of_domsim_wt; eassumption.
 Qed.
 
@@ -5817,11 +5817,11 @@ Definition DomOkD (q0 q' : proc) : Prop :=
   exists r', Static r' /\ NoResD r' /\ (size r' < size q0)%nat
              /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
 
-Lemma domokd_of_domsim_wt : forall (q0 q : proc) mu s r,
-  Static q0 -> NoResD q0 -> domsim q0 q -> q ⟹[mu :: s] r -> DomOkD q0 r.
+Lemma domokd_of_domsim_wt : forall (q0 q : proc) μ s r,
+  Static q0 -> NoResD q0 -> domsim q0 q -> q ⟹[μ :: s] r -> DomOkD q0 r.
 Proof.
-  intros q0 q mu s r Hst Hnr Hd Hw.
-  destruct (domsim_wt q (mu :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
+  intros q0 q μ s r Hst Hnr Hd Hw.
+  destruct (domsim_wt q (μ :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
   exists r'. split; [ | split; [ | split; [ | split ] ] ].
   - eapply Static_preserved_by_wt; [ exact Hst | exact Hr' ].
   - eapply noresd_wt_target; [ exact Hst | exact Hnr | exact Hr' ].
@@ -5833,7 +5833,7 @@ Qed.
 Lemma domokd_of_domsim_wt' : forall (q0 q : proc) s r,
   Static q0 -> NoResD q0 -> domsim q0 q -> q ⟹[s] r -> s <> [] -> DomOkD q0 r.
 Proof.
-  intros q0 q s r Hst Hnr Hd Hw Hs. destruct s as [|mu s0]; [ contradiction | ].
+  intros q0 q s r Hst Hnr Hd Hw Hs. destruct s as [|μ s0]; [ contradiction | ].
   eapply domokd_of_domsim_wt; eassumption.
 Qed.
 
@@ -6056,11 +6056,11 @@ Proof.
   - intros t' Ht'. inversion Ht'; subst.
     + inversion H3; subst. apply m_now. constructor.
     + inversion H3.
-  - intros p' t' mu1 mu2 Hdual Hp' Ht'. exfalso.
+  - intros p' t' μ1 μ2 Hdual Hp' Ht'. exfalso.
     inversion Ht'; subst.
     + inversion H3.
     + inversion H3; subst.
-      destruct mu1 as [a1|a1]; simpl in Hdual; try contradiction.
+      destruct μ1 as [a1|a1]; simpl in Hdual; try contradiction.
       eapply Hnw; [ apply wt_nil | ]. subst a1. exact Hp'.
 Qed.
 
@@ -6195,11 +6195,11 @@ Proof.
   - intros t2 Ht2. inversion Ht2; subst.
     + inversion H3; subst. apply m_now. constructor.
     + inversion H3.
-  - intros p' t2 mu1 mu2 Hdual Hp' Ht2.
+  - intros p' t2 μ1 μ2 Hdual Hp' Ht2.
     inversion Ht2; subst.
     + inversion H3.
     + inversion H3; subst.
-      destruct mu1 as [a1|a1]; simpl in Hdual; try contradiction.
+      destruct μ1 as [a1|a1]; simpl in Hdual; try contradiction.
       subst a1. rewrite NewVar_subst_cancel.
       eapply Hall; [ apply wt_nil | exact Hp' ].
 Qed.
@@ -6238,7 +6238,7 @@ Qed.
       residues at each of them from [lts_set]. *)
 
 Definition out_vals (c : ChannelData) (u : proc) : list ValueData :=
-  flat_map (fun eta => match eta with
+  flat_map (fun η => match η with
       | ActOut (d,w) => if bool_decide (d = c) then [w] else []
       | _ => [] end) (elements (lts_oba_mo u)).
 
@@ -6381,11 +6381,11 @@ Proof.
   - intros t2 Ht2. inversion Ht2; subst.
     + inversion H3; subst. apply m_now. constructor.
     + inversion H3.
-  - intros p' t2 mu1 mu2 Hdual Hp' Ht2.
+  - intros p' t2 μ1 μ2 Hdual Hp' Ht2.
     inversion Ht2; subst.
     + inversion H3.
     + inversion H3; subst.
-      destruct mu1 as [a1|a1]; simpl in Hdual; try contradiction.
+      destruct μ1 as [a1|a1]; simpl in Hdual; try contradiction.
       subst a1. simpl. rewrite subst_NewVar_in_Data_cancel.
       destruct (Eval_Eq 0 (v == v0)) as [[|]|] eqn:HE.
       * eapply must_eq_client; [ symmetry; apply cgr_if_true; exact HE | ].
@@ -7162,12 +7162,12 @@ Qed.
     [wt_cons_stable] is the companion for a visible action: a stable
     process's run over [μ :: s] must *start* with its [μ]-step. *)
 
-Lemma wt_cons_stable : forall (p r : proc) (mu : ExtAct TypeOfActions)
+Lemma wt_cons_stable : forall (p r : proc) (μ : ExtAct TypeOfActions)
     (s : trace (ExtAct TypeOfActions)),
-  (forall z, ~ lts p τ z) -> p ⟹[mu :: s] r ->
-  exists q, lts p (ActExt mu) q /\ q ⟹[s] r.
+  (forall z, ~ lts p τ z) -> p ⟹[μ :: s] r ->
+  exists q, lts p (ActExt μ) q /\ q ⟹[s] r.
 Proof.
-  intros p r mu s Hst Hwt. inversion Hwt; subst.
+  intros p r μ s Hst Hwt. inversion Hwt; subst.
   - exfalso. eapply Hst. eassumption.
   - eexists. split; eassumption.
 Qed.
@@ -7730,7 +7730,7 @@ Theorem cfg_replay_tau_run : forall (r : trace (ExtAct TypeOfActions)) (p q : pr
             /\ (msgs l ‖ p) ⟹[[]] z
             /\ z ≡* (msgs lf ‖ q).
 Proof.
-  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | mu s x y z Hl Hwt IH];
+  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | μ s x y z Hl Hwt IH];
     intros l Hsub.
   - exists l, (msgs l ‖ x).
     split; [ reflexivity | split; [ apply wt_nil | apply cgr_refl ]].
@@ -7738,7 +7738,7 @@ Proof.
     exists lf, w. split; [ exact Hbal | split; [ | exact Hc ]].
     assert (Hstep : lts (msgs l ‖ x) τ (msgs l ‖ y)) by (apply lts_parR; exact Hl).
     eapply wt_tau; [ exact Hstep | exact Hrun ].
-  - destruct mu as [[c v]|[c v]].
+  - destruct μ as [[c v]|[c v]].
     + simpl in Hsub |- *.
       assert (Hin : In (c,v) l).
       { apply bag_elem. eapply gmultiset_elem_of_subseteq; [ | exact Hsub ].
@@ -8221,10 +8221,10 @@ Qed.
     two sides be compared under the block rather than inside it — inside,
     the bag emits and the two are NOT equivalent. *)
 
-Lemma VarC_action_add_revert : forall k n mu,
-  VarC_action_add (k + n) mu = VarC_action_add k (VarC_action_add n mu).
+Lemma VarC_action_add_revert : forall k n μ,
+  VarC_action_add (k + n) μ = VarC_action_add k (VarC_action_add n μ).
 Proof.
-  intros k n mu. destruct mu as [(c,v)|(c,v)]; simpl; f_equal; f_equal;
+  intros k n μ. destruct μ as [(c,v)|(c,v)]; simpl; f_equal; f_equal;
     apply VarC_add_revert_def.
 Qed.
 
@@ -8232,12 +8232,12 @@ Lemma lts_res_n_shape : forall n (p : proc) al z, lts (Ѵ n p) al z ->
   exists p', z = Ѵ n p' /\
     match al with
     | τ => lts p τ p'
-    | ActExt mu => lts p (ActExt (VarC_action_add n mu)) p'
+    | ActExt μ => lts p (ActExt (VarC_action_add n μ)) p'
     end.
 Proof.
   induction n as [|n IH]; intros p al z Hz.
   - exists z. split; [ reflexivity | ].
-    destruct al as [mu|]; [ rewrite VarC_add_zero_ext | ]; exact Hz.
+    destruct al as [μ|]; [ rewrite VarC_add_zero_ext | ]; exact Hz.
   - simpl in Hz. inversion Hz; subst.
     + destruct (IH p (ActExt (VarC_action_add 1 μ)) p' H0) as (p'' & Heq & Hl).
       exists p''. split; [ simpl; rewrite Heq; reflexivity | ].
@@ -8263,7 +8263,7 @@ match M with
 | gpr_nil => gpr_nil
 | gpr_input c P => gpr_input c ((NewVar 0 (msgs l)) ‖ P)
 | gpr_tau p => gpr_tau ((msgs l) ‖ p)
-| gpr_choice M1 M2 => gpr_choice (bagify l M1) (bagify l M2)
+| gpr_choice M1 M2 => (bagify l M1) + (bagify l M2)
 end.
 
 Lemma bagify_lts_fwd : forall l (M : gproc) al y,
@@ -8356,18 +8356,18 @@ Qed.
 Fixpoint deliv1 (a : ChannelData * ValueData) (B : proc) (M : gproc) : gproc :=
 match M with
 | gpr_input c P => if Data_dec c a.1 then gpr_tau (B ‖ subst_in_proc 0 a.2 P) else gpr_nil
-| gpr_choice M1 M2 => gpr_choice (deliv1 a B M1) (deliv1 a B M2)
+| gpr_choice M1 M2 => (deliv1 a B M1) + (deliv1 a B M2)
 | _ => gpr_nil
 end.
 
 Fixpoint delivs (os : list ((ChannelData * ValueData) * proc)) (M : gproc) : gproc :=
 match os with
 | [] => gpr_nil
-| x :: os' => gpr_choice (deliv1 x.1 x.2 M) (delivs os' M)
+| x :: os' => (deliv1 x.1 x.2 M) + (delivs os' M)
 end.
 
 Definition saturate (l : list (ChannelData * ValueData)) (M : gproc) : gproc :=
-  gpr_choice (bagify l M) (delivs (msg_outs l) M).
+  (bagify l M) + (delivs (msg_outs l) M).
 
 Lemma deliv1_lts_bwd : forall a B M al z,
   lts ((g (deliv1 a B M)) : proc) al z ->
@@ -8437,8 +8437,8 @@ Proof.
   - exfalso. match goal with HH : lts (msgs l) ((_ ▷ _) ?) _ |- _ =>
       eapply msgs_no_input; exact HH end.
   - match goal with HH : lts (msgs l) _ _ |- _ => rename HH into Hm end.
-    destruct al as [mu|].
-    + destruct (msgs_lts_inv l mu _ Hm) as (c0 & v0 & l0 & -> & _ & _).
+    destruct al as [μ|].
+    + destruct (msgs_lts_inv l μ _ Hm) as (c0 & v0 & l0 & -> & _ & _).
       left. exists c0, v0. reflexivity.
     + exfalso. eapply msgs_no_tau. exact Hm.
   - right. unfold saturate. apply lts_choiceL. apply bagify_lts_fwd.
@@ -8451,7 +8451,7 @@ Lemma trapped_saturate_lts_bwd : forall n l (M : gproc) al z,
 Proof.
   intros n l M al z Hz.
   destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
-  destruct al as [mu|].
+  destruct al as [μ|].
   - apply lts_res_ext_n. apply saturate_body_bwd. exact Hl.
   - apply lts_res_tau_n. apply saturate_body_bwd. exact Hl.
 Qed.
@@ -8464,9 +8464,9 @@ Lemma trapped_saturate_lts_fwd : forall n l (M : gproc) al z,
 Proof.
   intros n l M al z Hmu Hz. assert (Hz0 := Hz).
   destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
-  destruct al as [mu|].
+  destruct al as [μ|].
   - destruct (saturate_body_fwd l M _ _ Hl) as [ (d & w & E) | Hs ].
-    + exfalso. destruct mu as [(d0,w0)|(d0,w0)]; simpl in E; [ discriminate E | ].
+    + exfalso. destruct μ as [(d0,w0)|(d0,w0)]; simpl in E; [ discriminate E | ].
       eapply (Hmu d0 w0). exact Hz0.
     + apply lts_res_ext_n. exact Hs.
   - destruct (saturate_body_fwd l M _ _ Hl) as [ (d & w & E) | Hs ]; [ discriminate E | ].

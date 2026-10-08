@@ -106,10 +106,10 @@ Section FeedbackFreeTraces.
   (** An action dual to a non-blocking one is blocking. *)
   Lemma exists_dual_blocking (x : A) (l : trace A) :
     non_blocking x ->
-    Exists (fun μ => dual μ x) l <-> Exists (fun μ => ¬ non_blocking μ /\ dual μ x) l.
+    Exists (fun β => dual β x) l <-> Exists (fun β => ¬ non_blocking β /\ dual β x) l.
   Proof.
-    intro nb. eapply Exists_iff_pt. intro μ. split.
-    - intro d. split; [| exact d]. intro nbμ. exact (dual_blocks μ x nb d nbμ).
+    intro nb. eapply Exists_iff_pt. intro β. split.
+    - intro d. split; [| exact d]. intro nbμ. exact (dual_blocks β x nb d nbμ).
     - now intros (_ & d).
   Qed.
 
@@ -208,15 +208,15 @@ Section RestrictedSimulation.
       eapply wt_push_nil_right; [exact ws2 | exact ws3].
     Qed.
 
-    Lemma rsim_step_b E p1 q1 (μ : A) p2 :
-      R E p1 q1 -> ¬ non_blocking μ -> no_fb_after E μ -> p1 ⟹{μ} p2 ->
-      exists q2, q1 ⟹{μ} q2 /\ R E p2 q2.
+    Lemma rsim_step_b E p1 q1 (β : A) p2 :
+      R E p1 q1 -> ¬ non_blocking β -> no_fb_after E β -> p1 ⟹{β} p2 ->
+      exists q2, q1 ⟹{β} q2 /\ R E p2 q2.
     Proof.
       intros hr nb hok w.
       eapply wt_decomp_one in w as (r1 & r2 & w1 & l & w2).
       destruct (rsim_nil E p1 q1 r1 hr w1) as (s1 & ws1 & hr1).
       destruct hR as (_ & _ & hb).
-      destruct (hb E r1 s1 μ r2 hr1 nb hok l) as (s2 & ws2 & hr2).
+      destruct (hb E r1 s1 β r2 hr1 nb hok l) as (s2 & ws2 & hr2).
       destruct (rsim_nil E r2 s2 p2 hr2 w2) as (s3 & ws3 & hr3).
       exists s3. split; [| exact hr3].
       eapply wt_push_nil_left; [exact ws1 |].

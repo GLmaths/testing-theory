@@ -98,9 +98,9 @@ Proof.
     + (* what is left of [s] is all outputs: [q] co-answers them via BOOMERANG *)
       destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
       assert (hd : ForAllHelper.Forall2 dual s (coₜ s)).
-      { clear. induction s as [| ν s' IHs]; simpl.
+      { clear. induction s as [| μ3 s' IHs]; simpl.
         - constructor.
-        - constructor; [exact (proj2_sig (exists_dual ν)) | exact IHs]. }
+        - constructor; [exact (proj2_sig (exists_dual μ3)) | exact IHs]. }
       exists q'. eapply wt_to_cowt_dual; [exact w | exact hd].
     + (* the test talked to itself: give the pair back to the process by BOOMERANG *)
       destruct (IH (s1 ++ s2 ++ s3)) as (qend & w).
@@ -129,9 +129,9 @@ Proof.
     + (* same escape as above: everything left of [s] is co-answered outright *)
       destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
       assert (hd : ForAllHelper.Forall2 dual s (coₜ s)).
-      { clear. induction s as [| ν s' IHs]; simpl.
+      { clear. induction s as [| μ3 s' IHs]; simpl.
         - constructor.
-        - constructor; [exact (proj2_sig (exists_dual ν)) | exact IHs]. }
+        - constructor; [exact (proj2_sig (exists_dual μ3)) | exact IHs]. }
       exists q'. eapply wt_to_cowt_dual; [exact w | exact hd].
     + (* [q]'s own move co-answers [μ], anticipated past the postponed prefix [s1] *)
       destruct (IH (s1 ++ s2)) as (qend & w).
