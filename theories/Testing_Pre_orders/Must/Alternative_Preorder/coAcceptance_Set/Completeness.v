@@ -992,15 +992,15 @@ Lemma wt_acceptance_set_subseteq `{CC : Countable PreAct} `{
   FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   μ s p q hacnv1 hacnv2 :
   p ⟹{μ} q ->
-  map (coR_abs) (elements (wt_refuses_set q s hacnv1)) ⊆
-    map (coR_abs) (elements (wt_refuses_set p (μ :: s) hacnv2)).
+  map (coR_abs) (elements (wt_stable_set q s hacnv1)) ⊆
+    map (coR_abs) (elements (wt_stable_set p (μ :: s) hacnv2)).
 Proof.
   intros.
   intros a in__a.
-  assert (wt_refuses_set q s hacnv1 ⊆ wt_refuses_set p (μ :: s) hacnv2).
+  assert (wt_stable_set q s hacnv1 ⊆ wt_stable_set p (μ :: s) hacnv2).
   intros t in__t.
-  eapply wt_refuses_set_spec2.
-  eapply wt_refuses_set_spec1 in in__t.
+  eapply wt_stable_set_spec2.
+  eapply wt_stable_set_spec1 in in__t.
   destruct in__t. split; eauto with mdb.
   eapply wt_push_left; eauto.
   set_solver.
@@ -1011,14 +1011,14 @@ Lemma lts_tau_acceptance_set_subseteq `{CC : Countable PreAct} `{
   FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   s p q hacnv1 hacnv2 :
   p ⟶ q ->
-  map coR_abs  (elements $ wt_refuses_set q s hacnv1) ⊆
-    map coR_abs (elements $ wt_refuses_set p s hacnv2).
+  map coR_abs  (elements $ wt_stable_set q s hacnv1) ⊆
+    map coR_abs (elements $ wt_stable_set p s hacnv2).
 Proof.
   intros.
   intros a in__a.
-  assert (wt_refuses_set q s hacnv1 ⊆ wt_refuses_set p s hacnv2).
-  { intros t in__t. eapply wt_refuses_set_spec2.
-    eapply wt_refuses_set_spec1 in in__t.
+  assert (wt_stable_set q s hacnv1 ⊆ wt_stable_set p s hacnv2).
+  { intros t in__t. eapply wt_stable_set_spec2.
+    eapply wt_stable_set_spec1 in in__t.
     destruct in__t. split; eauto with mdb. }
   set_solver.
 Qed.
@@ -1027,7 +1027,7 @@ Definition oas `{CC : Countable PreAct}  `{
   gLtsP : @gLts P A H, FiniteImagegLts P A,
   FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
-  let ps : list P := elements (wt_refuses_set p s hcnv) in
+  let ps : list P := elements (wt_stable_set p s hcnv) in
   ⋃ map coR_abs ps.
 
 Lemma union_wt_acceptance_set_subseteq `{CC : Countable PreAct}  `{
@@ -1098,7 +1098,7 @@ Proof.
         ++ eapply m_now. eapply ta_transition_to_good; eauto.
   + destruct (stable_process_must_ta_or_empty_pre_action_set p E st) as [Hyp | Hyp].
     ++ right. assert (oas p ε hcnv = coR_abs p) as eq.
-       { unfold oas. rewrite wt_refuses_set_refuses_singleton, elements_singleton; eauto.
+       { unfold oas. rewrite wt_stable_set_stable_singleton, elements_singleton; eauto.
          simpl. now rewrite union_empty_r_L. } rewrite eq.
        exact Hyp.
     ++ left. exists p. split; eauto. constructor.
@@ -1125,15 +1125,15 @@ Proof.
     inversion hcnv as [| ? ? ? conv Hyp_conv]; subst.
     assert (hcnv0 : forall p', p' ∈ ps -> p' ⇓ s') by (intros ? mem%wt_set_mu_spec1; eauto).
     assert (he : ∀ p', p' ∈ ps ->
-     ((exists pr p0, p0 ∈ wt_refuses_set p' s' pr ∧ coR_abs p0 ⊆ E) 
+     ((exists pr p0, p0 ∈ wt_stable_set p' s' pr ∧ coR_abs p0 ⊆ E) 
              \/ (exists h, p' must_pass (ta ((oas p' s' h) ∖ E) (coₜ s'))))).
     { intros p' mem. destruct (IHs' p' (hcnv0 _ mem) E) as [(r & w & st & sub)| hm].
       * left. eapply wt_set_mu_spec1 in mem.
-        exists (Hyp_conv _ mem), r. split; [eapply wt_refuses_set_spec2 |]; eauto.
+        exists (Hyp_conv _ mem), r. split; [eapply wt_stable_set_spec2 |]; eauto.
       * right. eauto. }
     destruct (exists_forall_in_gset ps _ _ he) as [Hyp | Hyp].
     + left. destruct Hyp
-          as (p1 & ?%wt_set_mu_spec1 & ? & r & (? & ?)%wt_refuses_set_spec1 & ?).
+          as (p1 & ?%wt_set_mu_spec1 & ? & r & (? & ?)%wt_stable_set_spec1 & ?).
       exists r. repeat split; eauto. eapply wt_push_left; eauto.
     + right.
       assert (dual μ (co μ)) as inter.

@@ -48,7 +48,7 @@ Definition oas `{CC : Countable PreAct}  `{
   gLtsP : @gLts P A H, FiniteImagegLts P A,
   FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
-  let ps : list P := elements (wt_refuses_set p s hcnv) in
+  let ps : list P := elements (wt_stable_set p s hcnv) in
   ⋃ map coR_abs ps.
 
   (* ************************************************** *)
@@ -218,7 +218,7 @@ Proof.
     { eapply elem_of_union_list. eexists. split; eauto.
       eapply list_elem_of_fmap.
       exists p0. repeat split; eauto.
-      eapply elem_of_elements, wt_refuses_set_spec2; split; eauto.
+      eapply elem_of_elements, wt_stable_set_spec2; split; eauto.
       eapply wt_push_nil_right, wt_push_nil_right; eauto. }
     (* eapply lts_performs_spec1 in mem_mu as (p'0 & HypTr). *)
     { destruct (decide (pre_μ ∈ G)).

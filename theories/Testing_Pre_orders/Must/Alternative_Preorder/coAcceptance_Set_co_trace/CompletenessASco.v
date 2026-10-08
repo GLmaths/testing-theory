@@ -829,8 +829,8 @@ Proof. intros hleq s hcnv. now eapply must_iff_cocnv, hleq, must_iff_cocnv. Qed.
     from [Completeness.v]: their statements only ever mention [P]'s plain
     single-step [⟶]/[coR] or the test-side trace [s]/[E] — never [P]'s own
     [⇓]/[⟹] — so nothing about them is specific to the map-[coₜ] vs.
-    relational-[cowt] choice. Only the lemmas built on [wt_refuses_set]
-    (which packages [P]'s own [⇓]/[⟹]) need a [cowt_refuses_set] replacement,
+    relational-[cowt] choice. Only the lemmas built on [wt_stable_set]
+    (which packages [P]'s own [⇓]/[⟹]) need a [cowt_stable_set] replacement,
     below. *)
 
 Lemma after_blocking_co_of_must_tacc_co `{CC : Countable PreAct} `{
@@ -856,15 +856,15 @@ Lemma cowt_acceptance_set_subseteq `{CC : Countable PreAct} `{
   FiniteAbs : !@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 Aproc Hp gLtsP gLtsT SA _ _}
   μ s p q hacnv1 hacnv2 :
   p ⟹ᶜᵒ{μ} q ->
-  map (coR_abs) (elements (cowt_refuses_set q s hacnv1)) ⊆
-    map (coR_abs) (elements (cowt_refuses_set p (μ :: s) hacnv2)).
+  map (coR_abs) (elements (cowt_stable_set q s hacnv1)) ⊆
+    map (coR_abs) (elements (cowt_stable_set p (μ :: s) hacnv2)).
 Proof.
   intros.
   intros a in__a.
-  assert (cowt_refuses_set q s hacnv1 ⊆ cowt_refuses_set p (μ :: s) hacnv2).
+  assert (cowt_stable_set q s hacnv1 ⊆ cowt_stable_set p (μ :: s) hacnv2).
   intros t in__t.
-  eapply cowt_refuses_set_spec2.
-  eapply cowt_refuses_set_spec1 in in__t.
+  eapply cowt_stable_set_spec2.
+  eapply cowt_stable_set_spec1 in in__t.
   destruct in__t. split; eauto with mdb.
   eapply cowt_push_left; eauto.
   set_solver.
@@ -876,14 +876,14 @@ Lemma lts_tau_cowt_acceptance_set_subseteq `{CC : Countable PreAct} `{
   FiniteAbs : !@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 Aproc Hp gLtsP gLtsT SA _ _}
   s p q hacnv1 hacnv2 :
   p ⟶ q ->
-  map coR_abs  (elements $ cowt_refuses_set q s hacnv1) ⊆
-    map coR_abs (elements $ cowt_refuses_set p s hacnv2).
+  map coR_abs  (elements $ cowt_stable_set q s hacnv1) ⊆
+    map coR_abs (elements $ cowt_stable_set p s hacnv2).
 Proof.
   intros.
   intros a in__a.
-  assert (cowt_refuses_set q s hacnv1 ⊆ cowt_refuses_set p s hacnv2).
-  { intros t in__t. eapply cowt_refuses_set_spec2.
-    eapply cowt_refuses_set_spec1 in in__t.
+  assert (cowt_stable_set q s hacnv1 ⊆ cowt_stable_set p s hacnv2).
+  { intros t in__t. eapply cowt_stable_set_spec2.
+    eapply cowt_stable_set_spec1 in in__t.
     destruct in__t. split; eauto with mdb. }
   set_solver.
 Qed.
@@ -893,7 +893,7 @@ Definition cooas `{CC : Countable PreAct}  `{
   !coFiniteImagegLts P A,
   FiniteAbs : !@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 Aproc Hp gLtsP gLtsT SA _ _}
   (p : P) (s : list A) (hcocnv : p ⇓ᶜᵒ s) : gset PreAct :=
-  let ps : list P := elements (cowt_refuses_set p s hcocnv) in
+  let ps : list P := elements (cowt_stable_set p s hcocnv) in
   ⋃ map coR_abs ps.
 
 Lemma union_cowt_acceptance_set_subseteq `{CC : Countable PreAct}  `{
@@ -966,7 +966,7 @@ Proof.
         ++ eapply m_now. eapply ta_transition_to_good; eauto.
   + destruct (stable_process_must_ta_or_empty_pre_action_set p E st) as [Hyp | Hyp].
     ++ right. assert (cooas p ε hcocnv = coR_abs p) as eq.
-       { unfold cooas. rewrite cowt_refuses_set_refuses_singleton, elements_singleton; eauto.
+       { unfold cooas. rewrite cowt_stable_set_stable_singleton, elements_singleton; eauto.
          simpl. now rewrite union_empty_r_L. } rewrite eq.
        exact Hyp.
     ++ left. exists p. split; eauto. constructor.
@@ -994,15 +994,15 @@ Proof.
     inversion hcocnv as [| ? ? ? conv Hyp_conv]; subst.
     assert (hcocnv0 : forall p', p' ∈ ps -> p' ⇓ᶜᵒ s') by (intros ? mem%cowt_set_mu_spec1; eauto).
     assert (he : ∀ p', p' ∈ ps ->
-     ((exists pr p0, p0 ∈ cowt_refuses_set p' s' pr ∧ coR_abs p0 ⊆ E)
+     ((exists pr p0, p0 ∈ cowt_stable_set p' s' pr ∧ coR_abs p0 ⊆ E)
              \/ (exists h, p' must_pass (ta ((cooas p' s' h) ∖ E) s')))).
     { intros p' mem. destruct (IHs' p' (hcocnv0 _ mem) E) as [(r & w & st & sub)| hm].
       * left. eapply cowt_set_mu_spec1 in mem.
-        exists (Hyp_conv _ mem), r. split; [eapply cowt_refuses_set_spec2 |]; eauto.
+        exists (Hyp_conv _ mem), r. split; [eapply cowt_stable_set_spec2 |]; eauto.
       * right. eauto. }
     destruct (exists_forall_in_gset ps _ _ he) as [Hyp | Hyp].
     + left. destruct Hyp
-          as (p1 & ?%cowt_set_mu_spec1 & ? & r & (? & ?)%cowt_refuses_set_spec1 & ?).
+          as (p1 & ?%cowt_set_mu_spec1 & ? & r & (? & ?)%cowt_stable_set_spec1 & ?).
       exists r. repeat split; eauto. eapply cowt_push_left; eauto.
     + right.
       destruct (decide (non_blocking μ)) as [nb | b].

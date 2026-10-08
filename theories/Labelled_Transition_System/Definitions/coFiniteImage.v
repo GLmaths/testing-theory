@@ -379,7 +379,7 @@ Definition cowt_set_fin
 
 (** *** The set of stable states reachable along a whole co-weak trace
 
-    Mirrors [wt_nil_refuses_set] (FiniteImageLTS.v) verbatim, sourced from
+    Mirrors [wt_nil_stable_set] (FiniteImageLTS.v) verbatim, sourced from
     [coFiniteImagegLts] instead of [FiniteImagegLts] — like [cowt_set_nil],
     it only needs [⟶]/[⟹]/[⤓], and [cowt]'s nil case coincides with [wt]'s
     ([cowt_iff_wt_nil]). *)
@@ -388,18 +388,18 @@ Lemma cocnv_cowt_s_terminate
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) : p ⟹ᶜᵒ[s] q -> q ⤓.
 Proof. eapply cocnv_iff_prefix_terminate; eauto. Qed.
 
-Fixpoint cowt_nil_refuses_set (p : P) (ht : p ⤓) : gset P :=
+Fixpoint cowt_nil_stable_set (p : P) (ht : p ⤓) : gset P :=
   match decide (p ⟶) with
   | left _ =>
       let '(tstep _ f) := ht in
-      let k p := cowt_nil_refuses_set (`p) (f (`p) (proj2_dsig p)) in
+      let k p := cowt_nil_stable_set (`p) (f (`p) (proj2_dsig p)) in
       ⋃ map k (enum (dsig (fun q => p ⟶ q)))
   | right _ => {[ p ]}
   end.
 
-Lemma cowt_nil_refuses_set_spec1
+Lemma cowt_nil_stable_set_spec1
   (p q : P) (ht : p ⤓) :
-  q ∈ cowt_nil_refuses_set p ht -> p ⟹ᶜᵒ q /\ q ↛.
+  q ∈ cowt_nil_stable_set p ht -> p ⟹ᶜᵒ q /\ q ↛.
 Proof.
   intro mem.
   assert (p ⟹ q /\ q ↛) as [w hst].
@@ -417,9 +417,9 @@ Proof.
   split; [eapply cowt_iff_wt_nil; exact w | exact hst].
 Qed.
 
-Lemma cowt_nil_refuses_set_spec2
+Lemma cowt_nil_stable_set_spec2
   (p q : P) (ht : p ⤓) :
-  (p ⟹ᶜᵒ q /\ q ↛) -> q ∈ cowt_nil_refuses_set p ht.
+  (p ⟹ᶜᵒ q /\ q ↛) -> q ∈ cowt_nil_stable_set p ht.
 Proof.
   intros (hw%cowt_iff_wt_nil & hst). dependent induction hw; case ht; induction ht; intros ht; simpl.
   - case (decide (p ⟶)); set_solver.
@@ -430,62 +430,62 @@ Proof.
     + exfalso. apply hst', (lts_performs_spec2 p τ). eauto.
 Qed.
 
-Definition cowt_refuses_set
+Definition cowt_stable_set
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) : gset P :=
   let ps := @enum (dsig (fun q => p ⟹ᶜᵒ[s] q)) _ (cowt_set_fin p s hcocnv) in
-  let k t := cowt_nil_refuses_set (`t) (cocnv_cowt_s_terminate p (`t) s hcocnv (proj2_dsig t)) in
+  let k t := cowt_nil_stable_set (`t) (cocnv_cowt_s_terminate p (`t) s hcocnv (proj2_dsig t)) in
   ⋃ map k ps.
 
-Lemma cowt_refuses_set_spec1
+Lemma cowt_stable_set_spec1
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) :
-  q ∈ cowt_refuses_set p s hcocnv -> p ⟹ᶜᵒ[s] q /\ q ↛.
+  q ∈ cowt_stable_set p s hcocnv -> p ⟹ᶜᵒ[s] q /\ q ↛.
 Proof.
   intro mem.
   eapply elem_of_union_list in mem as (g & mem1 & mem2).
   eapply list_elem_of_fmap in mem1 as ((t & hw1) & eq & mem1). subst.
   simpl in mem2.
-  eapply cowt_nil_refuses_set_spec1 in mem2.
+  eapply cowt_nil_stable_set_spec1 in mem2.
   split. eapply cowt_push_nil_right. eapply bool_decide_unpack. eassumption.
   firstorder.
   firstorder.
 Qed.
 
-Lemma cowt_refuses_set_spec2
+Lemma cowt_stable_set_spec2
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) :
-  (p ⟹ᶜᵒ[s] q /\ q ↛) -> q ∈ cowt_refuses_set p s hcocnv.
+  (p ⟹ᶜᵒ[s] q /\ q ↛) -> q ∈ cowt_stable_set p s hcocnv.
 Proof.
   intros (hw & hst).
   eapply elem_of_union_list.
   eexists. split. eapply list_elem_of_fmap.
   exists (dexist q hw). split. reflexivity. eapply elem_of_enum.
-  simpl. eapply cowt_nil_refuses_set_spec2. eauto with mdb.
+  simpl. eapply cowt_nil_stable_set_spec2. eauto with mdb.
 Qed.
 
-Lemma cowt_refuses_set_fin_aux
+Lemma cowt_stable_set_fin_aux
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) (d : ∀ q, Decision (p ⟹ᶜᵒ[s] q /\ q ↛)) :
   Finite (dsig (fun q => p ⟹ᶜᵒ[s] q /\ q ↛)).
 Proof.
   unfold dsig.
-  eapply (in_list_finite (elements (cowt_refuses_set p s hcocnv))).
+  eapply (in_list_finite (elements (cowt_stable_set p s hcocnv))).
   intros q Htrans%bool_decide_unpack.
-  now eapply elem_of_elements, cowt_refuses_set_spec2.
+  now eapply elem_of_elements, cowt_stable_set_spec2.
 Qed.
 
-Lemma cowt_refuses_set_dec p s (hcocnv : p ⇓ᶜᵒ s) :
+Lemma cowt_stable_set_dec p s (hcocnv : p ⇓ᶜᵒ s) :
   forall q, Decision (p ⟹ᶜᵒ[s] q /\ q ↛).
 Proof.
   intro q.
-  destruct (decide (q ∈ cowt_refuses_set p s hcocnv)).
-  - left. eapply (cowt_refuses_set_spec1 p q s hcocnv e).
-  - right. intro w. eapply n. now eapply cowt_refuses_set_spec2.
+  destruct (decide (q ∈ cowt_stable_set p s hcocnv)).
+  - left. eapply (cowt_stable_set_spec1 p q s hcocnv e).
+  - right. intro w. eapply n. now eapply cowt_stable_set_spec2.
 Qed.
 
-Definition cowt_refuses_set_fin
+Definition cowt_stable_set_fin
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) :
-  Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q /\ q ↛) (cowt_refuses_set_dec p s hcocnv)) :=
-  cowt_refuses_set_fin_aux p s hcocnv (cowt_refuses_set_dec p s hcocnv).
+  Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q /\ q ↛) (cowt_stable_set_dec p s hcocnv)) :=
+  cowt_stable_set_fin_aux p s hcocnv (cowt_stable_set_dec p s hcocnv).
 
-Lemma cowt_nil_set_refuses p hcocnv :
+Lemma cowt_nil_set_stable p hcocnv :
   (p ↛) -> cowt_set p [] hcocnv = {[ p ]}.
 Proof.
   intros hst.
@@ -500,17 +500,17 @@ Proof.
     eapply cowt_iff_wt_nil. eauto with mdb. set_solver.
 Qed.
 
-Lemma cowt_refuses_set_refuses_singleton p hcocnv :
-  (p ↛) -> cowt_refuses_set p [] hcocnv = {[ p ]}.
+Lemma cowt_stable_set_stable_singleton p hcocnv :
+  (p ↛) -> cowt_stable_set p [] hcocnv = {[ p ]}.
 Proof.
   intro hst.
   eapply leibniz_equiv.
   intro q. split; intro mem.
-  - eapply cowt_refuses_set_spec1 in mem as (w & hst').
+  - eapply cowt_stable_set_spec1 in mem as (w & hst').
     eapply cowt_iff_wt_nil in w.
     inversion w; subst. set_solver. exfalso. apply hst, lts_performs_spec2. eauto.
   - eapply elem_of_singleton_1 in mem. subst.
-    eapply cowt_refuses_set_spec2. split; eauto with mdb.
+    eapply cowt_stable_set_spec2. split; eauto with mdb.
 Qed.
 
 (** *** The set of states a whole *set* [P] reaches via a single co-weak
