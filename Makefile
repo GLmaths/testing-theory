@@ -3,7 +3,7 @@ DOC_DIR := doc
 BUILD_DIR := _build/default/theories
 EXTRA_DIR := doc-config
 COQDOC_FLAGS:= \
-  --toc --toc-depth 2 --html --interpolate \
+  --html --interpolate \
   -d $(DOC_DIR) \
 	--no-lib-name \
   --index indexpage \
