@@ -36,12 +36,14 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list decidable.
 
 From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
-From TestingTheory Require Import gLts SyncActions UnionAction UnionSync SyncForwarder Bisimulation Lts_OBA
+From TestingTheory Require Import gLts SyncActions MemAction InteractionUnion MemForwarder Bisimulation Lts_OBA
   Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
   Subset_Act Termination Convergence WeakTransitions Testing_Predicate
   StateTransitionSystems InteractionBetweenLts
   Must.
 From TestingTheory Require Import SoundnessASco coWeakSync FiniteImageLTS coFiniteImage coSetLTSConstruction DefinitionAS DefinitionASco coWeakTransition coConvergence.
+
+#[local] Hint Mode ExtAction ! : typeclass_instances.
 
 
 (** ** Soundness on forwarders, for two alphabets
@@ -55,23 +57,23 @@ From TestingTheory Require Import SoundnessASco coWeakSync FiniteImageLTS coFini
 Section SoundnessFW_sync.
 
 Context {P Q T FinA PreAct Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{FS : !FwSync Aproc Atest}.
+Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
 Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
 Context (outcome : T → Prop).
 Context `{gLtsEqT : !gLtsEq T Ht} `{TP : !Testing_Predicate outcome gLtsEqT}.
-Context `{gLtsEqP : !gLtsEq P ExtAction_fw} `{SYP : !Prop_of_Inter P T (Aproc + Atest) Atest sync}
+Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{SYP : !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}
         `{CFIP : !coFiniteImagegLts P Atest}.
-Context `{gLtsEqQ : !gLtsEq Q ExtAction_fw} `{gLtsObaQ : !gLtsOba Q} `{FWQ : !gLtsObaFWSync Q Aproc Atest}
-        `{SYQ : !Prop_of_Inter Q T (Aproc + Atest) Atest sync}
+Context `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWQ : !gLtsFWMem Q Aproc Atest}
+        `{SYQ : !Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync}
         `{CFIQ : !coFiniteImagegLts Q Atest}.
-Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 (Aproc + Atest) ExtAction_fw _ _ SyncAction_fw}.
-Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 (Aproc + Atest) ExtAction_fw _ _ SyncAction_fw}.
+Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem}.
+Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem}.
 
-#[local] Instance CN_of_FW : gLtsCNenabledSync Q (Aproc + Atest) Atest.
+#[local] Instance CN_of_FW : gLtsCNenabledSync Q (Aproc + MemAct Atest) Atest.
 Proof.
   apply MkgLtsCNenabledSync. intros q1 η nb.
-  destruct (fw_boomerang_total q1 η nb) as (μ & q2 & hsy & l & _).
-  by exists (inl μ), q2.
+  destruct (fw_boomerang_total q1 η nb) as (β & q2 & hsy & l & _).
+  by exists β, q2.
 Qed.
 
 Lemma soundness_fw_co_sync (p : P) (q : Q) :

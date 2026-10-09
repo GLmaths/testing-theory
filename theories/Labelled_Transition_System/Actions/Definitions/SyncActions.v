@@ -39,9 +39,9 @@ From TestingTheory Require Import ActTau gLts.
     recovered by guessing a relation.
 
     Nothing is asked of it here: the composition of two LTSs and the co-trace
-    machinery work for any decidable relation.  The laws that the
-    characterisation needs come from the forwarder setting ([UnionSync.v]),
-    where the process alphabet is [Aproc ⊎ Atest]. *)
+    machinery work for any decidable relation.  The characterisation asks
+    nothing more of it either: its laws are on the forwarders
+    ([MemForwarder.v]), whose alphabet is [Aproc ⊎ Atest ⊎ cobar Atest]. *)
 
 Class SyncAction (Aproc Atest : Type)
   `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} :=

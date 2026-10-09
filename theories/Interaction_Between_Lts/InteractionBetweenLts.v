@@ -85,22 +85,6 @@ Inductive inter_step `{M12 : Prop_of_Inter P1 P2 A A inter}
 
 Global Hint Constructors inter_step:mdb.
 
-(* The computations of the composition, over two alphabets: only the τ steps
-   have a common meaning.  On one alphabet they are the τ steps of
-   [inter_step] ([inter_tau_step_inter_step]). *)
-Inductive inter_tau_step `{M12 : Prop_of_Inter P1 P2 A1 A2 inter} : P1 * P2 → P1 * P2 → Prop :=
-| TauLeft p p' t (l : p ⟶ p') : inter_tau_step (p, t) (p', t)
-| TauRight p t t' (l : t ⟶ t') : inter_tau_step (p, t) (p, t')
-| TauSync p p' t t' μ η (hs : inter μ η) (l1 : p ⟶[μ] p') (l2 : t ⟶[η] t') :
-    inter_tau_step (p, t) (p', t')
-.
-
-Global Hint Constructors inter_tau_step:mdb.
-
-Lemma inter_tau_step_inter_step `{M12 : Prop_of_Inter P1 P2 A A inter} x y :
-  inter_tau_step x y → inter_step x τ y.
-Proof. destruct 1; eauto with mdb. Qed.
-
 Fixpoint search_co_steps_right `{Prop_of_Inter S1 S2 A1 A2 inter} 
   (s2: S2) s'2 ξ candidates (s1 : S1) :=
   match candidates with
@@ -626,14 +610,15 @@ Fixpoint inter_lts_performs_helper_essential_left
 
 Lemma inter_sts_performs_helper_spec_1_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) (l: list A1) :
-  inter_lts_performs_helper_essential_left s1 s2 l = true → {s' | inter_tau_step (s1, s2) s'}.
+  inter_lts_performs_helper_essential_left s1 s2 l = true →
+  {s' | ∃ μ1 μ2, inter μ1 μ2 ∧ s1 ⟶[μ1] s'.1 ∧ s2 ⟶[μ2] s'.2}.
 Proof.
   induction l as [| ξ l ]; [done|].
   simpl. destruct (decide (inter_performs_essential_left s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
   destruct Hyp as [Hperf1 act_founded]. eapply some_witness1_right in act_founded.
   destruct act_founded as (μ & s'2 & HypTr2 & duo & ess_act).
   apply lts_performs_spec1 in Hperf1 as [s'1 HypTr1].
-  exists (s'1, s'2). eapply TauSync. exact duo. exact HypTr1. exact HypTr2.
+  exists (s'1, s'2). by exists ξ, μ.
 Qed.
 
 Lemma inter_sts_performs_helper_spec_2_essential_left `{Prop_of_Inter S1 S2 A1 A2}
@@ -809,14 +794,15 @@ Fixpoint inter_lts_performs_helper_essential_right (* {S1 S2 A: Type} `{ExtActio
 
 Lemma inter_sts_performs_helper_spec_1_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   (s1: S1) (s2: S2) (l: list A2) :
-  inter_lts_performs_helper_essential_right s1 s2 l = true → {s' | inter_tau_step (s1, s2) s'}.
+  inter_lts_performs_helper_essential_right s1 s2 l = true →
+  {s' | ∃ μ1 μ2, inter μ1 μ2 ∧ s1 ⟶[μ1] s'.1 ∧ s2 ⟶[μ2] s'.2}.
 Proof.
   induction l as [| ξ l ]; [done|].
   simpl. destruct (decide (inter_performs_essential_right s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
   destruct Hyp as [Hperf1 act_founded]. eapply some_witness1_left in act_founded.
   destruct act_founded as (μ & s'1 & HypTr1 & duo & ess_act).
   apply lts_performs_spec1 in Hperf1 as [s'2 HypTr2].
-  exists (s'1, s'2). eapply TauSync. exact duo. exact HypTr1. exact HypTr2.
+  exists (s'1, s'2). by exists μ, ξ.
 Qed.
 
 Lemma inter_sts_performs_helper_spec_2_essential_right `{Prop_of_Inter S1 S2 A1 A2}
@@ -869,11 +855,11 @@ Proof.
     { apply lts_performs_spec1 in Hp2 as [s' ?]. refine ((a, s') ↾ _). by constructor. }
     destruct α as [μ|]; [exfalso; by destruct Hp as [|[|]]|].
     destruct (inter_lts_performs_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1.
-    { apply inter_sts_performs_helper_spec_1_essential_left in Hs1 as (s' & hs).
-      exists s'. by apply inter_tau_step_inter_step. }
+    { apply inter_sts_performs_helper_spec_1_essential_left in Hs1 as ((s'1, s'2) & hs).
+      exists (s'1, s'2). destruct hs as (μ1 & μ2 & hs & l1 & l2). by eapply ParSync. }
     destruct (inter_lts_performs_helper_essential_right a b (elements (lts_essential_actions_right b))) eqn:Hs2.
-    { apply inter_sts_performs_helper_spec_1_essential_right in Hs2 as (s' & hs).
-      exists s'. by apply inter_tau_step_inter_step. }
+    { apply inter_sts_performs_helper_spec_1_essential_right in Hs2 as ((s'1, s'2) & hs).
+      exists (s'1, s'2). destruct hs as (μ1 & μ2 & hs & l1 & l2). by eapply ParSync. }
     exfalso. destruct Hp as [|[|[|]]]; done.
   - intros [s1 s2] α [[s'1 s'2] Hstep].
     unfold inter_lts_performs.
@@ -902,86 +888,3 @@ Proof.
     destruct (decide (bool_decide (x ⟶{α} y))); [left | right]; done.
 Qed.
 
-(** ** The computations of the composition, over two alphabets
-
-    The τ steps of [p ∥ t] form a state transition system whatever the two
-    alphabets; the essential actions decide it, as they decide [inter_lts] on
-    one alphabet. *)
-
-Section Inter_tau_sts.
-
-Context `{M : Prop_of_Inter S1 S2 A1 A2 inter}.
-
-Definition decide_inter_tau_step (x y : S1 * S2) : Decision (inter_tau_step x y).
-Proof.
-  destruct x as (s1, s2), y as (s'1, s'2).
-  destruct (decide (s1 ⟶ s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
-  { simplify_eq. left. by apply TauLeft. }
-  destruct (decide (s2 ⟶ s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
-  { simplify_eq. left. by apply TauRight. }
-  destruct (search_steps_essential_left s1 s2 s'1 s'2 (elements $ lts_essential_actions_left s1)) as [ξ|] eqn:Hpar1.
-  { apply search_steps_spec_2_essential_left in Hpar1 as (μ & ess_act & step_left & step_right & duo).
-    left; eapply TauSync; eauto. }
-  destruct (search_steps_essential_right s1 s2 s'1 s'2 (elements $ lts_essential_actions_right s2)) as [ξ|] eqn:Hpar2.
-  { apply search_steps_spec_2_essential_right in Hpar2 as (μ & ess_act & step_right & step_left & duo).
-    left; eapply TauSync; eauto. }
-  right; intros contra; inversion contra; simplify_eq; eauto.
-  eapply lts_essential_actions_spec_interact in hs as case_essential; eauto.
-  destruct case_essential as [ess_act1 | ess_act2].
-  - assert (is_Some $ search_steps_essential_left s1 s2 s'1 s'2 (elements (lts_essential_actions_left s1))) as Hc; [|].
-    eapply search_steps_spec_1_essential_left_rev. exists μ. exists η. repeat split; eauto.
-    inversion Hc. simplify_eq.
-  - assert (is_Some $ search_steps_essential_right s1 s2 s'1 s'2 (elements (lts_essential_actions_right s2))) as Hc; [|].
-    eapply search_steps_spec_1_essential_right_rev. exists η. exists μ. repeat split; eauto.
-    inversion Hc. simplify_eq.
-Defined.
-
-(* Local: as a global [RelDecision] it is tried on every [Decision (?R x y)]
-   and makes the search go through all the interactions in scope. *)
-#[local] Instance inter_tau_step_dec : RelDecision inter_tau_step := decide_inter_tau_step.
-
-(** [p ∥ t] can compute. *)
-Definition inter_tau_performs (x : S1 * S2) : Prop :=
-  x.1 ⟶ ∨ x.2 ⟶
-  ∨ inter_lts_performs_helper_essential_left x.1 x.2 (elements $ lts_essential_actions_left x.1) = true
-  ∨ inter_lts_performs_helper_essential_right x.1 x.2 (elements $ lts_essential_actions_right x.2) = true.
-
-#[global] Instance inter_tau_performs_dec x : Decision (inter_tau_performs x).
-Proof. unfold inter_tau_performs. apply _. Defined.
-
-Lemma inter_tau_performs_spec1 x : inter_tau_performs x → { y | inter_tau_step x y }.
-Proof.
-  destruct x as (a, b). intros Hp. unfold inter_tau_performs in Hp. simpl in Hp.
-  destruct (decide (a ⟶)) as [Hp1|].
-  { apply lts_performs_spec1 in Hp1 as [s' ?]. exists (s', b). by apply TauLeft. }
-  destruct (decide (b ⟶)) as [Hp2|].
-  { apply lts_performs_spec1 in Hp2 as [s' ?]. exists (a, s'). by apply TauRight. }
-  destruct (inter_lts_performs_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1.
-  { by apply inter_sts_performs_helper_spec_1_essential_left in Hs1. }
-  destruct (inter_lts_performs_helper_essential_right a b (elements (lts_essential_actions_right b))) eqn:Hs2.
-  { by apply inter_sts_performs_helper_spec_1_essential_right in Hs2. }
-  exfalso. destruct Hp as [|[|[Hh|Hh]]]; [done | done | congruence | congruence].
-Defined.
-
-Lemma inter_tau_performs_spec2 x : { y | inter_tau_step x y } → inter_tau_performs x.
-Proof.
-  destruct x as (s1, s2).
-  intros ((s'1, s'2) & Hstep). unfold inter_tau_performs. simpl.
-  inversion Hstep; simplify_eq.
-  - left. exact (lts_performs_spec2 _ _ (s'1 ↾ l)).
-  - right; left. exact (lts_performs_spec2 _ _ (s'2 ↾ l)).
-  - eapply lts_essential_actions_spec_interact in hs as where_ess; eauto.
-    destruct where_ess as [ess1 | ess2].
-    + right; right; left. eapply inter_sts_performs_helper_spec_2_essential_left; eauto.
-    + right; right; right. eapply inter_sts_performs_helper_spec_2_essential_right; eauto.
-Qed.
-
-(* Not an instance: on one alphabet, [must] reads the composition through
-   [parallel_sts] (see [ParallelLTSConstruction.v]). *)
-Definition inter_tau_sts : Sts (S1 * S2) :=
-  {| sts_step := inter_tau_step;
-     sts_performs := inter_tau_performs;
-     sts_performs_spec1 := inter_tau_performs_spec1;
-     sts_performs_spec2 := inter_tau_performs_spec2 |}.
-
-End Inter_tau_sts.

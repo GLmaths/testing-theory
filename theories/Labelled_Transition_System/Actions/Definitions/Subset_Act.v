@@ -34,8 +34,6 @@ Definition R `{gLts P A} (p : P) : subset_of A :=
   fun μ => p ⟶[μ].
 
 (* ** Blocking co-actions *)
-(* Two alphabets: the process over [Aproc], the co-actions over [Atest],
-   linked by [sync]; on one alphabet [sync] is [dual]. *)
 Definition coR `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (p : P) : subset_of Atest :=
   fun μ1 => exists μ2, p ⟶[μ2] /\ sync μ2 μ1 /\ blocking μ1.
@@ -44,9 +42,7 @@ Definition coR `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc 
 Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
   fun p => p ⟶[μ].
 
-(** ** All processes accepting a co-action of an action *)
-(* As [coR]: the processes over [Aproc], the action [μ] over [Atest], linked
-   by [sync]; on one alphabet [sync] is [dual]. *)
+(** ** All processes accepting a co-action *)
 Definition co𝐏 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (μ : Atest) : subset_of P :=
   fun p => exists μ', sync μ' μ /\ p ⟶[μ'].

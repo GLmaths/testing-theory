@@ -27,7 +27,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
-    StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS ParallelLTSConstruction.
+    StateTransitionSystems InteractionBetweenLts InteractionUnion Convergence Termination FiniteImageLTS ParallelLTSConstruction.
 
  (** ** Inductive definition [must_sts] of Must based on the STS *)
 Inductive must_sts 
@@ -55,8 +55,8 @@ Global Hint Constructors must_sts:mdb.
       of the parallel LTS given by [Prop_of_Inter] ([ParSts_of_inter]):
       [sts_step (p, t) t'] is then [(p, t) ⟶ t'] and [sync μ1 μ2] is
       [dual μ1 μ2], by computation.
-    - With two alphabets the [Sts] is [inter_tau_sts], from [Prop_of_Inter] on two alphabets
-      ([InteractionBetweenLts.v]). *)
+    - With two alphabets the [Sts] is the τ part of [inter_union_lts], from [Prop_of_Inter]
+      on two alphabets ([InteractionUnion.v]). *)
 
 (** The computations of [p ∥ t], for given LTSs of [P] and [T].  Indexing
     them by the two LTSs keeps [must] as rigid as it was with [Prop_of_Inter]:
@@ -114,7 +114,7 @@ Global Hint Constructors must:mdb.
     The lemmas on [must] below only use that a computation of [p ∥ t] is a
     τ of [p], a τ of [t], or a synchronisation of an action of [p] with an
     action of [t] — and conversely.  [ParStsSpec] says so; it holds for the
-    parallel composition of [Prop_of_Inter] (one alphabet) and for [inter_tau_sts]
+    parallel composition of [Prop_of_Inter] (one alphabet) and for [inter_union_lts]
     (two alphabets). *)
 
 Class ParStsSpec (P T : Type) {Aproc Atest : Type}
@@ -135,7 +135,7 @@ Class ParStsSpec (P T : Type) {Aproc Atest : Type}
   }.
 
 (** The three shapes of a computation, as an inductive view: [inversion] on
-    [par_view_of l] gives the cases with the names of [inter_tau_step]. *)
+    [par_view_of l] gives the three cases with named hypotheses. *)
 Inductive par_view `{gLtsP : @gLts P Aproc Hp} `{gLtsT : @gLts T Atest Ht}
   `{SA : !SyncAction Aproc Atest} (p : P) (t : T) : P * T → Prop :=
 | ViewLeft p' (l : p ⟶ p') : par_view p t (p', t)
@@ -170,7 +170,7 @@ Proof.
     + right; right. by do 4 eexists.
 Qed.
 
-(* The instances built from [inter_tau_sts] have a lower priority than the
+(* The instances built from [inter_union_lts] have a lower priority than the
    ones of the parallel composition: on one alphabet, with [sync = dual],
    both would apply, and [must] must keep its one-alphabet reading. *)
 
@@ -179,32 +179,32 @@ Qed.
 #[global] Hint Extern 1 (ParSts _ _ _ _) => typeclasses eauto : core.
 #[global] Hint Extern 1 (ParStsSpec _ _ _ _ _ _) => typeclasses eauto : core.
 
-(** With two alphabets, the computations are those of [inter_tau_sts]
-    ([InteractionBetweenLts.v]), built from the interaction. *)
+(** With two alphabets, the computations are the τ steps of [inter_union_lts]
+    ([InteractionUnion.v]), built from the interaction. *)
 
-#[global] Instance ParSts_of_inter_tau {P T Aproc Atest : Type}
+#[global] Instance ParSts_of_union {P T Aproc Atest : Type}
   {Hp : ExtAction Aproc} {Ht : ExtAction Atest}
   (gLtsP : gLts P Hp) (gLtsT : gLtsEq T Ht) {SA : SyncAction Aproc Atest}
   {SY : @Prop_of_Inter P T Aproc Atest (@sync Aproc Atest Hp Ht SA) Hp gLtsP Ht (@gLtsEq_gLts T Atest Ht gLtsT)} :
   ParSts P T gLtsP gLtsT | 10 :=
-  {| par_sts := inter_tau_sts (M := SY) |}.
+  {| par_sts := sts_of_lts (inter_union_lts (M := SY)) |}.
 
-#[global] Instance ParStsSpec_of_inter_tau {P T Aproc Atest : Type}
+#[global] Instance ParStsSpec_of_union {P T Aproc Atest : Type}
   {Hp : ExtAction Aproc} {Ht : ExtAction Atest}
   (gLtsP : gLts P Hp) (gLtsT : gLtsEq T Ht) {SA : SyncAction Aproc Atest}
   {SY : @Prop_of_Inter P T Aproc Atest (@sync Aproc Atest Hp Ht SA) Hp gLtsP Ht (@gLtsEq_gLts T Atest Ht gLtsT)} :
-  ParStsSpec P T gLtsP gLtsT SA (ParSts_of_inter_tau gLtsP gLtsT) | 10.
+  ParStsSpec P T gLtsP gLtsT SA (ParSts_of_union gLtsP gLtsT) | 10.
 Proof.
   apply MkParStsSpec.
-  - intros p p' t l. change (inter_tau_step (p, t) (p', t)). by apply TauLeft.
-  - intros p t t' l. change (inter_tau_step (p, t) (p, t')). by apply TauRight.
-  - intros p p' t t' μ1 μ2 hs l1 l2. change (inter_tau_step (p, t) (p', t')).
-    by eapply TauSync.
-  - intros p t y l. change (inter_tau_step (p, t) y) in l.
-    inversion l; subst.
+  - intros p p' t l. by apply (ParLeft τ).
+  - intros p t t' l. by apply (ParRight τ).
+  - intros p p' t t' μ1 μ2 hs l1 l2. by apply (ParSync (inl μ1) (inr μ2)).
+  - intros p t y l.
+    inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
     + left. by eexists.
     + right; left. by eexists.
-    + right; right. by do 4 eexists.
+    + destruct a1 as [μ1 | ], a2 as [ | μ2]; simpl in hs; try done.
+      right; right. by exists s'1, s'2, μ1, μ2.
 Qed.
 
 (** ** Equivalence of the two inductive definitions [must] and [must_sts] *)
@@ -258,7 +258,7 @@ Notation "p ≂ₘᵤₛₜᵢ q" := (q ⊑ₘᵤₛₜᵢ p /\ p ⊑ₘᵤₛ�
 (** ** Properties on [must]
 
     Stated once, for any well-formed composition ([ParStsSpec]): they hold
-    for one alphabet and [dual] as for two alphabets and [inter_tau_sts]. *)
+    for one alphabet and [dual] as for two alphabets and [inter_union_lts]. *)
 
 Lemma must_eq_client `{
   gLtsP : @gLts P Aproc Hp,

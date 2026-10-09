@@ -657,7 +657,7 @@ Qed.
 
 Lemma stable_process_must_ta_or_empty_pre_action_set {P : Type}
   `{CC : Countable PreAct} `{
-  gLtsEqP : @gLtsEq P Aproc Hp, gLtsObaP : !gLtsOba P,
+  gLtsEqP : @gLtsEq P Aproc Hp,
   gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T,
   SA : !SyncAction Aproc Atest,
   FiniteAbs : !@FinitaryAbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA _ _,

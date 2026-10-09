@@ -38,39 +38,40 @@ Import ListNotations.
 From Stdlib.Program Require Import Wf Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable decidable finite gmap list.
-From TestingTheory Require Import ActTau gLts SyncActions UnionAction UnionSync SyncForwarder Bisimulation Lts_OBA
+From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionUnion MemForwarder Bisimulation Lts_OBA
   Lts_OBA_FB Lts_FW Subset_Act Termination WeakTransitions
   coWeakSync
   FiniteImageLTS coFiniteImage Testing_Predicate InteractionBetweenLts
   Must Completeness CompletenessASco DefinitionAS DefinitionASco
   coWeakTransition coConvergence.
 
+#[local] Hint Mode ExtAction ! : typeclass_instances.
+
 (** ** Swapping a non-blocking action across the composition, on forwarders
 
     [Lift.must_non_blocking_action_swap_l_fw] for two alphabets.  In the
     homogeneous statement the process and the observer perform the /same/
     non-blocking action [η]; here the observer performs [ν] over [Atest] and
-    the forwarder gives the same message back as [inr ν]. *)
+    the forwarder gives the same message back as [inr (msg ν)]. *)
 
 Section SwapSync.
 
 Context {P T Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{FS : !FwSync Aproc Atest}.
-Context `{gLtsEqP : !gLtsEq P ExtAction_fw} `{gLtsObaP : !gLtsOba P}.
+Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}.
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
-Context `{!gLtsObaFWSync P Aproc Atest} `{!Prop_of_Inter P T (Aproc + Atest) Atest sync}.
+Context `{!gLtsFWMem P Aproc Atest} `{!Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}.
 
 Lemma must_non_blocking_action_swap_l_fw_sync_eq
   (p1 p2 : P) (e1 e2 : T) (η3 : Atest) :
   non_blocking η3 →
-  p1 ⟶⋍[inr η3] p2 → e1 ⟶⋍[η3] e2 → p1 must_pass e2 → p2 must_pass e1.
+  p1 ⟶⋍[inr (msg η3)] p2 → e1 ⟶⋍[η3] e2 → p1 must_pass e2 → p2 must_pass e1.
 Proof.
   intros nbν lp le hm.
-  destruct (inr_spec η3 nbν) as (nbγ & hiff & hdν).
-  set (γ := inr η3) in *.
-  destruct (fsync_total η3 nbν) as (μ0 & hμ0).
-  assert (hsyco : sync (inl μ0 : Aproc + Atest) η3) by exact hμ0.
+  destruct (msg_spec (Aproc := Aproc) η3 nbν) as (nbγ & hdν).
+  set (γ := inr (msg η3) : Aproc + MemAct Atest) in *.
+  assert (hsyco : sync (inr (cobar η3) : Aproc + MemAct Atest) η3) by reflexivity.
   revert e1 p2 lp le.
   induction hm as [p e happy | p1 e2 nh ex Hpt IHpt Het IHet Hcom IHcom];
     intros e1 p2 lp le.
@@ -85,16 +86,16 @@ Proof.
       eapply nh, (outcome_preserved_by_eq e' e2); [| exact heqe'].
       eapply outcome_preserved_by_lts_non_blocking_action;
         [exact nbν | exact hle' | exact h].
-    + (* [fw_boomerang]: [p2] can take back what [p1] has emitted, as the
-         process reception [inl μ0], which synchronises with [η3] *)
-      destruct (fw_boomerang p2 η3 μ0 nbν hμ0) as (p'2 & Tr1 & Tr2).
+    + (* [fwm_boomerang]: [p2] can take back what [p1] has emitted, as the
+         memory reception [inr (cobar η3)], which synchronises with [η3] *)
+      destruct (fwm_boomerang p2 η3 nbν) as (p'2 & Tr1 & Tr2).
       destruct le as (e'1 & Tr & eq).
-      exists (p'2, e'1). eapply TauSync; [exact hsyco | exact Tr1 | exact Tr].
+      exists (p'2, e'1). eapply par_step_sync; [exact hsyco | exact Tr1 | exact Tr].
     + intros p' l.
       destruct lp as (p0 & hlp0 & heqp0).
       edestruct (eq_spec p0 p' τ) as (p3 & hlp3 & heqp3).
       { exists p2. split; [by symmetry | exact l]. }
-      destruct (nb_delay nbγ hlp0 hlp3) as (t & l1 & (p4 & hlp4 & heqp4)).
+      destruct (fw_delay η3 nbν hlp0 hlp3) as (t & l1 & (p4 & hlp4 & heqp4)).
       eapply must_eq_server; [etrans; [eapply heqp4 | exact heqp3] |].
       eapply IHpt; [exact l1 | exists p4; split; [exact hlp4 | reflexivity] | exact le].
     + intros e' l.
@@ -112,7 +113,7 @@ Proof.
          destruct lp as (p0 & hlp0 & heqp0).
          eapply must_eq_server; [exact heqp0 |].
          eapply Hcom; [| exact hlp0 | exact hlv].
-         (* [inr_spec]'s third clause: a dual of [η3] on the observer side
+         (* [msg_spec]'s second clause: a dual of [η3] on the observer side
             is answered by [γ] itself *)
          by apply hdν.
     + intros p' e' μ1 μ2 hsy2 l1 l2.
@@ -133,7 +134,7 @@ Proof.
       ++ destruct (nb_confluence nbν n hle0 l2) as (t & l3 & (e4 & hle4 & heqe4)).
          edestruct (eq_spec p0 p' (ActExt μ1)) as (p3 & hlp3 & heqp3).
          { exists p2. split; [by symmetry | exact l1]. }
-         destruct (nb_delay nbγ hlp0 hlp3) as (r & l5 & (p4 & hlp4 & heqp4)).
+         destruct (fw_delay η3 nbν hlp0 hlp3) as (r & l5 & (p4 & hlp4 & heqp4)).
          edestruct (eq_spec e2 t (ActExt μ2)) as (e3 & hle3 & heqe3).
          { exists e0. split; [by symmetry | exact l3]. }
          eapply IHcom.
@@ -147,7 +148,7 @@ Qed.
 Lemma must_non_blocking_action_swap_l_fw_sync
   (p1 p2 : P) (e1 e2 : T) (η : Atest) :
   non_blocking η →
-  p1 ⟶[inr η] p2 → e1 ⟶[η] e2 → p1 must_pass e2 → p2 must_pass e1.
+  p1 ⟶[inr (msg η)] p2 → e1 ⟶[η] e2 → p1 must_pass e2 → p2 must_pass e1.
 Proof.
   intros. eapply must_non_blocking_action_swap_l_fw_sync_eq;
     eauto; eexists; split; eauto; reflexivity.
@@ -162,11 +163,11 @@ End SwapSync.
 (** ** The observer of convergence characterises co-convergence *)
 
 Lemma must_sync_if_cocnvs `{
-  Hp : ExtAction Aproc, Ht : ExtAction Atest, FS : !FwSync Aproc Atest,
-  gLtsEqP : @gLtsEq P (Aproc + Atest) ExtAction_fw, gLtsObaP : !gLtsOba P,
+  Hp : ExtAction Aproc, Ht : ExtAction Atest, SA : !SyncAction Aproc Atest,
+  gLtsEqP : @gLtsEq P (Aproc + MemAct Atest) (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht)),
   gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T, !gLtsObaFB T Atest,
   !Testing_Predicate outcome gLtsEqT, !test_convergence_spec tconv,
-  !gLtsObaFWSync P Aproc Atest, !Prop_of_Inter P T (Aproc + Atest) Atest sync}
+  !gLtsFWMem P Aproc Atest, !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}
   s (p : P) : p ⇓ᶜᵒ s → p must_pass (tconv s).
 Proof.
   revert p.
@@ -176,7 +177,7 @@ Proof.
   induction (cocnv_terminate p s hc) as [p hp IHtp].
   apply m_step.
   + apply test_ungood.
-  + edestruct tconv_always_reduces as (x & hx). exists (p, x). by apply TauRight.
+  + edestruct tconv_always_reduces as (x & hx). exists (p, x). by apply par_step_right.
   + intros p' l. eapply IHtp; [exact l | by eapply cocnv_preserved_by_lts_tau].
   + intros e' l.
     destruct (inversion_tconv_tau_action s e' l)
@@ -197,11 +198,11 @@ Proof.
 Qed.
 
 Lemma must_sync_iff_cocnvs `{
-  Hp : ExtAction Aproc, Ht : ExtAction Atest, FS : !FwSync Aproc Atest,
-  gLtsEqP : @gLtsEq P (Aproc + Atest) ExtAction_fw, gLtsObaP : !gLtsOba P,
+  Hp : ExtAction Aproc, Ht : ExtAction Atest, SA : !SyncAction Aproc Atest,
+  gLtsEqP : @gLtsEq P (Aproc + MemAct Atest) (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht)),
   gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T, !gLtsObaFB T Atest,
   !Testing_Predicate outcome gLtsEqT, !test_convergence_spec tconv,
-  !gLtsObaFWSync P Aproc Atest, !Prop_of_Inter P T (Aproc + Atest) Atest sync}
+  !gLtsFWMem P Aproc Atest, !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}
   (p : P) s : p must_pass (tconv s) ↔ p ⇓ᶜᵒ s.
 Proof.
   split; [by apply cocnv_if_must | by apply must_sync_if_cocnvs].
@@ -210,15 +211,15 @@ Qed.
 (** ** The convergence half of completeness *)
 
 Lemma completeness1_co_sync `{
-  Hp : ExtAction Aproc, Ht : ExtAction Atest, FS : !FwSync Aproc Atest,
-  gLtsEqP : @gLtsEq P (Aproc + Atest) ExtAction_fw, gLtsObaP : !gLtsOba P,
-  gLtsEqQ : !@gLtsEq Q (Aproc + Atest) ExtAction_fw, gLtsObaQ : !gLtsOba Q,
+  Hp : ExtAction Aproc, Ht : ExtAction Atest, SA : !SyncAction Aproc Atest,
+  gLtsEqP : @gLtsEq P (Aproc + MemAct Atest) (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht)),
+  gLtsEqQ : !@gLtsEq Q (Aproc + MemAct Atest) (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht)),
   gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T, !gLtsObaFB T Atest,
   !Testing_Predicate outcome gLtsEqT, !test_convergence_spec tconv,
-  !gLtsObaFWSync P Aproc Atest, !gLtsObaFWSync Q Aproc Atest,
-  !Prop_of_Inter P T (Aproc + Atest) Atest sync, !Prop_of_Inter Q T (Aproc + Atest) Atest sync}
+  !gLtsFWMem P Aproc Atest, !gLtsFWMem Q Aproc Atest,
+  !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync, !Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync}
   (p : P) (q : Q) :
-  p ⊆ₘᵤₛₜᵢ q → p ₁≼꜀ₒ₋ₐₛ q.
+  ctx_pre (gLtsT := gLtsEqT) p q → p ₁≼꜀ₒ₋ₐₛ q.
 Proof.
   intros hleq s hc.
   by eapply must_sync_iff_cocnvs, hleq, must_sync_iff_cocnvs.
@@ -246,19 +247,18 @@ Qed.
     [f_gen_lts_mu_in_the_middle] are the observer-only lemmas of
     [CompletenessASco.v], reused here over [Atest].  The one step that changes
     is the synchronisation witness: where the homogeneous proof made [p] accept
-    [co μ2] for the non-blocking [μ2] of the trace, here [fsync_total] picks a
-    process reception [μ1] answering [μ2], and [fw_boomerang] makes [p] accept
-    [inl μ1]. *)
+    [co μ2] for the non-blocking [μ2] of the trace, here [fwm_boomerang] makes
+    [p] accept [μ2] as the memory reception [inr (cobar μ2)]. *)
 
 Lemma must_ta_monotonicity_sync {P : Type} `{CC : Countable PreAct} `{
-  Hp : ExtAction Aproc, Ht : ExtAction Atest, FS : !FwSync Aproc Atest,
-  gLtsEqP : @gLtsEq P (Aproc + Atest) ExtAction_fw, gLtsObaP : !gLtsOba P,
+  Hp : ExtAction Aproc, Ht : ExtAction Atest, SA : !SyncAction Aproc Atest,
+  gLtsEqP : @gLtsEq P (Aproc + MemAct Atest) (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht)),
   gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T, !gLtsObaFB T Atest,
-  !gLtsObaFWSync P Aproc Atest,
-  AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 (Aproc + Atest) ExtAction_fw _ _ SyncAction_fw,
+  !gLtsFWMem P Aproc Atest,
+  AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem,
   !Testing_Predicate outcome gLtsEqT,
   !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x))),
-  !Prop_of_Inter P T (Aproc + Atest) Atest sync}
+  !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}
   s (p : P) E1 :
   p must_pass (ta E1 s) → ∀ E2, E1 ⊆ E2 → p must_pass (ta E2 s).
 Proof.
@@ -274,14 +274,14 @@ Proof.
     * apply m_step.
       + apply test_ungood.
       + destruct (decide (non_blocking μ1)) as [nb | not_nb].
-        (* [fw_boomerang]: the forwarder receives [μ1] as a process action *)
+        (* [fwm_boomerang]: the forwarder's memory receives [μ1] *)
         ++ destruct (fw_boomerang_total p μ1 nb) as (μ0 & p' & hsyco & tr_b & _).
            assert (ta E2 (μ1 :: s') ⟶⋍[μ1] ta E2 s') as (t' & tr' & eq')
              by eapply (test_next_step (test_spec := ta_test_spec E2)).
-           exists (p', t'). eapply TauSync; [exact hsyco | exact tr_b | exact tr'].
+           exists (p', t'). eapply par_step_sync; [exact hsyco | exact tr_b | exact tr'].
         ++ assert (∃ e', ta E2 (μ1 :: s') ⟶ e') as (e' & tr')
              by (eapply (test_tau_transition (test_spec := ta_test_spec E2)); eauto).
-           exists (p, e'). by eapply TauRight.
+           exists (p, e'). by eapply par_step_right.
       + intros p' l. eapply H0; eauto.
       + intros e' l.
         edestruct (inversion_ta_tau_action (μ1 :: s') E2 e' l) as [hg | Hyp];
@@ -326,10 +326,10 @@ Section AcceptanceSetsSync.
 
 Context {P T FinA PreAct Aproc Atest : Type}.
 Context `{CC : Countable PreAct}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{FS : !FwSync Aproc Atest}.
-Context `{gLtsEqP : !gLtsEq P ExtAction_fw} `{gLtsObaP : !gLtsOba P}.
+Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}.
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
-Context `{!gLtsObaFWSync P Aproc Atest} `{!Prop_of_Inter P T (Aproc + Atest) Atest sync}.
+Context `{!gLtsFWMem P Aproc Atest} `{!Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}.
 Context `{CFI : !coFiniteImagegLts P Atest}.
 Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
 Context `{FiniteAbs : !FinitaryAbsAction P T Atest Ht Φ 𝝳}.
@@ -366,7 +366,7 @@ Proof.
       left. exists t'. eauto with mdb.
     - right. apply m_step.
       * apply test_ungood.
-      * exists (p'', ta ((cooas p ε hcocnv) ∖ E) ε). by eapply TauLeft.
+      * exists (p'', ta ((cooas p ε hcocnv) ∖ E) ε). by eapply par_step_left.
       * intros p0 l0.
         assert (m0 : p0 ∈ cowt_tau_set p) by by eapply cowt_tau_set_spec.
         eapply Forall_forall in Hyp' as (h0 & hm); [| exact m0].
@@ -390,8 +390,8 @@ Qed.
 
 (** *** ... and then for an arbitrary co-trace
 
-    The non-blocking case is the one that changes: [fw_boomerang] makes [p]
-    receive the trace's [μ2] and give it back as [inr μ2], and
+    The non-blocking case is the one that changes: [fwm_boomerang] makes [p]
+    receive the trace's [μ2] and give it back as [inr (msg μ2)], and
     [must_non_blocking_action_swap_l_fw_sync] moves it from the process side
     to [μ2] on the observer side. *)
 
@@ -454,12 +454,12 @@ End AcceptanceSetsSync.
 
 Lemma completeness2_co_sync {P Q T FinA PreAct Aproc Atest : Type}
   `{CC : Countable PreAct}
-  `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{FS : !FwSync Aproc Atest}
-  `{gLtsEqP : !gLtsEq P ExtAction_fw} `{gLtsObaP : !gLtsOba P}
-  `{gLtsEqQ : !gLtsEq Q ExtAction_fw} `{gLtsObaQ : !gLtsOba Q}
+  `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+  `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}
+  `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}
   `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
   
-  `{!gLtsObaFWSync P Aproc Atest, !gLtsObaFWSync Q Aproc Atest, !Prop_of_Inter P T (Aproc + Atest) Atest sync} `{!Prop_of_Inter Q T (Aproc + Atest) Atest sync}
+  `{!gLtsFWMem P Aproc Atest, !gLtsFWMem Q Aproc Atest, !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync} `{!Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync}
   `{CFIP : !coFiniteImagegLts P Atest}
   `{CFIQ : !coFiniteImagegLts Q Atest}
   {Φ : Atest → FinA} {𝝳 : FinA → PreAct}
@@ -469,7 +469,7 @@ Lemma completeness2_co_sync {P Q T FinA PreAct Aproc Atest : Type}
   {ta : gset PreAct → list Atest → T}
   `{!test_co_acceptance_set_spec PreAct ta (fun x => 𝝳 (Φ x))}
   (p : P) (q : Q) :
-  p ⊆ₘᵤₛₜᵢ q →
+  ctx_pre (gLtsT := gLtsEqT) p q →
   p ₂≼꜀ₒ₋ₐₛ q.
 Proof.
   intros hpre s q' hacnv w st.
@@ -485,12 +485,12 @@ Qed.
 
 Lemma completeness_fw_co_sync {P Q T FinA PreAct Aproc Atest : Type}
   `{CC : Countable PreAct}
-  `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{FS : !FwSync Aproc Atest}
-  `{gLtsEqP : !gLtsEq P ExtAction_fw} `{gLtsObaP : !gLtsOba P}
-  `{gLtsEqQ : !gLtsEq Q ExtAction_fw} `{gLtsObaQ : !gLtsOba Q}
+  `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+  `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}
+  `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}
   `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
   
-  `{!gLtsObaFWSync P Aproc Atest, !gLtsObaFWSync Q Aproc Atest, !Prop_of_Inter P T (Aproc + Atest) Atest sync} `{!Prop_of_Inter Q T (Aproc + Atest) Atest sync}
+  `{!gLtsFWMem P Aproc Atest, !gLtsFWMem Q Aproc Atest, !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync} `{!Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync}
   `{CFIP : !coFiniteImagegLts P Atest}
   `{CFIQ : !coFiniteImagegLts Q Atest}
   {Φ : Atest → FinA} {𝝳 : FinA → PreAct}
@@ -501,7 +501,7 @@ Lemma completeness_fw_co_sync {P Q T FinA PreAct Aproc Atest : Type}
   {ta : gset PreAct → list Atest → T}
   `{!test_co_acceptance_set_spec PreAct ta (fun x => 𝝳 (Φ x))}
   (p : P) (q : Q) :
-  p ⊆ₘᵤₛₜᵢ q →
+  ctx_pre (gLtsT := gLtsEqT) p q →
   p ≼꜀ₒ₋ₐₛ q.
 Proof.
   intro hpre. split.
