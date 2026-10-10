@@ -16,7 +16,7 @@ homepage: "https://github.com/GLmaths/testing-theory"
 doc: "https://GLmaths.github.io/testing-theory"
 bug-reports: "https://github.com/GLmaths/testing-theory/issues"
 depends: [
-  "dune" {>= "3.17"}
+  "dune" {>= "3.21"}
   "rocq-prover" {>= "9.0.0"}
   "rocq-stdpp" {>= "1.13.0"}
   "coq-coinduction" {>= "1.21"}
@@ -38,3 +38,4 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/GLmaths/testing-theory.git"
+x-maintenance-intent: ["(latest)"]
