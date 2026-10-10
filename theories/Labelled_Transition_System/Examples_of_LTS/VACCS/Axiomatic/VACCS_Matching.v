@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The echo condition: what an extra input on the right must do
+(* * The echo condition: what an extra input on the right must do
 
     The starting observation is that for two **stable guarded sums** the
     acceptance condition at [ε] is *vacuous*: a guarded sum can never emit
@@ -72,19 +73,19 @@ Section VACCS_Matching.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** Pinning the witness down *)
+(* ** Pinning the witness down *)
 
-(** A stable process reaches only itself along the empty trace. *)
+(* A stable process reaches only itself along the empty trace. *)
 Lemma wt_nil_stable : forall (p q : proc), p ↛ -> p ⟹[[]] q -> q = p.
 Proof.
   intros p q Hst H. remember (@nil (ExtAct TypeOfActions)) as s eqn:Hs.
-  induction H as [x|s x r y Hl Hw IH|mu s x r y Hl Hw IH]; subst.
+  induction H as [x|s x r y Hl Hw IH|μ s x r y Hl Hw IH]; subst.
   - reflexivity.
   - exfalso. eapply stable_no_lts; [ exact Hst | exact Hl ].
   - discriminate.
 Qed.
 
-(** A message beside a stable sum that refuses the matching input is
+(* A message beside a stable sum that refuses the matching input is
     stable: the only candidate [τ] would be the delivery, and it is ruled
     out by hypothesis. *)
 Lemma msg_sum_stable : forall c v (M : gproc),
@@ -98,7 +99,7 @@ Proof.
   - eapply stable_no_lts; [ exact Hst | eassumption ].
 Qed.
 
-(** ** The echo condition *)
+(* ** The echo condition *)
 
 Theorem must_i_must_echo : forall (M1 M2 : gproc) c v,
   Static (g M1) -> Static (g M2) ->
@@ -120,7 +121,7 @@ Proof.
   apply lts_parL. apply lts_output.
 Qed.
 
-(** The reading that matters: an input [M₂] has and [M₁] has not must
+(* The reading that matters: an input [M₂] has and [M₁] has not must
     hand the message back. *)
 Corollary must_i_extra_input : forall (M1 M2 : gproc) c v P,
   Static (g M1) -> Static (g M2) ->
@@ -136,7 +137,7 @@ Proof.
   eapply lts_comL; [ apply lts_output | exact Hin ].
 Qed.
 
-(** * The recursive engine, and the mirror summand
+(* * The recursive engine, and the mirror summand
 
     ** Semantics: descending into a matched guard costs nothing
 
@@ -181,7 +182,7 @@ Qed.
     process level, exactly the shape an input summand of the mirror must
     have. *)
 
-(** [must_i_tau_below] now lives in [VACCS_Precongruence.v]: it is the
+(* [must_i_tau_below] now lives in [VACCS_Precongruence.v]: it is the
     soundness of the [ax_tau_step] rule, so it has to precede the axiom
     system rather than sit here. *)
 
@@ -201,9 +202,9 @@ Proof.
   destruct Hc as [Hc1 Hc2]. apply Hc2. exact Hm2.
 Qed.
 
-(** ** The mirror summand *)
+(* ** The mirror summand *)
 
-(** Generalised from a guarded sum to an **arbitrary** left-hand process:
+(* Generalised from a guarded sum to an **arbitrary** left-hand process:
     [NewVar 0 (g M)] is [g (gNewVar 0 M)] by conversion, so
     [fwdg c M] for a [gproc] [M] still elaborates to the old definition
     through the [g] coercion, and every existing use keeps working. *)
@@ -211,7 +212,7 @@ Qed.
 Definition fwdg (c : ChannelData) (p : proc) : gproc :=
   c ? ((NewVar 0 p) ‖ (c ! (bvar 0) • 𝟘)).
 
-(** Reaching it: add a copycat on [c] — invisible by [ax_ccat_r] — and
+(* Reaching it: add a copycat on [c] — invisible by [ax_ccat_r] — and
     flatten with the expansion law.  Besides the mirror summand the
     expansion leaves [M]'s own guards, each carrying the copycat along. *)
 Lemma ax_fwd_intro : forall c M,
@@ -224,7 +225,7 @@ Proof.
   apply ax_par; [ apply ax_refl | apply ax_ccat_r; reflexivity ].
 Qed.
 
-(** Consuming it: the omega rule, at the premise [must_i_feed_below]
+(* Consuming it: the omega rule, at the premise [must_i_feed_below]
     supplies once the recursion has turned it into a derivation. *)
 Lemma ax_fwd_match : forall c M Q,
   (forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
@@ -234,7 +235,7 @@ Proof.
   simpl. rewrite gproc_NewVar_cancel. apply H.
 Qed.
 
-(** ** The two halves meet: everything above [𝟘] is an echo
+(* ** The two halves meet: everything above [𝟘] is an echo
 
     The first complete instance of the matching argument, and the exact
     converse of [must_i_extra_input]: a single input summand is above [𝟘]
@@ -258,7 +259,7 @@ Proof.
   apply ax_cgr. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
 Qed.
 
-(** * The matching argument, on one channel
+(* * The matching argument, on one channel
 
     Everything above assembles into a complete case of the completeness
     proof: a left-hand side whose summands are all inputs on a single
@@ -306,7 +307,7 @@ Proof.
   rewrite gproc_NewVar_cancel. apply H.
 Qed.
 
-(** The same merge with a residue, and with no premise: an input guard on
+(* The same merge with a residue, and with no premise: an input guard on
     [c] beside the mirror is simply absorbed by it. *)
 Lemma ax_merge_into_fwd_ctx :
   forall (c : ChannelData) (A : proc) (M R : gproc),
@@ -326,7 +327,7 @@ Proof.
   apply cgr_choice_assoc.
 Qed.
 
-(** Every summand is an input guard on [c] (and [①]/[𝟘] carry no guard).
+(* Every summand is an input guard on [c] (and [①]/[𝟘] carry no guard).
     A [𝛕]-summand is excluded: it would leave a mixed sum, which is its
     own thing ([ax_tau_sep_*]). *)
 Fixpoint gInputsOn (c : ChannelData) (M : gproc) : Prop :=
@@ -357,7 +358,7 @@ Proof.
     apply cgr_fullchoice; [ apply cgr_refl | apply cgr_swap3 ].
 Qed.
 
-(** ** The case, syntactically *)
+(* ** The case, syntactically *)
 
 Theorem ax_below_input : forall (c : ChannelData) (M : gproc) (Q : proc),
   gInputsOn c M ->
@@ -373,7 +374,7 @@ Proof.
   apply ax_fwd_match. exact H.
 Qed.
 
-(** ** The case, with the semantic premise discharged
+(* ** The case, with the semantic premise discharged
 
     [must_i_feed_below] supplies exactly what [ax_below_input] asks for,
     so the only remaining hypothesis is the recursive call — at a
@@ -393,7 +394,7 @@ Proof.
   eapply must_i_feed_below; [ exact Hsem | apply lts_input ].
 Qed.
 
-(** * The matching argument, on an arbitrary stable sum
+(* * The matching argument, on an arbitrary stable sum
 
     The general case splits cleanly in two, and the second half is now
     done in full.
@@ -426,10 +427,10 @@ Fixpoint mirrorN (P : proc) (N : gproc) : gproc :=
   | gpr_nil => gpr_nil
   | gpr_input c _ => fwdg c P
   | gpr_tau p => gpr_tau p
-  | gpr_choice N1 N2 => gpr_choice (mirrorN P N1) (mirrorN P N2)
+  | gpr_choice N1 N2 => (mirrorN P N1) + (mirrorN P N2)
   end.
 
-(** The premise Phase B needs at each of [N]'s summands: the recursive
+(* The premise Phase B needs at each of [N]'s summands: the recursive
     call, already discharged. *)
 Fixpoint mirror_ok (M : gproc) (N : gproc) : Prop :=
   match N with
@@ -459,7 +460,7 @@ Proof.
     apply cgr_symm. apply cgr_choice_assoc.
 Qed.
 
-(** [mirror_ok] is exactly "one recursive call per input transition of
+(* [mirror_ok] is exactly "one recursive call per input transition of
     [N]", read structurally. *)
 Lemma mirror_ok_of : forall (M N : gproc),
   (forall p, ~ lts (g N) τ p) ->
@@ -480,7 +481,7 @@ Proof.
       * intros c v Q' Hl. apply Hrec. apply lts_choiceR. exact Hl.
 Qed.
 
-(** …and [must_i_feed_below] supplies its semantic side, so all that is
+(* …and [must_i_feed_below] supplies its semantic side, so all that is
     asked of the caller is the recursive call itself.  Note the semantic
     hypothesis is used at the **whole** of [N] — it cannot be weakened to
     a sub-sum, since [g M ⊑ₘᵤₛₜᵢ g (N₁ + N₂)] does not imply
@@ -500,7 +501,7 @@ Proof.
   eapply must_i_feed_below; [ exact Hsem | exact Hl ].
 Qed.
 
-(** ** The reduction: completeness against a stable sum IS Phase A
+(* ** The reduction: completeness against a stable sum IS Phase A
 
     Everything else — the pairing, the omega rule, the recursion's
     semantic premise — is discharged. *)
@@ -521,7 +522,7 @@ Proof.
   apply ax_cgr. apply cgr_choice_nil.
 Qed.
 
-(** Phase A, settled when everything lives on one channel. *)
+(* Phase A, settled when everything lives on one channel. *)
 Theorem ax_phaseA_one_channel : forall (c : ChannelData) (M : gproc),
   gInputsOn c M -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (fwdg c M)).
 Proof.
@@ -537,7 +538,7 @@ Corollary ax_phaseA_single_summand : forall (c : ChannelData) (M : gproc) (Q : p
   gInputsOn c M -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M (c ? Q))).
 Proof. intros c M Q Hin. simpl. apply ax_phaseA_one_channel. exact Hin. Qed.
 
-(** * Reaching the mirror in one step, on all channels at once
+(* * Reaching the mirror in one step, on all channels at once
 
     [ax_fwd_intro] adds one copycat.  Adding one per channel and expanding
     the [k]-fold parallel product would be painful — but it is unnecessary,
@@ -579,7 +580,7 @@ Fixpoint guardsN (N : gproc) : gproc :=
   | gpr_nil => gpr_nil
   | gpr_input c _ => gpr_input c (c ! (bvar 0) • 𝟘)
   | gpr_tau p => gpr_tau p
-  | gpr_choice N1 N2 => gpr_choice (guardsN N1) (guardsN N2)
+  | gpr_choice N1 N2 => (guardsN N1) + (guardsN N2)
   end.
 
 Lemma guardsN_copycats : forall N, (forall p, ~ lts (g N) τ p) -> gCopycats (guardsN N).
@@ -617,7 +618,7 @@ Proof.
   apply ax_par; [ apply ax_refl | apply ax_ccat_r; apply guardsN_copycats; exact Hst ].
 Qed.
 
-(** ** Completeness against a stable sum, reduced to the absorption alone
+(* ** Completeness against a stable sum, reduced to the absorption alone
 
     Everything else is discharged: the semantic premise by
     [must_i_feed_below], the pairing by [ax_mirrorN_match], the shape by
@@ -638,7 +639,7 @@ Proof.
   eapply ax_trans; [ apply (ax_mirror_reach M N Hst) | exact Habs ].
 Qed.
 
-(** * The absorption, in general — and the stable case CLOSES
+(* * The absorption, in general — and the stable case CLOSES
 
     What is left of Phase A is to absorb [M]'s own guards, which the
     expansion left beside the mirror.  The one new ingredient is a way to
@@ -730,7 +731,7 @@ Proof.
   apply ax_cgr. apply cgr_choice_nil.
 Qed.
 
-(** ** The stable case of completeness, closed
+(* ** The stable case of completeness, closed
 
     Two arbitrary stable guarded sums, with no restriction on how many
     channels either offers or how many summands share one.  The only
@@ -750,7 +751,7 @@ Proof.
   apply ax_absorb_into_mirror. exact Hin.
 Qed.
 
-(** * The unstable right-hand side, and the whole [tau_nf] case
+(* * The unstable right-hand side, and the whole [tau_nf] case
 
     An internal choice on the right costs nothing: [ax_int_glb] builds it,
     and the two semantic premises come from [must_i_tau_below] — a [𝛕] of
@@ -812,7 +813,7 @@ Proof.
       * intros L c v Q' HL Hl Hs. eapply Hrec; [ apply leaf_r; exact HL | exact Hl | exact Hs ].
 Qed.
 
-(** Two facts about leaves, for the measure the outer recursion will need:
+(* Two facts about leaves, for the measure the outer recursion will need:
     a leaf is reached from the whole normal form by [τ]s alone (so
     [Static_lts_decrease] bounds its size), and it inherits [gStatic]. *)
 
@@ -832,7 +833,7 @@ Proof.
   - inversion HS; subst. apply IH. inversion H3; subst. inversion H1; subst. assumption.
 Qed.
 
-(** * Peeling a [𝛕]-summand — the inner recursion's step
+(* * Peeling a [𝛕]-summand — the inner recursion's step
 
     ** A retraction, first
 
@@ -882,7 +883,7 @@ Proof.
     eapply must_i_tau_below; [ exact Hl | apply Hsem; exact Hm ].
 Qed.
 
-(** **A structural caveat on this whole layer, found while assembling
+(* **A structural caveat on this whole layer, found while assembling
     completeness.**  Every driver below carries [Forall tau_cont_nf
     (summands …)], i.e. *every τ-summand's continuation is literally a
     guarded sum* [g Y].  That invariant is **assumed everywhere and
@@ -931,7 +932,7 @@ Proof.
   apply H1. intros t Hm. apply (soundness_ax _ _ Ha). apply Hsem. exact Hm.
 Qed.
 
-(** * The inner driver: any guarded sum reduces to its stable case
+(* * The inner driver: any guarded sum reduces to its stable case
 
     The two peeling steps are iterated exactly as [tau_flatten_all] and
     [tau_separate] iterate their rewrites — same searches, same measures,
@@ -1008,7 +1009,7 @@ Proof.
   intros t Hm. apply (soundness_ax _ _ Hf). apply Hsem. exact Hm.
 Qed.
 
-(** * The outer measure, recovered
+(* * The outer measure, recovered
 
     The retraction above cost the naive route to the outer recursion's
     measure.  It is recovered by looking at what the driver actually hands
@@ -1033,7 +1034,7 @@ Qed.
 
 Lemma wt_size_le : forall (p : proc) s q, Static p -> p ⟹[s] q -> (size q <= size p)%nat.
 Proof.
-  intros p s q HS H. induction H as [x|s0 x r y Hl Hw IH|mu s0 x r y Hl Hw IH].
+  intros p s q HS H. induction H as [x|s0 x r y Hl Hw IH|μ s0 x r y Hl Hw IH].
   - lia.
   - assert (Hlt : (size r < size x)%nat) by (eapply Static_lts_decrease; eassumption).
     assert (HSr : Static r) by (eapply Static_preserved_by_lts; eassumption).
@@ -1043,22 +1044,22 @@ Proof.
     specialize (IH HSr). lia.
 Qed.
 
-Lemma wt_act_size_lt : forall (p : proc) mu s q, Static p -> p ⟹[mu :: s] q ->
+Lemma wt_act_size_lt : forall (p : proc) μ s q, Static p -> p ⟹[μ :: s] q ->
   (size q < size p)%nat.
 Proof.
-  intros p mu s q HS H. remember (mu :: s) as s0 eqn:Hs.
-  revert mu s Hs HS.
-  induction H as [x|s1 x r y Hl Hw IH|mu1 s1 x r y Hl Hw IH]; intros mu s Hs HS.
+  intros p μ s q HS H. remember (μ :: s) as s0 eqn:Hs.
+  revert μ s Hs HS.
+  induction H as [x|s1 x r y Hl Hw IH|μ1 s1 x r y Hl Hw IH]; intros μ s Hs HS.
   - discriminate.
   - assert (Hlt : (size r < size x)%nat) by (eapply Static_lts_decrease; eassumption).
     assert (HSr : Static r) by (eapply Static_preserved_by_lts; eassumption).
-    specialize (IH mu s Hs HSr). lia.
+    specialize (IH μ s Hs HSr). lia.
   - assert (Hlt : (size r < size x)%nat) by (eapply Static_lts_decrease; eassumption).
     assert (HSr : Static r) by (eapply Static_preserved_by_lts; eassumption).
     assert (Hle : (size y <= size r)%nat) by (eapply wt_size_le; eassumption). lia.
 Qed.
 
-(** ** Flattening as a driver too
+(* ** Flattening as a driver too
 
     [ax_below_gsum] above reaches its flattened form through
     [tau_flatten_all], which returns only a [⊢]-equality — and an equality
@@ -1139,7 +1140,7 @@ Definition InvR (M0 : proc) (L : gproc) : Prop :=
 
 
 
-(** The measure, delivered. *)
+(* The measure, delivered. *)
 Corollary InvR_reduct_smaller : forall (M0 : proc) (L : gproc), Static M0 -> InvR M0 L ->
   forall c v (Q : proc), lts (g L) (ActExt (ActIn (c,v))) Q -> (size Q < size M0)%nat.
 Proof.
@@ -1147,7 +1148,7 @@ Proof.
   eapply wt_act_size_lt; [ exact HS | apply H1; exact Hl ].
 Qed.
 
-(** * `grestrict` meets `gGuardsIn`
+(* * `grestrict` meets `gGuardsIn`
 
     [VACCS_Absorb.grestrict N M] keeps exactly [M]'s guards on channels
     [N] offers, so it satisfies this file's structural side condition.
@@ -1178,7 +1179,7 @@ Proof.
   - split; assumption.
 Qed.
 
-(** **A third direction mismatch, recorded rather than papered over.**
+(* **A third direction mismatch, recorded rather than papered over.**
 
     With [grestrict_guards] it is tempting to chain
 
@@ -1196,7 +1197,7 @@ Qed.
     an inequation available in one direction where the argument needs the
     other.  Both are recorded so neither is re-walked. *)
 
-(** * Phase A without [gGuardsIn]: restrict the WHOLE expansion
+(* * Phase A without [gGuardsIn]: restrict the WHOLE expansion
 
     The three earlier routes all failed the same way — they weakened the
     left-hand side and then needed a hypothesis about the weakened side.
@@ -1270,7 +1271,7 @@ Proof.
   - destruct (IH2 c v _ H3) as (w & r & Hr). exists w, r. apply lts_choiceR. exact Hr.
 Qed.
 
-(** The certificate's semantic content, available from the hypothesis
+(* The certificate's semantic content, available from the hypothesis
     completeness starts with. *)
 
 Theorem bigsum_sembadk : forall (M N : gproc), (forall p, ~ lts (g N) τ p) ->
@@ -1293,7 +1294,7 @@ Proof.
     exists v2, b2. exact l2.
 Qed.
 
-(** * Feeding a surplus channel cannot help — the engine of the kill list
+(* * Feeding a surplus channel cannot help — the engine of the kill list
 
     A channel [M] offers and [N] does not is *useless to a client that
     stays inside [N]'s channels*: [g M] fails every such client even when
@@ -1351,7 +1352,7 @@ Proof.
     + eapply (Hem c2); [ exact Hoff | exists v2; eexists; eassumption ].
 Qed.
 
-(** * Bridging `grestrict` to the certificate
+(* * Bridging `grestrict` to the certificate
 
     `grestrict N M` keeps `M`'s guard on `c` exactly when `N` offers `c`
     ([grestrict_offers]).  So if the restricted sum is *stable* at a
@@ -1384,8 +1385,8 @@ Proof.
   destruct (grestrict_offers N M c HM HN) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (grestrict N M)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-            ((g (grestrict N M)) ▷ m) τ); [ | exact Hst ].
+  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+            ((g (grestrict N M)) ▷ m) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
 Qed.
@@ -1406,7 +1407,7 @@ Proof.
   - exists w, r. exact Hr.
 Qed.
 
-(** * Restricting the WHOLE expansion to the mirror — semantically
+(* * Restricting the WHOLE expansion to the mirror — semantically
 
     This is Phase A's semantic content, and unlike the `grestrict` route
     it has no mixed-buffer case at all.
@@ -1445,7 +1446,7 @@ Proof.
   - inversion H; subst. constructor; auto.
 Qed.
 
-(** The certificate, factored out: it is what both the semantic fact and
+(* The certificate, factored out: it is what both the semantic fact and
     the derivation need. *)
 
 Lemma bigsum_gStatic : forall (M N : gproc), gStatic M -> gStatic N ->
@@ -1475,13 +1476,13 @@ Proof.
   destruct (offers_mirrorN M N c w r Hr) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (mirrorN M N)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-            ((g (mirrorN M N)) ▷ m) τ); [ | exact Hst ].
+  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+            ((g (mirrorN M N)) ▷ m) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
 Qed.
 
-(** ** The same certificate at a LOADED buffer, from the CONFIGURATION hypothesis
+(* ** The same certificate at a LOADED buffer, from the CONFIGURATION hypothesis
 
     [bigsum_certificate] needs the *bare* [g M ⊑ₘᵤₛₜᵢ g N], which
     [VACCS_NormalForm.msgs_cancel] only supplies when the left
@@ -1536,13 +1537,13 @@ Proof.
   destruct (offers_mirrorN M N c w r Hr) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (mirrorN M N)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  eapply (@lts_refuses_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
-            ((g (mirrorN M N)) ▷ (m ⊎ bag l)) τ); [ | exact Hst ].
+  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+            ((g (mirrorN M N)) ▷ (m ⊎ bag l)) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
 Qed.
 
-(** ** …and where it is FREE: buffers the left cannot touch
+(* ** …and where it is FREE: buffers the left cannot touch
 
     The certificate has a large trivial region, and isolating it narrows
     the residue considerably.  A guarded sum settles at itself when it
@@ -1628,7 +1629,7 @@ Qed.
 
 
 
-(** Phase A at a configuration, from the certificate for [g M] alone. *)
+(* Phase A at a configuration, from the certificate for [g M] alone. *)
 
 
 
@@ -1649,7 +1650,7 @@ Qed.
 
 
 
-(** *** CAVEAT: the recursive premise sits at the WRONG LEVEL for the measure
+(* *** CAVEAT: the recursive premise sits at the WRONG LEVEL for the measure
 
     [ax_below_stable_NF]'s recursive premise is inherited from the
     bare-sum theorem through [msgs_cancel], [ax_par] and [ax_res_n], so it
@@ -1672,7 +1673,7 @@ Qed.
     level.  Recorded here rather than in the plan file because it is a
     property of *these two statements*. *)
 
-(** ** Chasing internal moves: the leaves of a configuration
+(* ** Chasing internal moves: the leaves of a configuration
 
     [ax_below_stable_config] needs its left stable, and that hypothesis is
     **necessary** — for an unstable configuration a common bag cannot be
@@ -1707,7 +1708,7 @@ Proof.
   eapply Static_preserved_by_wt; [ exact HS | exact Hw ].
 Qed.
 
-(** ** n-ary internal choice: the derivable laws
+(* ** n-ary internal choice: the derivable laws
 
     [ichoice] itself, [ichoice_gAllTau] and [lts_ichoice] live upstream,
     in [VACCS_Residues], so that a rule of the system can name them; what
@@ -1753,7 +1754,7 @@ Proof.
   - intros c Q HQ v. apply ax_deliver. apply Hsub. eapply summand_lts; [ exact HQ | apply lts_input ].
 Qed.
 
-(** ** Removing a duplicated residue — where [ax_sub_tau] and
+(* ** Removing a duplicated residue — where [ax_sub_tau] and
        [ax_restrict_keep] meet
 
     [(A + R) + (B + R)] and [(A + B) + R] have *literally the same*
@@ -1816,7 +1817,7 @@ Proof.
   - apply ax_sub_tau; [ apply dup_sub | exists z; exact Hz ].
 Qed.
 
-(** …and hence the split law **with a residue**, which
+(* …and hence the split law **with a residue**, which
     [VACCS_Precongruence.must_i_input_distrib_ctx_r] proves sound and no
     rule provides.  It is derivable after all — so the system has no gap
     here either. *)
@@ -1836,7 +1837,7 @@ Proof.
   - apply ax_choice_input. intro v. simpl. apply ax_int_r.
 Qed.
 
-(** ** PHASE A OVER THE UNION OF CHANNELS — with no semantic hypothesis
+(* ** PHASE A OVER THE UNION OF CHANNELS — with no semantic hypothesis
 
     Build the mirror over [N + M] instead of [N].  Then the mirror offers
     every channel the expansion offers — [M]'s from the [ext] part, and
@@ -1878,7 +1879,7 @@ Proof.
     + eapply mirrorN_no_tau; [ exact HstNM | eassumption ].
 Qed.
 
-(** ** The outer recursion, as a frame
+(* ** The outer recursion, as a frame
 
     Completeness is a well-founded recursion on the **size of the
     right-hand side**; this fixes that frame and checks the induction is
@@ -1917,7 +1918,7 @@ Proof.
 Qed.
 
 
-(** ** …instantiated at a message bag
+(* ** …instantiated at a message bag
 
     A bag's transitions are exactly "emit one message, leaving the rest",
     so the family of bags reachable from [msgs l] — the sub-bags, up to
@@ -1925,14 +1926,14 @@ Qed.
     laws the matching actually needs, with the premise quantified over
     sub-bags only, which is precisely the range [domsim_wt] measures. *)
 
-(** ** …and at the level of [⊢]
+(* ** …and at the level of [⊢]
 
     [ax_choice_input_bag] is itself a rule of the system: a summand's
     continuation may be rewritten **beside a message bag**, provided the
     rewrite is derivable at every sub-bag — and the sub-bags are exactly
     the states [domsim_wt] measures. *)
 
-(** Pooling two **same-channel** guards is free at a bag: the law is a
+(* Pooling two **same-channel** guards is free at a bag: the law is a
     closed inequation, so [ax_par] carries it into any context.  This is
     what merges the delivery-branches a bag creates *at one channel*;
     nothing in the rule set merges branches at *different* channels, which
@@ -1967,7 +1968,7 @@ Proof.
     apply ax_cgr. apply cgr_par_assoc_rev.
 Qed.
 
-(** The greatest lower bound, likewise at a bag: the bare rule
+(* The greatest lower bound, likewise at a bag: the bare rule
     [ax_int_glb] builds the internal choice of the two configurations, and
     [ax_share_msgs] factors the common bag out of it. *)
 Lemma ax_int_glb_bag : forall (l : list TypeOfActions) (p q1 q2 : proc),
@@ -1981,7 +1982,7 @@ Proof.
     | apply ax_share_msgs ].
 Qed.
 
-(** ** Phase B, and the stable case, AT A CONFIGURATION
+(* ** Phase B, and the stable case, AT A CONFIGURATION
 
     The whole chain now lifts, and the point of lifting it is the shape of
     the **recursive premise**: it comes out as
@@ -2004,7 +2005,7 @@ Proof. intros l X Y H. apply ax_par; [ apply ax_refl | exact H ]. Qed.
 
 
 
-(** ** THE SAME, WITH THE LEFT CONFIGURATION UNSTABLE — modulo ONE assumption
+(* ** THE SAME, WITH THE LEFT CONFIGURATION UNSTABLE — modulo ONE assumption
 
     [ax_below_stable_NF_bag] requires the left configuration
     [g M ▷ bag l] to be τ-stable, and that hypothesis is used in exactly
@@ -2040,7 +2041,7 @@ Proof. intros l X Y H. apply ax_par; [ apply ax_refl | exact H ]. Qed.
 
 
 
-(** ** The τ-layer, at a configuration
+(* ** The τ-layer, at a configuration
 
     The two drivers lift as mechanically as Phase B did.  Everything is
     phrased with two abbreviations, both **monotone in the bag** (a
@@ -2172,7 +2173,7 @@ Proof.
 Qed.
 
 
-(** * THE WHOLE RIGHT-HAND SIDE AT A CONFIGURATION, modulo [PhaseA_config]
+(* * THE WHOLE RIGHT-HAND SIDE AT A CONFIGURATION, modulo [PhaseA_config]
 
     [ax_below_gsum_bag] reduces an arbitrary right-hand sum to its
     **stable leaves**, at a configuration, by the two τ-drivers; and
@@ -2195,7 +2196,7 @@ Qed.
 
 
 
-(** * MOVING A PENDING MESSAGE FROM THE BUFFER INTO THE PROCESS
+(* * MOVING A PENDING MESSAGE FROM THE BUFFER INTO THE PROCESS
 
     [Settles] is insensitive to where a pending output sits.  This is the
     [Settles]-level counterpart of [VACCS_Precongruence.must_msg_swap]
@@ -2373,7 +2374,7 @@ Proof.
 Qed.
 
 
-(** ** …and a WHOLE bag, which needs [Settles] up to structural congruence
+(* ** …and a WHOLE bag, which needs [Settles] up to structural congruence
 
     Iterating [Settles_msg_to_buffer] over a list needs the messages to
     accumulate on the *left* of the process, whereas the lemma puts each
@@ -2411,20 +2412,20 @@ Proof.
     + exists p1, q1, m'. split; [ reflexivity | split; [ reflexivity | exact Hc1 ] ].
 Qed.
 
-Lemma step_cgr_ext : forall x y mu x1, Rcgr x y -> x ⟶[mu] x1 ->
-  exists y1, y ⟶[mu] y1 /\ Rcgr x1 y1.
+Lemma step_cgr_ext : forall x y μ x1, Rcgr x y -> x ⟶[μ] x1 ->
+  exists y1, y ⟶[μ] y1 /\ Rcgr x1 y1.
 Proof.
-  intros x y mu x1 (p & q & m & Ex & Ey & Hc) Hl. subst x y.
-  destruct (fw_ext_shape p m mu x1 Hl) as [HA|[HB|HC]].
+  intros x y μ x1 (p & q & m & Ex & Ey & Hc) Hl. subst x y.
+  destruct (fw_ext_shape p m μ x1 Hl) as [HA|[HB|HC]].
   - destruct HA as (p1 & Hp1 & E). subst x1.
-    destruct (cgr_lts_transfer p q (ActExt mu) p1 Hc Hp1) as (q1 & Hq1 & Hc1).
+    destruct (cgr_lts_transfer p q (ActExt μ) p1 Hc Hp1) as (q1 & Hq1 & Hc1).
     exists (q1 ▷ m). split; [ apply fw_ext_left; exact Hq1 | ].
     exists p1, q1, m. split; [ reflexivity | split; [ reflexivity | exact Hc1 ] ].
-  - destruct HB as (b & Hb & E). subst mu x1.
+  - destruct HB as (b & Hb & E). subst μ x1.
     exists (q ▷ ({[+ ActOut b +]} ⊎ m)). split; [ apply fw_input_always | ].
     exists p, q, ({[+ ActOut b +]} ⊎ m).
     split; [ reflexivity | split; [ reflexivity | exact Hc ] ].
-  - destruct HC as (b & m' & Hb & HK & E). subst mu x1.
+  - destruct HC as (b & m' & Hb & HK & E). subst μ x1.
     exists (q ▷ m'). split.
     + rewrite HK. apply fw_emit.
     + exists p, q, m'. split; [ reflexivity | split; [ reflexivity | exact Hc ] ].
@@ -2466,7 +2467,7 @@ Proof.
     + eapply He. exact Hr'.
 Qed.
 
-(** The payoff: a whole bag moves from the buffer into the process.  This
+(* The payoff: a whole bag moves from the buffer into the process.  This
     is what turns a certificate for [g M] at a loaded buffer into one for
     the left-hand side [msgs d ‖ g M] that
     [ax_below_stable_split_bag] compares. *)
@@ -2493,7 +2494,7 @@ Qed.
 
 
 
-(** * THE PRINCIPLE THE SET-BASED ROUTE RUNS ON
+(* * THE PRINCIPLE THE SET-BASED ROUTE RUNS ON
 
     Every failed route above needed the semantics to name a *specific*
     matching state, while [bhv_pre_cond2] — and its coinductive
@@ -2538,7 +2539,7 @@ Proof.
 Qed.
 
 
-(** And the certificate for an internal choice needs **one** member to
+(* And the certificate for an internal choice needs **one** member to
     settle — which is exactly the shape [DefinitionCI.c_now] promises. *)
 
 Lemma Settles_ichoice : forall S (L : list proc) (x : proc) K,
@@ -2549,7 +2550,7 @@ Proof.
   eapply wt_tau; [ apply fw_tau_left; apply lts_ichoice; exact Hin | apply wt_nil ].
 Qed.
 
-(** ** Why this is still not a short cut — recorded so it is not retried
+(* ** Why this is still not a short cut — recorded so it is not retried
 
     [ax_phaseA_direct] accepts an arbitrary [proc] on the left since the
     mirror was generalised, and [g (ichoice L)] is one, so Phase A does
@@ -2576,7 +2577,7 @@ Qed.
     member. *)
 
 
-(** * SETS OF CONFIGURATIONS, SYNTACTICALLY
+(* * SETS OF CONFIGURATIONS, SYNTACTICALLY
 
     The set-based recursion works with *configurations* — a process and a
     pending bag — and has to name them syntactically.  A configuration
@@ -2623,7 +2624,7 @@ Proof.
 Qed.
 
 
-(** ** From a SET of forwarder states to a list of configurations
+(* ** From a SET of forwarder states to a list of configurations
 
     [DefinitionCI]'s sets live at the pair type, with an arbitrary
     multiset as buffer; the syntax needs a *list*.  The two are
@@ -2642,7 +2643,7 @@ Qed.
     and an internal choice inherits any member's settling
     ([Settles_ichoice_cfg]). *)
 
-(** Every buffer the forwarder reaches from an [OutOnly] one is again
+(* Every buffer the forwarder reaches from an [OutOnly] one is again
     [OutOnly]: messages enter only through [lts_multiset_add], which
     stores an output, so [fw_buffer_bounded] bounds the final buffer by
     the initial one together with a bag. *)
@@ -2668,7 +2669,7 @@ Proof.
   apply OutOnly_disj; [ exact Ho | apply outonly_of_bag ].
 Qed.
 
-(** The list covers the set **and** contains nothing else — the second
+(* The list covers the set **and** contains nothing else — the second
     conjunct is what lets a caller conclude that every configuration of
     the list is a genuine reduct. *)
 
@@ -2726,7 +2727,7 @@ Proof.
 Qed.
 
 
-(** ** The set of a coinductive step, as one internal choice
+(* ** The set of a coinductive step, as one internal choice
 
     [VACCS_Cond2.copre_step_single] carries the hypothesis across **one**
     visible action and hands back the canonical set of the left's
@@ -2748,19 +2749,19 @@ Qed.
     since an emission cannot be replayed backwards. *)
 
 Theorem copre_settles_ichoice_after :
-  forall (l l' : list TypeOfActions) (p q : proc) mu y', Static p ->
+  forall (l l' : list TypeOfActions) (p q : proc) μ y', Static p ->
   ((msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l' ‖ q)) ->
-  ((q ▷ bag l') ⟶[mu] y') -> y' ↛ ->
+  ((q ▷ bag l') ⟶[μ] y') -> y' ↛ ->
   exists L : list cfg,
-    (forall c, In c L -> (p ▷ bag l) ⟹{mu} (cfg_state c))
+    (forall c, In c L -> (p ▷ bag l) ⟹{μ} (cfg_state c))
     /\ Settles (emits y') ((g (ichoice_cfg L)) ▷ (∅ : MO (ExtAct TypeOfActions))).
 Proof.
-  intros l l' p q mu y' Hp Hsem Hl Hst.
+  intros l l' p q μ y' Hp Hsem Hl Hst.
   assert (Hcnv : forall x, x ∈ ({[ (p ▷ bag l) ]} : gset (proc * MO (ExtAct TypeOfActions))) ->
-                   x ⇓ [mu]).
+                   x ⇓ [μ]).
   { intros x Hx. apply elem_of_singleton_1 in Hx. subst x.
     apply fw_converge_static. exact Hp. }
-  destruct (copre_step_single _ _ (q ▷ bag l') y' mu
+  destruct (copre_step_single _ _ (q ▷ bag l') y' μ
               (msgs_copre l l' p q Hsem) Hcnv
               (elem_of_singleton_2 _ _ eq_refl) Hl)
     as (X' & (Hs1 & Hs2) & Hco').
@@ -2788,7 +2789,7 @@ Proof.
 Qed.
 
 
-(** ** Phase A, and the stable step, with a SET on the left
+(* ** Phase A, and the stable step, with a SET on the left
 
     The certificate is the only semantic content of Phase A, and for a
     single left-hand process it is a statement about *that* process.
@@ -2819,7 +2820,7 @@ Qed.
 
 
 
-(** The same at an arbitrary trace, via [VACCS_Cond2.copre_step_trace]:
+(* The same at an arbitrary trace, via [VACCS_Cond2.copre_step_trace]:
     after the right-hand side runs [s] and settles, the set of states
     the left reaches over the **same** [s] settles below it, written as
     one internal choice of configurations.  [copre_settles_ichoice_after]
@@ -2865,7 +2866,7 @@ Proof.
 Qed.
 
 
-(** ** Entering the set: a configuration is below the choice of its τ-reducts
+(* ** Entering the set: a configuration is below the choice of its τ-reducts
 
     [ax_ichoice_of_taus] enters an internal choice whenever every member
     is τ-reachable.  At a *configuration* the τ-reducts are again
@@ -2939,7 +2940,7 @@ Lemma cfg_tau_run_transfer : forall (x y : proc * MO (ExtAct TypeOfActions)),
   exists p' l' r', y = (p' ▷ bag l') /\ r ⟹[[]] r' /\ r' ≡* (msgs l' ‖ p').
 Proof.
   intros x y Hw. remember (nil : trace (ExtAct TypeOfActions)) as s eqn:Hs.
-  induction Hw as [x0|s0 x0 q0 y0 Hl Hwt IH|mu s0 x0 q0 y0 Hl Hwt IH];
+  induction Hw as [x0|s0 x0 q0 y0 Hl Hwt IH|μ s0 x0 q0 y0 Hl Hwt IH];
     intros p l r Ex Hcgr.
   - subst x0. exists p, l, r.
     split; [ reflexivity | split; [ apply wt_nil | exact Hcgr ] ].
@@ -2972,7 +2973,7 @@ Proof.
 Qed.
 
 
-(** ** The drain-then-refill certificate, at the SET level
+(* ** The drain-then-refill certificate, at the SET level
 
     This is the point of the whole set-based route.  Compare the
     single-process certificates:
@@ -3009,8 +3010,8 @@ Proof.
   { assert (Hnostep : forall x, ~ (((g N) ▷ bag k) ⟶ x)).
     { apply fw_stable_iff. split; [ exact HstN | ].
       intros a Hin q Hq. eapply Hnoc; [ exact Hin | exact Hq ]. }
-    destruct (decide (lts_refuses ((g N) ▷ bag k) τ)) as [Hy|Hn]; [ exact Hy | ].
-    exfalso. apply lts_refuses_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
+    intros Hn.
+    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
   destruct (copre_settles_ichoice_along (map ActOut l ++ feed k) l l p (g N)
               ((g N) ▷ bag k) Hp Hsem (drain_refill_run N l k) Hsty)
     as (L & HL & HS).
@@ -3020,7 +3021,7 @@ Proof.
 Qed.
 
 
-(** ** Where the set can and cannot be entered — the delimitation
+(* ** Where the set can and cannot be entered — the delimitation
 
     [Settles_tau_reduct] says the certificate is inherited **backwards**
     along an internal run ([fw_wt_lift] + [Settles_wt]).  Hence
@@ -3067,7 +3068,7 @@ Proof.
 Qed.
 
 
-(** ** The escape channel is inside the footprint — the client is finite
+(* ** The escape channel is inside the footprint — the client is finite
 
     Lifting [VACCS_Absorb.emits_in_pchans] to the forwarder: along an
     **internal** run, an emission comes either from the process (so its
@@ -3142,7 +3143,7 @@ Proof.
 Qed.
 
 
-(** ** The separating client itself
+(* ** The separating client itself
 
     [probes L] is [Σ_{d ∈ L} d ? ①] — a finite guarded sum, which is
     what [escapes_in_pchans] makes possible: the channels to listen on
@@ -3199,7 +3200,7 @@ Proof.
 Qed.
 
 
-(** ** The client SEPARATES — both halves proved
+(* ** The client SEPARATES — both halves proved
 
     [escapes_must_probes] is the left half, by induction on
     **termination** ([fw_terminate_static]) with [EscapesOutside] as the
@@ -3248,17 +3249,17 @@ Proof.
   intros P K L HP HL Hesc x Ht. induction Ht as [x Hacc IH]. intros Hw.
   apply m_step.
   - apply probes_not_good.
-  - destruct (decide (lts_refuses x τ)) as [Hs|Hn].
+  - destruct (decide (x ⟶)) as [Hn | Hs].
+    + apply lts_performs_spec1 in Hn as (z & Hz).
+      exists (z, (g (probes L) : proc)). apply ParLeft. exact Hz.
     + destruct (escapes_in_pchans P K HP Hesc x Hw Hs) as (d & w & r & Hr & Hnot & Hin).
       exists (r, (g ① : proc)).
       eapply (ParSync (ActOut (d,w)) (ActIn (d,w)));
         [ reflexivity | exact Hr | apply probes_in; apply HL; assumption ].
-    + apply lts_refuses_spec1 in Hn as (z & Hz).
-      exists (z, (g (probes L) : proc)). apply ParLeft. exact Hz.
   - intros x' Hx'. apply IH; [ exact Hx' | ].
     eapply wt_push_nil_right; [ exact Hw | eapply wt_tau; [ exact Hx' | apply wt_nil ] ].
   - intros t' Ht'. exfalso. eapply probes_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hdual Hp' Ht'.
+  - intros p' t' μ1 μ2 Hdual Hp' Ht'.
     apply m_now. rewrite (probes_lts_target L _ _ Ht'). constructor.
 Qed.
 
@@ -3288,7 +3289,7 @@ Proof.
 Qed.
 
 
-(** ** The sink — how a test reaches buffers BELOW the bag
+(* ** The sink — how a test reaches buffers BELOW the bag
 
     The assembly needs a test for the whole *configuration*, whose
     buffer is [bag l], while the certificate speaks of an arbitrary
@@ -3364,7 +3365,7 @@ Proof.
 Qed.
 
 
-(** ** The composed test
+(* ** The composed test
 
     **Scope, checked before building on it.**  The left half does *not*
     go through for the composed test, and the reason is worth stating
@@ -3455,7 +3456,7 @@ Proof.
 Qed.
 
 
-(** The composed test never moves on its own — under exactly the
+(* The composed test never moves on its own — under exactly the
     disjointness the construction will supply ([kk]'s channels lie
     inside [chans K], the sinks' and probes' outside it).  Both
     synchronisations inside the test are ruled out for their own reason:
@@ -3507,7 +3508,7 @@ Proof.
 Qed.
 
 
-(** ** The right half at the composed test
+(* ** The right half at the composed test
 
     [probe_test_lts_inv] characterises the test's visible moves
     completely — an **input** on [Ls ∪ L], or an **output** of the bag
@@ -3575,7 +3576,7 @@ Proof.
   etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
 Qed.
 
-(** ** THE RESIDUE, NAMED — everything rests on one [Settles] statement
+(* ** THE RESIDUE, NAMED — everything rests on one [Settles] statement
 
     [CertAll] is the certificate of [ax_phaseA_direct], quantified over
     the data the matching actually supplies: two [gStatic] sums, a
@@ -3609,7 +3610,7 @@ Definition CertAll : Prop :=
 
 
 
-(** ** The descent step, at a configuration
+(* ** The descent step, at a configuration
 
     The other half of the dichotomy for an unstable left (see the note at
     [ax_phaseA_direct] and [VACCS_DropProbes]): when a guard of [M]
@@ -3659,7 +3660,7 @@ Proof.
   eapply ax_trans; [ apply ax_cgr; exact Hcr | exact Hax ].
 Qed.
 
-(** Les versions à somme gardée en sont les instances : rien dans la
+(* Les versions à somme gardée en sont les instances : rien dans la
     preuve n'inspecte la forme du processus. *)
 
 Lemma cfg_deliver_step : forall (l l0 : list TypeOfActions) c v (M : gproc) (Mc : proc),
@@ -3668,7 +3669,7 @@ Lemma cfg_deliver_step : forall (l l0 : list TypeOfActions) c v (M : gproc) (Mc 
   exists r, lts (msgs l ‖ g M) τ r /\ r ≡* (msgs l0 ‖ Mc).
 Proof. intros l l0 c v M Mc. apply cfg_deliver_step_p. Qed.
 
-(** ** The descent disjunct, reduced to a LOCAL condition
+(* ** The descent disjunct, reduced to a LOCAL condition
 
     [CfgDisjunction]'s second disjunct asks for *some* [τ]-successor of
     the configuration to be below the target — a statement about the whole
@@ -3714,7 +3715,7 @@ Proof.
   exact (proj2 (must_i_cgr _ _ Hc2) t H2).
 Qed.
 
-(** The copycat / responder shape, where the continuation literally
+(* The copycat / responder shape, where the continuation literally
     returns the message beside a residue.  Both [VACCS_DropProbes]'s
     [MCert] (residue [𝟘], target [𝟘]) and the [rb]-guard of its
     regenerating probe are this instance.
@@ -3759,7 +3760,7 @@ Theorem ax_below_cfg_descend : forall (l l0 : list TypeOfActions) c v
   (msgs l ‖ g M) ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 Proof. intros l l0 c v M Mc q. apply ax_below_cfg_descend_p. Qed.
 
-(** ** La délivrance est réversible — le cas garde unique
+(* ** La délivrance est réversible — le cas garde unique
 
     Le dernier énoncé ouvert de la complétude est la branche
     *régénérante* de la dichotomie : lorsque la garde qui consomme le
@@ -3825,14 +3826,14 @@ Proof.
       * inversion H3.
       * inversion H3.
     + intros t' Hstep. exact (IHet t' Hstep Hreg Hrendu Hsym eq_refl).
-    + intros p' t' mu1 mu2 Hdual Hp Ht. inversion Hp; subst.
+    + intros p' t' μ1 μ2 Hdual Hp Ht. inversion Hp; subst.
       * inversion H3; subst.
         destruct Hreg as [Pr HPr].
         assert (HPt : Pr must_pass t') by (eapply com; [ exact Hdual | exact HPr | exact Ht ]).
         assert (HG : ((c ? P) : proc) must_pass t') by (eapply Hrendu; [ exact HPr | exact HPt ]).
         exact (proj2 (must_i_cgr _ _ (ax_nil_par ((c ? P) : proc))) t' HG).
       * inversion H3; subst.
-        destruct mu2 as [a2|a2]; simpl in Hdual; try contradiction. subst a2.
+        destruct μ2 as [a2|a2]; simpl in Hdual; try contradiction. subst a2.
         assert (Hc : t ≡* ((c ! v0 • 𝟘) ‖ t'))
           by (eapply TransitionShapeForOutputSimplified; exact Ht).
         assert (Ha : (P ^ v) must_pass ((c ! v0 • 𝟘) ‖ t'))
@@ -3845,7 +3846,7 @@ Proof.
         exact (proj1 (must_i_cgr _ _ Hcom2) t' Hd).
 Qed.
 
-(** La délivrance est alors une **équivalence** : l'autre sens est
+(* La délivrance est alors une **équivalence** : l'autre sens est
     [must_i_tau_below] sur le τ de délivrance, composé avec
     [ax_nil_par]. *)
 Lemma must_i_delivery_equiv :
@@ -3868,7 +3869,7 @@ Proof.
     exact (proj1 (must_i_cgr _ _ Hnil) t (must_i_tau_below _ _ Hstep t Hm)).
 Qed.
 
-(** Et la branche régénérante de la dichotomie tombe par transitivité,
+(* Et la branche régénérante de la dichotomie tombe par transitivité,
     **sans jamais parler de la cible** [q] — c'est tout l'intérêt de
     l'avoir reformulée en [successeur ⊑ p]. *)
 Corollary must_i_delivery_below_target :
@@ -3887,7 +3888,7 @@ Proof.
   apply Hpq. exact (must_i_delivery_reversible c v P Hreg Hrendu Hsym t Hm).
 Qed.
 
-(** *** Les hypothèses sont satisfaisables — le copycat les vérifie
+(* *** Les hypothèses sont satisfaisables — le copycat les vérifie
 
     Une loi dont les prémisses ne sont jamais remplies ne vaut rien ;
     voici donc l'instance qui les remplit, et c'est celle qui a motivé
@@ -3921,7 +3922,7 @@ Proof.
     exact (proj1 (must_i_cgr _ _ Hc) t' H1).
 Qed.
 
-(** *** À sac quelconque : pour un copycat, la délivrance reste réversible
+(* *** À sac quelconque : pour un copycat, la délivrance reste réversible
 
     [must_i_delivery_reversible] est limitée à un sac d'un seul message,
     parce que son champ [pt] doit couvrir *tous* les τ de [p] et qu'un
@@ -3974,7 +3975,7 @@ Proof.
   - intros t H. exact (Hm1 t (Hcgr2 t H)).
 Qed.
 
-(** *** …et à somme quelconque : le cas copycat est clos en toute généralité
+(* *** …et à somme quelconque : le cas copycat est clos en toute généralité
 
     [msgs_ccat_delivery] ci-dessus lève l'hypothèse « un seul message » ;
     il reste celle d'« une seule garde ».  Elle tombe de la même façon,
@@ -4034,7 +4035,7 @@ Proof.
   - intros t H. exact (Hm1 t (Hcgr2 t H)).
 Qed.
 
-(** La branche régénérante de la dichotomie, close pour toute la classe
+(* La branche régénérante de la dichotomie, close pour toute la classe
     copycat : sac quelconque, somme quelconque, et **sans rien supposer
     de la cible**. *)
 Corollary copycat_delivery_below_target :
@@ -4065,7 +4066,7 @@ Qed.
 
 
 
-(** ** The stable case for a GUARDED SUM, at an arbitrary left
+(* ** The stable case for a GUARDED SUM, at an arbitrary left
 
     [ax_below_stable_sum_clean] asks the left to be a guarded sum too;
     nothing in the chain needs that.  Phase A ([ax_phaseA_direct]) has
@@ -4095,7 +4096,7 @@ Proof.
   - intros c Q HQ v. apply Hrec. eapply summand_lts; [ exact HQ | apply lts_input ].
 Qed.
 
-(** ** Vers une cible QUELCONQUE : la réduction, et ce qu'elle laisse
+(* ** Vers une cible QUELCONQUE : la réduction, et ce qu'elle laisse
 
     [VACCS_AxExamples.completeness_from_NF] ramène déjà la complétude à la
     comparaison de deux **formes normales** [Ѵⁿ (msgs l ‖ g M)].  Le pas
@@ -4141,7 +4142,7 @@ Proof.
     apply (proj2 (must_i_cgr _ _ HcA)). exact Ht.
 Qed.
 
-(** ** …et pourquoi ce pas ne se généralise PAS à une cible quelconque
+(* ** …et pourquoi ce pas ne se généralise PAS à une cible quelconque
 
     [completeness_gsum_step_gen] fonctionne parce que la cible est une somme
     gardée : elle n'émet jamais ([gsum_no_out]), donc les deux prémisses
@@ -4176,7 +4177,7 @@ Qed.
 
 
 
-(** ** …et la prémisse de non-régénération est SYNTAXIQUE
+(* ** …et la prémisse de non-régénération est SYNTAXIQUE
 
     [ax_below_NF_no_regen]'s premise quantifies over *runs*, which nobody
     can discharge by hand.  It follows from a check on the syntax:
@@ -4203,11 +4204,11 @@ Lemma trace_out_in_ochans : forall s (p q : proc) c v, Static p ->
   p ⟹[s] q -> In (c,v) (outs s) -> In c (ochans p).
 Proof.
   intros s p q c v Hst Hw. revert Hst.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros Hst Hin.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros Hst Hin.
   - simpl in Hin. contradiction.
   - eapply lts_ochans_target; [ exact Hst | exact Hl | ].
     eapply IH; [ eapply Static_preserved_by_lts; eassumption | exact Hin ].
-  - destruct mu as [[d w]|[d w]]; simpl in Hin.
+  - destruct μ as [[d w]|[d w]]; simpl in Hin.
     + eapply lts_ochans_target; [ exact Hst | exact Hl | ].
       eapply IH; [ eapply Static_preserved_by_lts; eassumption | exact Hin ].
     + destruct Hin as [He|Hin].
@@ -4224,10 +4225,10 @@ Lemma no_regen_of_own_channel : forall (M : gproc),
   forall r q, ((g M) : proc) ⟹[r] q -> bag (ins r) ⊆ bag (outs r) -> ins r = [].
 Proof.
   intros M HstM HStat Hcrit r q Hw Hsub.
-  inversion Hw as [ x Hx | s0 x y z Hl Hwt Hs Hx | mu s0 x y z Hl Hwt Hs Hx ]; subst.
+  inversion Hw as [ x Hx | s0 x y z Hl Hwt Hs Hx | μ s0 x y z Hl Hwt Hs Hx ]; subst.
   - reflexivity.
   - exfalso. eapply HstM. exact Hl.
-  - exfalso. destruct mu as [[c v]|[c v]].
+  - exfalso. destruct μ as [[c v]|[c v]].
     + simpl in Hsub.
       assert (Hmem : ActOut (c,v) ∈ bag (outs s0))
         by (eapply gmultiset_elem_of_subseteq;
@@ -4241,7 +4242,7 @@ Proof.
     + eapply gsum_no_out. exact Hl.
 Qed.
 
-(** ** …et il suffit de le vérifier sur les canaux DU SAC
+(* ** …et il suffit de le vérifier sur les canaux DU SAC
 
     L'inversion ne consulte le critère qu'au canal de la **première
     entrée** du run.  Avec la prémisse [bag (ins r) ⊆ bag l] — que
@@ -4256,7 +4257,7 @@ Qed.
 
 
 
-(** ** Le même critère, sans τ-stabilité : voies d'entrée et de sortie DISJOINTES
+(* ** Le même critère, sans τ-stabilité : voies d'entrée et de sortie DISJOINTES
 
     [no_regen_of_own_channel] ne fait qu'une **inversion** sur le premier
     pas du run, et c'est là que la τ-stabilité de la somme intervient :
@@ -4289,11 +4290,11 @@ Lemma trace_in_in_ichans : forall s (p q : proc) c v, Static p ->
   p ⟹[s] q -> In (c,v) (ins s) -> In c (ichans p).
 Proof.
   intros s p q c v Hst Hw. revert Hst.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros Hst Hin.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros Hst Hin.
   - simpl in Hin. contradiction.
   - eapply lts_ichans_target; [ exact Hst | exact Hl | ].
     eapply IH; [ eapply Static_preserved_by_lts; eassumption | exact Hin ].
-  - destruct mu as [[d w]|[d w]]; simpl in Hin.
+  - destruct μ as [[d w]|[d w]]; simpl in Hin.
     + destruct Hin as [He|Hin].
       * injection He as He1 He2. subst d w.
         eapply lts_ichans_in; [ exact Hst | exact Hl | reflexivity ].
@@ -4322,7 +4323,7 @@ Proof.
   - eapply trace_out_in_ochans; [ exact Hst | exact Hw | exact Hmem ].
 Qed.
 
-(** La subsomption annoncée : rien de ce que la disjonction donne n'est
+(* La subsomption annoncée : rien de ce que la disjonction donne n'est
     hors de portée du critère par garde. *)
 
 Lemma disjoint_implies_own_channel : forall (p : proc), Static p ->
@@ -4335,7 +4336,7 @@ Proof.
   - eapply lts_ochans_target; [ exact Hst | exact Hl | exact Hin ].
 Qed.
 
-(** ** Une somme qui n'émet JAMAIS : le sac s'annule, `𝛕`-sommants compris
+(* ** Une somme qui n'émet JAMAIS : le sac s'annule, `𝛕`-sommants compris
 
     [VACCS_NormalForm.drain_forced_no_regen] réclame la τ-stabilité pour
     conclure que la vidange laisse le processus **exactement** où il
@@ -4412,7 +4413,7 @@ Proof.
     eapply wt_concat; [ apply fw_wt_lift; exact Ez1 | exact Hz2 ].
 Qed.
 
-(** …d'où le premier disjoint de [CfgDisjunctionLocal] **sans aucune
+(* …d'où le premier disjoint de [CfgDisjunctionLocal] **sans aucune
     hypothèse de τ-stabilité** : c'est le cas (3) de la liste des trous,
     traité pour les sommes qui n'émettent jamais. *)
 
@@ -4432,7 +4433,7 @@ Qed.
 
 
 
-(** Et le critère n'est pas vide sur le cas qu'il vise : voici une somme
+(* Et le critère n'est pas vide sur le cas qu'il vise : voici une somme
     qui le satisfait **et** porte un [𝛕]-sommant, donc que
     [ax_below_NF_no_return] ne peut pas traiter. *)
 
@@ -4450,7 +4451,7 @@ Qed.
 
 
 
-(** Et l'inclusion est **stricte** : une somme qui porte un [𝛕]-sommant
+(* Et l'inclusion est **stricte** : une somme qui porte un [𝛕]-sommant
     émettant sur une voie **étrangère au sac** échoue à [ochans _ = []]
     et satisfait le critère relatif. *)
 
@@ -4468,7 +4469,7 @@ Proof.
 Qed.
 
 
-(** ** LE RÉSIDU COMME DISJONCTION — les deux disjoints sont des théorèmes
+(* ** LE RÉSIDU COMME DISJONCTION — les deux disjoints sont des théorèmes
 
     Pour une configuration gauche **instable**, deux mécanismes sont
     disponibles, et tous deux sont prouvés :
@@ -4505,7 +4506,7 @@ Definition CfgDisjunction : Prop :=
     \/ (exists p', lts (msgs l ‖ ((g M) : proc)) τ p'
                    /\ p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g N) : proc))).
 
-(** ** …et « la continuation rend-elle le message ? » est DÉCIDABLE
+(* ** …et « la continuation rend-elle le message ? » est DÉCIDABLE
 
     [descent_of_copycat_cont] asks for [Mc ≡* ((c!v•𝟘) ‖ K)].  By
     [TransitionShapeForOutputSimplified] that is exactly *"[Mc] can emit
@@ -4541,7 +4542,7 @@ Corollary cont_returns_dec :
 Proof. intros Mc c v. apply lts_dec. Qed.
 
 
-(** ⚠ **[CfgDisjunctionSource] et [CfgDisjunctionSourceBag] sont FAUSSES**
+(* ⚠ **[CfgDisjunctionSource] et [CfgDisjunctionSourceBag] sont FAUSSES**
     — [VACCS_DropProbes.cfg_disjunction_source_is_false] et
     [..._source_bag_is_false], réfutées par [MCert].  Elles sont
     conservées parce que les implications vers [CfgDisjunction] restent
@@ -4570,7 +4571,7 @@ Definition CfgDisjunctionSource : Prop :=
           /\ K ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g M) : proc)).
 
 
-(** [CfgDisjunctionSource]'s second disjunct is satisfied outright by the
+(* [CfgDisjunctionSource]'s second disjunct is satisfied outright by the
     **copycat** class: such a guard's residue after returning the message
     is [𝟘], and a sum of copycats is above [𝟘]
     ([must_i_nil_below_copycats]).  This is the same positive case the
@@ -4592,7 +4593,7 @@ Proof.
   - apply must_i_nil_below_copycats. exact Hcop.
 Qed.
 
-(** Un [τ] d'une configuration dont la somme est τ-stable est
+(* Un [τ] d'une configuration dont la somme est τ-stable est
     nécessairement une **délivrance** : [fw_tau_shape] n'a que deux
     formes, et la première est exclue.  [bag_split_msg] remet ensuite le
     message consommé en tête de la liste, ce que le disjoint attend. *)
@@ -4610,7 +4611,7 @@ Proof.
     destruct a as (c,v). exists c, v, l', p'. split; assumption.
 Qed.
 
-(** …d'où, pour une gauche **copycat**, le second disjoint de
+(* …d'où, pour une gauche **copycat**, le second disjoint de
     [CfgDisjunctionSource] **sans aucune hypothèse sémantique** : la
     seule chose demandée est que la configuration ait un [τ], ce qui est
     déjà la prémisse de la disjonction. *)
@@ -4632,7 +4633,7 @@ Proof.
   exists c, v, l0, Mc, K. repeat split; assumption.
 Qed.
 
-(** ** Le disjoint source, RELATIVISÉ AU SAC
+(* ** Le disjoint source, RELATIVISÉ AU SAC
 
     [descent_of_residue_below_source] n'emploie [K ⊑ₘᵤₛₜᵢ g M] qu'à
     travers [must_i_par_compat_r], c'est-à-dire uniquement sous le sac.
@@ -4707,7 +4708,7 @@ Proof.
   - right. eapply descent_of_residue_below_source_bag; eassumption.
 Qed.
 
-(** …et elle est bien plus faible que la version nue. *)
+(* …et elle est bien plus faible que la version nue. *)
 
 Theorem cfg_source_bag_of_source : CfgDisjunctionSource -> CfgDisjunctionSourceBag.
 Proof.
@@ -4719,7 +4720,7 @@ Proof.
     apply must_i_par_compat_r. exact HK.
 Qed.
 
-(** ** La même disjonction, avec le second disjoint LOCAL
+(* ** La même disjonction, avec le second disjoint LOCAL
 
     [CfgDisjunction]'s second disjunct quantifies over the successors of
     the whole configuration.  [descent_of_cont_below] shows it follows
@@ -4749,7 +4750,7 @@ Definition CfgDisjunctionLocal : Prop :=
           /\ Mc ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (((c ! v • 𝟘) : proc) ‖ ((g N) : proc))).
 
 
-(** ** ATTENTION : [CfgDisjunctionLocal] est **FAUSSE**
+(* ** ATTENTION : [CfgDisjunctionLocal] est **FAUSSE**
 
     [VACCS_DropProbes.CfgDisjunctionLocal_is_false] la réfute.  Le défaut
     est la *localisation* : son second disjoint n'admet qu'une
@@ -4788,7 +4789,7 @@ Proof.
   - right. exists (msgs l ‖ K). split; [ apply lts_parR; exact Hk | exact Hb ].
 Qed.
 
-(** Le second disjoint de [CfgDisjunctionLocal] est satisfait dès que la
+(* Le second disjoint de [CfgDisjunctionLocal] est satisfait dès que la
     garde **rend** le message consommé et que son résidu est sous la
     cible : le message revient alors *à côté* de la cible, ce qui est
     exactement la forme du disjoint.
@@ -4812,7 +4813,7 @@ Proof.
   exact (proj2 (must_i_cgr _ _ Hsh) t Hm).
 Qed.
 
-(** ** Les deux moitiés de [CfgDisjunctionLocal] que l'on sait produire
+(* ** Les deux moitiés de [CfgDisjunctionLocal] que l'on sait produire
 
     Elles se répartissent selon le **critère syntaxique** [ochans] — le
     même qui commande [ax_below_NF_no_return] :
@@ -4871,19 +4872,19 @@ Qed.
 
 
 
-(** Énoncé au type **générique** à dessein : à [MO (ExtAct TypeOfActions)]
+(* Énoncé au type **générique** à dessein : à [MO (ExtAct TypeOfActions)]
     les deux élaborations de [⊎] que le développement transporte sont
     convertibles sans être syntaxiquement égales, et [rewrite] rate.  Même
     précaution que pour [VACCS_NormalForm.disj_union_cancel_empty]. *)
 
-(** …et la version qui tolère un troisième terme à gauche, pourvu qu'il
+(* …et la version qui tolère un troisième terme à gauche, pourvu qu'il
     ne rencontre pas [Z].  C'est ce qui permet de relativiser au sac le
     critère d'émission : le membre gauche du bilan porte alors les
     sorties **propres** du processus, et il suffit qu'elles évitent les
     voies du sac visé. *)
 
 
-(** The state reached by draining the right bag need not be **stable** —
+(* The state reached by draining the right bag need not be **stable** —
     [bhv_pre_cond2] only needs *some* stable state, and its emissions are
     never used here (the inclusion comes from the balance equation on the
     LEFT run).  So follow the drain by [τ]s, which leave the trace
@@ -4897,14 +4898,14 @@ Proof.
   eapply fw_terminate_static; [ exact HS | apply Nat.le_refl ].
 Qed.
 
-(** Le critère n'a jamais eu besoin d'interdire **toute** émission de la
+(* Le critère n'a jamais eu besoin d'interdire **toute** émission de la
     gauche : il suffit que ses émissions évitent les voies du **sac de
     droite**.  Les messages du processus sur d'autres voies ne peuvent
     pas rembourser ce que la trace de vidange réclame, donc ils ne
     faussent pas l'inclusion. *)
 
 
-(** ** L'inclusion des deux sacs, SANS AUCUN CRITÈRE
+(* ** L'inclusion des deux sacs, SANS AUCUN CRITÈRE
 
     Vider le sac de droite et suivre à gauche donne, par le bilan de
     [fw_conservation], une inclusion inconditionnelle : *le sac de droite
@@ -4943,7 +4944,7 @@ Proof.
 Qed.
 
 
-(** Lu à l'envers, le terme correcteur dit *quand* le sac de droite peut
+(* Lu à l'envers, le terme correcteur dit *quand* le sac de droite peut
     déborder : uniquement si le processus gauche **émet**. *)
 
 Theorem emit_of_bag_incl_failure : forall (l1 l2 : list TypeOfActions) (M N : gproc),
@@ -4958,7 +4959,7 @@ Proof.
   intro Ho. apply Hno. rewrite Ho in Hsub. simpl in Hsub. multiset_solver.
 Qed.
 
-(** ** ★ QUAND LA SOMME DROITE EST τ-LIBRE, LE BILAN EST UNE ÉGALITÉ
+(* ** ★ QUAND LA SOMME DROITE EST τ-LIBRE, LE BILAN EST UNE ÉGALITÉ
 
     Le cas du résidu : la droite y est **stable**, donc sa somme est
     τ-libre.  Alors l'état que la droite atteint après vidange est
@@ -5100,12 +5101,12 @@ Proof.
   - apply cgr_choice_nil.
 Qed.
 
-(** The peeling steps fire *in place*, on the head of the summand list —
+(* The peeling steps fire *in place*, on the head of the summand list —
     the position-generic [*_anywhere] form the rest of the development
     uses (via [pull_one]) is not needed here, because the induction walks
     the list itself instead of searching it. *)
 
-(** Stability and the emission footprint both distribute over [summands]. *)
+(* Stability and the emission footprint both distribute over [summands]. *)
 
 Lemma gStable_summands : forall M, gStable M -> Forall gStable (summands M).
 Proof.
@@ -5123,14 +5124,14 @@ Proof.
   - apply Forall_app. apply app_eq_nil in Ho as (Ho1 & Ho2). split; auto.
 Qed.
 
-(** The peeling itself: a **prefix** of summands meeting [DropOk] is
+(* The peeling itself: a **prefix** of summands meeting [DropOk] is
     discarded, whatever the rest [r] is.  Below-[𝟘] is the case [r = []];
     the general form is a *derivable restriction* of a sum to its
     non-droppable summands — ce que [grestrict] et [ax_restrict]
     cherchent à faire avec un certificat [BadK], obtenu ici par un
     critère syntaxique et décidable. *)
 
-(** ** ★ LE PELAGE, AU CRITÈRE [ochans] PAR GARDE
+(* ** ★ LE PELAGE, AU CRITÈRE [ochans] PAR GARDE
 
     Le pelage « muet » que ce bloc remplace exigeait [gochans a = []] de
     chaque sommant pelé, ce qui exclut le **copycat** — dont la continuation émet, précisément
@@ -5151,7 +5152,7 @@ Definition DropOk (a : gproc) : Prop :=
   | gpr_choice _ _ => False
   end.
 
-(** Et l'instance qui motive le critère : une somme de **copycats** est
+(* Et l'instance qui motive le critère : une somme de **copycats** est
     dérivablement sous [𝟘], ce que le pelage muet ne pouvait pas dire. *)
 
 Lemma gCopycats_DropOk : forall M, gCopycats M -> Forall DropOk (summands M).
@@ -5165,7 +5166,7 @@ Proof.
       assumption.
 Qed.
 
-(** Le critère muet en est un cas particulier : une garde silencieuse
+(* Le critère muet en est un cas particulier : une garde silencieuse
     n'émet sur aucune voie, donc *a fortiori* pas hors de la sienne. *)
 
 Lemma DropOk_of_mute : forall (aa : gproc),
@@ -5187,7 +5188,7 @@ Proof.
 Qed.
 
 
-(** ** ★ UNE GARDE COPYCAT SUR UNE VOIE DU SAC : LA DESCENTE SUFFIT
+(* ** ★ UNE GARDE COPYCAT SUR UNE VOIE DU SAC : LA DESCENTE SUFFIT
 
     La délivrance d'un message du sac dans une garde **copycat** rend ce
     message aussitôt — et le choix gardé **s'engage**, donc tout le reste
@@ -5213,7 +5214,7 @@ Proof.
   rewrite <- E. apply lts_input.
 Qed.
 
-(** La forme générale : il suffit que la garde **rende** le message.  Le
+(* La forme générale : il suffit que la garde **rende** le message.  Le
     résidu [K] de cette ré-émission remplace alors toute la somme, et il
     est un réduit de réduit de [g M] — donc **strictement plus petit**,
     ce qu'aucune autre route de ce développement n'offre du côté gauche. *)
@@ -5256,14 +5257,14 @@ Theorem ax_cfg_replay : forall (r : trace (ExtAct TypeOfActions)) (p q : proc),
   exists lf, bag lf ⊎ bag (ins r) = bag l ⊎ bag (outs r)
           /\ (msgs l ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs lf ‖ q).
 Proof.
-  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | mu s x y z Hl Hwt IH];
+  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | μ s x y z Hl Hwt IH];
     intros l Hsub.
   - exists l. split; [ reflexivity | apply ax_refl ].
   - destruct (IH l Hsub) as (lf & Hbal & Hax).
     exists lf. split; [ exact Hbal | ].
     eapply ax_trans; [ | exact Hax ].
     apply ax_tau_step. apply lts_parR. exact Hl.
-  - destruct mu as [[c v]|[c v]].
+  - destruct μ as [[c v]|[c v]].
     + simpl in Hsub |- *.
       assert (Hin : In (c,v) l).
       { apply bag_elem. eapply gmultiset_elem_of_subseteq; [ | exact Hsub ].
@@ -5293,7 +5294,7 @@ Proof.
         -- simpl. apply cgr_swap_out.
 Qed.
 
-(** …et quand le run **rend exactement ce qu'il a pris**, le sac est
+(* …et quand le run **rend exactement ce qu'il a pris**, le sac est
     restitué et la configuration passe sous son propre résidu.  C'est la
     forme générale dont [cfg_return_below_residue_w] est le cas d'un
     seul message rendu tout de suite après un τ-run. *)
@@ -5312,7 +5313,7 @@ Proof.
   apply bag_msgs_eq. exact Hlf.
 Qed.
 
-(** ** ★ LE REJEU ATTERRIT SUR LE SAC DE DROITE
+(* ** ★ LE REJEU ATTERRIT SUR LE SAC DE DROITE
 
     Les deux résultats se composent exactement.  Le bilan
     ([bag_balance_of_taufree_right]) donne un run [r] du processus gauche
@@ -5349,7 +5350,7 @@ Proof.
   apply bag_msgs_eq. multiset_solver.
 Qed.
 
-(** ** LES DESCENTES EN SONT DES INSTANCES
+(* ** LES DESCENTES EN SONT DES INSTANCES
 
     Un renvoi est un run à deux actions — l'entrée, puis la sortie, avec
     des pas internes entre les deux ([wt_push_nil_left]) — et il est
@@ -5390,7 +5391,7 @@ Proof.
     [ exact Hperm | exact Hin | exact Hw | exact Hout ].
 Qed.
 
-(** Et le renvoi *immédiat* est le cas [wt_nil]. *)
+(* Et le renvoi *immédiat* est le cas [wt_nil]. *)
 
 Theorem ax_below_cfg_descend_return :
   forall (l l0 : list TypeOfActions) (c : ChannelData) (u : ValueData)
@@ -5419,7 +5420,7 @@ Proof.
     [ exact Hperm | exact Hin | apply wt_nil | exact Hout ].
 Qed.
 
-(** …et le cas copycat en est l'instance [K := 𝟘], sans plus aucune
+(* …et le cas copycat en est l'instance [K := 𝟘], sans plus aucune
     hypothèse de staticité. *)
 
 Theorem cfg_copycat_guard_below_bag :
@@ -5434,7 +5435,7 @@ Proof.
   eapply summand_lts; [ rewrite Hsum; left; reflexivity | apply ccatg_lts_in ].
 Qed.
 
-(** The [𝟘] case: discard *everything*. *)
+(* The [𝟘] case: discard *everything*. *)
 
 (* ------------------------------------------------------------------ *)
 (*  …AND AT THE LEVEL OF PROCESSES, ON THE ν-FREE FRAGMENT             *)
@@ -5471,7 +5472,7 @@ match M with
 | gpr_choice M1 M2 => gNoResD M1 /\ gNoResD M2
 end.
 
-(** Only the [τ] case of the recursion needs [NoResD] transported along a
+(* Only the [τ] case of the recursion needs [NoResD] transported along a
     transition, and there the target is a *subterm* — so no substitution
     lemma is required (an input's target would need one). *)
 
@@ -5486,7 +5487,7 @@ Proof.
     + eapply IH2; eassumption.
 Qed.
 
-(** …and the criterion need only hold *somewhere along an internal run*.
+(* …and the criterion need only hold *somewhere along an internal run*.
 
     [ochans p = []] is a strong request for a **configuration**: a pending
     message puts its own channel in the footprint.  But a configuration
@@ -5543,7 +5544,7 @@ Lemma noresd_wt_target : forall s (p q : proc),
   Static p -> NoResD p -> p ⟹[s] q -> NoResD q.
 Proof.
   intros s p q Hst Hnr Hw. revert Hst Hnr.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros Hst Hnr.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros Hst Hnr.
   - exact Hnr.
   - apply IH.
     + eapply Static_preserved_by_lts; [ exact Hst | exact Hl ].
@@ -5553,7 +5554,7 @@ Proof.
     + eapply noresd_lts_target; [ exact Hst | exact Hnr | exact Hl ].
 Qed.
 
-(** So the criterion [ochans p = []] now has *four* consumers: the bag
+(* So the criterion [ochans p = []] now has *four* consumers: the bag
     cancellation ([drain_forced_no_output], [msgs_cancel_no_output]),
     [VACCS_Bad.no_output_below_nil] semantically,
     [VACCS_Absorb.ochans_sub_Bad] as a [Bad] certificate — and, from
@@ -5621,11 +5622,11 @@ Qed.
 Definition DomOk (q0 q' : proc) : Prop :=
   exists r', Static r' /\ (size r' < size q0)%nat /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
 
-Lemma domok_of_domsim_wt : forall (q0 q : proc) mu s r,
-  Static q0 -> domsim q0 q -> q ⟹[mu :: s] r -> DomOk q0 r.
+Lemma domok_of_domsim_wt : forall (q0 q : proc) μ s r,
+  Static q0 -> domsim q0 q -> q ⟹[μ :: s] r -> DomOk q0 r.
 Proof.
-  intros q0 q mu s r Hst Hd Hw.
-  destruct (domsim_wt q (mu :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
+  intros q0 q μ s r Hst Hd Hw.
+  destruct (domsim_wt q (μ :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
   exists r'. split; [ | split; [ | split ] ].
   - eapply Static_preserved_by_wt; [ exact Hst | exact Hr' ].
   - eapply wt_act_size_lt; [ exact Hst | exact Hr' ].
@@ -5634,7 +5635,7 @@ Proof.
 Qed.
 
 
-(** The last technical piece: **emitting a sub-bag** is a run.
+(* The last technical piece: **emitting a sub-bag** is a run.
 
     [completeness_cfg_split_dom] applies its hypothesis at
     [msgs l' ‖ Q'] for a *sub-bag* [l'] — a state reached by emitting the
@@ -5648,12 +5649,12 @@ Lemma cgr_wt_transfer : forall s (p p' r : proc), p ≡* p' -> p ⟹[s] r ->
   exists r', p' ⟹[s] r' /\ r ≡* r'.
 Proof.
   intros s p p' r Hc Hw. revert p' Hc.
-  induction Hw as [x|s0 x y z Hl Hwt IH|mu s0 x y z Hl Hwt IH]; intros p' Hc.
+  induction Hw as [x|s0 x y z Hl Hwt IH|μ s0 x y z Hl Hwt IH]; intros p' Hc.
   - exists p'. split; [ apply wt_nil | exact Hc ].
   - destruct (cgr_lts_transfer x p' τ y Hc Hl) as (y' & Hy' & Hcy).
     destruct (IH y' Hcy) as (r' & Hr' & Hcr).
     exists r'. split; [ eapply wt_tau; [ exact Hy' | exact Hr' ] | exact Hcr ].
-  - destruct (cgr_lts_transfer x p' (ActExt mu) y Hc Hl) as (y' & Hy' & Hcy).
+  - destruct (cgr_lts_transfer x p' (ActExt μ) y Hc Hl) as (y' & Hy' & Hcy).
     destruct (IH y' Hcy) as (r' & Hr' & Hcr).
     exists r'. split; [ eapply wt_act; [ exact Hy' | exact Hr' ] | exact Hcr ].
 Qed.
@@ -5661,7 +5662,7 @@ Qed.
 Lemma domok_of_domsim_wt' : forall (q0 q : proc) s r,
   Static q0 -> domsim q0 q -> q ⟹[s] r -> s <> [] -> DomOk q0 r.
 Proof.
-  intros q0 q s r Hst Hd Hw Hs. destruct s as [|mu s0]; [ contradiction | ].
+  intros q0 q s r Hst Hd Hw Hs. destruct s as [|μ s0]; [ contradiction | ].
   eapply domok_of_domsim_wt; eassumption.
 Qed.
 
@@ -5680,7 +5681,7 @@ Qed.
 (* ------------------------------------------------------------------ *)
 
 
-(** * A SYNTACTIC SUFFICIENT CONDITION FOR [MuteNF]
+(* * A SYNTACTIC SUFFICIENT CONDITION FOR [MuteNF]
 
     [MuteNF] is the one hypothesis the whole configuration chain still
     rests on, and until now it could only be checked by hand.  Here is a
@@ -5713,7 +5714,7 @@ Proof.
     + f_equal; apply gochans_gNewVar.
 Qed.
 
-(** * THE LEFT-HAND CLASS IS STABLE UNDER THE RECURSION
+(* * THE LEFT-HAND CLASS IS STABLE UNDER THE RECURSION
 
     This matters more than it looks.  The four recursive calls of
     [completeness_cfg_mute_ok] all have a left-hand side of the shape
@@ -5733,7 +5734,7 @@ Qed.
     deleted when [MuteSem] superseded it, since nothing consumed them any
     more — see the audit note in the plan.) *)
 
-(** * THE RIGHT-HAND CLASS: [NoResD] SURVIVES NORMALISATION
+(* * THE RIGHT-HAND CLASS: [NoResD] SURVIVES NORMALISATION
 
     [MuteSem_msg]/[MuteSem_bag] close the recursion on the left.  On the
     right what has to survive is *deep* ν-freedom, because the reducts of
@@ -5772,7 +5773,7 @@ Proof.
         assumption.
 Qed.
 
-(** * THE LEFT-HAND CLASS, WEAKENED: [MuteSem]
+(* * THE LEFT-HAND CLASS, WEAKENED: [MuteSem]
 
     [MuteNF] asks for [⊢] in **both** directions between [p] and its mute
     configuration.  The recursion never needs that: it uses [⊢] one way —
@@ -5798,7 +5799,7 @@ Definition MuteSem (p : proc) : Prop :=
            /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs l ‖ ((g M) : proc))
            /\ (msgs l ‖ ((g M) : proc)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ p.
 
-(** * THE RESTRICTED RECURSION
+(* * THE RESTRICTED RECURSION
 
     [completeness_from_step]'s frame is unrestricted: its recursive
     premise speaks about *every* pair at a smaller right-hand side, so it
@@ -5817,11 +5818,11 @@ Definition DomOkD (q0 q' : proc) : Prop :=
   exists r', Static r' /\ NoResD r' /\ (size r' < size q0)%nat
              /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ r' /\ r' ᴠᴀᴄᴄꜱ⊑ₐₓ q'.
 
-Lemma domokd_of_domsim_wt : forall (q0 q : proc) mu s r,
-  Static q0 -> NoResD q0 -> domsim q0 q -> q ⟹[mu :: s] r -> DomOkD q0 r.
+Lemma domokd_of_domsim_wt : forall (q0 q : proc) μ s r,
+  Static q0 -> NoResD q0 -> domsim q0 q -> q ⟹[μ :: s] r -> DomOkD q0 r.
 Proof.
-  intros q0 q mu s r Hst Hnr Hd Hw.
-  destruct (domsim_wt q (mu :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
+  intros q0 q μ s r Hst Hnr Hd Hw.
+  destruct (domsim_wt q (μ :: s) r Hw q0 Hd) as (r' & Hr' & Hds).
   exists r'. split; [ | split; [ | split; [ | split ] ] ].
   - eapply Static_preserved_by_wt; [ exact Hst | exact Hr' ].
   - eapply noresd_wt_target; [ exact Hst | exact Hnr | exact Hr' ].
@@ -5833,11 +5834,11 @@ Qed.
 Lemma domokd_of_domsim_wt' : forall (q0 q : proc) s r,
   Static q0 -> NoResD q0 -> domsim q0 q -> q ⟹[s] r -> s <> [] -> DomOkD q0 r.
 Proof.
-  intros q0 q s r Hst Hnr Hd Hw Hs. destruct s as [|mu s0]; [ contradiction | ].
+  intros q0 q s r Hst Hnr Hd Hw Hs. destruct s as [|μ s0]; [ contradiction | ].
   eapply domokd_of_domsim_wt; eassumption.
 Qed.
 
-(** * WIDENING THE LEFT-HAND CLASS: [MuteG]
+(* * WIDENING THE LEFT-HAND CLASS: [MuteG]
 
     [MuteNF_of_mute] asks [ochans p = []] — the *whole* process mute.
     That is stricter than [completeness_deep_cfg] needs: what has to be
@@ -5875,7 +5876,7 @@ Proof.
   - exact Hoc.
 Qed.
 
-(** [MuteSem] transports along the *same* asymmetric pair it is defined
+(* [MuteSem] transports along the *same* asymmetric pair it is defined
     by — [⊢] one way, the semantics the other — so any process squeezed
     that way against a member is itself a member. *)
 
@@ -5889,7 +5890,7 @@ Proof.
   - intros t Ht. apply Hpq. apply Hmp. exact Ht.
 Qed.
 
-(** Two consequences of [MuteSem_transport], both by [ax_cgr]: the class
+(* Two consequences of [MuteSem_transport], both by [ax_cgr]: the class
     is stable under structural congruence, and under a conditional
     ([Eval_Eq 0] never fails, so a conditional is congruent to a
     branch). *)
@@ -5911,7 +5912,7 @@ Proof.
   - eapply MuteSem_cgr; [ apply cgr_if_false; exact HE | exact Hq ].
 Qed.
 
-(** * THE RIGHT-HAND CLASS, WEAKENED TOO: [ResFree]
+(* * THE RIGHT-HAND CLASS, WEAKENED TOO: [ResFree]
 
     Deep ν-freedom is asked of the right because [normal_form_deep] has
     to return a **bare configuration** for the matching machinery, and
@@ -5922,7 +5923,7 @@ Qed.
 Definition ResFree (q : proc) : Prop :=
   exists q', Static q' /\ NoResD q' /\ q ᴠᴀᴄᴄꜱ⊑ₐₓ q' /\ q' ᴠᴀᴄᴄꜱ⊑ₐₓ q.
 
-(** [ResFree] is closed under parallel composition — [ax_par] on both
+(* [ResFree] is closed under parallel composition — [ax_par] on both
     sides, and [NoResD] of a product is [NoResD] of the factors. *)
 
 Lemma ResFree_par : forall (p q : proc), ResFree p -> ResFree q -> ResFree (p ‖ q).
@@ -5933,7 +5934,7 @@ Proof.
   split; apply ax_par; assumption.
 Qed.
 
-(** The two remaining structural closures, both by [ax_cgr]: a
+(* The two remaining structural closures, both by [ax_cgr]: a
     conditional is congruent to the branch [Eval_Eq 0] selects (it never
     fails — [Eval_Eq_0_not_none]), and a restriction on a channel the
     body does not use is vacuous ([cgr_res_newvarc]). *)
@@ -5966,7 +5967,7 @@ Proof.
          | eapply ax_trans; [ exact H2 | apply ax_cgr_sym; exact Hc ] ].
 Qed.
 
-(** * WHY THE LAST ν CASE IS NOT PLUMBING
+(* * WHY THE LAST ν CASE IS NOT PLUMBING
 
     What is left is a block with **both** visible and internal actions,
     e.g. [ν (g M)] where [M] guards a non-restricted channel.  The route
@@ -5989,7 +5990,7 @@ Qed.
     [normal_form_strong_u] possible; they do **not** give uniform
     [⊢]-equalities, and that is exactly the half needed here. *)
 
-(** * A NEW ROUTE: THE RIGHT'S OUTPUTS ARE **WEAKLY** MATCHED ON THE LEFT
+(* * A NEW ROUTE: THE RIGHT'S OUTPUTS ARE **WEAKLY** MATCHED ON THE LEFT
 
     The bag layer is the whole residue: Phase A ([ax_phaseA_direct] with
     [bigsum_certificate]) and the bare-sum step
@@ -6056,11 +6057,11 @@ Proof.
   - intros t' Ht'. inversion Ht'; subst.
     + inversion H3; subst. apply m_now. constructor.
     + inversion H3.
-  - intros p' t' mu1 mu2 Hdual Hp' Ht'. exfalso.
+  - intros p' t' μ1 μ2 Hdual Hp' Ht'. exfalso.
     inversion Ht'; subst.
     + inversion H3.
     + inversion H3; subst.
-      destruct mu1 as [a1|a1]; simpl in Hdual; try contradiction.
+      destruct μ1 as [a1|a1]; simpl in Hdual; try contradiction.
       eapply Hnw; [ apply wt_nil | ]. subst a1. exact Hp'.
 Qed.
 
@@ -6083,7 +6084,7 @@ Proof.
     eapply Static_preserved_by_wt; [ exact Hq | exact Hq1 ].
 Qed.
 
-(** …and the result is usable **forwards**, not only as a contrapositive.
+(* …and the result is usable **forwards**, not only as a contrapositive.
 
     [below_preserves_no_weak_out] is stated the way it is because
     [¬ NoWeakOut] is a negated ∀ and gives no witness constructively.  The
@@ -6146,7 +6147,7 @@ Proof.
   - exact Hout.
 Qed.
 
-(** * THE FIFTH PREMISE, FIXED: COMPARE THE RESIDUES **COLLECTIVELY**
+(* * THE FIFTH PREMISE, FIXED: COMPARE THE RESIDUES **COLLECTIVELY**
 
     The output premise of a weak-output [glb] rule was stated
     per-residue — [p'' ᴠᴀᴄᴄꜱ⊑ₐₓ q''] for each emission residue — and that is
@@ -6195,11 +6196,11 @@ Proof.
   - intros t2 Ht2. inversion Ht2; subst.
     + inversion H3; subst. apply m_now. constructor.
     + inversion H3.
-  - intros p' t2 mu1 mu2 Hdual Hp' Ht2.
+  - intros p' t2 μ1 μ2 Hdual Hp' Ht2.
     inversion Ht2; subst.
     + inversion H3.
     + inversion H3; subst.
-      destruct mu1 as [a1|a1]; simpl in Hdual; try contradiction.
+      destruct μ1 as [a1|a1]; simpl in Hdual; try contradiction.
       subst a1. rewrite NewVar_subst_cancel.
       eapply Hall; [ apply wt_nil | exact Hp' ].
 Qed.
@@ -6222,7 +6223,7 @@ Proof.
     rewrite NewVar_subst_cancel in Hcon. exact Hcon.
 Qed.
 
-(** * ENUMERATING THE RESIDUES
+(* * ENUMERATING THE RESIDUES
 
     The last thing a weak-output rule needs is the **list** of emission
     residues, so that [ichoice] can turn [residues_below]'s conjunction
@@ -6238,7 +6239,7 @@ Qed.
       residues at each of them from [lts_set]. *)
 
 Definition out_vals (c : ChannelData) (u : proc) : list ValueData :=
-  flat_map (fun eta => match eta with
+  flat_map (fun η => match η with
       | ActOut (d,w) => if bool_decide (d = c) then [w] else []
       | _ => [] end) (elements (lts_oba_mo u)).
 
@@ -6284,7 +6285,7 @@ Proof.
   - apply lts_set_spec0. apply elem_of_elements. apply list_elem_of_In. exact Hr.
 Qed.
 
-(** * THE n-ARY JOIN — and the value-selectivity obstruction
+(* * THE n-ARY JOIN — and the value-selectivity obstruction
 
     [ichoice] turns [residues_below]'s conjunction into a process only if
     "all members pass [t]" gives "[ichoice L] passes [t]" — that is
@@ -6292,7 +6293,7 @@ Qed.
     itself. *)
 
 
-(** * THE VALUE-SELECTIVE PROBE
+(* * THE VALUE-SELECTIVE PROBE
 
     The comparison of residues has to be made **at one value**: in the
     [com]-output case the client offers [(c,v)?] for a *single* [v], so
@@ -6356,7 +6357,7 @@ Proof.
   all: inversion H0.
 Qed.
 
-(** A [Static] process passes [TCatchD c v0 t] as soon as every residue of
+(* A [Static] process passes [TCatchD c v0 t] as soon as every residue of
     an emission on [c] **at the value [v0]** passes [t].  Emissions at
     other values impose nothing: there the guard evaluates to [false] and
     the client is congruent to [g ①], which is good, so [m_now] closes
@@ -6381,11 +6382,11 @@ Proof.
   - intros t2 Ht2. inversion Ht2; subst.
     + inversion H3; subst. apply m_now. constructor.
     + inversion H3.
-  - intros p' t2 mu1 mu2 Hdual Hp' Ht2.
+  - intros p' t2 μ1 μ2 Hdual Hp' Ht2.
     inversion Ht2; subst.
     + inversion H3.
     + inversion H3; subst.
-      destruct mu1 as [a1|a1]; simpl in Hdual; try contradiction.
+      destruct μ1 as [a1|a1]; simpl in Hdual; try contradiction.
       subst a1. simpl. rewrite subst_NewVar_in_Data_cancel.
       destruct (Eval_Eq 0 (v == v0)) as [[|]|] eqn:HE.
       * eapply must_eq_client; [ symmetry; apply cgr_if_true; exact HE | ].
@@ -6397,7 +6398,7 @@ Proof.
       * exfalso. eapply Eval_Eq_0_not_none. exact HE.
 Qed.
 
-(** The fixed-value residue comparison, at an **arbitrary** value. *)
+(* The fixed-value residue comparison, at an **arbitrary** value. *)
 
 Theorem residues_below_d : forall (p q : proc) c (v0 : ValueData) q' t,
   Static p -> Static q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
@@ -6423,7 +6424,7 @@ Proof.
     rewrite NewVar_subst_cancel in Hcon. exact Hcon.
 Qed.
 
-(** ** The payoff: the residues, taken COLLECTIVELY, are below every residue
+(* ** The payoff: the residues, taken COLLECTIVELY, are below every residue
        of the right-hand side
 
     This is the output premise of the weak-emission [glb] rule, in semantic
@@ -6449,7 +6450,7 @@ Proof.
   apply Hb. exact Ht.
 Qed.
 
-(** ** The non-emptiness side condition of the weak-emission glb law
+(* ** The non-emptiness side condition of the weak-emission glb law
 
     It never rules out a valid instance: were the residue list empty,
     [residues_below_d]'s hypothesis would be vacuous, so [q'] would pass
@@ -6485,7 +6486,7 @@ Proof.
     [ eapply Static_preserved_by_wt; [ exact Hst | exact Hp1 ] | exact Ho ].
 Qed.
 
-(** ** …and the stable case may be assumed AT A NORMAL FORM
+(* ** …and the stable case may be assumed AT A NORMAL FORM
 
     [domsim] carries stability across: the normal form's transitions are
     matched by the original's ([ds_s]), so a τ-stable process has a
@@ -6504,7 +6505,7 @@ Proof.
   destruct (ds_s Hs τ z Hz) as (r' & Hl & _). eapply Hst. exact Hl.
 Qed.
 
-(** ** THE RESTRICTION BLOCK IS NOT AN OBSTACLE WHEN THE BAG IS EMPTY
+(* ** THE RESTRICTION BLOCK IS NOT AN OBSTACLE WHEN THE BAG IS EMPTY
 
     [resg] pushes a [ν] into the guards of a **guarded sum**, and with an
     empty bag the body of the restriction *is* one — [msgs [] ‖ g M] is
@@ -6536,7 +6537,7 @@ Proof.
   - eapply domsim_trans; [ apply domsim_res; apply IH | apply domsim_resg ].
 Qed.
 
-(** The stable case at a bare guarded sum, with the measure routed through
+(* The stable case at a bare guarded sum, with the measure routed through
     [domsim]: the recursive premise is about a reduct of [g M], while the
     induction hypothesis is at [size q] for the **original** [q], and
     [ds_s] hands back a genuine reduct of [q] with a [⊢]-equal target. *)
@@ -6564,7 +6565,7 @@ Proof.
   - eapply must_i_feed_below; [ exact Hpre | exact Hr' ].
 Qed.
 
-(** ** THE RESIDUE
+(* ** THE RESIDUE
 
     Completeness now needs only the step where the right-hand side is a
     **stable normal form carrying a message** and, on top of that, either
@@ -6579,7 +6580,7 @@ Qed.
     the weaker obligation; the bare version had no consumer left and is
     gone. *)
 
-(** ** THE LEFT-UNSTABLE CASE: the slice where the ∀∃ gap degenerates
+(* ** THE LEFT-UNSTABLE CASE: the slice where the ∀∃ gap degenerates
 
     The obstruction is that [p ⊑ₘᵤₛₜᵢ q] constrains only the *conjunction*
     of [p]'s τ-successors — for [p = 𝛕•A + 𝛕•B] roughly
@@ -6637,7 +6638,7 @@ Proof.
   intros q' Hq'. rewrite (Huniq q' Hq'). intros t Ht. exact Ht.
 Qed.
 
-(** The instance, and the non-vacuity witness: the singleton internal
+(* The instance, and the non-vacuity witness: the singleton internal
     choice collapses to its member. *)
 
 Lemma ichoice_singleton_no_ext : forall (x : proc) a z,
@@ -6665,7 +6666,7 @@ Proof.
   - intros _. exact Hax.
 Qed.
 
-(** ** …AND IN GENERAL: AN UNSTABLE LEFT *IS* AN INTERNAL CHOICE
+(* ** …AND IN GENERAL: AN UNSTABLE LEFT *IS* AN INTERNAL CHOICE
 
     Drop the confluence assumption and the collapse still says something,
     because the target it collapses to may be chosen to be the internal
@@ -6742,7 +6743,7 @@ Proof.
   apply (left_ichoice_below p Hex Hnoext). exact Ht.
 Qed.
 
-(** ** THE RESTRICTION BLOCK GOES WHEN NO MESSAGE IS TRAPPED
+(* ** THE RESTRICTION BLOCK GOES WHEN NO MESSAGE IS TRAPPED
 
     [stable_NF_empty_bag] removes the block when the bag is *empty*.
     With a bag it cannot, in general: a message on the just-restricted
@@ -6799,7 +6800,7 @@ Proof.
   unfold shiftCn. simpl. apply untrappedC_shift.
 Qed.
 
-(** Scope extrusion, read backwards: an untrapped bag comes out of the
+(* Scope extrusion, read backwards: an untrapped bag comes out of the
     block, leaving [Ѵⁿ (g M)] behind. *)
 
 Lemma NF_extrude : forall n l0 M,
@@ -6821,7 +6822,7 @@ Proof.
   apply domsim_par; [ apply domsim_refl | apply domsim_resgn ].
 Qed.
 
-(** The criterion is neither vacuous nor trivial: [bvar 1] survives one
+(* The criterion is neither vacuous nor trivial: [bvar 1] survives one
     binder and comes out of the block, [bvar 0] does not. *)
 
 Lemma untrapped_shift_one : forall (v : ValueData),
@@ -6842,7 +6843,7 @@ Example untrapped_criterion_bites : forall (v : ValueData),
   untrappedB 1 [((bvar 0) : ChannelData, v)] = false.
 Proof. intro v. reflexivity. Qed.
 
-(** ** …AND A MUTE LEFT IS ALREADY DONE
+(* ** …AND A MUTE LEFT IS ALREADY DONE
 
     When both blocks are gone the two sides are bare configurations, and
     the case where the left's guarded sum can **never emit along any run**
@@ -6855,7 +6856,7 @@ Proof. intro v. reflexivity. Qed.
     messages are allowed, since they go to the bag and never to [M1]. *)
 
 
-(** ** THE POOLING LAW, LIFTED TO A WHOLE BAG
+(* ** THE POOLING LAW, LIFTED TO A WHOLE BAG
 
     [ax_share_msg] pools two branches of an internal choice at **one**
     shared pending message.  Iterated over a message list it says that
@@ -6891,7 +6892,7 @@ Proof.
     [ apply ax_share_msgs_rev | apply ax_share_msgs ].
 Qed.
 
-(** ** THE POOLING LAW, n-ARY — AND THE CONFIGURATION-LEVEL DECOMPOSITION
+(* ** THE POOLING LAW, n-ARY — AND THE CONFIGURATION-LEVEL DECOMPOSITION
 
     Iterating [ax_share_msgs] over an [ichoice] gives the n-ary form: an
     internal choice of **any number** of configurations at a common bag is
@@ -6935,7 +6936,7 @@ Proof.
     apply ax_par; [ apply ax_refl | apply ax_ichoice_below; exact Hx ].
 Qed.
 
-(** And here is what it buys.  A configuration whose **process has no
+(* And here is what it buys.  A configuration whose **process has no
     external offer of its own** — everything visible about it is its bag
     — is, by [left_ichoice_eq], must-equivalent to the internal choice of
     that process's τ-branches; the n-ary law then carries the bag through
@@ -6990,7 +6991,7 @@ Proof.
   apply (cfg_noext_ichoice_below l p Hex Hnoext). exact Ht.
 Qed.
 
-(** The intended instance: an all-τ guarded sum. *)
+(* The intended instance: an all-τ guarded sum. *)
 
 Corollary completeness_step_cfg_alltau :
   forall (l : list TypeOfActions) (M : gproc) (q : proc),
@@ -7007,7 +7008,7 @@ Proof.
   - intros a z Hl. eapply gAllTau_no_ext; [ exact HAT | exact Hl ].
 Qed.
 
-(** * THE LEAF LAYER — union closure of the acceptance family
+(* * THE LEAF LAYER — union closure of the acceptance family
 
     Ported from VCCS's [CompletenessAx.v], where it is the first stage of
     [ax_M_below].  [leaves] reads the stable leaves off a [tau_nf] tree,
@@ -7139,7 +7140,7 @@ Proof.
       symmetry. apply rebuild_app.
 Qed.
 
-(** Union closure lifts to a configuration for free: [ax_par] carries it
+(* Union closure lifts to a configuration for free: [ax_par] carries it
     under the bag, no sharing law needed — the bag is untouched. *)
 
 Corollary ax_cfg_leafsum : forall (l : list TypeOfActions) (M : gproc),
@@ -7150,7 +7151,7 @@ Proof.
   apply ax_par; [ apply ax_refl | apply ax_leafsum; assumption ].
 Qed.
 
-(** ** …AND THE LEAVES ARE EXACTLY THE INTERNALLY-REACHABLE STABLE STATES
+(* ** …AND THE LEAVES ARE EXACTLY THE INTERNALLY-REACHABLE STABLE STATES
 
     [leaves_below] is the derivational reading; these two are the
     semantic one, and together they pin [⟹[[]]] down on a [tau_nf]
@@ -7162,12 +7163,12 @@ Qed.
     [wt_cons_stable] is the companion for a visible action: a stable
     process's run over [μ :: s] must *start* with its [μ]-step. *)
 
-Lemma wt_cons_stable : forall (p r : proc) (mu : ExtAct TypeOfActions)
+Lemma wt_cons_stable : forall (p r : proc) (μ : ExtAct TypeOfActions)
     (s : trace (ExtAct TypeOfActions)),
-  (forall z, ~ lts p τ z) -> p ⟹[mu :: s] r ->
-  exists q, lts p (ActExt mu) q /\ q ⟹[s] r.
+  (forall z, ~ lts p τ z) -> p ⟹[μ :: s] r ->
+  exists q, lts p (ActExt μ) q /\ q ⟹[s] r.
 Proof.
-  intros p r mu s Hst Hwt. inversion Hwt; subst.
+  intros p r μ s Hst Hwt. inversion Hwt; subst.
   - exfalso. eapply Hst. eassumption.
   - eexists. split; eassumption.
 Qed.
@@ -7215,7 +7216,7 @@ Proof.
         exists A. split; [ apply in_app_iff; right; exact Hin | exact Heq ].
 Qed.
 
-(** * [ax_M_below] FOR VACCS — three lines, where VCCS needs forty lemmas
+(* * [ax_M_below] FOR VACCS — three lines, where VCCS needs forty lemmas
 
     VCCS's [ax_M_below] builds, from a [tau_nf] left-hand side, a
     **stable canonical** sum derivably above it, and to do so it carries a
@@ -7263,7 +7264,7 @@ Proof.
   eapply ax_trans; [ apply ax_leafsum; assumption | exact HB ].
 Qed.
 
-(** …and it lifts to a configuration by [ax_par], the bag being
+(* …and it lifts to a configuration by [ax_par], the bag being
     untouched. *)
 
 Corollary ax_cfg_M_below : forall (l : list TypeOfActions) (M : gproc),
@@ -7277,7 +7278,7 @@ Proof.
   apply ax_par; [ apply ax_refl | exact HB ].
 Qed.
 
-(** * CONVEXITY AT AN ARBITRARY SUMMAND SPLIT
+(* * CONVEXITY AT AN ARBITRARY SUMMAND SPLIT
 
     [ax_convex]'s literal shape demands the middle term be syntactically
     [(X + Y) + Z] with the same [X] as the first branch.  In practice all
@@ -7341,7 +7342,7 @@ Proof.
   - apply summands_gStatic. apply rebuild_gStatic. exact Hk'.
 Qed.
 
-(** And the payoff, which is the shape the matching wants: **a normal
+(* And the payoff, which is the shape the matching wants: **a normal
     form is derivably below its chosen leaf enlarged by any
     sub-collection of the other leaves' summands.**  Union closure
     ([ax_leafsum]) goes up to *all* the leaves, [leaves_below] goes down
@@ -7365,7 +7366,7 @@ Proof.
   apply (ax_convex_anywhere (leafsum M) A Y Z); assumption.
 Qed.
 
-(** The form a caller actually wants: **here is the remainder, keep any
+(* The form a caller actually wants: **here is the remainder, keep any
     part of it**.  [leafsum_split] produces the remainder, the caller
     chooses the split, and the [gStatic] side conditions come along the
     permutation. *)
@@ -7401,7 +7402,7 @@ Proof.
   apply ax_par; [ apply ax_refl | apply (Hall Y Z Hsplit) ].
 Qed.
 
-(** * A DELIMITATION: THE TWO BAGS NEED NOT BE RELATED AT ALL
+(* * A DELIMITATION: THE TWO BAGS NEED NOT BE RELATED AT ALL
 
     [bag_incl_of_below_disj] gives [bag l ⊆ bag l1] under the bag-relative
     criterion (the left's emissions avoid the right bag's channels), and
@@ -7464,7 +7465,7 @@ Proof.
     simpl in Hm2. eapply gmultiset_not_elem_of_empty. exact Hm2.
 Qed.
 
-(** …et le témoin **exerce** le terme correcteur : l'inclusion y échoue,
+(* …et le témoin **exerce** le terme correcteur : l'inclusion y échoue,
     donc [emit_of_bag_incl_failure] impose au processus gauche d'émettre —
     ce qu'il fait, après son [𝛕]. *)
 
@@ -7478,7 +7479,7 @@ Proof.
     [ repeat constructor | constructor | exact Hpre | exact Hno ].
 Qed.
 
-(** * THE TWO SPECIES OF τ OF A CONFIGURATION, NAMED
+(* * THE TWO SPECIES OF τ OF A CONFIGURATION, NAMED
 
     This is the structural fact behind every negative result about the
     residue, and it is worth having machine-checked rather than repeated
@@ -7538,7 +7539,7 @@ Proof.
     apply (proj1 (must_msgs_swap l p t)). exact Ht.
 Qed.
 
-(** At a common bag: cancelling it *is* extending a restricted preorder
+(* At a common bag: cancelling it *is* extending a restricted preorder
     to all tests. *)
 
 Corollary msgs_cancel_is_extension : forall (l : list TypeOfActions) (p q : proc),
@@ -7547,7 +7548,7 @@ Corollary msgs_cancel_is_extension : forall (l : list TypeOfActions) (p q : proc
 Proof. intros l p q. apply msgs_below_tests. Qed.
 
 (* ===================================================================== *)
-(** ** The instance: a right-hand side that never sits on a message
+(* ** The instance: a right-hand side that never sits on a message
 
     [NoStableEmit q] says no **stable** state reachable from [q] can
     emit.  It is exactly what makes the bag of the normal form empty: a
@@ -7564,7 +7565,7 @@ Definition NoStableEmit (q : proc) : Prop :=
   forall s x, q ⟹[s] x -> (forall z, ~ lts x τ z) ->
     forall c v r, ~ lts x (ActExt (ActOut (c,v))) r.
 
-(** ** The schema's reach is *exactly* [NoStableEmit] — and it stops there
+(* ** The schema's reach is *exactly* [NoStableEmit] — and it stops there
 
     The two conditions the schema asks of a class force it: a stable
     member is [domsim]-equal to a bare guarded sum, that sum is stable
@@ -7607,7 +7608,7 @@ Proof.
   eapply (HnwX x (wt_nil x) v r). exact Hout.
 Qed.
 
-(** …and the open case is provably out of range.
+(* …and the open case is provably out of range.
 
     [HardResidue]'s right-hand side is a **stable** configuration with a
     **non-empty** bag.  Such a state emits, and it is stable, so it
@@ -7643,14 +7644,14 @@ Proof.
 Qed.
 
 (* ===================================================================== *)
-(** * DEUX SONDES SUR LE RÉSIDU
+(* * DEUX SONDES SUR LE RÉSIDU
 
     [HardResidue] compare deux configurations, la droite **stable** à sac
     **non vide**.  Les deux résultats qui suivent disent, l'un ce que la
     stabilité de la droite donne, l'autre que la classe n'est pas vide de
     cas dérivables. *)
 
-(** ** La droite stable ne touche jamais son propre sac
+(* ** La droite stable ne touche jamais son propre sac
 
     Un message du sac et une garde de la somme sur son canal se
     synchronisent en un [τ] de la configuration.  Donc, pour une
@@ -7686,7 +7687,7 @@ Proof.
   eapply (Hst (r ‖ K)). eapply lts_comL; eassumption.
 Qed.
 
-(** ** …et le résidu contient des instances DÉRIVABLES
+(* ** …et le résidu contient des instances DÉRIVABLES
 
     Contrôle de non-vacuité, dans la discipline du dossier : une instance
     qui remplit **toutes** les conditions de [HardResidue] — gauche
@@ -7700,7 +7701,7 @@ Qed.
     de la réduction — elle est habitée, et par des cas que le système
     atteint. *)
 
-(** ** LE REJEU EST UN τ-RUN DE LA CONFIGURATION — donc un pas qui MONTE
+(* ** LE REJEU EST UN τ-RUN DE LA CONFIGURATION — donc un pas qui MONTE
 
     [ax_cfg_replay] rejoue un run du processus à l'intérieur de la
     configuration.  Le fait structurel qui explique *pourquoi* ce rejeu
@@ -7730,7 +7731,7 @@ Theorem cfg_replay_tau_run : forall (r : trace (ExtAct TypeOfActions)) (p q : pr
             /\ (msgs l ‖ p) ⟹[[]] z
             /\ z ≡* (msgs lf ‖ q).
 Proof.
-  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | mu s x y z Hl Hwt IH];
+  intros r p q Hw. induction Hw as [x | s x y z Hl Hwt IH | μ s x y z Hl Hwt IH];
     intros l Hsub.
   - exists l, (msgs l ‖ x).
     split; [ reflexivity | split; [ apply wt_nil | apply cgr_refl ]].
@@ -7738,7 +7739,7 @@ Proof.
     exists lf, w. split; [ exact Hbal | split; [ | exact Hc ]].
     assert (Hstep : lts (msgs l ‖ x) τ (msgs l ‖ y)) by (apply lts_parR; exact Hl).
     eapply wt_tau; [ exact Hstep | exact Hrun ].
-  - destruct mu as [[c v]|[c v]].
+  - destruct μ as [[c v]|[c v]].
     + simpl in Hsub |- *.
       assert (Hin : In (c,v) l).
       { apply bag_elem. eapply gmultiset_elem_of_subseteq; [ | exact Hsub ].
@@ -7772,7 +7773,7 @@ Proof.
       * transitivity w; [ apply cgr_symm; exact Hcw' | exact Hc ].
 Qed.
 
-(** Et pour un run **équilibré**, le sac est restitué : la configuration
+(* Et pour un run **équilibré**, le sac est restitué : la configuration
     τ-atteint (à [≡*] près) son propre résidu.  C'est la lecture LTS de
     [ax_cfg_replay_balanced], et elle dit exactement pourquoi cette
     dérivation ne se compose pas avec l'hypothèse sémantique. *)
@@ -7792,7 +7793,7 @@ Proof.
   apply bag_msgs_eq. exact Hlf.
 Qed.
 
-(** ** ★ LE RÉSIDU SE RAMÈNE À CHOISIR UN RÉSIDU D'ÉMISSION
+(* ** ★ LE RÉSIDU SE RAMÈNE À CHOISIR UN RÉSIDU D'ÉMISSION
 
     Le rejeu ([ax_cfg_replay]) est un pas qui **monte**
     ([cfg_replay_tau_run]), donc il ne compose pas avec l'hypothèse
@@ -7818,7 +7819,7 @@ Proof.
   apply ax_cgr. apply (TransitionShapeForOutputSimplified _ _ _ _ Hout).
 Qed.
 
-(** Lu à une configuration : le message émis rejoint le **sac de la
+(* Lu à une configuration : le message émis rejoint le **sac de la
     cible**, donc la comparaison se poursuit à un sac strictement plus
     petit. *)
 
@@ -7841,7 +7842,7 @@ Proof.
       apply msgs_perm. symmetry. exact Hperm.
 Qed.
 
-(** …et la prémisse récursive de [HardResidue] décharge le pas restant :
+(* …et la prémisse récursive de [HardResidue] décharge le pas restant :
     le résidu de la cible est atteint par une **transition** de la forme
     normale, donc [domsim] le mesure contre le [q] d'origine.  Il ne
     reste donc, du cas à sac non vide, que le **choix** d'un résidu
@@ -7877,7 +7878,7 @@ Proof.
   eapply ax_trans; [ exact (ds_l Hdr) | apply ax_cgr; exact Hc0 ].
 Qed.
 
-(** Le principe de choix correspondant, sous sa forme la plus nette.  La
+(* Le principe de choix correspondant, sous sa forme la plus nette.  La
     sémantique donne bien que le membre gauche **émet faiblement** ce que
     la cible émet ([weak_out_of_below], [res_list_v_nonempty]), et que le
     **choix interne de tous** ses résidus est sous le résidu de la cible
@@ -7918,7 +7919,7 @@ Proof.
   apply (HC p l l0 c v M Hp HM Hperm Hsem).
 Qed.
 
-(** ** UN MESSAGE EN ATTENTE REND SOURD À SA PROPRE VOIE
+(* ** UN MESSAGE EN ATTENTE REND SOURD À SA PROPRE VOIE
 
     Un processus **τ-bloqué** qui peut émettre sur [c] refuse toute
     entrée sur [c] : sinon le message et la garde se synchroniseraient.
@@ -7948,7 +7949,7 @@ Proof.
     eapply Hst. exact Hx.
 Qed.
 
-(** Lu à une configuration : un client **τ-bloqué qui porte un message
+(* Lu à une configuration : un client **τ-bloqué qui porte un message
     sur [c] refuse [c]**, à toute valeur.  Comparer
     [stable_cfg_refuses_bag], qui dit la même chose de la *composante
     processus* d'une somme gardée ; celle-ci porte sur la configuration
@@ -7976,7 +7977,7 @@ Proof.
   eapply stuck_emit_refuses_in; [ exact Hst | exact Hr0 ].
 Qed.
 
-(** ** ★★ LE RÉSIDU SE RAMÈNE À UNE COMPARAISON **NUE**
+(* ** ★★ LE RÉSIDU SE RAMÈNE À UNE COMPARAISON **NUE**
 
     Les deux outils de cette session se composent.  Le bilan
     ([bag_balance_of_taufree_right]) donne un run du processus gauche au
@@ -8028,7 +8029,7 @@ Proof.
     [ apply ax_refl | exact Hqq ].
 Qed.
 
-(** ** THE EMITTING RIGHT-HAND SIDE, CLOSED BY POOLING
+(* ** THE EMITTING RIGHT-HAND SIDE, CLOSED BY POOLING
 
     [out_choice_is_false] refutes choosing ONE weak output residue of the
     left ([OutChoice]).  What the semantics does give, freely, is the
@@ -8085,7 +8086,7 @@ Proof.
   eapply ax_trans; [ exact H3 | exact H4 ].
 Qed.
 
-(** …and the recursive premise is discharged by the outer induction on
+(* …and the recursive premise is discharged by the outer induction on
     [size q]: the residue [q''] is a reduct of [q] ([Static_lts_decrease]),
     and the left-hand side of the call is [Static] ([res_list_v_Static]).
     So a right-hand side that EMITS needs no side condition at all. *)
@@ -8108,7 +8109,7 @@ Proof.
   apply HIH; [ exact Hst | exact Hq'' | exact Hlt | exact Hsem ].
 Qed.
 
-(** "Does this process emit at all?" is decidable, because its pending
+(* "Does this process emit at all?" is decidable, because its pending
     outputs form a FINITE multiset ([lts_oba_mo]) — the same finiteness
     [emits_on_dec] rests on, read at the trivial channel set. *)
 Lemma emits_any_dec : forall (u : proc),
@@ -8122,7 +8123,7 @@ Proof.
   - right. intros c v q Hl. eapply (Hno c I). exists v, q. exact Hl.
 Qed.
 
-(** ** …AND THE RESIDUE BECOMES A TRAPPED MESSAGE UNDER A BLOCK
+(* ** …AND THE RESIDUE BECOMES A TRAPPED MESSAGE UNDER A BLOCK
 
     [domsim] carries both stability ([domsim_stable]) and muteness
     ([domsim_mute]) from [q] to its normal form, so the case left by
@@ -8150,7 +8151,7 @@ Qed.
 
 
 
-(** *** The control: a TRAPPED message no guard can consume IS deletable
+(* *** The control: a TRAPPED message no guard can consume IS deletable
 
     Contrast [VACCS_DropProbes.trapped_message_is_not_deletable], where
     a SIBLING guard on the restricted channel can consume the message,
@@ -8200,7 +8201,7 @@ Proof.
     try (intros al z Hz; exfalso; eapply res_nil_no_lts; exact Hz).
 Qed.
 
-(** * ★ COMPLETENESS FOR VACCS
+(* * ★ COMPLETENESS FOR VACCS
 
     A right-hand side that does not emit is, up to [domsim], a BARE
     GUARDED SUM.  Under the restriction block of its normal form
@@ -8214,17 +8215,17 @@ Qed.
     No new rule: [ax_same_lts] is derived from [ax_settle_sim], and
     [resgn] from [ax_res_normalize]. *)
 
-(** ** Inverting a transition under a block of restrictions
+(* ** Inverting a transition under a block of restrictions
 
     [lts_res_ext_n] and [lts_res_tau_n] ([VACCS_Instance.v]) build such
     transitions; this is the missing inversion, and it is what lets the
     two sides be compared under the block rather than inside it — inside,
     the bag emits and the two are NOT equivalent. *)
 
-Lemma VarC_action_add_revert : forall k n mu,
-  VarC_action_add (k + n) mu = VarC_action_add k (VarC_action_add n mu).
+Lemma VarC_action_add_revert : forall k n μ,
+  VarC_action_add (k + n) μ = VarC_action_add k (VarC_action_add n μ).
 Proof.
-  intros k n mu. destruct mu as [(c,v)|(c,v)]; simpl; f_equal; f_equal;
+  intros k n μ. destruct μ as [(c,v)|(c,v)]; simpl; f_equal; f_equal;
     apply VarC_add_revert_def.
 Qed.
 
@@ -8232,12 +8233,12 @@ Lemma lts_res_n_shape : forall n (p : proc) al z, lts (Ѵ n p) al z ->
   exists p', z = Ѵ n p' /\
     match al with
     | τ => lts p τ p'
-    | ActExt mu => lts p (ActExt (VarC_action_add n mu)) p'
+    | ActExt μ => lts p (ActExt (VarC_action_add n μ)) p'
     end.
 Proof.
   induction n as [|n IH]; intros p al z Hz.
   - exists z. split; [ reflexivity | ].
-    destruct al as [mu|]; [ rewrite VarC_add_zero_ext | ]; exact Hz.
+    destruct al as [μ|]; [ rewrite VarC_add_zero_ext | ]; exact Hz.
   - simpl in Hz. inversion Hz; subst.
     + destruct (IH p (ActExt (VarC_action_add 1 μ)) p' H0) as (p'' & Heq & Hl).
       exists p''. split; [ simpl; rewrite Heq; reflexivity | ].
@@ -8248,7 +8249,7 @@ Proof.
       exists p''. split; [ simpl; rewrite Heq; reflexivity | ]. exact Hl.
 Qed.
 
-(** ** Pushing the bag into the continuations
+(* ** Pushing the bag into the continuations
 
     [bagify l M] is [M] with the bag prefixed to every continuation.  The
     value binder of an input guard sits between the bag and the
@@ -8263,7 +8264,7 @@ match M with
 | gpr_nil => gpr_nil
 | gpr_input c P => gpr_input c ((NewVar 0 (msgs l)) ‖ P)
 | gpr_tau p => gpr_tau ((msgs l) ‖ p)
-| gpr_choice M1 M2 => gpr_choice (bagify l M1) (bagify l M2)
+| gpr_choice M1 M2 => (bagify l M1) + (bagify l M2)
 end.
 
 Lemma bagify_lts_fwd : forall l (M : gproc) al y,
@@ -8311,7 +8312,7 @@ Proof.
   - inversion HM; subst. apply IH2. exact H2.
 Qed.
 
-(** ** A mute normal form IS a bare guarded sum
+(* ** A mute normal form IS a bare guarded sum
 
     Under the restriction block of a mute normal form, the bag never
     emits, so every transition is either an input of [M] or a delivery
@@ -8356,18 +8357,18 @@ Qed.
 Fixpoint deliv1 (a : ChannelData * ValueData) (B : proc) (M : gproc) : gproc :=
 match M with
 | gpr_input c P => if Data_dec c a.1 then gpr_tau (B ‖ subst_in_proc 0 a.2 P) else gpr_nil
-| gpr_choice M1 M2 => gpr_choice (deliv1 a B M1) (deliv1 a B M2)
+| gpr_choice M1 M2 => (deliv1 a B M1) + (deliv1 a B M2)
 | _ => gpr_nil
 end.
 
 Fixpoint delivs (os : list ((ChannelData * ValueData) * proc)) (M : gproc) : gproc :=
 match os with
 | [] => gpr_nil
-| x :: os' => gpr_choice (deliv1 x.1 x.2 M) (delivs os' M)
+| x :: os' => (deliv1 x.1 x.2 M) + (delivs os' M)
 end.
 
 Definition saturate (l : list (ChannelData * ValueData)) (M : gproc) : gproc :=
-  gpr_choice (bagify l M) (delivs (msg_outs l) M).
+  (bagify l M) + (delivs (msg_outs l) M).
 
 Lemma deliv1_lts_bwd : forall a B M al z,
   lts ((g (deliv1 a B M)) : proc) al z ->
@@ -8437,8 +8438,8 @@ Proof.
   - exfalso. match goal with HH : lts (msgs l) ((_ ▷ _) ?) _ |- _ =>
       eapply msgs_no_input; exact HH end.
   - match goal with HH : lts (msgs l) _ _ |- _ => rename HH into Hm end.
-    destruct al as [mu|].
-    + destruct (msgs_lts_inv l mu _ Hm) as (c0 & v0 & l0 & -> & _ & _).
+    destruct al as [μ|].
+    + destruct (msgs_lts_inv l μ _ Hm) as (c0 & v0 & l0 & -> & _ & _).
       left. exists c0, v0. reflexivity.
     + exfalso. eapply msgs_no_tau. exact Hm.
   - right. unfold saturate. apply lts_choiceL. apply bagify_lts_fwd.
@@ -8451,7 +8452,7 @@ Lemma trapped_saturate_lts_bwd : forall n l (M : gproc) al z,
 Proof.
   intros n l M al z Hz.
   destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
-  destruct al as [mu|].
+  destruct al as [μ|].
   - apply lts_res_ext_n. apply saturate_body_bwd. exact Hl.
   - apply lts_res_tau_n. apply saturate_body_bwd. exact Hl.
 Qed.
@@ -8464,9 +8465,9 @@ Lemma trapped_saturate_lts_fwd : forall n l (M : gproc) al z,
 Proof.
   intros n l M al z Hmu Hz. assert (Hz0 := Hz).
   destruct (lts_res_n_shape n _ al z Hz) as (z' & Heq & Hl). subst z.
-  destruct al as [mu|].
+  destruct al as [μ|].
   - destruct (saturate_body_fwd l M _ _ Hl) as [ (d & w & E) | Hs ].
-    + exfalso. destruct mu as [(d0,w0)|(d0,w0)]; simpl in E; [ discriminate E | ].
+    + exfalso. destruct μ as [(d0,w0)|(d0,w0)]; simpl in E; [ discriminate E | ].
       eapply (Hmu d0 w0). exact Hz0.
     + apply lts_res_ext_n. exact Hs.
   - destruct (saturate_body_fwd l M _ _ Hl) as [ (d & w & E) | Hs ]; [ discriminate E | ].
@@ -8513,7 +8514,7 @@ Proof.
     eapply trapped_saturate_lts_bwd. exact Hr.
 Qed.
 
-(** A bare guarded sum with a [τ]: [ax_glb_sum], each premise a
+(* A bare guarded sum with a [τ]: [ax_glb_sum], each premise a
     recursive call at a strictly smaller reduct measured by [domsim]. *)
 Lemma tau_bare_gsum_of_domsim : forall (p q : proc) (M : gproc),
   Static p -> Static q -> domsim q ((g M) : proc) ->
@@ -8569,7 +8570,7 @@ Proof.
       [ exact Hp | exact Hq | exact Hd3 | exists z; exact Hz | exact Hpre | exact HR ].
 Qed.
 
-(** ** ★★★ COMPLETENESS
+(* ** ★★★ COMPLETENESS
 
     | the right-hand side… | closed by |
     |---|---|
@@ -8591,3 +8592,4 @@ Proof.
 Qed.
 
 End VACCS_Matching.
+(* end hide *)

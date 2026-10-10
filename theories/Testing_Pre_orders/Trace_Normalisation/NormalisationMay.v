@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
     WeakTransitions coWeakTransition DefinitionTI DefinitionTIco
     NormalForm Normalisation NormalisationCo.
 
-(** * The may preorders on traces in normal form
+(* * The may preorders on traces in normal form
 
     The alternative characterisations of [may] in this development are plain
     trace inclusion ([≼ₜᵢ]) and plain co-trace inclusion ([≼꜀ₒ₋ₜᵢ]): the
@@ -39,7 +40,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
 
     Both inclusions only have to be checked on traces in normal form. *)
 
-(** ** Trace inclusion on normalised traces *)
+(* ** Trace inclusion on normalised traces *)
 
 Definition bhv_pre_ti_nf `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :=
   ∀ σ : ntrace A, traces p (nlin σ) -> traces q (nlin σ).
@@ -54,11 +55,12 @@ Notation "p ≼ₙ_꜀ₒ₋ₜᵢ q" := (bhv_pre_ti_co_nf p q) (at level 70).
 Section OneProcess.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
-  (** *** Traces *)
+  (* *** Traces *)
 
-  (** Two traces with the same normal form are traces of the same processes. *)
+  (* Two traces with the same normal form are traces of the same processes. *)
   Lemma traces_of_nform (p : P) s t :
     nform cls_tr s = nform cls_tr t -> traces p s -> traces p t.
   Proof.
@@ -74,7 +76,7 @@ Section OneProcess.
     - eapply traces_of_nform; [| exact h]. eapply nform_nlin_nform.
   Qed.
 
-  (** *** Co-traces *)
+  (* *** Co-traces *)
 
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
@@ -94,7 +96,7 @@ Section OneProcess.
     - eapply traces_co_of_nform; [| exact h]. eapply nform_nlin_nform.
   Qed.
 
-  (** *** The preorder on traces, read on [may]
+  (* *** The preorder on traces, read on [may]
 
       On the may side the preorder has a direct reading: performing a trace
       implies performing every trace above it, in particular the one where a
@@ -111,6 +113,7 @@ End OneProcess.
 Section MayNormalForm.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
 
@@ -138,7 +141,7 @@ Section MayNormalForm.
 
 End MayNormalForm.
 
-(** ** Trace inclusion on simplified traces
+(* ** Trace inclusion on simplified traces
 
     The preorder of [FeedbackNotReversible.v]: like [bhv_pre_ti_nf], it
     quantifies over normalised traces on *both* sides, the difference being
@@ -150,7 +153,7 @@ End MayNormalForm.
     closed under simplification; the other is the idempotence of the normal
     form ([fnf_idem]). *)
 
-Definition bhv_pre_ti_fnf `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :=
+Definition bhv_pre_ti_fnf `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} {unique_nb : UniqueDual A} (p : P) (q : Q) :=
   ∀ s : trace A, traces p (nlin (fnf s)) -> traces q (nlin (fnf s)).
 
 Notation "p ≼ₛ_ₜᵢ q" := (bhv_pre_ti_fnf p q) (at level 70).
@@ -158,6 +161,7 @@ Notation "p ≼ₛ_ₜᵢ q" := (bhv_pre_ti_fnf p q) (at level 70).
 Section MaySimplified.
 
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
 
@@ -172,3 +176,4 @@ Section MaySimplified.
   Qed.
 
 End MaySimplified.
+(* end hide *)

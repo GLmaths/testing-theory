@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -26,7 +27,7 @@
 From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS Must.
@@ -35,6 +36,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
 
  (** * Must preoder *)
  (** ** Extensional definition of Must *)
+(* end hide *)
 
 
   Definition must_extensional {P : Type}
@@ -42,6 +44,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
     (p : P) (t : T) : Prop :=
     forall η : max_exec_from (p, t), exists n fex, mex_take_from n η = Some fex 
           /\ outcome (fex_from_last fex).2 .
+(* begin hide *)
 
   Definition outcome_client {P : Type} `{Sts (P * T), outcome : T -> Prop} (s : (P * T)) := outcome s.2.
 
@@ -86,14 +89,14 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
     (p : P) (q : Q) : Prop :=
     forall (t : T), @must_extensional P T _ outcome p t -> @must_extensional Q T _ outcome q t.
 
-  (** ** Equivalence between the extensional and inductive definitions *)
+  (* ** Equivalence between the extensional and inductive definitions *)
 
   Lemma must_extensional_iff_must_sts
     {P : Type}
     `{outcome : T -> Prop, outcome_decidable : forall (t : T), Decision (outcome t)}
     `{gLtsP : @gLts P A H, !CountablegLts P A,
       gLtsT : !gLtsEq T H, !CountablegLts T A , !Testing_Predicate outcome _}
-    `{!Prop_of_Inter P T A dual}
+    `{!Prop_of_Inter P T A A dual}
     (p : P) (t : T) :
     must_extensional outcome p t <-> must_sts outcome p t.
   Proof.
@@ -117,8 +120,8 @@ Section preorder.
   Context `{gLtsP : !gLts P H, !CountablegLts P A}.
   Context `{gLtsQ : !gLts Q H, !CountablegLts Q A}.
   Context `{gLtsEqT: !gLtsEq T H, !CountablegLts T A, !Testing_Predicate outcome _}.
-  Context `{!Prop_of_Inter P T A dual}.
-  Context `{!Prop_of_Inter Q T A dual}.
+  Context `{!Prop_of_Inter P T A A dual}.
+  Context `{!Prop_of_Inter Q T A A dual}.
 
   (* ************************************************** *)
 
@@ -135,3 +138,4 @@ Section preorder.
 End preorder.
 
 Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional _ p q) (at level 70).
+(* end hide *)

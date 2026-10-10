@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -24,7 +25,8 @@
 *)
 
 From Stdlib.Unicode Require Import Utf8.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA.
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA.
+(* end hide *)
 
 (** ** LTSs that respects the axioms FW-FEEDBACK and BOOMERANG *)
 Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
@@ -36,8 +38,9 @@ Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
       non_blocking η -> dual β η -> p1 ⟶[ η ] p2 -> p2 ⟶[ β ] p3 
         -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
     }.
+(* begin hide *)
 
-(** ** Properties on forwarder LTSs *)
+(* ** Properties on forwarder LTSs *)
 
 Lemma lts_dual_non_blocking_enabled `{gLtsObaFW P A} (p : P) η β :
   non_blocking η → dual β η → exists p', p ⟶[ β ] p'.
@@ -48,11 +51,9 @@ Qed.
 Lemma lts_co_non_blocking_enabled `{gLtsObaFW P A} (p : P) :
   ∀ η, non_blocking η → exists p', p ⟶[ co η ] p'.
 Proof.
-  intro η. intro nb.
-  destruct (exists_dual η) as (β & duo).
-  simpl. symmetry in duo.
-  eapply unique_nb in duo as eq; eauto; subst.
-  edestruct (boomerang p (co β)) as (t & l1 & l2); eauto.
+  intros η nb.
+  eapply lts_dual_non_blocking_enabled; eauto.
+  symmetry. exact (proj2_sig (exists_dual η)).
 Qed.
 
 Lemma lts_ht_input_ex `{gLtsObaFW P A} (p : P) :
@@ -60,3 +61,4 @@ Lemma lts_ht_input_ex `{gLtsObaFW P A} (p : P) :
 Proof.
   intros. exists (co η). eapply lts_co_non_blocking_enabled; eauto.
 Qed.
+(* end hide *)

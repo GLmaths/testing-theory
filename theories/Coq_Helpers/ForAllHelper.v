@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -69,3 +70,4 @@ Proof.
     assert (elements (gmultiset_singleton η) = [η]) as eq.
     eapply gmultiset_elements_singleton. unfold singletonMS. rewrite eq. simpl in *. eauto.
 Qed.
+(* end hide *)

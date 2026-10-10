@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActi
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization.
 
-(** * Erasing [①] from a server — the bridge that moves a context into the test
+(* * Erasing [①] from a server — the bridge that moves a context into the test
 
     This is the VCCS counterpart of [VACCS_Erasure.v], and it exists for
     the reason recorded there: a **contextual** preorder is best attacked
@@ -69,7 +70,7 @@ match M with
 | p1 + p2 => (gnoone p1) + (gnoone p2)
 end.
 
-(** ** [noone] commutes with every substitution and shift the LTS uses *)
+(* ** [noone] commutes with every substitution and shift the LTS uses *)
 
 Lemma noone_subst : forall p k X, noone (subst_in_proc k X p) = subst_in_proc k X (noone p)
 with gnoone_subst : forall M k X, gnoone (subst_in_gproc k X M) = subst_in_gproc k X (gnoone M).
@@ -121,7 +122,7 @@ Proof.
     + f_equal; apply gnoone_gpr_subst.
 Qed.
 
-(** ** [noone] is a strong bisimulation, in both directions
+(* ** [noone] is a strong bisimulation, in both directions
 
     Erasing does not change a single transition: [①] has no [lts] rule,
     so replacing it by [𝟘] cannot remove one, and cannot add one either. *)
@@ -148,7 +149,7 @@ Proof.
   - apply lts_choiceR; assumption.
 Qed.
 
-(** The converse.  Stated with an explicit equation on the subject so that
+(* The converse.  Stated with an explicit equation on the subject so that
     [induction] applies (the subject [noone p] is a compound term); the
     local tactic recovers [p]'s shape from it, one [proc] constructor at a
     time, with the [gproc] case nested. *)
@@ -195,7 +196,7 @@ Lemma lts_noone_inv : forall p a q', lts (noone p) a q' ->
   exists q, q' = noone q /\ lts p a q.
 Proof. intros p a q' Hl. eapply lts_noone_inv_aux; [ exact Hl | reflexivity ]. Qed.
 
-(** ** An erased process is never [good] *)
+(* ** An erased process is never [good] *)
 
 Lemma noone_not_good : forall p, ~ good_VCCS (noone p)
 with gnoone_not_good : forall M, ~ good_VCCS (g (gnoone M)).
@@ -216,7 +217,7 @@ Proof.
     + inversion Hg; subst. destruct H0 as [H|H]; eapply gnoone_not_good; eassumption.
 Qed.
 
-(** ** Erasing a server is invisible to [must] *)
+(* ** Erasing a server is invisible to [must] *)
 
 Lemma must_noone : forall (p t : proc), p must_pass t -> (noone p) must_pass t.
 Proof.
@@ -231,7 +232,7 @@ Proof.
     + intros y Hy. destruct (lts_noone_inv _ _ _ Hy) as (x & Hx & Hlx).
       subst y. apply IHpt. exact Hlx.
     + intros t' Ht'. apply IHet. exact Ht'.
-    + intros y t' mu1 mu2 Hd Hy Ht'.
+    + intros y t' μ1 μ2 Hd Hy Ht'.
       destruct (lts_noone_inv _ _ _ Hy) as (x & Hx & Hlx).
       subst y. eapply IHcom; eassumption.
 Qed.
@@ -252,7 +253,7 @@ Proof.
         eexists. eapply ParSync; eassumption.
     + intros p' Hp'. eapply IHpt; [ apply lts_noone; exact Hp' | reflexivity ].
     + intros t' Ht'. eapply IHet; [ exact Ht' | reflexivity ].
-    + intros p' t' mu1 mu2 Hd Hp' Ht'.
+    + intros p' t' μ1 μ2 Hd Hp' Ht'.
       eapply IHcom; [ exact Hd | apply lts_noone; exact Hp' | exact Ht' | reflexivity ].
 Qed.
 
@@ -265,10 +266,10 @@ Proof. intros t Hm. apply must_noone. exact Hm. Qed.
 Lemma must_i_noone_r (p : proc) : (noone p) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ p.
 Proof. intros t Hm. apply must_noone_rev. exact Hm. Qed.
 
-(** ** Reading off the polarity of a [dual] pair *)
+(* ** Reading off the polarity of a [dual] pair *)
 
-Lemma dual_shape : forall (mu1 mu2 : ExtAct TypeOfActions), dual mu1 mu2 ->
-  (exists a, mu1 = ActOut a /\ mu2 = ActIn a) \/ (exists a, mu1 = ActIn a /\ mu2 = ActOut a).
+Lemma dual_shape : forall (μ1 μ2 : ExtAct TypeOfActions), dual μ1 μ2 ->
+  (exists a, μ1 = ActOut a /\ μ2 = ActIn a) \/ (exists a, μ1 = ActIn a /\ μ2 = ActOut a).
 Proof.
   intros [a|a] [b|b] Hd; simpl in Hd; try (exact (match Hd with end)); subst;
     [ right | left ]; eexists; split; reflexivity.
@@ -280,7 +281,7 @@ Proof. intros a. simpl. reflexivity. Qed.
 Lemma dual_in_out : forall (a : TypeOfActions), dual (ActIn a) (ActOut a).
 Proof. intros a. simpl. reflexivity. Qed.
 
-(** ** The bridge: an erased context may sit on either side of the barrier
+(* ** The bridge: an erased context may sit on either side of the barrier
 
     [must]'s pair LTS does not care how [p | r | t] is bracketed; only the
     outcome predicate does, and [noone r] can never be [good].  So [r]
@@ -326,7 +327,7 @@ Proof.
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         eapply (IHpt (p ‖ noone r1)); [ apply lts_parR; apply lts_noone; exact Hlr1 | reflexivity ].
       * eapply IHet; [ eassumption | reflexivity ].
-    + intros p' u mu1 mu2 Hd Hp' Hu. inversion Hu; subst.
+    + intros p' u μ1 μ2 Hd Hp' Hu. inversion Hu; subst.
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         destruct (dual_shape _ _ Hd) as [(a & Ha1 & Ha2)|(a & Ha1 & Ha2)]; subst.
         -- destruct a as (c0,v0).
@@ -335,7 +336,7 @@ Proof.
         -- destruct a as (c0,v0).
            eapply (IHpt (p' ‖ noone r1));
              [ eapply lts_comR; [ apply lts_noone; exact Hlr1 | exact Hp' ] | reflexivity ].
-      * eapply (IHcom (p' ‖ noone r) _ mu1 mu2);
+      * eapply (IHcom (p' ‖ noone r) _ μ1 μ2);
           [ exact Hd | apply lts_parL; exact Hp' | eassumption | reflexivity ].
 Qed.
 
@@ -379,8 +380,8 @@ Proof.
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         eapply (IHet (noone r1 ‖ t)); [ apply lts_parL; apply lts_noone; exact Hlr1 | reflexivity ].
     + intros t' Ht'. eapply (IHet (noone r ‖ t')); [ apply lts_parR; exact Ht' | reflexivity ].
-    + intros y t' mu1 mu2 Hd Hy Ht'. inversion Hy; subst.
-      * eapply (IHcom p2 (noone r ‖ t') mu1 mu2);
+    + intros y t' μ1 μ2 Hd Hy Ht'. inversion Hy; subst.
+      * eapply (IHcom p2 (noone r ‖ t') μ1 μ2);
           [ exact Hd | eassumption | apply lts_parR; exact Ht' | reflexivity ].
       * destruct (lts_noone_inv _ _ _ H3) as (r1 & Hr1 & Hlr1). subst.
         eapply (IHet (noone r1 ‖ t')); [ | reflexivity ].
@@ -390,7 +391,7 @@ Proof.
         -- eapply lts_comR; [ exact Ht' | apply lts_noone; exact Hlr1 ].
 Qed.
 
-(** ** [‖]-precongruence, with NO [Static] side condition
+(* ** [‖]-precongruence, with NO [Static] side condition
 
     Compare [VCCS_Precongruence.must_i_par_compat], which needs three of
     them and rests on [par_wt_transfer] + [par_nosync_transfer] + the
@@ -435,3 +436,4 @@ Qed.
 
 
 End VCCS_Erasure.
+(* end hide *)

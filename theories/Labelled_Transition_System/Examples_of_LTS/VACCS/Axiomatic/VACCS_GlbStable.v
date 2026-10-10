@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -21,7 +22,7 @@
 *)
 
 
-(** * Below a τ-stable guarded sum
+(* * Below a τ-stable guarded sum
 
     A guarded sum [g M] with no [τ] passes a client exactly when the
     client can move on its own, or emits on a channel [M] offers — and
@@ -55,7 +56,7 @@ Section VACCS_GlbStable.
 
 Context `{VP : VACCS_Parameters}.
 
-(** A client is its pending messages beside a mute residue. *)
+(* A client is its pending messages beside a mute residue. *)
 Lemma strip_outputs : forall n (t : proc),
   (gmultiset_size (lts_oba_mo t : gmultiset (ExtAct TypeOfActions)) <= n)%nat ->
   exists (l : list TypeOfActions) t0, t ≡* (msgs l ‖ t0) /\
@@ -102,7 +103,7 @@ Lemma strip_outputs_all : forall (t : proc), exists (l : list TypeOfActions) t0,
   t ≡* (msgs l ‖ t0) /\ (forall a z, ~ lts t0 (ActExt (ActOut a)) z).
 Proof. intro t. eapply strip_outputs. reflexivity. Qed.
 
-(** A settled server and a mute client that refuses the settled
+(* A settled server and a mute client that refuses the settled
     server's channels are stuck together. *)
 Lemma settles_fails_stuck : forall (p t0 : proc) (l : list TypeOfActions),
   (forall z, ~ lts t0 τ z) -> ~ good_VACCS t0 ->
@@ -143,7 +144,7 @@ Proof.
   - destruct (IH c v Hin) as (z & Hz). eexists. simpl. eapply lts_parR. exact Hz.
 Qed.
 
-(** The whole bag can sit on either side of the barrier. *)
+(* The whole bag can sit on either side of the barrier. *)
 Lemma must_msgs_swap : forall (l : list TypeOfActions) (p e : proc),
   ((msgs l ‖ p) must_pass e) <-> (p must_pass (msgs l ‖ e)).
 Proof.
@@ -174,7 +175,7 @@ Proof.
       apply (proj1 (must_i_cgr _ _ Hc)). exact Hs.
 Qed.
 
-(** A τ-stuck client that [p] passes meets [M] on one of its channels. *)
+(* A τ-stuck client that [p] passes meets [M] on one of its channels. *)
 Lemma stuck_client_meets : forall (p : proc) (M : gproc) (t : proc),
   (forall l : list TypeOfActions, (forall c v, In (c,v) l -> ~ offers M c) ->
      Settles (chans (bag l)) (p ▷ bag l)) ->
@@ -234,9 +235,9 @@ Proof.
       * exists ((g M : proc) ▷ z). apply ParRight. exact Hz.
     + intros p' Hp'. exfalso. exact (Hst p' Hp').
     + intros t' Ht'. exact (IHet t' Ht' Hcert Hin eq_refl).
-    + intros p' t' mu1 mu2 Hdual Hp' Ht'.
-      destruct mu1 as [ (c,v) | (c,v) ].
-      * destruct mu2 as [ (d,w) | (d,w) ]; simpl in Hdual; [ inversion Hdual | ].
+    + intros p' t' μ1 μ2 Hdual Hp' Ht'.
+      destruct μ1 as [ (c,v) | (c,v) ].
+      * destruct μ2 as [ (d,w) | (d,w) ]; simpl in Hdual; [ inversion Hdual | ].
         inversion Hdual; subst.
         apply (Hin d w p' Hp').
         assert (H1 : p must_pass ((d ! w • 𝟘) ‖ t')).
@@ -250,3 +251,4 @@ Proof.
 Qed.
 
 End VACCS_GlbStable.
+(* end hide *)

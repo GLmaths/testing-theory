@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -36,15 +37,17 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 (* Local Open Scope positive. *)
 
 Definition MUST `{
-  gLtsP : @gLts P A H, CC : Countable PreAct, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _}
+  gLtsP : @gLts P A H, CC : Countable PreAct, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _}
   (p : P) (G : gset PreAct) :=
   forall p', p ⟹ p' -> exists β μ p0, ( 𝝳 ∘ Φ ) β ∈ G /\ p' ⟹{μ} p0 /\ dual μ β /\ blocking β.
+(* end hide *)
 
 Definition MUST__s `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  CC : Countable PreAct, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ gLtsEqT _ _ }
+  CC : Countable PreAct, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ }
   (ps : gset P) (G : gset PreAct) := 
   forall p, p ∈ ps -> MUST p G.
+(* begin hide *)
 
 (* Residuals of a process p AFTER the execution of s. *)
 
@@ -57,19 +60,21 @@ Definition bhv_pre_ms_cond1 `{@gLts P A H, @gLts Q A H}
 
 Definition bhv_pre_ms_cond2 `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsEqT _ _,
+  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsEqT _ _ _,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A,
-  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsEqT _ _}
+  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsEqT _ _ _}
   (p : P) (q : Q) :=
   forall s (hp : p ⇓ s) (hq : q ⇓ s) G, MUST__s (AFTER p s hp) G -> MUST__s (AFTER q s hq) G.
+(* end hide *)
 
 Definition bhv_pre_ms `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳P _ gLtsEqT _ _,
+  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsEqT _ _ _,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A,
-  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳Q _ gLtsEqT _ _}
+  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsEqT _ _ _}
   (p : P) (q : Q) :=
   bhv_pre_ms_cond1 p q /\ bhv_pre_ms_cond2 p q.
+(* begin hide *)
 
 Global Hint Unfold bhv_pre_ms:mdb.
 
@@ -80,4 +85,4 @@ Notation "p ₁≾ₘᵤₛₜ q" := (bhv_pre_ms_cond1 p q) (at level 70).
 Notation "p ₂≾ₘᵤₛₜ q" := (bhv_pre_ms_cond2 p q) (at level 70).
 
 Notation "p ≾ₘᵤₛₜ q" := (bhv_pre_ms p q) (at level 70).
-
+(* end hide *)

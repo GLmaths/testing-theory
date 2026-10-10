@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -94,3 +95,4 @@ Section in_list_finite.
   Defined.
 
 End in_list_finite.
+(* end hide *)

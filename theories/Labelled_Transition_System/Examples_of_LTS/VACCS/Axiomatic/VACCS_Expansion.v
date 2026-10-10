@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The expansion law for two guarded sums
+(* * The expansion law for two guarded sums
 
     [g M ‖ g N ≂ₘᵤₛₜᵢ g (ext M N + ext_r N M)] — pure interleaving, with
     **no synchronisation term**.  That is the VACCS-specific part: [gproc]
@@ -49,7 +50,7 @@ Section VACCS_Expansion.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** Same transitions ⟹ same [must]-behaviour
+(* ** Same transitions ⟹ same [must]-behaviour
 
     [must]'s recursive structure only ever inspects one-step transitions,
     so no relation on reached states beyond "same transition set" is
@@ -57,7 +58,7 @@ Context `{VP : VACCS_Parameters}.
 
 Lemma must_same_lts_dir : forall (p q : proc),
   (forall p', p ⟶ p' <-> q ⟶ p') ->
-  (forall mu p', p ⟶[mu] p' <-> q ⟶[mu] p') ->
+  (forall μ p', p ⟶[μ] p' <-> q ⟶[μ] p') ->
   forall t, p must_pass t -> q must_pass t.
 Proof.
   intros p q Htau Hext t Hm.
@@ -79,17 +80,17 @@ Qed.
 
 Lemma must_same_lts : forall (p q : proc),
   (forall p', p ⟶ p' <-> q ⟶ p') ->
-  (forall mu p', p ⟶[mu] p' <-> q ⟶[mu] p') ->
+  (forall μ p', p ⟶[μ] p' <-> q ⟶[μ] p') ->
   forall t, p must_pass t <-> q must_pass t.
 Proof.
   intros p q Htau Hext t. split.
   - apply must_same_lts_dir; assumption.
   - apply must_same_lts_dir.
     + intro p'. symmetry. apply Htau.
-    + intros mu p'. symmetry. apply Hext.
+    + intros μ p'. symmetry. apply Hext.
 Qed.
 
-(** ** A guarded sum never emits
+(* ** A guarded sum never emits
 
     The structural fact that makes VACCS asynchronous, and the reason the
     expansion law below has no synchronisation term. *)
@@ -102,7 +103,7 @@ Proof.
   - eapply IHM2; eassumption.
 Qed.
 
-(** ** Shifting a value binder, then substituting it, is the identity *)
+(* ** Shifting a value binder, then substituting it, is the identity *)
 
 Lemma subst_NewVar_Data_cancel : forall k X Y,
   subst_Data k X (NewVar_in_Data k Y) = Y.
@@ -142,7 +143,7 @@ Qed.
 Lemma gproc_NewVar_cancel : forall N v, subst_in_gproc 0 v (gNewVar 0 N) = N.
 Proof. intros N v. apply gNewVar_subst_cancel. Qed.
 
-(** ** The interleaving
+(* ** The interleaving
 
     [ext M N] lets [M]'s own guards race ahead of the untouched [N].  The
     input case must shift [N]'s value binders out of the new binder's way
@@ -158,7 +159,7 @@ match M with
 | gp1 + gp2 => (ext gp1 N) + (ext gp2 N)
 end.
 
-(** [N]'s guards race ahead of the untouched [M] — a *separate* function,
+(* [N]'s guards race ahead of the untouched [M] — a *separate* function,
     not [ext] with swapped arguments, so that the wrapping order matches
     [lts_parR]'s target shape [g M ‖ c2] rather than [c2 ‖ g M]. *)
 
@@ -171,7 +172,7 @@ match N with
 | gq1 + gq2 => (ext_r gq1 M) + (ext_r gq2 M)
 end.
 
-(** ** [ext]/[ext_r] mirror their argument's transitions exactly *)
+(* ** [ext]/[ext_r] mirror their argument's transitions exactly *)
 
 Lemma ext_lts_iff : forall M N a tgt, lts (g M) a tgt <-> lts (g (ext M N)) a (tgt ‖ g N).
 Proof.
@@ -219,7 +220,7 @@ Proof.
       * apply IHN2 in H4. eapply lts_choiceR. exact H4.
 Qed.
 
-(** The "every target has this shape" corollaries, needed for the
+(* The "every target has this shape" corollaries, needed for the
     backward direction; proved by their own induction, since the [iff]s
     above do not themselves assert it. *)
 
@@ -259,7 +260,7 @@ Proof.
       exists tgt'. split; [exact Heq | apply lts_choiceR; exact H4'].
 Qed.
 
-(** ** The transition correspondence, and the law *)
+(* ** The transition correspondence, and the law *)
 
 Lemma expansion_lts_iff : forall M N a tgt,
   lts (g M ‖ g N) a tgt <-> lts (g (ext M N)) a tgt \/ lts (g (ext_r N M)) a tgt.
@@ -291,7 +292,7 @@ Proof.
   - intro p'. split.
     + intro H. apply lts_choice2_iff. apply expansion_lts_iff. exact H.
     + intro H. apply expansion_lts_iff. apply lts_choice2_iff. exact H.
-  - intros mu p'. split.
+  - intros μ p'. split.
     + intro H. apply lts_choice2_iff. apply expansion_lts_iff. exact H.
     + intro H. apply expansion_lts_iff. apply lts_choice2_iff. exact H.
 Qed.
@@ -304,7 +305,7 @@ Corollary must_i_expansion_r : forall M N,
   g (ext M N + ext_r N M) ⊑ₘᵤₛₜᵢ (g M ‖ g N).
 Proof. intros M N t Hm. apply must_i_expansion. exact Hm. Qed.
 
-(** ** [gStatic] survives the construction *)
+(* ** [gStatic] survives the construction *)
 
 Lemma ext_gStatic : forall M N, gStatic M -> gStatic N -> gStatic (ext M N).
 Proof.
@@ -326,7 +327,7 @@ Proof.
   - constructor; [ apply IHN1 | apply IHN2 ]; assumption.
 Qed.
 
-(** [①] is inert on the server side **in an arbitrary context** too: a
+(* [①] is inert on the server side **in an arbitrary context** too: a
     sum's transitions never come from an [①] summand (no [lts] rule
     mentions [①]), so replacing it by [𝟘] leaves the transition relation
     *literally identical* and [must_same_lts] closes both directions at
@@ -345,7 +346,7 @@ Proof.
     + apply lts_choiceR. assumption.
     + inversion H4.
     + apply lts_choiceR. assumption.
-  - intros mu p'. split; intro H; inversion H; subst.
+  - intros μ p'. split; intro H; inversion H; subst.
     + inversion H4.
     + apply lts_choiceR. assumption.
     + inversion H4.
@@ -361,3 +362,4 @@ Corollary must_i_success_ctx_r : forall (R : gproc),
 Proof. intros R t H. apply must_i_success_ctx. exact H. Qed.
 
 End VACCS_Expansion.
+(* end hide *)

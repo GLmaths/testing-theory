@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Towards a *canonical* guarded-sum normal form
+(* * Towards a *canonical* guarded-sum normal form
 
     [VCCS_NormalForm.v]'s [normal_form] already puts every [Static]
     process into guarded-sum shape [g M]. For [CompletenessAx.v] that is
@@ -64,7 +65,7 @@ Section VCCS_Canonical.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** Collapsing a same-action pair underneath an arbitrary context
+(* ** Collapsing a same-action pair underneath an arbitrary context
 
     [R] is unconstrained — in particular it may contain [𝛕]-guards. *)
 
@@ -108,7 +109,7 @@ Proof.
   - apply ax_output_distrib_r; assumption.
 Qed.
 
-(** ** Flattening a sum into its list of summands
+(* ** Flattening a sum into its list of summands
 
     The collapse steps above act on a same-action pair sitting at the
     *front* of a sum. Reaching that shape from an arbitrary position in
@@ -166,7 +167,7 @@ Proof.
   - transitivity (g (rebuild l')); assumption.
 Qed.
 
-(** Any two summands, wherever they sit, can be brought to the front —
+(* Any two summands, wherever they sit, can be brought to the front —
     exactly the shape the four collapse steps consume. *)
 
 Lemma pull_pair : forall M a b l,
@@ -179,7 +180,7 @@ Proof.
   simpl. apply cgr_choice_assoc_rev.
 Qed.
 
-(** Elements of [summands M] are themselves leaves — needed whenever
+(* Elements of [summands M] are themselves leaves — needed whenever
     [summands (rebuild r)] has to be computed for an [r] that came from
     flattening. *)
 Lemma summands_leaves : forall M, Forall (fun a => summands a = [a]) (summands M).
@@ -188,7 +189,7 @@ Proof.
   apply Forall_app. split; assumption.
 Qed.
 
-(** ** [gStatic] survives flattening, rebuilding and permuting *)
+(* ** [gStatic] survives flattening, rebuilding and permuting *)
 
 Lemma summands_gStatic : forall M, gStatic M -> Forall gStatic (summands M).
 Proof.
@@ -213,7 +214,7 @@ Proof.
   rewrite Hp. exact Hx.
 Qed.
 
-(** ** Collapsing a same-action pair sitting at *arbitrary* positions
+(* ** Collapsing a same-action pair sitting at *arbitrary* positions
 
     The payoff: given only that two same-action guards occur somewhere
     among [M]'s summands, [⊢] proves [M] equal to the sum with those two
@@ -269,7 +270,7 @@ Proof.
     + apply ax_cgr_sym; [constructor; exact HM | apply pull_pair; exact Hp].
 Qed.
 
-(** ** Locating a same-action pair
+(* ** Locating a same-action pair
 
     [gact] is the *action* a guard offers, at the granularity that
     matters for canonicity: a channel for an input, a channel *and* a
@@ -374,7 +375,7 @@ Proof.
       * apply perm_move2.
 Qed.
 
-(** ** When the search fails, the sum really is canonical
+(* ** When the search fails, the sum really is canonical
 
     [count_act k l] counts the summands offering action [k], and
     [find_dup_none_count] is the "stop" half of the driver: once
@@ -432,7 +433,7 @@ Definition canonical (M : gproc) : Prop := find_dup (summands M) = None.
 Lemma canonical_count : forall M, canonical M -> forall k, count_act k (summands M) <= 1.
 Proof. intros M H k. apply find_dup_none_count. exact H. Qed.
 
-(** ** Selecting a [𝛕]-summand
+(* ** Selecting a [𝛕]-summand
 
     The same search/rebuild pattern as [find_dup], but aimed at the
     *next* normalisation stage — reaching an internal choice of stable
@@ -491,7 +492,7 @@ Proof.
     discriminate H.
 Qed.
 
-(** The "stop" side: no [𝛕]-summand anywhere means the sum is stable. *)
+(* The "stop" side: no [𝛕]-summand anywhere means the sum is stable. *)
 Lemma find_tau_none_stable : forall M, find_tau (summands M) = None -> gStable M.
 Proof.
   induction M; intro H; simpl in *; try exact I.
@@ -500,7 +501,7 @@ Proof.
     split; [apply IHM1 | apply IHM2]; assumption.
 Qed.
 
-(** ** The two [𝛕]-normalisation steps, at arbitrary positions
+(* ** The two [𝛕]-normalisation steps, at arbitrary positions
 
     Both follow the pattern of [ax_collapse_*_anywhere] above: bring the
     chosen summand to the front with [pull_one], commute it to the *end*
@@ -566,7 +567,7 @@ Proof.
     + apply ax_cgr_sym; [constructor; exact HM | apply tau_pull_cgr; exact Hp].
 Qed.
 
-(** ** The target shape
+(* ** The target shape
 
     [tau_nf] is Hennessy's [⊕]-of-stable-sums, as a binary tree of
     internal choices with [gStable] leaves — exactly the shape
@@ -587,7 +588,7 @@ Proof.
   - right. simpl. split; exact I.
 Qed.
 
-(** ** The separation recursion
+(* ** The separation recursion
 
     Measure: [ntaus], the number of [𝛕]-summands. Each application of
     [ax_tau_sep_anywhere] peels one off and recurses into
@@ -637,7 +638,7 @@ Proof.
     rewrite (IHY1 H1). rewrite (IHY2 H2). reflexivity.
 Qed.
 
-(** The invariant the recursion maintains: every [𝛕]-summand's
+(* The invariant the recursion maintains: every [𝛕]-summand's
     continuation is a *stable* guarded sum. *)
 
 Definition tau_cont_ok (a : gproc) : Prop :=
@@ -673,7 +674,7 @@ Proof.
     + apply IH; assumption.
 Qed.
 
-(** ** Rewriting a [𝛕]-summand's continuation in place
+(* ** Rewriting a [𝛕]-summand's continuation in place
 
     Unlike the separation/flattening steps, this one needs no
     commutation: [ax_choice_tau] already expects the [𝛕]-summand
@@ -712,7 +713,7 @@ Proof.
     + apply ax_cgr_sym; [constructor; exact HM | apply pull_one; exact Hp].
 Qed.
 
-(** ** Turning a [𝛕]-summand into a strictly smaller process
+(* ** Turning a [𝛕]-summand into a strictly smaller process
 
     The payoff of [VCCS_NormalForm.v]'s [step_dominated]. A [𝛕]-summand
     of the normal form is a [τ]-transition of it, hence matched by a
@@ -722,7 +723,7 @@ Qed.
     along the [⊢]-equality. This is what lets the normalisation descend
     into continuations despite normalisation not being size-decreasing. *)
 
-(** Defined here rather than in [VCCS_NormalForm.v] (where
+(* Defined here rather than in [VCCS_NormalForm.v] (where
     [normal_form_strong] establishes it) purely for dependency order:
     [VCCS_NormalForm.v] imports this file. *)
 Definition step_dominated (p : proc) (M : gproc) : Prop :=
@@ -755,7 +756,7 @@ Proof.
   - eapply Static_lts_decrease; eassumption.
 Qed.
 
-(** ** Invariant and measure for the flattening phase
+(* ** Invariant and measure for the flattening phase
 
     The phase that *establishes* [tau_cont_ok] (which [tau_separate]
     below then consumes). Its own invariant is the weaker
@@ -811,7 +812,7 @@ Proof.
   rewrite Forall_forall in Hall. apply Hall. rewrite Hp. exact Hx.
 Qed.
 
-(** ** Searching for a [𝛕]-summand still to be flattened
+(* ** Searching for a [𝛕]-summand still to be flattened
 
     [gStable] is a [Fixpoint] into [Prop], so it needs a boolean twin to
     be usable as a test inside the search. [find_unstable_tau] then
@@ -899,7 +900,7 @@ Proof.
     + apply IH; [reflexivity | exact Hall'].
 Qed.
 
-(** ** Deciding [tau_nf]
+(* ** Deciding [tau_nf]
 
     Stage 1's search needs to tell whether a [𝛕]-summand's continuation
     is *already* normalised — without it the search re-selects the
@@ -949,7 +950,7 @@ Proof.
       * apply IH; [simpl; lia | exact HB].
 Qed.
 
-(** ** Stage 1's search: a [𝛕]-summand still to be normalised
+(* ** Stage 1's search: a [𝛕]-summand still to be normalised
 
     Selects a [𝛕]-summand whose continuation is *not* already a guarded
     sum in [tau_nf]. Thanks to [tau_nfB] this is decidable, which is
@@ -1057,7 +1058,7 @@ Proof.
     + apply IH; reflexivity.
 Qed.
 
-(** *** External choice lies above internal choice — derived, not an axiom
+(* *** External choice lies above internal choice — derived, not an axiom
 
     [g A ⊕ g B ⊑ g (A + B)]: the union-closure condition acceptance-tree
     semantics imposes on acceptance families (the family must contain
@@ -1089,7 +1090,7 @@ Proof.
     [constructor; constructor; assumption | apply cgr_choice_com].
 Qed.
 
-(** *** Stage 1's invariant, measure bookkeeping, and iteration
+(* *** Stage 1's invariant, measure bookkeeping, and iteration
 
     [tau_cont_norm] is the *hypothesis* stage 1 consumes ("every
     [𝛕]-continuation is [⊢]-equal to some [tau_nf] guarded sum") and
@@ -1138,14 +1139,14 @@ Proof.
     rewrite ntodo_app. rewrite Ha. simpl. rewrite (IH Hall'). lia.
 Qed.
 
-(** [simpl] eagerly unfolds [todo1] inside [ntodo], which destroys the
+(* [simpl] eagerly unfolds [todo1] inside [ntodo], which destroys the
     shape the rewrites below need — this lemma exposes the [cons] step
     without touching the per-summand weight. *)
 
 Lemma ntodo_cons : forall a l, ntodo (a :: l) = (todo1 a + ntodo l)%nat.
 Proof. reflexivity. Qed.
 
-(** Stage 1's iteration: turn [tau_cont_norm] into [tau_cont_nf], one
+(* Stage 1's iteration: turn [tau_cont_norm] into [tau_cont_nf], one
     [𝛕]-summand at a time. Each round selects an outstanding summand
     ([find_tau_todo]), rewrites its continuation in place
     ([ax_tau_cont_anywhere]) to the [tau_nf] guarded sum the invariant
@@ -1240,7 +1241,7 @@ Proof.
     + apply IH; assumption.
 Qed.
 
-(** ** The flattening phase: [tau_cont_nf] becomes [tau_cont_ok]
+(* ** The flattening phase: [tau_cont_nf] becomes [tau_cont_ok]
 
     Repeatedly flatten a [𝛕]-summand whose continuation is a nested
     internal choice, until none is left. Measure: [tau_weight]. Note the
@@ -1340,7 +1341,7 @@ Proof.
       apply tnf_stable. apply find_tau_none_stable. exact E.
 Qed.
 
-(** ** The termination measure
+(* ** The termination measure
 
     [nacts] counts the *action-bearing* summands, ignoring [①]/[𝟘]/[𝛕].
     Plain [length (summands _)] does **not** work as the measure: a
@@ -1384,7 +1385,7 @@ Proof.
     destruct (decide (gact a = None)); rewrite (IH Hall'); reflexivity.
 Qed.
 
-(** ** Recovering a guard's shape from its action *)
+(* ** Recovering a guard's shape from its action *)
 
 Lemma gact_input_shape : forall a c, gact a = Some (c, None) -> exists P, a = c ? P.
 Proof.
@@ -1398,7 +1399,7 @@ Proof.
   injection H as H1 H2. subst. exists p. reflexivity.
 Qed.
 
-(** ** Canonicalisation
+(* ** Canonicalisation
 
     Every [gStatic] guarded sum is [⊢]-provably equal, in both
     directions, to a *canonical* one. By well-founded recursion on
@@ -1468,3 +1469,4 @@ Proof.
 Qed.
 
 End VCCS_Canonical.
+(* end hide *)

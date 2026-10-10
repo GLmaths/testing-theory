@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -25,7 +26,8 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
-From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA.
+From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA.
+(* end hide *)
 
 (** ** Each program has a MailBox, which is finite and counts occurences of Value *)
 
@@ -47,9 +49,10 @@ Class FiniteOutputChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P 
       forall q, non_blocking η → p ⟶[ η ] q 
         → lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
     }.
+(* begin hide *)
 
 
-(** *** Relationship between mailbox and non-blocking actions *)
+(* *** Relationship between mailbox and non-blocking actions *)
 
 Lemma lts_oba_mo_non_blocking_spec1 `{FiniteOutputChain_LtsOba P A} {p η} : 
   η ∈ lts_oba_mo p → non_blocking η.
@@ -76,7 +79,7 @@ Proof.
 Qed.
 
 
-(** *** Properties on LTS with OBA axioms *)
+(* *** Properties on LTS with OBA axioms *)
 
 Lemma lts_oba_mo_eq `{FiniteOutputChain_LtsOba P A} {p q} :
   p ⋍ q → lts_oba_mo p = lts_oba_mo q.
@@ -87,15 +90,15 @@ Proof.
   - eapply leibniz_equiv. intros η.
     rewrite multiplicity_empty.
     destruct (non_blocking_dec η).
-    destruct (decide (q ↛[η])) as [refuses | accepts ].
-    + destruct (decide (η ∈ lts_oba_mo q)).
-      ++ eapply lts_oba_mo_spec_bis2 in e as (t & hl).
-         eapply lts_refuses_spec2 in refuses. multiset_solver. destruct hl. now exists t.
-      ++ destruct (multiplicity η (lts_oba_mo q)) eqn:eq; multiset_solver.
-    + eapply lts_refuses_spec1 in accepts as (t & hl).
+    destruct (decide (q ⟶[η])) as [accepts | refuses].
+    + eapply lts_performs_spec1 in accepts as (t & hl).
       assert (p ⟶⋍[η] t) as (u & hlu & hequ).
       { eapply eq_spec. eexists; split; eauto. }
       eapply lts_oba_mo_spec_bis1 in hlu. multiset_solver. assumption.
+    + destruct (decide (η ∈ lts_oba_mo q)).
+      ++ eapply lts_oba_mo_spec_bis2 in e as (t & hl).
+         exfalso. apply refuses, lts_performs_spec2. destruct hl. now exists t.
+      ++ destruct (multiplicity η (lts_oba_mo q)) eqn:eq; multiset_solver.
     + eapply lts_oba_mo_non_blocking_contra in n. instantiate (1 := q) in n. multiset_solver.
   - assert {t | non_blocking x /\ p ⟶[x] t} as (t & nb & hlt).
     { eapply lts_oba_mo_spec_bis2. multiset_solver. }
@@ -109,5 +112,4 @@ Proof.
     { eapply gmultiset_disj_union_inj_1. etrans; eassumption. }
     eapply gmultiset_eq_pop_l. eapply IHhmo. eassumption. now symmetry. assumption. assumption.
 Qed.
-
-
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,14 +26,14 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   DefinitionTIco EquivalenceTIco
   VCCS_Instance VCCS_Good VCCS_test_trace_gen_may.
 
-(** * The May preorder is trace inclusion, for VCCS
+(* * The May preorder is trace inclusion, for VCCS
 
     [VCCS_gLtsOBAFW] ([VCCS_Instance.v]) already makes [proc] a forwarder
     LTS on its own — no [▷ ∅] lift needed, unlike the feedback calculi
     (VACCS/ACCS, see [VACCS_May_Characterization.v]) — so this is a direct
-    instance of [equivalence_ti_fw]/[equivalence_ti_co_fw], self-testing
+    instance of [equivalence_ti_fw]/[equivalence_ti_co_trace_fw], self-testing
     ([Interaction_between_parallel_VCCS] already supplies
-    [Prop_of_Inter proc proc dual]). Both the plain and co-trace
+    [Prop_of_Inter proc proc dual dual]). Both the plain and co-trace
     characterisations reuse the very same [gen_may]/[VCCS_may_test_spec] —
     [EquivalenceTIco.v]'s theorems take exactly the same [gen]/[may_test_spec]
     typeclasses as [EquivalenceTI.v]'s, so no separate generator is needed. *)
@@ -52,7 +53,8 @@ Qed.
 Corollary may_iff_co_trace_inclusion_VCCS (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘₐᵧ q <-> p ≼꜀ₒ₋ₜᵢ q.
 Proof.
-  eapply (equivalence_ti_co_fw (gen := gen_may)).
+  eapply (equivalence_ti_co_trace_fw (gen := gen_may)).
 Qed.
 
 End VCCS_May_Corollary.
+(* end hide *)

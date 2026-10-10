@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -31,6 +32,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW.
+(* end hide *)
 
 (** ** Weak transitions *)
 
@@ -41,6 +43,7 @@ Inductive wt `{gLts P A} : P -> trace A -> P -> Prop :=
 | wt_tau s p q t (l : p ⟶ q) (w : wt q s t) : wt p s t
 | wt_act μ s p q t (l : p ⟶[μ] q) (w : wt q s t) : wt p (μ :: s) t
 .
+(* begin hide *)
 
 Global Hint Constructors wt:mdb.
 
@@ -54,18 +57,18 @@ Notation "p ⟹⋍ q" := (wt_sc p [] q) (at level 30, format "p  ⟹⋍  q").
 Notation "p ⟹⋍{ μ } q" := (wt_sc p [μ] q) (at level 30, format "p  ⟹⋍{ μ }  q").
 Notation "p ⟹⋍[ s ] q" := (wt_sc p s q) (at level 30, format "p  ⟹⋍[ s ]  q").
 
-(** *** Properties on weak transitions in LTSs *)
+(* *** Properties on weak transitions in LTSs *)
 
 (* The trace is kept as a variable and constrained by an equation, so that plain
    induction applies: [dependent induction] on the non-variable index [μ :: s]
    would go through [JMeq] and pull in the [Eqdep.Eq_rect_eq] axiom. *)
 Lemma wt_pop_gen `{gLts P A} p q s0 :
-  p ⟹[s0] q -> forall μ s, s0 = μ :: s -> ∃ t, p ⟹{μ} t /\ t ⟹[s] q.
+  p ⟹[s0] q -> forall μ1 s, s0 = μ1 :: s -> ∃ t, p ⟹{μ1} t /\ t ⟹[s] q.
 Proof.
   intro w.
-  induction w as [ p | s0 p r q l w IH | ν s0 p r q l w IH ]; intros μ s Heq.
+  induction w as [ p | s0 p r q l w IH | μ2 s0 p r q l w IH ]; intros μ1 s Heq.
   - discriminate.
-  - destruct (IH μ s Heq) as (t & w1 & w2).
+  - destruct (IH μ1 s Heq) as (t & w1 & w2).
     exists t. split; eauto with mdb.
   - inversion Heq; subst.
     exists r. split; eauto with mdb.
@@ -120,12 +123,12 @@ Proof. intros w1 w2. eapply wt_concat; eauto. Qed.
 
 (* Same treatment as [wt_pop]: the trace stays a variable, so no UIP axiom. *)
 Lemma wt_decomp_one_gen `{gLts P A} p q s0 :
-  p ⟹[s0] q -> forall μ, s0 = [μ] -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ] r2 ∧ r2 ⟹ q.
+  p ⟹[s0] q -> forall μ1, s0 = [μ1] -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ1] r2 ∧ r2 ⟹ q.
 Proof.
   intro w.
-  induction w as [ p | s0 p r q l w IH | ν s0 p r q l w IH ]; intros μ Heq.
+  induction w as [ p | s0 p r q l w IH | μ2 s0 p r q l w IH ]; intros μ1 Heq.
   - discriminate.
-  - destruct (IH μ Heq) as (r1 & r2 & w1 & l' & w2).
+  - destruct (IH μ1 Heq) as (r1 & r2 & w1 & l' & w2).
     exists r1, r2. repeat split; eauto with mdb.
   - inversion Heq; subst.
     exists p, r. repeat split; eauto with mdb.
@@ -143,7 +146,7 @@ Proof. eauto with mdb. Qed.
 Lemma lts_to_wt_tau`{gLts P A} {p q} : p ⟶ q -> p ⟹ q.
 Proof. intros tr'. eapply wt_tau;eauto. constructor. Qed.
 
-(** *** Properties on weak transitions in LTSs with a Bisimulation *)
+(* *** Properties on weak transitions in LTSs with a Bisimulation *)
 
 Lemma eq_spec_wt `{gLtsEq P A} p p' : p ⋍ p' -> forall q s, p ⟹[s] q -> p' ⟹⋍[s] q.
 Proof.
@@ -213,15 +216,17 @@ Proof.
   intros w1 (r' & hwr' & heqr').
   exists r'. split. eapply wt_concat; eassumption. eassumption.
 Qed.
+(* end hide *)
 
 (** *** Properties on weak transitions in Lts with OBA axioms *)
+(* begin hide *)
 
 Lemma refuses_tau_preserved_by_wt_non_blocking_action `{gLtsOba P A} p q s :
   Forall non_blocking s ->  p ↛ -> p ⟹[s] q -> q ↛.
 Proof.
   intros s_spec hst hw.
   induction hw; eauto.
-  - eapply lts_refuses_spec2 in hst. now exfalso. eauto.
+  - exfalso. apply hst, lts_performs_spec2. eauto.
   - inversion s_spec; subst.
     eapply IHhw. eassumption. eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
 Qed. 
@@ -231,7 +236,7 @@ Lemma refuses_tau_action_preserved_by_wt_non_blocking_action `{gLtsOba P A} p q 
 Proof.
   intros s_spec hst_tau hst_inp hw.
   induction hw; eauto.
-  - eapply lts_refuses_spec2 in hst_tau. now exfalso. eauto.
+  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
   - inversion s_spec; subst. eapply IHhw. 
     + assumption.
     + eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
@@ -245,7 +250,7 @@ Lemma lts_input_preserved_by_wt_output `{gLtsOba P A} p q s μ :
 Proof.
   intros s_spec1 s_spec2 hst_tau hst_inp hw.
   induction hw; eauto.
-  - eapply lts_refuses_spec2 in hst_tau. now exfalso. eauto.
+  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
   - inversion s_spec1; subst. inversion s_spec2; subst. eapply IHhw. 
     + eassumption.
     + eassumption.
@@ -377,6 +382,7 @@ Proof.
     exists q''. split; eauto. etrans; eauto.
     eapply are_actions_preserved_by_perm; eauto.
 Qed.
+(* end hide *)
 
 Lemma push_wt_non_blocking_action `{gLtsObaFW P A} {p q η s} :
   non_blocking η -> p ⟹[η :: s] q
@@ -393,6 +399,7 @@ Proof.
   destruct w7 as (u & hwu & hequ).
   exists u. split. eapply wt_act. eassumption. eapply wt_nil. eassumption.
 Qed.
+(* begin hide *)
 
 Lemma wt_annhil `{gLtsObaFW P A} p q η μ :
   non_blocking η -> dual μ η -> p ⟹[[η ; μ]] q
@@ -462,3 +469,4 @@ Proof.
          eapply Forall_app. split. assumption. eauto. 
          symmetry. eapply Permutation_cons_append.
 Qed.
+(* end hide *)

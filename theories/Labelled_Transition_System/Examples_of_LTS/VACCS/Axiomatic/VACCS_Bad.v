@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * [Bad]: the summand-indexed harmlessness judgement
+(* * [Bad]: the summand-indexed harmlessness judgement
 
     [VACCS_Absorb.v]'s [Harmless] is sound but provably incomplete for the
     condition it approximates — "passes no τ-stuck, non-good, [S]-refusing
@@ -80,7 +81,7 @@ Section VACCS_Bad.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** Inverting a guarded sum's transitions to a summand *)
+(* ** Inverting a guarded sum's transitions to a summand *)
 
 
 
@@ -89,7 +90,7 @@ Proof.
   intros M HS q Hq. eapply stable_no_lts; [ apply gStable_iff; exact HS | exact Hq ].
 Qed.
 
-(** ** The syntactic clauses, recovered
+(* ** The syntactic clauses, recovered
 
     The three clauses of the first version are derivable, so nothing is
     lost by stating the judgement over the LTS. *)
@@ -114,7 +115,7 @@ Proof.
     subst p'. apply Hbr. exact Hin.
 Qed.
 
-(** The clause the [exists] buys, and the reason it was weakened: a
+(* The clause the [exists] buys, and the reason it was weakened: a
     guarded sum is bad as soon as, **at each channel it guards, ONE of
     its guards has a bad continuation** — the siblings on that channel
     need not all be bad, because [must]'s [com] field owes them all and
@@ -134,7 +135,7 @@ Proof.
     eapply summand_lts; [ exact Hin | apply lts_input ].
 Qed.
 
-(** * Partial completeness: the output side of [bad_stuck] is FORCED
+(* * Partial completeness: the output side of [bad_stuck] is FORCED
 
     [Bad] is not complete in general (the ∀∃ alternation above), but its
     *output* condition is: a [τ]-stuck process that can emit on a channel
@@ -165,7 +166,7 @@ Proof.
       [ reflexivity | exact Hl | apply lts_input ].
   - intros q Hq. exfalso. eapply Hst. exact Hq.
   - intros t' Ht'. exfalso. eapply probe_no_tau. exact Ht'.
-  - intros p'' t' mu1 mu2 Hd Hl1 Hl2.
+  - intros p'' t' μ1 μ2 Hd Hl1 Hl2.
     inversion Hl2; subst. apply m_now. simpl. apply good_success.
 Qed.
 
@@ -183,7 +184,7 @@ Proof.
   - apply must_any_probe; [ exact Hst | exists v, p'; exact Hl ].
 Qed.
 
-(** * At [S = ∅] the judgement's target IS an inequation
+(* * At [S = ∅] the judgement's target IS an inequation
 
     [Bad] approximates the semantic predicate
 
@@ -242,10 +243,10 @@ Proof.
         apply ParRight. exact Ht'.
       * intros p' Hp'. inversion Hp'.
       * intros t' Ht'. eapply H0; [ exact Ht' | exact HB | reflexivity ].
-      * intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+      * intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
-(** The sound half, restated: a [Bad] process at [∅] really is below
+(* The sound half, restated: a [Bad] process at [∅] really is below
     [𝟘] — so [Bad] is a *derivation system for one direction of*
     [⊑ₘᵤₛₜᵢ 𝟘], which is exactly the role it plays in the drop law. *)
 
@@ -257,7 +258,7 @@ Proof.
   intros c x q Hc. contradiction.
 Qed.
 
-(** * [⊑ₘᵤₛₜᵢ 𝟘] is closed under external choice — but not reflected by it
+(* * [⊑ₘᵤₛₜᵢ 𝟘] is closed under external choice — but not reflected by it
 
     A τ-stuck client can only make a *sum* move through one of its
     summands, and every obligation the sum then owes is that summand's
@@ -303,14 +304,14 @@ Proof.
       * exists z1. exact Hz1.
       * intros p' Hp'. apply Hpt. apply lts_choiceL. exact Hp'.
       * intros t' Ht'. exfalso. eapply Hst. exact Ht'.
-      * intros p' t' mu1 mu2 Hd Hp' Ht'.
+      * intros p' t' μ1 μ2 Hd Hp' Ht'.
         eapply Hcom; [ exact Hd | apply lts_choiceL; exact Hp' | exact Ht' ].
     + right. apply m_step.
       * exact Ho.
       * exists z2. exact Hz2.
       * intros p' Hp'. apply Hpt. apply lts_choiceR. exact Hp'.
       * intros t' Ht'. exfalso. eapply Hst. exact Ht'.
-      * intros p' t' mu1 mu2 Hd Hp' Ht'.
+      * intros p' t' μ1 μ2 Hd Hp' Ht'.
         eapply Hcom; [ exact Hd | apply lts_choiceR; exact Hp' | exact Ht' ].
 Qed.
 
@@ -324,7 +325,7 @@ Proof.
   - eapply (proj1 (below_nil_iff (g N)) HN u Hst Hng H1).
 Qed.
 
-(** ** The two engines of the "dead guard" mechanism, at an arbitrary sum
+(* ** The two engines of the "dead guard" mechanism, at an arbitrary sum
 
     Both facts below were used repeatedly — in [Bad_sound], in
     [BadK_sound], and in every counterexample of `VACCS_DropProbes.v` —
@@ -356,7 +357,7 @@ Proof.
     apply good_par. right. exact Hgb.
 Qed.
 
-(** A *dead* guard — one whose continuation is [𝟘] — forbids the client
+(* A *dead* guard — one whose continuation is [𝟘] — forbids the client
     to emit on its channel: the [com] field there would owe
     [𝟘 must_pass <residue>], and the residue is still τ-stuck and not
     good.  So a dead guard turns "I do not need this channel" into "I
@@ -380,7 +381,7 @@ Proof.
   eapply nil_fails_stuck; [ exact Hst' | exact Hng' | exact Hd ].
 Qed.
 
-(** Dually, the [ex] field forces the client to emit at all: a τ-stable
+(* Dually, the [ex] field forces the client to emit at all: a τ-stable
     guarded sum has no move of its own, and it can never emit
     ([gsum_no_out]), so the only available step of the pair is a
     synchronisation at one of its input guards. *)
@@ -403,7 +404,7 @@ Proof.
     + exfalso. eapply gsum_no_out. exact l1.
 Qed.
 
-(** The two combined.  This is the inversion principle the analysis of a
+(* The two combined.  This is the inversion principle the analysis of a
     stable sum actually uses: a τ-stuck non-good client that the sum
     passes emits on a channel the sum guards, and that guard is *live*.
     Note it says nothing about the continuation — unlike [Bad] and
@@ -423,7 +424,7 @@ Proof.
   intro Hdead. eapply gsum_dead_blocks; eassumption.
 Qed.
 
-(** Immediate consequence, and the shape a *decidable* criterion for the
+(* Immediate consequence, and the shape a *decidable* criterion for the
     empty-bag branch would have: if every channel the sum guards is also
     dead-guarded, no client can work at all. *)
 
@@ -439,7 +440,7 @@ Proof.
   apply Hnd. eapply Hall. exact Hin.
 Qed.
 
-(** ** The criterion is DECIDABLE
+(* ** The criterion is DECIDABLE
 
     [gdeadb c M] tests, structurally, whether [M] has a dead guard on [c];
     [all_deadb] tests the condition above over [gchans M].  Both are
@@ -492,7 +493,7 @@ Proof.
   apply Hb. eapply gchans_summand. exact Hin.
 Qed.
 
-(** ** The witness that motivated weakening [bad_stuck]
+(* ** The witness that motivated weakening [bad_stuck]
 
     [(c ? K) + (c ? 𝟘)], with [K] arbitrary, is below [𝟘]: the client is
     forced to emit on [c] ([gsum_forces_emit]), and the dead **sibling**
@@ -537,7 +538,7 @@ Proof.
     subst c1. split; [ simpl; right; left; reflexivity | apply bad_nil_any ].
 Qed.
 
-(** The negative half, in general form: a live message is never [Bad] at
+(* The negative half, in general form: a live message is never [Bad] at
     a set that misses its channel.  It is what shows the *per-branch*
     reading could not have worked — [(c ? K) + (c ? 𝟘)] with [K] a
     message on a third channel is below [𝟘], yet [K] itself is not
@@ -554,7 +555,7 @@ Proof.
     apply lts_output.
 Qed.
 
-(** ** …and the RULE gets strictly stronger
+(* ** …and the RULE gets strictly stronger
 
     [ax_input_drop] discards an input summand whose continuation is
     [Bad].  With the sibling clause a *nested* sum qualifies, and the old
@@ -572,7 +573,7 @@ Proof.
   intro v. simpl. apply sibling_dead_Bad.
 Qed.
 
-(** ** …and a drop that NO certificate can license
+(* ** …and a drop that NO certificate can license
 
     [ax_drop_tau] removes an input guard beside a [𝛕]-summand with a
     premise that says nothing about the discarded continuation.  The
@@ -594,7 +595,7 @@ Lemma tau_beside_not_bad : forall (c : ChannelData) (d : Channel) (y : Value),
   ~ Bad (fun x => x = c) (((cst d) ! (cst y) • 𝟘) : proc).
 Proof. intros c d y. apply msg_not_Bad. Qed.
 
-(** ** The same defect was in [BadK], and fixing it makes the instance
+(* ** The same defect was in [BadK], and fixing it makes the instance
        DERIVABLE, not merely true
 
     [bk_kill] carried the same universal clause, and had to be weakened
@@ -646,7 +647,7 @@ Proof.
   - apply sibling_dead_BadK.
 Qed.
 
-(** And the decidable criterion of [below_nil_of_all_deadb] is now a
+(* And the decidable criterion of [below_nil_of_all_deadb] is now a
     *decidable fragment of [Bad]* rather than something beside it: with
     the [exists] clause, "every guarded channel is also dead-guarded"
     certifies [Bad] at any set.  The direct proof through
@@ -664,7 +665,7 @@ Proof.
   exists ((g 𝟘) : proc). split; [ apply Hall with (P := P); exact Hin | apply bad_nil_any ].
 Qed.
 
-(** ** Message rigidity, at an arbitrary channel
+(* ** Message rigidity, at an arbitrary channel
 
     `VACCS_DropProbes.v` proves [𝟘 ⋢ₘᵤₛₜᵢ (a!v•𝟘)] at the constant
     channel its own section fixes.  The argument is generic, and the
@@ -697,7 +698,7 @@ Proof.
   - intros t' Ht'. unfold TSg in Ht'. inversion Ht'; subst.
     + inversion H3; subst. apply m_now. simpl. constructor.
     + inversion H3.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
 Lemma msg_fails_TSg : forall (c : ChannelData) (v : ValueData),
@@ -725,7 +726,7 @@ Proof.
   intros c v Hle. eapply msg_fails_TSg. apply Hle. apply nil_passes_TSg.
 Qed.
 
-(** At both sets empty, [BadK] certifies an inequation of the theory —
+(* At both sets empty, [BadK] certifies an inequation of the theory —
     the same reading [below_nil_iff] gives, now with a judgement strong
     enough to reach `VACCS_DropProbes.v`'s counterexample, which [Bad]
     provably cannot. *)
@@ -739,7 +740,7 @@ Proof.
   - intros c Hc. contradiction.
 Qed.
 
-(** ** An unstable left configuration need NOT have the right's bag
+(* ** An unstable left configuration need NOT have the right's bag
 
     [VACCS_NormalForm.bags_agree] forces the two message bags to be equal,
     but only when the **left configuration is τ-stable**.  That hypothesis
@@ -778,7 +779,7 @@ Proof.
   apply (proj2 (must_i_cgr _ _ Hc)). exact Hd.
 Qed.
 
-(** …and yet this instance **is** derivable — by [ax_tau_step], stepping to
+(* …and yet this instance **is** derivable — by [ax_tau_step], stepping to
     the delivery's target, which here is [≡*]-equal to the right-hand side.
 
     So the unstable case is not uniformly out of reach: what is out of
@@ -802,7 +803,7 @@ Proof.
   apply ax_cgr. etransitivity; [ apply cgr_par_nil | apply cgr_par_nil ].
 Qed.
 
-(** ** [𝟘] is NOT below an arbitrary guarded sum — a dead guard suffices
+(* ** [𝟘] is NOT below an arbitrary guarded sum — a dead guard suffices
 
     [VACCS_Copycat.must_i_nil_below_copycats] gives [𝟘 ⊑ₘᵤₛₜᵢ g M] for a
     sum of **copycats**, and that is what discharges the source-only
@@ -860,10 +861,10 @@ Proof.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. rewrite (TD_tau_inv c v t' Ht').
     apply m_now. apply good_par. right. constructor.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
-(** Le refus vaut dès qu'**un sommant** est mort : [must]'s [com] doit les
+(* Le refus vaut dès qu'**un sommant** est mort : [must]'s [com] doit les
     résidus d'un canal *tous à la fois*, donc le sommant mort suffit à le
     faire échouer, quels que soient ses frères.  [summand_lts] relève sa
     transition à la somme entière. *)
@@ -899,7 +900,7 @@ Proof.
       match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
 Qed.
 
-(** **Une seule garde morte suffit** : la classe copycat de
+(* **Une seule garde morte suffit** : la classe copycat de
     [must_i_nil_below_copycats] ne peut donc pas être relâchée en
     « contient au moins un copycat » — un sommant mort quelque part dans
     la somme réfute déjà [𝟘 ⊑ₘᵤₛₜᵢ g M]. *)
@@ -919,7 +920,7 @@ Proof.
   simpl. left. reflexivity.
 Qed.
 
-(** ** …et les branches [𝛕] d'une somme NE SE LAISSENT PAS mettre en commun
+(* ** …et les branches [𝛕] d'une somme NE SE LAISSENT PAS mettre en commun
        vers le bas
 
     [VACCS_Matching.left_ichoice_below] met le choix interne des
@@ -980,7 +981,7 @@ Qed.
 (* ===================================================================== *)
 
 
-(** [SelfRet M] : une garde de [M] a une continuation qui **peut émettre
+(* [SelfRet M] : une garde de [M] a une continuation qui **peut émettre
     sur la voie de cette garde même**.  C'est exactement la négation du
     critère de [cfg_local_of_no_return], et c'est décidable : par
     [gsum_in_summand] la condition ne porte que sur les **sommants**, en
@@ -991,7 +992,7 @@ Definition SelfRet (M : gproc) : Prop :=
   exists c v P', lts ((g M) : proc) (ActExt (ActIn (c,v))) P' /\ In c (ochans P').
 
 
-(** ** La disjonction se scinde en DEUX obligations complémentaires
+(* ** La disjonction se scinde en DEUX obligations complémentaires
 
     **Rectification.**  Une première version demandait le *second*
     disjoint dès que le critère échoue — c'est-à-dire aussi quand [M]
@@ -1047,7 +1048,7 @@ Qed.
 
 
 (* ===================================================================== *)
-(** * LE CRITÈRE RAFFINÉ : SEULES LES GARDES SUR LES CANAUX DU SAC COMPTENT
+(* * LE CRITÈRE RAFFINÉ : SEULES LES GARDES SUR LES CANAUX DU SAC COMPTENT
 
     [SelfRet] est *suffisant* pour que le sac ne s'annule pas, jamais
     nécessaire : [VACCS_DropProbes.MSelf] est [SelfRet] par une garde sur
@@ -1073,7 +1074,7 @@ Definition SelfRetBag (l : list TypeOfActions) (M : gproc) : Prop :=
   exists c v, In (c,v) l /\ Exists (SelfRetOn c) (summands M).
 
 
-(** Il est bien **plus faible** que [SelfRet] — inclusion prouvée
+(* Il est bien **plus faible** que [SelfRet] — inclusion prouvée
     ci-dessous, stricte par [VACCS_DropProbes.MSelf_not_selfretbag]. *)
 
 Lemma selfretbag_selfret : forall l M, SelfRetBag l M -> SelfRet M.
@@ -1088,7 +1089,7 @@ Qed.
 
 
 
-(** ** ★ LES DEUX CRITÈRES RELATIFS AU SAC, RÉUNIS EN UNE DICHOTOMIE
+(* ** ★ LES DEUX CRITÈRES RELATIFS AU SAC, RÉUNIS EN UNE DICHOTOMIE
 
     Deux routes ferment l'annulation du sac, et elles sont
     **incomparables** :
@@ -1121,7 +1122,7 @@ Qed.
 Definition MeetsBag (l : list TypeOfActions) (M : gproc) : Prop :=
   exists c vv, In (c,vv) l /\ In c (ochans ((g M) : proc)).
 
-(** Une garde auto-rendante sur une voie du sac met cette voie dans
+(* Une garde auto-rendante sur une voie du sac met cette voie dans
     l'empreinte d'émission de la somme : [SelfRetBag] est donc un cas
     particulier de [MeetsBag], ce qui simplifie l'énoncé du résidu. *)
 
@@ -1146,7 +1147,7 @@ Qed.
 
 
 
-(** ** …et le refus SURVIT AU SAC
+(* ** …et le refus SURVIT AU SAC
 
     [VACCS_Matching.CfgDisjunctionSourceBag] affaiblit la prémisse du
     disjoint source en [msgs l ‖ K ⊑ₘᵤₛₜᵢ msgs l ‖ g M] — relativisée au
@@ -1188,10 +1189,10 @@ Proof.
   - match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
 Qed.
 
-Lemma bag_nil_ext_inv : forall (l : list TypeOfActions) mu q,
-  lts (msgs l ‖ ((g 𝟘) : proc)) (ActExt mu) q -> exists c v, mu = ActOut (c,v).
+Lemma bag_nil_ext_inv : forall (l : list TypeOfActions) μ q,
+  lts (msgs l ‖ ((g 𝟘) : proc)) (ActExt μ) q -> exists c v, μ = ActOut (c,v).
 Proof.
-  intros l mu q H. inversion H; subst.
+  intros l μ q H. inversion H; subst.
   - match goal with H2 : lts (msgs l) _ _ |- _ =>
       apply msgs_lts_inv in H2 as (c0 & v0 & l' & He & _ & _) end.
     exists c0, v0. exact He.
@@ -1245,9 +1246,9 @@ Proof.
   - intros p' Hp'. exfalso. eapply bag_nil_no_tau; eassumption.
   - intros t' Ht'. rewrite (TD_tau_inv d w t' Ht').
     apply m_now. apply good_par. right. constructor.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
-    destruct (bag_nil_ext_inv l mu1 p' Hp') as (c & v & Emu). subst mu1.
-    destruct mu2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
+    destruct (bag_nil_ext_inv l μ1 p' Hp') as (c & v & Emu). subst μ1.
+    destruct μ2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
     apply m_now. eapply TD_in_good. exact Ht'.
 Qed.
 
@@ -1278,7 +1279,7 @@ Proof.
     eapply bag_stuck_fails; [ exact Hnin | exact Hbad ].
 Qed.
 
-(** ** UN PROCESSUS QUI N'ÉMET JAMAIS EST SOUS [𝟘]
+(* ** UN PROCESSUS QUI N'ÉMET JAMAIS EST SOUS [𝟘]
 
     Généralisation substantielle de [below_nil_of_all_dead], qui exige que
     **toute** garde ait une sœur morte sur sa voie : ici il suffit que le
@@ -1358,7 +1359,7 @@ Proof.
     + simpl. apply in_or_app. right. eapply IH; [ exact Hx | exact Hc ].
 Qed.
 
-(** Le critère est TOUJOURS faux sur la forme dépliée : chaque branche
+(* Le critère est TOUJOURS faux sur la forme dépliée : chaque branche
     porte une copie du sac, donc [ochans] contient toutes ses voies.
     [cfg_derivable_of_disjoint] ne peut donc jamais s'y appliquer
     directement — le pooling est indispensable. *)
@@ -1398,7 +1399,7 @@ end.
 
 
 
-(** Contrôle : le reconnaisseur se déclenche exactement sur la forme des
+(* Contrôle : le reconnaisseur se déclenche exactement sur la forme des
     branches de [VACCS_DropProbes.OCp] — un message à côté d'une somme
     gardée — et par simple calcul. *)
 Lemma peel_msg_par : forall (c : ChannelData) (v : ValueData) (M : gproc),
@@ -1479,7 +1480,7 @@ Proof.
     + exists (p, t). apply ParLeft. apply lts_tau.
     + intros p' Hp'. inversion Hp'; subst. apply m_step; assumption.
     + exact IHet.
-    + intros p' t' mu1 mu2 Hd Hp' Ht'. inversion Hp'.
+    + intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
 Lemma must_i_tau_prefix_l : forall (X : proc),
@@ -1500,7 +1501,7 @@ Proof.
     + exists X. apply lts_tau.
 Qed.
 
-(** La loi, dans les deux lectures. *)
+(* La loi, dans les deux lectures. *)
 Theorem tau_prefix_law : forall (X : proc),
   (((g ((𝛕 • X) : gproc)) : proc) ⊑ₘᵤₛₜᵢ X)
   /\ (X ⊑ₘᵤₛₜᵢ ((g ((𝛕 • X) : gproc)) : proc))
@@ -1534,7 +1535,7 @@ end.
 
 
 
-(** Monotonie du choix interne : [ax_ichoice_glb] pour entrer,
+(* Monotonie du choix interne : [ax_ichoice_glb] pour entrer,
     [ax_ichoice_below] pour sortir.  Aucune congruence de somme n'est
     nécessaire — c'est ce qui rend l'énoncé si court malgré
     l'unsoundness de [ax_choice_stable]. *)
@@ -1552,7 +1553,7 @@ Qed.
 
 
 
-(** Le contrôle : sur la branche même de [branch_bag_scission_not_forced],
+(* Le contrôle : sur la branche même de [branch_bag_scission_not_forced],
     l'extracteur ne voit rien, et il voit le message après effacement. *)
 Lemma strip_repairs_the_counterexample : forall (c : ChannelData) (v : ValueData),
   fst (peel_msgs ((g ((𝛕 • ((c ! v • 𝟘) : proc)) : gproc)) : proc)) = []
@@ -1638,7 +1639,7 @@ Proof.
   - apply ax_refl.
 Qed.
 
-(** La troisième loi, dans les deux lectures. *)
+(* La troisième loi, dans les deux lectures. *)
 Theorem tau_third_law : forall (X : gproc), gStatic X ->
   ((g (X + (𝛕 • ((g X) : proc)))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g X) : proc)
   /\ ((g X) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (X + (𝛕 • ((g X) : proc)))) : proc)
@@ -1678,7 +1679,7 @@ Proof.
   rewrite subst_tau_guard. apply ax_tau_prefix_r.
 Qed.
 
-(** ** Les trois lois τ valides de Milner, pour VACCS
+(* ** Les trois lois τ valides de Milner, pour VACCS
 
     Rassemblées, parce que l'encodage [⊕ := 𝛕•X + 𝛕•Y] de ce dépôt les
     rendait toutes trois douteuses — [VACCS_Residues.v] contourne la
@@ -1742,7 +1743,7 @@ Lemma tau_wrap_tau_inv : forall (q z : proc),
   lts ((g ((𝛕 • q) : gproc)) : proc) τ z -> z = q.
 Proof. intros q z Hz. inversion Hz; subst; reflexivity. Qed.
 
-(** La prémisse τ d'[ax_glb_weak] sur une cible [g (𝛕 • q)] est
+(* La prémisse τ d'[ax_glb_weak] sur une cible [g (𝛕 • q)] est
     ÉQUIVALENTE au but [p ᴠᴀᴄᴄꜱ⊑ₐₓ q] : dans les deux sens. *)
 Theorem tau_wrap_glb_is_circular :
   forall (q : proc),
@@ -1760,3 +1761,4 @@ Proof.
 Qed.
 
 End VACCS_Bad.
+(* end hide *)

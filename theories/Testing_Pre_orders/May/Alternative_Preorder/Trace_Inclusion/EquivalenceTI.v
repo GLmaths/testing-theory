@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,7 +26,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
     MultisetLTSConstruction ForwarderConstruction May DefinitionTI MayTestSpec SoundnessTI CompletenessTI.
 
-(** * The May preorder is trace inclusion
+(* * The May preorder is trace inclusion
 
       [p ⊑ₘₐᵧ q  ↔  p ≼ₜᵢ q]
 
@@ -40,15 +41,15 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     LTSs, and it could not be: on a raw LTS the statement is false, since [𝟘] and
     [a?.𝟘] are May-equivalent while their raw traces differ. *)
 
-(** ** Equivalence, for forwarders *)
+(* ** Equivalence, for forwarders *)
 
 Theorem equivalence_ti_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -60,7 +61,7 @@ Proof.
   - eapply soundness_ti_fw.
 Qed.
 
-(** ** Equivalence, for feedback LTSs, through the forwarder construction
+(* ** Equivalence, for feedback LTSs, through the forwarder construction
 
     The trace inclusion is read on the *lifted* processes.  That is not a
     technicality: it is where the asynchrony lives.  [(𝟘, ∅)] already has the
@@ -70,15 +71,15 @@ Qed.
 Theorem equivalence_ti_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  {_ : Prop_of_Inter Q (MO A) A fw_inter}
-  {_ : Prop_of_Inter (Q * MO A) T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter Q (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (Q * MO A) T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -90,15 +91,15 @@ Proof.
   - eapply soundness_ti_fb.
 Qed.
 
-(** ** Corollary: the induced equivalences coincide *)
+(* ** Corollary: the induced equivalences coincide *)
 
 Corollary may_equiv_iff_same_traces `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -113,3 +114,4 @@ Proof.
     + eapply equivalence_ti_fw. intros s hs. now eapply hsame.
     + eapply equivalence_ti_fw. intros s hs. now eapply hsame.
 Qed.
+(* end hide *)

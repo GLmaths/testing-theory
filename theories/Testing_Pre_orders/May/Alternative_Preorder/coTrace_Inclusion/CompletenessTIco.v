@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     coWeakTransition Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
     MultisetLTSConstruction ForwarderConstruction May LiftMay MayTestSpec CompletenessTI DefinitionTIco.
 
-(** * Completeness of the co-trace-inclusion preorder for May
+(* * Completeness of the co-trace-inclusion preorder for May
 
       [p ⊑ₘₐᵧ q  →  p ≼꜀ₒ₋ₜᵢ q]   (for forwarders)
 
@@ -60,10 +61,10 @@ Section Completeness_ti_co.
 
 Context `{gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
 Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
-Context {QInter : Prop_of_Inter Q T A dual}.
+Context {QInter : Prop_of_Inter Q T A A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
-(** ** The core of completeness, co-native
+(* ** The core of completeness, co-native
 
     If [q] passes the test attesting [s] (literally), then [q] really
     does co-answer [s]. Mirrors [completeness_core]'s case-by-case
@@ -98,9 +99,9 @@ Proof.
     + (* what is left of [s] is all outputs: [q] co-answers them via BOOMERANG *)
       destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
       assert (hd : ForAllHelper.Forall2 dual s (coₜ s)).
-      { clear. induction s as [| ν s' IHs]; simpl.
+      { clear. induction s as [| μ3 s' IHs]; simpl.
         - constructor.
-        - constructor; [exact (proj2_sig (exists_dual ν)) | exact IHs]. }
+        - constructor; [exact (proj2_sig (exists_dual μ3)) | exact IHs]. }
       exists q'. eapply wt_to_cowt_dual; [exact w | exact hd].
     + (* the test talked to itself: give the pair back to the process by BOOMERANG *)
       destruct (IH (s1 ++ s2 ++ s3)) as (qend & w).
@@ -129,9 +130,9 @@ Proof.
     + (* same escape as above: everything left of [s] is co-answered outright *)
       destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
       assert (hd : ForAllHelper.Forall2 dual s (coₜ s)).
-      { clear. induction s as [| ν s' IHs]; simpl.
+      { clear. induction s as [| μ3 s' IHs]; simpl.
         - constructor.
-        - constructor; [exact (proj2_sig (exists_dual ν)) | exact IHs]. }
+        - constructor; [exact (proj2_sig (exists_dual μ3)) | exact IHs]. }
       exists q'. eapply wt_to_cowt_dual; [exact w | exact hd].
     + (* [q]'s own move co-answers [μ], anticipated past the postponed prefix [s1] *)
       destruct (IH (s1 ++ s2)) as (qend & w).
@@ -154,15 +155,15 @@ Qed.
 
 End Completeness_ti_co.
 
-(** ** Completeness, for forwarders *)
+(* ** Completeness, for forwarders *)
 
 Theorem completeness_ti_co_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -179,20 +180,20 @@ Proof.
   reflexivity.
 Qed.
 
-(** ** Completeness, for feedback LTSs, through the forwarder construction *)
+(* ** Completeness, for feedback LTSs, through the forwarder construction *)
 
 Theorem completeness_ti_co_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  {_ : Prop_of_Inter Q (MO A) A fw_inter}
-  {_ : Prop_of_Inter (Q * MO A) T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter Q (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (Q * MO A) T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -203,3 +204,4 @@ Proof.
   eapply completeness_ti_co_fw.
   eapply (proj1 (lift_fw_ctx_pre p q)). exact hctx.
 Qed.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -29,21 +30,23 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable.
 
-From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW
+From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation Lts_OBA Lts_FW
   ActTau Termination WeakTransitions Convergence coWeakTransition.
 
-(** ** Co-convergence
+(* ** Co-convergence
 
     [cocnv p s] is [cnv] with every step taken along [cowt] instead of [wt]:
     [p] converges "in the co sense" on [s] if it terminates and every
     co-weak-step along the head of [s] leads to a process that co-converges
     on the tail. *)
 
-(** *** Definition *)
+(* *** Definition *)
 
 Reserved Notation "p ⇓ᶜᵒ s" (at level 70).
 
-Inductive cocnv `{gLts P A} : P -> trace A -> Prop :=
+(* Two alphabets, as [cowt]: on one alphabet [sync] is [dual]. *)
+Inductive cocnv `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+  : P -> trace Atest -> Prop :=
 | cocnv_nil p : p ⤓ -> p ⇓ᶜᵒ ε
 | cocnv_act p μ s : p ⤓ -> (forall q, p ⟹ᶜᵒ{μ} q -> q ⇓ᶜᵒ s) -> p ⇓ᶜᵒ μ :: s
 
@@ -51,12 +54,16 @@ where "p ⇓ᶜᵒ s" := (cocnv p s).
 
 Global Hint Constructors cocnv:mdb.
 
-(** *** Properties on co-convergence in an LTS *)
+(* *** Properties on co-convergence in an LTS *)
 
-Lemma cocnv_terminate `{M : gLts P A} p s : p ⇓ᶜᵒ s -> p ⤓.
+Section cocnv_structure.
+
+Context `{gLtsP : @gLts P Aproc Hp} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+
+Lemma cocnv_terminate p s : p ⇓ᶜᵒ s -> p ⤓.
 Proof. by intros hcnv; now inversion hcnv. Qed.
 
-Lemma cocnv_wk `{gLtsP : gLts P A} {p : P}{a : A} {s} : p ⇓ᶜᵒ a :: s -> p ⇓ᶜᵒ [ a ] .
+Lemma cocnv_wk {p : P}{a : Atest} {s} : p ⇓ᶜᵒ a :: s -> p ⇓ᶜᵒ [ a ] .
 Proof.
   intros pw; depelim pw; constructor.
   - assumption.
@@ -64,7 +71,7 @@ Proof.
     eapply cocnv_terminate, qw.
 Qed.
 
-Lemma cocnv_preserved_by_lts_tau `{M : gLts P A} s p : p ⇓ᶜᵒ s -> forall q, p ⟶ q -> q ⇓ᶜᵒ s.
+Lemma cocnv_preserved_by_lts_tau s p : p ⇓ᶜᵒ s -> forall q, p ⟶ q -> q ⇓ᶜᵒ s.
 Proof.
   intros hcnv q l. destruct hcnv as [p p_cnv| μ p s p_cnv Hs].
   - eapply cocnv_nil. inversion p_cnv; eauto.
@@ -73,7 +80,7 @@ Proof.
     + eauto with mdb.
 Qed.
 
-Lemma cocnv_preserved_by_cowt_nil `{M : gLts P A} s p :
+Lemma cocnv_preserved_by_cowt_nil s p :
   p ⇓ᶜᵒ s -> forall q, p ⟹ᶜᵒ q -> q ⇓ᶜᵒ s.
 Proof.
   intros hcnv q w.
@@ -81,11 +88,11 @@ Proof.
   eapply IHw. eapply cocnv_preserved_by_lts_tau; eauto. reflexivity.
 Qed.
 
-Lemma cocnv_preserved_by_cowt_act `{M: gLts P A} s p μ :
+Lemma cocnv_preserved_by_cowt_act s p μ :
   p ⇓ᶜᵒ μ :: s -> forall q, p ⟹ᶜᵒ{μ} q -> q ⇓ᶜᵒ s.
 Proof. by intros hcnv; inversion hcnv; eauto with mdb. Qed.
 
-Lemma cocnv_iff_prefix_terminate_l `{M: gLts P A} p s :
+Lemma cocnv_iff_prefix_terminate_l p s :
   p ⇓ᶜᵒ s -> (forall t q, t `prefix_of` s -> p ⟹ᶜᵒ[t] q -> q ⤓).
 Proof.
   intros hcnv t q hpre w.
@@ -100,7 +107,7 @@ Proof.
     eassumption.
 Qed.
 
-Lemma cocnv_iff_prefix_terminate_r `{M: gLts P A} p s :
+Lemma cocnv_iff_prefix_terminate_r p s :
   (forall t q, t `prefix_of` s -> p ⟹ᶜᵒ[t] q -> q ⤓) -> p ⇓ᶜᵒ s.
 Proof.
   intros h.
@@ -114,13 +121,13 @@ Proof.
   eapply cowt_push_left; eassumption.
 Qed.
 
-Corollary cocnv_iff_prefix_terminate `{M: gLts P A} p s :
+Corollary cocnv_iff_prefix_terminate p s :
   p ⇓ᶜᵒ s <-> (forall s0 q, s0 `prefix_of` s -> p ⟹ᶜᵒ[s0] q -> q ⤓).
 Proof.
   split; [eapply cocnv_iff_prefix_terminate_l|eapply cocnv_iff_prefix_terminate_r].
 Qed.
 
-Lemma cocnv_cowt_prefix `{M: gLts P A} s1 s2 p :
+Lemma cocnv_cowt_prefix s1 s2 p :
   p ⇓ᶜᵒ s1 ++ s2 -> forall q, p ⟹ᶜᵒ[s1] q -> q ⇓ᶜᵒ s2.
 Proof.
   revert s2 p.
@@ -130,9 +137,15 @@ Proof.
     inversion hcnv; eauto with mdb.
 Qed.
 
-(** *** Properties on co-convergence in an LTS with a Bisimulation *)
+End cocnv_structure.
 
-Global Instance cocnv_preserved_by_eq `{gLtsEq P A}:
+(* *** Properties on co-convergence in an LTS with a Bisimulation *)
+
+Section cocnv_structure_eq.
+
+Context `{gLtsEqP : @gLtsEq P Aproc Hp} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+
+Global Instance cocnv_preserved_by_eq :
   Proper ((eq_rel) ==> (=) ==> (impl)) cocnv.
   (* p ⋍ q -> p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s *)
   Proof.
@@ -147,7 +160,9 @@ Global Instance cocnv_preserved_by_eq `{gLtsEq P A}:
       eapply (Hμ t' hlt' t heqt').
 Qed.
 
-(** *** Properties on co-convergence in an LTS with OBA axioms *)
+End cocnv_structure_eq.
+
+(* *** Properties on co-convergence in an LTS with OBA axioms *)
 
 Lemma terminate_preserved_by_cowt_non_blocking_action `{M: gLtsOba P A} p q η :
   co_non_blocking η -> p ⤓ -> p ⟹ᶜᵒ{ η } q -> q ⤓.
@@ -160,7 +175,7 @@ Proof.
   apply nb. symmetry. exact dxy.
 Qed.
 
-(** *** Properties on co-convergence in an LTS with Forwarder axioms *)
+(* *** Properties on co-convergence in an LTS with Forwarder axioms *)
 
 Lemma cocnv_preserved_by_lts_non_blocking_action `{gLtsObaFW P A} p q η s :
   non_blocking η -> p ⇓ᶜᵒ s -> p ⟶[η] q
@@ -395,7 +410,7 @@ Proof.
     + intros q w. exact (IHs1 his1' q (hclause q w)).
 Qed.
 
-(** *** From co-convergence to plain convergence on the dual action
+(* *** From co-convergence to plain convergence on the dual action
 
     [p ⇓ᶜᵒ [μ]] means "[p] is ready to respond to an observer's [μ]",
     i.e. [p] is ready to itself perform [co μ] — exactly [p ⇓ [co μ]].
@@ -416,3 +431,4 @@ Proof.
     eapply cocnv_preserved_by_cowt_act in hcowt; eauto.
     eapply equiv_termination, equiv_cotermination; eauto.
 Qed.
+(* end hide *)

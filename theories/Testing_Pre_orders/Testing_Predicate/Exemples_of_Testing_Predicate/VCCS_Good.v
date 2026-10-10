@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -26,8 +27,9 @@
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import decidable countable.
-From TestingTheory Require Import gLts InputOutputActions Must 
+From TestingTheory Require Import ActTau gLts InputOutputActions Must 
 Testing_Predicate VCCS_Instance.
+(* end hide *)
 
 Section VCCS_Testing.
 
@@ -41,6 +43,7 @@ Inductive good_VCCS : proc -> Prop :=
 | good_if_true : forall E p q, good_VCCS p -> Eval_Eq 0 E = Some true -> good_VCCS (If E Then p Else q)
 | good_if_false : forall E p q, good_VCCS q -> Eval_Eq 0 E = Some false -> good_VCCS (If E Then p Else q)
 | good_res : forall p, good_VCCS p -> good_VCCS (ν p).
+(* begin hide *)
 
 Hint Constructors good_VCCS:ccs.
 
@@ -211,7 +214,10 @@ Qed.
 Next Obligation.
  intros. unfold non_blocking in H.  simpl in *. inversion H.
 Qed.
+(* end hide *)
 
 End VCCS_Testing.
+(* begin hide *)
 
 #[global] Hint Constructors good_VCCS:ccs.
+(* end hide *)

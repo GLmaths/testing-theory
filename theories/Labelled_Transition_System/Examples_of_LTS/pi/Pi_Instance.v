@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -983,3 +984,4 @@ intros. split.
 * apply TausAndCong_Implies_Reduction.
 * apply Reduction_Implies_TausAndCong.
 Qed.
+(* end hide *)

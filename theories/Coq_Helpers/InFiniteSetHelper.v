@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -53,3 +54,4 @@ Proof.
   induction ps using set_ind_L. set_solver.
   destruct IHps; destruct (h x); eauto; set_solver.
 Qed.
+(* end hide *)

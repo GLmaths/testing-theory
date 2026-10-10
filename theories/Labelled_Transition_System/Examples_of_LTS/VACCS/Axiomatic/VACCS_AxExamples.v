@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The VACCS proof system, exercised — and exactly what completeness still needs
+(* * The VACCS proof system, exercised — and exactly what completeness still needs
 
     Two things here.
 
@@ -49,7 +50,7 @@ Section VACCS_AxExamples.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** The copycat, from the system
+(* ** The copycat, from the system
 
     [VACCS_Examples.v] proves [ccat ≂ₘᵤₛₜᵢ 𝟘] with two ~40-line [must]
     inductions leaning on [OBA_with_FB_First/Fourth/Fifth_Axiom].  Here
@@ -64,7 +65,7 @@ Proof. split; [ apply ax_ccat_l | apply ax_ccat_r; reflexivity ]. Qed.
 Example ccat_eq_nil : (ccat (cst a)) ≂ₘᵤₛₜᵢ (g 𝟘).
 Proof. apply soundness_ax_eq; [ apply ax_ccat_l | apply ax_ccat_r; reflexivity ]. Qed.
 
-(** ** The constant responder
+(* ** The constant responder
 
     [VACCS_Examples.NIL_is_above_constant] chains two long lemmas.  Here it
     is [ax_resp] followed by [ax_ccat_l] — and the *converse* is false, as
@@ -79,7 +80,7 @@ Proof. eapply ax_trans; [ apply ax_resp | apply ax_ccat_l ]. Qed.
 Example const_below_nil : (resp a (cst O)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof. apply soundness_ax. apply ax_const_below_nil. Qed.
 
-(** A copycat in parallel with anything is invisible — the general
+(* A copycat in parallel with anything is invisible — the general
     forwarder law, by [ax_par] and the unit law for [‖]. *)
 Example ax_ccat_par : forall p, (p ‖ (ccat (cst a))) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof.
@@ -89,7 +90,7 @@ Qed.
 
 End Copycat.
 
-(** ** The absorbing input, from the system
+(* ** The absorbing input, from the system
 
     A server that swallows a message and does nothing with it is invisible
     too — but for the opposite reason to the copycat, and by a different
@@ -106,7 +107,7 @@ Qed.
 Example swallow_nil : forall c, (g (c ? (g 𝟘))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof. intro c. apply soundness_ax. apply ax_swallow_nil. Qed.
 
-(** ** What completeness reduces to
+(* ** What completeness reduces to
 
     Soundness plus the normal form turn completeness into a statement
     about normal forms only: it suffices to compare two
@@ -130,14 +131,14 @@ Proof.
   apply (soundness_ax _ _ Ha2). apply Hpq. apply (soundness_ax _ _ Hb1). exact Hm.
 Qed.
 
-(** And the half of the characterisation that *is* available: soundness,
+(* And the half of the characterisation that *is* available: soundness,
     in the shape [VACCS_Must_Characterization.v] states its corollaries. *)
 
 Theorem ax_pre_sound : forall (p q : proc), p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q.
 Proof. apply soundness_ax. Qed.
 
 
-(** * REGRESSION: the whole new chain, on a configuration with an UNSTABLE left
+(* * REGRESSION: the whole new chain, on a configuration with an UNSTABLE left
 
     [VACCS_Bad.unstable_delivery_below_nil] machine-checks, by a direct
     [must] argument, that a pending message beside a guard that swallows
@@ -168,7 +169,7 @@ Context {c : Channel} {v : Value}.
 
 End SplitRegression.
 
-(** ** Regression on the two drop laws, at concrete channels
+(* ** Regression on the two drop laws, at concrete channels
 
     Both of these are derivations the system did **not** license before
     the two clauses were corrected, and they exercise different parts of
@@ -229,7 +230,7 @@ Proof. intro K1. apply soundness_ax. apply ax_double_tau_drop. Qed.
 End DropRegression2.
 
 
-(** * REGRESSION: THE UNEQUAL-BAG CHAIN, END TO END
+(* * REGRESSION: THE UNEQUAL-BAG CHAIN, END TO END
 
     [VACCS_Bad.unstable_delivery_below_nil] machine-checks, by a direct
     [must] argument, that a one-message bag sits below the empty one when
@@ -289,7 +290,7 @@ Proof.
     [ apply two_ccats_gStatic | apply two_ccats_copycats ].
 Qed.
 
-(** …et le critère muet ne peut pas le dire. *)
+(* …et le critère muet ne peut pas le dire. *)
 
 Lemma two_ccats_not_mute :
   ochans ((g ((ccatg (cst ka)) + (ccatg (cst kb)))) : proc) <> [].
@@ -445,7 +446,7 @@ Definition OutSink : gproc := (cst od) ? ((g (𝟘 : gproc)) : proc).
 Definition OutBody : proc := (((cst oc) ! (cst ov) • 𝟘) : proc) ‖ ((g OutSink) : proc).
 Definition OutSrc : proc := (g ((𝛕 • OutBody) : gproc)) : proc.
 
-(** Une somme gardée n'émet jamais : l'état émetteur n'est donc PAS
+(* Une somme gardée n'émet jamais : l'état émetteur n'est donc PAS
     [OutSrc] lui-même. *)
 Lemma OutSrc_no_out : forall c v z, ~ lts OutSrc (ActExt (ActOut (c,v))) z.
 Proof. intros c v z. apply gsum_no_out. Qed.
@@ -460,7 +461,7 @@ Lemma OutBody_emits :
       (((g (𝟘 : gproc)) : proc) ‖ ((g OutSink) : proc)).
 Proof. apply lts_parL. apply lts_output. Qed.
 
-(** Le résidu se ferme par la loi de drop : la continuation de la garde
+(* Le résidu se ferme par la loi de drop : la continuation de la garde
     n'émet rien, donc le critère [ochans] s'applique. *)
 Lemma ax_OutSink_below_nil : ((g OutSink) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝟘 : gproc)) : proc).
 Proof.
@@ -486,7 +487,7 @@ Corollary ax_out_residue_example_sound :
   OutSrc ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [((cst oc) ▷ (cst ov))] ‖ ((g (𝟘 : gproc)) : proc)).
 Proof. apply soundness_ax. apply ax_out_residue_example. Qed.
 
-(** Les quatre faits ensemble : l'inéquation est dérivable, la gauche
+(* Les quatre faits ensemble : l'inéquation est dérivable, la gauche
     n'émet rien, et l'émission utilisée n'apparaît qu'après le τ-run. *)
 Theorem out_residue_descent_is_essential :
   OutSrc ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc) ▷ (cst ov))] ‖ ((g (𝟘 : gproc)) : proc))
@@ -505,7 +506,7 @@ End OutResidueRegression.
 End VACCS_AxExamples.
 
 (* ===================================================================== *)
-(** * CONTROL: the derivations now come from the SEMANTICS alone
+(* * CONTROL: the derivations now come from the SEMANTICS alone
 
     [VACCS_Bad.ax_unstable_delivery_below_nil] derives its inequation by
     a hand-picked [ax_tau_step]; [ax_sink_split] above derives the same
@@ -531,7 +532,7 @@ Proof.
     [ repeat constructor | repeat constructor | apply unstable_delivery_below_nil ].
 Qed.
 
-(** The copycat too: the inequation falls out of its semantic content. *)
+(* The copycat too: the inequation falls out of its semantic content. *)
 Corollary ax_ccat_from_semantics : (ccat (cst ca)) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   apply completeness_ax;
@@ -540,3 +541,4 @@ Proof.
 Qed.
 
 End CompletenessBelowNil.
+(* end hide *)

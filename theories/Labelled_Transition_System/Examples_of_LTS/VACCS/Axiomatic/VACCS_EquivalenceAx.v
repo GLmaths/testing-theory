@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * THE CHARACTERISATION
+(* * THE CHARACTERISATION
 
     On the recursion-free [Static] fragment the 9-rule system is **sound
     and complete** for the asynchronous must-preorder, with no side
@@ -82,3 +83,4 @@ Qed.
 
 
 End VACCS_EquivalenceAx.
+(* end hide *)

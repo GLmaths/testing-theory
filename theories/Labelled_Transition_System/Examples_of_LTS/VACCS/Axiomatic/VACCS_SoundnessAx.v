@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Soundness of the VACCS proof system
+(* * Soundness of the VACCS proof system
 
         [p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ⊑ₘᵤₛₜᵢ q]
 
@@ -64,7 +65,7 @@ Proof.
   (* ax_same_lts *)
   - intro t. apply (proj1 (must_same_lts p q
       (fun p' => conj (H τ p') (H0 τ p'))
-      (fun mu p' => conj (H (ActExt mu) p') (H0 (ActExt mu) p')) t)).
+      (fun μ p' => conj (H (ActExt μ) p') (H0 (ActExt μ) p')) t)).
   (* ax_glb_tau *)
   - apply must_i_glb_tau.
     + match goal with Hex : exists X, In (𝛕 • X) (summands M) |- _ =>
@@ -100,7 +101,7 @@ Proof.
   - apply must_i_share_msg_pre.
 Qed.
 
-(** The equational form. *)
+(* The equational form. *)
 Corollary soundness_ax_eq : forall (p q : proc),
   p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> q ᴠᴀᴄᴄꜱ⊑ₐₓ p -> p ≂ₘᵤₛₜᵢ q.
 Proof.
@@ -108,3 +109,4 @@ Proof.
 Qed.
 
 End VACCS_SoundnessAx.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -31,16 +32,16 @@ From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA 
   Must CodePurification Termination 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS
   Convergence WeakTransitions.
+(* end hide *)
 
 (** * Lifting an LTS to forwarders preserves Must *)
-Lemma conv `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
+(* begin hide *)
+Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
   intro ht.
   induction ht.
-  destruct (decide ((p, ∅) ↛)) as [refuses | accept].
-  - eapply tstep. intros (p', m') l'.
-    apply lts_refuses_spec2 in refuses. now exfalso. eauto.
+  destruct (decide ((p, ∅) ⟶)) as [accept | refuses].
   - eapply tstep. intros (p', m') l'.
     inversion l'; subst.
     + eapply H2; eauto.
@@ -48,21 +49,23 @@ Proof.
     + exfalso. 
       destruct eq as (duo & nb).
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
+  - eapply tstep. intros (p', m') l'.
+    exfalso. apply refuses, lts_performs_spec2. eauto.
 Qed.
 
-Lemma conv_lift `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) : 
+Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   (p, ∅) ⤓ -> p ⤓.
 Proof.
   intro ht.
   dependent induction ht.
-  destruct (decide (p ↛)) as [refuses | accept].
-  - eapply tstep. intros p' l'.
-    apply lts_refuses_spec2 in refuses. now exfalso. eauto.
+  destruct (decide (p ⟶)) as [accept | refuses].
   - eapply tstep. intros p' l'.
     eapply H2;eauto. eapply ParLeft. eauto.
+  - eapply tstep. intros p' l'.
+    exfalso. apply refuses, lts_performs_spec2. eauto.
 Qed.
 
-Lemma p_trace_implies_toFW_p_trace `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} p μ q :
+Lemma p_trace_implies_toFW_p_trace `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} p μ q :
   p ⟹{μ} q -> (p ▷ ∅) ⟹{μ} (q ▷ ∅).
 Proof.
   intro Hyp. induction Hyp.
@@ -73,7 +76,7 @@ Proof.
     eapply IHHyp;eauto.
 Qed.
 
-Lemma conv_s_lift `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts} (p : P) s: 
+Lemma conv_s_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) s: 
   (p, ∅) ⇓ s -> p ⇓ s.
 Proof.
   intro ht.
@@ -91,7 +94,7 @@ Context `{!Testing_Predicate outcome gLtsEqT}.
 
 Section Forwarder.
 Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
-Context `{_ : !Prop_of_Inter P T A dual}.
+Context `{_ : !Prop_of_Inter P T A A dual}.
 
 Lemma must_non_blocking_action_swap_l_fw_eq
   (p1 p2 : P) (e1 e2 : T) (η : A) :
@@ -209,7 +212,7 @@ Proof.
                  exists p2. split. now symmetry. eassumption.
                  destruct (fwd_feedback nb eq hlp0 hlp3) as [(t & hlt & heqt)|]; subst; eauto with mdb.
                  exists (t, e2). eapply ParLeft; eauto.
-                 assert (hm : must p' e0) by eauto with mdb.
+                 assert (hm : p' must_pass e0) by eauto with mdb.
                  eapply (must_eq_client p' e0 e2) in hm.
                  eapply (must_eq_server p' p1 e2) in hm.
                  assert (¬ outcome e2).
@@ -312,9 +315,10 @@ Notation gLtsT := (gLtsEq_gLts (gLtsEq := gLtsEqT)).
 
 Context `{!FiniteOutputChain_LtsOba T}.
 
-Context `{_ : !Prop_of_Inter P (MO A) A fw_inter}.
-Context `{_ : !Prop_of_Inter (P * MO A) T A dual}.
-Context `{_ : !Prop_of_Inter P T A dual}.
+Context {unique_nb : UniqueDual A}.
+Context `{_ : !Prop_of_Inter P (MO A) A A fw_inter}.
+Context `{_ : !Prop_of_Inter (P * MO A) T A A dual}.
+Context `{_ : !Prop_of_Inter P T A A dual}.
 
 Lemma nf_must_fw_l
   m1 m2 (p : P) (e e' : T) : e ⟿{m1} e' -> (p, m1 ⊎ m2) must_pass e' -> (p, m2) must_pass e.
@@ -348,9 +352,9 @@ Proof.
   dependent induction hwo; intros q m2 hm.
   rename p into e, q into p.
   - rewrite gmultiset_disj_union_left_id. eapply must_eq_client; eauto.
-  - assert (must (q, {[+ η +]} ⊎ m2) p2).
+  - assert ((q, {[+ η +]} ⊎ m2) must_pass p2).
     -- dependent induction hm; subst. 
-      + eapply m_now. eapply outcome_preserved_by_lts_non_blocking_action; eassumption.
+      + eapply m_now. exact (outcome_preserved_by_lts_non_blocking_action _ _ _ H2 H3 H10).
       + assert (non_blocking η) as nb. eauto.
         edestruct (exists_dual η) as (μ & duo). symmetry in duo.
         eapply com; eauto.
@@ -440,8 +444,8 @@ Proof.
              rewrite gmultiset_disj_union_right_id.
              eapply Hcom; eauto with mdb.
          +++ exfalso. subst.
-             eapply (@lts_refuses_spec2 T).
-             exists e0. eassumption. eapply lts_oba_mo_strip_refuses; eauto.
+             generalize (lts_performs_spec2 e' _ (exist _ e0 l2)).
+             eapply lts_oba_mo_strip_refuses; eauto.
        ++ destruct (decide (non_blocking μ1)) as [ nb1 | not_nb1];  simpl in *.
           +++ inversion l1; subst.
               ++++ rewrite <- gmultiset_disj_union_right_id.
@@ -537,8 +541,8 @@ Proof.
            exists (p0 ▷ r0). eapply ParRight; eauto.
         ++ destruct (decide (non_blocking μ2)); destruct (decide (non_blocking μ1)). 
            +++ exfalso. eapply dual_blocks. eauto. symmetry; eauto. eauto.
-           +++ exfalso. eapply (lts_refuses_spec2 e').
-               exists e0. exact l2. eapply lts_oba_mo_strip_refuses; eauto.
+           +++ exfalso. generalize (lts_performs_spec2 e' _ (exist _ e0 l2)).
+               eapply lts_oba_mo_strip_refuses; eauto.
            +++ eapply woutpout_preserves_mu in l2 as (r0 & r1 & l0 & _); eauto.
                inversion l1; subst.
                ++++ exists (p0, r0). 
@@ -577,20 +581,21 @@ Qed.
 
 End FeedBack.
 End Lifting.
+(* end hide *)
 
 Lemma lift_fw_ctx_pre
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
   `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
   `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome gLtsEqT}
 
-  `{!Prop_of_Inter P T A dual}
-  `{!Prop_of_Inter Q T A dual}
+  `{!Prop_of_Inter P T A A dual}
+  `{!Prop_of_Inter Q T A A dual}
 
-  {_ : @Prop_of_Inter P (MO A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (P * MO A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter P (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (P * MO A) T A A dual H (inter_lts fw_inter) H _}
 
-  {_ : @Prop_of_Inter Q (MO A) A fw_inter H _ MbgLts}
-  {_ : @Prop_of_Inter (Q * MO A) T A dual H (inter_lts fw_inter) _}
+  {_ : @Prop_of_Inter Q (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (Q * MO A) T A A dual H (inter_lts fw_inter) H _}
 
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⊑ₘᵤₛₜᵢ (q, ∅).
 Proof.

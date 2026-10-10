@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -29,7 +30,7 @@ From stdpp Require Import base countable strings sets gmap.
 
 From TestingTheory Require Import gLts Bisimulation Termination Lts_OBA MultisetHelper ActTau.
 
-(** ** Similarity *)
+(* ** Similarity *)
 CoInductive similar `{@gLts A L H} `{@gLts B L H}  (a : A) (b : B) : Prop :=
 | smi_step : (forall (α : Act L) a', a ⟶{α} a' -> exists b', b ⟶{α} b' /\ similar a' b') -> similar a b.
 Infix "≲" := (similar) (at level 20).
@@ -37,7 +38,7 @@ Infix "≲" := (similar) (at level 20).
 
 Section Similarity.
 
-(** *** Similarity preserves termination *)
+(* *** Similarity preserves termination *)
 Lemma similar_terminate `{@gLts A L H} `{@gLts B L H} (a : A) (b : B) :
   b ≲ a -> a ⤓ -> b ⤓.
 Proof.
@@ -78,7 +79,7 @@ Section ParallelTermination.
 
 Context `{gLtsP : @gLts P A H}.
 Context `{gLtsQ : @gLts Q A H}.
-Context `{!Prop_of_Inter P Q A dual}.
+Context `{!Prop_of_Inter P Q A A dual}.
 
 Local Instance gLtsPQ : gLts (P * Q) H := parallel_gLts.
 
@@ -87,7 +88,7 @@ Lemma parallel_termination_with R S (p : P) (q : Q) :
   (forall μ μ', R μ -> S μ' -> ¬ (dual μ μ')) ->
   terminate_with R p ->
   terminate_with S q ->
-    terminate (p, q).
+    (p, q) ⤓.
 Proof.
 intros Hm Hp Hq. revert q Hq.
 induction Hp as [p He Ht Hi]. intros q Hq.
@@ -104,3 +105,4 @@ intros (r & s) Hrs. lts_inversion idtac.
 Qed.
 
 End ParallelTermination.
+(* end hide *)

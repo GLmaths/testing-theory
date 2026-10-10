@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Pushing [ν] into a guarded sum
+(* * Pushing [ν] into a guarded sum
 
     [Congruence.v] has no rule distributing [ν] over an arbitrary [+]
     (only [cgr_res_scope_step], for [‖]), so [resg] is built from scratch,
@@ -102,14 +103,14 @@ Proof.
         inversion H4; subst; [apply lts_res_ext | apply lts_res_tau]; apply lts_choiceR; assumption.
 Qed.
 
-(** ** The normalisation law *)
+(* ** The normalisation law *)
 
 Theorem must_i_res_normalize : forall M t, (ν (g M)) must_pass t <-> g (resg M) must_pass t.
 Proof.
   intros M t.
   apply must_same_lts.
   - intro p'. apply resg_lts_iff.
-  - intros mu p'. apply resg_lts_iff.
+  - intros μ p'. apply resg_lts_iff.
 Qed.
 
 Corollary must_i_res_normalize_l : forall M, (ν (g M)) ⊑ₘᵤₛₜᵢ g (resg M).
@@ -129,3 +130,4 @@ Proof.
 Qed.
 
 End VACCS_ResNormalize.
+(* end hide *)

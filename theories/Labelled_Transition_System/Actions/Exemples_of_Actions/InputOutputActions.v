@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -33,7 +34,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable list decidable finite gmap.
 
 From TestingTheory Require Import ActTau.
-(** ** Example: Input/Output actions over a set of channels *)
+(* ** Example: Input/Output actions over a set of channels *)
 
 Inductive ExtAct (A: Type) :=
 | ActIn (a : A)
@@ -60,7 +61,7 @@ Definition act_match {A} (l1 l2: Act (ExtAct A)) :=
   | _, _ => False
   end.
 
-Definition co {A} (l: ExtAct A) :=
+Definition io_co {A} (l: ExtAct A) :=
   match l with
   | ActIn x => ActOut x
   | ActOut x => ActIn x
@@ -68,10 +69,10 @@ Definition co {A} (l: ExtAct A) :=
 
 (* fixme: Involution does not hold anymore in the context of pi-calculus. *)
 
-Lemma co_involution {A} (l: ExtAct A) : co (co l) = l.
+Lemma co_involution {A} (l: ExtAct A) : io_co (io_co l) = l.
 Proof. destruct l; eauto. Qed.
 
-Lemma dual_co {A} (μ : ExtAct A)  : ext_act_match (co μ) μ.
+Lemma dual_co {A} (μ : ExtAct A)  : ext_act_match (io_co μ) μ.
 Proof.
   destruct μ; simpl; eauto. 
 Qed.
@@ -84,13 +85,13 @@ Proof. by destruct l1 as [[?|?]|], l2 as [[?|?]|]; eauto; intros ->. Qed.
 Proof. solve_decision. Defined.
 #[global] Instance act_eqdec `{EqDecision L} : EqDecision (Act L).
 Proof. solve_decision. Defined.
-#[global] Instance ext_act_match_dec `{EqDecision L} : ∀ (ℓ1 ℓ2: ExtAct L), Decision (ext_act_match ℓ1 ℓ2).
+#[global] Instance ext_act_match_dec `{EqDecision L} : ∀ (α1 α2: ExtAct L), Decision (ext_act_match α1 α2).
 Proof.
   intros [l1|l1] [l2|l2]; [by right; intros ? | | | by right; intros ?];
     destruct (decide (l1 = l2)); eauto.
 Defined.
 
-#[global] Instance act_match_dec `{EqDecision L} : ∀ (ℓ1 ℓ2: Act (ExtAct L)), Decision (act_match ℓ1 ℓ2).
+#[global] Instance act_match_dec `{EqDecision L} : ∀ (α1 α2: Act (ExtAct L)), Decision (act_match α1 α2).
 Proof. intros [l1|] [l2|]; try by (right; eauto). simpl. apply _. Defined.
 
 Definition is_input {A} (μ : ExtAct A) := ∃ a, μ = ActIn a.
@@ -155,3 +156,4 @@ Qed.
 
 
 
+(* end hide *)

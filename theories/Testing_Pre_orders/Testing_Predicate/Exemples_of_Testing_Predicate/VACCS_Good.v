@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -26,7 +27,7 @@
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import countable decidable.
-From TestingTheory Require Import gLts InputOutputActions
+From TestingTheory Require Import ActTau gLts InputOutputActions
                                   Must VACCS_Instance Testing_Predicate.
 
 
@@ -34,7 +35,7 @@ Section VACCS_Testing.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** Testing Predicate for VACCS *)
+(* ** Testing Predicate for VACCS *)
 Inductive good_VACCS : proc -> Prop :=
 | good_success : good_VACCS ①
 | good_par : forall p q, good_VACCS p \/ good_VACCS q -> good_VACCS (p ‖ q)
@@ -255,3 +256,4 @@ Qed.
 End VACCS_Testing.
 
 #[global] Hint Constructors good_VACCS:ccs.
+(* end hide *)

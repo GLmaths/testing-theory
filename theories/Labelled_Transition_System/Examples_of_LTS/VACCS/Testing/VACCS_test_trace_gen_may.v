@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -33,7 +34,7 @@ From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimula
   InputOutputActions Completeness ParallelLTSConstruction InputOutputActions
   VACCS_ta_tc_gen MayTestSpec Testing_Predicate.
 
-(** * The May test generator for VACCS
+(* * The May test generator for VACCS
 
     VACCS counterpart of [VCCS/Testing/VCCS_test_trace_gen_may.v]. The
     de-Bruijn machinery is reused verbatim from Must's own generator
@@ -60,7 +61,7 @@ Section VACCS_May_Gen.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** The generator itself *)
+(* ** The generator itself *)
 
 Fixpoint gen_may_raw (Vs : trace (ExtAct (ChannelData * ValueData)))
   (s : trace (ExtAct TypeOfActions)) {struct s} : proc :=
@@ -86,7 +87,7 @@ Fixpoint gen_may_raw (Vs : trace (ExtAct (ChannelData * ValueData)))
 Definition gen_may (s : trace (ExtAct (ChannelData * ValueData))) : proc :=
   gen_may_raw s s.
 
-(** ** Substitution commutes with the shift, for [gen_may]
+(* ** Substitution commutes with the shift, for [gen_may]
 
     Identical strategy and identical proof shape to VCCS's
     [All_Accordingto_gen_may] — the output branch's [‖] instead of [+]
@@ -148,16 +149,16 @@ Proof.
               rewrite eq1. eauto.
 Qed.
 
-(** ** [gen_may] performs the expected step ([may_test_spec] field 2)
+(* ** [gen_may] performs the expected step ([may_test_spec] field 2)
 
     Unlike every [blocking β]-guarded field below, this one is unconditional
     — it must hold for outputs too, so both cases of [gen_may_lts_mu] do
     real work. *)
 
-Lemma gen_may_lts_mu mu s :
-  (gen_may (mu :: s)) ⟶⋍[mu] (gen_may s).
+Lemma gen_may_lts_mu μ s :
+  (gen_may (μ :: s)) ⟶⋍[μ] (gen_may s).
 Proof.
-  intros. destruct mu as [ (c , v) | (c , v) ].
+  intros. destruct μ as [ (c , v) | (c , v) ].
   - unfold gen_may. simpl in *.
     eexists. split.
     + eapply lts_choiceL. eapply lts_input.
@@ -183,17 +184,17 @@ Qed.
 Lemma cgr_to_eqrel p q : p ≡ q -> p ⋍ q.
 Proof. intro h. eapply Relation_Operators.t_step. exact h. Qed.
 
-(** ** Determinacy on the expected trace element ([may_test_spec] field 3) *)
+(* ** Determinacy on the expected trace element ([may_test_spec] field 3) *)
 
-Lemma gen_may_follows_trace_determinacy beta s t :
-  blocking beta -> lts (gen_may (beta :: s)) (ActExt beta) t -> t ⋍ gen_may s.
+Lemma gen_may_follows_trace_determinacy β s t :
+  blocking β -> lts (gen_may (β :: s)) (ActExt β) t -> t ⋍ gen_may s.
 Proof.
-  intros hb hl. destruct beta as [a|a].
+  intros hb hl. destruct β as [a|a].
   - eapply cgr_to_eqrel. eapply gen_may_mu_uniq. eauto.
   - exfalso. eapply hb. simpl. unfold non_blocking_output, is_output. exists a; eauto.
 Qed.
 
-(** ** [gen_may] is never immediately good ([may_test_spec] field 1)
+(* ** [gen_may] is never immediately good ([may_test_spec] field 1)
 
     Unlike VCCS, the output case is not a closed dead subterm: it recurses
     into [gen_may s'] through the parallel composition ([good_par] is
@@ -202,9 +203,9 @@ Qed.
 
 Lemma gen_may_ungood s : ~ good_VACCS (gen_may s).
 Proof.
-  induction s as [|mu s' IH].
+  induction s as [|μ s' IH].
   - unfold gen_may. simpl. intro hg. inversion hg.
-  - destruct mu as [(c,v)|(c,v)].
+  - destruct μ as [(c,v)|(c,v)].
     + unfold gen_may. simpl. intro hg. inversion hg; subst.
       destruct H0 as [h|h]; inversion h.
     + unfold gen_may. simpl. intro hg. inversion hg; subst.
@@ -213,13 +214,13 @@ Proof.
       * apply IH. unfold gen_may. exact h.
 Qed.
 
-(** ** The dead process [𝟘] has no transitions, and reaches success never *)
+(* ** The dead process [𝟘] has no transitions, and reaches success never *)
 
 Lemma DEAD_no_lts_tau : forall t, ~ lts (g 𝟘) τ t.
 Proof. intros t h. inversion h. Qed.
 
-Lemma DEAD_no_lts_mu : forall mu t, ~ lts (g 𝟘) (ActExt mu) t.
-Proof. intros mu t h. inversion h. Qed.
+Lemma DEAD_no_lts_mu : forall μ t, ~ lts (g 𝟘) (ActExt μ) t.
+Proof. intros μ t h. inversion h. Qed.
 
 Lemma DEAD_never_outcome : never_outcome good_VACCS (g 𝟘).
 Proof.
@@ -231,7 +232,7 @@ Proof.
   - subst. exfalso. eapply DEAD_no_lts_mu. eauto.
 Qed.
 
-(** ** A conditional whose [Else] branch is dead and whose condition is not
+(* ** A conditional whose [Else] branch is dead and whose condition is not
       provably true, is itself dead — same argument as VCCS's
       [if_not_true_never_outcome]. *)
 
@@ -255,14 +256,14 @@ Proof.
   - subst. exfalso. eapply if_not_true_no_lts; eauto.
 Qed.
 
-(** ** Every step from [gen_may (ActIn a :: s)] is either the expected step
+(* ** Every step from [gen_may (ActIn a :: s)] is either the expected step
       to [gen_may s], or leads somewhere success can never be reached from.
       Restricted to inputs: this is only ever consumed by the
       [blocking β]-guarded fields below, and outputs are never blocking. *)
 
-Lemma gen_may_step_dichotomy a s alpha t :
-  lts (gen_may (ActIn a :: s)) alpha t ->
-  (alpha = ActExt (ActIn a) /\ t ≡ gen_may s) \/ never_outcome good_VACCS t.
+Lemma gen_may_step_dichotomy a s α t :
+  lts (gen_may (ActIn a :: s)) α t ->
+  (α = ActExt (ActIn a) /\ t ≡ gen_may s) \/ never_outcome good_VACCS t.
 Proof.
   unfold gen_may. destruct a as (c,v); simpl; intro hl; inversion hl; subst.
   { inversion H3; subst.
@@ -278,33 +279,33 @@ Proof.
   { right. inversion H3; subst. eapply DEAD_never_outcome. }
 Qed.
 
-(** ** Deviation is fatal ([may_test_spec] field 4) *)
+(* ** Deviation is fatal ([may_test_spec] field 4) *)
 
-Lemma gen_may_deviation_is_fatal beta mu s t :
-  blocking beta -> lts (gen_may (beta :: s)) (ActExt mu) t -> mu <> beta -> never_outcome good_VACCS t.
+Lemma gen_may_deviation_is_fatal β μ s t :
+  blocking β -> lts (gen_may (β :: s)) (ActExt μ) t -> μ <> β -> never_outcome good_VACCS t.
 Proof.
   intros hb hl hneq.
-  destruct beta as [a|a].
-  - destruct (gen_may_step_dichotomy a s (ActExt mu) t hl) as [[heq _]|hno].
+  destruct β as [a|a].
+  - destruct (gen_may_step_dichotomy a s (ActExt μ) t hl) as [[heq _]|hno].
     + injection heq as ->. contradiction.
     + exact hno.
   - exfalso. eapply hb. simpl. unfold non_blocking_output, is_output. exists a; eauto.
 Qed.
 
-(** ** A silent move on a blocking head is fatal ([may_test_spec] field 7) *)
+(* ** A silent move on a blocking head is fatal ([may_test_spec] field 7) *)
 
-Lemma gen_may_tau_on_blocking_is_fatal beta s t :
-  blocking beta -> lts (gen_may (beta :: s)) τ t -> never_outcome good_VACCS t.
+Lemma gen_may_tau_on_blocking_is_fatal β s t :
+  blocking β -> lts (gen_may (β :: s)) τ t -> never_outcome good_VACCS t.
 Proof.
   intros hb hl.
-  destruct beta as [a|a].
+  destruct β as [a|a].
   - destruct (gen_may_step_dichotomy a s τ t hl) as [[heq _]|hno].
     + discriminate.
     + exact hno.
   - exfalso. eapply hb. simpl. unfold non_blocking_output, is_output. exists a; eauto.
 Qed.
 
-(** ** [gen_may ε] computes silently to success ([may_test_spec] fields 5, 6) *)
+(* ** [gen_may ε] computes silently to success ([may_test_spec] fields 5, 6) *)
 
 Lemma gen_may_can_compute : exists e, lts (gen_may []) τ e.
 Proof.
@@ -316,7 +317,7 @@ Proof.
   unfold gen_may. simpl. intro hl. inversion hl; subst. eapply good_success.
 Qed.
 
-(** ** The instance *)
+(* ** The instance *)
 
 #[global] Program Instance VACCS_may_test_spec : may_test_spec gen_may := {|
   may_test_ungood := gen_may_ungood;
@@ -329,3 +330,4 @@ Qed.
 |}.
 
 End VACCS_May_Gen.
+(* end hide *)

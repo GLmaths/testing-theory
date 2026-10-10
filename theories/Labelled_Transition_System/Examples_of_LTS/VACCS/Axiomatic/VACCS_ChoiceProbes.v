@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * A negative result: stable-choice congruence is UNSOUND for VACCS
+(* * A negative result: stable-choice congruence is UNSOUND for VACCS
 
     In VCCS, sum-congruence is unsound in general but becomes sound once
     both sides are required to be *initially stable*
@@ -80,7 +81,7 @@ Context `{VP : VACCS_Parameters}.
 Context {a b c : Channel} {I u w O : Value}.
 Context {nab : a <> b} {nac : a <> c} {nbc : b <> c} {nOI : O <> I}.
 
-(** ** The processes *)
+(* ** The processes *)
 
 Definition Kc : proc := (cst c) ! (cst w) • 𝟘.
 Definition GQ : gproc := (cst b) ? Kc.
@@ -92,10 +93,10 @@ Definition S2 : proc := g (CCAT + GQ).
 Definition TT : proc :=
   ((cst a) ! (cst I) • 𝟘) ‖ (((cst b) ! (cst u) • 𝟘) ‖ (g ((cst c) ? (g ①)))).
 
-(** [TT] after the [b]-synchronisation. *)
+(* [TT] after the [b]-synchronisation. *)
 Definition T2 : proc := ((cst a) ! (cst I) • 𝟘) ‖ ((g 𝟘) ‖ (g ((cst c) ? (g ①)))).
 
-(** ** Enumerating the transitions
+(* ** Enumerating the transitions
 
     [blast2] inverts every [lts] hypothesis whose subject has a concrete
     head, then closes the residue with the channel disequalities.  The
@@ -129,12 +130,12 @@ Proof.
   inversion H1; subst. destruct H2 as [H2|H2]; inversion H2.
 Qed.
 
-(** The test has no internal [τ] of its own: its only outputs are on [a]
+(* The test has no internal [τ] of its own: its only outputs are on [a]
     and [b], its only input is on [c], and the three channels differ. *)
 Lemma TT_no_tau : forall t', ~ lts TT τ t'.
 Proof. unfold TT. intros t' Hl. blast2. Qed.
 
-(** ** [S₁] passes the test *)
+(* ** [S₁] passes the test *)
 
 Lemma level2 : Kc must_pass T2.
 Proof.
@@ -147,7 +148,7 @@ Proof.
     rewrite <- E. apply lts_input.
   - intros p' Hp'. unfold Kc in Hp'. blast2.
   - intros t' Ht'. unfold T2 in Ht'. blast2.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold Kc in Hp'. unfold T2 in Ht'. blast2.
     apply m_now. apply good_par. right. apply good_par. right. apply good_success.
 Qed.
@@ -163,12 +164,12 @@ Proof.
     + unfold TT, T2. apply lts_parR. apply lts_parL. apply lts_output.
   - intros p' Hp'. unfold S1, GQ in Hp'. blast2.
   - intros t' Ht'. exfalso. eapply TT_no_tau. exact Ht'.
-  - intros p' t' mu1 mu2 Hd Hp' Ht'.
+  - intros p' t' μ1 μ2 Hd Hp' Ht'.
     unfold S1, GQ in Hp'. unfold TT in Ht'. blast2.
     exact level2.
 Qed.
 
-(** ** [S₂] fails it
+(* ** [S₂] fails it
 
     [S₂] may commit to the copycat branch, swallowing [a!I] and discarding
     the [b]-summand.  What is left is a message on [a] facing a test that
@@ -196,7 +197,7 @@ Proof.
     + unfold TT. apply lts_parL. apply lts_output.
 Qed.
 
-(** ** The negative result
+(* ** The negative result
 
     Note how weak the refuted rule is: both summands being rewritten are
     [gStable] (one is [𝟘], the other an input guard), the context [GQ] is
@@ -215,3 +216,4 @@ Proof.
 Qed.
 
 End VACCS_ChoiceProbes.
+(* end hide *)

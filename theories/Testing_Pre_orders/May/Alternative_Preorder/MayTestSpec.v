@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitio
 
 Import ListNotations.
 
-(** * The axiomatised test attesting a trace, for May
+(* * The axiomatised test attesting a trace, for May
 
     [may_test_spec] and everything that follows from it alone — the
     test's own behaviour, independent of *which* trace-inclusion
@@ -35,12 +36,12 @@ Import ListNotations.
     rather than inside either characterisation so both can import it
     directly, instead of one importing the other's file for it. *)
 
-(** ** Success is unreachable from [t] *)
+(* ** Success is unreachable from [t] *)
 
 Definition never_outcome `{gLts T A} (outcome : T -> Prop) (t : T) : Prop :=
   ∀ (u : trace A) (t' : T), t ⟹[u] t' -> ¬ outcome t'.
 
-(** ** Axioms for the tests attesting a trace
+(* ** Axioms for the tests attesting a trace
 
     This mirrors the Must [test_spec] of [Completeness.v] field by field. The
     *only* semantic difference is the polarity of the deviation axiom:
@@ -78,7 +79,7 @@ Class may_test_spec
               blocking β -> gen (β :: s) ⟶ t -> never_outcome outcome t ;
   }.
 
-(** Nothing at all is assumed about [gen ε] beyond (5) and (6) — in particular no
+(* Nothing at all is assumed about [gen ε] beyond (5) and (6) — in particular no
     counterpart of the side condition Must drags through its inversion lemmas,
     [∀ μ, f ε ↛[μ] ∨ (∀ t, f ε ⟶[μ] t -> outcome t)].  It is not needed: should
     [gen ε] offer some stray external action, it is only ever *reachable* once the
@@ -91,7 +92,7 @@ Section May_tests.
 Context `{gLtsT : @gLtsEq T A H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
-(** ** Determinacy on the expected action, for every action
+(* ** Determinacy on the expected action, for every action
 
     On a non-blocking head it comes for free from NB-DETERMINACY, which is why
     axiom (3) only needs to speak about blocking heads. Same argument as Must's
@@ -108,7 +109,7 @@ Proof.
   - eapply may_test_follows_trace_determinacy; eauto.
 Qed.
 
-(** ** Fatality propagates backwards along a non-blocking action
+(* ** Fatality propagates backwards along a non-blocking action
 
     The May counterpart of [outcome_preserved_by_lts_non_blocking_action_converse].
     It is not an axiom: it is *derived*, by showing that [w] can replay any
@@ -118,58 +119,58 @@ Qed.
 
 Lemma outcome_reachable_nb_forward (u : trace A) (t e : T) :
   t ⟹[u] e -> outcome e ->
-  ∀ (w : T) (eta : A), non_blocking eta -> t ⟶[eta] w ->
+  ∀ (w : T) (η : A), non_blocking η -> t ⟶[η] w ->
   ∃ u' e', w ⟹[u'] e' /\ outcome e'.
 Proof.
   intro wt.
-  induction wt as [ x | u0 x y z l wt IH | mu u0 x y z l wt IH ];
-    intros happy w eta nb leta.
+  induction wt as [ x | u0 x y z l wt IH | μ u0 x y z l wt IH ];
+    intros happy w η nb leta.
   - (* the run is over: [x] is already successful, hence so is [w] *)
     exists ε, w. split; [eapply wt_nil |].
     eapply outcome_preserved_by_lts_non_blocking_action; eauto.
   - (* a silent move of [x] *)
     destruct (nb_tau nb leta l)
-      as [ (z0 & lz0 & (y' & ly' & heqy')) | (beta & duo & (w2 & lw2 & heqw2)) ].
-    + (* [w] follows the tau, and [y] can still emit eta *)
-      destruct (IH happy y' eta nb ly') as (u' & e' & wu & happy').
+      as [ (z0 & lz0 & (y' & ly' & heqy')) | (β & duo & (w2 & lw2 & heqw2)) ].
+    + (* [w] follows the tau, and [y] can still emit η *)
+      destruct (IH happy y' η nb ly') as (u' & e' & wu & happy').
       edestruct (eq_spec_wt y' z0 heqy' e' u' wu) as (e'' & wu' & heqe'').
       exists u', e''. split.
       * eapply wt_tau; [exact lz0 | exact wu'].
       * eapply outcome_preserved_by_eq; [exact happy' | now symmetry].
-    + (* the tau was a feedback: [w] absorbs it with a blocking beta *)
+    + (* the tau was a feedback: [w] absorbs it with a blocking β *)
       edestruct (eq_spec_wt y w2) as (e'' & wu' & heqe'').
       { now symmetry. }
       { exact wt. }
-      exists (beta :: u0), e''. split.
+      exists (β :: u0), e''. split.
       * eapply wt_act; [exact lw2 | exact wu'].
       * eapply outcome_preserved_by_eq; [exact happy | now symmetry].
-  - (* an external move [mu] of [x] *)
-    destruct (decide (mu = eta)) as [-> | neq].
+  - (* an external move [μ] of [x] *)
+    destruct (decide (μ = η)) as [-> | neq].
     + (* the very same action: NB-DETERMINACY identifies [y] and [w] *)
       assert (heq : y ⋍ w) by (eapply nb_determinacy; eauto).
       edestruct (eq_spec_wt y w heq z u0 wt) as (e'' & wu' & heqe'').
       exists u0, e''. split; [exact wu' |].
       eapply outcome_preserved_by_eq; [exact happy | now symmetry].
-    + (* a different action: NB-CONFLUENCE, [w] follows [mu] *)
+    + (* a different action: NB-CONFLUENCE, [w] follows [μ] *)
       destruct (nb_confluence nb neq leta l) as (r & lr & (y' & ly' & heqy')).
-      destruct (IH happy y' eta nb ly') as (u' & e' & wu & happy').
+      destruct (IH happy y' η nb ly') as (u' & e' & wu & happy').
       edestruct (eq_spec_wt y' r heqy' e' u' wu) as (e'' & wu' & heqe'').
-      exists (mu :: u'), e''. split.
+      exists (μ :: u'), e''. split.
       * eapply wt_act; [exact lr | exact wu'].
       * eapply outcome_preserved_by_eq; [exact happy' | now symmetry].
 Qed.
 
-Lemma never_outcome_nb_back (t w : T) (eta : A) :
-  non_blocking eta -> t ⟶[eta] w ->
+Lemma never_outcome_nb_back (t w : T) (η : A) :
+  non_blocking η -> t ⟶[η] w ->
   never_outcome outcome w -> never_outcome outcome t.
 Proof.
   intros nb l nw u e wu happy.
-  destruct (outcome_reachable_nb_forward u t e wu happy w eta nb l)
+  destruct (outcome_reachable_nb_forward u t e wu happy w η nb l)
     as (u' & e' & wu' & happy').
   eapply nw; eauto.
 Qed.
 
-(** ** The test does run its own trace, all the way to success *)
+(* ** The test does run its own trace, all the way to success *)
 
 Lemma may_test_runs (r : trace A) : ∃ e, gen r ⟹[r] e /\ outcome e.
 Proof.
@@ -189,7 +190,7 @@ Proof.
     + eapply outcome_preserved_by_eq; [exact happy | now symmetry].
 Qed.
 
-(** ** A trace element can be consumed from the middle of the trace
+(* ** A trace element can be consumed from the middle of the trace
 
     Duplicated from Must's [f_gen_lts_mu_in_the_middle] / [..._middle'] (they only
     use [test_next_step], the determinacy above, and the OBA axioms, never
@@ -197,38 +198,38 @@ Qed.
     [Forall non_blocking s1] is what makes the delay of outputs precise: the
     messages of [s1] are already floating, so anything after them is reachable. *)
 
-Lemma gen_lts_mu_in_the_middle (s1 s2 : trace A) (μ : A) :
-  Forall non_blocking s1 -> gen (s1 ++ μ :: s2) ⟶⋍[μ] gen (s1 ++ s2).
+Lemma gen_lts_mu_in_the_middle (s1 s2 : trace A) (μ1 : A) :
+  Forall non_blocking s1 -> gen (s1 ++ μ1 :: s2) ⟶⋍[μ1] gen (s1 ++ s2).
 Proof.
-  revert s2 μ.
-  induction s1 as [| ν s']; intros s2 μ his; simpl in *.
-  - eapply (may_test_next_step μ).
+  revert s2 μ1.
+  induction s1 as [| μ2 s']; intros s2 μ1 his; simpl in *.
+  - eapply (may_test_next_step μ1).
   - inversion his as [| ? ? nb his']; subst.
-    destruct (IHs' s2 μ his') as (r & hlr & heqr).
-    edestruct (may_test_next_step ν (s' ++ μ :: s2)) as (t & hlt & heqt).
+    destruct (IHs' s2 μ1 his') as (r & hlr & heqr).
+    edestruct (may_test_next_step μ2 (s' ++ μ1 :: s2)) as (t & hlt & heqt).
     edestruct (eq_spec t r) as (u & hlu & hequ).
     { eauto with mdb. }
     destruct (nb_delay nb hlt hlu) as (v & l1 & (t' & l2 & heq')).
     exists v. split; [eassumption |].
-    destruct (may_test_next_step ν (s' ++ s2)) as (w & hlw & heqw).
+    destruct (may_test_next_step μ2 (s' ++ s2)) as (w & hlw & heqw).
     eapply backwards_nb_determinacy; try eassumption.
     etransitivity; [eassumption |].
     etransitivity; [eassumption |].
     etransitivity; [eassumption | now symmetry].
 Qed.
 
-Lemma gen_lts_mu_in_the_middle' (s1 s2 : trace A) (μ : A) (t : T) :
+Lemma gen_lts_mu_in_the_middle' (s1 s2 : trace A) (μ1 : A) (t : T) :
   Forall non_blocking s1 ->
-  gen (s1 ++ μ :: s2) ⟶⋍[μ] t -> t ⋍ gen (s1 ++ s2).
+  gen (s1 ++ μ1 :: s2) ⟶⋍[μ1] t -> t ⋍ gen (s1 ++ s2).
 Proof.
-  revert s2 μ t.
-  induction s1 as [| ν s']; intros s2 μ t his HypTr; simpl in *.
+  revert s2 μ1 t.
+  induction s1 as [| μ2 s']; intros s2 μ1 t his HypTr; simpl in *.
   - destruct HypTr as (e & HypTr & equiv).
     assert (e ⋍ gen s2) by (eapply may_test_determinacy; eauto).
     etransitivity; [symmetry; exact equiv | assumption].
   - inversion his as [| ? ? nb' his']; subst.
-    destruct (decide (non_blocking μ)) as [nb | not_nb].
-    + assert (HypTr' : gen ((ν :: s') ++ μ :: s2) ⟶⋍[μ] gen ((ν :: s') ++ s2)).
+    destruct (decide (non_blocking μ1)) as [nb | not_nb].
+    + assert (HypTr' : gen ((μ2 :: s') ++ μ1 :: s2) ⟶⋍[μ1] gen ((μ2 :: s') ++ s2)).
       { eapply gen_lts_mu_in_the_middle. constructor; eauto. }
       destruct HypTr as (e & HypTr & equiv).
       destruct HypTr' as (e' & HypTr' & equiv').
@@ -236,25 +237,25 @@ Proof.
       etransitivity; [symmetry; exact equiv |].
       etransitivity; eauto.
     + destruct HypTr as (e & HypTr & equiv).
-      assert (HypTr' : gen (ν :: s' ++ μ :: s2) ⟶⋍[ν] gen (s' ++ μ :: s2)).
+      assert (HypTr' : gen (μ2 :: s' ++ μ1 :: s2) ⟶⋍[μ2] gen (s' ++ μ1 :: s2)).
       { eapply may_test_next_step. }
       destruct HypTr' as (e' & HypTr' & equiv').
-      assert (not_eq : μ ≠ ν) by (intro imp; rewrite imp in not_nb; contradiction).
+      assert (not_eq : μ1 ≠ μ2) by (intro imp; rewrite imp in not_nb; contradiction).
       destruct (nb_confluence nb' not_eq HypTr' HypTr)
         as (t' & l2 & (t'' & l1 & heq)).
-      edestruct (eq_spec (gen (s' ++ μ :: s2)) t' (ActExt μ)) as (v & hlv & heqv).
+      edestruct (eq_spec (gen (s' ++ μ1 :: s2)) t' (ActExt μ1)) as (v & hlv & heqv).
       { exists e'. split; [now symmetry | exact l2]. }
       assert (heq' : t' ⋍ gen (s' ++ s2)).
       { eapply IHs'; eauto. exists v. split; eauto. }
-      destruct (may_test_next_step ν (s' ++ s2)) as (v' & hlv' & heqv').
-      assert (final : e ⋍ gen (ν :: s' ++ s2)).
+      destruct (may_test_next_step μ2 (s' ++ s2)) as (v' & hlv' & heqv').
+      assert (final : e ⋍ gen (μ2 :: s' ++ s2)).
       { eapply backwards_nb_determinacy; eauto.
         etransitivity; [exact heq |].
         etransitivity; [exact heq' | now symmetry]. }
       etransitivity; [symmetry; exact equiv | exact final].
 Qed.
 
-(** ** Fatality is invariant under bisimilarity *)
+(* ** Fatality is invariant under bisimilarity *)
 
 Lemma never_outcome_eq (t t' : T) :
   t ⋍ t' -> never_outcome outcome t -> never_outcome outcome t'.
@@ -267,7 +268,7 @@ Proof.
   eapply outcome_preserved_by_eq; [exact happy | now symmetry].
 Qed.
 
-(** ** Inversion of an external action of the test
+(* ** Inversion of an external action of the test
 
     The May counterpart of Must's [inversion_test_external_action]. Either the
     transition is a deviation — and then it is fatal — or it consumes an element
@@ -288,33 +289,33 @@ Lemma inversion_may_test_b_external_action (s : trace A) (β' : A) (t : T) :
     /\ Forall non_blocking s1.
 Proof.
   revert β' t.
-  induction s as [| ν s' IH]; intros β' t l b.
+  induction s as [| μ s' IH]; intros β' t l b.
   - (* the trace is exhausted: whatever [gen ε] still offers, [s] is all messages *)
     right. left. constructor.
-  - destruct (decide (non_blocking ν)) as [nb | bν].
-    + (* a floating message [ν] sits in front: NB-CONFLUENCE steps over it *)
-      destruct (may_test_next_step ν s') as (v & lv & heqv).
-      assert (not_eq : β' ≠ ν) by (intro imp; subst; contradiction).
+  - destruct (decide (non_blocking μ)) as [nb | bν].
+    + (* a floating message [μ] sits in front: NB-CONFLUENCE steps over it *)
+      destruct (may_test_next_step μ s') as (v & lv & heqv).
+      assert (not_eq : β' ≠ μ) by (intro imp; subst; contradiction).
       destruct (nb_confluence nb not_eq lv l) as (t' & l2 & (t'' & l1 & heq)).
       edestruct (eq_spec (gen s') t' (ActExt β')) as (v' & lv' & heqv').
       { exists v. split; [now symmetry | exact l2]. }
       destruct (IH β' v' lv' b)
         as [ fatal | [ his | (s1 & s2 & β & -> & equiv & -> & his) ] ].
-      * (* fatal further down, and [t] only leads there through the message [ν] *)
+      * (* fatal further down, and [t] only leads there through the message [μ] *)
         assert (nt' : never_outcome outcome t')
           by (eapply never_outcome_eq; [exact heqv' | exact fatal]).
-        left. eapply (never_outcome_nb_back t t'' ν); [exact nb | exact l1 |].
+        left. eapply (never_outcome_nb_back t t'' μ); [exact nb | exact l1 |].
         eapply (never_outcome_eq t' t''); [now symmetry | exact nt'].
-      * (* nothing but messages below, and [ν] is one too *)
+      * (* nothing but messages below, and [μ] is one too *)
         right. left. constructor; assumption.
-      * (* the element is consumed from the middle, [ν] joining the delayed prefix *)
-        right. right. exists (ν :: s1), s2, β. repeat split; eauto.
+      * (* the element is consumed from the middle, [μ] joining the delayed prefix *)
+        right. right. exists (μ :: s1), s2, β. repeat split; eauto.
         eapply gen_lts_mu_in_the_middle'.
         -- constructor; eauto.
         -- exists t. split; [exact l | reflexivity].
     + (* a blocking head: either the expected action, or a fatal deviation *)
-      destruct (decide (β' = ν)) as [-> | neq].
-      * right. right. exists ε, s', ν. repeat split; simpl; eauto with mdb.
+      destruct (decide (β' = μ)) as [-> | neq].
+      * right. right. exists ε, s', μ. repeat split; simpl; eauto with mdb.
         eapply may_test_follows_trace_determinacy; eauto.
       * left. eapply may_test_deviation_is_fatal; eauto.
 Qed.
@@ -329,15 +330,15 @@ Lemma inversion_may_test_nb_external_action (s : trace A) (η' : A) (t : T) :
     /\ Forall non_blocking s1.
 Proof.
   revert η' t.
-  induction s as [| ν s' IH]; intros η' t l nb.
+  induction s as [| μ s' IH]; intros η' t l nb.
   - right. left. constructor.
-  - destruct (may_test_next_step ν s') as (r & lr & heqr).
-    destruct (decide (ν = η')) as [-> | not_eq].
+  - destruct (may_test_next_step μ s') as (r & lr & heqr).
+    destruct (decide (μ = η')) as [-> | not_eq].
     + (* the head itself: NB-DETERMINACY *)
       right. right. exists ε, s', η'. repeat split; simpl; eauto with mdb.
       transitivity r; [eapply (nb_determinacy nb l lr) | exact heqr].
-    + destruct (decide (non_blocking ν)) as [nbν | bν].
-      * (* [ν] is a floating message: step over it and recurse *)
+    + destruct (decide (non_blocking μ)) as [nbν | bν].
+      * (* [μ] is a floating message: step over it and recurse *)
         destruct (nb_confluence nb not_eq l lr)
           as (t' & l2 & (t'' & l1 & heq)).
         edestruct (eq_spec (gen s') t'' (ActExt η')) as (v & lv & heqv).
@@ -346,14 +347,14 @@ Proof.
           as [ fatal | [ his | (s1 & s2 & η & -> & equiv & -> & his) ] ].
         -- assert (nt'' : never_outcome outcome t'')
              by (eapply never_outcome_eq; [exact heqv | exact fatal]).
-           left. eapply (never_outcome_nb_back t t' ν); [exact nbν | exact l2 |].
+           left. eapply (never_outcome_nb_back t t' μ); [exact nbν | exact l2 |].
            eapply never_outcome_eq; [exact heq | exact nt''].
         -- right. left. constructor; assumption.
-        -- right. right. exists (ν :: s1), s2, η. repeat split; eauto.
+        -- right. right. exists (μ :: s1), s2, η. repeat split; eauto.
            eapply gen_lts_mu_in_the_middle'.
            ++ constructor; eauto.
            ++ exists t. split; [exact l | reflexivity].
-      * (* a blocking head and [η' ≠ ν] : a deviation, hence fatal *)
+      * (* a blocking head and [η' ≠ μ] : a deviation, hence fatal *)
         left. eapply may_test_deviation_is_fatal; eauto.
 Qed.
 
@@ -371,7 +372,7 @@ Proof.
   - eapply inversion_may_test_b_external_action; eauto.
 Qed.
 
-(** ** Inversion of a silent move of the test
+(* ** Inversion of a silent move of the test
 
     Three ways for [gen s] to compute on its own.
 
@@ -452,3 +453,4 @@ Proof.
 Qed.
 
 End May_tests.
+(* end hide *)

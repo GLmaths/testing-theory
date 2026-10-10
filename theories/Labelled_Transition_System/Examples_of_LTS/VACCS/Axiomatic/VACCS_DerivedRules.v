@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -21,7 +22,7 @@
 *)
 
 
-(** * Rules that are no longer rules
+(* * Rules that are no longer rules
 
     [ax_input_drop] (drop a guard whose continuation is [Bad]) and
     [ax_restrict] (restrict a stable sum, certified by [BadK]) used to be
@@ -76,7 +77,7 @@ Proof.
   - apply must_i_restrict_badk; assumption.
 Qed.
 
-(** ** The copycat, the responder and the swallow *)
+(* ** The copycat, the responder and the swallow *)
 
 Lemma ax_ccat_l : forall c, (ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘).
 Proof.
@@ -99,7 +100,7 @@ Proof.
   intro v. simpl. apply bad_nil_any.
 Qed.
 
-(** A guard may be dropped as soon as its continuation emits only on the
+(* A guard may be dropped as soon as its continuation emits only on the
     guard's own channel — the sink ([ochans P = []]) and the copycat
     ([ochans P ⊆ {c}]) are both instances. *)
 
@@ -133,7 +134,7 @@ Proof.
   intros d Hd. simpl in Hd. destruct Hd as [Hd|[]]. symmetry. exact Hd.
 Qed.
 
-(** ** Dropping up to a rewrite of the continuation *)
+(* ** Dropping up to a rewrite of the continuation *)
 
 Lemma ax_input_drop_upto :
   forall (c : ChannelData) (P Q : proc) (G : gproc),
@@ -167,7 +168,7 @@ Proof.
   eapply bad_step; [ apply lts_choiceR; apply lts_tau | apply HB ].
 Qed.
 
-(** ** Peeling mute summands, and dropping to [𝟘] *)
+(* ** Peeling mute summands, and dropping to [𝟘] *)
 
 Lemma ax_rebuild_drop_ochans : forall (l r : list gproc),
   Forall gStatic l -> Forall gStatic r -> Forall DropOk l ->
@@ -321,3 +322,4 @@ Qed.
 
 
 End VACCS_DerivedRules.
+(* end hide *)

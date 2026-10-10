@@ -1,0 +1,1401 @@
+(* begin hide *)
+(*
+   Copyright (c) 2024 Nomadic Labs
+   Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
+   Copyright (c) 2024 Léo Stefanesco <leo.stefanesco@mpi-sws.org>
+   Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*)
+
+From Stdlib Require ssreflect Setoid.
+From Stdlib.Unicode Require Import Utf8.
+From Stdlib.Lists Require Import List.
+Import ListNotations.
+From Stdlib.Program Require Import Wf Equality.
+From Stdlib.Wellfounded Require Import Inverse_Image.
+
+
+From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
+
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
+      Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction 
+      Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction.
+From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
+(* end hide *)
+
+(** * Soundness *)
+(* begin hide *)
+
+Inductive mustx `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
+  (X : gset P) (t : T) : Prop :=
+| mx_now (hh : outcome t) : mustx X t
+| mx_step
+    (nh : ¬ outcome t)
+    (ex : forall (p : P), p ∈ X -> ∃ p', inter_step (p, t) τ p')
+    (pt : forall X',
+        lts_tau_set_from_pset_spec1 X X' -> X' ≠ ∅ ->
+        mustx X' t)
+    (et : forall (t' : T), t ⟶ t' -> mustx X t')
+    (com : forall (t' : T) μ1 μ2 (X' : gset P),
+        dual μ1 μ2 ->
+        t ⟶[μ2] t' ->
+        wt_set_from_pset_spec1 X [μ1] X' ->
+        X' ≠ ∅ ->
+        mustx X' t')
+  : mustx X t.
+
+#[global] Hint Constructors mustx:mdb.
+Global Notation "X 'must_pass_x' t" := (mustx X t) (at level 70).
+(* end hide *)
+
+Section Must_for_sets.
+
+Context `{EA : !ExtAction A}.
+Context `{gLtsT : !gLtsEq T EA}.
+Context `{TP : @Testing_Predicate T A EA outcome _}.
+
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}.
+
+(** ** Must predicate for Sets *)
+(* begin hide *)
+
+Lemma mx_sub X t :
+  X must_pass_x t
+    -> forall X', X' ⊆ X
+      -> X' must_pass_x t.
+Proof.
+  intros hmx. dependent induction hmx.
+  - eauto with mdb.
+  - intros qs sub.
+    apply mx_step; eauto with mdb.
+    + intros qs' hs hneq_nil.
+      set (X' := lts_tau_set_from_pset_ispec X).
+      destruct X'.
+      eapply H; eauto with mdb.
+      ++ destruct (set_choose_or_empty qs') as [(q' & l'%hs)|].
+         intro eq_nil. destruct l' as (q & mem%sub & l%H3); set_solver.
+         set_solver.
+      ++ intros p (q & mem%sub & l)%hs. eauto.
+    + intros t' μ μ' qs' hle duo hwqs hneq_nil.
+      eapply (H1 t' μ μ'); eauto. intros p' mem%hwqs. set_solver.
+Qed.
+
+Lemma mx_mem X t :
+  X must_pass_x t
+    -> forall p, p ∈ X
+      -> mustx {[ p ]} t.
+Proof. intros hmx p mem. eapply mx_sub; set_solver. Qed.
+
+Lemma mustx_terminate_unoutcome X t :
+  X must_pass_x t
+    -> outcome t \/ forall p, p ∈ X -> p ⤓.
+Proof.
+  intros hmx.
+  induction hmx.
+  - now left.
+  - right.
+    intros p mem.
+    eapply tstep. intros p' l.
+    edestruct (H {[p']}); [exists p; set_solver| | |]; set_solver.
+Qed.
+
+Lemma mustx_terminate_unoutcome' X (t : T) :
+  X must_pass_x t
+        -> ¬ outcome t -> forall p, p ∈ X -> p ⤓.
+Proof.
+  intros hmx not_happy p mem.
+  dependent induction hmx.
+  + contradiction.
+  + eapply tstep.
+    intros q tr. eapply H; eauto.
+    assert (h1 : lts_tau_set_from_pset_spec1 X {[q]}).
+    exists p. assert (q0 = q);subst. set_solver. split; eauto. eauto.
+    set_solver. set_solver.
+Qed.
+
+Lemma unoutcome_acnv_mu X t t' :
+  X must_pass_x t
+    -> forall μ μ' p, p ∈ X
+      -> dual μ μ'
+        -> t ⟶[μ'] t'
+          -> ¬ outcome t -> ¬ outcome t' -> p ⇓ [μ].
+Proof.
+  intros hmx μ μ' p mem inter l not_happy not_happy'.
+  dependent induction hmx.
+  - contradiction.
+  - edestruct mustx_terminate_unoutcome as [happy | finish].
+    + eauto with mdb.
+    + contradiction.
+    + edestruct mustx_terminate_unoutcome; eauto with mdb. contradiction.
+      eapply cnv_act. eauto.
+      intros q w.
+      assert (h1 : wt_set_from_pset_spec1 X [μ] {[q]}).
+      exists p. split; set_solver.
+      assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
+      set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
+      destruct (mustx_terminate_unoutcome _ _ hm).
+      +++ contradiction.
+      +++ eapply cnv_nil. eapply H3. set_solver.
+Qed.
+
+Lemma must_mu_either_outcome_cnv X t t' :
+  X must_pass_x t
+    -> forall μ μ' p, p ∈ X
+      -> dual μ μ'
+        -> t ⟶[μ'] t'
+          -> outcome t \/ outcome t' (* ajout par rapport à Input/Output *)
+                       \/ p ⇓ [μ].
+Proof.
+  intros hmx μ μ' p mem inter l.
+  destruct (decide (outcome t)); destruct (decide (outcome t')).
+  + left; eauto.
+  + left; eauto.
+  + right; eauto.
+  + right. right. eapply unoutcome_acnv_mu; eauto.
+Qed.
+
+(* to rework , why ?*)
+Lemma mx_sum X X' t : X must_pass_x t
+    -> X' must_pass_x t
+      -> (X ∪ X') must_pass_x t.
+Proof.
+  intros hmx1 hmx2. revert X' hmx2.
+  dependent induction hmx1. eauto with mdb.
+  intros ps2 hmx2.
+  eapply mx_step.
+  - eassumption.
+  - intros p mem.
+    eapply elem_of_union in mem.
+    destruct mem.
+    eapply ex; eassumption.
+    inversion hmx2; subst. contradiction.
+    eapply ex0; eassumption.
+  - intros.
+    set (Y := lts_tau_set_from_pset X).
+    set (Z := lts_tau_set_from_pset ps2).
+    assert (X' ⊆ lts_tau_set_from_pset X ∪ lts_tau_set_from_pset ps2).
+    { intros q mem. eapply H2 in mem as (q0 & mem & l).
+      eapply elem_of_union in mem. destruct mem.
+      eapply elem_of_union. left. eapply lts_tau_set_from_pset_ispec; eassumption.
+      eapply elem_of_union. right. eapply lts_tau_set_from_pset_ispec; eassumption. }
+    eapply lem_dec in H4 as (Y' & Z' & Y_spec' & Z_spec' & eq).
+    remember Y' as Y_'.
+    remember Z' as Z_'.
+    destruct Y_' using set_ind_L.
+    + destruct Z_' using set_ind_L.
+      ++ exfalso.
+         assert (exists p, p ∈ X') as (p & mem).
+         destruct X' using set_ind_L. contradiction.
+         exists x. set_solver.
+         eapply H2 in mem as (p0 & mem & l).
+         eapply elem_of_union in mem. destruct mem.
+         eapply lts_tau_set_from_pset_ispec in l; set_solver.
+         eapply lts_tau_set_from_pset_ispec in l; set_solver.
+      ++ assert (Y' = ∅) by set_solver.
+         assert (Z' = X') by set_solver. subst.
+         inversion hmx2; subst. set_solver.
+         eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+    + destruct Z_' using set_ind_L.
+      ++ assert (Y' = X') by set_solver.
+         assert (X must_pass_x t) by eauto with mdb.
+         inversion H6; subst. set_solver.
+         eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+      ++ subst.
+         replace X' with (({[x]} ∪ X0) ∪ ({[x0]} ∪ X1)) by set_solver.
+         eapply H.
+         +++ intros t' mem. apply lts_tau_set_from_pset_ispec. set_solver.
+         +++ set_solver.
+         +++ inversion hmx2; subst.
+             ++++ now contradiction nh.
+             ++++ eapply pt0. intros t' mem. eapply lts_tau_set_from_pset_ispec. set_solver. set_solver.
+  - intros t' l. eapply H0; eauto with mdb.
+    inversion hmx2; subst; eauto with mdb. contradiction.
+  - intros t' μ μ' ps' duo l ps'_spec neq_nil.
+    destruct (outcome_decidable t'); eauto with mdb.
+    assert (HAX : forall p, p ∈ X -> p ⇓ [μ]).
+    intros p0 mem0.
+    eapply cnv_act. edestruct (mustx_terminate_unoutcome X); eauto with mdb.
+    contradiction.
+    intros p' hw. eapply cnv_nil.
+    edestruct (mustx_terminate_unoutcome {[p']}). eapply com; eauto.
+    intros j memj. eapply elem_of_singleton_1 in memj. subst.
+    exists p0. split; eauto. set_solver.
+    set_solver.
+    set (Y := wt_s_set_from_pset X [μ] HAX).
+    assert (HAX2 : forall p, p ∈ ps2 -> p ⇓ [μ]).
+    intros p0 mem0.
+    eapply cnv_act. edestruct (mustx_terminate_unoutcome ps2); eauto with mdb.
+    contradiction.
+    intros p' hw. eapply cnv_nil.
+    edestruct (mustx_terminate_unoutcome {[p']}).
+    inversion hmx2; subst. contradiction. eapply com0; eauto.
+    intros j memj. eapply elem_of_singleton_1 in memj. subst.
+    exists p0. split; eauto. set_solver. set_solver.
+    set (Z := wt_s_set_from_pset ps2 [μ] HAX2).
+    assert (ps' ⊆ Y ∪ Z).
+    intros q mem. eapply ps'_spec in mem as (q0 & mem & l').
+    eapply elem_of_union in mem. destruct mem.
+    eapply elem_of_union. left. eapply wt_s_set_from_pset_ispec; eassumption.
+    eapply elem_of_union. right. eapply wt_s_set_from_pset_ispec; eassumption.
+    eapply lem_dec in H2 as (Y0 & Z0 & Y_spec0 & Z_spec0 & eq).
+    destruct Y0 using set_ind_L.
+    + destruct Z0 using set_ind_L.
+      ++ exfalso.
+         assert (exists p, p ∈ ps') as (p & mem).
+         destruct ps' using set_ind_L. contradiction.
+         exists x. set_solver.
+         eapply ps'_spec in mem as (p0 & mem & l').
+         eapply elem_of_union in mem.
+         destruct mem; eapply (wt_s_set_from_pset_ispec X [μ] HAX) in l'; set_solver.
+      ++ inversion hmx2; subst. now contradict nh.
+         eapply com0. eassumption. eassumption. intros t'' mem.
+         eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
+         set_solver. set_solver.
+    + destruct Z0 using set_ind_L.
+      ++ inversion hmx2; subst.
+         +++ now contradict nh.
+         +++ eapply com. eassumption. eassumption. intros t'' mem.
+             eapply (wt_s_set_from_pset_ispec X [μ] HAX).
+             set_solver. set_solver.
+      ++ replace ps' with (({[x]} ∪ X0) ∪ ({[x0]} ∪ X1)) by set_solver.
+         eapply H1; eauto with mdb.
+         +++ intros t'' mem.
+             eapply (wt_s_set_from_pset_ispec X [μ] HAX).
+             set_solver.
+         +++ set_solver.
+         +++ inversion hmx2; subst.
+             ++++ now contradict nh.
+             ++++ eapply com0. eassumption. eassumption.
+                  intros t'' mem.
+                  eapply (wt_s_set_from_pset_ispec ps2 [μ] HAX2).
+                  set_solver. set_solver.
+Qed.
+
+Lemma mx_forall X t :
+  X ≠ ∅
+    -> (forall p, p ∈ X -> {[p]} must_pass_x t)
+      -> X must_pass_x t.
+Proof.
+  intros neq_nil hm.
+  induction X using set_ind_L.
+  - set_solver.
+  - destruct (set_choose_or_empty X).
+    + eapply mx_sum.
+      * eapply hm. set_solver.
+      * eapply IHX.
+        -- set_solver.
+        -- intros. eapply hm. set_solver.
+    + assert (X = ∅) by set_solver.
+      rewrite H1, union_empty_r_L. set_solver.
+Qed.
+
+Lemma wt_nil_mx:
+  forall p1 p2 t, {[ p1 ]} must_pass_x t
+    -> p1 ⟹ p2 -> {[ p2 ]} must_pass_x t.
+Proof.
+  intros p1 p2 e hmx wt.
+  dependent induction wt; subst; eauto with mdb.
+  inversion hmx; subst; eauto with mdb.
+  eapply IHwt; eauto with mdb.
+  eapply pt; eauto with mdb.
+  intros p2 mem. replace q with p2 in * by set_solver.
+  exists p; set_solver.
+Qed.
+
+Lemma wt_nil_mx_set X X' t :
+  X must_pass_x t
+    -> X ⟹ X' -> X' must_pass_x t.
+Proof.
+  intros hmx wt_tr.
+  revert t hmx.
+  dependent induction wt_tr; subst; eauto with mdb; intros.
+  inversion hmx; subst; eauto with mdb.
+  eapply IHwt_tr ; eauto with mdb.
+  eapply pt; eauto with mdb.
+  + intros p2 mem. destruct l;subst.
+    destruct (lts_tau_set_from_pset_ispec X) as (Hyp1 & Hyp2).
+    eapply Hyp1 in mem;eauto.
+  + destruct l; eauto.
+Qed.
+
+Lemma wt_mu_mx p1 p2 t t' μ μ':
+  dual μ μ' -> ¬ outcome t -> {[ p1 ]} must_pass_x t
+    -> t ⟶[μ'] t' -> p1 ⟹{μ} p2 -> {[p2]} must_pass_x t'.
+Proof.
+  intros duo nh hmx l w.
+  inversion hmx; subst.
+  - contradiction.
+  - eapply com; eauto with mdb. exists p1. set_solver.
+Qed.
+
+Lemma wt_mu_mx_set X X' t t' μ μ':
+  dual μ μ' -> ¬ outcome t -> X must_pass_x t
+    -> t ⟶[μ'] t' -> X ⟹{μ} X' -> X' must_pass_x t'.
+Proof.
+  intros duo nh hmx l w.
+  inversion hmx; subst.
+  - contradiction.
+  - eapply com; eauto with mdb.
+    + intros q mem.
+      eapply wk_tr_inv in w as (q'' & wt_tr & mem'');eauto.
+    + intro. subst.
+      eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+Qed.
+
+Lemma not_outcome_and_must_implies_convergence X t :
+  ¬ outcome t -> X must_pass_x t -> X ⤓.
+Proof.
+  intros not_happy hmx.
+  dependent induction hmx.
+  + contradiction.
+  + constructor.
+    intros X' tr.
+    eapply H.
+    * destruct tr; subst. eapply lts_tau_set_from_pset_ispec.
+    * destruct tr; eauto.
+    * eauto.
+Qed.
+
+Lemma not_outcome_must_implies_convergence_extaction X t t' μ' μ:
+  dual μ μ' -> ¬ outcome t -> ¬ outcome t' -> X must_pass_x t -> t ⟶[μ'] t' -> X ⇓ [μ].
+Proof.
+  intros duo not_happy not_happy' hmx tr_test.
+  inversion hmx; subst.
+  + contradiction.
+  + constructor.
+    * eapply not_outcome_and_must_implies_convergence; eauto.
+    * intros. constructor.
+      eapply not_outcome_and_must_implies_convergence.
+      - exact not_happy'.
+      - eapply com;eauto.
+        ++ intros q' mem.
+           eapply wk_tr_inv in H as (q'' & wt_tr & mem'');eauto.
+        ++ intro. subst.
+           eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+Qed.
+
+Lemma must_set_if_must  (p : P) (t : T) : p must_pass t -> {[ p ]} must_pass_x t.
+Proof.
+  intro hm. dependent induction hm.
+  - eauto with mdb.
+  - eapply mx_step.
+    + eassumption.
+    + set_solver.
+    + intros ps' hs hneq_nil.
+      unfold lts_tau_set_from_pset_spec1 in hs.
+      eapply mx_forall; set_solver.
+    + eauto with mdb.
+    + intros e' μ μ' X' duo hle hws hneq_nil.
+      unfold wt_set_from_pset_spec1 in hws.
+      eapply mx_forall. eassumption.
+      intros.
+      edestruct hws as (p' & mem%elem_of_singleton_1 & w); subst; eauto.
+      inversion w; subst; eauto with mdb.
+      eapply wt_mu_mx; eauto with mdb.
+      eapply wt_nil_mx; eauto with mdb.
+Qed.
+
+Lemma must_if_must_set_helper  (X : gset P) (t : T) :
+  X must_pass_x t
+    -> forall p, p ∈ X
+      -> p must_pass t.
+Proof.
+  intro hm. dependent induction hm.
+  - eauto with mdb.
+  - intros p mem. eapply m_step.
+    + eassumption.
+    + set_solver.
+    + intros p' hl.
+      set (X' := list_to_set (lts_tau_set p) : gset P).
+      assert (p' ∈ X').
+      eapply lts_tau_set_spec, elem_of_list_to_set in hl; eauto.
+      eapply (H X'); eauto.
+      intros p0 mem0%elem_of_list_to_set%lts_tau_set_spec. set_solver. set_solver.
+    + eauto with mdb.
+    + intros p' e' μ μ' duo hlp hle.
+      set (X' := list_to_set (
+                     map proj1_sig (enum $ dsig (lts_step p (ActExt μ)))
+                   ) : gset P).
+      assert (p' ∈ X').
+      eapply elem_of_list_to_set, list_elem_of_fmap; eauto.
+      exists (dexist p' hlp). split. eauto. eapply elem_of_enum.
+      eapply (H1 e' μ μ' X'). eassumption. eassumption.
+      intros p0 mem0%elem_of_list_to_set.
+      eapply list_elem_of_fmap in mem0 as ((r & l) & eq & mem'). subst.
+      exists p. split; eauto.
+      eapply wt_act.
+      eapply bool_decide_unpack. eauto. eapply wt_nil. set_solver. set_solver.
+Qed.
+
+Lemma must_if_must_set  (p : P) (t : T) :
+  {[ p ]} must_pass_x t
+    -> p must_pass t.
+Proof. intros. eapply must_if_must_set_helper; set_solver. Qed.
+
+Lemma must_set_iff_must  (p : P) (t : T) :
+  p must_pass t <-> mustx {[ p ]} t.
+Proof. split; [eapply must_set_if_must | eapply must_if_must_set]. Qed.
+
+Lemma must_set_for_all  (X : gset P) (t : T) :
+  X ≠ ∅
+    -> (forall p, p ∈ X -> p must_pass t)
+      -> X must_pass_x t.
+Proof.
+(*  intros xneq_nil hm.
+  revert t xneq_nil hm.
+  induction X using set_ind_L.
+  + intros. set_solver.
+  + destruct (set_choose_or_empty X).
+    - intros. eapply mx_sum.
+      * assert (x must_pass t)as hm'.
+        { eapply hm. set_solver. }
+        clear H. clear IHX. clear H0.
+        clear xneq_nil. clear hm. clear X.
+        dependent induction hm'.
+        ++ eapply mx_now; eauto.
+        ++ eapply mx_step.
+           -- eauto.
+           -- intros. set_solver.
+           -- intros. intros. induction X' using set_ind_L.
+              ** set_solver.
+              ** destruct (set_choose_or_empty X).
+                 --- eapply mx_sum.
+                     +++ eapply H; eauto.
+                         destruct H5 as (x' & mem).
+                         assert (x ∈ ({[x]} ∪ X)) by set_solver.
+                         eapply H2 in H5 as (p' & mem' & tr).
+                         assert (p' = p) by set_solver. subst ;eauto.
+                     +++ eapply IHX'.
+                         ++++ intros q mem. exists p.
+                              assert (q ∈ ({[x]} ∪ X)) by set_solver.
+                              eapply H2 in H6 as (p' & mem' & tr).
+                              assert (p' = p) by set_solver. subst ;eauto.
+                         ++++ set_solver.
+                 --- assert (X = ∅) as H'' by set_solver.
+                     rewrite H'', union_empty_r_L.
+                     eapply H;eauto. assert (x ∈ ({[x]} ∪ X)) by set_solver.
+                     eapply H2 in H6 as (p' & mem' & tr'). assert (p' = p) by set_solver.
+                     subst ;eauto.
+           -- intros ; set_solver.
+           -- intros. induction X' using set_ind_L.
+              ** set_solver.
+              ** destruct (set_choose_or_empty X).
+                 --- eapply mx_sum.
+                     +++ (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                     +++ eapply IHX'.
+                         ++++ (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+                         ++++ set_solver.
+                 --- assert (X = ∅) as H'' by set_solver.
+                     rewrite H'', union_empty_r_L.
+                     eapply H1;eauto. (* by wt_set_from_pset_spec1 {[p]} [μ1] ({[x]} ∪ X) *)
+      * eapply IHX.
+        ++ set_solver.
+        ++ intros. eapply hm. set_solver.
+    - intros.
+      assert (X = ∅) as H1 by set_solver.
+      rewrite H1, union_empty_r_L.
+      (* like in the base case *) *)
+  intros xneq_nil hm.
+  destruct (outcome_decidable t).
+  - now eapply mx_now.
+  - eapply mx_step.
+    + eassumption.
+    + intros p h%hm. inversion h. contradiction. eassumption.
+    + intros X' xspec' xneq_nil'.
+      eapply mx_forall. eassumption.
+      intros p' (p0 & mem%hm & hl)%xspec'. eapply must_set_iff_must.
+      inversion mem; eauto with mdb.
+    + intros t' hl.
+      eapply mx_forall. eassumption.
+      intros p' mem%hm. eapply must_set_iff_must.
+      inversion mem; eauto with mdb. contradiction.
+    + intros t' μ μ' X' duo hle xspec' xneq_nil'.
+      eapply mx_forall. eassumption.
+      intros p' (p0 & h%hm & hl)%xspec'. eapply must_set_iff_must.
+      eapply must_preserved_by_wt_synch_if_notoutcome; eauto.
+Qed.
+(* end hide *)
+
+Lemma must_set_iff_must_for_all  (X : gset P) (t : T) :
+  X ≠ ∅ -> (forall p, p ∈ X -> p must_pass t) <-> X must_pass_x t.
+Proof.
+  intros.
+  split. now eapply must_set_for_all.
+  now eapply must_if_must_set_helper.
+Qed.
+
+End Must_for_sets.
+(* begin hide *)
+
+(* ** Contextual preorder for sets *)
+(* end hide *)
+
+Section Must_preorder_for_sets.
+Context `{EA : !ExtAction A}.
+Context `{gLtsT : !gLtsEq T EA}.
+Context `{TP : @Testing_Predicate T A EA outcome _}.
+
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{HinterP : !Prop_of_Inter P T A A dual}.
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
+Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
+(* begin hide *)
+
+Definition ctx_pre__x
+  (X : gset P) (Y : gset Q) 
+  := forall (t : T), X must_pass_x t -> Y must_pass_x t.
+Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre__x X Y) (at level 70).
+
+Lemma set_must_union_right
+  (X : gset P) (Y Y' : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y' ->  X ⊑ₛₑₜ_ₘᵤₛₜᵢ (Y ∪ Y').
+Proof.
+  intros Hyp1 Hyp2.
+  intros t h_must.
+  - eapply mx_sum.
+    + eapply Hyp1; eauto.
+    + eapply Hyp2; eauto.
+Qed.
+
+Lemma set_must_empty (X : gset P) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ ∅.
+Proof.
+  intros t h_must.
+  induction h_must.
+  + now eapply mx_now.
+  + eapply mx_step;eauto.
+    * intros p mem. inversion mem.
+    * intros. destruct X' using set_ind_L.
+      - exfalso. eapply H3;eauto. 
+      - assert (x ∈ {[x]} ∪ X0) as mem'' by set_solver.
+        eapply H2 in mem'' as (p' & mem_imp & tr). inversion mem_imp.
+    * intros. destruct X' using set_ind_L.
+      - exfalso. eapply H5;eauto. 
+      - assert (x ∈ {[x]} ∪ X0) as mem'' by set_solver.
+        eapply H4 in mem'' as (p' & mem_imp & tr). inversion mem_imp.
+Qed.
+
+Lemma set_must_union_left_rev
+  (X : gset P) (Y Y' : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ (Y ∪ Y') -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
+Proof.
+  intros Hyp t h_must.
+  induction Y using set_ind_L.
+  - eapply set_must_empty;eauto.
+  - eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed.
+
+(* Lemma set_must_union_rev
+  (X1 X2 : gset P) (Y : gset Q) : X1 ∪ X2 ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X1 ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
+Proof.
+  induction Y using set_ind_L.
+  + intros. eapply set_must_empty;eauto.
+  + intro Hyp. intros t h_must. eapply Hyp.
+  + rewrite union_empty_r_L. eauto.
+  + intros. destruct Y using set_ind_L.
+    * intros t hyp. eapply set_must_empty;eauto.
+    * intros t h_must. eapply must_set_for_all.
+      - set_solver.
+      - intros. eapply 
+     intros.
+  - eapply set_must_empty;eauto.
+  - eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed. *)
+
+Lemma set_must_union_right_rev
+  (X : gset P) (Y Y' : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ (Y ∪ Y') -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y'.
+Proof.
+  intros Hyp t h_must.
+  induction Y' using set_ind_L.
+  - eapply set_must_empty;eauto.
+  - eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed.
+
+Lemma set_must_sub
+  (X : gset P) (Y : gset Q) : X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> forall Y', Y' ⊆ Y ->  X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y'.
+Proof.
+  intros Hyp Y' sub t h_must.
+  destruct Y' using set_ind_L.
+  + eapply set_must_empty;eauto.
+  + eapply Hyp in h_must. eapply must_set_for_all. set_solver.
+    intros. eapply must_if_must_set_helper in h_must.
+    set_solver. set_solver.
+Qed.
+(* end hide *)
+
+(** ** Equivalence between the must preorder and the must preorder on sets *)
+Lemma must_set_singleton_iff (p : P) (q : Q) :
+  p ⊑ₘᵤₛₜᵢ q <-> {[ p ]} ⊑ₛₑₜ_ₘᵤₛₜᵢ {[ q ]}.
+Proof.
+  split.
+  - intro must_hyp. intros t Hyp_set_p.
+    eapply must_if_must_set in Hyp_set_p.
+    eapply must_hyp in Hyp_set_p as Hyp_set_q.
+    eapply must_set_if_must in Hyp_set_q. exact Hyp_set_q.
+  - intro set_must_hyp. intros t Hyp_p.
+    eapply must_set_if_must in Hyp_p.
+    eapply set_must_hyp in Hyp_p as Hyp_q.
+    eapply must_if_must_set in Hyp_q. exact Hyp_q.
+Qed.
+
+End Must_preorder_for_sets.
+(* begin hide *)
+
+#[global] Hint Unfold ctx_pre__x : mdb.
+Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
+Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre__x X Y) (at level 70).
+
+(* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is reflexive *)
+#[global] Instance set_must_refl
+  `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _} : Reflexive ctx_pre__x.
+Proof. intros X t h_must. eauto. Qed.
+
+(* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is transitive *)
+#[global] Instance set_must_transitive
+  `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _} : Transitive ctx_pre__x.
+Proof.
+  intros X Y Z hcgr1 hcgr2. intros t h_must.
+  eapply hcgr2. eapply hcgr1; eauto.
+Qed.
+
+(* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is a preorder *)
+#[global] Instance set_must_x_preorder
+  `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _} : PreOrder ctx_pre__x.
+Proof.
+  split.
+  + exact set_must_refl.
+  + exact set_must_transitive.
+Qed.
+
+Notation "X ≂ₛₑₜ_ₘᵤₛₜᵢ Y" := (Y ⊑ₛₑₜ_ₘᵤₛₜᵢ X /\ X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y) (at level 70).
+
+Inductive mustx_alt `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
+  (X : gset P) (t : T) : Prop :=
+| mx_now_alt (hh : outcome t) : mustx_alt X t
+| mx_step_alt
+    (nh : ¬ outcome t)
+    (ex : forall (p : P), p ∈ X -> ∃ p', inter_step (p, t) τ p')
+    (pt : forall X',
+        X ⟶ X' ->
+        mustx_alt X' t)
+    (et : forall (t' : T), t ⟶ t' -> mustx_alt X t')
+    (com : forall (t' : T) μ1 μ2 (X' : gset P),
+        dual μ1 μ2 ->
+        t ⟶[μ2] t' ->
+        X ⟹{μ1} X' ->
+        mustx_alt X' t')
+  : mustx_alt X t.
+
+#[global] Hint Constructors mustx_alt:mdb.
+Global Notation "X 'must_alt_pass_x' t" := (mustx_alt X t) (at level 70).
+
+Lemma mustx_alt_iff_mustx_alt `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
+  (X : gset P) (t : T) :
+  X must_pass_x t <-> X must_alt_pass_x t.
+Proof.
+  split.
+  - intro hmx. dependent induction hmx; eauto.
+    + constructor ;eauto.
+    + eapply mx_step_alt; eauto.
+      * intros. destruct H2;eauto. subst.
+        assert (lts_tau_set_from_pset_spec1 X (lts_tau_set_from_pset X)).
+        { eapply lts_tau_set_from_pset_ispec. }
+        eauto.
+      * intros.
+        assert (wt_set_from_pset_spec1 X [μ1] X').
+        { intro. intro mem. eapply wk_tr_inv in H4 as (p & wk_tr & mem'); eauto. }
+        eauto. eapply H1;eauto.
+        destruct X' using set_ind_L. 
+        ++ intro. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+        ++ set_solver.
+  - intro hmx. dependent induction hmx; eauto.
+    + constructor ;eauto.
+    + eapply mx_step; eauto.
+      * intros. assert (X' ⊆ lts_tau_set_from_pset X).
+        { intros p' mem'. eapply H2 in mem' as (p & mem & tr).
+          eapply lts_tau_set_from_pset_ispec;eauto. }
+        assert (lts_tau_set_from_pset X  ≠ ∅ ) by set_solver.
+        assert (X ⟶ lts_tau_set_from_pset X).
+        { split ;eauto. }
+        eapply H in H6. eapply mx_sub;eauto.
+      * intros. induction X' using set_ind_L.
+        ++ set_solver.
+        ++ eapply must_set_for_all. set_solver.
+           intros. eapply elem_of_union in H7. destruct H7.
+           -- revert p H7. eapply must_set_iff_must_for_all;eauto.
+              assert (x ∈ ({[x]} ∪ X0)) by set_solver.
+              eapply H4 in H7 as (p' & mem & tr).
+              eapply witness_wk_tr in tr as (qs & wk_tr & mem'); eauto.
+              assert ({[x]} ⊆ qs) by set_solver.
+              eapply mx_sub;eauto.
+           -- revert p H7. destruct X0 using set_ind_L.
+              ** intros. inversion H7.
+              ** eapply must_set_iff_must_for_all;eauto.
+                 set_solver.
+                 assert (wt_set_from_pset_spec1 X [μ1] ({[x0]} ∪ X0)).
+                 { intros p mem. assert (p ∈ ({[x]} ∪ ({[x0]} ∪ X0))) by set_solver.
+                   eapply H4 in H8. eauto. }
+                 eapply IHX'. eauto. set_solver.
+Qed.
+(* end hide *)
+
+(** ** Condition on convergence *)
+(* begin hide *)
+
+Definition bhv_pre_cond1__x `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
+  (X : gset P) (Y : gset Q) :=
+  forall s, (forall p, p ∈ X -> p ⇓ s) -> (forall q, q ∈ Y -> q ⇓ s).
+
+Global Notation "X ₁≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
+(* end hide *)
+
+(** ** Condition on acceptance sets *)
+(* begin hide *)
+
+Definition bhv_pre_cond2__x
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}
+  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
+  (X : gset P) (Y : gset Q) :=
+  forall q s q', q ∈ Y ->
+    q ⟹[s] q' -> q' ↛ ->
+    (forall p, p ∈ X -> p ⇓ s) ->
+    exists p, p ∈ X /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+
+Global Notation "X ₂≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
+(* end hide *)
+
+
+(** ** Alternative preorder on sets *)
+
+Definition bhv_pre__x 
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}
+  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
+    (X : gset P) (Y : gset Q) :=
+      (X ₁≼ₛₑₜ_ₐₛ Y /\ X ₂≼ₛₑₜ_ₐₛ Y).
+(* begin hide *)
+
+Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
+
+#[global] Hint Unfold bhv_pre_cond1__x bhv_pre_cond2__x : mdb.
+
+(* The relation ≼ₛₑₜ_ₐₛ is reflexive *)
+#[global] Instance bhv_pre__x_refl
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : Reflexive bhv_pre__x.
+Proof. intros. constructor;intro; intros; set_solver. Qed.
+
+(* The relation ≼ₛₑₜ_ₐₛ is transitive *)
+#[global] Instance bhv_pre__x_transitive
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : Transitive bhv_pre__x.
+Proof.
+  intros X Y Z hcgr1 hcgr2. split. 
+  + intro s. intros Hyp_conv. eapply hcgr2. eapply hcgr1. exact Hyp_conv. 
+  + intros z s z' mem wk_tr stable Hyp_conv.
+    destruct hcgr2 as (Hyp1_z & Hyp2_z).
+    assert (∀ y : P, y ∈ Y → y ⇓ s).
+    { eapply hcgr1. eauto. }
+    eapply (Hyp2_z z s z') in mem as (y & mem & y' & wk_tr_y & stable_y & Hyp_acc_y); eauto.
+    destruct hcgr1 as (Hyp1_y & Hyp2_y).
+    eapply (Hyp2_y y s y') in mem as (x & mem & x' & wk_tr_x & stable_x & Hyp_acc); eauto.
+    set_solver.
+Qed.
+
+(* The relation ≼ₛₑₜ_ₐₛ is a preorder *)
+#[global] Instance bhv_pre__x_preorder
+  `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
+  `{gLtsT : @gLtsEq T A EA}
+  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : PreOrder bhv_pre__x.
+Proof.
+  split.
+  + exact bhv_pre__x_refl.
+  + exact bhv_pre__x_transitive.
+Qed.
+(* end hide *)
+
+
+Section Acceptance_Set_preorder_for_sets.
+
+Context `{EA : !ExtAction A}.
+Context `{gLtsEqT : !gLtsEq T EA}.
+
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}.
+
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}.
+(* begin hide *)
+
+Lemma alt_set_union_right
+  (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y' ->  X ≼ₛₑₜ_ₐₛ (Y ∪ Y').
+Proof.
+  intros Hyp1 Hyp2. split.
+  - intros s Hyp_conv y mem.
+    eapply elem_of_union in mem. destruct mem as [mem_Y | mem_Y'].
+    + eapply Hyp1;eauto.
+    + eapply Hyp2;eauto.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply elem_of_union in mem. destruct mem as [mem_Y | mem_Y'].
+    * destruct Hyp1 as (Hyp1 & Hyp'1).
+      eapply Hyp'1 in wk_tr;eauto.
+    * destruct Hyp2 as (Hyp2 & Hyp'2).
+      eapply Hyp'2 in wk_tr;eauto.
+Qed.
+
+Lemma alt_set_empty (X : gset P) : X ≼ₛₑₜ_ₐₛ ∅.
+Proof.
+  split.
+  + intro p. intros. set_solver.
+  + intro p. intros. set_solver.
+Qed.
+
+Lemma alt_set_union_left_rev
+  (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ (Y ∪ Y') -> X ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros Hyp. split.
+  - intros s Hyp_conv y mem.
+    eapply Hyp ;eauto. set_solver.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply Hyp;eauto. set_solver.
+Qed.
+
+Lemma alt_set_union_right_rev
+  (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ (Y ∪ Y') -> X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros Hyp. split.
+  - intros s Hyp_conv y mem.
+    eapply Hyp ;eauto. set_solver.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply Hyp;eauto. set_solver.
+Qed.
+
+Lemma alt_set_sub
+  (X : gset P) (Y : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> forall Y', Y' ⊆ Y ->  X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros Hyp. split.
+  - intros s Hyp_conv y mem.
+    eapply Hyp;eauto.
+  - intros q s q' mem wk_tr stable Hyp_conv.
+    eapply Hyp; eauto.
+Qed.
+
+Lemma alt_set_union_l (X1 X2 : gset P) (Y : gset Q) : X1 ≼ₛₑₜ_ₐₛ Y -> (X1 ∪ X2) ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros Hyp. split.
+  + intros s Hyp_conv. eapply Hyp.
+    intros; eauto. eapply Hyp_conv. set_solver.
+  + intros q s q' mem wt_tr stable Hyp_conv.
+    assert (∀ p : P, p ∈ X1 → p ⇓ s) as Hyp_conv'.
+    { intros. eapply Hyp_conv. set_solver. } destruct Hyp as (Hyp1 & Hyp2).
+    destruct (Hyp2 q s q' mem wt_tr stable Hyp_conv') as (p' & mem' & p'' & wt_tr' & stable' & sub').
+    exists p'. repeat split ;eauto. set_solver.
+Qed.
+
+Lemma alt_set_union_r (X1 X2 : gset P) (Y : gset Q) : X2 ≼ₛₑₜ_ₐₛ Y -> (X1 ∪ X2) ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros Hyp. split.
+  + intros s Hyp_conv. eapply Hyp.
+    intros; eauto. eapply Hyp_conv. set_solver.
+  + intros q s q' mem wt_tr stable Hyp_conv.
+    assert (∀ p : P, p ∈ X2 → p ⇓ s) as Hyp_conv'.
+    { intros. eapply Hyp_conv. set_solver. } destruct Hyp as (Hyp1 & Hyp2).
+    destruct (Hyp2 q s q' mem wt_tr stable Hyp_conv') as (p' & mem' & p'' & wt_tr' & stable' & sub').
+    exists p'. repeat split ;eauto. set_solver.
+Qed.
+
+Lemma alt_set_choose (p : P) (X : gset P) (Y : gset Q) : p ∈ X -> ({[p]} : gset P) ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros mem alt_p.
+  replace X with ({[p]} ∪ (X ∖ {[p]})).
+  + eapply alt_set_union_l. eauto.
+  + symmetry. eapply leibniz_equiv. eapply union_difference_singleton. eauto.
+Qed.
+
+Lemma bhvleqone_preserved_by_reduction
+  (X : gset P) (Y Y' : gset Q) :
+  X ₁≼ₛₑₜ_ₐₛ Y -> lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros halt1 l (* not_empty *) s mem.
+  intros. eapply l in H as (q' & mem' & tr').
+  eapply cnv_preserved_by_lts_tau; eauto.
+Qed.
+
+Lemma bhvleqone_preserved_by_reduction_lts
+  (X : gset P) (Y Y' : gset Q) :
+  X ₁≼ₛₑₜ_ₐₛ Y -> Y ⟶ Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros; eapply bhvleqone_preserved_by_reduction;eauto.
+  destruct H0. subst. eapply lts_tau_set_from_pset_ispec.
+Qed.
+
+Lemma bhvleqone_preserved_by_external_action
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
+  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *) -> X' ₁≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros hleq hws l (* not_empty *) s hcnv. intros.
+  eapply l in H as (q' & mem' & wk_tr).
+  eapply cnv_preserved_by_wt_act;eauto.
+  eapply hleq.
+  intros p mem''. eapply cnv_act.
+  + eapply htp; eauto.
+  + intros. eapply hcnv, hws; eassumption.
+  + exact mem'.
+Qed.
+
+Lemma bhvleqone_preserved_by_external_action_lts
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
+  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> Y ⟹{μ} Y' -> X' ₁≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros. eapply bhvleqone_preserved_by_external_action; eauto.
+  intros q' mem'. eapply wk_tr_inv in mem' as (p' & hyp1 & hyp2).
+  eauto. eauto. (* intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
+Qed.
+(* end hide *)
+
+Lemma alt_set_singleton_iff
+  (p : P) (q : Q) : ({[ p ]} : gset P) ≼ₛₑₜ_ₐₛ ({[ q ]} : gset Q) <->  p ≼ₐₛ q.
+Proof.
+  split.
+  - intros (hbhv1 & hbhv2). split.
+    + intros s mem. eapply hbhv1. set_solver. set_solver.
+    + intros s q' w st hcnv. edestruct hbhv2; set_solver.
+  - intros (h1 & h2). split.
+    + intros s mem. intros q' mem'.
+      assert (q' = q) by set_solver. subst. eapply h1. set_solver.
+    + intros q' s q'' w st hcnv.
+      assert (q' = q) by set_solver. subst. intros.
+      exists p. edestruct h2 ; set_solver.
+Qed.
+(* begin hide *)
+
+Lemma bhvx_preserved_by_reductions
+  (X : gset P) (Y Y' : gset Q) : wt_set_from_pset_spec1 Y [] Y' (* -> Y' ≠ ∅ *) -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros l (* not_empty *) (halt1 & halt2).
+  split.
+  - intros s mem. intros.
+    eapply l in H as (q' & tr & mem'). eapply cnv_preserved_by_wt_nil; eauto.
+  - (* bhvleqtwo_preserved_by_reduction *)
+    intros q' s q'' w st hcnv. intro hyp_conv.
+    eapply l in w as (q & mem & tr).
+    destruct (halt2 q s q'') as (p' & mem' & p'' & hw & hst) (* & sub0) *); eauto with mdb.
+    eapply wt_push_nil_left;eauto.
+Qed.
+
+Lemma bhvx_preserved_by_reductions_lts
+  (X : gset P) (Y Y' : gset Q) : Y ⟹ Y' -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros. eapply bhvx_preserved_by_reductions;eauto.
+  intros q' mem'. eapply wk_tr_inv in H as (q & wt_tr & mem); eauto.
+Qed.
+
+Lemma bhvx_preserved_by_reduction
+  (X : gset P) (Y Y' : gset Q) : lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros l (* not_empty *) (halt1 & halt2).
+  eapply bhvx_preserved_by_reductions;eauto.
+  intros q' mem'. eapply l in mem' as (q'' & mem'' & wt_tr'').
+  exists q''. split; eauto. eapply lts_to_wt_tau;eauto. split ;eauto.
+Qed.
+
+Lemma bhvx_preserved_by_reduction_lts
+  (X : gset P) (Y Y' : gset Q) : Y ⟶ Y' -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros. eapply bhvx_preserved_by_reductions;eauto.
+  destruct H. subst. intros q'' mem''.
+  destruct (lts_tau_set_from_pset_ispec Y) as (Hyp1 & Hyp2). 
+  eapply Hyp1 in mem'' as (q & mem & wt_tr).
+  exists q. split ;eauto. eapply lts_to_wt_tau;eauto.
+Qed.
+
+Lemma bhvx_preserved_by_external_action
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
+  wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *)
+    -> wt_set_from_pset_spec X [μ] X'
+      -> X ≼ₛₑₜ_ₐₛ Y
+        -> X' ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros lts__q (* not_empty *) ps1_spec (halt1 & halt2). split.
+  - eapply bhvleqone_preserved_by_external_action; eauto.
+  - (* bhvleqtwo_preserved_by_ext_action *)
+    intros q s q0 mem wt st hcnv. assert (wt_set_from_pset_spec1 Y [μ] Y') as tr'';eauto.
+    eapply tr'' in mem as (q' & mem' & tr_ext);eauto.
+    edestruct (halt2 q' (μ :: s) q0) as (t & mem'' & p0 & p1 & wta__t & sub); eauto with mdb.
+    eapply wt_push_left; eauto.
+    eapply convergence_set_iff_convergence_forall. eapply convergence_set_if_convergence_forall.
+    intros p'' mem1. eapply cnv_act; eauto.
+    intros q1 wk_tr. eapply ps1_spec in wk_tr .
+    eapply hcnv; eassumption. eauto.
+    eapply wt_pop in p1 as (r & w1 & w2).
+    exists r. repeat split. eapply ps1_spec; eassumption. eauto.
+Qed.
+
+Lemma bhvx_preserved_by_external_action_lts
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
+  Y ⟹{μ} Y'
+    -> wt_set_from_pset_spec X [μ] X'
+      -> X ≼ₛₑₜ_ₐₛ Y
+        -> X' ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros. eapply bhvx_preserved_by_external_action;eauto.
+  + intros q mem. eapply wk_tr_inv in mem as (q' & wk_tr & eq).
+    eauto. eauto.
+  (* + intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
+Qed.
+
+Lemma bhvx_preserved_by_external_action_tr
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
+  lts_extaction_set_from_pset_spec1  Y μ Y' (* -> Y' ≠ ∅ *)
+    -> wt_set_from_pset_spec X [μ] X'
+      -> X ≼ₛₑₜ_ₐₛ Y
+        -> X' ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros. eapply bhvx_preserved_by_external_action;eauto.
+  intros q mem. eapply H in mem as (p' & ext_tr & mem).
+  eapply lts_to_wt in mem. eauto.
+Qed.
+
+Lemma bhvx_preserved_by_external_action_tr_lts
+  (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
+  Y ⟶[μ] Y'
+    -> wt_set_from_pset_spec X [μ] X'
+      -> X ≼ₛₑₜ_ₐₛ Y
+        -> X' ≼ₛₑₜ_ₐₛ Y'.
+Proof.
+  intros. destruct H. subst. 
+  eapply bhvx_preserved_by_external_action_tr; eauto.
+  eapply lts_extaction_set_from_pset_ispec.
+Qed.
+
+Lemma reverse_trace_inclusion
+  (X : gset P) (Y Y' : gset Q) μ
+  : X ≼ₛₑₜ_ₐₛ Y -> (forall p, p ∈ X -> p ⇓ [μ]) ->
+    wt_set_from_pset_spec1 Y [μ] Y' -> Y' ≠ ∅ -> exists X', X ⟹{μ} X'.
+Proof.
+  intros (h1 & h2) hcnv hl not_empty.
+  assert (hqt : Y' ⤓).
+  { eapply termination_set_for_all. intros.
+    eapply hl in H as (q'' & mem & wt_tr).
+    eapply cnv_terminate, cnv_preserved_by_wt_act;eauto. }
+  assert (exists Y'', wt_set_from_pset_spec1 Y [μ] Y'' /\ Y'' ↛ /\ Y'' ≠ ∅) as (q0 & wq0 & stq0 & not_empty').
+  { eapply terminate_then_wt_refuses in hqt as (q0 & w0 & st0). exists q0.
+    split; eauto. intros q mem. eapply wk_tr_inv in w0 as (q'' & wt_tr & mem'');eauto.
+    eapply hl in mem'' as (p'' & mem''' & wt_tr'''). exists p''. split;eauto. eapply wt_push_nil_right;eauto.
+    split ;eauto. intro. subst. eapply empty_set_stable_wk_inv_nil in w0. subst. set_solver. }
+  destruct q0 using set_ind_L.
+  + set_solver.
+  + assert (x ∈ ({[x]} ∪ X0)) as mem by set_solver.
+    eapply wq0 in mem as ( q & mem & wk_tr).
+    destruct (h2 q [μ] x mem wk_tr) as (p1 & mem1 & p0 & wp0 & stp0) (* & subp0) *).
+    - simpl in *. unfold SetLTSConstruction.toSET_obligation_3 in stq0.
+      intros Hp. apply stq0. intros Hall. eapply Hall; [| exact Hp]. set_solver.
+    - eauto.
+    - eapply witness_wk_tr in wp0 as (ps' & wk_tr' & mem'); eauto. 
+Qed.
+
+Lemma reverse_trace_inclusion_tr
+  (X : gset P) (Y Y' : gset Q) μ
+  : X ≼ₛₑₜ_ₐₛ Y -> (forall p, p ∈ X -> p ⇓ [μ]) ->
+    lts_extaction_set_from_pset_spec1 Y μ Y' -> Y' ≠ ∅ -> exists X', X ⟹{μ} X'.
+Proof.
+  intros. eapply reverse_trace_inclusion;eauto. 
+  intros q mem. eapply H1 in mem as (q' & mem & tr).
+  eapply lts_to_wt in tr. eauto.
+Qed.
+
+Lemma reverse_trace_inclusion_lts
+  (X : gset P) (Y Y' : gset Q) μ
+  : X ≼ₛₑₜ_ₐₛ Y -> (forall p, p ∈ X -> p ⇓ [μ]) ->
+    Y ⟹{μ} Y' -> exists X', X ⟹{μ} X'.
+Proof.
+  intros. eapply reverse_trace_inclusion;eauto. intros q mem.
+  eapply wk_tr_inv in H1 as (q'' & wt_tr & mem'); eauto.
+  intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+Qed.
+
+Lemma reverse_trace_inclusion_tr_lts
+  (X : gset P) (Y Y' : gset Q) μ
+  : X ≼ₛₑₜ_ₐₛ Y -> (forall p, p ∈ X -> p ⇓ [μ]) ->
+    Y ⟶[μ] Y' -> exists X', X ⟹{μ} X'.
+Proof.
+  intros. eapply reverse_trace_inclusion_lts ;eauto.
+  eapply lts_to_wt; eauto.
+Qed.
+(* end hide *)
+
+End Acceptance_Set_preorder_for_sets.
+
+Section Properties_for_soundness.
+
+Context `{EA : !ExtAction A}.
+Context `{gLtsEqT : !gLtsEq T EA}.
+Context `{TP : @Testing_Predicate T A EA outcome _}.
+
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{HinterP : !Prop_of_Inter P T A A dual}.
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
+Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
+
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+
+Context `{!gLtsCNenabled Q A}.
+
+Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ1 μ2 :
+      dual μ1 μ2 -> p ⟶[μ1] p' -> t ⟶[μ2] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
+        -> exists μ4 μ5 q' t'', dual μ4 μ5 /\ q ⟶[μ4] q' /\ t ⟶[μ5] t''.
+Proof.
+  intros duo tr tr_co sub.
+  destruct (decide (non_blocking μ2)) as [nb | not_nb].
+  + eapply (cn_enabled q μ2 μ1) in nb as (q' & tr'); [| symmetry; exact duo].
+    exists μ1, μ2, q', t'. eauto.
+  + assert (μ2 ∈ coR p) as some_co_action_of_p.
+    { exists μ1. repeat split; eauto.
+      eapply lts_performs_spec2;eauto. }
+    eapply (map_gamma_of_action (𝝳 ∘ Φ)) in some_co_action_of_p as mem.
+    eapply sub in mem. destruct mem as (μ' & mem & eq).
+    eapply (map_gamma_of_action Φ) in mem as eq'. symmetry in eq.
+    eapply (abstraction_prog_spec q) in eq' ;eauto.
+    2:{ destruct mem as (μ3 & hmem & hdual & hblock). eauto. }
+    destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo2 & b).
+    assert (μ'' ∈ R t) as Tr_Test.
+    { eapply abstraction_test_spec in eq';eauto. apply lts_performs_spec2. eauto. }
+    eapply lts_performs_spec1 in Tr_Test as (t'' & Tr'').
+    eapply lts_performs_spec1 in tr' as (q' & tr').
+    exists μ''', μ'', q', t''. eauto.
+Qed.
+
+End Properties_for_soundness.
+
+
+Section SoundnessAS.
+
+Context `{EA : !ExtAction A}.
+Context `{gLtsEqT : !gLtsEq T EA}.
+Context `{TP : @Testing_Predicate T A EA outcome _}.
+
+Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
+Context `{!Prop_of_Inter P T A A dual}.
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A}.
+Context `{!Prop_of_Inter Q T A A dual}.
+
+Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+(* begin hide *)
+
+Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
+  ¬ outcome t
+    -> X must_pass_x t
+      -> (∃ q, q ∈ Y /\ (q, t) ↛)
+        -> ¬ X ₂≼ₛₑₜ_ₐₛ Y.
+Proof.
+  intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
+
+  assert (q ↛) as stable_q.
+  { destruct (decide (q ⟶)) as [not_refuses_q | refuses_q].
+    - exfalso. eapply lts_performs_spec1 in not_refuses_q as (q' & l).
+      apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q' ▷ t). eapply ParLeft. exact l.
+    - exact refuses_q. }
+
+  assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
+  { destruct (mustx_terminate_unoutcome X t all_must) as [|htps]; eauto with mdb. contradiction. }
+
+  destruct (hbhv2 q [] q mem' (wt_nil q) stable_q htX) as (p & mem & p' & wp & stp' & sub).
+
+  assert (mustx {[ p' ]} t) as must_p'.
+  { eapply (wt_nil_mx p). eapply (mx_sub X t all_must). set_solver. eassumption. }
+
+  destruct must_p'; eauto.
+  edestruct (ex p') as ((p'' , t'') & HypTr). now eapply elem_of_singleton.
+
+  inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
+  - exfalso; apply stp', lts_performs_spec2; eauto.
+  - destruct (decide (t ⟶)) as [not_refuses_t | refuses_t].
+    + apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)).
+      exists (q , t''). eapply ParRight; eauto.
+    + exfalso. apply refuses_t, lts_performs_spec2. eauto with mdb.
+  - eapply communication_enabled in act_left as (μ'1 & μ'2 & q' & t''' & duo & tr1 & tr2); eauto.
+    apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q', t''').
+    eapply (ParSync (μ'1)); eauto.
+Qed.
+(* end hide *)
+
+Lemma stability_nbhvleqtwo
+  (X : gset P) (Y : gset Q) t :
+  ¬ outcome t
+    -> X must_pass_x t
+      -> X ₂≼ₛₑₜ_ₐₛ Y
+        -> forall (q : Q), q ∈ Y -> ∃ q', (q, t) ⟶{τ} q'.
+Proof.
+  intros nhg hmx hleq q mem.
+  destruct (decide ((q, t) ⟶)) as [Hp | Hst].
+  - eapply lts_performs_spec1 in Hp as (t' & hl). eauto.
+  - exfalso. apply (unoutcome_must_st_nleqx X Y t nhg hmx); eauto.
+Qed.
+
+(** ** Soundness for sets *)
+Lemma soundnessx
+  (X : gset P) (Y : gset Q) :
+  X ≼ₛₑₜ_ₐₛ Y  -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
+Proof.
+  intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
+  dependent induction hmx; intros.
+  - eauto with mdb.
+  - destruct (mustx_terminate_unoutcome X t ltac:(eauto with mdb));
+    [contradiction|].
+    assert (q_conv : Y ⤓).
+    { eapply cnv_terminate , convergence_set_if_convergence_forall , halt1; intros; eapply cnv_nil.
+      destruct (mustx_terminate_unoutcome X t); eauto with mdb. }
+    induction q_conv as [q tq IHq_conv].
+    eapply mustx_alt_iff_mustx_alt.
+    eapply mx_step_alt.
+    + eassumption.
+    + eapply (stability_nbhvleqtwo X); eauto with mdb.
+    + intros q' l. eapply mustx_alt_iff_mustx_alt. eapply IHq_conv.
+      * eassumption.
+      * eapply bhvleqone_preserved_by_reduction_lts;eauto.
+        (* destruct l; eauto. *)
+      * eapply bhvx_preserved_by_reduction_lts;eauto.
+        split ;eauto.
+    + intros e' hle. eapply mustx_alt_iff_mustx_alt. eapply H0; eauto with mdb.
+    + intros t' μ μ' q' inter lt lq.
+      eapply mustx_alt_iff_mustx_alt.
+      destruct (decide (outcome t')).
+      * eapply mx_now. assumption.
+      * assert (HA : forall p, p ∈ X -> p ⇓ [μ]).
+        { intros; eapply unoutcome_acnv_mu; eauto with mdb. }
+        set (ts := wt_s_set_from_pset X [μ] HA).
+        set (ts_spec := wt_s_set_from_pset_ispec X [μ] HA).
+        eapply H1.
+        ++ eauto.
+        ++ eauto.
+        ++ eapply ts_spec.
+        ++ intro. assert (∀ p : P, p ∈ X → p ⇓ [μ]) as Hyp;eauto.
+           eapply reverse_trace_inclusion in Hyp;eauto.
+           ** destruct Hyp as (X' & wt_tr).
+              destruct X' using set_ind_L.
+              -- eapply empty_set_stable_wk_not_emp_list_inv in wt_tr. 
+                 eauto.
+              -- assert (x ∈ {[x]} ∪ X0) by set_solver.
+                 eapply wk_tr_inv in wt_tr as (p'' & wt_tr'' & mem'');eauto.
+                 assert (x ∈ wt_s_set_from_pset X [μ] HA).
+                 { eapply ts_spec;eauto. }
+                 set_solver.
+           ** split ;eauto.
+           ** intros q'' mem. eapply wk_tr_inv in mem as (q''' & wt_tr & mem''');eauto.
+           ** intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
+        ++ eapply bhvleqone_preserved_by_external_action;eauto.
+           ** intros q'' mem. eapply wk_tr_inv in mem as (q''' & wt_tr & mem''');eauto.
+           (* ** intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
+        ++ eapply bhvx_preserved_by_external_action_lts;eauto. split;eauto.
+Qed.
+
+End SoundnessAS.
+(* begin hide *)
+
+Lemma soundness_co_nb_enabled `{
+  gLtsP : @gLtsEq P A H, !FiniteImagegLts P A,
+  gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
+
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+
+  `{!Prop_of_Inter P T A A dual}
+  `{!Prop_of_Inter Q T A A dual}
+
+  (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
+Proof.
+  intros halt e hm.
+  eapply must_set_iff_must.
+  eapply (soundnessx ({[p]} : gset P)).
+  now eapply alt_set_singleton_iff.
+  now eapply must_set_iff_must.
+Qed.
+
+
+Lemma soundness_fw `{
+  gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
+  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
+
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+
+  `{!Prop_of_Inter P T A A dual}
+  `{!Prop_of_Inter Q T A A dual}
+
+  (p : P) (q : Q) : p ≼ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
+Proof.
+  eapply soundness_co_nb_enabled.
+  (* FW is co-non-blocking enabled *)
+  Unshelve.
+  eapply MkgLtsCNenabled. intros.
+  destruct (boomerang p1 η β) as (t & l1 & l2) ; eauto. symmetry;eauto.
+Qed.
+
+(* ** Soundness for LTSs that can be lifted to forwarders *)
+Lemma soundness 
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !CountablegLts T A}
+
+  `{ !Testing_Predicate outcome _}
+
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
+
+  {_ : @Prop_of_Inter P (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (P * MO A) T A A dual H (inter_lts fw_inter) H _}
+
+  {_ : @Prop_of_Inter Q (MO A) A A fw_inter H _ H MbgLts}
+  {_ : @Prop_of_Inter (Q * MO A) T A A dual H (inter_lts fw_inter) H _}
+
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+
+  (p : P) (q : Q) : p ▷ ∅ ≼ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
+Proof.
+  intros halt t hm.
+  eapply Lift.must_iff_must_fw in hm.
+  eapply Lift.must_iff_must_fw.
+  now eapply (soundness_fw (p ▷ ∅) (q ▷ ∅)).
+Qed.
+(* end hide *)

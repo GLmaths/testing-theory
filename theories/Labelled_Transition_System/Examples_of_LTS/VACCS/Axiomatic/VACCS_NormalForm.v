@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The VACCS normal form: [Ѵⁿ (messages ‖ guarded sum)]
+(* * The VACCS normal form: [Ѵⁿ (messages ‖ guarded sum)]
 
         [NF n l M := Ѵ n (msgs l ‖ g M)]
 
@@ -65,7 +66,7 @@ Section VACCS_NormalForm.
 
 Context `{VP : VACCS_Parameters}.
 
-(** Shifting a message's channel [n] times, at depth [k] — what scope
+(* Shifting a message's channel [n] times, at depth [k] — what scope
     extrusion does to the *other* operand of a [‖]. *)
 Definition shiftCn (k n : nat) (cv : ChannelData * ValueData) : ChannelData * ValueData :=
   (Nat.iter n (NewVar_in_ChannelData k) (fst cv), snd cv).
@@ -73,7 +74,7 @@ Definition shiftCn (k n : nat) (cv : ChannelData * ValueData) : ChannelData * Va
 Definition NF (n : nat) (l : list (ChannelData * ValueData)) (M : gproc) : proc :=
   Ѵ n (msgs l ‖ g M).
 
-(** A buffer empties along its own output trace.  This is the run the
+(* A buffer empties along its own output trace.  This is the run the
     acceptance condition is read at when one wants to see the *bag*:
     the ready-set abstraction erases both the value and the multiplicity
     of a pending message, so a bag is only observable through traces. *)
@@ -92,7 +93,7 @@ Proof.
     eapply wt_act; [ apply fw_emit | apply IH ].
 Qed.
 
-(** ** THE TWO BAGS AGREE
+(* ** THE TWO BAGS AGREE
 
     For two *stable* configurations the pending-message bags are equal —
     not merely their channel sets.  Read the acceptance condition along
@@ -155,7 +156,7 @@ Proof.
     rewrite <- Hx2. apply gmultiset.gmultiset_disj_union_right_id.
 Qed.
 
-(** ** The settling certificate, at a configuration
+(* ** The settling certificate, at a configuration
 
     [VACCS_Cond2.surplus_settles_bag] reads the acceptance condition at
     the trace that feeds a bag in, and concludes that the left settles
@@ -198,7 +199,7 @@ Proof.
     eapply emits_gsum_chans. exact Hin.
 Qed.
 
-(** The multiset form, via [outonly_bag] — every buffer the forwarder can
+(* The multiset form, via [outonly_bag] — every buffer the forwarder can
     reach is a bag. *)
 
 Corollary certificate_config : forall (M N : gproc) (l : list TypeOfActions),
@@ -214,7 +215,7 @@ Proof.
   apply surplus_settles_config with (N := N); assumption.
 Qed.
 
-(** ** THE CERTIFICATE IN THE **SPLIT** SETTING, ON THE CONE ABOVE THE BAG
+(* ** THE CERTIFICATE IN THE **SPLIT** SETTING, ON THE CONE ABOVE THE BAG
 
     When the left carries a surplus bag [d] — the shape
     [VACCS_Matching.ax_below_split_from_certificate] compares — the
@@ -299,7 +300,7 @@ Proof.
     eapply emits_gsum_chans. exact Hin.
 Qed.
 
-(** ** DRAIN, THEN REFILL — the certificate BELOW the bag
+(* ** DRAIN, THEN REFILL — the certificate BELOW the bag
 
     [certificate_config] covers the buffers *above* the bag, [m ⊎ bag l],
     and that is forced: it reads [bhv_pre_cond2] along a trace of
@@ -346,7 +347,7 @@ Qed.
 
 
 
-(** ** REGENERATION IS THE ONLY OBSTRUCTION
+(* ** REGENERATION IS THE ONLY OBSTRUCTION
 
     [surplus_settles_drain]'s side condition — "the left's drain run is
     forced" — is not a black box.  [fw_conservation]'s balance equation,
@@ -382,7 +383,7 @@ Proof.
   destruct a as [x|x]; simpl; intros H1 H2; discriminate.
 Qed.
 
-(** Stated at the **generic** multiset type on purpose: at [MO (ExtAct
+(* Stated at the **generic** multiset type on purpose: at [MO (ExtAct
     TypeOfActions)] the two elaborations of [⊎] that the development
     carries are convertible but not syntactically equal, so [rewrite]
     misfires; generically there is only one instance and the size
@@ -422,7 +423,7 @@ Proof.
   destruct y as (y1, y2). simpl in Hr, Hy2. subst y1 y2. reflexivity.
 Qed.
 
-(** ** …and the condition weakens to exactly what the balance equation asks
+(* ** …and the condition weakens to exactly what the balance equation asks
 
     "[M] never emits" is far too strong — it already fails for
     [c ? (d ! v • 𝟘)], whose drain is nevertheless forced (the trace
@@ -492,7 +493,7 @@ Qed.
 
 
 
-(** ** …AND WITHOUT STABILITY, IF THE SUM DOES NOT REGENERATE
+(* ** …AND WITHOUT STABILITY, IF THE SUM DOES NOT REGENERATE
 
     [msgs_cancel] uses its stability hypothesis in **one** place: to know
     that the left's run over [map ActOut l] is the pure drain, so that it
@@ -542,7 +543,7 @@ Proof.
 Qed.
 
 
-(** ** Lifting a run into a larger guarded sum
+(* ** Lifting a run into a larger guarded sum
 
     A run of `(g M ▷ m₀)` is also a run of `(g K ▷ m₀)` whenever `K`'s
     transitions include `M`'s — **once the process has moved**, because a
@@ -561,7 +562,7 @@ Lemma fw_sub_lift : forall (M K : gproc),
   \/ (exists m, x = ((g M) ▷ m) /\ ((g K) ▷ x0.2) ⟹[s] ((g K) ▷ m)).
 Proof.
   intros M K Hsub s x0 x Hw.
-  induction Hw as [z|s0 z q y Hl Hwt IH|mu s0 z q y Hl Hwt IH]; intros Heq.
+  induction Hw as [z|s0 z q y Hl Hwt IH|μ s0 z q y Hl Hwt IH]; intros Heq.
   - right. destruct z as (p,m). simpl in *. subst p.
     exists m. split; [ reflexivity | apply wt_nil ].
   - left. destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
@@ -571,7 +572,7 @@ Proof.
     + destruct HB as (a & p' & m' & Hm & Hp' & E). inversion E; subst.
       eapply wt_tau; [ | exact Hwt ]. apply fw_tau_deliver. apply Hsub. exact Hp'.
   - destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
-    destruct (fw_ext_shape (g M) m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape (g M) m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + left. destruct HA as (p' & Hp' & E). inversion E; subst.
       eapply wt_act; [ | exact Hwt ]. apply ParLeft. apply Hsub. exact Hp'.
     + destruct HB as (a & Hmu & E). inversion E; subst.
@@ -586,7 +587,7 @@ Proof.
         simpl in Hright. eapply wt_act; [ | exact Hright ]. apply fw_emit.
 Qed.
 
-(** The same, strengthened: in the second disjunct the run used **no
+(* The same, strengthened: in the second disjunct the run used **no
     process step at all**, so it is a run over *any* process. *)
 
 Lemma fw_sub_lift_gen : forall (M K : gproc),
@@ -597,7 +598,7 @@ Lemma fw_sub_lift_gen : forall (M K : gproc),
   \/ (exists m, x = ((g M) ▷ m) /\ forall X : proc, (X ▷ x0.2) ⟹[s] (X ▷ m)).
 Proof.
   intros M K Hsub s x0 x Hw.
-  induction Hw as [z|s0 z q y Hl Hwt IH|mu s0 z q y Hl Hwt IH]; intros Heq.
+  induction Hw as [z|s0 z q y Hl Hwt IH|μ s0 z q y Hl Hwt IH]; intros Heq.
   - right. destruct z as (p,m). simpl in *. subst p.
     exists m. split; [ reflexivity | intro X; apply wt_nil ].
   - left. destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
@@ -607,7 +608,7 @@ Proof.
     + destruct HB as (a & p' & m' & Hm & Hp' & E). inversion E; subst.
       eapply wt_tau; [ | exact Hwt ]. apply fw_tau_deliver. apply Hsub. exact Hp'.
   - destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
-    destruct (fw_ext_shape (g M) m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape (g M) m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + left. destruct HA as (p' & Hp' & E). inversion E; subst.
       eapply wt_act; [ | exact Hwt ]. apply ParLeft. apply Hsub. exact Hp'.
     + destruct HB as (a & Hmu & E). inversion E; subst.
@@ -622,7 +623,7 @@ Proof.
         intro X. eapply wt_act; [ apply fw_emit | apply Hright ].
 Qed.
 
-(** A buffer-only run's final buffer is a *function* of the trace — read
+(* A buffer-only run's final buffer is a *function* of the trace — read
     off at the process `𝟘`, which has no transitions at all, so its
     forwarder is a pure buffer. *)
 
@@ -652,14 +653,14 @@ Lemma nil_buf_run : forall s (x0 y : proc * MO (ExtAct TypeOfActions)),
   y = (((g 𝟘) : proc) ▷ bufafter s x0.2).
 Proof.
   intros s x0 y Hw.
-  induction Hw as [z|s0 z q y Hl Hwt IH|mu s0 z q y Hl Hwt IH]; intros Heq.
+  induction Hw as [z|s0 z q y Hl Hwt IH|μ s0 z q y Hl Hwt IH]; intros Heq.
   - destruct z as (p,m). simpl in *. subst p. reflexivity.
   - exfalso. destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
     destruct (fw_tau_shape ((g 𝟘) : proc) m (p1,m1) Hl) as [HA|HB].
     + destruct HA as (p' & Hp' & _). eapply nil_no_lts. exact Hp'.
     + destruct HB as (a & p' & m' & _ & Hp' & _). eapply nil_no_lts. exact Hp'.
   - destruct z as (p,m). destruct q as (p1,m1). simpl in *. subst p.
-    destruct (fw_ext_shape ((g 𝟘) : proc) m mu (p1,m1) Hl) as [HA|[HB|HC]].
+    destruct (fw_ext_shape ((g 𝟘) : proc) m μ (p1,m1) Hl) as [HA|[HB|HC]].
     + exfalso. destruct HA as (p' & Hp' & _). eapply nil_no_lts. exact Hp'.
     + destruct HB as (a & Hmu & E). inversion E; subst.
       specialize (IH eq_refl). simpl in IH. exact IH.
@@ -667,7 +668,7 @@ Proof.
       specialize (IH eq_refl). simpl in IH. rewrite bag_sub_add. exact IH.
 Qed.
 
-(** ** THE UNION SUM IS BELOW — the last step of the union route, semantically
+(* ** THE UNION SUM IS BELOW — the last step of the union route, semantically
 
     Adding the *left*-hand sum's guards to the right-hand one preserves
     the comparison.  This is the inequation the union route needs to
@@ -747,7 +748,7 @@ Proof.
               rewrite Hm at 1. apply fw_emit.
 Qed.
 
-(** The settling certificate transfers from `g M` to the union sum.
+(* The settling certificate transfers from `g M` to the union sum.
 
     Note where the argument turns: `Settles` uses the **empty** trace, so
     `fw_sub_lift_gen`'s second disjunct — the run took no process step —
@@ -788,7 +789,7 @@ Proof.
       * exists w. exact Hmem.
 Qed.
 
-(** ** How the channel shift distributes *)
+(* ** How the channel shift distributes *)
 
 Lemma NewVarCn_par : forall k n P Q, NewVarCn k n (P ‖ Q) = NewVarCn k n P ‖ NewVarCn k n Q.
 Proof. intros k n. induction n; intros P Q; simpl; [ reflexivity | rewrite IHn; reflexivity ]. Qed.
@@ -824,7 +825,7 @@ Proof. induction n; intros m p; simpl; [ reflexivity | rewrite IHn; reflexivity 
 Lemma ax_res_n : forall n p q, p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> (Ѵ n p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n q).
 Proof. induction n; intros p q H; simpl; [ exact H | apply ax_res; apply IHn; exact H ]. Qed.
 
-(** ** Merging two normal forms
+(* ** Merging two normal forms
 
     Scope extrusion pulls both restriction blocks to the top — each
     shifting the other operand's channels — then the four components are
@@ -852,7 +853,7 @@ Proof.
   apply cgr_par_com.
 Qed.
 
-(** ** The normal form *)
+(* ** The normal form *)
 
 Theorem normal_form : forall p, Static p ->
   exists n l M, gStatic M /\ p ᴠᴀᴄᴄꜱ⊑ₐₓ (NF n l M) /\ (NF n l M) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
@@ -920,7 +921,7 @@ Proof.
     + apply ax_cgr_sym. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
 Qed.
 
-(** * LE FRAGMENT SANS [ν] : la forme normale est une CONFIGURATION NUE
+(* * LE FRAGMENT SANS [ν] : la forme normale est une CONFIGURATION NUE
 
     Le seul cas de [normal_form] qui produise un bloc de restriction est
     celui de [ν] ; tous les autres rendent [n = 0] ou l'additionnent.
@@ -1013,7 +1014,7 @@ Proof.
     + apply ax_cgr_sym. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
 Qed.
 
-(** La réduction : sur le fragment sans [ν], la complétude se ramène à la
+(* La réduction : sur le fragment sans [ν], la complétude se ramène à la
     comparaison de deux **configurations nues**, avec l'hypothèse
     sémantique livrée exactement à ce niveau-là. *)
 
@@ -1034,7 +1035,7 @@ Proof.
   apply (soundness_ax _ _ Ha2). apply Hsem. apply (soundness_ax _ _ Hb1). exact Ht.
 Qed.
 
-(** The semantic reading, for free by soundness. *)
+(* The semantic reading, for free by soundness. *)
 Corollary normal_form_sem : forall p, Static p ->
   exists n l M, gStatic M /\ p ≂ₘᵤₛₜᵢ (NF n l M).
 Proof.
@@ -1042,7 +1043,7 @@ Proof.
   exists n, l, M. split; [ exact HM | ]. split; apply soundness_ax; assumption.
 Qed.
 
-(** ** A step-dominating normal form
+(* ** A step-dominating normal form
 
     [normal_form] alone is not enough to recurse into a [𝛕]-continuation:
     normalisation is **not** size-decreasing (the expansion law blows terms
@@ -1150,7 +1151,7 @@ Qed.
 Lemma dom_res_n : forall n p q, dom p q -> dom (Ѵ n p) (Ѵ n q).
 Proof. induction n; intros p q H; simpl; [exact H | apply dom_res; apply IHn; exact H]. Qed.
 
-(** ** [dom] IS closable under one step — the simulation [domsim]
+(* ** [dom] IS closable under one step — the simulation [domsim]
 
     [step_dominated] stops at [⊢]-equal targets, so it descends exactly one
     step.  Anything that has to follow a *run* of the normal form — for
@@ -1270,7 +1271,7 @@ Qed.
 Lemma domsim_res_n : forall n p q, domsim p q -> domsim (Ѵ n p) (Ѵ n q).
 Proof. induction n; intros p q H; simpl; [ exact H | apply domsim_res; apply IHn; exact H ]. Qed.
 
-(** The normal form is reached by the simulation, not merely by [dom] —
+(* The normal form is reached by the simulation, not merely by [dom] —
     and the proof script is [normal_form_strong]'s, unchanged apart from
     the names. *)
 Theorem normal_form_strong_sim : forall p, Static p ->
@@ -1320,14 +1321,14 @@ Proof.
     apply domsim_cgr. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
 Qed.
 
-(** The payoff: the descent follows a whole **run**, not one step.  Every
+(* The payoff: the descent follows a whole **run**, not one step.  Every
     state the normal form reaches along a trace — including one reached by
     emitting part of the message bag before acting — is [⊢]-equal to a
     state the original process reaches along the *same* trace. *)
 Lemma domsim_wt : forall q s r, q ⟹[s] r ->
   forall p, domsim p q -> exists r', p ⟹[s] r' /\ domsim r' r.
 Proof.
-  intros q s r Hw. induction Hw as [q0 | s0 q0 q1 r0 Hl Hw IH | mu s0 q0 q1 r0 Hl Hw IH];
+  intros q s r Hw. induction Hw as [q0 | s0 q0 q1 r0 Hl Hw IH | μ s0 q0 q1 r0 Hl Hw IH];
     intros p Hd.
   - exists p. split; [ apply wt_nil | exact Hd ].
   - destruct (ds_s Hd _ _ Hl) as (y & Hy & Hy2).
@@ -1348,7 +1349,7 @@ Proof.
   split; [ exact (ds_r Hd') | exact (ds_l Hd') ].
 Qed.
 
-(** ** UNIFORM domination — the notion the recursive normal form needs
+(* ** UNIFORM domination — the notion the recursive normal form needs
 
     [step_dominated] matches each transition of the normal form by one of
     the original process, but for an *input* it does so **per value**: the
@@ -1415,7 +1416,7 @@ Proof.
   intro v. apply resg_lts_iff. apply HR.
 Qed.
 
-(** Input transitions come in **uniform families**.  Every `(c,v)?`-step
+(* Input transitions come in **uniform families**.  Every `(c,v)?`-step
     of a process is `R^v` for one open `R` that works at *every* value —
     the constructive strengthening of [lts_in_value_swap], which only
     asserts that *some* step exists at each value.
@@ -1464,7 +1465,7 @@ Proof.
     exists R. split; [ exact E1 | intro w; apply lts_choiceR; apply E2 ].
 Qed.
 
-(** Substitution preserves head constructors, so an open term whose
+(* Substitution preserves head constructors, so an open term whose
     instance is a parallel composition (a restriction) is itself one.
     These are the inversions the functorial [dom_u] combinators need, and
     they cost one [destruct] apiece. *)
@@ -1486,7 +1487,7 @@ Proof.
   inversion H; subst. exists R. split; [ reflexivity | reflexivity ].
 Qed.
 
-(** Uniform domination survives restriction.  The channel shift
+(* Uniform domination survives restriction.  The channel shift
     [VarC_action_add] leaves the *value* alone, so the inner family is
     indexed by the same values as the outer one. *)
 
@@ -1507,7 +1508,7 @@ Proof.
   - split; intro v; simpl; apply ax_res; [ apply H2' | apply H3' ].
 Qed.
 
-(** Uniform domination survives parallel composition — and this is where
+(* Uniform domination survives parallel composition — and this is where
     the notion earns its `Static` hypotheses.
 
     For an *input* only [lts_parL] and [lts_parR] apply ([lts_comL] and
@@ -1565,7 +1566,7 @@ Proof.
         apply ax_par; solve [ apply Hb | apply Hc | exact Hd1a | exact Hd1b ].
 Qed.
 
-(** Two of `normal_form_strong`'s six `dom_cgr` sites need no work at all.
+(* Two of `normal_form_strong`'s six `dom_cgr` sites need no work at all.
 
     A process with **no input transitions** dominates uniformly for free —
     the hypothesis of `sd_u` is unsatisfiable.  That covers the
@@ -1578,7 +1579,7 @@ Proof.
   intros p q Hno c R HR. exfalso. eapply Hno. apply (HR (cst O)).
 Qed.
 
-(** And the bare-sum case is the unit law, whose transition
+(* And the bare-sum case is the unit law, whose transition
     correspondence is functorial: only [lts_parR] can fire, so the family
     is carried across unchanged and the `⊢`-equalities are one `ax_cgr`. *)
 
@@ -1605,7 +1606,7 @@ Proof.
     + apply ax_cgr_sym. etransitivity; [ apply cgr_par_com | apply cgr_par_nil ].
 Qed.
 
-(** A message bag has no input transitions at all — it is a parallel
+(* A message bag has no input transitions at all — it is a parallel
     composition of *outputs*.  So every congruence between message bags is
     uniformly dominating for free, which retires the `msgs_app` site. *)
 
@@ -1615,7 +1616,7 @@ Proof.
   intros p q Hc Hno. split; [ apply dom_cgr; exact Hc | apply sd_u_vacuous; exact Hno ].
 Qed.
 
-(** Commutativity of [‖], uniformly.  Same recipe as [dom_u_par]: invert
+(* Commutativity of [‖], uniformly.  Same recipe as [dom_u_par]: invert
     with [subst_par_inv], rule out the branch switching by [size_subst] +
     [Static_lts_decrease], rebuild the family with [NewVar] on the
     untouched side, and discharge the two `⊢`-equalities with one
@@ -1659,7 +1660,7 @@ Proof.
         [ apply ax_cgr | apply ax_cgr_sym ]; apply cgr_par_com.
 Qed.
 
-(** The channel shift and the value substitution commute — they never
+(* The channel shift and the value substitution commute — they never
     touch the same syntax.  Both indices have to be generalised: the
     substitution's index climbs under an input guard, the shift's under a
     [ν], and each fixpoint's own case does one of the two. *)
@@ -1681,7 +1682,7 @@ Proof.
     + f_equal; apply subst_gNewVarC.
 Qed.
 
-(** And the converse: an open term whose instance is a channel-shift is
+(* And the converse: an open term whose instance is a channel-shift is
     itself one.  This is the [NewVarC] analogue of [subst_par_inv] /
     [subst_res_inv] — but `‖` and `ν` are *constructors*, so those were one
     `destruct`, whereas [NewVarC k] is a *function* and this needs the full
@@ -1737,7 +1738,7 @@ Proof.
       exists (S1 + S2). subst. split; reflexivity.
 Qed.
 
-(** The channel shift is injective — needed to turn
+(* The channel shift is injective — needed to turn
     [lts_NewVarC_inv]'s per-value witness into the *given* family: the
     inversion returns some [q0_v] with [NewVarC 0 (S^v) = NewVarC 0 q0_v],
     and only injectivity makes that [q0_v = S^v]. *)
@@ -1767,7 +1768,7 @@ Proof.
     + inversion H. f_equal; eapply gNewVarC_inj; eassumption.
 Qed.
 
-(** Scope extrusion dominates uniformly.  This is the last of the six
+(* Scope extrusion dominates uniformly.  This is the last of the six
     congruence sites [normal_form_strong] goes through.  Both cases follow
     the [dom_u_par] recipe — invert the open family with
     [subst_par_inv]/[subst_res_inv], rule out a value-dependent choice of
@@ -1843,7 +1844,7 @@ Proof.
         [ apply ax_cgr | apply ax_cgr_sym ]; apply cgr_res_scope.
 Qed.
 
-(** Associativity of [‖].  Three branches — the moving leaf is [p], [q] or
+(* Associativity of [‖].  Three branches — the moving leaf is [p], [q] or
     [r] — each closed by the same recipe as [dom_u_par]: invert the open
     family, rule out a value-dependent choice of branch by [size_subst] +
     [Static_lts_decrease], rebuild.  The two untouched leaves are shifted out
@@ -1928,7 +1929,7 @@ Proof.
           [ apply ax_cgr; apply cgr_par_assoc_rev | apply ax_cgr; apply cgr_par_assoc ].
 Qed.
 
-(** The other direction costs nothing: commutativity turns a right-nested
+(* The other direction costs nothing: commutativity turns a right-nested
     product into a left-nested one in five top-level steps, using only
     [dom_u_par_com] and [dom_u_par_assoc]. *)
 Lemma dom_u_par_assoc_rev : forall p q r, Static p -> Static q -> Static r ->
@@ -1942,7 +1943,7 @@ Proof.
   apply dom_u_par_com; [ exact HSr | constructor; assumption ].
 Qed.
 
-(** The [n]-fold versions, mirroring [cgr_res_n] and [cgr_res_scope_n]. *)
+(* The [n]-fold versions, mirroring [cgr_res_n] and [cgr_res_scope_n]. *)
 Lemma Static_res_n : forall n P, Static P -> Static (Ѵ n P).
 Proof. induction n; intros P HP; simpl; [ exact HP | constructor; apply IHn; exact HP ]. Qed.
 
@@ -1967,7 +1968,7 @@ Proof.
   induction n; intros P HP; simpl; [ exact HP | apply Static_NewVarC; apply IHn; exact HP ].
 Qed.
 
-(** The scope-extrusion chain of [NF_par_step], re-run at [dom_u].  Every link
+(* The scope-extrusion chain of [NF_par_step], re-run at [dom_u].  Every link
     is one of the combinators above; the [rewrite]s are definitional
     equalities and so cost nothing. *)
 Lemma dom_u_NF_par_step : forall n1 l1 M1 n2 l2 M2, gStatic M1 -> gStatic M2 ->
@@ -2056,7 +2057,7 @@ Proof.
     apply dom_cgr. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ].
 Qed.
 
-(** ** The normal form dominates UNIFORMLY
+(* ** The normal form dominates UNIFORMLY
 
     [normal_form_strong] matches an input transition of the normal form
     per value; the omega rule [ax_input] consumes a single *open*
@@ -2072,7 +2073,7 @@ Proof.
   constructor; [ apply msgs_Static | constructor; exact HM ].
 Qed.
 
-(** The two [If] cases are free: [lts_ifOne]/[lts_ifZero] carry a
+(* The two [If] cases are free: [lts_ifOne]/[lts_ifZero] carry a
     transition of the selected branch to the conditional with the *same*
     target, so the given family is its own witness. *)
 Lemma dom_u_if_true : forall E p1 p2, Eval_Eq 0 E = Some true ->
@@ -2091,7 +2092,7 @@ Proof.
   intro v. eapply lts_ifZero; [ exact HE | apply HR ].
 Qed.
 
-(** A message's normal form has no input transition at all, so its
+(* A message's normal form has no input transition at all, so its
     [sd_u] obligation is vacuous. *)
 Lemma msg_NF_no_input : forall c v cc w r,
   ~ lts (NF 0 [(c,v)] 𝟘) (ActExt (ActIn (cc,w))) r.
@@ -2161,7 +2162,7 @@ Proof.
     apply dom_u_nil_par.
 Qed.
 
-(** ** Value substitution commutes with the value-binder shift
+(* ** Value substitution commutes with the value-binder shift
 
     The standard de Bruijn commutation, missing from the development until
     now and needed by anything that normalises an *open* term (in
@@ -2228,12 +2229,12 @@ Proof.
   destruct (decide (0 < S i)); [ reflexivity | exfalso; lia ].
 Qed.
 
-(** The instance the expansion law's [gNewVar 0] needs. *)
+(* The instance the expansion law's [gNewVar 0] needs. *)
 Corollary subst_NewVar_0 : forall p k X,
   subst_in_proc (S k) (Succ_bvar X) (NewVar 0 p) = NewVar 0 (subst_in_proc k X p).
 Proof. intros p k X. rewrite <- NewVar_in_Data_zero. apply subst_NewVar. lia. Qed.
 
-(** A message bag under substitution is the bag of substituted messages. *)
+(* A message bag under substitution is the bag of substituted messages. *)
 Definition substl (k : nat) (X : ValueData) (l : list (ChannelData * ValueData))
   : list (ChannelData * ValueData) := map (fun cv => (fst cv, subst_Data k X (snd cv))) l.
 
@@ -2247,7 +2248,7 @@ Lemma subst_res_n : forall n j X p,
   subst_in_proc j X (Ѵ n p) = Ѵ n (subst_in_proc j X p).
 Proof. induction n; intros j X p; simpl; [ reflexivity | f_equal; apply IHn ]. Qed.
 
-(** ** …and with every construction the normal form is built from
+(* ** …and with every construction the normal form is built from
 
     So the normal-form *shape* is substitution-equivariant: instantiating an
     open term's normal form is the normal form of the instantiated term, as
@@ -2276,7 +2277,7 @@ Proof.
   f_equal. simpl. f_equal. f_equal. apply subst_gNewVar_0.
 Qed.
 
-(** [resg] dispatches on a *channel*, which a value substitution never
+(* [resg] dispatches on a *channel*, which a value substitution never
     touches — so the two commute with no side condition at all. *)
 Lemma subst_resg : forall M k X,
   subst_in_gproc k X (resg M) = resg (subst_in_gproc k X M).
@@ -2300,7 +2301,7 @@ Proof.
   rewrite subst_gNewVarC. f_equal. apply IHn.
 Qed.
 
-(** The channel shift touches a message's channel, the substitution its
+(* The channel shift touches a message's channel, the substitution its
     value, so they pass through each other untouched. *)
 Lemma substl_shiftCn : forall l i n k X,
   substl k X (map (shiftCn i n) l) = map (shiftCn i n) (substl k X l).
@@ -2316,7 +2317,7 @@ Proof.
   reflexivity.
 Qed.
 
-(** ** …but NORMALISATION itself is not substitution-equivariant
+(* ** …but NORMALISATION itself is not substitution-equivariant
 
     The commutations above cover every construction the normal form is
     *built* from, so one is tempted to conclude that an open term has an
@@ -2348,7 +2349,7 @@ Proof.
     simpl. destruct (decide (b = a)); [ exfalso; congruence | reflexivity ].
 Qed.
 
-(** ** Padding the restriction block
+(* ** Padding the restriction block
 
     Two processes normalise to blocks of *different* depth, and every
     configuration-level statement compares two normal forms at the **same**
@@ -2399,3 +2400,4 @@ Proof. intros. apply ax_cgr. apply NF_pad. Qed.
 
 
 End VACCS_NormalForm.
+(* end hide *)

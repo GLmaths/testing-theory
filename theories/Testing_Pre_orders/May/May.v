@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -43,7 +44,7 @@ Inductive may `{
     gLtsP : @gLts P A H, 
     gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT} 
 
-    {PInter: Prop_of_Inter P T A dual}
+    {PInter: Prop_of_Inter P T A A dual}
 
     (p : P) (t : T) : Prop :=
 | may_now : outcome t -> may p t
@@ -62,7 +63,7 @@ Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
   (p : P) (t : T) :
   @may_sts P T _ outcome p t <-> may p t.
@@ -86,8 +87,8 @@ Definition ctx_may_pre `{
   gLtsQ : !gLts Q H, 
   gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) 
   := forall (t : T), p may_pass t -> q may_pass t.
@@ -103,7 +104,7 @@ Lemma may_eq_client `{
   gLtsP : @gLts P A H, 
   gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
-  {_ : Prop_of_Inter P T A dual} :
+  {_ : Prop_of_Inter P T A A dual} :
 
   forall (p : P) (t1 t2 : T), t1 ⋍ t2 -> p may_pass t1 -> p may_pass t2.
 Proof.
@@ -126,7 +127,7 @@ Lemma may_eq_server `{
   gLtsP : @gLtsEq P A H,
   gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT} 
 
-  {_ : Prop_of_Inter P T A dual} :
+  {_ : Prop_of_Inter P T A A dual} :
 
   forall (p1 p2 : P) (t : T), p1 ⋍ p2 -> p1 may_pass t -> p2 may_pass t.
 Proof.
@@ -149,25 +150,25 @@ Lemma may_not_stable_or_outcome `{
   gLtsP : @gLts P A H, 
   gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
 
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  (p : P) (t : T) : p may_pass t -> outcome t \/ ¬ t ↛ \/ (exists μ, ¬ t ↛[μ]). 
+  (p : P) (t : T) : p may_pass t -> outcome t \/ t ⟶ \/ (exists μ, t ⟶[μ]). 
 Proof. 
   intros hm. destruct (decide (outcome t)) as [happy | not_happy].
   + now left. 
   + right. dependent induction hm. 
     - contradiction. 
     - exact (IHhm not_happy). 
-    - left. eapply lts_refuses_spec2; eauto.
-    - right. exists μ2. eapply lts_refuses_spec2; eauto.
+    - left. eapply lts_performs_spec2; eauto.
+    - right. exists μ2. eapply lts_performs_spec2; eauto.
 Qed.
 
 Lemma ctx_may_pre_not `{
   gLtsP : @gLts P A H,
   gLtsQ : !gLts Q H,
   gLtsT : ! gLtsEq T H, !Testing_Predicate outcome gLtsT}
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
   (p : P) (q : Q) (t : T) :
   p ⊑ₘₐᵧ  q -> ¬ may q t -> ¬ may p t.
 Proof.
@@ -178,7 +179,7 @@ Qed.
 
 (********************************* [may] and (co-)weak transitions **********************************************)
 
-(** [may] is preserved backwards along a pure-τ weak transition of the
+(* [may] is preserved backwards along a pure-τ weak transition of the
     server or the client — used by both the plain and the co-trace
     characterisations of May ([DefinitionTI.v]/[DefinitionTIco.v]), so
     it lives here rather than being duplicated in either. *)
@@ -187,7 +188,7 @@ Section May_and_wt.
 
 Context `{gLtsP : @gLts P A H}.
 Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
-Context {PInter : Prop_of_Inter P T A dual}.
+Context {PInter : Prop_of_Inter P T A A dual}.
 
 Lemma may_wt_nil_server (s : trace A) (p1 p2 : P) (t : T) :
   p1 ⟹[s] p2 -> s = [] -> p2 may_pass t -> p1 may_pass t.
@@ -221,7 +222,7 @@ Lemma may_wt_tau_client (r : P) (t1 t2 : T) :
   t1 ⟹ t2 -> r may_pass t2 -> r may_pass t1.
 Proof. intros w hm. eapply may_wt_nil_client; eauto. Qed.
 
-(** The co-trace analogues, for the *process* side ([DefinitionTIco.v]
+(* The co-trace analogues, for the *process* side ([DefinitionTIco.v]
     puts the duality there, never on the test/client — see that file).
     With an empty trace, [cowt] only ever uses its
     [cowt_nil]/[cowt_tau] constructors (no dual action involved), so
@@ -245,3 +246,4 @@ Proof. intros w hm. eapply may_wt_nil_server_co; eauto. Qed.
 
 End May_and_wt.
 
+(* end hide *)

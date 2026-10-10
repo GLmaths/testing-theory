@@ -1,3 +1,4 @@
+(* begin hide *)
 From TestingTheory Require Import LTS Renamings pi.Congruence.
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Morphisms.
@@ -410,3 +411,4 @@ intro Transition.
 apply (ren_lts p α q swap (Eq_Subst_Spec_inj swap Swap_Injective)) in Transition.
 assumption.
 Qed.
+(* end hide *)

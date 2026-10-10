@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -433,11 +434,11 @@ Qed.
 Scheme proc_ind2 := Induction for proc Sort Prop
   with gproc_ind2 := Induction for gproc Sort Prop.
 
-Lemma cgr_step_altcgr n p q: cgr_step n p q -> altcgr n p q.
+Lemma cgr_step_altcgr n p q: p ≡[ n ] q -> altcgr n p q.
 Proof.
 revert n q.
 induction p using proc_ind2 with (P0 :=
-  (fun gp => forall d gq, cgr_step d (g gp) (g gq) -> altcgr_gstep d gp gq));
+  (fun gp => forall d gq, (g gp) ≡[ d ] (g gq) -> altcgr_gstep d gp gq));
 intros d q Hq;
 try (solve[inversion Hq; subst; eauto with *; do 2 try constructor; eauto]).
 inversion Hq; subst; eauto with *;
@@ -1591,8 +1592,8 @@ Proof.
 Qed.
 
 
-Lemma cgr_step_subst : forall d p q, cgr_step d p q -> forall n, d = S n -> forall v,
-    cgr_step n (subst_in_proc n v p) (subst_in_proc n v q).
+Lemma cgr_step_subst : forall d p q, p ≡[ d ] q -> forall n, d = S n -> forall v,
+    (subst_in_proc n v p) ≡[ n ] (subst_in_proc n v q).
 Proof.
 intros d p q H. induction H; intros n0 Heqn w; subst n; simpl; eauto with cgr_step_structure.
 - apply cgr_if_true_step. eapply subst_equation. eauto.
@@ -1698,7 +1699,7 @@ Proof.
 Qed.
 
 
-Lemma cgr_step_NewVar : forall n p q, cgr_step n p q -> forall j, j <= n -> cgr_step (S n) (NewVar j p) (NewVar j q).
+Lemma cgr_step_NewVar : forall n p q, p ≡[ n ] q -> forall j, j <= n -> (NewVar j p) ≡[ (S n) ] (NewVar j q).
 Proof.
 intros n p q H. induction H; intros j Hjn; simpl; eauto with cgr_step_structure.
 - apply cgr_if_true_step. eapply NewVar_equation; eauto.
@@ -1722,7 +1723,7 @@ Qed.
 (* [NewVarC] only ever shifts channel indices, an index space entirely
    disjoint from the ValueData depth [n] that [Eval_Eq]/[cgr_step] track, so
    it never needs to change [n]. *)
-Lemma cgr_step_NewVarC : forall n p q, cgr_step n p q -> forall j, cgr_step n (NewVarC j p) (NewVarC j q).
+Lemma cgr_step_NewVarC : forall n p q, p ≡[ n ] q -> forall j, (NewVarC j p) ≡[ n ] (NewVarC j q).
 Proof.
 intros n p q H. induction H; intros j; simpl; eauto with cgr_step_structure.
 - replace (NewVarC (S (S j)) (VarSwap_in_proc 0 p)) with (VarSwap_in_proc 0 (NewVarC (S (S j)) p)).
@@ -1941,7 +1942,7 @@ Proof.
 Qed.
 
 (* ≡ respects the substitution of his variable*)
-Lemma cgr_step_subst2 : forall p d p' q x, cgr_step d p p' → pr_subst x p q ≡[d] pr_subst x p' q.
+Lemma cgr_step_subst2 : forall p d p' q x, p ≡[ d ] p' → pr_subst x p q ≡[d] pr_subst x p' q.
 Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
@@ -2006,3 +2007,4 @@ cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice
 cgr_full_if cgr_fullchoice cgr_fullpar cgr_res_nil cgr_res_nil_rev cgr_res_swap cgr_res_swap_rev cgr_res
 cgr_res_scope cgr_res_scope_rev cgr_refl @cgr_symm cgr_trans:cgr.
 
+(* end hide *)

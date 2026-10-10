@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
 
@@ -524,7 +525,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   intros g a. simpl. unfold proc_stable. cbn. intro nb.
-  unfold non_blocking_output in nb. destruct nb as (c & eq); subst. reflexivity.
+  unfold non_blocking_output in nb. destruct nb as (c & eq); subst. intros H. now apply H.
 Qed.
 Next Obligation.
   intros g.
@@ -612,3 +613,4 @@ Next Obligation. cbn. eauto with cgr. Qed.
 Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VACCS_ta_tc.
+(* end hide *)

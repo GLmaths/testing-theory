@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -32,12 +33,12 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
      DefinitionTI DefinitionTIco DefinitionAS DefinitionASco
      FeedbackNotReversible.
 
-(** [NatVP] -- the instantiation of the VACCS parameters used by all the
+(* [NatVP] -- the instantiation of the VACCS parameters used by all the
     counterexamples -- is declared [#[local]] in [FeedbackNotReversible.v], so
     it has to be put back in the instance database here. *)
 #[local] Existing Instance NatVP.
 
-(** * None of the four feedback-free preorders implies its counterpart
+(* * None of the four feedback-free preorders implies its counterpart
 
     [FeedbackNotReversible.v] separates the alternative preorders of the
     development from their restrictions to the traces carrying no feedback, but
@@ -61,7 +62,7 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
       [Pe  = c1 ? (If x = v0 Then 𝛕•ā + 𝛕•b̄ Else 𝟘)]
       [Qe  = c1 ? (If x = v0 Then ā ‖ b̄ Else 𝟘)] *)
 
-(** * co-Trace inclusion: the missing separation
+(* * co-Trace inclusion: the missing separation
 
     Everything here is read on co-traces, with [has_fb] taken literally on the
     co-trace, exactly as [pe_qe_co_cond2_ff] and [bhv_pre_co_cond2] do.  No
@@ -81,12 +82,12 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
     driven silently to a stable one, which extends the co-weak transition
     without touching the co-trace read so far. *)
 
-(** A silent computation is a co-weak transition on the empty co-trace: the
+(* A silent computation is a co-weak transition on the empty co-trace: the
     empty co-trace is dual to the empty trace. *)
 Lemma wt_nil_to_cowt_nil `{gLts P A} (p q : P) : p ⟹ q -> p ⟹ᶜᵒ q.
 Proof. intro w. eapply (wt_to_cowt_dual p [] q w []). constructor. Qed.
 
-(** [Qe] converges on every co-trace: it converges on every trace ([qe_cnv]),
+(* [Qe] converges on every co-trace: it converges on every trace ([qe_cnv]),
     and a co-trace is answered along some dual trace ([cowt_to_wt_dual]). *)
 Lemma qe_cocnv (s : trace (ExtAct TypeOfActions)) : ((Qe, mt) : st) ⇓ᶜᵒ s.
 Proof.
@@ -96,7 +97,7 @@ Proof.
             ltac:(reflexivity) w').
 Qed.
 
-(** Every feedback-free co-trace of [Qe] is a co-trace of [Pe]. *)
+(* Every feedback-free co-trace of [Qe] is a co-trace of [Pe]. *)
 Theorem qe_pe_co_ti_nfb : ((Qe, mt) : st) ≼꜀ₒ₋ₜᵢⁿᶠᵇ ((Pe, mt) : st).
 Proof.
   intros s hfb (q' & w).
@@ -109,7 +110,7 @@ Proof.
   exists p'. exact wp.
 Qed.
 
-(** But the co-trace [s_bad = ā ; a ; b] carries a feedback ([s_bad_has_fb]),
+(* But the co-trace [s_bad = ā ; a ; b] carries a feedback ([s_bad_has_fb]),
     and separates them. *)
 Theorem qe_pe_not_co_ti : ((Qe, mt) : st) ⋠꜀ₒ₋ₜᵢ ((Pe, mt) : st).
 Proof.
@@ -121,7 +122,7 @@ Theorem co_ti_nfb_not_co_ti :
   ((Qe, mt) : st) ≼꜀ₒ₋ₜᵢⁿᶠᵇ ((Pe, mt) : st) /\ ((Qe, mt) : st) ⋠꜀ₒ₋ₜᵢ ((Pe, mt) : st).
 Proof. split; [exact qe_pe_co_ti_nfb | exact qe_pe_not_co_ti]. Qed.
 
-(** * Trace inclusion *)
+(* * Trace inclusion *)
 
 Theorem bp2_q0_ti_nfb : ((Bp2, mt) : st) ≼ₜᵢⁿᶠᵇ ((g Q0, mt) : st).
 Proof. intros s hfb hs. eapply bp2_ff_included; eassumption. Qed.
@@ -133,7 +134,7 @@ Theorem ti_nfb_not_ti :
   ((Bp2, mt) : st) ≼ₜᵢⁿᶠᵇ ((g Q0, mt) : st) /\ ((Bp2, mt) : st) ⋠ₜᵢ ((g Q0, mt) : st).
 Proof. split; [exact bp2_q0_ti_nfb | exact bp2_q0_not_ti]. Qed.
 
-(** * The acceptance-set preorders
+(* * The acceptance-set preorders
 
     Both read the acceptance sets through the image [⌈ 𝝳 ∘ Φ ⌉]; as in
     [SoundnessASco], the two sides are required to read the labels through the
@@ -145,11 +146,11 @@ Section NfbNotMust.
   Context {T FA PA : Type}.
   Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
   Context (same_delta : forall x, 𝝳P x = 𝝳Q x).
 
-  (** ** Acceptance sets on traces: [Pw] against [Bp2] *)
+  (* ** Acceptance sets on traces: [Pw] against [Bp2] *)
 
   Theorem pw_bp2_as_nfb :
     @bhv_pre_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
@@ -175,7 +176,7 @@ Section NfbNotMust.
          st _ 𝝳Q AbsQ ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof. split; [exact pw_bp2_as_nfb | exact pw_bp2_not_as]. Qed.
 
-  (** ** Acceptance sets on co-traces: [Pe] against [Qe] *)
+  (* ** Acceptance sets on co-traces: [Pe] against [Qe] *)
 
   Theorem pe_qe_co_as_nfb :
     @bhv_pre_co_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
@@ -192,8 +193,9 @@ Section NfbNotMust.
   Theorem co_as_nfb_not_co_as :
     @bhv_pre_co_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
       st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st)
-    /\ ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
+    /\ ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P gLtsT _ AbsP
          st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
   Proof. split; [exact pe_qe_co_as_nfb | exact (co_must_false_Pe AbsP AbsQ)]. Qed.
 
 End NfbNotMust.
+(* end hide *)

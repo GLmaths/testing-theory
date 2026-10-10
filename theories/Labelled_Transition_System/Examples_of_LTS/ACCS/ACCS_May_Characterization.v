@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -30,7 +31,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
 
 Import VACCS.
 
-(** * The May preorder is trace inclusion, for ACCS
+(* * The May preorder is trace inclusion, for ACCS
 
     ACCS is VACCS with a trivial [Value] — direct specialisation of
     [VACCS_May_Characterization.v], exactly as [ACCS_Must_Characterization.v]
@@ -56,3 +57,4 @@ Proof.
 Qed.
 
 End ACCS_May_Corollary.
+(* end hide *)

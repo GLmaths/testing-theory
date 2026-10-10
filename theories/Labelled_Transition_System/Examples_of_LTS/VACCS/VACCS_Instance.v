@@ -1,3 +1,4 @@
+(* begin hide *)
 From stdpp Require Import gmap gmultiset.
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
@@ -7,10 +8,12 @@ From TestingTheory Require Import
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
   DefinitionAS Equivalence.
 From TestingTheory Require Export VACCS VACCS.Congruence.
+(* end hide *)
 
 Section VACCS_lts.
 
 Context `{VP : VACCS_Parameters}.
+(* begin hide *)
 Existing Instance VP.
 
 (* State Transition System (STS-reduction) *)
@@ -223,6 +226,7 @@ Proof. intros. intro l. dependent induction l;eapply IHl; eauto. Defined.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs an OUPUT,
 are pretty all the same, up to ≡* *)
+(* end hide *)
 Lemma TransitionShapeForOutput : forall P Q c v, (lts P ((c , v) !) Q) -> 
 (exists R n, (P ≡* (Ѵ  n (((VarC_add n c) ! v • 𝟘) ‖ R)) /\ (Q ≡* Ѵ  n (𝟘 ‖ R)))).
 Proof.
@@ -253,6 +257,7 @@ intros P Q c v Transition.
 - edestruct guarded_does_no_output. subst. eauto.
 - edestruct guarded_does_no_output. subst. eauto.
 Qed.
+(* begin hide *)
 
 Lemma BigNew_reverse_def_one j p : (Ѵ j (ν p)) = ν (Ѵ j p).
 Proof.
@@ -2509,13 +2514,13 @@ Proof.
   + cbn in mem.
     destruct (decide (a ∈ moutputs_of k e1)).
     destruct (IHe1 a k e) as (e1' & lts__e1 & eq).
-    exists (pr_par e1' e2). repeat split; eauto with ccs.
+    exists (e1' ‖ e2). repeat split; eauto with ccs.
     eapply inversion_res_ext in lts__e1. eapply lts_res_ext_n.
     eapply lts_parL. eauto.
     multiset_solver.
     destruct (decide (a ∈ moutputs_of k e2)).
     destruct (IHe2 a k e) as (e2' & lts__e2 & eq).
-    exists (pr_par e1 e2'). repeat split; eauto with ccs.
+    exists (e1 ‖ e2'). repeat split; eauto with ccs.
     eapply inversion_res_ext in lts__e2. eapply lts_res_ext_n.
     eapply lts_parR. eauto.
     multiset_solver.
@@ -2726,6 +2731,7 @@ Proof.
   - eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_res_ext. rewrite elem_of_elements in mem. eapply IHp in mem. simpl. destruct a. eauto.
 Qed.
+(* end hide *)
 
 Lemma lts_set_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_set_output p a.
 Proof.
@@ -2735,6 +2741,7 @@ Proof.
   - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
   - simpl in *. destruct a. try set_solver.
 Qed.
+(* begin hide *)
 
 Lemma lts_set_input_spec0 p a q : q ∈ lts_set_input p a -> lts p (ActExt $ ActIn a) q.
 Proof.
@@ -2892,8 +2899,10 @@ Proof.
 Qed.
 
 Definition non_blocking_output (μ : ExtAct TypeOfActions) := (is_output μ).
+(* end hide *)
 
 (** ** VACCS satisfies the axioms for soundness and completeness *)
+(* begin hide *)
 
 #[global] Program Instance VACCS_ExtAction : ExtAction (ExtAct TypeOfActions) :=
   {| non_blocking η := non_blocking_output η ;
@@ -2911,10 +2920,12 @@ Next Obligation.
 Defined.
 Next Obligation.
  intros μ; simpl in *.
- exists (InputOutputActions.co μ).
+ exists (InputOutputActions.io_co μ).
  symmetry. eapply dual_co.
 Defined.
-Next Obligation.
+
+#[global] Instance VACCS_UniqueDual : UniqueDual (ExtAct TypeOfActions).
+Proof.
   intros μ1 μ2 dual; subst.
   simpl in *.
   destruct μ2 as [ (* Input *) a' | (* Output *) a' ].
@@ -2923,11 +2934,11 @@ Next Obligation.
 Defined.
 
 Local Program Definition VACCS_gLts : gLts proc VACCS_ExtAction :=
-  {| lts_step x ℓ y  := lts x ℓ y ;
+  {| lts_step x α y  := lts x α y ;
      lts_state_eqdec := proc_dec ;
      lts_step_decidable p α q := lts_dec p α q ;
-     lts_refuses p := proc_stable p;
-     lts_refuses_decidable p α := proc_stable_dec p α
+     lts_performs p α := ¬ proc_stable p α;
+     lts_performs_decidable p α := not_dec (proc_stable_dec p α)
     |}.
 Next Obligation.
   intros p [[a|a]|]; intro hs;eapply gset_nempty_ex in hs as (r & l); eapply lts_set_spec0 in l; 
@@ -2985,6 +2996,7 @@ Next Obligation. (* lts_oba_non_blocking_action_deter_inv *)
   destruct nb as (a & eq); subst.
   eapply ExtraAxiom; eauto.
 Qed.
+(* end hide *)
 
 #[global] Program Instance VACCS_gLtsOBAFB : gLtsObaFB proc (ExtAct TypeOfActions).
 Next Obligation.
@@ -2993,6 +3005,7 @@ Next Obligation.
   eapply simplify_match_output in dual; subst.
   eapply OBA_with_FB_Fourth_Axiom; eauto.
 Qed.
+(* begin hide *)
 
 Definition label_to_output (a : TypeOfActions) : ExtAct TypeOfActions := ActOut a.
 
@@ -3037,11 +3050,12 @@ Next Obligation.
   rewrite gmultiset_map_disj_union. rewrite gmultiset_map_singleton.
   unfold label_to_output at 1. reflexivity.
 Qed.
+(* end hide *)
 
 #[global] Program Instance VACCS_gLtsFiniteImage : FiniteImagegLts proc (ExtAct TypeOfActions).
 Next Obligation.
-  intros p ℓ. unfold dsig.
-  destruct ℓ as [[a|a]|].
+  intros p α. unfold dsig.
+  destruct α as [[a|a]|].
   - eapply (in_list_finite (elements (lts_set_input p a))).
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_input_spec1.
@@ -3052,9 +3066,10 @@ Next Obligation.
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_tau_spec1.
 Defined.
+(* begin hide *)
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
-  Prop_of_Inter proc proc (ExtAct TypeOfActions) dual :=
+  Prop_of_Inter proc proc (ExtAct TypeOfActions) (ExtAct TypeOfActions) dual :=
   {| lts_essential_actions_left p := set_map ActOut (outputs_of p) ;
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
@@ -3118,7 +3133,7 @@ Next Obligation.
   symmetry in inter. eapply simplify_match_output in inter. subst. set_solver.
 Defined.
 
-#[global] Program Instance Interaction_between_VACCS_and_MB: Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) fw_inter :=
+#[global] Program Instance Interaction_between_VACCS_and_MB: Prop_of_Inter proc (MO (ExtAct TypeOfActions)) (ExtAct TypeOfActions) (ExtAct TypeOfActions) fw_inter :=
     {| lts_essential_actions_left p := empty ;
        lts_essential_actions_right m := dom (MO_without_not_nb m) ; 
        lts_co_inter_action_right m := fun x => empty |}.
@@ -3156,7 +3171,7 @@ Next Obligation.
   intros ? ? ? ? m mem l inter;simpl in *.
   unfold Interaction_between_VACCS_and_MB_obligation_4.
   destruct inter as (duo & nb). rewrite decide_True; eauto.
-  assert (μ = co ξ). { eapply unique_nb. symmetry. exact duo. }
+  assert (μ = co ξ). { eapply VACCS_UniqueDual. symmetry. exact duo. }
   subst; set_solver.
 Defined.
 Next Obligation.
@@ -3165,7 +3180,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance Interaction_between_FW_VACCS_and_VACCS :
-  Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) dual :=
+  Prop_of_Inter (proc * MO (ExtAct TypeOfActions)) proc (ExtAct TypeOfActions) (ExtAct TypeOfActions) dual :=
     {| lts_essential_actions_left p := set_map ActOut (outputs_of p.1) ∪ (dom (MO_without_not_nb p.2)); 
        lts_essential_actions_right q := set_map ActOut (outputs_of q)|}.
 Next Obligation.
@@ -3497,11 +3512,11 @@ Proof.
   + intros; simpl in *. rewrite<- BigNew_reverse_def_one.
     eapply IHj. exists (VarC_action_add (j + k) (co μ')).
     destruct H as (μ'' & eq1 & eq2 & eq3).
-    eapply lts_refuses_spec1 in eq1 as (p' & tr). 
+    eapply lts_performs_spec1 in eq1 as (p' & tr). 
     assert (dual μ'' (VarC_action_add (S (j + k)) μ')); eauto.
     eapply simpl_dual_VarC_add in eq2. subst.
     repeat split.
-    ++ eapply lts_refuses_spec2. exists (ν p'). eapply lts_res_ext.
+    ++ eapply lts_performs_spec2. exists (ν p'). eapply lts_res_ext.
        rewrite VarC_action_add_add; simpl; eauto.
     ++ eapply (simpl_dual_VarC 1). simpl; eauto.
     ++ eapply (simpl_blocking_Varc 1). simpl ; eauto.
@@ -3553,35 +3568,35 @@ Proof.
   * simpl in *. eapply gmultiset_elem_of_disj_union in H. destruct H.
     -- eapply (Hp p1) in H. destruct H as (μ' & eq & mem).
        destruct eq as (μ'' & Tr & duo & b). exists μ'. split; eauto. 
-       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-       eapply lts_refuses_spec2. exists (p'1 ‖ p2). constructor. eauto. simpl. lia.
+       exists μ''. repeat split; eauto. eapply lts_performs_spec1 in Tr as (p'1 & Tr).
+       eapply lts_performs_spec2. exists (p'1 ‖ p2). constructor. eauto. simpl. lia.
     -- eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
        exists μ'. split; eauto. destruct eq as (μ'' & Tr & duo & b).
-       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-       eapply lts_refuses_spec2. exists (p1 ‖ p'2). constructor. eauto. simpl. lia.
+       exists μ''. repeat split; eauto. eapply lts_performs_spec1 in Tr as (p'2 & Tr).
+       eapply lts_performs_spec2. exists (p1 ‖ p'2). constructor. eauto. simpl. lia.
   * simpl in *. inversion H.
   * simpl in *. inversion H.
   * case_eq (Eval_Eq 0 e); intros; simpl in *. rewrite H0 in H. destruct b.
     -- eapply (Hp p1) in H. destruct H as (μ' & eq & mem).
        exists μ'. split; eauto. destruct eq as (μ'' & Tr & duo & b).
-       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-       eapply lts_refuses_spec2. exists p'1. constructor; eauto. lia.
+       exists μ''. repeat split; eauto. eapply lts_performs_spec1 in Tr as (p'1 & Tr).
+       eapply lts_performs_spec2. exists p'1. constructor; eauto. lia.
     -- eapply (Hp p2) in H. destruct H as (μ' & eq & mem).
        exists μ'. split; eauto. destruct eq as (μ'' & Tr & duo & b).
-       exists μ''. repeat split; eauto. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-       eapply lts_refuses_spec2. exists p'2. eapply lts_ifZero; eauto. lia.
+       exists μ''. repeat split; eauto. eapply lts_performs_spec1 in Tr as (p'2 & Tr).
+       eapply lts_performs_spec2. exists p'2. eapply lts_ifZero; eauto. lia.
     -- eapply gmultiset_elem_of_dom in H. simpl in *. rewrite H0 in H. inversion H.
   * simpl in *. destruct c.
     ** assert (pre_μ = Inputs (cst c)) by multiset_solver.
        rewrite H0. simpl. assert ((𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) (ActIn (cst c , v)) = Inputs (cst c)). simpl; eauto.
        rewrite<- H1. eapply map_gamma_of_action. exists (ActOut (cst c , v)). repeat split.
-       eapply lts_refuses_spec2. exists (g 𝟘). constructor. intro. inversion H2. inversion H3.
+       eapply lts_performs_spec2. exists (g 𝟘). constructor. intro. inversion H2. inversion H3.
     ** destruct (decide ((k < S n))).
        - assert (pre_μ = Inputs (bvar (n - k))) by multiset_solver.
          rewrite H0. simpl. assert ((k + (n - k) = n)%nat) by lia. subst. rewrite H1.
          assert ((𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) (ActIn (bvar n , v)) = Inputs (bvar n)). simpl; eauto.
          rewrite<- H0. eapply map_gamma_of_action. exists (ActOut (bvar n , v)). repeat split.
-         eapply lts_refuses_spec2. exists (g 𝟘). constructor. intro. inversion H2. inversion H3.
+         eapply lts_performs_spec2. exists (g 𝟘). constructor. intro. inversion H2. inversion H3.
        - inversion H.
   * simpl in *. assert (S k = 1 + k)%nat as eq'' by lia.
     rewrite eq'' in H.
@@ -3591,14 +3606,14 @@ Proof.
 Qed.
 
 #[global] Program Instance AbsVACCS :
-  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq.
+  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
-    eapply lts_refuses_spec1 in H2 as (e' & Tr).
+    eapply lts_performs_spec1 in H2 as (e' & Tr).
     eapply TransitionShapeForInput in Tr as (P1 & G & R & n & eq & eq' & Hyp).
-    assert (¬ (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ↛{ (c0 , v0) ? })) as accepts.
-    { eapply lts_refuses_spec2. exists (Ѵ n (P1 ^ v0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
+    assert (Ѵ n ((gpr_input (VarC_add n c0) P1 + G) ‖ R) ⟶{(c0 , v0) ?}) as accepts.
+    { eapply lts_performs_spec2. exists (Ѵ n (P1 ^ v0 ‖ R)). eapply lts_res_ext_n. eapply lts_parL. eapply lts_choiceL. constructor. }
     eapply (@accepts_preserved_by_eq proc (ExtAct TypeOfActions) VACCS_ExtAction VACCS_gLtsEq) in accepts.
     exact accepts. symmetry. eauto.
   - exfalso. eapply H0. exists (c0 , v0). eauto.
@@ -3621,7 +3636,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance FinitaryAbsVACCS :
-  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _ _ :=
+  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _ _ _ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.
@@ -3632,7 +3647,7 @@ Next Obligation.
   destruct μ.
   + destruct eq as (μ' & Tr & duo & b). symmetry in duo.
     destruct a. eapply simplify_match_input in duo. subst.
-    eapply lts_refuses_spec1 in Tr as (p' & Tr).
+    eapply lts_performs_spec1 in Tr as (p' & Tr).
     eapply TransitionShapeForOutput in Tr as (R & n & eq & eq').
     assert ((𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ) (ActIn (c , v)) ∈ PreCoAct_of (Ѵ n ((VarC_add n c ! v • 𝟘) ‖ R))).
     { eapply gmultiset_elem_of_dom. simpl. rewrite mPreCoAct_of_res_n.
@@ -3645,5 +3660,6 @@ Next Obligation.
   + destruct eq as (μ' & Tr & duo & b).
     destruct b. exists a; eauto.
 Qed.
+(* end hide *)
 
 End VACCS_lts.

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -30,7 +31,7 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
      coWeakTransition Termination Convergence NormalForm Normalisation
      RestrictedSimulation Subset_Act coConvergence DefinitionAS DefinitionASco.
 
-(** * The feedback simplification is not reversible
+(* * The feedback simplification is not reversible
 
     [wt_fnf] states that a process performing [s] also performs the simplified
     trace [nlin (fnf s)].  The converse fails, and this file exhibits a
@@ -45,18 +46,18 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
     traces is strictly weaker than comparing them on all their traces
     ([feedback_free_strictly_weaker]). *)
 
-(** ** A generic tool for negative results *)
+(* ** A generic tool for negative results *)
 
 Lemma wt_nil_stable `{gLts P A} (p r : P) : p ↛ -> p ⟹ r -> r = p.
 Proof.
   intros hst w. remember ([] : trace A) as s0 eqn:Hs. revert Hs.
   induction w as [ p0 | s p0 q0 t l w IH | μ s p0 q0 t l w IH ]; intro Hs.
   - reflexivity.
-  - exfalso. eapply (lts_refuses_spec2 p0 τ); [exists q0; exact l | exact hst].
+  - exfalso. apply hst, (lts_performs_spec2 p0 τ). exists q0; exact l.
   - discriminate.
 Qed.
 
-(** A stable process refusing [μ] performs no trace starting with [μ]. *)
+(* A stable process refusing [μ] performs no trace starting with [μ]. *)
 Lemma no_wt_of_refuses `{gLts P A} (p : P) (μ : A) s :
   p ↛ -> p ↛[μ] -> ¬ (exists q, p ⟹[μ :: s] q).
 Proof.
@@ -64,17 +65,17 @@ Proof.
   eapply wt_pop in w as (t & w1 & _).
   eapply wt_decomp_one in w1 as (r1 & r2 & w2 & l & _).
   eapply wt_nil_stable in w2; [| exact ht]. subst r1.
-  eapply (lts_refuses_spec2 p (ActExt μ)); [exists r2; exact l | exact hm].
+  apply hm, (lts_performs_spec2 p (ActExt μ)). exists r2; exact l.
 Qed.
 
-(** ** The counterexample, in the forwarder lifting of VACCS *)
+(* ** The counterexample, in the forwarder lifting of VACCS *)
 
 #[local] Instance NatVP : VACCS_Parameters :=
   {| Channel := nat ; Value := nat ; O := 0 |}.
 
 Definition a1 : TypeOfActions := (cst 1, cst 0).
 
-(** The idle process, with an empty mailbox. *)
+(* The idle process, with an empty mailbox. *)
 Definition z : proc * MO (ExtAct TypeOfActions) := (g 𝟘, ∅).
 
 Lemma nil_no_step (α : ActIO TypeOfActions) (p' : proc) : ¬ lts (g 𝟘) α p'.
@@ -85,32 +86,32 @@ Qed.
 
 Lemma z_stable : z ↛.
 Proof.
-  destruct (decide (z ↛)) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as ((p', m') & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as ((p', m') & l).
   inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0.
   - eapply nil_no_step; eassumption.
 Qed.
 
-(** [z] cannot emit: the process is idle and the mailbox is empty. *)
+(* [z] cannot emit: the process is idle and the mailbox is empty. *)
 Lemma z_no_out : z ↛[ActOut a1].
 Proof.
-  destruct (decide (z ↛[ActOut a1])) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as ((p', m') & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as ((p', m') & l).
   inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0; subst; [| multiset_solver].
     destruct nb as (c & eq). subst η. simpl in duo. exact duo.
 Qed.
 
-(** The trace [ā ; a] is entirely consumed by the feedback simplification. *)
+(* The trace [ā ; a] is entirely consumed by the feedback simplification. *)
 Definition s_ce : trace (ExtAct TypeOfActions) := [ActOut a1 ; ActIn a1].
 
 Lemma fnf_s_ce : nlin (fnf s_ce) = [].
 Proof. vm_compute. reflexivity. Qed.
 
-(** [z] performs the simplified trace but not the original one. *)
+(* [z] performs the simplified trace but not the original one. *)
 Theorem feedback_not_reversible :
   (exists r, z ⟹[nlin (fnf s_ce)] r) /\ ¬ (exists r, z ⟹[s_ce] r).
 Proof.
@@ -119,7 +120,7 @@ Proof.
   - exact (no_wt_of_refuses z (ActOut a1) [ActIn a1] z_stable z_no_out).
 Qed.
 
-(** * The candidate witness for the open question
+(* * The candidate witness for the open question
 
     Refuting the equivalence of the two preorders needs a pair [p], [q]
     agreeing on every feedback-free trace but not on some trace with a
@@ -153,7 +154,7 @@ Definition mt : MO (ExtAct TypeOfActions) := ∅.
 Lemma subst_oB (v : ValueData) : oB ^ v = oB.
 Proof. vm_compute. reflexivity. Qed.
 
-(** [p] performs the discriminating trace, through its third branch. *)
+(* [p] performs the discriminating trace, through its third branch. *)
 Lemma p_does : exists r, (g P0, mt) ⟹[[aOut; aIn; bOut]] r.
 Proof.
   eexists.
@@ -168,7 +169,7 @@ Proof.
   eapply wt_nil.
 Qed.
 
-(** ** Inversion tools for the forwarder lifting *)
+(* ** Inversion tools for the forwarder lifting *)
 
 Lemma fw_tau_empty (p : proc) (r : proc * MO (ExtAct TypeOfActions)) :
   (p, mt) ⟶ r -> exists p', lts p τ p' /\ r = (p', mt).
@@ -195,15 +196,15 @@ Qed.
 
 Lemma stable_of_no_tau (p : proc) : (forall p', ¬ lts p τ p') -> (p, mt) ↛.
 Proof.
-  intro h. destruct (decide ((p, mt) ↛)) as [k | k]; [exact k |].
-  exfalso. eapply lts_refuses_spec1 in k as (r & l).
+  intro h. intros k.
+  exfalso. eapply lts_performs_spec1 in k as (r & l).
   eapply fw_tau_empty in l as (p' & l' & _). eapply h, l'.
 Qed.
 
 Lemma nil_mb_stable (m : MO (ExtAct TypeOfActions)) : (g 𝟘, m) ↛.
 Proof.
-  destruct (decide ((g 𝟘, m) ↛)) as [k | k]; [exact k |].
-  exfalso. eapply lts_refuses_spec1 in k as (r & l). inversion l; subst.
+  intros k.
+  exfalso. eapply lts_performs_spec1 in k as (r & l). inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0.
   - eapply nil_no_step; eassumption.
@@ -215,7 +216,7 @@ Proof. intros p' l. eapply lts_set_spec1 in l. revert l. vm_compute. discriminat
 Lemma oB_no_tau : forall p', ¬ lts oB τ p'.
 Proof. intros p' l. eapply lts_set_spec1 in l. revert l. vm_compute. discriminate. Qed.
 
-(** ** [q] cannot perform the discriminating trace *)
+(* ** [q] cannot perform the discriminating trace *)
 
 Lemma Q0_tau_step p' : lts (g Q0) τ p' -> p' = oA \/ p' = oB.
 Proof.
@@ -272,8 +273,8 @@ Proof. unfold aOut, bOut, c1, c2. discriminate. Qed.
 
 Lemma nilA_no_bOut : (g 𝟘, {[+ aOut +]} ⊎ mt) ↛[bOut].
 Proof.
-  destruct (decide ((g 𝟘, {[+ aOut +]} ⊎ mt) ↛[bOut])) as [k | k]; [exact k |].
-  exfalso. eapply lts_refuses_spec1 in k as (r & l). inversion l; subst.
+  intros k.
+  exfalso. eapply lts_performs_spec1 in k as (r & l). inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0; subst.
     + destruct nb as (c & ->). simpl in duo. exact duo.
@@ -288,7 +289,7 @@ Proof.
   exact (no_wt_of_refuses _ bOut [] (nil_mb_stable _) nilA_no_bOut (ex_intro _ r w4)).
 Qed.
 
-(** The witness is separated by a trace carrying a feedback. *)
+(* The witness is separated by a trace carrying a feedback. *)
 Theorem witness_separated :
   (exists r, (g P0, mt) ⟹[[aOut; aIn; bOut]] r)
   /\ ¬ (exists r, (g Q0, mt) ⟹[[aOut; aIn; bOut]] r)
@@ -300,7 +301,7 @@ Proof.
   - constructor. reflexivity.
 Qed.
 
-(** * The witness does not work
+(* * The witness does not work
 
     The candidate above is *not* a counterexample to the open question, and the
     reason is specific to a calculus with values: the input [c1 ? P] of VACCS
@@ -334,7 +335,7 @@ Proof.
   - exact h.
 Qed.
 
-(** [p] is unlocked by *any* value on the channel. *)
+(* [p] is unlocked by *any* value on the channel. *)
 Lemma p_does_gen (v : ValueData) :
   exists r, (g P0, mt) ⟹[[aOut; ActIn (c1, v); bOut]] r.
 Proof.
@@ -365,8 +366,8 @@ Lemma nilA_no_bOut_gen (a : TypeOfActions) :
   ActOut a <> bOut -> (g 𝟘, {[+ ActOut a +]} ⊎ mt) ↛[bOut].
 Proof.
   intro hne.
-  destruct (decide ((g 𝟘, {[+ ActOut a +]} ⊎ mt) ↛[bOut])) as [k | k]; [exact k |].
-  exfalso. eapply lts_refuses_spec1 in k as (r & l). inversion l; subst.
+  intros k.
+  exfalso. eapply lts_performs_spec1 in k as (r & l). inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0; subst.
     + destruct nb as (c & ->). simpl in duo. exact duo.
@@ -383,7 +384,7 @@ Proof.
            (ex_intro _ r w4)).
 Qed.
 
-(** [p] and [q] are separated by a *feedback-free* trace, so the pair is not a
+(* [p] and [q] are separated by a *feedback-free* trace, so the pair is not a
     counterexample to the open question. *)
 Theorem witness_fails :
   ¬ has_fb t_ff
@@ -395,7 +396,7 @@ Proof.
   - eapply q_does_not_gen. unfold bOut, c1, c2. discriminate.
 Qed.
 
-(** * The repaired witness
+(* * The repaired witness
 
     Guarding the continuation of the input on the received value makes the
     unlocking of [b̄] depend on the *exact* co-action of [ā]:
@@ -419,11 +420,11 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma Gd_v1 : Gd ^ v1 = If (Equality v1 v0) Then oB Else 𝟘.
 Proof. vm_compute. reflexivity. Qed.
 
-(** The co-action of [ā] fires the guard... *)
+(* The co-action of [ā] fires the guard... *)
 Lemma guard_v0_fires : lts (Gd ^ v0) (ActExt bOut) (g 𝟘).
 Proof. rewrite Gd_v0. eapply lts_ifOne; [vm_compute; reflexivity | eapply lts_output]. Qed.
 
-(** ...and no other value does. *)
+(* ...and no other value does. *)
 Lemma guard_v1_blocks (p' : proc) : ¬ lts (Gd ^ v1) (ActExt bOut) p'.
 Proof. intro l. eapply lts_set_spec1 in l. revert l. vm_compute. discriminate. Qed.
 
@@ -452,7 +453,7 @@ Proof.
   - constructor. reflexivity.
 Qed.
 
-(** * Feedback-free traces do not determine the traces
+(* * Feedback-free traces do not determine the traces
 
     The pair below settles the question left open above: restricting the trace
     preorder to the feedback-free traces is *strictly weaker* than the trace
@@ -473,7 +474,7 @@ Qed.
     [RestrictedSimulation.v]: an ordinary simulation would have to match the
     input closing the feedback, and there [q] gets stuck. *)
 
-(** ** The guard *)
+(* ** The guard *)
 
 Definition fires (v : ValueData) : Prop := Eval_Eq 0 (Equality v v0) = Some true.
 
@@ -483,7 +484,7 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma fires_v0 : fires v0.
 Proof. vm_compute. reflexivity. Qed.
 
-(** On [Data], syntactic equality is the only way to satisfy the guard. *)
+(* On [Data], syntactic equality is the only way to satisfy the guard. *)
 Lemma fires_eq (v : ValueData) : fires v -> v = v0.
 Proof.
   unfold fires, v0. destruct v as [t | i]; simpl.
@@ -491,7 +492,7 @@ Proof.
   - discriminate.
 Qed.
 
-(** Hence the guard fires only on the co-action of [ā], and then emits [b̄]. *)
+(* Hence the guard fires only on the co-action of [ā], and then emits [b̄]. *)
 Lemma guard_step (v : ValueData) α r :
   lts (Gd ^ v) α r -> v = v0 /\ α = ActExt bOut /\ r = g 𝟘.
 Proof.
@@ -500,7 +501,7 @@ Proof.
   - inversion H5.
 Qed.
 
-(** ** Inert processes *)
+(* ** Inert processes *)
 
 Definition W : proc := g (c1 ? Gd).
 Definition dead (p : proc) : Prop := forall α r, ¬ lts p α r.
@@ -520,7 +521,7 @@ Proof.
   - eapply hq; eassumption.
 Qed.
 
-(** ** Inversion in the forwarder lifting, with an arbitrary mailbox *)
+(* ** Inversion in the forwarder lifting, with an arbitrary mailbox *)
 
 Lemma fw_tau_inv (p : proc) (m : MO (ExtAct TypeOfActions))
   (r : proc * MO (ExtAct TypeOfActions)) :
@@ -555,7 +556,7 @@ Proof.
       exists a, b2. split; [reflexivity | split; reflexivity].
 Qed.
 
-(** ** Inversion of the components *)
+(* ** Inversion of the components *)
 
 Lemma oA_inv α r : lts oA α r -> α = ActExt aOut /\ r = g 𝟘.
 Proof. intro l. inversion l; subst. split; reflexivity. Qed.
@@ -582,7 +583,7 @@ Proof.
   - right. left. eexists. split; [eassumption | reflexivity].
 Qed.
 
-(** ** The moves available to [q] *)
+(* ** The moves available to [q] *)
 
 Notation st := (proc * MO (ExtAct TypeOfActions))%type.
 
@@ -592,7 +593,7 @@ Proof. intro l. eapply wt_act; [exact l | eapply wt_nil]. Qed.
 Lemma wt_one_tau (x y : st) : x ⟶ y -> x ⟹ y.
 Proof. intro l. eapply wt_tau; [exact l | eapply wt_nil]. Qed.
 
-(** The mailbox forwards what it holds, and absorbs any input. *)
+(* The mailbox forwards what it holds, and absorbs any input. *)
 Lemma q_mb_out (q : proc) (n : MO (ExtAct TypeOfActions)) (a : TypeOfActions) :
   ((q, {[+ ActOut a +]} ⊎ n) : st) ⟶[ActOut a] (q, n).
 Proof. eapply ParRight. eapply lts_multiset_minus. exists a. reflexivity. Qed.
@@ -607,15 +608,15 @@ Proof. eapply ParLeft. eapply lts_choiceL. eapply lts_tau. Qed.
 Lemma q0_to_oB (n : MO (ExtAct TypeOfActions)) : ((g Q0, n) : st) ⟶ (oB, n).
 Proof. eapply ParLeft. eapply lts_choiceR. eapply lts_tau. Qed.
 
-(** [q] spends its branch on [ā]... *)
+(* [q] spends its branch on [ā]... *)
 Lemma q0_out_aOut (n : MO (ExtAct TypeOfActions)) : ((g Q0, n) : st) ⟹{aOut} (g 𝟘, n).
 Proof. eapply wt_tau; [eapply q0_to_oA |]. eapply wt_one. eapply ParLeft. eapply lts_output. Qed.
 
-(** ...or on [b̄], but never on both. *)
+(* ...or on [b̄], but never on both. *)
 Lemma q0_out_bOut (n : MO (ExtAct TypeOfActions)) : ((g Q0, n) : st) ⟹{bOut} (g 𝟘, n).
 Proof. eapply wt_tau; [eapply q0_to_oB |]. eapply wt_one. eapply ParLeft. eapply lts_output. Qed.
 
-(** ** The restricted simulation
+(* ** The restricted simulation
 
     [Rel E p q] relates a state of [p] to a state of [q], where [E] is the
     ledger of the non-blocking actions [p] has already emitted.  The mailbox of
@@ -637,7 +638,7 @@ Inductive Rel : list (ExtAct TypeOfActions) -> st -> st -> Prop :=
 | K8 E p m n : dead p -> m ⊆ n -> Rel E (p, m) (g 𝟘, n)
 | K9 E p m n : dead p -> m ⊆ {[+ aOut +]} ⊎ n -> Rel E (p, m) (g Q0, n).
 
-(** A process with neither a [τ] nor an input cannot move at all once lifted:
+(* A process with neither a [τ] nor an input cannot move at all once lifted:
     the mailbox alone never produces a [τ]. *)
 Definition inert (p : proc) : Prop :=
   (forall p', ¬ lts p τ p') /\ (forall (a : TypeOfActions) p', ¬ lts p (ActExt (ActIn a)) p').
@@ -678,7 +679,7 @@ Proof.
   - eapply hi; eassumption.
 Qed.
 
-(** *** The silent clause
+(* *** The silent clause
 
     Only [K1], [K2] and [K3] move silently, and always by forwarding a message
     of the mailbox to the waiting input -- or, in [K1], by the internal
@@ -748,7 +749,7 @@ Proof.
   - exfalso. eapply inert_no_tau; [eapply inert_dead; exact H | exact l].
 Qed.
 
-(** *** Small multiset lemmas, to keep [multiset_solver] out of the big cases *)
+(* *** Small multiset lemmas, to keep [multiset_solver] out of the big cases *)
 
 Lemma mb_split (x : ExtAct TypeOfActions) (n : MO (ExtAct TypeOfActions)) :
   x ∈ n -> exists n', n = {[+ x +]} ⊎ n'.
@@ -766,7 +767,7 @@ Lemma mb_drop (x : ExtAct TypeOfActions) (u w : MO (ExtAct TypeOfActions)) :
   {[+ x +]} ⊎ u ⊆ w -> u ⊆ w.
 Proof. intro h. etransitivity; [eapply gmultiset_disj_union_subseteq_r | exact h]. Qed.
 
-(** *** The non-blocking clause
+(* *** The non-blocking clause
 
     Every output of [p] is matched: those of its mailbox by the corresponding
     message of the mailbox of [q], which is larger; the [ā] of the left
@@ -933,7 +934,7 @@ Lemma mb_weak (x : ExtAct TypeOfActions) (u w : MO (ExtAct TypeOfActions)) :
   u ⊆ w -> u ⊆ {[+ x +]} ⊎ w.
 Proof. intro h. etransitivity; [exact h | eapply gmultiset_disj_union_subseteq_r]. Qed.
 
-(** The point of the whole construction: once [ā] is in the ledger, the input
+(* The point of the whole construction: once [ā] is in the ledger, the input
     that would fire the guard closes a feedback, so a feedback-free trace never
     offers it. *)
 Lemma no_fb_aIn E (a : TypeOfActions) : no_fb_after E (ActIn a) -> aOut ∈ E -> a <> (c1, v0).
@@ -947,17 +948,17 @@ Qed.
 Lemma out_neq (a : TypeOfActions) : a <> (c1, v0) -> ActOut a <> aOut.
 Proof. intros ne e. eapply ne. injection e as ->. reflexivity. Qed.
 
-(** *** The blocking clause
+(* *** The blocking clause
 
     [q] answers every input by letting its mailbox absorb it, which keeps the
     invariant since both mailboxes grow by the same message.  In [K2] and [K3]
     the input [a] itself is excluded by [no_fb_aIn], and that is the only place
     where the hypothesis [no_fb_after] is used. *)
-Lemma rel_b E p1 q1 (μ : ExtAct TypeOfActions) p2 :
-  Rel E p1 q1 -> ¬ non_blocking μ -> no_fb_after E μ -> p1 ⟶[μ] p2 ->
-  exists q2, q1 ⟹{μ} q2 /\ Rel E p2 q2.
+Lemma rel_b E p1 q1 (β : ExtAct TypeOfActions) p2 :
+  Rel E p1 q1 -> ¬ non_blocking β -> no_fb_after E β -> p1 ⟶[β] p2 ->
+  exists q2, q1 ⟹{β} q2 /\ Rel E p2 q2.
 Proof.
-  intros hr nb hok l. destruct μ as [a | a]; [| exfalso; eapply nb; exists a; reflexivity].
+  intros hr nb hok l. destruct β as [a | a]; [| exfalso; eapply nb; exists a; reflexivity].
   inversion hr; subst.
   - eapply fw_act_inv in l as [(p' & l & ->) | [(b & e & ->) | (b & m' & e & _ & _)]].
     + eapply par_inv in l
@@ -1066,7 +1067,7 @@ Proof.
     + discriminate.
 Qed.
 
-(** ** The conclusion *)
+(* ** The conclusion *)
 
 Theorem Rel_rsim : rsim Rel.
 Proof. split; [exact rel_tau | split; [exact rel_nb | exact rel_b]]. Qed.
@@ -1074,7 +1075,7 @@ Proof. split; [exact rel_tau | split; [exact rel_nb | exact rel_b]]. Qed.
 Lemma Rel_init : Rel [] ((Bp2, mt) : st) (g Q0, mt).
 Proof. eapply K1. multiset_solver. Qed.
 
-(** Every feedback-free trace of [p] is a trace of [q]. *)
+(* Every feedback-free trace of [p] is a trace of [q]. *)
 Theorem bp2_ff_included (s : trace (ExtAct TypeOfActions)) :
   ¬ has_fb s -> (exists r, ((Bp2, mt) : st) ⟹[s] r) -> exists r, ((g Q0, mt) : st) ⟹[s] r.
 Proof.
@@ -1082,7 +1083,7 @@ Proof.
   eapply (rsim_traces_ff Rel Rel_rsim (Bp2, mt) (g Q0, mt) s Rel_init hff hp).
 Qed.
 
-(** But [ā ; a ; b̄] is a trace of [p] -- and, by [q_does_not], not one of [q]. *)
+(* But [ā ; a ; b̄] is a trace of [p] -- and, by [q_does_not], not one of [q]. *)
 Lemma bp2_does : exists r, ((Bp2, mt) : st) ⟹[[aOut; aIn; bOut]] r.
 Proof.
   eexists.
@@ -1095,7 +1096,7 @@ Proof.
   eapply wt_nil.
 Qed.
 
-(** Since the traces of [p] are closed under [fnf] ([wt_fnf]) and [fnf]
+(* Since the traces of [p] are closed under [fnf] ([wt_fnf]) and [fnf]
     produces feedback-free traces ([fnf_no_fb]), the inclusion above is exactly
     the preorder "every trace of [p], simplified, is a trace of [q]". *)
 Corollary bp2_pre_fnf (s : trace (ExtAct TypeOfActions)) :
@@ -1105,7 +1106,7 @@ Proof.
   eapply bp2_ff_included; [eapply fnf_no_fb | exists r'; exact w'].
 Qed.
 
-(** The answer to the open question: the preorder obtained by normalising *and*
+(* The answer to the open question: the preorder obtained by normalising *and*
     simplifying the feedbacks is *strictly weaker* than trace inclusion.  So
 
       p ≼_fnf q  <->  p ≼ₜᵢ q
@@ -1128,7 +1129,7 @@ Proof.
 Qed.
 
 
-(** [co] is a notation, so it needs a name of its own to be mapped over a
+(* [co] is a notation, so it needs a name of its own to be mapped over a
     co-trace. *)
 Definition cov (x : ExtAct TypeOfActions) : ExtAct TypeOfActions := co x.
 
@@ -1150,7 +1151,7 @@ Proof.
       [eapply dual_iff_co; reflexivity | exact IH].
 Qed.
 
-(** A co-trace is the dual trace. *)
+(* A co-trace is the dual trace. *)
 Lemma cowt_iff_wt (p q : st) s : p ⟹ᶜᵒ[s] q <-> p ⟹[map cov s] q.
 Proof.
   split.
@@ -1164,7 +1165,7 @@ Definition co_s : trace (ExtAct TypeOfActions) := [aIn; aOut; bIn].
 
 
 
-(** ** A co-trace that [fnf] wrongly simplifies
+(* ** A co-trace that [fnf] wrongly simplifies
 
     [Pin] waits for a message on [c1] and then emits [ā] and [b̄].  The observer
     sends [a], receives [ā] back and receives [b̄]: the co-trace [ā ; a ; b].
@@ -1211,15 +1212,15 @@ Proof. eapply stable_of_no_tau. intros p' l. eapply Pin_inv in l as (v & e & _).
 
 Lemma pin_no_bOut : ((Pin, mt) : st) ↛[bOut].
 Proof.
-  destruct (decide (((Pin, mt) : st) ↛[bOut])) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l).
   eapply fw_act_inv in l as [(p' & l' & _) | [(a & e & _) | (a & m' & _ & e & _)]].
   - eapply Pin_inv in l' as (v & e & _). discriminate.
   - discriminate.
   - unfold mt in e. multiset_solver.
 Qed.
 
-(** The analogue of [wt_fnf] for [⟹ᶜᵒ] and [fnf] is false. *)
+(* The analogue of [wt_fnf] for [⟹ᶜᵒ] and [fnf] is false. *)
 Theorem fnf_unsound_on_cotraces :
   (exists r, ((Pin, mt) : st) ⟹ᶜᵒ[s_bad] r)
   /\ ¬ (exists r, ((Pin, mt) : st) ⟹ᶜᵒ[nlin (fnf s_bad)] r).
@@ -1231,7 +1232,7 @@ Proof.
 Qed.
 
 
-(** * The preorder read on normalised traces on both sides
+(* * The preorder read on normalised traces on both sides
 
     [bhv_pre_ti_fnf] quantifies over the normalised traces on both sides, in
     the style of [bhv_pre_ti_nf]; [bhv_pre_ti_fnf_iff] shows it agrees with the
@@ -1254,7 +1255,7 @@ Proof.
   intro h. eapply q_does_not. eapply h. exact bp2_does.
 Qed.
 
-(** * The must side: the feedback cannot be simplified either
+(* * The must side: the feedback cannot be simplified either
 
     The must characterisations of [NormalisationMust.v] rest on convergence,
     and convergence travels along the trace preorder in the *opposite*
@@ -1278,23 +1279,23 @@ Definition c3 : ChannelData := cst 3.
 Definition Dv : proc := rec 0 • (𝛕 • (pr_var 0)).
 Definition cIn : ExtAct TypeOfActions := ActIn (c3, v0).
 
-(** [b̄ ; b ; c]: the feedback pair [b̄ ; b], then an input on a third channel.
+(* [b̄ ; b ; c]: the feedback pair [b̄ ; b], then an input on a third channel.
     Its simplification is [c]. *)
 Definition s_must : trace (ExtAct TypeOfActions) := [bOut; bIn; cIn].
 
-(** [Gd2] diverges on the co-action of [b̄], and only on it. *)
+(* [Gd2] diverges on the co-action of [b̄], and only on it. *)
 Definition Gd2 : proc := If (Equality (bvar 0) v0) Then Dv Else 𝟘.
 Definition Wc2 : proc := g (c2 ? Gd2).
 Definition Wc3 : proc := g (c3 ? Wc2).
 
-(** [p] diverges as soon as it receives on [c3] -- and has no output at all. *)
+(* [p] diverges as soon as it receives on [c3] -- and has no output at all. *)
 Definition Pdv : proc := g (c3 ? Dv).
 
-(** [q] emits [b̄]; after a message on [c3] it starts listening on [c2], where
+(* [q] emits [b̄]; after a message on [c3] it starts listening on [c2], where
     the co-action of [b̄] makes it diverge. *)
 Definition Qdv : proc := oB ‖ Wc3.
 
-(** ** The divergence *)
+(* ** The divergence *)
 
 Lemma Dv_subst (v : ValueData) : Dv ^ v = Dv.
 Proof. vm_compute. reflexivity. Qed.
@@ -1308,7 +1309,7 @@ Proof. exact (@lts_recursion _ 0 (g (𝛕 • (pr_var 0)))). Qed.
 Lemma Dv_step2 : lts (g (𝛕 • Dv)) τ Dv.
 Proof. eapply lts_tau. Qed.
 
-(** A two-state [τ]-cycle never terminates. *)
+(* A two-state [τ]-cycle never terminates. *)
 Lemma loop_not_term (x y : st) : x ⟶ y -> y ⟶ x -> ¬ x ⤓.
 Proof.
   intros lxy lyx hx.
@@ -1333,7 +1334,7 @@ Proof.
   - eapply ParLeft. eapply Dv_step2.
 Qed.
 
-(** ** Inversion tools for convergence *)
+(* ** Inversion tools for convergence *)
 
 Lemma cnv_nil_term (x : st) : x ⇓ [] -> x ⤓.
 Proof. intro h. inversion h; subst. assumption. Qed.
@@ -1345,13 +1346,13 @@ Proof. intro h. inversion h; subst. assumption. Qed.
 Lemma stable_term (x : st) : x ↛ -> x ⤓.
 Proof.
   intro hst. eapply tstep. intros y l. exfalso.
-  eapply (lts_refuses_spec2 x τ); [exists y; exact l | exact hst].
+  apply hst, (lts_performs_spec2 x τ). exists y; exact l.
 Qed.
 
 Lemma not_term_step (x y : st) : x ⟶ y -> ¬ y ⤓ -> ¬ x ⤓.
 Proof. intros l hy hx. inversion hx as [h]. eapply hy, h, l. Qed.
 
-(** ** [p] converges on the feedback trace, not on its simplification *)
+(* ** [p] converges on the feedback trace, not on its simplification *)
 
 Lemma Pdv_inv α r : lts Pdv α r -> exists v, α = ActExt (ActIn (c3, v)) /\ r = Dv.
 Proof. intro l. inversion l; subst. exists v. split; [reflexivity | eapply Dv_subst]. Qed.
@@ -1361,15 +1362,15 @@ Proof. eapply stable_of_no_tau. intros p' l. eapply Pdv_inv in l as (v & e & _).
 
 Lemma Pdv_no_bOut : ((Pdv, mt) : st) ↛[bOut].
 Proof.
-  destruct (decide (((Pdv, mt) : st) ↛[bOut])) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l).
   eapply fw_act_inv in l as [(p' & l' & _) | [(a & e & _) | (a & m' & _ & e & _)]].
   - eapply Pdv_inv in l' as (v & e & _). discriminate.
   - discriminate.
   - unfold mt in e. multiset_solver.
 Qed.
 
-(** [p] has no [b̄] at all, so it converges on [s_must] vacuously. *)
+(* [p] has no [b̄] at all, so it converges on [s_must] vacuously. *)
 Lemma pdv_cnv : ((Pdv, mt) : st) ⇓ s_must.
 Proof.
   eapply cnv_act; [eapply stable_term, Pdv_stable |].
@@ -1377,7 +1378,7 @@ Proof.
   eapply (no_wt_of_refuses (Pdv, mt) bOut [] Pdv_stable Pdv_no_bOut). exists q. exact w.
 Qed.
 
-(** But the simplified trace starts with the input that makes it diverge. *)
+(* But the simplified trace starts with the input that makes it diverge. *)
 Lemma pdv_not_cnv : ¬ ((Pdv, mt) : st) ⇓ [cIn].
 Proof.
   intro h. eapply (Dv_not_term mt). eapply cnv_nil_term.
@@ -1391,7 +1392,7 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma s_must_has_fb : has_fb s_must.
 Proof. simpl. left. split; [exists (c2, v0); reflexivity | constructor; reflexivity]. Qed.
 
-(** Convergence is not transported along the feedback simplification: the
+(* Convergence is not transported along the feedback simplification: the
     counterpart of [cnv_norm] fails for [fnf]. *)
 Theorem cnv_fnf_not_reversible :
   has_fb s_must
@@ -1402,7 +1403,7 @@ Proof.
   rewrite fnf_s_must. exact pdv_not_cnv.
 Qed.
 
-(** ** [q] does not converge on the feedback trace
+(* ** [q] does not converge on the feedback trace
 
     After emitting [b̄], receiving it back and receiving on [c3], the mailbox of
     [q] holds [b̄] and the process is listening on [c2]: the forwarder feeds it
@@ -1445,7 +1446,7 @@ Proof.
   eapply (wc2_mailbox_diverges mt). eapply cnv_nil_term. exact h3.
 Qed.
 
-(** The pair is separated on a trace carrying a feedback, by the termination
+(* The pair is separated on a trace carrying a feedback, by the termination
     condition alone.
 
     What is *not* proved here is the other half -- that [p] and [q] satisfy the
@@ -1458,12 +1459,12 @@ Theorem must_cond1_separated :
   /\ ¬ ((Qdv, mt) : st) ⇓ s_must.
 Proof. split; [exact s_must_has_fb |]. split; [exact pdv_cnv | exact qdv_not_cnv]. Qed.
 
-(** ** The other half: [p] and [q] agree on the feedback-free traces
+(* ** The other half: [p] and [q] agree on the feedback-free traces
 
     The tool is [csim] of [RestrictedSimulation.v]: a relation simulating [q]
     by [p] and reflecting termination, restricted by the ledger. *)
 
-(** *** When [p] terminates
+(* *** When [p] terminates
 
     [p = c3 ? Ω] is stable unless its mailbox holds a message on [c3], in which
     case the forwarder feeds it and it diverges.  So [p ⤓] is exactly "no [c3]
@@ -1475,8 +1476,8 @@ Definition no_c3 (m : MO (ExtAct TypeOfActions)) : Prop := forall v, ActOut (c3,
 Lemma Pdv_stable_gen (m : MO (ExtAct TypeOfActions)) : no_c3 m -> ((Pdv, m) : st) ↛.
 Proof.
   intro hno.
-  destruct (decide (((Pdv, m) : st) ↛)) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)].
   - eapply Pdv_inv in l' as (v & e & _). discriminate.
   - eapply Pdv_inv in l' as (v & e & _). injection e as ->.
@@ -1500,7 +1501,7 @@ Qed.
 Lemma Pdv_term_no_c3 (m : MO (ExtAct TypeOfActions)) : ((Pdv, m) : st) ⤓ -> no_c3 m.
 Proof. intros ht v hin. eapply (Pdv_c3_not_term v m hin ht). Qed.
 
-(** *** The states of [q] that can no longer diverge
+(* *** The states of [q] that can no longer diverge
 
     Once [b̄] has left through [oB], the only way back to [Ω] is the co-action
     of [b̄] reaching the guard, and that message can only come from the mailbox.
@@ -1548,7 +1549,7 @@ Proof.
   - eapply Gd2_dead; eassumption.
 Qed.
 
-(** Every silent step of a [qgood] state consumes one message of the mailbox. *)
+(* Every silent step of a [qgood] state consumes one message of the mailbox. *)
 Lemma qgood_tau (X : proc) (m : MO (ExtAct TypeOfActions)) r :
   qgood X -> bOut ∉ m -> ((X, m) : st) ⟶ r ->
   exists (Y : proc) (m' : MO (ExtAct TypeOfActions)),
@@ -1573,7 +1574,7 @@ Proof.
     + exfalso. eapply Gd2_dead; eassumption.
 Qed.
 
-(** Hence a [qgood] state terminates: the mailbox is a well-founded measure. *)
+(* Hence a [qgood] state terminates: the mailbox is a well-founded measure. *)
 Lemma qgood_term (m : MO (ExtAct TypeOfActions)) :
   forall X, qgood X -> bOut ∉ m -> ((X, m) : st) ⤓.
 Proof.
@@ -1645,7 +1646,7 @@ Proof.
     eapply IH; assumption.
 Qed.
 
-(** A feedback-free trace whose ledger already holds [b̄] never offers [b]. *)
+(* A feedback-free trace whose ledger already holds [b̄] never offers [b]. *)
 Lemma no_fb_after_elem (E : list (ExtAct TypeOfActions)) (μ η : ExtAct TypeOfActions) :
   no_fb_after E μ -> η ∈ E -> ¬ dual μ η.
 Proof.
@@ -1667,7 +1668,7 @@ Proof.
     + eapply IH; eassumption.
 Qed.
 
-(** So a [qgood] state without [b̄] in its mailbox converges on every
+(* So a [qgood] state without [b̄] in its mailbox converges on every
     continuation a feedback-free trace can offer. *)
 Lemma qgood_safe (X : proc) (m : MO (ExtAct TypeOfActions)) (E : list (ExtAct TypeOfActions)) :
   qgood X -> bOut ∉ m -> bOut ∈ E -> forall s, ff_from E s -> ((X, m) : st) ⇓ s.
@@ -1676,7 +1677,7 @@ Proof.
   eapply qgood_cnv; [eapply ff_no_bIn; eassumption | exact hg | exact hb].
 Qed.
 
-(** *** Stability of the states in play *)
+(* *** Stability of the states in play *)
 
 Lemma no_c3_sub (m' m : MO (ExtAct TypeOfActions)) : m' ⊆ m -> no_c3 m -> no_c3 m'.
 Proof. intros hs h v hin. eapply (h v). multiset_solver. Qed.
@@ -1693,8 +1694,8 @@ Qed.
 Lemma Qdv_stable (m : MO (ExtAct TypeOfActions)) : no_c3 m -> ((Qdv, m) : st) ↛.
 Proof.
   intro hno.
-  destruct (decide (((Qdv, m) : st) ↛)) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)].
   - eapply par_inv in l'
       as [(x & l2 & _) | [(x & l2 & _) | [(b & x & y & l1 & l2 & _ & _) | (b & x & y & l1 & l2 & _ & _)]]].
@@ -1715,8 +1716,8 @@ Qed.
 Lemma Wc3_par_stable (m : MO (ExtAct TypeOfActions)) : no_c3 m -> (((𝟘 ‖ Wc3), m) : st) ↛.
 Proof.
   intro hno.
-  destruct (decide ((((𝟘 ‖ Wc3), m) : st) ↛)) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)].
   - eapply qgood_no_tau; [eapply qg_wc3 | exact l'].
   - eapply par_inv in l'
@@ -1728,7 +1729,7 @@ Proof.
     + discriminate.
 Qed.
 
-(** *** The restricted convergence simulation
+(* *** The restricted convergence simulation
 
     [M1] is the phase where [oB] is still there: the mailbox of [q] is included
     in that of [p], so [p] matches every emission of [q] except the [b̄] of
@@ -1835,12 +1836,12 @@ Proof.
   - right. intros s hff. eapply cnv_step; [| exact w]. eapply hsafe. simpl. exact hff.
 Qed.
 
-Lemma Rel3_b E p q (μ : ExtAct TypeOfActions) q' :
-  Rel3 E p q -> p ⤓ -> ¬ non_blocking μ -> no_fb_after E μ -> q ⟹{μ} q' ->
-  (exists p', p ⟹{μ} p' /\ Rel3 E p' q') \/ (forall s, ff_from E s -> q' ⇓ s).
+Lemma Rel3_b E p q (β : ExtAct TypeOfActions) q' :
+  Rel3 E p q -> p ⤓ -> ¬ non_blocking β -> no_fb_after E β -> q ⟹{β} q' ->
+  (exists p', p ⟹{β} p' /\ Rel3 E p' q') \/ (forall s, ff_from E s -> q' ⇓ s).
 Proof.
   intros hr ht nb hok w.
-  destruct μ as [a | a]; [| exfalso; eapply nb; exists a; reflexivity].
+  destruct β as [a | a]; [| exfalso; eapply nb; exists a; reflexivity].
   destruct hr as [E mp mq hs | E mp mq hs | E p q hnt | E p q hsafe].
   - assert (hc3p : no_c3 mp) by (eapply Pdv_term_no_c3, ht).
     assert (hc3q : no_c3 mq) by (eapply no_c3_sub; eassumption).
@@ -1894,7 +1895,7 @@ Proof.
     simpl. split; [exact hok | exact hff].
 Qed.
 
-(** ** The conclusion on the must side *)
+(* ** The conclusion on the must side *)
 
 Theorem Rel3_csim : csim Rel3.
 Proof. split; [exact Rel3_term | split; [exact Rel3_nb | exact Rel3_b]]. Qed.
@@ -1902,17 +1903,17 @@ Proof. split; [exact Rel3_term | split; [exact Rel3_nb | exact Rel3_b]]. Qed.
 Lemma Rel3_init : Rel3 [] ((Pdv, mt) : st) (Qdv, mt).
 Proof. eapply M1. multiset_solver. Qed.
 
-(** On every feedback-free trace, [p] converging forces [q] to converge. *)
+(* On every feedback-free trace, [p] converging forces [q] to converge. *)
 Theorem pdv_qdv_ff_cnv (s : trace (ExtAct TypeOfActions)) :
   ¬ has_fb s -> ((Pdv, mt) : st) ⇓ s -> ((Qdv, mt) : st) ⇓ s.
 Proof. eapply (csim_cnv_ff Rel3 Rel3_csim (Pdv, mt) (Qdv, mt) s Rel3_init). Qed.
 
-(** In particular on the simplified traces, which carry no feedback. *)
+(* In particular on the simplified traces, which carry no feedback. *)
 Theorem pdv_qdv_pre_fnf (s : trace (ExtAct TypeOfActions)) :
   ((Pdv, mt) : st) ⇓ (nlin (fnf s)) -> ((Qdv, mt) : st) ⇓ (nlin (fnf s)).
 Proof. eapply pdv_qdv_ff_cnv, fnf_no_fb. Qed.
 
-(** The must counterpart of [feedback_free_strictly_weaker_nf]: the termination
+(* The must counterpart of [feedback_free_strictly_weaker_nf]: the termination
     condition of the acceptance-set preorder, checked on the normalised and
     feedback-simplified traces only, is strictly weaker than the condition
     itself.  So the must characterisation cannot be restricted to the
@@ -1926,7 +1927,7 @@ Proof.
   intro h. eapply qdv_not_cnv, h, pdv_cnv.
 Qed.
 
-(** * The second must condition
+(* * The second must condition
 
     [bhv_pre_cond2] asks that every stable state [q] reaches along a trace be
     matched by a stable state of [p] accepting no more.  The counterexample
@@ -1938,7 +1939,7 @@ Qed.
     The pair is the may witness read in the other direction: [p = 𝛕•ā + 𝛕•b̄]
     and [q = ā ‖ c1 ? (If (bvar 0 = v0) Then b̄ Else 𝟘)]. *)
 
-(** ** [p = Q0] converges on every trace *)
+(* ** [p = Q0] converges on every trace *)
 
 Inductive q0good : proc -> Prop :=
 | q0_root : q0good (g Q0)
@@ -1950,8 +1951,8 @@ Lemma q0good_stable_or_root (X : proc) (m : MO (ExtAct TypeOfActions)) :
   q0good X -> X <> g Q0 -> ((X, m) : st) ↛.
 Proof.
   intros hg hne.
-  destruct (decide (((X, m) : st) ↛)) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)];
     destruct hg as [ | | | ]; try (eapply hne; reflexivity).
   - eapply oA_inv in l' as (e & _). discriminate.
@@ -2045,7 +2046,7 @@ Proof.
     eapply IH, hg'.
 Qed.
 
-(** ** [q = Bp2] reaches a stable state along the feedback trace *)
+(* ** [q = Bp2] reaches a stable state along the feedback trace *)
 
 Definition s_cnd2 : trace (ExtAct TypeOfActions) := [aOut; aIn; bOut].
 
@@ -2066,7 +2067,7 @@ Proof.
   eapply wt_nil.
 Qed.
 
-(** All four ingredients of a failure of [bhv_pre_cond2] at a trace carrying a
+(* All four ingredients of a failure of [bhv_pre_cond2] at a trace carrying a
     feedback: [p] converges on it, [q] reaches a stable state along it, and [p]
     cannot perform it at all. *)
 Theorem must_cond2_fails_at_feedback :
@@ -2083,7 +2084,7 @@ Proof.
   - exact q_does_not.
 Qed.
 
-(** ** The failure, for an arbitrary abstraction of the labels
+(* ** The failure, for an arbitrary abstraction of the labels
 
     The existential of [bhv_pre_cond2] fails outright -- there is no [p'] at
     all -- so the conclusion does not depend on [Φ], [𝝳P], [𝝳Q] nor on the
@@ -2094,8 +2095,8 @@ Section Cond2Generic.
   Context {T FA PA : Type}.
   Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
 
   Theorem must_cond2_false :
     ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
@@ -2109,7 +2110,7 @@ Section Cond2Generic.
 
 End Cond2Generic.
 
-(** ** What is *not* claimed here
+(* ** What is *not* claimed here
 
     Unlike [must_cond1_strictly_weaker], this is only the negative half.  The
     pair above does *not* separate "[bhv_pre_cond2] on the feedback-free
@@ -2127,7 +2128,7 @@ End Cond2Generic.
     give [p] the same input capabilities as [q], while still failing to
     perform the feedback trace.  The next section builds one. *)
 
-(** * A pair that separates the second condition
+(* * A pair that separates the second condition
 
     The obstruction above says what a witness must look like: [p] needs the
     same input capabilities as [q], so that the forwarder never has to park a
@@ -2152,19 +2153,18 @@ Proof.
     destruct μ as [a | a]; [| exfalso; eapply hb; exists a; reflexivity].
     exists a. split; [reflexivity |].
     eapply ext_act_match_sym, simplify_match_input in duo. subst μ2.
-    eapply lts_refuses_spec1 in hns as (r & l).
+    eapply lts_performs_spec1 in hns as (r & l).
     eapply fw_act_inv in l as [(X' & l' & _) | [(b & e & _) | (b & m' & e & -> & _)]].
     + left. exists X'. exact l'.
     + discriminate.
     + right. injection e as <-. multiset_solver.
   - intros (a & -> & hcase).
     exists (ActOut a). split; [| split].
-    + intro hns. destruct hcase as [(X' & l') | hin].
-      * eapply (lts_refuses_spec2 ((X, m) : st) (ActExt (ActOut a))); [| exact hns].
+    + destruct hcase as [(X' & l') | hin].
+      * apply (lts_performs_spec2 ((X, m) : st) (ActExt (ActOut a))).
         exists ((X', m) : st). eapply ParLeft. exact l'.
       * eapply mb_split in hin as (m' & ->).
-        eapply (lts_refuses_spec2 ((X, {[+ ActOut a +]} ⊎ m') : st) (ActExt (ActOut a)));
-          [| exact hns].
+        apply (lts_performs_spec2 ((X, {[+ ActOut a +]} ⊎ m') : st) (ActExt (ActOut a))).
         exists ((X, m') : st). eapply q_mb_out.
     + reflexivity.
     + intros (b & e). discriminate.
@@ -2200,7 +2200,7 @@ Proof. eapply dead_par; eapply dead_zero. Qed.
 Lemma dead_nilGd (v : ValueData) : v <> v0 -> dead (𝟘 ‖ (Gd ^ v)).
 Proof. intro ne. eapply dead_par; [eapply dead_zero | eapply dead_Gd, ne]. Qed.
 
-(** *** The relation
+(* *** The relation
 
     [N1] is the two roots in step.  [N2] is the phase where [q] has emitted the
     [ā] of its [ā] and [p] has answered from its mailbox, so [q] owes one [ā]
@@ -2232,7 +2232,7 @@ Proof.
   - eapply Ndead; assumption.
 Qed.
 
-(** *** The moves of [p] *)
+(* *** The moves of [p] *)
 
 Lemma Pw_to_oB (m : MO (ExtAct TypeOfActions)) : ((Pw, m) : st) ⟶ (oB, m).
 Proof. eapply ParLeft. eapply lts_choiceL. eapply lts_choiceR. eapply lts_tau. Qed.
@@ -2273,7 +2273,7 @@ Proof. intro e. multiset_solver. Qed.
 Lemma out_c1_neq (w : ValueData) : w <> v0 -> ActOut (c1, w) <> aOut.
 Proof. intros ne e. eapply ne. injection e as e. exact e. Qed.
 
-(** *** The silent clause *)
+(* *** The silent clause *)
 
 Lemma Rel4_tau1 E p q q' : Rel4 E p q -> q ⟶ q' -> exists p', p ⟹ p' /\ Rel4 E p' q'.
 Proof.
@@ -2365,7 +2365,7 @@ Proof.
   - discriminate.
 Qed.
 
-(** *** The clauses on actions *)
+(* *** The clauses on actions *)
 
 Lemma Pw_emit_aOut (m : MO (ExtAct TypeOfActions)) :
   ((Pw, m) : st) ⟹{aOut} ((𝟘 ‖ Wd), m).
@@ -2552,12 +2552,12 @@ Proof.
   eapply wt_push_nil_left; [exact wp1 |]. eapply wt_push_nil_right; [exact wp2 | exact wp3].
 Qed.
 
-Lemma Rel4_b E p q (μ : ExtAct TypeOfActions) q' :
-  Rel4 E p q -> ¬ non_blocking μ -> no_fb_after E μ -> q ⟹{μ} q' ->
-  exists p', p ⟹{μ} p' /\ Rel4 E p' q'.
+Lemma Rel4_b E p q (β : ExtAct TypeOfActions) q' :
+  Rel4 E p q -> ¬ non_blocking β -> no_fb_after E β -> q ⟹{β} q' ->
+  exists p', p ⟹{β} p' /\ Rel4 E p' q'.
 Proof.
   intros hr nb hok w.
-  destruct μ as [a | a]; [| exfalso; eapply nb; exists a; reflexivity].
+  destruct β as [a | a]; [| exfalso; eapply nb; exists a; reflexivity].
   eapply wt_decomp_one in w as (r1 & r2 & w1 & l & w2).
   destruct (Rel4_tau E p q r1 hr w1) as (p1 & wp1 & hr1).
   destruct (Rel4_b1 E p1 r1 a r2 hr1 hok l) as (p2 & wp2 & hr2).
@@ -2566,12 +2566,12 @@ Proof.
   eapply wt_push_nil_left; [exact wp1 |]. eapply wt_push_nil_right; [exact wp2 | exact wp3].
 Qed.
 
-(** *** The acceptance clause *)
+(* *** The acceptance clause *)
 
 Lemma stable_of_inert (X : proc) (m : MO (ExtAct TypeOfActions)) : inert X -> ((X, m) : st) ↛.
 Proof.
-  intro hi. destruct (decide (((X, m) : st) ↛)) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l). eapply inert_no_tau; eassumption.
+  intro hi. intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l). eapply inert_no_tau; eassumption.
 Qed.
 
 Lemma W_sync (v : ValueData) (m : MO (ExtAct TypeOfActions)) :
@@ -2587,7 +2587,7 @@ Lemma nilW_no_c1 (m : MO (ExtAct TypeOfActions)) :
   (((𝟘 ‖ W), m) : st) ↛ -> forall v, ActOut (c1, v) ∉ m.
 Proof.
   intros hst v hin. eapply mb_split in hin as (m2 & ->).
-  eapply (lts_refuses_spec2 (((𝟘 ‖ W), {[+ ActOut (c1, v) +]} ⊎ m2) : st) τ); [| exact hst].
+  apply hst, (lts_performs_spec2 (((𝟘 ‖ W), {[+ ActOut (c1, v) +]} ⊎ m2) : st) τ).
   exists (((𝟘 ‖ (Gd ^ v)), m2) : st). eapply W_sync.
 Qed.
 
@@ -2595,8 +2595,8 @@ Lemma nilWd_stable (m : MO (ExtAct TypeOfActions)) :
   (forall v, ActOut (c1, v) ∉ m) -> (((𝟘 ‖ Wd), m) : st) ↛.
 Proof.
   intro hno.
-  destruct (decide ((((𝟘 ‖ Wd), m) : st) ↛)) as [h | h]; [exact h |].
-  exfalso. eapply lts_refuses_spec1 in h as (r & l).
+  intros h.
+  exfalso. eapply lts_performs_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(X' & l' & _) | (a & X' & m' & l' & -> & _)].
   - eapply par_inv in l'
       as [(y & l2 & _) | [(y & l2 & _) | [(b & y & z & l1 & _ & _ & _) | (b & y & z & l1 & _ & _ & _)]]].
@@ -2623,9 +2623,9 @@ Lemma Rel4_stable E p q : Rel4 E p q -> q ↛ -> exists p', p ⟹ p' /\ p' ↛ /
 Proof.
   intros hr hst.
   destruct hr as [E m | E n hin | E m hnin hin | E m | E v n ne | E x | E Xp Xq m d1 d2].
-  - exfalso. eapply (lts_refuses_spec2 ((Bp2, m) : st) τ); [| exact hst].
+  - exfalso. apply hst, (lts_performs_spec2 ((Bp2, m) : st) τ).
     exists (((𝟘 ‖ (Gd ^ v0)), m) : st). eapply Bp2_comL.
-  - exfalso. eapply (lts_refuses_spec2 (((𝟘 ‖ W), {[+ aOut +]} ⊎ n) : st) τ); [| exact hst].
+  - exfalso. apply hst, (lts_performs_spec2 (((𝟘 ‖ W), {[+ aOut +]} ⊎ n) : st) τ).
     exists (((𝟘 ‖ (Gd ^ v0)), n) : st). eapply (W_sync v0 n).
   - exists (((𝟘 ‖ Wd), m) : st). split; [eapply wt_nil | split].
     + eapply nilWd_stable, nilW_no_c1, hst.
@@ -2662,7 +2662,7 @@ Proof.
       exfalso. eapply d1; eassumption.
 Qed.
 
-(** *** [p] converges, and cannot perform the feedback trace *)
+(* *** [p] converges, and cannot perform the feedback trace *)
 
 Lemma Pw_mt_tau (r : st) : ((Pw, mt) : st) ⟶ r -> r = ((oA ‖ Wd), mt) \/ r = (oB, mt).
 Proof.
@@ -2850,7 +2850,7 @@ Proof.
     intros p3 w3. exfalso. eapply nilWd_aOut_no_bOut. exists p3. exact w3.
 Qed.
 
-(** [p] commits when it emits [ā]: after that its guard is gone for ever, so
+(* [p] commits when it emits [ā]: after that its guard is gone for ever, so
     the feedback trace is out of its reach. *)
 Lemma pw_no_s_cnd2 : ¬ exists r, ((Pw, mt) : st) ⟹[s_cnd2] r.
 Proof.
@@ -2861,7 +2861,7 @@ Proof.
   - eapply nilWd_aOut_no_bOut. exists r. exact w4.
 Qed.
 
-(** ** The conclusion on the second condition *)
+(* ** The conclusion on the second condition *)
 
 Theorem Rel4_asim : asim Rel4.
 Proof.
@@ -2871,7 +2871,7 @@ Qed.
 Lemma Rel4_init : Rel4 [] ((Pw, mt) : st) ((Bp2, mt) : st).
 Proof. eapply N1. Qed.
 
-(** On every feedback-free trace, each stable state of [q] is matched by a
+(* On every feedback-free trace, each stable state of [q] is matched by a
     stable state of [p] accepting no more -- so [bhv_pre_cond2] holds there,
     for every abstraction, by monotonicity of the image. *)
 Theorem pw_bp2_cond2_ff (s : trace (ExtAct TypeOfActions)) (q' : st) :
@@ -2896,14 +2896,14 @@ Proof.
   - exact pw_no_s_cnd2.
 Qed.
 
-(** And the failure of the condition itself, for an arbitrary abstraction. *)
+(* And the failure of the condition itself, for an arbitrary abstraction. *)
 Section Cond2GenericPw.
 
   Context {T FA PA : Type}.
   Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
 
   Theorem must_cond2_false_Pw :
     ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
@@ -2918,7 +2918,7 @@ Section Cond2GenericPw.
 
 End Cond2GenericPw.
 
-(** * The must preorder, restricted to the feedback-free traces
+(* * The must preorder, restricted to the feedback-free traces
 
     The two conditions of [≼ₐₛ] were refuted separately above, by two different
     pairs.  The pair [Pw], [Bp2] settles both at once: neither process
@@ -3053,7 +3053,7 @@ Qed.
 Lemma bp2_cnv (s : trace (ExtAct TypeOfActions)) : ((Bp2, mt) : st) ⇓ s.
 Proof. eapply bgood_cnv, bg_root. Qed.
 
-(** The must preorder restricted to the feedback-free traces does not imply the
+(* The must preorder restricted to the feedback-free traces does not imply the
     must preorder: on one and the same pair, the termination condition holds
     outright, the acceptance condition holds on every feedback-free trace, and
     the acceptance condition fails on a trace carrying a feedback -- so
@@ -3072,7 +3072,7 @@ Proof.
   exact must_cond2_strictly_weaker.
 Qed.
 
-(** A co-trace is the dual trace, and co-convergence the convergence of the
+(* A co-trace is the dual trace, and co-convergence the convergence of the
     dual trace. *)
 Lemma cocnv_iff_cnv (s : trace (ExtAct TypeOfActions)) :
   forall x : st, x ⇓ᶜᵒ s <-> x ⇓ (map cov s).
@@ -3086,7 +3086,7 @@ Proof.
       eapply IH. eapply H3. eapply cowt_iff_wt in w. exact w.
 Qed.
 
-(** * Feedback on co-traces: the echo
+(* * Feedback on co-traces: the echo
 
     Read on a co-trace, [has_fb] bans the pattern "an output [η] appears, and
     its dual input [μ] appears later".  Dualising the whole co-trace, the
@@ -3108,7 +3108,7 @@ Definition Pch : gproc := (𝛕 • oA) + (𝛕 • oB).
 Definition Gch : proc := If (Equality (bvar 0) v0) Then (g Pch) Else 𝟘.
 Definition Gpair : proc := If (Equality (bvar 0) v0) Then (oA ‖ oB) Else 𝟘.
 
-(** [Pe] commits to one of the two outputs, [Qe] offers both. *)
+(* [Pe] commits to one of the two outputs, [Qe] offers both. *)
 Definition Pe : proc := g (c1 ? Gch).
 Definition Qe : proc := g (c1 ? Gpair).
 
@@ -3167,7 +3167,7 @@ Proof.
   eapply elem_of_cons in hin as [-> | hin]; [left; reflexivity | right; eapply IH; exact hin].
 Qed.
 
-(** The mailbox can only hold the message [ā] if the input [a?] has already
+(* The mailbox can only hold the message [ā] if the input [a?] has already
     been received: this is the invariant that makes the echo the only way to
     reach the output [ā]. *)
 Definition mb_ok (E : list (ExtAct TypeOfActions)) (m : MO (ExtAct TypeOfActions)) : Prop :=
@@ -3238,7 +3238,7 @@ Qed.
 Lemma oB_out (m : MO (ExtAct TypeOfActions)) : ((oB, m) : st) ⟶[bOut] ((g 𝟘), m).
 Proof. eapply ParLeft. eapply lts_output. Qed.
 
-(** The heart of the matter: [q] can produce [ā] only through its process
+(* The heart of the matter: [q] can produce [ā] only through its process
     component, and [aIn] is then in the ledger, so the step is barred by
     [no_echo_after].  Every other output is matched by [p] committing to [b̄]. *)
 Lemma Rel5_nb1 E p q η q' :
@@ -3285,12 +3285,12 @@ Lemma Pe_in (v : ValueData) (m : MO (ExtAct TypeOfActions)) :
   ((Pe, m) : st) ⟶[ActIn (c1, v)] ((Gch ^ v), m).
 Proof. eapply ParLeft. eapply lts_input. Qed.
 
-(** A blocking action either enters the mailbox -- and then it is [a?] that
+(* A blocking action either enters the mailbox -- and then it is [a?] that
     puts [ā] there, which is exactly what the ledger records -- or is consumed
     by the process. *)
-Lemma Rel5_b1 E p q μ q' :
-  Rel5 E p q -> ¬ non_blocking μ -> q ⟶[μ] q' ->
-  exists p', p ⟹{μ} p' /\ Rel5 (μ :: E) p' q'.
+Lemma Rel5_b1 E p q β q' :
+  Rel5 E p q -> ¬ non_blocking β -> q ⟶[β] q' ->
+  exists p', p ⟹{β} p' /\ Rel5 (β :: E) p' q'.
 Proof.
   intros hr nb l. revert nb l.
   destruct hr as [E m hmb | E m hin | E m hin | E Xp Xq m d1 d2]; intros nb l.
@@ -3344,14 +3344,14 @@ Proof.
   eapply wt_push_nil_left; [exact wp1 | eapply wt_push_left; [exact wp2 | exact wp3]].
 Qed.
 
-Lemma Rel5_b E p q μ q' :
-  Rel5 E p q -> ¬ non_blocking μ -> q ⟹{μ} q' ->
-  exists p', p ⟹{μ} p' /\ Rel5 (μ :: E) p' q'.
+Lemma Rel5_b E p q β q' :
+  Rel5 E p q -> ¬ non_blocking β -> q ⟹{β} q' ->
+  exists p', p ⟹{β} p' /\ Rel5 (β :: E) p' q'.
 Proof.
   intros hr nb w. eapply wt_decomp_one in w as (r1 & r2 & w1 & l & w2).
   destruct (Rel5_tau E p q r1 hr w1) as (p1 & wp1 & hr1).
-  destruct (Rel5_b1 E p1 r1 μ r2 hr1 nb l) as (p2 & wp2 & hr2).
-  destruct (Rel5_tau (μ :: E) p2 r2 q' hr2 w2) as (p3 & wp3 & hr3).
+  destruct (Rel5_b1 E p1 r1 β r2 hr1 nb l) as (p2 & wp2 & hr2).
+  destruct (Rel5_tau (β :: E) p2 r2 q' hr2 w2) as (p3 & wp3 & hr3).
   exists p3. split; [| exact hr3].
   eapply wt_push_nil_left; [exact wp1 | eapply wt_push_left; [exact wp2 | exact wp3]].
 Qed.
@@ -3359,8 +3359,8 @@ Qed.
 Lemma st_stable_intro (X : proc) (m : MO (ExtAct TypeOfActions)) :
   (forall r, ¬ (((X, m) : st) ⟶ r)) -> ((X, m) : st) ↛.
 Proof.
-  intro h. destruct (decide (((X, m) : st) ↛)) as [k | k]; [exact k |].
-  exfalso. eapply lts_refuses_spec1 in k as (r & l). eapply h; exact l.
+  intro h. intros k.
+  exfalso. eapply lts_performs_spec1 in k as (r & l). eapply h; exact l.
 Qed.
 
 Lemma oB_stable (m : MO (ExtAct TypeOfActions)) : ((oB, m) : st) ↛.
@@ -3398,11 +3398,11 @@ Proof.
   eapply fw_tau_inv in l as [(X' & l' & _) | (a & X' & m' & l' & -> & _)].
   - eapply Pe_inv in l' as (v & e & _). discriminate.
   - eapply Pe_inv in l' as (v & e & _). injection e as ->.
-    eapply (lts_refuses_spec2 ((Qe, {[+ ActOut (c1, v) +]} ⊎ m') : st) τ); [| exact hst].
+    apply hst, (lts_performs_spec2 ((Qe, {[+ ActOut (c1, v) +]} ⊎ m') : st) τ).
     exists (((Gpair ^ v), m') : st). eapply Qe_sync.
 Qed.
 
-(** [p] can always fall back on its [b̄] branch, which accepts strictly less
+(* [p] can always fall back on its [b̄] branch, which accepts strictly less
     than [q]'s parallel pair. *)
 Lemma Rel5_stable E p q :
   Rel5 E p q -> q ↛ -> exists p', p ⟹ p' /\ p' ↛ /\ coR p' ⊆ coR q.
@@ -3436,14 +3436,14 @@ Qed.
 Lemma Rel5_init : Rel5 [] ((Pe, mt) : st) ((Qe, mt) : st).
 Proof. eapply G1. intro h. exfalso. multiset_solver. Qed.
 
-(** On every echo-free trace, each stable state of [Qe] is matched by a stable
+(* On every echo-free trace, each stable state of [Qe] is matched by a stable
     state of [Pe] accepting no more. *)
 Theorem pe_qe_cond2_ef (s : trace (ExtAct TypeOfActions)) (q' : st) :
   ¬ has_echo s -> ((Qe, mt) : st) ⟹[s] q' -> q' ↛ ->
   exists p', ((Pe, mt) : st) ⟹[s] p' /\ p' ↛ /\ coR p' ⊆ coR q'.
 Proof. eapply (easim_cond2_ef Rel5 Rel5_easim (Pe, mt) (Qe, mt) s q' Rel5_init). Qed.
 
-(** ** [Pe] cannot answer the echo
+(* ** [Pe] cannot answer the echo
 
     After the input [a?], [Pe] is in one of four states; from each of them the
     output [ā] leaves it with nothing more to say. *)
@@ -3500,8 +3500,8 @@ Proof.
   intros [-> | [-> | [-> | ->]]] l.
   - eapply Pe_aOut_tau in l as ->. right; left; reflexivity.
   - eapply Gch_v0_tau in l as [-> | ->]; [right; right; left | right; right; right]; reflexivity.
-  - exfalso. eapply (lts_refuses_spec2 ((oA, mt) : st) τ); [exists y; exact l | eapply oA_stable].
-  - exfalso. eapply (lts_refuses_spec2 ((oB, mt) : st) τ); [exists y; exact l | eapply oB_stable].
+  - exfalso. eapply oA_stable, (lts_performs_spec2 ((oA, mt) : st) τ). exists y; exact l.
+  - exfalso. eapply oB_stable, (lts_performs_spec2 ((oB, mt) : st) τ). exists y; exact l.
 Qed.
 
 Lemma PS_wt (x y : st) : PS x -> x ⟹ y -> PS y.
@@ -3573,7 +3573,7 @@ Proof.
   - unfold mt in e2. multiset_solver.
 Qed.
 
-(** The separating trace: [Qe] receives [a], echoes it back and still has [b̄]
+(* The separating trace: [Qe] receives [a], echoes it back and still has [b̄]
     to send; [Pe] has spent its single branch. *)
 Definition s_echo : trace (ExtAct TypeOfActions) := [aIn; aOut; bOut].
 
@@ -3638,7 +3638,7 @@ Proof.
   - econstructor. split; [exists (c1, v0); reflexivity | eapply dual_iff_co; reflexivity].
 Qed.
 
-(** ** The echo on a trace is exactly the feedback on the dual co-trace *)
+(* ** The echo on a trace is exactly the feedback on the dual co-trace *)
 
 Lemma cov_in (a : TypeOfActions) : cov (ActIn a) = ActOut a.
 Proof. reflexivity. Qed.
@@ -3685,7 +3685,7 @@ Proof.
   - right. exact IH.
 Qed.
 
-(** An echo on a trace is exactly a feedback on the dual co-trace: this is the
+(* An echo on a trace is exactly a feedback on the dual co-trace: this is the
     bridge between [easim], which lives on traces, and the statement the user
     asks for, which reads [has_fb] on co-traces. *)
 Theorem has_echo_cov (s : trace (ExtAct TypeOfActions)) : has_echo s <-> has_fb (map cov s).
@@ -3700,7 +3700,7 @@ Proof.
     rewrite (exists_echo_cov x s hnb). tauto.
 Qed.
 
-(** ** [Qe] converges on every trace
+(* ** [Qe] converges on every trace
 
     [Qe] is finite and recursion-free: apart from the root, every state it
     reaches is inert, and the root's only silent step consumes a message. *)
@@ -3823,7 +3823,7 @@ Qed.
 Lemma qe_cnv (s : trace (ExtAct TypeOfActions)) : ((Qe, mt) : st) ⇓ s.
 Proof. eapply egood_cnv, eg_root. Qed.
 
-(** ** The must preorder read on co-traces, restricted to those without a
+(* ** The must preorder read on co-traces, restricted to those without a
        feedback, does not imply the must preorder
 
     [s_bad = ā ; a ; b] is a co-trace with a feedback; the trace it stands for
@@ -3861,7 +3861,7 @@ Proof.
   eapply pe_no_s_echo. exists p'. exact w.
 Qed.
 
-(** Both conditions of [≼꜀ₒ₋ₐₛ] restricted to the feedback-free co-traces hold
+(* Both conditions of [≼꜀ₒ₋ₐₛ] restricted to the feedback-free co-traces hold
     for the pair [Pe], [Qe] -- the termination condition outright, since [Qe]
     converges everywhere -- and the acceptance condition fails on the co-trace
     [s_bad], which carries a feedback. *)
@@ -3883,17 +3883,17 @@ Proof.
   split; [exact qe_co_reaches_stable | exact nilnil_e_stable].
 Qed.
 
-(** And the failure of the co-condition itself, for an arbitrary abstraction. *)
+(* And the failure of the co-condition itself, for an arbitrary abstraction. *)
 Section CoCond2GenericPe.
 
   Context {T FA PA : Type}.
   Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ gLtsT).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ gLtsT).
+  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
+  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
 
   Theorem co_must_cond2_false_Pe :
-    ¬ @bhv_pre_co_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
+    ¬ @bhv_pre_co_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P gLtsT _ AbsP
         st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
   Proof.
     intro h.
@@ -3902,18 +3902,18 @@ Section CoCond2GenericPe.
     eapply pe_no_co_s_bad. exists p'. exact w.
   Qed.
 
-  (** A fortiori the whole co-preorder fails, although its termination
+  (* A fortiori the whole co-preorder fails, although its termination
       condition holds ([qe_cnv]) and its acceptance condition holds on every
       feedback-free co-trace ([pe_qe_co_cond2_ff]). *)
   Theorem co_must_false_Pe :
-    ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
+    ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P gLtsT _ AbsP
         st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
   Proof. intros (_ & h2). eapply co_must_cond2_false_Pe, h2. Qed.
 
 
 End CoCond2GenericPe.
 
-(** * The positive results in the abstracted form
+(* * The positive results in the abstracted form
 
     [bhv_pre_cond2] compares the acceptance sets through the image
     [⌈ 𝝳 ∘ Φ ⌉], not raw.  Going from the raw inclusion proved above to that
@@ -3938,7 +3938,7 @@ Section AbstractedAcceptance.
     exists μ. split; [exact hμ | eapply same_delta].
   Qed.
 
-  (** Feedback, on traces. *)
+  (* Feedback, on traces. *)
   Theorem pw_bp2_cond2_ff_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_fb s -> ((Bp2, mt) : st) ⟹[s] q' -> q' ↛ ->
     exists p', ((Pw, mt) : st) ⟹[s] p' /\ p' ↛
@@ -3948,7 +3948,7 @@ Section AbstractedAcceptance.
     exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
   Qed.
 
-  (** Echo, on traces. *)
+  (* Echo, on traces. *)
   Theorem pe_qe_cond2_ef_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_echo s -> ((Qe, mt) : st) ⟹[s] q' -> q' ↛ ->
     exists p', ((Pe, mt) : st) ⟹[s] p' /\ p' ↛
@@ -3958,7 +3958,7 @@ Section AbstractedAcceptance.
     exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
   Qed.
 
-  (** Feedback, on co-traces -- the statement asked for. *)
+  (* Feedback, on co-traces -- the statement asked for. *)
   Theorem pe_qe_co_cond2_ff_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_fb s -> ((Qe, mt) : st) ⟹ᶜᵒ[s] q' -> q' ↛ ->
     exists p', ((Pe, mt) : st) ⟹ᶜᵒ[s] p' /\ p' ↛
@@ -3969,3 +3969,4 @@ Section AbstractedAcceptance.
   Qed.
 
 End AbstractedAcceptance.
+(* end hide *)

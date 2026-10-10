@@ -1,4 +1,4 @@
-(lang dune 3.17)
+(lang dune 3.21)
 
 (name testing-theory)
 
@@ -15,7 +15,7 @@
 
 (license MIT)
 
-(using coq 0.10)
+(using rocq 0.11)
 
 (documentation https://GLmaths.github.io/testing-theory)
 

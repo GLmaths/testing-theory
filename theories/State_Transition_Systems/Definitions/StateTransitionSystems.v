@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -27,7 +28,7 @@ From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS.
 
-(** * State Transition Systems *)
+(* * State Transition Systems *)
 
 (* Definition of a State Transition System (STS) *)
 Class Sts (P: Type) := MkSts {
@@ -35,34 +36,34 @@ Class Sts (P: Type) := MkSts {
     sts_state_eqdec: EqDecision P;
     sts_step_decidable: RelDecision sts_step;
 
-    sts_refuses: P → Prop;
-    sts_refuses_decidable p : Decision (sts_refuses p);
-    sts_refuses_spec1 p : ¬ sts_refuses p → { q | sts_step p q };
-    sts_refuses_spec2 p : { q | sts_step p q } → ¬ sts_refuses p;
+    sts_performs: P → Prop;
+    sts_performs_decidable p : Decision (sts_performs p);
+    sts_performs_spec1 p : sts_performs p → { q | sts_step p q };
+    sts_performs_spec2 p : { q | sts_step p q } → sts_performs p;
 }.
 #[global] Existing Instance sts_state_eqdec.
 #[global] Existing Instance sts_step_decidable.
-#[global] Existing Instance sts_refuses_decidable.
+#[global] Existing Instance sts_performs_decidable.
 
-(** ** State Transition Systems are Labelled Transition Systems *)
+(* ** State Transition Systems are Labelled Transition Systems *)
 
-Definition istep `{gLts A} p q := lts_step p τ q.
+Definition istep `{gLts A} p q := p ⟶ q.
 
 #[global]
 Program Instance sts_of_lts {P} `(M: gLts P H): Sts P :=
   {|
     sts_step := istep;
-    sts_refuses s := lts_refuses s τ;
+    sts_performs s := s ⟶;
   |}.
 Next Obligation. intros ??????. apply _. Defined.
-Next Obligation. intros ??????. by apply lts_refuses_spec1. Qed.
-Next Obligation. intros ??????. by apply lts_refuses_spec2. Qed.
+Next Obligation. intros ????? Hp. by apply lts_performs_spec1. Qed.
+Next Obligation. intros ????? Hq. by apply lts_performs_spec2. Qed.
 
 Section sts_executions.
   Context `{Sts P}.
 
   CoInductive max_exec_from: P → Type :=
-  | MExStop x (Hrefuses: sts_refuses x): max_exec_from x
+  | MExStop x (Hrefuses: ¬ sts_performs x): max_exec_from x
   | MExStep x x' (Hstep: sts_step x x') (η: max_exec_from x'): max_exec_from x.
 
   CoInductive iexec_from: P → Type :=
@@ -226,3 +227,4 @@ Proof.
   - exact clts_states_countable.
   - intros ?. apply clts_next_states_countable.
 Defined.
+(* end hide *)

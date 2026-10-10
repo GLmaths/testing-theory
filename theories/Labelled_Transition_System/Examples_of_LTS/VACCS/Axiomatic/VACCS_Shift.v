@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The channel-index shift [NewVarC] transports transitions, both ways
+(* * The channel-index shift [NewVarC] transports transitions, both ways
 
     [NewVarC k] inserts a fresh channel binder at de Bruijn level [k].
     This file shows it is a *strong bisimulation* between [p] and
@@ -58,13 +59,13 @@ Section VACCS_Shift.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** Shifting a label *)
+(* ** Shifting a label *)
 
 Definition NewVarC_TOA (k : nat) (a : TypeOfActions) : TypeOfActions :=
   match a with (c,v) => (NewVar_in_ChannelData k c, v) end.
 
-Definition NewVar_in_action (k : nat) (mu : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
-  match mu with
+Definition NewVar_in_action (k : nat) (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
+  match μ with
   | ActIn x  => ActIn (NewVarC_TOA k x)
   | ActOut x => ActOut (NewVarC_TOA k x)
   end.
@@ -76,18 +77,18 @@ Definition NewVarC_act (k : nat) (a : ActIO TypeOfActions) : ActIO TypeOfActions
   | τ => τ
   end.
 
-Lemma NewVarC_act_ext : forall k mu,
-  NewVarC_act k (ActExt mu) = ActExt (NewVar_in_action k mu).
+Lemma NewVarC_act_ext : forall k μ,
+  NewVarC_act k (ActExt μ) = ActExt (NewVar_in_action k μ).
 Proof. intros k [x|x]; reflexivity. Qed.
 
-(** The two shifts of the development coincide at level [0]. *)
+(* The two shifts of the development coincide at level [0]. *)
 Lemma NewVarC_at_zero : forall c, NewVar_in_ChannelData 0 c = VarC_add 1 c.
 Proof.
   intros [a|i]; simpl; [ reflexivity | ].
   destruct (decide (0 < S i)) as [H|H]; [ reflexivity | exfalso; lia ].
 Qed.
 
-(** ** How the two shifts commute, and how they invert *)
+(* ** How the two shifts commute, and how they invert *)
 
 Lemma NewVarC_shift_comm : forall k c,
   NewVar_in_ChannelData (S k) (VarC_add 1 c) = VarC_add 1 (NewVar_in_ChannelData k c).
@@ -97,7 +98,7 @@ Proof.
     simpl; try reflexivity; exfalso; lia.
 Qed.
 
-(** The converse of [NewVarC_shift_comm]: a channel that is *both* a
+(* The converse of [NewVarC_shift_comm]: a channel that is *both* a
     [VarC_add 1]-shift and a [NewVar_in_ChannelData (S k)]-shift is the
     shift of a single common channel.  This is what lets the [ν] case of
     [lts_NewVarC_inv_aux] pull a label back out through the binder. *)
@@ -131,9 +132,9 @@ Proof.
       inversion Heq; f_equal; lia.
 Qed.
 
-Lemma NewVar_in_action_inv : forall k mu mu0,
-  VarC_action_add 1 mu = NewVar_in_action (S k) mu0 ->
-  exists mu1, mu = NewVar_in_action k mu1 /\ mu0 = VarC_action_add 1 mu1.
+Lemma NewVar_in_action_inv : forall k μ μ0,
+  VarC_action_add 1 μ = NewVar_in_action (S k) μ0 ->
+  exists μ1, μ = NewVar_in_action k μ1 /\ μ0 = VarC_action_add 1 μ1.
 Proof.
   intros k [[c v]|[c v]] [[c0 v0]|[c0 v0]] Heq; simpl in Heq; inversion Heq; subst;
     match goal with H : VarC_add 1 c = _ |- _ =>
@@ -141,7 +142,7 @@ Proof.
     [ exists (ActIn (c1, v0)) | exists (ActOut (c1, v0)) ]; split; reflexivity.
 Qed.
 
-(** ** The shift transports transitions forwards *)
+(* ** The shift transports transitions forwards *)
 
 Lemma lts_NewVarC : forall p a q, lts p a q ->
   forall k, lts (NewVarC k p) (NewVarC_act k a) (NewVarC k q).
@@ -169,7 +170,7 @@ Proof.
   - apply lts_choiceR. apply IHHl.
 Qed.
 
-(** ** …and backwards
+(* ** …and backwards
 
     Every transition of [NewVarC k p] is the shift of a transition of [p],
     at a label that is itself a shift.  Same shape as
@@ -199,16 +200,16 @@ Proof.
   - dnvc p0 Heq. destruct (IHHl _ _ eq_refl) as (a0 & q & Ha & Hq & Hlq).
     exists a0, q. split; [ exact Ha | split; [ exact Hq | eapply lts_ifZero; eassumption ] ].
   - dnvc p0 Heq. destruct (IHHl zq0 (S k) eq_refl) as (a0 & q & Ha & Hq & Hlq).
-    destruct a0 as [mu0|]; [ | simpl in Ha; discriminate Ha ].
+    destruct a0 as [μ0|]; [ | simpl in Ha; discriminate Ha ].
     simpl in Ha. inversion Ha as [Ha']. clear Ha.
-    assert (Ha2 : VarC_action_add 1 μ = NewVar_in_action (S k) mu0)
-      by (destruct mu0; simpl in Ha' |- *; congruence).
-    destruct (NewVar_in_action_inv k μ mu0 Ha2) as (mu1 & Hmu1 & Hmu2). subst.
-    exists (ActExt mu1), (ν q).
-    split; [ destruct mu1; reflexivity
+    assert (Ha2 : VarC_action_add 1 μ = NewVar_in_action (S k) μ0)
+      by (destruct μ0; simpl in Ha' |- *; congruence).
+    destruct (NewVar_in_action_inv k μ μ0 Ha2) as (μ1 & Hmu1 & Hmu2). subst.
+    exists (ActExt μ1), (ν q).
+    split; [ destruct μ1; reflexivity
            | split; [ simpl; f_equal; exact Hq | apply lts_res_ext; exact Hlq ] ].
   - dnvc p0 Heq. destruct (IHHl zq0 (S k) eq_refl) as (a0 & q & Ha & Hq & Hlq).
-    destruct a0 as [mu0|]; [ simpl in Ha; destruct mu0; discriminate Ha | ].
+    destruct a0 as [μ0|]; [ simpl in Ha; destruct μ0; discriminate Ha | ].
     exists τ, (ν q).
     split; [ reflexivity | split; [ simpl; f_equal; exact Hq | apply lts_res_tau; exact Hlq ] ].
   - dnvc p0 Heq. destruct (IHHl1 _ _ eq_refl) as (b1 & r1 & Hb1 & Hr1 & Hlr1).
@@ -246,3 +247,4 @@ Lemma lts_NewVarC_inv : forall p k a q', lts (NewVarC k p) a q' ->
 Proof. intros p k a q' Hl. eapply lts_NewVarC_inv_aux; [ exact Hl | reflexivity ]. Qed.
 
 End VACCS_Shift.
+(* end hide *)

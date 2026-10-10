@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -22,9 +23,9 @@
 
 From Stdlib.Lists Require Import List.
 From stdpp Require Import decidable.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderConstruction May LiftMay DefinitionTI.
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderConstruction May LiftMay DefinitionTI.
 
-(** * Soundness of the trace-inclusion preorder for May
+(* * Soundness of the trace-inclusion preorder for May
 
     Soundness: the alternative (behavioural) preorder implies the contextual one,
 
@@ -37,15 +38,16 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Pr
     replays the very same computation with [q] in place of [p] — the client [t] is
     untouched, so it still reaches the same successful state. *)
 
-(** ** Soundness, for arbitrary LTSs *)
+(* ** Soundness, for arbitrary LTSs *)
 
 Section Soundness_ti.
 
 Context `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H}.
+Context {unique_nb : UniqueDual A}.
 Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
 (* non-generalising binders: the [gLts] instances are [gLtsP], [gLtsQ], [gLtsT] *)
-Context {PInter : Prop_of_Inter P T A dual}.
-Context {QInter : Prop_of_Inter Q T A dual}.
+Context {PInter : Prop_of_Inter P T A A dual}.
+Context {QInter : Prop_of_Inter Q T A A dual}.
 
 Theorem soundness_ti (p : P) (q : Q) : p ≼ₜᵢ q -> p ⊑ₘₐᵧ q.
 Proof.
@@ -61,7 +63,7 @@ Qed.
 
 End Soundness_ti.
 
-(** ** Soundness, for forwarders
+(* ** Soundness, for forwarders
 
     The statement asked for: [p] and [q] live in forwarder LTSs ([gLtsObaFW]).
     The forwarder axioms are not needed for soundness — they are what completeness
@@ -71,16 +73,16 @@ End Soundness_ti.
 Theorem soundness_ti_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}
+  gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) :
   p ≼ₜᵢ q -> p ⊑ₘₐᵧ q.
 Proof. eapply soundness_ti. Qed.
 
-(** ** Soundness, for feedback LTSs, through the forwarder construction
+(* ** Soundness, for feedback LTSs, through the forwarder construction
 
     An LTS satisfying only the feedback axioms ([gLtsObaFB]) is not a forwarder,
     so [soundness_ti_fw] does not apply to it directly. But it can be turned into
@@ -95,15 +97,15 @@ Proof. eapply soundness_ti. Qed.
 Theorem soundness_ti_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  {_ : Prop_of_Inter Q (MO A) A fw_inter}
-  {_ : Prop_of_Inter (Q * MO A) T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter Q (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (Q * MO A) T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) :
   (p, ∅ : MO A) ≼ₜᵢ (q, ∅ : MO A) -> p ⊑ₘₐᵧ q.
@@ -115,3 +117,4 @@ Proof.
   (* [(p, ∅)] and [(q, ∅)] live in forwarder LTSs: apply the general soundness *)
   eapply soundness_ti. exact hti.
 Qed.
+(* end hide *)

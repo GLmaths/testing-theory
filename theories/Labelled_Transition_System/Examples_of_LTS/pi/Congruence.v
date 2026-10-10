@@ -1,3 +1,4 @@
+(* begin hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Lia Arith Relations Morphisms.
@@ -690,3 +691,4 @@ Qed.
 #[global] Hint Resolve cgr_is_eq_rel: ccs.
 #[global] Hint Constructors clos_trans:ccs.
 #[global] Hint Unfold cgr:ccs.
+(* end hide *)

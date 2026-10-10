@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -27,7 +28,7 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts.
 
-(** * Traces in normal form (combinatorial core)
+(* * Traces in normal form (combinatorial core)
 
     This file contains the purely combinatorial part of the normalisation of
     traces described in the ESOP'25 submission (file [traces_normal_form.tex]),
@@ -68,14 +69,14 @@ From TestingTheory Require Import ActTau gLts.
     The file is parametric in the classifier [cls]; it is instantiated on
     traces in [Normalisation.v] and on co-traces in [NormalisationCo.v]. *)
 
-(** ** Classes of actions *)
+(* ** Classes of actions *)
 
 Inductive act_class := CNB | CIN | COP.
 
 #[global] Instance act_class_eq_dec : EqDecision act_class.
 Proof. solve_decision. Defined.
 
-(** A small compatibility lemma between [In] (from the standard library, used
+(* A small compatibility lemma between [In] (from the standard library, used
     by [Forall_forall]) and [∈] (from stdpp). *)
 Lemma elem_of_of_In {B : Type} (l : list B) (x : B) : In x l -> x ∈ l.
 Proof.
@@ -85,7 +86,7 @@ Proof.
   - right. now eapply IH.
 Qed.
 
-(** A few list helpers, stated here to avoid the name clashes between the
+(* A few list helpers, stated here to avoid the name clashes between the
     standard library and stdpp. *)
 
 Lemma Forall_weaken {B : Type} (Q R : B -> Prop) (u : list B) :
@@ -141,9 +142,9 @@ Proof.
     rewrite (filter_cons_False Q x u); [exact IH | intro hq; exact (hr (h x hq))].
 Qed.
 
-(** ** Normalised traces *)
+(* ** Normalised traces *)
 
-(** A block is a class together with the multiset of the actions of that class
+(* A block is a class together with the multiset of the actions of that class
     occurring in a maximal run. *)
 Definition nblock (A : Type) `{ExtAction A} : Type := (act_class * gmultiset A)%type.
 
@@ -153,12 +154,12 @@ Section NormalForm.
 
   Context `{EA : ExtAction A}.
 
-  (** The classification of actions.  Everything below only depends on [cls]. *)
+  (* The classification of actions.  Everything below only depends on [cls]. *)
   Variable cls : A -> act_class.
 
-  (** *** The normalisation function *)
+  (* *** The normalisation function *)
 
-  (** [ncons μ σ] adds [μ] in front of the normalised trace [σ]: it is merged
+  (* [ncons μ σ] adds [μ] in front of the normalised trace [σ]: it is merged
       with the first block of [σ] when they have the same, non opaque, class,
       and it opens a new block otherwise. *)
   Definition ncons (μ : A) (σ : ntrace A) : ntrace A :=
@@ -176,7 +177,7 @@ Section NormalForm.
     | μ :: s' => ncons μ (nform s')
     end.
 
-  (** [nlin σ] is the canonical linearisation of [σ]: inside each block the
+  (* [nlin σ] is the canonical linearisation of [σ]: inside each block the
       actions are listed in the canonical order of [elements]. *)
   Fixpoint nlin (σ : ntrace A) : trace A :=
     match σ with
@@ -187,27 +188,27 @@ Section NormalForm.
   Lemma nform_app s1 s2 : nform (s1 ++ s2) = foldr ncons (nform s2) s1.
   Proof. induction s1 as [| μ s1 IH]; simpl; [reflexivity | now rewrite IH]. Qed.
 
-  (** *** Well-formedness *)
+  (* *** Well-formedness *)
 
   Definition block_wf (b : nblock A) : Prop :=
     match b with (c , M) => M ≠ ∅ /\ forall μ, μ ∈ M -> cls μ = c end.
 
   Definition nf_wf (σ : ntrace A) : Prop := Forall block_wf σ.
 
-  Lemma nf_wf_ncons μ σ : nf_wf σ -> nf_wf (ncons μ σ).
+  Lemma nf_wf_ncons μ1 σ : nf_wf σ -> nf_wf (ncons μ1 σ).
   Proof.
     intro hwf. destruct σ as [| (c , M) σ']; simpl.
     - constructor; [| constructor]. split; [multiset_solver |].
-      intros ν hν. assert (hνμ : ν = μ) by multiset_solver. now rewrite hνμ.
+      intros μ2 hν. assert (hνμ : μ2 = μ1) by multiset_solver. now rewrite hνμ.
     - inversion hwf as [| b σ0 hb hσ']; subst.
-      destruct (decide (cls μ = c /\ cls μ ≠ COP)) as [(heq & _) | hne].
+      destruct (decide (cls μ1 = c /\ cls μ1 ≠ COP)) as [(heq & _) | hne].
       + constructor; [| exact hσ'].
         destruct hb as (hne0 & hall). split; [multiset_solver |].
-        intros ν hν. eapply gmultiset_elem_of_disj_union in hν as [hν | hν].
-        * assert (hνμ : ν = μ) by multiset_solver. rewrite hνμ. exact heq.
+        intros μ2 hν. eapply gmultiset_elem_of_disj_union in hν as [hν | hν].
+        * assert (hνμ : μ2 = μ1) by multiset_solver. rewrite hνμ. exact heq.
         * now eapply hall.
       + constructor; [| exact hwf]. split; [multiset_solver |].
-        intros ν hν. assert (hνμ : ν = μ) by multiset_solver. now rewrite hνμ.
+        intros μ2 hν. assert (hνμ : μ2 = μ1) by multiset_solver. now rewrite hνμ.
   Qed.
 
   Lemma nf_wf_nform s : nf_wf (nform s).
@@ -215,21 +216,21 @@ Section NormalForm.
     induction s as [| μ s IH]; simpl; [constructor | now eapply nf_wf_ncons].
   Qed.
 
-  (** *** Equivalence of traces up to swapping consecutive actions of the same
+  (* *** Equivalence of traces up to swapping consecutive actions of the same
       (non-opaque) class *)
 
   Inductive tequiv : trace A -> trace A -> Prop :=
   | te_refl s : tequiv s s
   | te_trans s t u : tequiv s t -> tequiv t u -> tequiv s u
-  | te_swap s1 μ ν s2 :
-    cls μ = cls ν -> cls μ ≠ COP ->
-    tequiv (s1 ++ μ :: ν :: s2) (s1 ++ ν :: μ :: s2).
+  | te_swap s1 μ1 μ2 s2 :
+    cls μ1 = cls μ2 -> cls μ1 ≠ COP ->
+    tequiv (s1 ++ μ1 :: μ2 :: s2) (s1 ++ μ2 :: μ1 :: s2).
 
   (* hints are added after the section *)
 
   Lemma tequiv_sym s t : tequiv s t -> tequiv t s.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply te_trans; eassumption.
     - eapply te_swap; [now symmetry | now rewrite <- heq].
@@ -237,7 +238,7 @@ Section NormalForm.
 
   Lemma tequiv_app_l u s t : tequiv s t -> tequiv (u ++ s) (u ++ t).
   Proof.
-    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply te_trans; eassumption.
     - rewrite 2 app_assoc. eapply te_swap; eassumption.
@@ -245,7 +246,7 @@ Section NormalForm.
 
   Lemma tequiv_app_r u s t : tequiv s t -> tequiv (s ++ u) (t ++ u).
   Proof.
-    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t v h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply te_trans; eassumption.
     - rewrite <- 2 app_assoc. simpl. eapply te_swap; eassumption.
@@ -254,17 +255,17 @@ Section NormalForm.
   Lemma tequiv_cons μ s t : tequiv s t -> tequiv (μ :: s) (μ :: t).
   Proof. intro h. eapply (tequiv_app_l [μ]) in h. exact h. Qed.
 
-  (** Inside a run of actions of a same non-opaque class every permutation is
+  (* Inside a run of actions of a same non-opaque class every permutation is
       reachable by consecutive swaps. *)
   Lemma tequiv_perm_class c s1 s2 u v :
-    c ≠ COP -> Forall (fun μ => cls μ = c) s1 -> s1 ≡ₚ s2 ->
+    c ≠ COP -> Forall (fun μ1 => cls μ1 = c) s1 -> s1 ≡ₚ s2 ->
     tequiv (u ++ s1 ++ v) (u ++ s2 ++ v).
   Proof.
     intros hc hall hp. revert u hall.
-    induction hp as [| μ l1 l2 hp IH | μ ν l | l1 l2 l3 hp1 IH1 hp2 IH2 ]; intros u hall.
+    induction hp as [| μ1 l1 l2 hp IH | μ1 μ2 l | l1 l2 l3 hp1 IH1 hp2 IH2 ]; intros u hall.
     - constructor.
     - eapply Forall_cons_1 in hall as (hμ & hl1).
-      specialize (IH (u ++ [μ]) hl1).
+      specialize (IH (u ++ [μ1]) hl1).
       rewrite <- !app_assoc in IH. simpl in IH. exact IH.
     - eapply Forall_cons_1 in hall as (hν & hrest).
       eapply Forall_cons_1 in hrest as (hμ & hl).
@@ -274,18 +275,18 @@ Section NormalForm.
       + eapply IH2. eapply (Permutation_Forall hp1). exact hall.
   Qed.
 
-  (** *** [nform] is invariant under [tequiv] *)
+  (* *** [nform] is invariant under [tequiv] *)
 
-  Lemma ncons_comm μ ν σ :
-    cls μ = cls ν -> cls μ ≠ COP -> ncons μ (ncons ν σ) = ncons ν (ncons μ σ).
+  Lemma ncons_comm μ1 μ2 σ :
+    cls μ1 = cls μ2 -> cls μ1 ≠ COP -> ncons μ1 (ncons μ2 σ) = ncons μ2 (ncons μ1 σ).
   Proof.
     intros heq hne.
-    assert (hne' : cls ν ≠ COP) by now rewrite <- heq.
+    assert (hne' : cls μ2 ≠ COP) by now rewrite <- heq.
     destruct σ as [| (c , M) σ' ]; simpl.
     - rewrite 2 decide_True by (split; [now rewrite heq | assumption]).
       rewrite heq. f_equal. f_equal. multiset_solver.
-    - destruct (decide (cls ν = c /\ cls ν ≠ COP)) as [ (heqc & _) | hnc ];
-        destruct (decide (cls μ = c /\ cls μ ≠ COP)) as [ (heqc' & _) | hnc' ];
+    - destruct (decide (cls μ2 = c /\ cls μ2 ≠ COP)) as [ (heqc & _) | hnc ];
+        destruct (decide (cls μ1 = c /\ cls μ1 ≠ COP)) as [ (heqc' & _) | hnc' ];
         simpl.
       + rewrite 2 decide_True by (split; assumption).
         f_equal. f_equal. multiset_solver.
@@ -297,25 +298,25 @@ Section NormalForm.
 
   Lemma nform_tequiv s t : tequiv s t -> nform s = nform t.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - reflexivity.
     - now transitivity (nform t).
     - rewrite 2 nform_app. simpl. now rewrite ncons_comm.
   Qed.
 
-  (** *** A trace is [tequiv] to the linearisation of its normal form *)
+  (* *** A trace is [tequiv] to the linearisation of its normal form *)
 
-  Lemma nlin_ncons μ σ :
-    nf_wf σ -> tequiv (μ :: nlin σ) (nlin (ncons μ σ)).
+  Lemma nlin_ncons μ1 σ :
+    nf_wf σ -> tequiv (μ1 :: nlin σ) (nlin (ncons μ1 σ)).
   Proof.
     intro hwf. destruct σ as [| (c , M) σ' ]; simpl.
     - rewrite gmultiset_elements_singleton. constructor.
     - eapply Forall_cons_1 in hwf as (hb & hσ'). destruct hb as (hne0 & hall).
-      destruct (decide (cls μ = c /\ cls μ ≠ COP)) as [ (heqc & hnc) | hnc ]; simpl.
-      + eapply (tequiv_perm_class c (μ :: elements M) (elements ({[+ μ +]} ⊎ M)) [] (nlin σ')).
+      destruct (decide (cls μ1 = c /\ cls μ1 ≠ COP)) as [ (heqc & hnc) | hnc ]; simpl.
+      + eapply (tequiv_perm_class c (μ1 :: elements M) (elements ({[+ μ1 +]} ⊎ M)) [] (nlin σ')).
         * now rewrite <- heqc.
         * constructor; [exact heqc |].
-          eapply Forall_forall. intros ν hν. eapply hall.
+          eapply Forall_forall. intros μ2 hν. eapply hall.
           rewrite <- gmultiset_elem_of_elements. now eapply elem_of_of_In.
         * rewrite gmultiset_elements_disj_union, gmultiset_elements_singleton.
           reflexivity.
@@ -330,7 +331,7 @@ Section NormalForm.
     - eapply nlin_ncons, nf_wf_nform.
   Qed.
 
-  (** Two traces with the same normal form are related by [tequiv]. *)
+  (* Two traces with the same normal form are related by [tequiv]. *)
   Lemma tequiv_of_nform s t : nform s = nform t -> tequiv s t.
   Proof.
     intro heq. eapply te_trans; [eapply tequiv_nform |].
@@ -340,14 +341,14 @@ Section NormalForm.
   Corollary nform_iff_tequiv s t : nform s = nform t <-> tequiv s t.
   Proof. split; [eapply tequiv_of_nform | eapply nform_tequiv]. Qed.
 
-  (** *** Canonicity *)
+  (* *** Canonicity *)
 
   Lemma nform_nlin_nform s : nform (nlin (nform s)) = nform s.
   Proof. symmetry. eapply nform_tequiv, tequiv_nform. Qed.
 
   Lemma tequiv_perm s t : tequiv s t -> s ≡ₚ t.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - reflexivity.
     - etransitivity; eassumption.
     - eapply Permutation_app_head. constructor.
@@ -361,14 +362,14 @@ Section NormalForm.
 
 End NormalForm.
 
-(** ** Transporting [tequiv] along a renaming of the actions
+(* ** Transporting [tequiv] along a renaming of the actions
 
     Used to relate the normalisation of co-traces with the normalisation of
     traces, through the involution [co]. *)
 Lemma tequiv_map {A B : Type} (f : A -> B) (c1 : A -> act_class) (c2 : B -> act_class) s t :
-  (forall μ, c2 (f μ) = c1 μ) -> tequiv c1 s t -> tequiv c2 (map f s) (map f t).
+  (forall μ1, c2 (f μ1) = c1 μ1) -> tequiv c1 s t -> tequiv c2 (map f s) (map f t).
 Proof.
-  intro hf. induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+  intro hf. induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
   - constructor.
   - eapply te_trans; eassumption.
   - rewrite 2 map_app. simpl. eapply te_swap.
@@ -377,7 +378,7 @@ Proof.
 Qed.
 
 
-(** ** Counting inversions
+(* ** Counting inversions
 
     In order to show that the normal form of a trace is the least element of
     its equivalence class for the preorder on traces of [Normalisation.v], we
@@ -424,7 +425,7 @@ Section Inversions.
     unfold bit. destruct (decide (Pl μ)); simpl; lia.
   Qed.
 
-  (** The part of the count that a swap of two consecutive actions leaves
+  (* The part of the count that a swap of two consecutive actions leaves
       untouched. *)
   Definition inv_ctx (s1 : list B) (x y : B) (s2 : list B) : nat :=
     inv_cnt s1
@@ -443,7 +444,7 @@ Section Inversions.
   Lemma inv_ctx_sym s1 x y s2 : inv_ctx s1 x y s2 = inv_ctx s1 y x s2.
   Proof. unfold inv_ctx. lia. Qed.
 
-  (** A swap never increases the count as soon as it does not create an
+  (* A swap never increases the count as soon as it does not create an
       inversion. *)
   Lemma inv_cnt_swap_le s1 x y s2 :
     ¬ (Pl y /\ Pr x) -> inv_cnt (s1 ++ y :: x :: s2) <= inv_cnt (s1 ++ x :: y :: s2).
@@ -455,7 +456,7 @@ Section Inversions.
     rewrite heq. lia.
   Qed.
 
-  (** and it strictly decreases it when it destroys one. *)
+  (* and it strictly decreases it when it destroys one. *)
   Lemma inv_cnt_swap_lt s1 x y s2 :
     ¬ (Pl y /\ Pr x) -> Pl x -> Pr y ->
     inv_cnt (s1 ++ y :: x :: s2) < inv_cnt (s1 ++ x :: y :: s2).
@@ -474,12 +475,12 @@ Section Inversions.
     rewrite inv_cnt_app. lia.
   Qed.
 
-  (** Erasing a whole factor never increases the count. *)
+  (* Erasing a whole factor never increases the count. *)
   Lemma inv_cnt_erase s1 u s2 :
     inv_cnt (s1 ++ s2) <= inv_cnt (s1 ++ u ++ s2).
   Proof. rewrite !inv_cnt_app, length_filter_app. lia. Qed.
 
-  (** A count vanishes as soon as one of the two predicates is never
+  (* A count vanishes as soon as one of the two predicates is never
       satisfied. *)
   Lemma inv_cnt_0_l u : Forall (fun x => ¬ Pl x) u -> inv_cnt u = 0.
   Proof.
@@ -498,7 +499,7 @@ End Inversions.
 
 Arguments inv_cnt {B} Pl Pr {_ _} s.
 
-(** ** Redexes of a binary relation on consecutive actions
+(* ** Redexes of a binary relation on consecutive actions
 
     The feedback rule of the preorders on traces and on co-traces erases two
     *consecutive* actions related by a binary relation [R].  Two such redexes
@@ -555,7 +556,7 @@ End Redex.
 Arguments no_redex {B} R t.
 Arguments has_redex {B} R {_} s.
 
-(** ** A combinatorial preorder on traces
+(* ** A combinatorial preorder on traces
 
     The three families of rearrangements that the alternative characterisations
     of the testing preorders enjoy -- delaying an action of class [CNB],
@@ -590,7 +591,7 @@ Section Measure.
     length (s1 ++ x :: y :: s2) = length (s1 ++ y :: x :: s2).
   Proof. rewrite 2 length_app'. reflexivity. Qed.
 
-  (** *** Effect of the three rearrangements on the measure *)
+  (* *** Effect of the three rearrangements on the measure *)
 
   Lemma tmeasure_delay s1 x y s2 :
     cls x = CNB -> tmeasure (s1 ++ y :: x :: s2) <= tmeasure (s1 ++ x :: y :: s2).
@@ -661,7 +662,7 @@ Section Measure.
     lia.
   Qed.
 
-  (** *** The combinatorial preorder *)
+  (* *** The combinatorial preorder *)
 
   Inductive cls_pre : list A -> list A -> Prop :=
   | cp_refl s : cls_pre s s
@@ -679,10 +680,10 @@ Section Measure.
 
   Lemma cls_pre_of_tequiv s t : tequiv cls s t -> cls_pre s t.
   Proof.
-    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ ν s2 heq hne ].
+    induction 1 as [ s | s t u h1 IH1 h2 IH2 | s1 μ1 μ2 s2 heq hne ].
     - constructor.
     - eapply cp_trans; eassumption.
-    - destruct (cls μ) eqn:hμ.
+    - destruct (cls μ1) eqn:hμ.
       + eapply cp_delay. exact hμ.
       + eapply cp_anticipate. now rewrite <- heq.
       + now exfalso.
@@ -700,7 +701,7 @@ Section Measure.
       replace ((x :: u) ++ s2) with (x :: u ++ s2) in hlt by reflexivity. lia.
   Qed.
 
-  (** A step that does not decrease the measure is a swap of two consecutive
+  (* A step that does not decrease the measure is a swap of two consecutive
       actions of a same, non opaque, class. *)
   Lemma cls_pre_measure_tequiv s t :
     cls_pre s t -> tmeasure t = tmeasure s -> tequiv cls s t.
@@ -722,7 +723,7 @@ Section Measure.
       replace ((x :: u) ++ s2) with (x :: u ++ s2) in hlt by reflexivity. lia.
   Qed.
 
-  (** The normal form is a complete invariant of the equivalence induced by the
+  (* The normal form is a complete invariant of the equivalence induced by the
       preorder: it is the canonical representative of the class of a trace.
       This is Proposition 4.7 of Boreale, De Nicola and Pugliese. *)
   Theorem nform_iff_cls_pre s t :
@@ -735,7 +736,7 @@ Section Measure.
       pose proof (cls_pre_measure _ _ h1). pose proof (cls_pre_measure _ _ h2). lia.
   Qed.
 
-  (** *** Simplified traces
+  (* *** Simplified traces
 
       No rule of [cls_pre] applies any more, up to the reversible swaps, to a
       trace that has no action of class [CNB] and whose actions of class [CIN]
@@ -771,7 +772,7 @@ Section Measure.
     unfold tmeasure. lia.
   Qed.
 
-  (** No rule can erase or permute anything in a trace without [CNB] actions,
+  (* No rule can erase or permute anything in a trace without [CNB] actions,
       except the reversible swaps. *)
   Lemma cls_pre_no_nb u t : cls_pre u t ->
     Forall (fun μ => cls μ ≠ CNB) u ->
@@ -794,7 +795,7 @@ Section Measure.
       eapply Forall_cons_1 in hu2 as (hx' & _). exact (hx' hx).
   Qed.
 
-  (** A trace is *simplified* when nothing below it in the preorder is
+  (* A trace is *simplified* when nothing below it in the preorder is
       strictly smaller. *)
   Definition cls_min (u : list A) : Prop :=
     forall t, cls_pre u t -> tmeasure t = tmeasure u.
@@ -819,7 +820,7 @@ Section Measure.
   Corollary cls_min_csimpl s : cls_min (csimpl s).
   Proof. eapply cls_min_of_no_nb; [eapply csimpl_no_nb | eapply tmeasure_csimpl]. Qed.
 
-  (** *** Sorted traces
+  (* *** Sorted traces
 
       Without the deletion law, nothing is ever erased and the least traces are
       the *sorted* ones: the actions of class [CIN] first, then the opaque
@@ -842,17 +843,17 @@ Section Measure.
   Proof.
     induction s as [| x s IH]; [reflexivity |]. unfold tsort in *.
     destruct (cls x) eqn:e.
-    - rewrite (filter_cons_False (fun ν => cls ν = CIN) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_False (fun ν => cls ν = COP) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_True (fun ν => cls ν = CNB) x s e).
+    - rewrite (filter_cons_False (fun μ => cls μ = CIN) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_False (fun μ => cls μ = COP) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_True (fun μ => cls μ = CNB) x s e).
       rewrite perm_middle3, IH. reflexivity.
-    - rewrite (filter_cons_True (fun ν => cls ν = CIN) x s e).
-      rewrite (filter_cons_False (fun ν => cls ν = COP) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_False (fun ν => cls ν = CNB) x s) by (rewrite e; discriminate).
+    - rewrite (filter_cons_True (fun μ => cls μ = CIN) x s e).
+      rewrite (filter_cons_False (fun μ => cls μ = COP) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_False (fun μ => cls μ = CNB) x s) by (rewrite e; discriminate).
       rewrite <- app_comm_cons, IH. reflexivity.
-    - rewrite (filter_cons_False (fun ν => cls ν = CIN) x s) by (rewrite e; discriminate).
-      rewrite (filter_cons_True (fun ν => cls ν = COP) x s e).
-      rewrite (filter_cons_False (fun ν => cls ν = CNB) x s) by (rewrite e; discriminate).
+    - rewrite (filter_cons_False (fun μ => cls μ = CIN) x s) by (rewrite e; discriminate).
+      rewrite (filter_cons_True (fun μ => cls μ = COP) x s e).
+      rewrite (filter_cons_False (fun μ => cls μ = CNB) x s) by (rewrite e; discriminate).
       rewrite <- app_comm_cons, perm_middle2, IH. reflexivity.
   Qed.
 
@@ -896,7 +897,7 @@ Section Measure.
     unfold tmeasure. lia.
   Qed.
 
-  (** The measure is constant on the class of a trace. *)
+  (* The measure is constant on the class of a trace. *)
   Corollary tmeasure_nform s : tmeasure (nlin (nform cls s)) = tmeasure s.
   Proof.
     assert (h1 : cls_pre s (nlin (nform cls s)))
@@ -923,7 +924,7 @@ Arguments block_wf {A _} cls b.
 Arguments nf_wf {A _} cls σ.
 Arguments tequiv {A} cls s t.
 
-(** * Two classifiers that split the actions the same way
+(* * Two classifiers that split the actions the same way
 
     [nform] only ever compares the class of an action with the class of the
     block it may join, and refuses to merge [COP]: it depends on the classifier
@@ -983,3 +984,4 @@ Section SameShape.
   Proof. eapply nlin_shape, nform_same_shape. Qed.
 
 End SameShape.
+(* end hide *)

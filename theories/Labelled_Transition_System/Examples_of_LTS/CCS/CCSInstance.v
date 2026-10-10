@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -125,7 +126,7 @@ with gsize p :=
 (* Substitution, usefull for Recursion def and Context definition (for congruence) *)
 Fixpoint pr_subst id p q :=
   match p with
-  | p1 ‖ p2 => pr_par (pr_subst id p1 q) (pr_subst id p2 q)
+  | p1 ‖ p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q)
   | pr_var id' => if decide (id = id') then q else p
   | rec id' • p' =>
     if decide (id = id') then p else rec id' • (pr_subst id p' q)
@@ -363,8 +364,8 @@ apply cgr_par_step. exact H. eauto with cgr_eq.
 Qed.
 
 (* This is all for cgr_choice *)
-Lemma cgr_n_par_l p p' q n: clos_n cgr_step n p p' ->
-  clos_n cgr_step n (p ‖ q) (p' ‖ q).
+Lemma cgr_n_par_l p p' q n: clos_n p ≡[ n ] p' ->
+  clos_n (p ‖ q) ≡[ n ] (p' ‖ q).
 Proof.
 induction 1 as [|n p p' p'' Hp' Hind].
 - constructor.
@@ -375,8 +376,8 @@ Qed.
 
 (* It takes two more steps to apply congruences on the right hand side of
   a parallel *)
-Lemma cgr_n_par_r p p' q n: clos_n cgr_step n p p' ->
-  clos_n cgr_step (S (S n)) (q ‖ p) (q ‖ p').
+Lemma cgr_n_par_r p p' q n: clos_n p ≡[ n ] p' ->
+  clos_n (q ‖ p) ≡[ (S (S n)) ] (q ‖ p').
 Proof.
 intro Hp. apply clos_n_step with (p ‖ q); [constructor|].
 replace (S n) with (n + 1)%nat by lia.
@@ -385,11 +386,11 @@ apply clos_n_trans with (p' ‖ q).
 - apply clos_n_step with (q ‖ p'); constructor.
 Qed.
 
-Lemma cgr_n_par_guard p q g0 n : clos_n cgr_step n (p ‖ q) (g g0) ->
+Lemma cgr_n_par_guard p q g0 n : clos_n (p ‖ q) ≡[ n ] (g g0) ->
   exists np nq,
-  (n >= (np + nq + 2)%nat /\ (clos_n cgr_step np p (g gpr_nil) /\ clos_n cgr_step nq q (g g0)) \/
-   (n >= (np + nq + 2)%nat /\ clos_n cgr_step np p (g g0) /\ clos_n cgr_step nq q (g gpr_nil)) \/
-   (n >= (np + 1)%nat /\ clos_n cgr_step np p (g g0) /\ clos_n cgr_step 0 q (g gpr_nil))).
+  (n >= (np + nq + 2)%nat /\ (clos_n p ≡[ np ] (g gpr_nil) /\ clos_n q ≡[ nq ] (g g0)) \/
+   (n >= (np + nq + 2)%nat /\ clos_n p ≡[ np ] (g g0) /\ clos_n q ≡[ nq ] (g gpr_nil)) \/
+   (n >= (np + 1)%nat /\ clos_n p ≡[ np ] (g g0) /\ clos_n q ≡[ 0 ] (g gpr_nil))).
 Proof.
 (* by strong induction *)
 revert p q g0. induction n as [n IH] using lt_wf_ind; intros p q g0 H.
@@ -535,8 +536,8 @@ dependent destruction Hpp'.
     * constructor.
 Qed.
 
-Lemma cgr_n_par_nil_l p q n: clos_n cgr_step n (g p ‖ g gpr_nil) (g q) ->
-  clos_n cgr_step n (g p) (g q).
+Lemma cgr_n_par_nil_l p q n: clos_n (g p ‖ g gpr_nil) ≡[ n ] (g q) ->
+  clos_n (g p) ≡[ n ] (g q).
 Proof.
 intro Hp. apply cgr_n_par_guard in Hp
   as (np & nq & [[Hnpq [Hp Hq]] | [[Hnpq [Hp Hq]] | [Hnpq [Hp Hq]]]]).
@@ -790,7 +791,7 @@ exact IHhcgr1. exact IHhcgr2.
 Qed.
 
 (* ≡ respects the substitution / recursion *)
-Lemma cgr_subst p q x : p ≡ q -> pr_subst x p (pr_rec x p) ≡* pr_subst x q (pr_rec x q).
+Lemma cgr_subst p q x : p ≡ q -> pr_subst x p (rec x • p) ≡* pr_subst x q (rec x • q).
 Proof.
   intro heq.
   etrans.
@@ -877,7 +878,7 @@ Proof.
          * exists q0. split. apply lts_choiceL. exact l. auto with cgr.
          * exists q0. split. apply lts_choiceR. apply lts_choiceL. exact l. auto with cgr.
       -- exists q0. split. apply lts_choiceR. apply lts_choiceR. exact l. auto with cgr.
-    + intros. dependent destruction l. exists (pr_subst x p (pr_rec x p)). split. apply lts_rec.
+    + intros. dependent destruction l. exists (pr_subst x p (rec x • p)). split. apply lts_rec.
       apply cgr_subst. exact H.
     + intros. dependent destruction l. exists p.  split. apply lts_tau. constructor. exact H.
     + intros. dependent destruction l. exists p. split. apply lts_input. constructor. apply H.
@@ -1480,7 +1481,7 @@ From TestingTheory Require Import OldTransitionSystems.
 #[global] Program Instance CCS_Label : Label Channel.
 
 #[global] Program Instance CCS_Lts : Lts proc Channel := 
-  {| lts_step x ℓ y  := lts x ℓ y ;
+  {| lts_step x α y  := lts x α y ;
      lts_state_eqdec := proc_dec ;
      lts_step_decidable p α q := lts_dec p α q ;
      lts_outputs := outputs_of ;
@@ -1520,8 +1521,8 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
 
 #[global] Instance CCS_finite : FiniteLts proc Channel.
 Proof.
-  constructor; [apply _|]. intros p ℓ. unfold dsig.
-  destruct ℓ as [[a|a]|].
+  constructor; [apply _|]. intros p α. unfold dsig.
+  destruct α as [[a|a]|].
   - eapply (in_list_finite (elements (lts_set_input p a))).
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_input_spec1.
@@ -1541,8 +1542,8 @@ gLts Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
   ForwarderConstruction MultisetLTSConstruction FiniteImageLTS.
 
 #[global] Program Instance Interaction_between_parallel_CCS :
-  @Prop_of_Inter proc proc (ExtAct Channel) dual gLabel_b
-  CCS_ggLts CCS_ggLts :=  Inter_parallel_IO gLabel_b.
+  @Prop_of_Inter proc proc (ExtAct Channel) (ExtAct Channel) dual gLabel_b
+  CCS_ggLts gLabel_b CCS_ggLts :=  Inter_parallel_IO gLabel_b.
 Next Obligation.
   intros μ1 μ2 inter. unfold dual in inter.
   unfold dual in inter. simpl in *. eauto.
@@ -1551,9 +1552,9 @@ Defined.
 
 #[global] Program Instance Interaction_between_MB_and_CCS :
   @Prop_of_Inter proc (@mb (ExtAct Channel) (@gLabel_b Channel CCS_Label))
-    (ExtAct Channel) (@fw_inter (ExtAct Channel) (@gLabel_b Channel CCS_Label))
+    (ExtAct Channel) (ExtAct Channel) (@fw_inter (ExtAct Channel) (@gLabel_b Channel CCS_Label))
     (@gLabel_b Channel CCS_Label)
-    (@ggLts Channel (@gLabel_b Channel CCS_Label) proc _ _)
+    (@ggLts Channel (@gLabel_b Channel CCS_Label) proc _ _) (@gLabel_b Channel CCS_Label)
     (@MbgLts (ExtAct Channel) (@gLabel_b Channel CCS_Label))
   :=  Inter_FW_IO gLabel_b.
 Next Obligation.
@@ -1561,7 +1562,7 @@ Next Obligation.
 Defined.
 
 #[global] Program Instance Interaction_between_FW_CCS_and_CCS :
-  Prop_of_Inter (proc * mb (ExtAct Channel)) proc (ExtAct Channel) dual :=  Inter_FW_parallel_IO gLabel_b.
+  Prop_of_Inter (proc * mb (ExtAct Channel)) proc (ExtAct Channel) (ExtAct Channel) dual :=  Inter_FW_parallel_IO gLabel_b.
 Next Obligation.
   intros μ1 nb. inversion nb.
 Defined.
@@ -1570,7 +1571,7 @@ From TestingTheory Require Import Subset_Act.
 
 Inductive CCS_good : proc -> Prop :=
 | CCS_good_success : CCS_good ①
-| CCS_good_par : forall p q, CCS_good p \/ CCS_good q -> CCS_good (pr_par p q)
+| CCS_good_par : forall p q, CCS_good p \/ CCS_good q -> CCS_good (p ‖ q)
 | CCS_good_choice : forall p q, CCS_good (g p) \/ CCS_good (g q) -> CCS_good (p + q).
 
 #[global] Hint Constructors CCS_good:ccs.
@@ -1746,8 +1747,8 @@ From TestingTheory Require Import DefinitionAS.
   : @AbsAction (ExtAct name) gLabel_nb proc FinA _ Φ.
 Next Obligation.
   intros. destruct μ; destruct μ'.
-  - simpl in H1. subst. eapply lts_refuses_spec1 in H2 as (e' & Tr).
-    eapply lts_refuses_spec2. eauto.
+  - simpl in H1. subst. eapply lts_performs_spec1 in H2 as (e' & Tr).
+    eapply lts_performs_spec2. eauto.
   - exfalso. eapply H0. exists a0. eauto.
   - exfalso. eapply H. exists a. eauto.
   - exfalso. eapply H. exists a. eauto.
@@ -1875,7 +1876,7 @@ Proof.
       simpl in *. eapply hl. eauto.
     + assert (mem' : a ∈ X) by set_solver.
       edestruct (IHG X eq_refl mem') as (r & hlr); eauto.
-      edestruct (eq_spec (unroll_fw (elements ({[x]} ∪ X))) (pr_par (pr_input x pr_success) r) 
+      edestruct (eq_spec (unroll_fw (elements ({[x]} ∪ X))) ((pr_input x pr_success) ‖ r) 
         (ActExt $ ActIn a)) as (t & hlt & heqt).
       exists (unroll_fw (x :: elements X)).
       split. eapply unroll_a_eq_perm.
@@ -1977,7 +1978,7 @@ Next Obligation.
     destruct μ.
     + destruct mem as (μ' & Tr & duo & b). symmetry in duo.
       eapply simplify_match_input in duo. subst.
-      eapply lts_refuses_spec1 in Tr as (p' & Tr).
+      eapply lts_performs_spec1 in Tr as (p' & Tr).
       eapply output_shape in Tr as Eq.
       assert (𝝳 (Φ (ActIn a)) ∈ PreCoAct_of (! a ∥ p')).
       { eapply gmultiset_elem_of_dom. simpl. multiset_solver. }
@@ -1993,17 +1994,17 @@ Next Obligation.
       exists (ActIn pre_μ). split.
       * simpl; eauto.
       * exists (ActOut pre_μ). repeat split.
-        -- eapply lts_refuses_spec2. exists 𝟘. eapply lts_output.
+        -- eapply lts_performs_spec2. exists 𝟘. eapply lts_output.
         -- intro. inversion H0. inversion H1.
     + eapply gmultiset_elem_of_disj_union in H. destruct H.
       * apply gmultiset_elem_of_dom in H. eapply (Hp p1) in H; simpl ; eauto with lia.
         destruct H as (μ & Hyp1 & μ' & Tr & duo & b). subst.
-        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_refuses_spec1 in Tr as (p'1 & Tr).
-        eapply lts_refuses_spec2. exists (p'1 ∥ p2). constructor. eauto. split; eauto.
+        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_performs_spec1 in Tr as (p'1 & Tr).
+        eapply lts_performs_spec2. exists (p'1 ∥ p2). constructor. eauto. split; eauto.
       * apply gmultiset_elem_of_dom in H. eapply (Hp p2) in H; simpl ; eauto with lia.
         destruct H as (μ & Hyp1 & μ' & Tr & duo & b). subst.
-        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_refuses_spec1 in Tr as (p'2 & Tr).
-        eapply lts_refuses_spec2. exists (p1 ∥ p'2). constructor. eauto. split; eauto.
+        exists μ. split; simpl; eauto. exists μ'. split. eapply lts_performs_spec1 in Tr as (p'2 & Tr).
+        eapply lts_performs_spec2. exists (p1 ∥ p'2). constructor. eauto. split; eauto.
     + simpl in H. inversion H.
     + simpl in H. inversion H.
     + destruct g0.
@@ -2033,3 +2034,4 @@ Proof.
 Qed. *)
 
 *)
+(* end hide *)

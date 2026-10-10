@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     MultisetLTSConstruction ForwarderConstruction May MayTestSpec DefinitionTI CompletenessTI DefinitionTIco
     SoundnessTIco CompletenessTIco.
 
-(** * The May preorder is co-trace inclusion
+(* * The May preorder is co-trace inclusion
 
       [p ⊑ₘₐᵧ q  ↔  p ≼꜀ₒ₋ₜᵢ q]
 
@@ -38,15 +39,15 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     [completeness_ti_fw]/[completeness_ti_fb]. This file never
     imports [EquivalenceTI.v] and never calls its theorems. *)
 
-(** ** Equivalence, for forwarders *)
+(* ** Equivalence, for forwarders *)
 
-Theorem equivalence_ti_co_fw `{
+Theorem equivalence_ti_co_trace_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -58,20 +59,20 @@ Proof.
   - eapply soundness_ti_co_fw.
 Qed.
 
-(** ** Equivalence, for feedback LTSs, through the forwarder construction *)
+(* ** Equivalence, for feedback LTSs, through the forwarder construction *)
 
-Theorem equivalence_ti_co_fb `{
+Theorem equivalence_ti_co_trace_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
     @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _}
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
-  {_ : Prop_of_Inter P (MO A) A fw_inter}
-  {_ : Prop_of_Inter (P * MO A) T A dual}
-  {_ : Prop_of_Inter P T A dual}
+  {_ : Prop_of_Inter P (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (P * MO A) T A A dual}
+  {_ : Prop_of_Inter P T A A dual}
 
-  {_ : Prop_of_Inter Q (MO A) A fw_inter}
-  {_ : Prop_of_Inter (Q * MO A) T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter Q (MO A) A A fw_inter}
+  {_ : Prop_of_Inter (Q * MO A) T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -83,15 +84,15 @@ Proof.
   - eapply soundness_ti_co_fb.
 Qed.
 
-(** ** Corollary: the induced equivalences coincide *)
+(* ** Corollary: the induced equivalences coincide *)
 
 Corollary may_equiv_iff_same_cotraces `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
   gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
 
-  {_ : Prop_of_Inter P T A dual}
-  {_ : Prop_of_Inter Q T A dual}
+  {_ : Prop_of_Inter P T A A dual}
+  {_ : Prop_of_Inter Q T A A dual}
 
   {gen : trace A -> T} {gspec : may_test_spec gen}
 
@@ -100,9 +101,10 @@ Corollary may_equiv_iff_same_cotraces `{
 Proof.
   split.
   - intros (hpq & hqp) s. split.
-    + now eapply (equivalence_ti_co_fw p q).
-    + now eapply (equivalence_ti_co_fw q p).
+    + now eapply (equivalence_ti_co_trace_fw p q).
+    + now eapply (equivalence_ti_co_trace_fw q p).
   - intro hsame. split.
-    + eapply equivalence_ti_co_fw. intros s hs. now eapply hsame.
-    + eapply equivalence_ti_co_fw. intros s hs. now eapply hsame.
+    + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
+    + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
 Qed.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From TestingTheory Require Import
   gLts Bisimulation coFiniteImage.
 From TestingTheory Require Export VCCS.VCCS_Instance.
 
-(** ** [coFiniteImagegLts] for VCCS
+(* ** [coFiniteImagegLts] for VCCS
 
     Kept in its own file (not added directly to [VCCS_Instance.v]) purely
     for compile-memory reasons: [VCCS_Instance.v] is already large enough
@@ -109,3 +110,4 @@ Proof.
 Defined.
 
 End VCCS_CoFiniteImage.
+(* end hide *)

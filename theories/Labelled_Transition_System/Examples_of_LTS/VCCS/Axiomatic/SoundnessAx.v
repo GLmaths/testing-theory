@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Soundness of the [ax_pre] proof system w.r.t. [⊑ₘᵤₛₜᵢ]
+(* * Soundness of the [ax_pre] proof system w.r.t. [⊑ₘᵤₛₜᵢ]
 
     [soundness_ax] below is the payoff of [VCCS_Precongruence.v]: every
     constructor of [ax_pre] ([DefinitionAxiomatic.v]) has a matching
@@ -35,7 +36,7 @@ Section SoundnessAx.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** [Static] is an invariant of every [⊢]-derivation
+(* ** [Static] is an invariant of every [⊢]-derivation
 
     Needed so [ax_trans]'s middle term can be shown [Static] from
     nothing but the endpoints' [Static]-ness — this is exactly why
@@ -163,7 +164,7 @@ Proof.
     apply static_g. constructor; [constructor; assumption | assumption].
 Qed.
 
-(** ** Soundness
+(* ** Soundness
 
     By induction on the [ax_pre] derivation; each case is one
     application of a [VCCS_Precongruence.v] lemma (none of which need
@@ -246,3 +247,4 @@ Proof.
 Qed.
 
 End SoundnessAx.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -27,10 +28,12 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts InteractionBetweenLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW.
+(* end hide *)
 
 (** ** Mailbox LTS *)
 
 (** A mailbox is a multiset of actions *)
+(* begin hide *)
 
 Definition MO (A : Type) `{ExtAction A} := gmultiset A.
 
@@ -45,12 +48,14 @@ Proof.
   + assert (η'' = η). multiset_solver. subst.
     eauto.
 Qed.
+(* end hide *)
 
 Inductive lts_multiset_step `{ExtAction A} : MO A -> Act A -> MO A -> Prop :=
 | lts_multiset_add m η μ (duo : dual μ η) (nb : non_blocking η) :
    lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
 | lts_multiset_minus m η (nb : non_blocking η):  
    lts_multiset_step ({[+ η +]} ⊎ m) (ActExt η) m.
+(* begin hide *)
 
 Global Hint Constructors lts_multiset_step:mdb.
 
@@ -66,7 +71,7 @@ Proof.
   + eauto.
 Qed.
 
-Lemma blocking_action_in_ms `{ExtAction A}  mb1 β mb2 :  
+Lemma blocking_action_in_ms `{ExtAction A} {unique_nb : UniqueDual A}  mb1 β mb2 :  
   blocking β -> lts_multiset_step mb1 (ActExt β) mb2 
     ->  ({[+ co β +]} ⊎ mb1 = mb2 /\ (dual β (co β) /\ non_blocking (co β))).
 Proof.
@@ -76,7 +81,7 @@ Proof.
   + contradiction.
 Qed.
 
-Definition lts_multiset_step_decidable `{ExtAction A} m α m' : Decision (lts_multiset_step m α m').
+Definition lts_multiset_step_decidable `{ExtAction A} {unique_nb : UniqueDual A} m α m' : Decision (lts_multiset_step m α m').
 Proof.
   destruct α as [μ |].
   + destruct (decide (non_blocking μ)) as [nb | not_nb].
@@ -94,63 +99,45 @@ Proof.
   + right. inversion 1.
 Qed.
 
-Definition lts_multiset_refuses `{ExtAction A} (m : MO A) (α : Act A): Prop := 
+Definition lts_multiset_performs `{ExtAction A} (m : MO A) (α : Act A) : Prop :=
 match α with
-    | ActExt η => if (decide (non_blocking η)) then if (decide (η ∈ m)) then False
-                                                                        else True
-                                               else forall η', dual η η' -> blocking η'
-    | τ => True
+    | ActExt μ => if (decide (non_blocking μ)) then μ ∈ m
+                                               else ∃ η, non_blocking η ∧ dual μ η
+    | τ => False
 end.
 
-Definition lts_multiset_refuses_decidable `{ExtAction A} m α : Decision (lts_multiset_refuses m α).
+Definition lts_multiset_performs_decidable `{ExtAction A} {unique_nb : UniqueDual A} m α : Decision (lts_multiset_performs m α).
 Proof.
-  destruct α as [μ |].
-  + simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
-    - rename μ into η. destruct (decide (η ∈ m)) as [in_mem | not_in_mem].
-      ++ right. intro. eauto.
-      ++ left. eauto. 
-    - destruct (decide (∃ η', non_blocking η' /\ dual μ η' )) as [exists_dual | not_exists_dual].
-      ++ right. intro imp. destruct exists_dual as (η & nb & duo). destruct (imp η); eauto.
-      ++ left. eauto.
-  + left. simpl. eauto.
+  destruct α as [μ |]; simpl.
+  + destruct (decide (non_blocking μ)); apply _.
+  + apply _.
 Qed.
 
-#[global] Program Instance MbgLts `{H : ExtAction A} : gLts (MO A) H :=
+#[global] Program Instance MbgLts `{H : ExtAction A} {unique_nb : UniqueDual A} : gLts (MO A) H :=
 {|
     lts_step m α m' := lts_multiset_step m α m' ;
-    lts_refuses p := lts_multiset_refuses p;
+    lts_performs m α := lts_multiset_performs m α;
     lts_step_decidable m α m' := lts_multiset_step_decidable m α m';
-    lts_refuses_decidable m α := lts_multiset_refuses_decidable m α;
+    lts_performs_decidable m α := lts_multiset_performs_decidable m α;
   |}.
 Next Obligation.
-  intros ? ? m α not_refuses; simpl in *.
-  destruct α.
-  - simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
-    + rename μ into η. destruct (decide (η ∈ m)).
-      ++ assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq. multiset_solver.
-         exists (m ∖ {[+ η +]}). rewrite eq at 1. eapply lts_multiset_minus; eauto.
-      ++ exfalso. eauto.
-    + destruct (decide (∃ η' : A, non_blocking η' ∧ dual μ η')) as [exist | not_exists ].
-      ++ exists ({[+ co μ +]} ⊎ m). destruct exist as (η & nb & duo).
-         eapply unique_nb in duo as eq; eauto;subst.
-         constructor; eauto.  
-      ++ exfalso. eapply not_refuses. eauto.
-  - simpl in *. exfalso. eauto.
+  intros ? ? ? m α accepts; simpl in *.
+  destruct α as [μ |]; [| contradiction].
+  simpl in accepts. destruct (decide (non_blocking μ)) as [nb | not_nb].
+  - rename μ into η.
+    assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq by multiset_solver.
+    exists (m ∖ {[+ η +]}). rewrite eq at 1. eapply lts_multiset_minus; eauto.
+  - exists ({[+ co μ +]} ⊎ m).
+    destruct accepts as (η & nb & duo).
+    eapply unique_nb in duo as eq; eauto; subst.
+    constructor; eauto.
 Qed.
 Next Obligation.
-  intros ? ? m α not_refuses; simpl in *.
-  destruct α.
-  + intro refuses. simpl in *. destruct (decide (non_blocking μ)) as [nb | not_nb].
-    ++ destruct (decide (μ ∈ m)) as [in_mem | not_in_mem]. 
-      +++ eauto. 
-      +++ destruct not_refuses as (q & HypTr). 
-          eapply non_blocking_action_in_ms in nb;eauto; subst. 
-          multiset_solver.
-    ++ destruct not_refuses as (q & HypTr).
-       eapply blocking_action_in_ms in not_nb as Hyp;eauto; subst.
-       destruct Hyp as (eq & duo & nb). subst.
-       eapply refuses in duo as not_nb'. eauto.
-  + intro impossible. destruct not_refuses as (q & HypTr). inversion HypTr.
+  intros ? ? ? m α (q & HypTr); simpl in *.
+  destruct α as [μ |]; [| inversion HypTr].
+  simpl. destruct (decide (non_blocking μ)) as [nb | not_nb].
+  - eapply non_blocking_action_in_ms in nb; eauto. subst. multiset_solver.
+  - eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto.
 Qed.
 
 (*************************** Mailbox purification of blocking actions *********************************)
@@ -445,15 +432,15 @@ Qed.
 
 Global Hint Resolve MO_eq_equiv:mdb.
 
-#[global] Program Instance MbgLtsEq `{H : ExtAction A} : gLtsEq (MO A) H :=
+#[global] Program Instance MbgLtsEq `{H : ExtAction A} {unique_nb : UniqueDual A} : gLtsEq (MO A) H :=
  {| eq_rel := MO_eq |}.
 Next Obligation.
   unfold MO_eq.
-  intros ? ? M1 M2 ? (r & eq & tr).
+  intros ? ? ? M1 M2 ? (r & eq & tr).
   subst. exists M2. split; eauto.
 Qed.
 
-Lemma delay_in_ms `{H : ExtAction A} η α M1 M2 M3 : non_blocking η -> M1 ⟶[ η ] M2 -> M2 ⟶{ α } M3 
+Lemma delay_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} η α M1 M2 M3 : non_blocking η -> M1 ⟶[ η ] M2 -> M2 ⟶{ α } M3 
         → (∃ M'2, M1 ⟶{α} M'2 /\ M'2 ⟶⋍[ η ] M3).
 Proof.
   destruct α.
@@ -477,7 +464,7 @@ Proof.
   + intros nb tr_nb tr. inversion tr.
 Qed.
 
-Lemma confluence_in_ms `{H : ExtAction A} M M1 M2 η μ : μ ≠ η -> M ⟶[ η ] M1 → M ⟶[ μ ] M2 
+Lemma confluence_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} M M1 M2 η μ : μ ≠ η -> M ⟶[ η ] M1 → M ⟶[ μ ] M2 
         → ∃ M', M1 ⟶[ μ ] M' /\ M2 ⟶⋍[ η ] M'.
 Proof.
   intros neq tr_nb tr.
@@ -522,7 +509,7 @@ Proof.
         ++ reflexivity.
 Qed.
 
-Lemma nb_tau_in_ms `{H : ExtAction A} M M1 M2 η :
+Lemma nb_tau_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} M M1 M2 η :
       M ⟶[ η ] M1 -> M ⟶ M2 
         → (∃ M', M1 ⟶ M' /\ M2 ⟶⋍[ η ] M') \/ (∃ β, (dual β η) /\ M1 ⟶⋍[ β ] M2).
 Proof.
@@ -530,7 +517,7 @@ Proof.
   inversion tr_tau.
 Qed.
 
-Lemma deter_in_ms `{H : ExtAction A} M1 M2 M3 η :
+Lemma deter_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} M1 M2 M3 η :
       M1 ⟶[ η ] M2 → M1 ⟶[ η ] M3 
         → M2 ⋍ M3.
 Proof.
@@ -544,7 +531,7 @@ Proof.
     eapply blocking_action_in_ms in tr2 as (eq'' & duo'' & nb''); eauto ; subst.
 Qed.
 
-Lemma inv_deter_in_ms `{H : ExtAction A} M1 M'1 M2 M3 η :
+Lemma inv_deter_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} M1 M'1 M2 M3 η :
       M1 ⟶[ η ] M2 -> M'1 ⟶[ η ] M3 
         -> M2 ⋍ M3 -> M1 ⋍ M'1.
 Proof.
@@ -558,7 +545,7 @@ Proof.
     reflexivity.
 Qed.
 
-#[global] Program Instance MbgLts_Oba`{H : ExtAction A} : gLtsOba (MO A). 
+#[global] Program Instance MbgLts_Oba `{H : ExtAction A} {unique_nb : UniqueDual A} : gLtsOba (MO A). 
 Next Obligation.
   intros. eapply delay_in_ms;eauto.
 Qed.
@@ -575,7 +562,7 @@ Next Obligation.
   intros. eapply inv_deter_in_ms; eauto.
 Qed.
 
-Lemma forward_in_ms `{H : ExtAction A} M1 η β :
+Lemma forward_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} M1 η β :
       ∃ M2, non_blocking η -> dual β η
         -> M1 ⟶[ β ] M2 /\ M2 ⟶[ η ] M1.
 Proof.
@@ -585,7 +572,7 @@ Proof.
   + eapply lts_multiset_minus;eauto.
 Qed.
 
-Lemma forward_feedback_in_ms `{H : ExtAction A} M1 M2 M3 η β :
+Lemma forward_feedback_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} M1 M2 M3 η β :
       non_blocking η -> dual β η -> M1 ⟶[ η ] M2 -> M2 ⟶[ β ] M3 
         -> M1 ⟶⋍ M3 \/ M1 ⋍ M3.
 Proof.
@@ -598,10 +585,11 @@ Proof.
   + eapply dual_blocks;eauto.
 Qed.
 
-#[global] Program Instance MbgLts_Oba_FW `{H : ExtAction A} : gLtsObaFW (MO A) A. 
+#[global] Program Instance MbgLts_Oba_FW `{H : ExtAction A} {unique_nb : UniqueDual A} : gLtsObaFW (MO A) A. 
 Next Obligation.
   intros. eapply forward_in_ms; eauto.
 Qed.
 Next Obligation.
   intros. eapply forward_feedback_in_ms;eauto.
 Qed.
+(* end hide *)

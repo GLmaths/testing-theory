@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The last derived law: the output-merge equation, left to right
+(* * The last derived law: the output-merge equation, left to right
 
     Ten of the laws a Hennessy-style presentation states as *rules* are
     admissible from the twenty-six constructors of
@@ -49,7 +50,7 @@ Section VCCS_AxRedundancy.
 
 Context `{VP : VCCS_Parameters}.
 
-(** A sum of two same-channel outputs is below each of them. With the
+(* A sum of two same-channel outputs is below each of them. With the
     *same* value this is [ax_output_distrib_l]; with different values it
     is [ax_drop_out], and nothing weaker will do. *)
 
@@ -76,7 +77,7 @@ Proof.
   apply ax_output_below_r; assumption.
 Qed.
 
-(** …so [ax_int_glb] assembles the internal choice. *)
+(* …so [ax_int_glb] assembles the internal choice. *)
 
 Lemma ax_output_merge_l : forall c v v' P Q, Static P -> Static Q ->
   (g ((c ! v • P) + (c ! v' • Q)))
@@ -87,3 +88,4 @@ Proof.
 Qed.
 
 End VCCS_AxRedundancy.
+(* end hide *)

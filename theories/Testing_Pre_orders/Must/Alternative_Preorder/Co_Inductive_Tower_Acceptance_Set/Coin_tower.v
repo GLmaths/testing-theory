@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -43,8 +44,8 @@ From TestingTheory Require Import
 
 Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   `{gLtsT : !gLtsEq T H}
-  `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
-  `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ }
+  `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ }
   (FIX : gset P -> gset Q -> Prop) (X : gset P) (Y : gset Q) : Prop := {
     c_tau_ Y' : wt_set_from_pset_spec1 Y [] Y' -> FIX X Y'
   ; c_now_ : X ⤓ -> forall q , q ∈ Y -> q ↛ ->
@@ -61,8 +62,8 @@ Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
 Program Definition copre_m 
 `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
 `{gLtsT : !gLtsEq T H}
-`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
-`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ } : mon (gset P -> gset Q -> Prop) := 
+`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ } : mon (gset P -> gset Q -> Prop) := 
 {| body := (@copre_ P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT) |} .
 Next Obligation.
   intros F1 F2 HF X Y h; constructor.
@@ -77,8 +78,8 @@ Qed.
 
 Definition copre `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
 `{gLtsT : !gLtsEq T H}
-`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
-`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ } := 
+`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ } := 
 gfp (@copre_m P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT).
 
 Notation "X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y" := (copre X Y) (at level 70).
@@ -86,8 +87,8 @@ Notation "X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y" := (copre X Y) (at level 70).
 Section copre.
   Context `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}.
   Context `{gLtsT : !gLtsEq T H}.
-  Context `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }.
-  Context `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ }.
+  Context `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }.
+  Context `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ }.
 
   Definition REL := gset P -> gset Q -> Prop.
 
@@ -261,22 +262,23 @@ Section must_co_inductive_acceptance_preorder.
   Context `{P : Type}.
   Context `{Q : Type}.
   Context `{H : !ExtAction A}.
+  Context {unique_nb : UniqueDual A}.
 
   Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
   Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
   Context `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
-  Context `{!Prop_of_Inter P T A dual}.
-  Context `{!Prop_of_Inter Q T A dual}.
+  Context `{!Prop_of_Inter P T A A dual}.
+  Context `{!Prop_of_Inter Q T A A dual}.
 
   Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ }.
+  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
 
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
-  (** * Main equivalence theorems *)
+  (* * Main equivalence theorems *)
 
   Section FWⁿ.
 
@@ -284,7 +286,7 @@ Section must_co_inductive_acceptance_preorder.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
-  (** ** The co-inductive-tower characterisation on FW is equivalent to the extensional must preorder *)
+  (* ** The co-inductive-tower characterisation on FW is equivalent to the extensional must preorder *)
   Corollary equivalence_fw_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
     pre_extensional outcome p q <-> ({[ p ]} : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset Q).
   Proof.
@@ -292,7 +294,7 @@ Section must_co_inductive_acceptance_preorder.
     rewrite equivalence_fw_bhv_acc_ctx;eauto.
   Qed.
   
-  (** ** The co-inductive-towercharacterisation on FW is equivalent to the inductive must preorder *)
+  (* ** The co-inductive-towercharacterisation on FW is equivalent to the inductive must preorder *)
   (* From TestingTheory Require Import Lts_CN.
   Corollary equivalence_fw_co_inductive_acceptance_and_must_i (X : gset P) (Y : gset Q) :
     X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y <-> (X : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ (Y : gset Q).
@@ -337,19 +339,19 @@ Section must_co_inductive_acceptance_preorder.
   Qed.
 
   End FWⁿ.
-  (** ---- *)
+  (* ---- *)
   Section Lⁿ.
   
-  Context `{!Prop_of_Inter P (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A dual}.
+  Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (P * MO A) T A A dual}.
+  Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
+  Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
   
   Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
-  (** ** The co-inductive-tower characterisation on toFW is equivalent to the inductive must preorder *)
+  (* ** The co-inductive-tower characterisation on toFW is equivalent to the inductive must preorder *)
   Corollary equivalence_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ (q, ∅) ]} : gset (Q * MO A)).
   Proof.
@@ -357,9 +359,9 @@ Section must_co_inductive_acceptance_preorder.
     eapply equivalence_acc_set_and_must_i.
   Qed.
 
-  (** ---- *)
+  (* ---- *)
 
-  (** ** The co-inductive-tower characterisation on toFW is equivalent to the extensional must preorder *)
+  (* ** The co-inductive-tower characterisation on toFW is equivalent to the extensional must preorder *)
   Corollary equivalence_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
     pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ (q, ∅) ]} : gset (Q * MO A)).
   Proof.
@@ -374,7 +376,7 @@ End must_co_inductive_acceptance_preorder.
 
 Lemma coin_refl
   `{@FiniteImagegLts P A H gLtsP}
-  `{gLtsT : !gLtsEq T H} `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+  `{gLtsT : !gLtsEq T H} `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
   {PRE : Chain copre_m} {p : P} : elem PRE {[ p ]} {[ p ]}.
 Proof.
   apply (gfp_chain PRE).
@@ -385,7 +387,7 @@ Qed.
 
 Global Instance Proper_elem 
   `{@FiniteImagegLts P A H gLtsP}
-  `{gLtsT : !gLtsEq T H} `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+  `{gLtsT : !gLtsEq T H} `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
   {PRE : Chain copre_m} :
   Proper ((≡) ==> (=) ==> (iff)) (elem PRE).
 Proof.
@@ -394,14 +396,14 @@ Proof.
 Qed.
 
 Global Instance Proper_lts_stable `{gLtsEq P A}:
-  Proper ((eq_rel) ==> (=) ==> (impl)) lts_refuses.
+  Proper ((eq_rel) ==> (=) ==> (impl)) (λ p α, p ↛{α}).
 Proof.
-  intros p p' Heq α α' ? Hs; subst α'.
-  case (decide (lts_refuses p' α)); trivial. intro Hf.
-  apply lts_refuses_spec1 in Hf as (q & Hq).
+  intros p p' Heq α α' ? Hs; subst α'; cbn in *.
+  intros Hf.
+  apply lts_performs_spec1 in Hf as (q & Hq).
   destruct (eq_spec p q α) as (r & Hr & Heqr).
   - eexists; split; eauto.
-  - contradict Hs. apply lts_refuses_spec2. eexists; eauto.
+  - contradict Hs. apply lts_performs_spec2. eexists; eauto.
 Qed.
 
 (* In the case of a Lts with equivalence relation, the right hand side can also
@@ -409,7 +411,7 @@ Qed.
 (* Global Instance Proper_eq_rel 
   `{gLtsP : @gLtsEq P A H}
   `{!FiniteImagegLts P A} 
-  `{gLtsT : !gLtsEq T H} `{AbsPT : !@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ } 
+  `{gLtsT : !gLtsEq T H} `{AbsPT : !@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ } 
    {PRE : Chain copre_m}:
   Proper ((≡) ==> (eq_rel) ==> (impl)) (elem PRE).
 Proof.
@@ -434,7 +436,7 @@ Qed. *)
 
 Lemma coin_union_l `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
   {PRE : Chain copre_m}
   : forall (X1 X2 : gset P) (Y : gset P), elem PRE X1 Y -> elem PRE (X1 ∪ X2) Y.
 Proof.
@@ -470,7 +472,7 @@ Qed.
 
 Lemma coin_union_r `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
   {PRE : Chain copre_m}
   : forall (X1 X2 : gset P) (Y : gset P), elem PRE X2 Y -> elem PRE (X1 ∪ X2) Y.
 Proof.
@@ -506,7 +508,7 @@ Qed.
 
 Lemma coin_elem_of `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
   {PRE : Chain copre_m} (p : P) X: p ∈ X -> elem PRE X {[p]}.
 Proof.
   intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
@@ -515,7 +517,7 @@ Qed.
 
 Lemma coin_choose `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
   {PRE : Chain copre_m}
   : forall {X : gset P} {Y : gset P} {p : P}, p ∈ X -> elem PRE {[p]} Y -> elem PRE X Y.
 Proof.
@@ -524,10 +526,10 @@ Proof.
   now apply coin_union_l.
 Qed.
 
-Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP}
+Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP} {unique_nb : UniqueDual A}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
-  `{@Prop_of_Inter P (MO A) A fw_inter H gLtsP MbgLts}
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
   {PRE : Chain (copre_m (P := P * MO A) (Q := P * MO A))} (p t: P):
   (∀ μ p', p ⟶{μ} p' <-> (p' = t /\ μ = τ)) ->
   forall M (X : gset (P * MO A)) (Y : gset (P * MO A)),
@@ -620,7 +622,7 @@ Qed.
 
 Lemma copre_inv_l `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
   {PRE : Chain copre_m} (p : P) X t Y : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
   elem PRE ({[t]} ∪ X) Y -> elem PRE ({[p]} ∪ X) Y.
 Proof.
@@ -714,3 +716,4 @@ Proof.
       apply hXX' in Hin as (p'' & Hin & Heqp'').
       eapply terminate_preserved_by_eq2; [apply symmetry, Heqp''|auto with *].
 Qed. *)
+(* end hide *)

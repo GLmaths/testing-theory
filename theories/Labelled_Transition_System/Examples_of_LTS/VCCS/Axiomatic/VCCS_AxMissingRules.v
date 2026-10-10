@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * What the τ-encoding costs, relative to Hennessy & Ingólfsdóttir
+(* * What the τ-encoding costs, relative to Hennessy & Ingólfsdóttir
 
     Transcribing Hennessy & Ingólfsdóttir's proof system ("A Theory of
     Communicating Processes with Value-Passing", Information and
@@ -107,10 +108,10 @@ Section VCCS_AxMissingRules.
 Context `{VP : VCCS_Parameters}.
 Context {a b c : Channel} {v w : Value}.
 
-(** A tactic for the [Static] side conditions, which are all structural. *)
+(* A tactic for the [Static] side conditions, which are all structural. *)
 Ltac st := repeat constructor.
 
-(** ** 0. The rule that had to be REMOVED: sum congruence
+(* ** 0. The rule that had to be REMOVED: sum congruence
 
     Hennessy's system has a congruence rule for [+]. In CCS with a
     [𝛕]-prefix it is **unsound**, and this is not a subtlety of the
@@ -135,7 +136,7 @@ Ltac st := repeat constructor.
     the rewrite cannot change whether the rewritten summand is
     initially stable.** *)
 
-(** ** 1. [ax_choice_stable] — rewriting a stable summand in context
+(* ** 1. [ax_choice_stable] — rewriting a stable summand in context
 
     Without it no derivation can collapse two same-action summands
     sitting inside a larger sum, because [ax_cgr] only permutes and the
@@ -150,7 +151,7 @@ Proof. apply ax_collapse_input_ctx_l. Qed.
 Example sem_1 : p1 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q1.
 Proof. apply soundness_ax; [st | st | apply ax_1]. Qed.
 
-(** ** 2. [ax_int_glb] — internal choice is the GREATEST lower bound
+(* ** 2. [ax_int_glb] — internal choice is the GREATEST lower bound
 
     The original system has glb *elimination* ([ax_int_l]/[ax_int_r])
     and no introduction, so nothing can ever establish [_ ⊑ q₁ ⊕ q₂].
@@ -167,7 +168,7 @@ Proof. apply ax_int_glb; apply ax_refl; st. Qed.
 Example sem_2 : p2 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q2.
 Proof. apply soundness_ax; [st | st | apply ax_2]. Qed.
 
-(** ** 3. [ax_tau_sep_l]/[_r] — a mixed sum is its own thing
+(* ** 3. [ax_tau_sep_l]/[_r] — a mixed sum is its own thing
 
     A sum with both external guards and a [𝛕]-guard is neither an
     internal choice nor its external part: [VCCS_MixedSumProbes.v]
@@ -190,7 +191,7 @@ Proof. apply ax_tau_sep_l. Qed.
 Example sem_3 : p3 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q3.
 Proof. apply soundness_ax; [st | st | apply ax_3]. Qed.
 
-(** ** 4. [ax_tau_flatten_l]/[_r] — what makes the normal form terminate
+(* ** 4. [ax_tau_flatten_l]/[_r] — what makes the normal form terminate
 
     [gAllTau Y] ("every summand of [Y] is [𝛕]-guarded") is essential:
     with external summands in [Y], moving it up would expose them at
@@ -211,7 +212,7 @@ Proof. apply ax_tau_flatten_l. simpl. split; exact I. Qed.
 Example sem_4 : p4 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q4.
 Proof. apply soundness_ax; [st | st | apply ax_4]. Qed.
 
-(** ** 5. [ax_choice_tau] — rewriting a [𝛕]-summand's continuation
+(* ** 5. [ax_choice_tau] — rewriting a [𝛕]-summand's continuation
 
     The exact complement of [ax_choice_stable]. Needed because applying
     the separation law requires the [𝛕]-summand's continuation to
@@ -228,7 +229,7 @@ Proof. apply ax_choice_tau. apply ax_output_below_l; st. Qed.
 Example sem_5 : p5 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q5.
 Proof. apply soundness_ax; [st | st | apply ax_5]. Qed.
 
-(** ** 6. [ax_convex] — convex closure of the acceptance family
+(* ** 6. [ax_convex] — convex closure of the acceptance family
 
     The witness that forced it. With
 
@@ -253,7 +254,7 @@ Proof. apply ax_convex. Qed.
 Example sem_6 : p6 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q6.
 Proof. apply soundness_ax; [st | st | apply ax_6]. Qed.
 
-(** ** 7. [ax_success_l]/[_r] — [①] is a [𝟘] on the server side
+(* ** 7. [ax_success_l]/[_r] — [①] is a [𝟘] on the server side
 
     [must]'s outcome field inspects only the *test*, so a server enters
     solely through its transitions — and [①] has none, exactly like
@@ -273,7 +274,7 @@ Proof. apply ax_success_r. Qed.
 Example sem_7r : (g (𝟘 : gproc) : proc) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g ①).
 Proof. apply soundness_ax; [st | st | apply ax_7r]. Qed.
 
-(** ** 8. [ax_share_in]/[_out] — acceptance-tree uniformity
+(* ** 8. [ax_share_in]/[_out] — acceptance-tree uniformity
 
     Two branches of an internal choice pool their continuations at an
     action they share, keeping the **first** branch's ready set. This is
@@ -310,7 +311,7 @@ Proof. apply ax_share_out. Qed.
 Example sem_8' : p8' ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q8'.
 Proof. apply soundness_ax; [st | st | apply ax_8']. Qed.
 
-(** ** 9. [ax_swap_out] — the ready-set abstraction erases the value
+(* ** 9. [ax_swap_out] — the ready-set abstraction erases the value
 
     The one found last, and the subtlest. VCCS's ready-set abstraction
     [⌈𝝳ᴠᴄᴄꜱ∘Φᴠᴄᴄꜱ⌉] keeps channel and polarity and **throws the value
@@ -345,3 +346,4 @@ Example sem_9 : p9 ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q9.
 Proof. apply soundness_ax; [st | st | apply ax_9]. Qed.
 
 End VCCS_AxMissingRules.
+(* end hide *)

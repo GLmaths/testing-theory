@@ -19,6 +19,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* begin hide *)
 
 
 From Stdlib.Program Require Import Equality.
@@ -32,6 +33,7 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS Convergence Termination
 MultisetLTSConstruction ForwarderConstruction InputOutputActions WeakTransitions Subset_Act VCCS_Instance
 VCCS_Good.
+(* end hide *)
 
 
 (** ** VCCS **)
@@ -41,6 +43,7 @@ Section VCCS_examples.
 Context `{VP : VCCS_Parameters}.
 
 Context {a : Channel} {I : Value} {neq : O ≠ I}.
+(* begin hide *)
 
 Definition all_out := g ((a ! O • 𝟘) + (a ! I • 𝟘)).
 
@@ -162,12 +165,14 @@ Proof.
     - exists all_out.
       repeat split.
       ++ constructor.
+      ++ intros Hp. apply Hp. reflexivity.
       ++ intros i mem.
          compute_coR mem.
          multiset_solver.
    - exists (g 𝟘).
       repeat split.
       ++ eapply lts_to_wt. constructor. constructor.
+      ++ intros Hp. apply Hp. reflexivity.
       ++ intros i mem.
          compute_coR mem.
          multiset_solver.
@@ -221,12 +226,14 @@ Proof.
   - destruct ex as ((p',t') & tr_par).
     inversion tr_par;subst; lts_inversion lts.
 Qed.
+(* end hide *)
 
 Example NIL_is_not_above_copycat : ccat ⋢ₘᵤₛₜᵢ g 𝟘.
 Proof. intros Hyp. eapply NIL_must_not_pass_MyTest, Hyp, copycat_must_MyTest. Qed.
 
 Example NIL_is_not_above_constant : const ⋢ₘᵤₛₜᵢ g 𝟘.
 Proof. intros Hyp. eapply NIL_must_not_pass_MyTest, Hyp, constant_must_MyTest. Qed.
+(* begin hide *)
 
 Definition MySynchTest := g (a ! I • g (a ? (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))).
 
@@ -442,14 +449,17 @@ Ltac compute_coR_g mem :=
   eapply gmultiset_elem_of_dom;
   eapply gmultiset_elem_of_dom in mem;
   simpl; simpl in mem.
+(* end hide *)
 
 
 Context {P : proc} {Q : proc}.
+(* begin hide *)
 
 Definition mem_outside := ν (g (bvar 0 ! cst I • 𝟘) ‖ g (cst a ? (If (bvar 0 == cst O) Then P Else Q))).
 
 Definition mem_inside := g (cst a ? (If (bvar 0 == cst O) Then (ν ((bvar 0 ! cst I • 𝟘) ‖ P)) 
                                                          Else (ν ((bvar 0 ! cst I • 𝟘) ‖ Q)))).
+(* end hide *)
 
 Example mem_outside_is_above_mem_inside : mem_inside ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ mem_outside.
 Proof.
@@ -504,6 +514,7 @@ Proof.
     inversion wk_tr;subst.
     * exists mem_inside. repeat split.
       - constructor.
+      - intros Hp. apply Hp. reflexivity.
       - intros i mem. (compute_coR_g mem). set_solver.
     * inversion l. subst. repeat lts_inversion lts.
     * repeat lts_inversion lts.

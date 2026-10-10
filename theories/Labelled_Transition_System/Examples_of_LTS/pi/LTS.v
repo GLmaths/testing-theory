@@ -1,3 +1,4 @@
+(* begin hide *)
 From TestingTheory Require Import Renamings.
 
 Parameter Eval_Eq : Equation -> (option bool).
@@ -63,8 +64,8 @@ Inductive lts : proc-> Act -> proc -> Prop :=
                       (* only α needs to shift here!! (both chan and value).
                          as a consequence, the channel in α can never be 0 (giving the condition in paper)
                          as in onther places: we started with an "open" value, that's why we add a flat ν *)
-| lts_open : forall {c p1 p2}, (** remark: we are adding a ν but we are not shifting. this corresponds to the intuition in momigliano&cecilia that free rules handle open terms *)
-    lts p1 (FreeOut ((⇑ c) ⋉ (var_Data 0))) p2 ->   (** condition: (⇑ c must not be 0 ! *)
+| lts_open : forall {c p1 p2}, (* remark: we are adding a ν but we are not shifting. this corresponds to the intuition in momigliano&cecilia that free rules handle open terms *)
+    lts p1 (FreeOut ((⇑ c) ⋉ (var_Data 0))) p2 ->   (* condition: (⇑ c must not be 0 ! *)
     lts (ν p1) (BoundOut c) p2                      (* this should happen only when v = 0 *)
                                                     (* note that p2 is now an open term. its scope is going to be closed in the close rule *)
 
@@ -121,3 +122,4 @@ Qed.
 
 #[global] Hint Constructors lts:lts.
 #[global] Hint Resolve res_not_bound res_bound parR_bound parR_not_bound : lts.
+(* end hide *)
