@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -107,3 +108,4 @@ Qed.
      fwm_delay := toFw_delay |}.
 
 End ForwarderMem.
+(* end hide *)

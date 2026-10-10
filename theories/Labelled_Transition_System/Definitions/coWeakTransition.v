@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -31,7 +32,7 @@ From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation
   Lts_OBA Lts_FW WeakTransitions.
 
-(** ** Co-weak transitions
+(* ** Co-weak transitions
 
     [cowt p s q] is the weak transition relation obtained by letting [p] answer
     with a dual (co-)action of every external action recorded in the trace
@@ -41,7 +42,7 @@ From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncAc
     be read back as a plain [wt] fact against *some* trace pointwise dual to
     [s] ([cowt_to_wt_dual]), and conversely built from one ([wt_to_cowt_dual]). *)
 
-(** *** Definition of co-weak transitions *)
+(* *** Definition of co-weak transitions *)
 
 (* Two alphabets: the process over [Aproc], the trace over [Atest], linked by
    [sync].  On one alphabet, [sync] is [dual] ([SyncAction_of_dual], found
@@ -67,7 +68,7 @@ Notation "p ⟹ᶜᵒ⋍ q" := (cowt_sc p [] q) (at level 30, format "p  ⟹ᶜ�
 Notation "p ⟹ᶜᵒ⋍{ μ } q" := (cowt_sc p [μ] q) (at level 30, format "p  ⟹ᶜᵒ⋍{ μ }  q").
 Notation "p ⟹ᶜᵒ⋍[ s ] q" := (cowt_sc p s q) (at level 30, format "p  ⟹ᶜᵒ⋍[ s ]  q").
 
-(** *** Properties on co-weak transitions in LTSs *)
+(* *** Properties on co-weak transitions in LTSs *)
 
 Section cowt_structure.
 
@@ -161,7 +162,7 @@ Proof. eauto with mdb. Qed.
 Lemma lts_to_cowt_tau {p q} : p ⟶ q -> p ⟹ᶜᵒ q.
 Proof. intros tr'. eapply cowt_tau;eauto. constructor. Qed.
 
-(** Reading a co-trace back as a trace of the process, and back. *)
+(* Reading a co-trace back as a trace of the process, and back. *)
 
 Lemma cowt_to_wt p s q :
   p ⟹ᶜᵒ[s] q → ∃ s', Forall2 sync s' s ∧ p ⟹[s'] q.
@@ -194,7 +195,7 @@ Qed.
 
 End cowt_structure.
 
-(** *** Properties on co-weak transitions in LTSs with a Bisimulation *)
+(* *** Properties on co-weak transitions in LTSs with a Bisimulation *)
 
 Section cowt_structure_eq.
 
@@ -271,7 +272,7 @@ Qed.
 
 End cowt_structure_eq.
 
-(** *** From [cowt] to [wt] and back, along an explicit dual trace
+(* *** From [cowt] to [wt] and back, along an explicit dual trace
 
     [cowt p s q] unwinds to a genuine weak transition [wt p s' q] for the
     trace [s'] of the actual (dual) actions taken; conversely, any [wt p s' q]
@@ -298,7 +299,7 @@ Proof.
     eapply cowt_act; [symmetry; exact dxy | exact l | eapply IH; exact hrest].
 Qed.
 
-(** *** Properties on co-weak transitions in Lts with OBA axioms
+(* *** Properties on co-weak transitions in Lts with OBA axioms
 
     [co_non_blocking μ] says that *every* action dual to [μ] is non-blocking;
     unlike [exist_co_nba] (which only asks for existence and is what
@@ -390,7 +391,7 @@ Proof.
     etrans; eassumption.
 Qed.
 
-(** *** Properties talking about [dual] in [WeakTransitions.v], restated using [cowt]
+(* *** Properties talking about [dual] in [WeakTransitions.v], restated using [cowt]
 
     [forward_s] already reasons about a trace dual to a process's moves via
     [Forall2 dual]; phrased with [cowt] it becomes "doing [s] then co-doing
@@ -533,3 +534,4 @@ Proof.
   exists q'. split; [| exact heq].
   eapply wt_to_cowt_dual; eauto.
 Qed.
+(* end hide *)

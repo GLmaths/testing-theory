@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The Smyth must sees correlations between measurement branches
+(* * The Smyth must sees correlations between measurement branches
 
     A measurement [M] on a qubit [q] with two outcomes [k0], [k1] of
     non-zero weight.  After it, both processes send the outcome on [c] and
@@ -51,7 +52,7 @@ From TestingTheory Require Import Lifted Paths States pMust_almost_sure pMust_sm
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Composition
   lqCCS_LTS lqCCS_AlmostSure lqCCS_Congruence.
 
-(** ** Inversion of the steps of small programs *)
+(* ** Inversion of the steps of small programs *)
 
 Lemma pstep_send_inv t c e l X :
   pstep (PSend t c e) l X → ∃ v, l = LAct t (AOut c v) ∧ eval e = Some v ∧ X = PG (GNil []).
@@ -111,7 +112,7 @@ Section Example.
   Notation c0 := (code _ k0).
   Notation c1 := (code _ k1).
 
-  (** ** The processes and the observer *)
+  (* ** The processes and the observer *)
 
   Definition vk (b : bool) : val := VNat (if b then c0 else c1).
   Definition wk (b : bool) : St := meas_branch M [q] (if b then k0 else k1) ρ.
@@ -155,7 +156,7 @@ Section Example.
     meas_dist M [q] ρ f = [(f c0, wk true); (f c1, wk false)].
   Proof. unfold meas_dist. rewrite Houts. done. Qed.
 
-  (** ** A run of [P_anti ∥ T] that never succeeds *)
+  (* ** A run of [P_anti ∥ T] that never succeeds *)
 
   Definition anti_mid (b : bool) : proc :=
     PPar (PSend 1 0 (EVal (vk b))) (PIte (EEq (EVal (vk b)) (EVal (VNat c0))) ChAB ChBA).
@@ -227,7 +228,7 @@ Section Example.
       constructor; [left; split; [simpl; by intros [=]|apply com_c]|constructor].
   Qed.
 
-  (** The last distribution is stable: in each branch, the program offers
+  (* The last distribution is stable: in each branch, the program offers
       the wrong channel. *)
   Lemma final_no_step b w σ Δx :
     ¬ cstep w (PPar (PG (GNil [])) (anti_chosen b), Tite (vk b)) σ Δx.
@@ -304,9 +305,9 @@ Section Example.
       repeat (apply elem_of_cons in Hx' as [->|Hx']); [| |set_solver]; apply not_good_Tite.
   Qed.
 
-  (** ** Every run of [P_corr ∥ T] succeeds with positive weight *)
+  (* ** Every run of [P_corr ∥ T] succeeds with positive weight *)
 
-  (** The state of a branch: [c] sent, the choice made, the synchronisation
+  (* The state of a branch: [c] sent, the choice made, the synchronisation
       on [a] or [b] done. *)
   Notation cst := (bool * option bool * bool)%type.
 
@@ -488,7 +489,7 @@ Section Example.
   Definition Shape (s0 s1 : cst) : dist conf :=
     [((pc true s0, tc true s0), wk true); ((pc false s1, tc false s1), wk false)].
 
-  (** The silent and choice steps move both branches together. *)
+  (* The silent and choice steps move both branches together. *)
   Lemma ttrans_other b b2 σ s s' s2 :
     ttrans b σ s s' → σ ≠ SPair 4 11 → σ ≠ SPair 5 12 → s2.1 = s.1 → wf s2 →
     ¬ conf_good (pc b2 s2, tc b2 s2) ∧ ∃ s2', ttrans b2 σ s2 s2' ∧ s2'.1 = s'.1.
@@ -536,7 +537,7 @@ Section Example.
         rewrite (must_move false s1 _ σ s1' _ Hw1 Ht1 Hg Hc1).
         exists s0', s1'. unfold Inv. split_and!; [by rewrite E|by eapply ttrans_wf|by eapply ttrans_wf|done].
   Qed.
-  (** The first step measures; the two branches start in [s_init]. *)
+  (* The first step measures; the two branches start in [s_init]. *)
   Definition s_init : cst := (false, None, false).
   Definition Δc0 : dist conf := dpoint (Pcorr, Tbr) ρ.
 
@@ -583,7 +584,7 @@ Section Example.
     - by eapply shape_step.
   Qed.
 
-  (** A stable shape has a successful branch. *)
+  (* A stable shape has a successful branch. *)
   Lemma ttrans_not_good b σ s s' : ttrans b σ s s' → ¬ conf_good (pc b s, tc b s).
   Proof. intros Ht (ch & ->)%good_shape. inversion Ht. Qed.
 
@@ -656,7 +657,7 @@ Section Example.
     - by apply succ_shape, shape_stable.
   Qed.
 
-  (** ** The two processes are not related by the Smyth must *)
+  (* ** The two processes are not related by the Smyth must *)
 
   Theorem corr_not_below_anti : ¬ ((Pcorr, ρ) ⊑ₛₘ (Panti, ρ)).
   Proof.
@@ -667,3 +668,4 @@ Section Example.
     by destruct Hw0 as [_ Hw0].
   Qed.
 End Example.
+(* end hide *)

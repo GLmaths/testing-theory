@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From TestingTheory Require Import
   gLts Bisimulation coFiniteImage.
 From TestingTheory Require Export VACCS.VACCS_Instance.
 
-(** ** [coFiniteImagegLts] for VACCS — mirrors [VCCS_CoFiniteImage.v]
+(* ** [coFiniteImagegLts] for VACCS — mirrors [VCCS_CoFiniteImage.v]
     verbatim (VACCS's [dual] is the same input/output swap
     [ext_act_match], and [lts_set_input]/[lts_set_output]/[lts_set_tau]
     have the same specs), just swapping the [VCCS_]/[proc]-via-[VP
@@ -94,3 +95,4 @@ Proof.
 Defined.
 
 End VACCS_CoFiniteImage.
+(* end hide *)

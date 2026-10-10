@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,7 +26,7 @@ From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation WeakTransitions coWeakTransition
     Testing_Predicate InteractionBetweenLts May.
 
-(** * Alternative preorder for May based on co-trace inclusion
+(* * Alternative preorder for May based on co-trace inclusion
 
     Mirrors [DefinitionTI.v], mechanically replacing the plain weak
     transition [⟹[s]] by the co-weak-transition [⟹ᶜᵒ[s]] on the
@@ -40,7 +41,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation WeakTransitions coWea
     witness satisfying [dual], recovered directly from
     [may_com_step]'s own [inter] field. *)
 
-(** ** Co-traces of a process
+(* ** Co-traces of a process
 
     [s] is a co-trace of [p] whenever [p] can weakly answer [s] with
     duals at each step. *)
@@ -49,7 +50,7 @@ Definition traces_co `{gLts P A} (p : P) (s : trace A) : Prop := ∃ p', p ⟹�
 
 Global Hint Unfold traces_co : mdb.
 
-(** ** Definition of the alternative preorder: co-trace inclusion *)
+(* ** Definition of the alternative preorder: co-trace inclusion *)
 
 Definition bhv_pre_ti_co `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :=
   ∀ (s : trace A), traces_co p s -> traces_co q s.
@@ -59,7 +60,7 @@ Global Hint Unfold bhv_pre_ti_co : mdb.
 Notation "p ≼꜀ₒ₋ₜᵢ q" := (bhv_pre_ti_co p q) (at level 70).
 Notation "p ⋠꜀ₒ₋ₜᵢ q" := (¬ bhv_pre_ti_co p q) (at level 70).
 
-(** ** [≼꜀ₒ₋ₜᵢ] is a preorder *)
+(* ** [≼꜀ₒ₋ₜᵢ] is a preorder *)
 
 #[global] Instance bhv_pre_ti_co_refl `{gLtsP : @gLts P A H} : Reflexive bhv_pre_ti_co.
 Proof. intros p s hs. exact hs. Qed.
@@ -70,7 +71,7 @@ Proof. intros p q r hpq hqr s hs. eapply hqr, hpq, hs. Qed.
 #[global] Instance bhv_pre_ti_co_preorder `{gLtsP : @gLts P A H} : PreOrder bhv_pre_ti_co.
 Proof. split; [exact bhv_pre_ti_co_refl | exact bhv_pre_ti_co_transitive]. Qed.
 
-(** * Characterisation of [may] in terms of co-traces
+(* * Characterisation of [may] in terms of co-traces
 
     The bridge between the contextual predicate [may] and co-traces:
     [p may_pass t] holds exactly when the process answers some trace
@@ -85,14 +86,14 @@ Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
    not freshly generalised ones *)
 Context {PInter : Prop_of_Inter P T A A dual}.
 
-(** [may_wt_nil_server_co]/[may_wt_tau_server_co] (the co-trace
+(* [may_wt_nil_server_co]/[may_wt_tau_server_co] (the co-trace
     analogues, for the *process* side — [DefinitionTIco.v] puts the
     duality there, never on the test/client) and the plain
     [may_wt_nil_client]/[may_wt_tau_client] (the client never carries
     duality here, so these are unchanged) all live in [May.v], shared
     with [DefinitionTI.v]. *)
 
-(** ** From a successful computation to a synchronising co-trace *)
+(* ** From a successful computation to a synchronising co-trace *)
 
 Lemma may_to_wt_co (p : P) (t : T) :
   p may_pass t ->
@@ -119,7 +120,7 @@ Proof.
     + assumption.
 Qed.
 
-(** ** From a synchronising co-trace to a successful computation *)
+(* ** From a synchronising co-trace to a successful computation *)
 
 Lemma wt_to_may_co (s : trace A) (p p' : P) (t t' : T) :
   p ⟹ᶜᵒ[s] p' -> t ⟹[s] t' -> outcome t' -> p may_pass t.
@@ -143,7 +144,7 @@ Proof.
     + eapply (may_com_step p t3 q μ' t4 μ); eauto.
 Qed.
 
-(** ** The characterisation *)
+(* ** The characterisation *)
 
 Lemma may_iff_wt_co (p : P) (t : T) :
   p may_pass t <->
@@ -155,3 +156,4 @@ Proof.
 Qed.
 
 End May_and_cotraces.
+(* end hide *)

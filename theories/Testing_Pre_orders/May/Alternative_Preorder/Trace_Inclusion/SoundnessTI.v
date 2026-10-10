@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -22,9 +23,9 @@
 
 From Stdlib.Lists Require Import List.
 From stdpp Require Import decidable.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderConstruction May LiftMay DefinitionTI.
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderConstruction May LiftMay DefinitionTI.
 
-(** * Soundness of the trace-inclusion preorder for May
+(* * Soundness of the trace-inclusion preorder for May
 
     Soundness: the alternative (behavioural) preorder implies the contextual one,
 
@@ -37,7 +38,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Pr
     replays the very same computation with [q] in place of [p] — the client [t] is
     untouched, so it still reaches the same successful state. *)
 
-(** ** Soundness, for arbitrary LTSs *)
+(* ** Soundness, for arbitrary LTSs *)
 
 Section Soundness_ti.
 
@@ -62,7 +63,7 @@ Qed.
 
 End Soundness_ti.
 
-(** ** Soundness, for forwarders
+(* ** Soundness, for forwarders
 
     The statement asked for: [p] and [q] live in forwarder LTSs ([gLtsObaFW]).
     The forwarder axioms are not needed for soundness — they are what completeness
@@ -81,7 +82,7 @@ Theorem soundness_ti_fw `{
   p ≼ₜᵢ q -> p ⊑ₘₐᵧ q.
 Proof. eapply soundness_ti. Qed.
 
-(** ** Soundness, for feedback LTSs, through the forwarder construction
+(* ** Soundness, for feedback LTSs, through the forwarder construction
 
     An LTS satisfying only the feedback axioms ([gLtsObaFB]) is not a forwarder,
     so [soundness_ti_fw] does not apply to it directly. But it can be turned into
@@ -116,3 +117,4 @@ Proof.
   (* [(p, ∅)] and [(q, ∅)] live in forwarder LTSs: apply the general soundness *)
   eapply soundness_ti. exact hti.
 Qed.
+(* end hide *)

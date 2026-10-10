@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: well-typed tested configurations
+(* * lqCCS: well-typed tested configurations
 
     A tested configuration [ρ • (P, Q)] — a process [P] and an observer [Q]
     sharing the memory [ρ] — is well typed when [P] and [Q] own disjoint sets
@@ -60,7 +61,7 @@ Section TypedConf.
   Lemma in_state_meas M qs k ρ Σ : in_state ρ Σ → in_state (meas_branch M qs k ρ) Σ.
   Proof. intros Hs q Hq. unfold meas_branch. rewrite meas_qubits. by apply Hs. Qed.
 
-  (** A communication from [P] to [Q] in a well-typed configuration: on a
+  (* A communication from [P] to [Q] in a well-typed configuration: on a
       qubit channel, the qubit is in [ρ], owned by [P] and not by [Q]; the
       configuration stays well typed. *)
   Lemma com_owner ρ P Q ΣP ΣQ t t' c v P' Q' :
@@ -118,7 +119,7 @@ Section TypedConf.
       exists ΣP', ΣQ'. rewrite HU'. split_and!; [done|done|set_solver|done|done].
   Qed.
 
-  (** An operation or a measurement of a component acts on qubits it owns,
+  (* An operation or a measurement of a component acts on qubits it owns,
       which are in [ρ] and not owned by the other component. *)
   Lemma op_owner ρ P ΣP ΣQ t E qs P' :
     wt ΣP P → ΣP ## ΣQ → in_state ρ (ΣP ∪ ΣQ) → pstep P (LAct t (AOp E qs)) P' →
@@ -142,3 +143,4 @@ Section TypedConf.
     split_and!; [apply Hs; set_solver|done|set_solver].
   Qed.
 End TypedConf.
+(* end hide *)

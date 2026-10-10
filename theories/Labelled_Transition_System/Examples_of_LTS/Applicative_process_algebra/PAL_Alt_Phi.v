@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -52,12 +53,12 @@ Section PAL_Alt_Phi.
   Notation PALA_Act := (PALA_Act Val).
   Notation step := (lts_step_a Val).
 
-  (** Infer the action type of [↛[μ]] from the LTS on terms. *)
+  (* Infer the action type of [↛[μ]] from the LTS on terms. *)
   #[local] Hint Mode ExtAction ! : typeclass_instances.
   Open Scope pal_scope.
 
 
-  (** ** Events and [Φ] *)
+  (* ** Events and [Φ] *)
 
   Inductive Event := EvIn (tp : template) | EvOut (ot : eot).
 
@@ -79,7 +80,7 @@ Section PAL_Alt_Phi.
     | AOut _ ot => EvOut ot
     end.
 
-  (** ** Templates of the inputs of a term *)
+  (* ** Templates of the inputs of a term *)
 
   Fixpoint collect_in_a (E : term) : list template :=
     match E with
@@ -132,12 +133,12 @@ Section PAL_Alt_Phi.
     - destruct (IHp1 hin) as (q & hq). eexists. by apply aar6.
   Qed.
 
-  (** An input only depends on the template of its label. *)
+  (* An input only depends on the template of its label. *)
   Lemma in_retarget p l l' q :
     step p (ActExt (AIn _ l)) q → ltemplate l' = ltemplate l → ∃ q', step p (ActExt (AIn _ l')) q'.
   Proof. intros h e. apply collect_in_a_step. rewrite e. by eapply in_step_in_collect_in_a. Qed.
 
-  (** A label of a template. *)
+  (* A label of a template. *)
   Definition label_witness (tp : template) : label :=
     map (λ f, match f with
               | tf_formal _ => lf_formal Val inhabitant
@@ -151,7 +152,7 @@ Section PAL_Alt_Phi.
       unfold PAL_Alt_LTS.ltemplate, label_witness in *; simpl; by rewrite IH.
   Qed.
 
-  (** ** The events of a process form a finite set *)
+  (* ** The events of a process form a finite set *)
 
   Definition abs_R (p : term) : gset Event :=
     list_to_set (map EvIn (collect_in_a p) ++ map EvOut (collect_out_a Val p)).
@@ -174,9 +175,9 @@ Section PAL_Alt_Phi.
       + right. exists ot. split; [done | by eapply out_step_in_collect_out_a].
   Qed.
 
-  (** ** The kernel of [Φ] is the largest [≈ᴛᴇꜱᴛ] *)
+  (* ** The kernel of [Φ] is the largest [≈ᴛᴇꜱᴛ] *)
 
-  (** Test side: labels with the same event are accepted by the same processes. *)
+  (* Test side: labels with the same event are accepted by the same processes. *)
   Lemma Φ_test_spec (t : term) μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' → t ⟶[μ] → t ⟶[μ'].
   Proof.
     intros e acc. apply lts_performs_spec1 in acc as (q & hq).
@@ -186,7 +187,7 @@ Section PAL_Alt_Phi.
     - subst. apply lts_performs_spec2. by exists q.
   Qed.
 
-  (** The pattern of template [tp], whose formal fields bind [i], [i+1], ... *)
+  (* The pattern of template [tp], whose formal fields bind [i], [i+1], ... *)
   Fixpoint pattern_from (i : nat) (tp : template) : tuple :=
     match tp with
     | [] => []
@@ -226,7 +227,7 @@ Section PAL_Alt_Phi.
     induction ot as [|[|v] ot IH]; [done | |]; unfold eval_out_tuple in *; simpl; by rewrite IH.
   Qed.
 
-  (** A process accepting exactly the labels of an event. *)
+  (* A process accepting exactly the labels of an event. *)
   Definition probe (μ : PALA_Act) : term :=
     match μ with
     | AIn _ l => in( pattern_from 0 (ltemplate l) ) • 𝟘
@@ -264,7 +265,7 @@ Section PAL_Alt_Phi.
     - intros hsub. apply Φ_complete. intros t. apply hsub.
   Qed.
 
-  (** ** [≈ᴛᴇꜱᴛ] *)
+  (* ** [≈ᴛᴇꜱᴛ] *)
 
   Definition R_test_a (μ μ' : PALA_Act) : Prop := Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ'.
 
@@ -283,8 +284,9 @@ Section PAL_Alt_Phi.
        LA_test_dec := R_test_a_dec;
        LA_test_spec := R_test_a_spec |}.
 
-  (** [R_test_a] is the largest [≈ᴛᴇꜱᴛ]. *)
+  (* [R_test_a] is the largest [≈ᴛᴇꜱᴛ]. *)
   Lemma R_test_a_largest (R : PALA_Act → PALA_Act → Prop) :
     (∀ μ μ', R μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ') → ∀ μ μ', R μ μ' → R_test_a μ μ'.
   Proof. intros hR μ μ' h. apply Φ_kernel, hR, h. Qed.
 End PAL_Alt_Phi.
+(* end hide *)

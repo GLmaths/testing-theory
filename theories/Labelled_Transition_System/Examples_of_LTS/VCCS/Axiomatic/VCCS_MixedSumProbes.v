@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * A mixed [𝛕]/external sum is not an internal choice
+(* * A mixed [𝛕]/external sum is not an internal choice
 
     A *negative* result, recorded because it constrains the design of
     [CompletenessAx.v]'s normal form and would otherwise be easy to
@@ -98,7 +99,7 @@ Proof.
     apply m_now. simpl. constructor.
 Qed.
 
-(** The mixed sum passes: the [𝛕] alone satisfies [ex], and [Q] is never
+(* The mixed sum passes: the [𝛕] alone satisfies [ex], and [Q] is never
     called upon to interact. *)
 Lemma probe_mixed_passes : g ((𝛕 • P) + Q) must_pass t.
 Proof.
@@ -119,7 +120,7 @@ Proof.
       injection Hdual as Hd1 Hd2. apply Hcd. symmetry. exact Hd1.
 Qed.
 
-(** [Q] on its own deadlocks against [t]: both stable, no shared channel. *)
+(* [Q] on its own deadlocks against [t]: both stable, no shared channel. *)
 Lemma probe_Q_fails : ~ (g Q must_pass t).
 Proof.
   intro Hm. inversion Hm; subst.
@@ -131,7 +132,7 @@ Proof.
       simpl in eq. injection eq as Hd1 Hd2. apply Hcd. symmetry. exact Hd1.
 Qed.
 
-(** Hence the internal choice fails where the mixed sum succeeded: making
+(* Hence the internal choice fails where the mixed sum succeeded: making
     [Q] a [𝛕]-branch puts it under [pt], which demands it interact. *)
 Lemma probe_intchoice_fails : ~ (g ((𝛕 • P) + (𝛕 • (g Q))) must_pass t).
 Proof.
@@ -140,7 +141,7 @@ Proof.
   - apply probe_Q_fails. apply pt. apply lts_choiceR. apply lts_tau.
 Qed.
 
-(** The two are therefore not must-equivalent — indeed incomparable in
+(* The two are therefore not must-equivalent — indeed incomparable in
     the direction that a normalisation step would need. *)
 Corollary probe_mixed_not_below_intchoice :
   ~ (g ((𝛕 • P) + Q) ⊑ₘᵤₛₜᵢ g ((𝛕 • P) + (𝛕 • (g Q)))).
@@ -151,3 +152,4 @@ Qed.
 End MixedSumProbe.
 
 End VCCS_MixedSumProbes.
+(* end hide *)

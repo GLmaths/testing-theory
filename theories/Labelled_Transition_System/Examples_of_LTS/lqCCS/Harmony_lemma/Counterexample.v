@@ -1,4 +1,5 @@
-(** * Counterexample to [Kierner 2025, Lemma 3.2]
+(* begin hide *)
+(* * Counterexample to [Kierner 2025, Lemma 3.2]
 
     S = (if M01[q] then skip else skip) ; (skip □ q *= X),   ρ = |+⟩⟨+|.
 
@@ -27,11 +28,11 @@ Definition meqb A B :=
   Qeq_bool (m00 A) (m00 B) && Qeq_bool (m01 A) (m01 B) &&
   Qeq_bool (m10 A) (m10 B) && Qeq_bool (m11 A) (m11 B).
 
-(** Loop-free fragment.  [If p0 p1] measures in the computational basis;
+(* Loop-free fragment.  [If p0 p1] measures in the computational basis;
     outcome 0 runs [p0], outcome 1 runs [p1]. *)
 Inductive prog := Done | Skip | Xg | Hg | Ini | Seq (p q : prog) | Nd (p q : prog) | If (p0 p1 : prog).
 
-(** ** Lifted semantics [FX, Fig. 2], applied to an input state.
+(* ** Lifted semantics [FX, Fig. 2], applied to an input state.
     ⟦p;q⟧ρ = ⋃_{ρ' ∈ ⟦p⟧ρ} ⟦q⟧ρ' and ⟦if⟧ρ = {a + b : a ∈ ⟦p0⟧(P⁰ρ), b ∈ ⟦p1⟧(P¹ρ)}
     are the pointwise images of ⟦q⟧∘⟦p⟧ and ⟦p0⟧∘𝒫⁰ + ⟦p1⟧∘𝒫¹. *)
 Fixpoint den p ρ : list mat :=
@@ -45,7 +46,7 @@ Fixpoint den p ρ : list mat :=
   | If p0 p1 => flat_map (fun a => map (madd a) (den p1 (P1 ρ))) (den p0 (P0 ρ))
   end.
 
-(** ** MDP semantics [K]: configurations ⟨p, ρ⟩ with ρ normalised. *)
+(* ** MDP semantics [K]: configurations ⟨p, ρ⟩ with ρ normalised. *)
 Inductive mtrans :=
 | MLeaf (x : prog) (ρ : mat)
 | MProb (q0 : Q) (x0 : prog) (ρ0 : mat) (q1 : Q) (x1 : prog) (ρ1 : mat)
@@ -72,7 +73,7 @@ Fixpoint mstep p ρ :=
             (tr (P1 ρ)) p1 (mscale (/ tr (P1 ρ)) (P1 ρ))
   end.
 
-(** Σ_{ρ'} Pr^𝔖(◇⟨↓,ρ'⟩)·ρ' for a memoryless scheduler [sch] (the MDP of
+(* Σ_{ρ'} Pr^𝔖(◇⟨↓,ρ'⟩)·ρ' for a memoryless scheduler [sch] (the MDP of
     a loop-free program is acyclic, so finite fuel suffices). *)
 Fixpoint run (sch : prog -> mat -> bool) n p ρ :=
   match p, n with
@@ -91,7 +92,7 @@ Definition plus := Mat (1#2) (1#2) (1#2) (1#2).
 Definition half := Mat (1#2) 0 0 (1#2).
 Definition ket0 := Mat 1 0 0 0.
 
-(** Memoryless: apply X exactly when the current state is |1⟩⟨1|. *)
+(* Memoryless: apply X exactly when the current state is |1⟩⟨1|. *)
 Definition sch (_ : prog) ρ := Qeq_bool (m00 ρ) 0.
 
 Lemma fx_side : den ex plus = [Mat (1#2) 0 0 (1#2); Mat (1#2) 0 0 (1#2)].
@@ -100,7 +101,7 @@ Proof. reflexivity. Qed.
 Lemma mdp_side : meqb (run sch 10 ex plus) ket0 = true.
 Proof. reflexivity. Qed.
 
-(** Kierner's Lemma 3.2 claims ⟦S⟧(ρ) = { Σ Pr^𝔖 · ρ' : 𝔖 }; the right-hand
+(* Kierner's Lemma 3.2 claims ⟦S⟧(ρ) = { Σ Pr^𝔖 · ρ' : 𝔖 }; the right-hand
     side contains |0⟩⟨0|, which is not in ⟦S⟧(ρ) = {I/2}. *)
 Theorem counterexample :
   meqb (run sch 10 ex plus) ket0 = true /\
@@ -110,7 +111,7 @@ Proof.
   intros σ [<- | [<- | []]]; split; reflexivity.
 Qed.
 
-(** ** The MDP semantics is not compositional
+(* ** The MDP semantics is not compositional
 
     T1 = q := 0; H; if M01 then skip else skip
     T2 = q := 0; H; if M01 then H else H
@@ -130,11 +131,11 @@ Proof.
   unfold meq; simpl; repeat split; ring.
 Qed.
 
-(** From |0⟩⟨0|, the scheduler [sch] reaches |0⟩⟨0| after T1; C ... *)
+(* From |0⟩⟨0|, the scheduler [sch] reaches |0⟩⟨0| after T1; C ... *)
 Lemma T1_C : meqb (run sch 20 (Seq T1 C) ket0) ket0 = true.
 Proof. reflexivity. Qed.
 
-(** ... whereas after T2; C the only two reachable decision configurations
+(* ... whereas after T2; C the only two reachable decision configurations
     are ⟨C, |+⟩⟨+|⟩ and ⟨C, |−⟩⟨−|⟩ (told apart by m01 = ±1/2), and all four
     ways of resolving them — hence every scheduler, history-dependent or not —
     yield I/2. *)
@@ -142,3 +143,4 @@ Definition sch2 (b1 b2 : bool) (_ : prog) ρ := if Qeq_bool (m01 ρ) (1#2) then 
 
 Lemma T2_C b1 b2 : meqb (run (sch2 b1 b2) 20 (Seq T2 C) ket0) half = true.
 Proof. destruct b1, b2; reflexivity. Qed.
+(* end hide *)

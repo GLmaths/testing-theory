@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -27,12 +28,14 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Termination WeakTransitions Convergence Lts_OBA_FB.
+(* end hide *)
 (** ** Finite Image LTSs *)
 Class FiniteImagegLts P A `{gLts P A} :=
   MkFlts {
       folts_states_countable: Countable P;
       folts_next_states_finite p α : Finite (dsig (fun q => p ⟶{α} q));
 }.
+(* begin hide *)
 
 #[global] Existing Instance folts_states_countable.
 #[global] Existing Instance folts_next_states_finite.
@@ -48,7 +51,7 @@ Class CountablegLts P A `{gLts P A} := MkClts {
 #[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
 Proof. econstructor; first apply _. intros *; apply finite_countable. Defined.
 
-(** *** Tau-set *)
+(* *** Tau-set *)
 Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶ p')).
 
@@ -96,7 +99,7 @@ Proof.
     + eapply lts_tau_set_spec in l. multiset_solver.
 Qed.
 
-(** *** External actions set *)
+(* *** External actions set *)
 
 Definition lts_extaction_set `{FiniteImagegLts P A} p μ : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶[ μ ] p')).
@@ -145,8 +148,10 @@ Proof.
     + multiset_solver.
     + eapply lts_extaction_set_spec in l. multiset_solver.
 Qed.
+(* end hide *)
 
 (** *** Weak traces sets **)
+(* begin hide *)
 Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : p ⤓) : gset P :=
   let '(tstep _ f) := t in
   let k q := wt_set_nil (`q) (f (`q) (proj2_dsig q)) in
@@ -286,6 +291,7 @@ Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : p ⇓ s) : 
                  wt_set (`t) s' hcnv
           ) ts
   end hcnv.
+(* end hide *)
 
 Lemma wt_set_spec1 `{FiniteImagegLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
@@ -313,6 +319,7 @@ Proof.
       exists (dexist t w1). now split; [|eapply elem_of_enum].
     + now eapply IHs'.
 Defined.
+(* begin hide *)
 
 Lemma wt_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
     forall q, Decision (p ⟹[s] q).
@@ -402,11 +409,13 @@ Definition wt_nil_stable_set_fin `{FiniteImagegLts P A}
 Lemma cnv_wt_s_terminate `{gLts P A}
   (p q : P) s (hcnv : p ⇓ s) : p ⟹[s] q -> q ⤓.
 Proof. eapply cnv_iff_prefix_terminate; eauto. Qed.
+(* end hide *)
 
 Definition wt_stable_set `{FiniteImagegLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
   let ps := @enum (dsig (fun q => p ⟹[s] q)) _ (wt_set_fin p s hcnv) in
   let k t := wt_nil_stable_set (`t) (cnv_wt_s_terminate p (`t) s hcnv (proj2_dsig t)) in
   ⋃ map k ps.
+(* begin hide *)
 
 Lemma wt_stable_set_spec1 `{FiniteImagegLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
@@ -451,10 +460,12 @@ Proof.
   - left. eapply (wt_stable_set_spec1 p q s hcnv e).
   - right. intro wt. eapply n. now eapply wt_stable_set_spec2.
 Qed.
+(* end hide *)
 
 Definition wt_stable_set_fin `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)) :=
   wt_stable_set_fin_aux p s hcnv (wt_stable_set_dec p s hcnv).
+(* begin hide *)
 
 Lemma wt_nil_set_stable `{FiniteImagegLts P A} p hcnv :
   (p ↛) -> wt_set p [] hcnv = {[ p ]}.
@@ -566,7 +577,7 @@ Proof.
     eapply elem_of_elements; eassumption. eassumption.
 Qed.
 
-(** *** The stable (refusing) derivatives of a whole gset, mirrors [wt_s_set_from_pset] *)
+(* *** The stable (refusing) derivatives of a whole gset, mirrors [wt_s_set_from_pset] *)
 
 Fixpoint wt_stable_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
   (ps : list P) s (hcnv : forall p, p ∈ ps -> p ⇓ s) : gset P :=
@@ -747,3 +758,4 @@ Proof.
   intro Hps'.
   eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
 Qed. *)
+(* end hide *)

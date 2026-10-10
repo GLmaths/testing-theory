@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -32,17 +33,21 @@ From Stdlib.Program Require Import Wf Equality.
 
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 
-From TestingTheory Require Import SyncActions MultisetHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB FiniteImageLTS
+From TestingTheory Require Import ActTau SyncActions MultisetHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB FiniteImageLTS
     InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau coFiniteImage.
+(* end hide *)
 
 (** * Operations on Ltss *)
 (** ** Forwarder LTS *)
+(* begin hide *)
 
 Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ2 μ1 /\ non_blocking μ1.
+(* end hide *)
 
 #[global] Program Instance toFW {P A : Type} `(M: gLts P A) {unique_nb : UniqueDual A} 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
     : gLts (P * MO A) _ := inter_lts fw_inter.
+(* begin hide *)
 
 (* Properties on the Forwarder Construction *)
 
@@ -88,7 +93,7 @@ Proof.
        multiset_solver. rewrite eq. eapply lts_multiset_minus; eauto.
 Qed.
 
-(** Definining an Forwarder Equivalence ≐ , between forwarders, using code purification *)
+(* Definining an Forwarder Equivalence ≐ , between forwarders, using code purification *)
 
 Definition fw_eq `{FiniteOutputChain_LtsOba P A} (p : P * MO A) (q : P * MO A) :=
   forall (p' q' : P),
@@ -99,7 +104,7 @@ Definition fw_eq `{FiniteOutputChain_LtsOba P A} (p : P * MO A) (q : P * MO A) :
 
 Infix "≐" := fw_eq (at level 70).
 
-(** ≐ is reflexive. **)
+(* ≐ is reflexive. **)
 
 Lemma fw_eq_refl `{FiniteOutputChain_LtsOba P A} : Reflexive fw_eq.
 Proof.
@@ -108,7 +113,7 @@ Qed.
 
 Global Hint Resolve fw_eq_refl:mdb.
 
-(** ≐ is symmetric. **)
+(* ≐ is symmetric. **)
 
 Lemma fw_eq_symm `{FiniteOutputChain_LtsOba P A} : Symmetric fw_eq.
 Proof.
@@ -119,7 +124,7 @@ Qed.
 
 Global Hint Resolve fw_eq_symm:mdb.
 
-(** ≐ is transitive. **)
+(* ≐ is transitive. **)
 
 Lemma fw_eq_trans `{FiniteOutputChain_LtsOba P A} : Transitive fw_eq.
 Proof.
@@ -133,7 +138,7 @@ Qed.
 
 Global Hint Resolve fw_eq_trans:mdb.
 
-(** Congruence is an Equivalence. *)
+(* Congruence is an Equivalence. *)
 
 Lemma fw_eq_equiv `{FiniteOutputChain_LtsOba P A} : Equivalence fw_eq.
 Proof. constructor; eauto with mdb. Qed.
@@ -876,6 +881,7 @@ Next Obligation.
 Qed.
 
 (* Forwarder of a LTS with OBA axioms respects FW axioms *)
+(* end hide *)
 
 #[global] Program Instance toFWObaFW
   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
@@ -924,6 +930,7 @@ Next Obligation.
        assert (η = co β) as eq_nb. eapply unique_nb; eauto. subst.
        reflexivity.
 Qed.
+(* begin hide *)
 
 (**********************************Forwarder Construction is a Finite Image LTS ************************)
 
@@ -1362,3 +1369,4 @@ dependent induction Ht.
   + now constructor.
   + now apply fw_wt.
 Qed.
+(* end hide *)

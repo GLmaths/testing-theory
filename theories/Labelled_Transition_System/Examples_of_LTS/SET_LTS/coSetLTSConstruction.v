@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -33,7 +34,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation FiniteIma
 
   coWeakTransition coConvergence.
 
-(** * The LTS of sets, co version
+(* * The LTS of sets, co version
 
     [SetLTSConstruction.v]'s [toSET], sourced from [coFiniteImagegLts]/[cowt]
     instead of [FiniteImagegLts]/[wt]: a meta-step of [coToSET] at a trace
@@ -50,7 +51,7 @@ Context `{gLtsP : !gLts P Hp}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{CFI : !coFiniteImagegLts P Atest}.
 
-(** ** Successors of a whole set by one synchronising action *)
+(* ** Successors of a whole set by one synchronising action *)
 
 Definition cowt_extaction_set_from_pset (ps : gset P) (η : Atest) : gset P :=
   ⋃ (map (fun p => list_to_set (cowt_extaction_set p η)) (elements ps)).
@@ -89,7 +90,7 @@ Qed.
 
 End coSetLTS.
 
-(** ** [coToSET] itself *)
+(* ** [coToSET] itself *)
 
 #[global] Program Instance coToSET {P Aproc Atest : Type}
   `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{gLtsP : !gLts P Hp}
@@ -201,7 +202,7 @@ Context `{gLtsP : !gLts P Hp}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{CFI : !coFiniteImagegLts P Atest}.
 
-(** ** Co-termination of a set of states *)
+(* ** Co-termination of a set of states *)
 
 Lemma co_empty_set_termination : (∅ : gset P) ⤓.
 Proof.
@@ -318,7 +319,7 @@ Proof.
          | now eapply co_termination_if_termination_set_helper].
 Qed.
 
-(** ** Co-convergence and co-traces on [coToSET] *)
+(* ** Co-convergence and co-traces on [coToSET] *)
 
 Lemma co_empty_set_stable α : (∅ : gset P) ↛{ α }.
 Proof. destruct α; intros Imp; apply Imp; intros p mem; exfalso; set_solver. Qed.
@@ -424,3 +425,4 @@ Proof.
 Qed.
 
 End coSetLTSFacts.
+(* end hide *)

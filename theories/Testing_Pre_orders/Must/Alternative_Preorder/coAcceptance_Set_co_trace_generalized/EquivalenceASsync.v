@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The co-acceptance-set characterisation, for two alphabets
+(* * The co-acceptance-set characterisation, for two alphabets
 
     [EquivalenceASco.v]'s [FWⁿ] section for two alphabets.  The observers,
     and the co-traces, live on [Atest].  The processes are forwarders over
@@ -71,7 +72,7 @@ Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset PreAct → list Atest → T)
         `{!test_co_acceptance_set_spec PreAct ta (fun x => 𝝳 (Φ x))}.
 
-(** ** The co-acceptance-set preorder is the must preorder, on forwarders *)
+(* ** The co-acceptance-set preorder is the must preorder, on forwarders *)
 
 Theorem equivalence_fw_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   p ⊆ₘᵤₛₜᵢ q ↔
@@ -129,3 +130,4 @@ Proof.
 Qed.
 
 End PreorderSyncLifted.
+(* end hide *)

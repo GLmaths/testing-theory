@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -281,3 +282,4 @@ Definition inter_union_ltsEq : gLtsEq (S1 * S2) (@ExtAction_sum A1 A2 H1 H2) :=
      eq_spec := inter_union_eq_spec |}.
 
 End Inter_union_eq.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -32,7 +33,7 @@ Section VCCS_LA.
 
 Context `{VP : VCCS_Parameters}.
 
-(** Inputs are related when they share their channel, outputs when equal. *)
+(* Inputs are related when they share their channel, outputs when equal. *)
 Definition R_test_vccs (μ μ' : ExtAct TypeOfActions) : Prop :=
   match μ, μ' with
   | ActIn (c , _), ActIn (c' , _) => c = c'
@@ -40,7 +41,7 @@ Definition R_test_vccs (μ μ' : ExtAct TypeOfActions) : Prop :=
   | _, _ => False
   end.
 
-(** Inputs are related when equal, outputs when they share their channel. *)
+(* Inputs are related when equal, outputs when they share their channel. *)
 Definition R_prog_vccs (μ μ' : ExtAct TypeOfActions) : Prop :=
   match μ, μ' with
   | ActIn a, ActIn a' => a = a'
@@ -58,7 +59,7 @@ Definition δᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : ProgA :=
   | ActOut (c , _) => ProgOut c
   end.
 
-(** The joined projection. *)
+(* The joined projection. *)
 Definition ρᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : PreAct := 𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ μ).
 
 Definition repr_vccs (x : FinA) : ExtAct TypeOfActions :=
@@ -67,7 +68,7 @@ Definition repr_vccs (x : FinA) : ExtAct TypeOfActions :=
   | Output c v => ActOut (c , v)
   end.
 
-(** Input acceptance does not depend on the value. *)
+(* Input acceptance does not depend on the value. *)
 Lemma accepts_input_any_value (p : proc) c v w :
   p ⟶[ActIn (c , v)] → p ⟶[ActIn (c , w)].
 Proof.
@@ -136,7 +137,7 @@ Proof.
       * by apply (R_test_LA_equiv R_prog_vccs R_test_vccs).
 Qed.
 
-(** The [𝝳ᴠᴄᴄꜱ] of [VCCS_Instance] is the completion of the joined projection. *)
+(* The [𝝳ᴠᴄᴄꜱ] of [VCCS_Instance] is the completion of the joined projection. *)
 Lemma delta_vccs_is_completion x :
   𝝳ᴠᴄᴄꜱ x = LA_complete Φᴠᴄᴄꜱ ρᴠᴄᴄꜱ x.
 Proof. by apply (LA_complete_unique Φᴠᴄᴄꜱ). Qed.
@@ -144,9 +145,10 @@ Proof. by apply (LA_complete_unique Φᴠᴄᴄꜱ). Qed.
 #[global] Instance LA_equiv_dec_VCCS : RelDecision (LA_equiv R_prog_vccs R_test_vccs) :=
   proj_rel_dec _ _ LA_proj_join_VCCS.
 
-(** The constructive canonical surjections of VCCS. *)
+(* The constructive canonical surjections of VCCS. *)
 Definition φ_canonical_VCCS := LA_φ (T := proc).
 Definition δ_canonical_VCCS := LA_δ (P := proc).
 Definition ρ_canonical_VCCS := LA_ρ (P := proc) (T := proc).
 
 End VCCS_LA.
+(* end hide *)

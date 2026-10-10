@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -44,7 +45,7 @@ Section PAL_Alt_CoTraceHypotheses.
 
   Notation term := (term Val).
 
-  (** The LTS of processes and of tests. *)
+  (* The LTS of processes and of tests. *)
   Definition hyp_CountablegLts : CountablegLts term (PALA_Act Val) := _.
   Definition hyp_gLtsOba : gLtsOba term (H := PALA_ExtAction Val) := _.
   Definition hyp_coFiniteImage : coFiniteImagegLts term (PALA_Act Val) := _.
@@ -52,16 +53,16 @@ Section PAL_Alt_CoTraceHypotheses.
   Definition hyp_gLtsObaFB : gLtsObaFB term (PALA_Act Val) := _.
   Definition hyp_Prop_of_Inter : Prop_of_Inter term term (PALA_Act Val) (PALA_Act Val) dual := _.
 
-  (** The testing predicate and the events. *)
+  (* The testing predicate and the events. *)
   Definition hyp_Testing_Predicate : Testing_Predicate (good_PAL Val) (PALA_gLtsEq Val) := _.
   Definition hyp_Countable_PreAct : Countable (Event Val) := _.
 
-  (** The label abstraction, without finiteness. *)
+  (* The label abstraction, without finiteness. *)
   Definition hyp_AbsAction :
     @AbsAction term term (Event Val) (Event Val) (PALA_Act Val) (PALA_ExtAction Val)
       (Φᴀᴘᴀʟ Val) (𝝳ᴇᴠ Val) _ _ (PALA_gLts Val) (PALA_gLtsEq Val) _ := AbsPALA Val.
 
-  (** The tests, in the co variants of the classes ([TestSpecBridge]). *)
+  (* The tests, in the co variants of the classes ([TestSpecBridge]). *)
   Definition hyp_test_convergence_spec : CompletenessASco.test_convergence_spec (t_conv Val) :=
     test_convergence_spec_of_plain (t_conv_convergence_spec Val).
 
@@ -70,3 +71,4 @@ Section PAL_Alt_CoTraceHypotheses.
       (λ x, 𝝳ᴇᴠ Val (Φᴀᴘᴀʟ Val x)) :=
     test_co_acceptance_set_spec_of_plain (ta_co_acceptance_set_spec Val).
 End PAL_Alt_CoTraceHypotheses.
+(* end hide *)

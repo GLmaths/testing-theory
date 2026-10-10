@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -89,7 +90,7 @@ Section PAL_Alt_Congruence.
     | cgr_read t E E' : cgr_step E E' → cgr_step (read( t ) • E) (read( t ) • E')
     | cgr_out t E E' : E ≠ 𝟘 → E' ≠ 𝟘 → cgr_step E E' → cgr_step (out( t ) • E) (out( t ) • E').
 
-  (** The structural congruence. *)
+  (* The structural congruence. *)
   Definition cgr : term → term → Prop := rtc cgr_step.
 
   Lemma cgr_step_symmetric : Symmetric cgr_step.
@@ -104,7 +105,7 @@ Section PAL_Alt_Congruence.
   Lemma cgr_refl E : cgr E E.
   Proof. reflexivity. Qed.
 
-  (** Lifting [cgr] through the static contexts. *)
+  (* Lifting [cgr] through the static contexts. *)
   Local Ltac lift C := intros h; induction h as [|x y z hxy _ IH]; [reflexivity | eapply rtc_l; [apply C, hxy | exact IH]].
 
   Lemma cgr_par_l_lift E E' F : cgr E E' → cgr (E ‖ F) (E' ‖ F).
@@ -125,7 +126,7 @@ Section PAL_Alt_Congruence.
   Lemma cgr_par_lift E E' F F' : cgr E E' → cgr F F' → cgr (E ‖ F) (E' ‖ F').
   Proof. intros h1 h2. etransitivity; [apply cgr_par_l_lift, h1 | apply cgr_par_r_lift, h2]. Qed.
 
-  (** Synchronisations read from the other side. *)
+  (* Synchronisations read from the other side. *)
   Lemma air12_sym E1 E2 μ1 μ2 E1' E2' :
     step E1 (ActExt μ1) E1' → step E2 (ActExt μ2) E2' → PALA_dual Val μ2 μ1 →
     step (E1 ‖ E2) τ (E1' ‖ E2').
@@ -136,7 +137,7 @@ Section PAL_Alt_Congruence.
     step (E1 |ₖ E2) τ (E1' ‖ E2').
   Proof. intros h1 h2 hd. eapply air13; [exact h1 | exact h2 | by symmetry]. Qed.
 
-  (** Steps in contexts, for any label. *)
+  (* Steps in contexts, for any label. *)
   Lemma step_par_l E F α E' : step E α E' → step (E ‖ F) α (E' ‖ F).
   Proof. destruct α; [apply aar5_l | apply air9_l]. Qed.
   Lemma step_par_r E F α F' : step F α F' → step (E ‖ F) α (E ‖ F').
@@ -164,9 +165,9 @@ Section PAL_Alt_Congruence.
         destruct (IH _ _ h) as (r0 & h0 & c0); clear IH
     end.
 
-  (** ** Substitution of values *)
+  (* ** Substitution of values *)
 
-  (** A guard which evaluates has no variable. *)
+  (* A guard which evaluates has no variable. *)
   Lemma subst_bexp_eval (σ : vsubst Val) be b : eval_bexp be = Some b → subst_bexp σ be = be.
   Proof.
     revert b. induction be as [| | e1 e2 | b1 IH1 b2 IH2 | b1 IH1 b2 IH2 | b1 IH1]; intros b h; cbn in *;
@@ -193,7 +194,7 @@ Section PAL_Alt_Congruence.
 
   Local Hint Resolve cgr_step_subst : pal_cgr.
 
-  (** One congruence step is a strong simulation. *)
+  (* One congruence step is a strong simulation. *)
   Lemma cgr_step_simulation p r :
     cgr_step p r → ∀ α p', step p α p' → ∃ r', step r α r' ∧ cgr p' r'.
   Proof.
@@ -202,7 +203,7 @@ Section PAL_Alt_Congruence.
       [ solve [destruct α; eauto 6 with pal_cgr]
       | inversion hs; subst; try congruence; invert_steps; try use_ih; eauto 7 with pal_cgr ].
   Qed.
-  (** [cgr] is a strong bisimulation. *)
+  (* [cgr] is a strong bisimulation. *)
   Lemma cgr_simulation p r α p' : cgr p r → step p α p' → ∃ r', step r α r' ∧ cgr p' r'.
   Proof.
     intros h. revert α p'. induction h as [|x y z hxy _ IH]; intros α p' hs.
@@ -218,7 +219,7 @@ Section PAL_Alt_Congruence.
     destruct (cgr_simulation r p α q hpr hs) as (r' & h' & c'). exists r'. split; [done | by symmetry].
   Qed.
 
-  (** ** [gLtsEq]/[gLtsOba]/[gLtsObaFW]/[gLtsObaFB]; the last three are vacuous, no action being non-blocking *)
+  (* ** [gLtsEq]/[gLtsOba]/[gLtsObaFW]/[gLtsObaFB]; the last three are vacuous, no action being non-blocking *)
 
   #[global] Instance PALA_gLtsEq : gLtsEq term (PALA_ExtAction Val) := {|
     gLtsEq_gLts := PALA_gLts Val;
@@ -250,3 +251,4 @@ Section PAL_Alt_Congruence.
     intros p1 p2 p3 η β nb Hdual Hl1 Hl2. destruct nb.
   Defined.
 End PAL_Alt_Congruence.
+(* end hide *)

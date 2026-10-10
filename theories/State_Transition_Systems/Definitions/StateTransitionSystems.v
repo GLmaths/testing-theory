@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -27,7 +28,7 @@ From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS.
 
-(** * State Transition Systems *)
+(* * State Transition Systems *)
 
 (* Definition of a State Transition System (STS) *)
 Class Sts (P: Type) := MkSts {
@@ -44,7 +45,7 @@ Class Sts (P: Type) := MkSts {
 #[global] Existing Instance sts_step_decidable.
 #[global] Existing Instance sts_performs_decidable.
 
-(** ** State Transition Systems are Labelled Transition Systems *)
+(* ** State Transition Systems are Labelled Transition Systems *)
 
 Definition istep `{gLts A} p q := p ⟶ q.
 
@@ -226,3 +227,4 @@ Proof.
   - exact clts_states_countable.
   - intros ?. apply clts_next_states_countable.
 Defined.
+(* end hide *)

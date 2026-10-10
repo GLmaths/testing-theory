@@ -1,3 +1,4 @@
+(* begin hide *)
 (* Function composition *)
 
 Definition funcomp {X Y Z} (g : Y -> Z) (f : X -> Y)  :=
@@ -18,7 +19,7 @@ Two things are important:
 2. For Coq to check termination, also the proofs have to be closed with Defined.
  *)
 
-(** *** List Instance *)
+(* *** List Instance *)
 From Stdlib Require Import List.
 
 Notation "'list_map'" := map.
@@ -43,7 +44,7 @@ Proof.
   cbn. rewrite <- H. f_equal. apply IHxs.
 Defined.
 
-(** *** Prod Instance *)
+(* *** Prod Instance *)
 
 Definition prod_map {A B C D} (f : A -> C) (g : B -> D) (p : A * B) :
   C * D.
@@ -70,7 +71,7 @@ Proof.
   intros H0 H1. destruct p as [a b]. cbn. f_equal; [ apply H0 | apply H1 ].
 Defined.
 
-(** *** Option Instance *)
+(* *** Option Instance *)
 
 Definition option_map {A B} (f : A -> B) (p : option A) :
   option B :=
@@ -157,3 +158,4 @@ Qed.
 Ltac unfold_funcomp := match goal with
                            | |-  context[(funcomp ?f ?g) ?s] => change ((funcomp f g) s) with (f (g s))
                            end.
+(* end hide *)

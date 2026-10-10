@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Eliminating [ν] over a guarded sum: [ν (g M) ≂ₘᵤₛₜᵢ g (resg M)]
+(* * Eliminating [ν] over a guarded sum: [ν (g M) ≂ₘᵤₛₜᵢ g (resg M)]
 
     The last piece [VCCS_NormalForm.v]'s normal-form theorem needs: once
     a [Static] process under a single [ν] has already been rewritten to
@@ -72,7 +73,7 @@ match M with
 | M1 + M2 => (resg M1) + (resg M2)
 end.
 
-(** ** [ν (g M)] and [g (resg M)] have exactly the same one-step transitions *)
+(* ** [ν (g M)] and [g (resg M)] have exactly the same one-step transitions *)
 
 Lemma resg_lts_iff : forall M a tgt, lts (ν (g M)) a tgt <-> lts (g (resg M)) a tgt.
 Proof.
@@ -135,7 +136,7 @@ Proof.
         inversion H4; subst; [apply lts_res_ext | apply lts_res_tau]; apply lts_choiceR; assumption.
 Qed.
 
-(** ** The normalization law *)
+(* ** The normalization law *)
 
 Theorem must_i_res_normalize : forall M t, (ν (g M)) must_pass t <-> g (resg M) must_pass t.
 Proof.
@@ -151,7 +152,7 @@ Proof. intros M t H. apply must_i_res_normalize. exact H. Qed.
 Corollary must_i_res_normalize_r : forall M, g (resg M) ⊑ₘᵤₛₜᵢ (ν (g M)).
 Proof. intros M t H. apply must_i_res_normalize. exact H. Qed.
 
-(** ** [resg] preserves [gStatic] *)
+(* ** [resg] preserves [gStatic] *)
 
 Lemma resg_gStatic : forall M, gStatic M -> gStatic (resg M).
 Proof.
@@ -165,3 +166,4 @@ Proof.
 Qed.
 
 End VCCS_ResNormalize.
+(* end hide *)

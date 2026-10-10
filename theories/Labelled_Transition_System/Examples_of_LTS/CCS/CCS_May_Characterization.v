@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,7 +26,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   DefinitionTIco EquivalenceTIco
   VCCS_Instance VCCS_Good VCCS_test_trace_gen_may VCCS_May_Characterization.
 
-(** * The May preorder is trace inclusion, for CCS
+(* * The May preorder is trace inclusion, for CCS
 
     CCS is VCCS with a trivial [Value] — [gen_may]/[VCCS_may_test_spec] and
     [equivalence_ti_fw] were already built generically over [VCCS_Parameters]
@@ -53,3 +54,4 @@ Proof.
 Qed.
 
 End CCS_May_Corollary.
+(* end hide *)

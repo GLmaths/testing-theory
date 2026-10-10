@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -31,7 +32,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import sets base countable finite gmap list finite
                           decidable finite gmap.
 From stdpp Require gmultiset.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA
   WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
   InteractionBetweenLts MultisetLTSConstruction
   ParallelLTSConstruction ForwarderConstruction
@@ -54,6 +55,7 @@ Proof.
   induction ps using set_ind_L. set_solver.
   destruct IHps; destruct (h x); eauto; set_solver.
 Qed.
+(* end hide *)
 
 (** * Completeness *)
 (** ** Axioms for completeness *)
@@ -79,6 +81,7 @@ Class test_spec (* {E A : Type} *)
               blocking β ->
               gen (β :: s) ⟶[μ] t -> μ ≠ β -> outcome t ;
   }.
+(* begin hide *)
 
 Lemma test_spec_determinacy 
   `{gLtsOba T, !Testing_Predicate outcome _, !test_spec f}
@@ -92,8 +95,10 @@ Proof.
     etransitivity; eauto. symmetry; eauto.
   + eapply test_follows_trace_determinacy in not_nb as equiv; eauto.
 Qed.
+(* end hide *)
 
 (** *** Axioms for tests on convergence *)
+(* begin hide *)
 Class test_convergence_spec
   `{@gLtsEq T A H, !Testing_Predicate outcome _}
   (tconv : list A -> T) := {
@@ -104,8 +109,10 @@ Class test_convergence_spec
   }.
 
 #[global] Existing Instance tconv_test_spec.
+(* end hide *)
 
 (** *** Axioms for the tests on co-acceptance sets *)
+(* begin hide *)
 Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
   `{@gLtsEq T A H, !Testing_Predicate outcome _}
   (ta : gset PreAct -> list A -> T) (Γ : A -> PreAct)
@@ -128,7 +135,7 @@ Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
 #[global] Existing Instance ta_test_spec.
 
 
-(** *** Facts about test generators *)
+(* *** Facts about test generators *)
 
 Lemma tconv_always_reduces `{
   gLtsOba T , !Testing_Predicate outcome _, !test_convergence_spec tconv} s :
@@ -187,8 +194,10 @@ Proof.
     eapply must_preserved_by_synch_if_notoutcome; eauto with mdb.
     eapply test_ungood. exact (proj2_sig (exists_dual μ)).
 Qed.
+(* end hide *)
 
 (** *** Satisfying [tconv] implies convergence *)
+(* begin hide *)
 
 Lemma cnv_if_must `{
   gLtsP : @gLts P A H, 
@@ -574,8 +583,10 @@ Proof.
     ++ right. intro e. 
        eapply ta_transition_to_good ; eauto.
 Qed.
+(* end hide *)
 
 (** *** Convergence implies satisfying [tconv] *)
+(* begin hide *)
 
 Lemma must_if_cnv `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -664,6 +675,7 @@ Proof.
 
       exact hcnv.
 Qed.
+(* end hide *)
 
 Lemma must_iff_cnv `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -674,6 +686,7 @@ Lemma must_iff_cnv `{
 
   (p : P) s : p must_pass (tconv (coₜ s)) <-> p ⇓ s.
 Proof. split; [eapply cnv_if_must | eapply must_if_cnv]; eauto. Qed.
+(* begin hide *)
 
 Lemma completeness1 `{
     @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -1103,6 +1116,7 @@ Proof.
        exact Hyp.
     ++ left. exists p. split; eauto. constructor.
 Qed.
+(* end hide *)
 
 
 Lemma must_ta_or_empty_pre_action_set_for_all_trace {P : Type} `{CC : Countable PreAct} `{
@@ -1202,6 +1216,7 @@ Proof.
     eapply must_preserved_by_synch_if_notoutcome; eauto.
     exact (proj2_sig (exists_dual μ)).
 Qed.
+(* begin hide *)
 
 Lemma completeness2 {P Q : Type} `{CC : Countable PreAct} `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -1224,6 +1239,7 @@ Proof.
   + eapply hpre in hm. contradict hm.
     eapply (not_must_ta_without_required_acc_set _ _ s); eauto.
 Qed.
+(* end hide *)
 
 (** ** Completeness for forwarder LTS *)
 Lemma completeness_fw {P Q : Type} `{CC : Countable PreAct} `{
@@ -1244,8 +1260,9 @@ Proof.
   - now apply completeness1.
   - now apply completeness2.
 Qed.
+(* begin hide *)
 
-(** ** Completeness for LTSs that can be lifted to forwarders *)
+(* ** Completeness for LTSs that can be lifted to forwarders *)
 Lemma completeness {P Q : Type} `{
   @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
   @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
@@ -1315,3 +1332,4 @@ Proof.
 Qed.
 
 *)
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     MultisetLTSConstruction ForwarderConstruction May MayTestSpec DefinitionTI CompletenessTI DefinitionTIco
     SoundnessTIco CompletenessTIco.
 
-(** * The May preorder is co-trace inclusion
+(* * The May preorder is co-trace inclusion
 
       [p ⊑ₘₐᵧ q  ↔  p ≼꜀ₒ₋ₜᵢ q]
 
@@ -38,7 +39,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     [completeness_ti_fw]/[completeness_ti_fb]. This file never
     imports [EquivalenceTI.v] and never calls its theorems. *)
 
-(** ** Equivalence, for forwarders *)
+(* ** Equivalence, for forwarders *)
 
 Theorem equivalence_ti_co_trace_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -58,7 +59,7 @@ Proof.
   - eapply soundness_ti_co_fw.
 Qed.
 
-(** ** Equivalence, for feedback LTSs, through the forwarder construction *)
+(* ** Equivalence, for feedback LTSs, through the forwarder construction *)
 
 Theorem equivalence_ti_co_trace_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
@@ -83,7 +84,7 @@ Proof.
   - eapply soundness_ti_co_fb.
 Qed.
 
-(** ** Corollary: the induced equivalences coincide *)
+(* ** Corollary: the induced equivalences coincide *)
 
 Corollary may_equiv_iff_same_cotraces `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -106,3 +107,4 @@ Proof.
     + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
     + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
 Qed.
+(* end hide *)

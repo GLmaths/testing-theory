@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
 
@@ -612,3 +613,4 @@ Next Obligation. cbn. eauto with cgr. Qed.
 Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VACCS_ta_tc.
+(* end hide *)

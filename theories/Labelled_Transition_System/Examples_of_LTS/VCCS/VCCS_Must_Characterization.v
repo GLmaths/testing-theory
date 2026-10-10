@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -34,22 +35,26 @@ From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
 From Coinduction Require Import all.
 
 Notation "p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
+(* end hide *)
 
 Section VCCS_Must_Alt_Corollary.
 
 Context `{VP : VCCS_Parameters}.
+(* begin hide *)
 
 Corollary must_iff_acceptance_set_VCCS (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
   now rewrite equivalence_acc_set_and_must_i.
 Qed.
+(* end hide *)
 
 Corollary must_iff_acceptance_set_VCCS_without_toFW (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
 Proof.
   now rewrite equivalence_fw_acc_set_and_must_i.
 Qed.
+(* begin hide *)
 
 Corollary must_iff_co_inductive_acceptance_VCCS_without_toFW (p q : proc) :
   p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset proc) ᶜᵒ≼ₐₛ ({[ q ]} : gset proc).
@@ -80,6 +85,7 @@ Corollary must_iff_co_acceptance_set_VCCS_without_toFW (p q : proc) :
 Proof.
   now rewrite equivalence_fw_acc_set_and_must_i_co_trace.
 Qed.
+(* end hide *)
 
 End VCCS_Must_Alt_Corollary.
 

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -31,8 +32,10 @@ From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA 
   Must CodePurification Termination 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS
   Convergence WeakTransitions.
+(* end hide *)
 
 (** * Lifting an LTS to forwarders preserves Must *)
+(* begin hide *)
 Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
@@ -578,6 +581,7 @@ Qed.
 
 End FeedBack.
 End Lifting.
+(* end hide *)
 
 Lemma lift_fw_ctx_pre
   `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}

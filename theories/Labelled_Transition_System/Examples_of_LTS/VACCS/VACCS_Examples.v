@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -31,6 +32,7 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
 Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination.
+(* end hide *)
 
 
 (** ** VACCS **)
@@ -39,9 +41,12 @@ Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination.
 Section VACCS_examples.
 
 Context `{VP : VACCS_Parameters}.
+(* begin hide *)
 
 (* We assume that there is at least one channel and two values *)
+(* end hide *)
 Context {a : Channel} {O : Value} {I : Value} {neq : O ≠ I}.
+(* begin hide *)
 
 Definition const : proc := a ? (a ! O • 𝟘).
 
@@ -139,6 +144,7 @@ Proof.
            ++ intros. lts_inversion lts.
            ++ intros. lts_inversion lts.
 Qed.
+(* end hide *)
 
 Example copycat_is_above_constant : const ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ccat.
 Proof.
@@ -203,6 +209,7 @@ Example NIL_is_above_constant : const ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘)
 Proof.
   intros e Hyp. eapply NIL_is_above_copycat. eapply copycat_is_above_constant. exact Hyp.
 Qed.
+(* begin hide *)
 
 Definition Test := (cst a ! cst I • 𝟘) ‖ (cst a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘))).
 
@@ -249,6 +256,7 @@ Proof.
          - inversion H5.
     ++ inversion ex0. repeat lts_inversion lts.
 Qed.
+(* end hide *)
 
 Example NIL_is_equivalent_to_ccat : ccat ≂ₘᵤₛₜᵢ (g 𝟘).
 Proof.

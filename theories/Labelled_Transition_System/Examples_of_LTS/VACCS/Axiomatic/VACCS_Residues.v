@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -21,7 +22,7 @@
 *)
 
 
-(** * Residue enumeration, and the weak-emission glb law
+(* * Residue enumeration, and the weak-emission glb law
 
     Everything a rule with **weakly matched emissions** needs, placed
     upstream of the axiom system so that a constructor can name it.
@@ -56,7 +57,7 @@ Section VACCS_Residues.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** The summands of a guarded sum, and how they carry its transitions *)
+(* ** The summands of a guarded sum, and how they carry its transitions *)
 
 Fixpoint summands (M : gproc) : list gproc :=
 match M with
@@ -99,7 +100,7 @@ Proof.
   - apply in_or_app. right. apply IH2. exact H3.
 Qed.
 
-(** ** n-ary internal choice
+(* ** n-ary internal choice
 
     Ported from VCCS's [CompletenessAx.v].  The singleton case is
     [𝛕•p + 𝛕•p], not [𝛕•p]: the obvious version would need Milner's first
@@ -135,7 +136,7 @@ Proof.
     + apply lts_choiceR. apply IH. exact Hin.
 Qed.
 
-(** ** Enumerating the reducts
+(* ** Enumerating the reducts
 
     The τ-reducts of a state form a [gset] through [lts_set], which the
     VACCS instance exposes concretely — so no choice principle is needed
@@ -152,7 +153,7 @@ Proof.
     apply lts_set_spec1. exact Hl.
 Qed.
 
-(** [reach_list] closes [tau_list] under iteration.  Each τ strictly
+(* [reach_list] closes [tau_list] under iteration.  Each τ strictly
     shrinks a [Static] process ([Static_lts_decrease]), so [S (size p)]
     steps of fuel suffice. *)
 
@@ -186,7 +187,7 @@ Proof.
       * exact w.
 Qed.
 
-(** ** The residues at ONE value
+(* ** The residues at ONE value
 
     The value being given, the residues are read straight off [lts_set];
     no enumeration of the emittable values is needed. *)
@@ -220,3 +221,4 @@ Proof.
 Qed.
 
 End VACCS_Residues.
+(* end hide *)

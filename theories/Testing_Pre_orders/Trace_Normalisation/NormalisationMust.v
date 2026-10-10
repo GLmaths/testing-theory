@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -30,7 +31,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Subset
     FiniteImageLTS Testing_Predicate StateTransitionSystems InteractionBetweenLts
     DefinitionAS DefinitionASco NormalForm Normalisation NormalisationCo.
 
-(** * The must preorders on traces in normal form
+(* * The must preorders on traces in normal form
 
     The alternative characterisations of [must] in this development are based
     on acceptance sets: [≼ₐₛ] on traces ([DefinitionAS.v]) and [≼꜀ₒ₋ₐₛ] on
@@ -39,9 +40,9 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Subset
 
     The counterpart for [may] is in [NormalisationMay.v]. *)
 
-(** ** The alternative preorder restricted to traces in normal form *)
+(* ** The alternative preorder restricted to traces in normal form *)
 
-(** Abstracted co-ready-sets are invariant under the bisimulation. *)
+(* Abstracted co-ready-sets are invariant under the bisimulation. *)
 Lemma coR_map_preserved_by_eq `{gLtsEq P A} {PreAct : Type} {Γ : A -> PreAct}
   (p p' : P) (x : PreAct) : p ⋍ p' -> x ∈ ⌈ Γ ⌉ (coR p) -> x ∈ ⌈ Γ ⌉ (coR p').
 Proof.
@@ -51,13 +52,13 @@ Proof.
   eapply accepts_preserved_by_eq; eassumption.
 Qed.
 
-(** ** Termination condition, on normalised traces *)
+(* ** Termination condition, on normalised traces *)
 Definition bhv_pre_nf_cond1 `{gLts P A, gLts Q A}
   (p : P) (q : Q) := forall σ : ntrace A, p ⇓ nlin σ -> q ⇓ nlin σ.
 
 Notation "p ₁≼ₙ_ₐₛ q" := (bhv_pre_nf_cond1 p q) (at level 70).
 
-(** ** Smyth preorder on acceptance sets, on normalised traces *)
+(* ** Smyth preorder on acceptance sets, on normalised traces *)
 Definition bhv_pre_nf_cond2 `{
   gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
@@ -68,7 +69,7 @@ Definition bhv_pre_nf_cond2 `{
 
 Notation "p ₂≼ₙ_ₐₛ q" := (bhv_pre_nf_cond2 p q) (at level 70).
 
-(** ** The alternative preorder on normalised traces *)
+(* ** The alternative preorder on normalised traces *)
 Definition bhv_pre_nf `{
   gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
@@ -87,7 +88,7 @@ Section Normalised_preorder.
   Context `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _}.
   Context `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}.
 
-  (** Every trace can be replaced by its normal form. *)
+  (* Every trace can be replaced by its normal form. *)
   Lemma bhv_pre_cond1_nf (p : P) (q : Q) : p ₁≼ₙ_ₐₛ q <-> p ₁≼ₐₛ q.
   Proof.
     split.
@@ -115,7 +116,7 @@ Section Normalised_preorder.
     - intros hpre σ q' hcnv w hst. now eapply hpre.
   Qed.
 
-  (** ** The alternative preorder on normalised traces coincides with the
+  (* ** The alternative preorder on normalised traces coincides with the
       alternative preorder on traces *)
   Theorem bhv_pre_nf_iff (p : P) (q : Q) : p ≼ₙ_ₐₛ q <-> p ≼ₐₛ q.
   Proof.
@@ -128,15 +129,15 @@ Section Normalised_preorder.
 
 End Normalised_preorder.
 
-(** ** The co-acceptance-set preorder restricted to co-traces in normal form *)
+(* ** The co-acceptance-set preorder restricted to co-traces in normal form *)
 
-(** ** Termination condition, on normalised co-traces *)
+(* ** Termination condition, on normalised co-traces *)
 Definition bhv_pre_co_nf_cond1 `{gLts P A, gLts Q A}
   (p : P) (q : Q) := forall σ : ntrace A, p ⇓ᶜᵒ nlin σ -> q ⇓ᶜᵒ nlin σ.
 
 Notation "p ₁≼ₙ_꜀ₒ₋ₐₛ q" := (bhv_pre_co_nf_cond1 p q) (at level 70).
 
-(** ** Smyth preorder on co-acceptance sets, on normalised co-traces *)
+(* ** Smyth preorder on co-acceptance sets, on normalised co-traces *)
 Definition bhv_pre_co_nf_cond2 `{
   gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
@@ -147,7 +148,7 @@ Definition bhv_pre_co_nf_cond2 `{
 
 Notation "p ₂≼ₙ_꜀ₒ₋ₐₛ q" := (bhv_pre_co_nf_cond2 p q) (at level 70).
 
-(** ** The alternative co-preorder on normalised co-traces *)
+(* ** The alternative co-preorder on normalised co-traces *)
 Definition bhv_pre_co_nf `{
   gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
@@ -193,7 +194,7 @@ Section Normalised_co_preorder.
     - intros hpre σ q' hcnv w hst. now eapply hpre.
   Qed.
 
-  (** ** The alternative co-preorder on normalised co-traces coincides with the
+  (* ** The alternative co-preorder on normalised co-traces coincides with the
       alternative co-preorder on co-traces *)
   Theorem bhv_pre_co_nf_iff (p : P) (q : Q) : p ≼ₙ_꜀ₒ₋ₐₛ q <-> p ≼꜀ₒ₋ₐₛ q.
   Proof.
@@ -205,3 +206,4 @@ Section Normalised_co_preorder.
   Qed.
 
 End Normalised_co_preorder.
+(* end hide *)

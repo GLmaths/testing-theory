@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable option gmap.
 
-(** * PAL: syntax
+(* * PAL: syntax
 
     The syntax of the Linda-based applicative process algebra from:
 
@@ -46,7 +47,7 @@ Section PAL_Syntax.
   Definition Var := nat.
   Definition PVar := nat.
 
-  (** ** Syntax (Definition 3.1)
+  (* ** Syntax (Definition 3.1)
 
       [Exp] and [BExp] are left abstract in the paper (parametrised by an
       external evaluation function [E⟦·⟧]); [vexp]/[bexp] below are a
@@ -93,7 +94,7 @@ Section PAL_Syntax.
     (* success of an observer (the paper's [success], Section 5) *)
     | t_success.
 
-  (** ** Value-substitution
+  (* ** Value-substitution
 
       Plain (no capture-avoidance): it only ever substitutes *closed
       values* for variables — never expressions with free variables — so
@@ -181,7 +182,7 @@ Section PAL_Syntax.
     | t_success => t_success
     end.
 
-  (** ** Tuple evaluation and matching (Tables 1-2) *)
+  (* ** Tuple evaluation and matching (Tables 1-2) *)
 
   (* evaluated output/input tuples: Table 1 *)
   Inductive out_field := of_star | of_val (v : Val).
@@ -321,7 +322,7 @@ Section PAL_Syntax.
 
   #[global] Instance eot_countable : Countable eot := _.
 
-  (** ** [Countable term]
+  (* ** [Countable term]
 
       Needed for [FiniteImagegLts]/[coFiniteImagegLts]/[Prop_of_Inter]'s
       [gset]s.  Built the same way as every other calculus in this
@@ -488,7 +489,7 @@ Arguments eot Val : clear implicits.
 Arguments in_field Val : clear implicits.
 Arguments eit Val : clear implicits.
 
-(** ** Notations, mirroring the paper's own concrete syntax
+(* ** Notations, mirroring the paper's own concrete syntax
 
     Kept in a dedicated scope ([pal_scope]/[%pal]) rather than opened
     globally, since some of the paper's own symbols are already taken
@@ -523,3 +524,4 @@ Notation "'✓'" := t_success : pal_scope.                               (* pape
 Notation "? x" := (f_formal x) (at level 20) : pal_scope.
 Notation "! e" := (f_actual e) (at level 20) : pal_scope.
 Notation "⋆" := f_star : pal_scope.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -30,7 +31,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Subset
     FiniteImageLTS Testing_Predicate StateTransitionSystems InteractionBetweenLts
     DefinitionAS DefinitionASco NormalForm Normalisation.
 
-(** * Normalisation of co-traces
+(* * Normalisation of co-traces
 
     A co-trace is read from the point of view of the *observer*: a step
     labelled [μ] in a co-trace is realised in the LTS by *some* action dual to
@@ -52,14 +53,14 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Subset
       non-blocking action ([co_exist_co_nba]);
     - [COP] the remaining, opaque, labels. *)
 
-(** ** Classes of the labels of a co-trace *)
+(* ** Classes of the labels of a co-trace *)
 
-(** The co variant of [exist_co_nba]: it is exactly the hypothesis that
+(* The co variant of [exist_co_nba]: it is exactly the hypothesis that
     [cowt_input_swap] and [cowt_input_perm] require. *)
 Definition co_exist_co_nba `{ExtAction A} (μ1 : A) : Prop :=
   exists η, non_blocking η /\ forall μ2, dual μ2 μ1 -> dual μ2 η.
 
-(** Two labels of a co-trace cancel out when the actions realising the second
+(* Two labels of a co-trace cancel out when the actions realising the second
     are co-actions of the actions realising the first. *)
 Definition co_feedback `{ExtAction A} (μ1 μ2 : A) : Prop :=
   forall μ3 μ4, dual μ3 μ1 -> dual μ4 μ2 -> dual μ4 μ3.
@@ -67,7 +68,7 @@ Definition co_feedback `{ExtAction A} (μ1 μ2 : A) : Prop :=
 Lemma dual_co `{ExtAction A} (μ : A) : dual (co μ) μ.
 Proof. symmetry. exact (proj2_sig (exists_dual μ)). Qed.
 
-(** The second label of a feedback always admits a non-blocking co-action.
+(* The second label of a feedback always admits a non-blocking co-action.
     Only the *existence* of a co-action is used here. *)
 Lemma co_feedback_CIN `{ExtAction A} (μ1 μ2 : A) :
   co_non_blocking μ1 -> co_feedback μ1 μ2 -> co_exist_co_nba μ2.
@@ -77,11 +78,11 @@ Proof.
   - intros μ3 dν. eapply hfb; [eapply dual_co | exact dν].
 Qed.
 
-(** The redex of the feedback on co-traces. *)
+(* The redex of the feedback on co-traces. *)
 Definition co_fb_rel `{ExtAction A} (μ1 μ2 : A) : Prop :=
   co_non_blocking μ1 /\ co_feedback μ1 μ2.
 
-(** Two feedback redexes never overlap: as on traces, this is [dual_blocks],
+(* Two feedback redexes never overlap: as on traces, this is [dual_blocks],
     applied to the co-actions that [exists_dual] provides.  No determinacy is
     involved. *)
 Lemma co_fb_rel_disjoint `{ExtAction A} (x y z : A) : co_fb_rel x y -> ¬ co_fb_rel y z.
@@ -93,7 +94,7 @@ Proof.
   - eapply nby, dual_co.
 Qed.
 
-(** A classification of the labels that is faithful to the two predicates
+(* A classification of the labels that is faithful to the two predicates
     above.  Any concrete LTS may provide its own; one canonical choice is given
     at the end of this file. *)
 Class CoClassifier `{ExtAction A} (cls : A -> act_class) := {
@@ -101,7 +102,7 @@ Class CoClassifier `{ExtAction A} (cls : A -> act_class) := {
     cls_CIN_iff : forall μ, cls μ = CIN <-> co_exist_co_nba μ;
   }.
 
-(** The two non-opaque classes are indeed disjoint. *)
+(* The two non-opaque classes are indeed disjoint. *)
 Lemma co_nb_not_co_exist_co_nba `{ExtAction A} (μ : A) :
   co_non_blocking μ -> ¬ co_exist_co_nba μ.
 Proof.
@@ -110,7 +111,7 @@ Proof.
   eapply (dual_blocks (co μ) η nbη (hη (co μ) duo)). now eapply hnb.
 Qed.
 
-(** ** Co-convergence is preserved by the swaps of two consecutive labels
+(* ** Co-convergence is preserved by the swaps of two consecutive labels
 
     The two lemmas below are the co variants of [cnv_non_blocking_action_swap]
     and of [cnv_input_swap]; they are missing from [coConvergence.v]. *)
@@ -195,7 +196,7 @@ Section CoSwaps.
 
 End CoSwaps.
 
-(** ** Transfer of the LTS predicates along the normalisation *)
+(* ** Transfer of the LTS predicates along the normalisation *)
 
 Section TransferCo.
 
@@ -205,7 +206,7 @@ Section TransferCo.
 
   Notation "⟪ s ⟫ᶜᵒ" := (nlin (nform cls s)) (at level 30).
 
-  (** *** Co-weak transitions *)
+  (* *** Co-weak transitions *)
 
   Lemma cowt_tequiv (p q : P) s t : tequiv cls s t -> p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[t] q.
   Proof.
@@ -231,7 +232,7 @@ Section TransferCo.
       eapply cowt_join_eq_l; eassumption.
   Qed.
 
-  (** *** Co-convergence *)
+  (* *** Co-convergence *)
 
   Lemma cocnv_tequiv (p : P) s t : tequiv cls s t -> p ⇓ᶜᵒ s -> p ⇓ᶜᵒ t.
   Proof.
@@ -254,7 +255,7 @@ Section TransferCo.
         * now exfalso.
   Qed.
 
-  (** *** A co-trace and (the linearisation of) its normal form are
+  (* *** A co-trace and (the linearisation of) its normal form are
       interchangeable *)
 
   Corollary cowt_norm (p q : P) s : p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[⟪ s ⟫ᶜᵒ] q.
@@ -280,7 +281,7 @@ Section TransferCo.
 End TransferCo.
 
 
-(** ** A preorder on co-traces
+(* ** A preorder on co-traces
 
     The observer's counterpart of [trace_leq] and [trace_pre] of
     [Normalisation.v], that is of the laws of Table 2 and Definition 5.1 of
@@ -312,7 +313,7 @@ Section CoTracePreorder.
   Context `{H : !ExtAction A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
-  (** [⊑ᶜᵒₜ] is sound for co-weak transitions. *)
+  (* [⊑ᶜᵒₜ] is sound for co-weak transitions. *)
   Lemma cowt_cotrace_leq (p q : P) s t : s ⊑ᶜᵒₜ t -> p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[t] q.
   Proof.
     intro hle. revert p q.
@@ -345,7 +346,7 @@ Section CoTracePreorder.
       eapply cowt_join_eq_l; eassumption.
   Qed.
 
-  (** Dropping a label only preserves the *existence* of a co-weak transition. *)
+  (* Dropping a label only preserves the *existence* of a co-weak transition. *)
   Lemma cowt_cotrace_pre (p q : P) s t : s ≼ᶜᵒₜ t -> p ⟹ᶜᵒ[s] q -> ∃ q', p ⟹ᶜᵒ[t] q'.
   Proof.
     intro hle. revert p q.
@@ -358,7 +359,7 @@ Section CoTracePreorder.
       exists t. eapply cowt_concat; eassumption.
   Qed.
 
-  (** Testing along a co-trace that performs a feedback is testing along a
+  (* Testing along a co-trace that performs a feedback is testing along a
       shorter co-trace: the co-convergence counterpart of [ctl_feedback] is
       [cocnv_annhil]. *)
   Lemma cocnv_feedback (p : P) s1 s2 s3 μ η :
@@ -368,7 +369,7 @@ Section CoTracePreorder.
 
 End CoTracePreorder.
 
-(** ** The normal form is the canonical representative of a class *)
+(* ** The normal form is the canonical representative of a class *)
 
 Section CoMinimality.
 
@@ -435,7 +436,7 @@ Section CoMinimality.
       split; now eapply cls_pre_of_cotrace_pre.
   Qed.
 
-  (** *** Simplifying a co-trace *)
+  (* *** Simplifying a co-trace *)
 
   Lemma cotrace_leq_app_l (u : trace A) s t : s ⊑ᶜᵒₜ t -> u ++ s ⊑ᶜᵒₜ u ++ t.
   Proof.
@@ -513,7 +514,7 @@ Section CoMinimality.
     eapply cotrace_pre_sort, Forall_filter_self.
   Qed.
 
-  (** Nothing strictly simpler lies below [csimpl cls s]. *)
+  (* Nothing strictly simpler lies below [csimpl cls s]. *)
   Theorem cotrace_simplification (s : trace A) :
     s ≼ᶜᵒₜ csimpl cls s
     /\ forall t, csimpl cls s ≼ᶜᵒₜ t
@@ -523,7 +524,7 @@ Section CoMinimality.
     intros t hpre. eapply cls_min_csimpl. now eapply cls_pre_of_cotrace_pre.
   Qed.
 
-  (** *** Simplifying a co-trace by feedback only
+  (* *** Simplifying a co-trace by feedback only
 
       Without the deletion law the least co-traces are the sorted ones: they
       are permutations of the original co-trace, and they carry no feedback. *)
@@ -661,14 +662,14 @@ Section CoSimplification.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
-  (** Testing along [s] is subsumed by testing along the simplified co-trace. *)
+  (* Testing along [s] is subsumed by testing along the simplified co-trace. *)
   Corollary cowt_csimpl (p q : P) s : p ⟹ᶜᵒ[s] q -> ∃ q', p ⟹ᶜᵒ[csimpl cls s] q'.
   Proof.
     intro w.
     exact (cowt_cotrace_pre p q s (csimpl cls s) (cotrace_pre_csimpl cls s) w).
   Qed.
 
-  (** Contrary to [cowt_csimpl], the state that is reached is preserved: the
+  (* Contrary to [cowt_csimpl], the state that is reached is preserved: the
       sorted co-trace loses nothing. *)
   Corollary cowt_tsort (p q : P) s : p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[tsort cls s] q.
   Proof.
@@ -678,7 +679,7 @@ Section CoSimplification.
 
 End CoSimplification.
 
-(** ** Consuming the feedbacks of a co-trace
+(* ** Consuming the feedbacks of a co-trace
 
     As on traces, the feedback rule alone is an orthogonal rewriting system
     ([co_fb_rel_disjoint]) and it terminates.  Its redexes quantify over all
@@ -752,7 +753,7 @@ Section CoFeedbackNormal.
 
 End CoFeedbackNormal.
 
-(** ** One canonical classification of the co-actions
+(* ** One canonical classification of the co-actions
 
     Everything above is parametric in the classification of the labels, and no
     determinacy of [dual] has been used.  When the co-action *is* unique --
@@ -778,7 +779,7 @@ Proof.
     + intros (η & nb & h). exists η. split; [exact nb |]. eapply h, dual_co.
 Qed.
 
-(** ** A normal form that consumes the feedbacks, on co-traces
+(* ** A normal form that consumes the feedbacks, on co-traces
 
     The mirror of [fbnf].  Both predicates involved in a co-feedback quantify
     over all the actions dual to a label, so their decidability is taken as a
@@ -935,7 +936,7 @@ Section CoFeedbackNormalFormLts.
   Context `{!forall μ1 μ2 : A, Decision (co_feedback μ1 μ2)}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
-  (** The normal form: the feedbacks are consumed, then the consecutive labels
+  (* The normal form: the feedbacks are consumed, then the consecutive labels
       of a same class are collected into multisets. *)
   Definition co_fnf (s : trace A) : ntrace A := nform cls (co_fbnf s).
 
@@ -962,7 +963,7 @@ Section CoFeedbackNormalFormLts.
 
 End CoFeedbackNormalFormLts.
 
-(** ** The co-preorder and co-convergence
+(* ** The co-preorder and co-convergence
 
     As on traces, [⊑ᶜᵒₜ] is sound for co-convergence contravariantly. *)
 
@@ -1075,3 +1076,4 @@ Section CoTracePreorderConvergence.
   Qed.
 
 End CoTracePreorderConvergence.
+(* end hide *)

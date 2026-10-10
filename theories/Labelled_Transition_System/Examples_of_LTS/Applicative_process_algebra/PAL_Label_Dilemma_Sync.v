@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -51,7 +52,7 @@ Section PAL_Label_Dilemma_Sync.
   Notation term := (PAL_Syntax.term Val).
   Open Scope pal_scope.
 
-  (** ** Any pair of labellings *)
+  (* ** Any pair of labellings *)
 
   Context {Aproc Atest : Type} {Hp : ExtAction Aproc} {Ht : ExtAction Atest}.
   Context {SA : SyncAction Aproc Atest}.
@@ -63,10 +64,10 @@ Section PAL_Label_Dilemma_Sync.
 
   #[local] Hint Mode ExtAction ! : typeclass_instances.
 
-  (** Every test action is blocking. *)
+  (* Every test action is blocking. *)
   Context (hblock : ∀ η : Atest, ¬ non_blocking η).
 
-  (** A process and a test communicate along [sync] exactly when they
+  (* A process and a test communicate along [sync] exactly when they
       synchronise in PAL. *)
   Context (hsync : ∀ p t p' t' : term,
     (∃ (μ1 : Aproc) (μ2 : Atest), sync μ1 μ2 ∧ p ⟶[μ1] p' ∧ t ⟶[μ2] t') ↔ PAL_sync p t p' t').
@@ -80,7 +81,7 @@ Section PAL_Label_Dilemma_Sync.
   Lemma accepts_of_step_t (p q : term) (μ : Atest) : p ⟶[μ] q → μ ∈ R p.
   Proof. intros h. exact (lts_performs_spec2 p (ActExt μ) (exist _ q h)). Qed.
 
-  (** [c] is a label by which the test [out(!v).𝟘] synchronises with the
+  (* [c] is a label by which the test [out(!v).𝟘] synchronises with the
       process [in(?x).out(!x).𝟘]. *)
   Definition spec_sync (v : Val) (c : Atest) : Prop :=
     ∃ a : Aproc, sync a c ∧ p_any ⟶[a] out_val v ∧ out_val v ⟶[c] t_nil.
@@ -98,7 +99,7 @@ Section PAL_Label_Dilemma_Sync.
     exists a. split_and!; [by eapply accepts_of_step_p | done | apply hblock].
   Qed.
 
-  (** By (1): different values give different [Φ c]. *)
+  (* By (1): different values give different [Φ c]. *)
   Lemma Φ_spec_sync_inj v w c c' : spec_sync v c → spec_sync w c' → Φ c = Φ c' → v = w.
   Proof.
     intros (a & hd & ha & hc) (a' & hd' & ha' & hc') e.
@@ -113,7 +114,7 @@ Section PAL_Label_Dilemma_Sync.
     - by apply p_any_out_inv in h1.
   Qed.
 
-  (** By (2) and (1). *)
+  (* By (2) and (1). *)
   Lemma not_in_coR_val_sync v w c c' :
     v ≠ w → spec_sync v c → spec_sync w c' → 𝝳 (Φ c) = 𝝳 (Φ c') →
     Φ c ∉ ⌈ Φ ⌉ (coR (in_val v)).
@@ -133,7 +134,7 @@ Section PAL_Label_Dilemma_Sync.
     - by apply in_val_out_inv in h1.
   Qed.
 
-  (** By (2), (5), (6): [𝝳 ∘ Φ] is injective on these labels. *)
+  (* By (2), (5), (6): [𝝳 ∘ Φ] is injective on these labels. *)
   Lemma 𝝳Φ_spec_sync_inj v w c c' :
     spec_sync v c → spec_sync w c' → 𝝳 (Φ c) = 𝝳 (Φ c') → v = w.
   Proof.
@@ -167,3 +168,4 @@ Section PAL_Label_Dilemma_Sync.
       by apply (𝝳Φ_spec_sync_inj (inj n) (inj m) c c').
   Qed.
 End PAL_Label_Dilemma_Sync.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -277,7 +278,7 @@ Section must_co_inductive_acceptance_preorder.
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
-  (** * Main equivalence theorems *)
+  (* * Main equivalence theorems *)
 
   Section FWⁿ.
 
@@ -285,7 +286,7 @@ Section must_co_inductive_acceptance_preorder.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
-  (** ** The co-inductive-tower characterisation on FW is equivalent to the extensional must preorder *)
+  (* ** The co-inductive-tower characterisation on FW is equivalent to the extensional must preorder *)
   Corollary equivalence_fw_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
     pre_extensional outcome p q <-> ({[ p ]} : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ q ]} : gset Q).
   Proof.
@@ -293,7 +294,7 @@ Section must_co_inductive_acceptance_preorder.
     rewrite equivalence_fw_bhv_acc_ctx;eauto.
   Qed.
   
-  (** ** The co-inductive-towercharacterisation on FW is equivalent to the inductive must preorder *)
+  (* ** The co-inductive-towercharacterisation on FW is equivalent to the inductive must preorder *)
   (* From TestingTheory Require Import Lts_CN.
   Corollary equivalence_fw_co_inductive_acceptance_and_must_i (X : gset P) (Y : gset Q) :
     X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y <-> (X : gset P) ᶜᵒ≼ₜₒᵥᵥₑᵣ (Y : gset Q).
@@ -338,7 +339,7 @@ Section must_co_inductive_acceptance_preorder.
   Qed.
 
   End FWⁿ.
-  (** ---- *)
+  (* ---- *)
   Section Lⁿ.
   
   Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
@@ -350,7 +351,7 @@ Section must_co_inductive_acceptance_preorder.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
-  (** ** The co-inductive-tower characterisation on toFW is equivalent to the inductive must preorder *)
+  (* ** The co-inductive-tower characterisation on toFW is equivalent to the inductive must preorder *)
   Corollary equivalence_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ (q, ∅) ]} : gset (Q * MO A)).
   Proof.
@@ -358,9 +359,9 @@ Section must_co_inductive_acceptance_preorder.
     eapply equivalence_acc_set_and_must_i.
   Qed.
 
-  (** ---- *)
+  (* ---- *)
 
-  (** ** The co-inductive-tower characterisation on toFW is equivalent to the extensional must preorder *)
+  (* ** The co-inductive-tower characterisation on toFW is equivalent to the extensional must preorder *)
   Corollary equivalence_co_inductive_acceptance_and_must_e_singleton (p : P) (q : Q) :
     pre_extensional outcome p q <-> ({[ (p, ∅) ]} : gset (P * MO A)) ᶜᵒ≼ₜₒᵥᵥₑᵣ ({[ (q, ∅) ]} : gset (Q * MO A)).
   Proof.
@@ -715,3 +716,4 @@ Proof.
       apply hXX' in Hin as (p'' & Hin & Heqp'').
       eapply terminate_preserved_by_eq2; [apply symmetry, Heqp''|auto with *].
 Qed. *)
+(* end hide *)

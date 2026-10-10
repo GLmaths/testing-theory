@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS processes observed by lqCCS programs without memory
+(* * lqCCS processes observed by lqCCS programs without memory
 
     The observers are lqCCS programs run without a memory of their own.
     Their actions ([tstep]) are those of the program:
@@ -61,11 +62,11 @@ From TestingTheory Require Import ActTau InListPropHelper
   DefinitionAS Completeness Soundness Equivalence
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge.
 
-(** The lift of an abstraction to the forwarder in [DefinitionAS.v] rests on an
+(* The lift of an abstraction to the forwarder in [DefinitionAS.v] rests on an
     [Admitted] obligation; as for Erlang, it is replaced below. *)
 Remove Hints PreActActionForFW FinitaryPreActActionForFW : typeclass_instances.
 
-(** ** Receptions take any value *)
+(* ** Receptions take any value *)
 
 Lemma grecv_any g t c v w P' :
   gstep g (LAct t (AIn c v)) P' → ∃ P'', gstep g (LAct t (AIn c w)) P''.
@@ -101,7 +102,7 @@ Proof.
   destruct (precv_any _ _ _ _ w _ Hs) as (Q'' & HQ). exists Q''. by exists (LAct t (AIn c w)).
 Qed.
 
-(** ** The observers: programs without memory *)
+(* ** The observers: programs without memory *)
 
 Definition tstep (Q : proc) (α : Act lact) (Q' : proc) : Prop :=
   match α with
@@ -163,7 +164,7 @@ Proof.
   exists P'. split; [by apply obs_step_def|by symmetry].
 Defined.
 
-(** *** Asynchronous outputs: the output axioms *)
+(* *** Asynchronous outputs: the output axioms *)
 
 Lemma tstep_par_l Q α Q' t c v :
   tstep Q α Q' → tstep (PPar Q (oproc t c v)) α (PPar Q' (oproc t c v)).
@@ -302,7 +303,7 @@ Proof.
   exists W. split; [by apply obs_step_def|exact Heq].
 Qed.
 
-(** *** The outputs of an observer *)
+(* *** The outputs of an observer *)
 
 Definition tmo (Q : proc) : gmultiset lact :=
   list_to_set_disj ((λ cv : chan * val, LOut cv.1 cv.2) <$> pouts Q).
@@ -350,7 +351,7 @@ Next Obligation.
   intros Q' HQ'%bool_decide_unpack. exact HQ'.
 Defined.
 
-(** *** The operations an observer can perform on a memory *)
+(* *** The operations an observer can perform on a memory *)
 
 Section Memory.
   Context `{QM : QuantumModel}.
@@ -394,7 +395,7 @@ Section Memory.
   Qed.
 End Memory.
 
-(** *** Success *)
+(* *** Success *)
 
 Lemma out_goodb Q c v Q' : ustep Q (UAct (AOut c v)) Q' → goodb Q = goodb Q'.
 Proof.
@@ -413,7 +414,7 @@ Proof.
     unfold good in *. by rewrite (out_goodb _ _ _ _ Hs).
 Qed.
 
-(** ** The abstraction *)
+(* ** The abstraction *)
 
 Inductive lfin : Type :=
 | FChan (c : chan)
@@ -447,7 +448,7 @@ Definition lΦ (a : lact) : lfin :=
 Definition l𝝳 (f : lfin) : lpre :=
   match f with FChan c => PChan c | FOp _ _ => POpAll | FMeas _ _ => PMeasAll end.
 
-(** The observer's side: an observer that can receive a value, or accept an
+(* The observer's side: an observer that can receive a value, or accept an
     outcome, can receive or accept any other one. *)
 Lemma obs_abs_test (t : proc) (β β' : lact) :
   blocking β → blocking β' → lΦ β = lΦ β' → β ∈ R t → β' ∈ R t.
@@ -468,7 +469,7 @@ Proof.
   exact (Href (lts_performs_spec2 t (ActExt β') (exist _ Q'' HQ''))).
 Qed.
 
-(** ** The observers of the characterisation
+(* ** The observers of the characterisation
 
     [gen k s] follows the trace [s], then behaves as [k].  An output is put
     in parallel; a blocking action is a prefix in a sum with [τ.①], whose
@@ -530,7 +531,7 @@ Section Generators.
   Lemma check_other v w s : w ≠ v → good (PIte (EEq (EVal w) (EVal v)) (gen k s) succP).
   Proof. intros Hne. unfold good. simpl. by rewrite bool_decide_eq_false_2. Qed.
 
-  (** The steps of a blocking prefix of [gen]. *)
+  (* The steps of a blocking prefix of [gen]. *)
   Lemma gen_guard_step α0 P0 Q :
     tstep (PG (GSum (GPre α0 P0) tau_succ)) τ Q → Q = succP ∨ ∃ t, α0 = PTau t ∨ ∃ t', α0 = PTauPair t t'.
   Proof.
@@ -551,7 +552,7 @@ Section Generators.
       apply succ_spec; simpl; by left.
   Qed.
 
-  (** The external steps of [gen] on a blocking action: only those of the
+  (* The external steps of [gen] on a blocking action: only those of the
       prefix, to the continuation checked against the trace. *)
   Lemma gen_in_step c v s μ Q :
     tstep (gen k (LIn c v :: s)) (ActExt μ) Q ↔
@@ -633,7 +634,7 @@ Section Generators.
   Qed.
 End Generators.
 
-(** The observer of convergence: [τ.①] after the trace. *)
+(* The observer of convergence: [τ.①] after the trace. *)
 Definition kconv : proc := PG (GPre (PTau 0) succP).
 Definition tconv : list lact → proc := gen kconv.
 
@@ -647,7 +648,7 @@ Proof.
     apply list_elem_of_singleton in He as ->. done.
 Qed.
 
-(** The observer of a co-acceptance set: for each class of [E], a blocking
+(* The observer of a co-acceptance set: for each class of [E], a blocking
     action of that class, then [①]. *)
 Definition ta_prefix (p : lpre) : prefix :=
   match p with
@@ -752,7 +753,7 @@ Proof.
     apply sumg_step_inv in Hs as (_ & _ & ->). done.
 Qed.
 
-(** ** The process side of the abstraction
+(* ** The process side of the abstraction
 
     [abs_prog_core]: what a process accepts is, up to [l𝝳], closed under the
     abstraction, as soon as it accepts every operation, and every
@@ -819,7 +820,7 @@ Section Characterisation.
       exists (dexist q hq). split; [reflexivity | eapply elem_of_enum].
   Defined.
 
-  (** *** What a process accepts *)
+  (* *** What a process accepts *)
 
   Lemma pmo_out x μ : μ ∈ dom (fmo x) → ∃ c v, μ = LOut c v.
   Proof. intros (c & v & -> & _)%gmultiset_elem_of_dom%fmo_elem. eauto. Qed.
@@ -868,7 +869,7 @@ Section Characterisation.
     apply p_accepts_meas. by apply p_meas_code in Hs as [? _].
   Qed.
 
-  (** The same for the forwarder: the mailbox takes no part in the memory. *)
+  (* The same for the forwarder: the mailbox takes no part in the memory. *)
   Lemma fw_step_mem (x : pconf * MO lact) μ y :
     x ⟶[μ] y → ¬ is_out μ → (∀ c v, μ ≠ LIn c v) → ∃ p', x.1 ⟶[μ] p'.
   Proof.
@@ -907,7 +908,7 @@ Section Characterisation.
     eexists. exact Hs''.
   Qed.
 
-  (** *** A process and an observer *)
+  (* *** A process and an observer *)
 
   Lemma ess_right_step Q μ : μ ∈ dom (tmo Q) ∪ tmem Q → ∃ Q', Q ⟶[μ] Q'.
   Proof.
@@ -916,7 +917,7 @@ Section Characterisation.
     - by apply tmem_step.
   Qed.
 
-  (** Every synchronisation goes through an output of the process, or an
+  (* Every synchronisation goes through an output of the process, or an
       output or a memory action of the observer. *)
   Lemma cover_test μ1 Q μ2 Q' :
     Q ⟶[μ2] Q' → μ2 = lco μ1 → (∀ M qs n, μ1 = LMeas M qs n → ∃ k, n = code (meas_of M qs) k) →
@@ -992,7 +993,7 @@ Section Characterisation.
     intros Q Q' ξ μ x hmem hl hinter; simpl in *. subst. set_solver.
   Defined.
 
-  (** *** The abstraction *)
+  (* *** The abstraction *)
 
   #[global] Program Instance pconf_AbsAction :
     @AbsAction pconf proc lfin lpre lact lact_ExtAction lΦ l𝝳 _ _ _ obs_gLtsEq _.
@@ -1105,17 +1106,18 @@ Section Characterisation.
         eapply lact_UniqueDual in duo; eauto. subst. contradiction.
   Qed.
 
-  (** ** The characterisations *)
+  (* ** The characterisations *)
 
-  (** The must preorder on lqCCS processes [(P, ρ)], tested by lqCCS programs
+  (* The must preorder on lqCCS processes [(P, ρ)], tested by lqCCS programs
       without memory that act on the memory of the process, is the inclusion
       of co-acceptance sets. *)
   Corollary must_iff_co_acceptance_set_lqCCS (x y : pconf) :
     x ⊑ₘᵤₛₜᵢ y ↔ (x ▷ (∅ : MO lact)) ≼꜀ₒ₋ₐₛ (y ▷ (∅ : MO lact)).
   Proof. exact (equivalence_acc_set_and_must_i_co_trace x y). Qed.
 
-  (** The same, on traces rather than co-traces. *)
+  (* The same, on traces rather than co-traces. *)
   Corollary must_iff_acceptance_set_lqCCS (x y : pconf) :
     x ⊑ₘᵤₛₜᵢ y ↔ (x ▷ (∅ : MO lact)) ≼ₐₛ (y ▷ (∅ : MO lact)).
   Proof. exact (equivalence_acc_set_and_must_i x y). Qed.
 End Characterisation.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The inequational theory, exercised on [VCCS_Examples.v]'s processes
+(* * The inequational theory, exercised on [VCCS_Examples.v]'s processes
 
     End-to-end check of [SoundnessAx.v] and [CompletenessAx.v] against
     the two concrete examples the repository already proves by hand.
@@ -45,7 +46,7 @@ Section VCCS_AxExamples.
 Context `{VP : VCCS_Parameters}.
 Context {a : Channel} {I : Value}.
 
-(** ** Offering two values on a channel is below offering one
+(* ** Offering two values on a channel is below offering one
 
     Same definitions as [VCCS_Examples.v]. *)
 
@@ -58,13 +59,13 @@ Proof. repeat constructor. Qed.
 Lemma one_out_Static : Static one_out.
 Proof. repeat constructor. Qed.
 
-(** The derivation, by hand: a sum of two same-channel outputs is below
+(* The derivation, by hand: a sum of two same-channel outputs is below
     either of them. That is [ax_output_below_l] ([VCCS_AxRedundancy.v]),
     itself the [ax_swap_out] rule in disguise. *)
 Example ax_all_out_below_one_out : all_out ᴠᴄᴄꜱ⊑ₐₓ one_out.
 Proof. apply ax_output_below_l; repeat constructor. Qed.
 
-(** …and the semantic fact, for free. Compare
+(* …and the semantic fact, for free. Compare
     [VCCS_Examples.one_output_is_above_all_output_conv]. *)
 Example all_out_below_one_out : all_out ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ one_out.
 Proof.
@@ -72,11 +73,11 @@ Proof.
     [apply all_out_Static | apply one_out_Static | apply ax_all_out_below_one_out].
 Qed.
 
-(** Both directions at once. *)
+(* Both directions at once. *)
 Example all_out_characterised : all_out ᴠᴄᴄꜱ⊑ₐₓ one_out <-> all_out ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ one_out.
 Proof. apply must_iff_ax_pre; [apply all_out_Static | apply one_out_Static]. Qed.
 
-(** ** Scope extrusion of a private memory cell
+(* ** Scope extrusion of a private memory cell
 
     [VCCS_Examples.mem_outside_is_above_mem_inside], again verbatim.
     Its continuations [P]/[Q] are arbitrary there; completeness applies
@@ -98,7 +99,7 @@ Proof. intros HP HQ. unfold mem_outside. repeat constructor; assumption. Qed.
 Lemma mem_inside_Static : Static P -> Static Q -> Static mem_inside.
 Proof. intros HP HQ. unfold mem_inside. repeat constructor; assumption. Qed.
 
-(** Every semantic fact about the [Static] fragment has a derivation —
+(* Every semantic fact about the [Static] fragment has a derivation —
     including the one [VCCS_Examples.v] proves by a page of
     acceptance-set reasoning. *)
 Example ax_mem_outside_above_mem_inside : Static P -> Static Q ->
@@ -110,3 +111,4 @@ Proof.
 Qed.
 
 End VCCS_AxExamples.
+(* end hide *)

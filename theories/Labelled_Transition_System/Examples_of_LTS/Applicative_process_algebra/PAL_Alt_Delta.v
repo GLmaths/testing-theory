@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -51,12 +52,12 @@ Section PAL_Alt_Delta.
   Notation PALA_Act := (PALA_Act Val).
   Notation step := (lts_step_a Val).
 
-  (** Infer the action type of [↛[μ]] from the LTS on terms. *)
+  (* Infer the action type of [↛[μ]] from the LTS on terms. *)
   #[local] Hint Mode ExtAction ! : typeclass_instances.
   Open Scope pal_scope.
 
 
-  (** ** Co-events and [𝝳] *)
+  (* ** Co-events and [𝝳] *)
 
   Inductive CoEvent := CoOut (ot : eot) | CoIn (ot : eot).
 
@@ -82,9 +83,9 @@ Section PAL_Alt_Delta.
     p ∈ (co𝐏 μ : subset_of term) ↔ ∃ μ', PALA_dual Val μ' μ ∧ p ⟶[μ'].
   Proof. done. Qed.
 
-  (** ** The kernel of [𝝳] is the largest [≈ᴘʀᴏ] *)
+  (* ** The kernel of [𝝳] is the largest [≈ᴘʀᴏ] *)
 
-  (** Process side: labels with the same co-event have duals accepted by the same processes. *)
+  (* Process side: labels with the same co-event have duals accepted by the same processes. *)
   Lemma 𝝳_prog_spec (p : term) μ μ' :
     𝝳ᴀᴘᴀʟ μ = 𝝳ᴀᴘᴀʟ μ' → p ∈ (co𝐏 μ : subset_of term) → p ∈ (co𝐏 μ' : subset_of term).
   Proof.
@@ -112,7 +113,7 @@ Section PAL_Alt_Delta.
       unfold template_of, PAL_Alt_LTS.ltemplate, exact_label, eot_to_eit in *; simpl; by rewrite IH.
   Qed.
 
-  (** A template without formal field determines the received tuple. *)
+  (* A template without formal field determines the received tuple. *)
   Lemma exact_template_ltuple (ot : eot) (l : label) :
     template_of Val (eot_to_eit ot) = ltemplate l → ltuple l = ot.
   Proof.
@@ -121,7 +122,7 @@ Section PAL_Alt_Delta.
     destruct o, f; cbn in ef; try discriminate; by try injection ef as ->.
   Qed.
 
-  (** A process accepting exactly the duals of the labels of a co-event. *)
+  (* A process accepting exactly the duals of the labels of a co-event. *)
   Definition coprobe (μ : PALA_Act) : term :=
     match μ with
     | AIn _ l => out( eot_to_tuple (ltuple l) ) • 𝟘
@@ -162,7 +163,7 @@ Section PAL_Alt_Delta.
     - intros hsub. apply 𝝳_complete. intros p. apply hsub.
   Qed.
 
-  (** ** [≈ᴘʀᴏ] *)
+  (* ** [≈ᴘʀᴏ] *)
 
   Definition R_prog_a (μ μ' : PALA_Act) : Prop := 𝝳ᴀᴘᴀʟ μ = 𝝳ᴀᴘᴀʟ μ'.
 
@@ -181,8 +182,9 @@ Section PAL_Alt_Delta.
        LA_prog_dec := R_prog_a_dec;
        LA_prog_spec := R_prog_a_spec |}.
 
-  (** [R_prog_a] is the largest [≈ᴘʀᴏ]. *)
+  (* [R_prog_a] is the largest [≈ᴘʀᴏ]. *)
   Lemma R_prog_a_largest (R : PALA_Act → PALA_Act → Prop) :
     (∀ μ μ', R μ μ' → (co𝐏 μ : subset_of term) ⊆ co𝐏 μ') → ∀ μ μ', R μ μ' → R_prog_a μ μ'.
   Proof. intros hR μ μ' h. apply 𝝳_kernel, hR, h. Qed.
 End PAL_Alt_Delta.
+(* end hide *)

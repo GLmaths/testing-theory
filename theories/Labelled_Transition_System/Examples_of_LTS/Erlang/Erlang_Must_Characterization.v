@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: the must preorder and its characterisations
+(* * Core Erlang: the must preorder and its characterisations
 
     The observers are VACCS processes: [Erlang_Test_Dilemma] shows that Erlang
     systems cannot follow a trace, so they cannot be the tests.  The framework
@@ -49,7 +50,7 @@ From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
   VACCS VACCS_Instance VACCS_Good VACCS_CoFiniteImage VACCS_ta_tc_gen
   Erlang_Syntax Erlang_LTS Erlang_Instance Erlang_LabelAbstraction Erlang_Forwarder.
 
-(** [PreActActionForFW] of [DefinitionAS.v] — the lift of an abstraction to the
+(* [PreActActionForFW] of [DefinitionAS.v] — the lift of an abstraction to the
     forwarder, whose process-side obligation is [Admitted] — is taken out of
     instance search: [Erl_AbsAction_FW] below replaces it, so that nothing here
     rests on the hole. *)
@@ -59,7 +60,7 @@ Section Erlang_Must_Characterization.
 
 Context `{EP : Erlang_Program}.
 
-(** ** An Erlang system interacting with an observer *)
+(* ** An Erlang system interacting with an observer *)
 
 #[global] Program Instance Erl_Inter_test : Prop_of_Inter sys proc erl_act erl_act dual :=
   {| lts_essential_actions_left S := dom (erl_mo S) ;
@@ -106,7 +107,7 @@ Next Obligation.
   - apply simplify_match_output in hinter as ->. set_solver.
 Defined.
 
-(** ** An Erlang forwarder interacting with an observer *)
+(* ** An Erlang forwarder interacting with an observer *)
 
 #[global] Program Instance Erl_Inter_FW_test :
   Prop_of_Inter (sys * MO erl_act) proc erl_act erl_act dual :=
@@ -171,7 +172,7 @@ Next Obligation.
   - apply simplify_match_output in hinter as ->. set_solver.
 Defined.
 
-(** ** The abstraction lifted to the forwarder
+(* ** The abstraction lifted to the forwarder
 
     [DefinitionAS.v] lifts an abstraction from [P] to [P * MO A] through
     [PreActActionForFW], whose process-side obligation is [Admitted].  It is not
@@ -191,7 +192,7 @@ Next Obligation.
   intros p β β' _ _ heq hmem. unfold 𝝳ᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
 Qed.
 
-(** [FinitaryPreActActionForFW] is a closed term mentioning the [Admitted]
+(* [FinitaryPreActActionForFW] is a closed term mentioning the [Admitted]
     instance, so it is replaced too; its two obligations are the ones of
     [DefinitionAS.v], which are proved. *)
 
@@ -251,19 +252,20 @@ Next Obligation.
       eapply VACCS_UniqueDual in duo; eauto. subst. contradiction.
 Qed.
 
-(** ** The characterisations *)
+(* ** The characterisations *)
 
 Notation "p ᴇʀʟ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
 
-(** The must preorder on Erlang systems, tested by asynchronous observers, is
+(* The must preorder on Erlang systems, tested by asynchronous observers, is
     the inclusion of co-acceptance sets. *)
 Corollary must_iff_co_acceptance_set_Erlang (S T : sys) :
   S ᴇʀʟ⊑ₘᵤₛₜᵢ T ↔ (S ▷ ∅) ≼꜀ₒ₋ₐₛ (T ▷ ∅).
 Proof. now rewrite equivalence_acc_set_and_must_i_co_trace. Qed.
 
-(** The same, on traces rather than co-traces. *)
+(* The same, on traces rather than co-traces. *)
 Corollary must_iff_acceptance_set_Erlang (S T : sys) :
   S ᴇʀʟ⊑ₘᵤₛₜᵢ T ↔ (S ▷ ∅) ≼ₐₛ (T ▷ ∅).
 Proof. now rewrite equivalence_acc_set_and_must_i. Qed.
 
 End Erlang_Must_Characterization.
+(* end hide *)

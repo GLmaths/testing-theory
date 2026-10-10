@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The Smyth must of lqCCS: least runs and thresholds
+(* * The Smyth must of lqCCS: least runs and thresholds
 
     lqCCS has no recursion: every run of a tested configuration ends in a
     stable distribution ([lqCCS_AlmostSure.v]), and a step has finitely many
@@ -70,7 +71,7 @@ Section Smyth.
 
   #[local] Instance lq_DenseWeights : DenseWeights := {| prob_dense := W_dense |}.
 
-  (** ** Runs *)
+  (* ** Runs *)
 
   Lemma dstep_moves Δ σ Δ' : dstep Δ σ Δ' → ¬ dstable Δ.
   Proof. intros [Hm _] Hst. by apply (Hst σ). Qed.
@@ -89,7 +90,7 @@ Section Smyth.
     destruct (Hr m) as [(σ & Hs)|[_ ->]]; [by eapply dstep_succ_mono|done].
   Qed.
 
-  (** The value of a run is reached when it is stable. *)
+  (* The value of a run is reached when it is stable. *)
   Lemma run_final N Δ r :
     bounded N Δ → is_run Δ r → ∃ n, ∀ m, W_le (succ_mass r m) (succ_mass r n).
   Proof.
@@ -111,7 +112,7 @@ Section Smyth.
     - right. intros n w [Hw _]. exists n1. etrans; [exact Hw|]. etrans; [apply Hf2|exact Hle].
   Qed.
 
-  (** Prefixing a step to a run, and dropping the first step. *)
+  (* Prefixing a step to a run, and dropping the first step. *)
   Definition rcons (Δ : dist conf) (r : nat → dist conf) : nat → dist conf :=
     λ n, match n with 0 => Δ | S n => r n end.
 
@@ -134,7 +135,7 @@ Section Smyth.
     - destruct (Hle n w Hw) as [m Hm]. by exists (S m).
   Qed.
 
-  (** A stable distribution has one run, which stays. *)
+  (* A stable distribution has one run, which stays. *)
   Lemma stable_runs Δ r : dstable Δ → is_run Δ r → ∀ n, r n = Δ.
   Proof.
     intros Hst Hr n. pose proof Hr as [Hr0 _].
@@ -144,7 +145,7 @@ Section Smyth.
   Lemma const_run Δ : dstable Δ → is_run Δ (λ _, Δ).
   Proof. intros Hst. split; [done|]. intros n. by right. Qed.
 
-  (** ** The results of a step are among finitely many candidates *)
+  (* ** The results of a step are among finitely many candidates *)
 
   Definition cands_l (C : conf) (ρ : St) (aP : pact * proc) : list (dist conf) :=
     let '(a, P') := aP in
@@ -230,7 +231,7 @@ Section Smyth.
     by eapply forall2_dchoices.
   Qed.
 
-  (** A component that moves makes the whole distribution step (as
+  (* A component that moves makes the whole distribution step (as
       [dstep_with] in [lqCCS_AlmostSure.v], with the excluded middle only). *)
   Lemma comp_steps_with' σ (x0 : conf * St) Δ0 (Δ : dist conf) :
     ¬ conf_good x0.1 → cstep x0.2 x0.1 σ Δ0 →
@@ -253,9 +254,9 @@ Section Smyth.
     exists (concat Δs). split; [|by exists Δs]. destruct x0 as [c ρ]. exists c, ρ, Δ0. done.
   Qed.
 
-  (** ** Least runs *)
+  (* ** Least runs *)
 
-  (** Among the distributions of a finite list that satisfy [S], one has
+  (* Among the distributions of a finite list that satisfy [S], one has
       a least run below the runs of all the others. *)
   Lemma min_list N (S : dist conf → Prop) (l : list (dist conf)) :
     (∃ Δ', S Δ' ∧ Δ' ∈ l) →
@@ -315,7 +316,7 @@ Section Smyth.
       by rewrite (stable_runs Δ r Hst Hr 0).
   Qed.
 
-  (** ** The Smyth must of lqCCS as threshold musts *)
+  (* ** The Smyth must of lqCCS as threshold musts *)
 
   Lemma compose_bounded (x : proc * St) (T : proc) :
     bounded (csize (x.1, T)) (compose_lq x T).
@@ -328,3 +329,4 @@ Section Smyth.
     exact (lq_min_run _ _ (compose_bounded x T)).
   Qed.
 End Smyth.
+(* end hide *)

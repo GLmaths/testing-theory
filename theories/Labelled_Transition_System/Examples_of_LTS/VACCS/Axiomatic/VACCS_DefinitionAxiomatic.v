@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * An inequational proof system for [⊑ₘᵤₛₜᵢ] on VACCS
+(* * An inequational proof system for [⊑ₘᵤₛₜᵢ] on VACCS
 
     Nine rules.  Every one has its semantic justification proved in
     [VACCS_Precongruence.v], [VACCS_Expansion.v] or [VACCS_ResNormalize.v]
@@ -74,7 +75,7 @@ Section VACCS_DefinitionAxiomatic.
 
 Context `{VP : VACCS_Parameters}.
 
-(** The axiomatic preorder is written [p ᴠᴀᴄᴄꜱ⊑ₐₓ q], named like the semantic
+(* The axiomatic preorder is written [p ᴠᴀᴄᴄꜱ⊑ₐₓ q], named like the semantic
     preorder it characterises, [p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q].  The token is reserved here
     and bound to the inductive by the [where] clause below, so the rules
     themselves read in the notation.  A [where]-bound notation is
@@ -84,12 +85,12 @@ Reserved Notation "p ᴠᴀᴄᴄꜱ⊑ₐₓ q" (at level 70).
 
 Inductive ax_pre : proc -> proc -> Prop :=
 
-(** *** Preorder and free equations *)
+(* *** Preorder and free equations *)
 
 | ax_trans : forall p q r, p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> q ᴠᴀᴄᴄꜱ⊑ₐₓ r -> p ᴠᴀᴄᴄꜱ⊑ₐₓ r
 | ax_cgr : forall p q, p ≡* q -> p ᴠᴀᴄᴄꜱ⊑ₐₓ q
 
-(** *** Congruence, one rule per operator
+(* *** Congruence, one rule per operator
 
     [ax_par] and [ax_res] are sound by the two bridges — the context is
     moved into the test, and [p ⊑ₘᵤₛₜᵢ q] is applied at a *single* test.
@@ -98,7 +99,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 | ax_par : forall p p' q q', p ᴠᴀᴄᴄꜱ⊑ₐₓ p' -> q ᴠᴀᴄᴄꜱ⊑ₐₓ q' -> (p ‖ q) ᴠᴀᴄᴄꜱ⊑ₐₓ (p' ‖ q')
 | ax_res : forall p q, p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> (ν p) ᴠᴀᴄᴄꜱ⊑ₐₓ (ν q)
-(** *** Internal computation, and the greatest lower bound
+(* *** Internal computation, and the greatest lower bound
 
     [⊕] is not primitive in this syntax; it is [𝛕•X + 𝛕•Y].  What projects
     out of it is not a law about sums at all but the general **τ-step**
@@ -118,7 +119,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 | ax_tau_step : forall p p', lts p τ p' -> p ᴠᴀᴄᴄꜱ⊑ₐₓ p'
 
-(** *** Two processes with the same transitions
+(* *** Two processes with the same transitions
 
     [must] inspects a server only through its transitions, so two
     processes with the same transitions pass the same tests
@@ -132,7 +133,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     (forall al z, lts q al z -> lts p al z) ->
     p ᴠᴀᴄᴄꜱ⊑ₐₓ q
 
-(** *** Below a guarded sum — two rules
+(* *** Below a guarded sum — two rules
 
     [p] is below a guarded sum [g M] as soon as
     - it is below every [𝛕]-branch (the [pt] field of [must] at the sum),
@@ -174,7 +175,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
        forall v, ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) ->
     p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M)
 
-(** ** THE MESSAGE-LAYER POOLING RULE
+(* ** THE MESSAGE-LAYER POOLING RULE
 
     [ax_share_in] pools two branches of an internal choice at a shared
     **input guard**; this pools them at a shared **pending message**, and
@@ -195,7 +196,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 where "p ᴠᴀᴄᴄꜱ⊑ₐₓ q" := (ax_pre p q).
 
 
-(** ** Derived rules
+(* ** Derived rules
 
     Each is admissible from the rules above; they are recorded here
     rather than as constructors so that the rule set stays minimal. *)
@@ -230,7 +231,7 @@ Proof. intros p q H. apply ax_cgr. apply cgr_symm. exact H. Qed.
 Lemma ax_nil_par : forall p, p ≡* ((g 𝟘 : proc) ‖ p).
 Proof. intro p. etransitivity; [ apply cgr_par_nil_rev | apply cgr_par_com ]. Qed.
 
-(** ** Laws derived from [ax_same_lts] *)
+(* ** Laws derived from [ax_same_lts] *)
 
 Lemma ax_success_l : forall R, (g (① + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (𝟘 + R)).
 Proof.
@@ -273,7 +274,7 @@ Proof.
 Qed.
 
 
-(** ** Rules derived from [ax_glb_sum] and [ax_tau_step]
+(* ** Rules derived from [ax_glb_sum] and [ax_tau_step]
 
     A guarded sum with a [𝛕] is below [p] as soon as each of its
     transitions is reachable from [p] by internal steps (or, for a [τ],
@@ -298,7 +299,7 @@ Proof.
   - apply ax_cgr_sym. apply ax_nil_par.
 Qed.
 
-(** ** The general "below a guarded sum" lemma
+(* ** The general "below a guarded sum" lemma
 
     [ax_glb_settle]'s premise, discharged by a single internal run of
     [p] to a state that is stable, silent, and only receives on channels
@@ -326,7 +327,7 @@ Proof.
       * exists w. exact Hm.
 Qed.
 
-(** The same, with the premises read off the sum's transitions. *)
+(* The same, with the premises read off the sum's transitions. *)
 Lemma ax_below_gsum_lts : forall (p : proc) (M : gproc),
   ((exists z, lts (g M) τ z) \/
    (exists p1, p ⟹[[]] p1 /\ (forall z, ~ lts p1 τ z) /\
@@ -348,7 +349,7 @@ Ltac inv_choice := repeat match goal with
   | HH : lts (g (𝛕 • _)) (ActExt _) _ |- _ => inversion HH
   end.
 
-(** A copycat may be introduced — for a whole sum of copycat guards. *)
+(* A copycat may be introduced — for a whole sum of copycat guards. *)
 Lemma ax_ccat_r : forall M, gCopycats M -> (g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M HM. apply ax_below_gsum.
@@ -362,7 +363,7 @@ Proof.
     injection E as -> ->. apply ax_cgr. apply cgr_par_nil.
 Qed.
 
-(** A summand's continuation may be rewritten, its guard may not. *)
+(* A summand's continuation may be rewritten, its guard may not. *)
 Lemma ax_choice_input : forall (c : ChannelData) (P Q : proc) (G : gproc),
   (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) -> (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? Q) + G)).
 Proof.
@@ -380,7 +381,7 @@ Proof.
     + apply ax_deliver. apply lts_choiceR. exact Hz.
 Qed.
 
-(** Prefix distributes over choice, in an arbitrary context [R]. *)
+(* Prefix distributes over choice, in an arbitrary context [R]. *)
 Lemma ax_input_distrib_l : forall (c : ChannelData) (P Q : proc) (R : gproc),
     (g (((c ? P) + (c ? Q)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
 Proof.
@@ -401,7 +402,7 @@ Proof.
     + apply ax_deliver. apply lts_choiceR. exact Hz.
 Qed.
 
-(** τ-separation of a mixed sum. *)
+(* τ-separation of a mixed sum. *)
 Lemma ax_tau_sep_l : forall (X Y : gproc),
     (g (X + (𝛕 • (g Y)))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y)))).
 Proof.
@@ -445,7 +446,7 @@ Proof.
     apply ax_deliver. exact Hl.
 Qed.
 
-(** τ makes you safe: a guarded sum with a [τ] whose transitions are
+(* τ makes you safe: a guarded sum with a [τ] whose transitions are
     among [p]'s is above [p], whatever [p]'s other branches do.  The
     general law for an arbitrary right-hand side is
     [VACCS_Precongruence.must_i_sub_tau]; every use in this development
@@ -517,7 +518,7 @@ Proof.
   apply ax_choice_input. exact H.
 Qed.
 
-(** The guarded-sum instance of [ax_tau_step]: an internal choice is
+(* The guarded-sum instance of [ax_tau_step]: an internal choice is
     below each of its branches. *)
 Lemma ax_int_l : forall p q, (g ((𝛕 • p) + (𝛕 • q))) ᴠᴀᴄᴄꜱ⊑ₐₓ p.
 Proof. intros p q. apply ax_tau_step. apply lts_choiceL. apply lts_tau. Qed.
@@ -528,7 +529,7 @@ Proof.
   apply ax_cgr. apply cgr_choice_com.
 Qed.
 
-(** Convex closure of acceptance families. *)
+(* Convex closure of acceptance families. *)
 Lemma ax_convex : forall (X Y Z : gproc),
     (g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z))))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (X + Y)).
 Proof.
@@ -550,7 +551,7 @@ Proof.
       apply ax_deliver. apply lts_choiceL. apply lts_choiceR. exact Hz.
 Qed.
 
-(** Acceptance-tree uniformity: two branches pool their continuations at
+(* Acceptance-tree uniformity: two branches pool their continuations at
     a shared input guard, keeping the first branch's ready set. *)
 Lemma ax_share_in : forall (c : ChannelData) (P Q : proc) (X' Y' : gproc),
     (g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y')))))
@@ -579,7 +580,7 @@ Proof.
       apply ax_deliver. apply lts_choiceR. exact Hz.
 Qed.
 
-(** A [𝛕] prefix on its own: the context of [ax_choice_tau] is [𝟘], and
+(* A [𝛕] prefix on its own: the context of [ax_choice_tau] is [𝟘], and
     [≡*] removes it on both sides. *)
 Lemma ax_tau : forall p p', p ᴠᴀᴄᴄꜱ⊑ₐₓ p' -> (g (𝛕 • p)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (𝛕 • p')).
 Proof.
@@ -589,7 +590,7 @@ Proof.
   apply ax_cgr. apply cgr_choice_nil.
 Qed.
 
-(** [Eval_Eq 0 E] is never [None] ([VACCS_Precongruence.Eval_Eq_0_not_none]),
+(* [Eval_Eq 0 E] is never [None] ([VACCS_Precongruence.Eval_Eq_0_not_none]),
     so a conditional is always structurally congruent to one of its
     branches and needs no rule of its own. *)
 Lemma ax_if : forall E p p' q q', p ᴠᴀᴄᴄꜱ⊑ₐₓ p' -> q ᴠᴀᴄᴄꜱ⊑ₐₓ q' ->
@@ -606,7 +607,7 @@ Proof.
     apply ax_cgr_sym. apply cgr_if_false. exact HE.
 Qed.
 
-(** And the drop whose premise says **nothing** about the discarded
+(* And the drop whose premise says **nothing** about the discarded
     continuation: an input guard sitting beside a [𝛕]-summand may always
     be removed, because the sum's own [τ] already discharges [ex] and
     every other field is contravariant. *)
@@ -621,7 +622,7 @@ Qed.
 
 End VACCS_DefinitionAxiomatic.
 
-(** ** Notations for the axiomatic preorder
+(* ** Notations for the axiomatic preorder
 
     [p ᴠᴀᴄᴄꜱ⊑ₐₓ q] and [p ᴠᴀᴄᴄꜱ≂ₐₓ q], after the semantic [p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q];
     VCCS has [p ᴠᴄᴄꜱ⊑ₐₓ q].  The calculus prefix is not decoration: the two
@@ -637,3 +638,4 @@ End VACCS_DefinitionAxiomatic.
 
 Notation "p ᴠᴀᴄᴄꜱ⊑ₐₓ q" := (ax_pre p q) (at level 70).
 Notation "p ᴠᴀᴄᴄꜱ≂ₐₓ q" := (p ᴠᴀᴄᴄꜱ⊑ₐₓ q /\ q ᴠᴀᴄᴄꜱ⊑ₐₓ p) (at level 70).
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: syntax
+(* * Core Erlang: syntax
 
     A first-order fragment of Core Erlang, following the language of
     Lanese, Nishida, Palacios and Vidal, /A theory of reversibility for Erlang/
@@ -53,17 +54,17 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers.
 
-(** ** Names *)
+(* ** Names *)
 
 Definition var : Type := nat.
 Definition atom : Type := nat.
 Definition fname : Type := nat.
 Definition bifname : Type := nat.
 
-(** A pid is the path of the process in the spawn tree; [[]] is a root. *)
+(* A pid is the path of the process in the spawn tree; [[]] is a root. *)
 Definition pid : Type := list nat.
 
-(** ** Values *)
+(* ** Values *)
 
 Inductive val : Type :=
 | VAtom (a : atom)
@@ -72,7 +73,7 @@ Inductive val : Type :=
 | VNil
 | VCons (v1 v2 : val).
 
-(** ** Patterns *)
+(* ** Patterns *)
 
 Inductive pat : Type :=
 | PVar (x : var)
@@ -82,7 +83,7 @@ Inductive pat : Type :=
 | PNil
 | PCons (q1 q2 : pat).
 
-(** ** Decidability and countability of values and patterns *)
+(* ** Decidability and countability of values and patterns *)
 
 #[global] Instance val_eq_dec : EqDecision val.
 Proof. solve_decision. Defined.
@@ -164,7 +165,7 @@ Proof. induction q; simpl; try done. by rewrite IHq1, IHq2. Qed.
 #[global] Instance pat_countable : Countable pat.
 Proof. refine (inj_countable pat_encode pat_decode pat_decode_encode). Defined.
 
-(** ** Expressions
+(* ** Expressions
 
     Clause lists and argument lists are mutual inductive types rather than
     [list]s: every traversal below is then a plain structural mutual fixpoint.
@@ -207,7 +208,7 @@ Fixpoint list_to_args (es : list expr) : args :=
 Lemma args_to_list_to_args es : args_to_list (list_to_args es) = es.
 Proof. induction es; simpl; by f_equal. Qed.
 
-(** ** Countability of expressions *)
+(* ** Countability of expressions *)
 
 Definition eleaf : Type := (nat + val + pat)%type.
 
@@ -375,7 +376,7 @@ Defined.
 #[global] Instance args_countable : Countable args.
 Proof. refine (inj_countable args_encode args_decode args_decode_encode). Defined.
 
-(** ** Substitution
+(* ** Substitution
 
     [σ] is a finite list of bindings of closed values.  Descending under a
     binder removes the bound variables from [σ]: patterns of Core Erlang bind
@@ -427,7 +428,7 @@ with subst_args (σ : sub) (es : args) : args :=
   | ACons e es' => ACons (subst σ e) (subst_args σ es')
   end.
 
-(** ** Filling the hole [κ] *)
+(* ** Filling the hole [κ] *)
 
 Fixpoint hfill (e : expr) (u : expr) : expr :=
   match e with
@@ -457,7 +458,7 @@ with hfill_args (es : args) (u : expr) : args :=
   | ACons e es' => ACons (hfill e u) (hfill_args es' u)
   end.
 
-(** ** Pattern matching *)
+(* ** Pattern matching *)
 
 Fixpoint pat_match (q : pat) (v : val) : option sub :=
   match q, v with
@@ -474,7 +475,7 @@ Fixpoint pat_match (q : pat) (v : val) : option sub :=
   | _, _ => None
   end.
 
-(** [match_cls cls v] is the body of the first clause of [cls] matching [v],
+(* [match_cls cls v] is the body of the first clause of [cls] matching [v],
     instantiated by the matching substitution. *)
 Fixpoint match_cls (cls : clauses) (v : val) : option expr :=
   match cls with
@@ -485,3 +486,4 @@ Fixpoint match_cls (cls : clauses) (v : val) : option expr :=
       | None => match_cls cls' v
       end
   end.
+(* end hide *)

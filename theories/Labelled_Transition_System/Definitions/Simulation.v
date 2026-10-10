@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -29,7 +30,7 @@ From stdpp Require Import base countable strings sets gmap.
 
 From TestingTheory Require Import gLts Bisimulation Termination Lts_OBA MultisetHelper ActTau.
 
-(** ** Similarity *)
+(* ** Similarity *)
 CoInductive similar `{@gLts A L H} `{@gLts B L H}  (a : A) (b : B) : Prop :=
 | smi_step : (forall (α : Act L) a', a ⟶{α} a' -> exists b', b ⟶{α} b' /\ similar a' b') -> similar a b.
 Infix "≲" := (similar) (at level 20).
@@ -37,7 +38,7 @@ Infix "≲" := (similar) (at level 20).
 
 Section Similarity.
 
-(** *** Similarity preserves termination *)
+(* *** Similarity preserves termination *)
 Lemma similar_terminate `{@gLts A L H} `{@gLts B L H} (a : A) (b : B) :
   b ≲ a -> a ⤓ -> b ⤓.
 Proof.
@@ -104,3 +105,4 @@ intros (r & s) Hrs. lts_inversion idtac.
 Qed.
 
 End ParallelTermination.
+(* end hide *)

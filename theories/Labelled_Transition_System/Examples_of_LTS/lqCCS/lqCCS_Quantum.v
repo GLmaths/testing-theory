@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: an abstract model of quantum states
+(* * lqCCS: an abstract model of quantum states
 
     The semantics of lqCCS (Ceragioli, Gadducci, Lomurno, Tedeschi,
     arXiv:2604.23756, Section 6) only uses a handful of operations on density
@@ -51,18 +52,18 @@ From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Syntax.
 
 Class QuantumModel `{StAlg} := MkQuantumModel {
-    (** Names of the syntax. *)
+    (* Names of the syntax. *)
     sop_act : sop → list qubit → Act;
     meas_of : meas → list qubit → Meas;
 
-    (** States: a commutative monoid, acted upon linearly. *)
+    (* States: a commutative monoid, acted upon linearly. *)
     St_eqdec :: EqDecision St;
     sadd_comm ρ σ : sadd ρ σ = sadd σ ρ;
     sadd_assoc ρ σ θ : sadd ρ (sadd σ θ) = sadd (sadd ρ σ) θ;
     sadd_szero_l ρ : sadd szero ρ = ρ;
     app_sadd a ρ σ : app a (sadd ρ σ) = sadd (app a ρ) (app a σ);
 
-    (** Probabilities. *)
+    (* Probabilities. *)
     W : Type;
     W_zero : W;
     W_add : W → W → W;
@@ -74,24 +75,24 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
     W_zero_le a : W_le W_zero a;
     W_add_mono a b c : W_le a b → W_le (W_add a c) (W_add b c);
 
-    (** Trace. *)
+    (* Trace. *)
     tr : St → W;
     tr_szero : tr szero = W_zero;
     tr_sadd ρ σ : tr (sadd ρ σ) = W_add (tr ρ) (tr σ);
-    (** Positivity: only [O] has trace zero. *)
+    (* Positivity: only [O] has trace zero. *)
     tr_zero_inv ρ : tr ρ = W_zero → ρ = szero;
-    (** Superoperators of the syntax are trace preserving. *)
+    (* Superoperators of the syntax are trace preserving. *)
     sop_tr E qs ρ : tr (app (act (sop_act E qs)) ρ) = tr ρ;
-    (** Completeness of measurements, [Σ_k M_k† M_k = I], read on traces. *)
+    (* Completeness of measurements, [Σ_k M_k† M_k = I], read on traces. *)
     meas_tr M qs ρ : tr (app (br (meas_of M qs) (λ _, one)) ρ) = tr ρ;
 
-    (** Qubits of a state, preserved by the operations of the syntax. *)
+    (* Qubits of a state, preserved by the operations of the syntax. *)
     St_qubits : St → gset qubit;
     sop_qubits E qs ρ : St_qubits (app (act (sop_act E qs)) ρ) = St_qubits ρ;
     meas_qubits M qs k ρ :
       St_qubits (app (kraus (meas_of M qs) k) ρ) = St_qubits ρ;
 
-    (** Partial trace [tr_Σ'(ρ)]. *)
+    (* Partial trace [tr_Σ'(ρ)]. *)
     ptrace : gset qubit → St → St;
     ptrace_sadd Σ ρ σ : ptrace Σ (sadd ρ σ) = sadd (ptrace Σ ρ) (ptrace Σ σ);
     ptrace_tr Σ ρ : tr (ptrace Σ ρ) = tr ρ;
@@ -99,13 +100,13 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
 
 Arguments W {_ _ _ _ _}.
 
-(** [E^q̃(ρ)] and the branch [k] of [M^q̃(ρ)], unnormalised: its trace is
+(* [E^q̃(ρ)] and the branch [k] of [M^q̃(ρ)], unnormalised: its trace is
     the probability of outcome [k]. *)
 Definition sop_apply `{QuantumModel} E qs ρ := app (act (sop_act E qs)) ρ.
 Definition meas_branch `{QuantumModel} M qs (k : Out (meas_of M qs)) ρ :=
   app (kraus (meas_of M qs) k) ρ.
 
-(** ** First consequences *)
+(* ** First consequences *)
 
 Section Consequences.
   Context `{QuantumModel}.
@@ -133,7 +134,7 @@ Section Consequences.
       apply W_add_mono, W_zero_le.
   Qed.
 
-  (** A measurement branch never weighs more than the state it comes from. *)
+  (* A measurement branch never weighs more than the state it comes from. *)
   Lemma meas_branch_le M qs k ρ : W_le (tr (meas_branch M qs k ρ)) (tr ρ).
   Proof.
     rewrite <- (meas_tr M qs ρ), br_sum. fold (sum (map (λ k, one ⋅ kraus (meas_of M qs) k)
@@ -149,7 +150,7 @@ Section Consequences.
     rewrite (Hl x) by set_solver. rewrite IH by set_solver. apply W_add_zero.
   Qed.
 
-  (** A measurement of a non-zero state has an outcome of non-zero weight. *)
+  (* A measurement of a non-zero state has an outcome of non-zero weight. *)
   Lemma meas_nonzero_branch M qs ρ : ρ ≠ szero → ∃ k, meas_branch M qs k ρ ≠ szero.
   Proof.
     intros Hρ.
@@ -167,7 +168,7 @@ Section Consequences.
   Qed.
 End Consequences.
 
-(** ** Weights of the probabilistic must
+(* ** Weights of the probabilistic must
 
     Quantum distributions (Definition 6.1) are distributions in the sense of
     [pMust_almost_sure] whose weights are states and whose mass is the
@@ -185,3 +186,4 @@ End Consequences.
   weight_add_zero := sadd_szero_l;
   mass := tr;
 |}.
+(* end hide *)

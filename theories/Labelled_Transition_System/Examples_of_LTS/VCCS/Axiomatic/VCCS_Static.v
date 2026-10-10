@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The recursion-free ("Static") fragment of VCCS
+(* * The recursion-free ("Static") fragment of VCCS
 
     This is the first building block of a Hennessy-Ingólfsdóttir-style
     inequational proof system for the must-preorder on VCCS. The proof
@@ -39,7 +40,7 @@ Section VCCS_Static.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** Definition *)
+(* ** Definition *)
 
 Inductive Static : proc -> Prop :=
 | static_par : forall p q, Static p -> Static q -> Static (p ‖ q)
@@ -63,7 +64,7 @@ Combined Scheme Static_ind' from Static_ind0, gStatic_ind0.
 Hint Constructors Static : ccs.
 Hint Constructors gStatic : ccs.
 
-(** ** [Static] is preserved by substitution *)
+(* ** [Static] is preserved by substitution *)
 
 Lemma Static_subst : forall p, Static p -> forall k X, Static (subst_in_proc k X p).
 Proof.
@@ -97,7 +98,7 @@ Proof.
       constructor; apply Hgen; simpl; eauto; lia.
 Qed.
 
-(** ** The reverse of [Static_subst]: [Static] reflects substitution too
+(* ** The reverse of [Static_subst]: [Static] reflects substitution too
 
     Needed for [ax_input]'s case of [SoundnessAx.v]'s
     [ax_pre_static_preserved]: the premise there is
@@ -132,7 +133,7 @@ Proof.
       constructor. constructor; apply Hgen; simpl; eauto; lia.
 Qed.
 
-(** ** [Static] rules out every source of non-termination *)
+(* ** [Static] rules out every source of non-termination *)
 
 Lemma Static_preserved_by_lts : forall p, Static p -> forall α q, lts p α q -> Static q.
 Proof.
@@ -269,7 +270,7 @@ Proof.
   eapply IH; eassumption.
 Qed.
 
-(** ** [Static] is preserved by weak transitions, and converges along every trace
+(* ** [Static] is preserved by weak transitions, and converges along every trace
 
     Since a [Static] process never diverges, it converges ([⇓ s]) along
     *every* trace [s], not just some — this collapses the convergence-
@@ -294,7 +295,7 @@ Proof.
     + intros q Hw. apply IHs. eapply Static_preserved_by_wt; eassumption.
 Qed.
 
-(** ** [Static] is preserved by the channel-index-shifting operations
+(* ** [Static] is preserved by the channel-index-shifting operations
     [NewVarC]/[VarSwap_in_proc] used by structural congruence's [ν]-swap
     and scope-extrusion steps ([Congruence.v]) — same well-founded-
     induction-on-size skeleton as [Static_subst], since both fixpoints
@@ -323,7 +324,7 @@ Proof.
       constructor. constructor; apply Hgen; simpl; eauto; lia.
 Qed.
 
-(** ** [Static] is preserved by the value-index-shifting operation [NewVar]/[gNewVar]
+(* ** [Static] is preserved by the value-index-shifting operation [NewVar]/[gNewVar]
 
     Same recursive shape as [NewVarC]/[gNewVarC] above (compare
     [VCCS.v]'s [NewVar]/[gNewVar] to [NewVarC]/[gNewVarC] — identical
@@ -387,3 +388,4 @@ Proof.
 Qed.
 
 End VCCS_Static.
+(* end hide *)

@@ -1,4 +1,5 @@
-(** * Quantum states, acted upon linearly by super-operators
+(* begin hide *)
+(* * Quantum states, acted upon linearly by super-operators
 
     Shared by the state-level results: [Harmony], [Corollaries], [Kierner]. *)
 From Stdlib Require Import List.
@@ -17,9 +18,9 @@ Class StAlg `{FinAlg} := {
   app_add a b ρ : app (add a b) ρ = sadd (app a ρ) (app b ρ);
   app_szero a : app a szero = szero;
   sadd_szero : sadd szero szero = szero;
-  (** Evaluation at a state commutes with suprema (pointwise limits). *)
+  (* Evaluation at a state commutes with suprema (pointwise limits). *)
   app_sup f g ρ : chain f -> (forall n, g n = app (f n) ρ) -> app (sup f) ρ = ssup g;
-  (** A super-operator is determined by its action on states. *)
+  (* A super-operator is determined by its action on states. *)
   app_ext a b : (forall ρ, app a ρ = app b ρ) -> a = b }.
 
 Section States.
@@ -31,3 +32,4 @@ Lemma app_ssum (l : list T) ρ : app (sum l) ρ = ssum (map (fun a => app a ρ) 
 Proof. induction l; simpl; [apply app_zero | now rewrite app_add, IHl]. Qed.
 
 End States.
+(* end hide *)

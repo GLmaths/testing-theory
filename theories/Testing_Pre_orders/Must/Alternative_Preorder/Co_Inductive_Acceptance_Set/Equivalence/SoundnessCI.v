@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -127,3 +128,4 @@ Proof.
       ++ eapply wt_push_left; eassumption.
       ++ split;eauto.
 Qed.
+(* end hide *)

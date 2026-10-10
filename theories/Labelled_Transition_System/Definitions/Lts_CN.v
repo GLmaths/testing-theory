@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -24,7 +25,8 @@
 *)
 
 From Stdlib.Unicode Require Import Utf8.
-From TestingTheory Require Import gLts.
+From TestingTheory Require Import ActTau gLts.
+(* end hide *)
 
 Class gLtsCNenabled (P A : Type) `{gLts P A} :=
   MkgLtsCNenabled {

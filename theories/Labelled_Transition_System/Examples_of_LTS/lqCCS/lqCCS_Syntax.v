@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: syntax
+(* * lqCCS: syntax
 
     Tagged lqCCS, following Ceragioli, Gadducci, Lomurno and Tedeschi,
     /Verification of Quantum Protocols Adopting Physically Admissible
@@ -54,19 +55,19 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers.
 
-(** ** Names *)
+(* ** Names *)
 
 Definition tag : Type := nat.
 Definition qubit : Type := nat.
 Definition var : Type := nat.
-(** Names of trace-preserving superoperators [E : Op(n)] and of
+(* Names of trace-preserving superoperators [E : Op(n)] and of
     measurements [M : Meas(n)]. *)
 Definition sop : Type := nat.
 Definition meas : Type := nat.
 
 Definition chan : Type := nat.
 
-(** ** Values and expressions *)
+(* ** Values and expressions *)
 
 Inductive val : Type :=
 | VBool (b : bool)
@@ -84,30 +85,30 @@ Inductive exp : Type :=
 | ELe (e1 e2 : exp)
 | EEq (e1 e2 : exp).
 
-(** ** Tagged prefixes and processes *)
+(* ** Tagged prefixes and processes *)
 
 Inductive prefix : Type :=
-(** [t : τ] *)
+(* [t : τ] *)
 | PTau (t : tag)
-(** [(t, t') : τ], a silent move standing for a synchronisation *)
+(* [(t, t') : τ], a silent move standing for a synchronisation *)
 | PTauPair (t t' : tag)
-(** [t : c?x] *)
+(* [t : c?x] *)
 | PRecv (t : tag) (c : chan) (x : var)
-(** [t : E(ẽ)] *)
+(* [t : E(ẽ)] *)
 | POp (t : tag) (E : sop) (es : list exp)
-(** [t : M(ẽ ▷ x)] *)
+(* [t : M(ẽ ▷ x)] *)
 | PMeas (t : tag) (M : meas) (es : list exp) (x : var).
 
 Inductive proc : Type :=
-(** [t : c!e], an asynchronous output: no continuation, never under a sum *)
+(* [t : c!e], an asynchronous output: no continuation, never under a sum *)
 | PSend (t : tag) (c : chan) (e : exp)
 | PIte (e : exp) (P Q : proc)
 | PPar (P Q : proc)
 | PRes (P : proc) (c : chan)
-(** a guarded sum *)
+(* a guarded sum *)
 | PG (g : guard)
 with guard : Type :=
-(** [0_ẽ], deadlock discarding the qubits [ẽ] *)
+(* [0_ẽ], deadlock discarding the qubits [ẽ] *)
 | GNil (es : list exp)
 | GSucc
 | GPre (α : prefix) (P : proc)
@@ -128,7 +129,7 @@ Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scop
 Notation "P \ c" := (PRes P c) (at level 36, left associativity) : lqccs_scope.
 Notation "①" := GSucc : lqccs_scope.
 
-(** ** Substitution [P[v/x]] *)
+(* ** Substitution [P[v/x]] *)
 
 Fixpoint exp_subst (e : exp) (x : var) (v : val) : exp :=
   match e with
@@ -143,7 +144,7 @@ Fixpoint exp_subst (e : exp) (x : var) (v : val) : exp :=
 Definition exps_subst (es : list exp) (x : var) (v : val) : list exp :=
   map (λ e, exp_subst e x v) es.
 
-(** The variable bound by a prefix, if any. *)
+(* The variable bound by a prefix, if any. *)
 Definition prefix_binder (α : prefix) : option var :=
   match α with
   | PRecv _ _ x | PMeas _ _ _ x => Some x
@@ -179,7 +180,7 @@ with gsubst (g : guard) (x : var) (v : val) : guard :=
 
 Notation "P [ v // x ]" := (subst P x v) (at level 20) : lqccs_scope.
 
-(** ** Big-step evaluation [e ⇓ v]
+(* ** Big-step evaluation [e ⇓ v]
 
     Only closed expressions evaluate.  Qubits are compared by name, never by
     value: [q = q'] says nothing about the quantum state. *)
@@ -214,7 +215,7 @@ Fixpoint eval (e : exp) : option val :=
       end
   end.
 
-(** ** Tags of a process ([Tag(P)] in the paper) *)
+(* ** Tags of a process ([Tag(P)] in the paper) *)
 
 Definition prefix_tags (α : prefix) : list tag :=
   match α with
@@ -236,7 +237,7 @@ with gtags (g : guard) : list tag :=
   | GSum g1 g2 => gtags g1 ++ gtags g2
   end.
 
-(** ** Decidability and countability *)
+(* ** Decidability and countability *)
 
 #[global] Instance exp_eq_dec : EqDecision exp.
 Proof. solve_decision. Defined.
@@ -263,7 +264,7 @@ Proof.
   refine (inj_countable' val_to_sum val_of_sum _). by intros [].
 Defined.
 
-(** Leaves of the encoding trees: values, and names (variables, tags,
+(* Leaves of the encoding trees: values, and names (variables, tags,
     channels, superoperators and measurements are all [nat]). *)
 Notation leaf := (val + nat)%type.
 
@@ -391,3 +392,4 @@ Proof. refine (inj_countable proc_encode proc_decode proc_decode_encode). Define
 
 #[global] Instance guard_countable : Countable guard.
 Proof. refine (inj_countable guard_encode guard_decode guard_decode_encode). Defined.
+(* end hide *)

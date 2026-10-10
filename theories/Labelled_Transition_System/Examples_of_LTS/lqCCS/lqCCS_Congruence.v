@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: structural congruence
+(* * lqCCS: structural congruence
 
     The structural congruence of Ceragioli, Gadducci, Lomurno, Tedeschi,
     /Quantum Bisimilarity via Barbs and Contexts/ (POPL 2024, Figure 2), on
@@ -44,7 +45,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets relations.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ.
 
-(** ** Free channels *)
+(* ** Free channels *)
 
 Definition prefix_chans (α : prefix) : list chan :=
   match α with PRecv _ c _ => [c] | _ => [] end.
@@ -63,9 +64,9 @@ with gfc (g : guard) : list chan :=
   | GSum g1 g2 => gfc g1 ++ gfc g2
   end.
 
-(** ** Expressions that evaluate *)
+(* ** Expressions that evaluate *)
 
-(** [e ⇓ v]. *)
+(* [e ⇓ v]. *)
 Definition exp_val (e : exp) (v : val) : Prop := eval e = Some v.
 
 Inductive exp_eqv : exp → exp → Prop :=
@@ -74,7 +75,7 @@ Inductive exp_eqv : exp → exp → Prop :=
 
 Definition exps_eqv : list exp → list exp → Prop := Forall2 exp_eqv.
 
-(** Same prefix, up to the evaluation of its expressions and its tags (tags
+(* Same prefix, up to the evaluation of its expressions and its tags (tags
     only matter to schedulers, see [lqCCS_AlmostSure.v]). *)
 Inductive prefix_eqv : prefix → prefix → Prop :=
 | pe_tau t t' : prefix_eqv (PTau t) (PTau t')
@@ -83,10 +84,10 @@ Inductive prefix_eqv : prefix → prefix → Prop :=
 | pe_op t t' E es es' : exps_eqv es es' → prefix_eqv (POp t E es) (POp t' E es')
 | pe_meas t t' M es es' x : exps_eqv es es' → prefix_eqv (PMeas t M es x) (PMeas t' M es' x).
 
-(** Inclusion of lists, as sets. *)
+(* Inclusion of lists, as sets. *)
 Definition incl {A} (l1 l2 : list A) : Prop := ∀ x, x ∈ l1 → x ∈ l2.
 
-(** ** One step of congruence *)
+(* ** One step of congruence *)
 
 Inductive cs : proc → proc → Prop :=
 | cs_par_nil P : cs (PPar P (PG (GNil []))) P
@@ -121,7 +122,7 @@ Scheme cs_mut_ind := Induction for cs Sort Prop
   with gcs_mut_ind := Induction for gcs Sort Prop.
 Combined Scheme cs_gcs_ind from cs_mut_ind, gcs_mut_ind.
 
-(** ** The congruence *)
+(* ** The congruence *)
 
 Definition cgr : relation proc := rtsc cs.
 
@@ -130,7 +131,7 @@ Notation "P ≡* Q" := (cgr P Q) (at level 70).
 #[global] Instance cgr_equivalence : Equivalence cgr.
 Proof. apply rtsc_equivalence. Qed.
 
-(** ** What a step of congruence keeps *)
+(* ** What a step of congruence keeps *)
 
 Lemma eval_closed e v : eval e = Some v → exp_fv e = [].
 Proof.
@@ -152,7 +153,7 @@ Proof.
   by rewrite E, IH.
 Qed.
 
-(** Success is invariant. *)
+(* Success is invariant. *)
 Lemma cs_gcs_goodb :
   (∀ P Q, cs P Q → goodb P = goodb Q) ∧ (∀ g h, gcs g h → ggoodb g = ggoodb h).
 Proof.
@@ -161,7 +162,7 @@ Proof.
     try (by rewrite e0); try (by rewrite (exp_eqv_eval _ _ e0)); try (by rewrite H).
 Qed.
 
-(** ** Substitution *)
+(* ** Substitution *)
 
 Lemma exp_subst_closed e w x v : eval e = Some w → exp_subst e x v = e.
 Proof. intros He. apply exp_subst_fresh. rewrite (eval_closed _ _ He). set_solver. Qed.
@@ -211,7 +212,7 @@ Proof.
   - etrans; [|exact IH]. apply rtsc_rl. by apply cs_subst.
 Qed.
 
-(** ** Congruence under contexts *)
+(* ** Congruence under contexts *)
 
 Lemma cgr_of_cs P Q : cs P Q → P ≡* Q.
 Proof. apply rtsc_lr. Qed.
@@ -236,7 +237,7 @@ Proof. apply (cgr_ctx (λ P, PRes P c)). intros. by constructor. Qed.
 Lemma cgr_par P P' Q Q' : P ≡* P' → Q ≡* Q' → PPar P Q ≡* PPar P' Q'.
 Proof. intros. etrans; [by apply cgr_par_l|by apply cgr_par_r]. Qed.
 
-(** ** Facts on steps *)
+(* ** Facts on steps *)
 
 Lemma gstep_nil es l P' : ¬ gstep (GNil es) l P'.
 Proof. by inversion 1. Qed.
@@ -279,7 +280,7 @@ Proof.
   - apply list_elem_of_filter. split; [|by apply IHHs]. intros ->. done.
 Qed.
 
-(** ** Structural congruence is a bisimulation
+(* ** Structural congruence is a bisimulation
 
     Up to the tags of the labels: commuting a parallel composition swaps
     the two tags of a synchronisation. *)
@@ -515,7 +516,7 @@ Proof.
   - exists (LAct t (AMeas M qs x)), X. split_and!; [done|constructor; congruence|done].
 Qed.
 
-(** *** Contexts *)
+(* *** Contexts *)
 
 Lemma fwd_ite_l e P P' Q : fwd P P' → fwd (PIte e P Q) (PIte e P' Q).
 Proof.
@@ -608,7 +609,7 @@ Proof.
     split_and!; [done|by apply gs_sumR|done].
 Qed.
 
-(** *** The bisimulation *)
+(* *** The bisimulation *)
 
 Theorem cs_bisim :
   (∀ P Q, cs P Q → fwd P Q ∧ fwd Q P) ∧ (∀ g h, gcs g h → gfwd g h ∧ gfwd h g).
@@ -640,7 +641,7 @@ Proof.
   - destruct H. split; by apply gfwd_sum_r.
 Qed.
 
-(** [≡*] is a bisimulation, up to tags. *)
+(* [≡*] is a bisimulation, up to tags. *)
 Theorem cgr_bisim P Q : P ≡* Q → fwd P Q.
 Proof.
   induction 1 as [P|P Q R [H|H] _ IH]; [by apply fwd_refl_step| |].
@@ -652,3 +653,4 @@ Proof.
     destruct (IH _ _ Hs1) as (l2 & R' & E2 & Hs2 & H2).
     exists l2, R'. split_and!; [congruence|done|by etrans].
 Qed.
+(* end hide *)

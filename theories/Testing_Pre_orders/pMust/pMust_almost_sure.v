@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Probabilistic must, almost-sure version
+(* * Probabilistic must, almost-sure version
 
     The setting is the scheduled semantics of lqCCS (Ceragioli, Gadducci,
     Lomurno, Tedeschi, arXiv:2604.23756, Section 6), made abstract.
@@ -53,7 +54,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base decidable list.
 
-(** ** Probabilities and weights *)
+(* ** Probabilities and weights *)
 
 Class Weights := MkWeights {
     prob : Type;
@@ -80,7 +81,7 @@ Notation "a ≤ₚ b" := (prob_le a b) (at level 70).
 Definition prob_lt `{Weights} (a b : prob) : Prop := a ≤ₚ b ∧ ¬ b ≤ₚ a.
 Notation "a <ₚ b" := (prob_lt a b) (at level 70).
 
-(** ** Distributions *)
+(* ** Distributions *)
 
 Notation dist C := (list (C * weight)) (only parsing).
 
@@ -93,36 +94,36 @@ Section Distributions.
 
   Definition dsum (l : list (dist C)) : dist C := concat l.
 
-  (** Image of a distribution by a renaming of its states. *)
+  (* Image of a distribution by a renaming of its states. *)
   Definition dmap {D} (f : C → D) (Δ : dist C) : dist D :=
     map (λ cρ, (f cρ.1, cρ.2)) Δ.
 
-  (** [|Δ|], the mass of a distribution. *)
+  (* [|Δ|], the mass of a distribution. *)
   Definition dmass (Δ : dist C) : prob :=
     foldr (λ cρ acc, prob_add (mass cρ.2) acc) prob_zero Δ.
 
-  (** The mass of the components satisfying [good]. *)
+  (* The mass of the components satisfying [good]. *)
   Definition dmass_of (good : C → Prop) `{∀ c, Decision (good c)}
     (Δ : dist C) : prob :=
     foldr (λ cρ acc, if decide (good cρ.1) then prob_add (mass cρ.2) acc else acc)
       prob_zero Δ.
 End Distributions.
 
-(** ** Scheduled systems
+(* ** Scheduled systems
 
     [C] are the states of the composed system [p ∥ t] (configurations), [Sch]
     the schedulers.  Only the silent steps of the composition are needed to
     define must, as in [Must.v]. *)
 
 Class SchedSts (C Sch : Type) `{Weights} := MkSchedSts {
-    (** [ρ • c —σ→ Δ] *)
+    (* [ρ • c —σ→ Δ] *)
     sstep : weight → C → Sch → dist C → Prop;
-    (** Success of the observer in [c]. *)
+    (* Success of the observer in [c]. *)
     psuccess : C → Prop;
     psuccess_dec :: ∀ c, Decision (psuccess c);
   }.
 
-(** Assumption 1 of the paper: the scheduler determines the step.  It is
+(* Assumption 1 of the paper: the scheduler determines the step.  It is
     not a field of [SchedSts], which is about any scheduled system;
     the results that need it take it as a hypothesis.  Without it a
     scheduler could resolve differently in different components, which is
@@ -133,17 +134,17 @@ Definition SchedDeterministic (C Sch : Type) `{Weights} `{!SchedSts C Sch} : Pro
 Section Runs.
   Context `{Weights} {C Sch : Type} `{!SchedSts C Sch}.
 
-  (** What happens to one component when [σ] is scheduled: it moves if it is
+  (* What happens to one component when [σ] is scheduled: it moves if it is
       not successful and enables [σ]; otherwise it stays. *)
   Definition comp_step (ρ : weight) (c : C) (σ : Sch) (Δ : dist C) : Prop :=
     (¬ psuccess c ∧ sstep ρ c σ Δ)
     ∨ ((psuccess c ∨ ∀ Δ', ¬ sstep ρ c σ Δ') ∧ Δ = dpoint c ρ).
 
-  (** [σ] moves at least one component of [𝔇]. *)
+  (* [σ] moves at least one component of [𝔇]. *)
   Definition dmoves (𝔇 : dist C) (σ : Sch) : Prop :=
     ∃ c ρ Δ, (c, ρ) ∈ 𝔇 ∧ ¬ psuccess c ∧ sstep ρ c σ Δ.
 
-  (** [𝔇 ⟿{σ} 𝔇'], the admissible lifted step: one scheduler for the whole
+  (* [𝔇 ⟿{σ} 𝔇'], the admissible lifted step: one scheduler for the whole
       distribution. *)
   Definition dstep (𝔇 : dist C) (σ : Sch) (𝔇' : dist C) : Prop :=
     dmoves 𝔇 σ ∧
@@ -151,16 +152,16 @@ Section Runs.
 
   Definition dstable (𝔇 : dist C) : Prop := ∀ σ, ¬ dmoves 𝔇 σ.
 
-  (** A maximal run from [𝔇], as a sequence that stutters once stable. *)
+  (* A maximal run from [𝔇], as a sequence that stutters once stable. *)
   Definition is_run (𝔇 : dist C) (r : nat → dist C) : Prop :=
     r 0 = 𝔇 ∧
     ∀ n, (∃ σ, dstep (r n) σ (r (S n))) ∨ (dstable (r n) ∧ r (S n) = r n).
 
-  (** Successful mass after [n] steps. *)
+  (* Successful mass after [n] steps. *)
   Definition succ_mass (r : nat → dist C) (n : nat) : prob :=
     dmass_of psuccess (r n).
 
-  (** The successful mass tends to the whole mass. *)
+  (* The successful mass tends to the whole mass. *)
   Definition almost_sure (r : nat → dist C) : Prop :=
     ∀ w, w <ₚ dmass (r 0) → ∃ n, w ≤ₚ succ_mass r n.
 
@@ -170,7 +171,7 @@ End Runs.
 
 Notation "𝔇 ⟿{ σ } 𝔇'" := (dstep 𝔇 σ 𝔇') (at level 30, format "𝔇  ⟿{ σ }  𝔇'").
 
-(** ** Testing
+(* ** Testing
 
     [p ∥ t] is a distribution of configurations: for lqCCS the initial
     quantum state is part of [p] (a quantum distribution) and the qubits the
@@ -193,3 +194,4 @@ End Preorder.
 
 Notation "p 'must_as' t" := (must_as p t) (at level 70).
 Notation "p ⊑ₐₛ q" := (ctx_pre_as p q) (at level 70).
+(* end hide *)

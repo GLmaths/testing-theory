@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -31,7 +32,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Logic Require Import JMeq ProofIrrelevance.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
-From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
+From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
     WeakTransitions StateTransitionSystems Convergence Termination ActTau.
 
 (************************************** Interaction between two LTS **************************************)
@@ -888,3 +889,4 @@ Proof.
     destruct (decide (bool_decide (x ⟶{α} y))); [left | right]; done.
 Qed.
 
+(* end hide *)

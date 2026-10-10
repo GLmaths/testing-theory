@@ -1,3 +1,4 @@
+(* begin hide *)
 (* Autosubst Header for Unnamed Syntax
 
 Version: December 11, 2019.
@@ -69,7 +70,7 @@ Module RenNotations.
   Notation "⟨ xi1 ; xi2 ⟩" := (ren2 xi1 xi2) (at level 1, left associativity, format "⟨ xi1 ; xi2 ⟩") : fscope.
 End RenNotations.
 
-(** *** Type Classes for Substiution *)
+(* *** Type Classes for Substiution *)
 
 Class Subst1 (X1 : Type) (Y Z: Type) :=
   subst1 : X1 -> Y -> Z.
@@ -92,7 +93,7 @@ Module SubstNotations.
   Notation "s [ sigma ; tau ]" := (subst2 sigma tau s) (at level 7, left associativity, format "s '/' [ sigma ; '/'  tau ]") : subst_scope.
 End SubstNotations.
 
-(** *** Type Class for Variables *)
+(* *** Type Class for Variables *)
 
 Class Var X Y :=
   ids : X -> Y.
@@ -117,11 +118,11 @@ End CombineNotations.
 Import CombineNotations.
 
 
-(** A generic lifting of a renaming. *)
+(* A generic lifting of a renaming. *)
 Definition up_ren (xi : nat -> nat) :=
   0 .: (xi >> S).
 
-(** A generic proof that lifting of renamings composes. *)
+(* A generic proof that lifting of renamings composes. *)
 Lemma up_ren_ren (xi: nat -> nat) (zeta : nat -> nat) (rho: nat -> nat) (E: forall x, (xi >> zeta) x = rho x) :
   forall x, (up_ren xi >> up_ren zeta) x = up_ren rho x.
 Proof.
@@ -130,7 +131,7 @@ Proof.
   - unfold up_ren. cbn. unfold funcomp. f_equal. apply E.
 Qed.
 
-(** Eta laws. *)
+(* Eta laws. *)
 Lemma scons_eta' {T} (f : nat -> T) :
   pointwise_relation _ eq (f var_zero .: (funcomp f shift)) f.
 Proof. intros x. destruct x; reflexivity. Qed.
@@ -185,13 +186,13 @@ End UnscopedNotations.
 
 (* ** Tactics for unscoped syntax *)
 
-(** Automatically does a case analysis on a natural number, useful for proofs with context renamings/context morphisms. *)
+(* Automatically does a case analysis on a natural number, useful for proofs with context renamings/context morphisms. *)
 Tactic Notation "auto_case" tactic(t) :=  (match goal with
                                            | [|- forall (i : nat), _] => intros []; t
                                            end).
 
 
-(** Generic fsimpl tactic: simplifies the above primitives in a goal. *)
+(* Generic fsimpl tactic: simplifies the above primitives in a goal. *)
 Ltac fsimpl :=
   repeat match goal with
          | [|- context[id >> ?f]] => change (id >> f) with f (* AsimplCompIdL *)
@@ -211,3 +212,4 @@ Ltac fsimpl :=
          | [|- context[funcomp _ (scons _ _)]] => setoid_rewrite scons_comp'; eta_reduce
          | [|- context[scons var_zero shift]] => setoid_rewrite scons_eta_id'; eta_reduce
                         end.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: labelled transition system
+(* * Core Erlang: labelled transition system
 
     ** Expression level
 
@@ -54,16 +55,16 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list numbers gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions VACCS Erlang_Syntax.
 
-(** ** The program *)
+(* ** The program *)
 
 Class Erlang_Program := MkErlang_Program {
-    (** Function definitions: parameters and body. *)
+    (* Function definitions: parameters and body. *)
     fun_def : fname → option (list var * expr);
-    (** Built-in operations, [eval] of the paper. *)
+    (* Built-in operations, [eval] of the paper. *)
     bif_eval : bifname → list val → option val;
   }.
 
-(** ** Requests of the expression level *)
+(* ** Requests of the expression level *)
 
 Inductive elabel : Type :=
 | LTau
@@ -87,7 +88,7 @@ Proof.
   - by left.
 Defined.
 
-(** ** Components and systems *)
+(* ** Components and systems *)
 
 Inductive comp : Type :=
 | CProc (p : pid) (n : nat) (e : expr)
@@ -111,7 +112,7 @@ Definition comp_dec (x : (pid * nat * expr) + (pid * val)) : comp :=
 #[global] Instance comp_countable : Countable comp.
 Proof. refine (inj_countable' comp_enc comp_dec _). by intros []. Defined.
 
-(** [sys] is a notation, not a definition: a definition would hide
+(* [sys] is a notation, not a definition: a definition would hide
     [gmultiset comp] from the rewriting of the stdpp lemmas. *)
 Notation sys := (gmultiset comp).
 
@@ -121,13 +122,13 @@ Proof. multiset_solver. Qed.
 Lemma sys_comm (X Y : sys) : X ⊎ Y = Y ⊎ X.
 Proof. multiset_solver. Qed.
 
-(** [⟨ p , n , e ⟩] is a process, [⟪ p , v ⟫] a message in transit. *)
+(* [⟨ p , n , e ⟩] is a process, [⟪ p , v ⟫] a message in transit. *)
 Notation "⟨ p , n , e ⟩" := ({[+ CProc p n e +]} : sys) (at level 0).
 Notation "⟪ p , v ⟫" := ({[+ CMsg p v +]} : sys) (at level 0).
 
-(** ** Actions *)
+(* ** Actions *)
 
-(** ** Actions
+(* ** Actions
 
     The actions are those of VACCS instantiated with [Channel := pid] and
     [Value := val], so that the observers of [VACCS_ta_tc_gen] can be used as
@@ -138,14 +139,14 @@ Notation "⟪ p , v ⟫" := ({[+ CMsg p v +]} : sys) (at level 0).
 #[global] Program Instance Erlang_VACCS_Parameters : VACCS_Parameters :=
   {| Channel := pid ; Value := val ; O := VNil |}.
 
-(** As for [sys]: notations, so that the types are never hidden behind a
+(* As for [sys]: notations, so that the types are never hidden behind a
     constant that the rewriting tactics refuse to unfold. *)
-(** [TypeOfActions] is VACCS's [ChannelData * ValueData], here [Data pid * Data
+(* [TypeOfActions] is VACCS's [ChannelData * ValueData], here [Data pid * Data
     val]; it is used as such so that every instance of the framework sees one
     and the same type. *)
 Notation erl_act := (ExtAct (@TypeOfActions Erlang_VACCS_Parameters)).
 
-(** Notations, not definitions: the proofs then match syntactically. *)
+(* Notations, not definitions: the proofs then match syntactically. *)
 Notation out_act p v := (ActOut (cst p, cst v)).
 Notation in_act p v := (ActIn (cst p, cst v)).
 
@@ -153,7 +154,7 @@ Section Erlang_LTS.
 
 Context `{EP : Erlang_Program}.
 
-(** ** The expression semantics as a function *)
+(* ** The expression semantics as a function *)
 
 Fixpoint args_vals (es : args) : option (list val) :=
   match es with
@@ -276,51 +277,51 @@ with estep_args (es : args) : option (elabel * args) :=
       end
   end.
 
-(** ** The transition relation *)
+(* ** The transition relation *)
 
 Inductive erl_lts : sys → Act erl_act → sys → Prop :=
-(** A local step of an expression. *)
+(* A local step of an expression. *)
 | ErlTau S p n e e' :
   estep e = Some (LTau, e') →
   erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, e'⟩ ⊎ S)
-(** A send puts a message in transit; self-sending is included. *)
+(* A send puts a message in transit; self-sending is included. *)
 | ErlSend S p n e q v e' :
   estep e = Some (LSend q v, e') →
   erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, e'⟩ ⊎ ⟪q , v⟫ ⊎ S)
-(** [self()] returns the pid of the process. *)
+(* [self()] returns the pid of the process. *)
 | ErlSelf S p n e e' :
   estep e = Some (LSelf, e') →
   erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, hfill e' (EVal (VPid p))⟩ ⊎ S)
-(** [spawn] creates the [n]-th child of [p], whose pid is [n :: p]. *)
+(* [spawn] creates the [n]-th child of [p], whose pid is [n :: p]. *)
 | ErlSpawn S p n e f vs e' xs body :
   estep e = Some (LSpawn f vs, e') →
   fun_def f = Some (xs, body) →
   length xs = length vs →
   erl_lts (⟨p, n, e⟩ ⊎ S) τ
     (⟨p, n + 1, hfill e' (EVal (VPid (n :: p)))⟩ ⊎ ⟨n :: p, 0, subst (zip xs vs) body⟩ ⊎ S)
-(** The timeout branch of a [receive] may always be taken. *)
+(* The timeout branch of a [receive] may always be taken. *)
 | ErlTimeout S p n e cls a e' :
   estep e = Some (LRec cls (Some a), e') →
   erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, hfill e' a⟩ ⊎ S)
-(** A [receive] consumes a matching message in transit. *)
+(* A [receive] consumes a matching message in transit. *)
 | ErlComm S p n e cls ao e' v body :
   estep e = Some (LRec cls ao, e') →
   match_cls cls v = Some body →
   erl_lts (⟨p, n, e⟩ ⊎ ⟪p , v⟫ ⊎ S) τ (⟨p, n, hfill e' body⟩ ⊎ S)
-(** A [receive] consumes a matching message coming from the environment. *)
+(* A [receive] consumes a matching message coming from the environment. *)
 | ErlIn S p n e cls ao e' v body :
   estep e = Some (LRec cls ao, e') →
   match_cls cls v = Some body →
   erl_lts (⟨p, n, e⟩ ⊎ S) (ActExt (in_act p v)) (⟨p, n, hfill e' body⟩ ⊎ S)
-(** A message in transit may be released to the environment. *)
+(* A message in transit may be released to the environment. *)
 | ErlOut S p v :
   erl_lts (⟪p , v⟫ ⊎ S) (ActExt (out_act p v)) S
 .
 
 
-(** ** Every rule is closed under parallel composition *)
+(* ** Every rule is closed under parallel composition *)
 
-(** Never use [econstructor] or [eauto] on a goal whose indices are multiset
+(* Never use [econstructor] or [eauto] on a goal whose indices are multiset
     expressions: the unifier unfolds [⊎] and diverges.  Always name the rule. *)
 Lemma erl_lts_par_l S1 α S2 T : erl_lts S1 α S2 → erl_lts (T ⊎ S1) α (T ⊎ S2).
 Proof.
@@ -350,3 +351,4 @@ Notation "S ⟶ₑ T" := (erl_lts S τ T) (at level 30).
 Notation "S ⟶ₑ{ α } T" := (erl_lts S α T) (at level 30).
 Notation "S ⟶ₑ[ μ ] T" := (erl_lts S (ActExt μ) T) (at level 30).
 
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * One alphabet out of two: [Aproc ⊎ Atest]
+(* * One alphabet out of two: [Aproc ⊎ Atest]
 
     A forwarder talking to an observer over another alphabet acts on both: its
     process part on [Aproc], its memory on [Aproc] (what it stores) and on
@@ -49,7 +50,7 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
 Context (sync : Aproc → Atest → Prop) (sync_dec : ∀ μ η, Decision (sync μ η)).
 #[local] Existing Instance sync_dec.
 
-(** The only law: a synchronisation pairs an offer with a consumption. *)
+(* The only law: a synchronisation pairs an offer with a consumption. *)
 Context (sync_polarity : ∀ μ η, sync μ η →
            (non_blocking η → ¬ non_blocking μ) ∧ (non_blocking μ → ¬ non_blocking η)).
 
@@ -107,3 +108,4 @@ Definition ExtAction_union : ExtAction (Aproc + Atest) :=
      exists_dual := union_exists_dual |}.
 
 End Union.
+(* end hide *)

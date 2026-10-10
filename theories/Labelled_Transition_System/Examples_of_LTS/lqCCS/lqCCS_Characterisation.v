@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The almost-sure must of lqCCS, characterised by co-acceptance sets
+(* * The almost-sure must of lqCCS, characterised by co-acceptance sets
 
     Three steps:
     - [lqCCS_AlmostSure.v] and [lqCCS_MustSupp.v]: the almost-sure must of
@@ -51,7 +52,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_P
   StateTransitionSystems InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   Must DefinitionASco pMust_almost_sure pMust_smyth.
 
-(** ** Must is invariant under a renaming of the actions *)
+(* ** Must is invariant under a renaming of the actions *)
 
 Section MustTransfer.
   Context {P T A1 B1 A2 B2 : Type}.
@@ -103,7 +104,7 @@ Section MustTransfer.
   Qed.
 End MustTransfer.
 
-(** ** The two settings of lqCCS have the same steps *)
+(* ** The two settings of lqCCS have the same steps *)
 
 Section Settings.
   Context `{QM : QuantumModel}.
@@ -217,7 +218,7 @@ Section Settings.
   Qed.
 End Settings.
 
-(** ** The characterisation of the almost-sure must *)
+(* ** The characterisation of the almost-sure must *)
 
 Section Characterisation.
   Context `{QM : QuantumModel} `{SC : !Countable St}.
@@ -225,7 +226,7 @@ Section Characterisation.
   Context (W_strict : ∀ a b, W_le (W_add a b) a → b = W_zero).
   Context (W_dense : ∀ a b : W, a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b).
 
-  (** For non-zero memories: [(P, ρ)] is below [(Q, σ)] for the almost-sure
+  (* For non-zero memories: [(P, ρ)] is below [(Q, σ)] for the almost-sure
       must of lqCCS iff, up to the abstraction, the co-acceptance sets of
       [(Q, σ)] are matched by those of [(P, ρ)] ([≼꜀ₒ₋ₐₛ]). *)
   Theorem lq_pre_as_iff_co_acceptance_set P ρ Q σ :
@@ -243,7 +244,7 @@ Section Characterisation.
       by apply (lq_must_as_iff_must XM W_strict W_dense _ _ _ Hρ).
   Qed.
 
-  (** ** The Smyth must
+  (* ** The Smyth must
 
       It is quantitative, so it is not determined by the supports and has no
       characterisation by co-acceptance sets: the inclusion of co-acceptance
@@ -267,3 +268,4 @@ Section Characterisation.
     by apply lq_pre_sm_as.
   Qed.
 End Characterisation.
+(* end hide *)

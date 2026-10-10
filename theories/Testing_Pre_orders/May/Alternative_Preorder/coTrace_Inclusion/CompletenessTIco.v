@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     coWeakTransition Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
     MultisetLTSConstruction ForwarderConstruction May LiftMay MayTestSpec CompletenessTI DefinitionTIco.
 
-(** * Completeness of the co-trace-inclusion preorder for May
+(* * Completeness of the co-trace-inclusion preorder for May
 
       [p ⊑ₘₐᵧ q  →  p ≼꜀ₒ₋ₜᵢ q]   (for forwarders)
 
@@ -63,7 +64,7 @@ Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome
 Context {QInter : Prop_of_Inter Q T A A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
-(** ** The core of completeness, co-native
+(* ** The core of completeness, co-native
 
     If [q] passes the test attesting [s] (literally), then [q] really
     does co-answer [s]. Mirrors [completeness_core]'s case-by-case
@@ -154,7 +155,7 @@ Qed.
 
 End Completeness_ti_co.
 
-(** ** Completeness, for forwarders *)
+(* ** Completeness, for forwarders *)
 
 Theorem completeness_ti_co_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -179,7 +180,7 @@ Proof.
   reflexivity.
 Qed.
 
-(** ** Completeness, for feedback LTSs, through the forwarder construction *)
+(* ** Completeness, for feedback LTSs, through the forwarder construction *)
 
 Theorem completeness_ti_co_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
@@ -203,3 +204,4 @@ Proof.
   eapply completeness_ti_co_fw.
   eapply (proj1 (lift_fw_ctx_pre p q)). exact hctx.
 Qed.
+(* end hide *)

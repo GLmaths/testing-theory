@@ -1,4 +1,5 @@
-(** * Tag schedulers are history-dependent schedulers (§3, inclusion ⊆)
+(* begin hide *)
+(* * Tag schedulers are history-dependent schedulers (§3, inclusion ⊆)
 
     Every element of ⟦p⟧(ρ) is the value of the MDP of [Kierner 2025] under
     some history-dependent scheduler.  The scheduler built here reads only
@@ -16,10 +17,10 @@ From Stdlib Require Import List ChoiceFacts.
 From TestingTheory Require Import Lifted Paths States.
 Import ListNotations.
 
-(** Measurement outcomes can be recovered from states (projective measurements). *)
+(* Measurement outcomes can be recovered from states (projective measurements). *)
 Class KAlg `{StAlg} := {
   St_eq_dec (a b : St) : {a = b} + {a <> b};
-  (** Distinct outcomes of a measurement lead to distinct states, unless the
+  (* Distinct outcomes of a measurement lead to distinct states, unless the
       outcome has probability zero. *)
   distinct_outcomes m k k' ρ :
     app (kraus m k) ρ = app (kraus m k') ρ -> k = k' \/ app (kraus m k) ρ = szero }.
@@ -27,7 +28,7 @@ Class KAlg `{StAlg} := {
 Section Kierner.
 Context `{KAlg}.
 
-(** ** The MDP, under a history-dependent scheduler
+(* ** The MDP, under a history-dependent scheduler
 
     [hsched] maps the list of states visited so far (most recent first) to
     a choice.  [KV 𝔖 n p ρ h] is the sum, over the 𝔖-induced paths of length
@@ -63,7 +64,7 @@ Proof. destruct n; reflexivity. Qed.
 Lemma ssum_szero {A} (l : list A) : ssum (map (fun _ => szero) l) = szero.
 Proof. induction l; simpl; [reflexivity | now rewrite IHl, sadd_szero]. Qed.
 
-(** Zero-probability branches contribute nothing, whatever the scheduler. *)
+(* Zero-probability branches contribute nothing, whatever the scheduler. *)
 Lemma KV_szero sc n p h : KV sc n p szero h = szero.
 Proof.
   induction n in p, h |- *; destruct (done_dec p) as [-> | Hp];
@@ -75,15 +76,15 @@ Proof.
     + apply IHn.
 Qed.
 
-(** ** Replaying a tag scheduler from the history of states *)
+(* ** Replaying a tag scheduler from the history of states *)
 
 Variable σ : sched.
 
-(** The outcome of measurement [m] that leads from [ρ] to [ρ']. *)
+(* The outcome of measurement [m] that leads from [ρ] to [ρ']. *)
 Definition outcome m ρ ρ' :=
   find (fun k => if St_eq_dec (app (kraus m k) ρ) ρ' then true else false) (outs m).
 
-(** One step of the replay: from configuration [q] in state [ρ] to state [ρ']. *)
+(* One step of the replay: from configuration [q] in state [ρ] to state [ρ']. *)
 Definition next q ρ ρ' : option prog :=
   match step q with
   | Leaf _ x => Some x
@@ -91,7 +92,7 @@ Definition next q ρ ρ' : option prog :=
   | Ch t x y => Some (if σ t then y else x)
   end.
 
-(** [replay q l]: the configuration reached from [q] along the states [l]
+(* [replay q l]: the configuration reached from [q] along the states [l]
     (oldest first). *)
 Fixpoint replay q (l : list St) : option prog :=
   match l with
@@ -113,7 +114,7 @@ Qed.
 
 Variable p0 : prog.
 
-(** The history-dependent scheduler: replay [p0] and apply [σ] to the tag of
+(* The history-dependent scheduler: replay [p0] and apply [σ] to the tag of
     the current choice. *)
 Definition hs : hsched := fun h =>
   match replay p0 (rev h) with
@@ -156,7 +157,7 @@ Proof.
       rewrite C. apply IHn. rewrite Rn. reflexivity.
 Qed.
 
-(** At every depth, the MDP under [hs] computes the tag-scheduler path sum. *)
+(* At every depth, the MDP under [hs] computes the tag-scheduler path sum. *)
 Theorem tag_as_history n ρ : KV hs n p0 ρ [] = app (Op σ n p0) ρ.
 Proof. apply KV_hs. reflexivity. Qed.
 
@@ -167,7 +168,7 @@ Qed.
 
 End Kierner.
 
-(** ⊆ of [Kierner, Lemma 3.2]: every element of ⟦p⟧(ρ) is the value of the
+(* ⊆ of [Kierner, Lemma 3.2]: every element of ⟦p⟧(ρ) is the value of the
     MDP under some history-dependent scheduler. *)
 Theorem lifted_in_mdp `{KAlg} (CC : FunctionalCountableChoice_on sched) p x ρ :
   wl p -> Sem p x -> exists sc : hsched, app x ρ = KVal sc p ρ.
@@ -175,3 +176,4 @@ Proof.
   intros W Hx. destruct (complete CC p x W Hx) as [σ ->].
   exists (hs σ p). symmetry. apply tag_as_history_val.
 Qed.
+(* end hide *)

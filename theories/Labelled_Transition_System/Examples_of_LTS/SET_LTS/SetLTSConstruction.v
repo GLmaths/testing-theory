@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -689,6 +690,7 @@ Proof.
     eapply H6 in wk_tr.
     eapply IHs;eauto.
 Qed.
+(* end hide *)
 
 Lemma convergence_set_iff_convergence_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
   (forall (p : P), p ∈ ps -> p ⇓ s) <-> ps ⇓ s.

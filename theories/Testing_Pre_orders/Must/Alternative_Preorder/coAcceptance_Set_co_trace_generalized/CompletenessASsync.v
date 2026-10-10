@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Completeness for two alphabets: the convergence condition
+(* * Completeness for two alphabets: the convergence condition
 
     The port of the first half of [CompletenessASco.v] — everything that leads
     to [completeness1_co] — to processes over [Aproc] tested by observers over
@@ -47,7 +48,7 @@ From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionU
 
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
-(** ** Swapping a non-blocking action across the composition, on forwarders
+(* ** Swapping a non-blocking action across the composition, on forwarders
 
     [Lift.must_non_blocking_action_swap_l_fw] for two alphabets.  In the
     homogeneous statement the process and the observer perform the /same/
@@ -156,11 +157,11 @@ Qed.
 
 End SwapSync.
 
-(** ** A single co-step against the convergence observer *)
+(* ** A single co-step against the convergence observer *)
 
 (* the trace is kept as a variable, constrained by an equation, so that plain
    induction applies *)
-(** ** The observer of convergence characterises co-convergence *)
+(* ** The observer of convergence characterises co-convergence *)
 
 Lemma must_sync_if_cocnvs `{
   Hp : ExtAction Aproc, Ht : ExtAction Atest, SA : !SyncAction Aproc Atest,
@@ -208,7 +209,7 @@ Proof.
   split; [by apply cocnv_if_must | by apply must_sync_if_cocnvs].
 Qed.
 
-(** ** The convergence half of completeness *)
+(* ** The convergence half of completeness *)
 
 Lemma completeness1_co_sync `{
   Hp : ExtAction Aproc, Ht : ExtAction Atest, SA : !SyncAction Aproc Atest,
@@ -225,15 +226,15 @@ Proof.
   by eapply must_sync_iff_cocnvs, hleq, must_sync_iff_cocnvs.
 Qed.
 
-(** ** Completeness, the acceptance-set half
+(* ** Completeness, the acceptance-set half
 
     The port of the second half of [CompletenessASco.v].  The observer is now
     [ta E s] with [s : trace Atest] and [E : gset PreAct]; the co-actions it has
     to offer are read off [coR p], a set of /test/ actions. *)
 
-(** *** Prefixing the observer with a blocking action *)
+(* *** Prefixing the observer with a blocking action *)
 
-(** *** Monotonicity in the acceptance set, for the empty trace
+(* *** Monotonicity in the acceptance set, for the empty trace
 
     The interesting case is the synchronisation one: the observer [ta E1 ε] had
     a blocking action [η] matching an action of [p]; the bigger observer
@@ -241,7 +242,7 @@ Qed.
     [abstraction_prog_spec] turns it back into an action [η''] of
     [coR p]. *)
 
-(** *** Monotonicity in the acceptance set, for an arbitrary trace
+(* *** Monotonicity in the acceptance set, for an arbitrary trace
 
     [inversion_ta_tau_action], [inversion_ta_external_action], [ta_tau_ex] and
     [f_gen_lts_mu_in_the_middle] are the observer-only lemmas of
@@ -307,15 +308,15 @@ Proof.
         ++ exact hsub.
 Qed.
 
-(** *** A stable process passes the observer of its own co-actions
+(* *** A stable process passes the observer of its own co-actions
 
     Unless that set is already contained in [E]: the observer [ta (coR_abs p ∖ E) ε]
     offers a representative of every abstract co-action of [p] that [E] misses,
     so the composition can always take a synchronisation step. *)
 
-(** *** A blocking co-step of the process, in one go *)
+(* *** A blocking co-step of the process, in one go *)
 
-(** ** The acceptance sets along a co-trace
+(* ** The acceptance sets along a co-trace
 
     From here on the binders are collected in a section: every lemma needs the
     same long list, and naming the instances is also what keeps elaboration
@@ -339,11 +340,11 @@ Context (ta : gset PreAct → list Atest → T)
 
 Notation coRa := (coR_abs (FinitaryAbsAction := FiniteAbs)).
 
-(** *** Monotonicity of the stable states reached along a co-trace *)
+(* *** Monotonicity of the stable states reached along a co-trace *)
 
-(** *** The union of the acceptance sets reachable along a co-trace *)
+(* *** The union of the acceptance sets reachable along a co-trace *)
 
-(** *** Either some stable state of [p] is covered by [E], or [p] passes the
+(* *** Either some stable state of [p] is covered by [E], or [p] passes the
     observer of what [E] misses — first for the empty co-trace *)
 
 Lemma must_ta_or_empty_pre_action_set_for_empty_trace_co_sync
@@ -388,7 +389,7 @@ Proof.
     ++ left. exists p. split; [constructor | split; [exact st | exact Hyp]].
 Qed.
 
-(** *** ... and then for an arbitrary co-trace
+(* *** ... and then for an arbitrary co-trace
 
     The non-blocking case is the one that changes: [fwm_boomerang] makes [p]
     receive the trace's [μ2] and give it back as [inr (msg μ2)], and
@@ -446,11 +447,11 @@ Proof.
          eapply difference_mono_r, union_cowt_acceptance_set_subseteq, w.
 Qed.
 
-(** *** An observer that misses a reachable acceptance set is not passed *)
+(* *** An observer that misses a reachable acceptance set is not passed *)
 
 End AcceptanceSetsSync.
 
-(** ** The acceptance-set half of completeness *)
+(* ** The acceptance-set half of completeness *)
 
 Lemma completeness2_co_sync {P Q T FinA PreAct Aproc Atest : Type}
   `{CC : Countable PreAct}
@@ -481,7 +482,7 @@ Proof.
     eapply (not_must_ta_without_required_acc_set_co q q' s); eauto.
 Qed.
 
-(** ** Completeness on forwarders, for two alphabets *)
+(* ** Completeness on forwarders, for two alphabets *)
 
 Lemma completeness_fw_co_sync {P Q T FinA PreAct Aproc Atest : Type}
   `{CC : Countable PreAct}
@@ -508,3 +509,4 @@ Proof.
   - by eapply (completeness1_co_sync (tconv := tconv)).
   - by eapply (completeness2_co_sync (ta := ta)).
 Qed.
+(* end hide *)

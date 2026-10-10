@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The channel-index shift [NewVarC] transports transitions, both ways
+(* * The channel-index shift [NewVarC] transports transitions, both ways
 
     [NewVarC k] inserts a fresh channel binder at de Bruijn level [k].
     This file shows it is a *strong bisimulation* between [p] and
@@ -65,7 +66,7 @@ Section VCCS_Shift.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** Shifting a label *)
+(* ** Shifting a label *)
 
 Definition NewVarC_TOA (k : nat) (a : TypeOfActions) : TypeOfActions :=
   match a with (c,v) => (NewVar_in_ChannelData k c, v) end.
@@ -87,14 +88,14 @@ Lemma NewVarC_act_ext : forall k μ,
   NewVarC_act k (ActExt μ) = ActExt (NewVar_in_action k μ).
 Proof. intros k [x|x]; reflexivity. Qed.
 
-(** The two shifts of the development coincide at level [0]. *)
+(* The two shifts of the development coincide at level [0]. *)
 Lemma NewVarC_at_zero : forall c, NewVar_in_ChannelData 0 c = VarC_add 1 c.
 Proof.
   intros [a|i]; simpl; [ reflexivity | ].
   destruct (decide (0 < S i)) as [H|H]; [ reflexivity | exfalso; lia ].
 Qed.
 
-(** ** How the two shifts commute, and how they invert *)
+(* ** How the two shifts commute, and how they invert *)
 
 Lemma NewVarC_shift_comm : forall k c,
   NewVar_in_ChannelData (S k) (VarC_add 1 c) = VarC_add 1 (NewVar_in_ChannelData k c).
@@ -104,7 +105,7 @@ Proof.
     simpl; try reflexivity; exfalso; lia.
 Qed.
 
-(** The converse of [NewVarC_shift_comm]: a channel that is *both* a
+(* The converse of [NewVarC_shift_comm]: a channel that is *both* a
     [VarC_add 1]-shift and a [NewVar_in_ChannelData (S k)]-shift is the
     shift of a single common channel.  This is what lets the [ν] case of
     [lts_NewVarC_inv_aux] pull a label back out through the binder. *)
@@ -148,7 +149,7 @@ Proof.
     [ exists (ActIn (c1, v0)) | exists (ActOut (c1, v0)) ]; split; reflexivity.
 Qed.
 
-(** ** The shift transports transitions forwards *)
+(* ** The shift transports transitions forwards *)
 
 Lemma lts_NewVarC : forall p a q, lts p a q ->
   forall k, lts (NewVarC k p) (NewVarC_act k a) (NewVarC k q).
@@ -176,7 +177,7 @@ Proof.
   - apply lts_choiceR. apply IHHl.
 Qed.
 
-(** ** …and backwards
+(* ** …and backwards
 
     Every transition of [NewVarC k p] is the shift of a transition of [p],
     at a label that is itself a shift.  Same shape as
@@ -253,3 +254,4 @@ Lemma lts_NewVarC_inv : forall p k a q', lts (NewVarC k p) a q' ->
 Proof. intros p k a q' Hl. eapply lts_NewVarC_inv_aux; [ exact Hl | reflexivity ]. Qed.
 
 End VCCS_Shift.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -30,7 +31,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA S
     DefinitionAS FiniteImageLTS Subset_Act.
 
 
-(** ** Termination condition *)
+(* ** Termination condition *)
 (* Two alphabets: the processes over [Aproc], the co-traces over the test
    alphabet [A], linked by [sync]; on one alphabet [sync] is [dual]. *)
 Definition bhv_pre_co_cond1 `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc Hp}
@@ -39,7 +40,7 @@ Definition bhv_pre_co_cond1 `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc
 
 Notation "p ₁≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond1 p q) (at level 70).
 
-(** ** Smyth preorder on acceptance sets *)
+(* ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_co_cond2 `{
   gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
   gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
@@ -50,7 +51,7 @@ Definition bhv_pre_co_cond2 `{
 
 Notation "p ₂≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond2 p q) (at level 70).
 
-(** ** Definition of the alternative preorder *)
+(* ** Definition of the alternative preorder *)
 Definition bhv_pre_co `{
   gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
   gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
@@ -58,3 +59,4 @@ Definition bhv_pre_co `{
       p ₁≼꜀ₒ₋ₐₛ q /\ p ₂≼꜀ₒ₋ₐₛ q.
 
 Notation "p ≼꜀ₒ₋ₐₛ q" := (bhv_pre_co p q) (at level 70).
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -27,7 +28,7 @@ From stdpp Require Import base countable list decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitions Termination Convergence Subset_Act
     NormalForm Normalisation.
 
-(** * Simulations restricted to the feedback-free traces
+(* * Simulations restricted to the feedback-free traces
 
     A plain simulation proves the inclusion of *all* traces of a process into
     those of another.  It is therefore too strong to compare two processes on
@@ -42,16 +43,16 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitio
     it.  Reading a trace that way from the empty ledger is exactly the absence
     of feedback ([ff_from_nil]). *)
 
-(** ** Reading a trace against a ledger *)
+(* ** Reading a trace against a ledger *)
 
 Section FeedbackFreeTraces.
 
   Context `{H : !ExtAction A}.
 
-  (** [μ] closes no feedback against the ledger [E]. *)
+  (* [μ] closes no feedback against the ledger [E]. *)
   Definition no_fb_after (E : list A) (μ : A) : Prop := Forall (fun η => ¬ dual μ η) E.
 
-  (** [s] performs no feedback, given what has already been emitted. *)
+  (* [s] performs no feedback, given what has already been emitted. *)
   Fixpoint ff_from (E : list A) (s : trace A) : Prop :=
     match s with
     | [] => True
@@ -70,7 +71,7 @@ Section FeedbackFreeTraces.
         else Exists (fun η => dual x η) E \/ has_fb_from E s'
     end.
 
-  (** The inputs of [s] that close a feedback opened before [s]. *)
+  (* The inputs of [s] that close a feedback opened before [s]. *)
   Definition hits (E : list A) (s : trace A) : Prop :=
     Exists (fun μ => ¬ non_blocking μ /\ Exists (fun η => dual μ η) E) s.
 
@@ -103,7 +104,7 @@ Section FeedbackFreeTraces.
         * eapply IH. intro h'. eapply h, Exists_cons_iff. now right.
   Qed.
 
-  (** An action dual to a non-blocking one is blocking. *)
+  (* An action dual to a non-blocking one is blocking. *)
   Lemma exists_dual_blocking (x : A) (l : trace A) :
     non_blocking x ->
     Exists (fun β => dual β x) l <-> Exists (fun β => ¬ non_blocking β /\ dual β x) l.
@@ -153,13 +154,13 @@ Section FeedbackFreeTraces.
       unfold no_fb_after. rewrite forall_not_exists, IH. tauto.
   Qed.
 
-  (** Reading a trace from the empty ledger is exactly being feedback-free. *)
+  (* Reading a trace from the empty ledger is exactly being feedback-free. *)
   Theorem ff_from_nil s : ff_from [] s <-> ¬ has_fb s.
   Proof. rewrite ff_from_iff, has_fb_from_nil. reflexivity. Qed.
 
 End FeedbackFreeTraces.
 
-(** ** Restricted simulations *)
+(* ** Restricted simulations *)
 
 Section RestrictedSimulation.
 
@@ -239,7 +240,7 @@ Section RestrictedSimulation.
           exists q2. eapply wt_push_left; eassumption.
     Qed.
 
-    (** A restricted simulation from the empty ledger yields the inclusion of
+    (* A restricted simulation from the empty ledger yields the inclusion of
         the feedback-free traces -- and only of those. *)
     Corollary rsim_traces_ff (p1 : P) (q1 : Q) s :
       R [] p1 q1 -> ¬ has_fb s -> (exists p2, p1 ⟹[s] p2) -> exists q2, q1 ⟹[s] q2.
@@ -253,7 +254,7 @@ Section RestrictedSimulation.
 
 End RestrictedSimulation.
 
-(** * Simulations for convergence, restricted to the feedback-free traces
+(* * Simulations for convergence, restricted to the feedback-free traces
 
     The must conditions quantify over convergence, and convergence travels
     along the trace preorder in the direction *opposite* to the traces.  So
@@ -308,7 +309,7 @@ Section ConvergenceSimulation.
         * eapply hsafe, hff.
   Qed.
 
-  (** A restricted convergence simulation from the empty ledger transports the
+  (* A restricted convergence simulation from the empty ledger transports the
       convergence of [p] into that of [q] -- on the feedback-free traces, and
       only on those. *)
   Corollary csim_cnv_ff (R : list A -> P -> Q -> Prop) (hR : csim R) (p : P) (q : Q) s :
@@ -320,7 +321,7 @@ Section ConvergenceSimulation.
 
 End ConvergenceSimulation.
 
-(** * Simulations for acceptance sets, restricted to the feedback-free traces
+(* * Simulations for acceptance sets, restricted to the feedback-free traces
 
     The second must condition asks that every stable state [q] reaches along a
     trace be matched by a stable state of [p] accepting no more.  Like [csim],
@@ -364,7 +365,7 @@ Section AcceptanceSimulation.
         exists p2. split; [eapply wt_push_left; eassumption | split; [exact hst2 | exact hsub]].
   Qed.
 
-  (** The second must condition, on the feedback-free traces and only there. *)
+  (* The second must condition, on the feedback-free traces and only there. *)
   Corollary asim_cond2_ff (R : list A -> P -> Q -> Prop) (hR : asim R) (p : P) (q : Q) s q' :
     R [] p q -> ¬ has_fb s -> q ⟹[s] q' -> q' ↛ ->
     exists p', p ⟹[s] p' /\ p' ↛ /\ coR p' ⊆ coR q'.
@@ -375,7 +376,7 @@ Section AcceptanceSimulation.
 
 End AcceptanceSimulation.
 
-(** * Traces without an echo
+(* * Traces without an echo
 
     The mirror of the ledger above.  Where [ff_from] records the non-blocking
     actions already emitted and forbids the inputs dual to them -- the
@@ -465,7 +466,7 @@ Section EchoFreeTraces.
 
 End EchoFreeTraces.
 
-(** * Acceptance simulations restricted to the traces without an echo
+(* * Acceptance simulations restricted to the traces without an echo
 
     Same shape as [asim]; only the ledger and the guarded clause are exchanged.
     This is the tool for the second must condition read on co-traces with
@@ -513,3 +514,4 @@ Section EchoAcceptanceSimulation.
   Qed.
 
 End EchoAcceptanceSimulation.
+(* end hide *)

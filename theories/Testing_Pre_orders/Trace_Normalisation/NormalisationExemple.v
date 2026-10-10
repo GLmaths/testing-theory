@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From stdpp Require Import base countable decidable gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
     InputOutputActions WeakTransitions VACCS VACCS_Instance NormalForm Normalisation.
 
-(** * Examples of normalisation in VACCS
+(* * Examples of normalisation in VACCS
 
     We instantiate VACCS over natural channels and natural values, and we
     normalise a few traces.  We write [out c v] for the emission of the value
@@ -46,7 +47,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
 Definition out (c v : nat) : ExtAct TypeOfActions := ActOut (cst c, cst v).
 Definition inp (c v : nat) : ExtAct TypeOfActions := ActIn  (cst c, cst v).
 
-(** ** The classes of the VACCS actions *)
+(* ** The classes of the VACCS actions *)
 
 Example cls_out (c v : nat) : cls_tr (out c v) = CNB.
 Proof. reflexivity. Qed.
@@ -54,11 +55,11 @@ Proof. reflexivity. Qed.
 Example cls_inp (c v : nat) : cls_tr (inp c v) = CIN.
 Proof. reflexivity. Qed.
 
-(** No VACCS action is opaque: the third class is empty here. *)
+(* No VACCS action is opaque: the third class is empty here. *)
 Example vaccs_no_opaque (μ : ExtAct TypeOfActions) : cls_tr μ ≠ COP.
 Proof. destruct μ; discriminate. Qed.
 
-(** ** Example 1: the runs are collected into multisets *)
+(* ** Example 1: the runs are collected into multisets *)
 
 Definition s1 : trace (ExtAct TypeOfActions) :=
   [inp 1 0; inp 2 1; out 3 2; out 4 3; inp 5 4].
@@ -70,11 +71,11 @@ Example nform_s1 :
     ; (CIN, {[+ inp 5 4 +]}) ].
 Proof. reflexivity. Qed.
 
-(** Nothing to simplify here: no output is followed by one of its co-actions. *)
+(* Nothing to simplify here: no output is followed by one of its co-actions. *)
 Example fbnf_s1 : fbnf s1 = s1.
 Proof. vm_compute. reflexivity. Qed.
 
-(** Inside a run the order is forgotten: permuting the two inputs and the two
+(* Inside a run the order is forgotten: permuting the two inputs and the two
     outputs does not change the normal form. *)
 Example nform_inside_runs :
   nform cls_tr [inp 1 0; inp 2 1; out 3 2; out 4 3]
@@ -87,12 +88,12 @@ Proof.
       [reflexivity | discriminate].
 Qed.
 
-(** The order *between* the runs is kept. *)
+(* The order *between* the runs is kept. *)
 Example nform_between_runs :
   nform cls_tr [inp 1 0; out 2 1] ≠ nform cls_tr [out 2 1; inp 1 0].
 Proof. intro h. inversion h. Qed.
 
-(** ** Example 2: a feedback is consumed
+(* ** Example 2: a feedback is consumed
 
     The trace emits [out 1 0] and receives it back, three actions later.  Both
     disappear, and the two runs of outputs that [inp 1 0] separated merge. *)
@@ -111,7 +112,7 @@ Proof.
   - reflexivity.
 Qed.
 
-(** The simplification function computes it too. *)
+(* The simplification function computes it too. *)
 Example fbnf_s2 : fbnf s2 = s2'.
 Proof. vm_compute. reflexivity. Qed.
 
@@ -121,11 +122,11 @@ Example nform_s2' :
     ; (CNB, {[+ out 4 3 +]} ⊎ {[+ out 5 4 +]}) ].
 Proof. reflexivity. Qed.
 
-(** The normal form of [s2] -- feedbacks consumed, then runs collected. *)
+(* The normal form of [s2] -- feedbacks consumed, then runs collected. *)
 Example fnf_s2 : fnf s2 = nform cls_tr s2'.
 Proof. reflexivity. Qed.
 
-(** For comparison, the normal form of [s2] *before* simplification still has
+(* For comparison, the normal form of [s2] *before* simplification still has
     five blocks. *)
 Example nform_s2 :
   nform cls_tr s2 =
@@ -136,7 +137,7 @@ Example nform_s2 :
     ; (CNB, {[+ out 5 4 +]}) ].
 Proof. reflexivity. Qed.
 
-(** ** Example 3: two nested feedbacks cancel the whole trace *)
+(* ** Example 3: two nested feedbacks cancel the whole trace *)
 
 Definition s3 : trace (ExtAct TypeOfActions) :=
   [out 1 0; out 2 1; inp 2 1; inp 1 0].
@@ -155,7 +156,7 @@ Qed.
 Example fbnf_s3 : fbnf s3 = [].
 Proof. vm_compute. reflexivity. Qed.
 
-(** ** Example 4: an input before its output is not a feedback
+(* ** Example 4: an input before its output is not a feedback
 
     Nothing can be simplified in [inp 1 0; out 1 0]: the emission comes after
     the reception, so the two do not cancel. *)
@@ -180,7 +181,7 @@ Proof.
   rewrite !length_app' in hl. simpl in hl. lia.
 Qed.
 
-(** ** What this means for a process
+(* ** What this means for a process
 
     In any forwarder LTS over the VACCS actions -- in particular the forwarder
     lifting of VACCS itself -- a process that can perform [s2] can perform the
@@ -196,3 +197,4 @@ Section OnAnyForwarderLts.
   Proof. intro w. eapply wt_trace_leq; [eapply s2_feedback | exact w]. Qed.
 
 End OnAnyForwarderLts.
+(* end hide *)

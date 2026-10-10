@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -94,3 +95,4 @@ End Mem.
 
 #[global] Hint Extern 10 (@UniqueDual (MemAct ?A) _) =>
   assert_fails (is_evar A); exact UniqueDual_mem : typeclass_instances.
+(* end hide *)

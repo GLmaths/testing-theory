@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -729,3 +730,4 @@ Proof.
   - rewrite <- may_iff_may_fw. eauto.
   - rewrite may_iff_may_fw. eauto.
 Qed.
+(* end hide *)

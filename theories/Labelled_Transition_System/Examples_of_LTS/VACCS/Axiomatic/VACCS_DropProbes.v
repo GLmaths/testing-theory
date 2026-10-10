@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Canonicity does not make the drop rule's premise derivable
+(* * Canonicity does not make the drop rule's premise derivable
 
     [VACCS_Bad.v]'s judgement approximates the premise
     [must_i_input_drop_bad] needs:
@@ -93,14 +94,14 @@ Context `{VP : VACCS_Parameters}.
 Context {a b e : Channel} {v w y : Value}.
 Context {nab : a <> b} {nae : a <> e} {nbe : b <> e}.
 
-(** ** The processes *)
+(* ** The processes *)
 
 Definition Ke : proc := (cst e) ! (cst y) • 𝟘.
 Definition PP : proc := g ((cst b) ? Ke).
 Definition MM : gproc := ((cst a) ? PP) + ((cst b) ? (g 𝟘)).
 Definition UU : proc := ((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? (g ①))).
 
-(** Same inversion tactic as [VACCS_ChoiceProbes.v]: invert every [lts]
+(* Same inversion tactic as [VACCS_ChoiceProbes.v]: invert every [lts]
     whose subject has a concrete head, then close on the channel
     disequalities.  The leading [unfold lts_step] is needed because
     [must]'s own fields are stated with the [gLts] notation. *)
@@ -119,7 +120,7 @@ Ltac blast3 :=
 Lemma dual_io : forall (x : TypeOfActions), dual (ActIn x) (ActOut x).
 Proof. intros x. simpl. reflexivity. Qed.
 
-(** ** [MM] really is canonical, and stable
+(* ** [MM] really is canonical, and stable
 
     Note the [decide]: [destruct (decide ...)] does **not** rewrite the
     goal's own [if decide _] here (the instance elaborates differently),
@@ -136,7 +137,7 @@ Qed.
 Lemma MM_no_tau : forall q, ~ lts (g MM) τ q.
 Proof. intros q Hl. unfold MM in Hl. blast3. Qed.
 
-(** ** The client [UU] *)
+(* ** The client [UU] *)
 
 Lemma UU_no_tau : forall q, ~ lts UU τ q.
 Proof. intros q Hl. unfold UU in Hl. blast3. Qed.
@@ -150,7 +151,7 @@ Qed.
 Lemma UU_refuses_a : forall x q, ~ lts UU ((cst a ▷ x)?) q.
 Proof. intros x q Hl. unfold UU in Hl. blast3. Qed.
 
-(** ** The continuation passes it
+(* ** The continuation passes it
 
     [PP] takes the [b]-message and answers on [e], where [①] is waiting.
     So [PP] is *not* [SemBad {a}]. *)
@@ -182,7 +183,7 @@ Proof.
       apply m_now. apply good_par. right. apply good_success.
 Qed.
 
-(** ** Residues of an output
+(* ** Residues of an output
 
     Both facts are the ones [Bad_sound]/[Harmless_sound] use, isolated
     here: an emitting client is [≡*] the message beside its residue
@@ -221,7 +222,7 @@ Proof.
   destruct Hsc as (r & Hr & _). exists r. exact Hr.
 Qed.
 
-(** ** The sum is bad at the empty set
+(* ** The sum is bad at the empty set
 
     First: a client [g MM] passes can never emit on [b].  The [b]-guard's
     continuation is [𝟘], so [com] there demands [𝟘 must_pass r] with [r]
@@ -247,7 +248,7 @@ Proof.
   - inversion l1.
 Qed.
 
-(** And then: [ex] forces the client to emit on [a] or [b]; [b] is out by
+(* And then: [ex] forces the client to emit on [a] or [b]; [b] is out by
     the above, and after the [a]-synchronisation [PP]'s own [ex] needs the
     client to emit on [b] after all. *)
 
@@ -289,7 +290,7 @@ Proof.
   rewrite <- E at 2. apply lts_input.
 Qed.
 
-(** ** The negative result
+(* ** The negative result
 
     The refuted statement is exactly [bad_stuck]'s input clause, read as
     an inversion principle: it is what a completeness proof for
@@ -318,7 +319,7 @@ Proof.
   exact PP_passes_UU.
 Qed.
 
-(** ** …and the inequation it witnesses
+(* ** …and the inequation it witnesses
 
     [VACCS_Bad.below_nil_iff] turns [MM_bad] into a genuine inequation of
     the theory.  So this is not a curiosity about a predicate: it is a
@@ -378,7 +379,7 @@ Proof.
   eapply Hle; [ apply TT2_no_tau | apply TT2_not_good | apply a_guard_passes_TT2 ].
 Qed.
 
-(** ** The drop-rule family provably cannot remove this guard
+(* ** The drop-rule family provably cannot remove this guard
 
     [ax_input_drop] and its up-to form [ax_input_drop_upto] are the only
     rules that discard a summand, and both ask for a target [Q] with
@@ -421,7 +422,7 @@ Proof.
   intros u Hst Hng Href Hm. eapply Bad_sound; eassumption.
 Qed.
 
-(** ** …and [BadK] DOES certify it
+(* ** …and [BadK] DOES certify it
 
     Where [Bad] provably cannot ([no_Bad_target] above), the killer-set
     judgement of [VACCS_Bad.v] succeeds, and the derivation reads exactly
@@ -475,11 +476,11 @@ Proof.
         -- inversion H3; subst. left. right. reflexivity.
 Qed.
 
-(** The inequation, recovered from the judgement alone. *)
+(* The inequation, recovered from the judgement alone. *)
 Corollary MM_below_nil_via_BadK : (g MM) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
 Proof. apply BadK_below_nil. exact MM_BadK. Qed.
 
-(** ** THE INEQUATION IS NOW DERIVABLE
+(* ** THE INEQUATION IS NOW DERIVABLE
 
     [MM_below_nil] is the inequation whose derivation was blocked: every
     route through the drop laws provably fails ([no_drop_target_for_a]),
@@ -501,12 +502,12 @@ Proof.
   - eapply BadK_mono; [ exact MM_BadK | intros c0 [] | intros c0 [] ].
 Qed.
 
-(** …and it really is the same inequation: soundness hands back the
+(* …and it really is the same inequation: soundness hands back the
     semantic fact, matching [MM_below_nil] proved directly. *)
 Corollary MM_derivable_sound : (g MM) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
 Proof. apply soundness_ax. exact MM_derivable. Qed.
 
-(** * A second probe: `grestrict` is the wrong restriction target
+(* * A second probe: `grestrict` is the wrong restriction target
 
     The matching argument discharges its [gGuardsIn] side condition by
     restricting the left-hand sum to the channels the right-hand side
@@ -611,7 +612,7 @@ Proof.
   eapply Hle; [ apply TT3_no_tau | apply TT3_not_good | apply MC_passes_TT3 ].
 Qed.
 
-(** ** A PENDING MESSAGE IS RIGID: it can be neither dropped nor added
+(* ** A PENDING MESSAGE IS RIGID: it can be neither dropped nor added
 
     [VACCS_NormalForm.msgs_buffer_iff] says a syntactic message bag is
     the forwarder's buffer.  These two probes say the bag is *observable*
@@ -713,7 +714,7 @@ Proof.
   intro Hle. apply MSG_fails_TSINK. apply Hle. apply nil_passes_TSINK.
 Qed.
 
-(** * The τ-successor cannot always be chosen
+(* * The τ-successor cannot always be chosen
 
     [ax_tau_step] lets a derivation move *up* to a τ-successor, and that is
     the one route that handles an **unstable** left-hand side (see
@@ -889,7 +890,7 @@ Proof.
   - inversion H3; subst. apply P2_not_below_nil.
 Qed.
 
-(** …and yet [(g PC) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] IS derivable — by [ax_share_in]
+(* …and yet [(g PC) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] IS derivable — by [ax_share_in]
 
     The negative result above says no *single* τ-successor works.  It does
     not say the inequation is out of reach, and it is not: the rule that
@@ -932,7 +933,7 @@ Proof.
   intro v0. simpl. apply bad_nil_any.
 Qed.
 
-(** * A τ on the RIGHT also breaks bag matching
+(* * A τ on the RIGHT also breaks bag matching
 
     [VACCS_NormalForm.bags_agree] forces the two message bags equal under
     two hypotheses: the left configuration is τ-stable, and the right's
@@ -970,7 +971,7 @@ Proof.
 Qed.
 
 
-(** * THE CERTIFICATE OF PHASE A IS FALSE — [CertAll] refuted
+(* * THE CERTIFICATE OF PHASE A IS FALSE — [CertAll] refuted
 
     [VACCS_Matching.CertAll] reduces the whole matching argument to one
     statement: the left process, handed any buffer the right refuses,
@@ -1118,7 +1119,7 @@ Proof.
 Qed.
 
 
-(** * …AND CHOOSING A DELIVERY DOES NOT WORK EITHER
+(* * …AND CHOOSING A DELIVERY DOES NOT WORK EITHER
 
     With the settling route refuted, the natural remaining move for an
     unstable configuration is [ax_tau_step]: descend to a **delivery**
@@ -1227,7 +1228,7 @@ Proof.
 Qed.
 
 
-(** * …BUT CANONICALISATION REPAIRS IT
+(* * …BUT CANONICALISATION REPAIRS IT
 
     The counterexample above is an artefact of **non-canonicity**: [MD]
     has *two* guards on the same channel, which is exactly what
@@ -1291,7 +1292,7 @@ Proof.
   apply (proj2 (must_i_cgr _ _ (nilnil_cgr ((g PC) : proc)))). exact Hm.
 Qed.
 
-(** ** `CfgDisjunction` sur cette instance : c'est le disjoint DESCENTE
+(* ** `CfgDisjunction` sur cette instance : c'est le disjoint DESCENTE
 
     [VACCS_Matching.CfgDisjunction] demande, pour une configuration
     gauche instable sous sa cible, que **l'un des deux** disjoints tienne.
@@ -1324,7 +1325,7 @@ Proof.
     exact (proj2 (must_i_cgr _ _ Hc)).
 Qed.
 
-(** * …et la famille « SOURCE-ONLY » de la disjonction est FAUSSE
+(* * …et la famille « SOURCE-ONLY » de la disjonction est FAUSSE
 
     [VACCS_Matching.CfgDisjunctionSource] et sa version relativisée au sac
     [CfgDisjunctionSourceBag] remplacent le second disjoint de
@@ -1367,7 +1368,7 @@ Qed.
     dit que la classe copycat satisfait ce disjoint, pas que tout le monde
     le fait. *)
 
-(** ** Le client qui réfute le disjoint « sac vide » *)
+(* ** Le client qui réfute le disjoint « sac vide » *)
 
 Definition UCert : proc :=
   (((cst b) ! (cst w) • 𝟘) : proc) ‖ ((g ((cst e) ? ((g ①) : proc))) : proc).
@@ -1469,14 +1470,14 @@ Proof.
 Qed.
 
 (* ===================================================================== *)
-(** * DEUX RÉFUTATIONS : LE CAS [𝛕]-SOMMANT
+(* * DEUX RÉFUTATIONS : LE CAS [𝛕]-SOMMANT
 
     Le découpage décidable de [VACCS_Bad] renvoyait d'abord le cas
     « [M] porte un [𝛕]-sommant » vers l'**annulation du sac** (le premier
     disjoint).  C'est faux, et la localisation de la disjonction l'est
     aussi.  Les deux témoins sont [MCert] augmenté d'un [𝛕]-sommant. *)
 
-(** ** (1) Un [𝛕]-sommant n'entraîne pas l'annulation du sac
+(* ** (1) Un [𝛕]-sommant n'entraîne pas l'annulation du sac
 
     [MTau] est [MCert] plus une branche [𝛕] vers lui-même.  Sa **branche
     de délivrance** épingle la configuration sur la cible — le message
@@ -1575,7 +1576,7 @@ Proof.
   - apply MTau_below.
 Qed.
 
-(** ** (2) …et [CfgDisjunctionLocal] elle-même est FAUSSE
+(* ** (2) …et [CfgDisjunctionLocal] elle-même est FAUSSE
 
     [MFalse] remplace la garde copycat de [MCert] par une garde
     **morte**, et garde la branche [𝛕].  Alors :
@@ -1669,7 +1670,7 @@ Proof.
     intros t Ht. apply (proj2 (must_i_cgr _ _ Hc)). apply Hb. exact Ht.
 Qed.
 
-(** ** (3) …et le TROISIÈME disjoint ne se laisse pas imposer non plus
+(* ** (3) …et le TROISIÈME disjoint ne se laisse pas imposer non plus
 
     La forme corrigée [CfgDisjunctionLocal3] ajoute le disjoint (C) — une
     branche [𝛕] de la somme qui, sous le sac, est sous la cible.  Il
@@ -1712,7 +1713,7 @@ Proof.
   apply (proj2 (must_i_cgr _ _ Hc1)). exact Ht.
 Qed.
 
-(** ** Contrôle : la forme CORRIGÉE survit aux six témoins
+(* ** Contrôle : la forme CORRIGÉE survit aux six témoins
 
     [CfgDisjunctionLocal] avait été prise pour cible plusieurs sessions
     sans avoir jamais été instanciée sur un [𝛕]-sommant.  Pour ne pas
@@ -1756,7 +1757,7 @@ Proof.
     intros t Ht. apply (proj1 (must_i_cgr _ _ Hc)). exact Ht.
 Qed.
 
-(** ** …et les deux branches de la dichotomie décidable sont atteintes
+(* ** …et les deux branches de la dichotomie décidable sont atteintes
 
     [VACCS_Bad.cfg_derivable_or_selfret] tranche par [SelfRet].  Les deux
     issues se produisent, sur deux sommes du dossier :
@@ -1792,7 +1793,7 @@ Proof.
   - simpl. left. reflexivity.
 Qed.
 
-(** ** (4) …et la TROISIÈME obligation tombe aussi — le critère regarde
+(* ** (4) …et la TROISIÈME obligation tombe aussi — le critère regarde
        les mauvaises gardes
 
     Des trois obligations du découpage, celle-ci — « [g M] τ-stable et
@@ -1895,7 +1896,7 @@ Proof.
   intros t Ht. apply (proj2 (must_i_cgr _ _ Hc)). apply Hb. exact Ht.
 Qed.
 
-(** ** …et le critère RAFFINÉ classe [MSelf] correctement
+(* ** …et le critère RAFFINÉ classe [MSelf] correctement
 
     [VACCS_Bad.SelfRetBag] ne regarde que les gardes sur les **canaux du
     sac**.  [MSelf] y échappe — sa garde auto-rendante est sur [b], hors
@@ -1918,7 +1919,7 @@ Proof.
   - injection H as Hp. subst P. simpl in Hoc. contradiction.
 Qed.
 
-(** ** …et les deux branches de [VACCS_Bad.cfg_derivable_or_hard] sont
+(* ** …et les deux branches de [VACCS_Bad.cfg_derivable_or_hard] sont
     atteintes
 
     [MCert] tombe dans le **résidu** — sa garde sur [a] rend le message
@@ -1938,7 +1939,7 @@ Proof.
   simpl. left. reflexivity.
 Qed.
 
-(** …et pourtant [MCert] est dérivablement sous le **sac nu**, par la
+(* …et pourtant [MCert] est dérivablement sous le **sac nu**, par la
     descente à travers sa garde copycat
     ([VACCS_Matching.cfg_copycat_guard_below_bag]) : le message revient
     aussitôt et le choix gardé, en s'engageant, jette la garde sur [b].
@@ -1969,7 +1970,7 @@ Qed.
 
 
 
-(** ** Bilan : la disjonction ne se DÉCOUPE pas par un critère syntaxique
+(* ** Bilan : la disjonction ne se DÉCOUPE pas par un critère syntaxique
 
     Trois tentatives successives de scinder
     [VACCS_Matching.CfgDisjunctionLocal3] en obligations à **un seul**
@@ -2002,7 +2003,7 @@ Qed.
     [VACCS_Matching.cfg_tau_species]), soit un tout autre angle. *)
 
 
-(** ** Le client qui réfute le disjoint « source » *)
+(* ** Le client qui réfute le disjoint « source » *)
 
 Definition QCert : gproc := (𝛕 • ((g ①) : proc)) + ((cst e) ? ((g 𝟘) : proc)).
 Definition TCert2 : proc := (((cst b) ! (cst w) • 𝟘) : proc) ‖ ((g QCert) : proc).
@@ -2195,7 +2196,7 @@ Proof.
   apply Amsg_passes_TCert.
 Qed.
 
-(** ** Les deux disjonctions source-only sont réfutées *)
+(* ** Les deux disjonctions source-only sont réfutées *)
 
 Theorem cfg_disjunction_source_bag_is_false : ~ CfgDisjunctionSourceBag.
 Proof.
@@ -2225,7 +2226,7 @@ Proof.
   apply cfg_source_bag_of_source. exact H.
 Qed.
 
-(** ** …tandis que [CfgDisjunctionLocal], elle, TIENT sur cette instance
+(* ** …tandis que [CfgDisjunctionLocal], elle, TIENT sur cette instance
 
     C'est le point de la réfutation ci-dessus : ce qui tombe est la
     suppression de la cible, pas la disjonction.  Ici le disjoint local
@@ -2250,7 +2251,7 @@ Proof.
     intros t Hm. exact Hm.
 Qed.
 
-(** ** LE PRÉORDRE RELATIVISÉ NE DESCEND PAS AUX SOUS-SACS
+(* ** LE PRÉORDRE RELATIVISÉ NE DESCEND PAS AUX SOUS-SACS
 
     [msgs_below_tests] lit [msgs l ‖ p ⊑ₘᵤₛₜᵢ msgs l ‖ q] comme
     « [p ⊑ₘᵤₛₜᵢ q] **restreint aux tests qui portent le sac** ».  À un
@@ -2280,7 +2281,7 @@ Proof.
 Qed.
 
 
-(** ** ★ AJOUTER UNE SOMME À GARDE COPYCAT N'EST PAS INOFFENSIF — SOUS LE SAC
+(* ** ★ AJOUTER UNE SOMME À GARDE COPYCAT N'EST PAS INOFFENSIF — SOUS LE SAC
 
     [VACCS_Matching.cfg_derivable_of_copycats] exige que **tous** les
     sommants soient des copycats.  La tentation est de n'en peler que
@@ -2322,7 +2323,7 @@ Proof.
     [ eapply nil_not_good; eassumption | eapply TSg_not_good; eassumption ].
 Qed.
 
-(** Le cœur : une fois le message [b] volé et la réponse [e] absorbée,
+(* Le cœur : une fois le message [b] volé et la réponse [e] absorbée,
     il ne reste que [𝟘] face à [𝟘]. *)
 
 Lemma e_sync_fails :
@@ -2372,7 +2373,7 @@ Proof.
   all: inversion H4; subst; try reflexivity; try congruence.
 Qed.
 
-(** Le sac seul passe le client : il n'a aucune garde, donc aucun [com] à
+(* Le sac seul passe le client : il n'a aucune garde, donc aucun [com] à
     honorer, et le client réussit par son propre [𝛕]. *)
 
 Lemma must_nil_Pcc : ((g (𝟘 : gproc)) : proc) must_pass Pcc.
@@ -2388,7 +2389,7 @@ Proof.
   - intros p' t' μ1 μ2 Hd Hp' Ht'. exfalso. eapply nil_no_lts; exact Hp'.
 Qed.
 
-(** …et la somme ajoutée le fait échouer, par sa garde sur [b]. *)
+(* …et la somme ajoutée le fait échouer, par sa garde sur [b]. *)
 
 Lemma b_sync_fails :
   ~ ((((g (𝟘 : gproc)) : proc) ‖ ((g MCert) : proc)) must_pass Pcc).
@@ -2458,7 +2459,7 @@ Proof.
   apply (proj2 (must_i_cgr _ _ Hcgr2)). exact H2.
 Qed.
 
-(** ** ★★ [VACCS_Matching.OutChoice] EST FAUX
+(* ** ★★ [VACCS_Matching.OutChoice] EST FAUX
 
     Le résidu se ramène ([ax_below_cfg_of_out_choice]) au **choix** d'un
     résidu d'émission faible du membre gauche : si l'un d'eux est sous
@@ -2575,7 +2576,7 @@ Proof.
   apply (proj1 (must_i_cgr _ _ Hn)). exact Ht.
 Qed.
 
-(** La sémantique de l'instance, et l'inversion de ses résidus
+(* La sémantique de l'instance, et l'inversion de ses résidus
     d'émission : un [τ] engage l'une des deux branches, après quoi il ne
     reste qu'une émission, donc les résidus sont **exactement** [𝟘 ‖ P1]
     et [𝟘 ‖ P2]. *)
@@ -2635,7 +2636,7 @@ Proof.
   eapply OCp_no_good_out_residue; [ exact Hrun | exact Hout | exact Hres ].
 Qed.
 
-(** Le contrôle : l'inéquation est bel et bien **dérivable**, par la
+(* Le contrôle : l'inéquation est bel et bien **dérivable**, par la
     mise en commun.  Ce n'est donc pas un témoin d'incomplétude — c'est
     la réfutation de la route « descendre par un résidu d'émission ». *)
 
@@ -2651,7 +2652,7 @@ Proof.
   - apply ax_cgr. apply msgC_cgr.
 Qed.
 
-(** ** …ET AUCUN TÉMOIN DE VIDANGE NE MARCHE NON PLUS
+(* ** …ET AUCUN TÉMOIN DE VIDANGE NE MARCHE NON PLUS
 
     [VACCS_Matching.residue_reduces_to_bare] ramène le résidu à une
     comparaison **nue** : le rejeu produit un [qq] τ-stable non émetteur
@@ -2706,7 +2707,7 @@ Proof.
   - apply NilPi_not_below_nil. apply P2_not_below_nil.
 Qed.
 
-(** ** ★ LE TÉMOIN, EN UN SEUL ÉNONCÉ
+(* ** ★ LE TÉMOIN, EN UN SEUL ÉNONCÉ
 
     [OCp] réfute les **deux** routes « choisir un témoin » de ce
     développement, et il est en même temps **dérivable** — donc ce n'est
@@ -2769,7 +2770,7 @@ Qed.
 (*  ([ax_OCp_below_msg]).  Savoir si tout échec l'est est la question. *)
 (* ================================================================== *)
 
-(** Clause 1, gratuite : un τ de la cible ne coûte rien, [x' := x]. *)
+(* Clause 1, gratuite : un τ de la cible ne coûte rien, [x' := x]. *)
 Lemma below_tau_target : forall (p q q' : proc),
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> lts q τ q' -> p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q'.
 Proof.
@@ -2790,7 +2791,7 @@ Proof.
   intros p q H t Ht. eapply must_preserved_by_weak_nil_srv; [ exact Ht | exact H ].
 Qed.
 
-(** Clause 2 : le témoin.  La cible émet [(oc,v)] et son résidu est
+(* Clause 2 : le témoin.  La cible émet [(oc,v)] et son résidu est
     [msgs [] ‖ g 𝟘] ; AUCUN état que la gauche atteint sur la même
     action ne se place sous ce résidu — les résidus d'émission de [OCp]
     sont [𝟘 ‖ P1] et [𝟘 ‖ P2] ([OCp_out_residue_inv]), aux exigences
@@ -2811,7 +2812,7 @@ Proof.
   intros t Ht. apply Hbad. apply (below_of_tau_run _ _ Hrun2). exact Ht.
 Qed.
 
-(** ** THE POOLING ROUTE, EXERCISED ON THE VERY WITNESS THAT REFUTES THE
+(* ** THE POOLING ROUTE, EXERCISED ON THE VERY WITNESS THAT REFUTES THE
        DESCENT
 
     [out_choice_is_false] shows no single weak output residue of [g OCp]
@@ -2839,7 +2840,7 @@ Proof.
   - exists ((g P1) : proc). apply lts_choiceL. apply lts_tau.
 Qed.
 
-(** The internal choice of [OCp]'s two output residues is below [𝟘] —
+(* The internal choice of [OCp]'s two output residues is below [𝟘] —
     although NEITHER member is ([NilPi_not_below_nil]).  That asymmetry
     is the whole point: [ichoice] is the conjunction, and it is the
     conjunction that the semantics constrains. *)
@@ -2904,7 +2905,7 @@ Qed.
 End VACCS_DropProbes.
 
 
-(** * La branche régénérante de la dichotomie est FAUSSE
+(* * La branche régénérante de la dichotomie est FAUSSE
 
     L'énoncé visé par plusieurs sessions —
 
@@ -2959,7 +2960,7 @@ Definition MR : gproc := ((cst ra) ? PAr) + ((cst rb) ? PBr).
 Definition lr : list TypeOfActions := [(cst ra ▷ cst ru); (cst rb ▷ cst rw)].
 Definition PR : proc := (msgs lr) ‖ (g MR).
 
-(** Les deux successeurs de délivrance, écrits littéralement pour que les
+(* Les deux successeurs de délivrance, écrits littéralement pour que les
     pas [lts] soient des applications directes des constructeurs. *)
 Definition SAr : proc :=
   ((𝟘 : proc) ‖ ((((cst rb) ! (cst rw) • 𝟘)) ‖ (𝟘 : proc))) ‖ PAr.
@@ -3012,14 +3013,14 @@ Proof.
   apply cgr_fullpar; [ reflexivity | apply cgr_par_nil_rev ].
 Qed.
 
-(** [SAr] est bien la configuration [msgs l0 ‖ Mc] de l'énoncé. *)
+(* [SAr] est bien la configuration [msgs l0 ‖ Mc] de l'énoncé. *)
 Lemma SAr_cgr : SAr ≡* ((msgs [(cst rb ▷ cst rw)]) ‖ PAr).
 Proof.
   unfold SAr. simpl. apply cgr_fullpar; [ | reflexivity ].
   apply cgr_symm. apply ax_nil_par.
 Qed.
 
-(** L'hypothèse, gratuitement : un τ du serveur est déjà un pas [⊑ₘᵤₛₜᵢ]. *)
+(* L'hypothèse, gratuitement : un τ du serveur est déjà un pas [⊑ₘᵤₛₜᵢ]. *)
 Lemma PR_below_msgs : PR ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs lr).
 Proof.
   intros t Hm.
@@ -3036,7 +3037,7 @@ Proof.
   destruct H0 as [H|H]; inversion H.
 Qed.
 
-(** L'état atteint après la synchronisation sur [rc] : le serveur y émet
+(* L'état atteint après la synchronisation sur [rc] : le serveur y émet
     sur [re], que le client écoute. *)
 Definition InnerT : proc := (𝟘 : proc) ‖ (g ((cst re) ? (g ①))).
 Definition InnerS : proc :=
@@ -3131,7 +3132,7 @@ Proof.
   - intro H. apply msgs_fails_TRr. apply H. exact SAr_passes_TRr.
 Qed.
 
-(** ** CORRECTION DE LECTURE : cette sonde ne réfute PAS la disjonction
+(* ** CORRECTION DE LECTURE : cette sonde ne réfute PAS la disjonction
 
     [regenerating_successor_can_fail] dit que **le successeur [ra] échoue**,
     pas qu'aucun successeur ne marche — et c'est une distinction qui a été
@@ -3289,7 +3290,7 @@ Proof.
     exact (proj2 (must_i_cgr _ _ SBr_cgr)).
 Qed.
 
-(** ** …mais Phase A, elle, tient — et se dérive en trois coups
+(* ** …mais Phase A, elle, tient — et se dérive en trois coups
 
     Il faut séparer deux choses que le contre-exemple ci-dessus pourrait
     laisser confondre.  Ce qu'il réfute est la **descente** : le
@@ -3317,7 +3318,7 @@ Proof.
   apply ax_cgr. apply cgr_par_nil_rev.
 Qed.
 
-(** …et ici encore [CfgDisjunctionLocal] tient, par l'**autre** garde :
+(* …et ici encore [CfgDisjunctionLocal] tient, par l'**autre** garde :
     [rb] rend exactement le message qu'elle consomme, avec résidu [𝟘].
     C'est la même leçon que celle du tableau des instances : ce que
     [regenerating_successor_can_fail] réfute est le choix d'un successeur
@@ -3342,7 +3343,7 @@ Qed.
 
 End VACCS_RegenProbe.
 
-(** * AUCUNE délivrance n'est réversible — même pour une somme CANONIQUE
+(* * AUCUNE délivrance n'est réversible — même pour une somme CANONIQUE
 
     `must_i_delivery_reversible` et `copycat_delivery_below_target`
     ([VACCS_Matching.v]) donnent les deux cas où la délivrance *est*
@@ -3519,7 +3520,7 @@ Proof. intros q Hq. unfold XSA, XA, XKe in Hq. blastX. Qed.
 Lemma XSB_no_tau : forall q, ~ lts XSB τ q.
 Proof. intros q Hq. unfold XSB, XB, XKe in Hq. blastX. Qed.
 
-(** Les deux résidus des **gardes mortes** : plus rien ne peut bouger. *)
+(* Les deux résidus des **gardes mortes** : plus rien ne peut bouger. *)
 Lemma XRb_fails_XIt : ~ (XRb must_pass XIt).
 Proof.
   intro Hm. inversion Hm; subst.
@@ -3604,7 +3605,7 @@ Proof.
     + inversion H3; subst. apply m_now. apply good_par. right. apply good_success.
 Qed.
 
-(** C'est le champ [pt] qui fait tout le travail : il exige que **tous**
+(* C'est le champ [pt] qui fait tout le travail : il exige que **tous**
     les τ-successeurs passent, donc l'un qui rate suffit. *)
 Lemma XP_fails_XTa : ~ (XP must_pass XTa).
 Proof.
@@ -3634,7 +3635,7 @@ Proof.
   - intro H. apply XP_fails_XTb. apply H. exact XSB_passes_XTb.
 Qed.
 
-(** ** LA « DESCENTE » N'EST PAS LA RÈGLE MANQUANTE — elle est FAUSSE
+(* ** LA « DESCENTE » N'EST PAS LA RÈGLE MANQUANTE — elle est FAUSSE
 
     Des deux formes candidates pour la règle qui traiterait
     [VACCS_Matching.CfgUnstableLeft], celle-ci se réfute d'un coup :
@@ -3686,7 +3687,7 @@ Proof.
   - apply HnB. exact Hle.
 Qed.
 
-(** ** `CfgDisjunction` sur cette instance : c'est le disjoint SAC VIDE
+(* ** `CfgDisjunction` sur cette instance : c'est le disjoint SAC VIDE
 
     Ici c'est l'inverse de [cfg_disjunction_at_MCert] : le disjoint
     **descente** est faux ([no_delivery_is_reversible] : aucun des deux
@@ -3710,7 +3711,7 @@ Proof.
     + apply HnB. exact Hle.
 Qed.
 
-(** Et sur la troisième instance, [CfgDisjunctionLocal] tient par son
+(* Et sur la troisième instance, [CfgDisjunctionLocal] tient par son
     **premier** disjoint — la cible étant la gauche elle-même, l'inéquation
     au sac vide est la réflexivité.
 
@@ -3729,7 +3730,7 @@ Proof.
   left. intros t Hm. exact Hm.
 Qed.
 
-(** ** Le critère décidable route CETTE instance vers le PREMIER disjoint
+(* ** Le critère décidable route CETTE instance vers le PREMIER disjoint
 
     [VACCS_Bad.cfg_local_split] scinde
     [VACCS_Matching.CfgDisjunctionLocal] à une seule implication, sous
@@ -3764,7 +3765,7 @@ Qed.
 
 End VACCS_XProbe.
 
-(** * THE LEFT-HAND RESTRICTION IS NOT AN ARTEFACT — [MuteSem] EXCLUDES
+(* * THE LEFT-HAND RESTRICTION IS NOT AN ARTEFACT — [MuteSem] EXCLUDES
       A THREE-LINE PROCESS
 
     [VACCS_EquivalenceAx]'s completeness needs the left in [MuteSem]:
@@ -3888,7 +3889,7 @@ Proof.
 Qed.
 
 
-(** ** The complementary half: a bag that already carries an [mb]-message
+(* ** The complementary half: a bag that already carries an [mb]-message
 
     [mute_cfg_not_above_PL] covers the bags carrying no [mb]-message.
     The other bags are settled here, and the plan's estimate of the cost
@@ -3936,7 +3937,7 @@ Qed.
 End VACCS_MuteLimit.
 
 (* ===================================================================== *)
-(** * [Bad] IS NOT CLOSED UNDER PARALLEL COMPOSITION
+(* * [Bad] IS NOT CLOSED UNDER PARALLEL COMPOSITION
 
     [VACCS_Absorb.Harmless] has a compositional clause for [‖]
     ([hm_par]); [VACCS_Absorb.Bad] has none, and the plan notes recorded
@@ -3997,7 +3998,7 @@ Ltac blastBP :=
   | H : cst _ = cst _ |- _ => inversion H; subst; clear H
   end; try congruence.
 
-(** A τ-stable process emitting outside [S] is not [Bad S] — the only
+(* A τ-stable process emitting outside [S] is not [Bad S] — the only
     clause available is [bad_stuck], whose output field demands [S c]. *)
 Lemma not_bad_out : forall (S : chset) p c v p',
   (forall z, ~ lts p τ z) ->
@@ -4009,7 +4010,7 @@ Proof.
   - apply HS. eapply Ho; exact Hout.
 Qed.
 
-(** ** The positive half *)
+(* ** The positive half *)
 
 Lemma BPp_no_tau : forall z, ~ lts BPp τ z.
 Proof. intros z Hz. unfold BPp, BPguard in Hz. blastBP. Qed.
@@ -4064,7 +4065,7 @@ Proof.
     unfold BPq in Hz. inversion Hz; subst. apply bad_nil_any.
 Qed.
 
-(** ** The negative half
+(* ** The negative half
 
     Three nested states, each refuted by the one below it.  [BPz3] emits
     on [pf] and is τ-stable, so [not_bad_out] applies; [BPz2] must go
@@ -4182,7 +4183,7 @@ Proof.
   - match goal with H : lts (g (_ ? _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
 Qed.
 
-(** ** [Bad] is not closed under [‖]
+(* ** [Bad] is not closed under [‖]
 
     Both operands are [Bad] at [S = {pc}], the composition is not. *)
 Theorem bad_not_closed_under_par :
@@ -4197,7 +4198,7 @@ Proof.
   - eapply Hst. apply BPpq_tau.
 Qed.
 
-(** ** …and the mechanism, isolated
+(* ** …and the mechanism, isolated
 
     [Harmless] has [hm_out_step] — the residue of an emission on a
     channel of [S] stays harmless.  [Bad] cannot: here the same [BPp]
@@ -4299,7 +4300,7 @@ Qed.
 End VACCS_BadPar.
 
 (* ===================================================================== *)
-(** * A TRAPPED MESSAGE IS NOT DELETABLE
+(* * A TRAPPED MESSAGE IS NOT DELETABLE
 
     [VACCS_Matching.completeness_of_trapped_NF_step] keeps a restriction
     block exactly when its bag holds a message **trapped** on the
@@ -4345,7 +4346,7 @@ Definition TrIn : proc := ν (((cst te) ! (cst ty) • 𝟘) : proc).
 Definition TrT2 : proc :=
   ((g 𝟘) : proc) ‖ ((g ((cst te) ? ((g ①) : proc))) : proc).
 
-(** A server with no transitions at all fails every τ-stuck non-good
+(* A server with no transitions at all fails every τ-stuck non-good
     client: [must]'s [ex] field has nothing to fire on. *)
 Lemma inert_fails_stuck : forall p u,
   (forall a z, ~ lts p a z) ->
@@ -4379,7 +4380,7 @@ Proof.
   - inversion H3.
 Qed.
 
-(** ** The side with the trapped message: it pre-empts *)
+(* ** The side with the trapped message: it pre-empts *)
 
 Lemma TrS1_tau : lts TrS1 τ (ν (((g 𝟘) : proc) ‖ ((g 𝟘) : proc))).
 Proof.
@@ -4407,7 +4408,7 @@ Proof.
       [ apply res_nilnil_inert | apply TrT_no_tau | apply TrT_not_good | exact pt ].
 Qed.
 
-(** ** The side without it: it answers *)
+(* ** The side without it: it answers *)
 
 Lemma TrIn_ext_inv : forall μ z, lts TrIn (ActExt μ) z ->
   μ = ActOut (cst te, cst ty) /\ z = ν ((g 𝟘) : proc).
@@ -4487,7 +4488,7 @@ Proof.
   unfold TrIn. rewrite Hs at 2. apply lts_input.
 Qed.
 
-(** The [bvar 0] guard is invisible from outside — that is exactly what
+(* The [bvar 0] guard is invisible from outside — that is exactly what
     makes the message trapped, and it is why the only surviving offer is
     the one on the constant channel [ta]. *)
 Lemma TrS2_ext_inv : forall μ z, lts TrS2 (ActExt μ) z ->
@@ -4536,7 +4537,7 @@ Proof.
     apply TrIn_passes.
 Qed.
 
-(** Deleting the trapped message is unsound: the two are not
+(* Deleting the trapped message is unsound: the two are not
     must-equivalent, so no [⊢]-step may perform the deletion. *)
 Theorem trapped_message_is_not_deletable :
   TrS2 must_pass TrT
@@ -4550,7 +4551,7 @@ Qed.
 End VACCS_TrapProbe.
 
 (* ===================================================================== *)
-(** * `drain_forced_no_regen` CANNOT DROP ITS STABILITY HYPOTHESIS
+(* * `drain_forced_no_regen` CANNOT DROP ITS STABILITY HYPOTHESIS
 
     [VACCS_NormalForm.drain_forced_no_regen] concludes that a drain run
     leaves the process exactly where it was, from two hypotheses: [g M]
@@ -4599,7 +4600,7 @@ Proof.
   intros c Hin. simpl in Hin. contradiction.
 Qed.
 
-(** The τ lets the *process* produce the output the drain trace asks
+(* The τ lets the *process* produce the output the drain trace asks
     for, so the buffer is untouched. *)
 Lemma DM_run : ((g DM) : proc) ⟹[[ActOut (cst dc ▷ cst dv)]] ((g 𝟘) : proc).
 Proof.
@@ -4621,7 +4622,7 @@ Qed.
 End VACCS_DrainProbe.
 
 (* ===================================================================== *)
-(** * `lts` IS NOT STABLE UNDER SUBSTITUTION
+(* * `lts` IS NOT STABLE UNDER SUBSTITUTION
 
     Eliminating a restriction in general ([VACCS_EquivalenceAx.ResFree]
     for an arbitrary [ν p]) runs through [VACCS_ResNormalize.resg], which
@@ -4686,7 +4687,7 @@ Proof.
   intro Hz. apply SP_subst_tau_inv in Hz. simpl in Hz. discriminate.
 Qed.
 
-(** Read at the rule: [ax_tau_step]'s premise does not survive the
+(* Read at the rule: [ax_tau_step]'s premise does not survive the
     substitution its conclusion would have to survive. *)
 Corollary ax_tau_step_not_substitutive :
   SP ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ①) : proc)
@@ -4698,7 +4699,7 @@ Qed.
 
 End VACCS_SubstProbe.
 
-(** * Localising the gap in [SettleSim]: clause 2 fails ONLY on outputs
+(* * Localising the gap in [SettleSim]: clause 2 fails ONLY on outputs
 
     [ax_settle_sim] is the only rule general enough to carry
     [HardResidue], and its premise is a [SettleSim].  So the question
@@ -4737,13 +4738,13 @@ Section VACCS_Clause2.
 
 Context `{VP : VACCS_Parameters}.
 
-(** The semantic preorder, read at the forwarder type.  [ctx_pre] would
+(* The semantic preorder, read at the forwarder type.  [ctx_pre] would
     do, but spelling it out avoids any instance ambiguity — the pair
     type carries both [VACCS_gLts] and the forwarder instance. *)
 Definition FwBelow (x y : proc * MO (ExtAct TypeOfActions)) : Prop :=
   forall e : proc, x must_pass e -> y must_pass e.
 
-(** Adding the same pending message on both sides preserves the
+(* Adding the same pending message on both sides preserves the
     relation.  [fw_msg_swap] moves the message from the buffer to the
     client on either side, so this is two rewrites and nothing else. *)
 Lemma fw_below_add_msg : forall (a : TypeOfActions) (p q : proc)
@@ -4755,7 +4756,7 @@ Proof.
   apply fw_msg_swap. apply H. apply fw_msg_swap. exact Hm.
 Qed.
 
-(** …and if the right-hand side CONSUMES the message instead of storing
+(* …and if the right-hand side CONSUMES the message instead of storing
     it, the left is still below: the buffered message makes the right's
     delivery available, and a server [τ] only weakens
     ([must_preserved_by_lts_tau_srv]).  This is the forwarder-level
@@ -4772,7 +4773,7 @@ Proof.
   apply fw_tau_deliver. exact Hin.
 Qed.
 
-(** ** Clause 2 at an input: TRUE, with no side condition
+(* ** Clause 2 at an input: TRUE, with no side condition
 
     The left answers by ABSORBING the input into its own buffer, which
     is available at every forwarder state whatever the process does
@@ -4796,7 +4797,7 @@ Proof.
     + discriminate Hb.
 Qed.
 
-(** ** Clause 1: TRUE, by answering with zero steps *)
+(* ** Clause 1: TRUE, by answering with zero steps *)
 Theorem settle_clause1_holds :
   forall (x y y' : proc * MO (ExtAct TypeOfActions)),
   FwBelow x y -> y ⟶ y' -> exists x', x ⟹[[]] x' /\ FwBelow x' y'.
@@ -4806,7 +4807,7 @@ Proof.
   apply H. exact Hm.
 Qed.
 
-(** ** The localisation
+(* ** The localisation
 
     For the semantic relation, clause 2 can only fail on an OUTPUT.
     With clause 1 (above) and clause 3
@@ -4827,3 +4828,4 @@ Proof.
 Qed.
 
 End VACCS_Clause2.
+(* end hide *)

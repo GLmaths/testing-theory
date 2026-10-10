@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: the almost-sure must is a must on supports
+(* * lqCCS: the almost-sure must is a must on supports
 
     lqCCS has no recursion: every step consumes a prefix, so every run is
     finite.  The almost-sure must then only asks that, at the end of every
@@ -42,7 +43,7 @@ From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition.
 
-(** ** Sizes: every step makes a configuration smaller *)
+(* ** Sizes: every step makes a configuration smaller *)
 
 Fixpoint psize (P : proc) : nat :=
   match P with
@@ -81,7 +82,7 @@ Qed.
 Section Supports.
   Context `{QM : QuantumModel}.
 
-  (** ** Branch steps
+  (* ** Branch steps
 
       One branch of a step of the composition: a measurement chooses one
       outcome [k], with weight [M_k(ρ)]. *)
@@ -115,7 +116,7 @@ Section Supports.
       rewrite ?psize_subst; lia.
   Qed.
 
-  (** The components of a step are its branches, and conversely. *)
+  (* The components of a step are its branches, and conversely. *)
   Lemma cstep_branches ρ C s Δ C' ρ' :
     cstep ρ C s Δ → (C', ρ') ∈ Δ → bstep ρ C C' ρ'.
   Proof.
@@ -144,7 +145,7 @@ Section Supports.
       + by left.
   Qed.
 
-  (** ** The must on supports *)
+  (* ** The must on supports *)
 
   Inductive must_supp : conf → St → Prop :=
   | ms_now C ρ : conf_good C → must_supp C ρ
@@ -155,7 +156,7 @@ Section Supports.
       (∀ C' ρ', bstep ρ C C' ρ' → must_supp C' ρ') →
       must_supp C ρ.
 
-  (** ** Mass *)
+  (* ** Mass *)
 
   Lemma dmass_app (Δ Θ : dist conf) : dmass (Δ ++ Θ) = W_add (dmass Δ) (dmass Θ).
   Proof.
@@ -186,7 +187,7 @@ Section Supports.
       apply sop_tr.
   Qed.
 
-  (** ** Termination
+  (* ** Termination
 
       A step moves at least one non-successful component, and replaces each
       moved component by smaller ones.  The histogram of the sizes of the
@@ -207,7 +208,7 @@ Section Supports.
   Lemma count_size_nil i : count_size i [] = 0.
   Proof. done. Qed.
 
-  (** Close an arithmetic goal on counts, splitting the [decide]s (two of
+  (* Close an arithmetic goal on counts, splitting the [decide]s (two of
       them may differ only by [weight] vs [St], which [lia] cannot see). *)
   Ltac count_solve :=
     rewrite ?count_size_nil; repeat case_decide; simpl in *; first [lia | tauto].
@@ -224,7 +225,7 @@ Section Supports.
     - apply IH. intros y Hy. apply Hsm. set_solver.
   Qed.
 
-  (** [x] is moved by [σ]. *)
+  (* [x] is moved by [σ]. *)
   Definition moved (σ : Sched) (x : conf * St) : Prop :=
     ¬ conf_good x.1 ∧ ∃ Δ, cstep x.2 x.1 σ Δ.
 
@@ -244,7 +245,7 @@ Section Supports.
     intros Hs [C' ρ'] Hy. eapply bstep_size, cstep_branches; [exact Hs|exact Hy].
   Qed.
 
-  (** Sizes above the largest moved one are untouched; at that size, the
+  (* Sizes above the largest moved one are untouched; at that size, the
       count goes down. *)
   Lemma count_above σ Δ Δs m :
     Forall2 (λ cρ Δ, comp_step cρ.2 cρ.1 σ Δ) Δ Δs →
@@ -324,7 +325,7 @@ Section Supports.
       intros z Hz Hmz. apply elem_of_cons in Hz as [->|Hz]; [done|]. by apply Hmax.
   Qed.
 
-  (** Histogram of the sizes [N, N-1, …, 0]. *)
+  (* Histogram of the sizes [N, N-1, …, 0]. *)
   Fixpoint hist (N : nat) (Δ : dist conf) : list nat :=
     match N with
     | 0 => [count_size 0 Δ]
@@ -400,7 +401,7 @@ Section Supports.
     - by apply (count_at σ Δ Δs m).
   Qed.
 
-  (** Every run reaches a stable distribution. *)
+  (* Every run reaches a stable distribution. *)
   Lemma dstep_sn N Δ :
     bounded N Δ → Acc (λ Δ' Δ, ∃ σ, dstep Δ σ Δ') Δ.
   Proof.
@@ -426,7 +427,7 @@ Section Supports.
     - by exists (S n).
   Qed.
 
-  (** ** From the must on supports to the almost-sure must *)
+  (* ** From the must on supports to the almost-sure must *)
 
   Lemma dmass_cons x (Δ : dist conf) : dmass (x :: Δ) = W_add (tr x.2) (dmass Δ).
   Proof. done. Qed.
@@ -444,7 +445,7 @@ Section Supports.
       unfold sop_apply, meas_branch; rewrite app_szero; apply tr_szero.
   Qed.
 
-  (** Every component satisfies the must on supports. *)
+  (* Every component satisfies the must on supports. *)
   Definition all_supp (Δ : dist conf) : Prop := ∀ C ρ, (C, ρ) ∈ Δ → must_supp C ρ.
 
   Lemma concat_elem {A} (y : A) Δs : y ∈ concat Δs → ∃ Δx, Δx ∈ Δs ∧ y ∈ Δx.
@@ -490,7 +491,7 @@ Section Supports.
     by eapply all_supp_step.
   Qed.
 
-  (** In a stable distribution of components passing the must on supports,
+  (* In a stable distribution of components passing the must on supports,
       all the mass has succeeded. *)
   Lemma stable_succ Δ : all_supp Δ → dstable Δ → dmass_of conf_good Δ = dmass Δ.
   Proof.
@@ -523,7 +524,7 @@ Section Supports.
   Qed.
 End Supports.
 
-(** ** From the almost-sure must to the must on supports
+(* ** From the almost-sure must to the must on supports
 
     By contraposition: a component that fails the must on supports is
     followed, with its own schedulers, until it is stuck; the run is then
@@ -543,7 +544,7 @@ Section Converse.
   Lemma W_le_add_l a b : W_le b (W_add a b).
   Proof. rewrite <- (W_add_zero b) at 1. apply W_add_mono, W_zero_le. Qed.
 
-  (** *** Building steps *)
+  (* *** Building steps *)
 
   Lemma Forall2_elem_l {A B} (R : A → B → Prop) l1 l2 x :
     Forall2 R l1 l2 → x ∈ l1 → ∃ y, y ∈ l2 ∧ R x y.
@@ -605,7 +606,7 @@ Section Converse.
     - eapply elem_concat; [exact HΔx|]. set_solver.
   Qed.
 
-  (** *** Chains of steps, and the runs they give *)
+  (* *** Chains of steps, and the runs they give *)
 
   Fixpoint is_chain (Δ : dist conf) (l : list (dist conf)) : Prop :=
     match l with
@@ -662,7 +663,7 @@ Section Converse.
       destruct n as [|n]; [left; by exists σ|]. simpl. apply IH; done.
   Qed.
 
-  (** *** Phase 1: follow a failing component until it is stuck *)
+  (* *** Phase 1: follow a failing component until it is stuck *)
 
   Lemma follow C ρ (Δ : dist conf) :
     (C, ρ) ∈ Δ → ¬ must_supp C ρ →
@@ -688,7 +689,7 @@ Section Converse.
     by exists s.
   Qed.
 
-  (** *** Phase 2: complete a run until it is stable *)
+  (* *** Phase 2: complete a run until it is stable *)
 
   Lemma complete_run N (Δ : dist conf) :
     bounded N Δ → ∃ l, is_chain Δ l ∧ dstable (lastd Δ l).
@@ -703,7 +704,7 @@ Section Converse.
     by exists σ.
   Qed.
 
-  (** *** Masses *)
+  (* *** Masses *)
 
   Lemma dmass_of_app (Δ Θ : dist conf) :
     dmass_of conf_good (Δ ++ Θ) = W_add (dmass_of conf_good Δ) (dmass_of conf_good Θ).
@@ -758,7 +759,7 @@ Section Converse.
       + simpl. apply (IH Δ1 n Hc).
   Qed.
 
-  (** *** The converse *)
+  (* *** The converse *)
 
   Theorem must_as_must_supp C ρ : pmust_as (dpoint C ρ) → must_supp C ρ.
   Proof.
@@ -800,13 +801,14 @@ Section Converse.
     apply Hws. etrans; [exact Hn|]. apply (chain_succ_le _ _ n Hc).
   Qed.
 
-  (** ** The characterisation *)
+  (* ** The characterisation *)
 
   Theorem must_as_iff_must_supp C ρ : pmust_as (dpoint C ρ) ↔ must_supp C ρ.
   Proof. split; [apply must_as_must_supp|apply must_supp_must_as]. Qed.
 
-  (** For lqCCS: [(P, ρ) must_as Q] iff the must on supports of [(P, Q)]
+  (* For lqCCS: [(P, ρ) must_as Q] iff the must on supports of [(P, Q)]
       in memory [ρ]. *)
   Corollary lq_must_as_iff P ρ Q : (P, ρ) must_as Q ↔ must_supp (P, Q) ρ.
   Proof. apply must_as_iff_must_supp. Qed.
 End Converse.
+(* end hide *)

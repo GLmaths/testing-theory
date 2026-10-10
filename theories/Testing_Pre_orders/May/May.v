@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -178,7 +179,7 @@ Qed.
 
 (********************************* [may] and (co-)weak transitions **********************************************)
 
-(** [may] is preserved backwards along a pure-τ weak transition of the
+(* [may] is preserved backwards along a pure-τ weak transition of the
     server or the client — used by both the plain and the co-trace
     characterisations of May ([DefinitionTI.v]/[DefinitionTIco.v]), so
     it lives here rather than being duplicated in either. *)
@@ -221,7 +222,7 @@ Lemma may_wt_tau_client (r : P) (t1 t2 : T) :
   t1 ⟹ t2 -> r may_pass t2 -> r may_pass t1.
 Proof. intros w hm. eapply may_wt_nil_client; eauto. Qed.
 
-(** The co-trace analogues, for the *process* side ([DefinitionTIco.v]
+(* The co-trace analogues, for the *process* side ([DefinitionTIco.v]
     puts the duality there, never on the test/client — see that file).
     With an empty trace, [cowt] only ever uses its
     [cowt_nil]/[cowt_tau] constructors (no dual action involved), so
@@ -245,3 +246,4 @@ Proof. intros w hm. eapply may_wt_nil_server_co; eauto. Qed.
 
 End May_and_wt.
 
+(* end hide *)

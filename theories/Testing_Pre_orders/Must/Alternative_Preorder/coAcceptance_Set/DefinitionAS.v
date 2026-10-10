@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -30,11 +31,14 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA S
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS Subset_Act.
 
 (* * Alternative preorder for Must based on acceptance-sets *)
+(* end hide *)
 
 (** ** Label abstractions *)
+(* begin hide *)
 
 (* The tests act over [A]; the processes may act over another alphabet
    [Aproc], linked to [A] by [sync] (on one alphabet, [sync] is [dual]). *)
+(* end hide *)
 Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} :=
@@ -44,8 +48,10 @@ Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A →
     (** Process-side condition for label abstractions,  Definition 5 (2) **)
     abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ ⌈ Φ ⌉ (coR p) -> (Φ β') ∈ ⌈ Φ ⌉ (coR p);
   }.
+(* begin hide *)
 
 Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_} {_} {_} {_}.
+(* end hide *)
 
 
 (** ** Finitary Label abstractions *)
@@ -63,12 +69,15 @@ Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ
   }.
 
 (** ** Termination condition *)
+(* begin hide *)
 Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
   (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
 
 Notation "p ₁≼ₐₛ q" := (bhv_pre_cond1 p q) (at level 70).
+(* end hide *)
 
 (** ** Smyth preorder on acceptance sets *)
+(* begin hide *)
 Definition bhv_pre_cond2 `{
   gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
@@ -78,6 +87,7 @@ Definition bhv_pre_cond2 `{
     ∃ p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
 
 Notation "p ₂≼ₐₛ q" := (bhv_pre_cond2 p q) (at level 70).
+(* end hide *)
 
 (** ** Definition of the alternative preorder *)
 Definition bhv_pre `{
@@ -85,6 +95,7 @@ Definition bhv_pre `{
   gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
     (p : P) (q : Q) := 
       p ₁≼ₐₛ q /\ p ₂≼ₐₛ q.
+(* begin hide *)
 
 Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 
@@ -200,5 +211,4 @@ Proof.
     { exists μ'. repeat split; eauto. }
     eapply map_gamma_of_action;eauto.
 Qed.
-
-
+(* end hide *)

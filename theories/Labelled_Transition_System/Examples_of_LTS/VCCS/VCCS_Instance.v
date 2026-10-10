@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -34,11 +35,13 @@ From TestingTheory Require Import
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
   DefinitionAS Equivalence.
 From TestingTheory Require Export VCCS VCCS.Congruence.
+(* end hide *)
 
 
 Section VCCS_lts.
 
 Context `{VP : VCCS_Parameters}.
+(* begin hide *)
 Existing Instance VP.
 
 (* State Transition System (STS-reduction) *)
@@ -2818,7 +2821,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   intro μ; simpl in *.
-  exists (InputOutputActions.co μ).
+  exists (InputOutputActions.io_co μ).
   symmetry. eapply dual_co.
 Defined.
 
@@ -2877,12 +2880,14 @@ Next Obligation.
   intros ? ? ? ? ? Imp ;simpl in *.
   inversion Imp.
 Qed.
+(* end hide *)
 
 #[global] Program Instance VCCS_gLtsOBAFB : gLtsObaFB proc (ExtAct TypeOfActions).
 Next Obligation.
   intros ? ? ? ? ? Imp ;simpl in *.
   inversion Imp.
 Qed.
+(* begin hide *)
 
 #[global] Program Instance VCCS_gLtsOBAFW : gLtsObaFW proc (ExtAct TypeOfActions).
 Next Obligation.
@@ -2893,6 +2898,7 @@ Next Obligation.
   intros ? ? ? ? ? Imp ;simpl in *.
   inversion Imp.
 Qed.
+(* end hide *)
 
 #[global] Program Instance VCCS_gFiniteOutputChain_LtsOba
  : FiniteOutputChain_LtsOba proc := {| lts_oba_mo p := empty ; |}.
@@ -2906,6 +2912,7 @@ Qed.
 Next Obligation.
   intros. simpl in *. inversion H.
 Qed.
+(* begin hide *)
 
 #[global] Program Instance VCCS_gLtsFiniteImage : FiniteImagegLts proc (ExtAct TypeOfActions).
 Next Obligation.
@@ -3653,5 +3660,6 @@ Next Obligation.
       eapply gmultiset_elem_of_dom. eapply PreCoEquiv. symmetry. eauto.
       eapply gmultiset_elem_of_dom. eauto.
 Qed.
+(* end hide *)
 
 End VCCS_lts.

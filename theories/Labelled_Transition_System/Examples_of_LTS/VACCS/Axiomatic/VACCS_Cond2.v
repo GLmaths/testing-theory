@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Cashing in [⊑ₘᵤₛₜᵢ]: the acceptance condition, with the forwarder gone
+(* * Cashing in [⊑ₘᵤₛₜᵢ]: the acceptance condition, with the forwarder gone
 
     [must_iff_acceptance_set_VACCS] states everything at [p ▷ ∅], and
     [VACCS_ReadySet.v] explains why that is not optional.  But
@@ -63,7 +64,7 @@ Section VACCS_Cond2.
 
 Context `{VP : VACCS_Parameters}.
 
-(** Typeclass resolution for [terminate]/[cnv] at the pair type diverges at
+(* Typeclass resolution for [terminate]/[cnv] at the pair type diverges at
     the default depth; capping it fixes the elaboration.  (Everything else
     at the pair type — [⟶], [⟹], [↛] — is fine, because there the instance
     is pinned by a surrounding [inter_step].) *)
@@ -78,7 +79,7 @@ Proof.
   rewrite <- Hm in Hc. apply gmultiset_elem_of_empty in Hc. exact Hc.
 Qed.
 
-(** Convergence at [ε], which is [bhv_pre_cond2]'s premise: an empty buffer
+(* Convergence at [ε], which is [bhv_pre_cond2]'s premise: an empty buffer
     can never fill, so the forwarder's [τ]-successors are the process's. *)
 Lemma fw_nil_terminate : forall (p : proc), p ⤓ -> (p ▷ ∅) ⤓.
 Proof.
@@ -105,7 +106,7 @@ Proof.
     + destruct HB as (a & p' & m' & Hm & _ & _). eapply empty_not_disj. exact Hm.
 Qed.
 
-(** ** The acceptance condition at the empty trace, on bare processes *)
+(* ** The acceptance condition at the empty trace, on bare processes *)
 
 Theorem must_i_cond2_nil : forall (p q : proc), Static p -> Static q ->
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q ->
@@ -149,7 +150,7 @@ Proof.
     unfold non_blocking_output, is_output in Hb. apply Hb. eexists; reflexivity.
 Qed.
 
-(** ** Input observation, syntactically
+(* ** Input observation, syntactically
 
     One line, and it is what removes the need for [bhv_pre_cond2] at
     input-bearing traces. *)
@@ -158,7 +159,7 @@ Lemma must_i_feed : forall c v (p q : proc),
   p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((c ! v • 𝟘) ‖ q).
 Proof. intros c v p q H. apply must_i_par_compat_r. exact H. Qed.
 
-(** * The acceptance condition at an INPUT-bearing trace
+(* * The acceptance condition at an INPUT-bearing trace
 
     [must_i_feed] above collapses an input observation back to [ε] by
     putting the message in parallel.  That is cheap and sound, but it
@@ -180,7 +181,7 @@ Proof. intros c v p q H. apply must_i_par_compat_r. exact H. Qed.
     what comes back out is precisely where a stable sum's input guards
     become observable. *)
 
-(** ** Convergence at an arbitrary buffer
+(* ** Convergence at an arbitrary buffer
 
     [cond2]'s premise is convergence along the trace, and on the [Static]
     fragment it holds at *any* buffer: a [τ] is either the process's own
@@ -238,7 +239,7 @@ Proof.
       apply IH. eapply (fw_static_wt [μ] (p ▷ m) (q1 ▷ m1)); [ exact HS | exact Hq ].
 Qed.
 
-(** ** The condition itself
+(* ** The condition itself
 
     Read [cond2] at the trace [[c?]] — [fw_wt_feed] turns a run of
     [q ▷ {c!v}] into one of [q ▷ ∅] over that trace — and unfold the
@@ -284,7 +285,7 @@ Proof.
     unfold non_blocking_output, is_output in Hb. apply Hb. eexists; reflexivity.
 Qed.
 
-(** ** Feeding is reversible — the converse of [fw_wt_feed]
+(* ** Feeding is reversible — the converse of [fw_wt_feed]
 
     A run of [p ▷ ∅] over the trace [[a?]] is always a run of
     [p ▷ {a!}] over [ε].  The input step is either the buffer absorbing
@@ -329,7 +330,7 @@ Proof.
     + destruct HC as (b & m' & Hb & _ & _). discriminate Hb.
 Qed.
 
-(** The acceptance condition, stated purely as "hand both sides the same
+(* The acceptance condition, stated purely as "hand both sides the same
     message and compare what they can still emit". *)
 
 Corollary must_i_cond2_fed : forall (p q : proc) c v, Static p -> Static q ->
@@ -350,7 +351,7 @@ Proof.
   exact H.
 Qed.
 
-(** * What the semantics says about a SURPLUS guard, in reachability form
+(* * What the semantics says about a SURPLUS guard, in reachability form
 
     Take stable sums with `g M ⊑ₘᵤₛₜᵢ g N` and a channel [c] that [M]
     offers and [N] does not.  Hand both sides the message [c!v].  The
@@ -413,7 +414,7 @@ Proof.
     apply gmultiset_elem_of_singleton in Hin. injection Hin as Hin. congruence.
 Qed.
 
-(** * [Settles] — the reachability predicate the obligations should use
+(* * [Settles] — the reachability predicate the obligations should use
 
     "[x] can reach, by internal steps alone, a stable state whose pending
     outputs all lie on channels in [S]".
@@ -450,7 +451,7 @@ Proof.
   intros S x Hst He. exists x. split; [ apply wt_nil | ]. split; [ exact Hst | exact He ].
 Qed.
 
-(** [surplus_settles], restated: a surplus guard's obligation *is* a
+(* [surplus_settles], restated: a surplus guard's obligation *is* a
     [Settles] fact, handed over by the semantics. *)
 
 Corollary surplus_Settles : forall (M N : gproc) c v, gStatic M -> gStatic N ->
@@ -465,7 +466,7 @@ Proof.
   intros d w r Hr. eapply He. exact Hr.
 Qed.
 
-(** * A settling simulation, and the preorder from it
+(* * A settling simulation, and the preorder from it
 
     [bhv_pre_cond2] quantifies over *all* traces, so a per-channel
     [Settles] fact is not by itself enough to justify a rule.  What is
@@ -520,7 +521,7 @@ Definition SettleSim
   /\ (forall x y μ y', R x y -> y ⟶[μ] y' -> exists x', x ⟹{μ} x' /\ R x' y')
   /\ (forall x y, R x y -> y ↛ -> Settles (emits y) x).
 
-(** Two closure facts that make a [SettleSim] modular: the diagonal is
+(* Two closure facts that make a [SettleSim] modular: the diagonal is
     one, and unions of them are.  Together they mean a construction only
     has to supply its *off-diagonal* part and show that part steps into
     (itself ∪ the diagonal) — which is how [restrict_by_settle] is
@@ -593,7 +594,7 @@ Proof.
     apply coR_abs_pair_iff. apply He. apply coR_abs_pair_iff. exact Ha.
 Qed.
 
-(** * Buffers and traces, in both directions
+(* * Buffers and traces, in both directions
 
     [fw_wt_feed_list] turns a run of [p ▷ bag l] into one of [p ▷ ∅] over
     the trace [feed l]; these are the converse and the monotonicity fact
@@ -654,7 +655,7 @@ Proof.
     eapply wt_concat; [ exact Hlift | exact Hrest ].
 Qed.
 
-(** * Restriction from a settling certificate — both step clauses free
+(* * Restriction from a settling certificate — both step clauses free
 
     For a transition-sub-sum [M' ⊆ M] the relation
 
@@ -723,7 +724,7 @@ Proof.
   - right. exists (∅ : MO (ExtAct TypeOfActions)). split; reflexivity.
 Qed.
 
-(** * The certificate's target set is just the buffer's channels
+(* * The certificate's target set is just the buffer's channels
 
     A guarded sum emits nothing of its own, so [emits (g M' ▷ m)] is
     exactly "some message of [m] is on this channel".  Two consequences,
@@ -783,7 +784,7 @@ Proof.
   intros d Hd. apply emits_gsum_iff. exact Hd.
 Qed.
 
-(** * Adding messages after settling
+(* * Adding messages after settling
 
     The remaining case of the certificate is a buffer mixing *surplus*
     channels (offered by [M], not by [N]) with channels [M] does not
@@ -839,7 +840,7 @@ Proof.
         apply (He d w z). exact Hz.
 Qed.
 
-(** * The whole surplus buffer at once — no iteration needed
+(* * The whole surplus buffer at once — no iteration needed
 
     [surplus_settles] handles one surplus message; the multi-message case
     turns out to need **no iteration at all**, because the right-hand
@@ -892,7 +893,7 @@ Proof.
     eapply emits_gsum_chans. exact Hin.
 Qed.
 
-(** * Buffers are bags
+(* * Buffers are bags
 
     The forwarder only ever stores *outputs*, so every buffer reachable
     from [∅] is a [bag].  [OutOnly] records that, is preserved by the
@@ -930,7 +931,7 @@ Proof.
     + exists (a :: l). simpl. rewrite Hl. reflexivity.
 Qed.
 
-(** * The certificate, for every buffer the right-hand side refuses
+(* * The certificate, for every buffer the right-hand side refuses
 
     Combining [outonly_bag] with [surplus_settles_bag]: whenever [N]
     refuses every channel carried by the buffer, the certificate holds —
@@ -962,7 +963,7 @@ Proof.
   eapply surplus_settles_bag; eassumption.
 Qed.
 
-(** * Settling in stages
+(* * Settling in stages
 
     [Settles_add] finishes as soon as the added messages are refused.
     When they are *not* — which the residual case shows really happens —
@@ -996,7 +997,7 @@ Proof.
   apply (fw_tau_run_add (x1 ▷ x2) (y1 ▷ y2) k). exact Hw.
 Qed.
 
-(** * [⊑ₘᵤₛₜᵢ 𝟘], read as settling
+(* * [⊑ₘᵤₛₜᵢ 𝟘], read as settling
 
     Pairs with [VACCS_Bad.below_nil_iff] ("`p ⊑ₘᵤₛₜᵢ 𝟘` iff `p` fails
     every τ-stuck, non-good client"): on the acceptance-set side the same
@@ -1047,7 +1048,7 @@ Proof.
     eapply (emits_gsum_chans 𝟘). exact Hin.
 Qed.
 
-(** * Input commutation is FALSE — machine-checked
+(* * Input commutation is FALSE — machine-checked
 
     It is tempting to think that in an asynchronous calculus the order of
     two nested input guards cannot matter: both `c ? (d ? P)` and
@@ -1136,13 +1137,13 @@ Proof.
   eapply fw_gsum_empty_no_emit. exact Hr0.
 Qed.
 
-(** The same, with the relation restricted to buffers that really are
+(* The same, with the relation restricted to buffers that really are
     bags of outputs — which is all the forwarder can reach from [∅].  The
     three [OutOnly] closure lemmas make every clause go through
     unchanged, and the certificate may then be stated for [OutOnly]
     buffers only, which is what [certificate_N_refuses] needs. *)
 
-(** The simulation that [restrict_by_settle_out] exhibits, **named**.
+(* The simulation that [restrict_by_settle_out] exhibits, **named**.
 
     Isolating it is what turns the restriction into a *derived* law: the
     system's primitive becomes [ax_settle_sim] — any [SettleSim] proves an
@@ -1214,7 +1215,7 @@ Proof.
     split; [ apply OutOnly_empty | split; reflexivity ].
 Qed.
 
-(** ** A buffered message is a message on the client
+(* ** A buffered message is a message on the client
 
     The buffer, a server-side pending message and a client-side pending
     message are all the same thing.  [VACCS_Precongruence.must_msg_swap]
@@ -1251,7 +1252,7 @@ Proof.
     exact Hm.
 Qed.
 
-(** ** A syntactic message bag IS the forwarder's buffer
+(* ** A syntactic message bag IS the forwarder's buffer
 
     [msgs l ‖ p] and [p ▷ bag l] pass exactly the same tests.  Two moves
     do it, one per level:
@@ -1292,7 +1293,7 @@ Proof.
       eapply Hcgr; [ | exact Hx ]. apply Hrot.
 Qed.
 
-(** Hence a comparison of two configurations is a comparison of two
+(* Hence a comparison of two configurations is a comparison of two
     forwarder states with the bags loaded into their buffers.  Recall
     [ctx_pre p q] is [∀ t, p must_pass t -> q must_pass t]. *)
 
@@ -1305,7 +1306,7 @@ Proof.
   - intros Hall e He. apply msgs_buffer_iff. apply Hall. apply msgs_buffer_iff. exact He.
 Qed.
 
-(** And hence the *acceptance condition* is available between two
+(* And hence the *acceptance condition* is available between two
     forwarder states with **loaded** buffers, not only at [▷ ∅].
 
     This is the enabling lemma for the message layer.  The repository's
@@ -1325,7 +1326,7 @@ Proof.
   apply msgs_buffer_iff. apply Hpre. apply msgs_buffer_iff. exact Ht.
 Qed.
 
-(** ** THE CONFIGURATION PREORDER *IS* THE ACCEPTANCE PREORDER ON LOADED STATES
+(* ** THE CONFIGURATION PREORDER *IS* THE ACCEPTANCE PREORDER ON LOADED STATES
 
     [msgs_accept] has a converse, by the repository's own
     [Soundness.soundness_fw] — which, like [Completeness.completeness_fw],
@@ -1352,7 +1353,7 @@ Proof.
   intros l l' p q. split; [ apply msgs_accept | apply msgs_sound ].
 Qed.
 
-(** And hence the settling simulation — the acceptance-set counterpart of
+(* And hence the settling simulation — the acceptance-set counterpart of
     the two [must]-level bridges — proves inequations between
     *configurations*, not only between bare processes.  Same statement as
     [VACCS_Cond2.settle_sim_below], with the buffers loaded. *)
@@ -1373,7 +1374,7 @@ Qed.
 
 
 
-(** * THE COINDUCTIVE, SET-BASED READING OF THE HYPOTHESIS
+(* * THE COINDUCTIVE, SET-BASED READING OF THE HYPOTHESIS
 
     [bhv_pre_cond2] quantifies over *whole traces*, and every attempt to
     use it below the bag has foundered on the same point: it hands back a
@@ -1433,7 +1434,7 @@ Proof.
 Qed.
 
 
-(** ** [c_now], read as [Settles]
+(* ** [c_now], read as [Settles]
 
     The first brick of the set-based route: the coinductive relation's
     "now" clause *is* the settling condition, once the abstracted ready
@@ -1456,7 +1457,7 @@ Proof.
   apply Hincl in Hin. apply coR_abs_pair_iff in Hin. exact Hin.
 Qed.
 
-(** At a singleton it degenerates to the reading already available from
+(* At a singleton it degenerates to the reading already available from
     [bhv_pre_cond2] at the empty trace — as it must, the two being
     equivalent.  It is recorded because it is the base case of the
     intended recursion, and because it fixes the instances: the [⤓] on
@@ -1481,7 +1482,7 @@ Proof.
 Qed.
 
 
-(** ** [c_step]: one action, including an EMISSION
+(* ** [c_step]: one action, including an EMISSION
 
     This is what the coinductive presentation buys, and it is exactly
     what no reading of [bhv_pre_cond2] could give.  [c_step] carries the
@@ -1554,7 +1555,7 @@ Proof.
 Qed.
 
 
-(** ** Iterating the coinductive step along a WHOLE TRACE
+(* ** Iterating the coinductive step along a WHOLE TRACE
 
     [c_step] carries the relation across **one** visible action.
     Iterating it along a trace is a plain induction, and the only care
@@ -1645,7 +1646,7 @@ Proof.
 Qed.
 
 
-(** ** A simulation between SETS — the set-based counterpart of [SettleSim]
+(* ** A simulation between SETS — the set-based counterpart of [SettleSim]
 
     [SettleSim] relates LTS *states*, and that is exactly why it cannot
     carry the set-based information the coinductive presentation
@@ -1709,7 +1710,7 @@ Proof.
     eapply fw_terminate_static; [ exact Hs | apply Nat.le_refl ].
 Qed.
 
-(** The converse of [msgs_copre]: at singletons the coinductive relation
+(* The converse of [msgs_copre]: at singletons the coinductive relation
     is the configuration preorder. *)
 
 Lemma copre_msgs : forall (l l' : list TypeOfActions) (p q : proc),
@@ -1722,7 +1723,7 @@ Proof.
   apply equivalence_co_inductive_acc_set_and_acc_set. exact H.
 Qed.
 
-(** …and the soundness statement a rule can be built on: exhibiting a
+(* …and the soundness statement a rule can be built on: exhibiting a
     set-simulation relating the two singletons establishes the
     configuration inequation. *)
 
@@ -1749,7 +1750,7 @@ Proof.
 Qed.
 
 
-(** ** …AND WHY IT MUST NOT BECOME A RULE — the clauses are satisfied by
+(* ** …AND WHY IT MUST NOT BECOME A RULE — the clauses are satisfied by
        [copre] itself
 
     [set_sim_below_bag] is sound, and it was briefly added to the system
@@ -1862,7 +1863,7 @@ Proof.
 Qed.
 
 
-(** ** The repository's OWN completeness tests, read at the forwarder
+(* ** The repository's OWN completeness tests, read at the forwarder
 
     The generic completeness proof for acceptance sets
     ([coAcceptance_Set/Completeness.v]) builds two tests: one for
@@ -1906,3 +1907,4 @@ Proof.
 Qed.
 
 End VACCS_Cond2.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: the process LTS on one alphabet
+(* * lqCCS: the process LTS on one alphabet
 
     Processes [(P, ρ)] (a program and its memory) and observers (programs
     without memory, [lqCCS_Observers.v]) share one alphabet [lact]:
@@ -47,7 +48,7 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Co
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Output_Chain Lts_FW.
 From TestingTheory Require Import InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction.
 
-(** ** The alphabet *)
+(* ** The alphabet *)
 
 Inductive lact : Type :=
 | LOut (c : chan) (v : val)
@@ -77,7 +78,7 @@ Proof.
   by intros [].
 Defined.
 
-(** The co-action: messages are swapped, operations on the memory are their
+(* The co-action: messages are swapped, operations on the memory are their
     own co-actions. *)
 Definition lco (a : lact) : lact :=
   match a with LOut c v => LIn c v | LIn c v => LOut c v | a => a end.
@@ -109,7 +110,7 @@ Proof. intros Hη ->. destruct β; simpl in *; tauto. Qed.
 #[global] Instance lact_UniqueDual : UniqueDual lact.
 Proof. unfold UniqueDual. intros η β Hd. exact Hd. Qed.
 
-(** ** An output is a parallel component *)
+(* ** An output is a parallel component *)
 
 Lemma cgr_par_comm P Q : PPar P Q ≡* PPar Q P.
 Proof. apply cgr_of_cs, cs_par_comm. Qed.
@@ -148,7 +149,7 @@ Proof.
     apply cgr_par_comm.
 Qed.
 
-(** ** Steps of a program in parallel with an output *)
+(* ** Steps of a program in parallel with an output *)
 
 Notation oproc t c v := (PSend t c (EVal v)).
 
@@ -172,7 +173,7 @@ Proof.
   exists (LTau (SPair t' t)). split; [done|]. eapply ps_syncR; [done|]. by constructor.
 Qed.
 
-(** What [Q ∥ c!v] can do: a step of [Q], the output, or [Q] receiving it. *)
+(* What [Q ∥ c!v] can do: a step of [Q], the output, or [Q] receiving it. *)
 Lemma ustep_par_out_inv Q t c v u X :
   ustep (PPar Q (oproc t c v)) u X →
     (∃ Q', ustep Q u Q' ∧ X = PPar Q' (oproc t c v))
@@ -201,7 +202,7 @@ Qed.
 Lemma cgr_send_tag t t' c v : oproc t c v ≡* oproc t' c v.
 Proof. apply cgr_of_cs, cs_send_val. by constructor. Qed.
 
-(** Two emissions of the same message leave congruent programs. *)
+(* Two emissions of the same message leave congruent programs. *)
 Lemma out_det P t t' c v P1 P2 :
   pstep P (LAct t (AOut c v)) P1 → pstep P (LAct t' (AOut c v)) P2 → P1 ≡* P2.
 Proof.
@@ -234,7 +235,7 @@ Proof.
   - inversion Hs'; subst. apply cgr_res. by eapply IH.
 Qed.
 
-(** ** The messages a program can emit, with multiplicity *)
+(* ** The messages a program can emit, with multiplicity *)
 
 Fixpoint pouts (P : proc) : list (chan * val) :=
   match P with
@@ -284,7 +285,7 @@ Proof.
   - set_solver.
 Qed.
 
-(** ** The process LTS: a program and its memory *)
+(* ** The process LTS: a program and its memory *)
 
 Section Process.
   Context `{QM : QuantumModel}.
@@ -388,7 +389,7 @@ Section Process.
   Lemma pconf_step_def x α y : x ⟶{α} y ↔ lstep x α y.
   Proof. change (y ∈ lsuccs x α ↔ lstep x α y). apply lsuccs_spec. Qed.
 
-  (** ** Transfer of program steps along [≡*] *)
+  (* ** Transfer of program steps along [≡*] *)
 
   Lemma cgr_ustep P Q u P1 : P ≡* Q → ustep P u P1 → ∃ Q1, ustep Q u Q1 ∧ P1 ≡* Q1.
   Proof.
@@ -400,7 +401,7 @@ Section Process.
     ∃ t' Q1, pstep Q (LAct t' a) Q1 ∧ P1 ≡* Q1.
   Proof. intros Hc Hs. by eapply fwd_vis; [apply cgr_bisim|]. Qed.
 
-  (** ** Equivalence of processes: congruent programs, same memory *)
+  (* ** Equivalence of processes: congruent programs, same memory *)
 
   Definition feq (x y : pconf) : Prop := x.1 ≡* y.1 ∧ x.2 = y.2.
 
@@ -441,7 +442,7 @@ Section Process.
     exists x'. split; [by apply pconf_step_def|done].
   Defined.
 
-  (** ** A process in parallel with an output *)
+  (* ** A process in parallel with an output *)
 
   Definition fpar (x : pconf) t c v : pconf := (PPar x.1 (oproc t c v), x.2).
 
@@ -505,7 +506,7 @@ Section Process.
     - exists z. split; [done|]. etrans; [exact Hzy|]. apply feq_par_nil.
   Qed.
 
-  (** ** The output axioms *)
+  (* ** The output axioms *)
 
   Lemma f_nb_delay x y z c v α :
     lstep x (ActExt (LOut c v)) y → lstep y α z →
@@ -612,7 +613,7 @@ Section Process.
     exists w. split; [by apply pconf_step_def|exact Heq].
   Qed.
 
-  (** ** The outputs a process can perform, with multiplicity *)
+  (* ** The outputs a process can perform, with multiplicity *)
 
   Definition fmo (x : pconf) : gmultiset lact :=
     list_to_set_disj ((λ cv : chan * val, LOut cv.1 cv.2) <$> pouts x.1).
@@ -665,7 +666,7 @@ Section Process.
     - intros p η q Hη Hs. apply pconf_step_def in Hs. by eapply fmo_spec2.
   Defined.
 
-  (** ** Interaction with the forwarder's mailbox *)
+  (* ** Interaction with the forwarder's mailbox *)
 
   #[global] Program Instance pconf_Inter_MO :
     Prop_of_Inter pconf (MO lact) lact lact fw_inter :=
@@ -709,6 +710,7 @@ Section Process.
     intros ? ? ? ? m hmem hl hinter; simpl in *. inversion hmem.
   Qed.
 
-  (** The forwarder of [(P, ρ)]. *)
+  (* The forwarder of [(P, ρ)]. *)
   Definition pconf_gLtsObaFW : gLtsObaFW (pconf * MO lact) lact := _.
 End Process.
+(* end hide *)

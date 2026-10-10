@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Soundness of the VACCS proof system
+(* * Soundness of the VACCS proof system
 
         [p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ⊑ₘᵤₛₜᵢ q]
 
@@ -100,7 +101,7 @@ Proof.
   - apply must_i_share_msg_pre.
 Qed.
 
-(** The equational form. *)
+(* The equational form. *)
 Corollary soundness_ax_eq : forall (p q : proc),
   p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> q ᴠᴀᴄᴄꜱ⊑ₐₓ p -> p ≂ₘᵤₛₜᵢ q.
 Proof.
@@ -108,3 +109,4 @@ Proof.
 Qed.
 
 End VACCS_SoundnessAx.
+(* end hide *)

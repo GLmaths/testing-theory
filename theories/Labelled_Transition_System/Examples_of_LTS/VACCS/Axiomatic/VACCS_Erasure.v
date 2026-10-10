@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Erasing [①] from a server
+(* * Erasing [①] from a server
 
     [good] (VACCS_Good.v) is the *client*'s outcome predicate; a server's
     own [①] is never observed, because [must]'s [m_now] inspects only the
@@ -50,7 +51,7 @@ Section VACCS_Erasure.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** The erasure *)
+(* ** The erasure *)
 
 Fixpoint noone (p : proc) : proc :=
 match p with
@@ -71,7 +72,7 @@ match M with
 | p1 + p2 => (gnoone p1) + (gnoone p2)
 end.
 
-(** ** [noone] commutes with every substitution and shift the LTS uses *)
+(* ** [noone] commutes with every substitution and shift the LTS uses *)
 
 Lemma noone_subst : forall p k X, noone (subst_in_proc k X p) = subst_in_proc k X (noone p)
 with gnoone_subst : forall M k X, gnoone (subst_in_gproc k X M) = subst_in_gproc k X (gnoone M).
@@ -134,7 +135,7 @@ Proof.
     + f_equal; apply gnoone_gpr_subst.
 Qed.
 
-(** ** [noone] is a strong bisimulation, in both directions
+(* ** [noone] is a strong bisimulation, in both directions
 
     Erasing does not change a single transition: [①] has no [lts] rule,
     so replacing it by [𝟘] cannot remove one, and cannot add one either. *)
@@ -161,7 +162,7 @@ Proof.
   - apply lts_choiceR; assumption.
 Qed.
 
-(** The converse.  Stated with an explicit equation on the subject so that
+(* The converse.  Stated with an explicit equation on the subject so that
     [induction] applies (the subject [noone p] is a compound term); the
     local tactic recovers [p]'s shape from it, one [proc] constructor at a
     time, with the [gproc] case nested. *)
@@ -208,7 +209,7 @@ Lemma lts_noone_inv : forall p a q', lts (noone p) a q' ->
   exists q, q' = noone q /\ lts p a q.
 Proof. intros p a q' Hl. eapply lts_noone_inv_aux; [ exact Hl | reflexivity ]. Qed.
 
-(** ** An erased process is never [good] *)
+(* ** An erased process is never [good] *)
 
 Lemma noone_not_good : forall p, ~ good_VACCS (noone p)
 with gnoone_not_good : forall M, ~ good_VACCS (g (gnoone M)).
@@ -229,7 +230,7 @@ Proof.
     + inversion Hg; subst. destruct H0 as [H|H]; eapply gnoone_not_good; eassumption.
 Qed.
 
-(** ** Erasing a server is invisible to [must]
+(* ** Erasing a server is invisible to [must]
 
     Both directions, by induction on the derivation: every field of
     [m_step] transports along [lts_noone] / [lts_noone_inv], and the
@@ -282,7 +283,7 @@ Proof. intros t Hm. apply must_noone. exact Hm. Qed.
 Lemma must_i_noone_r (p : proc) : (noone p) ⊑ₘᵤₛₜᵢ p.
 Proof. intros t Hm. apply must_noone_rev. exact Hm. Qed.
 
-(** ** Reading off the polarity of a [dual] pair
+(* ** Reading off the polarity of a [dual] pair
 
     [dual] is [ext_act_match], which pairs [ActIn a] with [ActOut a].
     These three tiny lemmas save unfolding it by hand at every use. *)
@@ -301,3 +302,4 @@ Lemma dual_in_out : forall (a : TypeOfActions), dual (ActIn a) (ActOut a).
 Proof. intros a. simpl. reflexivity. Qed.
 
 End VACCS_Erasure.
+(* end hide *)

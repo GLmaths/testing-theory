@@ -1,9 +1,10 @@
+(* begin hide *)
 Require Export signatures.pi.
 Require Export signatures.unscoped.
 From Stdlib Require Import Relations Morphisms.
 Arguments core.funcomp _ _ _/.
 
-(** Notation for π calculus terms *)
+(* Notation for π calculus terms *)
 Notation "x ∨ y" := (Or x y) (at level 50).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
@@ -27,7 +28,7 @@ Coercion g : gproc >-> proc.
 
 Definition νs n := Nat.iter n (fun p => ν p).
 
-(** Notations for renamings and substitutions *)
+(* Notations for renamings and substitutions *)
 Notation "tm [ s1 ; s2 ]" :=
   (subst2 s1 s2 tm) (at level 10, right associativity) : subst_scope.
 Notation "tm [ s ]" :=
@@ -43,7 +44,7 @@ Coercion cst : Value >-> Data.
 Coercion var_Data : nat >-> Data.
 Coercion var_proc : nat >-> proc.
 
-(** Autosubst doesn't generate these for Action, since it doesn't contain bound variables *)
+(* Autosubst doesn't generate these for Action, since it doesn't contain bound variables *)
 
 Definition ren_Act (xi : nat -> nat) (a : Act) : Act :=
   match a with
@@ -75,7 +76,7 @@ Qed.
 
 #[global] Instance Ren_Act : (Ren1 _ _ _) := @ren_Act.
 
-(** Definition and properties of swap and shift renaming *)
+(* Definition and properties of swap and shift renaming *)
 
 Definition swap : nat -> nat := 1 .: (0 .: (shift >> shift >> ids)).
 
@@ -281,7 +282,7 @@ Lemma shift_permute_Data : forall (v:Data) σ,
   ren1 shift (ren1 σ v) = ren1 (up_ren σ) (ren1 shift v).
 Proof. now asimpl. Qed.
 
-(** Autosubst should solve this? *)
+(* Autosubst should solve this? *)
 Lemma shift_permute_Action : forall (a:Act) σ,
   ren1 shift (ren1 σ a) = ren1 (up_ren σ) (ren1 shift a).
 Proof.
@@ -456,3 +457,4 @@ induction m.
   rewrite PeanoNat.Nat.add_succ_r.
   now rewrite PeanoNat.Nat.add_assoc.
 Qed.
+(* end hide *)

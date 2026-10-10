@@ -1,4 +1,5 @@
-(** * State-level corollaries: Corollary 4.12, Corollary 5.6 and pruning
+(* begin hide *)
+(* * State-level corollaries: Corollary 4.12, Corollary 5.6 and pruning
 
     - [cor_states]: ⟦p⟧(ρ) is the set of limits of the sums of final states
       over σ-compatible terminal paths of the configuration LTS.
@@ -12,13 +13,13 @@ Import ListNotations.
 Section Corollaries.
 Context `{StAlg}.
 
-(** ** Configuration LTS: ⟨p, ρ⟩ --α--> ⟨Done, ρ'⟩ *)
+(* ** Configuration LTS: ⟨p, ρ⟩ --α--> ⟨Done, ρ'⟩ *)
 
 Inductive cpath : prog -> St -> list (lbl * T) -> St -> Prop :=
 | cp_done ρ : cpath Done ρ [] ρ
 | cp_cons p ρ λ K x α ρ' : ts p λ K x -> cpath x (app K ρ) α ρ' -> cpath p ρ ((λ, K) :: α) ρ'.
 
-(** The final state of a path is ℰ_α(ρ). *)
+(* The final state of a path is ℰ_α(ρ). *)
 Lemma cpath_iff p ρ α ρ' : cpath p ρ α ρ' <-> tpath p α /\ ρ' = app (kr α) ρ.
 Proof.
   split.
@@ -30,7 +31,7 @@ Proof.
     + rewrite app_comp. econstructor; eauto.
 Qed.
 
-(** Depth-n value: sum of the final states of the σ-compatible terminal paths
+(* Depth-n value: sum of the final states of the σ-compatible terminal paths
     of length ≤ n (each listed once by [enum_spec], [enum_nodup]). *)
 Definition CV σ n p ρ := ssum (map (fun α => app (kr α) ρ) (enum σ n p)).
 
@@ -45,7 +46,7 @@ Proof.
   intro n. unfold CV. rewrite path_sum, app_ssum, map_map. reflexivity.
 Qed.
 
-(** Corollary 4.12. *)
+(* Corollary 4.12. *)
 Theorem cor_states (CC : FunctionalCountableChoice_on sched) p ρ s :
   NoDup (labels p) ->
   (exists x, Sem p x /\ s = app x ρ) <-> exists σ, s = ssup (fun n => CV σ n p ρ).
@@ -56,7 +57,7 @@ Proof.
   - intros [σ ->]. exists (E σ p). split; [apply sound | symmetry; apply app_E].
 Qed.
 
-(** ** Paths of (p ∥ ρ)\L *)
+(* ** Paths of (p ∥ ρ)\L *)
 
 Lemma ts_det p λ K K' x x' : ts p λ K x -> ts p λ K' x' -> K = K' /\ x = x'.
 Proof.
@@ -68,7 +69,7 @@ Proof.
     injection E as <-. auto.
 Qed.
 
-(** Different terminal paths give different composed paths. *)
+(* Different terminal paths give different composed paths. *)
 Lemma hats_inj p α α' : tpath p α -> tpath p α' -> hats α = hats α' -> α = α'.
 Proof.
   intro P. induction P as [| p λ K x α Ht P IH] in α' |- *; intros P' E.
@@ -79,7 +80,7 @@ Proof.
     destruct (ts_det _ _ _ _ _ _ Ht Ht') as [<- <-]. f_equal. apply IH; auto.
 Qed.
 
-(** Composed paths of length ≤ n, with their final memories. *)
+(* Composed paths of length ≤ n, with their final memories. *)
 Definition penum σ n p ρ := map (fun α => (hats α, app (kr α) ρ)) (enum σ n p).
 
 Theorem penum_spec σ n p ρ β ρ' :
@@ -121,7 +122,7 @@ Proof.
   intro n. rewrite PV_CV. unfold CV. rewrite path_sum, app_ssum, map_map. reflexivity.
 Qed.
 
-(** Corollary 5.6. *)
+(* Corollary 5.6. *)
 Theorem cor_par (CC : FunctionalCountableChoice_on sched) p ρ s :
   NoDup (labels p) ->
   (exists x, Sem p x /\ s = app x ρ) <-> exists σ, s = ssup (fun n => PV σ n p ρ).
@@ -132,7 +133,7 @@ Proof.
   - intros [σ ->]. exists (E σ p). split; [apply sound | symmetry; apply app_E_par].
 Qed.
 
-(** ** Pruning: resolve the choices on the program LTS, then compose
+(* ** Pruning: resolve the choices on the program LTS, then compose
 
     [ppstep σ] is the program LTS of [Harmony] with only the choice
     transitions [(t, σ t)] kept; [cpar P] composes a program LTS [P] with the
@@ -165,7 +166,7 @@ Proof.
     + econstructor. split; [exact S | exact B].
 Qed.
 
-(** The paths of the pruned composition are the σ-compatible composed paths. *)
+(* The paths of the pruned composition are the σ-compatible composed paths. *)
 Lemma cppath_prune σ p ρ β ρ' :
   cppath (ppstep σ) p ρ β ρ' <-> ppath p ρ β ρ' /\ ccompat σ β.
 Proof.
@@ -182,10 +183,10 @@ Theorem penum_prune σ n p ρ β ρ' :
   In (β, ρ') (penum σ n p ρ) <-> cppath (ppstep σ) p ρ β ρ' /\ length β <= n.
 Proof. rewrite penum_spec, cppath_prune. tauto. Qed.
 
-(** ⟦prune_σ(p) ∥ −⟧: the state map computed by the pruned composition. *)
+(* ⟦prune_σ(p) ∥ −⟧: the state map computed by the pruned composition. *)
 Definition pruned σ p (ρ : St) := ssup (fun n => PV σ n p ρ).
 
-(** ⟦p⟧ = { ⟦prune_σ(p) ∥ −⟧ : σ }. *)
+(* ⟦p⟧ = { ⟦prune_σ(p) ∥ −⟧ : σ }. *)
 Theorem pruning (CC : FunctionalCountableChoice_on sched) p x :
   NoDup (labels p) -> Sem p x <-> exists σ, forall ρ, app x ρ = pruned σ p ρ.
 Proof.
@@ -197,3 +198,4 @@ Proof.
 Qed.
 
 End Corollaries.
+(* end hide *)

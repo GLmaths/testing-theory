@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -33,7 +34,7 @@ From TestingTheory Require Import ActTau gLts VCCS_Instance VCCS_Good Bisimulati
   InputOutputActions Completeness ParallelLTSConstruction InputOutputActions
   VCCS_ta_tc_gen MayTestSpec Testing_Predicate.
 
-(** * The May test generator for VCCS
+(* * The May test generator for VCCS
 
     Builds the [gen : trace A -> proc] required by [may_test_spec]
     ([MayTestSpec.v]) for VCCS, and discharges the [may_test_spec] instance
@@ -57,7 +58,7 @@ Section VCCS_May_Gen.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** The generator itself *)
+(* ** The generator itself *)
 
 Fixpoint gen_may_raw (Vs : trace (ExtAct (ChannelData * ValueData)))
   (s : trace (ExtAct TypeOfActions)) {struct s} : proc :=
@@ -83,7 +84,7 @@ Fixpoint gen_may_raw (Vs : trace (ExtAct (ChannelData * ValueData)))
 Definition gen_may (s : trace (ExtAct (ChannelData * ValueData))) : proc :=
   gen_may_raw s s.
 
-(** ** Substitution commutes with the shift, for [gen_may]
+(* ** Substitution commutes with the shift, for [gen_may]
 
     May counterpart of [All_Accordingto_gen_test], without the continuation
     parameter [p]: the base case is now a closed term ([𝛕 • ①] has no free
@@ -143,7 +144,7 @@ Proof.
               rewrite eq1. eauto.
 Qed.
 
-(** ** [gen_may] is never immediately good ([may_test_spec] field 1)
+(* ** [gen_may] is never immediately good ([may_test_spec] field 1)
 
     [gen_may_raw] always returns [𝛕•①], [c?(...)+(𝛕•𝟘)] or [c!v•(...)+(𝛕•𝟘)]
     — none of these shapes matches any [good_VCCS] constructor directly
@@ -160,7 +161,7 @@ Proof.
     destruct H0 as [h|h]; inversion h.
 Qed.
 
-(** ** [gen_may] performs the expected step ([may_test_spec] field 2) *)
+(* ** [gen_may] performs the expected step ([may_test_spec] field 2) *)
 
 Lemma gen_may_lts_mu μ s :
   (gen_may (μ :: s)) ⟶⋍[μ] (gen_may s).
@@ -192,7 +193,7 @@ Qed.
 Lemma cgr_to_eqrel p q : p ≡ q -> p ⋍ q.
 Proof. intro h. eapply Relation_Operators.t_step. exact h. Qed.
 
-(** ** Determinacy on the expected trace element ([may_test_spec] field 3) *)
+(* ** Determinacy on the expected trace element ([may_test_spec] field 3) *)
 
 Lemma gen_may_follows_trace_determinacy β s t :
   blocking β -> lts (gen_may (β :: s)) (ActExt β) t -> t ⋍ gen_may s.
@@ -200,7 +201,7 @@ Proof.
   intros _ hl. eapply cgr_to_eqrel. eapply gen_may_mu_uniq. eauto.
 Qed.
 
-(** ** The dead process [𝟘] has no transitions, and reaches success never *)
+(* ** The dead process [𝟘] has no transitions, and reaches success never *)
 
 Lemma DEAD_no_lts_tau : forall t, ~ lts (g 𝟘) τ t.
 Proof. intros t h. inversion h. Qed.
@@ -218,7 +219,7 @@ Proof.
   - subst. exfalso. eapply DEAD_no_lts_mu. eauto.
 Qed.
 
-(** ** A conditional whose [Else] branch is dead and whose condition is not
+(* ** A conditional whose [Else] branch is dead and whose condition is not
       provably true, is itself dead — this is what a deviating input step
       reduces to (see [gen_may_step_dichotomy] below): either the concrete
       values genuinely differ ([Eval_Eq = Some false]), or the comparison is
@@ -245,7 +246,7 @@ Proof.
   - subst. exfalso. eapply if_not_true_no_lts; eauto.
 Qed.
 
-(** ** Every step from [gen_may (β :: s)] is either the expected [β]
+(* ** Every step from [gen_may (β :: s)] is either the expected [β]
       step to [gen_may s], or leads somewhere success can never be reached
       from — the key case split everything else is built from. *)
 
@@ -269,7 +270,7 @@ Proof.
   { right. inversion H3; subst. eapply DEAD_never_outcome. }
 Qed.
 
-(** ** Deviation is fatal ([may_test_spec] field 4) *)
+(* ** Deviation is fatal ([may_test_spec] field 4) *)
 
 Lemma gen_may_deviation_is_fatal β μ s t :
   blocking β -> lts (gen_may (β :: s)) (ActExt μ) t -> μ <> β -> never_outcome good_VCCS t.
@@ -280,7 +281,7 @@ Proof.
   - exact hno.
 Qed.
 
-(** ** A silent move on a blocking head is fatal ([may_test_spec] field 7) *)
+(* ** A silent move on a blocking head is fatal ([may_test_spec] field 7) *)
 
 Lemma gen_may_tau_on_blocking_is_fatal β s t :
   blocking β -> lts (gen_may (β :: s)) τ t -> never_outcome good_VCCS t.
@@ -291,7 +292,7 @@ Proof.
   - exact hno.
 Qed.
 
-(** ** [gen_may ε] computes silently to success ([may_test_spec] fields 5, 6) *)
+(* ** [gen_may ε] computes silently to success ([may_test_spec] fields 5, 6) *)
 
 Lemma gen_may_can_compute : exists e, lts (gen_may []) τ e.
 Proof.
@@ -303,7 +304,7 @@ Proof.
   unfold gen_may. simpl. intro hl. inversion hl; subst. eapply good_success.
 Qed.
 
-(** ** The instance *)
+(* ** The instance *)
 
 #[global] Program Instance VCCS_may_test_spec : may_test_spec gen_may := {|
   may_test_ungood := gen_may_ungood;
@@ -316,3 +317,4 @@ Qed.
 |}.
 
 End VCCS_May_Gen.
+(* end hide *)

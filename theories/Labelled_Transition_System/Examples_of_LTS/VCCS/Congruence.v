@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -2006,3 +2007,4 @@ cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice
 cgr_full_if cgr_fullchoice cgr_fullpar cgr_res_nil cgr_res_nil_rev cgr_res_swap cgr_res_swap_rev cgr_res
 cgr_res_scope cgr_res_scope_rev cgr_refl @cgr_symm cgr_trans:cgr.
 
+(* end hide *)

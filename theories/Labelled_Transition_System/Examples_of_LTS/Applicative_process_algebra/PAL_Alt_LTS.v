@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -49,7 +50,7 @@ Section PAL_Alt.
   Notation in_field := (in_field Val).
   Notation out_field := (out_field Val).
 
-  (** ** Templates *)
+  (* ** Templates *)
 
   Inductive tfield := tf_formal | tf_val (v : Val) | tf_star.
 
@@ -58,7 +59,7 @@ Section PAL_Alt.
   Definition tfield_of (f : in_field) : tfield :=
     match f with if_formal _ => tf_formal | if_val v => tf_val v | if_star => tf_star end.
 
-  (** The template of an evaluated pattern. *)
+  (* The template of an evaluated pattern. *)
   Definition template_of (it : eit) : template := map tfield_of it.
 
   #[global] Instance tfield_eqdec : EqDecision tfield.
@@ -73,7 +74,7 @@ Section PAL_Alt.
     by intros [].
   Defined.
 
-  (** ** Input labels: a tuple with a template matching it *)
+  (* ** Input labels: a tuple with a template matching it *)
 
   Inductive lfield := lf_formal (v : Val) | lf_val (v : Val) | lf_star.
 
@@ -101,7 +102,7 @@ Section PAL_Alt.
     by intros [].
   Defined.
 
-  (** A label is determined by its template and its tuple. *)
+  (* A label is determined by its template and its tuple. *)
   Lemma label_inj l l' : ltemplate l = ltemplate l' → ltuple l = ltuple l' → l = l'.
   Proof.
     revert l'. induction l as [|f l IH]; intros [|f' l'] ht ho; try discriminate; [done |].
@@ -109,7 +110,7 @@ Section PAL_Alt.
     destruct f, f'; cbn in *; congruence.
   Qed.
 
-  (** The label of a pattern matching a tuple. *)
+  (* The label of a pattern matching a tuple. *)
   Definition lfield_of (f : in_field) (o : out_field) : lfield :=
     match f, o with
     | if_formal _, of_val v => lf_formal v
@@ -134,7 +135,7 @@ Section PAL_Alt.
     destruct f, g; cbn in ef; try discriminate; try (injection ef as ->); constructor.
   Qed.
 
-  (** The finitely many input labels receiving a tuple. *)
+  (* The finitely many input labels receiving a tuple. *)
   Fixpoint labels_of (ot : eot) : list label :=
     match ot with
     | [] => [[]]
@@ -156,14 +157,14 @@ Section PAL_Alt.
         * right. exists l. split; [done | by apply IH].
   Qed.
 
-  (** The label receiving [ot] with the template matching exactly [ot]. *)
+  (* The label receiving [ot] with the template matching exactly [ot]. *)
   Definition exact_label (ot : eot) : label :=
     map (λ o, match o with of_val v => lf_val v | of_star => lf_star end) ot.
 
   Lemma ltuple_exact_label ot : ltuple (exact_label ot) = ot.
   Proof. induction ot as [|[|v] ot IH]; [done | ..]; unfold ltuple in *; simpl; by rewrite IH. Qed.
 
-  (** ** Labels and dual *)
+  (* ** Labels and dual *)
 
   Inductive PALA_Act := AIn (l : label) | AOut (ot : eot).
 
@@ -191,7 +192,7 @@ Section PAL_Alt.
   #[global] Instance PALA_dual_sym : Symmetric PALA_dual.
   Proof. by intros [] []. Qed.
 
-  (** As in PAL, no action is non-blocking. *)
+  (* As in PAL, no action is non-blocking. *)
   Definition PALA_non_blocking (_ : PALA_Act) : Prop := False.
 
   #[global] Instance PALA_non_blocking_dec a : Decision (PALA_non_blocking a).
@@ -216,7 +217,7 @@ Section PAL_Alt.
     exists_dual := PALA_exists_dual;
   |}.
 
-  (** The labels dual to a label. *)
+  (* The labels dual to a label. *)
   Definition co_labels (α : PALA_Act) : list PALA_Act :=
     match α with
     | AIn l => [AOut (ltuple l)]
@@ -232,7 +233,7 @@ Section PAL_Alt.
       + destruct α' as [l|ot']; simpl; [| done]. intros e. exists l. split; [done | by apply labels_of_spec].
   Qed.
 
-  (** ** The LTS (Tables 3-4, with alternative labels) *)
+  (* ** The LTS (Tables 3-4, with alternative labels) *)
 
   Open Scope pal_scope.
   Inductive lts_step_a : term → Act PALA_Act → term → Prop :=
@@ -299,9 +300,9 @@ Section PAL_Alt.
         lts_step_a (E1 |ₖ E2) τ (E1' ‖ E2').
   Close Scope pal_scope.
 
-  (** ** Enumerating successors *)
+  (* ** Enumerating successors *)
 
-  (** The outputs offered by a term. *)
+  (* The outputs offered by a term. *)
   Fixpoint collect_out_a (E : term) : list eot :=
     match E with
     | t_out t t_nil =>
@@ -588,7 +589,7 @@ Section PAL_Alt.
         apply in_flat_map. exists l2. split; [by apply labels_of_spec | exact IHlts_step_a2].
   Qed.
 
-  (** ** [gLts] instance *)
+  (* ** [gLts] instance *)
 
   Definition PALA_performs (p : term) (α : Act PALA_Act) : Prop := all_steps_a p α ≠ [].
 
@@ -619,7 +620,7 @@ Section PAL_Alt.
     @MkgLts term PALA_Act PALA_ExtAction lts_step_a term_eqdec PALA_step_dec
       PALA_performs PALA_performs_dec PALA_performs_spec1 PALA_performs_spec2.
 
-  (** ** [FiniteImagegLts]/[coFiniteImagegLts] *)
+  (* ** [FiniteImagegLts]/[coFiniteImagegLts] *)
 
   #[global] Instance PALA_FiniteImagegLts : FiniteImagegLts term PALA_Act.
   Proof.
@@ -661,7 +662,7 @@ Section PAL_Alt.
       intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply co_next_a_spec.
   Defined.
 
-  (** ** [Prop_of_Inter term term PALA_Act PALA_Act PALA_dual] *)
+  (* ** [Prop_of_Inter term term PALA_Act PALA_Act PALA_dual] *)
 
   Definition PALA_essential_actions (p : term) : gset PALA_Act :=
     list_to_set (map AOut (collect_out_a p)).
@@ -708,3 +709,4 @@ Section PAL_Alt.
       PALA_co_inter_action_spec μ ξ (PALA_dual_sym _ _ hinter);
   |}.
 End PAL_Alt.
+(* end hide *)

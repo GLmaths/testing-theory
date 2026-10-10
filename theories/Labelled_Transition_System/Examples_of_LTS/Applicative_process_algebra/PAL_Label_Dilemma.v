@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -45,7 +46,7 @@ From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Su
    - [no_labelling]: so [𝝳 ∘ Φ] is injective on these labels, which all lie
      in [coR p?], and [coR_abs p?] cannot be finite. *)
 
-(** A finite set cannot contain infinitely many distinct elements. *)
+(* A finite set cannot contain infinitely many distinct elements. *)
 Lemma finite_pigeonhole `{Countable B} (X : gset B) (P : nat → B → Prop) :
   (∀ n, ∃ b, P n b ∧ b ∈ X) → (∀ n m b, P n b → P m b → n = m) → False.
 Proof.
@@ -77,13 +78,13 @@ Section PAL_Label_Dilemma.
   Open Scope pal_scope.
 
 
-  (** ** PAL synchronisations *)
+  (* ** PAL synchronisations *)
 
   Definition PAL_sync (p t p' t' : term) : Prop :=
     ∃ ot : eot, (old p (ActExt (ActIn ot)) p' ∧ old t (ActExt (ActOut ot)) t')
               ∨ (old p (ActExt (ActOut ot)) p' ∧ old t (ActExt (ActIn ot)) t').
 
-  (** [in(?x).out(!x).𝟘], [in(!v).𝟘] and [out(!v).𝟘] *)
+  (* [in(?x).out(!x).𝟘], [in(!v).𝟘] and [out(!v).𝟘] *)
   Definition p_any : term := in( [? 0] ) • (out( [! ve_var 0] ) • 𝟘).
   Definition in_val (v : Val) : term := in( [! ve_val v] ) • 𝟘.
   Definition out_val (v : Val) : term := out( [! ve_val v] ) • 𝟘.
@@ -133,7 +134,7 @@ Section PAL_Label_Dilemma.
   Lemma out_val_inj u v : out_val u = out_val v → u = v.
   Proof. by injection 1. Qed.
 
-  (** ** Any labelling *)
+  (* ** Any labelling *)
 
   Context {A : Type} {EA : ExtAction A} {gLtsT : gLtsEq term EA}.
   Context {FinA PreAct : Type} `{Countable PreAct} (Φ : A → FinA) (𝝳 : FinA → PreAct).
@@ -143,20 +144,20 @@ Section PAL_Label_Dilemma.
 
   #[local] Hint Mode ExtAction ! : typeclass_instances.
 
-  (** Every action is blocking. *)
+  (* Every action is blocking. *)
   Context (hblock : ∀ μ : A, ¬ non_blocking μ).
 
-  (** A process and a test communicate along [dual] exactly when they synchronise in PAL. *)
+  (* A process and a test communicate along [dual] exactly when they synchronise in PAL. *)
   Context (hsync : ∀ p t p' t' : term,
     (∃ μ1 μ2 : A, dual μ1 μ2 ∧ p ⟶[μ1] p' ∧ t ⟶[μ2] t') ↔ PAL_sync p t p' t').
 
-  (** The fields used, with their instances given explicitly. *)
+  (* The fields used, with their instances given explicitly. *)
   Definition Abs : @AbsAction term term FinA PreAct A EA Φ 𝝳 _ _ gLtsEq_gLts gLtsT _ := Fin.(FinitaryAbsAction_Abs).
 
   Lemma accepts_of_step (p q : term) (μ : A) : p ⟶[μ] q → μ ∈ R p.
   Proof. intros h. exact (lts_performs_spec2 p (ActExt μ) (exist _ q h)). Qed.
 
-  (** [c] is a label by which [out(!v).𝟘] synchronises with [in(?x).out(!x).𝟘]. *)
+  (* [c] is a label by which [out(!v).𝟘] synchronises with [in(?x).out(!x).𝟘]. *)
   Definition spec (v : Val) (c : A) : Prop :=
     ∃ a : A, dual a c ∧ p_any ⟶[a] out_val v ∧ out_val v ⟶[c] t_nil.
 
@@ -170,7 +171,7 @@ Section PAL_Label_Dilemma.
   Lemma spec_coR v c : spec v c → c ∈ coR p_any.
   Proof. intros (a & hd & ha & hc). exists a. split_and!; [by eapply accepts_of_step | done | apply hblock]. Qed.
 
-  (** By (1): different values give different [Φ c]. *)
+  (* By (1): different values give different [Φ c]. *)
   Lemma Φ_spec_inj v w c c' : spec v c → spec w c' → Φ c = Φ c' → v = w.
   Proof.
     intros (a & hd & ha & hc) (a' & hd' & ha' & hc') e.
@@ -185,7 +186,7 @@ Section PAL_Label_Dilemma.
     - by apply p_any_out_inv in h1.
   Qed.
 
-  (** By (2) and (1). *)
+  (* By (2) and (1). *)
   Lemma not_in_coR_val v w c c' :
     v ≠ w → spec v c → spec w c' → 𝝳 (Φ c) = 𝝳 (Φ c') → Φ c ∉ ⌈ Φ ⌉ (coR (in_val v)).
   Proof.
@@ -203,7 +204,7 @@ Section PAL_Label_Dilemma.
     - by apply in_val_out_inv in h1.
   Qed.
 
-  (** By (2), (5), (6): [𝝳 ∘ Φ] is injective on these labels. *)
+  (* By (2), (5), (6): [𝝳 ∘ Φ] is injective on these labels. *)
   Lemma 𝝳Φ_spec_inj v w c c' : spec v c → spec w c' → 𝝳 (Φ c) = 𝝳 (Φ c') → v = w.
   Proof.
     intros hc hc' e. destruct (decide (v = w)) as [| hne]; [done | exfalso].
@@ -236,3 +237,4 @@ Section PAL_Label_Dilemma.
       by apply (𝝳Φ_spec_inj (inj n) (inj m) c c').
   Qed.
 End PAL_Label_Dilemma.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: the label abstraction
+(* * Core Erlang: the label abstraction
 
     The observers are VACCS processes ([Erlang_Must_Characterization]), so the
     abstraction is theirs: [Φᴠᴀᴄᴄꜱ (ActIn (c,v)) = Inputs c] forgets the value
@@ -49,7 +50,7 @@ Section Erlang_LabelAbstraction.
 
 Context `{EP : Erlang_Program}.
 
-(** ** The abstraction of VACCS is one for Erlang *)
+(* ** The abstraction of VACCS is one for Erlang *)
 
 #[global] Program Instance Erl_AbsAction :
   @AbsAction sys proc FinA PreAct erl_act VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
@@ -64,7 +65,7 @@ Next Obligation.
   intros S β β' _ _ heq hmem. unfold 𝝳ᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
 Qed.
 
-(** ** It is finitary: the abstracted co-actions are the targets of the
+(* ** It is finitary: the abstracted co-actions are the targets of the
     messages in transit *)
 
 Definition coR_abs_erl (S : sys) : gset PreAct :=
@@ -104,3 +105,4 @@ Next Obligation.
 Qed.
 
 End Erlang_LabelAbstraction.
+(* end hide *)

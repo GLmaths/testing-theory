@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -26,6 +27,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA.
+(* end hide *)
 
 (** ** Each program has a MailBox, which is finite and counts occurences of Value *)
 
@@ -47,9 +49,10 @@ Class FiniteOutputChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P 
       forall q, non_blocking η → p ⟶[ η ] q 
         → lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
     }.
+(* begin hide *)
 
 
-(** *** Relationship between mailbox and non-blocking actions *)
+(* *** Relationship between mailbox and non-blocking actions *)
 
 Lemma lts_oba_mo_non_blocking_spec1 `{FiniteOutputChain_LtsOba P A} {p η} : 
   η ∈ lts_oba_mo p → non_blocking η.
@@ -76,7 +79,7 @@ Proof.
 Qed.
 
 
-(** *** Properties on LTS with OBA axioms *)
+(* *** Properties on LTS with OBA axioms *)
 
 Lemma lts_oba_mo_eq `{FiniteOutputChain_LtsOba P A} {p q} :
   p ⋍ q → lts_oba_mo p = lts_oba_mo q.
@@ -109,5 +112,4 @@ Proof.
     { eapply gmultiset_disj_union_inj_1. etrans; eassumption. }
     eapply gmultiset_eq_pop_l. eapply IHhmo. eassumption. now symmetry. assumption. assumption.
 Qed.
-
-
+(* end hide *)

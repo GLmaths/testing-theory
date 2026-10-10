@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: the forwarder [toFW (Erlang)]
+(* * Core Erlang: the forwarder [toFW (Erlang)]
 
     What is left for [toFW] and for the co-trace characterisation: the
     co-finite-image condition and the interaction between a forwarder and a
@@ -36,7 +37,7 @@ From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   Erlang_Syntax Erlang_LTS Erlang_Instance.
 
-(** ** A finite image is a co-finite image
+(* ** A finite image is a co-finite image
 
     Generic: with a unique dual, [∃ α', dual α' α ∧ p ⟶[α'] q] is [p ⟶[co α] q],
     so [coFiniteImagegLts] follows from [FiniteImagegLts].  This belongs in
@@ -80,7 +81,7 @@ Context `{EP : Erlang_Program}.
 #[global] Instance Erl_coFiniteImage : coFiniteImagegLts sys erl_act :=
   coFiniteImage_from_FiniteImage.
 
-(** ** Interaction between a forwarder and a test *)
+(* ** Interaction between a forwarder and a test *)
 
 #[global] Program Instance Erl_Inter_FW :
   Prop_of_Inter (sys * MO erl_act) sys erl_act erl_act dual :=
@@ -138,3 +139,4 @@ Next Obligation.
 Defined.
 
 End Erlang_Forwarder.
+(* end hide *)

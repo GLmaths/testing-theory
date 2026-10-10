@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -59,3 +60,4 @@ Lemma co_preserved_by_wt_nil `{
 Proof. intros. eapply c_tau;eauto. Qed.
 
 
+(* end hide *)

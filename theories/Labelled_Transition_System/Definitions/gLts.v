@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -28,55 +29,7 @@ From stdpp Require Import countable.
 From TestingTheory Require Import ActTau.
 
 
-(** ** LTSs with non-blocking actions [gLts] *)
-
-Class ExtAction (A : Type) :=
-  MkExtAction {
-      eqdec: EqDecision A;
-      countable: Countable A;
-      non_blocking : A → Prop;
-      non_blocking_dec a : Decision (non_blocking a);
-      dual : A → A → Prop;
-      dual_dec a b: Decision (dual a b);
-
-      (* Co-action of a non-blocking action is blocking, otherwise infinite non-blocking action sequence in FW *)
-      dual_blocks β η :
-      non_blocking η → dual β η → 
-        ¬ non_blocking β ;
-
-      (* dual is symmetric *)
-      duo_sym : Symmetric dual;
-
-      (* Constructive way to build a dual action *)
-      exists_dual μ : { η | dual μ η};
-
-      (* Unique dual *)
-      (* unique_nb η β: dual β η → η = proj1_sig (exists_dual β); *)
-
-      (* Handy hypothesis *)
-      (* nb_not_nb η1 η2 ɣ : non_blocking η1 → dual η1 ɣ → dual η2 ɣ → non_blocking η2; *)
-    }.
-#[global] Existing Instance eqdec.
-#[global] Existing Instance countable.
-#[global] Existing Instance non_blocking_dec.
-#[global] Existing Instance dual_dec.
-#[global] Existing Instance duo_sym.
-
-(* Definition of blocking action *)
-Notation "'blocking' β" := (¬ non_blocking β) (at level 30).
-
-(* Definition of the co-action *)
-Notation "'co' μ" := (proj1_sig (exists_dual μ)) (at level 30).
-
-(*Definition of the co-trace *)
-Notation "'coₜ' s" := (map (fun μ => (proj1_sig (exists_dual μ))) s) (at level 30).
-
-(* Uniqueness of the dual, no longer a field of [ExtAction]. It is taken as a
-   hypothesis [{unique_nb : UniqueDual A}] where it is still needed; the goal
-   is to remove these hypotheses one by one. *)
-Definition UniqueDual (A : Type) `{ExtAction A} :=
-  forall η β, dual β η → η = proj1_sig (exists_dual β).
-Existing Class UniqueDual.
+(* ** LTSs with non-blocking actions [gLts] *)
 
 Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
   MkgLts {
@@ -111,7 +64,7 @@ Notation "p ↛[ μ ]" := (¬ lts_performs p (ActExt μ)) (at level 30, format "
 
 
 
-(** Properties on `gLts`*)
+(* Properties on `gLts`*)
 
 
 Definition lts_exists_duo_decidable : 
@@ -175,3 +128,4 @@ Lemma BlockingAction_are_not_non_blocking `{H : ExtAction A} {η β} :
 Proof.
   intros nb1 nb2 eq. rewrite eq in nb2. contradiction.
 Qed.
+(* end hide *)

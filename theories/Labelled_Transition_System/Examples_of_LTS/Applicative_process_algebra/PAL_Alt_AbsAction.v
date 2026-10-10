@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -53,3 +54,4 @@ Section PAL_Alt_AbsAction.
     - intros p β β' _ _ e h. unfold 𝝳ᴇᴠ in e. by rewrite <- e.
   Qed.
 End PAL_Alt_AbsAction.
+(* end hide *)

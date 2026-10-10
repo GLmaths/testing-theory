@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -41,11 +42,11 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
 
 Open Scope string_scope.
 
-(** * Examples *)
-(** ** ACCS *)
-(** *** Applications *)
+(* * Examples *)
+(* ** ACCS *)
+(* *** Applications *)
 
-(** Small helpers on weak-transition sets, missing from FiniteImageLTS. *)
+(* Small helpers on weak-transition sets, missing from FiniteImageLTS. *)
 
 Lemma wt_set_from_pset_spec1_union_rev_l `{Countable P, gLts P A}
   (ps : gset P) s (qs qs' : gset P) :
@@ -61,7 +62,7 @@ Proof.
   intros Hyp p mem. eapply Hyp. set_solver.
 Qed.
 
-(** The empty set is a top element for the co-inductive tower preorder. *)
+(* The empty set is a top element for the co-inductive tower preorder. *)
 Lemma empty_is_a_top_element
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
@@ -206,7 +207,7 @@ inversion Hstep; subst; clear Hstep.
       eapply hco.
 Qed.
 
-(** The co-inductive tower preorder is stable by union on the right.
+(* The co-inductive tower preorder is stable by union on the right.
     (This was left admitted (as [coin_union_left]) on the branch this file
     was imported from; proven here by tower induction + finite-set
     induction on the target set.) *)
@@ -256,7 +257,7 @@ Proof.
         eapply h2.(c_cnv_); eauto. eauto.
 Qed.
 
-(** τ-guarded internal choice is below each of its branches (plain processes). *)
+(* τ-guarded internal choice is below each of its branches (plain processes). *)
 Lemma choice_copre_l' (p q : proc) :
   forall (PRE : Chain (copre_m (P := proc) (Q := proc) (T := proc))),
     elem PRE {[g (𝛕 • p + 𝛕 • q)]} {[p]}.
@@ -281,7 +282,7 @@ intros PRE. eapply (c_tau' (Y := {[g (𝛕 • p + 𝛕 • q)]})).
   eapply lts_to_wt_tau. apply lts_choiceR. constructor.
 Qed.
 
-(** Same, on forwarder states. *)
+(* Same, on forwarder states. *)
 Lemma choice_copre_l (p q : proc) :
   forall (PRE : Chain (copre_m (P := proc * MO (ExtAct TypeOfActions))
                                (Q := proc * MO (ExtAct TypeOfActions))
@@ -312,7 +313,7 @@ intros PRE M. eapply (c_tau' (Y := {[(g (𝛕 • p + 𝛕 • q)) ▷ M]})).
   eapply lts_to_wt_tau. apply ParLeft, lts_choiceR. constructor.
 Qed.
 
-(** Inversion helpers for τ-guarded binary choice. *)
+(* Inversion helpers for τ-guarded binary choice. *)
 
 Lemma choice_tau_inv (p q t : proc) : (g (𝛕 • p + 𝛕 • q)) ⟶ t -> t = p \/ t = q.
 Proof.
@@ -344,7 +345,7 @@ Proof.
   - exfalso. eapply choice_ext_inv; eauto.
 Qed.
 
-(** A singleton is below any of its weak τ-descendants. *)
+(* A singleton is below any of its weak τ-descendants. *)
 Lemma coin_wt_nil_singleton `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
   `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
@@ -358,7 +359,7 @@ Proof.
     exists x. split; [apply elem_of_singleton_2; reflexivity|]. exact Hw.
 Qed.
 
-(** τ-guarded internal choice is above the set of its branches. *)
+(* τ-guarded internal choice is above the set of its branches. *)
 Lemma choice_copre_rev' (p q : proc) :
   forall (PRE : Chain (copre_m (P := proc) (Q := proc) (T := proc))),
     elem PRE ({[ p; q ]}) {[ g (𝛕 • p + 𝛕 • q) ]}.
@@ -412,7 +413,7 @@ Proof.
         apply elem_of_union_r, elem_of_singleton_2; reflexivity.
 Qed.
 
-(** Inversion helpers for τ-guarded binary choice under a forwarder. *)
+(* Inversion helpers for τ-guarded binary choice under a forwarder. *)
 
 Lemma choice_fw_tau_inv (p q : proc) (M : MO (ExtAct TypeOfActions)) t :
   ((g (𝛕 • p + 𝛕 • q)) ▷ M) ⟶ t -> t = (p ▷ M) \/ t = (q ▷ M).
@@ -601,7 +602,7 @@ apply m_step.
 Qed.
 
 Section Example_2_1.
-(** A nontrivial example with recursion *)
+(* A nontrivial example with recursion *)
 
 Definition unreliableW : proc :=
   pr_rec 0 (𝛕 • (cst "end" ! cst tt • 𝟘)
@@ -624,7 +625,7 @@ Proof.
   intros p p' Hp q q' Hq. eapply cgr_fullpar; eauto.
 Qed.
 
-(** Named sub-terms and one-step facts for the two workers. *)
+(* Named sub-terms and one-step facts for the two workers. *)
 
 Definition W_end : proc := cst "end" ! cst tt • 𝟘.
 Definition W_work : proc := cst "work" ! cst tt • 𝟘.
@@ -663,7 +664,7 @@ Proof. eapply lts_choiceR. eapply lts_tau. Qed.
 Lemma wout_step (c : String.string) : (ch c ! u1 • 𝟘) ⟶[ActOut (ch c, u1)] (g 𝟘).
 Proof. exact lts_output. Qed.
 
-(** A decidable measure: number of buffered "data" outputs in a mailbox. *)
+(* A decidable measure: number of buffered "data" outputs in a mailbox. *)
 
 Definition is_data (a : ExtAct TypeOfActions) : Prop :=
   exists v, a = ActOut (ch "data", v).
@@ -741,7 +742,7 @@ Proof.
     + eapply IH in H3 as (p' & hp & ->). eauto.
 Qed.
 
-(** One-step inversion facts for the workers' sub-terms. *)
+(* One-step inversion facts for the workers' sub-terms. *)
 
 Lemma reliableW_tau_inv t : reliableW ⟶ t -> t = Rbody.
 Proof. intro h. inversion h; subst. reflexivity. Qed.
@@ -780,7 +781,7 @@ Proof. intro h. inversion h. Qed.
 Lemma wend_input_inv c v t : W_end ⟶[ActIn (c, v)] t -> False.
 Proof. intro h. inversion h. Qed.
 
-(** τ-step inversion for forwarder states. *)
+(* τ-step inversion for forwarder states. *)
 Lemma fw_tau_inv (p : proc) (M : MO (ExtAct TypeOfActions)) s :
   ((p ▷ M) ⟶ s) ->
   (exists p', p ⟶ p' /\ s = (p' ▷ M))
@@ -830,7 +831,7 @@ Proof.
     exfalso. eapply wend_input_inv; eauto.
 Qed.
 
-(** Termination of the reliable worker under any mailbox, in any parallel
+(* Termination of the reliable worker under any mailbox, in any parallel
     context of buffered "work" outputs. By strong induction on the number
     of buffered "data" messages. *)
 Lemma addw_workers_fw_terminate : forall n (M : MO (ExtAct TypeOfActions)) k,
@@ -880,7 +881,7 @@ Proof.
   exact h.
 Qed.
 
-(** Advance data messages: a multiset of n buffered "data" outputs with
+(* Advance data messages: a multiset of n buffered "data" outputs with
     arbitrary payloads. *)
 Inductive datas : nat -> MO (ExtAct TypeOfActions) -> Prop :=
 | datas0 : datas 0 ∅
@@ -901,7 +902,7 @@ Proof.
     + rewrite heq. multiset_solver.
 Qed.
 
-(** Parallel contexts made of live "work" outputs (true) and spent
+(* Parallel contexts made of live "work" outputs (true) and spent
     outputs (false). *)
 Fixpoint wctx (ws : list bool) (p : proc) : proc :=
   match ws with
@@ -924,7 +925,7 @@ Proof. intro h. inversion h. Qed.
 Lemma gnil_out_inv c v (t : proc) : (g 𝟘) ⟶[ActOut (c, v)] t -> False.
 Proof. intro h. inversion h. Qed.
 
-(** Lifting steps of the core through a context. *)
+(* Lifting steps of the core through a context. *)
 Lemma wctx_lift_tau ws p p' : p ⟶ p' -> wctx ws p ⟶ wctx ws p'.
 Proof.
   intro h. induction ws as [|b l IH]; simpl; [exact h | eapply lts_parR; eauto].
@@ -942,7 +943,7 @@ Proof.
   intro h. induction ws as [|b l IH]; simpl; [exact h | eapply lts_parR; eauto].
 Qed.
 
-(** Firing the j-th live work of the context. *)
+(* Firing the j-th live work of the context. *)
 Fixpoint set_false (j : nat) (ws : list bool) : list bool :=
   match j, ws with
   | _, [] => []
@@ -960,7 +961,7 @@ Proof.
   - eapply lts_parR. eapply IH. exact hj.
 Qed.
 
-(** Inversion of context steps. The core is assumed not to listen on
+(* Inversion of context steps. The core is assumed not to listen on
     "work" (true of every state of both workers). *)
 Lemma wctx_input_inv ws p c v t :
   wctx ws p ⟶[ActIn (c, v)] t ->
@@ -1013,7 +1014,7 @@ Lemma wend_out_inv c v t : W_end ⟶[ActOut (c, v)] t ->
   c = ch "end" /\ v = u1 /\ t = g 𝟘.
 Proof. intro h. inversion h; subst. eauto. Qed.
 
-(** The four cores the reliable side ranges over. *)
+(* The four cores the reliable side ranges over. *)
 Inductive rcore : Type := Crel | Cbody | Cend | Cnil.
 
 Definition cproc (c : rcore) : proc :=
@@ -1060,7 +1061,7 @@ Proof.
   - exfalso. eapply gnil_out_inv; eauto.
 Qed.
 
-(** τ-step inversion for reliable-side states. *)
+(* τ-step inversion for reliable-side states. *)
 Lemma right_tau_inv ws c M s :
   (wctx ws (cproc c) ▷ M) ⟶ s ->
   (c = Crel /\ s = (wctx ws (cproc Cbody) ▷ M))
@@ -1078,7 +1079,7 @@ Proof.
     rewrite wctx_true_end. reflexivity.
 Qed.
 
-(** Weak-τ characterisation of the reliable side: it can only convert
+(* Weak-τ characterisation of the reliable side: it can only convert
     buffered "data" into live "work"s and move along rel → body → end. *)
 Lemma right_wt_nil_inv : forall y (ws : list bool) c (M : MO (ExtAct TypeOfActions)),
   (wctx ws (cproc c) ▷ M) ⟹ y ->
@@ -1113,7 +1114,7 @@ Proof.
       * constructor. exact hD.
 Qed.
 
-(** Constructive weak transitions of the unreliable side. *)
+(* Constructive weak transitions of the unreliable side. *)
 
 Lemma left_consume_one ws (v : ValueData) m :
   (wctx ws unreliableW ▷ ({[+ ActOut (ch "data", v) +]} ⊎ m))
@@ -1182,7 +1183,7 @@ Proof.
   rewrite wctx_true_end. eapply wt_nil.
 Qed.
 
-(** μ-step inversion for reliable-side states. *)
+(* μ-step inversion for reliable-side states. *)
 Lemma right_mu_inv ws c M μ s :
   (wctx ws (cproc c) ▷ M) ⟶[μ] s ->
   (exists j, ws !! j = Some true /\ μ = ActOut (ch "work", u1)
@@ -1208,7 +1209,7 @@ Proof.
     + right. right. right. right. exists b2. eauto.
 Qed.
 
-(** The reliable side terminates in any live/spent context. *)
+(* The reliable side terminates in any live/spent context. *)
 Lemma wctx_end_fw_terminate ws (M : MO (ExtAct TypeOfActions)) c :
   c = Cend \/ c = Cnil ->
   (wctx ws (cproc c) ▷ M) ⤓.
@@ -1272,7 +1273,7 @@ Lemma repeat_true_app (a b : nat) :
   (repeat true (a + b))%list = ((repeat true a) ++ (repeat true b))%list.
 Proof. eapply repeat_app. Qed.
 
-(** The coinductive generalisation: the unreliable worker with n buffered
+(* The coinductive generalisation: the unreliable worker with n buffered
     "data" messages in advance is below the reliable worker that has already
     converted this advance into n live "work" outputs. *)
 Lemma unreliable_below_ctx :
@@ -1523,7 +1524,7 @@ Qed.
 
 End Example_2_1.
 
-(** * Code hoisting: an output can be factored out of a τ-guarded choice. *)
+(* * Code hoisting: an output can be factored out of a τ-guarded choice. *)
 Section Code_Hoisting.
 
 Variable a : String.string.
@@ -1605,7 +1606,7 @@ Proof. eapply lts_choiceR. eapply lts_tau. Qed.
 Lemma wp_fire (r : proc) : (Wo ‖ r) ⟶[ActOut (ch a, vv)] (g 𝟘 ‖ r).
 Proof. eapply lts_parL. exact lts_output. Qed.
 
-(** τ-guarded choice under a spent output. *)
+(* τ-guarded choice under a spent output. *)
 Lemma nchoice_copre_rev :
   forall (PRE : Chain (copre_m (P := proc) (Q := proc) (T := proc))),
     elem PRE ({[ g 𝟘 ‖ p; g 𝟘 ‖ q ]}) {[ g 𝟘 ‖ C ]}.
@@ -1738,7 +1739,7 @@ Qed.
 
 End Code_Hoisting.
 
-(** * Code hoisting under a forwarder. *)
+(* * Code hoisting under a forwarder. *)
 Section Code_Hoisting_FW.
 
 Variable a : String.string.
@@ -2036,3 +2037,4 @@ Proof.
 Qed.
 
 End Code_Hoisting_FW.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import sets base countable finite gmap list finite
                           decidable finite gmap.
 From stdpp Require gmultiset.
-From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA
+From TestingTheory Require Import ActTau SyncActions gLts Bisimulation Lts_OBA
   WeakTransitions Lts_OBA_FB Lts_FW FiniteImageLTS
   InteractionBetweenLts MultisetLTSConstruction
   ParallelLTSConstruction ForwarderConstruction
@@ -38,7 +39,7 @@ From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA
 
 Import ListNotations.
 
-(** * Completeness for the co-acceptance-set preorder
+(* * Completeness for the co-acceptance-set preorder
 
     This file mirrors [Completeness.v] (the plain acceptance-set preorder)
     for the "co" preorder defined in [DefinitionASco.v], which is stated
@@ -57,8 +58,8 @@ Import ListNotations.
     to the tests via [⇓]/[⟹] are re-derived (not copied) here against
     [⇓ᶜᵒ]/[⟹ᶜᵒ]. *)
 
-(** ** Axioms for completeness (copied from [Completeness.v], unchanged) *)
-(** *** Common axioms for the generation of tests **)
+(* ** Axioms for completeness (copied from [Completeness.v], unchanged) *)
+(* *** Common axioms for the generation of tests **)
 
 (* TODO : move in Helpers *)
 Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
@@ -75,7 +76,7 @@ Proof.
   destruct IHps; destruct (h x); eauto; set_solver.
 Qed.
 
-(** *** Common axioms for the generation of tests **)
+(* *** Common axioms for the generation of tests **)
 Class test_spec (* {E A : Type} *)
   `{gLtsT : @gLtsEq T A H, !Testing_Predicate outcome _}
   (gen : list A -> T) := {
@@ -97,7 +98,7 @@ Class test_spec (* {E A : Type} *)
               gen (β :: s) ⟶[μ] t -> μ ≠ β -> outcome t ;
   }.
 
-(** *** Axioms for tests on convergence *)
+(* *** Axioms for tests on convergence *)
 Class test_convergence_spec
   `{@gLtsEq T A H, !Testing_Predicate outcome _}
   (tconv : list A -> T) := {
@@ -109,7 +110,7 @@ Class test_convergence_spec
 
 #[global] Existing Instance tconv_test_spec.
 
-(** *** Axioms for the tests on co-acceptance sets *)
+(* *** Axioms for the tests on co-acceptance sets *)
 Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
   `{@gLtsEq T A H, !Testing_Predicate outcome _}
   (ta : gset PreAct -> list A -> T) (Γ : A -> PreAct)
@@ -131,7 +132,7 @@ Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
 
 #[global] Existing Instance ta_test_spec.
 
-(** *** Facts about test generators *)
+(* *** Facts about test generators *)
 Lemma tconv_always_reduces `{
   gLtsOba T , !Testing_Predicate outcome _, !test_convergence_spec tconv} s :
   ∃ t, tconv s ⟶ t.
@@ -713,7 +714,7 @@ Proof.
        +++ apply m_now. eapply ta_transition_to_good; eauto.
 Qed.
 
-(** ** Completeness for co-acceptance sets
+(* ** Completeness for co-acceptance sets
 
     Everything below relates [P]'s own [⇓ᶜᵒ]/[⟹ᶜᵒ] to the tests above, and is
     genuinely re-derived (not copied) against [cocnv]/[cowt]. *)
@@ -822,7 +823,7 @@ Lemma completeness1_co `{
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₁≼꜀ₒ₋ₐₛ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cocnv, hleq, must_iff_cocnv. Qed.
 
-(** ** Completeness for co-acceptance sets
+(* ** Completeness for co-acceptance sets
 
     [must_ta_monotonicity_nil], [must_ta_monotonicity] and
     [stable_process_must_ta_or_empty_pre_action_set] are reused unchanged
@@ -1088,7 +1089,7 @@ Proof.
     eapply (not_must_ta_without_required_acc_set_co _ _ s); eauto.
 Qed.
 
-(** ** Completeness for forwarder LTS *)
+(* ** Completeness for forwarder LTS *)
 Lemma completeness_fw_co {P Q : Type} `{CC : Countable PreAct} `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP, !coFiniteImagegLts P A,
   @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !coFiniteImagegLts Q A,
@@ -1107,3 +1108,4 @@ Proof.
   - now apply completeness1_co.
   - now apply completeness2_co.
 Qed.
+(* end hide *)

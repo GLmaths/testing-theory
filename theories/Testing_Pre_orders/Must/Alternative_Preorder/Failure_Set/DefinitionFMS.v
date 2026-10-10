@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -49,14 +50,16 @@ Definition fail_pre_ms_cond2 `{ CC : Countable PreAct,
   forall s G, Failure q s G -> Failure p s G.
 
 Notation "p ₂⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond2 p q) (at level 70).
+(* end hide *)
 
 Definition fail_pre_ms `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ ,
   gLtsQ : @gLts Q A H, @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ }
   (p : P) (q : Q) :=
   p ₁⋖ꜰᴀɪʟ q /\ p ₂⋖ꜰᴀɪʟ q.
+(* begin hide *)
 
 Global Hint Unfold fail_pre_ms:mdb. 
 
 Notation "p ⋖ꜰᴀɪʟ q" := (fail_pre_ms p q) (at level 70).
-
+(* end hide *)

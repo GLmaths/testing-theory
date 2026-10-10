@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,21 +29,25 @@ From TestingTheory Require Import ActTau gLts SyncActions.
 Definition subset_of (A : Type) := A -> Prop.
 
 (*************************** Examples of Subset ***********************)
+(* end hide *)
 
 (** ** All actions of a process (ready-set) *)
 Definition R `{gLts P A} (p : P) : subset_of A :=
   fun μ => p ⟶[μ].
+(* begin hide *)
 
 (* ** Blocking co-actions *)
+(* end hide *)
 Definition coR `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (p : P) : subset_of Atest :=
   fun μ1 => exists μ2, p ⟶[μ2] /\ sync μ2 μ1 /\ blocking μ1.
+(* begin hide *)
 
-(** ** All processes accepting an action *)
+(* ** All processes accepting an action *)
 Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
   fun p => p ⟶[μ].
 
-(** ** All processes accepting a co-action *)
+(* ** All processes accepting a co-action *)
 Definition co𝐏 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (μ : Atest) : subset_of P :=
   fun p => exists μ', sync μ' μ /\ p ⟶[μ'].
@@ -61,7 +66,7 @@ Definition Difference_of_act {A :Type} (S : subset_of A) (S' : subset_of A) (a :
         S a /\ (~ (S' a)).
 (* Definition Singleton_of_Act {A : Type} (x : A) : Prop := forall y : A , x = y. *)
 
-(** Instances to use sets notation/properties from stdpp lib *)
+(* Instances to use sets notation/properties from stdpp lib *)
 #[global] Instance Union_of_Actions {A : Type} : Union (@subset_of A).
 exact Union_of_Act. Defined.
 #[global] Instance Empty_Actions {A : Type} : Empty (@subset_of A).
@@ -112,7 +117,7 @@ Qed.
 
 Notation "'⌈' Γ '⌉' S" := (map_set Γ S) (at level 50).
 
-(** The direct image is monotone: a bigger set has a bigger image. *)
+(* The direct image is monotone: a bigger set has a bigger image. *)
 Lemma map_set_mono {A B : Type} (Γ : A -> B) (S S' : subset_of A) :
   S ⊆ S' -> ⌈ Γ ⌉ S ⊆ ⌈ Γ ⌉ S'.
 Proof. intros h y (μ & hμ & ->). exists μ. split; [eapply h, hμ | reflexivity]. Qed.
@@ -127,3 +132,4 @@ Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B-> C) :
 Lemma coR_intro `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (p : P) (μ : Aproc) (β : Atest) : p ⟶[μ] → sync μ β → blocking β → β ∈ coR p.
 Proof. intros ha hs hb. by exists μ. Qed.
+(* end hide *)

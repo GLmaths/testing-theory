@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * A guarded sum's own stability and (abstracted) ready set, computed structurally
+(* * A guarded sum's own stability and (abstracted) ready set, computed structurally
 
     Groundwork for [CompletenessAx.v]: completeness of [ax_pre] w.r.t.
     [⊑ₘᵤₛₜᵢ] needs, at its core, to compare two guarded sums' own
@@ -68,7 +69,7 @@ Section VCCS_ReadySet.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** Stability *)
+(* ** Stability *)
 
 Fixpoint gStable (M : gproc) : Prop :=
 match M with
@@ -112,7 +113,7 @@ Proof.
     + destruct H as (H1 & H2). apply choice_stable_iff. split; [apply IHM1 | apply IHM2]; assumption.
 Qed.
 
-(** ** The abstracted ready set of an arbitrary process, value-erased *)
+(* ** The abstracted ready set of an arbitrary process, value-erased *)
 
 Lemma coR_abs_Outputs_on_iff : forall (p : proc) c,
   Outputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActIn (c,v)].
@@ -142,7 +143,7 @@ Proof.
     exists (ActOut (c,v)). split; [exact Hnr | split; [apply simplify_match_output; reflexivity | exact (fun H => H)]].
 Qed.
 
-(** ** A process's ability to fire an action, restated via the finite [lts_set] *)
+(* ** A process's ability to fire an action, restated via the finite [lts_set] *)
 
 Lemma no_lts_empty : forall (p : proc) a, (forall q, ~ lts p a q) -> lts_set p a = ∅.
 Proof.
@@ -154,7 +155,7 @@ Unshelve.
   all: typeclasses eauto.
 Qed.
 
-(** ** A guarded sum's own input/output offers, read off its syntax *)
+(* ** A guarded sum's own input/output offers, read off its syntax *)
 
 Fixpoint has_input (c : ChannelData) (M : gproc) : Prop :=
 match M with
@@ -226,7 +227,7 @@ Proof.
       * apply IHM2 in H2 as (v & Hnr). exists v. apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hc. apply choice_ext_stable_iff in Hc as (Hc1 & Hc2). revert Hnr. exact Hc2.
 Qed.
 
-(** ** The [≼ₐₛ]-level ready-set inclusion, restated structurally *)
+(* ** The [≼ₐₛ]-level ready-set inclusion, restated structurally *)
 
 Lemma coR_abs_incl_iff : forall M N,
   (⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g M)) ⊆ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g N)))
@@ -248,7 +249,7 @@ Proof.
       apply has_input_iff in Hmem. apply Hi in Hmem. apply has_input_iff in Hmem. exact Hmem.
 Qed.
 
-(** ** Guarded-choice precongruence, restricted to *stable* summands
+(* ** Guarded-choice precongruence, restricted to *stable* summands
 
     [must_i_choice_stable_compat] below closes what sessions 3-6 of this
     development treated as a hard blocker. The unrestricted rule
@@ -299,7 +300,7 @@ Proof.
   - exists q. split; [exact l | exact w].
 Qed.
 
-(** Every weak transition of a guarded choice either takes no step at
+(* Every weak transition of a guarded choice either takes no step at
     all, or takes a genuine *first committing step* from one of the two
     branches — unlike [choice_wt_decomp'], this records that first step,
     which is what makes the run liftable back onto another choice. *)
@@ -393,3 +394,4 @@ Proof.
 Qed.
 
 End VCCS_ReadySet.
+(* end hide *)

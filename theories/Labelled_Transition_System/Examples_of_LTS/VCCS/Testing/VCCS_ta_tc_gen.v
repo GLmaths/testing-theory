@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <glopez@irif.fr>
 
@@ -696,3 +697,4 @@ Next Obligation.
  intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VCCS_ta_tc.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,7 +26,7 @@ From TestingTheory Require Import gLts Bisimulation Testing_Predicate.
 From TestingTheory Require Import Completeness.
 From TestingTheory Require Import CompletenessASco.
 
-(** ** Bridge between [Completeness.v]'s and [CompletenessASco.v]'s
+(* ** Bridge between [Completeness.v]'s and [CompletenessASco.v]'s
     identically-named, field-for-field-identical [test_spec] /
     [test_convergence_spec] / [test_co_acceptance_set_spec] classes.
 
@@ -98,3 +99,4 @@ Proof.
   - exact tcc.
   - exact tctg.
 Defined.
+(* end hide *)

@@ -1,4 +1,5 @@
-(** * Harmony lemma (Lemma 5.1): program ∥ memory
+(* begin hide *)
+(* * Harmony lemma (Lemma 5.1): program ∥ memory
 
     The configuration LTS ⟨p, ρ⟩ --λ--> ⟨x, K(ρ)⟩ is in bijection with the
     restricted parallel composition (p ∥ ρ)\L of a classical program LTS,
@@ -10,10 +11,10 @@ Import ListNotations.
 Section Harmony.
 Context `{StAlg}.
 
-(** Configuration LTS. *)
+(* Configuration LTS. *)
 Definition cstep (p : prog) (ρ : St) λ x ρ' := exists K, ts p λ K x /\ ρ' = app K ρ.
 
-(** Program LTS: purely classical. *)
+(* Program LTS: purely classical. *)
 Inductive plbl := Emit (K : T) | Recv (m : Meas) (j : nat) | Pick (t : tag) (b : bool).
 
 Definition pstep p a x : Prop :=
@@ -24,14 +25,14 @@ Definition pstep p a x : Prop :=
   | Ch t x0 x1 => exists b, a = Pick t b /\ x = if b then x1 else x0
   end.
 
-(** Memory LTS. *)
+(* Memory LTS. *)
 Inductive mlbl := Apply (K : T) | Send (m : Meas) (j : nat).
 
 Inductive mstep : St -> mlbl -> St -> Prop :=
 | m_apply ρ K : mstep ρ (Apply K) (app K ρ)
 | m_send ρ m k : mstep ρ (Send m (code m k)) (app (kraus m k) ρ).
 
-(** Restricted composition: operations and outcomes must synchronise. *)
+(* Restricted composition: operations and outcomes must synchronise. *)
 Inductive clbl := TauOp (K : T) | TauMeas (m : Meas) (j : nat) | Choice (t : tag) (b : bool).
 
 Inductive par : prog -> St -> clbl -> prog -> St -> Prop :=
@@ -49,7 +50,7 @@ Definition erase (a : clbl) : lbl :=
 Lemma erase_hat λ K : erase (hat λ K) = λ.
 Proof. now destruct λ. Qed.
 
-(** Every configuration transition is a transition of the composition ... *)
+(* Every configuration transition is a transition of the composition ... *)
 Theorem harmony p ρ λ K x : ts p λ K x -> par p ρ (hat λ K) x (app K ρ).
 Proof.
   intros [Hp Ht]. destruct (step p) as [K' x' | m xs | t x0 x1] eqn:Hs.
@@ -59,7 +60,7 @@ Proof.
     constructor. split; [auto | rewrite Hs; eauto].
 Qed.
 
-(** ... and every transition of the composition arises this way, from a
+(* ... and every transition of the composition arises this way, from a
     unique configuration transition (the label and decoration are
     recovered by [erase] and [hat]). *)
 Theorem harmony_inv p ρ a x ρ' :
@@ -77,7 +78,7 @@ Proof.
     split; [split; [auto | rewrite Hs; eauto] | rewrite app_one; auto].
 Qed.
 
-(** ** Paths *)
+(* ** Paths *)
 
 Inductive ppath : prog -> St -> list clbl -> St -> Prop :=
 | pp_done ρ : ppath Done ρ [] ρ
@@ -85,7 +86,7 @@ Inductive ppath : prog -> St -> list clbl -> St -> Prop :=
 
 Definition hats (α : list (lbl * T)) := map (fun e => hat (fst e) (snd e)) α.
 
-(** Terminal paths correspond, with the same final memory [ℰ_α(ρ)]. *)
+(* Terminal paths correspond, with the same final memory [ℰ_α(ρ)]. *)
 Theorem harmony_paths p ρ α : tpath p α -> ppath p ρ (hats α) (app (kr α) ρ).
 Proof.
   intro Hα. induction Hα as [| p λ K x α Ht Hα IH] in ρ |- *; simpl.
@@ -105,7 +106,7 @@ Proof.
     + simpl. now rewrite app_comp.
 Qed.
 
-(** Scheduler compatibility only reads the [Choice] labels of the program
+(* Scheduler compatibility only reads the [Choice] labels of the program
     side: resolving choices before or after composition with the memory is
     the same (pruning, §5). *)
 Definition ccompat (σ : sched) (β : list clbl) :=
@@ -118,3 +119,4 @@ Proof.
 Qed.
 
 End Harmony.
+(* end hide *)

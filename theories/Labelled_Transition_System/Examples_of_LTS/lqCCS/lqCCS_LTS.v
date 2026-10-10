@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: the process LTS and the observer LTS
+(* * lqCCS: the process LTS and the observer LTS
 
     Two LTSs on two alphabets, linked by [sync], as in the classical
     development ([SyncActions.v], [InteractionBetweenLts.v]):
@@ -51,7 +52,7 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition l
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   InteractionBetweenLts.
 
-(** ** LTSs given by their successors *)
+(* ** LTSs given by their successors *)
 
 Definition list_witness {A} (l : list A) (Hl : l ≠ []) : { x | x ∈ l }.
 Proof. destruct l as [|x l]; [done|]. exists x. set_solver. Defined.
@@ -65,7 +66,7 @@ Definition gLts_of_succs {S A} `{EA : ExtAction A} `{EqDecision S}
      lts_performs_spec1 p α Hl := list_witness (f p α) Hl;
      lts_performs_spec2 p α '(exist _ q Hq) := ltac:(intros E; rewrite E in Hq; set_solver) |}.
 
-(** ** Alphabets *)
+(* ** Alphabets *)
 
 Inductive tact : Type :=
 | TOut (c : chan) (v : val)
@@ -110,7 +111,7 @@ Proof.
   by intros [].
 Defined.
 
-(** Duals inside each alphabet: an output and the matching reception;
+(* Duals inside each alphabet: an output and the matching reception;
     requests and measurements are their own duals. *)
 Definition tco (a : tact) : tact :=
   match a with TOut c v => TIn c v | TIn c v => TOut c v | _ => a end.
@@ -142,7 +143,7 @@ Proof. intros a b ->. by destruct a. Qed.
   exists_dual a := exist _ (aco a) eq_refl;
 |}.
 
-(** The synchronisation: the partner of a process action. *)
+(* The synchronisation: the partner of a process action. *)
 Definition partner (a : aact) : tact :=
   match a with
   | POut c v => TIn c v
@@ -169,11 +170,11 @@ Section LTSs.
   Context `{QM : QuantumModel}.
 
 
-  (** Codes of the outcomes of [M]. *)
+  (* Codes of the outcomes of [M]. *)
   Definition codes (M : meas) (qs : list qubit) : list nat :=
     code (meas_of M qs) <$> outs (meas_of M qs).
 
-  (** *** Observers *)
+  (* *** Observers *)
 
   Definition tsuccs (Q : proc) (α : Act tact) : list proc :=
     match α with
@@ -194,7 +195,7 @@ Section LTSs.
 
   #[global] Instance test_gLts : gLts proc tact_ExtAction := gLts_of_succs tsuccs.
 
-  (** *** Processes: a program and its memory *)
+  (* *** Processes: a program and its memory *)
 
   Definition nonzero (ρ : St) : Prop := ρ ≠ szero.
 
@@ -222,7 +223,7 @@ Section LTSs.
 
   #[global] Instance proc_gLts : gLts (proc * St) aact_ExtAction := gLts_of_succs psuccs.
 
-  (** *** What the steps are *)
+  (* *** What the steps are *)
 
   Lemma test_step_def Q α Q' : Q ⟶{α} Q' ↔ Q' ∈ tsuccs Q α.
   Proof. done. Qed.
@@ -315,7 +316,7 @@ Section LTSs.
         * apply acts_spec. split; [done|eauto].
   Qed.
 
-  (** *** Observers up to structural congruence *)
+  (* *** Observers up to structural congruence *)
 
   Lemma cgr_goodb P Q : P ≡* Q → goodb P = goodb Q.
   Proof.
@@ -359,7 +360,7 @@ Section LTSs.
     - intros ??? [].
   Qed.
 
-  (** *** Essential actions *)
+  (* *** Essential actions *)
 
   Definition ess_left (x : proc * St) : gset aact :=
     list_to_set ((λ '(c, v, _), POut c v) <$> prog_outs x.1).
@@ -441,3 +442,4 @@ Section LTSs.
     - intros q q' ξ μ p _ _ Hs. change (μ = partner ξ) in Hs. subst. set_solver.
   Defined.
 End LTSs.
+(* end hide *)

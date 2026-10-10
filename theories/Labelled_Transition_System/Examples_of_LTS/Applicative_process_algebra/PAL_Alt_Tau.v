@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -37,7 +38,7 @@ Section PAL_Alt_Tau.
   Notation old := (Applicative_process_algebra.pal_step Val).
   Notation new := (lts_step_a Val).
 
-  (** From the new LTS to the old one: forget the templates. *)
+  (* From the new LTS to the old one: forget the templates. *)
   Lemma new_old p α q :
     new p α q →
     match α with
@@ -80,7 +81,7 @@ Section PAL_Alt_Tau.
       + by eapply (ir13 _ _ _ (ActOut (ltuple Val l2))).
   Qed.
 
-  (** From the old LTS to the new one: an input gains the template of its pattern. *)
+  (* From the old LTS to the new one: an input gains the template of its pattern. *)
   Lemma old_new p α q :
     old p α q →
     match α with
@@ -129,11 +130,11 @@ Section PAL_Alt_Tau.
       + destruct IHpal_step2 as (l & hl & h2'). eapply air13; [exact IHpal_step1 | exact h2' | exact hl].
   Qed.
 
-  (** The τ-transitions coincide. *)
+  (* The τ-transitions coincide. *)
   Theorem tau_iff p q : new p τ q ↔ old p τ q.
   Proof. split; [apply (new_old p τ q) | apply (old_new p τ q)]. Qed.
 
-  (** Visible transitions: inputs refine the labels of the old LTS, outputs are unchanged. *)
+  (* Visible transitions: inputs refine the labels of the old LTS, outputs are unchanged. *)
   Lemma in_iff p ot q : (∃ l, ltuple Val l = ot ∧ new p (ActExt (AIn _ l)) q) ↔ old p (ActExt (ActIn ot)) q.
   Proof.
     split.
@@ -144,3 +145,4 @@ Section PAL_Alt_Tau.
   Lemma out_iff p ot q : new p (ActExt (AOut _ ot)) q ↔ old p (ActExt (ActOut ot)) q.
   Proof. split; [apply (new_old p (ActExt (AOut _ ot)) q) | apply (old_new p (ActExt (ActOut ot)) q)]. Qed.
 End PAL_Alt_Tau.
+(* end hide *)

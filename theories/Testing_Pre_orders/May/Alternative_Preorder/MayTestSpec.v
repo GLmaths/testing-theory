@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitio
 
 Import ListNotations.
 
-(** * The axiomatised test attesting a trace, for May
+(* * The axiomatised test attesting a trace, for May
 
     [may_test_spec] and everything that follows from it alone — the
     test's own behaviour, independent of *which* trace-inclusion
@@ -35,12 +36,12 @@ Import ListNotations.
     rather than inside either characterisation so both can import it
     directly, instead of one importing the other's file for it. *)
 
-(** ** Success is unreachable from [t] *)
+(* ** Success is unreachable from [t] *)
 
 Definition never_outcome `{gLts T A} (outcome : T -> Prop) (t : T) : Prop :=
   ∀ (u : trace A) (t' : T), t ⟹[u] t' -> ¬ outcome t'.
 
-(** ** Axioms for the tests attesting a trace
+(* ** Axioms for the tests attesting a trace
 
     This mirrors the Must [test_spec] of [Completeness.v] field by field. The
     *only* semantic difference is the polarity of the deviation axiom:
@@ -78,7 +79,7 @@ Class may_test_spec
               blocking β -> gen (β :: s) ⟶ t -> never_outcome outcome t ;
   }.
 
-(** Nothing at all is assumed about [gen ε] beyond (5) and (6) — in particular no
+(* Nothing at all is assumed about [gen ε] beyond (5) and (6) — in particular no
     counterpart of the side condition Must drags through its inversion lemmas,
     [∀ μ, f ε ↛[μ] ∨ (∀ t, f ε ⟶[μ] t -> outcome t)].  It is not needed: should
     [gen ε] offer some stray external action, it is only ever *reachable* once the
@@ -91,7 +92,7 @@ Section May_tests.
 Context `{gLtsT : @gLtsEq T A H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
-(** ** Determinacy on the expected action, for every action
+(* ** Determinacy on the expected action, for every action
 
     On a non-blocking head it comes for free from NB-DETERMINACY, which is why
     axiom (3) only needs to speak about blocking heads. Same argument as Must's
@@ -108,7 +109,7 @@ Proof.
   - eapply may_test_follows_trace_determinacy; eauto.
 Qed.
 
-(** ** Fatality propagates backwards along a non-blocking action
+(* ** Fatality propagates backwards along a non-blocking action
 
     The May counterpart of [outcome_preserved_by_lts_non_blocking_action_converse].
     It is not an axiom: it is *derived*, by showing that [w] can replay any
@@ -169,7 +170,7 @@ Proof.
   eapply nw; eauto.
 Qed.
 
-(** ** The test does run its own trace, all the way to success *)
+(* ** The test does run its own trace, all the way to success *)
 
 Lemma may_test_runs (r : trace A) : ∃ e, gen r ⟹[r] e /\ outcome e.
 Proof.
@@ -189,7 +190,7 @@ Proof.
     + eapply outcome_preserved_by_eq; [exact happy | now symmetry].
 Qed.
 
-(** ** A trace element can be consumed from the middle of the trace
+(* ** A trace element can be consumed from the middle of the trace
 
     Duplicated from Must's [f_gen_lts_mu_in_the_middle] / [..._middle'] (they only
     use [test_next_step], the determinacy above, and the OBA axioms, never
@@ -254,7 +255,7 @@ Proof.
       etransitivity; [symmetry; exact equiv | exact final].
 Qed.
 
-(** ** Fatality is invariant under bisimilarity *)
+(* ** Fatality is invariant under bisimilarity *)
 
 Lemma never_outcome_eq (t t' : T) :
   t ⋍ t' -> never_outcome outcome t -> never_outcome outcome t'.
@@ -267,7 +268,7 @@ Proof.
   eapply outcome_preserved_by_eq; [exact happy | now symmetry].
 Qed.
 
-(** ** Inversion of an external action of the test
+(* ** Inversion of an external action of the test
 
     The May counterpart of Must's [inversion_test_external_action]. Either the
     transition is a deviation — and then it is fatal — or it consumes an element
@@ -371,7 +372,7 @@ Proof.
   - eapply inversion_may_test_b_external_action; eauto.
 Qed.
 
-(** ** Inversion of a silent move of the test
+(* ** Inversion of a silent move of the test
 
     Three ways for [gen s] to compute on its own.
 
@@ -452,3 +453,4 @@ Proof.
 Qed.
 
 End May_tests.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The copycat law, for an arbitrary channel
+(* * The copycat law, for an arbitrary channel
 
         [ccat c := c ? (c ! x • 𝟘)]        [ccat c ≂ₘᵤₛₜᵢ 𝟘]
 
@@ -61,7 +62,7 @@ Section VACCS_Copycat.
 
 Context `{VP : VACCS_Parameters}.
 
-(** The one-shot forwarder on channel [c]. *)
+(* The one-shot forwarder on channel [c]. *)
 Definition ccat (c : ChannelData) : proc := c ? (c ! (bvar 0) • 𝟘).
 
 Lemma ccat_gStatic : forall c, gStatic (c ? (c ! (bvar 0) • 𝟘)).
@@ -160,7 +161,7 @@ Proof.
            ++ intros. lts_inversion lts.
 Qed.
 
-(** ** A *responder* is only below the copycat, never equal to it
+(* ** A *responder* is only below the copycat, never equal to it
 
     [resp a V := a ? (a ! V • 𝟘)] answers on the same channel but with a
     value of its own choosing.  It is **not** a forwarder: the buffer's
@@ -259,13 +260,13 @@ Proof.
         apply (must_i_ccat_l (cst a)). exact H8.
 Qed.
 
-(** …and hence below [𝟘], by the copycat law. *)
+(* …and hence below [𝟘], by the copycat law. *)
 Corollary must_i_resp_l : resp ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof. intros t Hm. apply (must_i_ccat_l (cst a)). apply must_i_resp_below_ccat. exact Hm. Qed.
 
 End Responder.
 
-(** * A whole SUM of copycats is invisible too
+(* * A whole SUM of copycats is invisible too
 
     Guarded choice commits, so a sum of copycats can absorb a message on
     one channel and thereby lose the ability to absorb on the others —
@@ -346,3 +347,4 @@ Proof.
 Qed.
 
 End VACCS_Copycat.
+(* end hide *)

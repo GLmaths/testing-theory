@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -36,13 +37,13 @@ From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
 From TestingTheory Require Import coWeakTransition coConvergence DefinitionASco
       FiniteImageLTS coFiniteImage coSetLTSConstruction DefinitionASco.
 
-(** * Soundness for the co-acceptance-set preorder
+(* * Soundness for the co-acceptance-set preorder
 
     Two alphabets throughout: the processes over [Aproc], the observers and
     the co-traces over [Atest], linked by [sync]; on one alphabet [sync] is
     [dual].  The computations of [p ∥ t] are any [ParStsSpec]. *)
 
-(** ** Must for a set of processes *)
+(* ** Must for a set of processes *)
 
 Inductive mustx `{
     gLtsP : @gLts P Aproc Hp, CP : !Countable P,
@@ -77,7 +78,7 @@ Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
 Context `{SA : !SyncAction Aproc Atest} `{STS : !ParSts P T gLtsP gLtsT} `{!ParStsSpec P T gLtsP gLtsT SA STS}.
 Context `{CFI : !coFiniteImagegLts P Atest}.
 
-(** ** Must predicate for sets *)
+(* ** Must predicate for sets *)
 
 Lemma mx_sub X t :
   X must_pass_x t → ∀ X', X' ⊆ X → X' must_pass_x t.
@@ -165,7 +166,7 @@ Proof.
   + right. right. eapply unoutcome_acnv_mu; eauto.
 Qed.
 
-(** *** The union of two sets that pass an observer passes it *)
+(* *** The union of two sets that pass an observer passes it *)
 
 Lemma mx_sum X X' t : X must_pass_x t → X' must_pass_x t → (X ∪ X') must_pass_x t.
 Proof.
@@ -267,7 +268,7 @@ Proof.
              intros q mem. eapply (cowt_s_set_from_pset_ispec ps2 η HAX2). set_solver.
 Qed.
 
-(** *** From singletons to arbitrary sets, and back to [must] *)
+(* *** From singletons to arbitrary sets, and back to [must] *)
 
 Lemma mx_forall X t :
   X ≠ ∅ → (∀ p, p ∈ X → ({[p]} : gset P) must_pass_x t) → X must_pass_x t.
@@ -460,7 +461,7 @@ Qed.
 
 End Must_for_sets_sync.
 
-(** ** Contextual preorder for sets *)
+(* ** Contextual preorder for sets *)
 
 (* As [ctx_pre] ([Must.v]): [outcome] and the instances are implicit. *)
 Definition ctx_pre__x `{gLtsP : @gLts P Aproc Hp, CP : !Countable P,
@@ -548,7 +549,7 @@ Proof.
     set_solver. set_solver.
 Qed.
 
-(** ** The set preorder on singletons is the process preorder *)
+(* ** The set preorder on singletons is the process preorder *)
 
 Lemma must_set_singleton_iff (p : P) (q : Q) :
   p ⊆ₘᵤₛₜᵢ q ↔ ({[ p ]} : gset P) ⊑ₛₑₜ_ₘᵤₛₜᵢ ({[ q ]} : gset Q).
@@ -570,7 +571,7 @@ End Must_preorder_for_sets_sync.
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
 Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre__x X Y) (at level 70).
 
-(** [⊑ₛₑₜ_ₘᵤₛₜᵢ] is a preorder. *)
+(* [⊑ₛₑₜ_ₘᵤₛₜᵢ] is a preorder. *)
 
 Section Must_preorder_for_sets_instances.
 
@@ -605,7 +606,7 @@ End Must_preorder_for_sets_instances.
 
 Notation "X ≂ₛₑₜ_ₘᵤₛₜᵢ Y" := (Y ⊑ₛₑₜ_ₘᵤₛₜᵢ X /\ X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y) (at level 70).
 
-(** ** The alternative preorder, on sets
+(* ** The alternative preorder, on sets
 
     [mustx_alt_co] and its bridge are commented out in [SoundnessASco.v]
     (they are the one piece that would need the set LTS on the [P] side), so
@@ -645,7 +646,7 @@ Definition bhv_pre_co__x
 
 Global Notation "X ≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co__x X Y) (at level 70).
 
-(** ** Acceptance-set preorder properties on sets *)
+(* ** Acceptance-set preorder properties on sets *)
 
 Section Acceptance_Set_preorder_for_sets_sync.
 
@@ -777,9 +778,9 @@ Qed.
 
 End Acceptance_Set_preorder_for_sets_sync.
 
-(** ** Communication-enabling property *)
+(* ** Communication-enabling property *)
 
-(** ** Communication-enabled processes
+(* ** Communication-enabled processes
 
     What the soundness proof asks of [Q]: every emission of the observer can
     be received, by /some/ action that synchronises with it.  On one
@@ -807,7 +808,7 @@ Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
 Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
 Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
 
-(** In the non-blocking case, [q] receives the observer's emission [η] by
+(* In the non-blocking case, [q] receives the observer's emission [η] by
     [sync_cn_enabled] — with its own action, not necessarily [p]'s. *)
 
 Lemma communication_enabled_co (p : P) p' (q : Q) (t : T) t' μ1 (η : Atest) :
@@ -841,7 +842,7 @@ Qed.
 
 End Properties_for_soundness_sync.
 
-(** ** Soundness for sets *)
+(* ** Soundness for sets *)
 
 Section SoundnessAS_sync.
 
@@ -862,7 +863,7 @@ Notation "X '₁≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
 Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 
-(** The composition is an [Sts], so "the composition is stuck" is
+(* The composition is an [Sts], so "the composition is stuck" is
     [¬ sts_performs], not a [τ]-refusal of an LTS. *)
 
 Lemma unoutcome_must_st_nleqx_co (X : gset P) (Y : gset Q) (t : T) :
@@ -909,7 +910,7 @@ Proof.
     apply h, (sts_performs_spec2 (Sts := par_sts) (q, t)). by exists y.
 Qed.
 
-(** ** Soundness, on sets *)
+(* ** Soundness, on sets *)
 
 Lemma soundnessx_co (X : gset P) (Y : gset Q) : X ≼ Y → X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
 Proof.
@@ -970,7 +971,7 @@ Proof.
     eapply Hbuild; eauto.
 Qed.
 
-(** ** Soundness, on processes *)
+(* ** Soundness, on processes *)
 
 Lemma soundness_co_nb_enabled_co (p : P) (q : Q) :
   p ≼꜀ₒ₋ₐₛ q →
@@ -986,7 +987,7 @@ Qed.
 End SoundnessAS_sync.
 
 
-(** ** Soundness on forwarders, one alphabet *)
+(* ** Soundness on forwarders, one alphabet *)
 
 Lemma soundness_fw_co `{
   gLtsEqP : @gLtsEq P A H, !coFiniteImagegLts P A,
@@ -1011,7 +1012,7 @@ Proof.
   eapply (soundness_co_nb_enabled_co _ _ _ (CN := CN)).
 Qed.
 
-(** ** [mustx_alt] — the one piece of [mustx]'s apparatus that *does* need a
+(* ** [mustx_alt] — the one piece of [mustx]'s apparatus that *does* need a
     co-variant: its [com] case is where the (map-[coₜ]-free) design pays off.
     Mirrors [mustx]'s own two-label ([wt_set_from_pset_spec1 X [μ1] X'] +
     [dual μ1 μ2]) style, but with a single [μ] via [cowt_set_from_pset_spec1]
@@ -1118,7 +1119,7 @@ Qed.
 End MustxIffMustxAltCo.
 *)
 
-(** ** Soundness for LTSs that can be lifted to forwarders, co variant *)
+(* ** Soundness for LTSs that can be lifted to forwarders, co variant *)
 (* Depends on [soundness_fw_co] (below), which depends on
    [soundness_co_nb_enabled_co]/[soundnessx_co] (set-LTS-based). *)
 (*
@@ -1159,3 +1160,4 @@ Proof.
   now eapply (soundness_fw_co (p ▷ ∅) (q ▷ ∅)).
 Qed.
 *)
+(* end hide *)

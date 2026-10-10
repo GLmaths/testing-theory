@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -28,7 +29,7 @@ From Stdlib.Program Require Import Equality.
 
 From stdpp Require Import base decidable gmap finite.
 
-From TestingTheory Require Import 
+From TestingTheory Require Import ActTau 
   gLts Lts_OBA Lts_OBA_FB Lts_FW FiniteImageLTS Lts_CN
   Subset_Act ActTau 
   Convergence Termination Bisimulation WeakTransitions
@@ -334,6 +335,7 @@ Proof.
       ++ exact duo'.
       ++ exact b'.
 Qed.
+(* end hide *)
 
 Theorem equivalence_bhv_acc_mst `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
@@ -345,6 +347,7 @@ Theorem equivalence_bhv_acc_mst `{CC : Countable PreAct} `{
   Proof.
     split; intros (pre1 & pre2) ; split; eauto; eapply equivalence_bhv_acc_mst2;eauto.
   Qed.
+(* begin hide *)
 
 From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
@@ -353,6 +356,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB St
     Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain Equivalence Soundness Completeness.
+(* end hide *)
 
 Section must_set_preorder.
   Context `{outcome : T -> Prop}.
@@ -398,7 +402,8 @@ Section must_set_preorder.
     rewrite equivalence_bhv_acc_mst;eauto.
   Qed.
 
-  (** ** The must-set characterisation on FW is equivalent to the inductive must preorder *)
+  (* ** The must-set characterisation on FW is equivalent to the inductive must preorder *)
+(* begin hide *)
   Corollary equivalence_fw_must_set_and_must_i (p : P) (q : Q) :
     p ≾ₘᵤₛₜ q <-> p ⊑ₘᵤₛₜᵢ q.
   Proof.
@@ -408,16 +413,20 @@ Section must_set_preorder.
     - intros hpre. eapply completeness_fw in hpre.
       now eapply equivalence_bhv_acc_mst.
   Qed.
+(* end hide *)
 
   End FWⁿ.
-  (** ---- *)
+  (* ---- *)
+(* begin hide *)
   Section Lⁿ.
+(* end hide *)
 
   Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
   Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
   Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
 
-  (** ** The must-set characterisation on toFW is equivalent to the inductive must preorder *)
+  (* ** The must-set characterisation on toFW is equivalent to the inductive must preorder *)
+(* begin hide *)
   Corollary equivalence_must_set_and_must_i (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≾ₘᵤₛₜ (q, ∅).
   Proof.
@@ -429,9 +438,9 @@ Section must_set_preorder.
       eapply soundness_fw; eauto.
   Qed.
 
-  (** ---- *)
+  (* ---- *)
 
-  (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
+  (* ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
   Corollary equivalence_must_set_and_must_e (p : P) (q : Q) :
     pre_extensional outcome p q <-> (p, ∅) ≾ₘᵤₛₜ (q, ∅).
   Proof.
@@ -439,5 +448,6 @@ Section must_set_preorder.
   Qed.
 
   End Lⁿ.
+(* end hide *)
 
 End must_set_preorder.

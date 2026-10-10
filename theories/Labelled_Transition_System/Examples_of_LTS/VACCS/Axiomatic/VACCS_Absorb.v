@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Dropping an absorbing input summand
+(* * Dropping an absorbing input summand
 
     An input guard whose continuation is itself below [𝟘] may be **removed
     from a sum**:
@@ -85,7 +86,7 @@ Section VACCS_Absorb.
 
 Context `{VP : VACCS_Parameters}.
 
-(** [must (g 𝟘) t] is a property of the *client* alone: [𝟘] never
+(* [must (g 𝟘) t] is a property of the *client* alone: [𝟘] never
     interacts, so the only field with content is [ex], which says [t] has a
     [τ] of its own whenever it is not already good. *)
 Lemma must_nil_tau : forall (t : proc), (g 𝟘) must_pass t -> ~ good_VACCS t ->
@@ -99,7 +100,7 @@ Proof.
     + unfold lts_step in *; simpl in *. inversion l1.
 Qed.
 
-(** ** The law *)
+(* ** The law *)
 
 Lemma must_i_input_drop : forall c P G,
   (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘)) -> (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g G).
@@ -140,7 +141,7 @@ Proof.
       eapply com; [ exact Hd | apply lts_choiceR; exact Hl1 | exact Hl2 ].
 Qed.
 
-(** The bare instance, for reference: an absorbing input is invisible. *)
+(* The bare instance, for reference: an absorbing input is invisible. *)
 Corollary must_i_input_nil : forall c P,
   (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘)) -> (g (c ? P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
@@ -151,7 +152,7 @@ Proof.
   destruct Hc as [Hc1 Hc2]. apply Hc2. exact Hm.
 Qed.
 
-(** * Harmlessness relative to a set of refused channels
+(* * Harmlessness relative to a set of refused channels
 
     [must_i_input_drop]'s premise is sound but too strong, and no premise
     of the form "[P^v ⊑ₘᵤₛₜᵢ X]" can replace it: the semantic condition
@@ -208,7 +209,7 @@ Proof.
   - apply hm_par; [ apply IHHarmless1 | apply IHHarmless2 ]; exact Hsub.
 Qed.
 
-(** The four transition-level facts the soundness induction needs.  With
+(* The four transition-level facts the soundness induction needs.  With
     [hm_par] present, a [τ] of the server may be an *internal
     synchronisation*, and closing that case is what forces both an output
     clause ([hm_out_step]) and the argument that the set need not grow:
@@ -271,7 +272,7 @@ Qed.
 Definition RefusesIn (S : chset) (u : proc) : Prop :=
   forall c v q, S c -> ~ lts u (ActExt (ActIn (c,v))) q.
 
-(** ** Soundness
+(* ** Soundness
 
     By induction on the [must] derivation, not on [Harmless] — the
     judgement is preserved by transitions ([hm_tau_step], [hm_in_step]),
@@ -321,7 +322,7 @@ Proof.
       * eapply Href; [ | exact l2 ]. eapply hm_out_chan; eassumption.
 Qed.
 
-(** A transition either exists or does not — constructively, because the
+(* A transition either exists or does not — constructively, because the
     VACCS [gLts] instance exposes [lts_set] as a [gset], whose equality
     with [∅] is decidable.  (The generic [lts_performs_spec1]/[_spec2] both
     misbehave on this instance — one times out — so go through [lts_set]
@@ -339,7 +340,7 @@ Proof.
   Unshelve. all: typeclasses eauto.
 Qed.
 
-(** ** The general drop law
+(* ** The general drop law
 
     The same proof as [must_i_input_drop], with [Harmless_sound] in place
     of [must_nil_tau].  The [ex]/[ParSync] case now splits three ways with
@@ -404,7 +405,7 @@ Proof.
       eapply com; [ exact Hd | apply lts_choiceR; exact Hl1 | exact Hl2 ].
 Qed.
 
-(** ** Four instances, all one line — and they were four separate laws
+(* ** Four instances, all one line — and they were four separate laws
 
     The copycat, the responder, the swallow, and the nested case that
     defeated the old premise.  Note the responder is obtained at an
@@ -439,7 +440,7 @@ Proof.
   intros c G. apply must_i_input_drop_harmless. intro v. simpl. apply hm_nil.
 Qed.
 
-(** ** The judgement — two clauses, no syntax at all
+(* ** The judgement — two clauses, no syntax at all
 
     The first version of this file had three *syntactic* clauses (a
     message, a bad [𝛕]-summand, a stable sum with all input branches bad).
@@ -466,7 +467,7 @@ Inductive Bad : chset -> proc -> Prop :=
                    Bad (fun d => S d \/ d = c) p'') ->
     Bad S p.
 
-(** ** Soundness
+(* ** Soundness
 
     Induction on the [must] derivation; at each step the *judgement* is
     destructed and each clause picks the field that refutes it — [bad_step]
@@ -537,7 +538,7 @@ Proof.
     [ intros q Hq | intros d x q Hq | intros d x q Hq ]; inversion Hq.
 Qed.
 
-(** ** The drop law at [Bad]
+(* ** The drop law at [Bad]
 
     Same shape as [must_i_input_drop_harmless]; only the appeal in the
     stuck case changes, from [Harmless_sound] to [Bad_sound]. *)
@@ -594,7 +595,7 @@ Proof.
 Qed.
 
 
-(** * Restricting a stable sum to a channel set — the rule the matching needs
+(* * Restricting a stable sum to a channel set — the rule the matching needs
 
     Dropping guards one at a time is the wrong move (see the plan notes):
     it is unsound as a *strategy* on the left, and unsound as a *step* on
@@ -649,7 +650,7 @@ Proof.
       eapply com; [ exact Hd | apply Hsub; exact Hl1 | exact Hl2 ].
 Qed.
 
-(** A guarded sum can never emit — the fact that makes the premise
+(* A guarded sum can never emit — the fact that makes the premise
     derivable, and the same one behind [gproc_coR_empty]. *)
 Lemma gsum_no_out : forall (N : gproc) c v q,
   ~ lts (g N) (ActExt (ActOut (c,v))) q.
@@ -679,7 +680,7 @@ Proof.
       * exfalso. eapply gsum_no_out. exact l1.
 Qed.
 
-(** ** A sum of copycats is equivalent to [𝟘] — the other direction
+(* ** A sum of copycats is equivalent to [𝟘] — the other direction
 
     [must_i_nil_below_copycats] ([VACCS_Copycat.v]) gives [𝟘 ⊑ₘᵤₛₜᵢ g N];
     this gives the converse, so the equivalence is complete.  It is the
@@ -735,7 +736,7 @@ Proof.
     + intros p' t' μ1 μ2 Hd Hl1 Hl2. unfold lts_step in *; simpl in *. inversion Hl1.
 Qed.
 
-(** ** The restriction that IS sound on its own
+(* ** The restriction that IS sound on its own
 
     [must_i_restrict]'s premise is semantic, so it cannot become a rule of
     the system: the fact that justifies it is the very inequation the
@@ -775,7 +776,7 @@ Proof.
       * exfalso. eapply gsum_no_out. exact l1.
 Qed.
 
-(** * [BadK]: a killer-channel set, and the first judgement that certifies
+(* * [BadK]: a killer-channel set, and the first judgement that certifies
       the counterexample
 
     [VACCS_DropProbes.v] shows that no *local* certificate can work: for
@@ -859,7 +860,7 @@ Inductive BadK : chset -> chset -> proc -> Prop :=
     (forall c v p', lts p (ActExt (ActIn (c,v))) p' -> D c) ->
     BadK S D p.
 
-(** Soundness is by induction on the **judgement**, not on the [must]
+(* Soundness is by induction on the **judgement**, not on the [must]
     derivation: [bk_kill]'s second premise is about the *same* process, so
     only the judgement decreases there.  The [bk_stuck] base case is where
     [D] pays off — every input of [p] is on a channel the client cannot
@@ -926,7 +927,7 @@ Proof.
 Qed.
 
 
-(** * The joint-removal law
+(* * The joint-removal law
 
     [must_i_restrict] is the semantically right move — restrict a stable
     sum's channel set in one step rather than dropping guards one at a
@@ -936,7 +937,7 @@ Qed.
     emits on none of [M']'s channels is failed by [g M]" is
     [BadK ∅ (offers M') (g M)]. *)
 
-(** [BadK] is monotone in **both** sets: enlarging [S] weakens the
+(* [BadK] is monotone in **both** sets: enlarging [S] weakens the
     output condition of [bk_stuck], enlarging [D] weakens its input
     condition, and [bk_kill] passes both enlargements to its premises. *)
 
@@ -961,7 +962,7 @@ Proof.
     + intros c v p' Hl. apply HD. eapply Hin; exact Hl.
 Qed.
 
-(** Deciding "does [u] emit on some channel of [D]?" — again from the
+(* Deciding "does [u] emit on some channel of [D]?" — again from the
     finiteness of the pending-message multiset, now swept over a whole
     channel set.  [offers M'] is decidable because an input's
     availability does not depend on the value ([lts_in_value_swap]), so
@@ -1023,7 +1024,7 @@ Proof.
     + exact Hno.
 Qed.
 
-(** * Building [BadK] derivations for a stable sum: the kill-list driver
+(* * Building [BadK] derivations for a stable sum: the kill-list driver
 
     A stable guarded sum's derivation has exactly one shape: kill its
     channels one after another with [bk_kill], each time enlarging [D],
@@ -1101,7 +1102,7 @@ Proof.
       * intros d Hin. apply Hoff. right. exact Hin.
 Qed.
 
-(** Run at the sum's own channel list, so the coverage and existence
+(* Run at the sum's own channel list, so the coverage and existence
     premises are discharged by [gchans_complete] / [gchans_offers] and
     only [KillOk] is left to the caller. *)
 
@@ -1113,7 +1114,7 @@ Proof.
   - intros c Hin. apply gchans_offers. exact Hin.
 Qed.
 
-(** * Restricting a sum to another sum's channels
+(* * Restricting a sum to another sum's channels
 
     The syntactic side of [ax_restrict]: [grestrict N M] keeps exactly
     [M]'s guards on channels [N] offers and replaces the rest by [𝟘].
@@ -1175,7 +1176,7 @@ Lemma grestrict_stable : forall (N M : gproc),
   (forall q, ~ lts (g M) τ q) -> forall q, ~ lts (g (grestrict N M)) τ q.
 Proof. intros N M Hst q Hl. eapply Hst. eapply grestrict_sub. exact Hl. Qed.
 
-(** …and the restriction itself, given the certificate.
+(* …and the restriction itself, given the certificate.
 
     **Scope, stated plainly.**  The certificate is *not* implied by
     [g M ⊑ₘᵤₛₜᵢ g N] in general.  With [M := a ? A] and [N := b ? B]
@@ -1197,7 +1198,7 @@ Proof.
 Qed.
 
 
-(** ** The channel footprint of a process — first brick of the separating client
+(* ** The channel footprint of a process — first brick of the separating client
 
     The residue (see the note above [VACCS_Matching.ax_phaseA_direct])
     is the certificate [Settles (chans K) (P ▷ K)] at the *specific*
@@ -1334,7 +1335,7 @@ Proof.
     apply IH; [ eapply Static_preserved_by_lts; [ exact Hst | exact Hl ] | exact Hd ].
 Qed.
 
-(** The payoff: every emission a [Static] process can ever perform, at
+(* The payoff: every emission a [Static] process can ever perform, at
     any point of any run, is on a channel of its own footprint. *)
 
 Lemma emits_in_pchans : forall s (p q r : proc) c v, Static p ->
@@ -1346,7 +1347,7 @@ Proof.
   eapply lts_pchans_out; [ exact Hq | exact Hl | reflexivity ].
 Qed.
 
-(** ** L'empreinte d'ÉMISSION seule
+(* ** L'empreinte d'ÉMISSION seule
 
     [pchans] compte aussi les canaux **gardés** ([gpchans (c ? P) =
     c :: pchans P]), ce qui le rend trop grossier pour un critère de
@@ -1441,7 +1442,7 @@ Proof.
       [ constructor; inversion H0; assumption | reflexivity ].
 Qed.
 
-(** ** L'empreinte d'ENTRÉE seule
+(* ** L'empreinte d'ENTRÉE seule
 
     Miroir exact de [ochans] : garde le canal de chaque garde d'entrée et
     descend, un message ne contribuant rien.  [pchans] est la réunion des
@@ -1546,7 +1547,7 @@ Proof.
     apply IH; [ eapply Static_preserved_by_lts; [ exact Hst | exact Hl ] | exact Hd ].
 Qed.
 
-(** ** [ochans p ⊆ S] certifie [Bad S p]
+(* ** [ochans p ⊆ S] certifie [Bad S p]
 
     Le champ [ex] de [must] réclame un pas de la paire ; si le serveur
     n'émet que sur des voies **déjà refusées** par le client, la clause de
@@ -1606,3 +1607,4 @@ Proof.
 Qed.
 
 End VACCS_Absorb.
+(* end hide *)

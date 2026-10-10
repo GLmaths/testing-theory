@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,7 +26,7 @@ From stdpp Require Import base countable.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate InteractionBetweenLts Must
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Good.
 
-(** * The Must preorder of PAL
+(* * The Must preorder of PAL
 
     [Must.must] and [Must.ctx_pre] instantiated with the alternative LTS
     ([PAL_Alt_LTS]) and the testing predicate [good_PAL]. *)
@@ -35,11 +36,11 @@ Section PAL_Must.
 
   Notation term := (term Val).
 
-  (** [p] must pass the test [t]. *)
+  (* [p] must pass the test [t]. *)
   Definition must_PAL (p t : term) : Prop :=
     must (gLtsP := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val) (outcome := good_PAL Val) p t.
 
-  (** The Must preorder: [q] passes every test that [p] must pass. *)
+  (* The Must preorder: [q] passes every test that [p] must pass. *)
   Definition must_pre_PAL (p q : term) : Prop :=
     ctx_pre (gLtsP := PALA_gLts Val) (gLtsQ := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val)
       (outcome := good_PAL Val) p q.
@@ -50,3 +51,4 @@ End PAL_Must.
 
 Notation "p 'must_pass_PAL' t" := (must_PAL _ p t) (at level 70).
 Notation "p ᴘᴀʟ⊑ₘᵤₛₜᵢ q" := (must_pre_PAL _ p q) (at level 70).
+(* end hide *)

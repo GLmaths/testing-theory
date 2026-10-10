@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Co-traces over the alphabet of the tests
+(* * Co-traces over the alphabet of the tests
 
     [coWeakTransition.v] reads a trace [s] as what an observer performs and
     lets the process answer with a /dual/ action.  When the observer speaks
@@ -52,12 +53,12 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
 Context `{gLtsP : !gLts P Hp}.
 Context `{SA : !SyncAction Aproc Atest}.
 
-(** The co-weak transitions [p ⟹ᶜᵒ[s] q] and the co-convergence [p ⇓ᶜᵒ s]
+(* The co-weak transitions [p ⟹ᶜᵒ[s] q] and the co-convergence [p ⇓ᶜᵒ s]
     are the ones of [coWeakTransition.v] and [coConvergence.v], which take two
     alphabets.  What follows is only what the one-alphabet development states
     with [dual] in place of [sync]. *)
 
-(** ** Every state reached along a converging co-trace terminates *)
+(* ** Every state reached along a converging co-trace terminates *)
 
 Lemma cocnv_cowt_terminate p q s : p ⇓ᶜᵒ s → p ⟹ᶜᵒ[s] q → q ⤓.
 Proof.
@@ -68,7 +69,7 @@ Proof.
     eapply cocnv_preserved_by_cowt_act; [exact hc | exact w1].
 Qed.
 
-(** ** The blocking co-actions of a process, as test actions
+(* ** The blocking co-actions of a process, as test actions
 
     [coR p] ([Subset_Act.v]) is what an observer must be able to do to
     interact with [p]. *)
@@ -76,7 +77,7 @@ Qed.
 
 End coWeakSync.
 
-(** ** Co-traces against a forwarder
+(* ** Co-traces against a forwarder
 
     The lemmas that cancel actions of the trace against one another.  They are
     where [msg_spec] and the forwarder axioms [gLtsFWMem] are needed; each use is
@@ -91,12 +92,12 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc
 Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}.
 Context `{!gLtsFWMem P Aproc Atest}.
 
-(** *** Transport along the bisimulation *)
+(* *** Transport along the bisimulation *)
 
 Lemma cocnv_eq_preserved (p q : P) (s : trace Atest) : p ⋍ q → p ⇓ᶜᵒ s → q ⇓ᶜᵒ s.
 Proof. intros heq hc. by eapply cocnv_preserved_by_eq; [exact heq | reflexivity | exact hc]. Qed.
 
-(** *** Giving back what has just been emitted *)
+(* *** Giving back what has just been emitted *)
 
 Lemma cocnv_retract_fw (p q : P) (η : Atest) (s : trace Atest) :
   non_blocking η → p ⇓ᶜᵒ s → p ⟶[inr (msg η)] q → q ⇓ᶜᵒ (η :: s).
@@ -126,7 +127,7 @@ Proof.
       eapply cocnv_preserved_by_cowt_nil; eauto.
 Qed.
 
-(** *** Dropping an action of the trace that the process answers *)
+(* *** Dropping an action of the trace that the process answers *)
 
 Lemma cocnv_drop_action_in_the_middle_fw (p : P) (s1 s2 : trace Atest) (η : Atest) :
   Forall non_blocking s1 → p ⇓ᶜᵒ (s1 ++ [η] ++ s2) →
@@ -151,7 +152,7 @@ Proof.
     eapply cocnv_eq_preserved; [exact heqr | exact hr'].
 Qed.
 
-(** *** Cancelling an action of the trace against its dual *)
+(* *** Cancelling an action of the trace against its dual *)
 
 Lemma cocnv_annhil_base_fw (p : P) (η μ1 : Atest) (s2 s3 : trace Atest) :
   Forall non_blocking s2 → non_blocking η → dual μ1 η →
@@ -200,3 +201,4 @@ Proof.
 Qed.
 
 End coWeakSync_forwarder.
+(* end hide *)

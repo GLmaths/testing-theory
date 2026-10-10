@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -29,17 +30,17 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable.
 
-From TestingTheory Require Import ForAllHelper MultisetHelper gLts SyncActions Bisimulation Lts_OBA Lts_FW
+From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation Lts_OBA Lts_FW
   ActTau Termination WeakTransitions Convergence coWeakTransition.
 
-(** ** Co-convergence
+(* ** Co-convergence
 
     [cocnv p s] is [cnv] with every step taken along [cowt] instead of [wt]:
     [p] converges "in the co sense" on [s] if it terminates and every
     co-weak-step along the head of [s] leads to a process that co-converges
     on the tail. *)
 
-(** *** Definition *)
+(* *** Definition *)
 
 Reserved Notation "p ⇓ᶜᵒ s" (at level 70).
 
@@ -53,7 +54,7 @@ where "p ⇓ᶜᵒ s" := (cocnv p s).
 
 Global Hint Constructors cocnv:mdb.
 
-(** *** Properties on co-convergence in an LTS *)
+(* *** Properties on co-convergence in an LTS *)
 
 Section cocnv_structure.
 
@@ -138,7 +139,7 @@ Qed.
 
 End cocnv_structure.
 
-(** *** Properties on co-convergence in an LTS with a Bisimulation *)
+(* *** Properties on co-convergence in an LTS with a Bisimulation *)
 
 Section cocnv_structure_eq.
 
@@ -161,7 +162,7 @@ Qed.
 
 End cocnv_structure_eq.
 
-(** *** Properties on co-convergence in an LTS with OBA axioms *)
+(* *** Properties on co-convergence in an LTS with OBA axioms *)
 
 Lemma terminate_preserved_by_cowt_non_blocking_action `{M: gLtsOba P A} p q η :
   co_non_blocking η -> p ⤓ -> p ⟹ᶜᵒ{ η } q -> q ⤓.
@@ -174,7 +175,7 @@ Proof.
   apply nb. symmetry. exact dxy.
 Qed.
 
-(** *** Properties on co-convergence in an LTS with Forwarder axioms *)
+(* *** Properties on co-convergence in an LTS with Forwarder axioms *)
 
 Lemma cocnv_preserved_by_lts_non_blocking_action `{gLtsObaFW P A} p q η s :
   non_blocking η -> p ⇓ᶜᵒ s -> p ⟶[η] q
@@ -409,7 +410,7 @@ Proof.
     + intros q w. exact (IHs1 his1' q (hclause q w)).
 Qed.
 
-(** *** From co-convergence to plain convergence on the dual action
+(* *** From co-convergence to plain convergence on the dual action
 
     [p ⇓ᶜᵒ [μ]] means "[p] is ready to respond to an observer's [μ]",
     i.e. [p] is ready to itself perform [co μ] — exactly [p ⇓ [co μ]].
@@ -430,3 +431,4 @@ Proof.
     eapply cocnv_preserved_by_cowt_act in hcowt; eauto.
     eapply equiv_termination, equiv_cotermination; eauto.
 Qed.
+(* end hide *)

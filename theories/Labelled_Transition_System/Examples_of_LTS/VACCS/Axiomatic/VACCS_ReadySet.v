@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Ready sets in VACCS: a process's ready set is the set of channels it
+(* * Ready sets in VACCS: a process's ready set is the set of channels it
       has a pending message on
 
     [coR p := λ μ₁. ∃ μ₂, p performs [μ₂] ∧ dual μ₂ μ₁ ∧ blocking μ₁]
@@ -65,7 +66,7 @@ Section VACCS_ReadySet.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** [coR] holds inputs only, and records what the process can emit *)
+(* ** [coR] holds inputs only, and records what the process can emit *)
 
 Lemma coR_only_inputs : forall (p : proc) (μ : ExtAct TypeOfActions),
   μ ∈ coR p -> exists x, μ = ActIn x /\ p ⟶[ActOut x].
@@ -87,7 +88,7 @@ Proof.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb.
 Qed.
 
-(** The abstracted form: [Φ] keeps the channel only. *)
+(* The abstracted form: [Φ] keeps the channel only. *)
 
 Lemma coR_abs_iff : forall (p : proc) (c : ChannelData),
   (Inputs c) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActOut (c,v)].
@@ -104,7 +105,7 @@ Lemma coR_abs_shape : forall (p : proc) (x : PreAct),
   x ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR p) -> exists c, x = Inputs c.
 Proof. intros p [c] _. exists c. reflexivity. Qed.
 
-(** ** Refusal, spelled out
+(* ** Refusal, spelled out
 
     The generic [lts_performs_spec1]/[_spec2] frequently fail to apply
     against this concrete [gLts] instance (an elaboration mismatch, not a
@@ -133,7 +134,7 @@ Proof.
   intros p μ H q Hq. apply H, lts_performs_spec2. exists q. exact Hq.
 Qed.
 
-(** ** A guarded sum has an empty ready set *)
+(* ** A guarded sum has an empty ready set *)
 
 Lemma gproc_coR_empty : forall (M : gproc) (μ : ExtAct TypeOfActions), ~ (μ ∈ coR (g M)).
 Proof.
@@ -143,7 +144,7 @@ Proof.
   - intro Hq. set_solver.
 Qed.
 
-(** ** Stability of a guarded sum, computed structurally *)
+(* ** Stability of a guarded sum, computed structurally *)
 
 Fixpoint gStable (M : gproc) : Prop :=
 match M with
@@ -169,7 +170,7 @@ Proof.
       split; [ apply IHM1; exact H1 | apply IHM2; exact H2 ].
 Qed.
 
-(** ** The ready set of a message bag *)
+(* ** The ready set of a message bag *)
 
 Lemma msg_emits_iff : forall c' v' c v,
   (c' ! v' • 𝟘) ⟶[ActOut (c,v)] <-> (c' = c /\ v' = v).
@@ -197,7 +198,7 @@ Proof.
       * exact (H2 (proj2 (IH c v) Hin)).
 Qed.
 
-(** The payoff: a message bag's abstracted ready set is exactly the set of
+(* The payoff: a message bag's abstracted ready set is exactly the set of
     channels it carries a message on. *)
 Corollary msgs_coR_abs : forall l c,
   (Inputs c) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (msgs l)) <-> exists v, In (c,v) l.
@@ -208,3 +209,4 @@ Proof.
 Qed.
 
 End VACCS_ReadySet.
+(* end hide *)

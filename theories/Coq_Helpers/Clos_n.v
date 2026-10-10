@@ -1,4 +1,5 @@
-(** Reflexive transitive closure with embedded length parameter *)
+(* begin hide *)
+(* Reflexive transitive closure with embedded length parameter *)
 
 From Stdlib Require Import Relations Program.Equality.
 From stdpp Require Import base.
@@ -52,3 +53,4 @@ revert x y z p. induction n; intros x y z p Hxy Hyz.
   + subst. apply (clos_n_le Hyz). apply PeanoNat.Nat.le_add_l.
   + simpl. apply clos_n_step with z'; trivial. eapply IHn; eauto.
 Qed.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -57,15 +58,15 @@ Section PAL_Alt_AbsR.
   Notation PALA_Act := (PALA_Act Val).
   Notation Event := (Event Val).
 
-  (** Infer the action type of [↛[μ]] from the LTS on terms. *)
+  (* Infer the action type of [↛[μ]] from the LTS on terms. *)
   #[local] Hint Mode ExtAction ! : typeclass_instances.
 
-  (** ** [Φᴿ] on the actions of a process, [𝝳ᴿ] on the events *)
+  (* ** [Φᴿ] on the actions of a process, [𝝳ᴿ] on the events *)
 
   Definition Φᴿ (μ : PALA_Act) : Event := Φᴀᴘᴀʟ Val μ.
   Definition 𝝳ᴿ (e : Event) : Event := e.
 
-  (** ** The acceptance set is finite *)
+  (* ** The acceptance set is finite *)
 
   Definition R_abs (p : term) : gset Event := abs_R Val p.
 
@@ -76,30 +77,30 @@ Section PAL_Alt_AbsR.
     - intros (μ & hμ & he). apply (@abs_R_spec Val _ _ Inh p e). exists μ. split; [exact hμ | symmetry; exact he].
   Qed.
 
-  (** The two obligations of a finitary abstraction, on [R p]. *)
+  (* The two obligations of a finitary abstraction, on [R p]. *)
   Lemma R_abs_spec1 p e : e ∈ R_abs p → e ∈ ⌈ 𝝳ᴿ ∘ Φᴿ ⌉ (R p).
   Proof. apply R_abs_spec. Qed.
 
   Lemma R_abs_spec2 e p : e ∈ ⌈ 𝝳ᴿ ∘ Φᴿ ⌉ (R p) → e ∈ R_abs p.
   Proof. apply R_abs_spec. Qed.
 
-  (** So the acceptance set is finite: it is the [gset] [R_abs p]. *)
+  (* So the acceptance set is finite: it is the [gset] [R_abs p]. *)
   Lemma R_abs_finite p : ∃ X : gset Event, ∀ e, e ∈ ⌈ 𝝳ᴿ ∘ Φᴿ ⌉ (R p) ↔ e ∈ X.
   Proof. exists (R_abs p). intros e. symmetry. apply R_abs_spec. Qed.
 
-  (** ** The two conditions *)
+  (* ** The two conditions *)
 
-  (** Process side: two labels with the same event are accepted by the same
+  (* Process side: two labels with the same event are accepted by the same
       processes ([Φ_kernel] even gives the converse). *)
   Lemma abs_prog_spec_R (p : term) μ μ' : Φᴿ μ = Φᴿ μ' → μ ∈ R p → μ' ∈ R p.
   Proof. intros e h. exact (Φ_test_spec Val p μ μ' e h). Qed.
 
-  (** Test side: [𝝳ᴿ] separates the events, so the condition is trivial. *)
+  (* Test side: [𝝳ᴿ] separates the events, so the condition is trivial. *)
   Lemma abs_test_spec_R (t : term) β β' :
     𝝳ᴿ (Φᴿ β) = 𝝳ᴿ (Φᴿ β') → Φᴿ β ∈ ⌈ Φᴿ ⌉ (coR t) → Φᴿ β' ∈ ⌈ Φᴿ ⌉ (coR t).
   Proof. unfold 𝝳ᴿ. intros e h. by rewrite <- e. Qed.
 
-  (** ** What a test label says about the events of its partner
+  (* ** What a test label says about the events of its partner
 
       A test label is dual to the actions of the process it synchronises with.
       [AOut ot] is dual to every input receiving [ot], whatever its template;
@@ -113,7 +114,7 @@ Section PAL_Alt_AbsR.
     - split; [done | intros (l & e & _); discriminate].
   Qed.
 
-  (** The event of such a label is the template of the receiver. *)
+  (* The event of such a label is the template of the receiver. *)
   Lemma dual_event_out_Φ (ot : eot) μ :
     PALA_dual Val μ (AOut Val ot) → ∃ tp, Φᴿ μ = EvIn Val tp.
   Proof. intros (l & -> & _)%dual_event_out. by exists (ltemplate l). Qed.
@@ -126,8 +127,9 @@ Section PAL_Alt_AbsR.
     - split; [by intros <- | by injection 1 as <-].
   Qed.
 
-  (** The event of such a label is the tuple received. *)
+  (* The event of such a label is the tuple received. *)
   Lemma dual_event_in_Φ (l : label Val) μ :
     PALA_dual Val μ (AIn Val l) → Φᴿ μ = EvOut Val (ltuple l).
   Proof. intros ->%dual_event_in. done. Qed.
 End PAL_Alt_AbsR.
+(* end hide *)

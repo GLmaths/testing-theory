@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * A Hennessy-Ingólfsdóttir-style inequational proof system for [⊑ₘᵤₛₜᵢ] on VCCS
+(* * A Hennessy-Ingólfsdóttir-style inequational proof system for [⊑ₘᵤₛₜᵢ] on VCCS
 
     [ax_pre] is the syntactic counterpart of [⊑ₘᵤₛₜᵢ]: a preorder built
     from structural congruence, one precongruence rule per operator, and
@@ -47,7 +48,7 @@ Context `{VP : VCCS_Parameters}.
 
 Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
 
-(** ** The proof-system relation
+(* ** The proof-system relation
 
     - [ax_refl]/[ax_trans]: [⊢_] is a preorder by construction.
     - [ax_cgr]: every structural-congruence law ([Congruence.v]'s
@@ -283,7 +284,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_tau_sep_r : forall (X Y : gproc),
     (g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y)))) ᴠᴄᴄꜱ⊑ₐₓ (g (X + (𝛕 • (g Y))))
 
-(** *** Convexity of acceptance sets
+(* *** Convexity of acceptance sets
 
     Read the internal choice as offering the two *ready sets*
     [A := ready X] and [B := ready ((X+Y)+Z)] — note [A ⊆ B]. This rule
@@ -314,7 +315,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_convex : forall (X Y Z : gproc),
     (g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z))))) ᴠᴄᴄꜱ⊑ₐₓ (g (X + Y))
 
-(** *** [①] is a [𝟘] on the server side
+(* *** [①] is a [𝟘] on the server side
 
     [must]'s outcome field inspects only the *test*, so a server enters
     solely through its transitions — and [①] has none, exactly like
@@ -328,7 +329,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_success_l : (g ①) ᴠᴄᴄꜱ⊑ₐₓ (g 𝟘)
 | ax_success_r : (g 𝟘) ᴠᴄᴄꜱ⊑ₐₓ (g ①)
 
-(** *** Continuation sharing
+(* *** Continuation sharing
 
     Two branches of an internal choice that offer the same action may
     pool their continuations there, keeping the *first* branch's ready
@@ -357,7 +358,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     (g ((𝛕 • (g ((c ! v • P) + X'))) + (𝛕 • (g ((c ! v • Q) + Y')))))
       ᴠᴄᴄꜱ⊑ₐₓ (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + X'))
 
-(** *** Cross-value swapping
+(* *** Cross-value swapping
 
     [ax_share_out] pools at a guard the two branches *share*, i.e. at
     the same channel AND the same value. That is not enough, because
@@ -398,7 +399,7 @@ Hint Constructors ax_pre : mdb.
 Lemma ax_cgr_sym : forall p q, Static p -> p ≡* q -> q ᴠᴄᴄꜱ⊑ₐₓ p.
 Proof. intros p q Hsp Hcgr. apply ax_cgr; [exact Hsp | eapply cgr_symm; exact Hcgr]. Qed.
 
-(** ** Laws that are DERIVED, not primitive
+(* ** Laws that are DERIVED, not primitive
 
     Ten laws a Hennessy-style presentation would state as rules are
     admissible from the twenty-six constructors above, and are proved
@@ -418,11 +419,11 @@ Proof. intros p q Hsp Hcgr. apply ax_cgr; [exact Hsp | eapply cgr_symm; exact Hc
     [VCCS_AxRedundancy.v] because its derivation needs [ax_drop_out],
     hence [ax_swap_out], which is not available this early.) *)
 
-(** Reflexivity: [ax_cgr] at [cgr_refl]. *)
+(* Reflexivity: [ax_cgr] at [cgr_refl]. *)
 Lemma ax_refl : forall p, Static p -> p ᴠᴄᴄꜱ⊑ₐₓ p.
 Proof. intros p Hp. apply ax_cgr; [exact Hp | apply cgr_refl]. Qed.
 
-(** Right glb elimination: [ax_int_l] modulo commutativity of [+]. *)
+(* Right glb elimination: [ax_int_l] modulo commutativity of [+]. *)
 Lemma ax_int_r : forall p q, Static p -> Static q -> (g ((𝛕 • p) + (𝛕 • q))) ᴠᴄᴄꜱ⊑ₐₓ q.
 Proof.
   intros p q Hp Hq.
@@ -432,7 +433,7 @@ Proof.
     | apply ax_int_l].
 Qed.
 
-(** The [𝛕]-prefix congruence: [ax_choice_tau] with the context [𝟘]. *)
+(* The [𝛕]-prefix congruence: [ax_choice_tau] with the context [𝟘]. *)
 Lemma ax_tau : forall p q, Static p -> Static q -> p ᴠᴄᴄꜱ⊑ₐₓ q ->
   (g (𝛕 • p)) ᴠᴄᴄꜱ⊑ₐₓ (g (𝛕 • q)).
 Proof.
@@ -444,7 +445,7 @@ Proof.
   apply ax_cgr; [repeat constructor; assumption | apply cgr_choice_nil].
 Qed.
 
-(** The [If] congruence: [Eval_Eq 0] never fails, so a conditional is
+(* The [If] congruence: [Eval_Eq 0] never fails, so a conditional is
     structurally congruent to one of its branches and [ax_cgr] suffices. *)
 Lemma ax_if : forall E p p' q q', Static p -> Static q -> Static p' -> Static q' ->
   p ᴠᴄᴄꜱ⊑ₐₓ p' -> q ᴠᴄᴄꜱ⊑ₐₓ q' ->
@@ -461,7 +462,7 @@ Proof.
     apply ax_cgr; [constructor; assumption | apply cgr_if_false_rev; exact Hb].
 Qed.
 
-(** **** Union closure
+(* **** Union closure
 
     An internal choice is below the external sum of its branches. Two
     rounds of [ax_tau_sep_l] + [ax_int_l] peel one [𝛕] each. This is the
@@ -482,7 +483,7 @@ Proof.
     [constructor; constructor; assumption | apply cgr_choice_com].
 Qed.
 
-(** The merge equations, right to left: instances of union closure. *)
+(* The merge equations, right to left: instances of union closure. *)
 Lemma ax_input_merge_r : forall c P Q, Static P -> Static Q ->
   (g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q))))) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? P) + (c ? Q))).
 Proof. intros c P Q HP HQ. apply ax_int_below_ext; constructor; assumption. Qed.
@@ -492,7 +493,7 @@ Lemma ax_output_merge_r : forall c v v' P Q, Static P -> Static Q ->
     ᴠᴄᴄꜱ⊑ₐₓ (g ((c ! v • P) + (c ! v' • Q))).
 Proof. intros c v v' P Q HP HQ. apply ax_int_below_ext; constructor; assumption. Qed.
 
-(** A sum of two same-channel inputs is below each of them — via
+(* A sum of two same-channel inputs is below each of them — via
     [ax_input_distrib_l] and glb elimination under the guard. *)
 Lemma ax_input_below_l : forall c P Q, Static P -> Static Q ->
   (g ((c ? P) + (c ? Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? P)).
@@ -510,7 +511,7 @@ Proof.
   apply ax_input. intro v. simpl. apply ax_int_r; apply Static_subst; assumption.
 Qed.
 
-(** …so [ax_int_glb] assembles the internal choice. *)
+(* …so [ax_int_glb] assembles the internal choice. *)
 Lemma ax_input_merge_l : forall c P Q, Static P -> Static Q ->
   (g ((c ? P) + (c ? Q))) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q))))).
 Proof.
@@ -518,7 +519,7 @@ Proof.
   apply ax_int_glb; [apply ax_input_below_l | apply ax_input_below_r]; assumption.
 Qed.
 
-(** The distributivity laws, right to left: a guard over an internal
+(* The distributivity laws, right to left: a guard over an internal
     choice is below the guard over each branch, and union closure
     rebuilds the sum. *)
 Lemma ax_input_distrib_r : forall c P Q, Static P -> Static Q ->
@@ -543,7 +544,7 @@ Qed.
 
 End DefinitionAxiomatic.
 
-(** ** The notations, globally
+(* ** The notations, globally
 
     [p ᴠᴄᴄꜱ⊑ₐₓ q] is the axiomatic preorder of VCCS, named like the semantic
     one it characterises, [p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q]; VACCS has [p ᴠᴀᴄᴄꜱ⊑ₐₓ q].  The
@@ -562,3 +563,4 @@ End DefinitionAxiomatic.
 
 Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" := (ax_pre p q) (at level 70).
 Notation "p ᴠᴄᴄꜱ≂ₐₓ q" := (q ᴠᴄᴄꜱ⊑ₐₓ p /\ p ᴠᴄᴄꜱ⊑ₐₓ q) (at level 70).
+(* end hide *)

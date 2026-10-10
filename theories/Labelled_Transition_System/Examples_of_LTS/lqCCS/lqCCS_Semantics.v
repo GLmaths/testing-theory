@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: the density operator semantics
+(* * lqCCS: the density operator semantics
 
     The semantics of Figure 9 of Ceragioli, Gadducci, Lomurno, Tedeschi
     (arXiv:2604.23756), for a single weighted process [ρ • P]: it steps to a
@@ -45,7 +46,7 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition.
 Section Semantics.
   Context `{QM : QuantumModel}.
 
-  (** Steps of a weighted guard. *)
+  (* Steps of a weighted guard. *)
   Inductive qgstep (ρ : St) : guard → plbl → dist proc → Prop :=
   | qg_tau t P :
       qgstep ρ (GPre (PTau t) P) (LTau (STag t)) (dpoint P ρ)
@@ -93,3 +94,4 @@ Section Semantics.
       ¬ on_chan c l → qstep ρ P l Δ →
       qstep ρ (PRes P c) l (dmap (λ P', PRes P' c) Δ).
 End Semantics.
+(* end hide *)

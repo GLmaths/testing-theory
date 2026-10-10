@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -69,3 +70,4 @@ Proof.
     { eapply convergence_forall_if_convergence_set;eauto. }
     intros. eapply Hyp_acc_1 in conv_ps;eauto. eapply equiv_termination; eauto.
 Qed.
+(* end hide *)

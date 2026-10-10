@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * τ-normal forms for a guarded sum
+(* * τ-normal forms for a guarded sum
 
     A [gproc] is rewritten, by [⊢]-provable steps, into a [tau_nf]: an
     internal choice of *stable* sums, [⊕ᵢ (Σ a.pᵢ)].  This is the shape the
@@ -108,7 +109,7 @@ Proof.
   - transitivity (g (rebuild l')); assumption.
 Qed.
 
-(** Any two summands, wherever they sit, can be brought to the front —
+(* Any two summands, wherever they sit, can be brought to the front —
     exactly the shape the four collapse steps consume. *)
 
 Lemma pull_pair : forall M a b l,
@@ -121,7 +122,7 @@ Proof.
   simpl. apply cgr_choice_assoc_rev.
 Qed.
 
-(** Elements of [summands M] are themselves leaves — needed whenever
+(* Elements of [summands M] are themselves leaves — needed whenever
     [summands (rebuild r)] has to be computed for an [r] that came from
     flattening. *)
 Lemma summands_leaves : forall M, Forall (fun a => summands a = [a]) (summands M).
@@ -130,7 +131,7 @@ Proof.
   apply Forall_app. split; assumption.
 Qed.
 
-(** ** [gStatic] survives flattening, rebuilding and permuting *)
+(* ** [gStatic] survives flattening, rebuilding and permuting *)
 
 Lemma summands_gStatic : forall M, gStatic M -> Forall gStatic (summands M).
 Proof.
@@ -155,7 +156,7 @@ Proof.
   rewrite Hp. exact Hx.
 Qed.
 
-(** ** Collapsing a same-action pair sitting at *arbitrary* positions
+(* ** Collapsing a same-action pair sitting at *arbitrary* positions
 
     The payoff: given only that two same-action guards occur somewhere
     among [M]'s summands, [⊢] proves [M] equal to the sum with those two
@@ -208,7 +209,7 @@ Proof.
     discriminate H.
 Qed.
 
-(** The "stop" side: no [𝛕]-summand anywhere means the sum is stable. *)
+(* The "stop" side: no [𝛕]-summand anywhere means the sum is stable. *)
 Lemma find_tau_none_stable : forall M, find_tau (summands M) = None -> gStable M.
 Proof.
   induction M; intro H; simpl in *; try exact I.
@@ -217,7 +218,7 @@ Proof.
     split; [apply IHM1 | apply IHM2]; assumption.
 Qed.
 
-(** ** The two [𝛕]-normalisation steps, at arbitrary positions
+(* ** The two [𝛕]-normalisation steps, at arbitrary positions
 
     Both follow the pattern of [ax_collapse_*_anywhere] above: bring the
     chosen summand to the front with [pull_one], commute it to the *end*
@@ -283,7 +284,7 @@ Proof.
     + apply ax_cgr_sym; apply tau_pull_cgr; exact Hp.
 Qed.
 
-(** ** The target shape
+(* ** The target shape
 
     [tau_nf] is Hennessy's [⊕]-of-stable-sums, as a binary tree of
     internal choices with [gStable] leaves — exactly the shape
@@ -304,7 +305,7 @@ Proof.
   - right. simpl. split; exact I.
 Qed.
 
-(** ** The separation recursion
+(* ** The separation recursion
 
     Measure: [ntaus], the number of [𝛕]-summands. Each application of
     [ax_tau_sep_anywhere] peels one off and recurses into
@@ -354,7 +355,7 @@ Proof.
     rewrite (IHY1 H1). rewrite (IHY2 H2). reflexivity.
 Qed.
 
-(** The invariant the recursion maintains: every [𝛕]-summand's
+(* The invariant the recursion maintains: every [𝛕]-summand's
     continuation is a *stable* guarded sum. *)
 
 Definition tau_cont_ok (a : gproc) : Prop :=
@@ -390,7 +391,7 @@ Proof.
     + apply IH; assumption.
 Qed.
 
-(** ** Rewriting a [𝛕]-summand's continuation in place
+(* ** Rewriting a [𝛕]-summand's continuation in place
 
     Unlike the separation/flattening steps, this one needs no
     commutation: [ax_choice_tau] already expects the [𝛕]-summand
@@ -429,7 +430,7 @@ Proof.
     + apply ax_cgr_sym; apply pull_one; exact Hp.
 Qed.
 
-(** ** Turning a [𝛕]-summand into a strictly smaller process
+(* ** Turning a [𝛕]-summand into a strictly smaller process
 
     The payoff of [VCCS_NormalForm.v]'s [step_dominated]. A [𝛕]-summand
     of the normal form is a [τ]-transition of it, hence matched by a
@@ -439,7 +440,7 @@ Qed.
     along the [⊢]-equality. This is what lets the normalisation descend
     into continuations despite normalisation not being size-decreasing. *)
 
-(** Defined here rather than in [VCCS_NormalForm.v] (where
+(* Defined here rather than in [VCCS_NormalForm.v] (where
     [normal_form_strong] establishes it) purely for dependency order:
     [VCCS_NormalForm.v] imports this file. *)
 Definition tau_cont_nf (a : gproc) : Prop :=
@@ -479,7 +480,7 @@ Proof.
   rewrite Forall_forall in Hall. apply Hall. rewrite Hp. exact Hx.
 Qed.
 
-(** ** Searching for a [𝛕]-summand still to be flattened
+(* ** Searching for a [𝛕]-summand still to be flattened
 
     [gStable] is a [Fixpoint] into [Prop], so it needs a boolean twin to
     be usable as a test inside the search. [find_unstable_tau] then
@@ -567,7 +568,7 @@ Proof.
     + apply IH; [reflexivity | exact Hall'].
 Qed.
 
-(** ** Deciding [tau_nf]
+(* ** Deciding [tau_nf]
 
     Stage 1's search needs to tell whether a [𝛕]-summand's continuation
     is *already* normalised — without it the search re-selects the
@@ -596,7 +597,7 @@ Proof.
   apply ax_cgr with (q := g (A + B)); apply cgr_choice_com.
 Qed.
 
-(** *** The split law is DERIVABLE — no rule needed
+(* *** The split law is DERIVABLE — no rule needed
 
     The system has [ax_input_distrib_l] (merge two same-channel guards
     into one over an internal choice) but nothing for the converse, while
@@ -633,7 +634,7 @@ Proof.
   - apply ax_input. intro v. simpl. apply ax_int_r.
 Qed.
 
-(** *** Stage 1's invariant, measure bookkeeping, and iteration
+(* *** Stage 1's invariant, measure bookkeeping, and iteration
 
     [tau_cont_norm] is the *hypothesis* stage 1 consumes ("every
     [𝛕]-continuation is [⊢]-equal to some [tau_nf] guarded sum") and
@@ -682,7 +683,7 @@ Proof.
     + apply IH; assumption.
 Qed.
 
-(** ** The flattening phase: [tau_cont_nf] becomes [tau_cont_ok]
+(* ** The flattening phase: [tau_cont_nf] becomes [tau_cont_ok]
 
     Repeatedly flatten a [𝛕]-summand whose continuation is a nested
     internal choice, until none is left. Measure: [tau_weight]. Note the
@@ -782,7 +783,7 @@ Proof.
       apply tnf_stable. apply find_tau_none_stable. exact E.
 Qed.
 
-(** ** The termination measure
+(* ** The termination measure
 
     [nacts] counts the *action-bearing* summands, ignoring [①]/[𝟘]/[𝛕].
     Plain [length (summands _)] does **not** work as the measure: a
@@ -793,7 +794,7 @@ Qed.
     this exactly: the collapse replaces two of them by one, and the
     padding [𝟘] contributes nothing, so [nacts] strictly decreases. *)
 
-(** * Collapsing two same-channel guards, anywhere in a sum
+(* * Collapsing two same-channel guards, anywhere in a sum
 
     The VCCS development derives its context-carrying collapse laws from
     [ax_choice_stable], which is **unsound** here
@@ -819,7 +820,7 @@ Proof.
   apply ax_input_distrib_l.
 Qed.
 
-(** * Canonical stable sums: at most one guard per channel
+(* * Canonical stable sums: at most one guard per channel
 
     VCCS drives its collapse with [ax_choice_stable], which is unsound
     here ([VACCS_ChoiceProbes.v]) — which is why this whole section was
@@ -882,7 +883,7 @@ Proof.
   - apply perm_skip. apply perm_swap.
 Qed.
 
-(** [find_dup] returns the two same-channel guards *together with the
+(* [find_dup] returns the two same-channel guards *together with the
     remaining summands* — that signature is the point, since the
     [Permutation] it produces is literally the hypothesis
     [ax_collapse_input_anywhere] consumes, so search and rewriting
@@ -936,7 +937,7 @@ Proof.
       * apply perm_move2.
 Qed.
 
-(** ** When the search fails, the sum really is canonical
+(* ** When the search fails, the sum really is canonical
 
     Phrased over *summands*, never over LTS labels — the lesson recorded
     for VCCS applies verbatim, and more sharply here: an input's
@@ -987,7 +988,7 @@ Proof.
   injection H as H1. subst. exists p. reflexivity.
 Qed.
 
-(** ** The measure
+(* ** The measure
 
     [length (summands M)] does **not** decrease: a collapse turns two
     guards into one, but [rebuild] emits a trailing [𝟘], so the count is
@@ -1031,7 +1032,7 @@ Proof.
   - rewrite ntaus_app in H. split; [apply IH1 | apply IH2]; lia.
 Qed.
 
-(** ** One collapse step
+(* ** One collapse step
 
     The [gStable] clause is what the consumer needs: the collapse only
     ever merges two *input* guards, and the [𝛕]-summands it leaves alone
@@ -1069,7 +1070,7 @@ Proof.
   - apply (ax_collapse_input_anywhere M k P Q r Hp).
 Qed.
 
-(** ** Canonicalisation
+(* ** Canonicalisation
 
     Every [gStatic] guarded sum is [⊢]-below a canonical one, and a
     *stable* one stays stable.  Only this one direction is available —
@@ -1099,3 +1100,4 @@ Proof.
 Qed.
 
 End VACCS_Canonical.
+(* end hide *)

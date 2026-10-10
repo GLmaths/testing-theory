@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The guarded-sum normal-form theorem
+(* * The guarded-sum normal-form theorem
 
     Every [Static] process is [⊢]-derivably equal to some guarded sum
     [g M] — the top-level shape [CompletenessAx.v]'s completeness proof
@@ -104,7 +105,7 @@ Proof.
     exists g. repeat split; [assumption | apply ax_refl; constructor; assumption | apply ax_refl; constructor; assumption].
 Qed.
 
-(** ** The canonical normal form
+(* ** The canonical normal form
 
     [normal_form] followed by [VCCS_Canonical.v]'s [canonicalize]: every
     [Static] process is [⊢]-provably equal, in both directions, to a
@@ -113,7 +114,7 @@ Qed.
     [DefinitionAxiomatic.v]'s [ax_input_distrib_l] comment for why
     completeness needs canonicity and not merely guarded-sum shape. *)
 
-(** ** Normalisation is one-step dominated by the original process
+(* ** Normalisation is one-step dominated by the original process
 
     [normal_form] alone is not enough to drive the [𝛕]-normalisation of
     [VCCS_Canonical.v]: that recursion has to descend into the
@@ -140,7 +141,7 @@ Qed.
     - [If] — directly from [lts_ifOne]/[lts_ifZero];
     - a guarded sum is already normal, so it matches itself. *)
 
-(** [step_dominated] itself is defined in [VCCS_Canonical.v], which this
+(* [step_dominated] itself is defined in [VCCS_Canonical.v], which this
     file imports — it is consumed there, by [tau_summand_reduct]. *)
 
 Lemma nf_if_case : forall (e : Equation ValueData) (p1 p2 : proc) M1 M2,
@@ -262,7 +263,7 @@ Proof.
   - eapply ax_trans; [exact Hb' | exact Hb].
 Qed.
 
-(** ** The full normal form: Hennessy's [⊕]-of-stable-sums
+(* ** The full normal form: Hennessy's [⊕]-of-stable-sums
 
     [tau_nf M] ([VCCS_Canonical.v]) is the shape the completeness proof
     consumes: a binary tree of internal choices whose leaves are
@@ -332,3 +333,4 @@ Proof.
 Qed.
 
 End VCCS_NormalForm.
+(* end hide *)

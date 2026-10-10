@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -27,7 +28,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   ForwarderConstruction MultisetLTSConstruction Lts_OBA_FB Lts_Finite_Output_Chain
   FiniteImageLTS VACCS_Instance VACCS_Good VACCS_test_trace_gen_may.
 
-(** * The May preorder is trace inclusion, for VACCS
+(* * The May preorder is trace inclusion, for VACCS
 
     VACCS is only a feedback LTS ([VACCS_gLtsOBAFB], [VACCS_Instance.v]) —
     unlike VCCS, [proc] is not itself a forwarder — so the characterisation
@@ -57,3 +58,4 @@ Proof.
 Qed.
 
 End VACCS_May_Corollary.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,7 +26,7 @@ From stdpp Require Import base decidable countable.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence.
 
-(** * Testing predicate for PAL
+(* * Testing predicate for PAL
 
     De Nicola–Pugliese (Section 5): an observer reports success when it can
     perform the action [ω] of its prefix [success]. [good_PAL E] holds when
@@ -69,7 +70,7 @@ Section PAL_Good.
     - left. apply good_success.
   Defined.
 
-  (** [good_PAL] is preserved by the structural congruence. *)
+  (* [good_PAL] is preserved by the structural congruence. *)
   Lemma good_cgr_step p q : cgr_step Val p q → good_PAL p → good_PAL q.
   Proof.
     induction 1; intros hg; inversion hg; subst; try congruence;
@@ -84,7 +85,7 @@ Section PAL_Good.
   Lemma good_cgr p q : cgr Val p q → good_PAL p → good_PAL q.
   Proof. induction 1; eauto using good_cgr_step. Qed.
 
-  (** For the alternative LTS, where [⋍] is the structural congruence. *)
+  (* For the alternative LTS, where [⋍] is the structural congruence. *)
   #[global] Instance PALA_Good : @Testing_Predicate term (PALA_Act Val) (PALA_ExtAction Val) good_PAL (PALA_gLtsEq Val).
   Proof.
     split.
@@ -95,3 +96,4 @@ Section PAL_Good.
   Defined.
 
 End PAL_Good.
+(* end hide *)

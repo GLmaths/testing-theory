@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
 
 Import ListNotations.
 
-(** * Completeness of the trace-inclusion preorder for May
+(* * Completeness of the trace-inclusion preorder for May
 
       [p ⊑ₘₐᵧ q  →  p ≼ₜᵢ q]   (for forwarders)
 
@@ -46,11 +47,11 @@ Import ListNotations.
       used — and they are used in full, [gLtsCNenabled] would not do.
     - [completeness_core], which meets the two. *)
 
-(** [never_outcome], [may_test_spec], and its [May_tests] section
+(* [never_outcome], [may_test_spec], and its [May_tests] section
     (determinacy, inversion lemmas, [may_test_runs], etc.) now live in
     [MayTestSpec.v], shared with [CompletenessTIco.v]. *)
 
-(** * The process side: what a forwarder can absorb
+(* * The process side: what a forwarder can absorb
 
     Everything the test "misses" — a pair it swallowed by talking to itself, an
     input it postponed — must be filled back in on the process side. That is
@@ -67,7 +68,7 @@ Section Forwarder_absorption.
 
 Context `{gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
 
-(** ** A forwarder can insert a dual pair anywhere
+(* ** A forwarder can insert a dual pair anywhere
 
     BOOMERANG receives [co η] and keeps it; [delay_wt_non_blocking_action] carries
     the pending [η] across the whole run [I]; then it is emitted. The run in
@@ -95,7 +96,7 @@ Proof.
   eapply wt_act; [exact lta | exact wq''].
 Qed.
 
-(** ** A forwarder can anticipate an input
+(* ** A forwarder can anticipate an input
 
     Here the return leg of BOOMERANG is not enough on its own: absorbing [β] early
     leaves the message [η] pending, and the run still contains the *later* [β] we
@@ -153,7 +154,7 @@ Proof.
   eapply (wt_concat q1 y'' r3 [α] u); [exact wA | exact wr3].
 Qed.
 
-(** ** ... hence a whole block of them *)
+(* ** ... hence a whole block of them *)
 
 Lemma fw_anticipate_inputs (q q' : Q) (α : A) (I v : trace A) :
   Forall exist_co_nba I ->
@@ -169,7 +170,7 @@ Proof.
     exists q2. eapply wt_push_left; [exact w1 | exact w3].
 Qed.
 
-(** ** The co-trace of a non-blocking trace is a trace of inputs *)
+(* ** The co-trace of a non-blocking trace is a trace of inputs *)
 
 Lemma Forall_exist_co_nba_of_non_blocking (s : trace A) :
   Forall non_blocking s -> Forall exist_co_nba (coₜ s).
@@ -194,7 +195,7 @@ Proof.
     + eapply IH; exact his'.
 Qed.
 
-(** ** A forwarder can always run a whole block of inputs — BOOMERANG, plainly *)
+(* ** A forwarder can always run a whole block of inputs — BOOMERANG, plainly *)
 
 Lemma fw_run_inputs (I : trace A) :
   Forall exist_co_nba I -> ∀ q : Q, ∃ q', q ⟹[I] q'.
@@ -210,7 +211,7 @@ Qed.
 
 End Forwarder_absorption.
 
-(** * Completeness *)
+(* * Completeness *)
 
 Section Completeness_ti.
 
@@ -220,7 +221,7 @@ Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome
 Context {QInter : Prop_of_Inter Q T A A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
-(** A test that some process may pass can obviously still reach success. *)
+(* A test that some process may pass can obviously still reach success. *)
 
 Lemma never_outcome_false_of_may (q : Q) (t : T) :
   q may_pass t -> ¬ never_outcome outcome t.
@@ -234,7 +235,7 @@ Proof.
   - apply IH. intros u t2 w. exact (nt (μ2 :: u) t2 (wt_act μ2 u t t' t2 trC w)).
 Qed.
 
-(** ** The core of completeness
+(* ** The core of completeness
 
     If [q] passes the test attesting [s], then [q] really does perform [s].
 
@@ -324,7 +325,7 @@ Qed.
 
 End Completeness_ti.
 
-(** ** Completeness, for forwarders *)
+(* ** Completeness, for forwarders *)
 
 Theorem completeness_ti_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -349,7 +350,7 @@ Proof.
   reflexivity.
 Qed.
 
-(** ** Completeness, for feedback LTSs, through the forwarder construction
+(* ** Completeness, for feedback LTSs, through the forwarder construction
 
     An LTS with only the feedback axioms is not a forwarder, but [toFW] makes one
     of it ([toFWObaFW]) and the construction is transparent for [may]
@@ -379,3 +380,4 @@ Proof.
   eapply completeness_ti_fw.
   eapply (proj1 (lift_fw_ctx_pre p q)). exact hctx.
 Qed.
+(* end hide *)

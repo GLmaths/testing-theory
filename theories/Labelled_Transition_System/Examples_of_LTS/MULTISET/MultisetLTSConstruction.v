@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -27,10 +28,12 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts InteractionBetweenLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW.
+(* end hide *)
 
 (** ** Mailbox LTS *)
 
 (** A mailbox is a multiset of actions *)
+(* begin hide *)
 
 Definition MO (A : Type) `{ExtAction A} := gmultiset A.
 
@@ -45,12 +48,14 @@ Proof.
   + assert (η'' = η). multiset_solver. subst.
     eauto.
 Qed.
+(* end hide *)
 
 Inductive lts_multiset_step `{ExtAction A} : MO A -> Act A -> MO A -> Prop :=
 | lts_multiset_add m η μ (duo : dual μ η) (nb : non_blocking η) :
    lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
 | lts_multiset_minus m η (nb : non_blocking η):  
    lts_multiset_step ({[+ η +]} ⊎ m) (ActExt η) m.
+(* begin hide *)
 
 Global Hint Constructors lts_multiset_step:mdb.
 
@@ -587,3 +592,4 @@ Qed.
 Next Obligation.
   intros. eapply forward_feedback_in_ms;eauto.
 Qed.
+(* end hide *)

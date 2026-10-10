@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -28,7 +29,7 @@ From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
     WeakTransitions Convergence Termination NormalForm.
 
-(** * Normalisation of traces
+(* * Normalisation of traces
 
     We instantiate the combinatorics of [NormalForm.v] on plain traces, and we
     show that the alternative (acceptance-set based) preorder [≼ₐₛ] only has to
@@ -45,7 +46,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
             was either an input or an output; they commute with nothing, hence
             they separate the runs of a normalised trace. *)
 
-(** ** Classifying the actions of a trace *)
+(* ** Classifying the actions of a trace *)
 
 Definition cls_tr `{ExtAction A} {unique_nb : UniqueDual A} (μ : A) : act_class :=
   if decide (non_blocking μ) then CNB
@@ -79,7 +80,7 @@ Proof.
   - intros (b & ni). now rewrite decide_False, decide_False.
 Qed.
 
-(** Actions of the same non-opaque class are either both non-blocking, or both
+(* Actions of the same non-opaque class are either both non-blocking, or both
     admit a non-blocking co-action. *)
 Lemma cls_tr_same_class `{ExtAction A} {unique_nb : UniqueDual A} (η μ : A) :
   cls_tr η = cls_tr μ -> cls_tr η ≠ COP ->
@@ -91,15 +92,15 @@ Proof.
   - now exfalso.
 Qed.
 
-(** ** Normalised traces and their linearisation *)
+(* ** Normalised traces and their linearisation *)
 
-(** [nf s] is the normal form of the trace [s]: the canonical linearisation of
+(* [nf s] is the normal form of the trace [s]: the canonical linearisation of
     its normalised trace. *)
 Definition nf `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) : trace A := nlin (nform cls_tr s).
 
 Notation "⟪ s ⟫" := (nf s) (at level 30).
 
-(** ** Transfer of the LTS predicates along the normalisation *)
+(* ** Transfer of the LTS predicates along the normalisation *)
 
 Section Transfer.
 
@@ -107,7 +108,7 @@ Section Transfer.
   Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
-  (** *** Weak transitions *)
+  (* *** Weak transitions *)
 
   Lemma wt_tequiv (p q : P) s t : tequiv cls_tr s t -> p ⟹[s] q -> p ⟹⋍[t] q.
   Proof.
@@ -129,7 +130,7 @@ Section Transfer.
       eapply wt_join_eq_l; eassumption.
   Qed.
 
-  (** *** Convergence *)
+  (* *** Convergence *)
 
   Lemma cnv_tequiv (p : P) s t : tequiv cls_tr s t -> p ⇓ s -> p ⇓ t.
   Proof.
@@ -146,7 +147,7 @@ Section Transfer.
         * eapply cnv_input_swap; eassumption.
   Qed.
 
-  (** *** A trace and (the linearisation of) its normal form are interchangeable *)
+  (* *** A trace and (the linearisation of) its normal form are interchangeable *)
 
   Corollary wt_norm (p q : P) s : p ⟹[s] q -> p ⟹⋍[⟪ s ⟫] q.
   Proof. eapply wt_tequiv, tequiv_nform. Qed.
@@ -160,7 +161,7 @@ Section Transfer.
   Corollary cnv_norm_rev (p : P) s : p ⇓ ⟪ s ⟫ -> p ⇓ s.
   Proof. eapply cnv_tequiv, tequiv_sym, tequiv_nform. Qed.
 
-  (** *** Two traces with the same normal form cannot be told apart *)
+  (* *** Two traces with the same normal form cannot be told apart *)
 
   Corollary wt_of_nform (p q : P) s t :
     nform cls_tr s = nform cls_tr t -> p ⟹[s] q -> p ⟹⋍[t] q.
@@ -173,7 +174,7 @@ Section Transfer.
 End Transfer.
 
 
-(** ** A preorder on traces
+(* ** A preorder on traces
 
     The normalisation above only quotients traces by the *reversible*
     rearrangements, namely the swaps of two consecutive actions of the same
@@ -217,7 +218,7 @@ Inductive trace_leq `{ExtAction A} : trace A -> trace A -> Prop :=
 
 Notation "s ⊑ₜ t" := (trace_leq s t) (at level 70).
 
-(** [trace_pre] adds the deletion law TO1 of the original work.  Contrary to
+(* [trace_pre] adds the deletion law TO1 of the original work.  Contrary to
     the three laws of [trace_leq], deletion does not preserve the state that is
     reached, hence the weaker conclusion of [wt_trace_pre] below. *)
 Inductive trace_pre `{ExtAction A} : trace A -> trace A -> Prop :=
@@ -227,13 +228,13 @@ Inductive trace_pre `{ExtAction A} : trace A -> trace A -> Prop :=
 
 Notation "s ≼ₜ t" := (trace_pre s t) (at level 70).
 
-(** A non-blocking action has no non-blocking co-action. *)
+(* A non-blocking action has no non-blocking co-action. *)
 Lemma nb_not_exist_co_nba `{ExtAction A} (η : A) : non_blocking η -> ¬ exist_co_nba η.
 Proof.
   intros nb (ζ & nbζ & duo). eapply (dual_blocks η ζ nbζ duo). exact nb.
 Qed.
 
-(** *** [tequiv] is the symmetric part of the preorders that the normalisation
+(* *** [tequiv] is the symmetric part of the preorders that the normalisation
     quotients by *)
 
 Lemma trace_leq_of_tequiv `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) : tequiv cls_tr s t -> s ⊑ₜ t.
@@ -255,7 +256,7 @@ Proof.
     [eapply tequiv_nform | eapply tequiv_sym, tequiv_nform].
 Qed.
 
-(** *** Soundness for the weak transitions *)
+(* *** Soundness for the weak transitions *)
 
 Section TracePreorderSoundness.
 
@@ -294,7 +295,7 @@ Section TracePreorderSoundness.
       eapply wt_join_eq_l; eassumption.
   Qed.
 
-  (** Deletion of a non-blocking action only preserves the *existence* of a
+  (* Deletion of a non-blocking action only preserves the *existence* of a
       weak transition: the state that is reached still owes the erased action.
       This is the analogue of Lemma 3.3 of Boreale, De Nicola and Pugliese. *)
   Lemma wt_trace_pre (p q : P) s t : s ≼ₜ t -> p ⟹[s] q -> ∃ q', p ⟹[t] q'.
@@ -309,7 +310,7 @@ Section TracePreorderSoundness.
       exists t. eapply wt_concat; eassumption.
   Qed.
 
-  (** Testing along a trace that performs a feedback is testing along a shorter
+  (* Testing along a trace that performs a feedback is testing along a shorter
       trace: the convergence counterpart of [tl_feedback] is [cnv_annhil]. *)
   Lemma cnv_feedback (p : P) s1 s2 s3 μ η :
     Forall exist_co_nba s1 -> Forall exist_co_nba s2 -> non_blocking η -> dual μ η ->
@@ -318,7 +319,7 @@ Section TracePreorderSoundness.
 
 End TracePreorderSoundness.
 
-(** *** The normal form is the canonical representative of a class
+(* *** The normal form is the canonical representative of a class
 
     Both preorders are instances of the combinatorial preorder [cls_pre] of
     [NormalForm.v], so the measure argument of Proposition 4.7 of Boreale,
@@ -363,7 +364,7 @@ Proof.
     split; now eapply cls_pre_of_trace_pre.
 Qed.
 
-(** *** Simplifying a trace
+(* *** Simplifying a trace
 
     The three strict laws (delay past a blocking action, feedback, deletion)
     all make the measure decrease, so a trace cannot be simplified for ever:
@@ -393,7 +394,7 @@ Proof.
   - rewrite 2 app_assoc. now eapply tp_drop.
 Qed.
 
-(** All the non-blocking actions can be deleted. *)
+(* All the non-blocking actions can be deleted. *)
 Lemma trace_pre_drop_nb `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
   s ≼ₜ filter (fun μ1 => cls_tr μ1 ≠ CNB) s.
 Proof.
@@ -408,7 +409,7 @@ Proof.
       exact (trace_pre_app_l [μ1] s _ IH).
 Qed.
 
-(** An action admitting a non-blocking co-action can be pulled in front of a
+(* An action admitting a non-blocking co-action can be pulled in front of a
     whole run of such actions. *)
 Lemma trace_pre_move_cin `{ExtAction A} {unique_nb : UniqueDual A} (l1 : trace A) (μ1 : A) (l2 : trace A) :
   Forall (fun μ2 => cls_tr μ2 = CIN) l1 -> μ1 :: (l1 ++ l2) ≼ₜ l1 ++ μ1 :: l2.
@@ -452,7 +453,7 @@ Proof.
   eapply trace_pre_sort, Forall_filter_self.
 Qed.
 
-(** Nothing strictly simpler lies below [csimpl s]. *)
+(* Nothing strictly simpler lies below [csimpl s]. *)
 Theorem trace_simplification `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
   s ≼ₜ csimpl cls_tr s
   /\ forall t, csimpl cls_tr s ≼ₜ t
@@ -468,13 +469,13 @@ Section Simplification.
   Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
-  (** Testing along [s] is subsumed by testing along the simplified trace. *)
+  (* Testing along [s] is subsumed by testing along the simplified trace. *)
   Corollary wt_csimpl (p q : P) s : p ⟹[s] q -> ∃ q', p ⟹[csimpl cls_tr s] q'.
   Proof. intro w. eapply wt_trace_pre; [eapply trace_pre_csimpl | exact w]. Qed.
 
 End Simplification.
 
-(** *** Simplifying a trace by feedback only
+(* *** Simplifying a trace by feedback only
 
     The deletion law [tp_drop] is very strong: it allows to erase *any*
     non-blocking action, so the [≼ₜ]-least traces keep no output at all.  If
@@ -488,7 +489,7 @@ End Simplification.
     co-actions, whereas in a sorted trace every non-blocking action comes
     last. *)
 
-(** A non-blocking action can be delayed past a whole factor. *)
+(* A non-blocking action can be delayed past a whole factor. *)
 Lemma trace_leq_delay_run `{ExtAction A} (s1 u v : trace A) (η : A) :
   non_blocking η -> s1 ++ η :: (u ++ v) ⊑ₜ s1 ++ u ++ η :: v.
 Proof.
@@ -500,7 +501,7 @@ Proof.
     rewrite <- !app_assoc in IH. simpl in IH. exact IH.
 Qed.
 
-(** Hence a non-blocking action and one of its co-actions cancel out even when
+(* Hence a non-blocking action and one of its co-actions cancel out even when
     they are far apart in the trace. *)
 Lemma trace_leq_feedback_mid `{ExtAction A} (s1 s2 s3 : trace A) (η μ : A) :
   non_blocking η -> dual μ η -> s1 ++ η :: (s2 ++ μ :: s3) ⊑ₜ s1 ++ s2 ++ s3.
@@ -552,7 +553,7 @@ Proof.
     + eapply trace_leq_move_cin, Forall_filter_self.
 Qed.
 
-(** From a trace of minimal measure no feedback can ever fire, so the length is
+(* From a trace of minimal measure no feedback can ever fire, so the length is
     preserved along the whole preorder. *)
 Lemma trace_leq_length `{ExtAction A} {unique_nb : UniqueDual A} (u t : trace A) :
   u ⊑ₜ t -> tmeasure cls_tr u = length u -> length t = length u.
@@ -579,7 +580,7 @@ Proof.
     unfold tmeasure in hm. lia.
 Qed.
 
-(** A trace is [⊑ₜ]-least when nothing below it is strictly simpler. *)
+(* A trace is [⊑ₜ]-least when nothing below it is strictly simpler. *)
 Definition trace_min `{ExtAction A} {unique_nb : UniqueDual A} (u : trace A) : Prop :=
   forall t, u ⊑ₜ t -> tmeasure cls_tr t = tmeasure cls_tr u.
 
@@ -601,7 +602,7 @@ Proof.
   - eapply trace_min_of_measure, tmeasure_tsort.
 Qed.
 
-(** No feedback is left in a sorted trace. *)
+(* No feedback is left in a sorted trace. *)
 Corollary tsort_feedback_free `{ExtAction A} {unique_nb : UniqueDual A} (s s1 s2 s3 : trace A) (η μ : A) :
   tsort cls_tr s = s1 ++ η :: (s2 ++ μ :: s3) -> non_blocking η -> dual μ η -> False.
 Proof.
@@ -620,14 +621,14 @@ Section SimplificationLeq.
   Context {unique_nb : UniqueDual A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
-  (** Contrary to [wt_csimpl], the state that is reached is preserved: the
+  (* Contrary to [wt_csimpl], the state that is reached is preserved: the
       sorted trace loses nothing. *)
   Corollary wt_tsort (p q : P) s : p ⟹[s] q -> p ⟹⋍[tsort cls_tr s] q.
   Proof. intro w. eapply wt_trace_leq; [eapply trace_leq_tsort | exact w]. Qed.
 
 End SimplificationLeq.
 
-(** *** Consuming the feedbacks
+(* *** Consuming the feedbacks
 
     Sorting a trace does not shorten it: it merely moves the non-blocking
     actions past their co-actions, so that no feedback is left.  To actually
@@ -644,7 +645,7 @@ Definition fb_rel `{ExtAction A} (x y : A) : Prop := non_blocking x /\ dual y x.
 #[global] Instance fb_rel_dec `{ExtAction A} (x y : A) : Decision (fb_rel x y).
 Proof. unfold fb_rel. solve_decision. Defined.
 
-(** Two feedback redexes never overlap. *)
+(* Two feedback redexes never overlap. *)
 Lemma fb_rel_disjoint `{ExtAction A} (x y z : A) : fb_rel x y -> ¬ fb_rel y z.
 Proof.
   intros (nb & duo) (nb' & _). eapply (dual_blocks y x nb duo). exact nb'.
@@ -677,7 +678,7 @@ Corollary fb_normal_exists `{ExtAction A} (s : trace A) :
   ∃ t, s ⊑ₜ t /\ no_redex fb_rel t /\ length t <= length s.
 Proof. eapply (fb_normal_exists_aux (length s) s). lia. Qed.
 
-(** Consuming the feedbacks and then sorting yields a least trace that carries
+(* Consuming the feedbacks and then sorting yields a least trace that carries
     no feedback at all, not even between actions that are far apart. *)
 Theorem trace_simplification_full `{ExtAction A} {unique_nb : UniqueDual A} (s : trace A) :
   ∃ t, s ⊑ₜ t
@@ -694,7 +695,7 @@ Proof.
   - intros s1 s2 s3 η μ heq nb duo. eapply tsort_feedback_free; eassumption.
 Qed.
 
-(** A trace performing a feedback -- even between two distant actions -- is
+(* A trace performing a feedback -- even between two distant actions -- is
     subsumed by a strictly shorter least trace.  This is the trace-level
     reading of the law TO3 of Boreale, De Nicola and Pugliese. *)
 Corollary trace_simplification_strict `{ExtAction A} {unique_nb : UniqueDual A} (s1 s2 s3 : trace A) (η μ : A) :
@@ -711,7 +712,7 @@ Proof.
   - rewrite !length_app' in *. simpl. rewrite !length_app'. simpl. lia.
 Qed.
 
-(** ** A normal form that consumes the feedbacks
+(* ** A normal form that consumes the feedbacks
 
     [fbnf] is a *computable* simplification of a trace: as long as the trace
     contains a non-blocking action followed -- anywhere later -- by one of its
@@ -724,7 +725,7 @@ Section FeedbackNormalForm.
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
 
-  (** Erase the first action of [l] that is a co-action of [η]. *)
+  (* Erase the first action of [l] that is a co-action of [η]. *)
   Fixpoint drop_dual (η : A) (l : trace A) : option (trace A) :=
     match l with
     | [] => None
@@ -759,7 +760,7 @@ Section FeedbackNormalForm.
     constructor; [exact d | exact (IH eq_refl)].
   Qed.
 
-  (** Erase one feedback pair, if the trace contains one. *)
+  (* Erase one feedback pair, if the trace contains one. *)
   Fixpoint drop_fb (s : trace A) : option (trace A) :=
     match s with
     | [] => None
@@ -824,7 +825,7 @@ Section FeedbackNormalForm.
     | S n => match drop_fb s with Some t => fb_iter n t | None => s end
     end.
 
-  (** The simplified trace. *)
+  (* The simplified trace. *)
   Definition fbnf (s : trace A) : trace A := fb_iter (length s) s.
 
   Lemma fb_iter_leq n : forall s, s ⊑ₜ fb_iter n s /\ length (fb_iter n s) <= length s.
@@ -853,14 +854,14 @@ Section FeedbackNormalForm.
   Theorem fbnf_length (s : trace A) : length (fbnf s) <= length s.
   Proof. exact (proj2 (fb_iter_leq (length s) s)). Qed.
 
-  (** Nothing is left to simplify. *)
+  (* Nothing is left to simplify. *)
   Theorem fbnf_feedback_free (s s1 s2 s3 : trace A) (η μ : A) :
     fbnf s = s1 ++ η :: (s2 ++ μ :: s3) -> non_blocking η -> dual μ η -> False.
   Proof.
     eapply drop_fb_none. unfold fbnf. eapply fb_iter_none. lia.
   Qed.
 
-  (** The normal form: the feedbacks are consumed, then the consecutive actions
+  (* The normal form: the feedbacks are consumed, then the consecutive actions
       of a same class are collected into multisets. *)
   Definition fnf (s : trace A) : ntrace A := nform cls_tr (fbnf s).
 
@@ -886,7 +887,7 @@ Section FeedbackNormalFormLts.
 
 End FeedbackNormalFormLts.
 
-(** ** The preorder and convergence
+(* ** The preorder and convergence
 
     [⊑ₜ] is sound for convergence too, but *contravariantly*: a weak transition
     is an existential statement, so making a trace easier to perform adds
@@ -967,7 +968,7 @@ Section TracePreorderConvergence.
     intros q w. eapply cnv_preserved_by_wt_non_blocking_action; eassumption.
   Qed.
 
-  (** All four rules only rewrite a factor, so a single context lemma suffices. *)
+  (* All four rules only rewrite a factor, so a single context lemma suffices. *)
   Lemma cnv_ctx (p : P) s1 u v :
     (forall r : P, r ⇓ v -> r ⇓ u) -> p ⇓ s1 ++ v -> p ⇓ s1 ++ u.
   Proof.
@@ -1002,7 +1003,7 @@ Section TracePreorderConvergence.
 
 End TracePreorderConvergence.
 
-(** ** A feedback survives the normalisation
+(* ** A feedback survives the normalisation
 
     A feedback pairs a non-blocking action with one of its co-actions, that is
     an action of class [CNB] with one of class [CIN].  They therefore always
@@ -1020,7 +1021,7 @@ Section FeedbackInvariance.
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
 
-  (** *** Small facts about [Exists] *)
+  (* *** Small facts about [Exists] *)
 
   Lemma Exists_cons_iff (Q : A -> Prop) x l : Exists Q (x :: l) <-> Q x \/ Exists Q l.
   Proof.
@@ -1052,7 +1053,7 @@ Section FeedbackInvariance.
       exists (x :: l1), y, l2. split; [reflexivity | exact hy].
   Qed.
 
-  (** *** [has_fb u]: the trace [u] admits a feedback *)
+  (* *** [has_fb u]: the trace [u] admits a feedback *)
 
   Definition dual_later (η : A) (l : trace A) : Prop := Exists (fun μ => dual μ η) l.
 
@@ -1082,7 +1083,7 @@ Section FeedbackInvariance.
       exists (x :: s1), η, s2, μ, s3. repeat split; assumption.
   Qed.
 
-  (** *** Invariance *)
+  (* *** Invariance *)
 
   Lemma nb_nb_not_dual (x y : A) : non_blocking x -> non_blocking y -> ¬ dual y x.
   Proof. intros nx ny d. exact (dual_blocks y x nx d ny). Qed.
@@ -1121,9 +1122,9 @@ Section FeedbackInvariance.
     nform cls_tr s = nform cls_tr t -> has_fb s -> has_fb t.
   Proof. intro heq. eapply has_fb_tequiv, tequiv_of_nform, heq. Qed.
 
-  (** *** Consequences *)
+  (* *** Consequences *)
 
-  (** The simplified trace admits no feedback, and neither does its normal
+  (* The simplified trace admits no feedback, and neither does its normal
       form, however the runs are linearised. *)
   Corollary fbnf_no_fb (s : trace A) : ¬ has_fb (fbnf s).
   Proof.
@@ -1138,7 +1139,7 @@ Section FeedbackInvariance.
     eapply tequiv_sym, tequiv_nform.
   Qed.
 
-  (** Grouping the runs first exposes no new feedback: the two orders of
+  (* Grouping the runs first exposes no new feedback: the two orders of
       composition see exactly the same ones. *)
   Corollary has_fb_norm (s : trace A) : has_fb s <-> has_fb (nlin (nform cls_tr s)).
   Proof.
@@ -1149,7 +1150,7 @@ Section FeedbackInvariance.
 
 End FeedbackInvariance.
 
-(** * [fnf] is idempotent
+(* * [fnf] is idempotent
 
     A trace that carries no feedback is its own simplification, so the
     normalised traces are exactly the fixed points of [nlin ∘ fnf].  This is
@@ -1165,7 +1166,7 @@ Section FeedbackIdempotence.
   Lemma has_fb_cons (x : A) (s : trace A) : has_fb s -> has_fb (x :: s).
   Proof. intro h. simpl. now right. Qed.
 
-  (** [drop_fb] only ever fires on a real feedback. *)
+  (* [drop_fb] only ever fires on a real feedback. *)
   Lemma drop_fb_some (s : trace A) : forall t, drop_fb s = Some t -> has_fb s.
   Proof.
     induction s as [| x s IH]; intros t heq; [discriminate |].
@@ -1196,3 +1197,4 @@ Section FeedbackIdempotence.
   Qed.
 
 End FeedbackIdempotence.
+(* end hide *)

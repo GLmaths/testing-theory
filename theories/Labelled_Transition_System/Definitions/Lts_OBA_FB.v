@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -23,7 +24,8 @@
    SOFTWARE.
 *)
 
-From TestingTheory Require Import gLts Lts_OBA Bisimulation.
+From TestingTheory Require Import ActTau gLts Lts_OBA Bisimulation.
+(* end hide *)
 
 (** ** LTSs that respects the axiom FEEDBACK *)
 Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=

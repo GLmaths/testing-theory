@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Descending into a normal form's summands
+(* * Descending into a normal form's summands
 
     The completeness recursion has to move from a normal form
     [NF n l M = Ѵⁿ (msgs l ‖ g M)] to the state reached by committing to
@@ -64,7 +65,7 @@ Section VACCS_Descent.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** A summand's transition is a transition of the sum *)
+(* ** A summand's transition is a transition of the sum *)
 
 Lemma summand_lts_tau : forall M q, In (𝛕 • q) (summands M) -> lts (g M) τ q.
 Proof.
@@ -93,7 +94,7 @@ Proof.
     + apply lts_choiceR. eapply IH2. exact H.
 Qed.
 
-(** ** …and a transition of the normal form
+(* ** …and a transition of the normal form
 
     For an input the visible channel is the *unshifted* one: [lts_res_ext_n]
     reads the restriction block off, so a summand on [VarC_add n c₀] is what
@@ -115,7 +116,7 @@ Proof.
   apply (summand_lts_in M (VarC_add n c0) P v). exact Hin.
 Qed.
 
-(** ** The descent
+(* ** The descent
 
     Committing to a summand lands on a configuration that is [⊢]-equal to a
     strictly smaller [Static] process — which is what the completeness
@@ -143,7 +144,7 @@ Proof.
   split; [ eapply Static_lts_decrease; eassumption | split; assumption ].
 Qed.
 
-(** ** The UNIFORM descent
+(* ** The UNIFORM descent
 
     [in_summand_reduct] matches an input guard's transition one value at a
     time, so its witness [u] depends on [v].  The omega rule [ax_input]
@@ -190,7 +191,7 @@ Proof.
   split; intro v; [ rewrite <- (HE v); apply Hb | rewrite <- (HE v); apply Hc ].
 Qed.
 
-(** ** The outer recursion's premise, at the WRAPPED level
+(* ** The outer recursion's premise, at the WRAPPED level
 
     This is what the level-mismatch analysis was about, stated as a
     theorem.  The completeness recursion runs on [size q] and, at a matched
@@ -231,3 +232,4 @@ Proof.
 Qed.
 
 End VACCS_Descent.
+(* end hide *)

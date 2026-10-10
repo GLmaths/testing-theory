@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Harmony for lqCCS: [ρ • (P ∥ Q)] and [(P, ρ) ∥ Q]
+(* * Harmony for lqCCS: [ρ • (P ∥ Q)] and [(P, ρ) ∥ Q]
 
     The silent steps of the configuration [ρ • (P ∥ Q)] in the density
     operator semantics ([qstep], Figure 9 of arXiv:2604.23756) are exactly
@@ -45,7 +46,7 @@ Definition closed (P : proc) : Prop := fv P = [].
 Section Harmony.
   Context `{QM : QuantumModel}.
 
-  (** ** Distributions under renamings *)
+  (* ** Distributions under renamings *)
 
   Lemma dmap_dpoint {C D} (f : C → D) c w : dmap f (dpoint c w) = dpoint (f c) w.
   Proof. done. Qed.
@@ -67,12 +68,12 @@ Section Harmony.
     dpoint c w = dpoint c' w' → c = c' ∧ w = w'.
   Proof. unfold dpoint. by intros [= -> ->]. Qed.
 
-  (** ** Closedness and typing of components *)
+  (* ** Closedness and typing of components *)
 
   Lemma closed_app l1 l2 : l1 ++ l2 = @nil var → l1 = [] ∧ l2 = [].
   Proof. by destruct l1, l2. Qed.
 
-  (** ** Steps of guards *)
+  (* ** Steps of guards *)
 
   Lemma qgstep_vis_inv ρ g t a Δ :
     qgstep ρ g (LAct t a) Δ →
@@ -142,7 +143,7 @@ Section Harmony.
     induction Hq; intros El; simplify_eq; eauto using qgstep.
   Qed.
 
-  (** ** Visible steps *)
+  (* ** Visible steps *)
 
   Lemma qstep_vis_inv ρ P t a Δ :
     qstep ρ P (LAct t a) Δ →
@@ -182,7 +183,7 @@ Section Harmony.
     - rewrite <- (dmap_dpoint (λ P, PRes P c)). apply qs_res; eauto.
   Qed.
 
-  (** Invert the visible premises of a synchronisation. *)
+  (* Invert the visible premises of a synchronisation. *)
   Ltac vis_inv :=
     repeat match goal with
       | Hx : qstep _ _ (LAct _ _) (dpoint _ _) |- _ =>
@@ -193,7 +194,7 @@ Section Harmony.
       end;
     subst.
 
-  (** ** Silent steps
+  (* ** Silent steps
 
       A silent step of [ρ • P] is a silent step of the program, a request
       of a superoperator, or a measurement. *)
@@ -312,7 +313,7 @@ Section Harmony.
       by intros (?&?&[[=]|[=]]).
   Qed.
 
-  (** ** The Harmony lemma *)
+  (* ** The Harmony lemma *)
 
   Theorem harmony ρ P Q s Δ :
     closed P → closed Q →
@@ -364,3 +365,4 @@ Section Harmony.
         eapply qs_syncR; (eapply qstep_vis; [eassumption|done|done]).
   Qed.
 End Harmony.
+(* end hide *)

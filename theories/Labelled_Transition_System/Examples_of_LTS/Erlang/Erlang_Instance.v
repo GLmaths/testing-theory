@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: the axioms of the framework
+(* * Core Erlang: the axioms of the framework
 
     The system LTS of [Erlang_LTS] is shown to be an LTS with non-blocking
     actions ([gLts]), whose bisimulation is /equality/ ([gLtsEq]), satisfying
@@ -38,7 +39,7 @@ From TestingTheory Require Import InListPropHelper ActTau InputOutputActions gLt
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   VACCS VACCS_Instance Erlang_Syntax Erlang_LTS.
 
-(** ** Actions
+(* ** Actions
 
     Those of VACCS instantiated by [Erlang_VACCS_Parameters]: [VACCS_ExtAction]
     and [VACCS_UniqueDual] are reused as they stand, so that Erlang systems and
@@ -48,7 +49,7 @@ Section Erlang_Instance.
 
 Context `{EP : Erlang_Program}.
 
-(** ** Multiset helpers *)
+(* ** Multiset helpers *)
 
 Lemma sys_split (c d : comp) (A B : sys) :
   c ≠ d → {[+ c +]} ⊎ A = {[+ d +]} ⊎ B →
@@ -60,7 +61,7 @@ Qed.
 Lemma sys_cancel (c : comp) (A B : sys) : {[+ c +]} ⊎ A = {[+ c +]} ⊎ B → A = B.
 Proof. multiset_solver. Qed.
 
-(** ** Shape of the external transitions *)
+(* ** Shape of the external transitions *)
 
 Lemma erl_out_inv S p v T :
   S ⟶ₑ[out_act p v] T ↔ S = ⟪p, v⟫ ⊎ T.
@@ -70,7 +71,7 @@ Proof.
   - intros ->. apply ErlOut.
 Qed.
 
-(** Inputs block, outputs do not. *)
+(* Inputs block, outputs do not. *)
 Lemma in_act_blocking p v : blocking (in_act p v : erl_act).
 Proof.
   intros hnb. simpl in hnb. unfold non_blocking_output, is_output in hnb.
@@ -80,7 +81,7 @@ Qed.
 Lemma out_act_non_blocking p v : non_blocking (out_act p v : erl_act).
 Proof. by exists (cst p, cst v). Qed.
 
-(** An Erlang system only performs actions over closed data. *)
+(* An Erlang system only performs actions over closed data. *)
 Lemma erl_out_shape S a T :
   S ⟶ₑ[ActOut a] T → ∃ p v, a = (cst p, cst v) ∧ S = ⟪p, v⟫ ⊎ T.
 Proof.
@@ -102,7 +103,7 @@ Proof.
   by exists n, e, cls, ao, e', body, S0.
 Qed.
 
-(** ** The key lemma: a message in transit is only used by a communication
+(* ** The key lemma: a message in transit is only used by a communication
 
     A transition of [⟪p,v⟫ ⊎ S] either does not use the message at all, or is
     the output of that very message, or is the internal communication that the
@@ -144,7 +145,7 @@ Proof.
         left. eexists. split; [apply ErlOut | done]. }
 Qed.
 
-(** ** Computing the successors
+(* ** Computing the successors
 
     The expression semantics is a function and a system is a finite multiset,
     so the set of successors of a system is computable.  Everything decidable
@@ -212,7 +213,7 @@ Definition erl_succ (S : sys) (α : Act erl_act) : list sys :=
   | ActExt _ => []
   end.
 
-(** *** [erl_succ] enumerates exactly the successors *)
+(* *** [erl_succ] enumerates exactly the successors *)
 
 Lemma erl_succ_sound S α T : T ∈ erl_succ S α → S ⟶ₑ{α} T.
 Proof.
@@ -295,7 +296,7 @@ Proof.
       - rewrite decide_True; [| done]. rewrite H0. f_equal. multiset_solver. }
 Qed.
 
-(** ** The LTS *)
+(* ** The LTS *)
 
 Definition erl_performs (S : sys) (α : Act erl_act) : Prop := erl_succ S α ≠ [].
 
@@ -331,7 +332,7 @@ Defined.
 Next Obligation. intros. by apply erl_performs_spec1. Defined.
 Next Obligation. intros. by apply erl_performs_spec2. Defined.
 
-(** The structural congruence is equality: parallel composition is multiset
+(* The structural congruence is equality: parallel composition is multiset
     union, which is associative, commutative and has [∅] as a unit. *)
 #[global] Program Instance Erl_gLtsEq : gLtsEq sys VACCS_ExtAction :=
   {| gLtsEq_gLts := Erl_gLts ;
@@ -340,7 +341,7 @@ Next Obligation.
   intros p q α (R & <- & hl). exists q. split; [exact hl | reflexivity].
 Defined.
 
-(** ** The multiset of messages in transit
+(* ** The multiset of messages in transit
 
     It plays the role of the multiset of pending outputs of an output-buffered
     agent. *)
@@ -371,7 +372,7 @@ Proof.
   injection hout as <-. exists p, v. split; [done | by apply gmultiset_elem_of_elements].
 Qed.
 
-(** ** The Selinger axioms
+(* ** The Selinger axioms
 
     Every one of them follows from [erl_drop_msg]: an output is the release of a
     message in transit, and a message in transit interferes with nothing but the
@@ -415,7 +416,7 @@ Next Obligation. (* BACKWARDS-NB-DETERMINACY *)
   change (q1 = q2) in heq. change (⟪p0, v⟫ ⊎ q1 = p2). multiset_solver.
 Qed.
 
-(** ** FEEDBACK
+(* ** FEEDBACK
 
     Releasing a message and receiving it back is the internal communication. *)
 
@@ -432,7 +433,7 @@ Next Obligation.
   eapply ErlComm; eassumption.
 Qed.
 
-(** ** The messages in transit form the output multiset *)
+(* ** The messages in transit form the output multiset *)
 
 #[global] Program Instance Erl_FiniteOutputChain : FiniteOutputChain_LtsOba sys :=
   {| lts_oba_mo := erl_mo |}.
@@ -457,7 +458,7 @@ Next Obligation.
   by rewrite erl_mo_union, erl_mo_msg.
 Defined.
 
-(** ** Finite image *)
+(* ** Finite image *)
 
 #[global] Program Instance Erl_FiniteImage : FiniteImagegLts sys erl_act.
 Next Obligation.
@@ -465,7 +466,7 @@ Next Obligation.
   intros T htr%bool_decide_unpack. by apply erl_succ_complete.
 Defined.
 
-(** ** Available outputs *)
+(* ** Available outputs *)
 
 Lemma erl_out_dom S p v : CMsg p v ∈ S → out_act p v ∈ dom (erl_mo S).
 Proof.
@@ -488,7 +489,7 @@ Proof.
   rewrite heq2 at 1. apply ErlOut.
 Defined.
 
-(** ** Interaction with the forwarder multiset: the axioms required by [toFW] *)
+(* ** Interaction with the forwarder multiset: the axioms required by [toFW] *)
 
 #[global] Program Instance Erl_Inter_MO :
   Prop_of_Inter sys (MO erl_act) erl_act erl_act fw_inter :=
@@ -532,7 +533,7 @@ Next Obligation.
   intros ? ? ? ? m hmem hl hinter; simpl in *. inversion hmem.
 Qed.
 
-(** ** Interaction of two systems: parallel composition *)
+(* ** Interaction of two systems: parallel composition *)
 
 #[global] Program Instance Erl_Inter_par : Prop_of_Inter sys sys erl_act erl_act dual :=
   {| lts_essential_actions_left S := dom (erl_mo S) ;
@@ -570,3 +571,4 @@ Next Obligation.
 Defined.
 
 End Erlang_Instance.
+(* end hide *)

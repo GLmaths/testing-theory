@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -26,7 +27,7 @@ From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActi
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization.
 
-(** * Erasing [①] from a server — the bridge that moves a context into the test
+(* * Erasing [①] from a server — the bridge that moves a context into the test
 
     This is the VCCS counterpart of [VACCS_Erasure.v], and it exists for
     the reason recorded there: a **contextual** preorder is best attacked
@@ -69,7 +70,7 @@ match M with
 | p1 + p2 => (gnoone p1) + (gnoone p2)
 end.
 
-(** ** [noone] commutes with every substitution and shift the LTS uses *)
+(* ** [noone] commutes with every substitution and shift the LTS uses *)
 
 Lemma noone_subst : forall p k X, noone (subst_in_proc k X p) = subst_in_proc k X (noone p)
 with gnoone_subst : forall M k X, gnoone (subst_in_gproc k X M) = subst_in_gproc k X (gnoone M).
@@ -121,7 +122,7 @@ Proof.
     + f_equal; apply gnoone_gpr_subst.
 Qed.
 
-(** ** [noone] is a strong bisimulation, in both directions
+(* ** [noone] is a strong bisimulation, in both directions
 
     Erasing does not change a single transition: [①] has no [lts] rule,
     so replacing it by [𝟘] cannot remove one, and cannot add one either. *)
@@ -148,7 +149,7 @@ Proof.
   - apply lts_choiceR; assumption.
 Qed.
 
-(** The converse.  Stated with an explicit equation on the subject so that
+(* The converse.  Stated with an explicit equation on the subject so that
     [induction] applies (the subject [noone p] is a compound term); the
     local tactic recovers [p]'s shape from it, one [proc] constructor at a
     time, with the [gproc] case nested. *)
@@ -195,7 +196,7 @@ Lemma lts_noone_inv : forall p a q', lts (noone p) a q' ->
   exists q, q' = noone q /\ lts p a q.
 Proof. intros p a q' Hl. eapply lts_noone_inv_aux; [ exact Hl | reflexivity ]. Qed.
 
-(** ** An erased process is never [good] *)
+(* ** An erased process is never [good] *)
 
 Lemma noone_not_good : forall p, ~ good_VCCS (noone p)
 with gnoone_not_good : forall M, ~ good_VCCS (g (gnoone M)).
@@ -216,7 +217,7 @@ Proof.
     + inversion Hg; subst. destruct H0 as [H|H]; eapply gnoone_not_good; eassumption.
 Qed.
 
-(** ** Erasing a server is invisible to [must] *)
+(* ** Erasing a server is invisible to [must] *)
 
 Lemma must_noone : forall (p t : proc), p must_pass t -> (noone p) must_pass t.
 Proof.
@@ -265,7 +266,7 @@ Proof. intros t Hm. apply must_noone. exact Hm. Qed.
 Lemma must_i_noone_r (p : proc) : (noone p) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ p.
 Proof. intros t Hm. apply must_noone_rev. exact Hm. Qed.
 
-(** ** Reading off the polarity of a [dual] pair *)
+(* ** Reading off the polarity of a [dual] pair *)
 
 Lemma dual_shape : forall (μ1 μ2 : ExtAct TypeOfActions), dual μ1 μ2 ->
   (exists a, μ1 = ActOut a /\ μ2 = ActIn a) \/ (exists a, μ1 = ActIn a /\ μ2 = ActOut a).
@@ -280,7 +281,7 @@ Proof. intros a. simpl. reflexivity. Qed.
 Lemma dual_in_out : forall (a : TypeOfActions), dual (ActIn a) (ActOut a).
 Proof. intros a. simpl. reflexivity. Qed.
 
-(** ** The bridge: an erased context may sit on either side of the barrier
+(* ** The bridge: an erased context may sit on either side of the barrier
 
     [must]'s pair LTS does not care how [p | r | t] is bracketed; only the
     outcome predicate does, and [noone r] can never be [good].  So [r]
@@ -390,7 +391,7 @@ Proof.
         -- eapply lts_comR; [ exact Ht' | apply lts_noone; exact Hlr1 ].
 Qed.
 
-(** ** [‖]-precongruence, with NO [Static] side condition
+(* ** [‖]-precongruence, with NO [Static] side condition
 
     Compare [VCCS_Precongruence.must_i_par_compat], which needs three of
     them and rests on [par_wt_transfer] + [par_nosync_transfer] + the
@@ -435,3 +436,4 @@ Qed.
 
 
 End VCCS_Erasure.
+(* end hide *)

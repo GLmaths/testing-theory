@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -56,10 +57,10 @@ Section PAL_Alt_Tests.
   Notation Event := (Event Val).
   Notation pattern_from := (pattern_from Val).
 
-  (** Infer the action type of [⟶], [⟶[μ]], ... from the LTS on terms. *)
+  (* Infer the action type of [⟶], [⟶[μ]], ... from the LTS on terms. *)
   #[local] Hint Mode ExtAction ! : typeclass_instances.
 
-  (** The received tuple is [ltuple l]: the formal fields [i], [i+1], ... got
+  (* The received tuple is [ltuple l]: the formal fields [i], [i+1], ... got
       the values of [l]. *)
   Fixpoint guard_l (i : nat) (l : label) : bexp :=
     match l with
@@ -68,11 +69,11 @@ Section PAL_Alt_Tests.
     | _ :: l' => guard_l (S i) l'
     end.
 
-  (** ** The tests *)
+  (* ** The tests *)
 
   Open Scope pal_scope.
 
-  (** [isucc = eval(nil).✓] *)
+  (* [isucc = eval(nil).✓] *)
   Definition isucc : term := eval( 𝟘 ) • ✓.
 
   Fixpoint gen_test (s : list PALA_Act) (p : term) : term :=
@@ -84,10 +85,10 @@ Section PAL_Alt_Tests.
         ((out( eot_to_tuple ot ) • 𝟘) ⌊ gen_test s' p) □ isucc
     end.
 
-  (** Tests for convergence: the paper's [con]. *)
+  (* Tests for convergence: the paper's [con]. *)
   Definition t_conv (s : list PALA_Act) : term := gen_test s isucc.
 
-  (** The test of one event: the paper's [ac e]. *)
+  (* The test of one event: the paper's [ac e]. *)
   Definition ac_t (e : Event) : term :=
     match e with
     | EvOut _ ot => (out( eot_to_tuple ot ) • 𝟘) ⌊ ✓
@@ -97,10 +98,10 @@ Section PAL_Alt_Tests.
   Definition sum_ac (E : gset Event) : term :=
     foldr (λ e acc, ac_t e □ acc) 𝟘 (elements E).
 
-  (** Tests for co-acceptance sets: the paper's [ac]. *)
+  (* Tests for co-acceptance sets: the paper's [ac]. *)
   Definition ta (E : gset Event) (s : list PALA_Act) : term := gen_test s (sum_ac E).
 
-  (** ** Basic properties *)
+  (* ** Basic properties *)
 
   Local Ltac invert_good :=
     repeat match goal with h : good_PAL _ _ |- _ => inversion h; subst; clear h end.
@@ -135,3 +136,4 @@ Section PAL_Alt_Tests.
   Qed.
   Close Scope pal_scope.
 End PAL_Alt_Tests.
+(* end hide *)

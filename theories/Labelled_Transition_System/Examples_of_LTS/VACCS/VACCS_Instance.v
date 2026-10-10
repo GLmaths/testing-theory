@@ -1,3 +1,4 @@
+(* begin hide *)
 From stdpp Require Import gmap gmultiset.
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
@@ -7,10 +8,12 @@ From TestingTheory Require Import
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
   DefinitionAS Equivalence.
 From TestingTheory Require Export VACCS VACCS.Congruence.
+(* end hide *)
 
 Section VACCS_lts.
 
 Context `{VP : VACCS_Parameters}.
+(* begin hide *)
 Existing Instance VP.
 
 (* State Transition System (STS-reduction) *)
@@ -223,6 +226,7 @@ Proof. intros. intro l. dependent induction l;eapply IHl; eauto. Defined.
 
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs an OUPUT,
 are pretty all the same, up to ≡* *)
+(* end hide *)
 Lemma TransitionShapeForOutput : forall P Q c v, (lts P ((c , v) !) Q) -> 
 (exists R n, (P ≡* (Ѵ  n (((VarC_add n c) ! v • 𝟘) ‖ R)) /\ (Q ≡* Ѵ  n (𝟘 ‖ R)))).
 Proof.
@@ -253,6 +257,7 @@ intros P Q c v Transition.
 - edestruct guarded_does_no_output. subst. eauto.
 - edestruct guarded_does_no_output. subst. eauto.
 Qed.
+(* begin hide *)
 
 Lemma BigNew_reverse_def_one j p : (Ѵ j (ν p)) = ν (Ѵ j p).
 Proof.
@@ -2726,6 +2731,7 @@ Proof.
   - eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_res_ext. rewrite elem_of_elements in mem. eapply IHp in mem. simpl. destruct a. eauto.
 Qed.
+(* end hide *)
 
 Lemma lts_set_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_set_output p a.
 Proof.
@@ -2735,6 +2741,7 @@ Proof.
   - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
   - simpl in *. destruct a. try set_solver.
 Qed.
+(* begin hide *)
 
 Lemma lts_set_input_spec0 p a q : q ∈ lts_set_input p a -> lts p (ActExt $ ActIn a) q.
 Proof.
@@ -2892,8 +2899,10 @@ Proof.
 Qed.
 
 Definition non_blocking_output (μ : ExtAct TypeOfActions) := (is_output μ).
+(* end hide *)
 
 (** ** VACCS satisfies the axioms for soundness and completeness *)
+(* begin hide *)
 
 #[global] Program Instance VACCS_ExtAction : ExtAction (ExtAct TypeOfActions) :=
   {| non_blocking η := non_blocking_output η ;
@@ -2911,7 +2920,7 @@ Next Obligation.
 Defined.
 Next Obligation.
  intros μ; simpl in *.
- exists (InputOutputActions.co μ).
+ exists (InputOutputActions.io_co μ).
  symmetry. eapply dual_co.
 Defined.
 
@@ -2987,6 +2996,7 @@ Next Obligation. (* lts_oba_non_blocking_action_deter_inv *)
   destruct nb as (a & eq); subst.
   eapply ExtraAxiom; eauto.
 Qed.
+(* end hide *)
 
 #[global] Program Instance VACCS_gLtsOBAFB : gLtsObaFB proc (ExtAct TypeOfActions).
 Next Obligation.
@@ -2995,6 +3005,7 @@ Next Obligation.
   eapply simplify_match_output in dual; subst.
   eapply OBA_with_FB_Fourth_Axiom; eauto.
 Qed.
+(* begin hide *)
 
 Definition label_to_output (a : TypeOfActions) : ExtAct TypeOfActions := ActOut a.
 
@@ -3039,6 +3050,7 @@ Next Obligation.
   rewrite gmultiset_map_disj_union. rewrite gmultiset_map_singleton.
   unfold label_to_output at 1. reflexivity.
 Qed.
+(* end hide *)
 
 #[global] Program Instance VACCS_gLtsFiniteImage : FiniteImagegLts proc (ExtAct TypeOfActions).
 Next Obligation.
@@ -3054,6 +3066,7 @@ Next Obligation.
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_tau_spec1.
 Defined.
+(* begin hide *)
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
   Prop_of_Inter proc proc (ExtAct TypeOfActions) (ExtAct TypeOfActions) dual :=
@@ -3647,5 +3660,6 @@ Next Obligation.
   + destruct eq as (μ' & Tr & duo & b).
     destruct b. exists a; eauto.
 Qed.
+(* end hide *)
 
 End VACCS_lts.

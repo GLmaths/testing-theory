@@ -1,3 +1,4 @@
+(* begin hide *)
 Require Import core unscoped.
 Require Import Setoid Morphisms Relation_Definitions.
 
@@ -2692,3 +2693,4 @@ End interface.
 
 Export interface.
 
+(* end hide *)

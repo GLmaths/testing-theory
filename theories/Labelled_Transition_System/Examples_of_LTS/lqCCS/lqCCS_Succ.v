@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: computing the successors of a program
+(* * lqCCS: computing the successors of a program
 
     The program LTS [pstep] labels its steps with schedulers.  Forgetting
     them ([erase]), the successors of a program for a given label are
@@ -34,7 +35,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program.
 
-(** ** Labels without schedulers *)
+(* ** Labels without schedulers *)
 
 Inductive ulbl : Type :=
 | UTau
@@ -59,7 +60,7 @@ Proof.
   - destruct l as [s|t [c' v|c' v| |]]; simpl; try done; intros ->; eauto.
 Qed.
 
-(** ** Outputs (guards never output) *)
+(* ** Outputs (guards never output) *)
 
 Fixpoint prog_outs (P : proc) : list (chan * val * proc) :=
   match P with
@@ -115,7 +116,7 @@ Proof.
   - split; [set_solver|]. intros (t & Hs). inversion Hs; subst. exfalso. by eapply gstep_not_out.
 Qed.
 
-(** ** Successors for a label *)
+(* ** Successors for a label *)
 
 Fixpoint gsucc (g : guard) (u : ulbl) : list proc :=
   match g with
@@ -250,7 +251,7 @@ Proof.
     [left; by apply succ_spec | right; by rewrite <- succ_spec].
 Defined.
 
-(** ** Actions other than receptions
+(* ** Actions other than receptions
 
     Outputs, superoperators and measurements: finitely many, listed with
     their targets. *)
@@ -350,3 +351,4 @@ Proof.
     + intros (Hni & t & Hs). split; [done|]. exists t. by constructor.
     + intros (Hni & t & Hs). split; [done|]. inversion Hs; subst. eauto.
 Qed.
+(* end hide *)

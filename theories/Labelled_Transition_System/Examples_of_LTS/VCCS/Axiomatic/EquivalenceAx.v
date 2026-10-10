@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The inequational theory characterises the must-preorder
+(* * The inequational theory characterises the must-preorder
 
     The tie-in corollary, in the style of [VCCS_Must_Characterization.v]:
     on the recursion-free ([Static]) fragment of VCCS, the proof system
@@ -50,7 +51,7 @@ Section EquivalenceAx.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** The characterisation *)
+(* ** The characterisation *)
 
 Theorem must_iff_ax_pre : forall (p q : proc), Static p -> Static q ->
   (p ᴠᴄᴄꜱ⊑ₐₓ q <-> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q).
@@ -60,7 +61,7 @@ Proof.
   - intro Hpre. apply completeness_ax; assumption.
 Qed.
 
-(** Two-sided derivability is must-equivalence. *)
+(* Two-sided derivability is must-equivalence. *)
 Corollary must_eq_iff_ax_eq : forall (p q : proc), Static p -> Static q ->
   (p ᴠᴄᴄꜱ≂ₐₓ q) <-> (p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q /\ q ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ p).
 Proof.
@@ -69,7 +70,7 @@ Proof.
   - intros (H1 & H2). split; apply must_iff_ax_pre; assumption.
 Qed.
 
-(** ** Decidability-flavoured restatement
+(* ** Decidability-flavoured restatement
 
     Every semantic fact about the [Static] fragment is reachable by a
     finite derivation in the 36-constructor system, and conversely. *)
@@ -82,3 +83,4 @@ Proof.
 Qed.
 
 End EquivalenceAx.
+(* end hide *)

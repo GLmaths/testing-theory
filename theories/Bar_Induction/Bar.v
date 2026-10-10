@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -535,3 +536,4 @@ Section bar_int_ext.
     by apply extensional_implies_intensional_helper.
   Qed.
 End bar_int_ext.
+(* end hide *)

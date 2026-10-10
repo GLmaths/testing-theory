@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -25,7 +26,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   DefinitionTIco EquivalenceTIco
   VCCS_Instance VCCS_Good VCCS_test_trace_gen_may.
 
-(** * The May preorder is trace inclusion, for VCCS
+(* * The May preorder is trace inclusion, for VCCS
 
     [VCCS_gLtsOBAFW] ([VCCS_Instance.v]) already makes [proc] a forwarder
     LTS on its own — no [▷ ∅] lift needed, unlike the feedback calculi
@@ -56,3 +57,4 @@ Proof.
 Qed.
 
 End VCCS_May_Corollary.
+(* end hide *)

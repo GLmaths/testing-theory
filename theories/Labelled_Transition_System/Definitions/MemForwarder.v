@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -140,3 +141,4 @@ Proof.
 Qed.
 
 End FWMemFacts.
+(* end hide *)

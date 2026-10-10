@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The recursion-free fragment of VACCS
+(* * The recursion-free fragment of VACCS
 
     Checkpoint 0 of the inequational theory for the *asynchronous*
     value-passing calculus, mirroring [VCCS_Static.v]. [Static] excludes
@@ -56,7 +57,7 @@ Section VACCS_Static.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** Definition *)
+(* ** Definition *)
 
 Inductive Static : proc -> Prop :=
 | static_par : forall p q, Static p -> Static q -> Static (p ‖ q)
@@ -80,7 +81,7 @@ Combined Scheme Static_ind' from Static_ind0, gStatic_ind0.
 Hint Constructors Static : ccs.
 Hint Constructors gStatic : ccs.
 
-(** ** [Static] is preserved by value substitution
+(* ** [Static] is preserved by value substitution
 
     Note the output case is now trivial: [subst_in_proc] rewrites the
     *value* carried by the message ([c ! (subst_Data k X v) • 𝟘]), and
@@ -110,7 +111,7 @@ Proof.
       constructor. constructor; apply Hgen; simpl; eauto; lia.
 Qed.
 
-(** The reverse direction, needed by the input rule's soundness case:
+(* The reverse direction, needed by the input rule's soundness case:
     its premise only ever gives [Static] of a *substituted* term. *)
 
 Lemma Static_subst_rev : forall p, forall k X, Static (subst_in_proc k X p) -> Static p.
@@ -137,7 +138,7 @@ Proof.
       constructor. constructor; apply Hgen; simpl; eauto; lia.
 Qed.
 
-(** ** [Static] rules out every source of non-termination
+(* ** [Static] rules out every source of non-termination
 
     The output case is where asynchrony shows: [c ! v • 𝟘] steps to
     [𝟘] and is consumed, so emitting strictly decreases [size] just like
@@ -269,7 +270,7 @@ Proof.
   eapply IH; eassumption.
 Qed.
 
-(** Since a [Static] process never diverges it converges along *every*
+(* Since a [Static] process never diverges it converges along *every*
     trace, which collapses the convergence half of the acceptance-set
     preorder to a triviality — exactly as in VCCS. *)
 
@@ -290,7 +291,7 @@ Proof.
     + intros q Hw. apply IHs. eapply Static_preserved_by_wt; eassumption.
 Qed.
 
-(** ** [Static] is preserved by the index-shifting operations
+(* ** [Static] is preserved by the index-shifting operations
 
     [NewVarC]/[VarSwap_in_proc] shift *channel* indices (structural
     congruence's [ν]-swap and scope-extrusion steps); [NewVar]/[gNewVar]
@@ -377,3 +378,4 @@ Proof.
 Qed.
 
 End VACCS_Static.
+(* end hide *)

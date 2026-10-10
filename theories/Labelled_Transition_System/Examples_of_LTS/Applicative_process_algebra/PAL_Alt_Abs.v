@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -59,7 +60,7 @@ Section PAL_Alt_Abs.
   Notation R_test_a := (R_test_a Val).
   Notation R_prog_a := (R_prog_a Val).
 
-  (** Infer the action type of [↛[μ]] from the LTS on terms. *)
+  (* Infer the action type of [↛[μ]] from the LTS on terms. *)
   #[local] Hint Mode ExtAction ! : typeclass_instances.
   Open Scope pal_scope.
 
@@ -67,9 +68,9 @@ Section PAL_Alt_Abs.
   #[local] Existing Instance R_test_a_equivalence.
   #[local] Existing Instance R_prog_a_equivalence.
 
-  (** ** [𝝳ᴀʟᴛ] *)
+  (* ** [𝝳ᴀʟᴛ] *)
 
-  (** The positions of the [⋆] fields of a template. *)
+  (* The positions of the [⋆] fields of a template. *)
   Definition shape (tp : template) : list bool :=
     map (λ f, match f with tf_star _ => true | _ => false end) tp.
 
@@ -95,16 +96,16 @@ Section PAL_Alt_Abs.
 
   Definition ρᴀʟᴛ (μ : PALA_Act) : PreEvent := 𝝳ᴀʟᴛ (Φᴀᴘᴀʟ Val μ).
 
-  (** ** [ρᴀʟᴛ] is the projection of the join *)
+  (* ** [ρᴀʟᴛ] is the projection of the join *)
 
   Definition is_star (o : out_field Val) : bool := match o with of_star => true | _ => false end.
 
-  (** The shape of the template of a label only depends on its tuple. *)
+  (* The shape of the template of a label only depends on its tuple. *)
   Lemma shape_ltemplate l : shape (ltemplate l) = map is_star (ltuple l).
   Proof. induction l as [|[] l IH]; [done | ..];
     unfold shape, PAL_Alt_LTS.ltemplate, PAL_Alt_LTS.ltuple in *; simpl; by rewrite IH. Qed.
 
-  (** The same label with its actual fields made formal. *)
+  (* The same label with its actual fields made formal. *)
   Definition formalize (l : label) : label :=
     map (λ f, match f with lf_val _ v => lf_formal Val v | f => f end) l.
 
@@ -144,7 +145,7 @@ Section PAL_Alt_Abs.
       + by subst.
   Qed.
 
-  (** ** [𝝳ᴀʟᴛ] is the completion of [ρᴀʟᴛ] along [Φᴀᴘᴀʟ] *)
+  (* ** [𝝳ᴀʟᴛ] is the completion of [ρᴀʟᴛ] along [Φᴀᴘᴀʟ] *)
 
   #[global] Instance Φᴀᴘᴀʟ_proj : LA_proj R_test_a (Φᴀᴘᴀʟ Val).
   Proof. intros μ μ'. done. Qed.
@@ -158,11 +159,11 @@ Section PAL_Alt_Abs.
   Lemma 𝝳ᴀʟᴛ_complete e : 𝝳ᴀʟᴛ e = LA_complete (Φᴀᴘᴀʟ Val) ρᴀʟᴛ e.
   Proof. by apply (LA_complete_unique (Φᴀᴘᴀʟ Val) ρᴀʟᴛ 𝝳ᴀʟᴛ). Qed.
 
-  (** ** Condition (2) forces an injective abstraction of outputs *)
+  (* ** Condition (2) forces an injective abstraction of outputs *)
 
   Definition tuple1 (v : Val) : eot := [of_val v].
 
-  (** [in(?x).𝟘] and [in(!v).𝟘] *)
+  (* [in(?x).𝟘] and [in(!v).𝟘] *)
   Definition p_formal : term := in( [? 0] ) • 𝟘.
   Definition p_val (v : Val) : term := in( [! ve_val v] ) • 𝟘.
 
@@ -200,11 +201,11 @@ Section PAL_Alt_Abs.
     apply coR_p_val_only in hx. subst x. cbn in ex. injection ex. congruence.
   Qed.
 
-  (** All the [EvOut ⟨v⟩] lie in [Φ(coR (in(?x).𝟘))]. *)
+  (* All the [EvOut ⟨v⟩] lie in [Φ(coR (in(?x).𝟘))]. *)
   Lemma Φ_coR_p_formal v : EvOut _ (tuple1 v) ∈ (⌈ Φᴀᴘᴀʟ Val ⌉ (coR p_formal)).
   Proof. exists (AOut _ (tuple1 v)). split; [apply coR_p_formal | done]. Qed.
 
-  (** [𝝳ᴀʟᴛ] does not satisfy condition (2): [out⟨v⟩.𝟘] accepts [AIn [v]] but not [AIn [w]]. *)
+  (* [𝝳ᴀʟᴛ] does not satisfy condition (2): [out⟨v⟩.𝟘] accepts [AIn [v]] but not [AIn [w]]. *)
   Lemma 𝝳ᴀʟᴛ_not_prog_spec v w : v ≠ w →
     let p := out( eot_to_tuple (tuple1 v) ) • 𝟘 in
     let β := AIn _ [lf_val Val v] in
@@ -227,3 +228,4 @@ Section PAL_Alt_Abs.
       congruence.
   Qed.
 End PAL_Alt_Abs.
+(* end hide *)

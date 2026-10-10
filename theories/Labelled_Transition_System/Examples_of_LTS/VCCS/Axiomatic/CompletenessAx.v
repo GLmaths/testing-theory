@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Completeness of the [ax_pre] proof system w.r.t. [⊑ₘᵤₛₜᵢ]
+(* * Completeness of the [ax_pre] proof system w.r.t. [⊑ₘᵤₛₜᵢ]
 
     The converse of [SoundnessAx.v], for the [Static] fragment. The
     plan, and the material it rests on:
@@ -55,7 +56,7 @@ Section CompletenessAx.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** Shifting the preorder past one visible action
+(* ** Shifting the preorder past one visible action
 
     The completeness construction matches two normal forms summand by
     summand and then has to recurse into the matched continuations. To
@@ -107,7 +108,7 @@ Proof.
   apply must_iff_acceptance_set_VCCS_without_toFW. exact Hpre.
 Qed.
 
-(** ** The leaves of a normal form
+(* ** The leaves of a normal form
 
     A [tau_nf] process is a binary tree of internal choices whose leaves
     are [gStable] guarded sums. [leaves] reads that list of leaves off
@@ -181,7 +182,7 @@ Proof.
   split; assumption.
 Qed.
 
-(** Every leaf is derivably *above* the whole normal form — one
+(* Every leaf is derivably *above* the whole normal form — one
     [ax_int_l]/[ax_int_r] per level of the [⊕]-tree. This is how the
     matching argument discards the leaves it does not need. *)
 
@@ -209,7 +210,7 @@ Definition leafsum (M : gproc) : gproc := rebuild (leaves M).
 Lemma leafsum_gStatic : forall M, gStatic M -> gStatic (leafsum M).
 Proof. intros M HM. apply rebuild_gStatic. apply leaves_gStatic. exact HM. Qed.
 
-(** The external sum of all leaves is derivably above the normal form
+(* The external sum of all leaves is derivably above the normal form
     too — this is union closure of the acceptance family, and it is
     where [ax_int_below_ext] ([VCCS_Canonical.v]) earns its keep. The
     [⊕]-congruence step needs [ax_choice_tau] *twice*, with a
@@ -249,7 +250,7 @@ Proof.
         symmetry. apply rebuild_app.
 Qed.
 
-(** The converse reading of [leaves]: the *stable* states a normal form
+(* The converse reading of [leaves]: the *stable* states a normal form
     reaches by internal moves alone are exactly its leaves. This is what
     turns [bhv_pre_cond2]'s witness at the empty trace — an anonymous
     stable reduct — into a concrete leaf the derivation can name. *)
@@ -279,7 +280,7 @@ Proof.
         exists A. split; [apply elem_of_app; right; exact Hin | exact Heq].
 Qed.
 
-(** ** The convexity step, at an arbitrary summand split
+(* ** The convexity step, at an arbitrary summand split
 
     [ax_convex]'s literal shape demands the middle term be syntactically
     [(X + Y) + Z] with the same [X] as the first branch. In practice all
@@ -305,7 +306,7 @@ Proof.
   - etransitivity; eassumption.
 Qed.
 
-(** A hand-rolled boolean partition. stdpp's [filter] is typeclass-based
+(* A hand-rolled boolean partition. stdpp's [filter] is typeclass-based
     and does not reduce under [simpl] here, and both halves' properties
     are wanted anyway, so a plain [Fixpoint] is less friction. *)
 
@@ -371,7 +372,7 @@ Proof.
   - apply cgr_fullchoice; [reflexivity | apply cgr_tau; exact Hcgr].
 Qed.
 
-(** The glue: a leaf's own summands sit inside [leafsum M]'s, with a
+(* The glue: a leaf's own summands sit inside [leafsum M]'s, with a
     definite remainder — exactly the [Permutation] hypothesis
     [ax_convex_anywhere] consumes, once the remainder is split by
     [split_by] on "is this action offered by the right-hand side?". *)
@@ -389,7 +390,7 @@ Proof.
   - apply summands_gStatic. apply rebuild_gStatic. exact Hk.
 Qed.
 
-(** ** Matching two stable sums summand by summand
+(* ** Matching two stable sums summand by summand
 
     Given a pairing of the two sums' summands with [⊢]-related members,
     the sums themselves are [⊢]-related.
@@ -441,7 +442,7 @@ Proof.
     [constructor; constructor; assumption | apply cgr_choice_com].
 Qed.
 
-(** ** Internal choice over a list
+(* ** Internal choice over a list
 
     The realiser [must_i_shift] was stated against: "[M] after [a]" is
     not any single leaf's continuation but the internal choice of *all*
@@ -518,7 +519,7 @@ Proof.
       intros p Hin. apply Hall. apply elem_of_cons. right. exact Hin.
 Qed.
 
-(** The reachability side: an [ichoice] must commit through one of its
+(* The reachability side: an [ichoice] must commit through one of its
     [𝛕]s before doing anything, so its stable reducts are exactly the
     union of its members'. This is the [pa]-side hypothesis of
     [must_i_shift] — and the reason that hypothesis was restricted to
@@ -557,7 +558,7 @@ Proof.
     eapply wt_tau; [apply ichoice_lts_tau; exact Hin | exact Hwp].
 Qed.
 
-(** ** Factoring a normal form's weak transitions through its leaves
+(* ** Factoring a normal form's weak transitions through its leaves
 
     A [tau_nf] does its internal moves *first*, reaching a leaf, and only
     then a visible action: its [⊕]-nodes have no external transitions at
@@ -605,7 +606,7 @@ Proof.
     + exfalso. inversion l; subst; inversion H5.
 Qed.
 
-(** ** "[M] after [μ]", and the recursion's semantic engine
+(* ** "[M] after [μ]", and the recursion's semantic engine
 
     [after M μ] lists every [μ]-reduct of every leaf — computable
     because VCCS's [gLts] instance gives [lts_set] as a [gset]. Wrapped
@@ -693,7 +694,7 @@ Proof.
   - exact Hpre.
 Qed.
 
-(** Two [ichoice]s over lists with the same *elements* are [⊢]-equal —
+(* Two [ichoice]s over lists with the same *elements* are [⊢]-equal —
     multiplicity and order are invisible, since both directions are just
     [ax_ichoice_glb] fed by [ax_ichoice_below]. This is what lets the
     set-based [after M μ] (built from [lts_set], so duplicate-free) be
@@ -710,7 +711,7 @@ Proof.
   intros p Hp. apply ax_ichoice_below; [exact Hst | apply Hiff; exact Hp].
 Qed.
 
-(** ** Syntactic continuations, and why they are needed
+(* ** Syntactic continuations, and why they are needed
 
     [after M μ] is a list of *reducts*. That is enough for an output
     summand, whose continuation is a closed term. It is **not** enough
@@ -797,7 +798,7 @@ Proof.
     + apply lts_choiceR. apply IHA2. exact H.
 Qed.
 
-(** Substitution distributes over [ichoice] — it only ever builds [𝛕]
+(* Substitution distributes over [ichoice] — it only ever builds [𝛕]
     guards and sums, neither of which binds, so the index stays at [0].
     Stated at the [gproc] level: at [proc] level the [g] coercion would
     have to be inverted before [rewrite] could fire. *)
@@ -870,7 +871,7 @@ Proof.
     right. apply IH. exists B. split; assumption.
 Qed.
 
-(** The bridge. Instantiating the syntactically collected input
+(* The bridge. Instantiating the syntactically collected input
     continuations at [v] gives exactly [M]'s [(c,v)?]-reducts (up to
     multiplicity, which [ax_ichoice_same_elems] renders harmless); the
     output case needs no substitution at all. *)
@@ -898,7 +899,7 @@ Proof.
   - intros (A & HA & H). exists A. split; [exact HA | apply out_conts_g_spec; exact H].
 Qed.
 
-(** ** The premise for one matched summand
+(* ** The premise for one matched summand
 
     For each summand of the right-hand side, the completeness recursion
     needs its continuation to dominate "[M] after that action". These two
@@ -952,7 +953,7 @@ Proof.
     | apply ax_ichoice_same_elems; assumption].
 Qed.
 
-(** [Static]-ness of the collected continuations comes for free through
+(* [Static]-ness of the collected continuations comes for free through
     [after], whose members are reducts of [Static] leaves. *)
 
 Lemma out_conts_Static : forall M c v, gStatic M -> Forall Static (out_conts M c v).
@@ -992,7 +993,7 @@ Proof.
     apply summand_lts_out. exact Hin.
 Qed.
 
-(** The input analogue, and the reason [in_conts] had to be collected
+(* The input analogue, and the reason [in_conts] had to be collected
     before substitution: the conclusion is stated at an *arbitrary* [v],
     which is exactly the shape [ax_input]'s omega rule consumes. *)
 
@@ -1020,7 +1021,7 @@ Proof.
     apply summand_lts_in. exact Hin.
 Qed.
 
-(** ** The mirror sum
+(* ** The mirror sum
 
     Given the right-hand side's stable sum, the left-hand sum the
     derivation aims at is built *from the right-hand side's own
@@ -1084,7 +1085,7 @@ Proof.
   intros M n Hn. destruct n as [ | | c Q | c v Q | Q | N1 N2 ]; simpl in *; exact Hn.
 Qed.
 
-(** ** The recursion's measure: a bound on trace length
+(* ** The recursion's measure: a bound on trace length
 
     The outer recursion cannot be measured by [size]. Its left-hand
     argument is unbounded (it is an [ichoice] over [M]'s leaves), and its
@@ -1178,7 +1179,7 @@ Proof.
   pose proof (Hb (μ :: s) r Hg) as H. simpl in H. lia.
 Qed.
 
-(** [ichoice] turns list concatenation into binary internal choice —
+(* [ichoice] turns list concatenation into binary internal choice —
     both directions, purely from the two n-ary laws. Needed at the
     [⊕]-nodes of the assembly, where the two branches' continuations at
     a shared action have to be merged into the single [ichoice] the
@@ -1216,7 +1217,7 @@ Proof.
         | apply ax_ichoice_below; assumption].
 Qed.
 
-(** ** The mirror, parametrised by an action set
+(* ** The mirror, parametrised by an action set
 
     [mirror_summand] above reads the guards off [N]. The derivation of
     [(g M) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror …))] runs by induction on [M]'s own [⊕]-tree, and
@@ -1313,7 +1314,7 @@ Proof.
   destruct Ha as (k & _ & Heq). subst. apply mirror_act_leaf.
 Qed.
 
-(** The base cases of the mirror derivation.
+(* The base cases of the mirror derivation.
 
     [ichoice [p] ≂ p] is derivable *because* the singleton case was
     defined as [𝛕•p + 𝛕•p]: [ax_int_l] one way, [ax_int_glb] on two
@@ -1361,7 +1362,7 @@ Proof.
   destruct (decide (v = v)); [reflexivity | contradiction].
 Qed.
 
-(** The four base cases of the leaf induction. The trailing [𝟘] that
+(* The four base cases of the leaf induction. The trailing [𝟘] that
     [rebuild] always emits is removed by [cgr_choice_nil_rev] — note
     [ax_cgr]'s [Static] obligation is on its *target*, so it is the sum
     (with the [𝟘]) that has to be shown [Static], not the guard alone. *)
@@ -1397,7 +1398,7 @@ Proof. unfold mirror. simpl. apply ax_success_l. Qed.
 Lemma ax_mirror_nil : (g 𝟘) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror 𝟘 [])).
 Proof. unfold mirror. simpl. apply ax_refl. repeat constructor. Qed.
 
-(** ** Half the leaf case: wrapping every continuation in an [ichoice]
+(* ** Half the leaf case: wrapping every continuation in an [ichoice]
 
     The leaf case of the mirror derivation splits cleanly in two. This
     is the first half, and it needs no action-set bookkeeping at all:
@@ -1463,7 +1464,7 @@ Qed.
 Lemma wrap_summand_gStable : forall a, gStable (wrap_summand a).
 Proof. intro a. destruct a as [ | | c P | c v P | P | A1 A2 ]; simpl; exact I. Qed.
 
-(** The [+] case is impossible for a *leaf*: [summands (A1 + A2)] is the
+(* The [+] case is impossible for a *leaf*: [summands (A1 + A2)] is the
     concatenation of two non-empty lists, so it is never a singleton. *)
 
 Lemma ax_wrap_summand : forall a, gStatic a -> gStable a -> summands a = [a] ->
@@ -1511,7 +1512,7 @@ Proof.
       apply HL. exact Ha.
 Qed.
 
-(** ** The merge step
+(* ** The merge step
 
     After [ax_wrapsum] every summand is a [kguard] — a guard on some
     action key carrying an [ichoice] continuation — so collapsing two
@@ -1569,7 +1570,7 @@ Proof.
        | apply Forall_Static_subst; exact Hs1 | apply Forall_Static_subst; exact Hs2].
 Qed.
 
-(** ** An association-list view of a stable sum
+(* ** An association-list view of a stable sum
 
     Once every summand is a [kguard], the sum is determined by a list of
     (action key, continuation list) pairs, and the merge iteration is
@@ -1689,7 +1690,7 @@ Proof.
     apply app_eq_nil in Hl2. destruct Hl2 as (_ & H2). discriminate H2.
 Qed.
 
-(** The merge step, lifted to the association-list view. The only
+(* The merge step, lifted to the association-list view. The only
     friction is [rebuild]'s trailing [𝟘]: [ax_merge_anywhere] puts the
     untouched summands back with a [rebuild], which re-emits one, so the
     result carries two. [cgr_rebuild_snoc_nil] absorbs the extra. *)
@@ -1749,7 +1750,7 @@ Proof.
   apply cgr_fullchoice; [reflexivity | apply cgr_rebuild_snoc_nil].
 Qed.
 
-(** ** Iterating the merge
+(* ** Iterating the merge
 
     Search and recursion, in the same shape as [canonicalize]
     ([VCCS_Canonical.v]) but on the association list, where the measure
@@ -1890,7 +1891,7 @@ Proof.
       apply ax_refl. constructor. apply build_gStatic. exact Hst.
 Qed.
 
-(** Concatenating association lists is summing the built sums — the step
+(* Concatenating association lists is summing the built sums — the step
     the [⊕]-node needs after [ax_int_below_ext] has turned the two
     branches' internal choice into an external one. *)
 
@@ -1913,7 +1914,7 @@ Lemma Forall_app_klist : forall (P : act_key * list proc -> Prop) kl1 kl2,
   Forall P kl1 -> Forall P kl2 -> Forall P (kl1 ++ kl2).
 Proof. intros P kl1 kl2 H1 H2. apply Forall_app. split; assumption. Qed.
 
-(** ** Restricting to an action set
+(* ** Restricting to an action set
 
     The induction that derives [(g M) ᴠᴄᴄꜱ⊑ₐₓ (g (build …))] must carry the
     target's **action set** as a parameter. A first attempt without it —
@@ -1973,7 +1974,7 @@ Proof.
       * apply IH. split; [exact HkS |]. exists l. split; assumption.
 Qed.
 
-(** ** Sharing at an arbitrary summand — the ⊕-node's atom
+(* ** Sharing at an arbitrary summand — the ⊕-node's atom
 
     [ax_share_*] at a key occurring *somewhere* in each branch. Note the
     conclusion is a single **stable** sum: sharing collapses the internal
@@ -2036,7 +2037,7 @@ Proof.
        | apply Forall_Static_subst; exact Hs1 | apply Forall_Static_subst; exact Hs2].
 Qed.
 
-(** Sharing lifted to the association-list view, exactly as
+(* Sharing lifted to the association-list view, exactly as
     [ax_merge_klist] lifts merging. Same trailing-[𝟘] bookkeeping, same
     [cgr_rebuild_snoc_nil] fix.
 
@@ -2094,7 +2095,7 @@ Proof.
   apply cgr_fullchoice; [reflexivity | apply cgr_rebuild_snoc_nil].
 Qed.
 
-(** ** One round of the sharing iteration, with its invariants
+(* ** One round of the sharing iteration, with its invariants
 
     Pooling at one key, packaged with everything the iteration has to
     carry: the key set is unchanged, the first list's members survive,
@@ -2173,7 +2174,7 @@ Proof.
   apply (ax_share_klist kl1 kl2 k l1 l2 r1 r2); assumption.
 Qed.
 
-(** ** The sharing iteration
+(* ** The sharing iteration
 
     Pool every key the two branches share, one round at a time. The
     recursion is on a **worklist** of `kl2`-entries rather than on `kl2`
@@ -2264,7 +2265,7 @@ Proof.
       * apply B5; assumption.
 Qed.
 
-(** ** Reading a duplicate-free association list
+(* ** Reading a duplicate-free association list
 
     On a list with no repeated key, [kmem] at the head's key is just
     membership in the head's own continuation list, and everything at
@@ -2324,7 +2325,7 @@ Proof.
   - intros (l0 & Hin). exists l0. apply elem_of_cons. right. exact Hin.
 Qed.
 
-(** Duplicate-freeness survives [kpick]: removing the (unique) entry at
+(* Duplicate-freeness survives [kpick]: removing the (unique) entry at
     a key leaves a list that is still duplicate-free and no longer
     mentions that key. This is what lets the alignment induction peel
     one key at a time off *both* lists and keep its hypotheses. *)
@@ -2365,7 +2366,7 @@ Proof.
         rewrite Hnr1. reflexivity.
 Qed.
 
-(** A guard whose continuation list is replaced by an element-equal one.
+(* A guard whose continuation list is replaced by an element-equal one.
     The input case is where substitution has to commute past the
     [ichoice] again, and the element-equality is transported through the
     [map] pointwise. *)
@@ -2387,7 +2388,7 @@ Proof.
       * intros (q & Hq & Heq). exists q. split; [apply Hiff; exact Hq | exact Heq].
 Qed.
 
-(** ** Alignment: same keys and same [kmem] ⟹ [⊢]-equal
+(* ** Alignment: same keys and same [kmem] ⟹ [⊢]-equal
 
     Two duplicate-free association lists that agree on which keys they
     carry and on which continuations sit under each key build
@@ -2488,7 +2489,7 @@ Proof.
       unfold build. apply rebuild_perm. apply Permutation_map. symmetry. exact Hp'.
 Qed.
 
-(** The restriction/complement split. This is what supplies
+(* The restriction/complement split. This is what supplies
     [ax_convex_anywhere]'s permutation hypothesis: the restricted list
     really is a sub-list of the full one, so the built sums stand in the
     sub-sum relation the convexity rule requires. *)
@@ -2747,7 +2748,7 @@ Proof.
   constructor; [apply kguard_gStatic; exact Ha | apply IH; exact H'].
 Qed.
 
-(** Convexity, in the association-list view.  This is where [ax_convex]
+(* Convexity, in the association-list view.  This is where [ax_convex]
     is finally used: a target restricted to a *smaller* action set [S1]
     and the full target together dominate the target at any [S] in
     between.  The two restrictions really are sub-sums of the full one
@@ -2806,7 +2807,7 @@ Proof.
   exists p. exists (p :: l'). split; [exact Hl | apply elem_of_cons; left; reflexivity].
 Qed.
 
-(** The ⊕-node's core, stated without reference to [M] at all.
+(* The ⊕-node's core, stated without reference to [M] at all.
 
     [klA] is one branch's list *already restricted* to the action set
     [S] the node has to land on, [klB] is the other branch's full list,
@@ -2908,7 +2909,7 @@ Proof.
 Qed.
 
 
-(** Every normal form is derivably below a duplicate-free association
+(* Every normal form is derivably below a duplicate-free association
     list carrying *all* of its continuations — and below every
     restriction of that list to an action set containing some leaf's
     actions.
@@ -2993,7 +2994,7 @@ Qed.
 (* Bridging the two needs exactly one new derived law: a guard may be   *)
 (* duplicated.                                                         *)
 
-(** A stable leaf guard is derivably below its own doubling.  For the
+(* A stable leaf guard is derivably below its own doubling.  For the
     two prefixes this is the distributivity law read backwards, with
     [ax_int_glb] supplying the degenerate internal choice [P ⊕ P]; for
     [①] it goes through [ax_success_l]/[_r], which is the second place
@@ -3030,7 +3031,7 @@ Proof.
     simpl in Hleaf. injection Hleaf as _ Hrest. destruct l1; simpl in Hrest; discriminate.
 Qed.
 
-(** Adding a summand that is *already present* changes nothing.  Note
+(* Adding a summand that is *already present* changes nothing.  Note
     the shape: [ax_choice_stable] only rewrites the leftmost summand, so
     the target is pulled to the front first ([pull_one]). *)
 Lemma ax_add_dups : forall X a, gStatic X -> gStable X -> a ∈ summands X ->
@@ -3110,7 +3111,7 @@ Proof.
   - apply kguard_leafP.
 Qed.
 
-(** [build kl] is derivably below *any* stable sum whose summands are
+(* [build kl] is derivably below *any* stable sum whose summands are
     [𝟘]s and [kguard]s of [kl]'s own entries, provided every entry is
     represented at least once.  Repetitions are absorbed by
     [ax_add_dups], [𝟘]s by [≡*].
@@ -3292,7 +3293,7 @@ Proof.
   rewrite Hc in Hin. set_solver.
 Qed.
 
-(** Every action the right-hand side offers has a continuation on the
+(* Every action the right-hand side offers has a continuation on the
     left.  This is where trace inclusion ([must_i_trace_incl]) pays for
     itself: without it the mirror could carry an empty [ichoice] at some
     key, and [in_cont_below]/[out_cont_below] would not apply. *)
@@ -3382,7 +3383,7 @@ Proof.
   eapply ax_cgr; [constructor; exact Hs | apply cgr_symm; exact Hcgr].
 Qed.
 
-(** Dropping one output summand in favour of another on the *same
+(* Dropping one output summand in favour of another on the *same
     channel*.  Derived: duplicate the sum with [ax_int_glb], reassociate
     the second copy so the surviving guard is leftmost, apply
     [ax_swap_out], then remove the duplicate it leaves behind. *)
@@ -3408,7 +3409,7 @@ Proof.
   - simpl. apply elem_of_cons. left. reflexivity.
 Qed.
 
-(** The abstraction the semantics actually constrains: channel and
+(* The abstraction the semantics actually constrains: channel and
     polarity, with the value erased. *)
 Definition kabs (k : act_key) : ChannelData * bool :=
   match k with (c, None) => (c, false) | (c, Some _) => (c, true) end.
@@ -3473,7 +3474,7 @@ Lemma krestrict_cons_notin : forall S k l (kl : list (act_key * list proc)),
   k ∉ S -> krestrict S ((k,l) :: kl) = krestrict S kl.
 Proof. intros S k l kl H. simpl. case_decide; [contradiction | reflexivity]. Qed.
 
-(** A built sum may be cut down to any action set that still covers
+(* A built sum may be cut down to any action set that still covers
     every key *up to the abstraction* — i.e. surplus output values may
     be dropped as long as one value per channel survives.  Inputs are
     never dropped: their key *is* their abstraction.
@@ -3641,7 +3642,7 @@ Proof.
     exists (c ? P). split; [exact HP | reflexivity].
 Qed.
 
-(** [bhv_pre_cond2] at the empty trace, read as a *leaf*: some leaf of
+(* [bhv_pre_cond2] at the empty trace, read as a *leaf*: some leaf of
     the normal form offers no more channels than the stable right-hand
     side.  Note this is all the semantics gives — the value is erased,
     which is what [ax_drop_keys] exists to repair. *)
@@ -3710,12 +3711,12 @@ Qed.
 (* ------------------------------------------------------------------ *)
 (* The stable-[N] step.                                                 *)
 
-(** The left-hand summand mirroring one of [N]'s: same guard, and the
+(* The left-hand summand mirroring one of [N]'s: same guard, and the
     continuation fetched from the association list at that guard's key. *)
 Definition mirror_look (kl : list (act_key * list proc)) (n : gproc) : gproc :=
   match gact n with Some k => kguard k (klook k kl) | None => 𝟘 end.
 
-(** Against a *stable* right-hand side, the whole chain:
+(* Against a *stable* right-hand side, the whole chain:
 
     - [leaf_from_cond2] picks a leaf [A] of [M] whose channels are
       inside [N]'s;
@@ -3897,7 +3898,7 @@ Proof.
   assert (Hg := H _ Hin). inversion Hg; subst. assumption.
 Qed.
 
-(** The recursion, on the *semantic* measure [tbound] — a bound on the
+(* The recursion, on the *semantic* measure [tbound] — a bound on the
     length of the traces the right-hand side can perform.
 
     A syntactic measure cannot work: normalisation is not
@@ -3999,7 +4000,7 @@ Proof.
   apply (Hinner (gsize N) N (le_n _)); assumption.
 Qed.
 
-(** ** Completeness of [ax_pre] for the [Static] fragment *)
+(* ** Completeness of [ax_pre] for the [Static] fragment *)
 Theorem completeness_ax : forall p q,
   Static p -> Static q -> p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q -> p ᴠᴄᴄꜱ⊑ₐₓ q.
 Proof.
@@ -4009,3 +4010,4 @@ Proof.
 Qed.
 
 End CompletenessAx.
+(* end hide *)

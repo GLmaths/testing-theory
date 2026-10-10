@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -44,7 +45,7 @@ Section PAL_Alt_Dilemma.
   Notation old := (Applicative_process_algebra.pal_step Val).
   Notation new := (lts_step_a Val).
 
-  (** The synchronisations of the alternative LTS are those of PAL. *)
+  (* The synchronisations of the alternative LTS are those of PAL. *)
   Lemma PALA_sync_iff (p t p' t' : term) :
     (∃ μ1 μ2 : PALA_Act Val, dual μ1 μ2 ∧ new p (ActExt μ1) p' ∧ new t (ActExt μ2) t')
       ↔ PAL_sync p t p' t'.
@@ -81,7 +82,7 @@ Section PAL_Alt_Dilemma.
   Qed.
 End PAL_Alt_Dilemma.
 
-(** With the tests of [PAL_Alt_Tests.v], which do satisfy [test_spec]
+(* With the tests of [PAL_Alt_Tests.v], which do satisfy [test_spec]
     ([PAL_Alt_CoTraceHypotheses.hyp_test_convergence_spec]): no [Φ], [𝝳] make
     the alternative LTS of PAL finitary — the one hypothesis that
     [PAL_Alt_CoTraceHypotheses.v] leaves open cannot be met. *)
@@ -96,7 +97,7 @@ Proof.
            (@tconv_test_spec _ _ _ _ _ _ _ (hyp_test_convergence_spec Val))).
 Qed.
 
-(** ** Modulo the join, [coR (in(?x).𝟘)] is still infinite
+(* ** Modulo the join, [coR (in(?x).𝟘)] is still infinite
 
     [ρᴀʟᴛ] is the canonical projection of [LA_equiv R_prog_a R_test_a]
     ([PAL_Alt_Abs.ρᴀʟᴛ_proj]).  On outputs both [≈ᴛᴇꜱᴛ] and [≈ᴘʀᴏ] are
@@ -113,3 +114,4 @@ Proof.
     apply hX. exists (AOut Val (tuple1 Val (inj n))). split; [apply coR_p_formal | done].
   - intros n m b -> e. cbn in e. injection e as e. apply (inj_iff inj). congruence.
 Qed.
+(* end hide *)

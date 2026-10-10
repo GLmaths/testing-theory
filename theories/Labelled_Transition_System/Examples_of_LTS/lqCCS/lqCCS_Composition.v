@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: (Prog, Mem) ∥ Test
+(* * lqCCS: (Prog, Mem) ∥ Test
 
     The system observed by must-testing.  A program [P] runs with the quantum
     memory [ρ]; an observer [Q] runs in parallel.  The observer has *no
@@ -55,7 +56,7 @@ Notation conf := (proc * proc)%type.
 Section Composition.
   Context `{QM : QuantumModel}.
 
-  (** The measurement of [M] on [qs] as a distribution: the outcome [k] goes
+  (* The measurement of [M] on [qs] as a distribution: the outcome [k] goes
       to [f k] with weight [M_k(ρ)]. *)
   Definition meas_dist {C} (M : meas) (qs : list qubit) (ρ : St)
     (f : nat → C) : dist C :=
@@ -63,26 +64,26 @@ Section Composition.
               (outs (meas_of M qs))).
 
   Inductive cstep (ρ : St) : conf → Sched → dist conf → Prop :=
-  (** silent steps *)
+  (* silent steps *)
   | cs_tauL P Q s P' :
       pstep P (LTau s) P' → cstep ρ (P, Q) s (dpoint (P', Q) ρ)
   | cs_tauR P Q s Q' :
       pstep Q (LTau s) Q' → cstep ρ (P, Q) s (dpoint (P, Q') ρ)
-  (** superoperators *)
+  (* superoperators *)
   | cs_opL P Q t E qs P' :
       pstep P (LAct t (AOp E qs)) P' →
       cstep ρ (P, Q) (STag t) (dpoint (P', Q) (sop_apply E qs ρ))
   | cs_opR P Q t E qs Q' :
       pstep Q (LAct t (AOp E qs)) Q' →
       cstep ρ (P, Q) (STag t) (dpoint (P, Q') (sop_apply E qs ρ))
-  (** measurements *)
+  (* measurements *)
   | cs_measL P Q t M qs x P' :
       pstep P (LAct t (AMeas M qs x)) P' →
       cstep ρ (P, Q) (STag t) (meas_dist M qs ρ (λ k, (subst P' x (VNat k), Q)))
   | cs_measR P Q t M qs x Q' :
       pstep Q (LAct t (AMeas M qs x)) Q' →
       cstep ρ (P, Q) (STag t) (meas_dist M qs ρ (λ k, (P, subst Q' x (VNat k))))
-  (** communications between the program and the observer *)
+  (* communications between the program and the observer *)
   | cs_comLR P Q t t' c v P' Q' :
       pstep P (LAct t (AOut c v)) P' → pstep Q (LAct t' (AIn c v)) Q' →
       cstep ρ (P, Q) (SPair t t') (dpoint (P', Q') ρ)
@@ -90,18 +91,18 @@ Section Composition.
       pstep P (LAct t (AIn c v)) P' → pstep Q (LAct t' (AOut c v)) Q' →
       cstep ρ (P, Q) (SPair t t') (dpoint (P', Q') ρ).
 
-  (** The observer has succeeded. *)
+  (* The observer has succeeded. *)
   Definition conf_good (C : conf) : Prop := good C.2.
 
   #[global] Instance conf_good_dec C : Decision (conf_good C).
   Proof. unfold conf_good. apply _. Defined.
 
-  (** The initial distribution of [P] in memory [ρ] tested by [Q]. *)
+  (* The initial distribution of [P] in memory [ρ] tested by [Q]. *)
   Definition compose_lq (Pρ : proc * St) (Q : proc) : dist conf :=
     dpoint (Pρ.1, Q) Pρ.2.
 End Composition.
 
-(** ** lqCCS as a scheduled system, and its two must preorders
+(* ** lqCCS as a scheduled system, and its two must preorders
 
     A process under test is a program with its initial memory [(P, ρ)]; an
     observer is a program alone. *)
@@ -114,3 +115,4 @@ End Composition.
 
 Definition lq_pre_as `{QuantumModel} (p q : proc * St) : Prop := p ⊑ₐₛ q.
 Definition lq_pre_sm `{QuantumModel} (p q : proc * St) : Prop := p ⊑ₛₘ q.
+(* end hide *)

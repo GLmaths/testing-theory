@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -29,7 +30,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
 
 Import ListNotations.
 
-(** * [completeness1] and [completeness2] are false without [UniqueDual]
+(* * [completeness1] and [completeness2] are false without [UniqueDual]
 
     [Completeness.v] proves [p ⊑ₘᵤₛₜᵢ q -> p ₁≼ₐₛ q] ([completeness1]) and
     [p ⊑ₘᵤₛₜᵢ q -> p ₂≼ₐₛ q] ([completeness2]) under the hypothesis
@@ -54,7 +55,7 @@ Import ListNotations.
     ([gLtsOba], [gLtsObaFW]): with every action blocking, their axioms are
     vacuous. *)
 
-(** ** Actions *)
+(* ** Actions *)
 
 Inductive ABC := la | lb | lc | ld | le.
 
@@ -67,7 +68,7 @@ Next Obligation. intros []; set_solver. Qed.
 
 #[global] Instance ABC_countable : Countable ABC := finite_countable.
 
-(** ** The non-unique dual: [la — lc — lb] *)
+(* ** The non-unique dual: [la — lc — lb] *)
 
 Definition dualNU (x y : ABC) : Prop :=
   match x, y with
@@ -102,7 +103,7 @@ Proof. by destruct x. Qed.
 Lemma EA_NU_not_unique : ¬ UniqueDual ABC.
 Proof. intros Hu. by specialize (Hu lb lc I). Qed.
 
-(** ** The processes
+(* ** The processes
 
     - [p0 = la.0 + lb.Ω] and [q0 = la.Ω + lb.0], for [completeness1];
     - [p1 = la.dz + lb.0] and [q1 = la.0 + lb.dz] with [dz = ld.0], for
@@ -165,7 +166,7 @@ Proof.
   - intros ? ? ? ? ? nb. contradiction.
 Qed.
 
-(** ** The swap [la ↔ lb] *)
+(* ** The swap [la ↔ lb] *)
 
 Definition swap_act (x : ABC) : ABC :=
   match x with la => lb | lb => la | x => x end.
@@ -176,7 +177,7 @@ Definition swap_st (s : st) : st :=
 Lemma swap_st_invol s : swap_st (swap_st s) = s.
 Proof. by destruct s. Qed.
 
-(** The swap preserves [dualNU] (one side is enough). *)
+(* The swap preserves [dualNU] (one side is enough). *)
 Lemma dualNU_swap x y : dualNU (swap_act x) y ↔ dualNU x y.
 Proof. destruct x, y; simpl; tauto. Qed.
 
@@ -201,7 +202,7 @@ Qed.
 Lemma step_swap_ext' s μ s' : s ⟶[μ] s' → swap_st s ⟶[swap_act μ] swap_st s'.
 Proof. apply step_swap. Qed.
 
-(** ** No test separates [s] from [swap_st s] *)
+(* ** No test separates [s] from [swap_st s] *)
 
 Section Tests.
 
@@ -238,7 +239,7 @@ Proof. intros t hm. exact (must_swap p1 t hm). Qed.
 
 End Tests.
 
-(** ** [p0 ⇓ [la]] but not [q0 ⇓ [la]] *)
+(* ** [p0 ⇓ [la]] but not [q0 ⇓ [la]] *)
 
 Lemma om_diverges : ¬ om ⤓.
 Proof.
@@ -276,7 +277,7 @@ Proof.
   exact (om_diverges hterm).
 Qed.
 
-(** ** The counterexample *)
+(* ** The counterexample *)
 
 Theorem completeness1_fails_without_unique_dual :
   ¬ UniqueDual ABC
@@ -293,7 +294,7 @@ Proof.
   - intro h. apply q0_not_cnv_la, h, p0_cnv_la.
 Qed.
 
-(** ** The acceptance sets of [p1] and [q1] after [la] *)
+(* ** The acceptance sets of [p1] and [q1] after [la] *)
 
 Definition idA (x : ABC) : ABC := x.
 
@@ -302,7 +303,7 @@ Definition idA (x : ABC) : ABC := x.
 Next Obligation. intros T gLtsT t β β' b b' e mem. unfold idA in e. subst. exact mem. Qed.
 Next Obligation. intros T gLtsT p β β' b b' e mem. unfold idA in *. subst. exact mem. Qed.
 
-(** [₂≼ₐₛ] with [Φ = 𝝳 = idA] *)
+(* [₂≼ₐₛ] with [Φ = 𝝳 = idA] *)
 Definition cond2_id `{gLtsT : !gLtsEq T EA_NU} (p q : st) : Prop :=
   @bhv_pre_cond2 st ABC EA_NU st_gLts T ABC ABC idA idA gLtsT AbsAction_id
     st st_gLts idA AbsAction_id p q.
@@ -368,7 +369,7 @@ Proof.
   exact (coR_nil_empty le (sub le le_in_coR_dz)).
 Qed.
 
-(** Every state reachable from [p1] or [q1] converges on every trace. *)
+(* Every state reachable from [p1] or [q1] converges on every trace. *)
 
 Definition fin_st (x : st) : Prop :=
   match x with p1 | q1 | dz | nil => True | _ => False end.
@@ -425,3 +426,4 @@ Proof.
   - exact p1_cond1_q1.
   - intros. apply p1_not_cond2.
 Qed.
+(* end hide *)

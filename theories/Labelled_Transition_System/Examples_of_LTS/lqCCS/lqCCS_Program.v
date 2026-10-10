@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: the programming language alone
+(* * lqCCS: the programming language alone
 
     The LTS of lqCCS processes *without* the quantum memory.  As the program
     side of the Harmony lemma ([Harmony_lemma/Harmony.v], [pstep]), quantum
@@ -57,7 +58,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS_Syntax.
 
-(** ** Schedulers and labels *)
+(* ** Schedulers and labels *)
 
 Inductive Sched : Type :=
 | STag (t : tag)
@@ -66,7 +67,7 @@ Inductive Sched : Type :=
 #[global] Instance Sched_eq_dec : EqDecision Sched.
 Proof. solve_decision. Defined.
 
-(** Visible actions of a program. *)
+(* Visible actions of a program. *)
 Inductive pact : Type :=
 | AOut (c : chan) (v : val)
 | AIn (c : chan) (v : val)
@@ -83,7 +84,7 @@ Inductive plbl : Type :=
 #[global] Instance plbl_eq_dec : EqDecision plbl.
 Proof. solve_decision. Defined.
 
-(** ** Auxiliary definitions *)
+(* ** Auxiliary definitions *)
 
 Definition eval_qubit (e : exp) : option qubit :=
   match eval e with Some (VQubit q) => Some q | _ => None end.
@@ -108,7 +109,7 @@ Definition prefix_qubits (α : prefix) : list qubit :=
   | POp _ _ es | PMeas _ _ es _ => concat (map exp_qubits es)
   end.
 
-(** [qnames P]: the qubits owned by [P]. *)
+(* [qnames P]: the qubits owned by [P]. *)
 Fixpoint qnames (P : proc) : list qubit :=
   match P with
   | PSend _ _ e => exp_qubits e
@@ -125,13 +126,13 @@ with gqnames (g : guard) : list qubit :=
   | GSum g1 g2 => gqnames g1 ++ gqnames g2
   end.
 
-(** [l] is a communication on [c]. *)
+(* [l] is a communication on [c]. *)
 Definition on_chan (c : chan) (l : plbl) : Prop :=
   ∃ t v, l = LAct t (AOut c v) ∨ l = LAct t (AIn c v).
 
-(** ** Transitions *)
+(* ** Transitions *)
 
-(** Steps of a guard: a prefix, or one side of a sum. *)
+(* Steps of a guard: a prefix, or one side of a sum. *)
 Inductive gstep : guard → plbl → proc → Prop :=
 | gs_tau t P :
     gstep (GPre (PTau t) P) (LTau (STag t)) P
@@ -173,11 +174,11 @@ Inductive pstep : proc → plbl → proc → Prop :=
 | ps_res P c l P' :
     ¬ on_chan c l → pstep P l P' → pstep (PRes P c) l (PRes P' c).
 
-(** A guard never outputs. *)
+(* A guard never outputs. *)
 Lemma gstep_not_out g t c v P' : ¬ gstep g (LAct t (AOut c v)) P'.
 Proof. intros Hs. remember (LAct t (AOut c v)) as l. induction Hs; simplify_eq; auto. Qed.
 
-(** ** Success of an observer: [①] at top level
+(* ** Success of an observer: [①] at top level
 
     [①] in parallel, under a restriction, in a sum, or in the branch of a
     conditional that is taken. *)
@@ -208,7 +209,7 @@ Definition good (P : proc) : Prop := goodb P = true.
 #[global] Instance good_dec P : Decision (good P).
 Proof. unfold good. apply _. Defined.
 
-(** ** Free variables *)
+(* ** Free variables *)
 
 Fixpoint exp_fv (e : exp) : list var :=
   match e with
@@ -284,7 +285,7 @@ Qed.
 Lemma subst_fresh P x v : x ∉ fv P → subst P x v = P.
 Proof. apply subst_gsubst_fresh. Qed.
 
-(** ** A sent qubit is owned by the sender *)
+(* ** A sent qubit is owned by the sender *)
 
 Lemma eval_qubit_in e q : eval e = Some (VQubit q) → q ∈ exp_qubits e.
 Proof.
@@ -305,3 +306,4 @@ Proof.
   - by edestruct gstep_not_out.
   - by apply eval_qubit_in.
 Qed.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: no trace-following observer exists
+(* * Core Erlang: no trace-following observer exists
 
     The characterisations of the must preorder need a family of observers
     [gen : trace → T] following a trace, axiomatised by [test_spec]
@@ -73,7 +74,7 @@ Section Erlang_Test_Dilemma.
 
 Context `{EP : Erlang_Program}.
 
-(** Releasing a message in transit does not create success: this is the
+(* Releasing a message in transit does not create success: this is the
     converse half of [Testing_Predicate] for [good_Erl].  (For an /input/ it is
     false, and rightly so: that is how an observer reports success.) *)
 Lemma good_Erl_of_out S T p v : S ⟶ₑ[out_act p v] T → good_Erl T → good_Erl S.
@@ -84,7 +85,7 @@ Proof.
   exists c. split; [multiset_solver | done].
 Qed.
 
-(** ** The three axioms of [test_spec] that clash *)
+(* ** The three axioms of [test_spec] that clash *)
 
 Theorem no_trace_following_observer (gen : list erl_act → sys) :
   (* (1) *) (∀ s, ¬ good_Erl (gen s)) →
@@ -119,7 +120,7 @@ Proof.
   eapply (h1 (β :: s)). eapply good_Erl_of_out; [exact hout | exact hg].
 Qed.
 
-(** ** A sharper obstruction: a trace over two pids
+(* ** A sharper obstruction: a trace over two pids
 
     The first argument can be blamed on [ESend] being a τ.  This one cannot: it
     uses two inputs at two /different/ pids and only the fact that a transition
@@ -180,3 +181,4 @@ Proof.
 Qed.
 
 End Erlang_Test_Dilemma.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * The expansion law: [g M ‖ g N] as a guarded sum
+(* * The expansion law: [g M ‖ g N] as a guarded sum
 
     [ext]/[ext_r]/[int] compute the guarded-sum normal form of [M ‖ N]
     for two guarded sums [M], [N] — [ext M N] lets each of [M]'s own
@@ -55,7 +56,7 @@ Section VCCS_Expansion.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** A generic tool: identical one-step transitions give identical [must]-behaviour
+(* ** A generic tool: identical one-step transitions give identical [must]-behaviour
 
     If [p] and [q] have exactly the same outgoing [τ] and external
     transitions (same labels, same targets), they must-pass exactly the
@@ -100,7 +101,7 @@ Proof.
     + intros μ p'. symmetry. apply Hext.
 Qed.
 
-(** ** [①] and [𝟘] are indistinguishable *as servers*
+(* ** [①] and [𝟘] are indistinguishable *as servers*
 
     [must p t]'s outcome field inspects only the *test*; the server
     enters solely through its transitions. [①] and [𝟘] have none at all
@@ -130,7 +131,7 @@ Proof. intros t Ht. apply must_i_success_nil. exact Ht. Qed.
 Lemma must_i_success_nil_r : (g 𝟘) ⊑ₘᵤₛₜᵢ (g ①).
 Proof. intros t Ht. apply must_i_success_nil. exact Ht. Qed.
 
-(** ** [M]'s own prefixes race ahead of the untouched [N]
+(* ** [M]'s own prefixes race ahead of the untouched [N]
 
     The input case needs [gNewVar 0 N] (not [N] verbatim) to shift
     [N]'s own bound value variables out of the way of the new binder
@@ -147,7 +148,7 @@ match M with
 | gp1 + gp2 => (ext gp1 N) + (ext gp2 N)
 end.
 
-(** [N]'s own prefixes race ahead of the untouched [M] — a *separate*
+(* [N]'s own prefixes race ahead of the untouched [M] — a *separate*
     function from [ext], not just [ext] with swapped arguments, so that
     the wrapping order matches [lts_parR]'s target shape [g M ‖ c2]
     (not [c2 ‖ g M]). *)
@@ -161,7 +162,7 @@ match N with
 | gq1 + gq2 => (ext_r gq1 M) + (ext_r gq2 M)
 end.
 
-(** Pair a specific input guard [c?p] (from one side) against every
+(* Pair a specific input guard [c?p] (from one side) against every
     output guard of [N] (the other side) on the same channel. *)
 Fixpoint int_input (c : ChannelData) (p : proc) (N : gproc) {struct N} : gproc :=
 match N with
@@ -173,7 +174,7 @@ match N with
 | gq1 + gq2 => (int_input c p gq1) + (int_input c p gq2)
 end.
 
-(** Symmetric: pair a specific output guard [c!v•p] against every input
+(* Symmetric: pair a specific output guard [c!v•p] against every input
     guard of [N] on the same channel. *)
 Fixpoint int_output (c : ChannelData) (v : ValueData) (p : proc) (N : gproc) {struct N} : gproc :=
 match N with
@@ -185,7 +186,7 @@ match N with
 | gq1 + gq2 => (int_output c v p gq1) + (int_output c v p gq2)
 end.
 
-(** All synchronisations between [M] and [N] — dispatches on [M]'s own
+(* All synchronisations between [M] and [N] — dispatches on [M]'s own
     guard kind and searches [N] for the complement, so a single call
     [int M N] already covers both sync directions (input-then-output
     and output-then-input); no separate [int N M] is needed. *)
@@ -199,7 +200,7 @@ match M with
 | gp1 + gp2 => (int gp1 N) + (int gp2 N)
 end.
 
-(** ** [Static] reflects the value-substitution shift: [gproc] cancellation
+(* ** [Static] reflects the value-substitution shift: [gproc] cancellation
 
     [subst_in_proc 0 v (NewVar 0 p) = p] is already proved (as
     [All_According], [VCCS_ta_tc_gen.v]) for arbitrary [proc]; injecting
@@ -213,7 +214,7 @@ Proof.
   simpl in H. injection H as H. exact H.
 Qed.
 
-(** ** [ext]/[ext_r] exactly mirror [M]/[N]'s own transitions
+(* ** [ext]/[ext_r] exactly mirror [M]/[N]'s own transitions
 
     [ext M N]'s transitions are in bijection with [M]'s own transitions,
     each wrapped with [‖ g N] — same label, same (wrapped) target, not
@@ -271,7 +272,7 @@ Proof.
       * apply IHN2 in H4. eapply lts_choiceR. exact H4.
 Qed.
 
-(** The "shape" corollaries: every transition [ext M N] (resp. [ext_r N
+(* The "shape" corollaries: every transition [ext M N] (resp. [ext_r N
     M]) can take lands on a target of the wrapped shape — needed to
     invert an *arbitrary* target back to the underlying [M]/[N]
     transition (the "forall tgt" phrasing of [ext_lts_iff] alone isn't
@@ -310,7 +311,7 @@ Proof.
     + apply IHN2 in H4 as (tgt' & Heq & H4'). exists tgt'. split; [exact Heq | apply lts_choiceR; exact H4'].
 Qed.
 
-(** ** [int]'s transitions are exactly [M]/[N]'s synchronisations *)
+(* ** [int]'s transitions are exactly [M]/[N]'s synchronisations *)
 
 Lemma int_input_lts_iff : forall c p N tgt,
   lts (g (int_input c p N)) τ tgt <->
@@ -417,7 +418,7 @@ Proof.
       * apply lts_choiceR. apply IHM2. right. exists c,v,p',q. auto.
 Qed.
 
-(** [int]'s own transitions are always [τ] (it's built entirely from
+(* [int]'s own transitions are always [τ] (it's built entirely from
     [𝛕•_]-guarded summands) — needed to discharge [int]'s contribution
     when comparing *external*-labelled transitions. *)
 
@@ -460,7 +461,7 @@ Proof.
     + eapply IHM2; exact H3.
 Qed.
 
-(** ** [g M ‖ g N] and the flattened guarded sum have exactly the same transitions *)
+(* ** [g M ‖ g N] and the flattened guarded sum have exactly the same transitions *)
 
 Lemma expansion_lts_iff : forall M N a tgt,
   lts (g M ‖ g N) a tgt <->
@@ -494,7 +495,7 @@ Proof.
     + apply lts_choiceR. exact H.
 Qed.
 
-(** ** The expansion law *)
+(* ** The expansion law *)
 
 Theorem must_i_expansion : forall M N t,
   (g M ‖ g N) must_pass t <-> g ((ext M N + ext_r N M) + int M N) must_pass t.
@@ -516,7 +517,7 @@ Proof. intros M N t H. apply must_i_expansion. exact H. Qed.
 Corollary must_i_expansion_r : forall M N, g ((ext M N + ext_r N M) + int M N) ⊑ₘᵤₛₜᵢ (g M ‖ g N).
 Proof. intros M N t H. apply must_i_expansion. exact H. Qed.
 
-(** ** [ext]/[ext_r]/[int] preserve [gStatic]
+(* ** [ext]/[ext_r]/[int] preserve [gStatic]
 
     Needed for [SoundnessAx.v]'s [ax_pre_static_preserved] once the
     expansion law becomes an [ax_pre] axiom ([DefinitionAxiomatic.v]'s
@@ -579,3 +580,4 @@ Proof.
 Qed.
 
 End VCCS_Expansion.
+(* end hide *)

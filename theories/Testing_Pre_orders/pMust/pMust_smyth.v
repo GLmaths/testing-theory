@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Probabilistic must, Smyth version
+(* * Probabilistic must, Smyth version
 
     Deng, van Glabbeek, Hennessy and Morgan compare the *sets* of success
     probabilities of [p ∥ t] by the Smyth order: below every value of
@@ -42,7 +43,7 @@ From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base decidable list.
 From TestingTheory Require Import pMust_almost_sure.
 
-(** Density of the probabilities, and transitivity across [<ₚ] and [≤ₚ]. *)
+(* Density of the probabilities, and transitivity across [<ₚ] and [≤ₚ]. *)
 Class DenseWeights `{Weights} := MkDenseWeights {
     prob_dense a b : a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b;
   }.
@@ -51,11 +52,11 @@ Section Smyth.
   Context `{Weights} {P T C Sch : Type} `{!SchedSts C Sch}
     `{!pTesting P T C Sch}.
 
-  (** [sup r1 ≤ sup r2] *)
+  (* [sup r1 ≤ sup r2] *)
   Definition run_le (r1 r2 : nat → dist C) : Prop :=
     ∀ n w, w <ₚ succ_mass r1 n → ∃ m, w ≤ₚ succ_mass r2 m.
 
-  (** [A(Δ) ≤Sm A(Θ)] *)
+  (* [A(Δ) ≤Sm A(Θ)] *)
   Definition smyth_le (Δ Θ : dist C) : Prop :=
     ∀ r2, is_run Θ r2 → ∃ r1, is_run Δ r1 ∧ run_le r1 r2.
 
@@ -89,7 +90,7 @@ Section Smyth.
       destruct (Hpq t r2 Hr2) as (r1 & Hr1 & H12).
       exists r1. split; [done|]. by eapply run_le_trans.
   Qed.
-  (** ** The Smyth must is finer than the almost-sure must
+  (* ** The Smyth must is finer than the almost-sure must
 
       If below every run of [Θ] there is a run of [Δ], and [Δ] succeeds
       almost surely, so does [Θ] — provided [Θ] does not weigh more than
@@ -113,7 +114,7 @@ Section Smyth.
   Proof.
     intros Hmass Hpq t Hp. exact (smyth_le_pmust_as _ _ (Hmass t) (Hpq t) Hp).
   Qed.
-  (** ** The Smyth must as a family of threshold musts
+  (* ** The Smyth must as a family of threshold musts
 
       [must_lt w Δ]: every run of [Δ] gets a successful mass arbitrarily
       close to [w] from below, i.e. its value is at least [w].  When [Δ] has
@@ -164,3 +165,4 @@ Section Smyth.
 End Smyth.
 
 Notation "p ⊑ₛₘ q" := (ctx_pre_sm p q) (at level 70).
+(* end hide *)

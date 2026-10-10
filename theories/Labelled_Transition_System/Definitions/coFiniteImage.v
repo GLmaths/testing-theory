@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2025 Gaëtan Lopez <glopez@irif.fr>
 
@@ -27,7 +28,7 @@ From TestingTheory Require Import InListPropHelper ActTau gLts SyncActions Bisim
   WeakTransitions Convergence Lts_OBA_FB FiniteImageLTS coWeakTransition coConvergence
   StateTransitionSystems.
 
-(** ** Co-Finite Image LTSs
+(* ** Co-Finite Image LTSs
 
     [coFiniteImagegLts] supplies, for every external action [α], finiteness of
     the set of states reachable by *some* action dual to [α] — exactly the
@@ -65,7 +66,7 @@ Class coFiniteImagegLts (P A : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLts
 #[global] Existing Instance cofolts_next_states_decidable.
 #[global] Existing Instance cofolts_next_states_finite.
 
-(** *** [coFiniteImagegLts] implies [CountablegLts] — mirrors
+(* *** [coFiniteImagegLts] implies [CountablegLts] — mirrors
     [FiniteImageLTS.v]'s [finite_countable_lts] ([FiniteImagegLts P A ->
     CountablegLts P A]), sourced from [coFiniteImagegLts] instead: this is
     what lets a bare [!coFiniteImagegLts P A] context satisfy
@@ -103,7 +104,7 @@ Section coFiniteImage_sets.
 Context `{gLtsP : @gLts P Aproc Hp} `{Ht : ExtAction A} `{SA : !SyncAction Aproc A}.
 Context `{CFI : !coFiniteImagegLts P A}.
 
-(** *** Tau-set
+(* *** Tau-set
 
     Mirrors [lts_tau_set]/[lts_tau_set_spec] (FiniteImageLTS.v) verbatim,
     sourced from [coFiniteImagegLts]'s [cofolts_tau_next_states_finite]
@@ -122,7 +123,7 @@ Proof.
     eauto. eapply elem_of_enum.
 Qed.
 
-(** *** Tau-successors of a whole *set*
+(* *** Tau-successors of a whole *set*
 
     Mirrors [lts_tau_set_from_pset]/[_ispec] (FiniteImageLTS.v) verbatim,
     sourced from [cowt_tau_set] (hence [coFiniteImagegLts]'s own
@@ -155,7 +156,7 @@ Proof.
     + eapply cowt_tau_set_spec in l. multiset_solver.
 Qed.
 
-(** *** [cowt] on the empty trace is exactly [wt] on the empty trace *)
+(* *** [cowt] on the empty trace is exactly [wt] on the empty trace *)
 
 (* Mirrors [wt_set_nil] (FiniteImageLTS.v) verbatim, sourced from
    [coFiniteImagegLts]'s own [cofolts_tau_next_states_finite]/
@@ -219,7 +220,7 @@ Definition cowt_set_nil_fin
   (p : P) (ht : p ⤓) : Finite (@dsig P (fun q => p ⟹ᶜᵒ q) (cowt_nil_set_dec p ht)) :=
   cowt_set_nil_fin_aux p ht (cowt_nil_set_dec p ht).
 
-(** *** The set of states reachable by a single co-weak action *)
+(* *** The set of states reachable by a single co-weak action *)
 
 Definition cowt_extaction_set p μ : list P :=
   map proj1_sig (enum $ dsig (fun q => exists μ', sync μ' μ /\ p ⟶[μ'] q)).
@@ -311,7 +312,7 @@ Definition cowt_set_mu_fin
   Finite (@dsig P (fun q => p ⟹ᶜᵒ{μ} q) (cowt_mu_set_dec p μ s hcocnv)) :=
   cowt_mu_set_fin_aux p μ s hcocnv (cowt_mu_set_dec p μ s hcocnv).
 
-(** *** The set of states reachable along a whole co-weak trace *)
+(* *** The set of states reachable along a whole co-weak trace *)
 
 Fixpoint cowt_set
   (p : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) : gset P :=
@@ -377,7 +378,7 @@ Definition cowt_set_fin
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) : Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q) (cowt_set_dec p s hcocnv)) :=
   cowt_set_fin_aux p s hcocnv (cowt_set_dec p s hcocnv).
 
-(** *** The set of stable states reachable along a whole co-weak trace
+(* *** The set of stable states reachable along a whole co-weak trace
 
     Mirrors [wt_nil_stable_set] (FiniteImageLTS.v) verbatim, sourced from
     [coFiniteImagegLts] instead of [FiniteImagegLts] — like [cowt_set_nil],
@@ -513,7 +514,7 @@ Proof.
     eapply cowt_stable_set_spec2. split; eauto with mdb.
 Qed.
 
-(** *** The set of states a whole *set* [P] reaches via a single co-weak
+(* *** The set of states a whole *set* [P] reaches via a single co-weak
     action — mirrors [wt_set_from_pset_spec1]/[spec2]/[spec]
     (FiniteImageLTS.v's "from_pset" section), packaging the dual directly
     into [⟹ᶜᵒ{μ}] (a single [μ], no separate [dual μ1 μ2] premise) instead of
@@ -531,7 +532,7 @@ Definition cowt_set_from_pset_spec `{Countable P}
   (ps : gset P) (μ : A) (qs : gset P) :=
   cowt_set_from_pset_spec1 ps μ qs /\ cowt_set_from_pset_spec2 ps μ qs.
 
-(** *** A concrete witness set for [cowt_set_from_pset_spec] — mirrors
+(* *** A concrete witness set for [cowt_set_from_pset_spec] — mirrors
     [wt_s_set_from_pset]/[wt_s_set_from_pset_ispec] (FiniteImageLTS.v)
     verbatim, restricted to a single action [μ] (so it is sourced from
     [cowt_set_mu] instead of the general-trace [wt_set]). *)
@@ -597,3 +598,4 @@ Proof.
 Qed.
 
 End coFiniteImage_sets.
+(* end hide *)

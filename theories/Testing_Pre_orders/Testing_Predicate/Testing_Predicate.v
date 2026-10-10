@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -97,3 +98,4 @@ Proof.
     now eapply IHstripped.
 Qed.
 
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Precongruence lemmas for [⊑ₘᵤₛₜᵢ] on VCCS
+(* * Precongruence lemmas for [⊑ₘᵤₛₜᵢ] on VCCS
 
     Building blocks for a Hennessy-Ingólfsdóttir-style inequational proof
     system for the must-preorder on VCCS. This file collects the lemmas
@@ -37,7 +38,7 @@ Section VCCS_Precongruence.
 
 Context `{VP : VCCS_Parameters}.
 
-(** ** Internal-choice inequations
+(* ** Internal-choice inequations
 
     [⊕] is not primitive in this VCCS syntax; it is definable as [𝛕•X + 𝛕•Y].
     The key Hennessy-Ingólfsdóttir inequation [X⊕Y ⊑ X] (resp. [⊑ Y]) holds
@@ -65,7 +66,7 @@ Proof.
     eapply lts_tau.
 Qed.
 
-(** ** Internal choice is the greatest lower bound, not merely a lower bound
+(* ** Internal choice is the greatest lower bound, not merely a lower bound
 
     [must_i_int_choice_l]/[_r] above say [𝛕X + 𝛕Y] is *below* each of [X]
     and [Y] — glb *elimination*. The matching *introduction* rule is
@@ -115,7 +116,7 @@ Proof.
   apply must_i_int_glb; [apply H1 | apply H2]; exact Ht.
 Qed.
 
-(** ** Separating [𝛕] from a mixed sum
+(* ** Separating [𝛕] from a mixed sum
 
     [X + 𝛕•(g Y) ≂ₘᵤₛₜᵢ 𝛕•(g (X + Y)) ⊕ 𝛕•(g Y)] — the law that turns a
     *mixed* sum (external guards sitting beside a [𝛕]-guard) into an
@@ -214,7 +215,7 @@ Corollary must_i_tau_sep_pre_r : forall (X Y : gproc),
   g ((𝛕 • (g (X + Y))) + (𝛕 • (g Y))) ⊑ₘᵤₛₜᵢ g (X + (𝛕 • (g Y))).
 Proof. intros X Y t H. apply must_i_tau_sep_r. exact H. Qed.
 
-(** ** Convexity of acceptance sets
+(* ** Convexity of acceptance sets
 
     [g X ⊕ g ((X+Y)+Z) ⊑ₘᵤₛₜᵢ g (X+Y)] — the internal choice between a
     sum and a *larger* sum lies below every sum in between. This is the
@@ -274,7 +275,7 @@ Corollary must_i_convex_pre : forall (X Y Z : gproc),
   g ((𝛕 • (g X)) + (𝛕 • (g ((X + Y) + Z)))) ⊑ₘᵤₛₜᵢ g (X + Y).
 Proof. intros X Y Z t Ht. apply must_i_convex with (Z := Z). exact Ht. Qed.
 
-(** ** Continuation sharing
+(* ** Continuation sharing
 
     Two branches of an internal choice that offer the *same* action may
     pool their continuations there, keeping the first branch's ready set:
@@ -399,7 +400,7 @@ Proof.
     + apply pt. apply lts_choiceR. apply lts_tau.
 Qed.
 
-(** ** Rewriting a [𝛕]-summand's continuation inside a sum
+(* ** Rewriting a [𝛕]-summand's continuation inside a sum
 
     The exact complement of [must_i_choice_stable_compat]
     ([VCCS_ReadySet.v]). Between them, *every* guard shape can have its
@@ -425,7 +426,7 @@ Qed.
     through the hypothesis [p ⊑ₘᵤₛₜᵢ p']. The [com] field never sees the
     [𝛕]-summand at all, since a [𝛕]-guard has no external transitions. *)
 
-(** ** Flattening a nested internal choice
+(* ** Flattening a nested internal choice
 
     [gAllTau Y] says every summand of [Y] is [𝛕]-guarded — so [g Y] is a
     pure internal choice, with no external offers of its own. In that
@@ -473,7 +474,7 @@ Proof.
     + eapply IHY2; eassumption.
 Qed.
 
-(** An all-[𝛕] part of a sum inherits the whole sum's obligations: it
+(* An all-[𝛕] part of a sum inherits the whole sum's obligations: it
     supplies its own [ex] (it always has a [𝛕]) and owes no [com] (it has
     no external transitions). *)
 Lemma must_i_alltau_part : forall (X Y : gproc) t, gAllTau Y ->
@@ -570,7 +571,7 @@ Proof.
       * eapply com; [exact Hdual | apply lts_choiceR; exact H3 | exact Ht'].
 Qed.
 
-(** ** Structural congruence is a (near-)free source of equations
+(* ** Structural congruence is a (near-)free source of equations
 
     Since VCCS's [gLtsEq] instance takes [⋍ := ≡*] (structural congruence),
     every axiom of [cgr_step] (commutativity/associativity of [‖]/[+],
@@ -584,7 +585,7 @@ Proof.
   - intros t Hm. eapply must_eq_server; [exact Hcgr | exact Hm].
 Qed.
 
-(** ** Precongruence for the output prefix
+(* ** Precongruence for the output prefix
 
     [must_eq_client]/[must_eq_server]'s technique (transferring transitions
     one-for-one via [eq_spec]) does NOT apply here: [⊑ₘᵤₛₜᵢ] is an
@@ -626,7 +627,7 @@ Proof.
       eapply com; [exact Hdual | eapply lts_output | exact Ht'].
 Qed.
 
-(** ** Precongruence for the τ prefix
+(* ** Precongruence for the τ prefix
 
     Unlike the output prefix, [𝛕•p] has a τ-successor ([p] itself), so
     here it is the [pt] field (not [com]) that uses [Hpq] directly; [com]
@@ -662,7 +663,7 @@ Proof.
       inversion Hp'.
 Qed.
 
-(** ** [ν]-precongruence, par le PONT DE DÉCALAGE
+(* ** [ν]-precongruence, par le PONT DE DÉCALAGE
 
     La première rédaction passait par [≼ₐₛ] : [ν]'s transition target is a
     *descendant* of its argument, not the argument itself, so a direct
@@ -704,7 +705,7 @@ Proof.
     try (exact (match Hd with end)); inversion Hd; subst; reflexivity.
 Qed.
 
-(** The inverse: a label dual to a shifted one is itself a shift.  This is
+(* The inverse: a label dual to a shifted one is itself a shift.  This is
     what lets the [com] field pull the *server*'s action back through [ν]. *)
 Lemma dual_shift_inv : forall (nu1 : ExtAct TypeOfActions) (μ2 : ExtAct TypeOfActions),
   dual nu1 (VarC_action_add 1 μ2) -> exists μ1, nu1 = VarC_action_add 1 μ1 /\ dual μ1 μ2.
@@ -773,7 +774,7 @@ Proof.
       rewrite NewVarC_act_at_zero in Hl. exact Hl.
 Qed.
 
-(** Et la condition [Static] disparaît : la route acceptance-set en
+(* Et la condition [Static] disparaît : la route acceptance-set en
     demandait deux. *)
 Lemma must_i_res_compat : forall (p q : proc), p ⊑ₘᵤₛₜᵢ q -> (ν p) ⊑ₘᵤₛₜᵢ (ν q).
 Proof.
@@ -782,7 +783,7 @@ Proof.
   apply Hpq. eapply res_bridge_fwd; [ exact Hm | reflexivity ].
 Qed.
 
-(** ** Precongruence for [If]
+(* ** Precongruence for [If]
 
     [lts_ifOne]/[lts_ifZero] (VCCS.v) only ever evaluate [Eval_Eq 0 E]
     (depth 0). At depth 0, [Eval_Eq]'s [None] branches (used to represent
@@ -823,7 +824,7 @@ Proof.
   - exfalso. eapply Eval_Eq_0_not_none. exact Heval.
 Qed.
 
-(** ** Toolkit for guarded-choice [+] precongruence
+(* ** Toolkit for guarded-choice [+] precongruence
 
     Unlike [ν] (single argument, shifting), guarded choice has *two*
     arguments and no depth shift, but introduces a genuine branching
@@ -899,7 +900,7 @@ Proof.
       apply (dec_stable (H := not_dec (proc_stable_dec _ _))). intro Hc. revert Hnr. apply choice_ext_stable_iff in Hc. destruct Hc as (Hc1 & Hc2). exact Hc2.
 Qed.
 
-(** Lifting a single first step of [gp] (resp. [gq]) through [lts_choiceL]
+(* Lifting a single first step of [gp] (resp. [gq]) through [lts_choiceL]
     (resp. [lts_choiceR]), then continuing with an *already-given* weak
     transition of the successor state unchanged — deliberately not by
     induction on the whole [gp ⟹[s] r] derivation, since that fails
@@ -923,7 +924,7 @@ Proof. intros gp gq q r s l w. eapply wt_tau; [eapply lts_choiceR; exact l | exa
 Lemma choice_wt_liftR_step_act : forall gp gq q r μ s, (g gq) ⟶[μ] q -> q ⟹[s] r -> (g (gp+gq)) ⟹[μ::s] r.
 Proof. intros gp gq q r μ s l w. eapply wt_act; [eapply lts_choiceR; exact l | exact w]. Qed.
 
-(** ** Precongruence for the input prefix
+(* ** Precongruence for the input prefix
 
     Unlike the guarded-choice case, the input's transition target
     [p^v]/[q^v] is *exactly* what the (necessarily [∀v]-quantified,
@@ -957,7 +958,7 @@ Proof.
       apply (Hpq v). eapply com; [exact Hdual | eapply lts_input | exact Ht'].
 Qed.
 
-(** ** Toolkit for parallel [‖] precongruence
+(* ** Toolkit for parallel [‖] precongruence
 
     The hardest operator (two-sided synchronisation), attempted last on
     purpose. Unlike guarded choice, taking a step in one component does
@@ -976,7 +977,7 @@ Qed.
     labelled-transition statement on bare (non-[g]-wrapped) [proc]
     arguments in this file. *)
 
-(** ** Output-merge equation (Hennessy's "c!v•P + c!v'•Q ≡ (c!v•P)⊕(c!v'•Q)")
+(* ** Output-merge equation (Hennessy's "c!v•P + c!v'•Q ≡ (c!v•P)⊕(c!v'•Q)")
 
     Unlike the other prefix-precongruences above, this is a genuine
     two-premise combinatorial argument, not a one-line unfolding. Key
@@ -1034,7 +1035,7 @@ Proof.
     exact Hq'.
 Qed.
 
-(** Whenever the choice of two same-channel outputs passes a test, *each*
+(* Whenever the choice of two same-channel outputs passes a test, *each*
     branch alone (as a bare output-guard process, no alternative) also
     passes it — this is the semantic content that lets the choice be
     replaced by an internal (τ-guarded) commitment to either branch.
@@ -1129,7 +1130,7 @@ Proof.
       inversion H6.
 Qed.
 
-(** ** Input-merge equation
+(* ** Input-merge equation
 
     Simpler than the output case: since [lts_input] is already
     [∀v]-quantified in the LTS itself, both branches of [c?P + c?Q] are
@@ -1213,7 +1214,7 @@ Proof.
       inversion H6.
 Qed.
 
-(** ** Reverse direction of the merge equations
+(* ** Reverse direction of the merge equations
 
     [must_i_int_choice_l]/[_r] already give, for free, that the internal-
     choice form's own [pt] field forces *both* branches to individually
@@ -1317,7 +1318,7 @@ Proof.
   - eapply must_i_int_choice_r. exact Hm.
 Qed.
 
-(** ** [‖]-precongruence — via the erasure bridge
+(* ** [‖]-precongruence — via the erasure bridge
 
     The original route to this went through the acceptance-set
     characterisation: [par_stable_iff], [par_ext_stable_iff],
@@ -1344,7 +1345,7 @@ Lemma must_i_par_compat2 : forall p p' q q',
   p ⊑ₘᵤₛₜᵢ p' -> q ⊑ₘᵤₛₜᵢ q' -> (p‖q) ⊑ₘᵤₛₜᵢ (p'‖q').
 Proof. exact must_i_par_compat2_erasure. Qed.
 
-(** ** Prefix distributes over guarded choice: [a.P + a.Q ≂ a.(P ⊕ Q)]
+(* ** Prefix distributes over guarded choice: [a.P + a.Q ≂ a.(P ⊕ Q)]
 
     The law that makes a guarded-sum normal form *canonical* — with a
     *unique* continuation per action — which is what
@@ -1464,7 +1465,7 @@ Proof.
   - apply (must_i_output_compat c v (g ((𝛕 • P) + (𝛕 • Q))) Q); [apply must_i_int_choice_r | exact Hm].
 Qed.
 
-(** ** Cross-value swapping: taking a guard from one branch and the
+(* ** Cross-value swapping: taking a guard from one branch and the
        residue from the other
 
     [must_i_share_out_*] pools two branches' continuations at a guard
@@ -1547,3 +1548,4 @@ Proof.
 Qed.
 
 End VCCS_Precongruence.
+(* end hide *)

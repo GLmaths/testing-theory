@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: the must on supports is the must of the two LTSs
+(* * lqCCS: the must on supports is the must of the two LTSs
 
     [must_supp] ([lqCCS_AlmostSure.v]) is the classical [must] of the
     repository ([Must.v]), for the process LTS [(P, ρ)] and the observer
@@ -49,7 +50,7 @@ Section Bridge.
     - intros Hn ->. apply Hn, tr_szero.
   Qed.
 
-  (** ** Branch steps of [(P, Q)] are the steps of the two LTSs *)
+  (* ** Branch steps of [(P, Q)] are the steps of the two LTSs *)
 
   Lemma ustep_inv P u P' : ustep P u P' →
     match u with
@@ -58,7 +59,7 @@ Section Bridge.
     end.
   Proof. intros ([s|t a] & <- & Hs); simpl; eauto. Qed.
 
-  (** *** From the steps of the LTSs to branch steps *)
+  (* *** From the steps of the LTSs to branch steps *)
 
   Lemma proc_tau_bstep P ρ Q x :
     nonzero ρ → (P, ρ) ⟶ x →
@@ -96,7 +97,7 @@ Section Bridge.
       eexists _, _. split; [done|]. split; [by eapply bs_measR|done].
   Qed.
 
-  (** *** From branch steps to the steps of the LTSs *)
+  (* *** From branch steps to the steps of the LTSs *)
 
   Lemma bstep_lts ρ P Q P' Q' ρ' :
     bstep ρ (P, Q) (P', Q') ρ' → nonzero ρ' →
@@ -125,7 +126,7 @@ Section Bridge.
       + apply tstep_ext; [done|]. by exists (LAct t' (AOut c v)).
   Qed.
 
-  (** A step of non-zero weight has a branch of non-zero weight. *)
+  (* A step of non-zero weight has a branch of non-zero weight. *)
   Lemma cstep_nonzero_branch ρ C s Δ :
     cstep ρ C s Δ → nonzero ρ → ∃ C' ρ', (C', ρ') ∈ Δ ∧ nonzero ρ'.
   Proof.
@@ -138,7 +139,7 @@ Section Bridge.
       destruct (IH Hn) as (C'' & ρ'' & Hin & Hnz). exists C'', ρ''. split; [set_solver|done].
   Qed.
 
-  (** ** The theorem *)
+  (* ** The theorem *)
 
   Theorem must_supp_must P ρ Q :
     must_supp (P, Q) ρ → nonzero ρ →
@@ -204,7 +205,7 @@ Section Bridge.
     intros Hn. split; intros Hm; [by apply must_supp_must|by apply must_must_supp].
   Qed.
 
-  (** ** The almost-sure must of lqCCS is a classical must
+  (* ** The almost-sure must of lqCCS is a classical must
 
       With [lq_must_as_iff] (and its hypotheses: excluded middle, strict
       positivity and density of the probabilities). *)
@@ -220,3 +221,4 @@ Section Bridge.
     by apply must_supp_iff_must.
   Qed.
 End Bridge.
+(* end hide *)

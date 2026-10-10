@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -37,8 +38,10 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Ch
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction 
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction.
 From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
+(* end hide *)
 
 (** * Soundness *)
+(* begin hide *)
 
 Inductive mustx `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
@@ -61,6 +64,7 @@ Inductive mustx `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Pre
 
 #[global] Hint Constructors mustx:mdb.
 Global Notation "X 'must_pass_x' t" := (mustx X t) (at level 70).
+(* end hide *)
 
 Section Must_for_sets.
 
@@ -72,6 +76,7 @@ Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}.
 
 (** ** Must predicate for Sets *)
+(* begin hide *)
 
 Lemma mx_sub X t :
   X must_pass_x t
@@ -528,6 +533,7 @@ Proof.
       intros p' (p0 & h%hm & hl)%xspec'. eapply must_set_iff_must.
       eapply must_preserved_by_wt_synch_if_notoutcome; eauto.
 Qed.
+(* end hide *)
 
 Lemma must_set_iff_must_for_all  (X : gset P) (t : T) :
   X ≠ ∅ -> (forall p, p ∈ X -> p must_pass t) <-> X must_pass_x t.
@@ -538,8 +544,10 @@ Proof.
 Qed.
 
 End Must_for_sets.
+(* begin hide *)
 
-(** ** Contextual preorder for sets *)
+(* ** Contextual preorder for sets *)
+(* end hide *)
 
 Section Must_preorder_for_sets.
 Context `{EA : !ExtAction A}.
@@ -550,6 +558,7 @@ Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{HinterP : !Prop_of_Inter P T A A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
+(* begin hide *)
 
 Definition ctx_pre__x
   (X : gset P) (Y : gset Q) 
@@ -635,6 +644,7 @@ Proof.
     intros. eapply must_if_must_set_helper in h_must.
     set_solver. set_solver.
 Qed.
+(* end hide *)
 
 (** ** Equivalence between the must preorder and the must preorder on sets *)
 Lemma must_set_singleton_iff (p : P) (q : Q) :
@@ -652,6 +662,7 @@ Proof.
 Qed.
 
 End Must_preorder_for_sets.
+(* begin hide *)
 
 #[global] Hint Unfold ctx_pre__x : mdb.
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
@@ -754,8 +765,10 @@ Proof.
                    eapply H4 in H8. eauto. }
                  eapply IHX'. eauto. set_solver.
 Qed.
+(* end hide *)
 
 (** ** Condition on convergence *)
+(* begin hide *)
 
 Definition bhv_pre_cond1__x `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
@@ -763,8 +776,10 @@ Definition bhv_pre_cond1__x `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   forall s, (forall p, p ∈ X -> p ⇓ s) -> (forall q, q ∈ Y -> q ⇓ s).
 
 Global Notation "X ₁≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
+(* end hide *)
 
 (** ** Condition on acceptance sets *)
+(* begin hide *)
 
 Definition bhv_pre_cond2__x
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
@@ -779,6 +794,7 @@ Definition bhv_pre_cond2__x
     exists p, p ∈ X /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
 
 Global Notation "X ₂≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
+(* end hide *)
 
 
 (** ** Alternative preorder on sets *)
@@ -791,6 +807,7 @@ Definition bhv_pre__x
   `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
     (X : gset P) (Y : gset Q) :=
       (X ₁≼ₛₑₜ_ₐₛ Y /\ X ₂≼ₛₑₜ_ₐₛ Y).
+(* begin hide *)
 
 Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
 
@@ -831,6 +848,7 @@ Proof.
   + exact bhv_pre__x_refl.
   + exact bhv_pre__x_transitive.
 Qed.
+(* end hide *)
 
 
 Section Acceptance_Set_preorder_for_sets.
@@ -843,6 +861,7 @@ Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}.
 
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}.
+(* begin hide *)
 
 Lemma alt_set_union_right
   (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y' ->  X ≼ₛₑₜ_ₐₛ (Y ∪ Y').
@@ -968,6 +987,7 @@ Proof.
   intros q' mem'. eapply wk_tr_inv in mem' as (p' & hyp1 & hyp2).
   eauto. eauto. (* intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
 Qed.
+(* end hide *)
 
 Lemma alt_set_singleton_iff
   (p : P) (q : Q) : ({[ p ]} : gset P) ≼ₛₑₜ_ₐₛ ({[ q ]} : gset Q) <->  p ≼ₐₛ q.
@@ -983,6 +1003,7 @@ Proof.
       assert (q' = q) by set_solver. subst. intros.
       exists p. edestruct h2 ; set_solver.
 Qed.
+(* begin hide *)
 
 Lemma bhvx_preserved_by_reductions
   (X : gset P) (Y Y' : gset Q) : wt_set_from_pset_spec1 Y [] Y' (* -> Y' ≠ ∅ *) -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
@@ -1137,6 +1158,7 @@ Proof.
   intros. eapply reverse_trace_inclusion_lts ;eauto.
   eapply lts_to_wt; eauto.
 Qed.
+(* end hide *)
 
 End Acceptance_Set_preorder_for_sets.
 
@@ -1196,6 +1218,7 @@ Context `{!Prop_of_Inter Q T A A dual}.
 
 Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
 Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+(* begin hide *)
 
 Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
   ¬ outcome t
@@ -1232,6 +1255,7 @@ Proof.
     apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q', t''').
     eapply (ParSync (μ'1)); eauto.
 Qed.
+(* end hide *)
 
 Lemma stability_nbhvleqtwo
   (X : gset P) (Y : gset Q) t :
@@ -1304,6 +1328,7 @@ Proof.
 Qed.
 
 End SoundnessAS.
+(* begin hide *)
 
 Lemma soundness_co_nb_enabled `{
   gLtsP : @gLtsEq P A H, !FiniteImagegLts P A,
@@ -1346,7 +1371,7 @@ Proof.
   destruct (boomerang p1 η β) as (t & l1 & l2) ; eauto. symmetry;eauto.
 Qed.
 
-(** ** Soundness for LTSs that can be lifted to forwarders *)
+(* ** Soundness for LTSs that can be lifted to forwarders *)
 Lemma soundness 
   `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
   `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
@@ -1373,3 +1398,4 @@ Proof.
   eapply Lift.must_iff_must_fw.
   now eapply (soundness_fw (p ▷ ∅) (q ▷ ∅)).
 Qed.
+(* end hide *)

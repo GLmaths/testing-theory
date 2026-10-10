@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -68,7 +69,7 @@ Section PAL_Rcv.
   Notation PALA_Act := (PALA_Act Val).
   Notation step := (lts_step_a Val).
 
-  (** ** Labels *)
+  (* ** Labels *)
 
   Inductive PALR_Act := RIn (l : label) | ROut (l : label).
 
@@ -84,7 +85,7 @@ Section PAL_Rcv.
     by intros [].
   Defined.
 
-  (** An input meets the output with the same label. *)
+  (* An input meets the output with the same label. *)
   Definition PALR_dual (μ η : PALR_Act) : Prop :=
     match μ, η with
     | RIn l, ROut l' | ROut l, RIn l' => l = l'
@@ -120,7 +121,7 @@ Section PAL_Rcv.
     exists_dual := PALR_exists_dual;
   |}.
 
-  (** ** The LTS, by relabelling *)
+  (* ** The LTS, by relabelling *)
 
   Definition to_a (α : Act PALR_Act) : Act PALA_Act :=
     match α with
@@ -149,7 +150,7 @@ Section PAL_Rcv.
     @MkgLts term PALR_Act PALR_ExtAction lts_step_r term_eqdec PALR_step_dec
       PALR_performs PALR_performs_dec PALR_performs_spec1 PALR_performs_spec2.
 
-  (** The structural congruence of the alternative LTS is a bisimulation here too. *)
+  (* The structural congruence of the alternative LTS is a bisimulation here too. *)
   Lemma PALR_cgr_spec p q (α : Act PALR_Act) :
     (∃ r, cgr Val p r ∧ lts_step_r r α q) → (∃ r, lts_step_r p α r ∧ cgr Val r q).
   Proof. apply (PALA_cgr_spec Val p q (to_a α)). Qed.
@@ -161,7 +162,7 @@ Section PAL_Rcv.
     eq_spec := PALR_cgr_spec;
   |}.
 
-  (** ** Same τ, same synchronisations *)
+  (* ** Same τ, same synchronisations *)
 
   Lemma PALR_tau_iff p q : lts_step_r p τ q ↔ step p τ q.
   Proof. done. Qed.
@@ -179,9 +180,9 @@ Section PAL_Rcv.
       + exists (ROut l2), (RIn l2). by split_and!.
   Qed.
 
-  (** ** The abstraction *)
+  (* ** The abstraction *)
 
-  (** A reception, seen through its template; an emission, through the label
+  (* A reception, seen through its template; an emission, through the label
       of its receiver. *)
   Inductive PreR := PRecv (tp : template) | PEmit (l : label).
 
@@ -207,7 +208,7 @@ Section PAL_Rcv.
 
   #[local] Hint Mode ExtAction ! : typeclass_instances.
 
-  (** What [coR] is made of. *)
+  (* What [coR] is made of. *)
   Lemma coR_PALR_iff (p : term) (η : PALR_Act) :
     η ∈ (coR p : subset_of PALR_Act) ↔
       match η with
@@ -242,7 +243,7 @@ Section PAL_Rcv.
     - destruct hx as (q & hq). by eapply in_retarget.
   Qed.
 
-  (** ** Finiteness *)
+  (* ** Finiteness *)
 
   Context `{!Inhabited Val}.
 
@@ -284,14 +285,14 @@ Section PAL_Rcv.
   Next Obligation. intros x p hx. by apply coR_abs_PALR_spec. Qed.
 End PAL_Rcv.
 
-(** ** Against PAL itself *)
+(* ** Against PAL itself *)
 
-(** The τ of [PAL_Rcv] are those of PAL. *)
+(* The τ of [PAL_Rcv] are those of PAL. *)
 Lemma PALR_tau_iff_PAL {Val : Type} `{Countable Val} (p q : term Val) :
   lts_step_r Val p τ q ↔ Applicative_process_algebra.pal_step Val p τ q.
 Proof. apply (tau_iff Val). Qed.
 
-(** A process and a test communicate along [dual] exactly when they
+(* A process and a test communicate along [dual] exactly when they
     synchronise in PAL. *)
 Lemma PALR_sync_iff_PAL {Val : Type} `{Countable Val} (p t p' t' : term Val) :
   (∃ μ1 μ2 : PALR_Act Val, PALR_dual Val μ1 μ2
@@ -299,7 +300,7 @@ Lemma PALR_sync_iff_PAL {Val : Type} `{Countable Val} (p t p' t' : term Val) :
     ↔ PAL_sync p t p' t'.
 Proof. rewrite PALR_sync_iff. apply PALA_sync_iff. Qed.
 
-(** ** The price: no test generator satisfies [test_spec]
+(* ** The price: no test generator satisfies [test_spec]
 
     [FinitaryPALR] meets the abstraction side, so by [no_labelling_sync] the
     test side must fail: an emission now carries several labels towards the
@@ -316,3 +317,4 @@ Proof.
   - intros η [].
   - exact PALR_sync_iff_PAL.
 Qed.
+(* end hide *)

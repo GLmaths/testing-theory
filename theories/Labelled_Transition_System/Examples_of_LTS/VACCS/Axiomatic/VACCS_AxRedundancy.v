@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Redundant rules of the VACCS system
+(* * Redundant rules of the VACCS system
 
     The system of [VACCS_DefinitionAxiomatic.v] has **nine** rules:
 
@@ -55,3 +56,4 @@
     rule whose conclusion is a parallel composition built from a guarded
     sum, which none of the others can produce; [ax_same_lts] and
     [ax_glb_settle] are the only rules with semantic (LTS-level) premises. *)
+(* end hide *)

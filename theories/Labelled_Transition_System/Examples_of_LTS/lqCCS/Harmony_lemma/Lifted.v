@@ -1,4 +1,5 @@
-(** * Tag schedulers are adequate for the lifted semantics of
+(* begin hide *)
+(* * Tag schedulers are adequate for the lifted semantics of
       nondeterministic quantum programs [Feng–Xu, ASPLOS'23].
 
     Everything is stated over an abstract ω-cpo of super-operators [Alg],
@@ -7,13 +8,13 @@
 From Stdlib Require Import List Arith Lia ChoiceFacts.
 Import ListNotations.
 
-(** ** Abstract domain of super-operators *)
+(* ** Abstract domain of super-operators *)
 
 Class Ord := { T : Type; le : T -> T -> Prop }.
 Infix "⊑" := le (at level 70).
 Definition chain `{Ord} (f : nat -> T) := forall n, f n ⊑ f (S n).
 
-(** A measurement [m] has (at most countably many) outcomes [Out m], coded
+(* A measurement [m] has (at most countably many) outcomes [Out m], coded
     injectively into [nat].  [comp a b] is [a ∘ b]; [br m f] is
     [Σ_k f k ∘ ℳ_k]. *)
 Class Alg `{Ord} := {
@@ -72,7 +73,7 @@ Qed.
 Lemma br_ext m f g : (forall k, f k = g k) -> br m f = br m g.
 Proof. intro E. apply le_antisym; apply br_mono; intro k; rewrite E; auto. Qed.
 
-(** ** Syntax
+(* ** Syntax
 
     [Ndet l p q] is [p □ q] with static label [l].  [Bind m f] measures [m]
     and continues with [f k] on outcome [k].  [While k m c p] carries its
@@ -94,7 +95,7 @@ Definition sched := tag -> bool.
 Lemma done_dec p : p = Done \/ p <> Done.
 Proof. destruct p; [left | right ..]; congruence. Qed.
 
-(** ** LTS
+(* ** LTS
 
     [step p] describes the outgoing transitions of [p ≠ Done]: a single
     transition with Kraus operation [K], a measurement [m] (outcome [k] goes
@@ -131,7 +132,7 @@ Lemma step_ctx a p : p <> Done ->
   step (Ctx a p) = tmap (Ctx a) (fun t => (fst t, a :: snd t)) (step p).
 Proof. destruct p; reflexivity || congruence. Qed.
 
-(** [Op σ n p]: sum of the Kraus compositions of the σ-compatible terminal
+(* [Op σ n p]: sum of the Kraus compositions of the σ-compatible terminal
     paths of length ≤ n from [p] (with multiplicity). *)
 Fixpoint Op (σ : sched) n p {struct n} :=
   match p, n with
@@ -185,7 +186,7 @@ Proof.
   unfold E. rewrite <- (sup_const one). apply sup_ext; auto. intro. apply Op_Done.
 Qed.
 
-(** One-step unfolding of the path sum. *)
+(* One-step unfolding of the path sum. *)
 Lemma E_step σ p : p <> Done -> E σ p =
   match step p with
   | Leaf K x => E σ x ⋅ K
@@ -201,7 +202,7 @@ Proof.
   - reflexivity.
 Qed.
 
-(** ** Sequence *)
+(* ** Sequence *)
 
 Lemma Op_seq1 σ n p q : Op σ n (Seq p q) ⊑ Op σ n q ⋅ Op σ n p.
 Proof.
@@ -244,7 +245,7 @@ Proof.
     eapply le_trans; [apply Op_seq2 | auto].
 Qed.
 
-(** ** Contexts *)
+(* ** Contexts *)
 
 Definition shift a (σ : sched) : sched := fun t => σ (fst t, a :: snd t).
 
@@ -275,7 +276,7 @@ Proof.
   - exists (S n). apply Op_ctx2.
 Qed.
 
-(** ** Locality: only tags whose label occurs in [p] matter *)
+(* ** Locality: only tags whose label occurs in [p] matter *)
 
 Fixpoint lab p : nat -> Prop :=
   match p with
@@ -319,7 +320,7 @@ Lemma E_local σ σ' p :
   (forall l w, lab p l -> σ (l, w) = σ' (l, w)) -> E σ p = E σ' p.
 Proof. intro. apply sup_ext; auto. intro. apply Op_local; auto. Qed.
 
-(** ** Loops
+(* ** Loops
 
     [F m c η n] is [Σ_{i ≤ n} P_exit ∘ η_{i-1} ∘ P_cont ∘ ⋯ ∘ η_0 ∘ P_cont] of
     [FX, Fig. 2], written in Horner form. *)
@@ -378,7 +379,7 @@ Proof.
     rewrite Fs, <- Hη0. apply comp_mono; auto.
 Qed.
 
-(** ** Lifted denotational semantics [FX, Fig. 2] (annotations erased) *)
+(* ** Lifted denotational semantics [FX, Fig. 2] (annotations erased) *)
 
 Fixpoint Sem p : T -> Prop :=
   match p with
@@ -392,7 +393,7 @@ Fixpoint Sem p : T -> Prop :=
   | Ctx _ p => Sem p
   end.
 
-(** ⊇ : every tag scheduler yields an element of the lifted semantics. *)
+(* ⊇ : every tag scheduler yields an element of the lifted semantics. *)
 Theorem sound σ p : Sem p (E σ p).
 Proof.
   induction p in σ |- *; cbn [Sem];
@@ -406,7 +407,7 @@ Proof.
   - rewrite E_ctx. auto.
 Qed.
 
-(** Well-labelled programs: the labels of the two sides of [;] are separated
+(* Well-labelled programs: the labels of the two sides of [;] are separated
     by a boolean predicate, and a choice label does not occur below it.
     Branches of a measurement, and iterations of a loop, may share labels. *)
 Fixpoint wl p : Prop :=
@@ -419,7 +420,7 @@ Fixpoint wl p : Prop :=
   | _ => True
   end.
 
-(** ⊆ : every element of the lifted semantics is realised by a tag
+(* ⊆ : every element of the lifted semantics is realised by a tag
     scheduler.  Needs well-labelling and countable choice (for loops and
     measurements). *)
 Theorem complete (CC : FunctionalCountableChoice_on sched) p x :
@@ -466,7 +467,7 @@ Proof.
     exists (fun t => σ (fst t, tl (snd t))). rewrite E_ctx. apply E_local. auto.
 Qed.
 
-(** Theorem 1 (strong form): for well-labelled [p],
+(* Theorem 1 (strong form): for well-labelled [p],
     ⟦p⟧ = { Σ_{α ⊨ σ} ℰ_α : σ tag scheduler }. *)
 Theorem adequacy (CC : FunctionalCountableChoice_on sched) p :
   wl p -> forall x, Sem p x <-> exists σ, x = E σ p.
@@ -475,3 +476,4 @@ Proof.
 Qed.
 
 End Lifted.
+(* end hide *)

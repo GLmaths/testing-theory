@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -26,11 +27,13 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS InteractionBetweenLts StateTransitionSystems.
+(* end hide *)
 
 (** ** Parallel composition of two LTSs *)
 
 #[global] Program Instance parallel_gLts {P1 P2}
  {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1} : gLts (P1 * P2) H := inter_lts dual.
+(* begin hide *)
 
 Definition reverse_dual `{H : !ExtAction A} μ1 μ2 := dual μ2 μ1.
 
@@ -70,7 +73,7 @@ Defined.
  #[global] Program Instance parallel_gLts_inv {P1 P2}
  {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1} : gLts (P2 * P1) H := inter_lts reverse_dual.
 
-(** ** The computations of [p ∥ t], as a state transition system
+(* ** The computations of [p ∥ t], as a state transition system
 
     The [Sts] that [must] runs on, in the one-alphabet development.  It is
     found (hint below) before the generic [sts_of_lts], so that
@@ -94,8 +97,9 @@ Definition parallel_sts {P1 P2} {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H
 #[global] Hint Extern 1 (Sts (?P1 * ?P2)) =>
   let PI := constr:(_ : Prop_of_Inter P1 P2 _ _ dual) in
   exact (@parallel_sts P1 P2 _ _ _ _ PI) : typeclass_instances.
-(** [parallel_sts] is [sts_of_lts parallel_gLts] up to computation, so it is
+(* [parallel_sts] is [sts_of_lts parallel_gLts] up to computation, so it is
     countable when the parallel LTS is. *)
 #[global] Instance parallel_csts {P1 P2} {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1}
   (M : CountablegLts (P1 * P2) A) : CountableSts (P1 * P2) | 1 :=
   csts_of_clts M.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Synchronising two alphabets
+(* * Synchronising two alphabets
 
     A relation [sync : Aproc → Atest → Prop] saying which action of a process
     matches which action of an observer.  This file has the conditions the
@@ -31,7 +32,7 @@ From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts.
 
-(** ** The synchronisation itself
+(* ** The synchronisation itself
 
     [sync] is a *field*, not a parameter: it is to the pair [(Aproc, Atest)]
     what [dual] is to [A] in [ExtAction].  That is what makes [p ⊆ₘᵤₛₜᵢ q]
@@ -73,3 +74,4 @@ Definition SyncAction_of_dual `{H : ExtAction A} : SyncAction A A :=
    one-alphabet development can keep using [symmetry]. *)
 #[global] Instance sync_of_dual_sym `{H : ExtAction A} :
   Symmetric (@sync A A H H SyncAction_of_dual) := duo_sym.
+(* end hide *)

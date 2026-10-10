@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -22,9 +23,9 @@
 
 From Stdlib.Lists Require Import List.
 From stdpp Require Import decidable.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderConstruction May LiftMay DefinitionTIco.
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderConstruction May LiftMay DefinitionTIco.
 
-(** * Soundness of the co-trace-inclusion preorder for May
+(* * Soundness of the co-trace-inclusion preorder for May
 
     Mirrors [SoundnessTI.v], mechanically replacing [≼ₜᵢ]/[may_to_wt]/
     [wt_to_may] by [≼꜀ₒ₋ₜᵢ]/[may_to_wt_co]/[wt_to_may_co] — the same
@@ -33,7 +34,7 @@ From TestingTheory Require Import gLts Bisimulation Lts_OBA_FB Lts_FW Testing_Pr
     it just replays the very same client computation [wC] under [q],
     so it never needed [unique_nb] to begin with. *)
 
-(** ** Soundness, for arbitrary LTSs *)
+(* ** Soundness, for arbitrary LTSs *)
 
 Section Soundness_ti_co.
 
@@ -57,7 +58,7 @@ Qed.
 
 End Soundness_ti_co.
 
-(** ** Soundness, for forwarders
+(* ** Soundness, for forwarders
 
     The statement asked for: [p] and [q] live in forwarder LTSs ([gLtsObaFW]).
     The forwarder axioms are not needed for soundness — they are what completeness
@@ -76,7 +77,7 @@ Theorem soundness_ti_co_fw `{
   p ≼꜀ₒ₋ₜᵢ q -> p ⊑ₘₐᵧ q.
 Proof. eapply soundness_ti_co. Qed.
 
-(** ** Soundness, for feedback LTSs, through the forwarder construction
+(* ** Soundness, for feedback LTSs, through the forwarder construction
 
     An LTS satisfying only the feedback axioms ([gLtsObaFB]) is not a forwarder,
     so [soundness_ti_co_fw] does not apply to it directly. But it can be turned
@@ -111,3 +112,4 @@ Proof.
   (* [(p, ∅)] and [(q, ∅)] live in forwarder LTSs: apply the general soundness *)
   eapply soundness_ti_co. exact hti.
 Qed.
+(* end hide *)

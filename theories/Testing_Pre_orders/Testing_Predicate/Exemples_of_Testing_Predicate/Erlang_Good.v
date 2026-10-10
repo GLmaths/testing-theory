@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Core Erlang: the testing predicate
+(* * Core Erlang: the testing predicate
 
     Core Erlang has no success operator, so one is added: the inert expression
     [✓ₑ] ([ETick]).  A system reports success when one of its processes /is/
@@ -65,7 +66,7 @@ Qed.
 #[global] Instance good_Erl_dec S : Decision (good_Erl S).
 Proof. unfold good_Erl. apply _. Defined.
 
-(** A message in transit is not a success, so releasing one changes nothing. *)
+(* A message in transit is not a success, so releasing one changes nothing. *)
 #[global] Instance Erl_Good : Testing_Predicate good_Erl Erl_gLtsEq.
 Proof.
   split.
@@ -83,3 +84,4 @@ Proof.
 Defined.
 
 End Erlang_Good.
+(* end hide *)

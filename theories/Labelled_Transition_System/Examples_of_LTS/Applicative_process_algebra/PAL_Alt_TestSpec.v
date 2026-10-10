@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -56,14 +57,14 @@ Section PAL_Alt_TestSpec.
   Notation lf_tfield := (lf_tfield Val).
   Notation lf_ofield := (lf_ofield Val).
 
-  (** Infer the action type of [⟶], [⟶[μ]], ... from the LTS on terms. *)
+  (* Infer the action type of [⟶], [⟶[μ]], ... from the LTS on terms. *)
   #[local] Hint Mode ExtAction ! : typeclass_instances.
   Open Scope pal_scope.
 
 
-  (** ** Guards *)
+  (* ** Guards *)
 
-  (** The variables of [guard_l k] are at least [k]. *)
+  (* The variables of [guard_l k] are at least [k]. *)
   Lemma subst_guard_skip (σ : vsubst Val) j v k l :
     j < k → subst_bexp ((j, v) :: σ) (guard_l k l) = subst_bexp σ (guard_l k l).
   Proof.
@@ -72,7 +73,7 @@ Section PAL_Alt_TestSpec.
     rewrite decide_False by lia. f_equal. apply IH. lia.
   Qed.
 
-  (** After receiving [ltuple l'], the guard of [l] says whether [l'] is [l]. *)
+  (* After receiving [ltuple l'], the guard of [l] says whether [l'] is [l]. *)
   Lemma eval_guard k l l' :
     ltemplate l' = ltemplate l →
     eval_bexp (subst_bexp (build_subst (it_from k (ltemplate l)) (ltuple l')) (guard_l k l))
@@ -90,7 +91,7 @@ Section PAL_Alt_TestSpec.
       + rewrite IH by done. f_equal. repeat case_bool_decide; simpl; congruence.
   Qed.
 
-  (** ** Closed terms *)
+  (* ** Closed terms *)
 
   Definition closed (E : term) := ∀ σ : vsubst Val, subst_term σ E = E.
 
@@ -154,12 +155,12 @@ Section PAL_Alt_TestSpec.
     rewrite IH. f_equal. apply ac_t_closed.
   Qed.
 
-  (** ** Steps of the tests *)
+  (* ** Steps of the tests *)
 
   Lemma par_nil_l_cgr (E : term) : (𝟘 ‖ E) ⋍ E.
   Proof. etransitivity; [apply cgr_once, cgr_par_com | apply cgr_once, cgr_par_nil]. Qed.
 
-  (** Steps of an input on the pattern of a template. *)
+  (* Steps of an input on the pattern of a template. *)
   Lemma in_pattern_step_inv tp E μ q :
     (in( pattern_from 0 tp ) • E) ⟶[μ] q →
     ∃ l, μ = AIn Val l ∧ ltemplate l = tp ∧ q = subst_term (build_subst (it_from 0 tp) (ltuple l)) E.
@@ -171,7 +172,7 @@ Section PAL_Alt_TestSpec.
     eexists. split_and!; [done | by symmetry | done].
   Qed.
 
-  (** Steps of the output of a test. *)
+  (* Steps of the output of a test. *)
   Lemma out_lmerge_step_inv ot F μ q :
     ((out( eot_to_tuple ot ) • 𝟘) ⌊ F) ⟶[μ] q → μ = AOut Val ot ∧ q = (𝟘 ‖ F).
   Proof.
@@ -230,7 +231,7 @@ Section PAL_Alt_TestSpec.
     - apply good_echoice_r. by eapply isucc_tau_good.
   Qed.
 
-  (** ** The tests of one event *)
+  (* ** The tests of one event *)
 
   Lemma ac_t_ext_inv e μ q : ac_t e ⟶[μ] q → Φᴀᴘᴀʟ Val μ = e ∧ good q.
   Proof.
@@ -291,7 +292,7 @@ Section PAL_Alt_TestSpec.
     destruct (lts_performs_spec1 p α h) as [q hq]. by destruct (hn q).
   Qed.
 
-  (** ** Instances *)
+  (* ** Instances *)
 
   Lemma gen_test_spec p : closed p → ¬ good p → test_spec (λ s, gen_test s p).
   Proof.
@@ -331,3 +332,4 @@ Section PAL_Alt_TestSpec.
     - intros β e' E _ h. by apply sum_list_ext_inv in h as [_ ?].
   Qed.
 End PAL_Alt_TestSpec.
+(* end hide *)

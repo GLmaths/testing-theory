@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -33,7 +34,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable list decidable finite gmap.
 
 From TestingTheory Require Import ActTau.
-(** ** Example: Input/Output actions over a set of channels *)
+(* ** Example: Input/Output actions over a set of channels *)
 
 Inductive ExtAct (A: Type) :=
 | ActIn (a : A)
@@ -60,7 +61,7 @@ Definition act_match {A} (l1 l2: Act (ExtAct A)) :=
   | _, _ => False
   end.
 
-Definition co {A} (l: ExtAct A) :=
+Definition io_co {A} (l: ExtAct A) :=
   match l with
   | ActIn x => ActOut x
   | ActOut x => ActIn x
@@ -68,10 +69,10 @@ Definition co {A} (l: ExtAct A) :=
 
 (* fixme: Involution does not hold anymore in the context of pi-calculus. *)
 
-Lemma co_involution {A} (l: ExtAct A) : co (co l) = l.
+Lemma co_involution {A} (l: ExtAct A) : io_co (io_co l) = l.
 Proof. destruct l; eauto. Qed.
 
-Lemma dual_co {A} (μ : ExtAct A)  : ext_act_match (co μ) μ.
+Lemma dual_co {A} (μ : ExtAct A)  : ext_act_match (io_co μ) μ.
 Proof.
   destruct μ; simpl; eauto. 
 Qed.
@@ -155,3 +156,4 @@ Qed.
 
 
 
+(* end hide *)

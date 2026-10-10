@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * What a forwarder state [p ▷ m] can actually do
+(* * What a forwarder state [p ▷ m] can actually do
 
     [VACCS_Must_Characterization.v] states every alternative
     characterisation of [⊑ₘᵤₛₜᵢ] at the forwarder, and
@@ -72,7 +73,7 @@ Section VACCS_Forwarder.
 
 Context `{VP : VACCS_Parameters}.
 
-(** ** The internal steps *)
+(* ** The internal steps *)
 
 Lemma fw_tau_shape : forall (p : proc) (m : MO (ExtAct TypeOfActions))
                             (x : proc * MO (ExtAct TypeOfActions)),
@@ -97,7 +98,7 @@ Lemma fw_tau_left : forall (p p' : proc) (m : MO (ExtAct TypeOfActions)),
   lts p τ p' -> (p ▷ m) ⟶ (p' ▷ m).
 Proof. intros p p' m H. eapply ParLeft. exact H. Qed.
 
-(** Delivery: the buffer emits a stored message and the process receives it. *)
+(* Delivery: the buffer emits a stored message and the process receives it. *)
 Lemma fw_tau_deliver : forall (p p' : proc) a (m : MO (ExtAct TypeOfActions)),
   lts p (ActExt (ActIn a)) p' -> (p ▷ ({[+ ActOut a +]} ⊎ m)) ⟶ (p' ▷ m).
 Proof.
@@ -107,7 +108,7 @@ Proof.
   - apply lts_multiset_minus. simpl. eexists; reflexivity.
 Qed.
 
-(** A forwarder state is stable iff the process is stable *and* refuses
+(* A forwarder state is stable iff the process is stable *and* refuses
     every message the buffer holds. *)
 Lemma fw_stable_iff : forall (p : proc) (m : MO (ExtAct TypeOfActions)),
   (forall x, ~ ((p ▷ m) ⟶ x))
@@ -127,7 +128,7 @@ Proof.
     + eapply H2; [ | exact Hp' ]. rewrite Hm. multiset_solver.
 Qed.
 
-(** ** The visible steps *)
+(* ** The visible steps *)
 
 Lemma fw_ext_shape : forall (p : proc) (m : MO (ExtAct TypeOfActions)) μ x,
   (p ▷ m) ⟶[μ] x ->
@@ -147,7 +148,7 @@ Proof.
       * exists a, b2. split; [ reflexivity | split; reflexivity ].
 Qed.
 
-(** **The** asynchrony fact: a forwarder state performs *any* input at any
+(* **The** asynchrony fact: a forwarder state performs *any* input at any
     time, storing the corresponding message.  Nothing about [p] is
     consulted. *)
 Lemma fw_input_always : forall (p : proc) (m : MO (ExtAct TypeOfActions)) a,
@@ -170,7 +171,7 @@ Lemma fw_ext_left : forall (p p' : proc) (m : MO (ExtAct TypeOfActions)) μ,
   lts p (ActExt μ) p' -> (p ▷ m) ⟶[μ] (p' ▷ m).
 Proof. intros p p' m μ H. eapply ParLeft. exact H. Qed.
 
-(** ** Weak transitions: feeding the buffer
+(* ** Weak transitions: feeding the buffer
 
     [fw_input_always] iterated.  A trace may *inject* messages into the
     buffer before anything else happens, and that is how a process's input
@@ -217,7 +218,7 @@ Proof.
     exact H.
 Qed.
 
-(** ** The buffer only ever holds what the trace put in
+(* ** The buffer only ever holds what the trace put in
 
     First half of the decomposition of a forwarder run.  Messages enter the
     buffer *only* through [lts_multiset_add], which fires on an input of
@@ -250,7 +251,7 @@ Proof.
     + destruct HC as (a & m' & Hmu & Hm & E). inversion E; subst. simpl in *. multiset_solver.
 Qed.
 
-(** Consequence: **on an output-only trace the buffer never fills**, so on
+(* Consequence: **on an output-only trace the buffer never fills**, so on
     that fragment the forwarder is exactly the bare process.  All the extra
     discriminating power of [p ▷ ∅] over [p] comes from traces that carry
     inputs — which is the same statement as [VACCS_ReadySet.v]'s (a bare
@@ -264,7 +265,7 @@ Proof.
   simpl in Hb. rewrite Hs in Hb. simpl in Hb. multiset_solver.
 Qed.
 
-(** ** The conservation law: recovering the process's own trace
+(* ** The conservation law: recovering the process's own trace
 
     Second half of the decomposition.  Every forwarder run projects onto a
     run of the *process*, and the two traces are related by a single
@@ -298,7 +299,7 @@ match s with
 | ActOut a :: s' => a :: outs s'
 end.
 
-(** ** La forme SHARPE : le processus ne consomme que ce que le sac tenait
+(* ** La forme SHARPE : le processus ne consomme que ce que le sac tenait
 
     L'équation de bilan laisse volontairement du jeu — elle ne dit pas
     *d'où* viennent les entrées du processus.  Or un message n'entre dans
@@ -365,7 +366,7 @@ Proof.
   exists r. split; assumption.
 Qed.
 
-(** La lecture du conjoint supplémentaire, et **pourquoi il doit être un
+(* La lecture du conjoint supplémentaire, et **pourquoi il doit être un
     conjoint** : sur une trace sans entrée il dit que *tout ce que le
     processus consomme venait du sac initial*, ce qui est exactement ce
     qui restreint aux canaux **du sac** le critère de non-régénération —
@@ -381,7 +382,7 @@ Qed.
     [r] différents.  C'est la raison pour laquelle le renforcement est un
     conjoint de [fw_conservation_bounded] et non un lemme à part. *)
 
-(** ** A STABLE state with a mute process just drains its buffer
+(* ** A STABLE state with a mute process just drains its buffer
 
     The conservation law leaves slack on purpose.  When the state is
     *stable* and its process can never emit — which is exactly a guarded
@@ -422,7 +423,7 @@ Proof.
       split; [ exact Hy1 | ]. simpl. multiset_solver.
 Qed.
 
-(** Moving between the two ways of saying "no internal step". *)
+(* Moving between the two ways of saying "no internal step". *)
 
 Lemma stable_of_no_step : forall (x : proc * MO (ExtAct TypeOfActions)),
   (forall z, ~ (x ⟶ z)) -> x ↛.
@@ -454,7 +455,7 @@ Proof. induction l as [|a l IH]; simpl; [ reflexivity | exact IH ]. Qed.
 Lemma outs_map_out : forall (l : list TypeOfActions), outs (map ActOut l) = l.
 Proof. induction l as [|a l IH]; simpl; [ reflexivity | rewrite IH; reflexivity ]. Qed.
 
-(** A state that offers no output at all has an empty buffer — provided
+(* A state that offers no output at all has an empty buffer — provided
     the buffer really holds messages, which is what [VACCS_Cond2.OutOnly]
     records for every buffer reachable from [∅]. *)
 
@@ -470,7 +471,7 @@ Proof.
   eapply (H a). rewrite Hm at 1. apply fw_emit.
 Qed.
 
-(** ** Projecting a drain run onto a smaller buffer
+(* ** Projecting a drain run onto a smaller buffer
 
     [fw_out_run_drain] says that a *stable* state whose process is mute
     only ever emits from its buffer.  What follows is the statement one
@@ -486,7 +487,7 @@ Qed.
     gratuitement ([MuteOn_no_out]).  Dans [VACCS_Matching.v] elle est
     déchargée par [MuteOn_of_ochans]. *)
 
-(** A run whose trace carries no input, from a buffer that is exactly what
+(* A run whose trace carries no input, from a buffer that is exactly what
     the trace emits plus a surplus [m], is a [τ]-run from [m] alone — and
     it reaches the **same** state, buffer included.
 
@@ -499,7 +500,7 @@ Qed.
     what makes the projection shorter than the run it projects. *)
 
 
-(** ** The forwarder's offers
+(* ** The forwarder's offers
 
     Completing the ready-set story of [VACCS_ReadySet.v] at the forwarder
     level.  [coR] holds inputs only, and an input is in it exactly when the
@@ -530,7 +531,7 @@ Lemma fw_inputs_always_iff : forall (p : proc) (m : MO (ExtAct TypeOfActions)) a
   exists y, (p ▷ m) ⟶[ActIn a] y.
 Proof. intros p m a. eexists. apply fw_input_always. Qed.
 
-(** ** On input-free traces the forwarder is transparent
+(* ** On input-free traces the forwarder is transparent
 
     Started from an empty buffer, a run whose trace carries no input can
     neither fill the buffer (only [lts_multiset_add] does, and it needs an
@@ -614,7 +615,7 @@ Proof.
   - intro H. left. exact H.
 Qed.
 
-(** * Three notions the acceptance-set arguments are phrased with
+(* * Three notions the acceptance-set arguments are phrased with
 
     They live here rather than with their lemmas so that the axiom system
     can mention them: [VACCS_Cond2.v] imports [VACCS_ReadySet.v], which
@@ -638,7 +639,7 @@ Definition OutOnly (m : MO (ExtAct TypeOfActions)) : Prop :=
   forall x, x ∈ m -> exists a, x = ActOut a.
 
 
-(** ** The bag is a multiset: permutation, emptiness, membership
+(* ** The bag is a multiset: permutation, emptiness, membership
 
     Three facts about [bag] that any comparison of two configurations
     needs â [bags_agree] delivers an equality of *multisets*, and the
@@ -673,7 +674,7 @@ Proof.
     + right. apply IH. exact H.
 Qed.
 
-(** ** …et le critère se RELATIVISE au sac
+(* ** …et le critère se RELATIVISE au sac
 
 Interdire **toute** émission du processus est plus
     que nécessaire.  Un run réalise exactement sa trace, donc si le
@@ -706,7 +707,7 @@ Proof.
   eapply Hm; [ exact Hw | simpl; left; reflexivity | exact HinL ].
 Qed.
 
-(** La cancellation du bilan, avec un troisième terme à gauche toléré
+(* La cancellation du bilan, avec un troisième terme à gauche toléré
     pourvu qu'il **ne rencontre pas** le multiensemble visé.  Énoncée au
     type générique : à [MO (ExtAct TypeOfActions)] les deux élaborations
     de [⊎] que le développement transporte sont convertibles sans être
@@ -776,7 +777,7 @@ Proof.
       intros aa Hina. apply HL. simpl. right. exact Hina.
 Qed.
 
-(** ** Message bags *)
+(* ** Message bags *)
 
 Fixpoint msgs (l : list (ChannelData * ValueData)) : proc :=
 match l with
@@ -803,7 +804,7 @@ Proof.
     + eapply IH. eassumption.
 Qed.
 
-(** ** From an equality of bags to a structural congruence of message bags
+(* ** From an equality of bags to a structural congruence of message bags
 
     [bags_agree] concludes [bag l = bag l'] — an equality of *multisets* —
     while every configuration-level statement is written with the *list*
@@ -847,7 +848,7 @@ Proof.
 Qed.
 
 
-(** ** Message bags as inert contexts
+(* ** Message bags as inert contexts
 
     A bag's transitions are exactly "emit one message, leaving the rest",
     so the family of bags reachable from [msgs l] — the sub-bags, up to
@@ -906,3 +907,4 @@ Qed.
 
 
 End VACCS_Forwarder.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -30,7 +31,7 @@ From stdpp Require Import base countable option gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
   FiniteImageLTS coFiniteImage InteractionBetweenLts InListPropHelper PAL_Syntax.
 
-(** * PAL: a Process Algebra based on Linda
+(* * PAL: a Process Algebra based on Linda
 
     A [gLts] formalisation of the LTS from:
 
@@ -62,7 +63,7 @@ Section PAL.
   Definition comp_act (μ : PAL_Act) : PAL_Act :=
     match μ with ActIn ot => ActOut ot | ActOut ot => ActIn ot end.
 
-  (** ** The LTS (Tables 3-4, Definition 4.2)
+  (* ** The LTS (Tables 3-4, Definition 4.2)
 
       Action Relation (AR1-AR8, Table 3) carries visible labels only;
       Internal Relation (IR1-IR13, Table 4) is always [τ] — combined here
@@ -137,7 +138,7 @@ Section PAL.
   #[global] Instance PAL_Act_eqdec : EqDecision PAL_Act.
   Proof. solve_decision. Defined.
 
-  (** ** Decidability
+  (* ** Decidability
 
       The paper's own Proposition 4.4 notes this LTS is "in general not
       finitely branching" (e.g. [t_in t E] has infinitely many
@@ -416,7 +417,7 @@ Section PAL.
 
   #[global] Instance PAL_Act_countable : Countable PAL_Act := _.
 
-  (** ** [ExtAction]/[gLts] instances
+  (* ** [ExtAction]/[gLts] instances
 
       [non_blocking] is set to always-[False]: no PAL action is treated as
       non-blocking here (per project convention, this is a per-calculus
@@ -500,7 +501,7 @@ Section PAL.
       PAL_lts_performs PAL_lts_performs_decidable
       PAL_lts_performs_spec1 PAL_lts_performs_spec2.
 
-  (** ** [gLtsEq]/[gLtsOba]/forwarder instances
+  (* ** [gLtsEq]/[gLtsOba]/forwarder instances
 
       [gLtsEq]'s bisimulation is plain syntactic equality (its own
       spec obligation is then a one-line rewrite).  Every [gLtsOba]/
@@ -545,7 +546,7 @@ Section PAL.
     intros p1 p2 p3 η β nb Hdual Hl1 Hl2. destruct nb.
   Defined.
 
-  (** ** [FiniteImagegLts]/[coFiniteImagegLts]
+  (* ** [FiniteImagegLts]/[coFiniteImagegLts]
 
       Both reuse [all_steps]: a literal-[α] successor set is exactly
       [all_steps p α] (via [all_steps_sound]/[all_steps_complete]), and
@@ -601,7 +602,7 @@ Section PAL.
       apply list_elem_of_In. apply all_steps_complete. apply PAL_co_next_iff. exact Hq.
   Defined.
 
-  (** ** [Prop_of_Inter term term PAL_Act PAL_Act ext_act_match]
+  (* ** [Prop_of_Inter term term PAL_Act PAL_Act ext_act_match]
 
       PAL interacting with itself.  The "essential actions" of a process
       are exactly its [ActOut ot] steps — i.e. [collect_out p] wrapped
@@ -701,3 +702,4 @@ Section PAL.
   |}.
 
 End PAL.
+(* end hide *)

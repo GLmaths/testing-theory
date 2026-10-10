@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2024 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -71,12 +72,16 @@ Proof.
   refine (inj_countable' encode_data decode_data _).
   apply encode_decide_datas.
 Defined.
+(* end hide *)
 
 (** * VCCS *)
+(* begin hide *)
 (****************************** Channels  and Values *************************)
+(* end hide *)
 (** VCCS is parameterized over two countable sets. *)
 (** Channel is the type of channels *)
 (** Value is the type of data that can be transmitted over channels *)
+(* begin hide *)
 
 Class VCCS_Parameters :=
   { Channel : Type;
@@ -86,12 +91,14 @@ Class VCCS_Parameters :=
     ValueData_eq_dec :: EqDecision Value;
     VACCS_Channels :: Countable Channel;
     VACCS_Value :: Countable Value }.
+(* end hide *)
 
 Section VCCS_proc.
 
 (** ** Definitions and properties of VACCS *)
 
 Context `{VP : VCCS_Parameters}.
+(* begin hide *)
 
 (********************************* Channels with free variables ************************************)
 Definition ChannelData := Data (VP.(Channel)).
@@ -142,7 +149,9 @@ match E with
 end.
 
 (* Definition of processes*)
+(* end hide *)
 Inductive proc : Type :=
+(* begin hide *)
 (* To parallele two processes*)
 | pr_par : proc -> proc -> proc
 (* Variable in a process, for recursion and substitution*)
@@ -369,7 +378,9 @@ with gpr_subst id p q {struct p} := match p with
 end.
 
 (* The Labelled Transition System (LTS-transition) *)
+(* end hide *)
 Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
+(* begin hide *)
 (*The Input and the Output*)
 | lts_input : forall {c v P},
     lts (c ? P) ((c , v) ?) (P^v)
@@ -477,8 +488,10 @@ match M with
 | 𝛕 • p => 𝛕 • (VarSwap_in_proc k0 p)
 | p1 + p2 => (gVarSwap_in_proc k0 p1) + (gVarSwap_in_proc k0 p2)
 end.
+(* end hide *)
 
 End VCCS_proc.
+(* begin hide *)
 
 Coercion cst_channel : Channel >-> ChannelData.
 Coercion cst_value : Value >-> ValueData.
@@ -499,4 +512,4 @@ Global Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 Global Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
-
+(* end hide *)

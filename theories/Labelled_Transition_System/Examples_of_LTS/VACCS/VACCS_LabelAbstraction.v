@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -35,7 +36,7 @@ Section VACCS_LA.
 
 Context `{VP : VACCS_Parameters}.
 
-(** Inputs are related when they share their channel, outputs when equal. *)
+(* Inputs are related when they share their channel, outputs when equal. *)
 Definition R_test_vaccs (μ μ' : ExtAct TypeOfActions) : Prop :=
   match μ, μ' with
   | ActIn (c , _), ActIn (c' , _) => c = c'
@@ -43,7 +44,7 @@ Definition R_test_vaccs (μ μ' : ExtAct TypeOfActions) : Prop :=
   | _, _ => False
   end.
 
-(** Inputs are related when equal, outputs when they share their channel. *)
+(* Inputs are related when equal, outputs when they share their channel. *)
 Definition R_prog_vaccs (μ μ' : ExtAct TypeOfActions) : Prop :=
   match μ, μ' with
   | ActIn a, ActIn a' => a = a'
@@ -90,7 +91,7 @@ Definition repr_vaccs (x : TestA_vaccs) : ExtAct TypeOfActions :=
   | TestOut c v => ActOut (c , v)
   end.
 
-(** Input acceptance does not depend on the value. *)
+(* Input acceptance does not depend on the value. *)
 Lemma accepts_input_any_value (p : proc) c v w :
   p ⟶[ActIn (c , v)] → p ⟶[ActIn (c , w)].
 Proof.
@@ -160,7 +161,7 @@ Proof.
       * by apply (R_test_LA_equiv R_prog_vaccs R_test_vaccs).
 Qed.
 
-(** The completion of [ρᴠᴀᴄᴄꜱ] along [φᴠᴀᴄᴄꜱ]. *)
+(* The completion of [ρᴠᴀᴄᴄꜱ] along [φᴠᴀᴄᴄꜱ]. *)
 Definition completeᴠᴀᴄᴄꜱ (x : TestA_vaccs) : PreA_vaccs :=
   match x with
   | TestIn c => In_on c
@@ -173,9 +174,10 @@ Proof. apply (LA_complete_unique φᴠᴀᴄᴄꜱ). by intros [[c v]|[c v]]. Qe
 #[global] Instance LA_equiv_dec_VACCS : RelDecision (LA_equiv R_prog_vaccs R_test_vaccs) :=
   proj_rel_dec _ _ LA_proj_join_VACCS.
 
-(** The constructive canonical surjections of VACCS. *)
+(* The constructive canonical surjections of VACCS. *)
 Definition φ_canonical_VACCS := LA_φ (T := proc).
 Definition δ_canonical_VACCS := LA_δ (P := proc).
 Definition ρ_canonical_VACCS := LA_ρ (P := proc) (T := proc).
 
 End VACCS_LA.
+(* end hide *)

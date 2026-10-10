@@ -1,4 +1,5 @@
-(** * Path sums (Lemma 4.7)
+(* begin hide *)
+(* * Path sums (Lemma 4.7)
 
     For finite branching, [Op σ n p] is the sum, over the σ-compatible
     terminal paths of length ≤ n from [p], of the composition of their Kraus
@@ -8,7 +9,7 @@ From Stdlib Require Import List Arith Lia FinFun ChoiceFacts.
 From TestingTheory Require Import Lifted.
 Import ListNotations.
 
-(** Finite branching: outcomes are enumerated, [+] exists, and [br] is the
+(* Finite branching: outcomes are enumerated, [+] exists, and [br] is the
     sum of its branches precomposed with the Kraus maps [ℳ_k]. *)
 Class FinAlg `{Alg} := {
   add : T -> T -> T;
@@ -34,11 +35,11 @@ Proof. induction l1; simpl; [now rewrite add_0l | now rewrite IHl1, add_assoc]. 
 Lemma sum_comp l c : sum l ⋅ c = sum (map (fun a => a ⋅ c) l).
 Proof. induction l; simpl; [apply comp_0l | now rewrite comp_addl, IHl]. Qed.
 
-(** ** Labelled transitions and paths *)
+(* ** Labelled transitions and paths *)
 
 Inductive lbl := Eps | Mk (m : Meas) (j : nat) | Chs (t : tag) (b : bool).
 
-(** [ts p λ K x]: a transition [p --λ|K--> x]. *)
+(* [ts p λ K x]: a transition [p --λ|K--> x]. *)
 Definition ts p λ K x : Prop :=
   p <> Done /\
   match step p with
@@ -47,7 +48,7 @@ Definition ts p λ K x : Prop :=
   | Ch t x0 x1 => exists b, λ = Chs t b /\ K = one /\ x = if b then x1 else x0
   end.
 
-(** Terminal paths, as lists of (label, Kraus decoration). *)
+(* Terminal paths, as lists of (label, Kraus decoration). *)
 Inductive tpath : prog -> list (lbl * T) -> Prop :=
 | tp_done : tpath Done []
 | tp_cons p λ K x α : ts p λ K x -> tpath x α -> tpath p ((λ, K) :: α).
@@ -55,11 +56,11 @@ Inductive tpath : prog -> list (lbl * T) -> Prop :=
 Definition compat (σ : sched) (α : list (lbl * T)) :=
   Forall (fun e => match fst e with Chs t b => b = σ t | _ => True end) α.
 
-(** [kr α] = K_n ∘ ⋯ ∘ K_1. *)
+(* [kr α] = K_n ∘ ⋯ ∘ K_1. *)
 Fixpoint kr (α : list (lbl * T)) :=
   match α with [] => one | (_, K) :: α => kr α ⋅ K end.
 
-(** ** Enumeration of compatible terminal paths of length ≤ n *)
+(* ** Enumeration of compatible terminal paths of length ≤ n *)
 
 Fixpoint enum (σ : sched) n p {struct n} : list (list (lbl * T)) :=
   match p, n with
@@ -96,7 +97,7 @@ Proof. induction l; simpl; [reflexivity | now rewrite map_app, sum_app, IHl]. Qe
 Lemma sum_cons λ K l : sum (map kr (map (cons (λ, K)) l)) = sum (map kr l) ⋅ K.
 Proof. rewrite sum_comp, !map_map. reflexivity. Qed.
 
-(** Lemma 4.7. *)
+(* Lemma 4.7. *)
 Theorem path_sum σ n p : Op σ n p = sum (map kr (enum σ n p)).
 Proof.
   induction n in p |- *; destruct (done_dec p) as [-> | Hp].
@@ -109,7 +110,7 @@ Proof.
     + now rewrite sum_cons, comp_1r, IHn.
 Qed.
 
-(** The enumeration lists exactly the compatible terminal paths of length ≤ n. *)
+(* The enumeration lists exactly the compatible terminal paths of length ≤ n. *)
 Theorem enum_spec σ n p α :
   In α (enum σ n p) <-> tpath p α /\ compat σ α /\ length α <= n.
 Proof.
@@ -140,7 +141,7 @@ Proof.
       * destruct Ht as (b & -> & -> & ->). simpl in Cb. subst b. apply in_map. auto.
 Qed.
 
-(** Each path is listed once: the sum counts paths with multiplicity. *)
+(* Each path is listed once: the sum counts paths with multiplicity. *)
 Lemma code_inj m k k' : code m k = code m k' -> k = k'.
 Proof. intro E. pose proof (decode_code m k) as D. rewrite E, decode_code in D. congruence. Qed.
 
@@ -167,7 +168,7 @@ Proof.
     injection E as Ec _. apply code_inj in Ec. subst. contradiction.
 Qed.
 
-(** ** Distinct labels imply well-labelling
+(* ** Distinct labels imply well-labelling
 
     With finitely many outcomes the labels of a program form a list; if no
     label is repeated (the hypothesis of Theorem 4.10 in the paper), the
@@ -219,9 +220,10 @@ Proof.
   - intro k. apply H2, (NoDup_flat_map_in (fun k => labels (f k)) (outs m)); [exact N | apply outs_all].
 Qed.
 
-(** Theorem 4.10 with the hypothesis of the paper. *)
+(* Theorem 4.10 with the hypothesis of the paper. *)
 Corollary adequacy_nodup (CC : ChoiceFacts.FunctionalCountableChoice_on sched) p :
   NoDup (labels p) -> forall x, Sem p x <-> exists σ, x = E σ p.
 Proof. intro N. apply adequacy; auto. apply nodup_wl, N. Qed.
 
 End Paths.
+(* end hide *)

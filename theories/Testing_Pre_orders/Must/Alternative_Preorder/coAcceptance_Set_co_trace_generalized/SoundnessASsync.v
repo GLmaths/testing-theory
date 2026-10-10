@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * Soundness for the co-acceptance-set preorder, for two alphabets
+(* * Soundness for the co-acceptance-set preorder, for two alphabets
 
     [SoundnessASco.v] with the co-steps of [coWeakSync.v].  A set of processes
     is tested by one observer, and the set's meta-steps are indexed by /test/
@@ -46,7 +47,7 @@ From TestingTheory Require Import SoundnessASco coWeakSync FiniteImageLTS coFini
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 
-(** ** Soundness on forwarders, for two alphabets
+(* ** Soundness on forwarders, for two alphabets
 
     [gLtsCNenabledSync Q] is built from the forwarder axioms and put
     in scope as a local instance — leaving it to be discharged by [Unshelve],
@@ -82,3 +83,4 @@ Lemma soundness_fw_co_sync (p : P) (q : Q) :
 Proof. by eapply (soundness_co_nb_enabled_co outcome Φ 𝝳). Qed.
 
 End SoundnessFW_sync.
+(* end hide *)

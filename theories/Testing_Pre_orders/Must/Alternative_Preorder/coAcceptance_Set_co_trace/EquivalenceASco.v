@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -23,13 +24,13 @@
 From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain.
 From TestingTheory Require Import coFiniteImage DefinitionASco CompletenessASco SoundnessASco.
 
-(** * Equivalence for the co-acceptance-set preorder *)
+(* * Equivalence for the co-acceptance-set preorder *)
 
 Section preorder.
   Context `{outcome : T -> Prop}.
@@ -54,7 +55,7 @@ Section preorder.
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
-  (** * Main equivalence theorems, co variant *)
+  (* * Main equivalence theorems, co variant *)
 
   Section FWⁿ.
 
@@ -62,7 +63,7 @@ Section preorder.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
-  (** ** The inductive characterisation on FW is equivalent to the inductive must preorder *)
+  (* ** The inductive characterisation on FW is equivalent to the inductive must preorder *)
   Theorem equivalence_fw_acc_set_and_must_i_co_trace (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ q.
   Proof.
@@ -71,9 +72,9 @@ Section preorder.
     - now intros hpre%soundness_fw_co.
   Qed.
 
-  (** ---- *)
+  (* ---- *)
 
-  (** ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
+  (* ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
   Theorem equivalence_fw_bhv_acc_ctx_co_trace (p : P) (q : Q) :
     pre_extensional outcome p q <-> p ≼꜀ₒ₋ₐₛ q.
   Proof.
@@ -81,7 +82,7 @@ Section preorder.
   Qed.
 
   End FWⁿ.
-  (** ---- *)
+  (* ---- *)
   Section Lⁿ.
 
   Context `{!FiniteImagegLts P A}.
@@ -106,7 +107,7 @@ Section preorder.
   Context `{!coFiniteImagegLts (P * MO A) A}.
   Context `{!coFiniteImagegLts (Q * MO A) A}.
 
-  (** ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
+  (* ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
   Theorem equivalence_acc_set_and_must_i_co_trace (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼꜀ₒ₋ₐₛ (q, ∅).
   Proof.
@@ -116,9 +117,9 @@ Section preorder.
       now eapply lift_fw_ctx_pre.
   Qed.
 
-  (** ---- *)
+  (* ---- *)
 
-  (** ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
+  (* ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
   Theorem equivalence_bhv_acc_ctx_co_trace (p : P) (q : Q) :
     pre_extensional outcome p q <-> (p, ∅) ≼꜀ₒ₋ₐₛ (q, ∅).
   Proof.
@@ -128,3 +129,4 @@ Section preorder.
   End Lⁿ.
 
 End preorder.
+(* end hide *)

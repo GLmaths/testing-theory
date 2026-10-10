@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -43,7 +44,7 @@ Section PAL_LA.
 
   #[local] Existing Instance PAL_gLts.
 
-  (** ** The relations: equality *)
+  (* ** The relations: equality *)
 
   #[global] Instance gLtsLAtest_PAL : @gLtsLAtest term PAL_Act (PAL_ExtAction Val) (PAL_gLts Val) :=
     {| LA_test := eq;
@@ -57,7 +58,7 @@ Section PAL_LA.
        LA_prog_dec := λ μ μ', decide (μ = μ');
        LA_prog_spec := λ μ μ' h, match h with eq_refl => λ _ h', h' end |}.
 
-  (** ** Terms singling out an action *)
+  (* ** Terms singling out an action *)
 
   Definition eot_to_eit (ot : eot Val) : eit Val :=
     map (λ of, match of with of_val v => if_val v | of_star => if_star end) ot.
@@ -121,7 +122,7 @@ Section PAL_LA.
     end.
   Qed.
 
-  (** ** Equality is the only sound relation *)
+  (* ** Equality is the only sound relation *)
 
   Lemma PAL_𝐏_incl (μ μ' : PAL_Act) : (𝐏 μ : subset_of term) ⊆ 𝐏 μ' → μ = μ'.
   Proof.
@@ -156,3 +157,4 @@ Section PAL_LA.
     (∀ μ μ', R μ μ' → (co𝐏 (Aproc := PAL_Act) μ : subset_of term) ⊆ co𝐏 (Aproc := PAL_Act) μ') → ∀ μ μ', R μ μ' → μ = μ'.
   Proof. intros sound μ μ' h. by apply PAL_co𝐏_incl, sound. Qed.
 End PAL_LA.
+(* end hide *)

@@ -1,3 +1,4 @@
+(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,7 +21,7 @@
    SOFTWARE.
 *)
 
-(** * lqCCS: the linear typing of qubit ownership
+(* * lqCCS: the linear typing of qubit ownership
 
     The type system of Ceragioli, Gadducci, Lomurno, Tedeschi
     (arXiv:2604.23756, "Typing rules for lqCCS"), on the asynchronous syntax:
@@ -48,7 +49,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program.
 
-(** ** Qubit terms *)
+(* ** Qubit terms *)
 
 Inductive qt : Type :=
 | QN (q : qubit)
@@ -67,7 +68,7 @@ Defined.
 Definition vclass (v : val) : Prop := match v with VQubit _ => False | _ => True end.
 
 Section Typing.
-  (** The global typing of channels and variables: [true] for qubits. *)
+  (* The global typing of channels and variables: [true] for qubits. *)
   Context (qchan : chan → bool) (qvar : var → bool).
 
   Definition qterm (e : exp) : option qt :=
@@ -127,10 +128,10 @@ Section Typing.
     with gwt_mut := Induction for gwt Sort Prop.
   Combined Scheme wt_gwt_ind from wt_mut, gwt_mut.
 
-  (** Only qubit names: the context of a closed process. *)
+  (* Only qubit names: the context of a closed process. *)
   Definition names (Σ : gset qt) : Prop := ∀ a, a ∈ Σ → ∃ q, a = QN q.
 
-  (** ** Expressions *)
+  (* ** Expressions *)
 
   Lemma classical_eval e v : classical e → eval e = Some v → vclass v.
   Proof.
@@ -162,7 +163,7 @@ Section Typing.
     all: destruct Hc; split; auto.
   Qed.
 
-  (** The renaming of [x] into [q] on qubit terms. *)
+  (* The renaming of [x] into [q] on qubit terms. *)
   Definition ren (x : var) (q : qubit) (a : qt) : qt :=
     if decide (a = QV x) then QN q else a.
 
@@ -223,7 +224,7 @@ Section Typing.
     f_equal. apply (IH l'); [done|intros ?; apply Hl; by right].
   Qed.
 
-  (** ** The renaming on lists of qubit terms *)
+  (* ** The renaming on lists of qubit terms *)
 
   Lemma ren_NoDup x q l : NoDup l → QN q ∉ l → NoDup (ren x q <$> l).
   Proof.
@@ -255,9 +256,9 @@ Section Typing.
     apply Hl. by apply elem_of_list_to_set.
   Qed.
 
-  (** ** Substitution *)
+  (* ** Substitution *)
 
-  (** A qubit variable that a process does not own does not occur in it. *)
+  (* A qubit variable that a process does not own does not occur in it. *)
   Lemma wt_subst_absent :
     (∀ Σ P, wt Σ P → ∀ x v, qvar x = true → QV x ∉ Σ → subst P x v = P)
     ∧ (∀ Σ g, gwt Σ g → ∀ x v, qvar x = true → QV x ∉ Σ → gsubst g x v = g).
@@ -325,7 +326,7 @@ Section Typing.
     - intros Σ g1 g2 H1 IH1 H2 IH2 x v Hx Hv. simpl. constructor; auto.
   Qed.
 
-  (** Receiving the fresh qubit [q] for the qubit variable [x]. *)
+  (* Receiving the fresh qubit [q] for the qubit variable [x]. *)
   Lemma wt_subst_q :
     (∀ Σ P, wt Σ P → ∀ x q, qvar x = true → QV x ∈ Σ → QN q ∉ Σ →
        wt ({[ QN q ]} ∪ (Σ ∖ {[ QV x ]})) (subst P x (VQubit q)))
@@ -386,7 +387,7 @@ Section Typing.
     - intros Σ g1 g2 H1 IH1 H2 IH2 x q Hx Hin Hq. simpl. constructor; auto.
   Qed.
 
-  (** ** Subject reduction *)
+  (* ** Subject reduction *)
 
   Lemma qterm_eval e a v : qterm e = Some a → eval e = Some v → ∃ q, a = QN q ∧ v = VQubit q.
   Proof.
@@ -408,7 +409,7 @@ Section Typing.
       by destruct (qterm_eval e a (VQubit q) Ea Ev) as (q' & -> & [= ->]).
   Qed.
 
-  (** What a step does to the qubits owned: nothing for a silent step, an
+  (* What a step does to the qubits owned: nothing for a silent step, an
       operation or a measurement (which only use owned qubits); an emission
       on a qubit channel gives the qubit away, a reception takes one. *)
   Definition sr_post (Σ : gset qt) (l : plbl) (P' : proc) : Prop :=
@@ -536,8 +537,9 @@ Section Typing.
       + destruct IH as (Hq & Hx & HP'). split_and!; [done|done|by constructor].
   Qed.
 
-  (** The silent steps of a program keep its qubits: Theorem 4.5 of the
+  (* The silent steps of a program keep its qubits: Theorem 4.5 of the
       paper, for programs. *)
   Corollary subject_reduction_tau Σ P s P' : wt Σ P → pstep P (LTau s) P' → wt Σ P'.
   Proof. apply subject_reduction. Qed.
 End Typing.
+(* end hide *)
