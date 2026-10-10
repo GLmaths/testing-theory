@@ -1611,7 +1611,7 @@ Lemma lts_par_msg_inv : forall (p : proc) (a : TypeOfActions) al z,
 Proof.
   intros p a al z Hl. destruct a as (c,v). simpl in Hl. inversion Hl; subst;
     try (exfalso;
-         match goal with H : lts ((_ ! _ • 𝟘) : proc) (ActExt (ActIn _)) _ |- _ =>
+         match goal with H : lts (_ ! _ • 𝟘) (ActExt (ActIn _)) _ |- _ =>
            inversion H end).
   - right. right. inversion H1; subst. eexists.
     split; [ reflexivity | split; [ reflexivity | exact H4 ] ].
@@ -7047,10 +7047,10 @@ Lemma gStatic_tau_choice : forall M1 M2,
   gStatic ((𝛕 • ((g M1) : proc)) + (𝛕 • ((g M2) : proc))) -> gStatic M1 /\ gStatic M2.
 Proof.
   intros M1 M2 H. inversion H; subst.
-  match goal with HA : gStatic (𝛕 • ((g M1) : proc)) |- _ => inversion HA; subst end.
-  match goal with HB : gStatic (𝛕 • ((g M2) : proc)) |- _ => inversion HB; subst end.
-  match goal with HA : Static ((g M1) : proc) |- _ => inversion HA; subst end.
-  match goal with HB : Static ((g M2) : proc) |- _ => inversion HB; subst end.
+  match goal with HA : gStatic (𝛕 • (g M1)) |- _ => inversion HA; subst end.
+  match goal with HB : gStatic (𝛕 • (g M2)) |- _ => inversion HB; subst end.
+  match goal with HA : Static (g M1) |- _ => inversion HA; subst end.
+  match goal with HB : Static (g M2) |- _ => inversion HB; subst end.
   split; assumption.
 Qed.
 
@@ -7434,7 +7434,7 @@ Lemma msgs_nil_par_stable : forall (l : list TypeOfActions) (z : proc),
 Proof.
   intros l z Hz. inversion Hz; subst;
     try (eapply msgs_no_tau; eassumption);
-    try (match goal with H : lts ((g (𝟘 : gproc)) : proc) _ _ |- _ =>
+    try (match goal with H : lts (g 𝟘) _ _ |- _ =>
            eapply nil_no_lts; exact H end).
 Qed.
 
@@ -7514,7 +7514,7 @@ Proof.
   intros l M z Hz. inversion Hz; subst;
     try (exfalso; eapply msgs_no_tau; eassumption);
     try (exfalso;
-         match goal with H : lts ((g M) : proc) (ActExt (ActOut _)) _ |- _ =>
+         match goal with H : lts (g M) (ActExt (ActOut _)) _ |- _ =>
            eapply gsum_no_out; exact H end);
     try (left; eexists; split; [ eassumption | reflexivity ]).
   right.

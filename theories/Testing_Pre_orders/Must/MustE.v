@@ -1,4 +1,4 @@
-(* begin hide *)
+
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -44,7 +44,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
     (p : P) (t : T) : Prop :=
     forall η : max_exec_from (p, t), exists n fex, mex_take_from n η = Some fex 
           /\ outcome (fex_from_last fex).2 .
-(* begin hide *)
+
 
   Definition outcome_client {P : Type} `{Sts (P * T), outcome : T -> Prop} (s : (P * T)) := outcome s.2.
 
@@ -82,12 +82,14 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
          exists x, x0. split. eassumption. simpl. destruct (fex_from_last x0). naive_solver.
   Qed.
 
+
   Definition pre_extensional
     {P Q T: Type} (outcome : T -> Prop)
     `{Sts (P * T), Sts (Q * T), outcome_decidable : forall (t : T), 
     Decision (outcome t)}
     (p : P) (q : Q) : Prop :=
     forall (t : T), @must_extensional P T _ outcome p t -> @must_extensional Q T _ outcome q t.
+
 
   (* ** Equivalence between the extensional and inductive definitions *)
 
@@ -138,4 +140,4 @@ Section preorder.
 End preorder.
 
 Notation "p ⊑ₘᵤₛₜ q" := (pre_extensional _ p q) (at level 70).
-(* end hide *)
+

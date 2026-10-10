@@ -1,4 +1,4 @@
-(* begin hide *)
+
 (*
    Copyright (c) 2026 Nomadic Labs
    Copyright (c) 2026 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -29,8 +29,9 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import decidable countable.
 
-(* * Actions and traces *)
-(********** Actions := External Action ⊎ { τ } **********)
+(** ** Actions and traces *)
+(** *** Actions := External Action ⊎ { τ } *)
+
 
 Inductive Act (A: Type) :=
   (* External Action *)
@@ -39,17 +40,19 @@ Inductive Act (A: Type) :=
   | τ 
  .
 
+
 Arguments ActExt {_} _.
 Arguments τ {_}.
 
-(****************** Trace Definition ********************)
+(** *** Trace Definition *)
 Definition trace A := list A.
 (* Empty Trace *)
 Definition ε {A : Type} := [] : list A. 
 
-(***************** EqDecision for Act *******************)
+(** *** EqDecision for Act *)
 #[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
 Proof. solve_decision. Defined.
+
 
 Class ExtAction (A : Type) :=
   MkExtAction {
@@ -77,25 +80,24 @@ Class ExtAction (A : Type) :=
       (* Handy hypothesis *)
       (* nb_not_nb η1 η2 ɣ : non_blocking η1 → dual η1 ɣ → dual η2 ɣ → non_blocking η2; *)
     }.
+
 #[global] Existing Instance eqdec.
 #[global] Existing Instance countable.
 #[global] Existing Instance non_blocking_dec.
 #[global] Existing Instance dual_dec.
 #[global] Existing Instance duo_sym.
 
-(* Definition of blocking action *)
+(** *** Definition of blocking action *)
 Notation "'blocking' β" := (¬ non_blocking β) (at level 30).
 
-(* Definition of the co-action *)
+(** *** Definition of the co-action *)
 Notation "'co' μ" := (proj1_sig (exists_dual μ)) (at level 30).
 
-(*Definition of the co-trace *)
+(** *** Definition of the co-trace *)
 Notation "'coₜ' s" := (map (fun μ => (proj1_sig (exists_dual μ))) s) (at level 30).
 
-(* Uniqueness of the dual, no longer a field of [ExtAction]. It is taken as a
-   hypothesis [{unique_nb : UniqueDual A}] where it is still needed; the goal
-   is to remove these hypotheses one by one. *)
+(** *** Uniqueness of the dual *)
 Definition UniqueDual (A : Type) `{ExtAction A} :=
   forall η β, dual β η → η = proj1_sig (exists_dual β).
 Existing Class UniqueDual.
-(* end hide *)
+

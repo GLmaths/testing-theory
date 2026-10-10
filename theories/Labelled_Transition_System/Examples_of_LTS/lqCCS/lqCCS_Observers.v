@@ -59,7 +59,7 @@ From TestingTheory Require Import ActTau InListPropHelper
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   ParallelLTSConstruction SetLTSConstruction
   Must MustE Lift Testing_Predicate
-  DefinitionAS Completeness Soundness Equivalence
+  DefinitionAS Completeness Equivalence
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge.
 
 (* The lift of an abstraction to the forwarder in [DefinitionAS.v] rests on an

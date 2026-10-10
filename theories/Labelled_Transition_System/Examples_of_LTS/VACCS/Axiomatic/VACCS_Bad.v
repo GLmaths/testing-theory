@@ -892,9 +892,9 @@ Proof.
       - unfold TD. apply lts_parL. apply lts_output. }
     eapply nil_fails_stuck; [ | | exact Hbad ].
     + intros q Hq. inversion Hq; subst.
-      * match goal with H : lts ((g 𝟘) : proc) (ActExt _) _ |- _ => inversion H end.
-      * match goal with H : lts ((g 𝟘) : proc) (ActExt _) _ |- _ => inversion H end.
-      * match goal with H : lts ((g 𝟘) : proc) τ _ |- _ => inversion H end.
+      * match goal with H : lts (g 𝟘) (ActExt _) _ |- _ => inversion H end.
+      * match goal with H : lts (g 𝟘) (ActExt _) _ |- _ => inversion H end.
+      * match goal with H : lts (g 𝟘) τ _ |- _ => inversion H end.
       * match goal with H : lts (g (_ ? _)) τ _ |- _ => inversion H end.
     + intro Hg. inversion Hg; subst.
       match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
@@ -1172,10 +1172,10 @@ Lemma bag_nil_no_tau : forall (l : list TypeOfActions) q,
   ~ lts (msgs l ‖ ((g 𝟘) : proc)) τ q.
 Proof.
   intros l q H. inversion H; subst.
-  - match goal with H2 : lts ((g 𝟘) : proc) (ActExt _) _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g 𝟘) (ActExt _) _ |- _ => inversion H2 end.
   - eapply msgs_no_input. eassumption.
   - eapply msgs_no_tau. eassumption.
-  - match goal with H2 : lts ((g 𝟘) : proc) τ _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g 𝟘) τ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma bag_nil_out_inv : forall (l : list TypeOfActions) c v q,
@@ -1186,7 +1186,7 @@ Proof.
       apply msgs_lts_inv in H2 as (c0 & v0 & l' & He & Hp & _) end.
     injection He as He1 He2. subst.
     rewrite Hp. simpl. left. reflexivity.
-  - match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma bag_nil_ext_inv : forall (l : list TypeOfActions) μ q,
@@ -1196,7 +1196,7 @@ Proof.
   - match goal with H2 : lts (msgs l) _ _ |- _ =>
       apply msgs_lts_inv in H2 as (c0 & v0 & l' & He & _ & _) end.
     exists c0, v0. exact He.
-  - match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma bag_stuck_fails : forall (l : list TypeOfActions) (d : ChannelData),
@@ -1214,11 +1214,11 @@ Proof.
     + eapply bag_nil_no_tau; eassumption.
     + inversion l0; subst;
         match goal with
-        | H : lts ((g 𝟘) : proc) _ _ |- _ => inversion H
+        | H : lts (g 𝟘) _ _ |- _ => inversion H
         | H : lts (g (_ ? _)) τ _ |- _ => inversion H
         end.
     + inversion l2; subst.
-      * match goal with H : lts ((g 𝟘) : proc) _ _ |- _ => inversion H end.
+      * match goal with H : lts (g 𝟘) _ _ |- _ => inversion H end.
       * match goal with H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst end.
         destruct μ1 as [a1|a1]; simpl in eq; try contradiction.
         subst a1. eapply Hnin. eapply bag_nil_out_inv. exact l1.

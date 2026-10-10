@@ -43,7 +43,7 @@ From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   ParallelLTSConstruction SetLTSConstruction
   Must MustE Lift Testing_Predicate
-  DefinitionAS Completeness Soundness Equivalence
+  DefinitionAS Completeness Equivalence
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS
   DefinitionCI EquivalenceCI Coin_tower

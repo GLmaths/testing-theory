@@ -1418,15 +1418,15 @@ Proof.
       rewrite E at 2. apply lts_input.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. exfalso. inversion Ht'; subst.
-    + match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
-    + match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
-    + match goal with H2 : lts ((g 𝟘) : proc) τ _ |- _ => inversion H2 end.
+    + match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
+    + match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
+    + match goal with H2 : lts (g 𝟘) τ _ |- _ => inversion H2 end.
     + match goal with H2 : lts (g (_ ? _)) τ _ |- _ => inversion H2 end.
   - intros p' t' μ1 μ2 Hd Hp' Ht'.
     inversion Hp'; subst.
     destruct μ2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
     apply m_now. inversion Ht'; subst.
-    + match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
+    + match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
     + match goal with H2 : lts (g (_ ? _)) _ _ |- _ => inversion H2; subst end.
       apply good_par. right. simpl. constructor.
 Qed.
@@ -2102,7 +2102,7 @@ Lemma nilpar_no_lts : forall al q,
   ~ lts (((g 𝟘) : proc) ‖ ((g 𝟘) : proc)) al q.
 Proof.
   intros al q H. inversion H; subst;
-    match goal with H2 : lts ((g 𝟘) : proc) _ _ |- _ => inversion H2 end.
+    match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma nilnil_fails_nilnil :
@@ -2358,15 +2358,15 @@ Proof.
   intros t' Ht. unfold Pcc, TSg in Ht.
   inversion Ht; subst;
     repeat match goal with
-    | H : lts ((cst b ! cst w • 𝟘) : proc) τ _ |- _ => inversion H
-    | H : lts ((cst b ! cst w • 𝟘) : proc) (ActExt (ActIn _)) _ |- _ => inversion H
-    | H : lts ((cst b ! cst w • 𝟘) : proc) (ActExt (ActOut _)) _ |- _ =>
+    | H : lts (cst b ! cst w • 𝟘) τ _ |- _ => inversion H
+    | H : lts (cst b ! cst w • 𝟘) (ActExt (ActIn _)) _ |- _ => inversion H
+    | H : lts (cst b ! cst w • 𝟘) (ActExt (ActOut _)) _ |- _ =>
         inversion H; subst; clear H
-    | H : lts ((g (_ + _)) : proc) _ _ |- _ => inversion H; subst; clear H
-    | H : lts ((𝛕 • _) : proc) (ActExt _) _ |- _ => inversion H
-    | H : lts ((𝛕 • _) : proc) τ _ |- _ => inversion H; subst; clear H
-    | H : lts ((cst e ? _) : proc) τ _ |- _ => inversion H
-    | H : lts ((cst e ? _) : proc) (ActExt (ActIn _)) _ |- _ =>
+    | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
+    | H : lts (𝛕 • _) (ActExt _) _ |- _ => inversion H
+    | H : lts (𝛕 • _) τ _ |- _ => inversion H; subst; clear H
+    | H : lts (cst e ? _) τ _ |- _ => inversion H
+    | H : lts (cst e ? _) (ActExt (ActIn _)) _ |- _ =>
         inversion H; subst; clear H
     end;
     try reflexivity; try congruence.
