@@ -25,8 +25,8 @@
  (description "Coq library for characterisations of testing preorders")
  (depends (rocq-prover (>= 9.0.0))
           (rocq-stdpp(>= 1.13.0))
-          (coq-coinduction(>= 1.21))
-          (coq-equations(>= 1.3.1)))
+          (rocq-coinduction (>= 1.21))
+          (rocq-equations (>= 1.3.1)))
  (tags
   (topics "to describe" your project)))
 
