@@ -140,14 +140,14 @@ Section PAL_LA.
     intros incl.
     assert (∀ (μ2 : PAL_Act) (p : term), p ∈ co𝐏 (Aproc := PAL_Act) μ2 ↔ p ∈ 𝐏 (comp_act Val μ2)) as co_iff.
     { intros [a|a] p; split.
-      - intros (μ1'' & duo & acc). symmetry in duo.
+      - intros (μ1'' & acc & duo & _). symmetry in duo.
         first [apply simplify_match_input in duo | apply simplify_match_output in duo].
         by subst.
-      - intros acc. exists (comp_act Val (ActIn a)). split; [done | done].
-      - intros (μ1'' & duo & acc). symmetry in duo.
+      - intros acc. exists (comp_act Val (ActIn a)). split; [exact acc | split; [done | intros []]].
+      - intros (μ1'' & acc & duo & _). symmetry in duo.
         first [apply simplify_match_input in duo | apply simplify_match_output in duo].
         by subst.
-      - intros acc. exists (comp_act Val (ActOut a)). split; [done | done]. }
+      - intros acc. exists (comp_act Val (ActOut a)). split; [exact acc | split; [done | intros []]]. }
     assert (comp_act Val μ1 = comp_act Val μ1') as eq.
     { apply PAL_𝐏_incl. intros p acc. apply co_iff, incl, co_iff, acc. }
     destruct μ1, μ1'; simpl in eq; congruence.

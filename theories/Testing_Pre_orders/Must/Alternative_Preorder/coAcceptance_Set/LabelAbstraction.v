@@ -124,13 +124,8 @@ Section LA_prog_properties.
   Proof. intros eq. split; apply coP_preserved_by_LA_prog; [done | by symmetry]. Qed.
 
   Lemma coR_preserved_by_LA_prog (p : P) μ β' :
-    μ ≈ᴘʀᴏ β' → blocking β' → μ ∈ coR p → β' ∈ coR p.
-  Proof.
-    intros eq b' (μ2 & accepts & duo & b).
-    destruct (coP_preserved_by_LA_prog p μ β' eq) as (μ'' & duo' & accepts');
-      [by exists μ2 |].
-    by exists μ''.
-  Qed.
+    μ ≈ᴘʀᴏ β' → μ ∈ coR p → β' ∈ coR p.
+  Proof. intros eq. exact (coP_preserved_by_LA_prog p μ β' eq). Qed.
 
   #[global] Instance Proper_coP_LA_prog (p : P) :
     Proper (LA_prog P ==> iff) (λ μ, p ∈ co𝐏 μ).
@@ -148,7 +143,7 @@ Section LA_eq_rel.
 
   Lemma co𝐏_preserved_by_eq (s s' : S) (μ : Atest) : s ∈ co𝐏 μ → s ⋍ s' → s' ∈ co𝐏 μ.
   Proof.
-    intros (μ'' & duo & accepts) eq. exists μ''. split; [done |].
+    intros (μ'' & accepts & duo & b) eq. exists μ''. split_and!; [| done | done].
     by eapply accepts_preserved_by_eq.
   Qed.
 End LA_eq_rel.

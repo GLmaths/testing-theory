@@ -31,12 +31,11 @@ From TestingTheory Require Import ActTau gLts Subset_Act InteractionBetweenLts
 
    In [toFW(P)], the multiset accepts every blocking action whose dual is
    non-blocking, and emits the non-blocking actions it contains. Hence the
-   relation of [P] is kept only between actions with the same blocking status
-   whose duals are blocking; other actions are only related to themselves. *)
+   relation of [P] is kept only between actions whose duals are blocking;
+   other actions are only related to themselves. *)
 
 Definition LA_prog_FW {A : Type} {H : ExtAction A} (R : relation A) : relation A :=
-  λ μ μ', μ = μ' ∨
-    (R μ μ' ∧ (non_blocking μ ↔ non_blocking μ') ∧ blocking (co μ) ∧ blocking (co μ')).
+  λ μ μ', μ = μ' ∨ (R μ μ' ∧ blocking (co μ) ∧ blocking (co μ')).
 
 Section LA_prog_FW.
   Context {P A : Type} {H : ExtAction A} {unique_nb : UniqueDual A} {gLtsP : gLts P H} {LAp : gLtsLAprog P H}
@@ -46,13 +45,13 @@ Section LA_prog_FW.
   Proof.
     split.
     - intros μ. by left.
-    - intros μ μ' [<- | (hR & hnb & b & b')]; [by left | right].
-      split_and!; [by symmetry | by symmetry | done | done].
-    - intros μ μ' μ'' [<- | (hR & hnb & b & b')] [<- | (hR' & hnb' & c & c')].
+    - intros μ μ' [<- | (hR & b & b')]; [by left | right].
+      split_and!; [by symmetry | done | done].
+    - intros μ μ' μ'' [<- | (hR & b & b')] [<- | (hR' & c & c')].
       + by left.
       + by right.
       + by right.
-      + right. split_and!; [by etransitivity | by etransitivity | done | done].
+      + right. split_and!; [by etransitivity | done | done].
   Qed.
 
   Lemma LA_prog_FW_dec : RelDecision (LA_prog_FW (LA_prog P)).
@@ -61,28 +60,23 @@ Section LA_prog_FW.
   Lemma LA_prog_FW_spec μ μ' :
     LA_prog_FW (LA_prog P) μ μ' → (co𝐏 μ : subset_of (P * MO A)) ⊆ co𝐏 μ'.
   Proof.
-    intros [<- | (hR & hnb & bco & bco')]; [done |].
-    intros [p m] (μ'' & duo & acc).
+    intros [<- | (hR & bco & bco')]; [done |].
+    intros [p m] (μ'' & acc & duo & b).
     apply lts_performs_spec1 in acc as ((p', m') & tr).
     inversion tr as [? ? ? ? l | ? ? ? ? l |]; subst.
     - (* the process moves *)
       assert (p ∈ co𝐏 μ) as mem.
-      { exists μ''. split; [done |]. eapply lts_performs_spec2. by exists p'. }
-      destruct (coP_preserved_by_LA_prog p μ μ' hR mem) as (μ3 & duo3 & acc3).
+      { exists μ''. split_and!; [| done | done]. eapply lts_performs_spec2. by exists p'. }
+      destruct (coP_preserved_by_LA_prog p μ μ' hR mem) as (μ3 & acc3 & duo3 & b3).
       apply lts_performs_spec1 in acc3 as (p3 & tr3).
-      exists μ3. split; [done |]. eapply lts_performs_spec2.
+      exists μ3. split_and!; [| done | done]. eapply lts_performs_spec2.
       exists (p3, m'). by eapply ParLeft.
     - (* the multiset moves *)
-      destruct (decide (non_blocking μ'')) as [nb | b].
-      + exfalso. apply bco. symmetry in duo.
+      exfalso. destruct (decide (non_blocking μ'')) as [nb | b''].
+      + apply bco. symmetry in duo.
         by rewrite <- (unique_nb μ'' μ duo).
-      + eapply blocking_action_in_ms in l as (_ & duo'' & nb''); [| exact b].
-        rewrite <- (unique_nb μ μ'' duo) in nb''.
-        apply hnb in nb''.
-        exists (co μ'). split; [symmetry; exact (proj2_sig (exists_dual μ')) |].
-        eapply lts_performs_spec2. exists (p', {[+ μ' +]} ⊎ m).
-        eapply ParRight. eapply lts_multiset_add; [| exact nb''].
-        symmetry. exact (proj2_sig (exists_dual μ')).
+      + eapply blocking_action_in_ms in l as (_ & duo'' & nb''); [| exact b''].
+        rewrite <- (unique_nb μ μ'' duo) in nb''. contradiction.
   Qed.
 
   (* Like [PreActActionForFW]: a process-side label abstraction of [P] yields one of [toFW(P)]. *)
@@ -93,16 +87,15 @@ Section LA_prog_FW.
        LA_prog_spec := LA_prog_FW_spec |}.
 
   (* The relation of [P] is kept unchanged when it relates distinct actions
-      only if they have the same blocking status and blocking duals. *)
+      only if they have blocking duals. *)
   Lemma LA_prog_FW_same :
-    (∀ η η', LA_prog P η η' → η ≠ η' →
-       (non_blocking η ↔ non_blocking η') ∧ blocking (co η) ∧ blocking (co η')) →
+    (∀ η η', LA_prog P η η' → η ≠ η' → blocking (co η) ∧ blocking (co η')) →
     ∀ η η', LA_prog_FW (LA_prog P) η η' ↔ LA_prog P η η'.
   Proof.
     intros cond η η'. split.
     - intros [<- | (hR & _)]; [reflexivity | done].
     - intros hR. destruct (decide (η = η')) as [<- | neq]; [by left | right].
-      destruct (cond η η' hR neq) as (hnb & b & b'). by split_and!.
+      destruct (cond η η' hR neq) as (b & b'). by split_and!.
   Qed.
 End LA_prog_FW.
 

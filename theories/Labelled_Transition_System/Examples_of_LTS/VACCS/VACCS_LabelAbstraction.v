@@ -128,10 +128,7 @@ Next Obligation.
   intros [[c v]|[c v]] [[c' v']|[c' v']] eq p; unfold elem_of, Elements_of, co𝐏;
     simpl in eq; try contradiction.
   - by injection eq as -> ->.
-  - subst. intros (μ'' & duo & acc).
-    symmetry in duo. apply simplify_match_output in duo. subst.
-    exists (ActIn (c' , v')). split; [simpl; reflexivity |].
-    by eapply accepts_input_any_value.
+  - intros (μ'' & acc & duo & b). exfalso. apply b. by eexists.
 Qed.
 
 #[global] Instance LA_proj_test_VACCS : LA_proj R_test_vaccs φᴠᴀᴄᴄꜱ := R_test_vaccs_proj.

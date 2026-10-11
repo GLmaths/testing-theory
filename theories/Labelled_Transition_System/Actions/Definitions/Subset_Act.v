@@ -50,7 +50,7 @@ Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
 (* ** All processes accepting a co-action *)
 Definition co𝐏 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (μ : Atest) : subset_of P :=
-  fun p => exists μ', sync μ' μ /\ p ⟶[μ'].
+  fun p => coR p μ.
 
 (******************* Instantiations to use the usual notation of sets ***********************)
 

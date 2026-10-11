@@ -81,7 +81,10 @@ Section PAL_Alt_Delta.
 
   Lemma co𝐏_iff (μ : PALA_Act) (p : term) :
     p ∈ (co𝐏 μ : subset_of term) ↔ ∃ μ', PALA_dual Val μ' μ ∧ p ⟶[μ'].
-  Proof. done. Qed.
+  Proof.
+    split; [intros (μ' & acc & hd & _); by exists μ' |].
+    intros (μ' & hd & acc). exists μ'. split; [exact acc | split; [exact hd | intros []]].
+  Qed.
 
   (* ** The kernel of [𝝳] is the largest [≈ᴘʀᴏ] *)
 

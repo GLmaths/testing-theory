@@ -104,9 +104,9 @@ Next Obligation.
   intros [[c v]|[c v]] [[c' v']|[c' v']] eq p; unfold elem_of, Elements_of, co𝐏;
     simpl in eq; try contradiction.
   - by injection eq as -> ->.
-  - subst. intros (μ'' & duo & acc).
+  - subst. intros (μ'' & acc & duo & b).
     symmetry in duo. apply simplify_match_output in duo. subst.
-    exists (ActIn (c' , v')). split; [simpl; reflexivity |].
+    exists (ActIn (c' , v')). split_and!; [| simpl; reflexivity | exact b].
     by eapply accepts_input_any_value.
 Qed.
 
