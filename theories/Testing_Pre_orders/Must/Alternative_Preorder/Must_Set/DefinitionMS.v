@@ -53,7 +53,7 @@ Definition MUST__s `{
 
 Definition AFTER `{FiniteImagegLts P A} 
   (p : P) (s : trace A) (hcnv : p ⇓ s) := 
-  wt_set p s hcnv.
+  reachable_states p s hcnv.
 
 Definition bhv_pre_ms_cond1 `{@gLts P A H, @gLts Q A H} 
 (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.

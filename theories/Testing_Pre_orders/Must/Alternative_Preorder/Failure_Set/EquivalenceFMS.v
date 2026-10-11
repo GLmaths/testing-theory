@@ -42,23 +42,23 @@ Lemma equivalence_must_set_nfailure `{
 Proof.
   split.
   - intros hm (e & hw & hf). eassumption.
-    edestruct (hm e) as (β & μ & p' & mem' & hw' & duo & b). eapply wt_set_spec2. eauto. eapply wt_nil.
+    edestruct (hm e) as (β & μ & p' & mem' & hw' & duo & b). eapply reachable_states_spec2. eauto. eapply wt_nil.
     edestruct (hf β μ mem' duo b). eauto.
   - intros hnf.
     assert (∀ p0 : P, p0 ∈ AFTER p s h1 → p0 ⇓ []).
     { intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
-      eapply (wt_set_spec1 _ _ _ _ mem0). }
+      eapply (reachable_states_spec1 _ _ _ _ mem0). }
     destruct (either_MUST__s (AFTER p s h1) G) as [Hyp | Hyp]; eauto.
     + eapply nMusts_ex in Hyp as (p0 & mem & hnm).
       * exfalso. eapply hnf.
         eapply nMust_ex in hnm as (p1 & hw1 & hnp).
         exists p1. split.
         eapply wt_push_nil_right.
-        eapply (wt_set_spec1 _ _ _ _ mem). eassumption.
+        eapply (reachable_states_spec1 _ _ _ _ mem). eassumption.
         intros β μ mem0 duo b (p' & hw'). eapply hnp. eassumption.
         eassumption. eassumption. eassumption.
         eapply cnv_nil, cnv_wt_s_terminate; eauto.
-        eapply (wt_set_spec1 _ _ _ _ mem).
+        eapply (reachable_states_spec1 _ _ _ _ mem).
       * eauto.
 Qed.
 
@@ -75,17 +75,17 @@ Proof.
     eapply nMust_ex in hnm as (p1 & hw1 & hnp).
     exists p1. split.
     eapply wt_push_nil_right.
-    eapply (wt_set_spec1 _ _ _ _ mem). eassumption.
+    eapply (reachable_states_spec1 _ _ _ _ mem). eassumption.
     intros β μ mem0 duo b (p' & hw'). eapply hnp. eassumption.
     eassumption. eassumption. eassumption.
     eapply cnv_nil, cnv_wt_s_terminate; eauto.
-    eapply (wt_set_spec1 _ _ _ _ mem).
+    eapply (reachable_states_spec1 _ _ _ _ mem).
     intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
-    eapply (wt_set_spec1 _ _ _ _ mem0).
+    eapply (reachable_states_spec1 _ _ _ _ mem0).
   - intros (e & hmem & hf) hm. eassumption.
     unfold MUST__s in hm.
     edestruct (hm e) as (β & μ & p1 & mem1 & hw1 & duo & b).
-    eapply (wt_set_spec2 _ _ _ _ hmem). eapply wt_nil.
+    eapply (reachable_states_spec2 _ _ _ _ hmem). eapply wt_nil.
     eapply (hf β μ mem1 duo b). eauto.
 Qed.
 (* begin hide *)

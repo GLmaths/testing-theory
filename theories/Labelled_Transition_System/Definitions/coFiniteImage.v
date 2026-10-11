@@ -314,7 +314,7 @@ Definition cowt_set_mu_fin
 
 (* *** The set of states reachable along a whole co-weak trace *)
 
-Fixpoint cowt_set
+Fixpoint coreachable_states
   (p : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) : gset P :=
   match s as s0 return p ⇓ᶜᵒ s0 -> gset P with
   | [] =>
@@ -324,13 +324,13 @@ Fixpoint cowt_set
         let ts := @enum (dsig (fun q => p ⟹ᶜᵒ{μ} q)) _ (cowt_set_mu_fin p μ s' f) in
         ⋃ map (fun t =>
                  let hcocnv := cocnv_preserved_by_cowt_act s' p μ f (`t) (proj2_dsig t) in
-                 cowt_set (`t) s' hcocnv
+                 coreachable_states (`t) s' hcocnv
           ) ts
   end hcocnv.
 
-Lemma cowt_set_spec1
+Lemma coreachable_states_spec1
   (p q : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) :
-  q ∈ cowt_set p s hcocnv -> p ⟹ᶜᵒ[s] q.
+  q ∈ coreachable_states p s hcocnv -> p ⟹ᶜᵒ[s] q.
 Proof.
   revert p q hcocnv. induction s; intros p q hcocnv mem; simpl in *.
   - eapply cowt_set_nil_spec1. eassumption.
@@ -340,9 +340,9 @@ Proof.
     eapply IHs. eassumption.
 Defined.
 
-Lemma cowt_set_spec2
+Lemma coreachable_states_spec2
   (p q : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) :
-  p ⟹ᶜᵒ[s] q -> q ∈ cowt_set p s hcocnv.
+  p ⟹ᶜᵒ[s] q -> q ∈ coreachable_states p s hcocnv.
 Proof.
   revert p q hcocnv.
   induction s as [|μ s']; intros p q hcocnv w; simpl in *.
@@ -355,28 +355,28 @@ Proof.
     + now eapply IHs'.
 Defined.
 
-Lemma cowt_set_dec p s (hcocnv : p ⇓ᶜᵒ s) :
+Lemma coreachable_states_dec p s (hcocnv : p ⇓ᶜᵒ s) :
     forall q, Decision (p ⟹ᶜᵒ[s] q).
 Proof.
   intro q.
-  destruct (decide (q ∈ cowt_set p s hcocnv)).
-  - left. eapply (cowt_set_spec1 p q s hcocnv e).
-  - right. intro w. eapply n. now eapply cowt_set_spec2.
+  destruct (decide (q ∈ coreachable_states p s hcocnv)).
+  - left. eapply (coreachable_states_spec1 p q s hcocnv e).
+  - right. intro w. eapply n. now eapply coreachable_states_spec2.
 Qed.
 
-Lemma cowt_set_fin_aux
+Lemma coreachable_states_fin_aux
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) (d : ∀ q, Decision (p ⟹ᶜᵒ[s] q)) :
     Finite (dsig (fun q => p ⟹ᶜᵒ[s] q)).
 Proof.
   unfold dsig.
-  eapply (in_list_finite (elements (cowt_set p s hcocnv))).
+  eapply (in_list_finite (elements (coreachable_states p s hcocnv))).
   intros q Htrans%bool_decide_unpack.
-  now eapply elem_of_elements, cowt_set_spec2.
+  now eapply elem_of_elements, coreachable_states_spec2.
 Qed.
 
-Definition cowt_set_fin
-  (p : P) s (hcocnv : p ⇓ᶜᵒ s) : Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q) (cowt_set_dec p s hcocnv)) :=
-  cowt_set_fin_aux p s hcocnv (cowt_set_dec p s hcocnv).
+Definition coreachable_states_fin
+  (p : P) s (hcocnv : p ⇓ᶜᵒ s) : Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q) (coreachable_states_dec p s hcocnv)) :=
+  coreachable_states_fin_aux p s hcocnv (coreachable_states_dec p s hcocnv).
 
 (* *** The set of stable states reachable along a whole co-weak trace
 
@@ -431,15 +431,15 @@ Proof.
     + exfalso. apply hst', (lts_performs_spec2 p τ). eauto.
 Qed.
 
-Definition cowt_stable_set
+Definition cowaiting_states
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) : gset P :=
-  let ps := @enum (dsig (fun q => p ⟹ᶜᵒ[s] q)) _ (cowt_set_fin p s hcocnv) in
+  let ps := @enum (dsig (fun q => p ⟹ᶜᵒ[s] q)) _ (coreachable_states_fin p s hcocnv) in
   let k t := cowt_nil_stable_set (`t) (cocnv_cowt_s_terminate p (`t) s hcocnv (proj2_dsig t)) in
   ⋃ map k ps.
 
-Lemma cowt_stable_set_spec1
+Lemma cowaiting_states_spec1
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) :
-  q ∈ cowt_stable_set p s hcocnv -> p ⟹ᶜᵒ[s] q /\ q ↛.
+  q ∈ cowaiting_states p s hcocnv -> p ⟹ᶜᵒ[s] q /\ q ↛.
 Proof.
   intro mem.
   eapply elem_of_union_list in mem as (g & mem1 & mem2).
@@ -451,9 +451,9 @@ Proof.
   firstorder.
 Qed.
 
-Lemma cowt_stable_set_spec2
+Lemma cowaiting_states_spec2
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) :
-  (p ⟹ᶜᵒ[s] q /\ q ↛) -> q ∈ cowt_stable_set p s hcocnv.
+  (p ⟹ᶜᵒ[s] q /\ q ↛) -> q ∈ cowaiting_states p s hcocnv.
 Proof.
   intros (hw & hst).
   eapply elem_of_union_list.
@@ -462,56 +462,56 @@ Proof.
   simpl. eapply cowt_nil_stable_set_spec2. eauto with mdb.
 Qed.
 
-Lemma cowt_stable_set_fin_aux
+Lemma cowaiting_states_fin_aux
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) (d : ∀ q, Decision (p ⟹ᶜᵒ[s] q /\ q ↛)) :
   Finite (dsig (fun q => p ⟹ᶜᵒ[s] q /\ q ↛)).
 Proof.
   unfold dsig.
-  eapply (in_list_finite (elements (cowt_stable_set p s hcocnv))).
+  eapply (in_list_finite (elements (cowaiting_states p s hcocnv))).
   intros q Htrans%bool_decide_unpack.
-  now eapply elem_of_elements, cowt_stable_set_spec2.
+  now eapply elem_of_elements, cowaiting_states_spec2.
 Qed.
 
-Lemma cowt_stable_set_dec p s (hcocnv : p ⇓ᶜᵒ s) :
+Lemma cowaiting_states_dec p s (hcocnv : p ⇓ᶜᵒ s) :
   forall q, Decision (p ⟹ᶜᵒ[s] q /\ q ↛).
 Proof.
   intro q.
-  destruct (decide (q ∈ cowt_stable_set p s hcocnv)).
-  - left. eapply (cowt_stable_set_spec1 p q s hcocnv e).
-  - right. intro w. eapply n. now eapply cowt_stable_set_spec2.
+  destruct (decide (q ∈ cowaiting_states p s hcocnv)).
+  - left. eapply (cowaiting_states_spec1 p q s hcocnv e).
+  - right. intro w. eapply n. now eapply cowaiting_states_spec2.
 Qed.
 
-Definition cowt_stable_set_fin
+Definition cowaiting_states_fin
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) :
-  Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q /\ q ↛) (cowt_stable_set_dec p s hcocnv)) :=
-  cowt_stable_set_fin_aux p s hcocnv (cowt_stable_set_dec p s hcocnv).
+  Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q /\ q ↛) (cowaiting_states_dec p s hcocnv)) :=
+  cowaiting_states_fin_aux p s hcocnv (cowaiting_states_dec p s hcocnv).
 
 Lemma cowt_nil_set_stable p hcocnv :
-  (p ↛) -> cowt_set p [] hcocnv = {[ p ]}.
+  (p ↛) -> coreachable_states p [] hcocnv = {[ p ]}.
 Proof.
   intros hst.
   eapply leibniz_equiv.
   intro q. split.
   - intro mem.
-    eapply cowt_set_spec1 in mem. eapply cowt_iff_wt_nil in mem.
+    eapply coreachable_states_spec1 in mem. eapply cowt_iff_wt_nil in mem.
     inversion mem; subst.
     + set_solver.
     + exfalso. apply hst, lts_performs_spec2. eauto.
-  - intro mem. eapply cowt_set_spec2. replace q with p.
+  - intro mem. eapply coreachable_states_spec2. replace q with p.
     eapply cowt_iff_wt_nil. eauto with mdb. set_solver.
 Qed.
 
-Lemma cowt_stable_set_stable_singleton p hcocnv :
-  (p ↛) -> cowt_stable_set p [] hcocnv = {[ p ]}.
+Lemma cowaiting_states_stable_singleton p hcocnv :
+  (p ↛) -> cowaiting_states p [] hcocnv = {[ p ]}.
 Proof.
   intro hst.
   eapply leibniz_equiv.
   intro q. split; intro mem.
-  - eapply cowt_stable_set_spec1 in mem as (w & hst').
+  - eapply cowaiting_states_spec1 in mem as (w & hst').
     eapply cowt_iff_wt_nil in w.
     inversion w; subst. set_solver. exfalso. apply hst, lts_performs_spec2. eauto.
   - eapply elem_of_singleton_1 in mem. subst.
-    eapply cowt_stable_set_spec2. split; eauto with mdb.
+    eapply cowaiting_states_spec2. split; eauto with mdb.
 Qed.
 
 (* *** The set of states a whole *set* [P] reaches via a single co-weak
@@ -535,7 +535,7 @@ Definition cowt_set_from_pset_spec `{Countable P}
 (* *** A concrete witness set for [cowt_set_from_pset_spec] — mirrors
     [wt_s_set_from_pset]/[wt_s_set_from_pset_ispec] (FiniteImageLTS.v)
     verbatim, restricted to a single action [μ] (so it is sourced from
-    [cowt_set_mu] instead of the general-trace [wt_set]). *)
+    [cowt_set_mu] instead of the general-trace [reachable_states]). *)
 
 Fixpoint cowt_s_set_from_pset_mu_xs
   (ps : list P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) : gset P :=

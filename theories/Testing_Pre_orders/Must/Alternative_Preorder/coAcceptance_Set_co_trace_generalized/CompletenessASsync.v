@@ -383,7 +383,7 @@ Proof.
   + destruct (stable_process_must_ta_or_empty_pre_action_set p E st) as [Hyp | Hyp].
     ++ right. assert (cooas p ε hcocnv = coRa p) as eq.
        { unfold cooas.
-         rewrite cowt_stable_set_stable_singleton, elements_singleton; [| exact st].
+         rewrite cowaiting_states_stable_singleton, elements_singleton; [| exact st].
          simpl. by rewrite union_empty_r_L. }
        rewrite eq. exact Hyp.
     ++ left. exists p. split; [constructor | split; [exact st | exact Hyp]].
@@ -414,15 +414,15 @@ Proof.
     assert (hcocnv0 : ∀ p', p' ∈ ps → p' ⇓ᶜᵒ s')
       by (intros ? mem%cowt_set_mu_spec1; eauto).
     assert (he : ∀ p', p' ∈ ps →
-      ((∃ pr p0, p0 ∈ cowt_stable_set p' s' pr ∧ coRa p0 ⊆ E)
+      ((∃ pr p0, p0 ∈ cowaiting_states p' s' pr ∧ coRa p0 ⊆ E)
         ∨ (∃ h, p' must_pass (ta ((cooas p' s' h) ∖ E) s')))).
     { intros p' mem. destruct (IHs' p' (hcocnv0 _ mem) E) as [(r & w & st & sub) | hm].
       * left. eapply cowt_set_mu_spec1 in mem.
-        exists (Hyp_conv _ mem), r. split; [eapply cowt_stable_set_spec2 |]; eauto.
+        exists (Hyp_conv _ mem), r. split; [eapply cowaiting_states_spec2 |]; eauto.
       * right. eauto. }
     destruct (exists_forall_in_gset ps _ _ he) as [Hyp | Hyp].
     + left. destruct Hyp
-        as (p1 & ?%cowt_set_mu_spec1 & ? & r & (? & ?)%cowt_stable_set_spec1 & ?).
+        as (p1 & ?%cowt_set_mu_spec1 & ? & r & (? & ?)%cowaiting_states_spec1 & ?).
       exists r. split; [by eapply cowt_push_left | by split].
     + right.
       destruct (decide (non_blocking μ1)) as [nb | b].

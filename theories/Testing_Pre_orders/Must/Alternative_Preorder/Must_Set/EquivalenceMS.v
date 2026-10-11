@@ -42,14 +42,14 @@ Definition oas_all `{CC : Countable PreAct}  `{
   gLtsP : @gLts P A H, FiniteImagegLts P A,
   FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
-  let ps : list P := elements (wt_set p s hcnv) in
+  let ps : list P := elements (reachable_states p s hcnv) in
   ⋃ map coR_abs ps.
 
 Definition oas `{CC : Countable PreAct}  `{
   gLtsP : @gLts P A H, FiniteImagegLts P A,
   FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
   (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
-  let ps : list P := elements (wt_stable_set p s hcnv) in
+  let ps : list P := elements (waiting_states p s hcnv) in
   ⋃ map coR_abs ps.
 
   (* ************************************************** *)
@@ -140,12 +140,12 @@ Lemma either_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
     (p : P) (G : gset PreAct) (hcnv : p ⇓ []) :
     p MUST G \/ ~ p MUST G.
 Proof.
-  assert (∀ p0 : P, p0 ∈ wt_set p [] hcnv → p0 ⤓) as pre_Hyp.
-  intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-  destruct (either_wperform_mem_set (wt_set p [] hcnv) G) 
+  assert (∀ p0 : P, p0 ∈ reachable_states p [] hcnv → p0 ⤓) as pre_Hyp.
+  intros p0 mem0%reachable_states_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
+  destruct (either_wperform_mem_set (reachable_states p [] hcnv) G) 
     as [Hyp|]; eauto.
-  - right. intro hm. destruct Hyp as (p' & mem%wt_set_spec1%hm & nhw). set_solver.
-  - left. intros p1 hw%(wt_set_spec2 _ p1 [] hcnv). set_solver.
+  - right. intro hm. destruct Hyp as (p' & mem%reachable_states_spec1%hm & nhw). set_solver.
+  - left. intros p1 hw%(reachable_states_spec2 _ p1 [] hcnv). set_solver.
 Qed.
 
 Lemma either_ex_nMUST_or_MUST `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
@@ -180,21 +180,21 @@ Lemma nMust_ex `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
   (hnm : ~ p MUST G) :
   exists p', p ⟹ p' /\ forall β μ p0, (𝝳 ∘ Φ) β ∈ G -> dual μ β -> blocking β -> ~ p' ⟹{μ} p0.
 Proof.
-  assert (∀ p0 : P, p0 ∈ wt_set p [] hcnv → p0 ⤓).
-  intros p0 mem0%wt_set_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
-  destruct (either_wperform_mem_set (wt_set p [] hcnv) G) as [Hyp|Hyp]; eauto.
-  - destruct Hyp as (p' & mem'%wt_set_spec1 & nhw). set_solver.
-  - edestruct hnm. intros p' mem. eapply Hyp. eapply wt_set_spec2; eauto.
+  assert (∀ p0 : P, p0 ∈ reachable_states p [] hcnv → p0 ⤓).
+  intros p0 mem0%reachable_states_spec1. eapply cnv_terminate, cnv_preserved_by_wt_nil; eauto.
+  destruct (either_wperform_mem_set (reachable_states p [] hcnv) G) as [Hyp|Hyp]; eauto.
+  - destruct Hyp as (p' & mem'%reachable_states_spec1 & nhw). set_solver.
+  - edestruct hnm. intros p' mem. eapply Hyp. eapply reachable_states_spec2; eauto.
 Qed.
 
 Lemma nMusts_nMust
 `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
 `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _ _ _ }
 (p : P) (G : gset PreAct) (hcnv : p ⇓ []) 
-(hnm : ~ MUST__s (wt_set p [] hcnv) G) : 
+(hnm : ~ MUST__s (reachable_states p [] hcnv) G) : 
 ¬ p MUST G.
 Proof.
-  intro hm. eapply hnm. intros p' mem0%wt_set_spec1.
+  intro hm. eapply hnm. intros p' mem0%reachable_states_spec1.
   intros r hw. eapply hm. eapply wt_push_nil_left; eassumption.
 Qed.
 
@@ -207,7 +207,7 @@ Lemma nMust_out_acc_ex
   -> ~ pt MUST ((oas p s hcnv) ∖ G) ->
   exists p', pt ⟹ p' /\ p' ↛ /\ (coR_abs p') ⊆ G.
 Proof.
-  intros mem%wt_set_spec1 hnm.
+  intros mem%reachable_states_spec1 hnm.
   eapply nMust_ex in hnm as (p' & hw' & nhw).
   + assert (ht': p' ⤓)
     by (eapply (cnv_wt_s_terminate p p' s hcnv), wt_push_nil_right; eauto).
@@ -219,7 +219,7 @@ Proof.
     { eapply elem_of_union_list. eexists. split; eauto.
       eapply list_elem_of_fmap.
       exists p0. repeat split; eauto.
-      eapply elem_of_elements, wt_stable_set_spec2; split; eauto.
+      eapply elem_of_elements, waiting_states_spec2; split; eauto.
       eapply wt_push_nil_right, wt_push_nil_right; eauto. }
     (* eapply lts_performs_spec1 in mem_mu as (p'0 & HypTr). *)
     { destruct (decide (pre_μ ∈ G)).
@@ -244,7 +244,7 @@ Lemma either_MUST_or_ex
 Proof.
   assert (h1 : forall p0, p0 ∈ AFTER p s hcnv → p0 ⇓ []).
   intros p0 mem0. eapply cnv_nil, cnv_wt_s_terminate; eauto.
-  eapply (wt_set_spec1 _ _ _ _ mem0).
+  eapply (reachable_states_spec1 _ _ _ _ mem0).
   destruct (either_MUST__s (AFTER p s hcnv) ((oas p s hcnv) ∖ G))
       as [ |Hyp].
   + eauto.
@@ -252,7 +252,7 @@ Proof.
   + right.
     eapply nMusts_ex in Hyp as (pt & mem & hnm); eauto.
     eapply nMust_out_acc_ex in hnm as (pt' & hw & hst & hsub); eauto.
-    exists pt'. split; eauto. eapply wt_push_nil_right; eauto. now eapply wt_set_spec1 in mem.
+    exists pt'. split; eauto. eapply wt_push_nil_right; eauto. now eapply reachable_states_spec1 in mem.
 Qed.
 
 Lemma Must_out_acc_npre `{CC : Countable PreAct} `{@gLts P A H, !FiniteImagegLts P A}
@@ -267,7 +267,7 @@ Proof.
   intros hcnv' hw hst hm pre2.
   set (G := (oas p s hcnv ∖ coR_abs q')).
   assert (exists β μ t, (𝝳 ∘ Φ) β ∈ G /\ q' ⟹{μ} t /\ dual μ β /\ blocking β) as (β & μ & t & mem & hw' & duo & b).
-  { eapply (pre2 s hcnv hcnv'); eauto. eapply wt_set_spec2; eauto. eapply wt_nil. }
+  { eapply (pre2 s hcnv hcnv'); eauto. eapply reachable_states_spec2; eauto. eapply wt_nil. }
   eapply elem_of_difference in mem as (mem & nmem).
   
   eapply elem_of_union_list in mem as (X & mem1 & mem2).
@@ -309,14 +309,14 @@ Proof.
       eapply coR_abs_spec2 in mem. eapply sub in mem.
       eapply coR_abs_spec1; eauto.
   - intro hpre2.
-    intros s hcnv hcnv' G hm q' mem%wt_set_spec1 q0 hw.
+    intros s hcnv hcnv' G hm q' mem%reachable_states_spec1 q0 hw.
     assert (exists r, q0 ⟹ r /\ r ↛) as (qt & hw' & hstq').
     { eapply terminate_then_wt_refuses, terminate_preserved_by_wt_nil; eauto.
       eapply cnv_wt_s_terminate; eauto. }
     edestruct (hpre2 s qt hcnv) as (pt & hwpt & hstpt & hsubpt); eauto.
     eapply wt_push_nil_right; eauto. eapply wt_push_nil_right; eauto.
     assert (exists β μ r, ( 𝝳 ∘ Φ ) β ∈ G /\ pt ⟹{μ} r /\ dual μ β /\ blocking β) as (β & μ & p0 & mem0 & hw0 & duo & b).
-    { eapply hm. eapply wt_set_spec2; eauto. eapply wt_nil. }
+    { eapply hm. eapply reachable_states_spec2; eauto. eapply wt_nil. }
     inversion hw0; subst.
     + exfalso. apply hstpt, lts_performs_spec2; eauto.
     + assert (( 𝝳 ∘ Φ) β ∈ coR_abs qt) as mem'.

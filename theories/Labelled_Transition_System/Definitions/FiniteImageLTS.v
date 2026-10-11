@@ -279,7 +279,7 @@ Definition wt_set_mu_fin `{FiniteImagegLts P A}
   (p : P) μ s (hcnv : p ⇓ μ :: s) : Finite (dsig (fun q => p ⟹{μ} q)) :=
   wt_mu_set_fin_aux p μ s hcnv (wt_mu_set_dec p μ s hcnv).
 
-Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : p ⇓ s) : gset P :=
+Fixpoint reachable_states `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : p ⇓ s) : gset P :=
   match s as s0 return p ⇓ s0 -> gset P with
   | [] =>
       fun _ => wt_set_nil p (cnv_terminate p _ hcnv)
@@ -288,14 +288,14 @@ Fixpoint wt_set `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : p ⇓ s) : 
         let ts := @enum (dsig (fun q => p ⟹{μ} q)) _ (wt_set_mu_fin p μ s' f) in
         ⋃ map (fun t =>
                  let hcnv := cnv_preserved_by_wt_act s' p μ f (`t) (proj2_dsig t) in
-                 wt_set (`t) s' hcnv
+                 reachable_states (`t) s' hcnv
           ) ts
   end hcnv.
 (* end hide *)
 
-Lemma wt_set_spec1 `{FiniteImagegLts P A}
+Lemma reachable_states_spec1 `{FiniteImagegLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
-  q ∈ wt_set p s hcnv -> p ⟹[s] q.
+  q ∈ reachable_states p s hcnv -> p ⟹[s] q.
 Proof.
   revert p q hcnv. induction s; intros p q hcnv mem; simpl in *.
   - eapply wt_set_nil_spec1. eassumption.
@@ -305,9 +305,9 @@ Proof.
     eapply IHs. eassumption.
 Defined.
 
-Lemma wt_set_spec2 `{FiniteImagegLts P A}
+Lemma reachable_states_spec2 `{FiniteImagegLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
-  p ⟹[s] q -> q ∈ wt_set p s hcnv.
+  p ⟹[s] q -> q ∈ reachable_states p s hcnv.
 Proof.
   revert p q hcnv.
   induction s as [|μ s']; intros p q hcnv w; simpl in *.
@@ -321,28 +321,28 @@ Proof.
 Defined.
 (* begin hide *)
 
-Lemma wt_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
+Lemma reachable_states_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
     forall q, Decision (p ⟹[s] q).
 Proof.
   intro q.
-  destruct (decide (q ∈ wt_set p s hcnv)).
-  - left. eapply  (wt_set_spec1 p q s hcnv e).
-  - right. intro wt. eapply n. now eapply wt_set_spec2.
+  destruct (decide (q ∈ reachable_states p s hcnv)).
+  - left. eapply  (reachable_states_spec1 p q s hcnv e).
+  - right. intro wt. eapply n. now eapply reachable_states_spec2.
 Qed.
 
-Lemma wt_set_fin_aux `{FiniteImagegLts P A}
+Lemma reachable_states_fin_aux `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q)) : 
     Finite (dsig (fun q => p ⟹[s] q)).
 Proof.
   unfold dsig.
-  eapply (in_list_finite (elements (wt_set p s hcnv))).
+  eapply (in_list_finite (elements (reachable_states p s hcnv))).
   intros q Htrans%bool_decide_unpack.
-  now eapply elem_of_elements, wt_set_spec2.
+  now eapply elem_of_elements, reachable_states_spec2.
 Qed.
 
-Definition wt_set_fin `{FiniteImagegLts P A}
+Definition reachable_states_fin `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q)) :=
-  wt_set_fin_aux p s hcnv (wt_set_dec p s hcnv).
+  reachable_states_fin_aux p s hcnv (reachable_states_dec p s hcnv).
 
 Fixpoint wt_nil_stable_set `{FiniteImagegLts P A} (p : P) (ht : p ⤓) : gset P :=
   match decide (p ⟶) with
@@ -411,15 +411,15 @@ Lemma cnv_wt_s_terminate `{gLts P A}
 Proof. eapply cnv_iff_prefix_terminate; eauto. Qed.
 (* end hide *)
 
-Definition wt_stable_set `{FiniteImagegLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
-  let ps := @enum (dsig (fun q => p ⟹[s] q)) _ (wt_set_fin p s hcnv) in
+Definition waiting_states `{FiniteImagegLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
+  let ps := @enum (dsig (fun q => p ⟹[s] q)) _ (reachable_states_fin p s hcnv) in
   let k t := wt_nil_stable_set (`t) (cnv_wt_s_terminate p (`t) s hcnv (proj2_dsig t)) in
   ⋃ map k ps.
 (* begin hide *)
 
-Lemma wt_stable_set_spec1 `{FiniteImagegLts P A}
+Lemma waiting_states_spec1 `{FiniteImagegLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
-  q ∈ wt_stable_set p s hcnv -> p ⟹[s] q /\ q ↛.
+  q ∈ waiting_states p s hcnv -> p ⟹[s] q /\ q ↛.
 Proof.
   intro mem.
   eapply elem_of_union_list in mem as (g & mem1 & mem2).
@@ -430,9 +430,9 @@ Proof.
   firstorder.
 Qed.
 
-Lemma wt_stable_set_spec2 `{FiniteImagegLts P A}
+Lemma waiting_states_spec2 `{FiniteImagegLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
-  (p ⟹[s] q /\ q ↛) -> q ∈ wt_stable_set p s hcnv.
+  (p ⟹[s] q /\ q ↛) -> q ∈ waiting_states p s hcnv.
 Proof.
   intros (hw & hst).
   eapply elem_of_union_list.
@@ -441,57 +441,57 @@ Proof.
   simpl. eapply wt_nil_stable_set_spec2. eauto with mdb.
 Qed.
 
-Lemma wt_stable_set_fin_aux `{FiniteImagegLts P A}
+Lemma waiting_states_fin_aux `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q /\ q ↛)) : 
   Finite (dsig (fun q => p ⟹[s] q /\ q ↛)).
 Proof.
   unfold dsig.
-  eapply (in_list_finite (elements (wt_stable_set p s hcnv))).
+  eapply (in_list_finite (elements (waiting_states p s hcnv))).
   intros q Htrans%bool_decide_unpack.
-  now eapply elem_of_elements, wt_stable_set_spec2.
+  now eapply elem_of_elements, waiting_states_spec2.
 Qed.
 
 
-Lemma wt_stable_set_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
+Lemma waiting_states_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
   forall q, Decision (p ⟹[s] q /\ q ↛).
 Proof.
   intro q.
-  destruct (decide (q ∈ wt_stable_set p s hcnv)).
-  - left. eapply (wt_stable_set_spec1 p q s hcnv e).
-  - right. intro wt. eapply n. now eapply wt_stable_set_spec2.
+  destruct (decide (q ∈ waiting_states p s hcnv)).
+  - left. eapply (waiting_states_spec1 p q s hcnv e).
+  - right. intro wt. eapply n. now eapply waiting_states_spec2.
 Qed.
 (* end hide *)
 
-Definition wt_stable_set_fin `{FiniteImagegLts P A}
+Definition waiting_states_fin `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)) :=
-  wt_stable_set_fin_aux p s hcnv (wt_stable_set_dec p s hcnv).
+  waiting_states_fin_aux p s hcnv (waiting_states_dec p s hcnv).
 (* begin hide *)
 
 Lemma wt_nil_set_stable `{FiniteImagegLts P A} p hcnv :
-  (p ↛) -> wt_set p [] hcnv = {[ p ]}.
+  (p ↛) -> reachable_states p [] hcnv = {[ p ]}.
 Proof.
   intros hst.
   eapply leibniz_equiv.
   intro q. split.
   - intro mem.
-    eapply wt_set_spec1 in mem.
+    eapply reachable_states_spec1 in mem.
     inversion mem; subst.
     + set_solver.
     + exfalso. apply hst, lts_performs_spec2. eauto.
-  - intro mem. eapply wt_set_spec2. replace q with p.
+  - intro mem. eapply reachable_states_spec2. replace q with p.
     eauto with mdb. set_solver.
 Qed.
 
-Lemma wt_stable_set_stable_singleton `{FiniteImagegLts P A} p hcnv :
-  (p ↛) -> wt_stable_set p [] hcnv = {[ p ]}.
+Lemma waiting_states_stable_singleton `{FiniteImagegLts P A} p hcnv :
+  (p ↛) -> waiting_states p [] hcnv = {[ p ]}.
 Proof.
   intro hst.
   eapply leibniz_equiv.
   intro q. split; intro mem.
-  - eapply wt_stable_set_spec1 in mem as (w & hst').
+  - eapply waiting_states_spec1 in mem as (w & hst').
     inversion w; subst. set_solver. exfalso. apply hst, lts_performs_spec2. eauto.
   - eapply elem_of_singleton_1 in mem. subst.
-    eapply wt_stable_set_spec2. split; eauto with mdb.
+    eapply waiting_states_spec2. split; eauto with mdb.
 Qed.
 
 Fixpoint wt_s_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
@@ -501,7 +501,7 @@ Fixpoint wt_s_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
   | p :: ps' =>
       fun ha =>
         let pr := ha p (list_elem_of_here p ps') in
-        let ys := wt_set p s pr in
+        let ys := reachable_states p s pr in
         let ha' := fun q mem => ha q (list_elem_of_further q p ps' mem) in
         ys ∪ wt_s_set_from_pset_xs ps' s ha'
   end hcnv.
@@ -528,7 +528,7 @@ Proof.
     intros p' mem. simpl in *.
     eapply elem_of_union in mem as [hl|hr].
     exists p. split.
-    set_solver. now eapply wt_set_spec1 in hl.
+    set_solver. now eapply reachable_states_spec1 in hl.
     eapply IHps in hr as (p0 & mem & hwp0).
     exists p0. repeat split; set_solver.
   - induction ps as [|p ps].
@@ -536,7 +536,7 @@ Proof.
     + intros p' q mem hwp'.
       eapply elem_of_union.
       inversion mem; subst.
-      ++ left. eapply wt_set_spec2; eauto.
+      ++ left. eapply reachable_states_spec2; eauto.
       ++ right. eapply IHps in hwp'; eauto.
 Qed.
 
@@ -586,7 +586,7 @@ Fixpoint wt_stable_set_from_pset_xs `{gLts P A, !FiniteImagegLts P A}
   | p :: ps' =>
       fun ha =>
         let pr := ha p (list_elem_of_here p ps') in
-        let ys := wt_stable_set p s pr in
+        let ys := waiting_states p s pr in
         let ha' := fun q mem => ha q (list_elem_of_further q p ps' mem) in
         ys ∪ wt_stable_set_from_pset_xs ps' s ha'
   end hcnv.
@@ -598,7 +598,7 @@ Proof.
   revert hcnv. induction ps as [|p ps' IHps]; intros hcnv mem; simpl in *.
   - set_solver.
   - eapply elem_of_union in mem as [mem1 | mem2].
-    + eapply wt_stable_set_spec1 in mem1 as (hw & hst). exists p. split; [set_solver|]; eauto.
+    + eapply waiting_states_spec1 in mem1 as (hw & hst). exists p. split; [set_solver|]; eauto.
     + edestruct IHps as (p0 & mem0 & hw & hst); [exact mem2|].
       exists p0. split; [set_solver|]; eauto.
 Qed.
@@ -610,7 +610,7 @@ Proof.
   revert hcnv. induction ps as [|p0 ps' IHps]; intros hcnv mem hw hst; simpl in *.
   - set_solver.
   - eapply elem_of_cons in mem as [-> | mem'].
-    + eapply elem_of_union. left. eapply wt_stable_set_spec2; eauto.
+    + eapply elem_of_union. left. eapply waiting_states_spec2; eauto.
     + eapply elem_of_union. right. eapply IHps; eauto.
 Qed.
 
