@@ -23,7 +23,7 @@
 
 (* * The co-acceptance-set characterisation, for two alphabets
 
-    [EquivalenceASco.v]'s [FWⁿ] section for two alphabets.  The observers,
+    The [FWⁿ] characterisation for two alphabets.  The observers,
     and the co-traces, live on [Atest].  The processes are forwarders over
     [Aproc ⊎ Atest ⊎ cobar Atest] ([MemForwarder.v]): they satisfy
     [gLtsFWMem], i.e. [boomerang], [feedback] and [delay] at the observer's
@@ -37,24 +37,26 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
+From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base countable decidable finite gmap list.
 
 From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionUnion MemForwarder Bisimulation Lts_OBA
   Lts_OBA_FB Lts_FW Subset_Act Termination WeakTransitions
   coWeakSync FiniteImageLTS coFiniteImage coSetLTSConstruction Testing_Predicate StateTransitionSystems InteractionBetweenLts
-  Must Completeness CompletenessASco
-  DefinitionAS DefinitionASco CompletenessASsync SoundnessASsync
+  Must CompletenessASsync
+  DefinitionASrel CompletenessASsync SoundnessASsync
   coWeakTransition coConvergence
-  Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderMem LiftMem.
+  Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderMem LiftMem
+  LabelAbstraction LabelAdmissible LabelAdmissibleFw.
 
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section PreorderSync.
 
-Context {P Q T FinA PreAct Aproc Atest : Type}.
+Context {P Q T PreAct Aproc Atest : Type}.
 Context `{CC : Countable PreAct}.
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
-Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
+Context (Γ : Atest → PreAct).
 Context (outcome : T → Prop).
 
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
@@ -62,37 +64,35 @@ Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWP : !gLtsFWMem P Aproc Atest}.
 Context `{SYP : !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync} `{CFIP : !coFiniteImagegLts P Atest}.
-Context `{FAP : !@FinitaryAbsAction P T FinA PreAct Atest Ht Φ 𝝳 (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
+Context `{FAP : !@FinitaryAbsActionG P T PreAct Atest Ht Γ (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
 
 Context `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWQ : !gLtsFWMem Q Aproc Atest}.
 Context `{SYQ : !Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync} `{CFIQ : !coFiniteImagegLts Q Atest}.
-Context `{FAQ : !@FinitaryAbsAction Q T FinA PreAct Atest Ht Φ 𝝳 (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
+Context `{FAQ : !@FinitaryAbsActionG Q T PreAct Atest Ht Γ (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
 
 Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset PreAct → list Atest → T)
-        `{!test_co_acceptance_set_spec PreAct ta (fun x => 𝝳 (Φ x))}.
-
-(* ** The co-acceptance-set preorder is the must preorder, on forwarders *)
+        `{!test_co_acceptance_set_spec PreAct ta Γ}.
 
 Theorem equivalence_fw_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   p ⊆ₘᵤₛₜᵢ q ↔
-  p ≼꜀ₒ₋ₐₛ q.
+  p ≼ᴳ[ Γ ] q.
 Proof.
   split.
   - intros hpre.
     by eapply (completeness_fw_co_sync (tconv := tconv) (ta := ta)).
   - intros hpre.
-    by eapply (soundness_fw_co_sync Φ 𝝳 outcome).
+    by eapply (soundness_fw_co_sync Γ outcome).
 Qed.
 
 End PreorderSync.
 
 Section PreorderSyncLifted.
 
-Context {P Q T FinA PreAct Aproc Atest : Type}.
+Context {P Q T PreAct Aproc Atest : Type}.
 Context `{CC : Countable PreAct}.
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
-Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
+Context (Γ : Atest → PreAct).
 Context (outcome : T → Prop).
 
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
@@ -110,24 +110,165 @@ Context `{PIQT : !Prop_of_Inter Q T Aproc Atest sync}.
 
 Context `{SYP : !Prop_of_Inter (P * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
         `{CFIP : !coFiniteImagegLts (P * MO (MemAct Atest)) Atest}.
-Context `{FAP : !@FinitaryAbsAction (P * MO (MemAct Atest)) T FinA PreAct Atest Ht Φ 𝝳
+Context `{FAP : !@FinitaryAbsActionG (P * MO (MemAct Atest)) T PreAct Atest Ht Γ
                   (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
 Context `{SYQ : !Prop_of_Inter (Q * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
         `{CFIQ : !coFiniteImagegLts (Q * MO (MemAct Atest)) Atest}.
-Context `{FAQ : !@FinitaryAbsAction (Q * MO (MemAct Atest)) T FinA PreAct Atest Ht Φ 𝝳
+Context `{FAQ : !@FinitaryAbsActionG (Q * MO (MemAct Atest)) T PreAct Atest Ht Γ
                   (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
 
 Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset PreAct → list Atest → T)
-        `{!test_co_acceptance_set_spec PreAct ta (fun x => 𝝳 (Φ x))}.
+        `{!test_co_acceptance_set_spec PreAct ta Γ}.
 
 Theorem equivalence_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   ctx_pre (gLtsT := gLtsEqT) p q ↔
-  (p, ∅ : MO (MemAct Atest)) ≼꜀ₒ₋ₐₛ (q, ∅ : MO (MemAct Atest)).
+  (p, ∅ : MO (MemAct Atest)) ≼ᴳ[ Γ ] (q, ∅ : MO (MemAct Atest)).
 Proof.
   rewrite (lift_fw_ctx_pre outcome).
-  exact (equivalence_fw_acc_set_and_must_i_sync_co_trace Φ 𝝳 outcome tconv ta _ _).
+  exact (equivalence_fw_acc_set_and_must_i_sync_co_trace Γ outcome tconv ta _ _).
 Qed.
 
 End PreorderSyncLifted.
+
+Section PreorderRel.
+
+Context {P Q T Aproc Atest : Type}.
+Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
+Context (outcome : T → Prop).
+
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
+Context `{TP : !Testing_Predicate outcome gLtsEqT}.
+
+Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWP : !gLtsFWMem P Aproc Atest}.
+Context `{SYP : !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync} `{CFIP : !coFiniteImagegLts P Atest}.
+Context `{AdmP : !@LA_admissible P T (Aproc + MemAct Atest) ExtAction_sum _ Atest Ht _ SyncAction_mem R}.
+Context `{FinP : !@FinitaryLA P (Aproc + MemAct Atest) ExtAction_sum _ Atest Ht SyncAction_mem R _ _}.
+
+Context `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWQ : !gLtsFWMem Q Aproc Atest}.
+Context `{SYQ : !Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync} `{CFIQ : !coFiniteImagegLts Q Atest}.
+Context `{AdmQ : !@LA_admissible Q T (Aproc + MemAct Atest) ExtAction_sum _ Atest Ht _ SyncAction_mem R}.
+Context `{FinQ : !@FinitaryLA Q (Aproc + MemAct Atest) ExtAction_sum _ Atest Ht SyncAction_mem R _ _}.
+
+Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
+Context (ta : gset (LA_quotient R) → list Atest → T)
+        `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+
+#[local] Instance FAP_rel : @FinitaryAbsActionG P T (LA_quotient R) Atest Ht (LA_class R)
+  (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _ :=
+  FinitaryAbsActionG_of_LA R AdmP FinP.
+
+#[local] Instance FAQ_rel : @FinitaryAbsActionG Q T (LA_quotient R) Atest Ht (LA_class R)
+  (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _ :=
+  FinitaryAbsActionG_of_LA R AdmQ FinQ.
+
+Theorem equivalence_fw_rel_and_must_i_sync_co_trace (p : P) (q : Q) :
+  p ⊆ₘᵤₛₜᵢ q ↔
+  p ≼ᴿ[ R ] q.
+Proof.
+  rewrite (bhv_pre_r_iff_g R).
+  exact (equivalence_fw_acc_set_and_must_i_sync_co_trace (LA_class R) outcome tconv ta p q).
+Qed.
+
+End PreorderRel.
+
+Section PreorderRelLifted.
+
+Context {P Q T Aproc Atest : Type}.
+Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
+Context (outcome : T → Prop).
+
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
+        `{!FiniteOutputChain_LtsOba T}.
+Context `{TP : !Testing_Predicate outcome gLtsEqT}.
+
+Context `{gLtsEqP : !gLtsEq P Hp}.
+Context `{PIP : !Prop_of_Inter P (MO (MemAct Atest)) Aproc (MemAct Atest) fw_inter_mem}.
+Context `{PIPT : !Prop_of_Inter P T Aproc Atest sync}.
+Context `{gLtsEqQ : !gLtsEq Q Hp}.
+Context `{PIQ : !Prop_of_Inter Q (MO (MemAct Atest)) Aproc (MemAct Atest) fw_inter_mem}.
+Context `{PIQT : !Prop_of_Inter Q T Aproc Atest sync}.
+
+#[local] Existing Instance toFwEq.
+
+Context `{SYP : !Prop_of_Inter (P * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
+        `{CFIP : !coFiniteImagegLts (P * MO (MemAct Atest)) Atest}.
+Context `{AdmP : !@LA_admissible (P * MO (MemAct Atest)) T (Aproc + MemAct Atest) ExtAction_sum _
+                    Atest Ht _ SyncAction_mem R}.
+Context `{FinP : !@FinitaryLA (P * MO (MemAct Atest)) (Aproc + MemAct Atest) ExtAction_sum _
+                    Atest Ht SyncAction_mem R _ _}.
+Context `{SYQ : !Prop_of_Inter (Q * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
+        `{CFIQ : !coFiniteImagegLts (Q * MO (MemAct Atest)) Atest}.
+Context `{AdmQ : !@LA_admissible (Q * MO (MemAct Atest)) T (Aproc + MemAct Atest) ExtAction_sum _
+                    Atest Ht _ SyncAction_mem R}.
+Context `{FinQ : !@FinitaryLA (Q * MO (MemAct Atest)) (Aproc + MemAct Atest) ExtAction_sum _
+                    Atest Ht SyncAction_mem R _ _}.
+
+Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
+Context (ta : gset (LA_quotient R) → list Atest → T)
+        `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+
+Theorem equivalence_rel_and_must_i_sync_co_trace (p : P) (q : Q) :
+  ctx_pre (gLtsT := gLtsEqT) p q ↔
+  (p, ∅ : MO (MemAct Atest)) ≼ᴿ[ R ] (q, ∅ : MO (MemAct Atest)).
+Proof.
+  rewrite (lift_fw_ctx_pre outcome).
+  exact (equivalence_fw_rel_and_must_i_sync_co_trace R outcome tconv ta _ _).
+Qed.
+
+End PreorderRelLifted.
+
+Section PreorderRelProcesses.
+
+Context {P Q T Aproc Atest : Type}.
+Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
+Context (outcome : T → Prop).
+
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
+        `{!FiniteOutputChain_LtsOba T}.
+Context `{TP : !Testing_Predicate outcome gLtsEqT}.
+
+Context `{gLtsEqP : !gLtsEq P Hp}.
+Context `{PIP : !Prop_of_Inter P (MO (MemAct Atest)) Aproc (MemAct Atest) fw_inter_mem}.
+Context `{PIPT : !Prop_of_Inter P T Aproc Atest sync}.
+Context `{gLtsEqQ : !gLtsEq Q Hp}.
+Context `{PIQ : !Prop_of_Inter Q (MO (MemAct Atest)) Aproc (MemAct Atest) fw_inter_mem}.
+Context `{PIQT : !Prop_of_Inter Q T Aproc Atest sync}.
+
+#[local] Existing Instance toFwEq.
+
+Context `{SYP : !Prop_of_Inter (P * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
+        `{CFIP : !coFiniteImagegLts (P * MO (MemAct Atest)) Atest}.
+Context `{SYQ : !Prop_of_Inter (Q * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
+        `{CFIQ : !coFiniteImagegLts (Q * MO (MemAct Atest)) Atest}.
+
+Context (AdmP : @LA_admissible P T Aproc Hp _ Atest Ht _ SA R).
+Context (FinP : @FinitaryLA P Aproc Hp _ Atest Ht SA R _ _).
+Context (AdmQ : @LA_admissible Q T Aproc Hp _ Atest Ht _ SA R).
+Context (FinQ : @FinitaryLA Q Aproc Hp _ Atest Ht SA R _ _).
+
+Context (AdmM : LA_admissible_mem (T := T) R).
+Context (co_rep : Atest → list Atest).
+Context (co_rep_sub : ∀ η x, non_blocking η → x ∈ co_rep η → dual η x).
+Context (co_rep_cover : ∀ η β, non_blocking η → dual η β → ∃ x, x ∈ co_rep η ∧ R β x).
+
+Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
+Context (ta : gset (LA_quotient R) → list Atest → T)
+        `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+
+Definition AdmP_fw := LA_admissible_fw (P := P) R AdmP AdmM.
+Definition AdmQ_fw := LA_admissible_fw (P := Q) R AdmQ AdmM.
+Definition FinP_fw := FinitaryLA_fw (P := P) R co_rep co_rep_sub co_rep_cover FinP.
+Definition FinQ_fw := FinitaryLA_fw (P := Q) R co_rep co_rep_sub co_rep_cover FinQ.
+#[local] Existing Instances AdmP_fw AdmQ_fw FinP_fw FinQ_fw.
+
+Theorem equivalence_rel_and_must_i_sync_co_trace_proc (p : P) (q : Q) :
+  ctx_pre (gLtsT := gLtsEqT) p q ↔
+  (p, ∅ : MO (MemAct Atest)) ≼ᴿ[ R ] (q, ∅ : MO (MemAct Atest)).
+Proof. exact (equivalence_rel_and_must_i_sync_co_trace R outcome tconv ta p q). Qed.
+
+End PreorderRelProcesses.
 (* end hide *)
