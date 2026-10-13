@@ -89,7 +89,7 @@ Proof. revert μ μ'. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; split; try 
 Next Obligation. exact (proj_equivalence _ _ R_test_vccs_proj). Qed.
 Next Obligation. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; apply _. Defined.
 Next Obligation.
-  intros [[c v]|[c v]] [[c' v']|[c' v']] eq t; unfold elem_of, Elements_of, 𝐏;
+  intros [[c v]|[c v]] [[c' v']|[c' v']] eq t; unfold elem_of, Elements_of, 𝐄;
     simpl in eq; try contradiction.
   - subst. apply accepts_input_any_value.
   - by injection eq as -> ->.
@@ -101,7 +101,7 @@ Qed.
 Next Obligation. exact (proj_equivalence _ _ R_prog_vccs_proj). Qed.
 Next Obligation. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; apply _. Defined.
 Next Obligation.
-  intros [[c v]|[c v]] [[c' v']|[c' v']] eq p; unfold elem_of, Elements_of, co𝐏;
+  intros [[c v]|[c v]] [[c' v']|[c' v']] eq p; unfold elem_of, Elements_of, co𝐄;
     simpl in eq; try contradiction.
   - by injection eq as -> ->.
   - subst. intros (μ'' & acc & duo & b).

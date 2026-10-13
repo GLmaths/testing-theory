@@ -82,7 +82,7 @@ Section Forwarder_admissible.
 
   Definition LA_admissible_mem : Prop :=
     ∀ η β β'', non_blocking η → dual η β'' → blocking β → R β β'' →
-      ∃ u, dual η u ∧ (𝐏 β : subset_of T) ⊆ 𝐏 u.
+      ∃ u, dual η u ∧ (𝐄 β : subset_of T) ⊆ 𝐄 u.
 
   Lemma LA_admissible_fw :
     LA_admissible P T R → LA_admissible_mem →

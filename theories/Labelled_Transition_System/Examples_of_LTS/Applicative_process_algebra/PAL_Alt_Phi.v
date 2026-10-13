@@ -258,10 +258,10 @@ Section PAL_Alt_Phi.
   Lemma Φ_complete μ μ' : (∀ t : term, t ⟶[μ] → t ⟶[μ']) → Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ'.
   Proof. intros h. symmetry. apply probe_only, h, probe_accepts. Qed.
 
-  Theorem Φ_kernel μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' ↔ (𝐏 μ : subset_of term) ⊆ 𝐏 μ'.
+  Theorem Φ_kernel μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' ↔ (𝐄 μ : subset_of term) ⊆ 𝐄 μ'.
   Proof.
     split.
-    - intros e p. unfold elem_of, Elements_of, 𝐏. by apply Φ_test_spec.
+    - intros e p. unfold elem_of, Elements_of, 𝐄. by apply Φ_test_spec.
     - intros hsub. apply Φ_complete. intros t. apply hsub.
   Qed.
 
@@ -275,7 +275,7 @@ Section PAL_Alt_Phi.
   Lemma R_test_a_dec : RelDecision R_test_a.
   Proof. intros μ μ'. unfold R_test_a. apply _. Defined.
 
-  Lemma R_test_a_spec μ μ' : R_test_a μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ'.
+  Lemma R_test_a_spec μ μ' : R_test_a μ μ' → (𝐄 μ : subset_of term) ⊆ 𝐄 μ'.
   Proof. apply Φ_kernel. Qed.
 
   #[global] Instance gLtsLAtest_PALA : @gLtsLAtest term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) :=
@@ -286,7 +286,7 @@ Section PAL_Alt_Phi.
 
   (* [R_test_a] is the largest [≈ᴛᴇꜱᴛ]. *)
   Lemma R_test_a_largest (R : PALA_Act → PALA_Act → Prop) :
-    (∀ μ μ', R μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ') → ∀ μ μ', R μ μ' → R_test_a μ μ'.
+    (∀ μ μ', R μ μ' → (𝐄 μ : subset_of term) ⊆ 𝐄 μ') → ∀ μ μ', R μ μ' → R_test_a μ μ'.
   Proof. intros hR μ μ' h. apply Φ_kernel, hR, h. Qed.
 End PAL_Alt_Phi.
 (* end hide *)

@@ -124,7 +124,7 @@ Section PAL_LA.
 
   (* ** Equality is the only sound relation *)
 
-  Lemma PAL_𝐏_incl (μ μ' : PAL_Act) : (𝐏 μ : subset_of term) ⊆ 𝐏 μ' → μ = μ'.
+  Lemma PAL_𝐄_incl (μ μ' : PAL_Act) : (𝐄 μ : subset_of term) ⊆ 𝐄 μ' → μ = μ'.
   Proof.
     intros incl. destruct μ as [ot|ot].
     - symmetry. apply (single_in_only ot), (incl (single_in ot)), single_in_accepts.
@@ -132,13 +132,13 @@ Section PAL_LA.
   Qed.
 
   Lemma PAL_LA_test_maximal (R : relation PAL_Act) :
-    (∀ μ μ', R μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ') → ∀ μ μ', R μ μ' → μ = μ'.
-  Proof. intros sound μ μ' h. by apply PAL_𝐏_incl, sound. Qed.
+    (∀ μ μ', R μ μ' → (𝐄 μ : subset_of term) ⊆ 𝐄 μ') → ∀ μ μ', R μ μ' → μ = μ'.
+  Proof. intros sound μ μ' h. by apply PAL_𝐄_incl, sound. Qed.
 
-  Lemma PAL_co𝐏_incl (μ1 μ1' : PAL_Act) : (co𝐏 (Aproc := PAL_Act) μ1 : subset_of term) ⊆ co𝐏 (Aproc := PAL_Act) μ1' → μ1 = μ1'.
+  Lemma PAL_co𝐄_incl (μ1 μ1' : PAL_Act) : (co𝐄 (Aproc := PAL_Act) μ1 : subset_of term) ⊆ co𝐄 (Aproc := PAL_Act) μ1' → μ1 = μ1'.
   Proof.
     intros incl.
-    assert (∀ (μ2 : PAL_Act) (p : term), p ∈ co𝐏 (Aproc := PAL_Act) μ2 ↔ p ∈ 𝐏 (comp_act Val μ2)) as co_iff.
+    assert (∀ (μ2 : PAL_Act) (p : term), p ∈ co𝐄 (Aproc := PAL_Act) μ2 ↔ p ∈ 𝐄 (comp_act Val μ2)) as co_iff.
     { intros [a|a] p; split.
       - intros (μ1'' & acc & duo & _). symmetry in duo.
         first [apply simplify_match_input in duo | apply simplify_match_output in duo].
@@ -149,12 +149,12 @@ Section PAL_LA.
         by subst.
       - intros acc. exists (comp_act Val (ActOut a)). split; [exact acc | split; [done | intros []]]. }
     assert (comp_act Val μ1 = comp_act Val μ1') as eq.
-    { apply PAL_𝐏_incl. intros p acc. apply co_iff, incl, co_iff, acc. }
+    { apply PAL_𝐄_incl. intros p acc. apply co_iff, incl, co_iff, acc. }
     destruct μ1, μ1'; simpl in eq; congruence.
   Qed.
 
   Lemma PAL_LA_prog_maximal (R : relation PAL_Act) :
-    (∀ μ μ', R μ μ' → (co𝐏 (Aproc := PAL_Act) μ : subset_of term) ⊆ co𝐏 (Aproc := PAL_Act) μ') → ∀ μ μ', R μ μ' → μ = μ'.
-  Proof. intros sound μ μ' h. by apply PAL_co𝐏_incl, sound. Qed.
+    (∀ μ μ', R μ μ' → (co𝐄 (Aproc := PAL_Act) μ : subset_of term) ⊆ co𝐄 (Aproc := PAL_Act) μ') → ∀ μ μ', R μ μ' → μ = μ'.
+  Proof. intros sound μ μ' h. by apply PAL_co𝐄_incl, sound. Qed.
 End PAL_LA.
 (* end hide *)

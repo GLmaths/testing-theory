@@ -23,350 +23,147 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses Classes.Morphisms.
-From Stdlib.Logic Require Import ConstructiveEpsilon.
-From stdpp Require Import base tactics finite gmap decidable relations countable.
+From stdpp Require Import base tactics gmap decidable countable.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act.
+From TestingTheory Require Export RelationKernel.
 
-(* * Label abstractions as equivalences on actions *)
+(* LTSs equipped with preorders on actions *)
 
-(* ** LTSs equipped with a test-side label abstraction *)
-Class gLtsLAtest (T : Type) {A : Type} (H : ExtAction A) {gLtsT : gLts T H} :=
-  MkgLtsLAtest {
-    LA_test : A → A → Prop;
-    LA_test_eq : Equivalence LA_test;
-    LA_test_dec : RelDecision LA_test;
-    (* Related actions are accepted by the same tests. *)
-    LA_test_spec μ μ' : LA_test μ μ' → (𝐏 μ : subset_of T) ⊆ 𝐏 μ';
+(* LTSs equipped with a preorders that preserves enabledness *)
+Module EPO.
+Class Enable_PO (T : Type) {At : Type} (Ht : ExtAction At) {gLtsT : gLts T Ht} :=
+  MkEnable_PO {
+    label_preorder : At → At → Prop;
+    label_preorder_is_a_preorder : PreOrder label_preorder;
+    Ready_set_inclusion μ μ' : label_preorder μ μ' → (𝐄 μ : subset_of T) ⊆ 𝐄 μ';
   }.
 
-Arguments gLtsLAtest T {_} H {_}.
-Arguments LA_test T {_ _ _ _} μ μ'.
+Arguments Enable_PO T {_} Ht {_}.
+Arguments label_preorder T {_ _ _ _} μ μ'.
+End EPO.
+Export EPO.
 
-Notation "μ ≈ᴛᴇꜱᴛ μ'" := (LA_test _ μ μ') (at level 70).
+Notation "(≼ᴛᴇꜱᴛ)" := (EPO.label_preorder _).
+Notation "μ ≼ᴛᴇꜱᴛ μ'" := (EPO.label_preorder _ μ μ') (at level 70).
 
-#[global] Instance LA_test_equivalence `{gLtsLAtest T A} : Equivalence (LA_test T).
-Proof. exact LA_test_eq. Defined.
+#[global] Instance EPO_preorder `{Enable_PO T Ht} : PreOrder (EPO.label_preorder T).
+Proof. exact EPO.label_preorder_is_a_preorder. Defined.
 
-#[global] Instance LA_test_decision `{gLtsLAtest T A} : RelDecision (LA_test T).
-Proof. exact LA_test_dec. Defined.
-
-(* ** LTSs equipped with a process-side label abstraction *)
-(* The relation is on the actions of the tests, [A]; the processes act over
-   [Aproc], linked to [A] by [sync] (on one alphabet, [sync] is [dual]). *)
-Class gLtsLAprog (P : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp}
-  {A : Type} (H : ExtAction A) {SA : SyncAction Aproc A} :=
-  MkgLtsLAprog {
-    LA_prog : A → A → Prop;
-    LA_prog_eq : Equivalence LA_prog;
-    LA_prog_dec : RelDecision LA_prog;
-    (* Co-actions of related actions are offered by the same processes. *)
-    LA_prog_spec μ μ' : LA_prog μ μ' → (co𝐏 μ : subset_of P) ⊆ co𝐏 μ';
+(* LTSs equipped with a preorders that preserves co-enabledness *)
+Module CEPO.
+Class CoEnable_PO (P : Type) {Ap : Type} {Hp : ExtAction Ap} {gLtsP : gLts P Hp}
+  {At : Type} (Ht : ExtAction At) {SA : SyncAction Ap At} :=
+  MkCoEnable_PO {
+    label_preorder : At → At → Prop;
+    label_preorder_is_a_preorder : PreOrder label_preorder;
+    coR_reverse_inclusion μ μ' : label_preorder μ μ' → (co𝐄 μ' : subset_of P) ⊆ co𝐄 μ;
   }.
 
-Arguments gLtsLAprog P {_ _ _ _} H {_}.
-Arguments LA_prog P {_ _ _ _ _ _ _} μ μ'.
+Arguments CoEnable_PO P {_ _ _ _} Ht {_}.
+Arguments label_preorder P {_ _ _ _ _ _ _} μ μ'.
+End CEPO.
+Export CEPO.
 
-Notation "μ ≈ᴘʀᴏ μ'" := (LA_prog _ μ μ') (at level 70).
+Notation "(≼ᴘʀᴏ)" := (CEPO.label_preorder _).
+Notation "μ ≼ᴘʀᴏ μ'" := (CEPO.label_preorder _ μ μ') (at level 70).
 
-#[global] Instance LA_prog_equivalence `{gLtsLAprog P (A := A)} : Equivalence (LA_prog P).
-Proof. exact LA_prog_eq. Defined.
+#[global] Instance CEPO_preorder `{CoEnable_PO P (At := At)} : PreOrder (CEPO.label_preorder P).
+Proof. exact CEPO.label_preorder_is_a_preorder. Defined.
 
-#[global] Instance LA_prog_decision `{gLtsLAprog P (A := A)} : RelDecision (LA_prog P).
-Proof. exact LA_prog_dec. Defined.
+(* ** Properties of enabledness preorders *)
+Section EPO_properties.
+  Context {T At : Type} {Ht : ExtAction At} {gLtsT : gLts T Ht} {EPO : Enable_PO T Ht}.
 
-(* ** Properties of test-side label abstractions *)
-Section LA_test_properties.
-  Context {T A : Type} {H : ExtAction A} {gLtsT : gLts T H} {LAt : gLtsLAtest T H}.
+  Lemma accepts_preserved_by_EPO (t : T) μ μ' :
+    μ ≼ᴛᴇꜱᴛ μ' → t ⟶[μ] → t ⟶[μ'].
+  Proof. intros le. exact (Ready_set_inclusion μ μ' le t). Qed.
 
-  Lemma accepts_preserved_by_LA_test (t : T) μ μ' :
-    μ ≈ᴛᴇꜱᴛ μ' → t ⟶[μ] → t ⟶[μ'].
-  Proof. intros eq. exact (LA_test_spec μ μ' eq t). Qed.
+  Lemma refuses_reflected_by_EPO (t : T) μ μ' :
+    μ ≼ᴛᴇꜱᴛ μ' → t ↛[μ'] → t ↛[μ].
+  Proof. intros le refuses accepts. apply refuses. by eapply accepts_preserved_by_EPO. Qed.
 
-  Lemma accepts_LA_test_iff (t : T) μ μ' :
-    μ ≈ᴛᴇꜱᴛ μ' → t ⟶[μ] ↔ t ⟶[μ'].
-  Proof. intros eq. split; apply accepts_preserved_by_LA_test; [done | by symmetry]. Qed.
+  #[global] Instance Proper_accepts_EPO (t : T) :
+    Proper ((≼ᴛᴇꜱᴛ) ==> impl) (λ μ, t ⟶[μ]).
+  Proof. intros μ μ' le. exact (accepts_preserved_by_EPO t μ μ' le). Qed.
 
-  Lemma refuses_preserved_by_LA_test (t : T) μ μ' :
-    μ ≈ᴛᴇꜱᴛ μ' → t ↛[μ] → t ↛[μ'].
-  Proof.
-    intros eq refuses accepts.
-    apply refuses. eapply (accepts_preserved_by_LA_test t μ' μ); [by symmetry | exact accepts].
-  Qed.
+  #[global] Instance Proper_refuses_EPO (t : T) :
+    Proper (flip (≼ᴛᴇꜱᴛ) ==> impl) (λ μ, t ↛[μ]).
+  Proof. intros μ μ' le. exact (refuses_reflected_by_EPO t μ' μ le). Qed.
+End EPO_properties.
 
-  Lemma refuses_LA_test_iff (t : T) μ μ' :
-    μ ≈ᴛᴇꜱᴛ μ' → t ↛[μ] ↔ t ↛[μ'].
-  Proof. intros eq. split; apply refuses_preserved_by_LA_test; [done | by symmetry]. Qed.
+(* ** Properties of co-enabledness preorders *)
+Section CEPO_properties.
+  Context {P Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At} {SA : SyncAction Ap At}.
+  Context {gLtsP : gLts P Hp} {CEPO : CoEnable_PO P Ht}.
 
-  Lemma R_preserved_by_LA_test (t : T) μ μ' :
-    μ ≈ᴛᴇꜱᴛ μ' → μ ∈ R t → μ' ∈ R t.
-  Proof. apply accepts_preserved_by_LA_test. Qed.
+  Lemma co𝐄_reflected_by_CEPO (p : P) μ μ' :
+    μ ≼ᴘʀᴏ μ' → p ∈ co𝐄 μ' → p ∈ co𝐄 μ.
+  Proof. intros le. exact (coR_reverse_inclusion μ μ' le p). Qed.
 
-  #[global] Instance Proper_accepts_LA_test (t : T) :
-    Proper (LA_test T ==> iff) (λ μ, t ⟶[μ]).
-  Proof. intros μ μ' eq. by apply accepts_LA_test_iff. Qed.
-
-  #[global] Instance Proper_refuses_LA_test (t : T) :
-    Proper (LA_test T ==> iff) (λ μ, t ↛[μ]).
-  Proof. intros μ μ' eq. by apply refuses_LA_test_iff. Qed.
-End LA_test_properties.
-
-(* ** Properties of process-side label abstractions *)
-Section LA_prog_properties.
-  Context {P Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}.
-  Context {gLtsP : gLts P Hp} {LAp : gLtsLAprog P H}.
-
-  Lemma coP_preserved_by_LA_prog (p : P) μ μ' :
-    μ ≈ᴘʀᴏ μ' → p ∈ co𝐏 μ → p ∈ co𝐏 μ'.
-  Proof. intros eq. exact (LA_prog_spec μ μ' eq p). Qed.
-
-  Lemma coP_LA_prog_iff (p : P) μ μ' :
-    μ ≈ᴘʀᴏ μ' → p ∈ co𝐏 μ ↔ p ∈ co𝐏 μ'.
-  Proof. intros eq. split; apply coP_preserved_by_LA_prog; [done | by symmetry]. Qed.
-
-  Lemma coR_preserved_by_LA_prog (p : P) μ β' :
-    μ ≈ᴘʀᴏ β' → μ ∈ coR p → β' ∈ coR p.
-  Proof. intros eq. exact (coP_preserved_by_LA_prog p μ β' eq). Qed.
-
-  #[global] Instance Proper_coP_LA_prog (p : P) :
-    Proper (LA_prog P ==> iff) (λ μ, p ∈ co𝐏 μ).
-  Proof. intros μ μ' eq. by apply coP_LA_prog_iff. Qed.
-End LA_prog_properties.
+  #[global] Instance Proper_co𝐄_CEPO (p : P) :
+    Proper (flip (≼ᴘʀᴏ) ==> impl) (λ μ, p ∈ co𝐄 μ).
+  Proof. intros μ μ' le. exact (co𝐄_reflected_by_CEPO p μ' μ le). Qed.
+End CEPO_properties.
 
 (* ** Compatibility with a bisimulation *)
-Section LA_eq_rel.
-  Context {S A : Type} {H : ExtAction A} {gLtsEqS : gLtsEq S H}.
+Section CEPO_EPO_and_Bissimulation_properties.
+  Context {S Ap : Type} {Hp : ExtAction Ap} {gLtsEqS : gLtsEq S Hp}.
 
-  Lemma 𝐏_preserved_by_eq (s s' : S) μ : s ∈ 𝐏 μ → s ⋍ s' → s' ∈ 𝐏 μ.
+  Lemma 𝐄_preserved_by_eq (s s' : S) μ : s ∈ 𝐄 μ → s ⋍ s' → s' ∈ 𝐄 μ.
   Proof. apply accepts_preserved_by_eq. Qed.
 
-  Context {Atest : Type} {Ht : ExtAction Atest} {SA : SyncAction A Atest}.
+  Context {At : Type} {Ht : ExtAction At} {SA : SyncAction Ap At}.
 
-  Lemma co𝐏_preserved_by_eq (s s' : S) (μ : Atest) : s ∈ co𝐏 μ → s ⋍ s' → s' ∈ co𝐏 μ.
+  Lemma co𝐄_preserved_by_eq (s s' : S) (μ : At) : s ∈ co𝐄 μ → s ⋍ s' → s' ∈ co𝐄 μ.
   Proof.
     intros (μ'' & accepts & duo & b) eq. exists μ''. split_and!; [| done | done].
     by eapply accepts_preserved_by_eq.
   Qed.
-End LA_eq_rel.
+End CEPO_EPO_and_Bissimulation_properties.
 
-(* * Canonical projections (independent of any LTS) *)
-
-(* [f] is the canonical projection of [R]. *)
-Class LA_proj {A B : Type} (R : relation A) (f : A → B) :=
-  LA_proj_spec μ μ' : f μ = f μ' ↔ R μ μ'.
-
-(* Each class of [f] has a representative. *)
-Class LA_surj {A B : Type} (f : A → B) :=
-  MkLA_surj {
-    LA_repr : B → A;
-    LA_repr_spec x : f (LA_repr x) = x;
+Class Label_abstraction (P T : Type) {Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
+  {gLtsP : gLts P Hp} {gLtsT : gLts T Ht} {SA : SyncAction Ap At} :=
+  MkLA {
+    EPO :: Enable_PO T Ht;
+    CEPO :: CoEnable_PO P Ht;
+    Label_abstraction_dec :
+      RelDecision (Ker ((≼ᴛᴇꜱᴛ) ⨾ (≼ᴘʀᴏ)));
   }.
 
-Lemma proj_equivalence {A B : Type} (R : relation A) (f : A → B) :
-  LA_proj R f → Equivalence R.
-Proof.
-  intros spec. split.
-  - intros μ. by apply spec.
-  - intros μ μ' h. apply spec. symmetry. by apply spec.
-  - intros μ μ' μ'' h h'. apply spec. transitivity (f μ'); by apply spec.
-Qed.
+Arguments Label_abstraction P T {_ _ _ _ _ _ _}.
 
-(* A relation with a canonical projection into a type with decidable equality is decidable. *)
-Lemma proj_rel_dec {A B : Type} `{EqDecision B} (R : relation A) (f : A → B) :
-  LA_proj R f → RelDecision R.
-Proof.
-  intros spec μ μ'. destruct (decide (f μ = f μ')) as [h|h].
-  - left. by apply spec.
-  - right. intros h'. apply h, spec, h'.
-Qed.
+Notation "(≼ᴛᴇꜱᴛ[ 𝔸 ])" := (EPO.label_preorder _ (Enable_PO := EPO (Label_abstraction := 𝔸)))
+  (format "(≼ᴛᴇꜱᴛ[ 𝔸 ])").
+Notation "μ ≼ᴛᴇꜱᴛ[ 𝔸 ] μ'" := (EPO.label_preorder _ (Enable_PO := EPO (Label_abstraction := 𝔸)) μ μ')
+  (at level 70, format "μ  ≼ᴛᴇꜱᴛ[ 𝔸 ]  μ'").
+Notation "(≼ᴘʀᴏ[ 𝔸 ])" := (CEPO.label_preorder _ (CoEnable_PO := CEPO (Label_abstraction := 𝔸)))
+  (format "(≼ᴘʀᴏ[ 𝔸 ])").
+Notation "μ ≼ᴘʀᴏ[ 𝔸 ] μ'" := (CEPO.label_preorder _ (CoEnable_PO := CEPO (Label_abstraction := 𝔸)) μ μ')
+  (at level 70, format "μ  ≼ᴘʀᴏ[ 𝔸 ]  μ'").
 
-Lemma test_spec_of_proj `{gLtsLAtest T A} {B : Type} (φ : A → B) `{!LA_proj (LA_test T) φ}
-  (t : T) β β' : φ β = φ β' → β ∈ R t → β' ∈ R t.
-Proof. intros eq. apply R_preserved_by_LA_test. by apply LA_proj_spec. Qed.
+Definition label_ker {P T Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
+  {gLtsP : gLts P Hp} {gLtsT : gLts T Ht} {SA : SyncAction Ap At}
+  (𝔸 : Label_abstraction P T) : relation At :=
+  Ker ((≼ᴛᴇꜱᴛ[𝔸]) ⨾ (≼ᴘʀᴏ[𝔸])).
 
-(* ** Joining two abstractions *)
+Notation "μ ≈[ 𝔸 ] μ'" := (label_ker 𝔸 μ μ') (at level 70, format "μ  ≈[ 𝔸 ]  μ'").
 
-(* [μ] and [μ'] are related when some [u0 ≈ᴛᴇꜱᴛ μ] and [u1 ≈ᴛᴇꜱᴛ μ'] satisfy [u0 ≈ᴘʀᴏ u1]. *)
-Definition LA_rel {A : Type} (R_prog R_test : relation A) : relation A :=
-  λ μ μ', ∃ u0 u1, R_test μ u0 ∧ R_test μ' u1 ∧ R_prog u0 u1.
+#[global] Instance label_ker_dec `{𝔸 : Label_abstraction P T (At := At)} : RelDecision (label_ker 𝔸).
+Proof. exact (Label_abstraction_dec (Label_abstraction := 𝔸)). Defined.
 
-(* The joined equivalence is the transitive closure of [LA_rel]. *)
-Definition LA_equiv {A : Type} (R_prog R_test : relation A) : relation A :=
-  tc (LA_rel R_prog R_test).
+#[global] Instance label_ker_equivalence `{𝔸 : Label_abstraction P T (At := At)} :
+  Equivalence (label_ker 𝔸).
+Proof. apply rel_ker_equivalence. Defined.
 
-Section Join.
-  Context {A : Type} (R_prog R_test : relation A) `{!Equivalence R_prog} `{!Equivalence R_test}.
+Coercion label_ker : Label_abstraction >-> relation.
 
-  Lemma LA_rel_reflexive : Reflexive (LA_rel R_prog R_test).
-  Proof. intros μ. exists μ, μ. split_and!; reflexivity. Qed.
+Class Finitary_Label_abstraction (P T : Type) {Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
+  {gLtsP : gLts P Hp} {gLtsT : gLts T Ht} {SA : SyncAction Ap At} :=
+  MkFLA {
+    𝔸 :: Label_abstraction P T;
+    coRₐ : P → gset (At / 𝔸);
+    coRₐ_spec (p : P) x : x ∈ coRₐ p ↔ x ∈ ⌈ ρ[𝔸] ⌉ (coR p);
+  }.
 
-  Lemma LA_rel_symmetric : Symmetric (LA_rel R_prog R_test).
-  Proof.
-    intros μ μ' (u0 & u1 & h0 & h1 & hp).
-    exists u1, u0. split_and!; [done | done | by symmetry].
-  Qed.
-
-  (* Not a global instance: it would loop on [Equivalence ?R]. *)
-  Lemma LA_equiv_equivalence : Equivalence (LA_equiv R_prog R_test).
-  Proof.
-    split.
-    - intros μ. apply tc_once, LA_rel_reflexive.
-    - intros μ μ' h. induction h as [x y h | x y z h _ IH].
-      + apply tc_once. by apply LA_rel_symmetric.
-      + eapply tc_r; [exact IH |]. by apply LA_rel_symmetric.
-    - apply tc_transitive.
-  Qed.
-
-  Lemma R_test_LA_equiv μ μ' : R_test μ μ' → LA_equiv R_prog R_test μ μ'.
-  Proof. intros h. apply tc_once. exists μ', μ'. split_and!; [done | reflexivity | reflexivity]. Qed.
-
-  Lemma R_prog_LA_equiv μ μ' : R_prog μ μ' → LA_equiv R_prog R_test μ μ'.
-  Proof. intros h. apply tc_once. exists μ, μ'. split_and!; [reflexivity | reflexivity | done]. Qed.
-
-  (* A map constant on both equivalences is constant on the joined one. *)
-  Lemma LA_equiv_ind {B : Type} (f : A → B) :
-    (∀ μ μ', R_test μ μ' → f μ = f μ') →
-    (∀ μ μ', R_prog μ μ' → f μ = f μ') →
-    ∀ μ μ', LA_equiv R_prog R_test μ μ' → f μ = f μ'.
-  Proof.
-    intros ht hp μ μ' h.
-    induction h as [x y (u0 & u1 & h0 & h1 & h01) | x y z (u0 & u1 & h0 & h1 & h01) _ IH].
-    - rewrite (ht _ _ h0), (hp _ _ h01). symmetry. by apply ht.
-    - rewrite <- IH, (ht _ _ h0), (hp _ _ h01). symmetry. by apply ht.
-  Qed.
-
-  (* To show that [ρ] is the canonical projection of [LA_equiv]. *)
-  Lemma LA_equiv_proj {B : Type} (ρ : A → B) :
-    (∀ μ μ', R_test μ μ' → ρ μ = ρ μ') →
-    (∀ μ μ', R_prog μ μ' → ρ μ = ρ μ') →
-    (∀ μ μ', ρ μ = ρ μ' → LA_equiv R_prog R_test μ μ') →
-    LA_proj (LA_equiv R_prog R_test) ρ.
-  Proof. intros ht hp hρ μ μ'. split; [apply hρ | by apply LA_equiv_ind]. Qed.
-
-End Join.
-
-(* ** The completion of [ρ] along [φ] *)
-Section Completion.
-  Context {A FinA PreAct : Type} (R_prog R_test : relation A)
-    `{!Equivalence R_prog} `{!Equivalence R_test}
-    (φ : A → FinA) (ρ : A → PreAct)
-    `{!LA_proj R_test φ} `{!LA_surj φ} `{!LA_proj (LA_equiv R_prog R_test) ρ}.
-
-  Definition LA_complete (x : FinA) : PreAct := ρ (LA_repr x).
-
-  Lemma LA_complete_spec μ : LA_complete (φ μ) = ρ μ.
-  Proof.
-    unfold LA_complete. apply (LA_proj_spec (R := LA_equiv R_prog R_test)).
-    apply R_test_LA_equiv; [apply _ | apply _ |].
-    apply (LA_proj_spec (f := φ)), LA_repr_spec.
-  Qed.
-
-  (* [LA_complete] is the only map [κ] such that [κ ∘ φ = ρ]. *)
-  Lemma LA_complete_unique (κ : FinA → PreAct) :
-    (∀ μ, κ (φ μ) = ρ μ) → ∀ x, κ x = LA_complete x.
-  Proof. intros spec x. unfold LA_complete. rewrite <- spec. by rewrite LA_repr_spec. Qed.
-End Completion.
-
-(* * Constructive canonical surjection
-
-    For a decidable equivalence [R] on a countable type, the representative of
-    a class is its element of least index ([encode_nat]); the quotient is the
-    type of representatives. No axiom is used. *)
-Section Canonical.
-  Context {A : Type} `{Countable A} (R : relation A) `{!Equivalence R} `{!RelDecision R}.
-
-  Definition canon_pred (μ : A) (n : nat) : Prop := ∃ x, decode_nat n = Some x ∧ R x μ.
-
-  Lemma canon_pred_dec μ n : {canon_pred μ n} + {¬ canon_pred μ n}.
-  Proof.
-    unfold canon_pred. destruct (decode_nat n) as [x|].
-    - destruct (decide (R x μ)) as [h|h].
-      + left. by exists x.
-      + right. intros (y & [= <-] & h'). done.
-    - right. by intros (y & ? & _).
-  Defined.
-
-  Lemma canon_pred_ex μ : ∃ n, canon_pred μ n.
-  Proof. exists (encode_nat μ), μ. split; [apply decode_encode_nat | reflexivity]. Qed.
-
-  (* The least index of an element of the class of [μ]. *)
-  Definition canon_index (μ : A) : nat :=
-    proj1_sig (epsilon_smallest (canon_pred μ) (canon_pred_dec μ) (canon_pred_ex μ)).
-
-  Lemma canon_index_spec μ :
-    canon_pred μ (canon_index μ) ∧ ∀ k, canon_pred μ k → canon_index μ ≤ k.
-  Proof. unfold canon_index. destruct (epsilon_smallest _ _ _) as [n h]. exact h. Qed.
-
-  (* The representative of the class of [μ]. *)
-  Definition canon (μ : A) : A :=
-    match decode_nat (canon_index μ) with Some x => x | None => μ end.
-
-  Lemma canon_related μ : R (canon μ) μ.
-  Proof.
-    unfold canon. destruct (canon_index_spec μ) as ((x & eq & h) & _).
-    by rewrite eq.
-  Qed.
-
-  Lemma canon_index_class μ μ' : R μ μ' → canon_index μ = canon_index μ'.
-  Proof.
-    intros h.
-    assert (∀ n, canon_pred μ n ↔ canon_pred μ' n) as iff.
-    { intros n. unfold canon_pred.
-      split; intros (x & ? & hx); exists x; split;
-        [done | by transitivity μ | done | transitivity μ'; [done | by symmetry]]. }
-    destruct (canon_index_spec μ) as (h1 & min1), (canon_index_spec μ') as (h2 & min2).
-    apply Nat.le_antisymm; [apply min1, iff, h2 | apply min2, iff, h1].
-  Qed.
-
-  Lemma canon_kernel μ μ' : canon μ = canon μ' ↔ R μ μ'.
-  Proof.
-    split.
-    - intros eq. transitivity (canon μ); [symmetry; apply canon_related |].
-      rewrite eq. apply canon_related.
-    - intros h. unfold canon. rewrite (canon_index_class μ μ' h).
-      destruct (canon_index_spec μ') as ((x & eq & _) & _). by rewrite eq.
-  Qed.
-
-  Lemma canon_idempotent μ : canon (canon μ) = canon μ.
-  Proof. apply canon_kernel, canon_related. Qed.
-
-  (* The quotient: the type of representatives. *)
-  Definition LA_quotient : Type := dsig (λ x, canon x = x).
-
-  (* The canonical surjection. *)
-  Definition LA_class (μ : A) : LA_quotient := dexist (canon μ) (canon_idempotent μ).
-
-  (* Not global instances, to keep instance search predictable. *)
-  Lemma LA_class_proj : LA_proj R LA_class.
-  Proof.
-    intros μ μ'. rewrite <- canon_kernel. unfold LA_class, LA_quotient. split.
-    - intros h. by apply (f_equal proj1_sig) in h.
-    - intros h. by apply dsig_eq.
-  Qed.
-
-  Definition LA_class_surj : LA_surj LA_class.
-  Proof.
-    refine {| LA_repr q := `q |}.
-    intros [x h]. apply dsig_eq. simpl. by apply bool_decide_unpack in h.
-  Defined.
-End Canonical.
-
-(* ** The canonical surjections of the label abstractions *)
-Section Canonical_LA.
-  Context {P T Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}
-    {gLtsP : gLts P Hp} {gLtsT : gLts T H}
-    {LAp : gLtsLAprog P H} {LAt : gLtsLAtest T H}.
-
-  #[local] Existing Instance LA_equiv_equivalence.
-
-  (* [φ]: the canonical surjection of [≈ᴛᴇꜱᴛ]. *)
-  Definition LA_φ : A → LA_quotient (LA_test T) := LA_class (LA_test T).
-
-  (* [δ]: the canonical surjection of [≈ᴘʀᴏ]. *)
-  Definition LA_δ : A → LA_quotient (LA_prog P) := LA_class (LA_prog P).
-
-  (* [ρ]: the canonical surjection of the joined equivalence, when it is decidable. *)
-  Definition LA_ρ `{!RelDecision (LA_equiv (LA_prog P) (LA_test T))} :
-    A → LA_quotient (LA_equiv (LA_prog P) (LA_test T)) :=
-    LA_class (LA_equiv (LA_prog P) (LA_test T)).
-End Canonical_LA.
+Arguments Finitary_Label_abstraction P T {_ _ _ _ _ _ _}.
 (* end hide *)

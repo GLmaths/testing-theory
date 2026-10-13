@@ -58,14 +58,14 @@ Section LA_prog_FW.
   Proof. intros μ μ'. unfold LA_prog_FW. apply _. Defined.
 
   Lemma LA_prog_FW_spec μ μ' :
-    LA_prog_FW (LA_prog P) μ μ' → (co𝐏 μ : subset_of (P * MO A)) ⊆ co𝐏 μ'.
+    LA_prog_FW (LA_prog P) μ μ' → (co𝐄 μ : subset_of (P * MO A)) ⊆ co𝐄 μ'.
   Proof.
     intros [<- | (hR & bco & bco')]; [done |].
     intros [p m] (μ'' & acc & duo & b).
     apply lts_performs_spec1 in acc as ((p', m') & tr).
     inversion tr as [? ? ? ? l | ? ? ? ? l |]; subst.
     - (* the process moves *)
-      assert (p ∈ co𝐏 μ) as mem.
+      assert (p ∈ co𝐄 μ) as mem.
       { exists μ''. split_and!; [| done | done]. eapply lts_performs_spec2. by exists p'. }
       destruct (coP_preserved_by_LA_prog p μ μ' hR mem) as (μ3 & acc3 & duo3 & b3).
       apply lts_performs_spec1 in acc3 as (p3 & tr3).

@@ -24,13 +24,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable gmap.
-From TestingTheory Require Import ActTau gLts SyncActions Subset_Act LabelAbstraction LabelKernel.
-
-Class LA_admissible (P T : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp}
-  {A : Type} {H : ExtAction A} {gLtsT : gLts T H} {SA : SyncAction Aproc A}
-  (R : relation A) :=
-  LA_adm_step (p : P) β β'' :
-    blocking β → R β β'' → β'' ∈ coR p → ∃ u, u ∈ coR p ∧ (𝐏 β : subset_of T) ⊆ 𝐏 u.
+From TestingTheory Require Import ActTau gLts SyncActions Subset_Act LabelAbstraction RelationKernel.
 
 Section Admissible.
   Context {P T Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}
@@ -49,8 +43,8 @@ Section Admissible.
   Proof. apply LA_admissible_sub. by intros μ μ' [_ h]. Qed.
 
   Lemma LA_admissible_of_pre (Rt Rp R : relation A) :
-    (∀ μ μ', Rt μ μ' → (𝐏 μ : subset_of T) ⊆ 𝐏 μ') →
-    (∀ μ μ', Rp μ μ' → (co𝐏 μ' : subset_of P) ⊆ co𝐏 μ) →
+    (∀ μ μ', Rt μ μ' → (𝐄 μ : subset_of T) ⊆ 𝐄 μ') →
+    (∀ μ μ', Rp μ μ' → (co𝐄 μ' : subset_of P) ⊆ co𝐄 μ) →
     (∀ μ μ', R μ μ' → ∃ u, Rt μ u ∧ Rp u μ') →
     LA_admissible P T R.
   Proof.
@@ -64,10 +58,10 @@ Section Kernel_admissible.
   Context {P Q T Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}
     {gLtsP : gLts P Hp} {gLtsQ : gLts Q Hp} {gLtsT : gLts T H}.
   Context (Rt RpP RpQ : relation A) `{!PreOrder Rt, !PreOrder RpP, !PreOrder RpQ}.
-  Context (ht : ∀ μ μ', Rt μ μ' → (𝐏 μ : subset_of T) ⊆ 𝐏 μ').
+  Context (ht : ∀ μ μ', Rt μ μ' → (𝐄 μ : subset_of T) ⊆ 𝐄 μ').
 
   Lemma LA_K_admissible_l :
-    (∀ μ μ', RpP μ μ' → (co𝐏 μ' : subset_of P) ⊆ co𝐏 μ) →
+    (∀ μ μ', RpP μ μ' → (co𝐄 μ' : subset_of P) ⊆ co𝐄 μ) →
     LA_admissible P T (LA_K Rt RpP RpQ).
   Proof.
     intros hp. apply (LA_admissible_of_pre Rt RpP); [exact ht | exact hp |].
@@ -76,7 +70,7 @@ Section Kernel_admissible.
   Qed.
 
   Lemma LA_K_admissible_r :
-    (∀ μ μ', RpQ μ μ' → (co𝐏 μ' : subset_of Q) ⊆ co𝐏 μ) →
+    (∀ μ μ', RpQ μ μ' → (co𝐄 μ' : subset_of Q) ⊆ co𝐄 μ) →
     LA_admissible Q T (LA_K Rt RpP RpQ).
   Proof.
     intros hq. apply (LA_admissible_of_pre Rt RpQ); [exact ht | exact hq |].
@@ -97,14 +91,6 @@ Qed.
 Lemma rel_inter_dec {A : Type} (R1 R2 : relation A) `{!RelDecision R1, !RelDecision R2} :
   RelDecision (λ μ μ', R1 μ μ' ∧ R2 μ μ').
 Proof. intros μ μ'. apply _. Defined.
-
-Class FinitaryLA (P : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp}
-  {A : Type} {H : ExtAction A} {SA : SyncAction Aproc A}
-  (R : relation A) `{!Equivalence R} `{!RelDecision R} :=
-  MkFinitaryLA {
-    coR_absR : P → gset (LA_quotient R);
-    coR_absR_spec p x : x ∈ coR_absR p ↔ ∃ β, β ∈ coR p ∧ LA_class R β = x;
-  }.
 
 Section Finitary_of_rep.
   Context {P Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}

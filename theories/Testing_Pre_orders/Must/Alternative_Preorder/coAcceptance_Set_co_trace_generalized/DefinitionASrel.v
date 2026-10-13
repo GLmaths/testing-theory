@@ -31,7 +31,7 @@ Class AbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → Pr
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} :=
   abstraction_step (p : P) β β'' :
-    blocking β → Γ β = Γ β'' → β'' ∈ coR p → ∃ u, u ∈ coR p ∧ (𝐏 β : subset_of T) ⊆ 𝐏 u.
+    blocking β → Γ β = Γ β'' → β'' ∈ coR p → ∃ u, u ∈ coR p ∧ (𝐄 β : subset_of T) ⊆ 𝐄 u.
 
 Class FinitaryAbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}

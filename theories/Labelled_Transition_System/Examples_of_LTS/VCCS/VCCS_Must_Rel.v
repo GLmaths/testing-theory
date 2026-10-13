@@ -27,7 +27,7 @@ From stdpp Require Import base tactics decidable countable finite gmap gmultiset
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
   InteractionBetweenLts MultisetLTSConstruction MemAction InteractionUnion MemForwarder
   ForwarderMem LiftMem InputOutputActions VCCS_Instance coFiniteImage VCCS_CoFiniteImage InListPropHelper
-  Testing_Predicate Must VCCS_ta_tc_gen VCCS_LabelAbstraction
+  Testing_Predicate Must VCCS_ta_tc_gen
   LabelAbstraction LabelAdmissible LabelAdmissibleFw DefinitionASrel EquivalenceASsync BridgeASsync BlockingLift.
 From TestingTheory Require Completeness CompletenessASsync.
 

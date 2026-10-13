@@ -43,12 +43,12 @@ Definition coR `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc 
   fun μ1 => exists μ2, p ⟶[μ2] /\ sync μ2 μ1 /\ blocking μ1.
 (* begin hide *)
 
-(* ** All processes accepting an action *)
-Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
+(* ** Enableness of an action μ : all processes accepting an action *)
+Definition 𝐄 `{gLts P A} (μ : A) : subset_of P :=
   fun p => p ⟶[μ].
 
-(* ** All processes accepting a co-action *)
-Definition co𝐏 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
+(* ** Co-Enableness of an action μ : all processes accepting a co-action *)
+Definition co𝐄 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (μ : Atest) : subset_of P :=
   fun p => coR p μ.
 

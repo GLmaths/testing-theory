@@ -27,7 +27,7 @@ From stdpp Require Import base tactics decidable countable finite gmap gmultiset
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
   InteractionBetweenLts MultisetLTSConstruction MemAction InteractionUnion MemForwarder
   ForwarderMem LiftMem InputOutputActions VACCS_Instance coFiniteImage VACCS_CoFiniteImage InListPropHelper
-  Testing_Predicate Must VACCS_ta_tc_gen VACCS_LabelAbstraction
+  Testing_Predicate Must VACCS_ta_tc_gen
   LabelAbstraction LabelAdmissible LabelAdmissibleFw DefinitionASrel EquivalenceASsync BridgeASsync.
 From TestingTheory Require Completeness CompletenessASsync.
 
@@ -270,6 +270,15 @@ End VACCS_Fw_cofinite.
 
 Section VACCS_Rel.
   Context `{VP : VACCS_Parameters}.
+
+  Lemma accepts_input_any_value (p : proc) c v w :
+    p ⟶[ActIn (c , v)] → p ⟶[ActIn (c , w)].
+  Proof.
+    intros acc.
+    assert (∀ a, ¬ @non_blocking _ VACCS_ExtAction (ActIn a)) as b by (intros a [? h]; discriminate h).
+    exact (@DefinitionAS.abstraction_test_spec _ _ _ _ _ _ _ _ _ _ _ _ _ AbsVACCS p
+             (ActIn (c , v)) (ActIn (c , w)) (b _) (b _) eq_refl acc).
+  Qed.
 
   Notation A := (ExtAct TypeOfActions).
 
