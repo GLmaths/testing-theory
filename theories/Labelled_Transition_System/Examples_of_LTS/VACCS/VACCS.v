@@ -20,14 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import Clos_n InputOutputActions ActTau.
-
+(* begin hide *)
 (* Values and their bound variables *)
 Inductive Data (MyType : Type) :=
 | cst : MyType -> Data MyType
@@ -179,7 +179,7 @@ Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
 Notation "P + Q" := (gpr_choice P Q).
 Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Notation "c ! v • 𝟘" := (pr_output c v) (at level 50).
-Notation "c ? P" := (gpr_input c P) (at level 50).
+Notation "c ? • P" := (gpr_input c P) (at level 50).
 Notation "'𝛕' • P" := (gpr_tau P) (at level 50).
 Notation "'ν' P" := (pr_restrict P) (at level 50).
 Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
@@ -220,7 +220,7 @@ with subst_in_gproc k X M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => c ? (subst_in_proc (S k) (Succ_bvar X) p)
+| c ? • p => c ? • (subst_in_proc (S k) (Succ_bvar X) p)
 | 𝛕 • p => 𝛕 • (subst_in_proc k X p)
 | p1 + p2 => (subst_in_gproc k X p1) + (subst_in_gproc k X p2)
 end.
@@ -255,7 +255,7 @@ with gNewVar k M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => c ? (NewVar (S k) p)
+| c ? • p => c ? • (NewVar (S k) p)
 | 𝛕 • p => 𝛕 • (NewVar k p)
 | p1 + p2 => (gNewVar k p1) + (gNewVar k p2)
 end.
@@ -283,7 +283,7 @@ with gNewVarC k M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => (NewVar_in_ChannelData k c) ? (NewVarC k p)
+| c ? • p => (NewVar_in_ChannelData k c) ? • (NewVarC k p)
 | 𝛕 • p => 𝛕 • (NewVarC k p)
 | p1 + p2 => (gNewVarC k p1) + (gNewVarC k p2)
 end.
@@ -337,7 +337,7 @@ end
 with gpr_subst id p q {struct p} := match p with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => c ? (pr_subst id p (NewVar 0 q))
+| c ? • p => c ? • (pr_subst id p (NewVar 0 q))
 | 𝛕 • p => 𝛕 • (pr_subst id p q)
 | p1 + p2 => (gpr_subst id p1 q) + (gpr_subst id p2 q)
 end.
@@ -349,7 +349,7 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 (* begin hide *)
 (* The Input and the Output *)
 | lts_input : forall {c v P},
-    lts (c ? P) ((c , v) ?) (P^v)
+    lts (c ? • P) ((c , v) ?) (P^v)
 | lts_output : forall {c v},
     lts (c ! v • 𝟘) ((c , v) !) 𝟘
 
@@ -413,7 +413,7 @@ with gsize p :=
   match p with
   | ① => 1
   | 𝟘 => 0
-  | c ? p => S (size p)
+  | c ? • p => S (size p)
   | 𝛕 • p => S (size p)
   | p + q => S (gsize p + gsize q)
 end.
@@ -449,7 +449,7 @@ with gVarSwap_in_proc k0 M {struct M} : gproc :=
 match M with 
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => (VarSwap_in_ChannelData k0 c) ? (VarSwap_in_proc k0 p)
+| c ? • p => (VarSwap_in_ChannelData k0 c) ? • (VarSwap_in_proc k0 p)
 | 𝛕 • p => 𝛕 • (VarSwap_in_proc k0 p)
 | p1 + p2 => (gVarSwap_in_proc k0 p1) + (gVarSwap_in_proc k0 p2)
 end.
@@ -783,7 +783,7 @@ Global Notation "'rec' x '•' p" := (pr_rec x p) (at level 50).
 Global Notation "P + Q" := (gpr_choice P Q).
 Global Notation "P ‖ Q" := (pr_par P Q) (at level 50).
 Global Notation "c ! v • 𝟘" := (pr_output c v) (at level 50).
-Global Notation "c ? P" := (gpr_input c P) (at level 50).
+Global Notation "c ? • P" := (gpr_input c P) (at level 50).
 Global Notation "'𝛕' • P" := (gpr_tau P) (at level 50).
 Global Notation "'ν' P" := (pr_restrict P) (at level 50).
 Global Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)

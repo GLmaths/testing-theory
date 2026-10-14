@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * One alphabet out of two: [Aproc ⊎ Atest]
 
     A forwarder talking to an observer over another alphabet acts on both: its
@@ -38,11 +39,12 @@
     [exists_dual] needs nothing from [sync] — each side supplies its own duals
     — so there is no coherence, naming or partner-existence law here.  With
     this alphabet the whole one-alphabet development applies as it stands. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts.
-
+(* begin hide *)
 Section Union.
 
 Context {Aproc Atest : Type}.

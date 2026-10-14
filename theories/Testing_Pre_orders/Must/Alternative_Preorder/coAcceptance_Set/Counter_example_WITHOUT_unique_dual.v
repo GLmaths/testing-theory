@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
@@ -29,11 +30,11 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
   Convergence Testing_Predicate Must Subset_Act DefinitionAS.
 
 Import ListNotations.
-
+(* begin hide *)
 (* * [completeness1] and [completeness2] are false without [UniqueDual]
 
-    [Completeness.v] proves [p ⊑ₘᵤₛₜᵢ q -> p ₁≼ₐₛ q] ([completeness1]) and
-    [p ⊑ₘᵤₛₜᵢ q -> p ₂≼ₐₛ q] ([completeness2]) under the hypothesis
+    [Completeness.v] proves [p ⊑ₘᵤₛₜᵢ q -> p ꜀ₙᵥ≼ₐₛ q] ([completeness1]) and
+    [p ⊑ₘᵤₛₜᵢ q -> p ₐ꜀꜀≼ₐₛ q] ([completeness2]) under the hypothesis
     [UniqueDual A]. This file shows that both statements are false without it.
 
     Actions are [la], [lb], [lc], [ld], [le], all blocking, and the dual
@@ -44,11 +45,11 @@ Import ListNotations.
     interact with [la] or [lb] through [lc], so no test separates a process
     from its swap: [p ⊑ₘᵤₛₜᵢ swap p], for tests of any LTS. Hence:
     - convergence ([completeness1]): [p0 = la.0 + lb.Ω], [q0 = la.Ω + lb.0].
-      [p0 ⇓ [la]] while [q0 ⟹{la} Ω] diverges, so [¬ p0 ₁≼ₐₛ q0].
+      [p0 ⇓ [la]] while [q0 ⟹{la} Ω] diverges, so [¬ p0 ꜀ₙᵥ≼ₐₛ q0].
     - acceptance sets ([completeness2]): [p1 = la.(ld.0) + lb.0],
       [q1 = la.0 + lb.(ld.0)], with [Φ = 𝝳 = id]. After [la], [q1] reaches the
       stable [0], whose [coR] is empty, while the only state [p1] reaches is
-      [ld.0], whose [coR] is [{le}], so [¬ p1 ₂≼ₐₛ q1]. Both processes
+      [ld.0], whose [coR] is [{le}], so [¬ p1 ₐ꜀꜀≼ₐₛ q1]. Both processes
       converge, so the failure really is on the acceptance sets.
 
     The process LTS satisfies the process-side hypotheses of [completeness1]
@@ -114,7 +115,7 @@ Inductive st := p0 | q0 | p1 | q1 | dz | nil | om.
 #[global] Instance st_eqdec : EqDecision st.
 Proof. solve_decision. Defined.
 
-Definition next (s : st) (α : Act ABC) : list st :=
+Definition next (s : st) (α : Labels ABC) : list st :=
   match s, α with
   | p0, ActExt la => [nil]
   | p0, ActExt lb => [om]
@@ -129,7 +130,7 @@ Definition next (s : st) (α : Act ABC) : list st :=
   | _, _ => []
   end.
 
-Definition st_step (s : st) (α : Act ABC) (s' : st) : Prop := s' ∈ next s α.
+Definition st_step (s : st) (α : Labels ABC) (s' : st) : Prop := s' ∈ next s α.
 
 Lemma st_performs_spec1 s α : next s α ≠ [] → { s' | st_step s α s' }.
 Proof.
@@ -285,8 +286,8 @@ Theorem completeness1_fails_without_unique_dual :
   ∧ (∀ `{gLtsT : !gLtsEq T EA_NU} `{!Testing_Predicate outcome _}
        `{!Prop_of_Inter st T ABC ABC dual},
        p0 ⊑ₘᵤₛₜᵢ q0)
-  (* but not [p0 ₁≼ₐₛ q0] *)
-  ∧ ¬ (p0 ₁≼ₐₛ q0).
+  (* but not [p0 ꜀ₙᵥ≼ₐₛ q0] *)
+  ∧ ¬ (p0 ꜀ₙᵥ≼ₐₛ q0).
 Proof.
   split; [|split].
   - exact EA_NU_not_unique.
@@ -303,7 +304,7 @@ Definition idA (x : ABC) : ABC := x.
 Next Obligation. intros T gLtsT t β β' b b' e mem. unfold idA in e. subst. exact mem. Qed.
 Next Obligation. intros T gLtsT p β β' b b' e mem. unfold idA in *. subst. exact mem. Qed.
 
-(* [₂≼ₐₛ] with [Φ = 𝝳 = idA] *)
+(* [ₐ꜀꜀≼ₐₛ] with [Φ = 𝝳 = idA] *)
 Definition cond2_id `{gLtsT : !gLtsEq T EA_NU} (p q : st) : Prop :=
   @bhv_pre_cond2 st ABC EA_NU st_gLts T ABC ABC idA idA gLtsT AbsAction_id
     st st_gLts idA AbsAction_id p q.
@@ -406,7 +407,7 @@ Proof.
     intros q w. apply IH. exact (fin_st_wt _ _ _ hx w).
 Qed.
 
-Lemma p1_cond1_q1 : p1 ₁≼ₐₛ q1.
+Lemma p1_cond1_q1 : p1 ꜀ₙᵥ≼ₐₛ q1.
 Proof. intros s _. apply fin_st_cnv. exact I. Qed.
 
 Theorem completeness2_fails_without_unique_dual :
@@ -416,8 +417,8 @@ Theorem completeness2_fails_without_unique_dual :
        `{!Prop_of_Inter st T ABC ABC dual},
        p1 ⊑ₘᵤₛₜᵢ q1)
   (* both converge on every trace [p1] converges on *)
-  ∧ (p1 ₁≼ₐₛ q1)
-  (* but not [p1 ₂≼ₐₛ q1], with [Φ = 𝝳 = id] *)
+  ∧ (p1 ꜀ₙᵥ≼ₐₛ q1)
+  (* but not [p1 ₐ꜀꜀≼ₐₛ q1], with [Φ = 𝝳 = id] *)
   ∧ (∀ `{gLtsT : !gLtsEq T EA_NU}, ¬ cond2_id p1 q1).
 Proof.
   split; [|split; [|split]].

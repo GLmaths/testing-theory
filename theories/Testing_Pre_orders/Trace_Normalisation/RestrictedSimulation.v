@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -27,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base countable list decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitions Termination Convergence Subset_Act
     NormalForm Normalisation.
-
+(* begin hide *)
 (* * Simulations restricted to the feedback-free traces
 
     A plain simulation proves the inclusion of *all* traces of a process into

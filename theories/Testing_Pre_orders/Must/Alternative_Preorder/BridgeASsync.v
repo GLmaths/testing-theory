@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -27,7 +28,7 @@ From stdpp Require Import base tactics decidable countable finite gmap list.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation StateTransitionSystems
   Testing_Predicate Must Subset_Act LabelAbstraction LabelAdmissible DefinitionAS.
 From TestingTheory Require Completeness CompletenessASsync.
-
+(* begin hide *)
 Section Test_bridges.
   Context `{gLtsT : @gLtsEq T A H} {outcome : T → Prop} `{TP : !Testing_Predicate outcome gLtsT}.
 

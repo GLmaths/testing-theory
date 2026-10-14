@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the process LTS on one alphabet
 
     Processes [(P, ρ)] (a program and its memory) and observers (programs
@@ -36,8 +37,9 @@
 
     The process's own operations on its memory are silent.  This file: the
     alphabet, outputs as parallel components ([out_par]), the process LTS and
-    its axioms (output-buffered agents with feedback, finite output chains),
+    its axioms (output-buffered agents with feedback, finite non-blocking chains),
     so that the forwarder construction [toFW] applies. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -45,9 +47,9 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets gmap gmultiset.
 From TestingTheory Require Import Lifted Paths States lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Congruence lqCCS_LTS.
-From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Output_Chain Lts_FW.
+From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Non_Blocking_Chain Lts_FW.
 From TestingTheory Require Import InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction.
-
+(* begin hide *)
 (* ** The alphabet *)
 
 Inductive lact : Type :=
@@ -292,7 +294,7 @@ Section Process.
 
   Notation pconf := (proc * St)%type.
 
-  Inductive lstep : pconf → Act lact → pconf → Prop :=
+  Inductive lstep : pconf → Labels lact → pconf → Prop :=
   | ls_tau P P' ρ :
       ustep P UTau P' → lstep (P, ρ) τ (P', ρ)
   | ls_op P P' ρ t E qs :
@@ -318,7 +320,7 @@ Section Process.
     (f : Out (meas_of M qs) → C) : list C :=
     f <$> filter (λ k, code _ k = n ∧ nonzero (meas_branch M qs k ρ)) (outs (meas_of M qs)).
 
-  Definition lsuccs (x : pconf) (α : Act lact) : list pconf :=
+  Definition lsuccs (x : pconf) (α : Labels lact) : list pconf :=
     let '(P, ρ) := x in
     match α with
     | τ =>
@@ -659,7 +661,7 @@ Section Process.
       apply pconf_step_def, lsuccs_spec. rewrite E. by left.
   Defined.
 
-  #[global] Instance pconf_FiniteOutputChain : FiniteOutputChain_LtsOba pconf (A := lact).
+  #[global] Instance pconf_FiniteNonBlockingChain : FiniteNonBlockingChain_LtsOba pconf (A := lact).
   Proof.
     refine {| lts_oba_mo := fmo; lts_oba_mo_spec_bis2 := fmo_witness |}.
     - intros p1 η p2 Hη Hs. apply pconf_step_def in Hs. by eapply fmo_spec1.

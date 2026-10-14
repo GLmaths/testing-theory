@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The inequational theory, exercised on [VCCS_Examples.v]'s processes
 
     End-to-end check of [SoundnessAx.v] and [CompletenessAx.v] against
@@ -33,6 +34,7 @@
     Here it is **one rule application** — a sum of two same-channel
     outputs is below either of them — and [soundness_ax] hands back the
     semantic fact. *)
+(* end hide *)
 
 From Stdlib Require Import List.
 From stdpp Require Import base.
@@ -40,7 +42,7 @@ From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActi
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization
   DefinitionAxiomatic SoundnessAx CompletenessAx EquivalenceAx VCCS_AxRedundancy.
-
+(* begin hide *)
 Section VCCS_AxExamples.
 
 Context `{VP : VCCS_Parameters}.
@@ -87,10 +89,10 @@ Proof. apply must_iff_ax_pre; [apply all_out_Static | apply one_out_Static]. Qed
 Context {P : proc} {Q : proc}.
 
 Definition mem_outside :=
-  ν (g (bvar 0 ! cst I • 𝟘) ‖ g (cst a ? (If (bvar 0 == cst O) Then P Else Q))).
+  ν (g (bvar 0 ! cst I • 𝟘) ‖ g (cst a ? • (If (bvar 0 == cst O) Then P Else Q))).
 
 Definition mem_inside :=
-  g (cst a ? (If (bvar 0 == cst O) Then (ν ((bvar 0 ! cst I • 𝟘) ‖ P))
+  g (cst a ? • (If (bvar 0 == cst O) Then (ν ((bvar 0 ! cst I • 𝟘) ‖ P))
                                    Else (ν ((bvar 0 ! cst I • 𝟘) ‖ Q)))).
 
 Lemma mem_outside_Static : Static P -> Static Q -> Static mem_outside.

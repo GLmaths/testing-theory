@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -27,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap relations.
 From TestingTheory Require Import ActTau gLts Subset_Act LabelAbstraction PAL_Syntax PAL_Alt_LTS
   PAL_Alt_Phi PAL_Alt_Delta.
-
+(* begin hide *)
 (* * The abstraction [𝝳ᴀʟᴛ] on events, so that [𝝳ᴀʟᴛ ∘ Φᴀᴘᴀʟ] makes sense
 
    [𝝳ᴀᴘᴀʟ] ([PAL_Alt_Delta.v]) does not factor through [Φᴀᴘᴀʟ]: two inputs

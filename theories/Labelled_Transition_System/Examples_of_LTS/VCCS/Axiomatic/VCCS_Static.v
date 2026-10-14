@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The recursion-free ("Static") fragment of VCCS
 
     This is the first building block of a Hennessy-Ingólfsdóttir-style
@@ -28,6 +29,7 @@
     system's completeness result is stated only for [Static] processes,
     i.e. processes that never use [pr_var]/[pr_rec] (no recursion, hence
     no divergence, hence no need for a [Ω]-like bottom element). *)
+(* end hide *)
 
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Equality.
@@ -35,7 +37,7 @@ From Stdlib Require Import PeanoNat Lia.
 From stdpp Require Import base.
 From TestingTheory Require Import VCCS VCCS_Instance Termination ActTau
   gLts Bisimulation InputOutputActions WeakTransitions Convergence.
-
+(* begin hide *)
 Section VCCS_Static.
 
 Context `{VP : VCCS_Parameters}.
@@ -51,7 +53,7 @@ Inductive Static : proc -> Prop :=
 with gStatic : gproc -> Prop :=
 | gstatic_success : gStatic ①
 | gstatic_nil     : gStatic 𝟘
-| gstatic_input   : forall c p, Static p -> gStatic (c ? p)
+| gstatic_input   : forall c p, Static p -> gStatic (c ? • p)
 | gstatic_output  : forall c v p, Static p -> gStatic (c ! v • p)
 | gstatic_tau     : forall p, Static p -> gStatic (𝛕 • p)
 | gstatic_choice  : forall p q, gStatic p -> gStatic q -> gStatic (p + q).

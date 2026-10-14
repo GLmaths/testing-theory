@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * A negative result: stable-choice congruence is UNSOUND for VACCS
 
     In VCCS, sum-congruence is unsound in general but becomes sound once
@@ -65,6 +66,7 @@
     input summand and [must_i_choice_tau_compat] for a [𝛕] summand.  Those
     are proved, by direct [must] induction, and between them they cover
     every guard shape VACCS has. *)
+(* end hide *)
 
 From Stdlib Require Import Lia.
 From Stdlib.Program Require Import Equality.
@@ -74,7 +76,7 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
   InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
   Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination
   VACCS_Static VACCS_Erasure VACCS_Examples.
-
+(* begin hide *)
 Section VACCS_ChoiceProbes.
 
 Context `{VP : VACCS_Parameters}.
@@ -84,17 +86,17 @@ Context {nab : a <> b} {nac : a <> c} {nbc : b <> c} {nOI : O <> I}.
 (* ** The processes *)
 
 Definition Kc : proc := (cst c) ! (cst w) • 𝟘.
-Definition GQ : gproc := (cst b) ? Kc.
-Definition CCAT : gproc := (cst a) ? ((cst a) ! (bvar 0) • 𝟘).
+Definition GQ : gproc := (cst b) ? • Kc.
+Definition CCAT : gproc := (cst a) ? • ((cst a) ! (bvar 0) • 𝟘).
 
 Definition S1 : proc := g (𝟘 + GQ).
 Definition S2 : proc := g (CCAT + GQ).
 
 Definition TT : proc :=
-  ((cst a) ! (cst I) • 𝟘) ‖ (((cst b) ! (cst u) • 𝟘) ‖ (g ((cst c) ? (g ①)))).
+  ((cst a) ! (cst I) • 𝟘) ‖ (((cst b) ! (cst u) • 𝟘) ‖ (g ((cst c) ? • (g ①)))).
 
 (* [TT] after the [b]-synchronisation. *)
-Definition T2 : proc := ((cst a) ! (cst I) • 𝟘) ‖ ((g 𝟘) ‖ (g ((cst c) ? (g ①)))).
+Definition T2 : proc := ((cst a) ! (cst I) • 𝟘) ‖ ((g 𝟘) ‖ (g ((cst c) ? • (g ①)))).
 
 (* ** Enumerating the transitions
 
@@ -109,7 +111,7 @@ Ltac blast2 :=
   | H : lts (_ ‖ _) _ _ |- _ => inversion H; subst; clear H
   | H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
-  | H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst; clear H
+  | H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g 𝟘) _ _ |- _ => inversion H
   | H : lts (g ①) _ _ |- _ => inversion H
   end; simpl in *; try congruence; try contradiction.
@@ -141,7 +143,7 @@ Lemma level2 : Kc must_pass T2.
 Proof.
   apply m_step.
   - apply T2_not_good.
-  - exists ((g 𝟘) ▷ (((cst a) ! (cst I) • 𝟘) ‖ ((g 𝟘) ‖ (g ①)))).
+  - exists ((g 𝟘) ∣ (((cst a) ! (cst I) • 𝟘) ‖ ((g 𝟘) ‖ (g ①)))).
     eapply ParSync; [ apply dual_out_in | unfold Kc; apply lts_output | ].
     unfold T2. apply lts_parR. apply lts_parR.
     assert (E : ((g ①) : proc) ^ (cst w) = g ①) by reflexivity.
@@ -157,7 +159,7 @@ Lemma S1_passes : S1 must_pass TT.
 Proof.
   apply m_step.
   - apply TT_not_good.
-  - exists (Kc ▷ T2).
+  - exists (Kc ∣ T2).
     eapply ParSync; [ apply dual_io | | ].
     + unfold S1, GQ. apply lts_choiceR.
       assert (E : Kc ^ (cst u) = Kc) by reflexivity. rewrite <- E at 2. apply lts_input.
@@ -176,7 +178,7 @@ Qed.
     only ever listens on [c] — nothing can move, and the test is not good. *)
 
 Lemma stuck_after_theft :
-  ~ ((cst a ! cst I • 𝟘) must_pass ((g 𝟘) ‖ (((cst b) ! (cst u) • 𝟘) ‖ (g ((cst c) ? (g ①)))))).
+  ~ ((cst a ! cst I • 𝟘) must_pass ((g 𝟘) ‖ (((cst b) ! (cst u) • 𝟘) ‖ (g ((cst c) ? • (g ①)))))).
 Proof.
   intro Hm. inversion Hm as [Ho | Ho Hex Hpt Het Hcom]; subst.
   - inversion Ho; subst. destruct H0 as [H0|H0]; [ inversion H0 | ].

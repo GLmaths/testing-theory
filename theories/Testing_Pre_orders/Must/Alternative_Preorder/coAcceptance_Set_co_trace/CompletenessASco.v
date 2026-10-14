@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib Require Import Unicode.Utf8 List.
@@ -34,11 +35,11 @@ From TestingTheory Require Import ActTau SyncActions gLts Bisimulation Lts_OBA
   InteractionBetweenLts MultisetLTSConstruction
   ParallelLTSConstruction ForwarderConstruction
   Must Lift Subset_Act Convergence Termination
-  Testing_Predicate DefinitionAS ActTau Lts_Finite_Output_Chain Subset_Act
+  Testing_Predicate DefinitionAS ActTau Lts_Finite_Non_Blocking_Chain Subset_Act
   coWeakTransition coConvergence coFiniteImage DefinitionASco.
 
 Import ListNotations.
-
+(* begin hide *)
 (* * Completeness for the co-acceptance-set preorder
 
     This file mirrors [Completeness.v] (the plain acceptance-set preorder)
@@ -781,7 +782,7 @@ Proof.
   induction (cocnv_terminate p s hcocnv) as [p hp IHtp].
   apply m_step.
   + eapply test_ungood.
-  + edestruct tconv_always_reduces. exists (p ▷ x). eapply ParRight; eauto.
+  + edestruct tconv_always_reduces. exists (p ∣ x). eapply ParRight; eauto.
   + intros p' l. eapply IHtp; [|eapply cocnv_preserved_by_lts_tau]; eauto.
   + intros e' l.
     destruct (inversion_tconv_tau_action s e' l)
@@ -820,7 +821,7 @@ Lemma completeness1_co `{
     `{!Prop_of_Inter P T A A dual}
     `{!Prop_of_Inter Q T A A dual}
 
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₁≼꜀ₒ₋ₐₛ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cocnv, hleq, must_iff_cocnv. Qed.
 
 (* ** Completeness for co-acceptance sets
@@ -951,7 +952,7 @@ Proof.
         left. exists t'. eauto with mdb.
     - right. eapply m_step.
       * eapply test_ungood.
-      * exists (p'' ▷ ta ((cooas p ε hcocnv) ∖ E) ε). eapply ParLeft; eauto.
+      * exists (p'' ∣ ta ((cooas p ε hcocnv) ∖ E) ε). eapply ParLeft; eauto.
       * intros p0 l0%cowt_tau_set_spec.
         eapply Forall_forall in Hyp' as (h0 & hm); eauto.
         eapply must_ta_monotonicity; eauto.
@@ -1079,7 +1080,7 @@ Lemma completeness2_co {P Q : Type} `{CC : Countable PreAct} `{
   `{!Prop_of_Inter P T A A dual}
   `{!Prop_of_Inter Q T A A dual}
 
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₂≼꜀ₒ₋ₐₛ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₐ꜀꜀≼꜀ₒ₋ₐₛ q.
 Proof.
   intros hpre s q' hacnv w st.
   destruct (must_ta_or_empty_pre_action_set_for_all_trace_co s p hacnv (coR_abs q')) as [(p' & w_tr & stable & sub)|hm].

@@ -20,12 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics decidable countable.
 From TestingTheory Require Import ActTau gLts Subset_Act DefinitionAS
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi.
-
+(* begin hide *)
 (* * Label abstraction of the alternative LTS of PAL, as in [DefinitionAS]
 
    [Φᴀᴘᴀʟ] ([PAL_Alt_Phi.v]) maps a label to its event, and [𝝳ᴇᴠ] is the

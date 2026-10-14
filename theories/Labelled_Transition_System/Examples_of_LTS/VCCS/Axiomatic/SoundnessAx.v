@@ -20,18 +20,20 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Soundness of the [ax_pre] proof system w.r.t. [⊑ₘᵤₛₜᵢ]
 
     [soundness_ax] below is the payoff of [VCCS_Precongruence.v]: every
     constructor of [ax_pre] ([DefinitionAxiomatic.v]) has a matching
     semantic lemma there, so this file is mostly assembly. *)
+(* end hide *)
 
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau
   gLts Bisimulation InputOutputActions WeakTransitions Convergence
   VCCS_Static VCCS_Precongruence VCCS_Expansion VCCS_ResNormalize VCCS_ReadySet
   DefinitionAxiomatic.
-
+(* begin hide *)
 Section SoundnessAx.
 
 Context `{VP : VCCS_Parameters}.
@@ -136,10 +138,10 @@ Proof.
     inversion Hsp; subst. inversion H0; subst.
     inversion H2; subst. inversion H3; subst.
     inversion H1; subst. inversion H4; subst.
-    match goal with H : gStatic (c ? P + X') |- _ => inversion H; subst end.
-    match goal with H : gStatic (c ? Q + Y') |- _ => inversion H; subst end.
-    match goal with H : gStatic (c ? P) |- _ => inversion H; subst end.
-    match goal with H : gStatic (c ? Q) |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • P + X') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • Q + Y') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • P) |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • Q) |- _ => inversion H; subst end.
     apply static_g. constructor;
       [constructor; apply static_g; constructor; constructor; assumption | assumption].
   - (* ax_share_out *)

@@ -23,9 +23,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From TestingTheory Require Import VACCS_Instance.
-
+(* begin hide *)
 Instance ACCS_Parameters : VACCS_Parameters :=
   { Channel := String.string;
     Value := unit;
@@ -1283,7 +1284,7 @@ Qed.
 
 From TestingTheory Require Import InteractionBetweenLts ParallelLTSConstruction 
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
-  ForwarderConstruction MultisetLTSConstruction FiniteImageLTS Lts_Finite_Output_Chain .
+  ForwarderConstruction MultisetLTSConstruction FiniteImageLTS Lts_Finite_Non_Blocking_Chain .
 
 #[global] Program Instance ACCS_ggLts : @gLts proc (ExtAct name) gLabel_nb := ggLts gLabel_nb.
 
@@ -1293,8 +1294,8 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB GeneralizeLtsOutputs
 #[global] Program Instance ACCS_gLtsOBA : 
   @gLtsOba proc (ExtAct name) gLabel_nb ACCS_ggLtsEq := ggLtsOba_nb.
 
-#[global] Program Instance ACCS_gLtsFiniteOutputChain_OBA : 
-  @FiniteOutputChain_LtsOba proc (ExtAct name) gLabel_nb ACCS_ggLtsEq ACCS_gLtsOBA:= ggLtsOba_FiniteOutputChain_nb.
+#[global] Program Instance ACCS_gLtsFiniteNonBlockingChain_OBA : 
+  @FiniteNonBlockingChain_LtsOba proc (ExtAct name) gLabel_nb ACCS_ggLtsEq ACCS_gLtsOBA:= ggLtsOba_FiniteNonBlockingChain_nb.
 
 #[global] Program Instance ACCS_gLtsOBAFB :
   @gLtsObaFB proc (ExtAct name) gLabel_nb ACCS_ggLtsEq ACCS_gLtsOBA := ggLtsObaFB_nb.

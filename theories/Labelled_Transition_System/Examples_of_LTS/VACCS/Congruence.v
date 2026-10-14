@@ -64,7 +64,7 @@ Inductive cgr_step : nat -> proc -> proc -> Prop :=
     cgr_step n (𝛕 • p) (𝛕 • q)
 | cgr_input_step : forall n c p q,
     cgr_step (S n) p q ->
-    cgr_step n (c ? p) (c ? q)
+    cgr_step n (c ? • p) (c ? • q)
 | cgr_par_step : forall n p q r,
     cgr_step n p q ->
     cgr_step n (p ‖ r) (q ‖ r)
@@ -201,12 +201,12 @@ intros n p q H. dependent induction H.
 constructor. apply cgr_tau_step. exact H.
 transitivity (𝛕 • y); assumption.
 Qed.
-Lemma cgr_input : forall n c p q, p ≡*[S n] q -> (c ? p) ≡*[n] (c ? q).
+Lemma cgr_input : forall n c p q, p ≡*[S n] q -> (c ? • p) ≡*[n] (c ? • q).
 Proof.
 intros n c p q H.
 dependent induction H.
 * constructor. apply cgr_input_step. auto.
-* transitivity (c ? y). apply (IHclos_trans1 n c eq_refl). apply (IHclos_trans2 n c eq_refl).
+* transitivity (c ? • y). apply (IHclos_trans1 n c eq_refl). apply (IHclos_trans2 n c eq_refl).
 Qed.
 Lemma cgr_par : forall n p q r, p ≡*[n] q-> p ‖ r ≡*[n] q ‖ r.
 Proof.
@@ -290,7 +290,7 @@ with altcgr_gstep : nat -> gproc -> gproc -> Prop :=
 | altcgr_tau_step : forall n p q,
     p ≡ₐ[n] q -> (𝛕 • p) ≡g[n] (𝛕 • q)
 | altcgr_input_step : forall n c p q,
-    p ≡ₐ[S n] q -> (c ? p) ≡g[n] (c ? q)
+    p ≡ₐ[S n] q -> (c ? • p) ≡g[n] (c ? • q)
 | altcgr_choice_nil_step : forall n p,
     (p + 𝟘) ≡g[n] p
 | altcgr_choice_nil_rev_step : forall n p,
@@ -324,7 +324,7 @@ constructor.
 - econstructor 2; eauto with cgr_eq.
 Qed.
 
-Lemma guardcgr_input : forall n c p q, p ≡*[S n] q -> guardcgr n (c ? p) (c ? q).
+Lemma guardcgr_input : forall n c p q, p ≡*[S n] q -> guardcgr n (c ? • p) (c ? • q).
 Proof.
 intros n c p q H. induction H.
 - constructor. eexists; eexists; repeat split. now apply cgr_input_step.
@@ -576,7 +576,7 @@ with gNewVarCdown k M {struct M} : gproc :=
 match M with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => (NewVar_in_ChannelData_down k c) ? (NewVarCdown k p)
+| c ? • p => (NewVar_in_ChannelData_down k c) ? • (NewVarCdown k p)
 | 𝛕 • p => 𝛕 • (NewVarCdown k p)
 | p1 + p2 => (gNewVarCdown k p1) + (gNewVarCdown k p2)
 end.

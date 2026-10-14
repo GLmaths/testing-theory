@@ -23,9 +23,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From TestingTheory Require Import ActTau gLts Lts_OBA Bisimulation.
-(* end hide *)
+
 
 (** ** LTSs that respects the axiom FEEDBACK *)
 Class gLtsObaFB (P A: Type) `{gLtsOba P A} :=

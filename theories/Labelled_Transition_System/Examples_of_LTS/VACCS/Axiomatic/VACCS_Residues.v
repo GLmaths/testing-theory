@@ -20,8 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
-
+(* end hide *)
+(* begin hide *)
 (* * Residue enumeration, and the weak-emission glb law
 
     Everything a rule with **weakly matched emissions** needs, placed
@@ -45,6 +45,7 @@
     left-hand side to emit **itself**, which is not a consequence of the
     preorder ([VACCS_Matching.glb_output_premise_not_semantic]); the weak
     form is ([VACCS_Matching.weak_out_of_below]). *)
+(* end hide *)
 
 From Stdlib Require Import List Lia.
 From stdpp Require Import base sets gmap.
@@ -52,7 +53,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Shift VACCS_Precongruence.
-
+(* begin hide *)
 Section VACCS_Residues.
 
 Context `{VP : VACCS_Parameters}.
@@ -80,7 +81,7 @@ Qed.
 
 Lemma gsum_in_summand : forall (M : gproc) c w p',
   lts (g M) (ActExt (ActIn (c,w))) p' ->
-  exists P, In (c ? P) (summands M) /\ p' = P ^ w.
+  exists P, In (c ? • P) (summands M) /\ p' = P ^ w.
 Proof.
   induction M as [ | | d P | P | M1 IH1 M2 IH2 ]; intros c w p' Hl;
     inversion Hl; subst.

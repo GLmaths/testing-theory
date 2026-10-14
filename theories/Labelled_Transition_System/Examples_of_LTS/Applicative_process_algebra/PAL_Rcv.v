@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -29,7 +30,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi
   Applicative_process_algebra PAL_Alt_Tau PAL_Label_Dilemma PAL_Label_Dilemma_Sync PAL_Alt_Dilemma
   Testing_Predicate CompletenessASco.
-
+(* begin hide *)
 (* * PAL with outputs labelled by their receiver
 
    The alternative LTS ([PAL_Alt_LTS.v]) labels an input with its template
@@ -123,19 +124,19 @@ Section PAL_Rcv.
 
   (* ** The LTS, by relabelling *)
 
-  Definition to_a (α : Act PALR_Act) : Act PALA_Act :=
+  Definition to_a (α : Labels PALR_Act) : Labels PALA_Act :=
     match α with
     | τ => τ
     | ActExt (RIn l) => ActExt (AIn Val l)
     | ActExt (ROut l) => ActExt (AOut Val (ltuple l))
     end.
 
-  Definition lts_step_r (p : term) (α : Act PALR_Act) (q : term) : Prop := step p (to_a α) q.
+  Definition lts_step_r (p : term) (α : Labels PALR_Act) (q : term) : Prop := step p (to_a α) q.
 
   #[global] Instance PALR_step_dec p α q : Decision (lts_step_r p α q).
   Proof. unfold lts_step_r. apply _. Defined.
 
-  Definition PALR_performs (p : term) (α : Act PALR_Act) : Prop := PALA_performs Val p (to_a α).
+  Definition PALR_performs (p : term) (α : Labels PALR_Act) : Prop := PALA_performs Val p (to_a α).
 
   #[global] Instance PALR_performs_dec p α : Decision (PALR_performs p α).
   Proof. unfold PALR_performs. apply _. Defined.
@@ -151,7 +152,7 @@ Section PAL_Rcv.
       PALR_performs PALR_performs_dec PALR_performs_spec1 PALR_performs_spec2.
 
   (* The structural congruence of the alternative LTS is a bisimulation here too. *)
-  Lemma PALR_cgr_spec p q (α : Act PALR_Act) :
+  Lemma PALR_cgr_spec p q (α : Labels PALR_Act) :
     (∃ r, cgr Val p r ∧ lts_step_r r α q) → (∃ r, lts_step_r p α r ∧ cgr Val r q).
   Proof. apply (PALA_cgr_spec Val p q (to_a α)). Qed.
 

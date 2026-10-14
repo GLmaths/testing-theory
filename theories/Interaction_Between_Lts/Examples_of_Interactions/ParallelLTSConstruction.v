@@ -23,16 +23,19 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS InteractionBetweenLts StateTransitionSystems.
-(* end hide *)
+
 
 (** ** Parallel composition of two LTSs *)
 
 #[global] Program Instance parallel_gLts {P1 P2}
  {A : Type} {H : ExtAction A} {H0 : gLts P1 H} {H1 : gLts P2 H} `{H2 : !@Prop_of_Inter P1 P2 A A dual H H0 H H1} : gLts (P1 * P2) H := inter_lts dual.
+
+Notation "p ∣ q" := (p, q) (at level 60).
 (* begin hide *)
 
 Definition reverse_dual `{H : !ExtAction A} μ1 μ2 := dual μ2 μ1.

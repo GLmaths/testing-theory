@@ -23,13 +23,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts InteractionUnion Convergence Termination FiniteImageLTS ParallelLTSConstruction.
-
+(* begin hide *)
  (* ** Inductive definition [must_sts] of Must based on the STS *)
 Inductive must_sts 
   `{Sts (P1 * P2)} (outcome : P2 -> Prop)

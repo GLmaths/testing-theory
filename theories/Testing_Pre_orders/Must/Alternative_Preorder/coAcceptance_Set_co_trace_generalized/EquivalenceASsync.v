@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The co-acceptance-set characterisation, for two alphabets
 
     The [FWⁿ] characterisation for two alphabets.  The observers,
@@ -33,6 +34,7 @@
     The [Lⁿ] section, for arbitrary processes over [Aproc], goes through
     [LiftMem.lift_fw_ctx_pre]: the forwarder [toFw] of [ForwarderMem.v] stores
     the test's pending outputs as [msg η], over [Atest]. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -46,9 +48,9 @@ From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionU
   Must CompletenessASsync
   DefinitionASrel CompletenessASsync SoundnessASsync
   coWeakTransition coConvergence
-  Lts_Finite_Output_Chain MultisetLTSConstruction ForwarderMem LiftMem
+  Lts_Finite_Non_Blocking_Chain MultisetLTSConstruction ForwarderMem LiftMem
   LabelAbstraction LabelAdmissible LabelAdmissibleFw.
-
+(* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section PreorderSync.
@@ -96,7 +98,7 @@ Context (Γ : Atest → PreAct).
 Context (outcome : T → Prop).
 
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
-        `{!FiniteOutputChain_LtsOba T}.
+        `{!FiniteNonBlockingChain_LtsOba T}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P Hp}.
@@ -181,7 +183,7 @@ Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
 Context (outcome : T → Prop).
 
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
-        `{!FiniteOutputChain_LtsOba T}.
+        `{!FiniteNonBlockingChain_LtsOba T}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P Hp}.
@@ -228,7 +230,7 @@ Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
 Context (outcome : T → Prop).
 
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
-        `{!FiniteOutputChain_LtsOba T}.
+        `{!FiniteNonBlockingChain_LtsOba T}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P Hp}.

@@ -23,13 +23,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import decidable countable.
 From TestingTheory Require Import ActTau gLts InputOutputActions Must 
 Testing_Predicate VCCS_Instance.
-(* end hide *)
+
 
 Section VCCS_Testing.
 

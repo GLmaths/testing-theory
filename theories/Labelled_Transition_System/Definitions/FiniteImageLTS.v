@@ -23,19 +23,19 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Termination WeakTransitions Convergence Lts_OBA_FB.
-(* end hide *)
+
 (** ** Finite Image LTSs *)
 Class FiniteImagegLts P A `{gLts P A} :=
   MkFlts {
       folts_states_countable: Countable P;
       folts_next_states_finite p α : Finite (dsig (fun q => p ⟶{α} q));
 }.
-(* begin hide *)
 
 #[global] Existing Instance folts_states_countable.
 #[global] Existing Instance folts_next_states_finite.
@@ -148,10 +148,9 @@ Proof.
     + multiset_solver.
     + eapply lts_extaction_set_spec in l. multiset_solver.
 Qed.
-(* end hide *)
 
 (** *** Weak traces sets **)
-(* begin hide *)
+
 Fixpoint wt_set_nil `{FiniteImagegLts P A} (p : P) (t : p ⤓) : gset P :=
   let '(tstep _ f) := t in
   let k q := wt_set_nil (`q) (f (`q) (proj2_dsig q)) in
@@ -279,6 +278,8 @@ Definition wt_set_mu_fin `{FiniteImagegLts P A}
   (p : P) μ s (hcnv : p ⇓ μ :: s) : Finite (dsig (fun q => p ⟹{μ} q)) :=
   wt_mu_set_fin_aux p μ s hcnv (wt_mu_set_dec p μ s hcnv).
 
+
+(** *** Construction of the set { q | p ⟹[s] q } *)
 Fixpoint reachable_states `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : p ⇓ s) : gset P :=
   match s as s0 return p ⇓ s0 -> gset P with
   | [] =>
@@ -291,8 +292,9 @@ Fixpoint reachable_states `{FiniteImagegLts P A} (p : P) (s : trace A) (hcnv : p
                  reachable_states (`t) s' hcnv
           ) ts
   end hcnv.
-(* end hide *)
 
+(** *** Sanity checks that our construction is the set { q | p ⟹[s] q } *)
+(** **** reachable_states (p  , s , _ ) ⊆ { q | p ⟹[s] q } *)
 Lemma reachable_states_spec1 `{FiniteImagegLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
   q ∈ reachable_states p s hcnv -> p ⟹[s] q.
@@ -305,6 +307,7 @@ Proof.
     eapply IHs. eassumption.
 Defined.
 
+(** **** { q | p ⟹[s] q } ⊆ reachable_states (p  , s , _ ) *)
 Lemma reachable_states_spec2 `{FiniteImagegLts P A}
   (p q : P) (s : trace A) (hcnv : p ⇓ s) :
   p ⟹[s] q -> q ∈ reachable_states p s hcnv.
@@ -319,8 +322,8 @@ Proof.
       exists (dexist t w1). now split; [|eapply elem_of_enum].
     + now eapply IHs'.
 Defined.
-(* begin hide *)
 
+(** *** for any q, p ⟹[s] q is decidable if p ⇓ s*)
 Lemma reachable_states_dec `{FiniteImagegLts P A} p s (hcnv : p ⇓ s) : 
     forall q, Decision (p ⟹[s] q).
 Proof.
@@ -330,6 +333,7 @@ Proof.
   - right. intro wt. eapply n. now eapply reachable_states_spec2.
 Qed.
 
+(** *** the set { q | p ⟹[s] q } is finite if p ⇓ s*)
 Lemma reachable_states_fin_aux `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q)) : 
     Finite (dsig (fun q => p ⟹[s] q)).
@@ -409,14 +413,15 @@ Definition wt_nil_stable_set_fin `{FiniteImagegLts P A}
 Lemma cnv_wt_s_terminate `{gLts P A}
   (p q : P) s (hcnv : p ⇓ s) : p ⟹[s] q -> q ⤓.
 Proof. eapply cnv_iff_prefix_terminate; eauto. Qed.
-(* end hide *)
 
+(** *** Construction of the set { q | p ⟹[s] q /\ q ↛. } *)
 Definition waiting_states `{FiniteImagegLts P A} (p : P) s (hcnv : p ⇓ s) : gset P :=
   let ps := @enum (dsig (fun q => p ⟹[s] q)) _ (reachable_states_fin p s hcnv) in
   let k t := wt_nil_stable_set (`t) (cnv_wt_s_terminate p (`t) s hcnv (proj2_dsig t)) in
   ⋃ map k ps.
-(* begin hide *)
 
+(** *** Sanity checks that our construction is the set { q | p ⟹[s] q /\ q ↛. } *)
+(** **** waiting_states (p  , s , _ ) ⊆ { q | p ⟹[s] q /\ q ↛. } *)
 Lemma waiting_states_spec1 `{FiniteImagegLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
   q ∈ waiting_states p s hcnv -> p ⟹[s] q /\ q ↛.
@@ -430,6 +435,7 @@ Proof.
   firstorder.
 Qed.
 
+(** **** { q | p ⟹[s] q /\ q ↛. } ⊆ waiting_states (p  , s , _ ) *)
 Lemma waiting_states_spec2 `{FiniteImagegLts P A}
   (p q : P) s (hcnv : p ⇓ s) :
   (p ⟹[s] q /\ q ↛) -> q ∈ waiting_states p s hcnv.
@@ -441,6 +447,7 @@ Proof.
   simpl. eapply wt_nil_stable_set_spec2. eauto with mdb.
 Qed.
 
+(** *** the set { q | p ⟹[s] q /\ q ↛. } is finite if p ⇓ s*)
 Lemma waiting_states_fin_aux `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) (d : ∀ q, Decision (p ⟹[s] q /\ q ↛)) : 
   Finite (dsig (fun q => p ⟹[s] q /\ q ↛)).
@@ -460,12 +467,11 @@ Proof.
   - left. eapply (waiting_states_spec1 p q s hcnv e).
   - right. intro wt. eapply n. now eapply waiting_states_spec2.
 Qed.
-(* end hide *)
+
 
 Definition waiting_states_fin `{FiniteImagegLts P A}
   (p : P) s (hcnv : p ⇓ s) : Finite (dsig (fun q => p ⟹[s] q /\ q ↛)) :=
   waiting_states_fin_aux p s hcnv (waiting_states_dec p s hcnv).
-(* begin hide *)
 
 Lemma wt_nil_set_stable `{FiniteImagegLts P A} p hcnv :
   (p ↛) -> reachable_states p [] hcnv = {[ p ]}.
@@ -758,4 +764,4 @@ Proof.
   intro Hps'.
   eapply wt_set_from_pset_spec_unique; eauto using wt_s_set_from_pset_ispec.
 Qed. *)
-(* end hide *)
+

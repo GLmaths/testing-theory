@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Completeness for two alphabets: the convergence condition
 
     The port of the first half of [CompletenessASco.v] — everything that leads
@@ -32,6 +33,7 @@
     family) are reused unchanged: they only ever mention the test LTS and its
     own [dual], so they hold over [Atest] as they stand.  Only the lemmas that
     relate a process to an observer had to be ported, and they are below. *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib Require Import Unicode.Utf8 List.
@@ -46,11 +48,11 @@ From TestingTheory Require Import ActTau SyncActions gLts Bisimulation Lts_OBA
   InteractionBetweenLts MultisetLTSConstruction
   ParallelLTSConstruction
   Must Subset_Act Convergence Termination
-  Testing_Predicate Lts_Finite_Output_Chain
+  Testing_Predicate Lts_Finite_Non_Blocking_Chain
   coWeakTransition coConvergence coFiniteImage DefinitionASrel.
 
 Import ListNotations.
-
+(* begin hide *)
 (* ** Axioms for completeness (copied from [Completeness.v], unchanged) *)
 (* *** Common axioms for the generation of tests **)
 

@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -34,11 +35,11 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction 
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction.
 From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
-(* end hide *)
+
 
 (** * Soundness *)
 (* begin hide *)
@@ -775,7 +776,7 @@ Definition bhv_pre_cond1__x `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   (X : gset P) (Y : gset Q) :=
   forall s, (forall p, p ∈ X -> p ⇓ s) -> (forall q, q ∈ Y -> q ⇓ s).
 
-Global Notation "X ₁≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
+Global Notation "X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
 (* end hide *)
 
 (** ** Condition on acceptance sets *)
@@ -793,7 +794,7 @@ Definition bhv_pre_cond2__x
     (forall p, p ∈ X -> p ⇓ s) ->
     exists p, p ∈ X /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
 
-Global Notation "X ₂≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
+Global Notation "X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
 (* end hide *)
 
 
@@ -806,7 +807,7 @@ Definition bhv_pre__x
   `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}
   `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
     (X : gset P) (Y : gset Q) :=
-      (X ₁≼ₛₑₜ_ₐₛ Y /\ X ₂≼ₛₑₜ_ₐₛ Y).
+      (X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y /\ X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y).
 (* begin hide *)
 
 Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
@@ -950,7 +951,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_reduction
   (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros halt1 l (* not_empty *) s mem.
   intros. eapply l in H as (q' & mem' & tr').
@@ -959,7 +960,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_reduction_lts
   (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> Y ⟶ Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> Y ⟶ Y' (* -> Y' ≠ ∅ *) -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros; eapply bhvleqone_preserved_by_reduction;eauto.
   destruct H0. subst. eapply lts_tau_set_from_pset_ispec.
@@ -967,7 +968,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_external_action
   (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *) -> X' ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *) -> X' ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros hleq hws l (* not_empty *) s hcnv. intros.
   eapply l in H as (q' & mem' & wk_tr).
@@ -981,7 +982,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_external_action_lts
   (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> Y ⟹{μ} Y' -> X' ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> Y ⟹{μ} Y' -> X' ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros. eapply bhvleqone_preserved_by_external_action; eauto.
   intros q' mem'. eapply wk_tr_inv in mem' as (p' & hyp1 & hyp2).
@@ -1224,14 +1225,14 @@ Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
   ¬ outcome t
     -> X must_pass_x t
       -> (∃ q, q ∈ Y /\ (q, t) ↛)
-        -> ¬ X ₂≼ₛₑₜ_ₐₛ Y.
+        -> ¬ X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y.
 Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
 
   assert (q ↛) as stable_q.
   { destruct (decide (q ⟶)) as [not_refuses_q | refuses_q].
     - exfalso. eapply lts_performs_spec1 in not_refuses_q as (q' & l).
-      apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q' ▷ t). eapply ParLeft. exact l.
+      apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)). exists (q' ∣ t). eapply ParLeft. exact l.
     - exact refuses_q. }
 
   assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
@@ -1248,11 +1249,11 @@ Proof.
   inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
   - exfalso; apply stp', lts_performs_spec2; eauto.
   - destruct (decide (t ⟶)) as [not_refuses_t | refuses_t].
-    + apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)).
+    + apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)).
       exists (q , t''). eapply ParRight; eauto.
     + exfalso. apply refuses_t, lts_performs_spec2. eauto with mdb.
   - eapply communication_enabled in act_left as (μ'1 & μ'2 & q' & t''' & duo & tr1 & tr2); eauto.
-    apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q', t''').
+    apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)). exists (q' ∣ t''').
     eapply (ParSync (μ'1)); eauto.
 Qed.
 (* end hide *)
@@ -1261,7 +1262,7 @@ Lemma stability_nbhvleqtwo
   (X : gset P) (Y : gset Q) t :
   ¬ outcome t
     -> X must_pass_x t
-      -> X ₂≼ₛₑₜ_ₐₛ Y
+      -> X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y
         -> forall (q : Q), q ∈ Y -> ∃ q', (q, t) ⟶{τ} q'.
 Proof.
   intros nhg hmx hleq q mem.
@@ -1373,9 +1374,9 @@ Qed.
 
 (* ** Soundness for LTSs that can be lifted to forwarders *)
 Lemma soundness 
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !CountablegLts T A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !CountablegLts T A}
 
   `{ !Testing_Predicate outcome _}
 

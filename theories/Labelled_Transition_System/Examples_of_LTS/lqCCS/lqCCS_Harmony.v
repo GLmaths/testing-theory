@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Harmony for lqCCS: [ρ • (P ∥ Q)] and [(P, ρ) ∥ Q]
 
     The silent steps of the configuration [ρ • (P ∥ Q)] in the density
@@ -33,6 +34,7 @@
     One hypothesis of the paper is used: processes are closed, so that
     substituting the outcome of a measurement in one component does not
     touch the others. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -40,7 +42,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition lqCCS_Semantics.
-
+(* begin hide *)
 Definition closed (P : proc) : Prop := fv P = [].
 
 Section Harmony.

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Pushing [ν] into a guarded sum
 
     [Congruence.v] has no rule distributing [ν] over an arbitrary [+]
@@ -40,13 +41,14 @@
 
     Compared with VCCS this is one case shorter: [gproc] has no output
     constructor. *)
+(* end hide *)
 
 From stdpp Require Import base.
 From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Expansion.
-
+(* begin hide *)
 Section VACCS_ResNormalize.
 
 Context `{VP : VACCS_Parameters}.
@@ -55,11 +57,11 @@ Fixpoint resg (M : gproc) : gproc :=
 match M with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p =>
+| c ? • p =>
     match c with
     | bvar 0 => 𝟘
-    | cst c' => (cst c') ? (ν p)
-    | bvar (S j) => (bvar j) ? (ν p)
+    | cst c' => (cst c') ? • (ν p)
+    | bvar (S j) => (bvar j) ? • (ν p)
     end
 | 𝛕 • p => 𝛕 • (ν p)
 | M1 + M2 => (resg M1) + (resg M2)

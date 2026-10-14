@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -31,7 +32,7 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation
   Lts_OBA Lts_FW WeakTransitions.
-
+(* begin hide *)
 (* ** Co-weak transitions
 
     [cowt p s q] is the weak transition relation obtained by letting [p] answer

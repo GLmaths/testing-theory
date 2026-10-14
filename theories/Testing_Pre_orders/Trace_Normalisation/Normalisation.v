@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -28,7 +29,7 @@ From Stdlib.Program Require Import Equality Basics.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
     WeakTransitions Convergence Termination NormalForm.
-
+(* begin hide *)
 (* * Normalisation of traces
 
     We instantiate the combinatorics of [NormalForm.v] on plain traces, and we

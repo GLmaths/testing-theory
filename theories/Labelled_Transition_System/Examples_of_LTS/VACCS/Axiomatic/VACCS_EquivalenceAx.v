@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * THE CHARACTERISATION
 
     On the recursion-free [Static] fragment the 9-rule system is **sound
@@ -33,6 +34,7 @@
     restriction is needed only for completeness
     ([VACCS_Matching.completeness_ax]), whose recursion measures the size
     of the right-hand side. *)
+(* end hide *)
 
 From Stdlib Require Import List PeanoNat Lia.
 From stdpp Require Import base gmultiset.
@@ -45,7 +47,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Forwarder VACCS_Cond2 VACCS_ReadySet VACCS_Canonical VACCS_Descent VACCS_Matching
   VACCS_DerivedRules.
 Import ListNotations.
-
+(* begin hide *)
 Section VACCS_EquivalenceAx.
 
 Context `{VP : VACCS_Parameters}.

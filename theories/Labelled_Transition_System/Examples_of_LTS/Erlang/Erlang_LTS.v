@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: labelled transition system
 
     ** Expression level
@@ -48,13 +49,14 @@
     Actions are [ExtAct (pid * val)]: [ActOut (p,v)] releases a message in
     transit to the environment (non-blocking), [ActIn (p,v)] is the reception
     of [v] by the process [p], which requires a matching clause (blocking). *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions VACCS Erlang_Syntax.
-
+(* begin hide *)
 (* ** The program *)
 
 Class Erlang_Program := MkErlang_Program {
@@ -279,7 +281,7 @@ with estep_args (es : args) : option (elabel * args) :=
 
 (* ** The transition relation *)
 
-Inductive erl_lts : sys → Act erl_act → sys → Prop :=
+Inductive erl_lts : sys → Labels erl_act → sys → Prop :=
 (* A local step of an expression. *)
 | ErlTau S p n e e' :
   estep e = Some (LTau, e') →

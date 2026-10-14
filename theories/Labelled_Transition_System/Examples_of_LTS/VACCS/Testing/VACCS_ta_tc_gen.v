@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -34,7 +35,7 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation
   InputOutputActions Completeness ParallelLTSConstruction InputOutputActions.
 Export VACCS_Instance VACCS_Good.
-
+(* begin hide *)
 Section VACCS_ta_tc.
 
 Context `{VP : VACCS_Parameters}.
@@ -242,7 +243,7 @@ Fixpoint gen_test_raw Vs (s : trace (ExtAct TypeOfActions)) p {struct s}:=
   | [] => p
   | ActIn (c , v) :: s' => match Vs with
                             | [] => (g 𝟘)     (*whatever*)
-                            | ActIn (c , v') :: s'' => (c ? (If ( bvar 0 ==  NewVar_in_Data 0 v' )
+                            | ActIn (c , v') :: s'' => (c ? • (If ( bvar 0 ==  NewVar_in_Data 0 v' )
                                    Then (gen_test_raw (NewVar_in_trace 0 s'') s' (NewVar 0 p))
                                    Else ①)) + (𝛕 • ①)
                             | ActOut (c , v') :: s'' => (g 𝟘)
@@ -396,7 +397,7 @@ Qed.
 Fixpoint unroll_fw (L : list PreAct) : gproc :=
   match L with
   | [] => 𝟘
-  | Inputs c :: l => (c ? ①) + unroll_fw l
+  | Inputs c :: l => (c ? • ①) + unroll_fw l
   end.
 
 Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))).

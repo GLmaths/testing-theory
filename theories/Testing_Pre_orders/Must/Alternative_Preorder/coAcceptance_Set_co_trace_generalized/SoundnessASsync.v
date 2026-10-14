@@ -20,12 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Soundness for the co-acceptance-set preorder, for two alphabets
 
     Uses the co-steps of [coWeakSync.v].  A set of processes
     is tested by one observer, and the set's meta-steps are indexed by /test/
     actions ([coSetLTSConstruction.v]). *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -36,13 +38,13 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
+From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction
       Termination Convergence WeakTransitions Testing_Predicate MultisetLTSConstruction StateTransitionSystems.
 From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
 From TestingTheory Require Import coWeakTransition coConvergence
       FiniteImageLTS coFiniteImage coSetLTSConstruction DefinitionASrel.
-
+(* begin hide *)
 (* ** Must for a set of processes *)
 
 Inductive mustx `{
@@ -618,7 +620,7 @@ Definition bhv_pre_co_cond1__x `{gLtsP : @gLts P Aproc Hp, !Countable P}
   (X : gset P) (Y : gset Q) :=
   ∀ (s : trace A), (∀ p, p ∈ X → p ⇓ᶜᵒ s) → (∀ q, q ∈ Y → q ⇓ᶜᵒ s).
 
-Global Notation "X ₁≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond1__x X Y) (at level 70).
+Global Notation "X ꜀ₙᵥ≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond1__x X Y) (at level 70).
 
 Definition bhv_pre_co_cond2__x
   `{gLtsP : @gLts P Aproc Hp, !Countable P}
@@ -649,8 +651,8 @@ Context `{gLtsQ : !gLts Q Hp} `{CQ : !Countable Q}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context (Γ : Atest → PreAct).
 
-Notation "X '₁≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x Γ X Y) (at level 70).
+Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
+Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x Γ X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x Γ X Y) (at level 70).
 
 Lemma alt_set_singleton_iff_co (p : P) (q : Q) :
@@ -670,7 +672,7 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_reduction_co (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ Y → lts_tau_set_from_pset_spec1 Y Y' → X ₁≼ Y'.
+  X ꜀ₙᵥ≼ Y → lts_tau_set_from_pset_spec1 Y Y' → X ꜀ₙᵥ≼ Y'.
 Proof.
   intros halt1 l s mem.
   intros q memq. eapply l in memq as (q' & mem' & tr').
@@ -704,8 +706,8 @@ Qed.
 Lemma bhvleqone_preserved_by_external_action_co
   (X X' : gset P) (η : Atest) (Y Y' : gset Q)
   (htp : ∀ p, p ∈ X → p ⤓) :
-  X ₁≼ Y → cowt_set_from_pset_spec X η X' →
-  cowt_set_from_pset_spec1 Y η Y' → X' ₁≼ Y'.
+  X ꜀ₙᵥ≼ Y → cowt_set_from_pset_spec X η X' →
+  cowt_set_from_pset_spec1 Y η Y' → X' ꜀ₙᵥ≼ Y'.
 Proof.
   intros hleq hws l s hcnv. intros q memq.
   eapply l in memq as (q' & mem' & wk_tr).
@@ -838,8 +840,8 @@ Context `{gLtsQ : !gLts Q Hp} `{STSQ : !ParSts Q T _ _} `{!ParStsSpec Q T _ _ SA
 Context (Γ : Atest → PreAct).
 Context `{AbsQT : !@AbsActionG Q T PreAct Atest Ht Γ Aproc Hp _ _ SA}.
 
-Notation "X '₁≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x Γ X Y) (at level 70).
+Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
+Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x Γ X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x Γ X Y) (at level 70).
 
 (* The composition is an [Sts], so "the composition is stuck" is
@@ -848,7 +850,7 @@ Notation "X '≼' Y" := (bhv_pre_co__x Γ X Y) (at level 70).
 Lemma unoutcome_must_st_nleqx_co (X : gset P) (Y : gset Q) (t : T) :
   ¬ outcome t → X must_pass_x t →
   (∃ q, q ∈ Y ∧ ¬ (∃ y, sts_step (Sts := par_sts) (q, t) y)) →
-  ¬ (X ₂≼ Y).
+  ¬ (X ₐ꜀꜀≼ Y).
 Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
   assert (stable_q : q ↛).
@@ -876,7 +878,7 @@ Proof.
 Qed.
 
 Lemma stability_nbhvleqtwo_co (X : gset P) (Y : gset Q) t :
-  ¬ outcome t → X must_pass_x t → X ₂≼ Y →
+  ¬ outcome t → X must_pass_x t → X ₐ꜀꜀≼ Y →
   ∀ (q : Q), q ∈ Y → ∃ y, sts_step (Sts := par_sts) (q, t) y.
 Proof.
   intros nhg hmx hleq q mem.
@@ -905,7 +907,7 @@ Proof.
     { intros q mem. eapply cocnv_terminate. eapply halt1; eauto. }
     assert (Y_conv : Y ⤓).
     { eapply co_termination_set_for_all. exact HYterm. }
-    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ₁≼ Y0 → X ₂≼ Y0 → Y0 must_pass_x t).
+    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ꜀ₙᵥ≼ Y0 → X ₐ꜀꜀≼ Y0 → Y0 must_pass_x t).
     { intros Y0 conv0. induction conv0 as [Y0 tY0 IHY0]. intros hb1 hb2.
       eapply mx_step.
       - exact nh.
@@ -976,7 +978,7 @@ From stdpp Require Import base countable finite gmap list decidable.
 
 From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
 From TestingTheory Require Import gLts SyncActions MemAction InteractionUnion MemForwarder Bisimulation Lts_OBA
-  Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
+  Lts_Finite_Non_Blocking_Chain Lts_FW Lts_OBA_FB Lts_CN
   Subset_Act Termination Convergence WeakTransitions Testing_Predicate
   StateTransitionSystems InteractionBetweenLts
   Must.

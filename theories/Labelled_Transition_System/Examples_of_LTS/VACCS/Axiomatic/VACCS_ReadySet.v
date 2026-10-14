@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Ready sets in VACCS: a process's ready set is the set of channels it
       has a pending message on
 
@@ -52,6 +53,7 @@
     the incoming half.  [VACCS_Must_Characterization.v] has no
     [_without_toFW] variant for exactly this reason, and here it is,
     visible at the level of [coR]. *)
+(* end hide *)
 
 From Stdlib Require Import List PeanoNat Lia.
 From stdpp Require Import decidable base sets gmap.
@@ -61,7 +63,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Erasure VACCS_Shift VACCS_Precongruence VACCS_Expansion VACCS_ResNormalize
   VACCS_Copycat VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_Forwarder
   VACCS_NormalForm.
-
+(* begin hide *)
 Section VACCS_ReadySet.
 
 Context `{VP : VACCS_Parameters}.
@@ -150,7 +152,7 @@ Fixpoint gStable (M : gproc) : Prop :=
 match M with
 | ① => True
 | 𝟘 => True
-| c ? p => True
+| c ? • p => True
 | 𝛕 • p => False
 | M1 + M2 => gStable M1 /\ gStable M2
 end.

@@ -23,15 +23,16 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA.
-(* end hide *)
+
 
 (** ** Each program has a MailBox, which is finite and counts occurences of Value *)
 
-Class FiniteOutputChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P A H gLtsEqP} :=
+Class FiniteNonBlockingChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P A H gLtsEqP} :=
   MkOba {
       (* Multiset of non-blocking action from a process *)
       lts_oba_mo (p : P) : gmultiset A;
@@ -54,19 +55,19 @@ Class FiniteOutputChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P 
 
 (* *** Relationship between mailbox and non-blocking actions *)
 
-Lemma lts_oba_mo_non_blocking_spec1 `{FiniteOutputChain_LtsOba P A} {p η} : 
+Lemma lts_oba_mo_non_blocking_spec1 `{FiniteNonBlockingChain_LtsOba P A} {p η} : 
   η ∈ lts_oba_mo p → non_blocking η.
 Proof.
   intro mem. apply lts_oba_mo_spec_bis2 in mem as (p2 & nb & tr). exact nb.
 Qed.
 
-Lemma lts_oba_mo_non_blocking_contra `{FiniteOutputChain_LtsOba P A} {p β} : 
+Lemma lts_oba_mo_non_blocking_contra `{FiniteNonBlockingChain_LtsOba P A} {p β} : 
   blocking β → β ∉ lts_oba_mo p.
 Proof.
   intros not_nb mem. apply lts_oba_mo_non_blocking_spec1 in mem. contradiction.
 Qed.
 
-Lemma not_in_mb_to_not_eq' `{FiniteOutputChain_LtsOba P A} {μ p}: 
+Lemma not_in_mb_to_not_eq' `{FiniteNonBlockingChain_LtsOba P A} {μ p}: 
   μ ∉ lts_oba_mo p 
   -> Forall (NotEq μ) (elements (lts_oba_mo p)).
 Proof.
@@ -81,7 +82,7 @@ Qed.
 
 (* *** Properties on LTS with OBA axioms *)
 
-Lemma lts_oba_mo_eq `{FiniteOutputChain_LtsOba P A} {p q} :
+Lemma lts_oba_mo_eq `{FiniteNonBlockingChain_LtsOba P A} {p q} :
   p ⋍ q → lts_oba_mo p = lts_oba_mo q.
 Proof.
   remember (lts_oba_mo p) as hmo.

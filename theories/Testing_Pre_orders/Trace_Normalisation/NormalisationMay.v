@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -28,7 +29,7 @@ From stdpp Require Import base countable list decidable gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
     WeakTransitions coWeakTransition DefinitionTI DefinitionTIco
     NormalForm Normalisation NormalisationCo.
-
+(* begin hide *)
 (* * The may preorders on traces in normal form
 
     The alternative characterisations of [may] in this development are plain

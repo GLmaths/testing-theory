@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Erasing [①] from a server
 
     [good] (VACCS_Good.v) is the *client*'s outcome predicate; a server's
@@ -40,13 +41,14 @@
 
     Everything here is about *any* VACCS process — [Static] is not
     assumed, so [pr_rec] is covered too. *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base.
 From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization.
-
+(* begin hide *)
 Section VACCS_Erasure.
 
 Context `{VP : VACCS_Parameters}.
@@ -67,7 +69,7 @@ with gnoone (M : gproc) : gproc :=
 match M with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c ? p => c ? (noone p)
+| c ? • p => c ? • (noone p)
 | 𝛕 • p => 𝛕 • (noone p)
 | p1 + p2 => (gnoone p1) + (gnoone p2)
 end.

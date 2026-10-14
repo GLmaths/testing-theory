@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * What the τ-encoding costs, relative to Hennessy & Ingólfsdóttir
 
     Transcribing Hennessy & Ingólfsdóttir's proof system ("A Theory of
@@ -93,6 +94,7 @@
     [DefinitionAxiomatic.v], one in [VCCS_AxRedundancy.v]). So the
     eleven corrections below are corrections to the *content* of the
     system, independently of how it is packaged. *)
+(* end hide *)
 
 From Stdlib Require Import List.
 From stdpp Require Import base.
@@ -102,7 +104,7 @@ From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActi
   VCCS_Expansion VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet
   DefinitionAxiomatic VCCS_Canonical VCCS_NormalForm SoundnessAx CompletenessAx
   VCCS_AxRedundancy.
-
+(* begin hide *)
 Section VCCS_AxMissingRules.
 
 Context `{VP : VCCS_Parameters}.
@@ -142,8 +144,8 @@ Ltac st := repeat constructor.
     sitting inside a larger sum, because [ax_cgr] only permutes and the
     unrestricted congruence is the unsound rule above. *)
 
-Definition p1 : proc := g ((a ? (g 𝟘)) + (a ? (g ①)) + (b ! v • 𝟘)).
-Definition q1 : proc := g ((a ? (g ((𝛕 • (g 𝟘)) + (𝛕 • (g ①))))) + (b ! v • 𝟘)).
+Definition p1 : proc := g ((a ? • (g 𝟘)) + (a ? • (g ①)) + (b ! v • 𝟘)).
+Definition q1 : proc := g ((a ? • (g ((𝛕 • (g 𝟘)) + (𝛕 • (g ①))))) + (b ! v • 𝟘)).
 
 Example ax_1 : p1 ᴠᴄᴄꜱ⊑ₐₓ q1.
 Proof. apply ax_collapse_input_ctx_l. Qed.
@@ -290,9 +292,9 @@ Proof. apply soundness_ax; [st | st | apply ax_7r]. Qed.
     conclusion. *)
 
 Definition p8 : proc :=
-  g ((𝛕 • (g ((a ? (g 𝟘)) + (b ! v • 𝟘)))) + (𝛕 • (g ((a ? (g ①)) + (c ! w • 𝟘))))).
+  g ((𝛕 • (g ((a ? • (g 𝟘)) + (b ! v • 𝟘)))) + (𝛕 • (g ((a ? • (g ①)) + (c ! w • 𝟘))))).
 Definition q8 : proc :=
-  g ((a ? (g ((𝛕 • (g 𝟘)) + (𝛕 • (g ①))))) + (b ! v • 𝟘)).
+  g ((a ? • (g ((𝛕 • (g 𝟘)) + (𝛕 • (g ①))))) + (b ! v • 𝟘)).
 
 Example ax_8 : p8 ᴠᴄᴄꜱ⊑ₐₓ q8.
 Proof. apply ax_share_in. Qed.

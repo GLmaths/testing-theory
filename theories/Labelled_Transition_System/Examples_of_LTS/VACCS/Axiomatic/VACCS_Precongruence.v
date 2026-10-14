@@ -20,19 +20,21 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Precongruence lemmas for [⊑ₘᵤₛₜᵢ] on VACCS
 
     Building blocks for a Hennessy-Ingólfsdóttir-style inequational proof
     system for the must-preorder on VACCS. This file collects the lemmas
     that don't require case-splitting on the parallel operator. *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import decidable base.
-From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
+From TestingTheory Require Import VACCS VACCS_Instance Must ParallelLTSConstruction ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization VACCS_Erasure VACCS_Shift.
-
+(* begin hide *)
 Section VACCS_Precongruence.
 
 Context `{VP : VACCS_Parameters}.
@@ -652,10 +654,10 @@ Proof.
   - apply m_step.
     + intro Hg. apply Ho. apply (NewVarC_respects_good 0). exact Hg.
     + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
-      * inversion l; subst. exists (p' ▷ NewVarC 0 x2). eapply ParLeft. eassumption.
-      * exists (p ▷ NewVarC 0 x2). eapply ParRight. apply (lts_NewVarC _ _ _ l 0).
+      * inversion l; subst. exists (p' ∣ NewVarC 0 x2). eapply ParLeft. eassumption.
+      * exists (p ∣ NewVarC 0 x2). eapply ParRight. apply (lts_NewVarC _ _ _ l 0).
       * inversion l1; subst.
-        exists (p' ▷ NewVarC 0 x2).
+        exists (p' ∣ NewVarC 0 x2).
         eapply ParSync; [ apply dual_shift; exact eq | eassumption | ].
         pose proof (lts_NewVarC _ _ _ l2 0) as Hl2.
         rewrite NewVarC_act_at_zero in Hl2. exact Hl2.
@@ -681,15 +683,15 @@ Proof.
   - apply m_step.
     + intro Hg. apply Ho. apply NewVarC_respects_good. exact Hg.
     + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
-      * exists ((ν x1) ▷ t). eapply ParLeft. apply lts_res_tau. eassumption.
+      * exists ((ν x1) ∣ t). eapply ParLeft. apply lts_res_tau. eassumption.
       * destruct (lts_NewVarC_inv _ _ _ _ l) as (a0 & t' & Ha & Hu' & Hlt).
         destruct a0 as [μ0|]; [ rewrite NewVarC_act_ext in Ha; discriminate Ha | ].
-        exists ((ν x1) ▷ t'). eapply ParRight. exact Hlt.
+        exists ((ν x1) ∣ t'). eapply ParRight. exact Hlt.
       * destruct (lts_NewVarC_inv _ _ _ _ l2) as (a0 & t' & Ha & Hu' & Hlt).
         destruct a0 as [μ3|]; [ | simpl in Ha; discriminate Ha ].
         rewrite NewVarC_act_at_zero in Ha. inversion Ha as [Ha']. clear Ha. subst.
         destruct (dual_shift_inv μ1 μ3 eq) as (μ4 & Hμ4 & Hdm). subst.
-        exists ((ν x1) ▷ t').
+        exists ((ν x1) ∣ t').
         eapply ParSync; [ exact Hdm | apply lts_res_ext; exact l1 | exact Hlt ].
     + intros x Hx. inversion Hx; subst. eapply IHpt; [ eassumption | reflexivity ].
     + intros t' Ht'. eapply (IHet (NewVarC 0 t'));
@@ -864,10 +866,10 @@ Proof. intros gp gq q r μ s l w. eapply wt_act; [eapply lts_choiceR; exact l | 
     substitution-respects-⊑ lemma is needed beyond this. *)
 
 Lemma must_i_input_compat (c : ChannelData) (p q : proc) :
-  (forall v, p^v ⊑ₘᵤₛₜᵢ q^v) -> g (c ? p) ⊑ₘᵤₛₜᵢ g (c ? q).
+  (forall v, p^v ⊑ₘᵤₛₜᵢ q^v) -> g (c ? • p) ⊑ₘᵤₛₜᵢ g (c ? • q).
 Proof.
   intros Hpq t Hm.
-  remember (g (c ? p)) as P eqn:HP.
+  remember (g (c ? • p)) as P eqn:HP.
   induction Hm.
   - now apply m_now.
   - subst.
@@ -876,7 +878,7 @@ Proof.
     + destruct ex as ((a2, b2) & Hstep).
       inversion Hstep; subst.
       * inversion l.
-      * exists (g (c ? q), b2). eapply ParRight. exact l.
+      * exists (g (c ? • q), b2). eapply ParRight. exact l.
       * inversion l1; subst. exists (q^v, b2). eapply ParSync; [exact eq | eapply lts_input | exact l2].
     + intros p' Hp'. inversion Hp'.
     + intros t' Ht'. eapply H0; [exact Ht' | reflexivity].
@@ -970,11 +972,11 @@ Qed.
     synchronising test transition is only known at the other branch's
     value, and has to be re-derived at this branch's value instead. *)
 Lemma must_i_input_branch_must : forall (c : ChannelData) (P Q t : proc),
-  (g ((c ? P) + (c ? Q))) must_pass t ->
-  (g (c ? P)) must_pass t /\ (g (c ? Q)) must_pass t.
+  (g ((c ? • P) + (c ? • Q))) must_pass t ->
+  (g (c ? • P)) must_pass t /\ (g (c ? • Q)) must_pass t.
 Proof.
   intros c P Q t Hm.
-  remember (g ((c ? P) + (c ? Q))) as R eqn:HR.
+  remember (g ((c ? • P) + (c ? • Q))) as R eqn:HR.
   induction Hm.
   - split; now apply m_now.
   - subst.
@@ -984,7 +986,7 @@ Proof.
       * destruct ex as ((a2,b2) & Hstep).
         inversion Hstep; subst.
         -- inversion l; subst; solve[inversion H6].
-        -- exists (g (c ? P), b2). eapply ParRight. exact l.
+        -- exists (g (c ? • P), b2). eapply ParRight. exact l.
         -- inversion l1; subst.
            ++ inversion H6; subst.
               exists (P ^ v, b2). eapply ParSync; [exact eq | exact H6 | exact l2].
@@ -1000,7 +1002,7 @@ Proof.
       * destruct ex as ((a2,b2) & Hstep).
         inversion Hstep; subst.
         -- inversion l; subst; solve[inversion H6].
-        -- exists (g (c ? Q), b2). eapply ParRight. exact l.
+        -- exists (g (c ? • Q), b2). eapply ParRight. exact l.
         -- inversion l1; subst.
            ++ inversion H6; subst.
               exists (Q ^ v, b2). eapply ParSync; [exact eq | eapply lts_input | exact l2].
@@ -1014,25 +1016,25 @@ Proof.
 Qed.
 
 Lemma must_i_input_merge_l : forall (c : ChannelData) (P Q : proc),
-  g ((c ? P) + (c ? Q)) ⊑ₘᵤₛₜᵢ g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q)))).
+  g ((c ? • P) + (c ? • Q)) ⊑ₘᵤₛₜᵢ g ((𝛕 • (g (c ? • P))) + (𝛕 • (g (c ? • Q)))).
 Proof.
   intros c P Q t Hm.
-  remember (g ((c ? P) + (c ? Q))) as LHS eqn:HLHS.
+  remember (g ((c ? • P) + (c ? • Q))) as LHS eqn:HLHS.
   induction Hm.
   - now apply m_now.
   - subst.
-    assert (Hbranch : (g (c ? P)) must_pass t /\ (g (c ? Q)) must_pass t).
+    assert (Hbranch : (g (c ? • P)) must_pass t /\ (g (c ? • Q)) must_pass t).
     { apply must_i_input_branch_must. apply m_step; assumption. }
     apply m_step.
     + exact nh.
     + destruct ex as ((a2,b2) & Hstep).
       inversion Hstep; subst.
       * inversion l; subst; solve[inversion H6].
-      * exists (g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q)))), b2).
+      * exists (g ((𝛕 • (g (c ? • P))) + (𝛕 • (g (c ? • Q)))), b2).
         eapply ParRight. exact l.
       * inversion l1; subst.
-        -- exists (g (c ? P), t). eapply ParLeft. eapply lts_choiceL. eapply lts_tau.
-        -- exists (g (c ? P), t). eapply ParLeft. eapply lts_choiceL. eapply lts_tau.
+        -- exists (g (c ? • P), t). eapply ParLeft. eapply lts_choiceL. eapply lts_tau.
+        -- exists (g (c ? • P), t). eapply ParLeft. eapply lts_choiceL. eapply lts_tau.
     + intros p' Hp'.
       inversion Hp'; subst.
       * inversion H6; subst. exact (proj1 Hbranch).
@@ -1062,10 +1064,10 @@ Qed.
     to the corresponding given hypothesis's own [com] field. *)
 
 Lemma must_i_input_join_branches : forall (c : ChannelData) (P Q t : proc),
-  (g (c ? P)) must_pass t -> (g (c ? Q)) must_pass t -> (g ((c ? P) + (c ? Q))) must_pass t.
+  (g (c ? • P)) must_pass t -> (g (c ? • Q)) must_pass t -> (g ((c ? • P) + (c ? • Q))) must_pass t.
 Proof.
   intros c P Q t Hm1 Hm2.
-  remember (g (c ? P)) as X eqn:HX.
+  remember (g (c ? • P)) as X eqn:HX.
   revert Hm2.
   induction Hm1; intros Hm2.
   - now apply m_now.
@@ -1075,7 +1077,7 @@ Proof.
     + destruct ex as ((a2,b2) & Hstep).
       inversion Hstep; subst.
       * inversion l.
-      * exists (g ((c ? P) + (c ? Q)), b2). eapply ParRight. exact l.
+      * exists (g ((c ? • P) + (c ? • Q)), b2). eapply ParRight. exact l.
       * inversion l1; subst.
         exists (P ^ v, b2). eapply ParSync; [exact eq | eapply lts_choiceL; eapply lts_input | exact l2].
     + intros p' Hp'. inversion Hp'; subst.
@@ -1097,7 +1099,7 @@ Proof.
 Qed.
 
 Lemma must_i_input_merge_r : forall (c : ChannelData) (P Q : proc),
-  g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q)))) ⊑ₘᵤₛₜᵢ g ((c ? P) + (c ? Q)).
+  g ((𝛕 • (g (c ? • P))) + (𝛕 • (g (c ? • Q)))) ⊑ₘᵤₛₜᵢ g ((c ? • P) + (c ? • Q)).
 Proof.
   intros c P Q t Hm.
   apply must_i_input_join_branches.
@@ -1355,17 +1357,17 @@ Proof.
       * apply Ho; exact H.
     + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
       * inversion l; subst.
-        -- exists (p2 ▷ (q2 ‖ x2)).
+        -- exists (p2 ∣ (q2 ‖ x2)).
            eapply ParSync; [ apply dual_out_in | eassumption | apply lts_parL; eassumption ].
-        -- exists (q2 ▷ (p2 ‖ x2)).
+        -- exists (q2 ∣ (p2 ‖ x2)).
            eapply ParSync; [ apply dual_in_out | eassumption | apply lts_parL; eassumption ].
-        -- exists (p2 ▷ (noone r ‖ x2)). eapply ParLeft. eassumption.
-        -- exists (p ▷ (q2 ‖ x2)). eapply ParRight. apply lts_parL. eassumption.
-      * exists (p ▷ (noone r ‖ x2)). eapply ParRight. apply lts_parR. eassumption.
+        -- exists (p2 ∣ (noone r ‖ x2)). eapply ParLeft. eassumption.
+        -- exists (p ∣ (q2 ‖ x2)). eapply ParRight. apply lts_parL. eassumption.
+      * exists (p ∣ (noone r ‖ x2)). eapply ParRight. apply lts_parR. eassumption.
       * inversion l1; subst.
-        -- exists (p2 ▷ (noone r ‖ x2)).
+        -- exists (p2 ∣ (noone r ‖ x2)).
            eapply ParSync; [ exact eq | eassumption | apply lts_parR; eassumption ].
-        -- exists (p ▷ (q2 ‖ x2)). eapply ParRight.
+        -- exists (p ∣ (q2 ‖ x2)). eapply ParRight.
            destruct (dual_shape _ _ eq) as [(a & Ha1 & Ha2)|(a & Ha1 & Ha2)]; subst;
              destruct a as (c0,v0).
            ++ eapply lts_comL; eassumption.
@@ -1407,21 +1409,21 @@ Proof.
   - apply m_step.
     + intro Hg. apply Ho. apply good_par. right. exact Hg.
     + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
-      * exists ((x1 ‖ noone r) ▷ t). eapply ParLeft. apply lts_parL. eassumption.
+      * exists ((x1 ‖ noone r) ∣ t). eapply ParLeft. apply lts_parL. eassumption.
       * inversion l; subst.
-        -- exists ((x1 ‖ p2) ▷ q2).
+        -- exists ((x1 ‖ p2) ∣ q2).
            eapply ParSync; [ apply dual_out_in | apply lts_parR; eassumption | eassumption ].
-        -- exists ((x1 ‖ q2) ▷ p2).
+        -- exists ((x1 ‖ q2) ∣ p2).
            eapply ParSync; [ apply dual_in_out | apply lts_parR; eassumption | eassumption ].
-        -- exists ((x1 ‖ p2) ▷ t). eapply ParLeft. apply lts_parR. eassumption.
-        -- exists ((x1 ‖ noone r) ▷ q2). eapply ParRight. eassumption.
+        -- exists ((x1 ‖ p2) ∣ t). eapply ParLeft. apply lts_parR. eassumption.
+        -- exists ((x1 ‖ noone r) ∣ q2). eapply ParRight. eassumption.
       * inversion l2; subst.
-        -- exists ((x1 ‖ p2) ▷ t). eapply ParLeft.
+        -- exists ((x1 ‖ p2) ∣ t). eapply ParLeft.
            destruct (dual_shape _ _ eq) as [(a & Ha1 & Ha2)|(a & Ha1 & Ha2)]; subst;
              destruct a as (c0,v0).
            ++ eapply lts_comL; eassumption.
            ++ eapply lts_comR; eassumption.
-        -- exists ((x1 ‖ noone r) ▷ q2).
+        -- exists ((x1 ‖ noone r) ∣ q2).
            eapply ParSync; [ exact eq | apply lts_parL; eassumption | eassumption ].
     + intros y Hy. inversion Hy; subst.
       * destruct (lts_noone_inv _ _ _ H2) as (r1 & Hr1 & Hlr1). subst.
@@ -1522,7 +1524,7 @@ Qed.
 
     This is what replaces VCCS's [ax_choice_stable] — which is **unsound**
     for VACCS: see [VACCS_ChoiceProbes.v] for the counterexample, whose
-    engine is the copycat [a ? (a!x•𝟘) ≂ₘᵤₛₜᵢ 𝟘].  A copycat is invisible
+    engine is the copycat [a ? • (a!x•𝟘) ≂ₘᵤₛₜᵢ 𝟘].  A copycat is invisible
     standalone, but guarded choice *commits*, so putting one beside another
     summand lets the sum swallow a message, discard the alternative, and
     deadlock.  Replacing a stable summand by another stable one is
@@ -1542,10 +1544,10 @@ Qed.
 
 Lemma must_i_choice_input_compat : forall (c : ChannelData) (P Q : proc) (G : gproc),
   (forall v, (P ^ v) ⊑ₘᵤₛₜᵢ (Q ^ v)) ->
-  g ((c ? P) + G) ⊑ₘᵤₛₜᵢ g ((c ? Q) + G).
+  g ((c ? • P) + G) ⊑ₘᵤₛₜᵢ g ((c ? • Q) + G).
 Proof.
   intros c P Q G HPQ t Hm.
-  remember (g ((c ? P) + G)) as S eqn:HS.
+  remember (g ((c ? • P) + G)) as S eqn:HS.
   revert HS. revert G. induction Hm as [ S t Ho | S t Ho Hex Hpt IHpt Het IHet Hcom IHcom ];
     intros G HS; subst.
   - now apply m_now.
@@ -1554,13 +1556,13 @@ Proof.
     + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
       * inversion l; subst.
         -- inversion H3.
-        -- exists (x1 ▷ x2). eapply ParLeft. apply lts_choiceR. exact H3.
-      * exists (g ((c ? Q) + G) ▷ x2). eapply ParRight. exact l.
+        -- exists (x1 ∣ x2). eapply ParLeft. apply lts_choiceR. exact H3.
+      * exists (g ((c ? • Q) + G) ∣ x2). eapply ParRight. exact l.
       * inversion l1; subst.
         -- inversion H3; subst.
-           exists ((Q ^ v) ▷ x2). eapply ParSync;
+           exists ((Q ^ v) ∣ x2). eapply ParSync;
              [ exact eq | apply lts_choiceL; apply lts_input | exact l2 ].
-        -- exists (x1 ▷ x2). eapply ParSync;
+        -- exists (x1 ∣ x2). eapply ParSync;
              [ exact eq | apply lts_choiceR; exact H3 | exact l2 ].
     + intros x Hx. inversion Hx; subst.
       * inversion H3.
@@ -1621,10 +1623,10 @@ Proof.
 Qed.
 
 Lemma must_i_input_distrib_l : forall (c : ChannelData) (P Q : proc),
-  g ((c ? P) + (c ? Q)) ⊑ₘᵤₛₜᵢ g (c ? (g ((𝛕 • P) + (𝛕 • Q)))).
+  g ((c ? • P) + (c ? • Q)) ⊑ₘᵤₛₜᵢ g (c ? • (g ((𝛕 • P) + (𝛕 • Q)))).
 Proof.
   intros c P Q t Hm.
-  remember (g ((c ? P) + (c ? Q))) as p0 eqn:Heq.
+  remember (g ((c ? • P) + (c ? • Q))) as p0 eqn:Heq.
   revert c P Q Heq.
   induction Hm; intros c0 P0 Q0 Heq.
   - now apply m_now.
@@ -1633,7 +1635,7 @@ Proof.
     + exact nh.
     + destruct ex as ((a2,b2) & Hstep). inversion Hstep; subst.
       * exfalso. inversion l; subst; inversion H6.
-      * exists (g (c0 ? (g ((𝛕 • P0) + (𝛕 • Q0)))), b2). eapply ParRight. exact l.
+      * exists (g (c0 ? • (g ((𝛕 • P0) + (𝛕 • Q0)))), b2). eapply ParRight. exact l.
       * inversion l1; subst; inversion H6; subst;
           (eexists; eapply ParSync; [exact eq | apply lts_input | exact l2]).
     + intros p' Hp'. inversion Hp'.
@@ -1646,7 +1648,7 @@ Proof.
 Qed.
 
 Lemma must_i_input_distrib_r : forall (c : ChannelData) (P Q : proc),
-  g (c ? (g ((𝛕 • P) + (𝛕 • Q)))) ⊑ₘᵤₛₜᵢ g ((c ? P) + (c ? Q)).
+  g (c ? • (g ((𝛕 • P) + (𝛕 • Q)))) ⊑ₘᵤₛₜᵢ g ((c ? • P) + (c ? • Q)).
 Proof.
   intros c P Q t Hm.
   apply must_i_input_join_branches.
@@ -1704,10 +1706,10 @@ Qed.
 
 Lemma must_i_input_distrib_ctx_r :
   forall (c : ChannelData) (P Q : proc) (R : gproc) (t : proc),
-  (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)) must_pass t ->
-  (g (((c ? P) + (c ? Q)) + R)) must_pass t.
+  (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + R)) must_pass t ->
+  (g (((c ? • P) + (c ? • Q)) + R)) must_pass t.
 Proof.
-  intros c P Q R t Hm. remember (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)) as p0 eqn:Heq.
+  intros c P Q R t Hm. remember (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + R)) as p0 eqn:Heq.
   induction Hm; subst.
   - apply m_now. assumption.
   - apply m_step.
@@ -1742,7 +1744,7 @@ Qed.
 
     The matching's innermost step, [ax_fwd_match], is an instance of
     [ax_input]: the mirror summand [fwdg c M] and the right-hand guard
-    [c ? Q] have the *same* guard, only different continuations.  Its
+    [c ? • Q] have the *same* guard, only different continuations.  Its
     premise is therefore about the **bare** continuations, while the
     recursion's measure only ever bounds the *wrapped* configuration
     [Ѵⁿ (msgs l ‖ ·)] — and the wrapper cannot be moved inside a guard
@@ -1755,7 +1757,7 @@ Qed.
     contexts is closed under those outputs.  [R] is that family.
 
     Note what the three structural hypotheses buy: with [B] inert, the
-    only [τ] of [B ‖ g (c ? P)] is [B] handing a message to the guard,
+    only [τ] of [B ‖ g (c ? • P)] is [B] handing a message to the guard,
     and the only visible actions are [B]'s outputs and the guard's own
     input.  Every one of them has a [Q]-counterpart with the *same*
     label, which is why all five [must] fields transfer. *)
@@ -1786,7 +1788,7 @@ Qed.
 
     The second premise is the one that makes the law usable at all.  A
     synchronous formulation would demand [p ⟶[μ] p'] with [p' ⊑ q''],
-    and the left need not offer the channel ([c ? 𝟘 ⊑ₘᵤₛₜᵢ 𝟘]).  Here it
+    and the left need not offer the channel ([c ? • 𝟘 ⊑ₘᵤₛₜᵢ 𝟘]).  Here it
     is enough that [(c!v•𝟘) ‖ p] be above the reduct — and that is
     exactly what the recursion produces
     ([VACCS_Matching.must_i_feed_below]).  The proof of the [com] case is
@@ -1851,7 +1853,7 @@ Proof.
   - apply m_now. exact Hgood.
   - apply m_step.
     + exact nh.
-    + destruct Htau as (z & Hz). exists (z ▷ t0). apply ParLeft. exact Hz.
+    + destruct Htau as (z & Hz). exists (z ∣ t0). apply ParLeft. exact Hz.
     + intros p' Hp'. apply pt. apply Hsub. exact Hp'.
     + intros t' Ht'. apply IHet; [ exact Ht' | exact Hsub ].
     + intros p' t' μ1 μ2 Hd Hp' Ht'.
@@ -1866,7 +1868,7 @@ Qed.
 
 Lemma must_i_drop_tau : forall (c : ChannelData) (P : proc) (G : gproc),
   (exists z, lts (g G) τ z) ->
-  (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g G).
+  (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g G).
 Proof.
   intros c P G Htau. apply must_i_sub_tau; [ | exact Htau ].
   intros al z Hz. apply lts_choiceR. exact Hz.

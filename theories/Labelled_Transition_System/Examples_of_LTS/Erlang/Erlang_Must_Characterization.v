@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the must preorder and its characterisations
 
     The observers are VACCS processes: [Erlang_Test_Dilemma] shows that Erlang
@@ -31,13 +32,14 @@
 
     What is missing here is only the interaction between an Erlang system (or
     an Erlang forwarder) and an observer. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
-  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain
+  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain
   FiniteImageLTS coFiniteImage Subset_Act Termination Convergence WeakTransitions
   coWeakTransition coConvergence StateTransitionSystems
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
@@ -49,7 +51,7 @@ From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
   DefinitionCI EquivalenceCI Coin_tower
   VACCS VACCS_Instance VACCS_Good VACCS_CoFiniteImage VACCS_ta_tc_gen
   Erlang_Syntax Erlang_LTS Erlang_Instance Erlang_LabelAbstraction Erlang_Forwarder.
-
+(* begin hide *)
 (* [PreActActionForFW] of [DefinitionAS.v] — the lift of an abstraction to the
     forwarder, whose process-side obligation is [Admitted] — is taken out of
     instance search: [Erl_AbsAction_FW] below replaces it, so that nothing here

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The channel-index shift [NewVarC] transports transitions, both ways
 
     [NewVarC k] inserts a fresh channel binder at de Bruijn level [k].
@@ -47,6 +48,7 @@
     [VarC_add k] ("add [k] to every index") — and they agree exactly at
     [k = 0] ([NewVarC_at_zero]), which is what makes the bridge's [k = 0]
     instance line up with [lts_res_ext]'s [VarC_action_add 1]. *)
+(* end hide *)
 
 From Stdlib Require Import Lia.
 From Stdlib.Program Require Import Equality.
@@ -54,7 +56,7 @@ From stdpp Require Import base.
 From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization VACCS_Erasure.
-
+(* begin hide *)
 Section VACCS_Shift.
 
 Context `{VP : VACCS_Parameters}.

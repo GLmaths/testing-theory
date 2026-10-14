@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -30,13 +31,13 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
+From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction
       Termination Convergence WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction StateTransitionSystems.
 From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
 From TestingTheory Require Import coWeakTransition coConvergence DefinitionASco
       FiniteImageLTS coFiniteImage coSetLTSConstruction DefinitionASco.
-
+(* begin hide *)
 (* * Soundness for the co-acceptance-set preorder
 
     Two alphabets throughout: the processes over [Aproc], the observers and
@@ -618,7 +619,7 @@ Definition bhv_pre_co_cond1__x `{gLtsP : @gLts P Aproc Hp, !Countable P}
   (X : gset P) (Y : gset Q) :=
   ∀ (s : trace A), (∀ p, p ∈ X → p ⇓ᶜᵒ s) → (∀ q, q ∈ Y → q ⇓ᶜᵒ s).
 
-Global Notation "X ₁≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond1__x X Y) (at level 70).
+Global Notation "X ꜀ₙᵥ≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond1__x X Y) (at level 70).
 
 Definition bhv_pre_co_cond2__x
   `{gLtsP : @gLts P Aproc Hp, !Countable P}
@@ -633,7 +634,7 @@ Definition bhv_pre_co_cond2__x
     ∃ p, p ∈ X ∧ ∃ p', p ⟹ᶜᵒ[s] p' ∧ p' ↛ ∧
            (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
 
-Global Notation "X ₂≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
+Global Notation "X ₐ꜀꜀≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 
 Definition bhv_pre_co__x
   `{gLtsP : @gLts P Aproc Hp, !Countable P}
@@ -642,7 +643,7 @@ Definition bhv_pre_co__x
   `{AbsPT : !@AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA}
   `{AbsQT : !@AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
   (X : gset P) (Y : gset Q) :=
-  bhv_pre_co_cond1__x (A := A) X Y ∧ X ₂≼꜀ₒ₋ₛₑₜ_ₐₛ Y.
+  bhv_pre_co_cond1__x (A := A) X Y ∧ X ₐ꜀꜀≼꜀ₒ₋ₛₑₜ_ₐₛ Y.
 
 Global Notation "X ≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co__x X Y) (at level 70).
 
@@ -660,8 +661,8 @@ Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
 Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp gLtsP gLtsEqT SA}.
 Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp gLtsQ gLtsEqT SA}.
 
-Notation "X '₁≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
+Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
+Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 
 Lemma alt_set_singleton_iff_co (p : P) (q : Q) :
@@ -681,7 +682,7 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_reduction_co (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ Y → lts_tau_set_from_pset_spec1 Y Y' → X ₁≼ Y'.
+  X ꜀ₙᵥ≼ Y → lts_tau_set_from_pset_spec1 Y Y' → X ꜀ₙᵥ≼ Y'.
 Proof.
   intros halt1 l s mem.
   intros q memq. eapply l in memq as (q' & mem' & tr').
@@ -715,8 +716,8 @@ Qed.
 Lemma bhvleqone_preserved_by_external_action_co
   (X X' : gset P) (η : Atest) (Y Y' : gset Q)
   (htp : ∀ p, p ∈ X → p ⤓) :
-  X ₁≼ Y → cowt_set_from_pset_spec X η X' →
-  cowt_set_from_pset_spec1 Y η Y' → X' ₁≼ Y'.
+  X ꜀ₙᵥ≼ Y → cowt_set_from_pset_spec X η X' →
+  cowt_set_from_pset_spec1 Y η Y' → X' ꜀ₙᵥ≼ Y'.
 Proof.
   intros hleq hws l s hcnv. intros q memq.
   eapply l in memq as (q' & mem' & wk_tr).
@@ -859,8 +860,8 @@ Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
 Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
 Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
 
-Notation "X '₁≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
+Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
+Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 
 (* The composition is an [Sts], so "the composition is stuck" is
@@ -869,7 +870,7 @@ Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 Lemma unoutcome_must_st_nleqx_co (X : gset P) (Y : gset Q) (t : T) :
   ¬ outcome t → X must_pass_x t →
   (∃ q, q ∈ Y ∧ ¬ (∃ y, sts_step (Sts := par_sts) (q, t) y)) →
-  ¬ (X ₂≼ Y).
+  ¬ (X ₐ꜀꜀≼ Y).
 Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
   assert (stable_q : q ↛).
@@ -897,7 +898,7 @@ Proof.
 Qed.
 
 Lemma stability_nbhvleqtwo_co (X : gset P) (Y : gset Q) t :
-  ¬ outcome t → X must_pass_x t → X ₂≼ Y →
+  ¬ outcome t → X must_pass_x t → X ₐ꜀꜀≼ Y →
   ∀ (q : Q), q ∈ Y → ∃ y, sts_step (Sts := par_sts) (q, t) y.
 Proof.
   intros nhg hmx hleq q mem.
@@ -926,7 +927,7 @@ Proof.
     { intros q mem. eapply cocnv_terminate. eapply halt1; eauto. }
     assert (Y_conv : Y ⤓).
     { eapply co_termination_set_for_all. exact HYterm. }
-    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ₁≼ Y0 → X ₂≼ Y0 → Y0 must_pass_x t).
+    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ꜀ₙᵥ≼ Y0 → X ₐ꜀꜀≼ Y0 → Y0 must_pass_x t).
     { intros Y0 conv0. induction conv0 as [Y0 tY0 IHY0]. intros hb1 hb2.
       eapply mx_step.
       - exact nh.
@@ -1124,9 +1125,9 @@ End MustxIffMustxAltCo.
    [soundness_co_nb_enabled_co]/[soundnessx_co] (set-LTS-based). *)
 (*
 Lemma soundness_co
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !FiniteImagegLts T A}
 
   `{ !Testing_Predicate outcome _}
 

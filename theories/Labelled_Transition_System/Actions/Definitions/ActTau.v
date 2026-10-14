@@ -1,4 +1,4 @@
-
+(* begin hide *)
 (*
    Copyright (c) 2026 Nomadic Labs
    Copyright (c) 2026 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -23,20 +23,22 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import decidable countable.
 
-(** ** Actions and traces *)
-(** *** Actions := External Action ⊎ { τ } *)
+
+(** ** Labels and traces *)
+(** *** Labels := External Action ⊎ { τ } *)
 
 
-Inductive Act (A: Type) :=
-  (* External Action *)
+Inductive Labels (A: Type) :=
+  (** **** External Action *)
   | ActExt (μ: A)
-  (* Silent Action / Computation Action / Reduction Action *)
+  (** **** Silent Action *)
   | τ 
  .
 
@@ -46,39 +48,44 @@ Arguments τ {_}.
 
 (** *** Trace Definition *)
 Definition trace A := list A.
-(* Empty Trace *)
+(** *** Empty Trace *)
 Definition ε {A : Type} := [] : list A. 
 
-(** *** EqDecision for Act *)
-#[global] Instance act_eqdec `{EqDecision A} : EqDecision (Act A).
+(** *** Equality decidability for Labels if it is the case for Act *)
+#[global] Instance act_eqdec `{EqDecision A} : EqDecision (Labels A).
 Proof. solve_decision. Defined.
 
-
+(** *** Specifications on external actions *)
 Class ExtAction (A : Type) :=
   MkExtAction {
+      (** **** Equality decidability for Act *)
       eqdec: EqDecision A;
-      countable: Countable A;
-      non_blocking : A → Prop;
-      non_blocking_dec a : Decision (non_blocking a);
-      dual : A → A → Prop;
-      dual_dec a b: Decision (dual a b);
 
-      (* Co-action of a non-blocking action is blocking, otherwise infinite non-blocking action sequence in FW *)
+      (** **** Act is a countable set *)
+      countable: Countable A;
+
+      (** **** The subset of non-blocking action ℕ *)
+      non_blocking : A → Prop;
+
+      (** **** μ ∈ ℕ is decidable for any external action μ *)
+      non_blocking_dec μ : Decision (non_blocking μ);
+
+      (** **** Interaction between external actions *)
+      dual : A → A → Prop;
+
+      (** **** The interaction between two external actions is decidable *)
+      dual_dec μ1 μ2: Decision (dual μ1 μ2);
+
+      (** **** Co-action of a non-blocking action is blocking *)
       dual_blocks β η :
       non_blocking η → dual β η → 
         ¬ non_blocking β ;
 
-      (* dual is symmetric *)
+      (** **** dual is symmetric *)
       duo_sym : Symmetric dual;
 
-      (* Constructive way to build a dual action *)
+      (** **** Constructive way to build a dual action *)
       exists_dual μ : { η | dual μ η};
-
-      (* Unique dual *)
-      (* unique_nb η β: dual β η → η = proj1_sig (exists_dual β); *)
-
-      (* Handy hypothesis *)
-      (* nb_not_nb η1 η2 ɣ : non_blocking η1 → dual η1 ɣ → dual η2 ɣ → non_blocking η2; *)
     }.
 
 #[global] Existing Instance eqdec.
@@ -93,7 +100,7 @@ Notation "'blocking' β" := (¬ non_blocking β) (at level 30).
 (** *** Definition of the co-action *)
 Notation "'co' μ" := (proj1_sig (exists_dual μ)) (at level 30).
 
-(** *** Definition of the co-trace *)
+(** *** Construction of a co-trace *)
 Notation "'coₜ' s" := (map (fun μ => (proj1_sig (exists_dual μ))) s) (at level 30).
 
 (** *** Uniqueness of the dual *)

@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib Require Import Unicode.Utf8 List.
@@ -37,10 +38,10 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA
   InteractionBetweenLts MultisetLTSConstruction
   ParallelLTSConstruction ForwarderConstruction
   Must Lift Subset_Act Convergence Termination
-  Testing_Predicate DefinitionAS ActTau Lts_Finite_Output_Chain Subset_Act.
+  Testing_Predicate DefinitionAS ActTau Lts_Finite_Non_Blocking_Chain Subset_Act.
 
 Import ListNotations.
-
+(* begin hide *)
 (* TODO : move in Helpers *)
 Lemma exists_forall_in {B} (ps : list B) (P : B -> Prop) (Q : B -> Prop)
   (h : forall p, p ∈ ps -> P p \/ Q p) : Exists P ps \/ Forall Q ps.
@@ -166,7 +167,7 @@ Proof.
   eapply m_step; eauto with mdb.
   - eapply test_ungood.
   - destruct tconv_can_compute as (e' & l); eauto with mdb.
-    exists (p ▷ e'). eapply ParRight; eauto.
+    exists (p ∣ e'). eapply ParRight; eauto.
   - intros e' l. eapply tconv_computes_to_good in l. eauto with mdb.
   - intros p0 e0 μ μ' inter l1 l2.
     exfalso. eapply tconv_does_no_external_action, (@lts_performs_spec2 T).
@@ -605,7 +606,7 @@ Proof.
   induction (cnv_terminate p s hcnv) as [p hp IHtp].
   apply m_step.
   + eapply test_ungood.
-  + edestruct tconv_always_reduces. exists (p ▷ x). eapply ParRight; eauto.
+  + edestruct tconv_always_reduces. exists (p ∣ x). eapply ParRight; eauto.
   + intros p' l. eapply IHtp; [|eapply cnv_preserved_by_lts_tau]; eauto.
   + intros e' l.
     destruct (inversion_tconv_tau_action (coₜ s) e' l)
@@ -697,7 +698,7 @@ Lemma completeness1 `{
     `{!Prop_of_Inter P T A A dual}
     `{!Prop_of_Inter Q T A A dual}
 
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₁≼ₐₛ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ꜀ₙᵥ≼ₐₛ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cnv, hleq, must_iff_cnv. Qed.
 
 Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
@@ -716,7 +717,7 @@ Proof.
   eapply m_step.
   - eapply test_ungood.
   - edestruct (@test_tau_transition T A); eauto with mdb.
-    now destruct test_co_acceptance_set_spec0. exists (p ▷ x). eapply ParRight; eauto.
+    now destruct test_co_acceptance_set_spec0. exists (p ∣ x). eapply ParRight; eauto.
   - intros p' Tr_p. eapply H3. exact Tr_p. eassumption. eauto with mdb.
   - intros e' l. eapply m_now.
     apply (test_reset_tau_path β s e'). eassumption. eassumption.
@@ -818,7 +819,7 @@ Proof.
     + eapply test_ungood.
     + destruct ex as ((p' & e') & l').
       inversion l'; subst.
-      +++ exists (p' ▷ (ta E2 ε)). eapply ParLeft; eauto.
+      +++ exists (p' ∣ (ta E2 ε)). eapply ParLeft; eauto.
       +++ exfalso. assert ({q : T | ta E1 ε ⟶ q}) as impossible.
           eauto.
           eapply lts_performs_spec2 in impossible.
@@ -1095,7 +1096,7 @@ Proof.
         left. exists t'. eauto with mdb.
     - right. eapply m_step.
       * eapply test_ungood.
-      * exists (p'' ▷ ta ((oas p ε hcnv) ∖ E) ε). eapply ParLeft; eauto.
+      * exists (p'' ∣ ta ((oas p ε hcnv) ∖ E) ε). eapply ParLeft; eauto.
       * intros p0 l0%lts_tau_set_spec.
         eapply Forall_forall in Hyp' as (h0 & hm); eauto.
         eapply must_ta_monotonicity; eauto.
@@ -1230,7 +1231,7 @@ Lemma completeness2 {P Q : Type} `{CC : Countable PreAct} `{
   `{!Prop_of_Inter P T A A dual}
   `{!Prop_of_Inter Q T A A dual}
 
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₂≼ₐₛ q.
+  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₐ꜀꜀≼ₐₛ q.
 Proof.
   intros hpre s q' hacnv w st.
   destruct (must_ta_or_empty_pre_action_set_for_all_trace s p hacnv (coR_abs q')) as [(p' & w_tr & stable & sub)|hm].
@@ -1264,9 +1265,9 @@ Qed.
 
 (* ** Completeness for LTSs that can be lifted to forwarders *)
 Lemma completeness {P Q : Type} `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-  @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !CountablegLts T A,
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
+  @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A,
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !CountablegLts T A,
   !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   `{!Prop_of_Inter P T A A dual}
@@ -1302,7 +1303,7 @@ Lemma completeness1_set `{
     `{!Prop_of_Inter Q T A A dual}
 
   (X : gset P) (Y : gset Q) :
-  X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ₁≼ₛₑₜ_ₐₛ Y.
+  X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y.
 Proof.
   intros hne hle s hcnv q mem.
   assert (hmx : X must_pass_x (tconv (coₜ s))).
@@ -1322,7 +1323,7 @@ Lemma completeness2_set `{
     `{!Prop_of_Inter Q T A A dual}
 
   (X : gset P) (Y : gset Q) :
-  X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ₂≼ₛₑₜ_ₐₛ Y.
+  X ≠ ∅ -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y -> X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y.
 Proof.
   intros hne hle s hcnv q mem.
   assert (hmx : X must_pass_x (tconv (coₜ s))).

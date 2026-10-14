@@ -20,17 +20,18 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   Testing_Predicate May DefinitionTI MayTestSpec EquivalenceTI InputOutputActions
   DefinitionTIco EquivalenceTIco
-  ForwarderConstruction MultisetLTSConstruction Lts_OBA_FB Lts_Finite_Output_Chain
+  ForwarderConstruction MultisetLTSConstruction Lts_OBA_FB Lts_Finite_Non_Blocking_Chain
   FiniteImageLTS VACCS_Instance VACCS_Good VACCS_test_trace_gen_may
   VACCS_May_Characterization.
 
 Import VACCS.
-
+(* begin hide *)
 (* * The May preorder is trace inclusion, for ACCS
 
     ACCS is VACCS with a trivial [Value] — direct specialisation of

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Co-traces over the alphabet of the tests
 
     [coWeakTransition.v] reads a trace [s] as what an observer performs and
@@ -37,6 +38,7 @@
     The subsets [R t] and [coR p] of [Subset_Act.v] both become subsets of
     [Atest] — which is what makes the abstraction [Φ] live on one alphabet
     only. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -45,7 +47,7 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper gLts SyncActions MemAction InteractionUnion MemForwarder Bisimulation Lts_OBA Lts_FW
   Subset_Act WeakTransitions Termination coWeakTransition coConvergence.
-
+(* begin hide *)
 Section coWeakSync.
 
 Context {P Aproc Atest : Type}.

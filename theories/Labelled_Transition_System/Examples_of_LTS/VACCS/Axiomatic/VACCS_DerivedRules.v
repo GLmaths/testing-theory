@@ -20,8 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
-
+(* end hide *)
+(* begin hide *)
 (* * Rules that are no longer rules
 
     [ax_input_drop] (drop a guard whose continuation is [Bad]) and
@@ -35,6 +35,7 @@
 
     The laws built on them follow, with the same statements plus that
     hypothesis. *)
+(* end hide *)
 
 From Stdlib Require Import List Lia.
 From Stdlib.Wellfounded Require Import Inverse_Image.
@@ -47,16 +48,16 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Erasure VACCS_Precongruence VACCS_Residues VACCS_Expansion VACCS_ReadySet VACCS_Cond2
   VACCS_Copycat VACCS_Absorb VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_Canonical
   VACCS_ResNormalize VACCS_Shift VACCS_NormalForm Termination DefinitionCI
-  SetLTSConstruction FiniteImageLTS Lts_Finite_Output_Chain VACCS_Matching.
-
+  SetLTSConstruction FiniteImageLTS Lts_Finite_Non_Blocking_Chain VACCS_Matching.
+(* begin hide *)
 Section VACCS_DerivedRules.
 
 Context `{VP : VACCS_Parameters}.
 
 Lemma ax_input_drop : forall (c : ChannelData) (P : proc) (G : gproc),
-  gStatic ((c ? P) + G) ->
+  gStatic ((c ? • P) + G) ->
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v P)) ->
-  (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c P G HS HP. apply completeness_ax.
   - apply static_g. exact HS.
@@ -94,7 +95,7 @@ Proof.
 Qed.
 
 Lemma ax_swallow : forall (c : ChannelData) (G : gproc),
-  gStatic G -> (g ((c ? (g 𝟘)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  gStatic G -> (g ((c ? • (g 𝟘)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c G HG. apply ax_input_drop; [ repeat constructor; exact HG | ].
   intro v. simpl. apply bad_nil_any.
@@ -106,7 +107,7 @@ Qed.
 
 Lemma ax_drop_ochans : forall (c : ChannelData) (P : proc) (G : gproc),
   Static P -> gStatic G -> (forall d, In d (ochans P) -> d = c) ->
-  (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c P G HSt HG Hsub. apply ax_input_drop; [ repeat constructor; assumption | ].
   intro v. apply ochans_sub_Bad.
@@ -115,20 +116,20 @@ Proof.
 Qed.
 
 Corollary ax_drop_no_output : forall (c : ChannelData) (P : proc) (G : gproc),
-  Static P -> gStatic G -> ochans P = [] -> (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  Static P -> gStatic G -> ochans P = [] -> (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c P G HSt HG Hoc. apply ax_drop_ochans; [ exact HSt | exact HG | ].
   intros d Hd. rewrite Hoc in Hd. contradiction.
 Qed.
 
 Example ax_drop_nested_sink : forall (c d : ChannelData) (G : gproc),
-  gStatic G -> (g ((c ? ((g (d ? ((g 𝟘) : proc))) : proc)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  gStatic G -> (g ((c ? • ((g (d ? • ((g 𝟘) : proc))) : proc)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c d G HG. apply ax_drop_no_output; [ repeat constructor | exact HG | reflexivity ].
 Qed.
 
 Example ax_drop_copycat : forall (c : ChannelData) (G : gproc),
-  gStatic G -> (g ((c ? (((c ! (bvar 0) • 𝟘)) : proc)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  gStatic G -> (g ((c ? • (((c ! (bvar 0) • 𝟘)) : proc)) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c G HG. apply ax_drop_ochans; [ repeat constructor | exact HG | ].
   intros d Hd. simpl in Hd. destruct Hd as [Hd|[]]. symmetry. exact Hd.
@@ -138,10 +139,10 @@ Qed.
 
 Lemma ax_input_drop_upto :
   forall (c : ChannelData) (P Q : proc) (G : gproc),
-  gStatic ((c ? Q) + G) ->
+  gStatic ((c ? • Q) + G) ->
   (forall v : ValueData, (subst_in_proc 0 v P) ᴠᴀᴄᴄꜱ⊑ₐₓ (subst_in_proc 0 v Q)) ->
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v Q)) ->
-  (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c P Q G HS Hpq HQ.
   eapply ax_trans; [ apply ax_choice_input with (Q := Q); exact Hpq | ].
@@ -150,9 +151,9 @@ Qed.
 
 Lemma ax_input_drop_int_l :
   forall (c : ChannelData) (A B : proc) (G : gproc),
-  gStatic ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G) ->
+  gStatic ((c ? • (g ((𝛕 • A) + (𝛕 • B)))) + G) ->
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v A)) ->
-  (g ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  (g ((c ? • (g ((𝛕 • A) + (𝛕 • B)))) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c A B G HS HA. apply ax_input_drop; [ exact HS | ]. intro v. simpl.
   eapply bad_step; [ apply lts_choiceL; apply lts_tau | apply HA ].
@@ -160,9 +161,9 @@ Qed.
 
 Lemma ax_input_drop_int_r :
   forall (c : ChannelData) (A B : proc) (G : gproc),
-  gStatic ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G) ->
+  gStatic ((c ? • (g ((𝛕 • A) + (𝛕 • B)))) + G) ->
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v B)) ->
-  (g ((c ? (g ((𝛕 • A) + (𝛕 • B)))) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
+  (g ((c ? • (g ((𝛕 • A) + (𝛕 • B)))) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
   intros c A B G HS HB. apply ax_input_drop; [ exact HS | ]. intro v. simpl.
   eapply bad_step; [ apply lts_choiceR; apply lts_tau | apply HB ].
@@ -298,9 +299,9 @@ Qed.
 Theorem residue_instance_derivable : forall (c : ChannelData) (v : ValueData),
      (exists z, lts ((c ! v • 𝟘) ‖ ccat c) τ z)
   /\ ochans (ccat c) <> []
-  /\ (forall z, ~ lts (msgs [(c ▷ v)]) τ z)
-  /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(c ▷ v)])
-  /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(c ▷ v)]).
+  /\ (forall z, ~ lts (msgs [(c, v)]) τ z)
+  /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(c, v)])
+  /\ ((c ! v • 𝟘) ‖ ccat c) ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(c, v)]).
 Proof.
   intros c v. split; [ | split; [ | split; [ | split ]]].
   - unfold ccat. eexists. eapply lts_comL; [ apply lts_output | apply lts_input ].
@@ -308,7 +309,7 @@ Proof.
   - intros z Hz. simpl in Hz.
     inversion Hz; subst; try (inversion H3; fail); try (inversion H4; fail);
       inversion H2.
-  - assert (Hc : ((c ! v • 𝟘) : proc) ≡* (msgs [(c ▷ v)]))
+  - assert (Hc : ((c ! v • 𝟘) : proc) ≡* (msgs [(c, v)]))
       by (simpl; apply cgr_symm; apply cgr_par_nil).
     intros t Ht.
     apply (proj2 (must_i_cgr _ _ Hc)).

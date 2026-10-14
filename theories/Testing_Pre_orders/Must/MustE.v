@@ -1,4 +1,4 @@
-
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
@@ -31,9 +32,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
     Must Bar Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS Must.
-
-
-
+(* begin hide *)
  (** * Must preoder *)
  (** ** Extensional definition of Must *)
 (* end hide *)

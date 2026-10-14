@@ -23,13 +23,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list 
                         finite base decidable finite gmap gmultiset.
-From TestingTheory Require Import ActTau MultisetHelper ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain.
-
-
+From TestingTheory Require Import ActTau MultisetHelper ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain.
+(* begin hide *)
 (* * Separating code from memory *)
 (* ** Striping a process from its mailbox *)
 
@@ -123,7 +123,7 @@ Proof.
   transitivity r. eapply strip_m_deter; eauto. eassumption.
 Qed.
 
-Lemma lts_oba_mo_strip `{FiniteOutputChain_LtsOba P A} p : 
+Lemma lts_oba_mo_strip `{FiniteNonBlockingChain_LtsOba P A} p : 
   ∃ q , p ⟿{lts_oba_mo p} q.
 Proof.
   remember (lts_oba_mo p) as ns.
@@ -187,7 +187,7 @@ Proof.
     exists w. eapply strip_step; eauto.
 Qed. 
 
-Lemma strip_after `{FiniteOutputChain_LtsOba P A} {p q m} :
+Lemma strip_after `{FiniteNonBlockingChain_LtsOba P A} {p q m} :
   p ⟿{m} q -> lts_oba_mo p = m ⊎ lts_oba_mo q.
 Proof.
   intros hwp. revert p q hwp.
@@ -234,7 +234,7 @@ Proof.
     exists u. split. eassumption. transitivity r1; eauto.
 Qed.
 
-Lemma strip_delay_inp4 `{FiniteOutputChain_LtsOba P A} {p q t β} :
+Lemma strip_delay_inp4 `{FiniteNonBlockingChain_LtsOba P A} {p q t β} :
   blocking β -> p ⟶[β] t -> t ⟿{lts_oba_mo p} q
     -> ∃ r, p ⟿{lts_oba_mo p} r /\ r ⟶⋍[β] q.
 Proof.
@@ -444,7 +444,7 @@ Proof.
     rewrite eq. econstructor; eauto.
 Qed.
 
-Lemma mo_stripped `{FiniteOutputChain_LtsOba P A} r m r' : 
+Lemma mo_stripped `{FiniteNonBlockingChain_LtsOba P A} r m r' : 
   r ⟿{m} r' -> (∀ η : A, non_blocking η -> r' ↛[η]) 
     -> lts_oba_mo r = m. 
 Proof.
@@ -471,7 +471,7 @@ Proof.
     intros. eapply refuses_preserved_by_eq; eauto. symmetry. eauto.
 Qed.
 
-Lemma lts_oba_mo_strip_refuses `{FiniteOutputChain_LtsOba P A} p q: 
+Lemma lts_oba_mo_strip_refuses `{FiniteNonBlockingChain_LtsOba P A} p q: 
   strip p (lts_oba_mo p) q 
   -> forall η, non_blocking η -> q ↛[η].
 Proof.

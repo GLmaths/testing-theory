@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -33,7 +34,7 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation
   InputOutputActions Completeness ParallelLTSConstruction InputOutputActions
   VACCS_ta_tc_gen MayTestSpec Testing_Predicate.
-
+(* begin hide *)
 (* * The May test generator for VACCS
 
     VACCS counterpart of [VCCS/Testing/VCCS_test_trace_gen_may.v]. The
@@ -71,7 +72,7 @@ Fixpoint gen_may_raw (Vs : trace (ExtAct (ChannelData * ValueData)))
       match Vs with
       | ActIn (c0, v') :: s'' =>
           c0
-          ? (If bvar 0 == NewVar_in_Data 0 v'
+          ? • (If bvar 0 == NewVar_in_Data 0 v'
                 Then gen_may_raw (NewVar_in_trace 0 s'') s'
                 Else 𝟘) +
           (𝛕 • 𝟘)

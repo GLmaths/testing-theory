@@ -1,3 +1,4 @@
+(* begin hide *)
    (*
    Copyright (c) 2026 Gaëtan Lopez <gaetanlopez.maths@gmail.com>
 
@@ -19,8 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* begin hide *)
-
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
@@ -33,7 +33,7 @@ gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS Convergence Termination
 MultisetLTSConstruction ForwarderConstruction InputOutputActions WeakTransitions Subset_Act VCCS_Instance
 VCCS_Good.
-(* end hide *)
+
 
 
 (** ** VCCS **)
@@ -178,9 +178,9 @@ Proof.
          multiset_solver.
 Qed.
 
-Definition const : proc := g (a ? (a ! O • 𝟘)).
+Definition const : proc := g (a ? • (a ! O • 𝟘)).
 
-Definition ccat : proc := g (a ? (a ! (0) • 𝟘)).
+Definition ccat : proc := g (a ? • (a ! (0) • 𝟘)).
 
 Definition MyTest := g (a ! I • ①).
 
@@ -191,7 +191,7 @@ Lemma constant_must_MyTest : const must_pass MyTest.
 Proof.
   eapply m_step.
   - eapply MyTest_is_not_good.
-  - exists ((a ! O • 𝟘)^(I) ▷ (g ①)).
+  - exists ((a ! O • 𝟘)^(I) ∣ (g ①)).
     eapply ParSync.
     3 : { eapply lts_output. }
     2 : { eapply lts_input. }
@@ -207,7 +207,7 @@ Lemma copycat_must_MyTest : ccat must_pass MyTest.
 Proof.
   eapply m_step.
   - eapply MyTest_is_not_good.
-  - exists ((a ! 0 • 𝟘)^(I) ▷ (g ①)).
+  - exists ((a ! 0 • 𝟘)^(I) ∣ (g ①)).
     eapply ParSync.
     3 : { eapply lts_output. }
     2 : { eapply lts_input. }
@@ -235,12 +235,12 @@ Example NIL_is_not_above_constant : const ⋢ₘᵤₛₜᵢ g 𝟘.
 Proof. intros Hyp. eapply NIL_must_not_pass_MyTest, Hyp, constant_must_MyTest. Qed.
 (* begin hide *)
 
-Definition MySynchTest := g (a ! I • g (a ? (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))).
+Definition MySynchTest := g (a ! I • g (a ? • (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))).
 
 Lemma MySynchTest_is_not_good : ¬ good_VCCS MySynchTest.
 Proof. intro imp. inversion imp; subst. Qed.
 
-Lemma MySubTest_is_not_good : ¬ good_VCCS (a ? (If bvar 0 == cst O
+Lemma MySubTest_is_not_good : ¬ good_VCCS (a ? • (If bvar 0 == cst O
                                                     Then ① 
                                                     Else 𝟘)).
 Proof. intro imp. inversion imp; subst. Qed.
@@ -249,7 +249,7 @@ Lemma copycat_must_not_pass_MySynchTest : ¬ ccat must_pass MySynchTest.
 Proof.
   intro Hyp. inversion Hyp; subst.
   + now eapply MySynchTest_is_not_good.
-  + assert (g (a ! (0) • 𝟘)^(I) must_pass g (a ? (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))) as Imp.
+  + assert (g (a ! (0) • 𝟘)^(I) must_pass g (a ? • (If (bvar 0 == cst O) Then (g ①) Else (g 𝟘)))) as Imp.
     { eapply com. 3 : { constructor. } 2 : { constructor. } simpl; eauto. }
     simpl in Imp. inversion Imp;subst.
     * now eapply MySubTest_is_not_good.
@@ -302,14 +302,14 @@ Proof.
   eapply constant_must_MySynchTest.
 Qed.
 
-Definition MySynchTest2 := g (a ! I • g (a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘)))).
+Definition MySynchTest2 := g (a ! I • g (a ? • (If (bvar 0 == cst I) Then ① Else (g 𝟘)))).
 
 Lemma MySynchTest2_is_not_good : ¬ good_VCCS MySynchTest2.
 Proof.
   intro imp. inversion imp; subst.
 Qed.
 
-Lemma MySubTest2_is_not_good : ¬ good_VCCS (a ? (If bvar 0 == cst I
+Lemma MySubTest2_is_not_good : ¬ good_VCCS (a ? • (If bvar 0 == cst I
                                                     Then ① 
                                                     Else 𝟘)).
 Proof.
@@ -343,7 +343,7 @@ Lemma constant_must_not_pass_MySynchTest2 : ¬ const must_pass MySynchTest2.
 Proof.
   intro Hyp. inversion Hyp; subst.
   + now eapply MySynchTest_is_not_good.
-  + assert (g (a ! O • 𝟘)^(I) must_pass g (a ? (If (bvar 0 == cst I) Then (g ①) Else (g 𝟘)))) as Imp.
+  + assert (g (a ! O • 𝟘)^(I) must_pass g (a ? • (If (bvar 0 == cst I) Then (g ①) Else (g 𝟘)))) as Imp.
     { eapply com. 3 : { constructor. } 2 : { constructor. } simpl; eauto. }
     simpl in Imp. inversion Imp;subst.
     * now eapply MySubTest_is_not_good.
@@ -455,9 +455,9 @@ Ltac compute_coR_g mem :=
 Context {P : proc} {Q : proc}.
 (* begin hide *)
 
-Definition mem_outside := ν (g (bvar 0 ! cst I • 𝟘) ‖ g (cst a ? (If (bvar 0 == cst O) Then P Else Q))).
+Definition mem_outside := ν (g (bvar 0 ! cst I • 𝟘) ‖ g (cst a ? • (If (bvar 0 == cst O) Then P Else Q))).
 
-Definition mem_inside := g (cst a ? (If (bvar 0 == cst O) Then (ν ((bvar 0 ! cst I • 𝟘) ‖ P)) 
+Definition mem_inside := g (cst a ? • (If (bvar 0 == cst O) Then (ν ((bvar 0 ! cst I • 𝟘) ‖ P)) 
                                                          Else (ν ((bvar 0 ! cst I • 𝟘) ‖ Q)))).
 (* end hide *)
 
@@ -478,9 +478,9 @@ Proof.
               -- assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If v0 == cst O Then P ^ v0 Else Q ^ v0)))
                            ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖ (P ^ v0))) as Hc1.
                  { eapply cgr_res. eapply cgr_fullpar. reflexivity. eapply cgr_if_true. eauto. }
-                 assert (g (cst a ? (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                 assert (g (cst a ? • (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
                                                      Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q)))
-                                                                ⟹{ActIn (cst a ▷ v0)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                                                                ⟹{ActIn (cst a, v0)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
                                                      Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q))) ^ (v0))) as h_wk.
                  { eapply lts_to_wt. eapply lts_input. } simpl in h_wk.
                  assert ((If v0 == cst O Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ v0)
@@ -495,9 +495,9 @@ Proof.
               -- assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If v0 == cst O Then P ^ v0 Else Q ^ v0)))
                            ⋍ ν ((bvar 0 ! cst I • 𝟘) ‖ (Q ^ v0))) as Hc1.
                  { eapply cgr_res. eapply cgr_fullpar. reflexivity. eapply cgr_if_false. eauto. }
-                 assert (g (cst a ? (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                 assert (g (cst a ? • (If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
                                                      Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q)))
-                                                                ⟹{ActIn (cst a ▷ v0)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
+                                                                ⟹{ActIn (cst a, v0)} (((If bvar 0 == cst O Then ν (g (bvar 0 ! cst I • 𝟘) ‖ P)
                                                      Else ν (g (bvar 0 ! cst I • 𝟘) ‖ Q))) ^ (v0))) as h_wk.
                  { eapply lts_to_wt. eapply lts_input. } simpl in h_wk.
                  assert ((If v0 == cst O Then ν ((bvar 0 ! cst I • 𝟘) ‖ P ^ v0)

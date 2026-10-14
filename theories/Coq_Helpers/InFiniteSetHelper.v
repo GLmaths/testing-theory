@@ -23,10 +23,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-
-
+(* begin hide *)
 Lemma lem_dec `{Countable A} (X Y Z : gset A) :
     X ⊆ Y ∪ Z
       -> exists Y' Z', Y' ⊆ Y /\ Z' ⊆ Z /\ (Y' ∪ Z' ≡ X)%stdpp.

@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap gmultiset.
 
@@ -33,7 +34,7 @@ From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
   TestSpecBridge VACCS_CoFiniteImage.
 
 Import VACCS.
-(* end hide *)
+
 
 Section ACCS_Must_Alt_Corollary.
 (* begin hide *)

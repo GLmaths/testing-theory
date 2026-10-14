@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
@@ -38,8 +39,7 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
   Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination
   ACCSInstance ACCS_Must_Characterization Coin_tower Simulation ForwarderConstruction
   SetLTSConstruction FiniteImageLTS Soundness.
-
-
+(* begin hide *)
 Open Scope string_scope.
 
 (* * Examples *)
@@ -606,12 +606,12 @@ Section Example_2_1.
 
 Definition unreliableW : proc :=
   pr_rec 0 (𝛕 • (cst "end" ! cst tt • 𝟘)
-            + (cst "data" ? (𝛕 • ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0)
+            + (cst "data" ? • (𝛕 • ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0)
                              + 𝛕 • (cst "bye" ! cst tt • 𝟘)))).
 
 Definition reliableW : proc :=
   pr_rec 0 (𝛕 • (cst "end" ! cst tt • 𝟘)
-            + (cst "data" ? ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0))).
+            + (cst "data" ? • ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0))).
 
 Lemma cgr_par_nil_l (p : proc) : (g 𝟘 ‖ p) ≡* p.
 Proof.
@@ -630,9 +630,9 @@ Qed.
 Definition W_end : proc := cst "end" ! cst tt • 𝟘.
 Definition W_work : proc := cst "work" ! cst tt • 𝟘.
 Definition W_bye : proc := cst "bye" ! cst tt • 𝟘.
-Definition Rbody : proc := g (𝛕 • W_end + (cst "data" ? (W_work ‖ reliableW))).
+Definition Rbody : proc := g (𝛕 • W_end + (cst "data" ? • (W_work ‖ reliableW))).
 Definition UChoice : proc := g (𝛕 • (W_work ‖ unreliableW) + 𝛕 • W_bye).
-Definition Ubody : proc := g (𝛕 • W_end + (cst "data" ? UChoice)).
+Definition Ubody : proc := g (𝛕 • W_end + (cst "data" ? • UChoice)).
 
 Definition ch (s : String.string) : ChannelData := cst s.
 Definition u1 : ValueData := cst tt.

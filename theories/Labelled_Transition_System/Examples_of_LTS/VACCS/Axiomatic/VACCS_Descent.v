@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Descending into a normal form's summands
 
     The completeness recursion has to move from a normal form
@@ -48,6 +49,7 @@
     VCCS's [tau_normalize_conts] — the stage that does not port
     ([VACCS_Canonical.v]) is simply not needed, because the recursion never
     rewrites a continuation *in place*; it recurses on the reduct. *)
+(* end hide *)
 
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import List Permutation PeanoNat Lia.
@@ -60,7 +62,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Copycat VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_NormalForm
   VACCS_ReadySet VACCS_Canonical VACCS_Forwarder.
 Import ListNotations.
-
+(* begin hide *)
 Section VACCS_Descent.
 
 Context `{VP : VACCS_Parameters}.
@@ -80,7 +82,7 @@ Proof.
     + apply lts_choiceR. apply IHM2. exact H.
 Qed.
 
-Lemma summand_lts_in : forall M c P v, In (c ? P) (summands M) ->
+Lemma summand_lts_in : forall M c P v, In (c ? • P) (summands M) ->
   lts (g M) (ActExt (ActIn (c,v))) (P ^ v).
 Proof.
   induction M as [ | | c0 p0 | p0 | M1 IH1 M2 IH2 ]; intros c P v Hin; simpl in Hin.
@@ -108,7 +110,7 @@ Proof.
   apply lts_res_tau_n. apply lts_parR. apply summand_lts_tau. exact Hin.
 Qed.
 
-Lemma NF_lts_in_summand : forall n l M c0 P v, In ((VarC_add n c0) ? P) (summands M) ->
+Lemma NF_lts_in_summand : forall n l M c0 P v, In ((VarC_add n c0) ? • P) (summands M) ->
   lts (NF n l M) (ActExt (ActIn (c0, v))) (Ѵ n (msgs l ‖ (P ^ v))).
 Proof.
   intros n l M c0 P v Hin. unfold NF.
@@ -134,7 +136,7 @@ Proof.
 Qed.
 
 Theorem in_summand_reduct : forall p n l M c0 P v,
-  Static p -> dom p (NF n l M) -> In ((VarC_add n c0) ? P) (summands M) ->
+  Static p -> dom p (NF n l M) -> In ((VarC_add n c0) ? • P) (summands M) ->
   exists u, Static u /\ (size u < size p)%nat
             /\ (Ѵ n (msgs l ‖ (P ^ v))) ᴠᴀᴄᴄꜱ⊑ₐₓ u /\ u ᴠᴀᴄᴄꜱ⊑ₐₓ (Ѵ n (msgs l ‖ (P ^ v))).
 Proof.
@@ -159,7 +161,7 @@ Qed.
     puts it back at every instance. *)
 
 Lemma NF_in_summand_family : forall n l M c0 P,
-  In ((VarC_add n c0) ? P) (summands M) ->
+  In ((VarC_add n c0) ? • P) (summands M) ->
   forall v, lts (NF n l M) (ActExt (ActIn (c0,v)))
                 (subst_in_proc 0 v (Ѵ n ((NewVar 0 (msgs l)) ‖ P))).
 Proof.
@@ -169,7 +171,7 @@ Proof.
 Qed.
 
 Theorem in_summand_reduct_u : forall p n l M c0 P,
-  Static p -> dom_u p (NF n l M) -> In ((VarC_add n c0) ? P) (summands M) ->
+  Static p -> dom_u p (NF n l M) -> In ((VarC_add n c0) ? • P) (summands M) ->
   exists U, (forall v : ValueData, lts p (ActExt (ActIn (c0,v))) (subst_in_proc 0 v U))
          /\ (forall v : ValueData, Static (subst_in_proc 0 v U))
          /\ (forall v : ValueData, (size (subst_in_proc 0 v U) < size p)%nat)
@@ -213,7 +215,7 @@ Qed.
     [ax_input]'s omega rule consumes — that is what [dom_u] buys over
     [dom]. *)
 Theorem wrapped_premise_from_IH : forall q n l N c0 Q,
-  Static q -> dom_u q (NF n l N) -> In ((VarC_add n c0) ? Q) (summands N) ->
+  Static q -> dom_u q (NF n l N) -> In ((VarC_add n c0) ? • Q) (summands N) ->
   (forall p' q', Static p' -> Static q' -> (size q' < size q)%nat ->
      ctx_pre p' q' -> p' ᴠᴀᴄᴄꜱ⊑ₐₓ q') ->
   forall X : proc,

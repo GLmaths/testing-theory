@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 
@@ -27,7 +28,7 @@ From stdpp Require Import base decidable sets.
 
 From TestingTheory Require Import ActTau gLts SyncActions Subset_Act WeakTransitions
     Convergence Termination DefinitionAS DefinitionQ.
-
+(* begin hide *)
 Lemma wt_stabilise `{gLts P A} (p q : P) s :
   p ⇓ s -> p ⟹[s] q -> ∃ q', p ⟹[s] q' /\ q' ↛.
 Proof.

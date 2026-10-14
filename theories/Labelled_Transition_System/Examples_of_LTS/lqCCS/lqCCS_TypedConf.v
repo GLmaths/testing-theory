@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: well-typed tested configurations
 
     A tested configuration [ρ • (P, Q)] — a process [P] and an observer [Q]
@@ -36,13 +37,14 @@
       owned by the sender, so not by the receiver (rules [Recv], [ParL],
       [ParR]); an operation or a measurement acts on qubits owned by the
       component that performs it. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import Lifted Paths States lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition lqCCS_AlmostSure
   lqCCS_Typing.
-
+(* begin hide *)
 Section TypedConf.
   Context `{QM : QuantumModel}.
   Context (qchan : chan → bool) (qvar : var → bool).

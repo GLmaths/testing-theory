@@ -20,11 +20,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts UnionAction.
-
+(* begin hide *)
 Definition ExtAction_sum {A1 A2 : Type} `{H1 : ExtAction A1} `{H2 : ExtAction A2} : ExtAction (A1 + A2) :=
   @ExtAction_union A1 A2 H1 H2 (λ _ _, False) (λ _ _, False_dec) (λ _ _ f, False_rect _ f).
 
@@ -36,14 +37,14 @@ Section Lift_left.
 
 Context `{gLts1 : !gLts S1 H1}.
 
-Definition lift_left_step (s : S1) (α : Act (A1 + A2)) (s' : S1) : Prop :=
+Definition lift_left_step (s : S1) (α : Labels (A1 + A2)) (s' : S1) : Prop :=
   match α with
   | τ => s ⟶ s'
   | ActExt (inl μ1) => s ⟶[μ1] s'
   | ActExt (inr _) => False
   end.
 
-Definition lift_left_performs (s : S1) (α : Act (A1 + A2)) : Prop :=
+Definition lift_left_performs (s : S1) (α : Labels (A1 + A2)) : Prop :=
   match α with
   | τ => s ⟶
   | ActExt (inl μ1) => s ⟶[μ1]
@@ -77,14 +78,14 @@ Section Lift_right.
 
 Context `{gLts2 : !gLts S2 H2}.
 
-Definition lift_right_step (s : S2) (α : Act (A1 + A2)) (s' : S2) : Prop :=
+Definition lift_right_step (s : S2) (α : Labels (A1 + A2)) (s' : S2) : Prop :=
   match α with
   | τ => s ⟶ s'
   | ActExt (inl _) => False
   | ActExt (inr μ2) => s ⟶[μ2] s'
   end.
 
-Definition lift_right_performs (s : S2) (α : Act (A1 + A2)) : Prop :=
+Definition lift_right_performs (s : S2) (α : Labels (A1 + A2)) : Prop :=
   match α with
   | τ => s ⟶
   | ActExt (inl _) => False
@@ -245,7 +246,7 @@ Proof.
   - intros x y z [h1 h2] [h1' h2']. split; by etrans.
 Qed.
 
-Lemma lift_left_eq_spec (s1 r1 r'1 : S1) (α : Act (A1 + A2)) :
+Lemma lift_left_eq_spec (s1 r1 r'1 : S1) (α : Labels (A1 + A2)) :
   s1 ⋍ r1 → lift_left_step r1 α r'1 → ∃ t1, lift_left_step s1 α t1 ∧ t1 ⋍ r'1.
 Proof.
   intros he l. destruct α as [[μ1 | μ2] |]; simpl in *; [| done |].
@@ -253,7 +254,7 @@ Proof.
   - destruct (eq_spec s1 r'1 τ) as (t1 & l1 & e1); [by exists r1 |]. by exists t1.
 Qed.
 
-Lemma lift_right_eq_spec (s2 r2 r'2 : S2) (α : Act (A1 + A2)) :
+Lemma lift_right_eq_spec (s2 r2 r'2 : S2) (α : Labels (A1 + A2)) :
   s2 ⋍ r2 → lift_right_step r2 α r'2 → ∃ t2, lift_right_step s2 α t2 ∧ t2 ⋍ r'2.
 Proof.
   intros he l. destruct α as [[μ1 | μ2] |]; simpl in *; [done | |].
@@ -261,7 +262,7 @@ Proof.
   - destruct (eq_spec s2 r'2 τ) as (t2 & l2 & e2); [by exists r2 |]. by exists t2.
 Qed.
 
-Lemma inter_union_eq_spec (x y : S1 * S2) (α : Act (A1 + A2)) :
+Lemma inter_union_eq_spec (x y : S1 * S2) (α : Labels (A1 + A2)) :
   (∃ r, inter_union_eq x r ∧ r ⟶{α} y) → ∃ r, x ⟶{α} r ∧ inter_union_eq r y.
 Proof.
   destruct x as (s1, s2). intros ((r1, r2) & [h1 h2] & l). simpl in *.

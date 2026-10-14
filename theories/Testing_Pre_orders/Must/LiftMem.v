@@ -20,14 +20,15 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable decidable gmap gmultiset.
-From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Output_Chain
+From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Non_Blocking_Chain
   Testing_Predicate StateTransitionSystems InteractionBetweenLts MultisetLTSConstruction CodePurification
   SyncActions MemAction InteractionUnion MemForwarder ForwarderMem Must CompletenessASsync.
-
+(* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section ForwarderSteps.
@@ -122,7 +123,7 @@ Section LiftMem.
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsEqP : !gLtsEq P Hp}.
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
-        `{!FiniteOutputChain_LtsOba T}.
+        `{!FiniteNonBlockingChain_LtsOba T}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 Context `{PIP : !Prop_of_Inter P (MO (MemAct Atest)) Aproc (MemAct Atest) fw_inter_mem}.
 Context `{PIPT : !Prop_of_Inter P T Aproc Atest sync}.
@@ -323,7 +324,7 @@ Section LiftMemPreorder.
 
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
-        `{!FiniteOutputChain_LtsOba T}.
+        `{!FiniteNonBlockingChain_LtsOba T}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P Hp}.

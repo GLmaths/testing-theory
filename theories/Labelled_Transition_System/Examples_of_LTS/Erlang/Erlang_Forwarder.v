@@ -20,23 +20,25 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the forwarder [toFW (Erlang)]
 
     What is left for [toFW] and for the co-trace characterisation: the
     co-finite-image condition and the interaction between a forwarder and a
     test. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
-  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain
+  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain
   FiniteImageLTS coFiniteImage
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   Erlang_Syntax Erlang_LTS Erlang_Instance.
-
+(* begin hide *)
 (* ** A finite image is a co-finite image
 
     Generic: with a unique dual, [∃ α', dual α' α ∧ p ⟶[α'] q] is [p ⟶[co α] q],

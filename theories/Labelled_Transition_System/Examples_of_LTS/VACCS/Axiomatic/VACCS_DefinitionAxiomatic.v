@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * An inequational proof system for [⊑ₘᵤₛₜᵢ] on VACCS
 
     Nine rules.  Every one has its semantic justification proved in
@@ -61,16 +62,17 @@
     [‖]- and [ν]-precongruence with no hypothesis on the operands at all,
     and every other rule was already unconditional.  So [VACCS_SoundnessAx.v]
     proves [p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ⊑ₘᵤₛₜᵢ q] outright. *)
+(* end hide *)
 
 From stdpp Require Import base gmultiset sets gmap.
-From TestingTheory Require Import MultisetLTSConstruction.
+From TestingTheory Require Import ForwarderConstruction MultisetLTSConstruction.
 From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Shift VACCS_Precongruence VACCS_Expansion VACCS_ResNormalize
   VACCS_Copycat VACCS_Absorb VACCS_Forwarder VACCS_Cond2 VACCS_Residues
   VACCS_GlbStable.
-
+(* begin hide *)
 Section VACCS_DefinitionAxiomatic.
 
 Context `{VP : VACCS_Parameters}.
@@ -139,7 +141,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     - it is below every [𝛕]-branch (the [pt] field of [must] at the sum),
     - holding the received message, it is below every input continuation
       (the [com] field) — not "[p] offers the channel", which it need not
-      ([c ? 𝟘 ⊑ₘᵤₛₜᵢ 𝟘]), and
+      ([c ? • 𝟘 ⊑ₘᵤₛₜᵢ 𝟘]), and
     - the pair can always move (the [ex] field).
 
     The last condition is what distinguishes the two rules.
@@ -151,7 +153,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     sum's silence.  Handed any bag of messages on channels the sum does
     not offer, it settles emitting only on the bag's own channels
     ([Settles]).  The quantification over bags is not decoration:
-    [c ? 𝟘 ⊑ₘᵤₛₜᵢ 𝟘] holds, and the only way to see it is that [c ? 𝟘]
+    [c ? • 𝟘 ⊑ₘᵤₛₜᵢ 𝟘] holds, and the only way to see it is that [c ? • 𝟘]
     swallows the [c]-messages it is handed.  Sound by
     [VACCS_GlbStable.must_i_glb_stable] when the sum is stable, and by
     [must_i_glb_tau] when it is not.
@@ -163,7 +165,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_glb_tau : forall (p : proc) (M : gproc),
     (exists X, In (𝛕 • X) (summands M)) ->
     (forall X, In (𝛕 • X) (summands M) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ X) ->
-    (forall c Q, In (c ? Q) (summands M) ->
+    (forall c Q, In (c ? • Q) (summands M) ->
        forall v, ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) ->
     p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M)
 
@@ -171,7 +173,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     (forall l : list TypeOfActions, (forall c v, In (c,v) l -> ~ offers M c) ->
        Settles (chans (bag l)) (p ▷ bag l)) ->
     (forall X, In (𝛕 • X) (summands M) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ X) ->
-    (forall c Q, In (c ? Q) (summands M) ->
+    (forall c Q, In (c ? • Q) (summands M) ->
        forall v, ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) ->
     p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M)
 
@@ -206,7 +208,7 @@ Lemma ax_glb_sum : forall (p : proc) (M : gproc),
      \/ (forall l : list TypeOfActions, (forall c v, In (c,v) l -> ~ offers M c) ->
            Settles (chans (bag l)) (p ▷ bag l))) ->
     (forall X, In (𝛕 • X) (summands M) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ X) ->
-    (forall c Q, In (c ? Q) (summands M) ->
+    (forall c Q, In (c ? • Q) (summands M) ->
        forall v, ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) ->
     p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
@@ -311,7 +313,7 @@ Lemma ax_below_gsum : forall (p : proc) (M : gproc),
       (forall a z, ~ lts p1 (ActExt (ActOut a)) z) /\
       (forall c v z, lts p1 (ActExt (ActIn (c,v))) z -> offers M c))) ->
   (forall X, In (𝛕 • X) (summands M) -> p ᴠᴀᴄᴄꜱ⊑ₐₓ X) ->
-  (forall c Q, In (c ? Q) (summands M) -> forall v, ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) ->
+  (forall c Q, In (c ? • Q) (summands M) -> forall v, ((c ! v • 𝟘) ‖ p) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) ->
   p ᴠᴀᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros p M [Hex | (p1 & Hw & Hnt & Hno & Hin)] Ht Hi; apply ax_glb_sum; try assumption.
@@ -345,7 +347,7 @@ Qed.
 
 Ltac inv_choice := repeat match goal with
   | HH : lts (g (_ + _)) _ _ |- _ => apply lts_choice2_iff in HH as [HH|HH]
-  | HH : lts (g (_ ? _)) τ _ |- _ => inversion HH
+  | HH : lts (g (_ ? • _)) τ _ |- _ => inversion HH
   | HH : lts (g (𝛕 • _)) (ActExt _) _ |- _ => inversion HH
   end.
 
@@ -365,11 +367,11 @@ Qed.
 
 (* A summand's continuation may be rewritten, its guard may not. *)
 Lemma ax_choice_input : forall (c : ChannelData) (P Q : proc) (G : gproc),
-  (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) -> (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? Q) + G)).
+  (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q^v)) -> (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? • Q) + G)).
 Proof.
   intros c P Q G H. apply ax_below_gsum_lts.
   - destruct (lts_dec (g G) τ) as [ Hno | (z & Hz) ]; [ right | left; exists z; apply lts_choiceR; exact Hz ].
-    exists (g ((c ? P) + G)). split; [ apply wt_nil | ].
+    exists (g ((c ? • P) + G)). split; [ apply wt_nil | ].
     split; [ intros z Hz; inv_choice; eapply Hno; eassumption | ].
     split; [ intros (d,w) z Hz; eapply gsum_no_out; exact Hz | ].
     intros d w z Hz. inv_choice.
@@ -383,11 +385,11 @@ Qed.
 
 (* Prefix distributes over choice, in an arbitrary context [R]. *)
 Lemma ax_input_distrib_l : forall (c : ChannelData) (P Q : proc) (R : gproc),
-    (g (((c ? P) + (c ? Q)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
+    (g (((c ? • P) + (c ? • Q)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
 Proof.
   intros c P Q R. apply ax_below_gsum_lts.
   - destruct (lts_dec (g R) τ) as [ Hno | (z & Hz) ]; [ right | left; exists z; apply lts_choiceR; exact Hz ].
-    exists (g (((c ? P) + (c ? Q)) + R)). split; [ apply wt_nil | ].
+    exists (g (((c ? • P) + (c ? • Q)) + R)). split; [ apply wt_nil | ].
     split; [ intros z Hz; inv_choice; eapply Hno; eassumption | ].
     split; [ intros (d,w) z Hz; eapply gsum_no_out; exact Hz | ].
     intros d w z Hz. inv_choice.
@@ -510,7 +512,7 @@ Proof.
 Qed.
 
 Lemma ax_input : forall (c : ChannelData) (p q : proc),
-  (forall v, (p^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (q^v)) -> (g (c ? p)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? q)).
+  (forall v, (p^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (q^v)) -> (g (c ? • p)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? • q)).
 Proof.
   intros c p q H.
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil_rev | ].
@@ -554,15 +556,15 @@ Qed.
 (* Acceptance-tree uniformity: two branches pool their continuations at
     a shared input guard, keeping the first branch's ready set. *)
 Lemma ax_share_in : forall (c : ChannelData) (P Q : proc) (X' Y' : gproc),
-    (g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y')))))
-      ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X')).
+    (g ((𝛕 • (g ((c ? • P) + X'))) + (𝛕 • (g ((c ? • Q) + Y')))))
+      ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + X')).
 Proof.
   intros c P Q X' Y'.
-  assert (HA : g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y')))) ᴠᴀᴄᴄꜱ⊑ₐₓ g ((c ? P) + X')) by apply ax_int_l.
-  assert (HB : g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y')))) ᴠᴀᴄᴄꜱ⊑ₐₓ g ((c ? Q) + Y')) by apply ax_int_r.
+  assert (HA : g ((𝛕 • (g ((c ? • P) + X'))) + (𝛕 • (g ((c ? • Q) + Y')))) ᴠᴀᴄᴄꜱ⊑ₐₓ g ((c ? • P) + X')) by apply ax_int_l.
+  assert (HB : g ((𝛕 • (g ((c ? • P) + X'))) + (𝛕 • (g ((c ? • Q) + Y')))) ᴠᴀᴄᴄꜱ⊑ₐₓ g ((c ? • Q) + Y')) by apply ax_int_r.
   apply ax_below_gsum_lts.
   - destruct (lts_dec (g X') τ) as [ Hno | (z & Hz) ]; [ right | left; exists z; apply lts_choiceR; exact Hz ].
-    exists (g ((c ? P) + X')). split; [ eapply wt_tau; [ apply lts_choiceL; apply lts_tau | apply wt_nil ] | ].
+    exists (g ((c ? • P) + X')). split; [ eapply wt_tau; [ apply lts_choiceL; apply lts_tau | apply wt_nil ] | ].
     split; [ intros z Hz; inv_choice; eapply Hno; eassumption | ].
     split; [ intros (d,w) z Hz; eapply gsum_no_out; exact Hz | ].
     intros d w z Hz. inv_choice.
@@ -614,7 +616,7 @@ Qed.
 
 Lemma ax_drop_tau : forall (c : ChannelData) (P : proc) (G : gproc),
   (exists z, lts ((g G) : proc) τ z) ->
-  ((g ((c ? P) + G)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g G) : proc).
+  ((g ((c ? • P) + G)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g G) : proc).
 Proof.
   intros c P G Htau. apply ax_sub_tau; [ | exact Htau ].
   intros al z Hz. apply lts_choiceR. exact Hz.

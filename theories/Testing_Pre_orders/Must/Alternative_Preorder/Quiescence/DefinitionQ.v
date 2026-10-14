@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 
 From stdpp Require Import base decidable.
 
 From TestingTheory Require Import ActTau gLts SyncActions Subset_Act WeakTransitions.
-
+(* begin hide *)
 Definition is_trace `{gLts P A} (p : P) (s : trace A) := ∃ p', p ⟹[s] p'.
 
 Definition quiescent `{gLts P A} (p : P) := p ↛ /\ (coR p : subset_of A) ≡ ∅.

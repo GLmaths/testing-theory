@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * [Bad]: the summand-indexed harmlessness judgement
 
     [VACCS_Absorb.v]'s [Harmless] is sound but provably incomplete for the
@@ -67,16 +68,17 @@
     inductive judgement of this shape can capture a ∀∃ alternation, so
     completeness — if it is wanted — has to come from restricting the
     processes the rule is applied to, not from adding clauses. *)
+(* end hide *)
 
 From Stdlib Require Import List.
 From stdpp Require Import base sets gmap.
-From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
+From TestingTheory Require Import ForwarderConstruction ParallelLTSConstruction VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   VACCS_Static VACCS_Erasure VACCS_Precongruence VACCS_Expansion VACCS_ReadySet
   VACCS_Copycat VACCS_Absorb VACCS_DefinitionAxiomatic VACCS_SoundnessAx
   VACCS_Canonical VACCS_Matching VACCS_Forwarder VACCS_Residues VACCS_NormalForm
   VACCS_DerivedRules.
-
+(* begin hide *)
 Section VACCS_Bad.
 
 Context `{VP : VACCS_Parameters}.
@@ -103,7 +105,7 @@ Proof.
 Qed.
 
 Lemma bad_gstable : forall S (M : gproc), gStable M ->
-  (forall c P, In (c ? P) (summands M) ->
+  (forall c P, In (c ? • P) (summands M) ->
      forall w, Bad (fun d => S d \/ d = c) (subst_in_proc 0 w P)) ->
   Bad S (g M).
 Proof.
@@ -123,7 +125,7 @@ Qed.
 
 Lemma bad_gstable_some : forall S (M : gproc), gStable M ->
   (forall c v p', lts ((g M) : proc) (ActExt (ActIn (c,v))) p' ->
-     exists P, In ((c ? P) : gproc) (summands M)
+     exists P, In ((c ? • P) : gproc) (summands M)
             /\ Bad (fun d => S d \/ d = c) (subst_in_proc 0 v P)) ->
   Bad S (g M).
 Proof.
@@ -143,21 +145,21 @@ Qed.
     condition [S c] is not a restriction the judgement imposes — it is
     exactly what the semantics dictates.
 
-    The witness is the smallest possible probe, [c ? ①]: [τ]-stuck, not
+    The witness is the smallest possible probe, [c ? • ①]: [τ]-stuck, not
     good, refusing nothing but [c], and it must-passes **any** [τ]-stuck
     process that emits on [c] — because whatever the process does, the
     probe's only move leads to [①]. *)
 
-Lemma probe_not_good : forall c, ~ good_VACCS (g (c ? (g ①))).
+Lemma probe_not_good : forall c, ~ good_VACCS (g (c ? • (g ①))).
 Proof. intros c H. inversion H. Qed.
 
-Lemma probe_no_tau : forall c q, ~ lts (g (c ? (g ①))) τ q.
+Lemma probe_no_tau : forall c q, ~ lts (g (c ? • (g ①))) τ q.
 Proof. intros c q H. inversion H. Qed.
 
 Lemma must_any_probe : forall (p : proc) c,
   (forall q, ~ lts p τ q) ->
   (exists v p', lts p (ActExt (ActOut (c,v))) p') ->
-  p must_pass (g (c ? (g ①))).
+  p must_pass (g (c ? • (g ①))).
 Proof.
   intros p c Hst (v & p' & Hl).
   apply m_step.
@@ -177,7 +179,7 @@ Theorem bad_out_forced : forall (p : proc) (S : chset) c v p',
   lts p (ActExt (ActOut (c,v))) p' -> ~ S c -> False.
 Proof.
   intros p S c v p' Hst Hsem Hl Hnc.
-  eapply (Hsem (g (c ? (g ①)))).
+  eapply (Hsem (g (c ? • (g ①)))).
   - apply probe_no_tau.
   - apply probe_not_good.
   - intros d x q Hd Hlq. inversion Hlq; subst. apply Hnc. exact Hd.
@@ -239,7 +241,7 @@ Proof.
         { destruct (lts_dec t τ) as [Hno | Hyes].
           - exfalso. eapply (HB t Hno nh). apply m_step; assumption.
           - exact Hyes. }
-        destruct Htau as (t' & Ht'). exists (((g 𝟘) : proc) ▷ t').
+        destruct Htau as (t' & Ht'). exists (((g 𝟘) : proc) ∣ t').
         apply ParRight. exact Ht'.
       * intros p' Hp'. inversion Hp'.
       * intros t' Ht'. eapply H0; [ exact Ht' | exact HB | reflexivity ].
@@ -288,8 +290,8 @@ Proof.
   inversion Hm as [Ho | Ho Hex Hpt Het Hcom]; subst.
   - left. apply m_now. exact Ho.
   - destruct Hex as (z & Hz).
-    assert (Hsplit : (exists z1, inter_step ((g M) ▷ u) τ z1)
-                  \/ (exists z2, inter_step ((g N) ▷ u) τ z2)).
+    assert (Hsplit : (exists z1, inter_step ((g M) ∣ u) τ z1)
+                  \/ (exists z2, inter_step ((g N) ∣ u) τ z2)).
     { inversion Hz; subst; unfold lts_step in *; simpl in *.
       - inversion l; subst.
         + left. eexists. apply ParLeft. eassumption.
@@ -340,7 +342,7 @@ Qed.
     τ-stuckness and non-goodness. *)
 
 Lemma stuck_out_residue : forall (t : proc) (c0 : ChannelData) (v0 : ValueData) (b0 : proc),
-  (forall q, ~ lts t τ q) -> ~ good_VACCS t -> lts t ((c0 ▷ v0)!) b0 ->
+  (forall q, ~ lts t τ q) -> ~ good_VACCS t -> lts t (c0 ! v0) b0 ->
   (forall q, ~ lts b0 τ q) /\ ~ good_VACCS b0.
 Proof.
   intros t c0 v0 b0 Hst Hng Hl.
@@ -365,17 +367,17 @@ Qed.
     of `VACCS_DropProbes.v` work. *)
 
 Lemma gsum_dead_blocks : forall (M : gproc) (c : ChannelData) (u : proc) (z : ValueData) (u' : proc),
-  In ((c ? ((g 𝟘) : proc)) : gproc) (summands M) ->
+  In ((c ? • ((g 𝟘) : proc)) : gproc) (summands M) ->
   (forall q, ~ lts u τ q) -> ~ good_VACCS u ->
-  ((g M) : proc) must_pass u -> ~ lts u ((c ▷ z)!) u'.
+  ((g M) : proc) must_pass u -> ~ lts u (c ! z) u'.
 Proof.
   intros M c u z u' Hin Hst Hng Hm Hl.
   inversion Hm; subst; [ contradiction | ].
-  assert (Hg : lts ((g M) : proc) ((c ▷ z) ?) ((g 𝟘) : proc)).
+  assert (Hg : lts ((g M) : proc) (c ? z) ((g 𝟘) : proc)).
   { eapply summand_lts; [ exact Hin | ].
     assert (E : ((g 𝟘) : proc) ^ z = ((g 𝟘) : proc)) by reflexivity.
     rewrite <- E at 2. apply lts_input. }
-  assert (Hdual : dual (ActIn (c ▷ z)) (ActOut (c ▷ z))) by (simpl; reflexivity).
+  assert (Hdual : dual (ActIn (c, z)) (ActOut (c, z))) by (simpl; reflexivity).
   pose proof (com _ _ _ _ Hdual Hg Hl) as Hd.
   destruct (stuck_out_residue u c z u' Hst Hng Hl) as (Hst' & Hng').
   eapply nil_fails_stuck; [ exact Hst' | exact Hng' | exact Hd ].
@@ -390,7 +392,7 @@ Lemma gsum_forces_emit : forall (M : gproc) (u : proc),
   (forall q, ~ lts ((g M) : proc) τ q) ->
   (forall q, ~ lts u τ q) -> ~ good_VACCS u ->
   ((g M) : proc) must_pass u ->
-  exists c P z u', In ((c ? P) : gproc) (summands M) /\ lts u ((c ▷ z)!) u'.
+  exists c P z u', In ((c ? • P) : gproc) (summands M) /\ lts u (c ! z) u'.
 Proof.
   intros M u HstM Hst Hng Hm.
   inversion Hm; subst; [ contradiction | ].
@@ -414,9 +416,9 @@ Lemma stuck_client_emits_live : forall (M : gproc) (u : proc),
   (forall q, ~ lts ((g M) : proc) τ q) ->
   (forall q, ~ lts u τ q) -> ~ good_VACCS u ->
   ((g M) : proc) must_pass u ->
-  exists c P z u', In ((c ? P) : gproc) (summands M)
-                /\ ~ In ((c ? ((g 𝟘) : proc)) : gproc) (summands M)
-                /\ lts u ((c ▷ z)!) u'.
+  exists c P z u', In ((c ? • P) : gproc) (summands M)
+                /\ ~ In ((c ? • ((g 𝟘) : proc)) : gproc) (summands M)
+                /\ lts u (c ! z) u'.
 Proof.
   intros M u HstM Hst Hng Hm.
   destruct (gsum_forces_emit M u HstM Hst Hng Hm) as (c & P & z & u' & Hin & Hl).
@@ -430,8 +432,8 @@ Qed.
 
 Corollary below_nil_of_all_dead : forall (M : gproc),
   (forall q, ~ lts ((g M) : proc) τ q) ->
-  (forall c P, In ((c ? P) : gproc) (summands M) ->
-               In ((c ? ((g 𝟘) : proc)) : gproc) (summands M)) ->
+  (forall c P, In ((c ? • P) : gproc) (summands M) ->
+               In ((c ? • ((g 𝟘) : proc)) : gproc) (summands M)) ->
   ((g M) : proc) ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
 Proof.
   intros M HstM Hall. apply below_nil_iff. intros u Hst Hng Hm.
@@ -458,7 +460,7 @@ match M with
 end.
 
 Lemma gdeadb_spec : forall (M : gproc) (c : ChannelData),
-  gdeadb c M = true -> In ((c ? ((g 𝟘) : proc)) : gproc) (summands M).
+  gdeadb c M = true -> In ((c ? • ((g 𝟘) : proc)) : gproc) (summands M).
 Proof.
   induction M as [ | | d P | P | M1 IH1 M2 IH2 ]; intros c H; simpl in H; try discriminate H.
   - destruct P as [ | | | | | | Y ]; try discriminate H.
@@ -470,7 +472,7 @@ Proof.
 Qed.
 
 Lemma gchans_summand : forall (M : gproc) c P,
-  In ((c ? P) : gproc) (summands M) -> In c (gchans M).
+  In ((c ? • P) : gproc) (summands M) -> In c (gchans M).
 Proof.
   induction M as [ | | d Q | Q | M1 IH1 M2 IH2 ]; intros c P Hin; simpl in Hin.
   - destruct Hin as [H|[]]; discriminate H.
@@ -495,7 +497,7 @@ Qed.
 
 (* ** The witness that motivated weakening [bad_stuck]
 
-    [(c ? K) + (c ? 𝟘)], with [K] arbitrary, is below [𝟘]: the client is
+    [(c ? • K) + (c ? • 𝟘)], with [K] arbitrary, is below [𝟘]: the client is
     forced to emit on [c] ([gsum_forces_emit]), and the dead **sibling**
     guard then kills it ([gsum_dead_blocks]).
 
@@ -508,15 +510,15 @@ Qed.
     could not express is now *inside* the judgement. *)
 
 Lemma sibling_dead_stable : forall (c1 : ChannelData) (K : proc) q,
-  ~ lts ((g ((c1 ? K) + (c1 ? ((g 𝟘) : proc)))) : proc) τ q.
+  ~ lts ((g ((c1 ? • K) + (c1 ? • ((g 𝟘) : proc)))) : proc) τ q.
 Proof.
   intros c1 K q H.
   inversion H; subst;
-  match goal with H2 : lts (g (_ ? _)) τ _ |- _ => inversion H2 end.
+  match goal with H2 : lts (g (_ ? • _)) τ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma sibling_dead_below_nil : forall (c1 : ChannelData) (K : proc),
-  ((g ((c1 ? K) + (c1 ? ((g 𝟘) : proc)))) : proc) ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
+  ((g ((c1 ? • K) + (c1 ? • ((g 𝟘) : proc)))) : proc) ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
 Proof.
   intros c1 K. apply below_nil_of_all_dead.
   - apply sibling_dead_stable.
@@ -526,21 +528,21 @@ Proof.
 Qed.
 
 Lemma sibling_dead_Bad : forall (S : chset) (c1 : ChannelData) (K : proc),
-  Bad S ((g ((c1 ? K) + (c1 ? ((g 𝟘) : proc)))) : proc).
+  Bad S ((g ((c1 ? • K) + (c1 ? • ((g 𝟘) : proc)))) : proc).
 Proof.
   intros S c1 K. apply bad_gstable_some.
   - simpl. split; exact I.
   - intros c v p' Hl. exists ((g 𝟘) : proc).
     assert (Hc : c1 = c).
     { inversion Hl; subst;
-        match goal with H : lts (g (_ ? _)) _ _ |- _ => inversion H end;
+        match goal with H : lts (g (_ ? • _)) _ _ |- _ => inversion H end;
         reflexivity. }
     subst c1. split; [ simpl; right; left; reflexivity | apply bad_nil_any ].
 Qed.
 
 (* The negative half, in general form: a live message is never [Bad] at
     a set that misses its channel.  It is what shows the *per-branch*
-    reading could not have worked — [(c ? K) + (c ? 𝟘)] with [K] a
+    reading could not have worked — [(c ? • K) + (c ? • 𝟘)] with [K] a
     message on a third channel is below [𝟘], yet [K] itself is not
     [Bad] at any set the client is known to refuse. *)
 
@@ -565,7 +567,7 @@ Qed.
 
 Theorem ax_nested_sibling_drop : forall (c d : ChannelData) (K : proc) (G : gproc),
   Static K -> gStatic G ->
-  ((g ((c ? ((g ((d ? K) + (d ? ((g 𝟘) : proc)))) : proc)) + G)) : proc)
+  ((g ((c ? • ((g ((d ? • K) + (d ? • ((g 𝟘) : proc)))) : proc)) + G)) : proc)
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g G) : proc).
 Proof.
   intros c d K G HK HG.
@@ -584,7 +586,7 @@ Qed.
     stable case, a free ride for the unstable one. *)
 
 Theorem ax_tau_beside_drop : forall (c : ChannelData) (K : proc),
-  ((g ((c ? K) + (𝛕 • ((g 𝟘) : proc)))) : proc)
+  ((g ((c ? • K) + (𝛕 • ((g 𝟘) : proc)))) : proc)
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝛕 • ((g 𝟘) : proc))) : proc).
 Proof.
   intros c K. apply ax_drop_tau. exists ((g 𝟘) : proc). apply lts_tau.
@@ -618,7 +620,7 @@ Proof.
 Qed.
 
 Lemma sibling_dead_BadK : forall (c1 : ChannelData) (K : proc) (S D : chset),
-  BadK S D ((g ((c1 ? K) + (c1 ? ((g 𝟘) : proc)))) : proc).
+  BadK S D ((g ((c1 ? • K) + (c1 ? • ((g 𝟘) : proc)))) : proc).
 Proof.
   intros c1 K S D.
   eapply (bk_kill _ _ c1 _ (fun _ => ((g 𝟘) : proc))).
@@ -631,13 +633,13 @@ Proof.
     + intros d x q Hq. exfalso. eapply gsum_no_out. exact Hq.
     + intros d x q Hq. right.
       inversion Hq; subst;
-        match goal with H : lts (g (_ ? _)) _ _ |- _ => inversion H end;
+        match goal with H : lts (g (_ ? • _)) _ _ |- _ => inversion H end;
         reflexivity.
 Qed.
 
 Theorem ax_sibling_dead_below_nil : forall (c1 : ChannelData) (K : proc),
   Static K ->
-  ((g ((c1 ? K) + (c1 ? ((g 𝟘) : proc)))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
+  ((g ((c1 ? • K) + (c1 ? • ((g 𝟘) : proc)))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   intros c1 K HK. apply ax_restrict.
   - repeat constructor; assumption.
@@ -656,8 +658,8 @@ Qed.
     records that the two agree. *)
 
 Lemma bad_of_all_dead : forall S (M : gproc), gStable M ->
-  (forall c P, In ((c ? P) : gproc) (summands M) ->
-               In ((c ? ((g 𝟘) : proc)) : gproc) (summands M)) ->
+  (forall c P, In ((c ? • P) : gproc) (summands M) ->
+               In ((c ? • ((g 𝟘) : proc)) : gproc) (summands M)) ->
   Bad S ((g M) : proc).
 Proof.
   intros S M HstM Hall. apply bad_gstable_some; [ exact HstM | ].
@@ -680,7 +682,7 @@ Qed.
     half of message rigidity that is easy to forget. *)
 
 Definition TSg (c : ChannelData) : proc :=
-  g ((𝛕 • ((g ①) : proc)) + (c ? ((g 𝟘) : proc))).
+  g ((𝛕 • ((g ①) : proc)) + (c ? • ((g 𝟘) : proc))).
 
 Lemma TSg_not_good : forall c, ~ good_VACCS (TSg c).
 Proof.
@@ -692,7 +694,7 @@ Lemma nil_passes_TSg : forall c, ((g 𝟘) : proc) must_pass (TSg c).
 Proof.
   intro c. apply m_step.
   - apply TSg_not_good.
-  - exists (((g 𝟘) : proc) ▷ ((g ①) : proc)). apply ParRight.
+  - exists (((g 𝟘) : proc) ∣ ((g ①) : proc)). apply ParRight.
     unfold TSg. apply lts_choiceL. apply lts_tau.
   - intros p' Hp'. inversion Hp'.
   - intros t' Ht'. unfold TSg in Ht'. inversion Ht'; subst.
@@ -762,12 +764,12 @@ Qed.
     [Ѵⁿ (msgs l ‖ ·)] — same [n], same [l] — is simply not attainable. *)
 
 Lemma unstable_delivery_below_nil : forall (c : ChannelData) (v : ValueData),
-  ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? ((g 𝟘) : proc)))
+  ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? • ((g 𝟘) : proc)))
     ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
 Proof.
   intros c v. apply below_nil_iff. intros u Hst Hng Hm.
   inversion Hm; subst; [ contradiction | ].
-  assert (Hstep : lts ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? ((g 𝟘) : proc))) τ
+  assert (Hstep : lts ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? • ((g 𝟘) : proc))) τ
                       ((((g 𝟘) : proc) ‖ ((g 𝟘) : proc))
                        ‖ (subst_in_proc 0 v ((g 𝟘) : proc))))
     by (eapply lts_comL; [ apply lts_parL; apply lts_output | apply lts_input ]).
@@ -790,11 +792,11 @@ Qed.
     passes strictly more tests), which is the same ∀∃ alternation that has
     defeated every other attack on this gap. *)
 Lemma ax_unstable_delivery_below_nil : forall (c : ChannelData) (v : ValueData),
-  ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? ((g 𝟘) : proc)))
+  ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? • ((g 𝟘) : proc)))
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   intros c v.
-  assert (Hstep : lts ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? ((g 𝟘) : proc))) τ
+  assert (Hstep : lts ((((c ! v • 𝟘) : proc) ‖ ((g 𝟘) : proc)) ‖ g (c ? • ((g 𝟘) : proc))) τ
                       ((((g 𝟘) : proc) ‖ ((g 𝟘) : proc))
                        ‖ (subst_in_proc 0 v ((g 𝟘) : proc))))
     by (eapply lts_comL; [ apply lts_parL; apply lts_output | apply lts_input ]).
@@ -809,7 +811,7 @@ Qed.
     sum of **copycats**, and that is what discharges the source-only
     disjunct of [VACCS_Matching.CfgDisjunctionSource] on that class.  The
     hypothesis is not slack: already the one-summand **dead** guard
-    [c ? 𝟘] is not above [𝟘].
+    [c ? • 𝟘] is not above [𝟘].
 
     The probe is the smallest possible.  [TD c v] is a pending message
     beside a client-side guard that turns it into success:
@@ -817,8 +819,8 @@ Qed.
         TD := (c ! v • 𝟘) ‖ (c ? ①)
 
     [𝟘] passes it — the client's own synchronisation reaches [①] — while
-    [c ? 𝟘] **steals the message** and leaves the client with nothing to
-    do: after the [com] at [c] the residue is [𝟘 ‖ (c ? ①)], which is
+    [c ? • 𝟘] **steals the message** and leaves the client with nothing to
+    do: after the [com] at [c] the residue is [𝟘 ‖ (c ? • ①)], which is
     τ-stuck and not good, so [nil_fails_stuck] applies.
 
     So absorbing a message is observable from *both* sides: the other
@@ -829,7 +831,7 @@ Qed.
     "the residue does nothing". *)
 
 Definition TD (c : ChannelData) (v : ValueData) : proc :=
-  ((c ! v • 𝟘) : proc) ‖ ((g (c ? ((g ①) : proc))) : proc).
+  ((c ! v • 𝟘) : proc) ‖ ((g (c ? • ((g ①) : proc))) : proc).
 
 Lemma TD_not_good : forall c v, ~ good_VACCS (TD c v).
 Proof.
@@ -841,19 +843,19 @@ Lemma TD_tau_inv : forall c v t',
   lts (TD c v) τ t' -> t' = (((g 𝟘) : proc) ‖ ((g ①) : proc)).
 Proof.
   intros c v t' Hl. unfold TD in Hl. inversion Hl; subst.
-  - match goal with H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst end.
+  - match goal with H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst end.
     match goal with H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst end.
     reflexivity.
-  - match goal with H : lts (g (_ ? _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
+  - match goal with H : lts (g (_ ? • _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
   - match goal with H : lts (_ ! _ • 𝟘) τ _ |- _ => inversion H end.
-  - match goal with H : lts (g (_ ? _)) τ _ |- _ => inversion H end.
+  - match goal with H : lts (g (_ ? • _)) τ _ |- _ => inversion H end.
 Qed.
 
 Lemma nil_passes_TD : forall c v, ((g 𝟘) : proc) must_pass (TD c v).
 Proof.
   intros c v. apply m_step.
   - apply TD_not_good.
-  - exists (((g 𝟘) : proc) ▷ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
+  - exists (((g 𝟘) : proc) ∣ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
     apply ParRight. unfold TD.
     eapply lts_comL; [ apply lts_output | ].
     assert (E : ((g ①) : proc) ^ v = ((g ①) : proc)) by reflexivity.
@@ -870,7 +872,7 @@ Qed.
     transition à la somme entière. *)
 
 Lemma dead_summand_fails_TD : forall (M : gproc) (c : ChannelData) (v : ValueData),
-  In ((c ? ((g 𝟘) : proc)) : gproc) (summands M) ->
+  In ((c ? • ((g 𝟘) : proc)) : gproc) (summands M) ->
   ~ (((g M) : proc) must_pass (TD c v)).
 Proof.
   intros M c v Hin Hm.
@@ -881,10 +883,10 @@ Proof.
   inversion Hm; subst.
   - eapply TD_not_good. eassumption.
   - assert (Hbad : ((g 𝟘) : proc) must_pass
-                     (((g 𝟘) : proc) ‖ ((g (c ? ((g ①) : proc))) : proc))).
+                     (((g 𝟘) : proc) ‖ ((g (c ? • ((g ①) : proc))) : proc))).
     { match goal with Hc : forall _ _ _ _, _ |- _ =>
         eapply (Hc ((g 𝟘) : proc)
-                   (((g 𝟘) : proc) ‖ ((g (c ? ((g ①) : proc))) : proc))
+                   (((g 𝟘) : proc) ‖ ((g (c ? • ((g ①) : proc))) : proc))
                    (ActIn (c,v)) (ActOut (c,v)))
       end.
       - simpl. reflexivity.
@@ -895,7 +897,7 @@ Proof.
       * match goal with H : lts (g 𝟘) (ActExt _) _ |- _ => inversion H end.
       * match goal with H : lts (g 𝟘) (ActExt _) _ |- _ => inversion H end.
       * match goal with H : lts (g 𝟘) τ _ |- _ => inversion H end.
-      * match goal with H : lts (g (_ ? _)) τ _ |- _ => inversion H end.
+      * match goal with H : lts (g (_ ? • _)) τ _ |- _ => inversion H end.
     + intro Hg. inversion Hg; subst.
       match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
 Qed.
@@ -906,7 +908,7 @@ Qed.
     la somme réfute déjà [𝟘 ⊑ₘᵤₛₜᵢ g M]. *)
 
 Theorem nil_not_below_dead_summand : forall (M : gproc) (c : ChannelData) (v : ValueData),
-  In ((c ? ((g 𝟘) : proc)) : gproc) (summands M) ->
+  In ((c ? • ((g 𝟘) : proc)) : gproc) (summands M) ->
   ~ (((g 𝟘) : proc) ⊑ₘᵤₛₜᵢ ((g M) : proc)).
 Proof.
   intros M c v Hin Hle.
@@ -914,9 +916,9 @@ Proof.
 Qed.
 
 Corollary nil_not_below_dead_guard : forall (c : ChannelData) (v : ValueData),
-  ~ (((g 𝟘) : proc) ⊑ₘᵤₛₜᵢ ((g (c ? ((g 𝟘) : proc))) : proc)).
+  ~ (((g 𝟘) : proc) ⊑ₘᵤₛₜᵢ ((g (c ? • ((g 𝟘) : proc))) : proc)).
 Proof.
-  intros c v. apply (nil_not_below_dead_summand (c ? ((g 𝟘) : proc)) c v).
+  intros c v. apply (nil_not_below_dead_summand (c ? • ((g 𝟘) : proc)) c v).
   simpl. left. reflexivity.
 Qed.
 
@@ -944,7 +946,7 @@ Qed.
     externes**. *)
 
 Definition PoolM (c : ChannelData) : gproc :=
-  (𝛕 • ((g (𝟘 : gproc)) : proc)) + (c ? ((g (𝟘 : gproc)) : proc)).
+  (𝛕 • ((g (𝟘 : gproc)) : proc)) + (c ? • ((g (𝟘 : gproc)) : proc)).
 
 Lemma PoolM_tau : forall c, lts ((g (PoolM c)) : proc) τ ((g (𝟘 : gproc)) : proc).
 Proof. intros c. unfold PoolM. apply lts_choiceL. apply lts_tau. Qed.
@@ -1032,14 +1034,14 @@ Proof.
   assert (Htau : exists z, lts ((g ((𝛕 • ((g (𝟘 : gproc)) : proc)) : gproc)) : proc) τ z)
     by (exists ((g (𝟘 : gproc)) : proc); apply lts_tau).
   assert (Hcfg : exists z,
-    (((g ((𝛕 • ((g (𝟘 : gproc)) : proc)) : gproc)) : proc) ▷ bag [(c ▷ v)]) ⟶ z).
-  { exists (((g (𝟘 : gproc)) : proc) ▷ bag [(c ▷ v)]).
+    (((g ((𝛕 • ((g (𝟘 : gproc)) : proc)) : gproc)) : proc) ▷ bag [(c, v)]) ⟶ z).
+  { exists (((g (𝟘 : gproc)) : proc) ▷ bag [(c, v)]).
     apply fw_tau_left. apply lts_tau. }
-  assert (Hsem : (msgs [(c ▷ v)] ‖ ((g ((𝛕 • ((g (𝟘 : gproc)) : proc)) : gproc)) : proc))
-                   ⊑ₘᵤₛₜᵢ (msgs [(c ▷ v)] ‖ ((g (𝟘 : gproc)) : proc))).
+  assert (Hsem : (msgs [(c, v)] ‖ ((g ((𝛕 • ((g (𝟘 : gproc)) : proc)) : gproc)) : proc))
+                   ⊑ₘᵤₛₜᵢ (msgs [(c, v)] ‖ ((g (𝟘 : gproc)) : proc))).
   { apply must_i_par_compat_r. apply soundness_ax.
     apply ax_tau_step with (p' := ((g (𝟘 : gproc)) : proc)). apply lts_tau. }
-  destruct (H [(c ▷ v)] ((𝛕 • ((g (𝟘 : gproc)) : proc)) : gproc) (𝟘 : gproc)
+  destruct (H [(c, v)] ((𝛕 • ((g (𝟘 : gproc)) : proc)) : gproc) (𝟘 : gproc)
               Hst ltac:(constructor) (or_intror Htau) Hcfg Hsem)
     as (c0 & v0 & l0 & Mc & Hp & Hin & Hb).
   inversion Hin.
@@ -1067,7 +1069,7 @@ Qed.
     indépendante de la valeur reçue. *)
 
 Definition SelfRetOn (c : ChannelData) (a : gproc) : Prop :=
-  exists P, a = (c ? P) /\ In c (ochans P).
+  exists P, a = (c ? • P) /\ In c (ochans P).
 
 
 Definition SelfRetBag (l : list TypeOfActions) (M : gproc) : Prop :=
@@ -1159,7 +1161,7 @@ Qed.
     [TD d w] sépare, à ceci près que le rôle des deux composantes
     s'inverse : c'est le message *du client* qui donne au client son
     [τ] (donc le champ [ex] de la gauche), et la garde morte le vole.
-    Ce qui reste — [msgs l ‖ 𝟘] face à [𝟘 ‖ (d ? ①)] — est bloqué, la
+    Ce qui reste — [msgs l ‖ 𝟘] face à [𝟘 ‖ (d ? • ①)] — est bloqué, la
     seule action du client étant une entrée sur [d] et le sac n'ayant
     aucun message dessus.
 
@@ -1202,7 +1204,7 @@ Qed.
 Lemma bag_stuck_fails : forall (l : list TypeOfActions) (d : ChannelData),
   (forall v, ~ In (d,v) l) ->
   ~ ((msgs l ‖ ((g 𝟘) : proc)) must_pass
-       (((g 𝟘) : proc) ‖ ((g (d ? ((g ①) : proc))) : proc))).
+       (((g 𝟘) : proc) ‖ ((g (d ? • ((g ①) : proc))) : proc))).
 Proof.
   intros l d Hnin Hm. inversion Hm; subst.
   - match goal with Hg : good_VACCS _ |- _ =>
@@ -1215,11 +1217,11 @@ Proof.
     + inversion l0; subst;
         match goal with
         | H : lts (g 𝟘) _ _ |- _ => inversion H
-        | H : lts (g (_ ? _)) τ _ |- _ => inversion H
+        | H : lts (g (_ ? • _)) τ _ |- _ => inversion H
         end.
     + inversion l2; subst.
       * match goal with H : lts (g 𝟘) _ _ |- _ => inversion H end.
-      * match goal with H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst end.
+      * match goal with H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst end.
         destruct μ1 as [a1|a1]; simpl in eq; try contradiction.
         subst a1. eapply Hnin. eapply bag_nil_out_inv. exact l1.
 Qed.
@@ -1229,7 +1231,7 @@ Lemma TD_in_good : forall (d : ChannelData) (w : ValueData) c v t',
 Proof.
   intros d w c v t' H. unfold TD in H. inversion H; subst.
   - match goal with H2 : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H2 end.
-  - match goal with H2 : lts (g (_ ? _)) _ _ |- _ => inversion H2; subst end.
+  - match goal with H2 : lts (g (_ ? • _)) _ _ |- _ => inversion H2; subst end.
     apply good_par. right. simpl. constructor.
 Qed.
 
@@ -1238,7 +1240,7 @@ Lemma bag_passes_TD : forall (l : list TypeOfActions) (d : ChannelData) (w : Val
 Proof.
   intros l d w. apply m_step.
   - apply TD_not_good.
-  - exists ((msgs l ‖ ((g 𝟘) : proc)) ▷ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
+  - exists ((msgs l ‖ ((g 𝟘) : proc)) ∣ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
     apply ParRight. unfold TD.
     eapply lts_comL; [ apply lts_output | ].
     assert (E : ((g ①) : proc) ^ w = ((g ①) : proc)) by reflexivity.
@@ -1254,7 +1256,7 @@ Qed.
 
 Lemma dead_summand_bag_fails_TD : forall (l : list TypeOfActions) (M : gproc)
                                          (d : ChannelData) (w : ValueData),
-  In ((d ? ((g 𝟘) : proc)) : gproc) (summands M) ->
+  In ((d ? • ((g 𝟘) : proc)) : gproc) (summands M) ->
   (forall v, ~ In (d,v) l) ->
   ~ ((msgs l ‖ ((g M) : proc)) must_pass (TD d w)).
 Proof.
@@ -1267,10 +1269,10 @@ Proof.
   inversion Hm; subst.
   - eapply TD_not_good. eassumption.
   - assert (Hbad : (msgs l ‖ ((g 𝟘) : proc)) must_pass
-                     (((g 𝟘) : proc) ‖ ((g (d ? ((g ①) : proc))) : proc))).
+                     (((g 𝟘) : proc) ‖ ((g (d ? • ((g ①) : proc))) : proc))).
     { match goal with Hc : forall _ _ _ _, _ |- _ =>
         eapply (Hc (msgs l ‖ ((g 𝟘) : proc))
-                   (((g 𝟘) : proc) ‖ ((g (d ? ((g ①) : proc))) : proc))
+                   (((g 𝟘) : proc) ‖ ((g (d ? • ((g ①) : proc))) : proc))
                    (ActIn (d,w)) (ActOut (d,w)))
       end.
       - simpl. reflexivity.
@@ -1284,7 +1286,7 @@ Qed.
     Généralisation substantielle de [below_nil_of_all_dead], qui exige que
     **toute** garde ait une sœur morte sur sa voie : ici il suffit que le
     terme ne puisse jamais émettre, ce que [ochans] mesure syntaxiquement.
-    [c ? (d ? 𝟘)] est couvert, [c ? 𝟘 + d ? (e!y•𝟘)] ne l'est pas — et de
+    [c ? • (d ? • 𝟘)] est couvert, [c ? • 𝟘 + d ? • (e!y•𝟘)] ne l'est pas — et de
     fait cette dernière n'est pas sous [𝟘] au sac vide.
 
     Deux lignes : [VACCS_Absorb.no_output_Bad] certifie [Bad ∅ p] à
@@ -1305,7 +1307,7 @@ Qed.
 
 Theorem nil_not_below_dead_summand_bag :
   forall (l : list TypeOfActions) (M : gproc) (d : ChannelData) (w : ValueData),
-  In ((d ? ((g 𝟘) : proc)) : gproc) (summands M) ->
+  In ((d ? • ((g 𝟘) : proc)) : gproc) (summands M) ->
   (forall v, ~ In (d,v) l) ->
   ~ ((msgs l ‖ ((g 𝟘) : proc)) ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc))).
 Proof.
@@ -1666,14 +1668,14 @@ Lemma subst_tau_guard : forall (P : proc) (v : ValueData),
 Proof. intros. reflexivity. Qed.
 
 Lemma ax_tau_under_input_l : forall (c : ChannelData) (P : proc),
-  ((g (c ? ((g ((𝛕 • P) : gproc)) : proc))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? P)) : proc).
+  ((g (c ? • ((g ((𝛕 • P) : gproc)) : proc))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? • P)) : proc).
 Proof.
   intros c P. apply ax_input. intro v.
   rewrite subst_tau_guard. apply ax_tau_prefix_l.
 Qed.
 
 Lemma ax_tau_under_input_r : forall (c : ChannelData) (P : proc),
-  ((g (c ? P)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? ((g ((𝛕 • P) : gproc)) : proc))) : proc).
+  ((g (c ? • P)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? • ((g ((𝛕 • P) : gproc)) : proc))) : proc).
 Proof.
   intros c P. apply ax_input. intro v.
   rewrite subst_tau_guard. apply ax_tau_prefix_r.
@@ -1697,9 +1699,9 @@ Theorem milner_tau_laws :
   forall (c : ChannelData) (P : proc) (X : gproc), gStatic X ->
     (((g ((𝛕 • P) : gproc)) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ P
      /\ P ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ((𝛕 • P) : gproc)) : proc))
- /\ (((g (c ? ((g ((𝛕 • P) : gproc)) : proc))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? P)) : proc)
-     /\ ((g (c ? P)) : proc)
-          ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? ((g ((𝛕 • P) : gproc)) : proc))) : proc))
+ /\ (((g (c ? • ((g ((𝛕 • P) : gproc)) : proc))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? • P)) : proc)
+     /\ ((g (c ? • P)) : proc)
+          ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (c ? • ((g ((𝛕 • P) : gproc)) : proc))) : proc))
  /\ (((g (X + (𝛕 • ((g X) : proc)))) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g X) : proc)
      /\ ((g X) : proc) ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (X + (𝛕 • ((g X) : proc)))) : proc)).
 Proof.

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The VACCS proof system, exercised — and exactly what completeness still needs
 
     Two things here.
@@ -33,6 +34,7 @@
     reduce completeness to a single statement about *normal forms*, i.e.
     about forwarder states.  That reduction is proved; the statement it
     reduces to is what remains to be done. *)
+(* end hide *)
 
 From Stdlib Require Import List PeanoNat Lia.
 From stdpp Require Import base gmultiset.
@@ -45,7 +47,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Forwarder VACCS_Cond2 VACCS_ReadySet VACCS_Canonical VACCS_Descent VACCS_Matching VACCS_DerivedRules
   VACCS_Bad.
 Import ListNotations.
-
+(* begin hide *)
 Section VACCS_AxExamples.
 
 Context `{VP : VACCS_Parameters}.
@@ -97,14 +99,14 @@ End Copycat.
     rule ([ax_input_drop], [VACCS_Absorb.v]).  Neither rule derives the
     other: [ax_ccat_l]'s guard re-emits, this one's does not. *)
 
-Example ax_swallow_nil : forall c, (g (c ? (g 𝟘))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘).
+Example ax_swallow_nil : forall c, (g (c ? • (g 𝟘))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘).
 Proof.
   intro c.
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil_rev | ].
   apply ax_input_drop; [ repeat constructor | ]. intro v. simpl. apply bad_nil_any.
 Qed.
 
-Example swallow_nil : forall c, (g (c ? (g 𝟘))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
+Example swallow_nil : forall c, (g (c ? • (g 𝟘))) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof. intro c. apply soundness_ax. apply ax_swallow_nil. Qed.
 
 (* ** What completeness reduces to
@@ -194,8 +196,8 @@ Section DropRegression2.
 Context {c d : Channel} {y : Value}.
 
 Example ax_nested_drop_nil :
-  ((g ((cst c) ? ((g ((((cst d) ? (((cst d) ! (cst y) • 𝟘) : proc)) : gproc)
-                          + ((cst d) ? ((g 𝟘) : proc)))) : proc))) : proc)
+  ((g ((cst c) ? • ((g ((((cst d) ? • (((cst d) ! (cst y) • 𝟘) : proc)) : gproc)
+                          + ((cst d) ? • ((g 𝟘) : proc)))) : proc))) : proc)
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil_rev | ].
@@ -203,19 +205,19 @@ Proof.
 Qed.
 
 Corollary nested_drop_nil_sound :
-  ((g ((cst c) ? ((g ((((cst d) ? (((cst d) ! (cst y) • 𝟘) : proc)) : gproc)
-                   + ((cst d) ? ((g 𝟘) : proc)))) : proc))) : proc)
+  ((g ((cst c) ? • ((g ((((cst d) ? • (((cst d) ! (cst y) • 𝟘) : proc)) : gproc)
+                   + ((cst d) ? • ((g 𝟘) : proc)))) : proc))) : proc)
   ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc).
 Proof. apply soundness_ax. apply ax_nested_drop_nil. Qed.
 
 Example ax_double_tau_drop : forall (K1 : proc),
-  ((g (((((cst c) ? K1) + ((cst c) ? ((g 𝟘) : proc)))) + (𝛕 • ((g 𝟘) : proc)))) : proc)
+  ((g (((((cst c) ? • K1) + ((cst c) ? • ((g 𝟘) : proc)))) + (𝛕 • ((g 𝟘) : proc)))) : proc)
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (𝛕 • ((g 𝟘) : proc))) : proc).
 Proof.
   intro K1.
   eapply ax_trans;
     [ apply ax_cgr with
-        (q := (g (((cst c) ? K1) + (((cst c) ? ((g 𝟘) : proc)) + (𝛕 • ((g 𝟘) : proc))))) : proc);
+        (q := (g (((cst c) ? • K1) + (((cst c) ? • ((g 𝟘) : proc)) + (𝛕 • ((g 𝟘) : proc))))) : proc);
       apply cgr_choice_assoc | ].
   eapply ax_trans;
     [ apply ax_drop_tau; exists ((g 𝟘) : proc); apply lts_choiceR; apply lts_tau | ].
@@ -223,7 +225,7 @@ Proof.
 Qed.
 
 Corollary double_tau_drop_sound : forall (K1 : proc),
-  ((g (((((cst c) ? K1) + ((cst c) ? ((g 𝟘) : proc)))) + (𝛕 • ((g 𝟘) : proc)))) : proc)
+  ((g (((((cst c) ? • K1) + ((cst c) ? • ((g 𝟘) : proc)))) + (𝛕 • ((g 𝟘) : proc)))) : proc)
   ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g (𝛕 • ((g 𝟘) : proc))) : proc).
 Proof. intro K1. apply soundness_ax. apply ax_double_tau_drop. Qed.
 
@@ -319,17 +321,17 @@ End CopycatSumRegression.
 Lemma ax_return_residue_example :
   forall (c d : ChannelData) (u : ValueData),
   ((msgs [(c,u)])
-            ‖ ((g (c ? (((c ! (bvar 0) • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc)))) : proc))
+            ‖ ((g (c ? • (((c ! (bvar 0) • 𝟘)) ‖ ((g (d ? • ((g 𝟘) : proc))) : proc)))) : proc))
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((msgs [(c,u)])
-            ‖ ((((g (𝟘 : gproc)) : proc)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc))).
+            ‖ ((((g (𝟘 : gproc)) : proc)) ‖ ((g (d ? • ((g 𝟘) : proc))) : proc))).
 Proof.
   intros c d u.
   eapply (cfg_return_below_residue _ [] c u _
-            (((c ! u • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc))).
+            (((c ! u • 𝟘)) ‖ ((g (d ? • ((g 𝟘) : proc))) : proc))).
   - reflexivity.
   - assert (E : subst_in_proc 0 u
-                  ((((c ! (bvar 0) • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc)) : proc)
-                = ((((c ! u • 𝟘)) ‖ ((g (d ? ((g 𝟘) : proc))) : proc)) : proc))
+                  ((((c ! (bvar 0) • 𝟘)) ‖ ((g (d ? • ((g 𝟘) : proc))) : proc)) : proc)
+                = ((((c ! u • 𝟘)) ‖ ((g (d ? • ((g 𝟘) : proc))) : proc)) : proc))
       by reflexivity.
     rewrite <- E. apply lts_input.
   - apply lts_parL. apply lts_output.
@@ -349,7 +351,7 @@ Qed.
 Lemma ax_delayed_return_example :
   forall (c : ChannelData) (u : ValueData),
   ((msgs [(c,u)])
-            ‖ ((g (c ? ((g (𝛕 • ((c ! (bvar 0) • 𝟘) : proc))) : proc))) : proc))
+            ‖ ((g (c ? • ((g (𝛕 • ((c ! (bvar 0) • 𝟘) : proc))) : proc))) : proc))
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((msgs [(c,u)]) ‖ ((g (𝟘 : gproc)) : proc)).
 Proof.
   intros c u.
@@ -386,7 +388,7 @@ Proof. intros c u K H. eapply gsum_no_out. exact H. Qed.
 Lemma ax_replay_two_messages :
   forall (a b : ChannelData) (UU WW : Value),
   (msgs [(a, cst UU); (b, cst WW)]
-            ‖ ((g (a ? ((g (b ? ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
+            ‖ ((g (a ? • ((g (b ? • ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
                           : proc))) : proc))
     ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [(a, cst UU); (b, cst WW)]
             ‖ ((((g (𝟘 : gproc)) : proc)) ‖ (((g (𝟘 : gproc)) : proc)))).
@@ -397,9 +399,9 @@ Proof.
              ActOut (a, cst UU); ActOut (b, cst WW)]).
   - eapply wt_act.
     { assert (E : subst_in_proc 0 (cst UU)
-                    ((g (b ? ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
+                    ((g (b ? • ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
                        : proc)
-                  = ((g (b ? ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
+                  = ((g (b ? • ((((a ! (cst UU) • 𝟘)) ‖ ((b ! (cst WW) • 𝟘))) : proc)))
                        : proc))
         by reflexivity.
       rewrite <- E. apply lts_input. }
@@ -435,14 +437,14 @@ Qed.
 (*  ([p1 := p]) ne s'appliquent : c'est bien la composition           *)
 (*  « τ-run puis émission » qui fait le travail.                      *)
 (*                                                                    *)
-(*  Le résidu [𝟘 ‖ g (od ? 𝟘)] se ferme par la loi de drop, via le    *)
+(*  Le résidu [𝟘 ‖ g (od ? • 𝟘)] se ferme par la loi de drop, via le    *)
 (*  critère syntaxique [ochans] ([ax_gsum_below_nil]).                *)
 (* ------------------------------------------------------------------ *)
 
 Section OutResidueRegression.
 Context {oc od : Channel} {ov : Value}.
 
-Definition OutSink : gproc := (cst od) ? ((g (𝟘 : gproc)) : proc).
+Definition OutSink : gproc := (cst od) ? • ((g (𝟘 : gproc)) : proc).
 Definition OutBody : proc := (((cst oc) ! (cst ov) • 𝟘) : proc) ‖ ((g OutSink) : proc).
 Definition OutSrc : proc := (g ((𝛕 • OutBody) : gproc)) : proc.
 
@@ -472,7 +474,7 @@ Proof.
 Qed.
 
 Theorem ax_out_residue_example :
-  OutSrc ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc) ▷ (cst ov))] ‖ ((g (𝟘 : gproc)) : proc)).
+  OutSrc ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc), (cst ov))] ‖ ((g (𝟘 : gproc)) : proc)).
 Proof.
   eapply (ax_below_cfg_of_out_residue _ [] (cst oc) (cst ov)
             OutSrc OutBody
@@ -484,13 +486,13 @@ Proof.
 Qed.
 
 Corollary ax_out_residue_example_sound :
-  OutSrc ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [((cst oc) ▷ (cst ov))] ‖ ((g (𝟘 : gproc)) : proc)).
+  OutSrc ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [((cst oc), (cst ov))] ‖ ((g (𝟘 : gproc)) : proc)).
 Proof. apply soundness_ax. apply ax_out_residue_example. Qed.
 
 (* Les quatre faits ensemble : l'inéquation est dérivable, la gauche
     n'émet rien, et l'émission utilisée n'apparaît qu'après le τ-run. *)
 Theorem out_residue_descent_is_essential :
-  OutSrc ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc) ▷ (cst ov))] ‖ ((g (𝟘 : gproc)) : proc))
+  OutSrc ᴠᴀᴄᴄꜱ⊑ₐₓ (msgs [((cst oc), (cst ov))] ‖ ((g (𝟘 : gproc)) : proc))
   /\ (forall c v z, ~ lts OutSrc (ActExt (ActOut (c,v))) z)
   /\ OutSrc ⟹[[]] OutBody
   /\ lts OutBody (ActExt (ActOut ((cst oc), (cst ov))))
@@ -525,7 +527,7 @@ Context {ca : Channel} {va : Value}.
 
 Corollary ax_sink_from_semantics :
   ((((cst ca) ! (cst va) • 𝟘) ‖ ((g 𝟘) : proc))
-            ‖ ((g ((cst ca) ? ((g 𝟘) : proc))) : proc))
+            ‖ ((g ((cst ca) ? • ((g 𝟘) : proc))) : proc))
     ᴠᴀᴄᴄꜱ⊑ₐₓ ((g 𝟘) : proc).
 Proof.
   apply completeness_ax;

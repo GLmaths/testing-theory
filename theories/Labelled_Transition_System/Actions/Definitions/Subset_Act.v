@@ -20,10 +20,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap.
 From TestingTheory Require Import ActTau gLts SyncActions.
-
+(* begin hide *)
 (**************************Definition of a Subset of A *************************************)
 
 Definition subset_of (A : Type) := A -> Prop.

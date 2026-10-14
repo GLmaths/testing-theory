@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The expansion law for two guarded sums
 
     [g M ‖ g N ≂ₘᵤₛₜᵢ g (ext M N + ext_r N M)] — pure interleaving, with
@@ -38,6 +39,7 @@
     *exactly* the same one-step transitions — same labels, same targets,
     not merely related ones — so a generic "same transitions ⟹ same
     [must]-behaviour" lemma closes it. *)
+(* end hide *)
 
 From Stdlib Require Import Lia.
 From stdpp Require Import base.
@@ -45,7 +47,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure.
-
+(* begin hide *)
 Section VACCS_Expansion.
 
 Context `{VP : VACCS_Parameters}.
@@ -154,7 +156,7 @@ Fixpoint ext (M N : gproc) : gproc :=
 match M with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c ? p => c ? (p ‖ (g (gNewVar 0 N)))
+| c ? • p => c ? • (p ‖ (g (gNewVar 0 N)))
 | 𝛕 • p => 𝛕 • (p ‖ (g N))
 | gp1 + gp2 => (ext gp1 N) + (ext gp2 N)
 end.
@@ -167,7 +169,7 @@ Fixpoint ext_r (N M : gproc) : gproc :=
 match N with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c ? q => c ? ((g (gNewVar 0 M)) ‖ q)
+| c ? • q => c ? • ((g (gNewVar 0 M)) ‖ q)
 | 𝛕 • q => 𝛕 • ((g M) ‖ q)
 | gq1 + gq2 => (ext_r gq1 M) + (ext_r gq2 M)
 end.

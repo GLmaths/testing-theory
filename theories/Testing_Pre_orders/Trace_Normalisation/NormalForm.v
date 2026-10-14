@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -27,7 +28,7 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts.
-
+(* begin hide *)
 (* * Traces in normal form (combinatorial core)
 
     This file contains the purely combinatorial part of the normalisation of

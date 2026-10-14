@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Redundant rules of the VACCS system
 
     The system of [VACCS_DefinitionAxiomatic.v] has **nine** rules:

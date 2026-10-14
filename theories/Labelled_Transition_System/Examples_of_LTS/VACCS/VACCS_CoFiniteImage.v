@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list.
@@ -28,7 +29,7 @@ From TestingTheory Require Import
   ActTau InputOutputActions InListPropHelper
   gLts Bisimulation coFiniteImage.
 From TestingTheory Require Export VACCS.VACCS_Instance.
-
+(* begin hide *)
 (* ** [coFiniteImagegLts] for VACCS — mirrors [VCCS_CoFiniteImage.v]
     verbatim (VACCS's [dual] is the same input/output swap
     [ext_act_match], and [lts_set_input]/[lts_set_output]/[lts_set_tau]

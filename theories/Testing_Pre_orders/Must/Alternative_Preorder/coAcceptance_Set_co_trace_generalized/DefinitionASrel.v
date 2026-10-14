@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
   coWeakTransition coConvergence LabelAbstraction LabelAdmissible.
-
+(* begin hide *)
 Class AbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} :=

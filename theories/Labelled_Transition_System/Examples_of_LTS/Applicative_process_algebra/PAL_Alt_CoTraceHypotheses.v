@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable.
@@ -27,7 +28,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
   coFiniteImage InteractionBetweenLts Testing_Predicate DefinitionAS CompletenessASco TestSpecBridge
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi PAL_Alt_AbsAction PAL_Good PAL_Alt_Tests
   PAL_Alt_TestSpec.
-
+(* begin hide *)
 (* * What the alternative LTS of PAL provides for [EquivalenceASco]
 
    [EquivalenceASco.equivalence_fw_acc_set_and_must_i_co_trace] states

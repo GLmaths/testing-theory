@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base.
-From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
+From TestingTheory Require Import VCCS VCCS_Instance Must ParallelLTSConstruction ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization.
-
+(* begin hide *)
 (* * Erasing [①] from a server — the bridge that moves a context into the test
 
     This is the VCCS counterpart of [VACCS_Erasure.v], and it exists for
@@ -64,7 +65,7 @@ with gnoone (M : gproc) : gproc :=
 match M with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c ? p => c ? (noone p)
+| c ? • p => c ? • (noone p)
 | c ! v • p => c ! v • (noone p)
 | 𝛕 • p => 𝛕 • (noone p)
 | p1 + p2 => (gnoone p1) + (gnoone p2)
@@ -299,17 +300,17 @@ Proof.
       * apply Ho; exact H.
     + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
       * inversion l; subst.
-        -- exists (p2 ▷ (q2 ‖ x2)).
+        -- exists (p2 ∣ (q2 ‖ x2)).
            eapply ParSync; [ apply dual_out_in | eassumption | apply lts_parL; eassumption ].
-        -- exists (q2 ▷ (p2 ‖ x2)).
+        -- exists (q2 ∣ (p2 ‖ x2)).
            eapply ParSync; [ apply dual_in_out | eassumption | apply lts_parL; eassumption ].
-        -- exists (p2 ▷ (noone r ‖ x2)). eapply ParLeft. eassumption.
-        -- exists (p ▷ (q2 ‖ x2)). eapply ParRight. apply lts_parL. eassumption.
-      * exists (p ▷ (noone r ‖ x2)). eapply ParRight. apply lts_parR. eassumption.
+        -- exists (p2 ∣ (noone r ‖ x2)). eapply ParLeft. eassumption.
+        -- exists (p ∣ (q2 ‖ x2)). eapply ParRight. apply lts_parL. eassumption.
+      * exists (p ∣ (noone r ‖ x2)). eapply ParRight. apply lts_parR. eassumption.
       * inversion l1; subst.
-        -- exists (p2 ▷ (noone r ‖ x2)).
+        -- exists (p2 ∣ (noone r ‖ x2)).
            eapply ParSync; [ exact eq | eassumption | apply lts_parR; eassumption ].
-        -- exists (p ▷ (q2 ‖ x2)). eapply ParRight.
+        -- exists (p ∣ (q2 ‖ x2)). eapply ParRight.
            destruct (dual_shape _ _ eq) as [(a & Ha1 & Ha2)|(a & Ha1 & Ha2)]; subst;
              destruct a as (c0,v0).
            ++ eapply lts_comL; eassumption.
@@ -351,21 +352,21 @@ Proof.
   - apply m_step.
     + intro Hg. apply Ho. apply good_par. right. exact Hg.
     + destruct Hex as ((x1,x2) & Hs). inversion Hs; subst.
-      * exists ((x1 ‖ noone r) ▷ t). eapply ParLeft. apply lts_parL. eassumption.
+      * exists ((x1 ‖ noone r) ∣ t). eapply ParLeft. apply lts_parL. eassumption.
       * inversion l; subst.
-        -- exists ((x1 ‖ p2) ▷ q2).
+        -- exists ((x1 ‖ p2) ∣ q2).
            eapply ParSync; [ apply dual_out_in | apply lts_parR; eassumption | eassumption ].
-        -- exists ((x1 ‖ q2) ▷ p2).
+        -- exists ((x1 ‖ q2) ∣ p2).
            eapply ParSync; [ apply dual_in_out | apply lts_parR; eassumption | eassumption ].
-        -- exists ((x1 ‖ p2) ▷ t). eapply ParLeft. apply lts_parR. eassumption.
-        -- exists ((x1 ‖ noone r) ▷ q2). eapply ParRight. eassumption.
+        -- exists ((x1 ‖ p2) ∣ t). eapply ParLeft. apply lts_parR. eassumption.
+        -- exists ((x1 ‖ noone r) ∣ q2). eapply ParRight. eassumption.
       * inversion l2; subst.
-        -- exists ((x1 ‖ p2) ▷ t). eapply ParLeft.
+        -- exists ((x1 ‖ p2) ∣ t). eapply ParLeft.
            destruct (dual_shape _ _ eq) as [(a & Ha1 & Ha2)|(a & Ha1 & Ha2)]; subst;
              destruct a as (c0,v0).
            ++ eapply lts_comL; eassumption.
            ++ eapply lts_comR; eassumption.
-        -- exists ((x1 ‖ noone r) ▷ q2).
+        -- exists ((x1 ‖ noone r) ∣ q2).
            eapply ParSync; [ exact eq | apply lts_parL; eassumption | eassumption ].
     + intros y Hy. inversion Hy; subst.
       * destruct (lts_noone_inv _ _ _ H2) as (r1 & Hr1 & Hlr1). subst.

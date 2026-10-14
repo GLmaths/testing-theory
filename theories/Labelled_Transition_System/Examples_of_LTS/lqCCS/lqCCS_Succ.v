@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: computing the successors of a program
 
     The program LTS [pstep] labels its steps with schedulers.  Forgetting
@@ -28,13 +29,14 @@
     finitely many, and computed by [succ] ([succ_spec]); the outputs of a
     program are listed by [prog_outs] ([prog_outs_spec]).  This is what makes the
     LTSs of [lqCCS_LTS.v] decidable. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program.
-
+(* begin hide *)
 (* ** Labels without schedulers *)
 
 Inductive ulbl : Type :=

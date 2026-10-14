@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Eliminating [ν] over a guarded sum: [ν (g M) ≂ₘᵤₛₜᵢ g (resg M)]
 
     The last piece [VCCS_NormalForm.v]'s normal-form theorem needs: once
@@ -44,11 +45,12 @@
     (justified since [ν] doesn't bind a *value*, so an input/output/tau
     guard's own continuation sits at exactly the same [ν]-depth whether
     [ν] wraps the guard or the guard wraps [ν]). *)
+(* end hide *)
 
 From stdpp Require Import base.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation WeakTransitions Convergence VCCS_Static VCCS_Expansion.
-
+(* begin hide *)
 Section VCCS_ResNormalize.
 
 Context `{VP : VCCS_Parameters}.
@@ -57,11 +59,11 @@ Fixpoint resg (M : gproc) : gproc :=
 match M with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p =>
+| c ? • p =>
     match c with
     | bvar 0 => 𝟘
-    | cst c' => (cst c') ? (ν p)
-    | bvar (S j) => (bvar j) ? (ν p)
+    | cst c' => (cst c') ? • (ν p)
+    | bvar (S j) => (bvar j) ? • (ν p)
     end
 | c ! v • p =>
     match c with

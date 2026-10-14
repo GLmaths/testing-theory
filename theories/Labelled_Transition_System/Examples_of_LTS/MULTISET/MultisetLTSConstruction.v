@@ -23,12 +23,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts InteractionBetweenLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW.
-(* end hide *)
+
 
 (** ** Mailbox LTS *)
 
@@ -50,7 +51,7 @@ Proof.
 Qed.
 (* end hide *)
 
-Inductive lts_multiset_step `{ExtAction A} : MO A -> Act A -> MO A -> Prop :=
+Inductive lts_multiset_step `{ExtAction A} : MO A -> Labels A -> MO A -> Prop :=
 | lts_multiset_add m η μ (duo : dual μ η) (nb : non_blocking η) :
    lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
 | lts_multiset_minus m η (nb : non_blocking η):  
@@ -99,7 +100,7 @@ Proof.
   + right. inversion 1.
 Qed.
 
-Definition lts_multiset_performs `{ExtAction A} (m : MO A) (α : Act A) : Prop :=
+Definition lts_multiset_performs `{ExtAction A} (m : MO A) (α : Labels A) : Prop :=
 match α with
     | ActExt μ => if (decide (non_blocking μ)) then μ ∈ m
                                                else ∃ η, non_blocking η ∧ dual μ η

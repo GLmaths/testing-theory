@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Cashing in [⊑ₘᵤₛₜᵢ]: the acceptance condition, with the forwarder gone
 
     [must_iff_acceptance_set_VACCS] states everything at [p ▷ ∅], and
@@ -50,6 +51,7 @@
     That is why the buffer, though essential to the *semantics* (a guarded
     sum's ready set is empty — [gproc_coR_empty]), need never appear in a
     *derivation*. *)
+(* end hide *)
 
 From Stdlib Require Import List PeanoNat Lia.
 From stdpp Require Import base sets gmap gmultiset.
@@ -59,7 +61,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   Lts_OBA Lts_FW Lts_OBA_FB VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Precongruence VACCS_Expansion VACCS_Forwarder
   DefinitionCI EquivalenceCI VACCS_ta_tc_gen Soundness Completeness.
-
+(* begin hide *)
 Section VACCS_Cond2.
 
 Context `{VP : VACCS_Parameters}.
@@ -1089,31 +1091,31 @@ Qed.
 
 Theorem input_comm_false : forall (c d e : Channel) (w y : Value),
   c <> d ->
-  ~ ((g ((cst c) ? (g ((cst d) ? ((cst e) ! (cst y) • 𝟘)))))
-       ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g ((cst d) ? (g ((cst c) ? ((cst e) ! (cst y) • 𝟘)))))).
+  ~ ((g ((cst c) ? • (g ((cst d) ? • ((cst e) ! (cst y) • 𝟘)))))
+       ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g ((cst d) ? • (g ((cst c) ? • ((cst e) ! (cst y) • 𝟘)))))).
 Proof.
   intros c d e w y Hcd Hle.
   set (P := ((cst e) ! (cst y) • 𝟘) : proc).
-  set (p := (g ((cst c) ? (g ((cst d) ? P)))) : proc).
-  set (q := (g ((cst d) ? (g ((cst c) ? P)))) : proc).
-  assert (Hy : (((g ((cst c) ? P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions))) ↛).
+  set (p := (g ((cst c) ? • (g ((cst d) ? • P)))) : proc).
+  set (q := (g ((cst d) ? • (g ((cst c) ? • P)))) : proc).
+  assert (Hy : (((g ((cst c) ? • P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions))) ↛).
   { assert (Hns : forall z,
-      ~ ((((g ((cst c) ? P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions))) ⟶ z)).
+      ~ ((((g ((cst c) ? • P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions))) ⟶ z)).
     { apply fw_stable_iff. split.
       - intros z Hz. inversion Hz.
       - intros a Hin z Hz. exfalso. eapply gmultiset_not_elem_of_empty. exact Hin. }
     intros Hn.
     exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
   assert (Hwy : (q ▷ ({[+ ActOut (cst d, cst w) +]} : MO (ExtAct TypeOfActions)))
-                  ⟹[[]] (((g ((cst c) ? P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))).
+                  ⟹[[]] (((g ((cst c) ? • P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))).
   { eapply wt_tau; [ | apply wt_nil ].
     replace ({[+ ActOut (cst d, cst w) +]} : MO (ExtAct TypeOfActions))
       with (({[+ ActOut (cst d, cst w) +]} : MO (ExtAct TypeOfActions)) ⊎ ∅)
       by (apply gmultiset_disj_union_right_id).
     apply fw_tau_deliver.
-    assert (E : ((g ((cst c) ? P)) : proc) ^ (cst w) = g ((cst c) ? P)) by reflexivity.
+    assert (E : ((g ((cst c) ? • P)) : proc) ^ (cst w) = g ((cst c) ? • P)) by reflexivity.
     assert (Hli : lts q (ActExt (ActIn (cst d, cst w)))
-                   (((g ((cst c) ? P)) : proc) ^ (cst w)))
+                   (((g ((cst c) ? • P)) : proc) ^ (cst w)))
       by (unfold q; apply lts_input).
     rewrite E in Hli. exact Hli. }
   assert (Hsp : Static p) by (unfold p, P; repeat constructor).
@@ -1874,7 +1876,7 @@ Qed.
 
     Reading that instance is instructive, because its acceptance part is
     **literally** the probe built by hand here:
-    [unroll_fw L = Σ_{Inputs c ∈ L} (c ? ①)] is [VACCS_Matching.probes].
+    [unroll_fw L = Σ_{Inputs c ∈ L} (c ? • ①)] is [VACCS_Matching.probes].
     What it has in addition is the two things the hand-rolled version
     lacked:
 

@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -33,7 +34,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation FiniteIma
     coFiniteImage InListPropHelper Termination Convergence WeakTransitions
 
   coWeakTransition coConvergence.
-
+(* begin hide *)
 (* * The LTS of sets, co version
 
     [SetLTSConstruction.v]'s [toSET], sourced from [coFiniteImagegLts]/[cowt]

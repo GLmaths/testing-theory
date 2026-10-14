@@ -23,9 +23,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From TestingTheory Require Import VCCS_Instance.
-
+(* begin hide *)
 Instance CCS_Parameters : VCCS_Parameters :=
   { Channel := String.string;
     Value := unit;
@@ -59,7 +60,7 @@ Parameter (Channel : Type).
 (*Exemple : Definition Channel := string.*)
 Parameter (channel_eq_dec : EqDecision Channel).
 #[global] Instance channel_eqdecision : EqDecision Channel. by exact channel_eq_dec. Defined.
-(* Coercion ActExt : ExtAct >-> Act. *)
+(* Coercion ActExt : ExtAct >-> Labels. *)
 Parameter (channel_is_countable : Countable Channel).
 #[global] Instance channel_countable : Countable Channel. by exact channel_is_countable. Defined.
 
@@ -1506,7 +1507,7 @@ From TestingTheory Require Import OldTransitionSystems.
      eq_spec p q α := Congruence_Respects_Transition p q α |}.
 
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB 
-  FiniteImageLTS Lts_Finite_Output_Chain GeneralizeLtsOutputs.
+  FiniteImageLTS Lts_Finite_Non_Blocking_Chain GeneralizeLtsOutputs.
 
 #[global] Program Instance CCS_ggLts : @gLts proc (ExtAct Channel) gLabel_b := ggLts gLabel_b.
 

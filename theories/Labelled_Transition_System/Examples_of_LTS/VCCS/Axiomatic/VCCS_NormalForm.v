@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The guarded-sum normal-form theorem
 
     Every [Static] process is [⊢]-derivably equal to some guarded sum
@@ -43,6 +44,7 @@
       ([VCCS_ResNormalize.v]).
     - [g M]: already a guarded sum — [ax_refl] both directions.
     - [pr_var _]/[rec _ • _]: excluded by [Static]. *)
+(* end hide *)
 
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import List Permutation PeanoNat Lia.
@@ -50,7 +52,7 @@ From stdpp Require Import base sets gmap.
 From TestingTheory Require Import VCCS VCCS_Instance Must VCCS_Static
   VCCS_Expansion VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet
   DefinitionAxiomatic VCCS_Canonical.
-
+(* begin hide *)
 Section VCCS_NormalForm.
 
 Context `{VP : VCCS_Parameters}.

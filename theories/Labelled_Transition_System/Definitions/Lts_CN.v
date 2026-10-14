@@ -23,10 +23,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From TestingTheory Require Import ActTau gLts.
-(* end hide *)
+
 
 Class gLtsCNenabled (P A : Type) `{gLts P A} :=
   MkgLtsCNenabled {

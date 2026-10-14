@@ -23,11 +23,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable finite gmultiset.
-
+(* begin hide *)
 Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list B → Prop :=
     Forall2_nil : Forall2 P [] [] 
     | Forall2_cons : ∀ (x : A) (y : B) (la : list A) (lb : list B), P x y → Forall2 P la lb → Forall2 P (x :: la) (y :: lb).

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The last derived law: the output-merge equation, left to right
 
     Ten of the laws a Hennessy-style presentation states as *rules* are
@@ -37,6 +38,7 @@
     [ax_drop_out], i.e. ultimately from **[ax_swap_out]**, the rule
     found last in the whole development. The rule added at the very end
     turns out to subsume one of the rules present from the start. *)
+(* end hide *)
 
 From Stdlib Require Import List.
 From stdpp Require Import base.
@@ -45,7 +47,7 @@ From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActi
   Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization
   VCCS_Expansion VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet
   DefinitionAxiomatic VCCS_Canonical VCCS_NormalForm SoundnessAx CompletenessAx.
-
+(* begin hide *)
 Section VCCS_AxRedundancy.
 
 Context `{VP : VCCS_Parameters}.

@@ -20,11 +20,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Lists Require Import List.
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation WeakTransitions Testing_Predicate InteractionBetweenLts May.
-
+(* begin hide *)
 (* * Alternative preorder for May based on trace inclusion *)
 
 (* ** Traces of a process

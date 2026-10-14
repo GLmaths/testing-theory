@@ -20,10 +20,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The copycat law, for an arbitrary channel
 
-        [ccat c := c ? (c ! x • 𝟘)]        [ccat c ≂ₘᵤₛₜᵢ 𝟘]
+        [ccat c := c ? • (c ! x • 𝟘)]        [ccat c ≂ₘᵤₛₜᵢ 𝟘]
 
     A one-shot forwarder is invisible: whatever a test sends it, it sends
     straight back, so no test can tell it apart from a process that never
@@ -49,6 +50,7 @@
     the left-hand side to be an internal choice of two sums each already
     offering [c].  So [(g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (ccat c)] is underivable without it, while
     being semantically true — the system would be incomplete. *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base.
@@ -57,15 +59,15 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
   InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
   Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination
   VACCS_Static VACCS_Erasure VACCS_Precongruence.
-
+(* begin hide *)
 Section VACCS_Copycat.
 
 Context `{VP : VACCS_Parameters}.
 
 (* The one-shot forwarder on channel [c]. *)
-Definition ccat (c : ChannelData) : proc := c ? (c ! (bvar 0) • 𝟘).
+Definition ccat (c : ChannelData) : proc := c ? • (c ! (bvar 0) • 𝟘).
 
-Lemma ccat_gStatic : forall c, gStatic (c ? (c ! (bvar 0) • 𝟘)).
+Lemma ccat_gStatic : forall c, gStatic (c ? • (c ! (bvar 0) • 𝟘)).
 Proof. intros c. constructor. constructor. Qed.
 
 Lemma must_i_ccat_r : forall c, g 𝟘 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (ccat c).
@@ -79,7 +81,7 @@ Proof.
     eapply m_step; eauto.
     + inversion ex; subst. inversion H; subst.
       * lts_inversion lts.
-      * exists (ccat c ▷ b2). eapply ParRight. eauto.
+      * exists (ccat c ∣ b2). eapply ParRight. eauto.
       * inversion l1.
     + intros. eauto. inversion H.
     + intros. destruct μ1 as [ b | b ].
@@ -94,10 +96,10 @@ Proof.
                  assert (lts e ((c , v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr
                     as [(t'' & HypTr' & t'0 & HypTr'0 & equiv')|(t'' & HypTr' & equiv'')]; eauto.
-                 --- exists (c ! v • 𝟘 ▷ t''). eapply ParRight. eauto.
+                 --- exists (c ! v • 𝟘 ∣ t''). eapply ParRight. eauto.
                  --- assert (lts (c ! v • 𝟘) ((c , v) !) (g 𝟘)).
                      { eauto with cgr. }
-                      exists ((g 𝟘) ▷ t''). eapply ParSync; eauto.
+                      exists ((g 𝟘) ∣ t''). eapply ParSync; eauto.
                      simpl; eauto.
               ** inversion l1.
            ++ intros. lts_inversion lts.
@@ -131,7 +133,7 @@ Proof.
     + inversion l.
     + eapply m_step.
       * eauto.
-      * exists ((g 𝟘) ▷ b2). eapply ParRight; eauto.
+      * exists ((g 𝟘) ∣ b2). eapply ParRight; eauto.
       * intros. lts_inversion lts.
       * intros. eapply H0; [ exact H3 | reflexivity | apply et; exact H3 ].
       * intros. lts_inversion lts.
@@ -148,7 +150,7 @@ Proof.
         -- eapply (OBA_with_FB_First_Axiom t b2 b0) in l2
               as (t'' & HypTr'' & p'1 & HypTr'1 & equiv'1); eauto.
            eapply m_step; eauto.
-           ++ exists ((g 𝟘) ▷ t''). eapply ParRight. eauto.
+           ++ exists ((g 𝟘) ∣ t''). eapply ParRight. eauto.
            ++ intros. lts_inversion lts.
            ++ intros. lts_inversion lts.
         -- inversion l0; subst.
@@ -156,14 +158,14 @@ Proof.
            eapply OBA_with_FB_Fourth_Axiom in l2 as (t''1 & HypTr''1 & equiv''1) ; eauto.
            eapply (@must_preserved_by_lts_tau_clt proc) in Mq; eauto.
            eapply m_step; eauto.
-           ++ exists ((g 𝟘) ▷ t''1). eapply ParRight. eauto.
+           ++ exists ((g 𝟘) ∣ t''1). eapply ParRight. eauto.
            ++ intros. lts_inversion lts.
            ++ intros. lts_inversion lts.
 Qed.
 
 (* ** A *responder* is only below the copycat, never equal to it
 
-    [resp a V := a ? (a ! V • 𝟘)] answers on the same channel but with a
+    [resp a V := a ? • (a ! V • 𝟘)] answers on the same channel but with a
     value of its own choosing.  It is **not** a forwarder: the buffer's
     [lts_multiset_add] stores the *dual of what it absorbed*, faithfully,
     and that fidelity is exactly what buys the *equation* [ccat c ≂ 𝟘].
@@ -195,7 +197,7 @@ Section Responder.
 Variable a : Channel.
 Variable V : ValueData.
 
-Definition resp : proc := (cst a) ? ((cst a) ! V • 𝟘).
+Definition resp : proc := (cst a) ? • ((cst a) ! V • 𝟘).
 
 Lemma must_i_resp_below_ccat : resp ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (ccat (cst a)).
 Proof.
@@ -205,7 +207,7 @@ Proof.
   - eapply m_step; eauto.
     + inversion ex; subst. inversion H2; subst.
       * inversion l.
-      * exists (ccat (cst a) ▷ b2). eapply ParRight. eauto.
+      * exists (ccat (cst a) ∣ b2). eapply ParRight. eauto.
       * inversion l1; subst.
         eapply simplify_match_input in eq as eq'; subst.
         eexists. eapply ParSync; eauto.
@@ -223,7 +225,7 @@ Proof.
         inversion Mp'. contradiction.
         inversion ex0. inversion H5; subst.
         -- inversion l.
-        -- exists ((cst a ! (bvar 0) • 𝟘) ^ v ▷ b2). eapply ParRight; eauto.
+        -- exists ((cst a ! (bvar 0) • 𝟘) ^ v ∣ b2). eapply ParRight; eauto.
         -- inversion l1; subst. eapply simplify_match_output in eq as eq'; subst.
            assert (t' ⟶[ActIn (cst a , subst_Data 0 v V)] b2) as l'2; eauto.
            eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & n & equiv1 & equiv2 & eq1).

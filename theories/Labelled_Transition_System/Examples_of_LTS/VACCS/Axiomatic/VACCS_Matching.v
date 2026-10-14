@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The echo condition: what an extra input on the right must do
 
     The starting observation is that for two **stable guarded sums** the
@@ -55,20 +56,21 @@
     a sum that refuses the matching input is again stable — which is what
     pins the witness [must_i_cond2_nil] returns down to a *known* process
     instead of an anonymous reduct. *)
+(* end hide *)
 
 From Stdlib Require Import List Lia.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import Sorting.Permutation.
 From stdpp Require Import base sets gmap gmultiset.
-From TestingTheory Require Import MultisetLTSConstruction VACCS_Forwarder.
+From TestingTheory Require Import ForwarderConstruction MultisetLTSConstruction VACCS_Forwarder.
 From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Precongruence VACCS_Residues VACCS_Expansion VACCS_ReadySet VACCS_Cond2
   VACCS_Copycat VACCS_Absorb VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_Canonical
   VACCS_ResNormalize VACCS_Shift VACCS_NormalForm Termination DefinitionCI
-  SetLTSConstruction FiniteImageLTS Lts_Finite_Output_Chain VACCS_GlbStable.
-
+  SetLTSConstruction FiniteImageLTS Lts_Finite_Non_Blocking_Chain VACCS_GlbStable.
+(* begin hide *)
 Section VACCS_Matching.
 
 Context `{VP : VACCS_Parameters}.
@@ -167,7 +169,7 @@ Qed.
 
         fwdg c M := c ? ((gNewVar 0 M) ‖ (c ! bvar₀ • 𝟘))
 
-    which is literally [ext_r (c ? (c ! bvar₀ • 𝟘)) M] — the summand the
+    which is literally [ext_r (c ? • (c ! bvar₀ • 𝟘)) M] — the summand the
     expansion law produces for [g M ‖ ccat c].  So the two halves fit
     without any glue:
 
@@ -210,16 +212,16 @@ Qed.
     through the [g] coercion, and every existing use keeps working. *)
 
 Definition fwdg (c : ChannelData) (p : proc) : gproc :=
-  c ? ((NewVar 0 p) ‖ (c ! (bvar 0) • 𝟘)).
+  c ? • ((NewVar 0 p) ‖ (c ! (bvar 0) • 𝟘)).
 
 (* Reaching it: add a copycat on [c] — invisible by [ax_ccat_r] — and
     flatten with the expansion law.  Besides the mirror summand the
     expansion leaves [M]'s own guards, each carrying the copycat along. *)
 Lemma ax_fwd_intro : forall c M,
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((ext M (c ? (c ! (bvar 0) • 𝟘))) + fwdg c M)).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((ext M (c ? • (c ! (bvar 0) • 𝟘))) + fwdg c M)).
 Proof.
   intros c M.
-  replace (fwdg c M) with (ext_r (c ? (c ! (bvar 0) • 𝟘)) M) by reflexivity.
+  replace (fwdg c M) with (ext_r (c ? • (c ! (bvar 0) • 𝟘)) M) by reflexivity.
   eapply ax_trans; [ | apply ax_expansion_l ].
   eapply ax_trans; [ apply ax_cgr_sym; apply cgr_par_nil | ].
   apply ax_par; [ apply ax_refl | apply ax_ccat_r; reflexivity ].
@@ -229,7 +231,7 @@ Qed.
     supplies once the recursion has turned it into a derivation. *)
 Lemma ax_fwd_match : forall c M Q,
   (forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
-  (g (fwdg c M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
+  (g (fwdg c M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? • Q)).
 Proof.
   intros c M Q H. unfold fwdg. apply ax_input. intro v.
   simpl. rewrite gproc_NewVar_cancel. apply H.
@@ -248,7 +250,7 @@ Qed.
     that [ext 𝟘 N] is [𝟘], so there is nothing left over. *)
 
 Theorem ax_nil_below_echo : forall c Q,
-  (forall v, (c ! v • 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) -> (g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
+  (forall v, (c ! v • 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) -> (g 𝟘) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? • Q)).
 Proof.
   intros c Q H.
   eapply ax_trans; [ apply (ax_fwd_intro c 𝟘) | ].
@@ -295,7 +297,7 @@ Qed.
 
 Lemma ax_merge_into_fwd : forall (c : ChannelData) (A : proc) (M : gproc) (Q : proc),
   (forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
-  (g ((c ? A) + (fwdg c M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
+  (g ((c ? • A) + (fwdg c M))) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? • Q)).
 Proof.
   intros c A M Q H.
   eapply ax_trans; [ apply ax_cgr_sym; apply cgr_choice_nil | ].
@@ -311,7 +313,7 @@ Qed.
     [c] beside the mirror is simply absorbed by it. *)
 Lemma ax_merge_into_fwd_ctx :
   forall (c : ChannelData) (A : proc) (M R : gproc),
-  (g (((c ? A) + (fwdg c M)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((fwdg c M) + R)).
+  (g (((c ? • A) + (fwdg c M)) + R)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((fwdg c M) + R)).
 Proof.
   intros c A M R.
   eapply ax_trans;
@@ -363,13 +365,13 @@ Qed.
 Theorem ax_below_input : forall (c : ChannelData) (M : gproc) (Q : proc),
   gInputsOn c M ->
   (forall v, ((g M) ‖ (c ! v • 𝟘)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? • Q)).
 Proof.
   intros c M Q Hin H.
   eapply ax_trans; [ apply (ax_fwd_intro c M) | ].
   eapply ax_trans; [ apply ax_cgr; apply cgr_fullchoice;
                      [ apply cgr_refl | apply cgr_symm; apply cgr_choice_nil ] | ].
-  eapply ax_trans; [ apply (ax_ext_absorb c M Hin (c ? (c ! (bvar 0) • 𝟘)) M 𝟘) | ].
+  eapply ax_trans; [ apply (ax_ext_absorb c M Hin (c ? • (c ! (bvar 0) • 𝟘)) M 𝟘) | ].
   eapply ax_trans; [ apply ax_cgr; apply cgr_choice_nil | ].
   apply ax_fwd_match. exact H.
 Qed.
@@ -384,8 +386,8 @@ Theorem ax_below_input_sem : forall (c : ChannelData) (M : gproc) (Q : proc),
   gInputsOn c M ->
   (forall v, ((c ! v • 𝟘) ‖ (g M)) ⊑ₘᵤₛₜᵢ (Q ^ v) ->
              ((c ! v • 𝟘) ‖ (g M)) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
-  (g M) ⊑ₘᵤₛₜᵢ (g (c ? Q)) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
+  (g M) ⊑ₘᵤₛₜᵢ (g (c ? • Q)) ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (c ? • Q)).
 Proof.
   intros c M Q Hin Hrec Hsem.
   apply (ax_below_input c M Q Hin). intro v.
@@ -530,12 +532,12 @@ Proof.
   eapply ax_trans; [ apply (ax_fwd_intro c M) | ].
   eapply ax_trans; [ apply ax_cgr; apply cgr_fullchoice;
                      [ apply cgr_refl | apply cgr_symm; apply cgr_choice_nil ] | ].
-  eapply ax_trans; [ apply (ax_ext_absorb c M Hin (c ? (c ! (bvar 0) • 𝟘)) M 𝟘) | ].
+  eapply ax_trans; [ apply (ax_ext_absorb c M Hin (c ? • (c ! (bvar 0) • 𝟘)) M 𝟘) | ].
   apply ax_cgr. apply cgr_choice_nil.
 Qed.
 
 Corollary ax_phaseA_single_summand : forall (c : ChannelData) (M : gproc) (Q : proc),
-  gInputsOn c M -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M (c ? Q))).
+  gInputsOn c M -> (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g (mirrorN M (c ? • Q))).
 Proof. intros c M Q Hin. simpl. apply ax_phaseA_one_channel. exact Hin. Qed.
 
 (* * Reaching the mirror in one step, on all channels at once
@@ -1824,14 +1826,14 @@ Qed.
 
 Theorem ax_input_split_ctx_r : forall (c : ChannelData) (P Q : proc) (R : gproc),
   Static P -> Static Q -> gStatic R ->
-  ((g ((c ? ((g ((𝛕 • P) + (𝛕 • Q))) : proc)) + R)) : proc)
-    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (((c ? P) + (c ? Q)) + R)) : proc).
+  ((g ((c ? • ((g ((𝛕 • P) + (𝛕 • Q))) : proc)) + R)) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g (((c ? • P) + (c ? • Q)) + R)) : proc).
 Proof.
   intros c P Q R HP HQ HR.
   eapply ax_trans;
-    [ | apply (ax_dup_ctx (c ? P) (c ? Q) R);
+    [ | apply (ax_dup_ctx (c ? • P) (c ? • Q) R);
         [ constructor; exact HP | constructor; exact HQ | exact HR ] ].
-  eapply ax_trans; [ | apply (ax_int_below_ext ((c ? P) + R) ((c ? Q) + R)) ].
+  eapply ax_trans; [ | apply (ax_int_below_ext ((c ? • P) + R) ((c ? • Q) + R)) ].
   apply ax_int_glb.
   - apply ax_choice_input. intro v. simpl. apply ax_int_l.
   - apply ax_choice_input. intro v. simpl. apply ax_int_r.
@@ -3085,7 +3087,7 @@ Qed.
     the escaping channel cannot be one of the buffer's, so it lies in
     [pchans P] — a **finite, syntactically computable** set.  The
     separating client can therefore be the guarded sum
-    [Σ_{d ∈ pchans P, d ∉ chans K} d ? ①], which is a term of the
+    [Σ_{d ∈ pchans P, d ∉ chans K} d ? • ①], which is a term of the
     calculus.  That was the one thing the construction needed and could
     not have without a footprint. *)
 
@@ -3145,7 +3147,7 @@ Qed.
 
 (* ** The separating client itself
 
-    [probes L] is [Σ_{d ∈ L} d ? ①] — a finite guarded sum, which is
+    [probes L] is [Σ_{d ∈ L} d ? • ①] — a finite guarded sum, which is
     what [escapes_in_pchans] makes possible: the channels to listen on
     can be taken from [pchans P], a finite syntactic set.
 
@@ -3160,7 +3162,7 @@ Qed.
 Fixpoint probes (L : list ChannelData) : gproc :=
 match L with
 | [] => 𝟘
-| d :: L' => (d ? (g ①)) + probes L'
+| d :: L' => (d ? • (g ①)) + probes L'
 end.
 
 Lemma probes_not_good : forall L, ~ good_VACCS (g (probes L)).
@@ -3316,7 +3318,7 @@ Qed.
 Fixpoint sinks (L : list ChannelData) : gproc :=
 match L with
 | [] => 𝟘
-| d :: L' => (d ? (g 𝟘)) + sinks L'
+| d :: L' => (d ? • (g 𝟘)) + sinks L'
 end.
 
 Lemma sinks_not_good : forall L, ~ good_VACCS (g (sinks L)).
@@ -3800,14 +3802,14 @@ Proof. intros l l0 c v M Mc q. apply ax_below_cfg_descend_p. Qed.
 
 Lemma must_i_delivery_reversible :
   forall (c : ChannelData) (v : ValueData) (P : proc),
-    (exists P', lts (P ^ v) ((c ▷ v) !) P') ->
+    (exists P', lts (P ^ v) (c ! v) P') ->
     (forall (P' t' : proc),
-        lts (P ^ v) ((c ▷ v) !) P' -> P' must_pass t' ->
-        ((c ? P) : proc) must_pass t') ->
+        lts (P ^ v) (c ! v) P' -> P' must_pass t' ->
+        ((c ? • P) : proc) must_pass t') ->
     (forall (v' : ValueData) (t' : proc),
         (P ^ v) must_pass ((c ! v' • 𝟘) ‖ t') ->
         (P ^ v') must_pass ((c ! v • 𝟘) ‖ t')) ->
-    (P ^ v) ⊑ₘᵤₛₜᵢ ((c ! v • 𝟘) ‖ ((c ? P) : proc)).
+    (P ^ v) ⊑ₘᵤₛₜᵢ ((c ! v • 𝟘) ‖ ((c ? • P) : proc)).
 Proof.
   intros c v P Hreg Hrendu Hsym t Hm.
   remember (P ^ v) as p0 eqn:Heq. revert Heq.
@@ -3830,8 +3832,8 @@ Proof.
       * inversion H3; subst.
         destruct Hreg as [Pr HPr].
         assert (HPt : Pr must_pass t') by (eapply com; [ exact Hdual | exact HPr | exact Ht ]).
-        assert (HG : ((c ? P) : proc) must_pass t') by (eapply Hrendu; [ exact HPr | exact HPt ]).
-        exact (proj2 (must_i_cgr _ _ (ax_nil_par ((c ? P) : proc))) t' HG).
+        assert (HG : ((c ? • P) : proc) must_pass t') by (eapply Hrendu; [ exact HPr | exact HPt ]).
+        exact (proj2 (must_i_cgr _ _ (ax_nil_par ((c ? • P) : proc))) t' HG).
       * inversion H3; subst.
         destruct μ2 as [a2|a2]; simpl in Hdual; try contradiction. subst a2.
         assert (Hc : t ≡* ((c ! v0 • 𝟘) ‖ t'))
@@ -3851,19 +3853,19 @@ Qed.
     [ax_nil_par]. *)
 Lemma must_i_delivery_equiv :
   forall (c : ChannelData) (v : ValueData) (P : proc),
-    (exists P', lts (P ^ v) ((c ▷ v) !) P') ->
+    (exists P', lts (P ^ v) (c ! v) P') ->
     (forall (P' t' : proc),
-        lts (P ^ v) ((c ▷ v) !) P' -> P' must_pass t' ->
-        ((c ? P) : proc) must_pass t') ->
+        lts (P ^ v) (c ! v) P' -> P' must_pass t' ->
+        ((c ? • P) : proc) must_pass t') ->
     (forall (v' : ValueData) (t' : proc),
         (P ^ v) must_pass ((c ! v' • 𝟘) ‖ t') ->
         (P ^ v') must_pass ((c ! v • 𝟘) ‖ t')) ->
-    ((c ! v • 𝟘) ‖ ((c ? P) : proc)) ≂ₘᵤₛₜᵢ (P ^ v).
+    ((c ! v • 𝟘) ‖ ((c ? • P) : proc)) ≂ₘᵤₛₜᵢ (P ^ v).
 Proof.
   intros c v P Hreg Hrendu Hsym. split.
   - exact (must_i_delivery_reversible c v P Hreg Hrendu Hsym).
   - intros t Hm.
-    assert (Hstep : lts ((c ! v • 𝟘) ‖ ((c ? P) : proc)) τ ((𝟘 : proc) ‖ (P ^ v)))
+    assert (Hstep : lts ((c ! v • 𝟘) ‖ ((c ? • P) : proc)) τ ((𝟘 : proc) ‖ (P ^ v)))
       by (eapply lts_comL; [ apply lts_output | apply lts_input ]).
     assert (Hnil : (P ^ v) ≡* ((𝟘 : proc) ‖ (P ^ v))) by (apply ax_nil_par).
     exact (proj1 (must_i_cgr _ _ Hnil) t (must_i_tau_below _ _ Hstep t Hm)).
@@ -3874,14 +3876,14 @@ Qed.
     l'avoir reformulée en [successeur ⊑ p]. *)
 Corollary must_i_delivery_below_target :
   forall (c : ChannelData) (v : ValueData) (P q : proc),
-    (exists P', lts (P ^ v) ((c ▷ v) !) P') ->
+    (exists P', lts (P ^ v) (c ! v) P') ->
     (forall (P' t' : proc),
-        lts (P ^ v) ((c ▷ v) !) P' -> P' must_pass t' ->
-        ((c ? P) : proc) must_pass t') ->
+        lts (P ^ v) (c ! v) P' -> P' must_pass t' ->
+        ((c ? • P) : proc) must_pass t') ->
     (forall (v' : ValueData) (t' : proc),
         (P ^ v) must_pass ((c ! v' • 𝟘) ‖ t') ->
         (P ^ v') must_pass ((c ! v • 𝟘) ‖ t')) ->
-    ((c ! v • 𝟘) ‖ ((c ? P) : proc)) ⊑ₘᵤₛₜᵢ q ->
+    ((c ! v • 𝟘) ‖ ((c ? • P) : proc)) ⊑ₘᵤₛₜᵢ q ->
     (P ^ v) ⊑ₘᵤₛₜᵢ q.
 Proof.
   intros c v P q Hreg Hrendu Hsym Hpq t Hm.
@@ -3892,7 +3894,7 @@ Qed.
 
     Une loi dont les prémisses ne sont jamais remplies ne vaut rien ;
     voici donc l'instance qui les remplit, et c'est celle qui a motivé
-    tout l'énoncé.  Pour [ccat c = c ? (c ! x • 𝟘)] :
+    tout l'énoncé.  Pour [ccat c = c ? • (c ! x • 𝟘)] :
 
     - **RENDU** est littéralement [must_i_ccat_r] ([𝟘 ⊑ₘᵤₛₜᵢ ccat c]),
       puisque le résidu après ré-émission est [𝟘] ;
@@ -4018,7 +4020,7 @@ Lemma msgs_copycats_delivery :
   forall (l l0 : list TypeOfActions) (M : gproc)
          (c : ChannelData) (v : ValueData) (Mc : proc),
     gCopycats M -> Permutation l ((c,v) :: l0) ->
-    lts ((g M) : proc) ((c ▷ v) ?) Mc ->
+    lts ((g M) : proc) (c ? v) Mc ->
     ((msgs l0) ‖ Mc) ≂ₘᵤₛₜᵢ ((msgs l) ‖ ((g M) : proc)).
 Proof.
   intros l l0 M c v Mc HM Hp Hlts.
@@ -4042,7 +4044,7 @@ Corollary copycat_delivery_below_target :
   forall (l l0 : list TypeOfActions) (M : gproc)
          (c : ChannelData) (v : ValueData) (Mc q : proc),
     gCopycats M -> Permutation l ((c,v) :: l0) ->
-    lts ((g M) : proc) ((c ▷ v) ?) Mc ->
+    lts ((g M) : proc) (c ? v) Mc ->
     ((msgs l) ‖ ((g M) : proc)) ⊑ₘᵤₛₜᵢ q ->
     ((msgs l0) ‖ Mc) ⊑ₘᵤₛₜᵢ q.
 Proof.
@@ -4189,7 +4191,7 @@ Qed.
     so the condition is one finite membership test per summand;
     [ochans_subst] makes it independent of the value received.  Using
     [ochans] rather than [pchans] matters: the latter also counts guarded
-    channels, so it would reject [c ? (c ? 𝟘)], which guards [c] again
+    channels, so it would reject [c ? • (c ? • 𝟘)], which guards [c] again
     but never returns it.
 
     Why it suffices: a run of a τ-stable guarded sum starts with an
@@ -4438,8 +4440,8 @@ Qed.
     [ax_below_NF_no_return] ne peut pas traiter. *)
 
 Lemma no_output_criterion_covers_tau : forall (c : ChannelData),
-  ochans ((g ((c ? ((g 𝟘) : proc)) + (𝛕 • ((g 𝟘) : proc)))) : proc) = []
-  /\ (exists z, lts ((g ((c ? ((g 𝟘) : proc)) + (𝛕 • ((g 𝟘) : proc)))) : proc) τ z).
+  ochans ((g ((c ? • ((g 𝟘) : proc)) + (𝛕 • ((g 𝟘) : proc)))) : proc) = []
+  /\ (exists z, lts ((g ((c ? • ((g 𝟘) : proc)) + (𝛕 • ((g 𝟘) : proc)))) : proc) τ z).
 Proof.
   intro c. split.
   - reflexivity.
@@ -4457,9 +4459,9 @@ Qed.
 
 Lemma no_output_bag_criterion_is_weaker :
   forall (c d : ChannelData) (vv uu : ValueData), c <> d ->
-  ochans ((g ((c ? ((g 𝟘) : proc)) + (𝛕 • ((d ! vv • 𝟘) : proc)))) : proc) <> []
+  ochans ((g ((c ? • ((g 𝟘) : proc)) + (𝛕 • ((d ! vv • 𝟘) : proc)))) : proc) <> []
   /\ (forall c' u', In (c',u') [(c,uu)] ->
-        ~ In c' (ochans ((g ((c ? ((g 𝟘) : proc)) + (𝛕 • ((d ! vv • 𝟘) : proc)))) : proc))).
+        ~ In c' (ochans ((g ((c ? • ((g 𝟘) : proc)) + (𝛕 • ((d ! vv • 𝟘) : proc)))) : proc))).
 Proof.
   intros c d vv uu Hcd. split.
   - simpl. discriminate.
@@ -4756,7 +4758,7 @@ Definition CfgDisjunctionLocal : Prop :=
     est la *localisation* : son second disjoint n'admet qu'une
     **délivrance**, alors que le [τ] qui sauve la configuration peut être
     une **branche [𝛕]** de la somme.  Le témoin est
-    [(a ? 𝟘) + 𝛕•(g MCert)] : le disjoint (A) échoue, la seule délivrance
+    [(a ? • 𝟘) + 𝛕•(g MCert)] : le disjoint (A) échoue, la seule délivrance
     mène à [𝟘] qui n'est pas sous le message, et c'est la branche [𝛕] —
     invisible aux deux disjoints — qui porte l'inéquation.
 
@@ -5075,7 +5077,7 @@ Qed.
 (*  Here it does, for a **stable guarded sum**, and by the cheapest     *)
 (*  route: peel the summands one at a time.                             *)
 (*                                                                     *)
-(*  Each summand of a stable sum is [①], [𝟘] or [c ? P], and each has   *)
+(*  Each summand of a stable sum is [①], [𝟘] or [c ? • P], and each has   *)
 (*  its own rule — [ax_success_l], [ax_cgr], [ax_drop_ochans].  Crucially *)
 (*  all three carry a **residue**, which is exactly what lets them fire *)
 (*  inside a sum: [ax_choice_stable] is unsound in VACCS               *)
@@ -5200,7 +5202,7 @@ Qed.
     gardé — la source de presque tous les résultats négatifs — joue **en
     faveur** de la dérivation. *)
 
-Definition ccatg (k : ChannelData) : gproc := k ? (k ! (bvar 0) • 𝟘).
+Definition ccatg (k : ChannelData) : gproc := k ? • (k ! (bvar 0) • 𝟘).
 
 Lemma ccatg_gStatic : forall k, gStatic (ccatg k).
 Proof. intro k. unfold ccatg. repeat constructor. Qed.
@@ -5789,9 +5791,9 @@ Qed.
     the shape the syntactic criterion [MuteG] excludes — it is what makes
     VACCS's must-preorder coarser than VCCS's.
 
-    It is not vacuous either.  [c ? (d ! v • 𝟘)] belongs to no such class:
+    It is not vacuous either.  [c ? • (d ! v • 𝟘)] belongs to no such class:
     a mute configuration can only ever emit what its bag held from the
-    start, so it would have to offer [d] straight away, and [d ? ①]
+    start, so it would have to offer [d] straight away, and [d ? • ①]
     separates the two. *)
 
 Definition MuteSem (p : proc) : Prop :=
@@ -6033,7 +6035,7 @@ Definition NoWeakOut (c : ChannelData) (p : proc) : Prop :=
   forall p1, p ⟹[[]] p1 -> forall w r, ~ lts p1 (ActExt (ActOut (c,w))) r.
 
 Definition TSink (c : ChannelData) : proc :=
-  g (((𝛕 • ((g (① : gproc)) : proc)) + (c ? ((g (𝟘 : gproc)) : proc))) : gproc).
+  g (((𝛕 • ((g (① : gproc)) : proc)) + (c ? • ((g (𝟘 : gproc)) : proc))) : gproc).
 
 Lemma TSink_not_good : forall c, ~ good_VACCS (TSink c).
 Proof.
@@ -6169,7 +6171,7 @@ Qed.
     ([NewVar_subst_cancel]). *)
 
 Definition TCatch (c : ChannelData) (t : proc) : proc :=
-  g (((𝛕 • ((g (① : gproc)) : proc)) + (c ? (NewVar 0 t))) : gproc).
+  g (((𝛕 • ((g (① : gproc)) : proc)) + (c ? • (NewVar 0 t))) : gproc).
 
 Lemma TCatch_not_good : forall c t, ~ good_VACCS (TCatch c t).
 Proof.
@@ -6255,7 +6257,7 @@ Proof.
   intros c u w r Hl.
   assert (Hnb : non_blocking (ActOut (c,w))).
   { unfold non_blocking. simpl. unfold non_blocking_output.
-    exists (c ▷ w). reflexivity. }
+    exists (c, w). reflexivity. }
   pose proof (lts_oba_mo_spec_bis1 u (ActOut (c,w)) r Hnb Hl) as Hmem.
   unfold out_vals. apply in_flat_map. exists (ActOut (c,w)). split.
   - apply list_elem_of_In. apply gmultiset_elem_of_elements. exact Hmem.
@@ -6301,7 +6303,7 @@ Qed.
     continuation is deliberately value-independent, so a selective probe
     is needed —
 
-      [c ? (If (bvar 0 == v0) Then t Else ①)]
+      [c ? • (If (bvar 0 == v0) Then t Else ①)]
 
     — and the calculus looks at first as if it pushed back:
     [Eval_Eq 0 (bvar i == cst t)] is [Some false] *unconditionally*
@@ -6348,7 +6350,7 @@ Qed.
 
 Definition TCatchD (c : ChannelData) (v0 : ValueData) (t : proc) : proc :=
   g ((( 𝛕 • ((g (① : gproc)) : proc))
-      + (c ? (If ((bvar 0) == (NewVar_in_Data 0 v0))
+      + (c ? • (If ((bvar 0) == (NewVar_in_Data 0 v0))
               Then (NewVar 0 t) Else ((g (① : gproc)) : proc)))) : gproc).
 
 Lemma TCatchD_not_good : forall c v0 t, ~ good_VACCS (TCatchD c v0 t).
@@ -6750,8 +6752,8 @@ Qed.
     channel neither escapes ([VarC_action_add 1] never produces
     [bvar 0]) nor can be supplied from outside, and it is **not**
     removable either — a visible transition may re-expose the restricted
-    channel, so [ν ((bvar 0 ! v • 𝟘) ‖ (c ? (bvar 0 ? ①)))] is not
-    [ν (c ? (bvar 0 ? ①))].
+    channel, so [ν ((bvar 0 ! v • 𝟘) ‖ (c ? • (bvar 0 ? • ①)))] is not
+    [ν (c ? • (bvar 0 ? • ①))].
 
     But that is the *trapped* case only.  A message whose channel
     survives the block is pulled straight out by scope extrusion, and
@@ -7623,9 +7625,9 @@ Lemma stable_bag_not_no_stable_emit : forall l (P : proc),
 Proof.
   intros l P Hl Hst Hns.
   destruct l as [ | (c,v) l0 ]; [ contradiction | ].
-  destruct (cfg_out_of_perm ((c ▷ v) :: l0) l0 c v P (Permutation_refl _))
+  destruct (cfg_out_of_perm ((c, v) :: l0) l0 c v P (Permutation_refl _))
     as (r & Hout & _).
-  eapply (Hns [] ((msgs ((c ▷ v) :: l0)) ‖ P) (wt_nil _) Hst c v r).
+  eapply (Hns [] ((msgs ((c, v) :: l0)) ‖ P) (wt_nil _) Hst c v r).
   exact Hout.
 Qed.
 
@@ -7664,8 +7666,8 @@ Qed.
     la stabilité d'une configuration, et c'est ce qu'un argument
     d'appariement consommerait. *)
 
-Lemma msgs_emits : forall l c v, In (c ▷ v) l ->
-  exists r, lts (msgs l) ((c ▷ v)!) r.
+Lemma msgs_emits : forall l c v, In (c, v) l ->
+  exists r, lts (msgs l) (c ! v) r.
 Proof.
   induction l as [ | (d,w) l0 IH ]; intros c v Hin; [ contradiction | ].
   simpl in Hin. destruct Hin as [Heq | Hin].
@@ -7679,8 +7681,8 @@ Qed.
 
 Lemma stable_cfg_refuses_bag : forall l (M : gproc) c v,
   (forall z, ~ lts ((msgs l) ‖ ((g M) : proc)) τ z) ->
-  In (c ▷ v) l ->
-  forall K, ~ lts ((g M) : proc) ((c ▷ v)?) K.
+  In (c, v) l ->
+  forall K, ~ lts ((g M) : proc) (c ? v) K.
 Proof.
   intros l M c v Hst Hin K Hk.
   destruct (msgs_emits l c v Hin) as (r & Hr).
@@ -8435,7 +8437,7 @@ Proof.
   intros l M al z Hz. inversion Hz; subst.
   - right. unfold saturate. apply lts_choiceR.
     eapply delivs_lts_fwd; [ apply msg_outs_fwd; exact H1 | exact H4 ].
-  - exfalso. match goal with HH : lts (msgs l) ((_ ▷ _) ?) _ |- _ =>
+  - exfalso. match goal with HH : lts (msgs l) (_ ? _) _ |- _ =>
       eapply msgs_no_input; exact HH end.
   - match goal with HH : lts (msgs l) _ _ |- _ => rename HH into Hm end.
     destruct al as [μ|].

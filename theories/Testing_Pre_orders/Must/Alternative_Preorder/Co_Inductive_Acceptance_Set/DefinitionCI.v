@@ -22,6 +22,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect.
 From Stdlib.Unicode Require Import Utf8.
@@ -38,7 +39,7 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
               Termination WeakTransitions Convergence  
                InteractionBetweenLts
                DefinitionAS.
-
+(* begin hide *)
 CoInductive copre `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ gLtsP gLtsT _,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ gLtsQ gLtsT _}

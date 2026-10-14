@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the process LTS and the observer LTS
 
     Two LTSs on two alphabets, linked by [sync], as in the classical
@@ -41,6 +42,7 @@
 
     Both LTSs are given by their lists of successors, so that they are
     decidable by construction. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -51,14 +53,14 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition l
   lqCCS_Congruence.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   InteractionBetweenLts.
-
+(* begin hide *)
 (* ** LTSs given by their successors *)
 
 Definition list_witness {A} (l : list A) (Hl : l ≠ []) : { x | x ∈ l }.
 Proof. destruct l as [|x l]; [done|]. exists x. set_solver. Defined.
 
 Definition gLts_of_succs {S A} `{EA : ExtAction A} `{EqDecision S}
-  (f : S → Act A → list S) : gLts S EA :=
+  (f : S → Labels A → list S) : gLts S EA :=
   {| lts_step p α q := q ∈ f p α;
      lts_step_decidable p α q := (_ : Decision (q ∈ f p α));
      lts_performs p α := f p α ≠ [];
@@ -176,7 +178,7 @@ Section LTSs.
 
   (* *** Observers *)
 
-  Definition tsuccs (Q : proc) (α : Act tact) : list proc :=
+  Definition tsuccs (Q : proc) (α : Labels tact) : list proc :=
     match α with
     | τ => succ Q UTau
     | ActExt (TOut c v) => succ Q (UAct (AOut c v))
@@ -199,7 +201,7 @@ Section LTSs.
 
   Definition nonzero (ρ : St) : Prop := ρ ≠ szero.
 
-  Definition psuccs (x : proc * St) (α : Act aact) : list (proc * St) :=
+  Definition psuccs (x : proc * St) (α : Labels aact) : list (proc * St) :=
     let '(P, ρ) := x in
     match α with
     | τ =>

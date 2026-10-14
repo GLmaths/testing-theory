@@ -20,15 +20,16 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Lists Require Import List.
 From stdpp Require Import base decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW WeakTransitions
-    Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
+    Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Non_Blocking_Chain
     MultisetLTSConstruction ForwarderConstruction May LiftMay DefinitionTI MayTestSpec.
 
 Import ListNotations.
-
+(* begin hide *)
 (* * Completeness of the trace-inclusion preorder for May
 
       [p ⊑ₘₐᵧ q  →  p ≼ₜᵢ q]   (for forwarders)
@@ -359,9 +360,9 @@ Qed.
     since e.g. [𝟘] and [a?.𝟘] are May-equivalent while their raw traces differ. *)
 
 Theorem completeness_ti_fb `{
-    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A,
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A A dual}

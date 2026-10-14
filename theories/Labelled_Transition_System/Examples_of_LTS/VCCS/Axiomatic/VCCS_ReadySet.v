@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * A guarded sum's own stability and (abstracted) ready set, computed structurally
 
     Groundwork for [CompletenessAx.v]: completeness of [ax_pre] w.r.t.
@@ -59,12 +60,13 @@
     value entirely erased. For a guarded sum specifically, "[p] can
     input on [c] at some value" reduces further, structurally, to
     [has_input c M]. *)
+(* end hide *)
 
 From stdpp Require Import decidable base sets gmap.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation WeakTransitions Convergence VCCS_Static
   VCCS_Precongruence Subset_Act DefinitionAS VCCS_Must_Characterization.
-
+(* begin hide *)
 Section VCCS_ReadySet.
 
 Context `{VP : VCCS_Parameters}.
@@ -75,7 +77,7 @@ Fixpoint gStable (M : gproc) : Prop :=
 match M with
 | ① => True
 | 𝟘 => True
-| c ? p => True
+| c ? • p => True
 | c ! v • p => True
 | 𝛕 • p => False
 | M1 + M2 => gStable M1 /\ gStable M2
@@ -96,7 +98,7 @@ Proof.
       * exact Hd.
   - split.
     + intros _. exact I.
-    + intros _. destruct (decide ((g (c ? p)) ⟶)) as [Hd | Hd].
+    + intros _. destruct (decide ((g (c ? • p)) ⟶)) as [Hd | Hd].
       * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
   - split.
@@ -159,7 +161,7 @@ Qed.
 
 Fixpoint has_input (c : ChannelData) (M : gproc) : Prop :=
 match M with
-| c' ? p => c = c'
+| c' ? • p => c = c'
 | M1 + M2 => has_input c M1 \/ has_input c M2
 | _ => False
 end.
@@ -182,7 +184,7 @@ Proof.
     + intros [].
   - split.
     + intros (v & Hnr). destruct (decide (c0 = c)) as [Heq|Hneq]; [exact Heq|]. exfalso. apply Hnr. apply no_lts_empty. intros q Hl. inversion Hl; subst. apply Hneq. reflexivity.
-    + intro Heq. subst c0. exists (cst VP.(O)). intro Hd. pose proof (lts_set_spec1 (c ? p) (ActExt (ActIn (c, cst VP.(O)))) (p ^ (cst VP.(O))) lts_input) as Hmem. rewrite Hd in Hmem. set_solver.
+    + intro Heq. subst c0. exists (cst VP.(O)). intro Hd. pose proof (lts_set_spec1 (c ? • p) (ActExt (ActIn (c, cst VP.(O)))) (p ^ (cst VP.(O))) lts_input) as Hmem. rewrite Hd in Hmem. set_solver.
   - split.
     + intros (v0 & Hnr). exfalso. apply Hnr. apply no_lts_empty. intros q Hl. inversion Hl.
     + intros [].

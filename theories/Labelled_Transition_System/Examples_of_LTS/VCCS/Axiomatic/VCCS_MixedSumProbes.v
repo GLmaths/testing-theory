@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * A mixed [𝛕]/external sum is not an internal choice
 
     A *negative* result, recorded because it constrains the design of
@@ -66,12 +67,13 @@
       stable reducts after the empty trace. What separates them is
       [bhv_pre_cond2] at a *longer* trace ([s = [(d,w)!]]) — [cond2]
       quantifies over all traces, not just [[]]. *)
+(* end hide *)
 
 From stdpp Require Import base sets gmap.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
   Convergence VCCS_Static VCCS_Precongruence.
-
+(* begin hide *)
 Section VCCS_MixedSumProbes.
 
 Context `{VP : VCCS_Parameters}.
@@ -82,7 +84,7 @@ Hypothesis Hcd : c <> d.
 
 Let P : proc := g (c ! v • (g 𝟘)).
 Let Q : gproc := d ! w • (g 𝟘).
-Let t : proc := g (c ? (g ①)).
+Let t : proc := g (c ? • (g ①)).
 
 Lemma probe_t_not_good : ~ good_VCCS t.
 Proof. intro H. inversion H. Qed.

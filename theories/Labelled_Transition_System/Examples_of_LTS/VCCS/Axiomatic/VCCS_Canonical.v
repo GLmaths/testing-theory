@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Towards a *canonical* guarded-sum normal form
 
     [VCCS_NormalForm.v]'s [normal_form] already puts every [Static]
@@ -52,6 +53,7 @@
     choice and cannot be merged — there is no distributivity law for
     [𝛕], nor should there be), so any collapse step has to tolerate them
     in the context. *)
+(* end hide *)
 
 From Stdlib Require Import List Permutation PeanoNat Lia.
 From Stdlib.Wellfounded Require Import Inverse_Image.
@@ -60,7 +62,7 @@ From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActi
   gLts Bisimulation WeakTransitions Convergence VCCS_Static VCCS_Precongruence
   VCCS_Expansion VCCS_ResNormalize VCCS_ReadySet DefinitionAxiomatic.
 Import ListNotations.
-
+(* begin hide *)
 Section VCCS_Canonical.
 
 Context `{VP : VCCS_Parameters}.
@@ -70,7 +72,7 @@ Context `{VP : VCCS_Parameters}.
     [R] is unconstrained — in particular it may contain [𝛕]-guards. *)
 
 Lemma ax_collapse_input_ctx_l : forall c P Q R,
-  (g ((c ? P) + (c ? Q) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
+  (g ((c ? • P) + (c ? • Q) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + R)).
 Proof.
   intros c P Q R.
   apply ax_choice_stable.
@@ -80,7 +82,7 @@ Proof.
 Qed.
 
 Lemma ax_collapse_input_ctx_r : forall c P Q R, Static P -> Static Q ->
-  (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? P) + (c ? Q) + R)).
+  (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + R)) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? • P) + (c ? • Q) + R)).
 Proof.
   intros c P Q R HP HQ.
   apply ax_choice_stable.
@@ -224,24 +226,24 @@ Qed.
 
 Theorem ax_collapse_input_anywhere : forall M c P Q l,
   gStatic M ->
-  Permutation (summands M) ((c ? P) :: (c ? Q) :: l) ->
-  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l))
-  /\ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)) ᴠᴄᴄꜱ⊑ₐₓ (g M).
+  Permutation (summands M) ((c ? • P) :: (c ? • Q) :: l) ->
+  (g M) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l))
+  /\ (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)) ᴠᴄᴄꜱ⊑ₐₓ (g M).
 Proof.
   intros M c P Q l HM Hp.
-  assert (Hall : Forall gStatic ((c ? P) :: (c ? Q) :: l))
+  assert (Hall : Forall gStatic ((c ? • P) :: (c ? • Q) :: l))
     by (eapply perm_summands_gStatic; eassumption).
   inversion Hall as [| ? ? HcP Hall2]; subst.
   inversion Hall2 as [| ? ? HcQ Hall3]; subst.
   inversion HcP; subst. inversion HcQ; subst.
-  assert (Hmid : Static (g ((c ? P) + (c ? Q) + rebuild l))).
+  assert (Hmid : Static (g ((c ? • P) + (c ? • Q) + rebuild l))).
   { constructor. constructor; [constructor; constructor; assumption |].
     apply rebuild_gStatic. assumption. }
   split.
   - eapply ax_trans.
     + apply ax_cgr; [exact Hmid | apply pull_pair; exact Hp].
     + apply ax_collapse_input_ctx_l.
-  - eapply ax_trans with (q := g ((c ? P) + (c ? Q) + rebuild l)).
+  - eapply ax_trans with (q := g ((c ? • P) + (c ? • Q) + rebuild l)).
     + apply ax_collapse_input_ctx_r; assumption.
     + apply ax_cgr_sym; [constructor; exact HM | apply pull_pair; exact Hp].
 Qed.
@@ -285,7 +287,7 @@ Qed.
 
 Definition gact (a : gproc) : option (ChannelData * option ValueData) :=
 match a with
-| c ? _ => Some (c, None)
+| c ? • _ => Some (c, None)
 | c ! v • _ => Some (c, Some v)
 | _ => None
 end.
@@ -1387,7 +1389,7 @@ Qed.
 
 (* ** Recovering a guard's shape from its action *)
 
-Lemma gact_input_shape : forall a c, gact a = Some (c, None) -> exists P, a = c ? P.
+Lemma gact_input_shape : forall a c, gact a = Some (c, None) -> exists P, a = c ? • P.
 Proof.
   intros a c H. destruct a; simpl in H; try discriminate H.
   injection H as H1. subst. exists p. reflexivity.
@@ -1454,11 +1456,11 @@ Proof.
       destruct (gact_input_shape b c Hgb) as (Q & Hb). subst b.
       inversion HsP; subst. inversion HsQ; subst.
       destruct (ax_collapse_input_anywhere M c P Q r HM Hp) as (Hfwd & Hbwd).
-      assert (HM0 : gStatic ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild r)).
+      assert (HM0 : gStatic ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild r)).
       { constructor.
         - constructor. constructor. constructor; constructor; assumption.
         - apply rebuild_gStatic. assumption. }
-      assert (Hmeas : nacts (summands ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild r)) < nacts (summands M)).
+      assert (Hmeas : nacts (summands ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild r)) < nacts (summands M)).
       { rewrite (nacts_perm _ _ Hp). simpl.
         rewrite (nacts_summands_rebuild r Hlv3). lia. }
       destruct (IH _ Hmeas HM0) as (M' & HM'st & HM'can & Hf & Hb).

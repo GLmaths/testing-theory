@@ -20,12 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate.
 From TestingTheory Require Import Completeness.
 From TestingTheory Require Import CompletenessASco.
-
+(* begin hide *)
 (* ** Bridge between [Completeness.v]'s and [CompletenessASco.v]'s
     identically-named, field-for-field-identical [test_spec] /
     [test_convergence_spec] / [test_co_acceptance_set_spec] classes.

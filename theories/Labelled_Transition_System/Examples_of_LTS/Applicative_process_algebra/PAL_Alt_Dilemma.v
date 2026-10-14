@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics countable gmap.
@@ -27,7 +28,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_P
   DefinitionAS CompletenessASco PAL_Syntax Applicative_process_algebra PAL_Label_Dilemma
   PAL_Label_Dilemma_Sync PAL_Alt_LTS PAL_Alt_Tau PAL_Alt_Congruence PAL_Good PAL_Alt_Tests PAL_Alt_TestSpec PAL_Alt_CoTraceHypotheses
   Subset_Act PAL_Alt_Abs.
-
+(* begin hide *)
 (* * No finitary abstraction for the alternative LTS of PAL
 
    [PAL_Label_Dilemma_Sync.no_labelling_sync] instantiated with the

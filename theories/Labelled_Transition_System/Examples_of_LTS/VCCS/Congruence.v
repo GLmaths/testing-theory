@@ -20,13 +20,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 
 From stdpp Require Import base countable.
 From TestingTheory Require Import VCCS Clos_n.
 From Stdlib Require Import Relations Program.Equality Wellfounded.Inverse_Image.
-
-
+(* begin hide *)
 Section VCCS_congruence.
 
 Context `{VP : VCCS_Parameters}.
@@ -88,7 +87,7 @@ Inductive cgr_step : nat -> proc -> proc -> Prop :=
     cgr_step n (𝛕 • p) (𝛕 • q)
 | cgr_input_step : forall n c p q,
     cgr_step (S n) p q ->
-    cgr_step n (c ? p) (c ? q)
+    cgr_step n (c ? • p) (c ? • q)
 | cgr_output_step : forall n c v p q,
     cgr_step n p q ->
     cgr_step n (c ! v • p) (c ! v • q)
@@ -265,12 +264,12 @@ constructor.
 apply cgr_tau_step. exact H.
 transitivity (𝛕 • y); assumption.
 Qed.
-Lemma cgr_input : forall n c p q, p ≡*[S n] q -> (c ? p) ≡*[n] (c ? q).
+Lemma cgr_input : forall n c p q, p ≡*[S n] q -> (c ? • p) ≡*[n] (c ? • q).
 Proof.
 intros n c p q H.
 dependent induction H.
 * constructor. apply cgr_input_step. auto.
-* transitivity (c ? y). apply (IHclos_trans1 n c eq_refl). apply (IHclos_trans2 n c eq_refl).
+* transitivity (c ? • y). apply (IHclos_trans1 n c eq_refl). apply (IHclos_trans2 n c eq_refl).
 Qed.
 Lemma cgr_output : forall n c v p q, p ≡*[n] q -> (c ! v • p) ≡*[n] (c ! v • q).
 Proof.
@@ -359,7 +358,7 @@ with altcgr_gstep : nat -> gproc -> gproc -> Prop :=
 | altcgr_tau_step : forall n p q,
     p ≡ₐ[n] q -> (𝛕 • p) ≡g[n] (𝛕 • q)
 | altcgr_input_step : forall n c p q,
-    p ≡ₐ[S n] q -> (c ? p) ≡g[n] (c ? q)
+    p ≡ₐ[S n] q -> (c ? • p) ≡g[n] (c ? • q)
 | altcgr_output_step : forall n c v p q,
     p ≡ₐ[n] q -> (c ! v • p) ≡g[n] (c ! v • q)
 | altcgr_choice_nil_step : forall n p,
@@ -395,7 +394,7 @@ constructor.
 - econstructor 2; eauto with cgr_eq.
 Qed.
 
-Lemma guardcgr_input : forall n c p q, p ≡*[S n] q -> guardcgr n (c ? p) (c ? q).
+Lemma guardcgr_input : forall n c p q, p ≡*[S n] q -> guardcgr n (c ? • p) (c ? • q).
 Proof.
 intros n c p q H. induction H.
 - constructor. eexists; eexists; repeat split. now apply cgr_input_step.
@@ -787,7 +786,7 @@ with gNewVarCdown k M {struct M} : gproc :=
 match M with
 | ① => ①
 | 𝟘 => 𝟘
-| c ? p => (NewVar_in_ChannelData_down k c) ? (NewVarCdown k p)
+| c ? • p => (NewVar_in_ChannelData_down k c) ? • (NewVarCdown k p)
 | c ! v • p => (NewVar_in_ChannelData_down k c) ! v • (NewVarCdown k p)
 | 𝛕 • p => 𝛕 • (NewVarCdown k p)
 | p1 + p2 => (gNewVarCdown k p1) + (gNewVarCdown k p2)

@@ -24,13 +24,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable option gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
   FiniteImageLTS coFiniteImage InteractionBetweenLts InListPropHelper PAL_Syntax.
-
+(* begin hide *)
 (* * PAL: a Process Algebra based on Linda
 
     A [gLts] formalisation of the LTS from:
@@ -67,11 +68,11 @@ Section PAL.
 
       Action Relation (AR1-AR8, Table 3) carries visible labels only;
       Internal Relation (IR1-IR13, Table 4) is always [τ] — combined here
-      into one [pal_step] relation per this project's [Act A := ActExt a
+      into one [pal_step] relation per this project's [Labels A := ActExt a
       | τ] convention, with each constructor kept faithful to a single
       named rule of the paper. *)
   Open Scope pal_scope.
-  Inductive pal_step : term -> Act PAL_Act -> term -> Prop :=
+  Inductive pal_step : term -> Labels PAL_Act -> term -> Prop :=
     (* AR1 *)
     | ar1 t E it ot :
         eval_in_tuple t = Some it -> tuple_match it ot ->
@@ -174,7 +175,7 @@ Section PAL.
      for a synchronising partner (IR12/IR13) are bounded via [collect_out]
      (finite) rather than searching over the whole, possibly-infinite, action
      type, exactly as sketched in the paper's own Proposition 4.4. *)
-  Fixpoint all_steps (p : term) (α : Act PAL_Act) : list term :=
+  Fixpoint all_steps (p : term) (α : Labels PAL_Act) : list term :=
     match p with
     | t_nil => []
     | t_pvar _ => []
@@ -463,7 +464,7 @@ Section PAL.
 
   #[global] Instance PAL_UniqueDual : UniqueDual PAL_Act := PAL_unique_nb.
 
-  Definition PAL_lts_performs (p : term) (α : Act PAL_Act) : Prop := all_steps p α ≠ [].
+  Definition PAL_lts_performs (p : term) (α : Labels PAL_Act) : Prop := all_steps p α ≠ [].
 
   #[global] Instance pal_step_decidable p α q : Decision (pal_step p α q).
   Proof.
@@ -510,7 +511,7 @@ Section PAL.
       [False] (see above) — so all five axioms, [boomerang],
       [fwd_feedback], and [feedback] are vacuous. *)
 
-  Lemma PAL_eq_spec p q (α : Act PAL_Act) :
+  Lemma PAL_eq_spec p q (α : Labels PAL_Act) :
     (exists r, p = r /\ pal_step r α q) -> (exists r, pal_step p α r /\ r = q).
   Proof.
     intros (r & -> & Hr). exists q. split; [exact Hr | reflexivity].

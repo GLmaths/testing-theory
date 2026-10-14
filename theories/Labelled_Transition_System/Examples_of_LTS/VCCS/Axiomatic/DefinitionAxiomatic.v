@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * A Hennessy-Ingólfsdóttir-style inequational proof system for [⊑ₘᵤₛₜᵢ] on VCCS
 
     [ax_pre] is the syntactic counterpart of [⊑ₘᵤₛₜᵢ]: a preorder built
@@ -38,10 +39,11 @@
     mirroring how [Static]-ness composes structurally (if [Static (p‖q)]
     then [Static p] and [Static q] individually, etc.) and keeping this
     file's constructors syntactically identical to Hennessy's own rules. *)
+(* end hide *)
 
 From TestingTheory Require Import VCCS VCCS_Instance Must VCCS_Static VCCS_Expansion
   VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet.
-
+(* begin hide *)
 Section DefinitionAxiomatic.
 
 Context `{VP : VCCS_Parameters}.
@@ -247,7 +249,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_par : forall p p' q q', p ᴠᴄᴄꜱ⊑ₐₓ p' -> q ᴠᴄᴄꜱ⊑ₐₓ q' -> (p ‖ q) ᴠᴄᴄꜱ⊑ₐₓ (p' ‖ q')
 | ax_res : forall p q, p ᴠᴄᴄꜱ⊑ₐₓ q -> (ν p) ᴠᴄᴄꜱ⊑ₐₓ (ν q)
 | ax_input : forall (c : ChannelData) (p q : proc),
-    (forall v, (p^v) ᴠᴄᴄꜱ⊑ₐₓ (q^v)) -> (g (c ? p)) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? q))
+    (forall v, (p^v) ᴠᴄᴄꜱ⊑ₐₓ (q^v)) -> (g (c ? • p)) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? • q))
 | ax_output : forall (c : ChannelData) (v : ValueData) (p q : proc),
     p ᴠᴄᴄꜱ⊑ₐₓ q -> (g (c ! v • p)) ᴠᴄᴄꜱ⊑ₐₓ (g (c ! v • q))
 
@@ -260,7 +262,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 | ax_res_normalize_r : forall M, gStatic M -> (g (resg M)) ᴠᴄᴄꜱ⊑ₐₓ (ν (g M))
 
 | ax_input_distrib_l : forall (c : ChannelData) (P Q : proc),
-    (g ((c ? P) + (c ? Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? (g ((𝛕 • P) + (𝛕 • Q)))))
+    (g ((c ? • P) + (c ? • Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? • (g ((𝛕 • P) + (𝛕 • Q)))))
 | ax_output_distrib_l : forall (c : ChannelData) (v : ValueData) (P Q : proc),
     (g ((c ! v • P) + (c ! v • Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ! v • (g ((𝛕 • P) + (𝛕 • Q)))))
 
@@ -352,8 +354,8 @@ Inductive ax_pre : proc -> proc -> Prop :=
     counterpart. *)
 
 | ax_share_in : forall (c : ChannelData) (P Q : proc) (X' Y' : gproc),
-    (g ((𝛕 • (g ((c ? P) + X'))) + (𝛕 • (g ((c ? Q) + Y')))))
-      ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + X'))
+    (g ((𝛕 • (g ((c ? • P) + X'))) + (𝛕 • (g ((c ? • Q) + Y')))))
+      ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + X'))
 | ax_share_out : forall (c : ChannelData) (v : ValueData) (P Q : proc) (X' Y' : gproc),
     (g ((𝛕 • (g ((c ! v • P) + X'))) + (𝛕 • (g ((c ! v • Q) + Y')))))
       ᴠᴄᴄꜱ⊑ₐₓ (g ((c ! v • (g ((𝛕 • P) + (𝛕 • Q)))) + X'))
@@ -485,7 +487,7 @@ Qed.
 
 (* The merge equations, right to left: instances of union closure. *)
 Lemma ax_input_merge_r : forall c P Q, Static P -> Static Q ->
-  (g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q))))) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? P) + (c ? Q))).
+  (g ((𝛕 • (g (c ? • P))) + (𝛕 • (g (c ? • Q))))) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? • P) + (c ? • Q))).
 Proof. intros c P Q HP HQ. apply ax_int_below_ext; constructor; assumption. Qed.
 
 Lemma ax_output_merge_r : forall c v v' P Q, Static P -> Static Q ->
@@ -496,7 +498,7 @@ Proof. intros c v v' P Q HP HQ. apply ax_int_below_ext; constructor; assumption.
 (* A sum of two same-channel inputs is below each of them — via
     [ax_input_distrib_l] and glb elimination under the guard. *)
 Lemma ax_input_below_l : forall c P Q, Static P -> Static Q ->
-  (g ((c ? P) + (c ? Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? P)).
+  (g ((c ? • P) + (c ? • Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? • P)).
 Proof.
   intros c P Q HP HQ.
   eapply ax_trans; [apply ax_input_distrib_l |].
@@ -504,7 +506,7 @@ Proof.
 Qed.
 
 Lemma ax_input_below_r : forall c P Q, Static P -> Static Q ->
-  (g ((c ? P) + (c ? Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? Q)).
+  (g ((c ? • P) + (c ? • Q))) ᴠᴄᴄꜱ⊑ₐₓ (g (c ? • Q)).
 Proof.
   intros c P Q HP HQ.
   eapply ax_trans; [apply ax_input_distrib_l |].
@@ -513,7 +515,7 @@ Qed.
 
 (* …so [ax_int_glb] assembles the internal choice. *)
 Lemma ax_input_merge_l : forall c P Q, Static P -> Static Q ->
-  (g ((c ? P) + (c ? Q))) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (c ? P))) + (𝛕 • (g (c ? Q))))).
+  (g ((c ? • P) + (c ? • Q))) ᴠᴄᴄꜱ⊑ₐₓ (g ((𝛕 • (g (c ? • P))) + (𝛕 • (g (c ? • Q))))).
 Proof.
   intros c P Q HP HQ.
   apply ax_int_glb; [apply ax_input_below_l | apply ax_input_below_r]; assumption.
@@ -523,7 +525,7 @@ Qed.
     choice is below the guard over each branch, and union closure
     rebuilds the sum. *)
 Lemma ax_input_distrib_r : forall c P Q, Static P -> Static Q ->
-  (g (c ? (g ((𝛕 • P) + (𝛕 • Q))))) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? P) + (c ? Q))).
+  (g (c ? • (g ((𝛕 • P) + (𝛕 • Q))))) ᴠᴄᴄꜱ⊑ₐₓ (g ((c ? • P) + (c ? • Q))).
 Proof.
   intros c P Q HP HQ.
   eapply ax_trans; [| apply ax_input_merge_r; assumption].

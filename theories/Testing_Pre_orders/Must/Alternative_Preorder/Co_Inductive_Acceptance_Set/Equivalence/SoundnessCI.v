@@ -22,6 +22,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect.
 From Stdlib.Unicode Require Import Utf8.
@@ -30,6 +31,7 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality Wf.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import Setoid.
+(* begin hide *)
 From Stdlib .Logic Require Import ProofIrrelevance.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
@@ -43,7 +45,7 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
 Lemma prex1_if_copre `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ gLtsP gLtsT _,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ gLtsQ gLtsT _}
-  (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ₁≼ₛₑₜ_ₐₛ qs.
+  (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ꜀ₙᵥ≼ₛₑₜ_ₐₛ qs.
 Proof.
   intros Hyp_PreO s hcnv.
   revert ps qs Hyp_PreO hcnv.
@@ -71,7 +73,7 @@ Qed.
 Lemma prex2_if_copre `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ gLtsP gLtsT _,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ gLtsQ gLtsT _}
-  (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ₂≼ₛₑₜ_ₐₛ qs.
+  (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ₐ꜀꜀≼ₛₑₜ_ₐₛ qs.
 Proof.
   revert ps qs.
   intros ps qs hsub q s.

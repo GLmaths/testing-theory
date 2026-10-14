@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
@@ -27,7 +28,7 @@ From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau gLts SyncActions Bisimulation Termination
   WeakTransitions Convergence Lts_OBA_FB FiniteImageLTS coWeakTransition coConvergence
   StateTransitionSystems.
-
+(* begin hide *)
 (* ** Co-Finite Image LTSs
 
     [coFiniteImagegLts] supplies, for every external action [α], finiteness of

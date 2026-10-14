@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -27,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base tactics countable option list gmap.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS coFiniteImage InteractionBetweenLts
   InListPropHelper PAL_Syntax.
-
+(* begin hide *)
 (* * PAL with alternative labels
 
    An LTS on the terms of [PAL_Syntax] whose τ-transitions are those of
@@ -236,7 +237,7 @@ Section PAL_Alt.
   (* ** The LTS (Tables 3-4, with alternative labels) *)
 
   Open Scope pal_scope.
-  Inductive lts_step_a : term → Act PALA_Act → term → Prop :=
+  Inductive lts_step_a : term → Labels PALA_Act → term → Prop :=
     (* AR1 *)
     | aar1 t E it l :
         eval_in_tuple t = Some it → template_of it = ltemplate l →
@@ -356,7 +357,7 @@ Section PAL_Alt.
     - destruct (IHE1 hin) as [E1' h1]. exists (t_par E1' E2). by eapply aar6.
   Qed.
 
-  Fixpoint all_steps_a (p : term) (α : Act PALA_Act) : list term :=
+  Fixpoint all_steps_a (p : term) (α : Labels PALA_Act) : list term :=
     match p with
     | t_nil => []
     | t_pvar _ => []
@@ -591,7 +592,7 @@ Section PAL_Alt.
 
   (* ** [gLts] instance *)
 
-  Definition PALA_performs (p : term) (α : Act PALA_Act) : Prop := all_steps_a p α ≠ [].
+  Definition PALA_performs (p : term) (α : Labels PALA_Act) : Prop := all_steps_a p α ≠ [].
 
   #[global] Instance PALA_step_dec p α q : Decision (lts_step_a p α q).
   Proof.

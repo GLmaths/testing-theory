@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Lists Require Import List.
 From stdpp Require Import base decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA WeakTransitions Testing_Predicate.
 
 Import ListNotations.
-
+(* begin hide *)
 (* * The axiomatised test attesting a trace, for May
 
     [may_test_spec] and everything that follows from it alone — the

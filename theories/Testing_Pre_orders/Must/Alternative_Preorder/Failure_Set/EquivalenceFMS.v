@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
@@ -32,7 +33,7 @@ From stdpp Require Import base decidable gmap finite.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS
     DefinitionAS DefinitionFMS DefinitionMS EquivalenceMS.
-(* end hide *)
+
 
 
 Lemma equivalence_must_set_nfailure `{
@@ -88,7 +89,6 @@ Proof.
     eapply (reachable_states_spec2 _ _ _ _ hmem). eapply wt_nil.
     eapply (hf β μ mem1 duo b). eauto.
 Qed.
-(* begin hide *)
 
 Theorem equivalence_failure_set_must_set `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
@@ -119,8 +119,7 @@ From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain Equivalence Soundness Completeness.
-(* end hide *)
+    Testing_Predicate DefinitionAS MustE Lts_Finite_Non_Blocking_Chain Equivalence Soundness Completeness.
 
 Section failure_set_preorder.
   Context `{outcome : T -> Prop}.
@@ -150,7 +149,7 @@ Section failure_set_preorder.
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
-  (** * Main equivalence theorems *)
+  (** ** Corollary of the main theorem for the failure divergence refinement *)
 
   Section FWⁿ.
 
@@ -158,7 +157,7 @@ Section failure_set_preorder.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
-  (** ** The failure divergence refinement is equivalent to the extensional must preorder on FWⁿ*)
+  (** *** The failure divergence refinement on FWⁿ is equivalent to the extensional must preorder *)
   Corollary equivalence_fw_failure_set_and_must_e (p : P) (q : Q) :
     p ⋖ꜰᴀɪʟ q <-> pre_extensional outcome p q.
   Proof.
@@ -166,28 +165,26 @@ Section failure_set_preorder.
     rewrite equivalence_fw_must_set_and_must_e;eauto.
   Qed.
 
-  (* ** The failure divergence refinement is equivalent to the inductive must preorder on FWⁿ*)
-(* begin hide *)
+  (** *** The failure divergence refinement on FWⁿ is equivalent to the inductive must preorder *)
+
   Corollary equivalence_fw_failure_set_and_must_i (p : P) (q : Q) :
      p ⋖ꜰᴀɪʟ q <-> p ⊑ₘᵤₛₜᵢ q .
   Proof.
     erewrite<- equivalence_failure_set_must_set.
     rewrite equivalence_fw_must_set_and_must_i;eauto.
   Qed.
-(* end hide *)
 
   End FWⁿ.
-  (* ---- *)
-(* begin hide *)
+  (** ---- *)
+
   Section Lⁿ.
-(* end hide *)
 
-  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
-  (* ** The failure divergence refinement is equivalent to the inductive must preorder *)
-(* begin hide *)
+  (*** *** The failure divergence refinement toFW(Lⁿ) is equivalent to the inductive must preorder *)
+
   Corollary equivalence_failure_set_and_must_i (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
   Proof.
@@ -195,9 +192,9 @@ Section failure_set_preorder.
     rewrite equivalence_must_set_and_must_i; eauto.
   Qed.
 
-  (* ---- *)
+  (** ---- *)
 
-  (* ** The failure divergence refinement is equivalent to the extensional must preorder *)
+  (** *** The failure divergence refinement toFW(Lⁿ) is equivalent to the extensional must preorder *)
   Corollary equivalence_failure_set_and_must_e (p : P) (q : Q) :
     pre_extensional outcome p q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
   Proof.
@@ -205,7 +202,6 @@ Section failure_set_preorder.
   Qed.
 
   End Lⁿ.
-(* end hide *)
 
 End failure_set_preorder.
 

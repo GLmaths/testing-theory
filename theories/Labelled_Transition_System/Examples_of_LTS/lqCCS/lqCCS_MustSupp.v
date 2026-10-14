@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the must on supports is the must of the two LTSs
 
     [must_supp] ([lqCCS_AlmostSure.v]) is the classical [must] of the
@@ -29,6 +30,7 @@
     [lq_must_as_iff], the almost-sure must of lqCCS is this classical must.
 
     Hypothesis: the memory is not zero. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -39,7 +41,7 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition l
   lqCCS_AlmostSure lqCCS_LTS.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   StateTransitionSystems InteractionBetweenLts Must.
-
+(* begin hide *)
 Section Bridge.
   Context `{QM : QuantumModel}.
 

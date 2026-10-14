@@ -20,7 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
@@ -31,11 +31,11 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 
 From TestingTheory Require Import
   ActTau InputOutputActions Clos_n InListPropHelper Subset_Act
-  gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
+  gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
   Must InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction
   DefinitionAS Equivalence.
 From TestingTheory Require Export VCCS VCCS.Congruence.
-(* end hide *)
+
 
 
 Section VCCS_lts.
@@ -49,7 +49,7 @@ Inductive sts : proc -> proc -> Prop :=
 (*The axiomes*)
 (* Communication of channels output and input that have the same name *)
 | sts_com : forall {c v p1 g1 p2 g2},
-    sts (((c ! v • p1) + g1) ‖ ((c ? p2) + g2)) (p1 ‖ (p2 ^ v))
+    sts (((c ! v • p1) + g1) ‖ ((c ? • p2) + g2)) (p1 ‖ (p2 ^ v))
 (* Nothing more , something less *)
 | sts_tau : forall {p g},
     sts ((𝛕 • p) + g) p
@@ -131,7 +131,7 @@ Qed.
 
 (* For the (STS-reduction), the reductible terms and reducted terms are pretty all the same, up to ≡* *)
 Lemma ReductionShape : forall P Q, sts P Q ->
-((exists c v P1 P2 G1 G2 S n , ((P ≡* Ѵ  n (((c ! v • P1) + G1) ‖ ((c ? P2) + G2) ‖ S))) /\ (Q ≡* Ѵ  n ((P1 ‖ (P2^v)) ‖ S)))
+((exists c v P1 P2 G1 G2 S n , ((P ≡* Ѵ  n (((c ! v • P1) + G1) ‖ ((c ? • P2) + G2) ‖ S))) /\ (Q ≡* Ѵ  n ((P1 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S n, (P ≡* Ѵ  n (((𝛕 • P1) + G1) ‖ S)) /\ (Q ≡* Ѵ  n (P1 ‖ S)))
 \/ (exists n P1 S n', (P ≡* Ѵ  n' ((rec n • P1) ‖ S)) /\ (Q ≡* Ѵ  n' (pr_subst n P1 (rec n • P1) ‖ S)))
 ).
@@ -189,16 +189,16 @@ Qed.
 (* For the (LTS-transition), the transitable terms and transitted terms, that performs a INPUT,
 are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForInput : forall P Q c v, (lts P ((c , v) ?) Q) -> 
-(exists P1 G R n, ((P ≡* Ѵ  n (((VarC_add n c) ? P1 + G) ‖ R)) /\ (Q ≡* Ѵ  n (P1^v ‖ R))
+(exists P1 G R n, ((P ≡* Ѵ  n (((VarC_add n c) ? • P1 + G) ‖ R)) /\ (Q ≡* Ѵ  n (P1^v ‖ R))
   /\ ((exists L,P = (g L)) -> R = 𝟘 /\ n = 0))).
 Proof.
 intros P Q c v Transition.
  dependent induction Transition.
 - exists P. exists 𝟘. exists 𝟘. exists 0. repeat split.
   * simpl. destruct c.
-    + simpl. apply cgr_trans with ((c ? P) + 𝟘). apply cgr_trans with (c ? P).
+    + simpl. apply cgr_trans with ((c ? • P) + 𝟘). apply cgr_trans with (c ? • P).
       apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
-    + simpl. apply cgr_trans with ((n ? P) + 𝟘). apply cgr_trans with (n ? P).
+    + simpl. apply cgr_trans with ((n ? • P) + 𝟘). apply cgr_trans with (n ? • P).
       apply cgr_refl. apply cgr_choice_nil_rev. apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
 - destruct (IHTransition c v). reflexivity. decompose record H0.
@@ -220,30 +220,30 @@ intros P Q c v Transition.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0.
   exists (x1 ‖ NewVarCn 0 x2 q). exists x2. repeat split.
-  * apply cgr_trans with (Ѵ x2 ((((VarC_add x2 c) ? x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption.
+  * apply cgr_trans with (Ѵ x2 ((((VarC_add x2 c) ? • x) + x0) ‖ x1) ‖ q). apply cgr_par. assumption.
     etrans. eapply cgr_res_scope_n. eapply cgr_res_n. apply cgr_par_assoc.
   * apply cgr_trans with (Ѵ x2 (x^v ‖ x1) ‖ q). apply cgr_par. assumption. etrans.
     eapply cgr_res_scope_n. eapply cgr_res_n. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists x0. exists (x1 ‖ NewVarCn 0 x2 p). exists x2. repeat split.
-  * apply cgr_trans with (Ѵ x2 ((((VarC_add x2 c) ? x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p).
+  * apply cgr_trans with (Ѵ x2 ((((VarC_add x2 c) ? • x) + x0) ‖ x1) ‖ p). apply cgr_trans with (q1 ‖ p).
     apply cgr_par_com. apply cgr_par. assumption. etrans. eapply cgr_res_scope_n. eapply cgr_res_n. apply cgr_par_assoc.
   * apply cgr_trans with (Ѵ x2 (x^v ‖ x1) ‖ p). apply cgr_trans with (q2 ‖ p). apply cgr_par_com. apply cgr_par. assumption.
     etrans. eapply cgr_res_scope_n. eapply cgr_res_n. apply cgr_par_assoc.
   * intros. inversion H2. inversion H4.
   * intros. inversion H2. inversion H4.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p2). exists 𝟘. exists 0. repeat split.
-  * simpl. apply cgr_trans with ((c ? x) + (x0 + p2)). apply cgr_trans with (((c ? x) + x0) + p2).
+  * simpl. apply cgr_trans with ((c ? • x) + (x0 + p2)). apply cgr_trans with (((c ? • x) + x0) + p2).
     apply cgr_choice. assert (x1 = 𝟘 ∧ x2 = 0) as (eq1 & eq2). apply H3. exists p1. reflexivity. subst.
-    apply transitivity with (((c ? x) + x0) ‖ 𝟘). simpl in *. rewrite VarC_add_zero in H1. eauto.
+    apply transitivity with (((c ? • x) + x0) ‖ 𝟘). simpl in *. rewrite VarC_add_zero in H1. eauto.
     apply cgr_par_nil. apply cgr_choice_assoc. rewrite VarC_add_zero. apply cgr_par_nil_rev.
   * simpl. assert (x1 = 𝟘 ∧ x2 = 0) as (eq1 & eq2). apply H3. exists p1. reflexivity. subst. simpl in *. assumption.
 - destruct (IHTransition c v). reflexivity. decompose record H. exists x. exists (x0 + p1). exists 𝟘. exists 0. repeat split.
-  * simpl. apply cgr_trans with ((c ? x) + (x0 + p1)). apply cgr_trans with (((c ? x) + x0) + p1).
+  * simpl. apply cgr_trans with ((c ? • x) + (x0 + p1)). apply cgr_trans with (((c ? • x) + x0) + p1).
     etrans. eapply cgr_choice_com. apply cgr_choice. assert (x1 = 𝟘 ∧ x2 = 0) as (eq1 & eq2).
     apply H3. exists p2. reflexivity. subst.
-    apply transitivity with (((c ? x) + x0) ‖ 𝟘). simpl in *. rewrite VarC_add_zero in H1. eauto.
+    apply transitivity with (((c ? • x) + x0) ‖ 𝟘). simpl in *. rewrite VarC_add_zero in H1. eauto.
     apply cgr_par_nil. apply cgr_choice_assoc. rewrite VarC_add_zero. apply cgr_par_nil_rev.
   * simpl. assert (x1 = 𝟘 ∧ x2 = 0) as (eq1 & eq2). apply H3. exists p2. reflexivity. subst. simpl in *. assumption.
 Qed.
@@ -1258,7 +1258,7 @@ Qed.
 Lemma Reduction_Implies_TausAndCong : forall P Q, (sts P Q) -> (lts_then_sc P τ Q).
 Proof. 
 intros P Q Reduction. 
-assert ((exists c v P1 P2 G1 G2 S n, ((P ≡* Ѵ  n ((((c ! v • P1) + G1) ‖ ((c ? P2) + G2)) ‖ S))) /\ (Q ≡* Ѵ  n ((P1 ‖ (P2^v)) ‖ S)))
+assert ((exists c v P1 P2 G1 G2 S n, ((P ≡* Ѵ  n ((((c ! v • P1) + G1) ‖ ((c ? • P2) + G2)) ‖ S))) /\ (Q ≡* Ѵ  n ((P1 ‖ (P2^v)) ‖ S)))
 \/ (exists P1 G1 S n, (P ≡* Ѵ  n (((𝛕 • P1) + G1) ‖ S)) /\ (Q ≡* Ѵ  n (P1 ‖ S)))
 \/ (exists n P1 S n', (P ≡* Ѵ  n' ((rec n • P1) ‖ S)) /\ (Q ≡* Ѵ  n' (pr_subst n P1 (rec n • P1) ‖ S)))
 ). 
@@ -1267,7 +1267,7 @@ destruct H as [IH|[IH|IH]];  decompose record IH.
 
 (*First case τ by communication *)
 
-- assert (lts (Ѵ x6 (((x ! x0 • x1) + x3) ‖ ((x ? x2) + x4) ‖ x5)) τ (Ѵ x6 (x1 ‖ (x2^x0) ‖ x5))).
+- assert (lts (Ѵ x6 (((x ! x0 • x1) + x3) ‖ ((x ? • x2) + x4) ‖ x5)) τ (Ѵ x6 (x1 ‖ (x2^x0) ‖ x5))).
   * eapply lts_res_tau_n.
     apply lts_parL.   
     eapply lts_comL. apply lts_choiceL. instantiate (2:= x). instantiate (1:= x0).
@@ -1383,7 +1383,7 @@ Proof.
     rewrite<- NewVarCn_revert_def. rewrite IHj. eauto. 
 Qed.
 
-Lemma NewVarCn_input k j c p : gNewVarCn 0 j ((VarC_add k c) ? p) = (VarC_add (j + k) c) ? (NewVarCn 0 j p).
+Lemma NewVarCn_input k j c p : gNewVarCn 0 j ((VarC_add k c) ? • p) = (VarC_add (j + k) c) ? • (NewVarCn 0 j p).
 Proof.
   revert k c p. induction j.
   + intros; simpl; eauto.
@@ -1545,7 +1545,7 @@ Inductive Well_Defined_Input_in : nat -> proc -> Prop :=
 | WD_success : forall k, Well_Defined_Input_in k (①)
 | WD_nil : forall k, Well_Defined_Input_in k (𝟘)
 | WD_input : forall k c p, Well_Defined_Input_in (S k) p
-                  -> Well_Defined_Input_in k (c ? p)
+                  -> Well_Defined_Input_in k (c ? • p)
 | WD_output : forall k c v p, Well_Defined_Data k v 
                     -> Well_Defined_Input_in k p -> Well_Defined_Input_in k (c ! v • p)
 | WD_tau : forall k p,  Well_Defined_Input_in k p -> Well_Defined_Input_in k (𝛕 • p)
@@ -2055,7 +2055,7 @@ encode_gproc (gp: gproc) : gen_tree (nat + (((Equation ValueData ) + TypeOfActio
   match gp with
   | ① => GenNode 1 []
   | 𝟘 => GenNode 0 []
-  | c ? p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
+  | c ? • p => GenNode 2 [GenLeaf (inr $ inr c); encode_proc p]
   | c ! v • p  => GenNode 5 [GenLeaf (inr $ inl $ inr $ ((c , v))); encode_proc p]
   | 𝛕 • p => GenNode 3 [encode_proc p]
   | gp + gq => GenNode 4 [encode_gproc gp; encode_gproc gq]
@@ -2076,7 +2076,7 @@ decode_gproc (t': gen_tree (nat + (((Equation ValueData ) + TypeOfActions) + Cha
   match t' with
   | GenNode 1 [] => ①
   | GenNode 0 [] => 𝟘
-  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? (decode_proc ep)
+  | GenNode 2 [GenLeaf (inr (inr c)); ep] => c ? • (decode_proc ep)
   | GenNode 5 [GenLeaf (inr ( inl (inr a))) ; ep] => (ChannelData_of a) ! (ValueData_of a) • (decode_proc ep)
   | GenNode 3 [eq] => 𝛕 • (decode_proc eq)
   | GenNode 4 [egp; egq] => (decode_gproc egp) + (decode_gproc egq)
@@ -2109,7 +2109,7 @@ Fixpoint moutputs_of_g (k : nat) (gp : gproc) : gmultiset (TypeOfActions) :=
   match gp with
   | ① => ∅
   | 𝟘 => ∅
-  | c ? p => ∅
+  | c ? • p => ∅
   | (cst c) ! v • p => {[+ ((cst c) , v) +]}
   | (bvar i) ! v • p => if decide(k < (S i)) then {[+ ((bvar (i - k)) , v) +]}
                                             else ∅
@@ -2518,7 +2518,7 @@ Fixpoint lts_set_output_g (g : gproc) (a : TypeOfActions) : gset proc :=
   match g with
   | ① => ∅
   | 𝟘 => ∅
-  | c ? p => ∅
+  | c ? • p => ∅
   | c ! v • p => if decide(a = ((c , v))) then {[ p ]} else ∅
   | 𝛕 • p => ∅
   | g1 + g2 => lts_set_output_g g1 a ∪ lts_set_output_g g2 a
@@ -2545,7 +2545,7 @@ Fixpoint lts_set_input_g (g : gproc) (a : TypeOfActions) : gset proc :=
  match g with
   | ① => ∅
   | 𝟘 => ∅
-  | c' ? p => if decide(ChannelData_of a = c') then {[ p^(ValueData_of a) ]} else ∅
+  | c' ? • p => if decide(ChannelData_of a = c') then {[ p^(ValueData_of a) ]} else ∅
   | c' ! v • p => ∅
   | 𝛕 • p => ∅
   | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
@@ -2574,7 +2574,7 @@ Fixpoint lts_set_tau_g (gp : gproc) : gset proc :=
 match gp with
   | ① => ∅
   | 𝟘 => ∅
-  | c ? p => ∅
+  | c ? • p => ∅
   | c ! v • p => ∅
   | 𝛕 • p => {[ p ]}
   | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
@@ -2900,8 +2900,8 @@ Next Obligation.
 Qed.
 (* end hide *)
 
-#[global] Program Instance VCCS_gFiniteOutputChain_LtsOba
- : FiniteOutputChain_LtsOba proc := {| lts_oba_mo p := empty ; |}.
+#[global] Program Instance VCCS_gFiniteNonBlockingChain_LtsOba
+ : FiniteNonBlockingChain_LtsOba proc := {| lts_oba_mo p := empty ; |}.
 Next Obligation.
   intros ? ? ? Imp ;simpl in *.
   inversion Imp.
@@ -3181,8 +3181,8 @@ Fixpoint mPreCoAct_of_g (k : nat) (gp : gproc) : gmultiset PreAct :=
   match gp with
   | ① => ∅
   | 𝟘 => ∅
-  | (cst c) ? p => {[+ Outputs_on c +]}
-  | (bvar i) ? p => if decide(k < (S i)) then {[+ Outputs_on (i - k) +]}
+  | (cst c) ? • p => {[+ Outputs_on c +]}
+  | (bvar i) ? • p => if decide(k < (S i)) then {[+ Outputs_on (i - k) +]}
                                               else ∅
   | (cst c) ! v • p => {[+ Inputs_on c +]}
   | (bvar i) ! v • p => if decide(k < (S i)) then {[+ Inputs_on (i - k) +]}

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The recursion-free fragment of VACCS
 
     Checkpoint 0 of the inequational theory for the *asynchronous*
@@ -38,13 +39,14 @@
       [①], [𝟘], inputs, [𝛕] and [+] only. So a process can never choose
       *by sending*, which is exactly asynchrony, and it is why the
       must-preorder collapses distinctions VCCS keeps (e.g.
-      [a ? (a ! x • 𝟘) ≂ₘᵤₛₜᵢ 𝟘], [VACCS_Examples.v]'s
+      [a ? • (a ! x • 𝟘) ≂ₘᵤₛₜᵢ 𝟘], [VACCS_Examples.v]'s
       [NIL_is_equivalent_to_ccat]).
 
     Everything below is the [VCCS_Static.v] development with those two
     cases adjusted; the proofs are unchanged in shape (well-founded
     induction on [size], with the [+] case going through a [Hgen]
     helper because the two sub-sums are not immediate [proc] subterms). *)
+(* end hide *)
 
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Equality.
@@ -52,7 +54,7 @@ From Stdlib Require Import PeanoNat Lia.
 From stdpp Require Import base.
 From TestingTheory Require Import VACCS VACCS_Instance Termination ActTau
   gLts Bisimulation InputOutputActions WeakTransitions Convergence.
-
+(* begin hide *)
 Section VACCS_Static.
 
 Context `{VP : VACCS_Parameters}.
@@ -69,7 +71,7 @@ Inductive Static : proc -> Prop :=
 with gStatic : gproc -> Prop :=
 | gstatic_success : gStatic ①
 | gstatic_nil     : gStatic 𝟘
-| gstatic_input   : forall c p, Static p -> gStatic (c ? p)
+| gstatic_input   : forall c p, Static p -> gStatic (c ? • p)
 | gstatic_tau     : forall p, Static p -> gStatic (𝛕 • p)
 | gstatic_choice  : forall p q, gStatic p -> gStatic q -> gStatic (p + q).
 

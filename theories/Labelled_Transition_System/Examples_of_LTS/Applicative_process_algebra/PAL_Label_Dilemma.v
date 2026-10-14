@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -27,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Subset_Act
   Testing_Predicate DefinitionAS Completeness PAL_Syntax Applicative_process_algebra.
-
+(* begin hide *)
 (* * No labelling of PAL fits [FinitaryAbsAction] and [test_spec]
 
    Take any type of labels [A] with any [dual], and any LTS on the terms of

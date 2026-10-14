@@ -1,4 +1,27 @@
 (* begin hide *)
+(*
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*)
+(* end hide *)
+(* begin hide *)
 (* * State-level corollaries: Corollary 4.12, Corollary 5.6 and pruning
 
     - [cor_states]: ⟦p⟧(ρ) is the set of limits of the sums of final states
@@ -6,10 +29,12 @@
     - [cor_par]: the same for the paths of (p ∥ ρ)\L.
     - [pruning]: ⟦p⟧ = { ⟦prune_σ(p) ∥ −⟧ : σ }, where the program LTS is
       pruned to the choices allowed by σ before composition with the memory. *)
+(* end hide *)
+
 From Stdlib Require Import List ChoiceFacts.
 From TestingTheory Require Import Lifted Paths States Harmony.
 Import ListNotations.
-
+(* begin hide *)
 Section Corollaries.
 Context `{StAlg}.
 

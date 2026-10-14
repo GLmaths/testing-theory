@@ -20,8 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
-
+(* end hide *)
+(* begin hide *)
 (* * Below a τ-stable guarded sum
 
     A guarded sum [g M] with no [τ] passes a client exactly when the
@@ -42,16 +42,17 @@
     ([strip_outputs_all]), the bag moves to the server side
     ([must_msgs_swap], [msgs_buffer_iff]), and the settled state and
     [t0] are then stuck together ([settles_fails_stuck]). *)
+(* end hide *)
 
 From Stdlib Require Import List PeanoNat Lia.
 From stdpp Require Import base sets gmap gmultiset.
-From TestingTheory Require Import Lts_Finite_Output_Chain.
-From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
+From TestingTheory Require Import Lts_Finite_Non_Blocking_Chain.
+From TestingTheory Require Import VACCS VACCS_Instance Must ParallelLTSConstruction ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence MultisetLTSConstruction ForwarderConstruction
   Lts_OBA Lts_FW Lts_OBA_FB VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Precongruence VACCS_Expansion VACCS_Forwarder VACCS_Cond2 VACCS_Absorb.
-
+(* begin hide *)
 Section VACCS_GlbStable.
 
 Context `{VP : VACCS_Parameters}.
@@ -230,9 +231,9 @@ Proof.
     + destruct (lts_dec t τ) as [ Hno | (z & Hz) ].
       * assert (Hm0 : p must_pass t) by (apply m_step; assumption).
         destruct (stuck_client_meets p M t Hcert Hm0 Hnh Hno) as (c & v & q & r & Hq & Hr).
-        exists (r ▷ q).
+        exists (r ∣ q).
         eapply (ParSync (ActIn (c,v)) (ActOut (c,v))); [ reflexivity | exact Hr | exact Hq ].
-      * exists ((g M : proc) ▷ z). apply ParRight. exact Hz.
+      * exists ((g M : proc) ∣ z). apply ParRight. exact Hz.
     + intros p' Hp'. exfalso. exact (Hst p' Hp').
     + intros t' Ht'. exact (IHet t' Ht' Hcert Hin eq_refl).
     + intros p' t' μ1 μ2 Hdual Hp' Ht'.

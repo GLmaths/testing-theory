@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * τ-normal forms for a guarded sum
 
     A [gproc] is rewritten, by [⊢]-provable steps, into a [tau_nf]: an
@@ -55,6 +56,7 @@
     and remain correct; what is missing is the caller that establishes
     those invariants, which is where the recursive normal form has to be
     designed. *)
+(* end hide *)
 
 From Stdlib Require Import List Permutation PeanoNat Lia.
 From stdpp Require Import base sets gmap.
@@ -65,7 +67,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Copycat VACCS_DefinitionAxiomatic VACCS_SoundnessAx VACCS_ReadySet VACCS_Forwarder
   VACCS_Residues.
 Import ListNotations.
-
+(* begin hide *)
 Section VACCS_Canonical.
 
 Context `{VP : VACCS_Parameters}.
@@ -624,11 +626,11 @@ Qed.
     either. *)
 
 Lemma ax_input_split_r : forall (c : ChannelData) (P Q : proc),
-  ((g (c ? ((g ((𝛕 • P) + (𝛕 • Q))) : proc))) : proc)
-    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ((c ? P) + (c ? Q))) : proc).
+  ((g (c ? • ((g ((𝛕 • P) + (𝛕 • Q))) : proc))) : proc)
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((g ((c ? • P) + (c ? • Q))) : proc).
 Proof.
   intros c P Q.
-  eapply ax_trans; [ | apply (ax_int_below_ext (c ? P) (c ? Q)) ].
+  eapply ax_trans; [ | apply (ax_int_below_ext (c ? • P) (c ? • Q)) ].
   apply ax_int_glb.
   - apply ax_input. intro v. simpl. apply ax_int_l.
   - apply ax_input. intro v. simpl. apply ax_int_r.
@@ -812,8 +814,8 @@ Qed.
     fails, and which one may vary with the client. *)
 
 Theorem ax_collapse_input_anywhere : forall (M : gproc) c P Q (l : list gproc),
-  Permutation (summands M) ((c ? P) :: (c ? Q) :: l) ->
-  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)).
+  Permutation (summands M) ((c ? • P) :: (c ? • Q) :: l) ->
+  (g M) ᴠᴀᴄᴄꜱ⊑ₐₓ (g ((c ? • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild l)).
 Proof.
   intros M c P Q l Hperm.
   eapply ax_trans; [ apply ax_cgr; apply (pull_pair M _ _ l Hperm) | ].
@@ -843,7 +845,7 @@ Qed.
 
 Definition gact (a : gproc) : option ChannelData :=
 match a with
-| c ? _ => Some c
+| c ? • _ => Some c
 | _ => None
 end.
 
@@ -982,7 +984,7 @@ Definition canonical (M : gproc) : Prop := find_dup (summands M) = None.
 Lemma canonical_count : forall M, canonical M -> forall k, count_act k (summands M) <= 1.
 Proof. intros M H k. apply find_dup_none_count. exact H. Qed.
 
-Lemma gact_input_shape : forall a c, gact a = Some c -> exists P, a = c ? P.
+Lemma gact_input_shape : forall a c, gact a = Some c -> exists P, a = c ? • P.
 Proof.
   intros a c H. destruct a; simpl in H; try discriminate H.
   injection H as H1. subst. exists p. reflexivity.
@@ -1056,7 +1058,7 @@ Proof.
   destruct (gact_input_shape a k Hga) as (P & Ha). subst a.
   destruct (gact_input_shape b k Hgb) as (Q & Hb). subst b.
   inversion HsP; subst. inversion HsQ; subst.
-  exists ((k ? (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild r).
+  exists ((k ? • (g ((𝛕 • P) + (𝛕 • Q)))) + rebuild r).
   split; [| split; [| split ]].
   - constructor.
     + constructor. constructor. constructor; constructor; assumption.

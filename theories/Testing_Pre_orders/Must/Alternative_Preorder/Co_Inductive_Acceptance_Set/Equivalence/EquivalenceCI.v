@@ -22,6 +22,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect.
 From Stdlib.Unicode Require Import Utf8.
@@ -30,12 +31,13 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality Wf.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import Setoid.
+(* begin hide *)
 From Stdlib .Logic Require Import ProofIrrelevance.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
 From TestingTheory Require Import
-  ActTau Subset_Act gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
+  ActTau Subset_Act gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_OBA_FB Lts_FW FiniteImageLTS
   Termination WeakTransitions Convergence
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction SetLTSConstruction
   Must MustE Lift Testing_Predicate StateTransitionSystems
@@ -112,9 +114,9 @@ Section eq_contextual.
   (* ---- *)
   Section Lⁿ.
 
-  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
   (* ** The co_inductive_acc_set characterisation on toFW is equivalent to the inductive must preorder *)
   Theorem equivalence_co_inductive_acc_set_and_must_i (p : P) (q : Q) :

@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap gmultiset.
 
@@ -33,7 +34,7 @@ From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
   TestSpecBridge VCCS_CoFiniteImage.
 
 From Coinduction Require Import all.
-
+(* begin hide *)
 Notation "p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
 (* end hide *)
 

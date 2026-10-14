@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -28,7 +29,7 @@ From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
   Testing_Predicate DefinitionAS CompletenessASco PAL_Syntax Applicative_process_algebra
   PAL_Label_Dilemma.
-
+(* begin hide *)
 (* * The PAL dilemma survives the separation of the alphabets
 
    [PAL_Label_Dilemma.v] with two alphabets: the processes are labelled over

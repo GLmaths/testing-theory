@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * What a forwarder state [p ▷ m] can actually do
 
     [VACCS_Must_Characterization.v] states every alternative
@@ -60,6 +61,7 @@
     Everything is stated in terms of [inter_step] rather than the derived
     [↛] of the [toFW] instance, so that none of it depends on the
     refusal-decision machinery. *)
+(* end hide *)
 
 From Stdlib Require Import List Permutation PeanoNat Lia.
 From stdpp Require Import base sets gmap gmultiset.
@@ -68,7 +70,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   Subset_Act DefinitionAS Convergence MultisetLTSConstruction ForwarderConstruction
   Lts_OBA Lts_FW Lts_OBA_FB VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Precongruence VACCS_Expansion.
-
+(* begin hide *)
 Section VACCS_Forwarder.
 
 Context `{VP : VACCS_Parameters}.

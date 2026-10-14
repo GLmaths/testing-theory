@@ -20,12 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics countable.
 From TestingTheory Require Import ActTau InputOutputActions PAL_Syntax
   Applicative_process_algebra PAL_Alt_LTS.
-
+(* begin hide *)
 (* * The alternative LTS of PAL has the τ-transitions of PAL
 
    [Applicative_process_algebra.pal_step] labels an input with the received

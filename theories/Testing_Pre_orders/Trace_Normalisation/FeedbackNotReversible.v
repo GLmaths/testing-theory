@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -30,7 +31,7 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
      ForwarderConstruction VACCS VACCS_Instance WeakTransitions
      coWeakTransition Termination Convergence NormalForm Normalisation
      RestrictedSimulation Subset_Act coConvergence DefinitionAS DefinitionASco.
-
+(* begin hide *)
 (* * The feedback simplification is not reversible
 
     [wt_fnf] states that a process performing [s] also performs the simplified
@@ -142,7 +143,7 @@ Definition v0 : ValueData := cst 0.
 
 Definition oA : proc := c1 ! v0 • 𝟘.                    (* the message ā *)
 Definition oB : proc := c2 ! v0 • 𝟘.                    (* the message b̄ *)
-Definition Bp : proc := oA ‖ (g (c1 ? oB)).             (* ā ‖ a?•b̄ *)
+Definition Bp : proc := oA ‖ (g (c1 ? • oB)).             (* ā ‖ a?•b̄ *)
 Definition Q0 : gproc := (𝛕 • oA) + (𝛕 • oB).
 Definition P0 : gproc := Q0 + (𝛕 • Bp).
 
@@ -160,7 +161,7 @@ Proof.
   eexists.
   eapply (wt_tau _ _ (Bp, mt)).
   { eapply ParLeft. eapply lts_choiceR. eapply lts_tau. }
-  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? oB))), mt)).
+  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? • oB))), mt)).
   { eapply ParLeft. eapply lts_parL. eapply lts_output. }
   eapply (wt_act _ _ _ ((𝟘 ‖ oB), mt)).
   { eapply ParLeft. eapply lts_parR. rewrite <- (subst_oB v0). eapply lts_input. }
@@ -304,7 +305,7 @@ Qed.
 (* * The witness does not work
 
     The candidate above is *not* a counterexample to the open question, and the
-    reason is specific to a calculus with values: the input [c1 ? P] of VACCS
+    reason is specific to a calculus with values: the input [c1 ? • P] of VACCS
     accepts *any* value on the channel, so [p] can be unlocked by an input that
     is not the co-action of what it emitted.
 
@@ -315,7 +316,7 @@ Qed.
     about the open question.
 
     Repairing this needs the continuation of the input to be guarded on the
-    received value, e.g. [c1 ? (If (bvar 0 = v0) Then b̄ Else 𝟘)], so that only
+    received value, e.g. [c1 ? • (If (bvar 0 = v0) Then b̄ Else 𝟘)], so that only
     the co-action of [ā] unlocks [b̄].  That is the next candidate. *)
 
 Definition v1 : ValueData := cst 1.
@@ -342,7 +343,7 @@ Proof.
   eexists.
   eapply (wt_tau _ _ (Bp, mt)).
   { eapply ParLeft. eapply lts_choiceR. eapply lts_tau. }
-  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? oB))), mt)).
+  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? • oB))), mt)).
   { eapply ParLeft. eapply lts_parL. eapply lts_output. }
   eapply (wt_act _ _ _ ((𝟘 ‖ oB), mt)).
   { eapply ParLeft. eapply lts_parR. rewrite <- (subst_oB v). eapply lts_input. }
@@ -411,7 +412,7 @@ Qed.
     separated by a trace carrying a feedback. *)
 
 Definition Gd : proc := If (Equality (bvar 0) v0) Then oB Else 𝟘.
-Definition Bp2 : proc := oA ‖ (g (c1 ? Gd)).
+Definition Bp2 : proc := oA ‖ (g (c1 ? • Gd)).
 Definition P2 : gproc := Q0 + (𝛕 • Bp2).
 
 Lemma Gd_v0 : Gd ^ v0 = If (Equality v0 v0) Then oB Else 𝟘.
@@ -433,7 +434,7 @@ Proof.
   eexists.
   eapply (wt_tau _ _ (Bp2, mt)).
   { eapply ParLeft. eapply lts_choiceR. eapply lts_tau. }
-  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? Gd))), mt)).
+  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? • Gd))), mt)).
   { eapply ParLeft. eapply lts_parL. eapply lts_output. }
   eapply (wt_act _ _ _ ((𝟘 ‖ (Gd ^ v0)), mt)).
   { eapply ParLeft. eapply lts_parR. eapply lts_input. }
@@ -503,7 +504,7 @@ Qed.
 
 (* ** Inert processes *)
 
-Definition W : proc := g (c1 ? Gd).
+Definition W : proc := g (c1 ? • Gd).
 Definition dead (p : proc) : Prop := forall α r, ¬ lts p α r.
 
 Lemma dead_zero : dead (g 𝟘).
@@ -1180,7 +1181,7 @@ Definition co_s : trace (ExtAct TypeOfActions) := [aIn; aOut; bIn].
     echoing it back later -- not the process emitting and receiving its own
     message, which is what [wt_annhil] annihilates. *)
 
-Definition Pin : proc := g (c1 ? (oA ‖ oB)).
+Definition Pin : proc := g (c1 ? • (oA ‖ oB)).
 Definition s_bad : trace (ExtAct TypeOfActions) := [aOut; aIn; bIn].
 
 Lemma fnf_s_bad : nlin (fnf s_bad) = [bIn].
@@ -1285,11 +1286,11 @@ Definition s_must : trace (ExtAct TypeOfActions) := [bOut; bIn; cIn].
 
 (* [Gd2] diverges on the co-action of [b̄], and only on it. *)
 Definition Gd2 : proc := If (Equality (bvar 0) v0) Then Dv Else 𝟘.
-Definition Wc2 : proc := g (c2 ? Gd2).
-Definition Wc3 : proc := g (c3 ? Wc2).
+Definition Wc2 : proc := g (c2 ? • Gd2).
+Definition Wc3 : proc := g (c3 ? • Wc2).
 
 (* [p] diverges as soon as it receives on [c3] -- and has no output at all. *)
-Definition Pdv : proc := g (c3 ? Dv).
+Definition Pdv : proc := g (c3 ? • Dv).
 
 (* [q] emits [b̄]; after a message on [c3] it starts listening on [c2], where
     the co-action of [b̄] makes it diverge. *)
@@ -1466,7 +1467,7 @@ Proof. split; [exact s_must_has_fb |]. split; [exact pdv_cnv | exact qdv_not_cnv
 
 (* *** When [p] terminates
 
-    [p = c3 ? Ω] is stable unless its mailbox holds a message on [c3], in which
+    [p = c3 ? • Ω] is stable unless its mailbox holds a message on [c3], in which
     case the forwarder feeds it and it diverges.  So [p ⤓] is exactly "no [c3]
     message in the mailbox" -- and any trace offering [c3] to a live [p] makes
     [p ⇓] fail, which is what makes those obligations void. *)
@@ -1937,7 +1938,7 @@ Qed.
     the labels.
 
     The pair is the may witness read in the other direction: [p = 𝛕•ā + 𝛕•b̄]
-    and [q = ā ‖ c1 ? (If (bvar 0 = v0) Then b̄ Else 𝟘)]. *)
+    and [q = ā ‖ c1 ? • (If (bvar 0 = v0) Then b̄ Else 𝟘)]. *)
 
 (* ** [p = Q0] converges on every trace *)
 
@@ -2170,8 +2171,8 @@ Proof.
     + intros (b & e). discriminate.
 Qed.
 
-Definition Wd : proc := g (c1 ? 𝟘).
-Definition Pc : gproc := ((𝛕 • (oA ‖ Wd)) + (𝛕 • oB)) + (c1 ? (oA ‖ Gd)).
+Definition Wd : proc := g (c1 ? • 𝟘).
+Definition Pc : gproc := ((𝛕 • (oA ‖ Wd)) + (𝛕 • oB)) + (c1 ? • (oA ‖ Gd)).
 Definition Pw : proc := g Pc.
 
 Lemma Wd_subst (v : ValueData) : Wd ^ v = Wd.
@@ -3109,8 +3110,8 @@ Definition Gch : proc := If (Equality (bvar 0) v0) Then (g Pch) Else 𝟘.
 Definition Gpair : proc := If (Equality (bvar 0) v0) Then (oA ‖ oB) Else 𝟘.
 
 (* [Pe] commits to one of the two outputs, [Qe] offers both. *)
-Definition Pe : proc := g (c1 ? Gch).
-Definition Qe : proc := g (c1 ? Gpair).
+Definition Pe : proc := g (c1 ? • Gch).
+Definition Qe : proc := g (c1 ? • Gpair).
 
 Lemma Gch_subst (v : ValueData) : Gch ^ v = If (Equality v v0) Then (g Pch) Else 𝟘.
 Proof. vm_compute. reflexivity. Qed.

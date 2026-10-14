@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS processes observed by lqCCS programs without memory
 
     The observers are lqCCS programs run without a memory of their own.
@@ -44,6 +45,7 @@
 
     The states of the memory are assumed countable (e.g. amplitudes in a
     countable field), as the framework asks of the states of a process. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -53,7 +55,7 @@ From TestingTheory Require Import Lifted Paths States lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Congruence
   lqCCS_LTS lqCCS_FwLTS.
 From TestingTheory Require Import ActTau InListPropHelper
-  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain
+  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain
   FiniteImageLTS coFiniteImage Subset_Act Termination Convergence WeakTransitions
   coWeakTransition coConvergence StateTransitionSystems
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
@@ -61,7 +63,7 @@ From TestingTheory Require Import ActTau InListPropHelper
   Must MustE Lift Testing_Predicate
   DefinitionAS Completeness Equivalence
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge.
-
+(* begin hide *)
 (* The lift of an abstraction to the forwarder in [DefinitionAS.v] rests on an
     [Admitted] obligation; as for Erlang, it is replaced below. *)
 Remove Hints PreActActionForFW FinitaryPreActActionForFW : typeclass_instances.
@@ -104,7 +106,7 @@ Qed.
 
 (* ** The observers: programs without memory *)
 
-Definition tstep (Q : proc) (α : Act lact) (Q' : proc) : Prop :=
+Definition tstep (Q : proc) (α : Labels lact) (Q' : proc) : Prop :=
   match α with
   | τ => ustep Q UTau Q'
   | ActExt (LOut c v) => ustep Q (UAct (AOut c v)) Q'
@@ -120,7 +122,7 @@ Definition meas_res (M : meas) (qs : list qubit) (n : nat) (aQ : pact * proc) : 
   | _ => []
   end.
 
-Definition tsuccs (Q : proc) (α : Act lact) : list proc :=
+Definition tsuccs (Q : proc) (α : Labels lact) : list proc :=
   match α with
   | τ => succ Q UTau
   | ActExt (LOut c v) => succ Q (UAct (AOut c v))
@@ -336,7 +338,7 @@ Proof.
   rewrite (pouts_step _ _ _ _ _ Hs). by left.
 Qed.
 
-#[global] Instance obs_FiniteOutputChain : FiniteOutputChain_LtsOba proc (A := lact).
+#[global] Instance obs_FiniteNonBlockingChain : FiniteNonBlockingChain_LtsOba proc (A := lact).
 Proof.
   refine {| lts_oba_mo := tmo; lts_oba_mo_spec_bis2 := tmo_witness |}.
   - intros Q η Q' Hη Hs. destruct η as [c v| | |]; try done. by eapply tmo_of_step.

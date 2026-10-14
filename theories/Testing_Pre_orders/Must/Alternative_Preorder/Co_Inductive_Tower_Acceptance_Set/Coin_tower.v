@@ -22,6 +22,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Wellfounded Require Import Inverse_Image.
@@ -31,7 +32,7 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 From Coinduction Require Import all.
 
 From TestingTheory Require Import
-  ActTau Subset_Act gLts FiniteImageLTS Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW
+  ActTau Subset_Act gLts FiniteImageLTS Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_OBA_FB Lts_FW
   Termination Convergence WeakTransitions Bisimulation
   SetLTSConstruction
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
@@ -39,7 +40,7 @@ From TestingTheory Require Import
   Testing_Predicate Must MustE 
   DefinitionAS Soundness Equivalence Completeness
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS.
-
+(* begin hide *)
 (* TODO: define me using the coinduction library *)
 
 Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
@@ -163,7 +164,7 @@ Section copre.
   Qed.
 
 
-  Lemma prex1_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₁≼ₛₑₜ_ₐₛ Y.
+  Lemma prex1_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y.
   Proof.
     intros hpq s; revert X Y hpq.
     dependent induction s; intros X Y hpq hcnv.
@@ -191,7 +192,7 @@ Section copre.
       ++ set_solver.
   Qed.
 
-  Lemma prex2_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₂≼ₛₑₜ_ₐₛ Y.
+  Lemma prex2_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y.
   Proof.
     intros hsub q s q' mem; revert X Y q q' mem hsub ; dependent induction s; intros X Y q q' mem hsub.
     + intros hw hstq' hcnv. revert X Y mem hsub hstq' hcnv.
@@ -347,9 +348,9 @@ Section must_co_inductive_acceptance_preorder.
   Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
   Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
   
-  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
   (* ** The co-inductive-tower characterisation on toFW is equivalent to the inductive must preorder *)
   Corollary equivalence_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :

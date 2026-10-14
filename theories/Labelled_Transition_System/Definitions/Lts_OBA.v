@@ -23,11 +23,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation.
-(* end hide *)
+
 
 (** ** Lts that respects the axioms NB-DELAY , NB-CONFLUENCE, NB-TAU, NB-DETERMINACY and BACKWARDS-NB-DETERMINACY *)
 

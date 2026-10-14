@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
@@ -27,9 +28,9 @@ From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain.
+    Testing_Predicate DefinitionAS MustE Lts_Finite_Non_Blocking_Chain.
 From TestingTheory Require Import coFiniteImage DefinitionASco CompletenessASco SoundnessASco.
-
+(* begin hide *)
 (* * Equivalence for the co-acceptance-set preorder *)
 
 Section preorder.
@@ -88,9 +89,9 @@ Section preorder.
   Context `{!FiniteImagegLts P A}.
   Context `{!FiniteImagegLts Q A}.
 
-  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
   Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
   Context `{!Prop_of_Inter (P * MO A) T A A dual}.

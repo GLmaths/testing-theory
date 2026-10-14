@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions.
 From stdpp Require Import base tactics.
 From TestingTheory Require Import ActTau gLts Bisimulation Subset_Act InputOutputActions
   DefinitionAS LabelAbstraction VCCS_Instance.
-
+(* begin hide *)
 (* * Label abstractions of VCCS as canonical projections *)
 
 Section VCCS_LA.

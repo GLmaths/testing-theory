@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses Classes.Morphisms.
 From Stdlib.Logic Require Import ConstructiveEpsilon.
 From stdpp Require Import base tactics finite gmap decidable relations countable.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act.
-
+(* begin hide *)
 (* * Label abstractions as equivalences on actions *)
 
 (* ** LTSs equipped with a test-side label abstraction *)

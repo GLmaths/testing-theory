@@ -23,16 +23,17 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 
 From stdpp Require Import base countable strings sets gmap.
 
 From TestingTheory Require Import gLts Bisimulation Termination Lts_OBA MultisetHelper ActTau.
-
+(* begin hide *)
 (* ** Similarity *)
 CoInductive similar `{@gLts A L H} `{@gLts B L H}  (a : A) (b : B) : Prop :=
-| smi_step : (forall (α : Act L) a', a ⟶{α} a' -> exists b', b ⟶{α} b' /\ similar a' b') -> similar a b.
+| smi_step : (forall (α : Labels L) a', a ⟶{α} a' -> exists b', b ⟶{α} b' /\ similar a' b') -> similar a b.
 Infix "≲" := (similar) (at level 20).
 
 

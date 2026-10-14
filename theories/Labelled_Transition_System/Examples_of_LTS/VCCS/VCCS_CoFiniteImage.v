@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list.
@@ -28,7 +29,7 @@ From TestingTheory Require Import
   ActTau InputOutputActions InListPropHelper
   gLts Bisimulation coFiniteImage.
 From TestingTheory Require Export VCCS.VCCS_Instance.
-
+(* begin hide *)
 (* ** [coFiniteImagegLts] for VCCS
 
     Kept in its own file (not added directly to [VCCS_Instance.v]) purely
@@ -77,7 +78,7 @@ Qed.
 
 (* [cofolts_tau_next_states_finite]'s goal is auto-resolved by [unshelve
    refine] itself: [VCCS_gLtsFiniteImage] (VCCS_Instance.v) already
-   provides [Finite (dsig (fun q => p ⟶{α} q))] for every [α : Act
+   provides [Finite (dsig (fun q => p ⟶{α} q))] for every [α : Labels
    TypeOfActions] including [τ], and [p ⟶{τ} q] is definitionally [p ⟶
    q] — so typeclass search finds it directly, no tactic needed. Verified
    interactively (rocq-mcp): only 2 goals remain after [unshelve refine],

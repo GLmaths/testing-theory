@@ -23,11 +23,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From TestingTheory Require Import ActTau gLts.
-
+(* begin hide *)
 (* * Labelled transition systems *)
 
 (* ** LTSs equipped with a bisimulation *)
@@ -38,7 +39,7 @@ Class gLtsEq (P : Type) {A} `(H : !ExtAction A) := {
     eq_rel_eq : Equivalence eq_rel;
 
     (* The relation is a bissimulation *)
-    eq_spec p q (α : Act A) :
+    eq_spec p q (α : Labels A) :
     (exists r, eq_rel p r /\ r ⟶{α} q) 
       → (exists r, p ⟶{α} r /\ eq_rel r q);
   }.

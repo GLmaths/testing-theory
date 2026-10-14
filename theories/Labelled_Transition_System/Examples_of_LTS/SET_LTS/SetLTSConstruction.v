@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -38,8 +39,8 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
 From TestingTheory Require Import MultisetHelper ActTau gLts Bisimulation FiniteImageLTS Lts_OBA Lts_FW Lts_OBA_FB 
-    InListPropHelper Lts_Finite_Output_Chain InFiniteSetHelper WeakTransitions.
-
+    InListPropHelper Lts_Finite_Non_Blocking_Chain InFiniteSetHelper WeakTransitions.
+(* begin hide *)
 (**************************************** LTS of Sets *************************************)
 
 Definition all_blocking_action_ext `{!ExtAction A} (μ : A) := False.
@@ -327,8 +328,8 @@ Qed.
 
 (* Set of a LTS respects FiniteOuputChain axioms , because empty set = non_blocking_action *)
 
-#[global] Program Instance toSET_FiniteOutputChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
-  {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} : @FiniteOutputChain_LtsOba (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ):=
+#[global] Program Instance toSET_FiniteNonBlockingChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} : @FiniteNonBlockingChain_LtsOba (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ):=
   {| lts_oba_mo p := empty |}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.

@@ -20,12 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics relations countable.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
   PAL_Syntax PAL_Alt_LTS.
-
+(* begin hide *)
 (* * Structural congruence for the alternative LTS of PAL
 
    As for VCCS: [𝟘] is a unit of [‖] and [□], both are commutative and
@@ -212,7 +213,7 @@ Section PAL_Alt_Congruence.
       destruct (IH _ _ hy) as (z' & hz & cz). exists z'. split; [done | by etransitivity].
   Qed.
 
-  Lemma PALA_cgr_spec p q (α : Act (PALA_Act Val)) :
+  Lemma PALA_cgr_spec p q (α : Labels (PALA_Act Val)) :
     (∃ r, cgr p r ∧ step r α q) → (∃ r, step p α r ∧ cgr r q).
   Proof.
     intros (r & hpr & hs). symmetry in hpr.

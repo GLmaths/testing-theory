@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Canonicity does not make the drop rule's premise derivable
 
     [VACCS_Bad.v]'s judgement approximates the premise
@@ -66,18 +67,19 @@
     *within* one channel, never *across* channels.
 
     **Consequence.**  It sharpens the "restrict, do not drop" finding
-    ([VACCS_Absorb.must_i_restrict]): here [b ? 𝟘] is droppable on its own
-    (a [𝟘] continuation is harmless at any set) while [a ? PP] is not —
+    ([VACCS_Absorb.must_i_restrict]): here [b ? • 𝟘] is droppable on its own
+    (a [𝟘] continuation is harmless at any set) while [a ? • PP] is not —
     and it is the [b]-guard that kills every client.  Removing the easy
     one first destroys the fact that justified removing them at all, so
     surplus guards have to go **jointly**, which is exactly
     [must_i_restrict]'s shape — and that lemma's premise is the very
     inequation completeness is trying to derive. *)
+(* end hide *)
 
 From Stdlib Require Import List Permutation Lia.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base gmultiset.
-From TestingTheory Require Import VACCS_Residues.
+From TestingTheory Require Import ForwarderConstruction VACCS_Residues.
 From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Characterization
   gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
   InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
@@ -87,7 +89,7 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
   VACCS_NormalForm VACCS_Canonical VACCS_ReadySet VACCS_Bad VACCS_Forwarder VACCS_Cond2
   VACCS_Descent VACCS_Matching VACCS_DerivedRules.
 Import ListNotations.
-
+(* begin hide *)
 Section VACCS_DropProbes.
 
 Context `{VP : VACCS_Parameters}.
@@ -97,9 +99,9 @@ Context {nab : a <> b} {nae : a <> e} {nbe : b <> e}.
 (* ** The processes *)
 
 Definition Ke : proc := (cst e) ! (cst y) • 𝟘.
-Definition PP : proc := g ((cst b) ? Ke).
-Definition MM : gproc := ((cst a) ? PP) + ((cst b) ? (g 𝟘)).
-Definition UU : proc := ((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? (g ①))).
+Definition PP : proc := g ((cst b) ? • Ke).
+Definition MM : gproc := ((cst a) ? • PP) + ((cst b) ? • (g 𝟘)).
+Definition UU : proc := ((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? • (g ①))).
 
 (* Same inversion tactic as [VACCS_ChoiceProbes.v]: invert every [lts]
     whose subject has a concrete head, then close on the channel
@@ -112,7 +114,7 @@ Ltac blast3 :=
   | H : lts (_ ‖ _) _ _ |- _ => inversion H; subst; clear H
   | H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
-  | H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst; clear H
+  | H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g 𝟘) _ _ |- _ => inversion H
   | H : lts (g ①) _ _ |- _ => inversion H
   end; simpl in *; try congruence; try contradiction.
@@ -148,7 +150,7 @@ Proof.
   match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
 Qed.
 
-Lemma UU_refuses_a : forall x q, ~ lts UU ((cst a ▷ x)?) q.
+Lemma UU_refuses_a : forall x q, ~ lts UU (cst a ? x) q.
 Proof. intros x q Hl. unfold UU in Hl. blast3. Qed.
 
 (* ** The continuation passes it
@@ -160,7 +162,7 @@ Lemma PP_passes_UU : PP must_pass UU.
 Proof.
   apply m_step.
   - apply UU_not_good.
-  - exists (Ke ▷ ((g 𝟘) ‖ (g ((cst e) ? (g ①))))).
+  - exists (Ke ∣ ((g 𝟘) ‖ (g ((cst e) ? • (g ①))))).
     eapply ParSync; [ apply dual_io | | ].
     + unfold PP. assert (E : Ke ^ (cst w) = Ke) by reflexivity.
       rewrite <- E at 2. apply lts_input.
@@ -172,7 +174,7 @@ Proof.
     apply m_step.
     + intro Hg. inversion Hg; subst.
       match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
-    + exists ((g 𝟘) ▷ ((g 𝟘) ‖ (g ①))).
+    + exists ((g 𝟘) ∣ ((g 𝟘) ‖ (g ①))).
       eapply ParSync; [ apply dual_out_in | apply lts_output | ].
       apply lts_parR.
       assert (E : ((g ①) : proc) ^ (cst y) = g ①) by reflexivity.
@@ -192,7 +194,7 @@ Qed.
     to the whole. *)
 
 Lemma out_residue : forall t c0 v0 b0,
-  (forall q, ~ lts t τ q) -> ~ good_VACCS t -> lts t ((c0 ▷ v0)!) b0 ->
+  (forall q, ~ lts t τ q) -> ~ good_VACCS t -> lts t (c0 ! v0) b0 ->
   (forall q, ~ lts b0 τ q) /\ ~ good_VACCS b0.
 Proof.
   intros t c0 v0 b0 Hst Hng Hl.
@@ -210,13 +212,13 @@ Proof.
 Qed.
 
 Lemma out_lift : forall t c0 v0 b0 c1 x q,
-  lts t ((c0 ▷ v0)!) b0 -> lts b0 ((c1 ▷ x)!) q ->
-  exists r, lts t ((c1 ▷ x)!) r.
+  lts t (c0 ! v0) b0 -> lts b0 (c1 ! x) q ->
+  exists r, lts t (c1 ! x) r.
 Proof.
   intros t c0 v0 b0 c1 x q Hl Hq.
   assert (Hsh : t ≡* ((c0 ! v0 • 𝟘) ‖ b0))
     by (eapply TransitionShapeForOutputSimplified; exact Hl).
-  assert (Hsc : sc_then_lts t ((c1 ▷ x)!) ((c0 ! v0 • 𝟘) ‖ q))
+  assert (Hsc : sc_then_lts t (c1 ! x) ((c0 ! v0 • 𝟘) ‖ q))
     by (exists ((c0 ! v0 • 𝟘) ‖ b0); split; [ exact Hsh | apply lts_parR; exact Hq ]).
   apply Congruence_Respects_Transition in Hsc.
   destruct Hsc as (r & Hr & _). exists r. exact Hr.
@@ -229,7 +231,7 @@ Qed.
     τ-stuck and not good — impossible. *)
 
 Lemma MM_no_b_out : forall t, (forall q, ~ lts t τ q) -> ~ good_VACCS t ->
-  (g MM) must_pass t -> forall x q, ~ lts t ((cst b ▷ x)!) q.
+  (g MM) must_pass t -> forall x q, ~ lts t (cst b ! x) q.
 Proof.
   intros t Hst Hng Hm x q Hl.
   inversion Hm as [Ho | Ho Hex Hpt Het Hcom]; subst; [contradiction |].
@@ -283,7 +285,7 @@ Proof.
     + inversion H3; subst. eapply Hnb. exact l2.
 Qed.
 
-Lemma MM_lts_a : lts (g MM) ((cst a ▷ cst v)?) PP.
+Lemma MM_lts_a : lts (g MM) (cst a ? cst v) PP.
 Proof.
   unfold MM. apply lts_choiceL.
   assert (E : PP ^ (cst v) = PP) by reflexivity.
@@ -304,7 +306,7 @@ Theorem bad_input_clause_is_not_forced :
        (forall q, ~ lts p τ q) ->
        (forall u, (forall q, ~ lts u τ q) -> ~ good_VACCS u -> RefusesIn S u ->
           ~ (p must_pass u)) ->
-       forall c0 v0 p', lts p ((c0 ▷ v0)?) p' ->
+       forall c0 v0 p', lts p (c0 ? v0) p' ->
          forall u, (forall q, ~ lts u τ q) -> ~ good_VACCS u ->
             RefusesIn (fun d => S d \/ d = c0) u -> ~ (p' must_pass u)).
 Proof.
@@ -327,9 +329,9 @@ Qed.
     derivation route provably passes through a *false* intermediate.
 
     `ax_input_drop` discards the [b]-summand at once ([𝟘] is harmless at
-    any set), leaving the goal [(g (a ? PP)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] — and that is not
+    any set), leaving the goal [(g (a ? • PP)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] — and that is not
     merely underivable, it is **unsound**: [PP_passes_UU] plus
-    [below_nil_iff] give [g (a ? PP) ⋢ₘᵤₛₜᵢ g 𝟘].  The two guards have to
+    [below_nil_iff] give [g (a ? • PP) ⋢ₘᵤₛₜᵢ g 𝟘].  The two guards have to
     go together, which is [must_i_restrict]'s shape and not any rule's.
 
     Whether the 24-rule system derives [(g MM) ᴠᴀᴄᴄꜱ⊑ₐₓ (g 𝟘)] by some other route
@@ -352,11 +354,11 @@ Proof.
   apply UU_not_good. assumption.
 Qed.
 
-Lemma a_guard_passes_TT2 : (g ((cst a) ? PP)) must_pass TT2.
+Lemma a_guard_passes_TT2 : (g ((cst a) ? • PP)) must_pass TT2.
 Proof.
   apply m_step.
   - apply TT2_not_good.
-  - exists (PP ▷ ((g 𝟘) ‖ UU)).
+  - exists (PP ∣ ((g 𝟘) ‖ UU)).
     eapply ParSync; [ apply dual_io | | ].
     + assert (E : PP ^ (cst v) = PP) by reflexivity.
       rewrite <- E at 2. apply lts_input.
@@ -373,7 +375,7 @@ Proof.
     + exfalso. unfold UU in H3. blast3.
 Qed.
 
-Theorem a_guard_not_below_nil : ~ ((g ((cst a) ? PP)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
+Theorem a_guard_not_below_nil : ~ ((g ((cst a) ? • PP)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc)).
 Proof.
   intro Hle. rewrite below_nil_iff in Hle.
   eapply Hle; [ apply TT2_no_tau | apply TT2_not_good | apply a_guard_passes_TT2 ].
@@ -431,7 +433,7 @@ Qed.
     - [bk_kill] at [b]: [MM] has a [b]-guard, its continuation is [𝟘] and
       is bad at any set — so a client that emits on [b] is killed;
     - hence the rest may assume the client is silent on [b].  [bk_kill]
-      at [a]: [MM]'s [a]-continuation is [PP = b ? (e!y•𝟘)], whose only
+      at [a]: [MM]'s [a]-continuation is [PP = b ? • (e!y•𝟘)], whose only
       guard is on [b] — a channel now in [D] — so [bk_stuck] applies,
       [ex] having nothing to fire on;
     - and finally [MM] itself, with both its channels in [D].
@@ -520,14 +522,14 @@ Proof. apply soundness_ax. exact MM_derivable. Qed.
 
     Both want the *same two messages* and answer on [e]; messages are
     asynchronous, so the order in which they are consumed ought to be
-    invisible — i.e. [a ? (b ? P) ≂ₘᵤₛₜᵢ b ? (a ? P)].  That law is not
+    invisible — i.e. [a ? • (b ? • P) ≂ₘᵤₛₜᵢ b ? • (a ? • P)].  That law is not
     proved here (it is worth proving in its own right), but if it holds
     then [g MC ⊑ₘᵤₛₜᵢ g MC'] while
     [offers MC = {a}] and [offers MC' = {b}] are **disjoint**, so
     [grestrict MC' MC = 𝟘].
 
     And [g MC ⋢ₘᵤₛₜᵢ g 𝟘] — that is [MC_not_below_nil] below, proved: the
-    client [(a!v•𝟘) ‖ (b!w•𝟘) ‖ (e ? ①)] is τ-stuck and not good, and
+    client [(a!v•𝟘) ‖ (b!w•𝟘) ‖ (e ? • ①)] is τ-stuck and not good, and
     [MC] passes it by taking both messages and answering on [e].
 
     So restricting to the target's channels can drop guards that are
@@ -536,9 +538,9 @@ Proof. apply soundness_ax. exact MM_derivable. Qed.
     [ax_restrict], whose premise is a [BadK] derivation and which simply
     cannot be applied here. *)
 
-Definition MC : gproc := (cst a) ? (g ((cst b) ? ((cst e) ! (cst y) • 𝟘))).
+Definition MC : gproc := (cst a) ? • (g ((cst b) ? • ((cst e) ! (cst y) • 𝟘))).
 Definition TT3 : proc :=
-  ((cst a) ! (cst v) • 𝟘) ‖ (((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? (g ①)))).
+  ((cst a) ! (cst v) • 𝟘) ‖ (((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? • (g ①)))).
 
 Lemma TT3_no_tau : forall q, ~ lts TT3 τ q.
 Proof. intros q Hq. unfold TT3 in Hq. blast3. Qed.
@@ -551,14 +553,14 @@ Proof.
   match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
 Qed.
 
-Lemma level3 : ((cst e) ! (cst y) • 𝟘) must_pass ((g 𝟘) ‖ ((g 𝟘) ‖ (g ((cst e) ? (g ①))))).
+Lemma level3 : ((cst e) ! (cst y) • 𝟘) must_pass ((g 𝟘) ‖ ((g 𝟘) ‖ (g ((cst e) ? • (g ①))))).
 Proof.
   apply m_step.
   - intro Hg. inversion Hg; subst.
     match goal with H : _ \/ _ |- _ => destruct H as [H|H]; [ inversion H | ] end.
     inversion H0; subst.
     match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
-  - exists ((g 𝟘) ▷ ((g 𝟘) ‖ ((g 𝟘) ‖ (g ①)))).
+  - exists ((g 𝟘) ∣ ((g 𝟘) ‖ ((g 𝟘) ‖ (g ①)))).
     eapply ParSync; [ apply dual_out_in | apply lts_output | ].
     apply lts_parR. apply lts_parR.
     assert (E : ((g ①) : proc) ^ (cst y) = g ①) by reflexivity.
@@ -569,15 +571,15 @@ Proof.
     apply m_now. apply good_par. right. apply good_par. right. apply good_success.
 Qed.
 
-Lemma level2b : (g ((cst b) ? ((cst e) ! (cst y) • 𝟘)))
-                  must_pass ((g 𝟘) ‖ (((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? (g ①))))).
+Lemma level2b : (g ((cst b) ? • ((cst e) ! (cst y) • 𝟘)))
+                  must_pass ((g 𝟘) ‖ (((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? • (g ①))))).
 Proof.
   apply m_step.
   - intro Hg. inversion Hg; subst.
     match goal with H : _ \/ _ |- _ => destruct H as [H|H]; [ inversion H | ] end.
     inversion H0; subst.
     match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
-  - exists (((cst e) ! (cst y) • 𝟘) ▷ ((g 𝟘) ‖ ((g 𝟘) ‖ (g ((cst e) ? (g ①)))))).
+  - exists (((cst e) ! (cst y) • 𝟘) ∣ ((g 𝟘) ‖ ((g 𝟘) ‖ (g ((cst e) ? • (g ①)))))).
     eapply ParSync; [ apply dual_io | | ].
     + assert (E : ((cst e) ! (cst y) • 𝟘) ^ (cst w) = (cst e) ! (cst y) • 𝟘) by reflexivity.
       rewrite <- E at 2. apply lts_input.
@@ -592,12 +594,12 @@ Theorem MC_passes_TT3 : (g MC) must_pass TT3.
 Proof.
   apply m_step.
   - apply TT3_not_good.
-  - exists ((g ((cst b) ? ((cst e) ! (cst y) • 𝟘)))
-              ▷ ((g 𝟘) ‖ (((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? (g ①)))))).
+  - exists ((g ((cst b) ? • ((cst e) ! (cst y) • 𝟘)))
+              ∣ ((g 𝟘) ‖ (((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? • (g ①)))))).
     eapply ParSync; [ apply dual_io | | ].
     + unfold MC.
-      assert (E : ((g ((cst b) ? ((cst e) ! (cst y) • 𝟘))) : proc) ^ (cst v)
-                  = g ((cst b) ? ((cst e) ! (cst y) • 𝟘))) by reflexivity.
+      assert (E : ((g ((cst b) ? • ((cst e) ! (cst y) • 𝟘))) : proc) ^ (cst v)
+                  = g ((cst b) ? • ((cst e) ! (cst y) • 𝟘))) by reflexivity.
       rewrite <- E at 2. apply lts_input.
     + unfold TT3. apply lts_parL. apply lts_output.
   - intros p' Hp'. unfold MC in Hp'. blast3.
@@ -623,7 +625,7 @@ Qed.
     Recall [ctx_pre p q] is [∀ t, p must_pass t -> q must_pass t]: [p ⊑ q]
     means every test [p] passes, [q] passes.
 
-    - **Not droppable** ([msg_not_below_nil]): the probe [SINK := a ? ①]
+    - **Not droppable** ([msg_not_below_nil]): the probe [SINK := a ? • ①]
       is τ-stuck and not good, and [a!v•𝟘] passes it — it hands the
       message over and the client succeeds — while [𝟘] fails it, having
       nothing to offer ([nil_fails_stuck]).
@@ -639,8 +641,8 @@ Qed.
     match. *)
 
 Definition MSG : proc := (cst a) ! (cst v) • 𝟘.
-Definition SINK : proc := g ((cst a) ? (g ①)).
-Definition TSINK : proc := g ((𝛕 • (g ①)) + ((cst a) ? (g 𝟘))).
+Definition SINK : proc := g ((cst a) ? • (g ①)).
+Definition TSINK : proc := g ((𝛕 • (g ①)) + ((cst a) ? • (g 𝟘))).
 
 Lemma SINK_no_tau : forall q, ~ lts SINK τ q.
 Proof. intros q Hq. unfold SINK in Hq. blast3. Qed.
@@ -749,16 +751,16 @@ Qed.
 Lemma dead_guard_blocks : forall (c1 c2 : ChannelData) (X : proc) (u : proc)
     (z : ValueData) (u' : proc),
   (forall q : proc, ~ lts u τ q) -> ~ good_VACCS u ->
-  (g ((c1 ? X) + (c2 ? ((g 𝟘) : proc)))) must_pass u ->
-  ~ lts u ((c2 ▷ z) !) u'.
+  (g ((c1 ? • X) + (c2 ? • ((g 𝟘) : proc)))) must_pass u ->
+  ~ lts u (c2 ! z) u'.
 Proof.
   intros c1 c2 X u z u' Hst Hng Hm Hl.
   inversion Hm; subst; [ contradiction | ].
-  assert (Hg : lts (g ((c1 ? X) + (c2 ? ((g 𝟘) : proc)))) ((c2 ▷ z) ?) ((g 𝟘) : proc)).
+  assert (Hg : lts (g ((c1 ? • X) + (c2 ? • ((g 𝟘) : proc)))) (c2 ? z) ((g 𝟘) : proc)).
   { apply lts_choiceR.
     assert (E : ((g 𝟘) : proc) ^ z = ((g 𝟘) : proc)) by reflexivity.
     rewrite <- E at 2. apply lts_input. }
-  assert (Hdual : dual (ActIn (c2 ▷ z)) (ActOut (c2 ▷ z))) by (simpl; reflexivity).
+  assert (Hdual : dual (ActIn (c2, z)) (ActOut (c2, z))) by (simpl; reflexivity).
   pose proof (com _ _ _ _ Hdual Hg Hl) as Hd.
   destruct (out_residue u c2 z u' Hst Hng Hl) as (Hst' & Hng').
   eapply nil_fails_stuck; [ exact Hst' | exact Hng' | exact Hd ].
@@ -766,8 +768,8 @@ Qed.
 
 Lemma guard_forces_emit : forall (c1 c2 : ChannelData) (X Y : proc) (u : proc),
   (forall q : proc, ~ lts u τ q) -> ~ good_VACCS u ->
-  (g ((c1 ? X) + (c2 ? Y))) must_pass u ->
-  (exists z u', lts u ((c1 ▷ z) !) u') \/ (exists z u', lts u ((c2 ▷ z) !) u').
+  (g ((c1 ? • X) + (c2 ? • Y))) must_pass u ->
+  (exists z u', lts u (c1 ! z) u') \/ (exists z u', lts u (c2 ! z) u').
 Proof.
   intros c1 c2 X Y u Hst Hng Hm.
   inversion Hm; subst; [ contradiction | ].
@@ -783,16 +785,16 @@ Proof.
       right. exists v0, x2. exact l2.
 Qed.
 
-Definition P1 : gproc := ((cst b) ? Ke) + ((cst a) ? ((g 𝟘) : proc)).
-Definition P2 : gproc := ((cst a) ? Ke) + ((cst b) ? ((g 𝟘) : proc)).
-Definition UU2 : proc := ((cst a) ! (cst w) • 𝟘) ‖ (g ((cst e) ? (g ①))).
+Definition P1 : gproc := ((cst b) ? • Ke) + ((cst a) ? • ((g 𝟘) : proc)).
+Definition P2 : gproc := ((cst a) ? • Ke) + ((cst b) ? • ((g 𝟘) : proc)).
+Definition UU2 : proc := ((cst a) ! (cst w) • 𝟘) ‖ (g ((cst e) ? • (g ①))).
 Definition PC : gproc := (𝛕 • ((g P1) : proc)) + (𝛕 • ((g P2) : proc)).
 
 Lemma P1_passes_UU : ((g P1) : proc) must_pass UU.
 Proof.
   apply m_step.
   - apply UU_not_good.
-  - exists (Ke ▷ ((g 𝟘) ‖ (g ((cst e) ? (g ①))))).
+  - exists (Ke ∣ ((g 𝟘) ‖ (g ((cst e) ? • (g ①))))).
     eapply ParSync; [ apply dual_io | | ].
     + unfold P1. apply lts_choiceL.
       assert (E : Ke ^ (cst w) = Ke) by reflexivity.
@@ -805,7 +807,7 @@ Proof.
     apply m_step.
     + intro Hg. inversion Hg; subst.
       match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
-    + exists ((g 𝟘) ▷ ((g 𝟘) ‖ (g ①))).
+    + exists ((g 𝟘) ∣ ((g 𝟘) ‖ (g ①))).
       eapply ParSync; [ apply dual_out_in | apply lts_output | ].
       apply lts_parR.
       assert (E : ((g ①) : proc) ^ (cst y) = g ①) by reflexivity.
@@ -829,7 +831,7 @@ Lemma P2_passes_UU2 : ((g P2) : proc) must_pass UU2.
 Proof.
   apply m_step.
   - apply UU2_not_good.
-  - exists (Ke ▷ ((g 𝟘) ‖ (g ((cst e) ? (g ①))))).
+  - exists (Ke ∣ ((g 𝟘) ‖ (g ((cst e) ? • (g ①))))).
     eapply ParSync; [ apply dual_io | | ].
     + unfold P2. apply lts_choiceL.
       assert (E : Ke ^ (cst w) = Ke) by reflexivity.
@@ -842,7 +844,7 @@ Proof.
     apply m_step.
     + intro Hg. inversion Hg; subst.
       match goal with H0 : _ \/ _ |- _ => destruct H0 as [H0|H0]; inversion H0 end.
-    + exists ((g 𝟘) ▷ ((g 𝟘) ‖ (g ①))).
+    + exists ((g 𝟘) ∣ ((g 𝟘) ‖ (g ①))).
       eapply ParSync; [ apply dual_out_in | apply lts_output | ].
       apply lts_parR.
       assert (E : ((g ①) : proc) ^ (cst y) = g ①) by reflexivity.
@@ -901,7 +903,7 @@ Qed.
     The derivation is five steps.  Commute [P2]'s summands so both
     branches lead with a [b]-guard; [ax_share_in] pools the two
     [b]-continuations into [Ke ⊕ 𝟘] and keeps the *first* branch's residue
-    [a ? 𝟘]; [ax_choice_input] rewrites that continuation to [𝟘] by
+    [a ? • 𝟘]; [ax_choice_input] rewrites that continuation to [𝟘] by
     [ax_int_r]; then [ax_input_drop] removes the [b]-guard and, after one
     [ax_cgr], the [a]-guard, both because [𝟘] is [Harmless].
 
@@ -918,14 +920,14 @@ Proof.
   { apply ax_cgr. apply cgr_fullchoice; [ reflexivity | ].
     apply cgr_tau. apply cgr_choice_com. }
   eapply ax_trans; [ apply (ax_share_in (cst b) Ke ((g 𝟘) : proc)
-                                        ((cst a) ? ((g 𝟘) : proc))
-                                        ((cst a) ? Ke)) | ].
+                                        ((cst a) ? • ((g 𝟘) : proc))
+                                        ((cst a) ? • Ke)) | ].
   eapply ax_trans.
   { apply (ax_choice_input (cst b) ((g ((𝛕 • Ke) + (𝛕 • ((g 𝟘) : proc)))) : proc)
-                           ((g 𝟘) : proc) ((cst a) ? ((g 𝟘) : proc))).
+                           ((g 𝟘) : proc) ((cst a) ? • ((g 𝟘) : proc))).
     intro v0. simpl. apply ax_int_r. }
   eapply ax_trans.
-  { apply (ax_input_drop (cst b) ((g 𝟘) : proc) ((cst a) ? ((g 𝟘) : proc)));
+  { apply (ax_input_drop (cst b) ((g 𝟘) : proc) ((cst a) ? • ((g 𝟘) : proc)));
       [ repeat constructor | ].
     intro v0. simpl. apply bad_nil_any. }
   eapply ax_trans; [ apply ax_cgr_sym; apply cgr_choice_nil | ].
@@ -964,7 +966,7 @@ Proof.
   - now apply m_now.
   - apply m_step.
     + exact Ho.
-    + exists (((c ! z • 𝟘) : proc) ▷ t). eapply ParLeft. apply lts_tau.
+    + exists (((c ! z • 𝟘) : proc) ∣ t). eapply ParLeft. apply lts_tau.
     + intros x Hx. inversion Hx; subst. apply m_step; assumption.
     + intros t' Ht'. eapply IHet; [ exact Ht' | reflexivity ].
     + intros x t' μ1 μ2 Hd Hx Ht'. inversion Hx.
@@ -1009,8 +1011,8 @@ Qed.
     simulation that falls, not the statement. *)
 
 Definition MCert : gproc :=
-  ((cst a) ? ((cst a) ! (bvar 0) • 𝟘)) + ((cst b) ? (cst e ! cst y • 𝟘)).
-Definition KCert : MO (ExtAct TypeOfActions) := {[+ ActOut (cst b ▷ cst w) +]}.
+  ((cst a) ? • ((cst a) ! (bvar 0) • 𝟘)) + ((cst b) ? • (cst e ! cst y • 𝟘)).
+Definition KCert : MO (ExtAct TypeOfActions) := {[+ ActOut (cst b, cst w) +]}.
 
 Lemma MCert_no_tau : forall z, ~ lts (g MCert) τ z.
 Proof. intros z Hz. unfold MCert in Hz. inversion Hz; subst; inversion H3. Qed.
@@ -1046,7 +1048,7 @@ Qed.
 Lemma MCert_deliver :
   ((g MCert) ▷ KCert) ⟶ ((cst e ! cst y • 𝟘) ▷ (∅ : MO (ExtAct TypeOfActions))).
 Proof.
-  assert (EK : KCert = {[+ ActOut (cst b ▷ cst w) +]} ⊎ (∅ : MO (ExtAct TypeOfActions))).
+  assert (EK : KCert = {[+ ActOut (cst b, cst w) +]} ⊎ (∅ : MO (ExtAct TypeOfActions))).
   { unfold KCert. symmetry. apply gmultiset_disj_union_right_id. }
   rewrite EK. apply fw_tau_deliver. apply lts_choiceR.
   assert (E : (cst e ! cst y • 𝟘 : proc) = ((cst e ! cst y • 𝟘) ^ (cst w))) by reflexivity.
@@ -1079,9 +1081,9 @@ Proof.
 Qed.
 
 Lemma MCert_below :
-  (msgs [(cst a ▷ cst v)] ‖ g MCert) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ g 𝟘).
+  (msgs [(cst a, cst v)] ‖ g MCert) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a, cst v)] ‖ g 𝟘).
 Proof.
-  assert (Hstep : lts (msgs [(cst a ▷ cst v)] ‖ g MCert) τ
+  assert (Hstep : lts (msgs [(cst a, cst v)] ‖ g MCert) τ
                       (((g 𝟘) ‖ (g 𝟘)) ‖ ((cst a) ! cst v • 𝟘))).
   { simpl. eapply lts_comL.
     - apply lts_parL. apply lts_output.
@@ -1090,7 +1092,7 @@ Proof.
         by reflexivity.
       rewrite E. apply lts_input. }
   assert (Hc : (((g 𝟘) ‖ (g 𝟘)) ‖ ((cst a) ! cst v • 𝟘))
-                 ≡* (msgs [(cst a ▷ cst v)] ‖ (g 𝟘))).
+                 ≡* (msgs [(cst a, cst v)] ‖ (g 𝟘))).
   { simpl.
     etransitivity; [ apply cgr_par_com | ].
     etransitivity; [ apply cgr_fullpar; [ reflexivity | apply cgr_par_nil ] | ].
@@ -1105,14 +1107,14 @@ Qed.
 Theorem CertAll_is_false : ~ CertAll.
 Proof.
   intro H. apply MCert_not_settles.
-  eapply (H MCert 𝟘 [(cst a ▷ cst v)]).
+  eapply (H MCert 𝟘 [(cst a, cst v)]).
   - repeat constructor.
   - constructor.
   - intros z Hz. inversion Hz.
   - apply MCert_below.
   - intros x Hx. unfold KCert in Hx.
     apply gmultiset_elem_of_singleton in Hx. subst x.
-    exists (cst b ▷ cst w). reflexivity.
+    exists (cst b, cst w). reflexivity.
   - apply stable_of_no_step. apply fw_stable_iff. simpl. split.
     + intros z Hz. inversion Hz.
     + intros a0 Hin q Hq. inversion Hq.
@@ -1148,8 +1150,8 @@ Qed.
     incompatible, and the semantics only ever constrains their
     conjunction. *)
 
-Definition MD : gproc := ((cst a) ? ((g P1) : proc)) + ((cst a) ? ((g P2) : proc)).
-Definition PCfg : proc := msgs [(cst a ▷ cst v)] ‖ g MD.
+Definition MD : gproc := ((cst a) ? • ((g P1) : proc)) + ((cst a) ? • ((g P2) : proc)).
+Definition PCfg : proc := msgs [(cst a, cst v)] ‖ g MD.
 
 Lemma MD_no_tau : forall z, ~ lts (g MD) τ z.
 Proof. intros z Hz. unfold MD in Hz. inversion Hz; subst; inversion H3. Qed.
@@ -1254,8 +1256,8 @@ Qed.
     [ax_input_distrib_l] only merges guards on the same channel.  That is
     the remaining shape to investigate. *)
 
-Definition MDc : gproc := (cst a) ? ((g PC) : proc).
-Definition PCfgC : proc := msgs [(cst a ▷ cst v)] ‖ g MDc.
+Definition MDc : gproc := (cst a) ? • ((g PC) : proc).
+Definition PCfgC : proc := msgs [(cst a, cst v)] ‖ g MDc.
 
 Lemma ax_PCfg_merge : PCfg ᴠᴀᴄᴄꜱ⊑ₐₓ PCfgC.
 Proof.
@@ -1304,8 +1306,8 @@ Qed.
 
 Theorem cfg_disjunction_at_MCert :
   (((g MCert) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc))
-  \/ (exists p', lts (msgs [(cst a ▷ cst v)] ‖ ((g MCert) : proc)) τ p'
-        /\ p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc))).
+  \/ (exists p', lts (msgs [(cst a, cst v)] ‖ ((g MCert) : proc)) τ p'
+        /\ p' ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a, cst v)] ‖ ((g 𝟘) : proc))).
 Proof.
   right.
   exists (((g 𝟘) ‖ (g 𝟘)) ‖ ((cst a) ! cst v • 𝟘)). split.
@@ -1316,7 +1318,7 @@ Proof.
         by reflexivity.
       rewrite E. apply lts_input.
   - assert (Hc : (((g 𝟘) ‖ (g 𝟘)) ‖ ((cst a) ! cst v • 𝟘))
-                   ≡* (msgs [(cst a ▷ cst v)] ‖ (g 𝟘))).
+                   ≡* (msgs [(cst a, cst v)] ‖ (g 𝟘))).
     { simpl.
       etransitivity; [ apply cgr_par_com | ].
       etransitivity; [ apply cgr_fullpar; [ reflexivity | apply cgr_par_nil ] | ].
@@ -1343,17 +1345,17 @@ Qed.
     sens.  Sur [MCert] :
 
     - le disjoint « sac vide » est faux : [MCert_not_below_nil], via le
-      client [UCert := (b!w•𝟘) ‖ (e ? ①)], τ-bloqué et non bon, que
+      client [UCert := (b!w•𝟘) ‖ (e ? • ①)], τ-bloqué et non bon, que
       [g MCert] passe (il prend [b] et répond sur [e]) ;
     - l'unique délivrance donne [Mc = a!v•𝟘], qui rend le message avec
       [K = 𝟘], donc le disjoint réclame
       [msgs l ‖ 𝟘 ⊑ₘᵤₛₜᵢ msgs l ‖ g MCert] — réfuté par [TCert].
 
-    [TCert := (b!w•𝟘) ‖ (a ? (𝛕•① + (e ? 𝟘)))] sépare pour la raison qui
+    [TCert := (b!w•𝟘) ‖ (a ? • (𝛕•① + (e ? • 𝟘)))] sépare pour la raison qui
     court dans tout ce fichier : la garde **sœur** sur une voie étrangère
     au sac.  À gauche, [msgs l ‖ 𝟘 ≂ (a!v•𝟘)] passe — son [com] en [a]
     laisse [𝟘] face à un client qui réussit tout seul par son [𝛕].  À
-    droite, le [com] en [b] réveille [e!y•𝟘], le [e ? 𝟘] du client
+    droite, le [com] en [b] réveille [e!y•𝟘], le [e ? • 𝟘] du client
     l'absorbe, et il ne reste que [𝟘] face à [𝟘].
 
     C'est le même mécanisme que [VACCS_Bad.nil_not_below_dead_summand] :
@@ -1371,7 +1373,7 @@ Qed.
 (* ** Le client qui réfute le disjoint « sac vide » *)
 
 Definition UCert : proc :=
-  (((cst b) ! (cst w) • 𝟘) : proc) ‖ ((g ((cst e) ? ((g ①) : proc))) : proc).
+  (((cst b) ! (cst w) • 𝟘) : proc) ‖ ((g ((cst e) ? • ((g ①) : proc))) : proc).
 
 Lemma UCert_not_good : ~ good_VACCS UCert.
 Proof.
@@ -1382,34 +1384,34 @@ Qed.
 Lemma UCert_no_tau : forall z, ~ lts UCert τ z.
 Proof.
   intros z H. unfold UCert in H. inversion H; subst.
-  - match goal with H2 : lts (g (_ ? _)) (ActExt (ActIn _)) _ |- _ =>
+  - match goal with H2 : lts (g (_ ? • _)) (ActExt (ActIn _)) _ |- _ =>
       inversion H2; subst end.
     match goal with H3 : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H3; subst end.
     apply nbe. reflexivity.
-  - match goal with H2 : lts (g (_ ? _)) (ActExt (ActOut _)) _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g (_ ? • _)) (ActExt (ActOut _)) _ |- _ => inversion H2 end.
   - match goal with H2 : lts (_ ! _ • 𝟘) τ _ |- _ => inversion H2 end.
-  - match goal with H2 : lts (g (_ ? _)) τ _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g (_ ? • _)) τ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma UCert_out_inv : forall c0 v0 t',
   lts UCert (ActExt (ActOut (c0,v0))) t' ->
   c0 = cst b /\ v0 = cst w
-  /\ t' = (((g 𝟘) : proc) ‖ ((g ((cst e) ? ((g ①) : proc))) : proc)).
+  /\ t' = (((g 𝟘) : proc) ‖ ((g ((cst e) ? • ((g ①) : proc))) : proc)).
 Proof.
   intros c0 v0 t' H. unfold UCert in H. inversion H; subst.
   - match goal with H2 : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H2; subst end.
     repeat split.
-  - match goal with H2 : lts (g (_ ? _)) _ _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g (_ ? • _)) _ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma emsg_passes_esink :
   (((cst e) ! (cst y) • 𝟘) : proc) must_pass
-    (((g 𝟘) : proc) ‖ ((g ((cst e) ? ((g ①) : proc))) : proc)).
+    (((g 𝟘) : proc) ‖ ((g ((cst e) ? • ((g ①) : proc))) : proc)).
 Proof.
   apply m_step.
   - intro Hg. inversion Hg; subst.
     match goal with H : _ \/ _ |- _ => destruct H as [H|H]; inversion H end.
-  - exists (((g 𝟘) : proc) ▷ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
+  - exists (((g 𝟘) : proc) ∣ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
     eapply (ParSync (ActOut (cst e, cst y)) (ActIn (cst e, cst y))).
     + simpl. reflexivity.
     + apply lts_output.
@@ -1421,13 +1423,13 @@ Proof.
     + match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
     + match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
     + match goal with H2 : lts (g 𝟘) τ _ |- _ => inversion H2 end.
-    + match goal with H2 : lts (g (_ ? _)) τ _ |- _ => inversion H2 end.
+    + match goal with H2 : lts (g (_ ? • _)) τ _ |- _ => inversion H2 end.
   - intros p' t' μ1 μ2 Hd Hp' Ht'.
     inversion Hp'; subst.
     destruct μ2 as [a2|a2]; simpl in Hd; try contradiction. subst a2.
     apply m_now. inversion Ht'; subst.
     + match goal with H2 : lts (g 𝟘) _ _ |- _ => inversion H2 end.
-    + match goal with H2 : lts (g (_ ? _)) _ _ |- _ => inversion H2; subst end.
+    + match goal with H2 : lts (g (_ ? • _)) _ _ |- _ => inversion H2; subst end.
       apply good_par. right. simpl. constructor.
 Qed.
 
@@ -1436,7 +1438,7 @@ Proof.
   apply m_step.
   - apply UCert_not_good.
   - exists ((((cst e) ! (cst y) • 𝟘) : proc)
-             ▷ (((g 𝟘) : proc) ‖ ((g ((cst e) ? ((g ①) : proc))) : proc))).
+             ∣ (((g 𝟘) : proc) ‖ ((g ((cst e) ? • ((g ①) : proc))) : proc))).
     eapply (ParSync (ActIn (cst b, cst w)) (ActOut (cst b, cst w))).
     + simpl. reflexivity.
     + unfold MCert. apply lts_choiceR.
@@ -1451,7 +1453,7 @@ Proof.
     + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction.
       exfalso. destruct a1 as (c1,v1).
       unfold MCert in Hp'. inversion Hp'; subst;
-        match goal with H : lts (g (_ ? _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
+        match goal with H : lts (g (_ ? • _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
     + destruct μ1 as [a1|a1]; simpl in Hd; try contradiction. subst a1.
       destruct a2 as (c2,v2).
       destruct (UCert_out_inv _ _ _ Ht') as (Ec & Ev & Et). subst c2 v2 t'.
@@ -1510,7 +1512,7 @@ Lemma MTau_passes_UCert : ((g MTau) : proc) must_pass UCert.
 Proof.
   apply m_step.
   - apply UCert_not_good.
-  - exists (((g MCert) : proc) ▷ UCert).
+  - exists (((g MCert) : proc) ∣ UCert).
     apply ParLeft. unfold MTau. apply lts_choiceR. apply lts_tau.
   - intros p' Hp'. apply MTau_tau_inv in Hp'. subst p'. apply MCert_passes_UCert.
   - intros t' Ht'. exfalso. eapply UCert_no_tau. exact Ht'.
@@ -1536,10 +1538,10 @@ Proof.
 Qed.
 
 Lemma MTau_below :
-  (msgs [(cst a ▷ cst v)] ‖ ((g MTau) : proc))
-    ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc)).
+  (msgs [(cst a, cst v)] ‖ ((g MTau) : proc))
+    ⊑ₘᵤₛₜᵢ (msgs [(cst a, cst v)] ‖ ((g 𝟘) : proc)).
 Proof.
-  assert (Hstep : lts (msgs [(cst a ▷ cst v)] ‖ ((g MTau) : proc)) τ
+  assert (Hstep : lts (msgs [(cst a, cst v)] ‖ ((g MTau) : proc)) τ
                       (((g 𝟘) ‖ (g 𝟘)) ‖ ((cst a) ! cst v • 𝟘))).
   { simpl. eapply lts_comL.
     - apply lts_parL. apply lts_output.
@@ -1548,7 +1550,7 @@ Proof.
         by reflexivity.
       rewrite E. apply lts_input. }
   assert (Hc : (((g 𝟘) ‖ (g 𝟘)) ‖ ((cst a) ! cst v • 𝟘))
-                 ≡* (msgs [(cst a ▷ cst v)] ‖ (g 𝟘))).
+                 ≡* (msgs [(cst a, cst v)] ‖ (g 𝟘))).
   { simpl.
     etransitivity; [ apply cgr_par_com | ].
     etransitivity; [ apply cgr_fullpar; [ reflexivity | apply cgr_par_nil ] | ].
@@ -1567,11 +1569,11 @@ Theorem tau_summand_cancellation_is_false :
        ((g M) : proc) ⊑ₘᵤₛₜᵢ ((g N) : proc)).
 Proof.
   intro H. apply MTau_not_below_nil.
-  apply (H [(cst a ▷ cst v)] MTau 𝟘).
+  apply (H [(cst a, cst v)] MTau 𝟘).
   - unfold MTau, MCert. repeat constructor.
   - constructor.
   - exists ((g MCert) : proc). unfold MTau. apply lts_choiceR. apply lts_tau.
-  - exists (((g MCert) : proc) ▷ bag [(cst a ▷ cst v)]). apply fw_tau_left.
+  - exists (((g MCert) : proc) ▷ bag [(cst a, cst v)]). apply fw_tau_left.
     unfold MTau. apply lts_choiceR. apply lts_tau.
   - apply MTau_below.
 Qed.
@@ -1594,7 +1596,7 @@ Qed.
     [VACCS_Matching.CfgDisjunctionLocal3]. *)
 
 Definition MFalse : gproc :=
-  ((cst a) ? ((g 𝟘) : proc)) + (𝛕 • ((g MCert) : proc)).
+  ((cst a) ? • ((g 𝟘) : proc)) + (𝛕 • ((g MCert) : proc)).
 
 Lemma MFalse_tau_inv : forall z, lts ((g MFalse) : proc) τ z -> z = ((g MCert) : proc).
 Proof.
@@ -1616,7 +1618,7 @@ Lemma MFalse_passes_UCert : ((g MFalse) : proc) must_pass UCert.
 Proof.
   apply m_step.
   - apply UCert_not_good.
-  - exists (((g MCert) : proc) ▷ UCert).
+  - exists (((g MCert) : proc) ∣ UCert).
     apply ParLeft. unfold MFalse. apply lts_choiceR. apply lts_tau.
   - intros p' Hp'. apply MFalse_tau_inv in Hp'. subst p'. apply MCert_passes_UCert.
   - intros t' Ht'. exfalso. eapply UCert_no_tau. exact Ht'.
@@ -1641,8 +1643,8 @@ Proof.
 Qed.
 
 Lemma MFalse_below :
-  (msgs [(cst a ▷ cst v)] ‖ ((g MFalse) : proc))
-    ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc)).
+  (msgs [(cst a, cst v)] ‖ ((g MFalse) : proc))
+    ⊑ₘᵤₛₜᵢ (msgs [(cst a, cst v)] ‖ ((g 𝟘) : proc)).
 Proof.
   intros t Hm.
   apply MCert_below.
@@ -1653,7 +1655,7 @@ Qed.
 Theorem CfgDisjunctionLocal_is_false : ~ CfgDisjunctionLocal.
 Proof.
   intro H.
-  destruct (H [(cst a ▷ cst v)] MFalse 𝟘
+  destruct (H [(cst a, cst v)] MFalse 𝟘
               ltac:(unfold MFalse, MCert; repeat constructor)
               ltac:(constructor)
               ltac:(eexists; apply fw_tau_left; unfold MFalse;
@@ -1732,8 +1734,8 @@ Qed.
 
 Lemma cfg_local3_at_MFalse :
   exists K, lts ((g MFalse) : proc) τ K
-    /\ (msgs [(cst a ▷ cst v)] ‖ K)
-         ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc)).
+    /\ (msgs [(cst a, cst v)] ‖ K)
+         ⊑ₘᵤₛₜᵢ (msgs [(cst a, cst v)] ‖ ((g 𝟘) : proc)).
 Proof.
   exists ((g MCert) : proc). split.
   - unfold MFalse. apply lts_choiceR. apply lts_tau.
@@ -1742,7 +1744,7 @@ Qed.
 
 Lemma cfg_local3_at_MTau :
   exists c v0 l0 Mc,
-    Permutation [(cst a ▷ cst v)] ((c,v0) :: l0)
+    Permutation [(cst a, cst v)] ((c,v0) :: l0)
     /\ lts ((g MTau) : proc) (ActExt (ActIn (c,v0))) Mc
     /\ Mc ⊑ₘᵤₛₜᵢ (((c ! v0 • 𝟘) : proc) ‖ ((g 𝟘) : proc)).
 Proof.
@@ -1822,8 +1824,8 @@ Qed.
     pour l'instant sur **tous** les canaux. *)
 
 Definition MSelf : gproc :=
-  (((cst b) ? ((cst b) ! (bvar 0) • 𝟘)) + ((cst b) ? ((g 𝟘) : proc)))
-  + ((cst a) ? ((g 𝟘) : proc)).
+  (((cst b) ? • ((cst b) ! (bvar 0) • 𝟘)) + ((cst b) ? • ((g 𝟘) : proc)))
+  + ((cst a) ? • ((g 𝟘) : proc)).
 
 Lemma MSelf_no_tau : forall z, ~ lts ((g MSelf) : proc) τ z.
 Proof.
@@ -1861,7 +1863,7 @@ Proof.
 Qed.
 
 Lemma MSelf_cfg_tau :
-  exists z, (((g MSelf) : proc) ▷ bag [(cst a ▷ cst v)]) ⟶ z.
+  exists z, (((g MSelf) : proc) ▷ bag [(cst a, cst v)]) ⟶ z.
 Proof.
   exists (((g 𝟘) : proc) ▷ (∅ : MO (ExtAct TypeOfActions))).
   simpl. apply fw_tau_deliver.
@@ -1882,7 +1884,7 @@ Theorem selfret_descent_is_false :
           /\ Mc ⊑ₘᵤₛₜᵢ (((c ! v0 • 𝟘) : proc) ‖ ((g N) : proc)))).
 Proof.
   intro H.
-  destruct (H [(cst a ▷ cst v)] MSelf 𝟘
+  destruct (H [(cst a, cst v)] MSelf 𝟘
               ltac:(unfold MSelf; repeat constructor)
               ltac:(constructor)
               MSelf_selfret MSelf_no_tau MSelf_cfg_tau
@@ -1907,7 +1909,7 @@ Qed.
     l'inclusion **stricte** : le cas clos de la dichotomie est
     strictement plus grand qu'avec [SelfRet]. *)
 
-Lemma MSelf_not_selfretbag : ~ SelfRetBag [(cst a ▷ cst v)] MSelf.
+Lemma MSelf_not_selfretbag : ~ SelfRetBag [(cst a, cst v)] MSelf.
 Proof.
   intros (c & v0 & Hin & Hex).
   simpl in Hin. destruct Hin as [Heq|[]]. injection Heq as Hc Hv. subst c v0.
@@ -1931,7 +1933,7 @@ Qed.
     C'est une seconde raison, indépendante de
     [MSelf_not_selfretbag], pour laquelle [MSelf] est du côté clos. *)
 
-Lemma MCert_selfretbag : SelfRetBag [(cst a ▷ cst v)] MCert.
+Lemma MCert_selfretbag : SelfRetBag [(cst a, cst v)] MCert.
 Proof.
   exists (cst a), (cst v). split; [ left; reflexivity | ].
   unfold MCert. simpl. left.
@@ -1950,18 +1952,18 @@ Qed.
     branche [SelfRetBag] du résidu. *)
 
 Lemma ax_MCert_bag_below_nil :
-  ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))
-    ᴠᴀᴄᴄꜱ⊑ₐₓ ((msgs [(cst a ▷ cst v)]) ‖ ((g (𝟘 : gproc)) : proc)).
+  ((msgs [(cst a, cst v)]) ‖ ((g MCert) : proc))
+    ᴠᴀᴄᴄꜱ⊑ₐₓ ((msgs [(cst a, cst v)]) ‖ ((g (𝟘 : gproc)) : proc)).
 Proof.
   eapply (cfg_copycat_guard_below_bag _ [] (cst a) (cst v) _
-            [((cst b) ? ((cst e) ! (cst y) • 𝟘))]).
+            [((cst b) ? • ((cst e) ! (cst y) • 𝟘))]).
   - reflexivity.
   - unfold MCert, ccatg. reflexivity.
 Qed.
 
 
 Lemma MSelf_disjoint_from_bag : forall c' u',
-  In (c',u') [(cst a ▷ cst v)] -> ~ In c' (ochans ((g MSelf) : proc)).
+  In (c',u') [(cst a, cst v)] -> ~ In c' (ochans ((g MSelf) : proc)).
 Proof.
   intros c' u' Hin Hoc. simpl in Hin. destruct Hin as [He|[]].
   injection He as He1 He2. subst c' u'.
@@ -2005,11 +2007,11 @@ Qed.
 
 (* ** Le client qui réfute le disjoint « source » *)
 
-Definition QCert : gproc := (𝛕 • ((g ①) : proc)) + ((cst e) ? ((g 𝟘) : proc)).
+Definition QCert : gproc := (𝛕 • ((g ①) : proc)) + ((cst e) ? • ((g 𝟘) : proc)).
 Definition TCert2 : proc := (((cst b) ! (cst w) • 𝟘) : proc) ‖ ((g QCert) : proc).
 Definition TCert : proc :=
   (((cst b) ! (cst w) • 𝟘) : proc)
-  ‖ ((g ((cst a) ? ((g QCert) : proc))) : proc).
+  ‖ ((g ((cst a) ? • ((g QCert) : proc))) : proc).
 
 Lemma TCert_not_good : ~ good_VACCS TCert.
 Proof.
@@ -2020,13 +2022,13 @@ Qed.
 Lemma TCert_no_tau : forall z, ~ lts TCert τ z.
 Proof.
   intros z H. unfold TCert in H. inversion H; subst.
-  - match goal with H2 : lts (g (_ ? _)) (ActExt (ActIn _)) _ |- _ =>
+  - match goal with H2 : lts (g (_ ? • _)) (ActExt (ActIn _)) _ |- _ =>
       inversion H2; subst end.
     match goal with H3 : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H3; subst end.
     apply nab. reflexivity.
-  - match goal with H2 : lts (g (_ ? _)) (ActExt (ActOut _)) _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g (_ ? • _)) (ActExt (ActOut _)) _ |- _ => inversion H2 end.
   - match goal with H2 : lts (_ ! _ • 𝟘) τ _ |- _ => inversion H2 end.
-  - match goal with H2 : lts (g (_ ? _)) τ _ |- _ => inversion H2 end.
+  - match goal with H2 : lts (g (_ ? • _)) τ _ |- _ => inversion H2 end.
 Qed.
 
 Lemma TCert2_not_good : ~ good_VACCS TCert2.
@@ -2043,7 +2045,7 @@ Proof.
   - match goal with H2 : lts (g (_ + _)) (ActExt (ActIn _)) _ |- _ =>
       inversion H2; subst end.
     + match goal with H3 : lts (g (𝛕 • _)) _ _ |- _ => inversion H3 end.
-    + match goal with H3 : lts (g (_ ? _)) _ _ |- _ => inversion H3; subst end.
+    + match goal with H3 : lts (g (_ ? • _)) _ _ |- _ => inversion H3; subst end.
       match goal with H4 : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H4; subst end.
       exfalso. apply nbe. reflexivity.
   - match goal with H2 : lts (g (_ + _)) (ActExt (ActOut _)) _ |- _ =>
@@ -2053,14 +2055,14 @@ Proof.
   - match goal with H2 : lts (g (_ + _)) τ _ |- _ => inversion H2; subst end.
     + match goal with H3 : lts (g (𝛕 • _)) τ _ |- _ => inversion H3; subst end.
       reflexivity.
-    + match goal with H3 : lts (g (_ ? _)) τ _ |- _ => inversion H3 end.
+    + match goal with H3 : lts (g (_ ? • _)) τ _ |- _ => inversion H3 end.
 Qed.
 
 Lemma nil_passes_TCert2 : ((g 𝟘) : proc) must_pass TCert2.
 Proof.
   apply m_step.
   - apply TCert2_not_good.
-  - exists (((g 𝟘) : proc) ▷ ((((cst b) ! (cst w) • 𝟘) : proc) ‖ ((g ①) : proc))).
+  - exists (((g 𝟘) : proc) ∣ ((((cst b) ! (cst w) • 𝟘) : proc) ‖ ((g ①) : proc))).
     apply ParRight. unfold TCert2, QCert.
     apply lts_parR. apply lts_choiceL. apply lts_tau.
   - intros p' Hp'. inversion Hp'.
@@ -2074,7 +2076,7 @@ Lemma TCert_in_inv : forall c0 v0 t', lts TCert (ActExt (ActIn (c0,v0))) t' ->
 Proof.
   intros c0 v0 t' H. unfold TCert in H. inversion H; subst.
   - match goal with H2 : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H2 end.
-  - match goal with H2 : lts (g (_ ? _)) _ _ |- _ => inversion H2; subst end.
+  - match goal with H2 : lts (g (_ ? • _)) _ _ |- _ => inversion H2; subst end.
     split; reflexivity.
 Qed.
 
@@ -2082,7 +2084,7 @@ Lemma Amsg_passes_TCert : (((cst a) ! (cst v) • 𝟘) : proc) must_pass TCert.
 Proof.
   apply m_step.
   - apply TCert_not_good.
-  - exists (((g 𝟘) : proc) ▷ TCert2).
+  - exists (((g 𝟘) : proc) ∣ TCert2).
     eapply (ParSync (ActOut (cst a, cst v)) (ActIn (cst a, cst v))).
     + simpl. reflexivity.
     + apply lts_output.
@@ -2141,7 +2143,7 @@ Qed.
 
 Lemma aemsg_fails_aQCert :
   ~ (((((cst a) ! (cst v) • 𝟘) : proc) ‖ (((cst e) ! (cst y) • 𝟘) : proc)) must_pass
-       (((g 𝟘) : proc) ‖ ((g ((cst a) ? ((g QCert) : proc))) : proc))).
+       (((g 𝟘) : proc) ‖ ((g ((cst a) ? • ((g QCert) : proc))) : proc))).
 Proof.
   intro Hm. inversion Hm; subst.
   - match goal with Hg : good_VACCS _ |- _ =>
@@ -2168,7 +2170,7 @@ Proof.
   - apply aemsg_fails_aQCert.
     match goal with Hc : forall _ _ _ _, _ |- _ =>
       eapply (Hc ((((cst a) ! (cst v) • 𝟘) : proc) ‖ (((cst e) ! (cst y) • 𝟘) : proc))
-                 (((g 𝟘) : proc) ‖ ((g ((cst a) ? ((g QCert) : proc))) : proc))
+                 (((g 𝟘) : proc) ‖ ((g ((cst a) ? • ((g QCert) : proc))) : proc))
                  (ActIn (cst b, cst w)) (ActOut (cst b, cst w)))
     end.
     + simpl. reflexivity.
@@ -2180,17 +2182,17 @@ Proof.
 Qed.
 
 Theorem MCert_succ_not_below_source :
-  ~ ((msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc))
-       ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ ((g MCert) : proc))).
+  ~ ((msgs [(cst a, cst v)] ‖ ((g 𝟘) : proc))
+       ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a, cst v)] ‖ ((g MCert) : proc))).
 Proof.
   intro Hle. apply BCert_fails_TCert.
-  assert (Hc2 : (msgs [(cst a ▷ cst v)] ‖ ((g MCert) : proc))
+  assert (Hc2 : (msgs [(cst a, cst v)] ‖ ((g MCert) : proc))
                 ≡* ((((cst a) ! (cst v) • 𝟘) : proc) ‖ ((g MCert) : proc))).
   { simpl. apply cgr_fullpar; [ apply cgr_par_nil | reflexivity ]. }
   apply (proj2 (must_i_cgr _ _ Hc2)).
   apply Hle.
   assert (Hc1 : (((cst a) ! (cst v) • 𝟘) : proc)
-                ≡* (msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc))).
+                ≡* (msgs [(cst a, cst v)] ‖ ((g 𝟘) : proc))).
   { simpl. symmetry. etransitivity; [ apply cgr_par_nil | apply cgr_par_nil ]. }
   apply (proj2 (must_i_cgr _ _ Hc1)).
   apply Amsg_passes_TCert.
@@ -2201,7 +2203,7 @@ Qed.
 Theorem cfg_disjunction_source_bag_is_false : ~ CfgDisjunctionSourceBag.
 Proof.
   intro H.
-  destruct (H [(cst a ▷ cst v)] MCert 𝟘)
+  destruct (H [(cst a, cst v)] MCert 𝟘)
     as [Hempty | (c0 & v0 & l0 & Mc & K & Hp & Hin & Hout & HK)].
   - unfold MCert. repeat constructor.
   - repeat constructor.
@@ -2237,7 +2239,7 @@ Qed.
 Theorem cfg_disjunction_local_at_MCert :
   (((g MCert) : proc) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((g 𝟘) : proc))
   \/ (exists c0 v0 l0 Mc,
-        Permutation [(cst a ▷ cst v)] ((c0,v0) :: l0)
+        Permutation [(cst a, cst v)] ((c0,v0) :: l0)
         /\ lts ((g MCert) : proc) (ActExt (ActIn (c0,v0))) Mc
         /\ Mc ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((((c0 ! v0 • 𝟘)) : proc) ‖ ((g 𝟘) : proc))).
 Proof.
@@ -2266,8 +2268,8 @@ Qed.
     sa forme la plus courte. *)
 
 Theorem bagsem_does_not_descend :
-  ((msgs [(cst a ▷ cst v)] ‖ ((g MCert) : proc))
-     ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a ▷ cst v)] ‖ ((g 𝟘) : proc)))
+  ((msgs [(cst a, cst v)] ‖ ((g MCert) : proc))
+     ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs [(cst a, cst v)] ‖ ((g 𝟘) : proc)))
   /\ ~ ((msgs (@nil TypeOfActions) ‖ ((g MCert) : proc))
           ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs (@nil TypeOfActions) ‖ ((g 𝟘) : proc))).
 Proof.
@@ -2303,7 +2305,7 @@ Qed.
 
 Definition ECont : proc := ((cst e) ! (cst y) • 𝟘).
 Definition Pcc : proc := (((cst b) ! (cst w) • 𝟘)) ‖ (TSg (cst e)).
-Definition TCC : proc := ((g ((cst a) ? Pcc)) : proc).
+Definition TCC : proc := ((g ((cst a) ? • Pcc)) : proc).
 
 Lemma nilnil_static : Static (((g (𝟘 : gproc)) : proc) ‖ ((g (𝟘 : gproc)) : proc)).
 Proof. repeat constructor. Qed.
@@ -2365,8 +2367,8 @@ Proof.
     | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
     | H : lts (𝛕 • _) (ActExt _) _ |- _ => inversion H
     | H : lts (𝛕 • _) τ _ |- _ => inversion H; subst; clear H
-    | H : lts (cst e ? _) τ _ |- _ => inversion H
-    | H : lts (cst e ? _) (ActExt (ActIn _)) _ |- _ =>
+    | H : lts (cst e ? • _) τ _ |- _ => inversion H
+    | H : lts (cst e ? • _) (ActExt (ActIn _)) _ |- _ =>
         inversion H; subst; clear H
     end;
     try reflexivity; try congruence.
@@ -2380,7 +2382,7 @@ Lemma must_nil_Pcc : ((g (𝟘 : gproc)) : proc) must_pass Pcc.
 Proof.
   apply m_step.
   - apply Pcc_not_good.
-  - exists (((g (𝟘 : gproc)) : proc) ▷ (((cst b) ! (cst w) • 𝟘) ‖ ((g (① : gproc)) : proc))).
+  - exists (((g (𝟘 : gproc)) : proc) ∣ (((cst b) ! (cst w) • 𝟘) ‖ ((g (① : gproc)) : proc))).
     apply ParRight. unfold Pcc. apply lts_parR. unfold TSg.
     apply lts_choiceL. apply lts_tau.
   - intros p' Hp'. exfalso. eapply nil_no_lts; exact Hp'.
@@ -2416,7 +2418,7 @@ Lemma msg_passes_TCC : (((cst a) ! (cst v) • 𝟘) : proc) must_pass TCC.
 Proof.
   apply m_step.
   - apply TCC_not_good.
-  - exists (((g (𝟘 : gproc)) : proc) ▷ (subst_in_proc 0 (cst v) Pcc)).
+  - exists (((g (𝟘 : gproc)) : proc) ∣ (subst_in_proc 0 (cst v) Pcc)).
     eapply ParSync with (μ1 := ActOut (cst a, cst v)) (μ2 := ActIn (cst a, cst v)).
     + simpl. reflexivity.
     + apply lts_output.
@@ -2443,17 +2445,17 @@ Proof.
 Qed.
 
 Theorem copycat_summand_not_harmless :
-  ~ ((msgs [(cst a ▷ cst v)])
-       ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))).
+  ~ ((msgs [(cst a, cst v)])
+       ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((msgs [(cst a, cst v)]) ‖ ((g MCert) : proc))).
 Proof.
   intro Hpre.
-  assert (Hcgr : (msgs [(cst a ▷ cst v)]) ≡* (((cst a) ! (cst v) • 𝟘) : proc)).
+  assert (Hcgr : (msgs [(cst a, cst v)]) ≡* (((cst a) ! (cst v) • 𝟘) : proc)).
   { simpl. apply cgr_par_nil. }
-  assert (H1 : (msgs [(cst a ▷ cst v)]) must_pass TCC).
+  assert (H1 : (msgs [(cst a, cst v)]) must_pass TCC).
   { apply (proj1 (must_i_cgr _ _ Hcgr)). apply msg_passes_TCC. }
   pose proof (Hpre TCC H1) as H2.
   eapply msg_MCert_fails_TCC.
-  assert (Hcgr2 : ((msgs [(cst a ▷ cst v)]) ‖ ((g MCert) : proc))
+  assert (Hcgr2 : ((msgs [(cst a, cst v)]) ‖ ((g MCert) : proc))
                   ≡* ((((cst a) ! (cst v) • 𝟘) : proc) ‖ ((g MCert) : proc))).
   { apply cgr_fullpar; [ exact Hcgr | apply cgr_refl ]. }
   apply (proj2 (must_i_cgr _ _ Hcgr2)). exact H2.
@@ -2920,7 +2922,7 @@ End VACCS_DropProbes.
 
     Les **deux** gardes régénèrent — chacune ré-émet le message qu'elle
     consomme — et les deux successeurs de délivrance sont, à [≡*] près,
-    [msgs lr ‖ (rc ? Kr)] et [msgs lr].
+    [msgs lr ‖ (rc ? • Kr)] et [msgs lr].
 
     - **L'hypothèse tient, et gratuitement** : [must_i_tau_below] sur la
       délivrance de [rb] donne [PR ⊑ₘᵤₛₜᵢ SBr], et [SBr ≡* msgs lr].
@@ -2943,7 +2945,7 @@ End VACCS_DropProbes.
     généralisent pas : dans la classe copycat les résidus sont [𝟘], donc
     tous les successeurs sont [≂ₘᵤₛₜᵢ] entre eux et [pt] ne contraint
     rien — c'est [VACCS_Matching.copycat_delivery_below_target].  Dès
-    qu'un résidu fait autre chose ([rc ? Kr] ci-dessus contre [𝟘]), les
+    qu'un résidu fait autre chose ([rc ? • Kr] ci-dessus contre [𝟘]), les
     successeurs divergent et rien ne les relie. *)
 
 Section VACCS_RegenProbe.
@@ -2954,10 +2956,10 @@ Context {nac : ra <> rc} {nae : ra <> re} {nbc : rb <> rc} {nbe : rb <> re}
         {nce : rc <> re}.
 
 Definition Kr : proc := (cst re) ! (cst ry) • 𝟘.
-Definition PAr : proc := ((cst ra) ! (cst ru) • 𝟘) ‖ (g ((cst rc) ? Kr)).
+Definition PAr : proc := ((cst ra) ! (cst ru) • 𝟘) ‖ (g ((cst rc) ? • Kr)).
 Definition PBr : proc := (cst rb) ! (cst rw) • 𝟘.
-Definition MR : gproc := ((cst ra) ? PAr) + ((cst rb) ? PBr).
-Definition lr : list TypeOfActions := [(cst ra ▷ cst ru); (cst rb ▷ cst rw)].
+Definition MR : gproc := ((cst ra) ? • PAr) + ((cst rb) ? • PBr).
+Definition lr : list TypeOfActions := [(cst ra, cst ru); (cst rb, cst rw)].
 Definition PR : proc := (msgs lr) ‖ (g MR).
 
 (* Les deux successeurs de délivrance, écrits littéralement pour que les
@@ -2966,7 +2968,7 @@ Definition SAr : proc :=
   ((𝟘 : proc) ‖ ((((cst rb) ! (cst rw) • 𝟘)) ‖ (𝟘 : proc))) ‖ PAr.
 Definition SBr : proc :=
   ((((cst ra) ! (cst ru) • 𝟘)) ‖ ((𝟘 : proc) ‖ (𝟘 : proc))) ‖ PBr.
-Definition TRr : proc := ((cst rc) ! (cst rz) • 𝟘) ‖ (g ((cst re) ? (g ①))).
+Definition TRr : proc := ((cst rc) ! (cst rz) • 𝟘) ‖ (g ((cst re) ? • (g ①))).
 
 Ltac blastR :=
   unfold lts_step in *; simpl in *;
@@ -2974,7 +2976,7 @@ Ltac blastR :=
   | H : lts (_ ‖ _) _ _ |- _ => inversion H; subst; clear H
   | H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
-  | H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst; clear H
+  | H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g 𝟘) _ _ |- _ => inversion H
   | H : lts (g ①) _ _ |- _ => inversion H
   end; simpl in *; try congruence; try contradiction.
@@ -3014,7 +3016,7 @@ Proof.
 Qed.
 
 (* [SAr] est bien la configuration [msgs l0 ‖ Mc] de l'énoncé. *)
-Lemma SAr_cgr : SAr ≡* ((msgs [(cst rb ▷ cst rw)]) ‖ PAr).
+Lemma SAr_cgr : SAr ≡* ((msgs [(cst rb, cst rw)]) ‖ PAr).
 Proof.
   unfold SAr. simpl. apply cgr_fullpar; [ | reflexivity ].
   apply cgr_symm. apply ax_nil_par.
@@ -3039,7 +3041,7 @@ Qed.
 
 (* L'état atteint après la synchronisation sur [rc] : le serveur y émet
     sur [re], que le client écoute. *)
-Definition InnerT : proc := (𝟘 : proc) ‖ (g ((cst re) ? (g ①))).
+Definition InnerT : proc := (𝟘 : proc) ‖ (g ((cst re) ? • (g ①))).
 Definition InnerS : proc :=
   ((𝟘 : proc) ‖ ((((cst rb) ! (cst rw) • 𝟘)) ‖ (𝟘 : proc)))
     ‖ (((cst ra) ! (cst ru) • 𝟘) ‖ Kr).
@@ -3062,7 +3064,7 @@ Proof.
   - apply InnerT_not_good.
   - exists (((((𝟘 : proc) ‖ ((((cst rb) ! (cst rw) • 𝟘)) ‖ (𝟘 : proc)))
                ‖ (((cst ra) ! (cst ru) • 𝟘) ‖ (𝟘 : proc))))
-              ▷ ((𝟘 : proc) ‖ ((g ①) : proc))).
+              ∣ ((𝟘 : proc) ‖ ((g ①) : proc))).
     eapply ParSync.
     + apply dual_oi_r.
     + unfold InnerS, Kr. apply lts_parR. apply lts_parR. apply lts_output.
@@ -3085,7 +3087,7 @@ Lemma SAr_passes_TRr : SAr must_pass TRr.
 Proof.
   apply m_step.
   - apply TRr_not_good.
-  - exists (InnerS ▷ InnerT). eapply ParSync.
+  - exists (InnerS ∣ InnerT). eapply ParSync.
     + apply dual_io_r.
     + unfold SAr, PAr, InnerS. apply lts_parR. apply lts_parR.
       assert (E : Kr ^ (cst rz) = Kr) by reflexivity.
@@ -3115,10 +3117,10 @@ Qed.
 
 Theorem regenerating_successor_can_fail :
   (PR ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs lr))
-  /\ lts ((g MR) : proc) ((cst ra ▷ cst ru) ?) PAr
+  /\ lts ((g MR) : proc) (cst ra ? cst ru) PAr
   /\ lts PR τ SAr
-  /\ lts PAr ((cst ra ▷ cst ru) !) ((𝟘 : proc) ‖ (g ((cst rc) ? Kr)))
-  /\ SAr ≡* ((msgs [(cst rb ▷ cst rw)]) ‖ PAr)
+  /\ lts PAr (cst ra ! cst ru) ((𝟘 : proc) ‖ (g ((cst rc) ? • Kr)))
+  /\ SAr ≡* ((msgs [(cst rb, cst rw)]) ‖ PAr)
   /\ ~ (SAr ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs lr)).
 Proof.
   repeat split.
@@ -3158,7 +3160,7 @@ Qed.
     message [ra] et l'obligation [com] changerait. *)
 
 Definition PInner : proc := ((cst ra) ! (cst ru) • 𝟘) ‖ Kr.
-Definition CTInner : proc := (𝟘 : proc) ‖ ((𝟘 : proc) ‖ (g ((cst re) ? (g ①)))).
+Definition CTInner : proc := (𝟘 : proc) ‖ ((𝟘 : proc) ‖ (g ((cst re) ? • (g ①)))).
 Definition CTr : proc := (𝟘 : proc) ‖ TRr.
 Definition UR : proc := ((cst ra) ! (cst ru) • 𝟘) ‖ TRr.
 
@@ -3190,7 +3192,7 @@ Proof.
   apply m_step.
   - apply CTInner_not_good.
   - exists (((((cst ra) ! (cst ru) • 𝟘)) ‖ (𝟘 : proc))
-              ▷ ((𝟘 : proc) ‖ ((𝟘 : proc) ‖ ((g ①) : proc)))).
+              ∣ ((𝟘 : proc) ‖ ((𝟘 : proc) ‖ ((g ①) : proc)))).
     eapply ParSync.
     + apply dual_oi_r.
     + unfold PInner, Kr. apply lts_parR. apply lts_output.
@@ -3215,7 +3217,7 @@ Lemma PAr_passes_CTr : PAr must_pass CTr.
 Proof.
   apply m_step.
   - apply CTr_not_good.
-  - exists (PInner ▷ CTInner). eapply ParSync.
+  - exists (PInner ∣ CTInner). eapply ParSync.
     + apply dual_io_r.
     + unfold PAr, PInner. apply lts_parR.
       assert (E : Kr ^ (cst rz) = Kr) by reflexivity.
@@ -3251,7 +3253,7 @@ Lemma MR_passes_UR : ra <> rb -> ((g MR) : proc) must_pass UR.
 Proof.
   intro Hab. apply m_step.
   - apply UR_not_good.
-  - exists (PAr ▷ CTr). eapply ParSync.
+  - exists (PAr ∣ CTr). eapply ParSync.
     + apply dual_io_r.
     + unfold MR. apply lts_choiceL.
       assert (E : PAr ^ (cst ru) = PAr) by reflexivity.
@@ -3331,7 +3333,7 @@ Theorem cfg_disjunction_local_at_MR :
         /\ lts ((g MR) : proc) (ActExt (ActIn (c0,v0))) Mc
         /\ Mc ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ((((c0 ! v0 • 𝟘)) : proc) ‖ ((g 𝟘) : proc))).
 Proof.
-  right. exists (cst rb), (cst rw), [(cst ra ▷ cst ru)], PBr.
+  right. exists (cst rb), (cst rw), [(cst ra, cst ru)], PBr.
   split; [ | split ].
   - unfold lr. apply perm_swap.
   - unfold MR. apply lts_choiceR.
@@ -3365,7 +3367,7 @@ End VACCS_RegenProbe.
     besoin, et réciproquement.  Les deux successeurs de délivrance sont
     donc *incompatibles* :
 
-    - [XSA] passe [XTa := (xc!xz•𝟘) ‖ (xe ? ①)] — il prend [xc], la
+    - [XSA] passe [XTa := (xc!xz•𝟘) ‖ (xe ? • ①)] — il prend [xc], la
       continuation répond sur [xe] — et [XSB] le **rate** : sa garde
       morte sur [xc] force [𝟘] à passer un résidu τ-bloqué non bon.
     - symétriquement avec [XTb] et [xd].
@@ -3399,17 +3401,17 @@ Context {xab : xa <> xb} {xac : xa <> xc} {xad : xa <> xd} {xae : xa <> xe}
         {xcd : xc <> xd} {xce : xc <> xe} {xde : xd <> xe}.
 
 Definition XKe : proc := (cst xe) ! (cst xy) • 𝟘.
-Definition XA : gproc := ((cst xc) ? XKe) + ((cst xd) ? ((g 𝟘) : proc)).
-Definition XB : gproc := ((cst xd) ? XKe) + ((cst xc) ? ((g 𝟘) : proc)).
-Definition XM : gproc := ((cst xa) ? ((g XA) : proc)) + ((cst xb) ? ((g XB) : proc)).
-Definition xl : list TypeOfActions := [(cst xa ▷ cst xu); (cst xb ▷ cst xw)].
+Definition XA : gproc := ((cst xc) ? • XKe) + ((cst xd) ? • ((g 𝟘) : proc)).
+Definition XB : gproc := ((cst xd) ? • XKe) + ((cst xc) ? • ((g 𝟘) : proc)).
+Definition XM : gproc := ((cst xa) ? • ((g XA) : proc)) + ((cst xb) ? • ((g XB) : proc)).
+Definition xl : list TypeOfActions := [(cst xa, cst xu); (cst xb, cst xw)].
 Definition XP : proc := (msgs xl) ‖ (g XM).
 Definition XSA : proc :=
   ((𝟘 : proc) ‖ ((((cst xb) ! (cst xw) • 𝟘)) ‖ (𝟘 : proc))) ‖ ((g XA) : proc).
 Definition XSB : proc :=
   ((((cst xa) ! (cst xu) • 𝟘)) ‖ ((𝟘 : proc) ‖ (𝟘 : proc))) ‖ ((g XB) : proc).
-Definition XTa : proc := ((cst xc) ! (cst xz) • 𝟘) ‖ (g ((cst xe) ? (g ①))).
-Definition XTb : proc := ((cst xd) ! (cst xz) • 𝟘) ‖ (g ((cst xe) ? (g ①))).
+Definition XTa : proc := ((cst xc) ! (cst xz) • 𝟘) ‖ (g ((cst xe) ? • (g ①))).
+Definition XTb : proc := ((cst xd) ! (cst xz) • 𝟘) ‖ (g ((cst xe) ? • (g ①))).
 
 Ltac blastX :=
   unfold lts_step in *; simpl in *;
@@ -3417,7 +3419,7 @@ Ltac blastX :=
   | H : lts (_ ‖ _) _ _ |- _ => inversion H; subst; clear H
   | H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
-  | H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst; clear H
+  | H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g 𝟘) _ _ |- _ => inversion H
   | H : lts (g ①) _ _ |- _ => inversion H
   end; simpl in *; try congruence; try contradiction.
@@ -3445,7 +3447,7 @@ Proof.
     rewrite <- E at 2. apply lts_input.
 Qed.
 
-Definition XIt : proc := (𝟘 : proc) ‖ (g ((cst xe) ? (g ①))).
+Definition XIt : proc := (𝟘 : proc) ‖ (g ((cst xe) ? • (g ①))).
 Definition XIa : proc :=
   ((𝟘 : proc) ‖ ((((cst xb) ! (cst xw) • 𝟘)) ‖ (𝟘 : proc))) ‖ XKe.
 Definition XIb : proc :=
@@ -3472,7 +3474,7 @@ Proof.
   apply m_step.
   - apply XIt_not_good.
   - exists ((((𝟘 : proc) ‖ ((((cst xb) ! (cst xw) • 𝟘)) ‖ (𝟘 : proc))) ‖ (𝟘 : proc))
-              ▷ ((𝟘 : proc) ‖ ((g ①) : proc))).
+              ∣ ((𝟘 : proc) ‖ ((g ①) : proc))).
     eapply ParSync.
     + apply dual_oi_x.
     + unfold XIa, XKe. apply lts_parR. apply lts_output.
@@ -3492,7 +3494,7 @@ Proof.
   apply m_step.
   - apply XIt_not_good.
   - exists (((((cst xa) ! (cst xu) • 𝟘) ‖ ((𝟘 : proc) ‖ (𝟘 : proc))) ‖ (𝟘 : proc))
-              ▷ ((𝟘 : proc) ‖ ((g ①) : proc))).
+              ∣ ((𝟘 : proc) ‖ ((g ①) : proc))).
     eapply ParSync.
     + apply dual_oi_x.
     + unfold XIb, XKe. apply lts_parR. apply lts_output.
@@ -3543,7 +3545,7 @@ Proof.
   - apply XTa_not_good. assumption.
   - apply XRb_fails_XIt.
     match goal with H : forall _ _ _ _, _ |- _ =>
-      apply (H XRb XIt (ActIn (cst xc ▷ cst xz)) (ActOut (cst xc ▷ cst xz))) end.
+      apply (H XRb XIt (ActIn (cst xc, cst xz)) (ActOut (cst xc, cst xz))) end.
     + apply dual_io_x.
     + unfold XSB, XRb, XB. apply lts_parR. apply lts_choiceR.
       assert (E : ((g 𝟘) : proc) ^ (cst xz) = ((g 𝟘) : proc)) by reflexivity.
@@ -3557,7 +3559,7 @@ Proof.
   - apply XTb_not_good. assumption.
   - apply XRa_fails_XIt.
     match goal with H : forall _ _ _ _, _ |- _ =>
-      apply (H XRa XIt (ActIn (cst xd ▷ cst xz)) (ActOut (cst xd ▷ cst xz))) end.
+      apply (H XRa XIt (ActIn (cst xd, cst xz)) (ActOut (cst xd, cst xz))) end.
     + apply dual_io_x.
     + unfold XSA, XRa, XA. apply lts_parR. apply lts_choiceR.
       assert (E : ((g 𝟘) : proc) ^ (cst xz) = ((g 𝟘) : proc)) by reflexivity.
@@ -3569,7 +3571,7 @@ Lemma XSA_passes_XTa : XSA must_pass XTa.
 Proof.
   apply m_step.
   - apply XTa_not_good.
-  - exists (XIa ▷ XIt). eapply ParSync.
+  - exists (XIa ∣ XIt). eapply ParSync.
     + apply dual_io_x.
     + unfold XSA, XIa, XA. apply lts_parR. apply lts_choiceL.
       assert (E : XKe ^ (cst xz) = XKe) by reflexivity.
@@ -3589,7 +3591,7 @@ Lemma XSB_passes_XTb : XSB must_pass XTb.
 Proof.
   apply m_step.
   - apply XTb_not_good.
-  - exists (XIb ▷ XIt). eapply ParSync.
+  - exists (XIb ∣ XIt). eapply ParSync.
     + apply dual_io_x.
     + unfold XSB, XIb, XB. apply lts_parR. apply lts_choiceL.
       assert (E : XKe ^ (cst xz) = XKe) by reflexivity.
@@ -3666,7 +3668,7 @@ Proof.
     | H : lts (_ ‖ _) _ _ |- _ => inversion H; subst; clear H
     | H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst; clear H
     | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
-    | H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst; clear H
+    | H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst; clear H
     | H : lts (g 𝟘) _ _ |- _ => inversion H
     end; simpl in *; try congruence;
     try (left; unfold XSA, XA; reflexivity);
@@ -3791,7 +3793,7 @@ End VACCS_XProbe.
 
     What is left informal is the complementary case, a bag that already
     carries a [b]-message: such a configuration emits [b] straight away
-    and [b ? ①] separates it from [PL], which emits nothing until it has
+    and [b ? • ①] separates it from [PL], which emits nothing until it has
     received.  (Formalising that half needs a *positive* [must] against a
     configuration with deliveries available, which [must_any_probe] does
     not cover — it asks for a τ-stuck server.)
@@ -3806,8 +3808,8 @@ Context `{VP : VACCS_Parameters}.
 Context {ma mb : Channel} {mvv : Value}.
 Context {mab : ma <> mb}.
 
-Definition PL : proc := g (((cst ma) ? (((cst mb) ! (cst mvv) • 𝟘) : proc)) : gproc).
-Definition TP : proc := g (((cst mb) ? ((g (① : gproc)) : proc)) : gproc).
+Definition PL : proc := g (((cst ma) ? • (((cst mb) ! (cst mvv) • 𝟘) : proc)) : gproc).
+Definition TP : proc := g (((cst mb) ? • ((g (① : gproc)) : proc)) : gproc).
 Definition TL : proc := (((cst ma) ! (cst mvv) • 𝟘) : proc) ‖ TP.
 
 Lemma TL_not_good : ~ good_VACCS TL.
@@ -3840,14 +3842,14 @@ Lemma PL_passes_TL : PL must_pass TL.
 Proof.
   apply m_step.
   - apply TL_not_good.
-  - assert (Hcl : lts TL (ActExt (ActOut ((cst ma) ▷ (cst mvv))))
+  - assert (Hcl : lts TL (ActExt (ActOut ((cst ma), (cst mvv))))
                       (((g (𝟘 : gproc)) : proc) ‖ TP)).
     { apply lts_parL. apply lts_output. }
-    assert (Hsv : lts PL (ActExt (ActIn ((cst ma) ▷ (cst mvv))))
+    assert (Hsv : lts PL (ActExt (ActIn ((cst ma), (cst mvv))))
                       (subst_in_proc 0 (cst mvv) (((cst mb) ! (cst mvv) • 𝟘) : proc)))
       by apply lts_input.
-    eexists. eapply (ParSync (ActIn ((cst ma) ▷ (cst mvv)))
-                             (ActOut ((cst ma) ▷ (cst mvv)))).
+    eexists. eapply (ParSync (ActIn ((cst ma), (cst mvv)))
+                             (ActOut ((cst ma), (cst mvv)))).
     + reflexivity.
     + exact Hsv.
     + exact Hcl.
@@ -3921,7 +3923,7 @@ Qed.
 
 Theorem cfg_with_msg_not_above_PL : forall l M w l0,
   gStatic M ->
-  Permutation l ((cst mb ▷ w) :: l0) ->
+  Permutation l ((cst mb, w) :: l0) ->
   ~ (PL ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (msgs l ‖ ((g M) : proc))).
 Proof.
   intros l M w l0 HM Hperm Hpre.
@@ -3968,7 +3970,7 @@ End VACCS_MuteLimit.
 
     Note this is not merely an incompleteness of [Bad]: the pair really
     does pass the τ-stuck, non-good, [S]-refusing client
-    [(pd!·•𝟘) ‖ (pe!·•𝟘) ‖ (pf ? ①)], so it is not semantically bad
+    [(pd!·•𝟘) ‖ (pe!·•𝟘) ‖ (pf ? • ①)], so it is not semantically bad
     either.  (That direction is not formalised here — [Bad_sound] makes
     it redundant for the point being made.) *)
 
@@ -3980,10 +3982,10 @@ Context {pcd : pc <> pd} {pce : pc <> pe} {pcf : pc <> pf}
         {pde : pd <> pe} {pdf : pd <> pf} {pef : pe <> pf}.
 
 Definition BPsum : gproc :=
-  ((cst pc) ? ((g 𝟘) : proc)) + ((cst pe) ? ((cst pf) ! (cst pw) • 𝟘)).
-Definition BPguard : proc := (g ((cst pd) ? ((g BPsum) : proc))) : proc.
+  ((cst pc) ? • ((g 𝟘) : proc)) + ((cst pe) ? • ((cst pf) ! (cst pw) • 𝟘)).
+Definition BPguard : proc := (g ((cst pd) ? • ((g BPsum) : proc))) : proc.
 Definition BPp : proc := ((cst pc) ! (cst pv) • 𝟘) ‖ BPguard.
-Definition BPq : proc := (g ((cst pc) ? ((g 𝟘) : proc))) : proc.
+Definition BPq : proc := (g ((cst pc) ? • ((g 𝟘) : proc))) : proc.
 Definition BPS : chset := fun x => x = cst pc.
 
 Ltac blastBP :=
@@ -3992,7 +3994,7 @@ Ltac blastBP :=
   | H : lts (_ ‖ _) _ _ |- _ => inversion H; subst; clear H
   | H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g (_ + _)) _ _ |- _ => inversion H; subst; clear H
-  | H : lts (g (_ ? _)) _ _ |- _ => inversion H; subst; clear H
+  | H : lts (g (_ ? • _)) _ _ |- _ => inversion H; subst; clear H
   | H : lts (g 𝟘) _ _ |- _ => inversion H
   | H : lts (g ①) _ _ |- _ => inversion H
   | H : cst _ = cst _ |- _ => inversion H; subst; clear H
@@ -4076,7 +4078,7 @@ Definition BPz3 : proc :=
 Definition BPz2 : proc :=
   (((g 𝟘) : proc) ‖ ((g BPsum) : proc)) ‖ ((g 𝟘) : proc).
 Definition BPz1 : proc :=
-  (((g 𝟘) : proc) ‖ ((g ((cst pd) ? ((g BPsum) : proc))) : proc)) ‖ ((g 𝟘) : proc).
+  (((g 𝟘) : proc) ‖ ((g ((cst pd) ? • ((g BPsum) : proc))) : proc)) ‖ ((g 𝟘) : proc).
 
 Lemma BPz3_not_bad : forall (S : chset), ~ S (cst pf) -> ~ Bad S BPz3.
 Proof.
@@ -4180,7 +4182,7 @@ Proof.
   - match goal with H : lts (_ ! _ • 𝟘) _ _ |- _ => inversion H; subst end.
     match goal with H : lts BPq _ _ |- _ => unfold BPq in H; inversion H; subst end.
     unfold BPz1, BPguard. simpl. reflexivity.
-  - match goal with H : lts (g (_ ? _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
+  - match goal with H : lts (g (_ ? • _)) (ActExt (ActOut _)) _ |- _ => inversion H end.
 Qed.
 
 (* ** [Bad] is not closed under [‖]
@@ -4208,7 +4210,7 @@ Qed.
     needed, and it is why [hm_par] has no [Bad] analogue. *)
 
 Definition BPres : proc :=
-  ((g 𝟘) : proc) ‖ ((g ((cst pd) ? ((g BPsum) : proc))) : proc).
+  ((g 𝟘) : proc) ‖ ((g ((cst pd) ? • ((g BPsum) : proc))) : proc).
 Definition BPres3 : proc := ((g 𝟘) : proc) ‖ ((cst pf) ! (cst pw) • 𝟘).
 Definition BPsum0 : proc := ((g 𝟘) : proc) ‖ ((g BPsum) : proc).
 
@@ -4337,14 +4339,14 @@ Context {ta te : Channel} {tv tw ty : Value}.
 Context {tae : ta <> te}.
 
 Definition TrM : gproc :=
-  ((bvar 0) ? ((g 𝟘) : proc)) + ((cst ta) ? (((cst te) ! (cst ty) • 𝟘) : proc)).
+  ((bvar 0) ? • ((g 𝟘) : proc)) + ((cst ta) ? • (((cst te) ! (cst ty) • 𝟘) : proc)).
 Definition TrS1 : proc := ν ((((bvar 0) ! (cst tv) • 𝟘) : proc) ‖ ((g TrM) : proc)).
 Definition TrS2 : proc := ν ((g TrM) : proc).
 Definition TrT : proc :=
-  (((cst ta) ! (cst tw) • 𝟘) : proc) ‖ ((g ((cst te) ? ((g ①) : proc))) : proc).
+  (((cst ta) ! (cst tw) • 𝟘) : proc) ‖ ((g ((cst te) ? • ((g ①) : proc))) : proc).
 Definition TrIn : proc := ν (((cst te) ! (cst ty) • 𝟘) : proc).
 Definition TrT2 : proc :=
-  ((g 𝟘) : proc) ‖ ((g ((cst te) ? ((g ①) : proc))) : proc).
+  ((g 𝟘) : proc) ‖ ((g ((cst te) ? • ((g ①) : proc))) : proc).
 
 (* A server with no transitions at all fails every τ-stuck non-good
     client: [must]'s [ex] field has nothing to fire on. *)
@@ -4455,7 +4457,7 @@ Lemma TrIn_passes : TrIn must_pass TrT2.
 Proof.
   apply m_step.
   - apply TrT2_not_good.
-  - exists ((ν ((g 𝟘) : proc)) ▷ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
+  - exists ((ν ((g 𝟘) : proc)) ∣ (((g 𝟘) : proc) ‖ ((g ①) : proc))).
     eapply (ParSync (ActOut (cst te, cst ty)) (ActIn (cst te, cst ty))).
     + simpl. reflexivity.
     + apply TrIn_out.
@@ -4475,7 +4477,7 @@ Lemma TrS2_no_tau : forall z, ~ lts TrS2 τ z.
 Proof.
   intros z Hz. unfold TrS2 in Hz. inversion Hz; subst.
   unfold TrM in H0.
-  inversion H0; subst; match goal with H : lts (g (_ ? _)) _ _ |- _ => inversion H end.
+  inversion H0; subst; match goal with H : lts (g (_ ? • _)) _ _ |- _ => inversion H end.
 Qed.
 
 Lemma TrS2_in : forall w, lts TrS2 (ActExt (ActIn (cst ta, w))) TrIn.
@@ -4522,7 +4524,7 @@ Lemma TrS2_passes : TrS2 must_pass TrT.
 Proof.
   apply m_step.
   - apply TrT_not_good.
-  - exists (TrIn ▷ TrT2).
+  - exists (TrIn ∣ TrT2).
     eapply (ParSync (ActIn (cst ta, cst tw)) (ActOut (cst ta, cst tw))).
     + simpl. reflexivity.
     + apply TrS2_in.
@@ -4588,7 +4590,7 @@ Context `{VP : VACCS_Parameters}.
 Context {dc : Channel} {dv : Value}.
 
 Definition DM : gproc := 𝛕 • (((cst dc) ! (cst dv) • 𝟘) : proc).
-Definition Dl : list TypeOfActions := [(cst dc ▷ cst dv)].
+Definition Dl : list TypeOfActions := [(cst dc, cst dv)].
 
 Lemma DM_static : Static ((g DM) : proc).
 Proof. apply static_g. unfold DM. repeat constructor. Qed.
@@ -4602,7 +4604,7 @@ Qed.
 
 (* The τ lets the *process* produce the output the drain trace asks
     for, so the buffer is untouched. *)
-Lemma DM_run : ((g DM) : proc) ⟹[[ActOut (cst dc ▷ cst dv)]] ((g 𝟘) : proc).
+Lemma DM_run : ((g DM) : proc) ⟹[[ActOut (cst dc, cst dv)]] ((g 𝟘) : proc).
 Proof.
   eapply wt_tau; [ unfold DM; apply lts_tau | ].
   eapply wt_act; [ apply lts_output | ]. apply wt_nil.

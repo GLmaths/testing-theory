@@ -20,18 +20,20 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Synchronising two alphabets
 
     A relation [sync : Aproc → Atest → Prop] saying which action of a process
     matches which action of an observer.  This file has the conditions the
     characterisation proofs need of it; the composition of the two LTSs is in
     [InteractionBetweenLts.v]. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts.
-
+(* begin hide *)
 (* ** The synchronisation itself
 
     [sync] is a *field*, not a parameter: it is to the pair [(Aproc, Atest)]

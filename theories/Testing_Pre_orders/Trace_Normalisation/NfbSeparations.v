@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -32,7 +33,7 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
      RestrictedSimulation RestrictedPreorders Subset_Act coConvergence
      DefinitionTI DefinitionTIco DefinitionAS DefinitionASco
      FeedbackNotReversible.
-
+(* begin hide *)
 (* [NatVP] -- the instantiation of the VACCS parameters used by all the
     counterexamples -- is declared [#[local]] in [FeedbackNotReversible.v], so
     it has to be put back in the instance database here. *)

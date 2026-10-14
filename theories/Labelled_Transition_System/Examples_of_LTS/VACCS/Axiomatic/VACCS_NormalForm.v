@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The VACCS normal form: [Ѵⁿ (messages ‖ guarded sum)]
 
         [NF n l M := Ѵ n (msgs l ‖ g M)]
@@ -49,6 +50,7 @@
     other operand's channels.  [VACCS_Instance.v] already provides
     everything for that ([cgr_res_scope_n], [NewVarCn_res], [cgr_res_n]);
     what had to be added is how [NewVarCn] distributes over a message list. *)
+(* end hide *)
 
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import List Permutation PeanoNat Lia.
@@ -61,7 +63,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
 From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction
   VACCS_Forwarder VACCS_Cond2.
 Import ListNotations.
-
+(* begin hide *)
 Section VACCS_NormalForm.
 
 Context `{VP : VACCS_Parameters}.
@@ -426,7 +428,7 @@ Qed.
 (* ** …and the condition weakens to exactly what the balance equation asks
 
     "[M] never emits" is far too strong — it already fails for
-    [c ? (d ! v • 𝟘)], whose drain is nevertheless forced (the trace
+    [c ? • (d ! v • 𝟘)], whose drain is nevertheless forced (the trace
     demands [c!u], and the only way to produce it is from the buffer;
     delivering into the guard yields a [d]-emitter, which realises a
     *different* trace).
@@ -442,7 +444,7 @@ Qed.
     performs no input performs nothing at all, since it cannot emit
     either ([gsum_no_output]).
 
-    A copycat violates it (consume [c!u], re-emit [c!u]); [c ? (d!v•𝟘)]
+    A copycat violates it (consume [c!u], re-emit [c!u]); [c ? • (d!v•𝟘)]
     does not ([{c} ⊄ {d}]). *)
 
 Lemma disj_union_cancel_gen : forall (A : Type) (EqA : EqDecision A) (CA : Countable A)
@@ -1728,7 +1730,7 @@ Proof.
     + exists 𝟘. split; reflexivity.
     + inversion H; subst.
       destruct (subst_NewVarC_inv Ma (S j) (Succ_bvar v) k Na H2) as (S1 & EA & EB).
-      exists (cb ? S1). subst. split; reflexivity.
+      exists (cb ? • S1). subst. split; reflexivity.
     + inversion H; subst.
       destruct (subst_NewVarC_inv Ma j v k Na H1) as (S1 & EA & EB).
       exists (𝛕 • S1). subst. split; reflexivity.
@@ -1815,7 +1817,7 @@ Proof.
                                              (subst_in_proc 0 v R02)
                         /\ subst_in_proc 0 v R01 = p).
     { intro v. assert (Hv := HR v). simpl in Hv. inversion Hv; subst.
-      match goal with HH : lts _ (ActExt (VarC_action_add 1 (ActIn (c ▷ v)))) _ |- _ =>
+      match goal with HH : lts _ (ActExt (VarC_action_add 1 (ActIn (c, v)))) _ |- _ =>
         simpl in HH; inversion HH; subst end.
       - exfalso.
         match goal with HH : lts (R01 ^ cst O) _ (R01 ^ v) |- _ =>
@@ -1865,7 +1867,7 @@ Proof.
     { intro v. assert (Hv := HR v). simpl in Hv. inversion Hv; subst.
       - split; [ assumption | reflexivity ].
       - exfalso.
-        match goal with HH : lts _ ((c ▷ cst O) ?) (R1 ^ cst O) |- _ =>
+        match goal with HH : lts _ (c ? cst O) (R1 ^ cst O) |- _ =>
           assert (Hsz : (size (subst_in_proc 0 (cst O) R1)
                          < size (subst_in_proc 0 v R1))%nat)
             by (eapply Static_lts_decrease; [ exact HSp | exact HH ]) end.
@@ -1881,7 +1883,7 @@ Proof.
                         /\ subst_in_proc 0 v R1 = subst_in_proc 0 (cst O) R1).
     { intro v. assert (Hv := HR v). simpl in Hv. inversion Hv; subst.
       - exfalso.
-        match goal with HH : lts _ ((c ▷ v) ?) (R1 ^ v) |- _ =>
+        match goal with HH : lts _ (c ? v) (R1 ^ v) |- _ =>
           assert (Hsz : (size (subst_in_proc 0 v R1)
                          < size (subst_in_proc 0 (cst O) R1))%nat)
             by (eapply Static_lts_decrease; [ exact HSp | exact HH ]) end.
@@ -1896,7 +1898,7 @@ Proof.
       { intro v. assert (Hv := proj1 (HQ v)). simpl in Hv. inversion Hv; subst.
         - split; [ assumption | reflexivity ].
         - exfalso.
-          match goal with HH : lts _ ((c ▷ cst O) ?) (R21 ^ cst O) |- _ =>
+          match goal with HH : lts _ (c ? cst O) (R21 ^ cst O) |- _ =>
             assert (Hsz : (size (subst_in_proc 0 (cst O) R21)
                            < size (subst_in_proc 0 v R21))%nat)
               by (eapply Static_lts_decrease; [ exact HSq | exact HH ]) end.
@@ -1914,7 +1916,7 @@ Proof.
                           /\ subst_in_proc 0 v R21 = subst_in_proc 0 (cst O) R21).
       { intro v. assert (Hv := proj1 (HQ v)). simpl in Hv. inversion Hv; subst.
         - exfalso.
-          match goal with HH : lts _ ((c ▷ v) ?) (R21 ^ v) |- _ =>
+          match goal with HH : lts _ (c ? v) (R21 ^ v) |- _ =>
             assert (Hsz : (size (subst_in_proc 0 v R21)
                            < size (subst_in_proc 0 (cst O) R21))%nat)
               by (eapply Static_lts_decrease; [ exact HSq | exact HH ]) end.

@@ -20,7 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
@@ -32,7 +32,7 @@ From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Char
 gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
 InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
 Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination.
-(* end hide *)
+
 
 
 (** ** VACCS **)
@@ -48,9 +48,9 @@ Context `{VP : VACCS_Parameters}.
 Context {a : Channel} {O : Value} {I : Value} {neq : O ≠ I}.
 (* begin hide *)
 
-Definition const : proc := a ? (a ! O • 𝟘).
+Definition const : proc := a ? • (a ! O • 𝟘).
 
-Definition ccat : proc := a ? (a ! (0) • 𝟘).
+Definition ccat : proc := a ? • (a ! (0) • 𝟘).
 
 Example copycat_is_above_NIL : g 𝟘 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ccat.
 Proof.
@@ -63,7 +63,7 @@ Proof.
     eapply m_step; eauto.
     + inversion ex; subst. inversion H; subst.
       * lts_inversion lts.
-      * exists (ccat ▷ b2). eapply ParRight. eauto.
+      * exists (ccat ∣ b2). eapply ParRight. eauto.
       * inversion l1.
     + intros. eauto. inversion H.
     + intros. destruct μ1 as [ (*Input*) b | (*Output*) b ].
@@ -78,10 +78,10 @@ Proof.
                  assert (lts e ((cst a , v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr 
                     as [(t'' & HypTr' & t'0 & HypTr'0 & equiv')|(t'' & HypTr' & equiv'')]; eauto.
-                 --- exists (a ! v • 𝟘 ▷ t''). eapply ParRight. eauto.
+                 --- exists (a ! v • 𝟘 ∣ t''). eapply ParRight. eauto.
                  --- assert (lts (a ! v • 𝟘) ((cst a , v) !) (g 𝟘)).
                      { eauto with cgr. }
-                      exists ((g 𝟘) ▷ t''). eapply ParSync; eauto.
+                      exists ((g 𝟘) ∣ t''). eapply ParSync; eauto.
                      simpl; eauto.
               ** inversion l1.
            ++ intros. lts_inversion lts.
@@ -115,7 +115,7 @@ Proof.
     + inversion l.
     + eapply m_step.
       * eauto. 
-      * exists ((g 𝟘) ▷ b2). eapply ParRight; eauto.
+      * exists ((g 𝟘) ∣ b2). eapply ParRight; eauto.
       * intros. lts_inversion lts.
       * intros. eapply H0. eauto. eauto. eapply et. eauto.
       * intros. lts_inversion lts.
@@ -132,7 +132,7 @@ Proof.
         -- eapply (OBA_with_FB_First_Axiom t b2 b0) in l2 
               as (t'' & HypTr'' & p'1 & HypTr'1 & equiv'1); eauto.
            eapply m_step; eauto.
-           ++ exists ((g 𝟘) ▷ t''). eapply ParRight. eauto.
+           ++ exists ((g 𝟘) ∣ t''). eapply ParRight. eauto.
            ++ intros. lts_inversion lts.
            ++ intros. lts_inversion lts.
         -- inversion l0; subst.
@@ -140,7 +140,7 @@ Proof.
            eapply OBA_with_FB_Fourth_Axiom in l2 as (t''1 & HypTr''1 & equiv''1) ; eauto.
            eapply (@must_preserved_by_lts_tau_clt proc) in Mq; eauto.
            eapply m_step; eauto.
-           ++ exists ((g 𝟘) ▷ t''1). eapply ParRight. eauto.
+           ++ exists ((g 𝟘) ∣ t''1). eapply ParRight. eauto.
            ++ intros. lts_inversion lts.
            ++ intros. lts_inversion lts.
 Qed.
@@ -154,7 +154,7 @@ Proof.
   - eapply m_step; eauto.
     + inversion ex; subst. inversion H2; subst.
       * inversion l.
-      * exists (ccat ▷ b2). eapply ParRight. eauto.
+      * exists (ccat ∣ b2). eapply ParRight. eauto.
       * inversion l1; subst.
         eapply simplify_match_input in eq as eq'; subst.
         eexists. eapply ParSync; eauto.
@@ -171,7 +171,7 @@ Proof.
         inversion Mp'. contradiction.
         inversion ex0. inversion H5; subst.
         -- inversion l.
-        -- exists ((cst a ! (bvar 0) • 𝟘) ^ v ▷ b2). eapply ParRight; eauto.
+        -- exists ((cst a ! (bvar 0) • 𝟘) ^ v ∣ b2). eapply ParRight; eauto.
         -- inversion l1; subst. eapply simplify_match_output in eq as eq'; subst.
            assert (t' ⟶[ActIn (cst a , cst O)] b2) as l'2; eauto.
            eapply TransitionShapeForInput in l2 as (p1 & g1 & r1 & n & equiv1 & equiv2 & eq1).
@@ -211,7 +211,7 @@ Proof.
 Qed.
 (* begin hide *)
 
-Definition Test := (cst a ! cst I • 𝟘) ‖ (cst a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘))).
+Definition Test := (cst a ! cst I • 𝟘) ‖ (cst a ? • (If (bvar 0 == cst I) Then ① Else (g 𝟘))).
 
 Lemma this_Test_is_not_good : ¬ good_VACCS Test.
 Proof. intro imp. inversion imp; subst. inversion H0; subst; inversion H. Qed.
@@ -220,7 +220,7 @@ Lemma NIL_must_this_TEST :  (g 𝟘) must_pass Test.
 Proof.
   eapply m_step.
   - eapply this_Test_is_not_good.
-  - exists (g 𝟘 ▷ (g 𝟘 ‖ ((If (bvar 0 == cst I) Then ① Else (g 𝟘))^(cst I)))).
+  - exists (g 𝟘 ∣ (g 𝟘 ‖ ((If (bvar 0 == cst I) Then ① Else (g 𝟘))^(cst I)))).
     eapply ParRight. eapply lts_comL; eauto with cgr.
   - intros ? imp. inversion imp.
   - intros. inversion H; subst; repeat lts_inversion lts.
@@ -237,7 +237,7 @@ Proof.
   { eapply imp. eapply NIL_must_this_TEST. }
   inversion H.
   + eapply this_Test_is_not_good; eauto.
-  + assert (((cst a ! cst O • 𝟘)^(cst I)) must_pass ((g 𝟘) ‖ (cst a ? (If (bvar 0 == cst I) Then ① Else (g 𝟘))))) as Mp.
+  + assert (((cst a ! cst O • 𝟘)^(cst I)) must_pass ((g 𝟘) ‖ (cst a ? • (If (bvar 0 == cst I) Then ① Else (g 𝟘))))) as Mp.
     { eapply com; eauto. 2: { eapply lts_input. } 2: { eapply lts_parL. eapply lts_output. }
     simpl; eauto. }
     simpl in Mp.

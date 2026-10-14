@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -30,7 +31,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
   Testing_Predicate Must VACCS_ta_tc_gen VACCS_LabelAbstraction
   LabelAbstraction LabelAdmissible LabelAdmissibleFw DefinitionASrel EquivalenceASsync BridgeASsync.
 From TestingTheory Require Completeness CompletenessASsync.
-
+(* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section VACCS_Mem.

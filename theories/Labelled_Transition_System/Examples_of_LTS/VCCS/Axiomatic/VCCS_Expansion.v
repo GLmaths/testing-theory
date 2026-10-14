@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The expansion law: [g M ‖ g N] as a guarded sum
 
     [ext]/[ext_r]/[int] compute the guarded-sum normal form of [M ‖ N]
@@ -45,13 +46,14 @@
     — so a generic "same transitions ⟹ same [must]-behaviour" lemma
     ([must_same_lts]) closes the whole thing, no trace-interleaving or
     coR-abstraction reasoning needed at all. *)
+(* end hide *)
 
 From stdpp Require Import base.
 From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization
   VCCS_Precongruence VCCS_ta_tc_gen.
-
+(* begin hide *)
 Section VCCS_Expansion.
 
 Context `{VP : VCCS_Parameters}.
@@ -142,7 +144,7 @@ Fixpoint ext (M N : gproc) : gproc :=
 match M with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c ? p => c ? (p ‖ (g (gNewVar 0 N)))
+| c ? • p => c ? • (p ‖ (g (gNewVar 0 N)))
 | c ! v • p => c ! v • (p ‖ (g N))
 | 𝛕 • p => 𝛕 • (p ‖ (g N))
 | gp1 + gp2 => (ext gp1 N) + (ext gp2 N)
@@ -156,7 +158,7 @@ Fixpoint ext_r (N M : gproc) : gproc :=
 match N with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c ? q => c ? ((g (gNewVar 0 M)) ‖ q)
+| c ? • q => c ? • ((g (gNewVar 0 M)) ‖ q)
 | c ! v • q => c ! v • ((g M) ‖ q)
 | 𝛕 • q => 𝛕 • ((g M) ‖ q)
 | gq1 + gq2 => (ext_r gq1 M) + (ext_r gq2 M)
@@ -168,7 +170,7 @@ Fixpoint int_input (c : ChannelData) (p : proc) (N : gproc) {struct N} : gproc :
 match N with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c' ? q => 𝟘
+| c' ? • q => 𝟘
 | c' ! v' • q => if decide (c = c') then 𝛕 • (p^v' ‖ q) else 𝟘
 | 𝛕 • q => 𝟘
 | gq1 + gq2 => (int_input c p gq1) + (int_input c p gq2)
@@ -180,7 +182,7 @@ Fixpoint int_output (c : ChannelData) (v : ValueData) (p : proc) (N : gproc) {st
 match N with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c' ? q => if decide (c = c') then 𝛕 • (p ‖ (q^v)) else 𝟘
+| c' ? • q => if decide (c = c') then 𝛕 • (p ‖ (q^v)) else 𝟘
 | c' ! v' • q => 𝟘
 | 𝛕 • q => 𝟘
 | gq1 + gq2 => (int_output c v p gq1) + (int_output c v p gq2)
@@ -194,7 +196,7 @@ Fixpoint int (M N : gproc) : gproc :=
 match M with
 | ① => 𝟘
 | 𝟘 => 𝟘
-| c ? p => int_input c p N
+| c ? • p => int_input c p N
 | c ! v • p => int_output c v p N
 | 𝛕 • p => 𝟘
 | gp1 + gp2 => (int gp1 N) + (int gp2 N)

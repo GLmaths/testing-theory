@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The Smyth must of lqCCS: least runs and thresholds
 
     lqCCS has no recursion: every run of a tested configuration ends in a
@@ -54,6 +55,7 @@
     - Castiglioni, "Behavioural metrics and compositionality in probabilistic
       process algebras" (PhD thesis, 2018), and her work with Gebler and
       Tini: compositionality of probabilistic behavioural relations. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -62,7 +64,7 @@ From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure pMust_smyth lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Composition
   lqCCS_LTS lqCCS_AlmostSure.
-
+(* begin hide *)
 Section Smyth.
   Context `{QM : QuantumModel}.
   Context (XM : ∀ P : Prop, P ∨ ¬ P).

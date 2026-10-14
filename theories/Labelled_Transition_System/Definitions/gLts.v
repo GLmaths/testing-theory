@@ -1,4 +1,4 @@
-
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -23,10 +23,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From TestingTheory Require Import ActTau.
+
 
 
 (* ** LTSs with non-blocking actions [gLts] *)
@@ -34,12 +36,12 @@ From TestingTheory Require Import ActTau.
 
 Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
   MkgLts {
-      lts_step: P → Act A → P → Prop;
+      lts_step: P → Labels A → P → Prop;
       lts_state_eqdec: EqDecision P;
 
       lts_step_decidable a α b : Decision (lts_step a α b);
 
-      lts_performs : P → Act A → Prop;
+      lts_performs : P → Labels A → Prop;
       lts_performs_decidable p α : Decision (lts_performs p α);
       lts_performs_spec1 p α : lts_performs p α → { q | lts_step p α q };
       lts_performs_spec2 p α : { q | lts_step p α q } → lts_performs p α;

@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap gmultiset.
 
@@ -31,7 +32,7 @@ From TestingTheory Require Import VCCS_Must_Characterization DefinitionAS Equiva
   InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower VCCS_Instance.
 From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
   TestSpecBridge VCCS_CoFiniteImage.
-(* end hide *)
+
 
 Section CCS_Must_Alt_Corollary.
 (* begin hide *)

@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import base decidable gmap finite.
 From Stdlib Require Import ssreflect.
@@ -30,8 +31,8 @@ From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain.
-(* end hide *)
+    Testing_Predicate DefinitionAS MustE Lts_Finite_Non_Blocking_Chain.
+
 
 Section preorder.
   Context `{outcome : T -> Prop}.
@@ -55,7 +56,7 @@ Section preorder.
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
   Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
-  (** * Main equivalence theorems *)
+  (** ** Main theorem *)
 
   Section FWⁿ.
 
@@ -63,8 +64,8 @@ Section preorder.
   Context `{!gLtsObaFW Q A}.
   Context `{!gLtsObaFB T A}.
 
-  (* ** The inductive characterisation on FW is equivalent to the inductive must preorder *)
-(* begin hide *)
+  (** *** Characterisation on FW for the inductive must preorder *)
+
   Theorem equivalence_fw_acc_set_and_must_i (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
   Proof.
@@ -75,8 +76,8 @@ Section preorder.
 
   (** ---- *)
 
-  (** ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
-(* end hide *)
+  (** *** Characterisation on FW for the extensional must preorder *)
+
   Theorem equivalence_fw_bhv_acc_ctx (p : P) (q : Q) :
     pre_extensional outcome p q <-> p ≼ₐₛ q.
   Proof.
@@ -84,22 +85,23 @@ Section preorder.
   Qed.
 
   End FWⁿ.
-  (* ---- *)
-(* begin hide *)
-  Section Lⁿ.
-(* end hide *)
 
-  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+  (** ---- *)
+
+  Section Lⁿ.
+
+
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
   Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
   Context `{!Prop_of_Inter (P * MO A) T A A dual}.
   Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
   Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
-  (* ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
-(* begin hide *)
+  (** *** Characterisation on toFW(Lⁿ) for the inductive must preorder *)
+
   Theorem equivalence_acc_set_and_must_i (p : P) (q : Q) :
     p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
@@ -109,9 +111,9 @@ Section preorder.
       now eapply lift_fw_ctx_pre.
   Qed.
 
-  (* ---- *)
+  (** ---- *)
 
-  (* ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
+  (** *** Characterisation on toFW(Lⁿ) for the extensional must preorder *)
   Theorem equivalence_bhv_acc_ctx (p : P) (q : Q) :
     pre_extensional outcome p q <-> (p, ∅) ≼ₐₛ (q, ∅).
   Proof.
@@ -119,6 +121,5 @@ Section preorder.
   Qed.
 
   End Lⁿ.
-(* end hide *)
 
 End preorder.

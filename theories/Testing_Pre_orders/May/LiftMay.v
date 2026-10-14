@@ -20,11 +20,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import gmultiset.
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate May CodePurification InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction FiniteImageLTS ActTau Lts_Finite_Output_Chain.
-
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate May CodePurification InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction FiniteImageLTS ActTau Lts_Finite_Non_Blocking_Chain.
+(* begin hide *)
 Lemma may_non_blocking_action_swap_l_fw_eq `{
    @gLtsObaFW P A H gLtsEqP gLtsObaP, 
   !@gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
@@ -238,7 +239,7 @@ Proof.
 Qed.
 
 Lemma nf_may_fw_l `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
@@ -423,7 +424,7 @@ Proof.
 Qed.
 
 Lemma nf_may_fw `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A ,
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A ,
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
@@ -438,8 +439,8 @@ Proof.
 Qed.
 
 Lemma may_to_may_fw `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A A dual}
@@ -691,8 +692,8 @@ Proof.
 Qed.
 
 Lemma may_iff_may_fw `{
-  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+  @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A A dual}
@@ -710,9 +711,9 @@ Proof.
 Qed.
 
 Lemma lift_fw_ctx_pre `{
-    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A,
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A A dual}

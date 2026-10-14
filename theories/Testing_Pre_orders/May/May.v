@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Lists Require Import List.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Testing_Predicate StateTransitionSystems InteractionBetweenLts
     WeakTransitions coWeakTransition.
-
+(* begin hide *)
 (********************************************* Definition of May *****************************************)
 
 Inductive may_sts 

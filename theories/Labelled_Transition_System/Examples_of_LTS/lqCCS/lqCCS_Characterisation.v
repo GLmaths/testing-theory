@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The almost-sure must of lqCCS, characterised by co-acceptance sets
 
     Three steps:
@@ -42,6 +43,7 @@
     [M(q ▷ x).(if x = 0 then ① else 0)] tells them apart, no typed observer
     does.  The typed preorder needs its own characterisation: co-traces
     restricted to what a typed observer can perform. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable list gmap gmultiset.
@@ -51,7 +53,7 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Co
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   StateTransitionSystems InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   Must DefinitionASco pMust_almost_sure pMust_smyth.
-
+(* begin hide *)
 (* ** Must is invariant under a renaming of the actions *)
 
 Section MustTransfer.

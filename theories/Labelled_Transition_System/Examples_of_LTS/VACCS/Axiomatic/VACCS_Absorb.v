@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Dropping an absorbing input summand
 
     An input guard whose continuation is itself below [𝟘] may be **removed
@@ -32,10 +33,10 @@
     ** Why this rule has to exist
 
     Nothing in the 25-rule system could derive even the simplest instance,
-    [g (c ? 𝟘) ⊑ₘᵤₛₜᵢ g 𝟘] — checked rule by rule: [ax_input] and
+    [g (c ? • 𝟘) ⊑ₘᵤₛₜᵢ g 𝟘] — checked rule by rule: [ax_input] and
     [ax_choice_input] preserve the guard, so they would need
     [𝟘 ᴠᴀᴄᴄꜱ⊑ₐₓ (c ! v • 𝟘)], which is **false** (a test can be made to fail by
-    an extra pending message: [t := c ? (If x = v Then 𝟘 Else ①)] is passed
+    an extra pending message: [t := c ? • (If x = v Then 𝟘 Else ①)] is passed
     by [𝟘] and failed by [c ! v • 𝟘]); [ax_ccat_l] and [ax_resp] both put a
     guard that *re-emits* on the left; every other rule with a bare input
     guard on the left needs one on the right too.  So this is an eleventh
@@ -64,24 +65,25 @@
 
         c ? (d ? (c ! x • 𝟘))  ⊑ₘᵤₛₜᵢ  𝟘        (semantically true)
 
-    while its continuation [d ? (c ! v • 𝟘)] is *not* below [𝟘] — checked:
-    the client [d ! w • 𝟘 ‖ (c ? ①)] is [τ]-stuck and not good, so [𝟘]
-    fails it, yet [d ? (c ! v • 𝟘)] passes it by taking the [d]-message and
+    while its continuation [d ? • (c ! v • 𝟘)] is *not* below [𝟘] — checked:
+    the client [d ! w • 𝟘 ‖ (c ? • ①)] is [τ]-stuck and not good, so [𝟘]
+    fails it, yet [d ? • (c ! v • 𝟘)] passes it by taking the [d]-message and
     answering on [c].  The premise above is therefore too strong.  The
     exact condition relativises to clients that *refuse* [c ?] — which is
     automatic in the situation the rule is applied in (the client was
     [τ]-stuck *while* holding the [c]-message, so it cannot have offered
     [c ?]), but is not expressible as a plain [⊑ₘᵤₛₜᵢ].  Recorded here so
     the gap is not mistaken for an oversight. *)
+(* end hide *)
 
 From Stdlib Require Import List Lia.
 From stdpp Require Import base sets gmap gmultiset.
-From TestingTheory Require Import Lts_Finite_Output_Chain.
+From TestingTheory Require Import Lts_Finite_Non_Blocking_Chain.
 From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VACCS_Good WeakTransitions
   Subset_Act DefinitionAS Convergence VACCS_Static VACCS_Must_Characterization
   VACCS_Erasure VACCS_Precongruence VACCS_Copycat.
-
+(* begin hide *)
 Section VACCS_Absorb.
 
 Context `{VP : VACCS_Parameters}.
@@ -103,9 +105,9 @@ Qed.
 (* ** The law *)
 
 Lemma must_i_input_drop : forall c P G,
-  (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘)) -> (g ((c ? P) + G)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g G).
+  (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘)) -> (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g G).
 Proof.
-  intros c P G HP t Hm. remember (g ((c ? P) + G)) as p0 eqn:Heq.
+  intros c P G HP t Hm. remember (g ((c ? • P) + G)) as p0 eqn:Heq.
   induction Hm; subst.
   - apply m_now. assumption.
   - apply m_step.
@@ -143,11 +145,11 @@ Qed.
 
 (* The bare instance, for reference: an absorbing input is invisible. *)
 Corollary must_i_input_nil : forall c P,
-  (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘)) -> (g (c ? P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
+  (forall v, (P^v) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘)) -> (g (c ? • P)) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
 Proof.
   intros c P HP t Hm.
   apply (must_i_input_drop c P 𝟘 HP).
-  assert (Hc : (g (c ? P)) ≂ₘᵤₛₜᵢ (g ((c ? P) + 𝟘)))
+  assert (Hc : (g (c ? • P)) ≂ₘᵤₛₜᵢ (g ((c ? • P) + 𝟘)))
     by (apply must_i_cgr; apply cgr_choice_nil_rev).
   destruct Hc as [Hc1 Hc2]. apply Hc2. exact Hm.
 Qed.
@@ -160,7 +162,7 @@ Qed.
     τ-stuck, not good, and refuse [c ?]), while [⊑ₘᵤₛₜᵢ] quantifies over
     all of them.  Three candidates were tried and all three fail —
     `∀v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ 𝟘` is too strong (it rejects the true
-    [c ? (d ? (c!x•𝟘)) ⊑ₘᵤₛₜᵢ 𝟘]), while `∀v, ((c!v•𝟘) ‖ P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (c!v•𝟘)`
+    [c ? • (d ? • (c!x•𝟘)) ⊑ₘᵤₛₜᵢ 𝟘]), while `∀v, ((c!v•𝟘) ‖ P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (c!v•𝟘)`
     and `∀v, (P^v) ᴠᴀᴄᴄꜱ⊑ₐₓ (c!v•𝟘)` are outright false.
 
     The right notion is a judgement, not a preorder, and it has to carry
@@ -177,8 +179,8 @@ Qed.
     every value*, from a single message.
 
     Four instances, and the judgement gets all four right:
-    [c ? 𝟘 ⊑ 𝟘] and [c ? (d ? (c!x•𝟘)) ⊑ 𝟘] are covered (the latter is
-    exactly what defeats the old premise), [d ? (c!x•𝟘) ⊑ 𝟘] is correctly
+    [c ? • 𝟘 ⊑ 𝟘] and [c ? • (d ? • (c!x•𝟘)) ⊑ 𝟘] are covered (the latter is
+    exactly what defeats the old premise), [d ? • (c!x•𝟘) ⊑ 𝟘] is correctly
     *refused* (it is false), and [ccat]/[resp] are covered — so this
     single judgement subsumes [ax_ccat_l] and [ax_resp] as well. *)
 
@@ -190,7 +192,7 @@ Inductive Harmless : chset -> proc -> Prop :=
 | hm_out : forall S c v, S c -> Harmless S (c ! v • 𝟘)
 | hm_tau : forall S p, Harmless S p -> Harmless S (g (𝛕 • p))
 | hm_in : forall S c P, (forall w, Harmless (fun d => S d \/ d = c) (P ^ w)) ->
-    Harmless S (g (c ? P))
+    Harmless S (g (c ? • P))
 | hm_choice : forall S M N, Harmless S (g M) -> Harmless S (g N) ->
     Harmless S (g (M + N))
 | hm_par : forall S p q, Harmless S p -> Harmless S q -> Harmless S (p ‖ q).
@@ -357,9 +359,9 @@ Qed.
 Theorem must_i_input_drop_harmless :
   forall (c : ChannelData) (P : proc) (G : gproc),
   (forall v : ValueData, Harmless (fun d => d = c) (subst_in_proc 0 v P)) ->
-  (g ((c ? P) + G)) ⊑ₘᵤₛₜᵢ (g G).
+  (g ((c ? • P) + G)) ⊑ₘᵤₛₜᵢ (g G).
 Proof.
-  intros c P G HP t Hm. remember (g ((c ? P) + G)) as p0 eqn:Heq.
+  intros c P G HP t Hm. remember (g ((c ? • P) + G)) as p0 eqn:Heq.
   induction Hm; subst.
   - apply m_now. assumption.
   - apply m_step.
@@ -414,28 +416,28 @@ Qed.
     technique, not of the fact. *)
 
 Corollary must_i_copycat_drop : forall (c : ChannelData) (G : gproc),
-  (g ((c ? (c ! (bvar 0) • 𝟘)) + G)) ⊑ₘᵤₛₜᵢ (g G).
+  (g ((c ? • (c ! (bvar 0) • 𝟘)) + G)) ⊑ₘᵤₛₜᵢ (g G).
 Proof.
   intros c G. apply must_i_input_drop_harmless. intro v.
   simpl. apply hm_out. reflexivity.
 Qed.
 
 Corollary must_i_resp_drop : forall (c : ChannelData) (V : ValueData) (G : gproc),
-  (g ((c ? (c ! V • 𝟘)) + G)) ⊑ₘᵤₛₜᵢ (g G).
+  (g ((c ? • (c ! V • 𝟘)) + G)) ⊑ₘᵤₛₜᵢ (g G).
 Proof.
   intros c V G. apply must_i_input_drop_harmless. intro v.
   simpl. apply hm_out. reflexivity.
 Qed.
 
 Corollary must_i_nested_drop : forall (c d : ChannelData) (V : ValueData) (G : gproc),
-  (g ((c ? (g (d ? (c ! V • 𝟘)))) + G)) ⊑ₘᵤₛₜᵢ (g G).
+  (g ((c ? • (g (d ? • (c ! V • 𝟘)))) + G)) ⊑ₘᵤₛₜᵢ (g G).
 Proof.
   intros c d V G. apply must_i_input_drop_harmless. intro v.
   simpl. apply hm_in. intro w. simpl. apply hm_out. left. reflexivity.
 Qed.
 
 Corollary must_i_swallow_drop : forall (c : ChannelData) (G : gproc),
-  (g ((c ? (g 𝟘)) + G)) ⊑ₘᵤₛₜᵢ (g G).
+  (g ((c ? • (g 𝟘)) + G)) ⊑ₘᵤₛₜᵢ (g G).
 Proof.
   intros c G. apply must_i_input_drop_harmless. intro v. simpl. apply hm_nil.
 Qed.
@@ -546,9 +548,9 @@ Qed.
 Theorem must_i_input_drop_bad :
   forall (c : ChannelData) (P : proc) (G : gproc),
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v P)) ->
-  (g ((c ? P) + G)) ⊑ₘᵤₛₜᵢ (g G).
+  (g ((c ? • P) + G)) ⊑ₘᵤₛₜᵢ (g G).
 Proof.
-  intros c P G HP t Hm. remember (g ((c ? P) + G)) as p0 eqn:Heq.
+  intros c P G HP t Hm. remember (g ((c ? • P) + G)) as p0 eqn:Heq.
   induction Hm; subst.
   - apply m_now. assumption.
   - apply m_step.
@@ -620,7 +622,7 @@ Qed.
 
     This replaces [gGuardsIn] entirely: no guard is ever dropped
     individually, so the fact that a stable sum may offer channels the
-    right-hand side does not ([c ? 𝟘 ⊑ₘᵤₛₜᵢ 𝟘]) stops being an obstacle. *)
+    right-hand side does not ([c ? • 𝟘 ⊑ₘᵤₛₜᵢ 𝟘]) stops being an obstacle. *)
 
 Definition offers (M : gproc) (c : ChannelData) : Prop :=
   exists w r, lts (g M) (ActExt (ActIn (c,w))) r.
@@ -808,12 +810,12 @@ Qed.
 
     Deciding the case split needs "does [u] emit on [c]?", which is
     decidable because a process's pending messages are a **finite
-    multiset** ([lts_oba_mo], [Lts_Finite_Output_Chain.v]) — the
+    multiset** ([lts_oba_mo], [Lts_Finite_Non_Blocking_Chain.v]) — the
     asynchronous structure paying for itself once more.  No classical
     reasoning is used. *)
 
 Definition emits_on (c : ChannelData) (u : proc) : Prop :=
-  exists v q, lts u ((c ▷ v)!) q.
+  exists v q, lts u (c ! v) q.
 
 Definition emitsb (c : ChannelData) (u : proc) : bool :=
   existsb (fun η => match η with
@@ -832,7 +834,7 @@ Proof.
     exists x, q. exact Hl.
   - right. intros (v & q & Hl).
     assert (Hnb : non_blocking (ActOut (c,v))).
-    { unfold non_blocking. simpl. unfold non_blocking_output. exists (c ▷ v). reflexivity. }
+    { unfold non_blocking. simpl. unfold non_blocking_output. exists (c, v). reflexivity. }
     pose proof (lts_oba_mo_spec_bis1 u (ActOut (c,v)) q Hnb Hl) as Hmem.
     unfold emitsb in E.
     assert (Hex : existsb (fun η => match η with
@@ -895,7 +897,7 @@ Proof.
         apply good_par. right. exact Hg. }
       eapply (IHcont v q Hobl Hstq Hngq).
       * intros d x z [Hd|Hd] Hlz.
-        -- assert (Hsc : sc_then_lts u ((d ▷ x)?) ((c ! v • 𝟘) ‖ z))
+        -- assert (Hsc : sc_then_lts u (d ? x) ((c ! v • 𝟘) ‖ z))
              by (exists ((c ! v • 𝟘) ‖ q); split; [ exact Hsh | apply lts_parR; exact Hlz ]).
            apply Congruence_Respects_Transition in Hsc.
            destruct Hsc as (r & Hr & _). eapply Href; [ exact Hd | exact Hr ].
@@ -907,7 +909,7 @@ Proof.
            apply Congruence_Respects_Transition in Hsc.
            destruct Hsc as (r & Hr & _). eapply Hst. exact Hr.
       * intros d Hd (x & z & Hlz). eapply (Hem d Hd).
-        assert (Hsc : sc_then_lts u ((d ▷ x)!) ((c ! v • 𝟘) ‖ z))
+        assert (Hsc : sc_then_lts u (d ! x) ((c ! v • 𝟘) ‖ z))
           by (exists ((c ! v • 𝟘) ‖ q); split; [ exact Hsh | apply lts_parR; exact Hlz ]).
         apply Congruence_Respects_Transition in Hsc.
         destruct Hsc as (r & Hr & _). exists x, r. exact Hr.
@@ -997,7 +999,7 @@ Proof.
   - right. intros c Hd (v & q & Hl). eapply (Hno c v); [ | exact Hd ].
     apply list_elem_of_In. apply gmultiset_elem_of_elements.
     eapply lts_oba_mo_spec_bis1; [ | exact Hl ].
-    unfold non_blocking. simpl. unfold non_blocking_output. exists (c ▷ v). reflexivity.
+    unfold non_blocking. simpl. unfold non_blocking_output. exists (c, v). reflexivity.
 Qed.
 
 Lemma offers_dec : forall (M' : gproc) c, offers M' c \/ ~ offers M' c.
@@ -1179,7 +1181,7 @@ Proof. intros N M Hst q Hl. eapply Hst. eapply grestrict_sub. exact Hl. Qed.
 (* …and the restriction itself, given the certificate.
 
     **Scope, stated plainly.**  The certificate is *not* implied by
-    [g M ⊑ₘᵤₛₜᵢ g N] in general.  With [M := a ? A] and [N := b ? B]
+    [g M ⊑ₘᵤₛₜᵢ g N] in general.  With [M := a ? • A] and [N := b ? • B]
     (disjoint channels) the restriction would be to [𝟘], whose
     certificate is [g M ⊑ₘᵤₛₜᵢ 𝟘] — and that can fail while
     [g M ⊑ₘᵤₛₜᵢ g N] holds, because every client [M] passes may also feed
@@ -1205,7 +1207,7 @@ Qed.
     [P].  Its contrapositive is the natural attack: from a **failure**
     to settle, build a τ-stuck non-good client that the left passes and
     the right fails.  The client to build is
-    [Σ_{d ∉ chans K} d ? ①] — every reachable stable state emits outside
+    [Σ_{d ∉ chans K} d ? • ①] — every reachable stable state emits outside
     [chans K], the client absorbs one such emission and succeeds, while
     a right-hand side emitting only within [chans K] deadlocks against
     it.
@@ -1349,9 +1351,9 @@ Qed.
 
 (* ** L'empreinte d'ÉMISSION seule
 
-    [pchans] compte aussi les canaux **gardés** ([gpchans (c ? P) =
+    [pchans] compte aussi les canaux **gardés** ([gpchans (c ? • P) =
     c :: pchans P]), ce qui le rend trop grossier pour un critère de
-    non-régénération : il rejette [c ? (c ? 𝟘)], qui garde [c] à nouveau
+    non-régénération : il rejette [c ? • (c ? • 𝟘)], qui garde [c] à nouveau
     mais ne le rend jamais.  [ochans] est le même parcours **sans** cette
     ligne : il ne retient que les canaux sur lesquels un message peut
     réellement partir.

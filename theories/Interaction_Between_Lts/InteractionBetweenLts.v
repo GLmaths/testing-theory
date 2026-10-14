@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -34,7 +35,7 @@ From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
     WeakTransitions StateTransitionSystems Convergence Termination ActTau.
-
+(* begin hide *)
 (************************************** Interaction between two LTS **************************************)
 
 (* Pre-requirements for the interaction
@@ -74,11 +75,10 @@ Class Prop_of_Inter (P1 P2 A1 A2 : Type) (inter : A1 -> A2 -> Prop)
 
 #[global] Existing Instance inter_dec.
 
-Notation "p ▷ m" := (p, m) (at level 60).
 
 (* Definition of the transition *)
 Inductive inter_step `{M12 : Prop_of_Inter P1 P2 A A inter}
-            : P1 * P2 → Act A → P1 * P2 → Prop :=
+            : P1 * P2 → Labels A → P1 * P2 → Prop :=
 | ParLeft α a1 a2 b (l : a1 ⟶{α} a2) : inter_step (a1, b) α (a2, b)
 | ParRight α a b1 b2 (l : b1 ⟶{α} b2) : inter_step (a, b1) α (a, b2)
 | ParSync μ1 μ2 a1 a2 b1 b2 (eq : inter μ1 μ2) (l1 : a1 ⟶[μ1] a2) (l2 : b1 ⟶[μ2] b2) : inter_step (a1, b1) τ (a2, b2)
@@ -831,7 +831,7 @@ Proof.
 Qed.
 
 Definition inter_lts_performs `{Prop_of_Inter S1 S2 A A}
-  (s1: S1) (s2: S2) (α : Act A): Prop :=
+  (s1: S1) (s2: S2) (α : Labels A): Prop :=
   s1 ⟶{α} ∨ s2 ⟶{α} ∨
     match α with
     | τ => inter_lts_performs_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1)

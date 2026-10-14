@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
@@ -41,7 +42,7 @@ Definition Failure `{
 Definition fail_pre_ms_cond1 `{gLts P A, gLts Q A} 
   (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
 
-Notation "p ₁⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond1 p q) (at level 70).
+Notation "p ꜀ₙᵥ⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond1 p q) (at level 70).
 
 Definition fail_pre_ms_cond2 `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ ,
@@ -50,16 +51,13 @@ Definition fail_pre_ms_cond2 `{ CC : Countable PreAct,
   forall s G, Failure q s G -> Failure p s G.
 
 Notation "p ₂⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond2 p q) (at level 70).
-(* end hide *)
 
 Definition fail_pre_ms `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ ,
   gLtsQ : @gLts Q A H, @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ }
   (p : P) (q : Q) :=
-  p ₁⋖ꜰᴀɪʟ q /\ p ₂⋖ꜰᴀɪʟ q.
-(* begin hide *)
+  p ꜀ₙᵥ⋖ꜰᴀɪʟ q /\ p ₂⋖ꜰᴀɪʟ q.
 
 Global Hint Unfold fail_pre_ms:mdb. 
 
 Notation "p ⋖ꜰᴀɪʟ q" := (fail_pre_ms p q) (at level 70).
-(* end hide *)

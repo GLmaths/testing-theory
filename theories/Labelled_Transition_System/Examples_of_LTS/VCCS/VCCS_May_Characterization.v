@@ -20,12 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   Testing_Predicate May DefinitionTI MayTestSpec EquivalenceTI
   DefinitionTIco EquivalenceTIco
   VCCS_Instance VCCS_Good VCCS_test_trace_gen_may.
-
+(* begin hide *)
 (* * The May preorder is trace inclusion, for VCCS
 
     [VCCS_gLtsOBAFW] ([VCCS_Instance.v]) already makes [proc] a forwarder

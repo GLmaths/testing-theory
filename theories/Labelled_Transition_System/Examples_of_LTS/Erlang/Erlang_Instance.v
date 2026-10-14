@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the axioms of the framework
 
     The system LTS of [Erlang_LTS] is shown to be an LTS with non-blocking
@@ -29,16 +30,17 @@
     conditions.  The boomerang axiom does /not/ hold — a process cannot emit a
     message it has not received — which is exactly why the forwarder
     construction [toFW] is needed. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau InputOutputActions gLts Bisimulation
-  Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain FiniteImageLTS
+  Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain FiniteImageLTS
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   VACCS VACCS_Instance Erlang_Syntax Erlang_LTS.
-
+(* begin hide *)
 (* ** Actions
 
     Those of VACCS instantiated by [Erlang_VACCS_Parameters]: [VACCS_ExtAction]
@@ -205,7 +207,7 @@ Definition in_succ (p : pid) (v : val) (S : sys) (c : comp) : list sys :=
       else []
   end.
 
-Definition erl_succ (S : sys) (α : Act erl_act) : list sys :=
+Definition erl_succ (S : sys) (α : Labels erl_act) : list sys :=
   match α with
   | τ => elements S ≫= tau_succ S
   | ActExt (ActIn (cst p, cst v)) => elements S ≫= in_succ p v S
@@ -298,7 +300,7 @@ Qed.
 
 (* ** The LTS *)
 
-Definition erl_performs (S : sys) (α : Act erl_act) : Prop := erl_succ S α ≠ [].
+Definition erl_performs (S : sys) (α : Labels erl_act) : Prop := erl_succ S α ≠ [].
 
 #[global] Instance erl_performs_dec S α : Decision (erl_performs S α).
 Proof. unfold erl_performs. apply _. Defined.
@@ -435,7 +437,7 @@ Qed.
 
 (* ** The messages in transit form the output multiset *)
 
-#[global] Program Instance Erl_FiniteOutputChain : FiniteOutputChain_LtsOba sys :=
+#[global] Program Instance Erl_FiniteNonBlockingChain : FiniteNonBlockingChain_LtsOba sys :=
   {| lts_oba_mo := erl_mo |}.
 Next Obligation.
   intros S η T nb hl. destruct nb as (a & ->).

@@ -20,11 +20,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap gmultiset.
 
 From TestingTheory Require Import VACCS_ta_tc_gen DefinitionAS Equivalence Must MustE
-  Completeness InputOutputActions Lts_OBA_FB MultisetLTSConstruction Lts_Finite_Output_Chain gLts
+  Completeness InputOutputActions Lts_OBA_FB MultisetLTSConstruction Lts_Finite_Non_Blocking_Chain gLts
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower Soundness SetLTSConstruction
   StateTransitionSystems FiniteImageLTS ForwarderConstruction ParallelLTSConstruction
   InteractionBetweenLts Bisimulation DefinitionCI EquivalenceCI VACCS_ta_tc_gen.
@@ -32,7 +33,7 @@ From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
   TestSpecBridge VACCS_CoFiniteImage.
 
 From Coinduction Require Import all.
-
+(* begin hide *)
 Notation "p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
 (* end hide *)
 

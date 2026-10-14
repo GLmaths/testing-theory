@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Soundness of the VACCS proof system
 
         [p ᴠᴀᴄᴄꜱ⊑ₐₓ q -> p ⊑ₘᵤₛₜᵢ q]
@@ -35,6 +36,7 @@
     context's effect on a behavioural characterisation.
 
     Every case is a single application of a lemma proved beforehand. *)
+(* end hide *)
 
 From stdpp Require Import base gmultiset.
 From TestingTheory Require Import MultisetLTSConstruction.
@@ -44,7 +46,7 @@ From TestingTheory Require Import VACCS VACCS_Instance Must ActTau InputOutputAc
   VACCS_Erasure VACCS_Shift VACCS_Precongruence VACCS_Expansion VACCS_ResNormalize
   VACCS_Copycat VACCS_Absorb VACCS_Forwarder VACCS_Cond2 VACCS_Residues
   VACCS_GlbStable VACCS_DefinitionAxiomatic.
-
+(* begin hide *)
 Section VACCS_SoundnessAx.
 
 Context `{VP : VACCS_Parameters}.
@@ -77,7 +79,7 @@ Proof.
           apply IH; apply gsum_tau_summand; exact Hq' end.
     + intros c v q'' Hq''. destruct (gsum_in_summand _ _ _ _ Hq'') as (Q & HQ & ->).
       match goal with
-        IH : forall c Q, In (c ? Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
+        IH : forall c Q, In (c ? • Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
           apply IH; exact HQ end.
   (* ax_glb_settle *)
   - destruct (lts_dec ((g M) : proc) τ) as [ Hno | (X0 & HX0) ].
@@ -85,7 +87,7 @@ Proof.
       * assumption.
       * intros c v q'' Hq''. destruct (gsum_in_summand _ _ _ _ Hq'') as (Q & HQ & ->).
         match goal with
-          IH : forall c Q, In (c ? Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
+          IH : forall c Q, In (c ? • Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
             apply IH; exact HQ end.
     + apply must_i_glb_tau.
       * exists X0. exact HX0.
@@ -95,7 +97,7 @@ Proof.
             apply IH; apply gsum_tau_summand; exact Hq' end.
       * intros c v q'' Hq''. destruct (gsum_in_summand _ _ _ _ Hq'') as (Q & HQ & ->).
         match goal with
-          IH : forall c Q, In (c ? Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
+          IH : forall c Q, In (c ? • Q) (summands M) -> forall v, _ ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ _ |- _ =>
             apply IH; exact HQ end.
   (* ax_share_msg *)
   - apply must_i_share_msg_pre.
