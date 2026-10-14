@@ -25,7 +25,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
-  coWeakTransition coConvergence LabelAbstraction LabelAdmissible.
+  coWeakTransition coConvergence LabelAbstraction.
 
 Class AbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
@@ -56,27 +56,28 @@ Section Abstraction_step.
   Qed.
 End Abstraction_step.
 
-Section Of_relation.
-  Context {P T Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}
-    {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}.
-  Context (R : relation A) `{!Equivalence R} `{!RelDecision R}.
+Section Of_label_abstraction.
+  Context {P T Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At} {SA : SyncAction Ap At}
+    {gLtsP : gLts P Hp} {gLtsT : gLtsEq T Ht}.
 
-  Definition AbsActionG_of_LA :
-    LA_admissible P T R → AbsActionG P T H (LA_class R).
+  Definition AbsActionG_of_LA (𝔸 : Label_abstraction P T) : AbsActionG P T Ht ρ[𝔸].
   Proof.
-    intros adm p β β'' b e mem.
-    exact (adm p β β'' b (proj1 (LA_class_proj R β β'') e) mem).
+    intros p β β'' b e mem.
+    apply (LA_class_proj (label_ker 𝔸)) in e.
+    apply rel_ker_sub in e as (u & hu & hu''); [| intros μ; exists μ; split; reflexivity].
+    exists u. split.
+    - exact (coR_reverse_inclusion u β'' hu'' p mem).
+    - exact (Ready_set_inclusion β u hu).
   Defined.
 
-  Definition FinitaryAbsActionG_of_LA :
-    LA_admissible P T R → FinitaryLA P R → FinitaryAbsActionG P T H (LA_class R).
+  Definition FinitaryAbsActionG_of_FLA (F : Finitary_Label_abstraction P T) :
+    FinitaryAbsActionG P T Ht ρ[𝔸 (Finitary_Label_abstraction := F)].
   Proof.
-    intros adm fin.
-    refine {| FinitaryAbsActionG_Abs := AbsActionG_of_LA adm; coR_abs := coR_absR |}.
-    - intros p x hx. apply coR_absR_spec in hx as (β & hβ & <-). by exists β.
-    - intros p x (β & hβ & ->). apply coR_absR_spec. by exists β.
+    refine {| FinitaryAbsActionG_Abs := AbsActionG_of_LA _; coR_abs := coRₐ |}.
+    - intros p x. apply coRₐ_spec.
+    - intros p x. apply coRₐ_spec.
   Defined.
-End Of_relation.
+End Of_label_abstraction.
 
 Definition bhv_pre_g_cond1 `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc Hp}
   `{Ht : ExtAction A} `{SA : !SyncAction Aproc A}
@@ -96,27 +97,29 @@ Definition bhv_pre_g `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc Hp}
 
 Notation "p ≼ᴳ[ Γ ] q" := (bhv_pre_g Γ p q) (at level 70).
 
-Definition bhv_pre_r_cond2 `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc Hp}
-  `{Ht : ExtAction A} `{SA : !SyncAction Aproc A} (R : relation A)
+Definition bhv_pre_LA_cond2 `{gLtsP : @gLts P Ap Hp} `{gLtsQ : !@gLts Q Ap Hp}
+  `{gLtsT : @gLts T At Ht} `{SA : !SyncAction Ap At} (𝔸 : Label_abstraction P T)
   (p : P) (q : Q) :=
-  ∀ (s : trace A) q',
+  ∀ (s : trace At) q',
     p ⇓ᶜᵒ s → q ⟹ᶜᵒ[s] q' → q' ↛ →
-    ∃ p', p ⟹ᶜᵒ[s] p' ∧ p' ↛ ∧ ∀ β, β ∈ coR p' → ∃ β', β' ∈ coR q' ∧ R β β'.
+    ∃ p', p ⟹ᶜᵒ[s] p' ∧ p' ↛ ∧ ⌈ ρ[𝔸] ⌉ (coR p') ⊆ ⌈ ρ[𝔸] ⌉ (coR q').
 
-Definition bhv_pre_r `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc Hp}
-  `{Ht : ExtAction A} `{SA : !SyncAction Aproc A} (R : relation A)
+Notation "p ₂≼꜀ₒ₋ₐₛ[ 𝔸 ] q" := (bhv_pre_LA_cond2 𝔸 p q) (at level 70, format "p  ₂≼꜀ₒ₋ₐₛ[ 𝔸 ]  q").
+
+Definition bhv_pre_LA `{gLtsP : @gLts P Ap Hp} `{gLtsQ : !@gLts Q Ap Hp}
+  `{gLtsT : @gLts T At Ht} `{SA : !SyncAction Ap At} (𝔸 : Label_abstraction P T)
   (p : P) (q : Q) :=
-  bhv_pre_g_cond1 (A := A) p q ∧ bhv_pre_r_cond2 R p q.
+  bhv_pre_g_cond1 (A := At) p q ∧ p ₂≼꜀ₒ₋ₐₛ[𝔸] q.
 
-Notation "p ≼ᴿ[ R ] q" := (bhv_pre_r R p q) (at level 70).
+Notation "p ≼꜀ₒ₋ₐₛ[ 𝔸 ] q" := (bhv_pre_LA 𝔸 p q) (at level 70, format "p  ≼꜀ₒ₋ₐₛ[ 𝔸 ]  q").
 
-Section Relational.
-  Context {P Q Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A} {SA : SyncAction Aproc A}
-    {gLtsP : gLts P Hp} {gLtsQ : gLts Q Hp}.
-  Context (R : relation A) `{!Equivalence R} `{!RelDecision R}.
+Section Label_abstraction_preorder.
+  Context {P Q T Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At} {SA : SyncAction Ap At}
+    {gLtsP : gLts P Hp} {gLtsQ : gLts Q Hp} {gLtsT : gLts T Ht}.
 
-  Lemma map_class_subseteq_iff (X Y : subset_of A) :
-    ⌈ LA_class R ⌉ X ⊆ ⌈ LA_class R ⌉ Y ↔ ∀ β, β ∈ X → ∃ β', β' ∈ Y ∧ R β β'.
+  Lemma map_class_subseteq_iff (R : relation At) `{!Equivalence R} `{!RelDecision R}
+    (X Y : subset_of At) :
+    ⌈ ρ[R] ⌉ X ⊆ ⌈ ρ[R] ⌉ Y ↔ ∀ β, β ∈ X → ∃ β', β' ∈ Y ∧ R β β'.
   Proof.
     split.
     - intros sub β hβ.
@@ -126,13 +129,8 @@ Section Relational.
       exists β'. split; [exact hβ' | exact (proj2 (LA_class_proj R β β') hR)].
   Qed.
 
-  Lemma bhv_pre_r_iff_g (p : P) (q : Q) : p ≼ᴿ[ R ] q ↔ p ≼ᴳ[ LA_class R ] q.
-  Proof.
-    split; intros [h1 h2]; split; [exact h1 | | exact h1 |].
-    - intros s q' hc w st. destruct (h2 s q' hc w st) as (p' & wp & stp & sub).
-      exists p'. split_and!; [exact wp | exact stp |]. by apply map_class_subseteq_iff.
-    - intros s q' hc w st. destruct (h2 s q' hc w st) as (p' & wp & stp & sub).
-      exists p'. split_and!; [exact wp | exact stp |]. by apply map_class_subseteq_iff.
-  Qed.
-End Relational.
+  Lemma bhv_pre_LA_iff_g (𝔸 : Label_abstraction P T) (p : P) (q : Q) :
+    p ≼꜀ₒ₋ₐₛ[𝔸] q ↔ p ≼ᴳ[ ρ[𝔸] ] q.
+  Proof. done. Qed.
+End Label_abstraction_preorder.
 (* end hide *)
