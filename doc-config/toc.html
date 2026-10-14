@@ -34,24 +34,24 @@
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts">Labelled Transition System (LTS)</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#folts_next_states_finite">Image-finite LTS</a></li>
 </ul>
-<h3>Non-blocking actions</h3>
+<h3>Forwarder FWⁿ and Non-Blocking buffered agents Lⁿ</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#gLtsOba">Specifications for non-blocking actions</a>
+<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#gLtsOba">Axioms of FWⁿ</a>
   <ul class="doclist">
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_delay">NB-delay</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_confluence">NB-confluence</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_tau">NB-tau</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_determinacy">NB-determinacy</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#backwards_nb_determinacy">Backwards NB-determinacy</a></li>
+  <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#gLtsObaFW">Forwarding</a>
+    <ul class="doclist">
+    <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#boomerang">Boomerang</a></li>
+    <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#fwd_feedback">FW-feedback</a></li>
+    </ul>
+  </li>
   </ul>
 </li>
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#gLtsObaFW">Forwarders</a>
-  <ul class="doclist">
-  <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#boomerang">Boomerang</a></li>
-  <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#fwd_feedback">FW-feedback</a></li>
-  </ul>
-</li>
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA_FB.html#gLtsObaFB">Feedback</a>
+<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA_FB.html#gLtsObaFB">Axioms of Lⁿ</a>
   <ul class="doclist">
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA_FB.html#feedback">Feedback</a></li>
   </ul>
@@ -63,8 +63,8 @@
 <ul class="doclist">
 <li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ParallelLTSConstruction.html#parallel_gLts">Parallel composition</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Testing_Predicate.html#Testing_Predicate">Good states</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#must_extensional">Definition — Must</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#pre_extensional">Definition — Must-preorder</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#must_extensional">Must</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#pre_extensional">Must-preorder</a></li>
 </ul>
 <h2>Uniform Characterisation with Co-Acceptance Sets</h2>
 <h3>The alternative preorder</h3>
@@ -74,11 +74,11 @@
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Convergence.html#cnv">Convergence along a trace</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#R">Ready set</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#coR">Co-ready set</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#AbsAction">Definition — Label abstraction</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#FinitaryAbsAction">Definition — Finitary label abstraction</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#AbsAction">Label abstraction</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#FinitaryAbsAction">Finitary label abstraction</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#waiting_states">Waiting states after a trace</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#waiting_states_fin">Waiting states after a trace, finiteness</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#bhv_pre">Definition — Alternative preorder</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#bhv_pre">Alternative preorder</a></li>
 </ul>
 <h3>Main theorem</h3>
 <ul class="doclist">
@@ -106,14 +106,14 @@
 </ul>
 <h3>Lifting to forwarders</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFW">Definition — Lifting to forwarders</a></li>
+<li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFW">Lifting to forwarders</a></li>
 <li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFWObaFW">Lemma — The lifting is a forwarder</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Lift.html#lift_fw_ctx_pre">Lemma — The lifting preserves the must-preorder</a></li>
 </ul>
 <h2>Uniform Characterisation with Must Refinement</h2>
 <ul class="doclist">
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.DefinitionMS.html#MUST__s">Must-set</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.DefinitionMS.html#bhv_pre_ms">Definition — De Nicola&#x27;s preorder</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.DefinitionMS.html#bhv_pre_ms">De Nicola&#x27;s preorder</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.EquivalenceMS.html#equivalence_bhv_acc_mst">Lemma — Must-sets and acceptance sets</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.EquivalenceMS.html#equivalence_fw_must_set_and_must_e">Theorem — Must-set characterisation</a></li>
 </ul>
@@ -121,7 +121,7 @@
 <ul class="doclist">
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.EquivalenceFMS.html#equivalence_nmust_set_failure">Lemma — Must-sets and failures</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.EquivalenceFMS.html#equivalence_must_set_nfailure">Lemma — Must-sets and failures, converse</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.DefinitionFMS.html#fail_pre_ms">Definition — Failure-divergence refinement</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.DefinitionFMS.html#fail_pre_ms">Failure-divergence refinement</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.EquivalenceFMS.html#equivalence_fw_failure_set_and_must_e">Theorem — Failure-divergence characterisation</a></li>
 </ul>
 <h2>Use Cases</h2>
