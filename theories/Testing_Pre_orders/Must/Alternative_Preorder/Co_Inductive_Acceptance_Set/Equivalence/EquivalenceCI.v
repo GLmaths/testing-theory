@@ -56,38 +56,27 @@ Proof.
 Qed.
 
 Section eq_contextual.
-  Context `{outcome : T -> Prop}.
-  Context `{outcome_dec : forall t, Decision (outcome t)}.
-  Context `{P : Type}.
-  Context `{Q : Type}.
-  Context `{H : !ExtAction A}.
-  Context {unique_nb : UniqueDual A}.
+  Context `{outcome : T -> Prop} `{outcome_dec : forall t, Decision (outcome t)} `{P : Type} `{Q : Type}
+          `{H : !ExtAction A} {unique_nb : UniqueDual A}.
 
-  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
-  Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
+  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A} `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}
+          `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
-  Context `{!Prop_of_Inter P T A A dual}.
-  Context `{!Prop_of_Inter Q T A A dual}.
+  Context `{!Prop_of_Inter P T A A dual} `{!Prop_of_Inter Q T A A dual}.
 
-  Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
+  Context `{!Prop_of_Inter P (MO A) A A fw_inter} `{!Prop_of_Inter (P * MO A) T A A dual}
+          `{!Prop_of_Inter Q (MO A) A A fw_inter} `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
-  Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{CC : Countable PreAct} `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }
+          `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
 
-  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
-  Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}
+          `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
 
   (* * Main equivalence theorems *)
   Section FWⁿ.
 
-  Context `{!gLtsObaFW P A}.
-  Context `{!gLtsObaFW Q A}.
-  Context `{!gLtsObaFB T A}.
+  Context `{!gLtsObaFW P A} `{!gLtsObaFW Q A} `{!gLtsObaFB T A}.
 
   (* ** The co-inductive acceptance set characterisation on FW is equivalent to the inductive must preorder *)
   Theorem equivalence_fw_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
@@ -114,9 +103,9 @@ Section eq_contextual.
   (* ---- *)
   Section Lⁿ.
 
-  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}
+          `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}
+          `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
   (* ** The co_inductive_acc_set characterisation on toFW is equivalent to the inductive must preorder *)
   Theorem equivalence_co_inductive_acc_set_and_must_i (p : P) (q : Q) :
