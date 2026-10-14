@@ -28,8 +28,6 @@
 <div class="code">
 
 <br/>
-
-<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Lists</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">List</span>.<br/>
 <span class="id" title="keyword">Import</span> <span class="id" title="module">ListNotations</span>.<br/>
@@ -39,17 +37,29 @@
 </div>
 
 <div class="doc">
-<a id="lab4"></a><h2 class="section">Actions and traces</h2>
-<a id="lab5"></a><h3 class="section">Actions := External Action ⊎ { τ }</h3>
+<a id="lab4"></a><h2 class="section">Labels and traces</h2>
+<a id="lab5"></a><h3 class="section">Labels := External Action ⊎ { τ }</h3>
 
 </div>
 <div class="code">
 
 <br/>
-<span class="id" title="keyword">Inductive</span> <a id="Act" class="idref" href="#Act"><span class="id" title="definition, inductive"><span id="Act_rect" class="id"><span id="Act_ind" class="id"><span id="Act_rec" class="id"><span id="Act_sind" class="id">Act</span></span></span></span></span></a> (<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>) :=<br/>
-&nbsp;&nbsp;<br/>
+<span class="id" title="keyword">Inductive</span> <a id="Labels" class="idref" href="#Labels"><span class="id" title="definition, inductive"><span id="Labels_rect" class="id"><span id="Labels_ind" class="id"><span id="Labels_rec" class="id"><span id="Labels_sind" class="id">Labels</span></span></span></span></span></a> (<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>) :=<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab6"></a><h4 class="section">External Action</h4>
+
+</div>
+<div class="code">
 &nbsp;&nbsp;| <a id="ActExt" class="idref" href="#ActExt"><span class="id" title="constructor">ActExt</span></a> (<a id="6941aac8dfa5391e43b8a4017a2cdcaf" class="idref" href="#6941aac8dfa5391e43b8a4017a2cdcaf"><span class="id" title="binder">μ</span></a>: <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:1"><span class="id" title="variable">A</span></a>)<br/>
-&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab7"></a><h4 class="section">Silent Action</h4>
+
+</div>
+<div class="code">
 &nbsp;&nbsp;| <a id="a788b57bb5319497a4de11f3392dcbc3" class="idref" href="#a788b57bb5319497a4de11f3392dcbc3"><span class="id" title="constructor">τ</span></a> <br/>
 &nbsp;.<br/>
 
@@ -61,50 +71,123 @@
 </div>
 
 <div class="doc">
-<a id="lab6"></a><h3 class="section">Trace Definition</h3>
+<a id="lab8"></a><h3 class="section">Trace Definition</h3>
 
 </div>
 <div class="code">
 <span class="id" title="keyword">Definition</span> <a id="trace" class="idref" href="#trace"><span class="id" title="definition">trace</span></a> <a id="A:5" class="idref" href="#A:5"><span class="id" title="binder">A</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.1.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:5"><span class="id" title="variable">A</span></a>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab9"></a><h3 class="section">Empty Trace</h3>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Definition</span> <a id="a06c34952043eb8035c521bac955bdcc" class="idref" href="#a06c34952043eb8035c521bac955bdcc"><span class="id" title="definition">ε</span></a> {<a id="A:6" class="idref" href="#A:6"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>} := <span class="id" title="notation">[]</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:6"><span class="id" title="variable">A</span></a>.<br/>
 
 <br/>
 </div>
 
 <div class="doc">
-<a id="lab7"></a><h3 class="section">EqDecision for Act</h3>
+<a id="lab10"></a><h3 class="section">Equality decidability for Labels if it is the case for Act</h3>
 
 </div>
 <div class="code">
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="act_eqdec" class="idref" href="#act_eqdec"><span class="id" title="instance">act_eqdec</span></a> `{<a id="EqDecision0:8" class="idref" href="#EqDecision0:8"><span class="id" title="binder">EqDecision</span></a> <a id="A:7" class="idref" href="#A:7"><span class="id" title="binder"><span id="EqDecision0:8" class="id">A</span></span></a>} : <span class="id" title="abbreviation">EqDecision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#Act"><span class="id" title="inductive">Act</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:7"><span class="id" title="variable">A</span></a>).<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="act_eqdec" class="idref" href="#act_eqdec"><span class="id" title="instance">act_eqdec</span></a> `{<a id="EqDecision0:8" class="idref" href="#EqDecision0:8"><span class="id" title="binder">EqDecision</span></a> <a id="A:7" class="idref" href="#A:7"><span class="id" title="binder"><span id="EqDecision0:8" class="id">A</span></span></a>} : <span class="id" title="abbreviation">EqDecision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#Labels"><span class="id" title="inductive">Labels</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:7"><span class="id" title="variable">A</span></a>).<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab11"></a><h3 class="section">Specifications on external actions</h3>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Class</span> <a id="ExtAction" class="idref" href="#ExtAction"><span class="id" title="record">ExtAction</span></a> (<a id="A:9" class="idref" href="#A:9"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) :=<br/>
 &nbsp;&nbsp;<span class="id" title="var">MkExtAction</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab12"></a><h4 class="section">Equality decidability for Act</h4>
+
+</div>
+<div class="code">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="eqdec" class="idref" href="#eqdec"><span class="id" title="projection">eqdec</span></a>: <span class="id" title="abbreviation">EqDecision</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a>;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="countable" class="idref" href="#countable"><span class="id" title="projection">countable</span></a>: <span class="id" title="class">Countable</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a>;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="non_blocking" class="idref" href="#non_blocking"><span class="id" title="projection">non_blocking</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <span class="id" title="keyword">Prop</span>;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="non_blocking_dec" class="idref" href="#non_blocking_dec"><span class="id" title="projection">non_blocking_dec</span></a> <a id="a:14" class="idref" href="#a:14"><span class="id" title="binder">a</span></a> : <span class="id" title="class">Decision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#non_blocking:13"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#a:14"><span class="id" title="variable">a</span></a>);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual" class="idref" href="#dual"><span class="id" title="projection">dual</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <span class="id" title="keyword">Prop</span>;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual_dec" class="idref" href="#dual_dec"><span class="id" title="projection">dual_dec</span></a> <a id="a:17" class="idref" href="#a:17"><span class="id" title="binder">a</span></a> <a id="b:18" class="idref" href="#b:18"><span class="id" title="binder">b</span></a>: <span class="id" title="class">Decision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual:16"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#a:17"><span class="id" title="variable">a</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#b:18"><span class="id" title="variable">b</span></a>);<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab13"></a><h4 class="section">Act is a countable set</h4>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="countable" class="idref" href="#countable"><span class="id" title="projection">countable</span></a>: <span class="id" title="class">Countable</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab14"></a><h4 class="section">The subset of non-blocking action ℕ</h4>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="non_blocking" class="idref" href="#non_blocking"><span class="id" title="projection">non_blocking</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <span class="id" title="keyword">Prop</span>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab15"></a><h4 class="section">μ ∈ ℕ is decidable for any external action μ</h4>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="non_blocking_dec" class="idref" href="#non_blocking_dec"><span class="id" title="projection">non_blocking_dec</span></a> <a id="7c8b1c219bc88250c0d512ae99f99ad0" class="idref" href="#7c8b1c219bc88250c0d512ae99f99ad0"><span class="id" title="binder">μ</span></a> : <span class="id" title="class">Decision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#non_blocking:13"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#7c8b1c219bc88250c0d512ae99f99ad0"><span class="id" title="variable">μ</span></a>);<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab16"></a><h4 class="section">Interaction between external actions</h4>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual" class="idref" href="#dual"><span class="id" title="projection">dual</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#A:9"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <span class="id" title="keyword">Prop</span>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab17"></a><h4 class="section">The interaction between two external actions is decidable</h4>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual_dec" class="idref" href="#dual_dec"><span class="id" title="projection">dual_dec</span></a> <a id="8de2c9f99e4699c737f06fc043b0e5b0" class="idref" href="#8de2c9f99e4699c737f06fc043b0e5b0"><span class="id" title="binder">μ1</span></a> <a id="00b55cd51f04e66754ff7c8def3f4867" class="idref" href="#00b55cd51f04e66754ff7c8def3f4867"><span class="id" title="binder">μ2</span></a>: <span class="id" title="class">Decision</span> (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual:16"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#8de2c9f99e4699c737f06fc043b0e5b0"><span class="id" title="variable">μ1</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#00b55cd51f04e66754ff7c8def3f4867"><span class="id" title="variable">μ2</span></a>);<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab18"></a><h4 class="section">Co-action of a non-blocking action is blocking</h4>
+
+</div>
+<div class="code">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="dual_blocks" class="idref" href="#dual_blocks"><span class="id" title="projection">dual_blocks</span></a> <a id="6c2ec6377e76aa6ba76ef80084405710" class="idref" href="#6c2ec6377e76aa6ba76ef80084405710"><span class="id" title="binder">β</span></a> <a id="a960cc8e75a010be8cd69c93699dd9fe" class="idref" href="#a960cc8e75a010be8cd69c93699dd9fe"><span class="id" title="binder">η</span></a> :<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#non_blocking:13"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#a960cc8e75a010be8cd69c93699dd9fe"><span class="id" title="variable">η</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual:16"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#6c2ec6377e76aa6ba76ef80084405710"><span class="id" title="variable">β</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#a960cc8e75a010be8cd69c93699dd9fe"><span class="id" title="variable">η</span></a> <span class="id" title="notation">→</span> <br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">¬</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#non_blocking:13"><span class="id" title="method">non_blocking</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#6c2ec6377e76aa6ba76ef80084405710"><span class="id" title="variable">β</span></a> ;<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab19"></a><h4 class="section">dual is symmetric</h4>
+
+</div>
+<div class="code">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="duo_sym" class="idref" href="#duo_sym"><span class="id" title="projection">duo_sym</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.1/stdlib//Corelib.Classes.RelationClasses.html#Symmetric"><span class="id" title="class">Symmetric</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual:16"><span class="id" title="method">dual</span></a>;<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<a id="lab20"></a><h4 class="section">Constructive way to build a dual action</h4>
+
+</div>
+<div class="code">
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="exists_dual" class="idref" href="#exists_dual"><span class="id" title="projection">exists_dual</span></a> <a id="a2a522a6e574dd733151ef85e564dfec" class="idref" href="#a2a522a6e574dd733151ef85e564dfec"><span class="id" title="binder">μ</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.1/stdlib//Corelib.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">{</span></a> <a id="5fb6c2096ec7ce94634b29203ad67386" class="idref" href="#5fb6c2096ec7ce94634b29203ad67386"><span class="id" title="binder">η</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.1/stdlib//Corelib.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">|</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual:16"><span class="id" title="method">dual</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#a2a522a6e574dd733151ef85e564dfec"><span class="id" title="variable">μ</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#5fb6c2096ec7ce94634b29203ad67386"><span class="id" title="variable">η</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.1/stdlib//Corelib.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">}</span></a>;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
 
 <br/>
@@ -118,7 +201,7 @@
 </div>
 
 <div class="doc">
-<a id="lab8"></a><h3 class="section">Definition of blocking action</h3>
+<a id="lab21"></a><h3 class="section">Definition of blocking action</h3>
 
 </div>
 <div class="code">
@@ -128,7 +211,7 @@
 </div>
 
 <div class="doc">
-<a id="lab9"></a><h3 class="section">Definition of the co-action</h3>
+<a id="lab22"></a><h3 class="section">Definition of the co-action</h3>
 
 </div>
 <div class="code">
@@ -138,7 +221,7 @@
 </div>
 
 <div class="doc">
-<a id="lab10"></a><h3 class="section">Definition of the co-trace</h3>
+<a id="lab23"></a><h3 class="section">Construction of a co-trace</h3>
 
 </div>
 <div class="code">
@@ -148,7 +231,7 @@
 </div>
 
 <div class="doc">
-<a id="lab11"></a><h3 class="section">Uniqueness of the dual</h3>
+<a id="lab24"></a><h3 class="section">Uniqueness of the dual</h3>
 
 </div>
 <div class="code">
