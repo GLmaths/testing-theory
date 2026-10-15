@@ -39,7 +39,7 @@ Import ListNotations.
 
 Lemma exists_included_or_witnesses `{Countable B} {P : Type}
   (ps : list P) (S : P → subset_of B) (C : subset_of B) :
-  (∀ p, p ∈ ps → S p ⊆ C ∨ ∃ x, x ∈ S p ∧ x ∉ C) →
+  (∀ p, p ∈ ps → (S p ⊆ C) + { x | x ∈ S p ∧ x ∉ C }) →
   (∃ p, p ∈ ps ∧ S p ⊆ C)
   ∨ ∃ X : gset B, (∀ x, x ∈ X → x ∉ C) ∧ (∀ p, p ∈ ps → ∃ x, x ∈ X ∧ x ∈ S p).
 Proof.
@@ -220,8 +220,8 @@ Lemma completeness2_co_weak {P Q : Type} `{CC : Countable PreAct} `{
   `{!Prop_of_Inter Q T A A dual}
 
   (dich : ∀ (p' : P) (q' : Q), p' ↛ → q' ↛ →
-     ⌈ 𝝳 ∘ Φ ⌉ (coR p') ⊆ ⌈ 𝝳 ∘ Φ ⌉ (coR q')
-     ∨ ∃ x, x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p') ∧ x ∉ ⌈ 𝝳 ∘ Φ ⌉ (coR q'))
+     (⌈ 𝝳 ∘ Φ ⌉ (coR p') ⊆ ⌈ 𝝳 ∘ Φ ⌉ (coR q'))
+     + { x | x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p') ∧ x ∉ ⌈ 𝝳 ∘ Φ ⌉ (coR q') })
 
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q → p ₐ꜀꜀≼꜀ₒ₋ₐₛ q.
 Proof.
@@ -250,8 +250,8 @@ Lemma completeness_fw_co_weak {P Q : Type} `{CC : Countable PreAct} `{
   `{!Prop_of_Inter Q T A A dual}
 
   (dich : ∀ (p' : P) (q' : Q), p' ↛ → q' ↛ →
-     ⌈ 𝝳 ∘ Φ ⌉ (coR p') ⊆ ⌈ 𝝳 ∘ Φ ⌉ (coR q')
-     ∨ ∃ x, x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p') ∧ x ∉ ⌈ 𝝳 ∘ Φ ⌉ (coR q'))
+     (⌈ 𝝳 ∘ Φ ⌉ (coR p') ⊆ ⌈ 𝝳 ∘ Φ ⌉ (coR q'))
+     + { x | x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p') ∧ x ∉ ⌈ 𝝳 ∘ Φ ⌉ (coR q') })
 
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q → p ≼꜀ₒ₋ₐₛ q.
 Proof.

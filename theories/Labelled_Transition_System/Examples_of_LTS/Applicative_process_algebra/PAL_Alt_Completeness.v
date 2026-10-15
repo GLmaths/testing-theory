@@ -162,15 +162,29 @@ Proof.
       destruct f'; simpl in hf1; done.
 Qed.
 
+Lemma list_sig {X} (l : list X) (Q : X → Prop) `{∀ x, Decision (Q x)} :
+  (∃ x, x ∈ l ∧ Q x) → { x | x ∈ l ∧ Q x }.
+Proof.
+  induction l as [| y l IH]; intros h.
+  - exfalso. destruct h as (x & hx & _). by apply elem_of_nil in hx.
+  - destruct (decide (Q y)) as [hy | hy].
+    + exists y. split; [apply list_elem_of_here | exact hy].
+    + destruct IH as (x & hx & hq).
+      * destruct h as (x & hx & hq). apply elem_of_cons in hx as [-> | hx]; [contradiction |].
+        by exists x.
+      * exists x. split; [by apply list_elem_of_further | exact hq].
+Defined.
+
 Lemma PALA_coR_dichotomy (p q : term) :
-  ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR p) ⊆ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR q)
-  ∨ ∃ x, x ∈ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR p) ∧ x ∉ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR q).
+  (⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR p) ⊆ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR q))
+  + { x | x ∈ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR p) ∧ x ∉ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR q) }.
 Proof.
   set (N := S (tsbound (collect_in_a nat q))).
   destruct (decide (∃ tp, tp ∈ collect_in_a nat p ∧
               ¬ ∃ tp', tp' ∈ collect_in_a nat q ∧ t_match tp' (gen_pt N tp)))
-    as [(tp & htp & hno) | hout].
-  { right. exists (EvOut nat (gen_pt N tp)). split.
+    as [hex | hout].
+  { destruct (list_sig _ _ hex) as (tp & htp & hno).
+    right. exists (EvOut nat (gen_pt N tp)). split.
     - apply Γ_coR_iff. left. exists (gen_pt N tp). split; [reflexivity |].
       exists tp. split; [exact htp | apply t_match_gen_pt].
     - intros [(ot & e & tp' & htp' & hm) | (tp' & e & _)]%Γ_coR_iff; [| discriminate].
@@ -178,8 +192,10 @@ Proof.
   destruct (decide (∃ ot, ot ∈ collect_out_a nat p ∧
               ∃ l, l ∈ labels_of nat ot ∧
                 ¬ ∃ ot', ot' ∈ collect_out_a nat q ∧ t_match (ltemplate nat l) ot'))
-    as [(ot & hot & l & hl & hno) | hin].
-  { right. exists (EvIn nat (ltemplate nat l)). split.
+    as [hex | hin].
+  { destruct (list_sig _ _ hex) as (ot & hot & hl').
+    destruct (list_sig _ _ hl') as (l & hl & hno).
+    right. exists (EvIn nat (ltemplate nat l)). split.
     - apply Γ_coR_iff. right. exists (ltemplate nat l). split; [reflexivity |].
       exists ot. split; [exact hot |]. apply t_match_label. exists l. split; [reflexivity |].
       by apply labels_of_spec, list_elem_of_In.
@@ -199,7 +215,7 @@ Proof.
       as [hp | hn]; [exact hp |].
     exfalso. apply hin. exists (ltuple nat l). split; [exact hot |].
     exists l. split; [by apply list_elem_of_In, labels_of_spec | exact hn].
-Qed.
+Defined.
 
 Theorem PAL_Alt_completeness (p q : term) :
   p ᴘᴀʟ⊑ₘᵤₛₜᵢ q →
