@@ -35,7 +35,6 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimulation
   InputOutputActions Completeness ParallelLTSConstruction InputOutputActions.
 Export VACCS_Instance VACCS_Good.
-(* begin hide *)
 Section VACCS_ta_tc.
 
 Context `{VP : VACCS_Parameters}.
@@ -67,7 +66,7 @@ Lemma All_According_To_Data : forall k v d, (subst_Data k v (NewVar_in_Data k d)
 Proof.
 intros. destruct d. 
 - simpl. auto.
-- simpl. destruct (decide (k < S n)). (* case decide. *)
+- simpl. destruct (decide (k < S n)).
   * simpl. destruct (decide (S n = k)) as [e | e].
     ** exfalso. dependent destruction l. eapply Nat.neq_succ_diag_l. exact e. 
        rewrite <-e in l. lia.
@@ -614,4 +613,3 @@ Next Obligation. cbn. eauto with cgr. Qed.
 Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VACCS_ta_tc.
-(* end hide *)

@@ -27,11 +27,12 @@ From Stdlib.Strings Require Import String.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From TestingTheory Require Import Clos_n InputOutputActions ActTau.
-(* begin hide *)
-(* Values and their bound variables *)
+
+(** *** Values and their bound variables *)
 Inductive Data (MyType : Type) :=
 | cst : MyType -> Data MyType
-| bvar : nat -> Data MyType. (* variable as De Bruijn indices *)
+(** **** variable as De Bruijn indices *)
+| bvar : nat -> Data MyType. 
 
 Arguments bvar {_} _.
 Arguments cst {_} _.
@@ -72,16 +73,12 @@ Proof.
   refine (inj_countable' encode_data decode_data _).
   apply encode_decide_datas.
 Defined.
-(* end hide *)
 
-(** * VACCS *)
-(* begin hide *)
-(****************************** Channels  and Values *************************)
-(* end hide *)
-(** VACCS is parameterized over two countable sets. *)
-(** Channel is the type of channels *)
-(** Value is the type of data that can be transmitted over channels *)
-(* begin hide *)
+(** *** VACCS *)
+(** **** Channels  and Values *)
+(** ***** VACCS is parameterized over two countable sets. *)
+(** ***** Channel is the type of channels *)
+(** ***** Value is the type of data that can be transmitted over channels *)
 
 Class VACCS_Parameters :=
   { Channel : Type;
@@ -91,26 +88,24 @@ Class VACCS_Parameters :=
     ValueData_eq_dec :: EqDecision Value;
     VACCS_Channels :: Countable Channel;
     VACCS_Value :: Countable Value }.
-(* end hide *)
 
 Section VACCS_proc.
 
-(** ** Definitions and properties of VACCS *)
+(** **** Definitions and properties of VACCS *)
 
 Context `{VP : VACCS_Parameters}.
-(* begin hide *)
 
-(********************************* Channels with free variables ************************************)
+(** ***** Channels with free variables *)
 Definition ChannelData := Data (VP.(Channel)).
 
-(********************************* Values with free variables ************************************)
+(** ***** Values with free variables *)
 Definition ValueData := Data (VP.(Value)).
 
 Definition cst_channel (c : Channel) : ChannelData := cst c.
 Definition cst_value (v : Value) : ValueData := cst v.
 
-(********************************* Labels **********************************)
-(* Label of action (other than tau), here it is a channel's name with data *)
+(** ***** Labels **)
+(** ****** Label of action (other than tau), here it is a channel's name with data *)
 Definition TypeOfActions := (ChannelData * ValueData)%type.
 
 Definition ChannelData_of (a : TypeOfActions) : ChannelData := fst a.
@@ -136,42 +131,40 @@ match E with
                             else None
 end.
 
-(* Definition of processes *)
-(* end hide *)
+(** **** Definition of processes *)
 Inductive proc : Type :=
-(* begin hide *)
-(* To parallele two processes *)
+(** ***** To parallele two processes *)
 | pr_par : proc -> proc -> proc
-(* Variable in a process, for recursion and substitution *)
+(** ***** Variable in a process, for recursion and substitution *)
 | pr_var : nat -> proc
-(* recursion for process *)
+(** ***** recursion for process *)
 | pr_rec : nat -> proc -> proc
-(* If test *NEW term in comparison of CCS* *)
+(** ***** If test *NEW term in comparison of CCS* *)
 | pr_if_then_else : Equation ValueData -> proc -> proc -> proc
-(* The Guards *)
-(* An output is a name of a channel, an ouput value, followed by a process *)
+(** ***** The Guards *)
+(** ***** An output is a name of a channel, an ouput value, followed by a process *)
 | pr_output : ChannelData -> ValueData -> proc
-(* Restriction of a channel *)
+(** ***** Restriction of a channel *)
 | pr_restrict : proc -> proc
 | g : gproc -> proc
 
 with gproc : Type :=
-(* The Success operation *)
+(** ***** The Success operation *)
 | gpr_success : gproc
-(* The Process that does nothing *)
+(** ***** The Process that does nothing *)
 | gpr_nil : gproc
-(* An input is a name of a channel, an input variable, followed by a process *)
+(** ***** An input is a name of a channel, an input variable, followed by a process *)
 | gpr_input : ChannelData ->  proc -> gproc
-(* A tau action : does nothing *)
+(** ***** A tau action : does nothing *)
 | gpr_tau : proc -> gproc
-(* To choose between two processes *)
+(** ***** To choose between two processes *)
 | gpr_choice : gproc -> gproc -> gproc
 .
 
 Coercion pr_var : nat >-> proc.
 Coercion g : gproc >-> proc.
 
-(*Some notation to simplify the view of the code*)
+(** ****** Some notation to simplify the view of the code *)
 
 Notation "①" := (gpr_success).
 Notation "𝟘" := (gpr_nil).
@@ -186,7 +179,7 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 
-(*Definition of the Substitution *)
+(** ****** Definition of the Substitution *)
 Definition subst_Data (k : nat) (X : ValueData) (Y : ValueData) : ValueData := 
 match Y with
 | cst v => cst v
@@ -322,7 +315,7 @@ Proof.
   + f_equal. f_equal. f_equal. lia.
 Qed.
 
-(* Substitution for the Recursive Variable *)
+(** ****** Substitution for the Recursive Variable *)
 Fixpoint pr_subst (id : nat) (p : proc) (q : proc) : proc :=
   match p with 
   | p1 ‖ p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q) 
@@ -343,17 +336,15 @@ with gpr_subst id p q {struct p} := match p with
 end.
 
 
-(* The Labelled Transition System (LTS-transition) *)
-(* end hide *)
+(** ****** The Labelled Transition System (LTS-transition) *)
 Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
-(* begin hide *)
-(* The Input and the Output *)
+(** ******* The Input and the Output *)
 | lts_input : forall {c v P},
     lts (c ? • P) ((c , v) ?) (P^v)
 | lts_output : forall {c v},
     lts (c ! v • 𝟘) ((c , v) !) 𝟘
 
-(* The actions Tau *)
+(** ******* The actions Tau *)
 | lts_tau : forall {P},
     lts (𝛕 • P) τ P
 | lts_recursion : forall {x P},
@@ -363,13 +354,13 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 | lts_ifZero : forall {p q q' α E}, Eval_Eq 0 E = Some false -> lts q α q' ->
     lts (If E Then p Else q) α q'
 
-(* The actions for process restriction *)
+(** ******* The actions for process restriction *)
 | lts_res_ext : forall {p p' μ}, lts p (ActExt (VarC_action_add 1 μ)) p'
                     -> lts (ν p) (ActExt μ) (ν p')
 | lts_res_tau : forall {p p'}, lts p τ p' -> lts (ν p) τ (ν p')
 
 
-(* Communication of a channel output and input that have the same name *)
+(** ******* Communication of a channel output and input that have the same name *)
 | lts_comL : forall {c v p1 p2 q1 q2},
     lts p1 ((c , v) !) p2 ->
     lts q1 ((c , v) ?) q2 ->
@@ -379,15 +370,15 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
     lts q1 ((c , v) ?) q2 ->
     lts (q1 ‖ p1) τ (q2 ‖ p2)
 
-(* The decoration for the transition system...*)
-(* ...for the parallele *)   
+(** ******* The decoration for the transition system...*)
+(** ******* ...for the parallele *)   
 | lts_parL : forall {α p1 p2 q},
     lts p1 α p2 ->
     lts (p1 ‖ q) α (p2 ‖ q)
 | lts_parR : forall {α p q1 q2}, 
     lts q1 α q2 ->
     lts (p ‖ q1) α (p ‖ q2)
-(* ...for the sum *)
+(** ******* ...for the sum *)
 | lts_choiceL : forall {p1 p2 q α},
     lts (g p1) α q -> 
     lts (p1 + p2) α q
@@ -518,7 +509,7 @@ Qed.
 Lemma NewVar_and_NewVarC j k p : (NewVar k (NewVarC j p) = (NewVarC j (NewVar k p))).
 Proof.
   revert j k.
-  (* Induction on the size of p*)
+  (** ******* Induction on the size of p*)
   induction p as (p & Hp) using
       (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   intros; destruct p ; simpl in *; repeat rewrite Hp by lia; eauto.
@@ -766,10 +757,8 @@ Proof.
       assert (pr_subst n (NewVarC k (g g0_2)) (NewVarC k q) = NewVarC k (pr_subst n (g g0_2) q)) as eq2.
       { eapply Hp. simpl. lia. } inversion eq1. inversion eq2. eauto.
 Qed.
-(* end hide *)
 
 End VACCS_proc.
-(* begin hide *)
 
 Coercion cst_channel : Channel >-> ChannelData.
 Coercion cst_value : Value >-> ValueData.
@@ -790,4 +779,3 @@ Global Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 (at level 200, right associativity, format
 "'[v   ' 'If'  C '/' '[' 'Then'  P  ']' '/' '[' 'Else'  Q ']' ']'").
 Global Notation "t1 ^ x1" := (subst_in_proc 0 x1 t1).
-(* end hide *)

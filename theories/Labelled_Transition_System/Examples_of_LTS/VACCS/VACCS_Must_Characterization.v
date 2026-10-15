@@ -33,9 +33,7 @@ From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
   TestSpecBridge VACCS_CoFiniteImage.
 
 From Coinduction Require Import all.
-(* begin hide *)
 Notation "p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
-(* end hide *)
 
 Section VACCS_Must_Alt_Corollary.
 
@@ -46,7 +44,6 @@ Corollary must_iff_acceptance_set_VACCS (p q : proc) :
 Proof.
   now rewrite equivalence_acc_set_and_must_i.
 Qed.
-(* begin hide *)
 
 Corollary must_iff_co_inductive_acceptance_VACCS (p q : proc) :
    p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> 
@@ -79,6 +76,5 @@ Corollary must_iff_co_acceptance_set_VACCS (p q : proc) :
 Proof.
   now rewrite equivalence_acc_set_and_must_i_co_trace.
 Qed.
-(* end hide *)
 
 End VACCS_Must_Alt_Corollary.

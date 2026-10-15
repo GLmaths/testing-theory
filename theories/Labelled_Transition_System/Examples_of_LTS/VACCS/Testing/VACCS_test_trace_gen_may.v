@@ -35,28 +35,7 @@ From TestingTheory Require Import ActTau gLts VACCS_Instance VACCS_Good Bisimula
   InputOutputActions Completeness ParallelLTSConstruction InputOutputActions
   VACCS_ta_tc_gen MayTestSpec Testing_Predicate.
 (* begin hide *)
-(* * The May test generator for VACCS
-
-    VACCS counterpart of [VCCS/Testing/VCCS_test_trace_gen_may.v]. The
-    de-Bruijn machinery is reused verbatim from Must's own generator
-    ([VACCS_ta_tc_gen.v]).
-
-    Two differences from VCCS, both forced by VACCS's asynchronous outputs
-    ([non_blocking_output := is_output], [VACCS_Instance.v]):
-
-    - The output branch is a parallel composition ([‖]), mirroring Must's
-      own [gen_test_raw]'s output case: the emitted message [c!v•𝟘] is put
-      in parallel with the rest of the run, exactly as [pr_output]'s own
-      grammar forces (an output prefix can only be followed by [𝟘] — there
-      is nothing to sequentialise onto). It carries no deviation branch
-      either: unlike an input mismatch, there is no "wrong output" to
-      reject, so nothing here plays the role of VCCS's trailing [+(𝛕•𝟘)].
-    - Every [blocking β]-guarded [may_test_spec] field is proved by cases
-      on [β]: the input case does the real work, the output case is
-      discharged by contradiction against [blocking], since
-      [non_blocking_output] already covers every output — matching how
-      Must's own [test_spec]/[test_co_acceptance_set_spec] instances in
-      [VACCS_ta_tc_gen.v] dispatch on [β]. *)
+(* The May test generator for VACCS *)
 
 Section VACCS_May_Gen.
 
@@ -88,14 +67,7 @@ Fixpoint gen_may_raw (Vs : trace (ExtAct (ChannelData * ValueData)))
 Definition gen_may (s : trace (ExtAct (ChannelData * ValueData))) : proc :=
   gen_may_raw s s.
 
-(* ** Substitution commutes with the shift, for [gen_may]
-
-    Identical strategy and identical proof shape to VCCS's
-    [All_Accordingto_gen_may] — the output branch's [‖] instead of [+]
-    never enters this argument, since substitution/shift commute with
-    every connective structurally, and the case split is entirely driven
-    by [s]'s head tag ([ActIn]/[ActOut]), not by what connects the
-    branches. *)
+(* ** Substitution commutes with the shift, for [gen_may] *)
 
 Lemma All_Accordingto_gen_may s s' d k :
   subst_in_proc k d (gen_may_raw (NewVar_in_trace k s') s) = gen_may_raw s' s.
