@@ -48,14 +48,14 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
    - [PALR_sync_iff]: its synchronisations along [dual] are those of the
      alternative LTS, hence of PAL ([PAL_Alt_Dilemma.PALA_sync_iff]).
 
-   Abstraction, with [Φ] the identity and [𝝳ᴿ] forgetting the values received
+   Abstraction, with [αᴛᴇꜱᴛ] the identity and [αᴘᴿ] forgetting the values received
    at formal positions:
-   - [𝝳ᴿ (ROut l) = PRecv (ltemplate l)]: a co-action [ROut l] of [p] stands
+   - [αᴘᴿ (ROut l) = PRecv (ltemplate l)]: a co-action [ROut l] of [p] stands
      for a reception of [p] with template [ltemplate l];
-   - [𝝳ᴿ (RIn l) = PEmit l]: a co-action [RIn l] stands for an emission of
+   - [αᴘᴿ (RIn l) = PEmit l]: a co-action [RIn l] stands for an emission of
      [p] towards a receiver of label [l].
    [AbsPALR] proves the conditions (1) and (2) of [AbsAction], and
-   [FinitaryPALR] the finiteness of [𝝳ᴿ (coR p)]: it is made of the templates
+   [FinitaryPALR] the finiteness of [αᴘᴿ (coR p)]: it is made of the templates
    of the receptions of [p] and the labels of its emissions. *)
 
 Section PAL_Rcv.
@@ -124,37 +124,37 @@ Section PAL_Rcv.
 
   (* ** The LTS, by relabelling *)
 
-  Definition to_a (α : Labels PALR_Act) : Labels PALA_Act :=
-    match α with
+  Definition to_a (𝜆 : Labels PALR_Act) : Labels PALA_Act :=
+    match 𝜆 with
     | τ => τ
     | ActExt (RIn l) => ActExt (AIn Val l)
     | ActExt (ROut l) => ActExt (AOut Val (ltuple l))
     end.
 
-  Definition lts_step_r (p : term) (α : Labels PALR_Act) (q : term) : Prop := step p (to_a α) q.
+  Definition lts_step_r (p : term) (𝜆 : Labels PALR_Act) (q : term) : Prop := step p (to_a 𝜆) q.
 
-  #[global] Instance PALR_step_dec p α q : Decision (lts_step_r p α q).
+  #[global] Instance PALR_step_dec p 𝜆 q : Decision (lts_step_r p 𝜆 q).
   Proof. unfold lts_step_r. apply _. Defined.
 
-  Definition PALR_performs (p : term) (α : Labels PALR_Act) : Prop := PALA_performs Val p (to_a α).
+  Definition PALR_performs (p : term) (𝜆 : Labels PALR_Act) : Prop := PALA_performs Val p (to_a 𝜆).
 
-  #[global] Instance PALR_performs_dec p α : Decision (PALR_performs p α).
+  #[global] Instance PALR_performs_dec p 𝜆 : Decision (PALR_performs p 𝜆).
   Proof. unfold PALR_performs. apply _. Defined.
 
-  Definition PALR_performs_spec1 p α : PALR_performs p α → {q | lts_step_r p α q} :=
-    PALA_performs_spec1 Val p (to_a α).
+  Definition PALR_performs_spec1 p 𝜆 : PALR_performs p 𝜆 → {q | lts_step_r p 𝜆 q} :=
+    PALA_performs_spec1 Val p (to_a 𝜆).
 
-  Definition PALR_performs_spec2 p α : {q | lts_step_r p α q} → PALR_performs p α :=
-    PALA_performs_spec2 Val p (to_a α).
+  Definition PALR_performs_spec2 p 𝜆 : {q | lts_step_r p 𝜆 q} → PALR_performs p 𝜆 :=
+    PALA_performs_spec2 Val p (to_a 𝜆).
 
   #[global] Instance PALR_gLts : gLts term PALR_ExtAction :=
     @MkgLts term PALR_Act PALR_ExtAction lts_step_r term_eqdec PALR_step_dec
       PALR_performs PALR_performs_dec PALR_performs_spec1 PALR_performs_spec2.
 
   (* The structural congruence of the alternative LTS is a bisimulation here too. *)
-  Lemma PALR_cgr_spec p q (α : Labels PALR_Act) :
-    (∃ r, cgr Val p r ∧ lts_step_r r α q) → (∃ r, lts_step_r p α r ∧ cgr Val r q).
-  Proof. apply (PALA_cgr_spec Val p q (to_a α)). Qed.
+  Lemma PALR_cgr_spec p q (𝜆 : Labels PALR_Act) :
+    (∃ r, cgr Val p r ∧ lts_step_r r 𝜆 q) → (∃ r, lts_step_r p 𝜆 r ∧ cgr Val r q).
+  Proof. apply (PALA_cgr_spec Val p q (to_a 𝜆)). Qed.
 
   #[global] Instance PALR_gLtsEq : gLtsEq term PALR_ExtAction := {|
     gLtsEq_gLts := PALR_gLts;
@@ -199,9 +199,9 @@ Section PAL_Rcv.
     by intros [].
   Defined.
 
-  Definition Φᴿ (μ : PALR_Act) : PALR_Act := μ.
+  Definition αᴛᴿ (μ : PALR_Act) : PALR_Act := μ.
 
-  Definition 𝝳ᴿ (μ : PALR_Act) : PreR :=
+  Definition αᴘᴿ (μ : PALR_Act) : PreR :=
     match μ with
     | ROut l => PRecv (ltemplate l)
     | RIn l => PEmit l
@@ -228,15 +228,15 @@ Section PAL_Rcv.
   Qed.
 
   #[global] Program Instance AbsPALR :
-    @AbsAction term term PALR_Act PreR PALR_Act PALR_ExtAction Φᴿ 𝝳ᴿ
+    @AbsAction term term PALR_Act PreR PALR_Act PALR_ExtAction αᴛᴿ αᴘᴿ
       PALR_Act PALR_ExtAction PALR_gLts PALR_gLtsEq SyncAction_of_dual.
   Next Obligation.
-    (* (1): [Φᴿ] is the identity *)
-    intros t β β' _ _ e acc. unfold Φᴿ in e. by subst.
+    (* (1): [αᴛᴿ] is the identity *)
+    intros t β β' _ _ e acc. unfold αᴛᴿ in e. by subst.
   Qed.
   Next Obligation.
     (* (2): a reception only depends on its template *)
-    intros p β β' _ _ e (x & hx & ex). unfold Φᴿ in *. subst x.
+    intros p β β' _ _ e (x & hx & ex). unfold αᴛᴿ in *. subst x.
     exists β'. split; [| done].
     apply coR_PALR_iff in hx. apply coR_PALR_iff.
     destruct β as [l | l], β' as [l' | l']; cbn in e; try discriminate; injection e as e.
@@ -253,7 +253,7 @@ Section PAL_Rcv.
                  ++ map PEmit (concat (map (labels_of Val) (collect_out_a Val p)))).
 
   Lemma coR_abs_PALR_spec (p : term) (x : PreR) :
-    x ∈ coR_abs_PALR p ↔ x ∈ ⌈ 𝝳ᴿ ∘ Φᴿ ⌉ (coR p).
+    x ∈ coR_abs_PALR p ↔ x ∈ ⌈ αᴘᴿ ∘ αᴛᴿ ⌉ (coR p).
   Proof.
     unfold coR_abs_PALR. rewrite elem_of_list_to_set, list_elem_of_In, in_app_iff, !in_map_iff.
     split.
@@ -279,7 +279,7 @@ Section PAL_Rcv.
   Qed.
 
   #[global] Program Instance FinitaryPALR :
-    @FinitaryAbsAction term term PALR_Act PreR PALR_Act PALR_ExtAction Φᴿ 𝝳ᴿ
+    @FinitaryAbsAction term term PALR_Act PreR PALR_Act PALR_ExtAction αᴛᴿ αᴘᴿ
       PALR_Act PALR_ExtAction PALR_gLts PALR_gLtsEq SyncAction_of_dual _ _ :=
     {| coR_abs := coR_abs_PALR |}.
   Next Obligation. intros p x hx. by apply coR_abs_PALR_spec. Qed.
@@ -314,7 +314,7 @@ Corollary PALR_no_test_spec {Val : Type} `{Countable Val} `{!Inhabited Val}
 Proof.
   intros TS.
   apply (no_labelling_sync (Val := Val) (TS := TS) (Fin := FinitaryPALR Val)
-           inj (Φᴿ Val) (𝝳ᴿ Val) outcome gen).
+           inj (αᴛᴿ Val) (αᴘᴿ Val) outcome gen).
   - intros η [].
   - exact PALR_sync_iff_PAL.
 Qed.

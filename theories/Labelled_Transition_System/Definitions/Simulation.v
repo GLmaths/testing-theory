@@ -33,7 +33,7 @@ From TestingTheory Require Import gLts Bisimulation Termination Lts_OBA Multiset
 
 (* ** Similarity *)
 CoInductive similar `{@gLts A L H} `{@gLts B L H}  (a : A) (b : B) : Prop :=
-| smi_step : (forall (α : Labels L) a', a ⟶{α} a' -> exists b', b ⟶{α} b' /\ similar a' b') -> similar a b.
+| smi_step : (forall (𝜆 : Labels L) a', a ⟶{𝜆} a' -> exists b', b ⟶{𝜆} b' /\ similar a' b') -> similar a b.
 Infix "≲" := (similar) (at level 20).
 
 

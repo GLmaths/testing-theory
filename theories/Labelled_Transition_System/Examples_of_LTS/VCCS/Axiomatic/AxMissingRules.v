@@ -316,7 +316,7 @@ Proof. apply soundness_ax; [st | st | apply ax_8']. Qed.
 (* ** 9. [ax_swap_out] — the ready-set abstraction erases the value
 
     The one found last, and the subtlest. VCCS's ready-set abstraction
-    [⌈𝝳ᴠᴄᴄꜱ∘Φᴠᴄᴄꜱ⌉] keeps channel and polarity and **throws the value
+    [⌈αᴘᴠᴄᴄꜱ∘αᴛᴠᴄᴄꜱ⌉] keeps channel and polarity and **throws the value
     away** ([coR_abs_incl_iff], [Axiomatic/ReadySet.v]). So a leaf may offer
     [a!v] where the target offers only [a!w].
 

@@ -40,7 +40,7 @@
     - [①] ([GSucc]) is an inert guard saying that the observer is good, as
       in CCS testing ([①] of VACCS); it is used by the testing predicate only.
     - Sums are *guarded*, as in VACCS: a sum is made of guards ([guard]):
-      [0_ẽ], [①], prefixes [α.P], and sums of guards.  Outputs, parallel
+      [0_ẽ], [①], prefixes [𝜆.P], and sums of guards.  Outputs, parallel
       composition, restriction and conditionals are processes only, so that
       an output never stands under a sum.
 
@@ -111,7 +111,7 @@ with guard : Type :=
 (* [0_ẽ], deadlock discarding the qubits [ẽ] *)
 | GNil (es : list exp)
 | GSucc
-| GPre (α : prefix) (P : proc)
+| GPre (𝜆 : prefix) (P : proc)
 | GSum (g1 g2 : guard).
 
 Scheme proc_mut_ind := Induction for proc Sort Prop
@@ -123,7 +123,7 @@ Delimit Scope lqccs_scope with lq.
 Bind Scope lqccs_scope with proc.
 
 Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
-Notation "α ∙ P" := (GPre α P) (at level 46, right associativity) : lqccs_scope.
+Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
 Notation "g ⊕ g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
 Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
 Notation "P \ c" := (PRes P c) (at level 36, left associativity) : lqccs_scope.
@@ -145,14 +145,14 @@ Definition exps_subst (es : list exp) (x : var) (v : val) : list exp :=
   map (λ e, exp_subst e x v) es.
 
 (* The variable bound by a prefix, if any. *)
-Definition prefix_binder (α : prefix) : option var :=
-  match α with
+Definition prefix_binder (𝜆 : prefix) : option var :=
+  match 𝜆 with
   | PRecv _ _ x | PMeas _ _ _ x => Some x
   | _ => None
   end.
 
-Definition prefix_subst (α : prefix) (x : var) (v : val) : prefix :=
-  match α with
+Definition prefix_subst (𝜆 : prefix) (x : var) (v : val) : prefix :=
+  match 𝜆 with
   | PTau t => PTau t
   | PTauPair t t' => PTauPair t t'
   | PRecv t c y => PRecv t c y
@@ -172,9 +172,9 @@ with gsubst (g : guard) (x : var) (v : val) : guard :=
   match g with
   | GNil es => GNil (exps_subst es x v)
   | GSucc => GSucc
-  | GPre α P =>
-      GPre (prefix_subst α x v)
-        (if decide (prefix_binder α = Some x) then P else subst P x v)
+  | GPre 𝜆 P =>
+      GPre (prefix_subst 𝜆 x v)
+        (if decide (prefix_binder 𝜆 = Some x) then P else subst P x v)
   | GSum g1 g2 => GSum (gsubst g1 x v) (gsubst g2 x v)
   end.
 
@@ -217,8 +217,8 @@ Fixpoint eval (e : exp) : option val :=
 
 (* ** Tags of a process ([Tag(P)] in the paper) *)
 
-Definition prefix_tags (α : prefix) : list tag :=
-  match α with
+Definition prefix_tags (𝜆 : prefix) : list tag :=
+  match 𝜆 with
   | PTau t | PRecv t _ _ | POp t _ _ | PMeas t _ _ _ => [t]
   | PTauPair t t' => [t; t']
   end.
@@ -233,7 +233,7 @@ Fixpoint tags (P : proc) : list tag :=
 with gtags (g : guard) : list tag :=
   match g with
   | GNil _ | GSucc => []
-  | GPre α P => prefix_tags α ++ tags P
+  | GPre 𝜆 P => prefix_tags 𝜆 ++ tags P
   | GSum g1 g2 => gtags g1 ++ gtags g2
   end.
 
@@ -295,10 +295,10 @@ Proof. induction e; simpl; try done; by rewrite ?IHe, ?IHe1, ?IHe2. Qed.
 #[global] Instance exp_countable : Countable exp.
 Proof. refine (inj_countable exp_encode exp_decode exp_decode_encode). Defined.
 
-Definition prefix_to_sum (α : prefix) :
+Definition prefix_to_sum (𝜆 : prefix) :
   tag + (tag * tag) + (tag * chan * var)
   + (tag * sop * list exp) + (tag * meas * list exp * var) :=
-  match α with
+  match 𝜆 with
   | PTau t => inl (inl (inl (inl t)))
   | PTauPair t t' => inl (inl (inl (inr (t, t'))))
   | PRecv t c x => inl (inl (inr (t, c, x)))
@@ -336,7 +336,7 @@ with guard_encode (g : guard) : gen_tree pleaf :=
   match g with
   | GNil es => GenLeaf (inl (inl (inl (inl es))))
   | GSucc => GenNode 5 []
-  | GPre α P => GenNode 0 [GenLeaf (inl (inl (inl (inr α)))); proc_encode P]
+  | GPre 𝜆 P => GenNode 0 [GenLeaf (inl (inl (inl (inr 𝜆)))); proc_encode P]
   | GSum g1 g2 => GenNode 2 [guard_encode g1; guard_encode g2]
   end.
 
@@ -354,7 +354,7 @@ with guard_decode (t : gen_tree pleaf) : option guard :=
   match t with
   | GenLeaf (inl (inl (inl (inl es)))) => Some (GNil es)
   | GenNode 5 [] => Some GSucc
-  | GenNode 0 [GenLeaf (inl (inl (inl (inr α)))); t] => GPre α <$> proc_decode t
+  | GenNode 0 [GenLeaf (inl (inl (inl (inr 𝜆)))); t] => GPre 𝜆 <$> proc_decode t
   | GenNode 2 [t1; t2] => g1 ← guard_decode t1; g2 ← guard_decode t2; Some (GSum g1 g2)
   | _ => None
   end.

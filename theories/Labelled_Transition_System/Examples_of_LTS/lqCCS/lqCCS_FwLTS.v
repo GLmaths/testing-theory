@@ -318,9 +318,9 @@ Section Process.
     (f : Out (meas_of M qs) → C) : list C :=
     f <$> filter (λ k, code _ k = n ∧ nonzero (meas_branch M qs k ρ)) (outs (meas_of M qs)).
 
-  Definition lsuccs (x : pconf) (α : Labels lact) : list pconf :=
+  Definition lsuccs (x : pconf) (𝜆 : Labels lact) : list pconf :=
     let '(P, ρ) := x in
-    match α with
+    match 𝜆 with
     | τ =>
         ((λ P', (P', ρ)) <$> succ P UTau)
         ++ (acts P ≫= λ '(a, P0),
@@ -354,10 +354,10 @@ Section Process.
       apply list_elem_of_filter. split; [done|]. apply list_elem_of_In, outs_all.
   Qed.
 
-  Lemma lsuccs_spec x α z : z ∈ lsuccs x α ↔ lstep x α z.
+  Lemma lsuccs_spec x 𝜆 z : z ∈ lsuccs x 𝜆 ↔ lstep x 𝜆 z.
   Proof.
     destruct x as [P ρ]. split.
-    - destruct α as [[c v|c v|E qs|M qs n]|]; simpl.
+    - destruct 𝜆 as [[c v|c v|E qs|M qs n]|]; simpl.
       + rewrite list_elem_of_fmap. intros (P' & -> & Hs). apply succ_spec in Hs. by constructor.
       + rewrite list_elem_of_fmap. intros (P' & -> & Hs). apply succ_spec in Hs. by constructor.
       + intros Hz. apply list_elem_of_singleton in Hz as ->. constructor.
@@ -386,8 +386,8 @@ Section Process.
 
   #[global] Instance pconf_gLts : gLts pconf lact_ExtAction := gLts_of_succs lsuccs.
 
-  Lemma pconf_step_def x α y : x ⟶{α} y ↔ lstep x α y.
-  Proof. change (y ∈ lsuccs x α ↔ lstep x α y). apply lsuccs_spec. Qed.
+  Lemma pconf_step_def x 𝜆 y : x ⟶{𝜆} y ↔ lstep x 𝜆 y.
+  Proof. change (y ∈ lsuccs x 𝜆 ↔ lstep x 𝜆 y). apply lsuccs_spec. Qed.
 
   (* ** Transfer of program steps along [≡*] *)
 
@@ -413,7 +413,7 @@ Section Process.
     - intros x y z (Ha & Hb) (Ha' & Hb'). split; [by etrans|congruence].
   Qed.
 
-  Lemma feq_step x r α y : feq x r → lstep r α y → ∃ x', lstep x α x' ∧ feq x' y.
+  Lemma feq_step x r 𝜆 y : feq x r → lstep r 𝜆 y → ∃ x', lstep x 𝜆 x' ∧ feq x' y.
   Proof.
     destruct x as [P ρ]. intros (Hc & E2) Hs. simpl in *. symmetry in Hc.
     inversion Hs as [R R' ρ' Hu|R R' ρ' t E qs Hp|R R0 ρ' t M qs y' k Hp Hn
@@ -437,8 +437,8 @@ Section Process.
   #[global] Instance pconf_gLtsEq : gLtsEq pconf lact_ExtAction.
   Proof.
     refine {| gLtsEq_gLts := pconf_gLts; eq_rel := feq; eq_rel_eq := _ |}.
-    intros x y α (r & Hxr & Hr). apply pconf_step_def in Hr.
-    destruct (feq_step x r α y Hxr Hr) as (x' & Hs & Hx').
+    intros x y 𝜆 (r & Hxr & Hr). apply pconf_step_def in Hr.
+    destruct (feq_step x r 𝜆 y Hxr Hr) as (x' & Hs & Hx').
     exists x'. split; [by apply pconf_step_def|done].
   Defined.
 
@@ -446,7 +446,7 @@ Section Process.
 
   Definition fpar (x : pconf) t c v : pconf := (PPar x.1 (oproc t c v), x.2).
 
-  Lemma lstep_par_out x α y t c v : lstep x α y → lstep (fpar x t c v) α (fpar y t c v).
+  Lemma lstep_par_out x 𝜆 y t c v : lstep x 𝜆 y → lstep (fpar x t c v) 𝜆 (fpar y t c v).
   Proof.
     intros Hs. inversion Hs; subst; unfold fpar; simpl.
     - constructor. by apply ustep_par_l.
@@ -460,11 +460,11 @@ Section Process.
     - by constructor.
   Qed.
 
-  Lemma lstep_par_out_inv x t c v α y :
-    lstep (fpar x t c v) α y →
-      (∃ y', lstep x α y' ∧ y = fpar y' t c v)
-    ∨ (α = ActExt (LOut c v) ∧ y = (PPar x.1 𝟘, x.2))
-    ∨ (α = τ ∧ ∃ P', ustep x.1 (UAct (AIn c v)) P' ∧ y = (PPar P' 𝟘, x.2)).
+  Lemma lstep_par_out_inv x t c v 𝜆 y :
+    lstep (fpar x t c v) 𝜆 y →
+      (∃ y', lstep x 𝜆 y' ∧ y = fpar y' t c v)
+    ∨ (𝜆 = ActExt (LOut c v) ∧ y = (PPar x.1 𝟘, x.2))
+    ∨ (𝜆 = τ ∧ ∃ P', ustep x.1 (UAct (AIn c v)) P' ∧ y = (PPar P' 𝟘, x.2)).
   Proof.
     destruct x as [P ρ]. unfold fpar; simpl. intros Hs.
     inversion Hs as [R R' ρ' Hu|R R' ρ' t' E qs Hp|R R0 ρ' t' M qs y' k Hp Hn
@@ -508,9 +508,9 @@ Section Process.
 
   (* ** The output axioms *)
 
-  Lemma f_nb_delay x y z c v α :
-    lstep x (ActExt (LOut c v)) y → lstep y α z →
-    ∃ w, lstep x α w ∧ ∃ z', lstep w (ActExt (LOut c v)) z' ∧ feq z' z.
+  Lemma f_nb_delay x y z c v 𝜆 :
+    lstep x (ActExt (LOut c v)) y → lstep y 𝜆 z →
+    ∃ w, lstep x 𝜆 w ∧ ∃ z', lstep w (ActExt (LOut c v)) z' ∧ feq z' z.
   Proof.
     intros Hxy Hyz. destruct (fout_cases _ _ _ _ Hxy) as [t Hx].
     destruct (feq_step x _ _ _ Hx (lstep_par_out _ _ _ t c v Hyz)) as (w & Hw & Hwz).
@@ -580,7 +580,7 @@ Section Process.
   #[global] Instance pconf_gLtsOba : @gLtsOba pconf lact lact_ExtAction pconf_gLtsEq.
   Proof.
     split.
-    - intros p q r η α Hη Hpq Hqr. destruct η as [c v| | |]; try done.
+    - intros p q r η 𝜆 Hη Hpq Hqr. destruct η as [c v| | |]; try done.
       apply pconf_step_def in Hpq, Hqr.
       destruct (f_nb_delay _ _ _ _ _ _ Hpq Hqr) as (w & Hw & z' & Hz' & Heq).
       exists w. split; [by apply pconf_step_def|].

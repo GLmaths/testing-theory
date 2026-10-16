@@ -37,7 +37,7 @@
     and, since VACCS's abstraction has the single constructor [Inputs c]
     (it erases the value *and* the polarity),
 
-        ⌈𝝳∘Φ⌉(coR p)  =  { Inputs c | p has a pending message on c }.
+        ⌈αᴘʀᴏ∘αᴛᴇꜱᴛ⌉(coR p)  =  { Inputs c | p has a pending message on c }.
 
     Two consequences worth stating plainly, both proved below:
 
@@ -88,10 +88,10 @@ Proof.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb.
 Qed.
 
-(* The abstracted form: [Φ] keeps the channel only. *)
+(* The abstracted form: [αᴛᴇꜱᴛ] keeps the channel only. *)
 
 Lemma coR_abs_iff : forall (p : proc) (c : ChannelData),
-  (Inputs c) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActOut (c,v)].
+  (Inputs c) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActOut (c,v)].
 Proof.
   intros p c. unfold elem_of, subset_of, map_set. simpl. split.
   - intros (μ & Hmu & Heq).
@@ -102,7 +102,7 @@ Proof.
 Qed.
 
 Lemma coR_abs_shape : forall (p : proc) (x : PreAct),
-  x ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR p) -> exists c, x = Inputs c.
+  x ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR p) -> exists c, x = Inputs c.
 Proof. intros p [c] _. exists c. reflexivity. Qed.
 
 (* ** Refusal, spelled out
@@ -201,7 +201,7 @@ Qed.
 (* The payoff: a message bag's abstracted ready set is exactly the set of
     channels it carries a message on. *)
 Corollary msgs_coR_abs : forall l c,
-  (Inputs c) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (msgs l)) <-> exists v, In (c,v) l.
+  (Inputs c) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR (msgs l)) <-> exists v, In (c,v) l.
 Proof.
   intros l c. rewrite coR_abs_iff. split.
   - intros (v & H). exists v. apply msgs_emits_iff. exact H.

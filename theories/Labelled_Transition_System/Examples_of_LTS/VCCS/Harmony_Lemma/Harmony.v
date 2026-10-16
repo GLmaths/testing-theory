@@ -285,11 +285,11 @@ destruct Hyp. rename H into Transition. dependent induction Transition.
   apply cgr_choice_com. apply cgr_choice. assumption. apply cgr_choice_assoc. assumption.
 Qed.
 
-(** ******* p 'is equivalent some r 'and r performs α to q *)
-Definition sc_then_lts p α q := exists r, p ≡* r /\ (lts r α q).
+(** ******* p 'is equivalent some r 'and r performs 𝜆 to q *)
+Definition sc_then_lts p 𝜆 q := exists r, p ≡* r /\ (lts r 𝜆 q).
 
-(** ******* p performs α to some r and this is equivalent to q*)
-Definition lts_then_sc p α q := exists r, ((lts p α r) /\ r ≡* q).
+(** ******* p performs 𝜆 to some r and this is equivalent to q*)
+Definition lts_then_sc p 𝜆 q := exists r, ((lts p 𝜆 r) /\ r ≡* q).
 
 Lemma VarSwap_swap_proc p p' μ k : lts (VarSwap_in_proc k p) (ActExt (VarC_action_add (S (S k)) μ)) p' -> 
 lts p (ActExt (VarC_action_add (S (S k)) μ)) (VarSwap_in_proc k p').
@@ -702,12 +702,12 @@ Proof.
       + assert (lts (NewVarC k (g g2)) τ (NewVarC k p')); eauto. eapply lts_choiceR. eapply Hp; simpl; eauto. lia.
 Qed.
 
-(** ******* p 'is equivalent some r 'and r performs α to q , the congruence and the Transition can be reversed : *)
-Lemma Congruence_Respects_Transition  : forall p q α, sc_then_lts p α q -> lts_then_sc p α q.
+(** ******* p 'is equivalent some r 'and r performs 𝜆 to q , the congruence and the Transition can be reversed : *)
+Lemma Congruence_Respects_Transition  : forall p q 𝜆, sc_then_lts p 𝜆 q -> lts_then_sc p 𝜆 q.
 Proof. 
 (** ******* by induction on the congruence and the step then...*)
-  intros p q α (p' & hcgr & l).
-  revert q α l.
+  intros p q 𝜆 (p' & hcgr & l).
+  revert q 𝜆 l.
   dependent induction hcgr.
   - dependent induction H. 
 (** ******* reasonning about all possible cases due to the structure of terms *)
@@ -796,7 +796,7 @@ Proof.
            eapply cgr_res_scope.
          * exists (ν (p' ‖ NewVarC 0 q)). split. eapply lts_res_tau. eapply lts_parL. eauto.
            eapply cgr_res_scope.
-      -- exists (ν (p ‖ NewVarC 0 q2)). destruct α.
+      -- exists (ν (p ‖ NewVarC 0 q2)). destruct 𝜆.
          * split. eapply lts_res_ext. eapply lts_parR. replace (NewVarC 0 q) with (NewVarCn 0 1 q); eauto.
            replace (NewVarC 0 q2) with (NewVarCn 0 1 q2); eauto. eapply NewVarC_preserves_transition. eauto.
            eapply cgr_res_scope.
@@ -861,7 +861,7 @@ Proof.
       -- destruct (IHcgr_step eq_refl q2 (((c , v)) ?)). assumption. destruct H0. exists (x ‖ p2).
           split.  eapply lts_comR. exact l1. assumption.
           apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step eq_refl p2 α). assumption. destruct H0. eexists.
+      -- destruct (IHcgr_step eq_refl p2 𝜆). assumption. destruct H0. eexists.
           split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
           assumption. reflexivity.
       -- eexists. split. instantiate (1:= (p ‖ q2)). apply lts_parR.
@@ -874,16 +874,16 @@ Proof.
          eapply lts_res_tau. eauto. eapply cgr_res. eauto.
     + intros. dependent destruction l.
       -- eexists. split. instantiate (1:= p'). apply lts_ifOne; eauto. reflexivity.
-      -- destruct (IHcgr_step eq_refl q'0 α) as (q'1 & l' & equiv'). eauto.
+      -- destruct (IHcgr_step eq_refl q'0 𝜆) as (q'1 & l' & equiv'). eauto.
          eexists. split. apply lts_ifZero; eauto. eauto.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step eq_refl p'0 α) as (p'1 & l' & equiv'). eauto.
+      -- destruct (IHcgr_step eq_refl p'0 𝜆) as (p'1 & l' & equiv'). eauto.
          eexists. split. apply lts_ifOne; eauto. eauto.
       -- eexists. split. instantiate (1:= q'). apply lts_ifZero; eauto. reflexivity.
     + intros. dependent destruction l.
-      -- destruct (IHcgr_step eq_refl q α). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
+      -- destruct (IHcgr_step eq_refl q 𝜆). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
       -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
-  - intros. destruct (IHhcgr2 eq_refl q α). assumption. destruct (IHhcgr1 eq_refl x0 α). destruct H. assumption. exists x1. split. destruct H0. assumption.
+  - intros. destruct (IHhcgr2 eq_refl q 𝜆). assumption. destruct (IHhcgr1 eq_refl x0 𝜆). destruct H. assumption. exists x1. split. destruct H0. assumption.
     destruct H. destruct H0. eauto with *.
 Qed.
 
@@ -979,8 +979,8 @@ apply transitivity with ((Q ‖ R) ‖ (P ‖ S)). apply InversionParallele. app
 Qed.
 
 (** ******* The More Stronger Harmony Lemma (in one side) is more stronger *)
-Lemma Congruence_Simplicity : (forall α , ((forall P Q, (((lts P α Q) -> (sts P Q)))) 
--> (forall P Q, ((lts_then_sc P α Q) -> (sts P Q))))).
+Lemma Congruence_Simplicity : (forall 𝜆 , ((forall P Q, (((lts P 𝜆 Q) -> (sts P Q)))) 
+-> (forall P Q, ((lts_then_sc P 𝜆 Q) -> (sts P Q))))).
 Proof.
 intros. destruct H0. destruct H0. eapply sts_cong. instantiate (1:=P). apply cgr_refl. instantiate (1:=x). apply H. exact H0. 
 exact H1.

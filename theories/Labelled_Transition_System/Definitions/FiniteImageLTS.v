@@ -34,7 +34,7 @@ From TestingTheory Require Import InListPropHelper ActTau gLts Bisimulation Term
 Class FiniteImagegLts P A `{gLts P A} :=
   MkFlts {
       folts_states_countable: Countable P;
-      folts_next_states_finite p α : Finite (dsig (fun q => p ⟶{α} q));
+      folts_next_states_finite p 𝜆 : Finite (dsig (fun q => p ⟶{𝜆} q));
 }.
 
 #[global] Existing Instance folts_states_countable.
@@ -42,7 +42,7 @@ Class FiniteImagegLts P A `{gLts P A} :=
 
 Class CountablegLts P A `{gLts P A} := MkClts {
     clts_states_countable: Countable P;
-    clts_next_states_countable: ∀ x α, Countable (dsig (fun y => x ⟶{α} y));
+    clts_next_states_countable: ∀ x 𝜆, Countable (dsig (fun y => x ⟶{𝜆} y));
 }.
 #[global] Existing Instance clts_states_countable.
 #[global] Existing Instance clts_next_states_countable.

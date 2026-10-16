@@ -322,10 +322,10 @@ destruct c'.
 - now exists v.
 Qed.
 
-Lemma Invert_Bound_Out : forall (α:Act) c,
-   BoundOut c = ⇑ α -> exists d, c = ⇑ d /\ α = BoundOut d.
+Lemma Invert_Bound_Out : forall (𝜆:Act) c,
+   BoundOut c = ⇑ 𝜆 -> exists d, c = ⇑ d /\ 𝜆 = BoundOut d.
 Proof.
-intros. destruct α; try destruct e; inversion H.
+intros. destruct 𝜆; try destruct e; inversion H.
 now exists d.
 Qed.
 

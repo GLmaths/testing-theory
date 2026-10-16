@@ -45,8 +45,8 @@ From TestingTheory Require Import
   DefinitionCI SoundnessCI CompletenessCI.
 
 Theorem equivalence_co_inductive_acc_set_and_acc_set `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ gLtsP gLtsT _,
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ gLtsQ gLtsT _}
   (X : gset P) (Y : gset Q) :
   X ≼ₛₑₜ_ₐₛ Y <-> X ᶜᵒ≼ₐₛ Y.
 Proof.
@@ -67,11 +67,11 @@ Section eq_contextual.
   Context `{!Prop_of_Inter P (MO A) A A fw_inter} `{!Prop_of_Inter (P * MO A) T A A dual}
           `{!Prop_of_Inter Q (MO A) A A fw_inter} `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
-  Context `{CC : Countable PreAct} `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }
-          `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{CC : Countable PreAct} `{@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }
+          `{@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }.
 
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}
-          `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+          `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
 
   (* * Main equivalence theorems *)
   Section FWⁿ.

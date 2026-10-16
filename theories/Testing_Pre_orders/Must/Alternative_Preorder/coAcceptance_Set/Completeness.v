@@ -129,7 +129,6 @@ Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
 
 #[global] Existing Instance ta_test_spec.
 
-
 (* *** Facts about test generators *)
 
 Lemma tconv_always_reduces `{
@@ -147,13 +146,15 @@ Proof.
     + eapply test_tau_transition. exact not_nb.
 Qed.
 
-Lemma terminate_must_test_conv_nil `{
-  gLtsP : @gLts P A H,
-  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _, !test_convergence_spec tconv}
+Section Must_tconv.
 
-  `{!Prop_of_Inter P T A A dual}
+Context `{gLtsP : @gLts P A H}.
+Context `{gLtsT : !gLtsEq T H}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_convergence_spec tconv}.
+Context `{!Prop_of_Inter P T A A dual}.
 
-  (p : P) : 
+Lemma terminate_must_test_conv_nil (p : P) : 
   p ⤓ -> p must_pass (tconv ε).
 Proof.
   intros ht.
@@ -168,14 +169,7 @@ Proof.
     exists e0. eassumption.
 Qed.
 
-Lemma must_tconv_wt_mu `{
-  gLtsP : @gLts P A H, 
-  gLtsT : ! gLtsEq T H,
-  !Testing_Predicate outcome _, ! test_convergence_spec tconv}
-
-  `{!Prop_of_Inter P T A A dual}
-
-  μ s (p q : P): 
+Lemma must_tconv_wt_mu μ s (p q : P) : 
   p must_pass (tconv ((co μ) :: s)) -> 
     p ⟹{μ} q -> q must_pass (tconv s).
 Proof.
@@ -190,13 +184,7 @@ Proof.
     eapply test_ungood. exact (proj2_sig (exists_dual μ)).
 Qed.
 
-(** *** Satisfying [tconv] implies convergence *)
-
-Lemma cnv_if_must `{
-  gLtsP : @gLts P A H, 
-  gLtsT : !gLtsEq T H, !Testing_Predicate outcome _, !test_convergence_spec tconv}
-  `{!Prop_of_Inter P T A A dual}
-  s (p : P) :
+Lemma cnv_if_must s (p : P) :
   p must_pass (tconv (coₜ s)) -> p ⇓ s.
 Proof.
   revert p.
@@ -209,9 +197,17 @@ Proof.
       eapply IHs', must_tconv_wt_mu; eauto.
 Qed.
 
-Lemma f_gen_lts_mu_in_the_middle `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f} 
-  s1 s2 μ1:
+End Must_tconv.
+
+(** *** Satisfying [tconv] implies convergence *)
+
+Section Test_spec_inversion.
+
+Context `{gLtsT : gLtsOba T}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_spec f}.
+
+Lemma f_gen_lts_mu_in_the_middle s1 s2 μ1 :
   Forall non_blocking s1
     -> f (s1 ++ μ1 :: s2) ⟶⋍[μ1] f (s1 ++ s2).
 Proof.
@@ -232,9 +228,7 @@ Proof.
     etrans. eauto. etrans. eauto. etrans. eauto. now symmetry.
 Qed.
 
-Lemma f_gen_lts_mu_in_the_middle' `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f} 
-  s1 s2 μ1 t:
+Lemma f_gen_lts_mu_in_the_middle' s1 s2 μ1 t :
   Forall non_blocking s1
     -> f (s1 ++ μ1 :: s2) ⟶⋍[μ1] t -> t ⋍ f (s1 ++ s2).
 Proof.
@@ -287,10 +281,7 @@ Proof.
          contradiction.
 Qed.
 
-
-Lemma side_effect_by_blocking_action `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f} 
-  s β β' t:
+Lemma side_effect_by_blocking_action s β β' t :
   blocking β -> f (β :: s) ⟶[β'] t -> blocking β'.
 Proof.
   intros not_nb HypTr.
@@ -305,9 +296,7 @@ Proof.
     contradiction.
 Qed.
 
-Lemma f_gen_lts_mu_in_the_middle_b_or_neq `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f} 
-  s1 s2 β β' t:
+Lemma f_gen_lts_mu_in_the_middle_b_or_neq s1 s2 β β' t :
   Forall non_blocking s1 -> blocking β -> β' ≠ β -> blocking β'
     -> f (s1 ++ β :: s2) ⟶[β'] t -> outcome t.
 Proof.
@@ -329,9 +318,7 @@ Proof.
       eapply outcome_preserved_by_eq; eauto. etransitivity ;eauto. now symmetry.
 Qed.
 
-Lemma inversion_test_b_external_action `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f} 
-  s β' t :
+Lemma inversion_test_b_external_action s β' t :
   (forall μ1, f ε ↛[μ1] \/ (forall t, f ε ⟶[μ1] t -> outcome t)) ->
   f s ⟶[β'] t ->
   blocking β' ->
@@ -376,9 +363,7 @@ Proof.
       ++ left. eapply test_side_effect_by_construction; eauto.
 Qed.
 
-Lemma inversion_test_nb_external_action `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f} 
-  s η' t :
+Lemma inversion_test_nb_external_action s η' t :
   (forall μ1, f ε ↛[μ1] \/ (forall t, f ε ⟶[μ1] t -> outcome t)) ->
   f s ⟶[η'] t ->
   non_blocking η' -> 
@@ -427,9 +412,7 @@ Proof.
            { eapply test_side_effect_by_construction; eauto. } eauto. 
 Qed.
 
-Lemma inversion_test_external_action `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f} 
-  s η' t :
+Lemma inversion_test_external_action s η' t :
   (forall μ, f ε ↛[μ] \/ (forall t, f ε ⟶[μ] t -> outcome t)) ->
   f s ⟶[η'] t ->
   outcome t \/
@@ -443,40 +426,7 @@ Proof.
   + eapply inversion_test_b_external_action; eauto.
 Qed.
 
-Lemma inversion_tconv_external_action `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_convergence_spec f} 
-  s μ' t :
-  f s ⟶[μ'] t ->
-  outcome t \/ 
-  ∃ s1 s2 μ, s = s1 ++ μ :: s2 
-  /\ t ⋍ f (s1 ++ s2)
-  /\ μ' = μ
-  /\ Forall non_blocking s1.
-Proof.
-  intros. eapply inversion_test_external_action; eauto.
-  left. eapply tconv_does_no_external_action; eauto.
-Qed.
-
-Lemma inversion_ta_external_action `{CC: Countable PreAct} `{
-  gLtsT : gLtsOba T,
-  !Testing_Predicate outcome _, !test_co_acceptance_set_spec PreAct f Γ} 
-  s μ' (t : T) (O : gset PreAct) :
-  f O s ⟶[μ'] t ->
-  outcome t \/ 
-  ∃ s1 s2 μ, s = s1 ++ μ :: s2 
-  /\ t ⋍ f O (s1 ++ s2)
-  /\ μ' = μ
-  /\ Forall non_blocking s1.
-Proof.
-  eapply inversion_test_external_action; eauto. intros μ.
-  destruct (decide (non_blocking μ)) as [nb' | not_nb'].
-       +++ left. eapply ta_does_no_non_blocking_actions; eauto.
-       +++ right. intro e. eapply ta_transition_to_good; eauto.
-Qed.
-
-Lemma inversion_test_tau_action `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_spec f}
-  s t :
+Lemma inversion_test_tau_action s t :
   (f ε ↛ \/ (forall t, f ε ⟶ t -> outcome t)) ->
   (forall μ, f ε ↛[μ] \/ (forall t, f ε ⟶[μ] t -> outcome t)) ->
   f s ⟶ t ->
@@ -537,9 +487,27 @@ Proof.
     + left. eapply test_reset_tau_path. exact not_nb. exact HypTr.
 Qed.
 
-Lemma inversion_tconv_tau_action `{
-  gLtsT : gLtsOba T, !Testing_Predicate outcome _, !test_convergence_spec f} 
-  s t :
+End Test_spec_inversion.
+
+Section Test_convergence_inversion.
+
+Context `{gLtsT : gLtsOba T}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_convergence_spec f}.
+
+Lemma inversion_tconv_external_action s μ' t :
+  f s ⟶[μ'] t ->
+  outcome t \/ 
+  ∃ s1 s2 μ, s = s1 ++ μ :: s2 
+  /\ t ⋍ f (s1 ++ s2)
+  /\ μ' = μ
+  /\ Forall non_blocking s1.
+Proof.
+  intros. eapply inversion_test_external_action; eauto.
+  left. eapply tconv_does_no_external_action; eauto.
+Qed.
+
+Lemma inversion_tconv_tau_action s t :
   f s ⟶ t ->
   outcome t \/
   ∃ η μ' s1 s2 s3,
@@ -556,10 +524,30 @@ Proof.
   + intro μ. left. eapply tconv_does_no_external_action.
 Qed.
 
-Lemma inversion_ta_tau_action `{CC : Countable PreAct} `{
-  gLtsT : gLtsOba T,
-  !Testing_Predicate outcome _, !test_co_acceptance_set_spec PreAct f Γ}
-  s O t :
+End Test_convergence_inversion.
+
+Section Test_acceptance_inversion.
+
+Context `{CC: Countable PreAct}.
+Context `{gLtsT : gLtsOba T}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_co_acceptance_set_spec PreAct f Γ}.
+
+Lemma inversion_ta_external_action s μ' (t : T) (O : gset PreAct) :
+  f O s ⟶[μ'] t ->
+  outcome t \/ 
+  ∃ s1 s2 μ, s = s1 ++ μ :: s2 
+  /\ t ⋍ f O (s1 ++ s2)
+  /\ μ' = μ
+  /\ Forall non_blocking s1.
+Proof.
+  eapply inversion_test_external_action; eauto. intros μ.
+  destruct (decide (non_blocking μ)) as [nb' | not_nb'].
+       +++ left. eapply ta_does_no_non_blocking_actions; eauto.
+       +++ right. intro e. eapply ta_transition_to_good; eauto.
+Qed.
+
+Lemma inversion_ta_tau_action s O t :
   f O s ⟶ t ->
   outcome t \/ (∃ η μ s1 s2 s3, s = s1 ++ [η] ++ s2 ++ [μ] ++ s3
                           /\ t ⋍ f O (s1 ++ s2 ++ s3)
@@ -577,15 +565,20 @@ Proof.
        eapply ta_transition_to_good ; eauto.
 Qed.
 
+End Test_acceptance_inversion.
+
 (** *** Convergence implies satisfying [tconv] *)
 
-Lemma must_if_cnv `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _, !test_convergence_spec tconv} {unique_nb : UniqueDual A} 
+Section Must_iff_cnv.
 
-  `{!Prop_of_Inter P T A A dual}
+Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_convergence_spec tconv}.
+Context {unique_nb : UniqueDual A}.
+Context `{!Prop_of_Inter P T A A dual}.
 
-  s (p : P) :
+Lemma must_if_cnv s (p : P) :
   p ⇓ s -> p must_pass (tconv (coₜ s)).
 Proof.
   revert p.
@@ -667,15 +660,10 @@ Proof.
       exact hcnv.
 Qed.
 
-Lemma must_iff_cnv `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _, 
-  !test_convergence_spec tconv} {unique_nb : UniqueDual A}
-
-  `{!Prop_of_Inter P T A A dual}
-
-  (p : P) s : p must_pass (tconv (coₜ s)) <-> p ⇓ s.
+Lemma must_iff_cnv (p : P) s : p must_pass (tconv (coₜ s)) <-> p ⇓ s.
 Proof. split; [eapply cnv_if_must | eapply must_if_cnv]; eauto. Qed.
+
+End Must_iff_cnv.
 
 Lemma completeness1 `{
     @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -786,8 +774,8 @@ Qed.
 Lemma must_ta_monotonicity_nil {P : Type} `{CC : Countable PreAct} `{
   gLtsP : @gLts P A H,
   @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ , !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
+  AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ , !Testing_Predicate outcome _,
+  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}
 
   `{!Prop_of_Inter P T A A dual}
 
@@ -822,12 +810,12 @@ Proof.
                contradiction.
           ++++ assert (μ2 ∈ coR p) as co_set.
                { exists μ1. repeat split; eauto. eapply lts_performs_spec2; eauto. }
-               eapply (map_gamma_of_action (𝝳 ∘ Φ)) in co_set.
+               eapply (map_gamma_of_action (αᴘʀᴏ ∘ αᴛᴇꜱᴛ)) in co_set.
                eapply ta_actions_are_in_its_gamma_set in l2 as mem; eauto.
                eapply hsub in mem.
                eapply ta_has_a_representative_transition_for_its_gamma_set in mem as (r & μ'2 & Tr' & eq'); eauto.
                simpl in co_set. rewrite<- eq' in co_set.
-               destruct co_set as (μ'1 & mem & eq''). eapply (map_gamma_of_action Φ) in mem as mem_map.
+               destruct co_set as (μ'1 & mem & eq''). eapply (map_gamma_of_action αᴛᴇꜱᴛ) in mem as mem_map.
                simpl in eq''. symmetry in eq''.
                (* The next line uses a property of delta *)
                eapply (abstraction_prog_spec p μ'1) in eq'' as mem_map_phi; eauto.
@@ -861,15 +849,15 @@ Proof.
          contradiction.
       ++ eapply (@ta_transition_to_good 
             PreAct _ _ T A H gLtsEqT
-                  outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))) in l1;eauto.
+                  outcome Testing_Predicate0 ta (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))) in l1;eauto.
          eapply m_now; eauto.
 Qed.
 
 Lemma must_ta_monotonicity {P : Type} `{CC : Countable PreAct} `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
   @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ , !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
+  AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ , !Testing_Predicate outcome _,
+  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}
 
   `{!Prop_of_Inter P T A A dual}
 
@@ -923,15 +911,14 @@ Proof.
         eassumption.
 Qed.
 
-
 Lemma stable_process_must_ta_or_empty_pre_action_set {P : Type} `{CC : Countable PreAct} `{
   @gLtsOba P A H gLtsEqP, 
   @gLtsOba T A H gLtsEqT}
 
-  `{FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _}
+  `{FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _}
 
   `{!Testing_Predicate outcome _, 
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
+  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}
 
   `{!Prop_of_Inter P T A A dual}
 
@@ -956,7 +943,7 @@ Proof.
          eapply ta_has_a_representative_transition_for_its_gamma_set in mem' as (r & μ & Tr & eq); eauto.
          subst. eapply coR_abs_spec1 in co_set.
          destruct co_set as (μ'' & co_set & eq).
-         assert ((Φ μ) ∈ ⌈ Φ ⌉ (coR p)) as mem.
+         assert ((αᴛᴇꜱᴛ μ) ∈ ⌈ αᴛᴇꜱᴛ ⌉ (coR p)) as mem.
          { symmetry in eq; eapply abstraction_prog_spec; eauto. 
            destruct co_set as (μ' & Tr' & duo & nb). exact nb.
            intro imp. eapply ta_does_no_non_blocking_actions in imp.
@@ -989,10 +976,14 @@ Proof.
                 eapply m_now. exact l'0. eauto.
 Qed.
 
-Lemma wt_acceptance_set_subseteq `{CC : Countable PreAct} `{
-  gLtsP : @gLts P A H, FiniteImagegLts P A,
-  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
-  μ s p q hacnv1 hacnv2 :
+Section Acceptance_set_inclusions.
+
+Context `{CC : Countable PreAct}.
+Context `{gLtsP : @gLts P A H}.
+Context `{FiniteImagegLts P A}.
+Context `{FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ gLtsP gLtsT _ _ _}.
+
+Lemma wt_acceptance_set_subseteq μ s p q hacnv1 hacnv2 :
   p ⟹{μ} q ->
   map (coR_abs) (elements (waiting_states q s hacnv1)) ⊆
     map (coR_abs) (elements (waiting_states p (μ :: s) hacnv2)).
@@ -1008,10 +999,7 @@ Proof.
   set_solver.
 Qed.
 
-Lemma lts_tau_acceptance_set_subseteq `{CC : Countable PreAct} `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
-  s p q hacnv1 hacnv2 :
+Lemma lts_tau_acceptance_set_subseteq s p q hacnv1 hacnv2 :
   p ⟶ q ->
   map coR_abs  (elements $ waiting_states q s hacnv1) ⊆
     map coR_abs (elements $ waiting_states p s hacnv2).
@@ -1025,17 +1013,11 @@ Proof.
   set_solver.
 Qed.
 
-Definition oas `{CC : Countable PreAct}  `{
-  gLtsP : @gLts P A H, FiniteImagegLts P A,
-  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
-  (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
+Definition oas (p : P) (s : list A) (hcnv : p ⇓ s) : gset PreAct :=
   let ps : list P := elements (waiting_states p s hcnv) in
   ⋃ map coR_abs ps.
 
-Lemma union_wt_acceptance_set_subseteq `{CC : Countable PreAct}  `{
-  gLtsP : @gLts P A H, FiniteImagegLts P A,
-  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
-  μ s p q h1 h2 :
+Lemma union_wt_acceptance_set_subseteq μ s p q h1 h2 :
   p ⟹{μ} q -> oas q s h1 ⊆ oas p (μ :: s) h2.
 Proof.
   intros hw a (O & mem1 & mem2)%elem_of_union_list.
@@ -1043,10 +1025,7 @@ Proof.
   exists O. split; eauto. eapply wt_acceptance_set_subseteq; eauto.
 Qed.
 
-Lemma union_acceptance_set_lts_tau_subseteq `{CC : Countable PreAct} `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  FiniteAbs : @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _}
-  s p q h1 h2 :
+Lemma union_acceptance_set_lts_tau_subseteq s p q h1 h2 :
   p ⟶ q -> oas q s h1 ⊆ oas p s h2.
 Proof.
   intros l a (L & mem1 & mem2)%elem_of_union_list.
@@ -1055,15 +1034,22 @@ Proof.
   eapply lts_tau_acceptance_set_subseteq; eauto.
 Qed.
 
-Lemma must_ta_or_empty_pre_action_set_for_empty_trace `{CC : Countable PreAct} {P : Type} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, FiniteAbs :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ ,
-  !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))}
+End Acceptance_set_inclusions.
 
-  `{!Prop_of_Inter P T A A dual}
+Section Must_ta.
 
-  (p : P) (hcnv : p ⇓ ε) (E : gset PreAct):
+Context `{CC : Countable PreAct}.
+Context {P : Type}.
+Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Context `{!FiniteImagegLts P A}.
+Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
+Context `{FiniteAbs :@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context `{!Prop_of_Inter P T A A dual}.
+Context {unique_nb : UniqueDual A}.
+
+Lemma must_ta_or_empty_pre_action_set_for_empty_trace (p : P) (hcnv : p ⇓ ε) (E : gset PreAct) :
 
   (exists p', p ⟹ p' /\ (p' ↛) /\ coR_abs p' ⊆ E)
   \/ p must_pass (ta ((oas p ε hcnv) ∖ E) ε).
@@ -1106,14 +1092,7 @@ Proof.
     ++ left. exists p. split; eauto. constructor.
 Qed.
 
-Lemma must_ta_or_empty_pre_action_set_for_all_trace {P : Type} `{CC : Countable PreAct} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, FiniteAbs :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ ,
-  !Testing_Predicate outcome _, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))} {unique_nb : UniqueDual A}
-
-  `{!Prop_of_Inter P T A A dual}
-
-  s (p : P) (hcnv : p ⇓ s) (E : gset PreAct):
+Lemma must_ta_or_empty_pre_action_set_for_all_trace s (p : P) (hcnv : p ⇓ s) (E : gset PreAct) :
 
   (exists p', p ⟹[s] p' /\ (p' ↛) /\ coR_abs p' ⊆ E) 
       \/ p must_pass (ta ((oas p s hcnv) ∖ E) (coₜ s)).
@@ -1164,11 +1143,13 @@ Proof.
           eapply must_ta_monotonicity; eauto.
 Qed.
 
+End Must_ta.
+
 Lemma not_must_ta_without_required_acc_set {Q : Type} `{CC : Countable PreAct} `{
   @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, 
-  @gLtsObaFB T A H gLtsEqT gLtsObaT, FiniteAbs :@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ ,
+  @gLtsObaFB T A H gLtsEqT gLtsObaT, FiniteAbs :@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ ,
   !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))} 
+  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ  (αᴛᴇꜱᴛ x)))} 
 
   `{!Prop_of_Inter Q T A A dual}
 
@@ -1186,9 +1167,9 @@ Proof.
        +++ destruct (decide (non_blocking μ2)) as [nb2 | not_nb2].
            ++++ exfalso. eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); eauto.
            ++++ eapply ta_actions_are_in_its_gamma_set in l2 as mem; eauto.
-                assert ((𝝳 ∘ Φ) μ2 ∉ coR_abs q) as not_in_mem.
+                assert ((αᴘʀᴏ ∘ αᴛᴇꜱᴛ) μ2 ∉ coR_abs q) as not_in_mem.
                 { set_solver. }
-                assert ((𝝳 ∘ Φ) μ2 ∈ coR_abs q) as in_mem.
+                assert ((αᴘʀᴏ ∘ αᴛᴇꜱᴛ) μ2 ∈ coR_abs q) as in_mem.
                 { eapply coR_abs_spec2. eapply map_gamma_of_action. exists μ1. repeat split; eauto.
                 eapply lts_performs_spec2; eauto. }
                 contradiction.
@@ -1204,19 +1185,25 @@ Proof.
     exact (proj2_sig (exists_dual μ)).
 Qed.
 
-Lemma completeness2 {P Q : Type} `{CC : Countable PreAct} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP,
-  @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  !FiniteImagegLts P A, FiniteAbsP :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ ,
-  !FiniteImagegLts Q A, FiniteAbsQ :@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ ,
-  !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))} {unique_nb : UniqueDual A}
+Section Completeness2.
 
-  `{!Prop_of_Inter P T A A dual}
-  `{!Prop_of_Inter Q T A A dual}
+Context {P Q : Type}.
+Context `{CC : Countable PreAct}.
+Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Context `{@gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
+Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
+Context `{!FiniteImagegLts P A}.
+Context `{FiniteAbsP :@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _}.
+Context `{!FiniteImagegLts Q A}.
+Context `{FiniteAbsQ :@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context {unique_nb : UniqueDual A}.
+Context `{!Prop_of_Inter P T A A dual}.
+Context `{!Prop_of_Inter Q T A A dual}.
+Context `{!test_convergence_spec tconv}.
 
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₐ꜀꜀≼ₐₛ q.
+Lemma completeness2 (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ₐ꜀꜀≼ₐₛ q.
 Proof.
   intros hpre s q' hacnv w st.
   destruct (must_ta_or_empty_pre_action_set_for_all_trace s p hacnv (coR_abs q')) as [(p' & w_tr & stable & sub)|hm].
@@ -1227,24 +1214,14 @@ Proof.
 Qed.
 
 (** ** Completeness for forwarder LTS *)
-Lemma completeness_fw {P Q : Type} `{CC : Countable PreAct} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP, !FiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !FiniteImagegLts Q A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  !FiniteImagegLts P A, FiniteAbsP :@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ ,
-  !FiniteImagegLts Q A, FiniteAbsQ :@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ ,
-  !Testing_Predicate outcome _, !test_convergence_spec tconv,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳  (Φ x)))} {unique_nb : UniqueDual A}
-
-  `{!Prop_of_Inter P T A A dual}
-  `{!Prop_of_Inter Q T A A dual}
-
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼ₐₛ q.
+Lemma completeness_fw (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ≼ₐₛ q.
 Proof.
   intros. split.
   - now apply completeness1.
   - now apply completeness2.
 Qed.
+
+End Completeness2.
 
 (** ** Completeness for LTSs that can be lifted to forwarders *)
 Lemma completeness {P Q : Type} `{
@@ -1263,10 +1240,10 @@ Lemma completeness {P Q : Type} `{
   `{@Prop_of_Inter (Q * MO A) T A A dual H (toFW _) H _}
  
   `{CC : Countable PreAct}
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }
-  `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }
+  `{@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }
+  `{@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }
 
-  `{!test_convergence_spec tconv, !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
+  `{!test_convergence_spec tconv, !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}
 
   (p : P) (q : Q) : (ctx_pre p q) -> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.

@@ -28,16 +28,16 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL_Syntax PAL_Alt_LTS.
-(* * The abstraction Φ of the alternative labels of PAL
+(* * The abstraction αᴛᴇꜱᴛ of the alternative labels of PAL
 
-   [Φ] maps a label to an event of De Nicola–Pugliese (Definition 5.3):
-   - [Φ (AIn l) = EvIn (ltemplate l)]: an input with template [ltemplate l],
+   [αᴛᴇꜱᴛ] maps a label to an event of De Nicola–Pugliese (Definition 5.3):
+   - [αᴛᴇꜱᴛ (AIn l) = EvIn (ltemplate l)]: an input with template [ltemplate l],
      the event [(i, p)], whatever the received tuple;
-   - [Φ (AOut ot) = EvOut ot]: an output of [ot], the event [(o, ot)].
+   - [αᴛᴇꜱᴛ (AOut ot) = EvOut ot]: an output of [ot], the event [(o, ot)].
    Results:
-   - [abs_R_spec]: the events [Φ(R p)] of a process form the finite set [abs_R p];
-   - [Φ_kernel]: [Φ μ = Φ μ'] iff every process accepting [μ] accepts [μ'].
-     So the kernel of [Φ] is the largest [≈ᴛᴇꜱᴛ], and [Φ] is its canonical
+   - [abs_R_spec]: the events [αᴛᴇꜱᴛ(R p)] of a process form the finite set [abs_R p];
+   - [αᴛᴇꜱᴛ_kernel]: [αᴛᴇꜱᴛ μ = αᴛᴇꜱᴛ μ'] iff every process accepting [μ] accepts [μ'].
+     So the kernel of [αᴛᴇꜱᴛ] is the largest [≈ᴛᴇꜱᴛ], and [αᴛᴇꜱᴛ] is its canonical
      projection ([gLtsLAtest_PALA]). *)
 
 Section PAL_Alt_Phi.
@@ -59,7 +59,7 @@ Section PAL_Alt_Phi.
   Open Scope pal_scope.
 
 
-  (* ** Events and [Φ] *)
+  (* ** Events and [αᴛᴇꜱᴛ] *)
 
   Inductive Event := EvIn (tp : template) | EvOut (ot : eot).
 
@@ -75,7 +75,7 @@ Section PAL_Alt_Phi.
     by intros [].
   Defined.
 
-  Definition Φᴀᴘᴀʟ (μ : PALA_Act) : Event :=
+  Definition αᴛᴀᴘᴀʟ (μ : PALA_Act) : Event :=
     match μ with
     | AIn _ l => EvIn (ltemplate l)
     | AOut _ ot => EvOut ot
@@ -101,7 +101,7 @@ Section PAL_Alt_Phi.
   Lemma in_step_in_collect_in_a p l q :
     step p (ActExt (AIn _ l)) q → In (ltemplate l) (collect_in_a p).
   Proof.
-    intros h. remember (ActExt (AIn _ l)) as α eqn:eq.
+    intros h. remember (ActExt (AIn _ l)) as 𝜆 eqn:eq.
     induction h; try discriminate eq; simpl.
     - injection eq as ->. match goal with hev : eval_in_tuple _ = Some _ |- _ => rewrite hev end. by left.
     - injection eq as ->. match goal with hev : eval_in_tuple _ = Some _ |- _ => rewrite hev end. by left.
@@ -158,7 +158,7 @@ Section PAL_Alt_Phi.
   Definition abs_R (p : term) : gset Event :=
     list_to_set (map EvIn (collect_in_a p) ++ map EvOut (collect_out_a Val p)).
 
-  Lemma abs_R_spec p e : e ∈ abs_R p ↔ ∃ μ, p ⟶[μ] ∧ Φᴀᴘᴀʟ μ = e.
+  Lemma abs_R_spec p e : e ∈ abs_R p ↔ ∃ μ, p ⟶[μ] ∧ αᴛᴀᴘᴀʟ μ = e.
   Proof.
     unfold abs_R. rewrite elem_of_list_to_set, list_elem_of_In, in_app_iff, !in_map_iff. split.
     - intros [(tp & <- & hin) | (ot & <- & hin)].
@@ -166,7 +166,7 @@ Section PAL_Alt_Phi.
         destruct (collect_in_a_step p _ hin) as (q & hq).
         exists (AIn _ (label_witness tp)). split.
         * apply lts_performs_spec2. by exists q.
-        * cbn [Φᴀᴘᴀʟ]. by rewrite ltemplate_label_witness.
+        * cbn [αᴛᴀᴘᴀʟ]. by rewrite ltemplate_label_witness.
       + destruct (collect_out_witnesses_a Val p ot hin) as [q hq].
         exists (AOut _ ot). split; [| done].
         apply lts_performs_spec2. by exists q.
@@ -176,10 +176,10 @@ Section PAL_Alt_Phi.
       + right. exists ot. split; [done | by eapply out_step_in_collect_out_a].
   Qed.
 
-  (* ** The kernel of [Φ] is the largest [≈ᴛᴇꜱᴛ] *)
+  (* ** The kernel of [αᴛᴇꜱᴛ] is the largest [≈ᴛᴇꜱᴛ] *)
 
   (* Test side: labels with the same event are accepted by the same processes. *)
-  Lemma Φ_test_spec (t : term) μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' → t ⟶[μ] → t ⟶[μ'].
+  Lemma αᴛᴇꜱᴛ_test_spec (t : term) μ μ' : αᴛᴀᴘᴀʟ μ = αᴛᴀᴘᴀʟ μ' → t ⟶[μ] → t ⟶[μ'].
   Proof.
     intros e acc. apply lts_performs_spec1 in acc as (q & hq).
     destruct μ as [l|ot], μ' as [l'|ot']; simpl in e; try discriminate; injection e as e.
@@ -243,32 +243,32 @@ Section PAL_Alt_Phi.
     - apply aar3, eval_out_eot_to_tuple.
   Qed.
 
-  Lemma probe_only μ μ' : probe μ ⟶[μ'] → Φᴀᴘᴀʟ μ' = Φᴀᴘᴀʟ μ.
+  Lemma probe_only μ μ' : probe μ ⟶[μ'] → αᴛᴀᴘᴀʟ μ' = αᴛᴀᴘᴀʟ μ.
   Proof.
     intros acc. apply lts_performs_spec1 in acc as (q & hq).
     destruct μ as [l|ot]; unfold probe in hq; simpl in hq; inversion hq; subst.
     - match goal with hev : eval_in_tuple _ = Some _ |- _ =>
         rewrite eval_pattern_from in hev; injection hev as <- end.
       match goal with ht : template_of _ _ = _ |- _ => rewrite template_of_it_from in ht end.
-      cbn [Φᴀᴘᴀʟ]. by f_equal.
+      cbn [αᴛᴀᴘᴀʟ]. by f_equal.
     - match goal with hev : eval_out_tuple _ = Some _ |- _ =>
         rewrite eval_out_eot_to_tuple in hev; injection hev as <- end.
       done.
   Qed.
 
-  Lemma Φ_complete μ μ' : (∀ t : term, t ⟶[μ] → t ⟶[μ']) → Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ'.
+  Lemma αᴛᴇꜱᴛ_complete μ μ' : (∀ t : term, t ⟶[μ] → t ⟶[μ']) → αᴛᴀᴘᴀʟ μ = αᴛᴀᴘᴀʟ μ'.
   Proof. intros h. symmetry. apply probe_only, h, probe_accepts. Qed.
 
-  Theorem Φ_kernel μ μ' : Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ' ↔ (𝐏 μ : subset_of term) ⊆ 𝐏 μ'.
+  Theorem αᴛᴇꜱᴛ_kernel μ μ' : αᴛᴀᴘᴀʟ μ = αᴛᴀᴘᴀʟ μ' ↔ (𝐏 μ : subset_of term) ⊆ 𝐏 μ'.
   Proof.
     split.
-    - intros e p. unfold elem_of, Elements_of, 𝐏. by apply Φ_test_spec.
-    - intros hsub. apply Φ_complete. intros t. apply hsub.
+    - intros e p. unfold elem_of, Elements_of, 𝐏. by apply αᴛᴇꜱᴛ_test_spec.
+    - intros hsub. apply αᴛᴇꜱᴛ_complete. intros t. apply hsub.
   Qed.
 
   (* ** [≈ᴛᴇꜱᴛ] *)
 
-  Definition R_test_a (μ μ' : PALA_Act) : Prop := Φᴀᴘᴀʟ μ = Φᴀᴘᴀʟ μ'.
+  Definition R_test_a (μ μ' : PALA_Act) : Prop := αᴛᴀᴘᴀʟ μ = αᴛᴀᴘᴀʟ μ'.
 
   Lemma R_test_a_equivalence : Equivalence R_test_a.
   Proof. unfold R_test_a. split; [done | by intros ?? | by intros ??? -> ->]. Qed.
@@ -277,7 +277,7 @@ Section PAL_Alt_Phi.
   Proof. intros μ μ'. unfold R_test_a. apply _. Defined.
 
   Lemma R_test_a_spec μ μ' : R_test_a μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ'.
-  Proof. apply Φ_kernel. Qed.
+  Proof. apply αᴛᴇꜱᴛ_kernel. Qed.
 
   #[global] Instance gLtsLAtest_PALA : @gLtsLAtest term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) :=
     {| LA_test := R_test_a;
@@ -288,6 +288,6 @@ Section PAL_Alt_Phi.
   (* [R_test_a] is the largest [≈ᴛᴇꜱᴛ]. *)
   Lemma R_test_a_largest (R : PALA_Act → PALA_Act → Prop) :
     (∀ μ μ', R μ μ' → (𝐏 μ : subset_of term) ⊆ 𝐏 μ') → ∀ μ μ', R μ μ' → R_test_a μ μ'.
-  Proof. intros hR μ μ' h. apply Φ_kernel, hR, h. Qed.
+  Proof. intros hR μ μ' h. apply αᴛᴇꜱᴛ_kernel, hR, h. Qed.
 End PAL_Alt_Phi.
 (* end hide *)

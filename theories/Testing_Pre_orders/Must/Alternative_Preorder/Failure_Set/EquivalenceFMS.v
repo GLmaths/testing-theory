@@ -38,7 +38,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 
 Lemma equivalence_must_set_nfailure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _}
+  @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _}
   (p : P) (s : trace A) h1 (G : gset PreAct) : MUST__s (AFTER p s h1) G <->  ¬ Failure p s G.
 Proof.
   split.
@@ -65,7 +65,7 @@ Qed.
 
 Lemma equivalence_nmust_set_failure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _}
+  @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _}
   (p : P) (s : trace A) h1 (G : gset PreAct) :
   ¬ MUST__s (AFTER p s h1) G
     <-> Failure p s G.
@@ -92,9 +92,9 @@ Qed.
 
 Theorem equivalence_failure_set_must_set `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _,
+  @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _,
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A,
-  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _
+  @FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _
   }
   (p : P) (q : Q) : p ≾ₘᵤₛₜ q <-> p ⋖ꜰᴀɪʟ q.
 Proof.
@@ -134,11 +134,11 @@ Section failure_set_preorder.
           `{!Prop_of_Inter Q (MO A) A A fw_inter} `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
 
-  Context `{CC : Countable PreAct} `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }
-          `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{CC : Countable PreAct} `{@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }
+          `{@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }.
 
   Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}
-          `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+          `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
 
   (** ** Corollary of the main theorem for the failure divergence refinement *)
 

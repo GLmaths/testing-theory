@@ -58,8 +58,8 @@ Section PAL_Label_Dilemma_Sync.
   Context {Aproc Atest : Type} {Hp : ExtAction Aproc} {Ht : ExtAction Atest}.
   Context {SA : SyncAction Aproc Atest}.
   Context {gLtsP : gLts term Hp} {gLtsT : gLtsEq term Ht}.
-  Context {FinA PreAct : Type} `{Countable PreAct} (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
-  Context {Fin : @FinitaryAbsAction term term FinA PreAct Atest Ht Φ 𝝳 Aproc Hp gLtsP gLtsT SA _ _}.
+  Context {FinA PreAct : Type} `{Countable PreAct} (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
+  Context {Fin : @FinitaryAbsAction term term FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsP gLtsT SA _ _}.
   Context (outcome : term → Prop) {TP : Testing_Predicate outcome gLtsT} (gen : list Atest → term)
     {TS : @test_spec term Atest Ht gLtsT outcome TP gen}.
 
@@ -73,7 +73,7 @@ Section PAL_Label_Dilemma_Sync.
   Context (hsync : ∀ p t p' t' : term,
     (∃ (μ1 : Aproc) (μ2 : Atest), sync μ1 μ2 ∧ p ⟶[μ1] p' ∧ t ⟶[μ2] t') ↔ PAL_sync p t p' t').
 
-  Definition Abs_sync : @AbsAction term term FinA PreAct Atest Ht Φ 𝝳 Aproc Hp gLtsP gLtsT SA :=
+  Definition Abs_sync : @AbsAction term term FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsP gLtsT SA :=
     Fin.(FinitaryAbsAction_Abs).
 
   Lemma accepts_of_step_p (p q : term) (μ : Aproc) : p ⟶[μ] q → μ ∈ R p.
@@ -100,8 +100,8 @@ Section PAL_Label_Dilemma_Sync.
     exists a. split_and!; [by eapply accepts_of_step_p | done | apply hblock].
   Qed.
 
-  (* By (1): different values give different [Φ c]. *)
-  Lemma Φ_spec_sync_inj v w c c' : spec_sync v c → spec_sync w c' → Φ c = Φ c' → v = w.
+  (* By (1): different values give different [αᴛᴇꜱᴛ c]. *)
+  Lemma αᴛᴇꜱᴛ_spec_sync_inj v w c c' : spec_sync v c → spec_sync w c' → αᴛᴇꜱᴛ c = αᴛᴇꜱᴛ c' → v = w.
   Proof.
     intros (a & hd & ha & hc) (a' & hd' & ha' & hc') e.
     assert (c' ∈ R (out_val v)) as hacc.
@@ -117,8 +117,8 @@ Section PAL_Label_Dilemma_Sync.
 
   (* By (2) and (1). *)
   Lemma not_in_coR_val_sync v w c c' :
-    v ≠ w → spec_sync v c → spec_sync w c' → 𝝳 (Φ c) = 𝝳 (Φ c') →
-    Φ c ∉ ⌈ Φ ⌉ (coR (in_val v)).
+    v ≠ w → spec_sync v c → spec_sync w c' → αᴘʀᴏ (αᴛᴇꜱᴛ c) = αᴘʀᴏ (αᴛᴇꜱᴛ c') →
+    αᴛᴇꜱᴛ c ∉ ⌈ αᴛᴇꜱᴛ ⌉ (coR (in_val v)).
   Proof.
     intros hne hc hc' e hin.
     apply (Abs_sync.(abstraction_prog_spec) (in_val v) c c' (hblock c) (hblock c') e)
@@ -135,9 +135,9 @@ Section PAL_Label_Dilemma_Sync.
     - by apply in_val_out_inv in h1.
   Qed.
 
-  (* By (2), (5), (6): [𝝳 ∘ Φ] is injective on these labels. *)
-  Lemma 𝝳Φ_spec_sync_inj v w c c' :
-    spec_sync v c → spec_sync w c' → 𝝳 (Φ c) = 𝝳 (Φ c') → v = w.
+  (* By (2), (5), (6): [αᴘʀᴏ ∘ αᴛᴇꜱᴛ] is injective on these labels. *)
+  Lemma αᴘʀᴏαᴛᴇꜱᴛ_spec_sync_inj v w c c' :
+    spec_sync v c → spec_sync w c' → αᴘʀᴏ (αᴛᴇꜱᴛ c) = αᴘʀᴏ (αᴛᴇꜱᴛ c') → v = w.
   Proof.
     intros hc hc' e. destruct (decide (v = w)) as [| hne]; [done | exfalso].
     destruct (TS.(test_next_step) c []) as (t & ht & heq).
@@ -161,12 +161,12 @@ Section PAL_Label_Dilemma_Sync.
 
   Theorem no_labelling_sync : False.
   Proof.
-    apply (finite_pigeonhole (Fin.(coR_abs) p_any) (λ n b, ∃ c, spec_sync (inj n) c ∧ b = 𝝳 (Φ c))).
+    apply (finite_pigeonhole (Fin.(coR_abs) p_any) (λ n b, ∃ c, spec_sync (inj n) c ∧ b = αᴘʀᴏ (αᴛᴇꜱᴛ c))).
     - intros n. destruct (spec_sync_exists (inj n)) as (c & hc).
-      exists (𝝳 (Φ c)). split; [by exists c |].
-      apply (Fin.(coR_abs_spec2) (𝝳 (Φ c)) p_any). exists c. split; [by eapply spec_sync_coR | done].
+      exists (αᴘʀᴏ (αᴛᴇꜱᴛ c)). split; [by exists c |].
+      apply (Fin.(coR_abs_spec2) (αᴘʀᴏ (αᴛᴇꜱᴛ c)) p_any). exists c. split; [by eapply spec_sync_coR | done].
     - intros n m b (c & hc & ->) (c' & hc' & e). apply (inj_iff inj).
-      by apply (𝝳Φ_spec_sync_inj (inj n) (inj m) c c').
+      by apply (αᴘʀᴏαᴛᴇꜱᴛ_spec_sync_inj (inj n) (inj m) c c').
   Qed.
 End PAL_Label_Dilemma_Sync.
 (* end hide *)

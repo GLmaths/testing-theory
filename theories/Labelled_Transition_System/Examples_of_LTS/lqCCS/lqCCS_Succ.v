@@ -120,8 +120,8 @@ Qed.
 
 Fixpoint gsucc (g : guard) (u : ulbl) : list proc :=
   match g with
-  | GPre α P0 =>
-      match α, u with
+  | GPre 𝜆 P0 =>
+      match 𝜆, u with
       | PTau _, UTau | PTauPair _ _, UTau => [P0]
       | PRecv _ c x, UAct (AIn c' v) =>
           if decide (c = c') then [subst P0 x v] else []
@@ -166,11 +166,11 @@ Definition ustep (P : proc) (u : ulbl) (P' : proc) : Prop :=
 
 Lemma gsucc_spec g u P' : P' ∈ gsucc g u ↔ ∃ l, erase l = u ∧ gstep g l P'.
 Proof.
-  revert u P'. induction g as [es| |α P|g1 IH1 g2 IH2]; intros u P0; simpl.
+  revert u P'. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; intros u P0; simpl.
   - split; [set_solver|]. intros (l & _ & Hs). inversion Hs.
   - split; [set_solver|]. intros (l & _ & Hs). inversion Hs.
   - split.
-    + destruct α, u as [|[]]; try set_solver; repeat case_decide; try set_solver;
+    + destruct 𝜆, u as [|[]]; try set_solver; repeat case_decide; try set_solver;
         intros Hin; apply list_elem_of_singleton in Hin as ->.
       * by exists (LTau (STag t)); split; [|constructor].
       * by exists (LTau (SPair t t')); split; [|constructor].
@@ -261,8 +261,8 @@ Definition not_in (a : pact) : Prop := match a with AIn _ _ => False | _ => True
 #[global] Instance not_in_dec a : Decision (not_in a).
 Proof. destruct a; simpl; apply _. Defined.
 
-Definition prefix_act (α : prefix) : option pact :=
-  match α with
+Definition prefix_act (𝜆 : prefix) : option pact :=
+  match 𝜆 with
   | POp _ E es => (λ qs, AOp E qs) <$> eval_qubits es
   | PMeas _ M es x => (λ qs, AMeas M qs x) <$> eval_qubits es
   | _ => None
@@ -270,7 +270,7 @@ Definition prefix_act (α : prefix) : option pact :=
 
 Fixpoint gacts (g : guard) : list (pact * proc) :=
   match g with
-  | GPre α P0 => match prefix_act α with Some a => [(a, P0)] | None => [] end
+  | GPre 𝜆 P0 => match prefix_act 𝜆 with Some a => [(a, P0)] | None => [] end
   | GSum g1 g2 => gacts g1 ++ gacts g2
   | _ => []
   end.
@@ -294,11 +294,11 @@ Fixpoint acts (P : proc) : list (pact * proc) :=
 Lemma gacts_spec g a P' :
   (a, P') ∈ gacts g ↔ not_in a ∧ ∃ t, gstep g (LAct t a) P'.
 Proof.
-  revert P'. induction g as [es| |α P|g1 IH1 g2 IH2]; intros P0; simpl.
+  revert P'. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; intros P0; simpl.
   - split; [set_solver|]. intros (_ & t & Hs). inversion Hs.
   - split; [set_solver|]. intros (_ & t & Hs). inversion Hs.
   - split.
-    + destruct α; simpl; try set_solver;
+    + destruct 𝜆; simpl; try set_solver;
         destruct (eval_qubits es) as [qs|] eqn:He; simpl; try set_solver;
         intros Hin; apply list_elem_of_singleton in Hin; simplify_eq;
         (split; [done|]); eexists; by constructor.

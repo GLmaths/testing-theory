@@ -176,20 +176,20 @@ Defined.
 
     [DefinitionAS.v] lifts an abstraction from [P] to [P * MO A] through
     [PreActActionForFW], whose process-side obligation is [Admitted].  It is not
-    needed: [𝝳ᴠᴀᴄᴄꜱ] is the identity, so that obligation is its own hypothesis
+    needed: [αᴘᴠᴀᴄᴄꜱ] is the identity, so that obligation is its own hypothesis
     rewritten.  The instance is given here so that nothing below rests on the
     hole. *)
 
 #[global] Program Instance Erl_AbsAction_FW :
   @AbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
+    αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
 Next Obligation.
   intros t β β' hb hb' heq hmem.
   eapply (@abstraction_test_spec proc proc FinA PreAct erl_act VACCS_ExtAction
-            Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
+            αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
 Qed.
 Next Obligation.
-  intros p β β' _ _ heq hmem. unfold 𝝳ᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
+  intros p β β' _ _ heq hmem. unfold αᴘᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
 Qed.
 
 (* [FinitaryPreActActionForFW] is a closed term mentioning the [Admitted]
@@ -198,10 +198,10 @@ Qed.
 
 #[global] Program Instance Erl_FinitaryAbsAction_FW :
   @FinitaryAbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ _ _ :=
+    αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ _ _ :=
   {| FinitaryAbsAction_Abs := Erl_AbsAction_FW ;
      coR_abs p := coR_abs p.1
-                  ∪ dom (gmultiset_map (fun x => 𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ (co x)))
+                  ∪ dom (gmultiset_map (fun x => αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ (co x)))
                            (MO_without_not_nb p.2)) |}.
 Next Obligation.
   intros p pre_mu hmem. destruct p as (p, m). simpl in *.
@@ -237,7 +237,7 @@ Next Obligation.
   eapply lts_performs_spec1 in tr as ((p2 , m2) & eq).
   inversion eq; subst; simpl in *.
   + eapply elem_of_union. left.
-    change (𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ μ) ∈ coR_abs p). eapply coR_abs_spec2.
+    change (αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ μ) ∈ coR_abs p). eapply coR_abs_spec2.
     exists μ. repeat split; eauto. exists μ2. repeat split; eauto.
     eapply lts_performs_spec2. eauto.
   + eapply elem_of_union. right.

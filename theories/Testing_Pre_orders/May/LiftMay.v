@@ -605,7 +605,7 @@ Proof.
   apply may_now.
   eapply woutpout_preserves_outcome_converse; eauto.
   subst q.
-  inversion pt as [α a1 a2 b l Heq1 Heq2 | α a b1 b2 l Heq1 Heq2 | μa μb a1 a2 b1 b2 eqfw l1 l2 Heq1 Heq2]; subst.
+  inversion pt as [𝜆 a1 a2 b l Heq1 Heq2 | 𝜆 a b1 b2 l Heq1 Heq2 | μa μb a1 a2 b1 b2 eqfw l1 l2 Heq1 Heq2]; subst.
   2: inversion l.
   eapply may_server_step.
   + intro hc. apply nh. eapply woutpout_preserves_outcome; eauto.
@@ -635,7 +635,7 @@ Proof.
     - exact htr.
     - eapply IH; eauto. eapply mo_stripped_equiv; eauto.
   + subst q.
-    inversion trS as [α a1 a2 b l Heq1 Heq2 Heq3 | α a b1 b2 l Heq1 Heq2 Heq3 | μa μb a1 a2 b1 b2 eqfw l1 l2 Heq1 Heq2]; subst.
+    inversion trS as [𝜆 a1 a2 b l Heq1 Heq2 Heq3 | 𝜆 a b1 b2 l Heq1 Heq2 Heq3 | μa μb a1 a2 b1 b2 eqfw l1 l2 Heq1 Heq2]; subst.
     edestruct (strip_retract_act hstrip trC) as (r & htr & w & hstripw & heqw).
     assert (nh0 : ¬ outcome t0).
     { intro hc. apply nh. eapply woutpout_preserves_outcome; eauto. }

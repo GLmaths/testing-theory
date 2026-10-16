@@ -42,7 +42,7 @@
     The observer branches: tests that follow one sequence of actions
     (co-ready traces, Georgievska and Andova) cannot tell such processes
     apart when the two outcomes have the same weight; the characterisation
-    of the Smyth must needs trees (as the [φ p⊕ ψ] of the logic F of Deng,
+    of the Smyth must needs trees (as the [αᴛᴇꜱᴛ p⊕ ψ] of the logic F of Deng,
     van Glabbeek, Hennessy and Morgan). *)
 
 From Stdlib.Unicode Require Import Utf8.

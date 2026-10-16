@@ -184,7 +184,7 @@ Section VCCS_Fw_cofinite.
     map (λ q, (`q, m)) (enum (dsig (λ q, p ⟶ q)))
     ++ (elements m ≫= (λ a, match a with
           | msg η => map (λ q, (`q, m ∖ {[+ msg η +]}))
-                       (enum (dsig (λ q, ∃ α' : A, sync α' η ∧ p ⟶[α'] q)))
+                       (enum (dsig (λ q, ∃ 𝜆' : A, sync 𝜆' η ∧ p ⟶[𝜆'] q)))
           | cobar _ => []
           end)).
 
@@ -201,34 +201,34 @@ Section VCCS_Fw_cofinite.
       + apply gmultiset_elem_of_elements. multiset_solver.
   Qed.
 
-  Lemma vccs_fw_sync_iff (pm y : proc * MO (MemAct A)) (α : A) :
-    (∃ α', sync α' α ∧ pm ⟶[α'] y) ↔
-      pm ⟶[inl (co α)] y ∨ pm ⟶[inr (msg (co α))] y ∨ pm ⟶[inr (cobar α)] y.
+  Lemma vccs_fw_sync_iff (pm y : proc * MO (MemAct A)) (𝜆 : A) :
+    (∃ 𝜆', sync 𝜆' 𝜆 ∧ pm ⟶[𝜆'] y) ↔
+      pm ⟶[inl (co 𝜆)] y ∨ pm ⟶[inr (msg (co 𝜆))] y ∨ pm ⟶[inr (cobar 𝜆)] y.
   Proof.
     split.
     - intros ([μ | [η | η]] & hs & l); simpl in hs.
-      + left. rewrite <- (VCCS_UniqueDual μ α); [exact l | by symmetry].
-      + right; left. rewrite <- (VCCS_UniqueDual η α); [exact l | by symmetry].
+      + left. rewrite <- (VCCS_UniqueDual μ 𝜆); [exact l | by symmetry].
+      + right; left. rewrite <- (VCCS_UniqueDual η 𝜆); [exact l | by symmetry].
       + right; right. by subst.
     - intros [l | [l | l]].
-      + exists (inl (co α)). split; [| exact l]. simpl. symmetry. exact (proj2_sig (exists_dual α)).
-      + exists (inr (msg (co α))). split; [| exact l]. simpl. symmetry. exact (proj2_sig (exists_dual α)).
-      + exists (inr (cobar α)). split; [| exact l]. done.
+      + exists (inl (co 𝜆)). split; [| exact l]. simpl. symmetry. exact (proj2_sig (exists_dual 𝜆)).
+      + exists (inr (msg (co 𝜆))). split; [| exact l]. simpl. symmetry. exact (proj2_sig (exists_dual 𝜆)).
+      + exists (inr (cobar 𝜆)). split; [| exact l]. done.
   Qed.
 
-  Definition vccs_fw_ext_set (p : proc) (m : MO (MemAct A)) (α : A) : list (proc * MO (MemAct A)) :=
-    map (λ q, (`q, m)) (enum (dsig (λ q, ∃ α' : A, sync α' α ∧ p ⟶[α'] q)))
-    ++ [(p, m ∖ {[+ msg (co α) +]}); (p, {[+ msg α +]} ⊎ m)].
+  Definition vccs_fw_ext_set (p : proc) (m : MO (MemAct A)) (𝜆 : A) : list (proc * MO (MemAct A)) :=
+    map (λ q, (`q, m)) (enum (dsig (λ q, ∃ 𝜆' : A, sync 𝜆' 𝜆 ∧ p ⟶[𝜆'] q)))
+    ++ [(p, m ∖ {[+ msg (co 𝜆) +]}); (p, {[+ msg 𝜆 +]} ⊎ m)].
 
-  Lemma vccs_fw_ext_set_spec (p : proc) (m : MO (MemAct A)) (α : A) y :
-    (∃ α', sync α' α ∧ (p, m) ⟶[α'] y) → y ∈ vccs_fw_ext_set p m α.
+  Lemma vccs_fw_ext_set_spec (p : proc) (m : MO (MemAct A)) (𝜆 : A) y :
+    (∃ 𝜆', sync 𝜆' 𝜆 ∧ (p, m) ⟶[𝜆'] y) → y ∈ vccs_fw_ext_set p m 𝜆.
   Proof.
     intros ([μ | [η | η]] & hs & l); simpl in hs.
     - apply fw_inl_inv in l as (p' & -> & l).
       apply elem_of_app. left. apply list_elem_of_fmap.
       exists (dexist p' (ex_intro _ μ (conj hs l))). split; [done | apply elem_of_enum].
     - apply fw_msg_inv in l as (m' & -> & -> & nb).
-      rewrite (VCCS_UniqueDual η α) by (by symmetry).
+      rewrite (VCCS_UniqueDual η 𝜆) by (by symmetry).
       apply elem_of_app. right. apply elem_of_cons. left. f_equal. multiset_solver.
     - apply fw_cobar_inv in l as [-> nb]. subst.
       apply elem_of_app. right. right. left.
@@ -241,20 +241,20 @@ Section VCCS_Fw_cofinite.
     intros y h%bool_decide_unpack. by apply vccs_fw_tau_set_spec.
   Defined.
 
-  Definition vccs_fw_ext_dec (pm : proc * MO (MemAct A)) (α : A) y :
-    Decision (∃ α', sync α' α ∧ pm ⟶[α'] y).
+  Definition vccs_fw_ext_dec (pm : proc * MO (MemAct A)) (𝜆 : A) y :
+    Decision (∃ 𝜆', sync 𝜆' 𝜆 ∧ pm ⟶[𝜆'] y).
   Proof.
-    destruct (decide (pm ⟶[inl (co α)] y ∨ pm ⟶[inr (msg (co α))] y ∨ pm ⟶[inr (cobar α)] y))
+    destruct (decide (pm ⟶[inl (co 𝜆)] y ∨ pm ⟶[inr (msg (co 𝜆))] y ∨ pm ⟶[inr (cobar 𝜆)] y))
       as [h | h]; [left | right]; by rewrite vccs_fw_sync_iff.
   Defined.
 
   #[local] Existing Instance vccs_fw_ext_dec.
 
-  Definition vccs_fw_ext_finite (pm : proc * MO (MemAct A)) (α : A) :
-    Finite (dsig (λ y, ∃ α', sync α' α ∧ pm ⟶[α'] y)).
+  Definition vccs_fw_ext_finite (pm : proc * MO (MemAct A)) (𝜆 : A) :
+    Finite (dsig (λ y, ∃ 𝜆', sync 𝜆' 𝜆 ∧ pm ⟶[𝜆'] y)).
   Proof.
     destruct pm as (p, m). unfold dsig.
-    eapply (in_list_finite (vccs_fw_ext_set p m α)).
+    eapply (in_list_finite (vccs_fw_ext_set p m 𝜆)).
     intros y h%bool_decide_unpack. by apply vccs_fw_ext_set_spec.
   Defined.
 
@@ -270,7 +270,7 @@ Section VCCS_Rel.
 
   Notation A := (ExtAct TypeOfActions).
 
-  Definition Γᴠ (μ : A) : PreAct := 𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ μ).
+  Definition Γᴠ (μ : A) : PreAct := αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ μ).
   Definition Rᴠ : relation A := ker_rel Γᴠ.
 
   Definition VCCS_Inter_sync : Prop_of_Inter proc proc A A sync := Interaction_between_parallel_VCCS.
@@ -281,7 +281,7 @@ Section VCCS_Rel.
     | Outputs_on c => ActOut (c , cst O)
     end.
 
-  Lemma vccs_repr_spec x : 𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (vccs_repr x)) = x.
+  Lemma vccs_repr_spec x : αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ (vccs_repr x)) = x.
   Proof. by destruct x. Qed.
 
   Definition VCCS_admissible : @LA_admissible proc proc A _ _ A _ _ _ Rᴠ :=

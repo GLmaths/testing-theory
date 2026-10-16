@@ -128,7 +128,7 @@ Proof.
   exists p1. split; [ exact Hwp | ].
   split; [ apply (proj1 (fw_nil_stable_iff p1)); exact Hstx | ].
   intros c (v & r & Hr).
-  assert (Hin : (Inputs c) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (p1 ▷ ∅))).
+  assert (Hin : (Inputs c) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR (p1 ▷ ∅))).
   { exists (ActIn (c,v)). split; [ | reflexivity ].
     exists (ActOut (c,v)). repeat split.
     + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
@@ -267,7 +267,7 @@ Proof.
   destruct (Hc2 [ActIn (c,v)] y Hcnv Hwq Hsty) as (x & Hwx & Hstx & Hincl).
   exists x. split; [ exact Hwx | ]. split; [ exact Hstx | ].
   intros d (w & r & Hr).
-  assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x)).
+  assert (Hin : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x)).
   { exists (ActIn (d,w)). split; [ | reflexivity ].
     exists (ActOut (d,w)). repeat split.
     + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
@@ -493,7 +493,7 @@ Qed.
     their reducts, which on the [Static] fragment are finitely many. *)
 
 Lemma coR_abs_pair_iff : forall (x : proc * MO (ExtAct TypeOfActions)) d,
-  (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x) <-> (exists w r, x ⟶[ActOut (d,w)] r).
+  (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x) <-> (exists w r, x ⟶[ActOut (d,w)] r).
 Proof.
   intros x d. split.
   - intros (μ & Hmu & Heq). destruct μ as [[d0 w0]|[d0 w0]]; simpl in Heq.
@@ -887,7 +887,7 @@ Proof.
     exact H.
   - split; [ exact Hstx | ].
     intros d w r Hr.
-    assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
+    assert (Hin : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x))
       by (apply coR_abs_pair_iff; exists w, r; exact Hr).
     apply Hincl in Hin. apply coR_abs_pair_iff in Hin.
     eapply emits_gsum_chans. exact Hin.
@@ -1042,7 +1042,7 @@ Proof.
     exact H.
   - split; [ exact Hstx | ].
     intros d w r Hr.
-    assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
+    assert (Hin : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x))
       by (apply coR_abs_pair_iff; exists w, r; exact Hr).
     apply Hincl in Hin. apply coR_abs_pair_iff in Hin.
     eapply (emits_gsum_chans 𝟘). exact Hin.
@@ -1452,7 +1452,7 @@ Proof.
   exists x. split; [ exact Hx | ].
   exists x'. split; [ exact Hwx | ]. split; [ exact Hstx | ].
   intros d w r Hr.
-  assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x'))
+  assert (Hin : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x'))
     by (apply coR_abs_pair_iff; exists w, r; exact Hr).
   apply Hincl in Hin. apply coR_abs_pair_iff in Hin. exact Hin.
 Qed.

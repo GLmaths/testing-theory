@@ -491,7 +491,7 @@ Proof.
 Qed.
 
 (* Theorem 1 (strong form): for well-labelled [p],
-    ⟦p⟧ = { Σ_{α ⊨ σ} ℰ_α : σ tag scheduler }. *)
+    ⟦p⟧ = { Σ_{𝜆 ⊨ σ} ℰ_𝜆 : σ tag scheduler }. *)
 Theorem adequacy (CC : FunctionalCountableChoice_on sched) p :
   wl p -> forall x, Sem p x <-> exists σ, x = E σ p.
 Proof.

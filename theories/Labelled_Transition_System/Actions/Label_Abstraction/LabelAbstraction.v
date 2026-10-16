@@ -180,8 +180,8 @@ Proof.
   - right. intros h'. apply h, spec, h'.
 Qed.
 
-Lemma test_spec_of_proj `{gLtsLAtest T A} {B : Type} (φ : A → B) `{!LA_proj (LA_test T) φ}
-  (t : T) β β' : φ β = φ β' → β ∈ R t → β' ∈ R t.
+Lemma test_spec_of_proj `{gLtsLAtest T A} {B : Type} (αᴛᴇꜱᴛ : A → B) `{!LA_proj (LA_test T) αᴛᴇꜱᴛ}
+  (t : T) β β' : αᴛᴇꜱᴛ β = αᴛᴇꜱᴛ β' → β ∈ R t → β' ∈ R t.
 Proof. intros eq. apply R_preserved_by_LA_test. by apply LA_proj_spec. Qed.
 
 (* ** Joining two abstractions *)
@@ -245,25 +245,25 @@ Section Join.
 
 End Join.
 
-(* ** The completion of [ρ] along [φ] *)
+(* ** The completion of [ρ] along [αᴛᴇꜱᴛ] *)
 Section Completion.
   Context {A FinA PreAct : Type} (R_prog R_test : relation A)
     `{!Equivalence R_prog} `{!Equivalence R_test}
-    (φ : A → FinA) (ρ : A → PreAct)
-    `{!LA_proj R_test φ} `{!LA_surj φ} `{!LA_proj (LA_equiv R_prog R_test) ρ}.
+    (αᴛᴇꜱᴛ : A → FinA) (ρ : A → PreAct)
+    `{!LA_proj R_test αᴛᴇꜱᴛ} `{!LA_surj αᴛᴇꜱᴛ} `{!LA_proj (LA_equiv R_prog R_test) ρ}.
 
   Definition LA_complete (x : FinA) : PreAct := ρ (LA_repr x).
 
-  Lemma LA_complete_spec μ : LA_complete (φ μ) = ρ μ.
+  Lemma LA_complete_spec μ : LA_complete (αᴛᴇꜱᴛ μ) = ρ μ.
   Proof.
     unfold LA_complete. apply (LA_proj_spec (R := LA_equiv R_prog R_test)).
     apply R_test_LA_equiv; [apply _ | apply _ |].
-    apply (LA_proj_spec (f := φ)), LA_repr_spec.
+    apply (LA_proj_spec (f := αᴛᴇꜱᴛ)), LA_repr_spec.
   Qed.
 
-  (* [LA_complete] is the only map [κ] such that [κ ∘ φ = ρ]. *)
+  (* [LA_complete] is the only map [κ] such that [κ ∘ αᴛᴇꜱᴛ = ρ]. *)
   Lemma LA_complete_unique (κ : FinA → PreAct) :
-    (∀ μ, κ (φ μ) = ρ μ) → ∀ x, κ x = LA_complete x.
+    (∀ μ, κ (αᴛᴇꜱᴛ μ) = ρ μ) → ∀ x, κ x = LA_complete x.
   Proof. intros spec x. unfold LA_complete. rewrite <- spec. by rewrite LA_repr_spec. Qed.
 End Completion.
 
@@ -359,11 +359,11 @@ Section Canonical_LA.
 
   #[local] Existing Instance LA_equiv_equivalence.
 
-  (* [φ]: the canonical surjection of [≈ᴛᴇꜱᴛ]. *)
-  Definition LA_φ : A → LA_quotient (LA_test T) := LA_class (LA_test T).
+  (* [αᴛᴇꜱᴛ]: the canonical surjection of [≈ᴛᴇꜱᴛ]. *)
+  Definition LA_αᴛᴇꜱᴛ : A → LA_quotient (LA_test T) := LA_class (LA_test T).
 
-  (* [δ]: the canonical surjection of [≈ᴘʀᴏ]. *)
-  Definition LA_δ : A → LA_quotient (LA_prog P) := LA_class (LA_prog P).
+  (* [αᴘʀᴏ]: the canonical surjection of [≈ᴘʀᴏ]. *)
+  Definition LA_αᴘʀᴏ : A → LA_quotient (LA_prog P) := LA_class (LA_prog P).
 
   (* [ρ]: the canonical surjection of the joined equivalence, when it is decidable. *)
   Definition LA_ρ `{!RelDecision (LA_equiv (LA_prog P) (LA_test T))} :

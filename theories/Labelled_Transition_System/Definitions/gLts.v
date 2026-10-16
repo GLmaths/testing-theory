@@ -39,12 +39,12 @@ Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
       lts_step: P → Labels A → P → Prop;
       lts_state_eqdec: EqDecision P;
 
-      lts_step_decidable a α b : Decision (lts_step a α b);
+      lts_step_decidable a 𝜆 b : Decision (lts_step a 𝜆 b);
 
       lts_performs : P → Labels A → Prop;
-      lts_performs_decidable p α : Decision (lts_performs p α);
-      lts_performs_spec1 p α : lts_performs p α → { q | lts_step p α q };
-      lts_performs_spec2 p α : { q | lts_step p α q } → lts_performs p α;
+      lts_performs_decidable p 𝜆 : Decision (lts_performs p 𝜆);
+      lts_performs_spec1 p 𝜆 : lts_performs p 𝜆 → { q | lts_step p 𝜆 q };
+      lts_performs_spec2 p 𝜆 : { q | lts_step p 𝜆 q } → lts_performs p 𝜆;
     }.
 
 Arguments gLts P {_} EA.
@@ -54,15 +54,15 @@ Arguments gLts P {_} EA.
 #[global] Existing Instance lts_performs_decidable.
 
 Notation "p ⟶ q"      := (lts_step p τ q) (at level 30, format "p  ⟶  q").
-Notation "p ⟶{ α } q" := (lts_step p α q) (at level 30, format "p  ⟶{ α }  q").
+Notation "p ⟶{ 𝜆 } q" := (lts_step p 𝜆 q) (at level 30, format "p  ⟶{ 𝜆 }  q").
 Notation "p ⟶[ μ ] q" := (lts_step p (ActExt μ) q) (at level 30, format "p  ⟶[ μ ]  q").
 
 Notation "p ⟶"      := (lts_performs p τ) (at level 30, format "p  ⟶").
-Notation "p ⟶{ α }" := (lts_performs p α) (at level 30, format "p  ⟶{ α }").
+Notation "p ⟶{ 𝜆 }" := (lts_performs p 𝜆) (at level 30, format "p  ⟶{ 𝜆 }").
 Notation "p ⟶[ μ ]" := (lts_performs p (ActExt μ)) (at level 30, format "p  ⟶[ μ ]").
 
 Notation "p ↛"      := (¬ lts_performs p τ) (at level 30, format "p  ↛").
-Notation "p ↛{ α }" := (¬ lts_performs p α) (at level 30, format "p  ↛{ α }").
+Notation "p ↛{ 𝜆 }" := (¬ lts_performs p 𝜆) (at level 30, format "p  ↛{ 𝜆 }").
 Notation "p ↛[ μ ]" := (¬ lts_performs p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
 
 

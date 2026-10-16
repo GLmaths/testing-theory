@@ -35,9 +35,9 @@ From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimu
 Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
   MkOba {
       (* Selinger axioms. *)
-      nb_delay {p q r η α} :
-      non_blocking η → p ⟶[ η ] q → q ⟶{ α } r 
-        → (∃ t, p ⟶{α} t /\ t ⟶⋍[ η ] r) ;
+      nb_delay {p q r η 𝜆} :
+      non_blocking η → p ⟶[ η ] q → q ⟶{ 𝜆 } r 
+        → (∃ t, p ⟶{𝜆} t /\ t ⟶⋍[ η ] r) ;
       nb_confluence {p q1 q2 η μ} :
       non_blocking η → μ ≠ η → p ⟶[ η ] q1 → p ⟶[ μ ] q2 
         → ∃ r, q1 ⟶[ μ ] r /\ q2 ⟶⋍[ η ] r ; 

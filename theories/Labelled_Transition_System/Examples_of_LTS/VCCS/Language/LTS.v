@@ -368,10 +368,10 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
     lts (rec x • P) τ (pr_subst x P (rec x • P))
 
 (** ******* The actions for IF contructor *)
-| lts_ifOne : forall {p p' q α E}, Eval_Eq 0 E = Some true -> lts p α p' ->
-    lts (If E Then p Else q) α p'
-| lts_ifZero : forall {p q q' α E}, Eval_Eq 0 E = Some false -> lts q α q' ->
-    lts (If E Then p Else q) α q'
+| lts_ifOne : forall {p p' q 𝜆 E}, Eval_Eq 0 E = Some true -> lts p 𝜆 p' ->
+    lts (If E Then p Else q) 𝜆 p'
+| lts_ifZero : forall {p q q' 𝜆 E}, Eval_Eq 0 E = Some false -> lts q 𝜆 q' ->
+    lts (If E Then p Else q) 𝜆 q'
 
 (** ******* The actions for process restriction *)
 | lts_res_ext : forall {p p' μ}, lts p (ActExt (VarC_action_add 1 μ)) p'
@@ -390,19 +390,19 @@ Inductive lts : proc-> (ActIO TypeOfActions) -> proc -> Prop :=
 
 (** ******* The decoration for the transition system... *)
 (** ******* ...for the parallele *)   
-| lts_parL : forall {α p1 p2 q},
-    lts p1 α p2 ->
-    lts (p1 ‖ q) α (p2 ‖ q)
-| lts_parR : forall {α p q1 q2}, 
-    lts q1 α q2 ->
-    lts (p ‖ q1) α (p ‖ q2)
+| lts_parL : forall {𝜆 p1 p2 q},
+    lts p1 𝜆 p2 ->
+    lts (p1 ‖ q) 𝜆 (p2 ‖ q)
+| lts_parR : forall {𝜆 p q1 q2}, 
+    lts q1 𝜆 q2 ->
+    lts (p ‖ q1) 𝜆 (p ‖ q2)
 (** ******* ...for the sum *)
-| lts_choiceL : forall {p1 p2 q α},
-    lts (g p1) α q -> 
-    lts (p1 + p2) α q
-| lts_choiceR : forall {p1 p2 q α},
-    lts (g p2) α q -> 
-    lts (p1 + p2) α q
+| lts_choiceL : forall {p1 p2 q 𝜆},
+    lts (g p1) 𝜆 q -> 
+    lts (p1 + p2) 𝜆 q
+| lts_choiceR : forall {p1 p2 q 𝜆},
+    lts (g p2) 𝜆 q -> 
+    lts (p1 + p2) 𝜆 q
 .
 
 Fixpoint size (p : proc) := 

@@ -47,7 +47,7 @@ Import ListNotations.
     - convergence ([completeness1]): [p0 = la.0 + lb.Ω], [q0 = la.Ω + lb.0].
       [p0 ⇓ [la]] while [q0 ⟹{la} Ω] diverges, so [¬ p0 ꜀ₙᵥ≼ₐₛ q0].
     - acceptance sets ([completeness2]): [p1 = la.(ld.0) + lb.0],
-      [q1 = la.0 + lb.(ld.0)], with [Φ = 𝝳 = id]. After [la], [q1] reaches the
+      [q1 = la.0 + lb.(ld.0)], with [αᴛᴇꜱᴛ = αᴘʀᴏ = id]. After [la], [q1] reaches the
       stable [0], whose [coR] is empty, while the only state [p1] reaches is
       [ld.0], whose [coR] is [{le}], so [¬ p1 ₐ꜀꜀≼ₐₛ q1]. Both processes
       converge, so the failure really is on the acceptance sets.
@@ -115,8 +115,8 @@ Inductive st := p0 | q0 | p1 | q1 | dz | nil | om.
 #[global] Instance st_eqdec : EqDecision st.
 Proof. solve_decision. Defined.
 
-Definition next (s : st) (α : Labels ABC) : list st :=
-  match s, α with
+Definition next (s : st) (𝜆 : Labels ABC) : list st :=
+  match s, 𝜆 with
   | p0, ActExt la => [nil]
   | p0, ActExt lb => [om]
   | q0, ActExt la => [om]
@@ -130,24 +130,24 @@ Definition next (s : st) (α : Labels ABC) : list st :=
   | _, _ => []
   end.
 
-Definition st_step (s : st) (α : Labels ABC) (s' : st) : Prop := s' ∈ next s α.
+Definition st_step (s : st) (𝜆 : Labels ABC) (s' : st) : Prop := s' ∈ next s 𝜆.
 
-Lemma st_performs_spec1 s α : next s α ≠ [] → { s' | st_step s α s' }.
+Lemma st_performs_spec1 s 𝜆 : next s 𝜆 ≠ [] → { s' | st_step s 𝜆 s' }.
 Proof.
-  unfold st_step. destruct (next s α) as [|x l]; intro h.
+  unfold st_step. destruct (next s 𝜆) as [|x l]; intro h.
   - exfalso. by apply h.
   - exists x. set_solver.
 Qed.
 
-Lemma st_performs_spec2 s α : { s' | st_step s α s' } → next s α ≠ [].
+Lemma st_performs_spec2 s 𝜆 : { s' | st_step s 𝜆 s' } → next s 𝜆 ≠ [].
 Proof. intros [s' h] e. unfold st_step in h. rewrite e in h. set_solver. Qed.
 
 #[global] Instance st_gLts : gLts st EA_NU := {|
     lts_step := st_step;
     lts_state_eqdec := _;
-    lts_step_decidable s α s' := decide (s' ∈ next s α);
-    lts_performs s α := next s α ≠ [];
-    lts_performs_decidable s α := decide (next s α ≠ []);
+    lts_step_decidable s 𝜆 s' := decide (s' ∈ next s 𝜆);
+    lts_performs s 𝜆 := next s 𝜆 ≠ [];
+    lts_performs_decidable s 𝜆 := decide (next s 𝜆 ≠ []);
     lts_performs_spec1 := st_performs_spec1;
     lts_performs_spec2 := st_performs_spec2;
   |}.
@@ -155,7 +155,7 @@ Proof. intros [s' h] e. unfold st_step in h. rewrite e in h. set_solver. Qed.
 #[global] Program Instance st_gLtsEq : gLtsEq st EA_NU := {|
     eq_rel := eq;
   |}.
-Next Obligation. intros p q α (r & -> & l). eauto. Qed.
+Next Obligation. intros p q 𝜆 (r & -> & l). eauto. Qed.
 
 #[global] Instance st_gLtsOba : gLtsOba st.
 Proof. constructor; intros; simpl in *; contradiction. Qed.
@@ -182,12 +182,12 @@ Proof. by destruct s. Qed.
 Lemma dualNU_swap x y : dualNU (swap_act x) y ↔ dualNU x y.
 Proof. destruct x, y; simpl; tauto. Qed.
 
-Lemma step_swap s α s' :
-  s ⟶{α} s' →
-  swap_st s ⟶{match α with ActExt μ => ActExt (swap_act μ) | τ => τ end} swap_st s'.
+Lemma step_swap s 𝜆 s' :
+  s ⟶{𝜆} s' →
+  swap_st s ⟶{match 𝜆 with ActExt μ => ActExt (swap_act μ) | τ => τ end} swap_st s'.
 Proof.
   simpl. unfold st_step.
-  destruct s, α as [[]|]; simpl; intro h; set_solver.
+  destruct s, 𝜆 as [[]|]; simpl; intro h; set_solver.
 Qed.
 
 Lemma step_swap_tau s s' : swap_st s ⟶ s' → s ⟶ swap_st s'.
@@ -304,7 +304,7 @@ Definition idA (x : ABC) : ABC := x.
 Next Obligation. intros T gLtsT t β β' b b' e mem. unfold idA in e. subst. exact mem. Qed.
 Next Obligation. intros T gLtsT p β β' b b' e mem. unfold idA in *. subst. exact mem. Qed.
 
-(* [ₐ꜀꜀≼ₐₛ] with [Φ = 𝝳 = idA] *)
+(* [ₐ꜀꜀≼ₐₛ] with [αᴛᴇꜱᴛ = αᴘʀᴏ = idA] *)
 Definition cond2_id `{gLtsT : !gLtsEq T EA_NU} (p q : st) : Prop :=
   @bhv_pre_cond2 st ABC EA_NU st_gLts T ABC ABC idA idA gLtsT AbsAction_id
     st st_gLts idA AbsAction_id p q.
@@ -375,10 +375,10 @@ Qed.
 Definition fin_st (x : st) : Prop :=
   match x with p1 | q1 | dz | nil => True | _ => False end.
 
-Lemma fin_st_step x α y : fin_st x → x ⟶{α} y → fin_st y ∧ α ≠ τ.
+Lemma fin_st_step x 𝜆 y : fin_st x → x ⟶{𝜆} y → fin_st y ∧ 𝜆 ≠ τ.
 Proof.
   simpl. unfold st_step.
-  destruct x, α as [[]|]; simpl; intros hx hy; try contradiction;
+  destruct x, 𝜆 as [[]|]; simpl; intros hx hy; try contradiction;
     repeat match goal with
     | H : _ ∈ [] |- _ => apply not_elem_of_nil in H; contradiction
     | H : _ ∈ [_] |- _ => apply list_elem_of_singleton in H; subst
@@ -418,7 +418,7 @@ Theorem completeness2_fails_without_unique_dual :
        p1 ⊑ₘᵤₛₜᵢ q1)
   (* both converge on every trace [p1] converges on *)
   ∧ (p1 ꜀ₙᵥ≼ₐₛ q1)
-  (* but not [p1 ₐ꜀꜀≼ₐₛ q1], with [Φ = 𝝳 = id] *)
+  (* but not [p1 ₐ꜀꜀≼ₐₛ q1], with [αᴛᴇꜱᴛ = αᴘʀᴏ = id] *)
   ∧ (∀ `{gLtsT : !gLtsEq T EA_NU}, ¬ cond2_id p1 q1).
 Proof.
   split; [|split; [|split]].

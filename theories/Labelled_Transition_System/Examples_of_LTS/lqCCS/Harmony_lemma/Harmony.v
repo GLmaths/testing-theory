@@ -107,23 +107,23 @@ Inductive ppath : prog -> St -> list clbl -> St -> Prop :=
 | pp_done ρ : ppath Done ρ [] ρ
 | pp_cons p ρ a x ρ1 β ρ' : par p ρ a x ρ1 -> ppath x ρ1 β ρ' -> ppath p ρ (a :: β) ρ'.
 
-Definition hats (α : list (lbl * T)) := map (fun e => hat (fst e) (snd e)) α.
+Definition hats (𝜆 : list (lbl * T)) := map (fun e => hat (fst e) (snd e)) 𝜆.
 
-(* Terminal paths correspond, with the same final memory [ℰ_α(ρ)]. *)
-Theorem harmony_paths p ρ α : tpath p α -> ppath p ρ (hats α) (app (kr α) ρ).
+(* Terminal paths correspond, with the same final memory [ℰ_𝜆(ρ)]. *)
+Theorem harmony_paths p ρ 𝜆 : tpath p 𝜆 -> ppath p ρ (hats 𝜆) (app (kr 𝜆) ρ).
 Proof.
-  intro Hα. induction Hα as [| p λ K x α Ht Hα IH] in ρ |- *; simpl.
+  intro H𝜆. induction H𝜆 as [| p λ K x 𝜆 Ht H𝜆 IH] in ρ |- *; simpl.
   - rewrite app_one. constructor.
   - rewrite app_comp. econstructor; [apply harmony, Ht | apply IH].
 Qed.
 
 Theorem harmony_paths_inv p ρ β ρ' :
-  ppath p ρ β ρ' -> exists α, tpath p α /\ hats α = β /\ ρ' = app (kr α) ρ.
+  ppath p ρ β ρ' -> exists 𝜆, tpath p 𝜆 /\ hats 𝜆 = β /\ ρ' = app (kr 𝜆) ρ.
 Proof.
   intro Hβ. induction Hβ as [ρ | p ρ a x ρ1 β ρ' Hpar Hβ IH].
   - exists []. repeat split; [constructor | simpl; now rewrite app_one].
-  - destruct IH as (α & Hα & <- & ->). apply harmony_inv in Hpar as (K & Ht & -> & Ha).
-    exists ((erase a, K) :: α). repeat split.
+  - destruct IH as (𝜆 & H𝜆 & <- & ->). apply harmony_inv in Hpar as (K & Ht & -> & Ha).
+    exists ((erase a, K) :: 𝜆). repeat split.
     + econstructor; eauto.
     + simpl. now rewrite Ha.
     + simpl. now rewrite app_comp.
@@ -135,9 +135,9 @@ Qed.
 Definition ccompat (σ : sched) (β : list clbl) :=
   Forall (fun a => match a with Choice t b => b = σ t | _ => True end) β.
 
-Lemma compat_hats σ α : compat σ α <-> ccompat σ (hats α).
+Lemma compat_hats σ 𝜆 : compat σ 𝜆 <-> ccompat σ (hats 𝜆).
 Proof.
-  induction α as [| [λ K] α IH]; simpl; [split; constructor |].
+  induction 𝜆 as [| [λ K] 𝜆 IH]; simpl; [split; constructor |].
   split; intro C; inversion C; subst; constructor; try apply IH; auto; destruct λ; auto.
 Qed.
 

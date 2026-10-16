@@ -35,8 +35,8 @@ Class coFiniteImagegLts (P A : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLts
   MkCoFlts {
       cofolts_states_countable :: Countable P;
       cofolts_tau_next_states_finite p : Finite (dsig (fun q => p ⟶ q));
-      cofolts_next_states_decidable p (α : A) q : Decision (exists α', sync α' α /\ p ⟶[α'] q);
-      cofolts_next_states_finite p (α : A) : Finite (dsig (fun q => exists α', sync α' α /\ p ⟶[α'] q));
+      cofolts_next_states_decidable p (𝜆 : A) q : Decision (exists 𝜆', sync 𝜆' 𝜆 /\ p ⟶[𝜆'] q);
+      cofolts_next_states_finite p (𝜆 : A) : Finite (dsig (fun q => exists 𝜆', sync 𝜆' 𝜆 /\ p ⟶[𝜆'] q));
 }.
 
 #[global] Existing Instance cofolts_states_countable.
@@ -49,9 +49,9 @@ Class coFiniteImagegLts (P A : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLts
 Proof.
   unshelve econstructor.
   - exact cofolts_states_countable.
-  - intros p α. destruct α as [a|].
+  - intros p 𝜆. destruct 𝜆 as [a|].
     + unshelve eapply finite_countable.
-      eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => exists α', sync α' (co a) /\ p ⟶[α'] q))))).
+      eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => exists 𝜆', sync 𝜆' (co a) /\ p ⟶[𝜆'] q))))).
       intros q Hq. eapply bool_decide_unpack in Hq.
       eapply list_elem_of_fmap.
       exists (dexist q (ex_intro _ a (conj (proj2_sig (exists_dual a)) Hq))).

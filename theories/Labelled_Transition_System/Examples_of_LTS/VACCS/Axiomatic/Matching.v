@@ -5006,7 +5006,7 @@ Proof.
   destruct x as (px,mx).
   assert (Hnoemit : forall d w z, ~ ((px ▷ mx) ⟶[ActOut (d,w)] z)).
   { intros d w z Hz.
-    assert (Habs : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (px ▷ mx)))
+    assert (Habs : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR (px ▷ mx)))
       by (apply coR_abs_pair_iff; exists w, z; exact Hz).
     apply Hincl in Habs.
     apply coR_abs_pair_iff in Habs as (w' & r' & Hr').

@@ -528,7 +528,7 @@ Proof.
               exists q''. repeat split;eauto.
               -- eapply wt_push_left. eapply lts_to_wt. constructor. simpl. eauto.
               -- symmetry in eq1. eapply stable_preserved_by_eq in eq1;eauto.
-              -- assert ((⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q')%stdpp.
+              -- assert ((⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ coR q')%stdpp.
                  { eapply Proper_lts_pre_co_actions in eq1. eauto. }
                  rewrite H0. set_solver.
           ** subst. assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If cst v == cst O
@@ -543,7 +543,7 @@ Proof.
               exists q''. repeat split;eauto.
               -- eapply wt_push_left. eapply lts_to_wt. constructor. simpl. eauto.
               -- symmetry in eq1. eapply stable_preserved_by_eq in eq1;eauto.
-              -- assert ((⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q')%stdpp.
+              -- assert ((⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ coR q')%stdpp.
                  { eapply Proper_lts_pre_co_actions in eq1. eauto. } 
                  rewrite H0. set_solver. 
        ++ assert ((ν ((bvar 0 ! cst I • 𝟘) ‖ (If bvar 0 == cst O
@@ -557,7 +557,7 @@ Proof.
               exists q''. repeat split;eauto.
               ** eapply wt_push_left. eapply lts_to_wt. constructor. simpl. eauto.
               ** symmetry in eq1. eapply stable_preserved_by_eq in eq1;eauto.
-              ** assert ((⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ coR q')%stdpp.
+              ** assert ((⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ coR q'') ≡ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ coR q')%stdpp.
                  { eapply Proper_lts_pre_co_actions in eq1. eauto. }
                  rewrite H0. set_solver.
 Qed.

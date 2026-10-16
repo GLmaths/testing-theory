@@ -3,21 +3,21 @@ From TestingTheory Require Import pi.LTS Renamings pi.Congruence.
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Morphisms.
 
-Lemma is_bound_ren : forall α σ,
-  is_bound_out α = is_bound_out (ren1 σ α).
+Lemma is_bound_ren : forall 𝜆 σ,
+  is_bound_out 𝜆 = is_bound_out (ren1 σ 𝜆).
 Proof.
-intros α σ. destruct α; try destruct e; reflexivity.
+intros 𝜆 σ. destruct 𝜆; try destruct e; reflexivity.
 Qed.
 
-Lemma is_bound_shift : forall α,
-  is_bound_out α = is_bound_out (⇑ α).
-Proof. intro α. eapply is_bound_ren. Qed.
+Lemma is_bound_shift : forall 𝜆,
+  is_bound_out 𝜆 = is_bound_out (⇑ 𝜆).
+Proof. intro 𝜆. eapply is_bound_ren. Qed.
 
-Lemma is_bound_exists : forall α,
-  is_bound_out α = true ->
-  exists c, α = BoundOut c.
+Lemma is_bound_exists : forall 𝜆,
+  is_bound_out 𝜆 = true ->
+  exists c, 𝜆 = BoundOut c.
 Proof.
-intros α H. destruct α; try destruct e; try discriminate; eauto.
+intros 𝜆 H. destruct 𝜆; try destruct e; try discriminate; eauto.
 Qed.
 
 Lemma Invert_Lts_Input : forall p q c v σ,
@@ -261,14 +261,14 @@ dependent induction transition.
   rewrite Heq1. repeat eexists; eauto with lts.
 Qed.
 
-Lemma Invert_Lts_Alpha : forall p q σ α,
-  is_bound_out α = false ->
+Lemma Invert_Lts_Alpha : forall p q σ 𝜆,
+  is_bound_out 𝜆 = false ->
   injective σ ->
-  lts (p ⟨σ⟩) (ren1 σ α) q ->
-  exists q', q = q' ⟨σ⟩ /\ lts p α q'.
+  lts (p ⟨σ⟩) (ren1 σ 𝜆) q ->
+  exists q', q = q' ⟨σ⟩ /\ lts p 𝜆 q'.
 Proof.
-intros p q σ α Hbound Hinj transition.
-destruct α; try destruct e.
+intros p q σ 𝜆 Hbound Hinj transition.
+destruct 𝜆; try destruct e.
 - (* ActIn *)
   destruct (Invert_Lts_Input_Full _ _ _ _ σ transition) as (c' & q' & Heq1 & Heq2 & Heq3).
   apply Injective_Ren_Data in Heq1; [|apply Hinj].
@@ -289,14 +289,14 @@ Qed.
 (* For some reason this makes asimple solve a goal??? *)
 From stdpp Require strings.
 
-Lemma ren_lts : forall p α q σ,
+Lemma ren_lts : forall p 𝜆 q σ,
   Eq_Subst_Spec σ ->
-  lts p α q ->
-  (is_bound_out α = false ->
-    lts (ren2 ids σ p) (ren1 σ α) (ren2 ids σ q)) /\
-   (is_bound_out α = true ->
-    lts (ren2 ids σ p) (ren1 σ α) (ren2 ids (up_ren σ) q)).
-  intros p α q σ EqSpec Transition. revert σ EqSpec.
+  lts p 𝜆 q ->
+  (is_bound_out 𝜆 = false ->
+    lts (ren2 ids σ p) (ren1 σ 𝜆) (ren2 ids σ q)) /\
+   (is_bound_out 𝜆 = true ->
+    lts (ren2 ids σ p) (ren1 σ 𝜆) (ren2 ids (up_ren σ) q)).
+  intros p 𝜆 q σ EqSpec Transition. revert σ EqSpec.
   dependent induction Transition; intro σ; split; intro Hbound; inversion Hbound; subst.
   - asimpl. simpl. refine (eq_rect _ _ lts_input _ _). now asimpl.
   - apply lts_output.
@@ -386,29 +386,29 @@ Lemma ren_lts : forall p α q σ,
     eapply lts_choiceR. apply IHTransition'. exact Hbound.
 Qed.
 
-Lemma shift_transition p α q :
-  lts p α q ->
-  (is_bound_out α = false ->
-  lts (⇑ p) (⇑ α) (⇑ q))
+Lemma shift_transition p 𝜆 q :
+  lts p 𝜆 q ->
+  (is_bound_out 𝜆 = false ->
+  lts (⇑ p) (⇑ 𝜆) (⇑ q))
   /\
-  (is_bound_out α = true ->
-  lts (⇑ p) (⇑ α) (q ⟨up_ren shift⟩)).
+  (is_bound_out 𝜆 = true ->
+  lts (⇑ p) (⇑ 𝜆) (q ⟨up_ren shift⟩)).
 Proof.
 intro Transition.
-apply (ren_lts p α q shift (Eq_Subst_Spec_inj shift Shift_Injective)) in Transition.
+apply (ren_lts p 𝜆 q shift (Eq_Subst_Spec_inj shift Shift_Injective)) in Transition.
 assumption.
 Qed.
 
-Lemma swap_transition p α q :
-  lts p α q ->
-  (is_bound_out α = false ->
-  lts (p ⟨swap⟩) (ren1 swap α) (q ⟨swap⟩))
+Lemma swap_transition p 𝜆 q :
+  lts p 𝜆 q ->
+  (is_bound_out 𝜆 = false ->
+  lts (p ⟨swap⟩) (ren1 swap 𝜆) (q ⟨swap⟩))
   /\
-  (is_bound_out α = true ->
-  lts (p ⟨swap⟩) (ren1 swap α) (q ⟨up_ren swap⟩)).
+  (is_bound_out 𝜆 = true ->
+  lts (p ⟨swap⟩) (ren1 swap 𝜆) (q ⟨up_ren swap⟩)).
 Proof.
 intro Transition.
-apply (ren_lts p α q swap (Eq_Subst_Spec_inj swap Swap_Injective)) in Transition.
+apply (ren_lts p 𝜆 q swap (Eq_Subst_Spec_inj swap Swap_Injective)) in Transition.
 assumption.
 Qed.
 (* end hide *)

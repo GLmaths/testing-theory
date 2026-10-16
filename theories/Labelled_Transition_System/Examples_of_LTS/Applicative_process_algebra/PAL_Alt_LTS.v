@@ -219,19 +219,19 @@ Section PAL_Alt.
   |}.
 
   (* The labels dual to a label. *)
-  Definition co_labels (α : PALA_Act) : list PALA_Act :=
-    match α with
+  Definition co_labels (𝜆 : PALA_Act) : list PALA_Act :=
+    match 𝜆 with
     | AIn l => [AOut (ltuple l)]
     | AOut ot => map AIn (labels_of ot)
     end.
 
-  Lemma co_labels_spec α α' : In α' (co_labels α) ↔ PALA_dual α' α.
+  Lemma co_labels_spec 𝜆 𝜆' : In 𝜆' (co_labels 𝜆) ↔ PALA_dual 𝜆' 𝜆.
   Proof.
-    destruct α as [l|ot]; simpl.
-    - split; [by intros [<- | []] |]. destruct α' as [l'|ot']; simpl; [done |]. intros <-. by left.
+    destruct 𝜆 as [l|ot]; simpl.
+    - split; [by intros [<- | []] |]. destruct 𝜆' as [l'|ot']; simpl; [done |]. intros <-. by left.
     - rewrite in_map_iff. split.
       + intros (l & <- & hl). simpl. by apply labels_of_spec.
-      + destruct α' as [l|ot']; simpl; [| done]. intros e. exists l. split; [done | by apply labels_of_spec].
+      + destruct 𝜆' as [l|ot']; simpl; [| done]. intros e. exists l. split; [done | by apply labels_of_spec].
   Qed.
 
   (* ** The LTS (Tables 3-4, with alternative labels) *)
@@ -323,7 +323,7 @@ Section PAL_Alt.
   Lemma out_step_in_collect_out_a E a E' :
     lts_step_a E (ActExt (AOut a)) E' → In a (collect_out_a E).
   Proof.
-    intros h. remember (ActExt (AOut a)) as α eqn:eq.
+    intros h. remember (ActExt (AOut a)) as 𝜆 eqn:eq.
     induction h; try discriminate eq; simpl.
     - injection eq as <-. match goal with hev : eval_out_tuple _ = Some _ |- _ => rewrite hev end.
       by left.
@@ -357,15 +357,15 @@ Section PAL_Alt.
     - destruct (IHE1 hin) as [E1' h1]. exists (t_par E1' E2). by eapply aar6.
   Qed.
 
-  Fixpoint all_steps_a (p : term) (α : Labels PALA_Act) : list term :=
+  Fixpoint all_steps_a (p : term) (𝜆 : Labels PALA_Act) : list term :=
     match p with
     | t_nil => []
     | t_pvar _ => []
     | t_success => []
-    | t_undef => match α with τ => [t_undef] | _ => [] end
-    | t_rec X E => match α with τ => [psubst X (t_rec X E) E] | _ => [] end
+    | t_undef => match 𝜆 with τ => [t_undef] | _ => [] end
+    | t_rec X E => match 𝜆 with τ => [psubst X (t_rec X E) E] | _ => [] end
     | t_out t E =>
-        match α with
+        match 𝜆 with
         | ActExt (AOut ot) =>
             if bool_decide (E = t_nil) then
               match eval_out_tuple t with
@@ -377,7 +377,7 @@ Section PAL_Alt.
         | _ => []
         end
     | t_in t E =>
-        match α with
+        match 𝜆 with
         | ActExt (AIn l) =>
             match eval_in_tuple t with
             | Some it =>
@@ -388,7 +388,7 @@ Section PAL_Alt.
         | _ => []
         end
     | t_read t E =>
-        match α with
+        match 𝜆 with
         | ActExt (AIn l) =>
             match eval_in_tuple t with
             | Some it =>
@@ -399,27 +399,27 @@ Section PAL_Alt.
             end
         | _ => []
         end
-    | t_eval E1 E2 => match α with τ => [t_par E1 E2] | _ => [] end
+    | t_eval E1 E2 => match 𝜆 with τ => [t_par E1 E2] | _ => [] end
     | t_if be E1 E2 =>
         match eval_bexp be with
-        | Some true => all_steps_a E1 α
-        | Some false => all_steps_a E2 α
+        | Some true => all_steps_a E1 𝜆
+        | Some false => all_steps_a E2 𝜆
         | None => []
         end
-    | t_ichoice E1 E2 => match α with τ => [E1; E2] | _ => [] end
+    | t_ichoice E1 E2 => match 𝜆 with τ => [E1; E2] | _ => [] end
     | t_echoice E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ => map (λ E1', t_echoice E1' E2) (all_steps_a E1 τ)
                ++ map (λ E2', t_echoice E1 E2') (all_steps_a E2 τ)
-        | ActExt _ => all_steps_a E1 α ++ all_steps_a E2 α
+        | ActExt _ => all_steps_a E1 𝜆 ++ all_steps_a E2 𝜆
         end
     | t_lmerge E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ => map (λ E1', t_lmerge E1' E2) (all_steps_a E1 τ)
-        | ActExt _ => map (λ E1', t_par E1' E2) (all_steps_a E1 α)
+        | ActExt _ => map (λ E1', t_par E1' E2) (all_steps_a E1 𝜆)
         end
     | t_cmerge E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ =>
             map (λ E1', t_cmerge E1' E2) (all_steps_a E1 τ)
             ++ map (λ E2', t_cmerge E1 E2') (all_steps_a E2 τ)
@@ -436,7 +436,7 @@ Section PAL_Alt.
         | ActExt _ => []
         end
     | t_par E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ =>
             map (λ E1', t_par E1' E2) (all_steps_a E1 τ)
             ++ map (λ E2', t_par E1 E2') (all_steps_a E2 τ)
@@ -451,45 +451,45 @@ Section PAL_Alt.
                    (all_steps_a E2 (ActExt (AOut a))))
                  (collect_out_a E2)
         | ActExt _ =>
-            map (λ E1', t_par E1' E2) (all_steps_a E1 α)
-            ++ map (λ E2', t_par E1 E2') (all_steps_a E2 α)
+            map (λ E1', t_par E1' E2) (all_steps_a E1 𝜆)
+            ++ map (λ E2', t_par E1 E2') (all_steps_a E2 𝜆)
         end
     end.
 
-  Lemma all_steps_a_sound p α q : In q (all_steps_a p α) → lts_step_a p α q.
+  Lemma all_steps_a_sound p 𝜆 q : In q (all_steps_a p 𝜆) → lts_step_a p 𝜆 q.
   Proof.
-    revert α q.
-    induction p; intros α q hin; simpl in hin.
+    revert 𝜆 q.
+    induction p; intros 𝜆 q hin; simpl in hin.
     - contradiction.
-    - destruct α as [μ|]; [contradiction |]. destruct hin as [<- | []]. apply air1.
-    - destruct α as [[l|ot]|].
+    - destruct 𝜆 as [μ|]; [contradiction |]. destruct hin as [<- | []]. apply air1.
+    - destruct 𝜆 as [[l|ot]|].
       + contradiction.
       + case_bool_decide as hE; [subst | contradiction].
         destruct (eval_out_tuple t) as [ot'|] eqn:ev; [| contradiction].
         case_bool_decide as hb; [subst | contradiction].
         destruct hin as [<- | []]. by apply aar3.
       + case_bool_decide as hE; [| contradiction]. destruct hin as [<- | []]. by apply air5.
-    - destruct α as [[l|ot]|]; try contradiction.
+    - destruct 𝜆 as [[l|ot]|]; try contradiction.
       destruct (eval_in_tuple t) as [it|] eqn:ev; [| contradiction].
       case_bool_decide as hb; [| contradiction].
       destruct hin as [<- | []]. by apply aar1.
-    - destruct α as [[l|ot]|]; try contradiction.
+    - destruct 𝜆 as [[l|ot]|]; try contradiction.
       destruct (eval_in_tuple t) as [it|] eqn:ev; [| contradiction].
       case_bool_decide as hb; [| contradiction].
       destruct hin as [<- | []]. by apply aar2.
-    - destruct α as [μ|]; [contradiction |]. destruct hin as [<- | []]. apply air6.
-    - destruct (eval_bexp be) as [[]|] eqn:hbe; [| | contradiction]; destruct α as [μ|].
+    - destruct 𝜆 as [μ|]; [contradiction |]. destruct hin as [<- | []]. apply air6.
+    - destruct (eval_bexp be) as [[]|] eqn:hbe; [| | contradiction]; destruct 𝜆 as [μ|].
       + eapply aar7; [done | by apply IHp1].
       + eapply air3; [done | by apply IHp1].
       + eapply aar8; [done | by apply IHp2].
       + eapply air4; [done | by apply IHp2].
-    - destruct α as [μ|]; [contradiction |]. destruct hin as [<- | [<- | []]]; [apply air7_l | apply air7_r].
-    - destruct α as [μ|]; apply in_app_iff in hin as [hin | hin].
+    - destruct 𝜆 as [μ|]; [contradiction |]. destruct hin as [<- | [<- | []]]; [apply air7_l | apply air7_r].
+    - destruct 𝜆 as [μ|]; apply in_app_iff in hin as [hin | hin].
       + by apply aar4_l, IHp1.
       + by apply aar4_r, IHp2.
       + apply in_map_iff in hin as (E1' & <- & hin). by apply air8_l, IHp1.
       + apply in_map_iff in hin as (E2' & <- & hin). by apply air8_r, IHp2.
-    - destruct α as [μ|].
+    - destruct 𝜆 as [μ|].
       + apply in_app_iff in hin as [hin | hin].
         * apply in_map_iff in hin as (E1' & <- & hin). by apply aar5_l, IHp1.
         * apply in_map_iff in hin as (E2' & <- & hin). by apply aar5_r, IHp2.
@@ -507,10 +507,10 @@ Section PAL_Alt.
           apply in_map_iff in hin3 as (E1' & <- & hE1').
           apply in_flat_map in hE1' as (l & hl & hE1'). apply labels_of_spec in hl.
           eapply (air12 _ _ (AIn l) (AOut a)); [by apply IHp1 | by apply IHp2 | exact hl].
-    - destruct α as [μ|]; apply in_map_iff in hin as (E1' & <- & hin).
+    - destruct 𝜆 as [μ|]; apply in_map_iff in hin as (E1' & <- & hin).
       + by apply aar6, IHp1.
       + by apply air11, IHp1.
-    - destruct α as [μ|]; [contradiction |].
+    - destruct 𝜆 as [μ|]; [contradiction |].
       apply in_app_iff in hin as [hin | hin];
         [| apply in_app_iff in hin as [hin | hin]; [| apply in_app_iff in hin as [hin | hin]]].
       + apply in_map_iff in hin as (E1' & <- & hin). by apply air10_l, IHp1.
@@ -526,11 +526,11 @@ Section PAL_Alt.
         apply in_flat_map in hE1' as (l & hl & hE1'). apply labels_of_spec in hl.
         eapply (air13 _ _ (AIn l) (AOut a)); [by apply IHp1 | by apply IHp2 | exact hl].
     - contradiction.
-    - destruct α as [μ|]; [contradiction |]. destruct hin as [<- | []]. apply air2.
+    - destruct 𝜆 as [μ|]; [contradiction |]. destruct hin as [<- | []]. apply air2.
     - contradiction.
   Qed.
 
-  Lemma all_steps_a_complete p α q : lts_step_a p α q → In q (all_steps_a p α).
+  Lemma all_steps_a_complete p 𝜆 q : lts_step_a p 𝜆 q → In q (all_steps_a p 𝜆).
   Proof.
     induction 1; simpl.
     - match goal with hev : eval_in_tuple _ = Some _ |- _ => rewrite hev end.
@@ -592,26 +592,26 @@ Section PAL_Alt.
 
   (* ** [gLts] instance *)
 
-  Definition PALA_performs (p : term) (α : Labels PALA_Act) : Prop := all_steps_a p α ≠ [].
+  Definition PALA_performs (p : term) (𝜆 : Labels PALA_Act) : Prop := all_steps_a p 𝜆 ≠ [].
 
-  #[global] Instance PALA_step_dec p α q : Decision (lts_step_a p α q).
+  #[global] Instance PALA_step_dec p 𝜆 q : Decision (lts_step_a p 𝜆 q).
   Proof.
-    destruct (in_dec term_eqdec q (all_steps_a p α)) as [hin|hnin].
+    destruct (in_dec term_eqdec q (all_steps_a p 𝜆)) as [hin|hnin].
     - left. by apply all_steps_a_sound.
     - right. intros h. by apply hnin, all_steps_a_complete.
   Defined.
 
-  #[global] Instance PALA_performs_dec p α : Decision (PALA_performs p α).
-  Proof. unfold PALA_performs. destruct (all_steps_a p α); [right; intros hne; by apply hne | left; discriminate]. Defined.
+  #[global] Instance PALA_performs_dec p 𝜆 : Decision (PALA_performs p 𝜆).
+  Proof. unfold PALA_performs. destruct (all_steps_a p 𝜆); [right; intros hne; by apply hne | left; discriminate]. Defined.
 
-  Definition PALA_performs_spec1 p α : PALA_performs p α → {q | lts_step_a p α q}.
+  Definition PALA_performs_spec1 p 𝜆 : PALA_performs p 𝜆 → {q | lts_step_a p 𝜆 q}.
   Proof.
     unfold PALA_performs. intros hne.
-    destruct (all_steps_a p α) as [|q l] eqn:e; [done |].
+    destruct (all_steps_a p 𝜆) as [|q l] eqn:e; [done |].
     exists q. apply all_steps_a_sound. rewrite e. by left.
   Defined.
 
-  Definition PALA_performs_spec2 p α : {q | lts_step_a p α q} → PALA_performs p α.
+  Definition PALA_performs_spec2 p 𝜆 : {q | lts_step_a p 𝜆 q} → PALA_performs p 𝜆.
   Proof.
     intros [q h] href.
     apply all_steps_a_complete in h. by rewrite href in h.
@@ -627,26 +627,26 @@ Section PAL_Alt.
   Proof.
     unshelve econstructor.
     - exact term_countable.
-    - intros p α. unfold dsig.
-      eapply (in_list_finite (all_steps_a p α)).
+    - intros p 𝜆. unfold dsig.
+      eapply (in_list_finite (all_steps_a p 𝜆)).
       intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply all_steps_a_complete.
   Defined.
 
-  Definition co_next_a (p : term) (α : PALA_Act) : list term :=
-    flat_map (λ α', all_steps_a p (ActExt α')) (co_labels α).
+  Definition co_next_a (p : term) (𝜆 : PALA_Act) : list term :=
+    flat_map (λ 𝜆', all_steps_a p (ActExt 𝜆')) (co_labels 𝜆).
 
-  Lemma co_next_a_spec p α q :
-    In q (co_next_a p α) ↔ ∃ α', PALA_dual α' α ∧ lts_step_a p (ActExt α') q.
+  Lemma co_next_a_spec p 𝜆 q :
+    In q (co_next_a p 𝜆) ↔ ∃ 𝜆', PALA_dual 𝜆' 𝜆 ∧ lts_step_a p (ActExt 𝜆') q.
   Proof.
     unfold co_next_a. rewrite in_flat_map. split.
-    - intros (α' & hα' & hq). exists α'. split; [by apply co_labels_spec | by apply all_steps_a_sound].
-    - intros (α' & hd & hs). exists α'. split; [by apply co_labels_spec | by apply all_steps_a_complete].
+    - intros (𝜆' & h𝜆' & hq). exists 𝜆'. split; [by apply co_labels_spec | by apply all_steps_a_sound].
+    - intros (𝜆' & hd & hs). exists 𝜆'. split; [by apply co_labels_spec | by apply all_steps_a_complete].
   Qed.
 
-  #[global] Instance PALA_co_next_states_decidable p α q :
-    Decision (∃ α', PALA_dual α' α ∧ lts_step_a p (ActExt α') q).
+  #[global] Instance PALA_co_next_states_decidable p 𝜆 q :
+    Decision (∃ 𝜆', PALA_dual 𝜆' 𝜆 ∧ lts_step_a p (ActExt 𝜆') q).
   Proof.
-    destruct (in_dec term_eqdec q (co_next_a p α)) as [hin|hnin].
+    destruct (in_dec term_eqdec q (co_next_a p 𝜆)) as [hin|hnin].
     - left. by apply co_next_a_spec.
     - right. intros hc. by apply hnin, co_next_a_spec.
   Defined.
@@ -658,8 +658,8 @@ Section PAL_Alt.
     - intros p. unfold dsig.
       eapply (in_list_finite (all_steps_a p τ)).
       intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply all_steps_a_complete.
-    - intros p α. unfold dsig.
-      eapply (in_list_finite (co_next_a p α)).
+    - intros p 𝜆. unfold dsig.
+      eapply (in_list_finite (co_next_a p 𝜆)).
       intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply co_next_a_spec.
   Defined.
 

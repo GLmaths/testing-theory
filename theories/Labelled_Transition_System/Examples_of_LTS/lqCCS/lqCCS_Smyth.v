@@ -36,7 +36,7 @@
     the literature, for definitions in the same spirit:
     - Deng, van Glabbeek, Hennessy, Morgan, "Characterising testing preorders
       for finite probabilistic processes" (LICS 2007, LMCS 2008): finite
-      pCSP, must = failure simulation, modal logic F with [φ p⊕ ψ];
+      pCSP, must = failure simulation, modal logic F with [αᴛᴇꜱᴛ p⊕ ψ];
       "Testing finitary probabilistic processes" (CONCUR 2009) with
       divergence.
     - Segala, "Testing probabilistic automata" (CONCUR 1996): vector testing

@@ -175,15 +175,15 @@ Section PAL.
      for a synchronising partner (IR12/IR13) are bounded via [collect_out]
      (finite) rather than searching over the whole, possibly-infinite, action
      type, exactly as sketched in the paper's own Proposition 4.4. *)
-  Fixpoint all_steps (p : term) (α : Labels PAL_Act) : list term :=
+  Fixpoint all_steps (p : term) (𝜆 : Labels PAL_Act) : list term :=
     match p with
     | t_nil => []
     | t_pvar _ => []
     | t_success => []
-    | t_undef => match α with τ => [t_undef] | _ => [] end
-    | t_rec X E => match α with τ => [psubst X (t_rec X E) E] | _ => [] end
+    | t_undef => match 𝜆 with τ => [t_undef] | _ => [] end
+    | t_rec X E => match 𝜆 with τ => [psubst X (t_rec X E) E] | _ => [] end
     | t_out t E =>
-        match α with
+        match 𝜆 with
         | ActExt (ActOut ot) =>
             if bool_decide (E = t_nil) then
               match eval_out_tuple t with
@@ -195,7 +195,7 @@ Section PAL.
         | _ => []
         end
     | t_in t E =>
-        match α with
+        match 𝜆 with
         | ActExt (ActIn ot) =>
             match eval_in_tuple t with
             | Some it => if tuple_match_b it ot then [subst_term (build_subst it ot) E] else []
@@ -204,7 +204,7 @@ Section PAL.
         | _ => []
         end
     | t_read t E =>
-        match α with
+        match 𝜆 with
         | ActExt (ActIn ot) =>
             match eval_in_tuple t with
             | Some it => if tuple_match_b it ot
@@ -214,27 +214,27 @@ Section PAL.
             end
         | _ => []
         end
-    | t_eval E1 E2 => match α with τ => [t_par E1 E2] | _ => [] end
+    | t_eval E1 E2 => match 𝜆 with τ => [t_par E1 E2] | _ => [] end
     | t_if be E1 E2 =>
         match eval_bexp be with
-        | Some true => all_steps E1 α
-        | Some false => all_steps E2 α
+        | Some true => all_steps E1 𝜆
+        | Some false => all_steps E2 𝜆
         | None => []
         end
-    | t_ichoice E1 E2 => match α with τ => [E1; E2] | _ => [] end
+    | t_ichoice E1 E2 => match 𝜆 with τ => [E1; E2] | _ => [] end
     | t_echoice E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ => map (fun E1' => t_echoice E1' E2) (all_steps E1 τ)
                ++ map (fun E2' => t_echoice E1 E2') (all_steps E2 τ)
-        | ActExt _ => all_steps E1 α ++ all_steps E2 α
+        | ActExt _ => all_steps E1 𝜆 ++ all_steps E2 𝜆
         end
     | t_lmerge E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ => map (fun E1' => t_lmerge E1' E2) (all_steps E1 τ)
-        | ActExt _ => map (fun E1' => t_par E1' E2) (all_steps E1 α)
+        | ActExt _ => map (fun E1' => t_par E1' E2) (all_steps E1 𝜆)
         end
     | t_cmerge E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ =>
             map (fun E1' => t_cmerge E1' E2) (all_steps E1 τ)
             ++ map (fun E2' => t_cmerge E1 E2') (all_steps E2 τ)
@@ -249,7 +249,7 @@ Section PAL.
         | ActExt _ => []
         end
     | t_par E1 E2 =>
-        match α with
+        match 𝜆 with
         | τ =>
             map (fun E1' => t_par E1' E2) (all_steps E1 τ)
             ++ map (fun E2' => t_par E1 E2') (all_steps E2 τ)
@@ -262,18 +262,18 @@ Section PAL.
                    (all_steps E2 (ActExt (ActOut ot))))
                  (collect_out E2)
         | ActExt _ =>
-            map (fun E1' => t_par E1' E2) (all_steps E1 α)
-            ++ map (fun E2' => t_par E1 E2') (all_steps E2 α)
+            map (fun E1' => t_par E1' E2) (all_steps E1 𝜆)
+            ++ map (fun E2' => t_par E1 E2') (all_steps E2 𝜆)
         end
     end.
 
   Hint Constructors pal_step : mdb.
 
-  Lemma all_steps_sound p α q : In q (all_steps p α) -> pal_step p α q.
+  Lemma all_steps_sound p 𝜆 q : In q (all_steps p 𝜆) -> pal_step p 𝜆 q.
   Proof.
-    revert α q.
-    induction p; intros α q Hin; simpl in Hin;
-      try (destruct α as [μ|]; simpl in Hin).
+    revert 𝜆 q.
+    induction p; intros 𝜆 q Hin; simpl in Hin;
+      try (destruct 𝜆 as [μ|]; simpl in Hin).
     all: try (exact (match Hin with end)).
     - destruct Hin as [<- | []]. eauto with mdb.
     - destruct μ as [ot|ot]; [contradiction |].
@@ -348,7 +348,7 @@ Section PAL.
   Lemma out_step_in_collect_out E ot E' : pal_step E (ActExt (ActOut ot)) E' -> In ot (collect_out E).
   Proof.
     intros Hstep.
-    remember (ActExt (ActOut ot)) as α eqn:Heq.
+    remember (ActExt (ActOut ot)) as 𝜆 eqn:Heq.
     induction Hstep; try discriminate Heq; simpl; auto.
     - injection Heq as <-. rewrite H0. left. reflexivity.
     - inversion Heq; subst. apply in_or_app. left. apply IHHstep. reflexivity.
@@ -359,7 +359,7 @@ Section PAL.
     - inversion Heq; subst. rewrite H0. apply IHHstep. reflexivity.
   Qed.
 
-  Lemma all_steps_complete p α q : pal_step p α q -> In q (all_steps p α).
+  Lemma all_steps_complete p 𝜆 q : pal_step p 𝜆 q -> In q (all_steps p 𝜆).
   Proof.
     intros Hstep.
     induction Hstep; simpl.
@@ -464,35 +464,35 @@ Section PAL.
 
   #[global] Instance PAL_UniqueDual : UniqueDual PAL_Act := PAL_unique_nb.
 
-  Definition PAL_lts_performs (p : term) (α : Labels PAL_Act) : Prop := all_steps p α ≠ [].
+  Definition PAL_lts_performs (p : term) (𝜆 : Labels PAL_Act) : Prop := all_steps p 𝜆 ≠ [].
 
-  #[global] Instance pal_step_decidable p α q : Decision (pal_step p α q).
+  #[global] Instance pal_step_decidable p 𝜆 q : Decision (pal_step p 𝜆 q).
   Proof.
-    destruct (in_dec term_eqdec q (all_steps p α)) as [Hin|Hnin].
-    - left. exact (all_steps_sound p α q Hin).
-    - right. intro Hstep. exact (Hnin (all_steps_complete p α q Hstep)).
+    destruct (in_dec term_eqdec q (all_steps p 𝜆)) as [Hin|Hnin].
+    - left. exact (all_steps_sound p 𝜆 q Hin).
+    - right. intro Hstep. exact (Hnin (all_steps_complete p 𝜆 q Hstep)).
   Defined.
 
-  #[global] Instance PAL_lts_performs_decidable p α : Decision (PAL_lts_performs p α).
+  #[global] Instance PAL_lts_performs_decidable p 𝜆 : Decision (PAL_lts_performs p 𝜆).
   Proof.
     unfold PAL_lts_performs.
-    destruct (all_steps p α) as [| q l].
+    destruct (all_steps p 𝜆) as [| q l].
     - right. intros Hne. by apply Hne.
     - left. discriminate.
   Defined.
 
-  Definition PAL_lts_performs_spec1 p α : PAL_lts_performs p α -> {q | pal_step p α q}.
+  Definition PAL_lts_performs_spec1 p 𝜆 : PAL_lts_performs p 𝜆 -> {q | pal_step p 𝜆 q}.
   Proof.
     unfold PAL_lts_performs. intro Hne.
-    destruct (all_steps p α) as [|q l] eqn:E.
+    destruct (all_steps p 𝜆) as [|q l] eqn:E.
     - exfalso. apply Hne. reflexivity.
     - exists q. apply all_steps_sound. rewrite E. left. reflexivity.
   Defined.
 
-  Definition PAL_lts_performs_spec2 p α : {q | pal_step p α q} -> PAL_lts_performs p α.
+  Definition PAL_lts_performs_spec2 p 𝜆 : {q | pal_step p 𝜆 q} -> PAL_lts_performs p 𝜆.
   Proof.
     intros [q Hstep] Href.
-    pose proof (all_steps_complete p α q Hstep) as Hin.
+    pose proof (all_steps_complete p 𝜆 q Hstep) as Hin.
     rewrite Href in Hin. exact Hin.
   Defined.
 
@@ -511,8 +511,8 @@ Section PAL.
       [False] (see above) — so all five axioms, [boomerang],
       [fwd_feedback], and [feedback] are vacuous. *)
 
-  Lemma PAL_eq_spec p q (α : Labels PAL_Act) :
-    (exists r, p = r /\ pal_step r α q) -> (exists r, pal_step p α r /\ r = q).
+  Lemma PAL_eq_spec p q (𝜆 : Labels PAL_Act) :
+    (exists r, p = r /\ pal_step r 𝜆 q) -> (exists r, pal_step p 𝜆 r /\ r = q).
   Proof.
     intros (r & -> & Hr). exists q. split; [exact Hr | reflexivity].
   Qed.
@@ -527,7 +527,7 @@ Section PAL.
   #[global] Instance PAL_gLtsOba : gLtsOba term (H:=PAL_ExtAction) (Rel:=PAL_gLtsEq).
   Proof.
     unshelve econstructor.
-    - intros p q r η α nb Hl1 Hl2. destruct nb.
+    - intros p q r η 𝜆 nb Hl1 Hl2. destruct nb.
     - intros p q1 q2 η μ nb Hne Hl1 Hl2. destruct nb.
     - intros p q1 q2 η nb Hl1 Hl2. destruct nb.
     - intros p1 p2 p3 η nb Hl1 Hl2. destruct nb.
@@ -549,12 +549,12 @@ Section PAL.
 
   (* ** [FiniteImagegLts]/[coFiniteImagegLts]
 
-      Both reuse [all_steps]: a literal-[α] successor set is exactly
-      [all_steps p α] (via [all_steps_sound]/[all_steps_complete]), and
-      a dual-[α] successor set is exactly [all_steps p (ActExt (comp_act
-      α))] — since [dual]/[ext_act_match] pairs [ActIn ot] with
-      [ActOut ot] on the very same payload, "some action dual to [α]"
-      collapses to the single, determined action [comp_act α]
+      Both reuse [all_steps]: a literal-[𝜆] successor set is exactly
+      [all_steps p 𝜆] (via [all_steps_sound]/[all_steps_complete]), and
+      a dual-[𝜆] successor set is exactly [all_steps p (ActExt (comp_act
+      𝜆))] — since [dual]/[ext_act_match] pairs [ActIn ot] with
+      [ActOut ot] on the very same payload, "some action dual to [𝜆]"
+      collapses to the single, determined action [comp_act 𝜆]
       ([PAL_co_next_iff]), never a genuine search over the (possibly
       infinite) alphabet. *)
 
@@ -562,29 +562,29 @@ Section PAL.
   Proof.
     unshelve econstructor.
     - exact term_countable.
-    - intros p α. unfold dsig.
-      eapply (in_list_finite (all_steps p α)).
+    - intros p 𝜆. unfold dsig.
+      eapply (in_list_finite (all_steps p 𝜆)).
       intros q Hq%bool_decide_unpack.
       apply list_elem_of_In. apply all_steps_complete. exact Hq.
   Defined.
 
-  Lemma PAL_co_next_iff p α q :
-    (exists α', ext_act_match α' α /\ pal_step p (ActExt α') q) <->
-    pal_step p (ActExt (comp_act α)) q.
+  Lemma PAL_co_next_iff p 𝜆 q :
+    (exists 𝜆', ext_act_match 𝜆' 𝜆 /\ pal_step p (ActExt 𝜆') q) <->
+    pal_step p (ActExt (comp_act 𝜆)) q.
   Proof.
     split.
-    - intros (α' & Hdual & Hl).
-      destruct α' as [a|a]; simpl in Hdual.
+    - intros (𝜆' & Hdual & Hl).
+      destruct 𝜆' as [a|a]; simpl in Hdual.
       + apply simplify_match_input in Hdual. subst. exact Hl.
       + apply simplify_match_output in Hdual. subst. exact Hl.
-    - intro Hl. exists (comp_act α). split; [| exact Hl].
-      destruct α as [a|a]; reflexivity.
+    - intro Hl. exists (comp_act 𝜆). split; [| exact Hl].
+      destruct 𝜆 as [a|a]; reflexivity.
   Qed.
 
-  #[global] Instance PAL_co_next_states_decidable p α q :
-    Decision (exists α', ext_act_match α' α /\ pal_step p (ActExt α') q).
+  #[global] Instance PAL_co_next_states_decidable p 𝜆 q :
+    Decision (exists 𝜆', ext_act_match 𝜆' 𝜆 /\ pal_step p (ActExt 𝜆') q).
   Proof.
-    destruct (pal_step_decidable p (ActExt (comp_act α)) q) as [Hy|Hn].
+    destruct (pal_step_decidable p (ActExt (comp_act 𝜆)) q) as [Hy|Hn].
     - left. apply PAL_co_next_iff. exact Hy.
     - right. intro Hc. apply Hn. apply PAL_co_next_iff. exact Hc.
   Defined.
@@ -597,8 +597,8 @@ Section PAL.
       eapply (in_list_finite (all_steps p τ)).
       intros q Hq%bool_decide_unpack.
       apply list_elem_of_In. apply all_steps_complete. exact Hq.
-    - intros p α. unfold dsig.
-      eapply (in_list_finite (all_steps p (ActExt (comp_act α)))).
+    - intros p 𝜆. unfold dsig.
+      eapply (in_list_finite (all_steps p (ActExt (comp_act 𝜆)))).
       intros q Hq%bool_decide_unpack.
       apply list_elem_of_In. apply all_steps_complete. apply PAL_co_next_iff. exact Hq.
   Defined.

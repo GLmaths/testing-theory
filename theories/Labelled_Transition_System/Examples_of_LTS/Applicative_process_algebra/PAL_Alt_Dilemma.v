@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_P
 
    [PAL_Label_Dilemma_Sync.no_labelling_sync] instantiated with the
    alternative LTS ([PAL_Alt_LTS.v]) on both sides: processes and tests over
-   [PALA_Act], meeting along [dual].  Whatever [Φ], [𝝳] and [gen],
+   [PALA_Act], meeting along [dual].  Whatever [αᴛᴇꜱᴛ], [αᴘʀᴏ] and [gen],
    [FinitaryAbsAction] and [test_spec gen] cannot both hold.  The two
    hypotheses of the general theorem are discharged here: no action of
    [PALA_Act] is non-blocking, and the synchronisations along [dual] are
@@ -66,35 +66,35 @@ Section PAL_Alt_Dilemma.
         exists (AOut Val ot), (AIn Val l). by split_and!.
   Qed.
 
-  Context {FinA PreAct : Type} `{Countable PreAct} (Φ : PALA_Act Val → FinA) (𝝳 : FinA → PreAct).
+  Context {FinA PreAct : Type} `{Countable PreAct} (αᴛᴇꜱᴛ : PALA_Act Val → FinA) (αᴘʀᴏ : FinA → PreAct).
   Context (outcome : term → Prop) {TP : Testing_Predicate outcome (PALA_gLtsEq Val)}
     (gen : list (PALA_Act Val) → term).
 
   Theorem PALA_no_finitary_abstraction :
-    @FinitaryAbsAction term term FinA PreAct (PALA_Act Val) (PALA_ExtAction Val) Φ 𝝳
+    @FinitaryAbsAction term term FinA PreAct (PALA_Act Val) (PALA_ExtAction Val) αᴛᴇꜱᴛ αᴘʀᴏ
       (PALA_Act Val) (PALA_ExtAction Val) (PALA_gLts Val) (PALA_gLtsEq Val) SyncAction_of_dual _ _ →
     @test_spec term (PALA_Act Val) (PALA_ExtAction Val) (PALA_gLtsEq Val) outcome TP gen →
     False.
   Proof.
     intros Fin TS.
-    apply (no_labelling_sync (Val := Val) (TS := TS) (Fin := Fin) inj Φ 𝝳 outcome gen).
+    apply (no_labelling_sync (Val := Val) (TS := TS) (Fin := Fin) inj αᴛᴇꜱᴛ αᴘʀᴏ outcome gen).
     - intros η [].
     - exact PALA_sync_iff.
   Qed.
 End PAL_Alt_Dilemma.
 
 (* With the tests of [PAL_Alt_Tests.v], which do satisfy [test_spec]
-    ([PAL_Alt_CoTraceHypotheses.hyp_test_convergence_spec]): no [Φ], [𝝳] make
+    ([PAL_Alt_CoTraceHypotheses.hyp_test_convergence_spec]): no [αᴛᴇꜱᴛ], [αᴘʀᴏ] make
     the alternative LTS of PAL finitary — the one hypothesis that
     [PAL_Alt_CoTraceHypotheses.v] leaves open cannot be met. *)
 Corollary PALA_not_finitary {Val : Type} `{Countable Val} `{!Inhabited Val}
   (inj : nat → Val) `{!Inj eq eq inj}
-  {FinA PreAct : Type} `{Countable PreAct} (Φ : PALA_Act Val → FinA) (𝝳 : FinA → PreAct) :
-  @FinitaryAbsAction (term Val) (term Val) FinA PreAct (PALA_Act Val) (PALA_ExtAction Val) Φ 𝝳
+  {FinA PreAct : Type} `{Countable PreAct} (αᴛᴇꜱᴛ : PALA_Act Val → FinA) (αᴘʀᴏ : FinA → PreAct) :
+  @FinitaryAbsAction (term Val) (term Val) FinA PreAct (PALA_Act Val) (PALA_ExtAction Val) αᴛᴇꜱᴛ αᴘʀᴏ
       (PALA_Act Val) (PALA_ExtAction Val) (PALA_gLts Val) (PALA_gLtsEq Val) SyncAction_of_dual _ _ → False.
 Proof.
   intros Fin.
-  exact (PALA_no_finitary_abstraction inj Φ 𝝳 (good_PAL Val) (t_conv Val) Fin
+  exact (PALA_no_finitary_abstraction inj αᴛᴇꜱᴛ αᴘʀᴏ (good_PAL Val) (t_conv Val) Fin
            (@tconv_test_spec _ _ _ _ _ _ _ (hyp_test_convergence_spec Val))).
 Qed.
 

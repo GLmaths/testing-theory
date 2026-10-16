@@ -70,7 +70,7 @@ Proof.
 Qed.
 
 Lemma Γ_coR_iff (p : term) (x : Event nat) :
-  x ∈ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR p) ↔
+  x ∈ ⌈ αᴘᴇᴠ nat ∘ αᴛᴀᴘᴀʟ nat ⌉ (coR p) ↔
   (∃ ot, x = EvOut nat ot ∧ ∃ tp, tp ∈ collect_in_a nat p ∧ t_match tp ot)
   ∨ (∃ tp, x = EvIn nat tp ∧ ∃ ot, ot ∈ collect_out_a nat p ∧ t_match tp ot).
 Proof.
@@ -176,8 +176,8 @@ Proof.
 Defined.
 
 Lemma PALA_coR_dichotomy (p q : term) :
-  (⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR p) ⊆ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR q))
-  + { x | x ∈ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR p) ∧ x ∉ ⌈ 𝝳ᴇᴠ nat ∘ Φᴀᴘᴀʟ nat ⌉ (coR q) }.
+  (⌈ αᴘᴇᴠ nat ∘ αᴛᴀᴘᴀʟ nat ⌉ (coR p) ⊆ ⌈ αᴘᴇᴠ nat ∘ αᴛᴀᴘᴀʟ nat ⌉ (coR q))
+  + { x | x ∈ ⌈ αᴘᴇᴠ nat ∘ αᴛᴀᴘᴀʟ nat ⌉ (coR p) ∧ x ∉ ⌈ αᴘᴇᴠ nat ∘ αᴛᴀᴘᴀʟ nat ⌉ (coR q) }.
 Proof.
   set (N := S (tsbound (collect_in_a nat q))).
   destruct (decide (∃ tp, tp ∈ collect_in_a nat p ∧
@@ -224,7 +224,7 @@ Proof.
   intros hpre.
   pose proof (completeness_fw_co_weak (P := term) (Q := term) (T := term)
                 (gLtsEqP := PALA_gLtsEq nat) (gLtsEqQ := PALA_gLtsEq nat)
-                (gLtsEqT := PALA_gLtsEq nat) (Φ := Φᴀᴘᴀʟ nat) (𝝳 := 𝝳ᴇᴠ nat)
+                (gLtsEqT := PALA_gLtsEq nat) (αᴛᴇꜱᴛ := αᴛᴀᴘᴀʟ nat) (αᴘʀᴏ := αᴘᴇᴠ nat)
                 (AbsPT := AbsPALA nat) (AbsQT := AbsPALA nat)
                 (test_convergence_spec0 := hyp_test_convergence_spec nat)
                 (test_co_acceptance_set_spec0 := hyp_test_co_acceptance_set_spec nat)) as hc.

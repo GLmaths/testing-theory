@@ -139,8 +139,8 @@ Proof.
     exists q0. eapply strip_step; eassumption.
 Qed.
 
-Lemma strip_retract_act `{gLtsOba P A} {p q m t α} :
-  p ⟿{m} q -> q ⟶{α} t -> ∃ r, p ⟶{α} r /\ r ⟿⋍{m} t.
+Lemma strip_retract_act `{gLtsOba P A} {p q m t 𝜆} :
+  p ⟿{m} q -> q ⟶{𝜆} t -> ∃ r, p ⟶{𝜆} r /\ r ⟿⋍{m} t.
 Proof.
   intros HypStrip HypTr. 
   induction HypStrip as [| ? ? ? ? ? nb HypTr' ?  InductionHyp]; eauto.
@@ -323,9 +323,9 @@ Proof.
        eapply IHstripped. eauto.
 Qed.
 
-Lemma woutpout_preserves_mu `{gLtsOba P A} {p q m t α} :
-  p ⟿{m} q -> q ⟶{α} t 
-    -> ∃ r t', p ⟶{α} r /\ r ⟿{m} t' /\ t ⋍ t'.
+Lemma woutpout_preserves_mu `{gLtsOba P A} {p q m t 𝜆} :
+  p ⟿{m} q -> q ⟶{𝜆} t 
+    -> ∃ r t', p ⟶{𝜆} r /\ r ⟿{m} t' /\ t ⋍ t'.
 Proof.
   intros stripped Hstep. induction stripped as [ | ? ? ? ? ? nb Hstep_nb ]; eauto.
   - edestruct (eq_spec p t) as (p'' & l & equiv). exists p'; eauto.

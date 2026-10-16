@@ -66,7 +66,7 @@ Qed.
 Lemma empty_is_a_top_element
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} (X : gset P) :
+  `{AbsPT : @AbsAction P T FinA PreAct A EA αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ _ _} (X : gset P) :
   forall (PRE : Chain (copre_m)),
     elem PRE X ∅.
 Proof.
@@ -79,7 +79,7 @@ Lemma accs_parallel_sim (p q : proc) :
   (p ‖ q) ≲ ((p, q) : proc * proc).
 Proof.
 revert p q. cofix hco. intros p q. constructor.
-intros α r Hstep. inversion Hstep; subst.
+intros 𝜆 r Hstep. inversion Hstep; subst.
 - eexists (p2, q2); split.
   + eapply (ParSync (ActOut (c, v)) (ActIn (c, v))); simpl; eauto.
   + apply hco.
@@ -101,7 +101,7 @@ Lemma accs_fw_parallel_sim (p q : proc) (M : MO (ExtAct TypeOfActions)) :
   ((p ‖ q) ▷ M) ≲ (((q ▷ M), p) : (proc * MO (ExtAct TypeOfActions)) * proc).
 Proof.
 revert M p q. cofix hco. intros M p q. constructor.
-intros α r Hstep. inversion Hstep; subst.
+intros 𝜆 r Hstep. inversion Hstep; subst.
 - inversion l; subst.
   + eexists ((q2 ▷ M), p2); split.
     * eapply (ParSync (ActIn (c, v)) (ActOut (c, v))); simpl; eauto.
@@ -140,7 +140,7 @@ Lemma pr_nil_fw_similar (p : proc) (M : MO (ExtAct TypeOfActions)) :
   ((g 𝟘 ‖ p) ▷ M) ≲ (p ▷ M).
 Proof.
 revert p M. cofix hco. intros p M.
-constructor. intros α r Hstep. inversion Hstep; subst.
+constructor. intros 𝜆 r Hstep. inversion Hstep; subst.
 - inversion l; subst.
   + inversion H1.
   + inversion H4.
@@ -157,7 +157,7 @@ Lemma parallel_output_mb_similar (c : Channel) (v : Value) :
   (((c ! v • 𝟘) ‖ q) ▷ M) ≲ (q ▷ {[+ ActOut (cst c, cst v) +]} ⊎ M).
 Proof.
 cofix hco. intros q M.
-constructor. intros α r Hstep.
+constructor. intros 𝜆 r Hstep.
 inversion Hstep; subst; clear Hstep.
 - inversion l; subst.
   + inversion H1; subst.
@@ -213,7 +213,7 @@ Qed.
     induction on the target set.) *)
 Lemma coin_union_right `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ _ _ }
   {PRE : Chain copre_m}
   : forall (X Y1 Y2 : gset P), elem PRE X Y1 -> elem PRE X Y2 -> elem PRE X (Y1 ∪ Y2).
 Proof.
@@ -348,7 +348,7 @@ Qed.
 (* A singleton is below any of its weak τ-descendants. *)
 Lemma coin_wt_nil_singleton `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ _ _ }
   {PRE : Chain copre_m} (x y : P) :
   x ⟹ y -> elem PRE {[x]} {[y]}.
 Proof.
@@ -571,10 +571,10 @@ Qed.
 End Omega.
 
 (* In ACCS, recursion unfolding steps are "invertible" τ steps *)
-Lemma rec_inv (n : nat) (p : proc) : forall α p',
-  (rec n • p) ⟶{α} p' <-> (p' = pr_subst n p (rec n • p) /\ α = τ).
+Lemma rec_inv (n : nat) (p : proc) : forall 𝜆 p',
+  (rec n • p) ⟶{𝜆} p' <-> (p' = pr_subst n p (rec n • p) /\ 𝜆 = τ).
 Proof.
-intros α p'. split; intro Hs.
+intros 𝜆 p'. split; intro Hs.
 - inversion Hs; subst. eauto.
 - destruct Hs; subst. eapply lts_recursion.
 Qed.

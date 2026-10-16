@@ -48,12 +48,12 @@
     p performs [μ2] ∧ dual μ2 μ1 ∧ blocking μ1] ([Subset_Act.v]), VCCS's
     [dual := ext_act_match] and [non_blocking := all_blocking_action :=
     False] (so [blocking] is unconditionally [True],
-    [Language/gLts_Instance.v]), and VCCS's label abstraction [Φᴠᴄᴄꜱ]/[𝝳ᴠᴄᴄꜱ]
+    [Language/gLts_Instance.v]), and VCCS's label abstraction [αᴛᴠᴄᴄꜱ]/[αᴘᴠᴄᴄꜱ]
     ([Language/gLts_Instance.v] ~line 3113/3165), which together discard a
     label's *value* component entirely, keeping only channel+polarity
     ([Inputs_on c]/[Outputs_on c] in [PreAct]). Concretely this gives,
     for *any* [proc] (no [gStable]/[Static] needed): [Outputs_on c ∈
-    ⌈𝝳∘Φ⌉(coR p) <-> ∃v, p performs [ActIn (c,v)]] (dual of "[p] can input on
+    ⌈αᴘʀᴏ∘αᴛᴇꜱᴛ⌉(coR p) <-> ∃v, p performs [ActIn (c,v)]] (dual of "[p] can input on
     [c]") and symmetrically for [Inputs_on c]/output — i.e. the
     abstracted ready set of *any* process is exactly a pair of
     (channel-indexed) input/output capability predicates, with the
@@ -118,7 +118,7 @@ Qed.
 (* ** The abstracted ready set of an arbitrary process, value-erased *)
 
 Lemma coR_abs_Outputs_on_iff : forall (p : proc) c,
-  Outputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActIn (c,v)].
+  Outputs_on c ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActIn (c,v)].
 Proof.
   intros p c. unfold coR, elem_of, subset_of, map_set in *; simpl.
   split.
@@ -132,7 +132,7 @@ Proof.
 Qed.
 
 Lemma coR_abs_Inputs_on_iff : forall (p : proc) c,
-  Inputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActOut (c,v)].
+  Inputs_on c ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR p) <-> exists v, p ⟶[ActOut (c,v)].
 Proof.
   intros p c. unfold coR, elem_of, subset_of, map_set in *; simpl.
   split.
@@ -232,16 +232,16 @@ Qed.
 (* ** The [≼ₐₛ]-level ready-set inclusion, restated structurally *)
 
 Lemma coR_abs_incl_iff : forall M N,
-  (⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g M)) ⊆ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g N)))
+  (⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g M)) ⊆ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g N)))
   <-> (forall c, has_input c M -> has_input c N) /\ (forall c, has_output c M -> has_output c N).
 Proof.
   intros M N. split.
   - intro Hincl. split.
     + intros c Hin. apply has_input_iff. apply has_input_iff in Hin as (v & Hnr).
-      assert (Hmem : Outputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g M))) by (apply coR_abs_Outputs_on_iff; exists v; exact Hnr).
+      assert (Hmem : Outputs_on c ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g M))) by (apply coR_abs_Outputs_on_iff; exists v; exact Hnr).
       apply Hincl in Hmem. apply coR_abs_Outputs_on_iff in Hmem. exact Hmem.
     + intros c Hin. apply has_output_iff. apply has_output_iff in Hin as (v & Hnr).
-      assert (Hmem : Inputs_on c ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g M))) by (apply coR_abs_Inputs_on_iff; exists v; exact Hnr).
+      assert (Hmem : Inputs_on c ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g M))) by (apply coR_abs_Inputs_on_iff; exists v; exact Hnr).
       apply Hincl in Hmem. apply coR_abs_Inputs_on_iff in Hmem. exact Hmem.
   - intros (Hi & Ho) pre_mu Hmem.
     destruct pre_mu as [c|c].
@@ -325,8 +325,8 @@ Proof.
 Qed.
 
 Lemma choice_coR_abs_mono_l : forall gp gp' gq,
-  (⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g gp)) ⊆ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g gp'))) ->
-  (⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g (gp + gq))) ⊆ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g (gp' + gq)))).
+  (⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g gp)) ⊆ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g gp'))) ->
+  (⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g (gp + gq))) ⊆ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g (gp' + gq)))).
 Proof.
   intros gp gp' gq Hincl.
   apply coR_abs_incl_iff in Hincl as (Hi & Ho).

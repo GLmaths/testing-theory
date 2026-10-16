@@ -134,7 +134,7 @@ Proof.
     as (x & Hwx & Hstx & Hincl).
   assert (Hnoemit : forall a y, ~ (x ⟶[ActOut a] y)).
   { intros (d,w) y Hy.
-    assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
+    assert (Hin : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x))
       by (apply coR_abs_pair_iff; exists w, y; exact Hy).
     apply Hincl in Hin. apply coR_abs_pair_iff in Hin as (w' & r & Hr).
     assert (Hex : exists y0, ((g N) ▷ (∅ : MO (ExtAct TypeOfActions))) ⟶[ActOut (d,w')] y0)
@@ -193,7 +193,7 @@ Proof.
   - pose proof (fw_feed_inv_list k ((g M) ▷ bag l) x Hwx) as H. simpl in H. exact H.
   - split; [ exact Hstx | ].
     intros d w r Hr.
-    assert (Hin : (Inputs d) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
+    assert (Hin : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x))
       by (apply coR_abs_pair_iff; exists w, r; exact Hr).
     apply Hincl in Hin. apply coR_abs_pair_iff in Hin.
     eapply emits_gsum_chans. exact Hin.
@@ -263,7 +263,7 @@ Proof.
   - rewrite <- bag_app. exact Hwx.
   - split; [ exact Hstx | ].
     intros e w r Hr.
-    assert (Hin : (Inputs e) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
+    assert (Hin : (Inputs e) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x))
       by (apply coR_abs_pair_iff; exists w, r; exact Hr).
     apply Hincl in Hin. apply coR_abs_pair_iff in Hin.
     eapply emits_gsum_chans. exact Hin.
@@ -294,7 +294,7 @@ Proof.
     apply (comm_L (@disj_union (MO (ExtAct TypeOfActions)) _)).
   - split; [ exact Hstx | ].
     intros e w r Hr.
-    assert (Hin : (Inputs e) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR x))
+    assert (Hin : (Inputs e) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x))
       by (apply coR_abs_pair_iff; exists w, r; exact Hr).
     apply Hincl in Hin. apply coR_abs_pair_iff in Hin.
     eapply emits_gsum_chans. exact Hin.

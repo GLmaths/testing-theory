@@ -405,8 +405,8 @@ subst. exists x. reflexivity.
 - dependent destruction H. eapply IHlts with c. assumption. reflexivity.
 Qed.
 
-Lemma LTS_Respects_WD : forall p q α, Well_Defined_Input_in 0 p -> Well_Defined_Action α -> 
-        lts p α q ->  Well_Defined_Input_in 0 q.
+Lemma LTS_Respects_WD : forall p q 𝜆, Well_Defined_Input_in 0 p -> Well_Defined_Action 𝜆 -> 
+        lts p 𝜆 q ->  Well_Defined_Input_in 0 q.
 Proof.
 intros. revert H. revert H0. rename H1 into Transition. dependent induction Transition.
 * intros. dependent destruction H0. apply ForSTS. dependent destruction H. assumption.
@@ -1202,40 +1202,40 @@ Proof.
          eapply lts_set_output_spec1; eauto with ccs.
 Qed.
 
-Definition lts_set (p : proc) (α : ActIO TypeOfActions): gset proc :=
-  match α with
+Definition lts_set (p : proc) (𝜆 : ActIO TypeOfActions): gset proc :=
+  match 𝜆 with
   | τ => lts_set_tau p
   | a ? => lts_set_input p a
   | a ! => lts_set_output p a
   end.
 
-Lemma lts_set_spec0 p α q : q ∈ lts_set p α -> lts p α q.
+Lemma lts_set_spec0 p 𝜆 q : q ∈ lts_set p 𝜆 -> lts p 𝜆 q.
 Proof.
-  destruct α as [[a|a]|].
+  destruct 𝜆 as [[a|a]|].
   - now eapply lts_set_input_spec0.
   - now eapply lts_set_output_spec0.
   - now eapply lts_set_tau_spec0.
 Qed.
 
-Lemma lts_set_spec1 p α q : lts p α q -> q ∈ lts_set p α.
+Lemma lts_set_spec1 p 𝜆 q : lts p 𝜆 q -> q ∈ lts_set p 𝜆.
 Proof.
-  destruct α as [[a|a]|].
+  destruct 𝜆 as [[a|a]|].
   - now eapply lts_set_input_spec1.
   - now eapply lts_set_output_spec1.
   - now eapply lts_set_tau_spec1.
 Qed.
 
-Definition proc_stable p α := lts_set p α = ∅.
+Definition proc_stable p 𝜆 := lts_set p 𝜆 = ∅.
 
-Lemma lts_dec p α q : { lts p α q } + { ~ lts p α q }.
+Lemma lts_dec p 𝜆 q : { lts p 𝜆 q } + { ~ lts p 𝜆 q }.
 Proof.
-  destruct (decide (q ∈ lts_set p α)).
+  destruct (decide (q ∈ lts_set p 𝜆)).
   - eapply lts_set_spec0 in e. eauto.
   - right. intro l. now eapply lts_set_spec1 in l.
 Qed.
 
-Lemma proc_stable_dec p α : Decision (proc_stable p α).
-Proof. destruct (decide (lts_set p α = ∅)); [ left | right ]; eauto. Qed.
+Lemma proc_stable_dec p 𝜆 : Decision (proc_stable p 𝜆).
+Proof. destruct (decide (lts_set p 𝜆 = ∅)); [ left | right ]; eauto. Qed.
 
 Lemma gset_nempty_ex (g : gset proc) : g ≠ ∅ -> {p | p ∈ g}.
 Proof.
@@ -1268,11 +1268,11 @@ Proof.
 Defined.
 
 Local Program Definition VCCS_gLts : gLts proc VCCS_ExtAction :=
-  {| lts_step x α y  := lts x α y ;
+  {| lts_step x 𝜆 y  := lts x 𝜆 y ;
      lts_state_eqdec := proc_dec ;
-     lts_step_decidable p α q := lts_dec p α q ;
-     lts_performs p α := ¬ proc_stable p α;
-     lts_performs_decidable p α := not_dec (proc_stable_dec p α)
+     lts_step_decidable p 𝜆 q := lts_dec p 𝜆 q ;
+     lts_performs p 𝜆 := ¬ proc_stable p 𝜆;
+     lts_performs_decidable p 𝜆 := not_dec (proc_stable_dec p 𝜆)
     |}.
 Next Obligation.
   intros p [[a|a]|]; intro hs ;eapply gset_nempty_ex in hs as (r & l) ; eapply lts_set_spec0 in l; 
@@ -1345,7 +1345,7 @@ Qed.
 
 #[global] Program Instance VCCS_gLtsFiniteImage : FiniteImagegLts proc (ExtAct TypeOfActions).
 Next Obligation.
-  intros. unfold dsig. destruct α as [[a|a]|].
+  intros. unfold dsig. destruct 𝜆 as [[a|a]|].
   - eapply (in_list_finite (elements (lts_set_input p a))).
     intros q Htrans%bool_decide_unpack.
     now eapply elem_of_elements, lts_set_input_spec1.
@@ -1548,13 +1548,13 @@ Inductive FinA :=
 | Output (c : ChannelData) (v : ValueData)
 .
 
-Definition Φᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : FinA :=
+Definition αᴛᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : FinA :=
 match μ with
 | ActIn ((c , v)) => Inputs c
 | ActOut ((c , v)) => Output c v
 end.
 
-Lemma same_input_channel c v c' v' : Φᴠᴄᴄꜱ (ActIn ((c , v))) =  Φᴠᴄᴄꜱ (ActIn (c' , v')) -> c = c'.
+Lemma same_input_channel c v c' v' : αᴛᴠᴄᴄꜱ (ActIn ((c , v))) =  αᴛᴠᴄᴄꜱ (ActIn (c' , v')) -> c = c'.
 Proof.
   simpl. intros. inversion H. eauto.
 Qed.
@@ -1600,7 +1600,7 @@ Proof.
   apply encode_decide_PreAct.
 Qed.
 
-Definition 𝝳ᴠᴄᴄꜱ (pre_μ : FinA) : PreAct :=
+Definition αᴘᴠᴄᴄꜱ (pre_μ : FinA) : PreAct :=
 match pre_μ with
 | Inputs c => Inputs_on c
 | Output c v => Outputs_on c
@@ -1799,8 +1799,8 @@ Proof.
 Qed.
 
 Lemma VarC_preaction_add_rev j k pre_μ μ' : 
-      VarC_preaction_add (j + k) pre_μ = 𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (VarC_action_add (j + k) μ'))
-      -> VarC_preaction_add k pre_μ = 𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (VarC_action_add k μ')).
+      VarC_preaction_add (j + k) pre_μ = αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ (VarC_action_add (j + k) μ'))
+      -> VarC_preaction_add k pre_μ = αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ (VarC_action_add k μ')).
 Proof.
   revert k pre_μ μ'.
   induction j.
@@ -1865,13 +1865,13 @@ Proof.
     ++ eapply (simpl_blocking_Varc 1). simpl ; eauto.
 Qed.
 
-Lemma delta_phi_newVarC j μ : VarC_preaction_add j ((𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ) μ) = (𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ) (VarC_action_add j μ).
+Lemma delta_phi_newVarC j μ : VarC_preaction_add j ((αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ) μ) = (αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ) (VarC_action_add j μ).
 Proof.
   destruct μ; destruct a; destruct c; eauto ; simpl.
 Qed.
  
 Lemma delta_phi_newVarC_inversion j μ μ' :
-  VarC_preaction_add j μ' = (𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ) μ -> (exists μ'', μ = VarC_action_add j μ'' /\ μ' = (𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ) μ'').
+  VarC_preaction_add j μ' = (αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ) μ -> (exists μ'', μ = VarC_action_add j μ'' /\ μ' = (αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ) μ'').
 Proof.
   intro.
   destruct μ; destruct a; destruct c; eauto ; simpl in *.
@@ -1885,15 +1885,15 @@ Proof.
     exists (ActOut (bvar n0 , v)). split ; eauto.
 Qed.
 
-Lemma VarC_action_add_co_rev_map j k μ' p : VarC_preaction_add (j + k) μ' ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR p)
-                        -> VarC_preaction_add k μ' ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (Ѵ  j p)).
+Lemma VarC_action_add_co_rev_map j k μ' p : VarC_preaction_add (j + k) μ' ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR p)
+                        -> VarC_preaction_add k μ' ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (Ѵ  j p)).
 Proof.
   revert k μ' p.
   induction j.
   + simpl ;eauto.
   + intros; simpl in *. rewrite<- BigNew_reverse_def_one.
     eapply IHj. destruct H as (μ & duo & eq).
-    assert (exists μ'', μ = VarC_action_add (S (j + k)) μ'' /\ μ' = (𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ) μ'') as (μ'' & eq'' & eq''').
+    assert (exists μ'', μ = VarC_action_add (S (j + k)) μ'' /\ μ' = (αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ) μ'') as (μ'' & eq'' & eq''').
     { eapply delta_phi_newVarC_inversion; eauto. } subst.
     assert (S (j + k) = 1 + (j + k))%nat as eq'''' by lia.
     rewrite eq'''' in duo. eapply VarC_action_add_co_rev in duo.
@@ -1902,7 +1902,7 @@ Proof.
 Qed.
 
 Lemma specPreAct1 k : ∀ (pre_μ : PreAct) (p : proc),
-   pre_μ ∈ (λ p0 : proc, mPreCoAct_of k p0) p -> (VarC_preaction_add k pre_μ) ∈ ⌈ (𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ) ⌉ (coR p).
+   pre_μ ∈ (λ p0 : proc, mPreCoAct_of k p0) p -> (VarC_preaction_add k pre_μ) ∈ ⌈ (αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ) ⌉ (coR p).
 Proof.
   intros. simpl in *. revert k pre_μ H.
   induction p as (p & Hp) using
@@ -1986,14 +1986,14 @@ Proof.
     ** simpl in *.
        eapply gmultiset_elem_of_disj_union in H. destruct H as [mem1 | mem2].
        -- assert (VarC_preaction_add k pre_μ
-          ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g g1))).
+          ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g g1))).
           { eapply Hp. simpl. lia. simpl. eauto. }
           destruct H as (μ' & eq & mem).
           destruct eq as (μ'' & Tr & duo & b). exists μ'. split; eauto. 
           exists μ''. repeat split; eauto. eapply lts_performs_spec1 in Tr as (p'1 & Tr).
           eapply lts_performs_spec2. exists p'1. constructor. eauto.
        -- assert (VarC_preaction_add k pre_μ
-          ∈ ⌈ 𝝳ᴠᴄᴄꜱ ∘ Φᴠᴄᴄꜱ ⌉ (coR (g g2))).
+          ∈ ⌈ αᴘᴠᴄᴄꜱ ∘ αᴛᴠᴄᴄꜱ ⌉ (coR (g g2))).
           { eapply Hp. simpl. lia. simpl. eauto. }
           destruct H as (μ' & eq & mem).
           destruct eq as (μ'' & Tr & duo & b). exists μ'. split; eauto. 
@@ -2002,7 +2002,7 @@ Proof.
 Qed.
 
 #[global] Program Instance AbsVCCS :
-  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq _.
+  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction αᴛᴠᴄᴄꜱ αᴘᴠᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq _.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -2051,7 +2051,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance FinitaryAbsVCCS :
-  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction Φᴠᴄᴄꜱ 𝝳ᴠᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq _ _ _ :=
+  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction αᴛᴠᴄᴄꜱ αᴘᴠᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq _ _ _ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.
@@ -2067,7 +2067,7 @@ Next Obligation.
     eapply simplify_match_input in duo. subst.
     eapply lts_performs_spec1 in Tr as (p' & Tr).
     eapply TransitionShapeForOutput in Tr as (P1 & P2 & R & n & eq & eq' & Hyp).
-    assert (𝝳ᴠᴄᴄꜱ  (Φᴠᴄᴄꜱ  (ActIn (c , v))) ∈ PreCoAct_of (Ѵ n ((VarC_add n c ! v • P1 + P2) ‖ R))).
+    assert (αᴘᴠᴄᴄꜱ  (αᴛᴠᴄᴄꜱ  (ActIn (c , v))) ∈ PreCoAct_of (Ѵ n ((VarC_add n c ! v • P1 + P2) ‖ R))).
       { unfold PreCoAct_of. eapply gmultiset_elem_of_dom. rewrite mPreCoAct_of_res_n.
         simpl. destruct c; simpl.
         + multiset_solver.
@@ -2080,7 +2080,7 @@ Next Obligation.
       eapply simplify_match_output in duo. subst.
       eapply lts_performs_spec1 in Tr as (p' & Tr).
       eapply TransitionShapeForInput in Tr as (P1 & P2 & R & n & eq & eq' & Hyp).
-      assert (𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ (ActOut (c , v))) ∈ PreCoAct_of (Ѵ n ((gpr_input (VarC_add n c) P1 + P2) ‖ R))).
+      assert (αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ (ActOut (c , v))) ∈ PreCoAct_of (Ѵ n ((gpr_input (VarC_add n c) P1 + P2) ‖ R))).
       { unfold PreCoAct_of. eapply gmultiset_elem_of_dom. rewrite mPreCoAct_of_res_n.
         simpl. destruct c.
         + simpl. multiset_solver.
@@ -2100,19 +2100,19 @@ Context `{VP : VCCS_Parameters}.
   @gLtsEq_gLts proc _ _ VCCS_gLtsEq.
 
 Lemma vccs_dual_image_in_iff (p : proc) (a : TypeOfActions) (q : proc) :
-  (exists α' : ExtAct TypeOfActions, dual α' (ActIn a) /\ p ⟶[α'] q) <-> p ⟶[ActOut a] q.
+  (exists 𝜆' : ExtAct TypeOfActions, dual 𝜆' (ActIn a) /\ p ⟶[𝜆'] q) <-> p ⟶[ActOut a] q.
 Proof.
   split.
-  - intros (α' & duo & tr). destruct α' as [x|x]; simpl in duo; [done|].
+  - intros (𝜆' & duo & tr). destruct 𝜆' as [x|x]; simpl in duo; [done|].
     assert (x = a) as -> by exact duo. exact tr.
   - intros tr. exists (ActOut a). split; [reflexivity | exact tr].
 Qed.
 
 Lemma vccs_dual_image_out_iff (p : proc) (a : TypeOfActions) (q : proc) :
-  (exists α' : ExtAct TypeOfActions, dual α' (ActOut a) /\ p ⟶[α'] q) <-> p ⟶[ActIn a] q.
+  (exists 𝜆' : ExtAct TypeOfActions, dual 𝜆' (ActOut a) /\ p ⟶[𝜆'] q) <-> p ⟶[ActIn a] q.
 Proof.
   split.
-  - intros (α' & duo & tr). destruct α' as [x|x]; simpl in duo; [|done].
+  - intros (𝜆' & duo & tr). destruct 𝜆' as [x|x]; simpl in duo; [|done].
     assert (x = a) as -> by exact duo. exact tr.
   - intros tr. exists (ActIn a). split; [reflexivity | exact tr].
 Qed.
@@ -2125,14 +2125,14 @@ Proof.
     cofolts_next_states_decidable := _;
     cofolts_next_states_finite := _;
   |}.
-  - intros p α q. destruct α as [a|a].
+  - intros p 𝜆 q. destruct 𝜆 as [a|a].
     + destruct (decide (p ⟶[ActOut a] q)) as [Hd|Hd].
       * left. eapply vccs_dual_image_in_iff. exact Hd.
       * right. intro Hc. eapply Hd. eapply vccs_dual_image_in_iff. exact Hc.
     + destruct (decide (p ⟶[ActIn a] q)) as [Hd|Hd].
       * left. eapply vccs_dual_image_out_iff. exact Hd.
       * right. intro Hc. eapply Hd. eapply vccs_dual_image_out_iff. exact Hc.
-  - intros p α. unfold dsig. destruct α as [a|a].
+  - intros p 𝜆. unfold dsig. destruct 𝜆 as [a|a].
     + unshelve eapply (in_list_finite (elements (lts_set_output p a))).
       intros q Htrans%bool_decide_unpack.
       eapply elem_of_elements, lts_set_output_spec1, vccs_dual_image_in_iff.

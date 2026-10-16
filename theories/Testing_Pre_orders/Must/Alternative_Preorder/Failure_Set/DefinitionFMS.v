@@ -34,9 +34,9 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS DefinitionAS.
 
 Definition Failure `{
-  gLtsP : @gLts P A H, CC : Countable PreAct, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ }
+  gLtsP : @gLts P A H, CC : Countable PreAct, @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _ }
   (p : P) (s : trace A) (G : gset PreAct) :=
-  p ⇓ s -> exists p', p ⟹[s] p' /\ forall β μ, ( 𝝳 ∘ Φ ) β ∈ G -> dual μ β -> blocking β
+  p ⇓ s -> exists p', p ⟹[s] p' /\ forall β μ, ( αᴘʀᴏ ∘ αᴛᴇꜱᴛ ) β ∈ G -> dual μ β -> blocking β
   -> ¬ exists p0, p' ⟹{μ} p0.
 
 Definition fail_pre_ms_cond1 `{gLts P A, gLts Q A} 
@@ -45,16 +45,16 @@ Definition fail_pre_ms_cond1 `{gLts P A, gLts Q A}
 Notation "p ꜀ₙᵥ⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond1 p q) (at level 70).
 
 Definition fail_pre_ms_cond2 `{ CC : Countable PreAct,
-  gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ ,
-  gLtsQ : @gLts Q A H, @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ }
+  gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _ ,
+  gLtsQ : @gLts Q A H, @FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _ }
   (p : P) (q : Q) :=
   forall s G, Failure q s G -> Failure p s G.
 
 Notation "p ₂⋖ꜰᴀɪʟ q" := (fail_pre_ms_cond2 p q) (at level 70).
 
 Definition fail_pre_ms `{ CC : Countable PreAct,
-  gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ ,
-  gLtsQ : @gLts Q A H, @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _ }
+  gLtsP : @gLts P A H, @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _ ,
+  gLtsQ : @gLts Q A H, @FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _ }
   (p : P) (q : Q) :=
   p ꜀ₙᵥ⋖ꜰᴀɪʟ q /\ p ₂⋖ꜰᴀɪʟ q.
 

@@ -206,9 +206,9 @@ Proof.
   - subst. exfalso. eapply if_not_true_no_lts; eauto.
 Qed.
 
-Lemma gen_may_step_dichotomy a s α t :
-  lts (gen_may (ActIn a :: s)) α t ->
-  (α = ActExt (ActIn a) /\ t ≡ gen_may s) \/ never_outcome good_VACCS t.
+Lemma gen_may_step_dichotomy a s 𝜆 t :
+  lts (gen_may (ActIn a :: s)) 𝜆 t ->
+  (𝜆 = ActExt (ActIn a) /\ t ≡ gen_may s) \/ never_outcome good_VACCS t.
 Proof.
   unfold gen_may. destruct a as (c,v); simpl; intro hl; inversion hl; subst.
   { inversion H3; subst.

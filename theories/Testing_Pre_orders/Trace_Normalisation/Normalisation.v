@@ -210,10 +210,10 @@ End Transfer.
 Inductive trace_leq `{ExtAction A} : trace A -> trace A -> Prop :=
 | tl_refl s : trace_leq s s
 | tl_trans s t u : trace_leq s t -> trace_leq t u -> trace_leq s u
-| tl_delay s1 η α s2 :
-  non_blocking η -> trace_leq (s1 ++ η :: α :: s2) (s1 ++ α :: η :: s2)
-| tl_anticipate s1 α μ s2 :
-  exist_co_nba μ -> trace_leq (s1 ++ α :: μ :: s2) (s1 ++ μ :: α :: s2)
+| tl_delay s1 η 𝜆 s2 :
+  non_blocking η -> trace_leq (s1 ++ η :: 𝜆 :: s2) (s1 ++ 𝜆 :: η :: s2)
+| tl_anticipate s1 𝜆 μ s2 :
+  exist_co_nba μ -> trace_leq (s1 ++ 𝜆 :: μ :: s2) (s1 ++ μ :: 𝜆 :: s2)
 | tl_feedback s1 η μ s2 :
   non_blocking η -> dual μ η -> trace_leq (s1 ++ η :: μ :: s2) (s1 ++ s2).
 
@@ -268,24 +268,24 @@ Section TracePreorderSoundness.
   Proof.
     intro hle. revert p q.
     induction hle
-      as [ s | s t u h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 η μ s2 nb duo ];
+      as [ s | s t u h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 η μ s2 nb duo ];
       intros p q w.
     - exists q. split; [exact w | reflexivity].
     - destruct (IH1 p q w) as (r & w1 & heqr).
       destruct (IH2 p r w1) as (r' & w2 & heqr').
       exists r'. split; [exact w2 | etransitivity; eassumption].
     - eapply wt_split in w as (r & w1 & w2).
-      replace (η :: α :: s2) with ([η ; α] ++ s2) in w2 by reflexivity.
+      replace (η :: 𝜆 :: s2) with ([η ; 𝜆] ++ s2) in w2 by reflexivity.
       eapply wt_split in w2 as (r' & w3 & w4).
-      assert (hsw : r ⟹⋍[[α ; η]] r').
-      { eapply (push_wt_non_blocking_action (η := η) (s := [α])); assumption. }
-      replace (s1 ++ α :: η :: s2) with (s1 ++ ([α ; η] ++ s2)) by reflexivity.
+      assert (hsw : r ⟹⋍[[𝜆 ; η]] r').
+      { eapply (push_wt_non_blocking_action (η := η) (s := [𝜆])); assumption. }
+      replace (s1 ++ 𝜆 :: η :: s2) with (s1 ++ ([𝜆 ; η] ++ s2)) by reflexivity.
       eapply wt_join_eq_r; [exact w1 |]. eapply wt_join_eq_l; eassumption.
     - eapply wt_split in w as (r & w1 & w2).
-      replace (α :: μ :: s2) with ([α ; μ] ++ s2) in w2 by reflexivity.
+      replace (𝜆 :: μ :: s2) with ([𝜆 ; μ] ++ s2) in w2 by reflexivity.
       eapply wt_split in w2 as (r' & w3 & w4).
-      assert (hsw : r ⟹⋍[[μ ; α]] r') by (eapply wt_input_swap; eassumption).
-      replace (s1 ++ μ :: α :: s2) with (s1 ++ ([μ ; α] ++ s2)) by reflexivity.
+      assert (hsw : r ⟹⋍[[μ ; 𝜆]] r') by (eapply wt_input_swap; eassumption).
+      replace (s1 ++ μ :: 𝜆 :: s2) with (s1 ++ ([μ ; 𝜆] ++ s2)) by reflexivity.
       eapply wt_join_eq_r; [exact w1 |]. eapply wt_join_eq_l; eassumption.
     - eapply wt_split in w as (r & w1 & w2).
       replace (η :: μ :: s2) with ([η ; μ] ++ s2) in w2 by reflexivity.
@@ -329,7 +329,7 @@ End TracePreorderSoundness.
 Lemma cls_pre_of_trace_leq `{ExtAction A} {unique_nb : UniqueDual A} (s t : trace A) : s ⊑ₜ t -> cls_pre cls_tr s t.
 Proof.
   induction 1
-    as [ s | s t u h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 η μ s2 nb duo ].
+    as [ s | s t u h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 η μ s2 nb duo ].
   - constructor.
   - eapply cp_trans; eassumption.
   - eapply cp_delay. now eapply cls_tr_CNB.
@@ -379,7 +379,7 @@ Qed.
 Lemma trace_leq_app_l `{ExtAction A} (u : trace A) s t : s ⊑ₜ t -> u ++ s ⊑ₜ u ++ t.
 Proof.
   induction 1
-    as [ s | s t v h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 η μ s2 nb duo ].
+    as [ s | s t v h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 η μ s2 nb duo ].
   - constructor.
   - eapply tl_trans; eassumption.
   - rewrite 2 app_assoc. now eapply tl_delay.
@@ -560,7 +560,7 @@ Lemma trace_leq_length `{ExtAction A} {unique_nb : UniqueDual A} (u t : trace A)
   u ⊑ₜ t -> tmeasure cls_tr u = length u -> length t = length u.
 Proof.
   induction 1
-    as [ s | s t v h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 η μ s2 nb duo ];
+    as [ s | s t v h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 η μ s2 nb duo ];
     intro hm.
   - reflexivity.
   - assert (hlt : length t = length s) by (eapply IH1, hm).
@@ -901,8 +901,8 @@ Section TracePreorderConvergence.
   Context `{H : !ExtAction A}.
   Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
 
-  Lemma cnv_delay (p : P) (η α : A) s :
-    non_blocking η -> p ⇓ α :: η :: s -> p ⇓ η :: α :: s.
+  Lemma cnv_delay (p : P) (η 𝜆 : A) s :
+    non_blocking η -> p ⇓ 𝜆 :: η :: s -> p ⇓ η :: 𝜆 :: s.
   Proof.
     intros nb hcnv.
     assert (hterm : p ⤓) by (eapply cnv_terminate; exact hcnv).
@@ -912,21 +912,21 @@ Section TracePreorderConvergence.
     - eapply terminate_preserved_by_wt_non_blocking_action;
         [exact nb | exact hterm | exact w1].
     - intros t w2.
-      assert (w3 : p ⟹[[η ; α]] t) by (eapply wt_push_left; eassumption).
+      assert (w3 : p ⟹[[η ; 𝜆]] t) by (eapply wt_push_left; eassumption).
       eapply push_wt_non_blocking_action in w3 as (t' & w4 & heq); [| exact nb].
       eapply cnv_preserved_by_eq; [exact heq | reflexivity |].
-      eapply (cnv_wt_prefix [α ; η] s p); [exact hcnv | exact w4].
+      eapply (cnv_wt_prefix [𝜆 ; η] s p); [exact hcnv | exact w4].
   Qed.
 
-  Lemma cnv_anticipate (p : P) (μ α : A) s :
-    exist_co_nba μ -> p ⇓ μ :: α :: s -> p ⇓ α :: μ :: s.
+  Lemma cnv_anticipate (p : P) (μ 𝜆 : A) s :
+    exist_co_nba μ -> p ⇓ μ :: 𝜆 :: s -> p ⇓ 𝜆 :: μ :: s.
   Proof.
     intros (η & nb & duo) hcnv.
     assert (hterm : p ⤓) by (eapply cnv_terminate; exact hcnv).
     destruct (boomerang p η μ) as (t0 & Hb).
     destruct (Hb nb duo) as (l1 & l2).
-    assert (h0 : t0 ⇓ α :: s).
-    { eapply (cnv_preserved_by_wt_act (α :: s) p μ hcnv). eapply lts_to_wt, l1. }
+    assert (h0 : t0 ⇓ 𝜆 :: s).
+    { eapply (cnv_preserved_by_wt_act (𝜆 :: s) p μ hcnv). eapply lts_to_wt, l1. }
     eapply cnv_act; [exact hterm |].
     intros q w1.
     eapply cnv_act.
@@ -934,14 +934,14 @@ Section TracePreorderConvergence.
         as (t' & w2 & (t2 & hlt2 & heqt2)).
       assert (ht' : t' ⤓).
       { eapply (cnv_terminate t' s).
-        exact (cnv_preserved_by_wt_act s t0 α h0 t' w2). }
+        exact (cnv_preserved_by_wt_act s t0 𝜆 h0 t' w2). }
       eapply (terminate_preserved_by_eq2 heqt2).
       exact (terminate_preserved_by_lts_non_blocking_action nb hlt2 ht').
     - intros r w2.
-      destruct (wt_input_swap p r α μ (ex_intro _ η (conj nb duo))
+      destruct (wt_input_swap p r 𝜆 μ (ex_intro _ η (conj nb duo))
                   (wt_push_left w1 w2)) as (t & w' & heq').
       eapply cnv_preserved_by_eq; [exact heq' | reflexivity |].
-      eapply (cnv_wt_prefix [μ ; α] s p); [exact hcnv | exact w'].
+      eapply (cnv_wt_prefix [μ ; 𝜆] s p); [exact hcnv | exact w'].
   Qed.
 
   Lemma cnv_annhil_head (p : P) (η μ : A) s :
@@ -982,7 +982,7 @@ Section TracePreorderConvergence.
   Proof.
     intro hle. revert p.
     induction hle
-      as [ s | s t u h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 η μ s2 nb duo ];
+      as [ s | s t u h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 η μ s2 nb duo ];
       intros p hcnv.
     - exact hcnv.
     - eapply IH1, IH2, hcnv.

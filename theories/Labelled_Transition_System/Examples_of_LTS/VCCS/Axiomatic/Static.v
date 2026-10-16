@@ -137,11 +137,11 @@ Qed.
 
 (* ** [Static] rules out every source of non-termination *)
 
-Lemma Static_preserved_by_lts : forall p, Static p -> forall α q, lts p α q -> Static q.
+Lemma Static_preserved_by_lts : forall p, Static p -> forall 𝜆 q, lts p 𝜆 q -> Static q.
 Proof.
   induction p as (p & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros Hs α q Ht.
+  intros Hs 𝜆 q Ht.
   destruct p; simpl in *.
   - inversion Hs; subst.
     dependent destruction Ht.
@@ -187,11 +187,11 @@ Proof.
       * eapply (IH (g g2)); simpl; try lia; [constructor|]; eassumption.
 Qed.
 
-Lemma Static_lts_decrease : forall p, Static p -> forall α q, lts p α q -> size q < size p.
+Lemma Static_lts_decrease : forall p, Static p -> forall 𝜆 q, lts p 𝜆 q -> size q < size p.
 Proof.
   induction p as (p & IH) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
-  intros Hs α q Ht.
+  intros Hs 𝜆 q Ht.
   destruct p; simpl in *.
   - inversion Hs; subst.
     dependent destruction Ht.

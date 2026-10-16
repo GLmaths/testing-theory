@@ -65,12 +65,12 @@ Lemma stable_process_must_ta_weak {P : Type}
   gLtsEqP : @gLtsEq P Aproc Hp,
   gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T,
   SA : !SyncAction Aproc Atest,
-  AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA,
+  AbsPT : !@AbsAction P T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA,
   !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x))),
+  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
   STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
   (p : P) (X : gset PreAct) :
-  p ↛ → (∃ x, x ∈ X ∧ x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p)) → p must_pass (ta X ε).
+  p ↛ → (∃ x, x ∈ X ∧ x ∈ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p)) → p must_pass (ta X ε).
 Proof.
   intros hst (a & mem' & co_set).
   apply m_step.
@@ -81,7 +81,7 @@ Proof.
     assert (blocking η) as bη.
     { intro imp. eapply ta_does_no_non_blocking_actions in imp.
       apply imp, (@lts_performs_spec2 T). exists r; exact Tr. }
-    assert ((Φ η) ∈ ⌈ Φ ⌉ (coR p)) as mem.
+    assert ((αᴛᴇꜱᴛ η) ∈ ⌈ αᴛᴇꜱᴛ ⌉ (coR p)) as mem.
     { symmetry in eq.
       eapply (abstraction_prog_spec (AbsAction := AbsPT) p η'' η); eauto.
       - by destruct co_set as (? & ? & ? & ?).
@@ -105,18 +105,20 @@ Proof.
     + apply m_now. eapply ta_transition_to_good; eauto.
 Qed.
 
-Lemma must_ta_weak_for_empty_trace {P : Type} `{CC : Countable PreAct} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _,
-  !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
+Section Must_ta_weak.
 
-  `{!Prop_of_Inter P T A A dual}
+Context {P : Type}.
+Context `{CC : Countable PreAct}.
+Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context `{!Prop_of_Inter P T A A dual}.
 
-  (p : P) (X : gset PreAct) :
+Lemma must_ta_weak_for_empty_trace (p : P) (X : gset PreAct) :
   p ⤓ →
-  (∀ p', p ⟹ p' → p' ↛ → ∃ x, x ∈ X ∧ x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p')) →
+  (∀ p', p ⟹ p' → p' ↛ → ∃ x, x ∈ X ∧ x ∈ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p')) →
   p must_pass (ta X ε).
 Proof.
   intros ht. induction ht as [p hpt IH]. intros hX.
@@ -138,17 +140,8 @@ Proof.
     eapply hX; [constructor | exact st].
 Qed.
 
-Lemma must_ta_weak_for_all_trace_co {P : Type} `{CC : Countable PreAct} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _,
-  !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
-
-  `{!Prop_of_Inter P T A A dual}
-
-  s (p : P) (hcocnv : p ⇓ᶜᵒ s) (X : gset PreAct) :
-  (∀ p', p ⟹ᶜᵒ[s] p' → p' ↛ → ∃ x, x ∈ X ∧ x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p')) →
+Lemma must_ta_weak_for_all_trace_co s (p : P) (hcocnv : p ⇓ᶜᵒ s) (X : gset PreAct) :
+  (∀ p', p ⟹ᶜᵒ[s] p' → p' ↛ → ∃ x, x ∈ X ∧ x ∈ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p')) →
   p must_pass (ta X s).
 Proof.
   revert p hcocnv.
@@ -173,15 +166,17 @@ Proof.
       intros p'' w' st. eapply hX; [eapply cowt_push_left; eauto | exact st].
 Qed.
 
+End Must_ta_weak.
+
 Lemma not_must_ta_without_required_acc_set_weak {Q : Type} `{CC : Countable PreAct} `{
   gLtsQ : @gLts Q Aproc Hp,
   gLtsEqT : !@gLtsEq T A H, gLtsObaT : !gLtsOba T, !gLtsObaFB T A,
   SA : !SyncAction Aproc A,
-  !Testing_Predicate outcome _} {FinA : Type} {Φ : A → FinA} {𝝳 : FinA → PreAct} `{
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x))),
+  !Testing_Predicate outcome _} {FinA : Type} {αᴛᴇꜱᴛ : A → FinA} {αᴘʀᴏ : FinA → PreAct} `{
+  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
   STS : !ParSts Q T gLtsQ gLtsEqT, !ParStsSpec Q T gLtsQ gLtsEqT SA STS}
   (q q' : Q) s (X : gset PreAct) :
-  q ⟹ᶜᵒ[s] q' → q' ↛ → (∀ x, x ∈ X → x ∉ ⌈ 𝝳 ∘ Φ ⌉ (coR q')) →
+  q ⟹ᶜᵒ[s] q' → q' ↛ → (∀ x, x ∈ X → x ∉ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR q')) →
   ¬ q must_pass (ta X s).
 Proof.
   intros wt hst.
@@ -194,7 +189,7 @@ Proof.
        +++ destruct (decide (non_blocking η)) as [nb | not_nb].
            ++++ exfalso. eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); [eauto.. | by eexists].
            ++++ eapply ta_actions_are_in_its_gamma_set in l2 as mem; [| exact not_nb].
-                apply (hX _ mem), (map_gamma_of_action (𝝳 ∘ Φ)).
+                apply (hX _ mem), (map_gamma_of_action (αᴘʀᴏ ∘ αᴛᴇꜱᴛ)).
                 eapply coR_intro;
                   [eapply lts_performs_spec2; by eexists | exact hs | exact not_nb].
   - eapply (IHwt hst hX).
@@ -207,27 +202,28 @@ Proof.
       [exact hm | apply test_ungood | exact duo | exact l | exact hle'].
 Qed.
 
-Lemma completeness2_co_weak {P Q : Type} `{CC : Countable PreAct} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP,
-  @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  !coFiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _,
-  AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _,
-  !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
+Section Completeness2_co_weak.
 
-  `{!Prop_of_Inter P T A A dual}
-  `{!Prop_of_Inter Q T A A dual}
+Context {P Q : Type}.
+Context `{CC : Countable PreAct}.
+Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Context `{@gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
+Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
+Context `{!coFiniteImagegLts P A}.
+Context `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _}.
+Context `{AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _}.
+Context `{!Testing_Predicate outcome _}.
+Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context `{!Prop_of_Inter P T A A dual}.
+Context `{!Prop_of_Inter Q T A A dual}.
+Context `{!coFiniteImagegLts Q A}.
+Context `{!test_convergence_spec tconv}.
 
-  (dich : ∀ (p' : P) (q' : Q), p' ↛ → q' ↛ →
-     (⌈ 𝝳 ∘ Φ ⌉ (coR p') ⊆ ⌈ 𝝳 ∘ Φ ⌉ (coR q'))
-     + { x | x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p') ∧ x ∉ ⌈ 𝝳 ∘ Φ ⌉ (coR q') })
-
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q → p ₐ꜀꜀≼꜀ₒ₋ₐₛ q.
+Lemma completeness2_co_weak (dich : ∀ (p' : P) (q' : Q), p' ↛ → q' ↛ → (⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p') ⊆ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR q')) + { x | x ∈ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p') ∧ x ∉ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR q') }) (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q → p ₐ꜀꜀≼꜀ₒ₋ₐₛ q.
 Proof.
   intros hpre s q' hacnv w st.
   destruct (exists_included_or_witnesses (elements (cowaiting_states p s hacnv))
-              (λ p', ⌈ 𝝳 ∘ Φ ⌉ (coR p')) (⌈ 𝝳 ∘ Φ ⌉ (coR q')))
+              (λ p', ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p')) (⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR q')))
     as [(p' & mem & sub) | (X & hXC & hXS)].
   - intros p' (_ & st')%elem_of_elements%cowaiting_states_spec1. exact (dich p' q' st' st).
   - apply elem_of_elements, cowaiting_states_spec1 in mem as (w' & st').
@@ -237,26 +233,13 @@ Proof.
     intros p' w' st'. eapply hXS, elem_of_elements, cowaiting_states_spec2. split; [exact w' | exact st'].
 Qed.
 
-Lemma completeness_fw_co_weak {P Q : Type} `{CC : Countable PreAct} `{
-  @gLtsObaFW P A H gLtsEqP gLtsObaP, !coFiniteImagegLts P A,
-  @gLtsObaFW Q A H gLtsEqQ gLtsObaQ, !coFiniteImagegLts Q A,
-  @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _,
-  AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _,
-  !Testing_Predicate outcome _, !test_convergence_spec tconv,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (𝝳 (Φ x)))}
-
-  `{!Prop_of_Inter P T A A dual}
-  `{!Prop_of_Inter Q T A A dual}
-
-  (dich : ∀ (p' : P) (q' : Q), p' ↛ → q' ↛ →
-     (⌈ 𝝳 ∘ Φ ⌉ (coR p') ⊆ ⌈ 𝝳 ∘ Φ ⌉ (coR q'))
-     + { x | x ∈ ⌈ 𝝳 ∘ Φ ⌉ (coR p') ∧ x ∉ ⌈ 𝝳 ∘ Φ ⌉ (coR q') })
-
-  (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q → p ≼꜀ₒ₋ₐₛ q.
+Lemma completeness_fw_co_weak (dich : ∀ (p' : P) (q' : Q), p' ↛ → q' ↛ → (⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p') ⊆ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR q')) + { x | x ∈ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p') ∧ x ∉ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR q') }) (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q → p ≼꜀ₒ₋ₐₛ q.
 Proof.
   intros. split.
   - now apply completeness1_co.
   - now apply completeness2_co_weak.
 Qed.
+
+End Completeness2_co_weak.
+
 (* end hide *)

@@ -59,17 +59,17 @@ Qed.
 
 (** **** A forwarder can anticipate an input *)
 
-Lemma fw_anticipate_input (q q' : Q) (α β η : A) (u : trace A) :
+Lemma fw_anticipate_input (q q' : Q) (𝜆 β η : A) (u : trace A) :
   non_blocking η -> dual β η ->
-  q ⟹[α :: β :: u] q' -> ∃ q'', q ⟹[β :: α :: u] q''.
+  q ⟹[𝜆 :: β :: u] q' -> ∃ q'', q ⟹[β :: 𝜆 :: u] q''.
 Proof.
   intros nb duo w.
   destruct (boomerang q η β) as (q1 & Hb).
   destruct (Hb nb duo) as (lβ & lη).
-  eapply wt_pop in w as (qa & wα & w).
+  eapply wt_pop in w as (qa & w𝜆 & w).
   eapply wt_pop in w as (qb & wβ & wu).
   assert (lsc : q1 ⟶⋍[η] q) by (exists q; split; [exact lη | reflexivity]).
-  destruct (delay_wt_non_blocking_action nb lsc wα)
+  destruct (delay_wt_non_blocking_action nb lsc w𝜆)
     as (t & wt1 & (ta & lta & heqta)).
   edestruct (eq_spec_wt qa ta) as (z & wz & heqz).
   { now symmetry. }
@@ -95,25 +95,25 @@ Proof.
   edestruct (eq_spec_wt y' y'') as (r3 & wr3 & heqr3).
   { now symmetry. }
   { exact wr2. }
-  assert (wA : q1 ⟹[[α]] y'').
+  assert (wA : q1 ⟹[[𝜆]] y'').
   { eapply wt_push_nil_right; [| exact wy''].
     eapply wt_push_nil_right; [exact wt1 | exact wt2]. }
   exists r3.
   eapply wt_act; [exact lβ |].
-  eapply (wt_concat q1 y'' r3 [α] u); [exact wA | exact wr3].
+  eapply (wt_concat q1 y'' r3 [𝜆] u); [exact wA | exact wr3].
 Qed.
 
-Lemma fw_anticipate_inputs (q q' : Q) (α : A) (I v : trace A) :
+Lemma fw_anticipate_inputs (q q' : Q) (𝜆 : A) (I v : trace A) :
   Forall exist_co_nba I ->
-  q ⟹[α :: I ++ v] q' -> ∃ q'', q ⟹[I ++ α :: v] q''.
+  q ⟹[𝜆 :: I ++ v] q' -> ∃ q'', q ⟹[I ++ 𝜆 :: v] q''.
 Proof.
-  revert q q' α v.
-  induction I as [| β I' IH]; intros q q' α v hI w; simpl in *.
+  revert q q' 𝜆 v.
+  induction I as [| β I' IH]; intros q q' 𝜆 v hI w; simpl in *.
   - exists q'. exact w.
   - inversion hI as [| ? ? (η & nb & duo) hI']; subst.
-    destruct (fw_anticipate_input q q' α β η (I' ++ v) nb duo w) as (q0 & w0).
+    destruct (fw_anticipate_input q q' 𝜆 β η (I' ++ v) nb duo w) as (q0 & w0).
     eapply wt_pop in w0 as (q1 & w1 & w2).
-    destruct (IH q1 q0 α v hI' w2) as (q2 & w3).
+    destruct (IH q1 q0 𝜆 v hI' w2) as (q2 & w3).
     exists q2. eapply wt_push_left; [exact w1 | exact w3].
 Qed.
 

@@ -83,7 +83,7 @@ Lemma fw_tau_inv (p : P) (m : MO (MemAct Atest)) y :
   ∨ (∃ p' μ η m', y = (p', m') ∧ p ⟶[μ] p' ∧ sync μ η ∧ non_blocking η ∧ m = {[+ msg η +]} ⊎ m').
 Proof.
   intros l.
-  inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
+  inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
   - left. by exists s'1.
   - inversion l2.
   - right. destruct a1 as [μ | ], a2 as [ | [η | η]]; simpl in hs; try done.
@@ -94,21 +94,21 @@ Qed.
 Lemma fw_inl_inv (p : P) (m : MO (MemAct Atest)) (μ : Aproc) y :
   (p, m) ⟶[inl μ] y → ∃ p', y = (p', m) ∧ p ⟶[μ] p'.
 Proof.
-  intros l. inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 |]; subst; [| done].
+  intros l. inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 |]; subst; [| done].
   by exists s'1.
 Qed.
 
 Lemma fw_msg_inv (p : P) (m : MO (MemAct Atest)) (η : Atest) y :
   (p, m) ⟶[inr (msg η)] y → ∃ m', y = (p, m') ∧ m = {[+ msg η +]} ⊎ m' ∧ non_blocking η.
 Proof.
-  intros l. inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 |]; subst; [done |].
+  intros l. inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 |]; subst; [done |].
   apply mem_msg_inv in l2 as [-> nb]. by exists s'2.
 Qed.
 
 Lemma fw_cobar_inv (p : P) (m : MO (MemAct Atest)) (η : Atest) y :
   (p, m) ⟶[inr (cobar η)] y → y = (p, {[+ msg η +]} ⊎ m) ∧ non_blocking η.
 Proof.
-  intros l. inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 |]; subst; [done |].
+  intros l. inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 |]; subst; [done |].
   apply mem_cobar_inv in l2 as [-> nb]. by split.
 Qed.
 

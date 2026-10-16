@@ -526,24 +526,24 @@ Proof.
   apply res_coR_iff. apply Hsub. apply res_coR_iff. exact Hy.
 Qed.
 
-(* ** Lifting [res_coR_iff] through VACCS's label abstraction [𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ]
+(* ** Lifting [res_coR_iff] through VACCS's label abstraction [αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ]
 
     [≼ₐₛ]'s [bhv_pre_cond2] (DefinitionAS.v) is stated over the *image*
-    [⌈𝝳∘Φ⌉(coR p')], not raw [coR p'] — abstracted-set inclusion does not
+    [⌈αᴘʀᴏ∘αᴛᴇꜱᴛ⌉(coR p')], not raw [coR p'] — abstracted-set inclusion does not
     in general imply raw-set inclusion, so [res_coR_mono] alone isn't
-    enough. The fix: [𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ] commutes with the channel shift
+    enough. The fix: [αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ] commutes with the channel shift
     ([VarC_action_add]/[VarC_preaction_add]) by direct computation — both
     sides just extract-and-rewrap the channel component — so
     [res_coR_iff] lifts through the abstraction essentially for free. *)
 
 Lemma Phi_delta_shift_commute : forall μ,
-  𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ (VarC_action_add 1 μ)) = VarC_preaction_add 1 (𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ μ)).
+  αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ (VarC_action_add 1 μ)) = VarC_preaction_add 1 (αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ μ)).
 Proof.
   intros [[c v]|[c v]]; reflexivity.
 Qed.
 
 Lemma res_coR_abs_iff : forall p x,
-  x ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (ν p)) <-> (VarC_preaction_add 1 x) ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR p).
+  x ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR (ν p)) <-> (VarC_preaction_add 1 x) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR p).
 Proof.
   intros p x. unfold elem_of, subset_of, map_set in *. simpl.
   split.
@@ -566,8 +566,8 @@ Proof.
 Qed.
 
 Lemma res_coR_abs_mono : forall p q,
-  (forall x, x ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR p) -> x ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR q)) ->
-  forall y, y ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (ν p)) -> y ∈ ⌈ 𝝳ᴠᴀᴄᴄꜱ ∘ Φᴠᴀᴄᴄꜱ ⌉ (coR (ν q)).
+  (forall x, x ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR p) -> x ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR q)) ->
+  forall y, y ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR (ν p)) -> y ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR (ν q)).
 Proof.
   intros p q Hsub y Hy.
   apply res_coR_abs_iff. apply Hsub. apply res_coR_abs_iff. exact Hy.
@@ -1279,7 +1279,7 @@ Qed.
 (* ** Bridging the acceptance-set abstraction through [‖]
 
     [cond2] only ever gives coR inclusion at the *abstracted* level
-    (dropping values, keeping channel+polarity — [Φᴠᴀᴄᴄꜱ]/[𝝳ᴠᴀᴄᴄꜱ], same
+    (dropping values, keeping channel+polarity — [αᴛᴠᴀᴄᴄꜱ]/[αᴘᴠᴀᴄᴄꜱ], same
     maps as for [ν]). To show a reconstructed pair is itself stable, a
     raw "no synchronisation possible" fact has to be derived from that
     abstracted bound. This is sound for the same reason the output-merge

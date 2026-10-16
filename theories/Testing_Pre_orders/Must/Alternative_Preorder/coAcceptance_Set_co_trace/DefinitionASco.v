@@ -41,19 +41,19 @@ Notation "p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond1 p q) (at level 7
 
 (* ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_co_cond2 `{
-  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
-  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
+  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP Aproc Hp gLtsP gLtsT SA,
+  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ Aproc Hp gLtsQ gLtsT SA}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
     p ⇓ᶜᵒ s -> q ⟹ᶜᵒ[s] q' -> q' ↛ ->
-    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
 
 Notation "p ₐ꜀꜀≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond2 p q) (at level 70).
 
 (* ** Definition of the alternative preorder *)
 Definition bhv_pre_co `{
-  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
-  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
+  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP Aproc Hp gLtsP gLtsT SA,
+  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ Aproc Hp gLtsQ gLtsT SA}
     (p : P) (q : Q) :=
       p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q /\ p ₐ꜀꜀≼꜀ₒ₋ₐₛ q.
 

@@ -100,30 +100,30 @@ Section Must_transfer.
 End Must_transfer.
 Section Abs_bridges.
   Context {P T FinA PreAct A : Type} {H : ExtAction A} {gLtsP : gLts P H} {gLtsT : gLtsEq T H}
-    {Φ : A → FinA} {𝝳 : FinA → PreAct} `{Countable PreAct}.
+    {αᴛᴇꜱᴛ : A → FinA} {αᴘʀᴏ : FinA → PreAct} `{Countable PreAct}.
 
   Lemma LA_admissible_of_AbsAction
-    `{AbsPT : !@AbsAction P T FinA PreAct A H Φ 𝝳 A H gLtsP gLtsT SyncAction_of_dual} :
-    @LA_admissible P T A H gLtsP A H (@gLtsEq_gLts T A H gLtsT) SyncAction_of_dual (ker_rel (λ x, 𝝳 (Φ x))).
+    `{AbsPT : !@AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ A H gLtsP gLtsT SyncAction_of_dual} :
+    @LA_admissible P T A H gLtsP A H (@gLtsEq_gLts T A H gLtsT) SyncAction_of_dual (ker_rel (λ x, αᴘʀᴏ (αᴛᴇꜱᴛ x))).
   Proof.
     intros p β β'' b h mem.
     pose proof mem as (μ2 & _ & _ & b'').
-    destruct (abstraction_prog_spec p β'' β b'' b (eq_sym h) (map_gamma_of_action Φ _ β'' mem))
+    destruct (abstraction_prog_spec p β'' β b'' b (eq_sym h) (map_gamma_of_action αᴛᴇꜱᴛ _ β'' mem))
       as (u & hu & e).
     exists u. split; [exact hu |]. intros t acc.
     pose proof hu as (? & ? & ? & bu).
     exact (abstraction_test_spec t β u b bu e acc).
   Qed.
 
-  Definition FinitaryLA_of_Finitary (r : PreAct → A) (hr : ∀ x, 𝝳 (Φ (r x)) = x)
-    `{FA : !@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 A H gLtsP gLtsT SyncAction_of_dual _ _} :
-    FinitaryLA P (ker_rel (λ x, 𝝳 (Φ x))).
+  Definition FinitaryLA_of_Finitary (r : PreAct → A) (hr : ∀ x, αᴘʀᴏ (αᴛᴇꜱᴛ (r x)) = x)
+    `{FA : !@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ A H gLtsP gLtsT SyncAction_of_dual _ _} :
+    FinitaryLA P (ker_rel (λ x, αᴘʀᴏ (αᴛᴇꜱᴛ x))).
   Proof.
-    refine {| coR_absR p := set_map (λ x, LA_class (ker_rel (λ x, 𝝳 (Φ x))) (r x)) (coR_abs p) |}.
+    refine {| coR_absR p := set_map (λ x, LA_class (ker_rel (λ x, αᴘʀᴏ (αᴛᴇꜱᴛ x))) (r x)) (coR_abs p) |}.
     intros p x. rewrite elem_of_map. split.
     - intros (pre & -> & hpre). apply coR_abs_spec1 in hpre as (β & hβ & ->).
       exists β. split; [exact hβ |]. apply (LA_class_proj (ker_rel _)). unfold ker_rel. cbn. by rewrite hr.
-    - intros (β & hβ & <-). exists (𝝳 (Φ β)). split.
+    - intros (β & hβ & <-). exists (αᴘʀᴏ (αᴛᴇꜱᴛ β)). split.
       + apply (LA_class_proj (ker_rel _)). unfold ker_rel. cbn. by rewrite hr.
       + apply coR_abs_spec2. by exists β.
   Defined.

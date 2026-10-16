@@ -103,8 +103,8 @@ Fixpoint exp_qubits (e : exp) : list qubit :=
   | EOr e1 e2 | ELe e1 e2 | EEq e1 e2 => exp_qubits e1 ++ exp_qubits e2
   end.
 
-Definition prefix_qubits (α : prefix) : list qubit :=
-  match α with
+Definition prefix_qubits (𝜆 : prefix) : list qubit :=
+  match 𝜆 with
   | PTau _ | PTauPair _ _ | PRecv _ _ _ => []
   | POp _ _ es | PMeas _ _ es _ => concat (map exp_qubits es)
   end.
@@ -122,7 +122,7 @@ with gqnames (g : guard) : list qubit :=
   match g with
   | GNil es => concat (map exp_qubits es)
   | GSucc => []
-  | GPre α P => prefix_qubits α ++ qnames P
+  | GPre 𝜆 P => prefix_qubits 𝜆 ++ qnames P
   | GSum g1 g2 => gqnames g1 ++ gqnames g2
   end.
 
@@ -219,8 +219,8 @@ Fixpoint exp_fv (e : exp) : list var :=
   | EOr e1 e2 | ELe e1 e2 | EEq e1 e2 => exp_fv e1 ++ exp_fv e2
   end.
 
-Definition prefix_fv (α : prefix) : list var :=
-  match α with
+Definition prefix_fv (𝜆 : prefix) : list var :=
+  match 𝜆 with
   | PTau _ | PTauPair _ _ | PRecv _ _ _ => []
   | POp _ _ es | PMeas _ _ es _ => concat (map exp_fv es)
   end.
@@ -237,9 +237,9 @@ with gfv (g : guard) : list var :=
   match g with
   | GNil es => concat (map exp_fv es)
   | GSucc => []
-  | GPre α P =>
-      prefix_fv α ++
-        (match prefix_binder α with
+  | GPre 𝜆 P =>
+      prefix_fv 𝜆 ++
+        (match prefix_binder 𝜆 with
          | Some x => filter (λ y, y ≠ x) (fv P)
          | None => fv P
          end)
@@ -260,8 +260,8 @@ Proof.
   intros Hx. unfold exps_subst in *. simpl. f_equal; [apply exp_subst_fresh|apply IH]; tauto.
 Qed.
 
-Lemma prefix_subst_fresh α x v : x ∉ prefix_fv α → prefix_subst α x v = α.
-Proof. destruct α; simpl; intros Hx; try done; by rewrite exps_subst_fresh. Qed.
+Lemma prefix_subst_fresh 𝜆 x v : x ∉ prefix_fv 𝜆 → prefix_subst 𝜆 x v = 𝜆.
+Proof. destruct 𝜆; simpl; intros Hx; try done; by rewrite exps_subst_fresh. Qed.
 
 Lemma subst_gsubst_fresh x v :
   (∀ P, x ∉ fv P → subst P x v = P) ∧ (∀ g, x ∉ gfv g → gsubst g x v = g).
@@ -275,7 +275,7 @@ Proof.
   - by rewrite exps_subst_fresh.
   - done.
   - rewrite prefix_subst_fresh by tauto. f_equal. case_decide; [done|].
-    apply H. destruct (prefix_binder α) eqn:Hb.
+    apply H. destruct (prefix_binder 𝜆) eqn:Hb.
     + intros Hin. apply H0. right. apply list_elem_of_filter. split; [|done].
       intros ->. done.
     + tauto.

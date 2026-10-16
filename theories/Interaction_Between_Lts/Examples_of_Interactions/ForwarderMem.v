@@ -65,35 +65,35 @@ Lemma toFw_feedback (p1 p2 p3 : P * MO (MemAct Atest)) (η : Atest) μ :
   p1 ⟶[inr (msg η)] p2 → p2 ⟶[μ] p3 → p1 ⟶⋍ p3 ∨ p1 ⋍ p3.
 Proof.
   intros nb hs l1 l2.
-  inversion l1 as [α s1 s'1 s2 l | α s1 s2 s'2 lm |]; subst; [done |].
+  inversion l1 as [𝜆 s1 s'1 s2 l | 𝜆 s1 s2 s'2 lm |]; subst; [done |].
   assert (heq : {[+ msg η +]} ⊎ s'2 = s2)
     by exact (non_blocking_action_in_ms (A := MemAct Atest) s2 (msg η) s'2 nb lm).
   subst.
   destruct μ as [μ | [η' | η']]; simpl in hs.
-  - inversion l2 as [α s1' s'1 s2' l | α s1' s2' s''2 l |]; subst; [| done].
+  - inversion l2 as [𝜆 s1' s'1 s2' l | 𝜆 s1' s2' s''2 l |]; subst; [| done].
     left. exists (s'1, s'2). split; [| reflexivity].
     by apply (ParSync (inl μ) (inr (msg η))).
-  - exfalso. inversion l2 as [α s1' s'1 s2' l | α s1' s2' s''2 lm2 |]; subst; [done |].
+  - exfalso. inversion l2 as [𝜆 s1' s'1 s2' l | 𝜆 s1' s2' s''2 lm2 |]; subst; [done |].
     inversion lm2 as [m x μ' duo nbx | m x nbx]; subst.
     + destruct x; simpl in *; done.
     + by apply (dual_blocks η' η nb hs).
-  - subst. inversion l2 as [α s1' s'1 s2' l | α s1' s2' s''2 lm2 |]; subst; [done |].
+  - subst. inversion l2 as [𝜆 s1' s'1 s2' l | 𝜆 s1' s2' s''2 lm2 |]; subst; [done |].
     inversion lm2 as [m x μ' duo nbx | m x nbx]; subst.
     + destruct x as [η'' | η'']; simpl in duo, nbx; [| done]. subst.
       right. reflexivity.
     + done.
 Qed.
 
-Lemma toFw_delay (p q r : P * MO (MemAct Atest)) (η : Atest) α :
-  non_blocking η → p ⟶[inr (msg η)] q → q ⟶{α} r →
-  ∃ t, p ⟶{α} t ∧ t ⟶⋍[inr (msg η)] r.
+Lemma toFw_delay (p q r : P * MO (MemAct Atest)) (η : Atest) 𝜆 :
+  non_blocking η → p ⟶[inr (msg η)] q → q ⟶{𝜆} r →
+  ∃ t, p ⟶{𝜆} t ∧ t ⟶⋍[inr (msg η)] r.
 Proof.
   intros nb l1 l2.
-  inversion l1 as [α1 s1 s'1 s2 l | α1 s1 s2 s'2 lm |]; subst; [done |].
-  inversion l2 as [α' s1' s'1 s2' l | α' s1' s2' s''2 l' | a1 a2 s1' s'1 s2' s''2 hs l l']; subst.
+  inversion l1 as [𝜆1 s1 s'1 s2 l | 𝜆1 s1 s2 s'2 lm |]; subst; [done |].
+  inversion l2 as [𝜆' s1' s'1 s2' l | 𝜆' s1' s2' s''2 l' | a1 a2 s1' s'1 s2' s''2 hs l l']; subst.
   - exists (s'1, s2). split; [by apply ParLeft |].
     exists (s'1, s'2). split; [by apply (ParRight (ActExt (inr (msg η)))) | reflexivity].
-  - destruct α as [[μ1 | μ2] |]; simpl in l'; [done | | inversion l'].
+  - destruct 𝜆 as [[μ1 | μ2] |]; simpl in l'; [done | | inversion l'].
     destruct (delay_in_ms (msg η) (ActExt μ2) s2 s'2 s''2 nb lm l') as (m & lm1 & (m' & lm2 & heq)).
     exists (s1, m). split; [by apply (ParRight (ActExt (inr μ2))) |].
     exists (s1, m'). split; [by apply (ParRight (ActExt (inr (msg η)))) | split; [reflexivity | exact heq]].

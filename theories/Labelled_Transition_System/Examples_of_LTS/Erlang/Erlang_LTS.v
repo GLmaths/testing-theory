@@ -323,7 +323,7 @@ Inductive erl_lts : sys → Labels erl_act → sys → Prop :=
 
 (* Never use [econstructor] or [eauto] on a goal whose indices are multiset
     expressions: the unifier unfolds [⊎] and diverges.  Always name the rule. *)
-Lemma erl_lts_par_l S1 α S2 T : erl_lts S1 α S2 → erl_lts (T ⊎ S1) α (T ⊎ S2).
+Lemma erl_lts_par_l S1 𝜆 S2 T : erl_lts S1 𝜆 S2 → erl_lts (T ⊎ S1) 𝜆 (T ⊎ S2).
 Proof.
   intros hl. inversion hl; subst.
   - rewrite (sys_swap _ T _), (sys_swap _ T _). by apply ErlTau.
@@ -336,7 +336,7 @@ Proof.
   - rewrite (sys_swap _ T _). apply ErlOut.
 Qed.
 
-Lemma erl_lts_par_r S1 α S2 T : erl_lts S1 α S2 → erl_lts (S1 ⊎ T) α (S2 ⊎ T).
+Lemma erl_lts_par_r S1 𝜆 S2 T : erl_lts S1 𝜆 S2 → erl_lts (S1 ⊎ T) 𝜆 (S2 ⊎ T).
 Proof.
   intros hl.
   rewrite (sys_comm S1 T), (sys_comm S2 T).
@@ -348,7 +348,7 @@ End Erlang_LTS.
 Global Hint Constructors erl_lts : erl.
 
 Notation "S ⟶ₑ T" := (erl_lts S τ T) (at level 30).
-Notation "S ⟶ₑ{ α } T" := (erl_lts S α T) (at level 30).
+Notation "S ⟶ₑ{ 𝜆 } T" := (erl_lts S 𝜆 T) (at level 30).
 Notation "S ⟶ₑ[ μ ] T" := (erl_lts S (ActExt μ) T) (at level 30).
 
 (* end hide *)

@@ -202,7 +202,7 @@ Proof.
   - intros p t t' l. by apply (ParRight τ).
   - intros p p' t t' μ1 μ2 hs l1 l2. by apply (ParSync (inl μ1) (inr μ2)).
   - intros p t y l.
-    inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
+    inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
     + left. by eexists.
     + right; left. by eexists.
     + destruct a1 as [μ1 | ], a2 as [ | μ2]; simpl in hs; try done.

@@ -42,7 +42,7 @@ Section Lift_eq.
     {| gLtsEq_gLts := lift_left_lts;
        eq_rel := eq_rel;
        eq_rel_eq := eq_rel_eq;
-       eq_spec p q α h := let '(ex_intro _ r (conj e l)) := h in lift_left_eq_spec p r q α e l |}.
+       eq_spec p q 𝜆 h := let '(ex_intro _ r (conj e l)) := h in lift_left_eq_spec p r q 𝜆 e l |}.
 End Lift_eq.
 
 Section Blocking_lift.
@@ -56,7 +56,7 @@ Section Blocking_lift.
 
   Definition gLtsFWMem_lift : @gLtsFWMem P Aproc Atest Hp Ht SA liftEq.
   Proof.
-    split; [intros p η nb | intros p1 p2 p3 η μ nb | intros p q r η α nb];
+    split; [intros p η nb | intros p1 p2 p3 η μ nb | intros p q r η 𝜆 nb];
       exfalso; exact (allblk η nb).
   Qed.
 
@@ -232,9 +232,9 @@ Section CoFinite_lift.
 
   Context `{CFI : !@coFiniteImagegLts P Atest Aproc Hp gP Ht SA}.
 
-  Lemma lift_sync_step_iff (p q : P) (α : Atest) :
-    (∃ α', @sync _ _ _ _ SyncAction_mem α' α ∧ lts_step (gLts := gL) p (ActExt α') q) ↔
-    (∃ μ, sync μ α ∧ p ⟶[μ] q).
+  Lemma lift_sync_step_iff (p q : P) (𝜆 : Atest) :
+    (∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q) ↔
+    (∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q).
   Proof.
     split.
     - intros ([μ | ζ] & hs & l); [by exists μ | by destruct l].
@@ -249,22 +249,22 @@ Section CoFinite_lift.
     exists (dexist q h). split; [done | apply elem_of_enum].
   Defined.
 
-  Definition lift_ext_dec (p : P) (α : Atest) q :
-    Decision (∃ α', @sync _ _ _ _ SyncAction_mem α' α ∧ lts_step (gLts := gL) p (ActExt α') q).
+  Definition lift_ext_dec (p : P) (𝜆 : Atest) q :
+    Decision (∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q).
   Proof.
-    destruct (decide (∃ μ, sync μ α ∧ p ⟶[μ] q)) as [h | h]; [left | right];
+    destruct (decide (∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q)) as [h | h]; [left | right];
       by rewrite lift_sync_step_iff.
   Defined.
 
   #[local] Existing Instance lift_ext_dec.
 
-  Definition lift_ext_finite (p : P) (α : Atest) :
-    Finite (dsig (λ q, ∃ α', @sync _ _ _ _ SyncAction_mem α' α ∧ lts_step (gLts := gL) p (ActExt α') q)).
+  Definition lift_ext_finite (p : P) (𝜆 : Atest) :
+    Finite (dsig (λ q, ∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q)).
   Proof.
     unfold dsig.
-    eapply (in_list_finite (map proj1_sig (enum (dsig (λ q, ∃ μ, sync μ α ∧ p ⟶[μ] q))))).
+    eapply (in_list_finite (map proj1_sig (enum (dsig (λ q, ∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q))))).
     intros q h%bool_decide_unpack. apply list_elem_of_fmap.
-    exists (dexist q (proj1 (lift_sync_step_iff p q α) h)). split; [done | apply elem_of_enum].
+    exists (dexist q (proj1 (lift_sync_step_iff p q 𝜆) h)). split; [done | apply elem_of_enum].
   Defined.
 
   Definition coFiniteImage_lift :

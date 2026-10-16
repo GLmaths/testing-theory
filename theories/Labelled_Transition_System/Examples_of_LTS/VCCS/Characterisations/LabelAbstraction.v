@@ -54,14 +54,14 @@ Inductive ProgA :=
 | ProgIn (c : ChannelData) (v : ValueData)
 | ProgOut (c : ChannelData).
 
-Definition δᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : ProgA :=
+Definition αᴘᴠᴄᴄꜱ_can (μ : ExtAct TypeOfActions) : ProgA :=
   match μ with
   | ActIn (c , v) => ProgIn c v
   | ActOut (c , _) => ProgOut c
   end.
 
 (* The joined projection. *)
-Definition ρᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : PreAct := 𝝳ᴠᴄᴄꜱ (Φᴠᴄᴄꜱ μ).
+Definition ρᴠᴄᴄꜱ (μ : ExtAct TypeOfActions) : PreAct := αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ μ).
 
 Definition repr_vccs (x : FinA) : ExtAct TypeOfActions :=
   match x with
@@ -78,10 +78,10 @@ Proof.
            (ActIn (c , v)) (ActIn (c , w)) (λ h, h) (λ h, h) eq_refl acc).
 Qed.
 
-Lemma R_test_vccs_proj μ μ' : Φᴠᴄᴄꜱ μ = Φᴠᴄᴄꜱ μ' ↔ R_test_vccs μ μ'.
+Lemma R_test_vccs_proj μ μ' : αᴛᴠᴄᴄꜱ μ = αᴛᴠᴄᴄꜱ μ' ↔ R_test_vccs μ μ'.
 Proof. revert μ μ'. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; split; try done; try congruence. Qed.
 
-Lemma R_prog_vccs_proj μ μ' : δᴠᴄᴄꜱ μ = δᴠᴄᴄꜱ μ' ↔ R_prog_vccs μ μ'.
+Lemma R_prog_vccs_proj μ μ' : αᴘᴠᴄᴄꜱ_can μ = αᴘᴠᴄᴄꜱ_can μ' ↔ R_prog_vccs μ μ'.
 Proof. revert μ μ'. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; split; try done; try congruence. Qed.
 
 #[global] Program Instance gLtsLAtest_VCCS :
@@ -111,10 +111,10 @@ Next Obligation.
     by eapply accepts_input_any_value.
 Qed.
 
-#[global] Instance LA_proj_test_VCCS : LA_proj R_test_vccs Φᴠᴄᴄꜱ := R_test_vccs_proj.
-#[global] Instance LA_proj_prog_VCCS : LA_proj R_prog_vccs δᴠᴄᴄꜱ := R_prog_vccs_proj.
+#[global] Instance LA_proj_test_VCCS : LA_proj R_test_vccs αᴛᴠᴄᴄꜱ := R_test_vccs_proj.
+#[global] Instance LA_proj_prog_VCCS : LA_proj R_prog_vccs αᴘᴠᴄᴄꜱ_can := R_prog_vccs_proj.
 
-#[global] Program Instance LA_surj_VCCS : LA_surj Φᴠᴄᴄꜱ := {| LA_repr := repr_vccs |}.
+#[global] Program Instance LA_surj_VCCS : LA_surj αᴛᴠᴄᴄꜱ := {| LA_repr := repr_vccs |}.
 Next Obligation. by intros [c|c v]. Qed.
 
 #[local] Instance R_test_vccs_equivalence : Equivalence R_test_vccs :=
@@ -138,17 +138,17 @@ Proof.
       * by apply (R_test_LA_equiv R_prog_vccs R_test_vccs).
 Qed.
 
-(* The [𝝳ᴠᴄᴄꜱ] of [gLts_Instance] is the completion of the joined projection. *)
+(* The [αᴘᴠᴄᴄꜱ] of [gLts_Instance] is the completion of the joined projection. *)
 Lemma delta_vccs_is_completion x :
-  𝝳ᴠᴄᴄꜱ x = LA_complete Φᴠᴄᴄꜱ ρᴠᴄᴄꜱ x.
-Proof. by apply (LA_complete_unique Φᴠᴄᴄꜱ). Qed.
+  αᴘᴠᴄᴄꜱ x = LA_complete αᴛᴠᴄᴄꜱ ρᴠᴄᴄꜱ x.
+Proof. by apply (LA_complete_unique αᴛᴠᴄᴄꜱ). Qed.
 
 #[global] Instance LA_equiv_dec_VCCS : RelDecision (LA_equiv R_prog_vccs R_test_vccs) :=
   proj_rel_dec _ _ LA_proj_join_VCCS.
 
 (* The constructive canonical surjections of VCCS. *)
-Definition φ_canonical_VCCS := LA_φ (T := proc).
-Definition δ_canonical_VCCS := LA_δ (P := proc).
+Definition αᴛᴇꜱᴛ_canonical_VCCS := LA_αᴛᴇꜱᴛ (T := proc).
+Definition αᴘʀᴏ_canonical_VCCS := LA_αᴘʀᴏ (P := proc).
 Definition ρ_canonical_VCCS := LA_ρ (P := proc) (T := proc).
 
 End VCCS_LA.

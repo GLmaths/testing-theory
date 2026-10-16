@@ -1653,7 +1653,7 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ *)
-(*  LA TROISIÈME LOI CLASSIQUE : [α.τ.P = α.P] SOUS UNE GARDE D'ENTRÉE *)
+(*  LA TROISIÈME LOI CLASSIQUE : [𝜆.τ.P = 𝜆.P] SOUS UNE GARDE D'ENTRÉE *)
 (*                                                                    *)
 (*  Trois lignes, parce que [ax_input] est la RÈGLE OMÉGA : elle       *)
 (*  consomme la première loi τ à chaque valeur reçue, et la           *)
@@ -1686,7 +1686,7 @@ Qed.
     première par la duplication du singleton de [ichoice].
 
       τ.P        = P
-      α.τ.P      = α.P        (ici : garde d'entrée ; il n'y a pas de
+      𝜆.τ.P      = 𝜆.P        (ici : garde d'entrée ; il n'y a pas de
                                garde de sortie en VACCS)
       P + τ.P    = τ.P
 

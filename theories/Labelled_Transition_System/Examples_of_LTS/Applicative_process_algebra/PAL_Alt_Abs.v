@@ -29,23 +29,23 @@ Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap relations.
 From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL_Syntax PAL_Alt_LTS
   PAL_Alt_Phi PAL_Alt_Delta.
-(* * The abstraction [𝝳ᴀʟᴛ] on events, so that [𝝳ᴀʟᴛ ∘ Φᴀᴘᴀʟ] makes sense
+(* * The abstraction [αᴘᴀʟᴛ] on events, so that [αᴘᴀʟᴛ ∘ αᴛᴀᴘᴀʟ] makes sense
 
-   [𝝳ᴀᴘᴀʟ] ([PAL_Alt_Delta.v]) does not factor through [Φᴀᴘᴀʟ]: two inputs
+   [αᴘᴀᴘᴀʟ] ([PAL_Alt_Delta.v]) does not factor through [αᴛᴀᴘᴀʟ]: two inputs
    with the same template may receive different tuples. The map on events is
-   the completion along [Φᴀᴘᴀʟ] of the projection [ρᴀʟᴛ] of the join of
+   the completion along [αᴛᴀᴘᴀʟ] of the projection [ρᴀʟᴛ] of the join of
    [≈ᴛᴇꜱᴛ] and [≈ᴘʀᴏ] ([LabelAbstraction.LA_complete]):
-   - [𝝳ᴀʟᴛ (EvIn tp) = PIn (shape tp)]: the join relates [[v]], [[?]] and [[w]],
+   - [αᴘᴀʟᴛ (EvIn tp) = PIn (shape tp)]: the join relates [[v]], [[?]] and [[w]],
      so only the positions of the [⋆] fields remain;
-   - [𝝳ᴀʟᴛ (EvOut ot) = POut ot].
+   - [αᴘᴀʟᴛ (EvOut ot) = POut ot].
    Results:
-   - [ρᴀʟᴛ_proj]: [ρᴀʟᴛ = 𝝳ᴀʟᴛ ∘ Φᴀᴘᴀʟ] is the canonical projection of the join;
-   - [𝝳ᴀʟᴛ_complete]: [𝝳ᴀʟᴛ] is the completion of [ρᴀʟᴛ] along [Φᴀᴘᴀʟ];
+   - [ρᴀʟᴛ_proj]: [ρᴀʟᴛ = αᴘᴀʟᴛ ∘ αᴛᴀᴘᴀʟ] is the canonical projection of the join;
+   - [αᴘᴀʟᴛ_complete]: [αᴘᴀʟᴛ] is the completion of [ρᴀʟᴛ] along [αᴛᴀᴘᴀʟ];
    - [prog_spec_injective]: any [κ] on events satisfying the process-side
      condition (2) of [AbsAction] is injective on the events [EvOut ⟨v⟩], all
-     of which lie in [Φ(coR (in(?x).𝟘))] ([coR_p_formal]); so [κ(Φ(coR p))] is
+     of which lie in [αᴛᴇꜱᴛ(coR (in(?x).𝟘))] ([coR_p_formal]); so [κ(αᴛᴇꜱᴛ(coR p))] is
      infinite as soon as [Val] is;
-   - [𝝳ᴀʟᴛ_not_prog_spec]: [𝝳ᴀʟᴛ] itself does not satisfy condition (2). *)
+   - [αᴘᴀʟᴛ_not_prog_spec]: [αᴘᴀʟᴛ] itself does not satisfy condition (2). *)
 
 Section PAL_Alt_Abs.
   Context (Val : Type) `{Countable Val} `{!Inhabited Val}.
@@ -69,7 +69,7 @@ Section PAL_Alt_Abs.
   #[local] Existing Instance R_test_a_equivalence.
   #[local] Existing Instance R_prog_a_equivalence.
 
-  (* ** [𝝳ᴀʟᴛ] *)
+  (* ** [αᴘᴀʟᴛ] *)
 
   (* The positions of the [⋆] fields of a template. *)
   Definition shape (tp : template) : list bool :=
@@ -89,13 +89,13 @@ Section PAL_Alt_Abs.
     by intros [].
   Defined.
 
-  Definition 𝝳ᴀʟᴛ (e : Event) : PreEvent :=
+  Definition αᴘᴀʟᴛ (e : Event) : PreEvent :=
     match e with
     | EvIn _ tp => PIn (shape tp)
     | EvOut _ ot => POut ot
     end.
 
-  Definition ρᴀʟᴛ (μ : PALA_Act) : PreEvent := 𝝳ᴀʟᴛ (Φᴀᴘᴀʟ Val μ).
+  Definition ρᴀʟᴛ (μ : PALA_Act) : PreEvent := αᴘᴀʟᴛ (αᴛᴀᴘᴀʟ Val μ).
 
   (* ** [ρᴀʟᴛ] is the projection of the join *)
 
@@ -146,19 +146,19 @@ Section PAL_Alt_Abs.
       + by subst.
   Qed.
 
-  (* ** [𝝳ᴀʟᴛ] is the completion of [ρᴀʟᴛ] along [Φᴀᴘᴀʟ] *)
+  (* ** [αᴘᴀʟᴛ] is the completion of [ρᴀʟᴛ] along [αᴛᴀᴘᴀʟ] *)
 
-  #[global] Instance Φᴀᴘᴀʟ_proj : LA_proj R_test_a (Φᴀᴘᴀʟ Val).
+  #[global] Instance αᴛᴀᴘᴀʟ_proj : LA_proj R_test_a (αᴛᴀᴘᴀʟ Val).
   Proof. intros μ μ'. done. Qed.
 
-  #[global] Instance Φᴀᴘᴀʟ_surj : LA_surj (Φᴀᴘᴀʟ Val).
+  #[global] Instance αᴛᴀᴘᴀʟ_surj : LA_surj (αᴛᴀᴘᴀʟ Val).
   Proof.
     refine {| LA_repr e := match e with EvIn _ tp => AIn _ (label_witness Val tp) | EvOut _ ot => AOut _ ot end |}.
     intros [tp|ot]; cbn; [by rewrite ltemplate_label_witness | done].
   Defined.
 
-  Lemma 𝝳ᴀʟᴛ_complete e : 𝝳ᴀʟᴛ e = LA_complete (Φᴀᴘᴀʟ Val) ρᴀʟᴛ e.
-  Proof. by apply (LA_complete_unique (Φᴀᴘᴀʟ Val) ρᴀʟᴛ 𝝳ᴀʟᴛ). Qed.
+  Lemma αᴘᴀʟᴛ_complete e : αᴘᴀʟᴛ e = LA_complete (αᴛᴀᴘᴀʟ Val) ρᴀʟᴛ e.
+  Proof. by apply (LA_complete_unique (αᴛᴀᴘᴀʟ Val) ρᴀʟᴛ αᴘᴀʟᴛ). Qed.
 
   (* ** Condition (2) forces an injective abstraction of outputs *)
 
@@ -191,29 +191,29 @@ Section PAL_Alt_Abs.
   Qed.
 
   Theorem prog_spec_injective {B : Type} (κ : Event → B) :
-    (∀ (p : term) (β β' : PALA_Act), κ (Φᴀᴘᴀʟ Val β) = κ (Φᴀᴘᴀʟ Val β') →
-       Φᴀᴘᴀʟ Val β ∈ (⌈ Φᴀᴘᴀʟ Val ⌉ (coR p)) → Φᴀᴘᴀʟ Val β' ∈ (⌈ Φᴀᴘᴀʟ Val ⌉ (coR p))) →
+    (∀ (p : term) (β β' : PALA_Act), κ (αᴛᴀᴘᴀʟ Val β) = κ (αᴛᴀᴘᴀʟ Val β') →
+       αᴛᴀᴘᴀʟ Val β ∈ (⌈ αᴛᴀᴘᴀʟ Val ⌉ (coR p)) → αᴛᴀᴘᴀʟ Val β' ∈ (⌈ αᴛᴀᴘᴀʟ Val ⌉ (coR p))) →
     ∀ v w, κ (EvOut _ (tuple1 v)) = κ (EvOut _ (tuple1 w)) → v = w.
   Proof.
     intros h2 v w e.
-    assert (Φᴀᴘᴀʟ Val (AOut _ (tuple1 w)) ∈ (⌈ Φᴀᴘᴀʟ Val ⌉ (coR (p_val v)))) as (x & hx & ex).
+    assert (αᴛᴀᴘᴀʟ Val (AOut _ (tuple1 w)) ∈ (⌈ αᴛᴀᴘᴀʟ Val ⌉ (coR (p_val v)))) as (x & hx & ex).
     { apply (h2 (p_val v) (AOut _ (tuple1 v))); [exact e |].
       exists (AOut _ (tuple1 v)). split; [apply coR_p_val | done]. }
     apply coR_p_val_only in hx. subst x. cbn in ex. injection ex. congruence.
   Qed.
 
-  (* All the [EvOut ⟨v⟩] lie in [Φ(coR (in(?x).𝟘))]. *)
-  Lemma Φ_coR_p_formal v : EvOut _ (tuple1 v) ∈ (⌈ Φᴀᴘᴀʟ Val ⌉ (coR p_formal)).
+  (* All the [EvOut ⟨v⟩] lie in [αᴛᴇꜱᴛ(coR (in(?x).𝟘))]. *)
+  Lemma αᴛᴇꜱᴛ_coR_p_formal v : EvOut _ (tuple1 v) ∈ (⌈ αᴛᴀᴘᴀʟ Val ⌉ (coR p_formal)).
   Proof. exists (AOut _ (tuple1 v)). split; [apply coR_p_formal | done]. Qed.
 
-  (* [𝝳ᴀʟᴛ] does not satisfy condition (2): [out⟨v⟩.𝟘] accepts [AIn [v]] but not [AIn [w]]. *)
-  Lemma 𝝳ᴀʟᴛ_not_prog_spec v w : v ≠ w →
+  (* [αᴘᴀʟᴛ] does not satisfy condition (2): [out⟨v⟩.𝟘] accepts [AIn [v]] but not [AIn [w]]. *)
+  Lemma αᴘᴀʟᴛ_not_prog_spec v w : v ≠ w →
     let p := out( eot_to_tuple (tuple1 v) ) • 𝟘 in
     let β := AIn _ [lf_val Val v] in
     let β' := AIn _ [lf_val Val w] in
-    𝝳ᴀʟᴛ (Φᴀᴘᴀʟ Val β) = 𝝳ᴀʟᴛ (Φᴀᴘᴀʟ Val β')
-    ∧ Φᴀᴘᴀʟ Val β ∈ (⌈ Φᴀᴘᴀʟ Val ⌉ (coR p))
-    ∧ Φᴀᴘᴀʟ Val β' ∉ (⌈ Φᴀᴘᴀʟ Val ⌉ (coR p)).
+    αᴘᴀʟᴛ (αᴛᴀᴘᴀʟ Val β) = αᴘᴀʟᴛ (αᴛᴀᴘᴀʟ Val β')
+    ∧ αᴛᴀᴘᴀʟ Val β ∈ (⌈ αᴛᴀᴘᴀʟ Val ⌉ (coR p))
+    ∧ αᴛᴀᴘᴀʟ Val β' ∉ (⌈ αᴛᴀᴘᴀʟ Val ⌉ (coR p)).
   Proof.
     intros hvw p β β'. split_and!.
     - done.

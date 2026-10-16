@@ -30,7 +30,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Subset_Act InputOutpu
 
 (* * Label abstractions of VACCS as canonical projections
 
-   [Φᴠᴀᴄᴄꜱ] merges inputs and outputs on a channel, which is only sound for
+   [αᴛᴠᴀᴄᴄꜱ] merges inputs and outputs on a channel, which is only sound for
    blocking actions. The canonical projections below are the semantic ones. *)
 
 Section VACCS_LA.
@@ -68,13 +68,13 @@ Inductive PreA_vaccs :=
 #[global] Instance PreA_vaccs_eqdec : EqDecision PreA_vaccs.
 Proof. solve_decision. Defined.
 
-Definition φᴠᴀᴄᴄꜱ (μ : ExtAct TypeOfActions) : TestA_vaccs :=
+Definition αᴛᴠᴀᴄᴄꜱ_can (μ : ExtAct TypeOfActions) : TestA_vaccs :=
   match μ with
   | ActIn (c , _) => TestIn c
   | ActOut (c , v) => TestOut c v
   end.
 
-Definition δᴠᴀᴄᴄꜱ (μ : ExtAct TypeOfActions) : ProgA_vaccs :=
+Definition αᴘᴠᴀᴄᴄꜱ_can (μ : ExtAct TypeOfActions) : ProgA_vaccs :=
   match μ with
   | ActIn (c , v) => ProgIn c v
   | ActOut (c , _) => ProgOut c
@@ -102,10 +102,10 @@ Proof.
            (ActIn (c , v)) (ActIn (c , w)) (b _) (b _) eq_refl acc).
 Qed.
 
-Lemma R_test_vaccs_proj μ μ' : φᴠᴀᴄᴄꜱ μ = φᴠᴀᴄᴄꜱ μ' ↔ R_test_vaccs μ μ'.
+Lemma R_test_vaccs_proj μ μ' : αᴛᴠᴀᴄᴄꜱ_can μ = αᴛᴠᴀᴄᴄꜱ_can μ' ↔ R_test_vaccs μ μ'.
 Proof. revert μ μ'. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; split; try done; try congruence. Qed.
 
-Lemma R_prog_vaccs_proj μ μ' : δᴠᴀᴄᴄꜱ μ = δᴠᴀᴄᴄꜱ μ' ↔ R_prog_vaccs μ μ'.
+Lemma R_prog_vaccs_proj μ μ' : αᴘᴠᴀᴄᴄꜱ_can μ = αᴘᴠᴀᴄᴄꜱ_can μ' ↔ R_prog_vaccs μ μ'.
 Proof. revert μ μ'. intros [[c v]|[c v]] [[c' v']|[c' v']]; simpl; split; try done; try congruence. Qed.
 
 #[global] Program Instance gLtsLAtest_VACCS :
@@ -132,10 +132,10 @@ Next Obligation.
   - intros (μ'' & acc & duo & b). exfalso. apply b. by eexists.
 Qed.
 
-#[global] Instance LA_proj_test_VACCS : LA_proj R_test_vaccs φᴠᴀᴄᴄꜱ := R_test_vaccs_proj.
-#[global] Instance LA_proj_prog_VACCS : LA_proj R_prog_vaccs δᴠᴀᴄᴄꜱ := R_prog_vaccs_proj.
+#[global] Instance LA_proj_test_VACCS : LA_proj R_test_vaccs αᴛᴠᴀᴄᴄꜱ_can := R_test_vaccs_proj.
+#[global] Instance LA_proj_prog_VACCS : LA_proj R_prog_vaccs αᴘᴠᴀᴄᴄꜱ_can := R_prog_vaccs_proj.
 
-#[global] Program Instance LA_surj_VACCS : LA_surj φᴠᴀᴄᴄꜱ := {| LA_repr := repr_vaccs |}.
+#[global] Program Instance LA_surj_VACCS : LA_surj αᴛᴠᴀᴄᴄꜱ_can := {| LA_repr := repr_vaccs |}.
 Next Obligation. by intros [c|c v]. Qed.
 
 #[local] Instance R_test_vaccs_equivalence : Equivalence R_test_vaccs :=
@@ -159,22 +159,22 @@ Proof.
       * by apply (R_test_LA_equiv R_prog_vaccs R_test_vaccs).
 Qed.
 
-(* The completion of [ρᴠᴀᴄᴄꜱ] along [φᴠᴀᴄᴄꜱ]. *)
+(* The completion of [ρᴠᴀᴄᴄꜱ] along [αᴛᴠᴀᴄᴄꜱ_can]. *)
 Definition completeᴠᴀᴄᴄꜱ (x : TestA_vaccs) : PreA_vaccs :=
   match x with
   | TestIn c => In_on c
   | TestOut c _ => Out_on c
   end.
 
-Lemma completeᴠᴀᴄᴄꜱ_is_completion x : completeᴠᴀᴄᴄꜱ x = LA_complete φᴠᴀᴄᴄꜱ ρᴠᴀᴄᴄꜱ x.
-Proof. apply (LA_complete_unique φᴠᴀᴄᴄꜱ). by intros [[c v]|[c v]]. Qed.
+Lemma completeᴠᴀᴄᴄꜱ_is_completion x : completeᴠᴀᴄᴄꜱ x = LA_complete αᴛᴠᴀᴄᴄꜱ_can ρᴠᴀᴄᴄꜱ x.
+Proof. apply (LA_complete_unique αᴛᴠᴀᴄᴄꜱ_can). by intros [[c v]|[c v]]. Qed.
 
 #[global] Instance LA_equiv_dec_VACCS : RelDecision (LA_equiv R_prog_vaccs R_test_vaccs) :=
   proj_rel_dec _ _ LA_proj_join_VACCS.
 
 (* The constructive canonical surjections of VACCS. *)
-Definition φ_canonical_VACCS := LA_φ (T := proc).
-Definition δ_canonical_VACCS := LA_δ (P := proc).
+Definition αᴛᴇꜱᴛ_canonical_VACCS := LA_αᴛᴇꜱᴛ (T := proc).
+Definition αᴘʀᴏ_canonical_VACCS := LA_αᴘʀᴏ (P := proc).
 Definition ρ_canonical_VACCS := LA_ρ (P := proc) (T := proc).
 
 End VACCS_LA.

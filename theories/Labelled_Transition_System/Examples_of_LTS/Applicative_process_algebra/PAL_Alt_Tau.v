@@ -40,9 +40,9 @@ Section PAL_Alt_Tau.
   Notation new := (lts_step_a Val).
 
   (* From the new LTS to the old one: forget the templates. *)
-  Lemma new_old p α q :
-    new p α q →
-    match α with
+  Lemma new_old p 𝜆 q :
+    new p 𝜆 q →
+    match 𝜆 with
     | τ => old p τ q
     | ActExt (AIn _ l) => old p (ActExt (ActIn (ltuple Val l))) q
     | ActExt (AOut _ ot) => old p (ActExt (ActOut ot)) q
@@ -83,9 +83,9 @@ Section PAL_Alt_Tau.
   Qed.
 
   (* From the old LTS to the new one: an input gains the template of its pattern. *)
-  Lemma old_new p α q :
-    old p α q →
-    match α with
+  Lemma old_new p 𝜆 q :
+    old p 𝜆 q →
+    match 𝜆 with
     | τ => new p τ q
     | ActExt (ActIn ot) => ∃ l, ltuple Val l = ot ∧ new p (ActExt (AIn _ l)) q
     | ActExt (ActOut ot) => new p (ActExt (AOut _ ot)) q

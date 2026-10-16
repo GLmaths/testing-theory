@@ -69,7 +69,7 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros; simpl in *. unfold toSET_obligation_1.
-  destruct α.
+  destruct 𝜆.
   - destruct (decide (b = lts_extaction_set_from_pset a μ /\ b ≠ ∅)).
     + left. eauto.
     + right. eauto.
@@ -82,19 +82,19 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros. simpl in *. unfold toSET_obligation_3. apply not_dec.
-  pose proof (decide (∃ x, x ∈ p ∧ x ⟶{α})) as Hdec.
+  pose proof (decide (∃ x, x ∈ p ∧ x ⟶{𝜆})) as Hdec.
   destruct Hdec as [Hex | Hnot].
   + right. intro. destruct Hex as (p' & mem & tr).
     eapply H0 in mem. contradiction.
-  + left. intros. destruct (decide (p0 ⟶{α})).
-    - assert (∃ x : P, x ∈ p ∧ x ⟶{α}).
+  + left. intros. destruct (decide (p0 ⟶{𝜆})).
+    - assert (∃ x : P, x ∈ p ∧ x ⟶{𝜆}).
       { exists p0. split ;eauto. }
       contradiction.
     - eauto.
 Qed.
 Next Obligation.
   unfold toSET_obligation_3.
-  unfold toSET_obligation_1. intros. destruct α.
+  unfold toSET_obligation_1. intros. destruct 𝜆.
   - assert (forall p', p' ∈ p -> (p' ⟶[μ] \/ (p' ↛[μ]))) as Hyp.
     { intros. destruct (decide (p' ⟶[μ])); [left|right]; eauto. }
     exists (lts_extaction_set_from_pset p μ). split; eauto.
@@ -119,7 +119,7 @@ Qed.
 Next Obligation.
   unfold toSET_obligation_3.
   unfold toSET_obligation_1. intros.
-  destruct α.
+  destruct 𝜆.
   - intro. destruct H0 as (p' & Hyp1 & Hyp2). subst.
     remember (lts_extaction_set_from_pset p μ).
     induction g using set_ind_L.
@@ -145,7 +145,7 @@ Qed.
 
 (** **** Properties of toSet(L) *)
 
-Lemma empty_refuses_all_action `{gLts P A} `{!FiniteImagegLts P A} α : (∅ : gset P) ↛{α}.
+Lemma empty_refuses_all_action `{gLts P A} `{!FiniteImagegLts P A} 𝜆 : (∅ : gset P) ↛{𝜆}.
 Proof.
   intros Imp. apply Imp. intros p Hp. inversion Hp.
 Qed.
@@ -276,11 +276,11 @@ Proof.
       * symmetry. exact equiv''.
 Qed.
 
-Lemma simulation_eq_set_rel `{gLtsEq P A} `{!FiniteImagegLts P A} X Y α Z :
-  X ⋍ₛₑₜ Y ∧ Y ⟶{α} Z → ∃ Y', X  ⟶{α} Y' ∧ Y' ⋍ₛₑₜ Z.
+Lemma simulation_eq_set_rel `{gLtsEq P A} `{!FiniteImagegLts P A} X Y 𝜆 Z :
+  X ⋍ₛₑₜ Y ∧ Y ⟶{𝜆} Z → ∃ Y', X  ⟶{𝜆} Y' ∧ Y' ⋍ₛₑₜ Z.
 Proof.
   intros (eq & tr).
-  destruct α.
+  destruct 𝜆.
   + destruct tr as (ext_action_set & non_empty). subst.
     exists (lts_extaction_set_from_pset X μ).
     split.
@@ -366,8 +366,8 @@ Qed.
 #[global] Program Instance gLtsMBFinite `{@FiniteImagegLts P A H gLtsP}
   : @FiniteImagegLts (gset P) A H (toSET gLtsP).
 Next Obligation. 
-  intros ? ? ? ? ? X α.
-  destruct α as [μ | ].
+  intros ? ? ? ? ? X 𝜆.
+  destruct 𝜆 as [μ | ].
   + simpl. eapply (in_list_finite ([lts_extaction_set_from_pset X μ])).
     intros P' h%bool_decide_unpack. destruct h as (eq & not_empty). subst.
     set_solver.
@@ -401,7 +401,7 @@ Proof.
   exfalso. set_solver.
 Qed.
 
-Lemma empty_set_stable `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} α : ∅ ↛{ α }.
+Lemma empty_set_stable `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} 𝜆 : ∅ ↛{ 𝜆 }.
 Proof.
   intros Imp. apply Imp. intros p Hp. inversion Hp.
 Qed.

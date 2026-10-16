@@ -228,15 +228,15 @@ Section RestrictedSimulation.
     Theorem rsim_sound s : forall E p1 q1 p2,
       R E p1 q1 -> ff_from E s -> p1 ⟹[s] p2 -> exists q2, q1 ⟹[s] q2.
     Proof.
-      induction s as [| α s IH]; intros E p1 q1 p2 hr hff w.
+      induction s as [| 𝜆 s IH]; intros E p1 q1 p2 hr hff w.
       - destruct (rsim_nil E p1 q1 p2 hr w) as (q2 & wq & _). now exists q2.
       - eapply wt_pop in w as (t & w1 & w2).
-        simpl in hff. destruct (decide (non_blocking α)) as [nb | nb].
-        + destruct (rsim_step_nb E p1 q1 α t hr nb w1) as (s2 & ws & hr2).
-          destruct (IH (α :: E) t s2 p2 hr2 hff w2) as (q2 & wq2).
+        simpl in hff. destruct (decide (non_blocking 𝜆)) as [nb | nb].
+        + destruct (rsim_step_nb E p1 q1 𝜆 t hr nb w1) as (s2 & ws & hr2).
+          destruct (IH (𝜆 :: E) t s2 p2 hr2 hff w2) as (q2 & wq2).
           exists q2. eapply wt_push_left; eassumption.
         + destruct hff as (hok & hff).
-          destruct (rsim_step_b E p1 q1 α t hr nb hok w1) as (s2 & ws & hr2).
+          destruct (rsim_step_b E p1 q1 𝜆 t hr nb hok w1) as (s2 & ws & hr2).
           destruct (IH E t s2 p2 hr2 hff w2) as (q2 & wq2).
           exists q2. eapply wt_push_left; eassumption.
     Qed.

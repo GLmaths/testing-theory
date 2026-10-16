@@ -95,7 +95,7 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros; simpl in *. unfold coToSET_obligation_1.
-  destruct α.
+  destruct 𝜆.
   - destruct (decide (b = cowt_extaction_set_from_pset a μ ∧ b ≠ ∅)).
     + left. eauto.
     + right. eauto.
@@ -110,7 +110,7 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros. simpl in *. unfold coToSET_obligation_3.
-  destruct α as [η |]; apply not_dec.
+  destruct 𝜆 as [η |]; apply not_dec.
   - destruct (cowt_extaction_set_from_pset_ispec p η) as (Espec1 & Espec2).
     destruct (decide (cowt_extaction_set_from_pset p η = ∅)) as [Hemp | Hnemp].
     + left. intros p' mem μ hsy.
@@ -139,7 +139,7 @@ Qed.
 Next Obligation.
   intros. simpl in *. unfold coToSET_obligation_3 in H.
   unfold coToSET_obligation_1.
-  destruct α as [η |].
+  destruct 𝜆 as [η |].
   - exists (cowt_extaction_set_from_pset p η). split; eauto.
     intro Hemp.
     apply H. intros p' mem μ hsy.
@@ -161,7 +161,7 @@ Next Obligation.
 Qed.
 Next Obligation.
   unfold coToSET_obligation_3, coToSET_obligation_1.
-  intros. destruct α as [η |].
+  intros. destruct 𝜆 as [η |].
   - destruct H as (X' & Heq & Hne). subst.
     intro Hall.
     apply Hne. apply leibniz_equiv. intros q. split; [| set_solver].
@@ -306,8 +306,8 @@ Qed.
 
 (** ***** Co-convergence and co-traces on [coToSET] *)
 
-Lemma co_empty_set_stable α : (∅ : gset P) ↛{ α }.
-Proof. destruct α; intros Imp; apply Imp; intros p mem; exfalso; set_solver. Qed.
+Lemma co_empty_set_stable 𝜆 : (∅ : gset P) ↛{ 𝜆 }.
+Proof. destruct 𝜆; intros Imp; apply Imp; intros p mem; exfalso; set_solver. Qed.
 
 Lemma co_empty_set_stable_wk_not_emp_list
   (a : Atest) (s : trace Atest) (ps : gset P) :
