@@ -63,7 +63,6 @@
 
     The statement below is the obstruction, not a claim about Erlang: it says
     that /this/ LTS has no trace-following observer. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -71,7 +70,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation
   Lts_OBA Testing_Predicate Erlang_Syntax Erlang_LTS Erlang_Instance Erlang_Good.
-(* begin hide *)
 Section Erlang_Test_Dilemma.
 
 Context `{EP : Erlang_Program}.

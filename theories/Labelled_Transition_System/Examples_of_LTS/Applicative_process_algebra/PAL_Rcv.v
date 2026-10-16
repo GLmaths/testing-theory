@@ -22,6 +22,7 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
@@ -30,7 +31,6 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi
   Applicative_process_algebra PAL_Alt_Tau PAL_Label_Dilemma PAL_Label_Dilemma_Sync PAL_Alt_Dilemma
   Testing_Predicate CompletenessASco.
-(* begin hide *)
 (* * PAL with outputs labelled by their receiver
 
    The alternative LTS ([PAL_Alt_LTS.v]) labels an input with its template

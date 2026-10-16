@@ -29,7 +29,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
   InteractionBetweenLts MemAction InteractionUnion MemForwarder Termination
   coWeakTransition coConvergence coFiniteImage InListPropHelper
   StateTransitionSystems Testing_Predicate Must
-  LabelAbstraction LabelAdmissible DefinitionASrel
+  Label_Abstraction.LabelAbstraction LabelAdmissible DefinitionASrel
   Lts_OBA Lts_OBA_FB CompletenessASsync EquivalenceASsync.
 (* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.

@@ -27,19 +27,19 @@
 
 From stdpp Require Import gmap gmultiset.
 
-From TestingTheory Require Import VACCS_Must_Characterization DefinitionAS Equivalence Must
+From TestingTheory Require Import VACCS.Characterisations.Must_Characterisation DefinitionAS Equivalence Must
   ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
   InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower.
 From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
-  TestSpecBridge VACCS_CoFiniteImage.
+  TestSpecBridge VACCS.Language.gLts_Instance.
 
-Import VACCS.
+Import VACCS.Language.LTS.
 
 
 Section ACCS_Must_Alt_Corollary.
 (* begin hide *)
 
-Local Instance ACCS_Parameters : VACCS.VACCS_Parameters :=
+Local Instance ACCS_Parameters : LTS.VACCS_Parameters :=
   { Channel := nat;
     Value := unit;
     O := tt}.

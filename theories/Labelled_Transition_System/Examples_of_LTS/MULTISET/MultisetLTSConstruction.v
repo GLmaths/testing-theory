@@ -33,9 +33,7 @@ From TestingTheory Require Import ActTau gLts InteractionBetweenLts Bisimulation
 
 (** ** Mailbox LTS *)
 
-(** A mailbox is a multiset of actions *)
-(* begin hide *)
-
+(** *** A mailbox is a multiset of actions *)
 Definition MO (A : Type) `{ExtAction A} := gmultiset A.
 
 Lemma Prop_for_nb `{ExtAction A} (η : A) (m : MO A) :
@@ -49,14 +47,12 @@ Proof.
   + assert (η'' = η). multiset_solver. subst.
     eauto.
 Qed.
-(* end hide *)
 
 Inductive lts_multiset_step `{ExtAction A} : MO A -> Labels A -> MO A -> Prop :=
 | lts_multiset_add m η μ (duo : dual μ η) (nb : non_blocking η) :
    lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
 | lts_multiset_minus m η (nb : non_blocking η):  
    lts_multiset_step ({[+ η +]} ⊎ m) (ActExt η) m.
-(* begin hide *)
 
 Global Hint Constructors lts_multiset_step:mdb.
 
@@ -141,7 +137,7 @@ Next Obligation.
   - eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto.
 Qed.
 
-(*************************** Mailbox purification of blocking actions *********************************)
+(** ***** Mailbox purification of blocking actions *)
 
 Fixpoint MO_without_not_nb_on_list `{ExtAction A} (l : list A) : MO A:=
 match l with
@@ -593,4 +589,3 @@ Qed.
 Next Obligation.
   intros. eapply forward_feedback_in_ms;eauto.
 Qed.
-(* end hide *)

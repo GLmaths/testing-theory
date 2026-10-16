@@ -21,13 +21,13 @@
    SOFTWARE.
 *)
 (* end hide *)
-
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable gmultiset.
 From TestingTheory Require Import ActTau gLts Subset_Act InteractionBetweenLts
-  MultisetLTSConstruction ForwarderConstruction LabelAbstraction.
-(* begin hide *)
+  MultisetLTSConstruction ForwarderConstruction Label_Abstraction.LabelAbstraction.
+
 (* * Process-side label abstraction of a forwarder
 
    In [toFW(P)], the multiset accepts every blocking action whose dual is

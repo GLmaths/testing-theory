@@ -26,10 +26,10 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable option gmap.
-(* begin hide *)
 (* * PAL: syntax
 
     The syntax of the Linda-based applicative process algebra from:

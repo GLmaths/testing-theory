@@ -36,7 +36,6 @@
     Only the single-element rules are given (the last three rules of
     Figure 9, deadlock and convex combination, are the lifting [dstep] of
     [pMust_almost_sure.v]).  Outputs are asynchronous, as in the syntax. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -44,7 +43,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition.
-(* begin hide *)
 Section Semantics.
   Context `{QM : QuantumModel}.
 

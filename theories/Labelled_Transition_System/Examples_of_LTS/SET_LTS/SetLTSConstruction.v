@@ -40,8 +40,7 @@ From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
 From TestingTheory Require Import MultisetHelper ActTau gLts Bisimulation FiniteImageLTS Lts_OBA Lts_FW Lts_OBA_FB 
     InListPropHelper Lts_Finite_Non_Blocking_Chain InFiniteSetHelper WeakTransitions.
-(* begin hide *)
-(**************************************** LTS of Sets *************************************)
+(** ***** LTS of Sets *)
 
 Definition all_blocking_action_ext `{!ExtAction A} (μ : A) := False.
 
@@ -144,7 +143,7 @@ Next Obligation.
 Qed.
 
 
-(************** Properties of toSet(L) ***************)
+(** **** Properties of toSet(L) *)
 
 Lemma empty_refuses_all_action `{gLts P A} `{!FiniteImagegLts P A} α : (∅ : gset P) ↛{α}.
 Proof.
@@ -306,7 +305,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? (Z & Hyp). eapply simulation_eq_set_rel;eauto.
 Qed.
 
-(* Set of a LTS respects OBA axioms , because empty set = non_blocking_action *)
+(** **** Set of a LTS respects OBA axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance toSET_gLtsOba `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} : @gLtsOba (gset P) A H (toSET_eq gLtsEqP).
@@ -326,7 +325,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(* Set of a LTS respects FiniteOuputChain axioms , because empty set = non_blocking_action *)
+(** ***** Set of a LTS respects FiniteOuputChain axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance toSET_FiniteNonBlockingChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} : @FiniteNonBlockingChain_LtsOba (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ):=
@@ -341,7 +340,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(* Set of a LTS respects FB axioms , because empty set = non_blocking_action *)
+(** **** Set of a LTS respects FB axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance toSET_gLtsObaFB `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} 
@@ -350,7 +349,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(* Set of a LTS respects FW axioms , because empty set = non_blocking_action *)
+(** **** Set of a LTS respects FW axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance toSET_gLtsObaFW `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} 
@@ -362,7 +361,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(********************************** toSet is a Finite Image LTS ************************)
+(* **** toSet is a Finite Image LTS *)
 
 #[global] Program Instance gLtsMBFinite `{@FiniteImagegLts P A H gLtsP}
   : @FiniteImagegLts (gset P) A H (toSET gLtsP).
@@ -377,7 +376,7 @@ Next Obligation.
     set_solver.
 Qed.
 
-(******************************* toSet Properties ************************************)
+(** **** toSet Properties *)
 
 From TestingTheory Require Import Termination.
 
@@ -679,7 +678,6 @@ Qed.
 Lemma convergence_forall_if_convergence_set `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
   ps ⇓ s -> forall p, p ∈ ps -> p ⇓ s.
 Proof.
-  (* intro hm. dependent induction hm. *)
   unfold trace in s. revert ps.
   dependent induction s.
   + intros ps hm p mem. inversion hm; subst. constructor.
@@ -691,7 +689,6 @@ Proof.
     eapply H6 in wk_tr.
     eapply IHs;eauto.
 Qed.
-(* end hide *)
 
 Lemma convergence_set_iff_convergence_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
   (forall (p : P), p ∈ ps -> p ⇓ s) <-> ps ⇓ s.

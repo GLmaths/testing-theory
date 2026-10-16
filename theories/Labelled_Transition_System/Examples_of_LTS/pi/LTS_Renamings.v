@@ -1,5 +1,5 @@
 (* begin hide *)
-From TestingTheory Require Import LTS Renamings pi.Congruence.
+From TestingTheory Require Import pi.LTS Renamings pi.Congruence.
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Morphisms.
 

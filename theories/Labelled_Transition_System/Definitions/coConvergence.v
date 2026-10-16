@@ -33,19 +33,13 @@ From stdpp Require Import countable.
 
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation Lts_OBA Lts_FW
   ActTau Termination WeakTransitions Convergence coWeakTransition.
-(* begin hide *)
-(* ** Co-convergence
+(** ***** Co-convergence *)
 
-    [cocnv p s] is [cnv] with every step taken along [cowt] instead of [wt]:
-    [p] converges "in the co sense" on [s] if it terminates and every
-    co-weak-step along the head of [s] leads to a process that co-converges
-    on the tail. *)
-
-(* *** Definition *)
+(** ******* Definition *)
 
 Reserved Notation "p ⇓ᶜᵒ s" (at level 70).
 
-(* Two alphabets, as [cowt]: on one alphabet [sync] is [dual]. *)
+(** ******* Two alphabets, as [cowt]: on one alphabet [sync] is [dual]. *)
 Inductive cocnv `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   : P -> trace Atest -> Prop :=
 | cocnv_nil p : p ⤓ -> p ⇓ᶜᵒ ε
@@ -55,7 +49,7 @@ where "p ⇓ᶜᵒ s" := (cocnv p s).
 
 Global Hint Constructors cocnv:mdb.
 
-(* *** Properties on co-convergence in an LTS *)
+(** ********** Properties on co-convergence in an LTS *)
 
 Section cocnv_structure.
 
@@ -140,7 +134,7 @@ Qed.
 
 End cocnv_structure.
 
-(* *** Properties on co-convergence in an LTS with a Bisimulation *)
+(** ******** Properties on co-convergence in an LTS with a Bisimulation *)
 
 Section cocnv_structure_eq.
 
@@ -163,7 +157,7 @@ Qed.
 
 End cocnv_structure_eq.
 
-(* *** Properties on co-convergence in an LTS with OBA axioms *)
+(** ******* Properties on co-convergence in an LTS with OBA axioms *)
 
 Lemma terminate_preserved_by_cowt_non_blocking_action `{M: gLtsOba P A} p q η :
   co_non_blocking η -> p ⤓ -> p ⟹ᶜᵒ{ η } q -> q ⤓.
@@ -176,7 +170,7 @@ Proof.
   apply nb. symmetry. exact dxy.
 Qed.
 
-(* *** Properties on co-convergence in an LTS with Forwarder axioms *)
+(** ******** Properties on co-convergence in an LTS with Forwarder axioms *)
 
 Lemma cocnv_preserved_by_lts_non_blocking_action `{gLtsObaFW P A} p q η s :
   non_blocking η -> p ⇓ᶜᵒ s -> p ⟶[η] q
@@ -209,11 +203,6 @@ Proof.
   exact l0.
 Qed.
 
-(* [q]'s own convergence clause for [η] is itself indirect (it fires on
-   [q ⟹ᶜᵒ{η} q0], i.e. some action dual to [η] out of [q]), so no external
-   [μ]/[dual μ η] pair is needed here: the internal witness [cowt_decomp_one]
-   exposes when we inspect that clause is exactly what [fwd_feedback] needs
-   to cancel against the literal [η]-step [l]. *)
 Lemma cocnv_retract_lts_non_blocking_action `{gLtsObaFW P A} p q η s :
   non_blocking η -> p ⇓ᶜᵒ s -> p ⟶[η] q -> q ⇓ᶜᵒ η :: s.
 Proof.
@@ -242,14 +231,6 @@ Proof.
       eapply cocnv_preserved_by_cowt_nil; eauto.
 Qed.
 
-(* [dual μ' μ] plays the role [exist_co_nba]'s hidden witness played in the
-   original: since [cocnv]'s own clause for the head of [s1] already goes
-   through *some* dual internally, [s1]'s elements can be taken non-blocking
-   directly, with no existential detour. Unlike an earlier attempt, [μ']
-   itself needs no non-blockingness: mirroring the original's own proof, the
-   "mover" commuted past the literal [μ']-step (via [nb_delay]) is [s1]'s
-   head [a] (already non-blocking), reached backwards from [p] via
-   [boomerang] — [μ'] plays the role of [nb_delay]'s fully generic [α]. *)
 Lemma cocnv_drop_action_in_the_middle `{gLtsObaFW P A} p s1 s2 μ :
   Forall non_blocking s1 -> p ⇓ᶜᵒ (s1 ++ [μ] ++ s2)
     -> forall r μ', dual μ' μ -> p ⟶[μ'] r -> r ⇓ᶜᵒ (s1 ++ s2).
@@ -280,11 +261,6 @@ Proof.
   - constructor; [symmetry; exact dxy | exact IH].
 Qed.
 
-(* [forward_s] already builds a [wt] trace whose *own* dual is [s3]; reading
-   the forward leg through [wt_to_cowt_dual] with [s1] (rather than [s3]) as
-   the observed trace, and the return leg with [s3], both against the *same*
-   given [Forall2 dual s3 s1] fact (never an independently re-decomposed
-   one), is enough to reuse it without any determinacy assumption. *)
 Lemma coforward_s `{gLtsObaFW P A} p s1 s3:
   Forall non_blocking s1 -> Forall2 dual s3 s1
     -> exists t, p ⟹ᶜᵒ[s1] t /\ t ⟹ᶜᵒ⋍[s3] p.
@@ -312,10 +288,7 @@ Proof.
   eapply wt_to_cowt_dual with (s:=[]) in w2; [exact w2 | constructor].
 Qed.
 
-(* No [dual]/[Forall2] pairing at all here: [s1] is used verbatim on both
-   sides (hypothesis and conclusion), so there is nothing to reconcile
-   against an independently-obtained witness — unlike the earlier
-   [cocnv_retract] attempt, which foundered on exactly that. *)
+
 Lemma cocnv_retract `{gLtsObaFW P A} p q s1 s2 (s3 : list A) :
   Forall non_blocking s1 -> p ⇓ᶜᵒ s2 -> p ⟹[s1] q
     -> q ⇓ᶜᵒ s1 ++ s2.
@@ -360,11 +333,6 @@ Proof.
   + intros. constructor. eauto.
 Qed.
 
-(* [η] and [μ] cancel across the (non-blocking) [s2] in between: [forward_s]
-   on the singleton [[μ]]/[[η]] constructs, consistently, both the co-step
-   realizing [hcnv]'s head [η] *and* the literal step that later needs to
-   cancel against it — never an independently re-decomposed dual, which is
-   what made the general [cocnv_retract] attempt fail earlier. *)
 Lemma cocnv_annhil_base `{gLtsObaFW P A} p μ η s2 s3 :
   Forall non_blocking s2 -> non_blocking η -> dual μ η -> p ⇓ᶜᵒ ([η] ++ s2 ++ [μ] ++ s3)
     -> p ⇓ᶜᵒ (s2 ++ s3).
@@ -392,9 +360,6 @@ Proof.
   eapply cocnv_preserved_by_eq; [exact heqp' | reflexivity | exact hp'].
 Qed.
 
-(* Only the base case ([s1 = []]) touches the [η]/[μ] cancellation; prepending
-   [s1] is plain structural recursion through [cocnv_act]'s own clause, no
-   duality reasoning involved. *)
 Lemma cocnv_annhil `{gLtsObaFW P A} p μ η s1 s2 s3 :
   Forall non_blocking s1 -> Forall non_blocking s2 -> non_blocking η -> dual μ η
     -> p ⇓ᶜᵒ (s1 ++ [η] ++ s2 ++ [μ] ++ s3)
@@ -411,16 +376,6 @@ Proof.
     + intros q w. exact (IHs1 his1' q (hclause q w)).
 Qed.
 
-(* *** From co-convergence to plain convergence on the dual action
-
-    [p ⇓ᶜᵒ [μ]] means "[p] is ready to respond to an observer's [μ]",
-    i.e. [p] is ready to itself perform [co μ] — exactly [p ⇓ [co μ]].
-    Only this direction is provable without [dual]'s global uniqueness
-    ([unique_nb]): [cocnv_act]'s clause quantifies over *every* action
-    dual to [μ], so a single witness [p ⟹{co μ} q] (built from
-    [exists_dual μ] alone, no uniqueness needed) instantiates it
-    directly. The converse would need [unique_nb] to pin an arbitrary
-    dual witness down to [co μ] specifically. *)
 Lemma cocnv_of_cnv_dual_rev `{EA : !ExtAction A} `{M : gLts P A} p μ : p ⇓ᶜᵒ [μ] -> p ⇓ [co μ].
 Proof.
   intro hcocnv. eapply cnv_act.
@@ -432,4 +387,3 @@ Proof.
     eapply cocnv_preserved_by_cowt_act in hcowt; eauto.
     eapply equiv_termination, equiv_cotermination; eauto.
 Qed.
-(* end hide *)

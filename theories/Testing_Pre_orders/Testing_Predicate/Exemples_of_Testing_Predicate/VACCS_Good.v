@@ -29,7 +29,7 @@ From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import countable decidable.
 From TestingTheory Require Import ActTau gLts InputOutputActions
-                                  Must VACCS_Instance Testing_Predicate.
+                                  Must VACCS.Language.gLts_Instance Testing_Predicate.
 (* begin hide *)
 Section VACCS_Testing.
 

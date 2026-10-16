@@ -34,15 +34,8 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation FiniteIma
     coFiniteImage InListPropHelper Termination Convergence WeakTransitions
 
   coWeakTransition coConvergence.
-(* begin hide *)
-(* * The LTS of sets, co version
 
-    [SetLTSConstruction.v]'s [toSET], sourced from [coFiniteImagegLts]/[cowt]
-    instead of [FiniteImagegLts]/[wt]: a meta-step of [coToSET] at a trace
-    action [η] collects the states reachable by some process action
-    synchronising with [η], so the LTS lives over the trace alphabet and
-    [⤓]/[⇓ s]/[⟹[s]] on [gset P] are indexed by co-traces, as [cocnv]/[cowt]
-    are.  Two alphabets throughout; on one alphabet [sync] is [dual]. *)
+(** *** The LTS of sets, co version *)
 
 Section coSetLTS.
 
@@ -52,13 +45,11 @@ Context `{gLtsP : !gLts P Hp}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{CFI : !coFiniteImagegLts P Atest}.
 
-(* ** Successors of a whole set by one synchronising action *)
+(** ***** Successors of a whole set by one synchronising action *)
 
 Definition cowt_extaction_set_from_pset (ps : gset P) (η : Atest) : gset P :=
   ⋃ (map (fun p => list_to_set (cowt_extaction_set p η)) (elements ps)).
 
-(* As in [coFiniteImageSync.v]: off a bare [Countable P], so that a user who
-   has no [coFiniteImageSync] never forces a hopeless search for one. *)
 Definition cowt_extaction_set_from_pset_spec1 `{CP : Countable P}
   (ps : gset P) (η : Atest) (qs : gset P) :=
   ∀ q, q ∈ qs → ∃ p, p ∈ ps ∧ ∃ μ, sync μ η ∧ p ⟶[μ] q.
@@ -91,7 +82,7 @@ Qed.
 
 End coSetLTS.
 
-(* ** [coToSET] itself *)
+(** ***** [coToSET] itself *)
 
 #[global] Program Instance coToSET {P Aproc Atest : Type}
   `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{gLtsP : !gLts P Hp}
@@ -186,13 +177,6 @@ Next Obligation.
     exfalso. apply memp, (lts_performs_spec2 p' τ (exist _ q tr)).
 Qed.
 
-
-(* [coToSET]'s conclusion is [gLts (gset P) _], so a search for a [gLts]
-   on an unknown carrier can instantiate it at [gset ?P] and ask for a [gLts ?P]
-   again, without bound; with a [SyncAction] among the premises, whose
-   alphabets the recursive call leaves open, this bites.  Bounding the depth
-   in this file turns the regress into a fast failure; the searches this file
-   really needs are shallow. *)
 Set Typeclasses Depth 8.
 
 Section coSetLTSFacts.
@@ -203,7 +187,7 @@ Context `{gLtsP : !gLts P Hp}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{CFI : !coFiniteImagegLts P Atest}.
 
-(* ** Co-termination of a set of states *)
+(** ****** Co-termination of a set of states *)
 
 Lemma co_empty_set_termination : (∅ : gset P) ⤓.
 Proof.
@@ -320,7 +304,7 @@ Proof.
          | now eapply co_termination_if_termination_set_helper].
 Qed.
 
-(* ** Co-convergence and co-traces on [coToSET] *)
+(** ***** Co-convergence and co-traces on [coToSET] *)
 
 Lemma co_empty_set_stable α : (∅ : gset P) ↛{ α }.
 Proof. destruct α; intros Imp; apply Imp; intros p mem; exfalso; set_solver. Qed.
@@ -426,4 +410,3 @@ Proof.
 Qed.
 
 End coSetLTSFacts.
-(* end hide *)

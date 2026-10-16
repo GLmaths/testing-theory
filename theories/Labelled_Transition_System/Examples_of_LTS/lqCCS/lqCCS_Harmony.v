@@ -34,7 +34,6 @@
     One hypothesis of the paper is used: processes are closed, so that
     substituting the outcome of a measurement in one component does not
     touch the others. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -42,7 +41,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition lqCCS_Semantics.
-(* begin hide *)
 Definition closed (P : proc) : Prop := fv P = [].
 
 Section Harmony.

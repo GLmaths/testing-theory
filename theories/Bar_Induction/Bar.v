@@ -30,8 +30,8 @@ From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import gLts StateTransitionSystems.
 
 From stdpp Require Import base countable gmap list.
-(* begin hide *)
-(* For proving that Bar-induction is admissible *)
+
+(** ****** For proving that Bar-induction is admissible *)
 From Stdlib.Logic Require ClassicalEpsilon.
 
 CoInductive infinite_stream A: Type :=
@@ -108,6 +108,7 @@ Section actual_bar_induction.
   [ClassicalEpsilon], hence there are two axioms used in the theorem below:
   constructive_indefinite_description and classical
    *)
+   
   Theorem actual_bar_induction: Q [].
   Proof using eventually_P Q_hereditary P_is_decidable P_implies_Q P.
     Import ClassicalEpsilon.
@@ -537,4 +538,3 @@ Section bar_int_ext.
     by apply extensional_implies_intensional_helper.
   Qed.
 End bar_int_ext.
-(* end hide *)

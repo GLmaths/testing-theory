@@ -43,14 +43,12 @@
     a program ([lqCCS_Program.v]) — silent steps keep the qubits owned, an
     emission on a qubit channel gives one away, a reception takes one; an
     operation or a measurement only acts on owned qubits. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program.
-(* begin hide *)
 (* ** Qubit terms *)
 
 Inductive qt : Type :=

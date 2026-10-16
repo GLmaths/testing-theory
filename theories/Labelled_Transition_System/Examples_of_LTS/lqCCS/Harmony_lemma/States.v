@@ -25,12 +25,10 @@
 (* * Quantum states, acted upon linearly by super-operators
 
     Shared by the state-level results: [Harmony], [Corollaries], [Kierner]. *)
-(* end hide *)
 
 From Stdlib Require Import List.
 From TestingTheory Require Import Lifted Paths.
 Import ListNotations.
-(* begin hide *)
 Class StAlg `{FinAlg} := {
   St : Type;
   szero : St;

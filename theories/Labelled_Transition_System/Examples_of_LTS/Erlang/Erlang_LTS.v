@@ -49,14 +49,12 @@
     Actions are [ExtAct (pid * val)]: [ActOut (p,v)] releases a message in
     transit to the environment (non-blocking), [ActIn (p,v)] is the reception
     of [v] by the process [p], which requires a matching clause (blocking). *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers gmultiset.
-From TestingTheory Require Import ActTau InputOutputActions VACCS Erlang_Syntax.
-(* begin hide *)
+From TestingTheory Require Import ActTau InputOutputActions VACCS.Language.LTS Erlang_Syntax.
 (* ** The program *)
 
 Class Erlang_Program := MkErlang_Program {

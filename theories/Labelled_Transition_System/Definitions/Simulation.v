@@ -24,13 +24,13 @@
    SOFTWARE.
 *)
 (* end hide *)
-
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 
 From stdpp Require Import base countable strings sets gmap.
 
 From TestingTheory Require Import gLts Bisimulation Termination Lts_OBA MultisetHelper ActTau.
-(* begin hide *)
+
 (* ** Similarity *)
 CoInductive similar `{@gLts A L H} `{@gLts B L H}  (a : A) (b : B) : Prop :=
 | smi_step : (forall (α : Labels L) a', a ⟶{α} a' -> exists b', b ⟶{α} b' /\ similar a' b') -> similar a b.

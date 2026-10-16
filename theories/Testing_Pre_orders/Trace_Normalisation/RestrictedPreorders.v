@@ -22,6 +22,7 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
@@ -29,9 +30,8 @@ From stdpp Require Import base decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act
      WeakTransitions coWeakTransition Termination Convergence coConvergence
      StateTransitionSystems InteractionBetweenLts Testing_Predicate
-     NormalForm Normalisation
+     Trace_Normalisation.NormalForm Normalisation
      DefinitionTI DefinitionTIco DefinitionAS DefinitionASco.
-(* begin hide *)
 (* * The alternative preorders restricted to the feedback-free traces
 
     Each of the four alternative preorders of the development quantifies over

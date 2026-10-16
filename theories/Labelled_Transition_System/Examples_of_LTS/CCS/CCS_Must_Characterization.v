@@ -27,15 +27,14 @@
 
 From stdpp Require Import gmap gmultiset.
 
-From TestingTheory Require Import VCCS_Must_Characterization DefinitionAS Equivalence Must
+From TestingTheory Require Import VCCS.Characterisations.Must_Characterisation DefinitionAS Equivalence Must
   ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
-  InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower VCCS_Instance.
+  InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower VCCS.Language.gLts_Instance.
 From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
-  TestSpecBridge VCCS_CoFiniteImage.
+  TestSpecBridge VCCS.Language.gLts_Instance.
 
 
 Section CCS_Must_Alt_Corollary.
-(* begin hide *)
 
 Local Instance CCS_Parameters : VCCS_Parameters :=
   { Channel := nat;
@@ -46,14 +45,12 @@ Corollary must_iff_acceptance_set_CCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> 
 Proof.
    eapply must_iff_acceptance_set_VCCS.
 Qed.
-(* end hide *)
 
 Corollary must_iff_acceptance_set_CCS_without_toFW (p q : proc) :
   p ⊑ₘᵤₛₜᵢ q <-> p ≼ₐₛ q.
 Proof.
   eapply must_iff_acceptance_set_VCCS_without_toFW.
 Qed.
-(* begin hide *)
 
 Corollary must_iff_tower_co_inductive_acceptance_CCS_without_toFW (p q : proc) :
   p ⊑ₘᵤₛₜᵢ q <-> ({[ p ]} : gset proc) ᶜᵒ≼ₐₛ ({[ q ]} : gset proc).
@@ -84,6 +81,5 @@ Corollary must_iff_co_acceptance_set_CCS_without_toFW (p q : proc) :
 Proof.
   eapply must_iff_co_acceptance_set_VCCS_without_toFW.
 Qed.
-(* end hide *)
 
 End CCS_Must_Alt_Corollary.

@@ -33,9 +33,9 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Coinduction Require Import all.
 
-From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Characterization
+From TestingTheory Require Import InputOutputActions ActTau Must VACCS.Characterisations.Must_Characterisation
   gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
-  InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
+  InteractionBetweenLts Testing_Predicate DefinitionAS VACCS.Language.LTS VACCS_Good VACCS.Language.gLts_Instance
   Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination
   ACCSInstance ACCS_Must_Characterization Coin_tower Simulation ForwarderConstruction
   SetLTSConstruction FiniteImageLTS Soundness.

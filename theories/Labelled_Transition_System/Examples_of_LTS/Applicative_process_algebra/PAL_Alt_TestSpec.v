@@ -22,13 +22,13 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Testing_Predicate Completeness
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi PAL_Alt_AbsAction PAL_Good PAL_Alt_Tests.
-(* begin hide *)
 (* * The tests of the alternative LTS of PAL satisfy the specifications of [Completeness]
 
    With [⋍ = cgr]:

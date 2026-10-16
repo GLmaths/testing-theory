@@ -28,10 +28,10 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS.
-(* begin hide *)
-(* * State Transition Systems *)
 
-(* Definition of a State Transition System (STS) *)
+(** *** State Transition Systems *)
+
+(** **** Definition of a State Transition System (STS) *)
 Class Sts (P: Type) := MkSts {
     sts_step: P → P → Prop;
     sts_state_eqdec: EqDecision P;
@@ -46,7 +46,7 @@ Class Sts (P: Type) := MkSts {
 #[global] Existing Instance sts_step_decidable.
 #[global] Existing Instance sts_performs_decidable.
 
-(* ** State Transition Systems are Labelled Transition Systems *)
+(** **** State Transition Systems are Labelled Transition Systems *)
 
 Definition istep `{gLts A} p q := p ⟶ q.
 
@@ -213,7 +213,6 @@ Section sts_executions.
   Qed.
 End sts_executions.
 
-
 Class CountableSts P `{Sts P} := MkCsts {
     csts_states_countable: Countable P;
     csts_next_states_countable: ∀ x, Countable (dsig (fun y => sts_step x y));
@@ -228,4 +227,3 @@ Proof.
   - exact clts_states_countable.
   - intros ?. apply clts_next_states_countable.
 Defined.
-(* end hide *)

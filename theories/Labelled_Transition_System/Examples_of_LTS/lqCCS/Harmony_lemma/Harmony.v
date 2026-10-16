@@ -27,12 +27,10 @@
     The configuration LTS ⟨p, ρ⟩ --λ--> ⟨x, K(ρ)⟩ is in bijection with the
     restricted parallel composition (p ∥ ρ)\L of a classical program LTS,
     which emits operations and receives outcomes, and a memory LTS. *)
-(* end hide *)
 
 From Stdlib Require Import List.
 From TestingTheory Require Import Lifted Paths States.
 Import ListNotations.
-(* begin hide *)
 Section Harmony.
 Context `{StAlg}.
 

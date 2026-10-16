@@ -29,9 +29,9 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable finite gmap list 
                         finite base decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau MultisetHelper ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain.
-(* begin hide *)
-(* * Separating code from memory *)
-(* ** Striping a process from its mailbox *)
+
+(** ****** Separating code from memory *)
+(** ****** Striping a process from its mailbox *)
 
 Reserved Notation "p ⟿{ m } q" (at level 30, format "p  ⟿{ m }  q").
 
@@ -44,7 +44,7 @@ where "p ⟿{ m } q" := (strip p m q).
 
 Notation "p ⟿⋍{ m } q" := (∃ r, p ⟿{m} r /\ r ⋍ q) (at level 30).
 
-(* ** Properties about strip *)
+(** ******* Properties about strip *)
 
 Lemma strip_eq `{gLtsOba P A} {e e' m} :
   e ⟿{m} e' -> ∀ r, r ⋍ e
@@ -485,4 +485,3 @@ Proof.
   - eapply lts_oba_mo_spec2 in H2. rewrite <- x in H2.
     eapply gmultiset_disj_union_inj_1 in H2. eauto. eassumption.
 Qed.
-(* end hide *)

@@ -27,20 +27,9 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
     coWeakTransition Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Non_Blocking_Chain
     MultisetLTSConstruction ForwarderConstruction May MayTestSpec DefinitionTI CompletenessTI DefinitionTIco
     SoundnessTIco CompletenessTIco.
-(* begin hide *)
-(* * The May preorder is co-trace inclusion
+(** ***** The May preorder is co-trace inclusion *)
 
-      [p ⊑ₘₐᵧ q  ↔  p ≼꜀ₒ₋ₜᵢ q]
-
-    Mirrors [EquivalenceTI.v]'s shape, but built entirely from the
-    "_co" chain ([DefinitionTIco.v]/[SoundnessTIco.v]/[CompletenessTIco.v]):
-    soundness needs nothing of the LTSs, completeness needs the
-    forwarder axioms in full, via [completeness_core_co] — a genuine
-    induction on [may], not a wrapper around the plain
-    [completeness_ti_fw]/[completeness_ti_fb]. This file never
-    imports [EquivalenceTI.v] and never calls its theorems. *)
-
-(* ** Equivalence, for forwarders *)
+(** ***** Equivalence, for forwarders *)
 
 Theorem equivalence_ti_co_trace_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -60,7 +49,7 @@ Proof.
   - eapply soundness_ti_co_fw.
 Qed.
 
-(* ** Equivalence, for feedback LTSs, through the forwarder construction *)
+(** ****** Equivalence, for feedback LTSs, through the forwarder construction *)
 
 Theorem equivalence_ti_co_trace_fb `{
     @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
@@ -85,7 +74,7 @@ Proof.
   - eapply soundness_ti_co_fb.
 Qed.
 
-(* ** Corollary: the induced equivalences coincide *)
+(** ****** Corollary: the induced equivalences coincide *)
 
 Corollary may_equiv_iff_same_cotraces `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
@@ -108,4 +97,3 @@ Proof.
     + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
     + eapply equivalence_ti_co_trace_fw. intros s hs. now eapply hsame.
 Qed.
-(* end hide *)

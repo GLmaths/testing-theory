@@ -22,13 +22,13 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics countable option list gmap.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS coFiniteImage InteractionBetweenLts
   InListPropHelper PAL_Syntax.
-(* begin hide *)
 (* * PAL with alternative labels
 
    An LTS on the terms of [PAL_Syntax] whose τ-transitions are those of

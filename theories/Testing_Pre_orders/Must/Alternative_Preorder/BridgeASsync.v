@@ -26,7 +26,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable finite gmap list.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation StateTransitionSystems
-  Testing_Predicate Must Subset_Act LabelAbstraction LabelAdmissible DefinitionAS.
+  Testing_Predicate Must Subset_Act Label_Abstraction.LabelAbstraction LabelAdmissible DefinitionAS.
 From TestingTheory Require Completeness CompletenessASsync.
 (* begin hide *)
 Section Test_bridges.

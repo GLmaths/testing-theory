@@ -28,7 +28,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Logic Require Import ProofIrrelevance. 
 From stdpp Require Import list finite gmap gmultiset.
-(* begin hide *)
+
 Lemma sig_eq {A} (P : A → Prop) (x y : sig P) :
   proj1_sig x = proj1_sig y → x = y.
 Proof.
@@ -96,4 +96,3 @@ Section in_list_finite.
   Defined.
 
 End in_list_finite.
-(* end hide *)

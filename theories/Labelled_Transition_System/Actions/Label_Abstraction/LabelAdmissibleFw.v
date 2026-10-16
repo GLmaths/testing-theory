@@ -21,14 +21,14 @@
    SOFTWARE.
 *)
 (* end hide *)
-
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable gmap gmultiset list.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
   InteractionBetweenLts MemAction InteractionUnion MemForwarder MultisetLTSConstruction ForwarderMem LiftMem
-  LabelAbstraction LabelAdmissible.
-(* begin hide *)
+  Label_Abstraction.LabelAbstraction LabelAdmissible.
+
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section Forwarder_coR.

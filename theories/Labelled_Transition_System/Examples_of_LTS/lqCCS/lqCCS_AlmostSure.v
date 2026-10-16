@@ -36,7 +36,6 @@
     *branch* steps [bstep], where a measurement is a non-deterministic choice
     of an outcome, weighted by [M_k(ρ)], and branches of zero weight are
     ignored. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -44,7 +43,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition.
-(* begin hide *)
 (* ** Sizes: every step makes a configuration smaller *)
 
 Fixpoint psize (P : proc) : nat :=

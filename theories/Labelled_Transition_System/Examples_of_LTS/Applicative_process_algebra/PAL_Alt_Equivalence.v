@@ -23,12 +23,12 @@
 (* end hide *)
 
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable.
 From TestingTheory Require Import ActTau gLts Bisimulation SyncActions Must DefinitionAS DefinitionASco SoundnessASco
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Phi PAL_Alt_AbsAction PAL_Alt_Congruence PAL_Good PAL_Must
   PAL_Alt_Completeness.
-(* begin hide *)
 
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 #[local] Hint Mode gLtsEq ! - - : typeclass_instances.

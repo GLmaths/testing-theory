@@ -39,7 +39,6 @@
     alphabet, outputs as parallel components ([out_par]), the process LTS and
     its axioms (output-buffered agents with feedback, finite non-blocking chains),
     so that the forwarder construction [toFW] applies. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -49,7 +48,6 @@ From TestingTheory Require Import Lifted Paths States lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Congruence lqCCS_LTS.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Non_Blocking_Chain Lts_FW.
 From TestingTheory Require Import InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction.
-(* begin hide *)
 (* ** The alphabet *)
 
 Inductive lact : Type :=

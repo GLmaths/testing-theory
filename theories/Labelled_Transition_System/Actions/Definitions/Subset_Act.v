@@ -24,36 +24,32 @@
 
 From stdpp Require Import gmap.
 From TestingTheory Require Import ActTau gLts SyncActions.
-(* begin hide *)
-(**************************Definition of a Subset of A *************************************)
+
+(** ****** Definition of a Subset of A *)
 
 Definition subset_of (A : Type) := A -> Prop.
 
-(*************************** Examples of Subset ***********************)
-(* end hide *)
+(** ******* Examples of Subset *)
 
-(** ** All actions of a process (ready-set) *)
+(** ******* All actions of a process (ready-set) *)
 Definition R `{gLts P A} (p : P) : subset_of A :=
   fun μ => p ⟶[μ].
-(* begin hide *)
 
-(* ** Blocking co-actions *)
-(* end hide *)
+(** ******* Blocking co-actions *)
 Definition coR `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (p : P) : subset_of Atest :=
   fun μ1 => exists μ2, p ⟶[μ2] /\ sync μ2 μ1 /\ blocking μ1.
-(* begin hide *)
 
-(* ** All processes accepting an action *)
+(** ******* All processes accepting an action *)
 Definition 𝐏 `{gLts P A} (μ : A) : subset_of P :=
   fun p => p ⟶[μ].
 
-(* ** All processes accepting a co-action *)
+(** ******* All processes accepting a co-action *)
 Definition co𝐏 `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (μ : Atest) : subset_of P :=
   fun p => coR p μ.
 
-(******************* Instantiations to use the usual notation of sets ***********************)
+(** ******* Instantiations to use the usual notation of sets *)
 
 Definition Union_of_Act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a \/ S' a.
@@ -65,9 +61,8 @@ Definition Empty_of_Act {A : Type} (x : A) : Prop := False.
 
 Definition Difference_of_act {A :Type} (S : subset_of A) (S' : subset_of A) (a : A)  : Prop := 
         S a /\ (~ (S' a)).
-(* Definition Singleton_of_Act {A : Type} (x : A) : Prop := forall y : A , x = y. *)
 
-(* Instances to use sets notation/properties from stdpp lib *)
+(** ******* Instances to use sets notation/properties from stdpp lib *)
 #[global] Instance Union_of_Actions {A : Type} : Union (@subset_of A).
 exact Union_of_Act. Defined.
 #[global] Instance Empty_Actions {A : Type} : Empty (@subset_of A).
@@ -106,7 +101,7 @@ repeat split; try set_solver.
 repeat split ; try set_solver. Defined.
 
 
-(*** Definition of map for predicate-set ***)
+(** ****** Definition of map for predicate-set *)
 
 Definition map_set {A : Type} {B : Type} (Γ : A -> B) (S : subset_of A)  : subset_of B :=
   fun pre_μ => ∃ μ', μ' ∈ S /\ pre_μ = (Γ μ').
@@ -126,11 +121,6 @@ Proof. intros h y (μ & hμ & ->). exists μ. split; [eapply h, hμ | reflexivit
 
 Definition coR_map {A B : Type} `{gLts P A} (Γ : A -> B) (p : P) := ⌈ Γ ⌉ (coR p).
 
-(*
-Lemma compose_map {A B C : Type} μ S (Γ1 : A -> B) (Γ2 : B-> C) :
-      μ ∈ ⌈ (fun x => Γ2 (Γ1 x)) ⌉ S <-> μ ∈ map_set (Γ2 (⌈ Γ1 ⌉ S)). *)
-
 Lemma coR_intro `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   (p : P) (μ : Aproc) (β : Atest) : p ⟶[μ] → sync μ β → blocking β → β ∈ coR p.
 Proof. intros ha hs hb. by exists μ. Qed.
-(* end hide *)

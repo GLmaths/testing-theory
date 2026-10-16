@@ -34,10 +34,10 @@ From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimu
 
 Class FiniteNonBlockingChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P A H gLtsEqP} :=
   MkOba {
-      (* Multiset of non-blocking action from a process *)
+      (** ******* Multiset of non-blocking action from a process *)
       lts_oba_mo (p : P) : gmultiset A;
 
-      (* Axioms on multiset of non-blocking action*)
+      (** ******* Axioms on multiset of non-blocking action*)
       lts_oba_mo_spec_bis1 p1 η p2 :
       non_blocking η → p1 ⟶[ η ] p2 
         → η ∈ lts_oba_mo p1; 
@@ -45,15 +45,13 @@ Class FiniteNonBlockingChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsO
       η ∈ lts_oba_mo p1 
         → {p2 | (non_blocking η /\ p1 ⟶[ η ] p2 ) } ; 
 
-      (* Finite mailbox *)
+      (** ******* Finite mailbox *)
       lts_oba_mo_spec2 p η : 
       forall q, non_blocking η → p ⟶[ η ] q 
         → lts_oba_mo p = {[+ η +]} ⊎ lts_oba_mo q;
     }.
-(* begin hide *)
 
-
-(* *** Relationship between mailbox and non-blocking actions *)
+(** *** Relationship between mailbox and non-blocking actions *)
 
 Lemma lts_oba_mo_non_blocking_spec1 `{FiniteNonBlockingChain_LtsOba P A} {p η} : 
   η ∈ lts_oba_mo p → non_blocking η.
@@ -80,7 +78,7 @@ Proof.
 Qed.
 
 
-(* *** Properties on LTS with OBA axioms *)
+(** *** Properties on LTS with OBA axioms *)
 
 Lemma lts_oba_mo_eq `{FiniteNonBlockingChain_LtsOba P A} {p q} :
   p ⋍ q → lts_oba_mo p = lts_oba_mo q.
@@ -113,4 +111,3 @@ Proof.
     { eapply gmultiset_disj_union_inj_1. etrans; eassumption. }
     eapply gmultiset_eq_pop_l. eapply IHhmo. eassumption. now symmetry. assumption. assumption.
 Qed.
-(* end hide *)

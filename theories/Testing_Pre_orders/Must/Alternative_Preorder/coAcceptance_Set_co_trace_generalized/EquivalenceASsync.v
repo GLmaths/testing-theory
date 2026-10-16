@@ -49,7 +49,7 @@ From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionU
   DefinitionASrel CompletenessASsync SoundnessASsync
   coWeakTransition coConvergence
   Lts_Finite_Non_Blocking_Chain MultisetLTSConstruction ForwarderMem LiftMem
-  LabelAbstraction LabelAdmissible LabelAdmissibleFw.
+  Label_Abstraction.LabelAbstraction LabelAdmissible LabelAdmissibleFw.
 (* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 

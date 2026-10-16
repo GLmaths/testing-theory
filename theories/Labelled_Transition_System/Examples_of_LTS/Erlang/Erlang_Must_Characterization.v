@@ -32,7 +32,6 @@
 
     What is missing here is only the interaction between an Erlang system (or
     an Erlang forwarder) and an observer. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -49,9 +48,8 @@ From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS
   DefinitionCI EquivalenceCI Coin_tower
-  VACCS VACCS_Instance VACCS_Good VACCS_CoFiniteImage VACCS_ta_tc_gen
+  VACCS.Language.LTS VACCS.Language.gLts_Instance VACCS_Good VACCS.Testing.ta_tc_gen
   Erlang_Syntax Erlang_LTS Erlang_Instance Erlang_LabelAbstraction Erlang_Forwarder.
-(* begin hide *)
 (* [PreActActionForFW] of [DefinitionAS.v] — the lift of an abstraction to the
     forwarder, whose process-side obligation is [Admitted] — is taken out of
     instance search: [Erl_AbsAction_FW] below replaces it, so that nothing here

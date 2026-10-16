@@ -27,7 +27,6 @@
     What is left for [toFW] and for the co-trace characterisation: the
     co-finite-image condition and the interaction between a forwarder and a
     test. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -38,7 +37,6 @@ From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
   FiniteImageLTS coFiniteImage
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   Erlang_Syntax Erlang_LTS Erlang_Instance.
-(* begin hide *)
 (* ** A finite image is a co-finite image
 
     Generic: with a unique dual, [∃ α', dual α' α ∧ p ⟶[α'] q] is [p ⟶[co α] q],

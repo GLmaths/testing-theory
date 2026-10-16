@@ -31,7 +31,7 @@ From TestingTheory Require Import ActTau.
 
 
 
-(* ** LTSs with non-blocking actions [gLts] *)
+(** ** LTSs with non-blocking actions [gLts] *)
 
 
 Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
@@ -67,7 +67,7 @@ Notation "p ↛[ μ ]" := (¬ lts_performs p (ActExt μ)) (at level 30, format "
 
 
 
-(* ** Properties on `gLts`*)
+(** ** Properties on `gLts`*)
 
 
 Definition lts_exists_duo_decidable : 
@@ -131,4 +131,3 @@ Lemma BlockingAction_are_not_non_blocking `{H : ExtAction A} {η β} :
 Proof.
   intros nb1 nb2 eq. rewrite eq in nb2. contradiction.
 Qed.
-

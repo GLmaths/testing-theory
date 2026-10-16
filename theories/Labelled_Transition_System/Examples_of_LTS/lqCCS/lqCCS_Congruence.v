@@ -39,14 +39,12 @@
     The paper asks congruent processes to be typed by the same [Σ].  Our
     semantics does not depend on the qubits owned ([lqCCS_Program.v]), so
     no such side condition is needed: [≡] is a bisimulation on all terms. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets relations.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ.
-(* begin hide *)
 (* ** Free channels *)
 
 Definition prefix_chans (α : prefix) : list chan :=

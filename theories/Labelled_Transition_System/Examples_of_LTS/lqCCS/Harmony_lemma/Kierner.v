@@ -36,12 +36,10 @@
     States are kept unnormalised: along a path, (probability) × (normalised
     final state) is the unnormalised final state, and the unnormalised
     states are a function of the normalised history. *)
-(* end hide *)
 
 From Stdlib Require Import List ChoiceFacts.
 From TestingTheory Require Import Lifted Paths States.
 Import ListNotations.
-(* begin hide *)
 (* Measurement outcomes can be recovered from states (projective measurements). *)
 Class KAlg `{StAlg} := {
   St_eq_dec (a b : St) : {a = b} + {a <> b};

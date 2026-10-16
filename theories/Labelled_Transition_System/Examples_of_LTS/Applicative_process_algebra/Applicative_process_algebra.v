@@ -26,12 +26,12 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable option gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
   FiniteImageLTS coFiniteImage InteractionBetweenLts InListPropHelper PAL_Syntax.
-(* begin hide *)
 (* * PAL: a Process Algebra based on Linda
 
     A [gLts] formalisation of the LTS from:

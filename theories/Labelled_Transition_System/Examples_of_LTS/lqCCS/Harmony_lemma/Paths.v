@@ -28,12 +28,10 @@
     terminal paths of length ≤ n from [p], of the composition of their Kraus
     decorations.  The enumeration [enum σ n p] lists exactly these paths,
     each once ([enum_spec], [enum_nodup]). *)
-(* end hide *)
 
 From Stdlib Require Import List Arith Lia FinFun ChoiceFacts.
 From TestingTheory Require Import Lifted.
 Import ListNotations.
-(* begin hide *)
 (* Finite branching: outcomes are enumerated, [+] exists, and [br] is the
     sum of its branches precomposed with the Kraus maps [ℳ_k]. *)
 Class FinAlg `{Alg} := {

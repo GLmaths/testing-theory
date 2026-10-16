@@ -27,33 +27,33 @@
     The converse of [SoundnessAx.v], for the [Static] fragment. The
     plan, and the material it rests on:
 
-    - [full_normalize] ([VCCS_NormalForm.v]) puts both sides into
+    - [full_normalize] ([Axiomatic/NormalForm.v]) puts both sides into
       [tau_nf] shape — an internal choice of *stable* guarded sums,
       Hennessy's [⊕ᵢ Σ_{a ∈ Aᵢ} a.p(a)].
-    - [coR_abs_incl_iff] ([VCCS_ReadySet.v]) turns [≼ₐₛ]'s abstracted
+    - [coR_abs_incl_iff] ([Axiomatic/ReadySet.v]) turns [≼ₐₛ]'s abstracted
       ready-set inclusion, for two stable sums, into a plain structural
       fact about which channels they offer.
     - The derivation is then assembled from [ax_int_l]/[_r] and
       [ax_int_glb] on the [⊕] layer, [ax_choice_stable] +
       [ax_input]/[ax_output] on the stable layer, and the two closure
       laws for acceptance families: union closure ([ax_int_below_ext],
-      derived, [VCCS_Canonical.v]) and convex closure ([ax_convex],
+      derived, [Axiomatic/Canonical.v]) and convex closure ([ax_convex],
       primitive, [DefinitionAxiomatic.v]).
 
     This file currently holds the trace-shift step, which is what lets
     the construction recurse into continuations. *)
 (* end hide *)
-
+(* begin hide *)
 From Stdlib Require Import List Permutation PeanoNat Lia.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base sets gmap.
-From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
+From TestingTheory Require Import VCCS.Language.LTS VCCS.Language.gLts_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
-  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization
-  VCCS_Expansion VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet
-  DefinitionAxiomatic VCCS_Canonical VCCS_NormalForm SoundnessAx.
-(* begin hide *)
+  Subset_Act DefinitionAS Convergence VCCS.Axiomatic.Static VCCS.Characterisations.Must_Characterisation
+  VCCS.Axiomatic.Expansion VCCS.Axiomatic.ResNormalize VCCS.Axiomatic.Precongruence VCCS.Axiomatic.ReadySet
+  VCCS.Axiomatic.DefinitionAxiomatic VCCS.Axiomatic.Canonical VCCS.Axiomatic.NormalForm VCCS.Axiomatic.SoundnessAx.
+
 Section CompletenessAx.
 
 Context `{VP : VCCS_Parameters}.
@@ -79,7 +79,7 @@ Context `{VP : VCCS_Parameters}.
     reaches is one [q] reaches after [a]); the [p]-side needs the [iff],
     since the witness comes back from [p] and has to be replayed on
     [pa]. [cond1] is free: [Static] processes converge on every trace
-    ([Static_converge], [VCCS_Static.v]). *)
+    ([Static_converge], [Axiomatic/Static.v]). *)
 
 Lemma bhv_pre_shift : forall (p q pa qa : proc) (a : ExtAct TypeOfActions),
   Static p -> Static qa ->
@@ -121,7 +121,7 @@ Qed.
     than by recursion on a [tau_nf] derivation, so that it is an ordinary
     [Fixpoint] usable inside other definitions; the [𝛕]-branches sit two
     constructors deep, which the guard checker accepts (same shape as
-    [tau_nfB], [VCCS_Canonical.v]). Since it inspects [gStableB M] before
+    [tau_nfB], [Axiomatic/Canonical.v]). Since it inspects [gStableB M] before
     [M]'s own constructor, [simpl] cannot unfold it at a variable —
     [leaves_eq] is the rewriting equation to use instead, and every
     proof below leads with it. *)
@@ -214,7 +214,7 @@ Proof. intros M HM. apply rebuild_gStatic. apply leaves_gStatic. exact HM. Qed.
 
 (* The external sum of all leaves is derivably above the normal form
     too — this is union closure of the acceptance family, and it is
-    where [ax_int_below_ext] ([VCCS_Canonical.v]) earns its keep. The
+    where [ax_int_below_ext] ([Axiomatic/Canonical.v]) earns its keep. The
     [⊕]-congruence step needs [ax_choice_tau] *twice*, with a
     commutation in between, because the rule only ever rewrites the
     leftmost summand. *)
@@ -288,7 +288,7 @@ Qed.
     [(X + Y) + Z] with the same [X] as the first branch. In practice all
     that is known is a *permutation* of summands, so this is the usable
     form — the analogue of [ax_collapse_*_anywhere] and
-    [ax_tau_sep_anywhere] ([VCCS_Canonical.v]) for the convexity rule.
+    [ax_tau_sep_anywhere] ([Axiomatic/Canonical.v]) for the convexity rule.
 
     Unlike those, no [𝟘]-padding mismatch arises: [rebuild_app] absorbs
     each [rebuild]'s trailing [𝟘] on both sides of the equation, so the
@@ -1230,7 +1230,7 @@ Qed.
 
     An action is a key [(c, None)] (input on [c]) or [(c, Some v)]
     (output of [v] on [c]) — the same granularity as [gact]
-    ([VCCS_Canonical.v]), which is exactly the level at which
+    ([Axiomatic/Canonical.v]), which is exactly the level at which
     canonicity was stated after the correction from label-level to
     summand-level. *)
 
@@ -1755,7 +1755,7 @@ Qed.
 (* ** Iterating the merge
 
     Search and recursion, in the same shape as [canonicalize]
-    ([VCCS_Canonical.v]) but on the association list, where the measure
+    ([Axiomatic/Canonical.v]) but on the association list, where the measure
     is simply [length] — each merge turns two entries into one — and the
     invariant carried through is [kmem]: which continuations sit under
     which key, as a *set*. That is all the caller needs, since

@@ -45,7 +45,6 @@
 
     The states of the memory are assumed countable (e.g. amplitudes in a
     countable field), as the framework asks of the states of a process. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -63,7 +62,6 @@ From TestingTheory Require Import ActTau InListPropHelper
   Must MustE Lift Testing_Predicate
   DefinitionAS Completeness Equivalence
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge.
-(* begin hide *)
 (* The lift of an abstraction to the forwarder in [DefinitionAS.v] rests on an
     [Admitted] obligation; as for Erlang, it is replaced below. *)
 Remove Hints PreActActionForFW FinitaryPreActActionForFW : typeclass_instances.

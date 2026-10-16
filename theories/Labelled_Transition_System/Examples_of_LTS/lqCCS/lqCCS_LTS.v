@@ -42,7 +42,6 @@
 
     Both LTSs are given by their lists of successors, so that they are
     decidable by construction. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -53,7 +52,6 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition l
   lqCCS_Congruence.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   InteractionBetweenLts.
-(* begin hide *)
 (* ** LTSs given by their successors *)
 
 Definition list_witness {A} (l : list A) (Hl : l ≠ []) : { x | x ∈ l }.

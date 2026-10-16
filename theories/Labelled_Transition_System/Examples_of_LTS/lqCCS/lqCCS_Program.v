@@ -52,14 +52,12 @@
     associativity included, is then a bisimulation on all terms, and the
     output-buffered axioms hold.  Typing can be added later as a
     hypothesis. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS_Syntax.
-(* begin hide *)
 (* ** Schedulers and labels *)
 
 Inductive Sched : Type :=

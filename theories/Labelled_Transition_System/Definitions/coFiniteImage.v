@@ -28,31 +28,8 @@ From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau gLts SyncActions Bisimulation Termination
   WeakTransitions Convergence Lts_OBA_FB FiniteImageLTS coWeakTransition coConvergence
   StateTransitionSystems.
-(* begin hide *)
-(* ** Co-Finite Image LTSs
 
-    [coFiniteImagegLts] supplies, for every external action [α], finiteness of
-    the set of states reachable by *some* action dual to [α] — exactly the
-    ingredient needed to enumerate one [cowt] step — plus, natively (not by
-    embedding [FiniteImagegLts]), [Countable P] and finiteness of plain
-    tau-successors, which is all [cowt]'s nil case actually needs (it
-    coincides with [wt]'s nil case, [cowt_iff_wt_nil]). This makes the class
-    fully self-sufficient: `!coFiniteImagegLts P A` alone is enough
-    everywhere below, [FiniteImagegLts P A] is never required as a sibling,
-    and there is only ever *one* [Countable P] instance in scope — no risk of
-    it resolving to two non-judgmentally-equal [gset P] types the way an
-    independently-supplied [FiniteImagegLts P A] sibling could. *)
-(* [dsig] needs a [Decision] instance for the predicate it packages. Rather
-   than deriving one from the canonical co-action / [unique_nb] (which would
-   smuggle that machinery back in), we follow the same style as [gLts]'s own
-   [lts_step_decidable] and [Prop_of_Inter]'s [inter_dec]
-   (InteractionBetweenLts.v): decidability of the atomic relation the class
-   is built on is simply *postulated* as a field, to be discharged by whoever
-   instantiates the class for a concrete LTS. *)
-(* Two alphabets: the process over [Aproc], the trace over [A], linked by
-   [sync] — on one alphabet, [sync] is [dual].  [coFiniteImagegLts P A]
-   keeps naming the trace alphabet [A]; the process side is found by
-   instance search. *)
+(* ****** Co-Finite Image LTSs *)
 Class coFiniteImagegLts (P A : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp}
   {Ht : ExtAction A} {SA : SyncAction Aproc A} :=
   MkCoFlts {
@@ -67,22 +44,6 @@ Class coFiniteImagegLts (P A : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLts
 #[global] Existing Instance cofolts_next_states_decidable.
 #[global] Existing Instance cofolts_next_states_finite.
 
-(* *** [coFiniteImagegLts] implies [CountablegLts] — mirrors
-    [FiniteImageLTS.v]'s [finite_countable_lts] ([FiniteImagegLts P A ->
-    CountablegLts P A]), sourced from [coFiniteImagegLts] instead: this is
-    what lets a bare [!coFiniteImagegLts P A] context satisfy
-    [StateTransitionSystems.CountableSts]/[Bar.v]'s bar-induction
-    machinery (via [csts_of_clts]), without needing the (structurally
-    unavailable, on the co side) full [FiniteImagegLts P A].
-
-    The literal-[α] successor set [{q | p⟶[α]q}] isn't itself one of
-    [coFiniteImagegLts]'s fields (only the *dual*-image at [α] is), but it
-    embeds into the dual-image at [co α]: any [q] with [p⟶[α]q] witnesses
-    membership there via [dual α (co α)] ([exists_dual] alone — no
-    [unique_nb] needed), and that dual-image set *is* [Finite]
-    ([cofolts_next_states_finite]) —
-    hence the literal set is too, as a decidable subtype of a finite type,
-    and [Finite -> Countable] ([finite_countable]) finishes it off. *)
 #[global] Instance CountablegLts_of_coFiniteImagegLts `{H : ExtAction A} `{gLtsP : !gLts P H}
   `{!coFiniteImagegLts P A} : CountablegLts P A.
 Proof.
@@ -100,16 +61,10 @@ Defined.
 
 Section coFiniteImage_sets.
 
-(* Two alphabets throughout: the empty co-trace does not tell the trace
-   alphabet, so it is fixed here once and for all. *)
 Context `{gLtsP : @gLts P Aproc Hp} `{Ht : ExtAction A} `{SA : !SyncAction Aproc A}.
 Context `{CFI : !coFiniteImagegLts P A}.
 
-(* *** Tau-set
-
-    Mirrors [lts_tau_set]/[lts_tau_set_spec] (FiniteImageLTS.v) verbatim,
-    sourced from [coFiniteImagegLts]'s [cofolts_tau_next_states_finite]
-    instead of [FiniteImagegLts]. *)
+(*** ******** Tau-set *)
 Definition cowt_tau_set p : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶ p')).
 
@@ -124,18 +79,7 @@ Proof.
     eauto. eapply elem_of_enum.
 Qed.
 
-(* *** Tau-successors of a whole *set*
-
-    Mirrors [lts_tau_set_from_pset]/[_ispec] (FiniteImageLTS.v) verbatim,
-    sourced from [cowt_tau_set] (hence [coFiniteImagegLts]'s own
-    [cofolts_tau_next_states_finite]) instead of [FiniteImagegLts]/
-    [lts_tau_set]. Lets any [!coFiniteImagegLts P A]-only context build the
-    SET-level internal-reduction machinery natively, with no need to derive
-    [FiniteImagegLts P A] (and hence route through
-    [FiniteImageLTS.finite_countable_lts]/[StateTransitionSystems]) just
-    for the tau-only part — the [lts_tau_set_from_pset_spec]/[spec1]/
-    [spec2] statements themselves are already generic (bare [Countable P]),
-    so no new spec vocabulary is needed either. *)
+(** ****** Tau-successors of a whole *set* *)
 Definition cowt_tau_set_from_pset (ps : gset P) : gset P :=
   ⋃ (map (fun p => list_to_set (cowt_tau_set p)) (elements ps)).
 
@@ -157,12 +101,6 @@ Proof.
     + eapply cowt_tau_set_spec in l. multiset_solver.
 Qed.
 
-(* *** [cowt] on the empty trace is exactly [wt] on the empty trace *)
-
-(* Mirrors [wt_set_nil] (FiniteImageLTS.v) verbatim, sourced from
-   [coFiniteImagegLts]'s own [cofolts_tau_next_states_finite]/
-   [cofolts_states_countable] fields instead of [FiniteImagegLts], so this
-   cluster never needs [FiniteImagegLts P A] as a sibling assumption. *)
 Fixpoint cowt_set_nil (p : P) (t : p ⤓) : gset P :=
   let '(tstep _ f) := t in
   let k q := cowt_set_nil (`q) (f (`q) (proj2_dsig q)) in
@@ -221,7 +159,7 @@ Definition cowt_set_nil_fin
   (p : P) (ht : p ⤓) : Finite (@dsig P (fun q => p ⟹ᶜᵒ q) (cowt_nil_set_dec p ht)) :=
   cowt_set_nil_fin_aux p ht (cowt_nil_set_dec p ht).
 
-(* *** The set of states reachable by a single co-weak action *)
+(** ******* The set of states reachable by a single co-weak action *)
 
 Definition cowt_extaction_set p μ : list P :=
   map proj1_sig (enum $ dsig (fun q => exists μ', sync μ' μ /\ p ⟶[μ'] q)).
@@ -313,7 +251,7 @@ Definition cowt_set_mu_fin
   Finite (@dsig P (fun q => p ⟹ᶜᵒ{μ} q) (cowt_mu_set_dec p μ s hcocnv)) :=
   cowt_mu_set_fin_aux p μ s hcocnv (cowt_mu_set_dec p μ s hcocnv).
 
-(* *** The set of states reachable along a whole co-weak trace *)
+(*** ******* The set of states reachable along a whole co-weak trace *)
 
 Fixpoint coreachable_states
   (p : P) (s : trace A) (hcocnv : p ⇓ᶜᵒ s) : gset P :=
@@ -378,13 +316,6 @@ Qed.
 Definition coreachable_states_fin
   (p : P) s (hcocnv : p ⇓ᶜᵒ s) : Finite (@dsig P (fun q => p ⟹ᶜᵒ[s] q) (coreachable_states_dec p s hcocnv)) :=
   coreachable_states_fin_aux p s hcocnv (coreachable_states_dec p s hcocnv).
-
-(* *** The set of stable states reachable along a whole co-weak trace
-
-    Mirrors [wt_nil_stable_set] (FiniteImageLTS.v) verbatim, sourced from
-    [coFiniteImagegLts] instead of [FiniteImagegLts] — like [cowt_set_nil],
-    it only needs [⟶]/[⟹]/[⤓], and [cowt]'s nil case coincides with [wt]'s
-    ([cowt_iff_wt_nil]). *)
 
 Lemma cocnv_cowt_s_terminate
   (p q : P) s (hcocnv : p ⇓ᶜᵒ s) : p ⟹ᶜᵒ[s] q -> q ⤓.
@@ -515,12 +446,6 @@ Proof.
     eapply cowaiting_states_spec2. split; eauto with mdb.
 Qed.
 
-(* *** The set of states a whole *set* [P] reaches via a single co-weak
-    action — mirrors [wt_set_from_pset_spec1]/[spec2]/[spec]
-    (FiniteImageLTS.v's "from_pset" section), packaging the dual directly
-    into [⟹ᶜᵒ{μ}] (a single [μ], no separate [dual μ1 μ2] premise) instead of
-    the two-label [wt_set_from_pset_spec1 ps [μ1] qs] + [dual μ1 μ2] style. *)
-
 Definition cowt_set_from_pset_spec1 `{Countable P} 
   (ps : gset P) (μ : A) (qs : gset P) :=
   forall q, q ∈ qs -> exists p, p ∈ ps /\ p ⟹ᶜᵒ{μ} q.
@@ -533,10 +458,6 @@ Definition cowt_set_from_pset_spec `{Countable P}
   (ps : gset P) (μ : A) (qs : gset P) :=
   cowt_set_from_pset_spec1 ps μ qs /\ cowt_set_from_pset_spec2 ps μ qs.
 
-(* *** A concrete witness set for [cowt_set_from_pset_spec] — mirrors
-    [wt_s_set_from_pset]/[wt_s_set_from_pset_ispec] (FiniteImageLTS.v)
-    verbatim, restricted to a single action [μ] (so it is sourced from
-    [cowt_set_mu] instead of the general-trace [reachable_states]). *)
 
 Fixpoint cowt_s_set_from_pset_mu_xs
   (ps : list P) μ (hcocnv : forall p, p ∈ ps -> p ⇓ᶜᵒ [μ]) : gset P :=
@@ -599,4 +520,3 @@ Proof.
 Qed.
 
 End coFiniteImage_sets.
-(* end hide *)

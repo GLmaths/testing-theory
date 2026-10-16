@@ -21,11 +21,11 @@
    SOFTWARE.
 *)
 (* end hide *)
-
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionUnion Bisimulation WeakTransitions Termination.
-(* begin hide *)
+
 Section SyncMem.
 
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.

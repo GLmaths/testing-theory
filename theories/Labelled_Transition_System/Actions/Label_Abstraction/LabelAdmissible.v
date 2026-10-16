@@ -21,12 +21,12 @@
    SOFTWARE.
 *)
 (* end hide *)
-
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable gmap.
-From TestingTheory Require Import ActTau gLts SyncActions Subset_Act LabelAbstraction LabelKernel.
-(* begin hide *)
+From TestingTheory Require Import ActTau gLts SyncActions Subset_Act Label_Abstraction.LabelAbstraction LabelKernel.
+
 Class LA_admissible (P T : Type) {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp}
   {A : Type} {H : ExtAction A} {gLtsT : gLts T H} {SA : SyncAction Aproc A}
   (R : relation A) :=

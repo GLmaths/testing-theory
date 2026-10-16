@@ -38,16 +38,14 @@
     proof is reused as it stands; [abstraction_prog_spec] is trivial because
     [𝝳ᴠᴀᴄᴄꜱ] is the identity — which is also why the [Admitted] instance
     [PreActActionForFW] of [DefinitionAS.v] is not needed here. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation
-  Lts_OBA Subset_Act DefinitionAS VACCS VACCS_Instance
+  Lts_OBA Subset_Act DefinitionAS VACCS.Language.LTS VACCS.Language.gLts_Instance
   Erlang_Syntax Erlang_LTS Erlang_Instance.
-(* begin hide *)
 Section Erlang_LabelAbstraction.
 
 Context `{EP : Erlang_Program}.

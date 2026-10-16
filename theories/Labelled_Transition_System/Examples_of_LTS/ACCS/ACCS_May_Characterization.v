@@ -27,20 +27,20 @@ From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   Testing_Predicate May DefinitionTI MayTestSpec EquivalenceTI InputOutputActions
   DefinitionTIco EquivalenceTIco
   ForwarderConstruction MultisetLTSConstruction Lts_OBA_FB Lts_Finite_Non_Blocking_Chain
-  FiniteImageLTS VACCS_Instance VACCS_Good VACCS_test_trace_gen_may
-  VACCS_May_Characterization.
+  FiniteImageLTS VACCS.Language.gLts_Instance VACCS_Good VACCS.Testing.test_trace_gen_may
+  VACCS.Characterisations.May_Characterisation.
 
-Import VACCS.
+Import VACCS.Language.LTS.
 (* begin hide *)
 (* * The May preorder is trace inclusion, for ACCS
 
     ACCS is VACCS with a trivial [Value] — direct specialisation of
-    [VACCS_May_Characterization.v], exactly as [ACCS_Must_Characterization.v]
+    [VACCS/Characterisations/May_Characterisation.v], exactly as [ACCS_Must_Characterization.v]
     specialises the Must side. *)
 
 Section ACCS_May_Corollary.
 
-Local Instance ACCS_Parameters : VACCS.VACCS_Parameters :=
+Local Instance ACCS_Parameters : LTS.VACCS_Parameters :=
   { Channel := nat;
     Value := unit;
     O := tt}.

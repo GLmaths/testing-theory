@@ -35,14 +35,10 @@ From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
     WeakTransitions StateTransitionSystems Convergence Termination ActTau.
-(* begin hide *)
-(************************************** Interaction between two LTS **************************************)
 
-(* Pre-requirements for the interaction
+(** ******* Interaction between two LTS *)
 
-   The two LTSs may have different alphabets, [A1] and [A2]; [inter] says
-   which of their actions meet.  The one-alphabet development is the case
-   [A1 = A2 = A], with [inter = dual]. *)
+(* Pre-requirements for the interaction *)
 Class Prop_of_Inter (P1 P2 A1 A2 : Type) (inter : A1 -> A2 -> Prop)
   `{@gLts P1 A1 H1} `{@gLts P2 A2 H2} :=
   MkProp_of_Inter {
@@ -76,7 +72,7 @@ Class Prop_of_Inter (P1 P2 A1 A2 : Type) (inter : A1 -> A2 -> Prop)
 #[global] Existing Instance inter_dec.
 
 
-(* Definition of the transition *)
+(** ****** Definition of the transition *)
 Inductive inter_step `{M12 : Prop_of_Inter P1 P2 A A inter}
             : P1 * P2 → Labels A → P1 * P2 → Prop :=
 | ParLeft α a1 a2 b (l : a1 ⟶{α} a2) : inter_step (a1, b) α (a2, b)
@@ -839,6 +835,8 @@ Definition inter_lts_performs `{Prop_of_Inter S1 S2 A A}
     | _ => False
     end.
 
+(* begin hide *)
+
 (* The labelled composition only makes sense on one alphabet. *)
 #[global] Instance inter_lts
   `(inter : A -> A -> Prop) {S1 S2 : Type} {H : ExtAction A} {M1 : gLts S1 H} {M2 : gLts S2 H}
@@ -877,6 +875,8 @@ Proof.
          right; right; right. by rewrite Hccl.
 Defined.
 
+(* end hide *)
+
 #[global]
 Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!gLts S1 H} `{!gLts S2 H} 
 `{M1: !CountablegLts S1 A} 
@@ -888,5 +888,3 @@ Proof.
   - intros x α. apply sig_countable. intros y.
     destruct (decide (bool_decide (x ⟶{α} y))); [left | right]; done.
 Qed.
-
-(* end hide *)

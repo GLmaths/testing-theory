@@ -22,12 +22,12 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
-From TestingTheory Require Import ActTau gLts Subset_Act LabelAbstraction PAL_Syntax PAL_Alt_LTS.
-(* begin hide *)
+From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL_Syntax PAL_Alt_LTS.
 (* * The abstraction 𝝳 of the co-actions of PAL
 
    The counterpart of [Φ] ([PAL_Alt_Phi.v]) for [≈ᴘʀᴏ]: a label [μ] is seen

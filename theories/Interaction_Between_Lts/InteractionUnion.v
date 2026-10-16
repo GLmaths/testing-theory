@@ -21,11 +21,11 @@
    SOFTWARE.
 *)
 (* end hide *)
-
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts UnionAction.
-(* begin hide *)
+
 Definition ExtAction_sum {A1 A2 : Type} `{H1 : ExtAction A1} `{H2 : ExtAction A2} : ExtAction (A1 + A2) :=
   @ExtAction_union A1 A2 H1 H2 (λ _ _, False) (λ _ _, False_dec) (λ _ _ f, False_rect _ f).
 

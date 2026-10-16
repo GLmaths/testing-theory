@@ -28,11 +28,9 @@
     Everything is stated over an abstract ω-cpo of super-operators [Alg],
     with measurements having finitely many outcomes.  Main result:
     [adequacy]. *)
-(* end hide *)
 
 From Stdlib Require Import List Arith Lia ChoiceFacts.
 Import ListNotations.
-(* begin hide *)
 (* ** Abstract domain of super-operators *)
 
 Class Ord := { T : Type; le : T -> T -> Prop }.

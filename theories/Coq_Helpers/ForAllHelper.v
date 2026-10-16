@@ -28,7 +28,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable finite gmultiset.
-(* begin hide *)
+
 Inductive Forall2 {A : Type} {B : Type} (P : A → B → Prop) : list A → list B → Prop :=
     Forall2_nil : Forall2 P [] [] 
     | Forall2_cons : ∀ (x : A) (y : B) (la : list A) (lb : list B), P x y → Forall2 P la lb → Forall2 P (x :: la) (y :: lb).
@@ -71,4 +71,3 @@ Proof.
     assert (elements (gmultiset_singleton η) = [η]) as eq.
     eapply gmultiset_elements_singleton. unfold singletonMS. rewrite eq. simpl in *. eauto.
 Qed.
-(* end hide *)

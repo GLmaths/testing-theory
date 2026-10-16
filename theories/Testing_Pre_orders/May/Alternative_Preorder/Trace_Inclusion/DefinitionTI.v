@@ -25,18 +25,14 @@
 From Stdlib.Lists Require Import List.
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation WeakTransitions Testing_Predicate InteractionBetweenLts May.
-(* begin hide *)
-(* * Alternative preorder for May based on trace inclusion *)
+(** **** Alternative preorder for May based on trace inclusion *)
 
-(* ** Traces of a process
-
-    [s] is a trace of [p] whenever [p] can weakly perform [s]. *)
-
+(** ***** Traces of a process *)
 Definition traces `{gLts P A} (p : P) (s : trace A) : Prop := ∃ p', p ⟹[s] p'.
 
 Global Hint Unfold traces : mdb.
 
-(* ** Definition of the alternative preorder: trace inclusion *)
+(** ***** Definition of the alternative preorder: trace inclusion *)
 
 Definition bhv_pre_ti `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :=
   ∀ (s : trace A), traces p s -> traces q s.
@@ -46,7 +42,7 @@ Global Hint Unfold bhv_pre_ti : mdb.
 Notation "p ≼ₜᵢ q" := (bhv_pre_ti p q) (at level 70).
 Notation "p ⋠ₜᵢ q" := (¬ bhv_pre_ti p q) (at level 70).
 
-(* ** [≼ₜᵢ] is a preorder *)
+(** ****** [≼ₜᵢ] is a preorder *)
 
 #[global] Instance bhv_pre_ti_refl `{gLtsP : @gLts P A H} : Reflexive bhv_pre_ti.
 Proof. intros p s hs. exact hs. Qed.
@@ -57,31 +53,16 @@ Proof. intros p q r hpq hqr s hs. eapply hqr, hpq, hs. Qed.
 #[global] Instance bhv_pre_ti_preorder `{gLtsP : @gLts P A H} : PreOrder bhv_pre_ti.
 Proof. split; [exact bhv_pre_ti_refl | exact bhv_pre_ti_transitive]. Qed.
 
-(* * Characterisation of [may] in terms of traces
-
-    The bridge between the contextual predicate [may] and traces: [p may_pass t]
-    holds exactly when the server and the client synchronise along some trace [s]
-    (the client following the co-trace [coₜ s]) and the client reaches a
-    successful state.
-
-    This is the only place where the operational content of [may] is unfolded;
-    both soundness and completeness of [≼ₜᵢ] rest on it. *)
+(** ***** Characterisation of [may] in terms of traces *)
 
 Section May_and_traces.
 
 Context `{gLtsP : @gLts P A H}.
 Context {unique_nb : UniqueDual A}.
 Context `{gLtsT : !gLtsEq T H, !Testing_Predicate outcome gLtsT}.
-(* non-generalising binder: the [gLts] instances must be [gLtsP] and [gLtsT],
-   not freshly generalised ones *)
 Context {PInter : Prop_of_Inter P T A A dual}.
 
-(* [may_wt_nil_server]/[may_wt_tau_server]/[may_wt_nil_client]/
-    [may_wt_tau_client] — "[may] is preserved backwards along
-    τ-transitions of the server/client" — now live in [May.v], shared
-    with [DefinitionTIco.v]. *)
-
-(* ** From a successful computation to a synchronising trace *)
+(** ***** From a successful computation to a synchronising trace *)
 
 Lemma may_to_wt (p : P) (t : T) :
   p may_pass t ->
@@ -109,7 +90,7 @@ Proof.
     + assumption.
 Qed.
 
-(* ** From a synchronising trace to a successful computation *)
+(** ***** From a synchronising trace to a successful computation *)
 
 Lemma wt_to_may (s : trace A) (p p' : P) (t t' : T) :
   p ⟹[s] p' -> t ⟹[coₜ s] t' -> outcome t' -> p may_pass t.
@@ -136,7 +117,7 @@ Proof.
       exact (proj2_sig (exists_dual μ)).
 Qed.
 
-(* ** The characterisation *)
+(** ***** The characterisation *)
 
 Lemma may_iff_wt (p : P) (t : T) :
   p may_pass t <->
@@ -148,4 +129,3 @@ Proof.
 Qed.
 
 End May_and_traces.
-(* end hide *)

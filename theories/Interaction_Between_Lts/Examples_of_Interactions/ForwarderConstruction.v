@@ -40,10 +40,8 @@ From TestingTheory Require Import ActTau SyncActions MultisetHelper gLts Bisimul
 
 (** * Operations on Ltss *)
 (** ** Forwarder LTS *)
-(* begin hide *)
 
 Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ2 μ1 /\ non_blocking μ1.
-(* end hide *)
 
 #[global] Program Instance toFW {P A : Type} `(M: gLts P A) {unique_nb : UniqueDual A} 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
@@ -53,9 +51,8 @@ Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ2 μ1 /\ non_blocking μ1.
 Notation "p ▷ m" := (@pair _ (gmultiset _) p m) (at level 60, right associativity, only printing).
 (* end hide *)
 Notation "p ▷ m" := (@pair _ (MO _) p m) (at level 60, right associativity).
-(* begin hide *)
 
-(* Properties on the Forwarder Construction *)
+(** ****** Properties on the Forwarder Construction *)
 
 Lemma add_in_MO_fw_tau `{H : ExtAction A} {unique_nb : UniqueDual A} `{
   @Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
@@ -99,7 +96,7 @@ Proof.
        multiset_solver. rewrite eq. eapply lts_multiset_minus; eauto.
 Qed.
 
-(* Definining an Forwarder Equivalence ≐ , between forwarders, using code purification *)
+(** ******* Definining an Forwarder Equivalence ≐ , between forwarders, using code purification *)
 
 Definition fw_eq `{FiniteNonBlockingChain_LtsOba P A} (p : P * MO A) (q : P * MO A) :=
   forall (p' q' : P),
@@ -110,7 +107,7 @@ Definition fw_eq `{FiniteNonBlockingChain_LtsOba P A} (p : P * MO A) (q : P * MO
 
 Infix "≐" := fw_eq (at level 70).
 
-(* ≐ is reflexive. **)
+(** ****** ≐ is reflexive. *)
 
 Lemma fw_eq_refl `{FiniteNonBlockingChain_LtsOba P A} : Reflexive fw_eq.
 Proof.
@@ -119,7 +116,7 @@ Qed.
 
 Global Hint Resolve fw_eq_refl:mdb.
 
-(* ≐ is symmetric. **)
+(** ****** ≐ is symmetric. *)
 
 Lemma fw_eq_symm `{FiniteNonBlockingChain_LtsOba P A} : Symmetric fw_eq.
 Proof.
@@ -130,7 +127,7 @@ Qed.
 
 Global Hint Resolve fw_eq_symm:mdb.
 
-(* ≐ is transitive. **)
+(** ****** ≐ is transitive. *)
 
 Lemma fw_eq_trans `{FiniteNonBlockingChain_LtsOba P A} : Transitive fw_eq.
 Proof.
@@ -144,17 +141,17 @@ Qed.
 
 Global Hint Resolve fw_eq_trans:mdb.
 
-(* Congruence is an Equivalence. *)
+(** ****** Congruence is an Equivalence. *)
 
 Lemma fw_eq_equiv `{FiniteNonBlockingChain_LtsOba P A} : Equivalence fw_eq.
 Proof. constructor; eauto with mdb. Qed.
 
 Global Hint Resolve fw_eq_equiv:mdb.
 
-(* Properties on our FW Equivalence *)
+(** ****** Properties on our FW Equivalence *)
 
 Global Instance fw_eq_id_MO `{FiniteNonBlockingChain_LtsOba P A}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
-(* p ⋍ q -> fw_eq (p, m) (q, m) *)
+(** ****** p ⋍ q -> fw_eq (p, m) (q, m) *)
 Proof.
   intros p1 p2 heq M1 M HM; simpl. subst M1.
   set (h := lts_oba_mo_eq heq). intros q q' Hp1 Hp2; simpl in *; split;
@@ -171,7 +168,7 @@ Notation "p ⟶≐ q" := (lts_fw_sc p τ q) (at level 90, format "p  ⟶≐  q")
 Notation "p ⟶≐{ α } q" := (lts_fw_sc p α q) (at level 90, format "p  ⟶≐{ α }  q").
 Notation "p ⟶≐[ μ ] q" := (lts_fw_sc p (ActExt μ) q) (at level 90, format "p  ⟶≐[ μ ]  q").
 
-(* Properties on our FW Equivalence, to assert it is a simulation. *)
+(** ****** Properties on our FW Equivalence, to assert it is a simulation. *)
 
 Lemma fw_eq_blocking_action_simulation `{FiniteNonBlockingChain_LtsOba P A} {p q mp mq β q'} :
   p ▷ mp ≐ q ▷ mq -> blocking β  -> q ⟶[β] q'
@@ -597,7 +594,7 @@ Proof.
     rewrite equal_MO. eauto.
 Qed.
 
-(* Our FW Equivalence ≐ is a bissimulation *)
+(** ****** Our FW Equivalence ≐ is a bissimulation *)
 
 #[global] Program Instance toFWEq 
   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
@@ -886,8 +883,7 @@ Next Obligation.
     eapply lts_MO_nb_spec1;eauto.
 Qed.
 
-(* Forwarder of a LTS with OBA axioms respects FW axioms *)
-(* end hide *)
+(** ****** Forwarder of a LTS with OBA axioms respects FW axioms *)
 
 #[global] Program Instance toFWObaFW
   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
@@ -936,9 +932,8 @@ Next Obligation.
        assert (η = co β) as eq_nb. eapply unique_nb; eauto. subst.
        reflexivity.
 Qed.
-(* begin hide *)
 
-(**********************************Forwarder Construction is a Finite Image LTS ************************)
+(** ****** Forwarder Construction is a Finite Image LTS *)
 
 Definition lts_fw_not_non_blocking_action_set `{FiniteImagegLts P A} 
   (p : P) (m : MO A) μ :=
@@ -1120,7 +1115,7 @@ Next Obligation.
       now eapply lts_fw_tau_set_spec1.
 Qed.
 
-(**********************************Forwarder Construction is a Co-Finite Image LTS *********************)
+(** ****** Forwarder Construction is a Co-Finite Image LTS *)
 
 Lemma co_involution_generic `{ExtAction A} {unique_nb : UniqueDual A} (x : A) : co (co x) = x.
 Proof.
@@ -1326,7 +1321,6 @@ Next Obligation.
   now eapply fw_co_ext_set_spec1.
 Qed.
 
-(****************** Random properties : TO BE CLASSIFIED ********************)
 From TestingTheory Require Import WeakTransitions.
 
 Lemma fw_wt `{@FiniteImagegLts P A H gLtsP} {unique_nb : UniqueDual A}
@@ -1375,4 +1369,3 @@ dependent induction Ht.
   + now constructor.
   + now apply fw_wt.
 Qed.
-(* end hide *)

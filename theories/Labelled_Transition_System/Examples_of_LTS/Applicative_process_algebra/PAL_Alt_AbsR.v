@@ -22,13 +22,13 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts Subset_Act DefinitionAS
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi PAL_Alt_Delta PAL_Alt_AbsAction.
-(* begin hide *)
 (* * The abstraction of PAL for a characterisation on [R p]
 
    Written as if the [R]-based framework existed: the acceptance set of a

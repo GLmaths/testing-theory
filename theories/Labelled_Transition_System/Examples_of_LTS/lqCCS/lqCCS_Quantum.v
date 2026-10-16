@@ -46,13 +46,11 @@
     - [EqDecision St], because [gLts] asks for decidable states.  A model
       over the real numbers cannot provide it constructively; this is the
       price of reusing the existing development as it is. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import List.
 From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Syntax.
-(* begin hide *)
 Class QuantumModel `{StAlg} := MkQuantumModel {
     (* Names of the syntax. *)
     sop_act : sop → list qubit → Act;

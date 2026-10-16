@@ -30,7 +30,6 @@
     conditions.  The boomerang axiom does /not/ hold — a process cannot emit a
     message it has not received — which is exactly why the forwarder
     construction [toFW] is needed. *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -39,8 +38,7 @@ From stdpp Require Import base countable decidable list numbers finite sets gmap
 From TestingTheory Require Import InListPropHelper ActTau InputOutputActions gLts Bisimulation
   Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain FiniteImageLTS
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
-  VACCS VACCS_Instance Erlang_Syntax Erlang_LTS.
-(* begin hide *)
+  VACCS.Language.LTS VACCS.Language.gLts_Instance Erlang_Syntax Erlang_LTS.
 (* ** Actions
 
     Those of VACCS instantiated by [Erlang_VACCS_Parameters]: [VACCS_ExtAction]

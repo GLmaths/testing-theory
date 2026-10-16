@@ -26,7 +26,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
-  coWeakTransition coConvergence LabelAbstraction LabelAdmissible.
+  coWeakTransition coConvergence Label_Abstraction.LabelAbstraction LabelAdmissible.
 (* begin hide *)
 Class AbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}

@@ -51,7 +51,7 @@ Class CountablegLts P A `{gLts P A} := MkClts {
 #[global] Instance finite_countable_lts `{FiniteImagegLts P A} : CountablegLts P A.
 Proof. econstructor; first apply _. intros *; apply finite_countable. Defined.
 
-(* *** Tau-set *)
+(** *** Tau-set *)
 Definition lts_tau_set `{FiniteImagegLts P A} p : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶ p')).
 
@@ -99,7 +99,7 @@ Proof.
     + eapply lts_tau_set_spec in l. multiset_solver.
 Qed.
 
-(* *** External actions set *)
+(** *** External actions set *)
 
 Definition lts_extaction_set `{FiniteImagegLts P A} p μ : list P :=
   map proj1_sig (enum $ dsig (fun p' => p ⟶[ μ ] p')).

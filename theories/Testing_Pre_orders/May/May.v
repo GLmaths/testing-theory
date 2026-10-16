@@ -27,8 +27,7 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Testing_Predicate StateTransitionSystems InteractionBetweenLts
     WeakTransitions coWeakTransition.
-(* begin hide *)
-(********************************************* Definition of May *****************************************)
+(** **** Definition of May *)
 
 Inductive may_sts 
   `{Sts (P * T), outcome : T -> Prop}
@@ -39,7 +38,7 @@ Inductive may_sts
 
 Global Hint Constructors may_sts:mdb.
 
-(********************* Definition of May decomposed with parallel computation definition *****************)
+(** ***** Definition of May decomposed with parallel computation definition *)
 
 Inductive may `{
     gLtsP : @gLts P A H, 
@@ -58,7 +57,7 @@ Global Hint Constructors may:mdb.
 
 Notation "p 'may_pass' t" := (may p t) (at level 70).
 
-(****************** May and May decomposed with parallel computation definition are equivalent ****************)
+(** **** May and May decomposed with parallel computation definition are equivalent *)
 
 Lemma must_sts_iff_must `{
   gLtsP : @gLts P A H, 
@@ -81,7 +80,7 @@ Proof.
     + eapply m_sts_step; eauto. eapply ParSync; eauto.
 Qed.
 
-(********************************* Definition of the contextual pre order with May *********************************)
+(** ***** Definition of the contextual pre order with May *)
 
 Definition ctx_may_pre `{
   gLtsP : @gLts P A H, 
@@ -99,7 +98,7 @@ Global Hint Unfold ctx_may_pre: mdb.
 Notation "p ⊑ₘₐᵧ q" := (ctx_may_pre p q) (at level 70).
 Notation "p ⋢ₘₐᵧ q" := (¬ ctx_may_pre p q) (at level 70).
 
-(********************************************* Properties on May **********************************************)
+(** ***** Properties on May *)
 
 Lemma may_eq_client `{
   gLtsP : @gLts P A H, 
@@ -178,12 +177,7 @@ Proof.
   contradiction.
 Qed.
 
-(********************************* [may] and (co-)weak transitions **********************************************)
-
-(* [may] is preserved backwards along a pure-τ weak transition of the
-    server or the client — used by both the plain and the co-trace
-    characterisations of May ([DefinitionTI.v]/[DefinitionTIco.v]), so
-    it lives here rather than being duplicated in either. *)
+(** ***** [may] and (co-)weak transitions *)
 
 Section May_and_wt.
 
@@ -223,12 +217,6 @@ Lemma may_wt_tau_client (r : P) (t1 t2 : T) :
   t1 ⟹ t2 -> r may_pass t2 -> r may_pass t1.
 Proof. intros w hm. eapply may_wt_nil_client; eauto. Qed.
 
-(* The co-trace analogues, for the *process* side ([DefinitionTIco.v]
-    puts the duality there, never on the test/client — see that file).
-    With an empty trace, [cowt] only ever uses its
-    [cowt_nil]/[cowt_tau] constructors (no dual action involved), so
-    plain induction applies exactly as above. *)
-
 Lemma may_wt_nil_server_co (s : trace A) (p1 p2 : P) (t : T) :
   p1 ⟹ᶜᵒ[s] p2 -> s = [] -> p2 may_pass t -> p1 may_pass t.
 Proof.
@@ -246,5 +234,3 @@ Lemma may_wt_tau_server_co (p1 p2 : P) (t : T) :
 Proof. intros w hm. eapply may_wt_nil_server_co; eauto. Qed.
 
 End May_and_wt.
-
-(* end hide *)

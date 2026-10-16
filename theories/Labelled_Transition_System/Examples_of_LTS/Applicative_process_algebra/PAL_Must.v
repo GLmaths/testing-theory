@@ -22,11 +22,11 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate InteractionBetweenLts Must
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Good.
-(* begin hide *)
 (* * The Must preorder of PAL
 
     [Must.must] and [Must.ctx_pre] instantiated with the alternative LTS

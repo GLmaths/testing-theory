@@ -25,7 +25,7 @@
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import gmultiset.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Testing_Predicate May CodePurification InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction FiniteImageLTS ActTau Lts_Finite_Non_Blocking_Chain.
-(* begin hide *)
+
 Lemma may_non_blocking_action_swap_l_fw_eq `{
    @gLtsObaFW P A H gLtsEqP gLtsObaP, 
   !@gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _}
@@ -731,4 +731,3 @@ Proof.
   - rewrite <- may_iff_may_fw. eauto.
   - rewrite may_iff_may_fw. eauto.
 Qed.
-(* end hide *)

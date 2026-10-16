@@ -29,12 +29,10 @@
     - [cor_par]: the same for the paths of (p ∥ ρ)\L.
     - [pruning]: ⟦p⟧ = { ⟦prune_σ(p) ∥ −⟧ : σ }, where the program LTS is
       pruned to the choices allowed by σ before composition with the memory. *)
-(* end hide *)
 
 From Stdlib Require Import List ChoiceFacts.
-From TestingTheory Require Import Lifted Paths States Harmony.
+From TestingTheory Require Import Lifted Paths States lqCCS.Harmony_lemma.Harmony.
 Import ListNotations.
-(* begin hide *)
 Section Corollaries.
 Context `{StAlg}.
 

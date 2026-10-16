@@ -22,12 +22,12 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
-From TestingTheory Require Import ActTau gLts Subset_Act LabelAbstraction PAL_Syntax PAL_Alt_LTS.
-(* begin hide *)
+From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL_Syntax PAL_Alt_LTS.
 (* * The abstraction Φ of the alternative labels of PAL
 
    [Φ] maps a label to an event of De Nicola–Pugliese (Definition 5.3):

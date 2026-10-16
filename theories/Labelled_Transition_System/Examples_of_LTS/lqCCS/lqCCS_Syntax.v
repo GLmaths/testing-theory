@@ -50,13 +50,11 @@
       2026 paper has a prefix [t : c!e.P]; [t : c!e.P] is recovered as
       [t : c!e ∥ P] up to the order of the output.  This is what makes outputs
       non-blocking in the sense of the output-buffered axioms ([Lts_OBA]). *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers.
-(* begin hide *)
 (* ** Names *)
 
 Definition tag : Type := nat.

@@ -31,11 +31,9 @@
     picking skip on |0⟩ and X on |1⟩ reaches |0⟩⟨0|.
 
     All states involved are real, so 2×2 matrices over Q suffice. *)
-(* end hide *)
 
 From Stdlib Require Import QArith List.
 Import ListNotations.
-(* begin hide *)
 Open Scope Q_scope.
 
 Record mat := Mat { m00 : Q; m01 : Q; m10 : Q; m11 : Q }.

@@ -22,13 +22,13 @@
 *)
 (* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Phi PAL_Good.
-(* begin hide *)
 (* * Tests for the completeness of the alternative LTS of PAL
 
    The observers of De Nicola–Pugliese (Definition 5.9), along a trace of

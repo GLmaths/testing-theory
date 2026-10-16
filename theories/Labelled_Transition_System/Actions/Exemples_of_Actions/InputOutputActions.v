@@ -35,8 +35,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable list decidable finite gmap.
 
 From TestingTheory Require Import ActTau.
-(* begin hide *)
-(* ** Example: Input/Output actions over a set of channels *)
+(** ******* Example: Input/Output actions over a set of channels *)
 
 Inductive ExtAct (A: Type) :=
 | ActIn (a : A)
@@ -70,8 +69,6 @@ Definition io_co {A} (l: ExtAct A) :=
   | ActIn x => ActOut x
   | ActOut x => ActIn x
   end.
-
-(* fixme: Involution does not hold anymore in the context of pi-calculus. *)
 
 Lemma co_involution {A} (l: ExtAct A) : io_co (io_co l) = l.
 Proof. destruct l; eauto. Qed.
@@ -156,8 +153,3 @@ Qed.
 Proof.
   refine (inj_countable encode_ext_act decode_ext_act encode_decide_ext_act).
 Qed.
-
-
-
-
-(* end hide *)

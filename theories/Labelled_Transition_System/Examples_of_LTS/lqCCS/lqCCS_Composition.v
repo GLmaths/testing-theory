@@ -44,7 +44,6 @@
     - a communication between [P] and [Q].  A received qubit must exist in
       the memory; that the receiver does not already own it is checked by the
       program LTS (rule Recv). *)
-(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -52,7 +51,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure pMust_smyth lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program.
-(* begin hide *)
 Notation conf := (proc * proc)%type.
 
 Section Composition.

@@ -32,7 +32,7 @@
     and Computation 107(2), 1993, §4).
 
     This system is intended only for the [Static] (recursion-free)
-    fragment of VCCS ([VCCS_Static.v]) — there is no [Ω]/divergence axiom,
+    fragment of VCCS ([Axiomatic/Static.v]) — there is no [Ω]/divergence axiom,
     since [Static] processes never diverge. Soundness ([SoundnessAx.v])
     is stated with explicit [Static] side conditions rather than baking
     them into the constructors themselves,
@@ -40,10 +40,10 @@
     then [Static p] and [Static q] individually, etc.) and keeping this
     file's constructors syntactically identical to Hennessy's own rules. *)
 (* end hide *)
-
-From TestingTheory Require Import VCCS VCCS_Instance Must VCCS_Static VCCS_Expansion
-  VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet.
 (* begin hide *)
+From TestingTheory Require Import VCCS.Language.LTS VCCS.Language.gLts_Instance Must VCCS.Axiomatic.Static VCCS.Axiomatic.Expansion
+  VCCS.Axiomatic.ResNormalize VCCS.Axiomatic.Precongruence VCCS.Axiomatic.ReadySet.
+
 Section DefinitionAxiomatic.
 
 Context `{VP : VCCS_Parameters}.
@@ -72,13 +72,13 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       rule would be unsound without it.
     - [ax_par]/[ax_res]/[ax_if]/[ax_input]/[ax_output]/[ax_tau]: one
       precongruence rule per operator, mirroring the lemmas proved in
-      [VCCS_Precongruence.v]. Every one of these is sound.
+      [Axiomatic/Precongruence.v]. Every one of these is sound.
     - [ax_int_l]/[ax_int_r]: [X⊕Y ⊑ X] (resp. [Y]), where [⊕] is
       definable as [𝛕•X + 𝛕•Y] — sound for free via [must]'s own [pt]
       field ([must_i_int_choice_l]/[_r]). These are glb *elimination*.
     - [ax_int_glb]: the matching glb **introduction** — anything below
       both [q1] and [q2] is below [q1 ⊕ q2]. Sound via
-      [VCCS_Precongruence.v]'s [must_i_int_glb_pre]. Without it the
+      [Axiomatic/Precongruence.v]'s [must_i_int_glb_pre]. Without it the
       system cannot establish [_ ⊑ 𝛕•q₁ + 𝛕•q₂] at all: an internal
       choice is not [gStable], so [ax_choice_stable] does not apply to it
       either, and every other rule with an internal choice on the right
@@ -88,7 +88,7 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       standard glb-introduction rule of Hennessy's own system.
     - [ax_choice_tau]: the exact complement of [ax_choice_stable] —
       rewriting a **[𝛕]-summand's continuation** in place inside a sum.
-      Sound via [VCCS_Precongruence.v]'s [must_i_choice_tau_compat].
+      Sound via [Axiomatic/Precongruence.v]'s [must_i_choice_tau_compat].
       Between the two rules, every guard shape can be rewritten in
       context: [①]/[𝟘]/input/output summands are [gStable] and go
       through [ax_choice_stable], [𝛕]-summands through this rule. Both
@@ -100,12 +100,12 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       untouched.
     - [ax_tau_flatten_l]/[_r]: flattening a nested internal choice,
       [gAllTau Y -> X + 𝛕•(g Y) ≂ X + Y]. Sound via
-      [VCCS_Precongruence.v]'s [must_i_tau_flatten_l]/[_r]. The
+      [Axiomatic/Precongruence.v]'s [must_i_tau_flatten_l]/[_r]. The
       [gAllTau Y] side condition ("every summand of [Y] is
       [𝛕]-guarded") is essential: if [Y] had *external* summands,
       moving it up would expose them at top level and change behaviour
       — which is exactly the content of [ax_tau_sep_*] and of
-      [VCCS_MixedSumProbes.v]. Note [𝟘] deliberately does **not** count
+      [Axiomatic/MixedSumProbes.v]. Note [𝟘] deliberately does **not** count
       as all-[𝛕]: [X + 𝛕•(g 𝟘)] has a [𝛕] into a deadlock, [X + 𝟘] does
       not.
 
@@ -118,18 +118,18 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       strictly decreases that measure.
     - [ax_tau_sep_l]/[_r]: the [𝛕]-separation law,
       [X + 𝛕•(g Y) ≂ 𝛕•(g (X + Y)) ⊕ 𝛕•(g Y)]. Sound via
-      [VCCS_Precongruence.v]'s [must_i_tau_sep_l]/[_r]. Iterating it
+      [Axiomatic/Precongruence.v]'s [must_i_tau_sep_l]/[_r]. Iterating it
       turns a *mixed* sum — external guards sitting beside a [𝛕]-guard —
       into an internal choice of sums each one [𝛕] closer to stable,
       eventually reaching the [⊕]-of-stable-sums shape
-      [CompletenessAx.v] matches on. [VCCS_Canonical.v]'s [canonical]
+      [CompletenessAx.v] matches on. [Axiomatic/Canonical.v]'s [canonical]
       does not deliver that shape on its own, since it constrains only
       *actions*, saying nothing about [𝛕]-guards.
 
       Note carefully that [X] is carried **into the first branch**
       ([X + Y]) rather than being made a branch of its own: the
       tempting [X + 𝛕•(g Y) ≂ 𝛕•(g Y) ⊕ X] is **false**, and
-      [VCCS_MixedSumProbes.v] refutes it with a machine-checked
+      [Axiomatic/MixedSumProbes.v] refutes it with a machine-checked
       counterexample. Promoting [X] to its own [𝛕]-branch would put it
       under [must]'s [pt] field, making it responsible for offering an
       interaction by itself — which a stable [X] facing a stable test on
@@ -141,7 +141,7 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       for two guarded sums [M]/[N] combined by [‖] — like the merge
       equations, this is a genuine *primitive* axiom of the system (not
       derivable from the other rules), matching how Hennessy's own
-      axiomatization treats it. Sound via [VCCS_Expansion.v]'s
+      axiomatization treats it. Sound via [Axiomatic/Expansion.v]'s
       [must_i_expansion_l]/[_r]. Carries explicit [gStatic M]/
       [gStatic N] side conditions — unlike [must_i_expansion_l]/[_r]
       themselves (true unconditionally), these conditions are here
@@ -153,7 +153,7 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
     - [ax_input_distrib_l]/[_r], [ax_output_distrib_l]/[_r]: prefix
       distributes over guarded choice, [a.P + a.Q ≂ a.(P ⊕ Q)] (same
       action on both summands — same channel for inputs, same channel
-      *and* value for outputs). Sound via [VCCS_Precongruence.v]'s
+      *and* value for outputs). Sound via [Axiomatic/Precongruence.v]'s
       [must_i_input_distrib_l]/[_r] and [must_i_output_distrib_l]/[_r].
       These need no [Static] side conditions: both directions recover
       each component's [Static]-ness structurally from the other side's
@@ -180,17 +180,17 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       [M] down to a guarded sum [resg M] with no [ν] left at the top —
       needed because no existing [≡*] rule distributes [ν] over an
       arbitrary [+] (only over [‖], via [cgr_res_scope_step]). Sound via
-      [VCCS_ResNormalize.v]'s [must_i_res_normalize_l]/[_r]. Carries an
+      [Axiomatic/ResNormalize.v]'s [must_i_res_normalize_l]/[_r]. Carries an
       explicit [gStatic M] side condition for the same reason as
       [ax_expansion_l]/[_r] above. Together with [ax_expansion_l]/[_r],
-      this is exactly what [VCCS_NormalForm.v]'s normal-form theorem
+      this is exactly what [Axiomatic/NormalForm.v]'s normal-form theorem
       needs to push any [Static] process down to a single guarded sum.
 
     - [ax_choice_stable]: guarded-choice congruence, **restricted to
       [gStable] summands on both sides**. Sound via
-      [VCCS_ReadySet.v]'s [must_i_choice_stable_compat]. This is what
+      [Axiomatic/ReadySet.v]'s [must_i_choice_stable_compat]. This is what
       makes it possible to rewrite a *sub-summand* of a larger sum at
-      all — needed by [VCCS_NormalForm.v]'s canonical-form
+      all — needed by [Axiomatic/NormalForm.v]'s canonical-form
       construction, which has to apply the distributivity laws above
       underneath a [_ + R] context (bring the two same-action summands
       adjacent and to the front with [ax_cgr], then rewrite them in
@@ -295,7 +295,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     derivably above the choice. That is exactly the convex-closure
     condition acceptance-tree semantics imposes on acceptance families
     (the companion union-closure condition, [x ⊕ y ⊑ x + y], is
-    *derivable* here — see [ax_int_below_ext], [VCCS_Canonical.v] — so
+    *derivable* here — see [ax_int_below_ext], [Axiomatic/Canonical.v] — so
     it needs no rule of its own).
 
     It is genuinely not derivable from the other rules, and completeness
@@ -309,7 +309,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     [X := a•𝟘], [Y := b•𝟘], [Z := c•𝟘] once union-closure has supplied
     the leaf [(a•𝟘)+(b•𝟘)+(c•𝟘)].
 
-    No side conditions: soundness ([must_i_convex], [VCCS_Precongruence.v])
+    No side conditions: soundness ([must_i_convex], [Axiomatic/Precongruence.v])
     needs neither stability nor [Static]-ness of any of [X], [Y], [Z] —
     every obligation of [X+Y] is met by [X]'s own or by [(X+Y)+Z]'s,
     whichever side the transition came from. *)
@@ -326,7 +326,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     mentions [①] at all, so a normal form carrying an [①] summand would
     otherwise be stuck. With these, [ax_choice_stable] turns the [①]
     into a [𝟘] and [ax_cgr] drops it. Sound by [must_i_success_nil]
-    ([VCCS_Expansion.v]), which is three lines of [must_same_lts]. *)
+    ([Axiomatic/Expansion.v]), which is three lines of [must_same_lts]. *)
 
 | ax_success_l : (g ①) ᴠᴄᴄꜱ⊑ₐₓ (g 𝟘)
 | ax_success_r : (g 𝟘) ᴠᴄᴄꜱ⊑ₐₓ (g ①)
@@ -348,7 +348,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     holds semantically but has no derivation.
 
     Sound with no side conditions ([must_i_share_in_aux]/[_out_aux],
-    [VCCS_Precongruence.v]): every field of the conclusion comes from the
+    [Axiomatic/Precongruence.v]): every field of the conclusion comes from the
     first branch alone except [com] at the shared action, where the two
     branches' obligations are assembled by [ax_int_glb]'s semantic
     counterpart. *)
@@ -365,7 +365,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     [ax_share_out] pools at a guard the two branches *share*, i.e. at
     the same channel AND the same value. That is not enough, because
     VCCS's ready-set abstraction erases the value ([coR_abs_incl_iff],
-    [VCCS_ReadySet.v]): a leaf may offer [c!v] where the target offers
+    [Axiomatic/ReadySet.v]): a leaf may offer [c!v] where the target offers
     only [c!v']. Witness (all continuations [𝟘], [v ≠ v'], [w ≠ w']):
 
       M := (c!v•𝟘 + d!w'•𝟘) ⊕ (c!v'•𝟘 + d!w•𝟘)     N := c!v'•𝟘 + d!w'•𝟘
@@ -381,7 +381,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     different values ([c!v'•(P ⊕ Q) + X']) would be **unsound** — after
     emitting [v'] the test sits in a state only [Q] was ever required to
     survive. Sound with no side conditions ([must_i_swap_out_aux],
-    [VCCS_Precongruence.v]); the [ex] field is where value-genericity of
+    [Axiomatic/Precongruence.v]); the [ex] field is where value-genericity of
     inputs ([lts_in_value_swap]) does the work.
 
     The input analogue needs no rule: [ax_share_in] gives
@@ -418,7 +418,7 @@ Proof. intros p q Hsp Hcgr. apply ax_cgr; [exact Hsp | eapply cgr_symm; exact Hc
     in this development needs it to be.
 
     ([ax_output_merge_l] is the eleventh such law; it is proved in
-    [VCCS_AxRedundancy.v] because its derivation needs [ax_drop_out],
+    [Axiomatic/AxRedundancy.v] because its derivation needs [ax_drop_out],
     hence [ax_swap_out], which is not available this early.) *)
 
 (* Reflexivity: [ax_cgr] at [cgr_refl]. *)

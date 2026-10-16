@@ -44,7 +44,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts.
-(* begin hide *)
+
 Section Union.
 
 Context {Aproc Atest : Type}.
@@ -96,8 +96,6 @@ Definition union_exists_dual (a : Aproc + Atest) : { b | union_dual a b } :=
   | inr η => exist _ (inr (co η)) (proj2_sig (exists_dual η))
   end.
 
-(* Not a global instance: [sync] is an explicit parameter, and an instance of
-   [ExtAction (_ + _)] would be tried on every sum type. *)
 Definition ExtAction_union : ExtAction (Aproc + Atest) :=
   {| eqdec := _;
      countable := _;
@@ -110,4 +108,3 @@ Definition ExtAction_union : ExtAction (Aproc + Atest) :=
      exists_dual := union_exists_dual |}.
 
 End Union.
-(* end hide *)
