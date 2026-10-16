@@ -62,8 +62,8 @@ Section Test_bridges.
   Proof. intros e. rewrite <- (class_of_repr x). by apply (LA_class_proj ker_rel). Qed.
 
   Definition ta_ker_bridge (ta : gset PreAct → list A → T) :
-    Completeness.test_co_acceptance_set_spec PreAct ta Γ →
-    CompletenessASsync.test_co_acceptance_set_spec (LA_quotient ker_rel) (ta_ker ta) (LA_class ker_rel).
+    Completeness.test_co_acceptance_set_spec ta Γ →
+    CompletenessASsync.test_co_acceptance_set_spec (ta_ker ta) (LA_class ker_rel).
   Proof.
     intros h. constructor.
     - intros E. exact (test_spec_bridge _ (Completeness.ta_test_spec (set_map (λ x, Γ (`x)) E))).
@@ -103,7 +103,7 @@ Section Abs_bridges.
     {αᴛᴇꜱᴛ : A → FinA} {αᴘʀᴏ : FinA → PreAct} `{Countable PreAct}.
 
   Lemma LA_admissible_of_AbsAction
-    `{AbsPT : !@AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ A H gLtsP gLtsT SyncAction_of_dual} :
+    `{AbsPT : !AbsAction (Aproc := A) (Hp := H) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SyncAction_of_dual) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} :
     @LA_admissible P T A H gLtsP A H (@gLtsEq_gLts T A H gLtsT) SyncAction_of_dual (ker_rel (λ x, αᴘʀᴏ (αᴛᴇꜱᴛ x))).
   Proof.
     intros p β β'' b h mem.
@@ -116,7 +116,7 @@ Section Abs_bridges.
   Qed.
 
   Definition FinitaryLA_of_Finitary (r : PreAct → A) (hr : ∀ x, αᴘʀᴏ (αᴛᴇꜱᴛ (r x)) = x)
-    `{FA : !@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ A H gLtsP gLtsT SyncAction_of_dual _ _} :
+    `{FA : !FinitaryAbsAction (Aproc := A) (Hp := H) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SyncAction_of_dual) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} :
     FinitaryLA P (ker_rel (λ x, αᴘʀᴏ (αᴛᴇꜱᴛ x))).
   Proof.
     refine {| coR_absR p := set_map (λ x, LA_class (ker_rel (λ x, αᴘʀᴏ (αᴛᴇꜱᴛ x))) (r x)) (coR_abs p) |}.

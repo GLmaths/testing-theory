@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA S
 
 
 (** ** Label abstractions *)
-Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
+Class AbsAction (P T : Type) {FinA PreAct : Type} {A : Type} {H : ExtAction A} (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} :=
   MkAbsAction {
@@ -47,14 +47,14 @@ Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (αᴛᴇ�
       αᴘʀᴏ (αᴛᴇꜱᴛ β) = αᴘʀᴏ (αᴛᴇꜱᴛ β') -> (αᴛᴇꜱᴛ β) ∈ ⌈ αᴛᴇꜱᴛ ⌉ (coR p) -> (αᴛᴇꜱᴛ β') ∈ ⌈ αᴛᴇꜱᴛ ⌉ (coR p);
   }.
 
-Arguments AbsAction {_} {_} {_} {_} A H αᴛᴇꜱᴛ αᴘʀᴏ {_} {_} {_} {_} {_}.
+Arguments AbsAction P T {_ _ _ _} αᴛᴇꜱᴛ αᴘʀᴏ {_ _ _ _ _}.
 
 (** ** Finitary Label abstractions *)
-Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
+Class FinitaryAbsAction (P T : Type) {FinA PreAct : Type} {A : Type} {H : ExtAction A} (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} `{Countable PreAct} :=
   MkFinitaryAbsAction {
-      FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsP gLtsT SA;
+      FinitaryAbsAction_Abs :: AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T αᴛᴇꜱᴛ αᴘʀᴏ;
 
       (** **** αᴘʀᴏ (αᴛᴇꜱᴛ (coR p)) is a finite set, called (coR_abs p) *)
       coR_abs : P -> gset PreAct;
@@ -74,8 +74,8 @@ Notation "p ꜀ₙᵥ≼ₐₛ q" := (bhv_pre_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
@@ -85,8 +85,8 @@ Notation "p ₐ꜀꜀≼ₐₛ q" := (bhv_pre_cond2 p q) (at level 70).
 
 (** ** Definition of the alternative preorder based on acceptance-sets *)
 Definition bhv_pre `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
     (p : P) (q : Q) := 
       p ꜀ₙᵥ≼ₐₛ q /\ p ₐ꜀꜀≼ₐₛ q.
 
@@ -98,9 +98,9 @@ Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
 #[global] Program Instance PreActActionForFW
-  `{@AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ gLtsP gLtsT _} {unique_nb : UniqueDual A}
+  `{H : ExtAction A, !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H _ H MbgLts} 
-  : @AbsAction (P * MO A) T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsT _. (* (toFW gLtsP) *)
+  : AbsAction (gLtsT := gLtsT) (P * MO A) T αᴛᴇꜱᴛ αᴘʀᴏ. (* (toFW gLtsP) *)
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
@@ -132,13 +132,14 @@ Next Obligation.
 Admitted.
 
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
-  `{@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ gLtsP gLtsT _ _ _ } {unique_nb : UniqueDual A}
+  `{H : ExtAction A, !FinitaryAbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) } {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} 
-  : @FinitaryAbsAction (P * MO A) T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ (toFW gLtsP) gLtsT _ _ _ :=
+  : FinitaryAbsAction (gLtsP := (toFW gLtsP)) (gLtsT := gLtsT) (P * MO A) T αᴛᴇꜱᴛ αᴘʀᴏ :=
   {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ (co x))) (MO_without_not_nb p.2));|}.
 Next Obligation.
   intros.
-  destruct p as (p, m). eapply elem_of_union in H2. destruct H2 as [in_p | in_M] ; simpl in *.
+  destruct p as (p, m).
+  match goal with Hm : _ ∈ _ ∪ _ |- _ => eapply elem_of_union in Hm; destruct Hm as [in_p | in_M] end; simpl in *.
   + eapply coR_abs_spec1 in in_p.
     destruct in_p as (μ & mem & eq). subst.
     exists μ. split.
@@ -165,7 +166,7 @@ Next Obligation.
       eapply dual_blocks; eauto. symmetry. exact (proj2_sig (exists_dual μ)).
 Qed.
 Next Obligation.
-  intros. destruct H2 as (μ & mem & eq). subst.
+  intros. match goal with Hm : _ ∈ ⌈ _ ⌉ _ |- _ => destruct Hm as (μ & mem & eq) end. subst.
   destruct p as (p, m). destruct mem as (μ' & tr & duo & b).
   eapply lts_performs_spec1 in tr as ((p' , m') & eq).
   inversion eq; subst; simpl in *.

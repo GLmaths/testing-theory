@@ -542,7 +542,7 @@ Proof.
     reflexivity.
 Qed.
 
-#[global] Program Instance MbgLts_Oba `{H : ExtAction A} {unique_nb : UniqueDual A} : gLtsOba (MO A). 
+#[global] Program Instance MbgLts_Oba `{H : ExtAction A} {unique_nb : UniqueDual A} : gLtsOba (MO A) _. 
 Next Obligation.
   intros. eapply delay_in_ms;eauto.
 Qed.

@@ -346,7 +346,7 @@ Section VACCS_Rel.
     test_convergence_spec_bridge gen_conv gen_conv_gen_spec_conv_inst.
 
   #[local] Instance VACCS_ta_core :
-    CompletenessASsync.test_co_acceptance_set_spec (LA_quotient Rᴠ) (ta_ker Γᴠ gen_acc) (LA_class Rᴠ) :=
+    CompletenessASsync.test_co_acceptance_set_spec (ta_ker Γᴠ gen_acc) (LA_class Rᴠ) :=
     ta_ker_bridge Γᴠ gen_acc gen_acc_gen_spec_acc_inst.
 
   Definition must_iff_rel_VACCS :=

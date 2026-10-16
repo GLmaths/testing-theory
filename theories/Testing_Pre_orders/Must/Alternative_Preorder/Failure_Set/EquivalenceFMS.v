@@ -38,7 +38,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act We
 
 Lemma equivalence_must_set_nfailure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _}
+  !FinitaryAbsAction (gLtsT := gLtsEqT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}
   (p : P) (s : trace A) h1 (G : gset PreAct) : MUST__s (AFTER p s h1) G <->  ¬ Failure p s G.
 Proof.
   split.
@@ -65,7 +65,7 @@ Qed.
 
 Lemma equivalence_nmust_set_failure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _}
+  !FinitaryAbsAction (gLtsT := gLtsEqT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}
   (p : P) (s : trace A) h1 (G : gset PreAct) :
   ¬ MUST__s (AFTER p s h1) G
     <-> Failure p s G.
@@ -92,11 +92,11 @@ Qed.
 
 Theorem equivalence_failure_set_must_set `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  @FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _,
+  !FinitaryAbsAction (gLtsT := gLtsEqT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct),
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A,
-  @FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ gLtsEqT _ _ _
+  !FinitaryAbsAction (gLtsT := gLtsEqT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
   }
-  (p : P) (q : Q) : p ≾ₘᵤₛₜ q <-> p ⋖ꜰᴀɪʟ q.
+  (p : P) (q : Q) : p ≾ₘₛ q <-> p ≾ꜰᴅʀ q.
 Proof.
   split.
   - intros (hpre1 & hpre2). split.
@@ -125,8 +125,8 @@ Section failure_set_preorder.
   Context `{outcome : T -> Prop} `{outcome_dec : forall t, Decision (outcome t)} `{P : Type} `{Q : Type}
           `{H : !ExtAction A} {unique_nb : UniqueDual A}.
 
-  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A} `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}
-          `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
+  Context `{!gLtsOba P gLtsEqP, !FiniteImagegLts P A} `{!gLtsOba Q gLtsEqQ, !FiniteImagegLts Q A}
+          `{!gLtsOba T gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A A dual} `{!Prop_of_Inter Q T A A dual}.
 
@@ -134,11 +134,11 @@ Section failure_set_preorder.
           `{!Prop_of_Inter Q (MO A) A A fw_inter} `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
 
-  Context `{CC : Countable PreAct} `{@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }
-          `{@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }.
+  Context `{CC : Countable PreAct} `{!FinitaryAbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+          `{!FinitaryAbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }.
 
-  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}
-          `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
+  Context `{tc_spec : !test_convergence_spec (t_conv : list A → T)}
+          `{ta_spec : !test_co_acceptance_set_spec (ta : gset PreAct → list A → T) (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
 
   (** ** Corollary of the main theorem for the failure divergence refinement *)
 
@@ -148,7 +148,7 @@ Section failure_set_preorder.
 
   (** *** The failure divergence refinement on FWⁿ is equivalent to the extensional must preorder *)
   Corollary equivalence_fw_failure_set_and_must_e (p : P) (q : Q) :
-    p ⋖ꜰᴀɪʟ q <-> pre_extensional outcome p q.
+    p ≾ꜰᴅʀ q <-> pre_extensional outcome p q.
   Proof.
     erewrite<- equivalence_failure_set_must_set.
     rewrite equivalence_fw_must_set_and_must_e;eauto.
@@ -157,7 +157,7 @@ Section failure_set_preorder.
   (** *** The failure divergence refinement on FWⁿ is equivalent to the inductive must preorder *)
 
   Corollary equivalence_fw_failure_set_and_must_i (p : P) (q : Q) :
-     p ⋖ꜰᴀɪʟ q <-> p ⊑ₘᵤₛₜᵢ q .
+     p ≾ꜰᴅʀ q <-> p ⊑ₘᵤₛₜᵢ q .
   Proof.
     erewrite<- equivalence_failure_set_must_set.
     rewrite equivalence_fw_must_set_and_must_i;eauto.
@@ -175,7 +175,7 @@ Section failure_set_preorder.
   (*** *** The failure divergence refinement toFW(Lⁿ) is equivalent to the inductive must preorder *)
 
   Corollary equivalence_failure_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
+    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≾ꜰᴅʀ (q, ∅).
   Proof.
     erewrite<- equivalence_failure_set_must_set.
     rewrite equivalence_must_set_and_must_i; eauto.
@@ -185,7 +185,7 @@ Section failure_set_preorder.
 
   (** *** The failure divergence refinement toFW(Lⁿ) is equivalent to the extensional must preorder *)
   Corollary equivalence_failure_set_and_must_e (p : P) (q : Q) :
-    pre_extensional outcome p q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
+    pre_extensional outcome p q <-> (p, ∅) ≾ꜰᴅʀ (q, ∅).
   Proof.
     rewrite pre_extensional_eq. apply equivalence_failure_set_and_must_i.
   Qed.

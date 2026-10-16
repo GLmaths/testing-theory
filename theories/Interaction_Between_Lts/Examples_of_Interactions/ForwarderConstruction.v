@@ -614,7 +614,7 @@ Qed.
 #[global] Program Instance toFWOba
   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A A fw_inter}
-  : gLtsOba (P * MO A).
+  : gLtsOba (P * MO A) _.
 Next Obligation.
 intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q, mq), r as (r, mr).
   inversion Hstep_nb; inversion Hstep; subst.

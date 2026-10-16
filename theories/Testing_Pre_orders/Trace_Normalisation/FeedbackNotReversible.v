@@ -2096,12 +2096,11 @@ Section Cond2Generic.
   Context {T FA PA : Type}.
   Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _).
+  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
+  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
 
   Theorem must_cond2_false :
-    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-        st _ αᴘʀᴏQ AbsQ ((g Q0, mt) : st) ((Bp2, mt) : st).
+    ¬ bhv_pre_cond2 (AbsPT := AbsP) (AbsQT := AbsQ) ((g Q0, mt) : st) ((Bp2, mt) : st).
   Proof.
     intro h.
     destruct (h s_cnd2 ((𝟘 ‖ 𝟘), mt) (q0good_cnv _ _ _ q0_root) bp2_reaches_stable nilnil_stable)
@@ -2903,12 +2902,11 @@ Section Cond2GenericPw.
   Context {T FA PA : Type}.
   Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _).
+  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
+  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
 
   Theorem must_cond2_false_Pw :
-    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-        st _ αᴘʀᴏQ AbsQ ((Pw, mt) : st) ((Bp2, mt) : st).
+    ¬ bhv_pre_cond2 (AbsPT := AbsP) (AbsQT := AbsQ) ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof.
     intro h.
     destruct (h s_cnd2 ((𝟘 ‖ 𝟘), mt) pw_cnv_s_cnd2 bp2_reaches_stable nilnil_stable)
@@ -3890,12 +3888,11 @@ Section CoCond2GenericPe.
   Context {T FA PA : Type}.
   Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _).
+  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
+  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
 
   Theorem co_must_cond2_false_Pe :
-    ¬ @bhv_pre_co_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏP gLtsT _ AbsP
-        st _ αᴘʀᴏQ AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
+    ¬ bhv_pre_co_cond2 (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
   Proof.
     intro h.
     destruct (h s_bad ((((g 𝟘) ‖ (g 𝟘)), mt) : st) pe_cocnv_s_bad qe_co_reaches_stable
@@ -3907,8 +3904,7 @@ Section CoCond2GenericPe.
       condition holds ([qe_cnv]) and its acceptance condition holds on every
       feedback-free co-trace ([pe_qe_co_cond2_ff]). *)
   Theorem co_must_false_Pe :
-    ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏP gLtsT _ AbsP
-        st _ αᴘʀᴏQ AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
+    ¬ bhv_pre_co (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
   Proof. intros (_ & h2). eapply co_must_cond2_false_Pe, h2. Qed.
 
 

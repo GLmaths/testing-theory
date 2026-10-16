@@ -48,7 +48,7 @@ Section PAL_Alt_CoTraceHypotheses.
 
   (* The LTS of processes and of tests. *)
   Definition hyp_CountablegLts : CountablegLts term (PALA_Act Val) := _.
-  Definition hyp_gLtsOba : gLtsOba term (H := PALA_ExtAction Val) := _.
+  Definition hyp_gLtsOba : gLtsOba term (H := PALA_ExtAction Val) _ := _.
   Definition hyp_coFiniteImage : coFiniteImagegLts term (PALA_Act Val) := _.
   Definition hyp_gLtsObaFW : gLtsObaFW term (PALA_Act Val) := _.
   Definition hyp_gLtsObaFB : gLtsObaFB term (PALA_Act Val) := _.
@@ -60,15 +60,14 @@ Section PAL_Alt_CoTraceHypotheses.
 
   (* The label abstraction, without finiteness. *)
   Definition hyp_AbsAction :
-    @AbsAction term term (Event Val) (Event Val) (PALA_Act Val) (PALA_ExtAction Val)
-      (αᴛᴀᴘᴀʟ Val) (αᴘᴇᴠ Val) _ _ (PALA_gLts Val) (PALA_gLtsEq Val) _ := AbsPALA Val.
+    AbsAction (gLtsP := (PALA_gLts Val)) (gLtsT := (PALA_gLtsEq Val)) term term (αᴛᴀᴘᴀʟ Val) (αᴘᴇᴠ Val) := AbsPALA Val.
 
   (* The tests, in the co variants of the classes ([TestSpecBridge]). *)
   Definition hyp_test_convergence_spec : CompletenessASco.test_convergence_spec (t_conv Val) :=
     test_convergence_spec_of_plain (t_conv_convergence_spec Val).
 
   Definition hyp_test_co_acceptance_set_spec :
-    CompletenessASco.test_co_acceptance_set_spec (Event Val) (ta Val)
+    CompletenessASco.test_co_acceptance_set_spec (ta Val)
       (λ x, αᴘᴇᴠ Val (αᴛᴀᴘᴀʟ Val x)) :=
     test_co_acceptance_set_spec_of_plain (ta_co_acceptance_set_spec Val).
 End PAL_Alt_CoTraceHypotheses.

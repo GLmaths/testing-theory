@@ -625,8 +625,8 @@ Definition bhv_pre_co_cond2__x
   `{gLtsP : @gLts P Aproc Hp, !Countable P}
   `{gLtsQ : !@gLts Q Aproc Hp, !Countable Q}
   `{gLtsT : @gLtsEq T A H} `{SA : !SyncAction Aproc A}
-  `{AbsPT : !@AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP Aproc Hp gLtsP gLtsT SA}
-  `{AbsQT : !@AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ Aproc Hp gLtsQ gLtsT SA}
+  `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}
+  `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsT) (SA := SA) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (X : gset P) (Y : gset Q) :=
   ∀ q s q', q ∈ Y →
     q ⟹ᶜᵒ[s] q' → q' ↛ →
@@ -640,8 +640,8 @@ Definition bhv_pre_co__x
   `{gLtsP : @gLts P Aproc Hp, !Countable P}
   `{gLtsQ : !@gLts Q Aproc Hp, !Countable Q}
   `{gLtsT : @gLtsEq T A H} `{SA : !SyncAction Aproc A}
-  `{AbsPT : !@AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP Aproc Hp gLtsP gLtsT SA}
-  `{AbsQT : !@AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ Aproc Hp gLtsQ gLtsT SA}
+  `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}
+  `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsT) (SA := SA) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (X : gset P) (Y : gset Q) :=
   bhv_pre_co_cond1__x (A := A) X Y ∧ X ₐ꜀꜀≼꜀ₒ₋ₛₑₜ_ₐₛ Y.
 
@@ -658,8 +658,8 @@ Context `{gLtsP : !gLts P Hp} `{CP : !Countable P}.
 Context `{gLtsQ : !gLts Q Hp} `{CQ : !Countable Q}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
-Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsP gLtsEqT SA}.
-Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsQ gLtsEqT SA}.
+Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsEqT) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsEqT) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
 Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
 Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
@@ -806,8 +806,8 @@ Context `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsP : !gLts P Hp}.
 Context `{gLtsQ : !gLts Q Hp} `{!gLtsCNenabledSync Q Aproc Atest}.
 Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
-Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA}.
-Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA}.
+Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
 (* In the non-blocking case, [q] receives the observer's emission [η] by
     [sync_cn_enabled] — with its own action, not necessarily [p]'s. *)
@@ -857,8 +857,8 @@ Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA
 Context `{gLtsQ : !gLts Q Hp} `{STSQ : !ParSts Q T _ _} `{!ParStsSpec Q T _ _ SA STSQ}
         `{CFIQ : !coFiniteImagegLts Q Atest} `{CN : !gLtsCNenabledSync Q Aproc Atest}.
 Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
-Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA}.
-Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA}.
+Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
 Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
 Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
@@ -992,11 +992,11 @@ End SoundnessAS_sync.
 
 Lemma soundness_fw_co `{
   gLtsEqP : @gLtsEq P A H, !coFiniteImagegLts P A,
-  gLtsEqQ : @gLtsEq Q A H, !coFiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsEqQ : @gLtsEq Q A H, !coFiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q _, !gLtsObaFW Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
 
   `{!Prop_of_Inter P T A A dual}
   `{!Prop_of_Inter Q T A A dual}
@@ -1150,8 +1150,8 @@ Lemma soundness_co
   `{!coFiniteImagegLts (P * MO A) A}
   `{!coFiniteImagegLts (Q * MO A) A}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
 
   (p : P) (q : Q) : p ▷ ∅ ≼꜀ₒ₋ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.

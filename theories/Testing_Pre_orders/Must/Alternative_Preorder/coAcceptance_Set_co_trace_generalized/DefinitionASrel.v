@@ -28,17 +28,17 @@ From stdpp Require Import base tactics decidable countable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
   coWeakTransition coConvergence Label_Abstraction.LabelAbstraction LabelAdmissible.
 (* begin hide *)
-Class AbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
+Class AbsActionG (P T : Type) {PreAct A : Type} {H : ExtAction A} (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} :=
   abstraction_step (p : P) β β'' :
     blocking β → Γ β = Γ β'' → β'' ∈ coR p → ∃ u, u ∈ coR p ∧ (𝐏 β : subset_of T) ⊆ 𝐏 u.
 
-Class FinitaryAbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
+Class FinitaryAbsActionG (P T : Type) {PreAct A : Type} {H : ExtAction A} (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} `{Countable PreAct} :=
   MkFinitaryAbsActionG {
-    FinitaryAbsActionG_Abs :: AbsActionG P T H Γ;
+    FinitaryAbsActionG_Abs :: AbsActionG P T Γ;
     coR_abs : P → gset PreAct;
     coR_abs_spec1 (p : P) (x : PreAct) : x ∈ coR_abs p → x ∈ ⌈ Γ ⌉ (coR p);
     coR_abs_spec2 (p : P) (x : PreAct) : x ∈ ⌈ Γ ⌉ (coR p) → x ∈ coR_abs p;
@@ -47,7 +47,7 @@ Class FinitaryAbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : 
 Section Abstraction_step.
   Context {P T PreAct Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A}
     {SA : SyncAction Aproc A} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
-    (Γ : A → PreAct) `{!AbsActionG P T H Γ}.
+    (Γ : A → PreAct) `{!AbsActionG P T Γ}.
 
   Lemma abstraction_step_test (p : P) (t : T) β β'' :
     blocking β → Γ β = Γ β'' → β'' ∈ coR p → t ⟶[β] → ∃ u, u ∈ coR p ∧ t ⟶[u].
@@ -63,14 +63,14 @@ Section Of_relation.
   Context (R : relation A) `{!Equivalence R} `{!RelDecision R}.
 
   Definition AbsActionG_of_LA :
-    LA_admissible P T R → AbsActionG P T H (LA_class R).
+    LA_admissible P T R → AbsActionG P T (LA_class R).
   Proof.
     intros adm p β β'' b e mem.
     exact (adm p β β'' b (proj1 (LA_class_proj R β β'') e) mem).
   Defined.
 
   Definition FinitaryAbsActionG_of_LA :
-    LA_admissible P T R → FinitaryLA P R → FinitaryAbsActionG P T H (LA_class R).
+    LA_admissible P T R → FinitaryLA P R → FinitaryAbsActionG P T (LA_class R).
   Proof.
     intros adm fin.
     refine {| FinitaryAbsActionG_Abs := AbsActionG_of_LA adm; coR_abs := coR_absR |}.

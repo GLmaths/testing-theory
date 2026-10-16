@@ -57,7 +57,7 @@ Section OneProcess.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   (* *** Traces *)
 
@@ -115,8 +115,8 @@ Section MayNormalForm.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
-  Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba Q gLtsEqQ, !gLtsObaFW Q A}.
 
   Theorem bhv_pre_ti_nf_iff (p : P) (q : Q) : p ≼ₙ_ₜᵢ q <-> p ≼ₜᵢ q.
   Proof.
@@ -163,8 +163,8 @@ Section MaySimplified.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
-  Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba Q gLtsEqQ, !gLtsObaFW Q A}.
 
   Theorem bhv_pre_ti_fnf_iff (p : P) (q : Q) :
     p ≼ₛ_ₜᵢ q <-> (forall s, traces p s -> traces q (nlin (fnf s))).

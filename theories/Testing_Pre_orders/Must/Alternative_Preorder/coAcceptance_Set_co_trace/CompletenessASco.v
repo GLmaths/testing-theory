@@ -112,7 +112,7 @@ Class test_convergence_spec
 #[global] Existing Instance tconv_test_spec.
 
 (* *** Axioms for the tests on co-acceptance sets *)
-Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
+Class test_co_acceptance_set_spec {PreAct : Type} `{CC : Countable PreAct}
   `{@gLtsEq T A H, !Testing_Predicate outcome _}
   (ta : gset PreAct -> list A -> T) (Γ : A -> PreAct)
     := {
@@ -135,7 +135,7 @@ Class test_co_acceptance_set_spec (PreAct : Type) `{CC : Countable PreAct}
 
 (* *** Facts about test generators *)
 Lemma tconv_always_reduces `{
-  gLtsOba T , !Testing_Predicate outcome _, !test_convergence_spec tconv} s :
+  gLtsOba T Rel , !Testing_Predicate outcome _, !test_convergence_spec tconv} s :
   ∃ t, tconv s ⟶ t.
 Proof.
   induction s as [|μ s'].
@@ -151,7 +151,7 @@ Qed.
 
 Section Test_spec_inversion.
 
-Context `{gLtsT : gLtsOba T}.
+Context `{gLtsT : gLtsOba T Rel}.
 Context `{!Testing_Predicate outcome _}.
 Context `{!test_spec f}.
 
@@ -402,7 +402,7 @@ End Test_spec_inversion.
 
 Section Test_convergence_inversion.
 
-Context `{gLtsT : gLtsOba T}.
+Context `{gLtsT : gLtsOba T Rel}.
 Context `{!Testing_Predicate outcome _}.
 Context `{!test_convergence_spec f}.
 
@@ -440,9 +440,9 @@ End Test_convergence_inversion.
 Section Test_acceptance_inversion.
 
 Context `{CC: Countable PreAct}.
-Context `{gLtsT : gLtsOba T}.
+Context `{gLtsT : gLtsOba T Rel}.
 Context `{!Testing_Predicate outcome _}.
-Context `{!test_co_acceptance_set_spec PreAct f Γ}.
+Context `{!test_co_acceptance_set_spec (PreAct := PreAct) f Γ}.
 
 Lemma inversion_ta_external_action s μ' (t : T) (O : gset PreAct) :
   f O s ⟶[μ'] t ->
@@ -480,9 +480,9 @@ End Test_acceptance_inversion.
 
 Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P Aproc Hp,
-  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T,
+  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _,
   !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec PreAct ta Γ,
+  !test_co_acceptance_set_spec (PreAct := PreAct) ta Γ,
   SA : !SyncAction Aproc Atest, STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
   (p : P) (β : Atest) s E :
   p ⤓ → blocking β →
@@ -511,7 +511,7 @@ Qed.
 
 Lemma ta_tau_ex `{CC : Countable PreAct}`{
   @gLtsObaFB T A H gLtsEqT gLtsObaT, !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct f Γ}
+  !test_co_acceptance_set_spec (PreAct := PreAct) f Γ}
   s1 s2 s3 η μ E :
   non_blocking η -> Forall non_blocking s1 -> Forall non_blocking s2 -> dual μ η ->
   f E (s1 ++ [η] ++ s2 ++ [μ] ++ s3) ⟶⋍ f E (s1 ++ s2 ++ s3).
@@ -537,11 +537,11 @@ Qed.
 
 Lemma must_ta_monotonicity_nil {P : Type} `{CC : Countable PreAct} `{
   gLtsP : @gLts P Aproc Hp,
-  gLtsEqT : @gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T, !gLtsObaFB T Atest,
+  gLtsEqT : @gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _, !gLtsObaFB T Atest,
   SA : !SyncAction Aproc Atest,
-  AbsPT : !@AbsAction P T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA,
+  AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct),
   !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
+  !test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
   STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
   (p : P) E1 :
   p must_pass (ta E1 ε) → ∀ E2, E1 ⊆ E2 → p must_pass (ta E2 ε).
@@ -605,8 +605,8 @@ Qed.
 Lemma must_ta_monotonicity {P : Type} `{CC : Countable PreAct} `{
   @gLtsObaFW P A H gLtsEqP gLtsObaP,
   @gLtsObaFB T A H gLtsEqT gLtsObaT,
-  AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ , !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}
+  AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) , !Testing_Predicate outcome _,
+  !test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}
 
   `{!Prop_of_Inter P T A A dual}
 
@@ -663,11 +663,11 @@ Qed.
 Lemma stable_process_must_ta_or_empty_pre_action_set {P : Type}
   `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P Aproc Hp,
-  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T,
+  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _,
   SA : !SyncAction Aproc Atest,
-  FiniteAbs : !@FinitaryAbsAction P T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA _ _,
+  FiniteAbs : !FinitaryAbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct),
   !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
+  !test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
   STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
   (p : P) (E : gset PreAct) :
   p ↛ → p must_pass (ta ((coR_abs p) ∖ E) ε) ∨ (coR_abs p ⊆ E).
@@ -834,9 +834,9 @@ Proof. intros hleq s hcnv. now eapply must_iff_cocnv, hleq, must_iff_cocnv. Qed.
 
 Lemma after_blocking_co_of_must_tacc_co `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P Aproc Hp,
-  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T,
+  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _,
   !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec PreAct ta Γ,
+  !test_co_acceptance_set_spec (PreAct := PreAct) ta Γ,
   SA : !SyncAction Aproc Atest, STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
   (p : P) (β : Atest) s E :
   p ⤓ → blocking β → (∀ q, p ⟹ᶜᵒ[[β]] q → q must_pass (ta E s)) →
@@ -856,7 +856,7 @@ Context `{gLtsP : @gLts P Aproc Hp}.
 Context `{gLtsT : !@gLtsEq T A H}.
 Context `{SA : !SyncAction Aproc A}.
 Context `{!coFiniteImagegLts P A}.
-Context `{FiniteAbs : !@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsP gLtsT SA _ _}.
+Context `{FiniteAbs : !FinitaryAbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
 Lemma cowt_acceptance_set_subseteq μ s p q hacnv1 hacnv2 :
   p ⟹ᶜᵒ{μ} q ->
@@ -918,9 +918,9 @@ Context {P : Type}.
 Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
 Context `{!coFiniteImagegLts P A}.
 Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
-Context `{FiniteAbs :@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _}.
+Context `{FiniteAbs :!FinitaryAbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{!Testing_Predicate outcome _}.
-Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context `{!test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
 Context `{!Prop_of_Inter P T A A dual}.
 
 Lemma must_ta_or_empty_pre_action_set_for_empty_trace_co (p : P) (hcocnv : p ⇓ᶜᵒ ε) (E : gset PreAct) :
@@ -1020,11 +1020,11 @@ End Must_ta_co.
 
 Lemma not_must_ta_without_required_acc_set_co {Q : Type} `{CC : Countable PreAct} `{
   gLtsQ : @gLts Q Aproc Hp,
-  gLtsEqT : !@gLtsEq T A H, gLtsObaT : !gLtsOba T, !gLtsObaFB T A,
+  gLtsEqT : !@gLtsEq T A H, gLtsObaT : !gLtsOba T _, !gLtsObaFB T A,
   SA : !SyncAction Aproc A,
-  FiniteAbs : !@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsQ gLtsEqT SA _ _,
+  FiniteAbs : !FinitaryAbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsEqT) (SA := SA) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct),
   !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
+  !test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
   STS : !ParSts Q T gLtsQ gLtsEqT, !ParStsSpec Q T gLtsQ gLtsEqT SA STS}
   (q q' : Q) s (E : gset PreAct) :
   q ⟹ᶜᵒ[s] q' -> q' ↛ -> ¬ q must_pass (ta (E ∖ (coR_abs q')) s).
@@ -1063,11 +1063,11 @@ Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
 Context `{@gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
 Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
 Context `{!coFiniteImagegLts P A}.
-Context `{FiniteAbsP :@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _}.
+Context `{FiniteAbsP :!FinitaryAbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{!coFiniteImagegLts Q A}.
-Context `{FiniteAbsQ :@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _}.
+Context `{FiniteAbsQ :!FinitaryAbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{!Testing_Predicate outcome _}.
-Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context `{!test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
 Context `{!Prop_of_Inter P T A A dual}.
 Context `{!Prop_of_Inter Q T A A dual}.
 Context `{!test_convergence_spec tconv}.

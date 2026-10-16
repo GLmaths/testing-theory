@@ -120,7 +120,7 @@ Qed.
 Section CoSwaps.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Lemma cocnv_non_blocking_action_swap (p : P) η1 η2 s :
     co_non_blocking η1 -> co_non_blocking η2 ->
@@ -202,7 +202,7 @@ End CoSwaps.
 Section TransferCo.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
   Notation "⟪ s ⟫ᶜᵒ" := (nlin (nform cls s)) (at level 30).
@@ -312,7 +312,7 @@ Notation "s ≼ᶜᵒₜ t" := (cotrace_pre s t) (at level 70).
 Section CoTracePreorder.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   (* [⊑ᶜᵒₜ] is sound for co-weak transitions. *)
   Lemma cowt_cotrace_leq (p q : P) s t : s ⊑ᶜᵒₜ t -> p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[t] q.
@@ -660,7 +660,7 @@ End CoMinimality.
 Section CoSimplification.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
   (* Testing along [s] is subsumed by testing along the simplified co-trace. *)
@@ -948,7 +948,7 @@ Section CoFeedbackNormalFormLts.
              (tequiv_nform cls (co_fbnf s))).
   Qed.
 
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Corollary cowt_co_fbnf (p q : P) s : p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[co_fbnf s] q.
   Proof.
@@ -971,7 +971,7 @@ End CoFeedbackNormalFormLts.
 Section CoTracePreorderConvergence.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Lemma cocnv_delay (p : P) (η 𝜆 : A) s :
     co_non_blocking η -> p ⇓ᶜᵒ 𝜆 :: η :: s -> p ⇓ᶜᵒ η :: 𝜆 :: s.

@@ -63,11 +63,11 @@ Qed.
 Lemma stable_process_must_ta_weak {P : Type}
   `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P Aproc Hp,
-  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T,
+  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _,
   SA : !SyncAction Aproc Atest,
-  AbsPT : !@AbsAction P T FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp _ _ SA,
+  AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct),
   !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
+  !test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
   STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
   (p : P) (X : gset PreAct) :
   p ↛ → (∃ x, x ∈ X ∧ x ∈ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR p)) → p must_pass (ta X ε).
@@ -111,9 +111,9 @@ Context {P : Type}.
 Context `{CC : Countable PreAct}.
 Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
 Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
-Context `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _}.
+Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{!Testing_Predicate outcome _}.
-Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context `{!test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
 Context `{!Prop_of_Inter P T A A dual}.
 
 Lemma must_ta_weak_for_empty_trace (p : P) (X : gset PreAct) :
@@ -170,10 +170,10 @@ End Must_ta_weak.
 
 Lemma not_must_ta_without_required_acc_set_weak {Q : Type} `{CC : Countable PreAct} `{
   gLtsQ : @gLts Q Aproc Hp,
-  gLtsEqT : !@gLtsEq T A H, gLtsObaT : !gLtsOba T, !gLtsObaFB T A,
+  gLtsEqT : !@gLtsEq T A H, gLtsObaT : !gLtsOba T _, !gLtsObaFB T A,
   SA : !SyncAction Aproc A,
   !Testing_Predicate outcome _} {FinA : Type} {αᴛᴇꜱᴛ : A → FinA} {αᴘʀᴏ : FinA → PreAct} `{
-  !test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
+  !test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x))),
   STS : !ParSts Q T gLtsQ gLtsEqT, !ParStsSpec Q T gLtsQ gLtsEqT SA STS}
   (q q' : Q) s (X : gset PreAct) :
   q ⟹ᶜᵒ[s] q' → q' ↛ → (∀ x, x ∈ X → x ∉ ⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉ (coR q')) →
@@ -210,10 +210,10 @@ Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
 Context `{@gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
 Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
 Context `{!coFiniteImagegLts P A}.
-Context `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _}.
+Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{!Testing_Predicate outcome _}.
-Context `{!test_co_acceptance_set_spec PreAct ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
+Context `{!test_co_acceptance_set_spec ta (fun x => (αᴘʀᴏ (αᴛᴇꜱᴛ x)))}.
 Context `{!Prop_of_Inter P T A A dual}.
 Context `{!Prop_of_Inter Q T A A dual}.
 Context `{!coFiniteImagegLts Q A}.

@@ -1292,7 +1292,7 @@ Next Obligation.
   eapply Congruence_Respects_Transition.
 Defined.
 
-#[global] Program Instance VCCS_gLtsOBA : gLtsOba proc.
+#[global] Program Instance VCCS_gLtsOBA : gLtsOba proc _.
 Next Obligation.
   intros ? ? ? ? ? Imp ;simpl in *.
   inversion Imp.
@@ -2002,7 +2002,7 @@ Proof.
 Qed.
 
 #[global] Program Instance AbsVCCS :
-  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction αᴛᴠᴄᴄꜱ αᴘᴠᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq _.
+  AbsAction (gLtsP := (@gLtsEq_gLts proc _ _ VCCS_gLtsEq)) (gLtsT := VCCS_gLtsEq) proc proc αᴛᴠᴄᴄꜱ αᴘᴠᴄᴄꜱ.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -2051,7 +2051,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance FinitaryAbsVCCS :
-  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VCCS_ExtAction αᴛᴠᴄᴄꜱ αᴘᴠᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VCCS_gLtsEq) VCCS_gLtsEq _ _ _ :=
+  FinitaryAbsAction (gLtsP := (@gLtsEq_gLts proc _ _ VCCS_gLtsEq)) (gLtsT := VCCS_gLtsEq) proc proc αᴛᴠᴄᴄꜱ αᴘᴠᴄᴄꜱ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.

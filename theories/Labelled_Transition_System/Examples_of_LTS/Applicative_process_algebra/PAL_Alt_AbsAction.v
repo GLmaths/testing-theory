@@ -47,8 +47,7 @@ Section PAL_Alt_AbsAction.
   Definition αᴘᴇᴠ (e : Event) : Event := e.
 
   #[global] Instance AbsPALA :
-    @AbsAction term term Event Event (PALA_Act Val) (PALA_ExtAction Val) (αᴛᴀᴘᴀʟ Val) αᴘᴇᴠ _ _
-      (PALA_gLts Val) (PALA_gLtsEq Val) _.
+    AbsAction (gLtsP := (PALA_gLts Val)) (gLtsT := (PALA_gLtsEq Val)) term term (αᴛᴀᴘᴀʟ Val) αᴘᴇᴠ.
   Proof.
     split.
     - intros t β β' _ _ e h. exact (αᴛᴇꜱᴛ_test_spec Val t β β' e h).

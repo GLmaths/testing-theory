@@ -45,8 +45,8 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
 
 
 Lemma copre_if_prex `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct),
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}
   (ps : gset P) (qs : gset Q) : ps ≼ₛₑₜ_ₐₛ qs -> ps ᶜᵒ≼ₐₛ qs.
 Proof.
   revert ps qs.

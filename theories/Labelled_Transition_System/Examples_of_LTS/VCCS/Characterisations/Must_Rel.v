@@ -307,7 +307,7 @@ Section VCCS_Rel.
     test_convergence_spec_bridge gen_conv gen_conv_gen_spec_conv_inst.
 
   #[local] Instance VCCS_ta_core :
-    CompletenessASsync.test_co_acceptance_set_spec (LA_quotient Rᴠ) (ta_ker Γᴠ gen_acc) (LA_class Rᴠ) :=
+    CompletenessASsync.test_co_acceptance_set_spec (ta_ker Γᴠ gen_acc) (LA_class Rᴠ) :=
     ta_ker_bridge Γᴠ gen_acc gen_acc_gen_spec_acc_inst.
 
   Definition must_iff_rel_VCCS :=
@@ -349,7 +349,7 @@ Section VCCS_Rel_direct.
     test_convergence_spec_bridge gen_conv gen_conv_gen_spec_conv_inst.
 
   #[local] Instance VCCS_ta_core' :
-    CompletenessASsync.test_co_acceptance_set_spec (LA_quotient Rᴠ) (ta_ker Γᴠ gen_acc) (LA_class Rᴠ) :=
+    CompletenessASsync.test_co_acceptance_set_spec (ta_ker Γᴠ gen_acc) (LA_class Rᴠ) :=
     ta_ker_bridge Γᴠ gen_acc gen_acc_gen_spec_acc_inst.
 
   Lemma vccs_all_blocking (η : A) : ¬ non_blocking η.

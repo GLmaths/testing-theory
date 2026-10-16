@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
 Theorem equivalence_ti_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P T A A dual}
   {_ : Prop_of_Inter Q T A A dual}
@@ -78,7 +78,7 @@ Qed.
 Corollary may_equiv_iff_same_traces `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P T A A dual}
   {_ : Prop_of_Inter Q T A A dual}

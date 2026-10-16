@@ -31,30 +31,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
 
 Import ListNotations.
 (* begin hide *)
-(* * [completeness1] and [completeness2] are false without [UniqueDual]
-
-    [Completeness.v] proves [p ⊑ₘᵤₛₜᵢ q -> p ꜀ₙᵥ≼ₐₛ q] ([completeness1]) and
-    [p ⊑ₘᵤₛₜᵢ q -> p ₐ꜀꜀≼ₐₛ q] ([completeness2]) under the hypothesis
-    [UniqueDual A]. This file shows that both statements are false without it.
-
-    Actions are [la], [lb], [lc], [ld], [le], all blocking, and the dual
-    relation is [la — lc — lb] and [ld — le]: [lc] is dual to both [la] and
-    [lb]. This is an [ExtAction] ([EA_NU]) which is not [UniqueDual].
-
-    The swap [la ↔ lb] preserves the dual relation, and a test can only
-    interact with [la] or [lb] through [lc], so no test separates a process
-    from its swap: [p ⊑ₘᵤₛₜᵢ swap p], for tests of any LTS. Hence:
-    - convergence ([completeness1]): [p0 = la.0 + lb.Ω], [q0 = la.Ω + lb.0].
-      [p0 ⇓ [la]] while [q0 ⟹{la} Ω] diverges, so [¬ p0 ꜀ₙᵥ≼ₐₛ q0].
-    - acceptance sets ([completeness2]): [p1 = la.(ld.0) + lb.0],
-      [q1 = la.0 + lb.(ld.0)], with [αᴛᴇꜱᴛ = αᴘʀᴏ = id]. After [la], [q1] reaches the
-      stable [0], whose [coR] is empty, while the only state [p1] reaches is
-      [ld.0], whose [coR] is [{le}], so [¬ p1 ₐ꜀꜀≼ₐₛ q1]. Both processes
-      converge, so the failure really is on the acceptance sets.
-
-    The process LTS satisfies the process-side hypotheses of [completeness1]
-    ([gLtsOba], [gLtsObaFW]): with every action blocking, their axioms are
-    vacuous. *)
+(* * [completeness1] and [completeness2] are false without [UniqueDual] *)
 
 (* ** Actions *)
 
@@ -157,7 +134,7 @@ Proof. intros [s' h] e. unfold st_step in h. rewrite e in h. set_solver. Qed.
   |}.
 Next Obligation. intros p q 𝜆 (r & -> & l). eauto. Qed.
 
-#[global] Instance st_gLtsOba : gLtsOba st.
+#[global] Instance st_gLtsOba : gLtsOba st _.
 Proof. constructor; intros; simpl in *; contradiction. Qed.
 
 #[global] Instance st_gLtsObaFW : gLtsObaFW st ABC.
@@ -300,14 +277,14 @@ Qed.
 Definition idA (x : ABC) : ABC := x.
 
 #[global] Program Instance AbsAction_id `{gLtsT : !gLtsEq T EA_NU} :
-  @AbsAction st T ABC ABC ABC EA_NU idA idA _ _ st_gLts gLtsT _.
+  AbsAction (gLtsP := st_gLts) (gLtsT := gLtsT) st T idA idA.
 Next Obligation. intros T gLtsT t β β' b b' e mem. unfold idA in e. subst. exact mem. Qed.
 Next Obligation. intros T gLtsT p β β' b b' e mem. unfold idA in *. subst. exact mem. Qed.
 
 (* [ₐ꜀꜀≼ₐₛ] with [αᴛᴇꜱᴛ = αᴘʀᴏ = idA] *)
 Definition cond2_id `{gLtsT : !gLtsEq T EA_NU} (p q : st) : Prop :=
-  @bhv_pre_cond2 st ABC EA_NU st_gLts T ABC ABC idA idA gLtsT AbsAction_id
-    st st_gLts idA AbsAction_id p q.
+  bhv_pre_cond2 (αᴛᴇꜱᴛ := idA) (αᴘʀᴏP := idA) (αᴘʀᴏQ := idA)
+    (AbsPT := AbsAction_id) (AbsQT := AbsAction_id) p q.
 
 Lemma dz_terminates : dz ⤓.
 Proof. by apply no_tau_terminates. Qed.

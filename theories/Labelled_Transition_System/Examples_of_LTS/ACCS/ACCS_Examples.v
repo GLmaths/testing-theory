@@ -66,7 +66,7 @@ Qed.
 Lemma empty_is_a_top_element
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ _ _} (X : gset P) :
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} (X : gset P) :
   forall (PRE : Chain (copre_m)),
     elem PRE X ∅.
 Proof.
@@ -213,7 +213,7 @@ Qed.
     induction on the target set.) *)
 Lemma coin_union_right `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m}
   : forall (X Y1 Y2 : gset P), elem PRE X Y1 -> elem PRE X Y2 -> elem PRE X (Y1 ∪ Y2).
 Proof.
@@ -348,7 +348,7 @@ Qed.
 (* A singleton is below any of its weak τ-descendants. *)
 Lemma coin_wt_nil_singleton `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m} (x y : P) :
   x ⟹ y -> elem PRE {[x]} {[y]}.
 Proof.

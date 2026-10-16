@@ -107,7 +107,7 @@ Section Transfer.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   (* *** Weak transitions *)
 
@@ -262,7 +262,7 @@ Qed.
 Section TracePreorderSoundness.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Lemma wt_trace_leq (p q : P) s t : s ⊑ₜ t -> p ⟹[s] q -> p ⟹⋍[t] q.
   Proof.
@@ -468,7 +468,7 @@ Section Simplification.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   (* Testing along [s] is subsumed by testing along the simplified trace. *)
   Corollary wt_csimpl (p q : P) s : p ⟹[s] q -> ∃ q', p ⟹[csimpl cls_tr s] q'.
@@ -620,7 +620,7 @@ Section SimplificationLeq.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   (* Contrary to [wt_csimpl], the state that is reached is preserved: the
       sorted trace loses nothing. *)
@@ -878,7 +878,7 @@ Section FeedbackNormalFormLts.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Corollary wt_fbnf (p q : P) s : p ⟹[s] q -> p ⟹⋍[fbnf s] q.
   Proof. intro w. eapply wt_trace_leq; [eapply trace_leq_fbnf | exact w]. Qed.
@@ -899,7 +899,7 @@ End FeedbackNormalFormLts.
 Section TracePreorderConvergence.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Lemma cnv_delay (p : P) (η 𝜆 : A) s :
     non_blocking η -> p ⇓ 𝜆 :: η :: s -> p ⇓ η :: 𝜆 :: s.

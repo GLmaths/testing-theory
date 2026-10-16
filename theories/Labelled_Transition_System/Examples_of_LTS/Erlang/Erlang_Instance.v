@@ -378,7 +378,7 @@ Qed.
     message in transit, and a message in transit interferes with nothing but the
     communication that consumes it. *)
 
-#[global] Program Instance Erl_gLtsOba : gLtsOba sys.
+#[global] Program Instance Erl_gLtsOba : gLtsOba sys _.
 Next Obligation. (* NB-DELAY *)
   intros p q r η 𝜆 nb hl1 hl2.
   destruct nb as (a & ->). apply erl_out_shape in hl1 as (p0 & v & -> & ->).

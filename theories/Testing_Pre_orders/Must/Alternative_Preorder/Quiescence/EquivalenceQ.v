@@ -39,8 +39,8 @@ Proof.
 Qed.
 
 Lemma quiescent_pre_of_bhv_pre `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :
   (∀ s, is_trace q s -> p ⇓ s) -> p ≼ₐₛ q -> q ⊑ǫ p.
 Proof.

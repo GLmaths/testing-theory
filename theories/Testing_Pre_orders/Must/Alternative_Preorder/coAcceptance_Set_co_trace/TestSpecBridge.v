@@ -74,8 +74,8 @@ Defined.
 #[global] Instance test_co_acceptance_set_spec_of_plain
   {PreAct T A} `{CC : Countable PreAct} `{H0 : @gLtsEq T A H} `{!Testing_Predicate outcome _}
   {ta : gset PreAct -> list A -> T} {Γ : A -> PreAct}
-  (Hspec : Completeness.test_co_acceptance_set_spec PreAct ta Γ)
-  : CompletenessASco.test_co_acceptance_set_spec PreAct ta Γ.
+  (Hspec : Completeness.test_co_acceptance_set_spec ta Γ)
+  : CompletenessASco.test_co_acceptance_set_spec ta Γ.
 Proof.
   destruct Hspec as [tts tdt tdnba taig thrt ttg].
   unshelve econstructor.

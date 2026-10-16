@@ -43,8 +43,8 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
                Testing_Predicate DefinitionAS DefinitionCI SetLTSConstruction.
 
 Lemma prex1_if_copre `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ꜀ₙᵥ≼ₛₑₜ_ₐₛ qs.
 Proof.
   intros Hyp_PreO s hcnv.
@@ -71,8 +71,8 @@ Proof.
 Qed.
 
 Lemma prex2_if_copre `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (ps : gset P) (qs : gset Q) : ps ᶜᵒ≼ₐₛ qs -> ps ₐ꜀꜀≼ₛₑₜ_ₐₛ qs.
 Proof.
   revert ps qs.

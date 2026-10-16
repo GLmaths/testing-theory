@@ -32,7 +32,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lt
 Section Completeness_ti_co.
 
 Context `{gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
-Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
+Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _}.
 Context {QInter : Prop_of_Inter Q T A A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
@@ -116,7 +116,7 @@ End Completeness_ti_co.
 Theorem completeness_ti_co_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A A dual}
   {_ : Prop_of_Inter Q T A A dual}

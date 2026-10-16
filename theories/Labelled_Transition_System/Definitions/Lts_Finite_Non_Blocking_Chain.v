@@ -32,7 +32,7 @@ From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimu
 
 (** ** Each program has a MailBox, which is finite and counts occurences of Value *)
 
-Class FiniteNonBlockingChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : @gLtsOba P A H gLtsEqP} :=
+Class FiniteNonBlockingChain_LtsOba P {A} `{H : ExtAction A} `{gLtsObaP : !gLtsOba P gLtsEqP} :=
   MkOba {
       (** ******* Multiset of non-blocking action from a process *)
       lts_oba_mo (p : P) : gmultiset A;

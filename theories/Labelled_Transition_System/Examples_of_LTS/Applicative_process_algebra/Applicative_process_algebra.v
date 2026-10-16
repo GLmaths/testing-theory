@@ -524,7 +524,7 @@ Section PAL.
     eq_spec := PAL_eq_spec;
   |}.
 
-  #[global] Instance PAL_gLtsOba : gLtsOba term (H:=PAL_ExtAction) (Rel:=PAL_gLtsEq).
+  #[global] Instance PAL_gLtsOba : gLtsOba term (H:=PAL_ExtAction)  (PAL_gLtsEq).
   Proof.
     unshelve econstructor.
     - intros p q r η 𝜆 nb Hl1 Hl2. destruct nb.

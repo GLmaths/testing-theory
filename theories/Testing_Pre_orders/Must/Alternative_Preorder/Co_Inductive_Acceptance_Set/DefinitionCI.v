@@ -41,8 +41,8 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
                DefinitionAS.
 (* begin hide *)
 CoInductive copre `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (ps : gset P) (qs : gset Q) : Prop := {
     c_tau qs' : wt_set_from_pset_spec1 qs [] qs' -> copre ps qs'
   ; c_now : ps ⤓ -> forall q , q ∈ qs -> q ↛ ->
@@ -55,8 +55,8 @@ CoInductive copre `{
 Notation "ps ᶜᵒ≼ₐₛ qs" := (copre ps qs) (at level 70).
 
 Lemma co_preserved_by_wt_nil `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _  gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _  gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ᶜᵒ≼ₐₛ qs -> ps ᶜᵒ≼ₐₛ qs'.
 Proof. intros. eapply c_tau;eauto. Qed.
 

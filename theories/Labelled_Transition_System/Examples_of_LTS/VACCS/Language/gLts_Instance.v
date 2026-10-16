@@ -1391,7 +1391,7 @@ Next Obligation.
   eapply Congruence_Respects_Transition.
 Defined.
 
-#[global] Program Instance VACCS_gLtsOBA : gLtsOba proc.
+#[global] Program Instance VACCS_gLtsOBA : gLtsOba proc _.
 (*   {| lts_oba_output_commutativity p q r a 𝜆 := OBA_with_FB_First_Axiom p q r a 𝜆;
      lts_oba_output_confluence p q1 q2 a μ := OBA_with_FB_Second_Axiom p q1 q2 a μ;
      lts_oba_output_deter p1 p2 p3 a := OBA_with_FB_Third_Axiom p1 p2 p3 a;
@@ -2034,7 +2034,7 @@ Proof.
 Qed.
 
 #[global] Program Instance AbsVACCS :
-  @AbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _.
+  AbsAction (gLtsP := (@gLtsEq_gLts proc _ _ VACCS_gLtsEq)) (gLtsT := VACCS_gLtsEq) proc proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ.
 Next Obligation.
   intros. destruct β; destruct β'; destruct a; destruct a0.
   - inversion H1; subst.
@@ -2064,7 +2064,7 @@ Next Obligation.
 Qed.
 
 #[global] Program Instance FinitaryAbsVACCS :
-  @FinitaryAbsAction proc proc FinA PreAct (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ (@gLtsEq_gLts proc _ _ VACCS_gLtsEq) VACCS_gLtsEq _ _ _ :=
+  FinitaryAbsAction (gLtsP := (@gLtsEq_gLts proc _ _ VACCS_gLtsEq)) (gLtsT := VACCS_gLtsEq) proc proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ :=
   {| coR_abs p := PreCoAct_of p ; |}.
 Next Obligation.
   intros; subst. eapply gmultiset_elem_of_dom in H.

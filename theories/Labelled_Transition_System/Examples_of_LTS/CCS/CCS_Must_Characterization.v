@@ -65,13 +65,13 @@ Proof.
 Qed.
 
 Corollary must_iff_must_set_CCS_without_toFW (p q : proc) :
-  p ⊑ₘᵤₛₜᵢ q <-> p ≾ₘᵤₛₜ q.
+  p ⊑ₘᵤₛₜᵢ q <-> p ≾ₘₛ q.
 Proof.
   eapply must_iff_must_set_VCCS_without_toFW.
 Qed.
 
 Corollary must_iff_failure_set_CCS_without_toFW (p q : proc) :
-  p ⊑ₘᵤₛₜᵢ q <-> p ⋖ꜰᴀɪʟ q.
+  p ⊑ₘᵤₛₜᵢ q <-> p ≾ꜰᴅʀ q.
 Proof.
   eapply must_iff_failure_set_VCCS_without_toFW.
 Qed.

@@ -735,7 +735,7 @@ Proof.
 Qed.
 
 #[global] Instance ta_spec :
-  Completeness.test_co_acceptance_set_spec lpre ta (λ x, lαᴘʀᴏ (lαᴛᴇꜱᴛ x)).
+  Completeness.test_co_acceptance_set_spec ta (λ x, lαᴘʀᴏ (lαᴛᴇꜱᴛ x)).
 Proof.
   split.
   - intros E. apply gen_test_spec.
@@ -996,7 +996,7 @@ Section Characterisation.
   (* *** The abstraction *)
 
   #[global] Program Instance pconf_AbsAction :
-    @AbsAction pconf proc lfin lpre lact lact_ExtAction lαᴛᴇꜱᴛ lαᴘʀᴏ _ _ _ obs_gLtsEq _.
+    AbsAction (gLtsT := obs_gLtsEq) pconf proc lαᴛᴇꜱᴛ lαᴘʀᴏ.
   Next Obligation.
     intros t β β' hb hb' heq hmem. exact (obs_abs_test t β β' hb hb' heq hmem).
   Qed.
@@ -1010,7 +1010,7 @@ Section Characterisation.
     ∪ (if decide (x.2 = szero) then ∅ else {[ PMeasAll ]}).
 
   #[global] Program Instance pconf_FinitaryAbsAction :
-    @FinitaryAbsAction pconf proc lfin lpre lact lact_ExtAction lαᴛᴇꜱᴛ lαᴘʀᴏ _ _ _ obs_gLtsEq _ _ _ :=
+    FinitaryAbsAction (gLtsT := obs_gLtsEq) pconf proc lαᴛᴇꜱᴛ lαᴘʀᴏ :=
     {| coR_abs := coR_abs_lq |}.
   Next Obligation.
     intros x pre_μ hmem. unfold coR_abs_lq in hmem.
@@ -1043,7 +1043,7 @@ Section Characterisation.
   Qed.
 
   #[global] Program Instance pconf_AbsAction_FW :
-    @AbsAction (pconf * MO lact) proc lfin lpre lact lact_ExtAction lαᴛᴇꜱᴛ lαᴘʀᴏ _ _ _ obs_gLtsEq _.
+    AbsAction (gLtsT := obs_gLtsEq) (pconf * MO lact) proc lαᴛᴇꜱᴛ lαᴘʀᴏ.
   Next Obligation.
     intros t β β' hb hb' heq hmem. exact (obs_abs_test t β β' hb hb' heq hmem).
   Qed.
@@ -1053,8 +1053,7 @@ Section Characterisation.
   Qed.
 
   #[global] Program Instance pconf_FinitaryAbsAction_FW :
-    @FinitaryAbsAction (pconf * MO lact) proc lfin lpre lact lact_ExtAction lαᴛᴇꜱᴛ lαᴘʀᴏ _ _ _
-      obs_gLtsEq _ _ _ :=
+    FinitaryAbsAction (gLtsT := obs_gLtsEq) (pconf * MO lact) proc lαᴛᴇꜱᴛ lαᴘʀᴏ :=
     {| FinitaryAbsAction_Abs := pconf_AbsAction_FW ;
        coR_abs p := coR_abs p.1
                     ∪ dom (gmultiset_map (fun x => lαᴘʀᴏ (lαᴛᴇꜱᴛ (co x)))

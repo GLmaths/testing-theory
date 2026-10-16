@@ -59,9 +59,9 @@ Section PAL_Label_Dilemma_Sync.
   Context {SA : SyncAction Aproc Atest}.
   Context {gLtsP : gLts term Hp} {gLtsT : gLtsEq term Ht}.
   Context {FinA PreAct : Type} `{Countable PreAct} (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
-  Context {Fin : @FinitaryAbsAction term term FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsP gLtsT SA _ _}.
+  Context {Fin : FinitaryAbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) term term αᴛᴇꜱᴛ αᴘʀᴏ}.
   Context (outcome : term → Prop) {TP : Testing_Predicate outcome gLtsT} (gen : list Atest → term)
-    {TS : @test_spec term Atest Ht gLtsT outcome TP gen}.
+    {TS : test_spec (gLtsT := gLtsT) gen}.
 
   #[local] Hint Mode ExtAction ! : typeclass_instances.
 
@@ -73,7 +73,7 @@ Section PAL_Label_Dilemma_Sync.
   Context (hsync : ∀ p t p' t' : term,
     (∃ (μ1 : Aproc) (μ2 : Atest), sync μ1 μ2 ∧ p ⟶[μ1] p' ∧ t ⟶[μ2] t') ↔ PAL_sync p t p' t').
 
-  Definition Abs_sync : @AbsAction term term FinA PreAct Atest Ht αᴛᴇꜱᴛ αᴘʀᴏ Aproc Hp gLtsP gLtsT SA :=
+  Definition Abs_sync : AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) term term αᴛᴇꜱᴛ αᴘʀᴏ :=
     Fin.(FinitaryAbsAction_Abs).
 
   Lemma accepts_of_step_p (p q : term) (μ : Aproc) : p ⟶[μ] q → μ ∈ R p.

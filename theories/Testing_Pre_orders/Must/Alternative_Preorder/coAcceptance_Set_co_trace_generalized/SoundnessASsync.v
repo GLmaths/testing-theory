@@ -795,7 +795,7 @@ Context `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsP : !gLts P Hp}.
 Context `{gLtsQ : !gLts Q Hp} `{!gLtsCNenabledSync Q Aproc Atest}.
 Context (Γ : Atest → PreAct).
-Context `{AbsQT : !@AbsActionG Q T PreAct Atest Ht Γ Aproc Hp _ _ SA}.
+Context `{AbsQT : !AbsActionG (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (Γ : Atest → PreAct)}.
 
 (* In the non-blocking case, [q] receives the observer's emission [η] by
     [sync_cn_enabled] — with its own action, not necessarily [p]'s. *)
@@ -838,7 +838,7 @@ Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA
 Context `{gLtsQ : !gLts Q Hp} `{STSQ : !ParSts Q T _ _} `{!ParStsSpec Q T _ _ SA STSQ}
         `{CFIQ : !coFiniteImagegLts Q Atest} `{CN : !gLtsCNenabledSync Q Aproc Atest}.
 Context (Γ : Atest → PreAct).
-Context `{AbsQT : !@AbsActionG Q T PreAct Atest Ht Γ Aproc Hp _ _ SA}.
+Context `{AbsQT : !AbsActionG (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (Γ : Atest → PreAct)}.
 
 Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
 Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x Γ X Y) (at level 70).
@@ -1007,7 +1007,7 @@ Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtActio
 Context `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWQ : !gLtsFWMem Q Aproc Atest}
         `{SYQ : !Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync}
         `{CFIQ : !coFiniteImagegLts Q Atest}.
-Context `{AbsQT : !@AbsActionG Q T PreAct Atest Ht Γ (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem}.
+Context `{AbsQT : !AbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) Q T (Γ : Atest → PreAct)}.
 
 #[local] Instance CN_of_FW : gLtsCNenabledSync Q (Aproc + MemAct Atest) Atest.
 Proof.

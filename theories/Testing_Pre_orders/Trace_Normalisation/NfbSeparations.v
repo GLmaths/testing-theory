@@ -147,15 +147,14 @@ Section NfbNotMust.
   Context {T FA PA : Type}.
   Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _).
+  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
+  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
   Context (same_delta : forall x, αᴘʀᴏP x = αᴘʀᴏQ x).
 
   (* ** Acceptance sets on traces: [Pw] against [Bp2] *)
 
   Theorem pw_bp2_as_nfb :
-    @bhv_pre_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-      st _ αᴘʀᴏQ AbsQ ((Pw, mt) : st) ((Bp2, mt) : st).
+    bhv_pre_nfb (AbsPT := AbsP) (AbsQT := AbsQ) ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof.
     split.
     - intros s _ _. eapply bp2_cnv.
@@ -166,22 +165,18 @@ Section NfbNotMust.
   Qed.
 
   Theorem pw_bp2_not_as :
-    ¬ @bhv_pre st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-        st _ αᴘʀᴏQ AbsQ ((Pw, mt) : st) ((Bp2, mt) : st).
+    ¬ bhv_pre (AbsPT := AbsP) (AbsQT := AbsQ) ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof. intros (_ & h2). exact (must_cond2_false_Pw AbsP AbsQ h2). Qed.
 
   Theorem as_nfb_not_as :
-    @bhv_pre_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-      st _ αᴘʀᴏQ AbsQ ((Pw, mt) : st) ((Bp2, mt) : st)
-    /\ ¬ @bhv_pre st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-         st _ αᴘʀᴏQ AbsQ ((Pw, mt) : st) ((Bp2, mt) : st).
+    bhv_pre_nfb (AbsPT := AbsP) (AbsQT := AbsQ) ((Pw, mt) : st) ((Bp2, mt) : st)
+    /\ ¬ bhv_pre (AbsPT := AbsP) (AbsQT := AbsQ) ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof. split; [exact pw_bp2_as_nfb | exact pw_bp2_not_as]. Qed.
 
   (* ** Acceptance sets on co-traces: [Pe] against [Qe] *)
 
   Theorem pe_qe_co_as_nfb :
-    @bhv_pre_co_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-      st _ αᴘʀᴏQ AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
+    bhv_pre_co_nfb (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
   Proof.
     split.
     - intros s _ _. eapply cocnv_iff_cnv, qe_cnv.
@@ -192,10 +187,8 @@ Section NfbNotMust.
   Qed.
 
   Theorem co_as_nfb_not_co_as :
-    @bhv_pre_co_nfb st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA αᴛᴇꜱᴛ αᴘʀᴏP gLtsT AbsP
-      st _ αᴘʀᴏQ AbsQ ((Pe, mt) : st) ((Qe, mt) : st)
-    /\ ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction αᴛᴇꜱᴛ αᴘʀᴏP gLtsT _ AbsP
-         st _ αᴘʀᴏQ AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
+    bhv_pre_co_nfb (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st)
+    /\ ¬ bhv_pre_co (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
   Proof. split; [exact pe_qe_co_as_nfb | exact (co_must_false_Pe AbsP AbsQ)]. Qed.
 
 End NfbNotMust.

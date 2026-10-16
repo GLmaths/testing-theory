@@ -61,8 +61,8 @@ Notation "p ꜀ₙᵥ≼ₙ_ₐₛ q" := (bhv_pre_nf_cond1 p q) (at level 70).
 
 (* ** Smyth preorder on acceptance sets, on normalised traces *)
 Definition bhv_pre_nf_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
   forall (σ : ntrace A) q',
     p ⇓ nlin σ -> q ⟹[nlin σ] q' -> q' ↛ ->
@@ -72,8 +72,8 @@ Notation "p ₐ꜀꜀≼ₙ_ₐₛ q" := (bhv_pre_nf_cond2 p q) (at level 70).
 
 (* ** The alternative preorder on normalised traces *)
 Definition bhv_pre_nf `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
     (p : P) (q : Q) :=
       p ꜀ₙᵥ≼ₙ_ₐₛ q /\ p ₐ꜀꜀≼ₙ_ₐₛ q.
 
@@ -83,11 +83,11 @@ Section Normalised_preorder.
 
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
-  Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba Q gLtsEqQ, !gLtsObaFW Q A}.
   Context `{gLtsT : !gLtsEq T H}.
-  Context `{@AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _}.
-  Context `{@AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}.
+  Context `{!AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}.
+  Context `{!AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}.
 
   (* Every trace can be replaced by its normal form. *)
   Lemma bhv_pre_cond1_nf (p : P) (q : Q) : p ꜀ₙᵥ≼ₙ_ₐₛ q <-> p ꜀ₙᵥ≼ₐₛ q.
@@ -140,8 +140,8 @@ Notation "p ꜀ₙᵥ≼ₙ_꜀ₒ₋ₐₛ q" := (bhv_pre_co_nf_cond1 p q) (at 
 
 (* ** Smyth preorder on co-acceptance sets, on normalised co-traces *)
 Definition bhv_pre_co_nf_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
   forall (σ : ntrace A) q',
     p ⇓ᶜᵒ nlin σ -> q ⟹ᶜᵒ[nlin σ] q' -> q' ↛ ->
@@ -151,8 +151,8 @@ Notation "p ₐ꜀꜀≼ₙ_꜀ₒ₋ₐₛ q" := (bhv_pre_co_nf_cond2 p q) (at 
 
 (* ** The alternative co-preorder on normalised co-traces *)
 Definition bhv_pre_co_nf `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
     (p : P) (q : Q) :=
       p ꜀ₙᵥ≼ₙ_꜀ₒ₋ₐₛ q /\ p ₐ꜀꜀≼ₙ_꜀ₒ₋ₐₛ q.
 
@@ -161,11 +161,11 @@ Notation "p ≼ₙ_꜀ₒ₋ₐₛ q" := (bhv_pre_co_nf p q) (at level 70).
 Section Normalised_co_preorder.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
-  Context `{@gLtsOba Q A H gLtsEqQ, !gLtsObaFW Q A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba Q gLtsEqQ, !gLtsObaFW Q A}.
   Context `{gLtsT : !gLtsEq T H}.
-  Context `{@AbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏP _ _ _ gLtsT _}.
-  Context `{@AbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏQ _ _ _ gLtsT _}.
+  Context `{!AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}.
+  Context `{!AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
   Lemma bhv_pre_co_cond1_nf (p : P) (q : Q) : p ꜀ₙᵥ≼ₙ_꜀ₒ₋ₐₛ q <-> p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q.

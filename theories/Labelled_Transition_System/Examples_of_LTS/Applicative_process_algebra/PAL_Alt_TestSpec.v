@@ -319,7 +319,7 @@ Section PAL_Alt_TestSpec.
   Qed.
 
   #[global] Instance ta_co_acceptance_set_spec :
-    test_co_acceptance_set_spec Event (ta Val) (λ x, αᴘᴇᴠ Val (αᴛᴀᴘᴀʟ Val x)).
+    test_co_acceptance_set_spec (ta Val) (λ x, αᴘᴇᴠ Val (αᴛᴀᴘᴀʟ Val x)).
   Proof.
     split.
     - intros E. apply gen_test_spec; [apply sum_ac_closed | apply sum_ac_not_good].

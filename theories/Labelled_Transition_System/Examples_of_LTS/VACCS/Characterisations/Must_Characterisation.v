@@ -61,12 +61,12 @@ Proof.
   now rewrite equivalence_co_inductive_acceptance_and_must_i_singleton.
 Qed.
 
-Corollary must_iff_must_set_VACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘᵤₛₜ q ▷ ∅.
+Corollary must_iff_must_set_VACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘₛ q ▷ ∅.
 Proof.
   now rewrite equivalence_must_set_and_must_i.
 Qed.
 
-Corollary must_iff_failure_set_VACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
+Corollary must_iff_failure_set_VACCS (p q : proc) : p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ꜰᴅʀ q ▷ ∅.
 Proof.
   now rewrite equivalence_failure_set_and_must_i.
 Qed.

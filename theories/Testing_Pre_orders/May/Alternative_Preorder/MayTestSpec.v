@@ -90,7 +90,7 @@ Class may_test_spec
 
 Section May_tests.
 
-Context `{gLtsT : @gLtsEq T A H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
+Context `{gLtsT : @gLtsEq T A H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
 (* ** Determinacy on the expected action, for every action

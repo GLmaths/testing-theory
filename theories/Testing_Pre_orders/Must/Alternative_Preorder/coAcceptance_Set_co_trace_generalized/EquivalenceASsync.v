@@ -61,20 +61,20 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc
 Context (Γ : Atest → PreAct).
 Context (outcome : T → Prop).
 
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWP : !gLtsFWMem P Aproc Atest}.
 Context `{SYP : !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync} `{CFIP : !coFiniteImagegLts P Atest}.
-Context `{FAP : !@FinitaryAbsActionG P T PreAct Atest Ht Γ (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
+Context `{FAP : !FinitaryAbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) P T (Γ : Atest → PreAct)}.
 
 Context `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWQ : !gLtsFWMem Q Aproc Atest}.
 Context `{SYQ : !Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync} `{CFIQ : !coFiniteImagegLts Q Atest}.
-Context `{FAQ : !@FinitaryAbsActionG Q T PreAct Atest Ht Γ (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
+Context `{FAQ : !FinitaryAbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) Q T (Γ : Atest → PreAct)}.
 
 Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset PreAct → list Atest → T)
-        `{!test_co_acceptance_set_spec PreAct ta Γ}.
+        `{!test_co_acceptance_set_spec ta Γ}.
 
 Theorem equivalence_fw_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   p ⊆ₘᵤₛₜᵢ q ↔
@@ -97,7 +97,7 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc
 Context (Γ : Atest → PreAct).
 Context (outcome : T → Prop).
 
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}
         `{!FiniteNonBlockingChain_LtsOba T}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
@@ -112,16 +112,14 @@ Context `{PIQT : !Prop_of_Inter Q T Aproc Atest sync}.
 
 Context `{SYP : !Prop_of_Inter (P * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
         `{CFIP : !coFiniteImagegLts (P * MO (MemAct Atest)) Atest}.
-Context `{FAP : !@FinitaryAbsActionG (P * MO (MemAct Atest)) T PreAct Atest Ht Γ
-                  (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
+Context `{FAP : !FinitaryAbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) (P * MO (MemAct Atest)) T (Γ : Atest → PreAct)}.
 Context `{SYQ : !Prop_of_Inter (Q * MO (MemAct Atest)) T (Aproc + MemAct Atest) Atest sync}
         `{CFIQ : !coFiniteImagegLts (Q * MO (MemAct Atest)) Atest}.
-Context `{FAQ : !@FinitaryAbsActionG (Q * MO (MemAct Atest)) T PreAct Atest Ht Γ
-                  (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _}.
+Context `{FAQ : !FinitaryAbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) (Q * MO (MemAct Atest)) T (Γ : Atest → PreAct)}.
 
 Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset PreAct → list Atest → T)
-        `{!test_co_acceptance_set_spec PreAct ta Γ}.
+        `{!test_co_acceptance_set_spec ta Γ}.
 
 Theorem equivalence_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   ctx_pre (gLtsT := gLtsEqT) p q ↔
@@ -140,7 +138,7 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc
 Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
 Context (outcome : T → Prop).
 
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWP : !gLtsFWMem P Aproc Atest}.
@@ -155,14 +153,12 @@ Context `{FinQ : !@FinitaryLA Q (Aproc + MemAct Atest) ExtAction_sum _ Atest Ht 
 
 Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset (LA_quotient R) → list Atest → T)
-        `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+        `{!test_co_acceptance_set_spec ta (LA_class R)}.
 
-#[local] Instance FAP_rel : @FinitaryAbsActionG P T (LA_quotient R) Atest Ht (LA_class R)
-  (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _ :=
+#[local] Instance FAP_rel : FinitaryAbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) P T (LA_class R) :=
   FinitaryAbsActionG_of_LA R AdmP FinP.
 
-#[local] Instance FAQ_rel : @FinitaryAbsActionG Q T (LA_quotient R) Atest Ht (LA_class R)
-  (Aproc + MemAct Atest) ExtAction_sum _ _ SyncAction_mem _ _ :=
+#[local] Instance FAQ_rel : FinitaryAbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) Q T (LA_class R) :=
   FinitaryAbsActionG_of_LA R AdmQ FinQ.
 
 Theorem equivalence_fw_rel_and_must_i_sync_co_trace (p : P) (q : Q) :
@@ -182,7 +178,7 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc
 Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
 Context (outcome : T → Prop).
 
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}
         `{!FiniteNonBlockingChain_LtsOba T}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
@@ -210,7 +206,7 @@ Context `{FinQ : !@FinitaryLA (Q * MO (MemAct Atest)) (Aproc + MemAct Atest) Ext
 
 Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset (LA_quotient R) → list Atest → T)
-        `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+        `{!test_co_acceptance_set_spec ta (LA_class R)}.
 
 Theorem equivalence_rel_and_must_i_sync_co_trace (p : P) (q : Q) :
   ctx_pre (gLtsT := gLtsEqT) p q ↔
@@ -229,7 +225,7 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc
 Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
 Context (outcome : T → Prop).
 
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}
         `{!FiniteNonBlockingChain_LtsOba T}.
 Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
@@ -259,7 +255,7 @@ Context (co_rep_cover : ∀ η β, non_blocking η → dual η β → ∃ x, x �
 
 Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
 Context (ta : gset (LA_quotient R) → list Atest → T)
-        `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+        `{!test_co_acceptance_set_spec ta (LA_class R)}.
 
 Definition AdmP_fw := LA_admissible_fw (P := P) R AdmP AdmM.
 Definition AdmQ_fw := LA_admissible_fw (P := Q) R AdmQ AdmM.

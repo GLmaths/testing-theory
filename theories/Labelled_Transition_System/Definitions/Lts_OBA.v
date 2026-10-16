@@ -32,7 +32,7 @@ From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimu
 
 (** *** Lts that respects the axioms NB-DELAY , NB-CONFLUENCE, NB-TAU, NB-DETERMINACY and BACKWARDS-NB-DETERMINACY *)
 
-Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
+Class gLtsOba P {A} `{H : ExtAction A} (Rel : gLtsEq P H) :=
   MkOba {
       (* Selinger axioms. *)
       nb_delay {p q r η 𝜆} :

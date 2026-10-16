@@ -67,13 +67,13 @@ Proof.
 Qed.
 
 Corollary must_iff_must_set_VCCS_without_toFW (p q : proc) :
-  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≾ₘᵤₛₜ q.
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≾ₘₛ q.
 Proof.
   now rewrite<- equivalence_fw_must_set_and_must_i.
 Qed.
 
 Corollary must_iff_failure_set_VCCS_without_toFW (p q : proc) :
-  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ⋖ꜰᴀɪʟ q.
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≾ꜰᴅʀ q.
 Proof.
   now rewrite<- equivalence_fw_failure_set_and_must_i.
 Qed.

@@ -181,8 +181,7 @@ Defined.
     hole. *)
 
 #[global] Program Instance Erl_AbsAction_FW :
-  @AbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
+  AbsAction (gLtsT := VACCS_gLtsEq) (sys * MO erl_act) proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ.
 Next Obligation.
   intros t β β' hb hb' heq hmem.
   eapply (@abstraction_test_spec proc proc FinA PreAct erl_act VACCS_ExtAction
@@ -197,8 +196,7 @@ Qed.
     [DefinitionAS.v], which are proved. *)
 
 #[global] Program Instance Erl_FinitaryAbsAction_FW :
-  @FinitaryAbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ _ _ :=
+  FinitaryAbsAction (gLtsT := VACCS_gLtsEq) (sys * MO erl_act) proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ :=
   {| FinitaryAbsAction_Abs := Erl_AbsAction_FW ;
      coR_abs p := coR_abs p.1
                   ∪ dom (gmultiset_map (fun x => αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ (co x)))

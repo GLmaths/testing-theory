@@ -38,16 +38,16 @@ Section preorder.
   Context `{outcome : T -> Prop} `{outcome_dec : forall t, Decision (outcome t)} `{P : Type} `{Q : Type}
           `{H : !ExtAction A} {unique_nb : UniqueDual A}.
 
-  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A} `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}
-          `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
+  Context `{!gLtsOba P gLtsEqP, !FiniteImagegLts P A} `{!gLtsOba Q gLtsEqQ, !FiniteImagegLts Q A}
+          `{!gLtsOba T gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A A dual} `{!Prop_of_Inter Q T A A dual}.
 
-  Context `{CC : Countable PreAct} `{@FinitaryAbsAction P T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }
-          `{@FinitaryAbsAction Q T FinA PreAct A H αᴛᴇꜱᴛ αᴘʀᴏ _ _ _ _ _ _ _ }.
+  Context `{CC : Countable PreAct} `{!FinitaryAbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+          `{!FinitaryAbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }.
 
-  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}
-          `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
+  Context `{tc_spec : !test_convergence_spec (t_conv : list A → T)}
+          `{ta_spec : !test_co_acceptance_set_spec (ta : gset PreAct → list A → T) (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
 
   (** ** Main theorem *)
 

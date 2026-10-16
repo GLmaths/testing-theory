@@ -122,7 +122,7 @@ Section LiftMem.
 
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsEqP : !gLtsEq P Hp}.
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}
         `{!FiniteNonBlockingChain_LtsOba T}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 Context `{PIP : !Prop_of_Inter P (MO (MemAct Atest)) Aproc (MemAct Atest) fw_inter_mem}.
@@ -323,7 +323,7 @@ End LiftMem.
 Section LiftMemPreorder.
 
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}
         `{!FiniteNonBlockingChain_LtsOba T}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 

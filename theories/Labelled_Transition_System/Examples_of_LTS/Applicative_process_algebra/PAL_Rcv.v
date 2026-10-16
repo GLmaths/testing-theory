@@ -228,8 +228,7 @@ Section PAL_Rcv.
   Qed.
 
   #[global] Program Instance AbsPALR :
-    @AbsAction term term PALR_Act PreR PALR_Act PALR_ExtAction αᴛᴿ αᴘᴿ
-      PALR_Act PALR_ExtAction PALR_gLts PALR_gLtsEq SyncAction_of_dual.
+    AbsAction (Aproc := PALR_Act) (Hp := PALR_ExtAction) (gLtsP := PALR_gLts) (gLtsT := PALR_gLtsEq) (SA := SyncAction_of_dual) term term αᴛᴿ αᴘᴿ.
   Next Obligation.
     (* (1): [αᴛᴿ] is the identity *)
     intros t β β' _ _ e acc. unfold αᴛᴿ in e. by subst.
@@ -279,8 +278,7 @@ Section PAL_Rcv.
   Qed.
 
   #[global] Program Instance FinitaryPALR :
-    @FinitaryAbsAction term term PALR_Act PreR PALR_Act PALR_ExtAction αᴛᴿ αᴘᴿ
-      PALR_Act PALR_ExtAction PALR_gLts PALR_gLtsEq SyncAction_of_dual _ _ :=
+    FinitaryAbsAction (Aproc := PALR_Act) (Hp := PALR_ExtAction) (gLtsP := PALR_gLts) (gLtsT := PALR_gLtsEq) (SA := SyncAction_of_dual) term term αᴛᴿ αᴘᴿ :=
     {| coR_abs := coR_abs_PALR |}.
   Next Obligation. intros p x hx. by apply coR_abs_PALR_spec. Qed.
   Next Obligation. intros x p hx. by apply coR_abs_PALR_spec. Qed.
@@ -310,7 +308,7 @@ Corollary PALR_no_test_spec {Val : Type} `{Countable Val} `{!Inhabited Val}
   (inj : nat → Val) `{!Inj eq eq inj}
   (outcome : term Val → Prop) {TP : Testing_Predicate outcome (PALR_gLtsEq Val)}
   (gen : list (PALR_Act Val) → term Val) :
-  @test_spec (term Val) (PALR_Act Val) (PALR_ExtAction Val) (PALR_gLtsEq Val) outcome TP gen → False.
+  test_spec (gLtsT := PALR_gLtsEq Val) gen → False.
 Proof.
   intros TS.
   apply (no_labelling_sync (Val := Val) (TS := TS) (Fin := FinitaryPALR Val)

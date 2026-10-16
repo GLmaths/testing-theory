@@ -229,7 +229,7 @@ Section PAL_Alt_Congruence.
     eq_spec := PALA_cgr_spec;
   |}.
 
-  #[global] Instance PALA_gLtsOba : gLtsOba term (H:=PALA_ExtAction Val) (Rel:=PALA_gLtsEq).
+  #[global] Instance PALA_gLtsOba : gLtsOba term (H:=PALA_ExtAction Val)  (PALA_gLtsEq).
   Proof.
     unshelve econstructor.
     - intros p q r η 𝜆 nb Hl1 Hl2. destruct nb.

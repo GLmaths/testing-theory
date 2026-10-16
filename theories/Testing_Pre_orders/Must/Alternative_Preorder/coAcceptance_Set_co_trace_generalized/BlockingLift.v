@@ -313,7 +313,7 @@ Section Blocking_characterisation.
   Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
   Context (outcome : T → Prop).
 
-  Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
+  Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}.
   Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
   Context `{gLtsEqP : !gLtsEq P Hp} `{gLtsEqQ : !gLtsEq Q Hp}.
@@ -335,7 +335,7 @@ Section Blocking_characterisation.
 
   Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
   Context (ta : gset (LA_quotient R) → list Atest → T)
-          `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+          `{!test_co_acceptance_set_spec ta (LA_class R)}.
 
   Theorem equivalence_rel_blocking (p : P) (q : Q) :
     @ctx_pre P Aproc Hp gP Q gQ T Atest Ht gLtsEqT outcome TP SA STSP STSQ p q ↔

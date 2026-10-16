@@ -381,7 +381,7 @@ Proof.
 Qed.
 
 #[global] Program Instance gen_acc_gen_spec_acc_inst
-  : test_co_acceptance_set_spec PreAct gen_acc (fun x => αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ x)).
+  : test_co_acceptance_set_spec gen_acc (fun x => αᴘᴠᴄᴄꜱ (αᴛᴠᴄᴄꜱ x)).
 Next Obligation.
   intros g. simpl. unfold proc_stable. cbn.
   remember (lts_set_tau (unroll_fw (elements g))) as ps.

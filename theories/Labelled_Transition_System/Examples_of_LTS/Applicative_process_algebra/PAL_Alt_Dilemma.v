@@ -71,9 +71,8 @@ Section PAL_Alt_Dilemma.
     (gen : list (PALA_Act Val) → term).
 
   Theorem PALA_no_finitary_abstraction :
-    @FinitaryAbsAction term term FinA PreAct (PALA_Act Val) (PALA_ExtAction Val) αᴛᴇꜱᴛ αᴘʀᴏ
-      (PALA_Act Val) (PALA_ExtAction Val) (PALA_gLts Val) (PALA_gLtsEq Val) SyncAction_of_dual _ _ →
-    @test_spec term (PALA_Act Val) (PALA_ExtAction Val) (PALA_gLtsEq Val) outcome TP gen →
+    FinitaryAbsAction (Aproc := (PALA_Act Val)) (Hp := (PALA_ExtAction Val)) (gLtsP := (PALA_gLts Val)) (gLtsT := (PALA_gLtsEq Val)) (SA := SyncAction_of_dual) term term αᴛᴇꜱᴛ αᴘʀᴏ →
+    test_spec (gLtsT := PALA_gLtsEq Val) gen →
     False.
   Proof.
     intros Fin TS.
@@ -90,8 +89,7 @@ End PAL_Alt_Dilemma.
 Corollary PALA_not_finitary {Val : Type} `{Countable Val} `{!Inhabited Val}
   (inj : nat → Val) `{!Inj eq eq inj}
   {FinA PreAct : Type} `{Countable PreAct} (αᴛᴇꜱᴛ : PALA_Act Val → FinA) (αᴘʀᴏ : FinA → PreAct) :
-  @FinitaryAbsAction (term Val) (term Val) FinA PreAct (PALA_Act Val) (PALA_ExtAction Val) αᴛᴇꜱᴛ αᴘʀᴏ
-      (PALA_Act Val) (PALA_ExtAction Val) (PALA_gLts Val) (PALA_gLtsEq Val) SyncAction_of_dual _ _ → False.
+  FinitaryAbsAction (Aproc := (PALA_Act Val)) (Hp := (PALA_ExtAction Val)) (gLtsP := (PALA_gLts Val)) (gLtsT := (PALA_gLtsEq Val)) (SA := SyncAction_of_dual) (term Val) (term Val) αᴛᴇꜱᴛ αᴘʀᴏ → False.
 Proof.
   intros Fin.
   exact (PALA_no_finitary_abstraction inj αᴛᴇꜱᴛ αᴘʀᴏ (good_PAL Val) (t_conv Val) Fin

@@ -162,7 +162,7 @@ Section Completeness_ti.
 
 Context `{gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
 Context {unique_nb : UniqueDual A}.
-Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
+Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _}.
 Context {QInter : Prop_of_Inter Q T A A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
@@ -251,7 +251,7 @@ End Completeness_ti.
 Theorem completeness_ti_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P T A A dual}
   {_ : Prop_of_Inter Q T A A dual}
