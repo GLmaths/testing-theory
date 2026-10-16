@@ -44,7 +44,6 @@ Inductive good_VCCS : proc -> Prop :=
 | good_if_true : forall E p q, good_VCCS p -> Eval_Eq 0 E = Some true -> good_VCCS (If E Then p Else q)
 | good_if_false : forall E p q, good_VCCS q -> Eval_Eq 0 E = Some false -> good_VCCS (If E Then p Else q)
 | good_res : forall p, good_VCCS p -> good_VCCS (ν p).
-(* begin hide *)
 
 Hint Constructors good_VCCS:ccs.
 
@@ -218,7 +217,5 @@ Qed.
 (* end hide *)
 
 End VCCS_Testing.
-(* begin hide *)
 
 #[global] Hint Constructors good_VCCS:ccs.
-(* end hide *)

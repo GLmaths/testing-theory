@@ -36,7 +36,6 @@ From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA 
 
 
 (** * Lifting an LTS to forwarders preserves Must *)
-(* begin hide *)
 Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
@@ -582,7 +581,6 @@ Qed.
 
 End FeedBack.
 End Lifting.
-(* end hide *)
 
 Lemma lift_fw_ctx_pre
   `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}

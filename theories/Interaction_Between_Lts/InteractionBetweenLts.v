@@ -835,9 +835,7 @@ Definition inter_lts_performs `{Prop_of_Inter S1 S2 A A}
     | _ => False
     end.
 
-(* begin hide *)
 
-(* The labelled composition only makes sense on one alphabet. *)
 #[global] Instance inter_lts
   `(inter : A -> A -> Prop) {S1 S2 : Type} {H : ExtAction A} {M1 : gLts S1 H} {M2 : gLts S2 H}
   `{!@Prop_of_Inter S1 S2 A A inter H M1 H M2} :
@@ -874,8 +872,6 @@ Proof.
            by (eapply inter_sts_performs_helper_spec_2_essential_right; eauto).
          right; right; right. by rewrite Hccl.
 Defined.
-
-(* end hide *)
 
 #[global]
 Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!gLts S1 H} `{!gLts S2 H} 

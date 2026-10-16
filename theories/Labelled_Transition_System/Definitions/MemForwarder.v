@@ -21,7 +21,6 @@
    SOFTWARE.
 *)
 (* end hide *)
-(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionUnion Bisimulation WeakTransitions Termination.
@@ -142,4 +141,3 @@ Proof.
 Qed.
 
 End FWMemFacts.
-(* end hide *)

@@ -26,34 +26,7 @@ From stdpp Require Import gmap.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate.
 From TestingTheory Require Import Completeness.
 From TestingTheory Require Import CompletenessASco.
-(* begin hide *)
-(* ** Bridge between [Completeness.v]'s and [CompletenessASco.v]'s
-    identically-named, field-for-field-identical [test_spec] /
-    [test_convergence_spec] / [test_co_acceptance_set_spec] classes.
-
-    [CompletenessASco.v]'s versions were ported from [Completeness.v] (same
-    "co-acceptance-set" test machinery, unrelated to the co-*preorder*
-    machinery this whole port is otherwise about — the name collision is
-    coincidental) and kept the exact same field names, but as genuinely
-    separate nominal [Class]es. Every calculus (VCCS/VACCS/ACCS/CCS) that
-    already has a concrete witness for the [Completeness.v] versions (built
-    once, for the non-co characterization) can reuse it for the co
-    characterization *for free* via these three instances — no
-    calculus-specific work needed. Found interactively via rocq-mcp: a
-    calculus's own [ta]/[tconv] witness failed to satisfy
-    [EquivalenceASco.v]'s [Section preorder] Context with a "Could not
-    find an instance" error naming the [CompletenessASco]-qualified
-    class, even though a structurally identical witness already existed.
-
-    Field-by-field [destruct Hspec as [...]] rather than bare
-    [exact test_ungood]-style projection access: since both classes'
-    fields share literal names, a bare field name inside a proof building
-    the *target* ([CompletenessASco]) record resolves to the target's own
-    (not-yet-built) projection, not the source [Hspec]'s — a genuine
-    ambiguity, not just a display quirk (confirmed via rocq-mcp: "Hspec
-    has type Completeness.test_spec gen while it is expected to have type
-    test_spec ?gen"). Destructuring into fresh local names sidesteps the
-    ambiguity entirely. *)
+(* ** Bridge between [Completeness.v]'s and [CompletenessASco.v]'s *)
 
 #[global] Instance test_spec_of_plain
   {T A} `{H0 : @gLtsEq T A H} `{!Testing_Predicate outcome _}
@@ -100,4 +73,3 @@ Proof.
   - exact tcc.
   - exact tctg.
 Defined.
-(* end hide *)

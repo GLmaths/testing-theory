@@ -21,25 +21,8 @@
    SOFTWARE.
 *)
 (* end hide *)
-(* begin hide *)
-(* * One alphabet out of two: [Aproc ⊎ Atest]
 
-    A forwarder talking to an observer over another alphabet acts on both: its
-    process part on [Aproc], its memory on [Aproc] (what it stores) and on
-    [Atest] (what it hands to the observer, under the observer's names).  So
-    the natural alphabet of the whole setting is the disjoint union, with a
-    duality that extends the two given ones by the synchronisation:
-
-    - [inl μ] and [inl μ'] are dual when [μ] and [μ'] are, in [Aproc];
-    - [inr η] and [inr η'] are dual when [η] and [η'] are, in [Atest];
-    - [inl μ] and [inr η] are dual when [sync μ η].
-
-    Every [ExtAction] law then holds under *one* condition on [sync], its
-    polarity: it pairs an offer with a consumption.  In particular
-    [exists_dual] needs nothing from [sync] — each side supplies its own duals
-    — so there is no coherence, naming or partner-existence law here.  With
-    this alphabet the whole one-alphabet development applies as it stands. *)
-(* end hide *)
+(* * One alphabet out of two: [Aproc ⊎ Atest] *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.

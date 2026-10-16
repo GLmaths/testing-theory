@@ -39,7 +39,7 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
               Termination WeakTransitions Convergence  
                InteractionBetweenLts
                DefinitionAS.
-(* begin hide *)
+
 CoInductive copre `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
@@ -59,6 +59,3 @@ Lemma co_preserved_by_wt_nil `{
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ᶜᵒ≼ₐₛ qs -> ps ᶜᵒ≼ₐₛ qs'.
 Proof. intros. eapply c_tau;eauto. Qed.
-
-
-(* end hide *)

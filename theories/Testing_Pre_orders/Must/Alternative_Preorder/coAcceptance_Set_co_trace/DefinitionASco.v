@@ -29,7 +29,6 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA S
     coWeakTransition Testing_Predicate
     StateTransitionSystems InteractionBetweenLts coConvergence Termination 
     DefinitionAS FiniteImageLTS Subset_Act.
-(* begin hide *)
 (* ** Termination condition *)
 (* Two alphabets: the processes over [Aproc], the co-traces over the test
    alphabet [A], linked by [sync]; on one alphabet [sync] is [dual]. *)
@@ -58,4 +57,3 @@ Definition bhv_pre_co `{
       p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q /\ p ₐ꜀꜀≼꜀ₒ₋ₐₛ q.
 
 Notation "p ≼꜀ₒ₋ₐₛ q" := (bhv_pre_co p q) (at level 70).
-(* end hide *)

@@ -92,8 +92,6 @@ Definition bhv_pre `{
 
 Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 
-
-(* begin hide *)
 (* No need to define a Abstraction on toFW(L) if it is already define on L. *)
 From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
@@ -187,7 +185,6 @@ Next Obligation.
       eapply blocking_action_in_ms in Imp as (mem' & duo' & nb'); eauto.
       eapply unique_nb in duo; eauto. subst. contradiction.
 Qed.
-(* end hide *)
 
 Global Instance Proper_lts_pre_co_actions `{gLtsEq P A} `{Γ : A -> PreAct}:
   Proper ((eq_rel) ==> (≡)) (fun p => ⌈ Γ ⌉ (coR p)).

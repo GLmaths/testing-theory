@@ -37,20 +37,17 @@ Import VACCS.Language.LTS.
 
 
 Section ACCS_Must_Alt_Corollary.
-(* begin hide *)
 
 Local Instance ACCS_Parameters : LTS.VACCS_Parameters :=
   { Channel := nat;
     Value := unit;
     O := tt}.
-(* end hide *)
 
 Corollary must_iff_acceptance_set_ACCS (p q : proc) :
   p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
   eapply must_iff_acceptance_set_VACCS.
 Qed.
-(* begin hide *)
 
 Corollary must_iff_co_inductive_acceptance_ACCS (p q : proc) :
    p ⊑ₘᵤₛₜᵢ q <-> 
@@ -83,6 +80,5 @@ Corollary must_iff_co_acceptance_set_ACCS (p q : proc) :
 Proof.
   eapply must_iff_co_acceptance_set_VACCS.
 Qed.
-(* end hide *)
 
 End ACCS_Must_Alt_Corollary.

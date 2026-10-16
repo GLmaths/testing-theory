@@ -37,12 +37,7 @@ From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Fini
 From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
 From TestingTheory Require Import coWeakTransition coConvergence DefinitionASco
       FiniteImageLTS coFiniteImage coSetLTSConstruction DefinitionASco.
-(* begin hide *)
-(* * Soundness for the co-acceptance-set preorder
-
-    Two alphabets throughout: the processes over [Aproc], the observers and
-    the co-traces over [Atest], linked by [sync]; on one alphabet [sync] is
-    [dual].  The computations of [p ∥ t] are any [ParStsSpec]. *)
+(* * Soundness for the co-acceptance-set preorder *)
 
 (* ** Must for a set of processes *)
 
@@ -390,8 +385,6 @@ Proof.
       set_solver.
     + intros t' hlt. eapply H0; [exact hlt | exact mem].
     + intros p' e' μ η hsy hlp hle.
-      (* the [Finite] instance for the literal-[μ] successors, cut down from
-         the class's dual image at [η] *)
       assert (hfin : Finite (dsig (λ q : P, sync μ η ∧ p ⟶[μ] q))).
       { unfold dsig.
         eapply (in_list_finite
@@ -607,11 +600,7 @@ End Must_preorder_for_sets_instances.
 
 Notation "X ≂ₛₑₜ_ₘᵤₛₜᵢ Y" := (Y ⊑ₛₑₜ_ₘᵤₛₜᵢ X /\ X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y) (at level 70).
 
-(* ** The alternative preorder, on sets
-
-    [mustx_alt_co] and its bridge are commented out in [SoundnessASco.v]
-    (they are the one piece that would need the set LTS on the [P] side), so
-    there is nothing to port for them. *)
+(* ** The alternative preorder, on sets *)
 
 Definition bhv_pre_co_cond1__x `{gLtsP : @gLts P Aproc Hp, !Countable P}
   `{gLtsQ : !@gLts Q Aproc Hp, !Countable Q}
@@ -781,12 +770,7 @@ End Acceptance_Set_preorder_for_sets_sync.
 
 (* ** Communication-enabling property *)
 
-(* ** Communication-enabled processes
-
-    What the soundness proof asks of [Q]: every emission of the observer can
-    be received, by /some/ action that synchronises with it.  On one
-    alphabet a forwarder has it by [boomerang] ([soundness_fw_co] below); on
-    [Aproc ⊎ Atest] by [fw_boomerang] ([SoundnessASsync.v]). *)
+(* ** Communication-enabled processes *)
 
 Class gLtsCNenabledSync (P Aproc Atest : Type)
   `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
@@ -808,9 +792,6 @@ Context `{gLtsQ : !gLts Q Hp} `{!gLtsCNenabledSync Q Aproc Atest}.
 Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
 Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
-
-(* In the non-blocking case, [q] receives the observer's emission [η] by
-    [sync_cn_enabled] — with its own action, not necessarily [p]'s. *)
 
 Lemma communication_enabled_co (p : P) p' (q : Q) (t : T) t' μ1 (η : Atest) :
   sync μ1 η → p ⟶[μ1] p' → t ⟶[η] t' →
@@ -1003,7 +984,6 @@ Lemma soundness_fw_co `{
 
   (p : P) (q : Q) : p ≼꜀ₒ₋ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
-  (* a forwarder receives every emission of the observer, by [boomerang] *)
   assert (CN : @gLtsCNenabledSync Q A A H H _ SyncAction_of_dual).
   { apply MkgLtsCNenabledSync. intros q1 η nb.
     destruct (boomerang q1 η (co η)) as (q2 & hb).
@@ -1013,26 +993,6 @@ Proof.
   eapply (soundness_co_nb_enabled_co _ _ _ (CN := CN)).
 Qed.
 
-(* ** [mustx_alt] — the one piece of [mustx]'s apparatus that *does* need a
-    co-variant: its [com] case is where the (map-[coₜ]-free) design pays off.
-    Mirrors [mustx]'s own two-label ([wt_set_from_pset_spec1 X [μ1] X'] +
-    [dual μ1 μ2]) style, but with a single [μ] via [cowt_set_from_pset_spec1]
-    (itself just [wt_set_from_pset_spec1]'s pattern rebuilt on [⟹ᶜᵒ]) — this
-    keeps the bridge to [mustx] a direct, per-element one (no need to route
-    through [toSET]'s "exact union" semantics, which only obscures the
-    already-immediate correspondence). The bridge itself needs [dual]'s
-    global uniqueness ([unique_nb], unrestricted to non-blocking actions
-    despite the name — see [gLts.v]) once, to turn the existential dual
-    witness [cowt_set_from_pset_spec1] hides back into the single fixed label
-    [wt_set_from_pset_spec1] needs; this is a legitimate external use of a
-    real class law, unlike baking [unique_nb]/canonical [co] into [cowt]'s
-    own definition (which stays fully dual-relational, per
-    [[co_trace_files_dual_bridge]]). *)
-
-(* [mustx_alt_co]'s own [pt] field uses the set LTS ([toSET], [X ⟶ X'] on
-   [gset P]) — the piece the header comment (top of file) calls out as the
-   one place [mustx]'s apparatus structurally needs [FiniteImagegLts] for
-   [SetLTSConstruction.toSET]. *)
 (*
 Inductive mustx_alt_co `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
@@ -1062,14 +1022,7 @@ Section MustxIffMustxAltCo.
 
 (* This bridge lemma needs [mustx] (⇒ [coFiniteImagegLts P A]) and
    [mustx_alt_co] (⇒ [FiniteImagegLts P A], for its toSET-based [pt] case)
-   simultaneously on the *same* [X : gset P] — so the two [Countable P]
-   sources must be the same term, not two independent postulates (see
-   [[bang_vs_bare_class_binder]]-style clash risk). [coFiniteImagegLts P A]
-   is taken as primary and [FiniteImagegLts P A] is derived locally via
-   [FiniteImagegLts_of_coFiniteImagegLts], sharing the countable field by
-   construction. Any caller supplying the *same* [coFiniteImagegLts P A]
-   term for both this lemma and [mustx_alt_co]'s own use gets a matching
-   derived instance automatically (it's a pure function of that term). *)
+   *)
 Context `{EA : !ExtAction A}.
 Context `{gLtsT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
@@ -1121,8 +1074,7 @@ End MustxIffMustxAltCo.
 *)
 
 (* ** Soundness for LTSs that can be lifted to forwarders, co variant *)
-(* Depends on [soundness_fw_co] (below), which depends on
-   [soundness_co_nb_enabled_co]/[soundnessx_co] (set-LTS-based). *)
+
 (*
 Lemma soundness_co
   `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A}
@@ -1161,4 +1113,3 @@ Proof.
   now eapply (soundness_fw_co (p ▷ ∅) (q ▷ ∅)).
 Qed.
 *)
-(* end hide *)

@@ -40,7 +40,6 @@ From TestingTheory Require Import
   Testing_Predicate Must MustE 
   DefinitionAS Soundness Equivalence Completeness
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS.
-(* begin hide *)
 (* TODO: define me using the coinduction library *)
 
 Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
@@ -717,4 +716,3 @@ Proof.
       apply hXX' in Hin as (p'' & Hin & Heqp'').
       eapply terminate_preserved_by_eq2; [apply symmetry, Heqp''|auto with *].
 Qed. *)
-(* end hide *)

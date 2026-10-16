@@ -30,7 +30,6 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS MustE Lts_Finite_Non_Blocking_Chain.
 From TestingTheory Require Import coFiniteImage DefinitionASco CompletenessASco SoundnessASco.
-(* begin hide *)
 (* * Equivalence for the co-acceptance-set preorder *)
 
 Section preorder.
@@ -85,13 +84,6 @@ Section preorder.
   Context `{!Prop_of_Inter P (MO A) A A fw_inter} `{!Prop_of_Inter (P * MO A) T A A dual}
           `{!Prop_of_Inter Q (MO A) A A fw_inter} `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
-  (* [completeness_fw_co] instantiated at the forwarder-pair type [P * MO
-     A] needs [coFiniteImagegLts (P * MO A) A]. Unlike [FiniteImagegLts
-     (P * MO A) A] (auto-derived from [FiniteImagegLts P A] by the
-     [gLtsMBFinite] instance in [ForwarderConstruction.v]), no such
-     forwarder-pair instance exists yet for [coFiniteImagegLts] (this is
-     the same missing piece noted for [completeness_co] in
-     [CompletenessASco.v]/memory), so it is assumed here directly. *)
   Context `{!coFiniteImagegLts (P * MO A) A} `{!coFiniteImagegLts (Q * MO A) A}.
 
   (* ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
@@ -116,4 +108,3 @@ Section preorder.
   End Lⁿ.
 
 End preorder.
-(* end hide *)

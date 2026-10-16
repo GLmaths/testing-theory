@@ -39,25 +39,7 @@ From TestingTheory Require Import ActTau SyncActions gLts Bisimulation Lts_OBA
   coWeakTransition coConvergence coFiniteImage DefinitionASco.
 
 Import ListNotations.
-(* begin hide *)
-(* * Completeness for the co-acceptance-set preorder
-
-    This file mirrors [Completeness.v] (the plain acceptance-set preorder)
-    for the "co" preorder defined in [DefinitionASco.v], which is stated
-    directly in terms of the relational duals [cocnv]/[cowt] ([⇓ᶜᵒ]/[⟹ᶜᵒ])
-    from [coConvergence.v]/[coWeakTransition.v], instead of testing a
-    [map co]-translated trace ([coₜ]) as the original file does.
-
-    All of the test-generator machinery ([test_spec], [test_convergence_spec],
-    [test_co_acceptance_set_spec]) and every lemma about it that only talks
-    about [T]/[A] (never about [P]'s own convergence/weak-transition
-    structure) is copied below, verbatim, from [Completeness.v] — this file
-    is kept independent of it on purpose (no [Require Import Completeness]),
-    so it does not need the map-[coₜ]-based [cnv_if_must]/[must_if_cnv]/
-    [completeness1]/[wt_acceptance_set_subseteq]/[oas]/etc. that file also
-    defines but this one has no use for. Only the lemmas that relate [P]/[Q]
-    to the tests via [⇓]/[⟹] are re-derived (not copied) here against
-    [⇓ᶜᵒ]/[⟹ᶜᵒ]. *)
+(* * Completeness for the co-acceptance-set preorder *)
 
 (* ** Axioms for completeness (copied from [Completeness.v], unchanged) *)
 (* *** Common axioms for the generation of tests **)
@@ -581,8 +563,6 @@ Proof.
                as (η'' & co_set & eq''').
              2:{ eapply (map_gamma_of_action αᴛᴇꜱᴛ). exact mem. }
              destruct co_set as (μ'' & Tr & duo & bη'').
-             (* [abstraction_test_spec]: the bigger observer offers [η'']
-                too, since it offers [η'] and they share their abstraction *)
              assert (Tr'' : ta E2 ε ⟶[η'']).
              { eapply (abstraction_test_spec (AbsAction := AbsPT)
                          (ta E2 ε) η' η'' bη' bη'' eq''').
@@ -718,10 +698,7 @@ Proof.
        +++ apply m_now. eapply ta_transition_to_good; eauto.
 Qed.
 
-(* ** Completeness for co-acceptance sets
-
-    Everything below relates [P]'s own [⇓ᶜᵒ]/[⟹ᶜᵒ] to the tests above, and is
-    genuinely re-derived (not copied) against [cocnv]/[cowt]. *)
+(* ** Completeness for co-acceptance sets *)
 
 Section Must_tconv_co.
 
@@ -821,16 +798,7 @@ Lemma completeness1_co `{
   (p : P) (q : Q) : p ⊑ₘᵤₛₜᵢ q -> p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q.
 Proof. intros hleq s hcnv. now eapply must_iff_cocnv, hleq, must_iff_cocnv. Qed.
 
-(* ** Completeness for co-acceptance sets
-
-    [must_ta_monotonicity_nil], [must_ta_monotonicity] and
-    [stable_process_must_ta_or_empty_pre_action_set] are reused unchanged
-    from [Completeness.v]: their statements only ever mention [P]'s plain
-    single-step [⟶]/[coR] or the test-side trace [s]/[E] — never [P]'s own
-    [⇓]/[⟹] — so nothing about them is specific to the map-[coₜ] vs.
-    relational-[cowt] choice. Only the lemmas built on [waiting_states]
-    (which packages [P]'s own [⇓]/[⟹]) need a [cowaiting_states] replacement,
-    below. *)
+(* ** Completeness for co-acceptance sets *)
 
 Lemma after_blocking_co_of_must_tacc_co `{CC : Countable PreAct} `{
   gLtsEqP : @gLtsEq P Aproc Hp,
@@ -1091,5 +1059,3 @@ Proof.
 Qed.
 
 End Completeness2_co.
-
-(* end hide *)

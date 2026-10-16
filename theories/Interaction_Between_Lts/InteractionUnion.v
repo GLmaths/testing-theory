@@ -21,7 +21,6 @@
    SOFTWARE.
 *)
 (* end hide *)
-(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts UnionAction.
@@ -283,4 +282,3 @@ Definition inter_union_ltsEq : gLtsEq (S1 * S2) (@ExtAction_sum A1 A2 H1 H2) :=
      eq_spec := inter_union_eq_spec |}.
 
 End Inter_union_eq.
-(* end hide *)
