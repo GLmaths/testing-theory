@@ -28,9 +28,64 @@
 <div class="code">
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab24"></a><h4 class="section">Synchronising two alphabets</h4>
+
+</div>
+<div class="code">
+
+<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">Stdlib.Unicode</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Utf8</span>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">stdpp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">base</span> <span class="id" title="library">countable</span> <span class="id" title="library">decidable</span>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">TestingTheory</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#"><span class="id" title="library">ActTau</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#"><span class="id" title="library">gLts</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+******* The synchronisation itself 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="SyncAction" class="idref" href="#SyncAction"><span class="id" title="record">SyncAction</span></a> (<a id="Aproc:1" class="idref" href="#Aproc:1"><span class="id" title="binder">Aproc</span></a> <a id="Atest:2" class="idref" href="#Atest:2"><span class="id" title="binder">Atest</span></a> : <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;`{<a id="Hp:3" class="idref" href="#Hp:3"><span class="id" title="binder">Hp</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#ExtAction"><span class="id" title="class">ExtAction</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#Aproc:1"><span class="id" title="variable">Aproc</span></a>} `{<a id="Ht:4" class="idref" href="#Ht:4"><span class="id" title="binder">Ht</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#ExtAction"><span class="id" title="class">ExtAction</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#Atest:2"><span class="id" title="variable">Atest</span></a>} :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">MkSyncAction</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="sync" class="idref" href="#sync"><span class="id" title="projection">sync</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#Aproc:1"><span class="id" title="variable">Aproc</span></a> <span class="id" title="notation">→</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#Atest:2"><span class="id" title="variable">Atest</span></a> <span class="id" title="notation">→</span> <span class="id" title="keyword">Prop</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="sync_dec" class="idref" href="#sync_dec"><span class="id" title="projection">sync_dec</span></a> :: <span class="id" title="class">RelDecision</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#sync:6"><span class="id" title="method">sync</span></a>;<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#sync"><span class="id" title="method">sync</span></a> {<span class="id" title="var">Aproc</span> <span class="id" title="var">Atest</span>}%<span class="id" title="var">_type_scope</span> {<span class="id" title="var">Hp</span> <span class="id" title="var">Ht</span>} {<span class="id" title="var">SyncAction</span>} <span class="id" title="var">_</span> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="SyncAction_of_dual" class="idref" href="#SyncAction_of_dual"><span class="id" title="definition">SyncAction_of_dual</span></a> `{<a id="H:9" class="idref" href="#H:9"><span class="id" title="binder">H</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#ExtAction"><span class="id" title="class">ExtAction</span></a> <a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a>} : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#SyncAction"><span class="id" title="class">SyncAction</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#A:8"><span class="id" title="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;{| <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#sync"><span class="id" title="method">sync</span></a> := <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual"><span class="id" title="method">dual</span></a>; <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#sync_dec"><span class="id" title="method">sync_dec</span></a> := <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual_dec"><span class="id" title="method">dual_dec</span></a> |}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+******* In the one-alphabet development the synchronisation is <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual"><span class="id" title="projection">dual</span></a></span>.  
+</div>
+<div class="code">
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Extern</span> 10 (<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#SyncAction"><span class="id" title="class">SyncAction</span></a> ?<span class="id" title="var">A</span> ?<span class="id" title="var">A</span>) =&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">lazymatch</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#SyncAction"><span class="id" title="class">SyncAction</span></a> ?<span class="id" title="var">A</span> ?<span class="id" title="var">A</span> =&gt; <span class="id" title="var">assert_fails</span> (<span class="id" title="var">is_evar</span> <span class="id" title="var">A</span>); <span class="id" title="tactic">exact</span> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#SyncAction_of_dual"><span class="id" title="definition">SyncAction_of_dual</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span> : <span class="id" title="var">typeclass_instances</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+******* With <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.UnionAction.html#Union.sync"><span class="id" title="variable">sync</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual"><span class="id" title="projection">dual</span></a></span>, <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.UnionAction.html#Union.sync"><span class="id" title="variable">sync</span></a></span> is symmetric, as <span class="inlinecode"><a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#dual"><span class="id" title="projection">dual</span></a></span> is: proofs of the
+   one-alphabet development can keep using <span class="inlinecode"><span class="id" title="tactic">symmetry</span></span>. 
+</div>
+<div class="code">
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="sync_of_dual_sym" class="idref" href="#sync_of_dual_sym"><span class="id" title="instance">sync_of_dual_sym</span></a> `{<a id="H:11" class="idref" href="#H:11"><span class="id" title="binder">H</span></a> : <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#ExtAction"><span class="id" title="class">ExtAction</span></a> <a id="A:10" class="idref" href="#A:10"><span class="id" title="binder">A</span></a>} :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.1/stdlib//Corelib.Classes.RelationClasses.html#Symmetric"><span class="id" title="class">Symmetric</span></a> (@<a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#sync"><span class="id" title="method">sync</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#A:10"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#A:10"><span class="id" title="variable">A</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#H:11"><span class="id" title="variable">H</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#H:11"><span class="id" title="variable">H</span></a> <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.SyncActions.html#SyncAction_of_dual"><span class="id" title="definition">SyncAction_of_dual</span></a>) := <a class="idref" href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#duo_sym"><span class="id" title="method">duo_sym</span></a>.<br/>
 </div>
 </div>
 <div id="footer">
