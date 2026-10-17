@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the testing predicate
 
     Core Erlang has no success operator, so one is added: the inert expression
@@ -31,6 +32,7 @@
 
     [✓ₑ] has no transition: success is irreversible, and the observer reporting
     it keeps neither computation nor messages of its own. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -38,7 +40,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list numbers gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation
   Testing_Predicate Erlang_Syntax Erlang_LTS Erlang_Instance.
-
+(* begin hide *)
 Section Erlang_Good.
 
 Context `{EP : Erlang_Program}.

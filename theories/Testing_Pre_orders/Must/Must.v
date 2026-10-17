@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
@@ -30,7 +31,7 @@ From stdpp Require Import finite gmap decidable.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts InteractionUnion Convergence Termination FiniteImageLTS ParallelLTSConstruction.
 
- (* ** Inductive definition [must_sts] of Must based on the STS *)
+ (** ***** Inductive definition [must_sts] of Must based on the STS *)
 Inductive must_sts 
   `{Sts (P1 * P2)} (outcome : P2 -> Prop)
   (p : P1) (t : P2) : Prop :=
@@ -44,24 +45,6 @@ Inductive must_sts
 
 Global Hint Constructors must_sts:mdb.
 
-(* ** Inductive definition [must] of Must
-
-    One definition for every setting.  The process and the observer may live
-    on different alphabets, [Aproc] and [Atest]; which of their actions meet
-    is the field [sync] of [SyncAction Aproc Atest], and the computations of
-    [p ∥ t] are the [Sts] of [ParSts], for the two LTSs at hand.
-
-    - In the one-alphabet development, [sync] is [dual]
-      ([SyncAction_of_dual], found automatically) and the [Sts] is the τ-part
-      of the parallel LTS given by [Prop_of_Inter] ([ParSts_of_inter]):
-      [sts_step (p, t) t'] is then [(p, t) ⟶ t'] and [sync μ1 μ2] is
-      [dual μ1 μ2], by computation.
-    - With two alphabets the [Sts] is the τ part of [inter_union_lts], from [Prop_of_Inter]
-      on two alphabets ([InteractionUnion.v]). *)
-
-(* The computations of [p ∥ t], for given LTSs of [P] and [T].  Indexing
-    them by the two LTSs keeps [must] as rigid as it was with [Prop_of_Inter]:
-    the instance is looked for with the very LTSs [must] is stated for. *)
 Class ParSts (P T : Type) {Aproc Atest : Type} {Hp : ExtAction Aproc} {Ht : ExtAction Atest}
   (gLtsP : gLts P Hp) (gLtsT : gLtsEq T Ht) := MkParSts { par_sts : Sts (P * T) }.
 
@@ -91,9 +74,7 @@ Inductive must `{
 
 Notation "p 'must_pass' t" := (must p t) (at level 70).
 
-(* [lts_inversion] inverts the first transition it finds.  The computation
-   step [ex] of [must] is now an [sts_step]; it is treated as the [lts_step]
-   of the parallel LTS it used to be, in the same search order. *)
+(** ****** [lts_inversion] inverts the first transition it finds. *)
 Ltac lts_inversion lts ::=
 try match goal with
 | H : ?X |- _ =>
@@ -110,13 +91,7 @@ match goal with
 
 Global Hint Constructors must:mdb.
 
-(* ** Well-formed computations of [p ∥ t]
-
-    The lemmas on [must] below only use that a computation of [p ∥ t] is a
-    τ of [p], a τ of [t], or a synchronisation of an action of [p] with an
-    action of [t] — and conversely.  [ParStsSpec] says so; it holds for the
-    parallel composition of [Prop_of_Inter] (one alphabet) and for [inter_union_lts]
-    (two alphabets). *)
+(** ***** Well-formed computations of [p ∥ t] *)
 
 Class ParStsSpec (P T : Type) {Aproc Atest : Type}
   {Hp : ExtAction Aproc} {Ht : ExtAction Atest}
@@ -135,8 +110,6 @@ Class ParStsSpec (P T : Type) {Aproc Atest : Type}
       ∨ (∃ p' t' μ1 μ2, y = (p', t') ∧ sync μ1 μ2 ∧ p ⟶[μ1] p' ∧ t ⟶[μ2] t');
   }.
 
-(* The three shapes of a computation, as an inductive view: [inversion] on
-    [par_view_of l] gives the three cases with named hypotheses. *)
 Inductive par_view `{gLtsP : @gLts P Aproc Hp} `{gLtsT : @gLts T Atest Ht}
   `{SA : !SyncAction Aproc Atest} (p : P) (t : T) : P * T → Prop :=
 | ViewLeft p' (l : p ⟶ p') : par_view p t (p', t)
@@ -171,16 +144,10 @@ Proof.
     + right; right. by do 4 eexists.
 Qed.
 
-(* The instances built from [inter_union_lts] have a lower priority than the
-   ones of the parallel composition: on one alphabet, with [sync = dual],
-   both would apply, and [must] must keep its one-alphabet reading. *)
-
-(* An [eapply] of a lemma on [must] may leave the [ParSts]/[ParStsSpec]
-   instances as goals; the [eauto] that usually follows closes them. *)
 #[global] Hint Extern 1 (ParSts _ _ _ _) => typeclasses eauto : core.
 #[global] Hint Extern 1 (ParStsSpec _ _ _ _ _ _) => typeclasses eauto : core.
 
-(* With two alphabets, the computations are the τ steps of [inter_union_lts]
+(** ****** With two alphabets, the computations are the τ steps of [inter_union_lts]
     ([InteractionUnion.v]), built from the interaction. *)
 
 #[global] Instance ParSts_of_union {P T Aproc Atest : Type}
@@ -201,14 +168,14 @@ Proof.
   - intros p t t' l. by apply (ParRight τ).
   - intros p p' t t' μ1 μ2 hs l1 l2. by apply (ParSync (inl μ1) (inr μ2)).
   - intros p t y l.
-    inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
+    inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
     + left. by eexists.
     + right; left. by eexists.
     + destruct a1 as [μ1 | ], a2 as [ | μ2]; simpl in hs; try done.
       right; right. by exists s'1, s'2, μ1, μ2.
 Qed.
 
-(* ** Equivalence of the two inductive definitions [must] and [must_sts] *)
+(** ****** Equivalence of the two inductive definitions [must] and [must_sts] *)
 
 Lemma must_sts_iff_must `{
     gLtsP : @gLts P A H,
@@ -236,7 +203,7 @@ Proof.
       inversion hl; subst; eauto with mdb.
 Qed.
 
-(* ** Definition of the contextual preorder based on [must] *)
+(** ******* Definition of the contextual preorder based on [must] *)
 
 Definition ctx_pre `{
   gLtsP : @gLts P Aproc Hp,
@@ -249,17 +216,14 @@ Definition ctx_pre `{
 
 Global Hint Unfold ctx_pre: mdb.
 
-(* The must preorder, for a synchronisation [sync]... *)
+(** ******* The must preorder, for a synchronisation [sync]... *)
 Notation "p ⊆ₘᵤₛₜᵢ q" := (ctx_pre p q) (at level 70).
 (* ... and for [sync = dual], on one alphabet. *)
 Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre (SA := SyncAction_of_dual) p q) (at level 70).
 Notation "p ⋢ₘᵤₛₜᵢ q" := (¬ ctx_pre (SA := SyncAction_of_dual) p q) (at level 70).
 Notation "p ≂ₘᵤₛₜᵢ q" := (q ⊑ₘᵤₛₜᵢ p /\ p ⊑ₘᵤₛₜᵢ q) (at level 70).
 
-(* ** Properties on [must]
-
-    Stated once, for any well-formed composition ([ParStsSpec]): they hold
-    for one alphabet and [dual] as for two alphabets and [inter_union_lts]. *)
+(** ********* Properties on [must] *)
 
 Lemma must_eq_client `{
   gLtsP : @gLts P Aproc Hp,
@@ -520,14 +484,14 @@ Proof.
   contradiction.
 Qed.
 
-(* The relation ⊆ₘᵤₛₜᵢ, and so ⊑ₘᵤₛₜᵢ, is reflexive *)
+(** ****** The relation ⊆ₘᵤₛₜᵢ, and so ⊑ₘᵤₛₜᵢ, is reflexive *)
 #[global] Instance must_i_refl `{
   gLtsP : @gLts P Aproc Hp,
   gLtsT : !@gLtsEq T Atest Ht, !Testing_Predicate outcome _,
   SA : !SyncAction Aproc Atest, !ParSts P T gLtsP gLtsT} : Reflexive (@ctx_pre P Aproc Hp gLtsP P gLtsP T Atest Ht gLtsT outcome _ SA _ _).
 Proof. intros p Hyp_test. eauto. Qed.
 
-(* The relation ⊆ₘᵤₛₜᵢ, and so ⊑ₘᵤₛₜᵢ, is transitive *)
+(** ****** The relation ⊆ₘᵤₛₜᵢ, and so ⊑ₘᵤₛₜᵢ, is transitive *)
 #[global] Instance must_i_transitive `{
   gLtsP : @gLts P Aproc Hp,
   gLtsT : !@gLtsEq T Atest Ht, !Testing_Predicate outcome _,
@@ -545,4 +509,3 @@ Proof.
   + exact must_i_refl.
   + exact must_i_transitive.
 Qed.
-(* end hide *)

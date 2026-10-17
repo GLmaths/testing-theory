@@ -20,19 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts
   Testing_Predicate May DefinitionTI MayTestSpec EquivalenceTI
   DefinitionTIco EquivalenceTIco
-  VCCS_Instance VCCS_Good VCCS_test_trace_gen_may VCCS_May_Characterization.
+  VCCS.Language.gLts_Instance VCCS_Good VCCS.Testing.test_trace_gen_may VCCS.Characterisations.May_Characterisation.
 
-(* * The May preorder is trace inclusion, for CCS
-
-    CCS is VCCS with a trivial [Value] — [gen_may]/[VCCS_may_test_spec] and
-    [equivalence_ti_fw] were already built generically over [VCCS_Parameters]
-    ([VCCS_test_trace_gen_may.v]/[VCCS_May_Characterization.v]), so the CCS
-    characterisation is a direct specialisation, exactly as
-    [CCS_Must_Characterization.v] specialises the Must side. *)
+(* * The May preorder is trace inclusion, for CCS *)
 
 Section CCS_May_Corollary.
 
@@ -54,4 +49,3 @@ Proof.
 Qed.
 
 End CCS_May_Corollary.
-(* end hide *)

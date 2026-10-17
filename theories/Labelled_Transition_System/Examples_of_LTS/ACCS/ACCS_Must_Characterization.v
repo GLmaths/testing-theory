@@ -23,33 +23,31 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap gmultiset.
 
-From TestingTheory Require Import VACCS_Must_Characterization DefinitionAS Equivalence Must
+From TestingTheory Require Import VACCS.Characterisations.Must_Characterisation DefinitionAS Equivalence Must
   ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
   InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower.
 From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
-  TestSpecBridge VACCS_CoFiniteImage.
+  TestSpecBridge VACCS.Language.gLts_Instance.
 
-Import VACCS.
-(* end hide *)
+Import VACCS.Language.LTS.
+
 
 Section ACCS_Must_Alt_Corollary.
-(* begin hide *)
 
-Local Instance ACCS_Parameters : VACCS.VACCS_Parameters :=
+Local Instance ACCS_Parameters : LTS.VACCS_Parameters :=
   { Channel := nat;
     Value := unit;
     O := tt}.
-(* end hide *)
 
 Corollary must_iff_acceptance_set_ACCS (p q : proc) :
   p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≼ₐₛ q ▷ ∅.
 Proof.
   eapply must_iff_acceptance_set_VACCS.
 Qed.
-(* begin hide *)
 
 Corollary must_iff_co_inductive_acceptance_ACCS (p q : proc) :
    p ⊑ₘᵤₛₜᵢ q <-> 
@@ -67,12 +65,12 @@ Proof.
   eapply must_iff_tower_co_inductive_acceptance_VACCS.
 Qed.
 
-Corollary must_iff_must_set_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘᵤₛₜ q ▷ ∅.
+Corollary must_iff_must_set_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ₘₛ q ▷ ∅.
 Proof.
   eapply must_iff_must_set_VACCS.
 Qed.
 
-Corollary must_iff_failure_set_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ⋖ꜰᴀɪʟ q ▷ ∅.
+Corollary must_iff_failure_set_ACCS (p q : proc) : p ⊑ₘᵤₛₜᵢ q <-> p ▷ ∅ ≾ꜰᴅʀ q ▷ ∅.
 Proof.
   eapply must_iff_failure_set_VACCS.
 Qed.
@@ -82,6 +80,5 @@ Corollary must_iff_co_acceptance_set_ACCS (p q : proc) :
 Proof.
   eapply must_iff_co_acceptance_set_VACCS.
 Qed.
-(* end hide *)
 
 End ACCS_Must_Alt_Corollary.

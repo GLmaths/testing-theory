@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -35,13 +36,9 @@ From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW FiniteImageLTS 
     WeakTransitions StateTransitionSystems Convergence Termination ActTau.
 
-(************************************** Interaction between two LTS **************************************)
+(** ******* Interaction between two LTS *)
 
-(* Pre-requirements for the interaction
-
-   The two LTSs may have different alphabets, [A1] and [A2]; [inter] says
-   which of their actions meet.  The one-alphabet development is the case
-   [A1 = A2 = A], with [inter = dual]. *)
+(* Pre-requirements for the interaction *)
 Class Prop_of_Inter (P1 P2 A1 A2 : Type) (inter : A1 -> A2 -> Prop)
   `{@gLts P1 A1 H1} `{@gLts P2 A2 H2} :=
   MkProp_of_Inter {
@@ -74,13 +71,12 @@ Class Prop_of_Inter (P1 P2 A1 A2 : Type) (inter : A1 -> A2 -> Prop)
 
 #[global] Existing Instance inter_dec.
 
-Notation "p ▷ m" := (p, m) (at level 60).
 
-(* Definition of the transition *)
+(** ****** Definition of the transition *)
 Inductive inter_step `{M12 : Prop_of_Inter P1 P2 A A inter}
-            : P1 * P2 → Act A → P1 * P2 → Prop :=
-| ParLeft α a1 a2 b (l : a1 ⟶{α} a2) : inter_step (a1, b) α (a2, b)
-| ParRight α a b1 b2 (l : b1 ⟶{α} b2) : inter_step (a, b1) α (a, b2)
+            : P1 * P2 → Labels A → P1 * P2 → Prop :=
+| ParLeft 𝜆 a1 a2 b (l : a1 ⟶{𝜆} a2) : inter_step (a1, b) 𝜆 (a2, b)
+| ParRight 𝜆 a b1 b2 (l : b1 ⟶{𝜆} b2) : inter_step (a, b1) 𝜆 (a, b2)
 | ParSync μ1 μ2 a1 a2 b1 b2 (eq : inter μ1 μ2) (l1 : a1 ⟶[μ1] a2) (l2 : b1 ⟶[μ2] b2) : inter_step (a1, b1) τ (a2, b2)
 .
 
@@ -439,14 +435,14 @@ Qed.
 
 
 Definition decide_inter_step `{M12 : Prop_of_Inter S1 S2 A A inter}
-            (s1: S1) (s2: S2) α s'1 s'2:
-  Decision (inter_step (s1, s2) α (s'1, s'2)).
+            (s1: S1) (s2: S2) 𝜆 s'1 s'2:
+  Decision (inter_step (s1, s2) 𝜆 (s'1, s'2)).
 Proof.
-  destruct (decide (s1 ⟶{α} s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
+  destruct (decide (s1 ⟶{𝜆} s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
   { simplify_eq. left. by constructor. }
-  destruct (decide (s2 ⟶{α} s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
+  destruct (decide (s2 ⟶{𝜆} s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
   { simplify_eq. left. by constructor. }
-  destruct α.
+  destruct 𝜆.
   { right. intros contra; inversion contra; simplify_eq; eauto. }
   destruct (search_steps_essential_left s1 s2 s'1 s'2 (elements $ lts_essential_actions_left s1)) as [ξ|] eqn:Hpar1.
   { apply search_steps_spec_2_essential_left in Hpar1 as (μ & ess_act & step_left & step_right & duo). 
@@ -831,30 +827,30 @@ Proof.
 Qed.
 
 Definition inter_lts_performs `{Prop_of_Inter S1 S2 A A}
-  (s1: S1) (s2: S2) (α : Act A): Prop :=
-  s1 ⟶{α} ∨ s2 ⟶{α} ∨
-    match α with
+  (s1: S1) (s2: S2) (𝜆 : Labels A): Prop :=
+  s1 ⟶{𝜆} ∨ s2 ⟶{𝜆} ∨
+    match 𝜆 with
     | τ => inter_lts_performs_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1)
         ∨ inter_lts_performs_helper_essential_right s1 s2 (elements $ lts_essential_actions_right s2)
     | _ => False
     end.
 
-(* The labelled composition only makes sense on one alphabet. *)
+
 #[global] Instance inter_lts
   `(inter : A -> A -> Prop) {S1 S2 : Type} {H : ExtAction A} {M1 : gLts S1 H} {M2 : gLts S2 H}
   `{!@Prop_of_Inter S1 S2 A A inter H M1 H M2} :
   gLts (S1 * S2) H.
 Proof.
-  refine (MkgLts _ _ _ inter_step _ _ (λ s α, inter_lts_performs s.1 s.2 α) _ _ _).
-  - intros [s1 s2] α [s'1 s'2]. apply decide_inter_step.
+  refine (MkgLts _ _ _ inter_step _ _ (λ s 𝜆, inter_lts_performs s.1 s.2 𝜆) _ _ _).
+  - intros [s1 s2] 𝜆 [s'1 s'2]. apply decide_inter_step.
   - intros ??. unfold inter_lts_performs.
-    apply or_dec; [apply _|apply or_dec; [apply _|]]. destruct α; apply _.
-  - intros [a b] α Hp. unfold inter_lts_performs in Hp. simpl in Hp.
-    destruct (decide (a ⟶{α})) as [Hp1|Hn1].
+    apply or_dec; [apply _|apply or_dec; [apply _|]]. destruct 𝜆; apply _.
+  - intros [a b] 𝜆 Hp. unfold inter_lts_performs in Hp. simpl in Hp.
+    destruct (decide (a ⟶{𝜆})) as [Hp1|Hn1].
     { apply lts_performs_spec1 in Hp1 as [s' ?]. refine ((s', b) ↾ _). by constructor. }
-    destruct (decide (b ⟶{α})) as [Hp2|Hn2].
+    destruct (decide (b ⟶{𝜆})) as [Hp2|Hn2].
     { apply lts_performs_spec1 in Hp2 as [s' ?]. refine ((a, s') ↾ _). by constructor. }
-    destruct α as [μ|]; [exfalso; by destruct Hp as [|[|]]|].
+    destruct 𝜆 as [μ|]; [exfalso; by destruct Hp as [|[|]]|].
     destruct (inter_lts_performs_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1.
     { apply inter_sts_performs_helper_spec_1_essential_left in Hs1 as ((s'1, s'2) & hs).
       exists (s'1, s'2). destruct hs as (μ1 & μ2 & hs & l1 & l2). by eapply ParSync. }
@@ -862,7 +858,7 @@ Proof.
     { apply inter_sts_performs_helper_spec_1_essential_right in Hs2 as ((s'1, s'2) & hs).
       exists (s'1, s'2). destruct hs as (μ1 & μ2 & hs & l1 & l2). by eapply ParSync. }
     exfalso. destruct Hp as [|[|[|]]]; done.
-  - intros [s1 s2] α [[s'1 s'2] Hstep].
+  - intros [s1 s2] 𝜆 [[s'1 s'2] Hstep].
     unfold inter_lts_performs.
     inversion Hstep; simplify_eq; simpl.
     + left. exact (lts_performs_spec2 _ _ (s'1 ↾ l)).
@@ -885,8 +881,6 @@ Instance inter_clts {S1 S2 A: Type} `{H : ExtAction A}  `{!gLts S1 H} `{!gLts S2
 Proof.
   apply MkClts.
   -  eapply prod_countable.
-  - intros x α. apply sig_countable. intros y.
-    destruct (decide (bool_decide (x ⟶{α} y))); [left | right]; done.
+  - intros x 𝜆. apply sig_countable. intros y.
+    destruct (decide (bool_decide (x ⟶{𝜆} y))); [left | right]; done.
 Qed.
-
-(* end hide *)

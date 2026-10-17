@@ -1,4 +1,27 @@
 (* begin hide *)
+(*
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*)
+(* end hide *)
+(* begin hide *)
 (* * State-level corollaries: Corollary 4.12, Corollary 5.6 and pruning
 
     - [cor_states]: ⟦p⟧(ρ) is the set of limits of the sums of final states
@@ -6,38 +29,38 @@
     - [cor_par]: the same for the paths of (p ∥ ρ)\L.
     - [pruning]: ⟦p⟧ = { ⟦prune_σ(p) ∥ −⟧ : σ }, where the program LTS is
       pruned to the choices allowed by σ before composition with the memory. *)
-From Stdlib Require Import List ChoiceFacts.
-From TestingTheory Require Import Lifted Paths States Harmony.
-Import ListNotations.
 
+From Stdlib Require Import List ChoiceFacts.
+From TestingTheory Require Import Lifted Paths States lqCCS.Harmony_lemma.Harmony.
+Import ListNotations.
 Section Corollaries.
 Context `{StAlg}.
 
-(* ** Configuration LTS: ⟨p, ρ⟩ --α--> ⟨Done, ρ'⟩ *)
+(* ** Configuration LTS: ⟨p, ρ⟩ --𝜆--> ⟨Done, ρ'⟩ *)
 
 Inductive cpath : prog -> St -> list (lbl * T) -> St -> Prop :=
 | cp_done ρ : cpath Done ρ [] ρ
-| cp_cons p ρ λ K x α ρ' : ts p λ K x -> cpath x (app K ρ) α ρ' -> cpath p ρ ((λ, K) :: α) ρ'.
+| cp_cons p ρ λ K x 𝜆 ρ' : ts p λ K x -> cpath x (app K ρ) 𝜆 ρ' -> cpath p ρ ((λ, K) :: 𝜆) ρ'.
 
-(* The final state of a path is ℰ_α(ρ). *)
-Lemma cpath_iff p ρ α ρ' : cpath p ρ α ρ' <-> tpath p α /\ ρ' = app (kr α) ρ.
+(* The final state of a path is ℰ_𝜆(ρ). *)
+Lemma cpath_iff p ρ 𝜆 ρ' : cpath p ρ 𝜆 ρ' <-> tpath p 𝜆 /\ ρ' = app (kr 𝜆) ρ.
 Proof.
   split.
-  - induction 1 as [ρ | p ρ λ K x α ρ' Ht Hc [P ->]]; simpl.
+  - induction 1 as [ρ | p ρ λ K x 𝜆 ρ' Ht Hc [P ->]]; simpl.
     + split; [constructor | now rewrite app_one].
     + split; [econstructor; eauto | now rewrite app_comp].
-  - intros [P ->]. induction P as [| p λ K x α Ht P IH] in ρ |- *; simpl.
+  - intros [P ->]. induction P as [| p λ K x 𝜆 Ht P IH] in ρ |- *; simpl.
     + rewrite app_one. constructor.
     + rewrite app_comp. econstructor; eauto.
 Qed.
 
 (* Depth-n value: sum of the final states of the σ-compatible terminal paths
     of length ≤ n (each listed once by [enum_spec], [enum_nodup]). *)
-Definition CV σ n p ρ := ssum (map (fun α => app (kr α) ρ) (enum σ n p)).
+Definition CV σ n p ρ := ssum (map (fun 𝜆 => app (kr 𝜆) ρ) (enum σ n p)).
 
-Lemma CV_spec σ n p ρ α ρ' :
-  (In α (enum σ n p) /\ ρ' = app (kr α) ρ) <->
-  (cpath p ρ α ρ' /\ compat σ α /\ length α <= n).
+Lemma CV_spec σ n p ρ 𝜆 ρ' :
+  (In 𝜆 (enum σ n p) /\ ρ' = app (kr 𝜆) ρ) <->
+  (cpath p ρ 𝜆 ρ' /\ compat σ 𝜆 /\ length 𝜆 <= n).
 Proof. rewrite enum_spec, cpath_iff. tauto. Qed.
 
 Lemma app_E σ p ρ : app (E σ p) ρ = ssup (fun n => CV σ n p ρ).
@@ -70,27 +93,27 @@ Proof.
 Qed.
 
 (* Different terminal paths give different composed paths. *)
-Lemma hats_inj p α α' : tpath p α -> tpath p α' -> hats α = hats α' -> α = α'.
+Lemma hats_inj p 𝜆 𝜆' : tpath p 𝜆 -> tpath p 𝜆' -> hats 𝜆 = hats 𝜆' -> 𝜆 = 𝜆'.
 Proof.
-  intro P. induction P as [| p λ K x α Ht P IH] in α' |- *; intros P' E.
-  - destruct α'; [reflexivity | discriminate].
-  - destruct α' as [| [λ' K'] α']; [discriminate |]. simpl in E. injection E as E1 E2.
+  intro P. induction P as [| p λ K x 𝜆 Ht P IH] in 𝜆' |- *; intros P' E.
+  - destruct 𝜆'; [reflexivity | discriminate].
+  - destruct 𝜆' as [| [λ' K'] 𝜆']; [discriminate |]. simpl in E. injection E as E1 E2.
     assert (λ' = λ) as -> by (rewrite <- (erase_hat λ' K'), <- E1; apply erase_hat).
     inversion P' as [| ? ? ? x' ? Ht' P'']; subst.
     destruct (ts_det _ _ _ _ _ _ Ht Ht') as [<- <-]. f_equal. apply IH; auto.
 Qed.
 
 (* Composed paths of length ≤ n, with their final memories. *)
-Definition penum σ n p ρ := map (fun α => (hats α, app (kr α) ρ)) (enum σ n p).
+Definition penum σ n p ρ := map (fun 𝜆 => (hats 𝜆, app (kr 𝜆) ρ)) (enum σ n p).
 
 Theorem penum_spec σ n p ρ β ρ' :
   In (β, ρ') (penum σ n p ρ) <-> ppath p ρ β ρ' /\ ccompat σ β /\ length β <= n.
 Proof.
   unfold penum. rewrite in_map_iff. split.
-  - intros (α & [= <- <-] & Hin). apply enum_spec in Hin as (P & C & L).
+  - intros (𝜆 & [= <- <-] & Hin). apply enum_spec in Hin as (P & C & L).
     repeat split; [apply harmony_paths, P | apply compat_hats, C | unfold hats; now rewrite length_map].
-  - intros (Pp & C & L). apply harmony_paths_inv in Pp as (α & P & <- & ->).
-    exists α. split; [reflexivity |]. apply enum_spec. repeat split; auto.
+  - intros (Pp & C & L). apply harmony_paths_inv in Pp as (𝜆 & P & <- & ->).
+    exists 𝜆. split; [reflexivity |]. apply enum_spec. repeat split; auto.
     + apply compat_hats, C.
     + unfold hats in L. now rewrite length_map in L.
 Qed.
@@ -107,8 +130,8 @@ Qed.
 Theorem penum_nodup σ n p ρ : NoDup (penum σ n p ρ).
 Proof.
   apply NoDup_map_on; [| apply enum_nodup].
-  intros α α' Hα Hα' E. injection E as E _.
-  apply enum_spec in Hα as [P _], Hα' as [P' _]. apply (hats_inj p); auto.
+  intros 𝜆 𝜆' H𝜆 H𝜆' E. injection E as E _.
+  apply enum_spec in H𝜆 as [P _], H𝜆' as [P' _]. apply (hats_inj p); auto.
 Qed.
 
 Definition PV σ n p ρ := ssum (map snd (penum σ n p ρ)).

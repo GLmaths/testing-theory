@@ -20,14 +20,15 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics countable option.
 From TestingTheory Require Import ActTau gLts Subset_Act InputOutputActions
-  LabelAbstraction PAL_Syntax Applicative_process_algebra.
-
+  Label_Abstraction.LabelAbstraction PAL_Syntax Applicative_process_algebra.
 (* * Label abstractions of PAL
 
    Every PAL action is singled out by a term: [in(t)•𝟘] and [out(t)•𝟘], where

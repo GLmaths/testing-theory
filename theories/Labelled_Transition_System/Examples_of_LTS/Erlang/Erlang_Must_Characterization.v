@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the must preorder and its characterisations
 
     The observers are VACCS processes: [Erlang_Test_Dilemma] shows that Erlang
@@ -37,7 +38,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
-  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain
+  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain
   FiniteImageLTS coFiniteImage Subset_Act Termination Convergence WeakTransitions
   coWeakTransition coConvergence StateTransitionSystems
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
@@ -47,9 +48,8 @@ From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS
   DefinitionCI EquivalenceCI Coin_tower
-  VACCS VACCS_Instance VACCS_Good VACCS_CoFiniteImage VACCS_ta_tc_gen
+  VACCS.Language.LTS VACCS.Language.gLts_Instance VACCS_Good VACCS.Testing.ta_tc_gen
   Erlang_Syntax Erlang_LTS Erlang_Instance Erlang_LabelAbstraction Erlang_Forwarder.
-
 (* [PreActActionForFW] of [DefinitionAS.v] — the lift of an abstraction to the
     forwarder, whose process-side obligation is [Admitted] — is taken out of
     instance search: [Erl_AbsAction_FW] below replaces it, so that nothing here
@@ -176,20 +176,19 @@ Defined.
 
     [DefinitionAS.v] lifts an abstraction from [P] to [P * MO A] through
     [PreActActionForFW], whose process-side obligation is [Admitted].  It is not
-    needed: [𝝳ᴠᴀᴄᴄꜱ] is the identity, so that obligation is its own hypothesis
+    needed: [αᴘᴠᴀᴄᴄꜱ] is the identity, so that obligation is its own hypothesis
     rewritten.  The instance is given here so that nothing below rests on the
     hole. *)
 
 #[global] Program Instance Erl_AbsAction_FW :
-  @AbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
+  AbsAction (gLtsT := VACCS_gLtsEq) (sys * MO erl_act) proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ.
 Next Obligation.
   intros t β β' hb hb' heq hmem.
   eapply (@abstraction_test_spec proc proc FinA PreAct erl_act VACCS_ExtAction
-            Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
+            αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
 Qed.
 Next Obligation.
-  intros p β β' _ _ heq hmem. unfold 𝝳ᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
+  intros p β β' _ _ heq hmem. unfold αᴘᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
 Qed.
 
 (* [FinitaryPreActActionForFW] is a closed term mentioning the [Admitted]
@@ -197,11 +196,10 @@ Qed.
     [DefinitionAS.v], which are proved. *)
 
 #[global] Program Instance Erl_FinitaryAbsAction_FW :
-  @FinitaryAbsAction (sys * MO erl_act) proc FinA PreAct erl_act VACCS_ExtAction
-    Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ _ _ :=
+  FinitaryAbsAction (gLtsT := VACCS_gLtsEq) (sys * MO erl_act) proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ :=
   {| FinitaryAbsAction_Abs := Erl_AbsAction_FW ;
      coR_abs p := coR_abs p.1
-                  ∪ dom (gmultiset_map (fun x => 𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ (co x)))
+                  ∪ dom (gmultiset_map (fun x => αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ (co x)))
                            (MO_without_not_nb p.2)) |}.
 Next Obligation.
   intros p pre_mu hmem. destruct p as (p, m). simpl in *.
@@ -237,7 +235,7 @@ Next Obligation.
   eapply lts_performs_spec1 in tr as ((p2 , m2) & eq).
   inversion eq; subst; simpl in *.
   + eapply elem_of_union. left.
-    change (𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ μ) ∈ coR_abs p). eapply coR_abs_spec2.
+    change (αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ μ) ∈ coR_abs p). eapply coR_abs_spec2.
     exists μ. repeat split; eauto. exists μ2. repeat split; eauto.
     eapply lts_performs_spec2. eauto.
   + eapply elem_of_union. right.

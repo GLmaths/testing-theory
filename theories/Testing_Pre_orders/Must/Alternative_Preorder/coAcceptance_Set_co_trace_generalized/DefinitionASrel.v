@@ -20,24 +20,25 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
-  coWeakTransition coConvergence LabelAbstraction.
-
-Class AbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
+  coWeakTransition coConvergence Label_Abstraction.LabelAbstraction.
+(* begin hide *)
+Class AbsActionG (P T : Type) {PreAct A : Type} {H : ExtAction A} (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} :=
   abstraction_step (p : P) β β'' :
     blocking β → Γ β = Γ β'' → β'' ∈ coR p → ∃ u, u ∈ coR p ∧ (𝐄 β : subset_of T) ⊆ 𝐄 u.
 
-Class FinitaryAbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : A → PreAct)
+Class FinitaryAbsActionG (P T : Type) {PreAct A : Type} {H : ExtAction A} (Γ : A → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} `{Countable PreAct} :=
   MkFinitaryAbsActionG {
-    FinitaryAbsActionG_Abs :: AbsActionG P T H Γ;
+    FinitaryAbsActionG_Abs :: AbsActionG P T Γ;
     coR_abs : P → gset PreAct;
     coR_abs_spec1 (p : P) (x : PreAct) : x ∈ coR_abs p → x ∈ ⌈ Γ ⌉ (coR p);
     coR_abs_spec2 (p : P) (x : PreAct) : x ∈ ⌈ Γ ⌉ (coR p) → x ∈ coR_abs p;
@@ -46,7 +47,7 @@ Class FinitaryAbsActionG (P T : Type) {PreAct A : Type} (H : ExtAction A) (Γ : 
 Section Abstraction_step.
   Context {P T PreAct Aproc A : Type} {Hp : ExtAction Aproc} {H : ExtAction A}
     {SA : SyncAction Aproc A} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
-    (Γ : A → PreAct) `{!AbsActionG P T H Γ}.
+    (Γ : A → PreAct) `{!AbsActionG P T Γ}.
 
   Lemma abstraction_step_test (p : P) (t : T) β β'' :
     blocking β → Γ β = Γ β'' → β'' ∈ coR p → t ⟶[β] → ∃ u, u ∈ coR p ∧ t ⟶[u].
@@ -60,7 +61,7 @@ Section Of_label_abstraction.
   Context {P T Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At} {SA : SyncAction Ap At}
     {gLtsP : gLts P Hp} {gLtsT : gLtsEq T Ht}.
 
-  Definition AbsActionG_of_LA (𝔸 : Label_abstraction P T) : AbsActionG P T Ht ρ[𝔸].
+  Definition AbsActionG_of_LA (𝔸 : Label_abstraction P T) : AbsActionG P T ρ[𝔸].
   Proof.
     intros p β β'' b e mem.
     apply (LA_class_proj (label_ker 𝔸)) in e.
@@ -71,7 +72,7 @@ Section Of_label_abstraction.
   Defined.
 
   Definition FinitaryAbsActionG_of_FLA (F : Finitary_Label_abstraction P T) :
-    FinitaryAbsActionG P T Ht ρ[𝔸 (Finitary_Label_abstraction := F)].
+    FinitaryAbsActionG P T ρ[𝔸 (Finitary_Label_abstraction := F)].
   Proof.
     refine {| FinitaryAbsActionG_Abs := AbsActionG_of_LA _; coR_abs := coRₐ |}.
     - intros p x. apply coRₐ_spec.

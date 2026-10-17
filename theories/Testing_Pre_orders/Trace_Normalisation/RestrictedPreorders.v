@@ -20,7 +20,9 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
@@ -28,9 +30,8 @@ From stdpp Require Import base decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act
      WeakTransitions coWeakTransition Termination Convergence coConvergence
      StateTransitionSystems InteractionBetweenLts Testing_Predicate
-     NormalForm Normalisation
+     Trace_Normalisation.NormalForm Normalisation
      DefinitionTI DefinitionTIco DefinitionAS DefinitionASco.
-
 (* * The alternative preorders restricted to the feedback-free traces
 
     Each of the four alternative preorders of the development quantifies over
@@ -70,23 +71,23 @@ Notation "p ⋠꜀ₒ₋ₜᵢⁿᶠᵇ q" := (¬ bhv_pre_ti_co_nfb p q) (at lev
 Definition bhv_pre_cond1_nfb `{gLts P A, gLts Q A} (p : P) (q : Q) :=
   ∀ s, ¬ has_fb s -> p ⇓ s -> q ⇓ s.
 
-Notation "p ₁≼ₐₛⁿᶠᵇ q" := (bhv_pre_cond1_nfb p q) (at level 70).
+Notation "p ꜀ₙᵥ≼ₐₛⁿᶠᵇ q" := (bhv_pre_cond1_nfb p q) (at level 70).
 
 Definition bhv_pre_cond2_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
   ∀ (s : trace A) q',
     ¬ has_fb s -> p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
 
-Notation "p ₂≼ₐₛⁿᶠᵇ q" := (bhv_pre_cond2_nfb p q) (at level 70).
+Notation "p ₐ꜀꜀≼ₐₛⁿᶠᵇ q" := (bhv_pre_cond2_nfb p q) (at level 70).
 
 Definition bhv_pre_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
-  p ₁≼ₐₛⁿᶠᵇ q /\ p ₂≼ₐₛⁿᶠᵇ q.
+  p ꜀ₙᵥ≼ₐₛⁿᶠᵇ q /\ p ₐ꜀꜀≼ₐₛⁿᶠᵇ q.
 
 Notation "p ≼ₐₛⁿᶠᵇ q" := (bhv_pre_nfb p q) (at level 70).
 
@@ -95,23 +96,23 @@ Notation "p ≼ₐₛⁿᶠᵇ q" := (bhv_pre_nfb p q) (at level 70).
 Definition bhv_pre_co_cond1_nfb `{gLts P A, gLts Q A} (p : P) (q : Q) :=
   ∀ s, ¬ has_fb s -> p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s.
 
-Notation "p ₁≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond1_nfb p q) (at level 70).
+Notation "p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond1_nfb p q) (at level 70).
 
 Definition bhv_pre_co_cond2_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
   ∀ (s : trace A) q',
     ¬ has_fb s -> p ⇓ᶜᵒ s -> q ⟹ᶜᵒ[s] q' -> q' ↛ ->
-    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
 
-Notation "p ₂≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond2_nfb p q) (at level 70).
+Notation "p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond2_nfb p q) (at level 70).
 
 Definition bhv_pre_co_nfb `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
-  p ₁≼꜀ₒ₋ₐₛⁿᶠᵇ q /\ p ₂≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+  p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q /\ p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ q.
 
 Notation "p ≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_nfb p q) (at level 70).
 
@@ -131,20 +132,20 @@ Lemma bhv_pre_ti_co_nfb_of_ti_co `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : 
 Proof. intros h s _ hs. eapply h, hs. Qed.
 
 Lemma bhv_pre_cond1_nfb_of_cond1 `{gLts P A, gLts Q A} (p : P) (q : Q) :
-  p ₁≼ₐₛ q -> p ₁≼ₐₛⁿᶠᵇ q.
+  p ꜀ₙᵥ≼ₐₛ q -> p ꜀ₙᵥ≼ₐₛⁿᶠᵇ q.
 Proof. intros h s _ hs. eapply h, hs. Qed.
 
 Lemma bhv_pre_co_cond1_nfb_of_co_cond1 `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :
-  bhv_pre_co_cond1 (A := A) p q -> p ₁≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+  bhv_pre_co_cond1 (A := A) p q -> p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q.
 Proof. intros h s _ hs. eapply h, hs. Qed.
 
 Section WeakerMust.
 
   Context `{
-    gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-    gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}.
+    gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+    gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}.
 
-  Lemma bhv_pre_cond2_nfb_of_cond2 (p : P) (q : Q) : p ₂≼ₐₛ q -> p ₂≼ₐₛⁿᶠᵇ q.
+  Lemma bhv_pre_cond2_nfb_of_cond2 (p : P) (q : Q) : p ₐ꜀꜀≼ₐₛ q -> p ₐ꜀꜀≼ₐₛⁿᶠᵇ q.
   Proof. intros h s q' _ hc w hst. eapply h; eassumption. Qed.
 
   Lemma bhv_pre_nfb_of_pre (p : P) (q : Q) : p ≼ₐₛ q -> p ≼ₐₛⁿᶠᵇ q.
@@ -153,7 +154,7 @@ Section WeakerMust.
       [eapply bhv_pre_cond1_nfb_of_cond1, h1 | eapply bhv_pre_cond2_nfb_of_cond2, h2].
   Qed.
 
-  Lemma bhv_pre_co_cond2_nfb_of_co_cond2 (p : P) (q : Q) : p ₂≼꜀ₒ₋ₐₛ q -> p ₂≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+  Lemma bhv_pre_co_cond2_nfb_of_co_cond2 (p : P) (q : Q) : p ₐ꜀꜀≼꜀ₒ₋ₐₛ q -> p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ q.
   Proof. intros h s q' _ hc w hst. eapply h; eassumption. Qed.
 
   Lemma bhv_pre_co_nfb_of_pre_co (p : P) (q : Q) : p ≼꜀ₒ₋ₐₛ q -> p ≼꜀ₒ₋ₐₛⁿᶠᵇ q.

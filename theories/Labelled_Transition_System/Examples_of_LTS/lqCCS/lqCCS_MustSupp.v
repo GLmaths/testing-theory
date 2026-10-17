@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the must on supports is the must of the two LTSs
 
     [must_supp] ([lqCCS_AlmostSure.v]) is the classical [must] of the
@@ -39,7 +40,6 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition l
   lqCCS_AlmostSure lqCCS_LTS.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   StateTransitionSystems InteractionBetweenLts Must.
-
 Section Bridge.
   Context `{QM : QuantumModel}.
 

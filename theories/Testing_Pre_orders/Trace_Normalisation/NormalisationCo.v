@@ -20,7 +20,9 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
@@ -29,8 +31,7 @@ From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Subset_Act
     WeakTransitions Convergence coWeakTransition coConvergence Termination
     FiniteImageLTS Testing_Predicate StateTransitionSystems InteractionBetweenLts
-    DefinitionAS DefinitionASco NormalForm Normalisation.
-
+    DefinitionAS DefinitionASco Trace_Normalisation.NormalForm Normalisation.
 (* * Normalisation of co-traces
 
     A co-trace is read from the point of view of the *observer*: a step
@@ -119,7 +120,7 @@ Qed.
 Section CoSwaps.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Lemma cocnv_non_blocking_action_swap (p : P) η1 η2 s :
     co_non_blocking η1 -> co_non_blocking η2 ->
@@ -201,7 +202,7 @@ End CoSwaps.
 Section TransferCo.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
   Notation "⟪ s ⟫ᶜᵒ" := (nlin (nform cls s)) (at level 30).
@@ -291,10 +292,10 @@ End TransferCo.
 Inductive cotrace_leq `{ExtAction A} : trace A -> trace A -> Prop :=
 | ctl_refl s : cotrace_leq s s
 | ctl_trans s t u : cotrace_leq s t -> cotrace_leq t u -> cotrace_leq s u
-| ctl_delay s1 η α s2 :
-  co_non_blocking η -> cotrace_leq (s1 ++ η :: α :: s2) (s1 ++ α :: η :: s2)
-| ctl_anticipate s1 α μ s2 :
-  co_exist_co_nba μ -> cotrace_leq (s1 ++ α :: μ :: s2) (s1 ++ μ :: α :: s2)
+| ctl_delay s1 η 𝜆 s2 :
+  co_non_blocking η -> cotrace_leq (s1 ++ η :: 𝜆 :: s2) (s1 ++ 𝜆 :: η :: s2)
+| ctl_anticipate s1 𝜆 μ s2 :
+  co_exist_co_nba μ -> cotrace_leq (s1 ++ 𝜆 :: μ :: s2) (s1 ++ μ :: 𝜆 :: s2)
 | ctl_feedback s1 μ1 μ2 s2 :
   co_non_blocking μ1 -> co_feedback μ1 μ2 ->
   cotrace_leq (s1 ++ μ1 :: μ2 :: s2) (s1 ++ s2).
@@ -311,31 +312,31 @@ Notation "s ≼ᶜᵒₜ t" := (cotrace_pre s t) (at level 70).
 Section CoTracePreorder.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   (* [⊑ᶜᵒₜ] is sound for co-weak transitions. *)
   Lemma cowt_cotrace_leq (p q : P) s t : s ⊑ᶜᵒₜ t -> p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[t] q.
   Proof.
     intro hle. revert p q.
     induction hle
-      as [ s | s t u h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 μ1 μ2 s2 nb hfb ];
+      as [ s | s t u h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 μ1 μ2 s2 nb hfb ];
       intros p q w.
     - exists q. split; [exact w | reflexivity].
     - destruct (IH1 p q w) as (r & w1 & heqr).
       destruct (IH2 p r w1) as (r' & w2 & heqr').
       exists r'. split; [exact w2 | etransitivity; eassumption].
     - eapply cowt_split in w as (r & w1 & w2).
-      replace (η :: α :: s2) with ([η ; α] ++ s2) in w2 by reflexivity.
+      replace (η :: 𝜆 :: s2) with ([η ; 𝜆] ++ s2) in w2 by reflexivity.
       eapply cowt_split in w2 as (r' & w3 & w4).
-      assert (hsw : r ⟹ᶜᵒ⋍[[α ; η]] r').
-      { eapply (push_cowt_non_blocking_action (η := η) (s := [α])); assumption. }
-      replace (s1 ++ α :: η :: s2) with (s1 ++ ([α ; η] ++ s2)) by reflexivity.
+      assert (hsw : r ⟹ᶜᵒ⋍[[𝜆 ; η]] r').
+      { eapply (push_cowt_non_blocking_action (η := η) (s := [𝜆])); assumption. }
+      replace (s1 ++ 𝜆 :: η :: s2) with (s1 ++ ([𝜆 ; η] ++ s2)) by reflexivity.
       eapply cowt_join_eq_r; [exact w1 |]. eapply cowt_join_eq_l; eassumption.
     - eapply cowt_split in w as (r & w1 & w2).
-      replace (α :: μ :: s2) with ([α ; μ] ++ s2) in w2 by reflexivity.
+      replace (𝜆 :: μ :: s2) with ([𝜆 ; μ] ++ s2) in w2 by reflexivity.
       eapply cowt_split in w2 as (r' & w3 & w4).
-      assert (hsw : r ⟹ᶜᵒ⋍[[μ ; α]] r') by (eapply cowt_input_swap; eassumption).
-      replace (s1 ++ μ :: α :: s2) with (s1 ++ ([μ ; α] ++ s2)) by reflexivity.
+      assert (hsw : r ⟹ᶜᵒ⋍[[μ ; 𝜆]] r') by (eapply cowt_input_swap; eassumption).
+      replace (s1 ++ μ :: 𝜆 :: s2) with (s1 ++ ([μ ; 𝜆] ++ s2)) by reflexivity.
       eapply cowt_join_eq_r; [exact w1 |]. eapply cowt_join_eq_l; eassumption.
     - eapply cowt_split in w as (r & w1 & w2).
       replace (μ1 :: μ2 :: s2) with ([μ1 ; μ2] ++ s2) in w2 by reflexivity.
@@ -400,7 +401,7 @@ Section CoMinimality.
   Lemma cls_pre_of_cotrace_leq (s t : trace A) : s ⊑ᶜᵒₜ t -> cls_pre cls s t.
   Proof.
     induction 1
-      as [ s | s t u h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 μ1 μ2 s2 nb hfb ].
+      as [ s | s t u h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 μ1 μ2 s2 nb hfb ].
     - constructor.
     - eapply cp_trans; eassumption.
     - eapply cp_delay. now eapply cls_CNB_iff.
@@ -441,7 +442,7 @@ Section CoMinimality.
   Lemma cotrace_leq_app_l (u : trace A) s t : s ⊑ᶜᵒₜ t -> u ++ s ⊑ᶜᵒₜ u ++ t.
   Proof.
     induction 1
-      as [ s | s t v h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 μ1 μ2 s2 nb hfb ].
+      as [ s | s t v h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 μ1 μ2 s2 nb hfb ].
     - constructor.
     - eapply ctl_trans; eassumption.
     - rewrite 2 app_assoc. now eapply ctl_delay.
@@ -598,7 +599,7 @@ Section CoMinimality.
     u ⊑ᶜᵒₜ t -> tmeasure cls u = length u -> length t = length u.
   Proof.
     induction 1
-      as [ s | s t v h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 μ1 μ2 s2 nb hfb ];
+      as [ s | s t v h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 μ1 μ2 s2 nb hfb ];
       intro hm.
     - reflexivity.
     - assert (hlt : length t = length s) by (eapply IH1, hm).
@@ -659,7 +660,7 @@ End CoMinimality.
 Section CoSimplification.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
   Context (cls : A -> act_class) `{!CoClassifier cls}.
 
   (* Testing along [s] is subsumed by testing along the simplified co-trace. *)
@@ -947,7 +948,7 @@ Section CoFeedbackNormalFormLts.
              (tequiv_nform cls (co_fbnf s))).
   Qed.
 
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
   Corollary cowt_co_fbnf (p q : P) s : p ⟹ᶜᵒ[s] q -> p ⟹ᶜᵒ⋍[co_fbnf s] q.
   Proof.
@@ -970,10 +971,10 @@ End CoFeedbackNormalFormLts.
 Section CoTracePreorderConvergence.
 
   Context `{H : !ExtAction A}.
-  Context `{@gLtsOba P A H gLtsEqP, !gLtsObaFW P A}.
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFW P A}.
 
-  Lemma cocnv_delay (p : P) (η α : A) s :
-    co_non_blocking η -> p ⇓ᶜᵒ α :: η :: s -> p ⇓ᶜᵒ η :: α :: s.
+  Lemma cocnv_delay (p : P) (η 𝜆 : A) s :
+    co_non_blocking η -> p ⇓ᶜᵒ 𝜆 :: η :: s -> p ⇓ᶜᵒ η :: 𝜆 :: s.
   Proof.
     intros nb hcnv.
     assert (hterm : p ⤓) by (eapply cocnv_terminate; exact hcnv).
@@ -983,14 +984,14 @@ Section CoTracePreorderConvergence.
     - eapply (terminate_preserved_by_cowt_non_blocking_action p q η nb);
         [exact hterm | exact w1].
     - intros t w2.
-      assert (w3 : p ⟹ᶜᵒ[[η ; α]] t) by (eapply cowt_push_left; eassumption).
+      assert (w3 : p ⟹ᶜᵒ[[η ; 𝜆]] t) by (eapply cowt_push_left; eassumption).
       eapply push_cowt_non_blocking_action in w3 as (t' & w4 & heq); [| exact nb].
       eapply cocnv_preserved_by_eq; [exact heq | reflexivity |].
-      eapply (cocnv_cowt_prefix [α ; η] s p); [exact hcnv | exact w4].
+      eapply (cocnv_cowt_prefix [𝜆 ; η] s p); [exact hcnv | exact w4].
   Qed.
 
-  Lemma cocnv_anticipate (p : P) (μ α : A) s :
-    co_exist_co_nba μ -> p ⇓ᶜᵒ μ :: α :: s -> p ⇓ᶜᵒ α :: μ :: s.
+  Lemma cocnv_anticipate (p : P) (μ 𝜆 : A) s :
+    co_exist_co_nba μ -> p ⇓ᶜᵒ μ :: 𝜆 :: s -> p ⇓ᶜᵒ 𝜆 :: μ :: s.
   Proof.
     intros (η1 & nb1 & h1) hcnv.
     assert (hterm : p ⤓) by (eapply cocnv_terminate; exact hcnv).
@@ -999,8 +1000,8 @@ Section CoTracePreorderConvergence.
     destruct (boomerang p η1 μ1) as (t0 & Hb).
     destruct (Hb nb1 (h1 μ1 dν1)) as (l1 & l2).
     assert (w0 : p ⟹ᶜᵒ{μ} t0) by (eapply lts_to_cowt; [exact dν1 | exact l1]).
-    assert (h0 : t0 ⇓ᶜᵒ α :: s)
-      by (exact (cocnv_preserved_by_cowt_act (α :: s) p μ hcnv t0 w0)).
+    assert (h0 : t0 ⇓ᶜᵒ 𝜆 :: s)
+      by (exact (cocnv_preserved_by_cowt_act (𝜆 :: s) p μ hcnv t0 w0)).
     eapply cocnv_act; [exact hterm |].
     intros q w1.
     eapply cocnv_act.
@@ -1008,14 +1009,14 @@ Section CoTracePreorderConvergence.
         as (t' & w2 & (t2 & hlt2 & heqt2)).
       assert (ht' : t' ⤓).
       { eapply (cocnv_terminate t' s).
-        exact (cocnv_preserved_by_cowt_act s t0 α h0 t' w2). }
+        exact (cocnv_preserved_by_cowt_act s t0 𝜆 h0 t' w2). }
       eapply (terminate_preserved_by_eq2 heqt2).
       exact (terminate_preserved_by_lts_non_blocking_action nb1 hlt2 ht').
     - intros r w2.
-      destruct (cowt_input_swap p r α μ (ex_intro _ η1 (conj nb1 h1))
+      destruct (cowt_input_swap p r 𝜆 μ (ex_intro _ η1 (conj nb1 h1))
                   (cowt_push_left w1 w2)) as (t & w' & heq').
       eapply cocnv_preserved_by_eq; [exact heq' | reflexivity |].
-      eapply (cocnv_cowt_prefix [μ ; α] s p); [exact hcnv | exact w'].
+      eapply (cocnv_cowt_prefix [μ ; 𝜆] s p); [exact hcnv | exact w'].
   Qed.
 
   Lemma cocnv_annhil_head (p : P) (μ1 μ2 : A) s :
@@ -1055,7 +1056,7 @@ Section CoTracePreorderConvergence.
   Proof.
     intro hle. revert p.
     induction hle
-      as [ s | s t u h1 IH1 h2 IH2 | s1 η α s2 nb | s1 α μ s2 i | s1 μ1 μ2 s2 nb hfb ];
+      as [ s | s t u h1 IH1 h2 IH2 | s1 η 𝜆 s2 nb | s1 𝜆 μ s2 i | s1 μ1 μ2 s2 nb hfb ];
       intros p hcnv.
     - exact hcnv.
     - eapply IH1, IH2, hcnv.

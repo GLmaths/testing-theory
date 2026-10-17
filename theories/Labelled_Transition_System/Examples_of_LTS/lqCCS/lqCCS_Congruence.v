@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: structural congruence
 
     The structural congruence of Ceragioli, Gadducci, Lomurno, Tedeschi,
@@ -44,11 +45,10 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets relations.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ.
-
 (* ** Free channels *)
 
-Definition prefix_chans (α : prefix) : list chan :=
-  match α with PRecv _ c _ => [c] | _ => [] end.
+Definition prefix_chans (𝜆 : prefix) : list chan :=
+  match 𝜆 with PRecv _ c _ => [c] | _ => [] end.
 
 Fixpoint fc (P : proc) : list chan :=
   match P with
@@ -60,7 +60,7 @@ Fixpoint fc (P : proc) : list chan :=
 with gfc (g : guard) : list chan :=
   match g with
   | GNil _ | GSucc => []
-  | GPre α P => prefix_chans α ++ fc P
+  | GPre 𝜆 P => prefix_chans 𝜆 ++ fc P
   | GSum g1 g2 => gfc g1 ++ gfc g2
   end.
 
@@ -112,9 +112,9 @@ with gcs : guard → guard → Prop :=
 | gcs_sum_comm g h : gcs (GSum g h) (GSum h g)
 | gcs_sum_assoc g h k : gcs (GSum g (GSum h k)) (GSum (GSum g h) k)
 | gcs_nil_val es es' : exps_eqv es es' → gcs (GNil es) (GNil es')
-| gcs_pre_val α α' P : prefix_eqv α α' → gcs (GPre α P) (GPre α' P)
+| gcs_pre_val 𝜆 𝜆' P : prefix_eqv 𝜆 𝜆' → gcs (GPre 𝜆 P) (GPre 𝜆' P)
 (* contexts *)
-| gcs_pre α P P' : cs P P' → gcs (GPre α P) (GPre α P')
+| gcs_pre 𝜆 P P' : cs P P' → gcs (GPre 𝜆 P) (GPre 𝜆 P')
 | gcs_sum_l g g' h : gcs g g' → gcs (GSum g h) (GSum g' h)
 | gcs_sum_r g h h' : gcs h h' → gcs (GSum g h) (GSum g h').
 
@@ -177,17 +177,17 @@ Lemma exps_eqv_subst es es' x v :
   exps_eqv es es' → exps_eqv (exps_subst es x v) (exps_subst es' x v).
 Proof. induction 1; constructor; [by apply exp_eqv_subst|done]. Qed.
 
-Lemma prefix_eqv_subst α α' x v :
-  prefix_eqv α α' → prefix_eqv (prefix_subst α x v) (prefix_subst α' x v).
+Lemma prefix_eqv_subst 𝜆 𝜆' x v :
+  prefix_eqv 𝜆 𝜆' → prefix_eqv (prefix_subst 𝜆 x v) (prefix_subst 𝜆' x v).
 Proof. destruct 1; simpl; constructor; by try apply exps_eqv_subst. Qed.
 
-Lemma prefix_eqv_binder α α' : prefix_eqv α α' → prefix_binder α = prefix_binder α'.
+Lemma prefix_eqv_binder 𝜆 𝜆' : prefix_eqv 𝜆 𝜆' → prefix_binder 𝜆 = prefix_binder 𝜆'.
 Proof. by destruct 1. Qed.
 
 Lemma fc_subst x v : (∀ P, fc (subst P x v) = fc P) ∧ (∀ g, gfc (gsubst g x v) = gfc g).
 Proof.
   apply proc_guard_ind; simpl; intros; try congruence.
-  case_decide; destruct α; simpl; congruence.
+  case_decide; destruct 𝜆; simpl; congruence.
 Qed.
 
 Lemma cs_subst x v :
@@ -500,9 +500,9 @@ Qed.
 Lemma gfwd_nil_val es es' : gfwd (GNil es) (GNil es').
 Proof. intros l P' Hs. no_nil. Qed.
 
-Lemma gfwd_pre_val α α' P : prefix_eqv α α' → gfwd (GPre α P) (GPre α' P) ∧ gfwd (GPre α' P) (GPre α P).
+Lemma gfwd_pre_val 𝜆 𝜆' P : prefix_eqv 𝜆 𝜆' → gfwd (GPre 𝜆 P) (GPre 𝜆' P) ∧ gfwd (GPre 𝜆' P) (GPre 𝜆 P).
 Proof.
-  intros Hα. destruct Hα as [t t'|t1 t2 t1' t2'|t t' c x|t t' E es es' Hes|t t' M es es' x Hes];
+  intros H𝜆. destruct H𝜆 as [t t'|t1 t2 t1' t2'|t t' c x|t t' E es es' Hes|t t' M es es' x Hes];
     try pose proof (exps_eqv_eval _ _ Hes) as Ev; split; intros l X Hs; inversion Hs; subst.
   - exists (LTau (STag t')), X. split_and!; [done|constructor|done].
   - exists (LTau (STag t)), X. split_and!; [done|constructor|done].
@@ -583,7 +583,7 @@ Proof.
   destruct (H _ _ Hg) as (l' & Y & El & Hs' & HY). exists l', Y. split_and!; [done|by constructor|done].
 Qed.
 
-Lemma gfwd_pre α P P' : P ≡* P' → gfwd (GPre α P) (GPre α P').
+Lemma gfwd_pre 𝜆 P P' : P ≡* P' → gfwd (GPre 𝜆 P) (GPre 𝜆 P').
 Proof.
   intros Hc l X Hs. inversion Hs; subst.
   - exists (LTau (STag t)), P'. split_and!; [done|constructor|done].

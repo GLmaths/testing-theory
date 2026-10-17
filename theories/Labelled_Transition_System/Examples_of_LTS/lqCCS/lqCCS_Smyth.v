@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The Smyth must of lqCCS: least runs and thresholds
 
     lqCCS has no recursion: every run of a tested configuration ends in a
@@ -35,7 +36,7 @@
     the literature, for definitions in the same spirit:
     - Deng, van Glabbeek, Hennessy, Morgan, "Characterising testing preorders
       for finite probabilistic processes" (LICS 2007, LMCS 2008): finite
-      pCSP, must = failure simulation, modal logic F with [φ p⊕ ψ];
+      pCSP, must = failure simulation, modal logic F with [αᴛᴇꜱᴛ p⊕ ψ];
       "Testing finitary probabilistic processes" (CONCUR 2009) with
       divergence.
     - Segala, "Testing probabilistic automata" (CONCUR 1996): vector testing
@@ -62,7 +63,6 @@ From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure pMust_smyth lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Composition
   lqCCS_LTS lqCCS_AlmostSure.
-
 Section Smyth.
   Context `{QM : QuantumModel}.
   Context (XM : ∀ P : Prop, P ∨ ¬ P).

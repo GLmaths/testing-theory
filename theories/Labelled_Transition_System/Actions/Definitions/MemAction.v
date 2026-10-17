@@ -20,7 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts.
@@ -95,4 +95,3 @@ End Mem.
 
 #[global] Hint Extern 10 (@UniqueDual (MemAct ?A) _) =>
   assert_fails (is_evar A); exact UniqueDual_mem : typeclass_instances.
-(* end hide *)

@@ -1,9 +1,30 @@
 (* begin hide *)
-(* Reflexive transitive closure with embedded length parameter *)
+(*
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*)
+(* end hide *)
+(** ****** Reflexive transitive closure with embedded length parameter *)
 
 From Stdlib Require Import Relations Program.Equality.
 From stdpp Require Import base.
-
 Set Implicit Arguments.
 
 Inductive clos_n {A : Type} (R : relation A) : nat -> relation A :=
@@ -32,7 +53,7 @@ Lemma clos_n_S_inv {A : Type} (R : relation A) x y n:
   clos_n R (S n) x y -> x = y \/ (exists z, R x z /\ clos_n R n z y).
 Proof. intro H. dependent destruction H; eauto. Qed.
 
-(* At most n transitions implies at most S n transitions *)
+(** ****** At most n transitions implies at most S n transitions *)
 Lemma clos_n_S `{_ : Reflexive A R} x y n:
   clos_n R n x y -> clos_n R (S n) x y.
 Proof. induction 1; econstructor; eauto. constructor. Qed.
@@ -53,4 +74,3 @@ revert x y z p. induction n; intros x y z p Hxy Hyz.
   + subst. apply (clos_n_le Hyz). apply PeanoNat.Nat.le_add_l.
   + simpl. apply clos_n_step with z'; trivial. eapply IHn; eauto.
 Qed.
-(* end hide *)

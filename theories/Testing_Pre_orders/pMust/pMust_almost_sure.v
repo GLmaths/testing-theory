@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Probabilistic must, almost-sure version
 
     The setting is the scheduled semantics of lqCCS (Ceragioli, Gadducci,
@@ -50,10 +51,11 @@
     preordered monoid; with [[0,1]] this is "succeeds with probability 1".
     The Smyth version, comparing success probabilities, is in
     [pMust_smyth.v]. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base decidable list.
-
+(* begin hide *)
 (* ** Probabilities and weights *)
 
 Class Weights := MkWeights {

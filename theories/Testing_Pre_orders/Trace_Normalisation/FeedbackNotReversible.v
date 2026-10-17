@@ -20,17 +20,18 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable gmultiset.
 From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
      Lts_OBA Lts_FW MultisetLTSConstruction InteractionBetweenLts
-     ForwarderConstruction VACCS VACCS_Instance WeakTransitions
-     coWeakTransition Termination Convergence NormalForm Normalisation
+     ForwarderConstruction VACCS.Language.LTS VACCS.Language.gLts_Instance WeakTransitions
+     coWeakTransition Termination Convergence Trace_Normalisation.NormalForm Normalisation
      RestrictedSimulation Subset_Act coConvergence DefinitionAS DefinitionASco.
-
 (* * The feedback simplification is not reversible
 
     [wt_fnf] states that a process performing [s] also performs the simplified
@@ -78,10 +79,10 @@ Definition a1 : TypeOfActions := (cst 1, cst 0).
 (* The idle process, with an empty mailbox. *)
 Definition z : proc * MO (ExtAct TypeOfActions) := (g 𝟘, ∅).
 
-Lemma nil_no_step (α : ActIO TypeOfActions) (p' : proc) : ¬ lts (g 𝟘) α p'.
+Lemma nil_no_step (𝜆 : ActIO TypeOfActions) (p' : proc) : ¬ lts (g 𝟘) 𝜆 p'.
 Proof.
   intro l. eapply lts_set_spec1 in l. revert l.
-  destruct α as [[a|a]|]; vm_compute; discriminate.
+  destruct 𝜆 as [[a|a]|]; vm_compute; discriminate.
 Qed.
 
 Lemma z_stable : z ↛.
@@ -142,7 +143,7 @@ Definition v0 : ValueData := cst 0.
 
 Definition oA : proc := c1 ! v0 • 𝟘.                    (* the message ā *)
 Definition oB : proc := c2 ! v0 • 𝟘.                    (* the message b̄ *)
-Definition Bp : proc := oA ‖ (g (c1 ? oB)).             (* ā ‖ a?•b̄ *)
+Definition Bp : proc := oA ‖ (g (c1 ? • oB)).             (* ā ‖ a?•b̄ *)
 Definition Q0 : gproc := (𝛕 • oA) + (𝛕 • oB).
 Definition P0 : gproc := Q0 + (𝛕 • Bp).
 
@@ -160,7 +161,7 @@ Proof.
   eexists.
   eapply (wt_tau _ _ (Bp, mt)).
   { eapply ParLeft. eapply lts_choiceR. eapply lts_tau. }
-  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? oB))), mt)).
+  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? • oB))), mt)).
   { eapply ParLeft. eapply lts_parL. eapply lts_output. }
   eapply (wt_act _ _ _ ((𝟘 ‖ oB), mt)).
   { eapply ParLeft. eapply lts_parR. rewrite <- (subst_oB v0). eapply lts_input. }
@@ -304,7 +305,7 @@ Qed.
 (* * The witness does not work
 
     The candidate above is *not* a counterexample to the open question, and the
-    reason is specific to a calculus with values: the input [c1 ? P] of VACCS
+    reason is specific to a calculus with values: the input [c1 ? • P] of VACCS
     accepts *any* value on the channel, so [p] can be unlocked by an input that
     is not the co-action of what it emitted.
 
@@ -315,7 +316,7 @@ Qed.
     about the open question.
 
     Repairing this needs the continuation of the input to be guarded on the
-    received value, e.g. [c1 ? (If (bvar 0 = v0) Then b̄ Else 𝟘)], so that only
+    received value, e.g. [c1 ? • (If (bvar 0 = v0) Then b̄ Else 𝟘)], so that only
     the co-action of [ā] unlocks [b̄].  That is the next candidate. *)
 
 Definition v1 : ValueData := cst 1.
@@ -342,7 +343,7 @@ Proof.
   eexists.
   eapply (wt_tau _ _ (Bp, mt)).
   { eapply ParLeft. eapply lts_choiceR. eapply lts_tau. }
-  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? oB))), mt)).
+  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? • oB))), mt)).
   { eapply ParLeft. eapply lts_parL. eapply lts_output. }
   eapply (wt_act _ _ _ ((𝟘 ‖ oB), mt)).
   { eapply ParLeft. eapply lts_parR. rewrite <- (subst_oB v). eapply lts_input. }
@@ -411,7 +412,7 @@ Qed.
     separated by a trace carrying a feedback. *)
 
 Definition Gd : proc := If (Equality (bvar 0) v0) Then oB Else 𝟘.
-Definition Bp2 : proc := oA ‖ (g (c1 ? Gd)).
+Definition Bp2 : proc := oA ‖ (g (c1 ? • Gd)).
 Definition P2 : gproc := Q0 + (𝛕 • Bp2).
 
 Lemma Gd_v0 : Gd ^ v0 = If (Equality v0 v0) Then oB Else 𝟘.
@@ -433,7 +434,7 @@ Proof.
   eexists.
   eapply (wt_tau _ _ (Bp2, mt)).
   { eapply ParLeft. eapply lts_choiceR. eapply lts_tau. }
-  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? Gd))), mt)).
+  eapply (wt_act _ _ _ ((𝟘 ‖ (g (c1 ? • Gd))), mt)).
   { eapply ParLeft. eapply lts_parL. eapply lts_output. }
   eapply (wt_act _ _ _ ((𝟘 ‖ (Gd ^ v0)), mt)).
   { eapply ParLeft. eapply lts_parR. eapply lts_input. }
@@ -493,8 +494,8 @@ Proof.
 Qed.
 
 (* Hence the guard fires only on the co-action of [ā], and then emits [b̄]. *)
-Lemma guard_step (v : ValueData) α r :
-  lts (Gd ^ v) α r -> v = v0 /\ α = ActExt bOut /\ r = g 𝟘.
+Lemma guard_step (v : ValueData) 𝜆 r :
+  lts (Gd ^ v) 𝜆 r -> v = v0 /\ 𝜆 = ActExt bOut /\ r = g 𝟘.
 Proof.
   rewrite Gd_subst. intro l. inversion l; subst.
   - inversion H5; subst. repeat split. eapply fires_eq. exact H4.
@@ -503,18 +504,18 @@ Qed.
 
 (* ** Inert processes *)
 
-Definition W : proc := g (c1 ? Gd).
-Definition dead (p : proc) : Prop := forall α r, ¬ lts p α r.
+Definition W : proc := g (c1 ? • Gd).
+Definition dead (p : proc) : Prop := forall 𝜆 r, ¬ lts p 𝜆 r.
 
 Lemma dead_zero : dead (g 𝟘).
-Proof. intros α r. eapply nil_no_step. Qed.
+Proof. intros 𝜆 r. eapply nil_no_step. Qed.
 
 Lemma dead_Gd (v : ValueData) : v <> v0 -> dead (Gd ^ v).
-Proof. intros ne α r l. eapply guard_step in l as (e & _ & _). exact (ne e). Qed.
+Proof. intros ne 𝜆 r l. eapply guard_step in l as (e & _ & _). exact (ne e). Qed.
 
 Lemma dead_par (p q : proc) : dead p -> dead q -> dead (p ‖ q).
 Proof.
-  intros hp hq α r l. inversion l; subst.
+  intros hp hq 𝜆 r l. inversion l; subst.
   - eapply hp; eassumption.
   - eapply hq; eassumption.
   - eapply hp; eassumption.
@@ -558,23 +559,23 @@ Qed.
 
 (* ** Inversion of the components *)
 
-Lemma oA_inv α r : lts oA α r -> α = ActExt aOut /\ r = g 𝟘.
+Lemma oA_inv 𝜆 r : lts oA 𝜆 r -> 𝜆 = ActExt aOut /\ r = g 𝟘.
 Proof. intro l. inversion l; subst. split; reflexivity. Qed.
 
-Lemma oB_inv α r : lts oB α r -> α = ActExt bOut /\ r = g 𝟘.
+Lemma oB_inv 𝜆 r : lts oB 𝜆 r -> 𝜆 = ActExt bOut /\ r = g 𝟘.
 Proof. intro l. inversion l; subst. split; reflexivity. Qed.
 
-Lemma W_inv α r : lts W α r -> exists v, α = ActExt (ActIn (c1, v)) /\ r = Gd ^ v.
+Lemma W_inv 𝜆 r : lts W 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c1, v)) /\ r = Gd ^ v.
 Proof. intro l. inversion l; subst. exists v. split; reflexivity. Qed.
 
-Lemma par_inv (p q : proc) α r :
-  lts (p ‖ q) α r ->
-  (exists p', lts p α p' /\ r = p' ‖ q)
-  \/ (exists q', lts q α q' /\ r = p ‖ q')
+Lemma par_inv (p q : proc) 𝜆 r :
+  lts (p ‖ q) 𝜆 r ->
+  (exists p', lts p 𝜆 p' /\ r = p' ‖ q)
+  \/ (exists q', lts q 𝜆 q' /\ r = p ‖ q')
   \/ (exists (a : TypeOfActions) p' q', lts p (ActExt (ActOut a)) p' /\ lts q (ActExt (ActIn a)) q'
-        /\ α = τ /\ r = p' ‖ q')
+        /\ 𝜆 = τ /\ r = p' ‖ q')
   \/ (exists (a : TypeOfActions) p' q', lts p (ActExt (ActIn a)) p' /\ lts q (ActExt (ActOut a)) q'
-        /\ α = τ /\ r = p' ‖ q').
+        /\ 𝜆 = τ /\ r = p' ‖ q').
 Proof.
   intro l. inversion l; subst.
   - right. right. left. exists (c, v), p2, q2. repeat split; assumption.
@@ -1180,7 +1181,7 @@ Definition co_s : trace (ExtAct TypeOfActions) := [aIn; aOut; bIn].
     echoing it back later -- not the process emitting and receiving its own
     message, which is what [wt_annhil] annihilates. *)
 
-Definition Pin : proc := g (c1 ? (oA ‖ oB)).
+Definition Pin : proc := g (c1 ? • (oA ‖ oB)).
 Definition s_bad : trace (ExtAct TypeOfActions) := [aOut; aIn; bIn].
 
 Lemma fnf_s_bad : nlin (fnf s_bad) = [bIn].
@@ -1204,7 +1205,7 @@ Proof.
   eapply cowt_nil.
 Qed.
 
-Lemma Pin_inv α r : lts Pin α r -> exists v, α = ActExt (ActIn (c1, v)) /\ r = (oA ‖ oB) ^ v.
+Lemma Pin_inv 𝜆 r : lts Pin 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c1, v)) /\ r = (oA ‖ oB) ^ v.
 Proof. intro l. inversion l; subst. exists v. split; reflexivity. Qed.
 
 Lemma pin_stable : ((Pin, mt) : st) ↛.
@@ -1285,11 +1286,11 @@ Definition s_must : trace (ExtAct TypeOfActions) := [bOut; bIn; cIn].
 
 (* [Gd2] diverges on the co-action of [b̄], and only on it. *)
 Definition Gd2 : proc := If (Equality (bvar 0) v0) Then Dv Else 𝟘.
-Definition Wc2 : proc := g (c2 ? Gd2).
-Definition Wc3 : proc := g (c3 ? Wc2).
+Definition Wc2 : proc := g (c2 ? • Gd2).
+Definition Wc3 : proc := g (c3 ? • Wc2).
 
 (* [p] diverges as soon as it receives on [c3] -- and has no output at all. *)
-Definition Pdv : proc := g (c3 ? Dv).
+Definition Pdv : proc := g (c3 ? • Dv).
 
 (* [q] emits [b̄]; after a message on [c3] it starts listening on [c2], where
     the co-action of [b̄] makes it diverge. *)
@@ -1354,7 +1355,7 @@ Proof. intros l hy hx. inversion hx as [h]. eapply hy, h, l. Qed.
 
 (* ** [p] converges on the feedback trace, not on its simplification *)
 
-Lemma Pdv_inv α r : lts Pdv α r -> exists v, α = ActExt (ActIn (c3, v)) /\ r = Dv.
+Lemma Pdv_inv 𝜆 r : lts Pdv 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c3, v)) /\ r = Dv.
 Proof. intro l. inversion l; subst. exists v. split; [reflexivity | eapply Dv_subst]. Qed.
 
 Lemma Pdv_stable : ((Pdv, mt) : st) ↛.
@@ -1466,7 +1467,7 @@ Proof. split; [exact s_must_has_fb |]. split; [exact pdv_cnv | exact qdv_not_cnv
 
 (* *** When [p] terminates
 
-    [p = c3 ? Ω] is stable unless its mailbox holds a message on [c3], in which
+    [p = c3 ? • Ω] is stable unless its mailbox holds a message on [c3], in which
     case the forwarder feeds it and it diverges.  So [p ⤓] is exactly "no [c3]
     message in the mailbox" -- and any trace offering [c3] to a live [p] makes
     [p ⇓] fail, which is what makes those obligations void. *)
@@ -1512,10 +1513,10 @@ Proof. intros ht v hin. eapply (Pdv_c3_not_term v m hin ht). Qed.
 Lemma Gd2_subst (v : ValueData) : Gd2 ^ v = If (Equality v v0) Then Dv Else 𝟘.
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma Dv_inv α r : lts Dv α r -> α = τ /\ r = g (𝛕 • Dv).
+Lemma Dv_inv 𝜆 r : lts Dv 𝜆 r -> 𝜆 = τ /\ r = g (𝛕 • Dv).
 Proof. intro l. inversion l; subst. split; reflexivity. Qed.
 
-Lemma Gd2_step (v : ValueData) α r : lts (Gd2 ^ v) α r -> v = v0 /\ α = τ /\ r = g (𝛕 • Dv).
+Lemma Gd2_step (v : ValueData) 𝜆 r : lts (Gd2 ^ v) 𝜆 r -> v = v0 /\ 𝜆 = τ /\ r = g (𝛕 • Dv).
 Proof.
   rewrite Gd2_subst. intro l. inversion l; subst.
   - eapply Dv_inv in H5 as (-> & ->). split; [eapply fires_eq; exact H4 | split; reflexivity].
@@ -1523,12 +1524,12 @@ Proof.
 Qed.
 
 Lemma Gd2_dead (v : ValueData) : v <> v0 -> dead (Gd2 ^ v).
-Proof. intros ne α r l. eapply Gd2_step in l as (e & _ & _). exact (ne e). Qed.
+Proof. intros ne 𝜆 r l. eapply Gd2_step in l as (e & _ & _). exact (ne e). Qed.
 
-Lemma Wc3_inv α r : lts Wc3 α r -> exists v, α = ActExt (ActIn (c3, v)) /\ r = Wc2.
+Lemma Wc3_inv 𝜆 r : lts Wc3 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c3, v)) /\ r = Wc2.
 Proof. intro l. inversion l; subst. exists v. split; [reflexivity | eapply Wc2_subst]. Qed.
 
-Lemma Wc2_inv α r : lts Wc2 α r -> exists v, α = ActExt (ActIn (c2, v)) /\ r = Gd2 ^ v.
+Lemma Wc2_inv 𝜆 r : lts Wc2 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c2, v)) /\ r = Gd2 ^ v.
 Proof. intro l. inversion l; subst. exists v. split; reflexivity. Qed.
 
 Inductive qgood : proc -> Prop :=
@@ -1937,7 +1938,7 @@ Qed.
     the labels.
 
     The pair is the may witness read in the other direction: [p = 𝛕•ā + 𝛕•b̄]
-    and [q = ā ‖ c1 ? (If (bvar 0 = v0) Then b̄ Else 𝟘)]. *)
+    and [q = ā ‖ c1 ? • (If (bvar 0 = v0) Then b̄ Else 𝟘)]. *)
 
 (* ** [p = Q0] converges on every trace *)
 
@@ -2087,20 +2088,19 @@ Qed.
 (* ** The failure, for an arbitrary abstraction of the labels
 
     The existential of [bhv_pre_cond2] fails outright -- there is no [p'] at
-    all -- so the conclusion does not depend on [Φ], [𝝳P], [𝝳Q] nor on the
+    all -- so the conclusion does not depend on [αᴛᴇꜱᴛ], [αᴘʀᴏP], [αᴘʀᴏQ] nor on the
     acceptance sets. *)
 
 Section Cond2Generic.
 
   Context {T FA PA : Type}.
-  Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
+  Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
+  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
+  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
 
   Theorem must_cond2_false :
-    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
-        st _ 𝝳Q AbsQ ((g Q0, mt) : st) ((Bp2, mt) : st).
+    ¬ bhv_pre_cond2 (AbsPT := AbsP) (AbsQT := AbsQ) ((g Q0, mt) : st) ((Bp2, mt) : st).
   Proof.
     intro h.
     destruct (h s_cnd2 ((𝟘 ‖ 𝟘), mt) (q0good_cnv _ _ _ q0_root) bp2_reaches_stable nilnil_stable)
@@ -2170,8 +2170,8 @@ Proof.
     + intros (b & e). discriminate.
 Qed.
 
-Definition Wd : proc := g (c1 ? 𝟘).
-Definition Pc : gproc := ((𝛕 • (oA ‖ Wd)) + (𝛕 • oB)) + (c1 ? (oA ‖ Gd)).
+Definition Wd : proc := g (c1 ? • 𝟘).
+Definition Pc : gproc := ((𝛕 • (oA ‖ Wd)) + (𝛕 • oB)) + (c1 ? • (oA ‖ Gd)).
 Definition Pw : proc := g Pc.
 
 Lemma Wd_subst (v : ValueData) : Wd ^ v = Wd.
@@ -2180,9 +2180,9 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma oAGd_subst (v : ValueData) : (oA ‖ Gd) ^ v = oA ‖ (Gd ^ v).
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma Pw_inv α r : lts Pw α r ->
-  (α = τ /\ r = oA ‖ Wd) \/ (α = τ /\ r = oB)
-  \/ (exists v, α = ActExt (ActIn (c1, v)) /\ r = oA ‖ (Gd ^ v)).
+Lemma Pw_inv 𝜆 r : lts Pw 𝜆 r ->
+  (𝜆 = τ /\ r = oA ‖ Wd) \/ (𝜆 = τ /\ r = oB)
+  \/ (exists v, 𝜆 = ActExt (ActIn (c1, v)) /\ r = oA ‖ (Gd ^ v)).
 Proof.
   intro l. inversion l; subst.
   - inversion H3; subst.
@@ -2191,7 +2191,7 @@ Proof.
   - inversion H3; subst. right. right. exists v. split; [reflexivity | eapply oAGd_subst].
 Qed.
 
-Lemma Wd_inv α r : lts Wd α r -> exists v, α = ActExt (ActIn (c1, v)) /\ r = g 𝟘.
+Lemma Wd_inv 𝜆 r : lts Wd 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c1, v)) /\ r = g 𝟘.
 Proof. intro l. inversion l; subst. exists v. split; reflexivity. Qed.
 
 Lemma dead_nilnil : dead (𝟘 ‖ 𝟘).
@@ -2900,14 +2900,13 @@ Qed.
 Section Cond2GenericPw.
 
   Context {T FA PA : Type}.
-  Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
+  Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
+  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
+  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
 
   Theorem must_cond2_false_Pw :
-    ¬ @bhv_pre_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA Φ 𝝳P gLtsT AbsP
-        st _ 𝝳Q AbsQ ((Pw, mt) : st) ((Bp2, mt) : st).
+    ¬ bhv_pre_cond2 (AbsPT := AbsP) (AbsQT := AbsQ) ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof.
     intro h.
     destruct (h s_cnd2 ((𝟘 ‖ 𝟘), mt) pw_cnv_s_cnd2 bp2_reaches_stable nilnil_stable)
@@ -3109,8 +3108,8 @@ Definition Gch : proc := If (Equality (bvar 0) v0) Then (g Pch) Else 𝟘.
 Definition Gpair : proc := If (Equality (bvar 0) v0) Then (oA ‖ oB) Else 𝟘.
 
 (* [Pe] commits to one of the two outputs, [Qe] offers both. *)
-Definition Pe : proc := g (c1 ? Gch).
-Definition Qe : proc := g (c1 ? Gpair).
+Definition Pe : proc := g (c1 ? • Gch).
+Definition Qe : proc := g (c1 ? • Gpair).
 
 Lemma Gch_subst (v : ValueData) : Gch ^ v = If (Equality v v0) Then (g Pch) Else 𝟘.
 Proof. vm_compute. reflexivity. Qed.
@@ -3118,14 +3117,14 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma Gpair_subst (v : ValueData) : Gpair ^ v = If (Equality v v0) Then (oA ‖ oB) Else 𝟘.
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma Gpair_step (v : ValueData) α r : lts (Gpair ^ v) α r -> v = v0 /\ lts (oA ‖ oB) α r.
+Lemma Gpair_step (v : ValueData) 𝜆 r : lts (Gpair ^ v) 𝜆 r -> v = v0 /\ lts (oA ‖ oB) 𝜆 r.
 Proof.
   rewrite Gpair_subst. intro l. inversion l; subst.
   - split; [eapply fires_eq; exact H4 | exact H5].
   - exfalso. inversion H5.
 Qed.
 
-Lemma Gch_step (v : ValueData) α r : lts (Gch ^ v) α r -> v = v0 /\ lts (g Pch) α r.
+Lemma Gch_step (v : ValueData) 𝜆 r : lts (Gch ^ v) 𝜆 r -> v = v0 /\ lts (g Pch) 𝜆 r.
 Proof.
   rewrite Gch_subst. intro l. inversion l; subst.
   - split; [eapply fires_eq; exact H4 | exact H5].
@@ -3133,15 +3132,15 @@ Proof.
 Qed.
 
 Lemma dead_Gpair (v : ValueData) : v <> v0 -> dead (Gpair ^ v).
-Proof. intros ne α r l. eapply Gpair_step in l as (e & _). exact (ne e). Qed.
+Proof. intros ne 𝜆 r l. eapply Gpair_step in l as (e & _). exact (ne e). Qed.
 
 Lemma dead_Gch (v : ValueData) : v <> v0 -> dead (Gch ^ v).
-Proof. intros ne α r l. eapply Gch_step in l as (e & _). exact (ne e). Qed.
+Proof. intros ne 𝜆 r l. eapply Gch_step in l as (e & _). exact (ne e). Qed.
 
-Lemma Pe_inv α r : lts Pe α r -> exists v, α = ActExt (ActIn (c1, v)) /\ r = Gch ^ v.
+Lemma Pe_inv 𝜆 r : lts Pe 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c1, v)) /\ r = Gch ^ v.
 Proof. intro l. inversion l; subst. exists v. split; reflexivity. Qed.
 
-Lemma Qe_inv α r : lts Qe α r -> exists v, α = ActExt (ActIn (c1, v)) /\ r = Gpair ^ v.
+Lemma Qe_inv 𝜆 r : lts Qe 𝜆 r -> exists v, 𝜆 = ActExt (ActIn (c1, v)) /\ r = Gpair ^ v.
 Proof. intro l. inversion l; subst. exists v. split; reflexivity. Qed.
 
 Lemma Pch_to_oA (m : MO (ExtAct TypeOfActions)) : (((Gch ^ v0), m) : st) ⟶ (oA, m).
@@ -3448,7 +3447,7 @@ Proof. eapply (easim_cond2_ef Rel5 Rel5_easim (Pe, mt) (Qe, mt) s q' Rel5_init).
     After the input [a?], [Pe] is in one of four states; from each of them the
     output [ā] leaves it with nothing more to say. *)
 
-Lemma Pch_inv α r : lts (g Pch) α r -> α = τ /\ (r = oA \/ r = oB).
+Lemma Pch_inv 𝜆 r : lts (g Pch) 𝜆 r -> 𝜆 = τ /\ (r = oA \/ r = oB).
 Proof.
   intro l. inversion l; subst.
   - inversion H3; subst. split; [reflexivity | left; reflexivity].
@@ -3887,14 +3886,13 @@ Qed.
 Section CoCond2GenericPe.
 
   Context {T FA PA : Type}.
-  Context {Φ : ExtAct TypeOfActions -> FA} {𝝳P 𝝳Q : FA -> PA}.
+  Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
   Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P _ _ _ gLtsT _).
-  Context (AbsQ : @AbsAction st T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳Q _ _ _ gLtsT _).
+  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
+  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
 
   Theorem co_must_cond2_false_Pe :
-    ¬ @bhv_pre_co_cond2 st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P gLtsT _ AbsP
-        st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
+    ¬ bhv_pre_co_cond2 (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
   Proof.
     intro h.
     destruct (h s_bad ((((g 𝟘) ‖ (g 𝟘)), mt) : st) pe_cocnv_s_bad qe_co_reaches_stable
@@ -3906,8 +3904,7 @@ Section CoCond2GenericPe.
       condition holds ([qe_cnv]) and its acceptance condition holds on every
       feedback-free co-trace ([pe_qe_co_cond2_ff]). *)
   Theorem co_must_false_Pe :
-    ¬ @bhv_pre_co st (ExtAct TypeOfActions) VACCS_ExtAction _ T FA PA (ExtAct TypeOfActions) VACCS_ExtAction Φ 𝝳P gLtsT _ AbsP
-        st _ 𝝳Q AbsQ ((Pe, mt) : st) ((Qe, mt) : st).
+    ¬ bhv_pre_co (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
   Proof. intros (_ & h2). eapply co_must_cond2_false_Pe, h2. Qed.
 
 
@@ -3916,10 +3913,10 @@ End CoCond2GenericPe.
 (* * The positive results in the abstracted form
 
     [bhv_pre_cond2] compares the acceptance sets through the image
-    [⌈ 𝝳 ∘ Φ ⌉], not raw.  Going from the raw inclusion proved above to that
+    [⌈ αᴘʀᴏ ∘ αᴛᴇꜱᴛ ⌉], not raw.  Going from the raw inclusion proved above to that
     form takes the monotonicity of the image ([map_set_mono]) plus the
-    hypothesis that the two sides read the labels through the *same* [𝝳] --
-    the restriction [SoundnessASco] already imposes on its own [𝝳].
+    hypothesis that the two sides read the labels through the *same* [αᴘʀᴏ] --
+    the restriction [SoundnessASco] already imposes on its own [αᴘʀᴏ].
 
     No [AbsAction] instance is involved: these are statements about [map_set]
     alone, so they live outside the sections above. *)
@@ -3927,14 +3924,14 @@ End CoCond2GenericPe.
 Section AbstractedAcceptance.
 
   Context {FA PA : Type}.
-  Context (Φ : ExtAct TypeOfActions -> FA) (𝝳P 𝝳Q : FA -> PA).
-  Context (same_delta : forall x, 𝝳P x = 𝝳Q x).
+  Context (αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA) (αᴘʀᴏP αᴘʀᴏQ : FA -> PA).
+  Context (same_delta : forall x, αᴘʀᴏP x = αᴘʀᴏQ x).
 
   Lemma abs_of_coR_sub (p q : st) :
-    coR p ⊆ coR q -> ⌈ (𝝳P ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q).
+    coR p ⊆ coR q -> ⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p) ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q).
   Proof.
     intros hsub y hy.
-    eapply (map_set_mono (𝝳P ∘ Φ) (coR p) (coR q) hsub) in hy as (μ & hμ & ->).
+    eapply (map_set_mono (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) (coR p) (coR q) hsub) in hy as (μ & hμ & ->).
     exists μ. split; [exact hμ | eapply same_delta].
   Qed.
 
@@ -3942,7 +3939,7 @@ Section AbstractedAcceptance.
   Theorem pw_bp2_cond2_ff_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_fb s -> ((Bp2, mt) : st) ⟹[s] q' -> q' ↛ ->
     exists p', ((Pw, mt) : st) ⟹[s] p' /\ p' ↛
-               /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q').
+               /\ ⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q').
   Proof.
     intros hfb w hst. destruct (pw_bp2_cond2_ff s q' hfb w hst) as (p' & wp & hp & hsub).
     exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
@@ -3952,7 +3949,7 @@ Section AbstractedAcceptance.
   Theorem pe_qe_cond2_ef_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_echo s -> ((Qe, mt) : st) ⟹[s] q' -> q' ↛ ->
     exists p', ((Pe, mt) : st) ⟹[s] p' /\ p' ↛
-               /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q').
+               /\ ⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q').
   Proof.
     intros hec w hst. destruct (pe_qe_cond2_ef s q' hec w hst) as (p' & wp & hp & hsub).
     exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].
@@ -3962,7 +3959,7 @@ Section AbstractedAcceptance.
   Theorem pe_qe_co_cond2_ff_abs (s : trace (ExtAct TypeOfActions)) (q' : st) :
     ¬ has_fb s -> ((Qe, mt) : st) ⟹ᶜᵒ[s] q' -> q' ↛ ->
     exists p', ((Pe, mt) : st) ⟹ᶜᵒ[s] p' /\ p' ↛
-               /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q').
+               /\ ⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q').
   Proof.
     intros hfb w hst. destruct (pe_qe_co_cond2_ff s q' hfb w hst) as (p' & wp & hp & hsub).
     exists p'. split; [exact wp | split; [exact hp | eapply abs_of_coR_sub, hsub]].

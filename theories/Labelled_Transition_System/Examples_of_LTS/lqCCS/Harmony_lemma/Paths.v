@@ -1,14 +1,37 @@
 (* begin hide *)
+(*
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*)
+(* end hide *)
+(* begin hide *)
 (* * Path sums (Lemma 4.7)
 
     For finite branching, [Op σ n p] is the sum, over the σ-compatible
     terminal paths of length ≤ n from [p], of the composition of their Kraus
     decorations.  The enumeration [enum σ n p] lists exactly these paths,
     each once ([enum_spec], [enum_nodup]). *)
+
 From Stdlib Require Import List Arith Lia FinFun ChoiceFacts.
 From TestingTheory Require Import Lifted.
 Import ListNotations.
-
 (* Finite branching: outcomes are enumerated, [+] exists, and [br] is the
     sum of its branches precomposed with the Kraus maps [ℳ_k]. *)
 Class FinAlg `{Alg} := {
@@ -51,14 +74,14 @@ Definition ts p λ K x : Prop :=
 (* Terminal paths, as lists of (label, Kraus decoration). *)
 Inductive tpath : prog -> list (lbl * T) -> Prop :=
 | tp_done : tpath Done []
-| tp_cons p λ K x α : ts p λ K x -> tpath x α -> tpath p ((λ, K) :: α).
+| tp_cons p λ K x 𝜆 : ts p λ K x -> tpath x 𝜆 -> tpath p ((λ, K) :: 𝜆).
 
-Definition compat (σ : sched) (α : list (lbl * T)) :=
-  Forall (fun e => match fst e with Chs t b => b = σ t | _ => True end) α.
+Definition compat (σ : sched) (𝜆 : list (lbl * T)) :=
+  Forall (fun e => match fst e with Chs t b => b = σ t | _ => True end) 𝜆.
 
-(* [kr α] = K_n ∘ ⋯ ∘ K_1. *)
-Fixpoint kr (α : list (lbl * T)) :=
-  match α with [] => one | (_, K) :: α => kr α ⋅ K end.
+(* [kr 𝜆] = K_n ∘ ⋯ ∘ K_1. *)
+Fixpoint kr (𝜆 : list (lbl * T)) :=
+  match 𝜆 with [] => one | (_, K) :: 𝜆 => kr 𝜆 ⋅ K end.
 
 (* ** Enumeration of compatible terminal paths of length ≤ n *)
 
@@ -111,29 +134,29 @@ Proof.
 Qed.
 
 (* The enumeration lists exactly the compatible terminal paths of length ≤ n. *)
-Theorem enum_spec σ n p α :
-  In α (enum σ n p) <-> tpath p α /\ compat σ α /\ length α <= n.
+Theorem enum_spec σ n p 𝜆 :
+  In 𝜆 (enum σ n p) <-> tpath p 𝜆 /\ compat σ 𝜆 /\ length 𝜆 <= n.
 Proof.
-  induction n in p, α |- *; destruct (done_dec p) as [-> | Hp].
+  induction n in p, 𝜆 |- *; destruct (done_dec p) as [-> | Hp].
   1,3: rewrite enum_Done; split; [intros [<- | []]; repeat constructor; simpl; lia |].
-  1,2: intros [Hα _]; inversion Hα as [| ? ? ? ? ? Ht]; [now left | destruct Ht; congruence].
+  1,2: intros [H𝜆 _]; inversion H𝜆 as [| ? ? ? ? ? Ht]; [now left | destruct Ht; congruence].
   - rewrite enum_0 by auto. split; [intros [] |].
-    intros (Hα & _ & Hl). inversion Hα; subst; simpl in Hl; [congruence | lia].
+    intros (H𝜆 & _ & Hl). inversion H𝜆; subst; simpl in Hl; [congruence | lia].
   - rewrite enum_S by auto. split.
     + intro Hin. destruct (step p) as [K x | m xs | t x y] eqn:Hs.
-      * apply in_map_iff in Hin as (α' & <- & Hin). apply IHn in Hin as (P & C & L).
+      * apply in_map_iff in Hin as (𝜆' & <- & Hin). apply IHn in Hin as (P & C & L).
         repeat split; [| constructor; [exact I | auto] | simpl; lia].
         econstructor; [| eauto]. split; [auto | rewrite Hs; auto].
-      * apply in_flat_map in Hin as (k & _ & Hin). apply in_map_iff in Hin as (α' & <- & Hin).
+      * apply in_flat_map in Hin as (k & _ & Hin). apply in_map_iff in Hin as (𝜆' & <- & Hin).
         apply IHn in Hin as (P & C & L).
         repeat split; [| constructor; [exact I | auto] | simpl; lia].
         econstructor; [| eauto]. split; [auto | rewrite Hs; eauto].
-      * apply in_map_iff in Hin as (α' & <- & Hin). apply IHn in Hin as (P & C & L).
+      * apply in_map_iff in Hin as (𝜆' & <- & Hin). apply IHn in Hin as (P & C & L).
         repeat split; [| constructor; [reflexivity | auto] | simpl; lia].
         econstructor; [| eauto]. split; [auto | rewrite Hs; eauto].
-    + intros (Hα & C & L). inversion Hα as [| ? λ K x α' [_ Ht] P]; subst; [congruence |].
+    + intros (H𝜆 & C & L). inversion H𝜆 as [| ? λ K x 𝜆' [_ Ht] P]; subst; [congruence |].
       inversion C as [| ? ? Cb C']; subst. simpl in L.
-      assert (IH : In α' (enum σ n x)) by (apply IHn; repeat split; auto; lia).
+      assert (IH : In 𝜆' (enum σ n x)) by (apply IHn; repeat split; auto; lia).
       destruct (step p) as [K' x' | m xs | t x0 x1].
       * destruct Ht as (-> & -> & ->). apply in_map. auto.
       * destruct Ht as (k & -> & -> & ->). apply in_flat_map. exists k.
@@ -163,8 +186,8 @@ Proof.
   - rewrite enum_S by auto. destruct (step p) as [K x | m xs | t x y]; try now apply NoDup_cons_map.
     pose proof (outs_nodup m) as N. induction N as [| k ks Nk N IHN]; simpl; [constructor |].
     apply NoDup_app'; [now apply NoDup_cons_map | auto |].
-    intros α A1 A2. apply in_map_iff in A1 as (α1 & <- & _).
-    apply in_flat_map in A2 as (k' & Hk' & A2). apply in_map_iff in A2 as (α2 & E & _).
+    intros 𝜆 A1 A2. apply in_map_iff in A1 as (𝜆1 & <- & _).
+    apply in_flat_map in A2 as (k' & Hk' & A2). apply in_map_iff in A2 as (𝜆2 & E & _).
     injection E as Ec _. apply code_inj in Ec. subst. contradiction.
 Qed.
 

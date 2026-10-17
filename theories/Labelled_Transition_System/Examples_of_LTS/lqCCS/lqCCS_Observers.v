@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS processes observed by lqCCS programs without memory
 
     The observers are lqCCS programs run without a memory of their own.
@@ -32,14 +33,14 @@
       bound to the outcome [k].  Each is its own co-action: it meets the same
       action of the memory, in one blocking synchronisation.
 
-    The abstraction of the actions ([lΦ], [l𝝳]):
-    - [lΦ] keeps the channel of a message, and the operation or the
+    The abstraction of the actions ([lαᴛᴇꜱᴛ], [lαᴘʀᴏ]):
+    - [lαᴛᴇꜱᴛ] keeps the channel of a message, and the operation or the
       measurement of a memory action — not the outcome, which an observer
       cannot choose;
-    - [l𝝳] then merges all operations into one class, and all measurements
+    - [lαᴘʀᴏ] then merges all operations into one class, and all measurements
       into another: the memory of a process accepts every operation, and,
       when it is non-zero, every measurement ([meas_nonzero_branch]).
-    It is finitary: the co-actions of [(P, ρ)] are, up to [l𝝳], the channels
+    It is finitary: the co-actions of [(P, ρ)] are, up to [lαᴘʀᴏ], the channels
     of the outputs of [P], the operations, and the measurements if [ρ ≠ 0].
 
     The states of the memory are assumed countable (e.g. amplitudes in a
@@ -53,7 +54,7 @@ From TestingTheory Require Import Lifted Paths States lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Congruence
   lqCCS_LTS lqCCS_FwLTS.
 From TestingTheory Require Import ActTau InListPropHelper
-  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain
+  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain
   FiniteImageLTS coFiniteImage Subset_Act Termination Convergence WeakTransitions
   coWeakTransition coConvergence StateTransitionSystems
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
@@ -61,7 +62,6 @@ From TestingTheory Require Import ActTau InListPropHelper
   Must MustE Lift Testing_Predicate
   DefinitionAS Completeness Equivalence
   DefinitionASco CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge.
-
 (* The lift of an abstraction to the forwarder in [DefinitionAS.v] rests on an
     [Admitted] obligation; as for Erlang, it is replaced below. *)
 Remove Hints PreActActionForFW FinitaryPreActActionForFW : typeclass_instances.
@@ -104,8 +104,8 @@ Qed.
 
 (* ** The observers: programs without memory *)
 
-Definition tstep (Q : proc) (α : Act lact) (Q' : proc) : Prop :=
-  match α with
+Definition tstep (Q : proc) (𝜆 : Labels lact) (Q' : proc) : Prop :=
+  match 𝜆 with
   | τ => ustep Q UTau Q'
   | ActExt (LOut c v) => ustep Q (UAct (AOut c v)) Q'
   | ActExt (LIn c v) => ustep Q (UAct (AIn c v)) Q'
@@ -120,8 +120,8 @@ Definition meas_res (M : meas) (qs : list qubit) (n : nat) (aQ : pact * proc) : 
   | _ => []
   end.
 
-Definition tsuccs (Q : proc) (α : Act lact) : list proc :=
-  match α with
+Definition tsuccs (Q : proc) (𝜆 : Labels lact) : list proc :=
+  match 𝜆 with
   | τ => succ Q UTau
   | ActExt (LOut c v) => succ Q (UAct (AOut c v))
   | ActExt (LIn c v) => succ Q (UAct (AIn c v))
@@ -129,9 +129,9 @@ Definition tsuccs (Q : proc) (α : Act lact) : list proc :=
   | ActExt (LMeas M qs n) => acts Q ≫= meas_res M qs n
   end.
 
-Lemma tsuccs_spec Q α Q' : Q' ∈ tsuccs Q α ↔ tstep Q α Q'.
+Lemma tsuccs_spec Q 𝜆 Q' : Q' ∈ tsuccs Q 𝜆 ↔ tstep Q 𝜆 Q'.
 Proof.
-  destruct α as [[c v|c v|E qs|M qs n]|]; simpl; try apply succ_spec.
+  destruct 𝜆 as [[c v|c v|E qs|M qs n]|]; simpl; try apply succ_spec.
   rewrite list_elem_of_bind. split.
   - intros ([a Q0] & Hin & Hacts). apply acts_spec in Hacts as (_ & t & Hs).
     destruct a as [c0 v0|c0 v0|E0 qs0|M' qs' x]; simpl in Hin; try set_solver.
@@ -146,12 +146,12 @@ Qed.
 
 #[global] Instance obs_gLts : gLts proc lact_ExtAction := gLts_of_succs tsuccs.
 
-Lemma obs_step_def Q α Q' : Q ⟶{α} Q' ↔ tstep Q α Q'.
-Proof. change (Q' ∈ tsuccs Q α ↔ tstep Q α Q'). apply tsuccs_spec. Qed.
+Lemma obs_step_def Q 𝜆 Q' : Q ⟶{𝜆} Q' ↔ tstep Q 𝜆 Q'.
+Proof. change (Q' ∈ tsuccs Q 𝜆 ↔ tstep Q 𝜆 Q'). apply tsuccs_spec. Qed.
 
-Lemma cgr_tstep R P α Q : R ≡* P → tstep R α Q → ∃ Q', tstep P α Q' ∧ Q ≡* Q'.
+Lemma cgr_tstep R P 𝜆 Q : R ≡* P → tstep R 𝜆 Q → ∃ Q', tstep P 𝜆 Q' ∧ Q ≡* Q'.
 Proof.
-  intros Hc. destruct α as [[c v|c v|E qs|M qs n]|]; simpl; try (by apply cgr_ustep).
+  intros Hc. destruct 𝜆 as [[c v|c v|E qs|M qs n]|]; simpl; try (by apply cgr_ustep).
   intros (x & Q0 & Hs & ->). destruct (cgr_ustep _ _ _ _ Hc Hs) as (Q1 & Hs1 & HQ).
   exists (subst Q1 x (VNat n)). split; [eauto|by apply cgr_subst].
 Qed.
@@ -159,27 +159,27 @@ Qed.
 #[global] Instance obs_gLtsEq : gLtsEq proc lact_ExtAction.
 Proof.
   refine {| gLtsEq_gLts := obs_gLts; eq_rel := cgr; eq_rel_eq := _ |}.
-  intros P Q α (R & HPR & HR). apply obs_step_def in HR.
-  destruct (cgr_tstep R P α Q (symmetry HPR) HR) as (P' & HP' & HQ).
+  intros P Q 𝜆 (R & HPR & HR). apply obs_step_def in HR.
+  destruct (cgr_tstep R P 𝜆 Q (symmetry HPR) HR) as (P' & HP' & HQ).
   exists P'. split; [by apply obs_step_def|by symmetry].
 Defined.
 
 (* *** Asynchronous outputs: the output axioms *)
 
-Lemma tstep_par_l Q α Q' t c v :
-  tstep Q α Q' → tstep (PPar Q (oproc t c v)) α (PPar Q' (oproc t c v)).
+Lemma tstep_par_l Q 𝜆 Q' t c v :
+  tstep Q 𝜆 Q' → tstep (PPar Q (oproc t c v)) 𝜆 (PPar Q' (oproc t c v)).
 Proof.
-  destruct α as [[c' v'|c' v'|E qs|M qs n]|]; simpl; try apply ustep_par_l.
+  destruct 𝜆 as [[c' v'|c' v'|E qs|M qs n]|]; simpl; try apply ustep_par_l.
   intros (x & Q0 & Hs & ->). exists x, (PPar Q0 (oproc t c v)). split; [by apply ustep_par_l|done].
 Qed.
 
-Lemma tstep_par_out_inv Q t c v α X :
-  tstep (PPar Q (oproc t c v)) α X →
-    (∃ Q', tstep Q α Q' ∧ X = PPar Q' (oproc t c v))
-  ∨ (α = ActExt (LOut c v) ∧ X = PPar Q 𝟘)
-  ∨ (α = τ ∧ ∃ Q', ustep Q (UAct (AIn c v)) Q' ∧ X = PPar Q' 𝟘).
+Lemma tstep_par_out_inv Q t c v 𝜆 X :
+  tstep (PPar Q (oproc t c v)) 𝜆 X →
+    (∃ Q', tstep Q 𝜆 Q' ∧ X = PPar Q' (oproc t c v))
+  ∨ (𝜆 = ActExt (LOut c v) ∧ X = PPar Q 𝟘)
+  ∨ (𝜆 = τ ∧ ∃ Q', ustep Q (UAct (AIn c v)) Q' ∧ X = PPar Q' 𝟘).
 Proof.
-  destruct α as [[c' v'|c' v'|E qs|M qs n]|]; simpl; intros Hs.
+  destruct 𝜆 as [[c' v'|c' v'|E qs|M qs n]|]; simpl; intros Hs.
   - destruct (ustep_par_out_inv _ _ _ _ _ _ Hs) as [(Q' & HQ & ->)|[[E ->]|[E _]]].
     + left. eauto.
     + right; left. simplify_eq. done.
@@ -207,9 +207,9 @@ Proof.
   exists Z. split; [done|]. symmetry. etrans; [symmetry; apply cgr_par_nil|exact HZ'].
 Qed.
 
-Lemma t_nb_delay Q Q1 Q2 c v α :
-  tstep Q (ActExt (LOut c v)) Q1 → tstep Q1 α Q2 →
-  ∃ W, tstep Q α W ∧ ∃ Z, tstep W (ActExt (LOut c v)) Z ∧ Z ≡* Q2.
+Lemma t_nb_delay Q Q1 Q2 c v 𝜆 :
+  tstep Q (ActExt (LOut c v)) Q1 → tstep Q1 𝜆 Q2 →
+  ∃ W, tstep Q 𝜆 W ∧ ∃ Z, tstep W (ActExt (LOut c v)) Z ∧ Z ≡* Q2.
 Proof.
   intros H1 H2. destruct (ustep_out_par _ _ _ _ H1) as [t Ht].
   destruct (cgr_tstep _ _ _ _ (symmetry Ht) (tstep_par_l _ _ _ t c v H2)) as (W & HW & HW').
@@ -273,7 +273,7 @@ Qed.
 #[global] Instance obs_gLtsOba : @gLtsOba proc lact lact_ExtAction obs_gLtsEq.
 Proof.
   split.
-  - intros p q r η α Hη Hpq Hqr. destruct η as [c v| | |]; try done.
+  - intros p q r η 𝜆 Hη Hpq Hqr. destruct η as [c v| | |]; try done.
     apply obs_step_def in Hpq, Hqr.
     destruct (t_nb_delay _ _ _ _ _ _ Hpq Hqr) as (W & HW & Z & HZ & HZr).
     exists W. split; [by apply obs_step_def|]. exists Z. split; [by apply obs_step_def|exact HZr].
@@ -336,7 +336,7 @@ Proof.
   rewrite (pouts_step _ _ _ _ _ Hs). by left.
 Qed.
 
-#[global] Instance obs_FiniteOutputChain : FiniteOutputChain_LtsOba proc (A := lact).
+#[global] Instance obs_FiniteNonBlockingChain : FiniteNonBlockingChain_LtsOba proc (A := lact).
 Proof.
   refine {| lts_oba_mo := tmo; lts_oba_mo_spec_bis2 := tmo_witness |}.
   - intros Q η Q' Hη Hs. destruct η as [c v| | |]; try done. by eapply tmo_of_step.
@@ -347,7 +347,7 @@ Defined.
 
 #[global] Program Instance obs_FiniteImage : FiniteImagegLts proc lact.
 Next Obligation.
-  intros Q α. eapply (in_list_finite (tsuccs Q α)).
+  intros Q 𝜆. eapply (in_list_finite (tsuccs Q 𝜆)).
   intros Q' HQ'%bool_decide_unpack. exact HQ'.
 Defined.
 
@@ -438,20 +438,20 @@ Proof.
   by intros [| |].
 Defined.
 
-Definition lΦ (a : lact) : lfin :=
+Definition lαᴛᴇꜱᴛ (a : lact) : lfin :=
   match a with
   | LOut c _ | LIn c _ => FChan c
   | LOp E qs => FOp E qs
   | LMeas M qs _ => FMeas M qs
   end.
 
-Definition l𝝳 (f : lfin) : lpre :=
+Definition lαᴘʀᴏ (f : lfin) : lpre :=
   match f with FChan c => PChan c | FOp _ _ => POpAll | FMeas _ _ => PMeasAll end.
 
 (* The observer's side: an observer that can receive a value, or accept an
     outcome, can receive or accept any other one. *)
 Lemma obs_abs_test (t : proc) (β β' : lact) :
-  blocking β → blocking β' → lΦ β = lΦ β' → β ∈ R t → β' ∈ R t.
+  blocking β → blocking β' → lαᴛᴇꜱᴛ β = lαᴛᴇꜱᴛ β' → β ∈ R t → β' ∈ R t.
 Proof.
   intros hb hb' heq hmem.
   assert (Hs : t ⟶[β]) by exact hmem.
@@ -532,11 +532,11 @@ Section Generators.
   Proof. intros Hne. unfold good. simpl. by rewrite bool_decide_eq_false_2. Qed.
 
   (* The steps of a blocking prefix of [gen]. *)
-  Lemma gen_guard_step α0 P0 Q :
-    tstep (PG (GSum (GPre α0 P0) tau_succ)) τ Q → Q = succP ∨ ∃ t, α0 = PTau t ∨ ∃ t', α0 = PTauPair t t'.
+  Lemma gen_guard_step 𝜆0 P0 Q :
+    tstep (PG (GSum (GPre 𝜆0 P0) tau_succ)) τ Q → Q = succP ∨ ∃ t, 𝜆0 = PTau t ∨ ∃ t', 𝜆0 = PTauPair t t'.
   Proof.
     intros Hs. apply succ_spec in Hs. simpl in Hs. apply elem_of_app in Hs as [Hs|Hs].
-    - right. destruct α0; simpl in Hs; try set_solver; eauto.
+    - right. destruct 𝜆0; simpl in Hs; try set_solver; eauto.
     - left. by apply list_elem_of_singleton in Hs.
   Qed.
 
@@ -679,7 +679,7 @@ Lemma sumg_out l c v : gsucc (sumg l) (UAct (AOut c v)) = [].
 Proof. induction l as [|[c'| |] l IH]; simpl; [done|..]; by rewrite IH. Qed.
 
 Lemma sumg_step_inv l μ Q :
-  tstep (PG (sumg l)) (ActExt μ) Q → l𝝳 (lΦ μ) ∈ l ∧ ¬ is_out μ ∧ Q = succP.
+  tstep (PG (sumg l)) (ActExt μ) Q → lαᴘʀᴏ (lαᴛᴇꜱᴛ μ) ∈ l ∧ ¬ is_out μ ∧ Q = succP.
 Proof.
   revert Q. induction l as [|p l IH]; intros Q Hs.
   - destruct μ as [c v|c v|E qs|M qs n]; simpl in Hs.
@@ -713,7 +713,7 @@ Proof.
         split_and!; [set_solver|done|done].
 Qed.
 
-Lemma sumg_step_ex l p : p ∈ l → ∃ μ, l𝝳 (lΦ μ) = p ∧ tstep (PG (sumg l)) (ActExt μ) succP.
+Lemma sumg_step_ex l p : p ∈ l → ∃ μ, lαᴘʀᴏ (lαᴛᴇꜱᴛ μ) = p ∧ tstep (PG (sumg l)) (ActExt μ) succP.
 Proof.
   induction l as [|p' l IH]; intros Hp; [set_solver|].
   destruct (decide (p = p')) as [->|Hne].
@@ -735,7 +735,7 @@ Proof.
 Qed.
 
 #[global] Instance ta_spec :
-  Completeness.test_co_acceptance_set_spec lpre ta (λ x, l𝝳 (lΦ x)).
+  Completeness.test_co_acceptance_set_spec ta (λ x, lαᴘʀᴏ (lαᴛᴇꜱᴛ x)).
 Proof.
   split.
   - intros E. apply gen_test_spec.
@@ -755,7 +755,7 @@ Qed.
 
 (* ** The process side of the abstraction
 
-    [abs_prog_core]: what a process accepts is, up to [l𝝳], closed under the
+    [abs_prog_core]: what a process accepts is, up to [lαᴘʀᴏ], closed under the
     abstraction, as soon as it accepts every operation, and every
     measurement once it accepts one. *)
 
@@ -763,19 +763,19 @@ Lemma abs_prog_core {X} {GL : @gLts X lact lact_ExtAction} (x : X)
   (Hop : ∀ E qs, x ⟶[LOp E qs])
   (Hm : (∃ M qs n, x ⟶[LMeas M qs n]) → ∀ M qs, ∃ n, x ⟶[LMeas M qs n])
   (β β' : lact) :
-  ¬ is_out β' → l𝝳 (lΦ β) = l𝝳 (lΦ β') →
-  (∃ μ', (∃ μ2, x ⟶[μ2] ∧ μ' = lco μ2 ∧ ¬ is_out μ') ∧ lΦ β = lΦ μ') →
-  (∃ μ', (∃ μ2, x ⟶[μ2] ∧ μ' = lco μ2 ∧ ¬ is_out μ') ∧ lΦ β' = lΦ μ').
+  ¬ is_out β' → lαᴘʀᴏ (lαᴛᴇꜱᴛ β) = lαᴘʀᴏ (lαᴛᴇꜱᴛ β') →
+  (∃ μ', (∃ μ2, x ⟶[μ2] ∧ μ' = lco μ2 ∧ ¬ is_out μ') ∧ lαᴛᴇꜱᴛ β = lαᴛᴇꜱᴛ μ') →
+  (∃ μ', (∃ μ2, x ⟶[μ2] ∧ μ' = lco μ2 ∧ ¬ is_out μ') ∧ lαᴛᴇꜱᴛ β' = lαᴛᴇꜱᴛ μ').
 Proof.
-  intros hb' heq (μ' & (μ2 & Hacc & -> & Hb) & HΦ).
+  intros hb' heq (μ' & (μ2 & Hacc & -> & Hb) & Hαᴛᴇꜱᴛ).
   destruct β' as [c v|c v|E qs|M qs n].
   - exfalso. by apply hb'.
-  - exists (lco μ2). split; [eauto|]. rewrite <- HΦ.
+  - exists (lco μ2). split; [eauto|]. rewrite <- Hαᴛᴇꜱᴛ.
     destruct β; simpl in heq |- *; congruence.
   - exists (LOp E qs). split; [|done].
     exists (LOp E qs). split_and!; [apply Hop|done|by intros ?].
   - destruct β as [| | |M0 qs0 n0]; simpl in heq; try discriminate.
-    destruct μ2 as [| | |M1 qs1 n1]; simpl in HΦ; try discriminate.
+    destruct μ2 as [| | |M1 qs1 n1]; simpl in Hαᴛᴇꜱᴛ; try discriminate.
     destruct (Hm (ex_intro _ M1 (ex_intro _ qs1 (ex_intro _ n1 Hacc))) M qs) as (n2 & Hn2).
     exists (LMeas M qs n2). split; [|done].
     exists (LMeas M qs n2). split_and!; [done|done|by intros ?].
@@ -788,18 +788,18 @@ Section Characterisation.
 
   #[global] Program Instance pconf_FiniteImage : FiniteImagegLts pconf lact.
   Next Obligation.
-    intros x α. eapply (in_list_finite (lsuccs x α)).
+    intros x 𝜆. eapply (in_list_finite (lsuccs x 𝜆)).
     intros y Hy%bool_decide_unpack. exact Hy.
   Defined.
 
-  Lemma pfw_dual_image_iff (x y : pconf * MO lact) (α : lact) :
-    (∃ α', dual α' α ∧ x ⟶[α'] y) ↔ x ⟶[co α] y.
+  Lemma pfw_dual_image_iff (x y : pconf * MO lact) (𝜆 : lact) :
+    (∃ 𝜆', dual 𝜆' 𝜆 ∧ x ⟶[𝜆'] y) ↔ x ⟶[co 𝜆] y.
   Proof.
     split.
-    - intros (α' & hd & hl). assert (α' = co α) as ->; [| done].
+    - intros (𝜆' & hd & hl). assert (𝜆' = co 𝜆) as ->; [| done].
       apply lact_UniqueDual. by symmetry.
-    - intros hl. exists (co α). split; [| done].
-      symmetry. exact (proj2_sig (exists_dual α)).
+    - intros hl. exists (co 𝜆). split; [| done].
+      symmetry. exact (proj2_sig (exists_dual 𝜆)).
   Qed.
 
   #[global] Instance pconf_FW_coFiniteImage : coFiniteImagegLts (pconf * MO lact) lact.
@@ -810,11 +810,11 @@ Section Characterisation.
       cofolts_next_states_decidable := _;
       cofolts_next_states_finite := _;
     |}.
-    - intros p α q. destruct (decide (p ⟶[co α] q)) as [h | h].
+    - intros p 𝜆 q. destruct (decide (p ⟶[co 𝜆] q)) as [h | h].
       + left. by apply pfw_dual_image_iff.
       + right. intros hc. apply h. by apply pfw_dual_image_iff.
-    - intros p α. unfold dsig.
-      eapply (in_list_finite (map proj1_sig (finite.enum (dsig (fun q => p ⟶[co α] q))))).
+    - intros p 𝜆. unfold dsig.
+      eapply (in_list_finite (map proj1_sig (finite.enum (dsig (fun q => p ⟶[co 𝜆] q))))).
       intros q hq%bool_decide_unpack.
       apply list_elem_of_fmap. apply pfw_dual_image_iff in hq.
       exists (dexist q hq). split; [reflexivity | eapply elem_of_enum].
@@ -874,7 +874,7 @@ Section Characterisation.
     x ⟶[μ] y → ¬ is_out μ → (∀ c v, μ ≠ LIn c v) → ∃ p', x.1 ⟶[μ] p'.
   Proof.
     destruct x as [p m]. intros Hs Hb Hi.
-    inversion Hs as [α0 a1 a2 b0 l|α0 a0 b1 b2 l|μ1 μ2 a1 a2 b1 b2 eq l1 l2]; subst.
+    inversion Hs as [𝜆0 a1 a2 b0 l|𝜆0 a0 b1 b2 l|μ1 μ2 a1 a2 b1 b2 eq l1 l2]; subst.
     - simpl. by exists a2.
     - inversion l; subst; exfalso;
         destruct μ as [c v|c v| |]; simpl in *; subst; simpl in *;
@@ -996,7 +996,7 @@ Section Characterisation.
   (* *** The abstraction *)
 
   #[global] Program Instance pconf_AbsAction :
-    @AbsAction pconf proc lfin lpre lact lact_ExtAction lΦ l𝝳 _ _ _ obs_gLtsEq _.
+    AbsAction (gLtsT := obs_gLtsEq) pconf proc lαᴛᴇꜱᴛ lαᴘʀᴏ.
   Next Obligation.
     intros t β β' hb hb' heq hmem. exact (obs_abs_test t β β' hb hb' heq hmem).
   Qed.
@@ -1006,11 +1006,11 @@ Section Characterisation.
   Qed.
 
   Definition coR_abs_lq (x : pconf) : gset lpre :=
-    set_map (λ μ, l𝝳 (lΦ μ)) (dom (fmo x)) ∪ {[ POpAll ]}
+    set_map (λ μ, lαᴘʀᴏ (lαᴛᴇꜱᴛ μ)) (dom (fmo x)) ∪ {[ POpAll ]}
     ∪ (if decide (x.2 = szero) then ∅ else {[ PMeasAll ]}).
 
   #[global] Program Instance pconf_FinitaryAbsAction :
-    @FinitaryAbsAction pconf proc lfin lpre lact lact_ExtAction lΦ l𝝳 _ _ _ obs_gLtsEq _ _ _ :=
+    FinitaryAbsAction (gLtsT := obs_gLtsEq) pconf proc lαᴛᴇꜱᴛ lαᴘʀᴏ :=
     {| coR_abs := coR_abs_lq |}.
   Next Obligation.
     intros x pre_μ hmem. unfold coR_abs_lq in hmem.
@@ -1043,7 +1043,7 @@ Section Characterisation.
   Qed.
 
   #[global] Program Instance pconf_AbsAction_FW :
-    @AbsAction (pconf * MO lact) proc lfin lpre lact lact_ExtAction lΦ l𝝳 _ _ _ obs_gLtsEq _.
+    AbsAction (gLtsT := obs_gLtsEq) (pconf * MO lact) proc lαᴛᴇꜱᴛ lαᴘʀᴏ.
   Next Obligation.
     intros t β β' hb hb' heq hmem. exact (obs_abs_test t β β' hb hb' heq hmem).
   Qed.
@@ -1053,11 +1053,10 @@ Section Characterisation.
   Qed.
 
   #[global] Program Instance pconf_FinitaryAbsAction_FW :
-    @FinitaryAbsAction (pconf * MO lact) proc lfin lpre lact lact_ExtAction lΦ l𝝳 _ _ _
-      obs_gLtsEq _ _ _ :=
+    FinitaryAbsAction (gLtsT := obs_gLtsEq) (pconf * MO lact) proc lαᴛᴇꜱᴛ lαᴘʀᴏ :=
     {| FinitaryAbsAction_Abs := pconf_AbsAction_FW ;
        coR_abs p := coR_abs p.1
-                    ∪ dom (gmultiset_map (fun x => l𝝳 (lΦ (co x)))
+                    ∪ dom (gmultiset_map (fun x => lαᴘʀᴏ (lαᴛᴇꜱᴛ (co x)))
                              (MO_without_not_nb p.2)) |}.
   Next Obligation.
     intros p pre_mu hmem. destruct p as (p, m). simpl in *.
@@ -1091,7 +1090,7 @@ Section Characterisation.
     eapply lts_performs_spec1 in tr as ((p2 , m2) & eq).
     inversion eq; subst; simpl in *.
     + eapply elem_of_union. left.
-      change (l𝝳 (lΦ μ) ∈ coR_abs p). eapply coR_abs_spec2.
+      change (lαᴘʀᴏ (lαᴛᴇꜱᴛ μ) ∈ coR_abs p). eapply coR_abs_spec2.
       exists μ. split; [|reflexivity]. exists μ2.
       split_and!; [eapply lts_performs_spec2; eexists; exact l|exact duo|exact b].
     + eapply elem_of_union. right.

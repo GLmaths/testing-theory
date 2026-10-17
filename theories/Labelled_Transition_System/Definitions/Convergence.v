@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -31,26 +32,23 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable.
 
 From TestingTheory Require Import ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW ActTau Termination WeakTransitions.
-(* end hide *)
+
 
 (** ** Convergence *)
 
 (** *** Definition *)
-(* begin hide *)
 
 Reserved Notation "p ⇓ s" (at level 70).
-(* end hide *)
 
 Inductive cnv `{gLts P A} : P -> trace A -> Prop :=
 | cnv_nil p : p ⤓ -> p ⇓ ε
 | cnv_act p μ s : p ⤓ -> (forall q, p ⟹{μ} q -> q ⇓ s) -> p ⇓ μ :: s
 
 where "p ⇓ s" := (cnv p s).
-(* begin hide *)
 
 Global Hint Constructors cnv:mdb.
 
-(* *** Properties on convergence in an LTS *)
+(** *** Properties on convergence in an LTS *)
 
 Lemma terminate_then_wt_refuses  `{gLts P A} p : 
   p ⤓ -> exists p', p ⟹ p' /\ p' ↛.
@@ -165,7 +163,7 @@ Global Instance cnv_preserved_by_eq `{gLtsEq P A}:
       eapply (Hμ t' hlt' t heqt').
 Qed.
 
-(* *** Properties on convergence in an LTSwith OBA axioms *)
+(** *** Properties on convergence in an LTSwith OBA axioms *)
 
 Lemma terminate_preserved_by_wt_non_blocking_action `{M: gLtsOba P A} p q η : 
   non_blocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
@@ -177,7 +175,7 @@ Proof.
     eapply terminate_preserved_by_lts_non_blocking_action; eauto. assumption.
 Qed.
 
-(* *** Properties on convergence in an LTSwith Forwarder axioms *)
+(** *** Properties on convergence in an LTS with Forwarder axioms *)
 
 Lemma cnv_preserved_by_lts_non_blocking_action `{gLtsObaFW P A} p q η s :
   non_blocking η -> p ⇓ s -> p ⟶[η] q
@@ -428,4 +426,3 @@ Proof.
   + intros. dependent induction H0; eauto.
   + intros. constructor. eauto.
 Qed.
-(* end hide *)

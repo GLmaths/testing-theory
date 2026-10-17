@@ -1,4 +1,4 @@
-
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -23,26 +23,28 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From TestingTheory Require Import ActTau.
 
 
-(* ** LTSs with non-blocking actions [gLts] *)
+
+(** ** LTSs with non-blocking actions [gLts] *)
 
 
 Class gLts (P : Type) {A : Type} (EA : ExtAction A) :=
   MkgLts {
-      lts_step: P → Act A → P → Prop;
+      lts_step: P → Labels A → P → Prop;
       lts_state_eqdec: EqDecision P;
 
-      lts_step_decidable a α b : Decision (lts_step a α b);
+      lts_step_decidable a 𝜆 b : Decision (lts_step a 𝜆 b);
 
-      lts_performs : P → Act A → Prop;
-      lts_performs_decidable p α : Decision (lts_performs p α);
-      lts_performs_spec1 p α : lts_performs p α → { q | lts_step p α q };
-      lts_performs_spec2 p α : { q | lts_step p α q } → lts_performs p α;
+      lts_performs : P → Labels A → Prop;
+      lts_performs_decidable p 𝜆 : Decision (lts_performs p 𝜆);
+      lts_performs_spec1 p 𝜆 : lts_performs p 𝜆 → { q | lts_step p 𝜆 q };
+      lts_performs_spec2 p 𝜆 : { q | lts_step p 𝜆 q } → lts_performs p 𝜆;
     }.
 
 Arguments gLts P {_} EA.
@@ -52,20 +54,20 @@ Arguments gLts P {_} EA.
 #[global] Existing Instance lts_performs_decidable.
 
 Notation "p ⟶ q"      := (lts_step p τ q) (at level 30, format "p  ⟶  q").
-Notation "p ⟶{ α } q" := (lts_step p α q) (at level 30, format "p  ⟶{ α }  q").
+Notation "p ⟶{ 𝜆 } q" := (lts_step p 𝜆 q) (at level 30, format "p  ⟶{ 𝜆 }  q").
 Notation "p ⟶[ μ ] q" := (lts_step p (ActExt μ) q) (at level 30, format "p  ⟶[ μ ]  q").
 
 Notation "p ⟶"      := (lts_performs p τ) (at level 30, format "p  ⟶").
-Notation "p ⟶{ α }" := (lts_performs p α) (at level 30, format "p  ⟶{ α }").
+Notation "p ⟶{ 𝜆 }" := (lts_performs p 𝜆) (at level 30, format "p  ⟶{ 𝜆 }").
 Notation "p ⟶[ μ ]" := (lts_performs p (ActExt μ)) (at level 30, format "p  ⟶[ μ ]").
 
 Notation "p ↛"      := (¬ lts_performs p τ) (at level 30, format "p  ↛").
-Notation "p ↛{ α }" := (¬ lts_performs p α) (at level 30, format "p  ↛{ α }").
+Notation "p ↛{ 𝜆 }" := (¬ lts_performs p 𝜆) (at level 30, format "p  ↛{ 𝜆 }").
 Notation "p ↛[ μ ]" := (¬ lts_performs p (ActExt μ)) (at level 30, format "p  ↛[ μ ]").
 
 
 
-(* ** Properties on `gLts`*)
+(** ** Properties on `gLts`*)
 
 
 Definition lts_exists_duo_decidable : 
@@ -129,4 +131,3 @@ Lemma BlockingAction_are_not_non_blocking `{H : ExtAction A} {η β} :
 Proof.
   intros nb1 nb2 eq. rewrite eq in nb2. contradiction.
 Qed.
-

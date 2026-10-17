@@ -22,6 +22,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Wellfounded Require Import Inverse_Image.
@@ -31,7 +32,7 @@ From stdpp Require Import base countable finite gmap list finite base decidable 
 From Coinduction Require Import all.
 
 From TestingTheory Require Import
-  ActTau Subset_Act gLts FiniteImageLTS Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW
+  ActTau Subset_Act gLts FiniteImageLTS Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_OBA_FB Lts_FW
   Termination Convergence WeakTransitions Bisimulation
   SetLTSConstruction
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction
@@ -39,17 +40,16 @@ From TestingTheory Require Import
   Testing_Predicate Must MustE 
   DefinitionAS Soundness Equivalence Completeness
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS.
-
 (* TODO: define me using the coinduction library *)
 
 Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
   `{gLtsT : !gLtsEq T H}
-  `{@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
-  `{@AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct) }
   (FIX : gset P -> gset Q -> Prop) (X : gset P) (Y : gset Q) : Prop := {
     c_tau_ Y' : wt_set_from_pset_spec1 Y [] Y' -> FIX X Y'
   ; c_now_ : X ⤓ -> forall q , q ∈ Y -> q ↛ ->
-            exists p, p ∈ X /\ exists p', p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q)
+            exists p, p ∈ X /\ exists p', p ⟹ p' /\ p' ↛ /\ ⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q)
   ; c_step_ : forall μ Y' X', X ⇓ [μ] ->
                          wt_set_from_pset_spec1 Y [μ] Y' -> wt_set_from_pset_spec X [μ] X' -> FIX X' Y'
   ; c_cnv_ : X ⤓ -> Y ⤓
@@ -62,9 +62,9 @@ Record copre_ `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
 Program Definition copre_m 
 `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
 `{gLtsT : !gLtsEq T H}
-`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
-`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ } : mon (gset P -> gset Q -> Prop) := 
-{| body := (@copre_ P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT) |} .
+`{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct) }
+`{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct) } : mon (gset P -> gset Q -> Prop) := 
+{| body := (copre_ (AbsPT := AbsPT) (AbsQT := AbsQT)) |} .
 Next Obligation.
   intros F1 F2 HF X Y h; constructor.
   - intros; apply HF, h.(c_tau_); auto.
@@ -78,17 +78,17 @@ Qed.
 
 Definition copre `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}
 `{gLtsT : !gLtsEq T H}
-`{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
-`{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ } := 
-gfp (@copre_m P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT).
+`{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct) }
+`{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct) } := 
+gfp (copre_m (AbsPT := AbsPT) (AbsQT := AbsQT)).
 
 Notation "X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y" := (copre X Y) (at level 70).
 
 Section copre.
   Context `{@FiniteImagegLts P A H gLtsP, @FiniteImagegLts Q A H gLtsQ}.
   Context `{gLtsT : !gLtsEq T H}.
-  Context `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }.
-  Context `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ _ _ }.
+  Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct) }.
+  Context `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct) }.
 
   Definition REL := gset P -> gset Q -> Prop.
 
@@ -97,8 +97,8 @@ Section copre.
     intros h%(gfp_pfp copre_m) ; intros; now apply h.(c_tau_).
   Qed.
 
-  Lemma c_tau' {PRE : Chain (@copre_m P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT)} { X : gset P } { Y Y' : gset Q} :
-    (@copre_m P A H _ _ Q _ _ T _ _ _ Φ 𝝳P AbsPT 𝝳Q AbsQT) (elem PRE) X Y -> wt_set_from_pset_spec1 Y [] Y' -> elem PRE X Y' .
+  Lemma c_tau' {PRE : Chain (copre_m (AbsPT := AbsPT) (AbsQT := AbsQT))} { X : gset P } { Y Y' : gset Q} :
+    (copre_m (AbsPT := AbsPT) (AbsQT := AbsQT)) (elem PRE) X Y -> wt_set_from_pset_spec1 Y [] Y' -> elem PRE X Y' .
   Proof.
     intros h Ht. now apply h.(c_tau_). Qed.
 
@@ -109,7 +109,7 @@ Section copre.
       -> exists p, p ∈ X
                 /\ exists p', p ⟹ p'
                 /\ p' ↛
-                /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q) .
+                /\ ⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q) .
   Proof.
     intros h%(gfp_pfp copre_m); intros.
     eapply h.(c_now_);eauto.
@@ -163,7 +163,7 @@ Section copre.
   Qed.
 
 
-  Lemma prex1_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₁≼ₛₑₜ_ₐₛ Y.
+  Lemma prex1_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y.
   Proof.
     intros hpq s; revert X Y hpq.
     dependent induction s; intros X Y hpq hcnv.
@@ -191,7 +191,7 @@ Section copre.
       ++ set_solver.
   Qed.
 
-  Lemma prex2_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₂≼ₛₑₜ_ₐₛ Y.
+  Lemma prex2_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y.
   Proof.
     intros hsub q s q' mem; revert X Y q q' mem hsub ; dependent induction s; intros X Y q q' mem hsub.
     + intros hw hstq' hcnv. revert X Y mem hsub hstq' hcnv.
@@ -264,19 +264,19 @@ Section must_co_inductive_acceptance_preorder.
   Context `{H : !ExtAction A}.
   Context {unique_nb : UniqueDual A}.
 
-  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
-  Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
+  Context `{!gLtsOba P gLtsEqP, !FiniteImagegLts P A}.
+  Context `{!gLtsOba Q gLtsEqQ, !FiniteImagegLts Q A}.
+  Context `{!gLtsOba T gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
   Context `{!Prop_of_Inter P T A A dual}.
   Context `{!Prop_of_Inter Q T A A dual}.
 
   Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{!FinitaryAbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }.
+  Context `{!FinitaryAbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }.
 
-  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
-  Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+  Context `{tc_spec : !test_convergence_spec (t_conv : list A → T)}.
+  Context `{ta_spec : !test_co_acceptance_set_spec (ta : gset PreAct → list A → T) (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
 
   (* * Main equivalence theorems *)
 
@@ -306,9 +306,9 @@ Section must_co_inductive_acceptance_preorder.
         * intros q s q' mem. inversion mem.
       - intros H'. eapply alt_set_union_right.
         * eapply set_must_union_left_rev in H' as Hyp_Must;eauto.
-          (* clear H5. *) clear H'. clear IHY. clear H6.
+          (* clear H2. *) clear H'. clear IHY. clear H3.
           induction X using set_ind_L.
-          ++ exfalso. eapply H5. eauto. 
+          ++ exfalso. eapply H2. eauto. 
           ++ destruct X using set_ind_L.
              ** rewrite union_empty_r_L.
                 rewrite union_empty_r_L in Hyp_Must.
@@ -327,7 +327,7 @@ Section must_co_inductive_acceptance_preorder.
     + eapply soundnessx.
     Unshelve.
     eapply MkgLtsCNenabled. intros. edestruct boomerang as (x & Hyp);eauto.
-    eapply Hyp in H6. exists x;eauto. destruct H6. eauto. symmetry. eauto.
+    eapply Hyp in H3. exists x;eauto. destruct H3. eauto. symmetry. eauto.
   Admitted. *)
 
   Corollary equivalence_fw_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :
@@ -347,9 +347,9 @@ Section must_co_inductive_acceptance_preorder.
   Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
   Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
   
-  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}.
+  Context `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}.
+  Context `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
   (* ** The co-inductive-tower characterisation on toFW is equivalent to the inductive must preorder *)
   Corollary equivalence_co_inductive_acceptance_and_must_i_singleton (p : P) (q : Q) :
@@ -376,7 +376,7 @@ End must_co_inductive_acceptance_preorder.
 
 Lemma coin_refl
   `{@FiniteImagegLts P A H gLtsP}
-  `{gLtsT : !gLtsEq T H} `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{gLtsT : !gLtsEq T H} `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m} {p : P} : elem PRE {[ p ]} {[ p ]}.
 Proof.
   apply (gfp_chain PRE).
@@ -387,7 +387,7 @@ Qed.
 
 Global Instance Proper_elem 
   `{@FiniteImagegLts P A H gLtsP}
-  `{gLtsT : !gLtsEq T H} `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{gLtsT : !gLtsEq T H} `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m} :
   Proper ((≡) ==> (=) ==> (iff)) (elem PRE).
 Proof.
@@ -396,12 +396,12 @@ Proof.
 Qed.
 
 Global Instance Proper_lts_stable `{gLtsEq P A}:
-  Proper ((eq_rel) ==> (=) ==> (impl)) (λ p α, p ↛{α}).
+  Proper ((eq_rel) ==> (=) ==> (impl)) (λ p 𝜆, p ↛{𝜆}).
 Proof.
-  intros p p' Heq α α' ? Hs; subst α'; cbn in *.
+  intros p p' Heq 𝜆 𝜆' ? Hs; subst 𝜆'; cbn in *.
   intros Hf.
   apply lts_performs_spec1 in Hf as (q & Hq).
-  destruct (eq_spec p q α) as (r & Hr & Heqr).
+  destruct (eq_spec p q 𝜆) as (r & Hr & Heqr).
   - eexists; split; eauto.
   - contradict Hs. apply lts_performs_spec2. eexists; eauto.
 Qed.
@@ -411,7 +411,7 @@ Qed.
 (* Global Instance Proper_eq_rel 
   `{gLtsP : @gLtsEq P A H}
   `{!FiniteImagegLts P A} 
-  `{gLtsT : !gLtsEq T H} `{AbsPT : !@AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ } 
+  `{gLtsT : !gLtsEq T H} `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) } 
    {PRE : Chain copre_m}:
   Proper ((≡) ==> (eq_rel) ==> (impl)) (elem PRE).
 Proof.
@@ -436,7 +436,7 @@ Qed. *)
 
 Lemma coin_union_l `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m}
   : forall (X1 X2 : gset P) (Y : gset P), elem PRE X1 Y -> elem PRE (X1 ∪ X2) Y.
 Proof.
@@ -472,7 +472,7 @@ Qed.
 
 Lemma coin_union_r `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m}
   : forall (X1 X2 : gset P) (Y : gset P), elem PRE X2 Y -> elem PRE (X1 ∪ X2) Y.
 Proof.
@@ -508,7 +508,7 @@ Qed.
 
 Lemma coin_elem_of `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m} (p : P) X: p ∈ X -> elem PRE X {[p]}.
 Proof.
   intro Hin. setoid_rewrite (union_difference_singleton_L p X Hin).
@@ -517,7 +517,7 @@ Qed.
 
 Lemma coin_choose `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m}
   : forall {X : gset P} {Y : gset P} {p : P}, p ∈ X -> elem PRE {[p]} Y -> elem PRE X Y.
 Proof.
@@ -528,7 +528,7 @@ Qed.
 
 Lemma copre_fw_inv_l `{@FiniteImagegLts P A H gLtsP} {unique_nb : UniqueDual A}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
   {PRE : Chain (copre_m (P := P * MO A) (Q := P * MO A))} (p t: P):
   (∀ μ p', p ⟶{μ} p' <-> (p' = t /\ μ = τ)) ->
@@ -622,7 +622,7 @@ Qed.
 
 Lemma copre_inv_l `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct) }
   {PRE : Chain copre_m} (p : P) X t Y : (p ⟶ t) -> (forall μ p', p ⟹{μ} p' <-> t ⟹{μ} p') ->
   elem PRE ({[t]} ∪ X) Y -> elem PRE ({[p]} ∪ X) Y.
 Proof.
@@ -687,7 +687,7 @@ Proof.
 Qed.
 
 (* Global Instance copre_eq_rel_l `{@gLtsOba P A H gLtsEqP} `{!FiniteImagegLts P A}
-  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable 𝝳 Φ _}
+  `{PreAP : @PreExtAction P A H FinA PreA PreA_eq PreA_countable αᴘʀᴏ αᴛᴇꜱᴛ _}
   {PRE : Chain copre_m}: Proper ((eq_rel_set) ==> (=) ==> (impl)) (elem PRE).
 Proof.
   intros X X' HXX' q q' ?; subst q'.
@@ -716,4 +716,3 @@ Proof.
       apply hXX' in Hin as (p'' & Hin & Heqp'').
       eapply terminate_preserved_by_eq2; [apply symmetry, Heqp''|auto with *].
 Qed. *)
-(* end hide *)

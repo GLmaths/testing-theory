@@ -23,19 +23,19 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap gmultiset.
 
-From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_OBA_FB Lts_FW Testing_Predicate 
+From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_OBA_FB Lts_FW Testing_Predicate 
   Must CodePurification Termination 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS
   Convergence WeakTransitions.
-(* end hide *)
+
 
 (** * Lifting an LTS to forwarders preserves Must *)
-(* begin hide *)
 Lemma conv `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   p ⤓ -> (p, ∅) ⤓.
 Proof.
@@ -308,12 +308,12 @@ Section FeedBack.
 
 Context `{@gLtsObaFB P A H gLtsEqP M}.
 Context `{!FiniteImagegLts P A}.
-Context `{!FiniteOutputChain_LtsOba P}.
+Context `{!FiniteNonBlockingChain_LtsOba P}.
 
 Notation gLtsP := (gLtsEq_gLts (gLtsEq := gLtsEqP)).
 Notation gLtsT := (gLtsEq_gLts (gLtsEq := gLtsEqT)).
 
-Context `{!FiniteOutputChain_LtsOba T}.
+Context `{!FiniteNonBlockingChain_LtsOba T}.
 
 Context {unique_nb : UniqueDual A}.
 Context `{_ : !Prop_of_Inter P (MO A) A A fw_inter}.
@@ -394,7 +394,7 @@ Proof.
              eapply (ParSync a co_a) ; simpl; eauto.
              rewrite l1. eapply ParRight.
              eapply lts_multiset_minus. eauto.
-         +++ destruct H8 as (e'' & HypTr). exists ((p ▷ lts_oba_mo e) ▷ e''). eapply ParRight; eauto.
+         +++ destruct H8 as (e'' & HypTr). exists ((p ▷ lts_oba_mo e) ∣ e''). eapply ParRight; eauto.
       ++ destruct (decide (non_blocking μ2)) as [nb |not_nb].
          +++ eapply lts_oba_mo_spec2 in l2 as h; eauto.
              exists (a2, lts_oba_mo b2, e'). eapply ParLeft.
@@ -511,9 +511,9 @@ Proof.
 Qed.
 
 Lemma must_fw_to_must
-  (p : P) (e : T) : (p, ∅ : gmultiset A) must_pass e -> p must_pass e.
+  (p : P) (e : T) : (p ▷ ∅) must_pass e -> p must_pass e.
 Proof.
-  intro hm. remember (p ▷ (∅ : gmultiset A)) as p'. revert p Heqp'.
+  intro hm. remember (p ▷ ∅) as p'. revert p Heqp'.
   induction hm; intros p' Eq.
   * now eapply m_now.
   * eapply m_step; eauto with mdb.
@@ -530,22 +530,22 @@ Proof.
       + destruct ex0 as (((p0, m0), e0) & l).
         inversion l; subst.
         ++ inversion l0; subst.
-           +++ exists (p0 ▷ t). eapply ParLeft; eauto.
+           +++ exists (p0 ∣ t). eapply ParLeft; eauto.
            +++ inversion l1.
            +++ destruct eq as (duo & nb).
                eapply non_blocking_action_in_ms in nb as eq; subst; eauto.
                assert (μ2 ∈ lts_oba_mo t) as mem. rewrite <- eq. set_solver.
                eapply lts_oba_mo_spec_bis2 in mem as (e'2 & nb' & l'2).
-               exists (p0, e'2). eapply ParSync; eauto.
+               exists (p0 ∣ e'2). eapply ParSync; eauto.
         ++ eapply woutpout_preserves_mu in l0 as (r0 & r1 & l0 & _); eauto.
-           exists (p0 ▷ r0). eapply ParRight; eauto.
+           exists (p0 ∣ r0). eapply ParRight; eauto.
         ++ destruct (decide (non_blocking μ2)); destruct (decide (non_blocking μ1)). 
            +++ exfalso. eapply dual_blocks. eauto. symmetry; eauto. eauto.
            +++ exfalso. generalize (lts_performs_spec2 e' _ (exist _ e0 l2)).
                eapply lts_oba_mo_strip_refuses; eauto.
            +++ eapply woutpout_preserves_mu in l2 as (r0 & r1 & l0 & _); eauto.
                inversion l1; subst.
-               ++++ exists (p0, r0). 
+               ++++ exists (p0 ∣ r0). 
                     eapply ParSync ; eauto.
                ++++ eapply non_blocking_action_in_ms in n0 as eq' ; eauto ; subst.
                     assert (μ1 ∈ lts_oba_mo t) as mem. rewrite <- eq'. set_solver.
@@ -554,7 +554,7 @@ Proof.
                     edestruct (nb_confluence nb' neq l'2 l0) as (e3 & l3 & l4).
                     assert (dual μ2 μ1) as duo. { symmetry. eauto. }
                     destruct (feedback nb' duo l'2 l3) as (e4 & l6 & _).
-                    exists (p0 ▷ e4). eapply ParRight; eauto.
+                    exists (p0 ∣ e4). eapply ParRight; eauto.
           +++ inversion l1; subst.
               ++++ eapply woutpout_preserves_mu in hwo; eauto.
                    destruct hwo as (r & t' & l3 & stripped & equiv).
@@ -581,12 +581,11 @@ Qed.
 
 End FeedBack.
 End Lifting.
-(* end hide *)
 
 Lemma lift_fw_ctx_pre
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome gLtsEqT}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !Testing_Predicate outcome gLtsEqT}
 
   `{!Prop_of_Inter P T A A dual}
   `{!Prop_of_Inter Q T A A dual}

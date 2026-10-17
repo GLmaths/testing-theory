@@ -20,14 +20,15 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Testing_Predicate Completeness
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi PAL_Alt_AbsAction PAL_Good PAL_Alt_Tests.
-
 (* * The tests of the alternative LTS of PAL satisfy the specifications of [Completeness]
 
    With [⋍ = cgr]:
@@ -35,7 +36,7 @@ From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Te
      good, the axioms (1)-(6) of [test_spec];
    - [t_conv_convergence_spec]: [test_convergence_spec] for [t_conv];
    - [ta_co_acceptance_set_spec]: [test_co_acceptance_set_spec] for [ta],
-     with [Γ = 𝝳ᴇᴠ ∘ Φᴀᴘᴀʟ], that is the event of the label. *)
+     with [Γ = αᴘᴇᴠ ∘ αᴛᴀᴘᴀʟ], that is the event of the label. *)
 
 Section PAL_Alt_TestSpec.
   Context (Val : Type) `{Countable Val} `{!Inhabited Val}.
@@ -233,11 +234,11 @@ Section PAL_Alt_TestSpec.
 
   (* ** The tests of one event *)
 
-  Lemma ac_t_ext_inv e μ q : ac_t e ⟶[μ] q → Φᴀᴘᴀʟ Val μ = e ∧ good q.
+  Lemma ac_t_ext_inv e μ q : ac_t e ⟶[μ] q → αᴛᴀᴘᴀʟ Val μ = e ∧ good q.
   Proof.
     destruct e as [tp|ot]; cbn [ac_t]; intros h.
     - apply in_pattern_step_inv in h as (l & -> & htp & ->).
-      split; [cbn [Φᴀᴘᴀʟ]; by rewrite htp | apply good_success].
+      split; [cbn [αᴛᴀᴘᴀʟ]; by rewrite htp | apply good_success].
     - apply out_lmerge_step_inv in h as [-> ->].
       split; [done | apply good_par_r, good_success].
   Qed.
@@ -248,20 +249,20 @@ Section PAL_Alt_TestSpec.
     match goal with h' : lts_step_a _ (t_out _ _) τ _ |- _ => inversion h'; subst end. congruence.
   Qed.
 
-  Lemma ac_t_step e : ∃ μ q, ac_t e ⟶[μ] q ∧ Φᴀᴘᴀʟ Val μ = e.
+  Lemma ac_t_step e : ∃ μ q, ac_t e ⟶[μ] q ∧ αᴛᴀᴘᴀʟ Val μ = e.
   Proof.
     destruct e as [tp|ot]; simpl.
     - exists (AIn _ (label_witness Val tp)). eexists. split.
       + apply aar1; [apply eval_pattern_from |].
         by rewrite template_of_it_from, ltemplate_label_witness.
-      + cbn [Φᴀᴘᴀʟ]. by rewrite ltemplate_label_witness.
+      + cbn [αᴛᴀᴘᴀʟ]. by rewrite ltemplate_label_witness.
     - exists (AOut _ ot). eexists. split; [| done].
       apply aar6, aar3, eval_out_eot_to_tuple.
   Qed.
 
   Notation sum_list l := (foldr (λ e acc, ac_t e □ acc) 𝟘 l).
 
-  Lemma sum_list_ext_inv l μ q : sum_list l ⟶[μ] q → Φᴀᴘᴀʟ Val μ ∈ l ∧ good q.
+  Lemma sum_list_ext_inv l μ q : sum_list l ⟶[μ] q → αᴛᴀᴘᴀʟ Val μ ∈ l ∧ good q.
   Proof.
     revert q. induction l as [|e l IH]; simpl; intros q h; inversion h; subst.
     - match goal with h' : lts_step_a _ (ac_t _) _ _ |- _ => apply ac_t_ext_inv in h' as [-> hg] end.
@@ -276,7 +277,7 @@ Section PAL_Alt_TestSpec.
       [eapply ac_t_no_tau; eassumption | eapply IH; eassumption].
   Qed.
 
-  Lemma sum_list_step l e : e ∈ l → ∃ μ q, sum_list l ⟶[μ] q ∧ Φᴀᴘᴀʟ Val μ = e.
+  Lemma sum_list_step l e : e ∈ l → ∃ μ q, sum_list l ⟶[μ] q ∧ αᴛᴀᴘᴀʟ Val μ = e.
   Proof.
     induction l as [|e' l IH]; intros hin; [by apply elem_of_nil in hin |].
     apply elem_of_cons in hin as [<- | hin].
@@ -286,10 +287,10 @@ Section PAL_Alt_TestSpec.
       simpl. by apply aar4_r.
   Qed.
 
-  Lemma no_step_refuses (p : term) α : (∀ q, ¬ p ⟶{α} q) → p ↛{α}.
+  Lemma no_step_refuses (p : term) 𝜆 : (∀ q, ¬ p ⟶{𝜆} q) → p ↛{𝜆}.
   Proof.
     intros hn. intros h.
-    destruct (lts_performs_spec1 p α h) as [q hq]. by destruct (hn q).
+    destruct (lts_performs_spec1 p 𝜆 h) as [q hq]. by destruct (hn q).
   Qed.
 
   (* ** Instances *)
@@ -318,14 +319,14 @@ Section PAL_Alt_TestSpec.
   Qed.
 
   #[global] Instance ta_co_acceptance_set_spec :
-    test_co_acceptance_set_spec Event (ta Val) (λ x, 𝝳ᴇᴠ Val (Φᴀᴘᴀʟ Val x)).
+    test_co_acceptance_set_spec (ta Val) (λ x, αᴘᴇᴠ Val (αᴛᴀᴘᴀʟ Val x)).
   Proof.
     split.
     - intros E. apply gen_test_spec; [apply sum_ac_closed | apply sum_ac_not_good].
     - intros E. apply no_step_refuses. apply sum_list_no_tau.
     - intros E η nb. destruct nb.
     - intros E β e _ h. apply sum_list_ext_inv in h as [hin _].
-      unfold 𝝳ᴇᴠ. by apply elem_of_elements.
+      unfold αᴘᴇᴠ. by apply elem_of_elements.
     - intros E pβ hin. destruct (sum_list_step (elements E) pβ) as (μ & q & hq & he);
         [by apply elem_of_elements |].
       exists q, μ. split; [exact hq | exact he].

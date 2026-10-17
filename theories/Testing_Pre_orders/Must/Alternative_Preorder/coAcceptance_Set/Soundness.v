@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -34,14 +35,14 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
+From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction 
       Termination Convergence FiniteImageLTS WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction.
 From TestingTheory Require Import ActTau InFiniteSetHelper SetLTSConstruction.
-(* end hide *)
+
 
 (** * Soundness *)
-(* begin hide *)
+
 
 Inductive mustx `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
@@ -64,7 +65,6 @@ Inductive mustx `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Pre
 
 #[global] Hint Constructors mustx:mdb.
 Global Notation "X 'must_pass_x' t" := (mustx X t) (at level 70).
-(* end hide *)
 
 Section Must_for_sets.
 
@@ -76,7 +76,7 @@ Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}.
 
 (** ** Must predicate for Sets *)
-(* begin hide *)
+
 
 Lemma mx_sub X t :
   X must_pass_x t
@@ -533,7 +533,7 @@ Proof.
       intros p' (p0 & h%hm & hl)%xspec'. eapply must_set_iff_must.
       eapply must_preserved_by_wt_synch_if_notoutcome; eauto.
 Qed.
-(* end hide *)
+
 
 Lemma must_set_iff_must_for_all  (X : gset P) (t : T) :
   X ≠ ∅ -> (forall p, p ∈ X -> p must_pass t) <-> X must_pass_x t.
@@ -544,10 +544,10 @@ Proof.
 Qed.
 
 End Must_for_sets.
-(* begin hide *)
+
 
 (* ** Contextual preorder for sets *)
-(* end hide *)
+
 
 Section Must_preorder_for_sets.
 Context `{EA : !ExtAction A}.
@@ -558,7 +558,7 @@ Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{HinterP : !Prop_of_Inter P T A A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
-(* begin hide *)
+
 
 Definition ctx_pre__x
   (X : gset P) (Y : gset Q) 
@@ -644,7 +644,7 @@ Proof.
     intros. eapply must_if_must_set_helper in h_must.
     set_solver. set_solver.
 Qed.
-(* end hide *)
+
 
 (** ** Equivalence between the must preorder and the must preorder on sets *)
 Lemma must_set_singleton_iff (p : P) (q : Q) :
@@ -662,7 +662,7 @@ Proof.
 Qed.
 
 End Must_preorder_for_sets.
-(* begin hide *)
+
 
 #[global] Hint Unfold ctx_pre__x : mdb.
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
@@ -765,36 +765,36 @@ Proof.
                    eapply H4 in H8. eauto. }
                  eapply IHX'. eauto. set_solver.
 Qed.
-(* end hide *)
+
 
 (** ** Condition on convergence *)
-(* begin hide *)
+
 
 Definition bhv_pre_cond1__x `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
   (X : gset P) (Y : gset Q) :=
   forall s, (forall p, p ∈ X -> p ⇓ s) -> (forall q, q ∈ Y -> q ⇓ s).
 
-Global Notation "X ₁≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
-(* end hide *)
+Global Notation "X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond1__x X Y) (at level 70).
+
 
 (** ** Condition on acceptance sets *)
-(* begin hide *)
+
 
 Definition bhv_pre_cond2__x
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}
-  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (X : gset P) (Y : gset Q) :=
   forall q s q', q ∈ Y ->
     q ⟹[s] q' -> q' ↛ ->
     (forall p, p ∈ X -> p ⇓ s) ->
-    exists p, p ∈ X /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+    exists p, p ∈ X /\ exists p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
 
-Global Notation "X ₂≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
-(* end hide *)
+Global Notation "X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y" := (bhv_pre_cond2__x X Y) (at level 70).
+
 
 
 (** ** Alternative preorder on sets *)
@@ -803,11 +803,11 @@ Definition bhv_pre__x
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}
-  `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
     (X : gset P) (Y : gset Q) :=
-      (X ₁≼ₛₑₜ_ₐₛ Y /\ X ₂≼ₛₑₜ_ₐₛ Y).
-(* begin hide *)
+      (X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y /\ X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y).
+
 
 Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
 
@@ -817,14 +817,14 @@ Global Notation "X ≼ₛₑₜ_ₐₛ  Y" := (bhv_pre__x X Y) (at level 70).
 #[global] Instance bhv_pre__x_refl
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : Reflexive bhv_pre__x.
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} : Reflexive bhv_pre__x.
 Proof. intros. constructor;intro; intros; set_solver. Qed.
 
 (* The relation ≼ₛₑₜ_ₐₛ is transitive *)
 #[global] Instance bhv_pre__x_transitive
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : Transitive bhv_pre__x.
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} : Transitive bhv_pre__x.
 Proof.
   intros X Y Z hcgr1 hcgr2. split. 
   + intro s. intros Hyp_conv. eapply hcgr2. eapply hcgr1. exact Hyp_conv. 
@@ -842,13 +842,13 @@ Qed.
 #[global] Instance bhv_pre__x_preorder
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} : PreOrder bhv_pre__x.
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} : PreOrder bhv_pre__x.
 Proof.
   split.
   + exact bhv_pre__x_refl.
   + exact bhv_pre__x_transitive.
 Qed.
-(* end hide *)
+
 
 
 Section Acceptance_Set_preorder_for_sets.
@@ -857,11 +857,11 @@ Context `{EA : !ExtAction A}.
 Context `{gLtsEqT : !gLtsEq T EA}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _}.
+Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}.
 
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳Q _ _ _ _ _}.
-(* begin hide *)
+Context `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}.
+
 
 Lemma alt_set_union_right
   (X : gset P) (Y Y' : gset Q) : X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y' ->  X ≼ₛₑₜ_ₐₛ (Y ∪ Y').
@@ -950,7 +950,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_reduction
   (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> lts_tau_set_from_pset_spec1 Y Y' (* -> Y' ≠ ∅ *) -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros halt1 l (* not_empty *) s mem.
   intros. eapply l in H as (q' & mem' & tr').
@@ -959,7 +959,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_reduction_lts
   (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> Y ⟶ Y' (* -> Y' ≠ ∅ *) -> X ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> Y ⟶ Y' (* -> Y' ≠ ∅ *) -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros; eapply bhvleqone_preserved_by_reduction;eauto.
   destruct H0. subst. eapply lts_tau_set_from_pset_ispec.
@@ -967,7 +967,7 @@ Qed.
 
 Lemma bhvleqone_preserved_by_external_action
   (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *) -> X' ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> wt_set_from_pset_spec1 Y [μ] Y' (* -> Y' ≠ ∅ *) -> X' ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros hleq hws l (* not_empty *) s hcnv. intros.
   eapply l in H as (q' & mem' & wk_tr).
@@ -981,13 +981,13 @@ Qed.
 
 Lemma bhvleqone_preserved_by_external_action_lts
   (X X' : gset P) μ (Y Y' : gset Q) (htp : forall p, p ∈ X -> p ⤓) :
-  X ₁≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> Y ⟹{μ} Y' -> X' ₁≼ₛₑₜ_ₐₛ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y -> wt_set_from_pset_spec X [μ] X'  -> Y ⟹{μ} Y' -> X' ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y'.
 Proof.
   intros. eapply bhvleqone_preserved_by_external_action; eauto.
   intros q' mem'. eapply wk_tr_inv in mem' as (p' & hyp1 & hyp2).
   eauto. eauto. (* intro. subst. eapply empty_set_stable_wk_not_emp_list_inv;eauto. *)
 Qed.
-(* end hide *)
+
 
 Lemma alt_set_singleton_iff
   (p : P) (q : Q) : ({[ p ]} : gset P) ≼ₛₑₜ_ₐₛ ({[ q ]} : gset Q) <->  p ≼ₐₛ q.
@@ -1003,7 +1003,7 @@ Proof.
       assert (q' = q) by set_solver. subst. intros.
       exists p. edestruct h2 ; set_solver.
 Qed.
-(* begin hide *)
+
 
 Lemma bhvx_preserved_by_reductions
   (X : gset P) (Y Y' : gset Q) : wt_set_from_pset_spec1 Y [] Y' (* -> Y' ≠ ∅ *) -> X ≼ₛₑₜ_ₐₛ Y -> X ≼ₛₑₜ_ₐₛ Y'.
@@ -1158,7 +1158,7 @@ Proof.
   intros. eapply reverse_trace_inclusion_lts ;eauto.
   eapply lts_to_wt; eauto.
 Qed.
-(* end hide *)
+
 
 End Acceptance_Set_preorder_for_sets.
 
@@ -1173,13 +1173,13 @@ Context `{HinterP : !Prop_of_Inter P T A A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A}.
 Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
 
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
+Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
 Context `{!gLtsCNenabled Q A}.
 
 Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ1 μ2 :
-      dual μ1 μ2 -> p ⟶[μ1] p' -> t ⟶[μ2] t' -> ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q)
+      dual μ1 μ2 -> p ⟶[μ1] p' -> t ⟶[μ2] t' -> ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR p) ⊆ ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR q)
         -> exists μ4 μ5 q' t'', dual μ4 μ5 /\ q ⟶[μ4] q' /\ t ⟶[μ5] t''.
 Proof.
   intros duo tr tr_co sub.
@@ -1189,9 +1189,9 @@ Proof.
   + assert (μ2 ∈ coR p) as some_co_action_of_p.
     { exists μ1. repeat split; eauto.
       eapply lts_performs_spec2;eauto. }
-    eapply (map_gamma_of_action (𝝳 ∘ Φ)) in some_co_action_of_p as mem.
+    eapply (map_gamma_of_action (αᴘʀᴏ ∘ αᴛᴇꜱᴛ)) in some_co_action_of_p as mem.
     eapply sub in mem. destruct mem as (μ' & mem & eq).
-    eapply (map_gamma_of_action Φ) in mem as eq'. symmetry in eq.
+    eapply (map_gamma_of_action αᴛᴇꜱᴛ) in mem as eq'. symmetry in eq.
     eapply (abstraction_prog_spec q) in eq' ;eauto.
     2:{ destruct mem as (μ3 & hmem & hdual & hblock). eauto. }
     destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo2 & b).
@@ -1216,22 +1216,22 @@ Context `{!Prop_of_Inter P T A A dual}.
 Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A}.
 Context `{!Prop_of_Inter Q T A A dual}.
 
-Context `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
-Context `{AbsQT : @AbsAction Q T FinA PreAct A EA Φ 𝝳 _ _ _ _ _}.
-(* begin hide *)
+Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+
 
 Lemma unoutcome_must_st_nleqx (X : gset P) (Y : gset Q) (t : T):
   ¬ outcome t
     -> X must_pass_x t
       -> (∃ q, q ∈ Y /\ (q, t) ↛)
-        -> ¬ X ₂≼ₛₑₜ_ₐₛ Y.
+        -> ¬ X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y.
 Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
 
   assert (q ↛) as stable_q.
   { destruct (decide (q ⟶)) as [not_refuses_q | refuses_q].
     - exfalso. eapply lts_performs_spec1 in not_refuses_q as (q' & l).
-      apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q' ▷ t). eapply ParLeft. exact l.
+      apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)). exists (q' ∣ t). eapply ParLeft. exact l.
     - exact refuses_q. }
 
   assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
@@ -1248,20 +1248,20 @@ Proof.
   inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
   - exfalso; apply stp', lts_performs_spec2; eauto.
   - destruct (decide (t ⟶)) as [not_refuses_t | refuses_t].
-    + apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)).
+    + apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)).
       exists (q , t''). eapply ParRight; eauto.
     + exfalso. apply refuses_t, lts_performs_spec2. eauto with mdb.
   - eapply communication_enabled in act_left as (μ'1 & μ'2 & q' & t''' & duo & tr1 & tr2); eauto.
-    apply refuses_tau_q, (lts_performs_spec2 (q ▷ t)). exists (q', t''').
+    apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)). exists (q' ∣ t''').
     eapply (ParSync (μ'1)); eauto.
 Qed.
-(* end hide *)
+
 
 Lemma stability_nbhvleqtwo
   (X : gset P) (Y : gset Q) t :
   ¬ outcome t
     -> X must_pass_x t
-      -> X ₂≼ₛₑₜ_ₐₛ Y
+      -> X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y
         -> forall (q : Q), q ∈ Y -> ∃ q', (q, t) ⟶{τ} q'.
 Proof.
   intros nhg hmx hleq q mem.
@@ -1328,15 +1328,15 @@ Proof.
 Qed.
 
 End SoundnessAS.
-(* begin hide *)
+
 
 Lemma soundness_co_nb_enabled `{
   gLtsP : @gLtsEq P A H, !FiniteImagegLts P A,
   gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
 
   `{!Prop_of_Inter P T A A dual}
   `{!Prop_of_Inter Q T A A dual}
@@ -1353,11 +1353,11 @@ Qed.
 
 Lemma soundness_fw `{
   gLtsEqP : @gLtsEq P A H, !FiniteImagegLts P A,
-  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsEqQ : @gLtsEq Q A H, !FiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q _, !gLtsObaFW Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
 
   `{!Prop_of_Inter P T A A dual}
   `{!Prop_of_Inter Q T A A dual}
@@ -1373,9 +1373,9 @@ Qed.
 
 (* ** Soundness for LTSs that can be lifted to forwarders *)
 Lemma soundness 
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !CountablegLts T A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A} {unique_nb : UniqueDual A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !CountablegLts T A}
 
   `{ !Testing_Predicate outcome _}
 
@@ -1388,8 +1388,8 @@ Lemma soundness
   {_ : @Prop_of_Inter Q (MO A) A A fw_inter H _ H MbgLts}
   {_ : @Prop_of_Inter (Q * MO A) T A A dual H (inter_lts fw_inter) H _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
 
   (p : P) (q : Q) : p ▷ ∅ ≼ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
@@ -1398,4 +1398,4 @@ Proof.
   eapply Lift.must_iff_must_fw.
   now eapply (soundness_fw (p ▷ ∅) (q ▷ ∅)).
 Qed.
-(* end hide *)
+

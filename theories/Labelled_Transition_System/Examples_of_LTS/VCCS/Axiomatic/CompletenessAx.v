@@ -20,37 +20,39 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Completeness of the [ax_pre] proof system w.r.t. [⊑ₘᵤₛₜᵢ]
 
     The converse of [SoundnessAx.v], for the [Static] fragment. The
     plan, and the material it rests on:
 
-    - [full_normalize] ([VCCS_NormalForm.v]) puts both sides into
+    - [full_normalize] ([Axiomatic/NormalForm.v]) puts both sides into
       [tau_nf] shape — an internal choice of *stable* guarded sums,
       Hennessy's [⊕ᵢ Σ_{a ∈ Aᵢ} a.p(a)].
-    - [coR_abs_incl_iff] ([VCCS_ReadySet.v]) turns [≼ₐₛ]'s abstracted
+    - [coR_abs_incl_iff] ([Axiomatic/ReadySet.v]) turns [≼ₐₛ]'s abstracted
       ready-set inclusion, for two stable sums, into a plain structural
       fact about which channels they offer.
     - The derivation is then assembled from [ax_int_l]/[_r] and
       [ax_int_glb] on the [⊕] layer, [ax_choice_stable] +
       [ax_input]/[ax_output] on the stable layer, and the two closure
       laws for acceptance families: union closure ([ax_int_below_ext],
-      derived, [VCCS_Canonical.v]) and convex closure ([ax_convex],
+      derived, [Axiomatic/Canonical.v]) and convex closure ([ax_convex],
       primitive, [DefinitionAxiomatic.v]).
 
     This file currently holds the trace-shift step, which is what lets
     the construction recurse into continuations. *)
-
+(* end hide *)
+(* begin hide *)
 From Stdlib Require Import List Permutation PeanoNat Lia.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base sets gmap.
-From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
+From TestingTheory Require Import VCCS.Language.LTS VCCS.Language.gLts_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
-  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization
-  VCCS_Expansion VCCS_ResNormalize VCCS_Precongruence VCCS_ReadySet
-  DefinitionAxiomatic VCCS_Canonical VCCS_NormalForm SoundnessAx.
+  Subset_Act DefinitionAS Convergence VCCS.Axiomatic.Static VCCS.Characterisations.Must_Characterisation
+  VCCS.Axiomatic.Expansion VCCS.Axiomatic.ResNormalize VCCS.Axiomatic.Precongruence VCCS.Axiomatic.ReadySet
+  VCCS.Axiomatic.DefinitionAxiomatic VCCS.Axiomatic.Canonical VCCS.Axiomatic.NormalForm VCCS.Axiomatic.SoundnessAx.
 
 Section CompletenessAx.
 
@@ -77,7 +79,7 @@ Context `{VP : VCCS_Parameters}.
     reaches is one [q] reaches after [a]); the [p]-side needs the [iff],
     since the witness comes back from [p] and has to be replayed on
     [pa]. [cond1] is free: [Static] processes converge on every trace
-    ([Static_converge], [VCCS_Static.v]). *)
+    ([Static_converge], [Axiomatic/Static.v]). *)
 
 Lemma bhv_pre_shift : forall (p q pa qa : proc) (a : ExtAct TypeOfActions),
   Static p -> Static qa ->
@@ -119,7 +121,7 @@ Qed.
     than by recursion on a [tau_nf] derivation, so that it is an ordinary
     [Fixpoint] usable inside other definitions; the [𝛕]-branches sit two
     constructors deep, which the guard checker accepts (same shape as
-    [tau_nfB], [VCCS_Canonical.v]). Since it inspects [gStableB M] before
+    [tau_nfB], [Axiomatic/Canonical.v]). Since it inspects [gStableB M] before
     [M]'s own constructor, [simpl] cannot unfold it at a variable —
     [leaves_eq] is the rewriting equation to use instead, and every
     proof below leads with it. *)
@@ -212,7 +214,7 @@ Proof. intros M HM. apply rebuild_gStatic. apply leaves_gStatic. exact HM. Qed.
 
 (* The external sum of all leaves is derivably above the normal form
     too — this is union closure of the acceptance family, and it is
-    where [ax_int_below_ext] ([VCCS_Canonical.v]) earns its keep. The
+    where [ax_int_below_ext] ([Axiomatic/Canonical.v]) earns its keep. The
     [⊕]-congruence step needs [ax_choice_tau] *twice*, with a
     commutation in between, because the rule only ever rewrites the
     leftmost summand. *)
@@ -286,7 +288,7 @@ Qed.
     [(X + Y) + Z] with the same [X] as the first branch. In practice all
     that is known is a *permutation* of summands, so this is the usable
     form — the analogue of [ax_collapse_*_anywhere] and
-    [ax_tau_sep_anywhere] ([VCCS_Canonical.v]) for the convexity rule.
+    [ax_tau_sep_anywhere] ([Axiomatic/Canonical.v]) for the convexity rule.
 
     Unlike those, no [𝟘]-padding mismatch arises: [rebuild_app] absorbs
     each [rebuild]'s trailing [𝟘] on both sides of the equation, so the
@@ -730,7 +732,7 @@ Qed.
 
 Fixpoint in_conts_g (A : gproc) (c : ChannelData) : list proc :=
 match A with
-| c' ? P => if decide (c' = c) then [P] else []
+| c' ? • P => if decide (c' = c) then [P] else []
 | A1 + A2 => in_conts_g A1 c ++ in_conts_g A2 c
 | _ => []
 end.
@@ -910,14 +912,14 @@ Qed.
     [summand_lts_out] — one transition of [g N], nothing more. No normal
     form, no canonicity, no stability is required of [N] here. *)
 
-Lemma summand_lts_in : forall N c P v, (c ? P) ∈ summands N ->
+Lemma summand_lts_in : forall N c P v, (c ? • P) ∈ summands N ->
   lts (g N) (ActExt (ActIn (c,v))) (P^v).
 Proof.
   intro N. induction N as [ | | c0 P0 | c0 v0 P0 | P0 | N1 IH1 N2 IH2 ];
     intros c P v Hin; simpl in Hin.
   - set_solver.
   - set_solver.
-  - assert (Heq : (c0 ? P0) = (c ? P)) by set_solver.
+  - assert (Heq : (c0 ? • P0) = (c ? • P)) by set_solver.
     injection Heq as Hc HP. subst. apply lts_input.
   - set_solver.
   - set_solver.
@@ -1000,7 +1002,7 @@ Qed.
 Lemma in_cont_below : forall M N c Q v p0 l,
   gStatic M -> tau_nf M -> Static (Q^v) ->
   in_conts M c = p0 :: l ->
-  (c ? Q) ∈ summands N ->
+  (c ? • Q) ∈ summands N ->
   g M ⊑ₘᵤₛₜᵢ g N ->
   (g (ichoice (in_conts M c)))^v ⊑ₘᵤₛₜᵢ (Q^v).
 Proof.
@@ -1066,7 +1068,7 @@ Qed.
 
 Definition mirror_summand (M : gproc) (n : gproc) : gproc :=
 match n with
-| c ? Q => c ? (g (ichoice (in_conts M c)))
+| c ? • Q => c ? • (g (ichoice (in_conts M c)))
 | c ! v • Q => c ! v • (g (ichoice (out_conts M c v)))
 | _ => n
 end.
@@ -1228,7 +1230,7 @@ Qed.
 
     An action is a key [(c, None)] (input on [c]) or [(c, Some v)]
     (output of [v] on [c]) — the same granularity as [gact]
-    ([VCCS_Canonical.v]), which is exactly the level at which
+    ([Axiomatic/Canonical.v]), which is exactly the level at which
     canonicity was stated after the correction from label-level to
     summand-level. *)
 
@@ -1257,7 +1259,7 @@ end.
 
 Definition mirror_act (M : gproc) (k : act_key) : gproc :=
 match k with
-| (c, None) => c ? (g (ichoice (in_conts M c)))
+| (c, None) => c ? • (g (ichoice (in_conts M c)))
 | (c, Some v) => c ! v • (g (ichoice (out_conts M c v)))
 end.
 
@@ -1349,9 +1351,9 @@ Proof.
   apply app_nil_r.
 Qed.
 
-Lemma in_conts_guard : forall c P, in_conts (c ? P) c = [P].
+Lemma in_conts_guard : forall c P, in_conts (c ? • P) c = [P].
 Proof.
-  intros c P. rewrite (in_conts_stable (c ? P) c I). simpl.
+  intros c P. rewrite (in_conts_stable (c ? • P) c I). simpl.
   destruct (decide (c = c)); [reflexivity | contradiction].
 Qed.
 
@@ -1368,12 +1370,12 @@ Qed.
     (with the [𝟘]) that has to be shown [Static], not the guard alone. *)
 
 Lemma ax_mirror_guard_in : forall c P, Static P ->
-  (g (c ? P)) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror (c ? P) [(c, None)])).
+  (g (c ? • P)) ᴠᴄᴄꜱ⊑ₐₓ (g (mirror (c ? • P) [(c, None)])).
 Proof.
   intros c P HP. unfold mirror. simpl. rewrite in_conts_guard.
   assert (HI : Static (g (ichoice [P])))
     by (apply static_g; apply ichoice_gStatic; constructor; [exact HP | constructor]).
-  eapply ax_trans with (q := g (c ? (g (ichoice [P])))).
+  eapply ax_trans with (q := g (c ? • (g (ichoice [P])))).
   - apply ax_input. intro v. rewrite subst_ichoice_proc. simpl.
     apply ax_ichoice_singleton_r. apply Static_subst. exact HP.
   - apply ax_cgr; [| apply cgr_choice_nil_rev].
@@ -1426,7 +1428,7 @@ Proof.
   induction A; intros HA a Ha; simpl in Ha, HA.
   - assert (a = ①) by set_solver. subst. exact I.
   - assert (a = 𝟘) by set_solver. subst. exact I.
-  - assert (a = c ? p) by set_solver. subst. exact I.
+  - assert (a = c ? • p) by set_solver. subst. exact I.
   - assert (a = c ! v • p) by set_solver. subst. exact I.
   - contradiction.
   - destruct HA as (H1 & H2). apply elem_of_app in Ha. destruct Ha as [H|H].
@@ -1445,7 +1447,7 @@ Qed.
 
 Definition wrap_summand (a : gproc) : gproc :=
 match a with
-| c ? P => c ? (g (ichoice [P]))
+| c ? • P => c ? • (g (ichoice [P]))
 | c ! v • P => c ! v • (g (ichoice [P]))
 | _ => 𝟘
 end.
@@ -1530,7 +1532,7 @@ Qed.
 
 Definition kguard (k : act_key) (l : list proc) : gproc :=
 match k with
-| (c, None) => c ? (g (ichoice l))
+| (c, None) => c ? • (g (ichoice l))
 | (c, Some v) => c ! v • (g (ichoice l))
 end.
 
@@ -1590,7 +1592,7 @@ match l with
 | [] => []
 | a :: l' =>
     match a with
-    | c ? P => ((c, None), [P]) :: klist l'
+    | c ? • P => ((c, None), [P]) :: klist l'
     | c ! v • P => ((c, Some v), [P]) :: klist l'
     | _ => klist l'
     end
@@ -1654,19 +1656,19 @@ Proof.
     apply ax_cgr; [exact (static_g _ Hrl) |].
     transitivity (g (rebuild l + 𝟘)); [apply cgr_choice_com | apply cgr_choice_nil].
   - inversion Ha; subst.
-    assert (Hk : gStatic (c ? (g (ichoice [P]))))
+    assert (Hk : gStatic (c ? • (g (ichoice [P]))))
       by (constructor; apply static_g; constructor; constructor; assumption).
     eapply ax_trans;
-      [apply (ax_choice_stable (c ? P) (c ? (g (ichoice [P]))) (rebuild l) I I);
+      [apply (ax_choice_stable (c ? • P) (c ? • (g (ichoice [P]))) (rebuild l) I I);
        apply ax_input; intro w; simpl; apply ax_int_glb; apply ax_refl;
          apply Static_subst; assumption |].
     eapply ax_trans;
-      [apply ax_cgr with (q := g (rebuild l + (c ? (g (ichoice [P])))));
+      [apply ax_cgr with (q := g (rebuild l + (c ? • (g (ichoice [P])))));
          [apply static_g; constructor; assumption | apply cgr_choice_com] |].
     eapply ax_trans;
-      [apply (ax_choice_stable (rebuild l) (build (klist l)) (c ? (g (ichoice [P]))));
+      [apply (ax_choice_stable (rebuild l) (build (klist l)) (c ? • (g (ichoice [P]))));
          [exact Hsrl | apply build_gStable | exact IH] |].
-    apply ax_cgr with (q := g ((c ? (g (ichoice [P]))) + build (klist l)));
+    apply ax_cgr with (q := g ((c ? • (g (ichoice [P]))) + build (klist l)));
       [apply static_g; constructor; assumption | apply cgr_choice_com].
   - inversion Ha; subst.
     assert (Hk : gStatic (c ! v • (g (ichoice [P]))))
@@ -1753,7 +1755,7 @@ Qed.
 (* ** Iterating the merge
 
     Search and recursion, in the same shape as [canonicalize]
-    ([VCCS_Canonical.v]) but on the association list, where the measure
+    ([Axiomatic/Canonical.v]) but on the association list, where the measure
     is simply [length] — each merge turns two entries into one — and the
     invariant carried through is [kmem]: which continuations sit under
     which key, as a *set*. That is all the caller needs, since
@@ -2016,16 +2018,16 @@ Proof.
     eapply ax_trans; [apply ax_share_out |].
     apply ax_choice_stable; [exact I | exact I |].
     apply ax_output. apply ax_ichoice_app_r; assumption.
-  - assert (Hg1 : gStatic ((c ? (g (ichoice l1))) + rebuild r1))
+  - assert (Hg1 : gStatic ((c ? • (g (ichoice l1))) + rebuild r1))
       by (constructor; [constructor; apply static_g; apply ichoice_gStatic; exact Hs1
                        | apply rebuild_gStatic; exact Hr1]).
-    assert (Hg2 : gStatic ((c ? (g (ichoice l2))) + rebuild r2))
+    assert (Hg2 : gStatic ((c ? • (g (ichoice l2))) + rebuild r2))
       by (constructor; [constructor; apply static_g; apply ichoice_gStatic; exact Hs2
                        | apply rebuild_gStatic; exact Hr2]).
     eapply ax_trans;
       [apply ax_cgr with
-         (q := g ((𝛕 • (g ((c ? (g (ichoice l1))) + rebuild r1)))
-                  + (𝛕 • (g ((c ? (g (ichoice l2))) + rebuild r2)))));
+         (q := g ((𝛕 • (g ((c ? • (g (ichoice l1))) + rebuild r1)))
+                  + (𝛕 • (g ((c ? • (g (ichoice l2))) + rebuild r2)))));
          [apply static_g; constructor; constructor; apply static_g; assumption
          | apply cgr_fullchoice; apply cgr_tau; [apply pull_one; exact Hp1
                                                 | apply pull_one; exact Hp2]] |].
@@ -2587,7 +2589,7 @@ Proof.
         { apply (IH Hl'). exists b. split; assumption. }
     + split.
       * intros (l0 & Hin & Hpl). apply elem_of_cons in Hin. destruct Hin as [Heq | Hin].
-        { injection Heq as Ha Hb. subst. exists (c ? P).
+        { injection Heq as Ha Hb. subst. exists (c ? • P).
           split; [apply elem_of_cons; left; reflexivity |].
           simpl. destruct (decide (c = c)); [exact Hpl | contradiction]. }
         { destruct (proj1 (IH Hl' k p) (ex_intro _ l0 (conj Hin Hpl))) as (b & Hb & Hp).
@@ -3239,7 +3241,7 @@ Proof.
         { apply IH. exists x. split; assumption. }
 Qed.
 
-Lemma has_input_summand : forall M c, has_input c M -> exists P, (c ? P) ∈ summands M.
+Lemma has_input_summand : forall M c, has_input c M -> exists P, (c ? • P) ∈ summands M.
 Proof.
   induction M as [ | | c0 P0 | c0 v0 P0 | P0 | M1 IH1 M2 IH2 ]; intros c H; simpl in H;
     try contradiction.
@@ -3531,24 +3533,24 @@ Proof.
       inversion HS2c as [|? ? Hl0N HS2kl2]; subst.
       inversion HS1kl2 as [|? ? Hl1S HS1r1]; subst.
       simpl in Hl0S, Hl1S.
-      assert (Hdup2 : kfind_dup (((c ▷ Some v') ▷ l1) :: r1) = None)
+      assert (Hdup2 : kfind_dup (((c, Some v'), l1) :: r1) = None)
         by (simpl; rewrite Hpr1; rewrite Hdr1; reflexivity).
       assert (Hexc : Permutation (kexclude S kl)
-                       (((c ▷ Some v) ▷ l0) :: kexclude S (((c ▷ Some v') ▷ l1) :: r1))).
+                       (((c, Some v), l0) :: kexclude S (((c, Some v'), l1) :: r1))).
       { etransitivity; [apply (kexclude_perm S kl _ Hpermkl) |].
         rewrite kexclude_cons_notin by exact Hk0S. reflexivity. }
-      assert (Hlen2 : length (kexclude S (((c ▷ Some v') ▷ l1) :: r1)) <= n).
+      assert (Hlen2 : length (kexclude S (((c, Some v'), l1) :: r1)) <= n).
       { assert (HL := Permutation_length Hexc). rewrite E in HL.
         assert (HL2 : Datatypes.S (length rest)
-                    = Datatypes.S (length (kexclude S (((c ▷ Some v') ▷ l1) :: r1))))
+                    = Datatypes.S (length (kexclude S (((c, Some v'), l1) :: r1))))
           by exact HL.
         simpl in Hlen. lia. }
       assert (Hres : Permutation (krestrict S kl)
-                       (krestrict S (((c ▷ Some v') ▷ l1) :: r1))).
+                       (krestrict S (((c, Some v'), l1) :: r1))).
       { etransitivity; [apply (krestrict_perm S kl _ Hpermkl) |].
         rewrite krestrict_cons_notin by exact Hk0S. reflexivity. }
-      assert (Hcov2 : forall k, khas (((c ▷ Some v') ▷ l1) :: r1) k ->
-                exists k2, k2 ∈ S /\ khas (((c ▷ Some v') ▷ l1) :: r1) k2 /\ kabs k2 = kabs k).
+      assert (Hcov2 : forall k, khas (((c, Some v'), l1) :: r1) k ->
+                exists k2, k2 ∈ S /\ khas (((c, Some v'), l1) :: r1) k2 /\ kabs k2 = kabs k).
       { intros k Hk.
         assert (Hkk : khas kl k).
         { destruct Hk as (la & Hla). exists la. rewrite Hpermkl.
@@ -3569,7 +3571,7 @@ Proof.
         - apply build_gStatic. exact HS1r1.
         - apply build_gStable. }
       eapply ax_trans.
-      { apply (IH (((c ▷ Some v') ▷ l1) :: r1) S); assumption. }
+      { apply (IH (((c, Some v'), l1) :: r1) S); assumption. }
       eapply ax_cgr; [| apply cgr_build_perm; symmetry; exact Hres].
       constructor. apply build_gStatic. apply krestrict_Forall. exact HS1.
 Qed.
@@ -3604,7 +3606,7 @@ Proof.
 Qed.
 
 Lemma in_conts_g_summand : forall A c, in_conts_g A c <> [] ->
-  exists P, (c ? P) ∈ summands A.
+  exists P, (c ? • P) ∈ summands A.
 Proof.
   induction A as [ | | c0 P0 | c0 v0 P0 | P0 | A1 IH1 A2 IH2 ]; intros c H; simpl in *;
     try (exfalso; apply H; reflexivity).
@@ -3639,7 +3641,7 @@ Proof.
     exists (c ! v • P). split; [exact HP | reflexivity].
   - rewrite (in_conts_stable A c Hst) in Hne.
     destruct (in_conts_g_summand A c Hne) as (P & HP).
-    exists (c ? P). split; [exact HP | reflexivity].
+    exists (c ? • P). split; [exact HP | reflexivity].
 Qed.
 
 (* [bhv_pre_cond2] at the empty trace, read as a *leaf*: some leaf of
@@ -3681,7 +3683,7 @@ Proof.
   - rewrite (in_conts_stable A c Hst) in Hne.
     destruct (has_input_summand N c (Hin c (in_conts_g_has_input A c Hne))) as (P & HP).
     exists (c, None). split; [| reflexivity].
-    apply keylist_spec. exists (c ? P). split; [exact HP | reflexivity].
+    apply keylist_spec. exists (c ? • P). split; [exact HP | reflexivity].
 Qed.
 
 Lemma key_conts_at : forall A k, gStable A -> k ∈ keylist (summands A) ->
@@ -3731,7 +3733,7 @@ Definition mirror_look (kl : list (act_key * list proc)) (n : gproc) : gproc :=
 Theorem ax_stable_step : forall M N,
   gStatic M -> tau_nf M -> gStatic N -> gStable N ->
   (g M) ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ (g N) ->
-  (forall c Q, (c ? Q) ∈ summands N -> forall v,
+  (forall c Q, (c ? • Q) ∈ summands N -> forall v,
       ((g (ichoice (in_conts M c))) ^ v) ᴠᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
   (forall c v Q, (c ! v • Q) ∈ summands N ->
       (g (ichoice (out_conts M c v))) ᴠᴄᴄꜱ⊑ₐₓ Q) ->
@@ -3826,7 +3828,7 @@ Proof.
     + unfold mirror_look. simpl. apply ax_success_r.
     + unfold mirror_look. simpl. apply ax_refl. repeat constructor.
     + assert (HkSN : (c, None) ∈ SN)
-        by (apply keylist_spec; exists (c ? P); split; [exact Ha | reflexivity]).
+        by (apply keylist_spec; exists (c ? • P); split; [exact Ha | reflexivity]).
       assert (Hm := klook_mem (krestrict SN kl) (c,None) (Hkhas' _ HkSN)).
       assert (HLne : klook (c,None) (krestrict SN kl) <> [])
         by (rewrite Forall_forall in HK2'; exact (HK2' _ Hm)).
@@ -3884,7 +3886,7 @@ Proof.
   assert (H := Htb [μ] q Hwt). simpl in H. lia.
 Qed.
 
-Lemma summand_in_Static : forall N c Q, gStatic N -> (c ? Q) ∈ summands N -> Static Q.
+Lemma summand_in_Static : forall N c Q, gStatic N -> (c ? • Q) ∈ summands N -> Static Q.
 Proof.
   intros N c Q Hs Hin.
   pose proof (summands_gStatic N Hs) as H. rewrite Forall_forall in H.
@@ -3930,11 +3932,11 @@ Proof.
   { intros N' M' HsN' HstN' HSN' HtbN' HsM' HtnfM' HSM' Hp'.
     apply ax_stable_step; try assumption.
     - intros c Q HQ v.
-      assert (Hlts : lts (g N') ((c ▷ v) ?) (Q ^ v)) by (apply summand_lts_in; exact HQ).
+      assert (Hlts : lts (g N') (c ? v) (Q ^ v)) by (apply summand_lts_in; exact HQ).
       assert (HSQ : Static (Q ^ v))
         by (apply Static_subst; exact (summand_in_Static N' c Q HsN' HQ)).
       assert (Hne : in_conts M' c <> [])
-        by (exact (conts_at_nonempty M' N' (c ? Q) (c, None) HSM' HSN' HtnfM' Hp' HQ eq_refl)).
+        by (exact (conts_at_nonempty M' N' (c ? • Q) (c, None) HSM' HSN' HtnfM' Hp' HQ eq_refl)).
       assert (HSl : Static ((g (ichoice (in_conts M' c))) ^ v)).
       { apply Static_subst. constructor. apply ichoice_gStatic.
         apply in_conts_Static. exact HsM'. }
@@ -3951,7 +3953,7 @@ Proof.
         eapply in_cont_below; [exact HsM' | exact HtnfM' | exact HSQ | exact E
                               | exact HQ | exact Hp'].
     - intros c v Q HQ.
-      assert (Hlts : lts (g N') ((c ▷ v) !) Q) by (apply summand_lts_out; exact HQ).
+      assert (Hlts : lts (g N') (c ! v) Q) by (apply summand_lts_out; exact HQ).
       assert (HSQ : Static Q) by (exact (summand_out_Static N' c v Q HsN' HQ)).
       assert (Hne : out_conts M' c v <> [])
         by (exact (conts_at_nonempty M' N' (c ! v • Q) (c, Some v)

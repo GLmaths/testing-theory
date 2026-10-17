@@ -23,10 +23,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA.
-(* end hide *)
+
 
 (** ** LTSs that respects the axioms FW-FEEDBACK and BOOMERANG *)
 Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
@@ -38,9 +39,8 @@ Class gLtsObaFW (P A : Type) `{gLtsOba P A} :=
       non_blocking η -> dual β η -> p1 ⟶[ η ] p2 -> p2 ⟶[ β ] p3 
         -> p1 ⟶⋍ p3 \/ p1 ⋍ p3 ;
     }.
-(* begin hide *)
 
-(* ** Properties on forwarder LTSs *)
+(** ** Properties on forwarder LTSs *)
 
 Lemma lts_dual_non_blocking_enabled `{gLtsObaFW P A} (p : P) η β :
   non_blocking η → dual β η → exists p', p ⟶[ β ] p'.
@@ -61,4 +61,3 @@ Lemma lts_ht_input_ex `{gLtsObaFW P A} (p : P) :
 Proof.
   intros. exists (co η). eapply lts_co_non_blocking_enabled; eauto.
 Qed.
-(* end hide *)

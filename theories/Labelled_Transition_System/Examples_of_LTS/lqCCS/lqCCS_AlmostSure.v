@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the almost-sure must is a must on supports
 
     lqCCS has no recursion: every step consumes a prefix, so every run is
@@ -42,7 +43,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition.
-
 (* ** Sizes: every step makes a configuration smaller *)
 
 Fixpoint psize (P : proc) : nat :=

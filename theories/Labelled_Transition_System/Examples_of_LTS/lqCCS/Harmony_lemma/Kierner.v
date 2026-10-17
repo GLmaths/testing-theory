@@ -1,4 +1,27 @@
 (* begin hide *)
+(*
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*)
+(* end hide *)
+(* begin hide *)
 (* * Tag schedulers are history-dependent schedulers (§3, inclusion ⊆)
 
     Every element of ⟦p⟧(ρ) is the value of the MDP of [Kierner 2025] under
@@ -13,10 +36,10 @@
     States are kept unnormalised: along a path, (probability) × (normalised
     final state) is the unnormalised final state, and the unnormalised
     states are a function of the normalised history. *)
+
 From Stdlib Require Import List ChoiceFacts.
 From TestingTheory Require Import Lifted Paths States.
 Import ListNotations.
-
 (* Measurement outcomes can be recovered from states (projective measurements). *)
 Class KAlg `{StAlg} := {
   St_eq_dec (a b : St) : {a = b} + {a <> b};

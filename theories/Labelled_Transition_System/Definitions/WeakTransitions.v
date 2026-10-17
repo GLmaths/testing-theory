@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -32,7 +33,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation Lts_OBA Lts_FW.
-(* end hide *)
+
 
 (** ** Weak transitions *)
 
@@ -43,8 +44,6 @@ Inductive wt `{gLts P A} : P -> trace A -> P -> Prop :=
 | wt_tau s p q t (l : p ⟶ q) (w : wt q s t) : wt p s t
 | wt_act μ s p q t (l : p ⟶[μ] q) (w : wt q s t) : wt p (μ :: s) t
 .
-(* begin hide *)
-
 Global Hint Constructors wt:mdb.
 
 Notation "p ⟹ q" := (wt p [] q) (at level 30).
@@ -57,11 +56,8 @@ Notation "p ⟹⋍ q" := (wt_sc p [] q) (at level 30, format "p  ⟹⋍  q").
 Notation "p ⟹⋍{ μ } q" := (wt_sc p [μ] q) (at level 30, format "p  ⟹⋍{ μ }  q").
 Notation "p ⟹⋍[ s ] q" := (wt_sc p s q) (at level 30, format "p  ⟹⋍[ s ]  q").
 
-(* *** Properties on weak transitions in LTSs *)
+(** *** Properties on weak transitions in LTSs *)
 
-(* The trace is kept as a variable and constrained by an equation, so that plain
-   induction applies: [dependent induction] on the non-variable index [μ :: s]
-   would go through [JMeq] and pull in the [Eqdep.Eq_rect_eq] axiom. *)
 Lemma wt_pop_gen `{gLts P A} p q s0 :
   p ⟹[s0] q -> forall μ1 s, s0 = μ1 :: s -> ∃ t, p ⟹{μ1} t /\ t ⟹[s] q.
 Proof.
@@ -121,7 +117,6 @@ Lemma wt_push_right `{gLts P A} p q r μ s :
   p ⟹[s] q -> q ⟹{μ} r -> p ⟹[s ++ [μ]] r.
 Proof. intros w1 w2. eapply wt_concat; eauto. Qed.
 
-(* Same treatment as [wt_pop]: the trace stays a variable, so no UIP axiom. *)
 Lemma wt_decomp_one_gen `{gLts P A} p q s0 :
   p ⟹[s0] q -> forall μ1, s0 = [μ1] -> ∃ r1 r2, p ⟹ r1 ∧ r1 ⟶[μ1] r2 ∧ r2 ⟹ q.
 Proof.
@@ -146,7 +141,7 @@ Proof. eauto with mdb. Qed.
 Lemma lts_to_wt_tau`{gLts P A} {p q} : p ⟶ q -> p ⟹ q.
 Proof. intros tr'. eapply wt_tau;eauto. constructor. Qed.
 
-(* *** Properties on weak transitions in LTSs with a Bisimulation *)
+(** *** Properties on weak transitions in LTSs with a Bisimulation *)
 
 Lemma eq_spec_wt `{gLtsEq P A} p p' : p ⋍ p' -> forall q s, p ⟹[s] q -> p' ⟹⋍[s] q.
 Proof.
@@ -216,10 +211,8 @@ Proof.
   intros w1 (r' & hwr' & heqr').
   exists r'. split. eapply wt_concat; eassumption. eassumption.
 Qed.
-(* end hide *)
 
 (** *** Properties on weak transitions in Lts with OBA axioms *)
-(* begin hide *)
 
 Lemma refuses_tau_preserved_by_wt_non_blocking_action `{gLtsOba P A} p q s :
   Forall non_blocking s ->  p ↛ -> p ⟹[s] q -> q ↛.
@@ -262,8 +255,6 @@ Lemma delay_wt_non_blocking_action_nil `{gLtsOba P A} {p q r η} :
   non_blocking η -> p ⟶⋍[η] q -> q ⟹ r
     -> exists t, p ⟹ t /\ t ⟶⋍[η] r.
 Proof.
-  (* the trace is kept as a variable, constrained by an equation, so that plain
-     induction applies and no UIP axiom is pulled in *)
   intros nb l w.
   remember ([] : trace A) as s0 eqn:Hs.
   revert p η nb l Hs.
@@ -303,7 +294,7 @@ Proof.
     etrans; eassumption.
 Qed.
 
-(* Properties of weak transitions in Lts with Forwarder axioms*)
+(** ***** Properties of weak transitions in Lts with Forwarder axioms*)
 
 Lemma wt_non_blocking_action_swap `{gLtsObaFW P A} p q η1 η2 : 
   non_blocking η1 -> non_blocking η2 -> p ⟹[[η1 ; η2]] q
@@ -382,7 +373,6 @@ Proof.
     exists q''. split; eauto. etrans; eauto.
     eapply are_actions_preserved_by_perm; eauto.
 Qed.
-(* end hide *)
 
 Lemma push_wt_non_blocking_action `{gLtsObaFW P A} {p q η s} :
   non_blocking η -> p ⟹[η :: s] q
@@ -399,7 +389,6 @@ Proof.
   destruct w7 as (u & hwu & hequ).
   exists u. split. eapply wt_act. eassumption. eapply wt_nil. eassumption.
 Qed.
-(* begin hide *)
 
 Lemma wt_annhil `{gLtsObaFW P A} p q η μ :
   non_blocking η -> dual μ η -> p ⟹[[η ; μ]] q
@@ -469,4 +458,3 @@ Proof.
          eapply Forall_app. split. assumption. eauto. 
          symmetry. eapply Permutation_cons_append.
 Qed.
-(* end hide *)

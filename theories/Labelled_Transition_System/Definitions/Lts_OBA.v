@@ -23,20 +23,21 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts Bisimulation.
-(* end hide *)
 
-(** ** Lts that respects the axioms NB-DELAY , NB-CONFLUENCE, NB-TAU, NB-DETERMINACY and BACKWARDS-NB-DETERMINACY *)
 
-Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
+(** *** Lts that respects the axioms NB-DELAY , NB-CONFLUENCE, NB-TAU, NB-DETERMINACY and BACKWARDS-NB-DETERMINACY *)
+
+Class gLtsOba P {A} `{H : ExtAction A} (Rel : gLtsEq P H) :=
   MkOba {
       (* Selinger axioms. *)
-      nb_delay {p q r η α} :
-      non_blocking η → p ⟶[ η ] q → q ⟶{ α } r 
-        → (∃ t, p ⟶{α} t /\ t ⟶⋍[ η ] r) ;
+      nb_delay {p q r η 𝜆} :
+      non_blocking η → p ⟶[ η ] q → q ⟶{ 𝜆 } r 
+        → (∃ t, p ⟶{𝜆} t /\ t ⟶⋍[ η ] r) ;
       nb_confluence {p q1 q2 η μ} :
       non_blocking η → μ ≠ η → p ⟶[ η ] q1 → p ⟶[ μ ] q2 
         → ∃ r, q1 ⟶[ μ ] r /\ q2 ⟶⋍[ η ] r ; 
@@ -51,9 +52,8 @@ Class gLtsOba P {A} `{H : ExtAction A} {Rel : gLtsEq P H} :=
       non_blocking η → p1 ⟶[ η ] q1 → p2 ⟶[ η ] q2 → q1 ⋍ q2 
         → p1 ⋍ p2
     }.
-(* begin hide *)
 
-(* *** Relationship between `co_nba`, `non_blocking` and `dual` *)
+(** *** Relationship between `co_nba`, `non_blocking` and `dual` *)
 
 Definition exist_co_nba `{ExtAction A} (β : A) := 
     exists (η : A), (non_blocking η /\ dual β η).
@@ -103,7 +103,7 @@ Proof.
   * apply EquivDef_inv1.
 Qed.
 
-(* *** Properties on gLtsOBA *)
+(** *** Properties on gLtsOBA *)
 
 Lemma refuses_tau_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η : 
   non_blocking η → p ↛ → p ⟶[ η ] q → q ↛.
@@ -139,4 +139,3 @@ Proof.
     contradiction.
   + exact refuses.
 Qed.
-(* end hide *)

@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Logic Require Import ProofIrrelevance. 
@@ -95,4 +96,3 @@ Section in_list_finite.
   Defined.
 
 End in_list_finite.
-(* end hide *)

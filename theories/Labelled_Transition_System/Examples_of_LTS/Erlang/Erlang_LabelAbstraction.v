@@ -20,13 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the label abstraction
 
     The observers are VACCS processes ([Erlang_Must_Characterization]), so the
-    abstraction is theirs: [Φᴠᴀᴄᴄꜱ (ActIn (c,v)) = Inputs c] forgets the value
+    abstraction is theirs: [αᴛᴠᴀᴄᴄꜱ (ActIn (c,v)) = Inputs c] forgets the value
     and keeps the channel — here, the target pid.  It is the /test/ side that
-    fixes [Φ]: an input prefix [c?(x).P] accepts every value on [c], so no
+    fixes [αᴛᴇꜱᴛ]: an input prefix [c?(x).P] accepts every value on [c], so no
     observer can accept one value and refuse another.
 
     An Erlang [receive] could tell them apart, its patterns being able to be
@@ -35,7 +36,7 @@
 
     [abstraction_test_spec] does not mention the processes at all, so VACCS's
     proof is reused as it stands; [abstraction_prog_spec] is trivial because
-    [𝝳ᴠᴀᴄᴄꜱ] is the identity — which is also why the [Admitted] instance
+    [αᴘᴠᴀᴄᴄꜱ] is the identity — which is also why the [Admitted] instance
     [PreActActionForFW] of [DefinitionAS.v] is not needed here. *)
 
 From Stdlib.Unicode Require Import Utf8.
@@ -43,9 +44,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation
-  Lts_OBA Subset_Act DefinitionAS VACCS VACCS_Instance
+  Lts_OBA Subset_Act DefinitionAS VACCS.Language.LTS VACCS.Language.gLts_Instance
   Erlang_Syntax Erlang_LTS Erlang_Instance.
-
 Section Erlang_LabelAbstraction.
 
 Context `{EP : Erlang_Program}.
@@ -53,23 +53,23 @@ Context `{EP : Erlang_Program}.
 (* ** The abstraction of VACCS is one for Erlang *)
 
 #[global] Program Instance Erl_AbsAction :
-  @AbsAction sys proc FinA PreAct erl_act VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _.
+  AbsAction (gLtsT := VACCS_gLtsEq) sys proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ.
 Next Obligation.
   (* the test side is the one of VACCS, which does not mention the processes *)
   intros t β β' hb hb' heq hmem.
   eapply (@abstraction_test_spec proc proc FinA PreAct erl_act VACCS_ExtAction
-            Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
+            αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ AbsVACCS t β β'); eassumption.
 Qed.
 Next Obligation.
-  (* [𝝳ᴠᴀᴄᴄꜱ] is the identity, so the hypothesis /is/ the conclusion *)
-  intros S β β' _ _ heq hmem. unfold 𝝳ᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
+  (* [αᴘᴠᴀᴄᴄꜱ] is the identity, so the hypothesis /is/ the conclusion *)
+  intros S β β' _ _ heq hmem. unfold αᴘᴠᴀᴄᴄꜱ in heq. by rewrite <- heq.
 Qed.
 
 (* ** It is finitary: the abstracted co-actions are the targets of the
     messages in transit *)
 
 Definition coR_abs_erl (S : sys) : gset PreAct :=
-  set_map (λ μ, 𝝳ᴠᴀᴄᴄꜱ (Φᴠᴀᴄᴄꜱ μ)) (dom (erl_mo S)).
+  set_map (λ μ, αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ μ)) (dom (erl_mo S)).
 
 Lemma coR_abs_erl_spec S pre_μ :
   pre_μ ∈ coR_abs_erl S ↔ ∃ p v, pre_μ = Inputs (cst p) ∧ CMsg p v ∈ S.
@@ -82,7 +82,7 @@ Proof.
 Qed.
 
 #[global] Program Instance Erl_FinitaryAbsAction :
-  @FinitaryAbsAction sys proc FinA PreAct erl_act VACCS_ExtAction Φᴠᴀᴄᴄꜱ 𝝳ᴠᴀᴄᴄꜱ _ _ _ VACCS_gLtsEq _ _ _ :=
+  FinitaryAbsAction (gLtsT := VACCS_gLtsEq) sys proc αᴛᴠᴀᴄᴄꜱ αᴘᴠᴀᴄᴄꜱ :=
   {| coR_abs := coR_abs_erl |}.
 Next Obligation.
   intros S pre_μ hmem.

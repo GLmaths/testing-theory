@@ -23,18 +23,17 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts InteractionBetweenLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW.
-(* end hide *)
+
 
 (** ** Mailbox LTS *)
 
-(** A mailbox is a multiset of actions *)
-(* begin hide *)
-
+(** *** A mailbox is a multiset of actions *)
 Definition MO (A : Type) `{ExtAction A} := gmultiset A.
 
 Lemma Prop_for_nb `{ExtAction A} (η : A) (m : MO A) :
@@ -48,14 +47,12 @@ Proof.
   + assert (η'' = η). multiset_solver. subst.
     eauto.
 Qed.
-(* end hide *)
 
-Inductive lts_multiset_step `{ExtAction A} : MO A -> Act A -> MO A -> Prop :=
+Inductive lts_multiset_step `{ExtAction A} : MO A -> Labels A -> MO A -> Prop :=
 | lts_multiset_add m η μ (duo : dual μ η) (nb : non_blocking η) :
    lts_multiset_step m (ActExt μ) ({[+ η +]} ⊎ m) 
 | lts_multiset_minus m η (nb : non_blocking η):  
    lts_multiset_step ({[+ η +]} ⊎ m) (ActExt η) m.
-(* begin hide *)
 
 Global Hint Constructors lts_multiset_step:mdb.
 
@@ -81,9 +78,9 @@ Proof.
   + contradiction.
 Qed.
 
-Definition lts_multiset_step_decidable `{ExtAction A} {unique_nb : UniqueDual A} m α m' : Decision (lts_multiset_step m α m').
+Definition lts_multiset_step_decidable `{ExtAction A} {unique_nb : UniqueDual A} m 𝜆 m' : Decision (lts_multiset_step m 𝜆 m').
 Proof.
-  destruct α as [μ |].
+  destruct 𝜆 as [μ |].
   + destruct (decide (non_blocking μ)) as [nb | not_nb].
     - rename μ into η. destruct (decide ((m =  {[+ η +]} ⊎ m'))); subst.
       ++ left. eapply lts_multiset_minus; eauto.
@@ -99,30 +96,30 @@ Proof.
   + right. inversion 1.
 Qed.
 
-Definition lts_multiset_performs `{ExtAction A} (m : MO A) (α : Act A) : Prop :=
-match α with
+Definition lts_multiset_performs `{ExtAction A} (m : MO A) (𝜆 : Labels A) : Prop :=
+match 𝜆 with
     | ActExt μ => if (decide (non_blocking μ)) then μ ∈ m
                                                else ∃ η, non_blocking η ∧ dual μ η
     | τ => False
 end.
 
-Definition lts_multiset_performs_decidable `{ExtAction A} {unique_nb : UniqueDual A} m α : Decision (lts_multiset_performs m α).
+Definition lts_multiset_performs_decidable `{ExtAction A} {unique_nb : UniqueDual A} m 𝜆 : Decision (lts_multiset_performs m 𝜆).
 Proof.
-  destruct α as [μ |]; simpl.
+  destruct 𝜆 as [μ |]; simpl.
   + destruct (decide (non_blocking μ)); apply _.
   + apply _.
 Qed.
 
 #[global] Program Instance MbgLts `{H : ExtAction A} {unique_nb : UniqueDual A} : gLts (MO A) H :=
 {|
-    lts_step m α m' := lts_multiset_step m α m' ;
-    lts_performs m α := lts_multiset_performs m α;
-    lts_step_decidable m α m' := lts_multiset_step_decidable m α m';
-    lts_performs_decidable m α := lts_multiset_performs_decidable m α;
+    lts_step m 𝜆 m' := lts_multiset_step m 𝜆 m' ;
+    lts_performs m 𝜆 := lts_multiset_performs m 𝜆;
+    lts_step_decidable m 𝜆 m' := lts_multiset_step_decidable m 𝜆 m';
+    lts_performs_decidable m 𝜆 := lts_multiset_performs_decidable m 𝜆;
   |}.
 Next Obligation.
-  intros ? ? ? m α accepts; simpl in *.
-  destruct α as [μ |]; [| contradiction].
+  intros ? ? ? m 𝜆 accepts; simpl in *.
+  destruct 𝜆 as [μ |]; [| contradiction].
   simpl in accepts. destruct (decide (non_blocking μ)) as [nb | not_nb].
   - rename μ into η.
     assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eq by multiset_solver.
@@ -133,14 +130,14 @@ Next Obligation.
     constructor; eauto.
 Qed.
 Next Obligation.
-  intros ? ? ? m α (q & HypTr); simpl in *.
-  destruct α as [μ |]; [| inversion HypTr].
+  intros ? ? ? m 𝜆 (q & HypTr); simpl in *.
+  destruct 𝜆 as [μ |]; [| inversion HypTr].
   simpl. destruct (decide (non_blocking μ)) as [nb | not_nb].
   - eapply non_blocking_action_in_ms in nb; eauto. subst. multiset_solver.
   - eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto.
 Qed.
 
-(*************************** Mailbox purification of blocking actions *********************************)
+(** ***** Mailbox purification of blocking actions *)
 
 Fixpoint MO_without_not_nb_on_list `{ExtAction A} (l : list A) : MO A:=
 match l with
@@ -440,10 +437,10 @@ Next Obligation.
   subst. exists M2. split; eauto.
 Qed.
 
-Lemma delay_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} η α M1 M2 M3 : non_blocking η -> M1 ⟶[ η ] M2 -> M2 ⟶{ α } M3 
-        → (∃ M'2, M1 ⟶{α} M'2 /\ M'2 ⟶⋍[ η ] M3).
+Lemma delay_in_ms `{H : ExtAction A} {unique_nb : UniqueDual A} η 𝜆 M1 M2 M3 : non_blocking η -> M1 ⟶[ η ] M2 -> M2 ⟶{ 𝜆 } M3 
+        → (∃ M'2, M1 ⟶{𝜆} M'2 /\ M'2 ⟶⋍[ η ] M3).
 Proof.
-  destruct α.
+  destruct 𝜆.
   + destruct (decide (non_blocking μ)) as [nb' | b'];intros nb tr_nb tr.
     - eapply non_blocking_action_in_ms in tr_nb; eauto ; subst.
       eapply non_blocking_action_in_ms in tr; eauto ; subst.
@@ -545,7 +542,7 @@ Proof.
     reflexivity.
 Qed.
 
-#[global] Program Instance MbgLts_Oba `{H : ExtAction A} {unique_nb : UniqueDual A} : gLtsOba (MO A). 
+#[global] Program Instance MbgLts_Oba `{H : ExtAction A} {unique_nb : UniqueDual A} : gLtsOba (MO A) _. 
 Next Obligation.
   intros. eapply delay_in_ms;eauto.
 Qed.
@@ -592,4 +589,3 @@ Qed.
 Next Obligation.
   intros. eapply forward_feedback_in_ms;eauto.
 Qed.
-(* end hide *)

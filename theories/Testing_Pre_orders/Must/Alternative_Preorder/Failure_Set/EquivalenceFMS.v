@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require Import ssreflect.
 From Stdlib.Program Require Import Equality.
@@ -32,12 +33,12 @@ From stdpp Require Import base decidable gmap finite.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS
     DefinitionAS DefinitionFMS DefinitionMS EquivalenceMS.
-(* end hide *)
+
 
 
 Lemma equivalence_must_set_nfailure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _}
+  !FinitaryAbsAction (gLtsT := gLtsEqT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}
   (p : P) (s : trace A) h1 (G : gset PreAct) : MUST__s (AFTER p s h1) G <->  ¬ Failure p s G.
 Proof.
   split.
@@ -64,7 +65,7 @@ Qed.
 
 Lemma equivalence_nmust_set_failure `{
   gLtsP : @gLts P A H, !FiniteImagegLts P A, CC : Countable PreAct,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _}
+  !FinitaryAbsAction (gLtsT := gLtsEqT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}
   (p : P) (s : trace A) h1 (G : gset PreAct) :
   ¬ MUST__s (AFTER p s h1) G
     <-> Failure p s G.
@@ -88,15 +89,14 @@ Proof.
     eapply (reachable_states_spec2 _ _ _ _ hmem). eapply wt_nil.
     eapply (hf β μ mem1 duo b). eauto.
 Qed.
-(* begin hide *)
 
 Theorem equivalence_failure_set_must_set `{ CC : Countable PreAct,
   gLtsP : @gLts P A H, !FiniteImagegLts P A,
-  @FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _,
+  !FinitaryAbsAction (gLtsT := gLtsEqT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct),
   gLtsQ : @gLts Q A H, !FiniteImagegLts Q A,
-  @FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ gLtsEqT _ _ _
+  !FinitaryAbsAction (gLtsT := gLtsEqT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
   }
-  (p : P) (q : Q) : p ≾ₘᵤₛₜ q <-> p ⋖ꜰᴀɪʟ q.
+  (p : P) (q : Q) : p ≾ₘₛ q <-> p ≾ꜰᴅʀ q.
 Proof.
   split.
   - intros (hpre1 & hpre2). split.
@@ -119,93 +119,78 @@ From Stdlib.Program Require Import Equality.
 From TestingTheory Require Import gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB StateTransitionSystems Termination
     Must Bar Completeness Soundness Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
-    Testing_Predicate DefinitionAS MustE Lts_Finite_Output_Chain Equivalence Soundness Completeness.
-(* end hide *)
+    Testing_Predicate DefinitionAS MustE Lts_Finite_Non_Blocking_Chain Equivalence Soundness Completeness.
 
 Section failure_set_preorder.
-  Context `{outcome : T -> Prop}.
-  Context `{outcome_dec : forall t, Decision (outcome t)}.
-  Context `{P : Type}.
-  Context `{Q : Type}.
-  Context `{H : !ExtAction A}.
-  Context {unique_nb : UniqueDual A}.
+  Context `{outcome : T -> Prop} `{outcome_dec : forall t, Decision (outcome t)} `{P : Type} `{Q : Type}
+          `{H : !ExtAction A} {unique_nb : UniqueDual A}.
 
-  Context `{@gLtsOba P A H gLtsEqP, !FiniteImagegLts P A}.
-  Context `{@gLtsOba Q A H gLtsEqQ, !FiniteImagegLts Q A}.
-  Context `{@gLtsOba T A H gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
+  Context `{!gLtsOba P gLtsEqP, !FiniteImagegLts P A} `{!gLtsOba Q gLtsEqQ, !FiniteImagegLts Q A}
+          `{!gLtsOba T gLtsEqT, !CountablegLts T A, !Testing_Predicate outcome _}.
 
-  Context `{!Prop_of_Inter P T A A dual}.
-  Context `{!Prop_of_Inter Q T A A dual}.
+  Context `{!Prop_of_Inter P T A A dual} `{!Prop_of_Inter Q T A A dual}.
 
-  Context `{!Prop_of_Inter P (MO A) A A fw_inter}.
-  Context `{!Prop_of_Inter (P * MO A) T A A dual}.
-  Context `{!Prop_of_Inter Q (MO A) A A fw_inter}.
-  Context `{!Prop_of_Inter (Q * MO A) T A A dual}.
+  Context `{!Prop_of_Inter P (MO A) A A fw_inter} `{!Prop_of_Inter (P * MO A) T A A dual}
+          `{!Prop_of_Inter Q (MO A) A A fw_inter} `{!Prop_of_Inter (Q * MO A) T A A dual}.
 
 
-  Context `{CC : Countable PreAct}.
-  Context `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
-  Context `{@FinitaryAbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ _ _ }.
+  Context `{CC : Countable PreAct} `{!FinitaryAbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+          `{!FinitaryAbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }.
 
-  Context `{tc_spec : @test_convergence_spec T _ _ _ outcome _ t_conv}.
-  Context `{ta_spec : @test_co_acceptance_set_spec PreAct _ _ T _ _ _ outcome Testing_Predicate0 ta (fun x => 𝝳 (Φ x))}.
+  Context `{tc_spec : !test_convergence_spec (t_conv : list A → T)}
+          `{ta_spec : !test_co_acceptance_set_spec (ta : gset PreAct → list A → T) (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
 
-  (** * Main equivalence theorems *)
+  (** ** Corollary of the main theorem for the failure divergence refinement *)
 
   Section FWⁿ.
 
-  Context `{!gLtsObaFW P A}.
-  Context `{!gLtsObaFW Q A}.
-  Context `{!gLtsObaFB T A}.
+  Context `{!gLtsObaFW P A} `{!gLtsObaFW Q A} `{!gLtsObaFB T A}.
 
-  (** ** The failure divergence refinement is equivalent to the extensional must preorder on FWⁿ*)
+  (** *** The failure divergence refinement on FWⁿ is equivalent to the extensional must preorder *)
   Corollary equivalence_fw_failure_set_and_must_e (p : P) (q : Q) :
-    p ⋖ꜰᴀɪʟ q <-> pre_extensional outcome p q.
+    p ≾ꜰᴅʀ q <-> pre_extensional outcome p q.
   Proof.
     erewrite<- equivalence_failure_set_must_set.
     rewrite equivalence_fw_must_set_and_must_e;eauto.
   Qed.
 
-  (* ** The failure divergence refinement is equivalent to the inductive must preorder on FWⁿ*)
-(* begin hide *)
+  (** *** The failure divergence refinement on FWⁿ is equivalent to the inductive must preorder *)
+
   Corollary equivalence_fw_failure_set_and_must_i (p : P) (q : Q) :
-     p ⋖ꜰᴀɪʟ q <-> p ⊑ₘᵤₛₜᵢ q .
+     p ≾ꜰᴅʀ q <-> p ⊑ₘᵤₛₜᵢ q .
   Proof.
     erewrite<- equivalence_failure_set_must_set.
     rewrite equivalence_fw_must_set_and_must_i;eauto.
   Qed.
-(* end hide *)
 
   End FWⁿ.
-  (* ---- *)
-(* begin hide *)
+  (** ---- *)
+
   Section Lⁿ.
-(* end hide *)
 
-  Context `{!gLtsObaFB P A, !FiniteOutputChain_LtsOba P}.
-  Context `{!gLtsObaFB Q A, !FiniteOutputChain_LtsOba Q}.
-  Context `{!gLtsObaFB T A, !FiniteOutputChain_LtsOba T}.
+  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}
+          `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}
+          `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
-  (* ** The failure divergence refinement is equivalent to the inductive must preorder *)
-(* begin hide *)
+  (*** *** The failure divergence refinement toFW(Lⁿ) is equivalent to the inductive must preorder *)
+
   Corollary equivalence_failure_set_and_must_i (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
+    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≾ꜰᴅʀ (q, ∅).
   Proof.
     erewrite<- equivalence_failure_set_must_set.
     rewrite equivalence_must_set_and_must_i; eauto.
   Qed.
 
-  (* ---- *)
+  (** ---- *)
 
-  (* ** The failure divergence refinement is equivalent to the extensional must preorder *)
+  (** *** The failure divergence refinement toFW(Lⁿ) is equivalent to the extensional must preorder *)
   Corollary equivalence_failure_set_and_must_e (p : P) (q : Q) :
-    pre_extensional outcome p q <-> (p, ∅) ⋖ꜰᴀɪʟ (q, ∅).
+    pre_extensional outcome p q <-> (p, ∅) ≾ꜰᴅʀ (q, ∅).
   Proof.
     rewrite pre_extensional_eq. apply equivalence_failure_set_and_must_i.
   Qed.
 
   End Lⁿ.
-(* end hide *)
 
 End failure_set_preorder.
 

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the forwarder [toFW (Erlang)]
 
     What is left for [toFW] and for the co-trace characterisation: the
@@ -32,27 +33,26 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions InListPropHelper
-  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain
+  gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain
   FiniteImageLTS coFiniteImage
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   Erlang_Syntax Erlang_LTS Erlang_Instance.
-
 (* ** A finite image is a co-finite image
 
-    Generic: with a unique dual, [∃ α', dual α' α ∧ p ⟶[α'] q] is [p ⟶[co α] q],
+    Generic: with a unique dual, [∃ 𝜆', dual 𝜆' 𝜆 ∧ p ⟶[𝜆'] q] is [p ⟶[co 𝜆] q],
     so [coFiniteImagegLts] follows from [FiniteImagegLts].  This belongs in
     [coFiniteImage.v]; it is kept here so that no file of the framework has to
     change.  It is not declared as an instance, to keep instance search
     predictable. *)
 
-Lemma dual_image_iff `{gLts P A} {unique_nb : UniqueDual A} (p q : P) α :
-  (∃ α', dual α' α ∧ p ⟶[α'] q) ↔ p ⟶[co α] q.
+Lemma dual_image_iff `{gLts P A} {unique_nb : UniqueDual A} (p q : P) 𝜆 :
+  (∃ 𝜆', dual 𝜆' 𝜆 ∧ p ⟶[𝜆'] q) ↔ p ⟶[co 𝜆] q.
 Proof.
   split.
-  - intros (α' & hd & hl). assert (α' = co α) as ->; [| done].
+  - intros (𝜆' & hd & hl). assert (𝜆' = co 𝜆) as ->; [| done].
     apply unique_nb. by symmetry.
-  - intros hl. exists (co α). split; [| done].
-    symmetry. exact (proj2_sig (exists_dual α)).
+  - intros hl. exists (co 𝜆). split; [| done].
+    symmetry. exact (proj2_sig (exists_dual 𝜆)).
 Qed.
 
 Definition coFiniteImage_from_FiniteImage `{FiniteImagegLts P A}
@@ -64,11 +64,11 @@ Proof.
     cofolts_next_states_decidable := _;
     cofolts_next_states_finite := _;
   |}.
-  - intros p α q. destruct (decide (p ⟶[co α] q)) as [h | h].
+  - intros p 𝜆 q. destruct (decide (p ⟶[co 𝜆] q)) as [h | h].
     + left. by apply dual_image_iff.
     + right. intros hc. apply h. by apply dual_image_iff.
-  - intros p α. unfold dsig.
-    eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => p ⟶[co α] q))))).
+  - intros p 𝜆. unfold dsig.
+    eapply (in_list_finite (map proj1_sig (enum (dsig (fun q => p ⟶[co 𝜆] q))))).
     intros q hq%bool_decide_unpack.
     apply list_elem_of_fmap. apply dual_image_iff in hq.
     exists (dexist q hq). split; [reflexivity | eapply elem_of_enum].

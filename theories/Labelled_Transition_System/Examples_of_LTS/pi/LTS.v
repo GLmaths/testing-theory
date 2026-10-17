@@ -58,64 +58,64 @@ Inductive lts : proc-> Act -> proc -> Prop :=
     lts q1 (BoundOut c) q2 ->
     lts (⇑ p1) (ActIn (⇑ c ⋉ 0)) p2 ->
     lts (p1 ‖ q1) τ (ν (p2 ‖ q2))
-| lts_res : forall {p q α},
-    lts p (⇑ α) q ->
-    lts (ν p) α (ν (α ?↔ q ))
-                      (* only α needs to shift here!! (both chan and value).
-                         as a consequence, the channel in α can never be 0 (giving the condition in paper)
+| lts_res : forall {p q 𝜆},
+    lts p (⇑ 𝜆) q ->
+    lts (ν p) 𝜆 (ν (𝜆 ?↔ q ))
+                      (* only 𝜆 needs to shift here!! (both chan and value).
+                         as a consequence, the channel in 𝜆 can never be 0 (giving the condition in paper)
                          as in onther places: we started with an "open" value, that's why we add a flat ν *)
 | lts_open : forall {c p1 p2}, (* remark: we are adding a ν but we are not shifting. this corresponds to the intuition in momigliano&cecilia that free rules handle open terms *)
     lts p1 (FreeOut ((⇑ c) ⋉ (var_Data 0))) p2 ->   (* condition: (⇑ c must not be 0 ! *)
     lts (ν p1) (BoundOut c) p2                      (* this should happen only when v = 0 *)
                                                     (* note that p2 is now an open term. its scope is going to be closed in the close rule *)
 
-| lts_parL : forall {α} {p1 p2 q q' : proc},
-    lts p1 α p2 ->
-    q' = (if is_bound_out α then (⇑ q) else q) ->
-    lts (p1 ‖ q) α (p2 ‖ q')
-| lts_parR : forall {α} {p p' q1 q2 : proc}, 
-    lts q1 α q2 ->
-    p' = (if is_bound_out α then (⇑ p) else p) ->
-    lts (p ‖ q1) α (p' ‖ q2)
-| lts_choiceL : forall {p1 p2 q α},
-    lts (g p1) α q -> 
-    lts (p1 + p2) α q
-| lts_choiceR : forall {p1 p2 q α},
-    lts (g p2) α q -> 
-    lts (p1 + p2) α q
+| lts_parL : forall {𝜆} {p1 p2 q q' : proc},
+    lts p1 𝜆 p2 ->
+    q' = (if is_bound_out 𝜆 then (⇑ q) else q) ->
+    lts (p1 ‖ q) 𝜆 (p2 ‖ q')
+| lts_parR : forall {𝜆} {p p' q1 q2 : proc}, 
+    lts q1 𝜆 q2 ->
+    p' = (if is_bound_out 𝜆 then (⇑ p) else p) ->
+    lts (p ‖ q1) 𝜆 (p' ‖ q2)
+| lts_choiceL : forall {p1 p2 q 𝜆},
+    lts (g p1) 𝜆 q -> 
+    lts (p1 + p2) 𝜆 q
+| lts_choiceR : forall {p1 p2 q 𝜆},
+    lts (g p2) 𝜆 q -> 
+    lts (p1 + p2) 𝜆 q
 .
 
 (* observations: a closed term does no visible actions (only τ) *)
 
 
-Lemma res_not_bound : forall p α q,
-  is_bound_out α = false ->
-  lts p (⇑ α) q ->
-  lts (ν p) α (ν q).
+Lemma res_not_bound : forall p 𝜆 q,
+  is_bound_out 𝜆 = false ->
+  lts p (⇑ 𝜆) q ->
+  lts (ν p) 𝜆 (ν q).
 Proof.
 intros. apply lts_res in H0. rewrite H in H0. assumption.
 Qed.
 
-Lemma res_bound : forall p α q,
-  is_bound_out α = true ->
-  lts p (⇑ α) q ->
-  lts (ν p) α (ν q ⟨swap⟩).
+Lemma res_bound : forall p 𝜆 q,
+  is_bound_out 𝜆 = true ->
+  lts p (⇑ 𝜆) q ->
+  lts (ν p) 𝜆 (ν q ⟨swap⟩).
 Proof.
 intros. apply lts_res in H0. rewrite H in H0. assumption.
 Qed.
 
-Lemma parR_bound : forall p α q1 q2,
-  is_bound_out α = true ->
-  lts q1 α q2 ->
-  lts (p ‖ q1) α (⇑ p ‖ q2).
+Lemma parR_bound : forall p 𝜆 q1 q2,
+  is_bound_out 𝜆 = true ->
+  lts q1 𝜆 q2 ->
+  lts (p ‖ q1) 𝜆 (⇑ p ‖ q2).
 Proof.
 intros. eapply lts_parR in H0. exact H0. now rewrite H.
 Qed.
 
-Lemma parR_not_bound : forall p α q1 q2,
-  is_bound_out α = false ->
-  lts q1 α q2 ->
-  lts (p ‖ q1) α (p ‖ q2).
+Lemma parR_not_bound : forall p 𝜆 q1 q2,
+  is_bound_out 𝜆 = false ->
+  lts q1 𝜆 q2 ->
+  lts (p ‖ q1) 𝜆 (p ‖ q2).
 Proof.
 intros. eapply lts_parR in H0. exact H0. now rewrite H.
 Qed.

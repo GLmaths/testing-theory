@@ -20,7 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionUnion Bisimulation WeakTransitions Termination.
@@ -67,9 +67,9 @@ Class gLtsFWMem :=
       fwm_feedback (p1 p2 p3 : P) (η : Atest) μ :
         non_blocking η → sync_mem μ η →
         p1 ⟶[inr (msg η)] p2 → p2 ⟶[μ] p3 → p1 ⟶⋍ p3 ∨ p1 ⋍ p3;
-      fwm_delay (p q r : P) (η : Atest) α :
-        non_blocking η → p ⟶[inr (msg η)] q → q ⟶{α} r →
-        ∃ t, p ⟶{α} t ∧ t ⟶⋍[inr (msg η)] r;
+      fwm_delay (p q r : P) (η : Atest) 𝜆 :
+        non_blocking η → p ⟶[inr (msg η)] q → q ⟶{𝜆} r →
+        ∃ t, p ⟶{𝜆} t ∧ t ⟶⋍[inr (msg η)] r;
     }.
 
 End FWMem.
@@ -102,10 +102,10 @@ Lemma sync_fwd_feedback {p1 p2 p3 : P} (η : Atest) (β : Aproc + MemAct Atest) 
   p1 ⟶[inr (msg η)] p2 → p2 ⟶[β] p3 → p1 ⟶⋍ p3 ∨ p1 ⋍ p3.
 Proof. intros nb hs l1 l2. exact (fwm_feedback p1 p2 p3 η β nb hs l1 l2). Qed.
 
-Lemma fw_delay {p q r : P} (η : Atest) {α} :
-  non_blocking η → p ⟶[inr (msg η)] q → q ⟶{α} r →
-  ∃ t, p ⟶{α} t ∧ t ⟶⋍[inr (msg η)] r.
-Proof. intros nb l1 l2. exact (fwm_delay p q r η α nb l1 l2). Qed.
+Lemma fw_delay {p q r : P} (η : Atest) {𝜆} :
+  non_blocking η → p ⟶[inr (msg η)] q → q ⟶{𝜆} r →
+  ∃ t, p ⟶{𝜆} t ∧ t ⟶⋍[inr (msg η)] r.
+Proof. intros nb l1 l2. exact (fwm_delay p q r η 𝜆 nb l1 l2). Qed.
 
 Lemma fw_delay_wt_nil {p q r : P} (η : Atest) :
   non_blocking η → p ⟶⋍[inr (msg η)] q → q ⟹ r →
@@ -141,4 +141,3 @@ Proof.
 Qed.
 
 End FWMemFacts.
-(* end hide *)

@@ -20,10 +20,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The inequational theory characterises the must-preorder
 
-    The tie-in corollary, in the style of [VCCS_Must_Characterization.v]:
+    The tie-in corollary, in the style of [Characterisations/Must_Characterisation.v]:
     on the recursion-free ([Static]) fragment of VCCS, the proof system
     [ax_pre] of [DefinitionAxiomatic.v] is *exactly* the must-preorder.
 
@@ -39,13 +40,14 @@
     [ax_tau_sep_l]/[_r], [ax_choice_tau], [ax_tau_flatten_l]/[_r],
     [ax_convex], [ax_success_l]/[_r], [ax_share_in]/[_out] and
     [ax_swap_out]. *)
-
+(* end hide *)
+(* begin hide *)
 From Stdlib Require Import List.
 From stdpp Require Import base.
-From TestingTheory Require Import VCCS VCCS_Instance Must ActTau InputOutputActions
+From TestingTheory Require Import VCCS.Language.LTS VCCS.Language.gLts_Instance Must ActTau InputOutputActions
   gLts Bisimulation InteractionBetweenLts Testing_Predicate VCCS_Good WeakTransitions
-  Subset_Act DefinitionAS Convergence VCCS_Static VCCS_Must_Characterization
-  DefinitionAxiomatic SoundnessAx CompletenessAx.
+  Subset_Act DefinitionAS Convergence VCCS.Axiomatic.Static VCCS.Characterisations.Must_Characterisation
+  VCCS.Axiomatic.DefinitionAxiomatic VCCS.Axiomatic.SoundnessAx VCCS.Axiomatic.CompletenessAx.
 
 Section EquivalenceAx.
 

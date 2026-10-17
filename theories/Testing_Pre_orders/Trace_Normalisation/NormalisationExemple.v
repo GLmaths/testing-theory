@@ -20,15 +20,16 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From Stdlib Require Import Lia.
 From stdpp Require Import base countable decidable gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW
-    InputOutputActions WeakTransitions VACCS VACCS_Instance NormalForm Normalisation.
-
+    InputOutputActions WeakTransitions VACCS.Language.LTS VACCS.Language.gLts_Instance Trace_Normalisation.NormalForm Normalisation.
 (* * Examples of normalisation in VACCS
 
     We instantiate VACCS over natural channels and natural values, and we

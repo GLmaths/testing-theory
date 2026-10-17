@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -34,7 +35,7 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable list decidable finite gmap.
 
 From TestingTheory Require Import ActTau.
-(* ** Example: Input/Output actions over a set of channels *)
+(** ******* Example: Input/Output actions over a set of channels *)
 
 Inductive ExtAct (A: Type) :=
 | ActIn (a : A)
@@ -50,12 +51,14 @@ Definition ext_act_match {A} (l1 l2: ExtAct A) :=
   | _, _ => False
   end.
 
-Definition ActIO (A : Type) := Act (ExtAct A).
+Definition ActIO (A : Type) := Labels (ExtAct A).
 
 Notation "c '?'" := (ActExt (ActIn c)) (at level 50).
 Notation "c '!'" := (ActExt (ActOut c)) (at level 50).
+Notation "c ? v" := (ActExt (ActIn (c, v))) (at level 50).
+Notation "c ! v" := (ActExt (ActOut (c, v))) (at level 50).
 
-Definition act_match {A} (l1 l2: Act (ExtAct A)) :=
+Definition act_match {A} (l1 l2: Labels (ExtAct A)) :=
   match l1, l2 with
   | ActExt x, ActExt y => ext_act_match x y
   | _, _ => False
@@ -67,8 +70,6 @@ Definition io_co {A} (l: ExtAct A) :=
   | ActOut x => ActIn x
   end.
 
-(* fixme: Involution does not hold anymore in the context of pi-calculus. *)
-
 Lemma co_involution {A} (l: ExtAct A) : io_co (io_co l) = l.
 Proof. destruct l; eauto. Qed.
 
@@ -77,21 +78,21 @@ Proof.
   destruct μ; simpl; eauto. 
 Qed.
 
-Definition act_match_commutative {A} (l1 l2: Act (ExtAct A)):
+Definition act_match_commutative {A} (l1 l2: Labels (ExtAct A)):
   act_match l1 l2 -> act_match l2 l1.
 Proof. by destruct l1 as [[?|?]|], l2 as [[?|?]|]; eauto; intros ->. Qed.
 
 #[global] Instance actext_eqdec `{EqDecision L} : EqDecision (ExtAct L).
 Proof. solve_decision. Defined.
-#[global] Instance act_eqdec `{EqDecision L} : EqDecision (Act L).
+#[global] Instance act_eqdec `{EqDecision L} : EqDecision (Labels L).
 Proof. solve_decision. Defined.
-#[global] Instance ext_act_match_dec `{EqDecision L} : ∀ (α1 α2: ExtAct L), Decision (ext_act_match α1 α2).
+#[global] Instance ext_act_match_dec `{EqDecision L} : ∀ (𝜆1 𝜆2: ExtAct L), Decision (ext_act_match 𝜆1 𝜆2).
 Proof.
   intros [l1|l1] [l2|l2]; [by right; intros ? | | | by right; intros ?];
     destruct (decide (l1 = l2)); eauto.
 Defined.
 
-#[global] Instance act_match_dec `{EqDecision L} : ∀ (α1 α2: Act (ExtAct L)), Decision (act_match α1 α2).
+#[global] Instance act_match_dec `{EqDecision L} : ∀ (𝜆1 𝜆2: Labels (ExtAct L)), Decision (act_match 𝜆1 𝜆2).
 Proof. intros [l1|] [l2|]; try by (right; eauto). simpl. apply _. Defined.
 
 Definition is_input {A} (μ : ExtAct A) := ∃ a, μ = ActIn a.
@@ -152,8 +153,3 @@ Qed.
 Proof.
   refine (inj_countable encode_ext_act decode_ext_act encode_decide_ext_act).
 Qed.
-
-
-
-
-(* end hide *)

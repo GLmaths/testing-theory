@@ -20,24 +20,25 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
-From TestingTheory Require Import ActTau gLts Subset_Act LabelAbstraction PAL_Syntax PAL_Alt_LTS.
+From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL_Syntax PAL_Alt_LTS.
+(* * The abstraction αᴘʀᴏ of the co-actions of PAL
 
-(* * The abstraction 𝝳 of the co-actions of PAL
-
-   The counterpart of [Φ] ([PAL_Alt_Phi.v]) for [≈ᴘʀᴏ]: a label [μ] is seen
+   The counterpart of [αᴛᴇꜱᴛ] ([PAL_Alt_Phi.v]) for [≈ᴘʀᴏ]: a label [μ] is seen
    through the processes accepting a dual of [μ], [co𝐄 μ].
-   - [𝝳 (AIn l) = CoOut (ltuple l)]: the duals of [AIn l] are the outputs of
+   - [αᴘʀᴏ (AIn l) = CoOut (ltuple l)]: the duals of [AIn l] are the outputs of
      [ltuple l], whatever the template;
-   - [𝝳 (AOut ot) = CoIn ot]: the duals of [AOut ot] are the inputs receiving
+   - [αᴘʀᴏ (AOut ot) = CoIn ot]: the duals of [AOut ot] are the inputs receiving
      [ot], with any template.
-   [𝝳_kernel]: [𝝳 μ = 𝝳 μ'] iff [co𝐄 μ ⊆ co𝐄 μ']. So the kernel of [𝝳] is the
-   largest [≈ᴘʀᴏ], and [𝝳] is its canonical projection ([gLtsLAprog_PALA]).
-   Unlike [Φ], [𝝳] forgets the template of an input: the co-actions of
+   [αᴘʀᴏ_kernel]: [αᴘʀᴏ μ = αᴘʀᴏ μ'] iff [co𝐄 μ ⊆ co𝐄 μ']. So the kernel of [αᴘʀᴏ] is the
+   largest [≈ᴘʀᴏ], and [αᴘʀᴏ] is its canonical projection ([gLtsLAprog_PALA]).
+   Unlike [αᴛᴇꜱᴛ], [αᴘʀᴏ] forgets the template of an input: the co-actions of
    [in(?x).𝟘] are [AOut ⟨v⟩] for every [v], with pairwise distinct images. *)
 
 Section PAL_Alt_Delta.
@@ -57,7 +58,7 @@ Section PAL_Alt_Delta.
   Open Scope pal_scope.
 
 
-  (* ** Co-events and [𝝳] *)
+  (* ** Co-events and [αᴘʀᴏ] *)
 
   Inductive CoEvent := CoOut (ot : eot) | CoIn (ot : eot).
 
@@ -73,7 +74,7 @@ Section PAL_Alt_Delta.
     by intros [].
   Defined.
 
-  Definition 𝝳ᴀᴘᴀʟ (μ : PALA_Act) : CoEvent :=
+  Definition αᴘᴀᴘᴀʟ (μ : PALA_Act) : CoEvent :=
     match μ with
     | AIn _ l => CoOut (ltuple l)
     | AOut _ ot => CoIn ot
@@ -86,11 +87,11 @@ Section PAL_Alt_Delta.
     intros (μ' & hd & acc). exists μ'. split; [exact acc | split; [exact hd | intros []]].
   Qed.
 
-  (* ** The kernel of [𝝳] is the largest [≈ᴘʀᴏ] *)
+  (* ** The kernel of [αᴘʀᴏ] is the largest [≈ᴘʀᴏ] *)
 
   (* Process side: labels with the same co-event have duals accepted by the same processes. *)
-  Lemma 𝝳_prog_spec (p : term) μ μ' :
-    𝝳ᴀᴘᴀʟ μ = 𝝳ᴀᴘᴀʟ μ' → p ∈ (co𝐄 μ : subset_of term) → p ∈ (co𝐄 μ' : subset_of term).
+  Lemma αᴘʀᴏ_prog_spec (p : term) μ μ' :
+    αᴘᴀᴘᴀʟ μ = αᴘᴀᴘᴀʟ μ' → p ∈ (co𝐄 μ : subset_of term) → p ∈ (co𝐄 μ' : subset_of term).
   Proof.
     rewrite !co𝐄_iff. intros e (μ'' & hd & acc). exists μ''. split; [| done].
     destruct μ as [l|ot], μ' as [l'|ot'], μ'' as [l''|ot'']; simpl in *; try done;
@@ -142,7 +143,7 @@ Section PAL_Alt_Delta.
       apply aar1; [apply eval_in_eot_to_tuple | apply template_of_eot_to_eit].
   Qed.
 
-  Lemma coprobe_only μ μ' : coprobe μ ∈ (co𝐄 μ' : subset_of term) → 𝝳ᴀᴘᴀʟ μ' = 𝝳ᴀᴘᴀʟ μ.
+  Lemma coprobe_only μ μ' : coprobe μ ∈ (co𝐄 μ' : subset_of term) → αᴘᴀᴘᴀʟ μ' = αᴘᴀᴘᴀʟ μ.
   Proof.
     rewrite co𝐄_iff. intros (μ'' & hd & acc). apply lts_performs_spec1 in acc as (q & hq).
     destruct μ as [l|ot]; unfold coprobe in hq; simpl in hq; inversion hq; subst.
@@ -155,20 +156,20 @@ Section PAL_Alt_Delta.
       destruct μ' as [l'|ot']; simpl in hd; [done |]. simpl. congruence.
   Qed.
 
-  Lemma 𝝳_complete μ μ' :
-    (∀ p : term, p ∈ (co𝐄 μ : subset_of term) → p ∈ (co𝐄 μ' : subset_of term)) → 𝝳ᴀᴘᴀʟ μ = 𝝳ᴀᴘᴀʟ μ'.
+  Lemma αᴘʀᴏ_complete μ μ' :
+    (∀ p : term, p ∈ (co𝐄 μ : subset_of term) → p ∈ (co𝐄 μ' : subset_of term)) → αᴘᴀᴘᴀʟ μ = αᴘᴀᴘᴀʟ μ'.
   Proof. intros h. symmetry. apply coprobe_only, h, coprobe_accepts. Qed.
 
-  Theorem 𝝳_kernel μ μ' : 𝝳ᴀᴘᴀʟ μ = 𝝳ᴀᴘᴀʟ μ' ↔ (co𝐄 μ : subset_of term) ⊆ co𝐄 μ'.
+  Theorem αᴘʀᴏ_kernel μ μ' : αᴘᴀᴘᴀʟ μ = αᴘᴀᴘᴀʟ μ' ↔ (co𝐄 μ : subset_of term) ⊆ co𝐄 μ'.
   Proof.
     split.
-    - intros e p. by apply 𝝳_prog_spec.
-    - intros hsub. apply 𝝳_complete. intros p. apply hsub.
+    - intros e p. by apply αᴘʀᴏ_prog_spec.
+    - intros hsub. apply αᴘʀᴏ_complete. intros p. apply hsub.
   Qed.
 
   (* ** [≈ᴘʀᴏ] *)
 
-  Definition R_prog_a (μ μ' : PALA_Act) : Prop := 𝝳ᴀᴘᴀʟ μ = 𝝳ᴀᴘᴀʟ μ'.
+  Definition R_prog_a (μ μ' : PALA_Act) : Prop := αᴘᴀᴘᴀʟ μ = αᴘᴀᴘᴀʟ μ'.
 
   Lemma R_prog_a_equivalence : Equivalence R_prog_a.
   Proof. unfold R_prog_a. split; [done | by intros ?? | by intros ??? -> ->]. Qed.
@@ -177,7 +178,7 @@ Section PAL_Alt_Delta.
   Proof. intros μ μ'. unfold R_prog_a. apply _. Defined.
 
   Lemma R_prog_a_spec μ μ' : R_prog_a μ μ' → (co𝐄 μ : subset_of term) ⊆ co𝐄 μ'.
-  Proof. apply 𝝳_kernel. Qed.
+  Proof. apply αᴘʀᴏ_kernel. Qed.
 
   #[global] Instance gLtsLAprog_PALA : @gLtsLAprog term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) PALA_Act (PALA_ExtAction Val) _ :=
     {| LA_prog := R_prog_a;
@@ -188,6 +189,6 @@ Section PAL_Alt_Delta.
   (* [R_prog_a] is the largest [≈ᴘʀᴏ]. *)
   Lemma R_prog_a_largest (R : PALA_Act → PALA_Act → Prop) :
     (∀ μ μ', R μ μ' → (co𝐄 μ : subset_of term) ⊆ co𝐄 μ') → ∀ μ μ', R μ μ' → R_prog_a μ μ'.
-  Proof. intros hR μ μ' h. apply 𝝳_kernel, hR, h. Qed.
+  Proof. intros hR μ μ' h. apply αᴘʀᴏ_kernel, hR, h. Qed.
 End PAL_Alt_Delta.
 (* end hide *)

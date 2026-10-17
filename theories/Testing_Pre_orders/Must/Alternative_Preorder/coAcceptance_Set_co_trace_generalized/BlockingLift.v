@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -28,9 +29,9 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
   InteractionBetweenLts MemAction InteractionUnion MemForwarder Termination
   coWeakTransition coConvergence coFiniteImage InListPropHelper
   StateTransitionSystems Testing_Predicate Must
-  LabelAbstraction LabelAdmissible DefinitionASrel
+  Label_Abstraction.LabelAbstraction LabelAdmissible DefinitionASrel
   Lts_OBA Lts_OBA_FB CompletenessASsync EquivalenceASsync.
-
+(* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section Lift_eq.
@@ -41,7 +42,7 @@ Section Lift_eq.
     {| gLtsEq_gLts := lift_left_lts;
        eq_rel := eq_rel;
        eq_rel_eq := eq_rel_eq;
-       eq_spec p q α h := let '(ex_intro _ r (conj e l)) := h in lift_left_eq_spec p r q α e l |}.
+       eq_spec p q 𝜆 h := let '(ex_intro _ r (conj e l)) := h in lift_left_eq_spec p r q 𝜆 e l |}.
 End Lift_eq.
 
 Section Blocking_lift.
@@ -55,7 +56,7 @@ Section Blocking_lift.
 
   Definition gLtsFWMem_lift : @gLtsFWMem P Aproc Atest Hp Ht SA liftEq.
   Proof.
-    split; [intros p η nb | intros p1 p2 p3 η μ nb | intros p q r η α nb];
+    split; [intros p η nb | intros p1 p2 p3 η μ nb | intros p q r η 𝜆 nb];
       exfalso; exact (allblk η nb).
   Qed.
 
@@ -231,9 +232,9 @@ Section CoFinite_lift.
 
   Context `{CFI : !@coFiniteImagegLts P Atest Aproc Hp gP Ht SA}.
 
-  Lemma lift_sync_step_iff (p q : P) (α : Atest) :
-    (∃ α', @sync _ _ _ _ SyncAction_mem α' α ∧ lts_step (gLts := gL) p (ActExt α') q) ↔
-    (∃ μ, sync μ α ∧ p ⟶[μ] q).
+  Lemma lift_sync_step_iff (p q : P) (𝜆 : Atest) :
+    (∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q) ↔
+    (∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q).
   Proof.
     split.
     - intros ([μ | ζ] & hs & l); [by exists μ | by destruct l].
@@ -248,22 +249,22 @@ Section CoFinite_lift.
     exists (dexist q h). split; [done | apply elem_of_enum].
   Defined.
 
-  Definition lift_ext_dec (p : P) (α : Atest) q :
-    Decision (∃ α', @sync _ _ _ _ SyncAction_mem α' α ∧ lts_step (gLts := gL) p (ActExt α') q).
+  Definition lift_ext_dec (p : P) (𝜆 : Atest) q :
+    Decision (∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q).
   Proof.
-    destruct (decide (∃ μ, sync μ α ∧ p ⟶[μ] q)) as [h | h]; [left | right];
+    destruct (decide (∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q)) as [h | h]; [left | right];
       by rewrite lift_sync_step_iff.
   Defined.
 
   #[local] Existing Instance lift_ext_dec.
 
-  Definition lift_ext_finite (p : P) (α : Atest) :
-    Finite (dsig (λ q, ∃ α', @sync _ _ _ _ SyncAction_mem α' α ∧ lts_step (gLts := gL) p (ActExt α') q)).
+  Definition lift_ext_finite (p : P) (𝜆 : Atest) :
+    Finite (dsig (λ q, ∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q)).
   Proof.
     unfold dsig.
-    eapply (in_list_finite (map proj1_sig (enum (dsig (λ q, ∃ μ, sync μ α ∧ p ⟶[μ] q))))).
+    eapply (in_list_finite (map proj1_sig (enum (dsig (λ q, ∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q))))).
     intros q h%bool_decide_unpack. apply list_elem_of_fmap.
-    exists (dexist q (proj1 (lift_sync_step_iff p q α) h)). split; [done | apply elem_of_enum].
+    exists (dexist q (proj1 (lift_sync_step_iff p q 𝜆) h)). split; [done | apply elem_of_enum].
   Defined.
 
   Definition coFiniteImage_lift :
@@ -312,7 +313,7 @@ Section Blocking_characterisation.
   Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
   Context (outcome : T → Prop).
 
-  Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}.
+  Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}.
   Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
   Context `{gLtsEqP : !gLtsEq P Hp} `{gLtsEqQ : !gLtsEq Q Hp}.
@@ -334,7 +335,7 @@ Section Blocking_characterisation.
 
   Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
   Context (ta : gset (LA_quotient R) → list Atest → T)
-          `{!test_co_acceptance_set_spec (LA_quotient R) ta (LA_class R)}.
+          `{!test_co_acceptance_set_spec ta (LA_class R)}.
 
   Theorem equivalence_rel_blocking (p : P) (q : Q) :
     @ctx_pre P Aproc Hp gP Q gQ T Atest Ht gLtsEqT outcome TP SA STSP STSQ p q ↔

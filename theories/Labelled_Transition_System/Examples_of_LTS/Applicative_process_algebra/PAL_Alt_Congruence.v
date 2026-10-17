@@ -20,12 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics relations countable.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
   PAL_Syntax PAL_Alt_LTS.
-
 (* * Structural congruence for the alternative LTS of PAL
 
    As for VCCS: [𝟘] is a unit of [‖] and [□], both are commutative and
@@ -138,12 +139,12 @@ Section PAL_Alt_Congruence.
   Proof. intros h1 h2 hd. eapply air13; [exact h1 | exact h2 | by symmetry]. Qed.
 
   (* Steps in contexts, for any label. *)
-  Lemma step_par_l E F α E' : step E α E' → step (E ‖ F) α (E' ‖ F).
-  Proof. destruct α; [apply aar5_l | apply air9_l]. Qed.
-  Lemma step_par_r E F α F' : step F α F' → step (E ‖ F) α (E ‖ F').
-  Proof. destruct α; [apply aar5_r | apply air9_r]. Qed.
+  Lemma step_par_l E F 𝜆 E' : step E 𝜆 E' → step (E ‖ F) 𝜆 (E' ‖ F).
+  Proof. destruct 𝜆; [apply aar5_l | apply air9_l]. Qed.
+  Lemma step_par_r E F 𝜆 F' : step F 𝜆 F' → step (E ‖ F) 𝜆 (E ‖ F').
+  Proof. destruct 𝜆; [apply aar5_r | apply air9_r]. Qed.
 
-  Lemma no_step_nil α q : ¬ step t_nil α q.
+  Lemma no_step_nil 𝜆 q : ¬ step t_nil 𝜆 q.
   Proof. inversion 1. Qed.
 
   Local Hint Constructors lts_step_a cgr_step : pal_cgr.
@@ -160,7 +161,7 @@ Section PAL_Alt_Congruence.
 
   Local Ltac use_ih :=
     match goal with
-    | IH : ∀ α p', step ?E α p' → ∃ r', _, h : step ?E _ _ |- _ =>
+    | IH : ∀ 𝜆 p', step ?E 𝜆 p' → ∃ r', _, h : step ?E _ _ |- _ =>
         let r0 := fresh "r" in let h0 := fresh "h" in let c0 := fresh "c" in
         destruct (IH _ _ h) as (r0 & h0 & c0); clear IH
     end.
@@ -196,27 +197,27 @@ Section PAL_Alt_Congruence.
 
   (* One congruence step is a strong simulation. *)
   Lemma cgr_step_simulation p r :
-    cgr_step p r → ∀ α p', step p α p' → ∃ r', step r α r' ∧ cgr p' r'.
+    cgr_step p r → ∀ 𝜆 p', step p 𝜆 p' → ∃ r', step r 𝜆 r' ∧ cgr p' r'.
   Proof.
-    induction 1; intros α p' hs.
+    induction 1; intros 𝜆 p' hs.
     all: first
-      [ solve [destruct α; eauto 6 with pal_cgr]
+      [ solve [destruct 𝜆; eauto 6 with pal_cgr]
       | inversion hs; subst; try congruence; invert_steps; try use_ih; eauto 7 with pal_cgr ].
   Qed.
   (* [cgr] is a strong bisimulation. *)
-  Lemma cgr_simulation p r α p' : cgr p r → step p α p' → ∃ r', step r α r' ∧ cgr p' r'.
+  Lemma cgr_simulation p r 𝜆 p' : cgr p r → step p 𝜆 p' → ∃ r', step r 𝜆 r' ∧ cgr p' r'.
   Proof.
-    intros h. revert α p'. induction h as [|x y z hxy _ IH]; intros α p' hs.
+    intros h. revert 𝜆 p'. induction h as [|x y z hxy _ IH]; intros 𝜆 p' hs.
     - exists p'. split; [done | reflexivity].
     - destruct (cgr_step_simulation _ _ hxy _ _ hs) as (y' & hy & cy).
       destruct (IH _ _ hy) as (z' & hz & cz). exists z'. split; [done | by etransitivity].
   Qed.
 
-  Lemma PALA_cgr_spec p q (α : Act (PALA_Act Val)) :
-    (∃ r, cgr p r ∧ step r α q) → (∃ r, step p α r ∧ cgr r q).
+  Lemma PALA_cgr_spec p q (𝜆 : Labels (PALA_Act Val)) :
+    (∃ r, cgr p r ∧ step r 𝜆 q) → (∃ r, step p 𝜆 r ∧ cgr r q).
   Proof.
     intros (r & hpr & hs). symmetry in hpr.
-    destruct (cgr_simulation r p α q hpr hs) as (r' & h' & c'). exists r'. split; [done | by symmetry].
+    destruct (cgr_simulation r p 𝜆 q hpr hs) as (r' & h' & c'). exists r'. split; [done | by symmetry].
   Qed.
 
   (* ** [gLtsEq]/[gLtsOba]/[gLtsObaFW]/[gLtsObaFB]; the last three are vacuous, no action being non-blocking *)
@@ -228,10 +229,10 @@ Section PAL_Alt_Congruence.
     eq_spec := PALA_cgr_spec;
   |}.
 
-  #[global] Instance PALA_gLtsOba : gLtsOba term (H:=PALA_ExtAction Val) (Rel:=PALA_gLtsEq).
+  #[global] Instance PALA_gLtsOba : gLtsOba term (H:=PALA_ExtAction Val)  (PALA_gLtsEq).
   Proof.
     unshelve econstructor.
-    - intros p q r η α nb Hl1 Hl2. destruct nb.
+    - intros p q r η 𝜆 nb Hl1 Hl2. destruct nb.
     - intros p q1 q2 η μ nb Hne Hl1 Hl2. destruct nb.
     - intros p q1 q2 η nb Hl1 Hl2. destruct nb.
     - intros p1 p2 p3 η nb Hl1 Hl2. destruct nb.

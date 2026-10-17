@@ -20,30 +20,31 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Subset_Act
   Testing_Predicate DefinitionAS Completeness PAL_Syntax Applicative_process_algebra.
-
 (* * No labelling of PAL fits [FinitaryAbsAction] and [test_spec]
 
    Take any type of labels [A] with any [dual], and any LTS on the terms of
    PAL whose synchronisations along [dual] are exactly those of PAL
    ([hsync]; this is what [must] uses to make a process and a test
    communicate), with every action blocking. If [Val] is infinite, there are
-   no [Φ], [𝝳] with [FinitaryAbsAction] and no [gen] with [test_spec].
+   no [αᴛᴇꜱᴛ], [αᴘʀᴏ] with [FinitaryAbsAction] and no [gen] with [test_spec].
 
    With [p? = in(?x).out(!x).𝟘], [p_v = in(!v).𝟘] and [T_v = out(!v).𝟘], let
    [c] be a label by which [T_v] synchronises with [p?] ([spec v c]):
-   - [Φ_spec_inj]: by (1), different [v] give different [Φ c];
-   - [not_in_coR_val]: by (2) and (1), if [𝝳 (Φ c) = 𝝳 (Φ c')] for a
-     different [w], then [Φ c ∉ Φ(coR p_v)];
-   - [𝝳Φ_spec_inj]: then [gen [c]] performs [c] and a second label towards
+   - [αᴛᴇꜱᴛ_spec_inj]: by (1), different [v] give different [αᴛᴇꜱᴛ c];
+   - [not_in_coR_val]: by (2) and (1), if [αᴘʀᴏ (αᴛᴇꜱᴛ c) = αᴘʀᴏ (αᴛᴇꜱᴛ c')] for a
+     different [w], then [αᴛᴇꜱᴛ c ∉ αᴛᴇꜱᴛ(coR p_v)];
+   - [αᴘʀᴏαᴛᴇꜱᴛ_spec_inj]: then [gen [c]] performs [c] and a second label towards
      the same state (the one synchronising with [p_v]), contradicting (6);
-   - [no_labelling]: so [𝝳 ∘ Φ] is injective on these labels, which all lie
+   - [no_labelling]: so [αᴘʀᴏ ∘ αᴛᴇꜱᴛ] is injective on these labels, which all lie
      in [coR p?], and [coR_abs p?] cannot be finite. *)
 
 (* A finite set cannot contain infinitely many distinct elements. *)
@@ -137,10 +138,10 @@ Section PAL_Label_Dilemma.
   (* ** Any labelling *)
 
   Context {A : Type} {EA : ExtAction A} {gLtsT : gLtsEq term EA}.
-  Context {FinA PreAct : Type} `{Countable PreAct} (Φ : A → FinA) (𝝳 : FinA → PreAct).
-  Context {Fin : @FinitaryAbsAction term term FinA PreAct A EA Φ 𝝳 _ _ gLtsEq_gLts gLtsT _ _ _}.
+  Context {FinA PreAct : Type} `{Countable PreAct} (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct).
+  Context {Fin : FinitaryAbsAction (gLtsP := gLtsEq_gLts) (gLtsT := gLtsT) term term αᴛᴇꜱᴛ αᴘʀᴏ}.
   Context (outcome : term → Prop) {TP : Testing_Predicate outcome gLtsT} (gen : list A → term)
-    {TS : @test_spec term A EA gLtsT outcome TP gen}.
+    {TS : test_spec (gLtsT := gLtsT) gen}.
 
   #[local] Hint Mode ExtAction ! : typeclass_instances.
 
@@ -152,7 +153,7 @@ Section PAL_Label_Dilemma.
     (∃ μ1 μ2 : A, dual μ1 μ2 ∧ p ⟶[μ1] p' ∧ t ⟶[μ2] t') ↔ PAL_sync p t p' t').
 
   (* The fields used, with their instances given explicitly. *)
-  Definition Abs : @AbsAction term term FinA PreAct A EA Φ 𝝳 _ _ gLtsEq_gLts gLtsT _ := Fin.(FinitaryAbsAction_Abs).
+  Definition Abs : AbsAction (gLtsP := gLtsEq_gLts) (gLtsT := gLtsT) term term αᴛᴇꜱᴛ αᴘʀᴏ := Fin.(FinitaryAbsAction_Abs).
 
   Lemma accepts_of_step (p q : term) (μ : A) : p ⟶[μ] q → μ ∈ R p.
   Proof. intros h. exact (lts_performs_spec2 p (ActExt μ) (exist _ q h)). Qed.
@@ -171,8 +172,8 @@ Section PAL_Label_Dilemma.
   Lemma spec_coR v c : spec v c → c ∈ coR p_any.
   Proof. intros (a & hd & ha & hc). exists a. split_and!; [by eapply accepts_of_step | done | apply hblock]. Qed.
 
-  (* By (1): different values give different [Φ c]. *)
-  Lemma Φ_spec_inj v w c c' : spec v c → spec w c' → Φ c = Φ c' → v = w.
+  (* By (1): different values give different [αᴛᴇꜱᴛ c]. *)
+  Lemma αᴛᴇꜱᴛ_spec_inj v w c c' : spec v c → spec w c' → αᴛᴇꜱᴛ c = αᴛᴇꜱᴛ c' → v = w.
   Proof.
     intros (a & hd & ha & hc) (a' & hd' & ha' & hc') e.
     assert (c' ∈ R (out_val v)) as hacc.
@@ -188,7 +189,7 @@ Section PAL_Label_Dilemma.
 
   (* By (2) and (1). *)
   Lemma not_in_coR_val v w c c' :
-    v ≠ w → spec v c → spec w c' → 𝝳 (Φ c) = 𝝳 (Φ c') → Φ c ∉ ⌈ Φ ⌉ (coR (in_val v)).
+    v ≠ w → spec v c → spec w c' → αᴘʀᴏ (αᴛᴇꜱᴛ c) = αᴘʀᴏ (αᴛᴇꜱᴛ c') → αᴛᴇꜱᴛ c ∉ ⌈ αᴛᴇꜱᴛ ⌉ (coR (in_val v)).
   Proof.
     intros hne hc hc' e hin.
     apply (Abs.(abstraction_prog_spec) (in_val v) c c' (hblock c) (hblock c') e) in hin as (x & hx & ex).
@@ -204,8 +205,8 @@ Section PAL_Label_Dilemma.
     - by apply in_val_out_inv in h1.
   Qed.
 
-  (* By (2), (5), (6): [𝝳 ∘ Φ] is injective on these labels. *)
-  Lemma 𝝳Φ_spec_inj v w c c' : spec v c → spec w c' → 𝝳 (Φ c) = 𝝳 (Φ c') → v = w.
+  (* By (2), (5), (6): [αᴘʀᴏ ∘ αᴛᴇꜱᴛ] is injective on these labels. *)
+  Lemma αᴘʀᴏαᴛᴇꜱᴛ_spec_inj v w c c' : spec v c → spec w c' → αᴘʀᴏ (αᴛᴇꜱᴛ c) = αᴘʀᴏ (αᴛᴇꜱᴛ c') → v = w.
   Proof.
     intros hc hc' e. destruct (decide (v = w)) as [| hne]; [done | exfalso].
     destruct (TS.(test_next_step) c []) as (t & ht & heq).
@@ -229,12 +230,12 @@ Section PAL_Label_Dilemma.
 
   Theorem no_labelling : False.
   Proof.
-    apply (finite_pigeonhole (Fin.(coR_abs) p_any) (λ n b, ∃ c, spec (inj n) c ∧ b = 𝝳 (Φ c))).
+    apply (finite_pigeonhole (Fin.(coR_abs) p_any) (λ n b, ∃ c, spec (inj n) c ∧ b = αᴘʀᴏ (αᴛᴇꜱᴛ c))).
     - intros n. destruct (spec_exists (inj n)) as (c & hc).
-      exists (𝝳 (Φ c)). split; [by exists c |].
-      apply (Fin.(coR_abs_spec2) (𝝳 (Φ c)) p_any). exists c. split; [by eapply spec_coR | done].
+      exists (αᴘʀᴏ (αᴛᴇꜱᴛ c)). split; [by exists c |].
+      apply (Fin.(coR_abs_spec2) (αᴘʀᴏ (αᴛᴇꜱᴛ c)) p_any). exists c. split; [by eapply spec_coR | done].
     - intros n m b (c & hc & ->) (c' & hc' & e). apply (inj_iff inj).
-      by apply (𝝳Φ_spec_inj (inj n) (inj m) c c').
+      by apply (αᴘʀᴏαᴛᴇꜱᴛ_spec_inj (inj n) (inj m) c c').
   Qed.
 End PAL_Label_Dilemma.
 (* end hide *)

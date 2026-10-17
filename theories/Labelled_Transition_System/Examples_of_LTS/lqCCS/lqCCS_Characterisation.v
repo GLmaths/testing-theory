@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The almost-sure must of lqCCS, characterised by co-acceptance sets
 
     Three steps:
@@ -51,7 +52,6 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Co
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   StateTransitionSystems InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
   Must DefinitionASco pMust_almost_sure pMust_smyth.
-
 (* ** Must is invariant under a renaming of the actions *)
 
 Section MustTransfer.

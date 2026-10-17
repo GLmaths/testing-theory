@@ -22,6 +22,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect.
 From Stdlib.Unicode Require Import Utf8.
@@ -40,12 +41,12 @@ From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation Lt
                DefinitionAS.
 
 CoInductive copre `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (ps : gset P) (qs : gset Q) : Prop := {
     c_tau qs' : wt_set_from_pset_spec1 qs [] qs' -> copre ps qs'
   ; c_now : ps ⤓ -> forall q , q ∈ qs -> q ↛ ->
-            exists p , p ∈ ps /\ exists p', p ⟹ p' /\ p' ↛ /\ ⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q)
+            exists p , p ∈ ps /\ exists p', p ⟹ p' /\ p' ↛ /\ ⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q)
   ; c_step : forall μ qs' ps', ps ⇓ [μ] ->
                          wt_set_from_pset_spec1 qs [μ] qs' -> wt_set_from_pset_spec ps [μ] ps' -> copre ps' qs'
   ; c_cnv : ps ⤓ -> qs ⤓
@@ -54,10 +55,7 @@ CoInductive copre `{
 Notation "ps ᶜᵒ≼ₐₛ qs" := (copre ps qs) (at level 70).
 
 Lemma co_preserved_by_wt_nil `{
-  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _  gLtsP gLtsT _,
-  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _  gLtsQ gLtsT _}
+  gLtsP : @gLts P A H, !FiniteImagegLts P A, AbsPT : !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, !FiniteImagegLts Q A, AbsQT : !AbsAction (gLtsP := gLtsQ) (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (ps : gset P) (qs qs' : gset Q) : wt_set_from_pset_spec1 qs [] qs' -> ps ᶜᵒ≼ₐₛ qs -> ps ᶜᵒ≼ₐₛ qs'.
 Proof. intros. eapply c_tau;eauto. Qed.
-
-
-(* end hide *)

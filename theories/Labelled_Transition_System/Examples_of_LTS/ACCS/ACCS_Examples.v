@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Strings Require Import String.
@@ -32,14 +33,13 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Coinduction Require Import all.
 
-From TestingTheory Require Import InputOutputActions ActTau Must VACCS_Must_Characterization
+From TestingTheory Require Import InputOutputActions ActTau Must VACCS.Characterisations.Must_Characterisation
   gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB ParallelLTSConstruction
-  InteractionBetweenLts Testing_Predicate DefinitionAS VACCS VACCS_Good VACCS_Instance
+  InteractionBetweenLts Testing_Predicate DefinitionAS VACCS.Language.LTS VACCS_Good VACCS.Language.gLts_Instance
   Convergence WeakTransitions Subset_Act MultisetLTSConstruction Termination
   ACCSInstance ACCS_Must_Characterization Coin_tower Simulation ForwarderConstruction
   SetLTSConstruction FiniteImageLTS Soundness.
-
-
+(* begin hide *)
 Open Scope string_scope.
 
 (* * Examples *)
@@ -66,7 +66,7 @@ Qed.
 Lemma empty_is_a_top_element
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}
   `{gLtsT : @gLtsEq T A EA}
-  `{AbsPT : @AbsAction P T FinA PreAct A EA Φ 𝝳P _ _ _ _ _} (X : gset P) :
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} (X : gset P) :
   forall (PRE : Chain (copre_m)),
     elem PRE X ∅.
 Proof.
@@ -79,7 +79,7 @@ Lemma accs_parallel_sim (p q : proc) :
   (p ‖ q) ≲ ((p, q) : proc * proc).
 Proof.
 revert p q. cofix hco. intros p q. constructor.
-intros α r Hstep. inversion Hstep; subst.
+intros 𝜆 r Hstep. inversion Hstep; subst.
 - eexists (p2, q2); split.
   + eapply (ParSync (ActOut (c, v)) (ActIn (c, v))); simpl; eauto.
   + apply hco.
@@ -101,7 +101,7 @@ Lemma accs_fw_parallel_sim (p q : proc) (M : MO (ExtAct TypeOfActions)) :
   ((p ‖ q) ▷ M) ≲ (((q ▷ M), p) : (proc * MO (ExtAct TypeOfActions)) * proc).
 Proof.
 revert M p q. cofix hco. intros M p q. constructor.
-intros α r Hstep. inversion Hstep; subst.
+intros 𝜆 r Hstep. inversion Hstep; subst.
 - inversion l; subst.
   + eexists ((q2 ▷ M), p2); split.
     * eapply (ParSync (ActIn (c, v)) (ActOut (c, v))); simpl; eauto.
@@ -140,7 +140,7 @@ Lemma pr_nil_fw_similar (p : proc) (M : MO (ExtAct TypeOfActions)) :
   ((g 𝟘 ‖ p) ▷ M) ≲ (p ▷ M).
 Proof.
 revert p M. cofix hco. intros p M.
-constructor. intros α r Hstep. inversion Hstep; subst.
+constructor. intros 𝜆 r Hstep. inversion Hstep; subst.
 - inversion l; subst.
   + inversion H1.
   + inversion H4.
@@ -157,7 +157,7 @@ Lemma parallel_output_mb_similar (c : Channel) (v : Value) :
   (((c ! v • 𝟘) ‖ q) ▷ M) ≲ (q ▷ {[+ ActOut (cst c, cst v) +]} ⊎ M).
 Proof.
 cofix hco. intros q M.
-constructor. intros α r Hstep.
+constructor. intros 𝜆 r Hstep.
 inversion Hstep; subst; clear Hstep.
 - inversion l; subst.
   + inversion H1; subst.
@@ -213,7 +213,7 @@ Qed.
     induction on the target set.) *)
 Lemma coin_union_right `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m}
   : forall (X Y1 Y2 : gset P), elem PRE X Y1 -> elem PRE X Y2 -> elem PRE X (Y1 ∪ Y2).
 Proof.
@@ -348,7 +348,7 @@ Qed.
 (* A singleton is below any of its weak τ-descendants. *)
 Lemma coin_wt_nil_singleton `{@FiniteImagegLts P A H gLtsP}
   `{gLtsT : !gLtsEq T H}
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
   {PRE : Chain copre_m} (x y : P) :
   x ⟹ y -> elem PRE {[x]} {[y]}.
 Proof.
@@ -571,10 +571,10 @@ Qed.
 End Omega.
 
 (* In ACCS, recursion unfolding steps are "invertible" τ steps *)
-Lemma rec_inv (n : nat) (p : proc) : forall α p',
-  (rec n • p) ⟶{α} p' <-> (p' = pr_subst n p (rec n • p) /\ α = τ).
+Lemma rec_inv (n : nat) (p : proc) : forall 𝜆 p',
+  (rec n • p) ⟶{𝜆} p' <-> (p' = pr_subst n p (rec n • p) /\ 𝜆 = τ).
 Proof.
-intros α p'. split; intro Hs.
+intros 𝜆 p'. split; intro Hs.
 - inversion Hs; subst. eauto.
 - destruct Hs; subst. eapply lts_recursion.
 Qed.
@@ -606,12 +606,12 @@ Section Example_2_1.
 
 Definition unreliableW : proc :=
   pr_rec 0 (𝛕 • (cst "end" ! cst tt • 𝟘)
-            + (cst "data" ? (𝛕 • ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0)
+            + (cst "data" ? • (𝛕 • ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0)
                              + 𝛕 • (cst "bye" ! cst tt • 𝟘)))).
 
 Definition reliableW : proc :=
   pr_rec 0 (𝛕 • (cst "end" ! cst tt • 𝟘)
-            + (cst "data" ? ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0))).
+            + (cst "data" ? • ((cst "work" ! cst tt • 𝟘) ‖ pr_var 0))).
 
 Lemma cgr_par_nil_l (p : proc) : (g 𝟘 ‖ p) ≡* p.
 Proof.
@@ -630,9 +630,9 @@ Qed.
 Definition W_end : proc := cst "end" ! cst tt • 𝟘.
 Definition W_work : proc := cst "work" ! cst tt • 𝟘.
 Definition W_bye : proc := cst "bye" ! cst tt • 𝟘.
-Definition Rbody : proc := g (𝛕 • W_end + (cst "data" ? (W_work ‖ reliableW))).
+Definition Rbody : proc := g (𝛕 • W_end + (cst "data" ? • (W_work ‖ reliableW))).
 Definition UChoice : proc := g (𝛕 • (W_work ‖ unreliableW) + 𝛕 • W_bye).
-Definition Ubody : proc := g (𝛕 • W_end + (cst "data" ? UChoice)).
+Definition Ubody : proc := g (𝛕 • W_end + (cst "data" ? • UChoice)).
 
 Definition ch (s : String.string) : ChannelData := cst s.
 Definition u1 : ValueData := cst tt.

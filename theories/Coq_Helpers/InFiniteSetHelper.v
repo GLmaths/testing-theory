@@ -23,9 +23,9 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
-
 
 Lemma lem_dec `{Countable A} (X Y Z : gset A) :
     X ⊆ Y ∪ Z
@@ -54,4 +54,3 @@ Proof.
   induction ps using set_ind_L. set_solver.
   destruct IHps; destruct (h x); eauto; set_solver.
 Qed.
-(* end hide *)

@@ -23,10 +23,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From stdpp Require Import gmap gmultiset.
-
-(* Multiset helpers. *)
+(** ****** Multiset helpers. *)
 
 Lemma gmultiset_eq_drop_l `{Countable A} (m1 m2 m3 : gmultiset A) : m1 ⊎ m2 = m1 ⊎ m3 -> m2 = m3.
 Proof. eapply gmultiset_disj_union_inj_1. Qed.
@@ -66,4 +66,3 @@ Proof. multiset_solver. Qed.
 Lemma gmultiset_not_elem_of_multiplicity `{Countable A} x (g : gmultiset A) :
   x ∉ g <-> multiplicity x g = 0.
 Proof. multiset_solver. Qed.
-(* end hide *)

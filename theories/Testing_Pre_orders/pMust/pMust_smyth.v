@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Probabilistic must, Smyth version
 
     Deng, van Glabbeek, Hennessy and Morgan compare the *sets* of success
@@ -38,11 +39,12 @@
     Following the definition, the Smyth order asks a dominating *run*, i.e.
     an attained infimum, which is the case for finite processes (Deng et
     al.); with infinitely many runs one would compare infima instead. *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base decidable list.
 From TestingTheory Require Import pMust_almost_sure.
-
+(* begin hide *)
 (* Density of the probabilities, and transitivity across [<ₚ] and [≤ₚ]. *)
 Class DenseWeights `{Weights} := MkDenseWeights {
     prob_dense a b : a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b;

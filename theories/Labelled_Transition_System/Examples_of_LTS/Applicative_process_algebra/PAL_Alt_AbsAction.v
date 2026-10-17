@@ -20,21 +20,22 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics decidable countable.
 From TestingTheory Require Import ActTau gLts Subset_Act DefinitionAS
   PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi.
-
 (* * Label abstraction of the alternative LTS of PAL, as in [DefinitionAS]
 
-   [Φᴀᴘᴀʟ] ([PAL_Alt_Phi.v]) maps a label to its event, and [𝝳ᴇᴠ] is the
-   identity on events. Condition (1) is [Φ_test_spec], and condition (2)
-   holds as [𝝳ᴇᴠ] is injective.
+   [αᴛᴀᴘᴀʟ] ([PAL_Alt_Phi.v]) maps a label to its event, and [αᴘᴇᴠ] is the
+   identity on events. Condition (1) is [αᴛᴇꜱᴛ_test_spec], and condition (2)
+   holds as [αᴘᴇᴠ] is injective.
 
    This abstraction is not finitary, and no abstraction of these labels is:
    the co-actions of [in(?x).𝟘] have pairwise distinct events [EvOut ⟨v⟩]
-   ([PAL_Alt_Abs.Φ_coR_p_formal], [PAL_Alt_Abs.prog_spec_injective], and
+   ([PAL_Alt_Abs.αᴛᴇꜱᴛ_coR_p_formal], [PAL_Alt_Abs.prog_spec_injective], and
    [PAL_Label_Dilemma.no_labelling] for any labelling). *)
 
 Section PAL_Alt_AbsAction.
@@ -43,15 +44,14 @@ Section PAL_Alt_AbsAction.
   Notation term := (term Val).
   Notation Event := (Event Val).
 
-  Definition 𝝳ᴇᴠ (e : Event) : Event := e.
+  Definition αᴘᴇᴠ (e : Event) : Event := e.
 
   #[global] Instance AbsPALA :
-    @AbsAction term term Event Event (PALA_Act Val) (PALA_ExtAction Val) (Φᴀᴘᴀʟ Val) 𝝳ᴇᴠ _ _
-      (PALA_gLts Val) (PALA_gLtsEq Val) _.
+    AbsAction (gLtsP := (PALA_gLts Val)) (gLtsT := (PALA_gLtsEq Val)) term term (αᴛᴀᴘᴀʟ Val) αᴘᴇᴠ.
   Proof.
     split.
-    - intros t β β' _ _ e h. exact (Φ_test_spec Val t β β' e h).
-    - intros p β β' _ _ e h. unfold 𝝳ᴇᴠ in e. by rewrite <- e.
+    - intros t β β' _ _ e h. exact (αᴛᴇꜱᴛ_test_spec Val t β β' e h).
+    - intros p β β' _ _ e h. unfold αᴘᴇᴠ in e. by rewrite <- e.
   Qed.
 End PAL_Alt_AbsAction.
 (* end hide *)

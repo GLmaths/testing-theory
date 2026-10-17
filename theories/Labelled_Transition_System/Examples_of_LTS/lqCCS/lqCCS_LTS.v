@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the process LTS and the observer LTS
 
     Two LTSs on two alphabets, linked by [sync], as in the classical
@@ -51,20 +52,19 @@ From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition l
   lqCCS_Congruence.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   InteractionBetweenLts.
-
 (* ** LTSs given by their successors *)
 
 Definition list_witness {A} (l : list A) (Hl : l ≠ []) : { x | x ∈ l }.
 Proof. destruct l as [|x l]; [done|]. exists x. set_solver. Defined.
 
 Definition gLts_of_succs {S A} `{EA : ExtAction A} `{EqDecision S}
-  (f : S → Act A → list S) : gLts S EA :=
-  {| lts_step p α q := q ∈ f p α;
-     lts_step_decidable p α q := (_ : Decision (q ∈ f p α));
-     lts_performs p α := f p α ≠ [];
-     lts_performs_decidable p α := _;
-     lts_performs_spec1 p α Hl := list_witness (f p α) Hl;
-     lts_performs_spec2 p α '(exist _ q Hq) := ltac:(intros E; rewrite E in Hq; set_solver) |}.
+  (f : S → Labels A → list S) : gLts S EA :=
+  {| lts_step p 𝜆 q := q ∈ f p 𝜆;
+     lts_step_decidable p 𝜆 q := (_ : Decision (q ∈ f p 𝜆));
+     lts_performs p 𝜆 := f p 𝜆 ≠ [];
+     lts_performs_decidable p 𝜆 := _;
+     lts_performs_spec1 p 𝜆 Hl := list_witness (f p 𝜆) Hl;
+     lts_performs_spec2 p 𝜆 '(exist _ q Hq) := ltac:(intros E; rewrite E in Hq; set_solver) |}.
 
 (* ** Alphabets *)
 
@@ -176,8 +176,8 @@ Section LTSs.
 
   (* *** Observers *)
 
-  Definition tsuccs (Q : proc) (α : Act tact) : list proc :=
-    match α with
+  Definition tsuccs (Q : proc) (𝜆 : Labels tact) : list proc :=
+    match 𝜆 with
     | τ => succ Q UTau
     | ActExt (TOut c v) => succ Q (UAct (AOut c v))
     | ActExt (TIn c v) => succ Q (UAct (AIn c v))
@@ -199,9 +199,9 @@ Section LTSs.
 
   Definition nonzero (ρ : St) : Prop := ρ ≠ szero.
 
-  Definition psuccs (x : proc * St) (α : Act aact) : list (proc * St) :=
+  Definition psuccs (x : proc * St) (𝜆 : Labels aact) : list (proc * St) :=
     let '(P, ρ) := x in
-    match α with
+    match 𝜆 with
     | τ =>
         ((λ P', (P', ρ)) <$> succ P UTau)
         ++ (acts P ≫= λ '(a, P0),
@@ -225,10 +225,10 @@ Section LTSs.
 
   (* *** What the steps are *)
 
-  Lemma test_step_def Q α Q' : Q ⟶{α} Q' ↔ Q' ∈ tsuccs Q α.
+  Lemma test_step_def Q 𝜆 Q' : Q ⟶{𝜆} Q' ↔ Q' ∈ tsuccs Q 𝜆.
   Proof. done. Qed.
 
-  Lemma proc_step_def x α y : x ⟶{α} y ↔ y ∈ psuccs x α.
+  Lemma proc_step_def x 𝜆 y : x ⟶{𝜆} y ↔ y ∈ psuccs x 𝜆.
   Proof. done. Qed.
 
   Lemma tstep_ext Q a Q' :
@@ -328,9 +328,9 @@ Section LTSs.
   #[global] Instance test_gLtsEq : gLtsEq proc tact_ExtAction.
   Proof.
     refine {| gLtsEq_gLts := test_gLts; eq_rel := cgr; eq_rel_eq := _ |}.
-    intros p q α (r & Hpr & Hr).
+    intros p q 𝜆 (r & Hpr & Hr).
     assert (Hrp : fwd r p) by (apply cgr_bisim; by symmetry).
-    destruct α as [a|].
+    destruct 𝜆 as [a|].
     - destruct a as [c v|c v|E qs|M qs k].
       + apply tstep_ext in Hr as (l & El & Hs); [|done].
         destruct (Hrp _ _ Hs) as (l' & p' & El' & Hs' & Hq).

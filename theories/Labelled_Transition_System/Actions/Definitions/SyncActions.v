@@ -20,29 +20,15 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
-(* * Synchronising two alphabets
-
-    A relation [sync : Aproc → Atest → Prop] saying which action of a process
-    matches which action of an observer.  This file has the conditions the
-    characterisation proofs need of it; the composition of the two LTSs is in
-    [InteractionBetweenLts.v]. *)
+(** **** Synchronising two alphabets *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable.
 From TestingTheory Require Import ActTau gLts.
 
-(* ** The synchronisation itself
-
-    [sync] is a *field*, not a parameter: it is to the pair [(Aproc, Atest)]
-    what [dual] is to [A] in [ExtAction].  That is what makes [p ⊆ₘᵤₛₜᵢ q]
-    mean something — the must preorder carries the synchronisation, it is not
-    recovered by guessing a relation.
-
-    Nothing is asked of it here: the composition of two LTSs and the co-trace
-    machinery work for any decidable relation.  The characterisation asks
-    nothing more of it either: its laws are on the forwarders
-    ([MemForwarder.v]), whose alphabet is [Aproc ⊎ Atest ⊎ cobar Atest]. *)
+(** ******* The synchronisation itself *)
 
 Class SyncAction (Aproc Atest : Type)
   `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} :=
@@ -53,25 +39,16 @@ Class SyncAction (Aproc Atest : Type)
 
 Arguments sync {Aproc Atest}%_type_scope {Hp Ht} {SyncAction} _ _.
 
-(* Deliberately *not* a global instance: it would make every search for
-   [SyncAction ?A ?A] succeed, and the searches that go through it (a [gLts]
-   on [gset P], say) then regress without bound.  The one-alphabet
-   development is in the same situation with [coFiniteImagegLts], which has
-   no generic instance either.  Pass it where it is meant. *)
 Definition SyncAction_of_dual `{H : ExtAction A} : SyncAction A A :=
   {| sync := dual; sync_dec := dual_dec |}.
 
-(* In the one-alphabet development the synchronisation is [dual].  It is
-   found automatically, but only for two copies of the same, known alphabet:
-   a search for [SyncAction ?A ?A] with [?A] unknown is left alone, which is
-   what keeps the regress described above away. *)
+(** ******* In the one-alphabet development the synchronisation is [dual].  *)
 #[global] Hint Extern 10 (SyncAction ?A ?A) =>
   lazymatch goal with
   | |- SyncAction ?A ?A => assert_fails (is_evar A); exact SyncAction_of_dual
   end : typeclass_instances.
 
-(* With [sync = dual], [sync] is symmetric, as [dual] is: proofs of the
+(** ******* With [sync = dual], [sync] is symmetric, as [dual] is: proofs of the
    one-alphabet development can keep using [symmetry]. *)
 #[global] Instance sync_of_dual_sym `{H : ExtAction A} :
   Symmetric (@sync A A H H SyncAction_of_dual) := duo_sym.
-(* end hide *)

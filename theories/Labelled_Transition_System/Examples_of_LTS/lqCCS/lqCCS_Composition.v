@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: (Prog, Mem) ∥ Test
 
     The system observed by must-testing.  A program [P] runs with the quantum
@@ -50,7 +51,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure pMust_smyth lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program.
-
 Notation conf := (proc * proc)%type.
 
 Section Composition.

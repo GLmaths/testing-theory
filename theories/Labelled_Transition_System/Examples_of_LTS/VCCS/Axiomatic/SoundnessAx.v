@@ -20,17 +20,19 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Soundness of the [ax_pre] proof system w.r.t. [⊑ₘᵤₛₜᵢ]
 
-    [soundness_ax] below is the payoff of [VCCS_Precongruence.v]: every
+    [soundness_ax] below is the payoff of [Axiomatic/Precongruence.v]: every
     constructor of [ax_pre] ([DefinitionAxiomatic.v]) has a matching
     semantic lemma there, so this file is mostly assembly. *)
-
-From TestingTheory Require Import VCCS VCCS_Instance Must ActTau
+(* end hide *)
+(* begin hide *)
+From TestingTheory Require Import VCCS.Language.LTS VCCS.Language.gLts_Instance Must ActTau
   gLts Bisimulation InputOutputActions WeakTransitions Convergence
-  VCCS_Static VCCS_Precongruence VCCS_Expansion VCCS_ResNormalize VCCS_ReadySet
-  DefinitionAxiomatic.
+  VCCS.Axiomatic.Static VCCS.Axiomatic.Precongruence VCCS.Axiomatic.Expansion VCCS.Axiomatic.ResNormalize VCCS.Axiomatic.ReadySet
+  VCCS.Axiomatic.DefinitionAxiomatic.
 
 Section SoundnessAx.
 
@@ -44,7 +46,7 @@ Context `{VP : VCCS_Parameters}.
     [DefinitionAxiomatic.v]): without it, [≡*] could relate a [Static]
     process to a non-[Static] one, and this invariant would be false.
     [ax_input]'s case needs [Static_subst]/[Static_subst_rev]
-    (]VCCS_Static.v]) to move between [Static (p^v)] (what the [∀v]
+    (]Axiomatic/Static.v]) to move between [Static (p^v)] (what the [∀v]
     premise talks about) and [Static p]/[Static q] themselves — [O]
     ([VCCS_Parameters]'s distinguished value) supplies a witness value
     to instantiate the universal at. *)
@@ -136,10 +138,10 @@ Proof.
     inversion Hsp; subst. inversion H0; subst.
     inversion H2; subst. inversion H3; subst.
     inversion H1; subst. inversion H4; subst.
-    match goal with H : gStatic (c ? P + X') |- _ => inversion H; subst end.
-    match goal with H : gStatic (c ? Q + Y') |- _ => inversion H; subst end.
-    match goal with H : gStatic (c ? P) |- _ => inversion H; subst end.
-    match goal with H : gStatic (c ? Q) |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • P + X') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • Q + Y') |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • P) |- _ => inversion H; subst end.
+    match goal with H : gStatic (c ? • Q) |- _ => inversion H; subst end.
     apply static_g. constructor;
       [constructor; apply static_g; constructor; constructor; assumption | assumption].
   - (* ax_share_out *)
@@ -167,7 +169,7 @@ Qed.
 (* ** Soundness
 
     By induction on the [ax_pre] derivation; each case is one
-    application of a [VCCS_Precongruence.v] lemma (none of which need
+    application of a [Axiomatic/Precongruence.v] lemma (none of which need
     [ax_choice] — there is no such constructor, see
     [DefinitionAxiomatic.v]). *)
 

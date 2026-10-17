@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -33,23 +34,25 @@ From Stdlib.Program Require Import Wf Equality.
 
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 
-From TestingTheory Require Import ActTau SyncActions MultisetHelper gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB FiniteImageLTS
+From TestingTheory Require Import ActTau SyncActions MultisetHelper gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_FW Lts_OBA_FB FiniteImageLTS
     InListPropHelper CodePurification InteractionBetweenLts MultisetLTSConstruction ActTau coFiniteImage.
-(* end hide *)
+
 
 (** * Operations on Ltss *)
 (** ** Forwarder LTS *)
-(* begin hide *)
 
 Definition fw_inter `{ExtAction A} μ2 μ1 := dual μ2 μ1 /\ non_blocking μ1.
-(* end hide *)
 
 #[global] Program Instance toFW {P A : Type} `(M: gLts P A) {unique_nb : UniqueDual A} 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
     : gLts (P * MO A) _ := inter_lts fw_inter.
-(* begin hide *)
 
-(* Properties on the Forwarder Construction *)
+(* begin hide *)
+Notation "p ▷ m" := (@pair _ (gmultiset _) p m) (at level 60, right associativity, only printing).
+(* end hide *)
+Notation "p ▷ m" := (@pair _ (MO _) p m) (at level 60, right associativity).
+
+(** ****** Properties on the Forwarder Construction *)
 
 Lemma add_in_MO_fw_tau `{H : ExtAction A} {unique_nb : UniqueDual A} `{
   @Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
@@ -93,9 +96,9 @@ Proof.
        multiset_solver. rewrite eq. eapply lts_multiset_minus; eauto.
 Qed.
 
-(* Definining an Forwarder Equivalence ≐ , between forwarders, using code purification *)
+(** ******* Definining an Forwarder Equivalence ≐ , between forwarders, using code purification *)
 
-Definition fw_eq `{FiniteOutputChain_LtsOba P A} (p : P * MO A) (q : P * MO A) :=
+Definition fw_eq `{FiniteNonBlockingChain_LtsOba P A} (p : P * MO A) (q : P * MO A) :=
   forall (p' q' : P),
     p.1 ⟿{lts_oba_mo p.1} p' ->
     q.1 ⟿{lts_oba_mo q.1} q' ->
@@ -104,18 +107,18 @@ Definition fw_eq `{FiniteOutputChain_LtsOba P A} (p : P * MO A) (q : P * MO A) :
 
 Infix "≐" := fw_eq (at level 70).
 
-(* ≐ is reflexive. **)
+(** ****** ≐ is reflexive. *)
 
-Lemma fw_eq_refl `{FiniteOutputChain_LtsOba P A} : Reflexive fw_eq.
+Lemma fw_eq_refl `{FiniteNonBlockingChain_LtsOba P A} : Reflexive fw_eq.
 Proof.
   intros p p1 q2 hw1 hw2. split; [eapply strip_m_deter|]; eauto.
 Qed.
 
 Global Hint Resolve fw_eq_refl:mdb.
 
-(* ≐ is symmetric. **)
+(** ****** ≐ is symmetric. *)
 
-Lemma fw_eq_symm `{FiniteOutputChain_LtsOba P A} : Symmetric fw_eq.
+Lemma fw_eq_symm `{FiniteNonBlockingChain_LtsOba P A} : Symmetric fw_eq.
 Proof.
   intros p q heq.
   intros q2 p2 hw1 hw2.
@@ -124,9 +127,9 @@ Qed.
 
 Global Hint Resolve fw_eq_symm:mdb.
 
-(* ≐ is transitive. **)
+(** ****** ≐ is transitive. *)
 
-Lemma fw_eq_trans `{FiniteOutputChain_LtsOba P A} : Transitive fw_eq.
+Lemma fw_eq_trans `{FiniteNonBlockingChain_LtsOba P A} : Transitive fw_eq.
 Proof.
   intros p q t.
   intros heq1 heq2 p2 t2 hwp hwt.
@@ -138,17 +141,17 @@ Qed.
 
 Global Hint Resolve fw_eq_trans:mdb.
 
-(* Congruence is an Equivalence. *)
+(** ****** Congruence is an Equivalence. *)
 
-Lemma fw_eq_equiv `{FiniteOutputChain_LtsOba P A} : Equivalence fw_eq.
+Lemma fw_eq_equiv `{FiniteNonBlockingChain_LtsOba P A} : Equivalence fw_eq.
 Proof. constructor; eauto with mdb. Qed.
 
 Global Hint Resolve fw_eq_equiv:mdb.
 
-(* Properties on our FW Equivalence *)
+(** ****** Properties on our FW Equivalence *)
 
-Global Instance fw_eq_id_MO `{FiniteOutputChain_LtsOba P A}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
-(* p ⋍ q -> fw_eq (p, m) (q, m) *)
+Global Instance fw_eq_id_MO `{FiniteNonBlockingChain_LtsOba P A}: Proper ((eq_rel) ==> (=) ==> (fw_eq)) pair.
+(** ****** p ⋍ q -> fw_eq (p, m) (q, m) *)
 Proof.
   intros p1 p2 heq M1 M HM; simpl. subst M1.
   set (h := lts_oba_mo_eq heq). intros q q' Hp1 Hp2; simpl in *; split;
@@ -156,18 +159,18 @@ Proof.
 Qed.
 
 Definition lts_fw_sc
-  `{M1 : @FiniteOutputChain_LtsOba P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A}
+  `{M1 : @FiniteNonBlockingChain_LtsOba P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
-  (p : P * MO A) α (q : P * MO A) :=
-  exists r, ((toFW gLtsP).(lts_step) p α r) /\ r ≐ q.
+  (p : P * MO A) 𝜆 (q : P * MO A) :=
+  exists r, ((toFW gLtsP).(lts_step) p 𝜆 r) /\ r ≐ q.
 
 Notation "p ⟶≐ q" := (lts_fw_sc p τ q) (at level 90, format "p  ⟶≐  q").
-Notation "p ⟶≐{ α } q" := (lts_fw_sc p α q) (at level 90, format "p  ⟶≐{ α }  q").
+Notation "p ⟶≐{ 𝜆 } q" := (lts_fw_sc p 𝜆 q) (at level 90, format "p  ⟶≐{ 𝜆 }  q").
 Notation "p ⟶≐[ μ ] q" := (lts_fw_sc p (ActExt μ) q) (at level 90, format "p  ⟶≐[ μ ]  q").
 
-(* Properties on our FW Equivalence, to assert it is a simulation. *)
+(** ****** Properties on our FW Equivalence, to assert it is a simulation. *)
 
-Lemma fw_eq_blocking_action_simulation `{FiniteOutputChain_LtsOba P A} {p q mp mq β q'} :
+Lemma fw_eq_blocking_action_simulation `{FiniteNonBlockingChain_LtsOba P A} {p q mp mq β q'} :
   p ▷ mp ≐ q ▷ mq -> blocking β  -> q ⟶[β] q'
     -> exists p', p ⟶[β] p' /\ p' ▷ mp ≐ q' ▷ mq.
 Proof.
@@ -206,7 +209,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left_blocking_action 
-   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+   `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A A fw_inter}
    p q q' mp mq β :
    p ▷ mp ≐ q ▷ mq -> blocking β -> q ⟶[β] q'
@@ -220,7 +223,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left_non_blocking_action
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A A fw_inter}
   p q q' mp mq η :
   p ▷ mp ≐ q ▷ mq -> non_blocking η -> q ⟶[η] q' -> p ▷ mp ⟶≐[η] q' ▷ mq.
@@ -281,7 +284,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left_tau
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A A fw_inter}
   (p : P) (q : P) q' (mp : MO A) (mq : MO A) :
   p ▷ mp ≐ q ▷ mq -> q ⟶ q'
@@ -398,13 +401,13 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_left
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A A fw_inter}
-  p q q' α mp mq :
-  p ▷ mp ≐ q ▷ mq -> q ⟶{α} q'
-    -> p ▷ mp ⟶≐{α} q' ▷ mq.
+  p q q' 𝜆 mp mq :
+  p ▷ mp ≐ q ▷ mq -> q ⟶{𝜆} q'
+    -> p ▷ mp ⟶≐{𝜆} q' ▷ mq.
 Proof.
-  intros heq l. destruct α as [μ | ].
+  intros heq l. destruct 𝜆 as [μ | ].
   + destruct (decide (non_blocking μ)).
    ++ eapply lts_fw_eq_spec_left_non_blocking_action; eauto.
    ++ eapply lts_fw_eq_spec_left_blocking_action; eauto.
@@ -412,7 +415,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_right_non_blocking_action 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A A fw_inter}
   p q mp mq η :
   non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq
@@ -472,7 +475,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec_right_blocking_action 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A A fw_inter}
    p q mp mq η μ:
   non_blocking η -> dual μ η -> p ▷ mp ≐ q ▷ mq 
@@ -490,7 +493,7 @@ Proof.
 Qed.
 
 Lemma lts_fw_com_eq_spec 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A A fw_inter}
   p q q' mp mq β η:
   blocking β -> dual β η -> non_blocking η -> p ▷ mp ≐ q ▷ {[+ η +]} ⊎ mq -> q ⟶[β] q' 
@@ -567,15 +570,15 @@ Proof.
 Qed.
 
 Lemma lts_fw_eq_spec  
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A A fw_inter}
-  (p : P) (q : P) (t : P) (mp : MO A) (mq : MO A) (mt : MO A) (α : Act A) :
-  (p ▷ mp) ≐ (t ▷ mt) -> (t ▷ mt) ⟶{α} (q ▷ mq)
-    -> p ▷ mp ⟶≐{α} q ▷ mq.
+  (p : P) (q : P) (t : P) (mp : MO A) (mq : MO A) (mt : MO A) (𝜆 : Labels A) :
+  (p ▷ mp) ≐ (t ▷ mt) -> (t ▷ mt) ⟶{𝜆} (q ▷ mq)
+    -> p ▷ mp ⟶≐{𝜆} q ▷ mq.
 Proof.
   intros heq hl. inversion hl as [ | ? ? ? ? Hstep | ] ; subst.
   - eapply lts_fw_eq_spec_left; eauto.
-  - destruct α. 
+  - destruct 𝜆. 
     + destruct (decide (non_blocking μ)) as [nb | not_nb]. 
       ++ eapply (non_blocking_action_in_ms mt μ mq) in nb as equal_MO; eauto.
          eapply lts_fw_eq_spec_right_non_blocking_action; eauto. rewrite equal_MO. eauto. 
@@ -591,10 +594,10 @@ Proof.
     rewrite equal_MO. eauto.
 Qed.
 
-(* Our FW Equivalence ≐ is a bissimulation *)
+(** ****** Our FW Equivalence ≐ is a bissimulation *)
 
 #[global] Program Instance toFWEq 
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A A fw_inter}
   : gLtsEq (P * MO A) H :=
   {| eq_rel := fw_eq |}.
@@ -604,14 +607,14 @@ Next Obligation. intros. split.
   + eapply fw_eq_trans.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? ? ? (p, mp) (q, mq) α ((t, mt) & heq & hl).
+  intros ? ? ? ? ? ? ? ? ? (p, mp) (q, mq) 𝜆 ((t, mt) & heq & hl).
   eapply lts_fw_eq_spec; eauto.
 Qed.
 
 #[global] Program Instance toFWOba
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A A fw_inter}
-  : gLtsOba (P * MO A).
+  : gLtsOba (P * MO A) _.
 Next Obligation.
 intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q as (q, mq), r as (r, mr).
   inversion Hstep_nb; inversion Hstep; subst.
@@ -629,7 +632,7 @@ intros ? ? ? ? ? ? ? ? ? ? ? ? ? ? nb Hstep_nb Hstep. destruct p as (p, mp), q a
     exists (r, {[+ η +]} ⊎ mr).
     split. simpl in *. eauto with mdb.
     exists (r, mr). split. simpl in *. eauto with mdb. reflexivity.
-  - destruct α as [μ |]. 
+  - destruct 𝜆 as [μ |]. 
     + apply (non_blocking_action_in_ms mp η mq) in nb as eq; subst; eauto.
       destruct ((decide (non_blocking μ))) as [nb' | not_nb'].
       ++ apply (non_blocking_action_in_ms mq μ mr) in nb' as eq; subst; eauto.
@@ -837,10 +840,10 @@ Next Obligation.
 Qed.
 
 
-#[global] Program Instance FW_Finite_Output_Chain
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+#[global] Program Instance FW_Finite_Non_Blocking_Chain
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
   `{!Prop_of_Inter P (MO A) A A fw_inter}
-  : FiniteOutputChain_LtsOba (P * MO A) :=
+  : FiniteNonBlockingChain_LtsOba (P * MO A) :=
   {| lts_oba_mo p := lts_oba_mo p.1 ⊎ MO_without_not_nb p.2 |}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? p1 η p2 nb Hstep; simpl in *.
@@ -880,11 +883,10 @@ Next Obligation.
     eapply lts_MO_nb_spec1;eauto.
 Qed.
 
-(* Forwarder of a LTS with OBA axioms respects FW axioms *)
-(* end hide *)
+(** ****** Forwarder of a LTS with OBA axioms respects FW axioms *)
 
 #[global] Program Instance toFWObaFW
-  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteOutputChain_LtsOba P}
+  `{M : @gLtsObaFB P A H gLtsEqP gLtsObaP} {unique_nb : UniqueDual A} `{!FiniteNonBlockingChain_LtsOba P}
    `{!Prop_of_Inter P (MO A) A A fw_inter}
   : gLtsObaFW (P * MO A) A.
 Next Obligation.
@@ -930,9 +932,8 @@ Next Obligation.
        assert (η = co β) as eq_nb. eapply unique_nb; eauto. subst.
        reflexivity.
 Qed.
-(* begin hide *)
 
-(**********************************Forwarder Construction is a Finite Image LTS ************************)
+(** ****** Forwarder Construction is a Finite Image LTS *)
 
 Definition lts_fw_not_non_blocking_action_set `{FiniteImagegLts P A} 
   (p : P) (m : MO A) μ :=
@@ -1006,7 +1007,7 @@ Proof.
     eapply Permutation_map. eauto.
     erewrite gmultiset_elements_singleton in equiv2.
     simpl in equiv2. 
-    assert (eq : co μ1 ▷ map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1)))) ∈ 
+    assert (eq : (co μ1, map proj1_sig (enum (dsig (lts_step p1 (ActExt μ1))))) ∈ 
     lts_fw_co_fin p1 (co μ1)).
     unfold lts_fw_co_fin.
     edestruct (lts_essential_actions_spec_interact _ _ _ _ _ _ l1 l2 inter) 
@@ -1099,8 +1100,8 @@ Qed.
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
   : FiniteImagegLts (P * MO A) A.
 Next Obligation. 
-  intros ? ? ? ? ? ? ? (p, m) α.
-  destruct α as [η | ].
+  intros ? ? ? ? ? ? ? (p, m) 𝜆.
+  destruct 𝜆 as [η | ].
   + destruct (decide (non_blocking η)) as [nb | not_nb].
     - eapply (in_list_finite (lts_fw_non_blocking_action_set p m η));
       intros (p0, m0) h%bool_decide_unpack.
@@ -1114,7 +1115,7 @@ Next Obligation.
       now eapply lts_fw_tau_set_spec1.
 Qed.
 
-(**********************************Forwarder Construction is a Co-Finite Image LTS *********************)
+(** ****** Forwarder Construction is a Co-Finite Image LTS *)
 
 Lemma co_involution_generic `{ExtAction A} {unique_nb : UniqueDual A} (x : A) : co (co x) = x.
 Proof.
@@ -1126,23 +1127,23 @@ Qed.
 
 Lemma fw_dual_image_ext_iff `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
-  (p q : P) (m m' : MO A) (α : A) :
-  (exists α', dual α' α /\ inter_step (p ▷ m) (ActExt α') (q ▷ m'))
-  <-> ((m' = m /\ p ⟶[co α] q) \/ (q = p /\ m ⟶[co α] m')).
+  (p q : P) (m m' : MO A) (𝜆 : A) :
+  (exists 𝜆', dual 𝜆' 𝜆 /\ inter_step (p ▷ m) (ActExt 𝜆') (q ▷ m'))
+  <-> ((m' = m /\ p ⟶[co 𝜆] q) \/ (q = p /\ m ⟶[co 𝜆] m')).
 Proof.
   split.
-  - intros (α' & duo & Hstep).
-    assert (α' = co α) as ->.
+  - intros (𝜆' & duo & Hstep).
+    assert (𝜆' = co 𝜆) as ->.
     { eapply unique_nb. eapply duo_sym. exact duo. }
     inversion Hstep; subst.
     + left. split; [reflexivity | assumption].
     + right. split; [reflexivity | assumption].
   - intros [(-> & Htr) | (-> & Htr)].
-    + exists (co α). split.
-      * eapply duo_sym, (proj2_sig (exists_dual α)).
+    + exists (co 𝜆). split.
+      * eapply duo_sym, (proj2_sig (exists_dual 𝜆)).
       * now constructor.
-    + exists (co α). split.
-      * eapply duo_sym, (proj2_sig (exists_dual α)).
+    + exists (co 𝜆). split.
+      * eapply duo_sym, (proj2_sig (exists_dual 𝜆)).
       * now constructor.
 Qed.
 
@@ -1173,19 +1174,19 @@ Qed.
 
 Lemma fw_ext_step_decidable `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
-  (p q : P) (m m' : MO A) (α : A) :
-  Decision ((m' = m /\ p ⟶[co α] q) \/ (q = p /\ m ⟶[co α] m')).
+  (p q : P) (m m' : MO A) (𝜆 : A) :
+  Decision ((m' = m /\ p ⟶[co 𝜆] q) \/ (q = p /\ m ⟶[co 𝜆] m')).
 Proof.
   destruct (decide (m' = m)) as [Hm|Hm].
-  - destruct (decide (p ⟶[co α] q)) as [Hp|Hp].
+  - destruct (decide (p ⟶[co 𝜆] q)) as [Hp|Hp].
     + left. left. split; assumption.
     + destruct (decide (q = p)) as [Hq|Hq].
-      * destruct (decide (m ⟶[co α] m')) as [Hm2|Hm2].
+      * destruct (decide (m ⟶[co 𝜆] m')) as [Hm2|Hm2].
         -- left. right. split; assumption.
         -- right. intros [(_ & Hc) | (_ & Hc)]; contradiction.
       * right. intros [(_ & Hc) | (Hc & _)]; contradiction.
   - destruct (decide (q = p)) as [Hq|Hq].
-    + destruct (decide (m ⟶[co α] m')) as [Hm2|Hm2].
+    + destruct (decide (m ⟶[co 𝜆] m')) as [Hm2|Hm2].
       * left. right. split; assumption.
       * right. intros [(Hc & _) | (_ & Hc)]; contradiction.
     + right. intros [(Hc & _) | (Hc & _)]; contradiction.
@@ -1193,32 +1194,32 @@ Defined.
 
 Lemma fw_dual_decidable `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
-  (p : P * MO A) (α : A) (q : P * MO A) :
-  Decision (exists α', dual α' α /\ p ⟶[α'] q).
+  (p : P * MO A) (𝜆 : A) (q : P * MO A) :
+  Decision (exists 𝜆', dual 𝜆' 𝜆 /\ p ⟶[𝜆'] q).
 Proof.
   destruct p as [p m], q as [q m'].
-  destruct (fw_ext_step_decidable p q m m' α) as [Hd|Hd].
+  destruct (fw_ext_step_decidable p q m m' 𝜆) as [Hd|Hd].
   - left. eapply fw_dual_image_ext_iff. exact Hd.
   - right. intro Hc. eapply Hd. eapply fw_dual_image_ext_iff. exact Hc.
 Defined.
 
-Lemma fw_ms_dual_image_finite `{H : ExtAction A} {unique_nb : UniqueDual A} (m : MO A) (α : A) :
-  Finite (dsig (fun m' => m ⟶[co α] m')).
+Lemma fw_ms_dual_image_finite `{H : ExtAction A} {unique_nb : UniqueDual A} (m : MO A) (𝜆 : A) :
+  Finite (dsig (fun m' => m ⟶[co 𝜆] m')).
 Proof.
-  destruct (decide (non_blocking α)) as [nb|nnb].
-  - eapply (in_list_finite [{[+ α +]} ⊎ m]).
+  destruct (decide (non_blocking 𝜆)) as [nb|nnb].
+  - eapply (in_list_finite [{[+ 𝜆 +]} ⊎ m]).
     intros m' Hm'%bool_decide_unpack.
     inversion Hm'; subst.
     eapply unique_nb in duo.
     rewrite duo, co_involution_generic.
     now left.
     exfalso.
-    assert (blocking (co α)) as Hb.
-    { eapply dual_blocks; [exact nb | eapply duo_sym, (proj2_sig (exists_dual α))]. }
+    assert (blocking (co 𝜆)) as Hb.
+    { eapply dual_blocks; [exact nb | eapply duo_sym, (proj2_sig (exists_dual 𝜆))]. }
     apply Hb.
     exact nb0.
-  - destruct (decide (co α ∈ m)) as [Hmem|Hmem].
-    + eapply (in_list_finite [m ∖ {[+ co α +]}]).
+  - destruct (decide (co 𝜆 ∈ m)) as [Hmem|Hmem].
+    + eapply (in_list_finite [m ∖ {[+ co 𝜆 +]}]).
       intros m' Hm'%bool_decide_unpack.
       inversion Hm'; subst.
       * exfalso.
@@ -1226,7 +1227,7 @@ Proof.
         rewrite duo, co_involution_generic in nb.
         apply nnb.
         exact nb.
-      * replace (({[+ co α +]} ⊎ m') ∖ {[+ co α +]}) with m' by multiset_solver.
+      * replace (({[+ co 𝜆 +]} ⊎ m') ∖ {[+ co 𝜆 +]}) with m' by multiset_solver.
         now left.
     + eapply (in_list_finite ([] : list (MO A))).
       intros m' Hm'%bool_decide_unpack.
@@ -1243,23 +1244,23 @@ Qed.
 
 Definition fw_co_ext_set `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
-  (p : P) (m : MO A) (α : A) : list (P * MO A) :=
-  map (fun q => (proj1_sig q, m)) (enum (dsig (fun q => exists α', sync α' α /\ p ⟶[α'] q)))
+  (p : P) (m : MO A) (𝜆 : A) : list (P * MO A) :=
+  map (fun q => (proj1_sig q, m)) (enum (dsig (fun q => exists 𝜆', sync 𝜆' 𝜆 /\ p ⟶[𝜆'] q)))
   ++ map (fun m' => (p, proj1_sig m'))
-     (@enum (dsig (fun m' => m ⟶[co α] m')) _ (fw_ms_dual_image_finite m α)).
+     (@enum (dsig (fun m' => m ⟶[co 𝜆] m')) _ (fw_ms_dual_image_finite m 𝜆)).
 
 Lemma fw_co_ext_set_spec1 `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
-  (p q : P) (m m' : MO A) (α : A) :
-  (exists α', dual α' α /\ inter_step (p ▷ m) (ActExt α') (q ▷ m')) ->
-  (q, m') ∈ fw_co_ext_set p m α.
+  (p q : P) (m m' : MO A) (𝜆 : A) :
+  (exists 𝜆', dual 𝜆' 𝜆 /\ inter_step (p ▷ m) (ActExt 𝜆') (q ▷ m')) ->
+  (q, m') ∈ fw_co_ext_set p m 𝜆.
 Proof.
   intro Hex.
   eapply fw_dual_image_ext_iff in Hex.
   unfold fw_co_ext_set.
   destruct Hex as [(-> & Htr) | (-> & Htr)].
   - eapply elem_of_app. left. eapply list_elem_of_fmap.
-    exists (dexist q (ex_intro _ (co α) (conj (duo_sym _ _ (proj2_sig (exists_dual α))) Htr))).
+    exists (dexist q (ex_intro _ (co 𝜆) (conj (duo_sym _ _ (proj2_sig (exists_dual 𝜆))) Htr))).
     split. reflexivity. eapply elem_of_enum.
   - eapply elem_of_app. right. eapply list_elem_of_fmap.
     exists (dexist m' Htr). split. reflexivity. eapply elem_of_enum.
@@ -1270,7 +1271,7 @@ Definition fw_co_tau_set `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : Un
   (p : P) (m : MO A) : list (P * MO A) :=
   map (fun q => (proj1_sig q, m)) (enum (dsig (fun q => p ⟶ q)))
   ++ concat (map (fun μ => map (fun q => (proj1_sig q, m ∖ {[+ μ +]}))
-                    (enum (dsig (fun q => exists α', sync α' μ /\ p ⟶[α'] q))))
+                    (enum (dsig (fun q => exists 𝜆', sync 𝜆' μ /\ p ⟶[𝜆'] q))))
               (elements m)).
 
 Lemma fw_co_tau_set_spec1 `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
@@ -1288,7 +1289,7 @@ Proof.
   - eapply elem_of_app. right.
     eapply list_elem_of_In. eapply in_concat.
     exists (map (fun q0 => (proj1_sig q0, ({[+ μ +]} ⊎ m') ∖ {[+ μ +]}))
-             (enum (dsig (fun q0 => exists α', sync α' μ /\ p ⟶[α'] q0)))).
+             (enum (dsig (fun q0 => exists 𝜆', sync 𝜆' μ /\ p ⟶[𝜆'] q0)))).
     split.
     + eapply list_elem_of_In. eapply list_elem_of_fmap.
       exists μ. split. reflexivity.
@@ -1310,17 +1311,16 @@ Next Obligation.
   now eapply fw_co_tau_set_spec1.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? p α q.
+  intros ? ? ? ? ? ? ? p 𝜆 q.
   eapply fw_dual_decidable.
 Qed.
 Next Obligation.
-  intros ? ? ? ? ? ? ? (p, m) α.
-  eapply (in_list_finite (fw_co_ext_set p m α)).
+  intros ? ? ? ? ? ? ? (p, m) 𝜆.
+  eapply (in_list_finite (fw_co_ext_set p m 𝜆)).
   intros (q, m') h%bool_decide_unpack.
   now eapply fw_co_ext_set_spec1.
 Qed.
 
-(****************** Random properties : TO BE CLASSIFIED ********************)
 From TestingTheory Require Import WeakTransitions.
 
 Lemma fw_wt `{@FiniteImagegLts P A H gLtsP} {unique_nb : UniqueDual A}
@@ -1369,4 +1369,3 @@ dependent induction Ht.
   + now constructor.
   + now apply fw_wt.
 Qed.
-(* end hide *)

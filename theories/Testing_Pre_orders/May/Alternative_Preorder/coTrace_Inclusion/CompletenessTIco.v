@@ -20,58 +20,23 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Lists Require Import List.
 From stdpp Require Import base decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_FW WeakTransitions
-    coWeakTransition Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Output_Chain
+    coWeakTransition Testing_Predicate InteractionBetweenLts FiniteImageLTS Lts_Finite_Non_Blocking_Chain
     MultisetLTSConstruction ForwarderConstruction May LiftMay MayTestSpec CompletenessTI DefinitionTIco.
-
-(* * Completeness of the co-trace-inclusion preorder for May
-
-      [p ⊑ₘₐᵧ q  →  p ≼꜀ₒ₋ₜᵢ q]   (for forwarders)
-
-    [completeness_core_co] is a genuine induction on [may], proven
-    directly against [gen s] (the test performing the literal trace
-    [s], per [DefinitionTIco.v]'s convention: the duality lives on the
-    *process*, never on the test) and concluding [q ⟹ᶜᵒ[s] q'] — not a
-    wrapper around [completeness_core]/[completeness_ti_fw]. It reuses
-    the shared, trace-agnostic sub-machinery of [CompletenessTI.v]
-    ([may_test_spec], the [May_tests] and [Forwarder_absorption]
-    sections — [inversion_may_test_tau_action],
-    [inversion_may_test_external_action], [fw_insert_pair],
-    [fw_anticipate_inputs], [fw_run_inputs], [never_outcome_false_of_may],
-    [never_outcome_eq], [EquivDef_inv2]), none of which depend on
-    [coₜ]/[unique_nb] in their own statements — but never calls
-    [completeness_core]/[completeness_ti_fw]/[completeness_ti_fb]
-    themselves.
-
-    Where the plain [completeness_core] peels a *canonical* dual
-    ([coₜ]/[unique_nb]) off the test's own literal co-trace, this
-    proof works the other way: it builds a plain (⟹[·]) witness for
-    the *process* piecewise (via [cowt_split]/[cowt_to_wt_dual] on the
-    induction hypothesis, [fw_insert_pair]/[fw_anticipate_inputs] to
-    absorb/reorder it against the forwarder axioms), then packages the
-    whole reassembled witness back into a co-answer in one
-    [wt_to_cowt_dual] call, with an explicit [Forall2 dual] witness
-    built compositionally ([ForAllHelper.Forall2_app]/[_cons]) — never
-    picking a canonical dual. *)
+(** ***** Completeness of the co-trace-inclusion preorder for May *)
 
 Section Completeness_ti_co.
 
 Context `{gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ}.
-Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}.
+Context `{gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _}.
 Context {QInter : Prop_of_Inter Q T A A dual}.
 Context {gen : trace A -> T} {gen_spec : may_test_spec gen}.
 
-(* ** The core of completeness, co-native
-
-    If [q] passes the test attesting [s] (literally), then [q] really
-    does co-answer [s]. Mirrors [completeness_core]'s case-by-case
-    structure but, since the test performs [s] literally (no [coₜ]
-    detour), each inversion lemma already hands back genuine pieces of
-    [s] itself — no canonical-dual bookkeeping needed to relate them
-    back to [s]. *)
+(** ***** The core of completeness *)
 
 Lemma completeness_core_co (q : Q) (t : T) :
   q may_pass t -> ∀ s, t ⋍ gen s -> ∃ q', q ⟹ᶜᵒ[s] q'.
@@ -82,29 +47,23 @@ Proof.
                   | q t t' nh et hm IH
                   | q t q0 μ1 t' μ2 nh inter trS trC hm IH ];
     intros s heq.
-  - (* the test is good — impossible: [gen] is never good *)
-    exfalso. eapply (may_test_ungood s).
+  - exfalso. eapply (may_test_ungood s).
     eapply outcome_preserved_by_eq; [exact happy | exact heq].
-  - (* the process moves on its own *)
-    destruct (IH s heq) as (q' & w).
+  - destruct (IH s heq) as (q' & w).
     exists q'. eapply cowt_tau; [exact pt | exact w].
-  - (* the test moves on its own *)
-    edestruct (eq_spec (gen s) t' τ) as (t'' & l'' & heq'').
+  - edestruct (eq_spec (gen s) t' τ) as (t'' & l'' & heq'').
     { exists t. split; [now symmetry | exact et]. }
     destruct (inversion_may_test_tau_action s t'' l'')
       as [ fatal | [ his | (η & μ & s1 & s2 & s3 & eqs & equiv & hη & his1 & his2 & duo) ] ].
-    + (* a deviation: but [q] passes the test, so success is still reachable *)
-      exfalso. eapply (never_outcome_false_of_may q t'); [exact hm |].
+    + exfalso. eapply (never_outcome_false_of_may q t'); [exact hm |].
       eapply (never_outcome_eq t'' t'); [exact heq'' | exact fatal].
-    + (* what is left of [s] is all outputs: [q] co-answers them via BOOMERANG *)
-      destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
+    + destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
       assert (hd : ForAllHelper.Forall2 dual s (coₜ s)).
       { clear. induction s as [| μ3 s' IHs]; simpl.
         - constructor.
         - constructor; [exact (proj2_sig (exists_dual μ3)) | exact IHs]. }
       exists q'. eapply wt_to_cowt_dual; [exact w | exact hd].
-    + (* the test talked to itself: give the pair back to the process by BOOMERANG *)
-      destruct (IH (s1 ++ s2 ++ s3)) as (qend & w).
+    + destruct (IH (s1 ++ s2 ++ s3)) as (qend & w).
       { etransitivity; [symmetry; exact heq'' | exact equiv]. }
       eapply cowt_split in w as (qa & w1 & w23).
       eapply cowt_split in w23 as (r2 & w2 & w3).
@@ -120,22 +79,19 @@ Proof.
       assert (wfull : q ⟹ᶜᵒ[s1 ++ (η :: s2 ++ μ :: s3)] qc)
         by (eapply cowt_concat; [exact w1 | exact wc]).
       exists qc. rewrite eqs. exact wfull.
-  - (* the process and the test synchronise *)
-    edestruct (eq_spec (gen s) t' (ActExt μ2)) as (t'' & l'' & heq'').
+  - edestruct (eq_spec (gen s) t' (ActExt μ2)) as (t'' & l'' & heq'').
     { exists t. split; [now symmetry | exact trC]. }
     destruct (inversion_may_test_external_action s μ2 t'' l'')
       as [ fatal | [ his | (s1 & s2 & μ & eqs & equiv & -> & his) ] ].
     + exfalso. eapply (never_outcome_false_of_may q0 t'); [exact hm |].
       eapply (never_outcome_eq t'' t'); [exact heq'' | exact fatal].
-    + (* same escape as above: everything left of [s] is co-answered outright *)
-      destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
+    + destruct (fw_run_inputs (coₜ s) (Forall_exist_co_nba_of_non_blocking s his) q) as (q' & w).
       assert (hd : ForAllHelper.Forall2 dual s (coₜ s)).
       { clear. induction s as [| μ3 s' IHs]; simpl.
         - constructor.
         - constructor; [exact (proj2_sig (exists_dual μ3)) | exact IHs]. }
       exists q'. eapply wt_to_cowt_dual; [exact w | exact hd].
-    + (* [q]'s own move co-answers [μ], anticipated past the postponed prefix [s1] *)
-      destruct (IH (s1 ++ s2)) as (qend & w).
+    + destruct (IH (s1 ++ s2)) as (qend & w).
       { etransitivity; [symmetry; exact heq'' | exact equiv]. }
       eapply cowt_split in w as (qa & w1 & w2).
       eapply cowt_to_wt_dual in w1 as (I & hI & wI).
@@ -155,12 +111,12 @@ Qed.
 
 End Completeness_ti_co.
 
-(* ** Completeness, for forwarders *)
+(** ***** Completeness, for forwarders *)
 
 Theorem completeness_ti_co_fw `{
   gLtsObaFWP : @gLtsObaFW P A H gLtsEqP gLtsObaP,
   gLtsObaFWQ : @gLtsObaFW Q A H gLtsEqQ gLtsObaQ,
-  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T, !Testing_Predicate outcome _}
+  gLtsT : !gLtsEq T H, gLtsObaT : !gLtsOba T _, !Testing_Predicate outcome _}
 
   {_ : Prop_of_Inter P T A A dual}
   {_ : Prop_of_Inter Q T A A dual}
@@ -171,21 +127,19 @@ Theorem completeness_ti_co_fw `{
   p ⊑ₘₐᵧ q -> p ≼꜀ₒ₋ₜᵢ q.
 Proof.
   intros hctx s (p' & wSco).
-  (* [p] co-answers [s], so it passes the test attesting [s] literally *)
   destruct (may_test_runs s) as (e & we & happy).
   assert (hmp : p may_pass (gen s)) by (eapply wt_to_may_co; eauto).
   eapply hctx in hmp.
-  (* hence so does [q] — and then [q] really does co-answer [s] *)
   eapply (completeness_core_co q (gen s) hmp s).
   reflexivity.
 Qed.
 
-(* ** Completeness, for feedback LTSs, through the forwarder construction *)
+(** ***** Completeness, for feedback LTSs, through the forwarder construction *)
 
 Theorem completeness_ti_co_fb `{
-    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A,
-    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A,
-    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
+    @gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A,
+    @gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A,
+    @gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !Testing_Predicate outcome _} {unique_nb : UniqueDual A}
 
   {_ : Prop_of_Inter P (MO A) A A fw_inter}
   {_ : Prop_of_Inter (P * MO A) T A A dual}
@@ -204,4 +158,3 @@ Proof.
   eapply completeness_ti_co_fw.
   eapply (proj1 (lift_fw_ctx_pre p q)). exact hctx.
 Qed.
-(* end hide *)

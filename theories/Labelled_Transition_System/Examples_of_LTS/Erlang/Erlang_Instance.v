@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * Core Erlang: the axioms of the framework
 
     The system LTS of [Erlang_LTS] is shown to be an LTS with non-blocking
@@ -35,10 +36,9 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers finite sets gmap gmultiset.
 From TestingTheory Require Import InListPropHelper ActTau InputOutputActions gLts Bisimulation
-  Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Output_Chain FiniteImageLTS
+  Lts_OBA Lts_OBA_FB Lts_FW Lts_Finite_Non_Blocking_Chain FiniteImageLTS
   InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction
-  VACCS VACCS_Instance Erlang_Syntax Erlang_LTS.
-
+  VACCS.Language.LTS VACCS.Language.gLts_Instance Erlang_Syntax Erlang_LTS.
 (* ** Actions
 
     Those of VACCS instantiated by [Erlang_VACCS_Parameters]: [VACCS_ExtAction]
@@ -110,11 +110,11 @@ Qed.
     environment could have performed as the input [ActIn (p,v)].  This is the
     combinatorial content of all the Selinger axioms. *)
 
-Lemma erl_drop_msg S p v α T :
-  (⟪p, v⟫ ⊎ S) ⟶ₑ{α} T →
-    (∃ R, S ⟶ₑ{α} R ∧ T = ⟪p, v⟫ ⊎ R)
-  ∨ (α = ActExt (out_act p v) ∧ T = S)
-  ∨ (α = τ ∧ S ⟶ₑ[in_act p v] T).
+Lemma erl_drop_msg S p v 𝜆 T :
+  (⟪p, v⟫ ⊎ S) ⟶ₑ{𝜆} T →
+    (∃ R, S ⟶ₑ{𝜆} R ∧ T = ⟪p, v⟫ ⊎ R)
+  ∨ (𝜆 = ActExt (out_act p v) ∧ T = S)
+  ∨ (𝜆 = τ ∧ S ⟶ₑ[in_act p v] T).
 Proof.
   intros hl. inversion hl; subst.
   all: try (assert (CMsg p v ≠ CProc p0 n e) as hne by (by intros ?)).
@@ -205,8 +205,8 @@ Definition in_succ (p : pid) (v : val) (S : sys) (c : comp) : list sys :=
       else []
   end.
 
-Definition erl_succ (S : sys) (α : Act erl_act) : list sys :=
-  match α with
+Definition erl_succ (S : sys) (𝜆 : Labels erl_act) : list sys :=
+  match 𝜆 with
   | τ => elements S ≫= tau_succ S
   | ActExt (ActIn (cst p, cst v)) => elements S ≫= in_succ p v S
   | ActExt (ActOut (cst p, cst v)) => if decide (CMsg p v ∈ S) then [S ∖ ⟪p, v⟫] else []
@@ -215,10 +215,10 @@ Definition erl_succ (S : sys) (α : Act erl_act) : list sys :=
 
 (* *** [erl_succ] enumerates exactly the successors *)
 
-Lemma erl_succ_sound S α T : T ∈ erl_succ S α → S ⟶ₑ{α} T.
+Lemma erl_succ_sound S 𝜆 T : T ∈ erl_succ S 𝜆 → S ⟶ₑ{𝜆} T.
 Proof.
   (* the actions over open data have no successor *)
-  destruct α as [[[[p | k] [v | k']] | [[p | k] [v | k']]] |]; simpl;
+  destruct 𝜆 as [[[[p | k] [v | k']] | [[p | k] [v | k']]] |]; simpl;
     try (by inversion 1).
   3:{ intros (c & hT & hc)%list_elem_of_bind.
       assert (c ∈ S) as hcS by (by apply gmultiset_elem_of_elements).
@@ -269,7 +269,7 @@ Proof.
       rewrite heq at 1. apply ErlOut. }
 Qed.
 
-Lemma erl_succ_complete S α T : S ⟶ₑ{α} T → T ∈ erl_succ S α.
+Lemma erl_succ_complete S 𝜆 T : S ⟶ₑ{𝜆} T → T ∈ erl_succ S 𝜆.
 Proof.
   intros hl. inversion hl; subst; simpl.
   all: try (assert (∀ (X : sys), (⟨p, n, e⟩ ⊎ X) ∖ ⟨p, n, e⟩ = X) as hd
@@ -298,37 +298,37 @@ Qed.
 
 (* ** The LTS *)
 
-Definition erl_performs (S : sys) (α : Act erl_act) : Prop := erl_succ S α ≠ [].
+Definition erl_performs (S : sys) (𝜆 : Labels erl_act) : Prop := erl_succ S 𝜆 ≠ [].
 
-#[global] Instance erl_performs_dec S α : Decision (erl_performs S α).
+#[global] Instance erl_performs_dec S 𝜆 : Decision (erl_performs S 𝜆).
 Proof. unfold erl_performs. apply _. Defined.
 
-Definition erl_step_dec S α T : Decision (S ⟶ₑ{α} T).
+Definition erl_step_dec S 𝜆 T : Decision (S ⟶ₑ{𝜆} T).
 Proof.
-  destruct (decide (T ∈ erl_succ S α)) as [h | h].
+  destruct (decide (T ∈ erl_succ S 𝜆)) as [h | h].
   - left. by apply erl_succ_sound.
   - right. intros hl. apply h. by apply erl_succ_complete.
 Defined.
 
-Definition erl_performs_spec1 S α : erl_performs S α → { T | S ⟶ₑ{α} T }.
+Definition erl_performs_spec1 S 𝜆 : erl_performs S 𝜆 → { T | S ⟶ₑ{𝜆} T }.
 Proof.
   intros h. unfold erl_performs in h.
-  destruct (erl_succ S α) as [| T l] eqn:heq; [done |].
+  destruct (erl_succ S 𝜆) as [| T l] eqn:heq; [done |].
   exists T. apply erl_succ_sound. rewrite heq. apply elem_of_cons. by left.
 Defined.
 
-Definition erl_performs_spec2 S α : { T | S ⟶ₑ{α} T } → erl_performs S α.
+Definition erl_performs_spec2 S 𝜆 : { T | S ⟶ₑ{𝜆} T } → erl_performs S 𝜆.
 Proof.
   intros (T & hl) heq.
   apply erl_succ_complete in hl. rewrite heq in hl. by inversion hl.
 Defined.
 
 #[global] Program Instance Erl_gLts : gLts sys VACCS_ExtAction :=
-  {| lts_step S α T := S ⟶ₑ{α} T ;
+  {| lts_step S 𝜆 T := S ⟶ₑ{𝜆} T ;
      lts_state_eqdec := _ ;
-     lts_step_decidable S α T := erl_step_dec S α T ;
-     lts_performs S α := erl_performs S α ;
-     lts_performs_decidable S α := erl_performs_dec S α |}.
+     lts_step_decidable S 𝜆 T := erl_step_dec S 𝜆 T ;
+     lts_performs S 𝜆 := erl_performs S 𝜆 ;
+     lts_performs_decidable S 𝜆 := erl_performs_dec S 𝜆 |}.
 Next Obligation. intros. by apply erl_performs_spec1. Defined.
 Next Obligation. intros. by apply erl_performs_spec2. Defined.
 
@@ -338,7 +338,7 @@ Next Obligation. intros. by apply erl_performs_spec2. Defined.
   {| gLtsEq_gLts := Erl_gLts ;
      eq_rel S T := S = T |}.
 Next Obligation.
-  intros p q α (R & <- & hl). exists q. split; [exact hl | reflexivity].
+  intros p q 𝜆 (R & <- & hl). exists q. split; [exact hl | reflexivity].
 Defined.
 
 (* ** The multiset of messages in transit
@@ -378,9 +378,9 @@ Qed.
     message in transit, and a message in transit interferes with nothing but the
     communication that consumes it. *)
 
-#[global] Program Instance Erl_gLtsOba : gLtsOba sys.
+#[global] Program Instance Erl_gLtsOba : gLtsOba sys _.
 Next Obligation. (* NB-DELAY *)
-  intros p q r η α nb hl1 hl2.
+  intros p q r η 𝜆 nb hl1 hl2.
   destruct nb as (a & ->). apply erl_out_shape in hl1 as (p0 & v & -> & ->).
   exists (⟪p0, v⟫ ⊎ r). split; [by apply erl_lts_par_l |].
   exists r. split; [apply ErlOut | reflexivity].
@@ -435,7 +435,7 @@ Qed.
 
 (* ** The messages in transit form the output multiset *)
 
-#[global] Program Instance Erl_FiniteOutputChain : FiniteOutputChain_LtsOba sys :=
+#[global] Program Instance Erl_FiniteNonBlockingChain : FiniteNonBlockingChain_LtsOba sys :=
   {| lts_oba_mo := erl_mo |}.
 Next Obligation.
   intros S η T nb hl. destruct nb as (a & ->).
@@ -462,7 +462,7 @@ Defined.
 
 #[global] Program Instance Erl_FiniteImage : FiniteImagegLts sys erl_act.
 Next Obligation.
-  intros S α. eapply (in_list_finite (erl_succ S α)).
+  intros S 𝜆. eapply (in_list_finite (erl_succ S 𝜆)).
   intros T htr%bool_decide_unpack. by apply erl_succ_complete.
 Defined.
 

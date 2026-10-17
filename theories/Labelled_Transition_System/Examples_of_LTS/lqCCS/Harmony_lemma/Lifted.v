@@ -1,13 +1,36 @@
 (* begin hide *)
+(*
+   Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+*)
+(* end hide *)
+(* begin hide *)
 (* * Tag schedulers are adequate for the lifted semantics of
       nondeterministic quantum programs [Feng–Xu, ASPLOS'23].
 
     Everything is stated over an abstract ω-cpo of super-operators [Alg],
     with measurements having finitely many outcomes.  Main result:
     [adequacy]. *)
+
 From Stdlib Require Import List Arith Lia ChoiceFacts.
 Import ListNotations.
-
 (* ** Abstract domain of super-operators *)
 
 Class Ord := { T : Type; le : T -> T -> Prop }.
@@ -468,7 +491,7 @@ Proof.
 Qed.
 
 (* Theorem 1 (strong form): for well-labelled [p],
-    ⟦p⟧ = { Σ_{α ⊨ σ} ℰ_α : σ tag scheduler }. *)
+    ⟦p⟧ = { Σ_{𝜆 ⊨ σ} ℰ_𝜆 : σ tag scheduler }. *)
 Theorem adequacy (CC : FunctionalCountableChoice_on sched) p :
   wl p -> forall x, Sem p x <-> exists σ, x = E σ p.
 Proof.

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * The Smyth must sees correlations between measurement branches
 
     A measurement [M] on a qubit [q] with two outcomes [k0], [k1] of
@@ -41,7 +42,7 @@
     The observer branches: tests that follow one sequence of actions
     (co-ready traces, Georgievska and Andova) cannot tell such processes
     apart when the two outcomes have the same weight; the characterisation
-    of the Smyth must needs trees (as the [φ p⊕ ψ] of the logic F of Deng,
+    of the Smyth must needs trees (as the [αᴛᴇꜱᴛ p⊕ ψ] of the logic F of Deng,
     van Glabbeek, Hennessy and Morgan). *)
 
 From Stdlib.Unicode Require Import Utf8.
@@ -51,7 +52,6 @@ From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure pMust_smyth lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Succ lqCCS_Composition
   lqCCS_LTS lqCCS_AlmostSure lqCCS_Congruence.
-
 (* ** Inversion of the steps of small programs *)
 
 Lemma pstep_send_inv t c e l X :

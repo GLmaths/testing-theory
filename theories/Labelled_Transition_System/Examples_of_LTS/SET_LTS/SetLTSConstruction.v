@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -38,9 +39,8 @@ From stdpp Require Import base countable finite gmap list gmultiset strings.
 From Stdlib.Program Require Import Wf Equality.
 From stdpp Require Import base list countable decidable finite gmap gmultiset.
 From TestingTheory Require Import MultisetHelper ActTau gLts Bisimulation FiniteImageLTS Lts_OBA Lts_FW Lts_OBA_FB 
-    InListPropHelper Lts_Finite_Output_Chain InFiniteSetHelper WeakTransitions.
-
-(**************************************** LTS of Sets *************************************)
+    InListPropHelper Lts_Finite_Non_Blocking_Chain InFiniteSetHelper WeakTransitions.
+(** ***** LTS of Sets *)
 
 Definition all_blocking_action_ext `{!ExtAction A} (μ : A) := False.
 
@@ -69,7 +69,7 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros; simpl in *. unfold toSET_obligation_1.
-  destruct α.
+  destruct 𝜆.
   - destruct (decide (b = lts_extaction_set_from_pset a μ /\ b ≠ ∅)).
     + left. eauto.
     + right. eauto.
@@ -82,19 +82,19 @@ Next Obligation.
 Defined.
 Next Obligation.
   intros. simpl in *. unfold toSET_obligation_3. apply not_dec.
-  pose proof (decide (∃ x, x ∈ p ∧ x ⟶{α})) as Hdec.
+  pose proof (decide (∃ x, x ∈ p ∧ x ⟶{𝜆})) as Hdec.
   destruct Hdec as [Hex | Hnot].
   + right. intro. destruct Hex as (p' & mem & tr).
     eapply H0 in mem. contradiction.
-  + left. intros. destruct (decide (p0 ⟶{α})).
-    - assert (∃ x : P, x ∈ p ∧ x ⟶{α}).
+  + left. intros. destruct (decide (p0 ⟶{𝜆})).
+    - assert (∃ x : P, x ∈ p ∧ x ⟶{𝜆}).
       { exists p0. split ;eauto. }
       contradiction.
     - eauto.
 Qed.
 Next Obligation.
   unfold toSET_obligation_3.
-  unfold toSET_obligation_1. intros. destruct α.
+  unfold toSET_obligation_1. intros. destruct 𝜆.
   - assert (forall p', p' ∈ p -> (p' ⟶[μ] \/ (p' ↛[μ]))) as Hyp.
     { intros. destruct (decide (p' ⟶[μ])); [left|right]; eauto. }
     exists (lts_extaction_set_from_pset p μ). split; eauto.
@@ -119,7 +119,7 @@ Qed.
 Next Obligation.
   unfold toSET_obligation_3.
   unfold toSET_obligation_1. intros.
-  destruct α.
+  destruct 𝜆.
   - intro. destruct H0 as (p' & Hyp1 & Hyp2). subst.
     remember (lts_extaction_set_from_pset p μ).
     induction g using set_ind_L.
@@ -143,9 +143,9 @@ Next Obligation.
 Qed.
 
 
-(************** Properties of toSet(L) ***************)
+(** **** Properties of toSet(L) *)
 
-Lemma empty_refuses_all_action `{gLts P A} `{!FiniteImagegLts P A} α : (∅ : gset P) ↛{α}.
+Lemma empty_refuses_all_action `{gLts P A} `{!FiniteImagegLts P A} 𝜆 : (∅ : gset P) ↛{𝜆}.
 Proof.
   intros Imp. apply Imp. intros p Hp. inversion Hp.
 Qed.
@@ -276,11 +276,11 @@ Proof.
       * symmetry. exact equiv''.
 Qed.
 
-Lemma simulation_eq_set_rel `{gLtsEq P A} `{!FiniteImagegLts P A} X Y α Z :
-  X ⋍ₛₑₜ Y ∧ Y ⟶{α} Z → ∃ Y', X  ⟶{α} Y' ∧ Y' ⋍ₛₑₜ Z.
+Lemma simulation_eq_set_rel `{gLtsEq P A} `{!FiniteImagegLts P A} X Y 𝜆 Z :
+  X ⋍ₛₑₜ Y ∧ Y ⟶{𝜆} Z → ∃ Y', X  ⟶{𝜆} Y' ∧ Y' ⋍ₛₑₜ Z.
 Proof.
   intros (eq & tr).
-  destruct α.
+  destruct 𝜆.
   + destruct tr as (ext_action_set & non_empty). subst.
     exists (lts_extaction_set_from_pset X μ).
     split.
@@ -305,7 +305,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? (Z & Hyp). eapply simulation_eq_set_rel;eauto.
 Qed.
 
-(* Set of a LTS respects OBA axioms , because empty set = non_blocking_action *)
+(** **** Set of a LTS respects OBA axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance toSET_gLtsOba `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} : @gLtsOba (gset P) A H (toSET_eq gLtsEqP).
@@ -325,10 +325,10 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(* Set of a LTS respects FiniteOuputChain axioms , because empty set = non_blocking_action *)
+(** ***** Set of a LTS respects FiniteOuputChain axioms , because empty set = non_blocking_action *)
 
-#[global] Program Instance toSET_FiniteOutputChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
-  {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} : @FiniteOutputChain_LtsOba (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ):=
+#[global] Program Instance toSET_FiniteNonBlockingChain `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
+  {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} : @FiniteNonBlockingChain_LtsOba (gset P) A H (toSET_eq gLtsEqP) (@toSET_gLtsOba P A H gLtsEqP _ ext_prop ):=
   {| lts_oba_mo p := empty |}.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
@@ -340,7 +340,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(* Set of a LTS respects FB axioms , because empty set = non_blocking_action *)
+(** **** Set of a LTS respects FB axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance toSET_gLtsObaFB `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} 
@@ -349,7 +349,7 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(* Set of a LTS respects FW axioms , because empty set = non_blocking_action *)
+(** **** Set of a LTS respects FW axioms , because empty set = non_blocking_action *)
 
 #[global] Program Instance toSET_gLtsObaFW `(gLtsEqP : @gLtsEq P A H) `{!FiniteImagegLts P A} 
   {ext_prop : forall η, non_blocking η -> all_blocking_action_ext η} 
@@ -361,13 +361,13 @@ Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? nb. eapply ext_prop in nb. inversion nb.
 Qed.
 
-(********************************** toSet is a Finite Image LTS ************************)
+(* **** toSet is a Finite Image LTS *)
 
 #[global] Program Instance gLtsMBFinite `{@FiniteImagegLts P A H gLtsP}
   : @FiniteImagegLts (gset P) A H (toSET gLtsP).
 Next Obligation. 
-  intros ? ? ? ? ? X α.
-  destruct α as [μ | ].
+  intros ? ? ? ? ? X 𝜆.
+  destruct 𝜆 as [μ | ].
   + simpl. eapply (in_list_finite ([lts_extaction_set_from_pset X μ])).
     intros P' h%bool_decide_unpack. destruct h as (eq & not_empty). subst.
     set_solver.
@@ -376,7 +376,7 @@ Next Obligation.
     set_solver.
 Qed.
 
-(******************************* toSet Properties ************************************)
+(** **** toSet Properties *)
 
 From TestingTheory Require Import Termination.
 
@@ -401,7 +401,7 @@ Proof.
   exfalso. set_solver.
 Qed.
 
-Lemma empty_set_stable `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} α : ∅ ↛{ α }.
+Lemma empty_set_stable `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} 𝜆 : ∅ ↛{ 𝜆 }.
 Proof.
   intros Imp. apply Imp. intros p Hp. inversion Hp.
 Qed.
@@ -678,7 +678,6 @@ Qed.
 Lemma convergence_forall_if_convergence_set `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
   ps ⇓ s -> forall p, p ∈ ps -> p ⇓ s.
 Proof.
-  (* intro hm. dependent induction hm. *)
   unfold trace in s. revert ps.
   dependent induction s.
   + intros ps hm p mem. inversion hm; subst. constructor.
@@ -690,7 +689,6 @@ Proof.
     eapply H6 in wk_tr.
     eapply IHs;eauto.
 Qed.
-(* end hide *)
 
 Lemma convergence_set_iff_convergence_forall `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (ps : gset P) s :
   (forall (p : P), p ∈ ps -> p ⇓ s) <-> ps ⇓ s.

@@ -23,14 +23,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import countable decidable.
 From TestingTheory Require Import ActTau gLts InputOutputActions
-                                  Must VACCS_Instance Testing_Predicate.
-
-
+                                  Must VACCS.Language.gLts_Instance Testing_Predicate.
 Section VACCS_Testing.
 
 Context `{VP : VACCS_Parameters}.
@@ -256,4 +255,3 @@ Qed.
 End VACCS_Testing.
 
 #[global] Hint Constructors good_VACCS:ccs.
-(* end hide *)

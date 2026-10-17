@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality Basics.
@@ -30,72 +31,64 @@ From stdpp Require Import finite gmap decidable gmultiset.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA Subset_Act WeakTransitions Testing_Predicate
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS Subset_Act.
 
-(* * Alternative preorder for Must based on acceptance-sets *)
-(* end hide *)
 
 (** ** Label abstractions *)
-(* begin hide *)
-
-(* The tests act over [A]; the processes may act over another alphabet
-   [Aproc], linked to [A] by [sync] (on one alphabet, [sync] is [dual]). *)
-(* end hide *)
-Class AbsAction {P T FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct)
+Class AbsAction (P T : Type) {FinA PreAct : Type} {A : Type} {H : ExtAction A} (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} :=
   MkAbsAction {
-    (** Test-side condition for label abstractions , Definition 5 (1) **)
-    abstraction_test_spec (t : T) (β : A) (β' : A) : blocking β -> blocking β' -> (Φ β) = (Φ β') -> β ∈ (R t)-> β' ∈ (R t);
-    (** Process-side condition for label abstractions,  Definition 5 (2) **)
-    abstraction_prog_spec (p : P) β β' : blocking β -> blocking β' -> 𝝳 (Φ β) = 𝝳 (Φ β') -> (Φ β) ∈ ⌈ Φ ⌉ (coR p) -> (Φ β') ∈ ⌈ Φ ⌉ (coR p);
+    (** Test-side condition for label abstractions *)
+    abstraction_test_spec (t : T) (β : A) (β' : A) :
+    blocking β -> blocking β' ->
+      (αᴛᴇꜱᴛ β) = (αᴛᴇꜱᴛ β') -> β ∈ (R t)-> β' ∈ (R t);
+    (** Program-side condition for label abstractions *)
+    abstraction_prog_spec (p : P) β β' :
+    blocking β -> blocking β' ->
+      αᴘʀᴏ (αᴛᴇꜱᴛ β) = αᴘʀᴏ (αᴛᴇꜱᴛ β') -> (αᴛᴇꜱᴛ β) ∈ ⌈ αᴛᴇꜱᴛ ⌉ (coR p) -> (αᴛᴇꜱᴛ β') ∈ ⌈ αᴛᴇꜱᴛ ⌉ (coR p);
   }.
-(* begin hide *)
 
-Arguments AbsAction {_} {_} {_} {_} A H Φ 𝝳 {_} {_} {_} {_} {_}.
-(* end hide *)
-
+Arguments AbsAction P T {_ _ _ _} αᴛᴇꜱᴛ αᴘʀᴏ {_ _ _ _ _}.
 
 (** ** Finitary Label abstractions *)
-
-Class FinitaryAbsAction P T {FinA PreAct: Type} (A : Type) (H : ExtAction A) (Φ : A → FinA) (𝝳 : FinA → PreAct)
+Class FinitaryAbsAction (P T : Type) {FinA PreAct : Type} {A : Type} {H : ExtAction A} (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)
   {Aproc : Type} {Hp : ExtAction Aproc} {gLtsP : gLts P Hp} {gLtsT : gLtsEq T H}
   {SA : SyncAction Aproc A} `{Countable PreAct} :=
   MkFinitaryAbsAction {
-      FinitaryAbsAction_Abs :: @AbsAction P T FinA PreAct A H Φ 𝝳 Aproc Hp gLtsP gLtsT SA;
+      FinitaryAbsAction_Abs :: AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T αᴛᴇꜱᴛ αᴘʀᴏ;
 
-      (** 𝝳 (Φ (coR p)) is a finite set, called (coR_abs p) **)
+      (** **** αᴘʀᴏ (αᴛᴇꜱᴛ (coR p)) is a finite set, called (coR_abs p) *)
       coR_abs : P -> gset PreAct;
-      coR_abs_spec1 (p : P) (pre_μ : PreAct) : pre_μ ∈ (coR_abs p) -> pre_μ ∈ ⌈ (𝝳 ∘ Φ) ⌉ (coR p);
-      coR_abs_spec2 (pre_μ : PreAct) (p : P) : pre_μ ∈ ⌈ (𝝳 ∘ Φ) ⌉ (coR p) -> pre_μ ∈ (coR_abs p);
+      
+      (** **** coR_abs p ⊆ αᴘʀᴏ (αᴛᴇꜱᴛ (coR p)) *)
+      coR_abs_spec1 (p : P) (pre_μ : PreAct) : pre_μ ∈ (coR_abs p) -> pre_μ ∈ ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR p);
+
+      (** **** αᴘʀᴏ (αᴛᴇꜱᴛ (coR p)) ⊆ coR_abs p *)
+      coR_abs_spec2 (pre_μ : PreAct) (p : P) : pre_μ ∈ ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR p) -> pre_μ ∈ (coR_abs p);
   }.
 
 (** ** Termination condition *)
-(* begin hide *)
 Definition bhv_pre_cond1 `{gLts P A, gLts Q A} 
   (p : P) (q : Q) := forall s, p ⇓ s -> q ⇓ s.
 
-Notation "p ₁≼ₐₛ q" := (bhv_pre_cond1 p q) (at level 70).
-(* end hide *)
+Notation "p ꜀ₙᵥ≼ₐₛ q" := (bhv_pre_cond1 p q) (at level 70).
 
 (** ** Smyth preorder on acceptance sets *)
-(* begin hide *)
 Definition bhv_pre_cond2 `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
     p ⇓ s -> q ⟹[s] q' -> q' ↛ ->
-    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+    ∃ p', p ⟹[s] p' /\ p' ↛ /\ (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
 
-Notation "p ₂≼ₐₛ q" := (bhv_pre_cond2 p q) (at level 70).
-(* end hide *)
+Notation "p ₐ꜀꜀≼ₐₛ q" := (bhv_pre_cond2 p q) (at level 70).
 
-(** ** Definition of the alternative preorder *)
+(** ** Definition of the alternative preorder based on acceptance-sets *)
 Definition bhv_pre `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
     (p : P) (q : Q) := 
-      p ₁≼ₐₛ q /\ p ₂≼ₐₛ q.
-(* begin hide *)
+      p ꜀ₙᵥ≼ₐₛ q /\ p ₐ꜀꜀≼ₐₛ q.
 
 Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 
@@ -103,20 +96,20 @@ Notation "p ≼ₐₛ q" := (bhv_pre p q) (at level 70).
 From TestingTheory Require Import MultisetLTSConstruction ForwarderConstruction.
 
 #[global] Program Instance PreActActionForFW
-  `{@AbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _} {unique_nb : UniqueDual A}
+  `{H : ExtAction A, !AbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H _ H MbgLts} 
-  : @AbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ _ _ gLtsT _. (* (toFW gLtsP) *)
+  : AbsAction (gLtsT := gLtsT) (P * MO A) T αᴛᴇꜱᴛ αᴘʀᴏ. (* (toFW gLtsP) *)
 Next Obligation.
   intros. eapply abstraction_test_spec in H4;eauto.
 Qed.
 Next Obligation.
   intros ? ? ? ? ? ? ? ? ? ? ? ? ? (p1, m1) β β' b b' eq mem.
-  assert (Φ β ∈ ⌈ Φ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
+  assert (αᴛᴇꜱᴛ β ∈ ⌈ αᴛᴇꜱᴛ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
   destruct mem as (μ'' & mem & eq').
   destruct mem as (η''' & tr' & duo & b'').
   eapply lts_performs_spec1 in tr' as ((p , m) & tr'').
   inversion tr'';subst.
-  - assert (Φ β ∈ ⌈ Φ ⌉ coR p1) as mem_h'.
+  - assert (αᴛᴇꜱᴛ β ∈ ⌈ αᴛᴇꜱᴛ ⌉ coR p1) as mem_h'.
     { rewrite eq'. eapply map_gamma_of_action. exists η'''.
       repeat split; eauto. eapply lts_performs_spec2;eauto. }
     eapply (abstraction_prog_spec p1 β β') in mem_h';eauto.
@@ -137,13 +130,14 @@ Next Obligation.
 Admitted.
 
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
-  `{@FinitaryAbsAction P T FinA PreAct A H Φ 𝝳 _ _ gLtsP gLtsT _ _ _ } {unique_nb : UniqueDual A}
+  `{H : ExtAction A, !FinitaryAbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) } {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} 
-  : @FinitaryAbsAction (P * MO A) T FinA PreAct A H Φ 𝝳 _ _ (toFW gLtsP) gLtsT _ _ _ :=
-  {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => 𝝳 (Φ (co x))) (MO_without_not_nb p.2));|}.
+  : FinitaryAbsAction (gLtsP := (toFW gLtsP)) (gLtsT := gLtsT) (P * MO A) T αᴛᴇꜱᴛ αᴘʀᴏ :=
+  {| coR_abs p := coR_abs p.1 ∪ dom (gmultiset_map (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ (co x))) (MO_without_not_nb p.2));|}.
 Next Obligation.
   intros.
-  destruct p. eapply elem_of_union in H2. destruct H2 as [in_p | in_M] ; simpl in *.
+  destruct p as (p, m).
+  match goal with Hm : _ ∈ _ ∪ _ |- _ => eapply elem_of_union in Hm; destruct Hm as [in_p | in_M] end; simpl in *.
   + eapply coR_abs_spec1 in in_p.
     destruct in_p as (μ & mem & eq). subst.
     exists μ. split.
@@ -170,8 +164,8 @@ Next Obligation.
       eapply dual_blocks; eauto. symmetry. exact (proj2_sig (exists_dual μ)).
 Qed.
 Next Obligation.
-  intros. destruct H2 as (μ & mem & eq). subst.
-  destruct p. destruct mem as (μ' & tr & duo & b).
+  intros. match goal with Hm : _ ∈ ⌈ _ ⌉ _ |- _ => destruct Hm as (μ & mem & eq) end. subst.
+  destruct p as (p, m). destruct mem as (μ' & tr & duo & b).
   eapply lts_performs_spec1 in tr as ((p' , m') & eq).
   inversion eq; subst; simpl in *.
   + eapply elem_of_union. left.
@@ -192,7 +186,6 @@ Next Obligation.
       eapply unique_nb in duo; eauto. subst. contradiction.
 Qed.
 
-
 Global Instance Proper_lts_pre_co_actions `{gLtsEq P A} `{Γ : A -> PreAct}:
   Proper ((eq_rel) ==> (≡)) (fun p => ⌈ Γ ⌉ (coR p)).
 Proof.
@@ -211,4 +204,4 @@ Proof.
     { exists μ'. repeat split; eauto. }
     eapply map_gamma_of_action;eauto.
 Qed.
-(* end hide *)
+

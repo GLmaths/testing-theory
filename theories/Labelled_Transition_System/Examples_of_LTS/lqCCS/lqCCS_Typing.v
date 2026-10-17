@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the linear typing of qubit ownership
 
     The type system of Ceragioli, Gadducci, Lomurno, Tedeschi
@@ -48,7 +49,6 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program.
-
 (* ** Qubit terms *)
 
 Inductive qt : Type :=

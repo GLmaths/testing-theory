@@ -20,12 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable gmultiset.
 From TestingTheory Require Import ActTau gLts Subset_Act InteractionBetweenLts
-  MultisetLTSConstruction ForwarderConstruction LabelAbstraction.
+  MultisetLTSConstruction ForwarderConstruction Label_Abstraction.LabelAbstraction.
 
 (* * Process-side label abstraction of a forwarder
 

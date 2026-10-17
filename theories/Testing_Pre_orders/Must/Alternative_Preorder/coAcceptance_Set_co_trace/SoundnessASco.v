@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib Require ssreflect Setoid.
 From Stdlib.Unicode Require Import Utf8.
@@ -30,18 +31,13 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
-From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Finite_Output_Chain Lts_FW Lts_OBA_FB Lts_CN
+From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_FW Lts_OBA_FB Lts_CN
       Must Subset_Act InteractionBetweenLts ParallelLTSConstruction ForwarderConstruction
       Termination Convergence WeakTransitions Lift Testing_Predicate DefinitionAS MultisetLTSConstruction StateTransitionSystems.
 From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
 From TestingTheory Require Import coWeakTransition coConvergence DefinitionASco
       FiniteImageLTS coFiniteImage coSetLTSConstruction DefinitionASco.
-
-(* * Soundness for the co-acceptance-set preorder
-
-    Two alphabets throughout: the processes over [Aproc], the observers and
-    the co-traces over [Atest], linked by [sync]; on one alphabet [sync] is
-    [dual].  The computations of [p ∥ t] are any [ParStsSpec]. *)
+(* * Soundness for the co-acceptance-set preorder *)
 
 (* ** Must for a set of processes *)
 
@@ -389,8 +385,6 @@ Proof.
       set_solver.
     + intros t' hlt. eapply H0; [exact hlt | exact mem].
     + intros p' e' μ η hsy hlp hle.
-      (* the [Finite] instance for the literal-[μ] successors, cut down from
-         the class's dual image at [η] *)
       assert (hfin : Finite (dsig (λ q : P, sync μ η ∧ p ⟶[μ] q))).
       { unfold dsig.
         eapply (in_list_finite
@@ -606,11 +600,7 @@ End Must_preorder_for_sets_instances.
 
 Notation "X ≂ₛₑₜ_ₘᵤₛₜᵢ Y" := (Y ⊑ₛₑₜ_ₘᵤₛₜᵢ X /\ X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y) (at level 70).
 
-(* ** The alternative preorder, on sets
-
-    [mustx_alt_co] and its bridge are commented out in [SoundnessASco.v]
-    (they are the one piece that would need the set LTS on the [P] side), so
-    there is nothing to port for them. *)
+(* ** The alternative preorder, on sets *)
 
 Definition bhv_pre_co_cond1__x `{gLtsP : @gLts P Aproc Hp, !Countable P}
   `{gLtsQ : !@gLts Q Aproc Hp, !Countable Q}
@@ -618,31 +608,31 @@ Definition bhv_pre_co_cond1__x `{gLtsP : @gLts P Aproc Hp, !Countable P}
   (X : gset P) (Y : gset Q) :=
   ∀ (s : trace A), (∀ p, p ∈ X → p ⇓ᶜᵒ s) → (∀ q, q ∈ Y → q ⇓ᶜᵒ s).
 
-Global Notation "X ₁≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond1__x X Y) (at level 70).
+Global Notation "X ꜀ₙᵥ≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond1__x X Y) (at level 70).
 
 Definition bhv_pre_co_cond2__x
   `{gLtsP : @gLts P Aproc Hp, !Countable P}
   `{gLtsQ : !@gLts Q Aproc Hp, !Countable Q}
   `{gLtsT : @gLtsEq T A H} `{SA : !SyncAction Aproc A}
-  `{AbsPT : !@AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA}
-  `{AbsQT : !@AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
+  `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}
+  `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsT) (SA := SA) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (X : gset P) (Y : gset Q) :=
   ∀ q s q', q ∈ Y →
     q ⟹ᶜᵒ[s] q' → q' ↛ →
     (∀ p, p ∈ X → p ⇓ᶜᵒ s) →
     ∃ p, p ∈ X ∧ ∃ p', p ⟹ᶜᵒ[s] p' ∧ p' ↛ ∧
-           (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+           (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
 
-Global Notation "X ₂≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
+Global Notation "X ₐ꜀꜀≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 
 Definition bhv_pre_co__x
   `{gLtsP : @gLts P Aproc Hp, !Countable P}
   `{gLtsQ : !@gLts Q Aproc Hp, !Countable Q}
   `{gLtsT : @gLtsEq T A H} `{SA : !SyncAction Aproc A}
-  `{AbsPT : !@AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA}
-  `{AbsQT : !@AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
+  `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct)}
+  `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsT) (SA := SA) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (X : gset P) (Y : gset Q) :=
-  bhv_pre_co_cond1__x (A := A) X Y ∧ X ₂≼꜀ₒ₋ₛₑₜ_ₐₛ Y.
+  bhv_pre_co_cond1__x (A := A) X Y ∧ X ₐ꜀꜀≼꜀ₒ₋ₛₑₜ_ₐₛ Y.
 
 Global Notation "X ≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co__x X Y) (at level 70).
 
@@ -656,12 +646,12 @@ Context `{gLtsEqT : !gLtsEq T Ht}.
 Context `{gLtsP : !gLts P Hp} `{CP : !Countable P}.
 Context `{gLtsQ : !gLts Q Hp} `{CQ : !Countable Q}.
 Context `{SA : !SyncAction Aproc Atest}.
-Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
-Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp gLtsP gLtsEqT SA}.
-Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp gLtsQ gLtsEqT SA}.
+Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
+Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsEqT) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsEqT) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
-Notation "X '₁≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
+Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
+Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 
 Lemma alt_set_singleton_iff_co (p : P) (q : Q) :
@@ -681,7 +671,7 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_reduction_co (X : gset P) (Y Y' : gset Q) :
-  X ₁≼ Y → lts_tau_set_from_pset_spec1 Y Y' → X ₁≼ Y'.
+  X ꜀ₙᵥ≼ Y → lts_tau_set_from_pset_spec1 Y Y' → X ꜀ₙᵥ≼ Y'.
 Proof.
   intros halt1 l s mem.
   intros q memq. eapply l in memq as (q' & mem' & tr').
@@ -715,8 +705,8 @@ Qed.
 Lemma bhvleqone_preserved_by_external_action_co
   (X X' : gset P) (η : Atest) (Y Y' : gset Q)
   (htp : ∀ p, p ∈ X → p ⤓) :
-  X ₁≼ Y → cowt_set_from_pset_spec X η X' →
-  cowt_set_from_pset_spec1 Y η Y' → X' ₁≼ Y'.
+  X ꜀ₙᵥ≼ Y → cowt_set_from_pset_spec X η X' →
+  cowt_set_from_pset_spec1 Y η Y' → X' ꜀ₙᵥ≼ Y'.
 Proof.
   intros hleq hws l s hcnv. intros q memq.
   eapply l in memq as (q' & mem' & wk_tr).
@@ -780,12 +770,7 @@ End Acceptance_Set_preorder_for_sets_sync.
 
 (* ** Communication-enabling property *)
 
-(* ** Communication-enabled processes
-
-    What the soundness proof asks of [Q]: every emission of the observer can
-    be received, by /some/ action that synchronises with it.  On one
-    alphabet a forwarder has it by [boomerang] ([soundness_fw_co] below); on
-    [Aproc ⊎ Atest] by [fw_boomerang] ([SoundnessASsync.v]). *)
+(* ** Communication-enabled processes *)
 
 Class gLtsCNenabledSync (P Aproc Atest : Type)
   `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
@@ -804,16 +789,13 @@ Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsP : !gLts P Hp}.
 Context `{gLtsQ : !gLts Q Hp} `{!gLtsCNenabledSync Q Aproc Atest}.
-Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
-Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
-Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
-
-(* In the non-blocking case, [q] receives the observer's emission [η] by
-    [sync_cn_enabled] — with its own action, not necessarily [p]'s. *)
+Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
+Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
 Lemma communication_enabled_co (p : P) p' (q : Q) (t : T) t' μ1 (η : Atest) :
   sync μ1 η → p ⟶[μ1] p' → t ⟶[η] t' →
-  ⌈ (𝝳 ∘ Φ) ⌉ (coR p) ⊆ ⌈ (𝝳 ∘ Φ) ⌉ (coR q) →
+  ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR p) ⊆ ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR q) →
   ∃ μ3 μ4 q' t'', sync μ3 μ4 ∧ q ⟶[μ3] q' ∧ t ⟶[μ4] t''.
 Proof.
   intros hsy tr tr_co sub.
@@ -823,11 +805,11 @@ Proof.
   + assert (hco : η ∈ coR p).
     { eapply coR_intro; [| exact hsy | exact not_nb].
       eapply lts_performs_spec2. by eexists. }
-    eapply (map_gamma_of_action (𝝳 ∘ Φ)) in hco as mem.
+    eapply (map_gamma_of_action (αᴘʀᴏ ∘ αᴛᴇꜱᴛ)) in hco as mem.
     eapply sub in mem. destruct mem as (η' & mem & eq).
     simpl in eq. symmetry in eq.
     pose proof mem as (? & ? & ? & bη'). rename mem into memq.
-    assert (hmapq : Φ η' ∈ ⌈ Φ ⌉ (coR q))
+    assert (hmapq : αᴛᴇꜱᴛ η' ∈ ⌈ αᴛᴇꜱᴛ ⌉ (coR q))
       by (eapply map_gamma_of_action; exact memq).
     eapply (abstraction_prog_spec (AbsAction := AbsQT) q η' η bη' not_nb eq)
       in hmapq as (η'' & memq'' & eq'').
@@ -855,12 +837,12 @@ Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA
         `{CFIP : !coFiniteImagegLts P Atest}.
 Context `{gLtsQ : !gLts Q Hp} `{STSQ : !ParSts Q T _ _} `{!ParStsSpec Q T _ _ SA STSQ}
         `{CFIQ : !coFiniteImagegLts Q Atest} `{CN : !gLtsCNenabledSync Q Aproc Atest}.
-Context (Φ : Atest → FinA) (𝝳 : FinA → PreAct).
-Context `{AbsPT : !@AbsAction P T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
-Context `{AbsQT : !@AbsAction Q T FinA PreAct Atest Ht Φ 𝝳 Aproc Hp _ _ SA}.
+Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
+Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
+Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
-Notation "X '₁≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X '₂≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
+Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
+Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x X Y) (at level 70).
 Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 
 (* The composition is an [Sts], so "the composition is stuck" is
@@ -869,7 +851,7 @@ Notation "X '≼' Y" := (bhv_pre_co__x X Y) (at level 70).
 Lemma unoutcome_must_st_nleqx_co (X : gset P) (Y : gset Q) (t : T) :
   ¬ outcome t → X must_pass_x t →
   (∃ q, q ∈ Y ∧ ¬ (∃ y, sts_step (Sts := par_sts) (q, t) y)) →
-  ¬ (X ₂≼ Y).
+  ¬ (X ₐ꜀꜀≼ Y).
 Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
   assert (stable_q : q ↛).
@@ -891,13 +873,13 @@ Proof.
   pose proof (par_view_of _ _ _ HypTr) as hv. inversion hv; subst.
   - exfalso; apply stp', lts_performs_spec2; eauto.
   - apply refuses_tau_q. exists (q, t''). by apply par_step_right.
-  - edestruct (communication_enabled_co Φ 𝝳 p' p'' q t t'' μ η hs l1 l2 sub)
+  - edestruct (communication_enabled_co αᴛᴇꜱᴛ αᴘʀᴏ p' p'' q t t'' μ η hs l1 l2 sub)
       as (μ1 & μ2 & q' & t3 & hsy' & tr1 & tr2).
     apply refuses_tau_q. exists (q', t3). by eapply par_step_sync.
 Qed.
 
 Lemma stability_nbhvleqtwo_co (X : gset P) (Y : gset Q) t :
-  ¬ outcome t → X must_pass_x t → X ₂≼ Y →
+  ¬ outcome t → X must_pass_x t → X ₐ꜀꜀≼ Y →
   ∀ (q : Q), q ∈ Y → ∃ y, sts_step (Sts := par_sts) (q, t) y.
 Proof.
   intros nhg hmx hleq q mem.
@@ -926,7 +908,7 @@ Proof.
     { intros q mem. eapply cocnv_terminate. eapply halt1; eauto. }
     assert (Y_conv : Y ⤓).
     { eapply co_termination_set_for_all. exact HYterm. }
-    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ₁≼ Y0 → X ₂≼ Y0 → Y0 must_pass_x t).
+    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ꜀ₙᵥ≼ Y0 → X ₐ꜀꜀≼ Y0 → Y0 must_pass_x t).
     { intros Y0 conv0. induction conv0 as [Y0 tY0 IHY0]. intros hb1 hb2.
       eapply mx_step.
       - exact nh.
@@ -941,7 +923,7 @@ Proof.
         + assert (hstep0 : Y0 ⟶ cowt_tau_set_from_pset Y0)
             by (split; [reflexivity | exact Hnemp]).
           specialize (IHY0 _ hstep0).
-          destruct (bhvx_preserved_by_reduction_co Φ 𝝳 X Y0 _ Y0full_spec1
+          destruct (bhvx_preserved_by_reduction_co αᴛᴇꜱᴛ αᴘʀᴏ X Y0 _ Y0full_spec1
                       (conj hb1 hb2)) as (hb1full & hb2full).
           specialize (IHY0 hb1full hb2full).
           eapply mx_sub; [exact IHY0 | exact Hsub0].
@@ -957,13 +939,13 @@ Proof.
           assert (htX : ∀ p, p ∈ X → p ⤓).
           { destruct (mustx_terminate_unoutcome outcome X t hmX) as [c | h];
               [contradiction | exact h]. }
-          edestruct (reverse_trace_inclusion_co Φ 𝝳 X Y0 Y0' η
+          edestruct (reverse_trace_inclusion_co αᴛᴇꜱᴛ αᴘʀᴏ X Y0 Y0' η
                        (conj hb1 hb2) HA lcowtspec hne) as (X2 & X2spec1 & X2ne).
           assert (Hsub : X2 ⊆ cowt_s_set_from_pset X η HA).
           { intros q memq. destruct (X2spec1 q memq) as (p & memp & wpq).
             eapply Xfull_spec2; eauto. }
           assert (Xfull_ne : cowt_s_set_from_pset X η HA ≠ ∅) by set_solver.
-          destruct (bhvx_preserved_by_external_action_co Φ 𝝳 X
+          destruct (bhvx_preserved_by_external_action_co αᴛᴇꜱᴛ αᴘʀᴏ X
                       (cowt_s_set_from_pset X η HA) η Y0 Y0' htX lcowtspec
                       (conj Xfull_spec1 Xfull_spec2) (conj hb1 hb2)) as (hb1' & hb2').
           eapply (H1 t' η (cowt_s_set_from_pset X η HA) ltr Xfull_spec1 Xfull_ne);
@@ -991,18 +973,17 @@ End SoundnessAS_sync.
 
 Lemma soundness_fw_co `{
   gLtsEqP : @gLtsEq P A H, !coFiniteImagegLts P A,
-  gLtsEqQ : @gLtsEq Q A H, !coFiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q, !gLtsObaFW Q A,
+  gLtsEqQ : @gLtsEq Q A H, !coFiniteImagegLts Q A, gLtsObaQ : !gLtsOba Q _, !gLtsObaFW Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
 
   `{!Prop_of_Inter P T A A dual}
   `{!Prop_of_Inter Q T A A dual}
 
   (p : P) (q : Q) : p ≼꜀ₒ₋ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
-  (* a forwarder receives every emission of the observer, by [boomerang] *)
   assert (CN : @gLtsCNenabledSync Q A A H H _ SyncAction_of_dual).
   { apply MkgLtsCNenabledSync. intros q1 η nb.
     destruct (boomerang q1 η (co η)) as (q2 & hb).
@@ -1012,26 +993,6 @@ Proof.
   eapply (soundness_co_nb_enabled_co _ _ _ (CN := CN)).
 Qed.
 
-(* ** [mustx_alt] — the one piece of [mustx]'s apparatus that *does* need a
-    co-variant: its [com] case is where the (map-[coₜ]-free) design pays off.
-    Mirrors [mustx]'s own two-label ([wt_set_from_pset_spec1 X [μ1] X'] +
-    [dual μ1 μ2]) style, but with a single [μ] via [cowt_set_from_pset_spec1]
-    (itself just [wt_set_from_pset_spec1]'s pattern rebuilt on [⟹ᶜᵒ]) — this
-    keeps the bridge to [mustx] a direct, per-element one (no need to route
-    through [toSET]'s "exact union" semantics, which only obscures the
-    already-immediate correspondence). The bridge itself needs [dual]'s
-    global uniqueness ([unique_nb], unrestricted to non-blocking actions
-    despite the name — see [gLts.v]) once, to turn the existential dual
-    witness [cowt_set_from_pset_spec1] hides back into the single fixed label
-    [wt_set_from_pset_spec1] needs; this is a legitimate external use of a
-    real class law, unlike baking [unique_nb]/canonical [co] into [cowt]'s
-    own definition (which stays fully dual-relational, per
-    [[co_trace_files_dual_bridge]]). *)
-
-(* [mustx_alt_co]'s own [pt] field uses the set LTS ([toSET], [X ⟶ X'] on
-   [gset P]) — the piece the header comment (top of file) calls out as the
-   one place [mustx]'s apparatus structurally needs [FiniteImagegLts] for
-   [SetLTSConstruction.toSET]. *)
 (*
 Inductive mustx_alt_co `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP : @Testing_Predicate T A EA outcome _}
   `{gLtsP : @gLts P A EA, !FiniteImagegLts P A} {Hinter : @Prop_of_Inter P T A A dual EA gLtsP EA _}
@@ -1061,14 +1022,7 @@ Section MustxIffMustxAltCo.
 
 (* This bridge lemma needs [mustx] (⇒ [coFiniteImagegLts P A]) and
    [mustx_alt_co] (⇒ [FiniteImagegLts P A], for its toSET-based [pt] case)
-   simultaneously on the *same* [X : gset P] — so the two [Countable P]
-   sources must be the same term, not two independent postulates (see
-   [[bang_vs_bare_class_binder]]-style clash risk). [coFiniteImagegLts P A]
-   is taken as primary and [FiniteImagegLts P A] is derived locally via
-   [FiniteImagegLts_of_coFiniteImagegLts], sharing the countable field by
-   construction. Any caller supplying the *same* [coFiniteImagegLts P A]
-   term for both this lemma and [mustx_alt_co]'s own use gets a matching
-   derived instance automatically (it's a pure function of that term). *)
+   *)
 Context `{EA : !ExtAction A}.
 Context `{gLtsT : !gLtsEq T EA}.
 Context `{TP : @Testing_Predicate T A EA outcome _}.
@@ -1120,13 +1074,12 @@ End MustxIffMustxAltCo.
 *)
 
 (* ** Soundness for LTSs that can be lifted to forwarders, co variant *)
-(* Depends on [soundness_fw_co] (below), which depends on
-   [soundness_co_nb_enabled_co]/[soundnessx_co] (set-LTS-based). *)
+
 (*
 Lemma soundness_co
-  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteOutputChain_LtsOba P, !FiniteImagegLts P A}
-  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteOutputChain_LtsOba Q, !FiniteImagegLts Q A}
-  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteOutputChain_LtsOba T, !FiniteImagegLts T A}
+  `{@gLtsObaFB P A H gLtsEqP gLtsObaP, !FiniteNonBlockingChain_LtsOba P, !FiniteImagegLts P A}
+  `{@gLtsObaFB Q A H gLtsEqQ gLtsObaQ, !FiniteNonBlockingChain_LtsOba Q, !FiniteImagegLts Q A}
+  `{@gLtsObaFB T A H gLtsEqT gLtsObaT, !FiniteNonBlockingChain_LtsOba T, !FiniteImagegLts T A}
 
   `{ !Testing_Predicate outcome _}
 
@@ -1149,8 +1102,8 @@ Lemma soundness_co
   `{!coFiniteImagegLts (P * MO A) A}
   `{!coFiniteImagegLts (Q * MO A) A}
 
-  `{AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
-  `{AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳 _ _ _ _ _ }
+  `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
+  `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
 
   (p : P) (q : Q) : p ▷ ∅ ≼꜀ₒ₋ₐₛ q ▷ ∅ -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
@@ -1160,4 +1113,3 @@ Proof.
   now eapply (soundness_fw_co (p ▷ ∅) (q ▷ ∅)).
 Qed.
 *)
-(* end hide *)

@@ -20,7 +20,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
+(* begin hide *)
 (* * lqCCS: the density operator semantics
 
     The semantics of Figure 9 of Ceragioli, Gadducci, Lomurno, Tedeschi
@@ -42,7 +43,6 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import Lifted Paths States pMust_almost_sure lqCCS_Quantum.
 From TestingTheory Require Import lqCCS_Syntax lqCCS_Program lqCCS_Composition.
-
 Section Semantics.
   Context `{QM : QuantumModel}.
 

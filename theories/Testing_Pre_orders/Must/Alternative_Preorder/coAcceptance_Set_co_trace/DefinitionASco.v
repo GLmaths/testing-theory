@@ -20,7 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality Basics.
@@ -29,8 +29,6 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Lts_OBA S
     coWeakTransition Testing_Predicate
     StateTransitionSystems InteractionBetweenLts coConvergence Termination 
     DefinitionAS FiniteImageLTS Subset_Act.
-
-
 (* ** Termination condition *)
 (* Two alphabets: the processes over [Aproc], the co-traces over the test
    alphabet [A], linked by [sync]; on one alphabet [sync] is [dual]. *)
@@ -38,25 +36,24 @@ Definition bhv_pre_co_cond1 `{gLtsP : @gLts P Aproc Hp} `{gLtsQ : !@gLts Q Aproc
   `{Ht : ExtAction A} `{SA : !SyncAction Aproc A}
   (p : P) (q : Q) := forall (s : trace A), p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s.
 
-Notation "p ₁≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond1 p q) (at level 70).
+Notation "p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond1 p q) (at level 70).
 
 (* ** Smyth preorder on acceptance sets *)
 Definition bhv_pre_co_cond2 `{
-  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
-  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
+  gLtsP : @gLts P Aproc Hp, H : ExtAction A, AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q Aproc Hp, AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsT) (SA := SA) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :=
   forall (s : trace A) q',
     p ⇓ᶜᵒ s -> q ⟹ᶜᵒ[s] q' -> q' ↛ ->
-    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ (⌈ (𝝳P ∘ Φ) ⌉ (coR p') ⊆ ⌈ (𝝳Q ∘ Φ) ⌉ (coR q')).
+    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
 
-Notation "p ₂≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond2 p q) (at level 70).
+Notation "p ₐ꜀꜀≼꜀ₒ₋ₐₛ q" := (bhv_pre_co_cond2 p q) (at level 70).
 
 (* ** Definition of the alternative preorder *)
 Definition bhv_pre_co `{
-  gLtsP : @gLts P Aproc Hp, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P Aproc Hp gLtsP gLtsT SA,
-  gLtsQ : @gLts Q Aproc Hp, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q Aproc Hp gLtsQ gLtsT SA}
+  gLtsP : @gLts P Aproc Hp, H : ExtAction A, AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q Aproc Hp, AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsT) (SA := SA) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
     (p : P) (q : Q) :=
-      p ₁≼꜀ₒ₋ₐₛ q /\ p ₂≼꜀ₒ₋ₐₛ q.
+      p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q /\ p ₐ꜀꜀≼꜀ₒ₋ₐₛ q.
 
 Notation "p ≼꜀ₒ₋ₐₛ q" := (bhv_pre_co p q) (at level 70).
-(* end hide *)

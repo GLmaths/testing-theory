@@ -23,6 +23,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -31,22 +32,11 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation
   Lts_OBA Lts_FW WeakTransitions.
+(*** ** Co-weak transitions *)
 
-(* ** Co-weak transitions
+(** *** Definition of co-weak transitions *)
 
-    [cowt p s q] is the weak transition relation obtained by letting [p] answer
-    with a dual (co-)action of every external action recorded in the trace
-    [s]: a step labelled [μ] in [s] is realised in the underlying LTS by any
-    action [μ'] such that [dual μ' μ]. Everything below is phrased with the
-    relation [dual]/[Forall2 dual] directly, so that a [cowt] fact can always
-    be read back as a plain [wt] fact against *some* trace pointwise dual to
-    [s] ([cowt_to_wt_dual]), and conversely built from one ([wt_to_cowt_dual]). *)
-
-(* *** Definition of co-weak transitions *)
-
-(* Two alphabets: the process over [Aproc], the trace over [Atest], linked by
-   [sync].  On one alphabet, [sync] is [dual] ([SyncAction_of_dual], found
-   automatically). *)
+(* Two alphabets: the process over [Aproc], the trace over [Atest] linked by [sync]. *)
 Inductive cowt `{gLts P Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}
   : P -> trace Atest -> P -> Prop :=
 | cowt_nil p : cowt p [] p
@@ -75,8 +65,7 @@ Section cowt_structure.
 (* Two alphabets throughout: these lemmas only move along the trace. *)
 Context `{gLtsP : @gLts P Aproc Hp} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
 
-(* As for [wt_pop_gen], the trace is kept as a variable and constrained by an
-   equation so that plain induction applies. *)
+
 Lemma cowt_pop_gen p q s0 :
   p ⟹ᶜᵒ[s0] q -> forall μ1 s, s0 = μ1 :: s -> ∃ t, p ⟹ᶜᵒ{μ1} t /\ t ⟹ᶜᵒ[s] q.
 Proof.
@@ -136,7 +125,6 @@ Lemma cowt_push_right p q r μ s :
   p ⟹ᶜᵒ[s] q -> q ⟹ᶜᵒ{μ} r -> p ⟹ᶜᵒ[s ++ [μ]] r.
 Proof. intros w1 w2. eapply cowt_concat; eauto. Qed.
 
-(* Same treatment as [cowt_pop]: the trace stays a variable, so no UIP axiom. *)
 Lemma cowt_decomp_one_gen p q s0 :
   p ⟹ᶜᵒ[s0] q -> forall μ1, s0 = [μ1] -> ∃ r1 r2 μ1', p ⟹ᶜᵒ r1 ∧ sync μ1' μ1 ∧ r1 ⟶[μ1'] r2 ∧ r2 ⟹ᶜᵒ q.
 Proof.
@@ -195,7 +183,7 @@ Qed.
 
 End cowt_structure.
 
-(* *** Properties on co-weak transitions in LTSs with a Bisimulation *)
+(** *** Properties on co-weak transitions in LTSs with a Bisimulation *)
 
 Section cowt_structure_eq.
 
@@ -272,13 +260,7 @@ Qed.
 
 End cowt_structure_eq.
 
-(* *** From [cowt] to [wt] and back, along an explicit dual trace
-
-    [cowt p s q] unwinds to a genuine weak transition [wt p s' q] for the
-    trace [s'] of the actual (dual) actions taken; conversely, any [wt p s' q]
-    together with a trace [s] pointwise dual to [s'] gives a [cowt p s q].
-    Both directions only ever use [dual]/[Forall2 dual], never the canonical
-    co-action or its uniqueness. *)
+(* *** From [cowt] to [wt] *)
 
 Lemma cowt_to_wt_dual `{gLts P A} p s q : p ⟹ᶜᵒ[s] q -> exists s', Forall2 dual s s' /\ p ⟹[s'] q.
 Proof.
@@ -299,13 +281,7 @@ Proof.
     eapply cowt_act; [symmetry; exact dxy | exact l | eapply IH; exact hrest].
 Qed.
 
-(* *** Properties on co-weak transitions in Lts with OBA axioms
-
-    [co_non_blocking μ] says that *every* action dual to [μ] is non-blocking;
-    unlike [exist_co_nba] (which only asks for existence and is what
-    [forward_s]/[EquivDef] already use to *build* a dual trace) the universal
-    form is what let us reason about the specific dual action a [cowt]
-    derivation happens to use, without any determinacy assumption on [dual]. *)
+(* *** Properties on co-weak transitions in Lts with OBA axioms *)
 
 Definition co_non_blocking `{ExtAction A} (μ : A) := forall μ', dual μ' μ -> non_blocking μ'.
 
@@ -391,11 +367,7 @@ Proof.
     etrans; eassumption.
 Qed.
 
-(* *** Properties talking about [dual] in [WeakTransitions.v], restated using [cowt]
-
-    [forward_s] already reasons about a trace dual to a process's moves via
-    [Forall2 dual]; phrased with [cowt] it becomes "doing [s] then co-doing
-    [s] returns (up to bisimulation) to where we started". *)
+(** *** Properties talking about [dual] in [WeakTransitions.v], restated using [cowt] *)
 
 Lemma cowt_forward_s `{gLtsObaFW P A} p s :
   Forall exist_co_nba s -> exists t, p ⟹[s] t /\ t ⟹ᶜᵒ⋍[s] p.
@@ -408,9 +380,6 @@ Proof.
   eapply wt_to_cowt_dual; eauto.
 Qed.
 
-(* [wt_annhil] needs a *specific* dual action of [μ] to be non-blocking; for
-   [cowt], that action is whichever one the given co-step actually took, which
-   [cowt_decomp_one] exposes existentially. *)
 Lemma cowt_annhil `{gLtsObaFW P A} p q μ r :
   co_non_blocking μ -> p ⟹ᶜᵒ{μ} q -> q ⟹{μ} r -> p ⟹⋍ r.
 Proof.
@@ -534,4 +503,3 @@ Proof.
   exists q'. split; [| exact heq].
   eapply wt_to_cowt_dual; eauto.
 Qed.
-(* end hide *)

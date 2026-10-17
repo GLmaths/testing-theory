@@ -20,14 +20,15 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import base countable decidable gmap gmultiset.
-From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Output_Chain
+From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Non_Blocking_Chain
   Testing_Predicate StateTransitionSystems InteractionBetweenLts MultisetLTSConstruction CodePurification
   SyncActions MemAction InteractionUnion MemForwarder ForwarderMem Must CompletenessASsync.
-
+(* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section ForwarderSteps.
@@ -82,7 +83,7 @@ Lemma fw_tau_inv (p : P) (m : MO (MemAct Atest)) y :
   ∨ (∃ p' μ η m', y = (p', m') ∧ p ⟶[μ] p' ∧ sync μ η ∧ non_blocking η ∧ m = {[+ msg η +]} ⊎ m').
 Proof.
   intros l.
-  inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
+  inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 | a1 a2 s1 s'1 s2 s'2 hs l1 l2]; subst.
   - left. by exists s'1.
   - inversion l2.
   - right. destruct a1 as [μ | ], a2 as [ | [η | η]]; simpl in hs; try done.
@@ -93,21 +94,21 @@ Qed.
 Lemma fw_inl_inv (p : P) (m : MO (MemAct Atest)) (μ : Aproc) y :
   (p, m) ⟶[inl μ] y → ∃ p', y = (p', m) ∧ p ⟶[μ] p'.
 Proof.
-  intros l. inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 |]; subst; [| done].
+  intros l. inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 |]; subst; [| done].
   by exists s'1.
 Qed.
 
 Lemma fw_msg_inv (p : P) (m : MO (MemAct Atest)) (η : Atest) y :
   (p, m) ⟶[inr (msg η)] y → ∃ m', y = (p, m') ∧ m = {[+ msg η +]} ⊎ m' ∧ non_blocking η.
 Proof.
-  intros l. inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 |]; subst; [done |].
+  intros l. inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 |]; subst; [done |].
   apply mem_msg_inv in l2 as [-> nb]. by exists s'2.
 Qed.
 
 Lemma fw_cobar_inv (p : P) (m : MO (MemAct Atest)) (η : Atest) y :
   (p, m) ⟶[inr (cobar η)] y → y = (p, {[+ msg η +]} ⊎ m) ∧ non_blocking η.
 Proof.
-  intros l. inversion l as [α s1 s'1 s2 l1 | α s1 s2 s'2 l2 |]; subst; [done |].
+  intros l. inversion l as [𝜆 s1 s'1 s2 l1 | 𝜆 s1 s2 s'2 l2 |]; subst; [done |].
   apply mem_cobar_inv in l2 as [-> nb]. by split.
 Qed.
 
@@ -121,8 +122,8 @@ Section LiftMem.
 
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsEqP : !gLtsEq P Hp}.
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
-        `{!FiniteOutputChain_LtsOba T}.
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}
+        `{!FiniteNonBlockingChain_LtsOba T}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 Context `{PIP : !Prop_of_Inter P (MO (MemAct Atest)) Aproc (MemAct Atest) fw_inter_mem}.
 Context `{PIPT : !Prop_of_Inter P T Aproc Atest sync}.
@@ -322,8 +323,8 @@ End LiftMem.
 Section LiftMemPreorder.
 
 Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
-Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T} `{!gLtsObaFB T Atest}
-        `{!FiniteOutputChain_LtsOba T}.
+Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}
+        `{!FiniteNonBlockingChain_LtsOba T}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 
 Context `{gLtsEqP : !gLtsEq P Hp}.

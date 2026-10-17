@@ -23,24 +23,24 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import countable.
 From TestingTheory Require Import ActTau gLts.
+(** ***** Labelled transition systems *)
 
-(* * Labelled transition systems *)
-
-(* ** LTSs equipped with a bisimulation *)
+(** ****** LTSs equipped with a bisimulation *)
 Class gLtsEq (P : Type) {A} `(H : !ExtAction A) := {
     gLtsEq_gLts :: gLts P H;
-    (* Equivalence relation *)
+    (** ********* Equivalence relation *)
     eq_rel : P → P → Prop;
     eq_rel_eq : Equivalence eq_rel;
 
-    (* The relation is a bissimulation *)
-    eq_spec p q (α : Act A) :
-    (exists r, eq_rel p r /\ r ⟶{α} q) 
-      → (exists r, p ⟶{α} r /\ eq_rel r q);
+    (** ********* The relation is a bissimulation *)
+    eq_spec p q (𝜆 : Labels A) :
+    (exists r, eq_rel p r /\ r ⟶{𝜆} q) 
+      → (exists r, p ⟶{𝜆} r /\ eq_rel r q);
   }.
 
 #[global] Instance rel_equivalence `{gLtsEq P A }: Equivalence eq_rel.
@@ -49,16 +49,16 @@ Defined.
 
 Infix "⋍" := eq_rel (at level 70).
 
-Definition lts_sc `{gLtsEq P H} p α q := exists r, p ⟶{α} r /\ r ⋍ q.
+Definition lts_sc `{gLtsEq P H} p 𝜆 q := exists r, p ⟶{𝜆} r /\ r ⋍ q.
 
 Notation "p ⟶⋍ q" := (lts_sc p τ q) (at level 30, format "p  ⟶⋍  q").
-Notation "p ⟶⋍{ α } q" := (lts_sc p α q) (at level 30, format "p  ⟶⋍{ α }  q").
+Notation "p ⟶⋍{ 𝜆 } q" := (lts_sc p 𝜆 q) (at level 30, format "p  ⟶⋍{ 𝜆 }  q").
 Notation "p ⟶⋍[ μ ] q" := (lts_sc p (ActExt μ) q) (at level 30, format "p  ⟶⋍[ μ ]  q").
 
 
-(* *** Bisimulation properties *)
+(** ****** Bisimulation properties *)
 
-Lemma mk_lts_eq `{gLtsEq P H} {p α q} : p ⟶{α} q  → p ⟶⋍{α} q.
+Lemma mk_lts_eq `{gLtsEq P H} {p 𝜆 q} : p ⟶{𝜆} q  → p ⟶⋍{𝜆} q.
 Proof. intro. exists q; split. eauto. reflexivity. Qed.
 
 Lemma refuses_preserved_by_eq `{gLtsEq P A} {p q μ} : p ↛[ μ ] -> p ⋍ q -> q ↛[ μ ].
@@ -84,5 +84,3 @@ Proof.
   edestruct (eq_spec p q') as (p' & hl' & heq'). eauto.
   apply heq, lts_performs_spec2. eauto.
 Qed.
-
-(* end hide *)

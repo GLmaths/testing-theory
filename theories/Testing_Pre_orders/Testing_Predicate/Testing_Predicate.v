@@ -1,4 +1,4 @@
-
+(* begin hide *)
 (*
    Copyright (c) 2024 Nomadic Labs
    Copyright (c) 2024 Paul Laforgue <paul.laforgue@nomadic-labs.com>
@@ -23,12 +23,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Program Require Import Equality.
 From stdpp Require Import finite gmap decidable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act WeakTransitions CodePurification
     StateTransitionSystems InteractionBetweenLts Convergence Termination FiniteImageLTS.
+
 
 
 Class Testing_Predicate {P A : Type} {H: ExtAction A} (outcome : P -> Prop) `(!gLtsEq P H) := {

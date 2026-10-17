@@ -20,7 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-
+(* end hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import ActTau gLts Bisimulation InteractionBetweenLts UnionAction.
@@ -36,31 +36,31 @@ Section Lift_left.
 
 Context `{gLts1 : !gLts S1 H1}.
 
-Definition lift_left_step (s : S1) (α : Act (A1 + A2)) (s' : S1) : Prop :=
-  match α with
+Definition lift_left_step (s : S1) (𝜆 : Labels (A1 + A2)) (s' : S1) : Prop :=
+  match 𝜆 with
   | τ => s ⟶ s'
   | ActExt (inl μ1) => s ⟶[μ1] s'
   | ActExt (inr _) => False
   end.
 
-Definition lift_left_performs (s : S1) (α : Act (A1 + A2)) : Prop :=
-  match α with
+Definition lift_left_performs (s : S1) (𝜆 : Labels (A1 + A2)) : Prop :=
+  match 𝜆 with
   | τ => s ⟶
   | ActExt (inl μ1) => s ⟶[μ1]
   | ActExt (inr _) => False
   end.
 
-Definition decide_lift_left_step s α s' : Decision (lift_left_step s α s').
-Proof. destruct α as [[] |]; simpl; apply _. Defined.
+Definition decide_lift_left_step s 𝜆 s' : Decision (lift_left_step s 𝜆 s').
+Proof. destruct 𝜆 as [[] |]; simpl; apply _. Defined.
 
-Definition decide_lift_left_performs s α : Decision (lift_left_performs s α).
-Proof. destruct α as [[] |]; simpl; apply _. Defined.
+Definition decide_lift_left_performs s 𝜆 : Decision (lift_left_performs s 𝜆).
+Proof. destruct 𝜆 as [[] |]; simpl; apply _. Defined.
 
-Lemma lift_left_performs_spec1 s α : lift_left_performs s α → { s' | lift_left_step s α s' }.
-Proof. destruct α as [[] |]; simpl; [apply lts_performs_spec1 | done | apply lts_performs_spec1]. Defined.
+Lemma lift_left_performs_spec1 s 𝜆 : lift_left_performs s 𝜆 → { s' | lift_left_step s 𝜆 s' }.
+Proof. destruct 𝜆 as [[] |]; simpl; [apply lts_performs_spec1 | done | apply lts_performs_spec1]. Defined.
 
-Lemma lift_left_performs_spec2 s α : { s' | lift_left_step s α s' } → lift_left_performs s α.
-Proof. destruct α as [[] |]; simpl; [apply lts_performs_spec2 | by intros [] | apply lts_performs_spec2]. Qed.
+Lemma lift_left_performs_spec2 s 𝜆 : { s' | lift_left_step s 𝜆 s' } → lift_left_performs s 𝜆.
+Proof. destruct 𝜆 as [[] |]; simpl; [apply lts_performs_spec2 | by intros [] | apply lts_performs_spec2]. Qed.
 
 Definition lift_left_lts : gLts S1 (@ExtAction_sum A1 A2 H1 H2) :=
   {| lts_step := lift_left_step;
@@ -77,31 +77,31 @@ Section Lift_right.
 
 Context `{gLts2 : !gLts S2 H2}.
 
-Definition lift_right_step (s : S2) (α : Act (A1 + A2)) (s' : S2) : Prop :=
-  match α with
+Definition lift_right_step (s : S2) (𝜆 : Labels (A1 + A2)) (s' : S2) : Prop :=
+  match 𝜆 with
   | τ => s ⟶ s'
   | ActExt (inl _) => False
   | ActExt (inr μ2) => s ⟶[μ2] s'
   end.
 
-Definition lift_right_performs (s : S2) (α : Act (A1 + A2)) : Prop :=
-  match α with
+Definition lift_right_performs (s : S2) (𝜆 : Labels (A1 + A2)) : Prop :=
+  match 𝜆 with
   | τ => s ⟶
   | ActExt (inl _) => False
   | ActExt (inr μ2) => s ⟶[μ2]
   end.
 
-Definition decide_lift_right_step s α s' : Decision (lift_right_step s α s').
-Proof. destruct α as [[] |]; simpl; apply _. Defined.
+Definition decide_lift_right_step s 𝜆 s' : Decision (lift_right_step s 𝜆 s').
+Proof. destruct 𝜆 as [[] |]; simpl; apply _. Defined.
 
-Definition decide_lift_right_performs s α : Decision (lift_right_performs s α).
-Proof. destruct α as [[] |]; simpl; apply _. Defined.
+Definition decide_lift_right_performs s 𝜆 : Decision (lift_right_performs s 𝜆).
+Proof. destruct 𝜆 as [[] |]; simpl; apply _. Defined.
 
-Lemma lift_right_performs_spec1 s α : lift_right_performs s α → { s' | lift_right_step s α s' }.
-Proof. destruct α as [[] |]; simpl; [done | apply lts_performs_spec1 | apply lts_performs_spec1]. Defined.
+Lemma lift_right_performs_spec1 s 𝜆 : lift_right_performs s 𝜆 → { s' | lift_right_step s 𝜆 s' }.
+Proof. destruct 𝜆 as [[] |]; simpl; [done | apply lts_performs_spec1 | apply lts_performs_spec1]. Defined.
 
-Lemma lift_right_performs_spec2 s α : { s' | lift_right_step s α s' } → lift_right_performs s α.
-Proof. destruct α as [[] |]; simpl; [by intros [] | apply lts_performs_spec2 | apply lts_performs_spec2]. Qed.
+Lemma lift_right_performs_spec2 s 𝜆 : { s' | lift_right_step s 𝜆 s' } → lift_right_performs s 𝜆.
+Proof. destruct 𝜆 as [[] |]; simpl; [by intros [] | apply lts_performs_spec2 | apply lts_performs_spec2]. Qed.
 
 Definition lift_right_lts : gLts S2 (@ExtAction_sum A1 A2 H1 H2) :=
   {| lts_step := lift_right_step;
@@ -245,30 +245,30 @@ Proof.
   - intros x y z [h1 h2] [h1' h2']. split; by etrans.
 Qed.
 
-Lemma lift_left_eq_spec (s1 r1 r'1 : S1) (α : Act (A1 + A2)) :
-  s1 ⋍ r1 → lift_left_step r1 α r'1 → ∃ t1, lift_left_step s1 α t1 ∧ t1 ⋍ r'1.
+Lemma lift_left_eq_spec (s1 r1 r'1 : S1) (𝜆 : Labels (A1 + A2)) :
+  s1 ⋍ r1 → lift_left_step r1 𝜆 r'1 → ∃ t1, lift_left_step s1 𝜆 t1 ∧ t1 ⋍ r'1.
 Proof.
-  intros he l. destruct α as [[μ1 | μ2] |]; simpl in *; [| done |].
+  intros he l. destruct 𝜆 as [[μ1 | μ2] |]; simpl in *; [| done |].
   - destruct (eq_spec s1 r'1 (ActExt μ1)) as (t1 & l1 & e1); [by exists r1 |]. by exists t1.
   - destruct (eq_spec s1 r'1 τ) as (t1 & l1 & e1); [by exists r1 |]. by exists t1.
 Qed.
 
-Lemma lift_right_eq_spec (s2 r2 r'2 : S2) (α : Act (A1 + A2)) :
-  s2 ⋍ r2 → lift_right_step r2 α r'2 → ∃ t2, lift_right_step s2 α t2 ∧ t2 ⋍ r'2.
+Lemma lift_right_eq_spec (s2 r2 r'2 : S2) (𝜆 : Labels (A1 + A2)) :
+  s2 ⋍ r2 → lift_right_step r2 𝜆 r'2 → ∃ t2, lift_right_step s2 𝜆 t2 ∧ t2 ⋍ r'2.
 Proof.
-  intros he l. destruct α as [[μ1 | μ2] |]; simpl in *; [done | |].
+  intros he l. destruct 𝜆 as [[μ1 | μ2] |]; simpl in *; [done | |].
   - destruct (eq_spec s2 r'2 (ActExt μ2)) as (t2 & l2 & e2); [by exists r2 |]. by exists t2.
   - destruct (eq_spec s2 r'2 τ) as (t2 & l2 & e2); [by exists r2 |]. by exists t2.
 Qed.
 
-Lemma inter_union_eq_spec (x y : S1 * S2) (α : Act (A1 + A2)) :
-  (∃ r, inter_union_eq x r ∧ r ⟶{α} y) → ∃ r, x ⟶{α} r ∧ inter_union_eq r y.
+Lemma inter_union_eq_spec (x y : S1 * S2) (𝜆 : Labels (A1 + A2)) :
+  (∃ r, inter_union_eq x r ∧ r ⟶{𝜆} y) → ∃ r, x ⟶{𝜆} r ∧ inter_union_eq r y.
 Proof.
   destruct x as (s1, s2). intros ((r1, r2) & [h1 h2] & l). simpl in *.
-  inversion l as [α' r1' r'1 r2' l1 | α' r1' r2' r'2 l2 | a1 a2 r1' r'1 r2' r'2 hs l1 l2]; subst.
-  - destruct (lift_left_eq_spec s1 r1 r'1 α h1 l1) as (t1 & lt1 & e1).
+  inversion l as [𝜆' r1' r'1 r2' l1 | 𝜆' r1' r2' r'2 l2 | a1 a2 r1' r'1 r2' r'2 hs l1 l2]; subst.
+  - destruct (lift_left_eq_spec s1 r1 r'1 𝜆 h1 l1) as (t1 & lt1 & e1).
     exists (t1, s2). split; [by apply ParLeft | done].
-  - destruct (lift_right_eq_spec s2 r2 r'2 α h2 l2) as (t2 & lt2 & e2).
+  - destruct (lift_right_eq_spec s2 r2 r'2 𝜆 h2 l2) as (t2 & lt2 & e2).
     exists (s1, t2). split; [by apply ParRight | done].
   - destruct (lift_left_eq_spec s1 r1 r'1 (ActExt a1) h1 l1) as (t1 & lt1 & e1).
     destruct (lift_right_eq_spec s2 r2 r'2 (ActExt a2) h2 l2) as (t2 & lt2 & e2).
@@ -282,4 +282,3 @@ Definition inter_union_ltsEq : gLtsEq (S1 * S2) (@ExtAction_sum A1 A2 H1 H2) :=
      eq_spec := inter_union_eq_spec |}.
 
 End Inter_union_eq.
-(* end hide *)

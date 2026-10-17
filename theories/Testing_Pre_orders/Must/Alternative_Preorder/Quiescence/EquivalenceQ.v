@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
 
@@ -27,7 +28,7 @@ From stdpp Require Import base decidable sets.
 
 From TestingTheory Require Import ActTau gLts SyncActions Subset_Act WeakTransitions
     Convergence Termination DefinitionAS DefinitionQ.
-
+(* begin hide *)
 Lemma wt_stabilise `{gLts P A} (p q : P) s :
   p ⇓ s -> p ⟹[s] q -> ∃ q', p ⟹[s] q' /\ q' ↛.
 Proof.
@@ -38,8 +39,8 @@ Proof.
 Qed.
 
 Lemma quiescent_pre_of_bhv_pre `{
-  gLtsP : @gLts P A H, AbsPT : @AbsAction P T FinA PreAct A H Φ 𝝳P _ _ _ gLtsT _,
-  gLtsQ : @gLts Q A H, AbsQT : @AbsAction Q T FinA PreAct A H Φ 𝝳Q _ _ _ gLtsT _}
+  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
+  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
   (p : P) (q : Q) :
   (∀ s, is_trace q s -> p ⇓ s) -> p ≼ₐₛ q -> q ⊑ǫ p.
 Proof.
@@ -55,7 +56,7 @@ Proof.
     exists p'. split; [exact hwp | split; [exact hstp | ]].
     intros β. split; [| set_solver].
     intros hβ.
-    assert ((𝝳P ∘ Φ) β ∈ ⌈ 𝝳Q ∘ Φ ⌉ (coR q')) as (β' & hβ' & _)
+    assert ((αᴘʀᴏP ∘ αᴛᴇꜱᴛ) β ∈ ⌈ αᴘʀᴏQ ∘ αᴛᴇꜱᴛ ⌉ (coR q')) as (β' & hβ' & _)
       by (eapply hsub, map_gamma_of_action, hβ).
     eapply hempty in hβ'. set_solver.
 Qed.

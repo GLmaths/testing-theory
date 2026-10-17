@@ -23,13 +23,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
+(* end hide *)
 
 From Stdlib.Program Require Import Equality.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import decidable countable.
 From TestingTheory Require Import ActTau gLts InputOutputActions Must 
-Testing_Predicate VCCS_Instance.
-(* end hide *)
+Testing_Predicate VCCS.Language.gLts_Instance.
+
 
 Section VCCS_Testing.
 
@@ -43,7 +44,6 @@ Inductive good_VCCS : proc -> Prop :=
 | good_if_true : forall E p q, good_VCCS p -> Eval_Eq 0 E = Some true -> good_VCCS (If E Then p Else q)
 | good_if_false : forall E p q, good_VCCS q -> Eval_Eq 0 E = Some false -> good_VCCS (If E Then p Else q)
 | good_res : forall p, good_VCCS p -> good_VCCS (ν p).
-(* begin hide *)
 
 Hint Constructors good_VCCS:ccs.
 
@@ -217,7 +217,5 @@ Qed.
 (* end hide *)
 
 End VCCS_Testing.
-(* begin hide *)
 
 #[global] Hint Constructors good_VCCS:ccs.
-(* end hide *)

@@ -27,44 +27,44 @@
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
 <h1 class="libtitle">Table of Contents</h1>
-<h2>Actions, Duality and LTSs</h2>
+<h2>Labels, Duality and LTS</h2>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#Act">Actions and the silent action</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#ExtAction">Definition — Actions with a duality</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts">Definition — LTS</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#Labels">Labels definition</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.ActTau.html#ExtAction">Specifications for external actions</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Definitions.gLts.html#gLts">Labelled Transition System (LTS)</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#folts_next_states_finite">Image-finite LTS</a></li>
 </ul>
-<h3>Axioms on non-blocking actions</h3>
+<h3>Forwarder FWⁿ and Non-Blocking buffered agents Lⁿ</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#gLtsOba">Axioms for non-blocking actions</a>
+<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#gLtsOba">Axioms of FWⁿ</a>
   <ul class="doclist">
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_delay">NB-delay</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_confluence">NB-confluence</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_tau">NB-tau</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#nb_determinacy">NB-determinacy</a></li>
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA.html#backwards_nb_determinacy">Backwards NB-determinacy</a></li>
+  <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#gLtsObaFW">Forwarding</a>
+    <ul class="doclist">
+    <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#boomerang">Boomerang</a></li>
+    <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#fwd_feedback">FW-feedback</a></li>
+    </ul>
+  </li>
   </ul>
 </li>
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#gLtsObaFW">Forwarders</a>
-  <ul class="doclist">
-  <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#boomerang">Boomerang</a></li>
-  <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_FW.html#fwd_feedback">FW-feedback</a></li>
-  </ul>
-</li>
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA_FB.html#gLtsObaFB">Feedback</a>
+<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA_FB.html#gLtsObaFB">Axioms of Lⁿ</a>
   <ul class="doclist">
   <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_OBA_FB.html#feedback">Feedback</a></li>
   </ul>
 </li>
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_Finite_Output_Chain.html#FiniteOutputChain_LtsOba">Finite output chains</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_Finite_Non_Blocking_Chain.html#FiniteNonBlockingChain_LtsOba">Finite NB chains</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.MULTISET.MultisetLTSConstruction.html#lts_multiset_step">Example — LTS of multisets</a></li>
 </ul>
 <h2>Testing</h2>
 <ul class="doclist">
 <li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ParallelLTSConstruction.html#parallel_gLts">Parallel composition</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Testing_Predicate.html#Testing_Predicate">Good states</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#must_extensional">Definition — Must</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#pre_extensional">Definition — Must-preorder</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#must_extensional">Must</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.MustE.html#pre_extensional">Must-preorder</a></li>
 </ul>
 <h2>Uniform Characterisation with Co-Acceptance Sets</h2>
 <h3>The alternative preorder</h3>
@@ -74,89 +74,87 @@
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.Convergence.html#cnv">Convergence along a trace</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#R">Ready set</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Actions.Definitions.Subset_Act.html#coR">Co-ready set</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#AbsAction">Definition — Label abstraction</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#FinitaryAbsAction">Definition — Finitary label abstraction</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#AbsAction">Label abstraction</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#FinitaryAbsAction">Finitary label abstraction</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#waiting_states">Waiting states after a trace</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#waiting_states_fin">Waiting states after a trace, finiteness</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#bhv_pre">Definition — Alternative preorder</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.DefinitionAS.html#bhv_pre">Alternative preorder</a></li>
 </ul>
 <h3>Main theorem</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Equivalence.html#equivalence_fw_bhv_acc_ctx">Theorem — Main result</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Equivalence.html#equivalence_fw_bhv_acc_ctx">Theorem — characterisation of the must-preorder with coAcceptance Set</a></li>
 </ul>
 <h3>Proof of soundness</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_CN.html#cn_enabled">Enabledness</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#communication_enabled">Lemma — Communication is enabled</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Definitions.Lts_CN.html#cn_enabled">Co-Non-Blocking Enabled</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#communication_enabled">Lemma — Preservation of progress</a></li>
 <li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.SET_LTS.SetLTSConstruction.html#convergence_set_iff_convergence_forall">Lemma — Convergence of a set of processes</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#bhv_pre__x">Alternative preorder on sets</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#must_set_iff_must_for_all">Must on sets</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#alt_set_singleton_iff">Lemma — Alternative preorder on singletons</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#must_set_singleton_iff">Lemma — Must on singletons</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#stability_nbhvleqtwo">Lemma — Stability</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#stability_nbhvleqtwo">Lemma — Preservation of progress for sets</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Soundness.html#soundnessx">Proposition — Soundness</a></li>
 </ul>
 <h3>Axioms for tests and proof of completeness</h3>
 <ul class="doclist">
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Completeness.html#test_spec">Axioms for completeness</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Completeness.html#must_iff_cnv">Lemma — Must and convergence</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Completeness.html#must_ta_or_empty_pre_action_set_for_all_trace">Lemma — Must and acceptance sets, for every trace</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Completeness.html#must_ta_or_empty_pre_action_set_for_all_trace">Lemma — Must and acceptance sets</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Completeness.html#not_must_ta_without_required_acc_set">Lemma — Acceptance sets are required</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.coAcceptance_Set.Completeness.html#completeness_fw">Proposition — Completeness</a></li>
 </ul>
 <h3>Lifting to forwarders</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFW">Definition — Lifting to forwarders</a></li>
+<li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFW">Lifting to forwarders</a></li>
 <li><a href="TestingTheory.Interaction_Between_Lts.Examples_of_Interactions.ForwarderConstruction.html#toFWObaFW">Lemma — The lifting is a forwarder</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Lift.html#lift_fw_ctx_pre">Lemma — The lifting preserves the must-preorder</a></li>
 </ul>
-<h2>Uniform Characterisation with Failure-Divergence Refinement</h2>
+<h2>Uniform Characterisation with Must Refinement</h2>
 <ul class="doclist">
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.DefinitionMS.html#MUST__s">Must-set</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.DefinitionMS.html#bhv_pre_ms">Definition — De Nicola&#x27;s preorder</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.DefinitionMS.html#bhv_pre_ms">De Nicola&#x27;s preorder</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.EquivalenceMS.html#equivalence_bhv_acc_mst">Lemma — Must-sets and acceptance sets</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Must_Set.EquivalenceMS.html#equivalence_fw_must_set_and_must_e">Theorem — Must-set characterisation</a></li>
+</ul>
+<h2>Uniform Characterisation with Failure-Divergence Refinement</h2>
+<ul class="doclist">
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.EquivalenceFMS.html#equivalence_nmust_set_failure">Lemma — Must-sets and failures</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.EquivalenceFMS.html#equivalence_must_set_nfailure">Lemma — Must-sets and failures, converse</a></li>
-<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.DefinitionFMS.html#fail_pre_ms">Definition — Failure-divergence refinement</a></li>
+<li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.DefinitionFMS.html#fail_pre_ms">Failure-divergence refinement</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Must.Alternative_Preorder.Failure_Set.EquivalenceFMS.html#equivalence_fw_failure_set_and_must_e">Theorem — Failure-divergence characterisation</a></li>
-</ul>
-<h2>Trace Inclusion, Infinite Traces, and Image-Finiteness</h2>
-<ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#reachable_states_spec1">Equation — Traces of an image-finite LTS</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Definitions.FiniteImageLTS.html#reachable_states_spec2">Equation — Traces of an image-finite LTS, converse</a></li>
 </ul>
 <h2>Use Cases</h2>
 <h3>VCCS</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#proc">Syntax of VCCS</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS.html#lts">LTS of VCCS</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#VCCS_gFiniteOutputChain_LtsOba">Lemma — VCCS has finite output chains</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Instance.html#VCCS_gLtsOBAFB">Lemma — VCCS satisfies the axioms with feedback</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Language.LTS.html#proc">Syntax of VCCS</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Language.LTS.html#lts">LTS of VCCS</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Language.gLts_Instance.html#VCCS_gFiniteNonBlockingChain_LtsOba">Lemma — VCCS has finite NB chains</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Language.gLts_Instance.html#VCCS_gLtsOBAFB">Lemma — VCCS satisfies the axioms with feedback</a></li>
 <li><a href="TestingTheory.Testing_Pre_orders.Testing_Predicate.Exemples_of_Testing_Predicate.VCCS_Good.html#good_VCCS">Good states of VCCS</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Must_Characterization.html#must_iff_acceptance_set_VCCS_without_toFW">Corollary — Characterisation for VCCS</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Characterisations.Must_Characterisation.html#must_iff_acceptance_set_VCCS_without_toFW">Corollary — Characterisation for VCCS</a></li>
 </ul>
 <h4>Examples</h4>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#NIL_is_not_above_copycat">Copy-cat is not below 0</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#NIL_is_not_above_constant">A constant is not below 0</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.VCCS_Examples.html#mem_outside_is_above_mem_inside">Code hoisting</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Examples.Examples.html#NIL_is_not_above_copycat">Copy-cat is not below 0</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Examples.Examples.html#NIL_is_not_above_constant">A constant is not below 0</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VCCS.Examples.Examples.html#mem_outside_is_above_mem_inside">Code hoisting</a></li>
 </ul>
 <h3>VACCS</h3>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS.html#proc">Syntax of VACCS</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS.html#lts">LTS of VACCS</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Instance.html#TransitionShapeForOutput">Lemma — Shape of the transitions for outputs</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Instance.html#lts_set_output_spec1">Lemma — The set of outputs</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Instance.html#VACCS_gLtsFiniteImage">Lemma — VACCS is image-finite</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Instance.html#VACCS_gLtsOBAFB">Lemma — VACCS satisfies the axioms with feedback</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Must_Characterization.html#must_iff_acceptance_set_VACCS">Corollary — Characterisation for VACCS</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Language.LTS.html#proc">Syntax of VACCS</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Language.LTS.html#lts">LTS of VACCS</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Harmony_Lemma.Harmony.html#TransitionShapeForOutput">Lemma — Shape of the transitions for outputs</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Language.gLts_Instance.html#lts_set_output_spec1">Lemma — The set of outputs</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Language.gLts_Instance.html#VACCS_gLtsFiniteImage">Lemma — VACCS is image-finite</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Language.gLts_Instance.html#VACCS_gLtsOBAFB">Lemma — VACCS satisfies the axioms with feedback</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Characterisations.Must_Characterisation.html#must_iff_acceptance_set_VACCS">Corollary — Characterisation for VACCS</a></li>
 </ul>
 <h4>Examples</h4>
 <ul class="doclist">
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Examples.html#NIL_is_equivalent_to_ccat">Copy-cat and 0 are equivalent</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Examples.html#NIL_is_above_constant">0 is above a constant</a></li>
-<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.VACCS_Examples.html#copycat_is_above_constant">Copy-cat is above a constant</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Examples.Examples.html#NIL_is_equivalent_to_ccat">Copy-cat and 0 are equivalent</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Examples.Examples.html#NIL_is_above_constant">0 is above a constant</a></li>
+<li><a href="TestingTheory.Labelled_Transition_System.Examples_of_LTS.VACCS.Examples.Examples.html#copycat_is_above_constant">Copy-cat is above a constant</a></li>
 </ul>
 <h3>ACCS</h3>
 <ul class="doclist">
