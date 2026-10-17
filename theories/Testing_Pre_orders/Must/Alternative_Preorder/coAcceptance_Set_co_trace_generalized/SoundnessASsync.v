@@ -50,7 +50,7 @@ From TestingTheory Require Import coWeakTransition coConvergence
 Inductive mustx `{
     gLtsP : @gLts P Ap Hp, CP : !Countable P,
     gLtsT : ! @gLtsEq T At Ht, !Testing_Predicate outcome _,
-    SA : !SyncAction Ap At, STS : !ParSts P T gLtsP gLtsT, !ParStsSpec P T gLtsP gLtsT SA STS}
+    SA : !SyncAction Ap At, PI : !Prop_of_Inter P T Ap At sync}
   (X : gset P) (t : T) : Prop :=
 | mx_now (hh : outcome t) : mustx X t
 | mx_step
@@ -77,7 +77,7 @@ Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsP : !gLts P Hp}.
 Context `{gLtsT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
-Context `{SA : !SyncAction Ap At} `{STS : !ParSts P T gLtsP gLtsT} `{!ParStsSpec P T gLtsP gLtsT SA STS}.
+Context `{SA : !SyncAction Ap At} `{PI : !Prop_of_Inter P T Ap At sync}.
 Context `{CFI : !coFiniteImagegLts P At}.
 
 (* ** Must predicate for sets *)
@@ -469,7 +469,7 @@ End Must_for_sets_sync.
 Definition ctx_pre__x `{gLtsP : @gLts P Ap Hp, CP : !Countable P,
     gLtsT : !@gLtsEq T At Ht, !Testing_Predicate outcome _,
     SA : !SyncAction Ap At,
-    STSP : !ParSts P T gLtsP gLtsT, !ParStsSpec P T gLtsP gLtsT SA STSP}
+    PI : !Prop_of_Inter P T Ap At sync}
   (X : gset P) (Y : gset P) :=
   ∀ (t : T), X must_pass_x t → Y must_pass_x t.
 
@@ -480,7 +480,7 @@ Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
 Context `{SA : !SyncAction Ap At}.
-Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA STSP}
+Context `{gLtsP : !gLts P Hp} `{PI : !Prop_of_Inter P T Ap At sync}
         `{CFIP : !coFiniteImagegLts P At}.
 
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
@@ -578,7 +578,7 @@ Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
 Context `{SA : !SyncAction Ap At}.
-Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA STSP}
+Context `{gLtsP : !gLts P Hp} `{PI : !Prop_of_Inter P T Ap At sync}
         `{CFIP : !coFiniteImagegLts P At}.
 
 (* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is reflexive *)
@@ -818,7 +818,7 @@ Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsEqT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsEqT}.
 Context `{SA : !SyncAction Ap At}.
-Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA STSP}
+Context `{gLtsP : !gLts P Hp} `{PI : !Prop_of_Inter P T Ap At sync}
         `{CFIP : !coFiniteImagegLts P At}.
 Context `{CN : !gLtsCNenabled P Ap At}.
 Context (𝔸 : Label_abstraction P T).

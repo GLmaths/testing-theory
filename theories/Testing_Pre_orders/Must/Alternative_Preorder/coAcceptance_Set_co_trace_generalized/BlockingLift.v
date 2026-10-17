@@ -29,16 +29,16 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
   InteractionBetweenLts MemAction InteractionUnion MemForwarder Termination
   coWeakTransition coConvergence coFiniteImage InListPropHelper
   StateTransitionSystems Testing_Predicate Must
-  Label_Abstraction.LabelAbstraction LabelAdmissible DefinitionASrel
-  Lts_OBA Lts_OBA_FB CompletenessASsync EquivalenceASsync.
+  Label_Abstraction.LabelAbstraction Label_Abstraction.Decidable_dichotomic DefinitionASrel
+  Lts_OBA CompletenessASsync EquivalenceASsync.
 (* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 Section Lift_eq.
-  Context {P Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
+  Context {P Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
   Context `{gLtsEqP : !gLtsEq P Hp}.
 
-  Definition liftEq : gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht)) :=
+  Definition liftEq : gLtsEq P (@ExtAction_sum Ap (MemAct At) Hp (@ExtAction_mem At Ht)) :=
     {| gLtsEq_gLts := lift_left_lts;
        eq_rel := eq_rel;
        eq_rel_eq := eq_rel_eq;
@@ -46,21 +46,21 @@ Section Lift_eq.
 End Lift_eq.
 
 Section Blocking_lift.
-  Context {P Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-    `{SA : !SyncAction Aproc Atest}.
+  Context {P Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+    `{SA : !SyncAction Ap At}.
   Context `{gLtsEqP : !gLtsEq P Hp}.
-  Context (allblk : ∀ η : Atest, ¬ non_blocking η).
+  Context (allblk : ∀ η : At, ¬ non_blocking η).
 
-  Notation gP := (@gLtsEq_gLts P Aproc Hp gLtsEqP).
-  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Aproc Atest Hp Ht gLtsEqP)).
+  Notation gP := (@gLtsEq_gLts P Ap Hp gLtsEqP).
+  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Ap At Hp Ht gLtsEqP)).
 
-  Definition gLtsFWMem_lift : @gLtsFWMem P Aproc Atest Hp Ht SA liftEq.
+  Definition gLtsFWMem_lift : @gLtsFWMem P Ap At Hp Ht SA liftEq.
   Proof.
     split; [intros p η nb | intros p1 p2 p3 η μ nb | intros p q r η 𝜆 nb];
       exfalso; exact (allblk η nb).
   Qed.
 
-  Lemma coR_lift (p : P) (β : Atest) :
+  Lemma coR_lift (p : P) (β : At) :
     β ∈ coR (H := gL) (SA := SyncAction_mem) p ↔ β ∈ coR (H := gP) (SA := SA) p.
   Proof.
     split.
@@ -74,7 +74,7 @@ Section Blocking_lift.
     split; induction 1 as [p _ IH]; constructor; intros q l; by apply IH.
   Qed.
 
-  Lemma cowt_lift (p q : P) (s : trace Atest) :
+  Lemma cowt_lift (p q : P) (s : trace At) :
     cowt (H := gL) (SA := SyncAction_mem) p s q ↔ cowt (H := gP) (SA := SA) p s q.
   Proof.
     split; induction 1 as [p | s p r t l w IH | μ μ' s p r t hs l w IH].
@@ -86,7 +86,7 @@ Section Blocking_lift.
     - eapply (cowt_act μ (inl μ')); [exact hs | exact l | exact IH].
   Qed.
 
-  Lemma cocnv_lift (p : P) (s : trace Atest) :
+  Lemma cocnv_lift (p : P) (s : trace At) :
     cocnv (H := gL) (SA := SyncAction_mem) p s ↔ cocnv (H := gP) (SA := SA) p s.
   Proof.
     split; induction 1 as [p ht | p μ s ht hq IH].
@@ -98,18 +98,23 @@ Section Blocking_lift.
 End Blocking_lift.
 
 Section Blocking_lift_pre.
-  Context {P Q Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-    `{SA : !SyncAction Aproc Atest}.
-  Context `{gLtsEqP : !gLtsEq P Hp} `{gLtsEqQ : !gLtsEq Q Hp}.
+  Context {P Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+    `{SA : !SyncAction Ap At}.
+  Context `{gLtsEqP : !gLtsEq P Hp}.
 
-  Notation gP := (@gLtsEq_gLts P Aproc Hp gLtsEqP).
-  Notation gLP := (@gLtsEq_gLts P _ _ (@liftEq P Aproc Atest Hp Ht gLtsEqP)).
-  Notation gQ := (@gLtsEq_gLts Q Aproc Hp gLtsEqQ).
-  Notation gLQ := (@gLtsEq_gLts Q _ _ (@liftEq Q Aproc Atest Hp Ht gLtsEqQ)).
+  Notation gP := (@gLtsEq_gLts P Ap Hp gLtsEqP).
+  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Ap At Hp Ht gLtsEqP)).
 
-  Lemma bhv_pre_r_lift (R : relation Atest) (p : P) (q : Q) :
-    bhv_pre_r (gLtsP := gLP) (gLtsQ := gLQ) (SA := SyncAction_mem) R p q ↔
-    bhv_pre_r (gLtsP := gP) (gLtsQ := gQ) (SA := SA) R p q.
+  Lemma map_coR_lift {PreA : Type} (Γ : At → PreA) (p : P) x :
+    x ∈ ⌈ Γ ⌉ (coR (H := gL) (SA := SyncAction_mem) p) ↔ x ∈ ⌈ Γ ⌉ (coR (H := gP) (SA := SA) p).
+  Proof.
+    split; intros (β & hβ & ->); exists β; split;
+      [by apply coR_lift | done | by apply coR_lift | done].
+  Qed.
+
+  Lemma bhv_pre_lift {PreA : Type} (Γ : At → PreA) (p q : P) :
+    cnv_acceptance_set_preorder_on_co_trace (gLtsP := gL) (SA := SyncAction_mem) Γ p q ↔
+    cnv_acceptance_set_preorder_on_co_trace (gLtsP := gP) (SA := SA) Γ p q.
   Proof.
     split; intros [h1 h2]; split.
     - intros s hc. apply cocnv_lift, h1, cocnv_lift, hc.
@@ -117,25 +122,24 @@ Section Blocking_lift_pre.
       destruct (h2 s q' (proj2 (cocnv_lift p s) hc) (proj2 (cowt_lift q q' s) w) st)
         as (p' & wp & stp & sub).
       exists p'. split_and!; [by apply cowt_lift | exact stp |].
-      intros β hβ. destruct (sub β (proj2 (coR_lift p' β) hβ)) as (β' & hβ' & hR).
-      exists β'. split; [by apply coR_lift | exact hR].
+      intros x hx. apply map_coR_lift, sub, map_coR_lift, hx.
     - intros s hc. apply cocnv_lift, h1, cocnv_lift, hc.
     - intros s q' hc w st.
       destruct (h2 s q' (proj1 (cocnv_lift p s) hc) (proj1 (cowt_lift q q' s) w) st)
         as (p' & wp & stp & sub).
       exists p'. split_and!; [by apply cowt_lift | exact stp |].
-      intros β hβ. destruct (sub β (proj1 (coR_lift p' β) hβ)) as (β' & hβ' & hR).
-      exists β'. split; [by apply coR_lift | exact hR].
+      intros x hx. apply map_coR_lift, sub, map_coR_lift, hx.
   Qed.
 End Blocking_lift_pre.
+
 Section Must_lift.
-  Context {P T Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-    `{SA : !SyncAction Aproc Atest}.
+  Context {P T Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+    `{SA : !SyncAction Ap At}.
   Context `{gLtsEqP : !gLtsEq P Hp} `{gLtsT : !gLtsEq T Ht}
     {outcome : T → Prop} `{TP : !Testing_Predicate outcome gLtsT}.
 
-  Notation gP := (@gLtsEq_gLts P Aproc Hp gLtsEqP).
-  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Aproc Atest Hp Ht gLtsEqP)).
+  Notation gP := (@gLtsEq_gLts P Ap Hp gLtsEqP).
+  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Ap At Hp Ht gLtsEqP)).
 
   Context (STS : ParSts P T gP gLtsT) (SPEC : ParStsSpec P T gP gLtsT SA STS).
   Context (STSL : ParSts P T gL gLtsT) (SPECL : ParStsSpec P T gL gLtsT SyncAction_mem STSL).
@@ -179,17 +183,17 @@ Section Must_lift.
 End Must_lift.
 
 Section Inter_lift.
-  Context {P T Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-    `{SA : !SyncAction Aproc Atest}.
+  Context {P T Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+    `{SA : !SyncAction Ap At}.
   Context `{gLtsEqP : !gLtsEq P Hp} `{gLtsT : !gLts T Ht}.
 
-  Notation gP := (@gLtsEq_gLts P Aproc Hp gLtsEqP).
-  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Aproc Atest Hp Ht gLtsEqP)).
+  Notation gP := (@gLtsEq_gLts P Ap Hp gLtsEqP).
+  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Ap At Hp Ht gLtsEqP)).
 
-  Context `{PI : !@Prop_of_Inter P T Aproc Atest (@sync _ _ _ _ SA) Hp gP Ht gLtsT}.
+  Context `{PI : !@Prop_of_Inter P T Ap At (@sync _ _ _ _ SA) Hp gP Ht gLtsT}.
 
   Program Definition lift_inter :
-    @Prop_of_Inter P T (Aproc + MemAct Atest) Atest (@sync _ _ _ _ SyncAction_mem)
+    @Prop_of_Inter P T (Ap + MemAct At) At (@sync _ _ _ _ SyncAction_mem)
       ExtAction_sum gL Ht gLtsT :=
     {| lts_essential_actions_left p := set_map inl (lts_essential_actions_left p);
        lts_essential_actions_right := lts_essential_actions_right;
@@ -223,16 +227,16 @@ Section Inter_lift.
 End Inter_lift.
 
 Section CoFinite_lift.
-  Context {P Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-    `{SA : !SyncAction Aproc Atest}.
+  Context {P Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+    `{SA : !SyncAction Ap At}.
   Context `{gLtsEqP : !gLtsEq P Hp}.
 
-  Notation gP := (@gLtsEq_gLts P Aproc Hp gLtsEqP).
-  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Aproc Atest Hp Ht gLtsEqP)).
+  Notation gP := (@gLtsEq_gLts P Ap Hp gLtsEqP).
+  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Ap At Hp Ht gLtsEqP)).
 
-  Context `{CFI : !@coFiniteImagegLts P Atest Aproc Hp gP Ht SA}.
+  Context `{CFI : !@coFiniteImagegLts P At Ap Hp gP Ht SA}.
 
-  Lemma lift_sync_step_iff (p q : P) (𝜆 : Atest) :
+  Lemma lift_sync_step_iff (p q : P) (𝜆 : At) :
     (∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q) ↔
     (∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q).
   Proof.
@@ -249,7 +253,7 @@ Section CoFinite_lift.
     exists (dexist q h). split; [done | apply elem_of_enum].
   Defined.
 
-  Definition lift_ext_dec (p : P) (𝜆 : Atest) q :
+  Definition lift_ext_dec (p : P) (𝜆 : At) q :
     Decision (∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q).
   Proof.
     destruct (decide (∃ μ, sync μ 𝜆 ∧ p ⟶[μ] q)) as [h | h]; [left | right];
@@ -258,7 +262,7 @@ Section CoFinite_lift.
 
   #[local] Existing Instance lift_ext_dec.
 
-  Definition lift_ext_finite (p : P) (𝜆 : Atest) :
+  Definition lift_ext_finite (p : P) (𝜆 : At) :
     Finite (dsig (λ q, ∃ 𝜆', @sync _ _ _ _ SyncAction_mem 𝜆' 𝜆 ∧ lts_step (gLts := gL) p (ActExt 𝜆') q)).
   Proof.
     unfold dsig.
@@ -268,92 +272,91 @@ Section CoFinite_lift.
   Defined.
 
   Definition coFiniteImage_lift :
-    @coFiniteImagegLts P Atest (Aproc + MemAct Atest) ExtAction_sum gL Ht SyncAction_mem :=
-    @MkCoFlts P Atest (Aproc + MemAct Atest) ExtAction_sum gL Ht SyncAction_mem
-      (@cofolts_states_countable P Atest Aproc Hp gP Ht SA CFI)
+    @coFiniteImagegLts P At (Ap + MemAct At) ExtAction_sum gL Ht SyncAction_mem :=
+    @MkCoFlts P At (Ap + MemAct At) ExtAction_sum gL Ht SyncAction_mem
+      (@cofolts_states_countable P At Ap Hp gP Ht SA CFI)
       lift_tau_finite lift_ext_dec lift_ext_finite.
 End CoFinite_lift.
-Section LA_lift.
-  Context {P T Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-    `{SA : !SyncAction Aproc Atest}.
+
+Section Label_abstraction_lift.
+  Context {P T Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+    `{SA : !SyncAction Ap At}.
   Context `{gLtsEqP : !gLtsEq P Hp} `{gLtsT : !gLts T Ht}.
-  Context (R : relation Atest).
 
-  Notation gP := (@gLtsEq_gLts P Aproc Hp gLtsEqP).
-  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Aproc Atest Hp Ht gLtsEqP)).
+  Notation gP := (@gLtsEq_gLts P Ap Hp gLtsEqP).
+  Notation gL := (@gLtsEq_gLts P _ _ (@liftEq P Ap At Hp Ht gLtsEqP)).
 
-  Lemma LA_admissible_lift :
-    @LA_admissible P T Aproc Hp gP Atest Ht gLtsT SA R →
-    @LA_admissible P T (Aproc + MemAct Atest) ExtAction_sum gL Atest Ht gLtsT SyncAction_mem R.
+  Definition CoEnable_PO_lift (C : @CoEnable_PO P Ap Hp gP At Ht SA) :
+    @CoEnable_PO P (Ap + MemAct At) ExtAction_sum gL At Ht SyncAction_mem.
   Proof.
-    intros adm p β β'' b h mem.
-    apply (proj1 (coR_lift (gLtsEqP := gLtsEqP) (SA := SA) p β'')) in mem.
-    destruct (adm p β β'' b h mem) as (u & hu & hP).
-    exists u. split; [exact (proj2 (coR_lift (gLtsEqP := gLtsEqP) (SA := SA) p u) hu) | exact hP].
-  Qed.
-
-  Context `{!Equivalence R} `{!RelDecision R}.
-
-  Definition FinitaryLA_lift :
-    @FinitaryLA P Aproc Hp gP Atest Ht SA R _ _ →
-    @FinitaryLA P (Aproc + MemAct Atest) ExtAction_sum gL Atest Ht SyncAction_mem R _ _.
-  Proof.
-    intros fin. refine {| coR_absR := @coR_absR _ _ _ _ _ _ _ R _ _ fin |}.
-    intros p x. rewrite (@coR_absR_spec _ _ _ _ _ _ _ R _ _ fin).
-    split; intros (β & hβ & e); exists β; split; try exact e.
-    - exact (proj2 (coR_lift (gLtsEqP := gLtsEqP) (SA := SA) p β) hβ).
-    - exact (proj1 (coR_lift (gLtsEqP := gLtsEqP) (SA := SA) p β) hβ).
+    refine (@CEPO.MkCoEnable_PO P (Ap + MemAct At) ExtAction_sum gL At Ht SyncAction_mem
+              (CEPO.label_preorder P (CoEnable_PO := C))
+              (@CEPO.label_preorder_is_a_preorder P Ap Hp gP At Ht SA C) _).
+    intros μ μ' le p mem.
+    apply (proj2 (coR_lift (SA := SA) p μ)).
+    apply (@CEPO.coR_reverse_inclusion P Ap Hp gP At Ht SA C μ μ' le p).
+    exact (proj1 (coR_lift (SA := SA) p μ') mem).
   Defined.
-End LA_lift.
+
+  Definition Label_abstraction_lift (𝔸 : @Label_abstraction P T Ap At Hp Ht gP gLtsT SA) :
+    @Label_abstraction P T (Ap + MemAct At) At ExtAction_sum Ht gL gLtsT SyncAction_mem.
+  Proof.
+    refine (@MkLA P T (Ap + MemAct At) At ExtAction_sum Ht gL gLtsT SyncAction_mem
+              (EPO (Label_abstraction := 𝔸)) (CoEnable_PO_lift (CEPO (Label_abstraction := 𝔸)))
+              (Label_abstraction_dec (Label_abstraction := 𝔸))).
+  Defined.
+
+  Definition Dichotomic_lift {PreA : Type} (Γ : At → PreA) :
+    @Dichotomic P Ap At PreA Hp Ht gP SA Γ →
+    @Dichotomic P (Ap + MemAct At) At PreA ExtAction_sum Ht gL SyncAction_mem Γ.
+  Proof.
+    intros D p q hp hq. destruct (D p q hp hq) as [sub | (x & hx & hnx)]; [left | right].
+    - intros x hx. apply map_coR_lift, sub, map_coR_lift, hx.
+    - exists x. split; [by apply map_coR_lift | intros h; apply hnx, map_coR_lift, h].
+  Defined.
+End Label_abstraction_lift.
 
 Section Blocking_characterisation.
-  Context {P Q T Aproc Atest : Type} `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-    `{SA : !SyncAction Aproc Atest}.
-  Context (allblk : ∀ η : Atest, ¬ non_blocking η).
-  Context (R : relation Atest) `{!Equivalence R} `{!RelDecision R}.
+  Context {P T Ap At : Type} `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+    `{SA : !SyncAction Ap At}.
+  Context (allblk : ∀ η : At, ¬ non_blocking η).
   Context (outcome : T → Prop).
 
-  Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}.
+  Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _}.
   Context `{TP : !Testing_Predicate outcome gLtsEqT}.
 
-  Context `{gLtsEqP : !gLtsEq P Hp} `{gLtsEqQ : !gLtsEq Q Hp}.
+  Context `{gLtsEqP : !gLtsEq P Hp}.
 
-  Notation gP := (@gLtsEq_gLts P Aproc Hp gLtsEqP).
-  Notation gQ := (@gLtsEq_gLts Q Aproc Hp gLtsEqQ).
-  Notation gT := (@gLtsEq_gLts T Atest Ht gLtsEqT).
+  Notation gP := (@gLtsEq_gLts P Ap Hp gLtsEqP).
+  Notation gT := (@gLtsEq_gLts T At Ht gLtsEqT).
 
-  Context (PIP : @Prop_of_Inter P T Aproc Atest (@sync _ _ _ _ SA) Hp gP Ht gT)
-          (PIQ : @Prop_of_Inter Q T Aproc Atest (@sync _ _ _ _ SA) Hp gQ Ht gT).
-  Context (CFIP : @coFiniteImagegLts P Atest Aproc Hp gP Ht SA)
-          (CFIQ : @coFiniteImagegLts Q Atest Aproc Hp gQ Ht SA).
-  Context (STSP : ParSts P T gP gLtsEqT) (SPECP : ParStsSpec P T gP gLtsEqT SA STSP)
-          (STSQ : ParSts Q T gQ gLtsEqT) (SPECQ : ParStsSpec Q T gQ gLtsEqT SA STSQ).
-  Context (AdmP : @LA_admissible P T Aproc Hp gP Atest Ht gT SA R)
-          (AdmQ : @LA_admissible Q T Aproc Hp gQ Atest Ht gT SA R).
-  Context (FinP : @FinitaryLA P Aproc Hp gP Atest Ht SA R _ _)
-          (FinQ : @FinitaryLA Q Aproc Hp gQ Atest Ht SA R _ _).
+  Context `{PIP : !@Prop_of_Inter P T Ap At (@sync _ _ _ _ SA) Hp gP Ht gT}.
+  Context (CFIP : @coFiniteImagegLts P At Ap Hp gP Ht SA).
 
-  Context (tconv : list Atest → T) `{!test_convergence_spec tconv}.
-  Context (ta : gset (LA_quotient R) → list Atest → T)
-          `{!test_co_acceptance_set_spec ta (LA_class R)}.
+  Context (𝔸 : @Label_abstraction P T Ap At Hp Ht gP gT SA).
+  Context (DichP : @Dichotomic P Ap At (At / 𝔸) Hp Ht gP SA ρ[𝔸]).
 
-  Theorem equivalence_rel_blocking (p : P) (q : Q) :
-    @ctx_pre P Aproc Hp gP Q gQ T Atest Ht gLtsEqT outcome TP SA STSP STSQ p q ↔
-    bhv_pre_r (gLtsP := gP) (gLtsQ := gQ) (SA := SA) R p q.
+  Context (tconv : trace At → T) `{!test_convergence_spec tconv}.
+  Context (ta : gset (At / 𝔸) → trace At → T)
+          `{TA : !test_co_acceptance_set_spec ta ρ[𝔸] }.
+
+  Theorem equivalence_blocking (p q : P) :
+    p ⊆ₘᵤₛₜᵢ q ↔
+    p ≼꜀ₒ₋ₐₛ[ ρ[𝔸] ] q.
   Proof.
-    rewrite <- (bhv_pre_r_lift R p q).
-    rewrite <- (equivalence_fw_rel_and_must_i_sync_co_trace R outcome tconv ta p q
+    pose proof (@ParStsSpec_of_union P T _ _ _ _ _ gLtsEqT SyncAction_mem (lift_inter (PI := PIP))) as SLP.
+    pose proof (equivalence_fw_label_abstraction outcome (Label_abstraction_lift 𝔸) tconv ta p q
                   (gLtsEqP := liftEq) (FWP := gLtsFWMem_lift allblk)
                   (SYP := lift_inter (PI := PIP)) (CFIP := coFiniteImage_lift (CFI := CFIP))
-                  (AdmP := LA_admissible_lift R AdmP) (FinP := FinitaryLA_lift R FinP)
-                  (gLtsEqQ := liftEq) (FWQ := gLtsFWMem_lift allblk)
-                  (SYQ := lift_inter (PI := PIQ)) (CFIQ := coFiniteImage_lift (CFI := CFIQ))
-                  (AdmQ := LA_admissible_lift R AdmQ) (FinQ := FinitaryLA_lift R FinQ)).
-    pose proof (@ParStsSpec_of_union P T _ _ _ _ _ gLtsEqT SyncAction_mem (lift_inter (PI := PIP))) as SLP.
-    pose proof (@ParStsSpec_of_union Q T _ _ _ _ _ gLtsEqT SyncAction_mem (lift_inter (PI := PIQ))) as SLQ.
-    split; intros h t hm.
-    - eapply (must_lift_to STSQ SPECQ _ SLQ), h, (must_lift_from STSP SPECP _ SLP), hm.
-    - eapply (must_lift_from STSQ SPECQ _ SLQ), h, (must_lift_to STSP SPECP _ SLP), hm.
+                  (DichP := Dichotomic_lift ρ[𝔸] DichP)) as E.
+    rewrite <- (bhv_pre_lift ρ[𝔸] p q).
+    split.
+    - intros h. apply (proj1 E). intros t hm.
+      eapply (must_lift_to _ (ParStsSpec_of_union gP gLtsEqT) _ SLP), h,
+        (must_lift_from _ (ParStsSpec_of_union gP gLtsEqT) _ SLP), hm.
+    - intros h. apply (proj2 E) in h. intros t hm.
+      eapply (must_lift_from _ (ParStsSpec_of_union gP gLtsEqT) _ SLP), h,
+        (must_lift_to _ (ParStsSpec_of_union gP gLtsEqT) _ SLP), hm.
   Qed.
 End Blocking_characterisation.
 (* end hide *)

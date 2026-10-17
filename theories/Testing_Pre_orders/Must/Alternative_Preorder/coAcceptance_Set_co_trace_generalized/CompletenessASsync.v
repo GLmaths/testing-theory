@@ -466,7 +466,7 @@ Lemma after_blocking_co_of_must_tacc `{CC : Countable PreAct} `{
   gLtsEqT : !@gLtsEq T At Ht, gLtsObaT : !gLtsOba T _,
   !Testing_Predicate outcome gLtsEqT,
   !test_co_acceptance_set_spec (PreAct := PreAct) ta Γ,
-  SA : !SyncAction Ap At, STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
+  SA : !SyncAction Ap At, PI : !Prop_of_Inter P T Ap At sync}
   (p : P) (β : At) s E :
   p ⤓ → blocking β →
   (∀ q μ1, sync μ1 β → p ⟹{μ1} q → q must_pass (ta E s)) →
@@ -499,8 +499,7 @@ Context `{gLtsT : !@gLtsEq T At Ht}.
 Context `{!Testing_Predicate outcome gLtsT}.
 Context `{!test_convergence_spec tconv}.
 Context `{SA : !SyncAction Ap At}.
-Context `{STS : !ParSts P T _ _}.
-Context `{!ParStsSpec P T _ _ SA STS}.
+Context `{PI : !Prop_of_Inter P T Ap At sync}.
 
 Lemma must_tconv_cowt_mu_gen (s0 : trace At) (p q : P) :
   p ⟹ᶜᵒ[s0] q → ∀ η s, s0 = [η] →
@@ -539,7 +538,7 @@ Lemma after_blocking_co_of_must_tacc_co `{CC : Countable PreAct} `{
   gLtsEqT : !@gLtsEq T At Ht, gLtsObaT : !gLtsOba T _,
   !Testing_Predicate outcome gLtsEqT,
   !test_co_acceptance_set_spec (PreAct := PreAct) ta Γ,
-  SA : !SyncAction Ap At, STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
+  SA : !SyncAction Ap At, PI : !Prop_of_Inter P T Ap At sync}
   (p : P) (β : At) s E :
   p ⤓ → blocking β → (∀ q, p ⟹ᶜᵒ[[β]] q → q must_pass (ta E s)) →
   p must_pass (ta E (β :: s)).
@@ -761,7 +760,7 @@ Lemma stable_process_must_ta_dich {P : Type} `{
   gLtsEqT : !@gLtsEq T At Ht, gLtsObaT : !gLtsOba T _,
   SA : !SyncAction Ap At,
   !Testing_Predicate outcome gLtsEqT,
-  STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
+  PI : !Prop_of_Inter P T Ap At sync}
   (𝔸 : Label_abstraction P T) `{!test_co_acceptance_set_spec ta ρ[𝔸] }
   (p : P) (X : gset (At / 𝔸)) :
   p ↛ → (∃ x, x ∈ X ∧ x ∈ ⌈ ρ[𝔸] ⌉ (coR p)) → p must_pass (ta X ε).
@@ -799,7 +798,7 @@ Lemma not_must_ta_without_required_acc_set_dich {Q : Type} `{CC : Countable PreA
   SA : !SyncAction Ap At,
   !Testing_Predicate outcome _} {Γ : At → PreAct} `{
   !test_co_acceptance_set_spec ta Γ,
-  STS : !ParSts Q T gLtsQ gLtsEqT, !ParStsSpec Q T gLtsQ gLtsEqT SA STS}
+  PI : !Prop_of_Inter Q T Ap At sync}
   (q q' : Q) s (X : gset PreAct) :
   q ⟹ᶜᵒ[s] q' → q' ↛ → (∀ x, x ∈ X → x ∉ ⌈ Γ ⌉ (coR q')) →
   ¬ q must_pass (ta X s).
