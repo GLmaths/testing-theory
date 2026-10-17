@@ -45,6 +45,6 @@ Notation "p ₐ꜀꜀≼꜀ₒ₋ₐₛ[ Γ ] q" := (acceptance_set_preorder_on_
 Definition cnv_acceptance_set_preorder_on_co_trace `{gLtsP : @gLts P Ap Hp}
   `{Ht : ExtAction At} `{SA : !SyncAction Ap At} {PreAct : Type} (Γ : At → PreAct)
   (p : P) (q : P) :=
-  convergence_preorder_on_co_trace (At := At) p q ∧ p ₐ꜀꜀≼꜀ₒ₋ₐₛ[ Γ ] q.
+  p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q ∧ p ₐ꜀꜀≼꜀ₒ₋ₐₛ[ Γ ] q.
 
 Notation "p ≼꜀ₒ₋ₐₛ[ Γ ] q" := (cnv_acceptance_set_preorder_on_co_trace Γ p q) (at level 70, format "p  ≼꜀ₒ₋ₐₛ[ Γ ]  q").

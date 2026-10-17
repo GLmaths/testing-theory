@@ -44,7 +44,7 @@ From TestingTheory Require Import SyncActions gLts Bisimulation Lts_OBA Lts_Fini
 From TestingTheory Require Import ActTau InFiniteSetHelper InListPropHelper.
 From TestingTheory Require Import coWeakTransition coConvergence
       FiniteImageLTS coFiniteImage coSetLTSConstruction DefinitionASrel Label_Abstraction.LabelAbstraction.
-(* begin hide *)
+
 (* ** Must for a set of processes *)
 
 Inductive mustx `{
@@ -610,16 +610,15 @@ Notation "X ≂ₛₑₜ_ₘᵤₛₜᵢ Y" := (Y ⊑ₛₑₜ_ₘᵤₛₜᵢ X
     (they are the one piece that would need the set LTS on the [P] side), so
     there is nothing to port for them. *)
 
-Definition bhv_pre_co_cond1__x `{gLtsP : @gLts P Aproc Hp, !Countable P}
-  `{Ht : ExtAction A} `{SA : !SyncAction Aproc A}
+Definition convergence_preorder_on_co_trace_for_set `{gLtsP : @gLts P Ap Hp} `{!Countable P}
+  `{Ht : ExtAction At} `{SA : !SyncAction Ap At}
   (X : gset P) (Y : gset P) :=
-  ∀ (s : trace A), (∀ p, p ∈ X → p ⇓ᶜᵒ s) → (∀ q, q ∈ Y → q ⇓ᶜᵒ s).
+  ∀ (s : trace At), (∀ p, p ∈ X → p ⇓ᶜᵒ s) → (∀ q, q ∈ Y → q ⇓ᶜᵒ s).
 
-Global Notation "X ꜀ₙᵥ≼꜀ₒ₋ₛₑₜ_ₐₛ Y" := (bhv_pre_co_cond1__x X Y) (at level 70).
+Notation "X ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y" := (convergence_preorder_on_co_trace_for_set X Y) (at level 70, format "X  ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ  Y").
 
-Definition bhv_pre_co_cond2__x
-  `{gLtsP : @gLts P Aproc Hp, !Countable P}
-  `{Ht : ExtAction A} `{SA : !SyncAction Aproc A} {PreAct : Type} (Γ : A → PreAct)
+Definition acceptance_set_preorder_on_co_trace_for_set `{gLtsP : @gLts P Ap Hp} `{!Countable P}
+  `{Ht : ExtAction At} `{SA : !SyncAction Ap At} {PreAct : Type} (Γ : At → PreAct)
   (X : gset P) (Y : gset P) :=
   ∀ q s q', q ∈ Y →
     q ⟹ᶜᵒ[s] q' → q' ↛ →
@@ -627,11 +626,14 @@ Definition bhv_pre_co_cond2__x
     ∃ p, p ∈ X ∧ ∃ p', p ⟹ᶜᵒ[s] p' ∧ p' ↛ ∧
            (⌈ Γ ⌉ (coR p') ⊆ ⌈ Γ ⌉ (coR q')).
 
-Definition bhv_pre_co__x
-  `{gLtsP : @gLts P Aproc Hp, !Countable P}
-  `{Ht : ExtAction A} `{SA : !SyncAction Aproc A} {PreAct : Type} (Γ : A → PreAct)
+Notation "X ₐ꜀꜀≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y" := (acceptance_set_preorder_on_co_trace_for_set Γ X Y) (at level 70, format "X  ₐ꜀꜀≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ]  Y").
+
+Definition cnv_acceptance_set_preorder_on_co_trace_for_set `{gLtsP : @gLts P Ap Hp} `{!Countable P}
+  `{Ht : ExtAction At} `{SA : !SyncAction Ap At} {PreAct : Type} (Γ : At → PreAct)
   (X : gset P) (Y : gset P) :=
-  bhv_pre_co_cond1__x (A := A) X Y ∧ bhv_pre_co_cond2__x Γ X Y.
+  X ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y ∧ X ₐ꜀꜀≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y.
+
+Notation "X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y" := (cnv_acceptance_set_preorder_on_co_trace_for_set Γ X Y) (at level 70, format "X  ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ]  Y").
 
 (* ** Acceptance-set preorder properties on sets *)
 
@@ -643,12 +645,9 @@ Context `{gLtsP : !gLts P Hp} `{CP : !Countable P}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context (Γ : Atest → PreAct).
 
-Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x Γ X Y) (at level 70).
-Notation "X '≼' Y" := (bhv_pre_co__x Γ X Y) (at level 70).
 
 Lemma alt_set_singleton_iff_co (p : P) (q : P) :
-  ({[ p ]} : gset P) ≼ ({[ q ]} : gset P) ↔
+  ({[ p ]} : gset P) ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] ({[ q ]} : gset P) ↔
   p ≼꜀ₒ₋ₐₛ[ Γ ] q.
 Proof.
   split.
@@ -664,7 +663,7 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_reduction_co (X : gset P) (Y Y' : gset P) :
-  X ꜀ₙᵥ≼ Y → lts_tau_set_from_pset_spec1 Y Y' → X ꜀ₙᵥ≼ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y → lts_tau_set_from_pset_spec1 Y Y' → X ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y'.
 Proof.
   intros halt1 l s mem.
   intros q memq. eapply l in memq as (q' & mem' & tr').
@@ -672,7 +671,7 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_reductions_co (X : gset P) (Y Y' : gset P) :
-  wt_set_from_pset_spec1 Y [] Y' → X ≼ Y → X ≼ Y'.
+  wt_set_from_pset_spec1 Y [] Y' → X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y → X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y'.
 Proof.
   intros l (halt1 & halt2).
   split.
@@ -687,7 +686,7 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_reduction_co (X : gset P) (Y Y' : gset P) :
-  lts_tau_set_from_pset_spec1 Y Y' → X ≼ Y → X ≼ Y'.
+  lts_tau_set_from_pset_spec1 Y Y' → X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y → X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y'.
 Proof.
   intros l (halt1 & halt2).
   eapply bhvx_preserved_by_reductions_co; [| split; eauto].
@@ -698,8 +697,8 @@ Qed.
 Lemma bhvleqone_preserved_by_external_action_co
   (X X' : gset P) (η : Atest) (Y Y' : gset P)
   (htp : ∀ p, p ∈ X → p ⤓) :
-  X ꜀ₙᵥ≼ Y → cowt_set_from_pset_spec X η X' →
-  cowt_set_from_pset_spec1 Y η Y' → X' ꜀ₙᵥ≼ Y'.
+  X ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y → cowt_set_from_pset_spec X η X' →
+  cowt_set_from_pset_spec1 Y η Y' → X' ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y'.
 Proof.
   intros hleq hws l s hcnv. intros q memq.
   eapply l in memq as (q' & mem' & wk_tr).
@@ -716,7 +715,7 @@ Lemma bhvx_preserved_by_external_action_co
   (htp : ∀ p, p ∈ X → p ⤓) :
   cowt_set_from_pset_spec1 Y η Y' →
   cowt_set_from_pset_spec X η X' →
-  X ≼ Y → X' ≼ Y'.
+  X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y → X' ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y'.
 Proof.
   intros lts__q ps1_spec (halt1 & halt2). split.
   - eapply bhvleqone_preserved_by_external_action_co; eauto.
@@ -736,7 +735,7 @@ Proof.
 Qed.
 
 Lemma reverse_trace_inclusion_co (X : gset P) (Y Y' : gset P) (η : Atest) :
-  X ≼ Y → (∀ p, p ∈ X → p ⇓ᶜᵒ [η]) →
+  X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y → (∀ p, p ∈ X → p ⇓ᶜᵒ [η]) →
   cowt_set_from_pset_spec1 Y η Y' → Y' ≠ ∅ →
   ∃ X', cowt_set_from_pset_spec1 X η X' ∧ X' ≠ ∅.
 Proof.
@@ -824,17 +823,10 @@ Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA
 Context `{CN : !gLtsCNenabled P Aproc Atest}.
 Context (𝔸 : Label_abstraction P T).
 
-Notation "X '꜀ₙᵥ≼' Y" := (bhv_pre_co_cond1__x (A := Atest) X Y) (at level 70).
-Notation "X 'ₐ꜀꜀≼' Y" := (bhv_pre_co_cond2__x ρ[𝔸] X Y) (at level 70).
-Notation "X '≼' Y" := (bhv_pre_co__x ρ[𝔸] X Y) (at level 70).
-
-(* The composition is an [Sts], so "the composition is stuck" is
-    [¬ sts_performs], not a [τ]-refusal of an LTS. *)
-
 Lemma unoutcome_must_st_nleqx_co (X : gset P) (Y : gset P) (t : T) :
   ¬ outcome t → X must_pass_x t →
   (∃ q, q ∈ Y ∧ ¬ (∃ y, sts_step (Sts := par_sts) (q, t) y)) →
-  ¬ (X ₐ꜀꜀≼ Y).
+  ¬ (X ₐ꜀꜀≼ₛₑₜ₋꜀ₒ₋ₐₛ[ ρ[𝔸] ] Y).
 Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
   assert (stable_q : q ↛).
@@ -862,7 +854,7 @@ Proof.
 Qed.
 
 Lemma stability_nbhvleqtwo_co (X : gset P) (Y : gset P) t :
-  ¬ outcome t → X must_pass_x t → X ₐ꜀꜀≼ Y →
+  ¬ outcome t → X must_pass_x t → X ₐ꜀꜀≼ₛₑₜ₋꜀ₒ₋ₐₛ[ ρ[𝔸] ] Y →
   ∀ (q : P), q ∈ Y → ∃ y, sts_step (Sts := par_sts) (q, t) y.
 Proof.
   intros nhg hmx hleq q mem.
@@ -877,7 +869,7 @@ Qed.
 
 (* ** Soundness, on sets *)
 
-Lemma soundnessx_co (X : gset P) (Y : gset P) : X ≼ Y → X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
+Lemma soundnessx_co (X : gset P) (Y : gset P) : X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ ρ[𝔸] ] Y → X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
 Proof.
   intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
   dependent induction hmx; intros Y halt1 halt2.
@@ -891,7 +883,7 @@ Proof.
     { intros q mem. eapply cocnv_terminate. eapply halt1; eauto. }
     assert (Y_conv : Y ⤓).
     { eapply co_termination_set_for_all. exact HYterm. }
-    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ꜀ₙᵥ≼ Y0 → X ₐ꜀꜀≼ Y0 → Y0 must_pass_x t).
+    assert (Hbuild : ∀ Y0, Y0 ⤓ → X ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y0 → X ₐ꜀꜀≼ₛₑₜ₋꜀ₒ₋ₐₛ[ ρ[𝔸] ] Y0 → Y0 must_pass_x t).
     { intros Y0 conv0. induction conv0 as [Y0 tY0 IHY0]. intros hb1 hb2.
       eapply mx_step.
       - exact nh.
@@ -971,13 +963,7 @@ From TestingTheory Require Import coWeakSync FiniteImageLTS coFiniteImage coSetL
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
 
-(* ** Soundness on forwarders, for two alphabets
-
-    [gLtsCNenabled P] is built from the forwarder axioms and put
-    in scope as a local instance — leaving it to be discharged by [Unshelve],
-    as the one-alphabet soundness does, makes elaboration search for an instance that
-    is not there yet, and that search does not terminate in reasonable
-    space. *)
+(* ** Soundness on forwarders, for two alphabets *)
 
 Section SoundnessFW_sync.
 
@@ -1003,4 +989,3 @@ Lemma soundness_fw_co_sync (p : P) (q : P) :
 Proof. by eapply (soundness_co_nb_enabled_co outcome 𝔸). Qed.
 
 End SoundnessFW_sync.
-(* end hide *)
