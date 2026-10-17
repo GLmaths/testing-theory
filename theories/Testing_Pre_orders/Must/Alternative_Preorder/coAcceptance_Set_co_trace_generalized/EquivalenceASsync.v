@@ -78,7 +78,7 @@ Context (ta : gset PreAct → list Atest → T)
 
 Theorem equivalence_fw_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   p ⊆ₘᵤₛₜᵢ q ↔
-  p ≼ᴳ[ Γ ] q.
+  p ≼꜀ₒ₋ₐₛ[ Γ ] q.
 Proof.
   split.
   - intros hpre.
@@ -123,7 +123,7 @@ Context (ta : gset PreAct → list Atest → T)
 
 Theorem equivalence_acc_set_and_must_i_sync_co_trace (p : P) (q : Q) :
   ctx_pre (gLtsT := gLtsEqT) p q ↔
-  (p, ∅ : MO (MemAct Atest)) ≼ᴳ[ Γ ] (q, ∅ : MO (MemAct Atest)).
+  (p, ∅ : MO (MemAct Atest)) ≼꜀ₒ₋ₐₛ[ Γ ] (q, ∅ : MO (MemAct Atest)).
 Proof.
   rewrite (lift_fw_ctx_pre outcome).
   exact (equivalence_fw_acc_set_and_must_i_sync_co_trace Γ outcome tconv ta _ _).

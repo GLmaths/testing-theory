@@ -25,37 +25,36 @@ From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics decidable countable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Subset_Act Label_Abstraction.LabelAbstraction.
 
-Class Dichotomic (P Q : Type) {Ap At PreA : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
-  {gLtsP : gLts P Hp} {gLtsQ : gLts Q Hp} {SA : SyncAction Ap At} (Γ : At → PreA) :=
-  coR_dichotomy (p : P) (q : Q) : p ↛ → q ↛ →
+Class Dichotomic (P : Type) {Ap At PreA : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
+  {gLtsP : gLts P Hp} {SA : SyncAction Ap At} (Γ : At → PreA) :=
+  coR_dichotomy (p q : P) : p ↛ → q ↛ →
     (⌈ Γ ⌉ (coR p) ⊆ ⌈ Γ ⌉ (coR q))
     + { x | x ∈ ⌈ Γ ⌉ (coR p) ∧ x ∉ ⌈ Γ ⌉ (coR q) }.
 
 Section Decidable_dichotomic.
-  Context {P Q Ap At PreA : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
-    {gLtsP : gLts P Hp} {gLtsQ : gLts Q Hp} {SA : SyncAction Ap At}
+  Context {P Ap At PreA : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
+    {gLtsP : gLts P Hp} {SA : SyncAction Ap At}
     `{Countable PreA} (Γ : At → PreA).
 
   Definition Dichotomic_of_finite
-    (coRP : P → gset PreA) (hP : ∀ p x, x ∈ coRP p ↔ x ∈ ⌈ Γ ⌉ (coR p))
-    (coRQ : Q → gset PreA) (hQ : ∀ q x, x ∈ coRQ q ↔ x ∈ ⌈ Γ ⌉ (coR q)) :
-    Dichotomic P Q Γ.
+    (coRΓ : P → gset PreA) (hspec : ∀ p x, x ∈ coRΓ p ↔ x ∈ ⌈ Γ ⌉ (coR p)) :
+    Dichotomic P Γ.
   Proof.
-    intros p q _ _. destruct (decide (coRP p ⊆ coRQ q)) as [sub | nsub].
-    - left. intros x hx. apply hQ, sub, hP, hx.
-    - right. destruct (elements (coRP p ∖ coRQ q)) as [| x l] eqn:e.
-      + exfalso. apply nsub. intros x hx. destruct (decide (x ∈ coRQ q)) as [| n]; [done |].
-        assert (x ∈ elements (coRP p ∖ coRQ q)) as m by (apply elem_of_elements; set_solver).
+    intros p q _ _. destruct (decide (coRΓ p ⊆ coRΓ q)) as [sub | nsub].
+    - left. intros x hx. apply hspec, sub, hspec, hx.
+    - right. destruct (elements (coRΓ p ∖ coRΓ q)) as [| x l] eqn:e.
+      + exfalso. apply nsub. intros x hx. destruct (decide (x ∈ coRΓ q)) as [| n]; [done |].
+        assert (x ∈ elements (coRΓ p ∖ coRΓ q)) as m by (apply elem_of_elements; set_solver).
         rewrite e in m. inversion m.
-      + exists x. assert (x ∈ coRP p ∖ coRQ q) as m.
+      + exists x. assert (x ∈ coRΓ p ∖ coRΓ q) as m.
         { apply elem_of_elements. rewrite e. constructor. }
         apply elem_of_difference in m as [m1 m2].
-        split; [by apply hP | intros hq; apply m2, hQ, hq].
+        split; [by apply hspec | intros hq; apply m2, hspec, hq].
   Defined.
 End Decidable_dichotomic.
 
 #[global] Instance Decidable_dichotomic {P T Ap At : Type} {Hp : ExtAction Ap} {Ht : ExtAction At}
   {gLtsP : gLts P Hp} {gLtsT : gLts T Ht} {SA : SyncAction Ap At}
-  (F : Finitary_Label_abstraction P T) : Dichotomic P P ρ[𝔸 (Finitary_Label_abstraction := F)] :=
-  Dichotomic_of_finite _ coRₐ coRₐ_spec coRₐ coRₐ_spec.
+  (F : Finitary_Label_abstraction P T) : Dichotomic P ρ[𝔸 (Finitary_Label_abstraction := F)] :=
+  Dichotomic_of_finite _ coRₐ coRₐ_spec.
 (* end hide *)

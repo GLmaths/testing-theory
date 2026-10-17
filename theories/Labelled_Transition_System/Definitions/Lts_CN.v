@@ -26,10 +26,12 @@
 (* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
-From TestingTheory Require Import ActTau gLts.
+From TestingTheory Require Import ActTau gLts SyncActions.
 
-
-Class gLtsCNenabled (P A : Type) `{gLts P A} :=
+Class gLtsCNenabled (P Ap At : Type)
+  `{Hp : ExtAction Ap} `{Ht : ExtAction At}
+  `{gLtsP : !gLts P Hp} `{SA : !SyncAction Ap At} :=
   MkgLtsCNenabled {
-      cn_enabled p1 η β : non_blocking η -> dual η β -> ∃ p2, p1 ⟶[ β ] p2;
-  }.
+      cn_enabled (p1 : P) (η : At) :
+        non_blocking η → ∃ β p2, sync β η ∧ p1 ⟶[β] p2;
+    }.

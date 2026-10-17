@@ -1176,7 +1176,7 @@ Context `{HinterQ : !Prop_of_Inter Q T A A dual}.
 Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{AbsQT : !AbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 
-Context `{!gLtsCNenabled Q A}.
+Context `{!gLtsCNenabled Q A A}.
 
 Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ1 μ2 :
       dual μ1 μ2 -> p ⟶[μ1] p' -> t ⟶[μ2] t' -> ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR p) ⊆ ⌈ (αᴘʀᴏ ∘ αᴛᴇꜱᴛ) ⌉ (coR q)
@@ -1184,8 +1184,8 @@ Lemma communication_enabled (p : P) p' (q : Q) (t : T) t' μ1 μ2 :
 Proof.
   intros duo tr tr_co sub.
   destruct (decide (non_blocking μ2)) as [nb | not_nb].
-  + eapply (cn_enabled q μ2 μ1) in nb as (q' & tr'); [| symmetry; exact duo].
-    exists μ1, μ2, q', t'. eauto.
+  + destruct (cn_enabled q μ2 nb) as (β & q' & duo' & tr').
+    exists β, μ2, q', t'. eauto.
   + assert (μ2 ∈ coR p) as some_co_action_of_p.
     { exists μ1. repeat split; eauto.
       eapply lts_performs_spec2;eauto. }
@@ -1213,7 +1213,7 @@ Context `{TP : @Testing_Predicate T A EA outcome _}.
 
 Context `{gLtsP : @gLts P A EA, !FiniteImagegLts P A}.
 Context `{!Prop_of_Inter P T A A dual}.
-Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A}.
+Context `{gLtsQ : @gLts Q A EA, !FiniteImagegLts Q A, !gLtsCNenabled Q A A}.
 Context `{!Prop_of_Inter Q T A A dual}.
 
 Context `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct)}.
@@ -1332,7 +1332,7 @@ End SoundnessAS.
 
 Lemma soundness_co_nb_enabled `{
   gLtsP : @gLtsEq P A H, !FiniteImagegLts P A,
-  gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A, !FiniteImagegLts Q A,
+  gLtsQ : !gLtsEq Q H, !gLtsCNenabled Q A A, !FiniteImagegLts Q A,
   gLtsT : !gLtsEq T H, !Testing_Predicate outcome _}
 
   `{AbsPT : !AbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
@@ -1367,8 +1367,11 @@ Proof.
   eapply soundness_co_nb_enabled.
   (* FW is co-non-blocking enabled *)
   Unshelve.
-  eapply MkgLtsCNenabled. intros.
-  destruct (boomerang p1 η β) as (t & l1 & l2) ; eauto. symmetry;eauto.
+  eapply MkgLtsCNenabled. intros p1 η nb.
+  destruct (exists_dual η) as (β & duo).
+  destruct (boomerang p1 η β) as (t & hb).
+  destruct (hb nb (symmetry duo)) as (l1 & l2).
+  exists β, t. split; [by symmetry | exact l1].
 Qed.
 
 (* ** Soundness for LTSs that can be lifted to forwarders *)

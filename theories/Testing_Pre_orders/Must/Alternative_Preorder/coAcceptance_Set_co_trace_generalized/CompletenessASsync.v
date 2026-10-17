@@ -529,109 +529,6 @@ Proof.
   transitivity e2; eauto.
 Qed.
 
-Lemma must_ta_monotonicity_nil {P : Type} `{CC : Countable PreAct} `{
-  gLtsP : @gLts P Aproc Hp,
-  gLtsEqT : @gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _, !gLtsObaFB T Atest,
-  SA : !SyncAction Aproc Atest,
-  AbsPT : !AbsActionG (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (Γ : Atest → PreAct),
-  !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec ta Γ,
-  STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
-  (p : P) E1 :
-  p must_pass (ta E1 ε) → ∀ E2, E1 ⊆ E2 → p must_pass (ta E2 ε).
-Proof.
-  intros hm.
-  assert (hpt : p ⤓)
-    by now (eapply must_terminate_unoutcome, test_ungood; eauto).
-  induction hpt. dependent induction hm; intros E2 hsub.
-  - exfalso. by eapply (test_ungood (test_spec := ta_test_spec E1) ε).
-  - apply m_step.
-    + apply test_ungood.
-    + destruct ex as ((p' & e') & l'). pose proof (par_view_of _ _ _ l') as hv; inversion hv; subst.
-      ++ exists (p', ta E2 ε). by apply par_step_left.
-      ++ exfalso.
-         assert ((ta E1 ε) ⟶) as himp by (eapply lts_performs_spec2; eauto).
-         revert himp. eapply ta_does_no_tau; eauto.
-      ++ destruct (decide (non_blocking η)) as [nb2 | not_nb2].
-         +++ exfalso.
-             assert ((ta E1 ε) ⟶[η]) as himp by (eapply lts_performs_spec2; eauto).
-             revert himp. eapply ta_does_no_non_blocking_actions; eauto.
-         +++ assert (η ∈ coR p) as co_set.
-             { eapply coR_intro;
-                 [ eapply lts_performs_spec2; eauto | exact hs | exact not_nb2 ]. }
-             eapply ta_actions_are_in_its_gamma_set in l2 as mem; [| exact not_nb2].
-             eapply hsub in mem.
-             eapply ta_has_a_representative_transition_for_its_gamma_set in mem
-               as (r & η' & Tr' & eq').
-             assert (blocking η') as bη'.
-             { intro imp. eapply ta_does_no_non_blocking_actions in imp.
-               apply imp, (@lts_performs_spec2 T). exists r; exact Tr'. }
-             assert (acc : ta E2 ε ⟶[η']) by (apply (@lts_performs_spec2 T); exists r; exact Tr').
-             destruct (abstraction_step_test Γ p (ta E2 ε) η' η bη' eq' co_set acc)
-               as (u & (μ'' & Tr & duo & bu) & Tr'').
-             eapply lts_performs_spec1 in Tr'' as (e'' & Tr'').
-             eapply lts_performs_spec1 in Tr as (p'' & Tr).
-             exists (p'', e''). eapply par_step_sync; [exact duo | exact Tr | exact Tr''].
-    + intros p'' l. eapply H3; eauto.
-    + intros e l. exfalso.
-      assert ((ta E2 ε) ⟶) as himp by (eapply lts_performs_spec2; eauto).
-      revert himp. eapply ta_does_no_tau; eauto.
-    + intros p'' e'' μ η hsy l2 l1.
-      destruct (decide (non_blocking η)) as [nb | not_nb].
-      ++ exfalso.
-         assert ((ta E2 ε) ⟶[η]) as himp by (eapply lts_performs_spec2; eauto).
-         revert himp. eapply ta_does_no_non_blocking_actions; eauto.
-      ++ apply m_now. eapply (ta_transition_to_good η e'' E2 not_nb l1).
-Qed.
-
-Lemma stable_process_must_ta_or_empty_pre_action_set {P : Type}
-  `{CC : Countable PreAct} `{
-  gLtsEqP : @gLtsEq P Aproc Hp,
-  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _,
-  SA : !SyncAction Aproc Atest,
-  FiniteAbs : !FinitaryAbsActionG (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (Γ : Atest → PreAct),
-  !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec ta Γ,
-  STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
-  (p : P) (E : gset PreAct) :
-  p ↛ → p must_pass (ta ((coR_abs p) ∖ E) ε) ∨ (coR_abs p ⊆ E).
-Proof.
-  intros hst.
-  remember ((coR_abs p) ∖ E) as D.
-  destruct D as [| a D'] using set_ind_L.
-  + right. set_solver.
-  + left. apply m_step.
-    ++ apply test_ungood.
-    ++ assert (a ∈ coR_abs p ∖ E) as mem' by set_solver.
-       assert (a ∈ coR_abs p) as co_set by (eapply elem_of_difference; eauto).
-       eapply ta_has_a_representative_transition_for_its_gamma_set in mem'
-         as (r & η & Tr & eq).
-       subst. eapply coR_abs_spec1 in co_set.
-       destruct co_set as (η'' & co_set & eq).
-       assert (blocking η) as bη.
-       { intro imp. eapply ta_does_no_non_blocking_actions in imp.
-         apply imp, (@lts_performs_spec2 T). exists r; exact Tr. }
-       assert (acc : ta (coR_abs p ∖ E) ε ⟶[η])
-         by (apply (@lts_performs_spec2 T); exists r; exact Tr).
-       destruct (abstraction_step_test Γ p _ η η'' bη eq co_set acc) as (η' & Tr' & Tr'').
-       rewrite <- HeqD in Tr''.
-       eapply lts_performs_spec1 in Tr'' as (e'' & Tr'').
-       destruct Tr' as (μ''' & Tr' & duo & bη').
-       eapply lts_performs_spec1 in Tr' as (p'' & Tr').
-       exists (p'', e''). eapply par_step_sync; [exact duo | exact Tr' | exact Tr''].
-    ++ intros p' l'. exfalso. generalize (lts_performs_spec2 p _ (exist _ p' l')). eauto with mdb.
-    ++ intros e' l'. exfalso.
-       assert (ta (coR_abs p ∖ E) ε ⟶).
-       { rewrite <- HeqD. eapply lts_performs_spec2; eauto. }
-       assert (ta (coR_abs p ∖ E) ε ↛).
-       { rewrite <- HeqD. eapply ta_does_no_tau; eauto. }
-       contradiction.
-    ++ intros p'' e'' μ' η hsy l'1 l'0.
-       destruct (decide (non_blocking η)) as [nb' | not_nb'].
-       +++ exfalso. eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); eauto with mdb.
-       +++ apply m_now. eapply ta_transition_to_good; eauto.
-Qed.
-
 Section Must_tconv_co.
 
 Context `{gLtsP : @gLtsEq P Aproc Hp}.
@@ -691,105 +588,6 @@ Proof.
   constructor; [exact hsy | constructor].
 Qed.
 
-Section Coacceptance_set_inclusions.
-
-Context `{CC : Countable PreAct}.
-Context `{gLtsP : @gLts P Aproc Hp}.
-Context `{gLtsT : !@gLtsEq T A H}.
-Context `{SA : !SyncAction Aproc A}.
-Context `{!coFiniteImagegLts P A}.
-Context `{FiniteAbs : !FinitaryAbsActionG (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsP) (gLtsT := gLtsT) (SA := SA) P T (Γ : A → PreAct)}.
-
-Lemma cowt_acceptance_set_subseteq μ s p q hacnv1 hacnv2 :
-  p ⟹ᶜᵒ{μ} q ->
-  map (coR_abs) (elements (cowaiting_states q s hacnv1)) ⊆
-    map (coR_abs) (elements (cowaiting_states p (μ :: s) hacnv2)).
-Proof.
-  intros.
-  intros a in__a.
-  assert (cowaiting_states q s hacnv1 ⊆ cowaiting_states p (μ :: s) hacnv2).
-  intros t in__t.
-  eapply cowaiting_states_spec2.
-  eapply cowaiting_states_spec1 in in__t.
-  destruct in__t. split; eauto with mdb.
-  eapply cowt_push_left; eauto.
-  set_solver.
-Qed.
-
-Lemma lts_tau_cowt_acceptance_set_subseteq s p q hacnv1 hacnv2 :
-  p ⟶ q ->
-  map coR_abs  (elements $ cowaiting_states q s hacnv1) ⊆
-    map coR_abs (elements $ cowaiting_states p s hacnv2).
-Proof.
-  intros.
-  intros a in__a.
-  assert (cowaiting_states q s hacnv1 ⊆ cowaiting_states p s hacnv2).
-  { intros t in__t. eapply cowaiting_states_spec2.
-    eapply cowaiting_states_spec1 in in__t.
-    destruct in__t. split; eauto with mdb. }
-  set_solver.
-Qed.
-
-Definition cooas (p : P) (s : list A) (hcocnv : p ⇓ᶜᵒ s) : gset PreAct :=
-  let ps : list P := elements (cowaiting_states p s hcocnv) in
-  ⋃ map coR_abs ps.
-
-Lemma union_cowt_acceptance_set_subseteq μ s p q h1 h2 :
-  p ⟹ᶜᵒ{μ} q -> cooas q s h1 ⊆ cooas p (μ :: s) h2.
-Proof.
-  intros hw a (O & mem1 & mem2)%elem_of_union_list.
-  eapply elem_of_union_list.
-  exists O. split; eauto. eapply cowt_acceptance_set_subseteq; eauto.
-Qed.
-
-Lemma union_acceptance_set_lts_tau_cowt_subseteq s p q h1 h2 :
-  p ⟶ q -> cooas q s h1 ⊆ cooas p s h2.
-Proof.
-  intros l a (L & mem1 & mem2)%elem_of_union_list.
-  eapply elem_of_union_list.
-  exists L. split; eauto.
-  eapply lts_tau_cowt_acceptance_set_subseteq; eauto.
-Qed.
-
-End Coacceptance_set_inclusions.
-
-Lemma not_must_ta_without_required_acc_set_co {Q : Type} `{CC : Countable PreAct} `{
-  gLtsQ : @gLts Q Aproc Hp,
-  gLtsEqT : !@gLtsEq T A H, gLtsObaT : !gLtsOba T _, !gLtsObaFB T A,
-  SA : !SyncAction Aproc A,
-  FiniteAbs : !FinitaryAbsActionG (Aproc := Aproc) (Hp := Hp) (gLtsP := gLtsQ) (gLtsT := gLtsEqT) (SA := SA) Q T (Γ : A → PreAct),
-  !Testing_Predicate outcome _,
-  !test_co_acceptance_set_spec ta Γ,
-  STS : !ParSts Q T gLtsQ gLtsEqT, !ParStsSpec Q T gLtsQ gLtsEqT SA STS}
-  (q q' : Q) s (E : gset PreAct) :
-  q ⟹ᶜᵒ[s] q' -> q' ↛ -> ¬ q must_pass (ta (E ∖ (coR_abs q')) s).
-Proof.
-  intros wt hst.
-  dependent induction wt; intros hm.
-  - inversion hm as [happy |]; subst.
-    ++ contradict happy. apply test_ungood.
-    ++ destruct ex as (y & l). pose proof (par_view_of _ _ _ l) as hv. inversion hv; subst.
-       +++ apply hst, (lts_performs_spec2 p τ); eauto with mdb.
-       +++ eapply ta_does_no_tau, (@lts_performs_spec2 T); [eauto.. | by eexists].
-       +++ destruct (decide (non_blocking η)) as [nb | not_nb].
-           ++++ exfalso. eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); [eauto.. | by eexists].
-           ++++ eapply ta_actions_are_in_its_gamma_set in l2 as mem; [| exact not_nb].
-                assert (Γ η ∉ coR_abs p) as not_in_mem by set_solver.
-                assert (Γ η ∈ coR_abs p) as in_mem.
-                { eapply coR_abs_spec2, map_gamma_of_action.
-                  eapply coR_intro;
-                    [eapply lts_performs_spec2; by eexists | exact hs | exact not_nb]. }
-                contradiction.
-  - eapply (IHwt hst).
-    by eapply must_preserved_by_lts_tau_srv.
-  - assert (ta (E ∖ (coR_abs t)) (μ :: s) ⟶⋍[μ] ta (E ∖ (coR_abs t)) s)
-      as (e' & hle' & heqe') by eapply (test_next_step (test_spec := ta_test_spec _)).
-    eapply (IHwt hst).
-    eapply must_eq_client; [exact heqe' |].
-    eapply must_preserved_by_synch_if_notoutcome;
-      [exact hm | apply test_ungood | exact duo | exact l | exact hle'].
-Qed.
-
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
@@ -800,7 +598,7 @@ From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionU
   Lts_OBA_FB Lts_FW Subset_Act Termination WeakTransitions
   coWeakSync
   FiniteImageLTS coFiniteImage Testing_Predicate InteractionBetweenLts
-  Must DefinitionASrel
+  Must DefinitionASrel Label_Abstraction.Decidable_dichotomic
   coWeakTransition coConvergence.
 
 #[local] Hint Mode ExtAction ! : typeclass_instances.
@@ -987,104 +785,100 @@ Proof.
   by eapply must_sync_iff_cocnvs, hleq, must_sync_iff_cocnvs.
 Qed.
 
-(* ** Completeness, the acceptance-set half
-
-    The port of the second half of [CompletenessASco.v].  The observer is now
-    [ta E s] with [s : trace Atest] and [E : gset PreAct]; the co-actions it has
-    to offer are read off [coR p], a set of /test/ actions. *)
-
-(* *** Prefixing the observer with a blocking action *)
-
-(* *** Monotonicity in the acceptance set, for the empty trace
-
-    The interesting case is the synchronisation one: the observer [ta E1 ε] had
-    a blocking action [η] matching an action of [p]; the bigger observer
-    [ta E2 ε] has a representative [η'] of the same abstraction, and
-    [abstraction_prog_spec] turns it back into an action [η''] of
-    [coR p]. *)
-
-(* *** Monotonicity in the acceptance set, for an arbitrary trace
-
-    [inversion_ta_tau_action], [inversion_ta_external_action], [ta_tau_ex] and
-    [f_gen_lts_mu_in_the_middle] are the observer-only lemmas of
-    [CompletenessASco.v], reused here over [Atest].  The one step that changes
-    is the synchronisation witness: where the homogeneous proof made [p] accept
-    [co μ2] for the non-blocking [μ2] of the trace, here [fwm_boomerang] makes
-    [p] accept [μ2] as the memory reception [inr (cobar μ2)]. *)
-
-Lemma must_ta_monotonicity_sync {P : Type} `{CC : Countable PreAct} `{
-  Hp : ExtAction Aproc, Ht : ExtAction Atest, SA : !SyncAction Aproc Atest,
-  gLtsEqP : @gLtsEq P (Aproc + MemAct Atest) (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht)),
-  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _, !gLtsObaFB T Atest,
-  !gLtsFWMem P Aproc Atest,
-  AbsPT : !AbsActionG (Aproc := (Aproc + MemAct Atest)) (Hp := ExtAction_sum) (SA := SyncAction_mem) P T (Γ : Atest → PreAct),
-  !Testing_Predicate outcome gLtsEqT,
-  !test_co_acceptance_set_spec ta Γ,
-  !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}
-  s (p : P) E1 :
-  p must_pass (ta E1 s) → ∀ E2, E1 ⊆ E2 → p must_pass (ta E2 s).
+Lemma exists_included_or_witnesses `{Countable B} {P : Type}
+  (ps : list P) (S : P → subset_of B) (C : subset_of B) :
+  (∀ p, p ∈ ps → (S p ⊆ C) + { x | x ∈ S p ∧ x ∉ C }) →
+  (∃ p, p ∈ ps ∧ S p ⊆ C)
+  ∨ ∃ X : gset B, (∀ x, x ∈ X → x ∉ C) ∧ (∀ p, p ∈ ps → ∃ x, x ∈ X ∧ x ∈ S p).
 Proof.
-  revert p E1.
-  induction s as (s & Hlength) using
-    (well_founded_induction (wf_inverse_image _ nat _ length Nat.lt_wf_0)).
-  destruct s as [| μ1 s']; intros p E1 hm E2 hsub.
-  - eapply must_ta_monotonicity_nil; eauto.
-  - assert (htp : p ⤓) by (eapply must_terminate_unoutcome, test_ungood; eauto).
-    induction htp.
-    inversion hm as [hg | nh ex pt et com].
-    * exfalso. by eapply (test_ungood (test_spec := ta_test_spec E1) (μ1 :: s')).
-    * apply m_step.
-      + apply test_ungood.
-      + destruct (decide (non_blocking μ1)) as [nb | not_nb].
-        (* [fwm_boomerang]: the forwarder's memory receives [μ1] *)
-        ++ destruct (fw_boomerang_total p μ1 nb) as (μ0 & p' & hsyco & tr_b & _).
-           assert (ta E2 (μ1 :: s') ⟶⋍[μ1] ta E2 s') as (t' & tr' & eq')
-             by eapply (test_next_step (test_spec := ta_test_spec E2)).
-           exists (p', t'). eapply par_step_sync; [exact hsyco | exact tr_b | exact tr'].
-        ++ assert (∃ e', ta E2 (μ1 :: s') ⟶ e') as (e' & tr')
-             by (eapply (test_tau_transition (test_spec := ta_test_spec E2)); eauto).
-           exists (p, e'). by eapply par_step_right.
-      + intros p' l. eapply H0; eauto.
-      + intros e' l.
-        edestruct (inversion_ta_tau_action (μ1 :: s') E2 e' l) as [hg | Hyp];
-          [by apply m_now |].
-        destruct Hyp as (η & μ & s1 & s2 & s3 & heqs & sc & himu & his1 & his2 & duo).
-        eapply (must_eq_client p (ta E2 (s1 ++ s2 ++ s3))); [by symmetry |].
-        edestruct (ta_tau_ex s1 s2 s3 η μ E1) as (t & hlt & heqt); eauto.
-        eapply Hlength.
-        ++ rewrite heqs, 6 length_app. simpl. lia.
-        ++ eapply must_eq_client; [eapply heqt |]. eapply et. by rewrite heqs.
-        ++ exact hsub.
-      + intros p' e' μ η hsy l1 l2.
-        edestruct (inversion_ta_external_action (μ1 :: s') η e' E2) as [hg | Hyp];
-          [exact l2 | by apply m_now |].
-        destruct Hyp as (s1 & s2 & η''' & heqs & heq & eq & his1). subst.
-        eapply must_eq_client; [by symmetry |].
-        edestruct (f_gen_lts_mu_in_the_middle (f := ta E1) (test_spec0 := ta_test_spec E1)
-                     s1 s2 η''' his1) as (t & l & heq').
-        eapply Hlength.
-        ++ rewrite heqs, 2 length_app. simpl. lia.
-        ++ eapply must_eq_client; [eapply heq' |].
-           eapply com; [exact hsy | exact l1 |]. rewrite heqs. exact l.
-        ++ exact hsub.
+  induction ps as [| p ps IH]; intros h.
+  - right. exists ∅. split.
+    + intros x hx. set_solver.
+    + intros p hp. by apply elem_of_nil in hp.
+  - destruct (h p (list_elem_of_here p ps)) as [sub | (x & hx & hnx)].
+    + left. exists p. split; [apply list_elem_of_here | exact sub].
+    + destruct IH as [(p' & hp' & sub) | (X & hXC & hXS)].
+      * intros p' hp'. apply h, list_elem_of_further, hp'.
+      * left. exists p'. split; [apply list_elem_of_further, hp' | exact sub].
+      * right. exists ({[x]} ∪ X). split.
+        -- intros y [->%elem_of_singleton | hy]%elem_of_union; [exact hnx | exact (hXC y hy)].
+        -- intros p0 [-> | hp0]%elem_of_cons.
+           ++ exists x. split; [set_solver | exact hx].
+           ++ destruct (hXS p0 hp0) as (y & hy & hyS).
+              exists y. split; [set_solver | exact hyS].
 Qed.
 
-(* *** A stable process passes the observer of its own co-actions
+Lemma stable_process_must_ta_dich {P : Type}
+  `{CC : Countable PreAct} `{
+  gLtsEqP : @gLtsEq P Aproc Hp,
+  gLtsEqT : !@gLtsEq T Atest Ht, gLtsObaT : !gLtsOba T _,
+  SA : !SyncAction Aproc Atest,
+  AbsP : !AbsActionG (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (Γ : Atest → PreAct),
+  !Testing_Predicate outcome gLtsEqT,
+  !test_co_acceptance_set_spec ta Γ,
+  STS : !ParSts P T _ _, !ParStsSpec P T _ _ SA STS}
+  (p : P) (X : gset PreAct) :
+  p ↛ → (∃ x, x ∈ X ∧ x ∈ ⌈ Γ ⌉ (coR p)) → p must_pass (ta X ε).
+Proof.
+  intros hst (a & mem' & co_set).
+  apply m_step.
+  - apply test_ungood.
+  - eapply ta_has_a_representative_transition_for_its_gamma_set in mem'
+      as (r & η & Tr & eq).
+    subst. destruct co_set as (η'' & co_set & eq).
+    assert (blocking η) as bη.
+    { intro imp. eapply ta_does_no_non_blocking_actions in imp.
+      apply imp, (@lts_performs_spec2 T). exists r; exact Tr. }
+    assert (acc : ta X ε ⟶[η]) by (apply (@lts_performs_spec2 T); exists r; exact Tr).
+    destruct (abstraction_step_test Γ p _ η η'' bη eq co_set acc) as (η' & Tr' & Tr'').
+    eapply lts_performs_spec1 in Tr'' as (e'' & Tr'').
+    destruct Tr' as (μ''' & Tr' & duo & bη').
+    eapply lts_performs_spec1 in Tr' as (p'' & Tr').
+    exists (p'', e''). eapply par_step_sync; [exact duo | exact Tr' | exact Tr''].
+  - intros p' l'. exfalso. generalize (lts_performs_spec2 p _ (exist _ p' l')). eauto with mdb.
+  - intros e' l'. exfalso.
+    eapply (ta_does_no_tau X). eapply lts_performs_spec2. exists e'. exact l'.
+  - intros p'' e'' μ' η hsy l'1 l'0.
+    destruct (decide (non_blocking η)) as [nb' | not_nb'].
+    + exfalso. eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); eauto with mdb.
+    + apply m_now. eapply ta_transition_to_good; eauto.
+Qed.
 
-    Unless that set is already contained in [E]: the observer [ta (coR_abs p ∖ E) ε]
-    offers a representative of every abstract co-action of [p] that [E] misses,
-    so the composition can always take a synchronisation step. *)
+Lemma not_must_ta_without_required_acc_set_dich {Q : Type} `{CC : Countable PreAct} `{
+  gLtsQ : @gLts Q Aproc Hp,
+  gLtsEqT : !@gLtsEq T A H, gLtsObaT : !gLtsOba T _, !gLtsObaFB T A,
+  SA : !SyncAction Aproc A,
+  !Testing_Predicate outcome _} {Γ : A → PreAct} `{
+  !test_co_acceptance_set_spec ta Γ,
+  STS : !ParSts Q T gLtsQ gLtsEqT, !ParStsSpec Q T gLtsQ gLtsEqT SA STS}
+  (q q' : Q) s (X : gset PreAct) :
+  q ⟹ᶜᵒ[s] q' → q' ↛ → (∀ x, x ∈ X → x ∉ ⌈ Γ ⌉ (coR q')) →
+  ¬ q must_pass (ta X s).
+Proof.
+  intros wt hst.
+  dependent induction wt; intros hX hm.
+  - inversion hm as [happy |]; subst.
+    ++ contradict happy. apply test_ungood.
+    ++ destruct ex as (y & l). pose proof (par_view_of _ _ _ l) as hv. inversion hv; subst.
+       +++ apply hst, (lts_performs_spec2 p τ); eauto with mdb.
+       +++ eapply ta_does_no_tau, (@lts_performs_spec2 T); [eauto.. | by eexists].
+       +++ destruct (decide (non_blocking η)) as [nb | not_nb].
+           ++++ exfalso. eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); [eauto.. | by eexists].
+           ++++ eapply ta_actions_are_in_its_gamma_set in l2 as mem; [| exact not_nb].
+                apply (hX _ mem), (map_gamma_of_action Γ).
+                eapply coR_intro;
+                  [eapply lts_performs_spec2; by eexists | exact hs | exact not_nb].
+  - eapply (IHwt hst hX).
+    by eapply must_preserved_by_lts_tau_srv.
+  - assert (ta X (μ :: s) ⟶⋍[μ] ta X s)
+      as (e' & hle' & heqe') by eapply (test_next_step (test_spec := ta_test_spec _)).
+    eapply (IHwt hst hX).
+    eapply must_eq_client; [exact heqe' |].
+    eapply must_preserved_by_synch_if_notoutcome;
+      [exact hm | apply test_ungood | exact duo | exact l | exact hle'].
+Qed.
 
-(* *** A blocking co-step of the process, in one go *)
-
-(* ** The acceptance sets along a co-trace
-
-    From here on the binders are collected in a section: every lemma needs the
-    same long list, and naming the instances is also what keeps elaboration
-    from searching for [FinitaryAbsActionG] with [T] unknown —
-    hence the [coRa] abbreviation below. *)
-
-Section AcceptanceSetsSync.
+Section AcceptanceSetsDich.
 
 Context {P T PreAct Aproc Atest : Type}.
 Context `{CC : Countable PreAct}.
@@ -1092,149 +886,79 @@ Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc
 Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}.
 Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _} `{!gLtsObaFB T Atest}.
 Context `{!gLtsFWMem P Aproc Atest} `{!Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}.
-Context `{CFI : !coFiniteImagegLts P Atest}.
 Context (Γ : Atest → PreAct).
-Context `{FiniteAbs : !FinitaryAbsActionG P T Γ}.
+Context `{AbsP : !AbsActionG P T Γ}.
 Context (outcome : T → Prop) `{!Testing_Predicate outcome gLtsEqT}.
 Context (ta : gset PreAct → list Atest → T)
         `{!test_co_acceptance_set_spec ta Γ}.
 
-Notation coRa := (coR_abs (FinitaryAbsActionG := FiniteAbs)).
-
-(* *** Monotonicity of the stable states reached along a co-trace *)
-
-(* *** The union of the acceptance sets reachable along a co-trace *)
-
-(* *** Either some stable state of [p] is covered by [E], or [p] passes the
-    observer of what [E] misses — first for the empty co-trace *)
-
-Lemma must_ta_or_empty_pre_action_set_for_empty_trace_co_sync
-  (p : P) (hcocnv : p ⇓ᶜᵒ ε) (E : gset PreAct) :
-  (∃ p', p ⟹ p' ∧ (p' ↛) ∧ coRa p' ⊆ E)
-  ∨ p must_pass (ta ((cooas p ε hcocnv) ∖ E) ε).
+Lemma must_ta_dich_for_empty_trace (p : P) (X : gset PreAct) :
+  p ⤓ →
+  (∀ p', p ⟹ p' → p' ↛ → ∃ x, x ∈ X ∧ x ∈ ⌈ Γ ⌉ (coR p')) →
+  p must_pass (ta X ε).
 Proof.
-  induction (cocnv_terminate p ε hcocnv) as (p, hpt, ihhp).
+  intros ht. induction ht as [p hpt IH]. intros hX.
   destruct (decide (p ⟶)) as [(p'' & l)%lts_performs_spec1 | st].
-  + assert (∀ q0 : P,
-         q0 ∈ cowt_tau_set p
-         → (∃ p' : P, q0 ⟹ p' ∧ p' ↛ ∧ coRa p' ⊆ E)
-           ∨ (∃ h, q0 must_pass (ta ((cooas q0 ε h) ∖ E) ε))) as Hyp.
-    { intros q' l'%cowt_tau_set_spec. destruct (hpt q' l') as (hq).
-      edestruct (ihhp q' l') as [hl | hr].
-      * now left.
-      * right. exists (cocnv_nil q' (tstep q' hq)). eauto. }
-    destruct (@exists_forall_in P (cowt_tau_set p) _ _ Hyp) as [Hyp' | Hyp'].
-    - eapply Exists_exists in Hyp' as (t & l'%cowt_tau_set_spec & t' & w & st & sub).
-      left. exists t'. eauto with mdb.
-    - right. apply m_step.
-      * apply test_ungood.
-      * exists (p'', ta ((cooas p ε hcocnv) ∖ E) ε). by eapply par_step_left.
-      * intros p0 l0.
-        assert (m0 : p0 ∈ cowt_tau_set p) by by eapply cowt_tau_set_spec.
-        eapply Forall_forall in Hyp' as (h0 & hm); [| exact m0].
-        eapply must_ta_monotonicity_sync; [exact hm |].
-        eapply difference_mono_r, union_acceptance_set_lts_tau_cowt_subseteq, l0.
-      * intros e' l'. exfalso.
-        eapply ta_does_no_tau, (@lts_performs_spec2 T); [eauto.. | by exists e'].
-      * intros p0 e0 μ1' η hsy lp le.
-        destruct (decide (non_blocking η)) as [nb | not_nb].
-        ++ exfalso.
-           eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); [eauto.. | by exists e0].
-        ++ apply m_now. eapply ta_transition_to_good; eauto.
-  + destruct (stable_process_must_ta_or_empty_pre_action_set p E st) as [Hyp | Hyp].
-    ++ right. assert (cooas p ε hcocnv = coRa p) as eq.
-       { unfold cooas.
-         rewrite cowaiting_states_stable_singleton, elements_singleton; [| exact st].
-         simpl. by rewrite union_empty_r_L. }
-       rewrite eq. exact Hyp.
-    ++ left. exists p. split; [constructor | split; [exact st | exact Hyp]].
+  - apply m_step.
+    + apply test_ungood.
+    + exists (p'', ta X ε). by eapply par_step_left.
+    + intros p0 l0. eapply IH; [exact l0 |].
+      intros p' w st'. eapply hX; [| exact st']. eauto with mdb.
+    + intros e' l'. exfalso.
+      eapply ta_does_no_tau, (@lts_performs_spec2 T); [eauto.. | by exists e'].
+    + intros p0 e0 μ1' η hsy lp le.
+      destruct (decide (non_blocking η)) as [nb | not_nb].
+      * exfalso.
+        eapply ta_does_no_non_blocking_actions, (@lts_performs_spec2 T); [eauto.. | by exists e0].
+      * apply m_now. eapply ta_transition_to_good; eauto.
+  - eapply stable_process_must_ta_dich; [exact st |].
+    eapply hX; [constructor | exact st].
 Qed.
 
-(* *** ... and then for an arbitrary co-trace
-
-    The non-blocking case is the one that changes: [fwm_boomerang] makes [p]
-    receive the trace's [μ2] and give it back as [inr (msg μ2)], and
-    [must_non_blocking_action_swap_l_fw_sync] moves it from the process side
-    to [μ2] on the observer side. *)
-
-Lemma must_ta_or_empty_pre_action_set_for_all_trace_co_sync
-  s (p : P) (hcocnv : p ⇓ᶜᵒ s) (E : gset PreAct) :
-  (∃ p', p ⟹ᶜᵒ[s] p' ∧ (p' ↛) ∧ coRa p' ⊆ E)
-  ∨ p must_pass (ta ((cooas p s hcocnv) ∖ E) s).
+Lemma must_ta_dich_for_all_trace s (p : P) (hcocnv : p ⇓ᶜᵒ s) (X : gset PreAct) :
+  (∀ p', p ⟹ᶜᵒ[s] p' → p' ↛ → ∃ x, x ∈ X ∧ x ∈ ⌈ Γ ⌉ (coR p')) →
+  p must_pass (ta X s).
 Proof.
-  revert p hcocnv E.
+  revert p hcocnv.
   induction s as [| μ1 s' IHs'].
-  - intros p hcocnv E.
-    destruct (must_ta_or_empty_pre_action_set_for_empty_trace_co_sync p hcocnv E)
-      as [(p' & w & st & sub) | hm].
-    + left. exists p'. split; [by eapply cowt_iff_wt_nil | by split].
-    + right. exact hm.
-  - intros p hcocnv E.
-    set (ps := cowt_set_mu p μ1 s' hcocnv).
+  - intros p hcocnv hX.
+    eapply must_ta_dich_for_empty_trace; [exact (cocnv_terminate p ε hcocnv) |].
+    intros p' w st. eapply hX; [eapply cowt_iff_wt_nil; exact w | exact st].
+  - intros p hcocnv hX.
     inversion hcocnv as [| ? ? ? conv Hyp_conv]; subst.
-    assert (hcocnv0 : ∀ p', p' ∈ ps → p' ⇓ᶜᵒ s')
-      by (intros ? mem%cowt_set_mu_spec1; eauto).
-    assert (he : ∀ p', p' ∈ ps →
-      ((∃ pr p0, p0 ∈ cowaiting_states p' s' pr ∧ coRa p0 ⊆ E)
-        ∨ (∃ h, p' must_pass (ta ((cooas p' s' h) ∖ E) s')))).
-    { intros p' mem. destruct (IHs' p' (hcocnv0 _ mem) E) as [(r & w & st & sub) | hm].
-      * left. eapply cowt_set_mu_spec1 in mem.
-        exists (Hyp_conv _ mem), r. split; [eapply cowaiting_states_spec2 |]; eauto.
-      * right. eauto. }
-    destruct (exists_forall_in_gset ps _ _ he) as [Hyp | Hyp].
-    + left. destruct Hyp
-        as (p1 & ?%cowt_set_mu_spec1 & ? & r & (? & ?)%cowaiting_states_spec1 & ?).
-      exists r. split; [by eapply cowt_push_left | by split].
-    + right.
-      destruct (decide (non_blocking μ1)) as [nb | b].
-      ++ destruct (fw_boomerang_total p μ1 nb) as (μ0 & p'' & hsyco & l0 & l1).
-         assert (ta ((cooas p (μ1 :: s') hcocnv) ∖ E) (μ1 :: s')
-                  ⟶⋍[μ1] ta ((cooas p (μ1 :: s') hcocnv) ∖ E) s')
-           as (e' & hle' & heqe')
-           by eapply (test_next_step (test_spec := ta_test_spec _)).
-         eapply (must_non_blocking_action_swap_l_fw_sync
-                   outcome p'' p _ e' μ1 nb l1 hle').
-         eapply (must_eq_client _ _ _ (symmetry heqe')).
-         edestruct (Hyp p'') as (h & hm).
-         { eapply cowt_set_mu_spec2. eapply lts_to_cowt; [exact hsyco | exact l0]. }
-         eapply must_ta_monotonicity_sync; [exact hm |].
-         eapply difference_mono_r, union_cowt_acceptance_set_subseteq.
-         eapply lts_to_cowt; [exact hsyco | exact l0].
-      ++ eapply after_blocking_co_of_must_tacc_co; [exact conv | exact b |].
-         intros p' w.
-         edestruct (Hyp p') as (h & hm).
-         { by eapply cowt_set_mu_spec2. }
-         eapply must_ta_monotonicity_sync; [exact hm |].
-         eapply difference_mono_r, union_cowt_acceptance_set_subseteq, w.
+    destruct (decide (non_blocking μ1)) as [nb | b].
+    + destruct (fw_boomerang_total p μ1 nb) as (μ0 & p'' & hsyco & l0 & l1).
+      assert (w0 : p ⟹ᶜᵒ{μ1} p'') by (eapply lts_to_cowt; [exact hsyco | exact l0]).
+      assert (ta X (μ1 :: s') ⟶⋍[μ1] ta X s') as (e' & hle' & heqe')
+        by eapply (test_next_step (test_spec := ta_test_spec _)).
+      eapply (must_non_blocking_action_swap_l_fw_sync outcome p'' p _ e' μ1 nb l1 hle').
+      eapply (must_eq_client _ _ _ (symmetry heqe')).
+      eapply IHs'; [exact (Hyp_conv p'' w0) |].
+      intros p3 w st. eapply hX; [eapply cowt_push_left; eauto | exact st].
+    + eapply after_blocking_co_of_must_tacc_co; [exact conv | exact b |].
+      intros p' w. eapply IHs'; [exact (Hyp_conv p' w) |].
+      intros p3 w' st. eapply hX; [eapply cowt_push_left; eauto | exact st].
 Qed.
 
-(* *** An observer that misses a reachable acceptance set is not passed *)
+End AcceptanceSetsDich.
 
-End AcceptanceSetsSync.
+Section Completeness_dich.
 
-(* ** The acceptance-set half of completeness *)
-
-Section Completeness2_co_sync.
-
-Context {P Q T PreAct Aproc Atest : Type}.
+Context {P T PreAct Aproc Atest : Type}.
 Context `{CC : Countable PreAct}.
 Context `{Hp : ExtAction Aproc}.
 Context `{Ht : ExtAction Atest}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}.
-Context `{gLtsEqQ : !gLtsEq Q (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))}.
 Context `{gLtsEqT : !gLtsEq T Ht}.
 Context `{gLtsObaT : !gLtsOba T _}.
 Context `{!gLtsObaFB T Atest}.
 Context `{!gLtsFWMem P Aproc Atest}.
-Context `{!gLtsFWMem Q Aproc Atest}.
 Context `{!Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}.
-Context `{!Prop_of_Inter Q T (Aproc + MemAct Atest) Atest sync}.
 Context `{CFIP : !coFiniteImagegLts P Atest}.
-Context `{CFIQ : !coFiniteImagegLts Q Atest}.
 Context {Γ : Atest → PreAct}.
-Context `{FiniteAbsP : !FinitaryAbsActionG P T Γ}.
-Context `{FiniteAbsQ : !FinitaryAbsActionG Q T Γ}.
+Context `{AbsP : !AbsActionG P T Γ}.
+Context `{DichP : !Dichotomic P Γ}.
 Context {outcome : T → Prop}.
 Context `{!Testing_Predicate outcome gLtsEqT}.
 Context {ta : gset PreAct → list Atest → T}.
@@ -1242,30 +966,31 @@ Context `{!test_co_acceptance_set_spec ta Γ}.
 Context {tconv : list Atest → T}.
 Context `{!test_convergence_spec tconv}.
 
-Lemma completeness2_co_sync (p : P) (q : Q) :
+Lemma completeness2_co_sync_dich (p q : P) :
   ctx_pre (gLtsT := gLtsEqT) p q →
   bhv_pre_g_cond2 Γ p q.
 Proof.
   intros hpre s q' hacnv w st.
-  destruct (must_ta_or_empty_pre_action_set_for_all_trace_co_sync Γ outcome ta s p hacnv (coR_abs q'))
-    as [(p' & w_tr & stable & sub) | hm].
-  + exists p'. split; [exact w_tr | split; [exact stable |]].
-    intros pre mem. eapply coR_abs_spec1, sub, coR_abs_spec2, mem.
-  + eapply hpre in hm. contradict hm.
-    eapply (not_must_ta_without_required_acc_set_co q q' s); eauto.
+  destruct (exists_included_or_witnesses (elements (cowaiting_states p s hacnv))
+              (λ p', ⌈ Γ ⌉ (coR p')) (⌈ Γ ⌉ (coR q')))
+    as [(p' & mem & sub) | (X & hXC & hXS)].
+  - intros p' (_ & st')%elem_of_elements%cowaiting_states_spec1. exact (coR_dichotomy p' q' st' st).
+  - apply elem_of_elements, cowaiting_states_spec1 in mem as (w' & st').
+    exists p'. split_and!; [exact w' | exact st' | exact sub].
+  - exfalso. eapply (not_must_ta_without_required_acc_set_dich q q' s X w st hXC).
+    eapply hpre, (must_ta_dich_for_all_trace Γ outcome ta s p hacnv X).
+    intros p' w' st'. eapply hXS, elem_of_elements, cowaiting_states_spec2.
+    split; [exact w' | exact st'].
 Qed.
 
-Lemma completeness_fw_co_sync (p : P) (q : Q) :
+Lemma completeness_fw_co_sync_dich (p q : P) :
   ctx_pre (gLtsT := gLtsEqT) p q →
-  p ≼ᴳ[ Γ ] q.
+  p ≼꜀ₒ₋ₐₛ[ Γ ] q.
 Proof.
   intro hpre. split.
   - by eapply (completeness1_co_sync (tconv := tconv)).
-  - by eapply completeness2_co_sync.
+  - by eapply completeness2_co_sync_dich.
 Qed.
 
-End Completeness2_co_sync.
-
-(* ** Completeness on forwarders, for two alphabets *)
-
+End Completeness_dich.
 (* end hide *)

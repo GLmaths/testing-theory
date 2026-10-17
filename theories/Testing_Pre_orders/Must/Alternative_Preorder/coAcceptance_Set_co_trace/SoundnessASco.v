@@ -772,14 +772,6 @@ End Acceptance_Set_preorder_for_sets_sync.
 
 (* ** Communication-enabled processes *)
 
-Class gLtsCNenabledSync (P Aproc Atest : Type)
-  `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}
-  `{gLtsP : !gLts P Hp} `{SA : !SyncAction Aproc Atest} :=
-  MkgLtsCNenabledSync {
-      sync_cn_enabled (p1 : P) (η : Atest) :
-        non_blocking η → ∃ β p2, sync β η ∧ p1 ⟶[β] p2;
-    }.
-
 Section Properties_for_soundness_sync.
 
 Context {P Q T FinA PreAct Aproc Atest : Type}.
@@ -788,7 +780,7 @@ Context `{gLtsT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsP : !gLts P Hp}.
-Context `{gLtsQ : !gLts Q Hp} `{!gLtsCNenabledSync Q Aproc Atest}.
+Context `{gLtsQ : !gLts Q Hp} `{!gLtsCNenabled Q Aproc Atest}.
 Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
 Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
@@ -800,7 +792,7 @@ Lemma communication_enabled_co (p : P) p' (q : Q) (t : T) t' μ1 (η : Atest) :
 Proof.
   intros hsy tr tr_co sub.
   destruct (decide (non_blocking η)) as [nb | not_nb].
-  + destruct (sync_cn_enabled q η nb) as (β & q' & hsyq & tr').
+  + destruct (cn_enabled q η nb) as (β & q' & hsyq & tr').
     exists β, η, q', t'. eauto.
   + assert (hco : η ∈ coR p).
     { eapply coR_intro; [| exact hsy | exact not_nb].
@@ -836,7 +828,7 @@ Context `{SA : !SyncAction Aproc Atest}.
 Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA STSP}
         `{CFIP : !coFiniteImagegLts P Atest}.
 Context `{gLtsQ : !gLts Q Hp} `{STSQ : !ParSts Q T _ _} `{!ParStsSpec Q T _ _ SA STSQ}
-        `{CFIQ : !coFiniteImagegLts Q Atest} `{CN : !gLtsCNenabledSync Q Aproc Atest}.
+        `{CFIQ : !coFiniteImagegLts Q Atest} `{CN : !gLtsCNenabled Q Aproc Atest}.
 Context (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct).
 Context `{AbsPT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) P T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
 Context `{AbsQT : !AbsAction (Aproc := Aproc) (Hp := Hp) (SA := SA) Q T (αᴛᴇꜱᴛ : Atest → FinA) (αᴘʀᴏ : FinA → PreAct)}.
@@ -984,8 +976,8 @@ Lemma soundness_fw_co `{
 
   (p : P) (q : Q) : p ≼꜀ₒ₋ₐₛ q -> p ⊑ₘᵤₛₜᵢ q.
 Proof.
-  assert (CN : @gLtsCNenabledSync Q A A H H _ SyncAction_of_dual).
-  { apply MkgLtsCNenabledSync. intros q1 η nb.
+  assert (CN : @gLtsCNenabled Q A A H H _ SyncAction_of_dual).
+  { apply MkgLtsCNenabled. intros q1 η nb.
     destruct (boomerang q1 η (co η)) as (q2 & hb).
     destruct (hb nb) as (l & _); [symmetry; exact (proj2_sig (exists_dual η)) |].
     exists (co η), q2. split; [| exact l].
