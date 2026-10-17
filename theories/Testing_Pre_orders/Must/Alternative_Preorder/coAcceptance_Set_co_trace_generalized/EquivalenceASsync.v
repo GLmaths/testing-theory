@@ -26,7 +26,7 @@ From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions MemAction InteractionUnion MemForwarder Bisimulation Lts_OBA
   Subset_Act coFiniteImage Testing_Predicate InteractionBetweenLts
   Must DefinitionASrel CompletenessASsync SoundnessASsync
-  Label_Abstraction.LabelAbstraction Label_Abstraction.Decidable_dichotomic.
+  Label_Abstraction.LabelAbstraction Label_Abstraction.Decidable_dichotomic Sum_LTS.
 
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
@@ -60,4 +60,102 @@ Proof.
 Qed.
 
 End Equivalence_label_abstraction.
+
+Section Must_sum.
+  Context {P Q T A1 A2 At : Type} `{H1 : ExtAction A1} `{H2 : ExtAction A2} `{Ht : ExtAction At}.
+  Context `{SA1 : !SyncAction A1 At} `{SA2 : !SyncAction A2 At}.
+  Context {gLtsP : gLts P H1} {gLtsQ : gLts Q H2} {gLtsT : gLtsEq T Ht}.
+  Context {outcome : T → Prop} `{TP : !Testing_Predicate outcome gLtsT}.
+
+  Notation gLP := (@lift_left_lts A1 A2 H1 H2 P gLtsP).
+  Notation gLQ := (@lift_right_lts A1 A2 H1 H2 Q gLtsQ).
+  Notation SAS := (@SyncAction_sum A1 A2 H1 H2 At Ht SA1 SA2).
+
+  Notation gT := (@gLtsEq_gLts T At Ht gLtsT).
+
+  Context (PILP : @Prop_of_Inter P T (A1 + A2) At (@sync _ _ _ _ SAS) ExtAction_sum gLP Ht gT).
+  Context (PILQ : @Prop_of_Inter Q T (A1 + A2) At (@sync _ _ _ _ SAS) ExtAction_sum gLQ Ht gT).
+  Context (PIPQ : @Prop_of_Inter (P + Q) T (A1 + A2) At (@sync _ _ _ _ SAS) ExtAction_sum gLts_sum Ht gT).
+
+  Notation STSP := (ParSts_of_union gLP gLtsT (SY := PILP)).
+  Notation SPECP := (ParStsSpec_of_union gLP gLtsT (SY := PILP)).
+  Notation STSQ := (ParSts_of_union gLQ gLtsT (SY := PILQ)).
+  Notation SPECQ := (ParStsSpec_of_union gLQ gLtsT (SY := PILQ)).
+  Notation STSS := (ParSts_of_union gLts_sum gLtsT (SY := PIPQ)).
+  Notation SPECS := (ParStsSpec_of_union gLts_sum gLtsT (SY := PIPQ)).
+
+  Lemma must_inl_to (p : P) (t : T) :
+    must (SA := SAS) (STS := STSP) p t → must (SA := SAS) (STS := STSS) (inl p) t.
+  Proof.
+    induction 1 as [p t ho | p t nh ex pt IHpt et IHet com IHcom].
+    - by apply m_now.
+    - apply m_step; [exact nh | | | exact IHet |].
+      + destruct ex as (y & hy).
+        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECP) in hy
+          as [(p' & -> & l) | [(t' & -> & l) | (p' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
+        * exists (inl p', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECS (inl p) (inl p') t l).
+        * exists (inl p, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECS (inl p) t t' l).
+        * exists (inl p', t').
+          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECS (inl p) (inl p') t t' μ1 μ2 hs l1 l2).
+      + intros [p' | q'] l; [exact (IHpt p' l) | done].
+      + intros [p' | q'] t' μ1 μ2 hs l1 l2; [exact (IHcom p' t' μ1 μ2 hs l1 l2) | done].
+  Qed.
+
+  Lemma must_inr_to (q : Q) (t : T) :
+    must (SA := SAS) (STS := STSQ) q t → must (SA := SAS) (STS := STSS) (inr q) t.
+  Proof.
+    induction 1 as [q t ho | q t nh ex pt IHpt et IHet com IHcom].
+    - by apply m_now.
+    - apply m_step; [exact nh | | | exact IHet |].
+      + destruct ex as (y & hy).
+        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECQ) in hy
+          as [(q' & -> & l) | [(t' & -> & l) | (q' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
+        * exists (inr q', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECS (inr q) (inr q') t l).
+        * exists (inr q, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECS (inr q) t t' l).
+        * exists (inr q', t').
+          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECS (inr q) (inr q') t t' μ1 μ2 hs l1 l2).
+      + intros [p' | q'] l; [done | exact (IHpt q' l)].
+      + intros [p' | q'] t' μ1 μ2 hs l1 l2; [done | exact (IHcom q' t' μ1 μ2 hs l1 l2)].
+  Qed.
+
+  Lemma must_inl_from (s : P + Q) (t : T) :
+    must (SA := SAS) (STS := STSS) s t → ∀ p, s = inl p → must (SA := SAS) (STS := STSP) p t.
+  Proof.
+    induction 1 as [s t ho | s t nh ex pt IHpt et IHet com IHcom]; intros p ->.
+    - by apply m_now.
+    - apply m_step; [exact nh | | | |].
+      + destruct ex as (y & hy).
+        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECS) in hy
+          as [(s' & -> & l) | [(t' & -> & l) | (s' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
+        * destruct s' as [p' | q']; [| done].
+          exists (p', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECP p p' t l).
+        * exists (p, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECP p t t' l).
+        * destruct s' as [p' | q']; [| done].
+          exists (p', t').
+          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECP p p' t t' μ1 μ2 hs l1 l2).
+      + intros p' l. exact (IHpt (inl p') l p' eq_refl).
+      + intros t' l. exact (IHet t' l p eq_refl).
+      + intros p' t' μ1 μ2 hs l1 l2. exact (IHcom (inl p') t' μ1 μ2 hs l1 l2 p' eq_refl).
+  Qed.
+
+  Lemma must_inr_from (s : P + Q) (t : T) :
+    must (SA := SAS) (STS := STSS) s t → ∀ q, s = inr q → must (SA := SAS) (STS := STSQ) q t.
+  Proof.
+    induction 1 as [s t ho | s t nh ex pt IHpt et IHet com IHcom]; intros q ->.
+    - by apply m_now.
+    - apply m_step; [exact nh | | | |].
+      + destruct ex as (y & hy).
+        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECS) in hy
+          as [(s' & -> & l) | [(t' & -> & l) | (s' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
+        * destruct s' as [p' | q']; [done |].
+          exists (q', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECQ q q' t l).
+        * exists (q, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECQ q t t' l).
+        * destruct s' as [p' | q']; [done |].
+          exists (q', t').
+          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECQ q q' t t' μ1 μ2 hs l1 l2).
+      + intros q' l. exact (IHpt (inr q') l q' eq_refl).
+      + intros t' l. exact (IHet t' l q eq_refl).
+      + intros q' t' μ1 μ2 hs l1 l2. exact (IHcom (inr q') t' μ1 μ2 hs l1 l2 q' eq_refl).
+  Qed.
+End Must_sum.
 (* end hide *)

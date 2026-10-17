@@ -30,7 +30,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
   coWeakTransition coConvergence coFiniteImage InListPropHelper
   StateTransitionSystems Testing_Predicate Must
   Label_Abstraction.LabelAbstraction Label_Abstraction.Decidable_dichotomic DefinitionASrel
-  Lts_OBA CompletenessASsync EquivalenceASsync.
+  Lts_OBA CompletenessASsync EquivalenceASsync Sum_LTS.
 (* begin hide *)
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 
@@ -359,4 +359,60 @@ Section Blocking_characterisation.
         (must_lift_to _ (ParStsSpec_of_union gP gLtsEqT) _ SLP), hm.
   Qed.
 End Blocking_characterisation.
+Section Blocking_characterisation_P_Q.
+  Context {P Q T A1 A2 At : Type} `{H1 : ExtAction A1} `{H2 : ExtAction A2} `{Ht : ExtAction At}.
+  Context `{SA1 : !SyncAction A1 At} `{SA2 : !SyncAction A2 At}.
+  Context (allblk : ∀ η : At, ¬ non_blocking η).
+  Context (outcome : T → Prop).
+
+  Context `{gLtsEqT : !gLtsEq T Ht} `{gLtsObaT : !gLtsOba T _}.
+  Context `{TP : !Testing_Predicate outcome gLtsEqT}.
+
+  Context (gLtsEqP : gLtsEq P H1) (gLtsEqQ : gLtsEq Q H2).
+
+  Notation gP := (@gLtsEq_gLts P A1 H1 gLtsEqP).
+  Notation gQ := (@gLtsEq_gLts Q A2 H2 gLtsEqQ).
+  Notation gT := (@gLtsEq_gLts T At Ht gLtsEqT).
+  Notation gLP := (@lift_left_lts A1 A2 H1 H2 P gP).
+  Notation gLQ := (@lift_right_lts A1 A2 H1 H2 Q gQ).
+
+  Context (PIP : @Prop_of_Inter P T A1 At (@sync _ _ _ _ SA1) H1 gP Ht gT).
+  Context (PIQ : @Prop_of_Inter Q T A2 At (@sync _ _ _ _ SA2) H2 gQ Ht gT).
+  Context (CFIP : @coFiniteImagegLts P At A1 H1 gP Ht SA1)
+          (CFIQ : @coFiniteImagegLts Q At A2 H2 gQ Ht SA2).
+
+  #[local] Hint Extern 0 (ExtAction (A1 + A2)) => exact (@ExtAction_sum A1 A2 H1 H2) : typeclass_instances.
+  #[local] Instance SAPQ : SyncAction (A1 + A2) At := @SyncAction_sum A1 A2 H1 H2 At Ht SA1 SA2.
+  #[local] Instance gLtsEqPQ : gLtsEq (P + Q) (@ExtAction_sum A1 A2 H1 H2) :=
+    gLtsEq_sum (gLtsEqP := gLtsEqP) (gLtsEqQ := gLtsEqQ).
+  #[local] Instance gLPi : gLts P (@ExtAction_sum A1 A2 H1 H2) := gLP.
+  #[local] Instance gLQi : gLts Q (@ExtAction_sum A1 A2 H1 H2) := gLQ.
+  #[local] Instance PIPQ : @Prop_of_Inter (P + Q) T (A1 + A2) At (@sync _ _ _ _ SAPQ)
+                             ExtAction_sum gLts_sum Ht gT := Prop_of_Inter_sum PIP PIQ.
+  #[local] Instance PILP : @Prop_of_Inter P T (A1 + A2) At (@sync _ _ _ _ SAPQ)
+                             ExtAction_sum gLP Ht gT := lift_left_inter PIP.
+  #[local] Instance PILQ : @Prop_of_Inter Q T (A1 + A2) At (@sync _ _ _ _ SAPQ)
+                             ExtAction_sum gLQ Ht gT := lift_right_inter PIQ.
+
+  Notation gPQ := (@gLtsEq_gLts (P + Q) (A1 + A2) ExtAction_sum gLtsEqPQ).
+
+  Context (𝔸 : @Label_abstraction (P + Q) T (A1 + A2) At ExtAction_sum Ht gPQ gT SAPQ).
+  Context (DichPQ : @Dichotomic (P + Q) (A1 + A2) At (At / 𝔸) ExtAction_sum Ht gPQ SAPQ ρ[𝔸]).
+
+  Context (tconv : trace At → T) `{!test_convergence_spec tconv}.
+  Context (ta : gset (At / 𝔸) → trace At → T)
+          `{TA : !test_co_acceptance_set_spec ta ρ[𝔸] }.
+
+  Theorem equivalence_blocking_sum (p : P) (q : Q) :
+    p ⊆ₘᵤₛₜᵢ q ↔
+    (inl p : P + Q) ≼꜀ₒ₋ₐₛ[ ρ[𝔸] ] (inr q).
+  Proof.
+    rewrite <- (equivalence_blocking (gLtsEqP := gLtsEqPQ) (SA := SAPQ) (PIP := PIPQ) allblk outcome
+                  (coFiniteImage_sum (CFIP := CFIP) (CFIQ := CFIQ)) 𝔸 DichPQ tconv ta (inl p) (inr q)).
+    split; intros h t hm.
+    - eapply (must_inr_to PILQ PIPQ), h, (must_inl_from PILP PIPQ _ _ hm p eq_refl).
+    - eapply (must_inr_from PILQ PIPQ (inr q) t); [| done].
+      eapply h, (must_inl_to PILP PIPQ), hm.
+  Qed.
+End Blocking_characterisation_P_Q.
 (* end hide *)
