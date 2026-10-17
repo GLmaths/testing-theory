@@ -132,12 +132,12 @@ Class Label_abstraction (P T : Type) {Ap At : Type} {Hp : ExtAction Ap} {Ht : Ex
 
 Arguments Label_abstraction P T {_ _ _ _ _ _ _}.
 
-Notation "(≼ᴛᴇꜱᴛ[ 𝔸 ])" := (EPO.label_preorder _ (Enable_PO := EPO (Label_abstraction := 𝔸)))
-  (format "(≼ᴛᴇꜱᴛ[ 𝔸 ])").
+Notation "(≼ᴛᴇꜱᴛ[ 𝔸 ] )" := (EPO.label_preorder _ (Enable_PO := EPO (Label_abstraction := 𝔸)))
+  (format "(≼ᴛᴇꜱᴛ[ 𝔸 ] )").
 Notation "μ ≼ᴛᴇꜱᴛ[ 𝔸 ] μ'" := (EPO.label_preorder _ (Enable_PO := EPO (Label_abstraction := 𝔸)) μ μ')
   (at level 70, format "μ  ≼ᴛᴇꜱᴛ[ 𝔸 ]  μ'").
-Notation "(≼ᴘʀᴏ[ 𝔸 ])" := (CEPO.label_preorder _ (CoEnable_PO := CEPO (Label_abstraction := 𝔸)))
-  (format "(≼ᴘʀᴏ[ 𝔸 ])").
+Notation "(≼ᴘʀᴏ[ 𝔸 ] )" := (CEPO.label_preorder _ (CoEnable_PO := CEPO (Label_abstraction := 𝔸)))
+  (format "(≼ᴘʀᴏ[ 𝔸 ] )").
 Notation "μ ≼ᴘʀᴏ[ 𝔸 ] μ'" := (CEPO.label_preorder _ (CoEnable_PO := CEPO (Label_abstraction := 𝔸)) μ μ')
   (at level 70, format "μ  ≼ᴘʀᴏ[ 𝔸 ]  μ'").
 

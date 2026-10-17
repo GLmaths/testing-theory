@@ -257,5 +257,5 @@ End Canonical.
 
 Notation "A / R" := (LA_quotient (A := A) R) (at level 40, left associativity) : type_scope.
 
-Notation "ρ[ R ]" := (LA_class R) (format "ρ[ R ]").
+Notation "ρ[ R ]" := (LA_class R) (at level 0, format "ρ[ R ]").
 (* end hide *)
