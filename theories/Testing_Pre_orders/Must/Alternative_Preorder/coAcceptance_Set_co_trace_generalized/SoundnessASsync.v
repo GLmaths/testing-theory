@@ -48,9 +48,9 @@ From TestingTheory Require Import coWeakTransition coConvergence
 (* ** Must for a set of processes *)
 
 Inductive mustx `{
-    gLtsP : @gLts P Aproc Hp, CP : !Countable P,
-    gLtsT : ! @gLtsEq T Atest Ht, !Testing_Predicate outcome _,
-    SA : !SyncAction Aproc Atest, STS : !ParSts P T gLtsP gLtsT, !ParStsSpec P T gLtsP gLtsT SA STS}
+    gLtsP : @gLts P Ap Hp, CP : !Countable P,
+    gLtsT : ! @gLtsEq T At Ht, !Testing_Predicate outcome _,
+    SA : !SyncAction Ap At, STS : !ParSts P T gLtsP gLtsT, !ParStsSpec P T gLtsP gLtsT SA STS}
   (X : gset P) (t : T) : Prop :=
 | mx_now (hh : outcome t) : mustx X t
 | mx_step
@@ -60,7 +60,7 @@ Inductive mustx `{
         lts_tau_set_from_pset_spec1 X X' → X' ≠ ∅ →
         mustx X' t)
     (et : ∀ (t' : T), t ⟶ t' → mustx X t')
-    (com : ∀ (t' : T) (η : Atest) (X' : gset P),
+    (com : ∀ (t' : T) (η : At) (X' : gset P),
         t ⟶[η] t' →
         cowt_set_from_pset_spec1 X η X' →
         X' ≠ ∅ →
@@ -72,13 +72,13 @@ Global Notation "X 'must_pass_x' t" := (mustx X t) (at level 70).
 
 Section Must_for_sets_sync.
 
-Context {P T Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
+Context {P T Ap At : Type}.
+Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsP : !gLts P Hp}.
 Context `{gLtsT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
-Context `{SA : !SyncAction Aproc Atest} `{STS : !ParSts P T gLtsP gLtsT} `{!ParStsSpec P T gLtsP gLtsT SA STS}.
-Context `{CFI : !coFiniteImagegLts P Atest}.
+Context `{SA : !SyncAction Ap At} `{STS : !ParSts P T gLtsP gLtsT} `{!ParStsSpec P T gLtsP gLtsT SA STS}.
+Context `{CFI : !coFiniteImagegLts P At}.
 
 (* ** Must predicate for sets *)
 
@@ -134,7 +134,7 @@ Qed.
 
 Lemma unoutcome_acnv_mu X t t' :
   X must_pass_x t →
-  ∀ (η : Atest) p, p ∈ X → t ⟶[η] t' →
+  ∀ (η : At) p, p ∈ X → t ⟶[η] t' →
   ¬ outcome t → ¬ outcome t' → p ⇓ᶜᵒ [η].
 Proof.
   intros hmx η p mem l not_happy not_happy'.
@@ -157,7 +157,7 @@ Qed.
 
 Lemma must_mu_either_outcome_cnv X t t' :
   X must_pass_x t →
-  ∀ (η : Atest) p, p ∈ X → t ⟶[η] t' →
+  ∀ (η : At) p, p ∈ X → t ⟶[η] t' →
   outcome t ∨ outcome t' ∨ p ⇓ᶜᵒ [η].
 Proof.
   intros hmx η p mem l.
@@ -332,7 +332,7 @@ Proof.
         intros mem. eapply hY in mem as (p' & mem_imp & tr). set_solver.
 Qed.
 
-Lemma co_wt_mu_mx p1 p2 t t' (η : Atest) :
+Lemma co_wt_mu_mx p1 p2 t t' (η : At) :
   ¬ outcome t → ({[ p1 ]} : gset P) must_pass_x t →
   t ⟶[η] t' → p1 ⟹ᶜᵒ[[η]] p2 → ({[p2]} : gset P) must_pass_x t'.
 Proof.
@@ -342,7 +342,7 @@ Proof.
   - eapply com; eauto with mdb. exists p1. set_solver.
 Qed.
 
-Lemma wt_mu_mx_set X X' t t' (η : Atest) :
+Lemma wt_mu_mx_set X X' t t' (η : At) :
   ¬ outcome t → X must_pass_x t →
   t ⟶[η] t' → cowt_set_from_pset_spec1 X η X' → X' ≠ ∅ →
   X' must_pass_x t'.
@@ -466,22 +466,22 @@ End Must_for_sets_sync.
 (* ** Contextual preorder for sets *)
 
 (* As [ctx_pre] ([Must.v]): [outcome] and the instances are implicit. *)
-Definition ctx_pre__x `{gLtsP : @gLts P Aproc Hp, CP : !Countable P,
-    gLtsT : !@gLtsEq T Atest Ht, !Testing_Predicate outcome _,
-    SA : !SyncAction Aproc Atest,
+Definition ctx_pre__x `{gLtsP : @gLts P Ap Hp, CP : !Countable P,
+    gLtsT : !@gLtsEq T At Ht, !Testing_Predicate outcome _,
+    SA : !SyncAction Ap At,
     STSP : !ParSts P T gLtsP gLtsT, !ParStsSpec P T gLtsP gLtsT SA STSP}
   (X : gset P) (Y : gset P) :=
   ∀ (t : T), X must_pass_x t → Y must_pass_x t.
 
 Section Must_preorder_for_sets_sync.
 
-Context {P T Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
+Context {P T Ap At : Type}.
+Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
-Context `{SA : !SyncAction Aproc Atest}.
+Context `{SA : !SyncAction Ap At}.
 Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA STSP}
-        `{CFIP : !coFiniteImagegLts P Atest}.
+        `{CFIP : !coFiniteImagegLts P At}.
 
 Notation "X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y" := (ctx_pre__x X Y) (at level 70).
 
@@ -573,13 +573,13 @@ Notation "X ⋢ₛₑₜ_ₘᵤₛₜᵢ Y" := (¬ ctx_pre__x X Y) (at level 70)
 
 Section Must_preorder_for_sets_instances.
 
-Context {P T Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
+Context {P T Ap At : Type}.
+Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsT}.
-Context `{SA : !SyncAction Aproc Atest}.
+Context `{SA : !SyncAction Ap At}.
 Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA STSP}
-        `{CFIP : !coFiniteImagegLts P Atest}.
+        `{CFIP : !coFiniteImagegLts P At}.
 
 (* The relation ⊑ₛₑₜ_ₘᵤₛₜᵢ is reflexive *)
 #[global] Instance set_must_refl : Reflexive (ctx_pre__x : relation (gset P)).
@@ -639,11 +639,11 @@ Notation "X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y" := (cnv_acceptance_set_preor
 
 Section Acceptance_Set_preorder_for_sets_sync.
 
-Context {P PreAct Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
+Context {P PreAct Ap At : Type}.
+Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsP : !gLts P Hp} `{CP : !Countable P}.
-Context `{SA : !SyncAction Aproc Atest}.
-Context (Γ : Atest → PreAct).
+Context `{SA : !SyncAction Ap At}.
+Context (Γ : At → PreAct).
 
 
 Lemma alt_set_singleton_iff_co (p : P) (q : P) :
@@ -695,7 +695,7 @@ Proof.
 Qed.
 
 Lemma bhvleqone_preserved_by_external_action_co
-  (X X' : gset P) (η : Atest) (Y Y' : gset P)
+  (X X' : gset P) (η : At) (Y Y' : gset P)
   (htp : ∀ p, p ∈ X → p ⤓) :
   X ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y → cowt_set_from_pset_spec X η X' →
   cowt_set_from_pset_spec1 Y η Y' → X' ꜀ₙᵥ≼ₛₑₜ₋꜀ₒ₋ₐₛ Y'.
@@ -711,7 +711,7 @@ Proof.
 Qed.
 
 Lemma bhvx_preserved_by_external_action_co
-  (X X' : gset P) (η : Atest) (Y Y' : gset P)
+  (X X' : gset P) (η : At) (Y Y' : gset P)
   (htp : ∀ p, p ∈ X → p ⤓) :
   cowt_set_from_pset_spec1 Y η Y' →
   cowt_set_from_pset_spec X η X' →
@@ -734,7 +734,7 @@ Proof.
       eauto.
 Qed.
 
-Lemma reverse_trace_inclusion_co (X : gset P) (Y Y' : gset P) (η : Atest) :
+Lemma reverse_trace_inclusion_co (X : gset P) (Y Y' : gset P) (η : At) :
   X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ Γ ] Y → (∀ p, p ∈ X → p ⇓ᶜᵒ [η]) →
   cowt_set_from_pset_spec1 Y η Y' → Y' ≠ ∅ →
   ∃ X', cowt_set_from_pset_spec1 X η X' ∧ X' ≠ ∅.
@@ -767,22 +767,22 @@ End Acceptance_Set_preorder_for_sets_sync.
     What the soundness proof asks of [P]: every emission of the observer can
     be received, by /some/ action that synchronises with it.  On one
     alphabet a forwarder has it by [boomerang] ([soundness_fw_co] below); on
-    [Aproc ⊎ Atest] by [fw_boomerang] (below). *)
+    [Ap ⊎ At] by [fw_boomerang] (below). *)
 
 Section Properties_for_soundness_sync.
 
-Context {P T Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
+Context {P T Ap At : Type}.
+Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsT : !gLtsEq T Ht}.
-Context `{SA : !SyncAction Aproc Atest}.
+Context `{SA : !SyncAction Ap At}.
 Context `{gLtsP : !gLts P Hp}.
-Context `{!gLtsCNenabled P Aproc Atest}.
+Context `{!gLtsCNenabled P Ap At}.
 Context (𝔸 : Label_abstraction P T).
 
 (* In the non-blocking case, [q] receives the observer's emission [η] by
     [cn_enabled] — with its own action, not necessarily [p]'s. *)
 
-Lemma communication_enabled_co (p : P) p' (q : P) (t : T) t' μ1 (η : Atest) :
+Lemma communication_enabled_co (p : P) p' (q : P) (t : T) t' μ1 (η : At) :
   sync μ1 η → p ⟶[μ1] p' → t ⟶[η] t' →
   ⌈ ρ[𝔸] ⌉ (coR p) ⊆ ⌈ ρ[𝔸] ⌉ (coR q) →
   ∃ μ3 μ4 q' t'', sync μ3 μ4 ∧ q ⟶[μ3] q' ∧ t ⟶[μ4] t''.
@@ -813,14 +813,14 @@ End Properties_for_soundness_sync.
 
 Section SoundnessAS_sync.
 
-Context {P T Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest}.
+Context {P T Ap At : Type}.
+Context `{Hp : ExtAction Ap} `{Ht : ExtAction At}.
 Context `{gLtsEqT : !gLtsEq T Ht}.
 Context (outcome : T → Prop) `{TP : !Testing_Predicate outcome gLtsEqT}.
-Context `{SA : !SyncAction Aproc Atest}.
+Context `{SA : !SyncAction Ap At}.
 Context `{gLtsP : !gLts P Hp} `{STSP : !ParSts P T _ _} `{!ParStsSpec P T _ _ SA STSP}
-        `{CFIP : !coFiniteImagegLts P Atest}.
-Context `{CN : !gLtsCNenabled P Aproc Atest}.
+        `{CFIP : !coFiniteImagegLts P At}.
+Context `{CN : !gLtsCNenabled P Ap At}.
 Context (𝔸 : Label_abstraction P T).
 
 Lemma unoutcome_must_st_nleqx_co (X : gset P) (Y : gset P) (t : T) :
@@ -967,16 +967,16 @@ From TestingTheory Require Import coWeakSync FiniteImageLTS coFiniteImage coSetL
 
 Section SoundnessFW_sync.
 
-Context {P T Aproc Atest : Type}.
-Context `{Hp : ExtAction Aproc} `{Ht : ExtAction Atest} `{SA : !SyncAction Aproc Atest}.
+Context {P T Ap At : Type}.
+Context `{Hp : ExtAction Ap} `{Ht : ExtAction At} `{SA : !SyncAction Ap At}.
 Context (outcome : T → Prop).
 Context `{gLtsEqT : !gLtsEq T Ht} `{TP : !Testing_Predicate outcome gLtsEqT}.
-Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Aproc (MemAct Atest) Hp (@ExtAction_mem Atest Ht))} `{FWP : !gLtsFWMem P Aproc Atest}
-        `{SYP : !Prop_of_Inter P T (Aproc + MemAct Atest) Atest sync}
-        `{CFIP : !coFiniteImagegLts P Atest}.
+Context `{gLtsEqP : !gLtsEq P (@ExtAction_sum Ap (MemAct At) Hp (@ExtAction_mem At Ht))} `{FWP : !gLtsFWMem P Ap At}
+        `{SYP : !Prop_of_Inter P T (Ap + MemAct At) At sync}
+        `{CFIP : !coFiniteImagegLts P At}.
 Context (𝔸 : Label_abstraction (Hp := ExtAction_sum) (SA := SyncAction_mem) P T).
 
-#[local] Instance CN_of_FW : gLtsCNenabled P (Aproc + MemAct Atest) Atest.
+#[local] Instance CN_of_FW : gLtsCNenabled P (Ap + MemAct At) At.
 Proof.
   apply MkgLtsCNenabled. intros q1 η nb.
   destruct (fw_boomerang_total q1 η nb) as (β & q2 & hsy & l & _).
