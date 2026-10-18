@@ -21,6 +21,9 @@
    SOFTWARE.
 *)
 (* end hide *)
+
+(* begin hide *)
+(*
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -364,4 +367,6 @@ Section VCCS_Rel_direct.
       VCCS_admissible VCCS_admissible VCCS_finitary VCCS_finitary
       gen_conv (ta_ker Γᴠ gen_acc).
 End VCCS_Rel_direct.
+(* end hide *)
+*)
 (* end hide *)

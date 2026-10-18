@@ -22,25 +22,24 @@
 *)
 (* end hide *)
 
-
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
-From stdpp Require Import base countable.
-From TestingTheory Require Import ActTau gLts Bisimulation SyncActions Must DefinitionAS DefinitionASco SoundnessASco
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Phi PAL_Alt_AbsAction PAL_Alt_Congruence PAL_Good PAL_Must
-  PAL_Alt_Completeness.
+From stdpp Require Import base countable gmap.
+From TestingTheory Require Import ActTau gLts Bisimulation SyncActions Must RelationKernel
+  Label_Abstraction.LabelAbstraction DefinitionASrel EquivalenceASco
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Phi PAL.Language.AbsAction PAL.Language.Congruence PAL_Good PAL.Testing.Must_Preorder
+  PAL.Testing.Tests PAL.Testing.Test_Spec PAL.Testing.CoTrace_Hypotheses PAL.Language.Label_Abstraction PAL.Testing.Class_Tests.
 
 #[local] Hint Mode ExtAction ! : typeclass_instances.
-#[local] Hint Mode gLtsEq ! - - : typeclass_instances.
-#[local] Hint Mode SyncAction - ! - - : typeclass_instances.
 
-Theorem PAL_Alt_soundness (p q : term) :
-  p ≼꜀ₒ₋ₐₛ q → p ᴘᴀʟ⊑ₘᵤₛₜᵢ q.
+Theorem PAL_Alt_equivalence (p q : term nat) :
+  p ᴘᴀʟ⊑ₘᵤₛₜᵢ q ↔ p ≼꜀ₒ₋ₐₛ[ ρ[𝔸ᴘᴀʟ] ] q.
 Proof.
-  exact (soundness_fw_co (outcome := good_PAL nat) p q).
+  exact (@equivalence_fw_acc_set_and_must_i_co_trace (term nat) (good_PAL nat) (term nat) _
+           (PALA_ExtAction nat) (PALA_gLtsEq nat) (hyp_coFiniteImage nat) (PALA_gLtsEq nat)
+           (hyp_gLtsOba nat) (hyp_Testing_Predicate nat) (hyp_Prop_of_Inter nat)
+           (t_conv nat) (hyp_test_convergence_spec nat)
+           (LtsFW.LtsFW_of_gLtsObaFW (H0 := hyp_gLtsObaFW nat))
+           𝔸ᴘᴀʟ Dichotomic_PAL ta_𝔸 ta_𝔸_spec p q).
 Qed.
-
-Theorem PAL_Alt_equivalence (p q : term) :
-  p ᴘᴀʟ⊑ₘᵤₛₜᵢ q ↔ p ≼꜀ₒ₋ₐₛ q.
-Proof. split; [apply PAL_Alt_completeness | apply PAL_Alt_soundness]. Qed.
 (* end hide *)

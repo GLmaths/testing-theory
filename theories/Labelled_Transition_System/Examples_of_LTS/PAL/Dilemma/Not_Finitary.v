@@ -26,24 +26,24 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics countable gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
-  DefinitionAS CompletenessASco PAL_Syntax Applicative_process_algebra PAL_Label_Dilemma
-  PAL_Label_Dilemma_Sync PAL_Alt_LTS PAL_Alt_Tau PAL_Alt_Congruence PAL_Good PAL_Alt_Tests PAL_Alt_TestSpec PAL_Alt_CoTraceHypotheses
-  Subset_Act PAL_Alt_Abs.
+  DefinitionAS CompletenessASco PAL.Language.Syntax PAL.Language.Paper_LTS PAL.Dilemma.Label_Dilemma
+  PAL.Dilemma.Label_Dilemma_Sync PAL.Language.LTS PAL.Language.Paper_Correspondence PAL.Language.Congruence PAL_Good PAL.Testing.Tests PAL.Testing.Test_Spec PAL.Testing.CoTrace_Hypotheses
+  Subset_Act RelationKernel Label_Abstraction.LabelAbstraction PAL.Dilemma.Abs PAL.Language.Label_Abstraction.
 (* * No finitary abstraction for the alternative LTS of PAL
 
-   [PAL_Label_Dilemma_Sync.no_labelling_sync] instantiated with the
-   alternative LTS ([PAL_Alt_LTS.v]) on both sides: processes and tests over
+   [PAL.Dilemma.Label_Dilemma_Sync.no_labelling_sync] instantiated with the
+   alternative LTS ([PAL.Language.LTS]) on both sides: processes and tests over
    [PALA_Act], meeting along [dual].  Whatever [αᴛᴇꜱᴛ], [αᴘʀᴏ] and [gen],
    [FinitaryAbsAction] and [test_spec gen] cannot both hold.  The two
    hypotheses of the general theorem are discharged here: no action of
    [PALA_Act] is non-blocking, and the synchronisations along [dual] are
-   those of PAL ([PAL_Alt_Tau.in_iff]/[out_iff]). *)
+   those of PAL ([PAL.Language.Paper_Correspondence.in_iff]/[out_iff]). *)
 
 Section PAL_Alt_Dilemma.
   Context {Val : Type} `{Countable Val} (inj : nat → Val) `{!Inj eq eq inj}.
 
-  Notation term := (PAL_Syntax.term Val).
-  Notation old := (Applicative_process_algebra.pal_step Val).
+  Notation term := (PAL.Language.Syntax.term Val).
+  Notation old := (PAL.Language.Paper_LTS.pal_step Val).
   Notation new := (lts_step_a Val).
 
   (* The synchronisations of the alternative LTS are those of PAL. *)
@@ -82,10 +82,10 @@ Section PAL_Alt_Dilemma.
   Qed.
 End PAL_Alt_Dilemma.
 
-(* With the tests of [PAL_Alt_Tests.v], which do satisfy [test_spec]
-    ([PAL_Alt_CoTraceHypotheses.hyp_test_convergence_spec]): no [αᴛᴇꜱᴛ], [αᴘʀᴏ] make
+(* With the tests of [PAL.Testing.Tests], which do satisfy [test_spec]
+    ([PAL.Testing.CoTrace_Hypotheses.hyp_test_convergence_spec]): no [αᴛᴇꜱᴛ], [αᴘʀᴏ] make
     the alternative LTS of PAL finitary — the one hypothesis that
-    [PAL_Alt_CoTraceHypotheses.v] leaves open cannot be met. *)
+    [PAL.Testing.CoTrace_Hypotheses] leaves open cannot be met. *)
 Corollary PALA_not_finitary {Val : Type} `{Countable Val} `{!Inhabited Val}
   (inj : nat → Val) `{!Inj eq eq inj}
   {FinA PreAct : Type} `{Countable PreAct} (αᴛᴇꜱᴛ : PALA_Act Val → FinA) (αᴘʀᴏ : FinA → PreAct) :
@@ -96,21 +96,14 @@ Proof.
            (@tconv_test_spec _ _ _ _ _ _ _ (hyp_test_convergence_spec Val))).
 Qed.
 
-(* ** Modulo the join, [coR (in(?x).𝟘)] is still infinite
-
-    [ρᴀʟᴛ] is the canonical projection of [LA_equiv R_prog_a R_test_a]
-    ([PAL_Alt_Abs.ρᴀʟᴛ_proj]).  On outputs both [≈ᴛᴇꜱᴛ] and [≈ᴘʀᴏ] are
-    equality, hence so is the join: [ρᴀʟᴛ (AOut ot) = POut ot].  The
-    co-actions of [in(?x).𝟘] are all the [AOut ⟨v⟩], so no finite set
-    contains [ρᴀʟᴛ (coR (in(?x).𝟘))]. *)
-Lemma ρᴀʟᴛ_coR_p_formal_infinite {Val : Type} `{Countable Val} `{!Inhabited Val}
-  (inj : nat → Val) `{!Inj eq eq inj} (X : gset (PreEvent Val)) :
-  (∀ e, e ∈ (⌈ ρᴀʟᴛ Val ⌉ (coR (p_formal Val))) → e ∈ X) → False.
+Lemma ρᴘᴀʟ_coR_p_formal_infinite (X : gset (PALA_Act nat / 𝔸ᴘᴀʟ)) :
+  (∀ x, x ∈ ⌈ ρ[𝔸ᴘᴀʟ] ⌉ (coR (p_formal nat)) → x ∈ X) → False.
 Proof.
   intros hX.
-  apply (finite_pigeonhole X (λ n b, b = ρᴀʟᴛ Val (AOut Val (tuple1 Val (inj n))))).
+  apply (finite_pigeonhole X (λ n x, x = ρ[𝔸ᴘᴀʟ] (AOut nat (tuple1 nat n)))).
   - intros n. eexists. split; [reflexivity |].
-    apply hX. exists (AOut Val (tuple1 Val (inj n))). split; [apply coR_p_formal | done].
-  - intros n m b -> e. cbn in e. injection e as e. apply (inj_iff inj). congruence.
+    apply hX. exists (AOut nat (tuple1 nat n)). split; [apply coR_p_formal | done].
+  - intros n m x -> e. apply ρᴘᴀʟ_eq in e. cbn in e. by injection e.
 Qed.
+
 (* end hide *)

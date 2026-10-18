@@ -28,14 +28,13 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Subset_Act Must
-  DefinitionAS DefinitionASco CompletenessASco Label_Abstraction.Decidable_dichotomic
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Phi PAL_Alt_AbsAction PAL_Alt_Congruence
-  PAL_Good PAL_Must PAL_Alt_Tests PAL_Alt_TestSpec PAL_Alt_CoTraceHypotheses.
+  DefinitionAS
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Phi PAL.Language.AbsAction PAL.Language.Congruence.
 
-Notation term := (term nat).
-Notation template := (template nat).
-Notation eot := (eot nat).
-Notation label := (label nat).
+#[local] Notation term := (term nat).
+#[local] Notation template := (template nat).
+#[local] Notation eot := (eot nat).
+#[local] Notation label := (label nat).
 
 #[local] Hint Mode ExtAction ! : typeclass_instances.
 #[local] Existing Instance list_exist_dec.
@@ -58,7 +57,7 @@ Proof. intros tp ot. unfold t_match. apply _. Defined.
 
 Lemma t_match_label tp ot : t_match tp ot ↔ ∃ l, ltemplate nat l = tp ∧ ltuple nat l = ot.
 Proof.
-  unfold t_match, PAL_Alt_LTS.ltemplate, PAL_Alt_LTS.ltuple. split.
+  unfold t_match, PAL.Language.LTS.ltemplate, PAL.Language.LTS.ltuple. split.
   - induction 1 as [| f o tp ot hf _ (l & <- & <-)].
     + by exists [].
     + destruct f as [| v |], o as [| w]; simpl in hf; try contradiction.
@@ -217,18 +216,4 @@ Proof.
     exists l. split; [by apply list_elem_of_In, labels_of_spec | exact hn].
 Defined.
 
-Theorem PAL_Alt_completeness (p q : term) :
-  p ᴘᴀʟ⊑ₘᵤₛₜᵢ q →
-  bhv_pre_co (AbsPT := AbsPALA nat) (AbsQT := AbsPALA nat) p q.
-Proof.
-  intros hpre.
-  pose proof (completeness_fw_co (P := term) (Q := term) (T := term)
-                (gLtsEqP := PALA_gLtsEq nat) (gLtsEqQ := PALA_gLtsEq nat)
-                (gLtsEqT := PALA_gLtsEq nat) (αᴛᴇꜱᴛ := αᴛᴀᴘᴀʟ nat) (αᴘʀᴏ := αᴘᴇᴠ nat)
-                (AbsPT := AbsPALA nat) (AbsQT := AbsPALA nat)
-                (test_convergence_spec0 := hyp_test_convergence_spec nat)
-                (test_co_acceptance_set_spec0 := hyp_test_co_acceptance_set_spec nat)
-                (DichPQ := λ p' q' _ _, PALA_coR_dichotomy p' q')) as hc.
-  exact (hc p q hpre).
-Qed.
 (* end hide *)

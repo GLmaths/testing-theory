@@ -150,6 +150,10 @@ Notation erl_act := (ExtAct (@TypeOfActions Erlang_VACCS_Parameters)).
 Notation out_act p v := (ActOut (cst p, cst v)).
 Notation in_act p v := (ActIn (cst p, cst v)).
 
+Reserved Notation "S ⟶ₑ T" (at level 30).
+Reserved Notation "S ⟶ₑ{ 𝜆 } T" (at level 30).
+Reserved Notation "S ⟶ₑ[ μ ] T" (at level 30).
+
 Section Erlang_LTS.
 
 Context `{EP : Erlang_Program}.
@@ -168,11 +172,11 @@ Fixpoint estep (e : expr) : option (elabel * expr) :=
   match e with
   | EVar _ => None
   | EVal _ => None
-  | ETick => None
-  | EHole => None
-  | ESelf => Some (LSelf, EHole)
-  | EReceive cls => Some (LRec cls None, EHole)
-  | EReceiveAfter cls a => Some (LRec cls (Some a), EHole)
+  | ✓ₑ => None
+  | κ => None
+  | ESelf => Some (LSelf, κ)
+  | EReceive cls => Some (LRec cls None, κ)
+  | EReceiveAfter cls a => Some (LRec cls (Some a), κ)
   | ECons e1 e2 =>
       match e1 with
       | EVal v1 =>
@@ -254,7 +258,7 @@ Fixpoint estep (e : expr) : option (elabel * expr) :=
       end
   | ESpawn f es =>
       match args_vals es with
-      | Some vs => Some (LSpawn f vs, EHole)
+      | Some vs => Some (LSpawn f vs, κ)
       | None => match estep_args es with
                 | Some (l, es') => Some (l, ESpawn f es')
                 | None => None
@@ -283,47 +287,50 @@ Inductive erl_lts : sys → Labels erl_act → sys → Prop :=
 (* A local step of an expression. *)
 | ErlTau S p n e e' :
   estep e = Some (LTau, e') →
-  erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, e'⟩ ⊎ S)
+  (⟨p, n, e⟩ ⊎ S) ⟶ₑ (⟨p, n, e'⟩ ⊎ S)
 (* A send puts a message in transit; self-sending is included. *)
 | ErlSend S p n e q v e' :
   estep e = Some (LSend q v, e') →
-  erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, e'⟩ ⊎ ⟪q , v⟫ ⊎ S)
+  (⟨p, n, e⟩ ⊎ S) ⟶ₑ (⟨p, n, e'⟩ ⊎ ⟪q , v⟫ ⊎ S)
 (* [self()] returns the pid of the process. *)
 | ErlSelf S p n e e' :
   estep e = Some (LSelf, e') →
-  erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, hfill e' (EVal (VPid p))⟩ ⊎ S)
+  (⟨p, n, e⟩ ⊎ S) ⟶ₑ (⟨p, n, hfill e' (EVal (VPid p))⟩ ⊎ S)
 (* [spawn] creates the [n]-th child of [p], whose pid is [n :: p]. *)
 | ErlSpawn S p n e f vs e' xs body :
   estep e = Some (LSpawn f vs, e') →
   fun_def f = Some (xs, body) →
   length xs = length vs →
-  erl_lts (⟨p, n, e⟩ ⊎ S) τ
+  (⟨p, n, e⟩ ⊎ S) ⟶ₑ
     (⟨p, n + 1, hfill e' (EVal (VPid (n :: p)))⟩ ⊎ ⟨n :: p, 0, subst (zip xs vs) body⟩ ⊎ S)
 (* The timeout branch of a [receive] may always be taken. *)
 | ErlTimeout S p n e cls a e' :
   estep e = Some (LRec cls (Some a), e') →
-  erl_lts (⟨p, n, e⟩ ⊎ S) τ (⟨p, n, hfill e' a⟩ ⊎ S)
+  (⟨p, n, e⟩ ⊎ S) ⟶ₑ (⟨p, n, hfill e' a⟩ ⊎ S)
 (* A [receive] consumes a matching message in transit. *)
 | ErlComm S p n e cls ao e' v body :
   estep e = Some (LRec cls ao, e') →
   match_cls cls v = Some body →
-  erl_lts (⟨p, n, e⟩ ⊎ ⟪p , v⟫ ⊎ S) τ (⟨p, n, hfill e' body⟩ ⊎ S)
+  (⟨p, n, e⟩ ⊎ ⟪p , v⟫ ⊎ S) ⟶ₑ (⟨p, n, hfill e' body⟩ ⊎ S)
 (* A [receive] consumes a matching message coming from the environment. *)
 | ErlIn S p n e cls ao e' v body :
   estep e = Some (LRec cls ao, e') →
   match_cls cls v = Some body →
-  erl_lts (⟨p, n, e⟩ ⊎ S) (ActExt (in_act p v)) (⟨p, n, hfill e' body⟩ ⊎ S)
+  (⟨p, n, e⟩ ⊎ S) ⟶ₑ[in_act p v] (⟨p, n, hfill e' body⟩ ⊎ S)
 (* A message in transit may be released to the environment. *)
 | ErlOut S p v :
-  erl_lts (⟪p , v⟫ ⊎ S) (ActExt (out_act p v)) S
-.
+  (⟪p , v⟫ ⊎ S) ⟶ₑ[out_act p v] S
+
+where "S ⟶ₑ T" := (erl_lts S τ T)
+and "S ⟶ₑ{ 𝜆 } T" := (erl_lts S 𝜆 T)
+and "S ⟶ₑ[ μ ] T" := (erl_lts S (ActExt μ) T).
 
 
 (* ** Every rule is closed under parallel composition *)
 
 (* Never use [econstructor] or [eauto] on a goal whose indices are multiset
     expressions: the unifier unfolds [⊎] and diverges.  Always name the rule. *)
-Lemma erl_lts_par_l S1 𝜆 S2 T : erl_lts S1 𝜆 S2 → erl_lts (T ⊎ S1) 𝜆 (T ⊎ S2).
+Lemma erl_lts_par_l S1 𝜆 S2 T : S1 ⟶ₑ{𝜆} S2 → (T ⊎ S1) ⟶ₑ{𝜆} (T ⊎ S2).
 Proof.
   intros hl. inversion hl; subst.
   - rewrite (sys_swap _ T _), (sys_swap _ T _). by apply ErlTau.
@@ -336,7 +343,7 @@ Proof.
   - rewrite (sys_swap _ T _). apply ErlOut.
 Qed.
 
-Lemma erl_lts_par_r S1 𝜆 S2 T : erl_lts S1 𝜆 S2 → erl_lts (S1 ⊎ T) 𝜆 (S2 ⊎ T).
+Lemma erl_lts_par_r S1 𝜆 S2 T : S1 ⟶ₑ{𝜆} S2 → (S1 ⊎ T) ⟶ₑ{𝜆} (S2 ⊎ T).
 Proof.
   intros hl.
   rewrite (sys_comm S1 T), (sys_comm S2 T).

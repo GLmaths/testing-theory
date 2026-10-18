@@ -39,8 +39,8 @@ From stdpp Require Import base countable option gmap.
 
     Syntax (Definition 3.1), substitutions, tuple evaluation and pattern
     matching (Tables 1-2), with their decidability and countability.  The
-    LTSs are built on top of it, in [Applicative_process_algebra.v] and
-    [PAL_Alt_LTS.v]. *)
+    LTSs are built on top of it, in [PAL.Language.Paper_LTS] and
+    [PAL.Language.LTS]. *)
 
 Section PAL_Syntax.
   Context {Val : Type} `{Countable Val}.
@@ -99,7 +99,7 @@ Section PAL_Syntax.
 
       Plain (no capture-avoidance): it only ever substitutes *closed
       values* for variables — never expressions with free variables — so
-      capture is structurally impossible.  Shadowing under [t_in]/[t_read]
+      capture is structurally impossible.  Shadowing under [in( t ) • E]/[read( t ) • E]
       is handled by dropping the tuple's own formals from the
       substitution ([vsubst_drop]). *)
 
@@ -516,9 +516,9 @@ Notation "'eval(' E1 ')' • E2" := (t_eval E1 E2) (at level 50) : pal_scope. (*
 Notation "'IF' be 'THEN' E1 'ELSE' E2" := (t_if be E1 E2) (at level 50) : pal_scope. (* paper: if be then E1 else E2 *)
 Notation "E1 ⊕ E2" := (t_ichoice E1 E2) (at level 50) : pal_scope.
 Notation "E1 □ E2" := (t_echoice E1 E2) (at level 50) : pal_scope.      (* paper: E1 [] E2 *)
-Notation "E1 ‖ E2" := (t_par E1 E2) (at level 50) : pal_scope.
-Notation "E1 ⌊ E2" := (t_lmerge E1 E2) (at level 50) : pal_scope.
-Notation "E1 '|ₖ' E2" := (t_cmerge E1 E2) (at level 50) : pal_scope.    (* paper: E1 |k E2 *)
+Notation "E1 │ E2" := (t_par E1 E2) (at level 50) : pal_scope.        (* paper: E1 | E2 *)
+Notation "E1 ⌊⌊ E2" := (t_lmerge E1 E2) (at level 50) : pal_scope.       (* paper: E1 ⌊⌊ E2 *)
+Notation "E1 ║ E2" := (t_cmerge E1 E2) (at level 50) : pal_scope.      (* paper: E1 ‖ E2 *)
 Notation "'rec' X • E" := (t_rec X E) (at level 50) : pal_scope.        (* paper: rec X.E *)
 Notation "'✓'" := t_success : pal_scope.                               (* paper: success *)
 

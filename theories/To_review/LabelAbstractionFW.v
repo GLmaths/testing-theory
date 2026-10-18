@@ -21,6 +21,9 @@
    SOFTWARE.
 *)
 (* end hide *)
+
+(* begin hide *)
+(*
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -104,4 +107,6 @@ End LA_prog_FW.
     [Instance] would also match an unknown state type and loop. *)
 #[global] Hint Extern 10 (@gLtsLAprog (_ * MO _) _ _ _ _ _ _) =>
   simple apply @gLtsLAprog_FW : typeclass_instances.
+(* end hide *)
+*)
 (* end hide *)

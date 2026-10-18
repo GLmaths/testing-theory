@@ -43,31 +43,33 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure lqCCS.Language.Quantum.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program lqCCS.Language.Composition.
+
+#[local] Open Scope lqccs_scope.
 (* ** Sizes: every step makes a configuration smaller *)
 
 Fixpoint psize (P : proc) : nat :=
   match P with
   | PSend _ _ _ => 1
-  | PIte _ P Q | PPar P Q => psize P + psize Q
-  | PRes P _ => psize P
+  | PIte _ P Q | P ∥ Q => psize P + psize Q
+  | P \ _ => psize P
   | PG g => gsize g
   end
 with gsize (g : guard) : nat :=
   match g with
-  | GNil _ | GSucc => 0
-  | GPre _ P => S (psize P)
-  | GSum g1 g2 => gsize g1 + gsize g2
+  | GNil _ | ① => 0
+  | _ ∙ P => S (psize P)
+  | g1 ⊕ g2 => gsize g1 + gsize g2
   end.
 
 Definition csize (C : conf) : nat := psize C.1 + psize C.2.
 
 Lemma psize_gsize_subst x v :
-  (∀ P, psize (subst P x v) = psize P) ∧ (∀ g, gsize (gsubst g x v) = gsize g).
+  (∀ P, psize (P ⟦ v // x ⟧) = psize P) ∧ (∀ g, gsize (gsubst g x v) = gsize g).
 Proof.
   apply proc_guard_ind; simpl; intros; try lia. case_decide; simpl; lia.
 Qed.
 
-Lemma psize_subst P x v : psize (subst P x v) = psize P.
+Lemma psize_subst P x v : psize (P ⟦ v // x ⟧) = psize P.
 Proof. apply psize_gsize_subst. Qed.
 
 Lemma gstep_size g l P' : gstep g l P' → psize P' < gsize g.
@@ -98,10 +100,10 @@ Section Supports.
       pstep Q (LAct t (AOp E qs)) Q' → bstep ρ (P, Q) (P, Q') (sop_apply E qs ρ)
   | bs_measL P Q t M qs x P' (k : Out (meas_of M qs)) :
       pstep P (LAct t (AMeas M qs x)) P' →
-      bstep ρ (P, Q) (subst P' x (VNat (code _ k)), Q) (meas_branch M qs k ρ)
+      bstep ρ (P, Q) (P' ⟦ VNat (code _ k) // x ⟧, Q) (meas_branch M qs k ρ)
   | bs_measR P Q t M qs x Q' (k : Out (meas_of M qs)) :
       pstep Q (LAct t (AMeas M qs x)) Q' →
-      bstep ρ (P, Q) (P, subst Q' x (VNat (code _ k))) (meas_branch M qs k ρ)
+      bstep ρ (P, Q) (P, Q' ⟦ VNat (code _ k) // x ⟧) (meas_branch M qs k ρ)
   | bs_comLR P Q t t' c v P' Q' :
       pstep P (LAct t (AOut c v)) P' → pstep Q (LAct t' (AIn c v)) Q' →
       bstep ρ (P, Q) (P', Q') ρ

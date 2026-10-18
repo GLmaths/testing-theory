@@ -52,6 +52,8 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program l
   lqCCS.Language.Congruence.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate
   InteractionBetweenLts.
+
+#[local] Open Scope lqccs_scope.
 (* ** LTSs given by their successors *)
 
 Definition list_witness {A} (l : list A) (Hl : l ≠ []) : { x | x ∈ l }.
@@ -187,7 +189,7 @@ Section LTSs.
           acts Q ≫= λ '(a, Q0),
             match a with
             | AMeas M' qs' x =>
-                if decide (M' = M ∧ qs' = qs) then [subst Q0 x (VNat k)] else []
+                if decide (M' = M ∧ qs' = qs) then [Q0 ⟦ VNat k // x ⟧] else []
             | _ => []
             end
         else []
@@ -208,7 +210,7 @@ Section LTSs.
               match a with
               | AOp E qs => [(P0, sop_apply E qs ρ)]
               | AMeas M qs x =>
-                  (λ k, (subst P0 x (VNat (code _ k)), meas_branch M qs k ρ))
+                  (λ k, (P0 ⟦ VNat (code _ k) // x ⟧, meas_branch M qs k ρ))
                     <$> filter (λ k, nonzero (meas_branch M qs k ρ)) (outs (meas_of M qs))
               | _ => []
               end)
@@ -246,7 +248,7 @@ Section LTSs.
 
   Lemma tstep_meas Q M qs k Q' :
     Q ⟶[TMeas M qs k] Q' ↔
-    k ∈ codes M qs ∧ ∃ t x Q0, pstep Q (LAct t (AMeas M qs x)) Q0 ∧ Q' = subst Q0 x (VNat k).
+    k ∈ codes M qs ∧ ∃ t x Q0, pstep Q (LAct t (AMeas M qs x)) Q0 ∧ Q' = Q0 ⟦ VNat k // x ⟧.
   Proof.
     rewrite test_step_def. simpl.
     case_decide as Hk; [|set_solver]. rewrite list_elem_of_bind. split.
@@ -294,7 +296,7 @@ Section LTSs.
     ∨ (∃ t E qs P', pstep P (LAct t (AOp E qs)) P' ∧ x = (P', sop_apply E qs ρ))
     ∨ (∃ t M qs y P0 k, pstep P (LAct t (AMeas M qs y)) P0
                         ∧ nonzero (meas_branch M qs k ρ)
-                        ∧ x = (subst P0 y (VNat (code _ k)), meas_branch M qs k ρ)).
+                        ∧ x = (P0 ⟦ VNat (code _ k) // y ⟧, meas_branch M qs k ρ)).
   Proof.
     rewrite proc_step_def. simpl.
     rewrite elem_of_app, list_elem_of_fmap, list_elem_of_bind. split.
@@ -343,7 +345,7 @@ Section LTSs.
         exists p'. split; [|by symmetry]. apply tstep_ext; [done|]. exists l'. split; [congruence|done].
       + apply tstep_meas in Hr as (Hk & t & x & Q0 & Hs & ->).
         destruct (Hrp _ _ Hs) as ([s'|t' a'] & P0 & El & Hs' & HQ); simpl in El; simplify_eq.
-        exists (subst P0 x (VNat k)). split.
+        exists (P0 ⟦ VNat k // x ⟧). split.
         * apply tstep_meas. split; [done|]. eauto.
         * symmetry. by apply cgr_subst.
     - apply tstep_tau in Hr as (l & El & Hs).
@@ -393,7 +395,7 @@ Section LTSs.
     - apply list_elem_of_singleton in Hξ as ->. exists Q0. apply tstep_ext; [done|].
       by exists (LAct t (AOp E qs)).
     - apply list_elem_of_fmap in Hξ as (k & -> & Hk).
-      exists (subst Q0 x (VNat k)). apply tstep_meas. split; [done|]. eauto.
+      exists (Q0 ⟦ VNat k // x ⟧). apply tstep_meas. split; [done|]. eauto.
   Qed.
 
   Lemma step_witness {S A} `{EA : ExtAction A} `{gL : !gLts S EA} p (μ : A) :

@@ -40,6 +40,8 @@ From TestingTheory Require Import ActTau InListPropHelper
   CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge.
 From TestingTheory Require Import lqCCS.Testing.Observer.LTS.
 
+#[local] Open Scope lqccs_scope.
+
 (* ** The abstraction *)
 
 Inductive lfin : Type :=
@@ -102,7 +104,7 @@ Qed.
     continuation succeeds unless the value received, or the outcome
     accepted, is the one of the trace. *)
 
-Definition succP : proc := PG GSucc.
+Definition succP : proc := PG ①.
 
 Definition qexps (qs : list qubit) : list exp := (λ q, EVal (VQubit q)) <$> qs.
 
@@ -117,16 +119,16 @@ Qed.
 
 Definition check (v : val) (P : proc) : proc := PIte (EEq (EVar 0) (EVal v)) P succP.
 
-Definition tau_succ : guard := GPre (PTau 0) succP.
+Definition tau_succ : guard := PTau 0 ∙ succP.
 
 Fixpoint gen (k : proc) (s : list lact) : proc :=
   match s with
   | [] => k
-  | LOut c v :: s => PPar (gen k s) (PSend 0 c (EVal v))
-  | LIn c v :: s => PG (GSum (GPre (PRecv 0 c 0) (check v (gen k s))) tau_succ)
-  | LOp E qs :: s => PG (GSum (GPre (POp 0 E (qexps qs)) (gen k s)) tau_succ)
+  | LOut c v :: s => gen k s ∥ PSend 0 c (EVal v)
+  | LIn c v :: s => PG ((PRecv 0 c 0 ∙ check v (gen k s)) ⊕ tau_succ)
+  | LOp E qs :: s => PG ((POp 0 E (qexps qs) ∙ gen k s) ⊕ tau_succ)
   | LMeas M qs n :: s =>
-      PG (GSum (GPre (PMeas 0 M (qexps qs) 0) (check (VNat n) (gen k s))) tau_succ)
+      PG ((PMeas 0 M (qexps qs) 0 ∙ check (VNat n) (gen k s)) ⊕ tau_succ)
   end.
 
 Lemma qexps_fv qs : concat (map exp_fv (qexps qs)) = [].
@@ -159,7 +161,7 @@ Section Generators.
 
   (* The steps of a blocking prefix of [gen]. *)
   Lemma gen_guard_step 𝜆0 P0 Q :
-    tstep (PG (GSum (GPre 𝜆0 P0) tau_succ)) τ Q → Q = succP ∨ ∃ t, 𝜆0 = PTau t ∨ ∃ t', 𝜆0 = PTauPair t t'.
+    tstep (PG ((𝜆0 ∙ P0) ⊕ tau_succ)) τ Q → Q = succP ∨ ∃ t, 𝜆0 = PTau t ∨ ∃ t', 𝜆0 = PTauPair t t'.
   Proof.
     intros Hs. apply succ_spec in Hs. simpl in Hs. apply elem_of_app in Hs as [Hs|Hs].
     - right. destruct 𝜆0; simpl in Hs; try set_solver; eauto.
@@ -236,7 +238,7 @@ Section Generators.
     split.
     - intros s. unfold good. by rewrite gen_ungood.
     - intros [c v|c v|E qs|M qs n] s.
-      + exists (PPar (gen k s) 𝟘). split; [|apply cgr_par_nil].
+      + exists (gen k s ∥ 𝟘). split; [|apply cgr_par_nil].
         apply obs_step_def. apply ustep_par_out_emit.
       + exists (PIte (EEq (EVal v) (EVal v)) (gen k s) succP). split; [|apply check_same].
         apply obs_step_def, gen_in_step. eauto.
@@ -261,7 +263,7 @@ Section Generators.
 End Generators.
 
 (* The observer of convergence: [τ.①] after the trace. *)
-Definition kconv : proc := PG (GPre (PTau 0) succP).
+Definition kconv : proc := PG (PTau 0 ∙ succP).
 Definition tconv : list lact → proc := gen kconv.
 
 #[global] Instance tconv_spec : Completeness.test_convergence_spec tconv.
@@ -286,7 +288,7 @@ Definition ta_prefix (p : lpre) : prefix :=
 Fixpoint sumg (l : list lpre) : guard :=
   match l with
   | [] => GNil []
-  | p :: l => GSum (GPre (ta_prefix p) succP) (sumg l)
+  | p :: l => (ta_prefix p ∙ succP) ⊕ sumg l
   end.
 
 Definition ta0 (E : gset lpre) : proc := PG (sumg (elements E)).
@@ -333,7 +335,7 @@ Proof.
       * destruct p as [c'| |]; simpl in Hq; try set_solver.
         case_decide; [|set_solver]. apply list_elem_of_singleton in Hq as ->.
         split_and!; [set_solver|by intros ?|done].
-      * assert (Hs : tstep (PG (sumg l)) (ActExt (LMeas M qs n)) (subst Q0 x (VNat n)))
+      * assert (Hs : tstep (PG (sumg l)) (ActExt (LMeas M qs n)) (Q0 ⟦ VNat n // x ⟧))
           by (exists x, Q0; split; [by apply succ_spec|done]).
         destruct (IH _ Hs) as (Hin & Ho & HQ). rewrite HQ.
         split_and!; [set_solver|done|done].

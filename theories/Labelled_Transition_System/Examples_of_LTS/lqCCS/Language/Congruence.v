@@ -45,6 +45,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets relations.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program lqCCS.Language.Succ.
+
+#[local] Open Scope lqccs_scope.
 (* ** Free channels *)
 
 Definition prefix_chans (𝜆 : prefix) : list chan :=
@@ -53,15 +55,15 @@ Definition prefix_chans (𝜆 : prefix) : list chan :=
 Fixpoint fc (P : proc) : list chan :=
   match P with
   | PSend _ c _ => [c]
-  | PIte _ P Q | PPar P Q => fc P ++ fc Q
-  | PRes P c => filter (λ d, d ≠ c) (fc P)
+  | PIte _ P Q | P ∥ Q => fc P ++ fc Q
+  | P \ c => filter (λ d, d ≠ c) (fc P)
   | PG g => gfc g
   end
 with gfc (g : guard) : list chan :=
   match g with
-  | GNil _ | GSucc => []
-  | GPre 𝜆 P => prefix_chans 𝜆 ++ fc P
-  | GSum g1 g2 => gfc g1 ++ gfc g2
+  | GNil _ | ① => []
+  | 𝜆 ∙ P => prefix_chans 𝜆 ++ fc P
+  | g1 ⊕ g2 => gfc g1 ++ gfc g2
   end.
 
 (* ** Expressions that evaluate *)
@@ -90,33 +92,33 @@ Definition incl {A} (l1 l2 : list A) : Prop := ∀ x, x ∈ l1 → x ∈ l2.
 (* ** One step of congruence *)
 
 Inductive cs : proc → proc → Prop :=
-| cs_par_nil P : cs (PPar P (PG (GNil []))) P
-| cs_par_comm P Q : cs (PPar P Q) (PPar Q P)
-| cs_par_assoc P Q R : cs (PPar P (PPar Q R)) (PPar (PPar P Q) R)
+| cs_par_nil P : cs (P ∥ 𝟘) P
+| cs_par_comm P Q : cs (P ∥ Q) (Q ∥ P)
+| cs_par_assoc P Q R : cs (P ∥ (Q ∥ R)) ((P ∥ Q) ∥ R)
 | cs_ite_t e P Q : eval e = Some (VBool true) → cs (PIte e P Q) P
 | cs_ite_f e P Q : eval e = Some (VBool false) → cs (PIte e P Q) Q
 | cs_send_val t t' c e e' : exp_eqv e e' → cs (PSend t c e) (PSend t' c e')
 | cs_ite_val e e' P Q : exp_eqv e e' → cs (PIte e P Q) (PIte e' P Q)
-| cs_res_nil es c : cs (PRes (PG (GNil es)) c) (PG (GNil es))
-| cs_res_ord P c d : cs (PRes (PRes P c) d) (PRes (PRes P d) c)
-| cs_res_par P Q c : c ∉ fc P → cs (PRes (PPar P Q) c) (PPar P (PRes Q c))
+| cs_res_nil es c : cs (PG (GNil es) \ c) (PG (GNil es))
+| cs_res_ord P c d : cs ((P \ c) \ d) ((P \ d) \ c)
+| cs_res_par P Q c : c ∉ fc P → cs ((P ∥ Q) \ c) (P ∥ (Q \ c))
 (* contexts *)
 | cs_ite_l e P P' Q : cs P P' → cs (PIte e P Q) (PIte e P' Q)
 | cs_ite_r e P Q Q' : cs Q Q' → cs (PIte e P Q) (PIte e P Q')
-| cs_par_l P P' Q : cs P P' → cs (PPar P Q) (PPar P' Q)
-| cs_par_r P Q Q' : cs Q Q' → cs (PPar P Q) (PPar P Q')
-| cs_res P P' c : cs P P' → cs (PRes P c) (PRes P' c)
+| cs_par_l P P' Q : cs P P' → cs (P ∥ Q) (P' ∥ Q)
+| cs_par_r P Q Q' : cs Q Q' → cs (P ∥ Q) (P ∥ Q')
+| cs_res P P' c : cs P P' → cs (P \ c) (P' \ c)
 | cs_guard g g' : gcs g g' → cs (PG g) (PG g')
 with gcs : guard → guard → Prop :=
-| gcs_sum_nil g es : gcs (GSum g (GNil es)) g
-| gcs_sum_comm g h : gcs (GSum g h) (GSum h g)
-| gcs_sum_assoc g h k : gcs (GSum g (GSum h k)) (GSum (GSum g h) k)
+| gcs_sum_nil g es : gcs (g ⊕ GNil es) g
+| gcs_sum_comm g h : gcs (g ⊕ h) (h ⊕ g)
+| gcs_sum_assoc g h k : gcs (g ⊕ (h ⊕ k)) ((g ⊕ h) ⊕ k)
 | gcs_nil_val es es' : exps_eqv es es' → gcs (GNil es) (GNil es')
-| gcs_pre_val 𝜆 𝜆' P : prefix_eqv 𝜆 𝜆' → gcs (GPre 𝜆 P) (GPre 𝜆' P)
+| gcs_pre_val 𝜆 𝜆' P : prefix_eqv 𝜆 𝜆' → gcs (𝜆 ∙ P) (𝜆' ∙ P)
 (* contexts *)
-| gcs_pre 𝜆 P P' : cs P P' → gcs (GPre 𝜆 P) (GPre 𝜆 P')
-| gcs_sum_l g g' h : gcs g g' → gcs (GSum g h) (GSum g' h)
-| gcs_sum_r g h h' : gcs h h' → gcs (GSum g h) (GSum g h').
+| gcs_pre 𝜆 P P' : cs P P' → gcs (𝜆 ∙ P) (𝜆 ∙ P')
+| gcs_sum_l g g' h : gcs g g' → gcs (g ⊕ h) (g' ⊕ h)
+| gcs_sum_r g h h' : gcs h h' → gcs (g ⊕ h) (g ⊕ h').
 
 Scheme cs_mut_ind := Induction for cs Sort Prop
   with gcs_mut_ind := Induction for gcs Sort Prop.
@@ -184,14 +186,14 @@ Proof. destruct 1; simpl; constructor; by try apply exps_eqv_subst. Qed.
 Lemma prefix_eqv_binder 𝜆 𝜆' : prefix_eqv 𝜆 𝜆' → prefix_binder 𝜆 = prefix_binder 𝜆'.
 Proof. by destruct 1. Qed.
 
-Lemma fc_subst x v : (∀ P, fc (subst P x v) = fc P) ∧ (∀ g, gfc (gsubst g x v) = gfc g).
+Lemma fc_subst x v : (∀ P, fc (P ⟦ v // x ⟧) = fc P) ∧ (∀ g, gfc (gsubst g x v) = gfc g).
 Proof.
   apply proc_guard_ind; simpl; intros; try congruence.
   case_decide; destruct 𝜆; simpl; congruence.
 Qed.
 
 Lemma cs_subst x v :
-  (∀ P Q, cs P Q → cs (subst P x v) (subst Q x v))
+  (∀ P Q, cs P Q → cs (P ⟦ v // x ⟧) (Q ⟦ v // x ⟧))
   ∧ (∀ g h, gcs g h → gcs (gsubst g x v) (gsubst h x v)).
 Proof.
   apply cs_gcs_ind; simpl; intros; try (constructor; done).
@@ -205,7 +207,7 @@ Proof.
   - case_decide; by apply gcs_pre.
 Qed.
 
-Lemma cgr_subst P Q x v : P ≡* Q → subst P x v ≡* subst Q x v.
+Lemma cgr_subst P Q x v : P ≡* Q → P ⟦ v // x ⟧ ≡* Q ⟦ v // x ⟧.
 Proof.
   induction 1 as [P|P Q R [HPQ|HQP] _ IH]; [done| |].
   - etrans; [|exact IH]. apply rtsc_lr. by apply cs_subst.
@@ -225,16 +227,16 @@ Proof.
   - etrans; [|exact IH]. apply rtsc_rl. by apply Hf.
 Qed.
 
-Lemma cgr_par_l P P' Q : P ≡* P' → PPar P Q ≡* PPar P' Q.
-Proof. apply (cgr_ctx (λ P, PPar P Q)). intros. by constructor. Qed.
+Lemma cgr_par_l P P' Q : P ≡* P' → P ∥ Q ≡* P' ∥ Q.
+Proof. apply (cgr_ctx (λ P, P ∥ Q)). intros. by constructor. Qed.
 
-Lemma cgr_par_r P Q Q' : Q ≡* Q' → PPar P Q ≡* PPar P Q'.
-Proof. apply (cgr_ctx (λ Q, PPar P Q)). intros. by constructor. Qed.
+Lemma cgr_par_r P Q Q' : Q ≡* Q' → P ∥ Q ≡* P ∥ Q'.
+Proof. apply (cgr_ctx (λ Q, P ∥ Q)). intros. by constructor. Qed.
 
-Lemma cgr_res P P' c : P ≡* P' → PRes P c ≡* PRes P' c.
-Proof. apply (cgr_ctx (λ P, PRes P c)). intros. by constructor. Qed.
+Lemma cgr_res P P' c : P ≡* P' → P \ c ≡* P' \ c.
+Proof. apply (cgr_ctx (λ P, P \ c)). intros. by constructor. Qed.
 
-Lemma cgr_par P P' Q Q' : P ≡* P' → Q ≡* Q' → PPar P Q ≡* PPar P' Q'.
+Lemma cgr_par P P' Q Q' : P ≡* P' → Q ≡* Q' → P ∥ Q ≡* P' ∥ Q'.
 Proof. intros. etrans; [by apply cgr_par_l|by apply cgr_par_r]. Qed.
 
 (* ** Facts on steps *)
@@ -297,88 +299,88 @@ Ltac no_nil :=
   | H : gstep (GNil _) _ _ |- _ => exfalso; by eapply gstep_nil
   end.
 
-Lemma fwd_par_nil P : fwd (PPar P (PG (GNil []))) P ∧ fwd P (PPar P (PG (GNil []))).
+Lemma fwd_par_nil P : fwd (P ∥ 𝟘) P ∧ fwd P (P ∥ 𝟘).
 Proof.
   split.
   - intros l X Hs. inversion Hs; subst; try no_nil.
     exists l, P'. split_and!; [done|done|]. apply cgr_of_cs, cs_par_nil.
-  - intros l P' Hs. exists l, (PPar P' (PG (GNil []))). split_and!; [done|by apply ps_parL|].
+  - intros l P' Hs. exists l, (P' ∥ 𝟘). split_and!; [done|by apply ps_parL|].
     symmetry. apply cgr_of_cs, cs_par_nil.
 Qed.
 
-Lemma fwd_par_comm P Q : fwd (PPar P Q) (PPar Q P).
+Lemma fwd_par_comm P Q : fwd (P ∥ Q) (Q ∥ P).
 Proof.
   intros l X Hs. inversion Hs; subst.
-  - exists l, (PPar Q P'). split_and!; [done|by apply ps_parR|]. apply cgr_of_cs, cs_par_comm.
-  - exists l, (PPar Q' P). split_and!; [done|by apply ps_parL|]. apply cgr_of_cs, cs_par_comm.
-  - exists (LTau (SPair t' t)), (PPar Q' P'). split_and!; [done|by eapply ps_syncR|].
+  - exists l, (Q ∥ P'). split_and!; [done|by apply ps_parR|]. apply cgr_of_cs, cs_par_comm.
+  - exists l, (Q' ∥ P). split_and!; [done|by apply ps_parL|]. apply cgr_of_cs, cs_par_comm.
+  - exists (LTau (SPair t' t)), (Q' ∥ P'). split_and!; [done|by eapply ps_syncR|].
     apply cgr_of_cs, cs_par_comm.
-  - exists (LTau (SPair t' t)), (PPar Q' P'). split_and!; [done|by eapply ps_syncL|].
+  - exists (LTau (SPair t' t)), (Q' ∥ P'). split_and!; [done|by eapply ps_syncL|].
     apply cgr_of_cs, cs_par_comm.
 Qed.
 
 Lemma fwd_par_assoc P Q R :
-  fwd (PPar P (PPar Q R)) (PPar (PPar P Q) R) ∧ fwd (PPar (PPar P Q) R) (PPar P (PPar Q R)).
+  fwd (P ∥ (Q ∥ R)) ((P ∥ Q) ∥ R) ∧ fwd ((P ∥ Q) ∥ R) (P ∥ (Q ∥ R)).
 Proof.
   split.
   - intros l X Hs. inversion Hs as [| | | |? ? ? P' HP|? ? ? X' HX|? ? t t' c v P' X' HP HX|? ? t t' c v P' X' HP HX|];
       subst.
-    + exists l, (PPar (PPar P' Q) R). split_and!; [done|by do 2 apply ps_parL|].
+    + exists l, ((P' ∥ Q) ∥ R). split_and!; [done|by do 2 apply ps_parL|].
       apply cgr_of_cs, cs_par_assoc.
     + inversion HX as [| | | |? ? ? Q' HQ|? ? ? R' HR|? ? t t' c v Q' R' HQ HR|? ? t t' c v Q' R' HQ HR|];
         subst.
-      * exists l, (PPar (PPar P Q') R). split_and!; [done|by apply ps_parL, ps_parR|].
+      * exists l, ((P ∥ Q') ∥ R). split_and!; [done|by apply ps_parL, ps_parR|].
         apply cgr_of_cs, cs_par_assoc.
-      * exists l, (PPar (PPar P Q) R'). split_and!; [done|by apply ps_parR|].
+      * exists l, ((P ∥ Q) ∥ R'). split_and!; [done|by apply ps_parR|].
         apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar (PPar P Q') R'). split_and!; [done| |].
+      * exists (LTau (SPair t t')), ((P ∥ Q') ∥ R'). split_and!; [done| |].
         -- eapply ps_syncL; [by apply ps_parR|done].
         -- apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar (PPar P Q') R'). split_and!; [done| |].
+      * exists (LTau (SPair t t')), ((P ∥ Q') ∥ R'). split_and!; [done| |].
         -- eapply ps_syncR; [by apply ps_parR|done].
         -- apply cgr_of_cs, cs_par_assoc.
     + inversion HX as [| | | |? ? ? Q' HQ|? ? ? R' HR| | |]; subst.
-      * exists (LTau (SPair t t')), (PPar (PPar P' Q') R). split_and!; [done| |].
+      * exists (LTau (SPair t t')), ((P' ∥ Q') ∥ R). split_and!; [done| |].
         -- apply ps_parL. by eapply ps_syncL.
         -- apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar (PPar P' Q) R'). split_and!; [done| |].
+      * exists (LTau (SPair t t')), ((P' ∥ Q) ∥ R'). split_and!; [done| |].
         -- eapply ps_syncL; [by apply ps_parL|done].
         -- apply cgr_of_cs, cs_par_assoc.
     + inversion HX as [| | | |? ? ? Q' HQ|? ? ? R' HR| | |]; subst.
-      * exists (LTau (SPair t t')), (PPar (PPar P' Q') R). split_and!; [done| |].
+      * exists (LTau (SPair t t')), ((P' ∥ Q') ∥ R). split_and!; [done| |].
         -- apply ps_parL. by eapply ps_syncR.
         -- apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar (PPar P' Q) R'). split_and!; [done| |].
+      * exists (LTau (SPair t t')), ((P' ∥ Q) ∥ R'). split_and!; [done| |].
         -- eapply ps_syncR; [by apply ps_parL|done].
         -- apply cgr_of_cs, cs_par_assoc.
   - intros l X Hs. inversion Hs as [| | | |? ? ? X' HX|? ? ? R' HR|? ? t t' c v X' R' HX HR|? ? t t' c v X' R' HX HR|];
       subst.
     + inversion HX as [| | | |? ? ? P' HP|? ? ? Q' HQ|? ? t t' c v P' Q' HP HQ|? ? t t' c v P' Q' HP HQ|];
         subst.
-      * exists l, (PPar P' (PPar Q R)). split_and!; [done|by apply ps_parL|].
+      * exists l, (P' ∥ (Q ∥ R)). split_and!; [done|by apply ps_parL|].
         symmetry. apply cgr_of_cs, cs_par_assoc.
-      * exists l, (PPar P (PPar Q' R)). split_and!; [done|by apply ps_parR, ps_parL|].
+      * exists l, (P ∥ (Q' ∥ R)). split_and!; [done|by apply ps_parR, ps_parL|].
         symmetry. apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar P' (PPar Q' R)). split_and!; [done| |].
+      * exists (LTau (SPair t t')), (P' ∥ (Q' ∥ R)). split_and!; [done| |].
         -- eapply ps_syncL; [done|by apply ps_parL].
         -- symmetry. apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar P' (PPar Q' R)). split_and!; [done| |].
+      * exists (LTau (SPair t t')), (P' ∥ (Q' ∥ R)). split_and!; [done| |].
         -- eapply ps_syncR; [done|by apply ps_parL].
         -- symmetry. apply cgr_of_cs, cs_par_assoc.
-    + exists l, (PPar P (PPar Q R')). split_and!; [done|by do 2 apply ps_parR|].
+    + exists l, (P ∥ (Q ∥ R')). split_and!; [done|by do 2 apply ps_parR|].
       symmetry. apply cgr_of_cs, cs_par_assoc.
     + inversion HX as [| | | |? ? ? P' HP|? ? ? Q' HQ| | |]; subst.
-      * exists (LTau (SPair t t')), (PPar P' (PPar Q R')). split_and!; [done| |].
+      * exists (LTau (SPair t t')), (P' ∥ (Q ∥ R')). split_and!; [done| |].
         -- eapply ps_syncL; [done|by apply ps_parR].
         -- symmetry. apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar P (PPar Q' R')). split_and!; [done| |].
+      * exists (LTau (SPair t t')), (P ∥ (Q' ∥ R')). split_and!; [done| |].
         -- apply ps_parR. by eapply ps_syncL.
         -- symmetry. apply cgr_of_cs, cs_par_assoc.
     + inversion HX as [| | | |? ? ? P' HP|? ? ? Q' HQ| | |]; subst.
-      * exists (LTau (SPair t t')), (PPar P' (PPar Q R')). split_and!; [done| |].
+      * exists (LTau (SPair t t')), (P' ∥ (Q ∥ R')). split_and!; [done| |].
         -- eapply ps_syncR; [done|by apply ps_parR].
         -- symmetry. apply cgr_of_cs, cs_par_assoc.
-      * exists (LTau (SPair t t')), (PPar P (PPar Q' R')). split_and!; [done| |].
+      * exists (LTau (SPair t t')), (P ∥ (Q' ∥ R')). split_and!; [done| |].
         -- apply ps_parR. by eapply ps_syncR.
         -- symmetry. apply cgr_of_cs, cs_par_assoc.
 Qed.
@@ -405,8 +407,8 @@ Lemma fwd_send_val t t' c e e' :
 Proof.
   intros He. pose proof (exp_eqv_eval _ _ He) as E.
   split; intros l P' Hs; inversion Hs as [|? ? ? v Hv| | | | | | |]; subst.
-  - exists (LAct t' (AOut c v)), (PG (GNil [])). split_and!; [done|constructor; congruence|done].
-  - exists (LAct t (AOut c v)), (PG (GNil [])). split_and!; [done|constructor; congruence|done].
+  - exists (LAct t' (AOut c v)), (𝟘). split_and!; [done|constructor; congruence|done].
+  - exists (LAct t (AOut c v)), (𝟘). split_and!; [done|constructor; congruence|done].
 Qed.
 
 Lemma fwd_ite_val e e' P Q : exp_eqv e e' → fwd (PIte e P Q) (PIte e' P Q) ∧ fwd (PIte e' P Q) (PIte e P Q).
@@ -416,37 +418,37 @@ Proof.
     [apply ps_iteT|apply ps_iteF|apply ps_iteT|apply ps_iteF]; congruence.
 Qed.
 
-Lemma fwd_res_nil es c : fwd (PRes (PG (GNil es)) c) (PG (GNil es)) ∧ fwd (PG (GNil es)) (PRes (PG (GNil es)) c).
+Lemma fwd_res_nil es c : fwd (PG (GNil es) \ c) (PG (GNil es)) ∧ fwd (PG (GNil es)) (PG (GNil es) \ c).
 Proof.
   split; intros l P' Hs; inversion Hs; subst; no_nil.
 Qed.
 
-Lemma fwd_res_ord P c d : fwd (PRes (PRes P c) d) (PRes (PRes P d) c).
+Lemma fwd_res_ord P c d : fwd ((P \ c) \ d) ((P \ d) \ c).
 Proof.
   intros l X Hs. inversion Hs as [| | | | | | | |? ? ? Y Hd HY]; subst.
   inversion HY as [| | | | | | | |? ? ? P' Hc HP]; subst.
-  exists l, (PRes (PRes P' d) c). split_and!; [done| |].
+  exists l, ((P' \ d) \ c). split_and!; [done| |].
   - apply ps_res; [done|]. by apply ps_res.
   - apply cgr_of_cs, cs_res_ord.
 Qed.
 
 Lemma fwd_res_par P Q c : c ∉ fc P →
-  fwd (PRes (PPar P Q) c) (PPar P (PRes Q c)) ∧ fwd (PPar P (PRes Q c)) (PRes (PPar P Q) c).
+  fwd ((P ∥ Q) \ c) (P ∥ (Q \ c)) ∧ fwd (P ∥ (Q \ c)) ((P ∥ Q) \ c).
 Proof.
   intros Hc. split.
   - intros l X Hs. inversion Hs as [| | | | | | | |? ? ? Y Hn HY]; subst.
     inversion HY as [| | | |? ? ? P' HP|? ? ? Q' HQ|? ? t t' c' v P' Q' HP HQ|? ? t t' c' v P' Q' HP HQ|];
       subst.
-    + exists l, (PPar P' (PRes Q c)). split_and!; [done|by apply ps_parL|].
+    + exists l, (P' ∥ (Q \ c)). split_and!; [done|by apply ps_parL|].
       apply cgr_of_cs, cs_res_par. intros Hin. apply Hc. by eapply pstep_fc.
-    + exists l, (PPar P (PRes Q' c)). split_and!; [done|by apply ps_parR, ps_res|].
+    + exists l, (P ∥ (Q' \ c)). split_and!; [done|by apply ps_parR, ps_res|].
       by apply cgr_of_cs, cs_res_par.
-    + exists (LTau (SPair t t')), (PPar P' (PRes Q' c)). split_and!; [done| |].
+    + exists (LTau (SPair t t')), (P' ∥ (Q' \ c)). split_and!; [done| |].
       * eapply ps_syncL; [done|]. apply ps_res; [|done].
         intros (? & ? & [Heq|Heq]); simplify_eq. apply Hc.
         eapply pstep_chan; [exact HP|]. do 2 eexists. by left.
       * apply cgr_of_cs, cs_res_par. intros Hin. apply Hc. by eapply pstep_fc.
-    + exists (LTau (SPair t t')), (PPar P' (PRes Q' c)). split_and!; [done| |].
+    + exists (LTau (SPair t t')), (P' ∥ (Q' \ c)). split_and!; [done| |].
       * eapply ps_syncR; [done|]. apply ps_res; [|done].
         intros (? & ? & [Heq|Heq]); simplify_eq. apply Hc.
         eapply pstep_chan; [exact HP|]. do 2 eexists. by right.
@@ -454,18 +456,18 @@ Proof.
   - intros l X Hs.
     inversion Hs as [| | | |? ? ? P' HP|? ? ? Y HY|? ? t t' c' v P' Y HP HY|? ? t t' c' v P' Y HP HY|];
       subst.
-    + exists l, (PRes (PPar P' Q) c). split_and!; [done| |].
+    + exists l, ((P' ∥ Q) \ c). split_and!; [done| |].
       * apply ps_res; [|by apply ps_parL]. intros Hon. apply Hc. by eapply pstep_chan.
       * symmetry. apply cgr_of_cs, cs_res_par. intros Hin. apply Hc. by eapply pstep_fc.
     + inversion HY as [| | | | | | | |? ? ? Q' Hn HQ]; subst.
-      exists l, (PRes (PPar P Q') c). split_and!; [done|by apply ps_res, ps_parR|].
+      exists l, ((P ∥ Q') \ c). split_and!; [done|by apply ps_res, ps_parR|].
       symmetry. by apply cgr_of_cs, cs_res_par.
     + inversion HY as [| | | | | | | |? ? ? Q' Hn HQ]; subst.
-      exists (LTau (SPair t t')), (PRes (PPar P' Q') c). split_and!; [done| |].
+      exists (LTau (SPair t t')), ((P' ∥ Q') \ c). split_and!; [done| |].
       * apply ps_res; [by intros (? & ? & [Heq|Heq])|]. by eapply ps_syncL.
       * symmetry. apply cgr_of_cs, cs_res_par. intros Hin. apply Hc. by eapply pstep_fc.
     + inversion HY as [| | | | | | | |? ? ? Q' Hn HQ]; subst.
-      exists (LTau (SPair t t')), (PRes (PPar P' Q') c). split_and!; [done| |].
+      exists (LTau (SPair t t')), ((P' ∥ Q') \ c). split_and!; [done| |].
       * apply ps_res; [by intros (? & ? & [Heq|Heq])|]. by eapply ps_syncR.
       * symmetry. apply cgr_of_cs, cs_res_par. intros Hin. apply Hc. by eapply pstep_fc.
 Qed.
@@ -473,20 +475,20 @@ Qed.
 Lemma gfwd_refl_step g h : (∀ l P', gstep g l P' → gstep h l P') → gfwd g h.
 Proof. intros H l P' Hs. exists l, P'. split_and!; [done|by apply H|done]. Qed.
 
-Lemma gfwd_sum_nil g es : gfwd (GSum g (GNil es)) g ∧ gfwd g (GSum g (GNil es)).
+Lemma gfwd_sum_nil g es : gfwd (g ⊕ GNil es) g ∧ gfwd g (g ⊕ GNil es).
 Proof.
   split; apply gfwd_refl_step; intros l P' Hs.
   - inversion Hs; subst; [done|no_nil].
   - by apply gs_sumL.
 Qed.
 
-Lemma gfwd_sum_comm g h : gfwd (GSum g h) (GSum h g).
+Lemma gfwd_sum_comm g h : gfwd (g ⊕ h) (h ⊕ g).
 Proof.
   apply gfwd_refl_step. intros l P' Hs. inversion Hs; subst; [by apply gs_sumR|by apply gs_sumL].
 Qed.
 
 Lemma gfwd_sum_assoc g h k :
-  gfwd (GSum g (GSum h k)) (GSum (GSum g h) k) ∧ gfwd (GSum (GSum g h) k) (GSum g (GSum h k)).
+  gfwd (g ⊕ (h ⊕ k)) ((g ⊕ h) ⊕ k) ∧ gfwd ((g ⊕ h) ⊕ k) (g ⊕ (h ⊕ k)).
 Proof.
   split; apply gfwd_refl_step; intros l P' Hs.
   - inversion Hs as [| | | | |? ? ? ? H1|? ? ? ? H2]; subst.
@@ -500,7 +502,7 @@ Qed.
 Lemma gfwd_nil_val es es' : gfwd (GNil es) (GNil es').
 Proof. intros l P' Hs. no_nil. Qed.
 
-Lemma gfwd_pre_val 𝜆 𝜆' P : prefix_eqv 𝜆 𝜆' → gfwd (GPre 𝜆 P) (GPre 𝜆' P) ∧ gfwd (GPre 𝜆' P) (GPre 𝜆 P).
+Lemma gfwd_pre_val 𝜆 𝜆' P : prefix_eqv 𝜆 𝜆' → gfwd (𝜆 ∙ P) (𝜆' ∙ P) ∧ gfwd (𝜆' ∙ P) (𝜆 ∙ P).
 Proof.
   intros H𝜆. destruct H𝜆 as [t t'|t1 t2 t1' t2'|t t' c x|t t' E es es' Hes|t t' M es es' x Hes];
     try pose proof (exps_eqv_eval _ _ Hes) as Ev; split; intros l X Hs; inversion Hs; subst.
@@ -508,8 +510,8 @@ Proof.
   - exists (LTau (STag t)), X. split_and!; [done|constructor|done].
   - exists (LTau (SPair t1' t2')), X. split_and!; [done|constructor|done].
   - exists (LTau (SPair t1 t2)), X. split_and!; [done|constructor|done].
-  - exists (LAct t' (AIn c v)), (subst P x v). split_and!; [done|constructor|done].
-  - exists (LAct t (AIn c v)), (subst P x v). split_and!; [done|constructor|done].
+  - exists (LAct t' (AIn c v)), (P ⟦ v // x ⟧). split_and!; [done|constructor|done].
+  - exists (LAct t (AIn c v)), (P ⟦ v // x ⟧). split_and!; [done|constructor|done].
   - exists (LAct t' (AOp E qs)), X. split_and!; [done|constructor; congruence|done].
   - exists (LAct t (AOp E qs)), X. split_and!; [done|constructor; congruence|done].
   - exists (LAct t' (AMeas M qs x)), X. split_and!; [done|constructor; congruence|done].
@@ -541,38 +543,38 @@ Proof.
   eauto.
 Qed.
 
-Lemma fwd_par_l P P' Q : P ≡* P' → fwd P P' → fwd (PPar P Q) (PPar P' Q).
+Lemma fwd_par_l P P' Q : P ≡* P' → fwd P P' → fwd (P ∥ Q) (P' ∥ Q).
 Proof.
   intros Hc H l X Hs.
   inversion Hs as [| | | |? ? ? P1 HP|? ? ? Q1 HQ|? ? t t' c v P1 Q1 HP HQ|? ? t t' c v P1 Q1 HP HQ|];
     subst.
-  - destruct (H _ _ HP) as (l' & Y & El & Hs' & HY). exists l', (PPar Y Q).
+  - destruct (H _ _ HP) as (l' & Y & El & Hs' & HY). exists l', (Y ∥ Q).
     split_and!; [done|by apply ps_parL|by apply cgr_par_l].
-  - exists l, (PPar P' Q1). split_and!; [done|by apply ps_parR|by apply cgr_par_l].
+  - exists l, (P' ∥ Q1). split_and!; [done|by apply ps_parR|by apply cgr_par_l].
   - destruct (fwd_vis _ _ _ _ _ H HP) as (t'' & Y & Hs' & HY).
-    exists (LTau (SPair t'' t')), (PPar Y Q1). split_and!; [done|by eapply ps_syncL|by apply cgr_par_l].
+    exists (LTau (SPair t'' t')), (Y ∥ Q1). split_and!; [done|by eapply ps_syncL|by apply cgr_par_l].
   - destruct (fwd_vis _ _ _ _ _ H HP) as (t'' & Y & Hs' & HY).
-    exists (LTau (SPair t'' t')), (PPar Y Q1). split_and!; [done|by eapply ps_syncR|by apply cgr_par_l].
+    exists (LTau (SPair t'' t')), (Y ∥ Q1). split_and!; [done|by eapply ps_syncR|by apply cgr_par_l].
 Qed.
 
-Lemma fwd_par_r P Q Q' : Q ≡* Q' → fwd Q Q' → fwd (PPar P Q) (PPar P Q').
+Lemma fwd_par_r P Q Q' : Q ≡* Q' → fwd Q Q' → fwd (P ∥ Q) (P ∥ Q').
 Proof.
   intros Hc H l X Hs.
   inversion Hs as [| | | |? ? ? P1 HP|? ? ? Q1 HQ|? ? t t' c v P1 Q1 HP HQ|? ? t t' c v P1 Q1 HP HQ|];
     subst.
-  - exists l, (PPar P1 Q'). split_and!; [done|by apply ps_parL|by apply cgr_par_r].
-  - destruct (H _ _ HQ) as (l' & Y & El & Hs' & HY). exists l', (PPar P Y).
+  - exists l, (P1 ∥ Q'). split_and!; [done|by apply ps_parL|by apply cgr_par_r].
+  - destruct (H _ _ HQ) as (l' & Y & El & Hs' & HY). exists l', (P ∥ Y).
     split_and!; [done|by apply ps_parR|by apply cgr_par_r].
   - destruct (fwd_vis _ _ _ _ _ H HQ) as (t'' & Y & Hs' & HY).
-    exists (LTau (SPair t t'')), (PPar P1 Y). split_and!; [done|by eapply ps_syncL|by apply cgr_par_r].
+    exists (LTau (SPair t t'')), (P1 ∥ Y). split_and!; [done|by eapply ps_syncL|by apply cgr_par_r].
   - destruct (fwd_vis _ _ _ _ _ H HQ) as (t'' & Y & Hs' & HY).
-    exists (LTau (SPair t t'')), (PPar P1 Y). split_and!; [done|by eapply ps_syncR|by apply cgr_par_r].
+    exists (LTau (SPair t t'')), (P1 ∥ Y). split_and!; [done|by eapply ps_syncR|by apply cgr_par_r].
 Qed.
 
-Lemma fwd_res P P' c : fwd P P' → fwd (PRes P c) (PRes P' c).
+Lemma fwd_res P P' c : fwd P P' → fwd (P \ c) (P' \ c).
 Proof.
   intros H l X Hs. inversion Hs as [| | | | | | | |? ? ? P1 Hn HP]; subst.
-  destruct (H _ _ HP) as (l' & Y & El & Hs' & HY). exists l', (PRes Y c). split_and!; [done| |].
+  destruct (H _ _ HP) as (l' & Y & El & Hs' & HY). exists l', (Y \ c). split_and!; [done| |].
   - apply ps_res; [|done]. rewrite on_chan_erase, El. by rewrite <- on_chan_erase.
   - by apply cgr_res.
 Qed.
@@ -583,17 +585,17 @@ Proof.
   destruct (H _ _ Hg) as (l' & Y & El & Hs' & HY). exists l', Y. split_and!; [done|by constructor|done].
 Qed.
 
-Lemma gfwd_pre 𝜆 P P' : P ≡* P' → gfwd (GPre 𝜆 P) (GPre 𝜆 P').
+Lemma gfwd_pre 𝜆 P P' : P ≡* P' → gfwd (𝜆 ∙ P) (𝜆 ∙ P').
 Proof.
   intros Hc l X Hs. inversion Hs; subst.
   - exists (LTau (STag t)), P'. split_and!; [done|constructor|done].
   - exists (LTau (SPair t t')), P'. split_and!; [done|constructor|done].
-  - exists (LAct t (AIn c v)), (subst P' x v). split_and!; [done|constructor|by apply cgr_subst].
+  - exists (LAct t (AIn c v)), (P' ⟦ v // x ⟧). split_and!; [done|constructor|by apply cgr_subst].
   - exists (LAct t (AOp E qs)), P'. split_and!; [done|by constructor|done].
   - exists (LAct t (AMeas M qs x)), P'. split_and!; [done|by constructor|done].
 Qed.
 
-Lemma gfwd_sum_l g g' h : gfwd g g' → gfwd (GSum g h) (GSum g' h).
+Lemma gfwd_sum_l g g' h : gfwd g g' → gfwd (g ⊕ h) (g' ⊕ h).
 Proof.
   intros H l X Hs. inversion Hs as [| | | | |? ? ? ? Hg|? ? ? ? Hh]; subst.
   - destruct (H _ _ Hg) as (l' & Y & El & Hs' & HY). exists l', Y.
@@ -601,7 +603,7 @@ Proof.
   - exists l, X. split_and!; [done|by apply gs_sumR|done].
 Qed.
 
-Lemma gfwd_sum_r g h h' : gfwd h h' → gfwd (GSum g h) (GSum g h').
+Lemma gfwd_sum_r g h h' : gfwd h h' → gfwd (g ⊕ h) (g ⊕ h').
 Proof.
   intros H l X Hs. inversion Hs as [| | | | |? ? ? ? Hg|? ? ? ? Hh]; subst.
   - exists l, X. split_and!; [done|by apply gs_sumL|done].

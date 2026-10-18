@@ -228,7 +228,7 @@ Proof.
       clear hR hc hcS. subst S. unfold tau_succ in hT.
       destruct (estep e) as [[l e'] |] eqn:hst; [| by inversion hT].
       destruct l as [| q w | cls ao | f vs |].
-      all: assert (({[+ CProc p n e +]} ⊎ R) ∖ {[+ CProc p n e +]} = R) as hd
+      all: assert ((⟨p, n, e⟩ ⊎ R) ∖ ⟨p, n, e⟩ = R) as hd
              by multiset_solver.
       all: rewrite hd in hT; clear hd.
       1:{ apply list_elem_of_singleton in hT as ->. by apply ErlTau. }
@@ -246,7 +246,7 @@ Proof.
         destruct (match_cls cls w) as [body |] eqn:hm; [| by inversion hsome].
         injection hsome as <-.
         assert (CMsg p w ∈ R) as hin by (by apply gmultiset_elem_of_elements).
-        assert ({[+ CProc p n e +]} ⊎ R = ⟨p, n, e⟩ ⊎ ⟪p, w⟫ ⊎ (R ∖ ⟪p, w⟫)) as ->
+        assert (⟨p, n, e⟩ ⊎ R = ⟨p, n, e⟩ ⊎ ⟪p, w⟫ ⊎ (R ∖ ⟪p, w⟫)) as ->
           by multiset_solver.
         eapply ErlComm; eassumption. }
   1:{ intros (c & hT & hc)%list_elem_of_bind.
@@ -255,7 +255,7 @@ Proof.
       remember (S ∖ ⟨p', n, e⟩) as R eqn:hR.
       assert (S = ⟨p', n, e⟩ ⊎ R) as heq2 by (subst R; multiset_solver).
       clear hR hc hcS. subst S. unfold in_succ in hT.
-      assert (({[+ CProc p' n e +]} ⊎ R) ∖ {[+ CProc p' n e +]} = R) as hd
+      assert ((⟨p', n, e⟩ ⊎ R) ∖ ⟨p', n, e⟩ = R) as hd
         by multiset_solver.
       rewrite hd in hT. clear hd.
       destruct (decide (p' = p)) as [-> |]; [| by inversion hT].

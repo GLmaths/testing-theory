@@ -26,19 +26,19 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics relations countable.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
-  PAL_Syntax PAL_Alt_LTS.
+  PAL.Language.Syntax PAL.Language.LTS.
 (* * Structural congruence for the alternative LTS of PAL
 
-   As for VCCS: [𝟘] is a unit of [‖] and [□], both are commutative and
-   associative, [⊕] and [|ₖ] are commutative, and a conditional whose guard
-   evaluates is its branch. For the left merge, [E ⌊ 𝟘 ≡ E] and [𝟘 ⌊ E ≡ 𝟘]
-   (laws LM4 and LM3; note that [𝟘 ⌊ E] has no transition). The congruence is
+   As for VCCS: [𝟘] is a unit of [│] and [□], both are commutative and
+   associative, [⊕] and [║] are commutative, and a conditional whose guard
+   evaluates is its branch. For the left merge, [E ⌊⌊ 𝟘 ≡ E] and [𝟘 ⌊⌊ E ≡ 𝟘]
+   (laws LM4 and LM3; note that [𝟘 ⌊⌊ E] has no transition). The congruence is
    closed under the static contexts and under the prefixes [in(t)], [read(t)]
    and [out(t)]:
    - under [in(t)] and [read(t)], the body is exposed by a substitution of
      values, which preserves the congruence ([cgr_step_subst]);
    - under [out(t)], only between bodies different from [𝟘], as rule IR5
-     tests [E = 𝟘] syntactically ([out(t).(𝟘 ‖ 𝟘)] has a τ, [out(t).𝟘] an output).
+     tests [E = 𝟘] syntactically ([out(t).(𝟘 │ 𝟘)] has a τ, [out(t).𝟘] an output).
    It is not closed under [rec]. *)
 
 Section PAL_Alt_Congruence.
@@ -50,11 +50,11 @@ Section PAL_Alt_Congruence.
   Open Scope pal_scope.
   Inductive cgr_step : term → term → Prop :=
     (* laws *)
-    | cgr_par_nil E : cgr_step (E ‖ 𝟘) E
-    | cgr_par_nil_rev E : cgr_step E (E ‖ 𝟘)
-    | cgr_par_com E F : cgr_step (E ‖ F) (F ‖ E)
-    | cgr_par_assoc E F G : cgr_step ((E ‖ F) ‖ G) (E ‖ (F ‖ G))
-    | cgr_par_assoc_rev E F G : cgr_step (E ‖ (F ‖ G)) ((E ‖ F) ‖ G)
+    | cgr_par_nil E : cgr_step (E │ 𝟘) E
+    | cgr_par_nil_rev E : cgr_step E (E │ 𝟘)
+    | cgr_par_com E F : cgr_step (E │ F) (F │ E)
+    | cgr_par_assoc E F G : cgr_step ((E │ F) │ G) (E │ (F │ G))
+    | cgr_par_assoc_rev E F G : cgr_step (E │ (F │ G)) ((E │ F) │ G)
     | cgr_choice_nil E : cgr_step (E □ 𝟘) E
     | cgr_choice_nil_rev E : cgr_step E (E □ 𝟘)
     | cgr_choice_com E F : cgr_step (E □ F) (F □ E)
@@ -62,26 +62,26 @@ Section PAL_Alt_Congruence.
     | cgr_choice_assoc_rev E F G : cgr_step (E □ (F □ G)) ((E □ F) □ G)
     | cgr_ichoice_com E F : cgr_step (E ⊕ F) (F ⊕ E)
     (* left merge: laws LM4 and LM3 of De Nicola–Pugliese *)
-    | cgr_lmerge_nil E : cgr_step (E ⌊ 𝟘) E
-    | cgr_lmerge_nil_rev E : cgr_step E (E ⌊ 𝟘)
-    | cgr_lmerge_nil_l E : cgr_step (𝟘 ⌊ E) 𝟘
-    | cgr_lmerge_nil_l_rev E : cgr_step 𝟘 (𝟘 ⌊ E)
-    | cgr_cmerge_com E F : cgr_step (E |ₖ F) (F |ₖ E)
+    | cgr_lmerge_nil E : cgr_step (E ⌊⌊ 𝟘) E
+    | cgr_lmerge_nil_rev E : cgr_step E (E ⌊⌊ 𝟘)
+    | cgr_lmerge_nil_l E : cgr_step (𝟘 ⌊⌊ E) 𝟘
+    | cgr_lmerge_nil_l_rev E : cgr_step 𝟘 (𝟘 ⌊⌊ E)
+    | cgr_cmerge_com E F : cgr_step (E ║ F) (F ║ E)
     | cgr_if_true be E F : eval_bexp be = Some true → cgr_step (IF be THEN E ELSE F) E
     | cgr_if_true_rev be E F : eval_bexp be = Some true → cgr_step E (IF be THEN E ELSE F)
     | cgr_if_false be E F : eval_bexp be = Some false → cgr_step (IF be THEN E ELSE F) F
     | cgr_if_false_rev be E F : eval_bexp be = Some false → cgr_step F (IF be THEN E ELSE F)
     (* static contexts *)
-    | cgr_par_l E E' F : cgr_step E E' → cgr_step (E ‖ F) (E' ‖ F)
-    | cgr_par_r E F F' : cgr_step F F' → cgr_step (E ‖ F) (E ‖ F')
+    | cgr_par_l E E' F : cgr_step E E' → cgr_step (E │ F) (E' │ F)
+    | cgr_par_r E F F' : cgr_step F F' → cgr_step (E │ F) (E │ F')
     | cgr_choice_l E E' F : cgr_step E E' → cgr_step (E □ F) (E' □ F)
     | cgr_choice_r E F F' : cgr_step F F' → cgr_step (E □ F) (E □ F')
     | cgr_ichoice_l E E' F : cgr_step E E' → cgr_step (E ⊕ F) (E' ⊕ F)
     | cgr_ichoice_r E F F' : cgr_step F F' → cgr_step (E ⊕ F) (E ⊕ F')
-    | cgr_lmerge_l E E' F : cgr_step E E' → cgr_step (E ⌊ F) (E' ⌊ F)
-    | cgr_lmerge_r E F F' : cgr_step F F' → cgr_step (E ⌊ F) (E ⌊ F')
-    | cgr_cmerge_l E E' F : cgr_step E E' → cgr_step (E |ₖ F) (E' |ₖ F)
-    | cgr_cmerge_r E F F' : cgr_step F F' → cgr_step (E |ₖ F) (E |ₖ F')
+    | cgr_lmerge_l E E' F : cgr_step E E' → cgr_step (E ⌊⌊ F) (E' ⌊⌊ F)
+    | cgr_lmerge_r E F F' : cgr_step F F' → cgr_step (E ⌊⌊ F) (E ⌊⌊ F')
+    | cgr_cmerge_l E E' F : cgr_step E E' → cgr_step (E ║ F) (E' ║ F)
+    | cgr_cmerge_r E F F' : cgr_step F F' → cgr_step (E ║ F) (E ║ F')
     | cgr_if_l be E E' F : cgr_step E E' → cgr_step (IF be THEN E ELSE F) (IF be THEN E' ELSE F)
     | cgr_if_r be E F F' : cgr_step F F' → cgr_step (IF be THEN E ELSE F) (IF be THEN E ELSE F')
     | cgr_eval_l E E' F : cgr_step E E' → cgr_step (eval( E ) • F) (eval( E' ) • F)
@@ -109,42 +109,42 @@ Section PAL_Alt_Congruence.
   (* Lifting [cgr] through the static contexts. *)
   Local Ltac lift C := intros h; induction h as [|x y z hxy _ IH]; [reflexivity | eapply rtc_l; [apply C, hxy | exact IH]].
 
-  Lemma cgr_par_l_lift E E' F : cgr E E' → cgr (E ‖ F) (E' ‖ F).
+  Lemma cgr_par_l_lift E E' F : cgr E E' → cgr (E │ F) (E' │ F).
   Proof. lift cgr_par_l. Qed.
-  Lemma cgr_par_r_lift E F F' : cgr F F' → cgr (E ‖ F) (E ‖ F').
+  Lemma cgr_par_r_lift E F F' : cgr F F' → cgr (E │ F) (E │ F').
   Proof. lift cgr_par_r. Qed.
   Lemma cgr_choice_l_lift E E' F : cgr E E' → cgr (E □ F) (E' □ F).
   Proof. lift cgr_choice_l. Qed.
-  Lemma cgr_lmerge_l_lift E E' F : cgr E E' → cgr (E ⌊ F) (E' ⌊ F).
+  Lemma cgr_lmerge_l_lift E E' F : cgr E E' → cgr (E ⌊⌊ F) (E' ⌊⌊ F).
   Proof. lift cgr_lmerge_l. Qed.
-  Lemma cgr_cmerge_l_lift E E' F : cgr E E' → cgr (E |ₖ F) (E' |ₖ F).
+  Lemma cgr_cmerge_l_lift E E' F : cgr E E' → cgr (E ║ F) (E' ║ F).
   Proof. lift cgr_cmerge_l. Qed.
-  Lemma cgr_cmerge_r_lift E F F' : cgr F F' → cgr (E |ₖ F) (E |ₖ F').
+  Lemma cgr_cmerge_r_lift E F F' : cgr F F' → cgr (E ║ F) (E ║ F').
   Proof. lift cgr_cmerge_r. Qed.
   Lemma cgr_choice_r_lift E F F' : cgr F F' → cgr (E □ F) (E □ F').
   Proof. lift cgr_choice_r. Qed.
 
-  Lemma cgr_par_lift E E' F F' : cgr E E' → cgr F F' → cgr (E ‖ F) (E' ‖ F').
+  Lemma cgr_par_lift E E' F F' : cgr E E' → cgr F F' → cgr (E │ F) (E' │ F').
   Proof. intros h1 h2. etransitivity; [apply cgr_par_l_lift, h1 | apply cgr_par_r_lift, h2]. Qed.
 
   (* Synchronisations read from the other side. *)
   Lemma air12_sym E1 E2 μ1 μ2 E1' E2' :
     step E1 (ActExt μ1) E1' → step E2 (ActExt μ2) E2' → PALA_dual Val μ2 μ1 →
-    step (E1 ‖ E2) τ (E1' ‖ E2').
+    step (E1 │ E2) τ (E1' │ E2').
   Proof. intros h1 h2 hd. eapply air12; [exact h1 | exact h2 | by symmetry]. Qed.
 
   Lemma air13_sym E1 E2 μ1 μ2 E1' E2' :
     step E1 (ActExt μ1) E1' → step E2 (ActExt μ2) E2' → PALA_dual Val μ2 μ1 →
-    step (E1 |ₖ E2) τ (E1' ‖ E2').
+    step (E1 ║ E2) τ (E1' │ E2').
   Proof. intros h1 h2 hd. eapply air13; [exact h1 | exact h2 | by symmetry]. Qed.
 
   (* Steps in contexts, for any label. *)
-  Lemma step_par_l E F 𝜆 E' : step E 𝜆 E' → step (E ‖ F) 𝜆 (E' ‖ F).
+  Lemma step_par_l E F 𝜆 E' : step E 𝜆 E' → step (E │ F) 𝜆 (E' │ F).
   Proof. destruct 𝜆; [apply aar5_l | apply air9_l]. Qed.
-  Lemma step_par_r E F 𝜆 F' : step F 𝜆 F' → step (E ‖ F) 𝜆 (E ‖ F').
+  Lemma step_par_r E F 𝜆 F' : step F 𝜆 F' → step (E │ F) 𝜆 (E │ F').
   Proof. destruct 𝜆; [apply aar5_r | apply air9_r]. Qed.
 
-  Lemma no_step_nil 𝜆 q : ¬ step t_nil 𝜆 q.
+  Lemma no_step_nil 𝜆 q : ¬ step 𝟘 𝜆 q.
   Proof. inversion 1. Qed.
 
   Local Hint Constructors lts_step_a cgr_step : pal_cgr.
@@ -154,9 +154,9 @@ Section PAL_Alt_Congruence.
 
   Local Ltac invert_steps :=
     repeat match goal with
-    | h : step t_nil _ _ |- _ => inversion h
-    | h : step (t_par _ _) _ _ |- _ => inversion h; subst; clear h
-    | h : step (t_echoice _ _) _ _ |- _ => inversion h; subst; clear h
+    | h : step 𝟘 _ _ |- _ => inversion h
+    | h : step (_ │ _) _ _ |- _ => inversion h; subst; clear h
+    | h : step (_ □ _) _ _ |- _ => inversion h; subst; clear h
     end.
 
   Local Ltac use_ih :=
@@ -181,7 +181,7 @@ Section PAL_Alt_Congruence.
     - destruct (eval_bexp b1) as [r1|] eqn:h1; try discriminate. by rewrite (IH1 r1).
   Qed.
 
-  Lemma subst_term_nil (σ : vsubst Val) E : subst_term σ E = t_nil → E = t_nil.
+  Lemma subst_term_nil (σ : vsubst Val) E : subst_term σ E = 𝟘 → E = 𝟘.
   Proof. by destruct E. Qed.
 
   Lemma cgr_step_subst (σ : vsubst Val) E E' : cgr_step E E' → cgr_step (subst_term σ E) (subst_term σ E').

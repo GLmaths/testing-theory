@@ -28,7 +28,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics countable option.
 From TestingTheory Require Import ActTau gLts Subset_Act InputOutputActions
-  Label_Abstraction.LabelAbstraction PAL_Syntax Applicative_process_algebra.
+  Label_Abstraction.LabelAbstraction PAL.Language.Syntax PAL.Language.Paper_LTS.
 (* * Label abstractions of PAL
 
    Every PAL action is singled out by a term: [in(t)•𝟘] and [out(t)•𝟘], where
@@ -38,6 +38,7 @@ From TestingTheory Require Import ActTau gLts Subset_Act InputOutputActions
    [PAL_LA_prog_maximal]). *)
 
 Section PAL_LA.
+  Open Scope pal_scope.
   Context (Val : Type) `{Countable Val}.
 
   Notation term := (term Val).
@@ -47,17 +48,13 @@ Section PAL_LA.
 
   (* ** The relations: equality *)
 
-  #[global] Instance gLtsLAtest_PAL : @gLtsLAtest term PAL_Act (PAL_ExtAction Val) (PAL_gLts Val) :=
-    {| LA_test := eq;
-       LA_test_eq := eq_equivalence;
-       LA_test_dec := λ μ μ', decide (μ = μ');
-       LA_test_spec := λ μ μ' h, match h with eq_refl => λ _ h', h' end |}.
+  Definition EPO_PAL : Enable_PO term (PAL_ExtAction Val) (gLtsT := PAL_gLts Val) :=
+    MkEnable_PO term PAL_Act (PAL_ExtAction Val) (PAL_gLts Val) eq _
+      (λ μ μ' h, match h with eq_refl => λ _ h', h' end).
 
-  #[global] Instance gLtsLAprog_PAL : @gLtsLAprog term PAL_Act (PAL_ExtAction Val) (PAL_gLts Val) PAL_Act (PAL_ExtAction Val) _ :=
-    {| LA_prog := eq;
-       LA_prog_eq := eq_equivalence;
-       LA_prog_dec := λ μ μ', decide (μ = μ');
-       LA_prog_spec := λ μ μ' h, match h with eq_refl => λ _ h', h' end |}.
+  Definition CEPO_PAL : CoEnable_PO term (PAL_ExtAction Val) (gLtsP := PAL_gLts Val) :=
+    MkCoEnable_PO term PAL_Act (PAL_ExtAction Val) (PAL_gLts Val) PAL_Act (PAL_ExtAction Val) _ eq _
+      (λ μ μ' h, match h with eq_refl => λ _ h', h' end).
 
   (* ** Terms singling out an action *)
 
@@ -84,20 +81,20 @@ Section PAL_LA.
     - intros ->. induction ot as [|[|v] ot IH]; simpl; constructor; [constructor | done | constructor | done].
   Qed.
 
-  Definition single_in (ot : eot Val) : term := t_in (eot_to_tuple ot) (t_nil).
-  Definition single_out (ot : eot Val) : term := t_out (eot_to_tuple ot) (t_nil).
+  Definition single_in (ot : eot Val) : term := in( eot_to_tuple ot ) • 𝟘.
+  Definition single_out (ot : eot Val) : term := out( eot_to_tuple ot ) • 𝟘.
 
   Lemma single_in_accepts ot : single_in ot ⟶[ActIn ot].
   Proof.
     apply lts_performs_spec2.
-    exists (subst_term (build_subst (eot_to_eit ot) ot) (t_nil)).
+    exists (subst_term (build_subst (eot_to_eit ot) ot) 𝟘).
     apply ar1; [apply eval_in_eot_to_tuple | by apply tuple_match_eot_to_eit].
   Qed.
 
   Lemma single_in_only ot μ : single_in ot ⟶[μ] → μ = ActIn ot.
   Proof.
     intros acc. apply lts_performs_spec1 in acc as (q & tr).
-    change (Applicative_process_algebra.pal_step Val (single_in ot) (ActExt μ) q) in tr.
+    change (PAL.Language.Paper_LTS.pal_step Val (single_in ot) (ActExt μ) q) in tr.
     inversion tr; subst.
     match goal with
     | ev : eval_in_tuple _ = Some _, hm : tuple_match _ _ |- _ =>
@@ -108,14 +105,14 @@ Section PAL_LA.
 
   Lemma single_out_accepts ot : single_out ot ⟶[ActOut ot].
   Proof.
-    apply lts_performs_spec2. exists (t_nil).
+    apply lts_performs_spec2. exists 𝟘.
     apply ar3, eval_out_eot_to_tuple.
   Qed.
 
   Lemma single_out_only ot μ : single_out ot ⟶[μ] → μ = ActOut ot.
   Proof.
     intros acc. apply lts_performs_spec1 in acc as (q & tr).
-    change (Applicative_process_algebra.pal_step Val (single_out ot) (ActExt μ) q) in tr.
+    change (PAL.Language.Paper_LTS.pal_step Val (single_out ot) (ActExt μ) q) in tr.
     inversion tr; subst.
     match goal with
     | ev : eval_out_tuple _ = Some _ |- _ =>

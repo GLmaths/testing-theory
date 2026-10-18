@@ -25,18 +25,18 @@
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics countable.
-From TestingTheory Require Import ActTau InputOutputActions PAL_Syntax
-  Applicative_process_algebra PAL_Alt_LTS.
+From TestingTheory Require Import ActTau InputOutputActions PAL.Language.Syntax
+  PAL.Language.Paper_LTS PAL.Language.LTS.
 (* * The alternative LTS of PAL has the τ-transitions of PAL
 
-   [Applicative_process_algebra.pal_step] labels an input with the received
-   tuple only; [PAL_Alt_LTS.lts_step_a] also records the template of the
+   [PAL.Language.Paper_LTS.pal_step] labels an input with the received
+   tuple only; [PAL.Language.LTS.lts_step_a] also records the template of the
    pattern. Outputs have the same labels in both. *)
 
 Section PAL_Alt_Tau.
   Context (Val : Type) `{Countable Val}.
 
-  Notation old := (Applicative_process_algebra.pal_step Val).
+  Notation old := (PAL.Language.Paper_LTS.pal_step Val).
   Notation new := (lts_step_a Val).
 
   (* From the new LTS to the old one: forget the templates. *)

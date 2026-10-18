@@ -28,7 +28,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Testing_Predicate Completeness
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi PAL_Alt_AbsAction PAL_Good PAL_Alt_Tests.
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Congruence PAL.Language.Phi PAL.Language.AbsAction PAL_Good PAL.Testing.Tests.
 (* * The tests of the alternative LTS of PAL satisfy the specifications of [Completeness]
 
    With [⋍ = cgr]:
@@ -81,7 +81,7 @@ Section PAL_Alt_TestSpec.
     = Some (bool_decide (ltuple l' = ltuple l)).
   Proof.
     revert k l'. induction l as [|f l IH]; intros k l';
-      unfold PAL_Alt_LTS.ltemplate, PAL_Alt_LTS.ltuple in *; intros e.
+      unfold PAL.Language.LTS.ltemplate, PAL.Language.LTS.ltuple in *; intros e.
     - destruct l'; [| discriminate]. simpl. by rewrite ?bool_decide_true.
     - destruct l' as [|f' l']; [discriminate |]. simpl in e. injection e as ef e.
       destruct f, f'; simpl in ef; try discriminate; simpl.
@@ -158,7 +158,7 @@ Section PAL_Alt_TestSpec.
 
   (* ** Steps of the tests *)
 
-  Lemma par_nil_l_cgr (E : term) : (𝟘 ‖ E) ⋍ E.
+  Lemma par_nil_l_cgr (E : term) : (𝟘 │ E) ⋍ E.
   Proof. etransitivity; [apply cgr_once, cgr_par_com | apply cgr_once, cgr_par_nil]. Qed.
 
   (* Steps of an input on the pattern of a template. *)
@@ -175,10 +175,10 @@ Section PAL_Alt_TestSpec.
 
   (* Steps of the output of a test. *)
   Lemma out_lmerge_step_inv ot F μ q :
-    ((out( eot_to_tuple ot ) • 𝟘) ⌊ F) ⟶[μ] q → μ = AOut Val ot ∧ q = (𝟘 ‖ F).
+    ((out( eot_to_tuple ot ) • 𝟘) ⌊⌊ F) ⟶[μ] q → μ = AOut Val ot ∧ q = (𝟘 │ F).
   Proof.
     intros h. inversion h; subst.
-    match goal with h' : lts_step_a _ (t_out _ _) _ _ |- _ => inversion h'; subst end.
+    match goal with h' : lts_step_a _ (out( _ ) • _) _ _ |- _ => inversion h'; subst end.
     match goal with hev : eval_out_tuple _ = Some _ |- _ =>
       rewrite eval_out_eot_to_tuple in hev; injection hev as <- end.
     done.
@@ -189,7 +189,7 @@ Section PAL_Alt_TestSpec.
     (μ = β ∧ t ⋍ gen_test s p) ∨ (μ ≠ β ∧ good t).
   Proof.
     intros hp. destruct β as [l|ot]; cbn [gen_test]; intros h; inversion h; subst.
-    - match goal with h' : lts_step_a _ (t_in _ _) _ _ |- _ =>
+    - match goal with h' : lts_step_a _ (in( _ ) • _) _ _ |- _ =>
         apply in_pattern_step_inv in h' as (l0 & -> & htp & ->) end.
       cbn [subst_term]. rewrite (gen_test_closed s p hp).
       pose proof (eval_guard 0 l l0 htp) as hg.
@@ -200,7 +200,7 @@ Section PAL_Alt_TestSpec.
         * intros e. injection e as <-. by apply hne.
         * apply good_if_false; [| apply good_success]. rewrite hg. by rewrite bool_decide_false.
     - match goal with h' : lts_step_a _ isucc _ _ |- _ => inversion h' end.
-    - match goal with h' : lts_step_a _ (t_lmerge _ _) _ _ |- _ =>
+    - match goal with h' : lts_step_a _ (_ ⌊⌊ _) _ _ |- _ =>
         apply out_lmerge_step_inv in h' as [-> ->] end.
       left. split; [done | apply par_nil_l_cgr].
     - match goal with h' : lts_step_a _ isucc _ _ |- _ => inversion h' end.
@@ -217,7 +217,7 @@ Section PAL_Alt_TestSpec.
       + by exists (subst_term (build_subst (it_from 0 (ltemplate l)) (ltuple l))
              (IF guard_l 0 l THEN gen_test s p ELSE ✓)).
       + by destruct hne.
-    - exists (𝟘 ‖ gen_test s p). split.
+    - exists (𝟘 │ gen_test s p). split.
       + cbn [gen_test]. apply aar4_l, aar6, aar3, eval_out_eot_to_tuple.
       + apply par_nil_l_cgr.
   Qed.
@@ -225,10 +225,10 @@ Section PAL_Alt_TestSpec.
   Lemma gen_test_tau_good p β s t : gen_test (β :: s) p ⟶ t → good t.
   Proof.
     intros h. destruct β as [l|ot]; simpl in h; inversion h; subst.
-    - match goal with h' : lts_step_a _ (t_in _ _) τ _ |- _ => inversion h' end.
+    - match goal with h' : lts_step_a _ (in( _ ) • _) τ _ |- _ => inversion h' end.
     - apply good_echoice_r. by eapply isucc_tau_good.
-    - match goal with h' : lts_step_a _ (t_lmerge _ _) τ _ |- _ => inversion h'; subst end.
-      match goal with h' : lts_step_a _ (t_out _ _) τ _ |- _ => inversion h'; subst end. congruence.
+    - match goal with h' : lts_step_a _ (_ ⌊⌊ _) τ _ |- _ => inversion h'; subst end.
+      match goal with h' : lts_step_a _ (out( _ ) • _) τ _ |- _ => inversion h'; subst end. congruence.
     - apply good_echoice_r. by eapply isucc_tau_good.
   Qed.
 
@@ -246,7 +246,7 @@ Section PAL_Alt_TestSpec.
   Lemma ac_t_no_tau e q : ¬ ac_t e ⟶ q.
   Proof.
     destruct e as [tp|ot]; simpl; intros h; inversion h; subst.
-    match goal with h' : lts_step_a _ (t_out _ _) τ _ |- _ => inversion h'; subst end. congruence.
+    match goal with h' : lts_step_a _ (out( _ ) • _) τ _ |- _ => inversion h'; subst end. congruence.
   Qed.
 
   Lemma ac_t_step e : ∃ μ q, ac_t e ⟶[μ] q ∧ αᴛᴀᴘᴀʟ Val μ = e.

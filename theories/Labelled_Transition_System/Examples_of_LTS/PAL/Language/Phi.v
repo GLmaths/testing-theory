@@ -27,7 +27,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
-From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL_Syntax PAL_Alt_LTS.
+From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL.Language.Syntax PAL.Language.LTS.
 (* * The abstraction αᴛᴇꜱᴛ of the alternative labels of PAL
 
    [αᴛᴇꜱᴛ] maps a label to an event of De Nicola–Pugliese (Definition 5.3):
@@ -38,7 +38,7 @@ From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.Label
    - [abs_R_spec]: the events [αᴛᴇꜱᴛ(R p)] of a process form the finite set [abs_R p];
    - [αᴛᴇꜱᴛ_kernel]: [αᴛᴇꜱᴛ μ = αᴛᴇꜱᴛ μ'] iff every process accepting [μ] accepts [μ'].
      So the kernel of [αᴛᴇꜱᴛ] is the largest [≈ᴛᴇꜱᴛ], and [αᴛᴇꜱᴛ] is its canonical
-     projection ([gLtsLAtest_PALA]). *)
+     projection ([EPO_PALA]). *)
 
 Section PAL_Alt_Phi.
   Context (Val : Type) `{Countable Val} `{!Inhabited Val}.
@@ -85,11 +85,11 @@ Section PAL_Alt_Phi.
 
   Fixpoint collect_in_a (E : term) : list template :=
     match E with
-    | t_in t _ | t_read t _ =>
+    | in( t ) • _ | read( t ) • _ =>
         match eval_in_tuple t with Some it => [template_of Val it] | None => [] end
-    | t_echoice E1 E2 | t_par E1 E2 => collect_in_a E1 ++ collect_in_a E2
-    | t_lmerge E1 _ => collect_in_a E1
-    | t_if be E1 E2 =>
+    | E1 □ E2 | E1 │ E2 => collect_in_a E1 ++ collect_in_a E2
+    | E1 ⌊⌊ _ => collect_in_a E1
+    | IF be THEN E1 ELSE E2 =>
         match eval_bexp be with
         | Some true => collect_in_a E1
         | Some false => collect_in_a E2
@@ -150,7 +150,7 @@ Section PAL_Alt_Phi.
   Lemma ltemplate_label_witness tp : ltemplate (label_witness tp) = tp.
   Proof.
     induction tp as [|[|v|] tp IH]; [done | ..];
-      unfold PAL_Alt_LTS.ltemplate, label_witness in *; simpl; by rewrite IH.
+      unfold PAL.Language.LTS.ltemplate, label_witness in *; simpl; by rewrite IH.
   Qed.
 
   (* ** The events of a process form a finite set *)
@@ -279,15 +279,22 @@ Section PAL_Alt_Phi.
   Lemma R_test_a_spec μ μ' : R_test_a μ μ' → (𝐄 μ : subset_of term) ⊆ 𝐄 μ'.
   Proof. apply αᴛᴇꜱᴛ_kernel. Qed.
 
-  #[global] Instance gLtsLAtest_PALA : @gLtsLAtest term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) :=
-    {| LA_test := R_test_a;
-       LA_test_eq := R_test_a_equivalence;
-       LA_test_dec := R_test_a_dec;
-       LA_test_spec := R_test_a_spec |}.
+  Definition EPO_PALA : Enable_PO term (PALA_ExtAction Val) (gLtsT := PALA_gLts Val) :=
+    MkEnable_PO term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) R_test_a
+      (@Equivalence_PreOrder _ _ R_test_a_equivalence) R_test_a_spec.
 
   (* [R_test_a] is the largest [≈ᴛᴇꜱᴛ]. *)
   Lemma R_test_a_largest (R : PALA_Act → PALA_Act → Prop) :
     (∀ μ μ', R μ μ' → (𝐄 μ : subset_of term) ⊆ 𝐄 μ') → ∀ μ μ', R μ μ' → R_test_a μ μ'.
   Proof. intros hR μ μ' h. apply αᴛᴇꜱᴛ_kernel, hR, h. Qed.
+
+  #[global] Instance αᴛᴀᴘᴀʟ_proj : LA_proj R_test_a αᴛᴀᴘᴀʟ.
+  Proof. intros μ μ'. done. Qed.
+
+  #[global] Instance αᴛᴀᴘᴀʟ_surj : LA_surj αᴛᴀᴘᴀʟ.
+  Proof.
+    refine {| LA_repr e := match e with EvIn tp => AIn _ (label_witness tp) | EvOut ot => AOut _ ot end |}.
+    intros [tp|ot]; cbn; [by rewrite ltemplate_label_witness | done].
+  Defined.
 End PAL_Alt_Phi.
 (* end hide *)

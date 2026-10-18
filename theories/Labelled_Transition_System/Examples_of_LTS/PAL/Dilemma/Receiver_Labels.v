@@ -28,12 +28,12 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act DefinitionAS
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi
-  Applicative_process_algebra PAL_Alt_Tau PAL_Label_Dilemma PAL_Label_Dilemma_Sync PAL_Alt_Dilemma
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Congruence PAL.Language.Phi
+  PAL.Language.Paper_LTS PAL.Language.Paper_Correspondence PAL.Dilemma.Label_Dilemma PAL.Dilemma.Label_Dilemma_Sync PAL.Dilemma.Not_Finitary
   Testing_Predicate CompletenessASco.
 (* * PAL with outputs labelled by their receiver
 
-   The alternative LTS ([PAL_Alt_LTS.v]) labels an input with its template
+   The alternative LTS ([PAL.Language.LTS]) labels an input with its template
    and the received tuple, [AIn l], but an output only with its tuple,
    [AOut ot].  Here an output is labelled like the input that receives it:
    [ROut l] is the emission of [ltuple l] to a receiver of template
@@ -41,12 +41,12 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
    matching [ot] (finitely many, [labels_of ot]), and the dual is unique:
    [RIn l] meets [ROut l] and nothing else.
 
-   The LTS is a relabelling of [PAL_Alt_LTS]: [p ⟶[ROut l] q] iff
+   The LTS is a relabelling of [PAL.Language.LTS]: [p ⟶[ROut l] q] iff
    [p ⟶[AOut (ltuple l)] q], with the same inputs and the same τ.  Hence
    - [PALR_tau_iff]: its τ are those of the alternative LTS, hence of PAL
-     ([PAL_Alt_Tau.tau_iff]);
+     ([PAL.Language.Paper_Correspondence.tau_iff]);
    - [PALR_sync_iff]: its synchronisations along [dual] are those of the
-     alternative LTS, hence of PAL ([PAL_Alt_Dilemma.PALA_sync_iff]).
+     alternative LTS, hence of PAL ([PAL.Dilemma.Not_Finitary.PALA_sync_iff]).
 
    Abstraction, with [αᴛᴇꜱᴛ] the identity and [αᴘᴿ] forgetting the values received
    at formal positions:
@@ -286,9 +286,9 @@ End PAL_Rcv.
 
 (* ** Against PAL itself *)
 
-(* The τ of [PAL_Rcv] are those of PAL. *)
+(* The τ of [PAL.Dilemma.Receiver_Labels] are those of PAL. *)
 Lemma PALR_tau_iff_PAL {Val : Type} `{Countable Val} (p q : term Val) :
-  lts_step_r Val p τ q ↔ Applicative_process_algebra.pal_step Val p τ q.
+  lts_step_r Val p τ q ↔ PAL.Language.Paper_LTS.pal_step Val p τ q.
 Proof. apply (tau_iff Val). Qed.
 
 (* A process and a test communicate along [dual] exactly when they

@@ -178,7 +178,7 @@ Proof.
       { eapply Hp. simpl. lia. } inversion eq2. eauto.
 Qed.
 
-Lemma gNewVarC_swap_0_S k g0 : gNewVarC (S k) (gNewVarC 0 g0) = gNewVarC 0 (gNewVarC k g0).
+Lemma gNewVarC_swap_0_S k g0 : gNewVarC (S k) (⇑ g0) = ⇑ (gNewVarC k g0).
 Proof.
   pose proof (NewVarC_and_NewVarC 0 k (g g0)) as Heq.
   simpl in Heq.
@@ -611,7 +611,7 @@ destruct p; intros i k0 Hle; simpl.
 Qed.
 
 Corollary gVarSwap_and_gNewVarC0 k0 g1 :
-  gVarSwap_in_proc (S k0) (gNewVarC 0 g1) = gNewVarC 0 (gVarSwap_in_proc k0 g1).
+  gVarSwap_in_proc (S k0) (⇑ g1) = ⇑ (gVarSwap_in_proc k0 g1).
 Proof.
 assert (VarSwap_in_proc (S k0) (NewVarC 0 (g g1)) = NewVarC 0 (VarSwap_in_proc k0 (g g1))) as H.
 { apply NewVarC_and_VarSwap_le. lia. }

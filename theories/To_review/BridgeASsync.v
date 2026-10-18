@@ -22,6 +22,9 @@
 *)
 (* end hide *)
 
+(* begin hide *)
+(*
+
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
 From stdpp Require Import base tactics decidable countable finite gmap list.
@@ -109,4 +112,6 @@ Section Abs_bridges.
       + apply coR_abs_spec2. by exists β.
   Defined.
 End Abs_bridges.
+(* end hide *)
+*)
 (* end hide *)

@@ -3074,7 +3074,7 @@ Proof.
 Qed.
 
 Lemma cgr_build_perm : forall kl kl', Permutation kl kl' ->
-  cgr 0 (g (build kl)) (g (build kl')).
+  g (build kl) ≡* g (build kl').
 Proof. intros kl kl' H. apply rebuild_perm. apply Permutation_map. exact H. Qed.
 
 Lemma kguard_leafP : forall k l, summands (kguard k l) = [kguard k l].

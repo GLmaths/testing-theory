@@ -27,8 +27,8 @@ From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base countable.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OBA_FB FiniteImageLTS
   coFiniteImage InteractionBetweenLts Testing_Predicate DefinitionAS CompletenessASco TestSpecBridge
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi PAL_Alt_AbsAction PAL_Good PAL_Alt_Tests
-  PAL_Alt_TestSpec.
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Congruence PAL.Language.Phi PAL.Language.AbsAction PAL_Good PAL.Testing.Tests
+  PAL.Testing.Test_Spec.
 (* * What the alternative LTS of PAL provides for [EquivalenceASco]
 
    [EquivalenceASco.equivalence_fw_acc_set_and_must_i_co_trace] states
@@ -36,10 +36,10 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
    here, and the only missing one is [FinitaryAbsAction].
 
    That one is not a gap to be filled: [αᴘʀᴏ (αᴛᴇꜱᴛ (coR p))] is infinite for
-   [in(?x).𝟘] whatever [αᴘʀᴏ] ([PAL_Alt_Abs.prog_spec_injective] with
-   [PAL_Alt_Abs.αᴛᴇꜱᴛ_coR_p_formal]), and no labelling of PAL does better
-   ([PAL_Label_Dilemma.no_labelling]). What is finite is [αᴛᴇꜱᴛ (R p)]
-   ([PAL_Alt_Phi.abs_R_spec]), the events of the process itself. *)
+   [in(?x).𝟘] whatever [αᴘʀᴏ] ([PAL.Dilemma.Abs.prog_spec_injective] with
+   [PAL.Dilemma.Abs.αᴛᴇꜱᴛ_coR_p_formal]), and no labelling of PAL does better
+   ([PAL.Dilemma.Label_Dilemma.no_labelling]). What is finite is [αᴛᴇꜱᴛ (R p)]
+   ([PAL.Language.Phi.abs_R_spec]), the events of the process itself. *)
 
 Section PAL_Alt_CoTraceHypotheses.
   Context (Val : Type) `{Countable Val} `{!Inhabited Val}.

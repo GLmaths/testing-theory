@@ -28,11 +28,11 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act
-  Testing_Predicate DefinitionAS CompletenessASco PAL_Syntax Applicative_process_algebra
-  PAL_Label_Dilemma.
+  Testing_Predicate DefinitionAS CompletenessASco PAL.Language.Syntax PAL.Language.Paper_LTS
+  PAL.Dilemma.Label_Dilemma.
 (* * The PAL dilemma survives the separation of the alphabets
 
-   [PAL_Label_Dilemma.v] with two alphabets: the processes are labelled over
+   [PAL.Dilemma.Label_Dilemma] with two alphabets: the processes are labelled over
    [Aproc], the tests over [Atest], and they meet along [sync].  The two LTSs
    on the terms of PAL are now independent — a process and a test may label
    the same term differently — and nothing is asked of the process labels.
@@ -50,7 +50,7 @@ From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Ac
 Section PAL_Label_Dilemma_Sync.
   Context {Val : Type} `{Countable Val} (inj : nat → Val) `{!Inj eq eq inj}.
 
-  Notation term := (PAL_Syntax.term Val).
+  Notation term := (PAL.Language.Syntax.term Val).
   Open Scope pal_scope.
 
   (* ** Any pair of labellings *)
@@ -85,11 +85,11 @@ Section PAL_Label_Dilemma_Sync.
   (* [c] is a label by which the test [out(!v).𝟘] synchronises with the
       process [in(?x).out(!x).𝟘]. *)
   Definition spec_sync (v : Val) (c : Atest) : Prop :=
-    ∃ a : Aproc, sync a c ∧ p_any ⟶[a] out_val v ∧ out_val v ⟶[c] t_nil.
+    ∃ a : Aproc, sync a c ∧ p_any ⟶[a] out_val v ∧ out_val v ⟶[c] 𝟘.
 
   Lemma spec_sync_exists v : ∃ c, spec_sync v c.
   Proof.
-    destruct (proj2 (hsync p_any (out_val v) (out_val v) t_nil)) as (a & c & hd & ha & hc).
+    destruct (proj2 (hsync p_any (out_val v) (out_val v) 𝟘)) as (a & c & hd & ha & hc).
     - exists [of_val v]. left. split; [apply p_any_in | apply out_val_out].
     - exists c, a. done.
   Qed.
@@ -148,7 +148,7 @@ Section PAL_Label_Dilemma_Sync.
     2: { by apply p_any_out_inv in h1. }
     apply p_any_in_inv in h1 as (u & -> & hq). apply out_val_inj in hq. subst u.
     (* so it synchronises with [in(!v).𝟘] towards [t] *)
-    destruct (proj2 (hsync (in_val v) (gen [c]) t_nil t)) as (μ1 & d & hd1 & h1' & hdstep).
+    destruct (proj2 (hsync (in_val v) (gen [c]) 𝟘 t)) as (μ1 & d & hd1 & h1' & hdstep).
     { exists [of_val v]. left. split; [apply in_val_in | exact h2]. }
     destruct (decide (d = c)) as [-> | hdc].
     - apply (not_in_coR_val_sync v w c c' hne); [by exists a | done | done |].

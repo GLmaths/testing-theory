@@ -28,7 +28,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Phi PAL_Good.
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Phi PAL_Good.
 (* * Tests for the completeness of the alternative LTS of PAL
 
    The observers of De Nicola–Pugliese (Definition 5.9), along a trace of
@@ -37,12 +37,12 @@ From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation
    - for an input [AIn l], the test inputs with the pattern of template
      [ltemplate l], and goes on only if the received tuple is [ltuple l],
      otherwise it succeeds;
-   - for an output [AOut ot], the test emits [ot] with [out(ot).nil ⌊ _];
+   - for an output [AOut ot], the test emits [ot] with [out(ot).nil ⌊⌊ _];
    - each step can also be abandoned by [isucc].
    [t_conv] ends with [isucc] (the paper's [con]), [ta E] ends with an
    external choice among the tests [ac e] for the events [e ∈ E] (the
    paper's [ac]):
-   - [ac (EvOut ot) = out(ot).nil ⌊ ✓];
+   - [ac (EvOut ot) = out(ot).nil ⌊⌊ ✓];
    - [ac (EvIn tp) = in(pattern of tp).✓]. *)
 
 Section PAL_Alt_Tests.
@@ -83,7 +83,7 @@ Section PAL_Alt_Tests.
     | AIn _ l :: s' =>
         (in( pattern_from 0 (ltemplate l) ) • (IF guard_l 0 l THEN gen_test s' p ELSE ✓)) □ isucc
     | AOut _ ot :: s' =>
-        ((out( eot_to_tuple ot ) • 𝟘) ⌊ gen_test s' p) □ isucc
+        ((out( eot_to_tuple ot ) • 𝟘) ⌊⌊ gen_test s' p) □ isucc
     end.
 
   (* Tests for convergence: the paper's [con]. *)
@@ -92,7 +92,7 @@ Section PAL_Alt_Tests.
   (* The test of one event: the paper's [ac e]. *)
   Definition ac_t (e : Event) : term :=
     match e with
-    | EvOut _ ot => (out( eot_to_tuple ot ) • 𝟘) ⌊ ✓
+    | EvOut _ ot => (out( eot_to_tuple ot ) • 𝟘) ⌊⌊ ✓
     | EvIn _ tp => in( pattern_from 0 tp ) • ✓
     end.
 
@@ -110,7 +110,7 @@ Section PAL_Alt_Tests.
   Lemma isucc_not_good : ¬ good_PAL Val isucc.
   Proof. inversion 1. Qed.
 
-  Lemma isucc_tau : isucc ⟶ (𝟘 ‖ ✓).
+  Lemma isucc_tau : isucc ⟶ (𝟘 │ ✓).
   Proof. apply air6. Qed.
 
   Lemma isucc_tau_good q : isucc ⟶ q → good_PAL Val q.

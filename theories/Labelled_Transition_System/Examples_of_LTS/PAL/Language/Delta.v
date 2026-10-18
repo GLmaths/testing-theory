@@ -27,17 +27,17 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
-From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL_Syntax PAL_Alt_LTS.
+From TestingTheory Require Import ActTau gLts Subset_Act Label_Abstraction.LabelAbstraction PAL.Language.Syntax PAL.Language.LTS.
 (* * The abstraction αᴘʀᴏ of the co-actions of PAL
 
-   The counterpart of [αᴛᴇꜱᴛ] ([PAL_Alt_Phi.v]) for [≈ᴘʀᴏ]: a label [μ] is seen
+   The counterpart of [αᴛᴇꜱᴛ] ([PAL.Language.Phi]) for [≈ᴘʀᴏ]: a label [μ] is seen
    through the processes accepting a dual of [μ], [co𝐄 μ].
    - [αᴘʀᴏ (AIn l) = CoOut (ltuple l)]: the duals of [AIn l] are the outputs of
      [ltuple l], whatever the template;
    - [αᴘʀᴏ (AOut ot) = CoIn ot]: the duals of [AOut ot] are the inputs receiving
      [ot], with any template.
    [αᴘʀᴏ_kernel]: [αᴘʀᴏ μ = αᴘʀᴏ μ'] iff [co𝐄 μ ⊆ co𝐄 μ']. So the kernel of [αᴘʀᴏ] is the
-   largest [≈ᴘʀᴏ], and [αᴘʀᴏ] is its canonical projection ([gLtsLAprog_PALA]).
+   largest [≈ᴘʀᴏ], and [αᴘʀᴏ] is its canonical projection ([CEPO_PALA]).
    Unlike [αᴛᴇꜱᴛ], [αᴘʀᴏ] forgets the template of an input: the co-actions of
    [in(?x).𝟘] are [AOut ⟨v⟩] for every [v], with pairwise distinct images. *)
 
@@ -114,7 +114,7 @@ Section PAL_Alt_Delta.
   Lemma template_of_eot_to_eit (ot : eot) : template_of Val (eot_to_eit ot) = ltemplate (exact_label Val ot).
   Proof.
     induction ot as [|[|v] ot IH]; [done | ..];
-      unfold template_of, PAL_Alt_LTS.ltemplate, exact_label, eot_to_eit in *; simpl; by rewrite IH.
+      unfold template_of, PAL.Language.LTS.ltemplate, exact_label, eot_to_eit in *; simpl; by rewrite IH.
   Qed.
 
   (* A template without formal field determines the received tuple. *)
@@ -122,7 +122,7 @@ Section PAL_Alt_Delta.
     template_of Val (eot_to_eit ot) = ltemplate l → ltuple l = ot.
   Proof.
     revert l. induction ot as [|o ot IH]; intros [|f l] e; try discriminate; [done |].
-    cbn in e. injection e as ef el. unfold PAL_Alt_LTS.ltuple in *. cbn. f_equal; [| by apply IH].
+    cbn in e. injection e as ef el. unfold PAL.Language.LTS.ltuple in *. cbn. f_equal; [| by apply IH].
     destruct o, f; cbn in ef; try discriminate; by try injection ef as ->.
   Qed.
 
@@ -180,11 +180,10 @@ Section PAL_Alt_Delta.
   Lemma R_prog_a_spec μ μ' : R_prog_a μ μ' → (co𝐄 μ : subset_of term) ⊆ co𝐄 μ'.
   Proof. apply αᴘʀᴏ_kernel. Qed.
 
-  #[global] Instance gLtsLAprog_PALA : @gLtsLAprog term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) PALA_Act (PALA_ExtAction Val) _ :=
-    {| LA_prog := R_prog_a;
-       LA_prog_eq := R_prog_a_equivalence;
-       LA_prog_dec := R_prog_a_dec;
-       LA_prog_spec := R_prog_a_spec |}.
+  Definition CEPO_PALA : CoEnable_PO term (PALA_ExtAction Val) (gLtsP := PALA_gLts Val) :=
+    MkCoEnable_PO term PALA_Act (PALA_ExtAction Val) (PALA_gLts Val) PALA_Act (PALA_ExtAction Val) _ R_prog_a
+      (@Equivalence_PreOrder _ _ R_prog_a_equivalence)
+      (λ μ μ' h, R_prog_a_spec μ' μ (@symmetry _ _ (@Equivalence_Symmetric _ _ R_prog_a_equivalence) _ _ h)).
 
   (* [R_prog_a] is the largest [≈ᴘʀᴏ]. *)
   Lemma R_prog_a_largest (R : PALA_Act → PALA_Act → Prop) :

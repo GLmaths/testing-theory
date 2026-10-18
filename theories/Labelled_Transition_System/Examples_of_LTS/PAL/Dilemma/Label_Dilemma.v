@@ -28,7 +28,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Subset_Act
-  Testing_Predicate DefinitionAS Completeness PAL_Syntax Applicative_process_algebra.
+  Testing_Predicate DefinitionAS Completeness PAL.Language.Syntax PAL.Language.Paper_LTS.
 (* * No labelling of PAL fits [FinitaryAbsAction] and [test_spec]
 
    Take any type of labels [A] with any [dual], and any LTS on the terms of
@@ -73,9 +73,9 @@ Qed.
 Section PAL_Label_Dilemma.
   Context {Val : Type} `{Countable Val} (inj : nat → Val) `{!Inj eq eq inj}.
 
-  Notation term := (PAL_Syntax.term Val).
+  Notation term := (PAL.Language.Syntax.term Val).
   Notation eot := (eot Val).
-  Notation old := (Applicative_process_algebra.pal_step Val).
+  Notation old := (PAL.Language.Paper_LTS.pal_step Val).
   Open Scope pal_scope.
 
 
@@ -91,7 +91,7 @@ Section PAL_Label_Dilemma.
   Definition out_val (v : Val) : term := out( [! ve_val v] ) • 𝟘.
 
   Lemma p_any_in u : old p_any (ActExt (ActIn [of_val u])) (out_val u).
-  Proof. exact (ar1 Val [? 0] (out( [! (ve_var 0)] ) • t_nil) [if_formal 0] [of_val u] eq_refl ltac:(repeat constructor)). Qed.
+  Proof. exact (ar1 Val [? 0] (out( [! (ve_var 0)] ) • 𝟘) [if_formal 0] [of_val u] eq_refl ltac:(repeat constructor)). Qed.
 
   Lemma p_any_in_inv ot q : old p_any (ActExt (ActIn ot)) q → ∃ u, ot = [of_val u] ∧ q = out_val u.
   Proof.
@@ -105,8 +105,8 @@ Section PAL_Label_Dilemma.
   Lemma p_any_out_inv ot q : ¬ old p_any (ActExt (ActOut ot)) q.
   Proof. inversion 1. Qed.
 
-  Lemma in_val_in v : old (in_val v) (ActExt (ActIn [of_val v])) t_nil.
-  Proof. exact (ar1 Val [! (ve_val v)] t_nil [if_val v] [of_val v] eq_refl ltac:(repeat constructor)). Qed.
+  Lemma in_val_in v : old (in_val v) (ActExt (ActIn [of_val v])) 𝟘.
+  Proof. exact (ar1 Val [! (ve_val v)] 𝟘 [if_val v] [of_val v] eq_refl ltac:(repeat constructor)). Qed.
 
   Lemma in_val_in_inv v ot q : old (in_val v) (ActExt (ActIn ot)) q → ot = [of_val v].
   Proof.
@@ -120,7 +120,7 @@ Section PAL_Label_Dilemma.
   Lemma in_val_out_inv v ot q : ¬ old (in_val v) (ActExt (ActOut ot)) q.
   Proof. inversion 1. Qed.
 
-  Lemma out_val_out v : old (out_val v) (ActExt (ActOut [of_val v])) t_nil.
+  Lemma out_val_out v : old (out_val v) (ActExt (ActOut [of_val v])) 𝟘.
   Proof. by apply ar3. Qed.
 
   Lemma out_val_out_inv v ot q : old (out_val v) (ActExt (ActOut ot)) q → ot = [of_val v].
@@ -160,11 +160,11 @@ Section PAL_Label_Dilemma.
 
   (* [c] is a label by which [out(!v).𝟘] synchronises with [in(?x).out(!x).𝟘]. *)
   Definition spec (v : Val) (c : A) : Prop :=
-    ∃ a : A, dual a c ∧ p_any ⟶[a] out_val v ∧ out_val v ⟶[c] t_nil.
+    ∃ a : A, dual a c ∧ p_any ⟶[a] out_val v ∧ out_val v ⟶[c] 𝟘.
 
   Lemma spec_exists v : ∃ c, spec v c.
   Proof.
-    destruct (proj2 (hsync p_any (out_val v) (out_val v) t_nil)) as (a & c & hd & ha & hc).
+    destruct (proj2 (hsync p_any (out_val v) (out_val v) 𝟘)) as (a & c & hd & ha & hc).
     - exists [of_val v]. left. split; [apply p_any_in | apply out_val_out].
     - exists c, a. done.
   Qed.
@@ -217,7 +217,7 @@ Section PAL_Label_Dilemma.
     2: { by apply p_any_out_inv in h1. }
     apply p_any_in_inv in h1 as (u & -> & hq). apply out_val_inj in hq. subst u.
     (* so it synchronises with [in(!v).𝟘] towards [t] *)
-    destruct (proj2 (hsync (in_val v) (gen [c]) t_nil t)) as (μ1 & d & hd1 & h1' & hdstep).
+    destruct (proj2 (hsync (in_val v) (gen [c]) 𝟘 t)) as (μ1 & d & hd1 & h1' & hdstep).
     { exists [of_val v]. left. split; [apply in_val_in | exact h2]. }
     destruct (decide (d = c)) as [-> | hdc].
     - apply (not_in_coR_val v w c c' hne); [by exists a | done | done |].

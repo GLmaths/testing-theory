@@ -35,6 +35,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program.
+
+#[local] Open Scope lqccs_scope.
 (* ** Labels without schedulers *)
 
 Inductive ulbl : Type :=
@@ -64,17 +66,17 @@ Qed.
 
 Fixpoint prog_outs (P : proc) : list (chan * val * proc) :=
   match P with
-  | PSend _ c e => match eval e with Some v => [(c, v, PG (GNil []))] | None => [] end
+  | PSend _ c e => match eval e with Some v => [(c, v, 𝟘)] | None => [] end
   | PIte e P Q =>
       match eval e with
       | Some (VBool true) => prog_outs P
       | Some (VBool false) => prog_outs Q
       | _ => []
       end
-  | PPar P Q =>
-      ((λ '(c, v, P'), (c, v, PPar P' Q)) <$> prog_outs P)
-      ++ ((λ '(c, v, Q'), (c, v, PPar P Q')) <$> prog_outs Q)
-  | PRes P c => (λ '(c', v, P'), (c', v, PRes P' c)) <$> filter (λ '(c', _, _), c' ≠ c) (prog_outs P)
+  | P ∥ Q =>
+      ((λ '(c, v, P'), (c, v, P' ∥ Q)) <$> prog_outs P)
+      ++ ((λ '(c, v, Q'), (c, v, P ∥ Q')) <$> prog_outs Q)
+  | P \ c => (λ '(c', v, P'), (c', v, P' \ c)) <$> filter (λ '(c', _, _), c' ≠ c) (prog_outs P)
   | PG _ => []
   end.
 
@@ -120,18 +122,18 @@ Qed.
 
 Fixpoint gsucc (g : guard) (u : ulbl) : list proc :=
   match g with
-  | GPre 𝜆 P0 =>
+  | 𝜆 ∙ P0 =>
       match 𝜆, u with
       | PTau _, UTau | PTauPair _ _, UTau => [P0]
       | PRecv _ c x, UAct (AIn c' v) =>
-          if decide (c = c') then [subst P0 x v] else []
+          if decide (c = c') then [P0 ⟦ v // x ⟧] else []
       | POp _ E es, UAct (AOp E' qs) =>
           if decide (E = E' ∧ eval_qubits es = Some qs) then [P0] else []
       | PMeas _ M es x, UAct (AMeas M' qs x') =>
           if decide (M = M' ∧ x = x' ∧ eval_qubits es = Some qs) then [P0] else []
       | _, _ => []
       end
-  | GSum g1 g2 => gsucc g1 u ++ gsucc g2 u
+  | g1 ⊕ g2 => gsucc g1 u ++ gsucc g2 u
   | _ => []
   end.
 
@@ -139,7 +141,7 @@ Fixpoint succ (P : proc) (u : ulbl) {struct P} : list proc :=
   match P with
   | PSend _ c e =>
       match u with
-      | UAct (AOut c' v) => if decide (c = c' ∧ eval e = Some v) then [PG (GNil [])] else []
+      | UAct (AOut c' v) => if decide (c = c' ∧ eval e = Some v) then [𝟘] else []
       | _ => []
       end
   | PIte e P Q =>
@@ -148,16 +150,16 @@ Fixpoint succ (P : proc) (u : ulbl) {struct P} : list proc :=
       | Some (VBool false) => succ Q u
       | _ => []
       end
-  | PPar P Q =>
-      ((λ P', PPar P' Q) <$> succ P u)
-      ++ ((λ Q', PPar P Q') <$> succ Q u)
+  | P ∥ Q =>
+      ((λ P', P' ∥ Q) <$> succ P u)
+      ++ ((λ Q', P ∥ Q') <$> succ Q u)
       ++ match u with
          | UTau =>
-             (prog_outs P ≫= λ '(c, v, P'), (λ Q', PPar P' Q') <$> succ Q (UAct (AIn c v)))
-             ++ (prog_outs Q ≫= λ '(c, v, Q'), (λ P', PPar P' Q') <$> succ P (UAct (AIn c v)))
+             (prog_outs P ≫= λ '(c, v, P'), (λ Q', P' ∥ Q') <$> succ Q (UAct (AIn c v)))
+             ++ (prog_outs Q ≫= λ '(c, v, Q'), (λ P', P' ∥ Q') <$> succ P (UAct (AIn c v)))
          | _ => []
          end
-  | PRes P c => if decide (on_chan_u c u) then [] else (λ P', PRes P' c) <$> succ P u
+  | P \ c => if decide (on_chan_u c u) then [] else (λ P', P' \ c) <$> succ P u
   | PG g => gsucc g u
   end.
 
@@ -270,24 +272,24 @@ Definition prefix_act (𝜆 : prefix) : option pact :=
 
 Fixpoint gacts (g : guard) : list (pact * proc) :=
   match g with
-  | GPre 𝜆 P0 => match prefix_act 𝜆 with Some a => [(a, P0)] | None => [] end
-  | GSum g1 g2 => gacts g1 ++ gacts g2
+  | 𝜆 ∙ P0 => match prefix_act 𝜆 with Some a => [(a, P0)] | None => [] end
+  | g1 ⊕ g2 => gacts g1 ++ gacts g2
   | _ => []
   end.
 
 Fixpoint acts (P : proc) : list (pact * proc) :=
   match P with
-  | PSend _ c e => match eval e with Some v => [(AOut c v, PG (GNil []))] | None => [] end
+  | PSend _ c e => match eval e with Some v => [(AOut c v, 𝟘)] | None => [] end
   | PIte e P Q =>
       match eval e with
       | Some (VBool true) => acts P
       | Some (VBool false) => acts Q
       | _ => []
       end
-  | PPar P Q =>
-      ((λ '(a, P'), (a, PPar P' Q)) <$> acts P) ++ ((λ '(a, Q'), (a, PPar P Q')) <$> acts Q)
-  | PRes P c =>
-      (λ '(a, P'), (a, PRes P' c)) <$> filter (λ '(a, _), ¬ on_chan_u c (UAct a)) (acts P)
+  | P ∥ Q =>
+      ((λ '(a, P'), (a, P' ∥ Q)) <$> acts P) ++ ((λ '(a, Q'), (a, P ∥ Q')) <$> acts Q)
+  | P \ c =>
+      (λ '(a, P'), (a, P' \ c)) <$> filter (λ '(a, _), ¬ on_chan_u c (UAct a)) (acts P)
   | PG g => gacts g
   end.
 

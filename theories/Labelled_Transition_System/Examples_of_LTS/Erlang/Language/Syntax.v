@@ -44,7 +44,7 @@
       timeout branch that may always be taken).  It is the only construct of
       the language offering a choice between receiving and computing, and it is
       what makes it possible to write observers.
-    - [✓] ([ETick]) is an inert expression marking success; it is used by the
+    - [✓ₑ] ([ETick]) is an inert expression marking success; it is used by the
       testing predicate, not by programs.
     - [κ] ([EHole]) is the hole of Lanese et al.: the expression semantics
       answers a request to the system level and leaves a hole for the answer.
@@ -232,8 +232,8 @@ Fixpoint expr_encode (e : expr) : gen_tree eleaf :=
   | EReceiveAfter cls a => GenNode 9 [cls_encode cls; expr_encode a]
   | ESpawn f es => GenNode 10 [GenLeaf (inl (inl f)); args_encode es]
   | ESelf => GenNode 11 []
-  | ETick => GenNode 12 []
-  | EHole => GenNode 13 []
+  | ✓ₑ => GenNode 12 []
+  | κ => GenNode 13 []
   end
 with cls_encode (cls : clauses) : gen_tree eleaf :=
   match cls with
@@ -284,8 +284,8 @@ Fixpoint expr_decode (t : gen_tree eleaf) : option expr :=
   | GenNode 10 [GenLeaf (inl (inl f)); t2] =>
       match args_decode t2 with Some es => Some (ESpawn f es) | None => None end
   | GenNode 11 [] => Some ESelf
-  | GenNode 12 [] => Some ETick
-  | GenNode 13 [] => Some EHole
+  | GenNode 12 [] => Some ✓ₑ
+  | GenNode 13 [] => Some κ
   | _ => None
   end
 with cls_decode (t : gen_tree eleaf) : option clauses :=
@@ -414,8 +414,8 @@ Fixpoint subst (σ : sub) (e : expr) : expr :=
   | EReceiveAfter cls a => EReceiveAfter (subst_cls σ cls) (subst σ a)
   | ESpawn f es => ESpawn f (subst_args σ es)
   | ESelf => ESelf
-  | ETick => ETick
-  | EHole => EHole
+  | ✓ₑ => ✓ₑ
+  | κ => κ
   end
 with subst_cls (σ : sub) (cls : clauses) : clauses :=
   match cls with
@@ -432,7 +432,7 @@ with subst_args (σ : sub) (es : args) : args :=
 
 Fixpoint hfill (e : expr) (u : expr) : expr :=
   match e with
-  | EHole => u
+  | κ => u
   | EVar x => EVar x
   | EVal v => EVal v
   | ECons e1 e2 => ECons (hfill e1 u) (hfill e2 u)
@@ -445,7 +445,7 @@ Fixpoint hfill (e : expr) (u : expr) : expr :=
   | EReceiveAfter cls a => EReceiveAfter (hfill_cls cls u) (hfill a u)
   | ESpawn f es => ESpawn f (hfill_args es u)
   | ESelf => ESelf
-  | ETick => ETick
+  | ✓ₑ => ✓ₑ
   end
 with hfill_cls (cls : clauses) (u : expr) : clauses :=
   match cls with

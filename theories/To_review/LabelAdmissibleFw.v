@@ -21,6 +21,9 @@
    SOFTWARE.
 *)
 (* end hide *)
+
+(* begin hide *)
+(*
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -146,4 +149,6 @@ Section Forwarder_admissible.
         exists x. split; [by apply (LA_class_proj R) | exact hx].
   Defined.
 End Forwarder_admissible.
+(* end hide *)
+*)
 (* end hide *)

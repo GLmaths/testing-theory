@@ -21,6 +21,9 @@
    SOFTWARE.
 *)
 (* end hide *)
+
+(* begin hide *)
+(*
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -388,4 +391,6 @@ Section VACCS_Rel_std.
   Definition must_iff_rel_VACCS_std (p q : proc) :=
     iff_trans (VACCS_ctx_std_union p q) (must_iff_rel_VACCS p q).
 End VACCS_Rel_std.
+(* end hide *)
+*)
 (* end hide *)

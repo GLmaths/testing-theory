@@ -31,7 +31,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable option gmap.
 From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lts_OBA Lts_FW Lts_OBA_FB
-  FiniteImageLTS coFiniteImage InteractionBetweenLts InListPropHelper PAL_Syntax.
+  FiniteImageLTS coFiniteImage InteractionBetweenLts InListPropHelper PAL.Language.Syntax.
 (* * PAL: a Process Algebra based on Linda
 
     A [gLts] formalisation of the LTS from:
@@ -39,7 +39,7 @@ From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Lt
     R. De Nicola, R. Pugliese, "Linda-based applicative and imperative
     process algebras", Theoretical Computer Science 238 (2000) 389-437.
 
-    The syntax, tuple evaluation and pattern matching are in [PAL_Syntax.v].
+    The syntax, tuple evaluation and pattern matching are in [PAL.Language.Syntax].
     This file builds the LTS itself (Table 3 Action Relation, Table 4
     Internal Relation, Definition 4.2's combination into one transition
     system) — the paper's testing theory / proof system / denotational
@@ -81,7 +81,7 @@ Section PAL.
     | ar2 t E it ot :
         eval_in_tuple t = Some it -> tuple_match it ot ->
         pal_step (read( t ) • E) (ot ?)
-          ((out( eot_to_tuple ot ) • 𝟘) ‖ (subst_term (build_subst it ot) E))
+          ((out( eot_to_tuple ot ) • 𝟘) │ (subst_term (build_subst it ot) E))
     (* AR3 *)
     | ar3 t ot :
         eval_out_tuple t = Some ot ->
@@ -90,10 +90,10 @@ Section PAL.
     | ar4_l E1 E2 μ E1' : pal_step E1 (ActExt μ) E1' -> pal_step (E1 □ E2) (ActExt μ) E1'
     | ar4_r E1 E2 μ E2' : pal_step E2 (ActExt μ) E2' -> pal_step (E1 □ E2) (ActExt μ) E2'
     (* AR5, + symmetric *)
-    | ar5_l E1 E2 μ E1' : pal_step E1 (ActExt μ) E1' -> pal_step (E1 ‖ E2) (ActExt μ) (E1' ‖ E2)
-    | ar5_r E1 E2 μ E2' : pal_step E2 (ActExt μ) E2' -> pal_step (E1 ‖ E2) (ActExt μ) (E1 ‖ E2')
+    | ar5_l E1 E2 μ E1' : pal_step E1 (ActExt μ) E1' -> pal_step (E1 │ E2) (ActExt μ) (E1' │ E2)
+    | ar5_r E1 E2 μ E2' : pal_step E2 (ActExt μ) E2' -> pal_step (E1 │ E2) (ActExt μ) (E1 │ E2')
     (* AR6 *)
-    | ar6 E1 E2 μ E1' : pal_step E1 (ActExt μ) E1' -> pal_step (E1 ⌊ E2) (ActExt μ) (E1' ‖ E2)
+    | ar6 E1 E2 μ E1' : pal_step E1 (ActExt μ) E1' -> pal_step (E1 ⌊⌊ E2) (ActExt μ) (E1' │ E2)
     (* AR7 *)
     | ar7 be E1 E2 μ E1' :
         eval_bexp be = Some true -> pal_step E1 (ActExt μ) E1' -> pal_step (IF be THEN E1 ELSE E2) (ActExt μ) E1'
@@ -109,9 +109,9 @@ Section PAL.
     (* IR4 *)
     | ir4 be E1 E2 E2' : eval_bexp be = Some false -> pal_step E2 τ E2' -> pal_step (IF be THEN E1 ELSE E2) τ E2'
     (* IR5 *)
-    | ir5 t E : E <> 𝟘 -> pal_step (out( t ) • E) τ ((out( t ) • 𝟘) ‖ E)
+    | ir5 t E : E <> 𝟘 -> pal_step (out( t ) • E) τ ((out( t ) • 𝟘) │ E)
     (* IR6 *)
-    | ir6 E1 E2 : pal_step (eval( E1 ) • E2) τ (E1 ‖ E2)
+    | ir6 E1 E2 : pal_step (eval( E1 ) • E2) τ (E1 │ E2)
     (* IR7, both summands (paper's "symmetrical version") *)
     | ir7_l E1 E2 : pal_step (E1 ⊕ E2) τ E1
     | ir7_r E1 E2 : pal_step (E1 ⊕ E2) τ E2
@@ -119,22 +119,21 @@ Section PAL.
     | ir8_l E1 E2 E1' : pal_step E1 τ E1' -> pal_step (E1 □ E2) τ (E1' □ E2)
     | ir8_r E1 E2 E2' : pal_step E2 τ E2' -> pal_step (E1 □ E2) τ (E1 □ E2')
     (* IR9, + symmetric *)
-    | ir9_l E1 E2 E1' : pal_step E1 τ E1' -> pal_step (E1 ‖ E2) τ (E1' ‖ E2)
-    | ir9_r E1 E2 E2' : pal_step E2 τ E2' -> pal_step (E1 ‖ E2) τ (E1 ‖ E2')
+    | ir9_l E1 E2 E1' : pal_step E1 τ E1' -> pal_step (E1 │ E2) τ (E1' │ E2)
+    | ir9_r E1 E2 E2' : pal_step E2 τ E2' -> pal_step (E1 │ E2) τ (E1 │ E2')
     (* IR10, + symmetric (comm-merge congruence) *)
-    | ir10_l E1 E2 E1' : pal_step E1 τ E1' -> pal_step (E1 |ₖ E2) τ (E1' |ₖ E2)
-    | ir10_r E1 E2 E2' : pal_step E2 τ E2' -> pal_step (E1 |ₖ E2) τ (E1 |ₖ E2')
+    | ir10_l E1 E2 E1' : pal_step E1 τ E1' -> pal_step (E1 ║ E2) τ (E1' ║ E2)
+    | ir10_r E1 E2 E2' : pal_step E2 τ E2' -> pal_step (E1 ║ E2) τ (E1 ║ E2')
     (* IR11 (left-merge, no symmetric: only the left process is "in control") *)
-    | ir11 E1 E2 E1' : pal_step E1 τ E1' -> pal_step (E1 ⌊ E2) τ (E1' ⌊ E2)
+    | ir11 E1 E2 E1' : pal_step E1 τ E1' -> pal_step (E1 ⌊⌊ E2) τ (E1' ⌊⌊ E2)
     (* IR12 (parallel synchronisation via complementary actions) *)
     | ir12 E1 E2 μ E1' E2' :
         pal_step E1 (ActExt μ) E1' -> pal_step E2 (ActExt (comp_act μ)) E2' ->
-        pal_step (E1 ‖ E2) τ (E1' ‖ E2')
+        pal_step (E1 │ E2) τ (E1' │ E2')
     (* IR13 (comm-merge synchronisation) *)
     | ir13 E1 E2 μ E1' E2' :
         pal_step E1 (ActExt μ) E1' -> pal_step E2 (ActExt (comp_act μ)) E2' ->
-        pal_step (E1 |ₖ E2) τ (E1' ‖ E2').
-  Close Scope pal_scope.
+        pal_step (E1 ║ E2) τ (E1' │ E2').
 
   #[global] Instance PAL_Act_eqdec : EqDecision PAL_Act.
   Proof. solve_decision. Defined.
@@ -142,14 +141,14 @@ Section PAL.
   (* ** Decidability
 
       The paper's own Proposition 4.4 notes this LTS is "in general not
-      finitely branching" (e.g. [t_in t E] has infinitely many
+      finitely branching" (e.g. [in( t ) • E] has infinitely many
       derivations when [Val] is infinite), so successors cannot be
       brute-force enumerated over the whole action type.  [all_steps]
       computes, for a given label, the FULL finite list of successors,
       bounding the search for IR12/IR13's synchronising partner via
       [collect_out] — mirroring the paper's own Proposition 4.4 idea that
       one side of a successful synchronisation is always a deterministic,
-      finitely-many-derivations [t_out t t_nil]-congruence leaf. *)
+      finitely-many-derivations [out( t ) • 𝟘]-congruence leaf. *)
 
   (* the (syntactically finite) set of output tuples reachable from [E] via a
      single congruence step of AR3-AR8 alone (never touching in/read) — the
@@ -157,11 +156,11 @@ Section PAL.
      IR12/IR13's synchronising partner without enumerating all input tuples *)
   Fixpoint collect_out (E : term) : list eot :=
     match E with
-    | t_out t t_nil => match eval_out_tuple t with Some ot => [ot] | None => [] end
-    | t_echoice E1 E2 => collect_out E1 ++ collect_out E2
-    | t_par E1 E2 => collect_out E1 ++ collect_out E2
-    | t_lmerge E1 E2 => collect_out E1
-    | t_if be E1 E2 =>
+    | out( t ) • 𝟘 => match eval_out_tuple t with Some ot => [ot] | None => [] end
+    | E1 □ E2 => collect_out E1 ++ collect_out E2
+    | E1 │ E2 => collect_out E1 ++ collect_out E2
+    | E1 ⌊⌊ E2 => collect_out E1
+    | IF be THEN E1 ELSE E2 =>
         match eval_bexp be with
         | Some true => collect_out E1
         | Some false => collect_out E2
@@ -177,24 +176,24 @@ Section PAL.
      type, exactly as sketched in the paper's own Proposition 4.4. *)
   Fixpoint all_steps (p : term) (𝜆 : Labels PAL_Act) : list term :=
     match p with
-    | t_nil => []
+    | 𝟘 => []
     | t_pvar _ => []
-    | t_success => []
-    | t_undef => match 𝜆 with τ => [t_undef] | _ => [] end
-    | t_rec X E => match 𝜆 with τ => [psubst X (t_rec X E) E] | _ => [] end
-    | t_out t E =>
+    | ✓ => []
+    | Ω => match 𝜆 with τ => [Ω] | _ => [] end
+    | rec X • E => match 𝜆 with τ => [psubst X (rec X • E) E] | _ => [] end
+    | out( t ) • E =>
         match 𝜆 with
         | ActExt (ActOut ot) =>
-            if bool_decide (E = t_nil) then
+            if bool_decide (E = 𝟘) then
               match eval_out_tuple t with
-              | Some ot' => if bool_decide (ot = ot') then [t_nil] else []
+              | Some ot' => if bool_decide (ot = ot') then [𝟘] else []
               | None => []
               end
             else []
-        | τ => if bool_decide (E <> t_nil) then [t_par (t_out t t_nil) E] else []
+        | τ => if bool_decide (E <> 𝟘) then [(out( t ) • 𝟘) │ E] else []
         | _ => []
         end
-    | t_in t E =>
+    | in( t ) • E =>
         match 𝜆 with
         | ActExt (ActIn ot) =>
             match eval_in_tuple t with
@@ -203,67 +202,67 @@ Section PAL.
             end
         | _ => []
         end
-    | t_read t E =>
+    | read( t ) • E =>
         match 𝜆 with
         | ActExt (ActIn ot) =>
             match eval_in_tuple t with
             | Some it => if tuple_match_b it ot
-                         then [t_par (t_out (eot_to_tuple ot) t_nil) (subst_term (build_subst it ot) E)]
+                         then [(out( eot_to_tuple ot ) • 𝟘) │ subst_term (build_subst it ot) E]
                          else []
             | None => []
             end
         | _ => []
         end
-    | t_eval E1 E2 => match 𝜆 with τ => [t_par E1 E2] | _ => [] end
-    | t_if be E1 E2 =>
+    | eval( E1 ) • E2 => match 𝜆 with τ => [E1 │ E2] | _ => [] end
+    | IF be THEN E1 ELSE E2 =>
         match eval_bexp be with
         | Some true => all_steps E1 𝜆
         | Some false => all_steps E2 𝜆
         | None => []
         end
-    | t_ichoice E1 E2 => match 𝜆 with τ => [E1; E2] | _ => [] end
-    | t_echoice E1 E2 =>
+    | E1 ⊕ E2 => match 𝜆 with τ => [E1; E2] | _ => [] end
+    | E1 □ E2 =>
         match 𝜆 with
-        | τ => map (fun E1' => t_echoice E1' E2) (all_steps E1 τ)
-               ++ map (fun E2' => t_echoice E1 E2') (all_steps E2 τ)
+        | τ => map (fun E1' => E1' □ E2) (all_steps E1 τ)
+               ++ map (fun E2' => E1 □ E2') (all_steps E2 τ)
         | ActExt _ => all_steps E1 𝜆 ++ all_steps E2 𝜆
         end
-    | t_lmerge E1 E2 =>
+    | E1 ⌊⌊ E2 =>
         match 𝜆 with
-        | τ => map (fun E1' => t_lmerge E1' E2) (all_steps E1 τ)
-        | ActExt _ => map (fun E1' => t_par E1' E2) (all_steps E1 𝜆)
+        | τ => map (fun E1' => E1' ⌊⌊ E2) (all_steps E1 τ)
+        | ActExt _ => map (fun E1' => E1' │ E2) (all_steps E1 𝜆)
         end
-    | t_cmerge E1 E2 =>
+    | E1 ║ E2 =>
         match 𝜆 with
         | τ =>
-            map (fun E1' => t_cmerge E1' E2) (all_steps E1 τ)
-            ++ map (fun E2' => t_cmerge E1 E2') (all_steps E2 τ)
+            map (fun E1' => E1' ║ E2) (all_steps E1 τ)
+            ++ map (fun E2' => E1 ║ E2') (all_steps E2 τ)
             ++ flat_map (fun ot =>
-                 flat_map (fun E1' => map (fun E2' => t_par E1' E2') (all_steps E2 (ActExt (ActIn ot))))
+                 flat_map (fun E1' => map (fun E2' => E1' │ E2') (all_steps E2 (ActExt (ActIn ot))))
                    (all_steps E1 (ActExt (ActOut ot))))
                  (collect_out E1)
             ++ flat_map (fun ot =>
-                 flat_map (fun E2' => map (fun E1' => t_par E1' E2') (all_steps E1 (ActExt (ActIn ot))))
+                 flat_map (fun E2' => map (fun E1' => E1' │ E2') (all_steps E1 (ActExt (ActIn ot))))
                    (all_steps E2 (ActExt (ActOut ot))))
                  (collect_out E2)
         | ActExt _ => []
         end
-    | t_par E1 E2 =>
+    | E1 │ E2 =>
         match 𝜆 with
         | τ =>
-            map (fun E1' => t_par E1' E2) (all_steps E1 τ)
-            ++ map (fun E2' => t_par E1 E2') (all_steps E2 τ)
+            map (fun E1' => E1' │ E2) (all_steps E1 τ)
+            ++ map (fun E2' => E1 │ E2') (all_steps E2 τ)
             ++ flat_map (fun ot =>
-                 flat_map (fun E1' => map (fun E2' => t_par E1' E2') (all_steps E2 (ActExt (ActIn ot))))
+                 flat_map (fun E1' => map (fun E2' => E1' │ E2') (all_steps E2 (ActExt (ActIn ot))))
                    (all_steps E1 (ActExt (ActOut ot))))
                  (collect_out E1)
             ++ flat_map (fun ot =>
-                 flat_map (fun E2' => map (fun E1' => t_par E1' E2') (all_steps E1 (ActExt (ActIn ot))))
+                 flat_map (fun E2' => map (fun E1' => E1' │ E2') (all_steps E1 (ActExt (ActIn ot))))
                    (all_steps E2 (ActExt (ActOut ot))))
                  (collect_out E2)
         | ActExt _ =>
-            map (fun E1' => t_par E1' E2) (all_steps E1 𝜆)
-            ++ map (fun E2' => t_par E1 E2') (all_steps E2 𝜆)
+            map (fun E1' => E1' │ E2) (all_steps E1 𝜆)
+            ++ map (fun E2' => E1 │ E2') (all_steps E2 𝜆)
         end
     end.
 
@@ -423,7 +422,7 @@ Section PAL.
       [non_blocking] is set to always-[False]: no PAL action is treated as
       non-blocking here (per project convention, this is a per-calculus
       choice — PAL's own asynchronous output is instead reflected directly
-      in the SOS rules, via IR5's eager detachment of [t_out t E]'s
+      in the SOS rules, via IR5's eager detachment of [out( t ) • E]'s
       continuation). *)
 
   Definition PAL_non_blocking (_ : PAL_Act) : Prop := False.
@@ -626,7 +625,7 @@ Section PAL.
     - destruct E; simpl in Hin; try contradiction.
       destruct (eval_out_tuple t) as [ot'|] eqn:Hev; [| contradiction].
       assert (Heq : ot = ot') by (destruct Hin as [H1|[]]; auto).
-      subst ot'. exists t_nil. eapply ar3. exact Hev.
+      subst ot'. exists 𝟘. eapply ar3. exact Hev.
     - destruct (eval_bexp be) as [b|] eqn:Hbe; [destruct b |]; simpl in Hin; [| | contradiction].
       + specialize (IHE1 Hin) as [E1' HE1']. exists E1'. eapply ar7; [exact Hbe | exact HE1'].
       + specialize (IHE2 Hin) as [E2' HE2']. exists E2'. eapply ar8; [exact Hbe | exact HE2'].
@@ -635,10 +634,10 @@ Section PAL.
       { assert (Hin2 : In ot (collect_out E2)) by (apply in_app_or in Hin as [?|?]; [contradiction | assumption]).
         specialize (IHE2 Hin2) as [E2' HE2']. exists E2'. eapply ar4_r. exact HE2'. }
     - destruct (in_dec (fun x y : eot => decide (x = y)) ot (collect_out E1)) as [Hin1|Hnin1].
-      { specialize (IHE1 Hin1) as [E1' HE1']. exists (t_par E1' E2). eapply ar5_l. exact HE1'. }
+      { specialize (IHE1 Hin1) as [E1' HE1']. exists (E1' │ E2). eapply ar5_l. exact HE1'. }
       { assert (Hin2 : In ot (collect_out E2)) by (apply in_app_or in Hin as [?|?]; [contradiction | assumption]).
-        specialize (IHE2 Hin2) as [E2' HE2']. exists (t_par E1 E2'). eapply ar5_r. exact HE2'. }
-    - specialize (IHE1 Hin) as [E1' HE1']. exists (t_par E1' E2). eapply ar6. exact HE1'.
+        specialize (IHE2 Hin2) as [E2' HE2']. exists (E1 │ E2'). eapply ar5_r. exact HE2'. }
+    - specialize (IHE1 Hin) as [E1' HE1']. exists (E1' │ E2). eapply ar6. exact HE1'.
   Qed.
 
   Lemma ext_act_match_det μ xi : ext_act_match μ xi -> μ = comp_act xi.

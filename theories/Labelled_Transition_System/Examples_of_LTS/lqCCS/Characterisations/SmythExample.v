@@ -52,17 +52,19 @@ From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure pMust_smyth lqCCS.Language.Quantum.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program lqCCS.Language.Succ lqCCS.Language.Composition
   lqCCS.Language.LTS lqCCS.Characterisations.AlmostSure lqCCS.Language.Congruence.
+
+#[local] Open Scope lqccs_scope.
 (* ** Inversion of the steps of small programs *)
 
 Lemma pstep_send_inv t c e l X :
-  pstep (PSend t c e) l X → ∃ v, l = LAct t (AOut c v) ∧ eval e = Some v ∧ X = PG (GNil []).
+  pstep (PSend t c e) l X → ∃ v, l = LAct t (AOut c v) ∧ eval e = Some v ∧ X = 𝟘.
 Proof. inversion 1; subst. eauto. Qed.
 
 Lemma pstep_par_inv P Q l X :
-  pstep (PPar P Q) l X →
-    (∃ P', pstep P l P' ∧ X = PPar P' Q)
-  ∨ (∃ Q', pstep Q l Q' ∧ X = PPar P Q')
-  ∨ (∃ t t' c v P' Q', l = LTau (SPair t t') ∧ X = PPar P' Q' ∧
+  pstep (P ∥ Q) l X →
+    (∃ P', pstep P l P' ∧ X = P' ∥ Q)
+  ∨ (∃ Q', pstep Q l Q' ∧ X = P ∥ Q')
+  ∨ (∃ t t' c v P' Q', l = LTau (SPair t t') ∧ X = P' ∥ Q' ∧
        ((pstep P (LAct t (AOut c v)) P' ∧ pstep Q (LAct t' (AIn c v)) Q')
         ∨ (pstep P (LAct t (AIn c v)) P' ∧ pstep Q (LAct t' (AOut c v)) Q'))).
 Proof.
@@ -79,24 +81,24 @@ Lemma pstep_ite_inv e P Q l X :
 Proof. inversion 1; subst; eauto. Qed.
 
 Lemma pstep_sum_inv g1 g2 l X :
-  pstep (PG (GSum g1 g2)) l X → pstep (PG g1) l X ∨ pstep (PG g2) l X.
+  pstep (PG (g1 ⊕ g2)) l X → pstep (PG g1) l X ∨ pstep (PG g2) l X.
 Proof.
   inversion 1 as [? ? ? Hg| | | | | | | |]; subst.
   inversion Hg; subst; [left|right]; by constructor.
 Qed.
 
-Lemma pstep_tau_inv t P l X : pstep (PG (GPre (PTau t) P)) l X → l = LTau (STag t) ∧ X = P.
+Lemma pstep_tau_inv t P l X : pstep (PG (PTau t ∙ P)) l X → l = LTau (STag t) ∧ X = P.
 Proof. inversion 1 as [? ? ? Hg| | | | | | | |]; subst. by inversion Hg. Qed.
 
 Lemma pstep_recv_inv t c x P l X :
-  pstep (PG (GPre (PRecv t c x) P)) l X → ∃ v, l = LAct t (AIn c v) ∧ X = subst P x v.
+  pstep (PG (PRecv t c x ∙ P)) l X → ∃ v, l = LAct t (AIn c v) ∧ X = P ⟦ v // x ⟧.
 Proof. inversion 1 as [? ? ? Hg| | | | | | | |]; subst. inversion Hg; subst. eauto. Qed.
 
-Lemma pstep_succ_inv l X : ¬ pstep (PG GSucc) l X.
+Lemma pstep_succ_inv l X : ¬ pstep (PG ①) l X.
 Proof. inversion 1 as [? ? ? Hg| | | | | | | |]; subst. inversion Hg. Qed.
 
 Lemma pstep_meas_inv t M es x P l X :
-  pstep (PG (GPre (PMeas t M es x) P)) l X →
+  pstep (PG (PMeas t M es x ∙ P)) l X →
   ∃ qs, eval_qubits es = Some qs ∧ l = LAct t (AMeas M qs x) ∧ X = P.
 Proof. inversion 1 as [? ? ? Hg| | | | | | | |]; subst. inversion Hg; subst. eauto. Qed.
 
@@ -119,21 +121,21 @@ Section Example.
 
   Definition sendA : proc := PSend 4 1 (EVal (VNat 0)).
   Definition sendB : proc := PSend 5 2 (EVal (VNat 0)).
-  Definition ChAB : proc := PG (GSum (GPre (PTau 2) sendA) (GPre (PTau 3) sendB)).
-  Definition ChBA : proc := PG (GSum (GPre (PTau 2) sendB) (GPre (PTau 3) sendA)).
+  Definition ChAB : proc := PG ((PTau 2 ∙ sendA) ⊕ (PTau 3 ∙ sendB)).
+  Definition ChBA : proc := PG ((PTau 2 ∙ sendB) ⊕ (PTau 3 ∙ sendA)).
   Definition qes : list exp := [EVal (VQubit q)].
 
-  Definition corr_body : proc := PPar (PSend 1 0 (EVar 0)) ChAB.
+  Definition corr_body : proc := PSend 1 0 (EVar 0) ∥ ChAB.
   Definition anti_body : proc :=
-    PPar (PSend 1 0 (EVar 0)) (PIte (EEq (EVar 0) (EVal (VNat c0))) ChAB ChBA).
+    PSend 1 0 (EVar 0) ∥ PIte (EEq (EVar 0) (EVal (VNat c0))) ChAB ChBA.
 
-  Definition Pcorr : proc := PG (GPre (PMeas 0 M qes 0) corr_body).
-  Definition Panti : proc := PG (GPre (PMeas 0 M qes 0) anti_body).
+  Definition Pcorr : proc := PG (PMeas 0 M qes 0 ∙ corr_body).
+  Definition Panti : proc := PG (PMeas 0 M qes 0 ∙ anti_body).
 
-  Definition TA : proc := PG (GPre (PRecv 11 1 2) (PG GSucc)).
-  Definition TB : proc := PG (GPre (PRecv 12 2 2) (PG GSucc)).
+  Definition TA : proc := PG (PRecv 11 1 2 ∙ PG ①).
+  Definition TB : proc := PG (PRecv 12 2 2 ∙ PG ①).
   Definition Tite (v : val) : proc := PIte (EEq (EVal v) (EVal (VNat c0))) TA TB.
-  Definition Tbr : proc := PG (GPre (PRecv 10 0 1) (PIte (EEq (EVar 1) (EVal (VNat c0))) TA TB)).
+  Definition Tbr : proc := PG (PRecv 10 0 1 ∙ PIte (EEq (EVar 1) (EVal (VNat c0))) TA TB).
 
   Lemma eval_vk b : eval (EEq (EVal (vk b)) (EVal (VNat c0))) = Some (VBool b).
   Proof.
@@ -159,18 +161,18 @@ Section Example.
   (* ** A run of [P_anti ∥ T] that never succeeds *)
 
   Definition anti_mid (b : bool) : proc :=
-    PPar (PSend 1 0 (EVal (vk b))) (PIte (EEq (EVal (vk b)) (EVal (VNat c0))) ChAB ChBA).
+    PSend 1 0 (EVal (vk b)) ∥ PIte (EEq (EVal (vk b)) (EVal (VNat c0))) ChAB ChBA.
   Definition anti_chosen (b : bool) : proc := if b then sendB else sendA.
 
   Definition Δa0 : dist conf := dpoint (Panti, Tbr) ρ.
   Definition Δa1 : dist conf :=
     [((anti_mid true, Tbr), wk true); ((anti_mid false, Tbr), wk false)].
   Definition Δa2 : dist conf :=
-    [((PPar (PSend 1 0 (EVal (vk true))) (anti_chosen true), Tbr), wk true);
-     ((PPar (PSend 1 0 (EVal (vk false))) (anti_chosen false), Tbr), wk false)].
+    [((PSend 1 0 (EVal (vk true)) ∥ anti_chosen true, Tbr), wk true);
+     ((PSend 1 0 (EVal (vk false)) ∥ anti_chosen false, Tbr), wk false)].
   Definition Δa3 : dist conf :=
-    [((PPar (PG (GNil [])) (anti_chosen true), Tite (vk true)), wk true);
-     ((PPar (PG (GNil [])) (anti_chosen false), Tite (vk false)), wk false)].
+    [((𝟘 ∥ anti_chosen true, Tite (vk true)), wk true);
+     ((𝟘 ∥ anti_chosen false, Tite (vk false)), wk false)].
 
   Lemma not_good_Tite v : ¬ good (Tite v).
   Proof. unfold good, Tite. simpl. intros Hg. repeat case_match; discriminate. Qed.
@@ -178,7 +180,7 @@ Section Example.
   Lemma step_a01 : dstep Δa0 (STag 0) Δa1.
   Proof.
     assert (Hs : cstep ρ (Panti, Tbr) (STag 0) Δa1).
-    { replace Δa1 with (meas_dist M [q] ρ (λ k, (subst anti_body 0 (VNat k), Tbr))).
+    { replace Δa1 with (meas_dist M [q] ρ (λ k, (anti_body ⟦ VNat k // 0 ⟧, Tbr))).
       - apply cs_measL. constructor. by apply gs_meas.
       - rewrite meas_split. done. }
     split.
@@ -188,7 +190,7 @@ Section Example.
   Qed.
 
   Lemma tau_mid b :
-    pstep (anti_mid b) (LTau (STag 3)) (PPar (PSend 1 0 (EVal (vk b))) (anti_chosen b)).
+    pstep (anti_mid b) (LTau (STag 3)) (PSend 1 0 (EVal (vk b)) ∥ anti_chosen b).
   Proof.
     apply ps_parR. destruct b.
     - apply ps_iteT; [apply (eval_vk true)|]. constructor. apply gs_sumR. constructor.
@@ -199,21 +201,21 @@ Section Example.
   Proof.
     unfold Δa1, Δa2. split.
     - eexists _, _, _. split_and!; [by left|by intros [=]|]. apply cs_tauL, tau_mid.
-    - exists [[((PPar (PSend 1 0 (EVal (vk true))) (anti_chosen true), Tbr), wk true)];
-              [((PPar (PSend 1 0 (EVal (vk false))) (anti_chosen false), Tbr), wk false)]].
+    - exists [[((PSend 1 0 (EVal (vk true)) ∥ anti_chosen true, Tbr), wk true)];
+              [((PSend 1 0 (EVal (vk false)) ∥ anti_chosen false, Tbr), wk false)]].
       split; [|reflexivity].
       constructor; [left; split; [simpl; by intros [=]|apply cs_tauL, tau_mid]|].
       constructor; [left; split; [simpl; by intros [=]|apply cs_tauL, tau_mid]|constructor].
   Qed.
 
   Lemma com_c b P :
-    cstep (wk b) (PPar (PSend 1 0 (EVal (vk b))) P, Tbr) (SPair 1 10)
-      (dpoint (PPar (PG (GNil [])) P, Tite (vk b)) (wk b)).
+    cstep (wk b) (PSend 1 0 (EVal (vk b)) ∥ P, Tbr) (SPair 1 10)
+      (dpoint (𝟘 ∥ P, Tite (vk b)) (wk b)).
   Proof.
     eapply (cs_comLR _ _ _ 1 10 0 (vk b)).
     - apply ps_parL. by constructor.
     - constructor. replace (Tite (vk b)) with
-        (subst (PIte (EEq (EVar 1) (EVal (VNat c0))) TA TB) 1 (vk b)) by done.
+        (PIte (EEq (EVar 1) (EVal (VNat c0))) TA TB ⟦ vk b // 1 ⟧) by done.
       constructor.
   Qed.
 
@@ -221,8 +223,8 @@ Section Example.
   Proof.
     unfold Δa2, Δa3. split.
     - eexists _, _, _. split_and!; [by left|by intros [=]|apply com_c].
-    - exists [[((PPar (PG (GNil [])) (anti_chosen true), Tite (vk true)), wk true)];
-              [((PPar (PG (GNil [])) (anti_chosen false), Tite (vk false)), wk false)]].
+    - exists [[((𝟘 ∥ anti_chosen true, Tite (vk true)), wk true)];
+              [((𝟘 ∥ anti_chosen false, Tite (vk false)), wk false)]].
       split; [|reflexivity].
       constructor; [left; split; [simpl; by intros [=]|apply com_c]|].
       constructor; [left; split; [simpl; by intros [=]|apply com_c]|constructor].
@@ -231,10 +233,10 @@ Section Example.
   (* The last distribution is stable: in each branch, the program offers
       the wrong channel. *)
   Lemma final_no_step b w σ Δx :
-    ¬ cstep w (PPar (PG (GNil [])) (anti_chosen b), Tite (vk b)) σ Δx.
+    ¬ cstep w (𝟘 ∥ anti_chosen b, Tite (vk b)) σ Δx.
   Proof.
     intros Hc.
-    assert (HP : ∀ l X, pstep (PPar (PG (GNil [])) (anti_chosen b)) l X →
+    assert (HP : ∀ l X, pstep (𝟘 ∥ anti_chosen b) l X →
               ∃ v, l = LAct (if b then 5 else 4) (AOut (if b then 2 else 1) v)).
     { intros l X Hs.
       destruct (pstep_par_inv _ _ _ _ Hs) as [(P' & Hp & _)|[(Q' & Hq & _)|(? & ? & ? & ? & ? & ? & _ & _ & [[Hp _]|[Hp _]])]].
@@ -314,16 +316,16 @@ Section Example.
   Definition chpart (ch : option bool) (d : bool) : proc :=
     match ch with
     | None => ChAB
-    | Some true => if d then PG (GNil []) else sendA
-    | Some false => if d then PG (GNil []) else sendB
+    | Some true => if d then 𝟘 else sendA
+    | Some false => if d then 𝟘 else sendB
     end.
 
   Definition pc (b : bool) (s : cst) : proc :=
     let '(cd, ch, d) := s in
-    PPar (if cd then PG (GNil []) else PSend 1 0 (EVal (vk b))) (chpart ch d).
+    (if cd then 𝟘 else PSend 1 0 (EVal (vk b))) ∥ chpart ch d.
 
   Definition tc (b : bool) (s : cst) : proc :=
-    let '(cd, ch, d) := s in if cd then (if d then PG GSucc else Tite (vk b)) else Tbr.
+    let '(cd, ch, d) := s in if cd then (if d then PG ① else Tite (vk b)) else Tbr.
 
   Definition wf (s : cst) : Prop := let '(cd, ch, d) := s in d = true → cd = true ∧ ch ≠ None.
 
@@ -337,8 +339,8 @@ Section Example.
   Lemma chpart_step ch d l X :
     pstep (chpart ch d) l X →
       (ch = None ∧ ((l = LTau (STag 2) ∧ X = sendA) ∨ (l = LTau (STag 3) ∧ X = sendB)))
-    ∨ (ch = Some true ∧ d = false ∧ l = LAct 4 (AOut 1 (VNat 0)) ∧ X = PG (GNil []))
-    ∨ (ch = Some false ∧ d = false ∧ l = LAct 5 (AOut 2 (VNat 0)) ∧ X = PG (GNil [])).
+    ∨ (ch = Some true ∧ d = false ∧ l = LAct 4 (AOut 1 (VNat 0)) ∧ X = 𝟘)
+    ∨ (ch = Some false ∧ d = false ∧ l = LAct 5 (AOut 2 (VNat 0)) ∧ X = 𝟘).
   Proof.
     destruct ch as [[]|]; [destruct d| destruct d|]; simpl; intros Hs.
     - by apply pstep_nil in Hs.
@@ -358,8 +360,8 @@ Section Example.
     ∨ (∃ cd, s = (cd, Some false, false) ∧ l = LAct 5 (AOut 2 (VNat 0)) ∧ X = pc b (cd, Some false, true)).
   Proof.
     destruct s as [[cd ch] d]. intros Hwf Hs. simpl in Hs.
-    assert (Hleft : ∀ l X, pstep (if cd then PG (GNil []) else PSend 1 0 (EVal (vk b))) l X →
-              cd = false ∧ l = LAct 1 (AOut 0 (vk b)) ∧ X = PG (GNil [])).
+    assert (Hleft : ∀ l X, pstep (if cd then 𝟘 else PSend 1 0 (EVal (vk b))) l X →
+              cd = false ∧ l = LAct 1 (AOut 0 (vk b)) ∧ X = 𝟘).
     { intros l' X' H'. destruct cd; [by apply pstep_nil in H'|].
       apply pstep_send_inv in H' as (v & -> & Hv & ->). simpl in Hv. by simplify_eq. }
     destruct (pstep_par_inv _ _ _ _ Hs)
@@ -382,7 +384,7 @@ Section Example.
       (∃ ch d v, s = (false, ch, d) ∧ l = LAct 10 (AIn 0 v) ∧ X = Tite v)
     ∨ (∃ ch v, s = (true, ch, false) ∧
          ((b = true ∧ l = LAct 11 (AIn 1 v)) ∨ (b = false ∧ l = LAct 12 (AIn 2 v))) ∧
-         X = PG GSucc).
+         X = PG ①).
   Proof.
     destruct s as [[cd ch] d]. simpl. intros Hs. destruct cd; [destruct d|].
     - by apply pstep_succ_inv in Hs.
@@ -441,7 +443,7 @@ Section Example.
 
   Lemma recv_Tbr v : pstep Tbr (LAct 10 (AIn 0 v)) (Tite v).
   Proof.
-    replace (Tite v) with (subst (PIte (EEq (EVar 1) (EVal (VNat c0))) TA TB) 1 v) by done.
+    replace (Tite v) with (PIte (EEq (EVar 1) (EVal (VNat c0))) TA TB ⟦ v // 1 ⟧) by done.
     constructor. constructor.
   Qed.
 
@@ -453,10 +455,10 @@ Section Example.
     - apply cs_tauL. apply ps_parR. constructor. apply gs_sumL. constructor.
     - apply cs_tauL. apply ps_parR. constructor. apply gs_sumR. constructor.
     - subst. eapply (cs_comLR _ _ _ 4 11 1 (VNat 0)); [apply ps_parR; by constructor|].
-      apply ps_iteT; [apply (eval_vk true)|]. replace (PG GSucc) with (subst (PG GSucc) 2 (VNat 0)) by done.
+      apply ps_iteT; [apply (eval_vk true)|]. replace (PG ①) with (PG ① ⟦ VNat 0 // 2 ⟧) by done.
       constructor. constructor.
     - subst. eapply (cs_comLR _ _ _ 5 12 2 (VNat 0)); [apply ps_parR; by constructor|].
-      apply ps_iteF; [apply (eval_vk false)|]. replace (PG GSucc) with (subst (PG GSucc) 2 (VNat 0)) by done.
+      apply ps_iteF; [apply (eval_vk false)|]. replace (PG ①) with (PG ① ⟦ VNat 0 // 2 ⟧) by done.
       constructor. constructor.
   Qed.
 
@@ -543,7 +545,7 @@ Section Example.
 
   Lemma start_cstep_ex : cstep ρ (Pcorr, Tbr) (STag 0) (Shape s_init s_init).
   Proof.
-    replace (Shape s_init s_init) with (meas_dist M [q] ρ (λ k, (subst corr_body 0 (VNat k), Tbr))).
+    replace (Shape s_init s_init) with (meas_dist M [q] ρ (λ k, (corr_body ⟦ VNat k // 0 ⟧, Tbr))).
     - apply cs_measL. constructor. by apply gs_meas.
     - rewrite meas_split. done.
   Qed.

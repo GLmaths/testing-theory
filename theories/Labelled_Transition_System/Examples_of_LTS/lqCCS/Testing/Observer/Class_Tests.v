@@ -34,6 +34,8 @@ From TestingTheory Require Import ActTau gLts Bisimulation Testing_Predicate Sub
   Label_Abstraction.LabelAbstraction.
 From TestingTheory Require Completeness CompletenessASco TestSpecBridge.
 
+#[local] Open Scope lqccs_scope.
+
 Section lqCCS_Class_Tests.
 
 Context `{QM : QuantumModel} `{SC : !Countable St}.
@@ -51,7 +53,7 @@ Fixpoint sumg_𝔸 (l : list (lact / 𝔸ʟǫ)) : guard :=
   | [] => GNil []
   | x :: l =>
       match pfx_𝔸 (`x) with
-      | Some p => GSum (GPre p succP) (sumg_𝔸 l)
+      | Some p => (p ∙ succP) ⊕ sumg_𝔸 l
       | None => sumg_𝔸 l
       end
   end.
@@ -98,7 +100,7 @@ Proof. by destruct μ. Qed.
 Lemma ker_out μ μ' : lq_ker μ μ' → is_out μ' → is_out μ.
 Proof. by destruct μ, μ'. Qed.
 
-Lemma tstep_sum_r g1 g2 μ Q : tstep (PG g2) (ActExt μ) Q → tstep (PG (GSum g1 g2)) (ActExt μ) Q.
+Lemma tstep_sum_r g1 g2 μ Q : tstep (PG g2) (ActExt μ) Q → tstep (PG (g1 ⊕ g2)) (ActExt μ) Q.
 Proof.
   destruct μ as [c v|c v|E qs|M qs n]; simpl.
   - intros h. apply succ_spec. simpl. apply elem_of_app. right. exact (proj2 (succ_spec _ _ _) h).

@@ -28,7 +28,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics decidable countable list gmap.
 From TestingTheory Require Import ActTau gLts Subset_Act DefinitionAS
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi PAL_Alt_Delta PAL_Alt_AbsAction.
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Congruence PAL.Language.Phi PAL.Language.Delta PAL.Language.AbsAction.
 (* * The abstraction of PAL for a characterisation on [R p]
 
    Written as if the [R]-based framework existed: the acceptance set of a

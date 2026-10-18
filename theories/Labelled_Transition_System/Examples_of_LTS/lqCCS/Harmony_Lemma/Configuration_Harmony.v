@@ -41,6 +41,8 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure lqCCS.Language.Quantum.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program lqCCS.Language.Composition lqCCS.Language.Semantics.
+
+#[local] Open Scope lqccs_scope.
 Definition closed (P : proc) : Prop := fv P = [].
 
 Section Harmony.
@@ -105,7 +107,7 @@ Section Harmony.
     ∨ (∃ t E qs P', s = STag t ∧ gstep g (LAct t (AOp E qs)) P'
                     ∧ Δ = dpoint P' (sop_apply E qs ρ))
     ∨ (∃ t M qs x P', s = STag t ∧ gstep g (LAct t (AMeas M qs x)) P'
-                      ∧ Δ = meas_dist M qs ρ (λ k, subst P' x (VNat k))).
+                      ∧ Δ = meas_dist M qs ρ (λ k, P' ⟦ VNat k // x ⟧)).
 
   Lemma qgstep_tau_inv ρ g s Δ : qgstep ρ g (LTau s) Δ → gtau_view ρ g s Δ.
   Proof.
@@ -137,7 +139,7 @@ Section Harmony.
 
   Lemma qgstep_meas ρ g t M qs x P' :
     gstep g (LAct t (AMeas M qs x)) P' →
-    qgstep ρ g (LTau (STag t)) (meas_dist M qs ρ (λ k, subst P' x (VNat k))).
+    qgstep ρ g (LTau (STag t)) (meas_dist M qs ρ (λ k, P' ⟦ VNat k // x ⟧)).
   Proof.
     intros Hq. remember (LAct t (AMeas M qs x)) as l eqn:El. revert El.
     induction Hq; intros El; simplify_eq; eauto using qgstep.
@@ -160,11 +162,11 @@ Section Harmony.
     - edestruct IHHq as (P' & Hs & ->); [done|].
       exists P'. eauto using pstep.
     - edestruct IHHq as (P' & Hs & ->); [done|].
-      exists (PPar P' Q). rewrite dmap_dpoint. eauto using pstep.
+      exists (P' ∥ Q). rewrite dmap_dpoint. eauto using pstep.
     - edestruct IHHq as (Q' & Hs & ->); [done|].
-      exists (PPar P Q'). rewrite dmap_dpoint. eauto using pstep.
+      exists (P ∥ Q'). rewrite dmap_dpoint. eauto using pstep.
     - edestruct IHHq as (P' & Hs & ->); [done|].
-      exists (PRes P' c). rewrite dmap_dpoint. eauto using pstep.
+      exists (P' \ c). rewrite dmap_dpoint. eauto using pstep.
   Qed.
 
   Lemma qstep_vis ρ P t a P' :
@@ -178,9 +180,9 @@ Section Harmony.
     - by constructor.
     - eapply qs_iteT; eauto.
     - eapply qs_iteF; eauto.
-    - rewrite <- (dmap_dpoint (λ P, PPar P Q)). apply qs_parL; eauto.
-    - rewrite <- (dmap_dpoint (λ Q, PPar P Q)). apply qs_parR; eauto.
-    - rewrite <- (dmap_dpoint (λ P, PRes P c)). apply qs_res; eauto.
+    - rewrite <- (dmap_dpoint (λ P, P ∥ Q)). apply qs_parL; eauto.
+    - rewrite <- (dmap_dpoint (λ Q, P ∥ Q)). apply qs_parR; eauto.
+    - rewrite <- (dmap_dpoint (λ P, P \ c)). apply qs_res; eauto.
   Qed.
 
   (* Invert the visible premises of a synchronisation. *)
@@ -204,7 +206,7 @@ Section Harmony.
     ∨ (∃ t E qs P', s = STag t ∧ pstep P (LAct t (AOp E qs)) P'
                     ∧ Δ = dpoint P' (sop_apply E qs ρ))
     ∨ (∃ t M qs x P', s = STag t ∧ pstep P (LAct t (AMeas M qs x)) P'
-                      ∧ Δ = meas_dist M qs ρ (λ k, subst P' x (VNat k))).
+                      ∧ Δ = meas_dist M qs ρ (λ k, P' ⟦ VNat k // x ⟧)).
 
   Lemma qstep_tau_inv ρ P s Δ :
     closed P → qstep ρ P (LTau s) Δ → tau_view ρ P s Δ.
@@ -224,10 +226,10 @@ Section Harmony.
       apply closed_app in Hc as [HcP HcQ].
       destruct (IHHq s0 eq_refl HcP)
         as [(P'&Hs&->)|[(t&E&qs&P'&->&Hs&->)|(t&M&qs&x&P'&->&Hs&->)]].
-      + left. exists (PPar P' Q). rewrite dmap_dpoint. eauto using pstep.
-      + right; left. exists t, E, qs, (PPar P' Q). rewrite dmap_dpoint.
+      + left. exists (P' ∥ Q). rewrite dmap_dpoint. eauto using pstep.
+      + right; left. exists t, E, qs, (P' ∥ Q). rewrite dmap_dpoint.
         split; [done|]. split; [|done]. by apply ps_parL.
-      + right; right. exists t, M, qs, x, (PPar P' Q). split; [done|]. split.
+      + right; right. exists t, M, qs, x, (P' ∥ Q). split; [done|]. split.
         * by apply ps_parL.
         * rewrite dmap_meas_dist. apply meas_dist_ext. intros k. simpl.
           rewrite (subst_fresh Q); [done|]. rewrite HcQ. set_solver.
@@ -235,10 +237,10 @@ Section Harmony.
       apply closed_app in Hc as [HcP HcQ].
       destruct (IHHq s0 eq_refl HcQ)
         as [(Q'&Hs&->)|[(t&E&qs&Q'&->&Hs&->)|(t&M&qs&x&Q'&->&Hs&->)]].
-      + left. exists (PPar P Q'). rewrite dmap_dpoint. eauto using pstep.
-      + right; left. exists t, E, qs, (PPar P Q'). rewrite dmap_dpoint.
+      + left. exists (P ∥ Q'). rewrite dmap_dpoint. eauto using pstep.
+      + right; left. exists t, E, qs, (P ∥ Q'). rewrite dmap_dpoint.
         split; [done|]. split; [|done]. by apply ps_parR.
-      + right; right. exists t, M, qs, x, (PPar P Q'). split; [done|]. split.
+      + right; right. exists t, M, qs, x, (P ∥ Q'). split; [done|]. split.
         * by apply ps_parR.
         * rewrite dmap_meas_dist. apply meas_dist_ext. intros k. simpl.
           rewrite (subst_fresh P); [done|]. rewrite HcP. set_solver.
@@ -249,11 +251,11 @@ Section Harmony.
     - (* res *)
       destruct (IHHq s0 eq_refl Hc)
         as [(P'&Hs&->)|[(t&E&qs&P'&->&Hs&->)|(t&M&qs&x&P'&->&Hs&->)]].
-      + left. exists (PRes P' c). rewrite dmap_dpoint.
+      + left. exists (P' \ c). rewrite dmap_dpoint.
         split; [|done]. apply ps_res; [|done]. by intros (?&?&[[=]|[=]]).
-      + right; left. exists t, E, qs, (PRes P' c). rewrite dmap_dpoint.
+      + right; left. exists t, E, qs, (P' \ c). rewrite dmap_dpoint.
         split; [done|]. split; [|done]. apply ps_res; [|done]. by intros (?&?&[[=]|[=]]).
-      + right; right. exists t, M, qs, x, (PRes P' c). split; [done|]. split.
+      + right; right. exists t, M, qs, x, (P' \ c). split; [done|]. split.
         * apply ps_res; [|done]. by intros (?&?&[[=]|[=]]).
         * rewrite dmap_meas_dist. by apply meas_dist_ext.
   Qed.
@@ -266,11 +268,11 @@ Section Harmony.
     - constructor. by apply qgstep_tau.
     - eapply qs_iteT; eauto.
     - eapply qs_iteF; eauto.
-    - rewrite <- (dmap_dpoint (λ P, PPar P Q)). apply qs_parL; eauto.
-    - rewrite <- (dmap_dpoint (λ Q, PPar P Q)). apply qs_parR; eauto.
+    - rewrite <- (dmap_dpoint (λ P, P ∥ Q)). apply qs_parL; eauto.
+    - rewrite <- (dmap_dpoint (λ Q, P ∥ Q)). apply qs_parR; eauto.
     - eapply qs_syncL; (eapply qstep_vis; [eassumption|done|done]).
     - eapply qs_syncR; (eapply qstep_vis; [eassumption|done|done]).
-    - rewrite <- (dmap_dpoint (λ P, PRes P c)). apply qs_res; eauto.
+    - rewrite <- (dmap_dpoint (λ P, P \ c)). apply qs_res; eauto.
   Qed.
 
   Lemma qstep_op ρ P t E qs P' :
@@ -282,15 +284,15 @@ Section Harmony.
     - constructor. by apply qgstep_op.
     - eapply qs_iteT; eauto.
     - eapply qs_iteF; eauto.
-    - rewrite <- (dmap_dpoint (λ P, PPar P Q)). apply qs_parL; eauto.
-    - rewrite <- (dmap_dpoint (λ Q, PPar P Q)). apply qs_parR; eauto.
-    - rewrite <- (dmap_dpoint (λ P, PRes P c)). apply qs_res; [|eauto].
+    - rewrite <- (dmap_dpoint (λ P, P ∥ Q)). apply qs_parL; eauto.
+    - rewrite <- (dmap_dpoint (λ Q, P ∥ Q)). apply qs_parR; eauto.
+    - rewrite <- (dmap_dpoint (λ P, P \ c)). apply qs_res; [|eauto].
       by intros (?&?&[[=]|[=]]).
   Qed.
 
   Lemma qstep_meas ρ P t M qs x P' :
     closed P → pstep P (LAct t (AMeas M qs x)) P' →
-    qstep ρ P (LTau (STag t)) (meas_dist M qs ρ (λ k, subst P' x (VNat k))).
+    qstep ρ P (LTau (STag t)) (meas_dist M qs ρ (λ k, P' ⟦ VNat k // x ⟧)).
   Proof.
     intros Hc Hq. remember (LAct t (AMeas M qs x)) as l eqn:El. revert El Hc.
     induction Hq; intros El Hc; simplify_eq; unfold closed in *; simpl in Hc.
@@ -302,14 +304,14 @@ Section Harmony.
     - apply closed_app in Hc as [HcP HcQ].
       erewrite meas_dist_ext.
       2:{ intros k. simpl. rewrite (subst_fresh Q); [done|]. rewrite HcQ. set_solver. }
-      rewrite <- (dmap_meas_dist (λ P, PPar P Q)). apply qs_parL; eauto.
+      rewrite <- (dmap_meas_dist (λ P, P ∥ Q)). apply qs_parL; eauto.
     - apply closed_app in Hc as [HcP HcQ].
       erewrite meas_dist_ext.
       2:{ intros k. simpl. rewrite (subst_fresh P); [done|]. rewrite HcP. set_solver. }
-      rewrite <- (dmap_meas_dist (λ Q, PPar P Q)). apply qs_parR; eauto.
-    - replace (meas_dist M qs ρ (λ k, subst (PRes P' c) x (VNat k)))
-        with (meas_dist M qs ρ (λ k, PRes (subst P' x (VNat k)) c)) by reflexivity.
-      rewrite <- (dmap_meas_dist (λ P, PRes P c)). apply qs_res; [|eauto].
+      rewrite <- (dmap_meas_dist (λ Q, P ∥ Q)). apply qs_parR; eauto.
+    - replace (meas_dist M qs ρ (λ k, (P' \ c) ⟦ VNat k // x ⟧))
+        with (meas_dist M qs ρ (λ k, P' ⟦ VNat k // x ⟧ \ c)) by reflexivity.
+      rewrite <- (dmap_meas_dist (λ P, P \ c)). apply qs_res; [|eauto].
       by intros (?&?&[[=]|[=]]).
   Qed.
 
@@ -317,8 +319,8 @@ Section Harmony.
 
   Theorem harmony ρ P Q s Δ :
     closed P → closed Q →
-    qstep ρ (PPar P Q) (LTau s) Δ
-    ↔ ∃ Δ', cstep ρ (P, Q) s Δ' ∧ Δ = dmap (λ C : conf, PPar C.1 C.2) Δ'.
+    qstep ρ (P ∥ Q) (LTau s) Δ
+    ↔ ∃ Δ', cstep ρ (P, Q) s Δ' ∧ Δ = dmap (λ C : conf, C.1 ∥ C.2) Δ'.
   Proof.
     intros HcP HcQ. split.
     - intros Hq. inversion Hq; subst.
@@ -342,22 +344,22 @@ Section Harmony.
       + vis_inv. eexists. split; [eapply cs_comRL; eauto|]. by rewrite dmap_dpoint.
     - intros (Δ' & Hc' & ->). inversion Hc'; subst.
       + rewrite dmap_dpoint. simpl.
-        rewrite <- (dmap_dpoint (λ P, PPar P Q)). apply qs_parL.
+        rewrite <- (dmap_dpoint (λ P, P ∥ Q)). apply qs_parL.
         by apply qstep_tau_prog.
       + rewrite dmap_dpoint. simpl.
-        rewrite <- (dmap_dpoint (λ Q, PPar P Q)). apply qs_parR.
+        rewrite <- (dmap_dpoint (λ Q, P ∥ Q)). apply qs_parR.
         by apply qstep_tau_prog.
       + rewrite dmap_dpoint. simpl.
-        rewrite <- (dmap_dpoint (λ P, PPar P Q)). apply qs_parL.
+        rewrite <- (dmap_dpoint (λ P, P ∥ Q)). apply qs_parL.
         by eapply qstep_op.
       + rewrite dmap_dpoint. simpl.
-        rewrite <- (dmap_dpoint (λ Q, PPar P Q)). apply qs_parR.
+        rewrite <- (dmap_dpoint (λ Q, P ∥ Q)). apply qs_parR.
         by eapply qstep_op.
       + rewrite dmap_meas_dist. simpl.
-        rewrite <- (dmap_meas_dist (λ P, PPar P Q)). apply qs_parL.
+        rewrite <- (dmap_meas_dist (λ P, P ∥ Q)). apply qs_parL.
         by eapply qstep_meas.
       + rewrite dmap_meas_dist. simpl.
-        rewrite <- (dmap_meas_dist (λ Q, PPar P Q)). apply qs_parR.
+        rewrite <- (dmap_meas_dist (λ Q, P ∥ Q)). apply qs_parR.
         by eapply qstep_meas.
       + rewrite dmap_dpoint. simpl.
         eapply qs_syncL; (eapply qstep_vis; [eassumption|done|done]).

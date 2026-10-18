@@ -28,11 +28,11 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base tactics countable option list gmap.
 From TestingTheory Require Import ActTau gLts FiniteImageLTS coFiniteImage InteractionBetweenLts
-  InListPropHelper PAL_Syntax.
+  InListPropHelper PAL.Language.Syntax.
 (* * PAL with alternative labels
 
-   An LTS on the terms of [PAL_Syntax] whose τ-transitions are those of
-   [Applicative_process_algebra] ([PAL_Alt_Tau.v]), with labels:
+   An LTS on the terms of [PAL.Language.Syntax] whose τ-transitions are those of
+   [PAL.Language.Paper_LTS] ([PAL.Language.Paper_Correspondence]), with labels:
    - [AIn l] for an input: [l] pairs the received tuple [ltuple l] with the
      template of the pattern [ltemplate l] (the pattern with the names of its
      formal fields erased), field by field;
@@ -246,7 +246,7 @@ Section PAL_Alt.
     | aar2 t E it l :
         eval_in_tuple t = Some it → template_of it = ltemplate l →
         lts_step_a (read( t ) • E) (ActExt (AIn l))
-          ((out( eot_to_tuple (ltuple l) ) • 𝟘) ‖ (subst_term (build_subst it (ltuple l)) E))
+          ((out( eot_to_tuple (ltuple l) ) • 𝟘) │ (subst_term (build_subst it (ltuple l)) E))
     (* AR3 *)
     | aar3 t ot :
         eval_out_tuple t = Some ot →
@@ -255,10 +255,10 @@ Section PAL_Alt.
     | aar4_l E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 □ E2) (ActExt μ) E1'
     | aar4_r E1 E2 μ E2' : lts_step_a E2 (ActExt μ) E2' → lts_step_a (E1 □ E2) (ActExt μ) E2'
     (* AR5, + symmetric *)
-    | aar5_l E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 ‖ E2) (ActExt μ) (E1' ‖ E2)
-    | aar5_r E1 E2 μ E2' : lts_step_a E2 (ActExt μ) E2' → lts_step_a (E1 ‖ E2) (ActExt μ) (E1 ‖ E2')
+    | aar5_l E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 │ E2) (ActExt μ) (E1' │ E2)
+    | aar5_r E1 E2 μ E2' : lts_step_a E2 (ActExt μ) E2' → lts_step_a (E1 │ E2) (ActExt μ) (E1 │ E2')
     (* AR6 *)
-    | aar6 E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 ⌊ E2) (ActExt μ) (E1' ‖ E2)
+    | aar6 E1 E2 μ E1' : lts_step_a E1 (ActExt μ) E1' → lts_step_a (E1 ⌊⌊ E2) (ActExt μ) (E1' │ E2)
     (* AR7 *)
     | aar7 be E1 E2 μ E1' :
         eval_bexp be = Some true → lts_step_a E1 (ActExt μ) E1' → lts_step_a (IF be THEN E1 ELSE E2) (ActExt μ) E1'
@@ -274,9 +274,9 @@ Section PAL_Alt.
     (* IR4 *)
     | air4 be E1 E2 E2' : eval_bexp be = Some false → lts_step_a E2 τ E2' → lts_step_a (IF be THEN E1 ELSE E2) τ E2'
     (* IR5 *)
-    | air5 t E : E <> 𝟘 → lts_step_a (out( t ) • E) τ ((out( t ) • 𝟘) ‖ E)
+    | air5 t E : E <> 𝟘 → lts_step_a (out( t ) • E) τ ((out( t ) • 𝟘) │ E)
     (* IR6 *)
-    | air6 E1 E2 : lts_step_a (eval( E1 ) • E2) τ (E1 ‖ E2)
+    | air6 E1 E2 : lts_step_a (eval( E1 ) • E2) τ (E1 │ E2)
     (* IR7 *)
     | air7_l E1 E2 : lts_step_a (E1 ⊕ E2) τ E1
     | air7_r E1 E2 : lts_step_a (E1 ⊕ E2) τ E2
@@ -284,34 +284,33 @@ Section PAL_Alt.
     | air8_l E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 □ E2) τ (E1' □ E2)
     | air8_r E1 E2 E2' : lts_step_a E2 τ E2' → lts_step_a (E1 □ E2) τ (E1 □ E2')
     (* IR9, + symmetric *)
-    | air9_l E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 ‖ E2) τ (E1' ‖ E2)
-    | air9_r E1 E2 E2' : lts_step_a E2 τ E2' → lts_step_a (E1 ‖ E2) τ (E1 ‖ E2')
+    | air9_l E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 │ E2) τ (E1' │ E2)
+    | air9_r E1 E2 E2' : lts_step_a E2 τ E2' → lts_step_a (E1 │ E2) τ (E1 │ E2')
     (* IR10, + symmetric *)
-    | air10_l E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 |ₖ E2) τ (E1' |ₖ E2)
-    | air10_r E1 E2 E2' : lts_step_a E2 τ E2' → lts_step_a (E1 |ₖ E2) τ (E1 |ₖ E2')
+    | air10_l E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 ║ E2) τ (E1' ║ E2)
+    | air10_r E1 E2 E2' : lts_step_a E2 τ E2' → lts_step_a (E1 ║ E2) τ (E1 ║ E2')
     (* IR11 *)
-    | air11 E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 ⌊ E2) τ (E1' ⌊ E2)
+    | air11 E1 E2 E1' : lts_step_a E1 τ E1' → lts_step_a (E1 ⌊⌊ E2) τ (E1' ⌊⌊ E2)
     (* IR12: synchronisation along dual labels *)
     | air12 E1 E2 μ1 μ2 E1' E2' :
         lts_step_a E1 (ActExt μ1) E1' → lts_step_a E2 (ActExt μ2) E2' → PALA_dual μ1 μ2 →
-        lts_step_a (E1 ‖ E2) τ (E1' ‖ E2')
+        lts_step_a (E1 │ E2) τ (E1' │ E2')
     (* IR13 *)
     | air13 E1 E2 μ1 μ2 E1' E2' :
         lts_step_a E1 (ActExt μ1) E1' → lts_step_a E2 (ActExt μ2) E2' → PALA_dual μ1 μ2 →
-        lts_step_a (E1 |ₖ E2) τ (E1' ‖ E2').
-  Close Scope pal_scope.
+        lts_step_a (E1 ║ E2) τ (E1' │ E2').
 
   (* ** Enumerating successors *)
 
   (* The outputs offered by a term. *)
   Fixpoint collect_out_a (E : term) : list eot :=
     match E with
-    | t_out t t_nil =>
+    | out( t ) • 𝟘 =>
         match eval_out_tuple t with Some ot => [ot] | None => [] end
-    | t_echoice E1 E2 => collect_out_a E1 ++ collect_out_a E2
-    | t_par E1 E2 => collect_out_a E1 ++ collect_out_a E2
-    | t_lmerge E1 E2 => collect_out_a E1
-    | t_if be E1 E2 =>
+    | E1 □ E2 => collect_out_a E1 ++ collect_out_a E2
+    | E1 │ E2 => collect_out_a E1 ++ collect_out_a E2
+    | E1 ⌊⌊ E2 => collect_out_a E1
+    | IF be THEN E1 ELSE E2 =>
         match eval_bexp be with
         | Some true => collect_out_a E1
         | Some false => collect_out_a E2
@@ -342,7 +341,7 @@ Section PAL_Alt.
     induction E; simpl; intros hin; try contradiction.
     - destruct E; simpl in hin; try contradiction.
       destruct (eval_out_tuple t) as [ot|] eqn:ev; [| contradiction].
-      exists t_nil. destruct hin as [<- | []]. by apply aar3.
+      exists 𝟘. destruct hin as [<- | []]. by apply aar3.
     - destruct (eval_bexp be) as [b|] eqn:hbe; [destruct b |]; simpl in hin; [| | contradiction].
       + destruct (IHE1 hin) as [E1' h1]. exists E1'. by eapply aar7.
       + destruct (IHE2 hin) as [E2' h2]. exists E2'. by eapply aar8.
@@ -351,32 +350,32 @@ Section PAL_Alt.
       + assert (In a (collect_out_a E2)) as hin2 by (apply in_app_or in hin as [?|?]; [contradiction | done]).
         destruct (IHE2 hin2) as [E2' h2]. exists E2'. by eapply aar4_r.
     - destruct (in_dec (λ x y : eot, decide (x = y)) a (collect_out_a E1)) as [hin1|hnin1].
-      + destruct (IHE1 hin1) as [E1' h1]. exists (t_par E1' E2). by eapply aar5_l.
+      + destruct (IHE1 hin1) as [E1' h1]. exists (E1' │ E2). by eapply aar5_l.
       + assert (In a (collect_out_a E2)) as hin2 by (apply in_app_or in hin as [?|?]; [contradiction | done]).
-        destruct (IHE2 hin2) as [E2' h2]. exists (t_par E1 E2'). by eapply aar5_r.
-    - destruct (IHE1 hin) as [E1' h1]. exists (t_par E1' E2). by eapply aar6.
+        destruct (IHE2 hin2) as [E2' h2]. exists (E1 │ E2'). by eapply aar5_r.
+    - destruct (IHE1 hin) as [E1' h1]. exists (E1' │ E2). by eapply aar6.
   Qed.
 
   Fixpoint all_steps_a (p : term) (𝜆 : Labels PALA_Act) : list term :=
     match p with
-    | t_nil => []
+    | 𝟘 => []
     | t_pvar _ => []
-    | t_success => []
-    | t_undef => match 𝜆 with τ => [t_undef] | _ => [] end
-    | t_rec X E => match 𝜆 with τ => [psubst X (t_rec X E) E] | _ => [] end
-    | t_out t E =>
+    | ✓ => []
+    | Ω => match 𝜆 with τ => [Ω] | _ => [] end
+    | rec X • E => match 𝜆 with τ => [psubst X (rec X • E) E] | _ => [] end
+    | out( t ) • E =>
         match 𝜆 with
         | ActExt (AOut ot) =>
-            if bool_decide (E = t_nil) then
+            if bool_decide (E = 𝟘) then
               match eval_out_tuple t with
-              | Some ot' => if bool_decide (ot' = ot) then [t_nil] else []
+              | Some ot' => if bool_decide (ot' = ot) then [𝟘] else []
               | None => []
               end
             else []
-        | τ => if bool_decide (E <> t_nil) then [t_par (t_out t t_nil) E] else []
+        | τ => if bool_decide (E <> 𝟘) then [(out( t ) • 𝟘) │ E] else []
         | _ => []
         end
-    | t_in t E =>
+    | in( t ) • E =>
         match 𝜆 with
         | ActExt (AIn l) =>
             match eval_in_tuple t with
@@ -387,72 +386,72 @@ Section PAL_Alt.
             end
         | _ => []
         end
-    | t_read t E =>
+    | read( t ) • E =>
         match 𝜆 with
         | ActExt (AIn l) =>
             match eval_in_tuple t with
             | Some it =>
                 if bool_decide (template_of it = ltemplate l)
-                then [t_par (t_out (eot_to_tuple (ltuple l)) t_nil) (subst_term (build_subst it (ltuple l)) E)]
+                then [(out( eot_to_tuple (ltuple l) ) • 𝟘) │ subst_term (build_subst it (ltuple l)) E]
                 else []
             | None => []
             end
         | _ => []
         end
-    | t_eval E1 E2 => match 𝜆 with τ => [t_par E1 E2] | _ => [] end
-    | t_if be E1 E2 =>
+    | eval( E1 ) • E2 => match 𝜆 with τ => [E1 │ E2] | _ => [] end
+    | IF be THEN E1 ELSE E2 =>
         match eval_bexp be with
         | Some true => all_steps_a E1 𝜆
         | Some false => all_steps_a E2 𝜆
         | None => []
         end
-    | t_ichoice E1 E2 => match 𝜆 with τ => [E1; E2] | _ => [] end
-    | t_echoice E1 E2 =>
+    | E1 ⊕ E2 => match 𝜆 with τ => [E1; E2] | _ => [] end
+    | E1 □ E2 =>
         match 𝜆 with
-        | τ => map (λ E1', t_echoice E1' E2) (all_steps_a E1 τ)
-               ++ map (λ E2', t_echoice E1 E2') (all_steps_a E2 τ)
+        | τ => map (λ E1', E1' □ E2) (all_steps_a E1 τ)
+               ++ map (λ E2', E1 □ E2') (all_steps_a E2 τ)
         | ActExt _ => all_steps_a E1 𝜆 ++ all_steps_a E2 𝜆
         end
-    | t_lmerge E1 E2 =>
+    | E1 ⌊⌊ E2 =>
         match 𝜆 with
-        | τ => map (λ E1', t_lmerge E1' E2) (all_steps_a E1 τ)
-        | ActExt _ => map (λ E1', t_par E1' E2) (all_steps_a E1 𝜆)
+        | τ => map (λ E1', E1' ⌊⌊ E2) (all_steps_a E1 τ)
+        | ActExt _ => map (λ E1', E1' │ E2) (all_steps_a E1 𝜆)
         end
-    | t_cmerge E1 E2 =>
+    | E1 ║ E2 =>
         match 𝜆 with
         | τ =>
-            map (λ E1', t_cmerge E1' E2) (all_steps_a E1 τ)
-            ++ map (λ E2', t_cmerge E1 E2') (all_steps_a E2 τ)
+            map (λ E1', E1' ║ E2) (all_steps_a E1 τ)
+            ++ map (λ E2', E1 ║ E2') (all_steps_a E2 τ)
             ++ flat_map (λ a,
-                 flat_map (λ E1', map (λ E2', t_par E1' E2')
+                 flat_map (λ E1', map (λ E2', E1' │ E2')
                                     (flat_map (λ l, all_steps_a E2 (ActExt (AIn l))) (labels_of a)))
                    (all_steps_a E1 (ActExt (AOut a))))
                  (collect_out_a E1)
             ++ flat_map (λ a,
-                 flat_map (λ E2', map (λ E1', t_par E1' E2')
+                 flat_map (λ E2', map (λ E1', E1' │ E2')
                                     (flat_map (λ l, all_steps_a E1 (ActExt (AIn l))) (labels_of a)))
                    (all_steps_a E2 (ActExt (AOut a))))
                  (collect_out_a E2)
         | ActExt _ => []
         end
-    | t_par E1 E2 =>
+    | E1 │ E2 =>
         match 𝜆 with
         | τ =>
-            map (λ E1', t_par E1' E2) (all_steps_a E1 τ)
-            ++ map (λ E2', t_par E1 E2') (all_steps_a E2 τ)
+            map (λ E1', E1' │ E2) (all_steps_a E1 τ)
+            ++ map (λ E2', E1 │ E2') (all_steps_a E2 τ)
             ++ flat_map (λ a,
-                 flat_map (λ E1', map (λ E2', t_par E1' E2')
+                 flat_map (λ E1', map (λ E2', E1' │ E2')
                                     (flat_map (λ l, all_steps_a E2 (ActExt (AIn l))) (labels_of a)))
                    (all_steps_a E1 (ActExt (AOut a))))
                  (collect_out_a E1)
             ++ flat_map (λ a,
-                 flat_map (λ E2', map (λ E1', t_par E1' E2')
+                 flat_map (λ E2', map (λ E1', E1' │ E2')
                                     (flat_map (λ l, all_steps_a E1 (ActExt (AIn l))) (labels_of a)))
                    (all_steps_a E2 (ActExt (AOut a))))
                  (collect_out_a E2)
         | ActExt _ =>
-            map (λ E1', t_par E1' E2) (all_steps_a E1 𝜆)
-            ++ map (λ E2', t_par E1 E2') (all_steps_a E2 𝜆)
+            map (λ E1', E1' │ E2) (all_steps_a E1 𝜆)
+            ++ map (λ E2', E1 │ E2') (all_steps_a E2 𝜆)
         end
     end.
 

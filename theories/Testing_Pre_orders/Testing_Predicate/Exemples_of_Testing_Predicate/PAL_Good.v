@@ -25,7 +25,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base decidable countable.
 From TestingTheory Require Import gLts Bisimulation Testing_Predicate
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence.
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Congruence.
 (* begin hide *)
 (* * Testing predicate for PAL
 
@@ -44,9 +44,9 @@ Section PAL_Good.
     | good_success : good_PAL ✓
     | good_echoice_l E1 E2 : good_PAL E1 → good_PAL (E1 □ E2)
     | good_echoice_r E1 E2 : good_PAL E2 → good_PAL (E1 □ E2)
-    | good_par_l E1 E2 : good_PAL E1 → good_PAL (E1 ‖ E2)
-    | good_par_r E1 E2 : good_PAL E2 → good_PAL (E1 ‖ E2)
-    | good_lmerge E1 E2 : good_PAL E1 → good_PAL (E1 ⌊ E2)
+    | good_par_l E1 E2 : good_PAL E1 → good_PAL (E1 │ E2)
+    | good_par_r E1 E2 : good_PAL E2 → good_PAL (E1 │ E2)
+    | good_lmerge E1 E2 : good_PAL E1 → good_PAL (E1 ⌊⌊ E2)
     | good_if_true be E1 E2 : eval_bexp be = Some true → good_PAL E1 → good_PAL (IF be THEN E1 ELSE E2)
     | good_if_false be E1 E2 : eval_bexp be = Some false → good_PAL E2 → good_PAL (IF be THEN E1 ELSE E2).
   Close Scope pal_scope.
@@ -96,5 +96,29 @@ Section PAL_Good.
     - intros p q η [].
   Defined.
 
+  Open Scope pal_scope.
+  Inductive omega_step : term → term → Prop :=
+    | os_success : omega_step ✓ 𝟘
+    | os_echoice_l E1 E2 E' : omega_step E1 E' → omega_step (E1 □ E2) E'
+    | os_echoice_r E1 E2 E' : omega_step E2 E' → omega_step (E1 □ E2) E'
+    | os_par_l E1 E2 E' : omega_step E1 E' → omega_step (E1 │ E2) (E' │ E2)
+    | os_par_r E1 E2 E' : omega_step E2 E' → omega_step (E1 │ E2) (E1 │ E')
+    | os_lmerge E1 E2 E' : omega_step E1 E' → omega_step (E1 ⌊⌊ E2) (E' │ E2)
+    | os_if_true be E1 E2 E' : eval_bexp be = Some true → omega_step E1 E' →
+        omega_step (IF be THEN E1 ELSE E2) E'
+    | os_if_false be E1 E2 E' : eval_bexp be = Some false → omega_step E2 E' →
+        omega_step (IF be THEN E1 ELSE E2) E'.
+  Close Scope pal_scope.
+
+  Lemma good_PAL_omega E : good_PAL E ↔ ∃ E', omega_step E E'.
+  Proof.
+    split.
+    - induction 1 as [| ? ? _ (? & ?) | ? ? _ (? & ?) | ? ? _ (? & ?) | ? ? _ (? & ?)
+                     | ? ? _ (? & ?) | ? ? ? ? _ (? & ?) | ? ? ? ? _ (? & ?)];
+        eexists; eauto using omega_step.
+    - intros (E' & h). induction h; eauto using good_PAL.
+  Qed.
 End PAL_Good.
+
+Notation "E ⟶ω E'" := (omega_step _ E E') (at level 70) : pal_scope.
 (* end hide *)

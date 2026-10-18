@@ -129,6 +129,8 @@ Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scop
 Notation "P \ c" := (PRes P c) (at level 36, left associativity) : lqccs_scope.
 Notation "①" := GSucc : lqccs_scope.
 
+#[local] Open Scope lqccs_scope.
+
 (* ** Substitution [P[v/x]] *)
 
 Fixpoint exp_subst (e : exp) (x : var) (v : val) : exp :=
@@ -164,21 +166,20 @@ Fixpoint subst (P : proc) (x : var) (v : val) : proc :=
   match P with
   | PSend t c e => PSend t c (exp_subst e x v)
   | PIte e P Q => PIte (exp_subst e x v) (subst P x v) (subst Q x v)
-  | PPar P Q => PPar (subst P x v) (subst Q x v)
-  | PRes P c => PRes (subst P x v) c
+  | P ∥ Q => subst P x v ∥ subst Q x v
+  | P \ c => subst P x v \ c
   | PG g => PG (gsubst g x v)
   end
 with gsubst (g : guard) (x : var) (v : val) : guard :=
   match g with
   | GNil es => GNil (exps_subst es x v)
-  | GSucc => GSucc
-  | GPre 𝜆 P =>
-      GPre (prefix_subst 𝜆 x v)
-        (if decide (prefix_binder 𝜆 = Some x) then P else subst P x v)
-  | GSum g1 g2 => GSum (gsubst g1 x v) (gsubst g2 x v)
+  | ① => ①
+  | 𝜆 ∙ P =>
+      prefix_subst 𝜆 x v ∙ (if decide (prefix_binder 𝜆 = Some x) then P else subst P x v)
+  | g1 ⊕ g2 => gsubst g1 x v ⊕ gsubst g2 x v
   end.
 
-Notation "P [ v // x ]" := (subst P x v) (at level 20) : lqccs_scope.
+Notation "P ⟦ v // x ⟧" := (subst P x v) (at level 20) : lqccs_scope.
 
 (* ** Big-step evaluation [e ⇓ v]
 
@@ -226,15 +227,15 @@ Definition prefix_tags (𝜆 : prefix) : list tag :=
 Fixpoint tags (P : proc) : list tag :=
   match P with
   | PSend t _ _ => [t]
-  | PIte _ P Q | PPar P Q => tags P ++ tags Q
-  | PRes P _ => tags P
+  | PIte _ P Q | P ∥ Q => tags P ++ tags Q
+  | P \ _ => tags P
   | PG g => gtags g
   end
 with gtags (g : guard) : list tag :=
   match g with
-  | GNil _ | GSucc => []
-  | GPre 𝜆 P => prefix_tags 𝜆 ++ tags P
-  | GSum g1 g2 => gtags g1 ++ gtags g2
+  | GNil _ | ① => []
+  | 𝜆 ∙ P => prefix_tags 𝜆 ++ tags P
+  | g1 ⊕ g2 => gtags g1 ++ gtags g2
   end.
 
 (* ** Decidability and countability *)
@@ -328,16 +329,16 @@ Fixpoint proc_encode (P : proc) : gen_tree pleaf :=
   match P with
   | PSend t c e => GenLeaf (inr (t, c, e))
   | PIte e P Q => GenNode 1 [GenLeaf (inl (inl (inr e))); proc_encode P; proc_encode Q]
-  | PPar P Q => GenNode 3 [proc_encode P; proc_encode Q]
-  | PRes P c => GenNode 4 [proc_encode P; GenLeaf (inl (inr c))]
+  | P ∥ Q => GenNode 3 [proc_encode P; proc_encode Q]
+  | P \ c => GenNode 4 [proc_encode P; GenLeaf (inl (inr c))]
   | PG g => GenNode 6 [guard_encode g]
   end
 with guard_encode (g : guard) : gen_tree pleaf :=
   match g with
   | GNil es => GenLeaf (inl (inl (inl (inl es))))
-  | GSucc => GenNode 5 []
-  | GPre 𝜆 P => GenNode 0 [GenLeaf (inl (inl (inl (inr 𝜆)))); proc_encode P]
-  | GSum g1 g2 => GenNode 2 [guard_encode g1; guard_encode g2]
+  | ① => GenNode 5 []
+  | 𝜆 ∙ P => GenNode 0 [GenLeaf (inl (inl (inl (inr 𝜆)))); proc_encode P]
+  | g1 ⊕ g2 => GenNode 2 [guard_encode g1; guard_encode g2]
   end.
 
 Fixpoint proc_decode (t : gen_tree pleaf) : option proc :=
@@ -345,17 +346,17 @@ Fixpoint proc_decode (t : gen_tree pleaf) : option proc :=
   | GenLeaf (inr (t, c, e)) => Some (PSend t c e)
   | GenNode 1 [GenLeaf (inl (inl (inr e))); t1; t2] =>
       P ← proc_decode t1; Q ← proc_decode t2; Some (PIte e P Q)
-  | GenNode 3 [t1; t2] => P ← proc_decode t1; Q ← proc_decode t2; Some (PPar P Q)
-  | GenNode 4 [t; GenLeaf (inl (inr c))] => (λ P, PRes P c) <$> proc_decode t
+  | GenNode 3 [t1; t2] => P ← proc_decode t1; Q ← proc_decode t2; Some (P ∥ Q)
+  | GenNode 4 [t; GenLeaf (inl (inr c))] => (λ P, P \ c) <$> proc_decode t
   | GenNode 6 [t] => PG <$> guard_decode t
   | _ => None
   end
 with guard_decode (t : gen_tree pleaf) : option guard :=
   match t with
   | GenLeaf (inl (inl (inl (inl es)))) => Some (GNil es)
-  | GenNode 5 [] => Some GSucc
+  | GenNode 5 [] => Some ①
   | GenNode 0 [GenLeaf (inl (inl (inl (inr 𝜆)))); t] => GPre 𝜆 <$> proc_decode t
-  | GenNode 2 [t1; t2] => g1 ← guard_decode t1; g2 ← guard_decode t2; Some (GSum g1 g2)
+  | GenNode 2 [t1; t2] => g1 ← guard_decode t1; g2 ← guard_decode t2; Some (g1 ⊕ g2)
   | _ => None
   end.
 

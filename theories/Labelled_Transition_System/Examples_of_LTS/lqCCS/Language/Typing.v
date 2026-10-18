@@ -49,6 +49,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program.
+
+#[local] Open Scope lqccs_scope.
 (* ** Qubit terms *)
 
 Inductive qt : Type :=
@@ -96,33 +98,33 @@ Section Typing.
   | wt_ite Σ e P Q :
       classical e → wt Σ P → wt Σ Q → wt Σ (PIte e P Q)
   | wt_par Σ1 Σ2 P Q :
-      Σ1 ## Σ2 → wt Σ1 P → wt Σ2 Q → wt (Σ1 ∪ Σ2) (PPar P Q)
+      Σ1 ## Σ2 → wt Σ1 P → wt Σ2 Q → wt (Σ1 ∪ Σ2) (P ∥ Q)
   | wt_res Σ P c :
-      wt Σ P → wt Σ (PRes P c)
+      wt Σ P → wt Σ (P \ c)
   | wt_guard Σ g :
       gwt Σ g → wt Σ (PG g)
   with gwt : gset qt → guard → Prop :=
   | gwt_nil Σ es l :
       qterms es = Some l → NoDup l → Σ = list_to_set l → gwt Σ (GNil es)
   | gwt_succ Σ :
-      gwt Σ GSucc
+      gwt Σ ①
   | gwt_tau Σ t P :
-      wt Σ P → gwt Σ (GPre (PTau t) P)
+      wt Σ P → gwt Σ (PTau t ∙ P)
   | gwt_taupair Σ t t' P :
-      wt Σ P → gwt Σ (GPre (PTauPair t t') P)
+      wt Σ P → gwt Σ (PTauPair t t' ∙ P)
   | gwt_op Σ t E es l P :
       qterms es = Some l → NoDup l → list_to_set l ⊆ Σ → wt Σ P →
-      gwt Σ (GPre (POp t E es) P)
+      gwt Σ (POp t E es ∙ P)
   | gwt_meas Σ t M es x l P :
       qterms es = Some l → NoDup l → list_to_set l ⊆ Σ → qvar x = false → wt Σ P →
-      gwt Σ (GPre (PMeas t M es x) P)
+      gwt Σ (PMeas t M es x ∙ P)
   | gwt_recv_c Σ t c x P :
-      qchan c = false → qvar x = false → wt Σ P → gwt Σ (GPre (PRecv t c x) P)
+      qchan c = false → qvar x = false → wt Σ P → gwt Σ (PRecv t c x ∙ P)
   | gwt_recv_q Σ t c x P :
       qchan c = true → qvar x = true → QV x ∉ Σ → wt ({[ QV x ]} ∪ Σ) P →
-      gwt Σ (GPre (PRecv t c x) P)
+      gwt Σ (PRecv t c x ∙ P)
   | gwt_sum Σ g1 g2 :
-      gwt Σ g1 → gwt Σ g2 → gwt Σ (GSum g1 g2).
+      gwt Σ g1 → gwt Σ g2 → gwt Σ (g1 ⊕ g2).
 
   Scheme wt_mut := Induction for wt Sort Prop
     with gwt_mut := Induction for gwt Sort Prop.
@@ -260,7 +262,7 @@ Section Typing.
 
   (* A qubit variable that a process does not own does not occur in it. *)
   Lemma wt_subst_absent :
-    (∀ Σ P, wt Σ P → ∀ x v, qvar x = true → QV x ∉ Σ → subst P x v = P)
+    (∀ Σ P, wt Σ P → ∀ x v, qvar x = true → QV x ∉ Σ → P ⟦ v // x ⟧ = P)
     ∧ (∀ Σ g, gwt Σ g → ∀ x v, qvar x = true → QV x ∉ Σ → gsubst g x v = g).
   Proof.
     apply wt_gwt_ind.
@@ -297,7 +299,7 @@ Section Typing.
   Qed.
 
   Lemma wt_subst_c :
-    (∀ Σ P, wt Σ P → ∀ x v, qvar x = false → vclass v → wt Σ (subst P x v))
+    (∀ Σ P, wt Σ P → ∀ x v, qvar x = false → vclass v → wt Σ (P ⟦ v // x ⟧))
     ∧ (∀ Σ g, gwt Σ g → ∀ x v, qvar x = false → vclass v → gwt Σ (gsubst g x v)).
   Proof.
     apply wt_gwt_ind.
@@ -329,7 +331,7 @@ Section Typing.
   (* Receiving the fresh qubit [q] for the qubit variable [x]. *)
   Lemma wt_subst_q :
     (∀ Σ P, wt Σ P → ∀ x q, qvar x = true → QV x ∈ Σ → QN q ∉ Σ →
-       wt ({[ QN q ]} ∪ (Σ ∖ {[ QV x ]})) (subst P x (VQubit q)))
+       wt ({[ QN q ]} ∪ (Σ ∖ {[ QV x ]})) (P ⟦ VQubit q // x ⟧))
     ∧ (∀ Σ g, gwt Σ g → ∀ x q, qvar x = true → QV x ∈ Σ → QN q ∉ Σ →
        gwt ({[ QN q ]} ∪ (Σ ∖ {[ QV x ]})) (gsubst g x (VQubit q))).
   Proof.
@@ -439,7 +441,7 @@ Section Typing.
     destruct (decide (b = a)); naive_solver.
   Qed.
 
-  Lemma wt_nil : wt ∅ (PG (GNil [])).
+  Lemma wt_nil : wt ∅ (𝟘).
   Proof. constructor. by econstructor; [done|constructor|]. Qed.
 
   Lemma sr_guard Σ g l P' : gwt Σ g → gstep g l P' → sr_post Σ l P'.

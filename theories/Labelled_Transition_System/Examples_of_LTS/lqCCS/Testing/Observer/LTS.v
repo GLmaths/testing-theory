@@ -63,6 +63,8 @@ From TestingTheory Require Import ActTau InListPropHelper
   DefinitionAS Completeness Equivalence
   CompletenessASco SoundnessASco EquivalenceASco TestSpecBridge.
 
+#[local] Open Scope lqccs_scope.
+
 (* ** Receptions take any value *)
 
 Lemma grecv_any g t c v w P' :
@@ -108,12 +110,12 @@ Definition tstep (Q : proc) (𝜆 : Labels lact) (Q' : proc) : Prop :=
   | ActExt (LIn c v) => ustep Q (UAct (AIn c v)) Q'
   | ActExt (LOp E qs) => ustep Q (UAct (AOp E qs)) Q'
   | ActExt (LMeas M qs n) =>
-      ∃ x Q0, ustep Q (UAct (AMeas M qs x)) Q0 ∧ Q' = subst Q0 x (VNat n)
+      ∃ x Q0, ustep Q (UAct (AMeas M qs x)) Q0 ∧ Q' = Q0 ⟦ VNat n // x ⟧
   end.
 
 Definition meas_res (M : meas) (qs : list qubit) (n : nat) (aQ : pact * proc) : list proc :=
   match aQ with
-  | (AMeas M' qs' x, Q0) => if decide (M' = M ∧ qs' = qs) then [subst Q0 x (VNat n)] else []
+  | (AMeas M' qs' x, Q0) => if decide (M' = M ∧ qs' = qs) then [Q0 ⟦ VNat n // x ⟧] else []
   | _ => []
   end.
 
@@ -150,7 +152,7 @@ Lemma cgr_tstep R P 𝜆 Q : R ≡* P → tstep R 𝜆 Q → ∃ Q', tstep P �
 Proof.
   intros Hc. destruct 𝜆 as [[c v|c v|E qs|M qs n]|]; simpl; try (by apply cgr_ustep).
   intros (x & Q0 & Hs & ->). destruct (cgr_ustep _ _ _ _ Hc Hs) as (Q1 & Hs1 & HQ).
-  exists (subst Q1 x (VNat n)). split; [eauto|by apply cgr_subst].
+  exists (Q1 ⟦ VNat n // x ⟧). split; [eauto|by apply cgr_subst].
 Qed.
 
 #[global] Instance obs_gLtsEq : gLtsEq proc lact_ExtAction.
@@ -164,17 +166,17 @@ Defined.
 (* *** Asynchronous outputs: the output axioms *)
 
 Lemma tstep_par_l Q 𝜆 Q' t c v :
-  tstep Q 𝜆 Q' → tstep (PPar Q (oproc t c v)) 𝜆 (PPar Q' (oproc t c v)).
+  tstep Q 𝜆 Q' → tstep (Q ∥ oproc t c v) 𝜆 (Q' ∥ oproc t c v).
 Proof.
   destruct 𝜆 as [[c' v'|c' v'|E qs|M qs n]|]; simpl; try apply ustep_par_l.
-  intros (x & Q0 & Hs & ->). exists x, (PPar Q0 (oproc t c v)). split; [by apply ustep_par_l|done].
+  intros (x & Q0 & Hs & ->). exists x, (Q0 ∥ oproc t c v). split; [by apply ustep_par_l|done].
 Qed.
 
 Lemma tstep_par_out_inv Q t c v 𝜆 X :
-  tstep (PPar Q (oproc t c v)) 𝜆 X →
-    (∃ Q', tstep Q 𝜆 Q' ∧ X = PPar Q' (oproc t c v))
-  ∨ (𝜆 = ActExt (LOut c v) ∧ X = PPar Q 𝟘)
-  ∨ (𝜆 = τ ∧ ∃ Q', ustep Q (UAct (AIn c v)) Q' ∧ X = PPar Q' 𝟘).
+  tstep (Q ∥ oproc t c v) 𝜆 X →
+    (∃ Q', tstep Q 𝜆 Q' ∧ X = Q' ∥ oproc t c v)
+  ∨ (𝜆 = ActExt (LOut c v) ∧ X = Q ∥ 𝟘)
+  ∨ (𝜆 = τ ∧ ∃ Q', ustep Q (UAct (AIn c v)) Q' ∧ X = Q' ∥ 𝟘).
 Proof.
   destruct 𝜆 as [[c' v'|c' v'|E qs|M qs n]|]; simpl; intros Hs.
   - destruct (ustep_par_out_inv _ _ _ _ _ _ Hs) as [(Q' & HQ & ->)|[[E ->]|[E _]]].
@@ -188,7 +190,7 @@ Proof.
   - destruct Hs as (x & X0 & Hs & ->).
     destruct (ustep_par_out_inv _ _ _ _ _ _ Hs) as [(Q0 & HQ & ->)|[[E _]|[E _]]];
       [|discriminate|discriminate].
-    left. exists (subst Q0 x (VNat n)). split; [eauto|done].
+    left. exists (Q0 ⟦ VNat n // x ⟧). split; [eauto|done].
   - destruct (ustep_par_out_inv _ _ _ _ _ _ Hs) as [(Q' & HQ & ->)|[[E _]|[_ (Q' & HQ & ->)]]].
     + left. eauto.
     + discriminate.
@@ -196,7 +198,7 @@ Proof.
 Qed.
 
 Lemma t_out_from_par Q Q1 t c v :
-  Q ≡* PPar Q1 (oproc t c v) → ∃ Z, tstep Q (ActExt (LOut c v)) Z ∧ Z ≡* Q1.
+  Q ≡* Q1 ∥ oproc t c v → ∃ Z, tstep Q (ActExt (LOut c v)) Z ∧ Z ≡* Q1.
 Proof.
   intros HQ.
   destruct (cgr_tstep _ _ (ActExt (LOut c v)) _ (symmetry HQ) (ustep_par_out_emit Q1 t c v))
@@ -370,7 +372,7 @@ Section Memory.
     - apply list_elem_of_singleton in Hin as ->. exists Q0. apply obs_step_def.
       by exists (LAct t (AOp E qs)).
     - apply list_elem_of_fmap in Hin as (k & -> & _).
-      exists (subst Q0 x (VNat (code _ k))). apply obs_step_def. exists x, Q0.
+      exists (Q0 ⟦ VNat (code _ k) // x ⟧). apply obs_step_def. exists x, Q0.
       split; [by exists (LAct t (AMeas M qs x))|done].
   Qed.
 

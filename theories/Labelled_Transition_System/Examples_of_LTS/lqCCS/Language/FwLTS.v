@@ -48,6 +48,8 @@ From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program lqCCS.Language.Succ lqCCS.Language.Congruence lqCCS.Language.LTS.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_OBA_FB Lts_Finite_Non_Blocking_Chain Lts_FW.
 From TestingTheory Require Import InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction.
+
+#[local] Open Scope lqccs_scope.
 (* ** The alphabet *)
 
 Inductive lact : Type :=
@@ -112,17 +114,17 @@ Proof. unfold UniqueDual. intros η β Hd. exact Hd. Qed.
 
 (* ** An output is a parallel component *)
 
-Lemma cgr_par_comm P Q : PPar P Q ≡* PPar Q P.
+Lemma cgr_par_comm P Q : P ∥ Q ≡* Q ∥ P.
 Proof. apply cgr_of_cs, cs_par_comm. Qed.
 
-Lemma cgr_par_assoc P Q R : PPar P (PPar Q R) ≡* PPar (PPar P Q) R.
+Lemma cgr_par_assoc P Q R : P ∥ (Q ∥ R) ≡* (P ∥ Q) ∥ R.
 Proof. apply cgr_of_cs, cs_par_assoc. Qed.
 
-Lemma cgr_par_nil P : PPar P (PG (GNil [])) ≡* P.
+Lemma cgr_par_nil P : P ∥ 𝟘 ≡* P.
 Proof. apply cgr_of_cs, cs_par_nil. Qed.
 
 Lemma out_par P t c v P' :
-  pstep P (LAct t (AOut c v)) P' → P ≡* PPar P' (PSend t c (EVal v)).
+  pstep P (LAct t (AOut c v)) P' → P ≡* P' ∥ PSend t c (EVal v).
 Proof.
   intros Hs. remember (LAct t (AOut c v)) as l eqn:El. revert El.
   induction Hs; intros El; simplify_eq.
@@ -154,20 +156,20 @@ Qed.
 Notation oproc t c v := (PSend t c (EVal v)).
 
 Lemma ustep_out_par P c v P' :
-  ustep P (UAct (AOut c v)) P' → ∃ t, P ≡* PPar P' (oproc t c v).
+  ustep P (UAct (AOut c v)) P' → ∃ t, P ≡* P' ∥ oproc t c v.
 Proof.
   intros ([s|t a] & El & Hs); simpl in El; simplify_eq. exists t. by apply out_par.
 Qed.
 
-Lemma ustep_par_l P Q u P' : ustep P u P' → ustep (PPar P Q) u (PPar P' Q).
+Lemma ustep_par_l P Q u P' : ustep P u P' → ustep (P ∥ Q) u (P' ∥ Q).
 Proof. intros (l & <- & Hs). exists l. split; [done|]. by apply ps_parL. Qed.
 
 Lemma ustep_par_out_emit Q t c v :
-  ustep (PPar Q (oproc t c v)) (UAct (AOut c v)) (PPar Q (PG (GNil []))).
+  ustep (Q ∥ oproc t c v) (UAct (AOut c v)) (Q ∥ 𝟘).
 Proof. exists (LAct t (AOut c v)). split; [done|]. apply ps_parR. by constructor. Qed.
 
 Lemma ustep_par_out_sync Q Q' t c v :
-  ustep Q (UAct (AIn c v)) Q' → ustep (PPar Q (oproc t c v)) UTau (PPar Q' (PG (GNil []))).
+  ustep Q (UAct (AIn c v)) Q' → ustep (Q ∥ oproc t c v) UTau (Q' ∥ 𝟘).
 Proof.
   intros ([s|t' a] & El & Hs); simpl in El; simplify_eq.
   exists (LTau (SPair t' t)). split; [done|]. eapply ps_syncR; [done|]. by constructor.
@@ -175,10 +177,10 @@ Qed.
 
 (* What [Q ∥ c!v] can do: a step of [Q], the output, or [Q] receiving it. *)
 Lemma ustep_par_out_inv Q t c v u X :
-  ustep (PPar Q (oproc t c v)) u X →
-    (∃ Q', ustep Q u Q' ∧ X = PPar Q' (oproc t c v))
-  ∨ (u = UAct (AOut c v) ∧ X = PPar Q (PG (GNil [])))
-  ∨ (u = UTau ∧ ∃ Q', ustep Q (UAct (AIn c v)) Q' ∧ X = PPar Q' (PG (GNil []))).
+  ustep (Q ∥ oproc t c v) u X →
+    (∃ Q', ustep Q u Q' ∧ X = Q' ∥ oproc t c v)
+  ∨ (u = UAct (AOut c v) ∧ X = Q ∥ 𝟘)
+  ∨ (u = UTau ∧ ∃ Q', ustep Q (UAct (AIn c v)) Q' ∧ X = Q' ∥ 𝟘).
 Proof.
   intros (l & <- & Hs).
   inversion Hs as [| | | |? ? ? Q' HQ|? ? ? O' HO|? ? t1 t2 c1 v1 Q' O' HQ HO|? ? t1 t2 c1 v1 Q' O' HQ HO|];
@@ -191,8 +193,8 @@ Proof.
 Qed.
 
 Lemma pstep_par_out_inv Q t c v t' a X :
-  pstep (PPar Q (oproc t c v)) (LAct t' a) X → (∀ v', a ≠ AOut c v') →
-  ∃ Q', pstep Q (LAct t' a) Q' ∧ X = PPar Q' (oproc t c v).
+  pstep (Q ∥ oproc t c v) (LAct t' a) X → (∀ v', a ≠ AOut c v') →
+  ∃ Q', pstep Q (LAct t' a) Q' ∧ X = Q' ∥ oproc t c v.
 Proof.
   intros Hs Ha. inversion Hs as [| | | |? ? ? Q' HQ|? ? ? O' HO| | |]; subst.
   - eauto.
@@ -246,8 +248,8 @@ Fixpoint pouts (P : proc) : list (chan * val) :=
       | Some (VBool false) => pouts Q
       | _ => []
       end
-  | PPar P Q => pouts P ++ pouts Q
-  | PRes P c => filter (λ cv, cv.1 ≠ c) (pouts P)
+  | P ∥ Q => pouts P ++ pouts Q
+  | P \ c => filter (λ cv, cv.1 ≠ c) (pouts P)
   | PG _ => []
   end.
 
@@ -299,7 +301,7 @@ Section Process.
       pstep P (LAct t (AOp E qs)) P' → lstep (P, ρ) τ (P', sop_apply E qs ρ)
   | ls_meas P P0 ρ t M qs y (k : Out (meas_of M qs)) :
       pstep P (LAct t (AMeas M qs y)) P0 → nonzero (meas_branch M qs k ρ) →
-      lstep (P, ρ) τ (subst P0 y (VNat (code _ k)), meas_branch M qs k ρ)
+      lstep (P, ρ) τ (P0 ⟦ VNat (code _ k) // y ⟧, meas_branch M qs k ρ)
   | ls_out P P' ρ c v :
       ustep P (UAct (AOut c v)) P' → lstep (P, ρ) (ActExt (LOut c v)) (P', ρ)
   | ls_in P P' ρ c v :
@@ -327,7 +329,7 @@ Section Process.
               match a with
               | AOp E qs => [(P0, sop_apply E qs ρ)]
               | AMeas M qs y =>
-                  meas_succs M qs ρ (λ k, (subst P0 y (VNat (code _ k)), meas_branch M qs k ρ))
+                  meas_succs M qs ρ (λ k, (P0 ⟦ VNat (code _ k) // y ⟧, meas_branch M qs k ρ))
               | _ => []
               end)
     | ActExt (LOut c v) => (λ P', (P', ρ)) <$> succ P (UAct (AOut c v))
@@ -423,7 +425,7 @@ Section Process.
     - destruct (cgr_pstep_act _ _ _ _ _ Hc Hp) as (t' & P'' & Hp' & HP).
       exists (P'', sop_apply E qs ρ'). split; [by econstructor|]. split; simpl; by try symmetry.
     - destruct (cgr_pstep_act _ _ _ _ _ Hc Hp) as (t' & P'' & Hp' & HP).
-      exists (subst P'' y' (VNat (code _ k)), meas_branch M qs k ρ').
+      exists (P'' ⟦ VNat (code _ k) // y' ⟧, meas_branch M qs k ρ').
       split; [by econstructor|]. split; simpl; [|done].
       symmetry. by apply cgr_subst.
     - destruct (cgr_ustep _ _ _ _ Hc Hu) as (P'' & Hu' & HP).
@@ -444,15 +446,15 @@ Section Process.
 
   (* ** A process in parallel with an output *)
 
-  Definition fpar (x : pconf) t c v : pconf := (PPar x.1 (oproc t c v), x.2).
+  Definition fpar (x : pconf) t c v : pconf := (x.1 ∥ oproc t c v, x.2).
 
   Lemma lstep_par_out x 𝜆 y t c v : lstep x 𝜆 y → lstep (fpar x t c v) 𝜆 (fpar y t c v).
   Proof.
     intros Hs. inversion Hs; subst; unfold fpar; simpl.
     - constructor. by apply ustep_par_l.
     - econstructor. by apply ps_parL.
-    - match goal with |- lstep _ _ (PPar (subst ?P0 ?y ?n) ?O, _) =>
-        change (PPar (subst P0 y n) O) with (subst (PPar P0 O) y n) end.
+    - match goal with |- lstep _ _ (?P0 ⟦ ?n // ?y ⟧ ∥ ?O, _) =>
+        change (P0 ⟦ n // y ⟧ ∥ O) with ((P0 ∥ O) ⟦ n // y ⟧) end.
       econstructor; [by apply ps_parL|done].
     - constructor. by apply ustep_par_l.
     - constructor. by apply ustep_par_l.
@@ -463,8 +465,8 @@ Section Process.
   Lemma lstep_par_out_inv x t c v 𝜆 y :
     lstep (fpar x t c v) 𝜆 y →
       (∃ y', lstep x 𝜆 y' ∧ y = fpar y' t c v)
-    ∨ (𝜆 = ActExt (LOut c v) ∧ y = (PPar x.1 𝟘, x.2))
-    ∨ (𝜆 = τ ∧ ∃ P', ustep x.1 (UAct (AIn c v)) P' ∧ y = (PPar P' 𝟘, x.2)).
+    ∨ (𝜆 = ActExt (LOut c v) ∧ y = (x.1 ∥ 𝟘, x.2))
+    ∨ (𝜆 = τ ∧ ∃ P', ustep x.1 (UAct (AIn c v)) P' ∧ y = (P' ∥ 𝟘, x.2)).
   Proof.
     destruct x as [P ρ]. unfold fpar; simpl. intros Hs.
     inversion Hs as [R R' ρ' Hu|R R' ρ' t' E qs Hp|R R0 ρ' t' M qs y' k Hp Hn
@@ -476,7 +478,7 @@ Section Process.
     - destruct (pstep_par_out_inv _ _ _ _ _ _ _ Hp) as (Q' & HQ & ->); [done|].
       left. eexists (Q', _). split; [by econstructor|done].
     - destruct (pstep_par_out_inv _ _ _ _ _ _ _ Hp) as (Q' & HQ & ->); [done|].
-      left. eexists (subst Q' y' (VNat (code _ k)), _). split; [by econstructor|done].
+      left. eexists (Q' ⟦ VNat (code _ k) // y' ⟧, _). split; [by econstructor|done].
     - destruct (ustep_par_out_inv _ _ _ _ _ _ Hu)
         as [(Q' & HQ & ->)|[[E ->] |[E _]]]; [|simplify_eq|done].
       + left. eexists (Q', _). split; [by constructor|done].
@@ -494,13 +496,13 @@ Section Process.
     destruct (ustep_out_par _ _ _ _ Hu) as [t Ht]. exists t. by split.
   Qed.
 
-  Lemma feq_par_nil y : feq (PPar y.1 𝟘, y.2) y.
+  Lemma feq_par_nil y : feq (y.1 ∥ 𝟘, y.2) y.
   Proof. split; simpl; [apply cgr_par_nil|done]. Qed.
 
   Lemma out_from_par x y t c v :
     feq x (fpar y t c v) → ∃ z, lstep x (ActExt (LOut c v)) z ∧ feq z y.
   Proof.
-    intros Hx. destruct (feq_step x (fpar y t c v) (ActExt (LOut c v)) (PPar y.1 𝟘, y.2) Hx)
+    intros Hx. destruct (feq_step x (fpar y t c v) (ActExt (LOut c v)) (y.1 ∥ 𝟘, y.2) Hx)
       as (z & Hz & Hzy).
     - constructor. apply ustep_par_out_emit.
     - exists z. split; [done|]. etrans; [exact Hzy|]. apply feq_par_nil.
@@ -572,7 +574,7 @@ Section Process.
   Proof.
     intros Hs1 Hs2. destruct (fout_cases _ _ _ _ Hs1) as [t Hx].
     inversion Hs2 as [| | | |P P' ρ ? ? Hu| |]; subst.
-    destruct (feq_step x (fpar (P, ρ) t c v) τ (PPar P' 𝟘, ρ) Hx) as (w & Hw & Hwz).
+    destruct (feq_step x (fpar (P, ρ) t c v) τ (P' ∥ 𝟘, ρ) Hx) as (w & Hw & Hwz).
     - constructor. by apply ustep_par_out_sync.
     - exists w. split; [done|]. etrans; [exact Hwz|]. apply (feq_par_nil (P', ρ)).
   Qed.

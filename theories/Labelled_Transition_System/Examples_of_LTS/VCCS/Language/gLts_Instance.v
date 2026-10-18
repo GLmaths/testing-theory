@@ -1284,7 +1284,7 @@ Qed.
 
 #[global] Program Instance VCCS_gLtsEq : gLtsEq proc VCCS_ExtAction :=
   {| gLtsEq_gLts := VCCS_gLts;
-     eq_rel x y  := cgr 0 x y; |}.
+     eq_rel x y  := x ≡* y; |}.
 Next Obligation.
   apply cgr_is_eq_rel.
 Defined.

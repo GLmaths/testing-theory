@@ -58,6 +58,8 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets.
 From TestingTheory Require Import lqCCS.Language.Syntax.
+
+#[local] Open Scope lqccs_scope.
 (* ** Schedulers and labels *)
 
 Inductive Sched : Type :=
@@ -114,16 +116,16 @@ Fixpoint qnames (P : proc) : list qubit :=
   match P with
   | PSend _ _ e => exp_qubits e
   | PIte e P Q => exp_qubits e ++ qnames P ++ qnames Q
-  | PPar P Q => qnames P ++ qnames Q
-  | PRes P _ => qnames P
+  | P ∥ Q => qnames P ++ qnames Q
+  | P \ _ => qnames P
   | PG g => gqnames g
   end
 with gqnames (g : guard) : list qubit :=
   match g with
   | GNil es => concat (map exp_qubits es)
-  | GSucc => []
-  | GPre 𝜆 P => prefix_qubits 𝜆 ++ qnames P
-  | GSum g1 g2 => gqnames g1 ++ gqnames g2
+  | ① => []
+  | 𝜆 ∙ P => prefix_qubits 𝜆 ++ qnames P
+  | g1 ⊕ g2 => gqnames g1 ++ gqnames g2
   end.
 
 (* [l] is a communication on [c]. *)
@@ -135,44 +137,44 @@ Definition on_chan (c : chan) (l : plbl) : Prop :=
 (* Steps of a guard: a prefix, or one side of a sum. *)
 Inductive gstep : guard → plbl → proc → Prop :=
 | gs_tau t P :
-    gstep (GPre (PTau t) P) (LTau (STag t)) P
+    gstep (PTau t ∙ P) (LTau (STag t)) P
 | gs_taupair t t' P :
-    gstep (GPre (PTauPair t t') P) (LTau (SPair t t')) P
+    gstep (PTauPair t t' ∙ P) (LTau (SPair t t')) P
 | gs_recv t c x v P :
-    gstep (GPre (PRecv t c x) P) (LAct t (AIn c v)) (subst P x v)
+    gstep (PRecv t c x ∙ P) (LAct t (AIn c v)) (P ⟦ v // x ⟧)
 | gs_op t E es qs P :
     eval_qubits es = Some qs →
-    gstep (GPre (POp t E es) P) (LAct t (AOp E qs)) P
+    gstep (POp t E es ∙ P) (LAct t (AOp E qs)) P
 | gs_meas t M es x qs P :
     eval_qubits es = Some qs →
-    gstep (GPre (PMeas t M es x) P) (LAct t (AMeas M qs x)) P
+    gstep (PMeas t M es x ∙ P) (LAct t (AMeas M qs x)) P
 | gs_sumL g1 g2 l P' :
-    gstep g1 l P' → gstep (GSum g1 g2) l P'
+    gstep g1 l P' → gstep (g1 ⊕ g2) l P'
 | gs_sumR g1 g2 l P' :
-    gstep g2 l P' → gstep (GSum g1 g2) l P'.
+    gstep g2 l P' → gstep (g1 ⊕ g2) l P'.
 
 Inductive pstep : proc → plbl → proc → Prop :=
 | ps_guard g l P' :
     gstep g l P' → pstep (PG g) l P'
 | ps_send t c e v :
     eval e = Some v →
-    pstep (PSend t c e) (LAct t (AOut c v)) (PG (GNil []))
+    pstep (PSend t c e) (LAct t (AOut c v)) (𝟘)
 | ps_iteT e P Q l P' :
     eval e = Some (VBool true) → pstep P l P' → pstep (PIte e P Q) l P'
 | ps_iteF e P Q l Q' :
     eval e = Some (VBool false) → pstep Q l Q' → pstep (PIte e P Q) l Q'
 | ps_parL P Q l P' :
-    pstep P l P' → pstep (PPar P Q) l (PPar P' Q)
+    pstep P l P' → pstep (P ∥ Q) l (P' ∥ Q)
 | ps_parR P Q l Q' :
-    pstep Q l Q' → pstep (PPar P Q) l (PPar P Q')
+    pstep Q l Q' → pstep (P ∥ Q) l (P ∥ Q')
 | ps_syncL P Q t t' c v P' Q' :
     pstep P (LAct t (AOut c v)) P' → pstep Q (LAct t' (AIn c v)) Q' →
-    pstep (PPar P Q) (LTau (SPair t t')) (PPar P' Q')
+    pstep (P ∥ Q) (LTau (SPair t t')) (P' ∥ Q')
 | ps_syncR P Q t t' c v P' Q' :
     pstep P (LAct t (AIn c v)) P' → pstep Q (LAct t' (AOut c v)) Q' →
-    pstep (PPar P Q) (LTau (SPair t t')) (PPar P' Q')
+    pstep (P ∥ Q) (LTau (SPair t t')) (P' ∥ Q')
 | ps_res P c l P' :
-    ¬ on_chan c l → pstep P l P' → pstep (PRes P c) l (PRes P' c).
+    ¬ on_chan c l → pstep P l P' → pstep (P \ c) l (P' \ c).
 
 (* A guard never outputs. *)
 Lemma gstep_not_out g t c v P' : ¬ gstep g (LAct t (AOut c v)) P'.
@@ -185,8 +187,8 @@ Proof. intros Hs. remember (LAct t (AOut c v)) as l. induction Hs; simplify_eq; 
 
 Fixpoint ggoodb (g : guard) : bool :=
   match g with
-  | GSucc => true
-  | GSum g1 g2 => ggoodb g1 || ggoodb g2
+  | ① => true
+  | g1 ⊕ g2 => ggoodb g1 || ggoodb g2
   | _ => false
   end.
 
@@ -199,8 +201,8 @@ Fixpoint goodb (P : proc) : bool :=
       | Some (VBool false) => goodb Q
       | _ => false
       end
-  | PPar P Q => goodb P || goodb Q
-  | PRes P _ => goodb P
+  | P ∥ Q => goodb P || goodb Q
+  | P \ _ => goodb P
   | PG g => ggoodb g
   end.
 
@@ -229,21 +231,21 @@ Fixpoint fv (P : proc) : list var :=
   match P with
   | PSend _ _ e => exp_fv e
   | PIte e P Q => exp_fv e ++ fv P ++ fv Q
-  | PPar P Q => fv P ++ fv Q
-  | PRes P _ => fv P
+  | P ∥ Q => fv P ++ fv Q
+  | P \ _ => fv P
   | PG g => gfv g
   end
 with gfv (g : guard) : list var :=
   match g with
   | GNil es => concat (map exp_fv es)
-  | GSucc => []
-  | GPre 𝜆 P =>
+  | ① => []
+  | 𝜆 ∙ P =>
       prefix_fv 𝜆 ++
         (match prefix_binder 𝜆 with
          | Some x => filter (λ y, y ≠ x) (fv P)
          | None => fv P
          end)
-  | GSum g1 g2 => gfv g1 ++ gfv g2
+  | g1 ⊕ g2 => gfv g1 ++ gfv g2
   end.
 
 Lemma exp_subst_fresh e x v : x ∉ exp_fv e → exp_subst e x v = e.
@@ -264,7 +266,7 @@ Lemma prefix_subst_fresh 𝜆 x v : x ∉ prefix_fv 𝜆 → prefix_subst 𝜆 x
 Proof. destruct 𝜆; simpl; intros Hx; try done; by rewrite exps_subst_fresh. Qed.
 
 Lemma subst_gsubst_fresh x v :
-  (∀ P, x ∉ fv P → subst P x v = P) ∧ (∀ g, x ∉ gfv g → gsubst g x v = g).
+  (∀ P, x ∉ fv P → P ⟦ v // x ⟧ = P) ∧ (∀ g, x ∉ gfv g → gsubst g x v = g).
 Proof.
   apply proc_guard_ind; simpl; intros; rewrite ?elem_of_app in *.
   - by rewrite exp_subst_fresh.
@@ -282,7 +284,7 @@ Proof.
   - rewrite H, H0; tauto.
 Qed.
 
-Lemma subst_fresh P x v : x ∉ fv P → subst P x v = P.
+Lemma subst_fresh P x v : x ∉ fv P → P ⟦ v // x ⟧ = P.
 Proof. apply subst_gsubst_fresh. Qed.
 
 (* ** A sent qubit is owned by the sender *)

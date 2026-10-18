@@ -470,7 +470,7 @@ apply altcgr_mutind; intros; simpl; try solve [constructor; eauto with *].
 - eapply galtcgr_trans; eauto.
 Qed.
 
-Lemma gNewVarC_altcgr n g g' : g ≡g[n] g' -> gNewVarC 0 g ≡g[n] gNewVarC 0 g'.
+Lemma gNewVarC_altcgr n g g' : g ≡g[n] g' -> (⇑ g) ≡g[n] (⇑ g').
 Proof. intro H. exact (proj2 NewVarC_altcgr_mut n g g' H 0). Qed.
 
 Lemma sguard_cgr_proper n p g g': sguard n g p -> g ≡g[n] g' -> sguard n g' p.

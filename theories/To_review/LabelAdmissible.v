@@ -21,6 +21,9 @@
    SOFTWARE.
 *)
 (* end hide *)
+
+(* begin hide *)
+(*
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import Relations.Relation_Definitions Classes.RelationClasses.
@@ -108,4 +111,6 @@ Section Finitary_of_rep.
       exists r. split; [by apply (LA_class_proj R) | exact hr].
   Defined.
 End Finitary_of_rep.
+(* end hide *)
+*)
 (* end hide *)

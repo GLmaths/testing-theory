@@ -51,6 +51,8 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure pMust_smyth lqCCS.Language.Quantum.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program.
+
+#[local] Open Scope lqccs_scope.
 Notation conf := (proc * proc)%type.
 
 Section Composition.
@@ -79,10 +81,10 @@ Section Composition.
   (* measurements *)
   | cs_measL P Q t M qs x P' :
       pstep P (LAct t (AMeas M qs x)) P' →
-      cstep ρ (P, Q) (STag t) (meas_dist M qs ρ (λ k, (subst P' x (VNat k), Q)))
+      cstep ρ (P, Q) (STag t) (meas_dist M qs ρ (λ k, (P' ⟦ VNat k // x ⟧, Q)))
   | cs_measR P Q t M qs x Q' :
       pstep Q (LAct t (AMeas M qs x)) Q' →
-      cstep ρ (P, Q) (STag t) (meas_dist M qs ρ (λ k, (P, subst Q' x (VNat k))))
+      cstep ρ (P, Q) (STag t) (meas_dist M qs ρ (λ k, (P, Q' ⟦ VNat k // x ⟧)))
   (* communications between the program and the observer *)
   | cs_comLR P Q t t' c v P' Q' :
       pstep P (LAct t (AOut c v)) P' → pstep Q (LAct t' (AIn c v)) Q' →

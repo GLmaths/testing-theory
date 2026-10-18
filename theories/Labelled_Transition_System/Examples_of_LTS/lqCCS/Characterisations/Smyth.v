@@ -63,6 +63,8 @@ From stdpp Require Import base countable decidable list sets gmap.
 From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure pMust_smyth lqCCS.Language.Quantum.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.Program lqCCS.Language.Succ lqCCS.Language.Composition
   lqCCS.Language.LTS lqCCS.Characterisations.AlmostSure.
+
+#[local] Open Scope lqccs_scope.
 Section Smyth.
   Context `{QM : QuantumModel}.
   Context (XM : ∀ P : Prop, P ∨ ¬ P).
@@ -151,7 +153,7 @@ Section Smyth.
     let '(a, P') := aP in
     match a with
     | AOp E qs => [dpoint (P', C.2) (sop_apply E qs ρ)]
-    | AMeas M qs x => [meas_dist M qs ρ (λ k, (subst P' x (VNat k), C.2))]
+    | AMeas M qs x => [meas_dist M qs ρ (λ k, (P' ⟦ VNat k // x ⟧, C.2))]
     | AOut c v => (λ Q', dpoint (P', Q') ρ) <$> succ C.2 (UAct (AIn c v))
     | AIn _ _ => []
     end.
@@ -160,7 +162,7 @@ Section Smyth.
     let '(a, Q') := aQ in
     match a with
     | AOp E qs => [dpoint (C.1, Q') (sop_apply E qs ρ)]
-    | AMeas M qs x => [meas_dist M qs ρ (λ k, (C.1, subst Q' x (VNat k)))]
+    | AMeas M qs x => [meas_dist M qs ρ (λ k, (C.1, Q' ⟦ VNat k // x ⟧))]
     | AOut c v => (λ P', dpoint (P', Q') ρ) <$> succ C.1 (UAct (AIn c v))
     | AIn _ _ => []
     end.

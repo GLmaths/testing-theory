@@ -24,34 +24,32 @@
 
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
-From stdpp Require Import base tactics decidable countable.
-From TestingTheory Require Import ActTau gLts Subset_Act DefinitionAS
-  PAL_Syntax PAL_Alt_LTS PAL_Alt_Congruence PAL_Alt_Phi.
-(* * Label abstraction of the alternative LTS of PAL, as in [DefinitionAS]
+From stdpp Require Import base countable.
+From TestingTheory Require Import gLts Bisimulation Testing_Predicate InteractionBetweenLts Must
+  PAL.Language.Syntax PAL.Language.LTS PAL.Language.Congruence PAL_Good.
+(* * The Must preorder of PAL
 
-   [αᴛᴀᴘᴀʟ] ([PAL_Alt_Phi.v]) maps a label to its event, and [αᴘᴇᴠ] is the
-   identity on events. Condition (1) is [αᴛᴇꜱᴛ_test_spec], and condition (2)
-   holds as [αᴘᴇᴠ] is injective.
+    [Must.must] and [Must.ctx_pre] instantiated with the alternative LTS
+    ([PAL.Language.LTS]) and the testing predicate [good_PAL]. *)
 
-   This abstraction is not finitary, and no abstraction of these labels is:
-   the co-actions of [in(?x).𝟘] have pairwise distinct events [EvOut ⟨v⟩]
-   ([PAL_Alt_Abs.αᴛᴇꜱᴛ_coR_p_formal], [PAL_Alt_Abs.prog_spec_injective], and
-   [PAL_Label_Dilemma.no_labelling] for any labelling). *)
-
-Section PAL_Alt_AbsAction.
+Section PAL_Must.
   Context (Val : Type) `{Countable Val}.
 
   Notation term := (term Val).
-  Notation Event := (Event Val).
 
-  Definition αᴘᴇᴠ (e : Event) : Event := e.
+  (* [p] must pass the test [t]. *)
+  Definition must_PAL (p t : term) : Prop :=
+    must (gLtsP := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val) (outcome := good_PAL Val) p t.
 
-  #[global] Instance AbsPALA :
-    AbsAction (gLtsP := (PALA_gLts Val)) (gLtsT := (PALA_gLtsEq Val)) term term (αᴛᴀᴘᴀʟ Val) αᴘᴇᴠ.
-  Proof.
-    split.
-    - intros t β β' _ _ e h. exact (αᴛᴇꜱᴛ_test_spec Val t β β' e h).
-    - intros p β β' _ _ e h. unfold αᴘᴇᴠ in e. by rewrite <- e.
-  Qed.
-End PAL_Alt_AbsAction.
+  (* The Must preorder: [q] passes every test that [p] must pass. *)
+  Definition must_pre_PAL (p q : term) : Prop :=
+    ctx_pre (gLtsP := PALA_gLts Val) (gLtsQ := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val)
+      (outcome := good_PAL Val) p q.
+
+  Lemma must_pre_PAL_spec p q : must_pre_PAL p q ↔ ∀ t, must_PAL p t → must_PAL q t.
+  Proof. done. Qed.
+End PAL_Must.
+
+Notation "p 'must_pass_PAL' t" := (must_PAL _ p t) (at level 70).
+Notation "p ᴘᴀʟ⊑ₘᵤₛₜᵢ q" := (must_pre_PAL _ p q) (at level 70).
 (* end hide *)

@@ -138,7 +138,7 @@ Qed.
 Lemma ax_input_drop_upto :
   forall (c : ChannelData) (P Q : proc) (G : gproc),
   gStatic ((c ? • Q) + G) ->
-  (forall v : ValueData, (subst_in_proc 0 v P) ᴠᴀᴄᴄꜱ⊑ₐₓ (subst_in_proc 0 v Q)) ->
+  (forall v : ValueData, (P ^ v) ᴠᴀᴄᴄꜱ⊑ₐₓ (Q ^ v)) ->
   (forall v : ValueData, Bad (fun d => d = c) (subst_in_proc 0 v Q)) ->
   (g ((c ? • P) + G)) ᴠᴀᴄᴄꜱ⊑ₐₓ (g G).
 Proof.
