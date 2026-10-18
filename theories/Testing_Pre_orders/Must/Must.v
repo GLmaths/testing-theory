@@ -509,3 +509,25 @@ Proof.
   + exact must_i_refl.
   + exact must_i_transitive.
 Qed.
+
+(* begin hide *)
+Section Must_transfer.
+  Context `{gLtsP : @gLts P Aproc Hp} `{gLtsT : !@gLtsEq T Atest Ht}
+    {outcome : T → Prop} `{TP : !Testing_Predicate outcome gLtsT} {SA : SyncAction Aproc Atest}.
+  Context (STS1 STS2 : ParSts P T gLtsP gLtsT)
+    (S1 : ParStsSpec P T gLtsP gLtsT SA STS1) (S2 : ParStsSpec P T gLtsP gLtsT SA STS2).
+
+  Lemma must_transfer (p : P) (t : T) : must (STS := STS1) p t → must (STS := STS2) p t.
+  Proof.
+    induction 1 as [p t ho | p t nh ex pt IHpt et IHet com IHcom].
+    - by apply m_now.
+    - apply m_step; [exact nh | | exact IHpt | exact IHet | exact IHcom].
+      destruct ex as (y & hy).
+      apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ S1) in hy
+        as [(p' & -> & l) | [(t' & -> & l) | (p' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
+      + exists (p', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ S2 p p' t l).
+      + exists (p, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ S2 p t t' l).
+      + exists (p', t'). exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ S2 p p' t t' μ1 μ2 hs l1 l2).
+  Qed.
+End Must_transfer.
+(* end hide *)

@@ -31,7 +31,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Subset_Act
      WeakTransitions coWeakTransition Termination Convergence coConvergence
      StateTransitionSystems InteractionBetweenLts Testing_Predicate
      Trace_Normalisation.NormalForm Normalisation
-     DefinitionTI DefinitionTIco DefinitionAS DefinitionASco.
+     DefinitionTI DefinitionTIco DefinitionAS DefinitionASrel.
 (* * The alternative preorders restricted to the feedback-free traces
 
     Each of the four alternative preorders of the development quantifies over
@@ -93,28 +93,24 @@ Notation "p ≼ₐₛⁿᶠᵇ q" := (bhv_pre_nfb p q) (at level 70).
 
 (* ** Must, on co-traces *)
 
-Definition bhv_pre_co_cond1_nfb `{gLts P A, gLts Q A} (p : P) (q : Q) :=
+Definition convergence_preorder_on_nfb_co_trace `{gLtsP : @gLts P A H} (p : P) (q : P) :=
   ∀ s, ¬ has_fb s -> p ⇓ᶜᵒ s -> q ⇓ᶜᵒ s.
 
-Notation "p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond1_nfb p q) (at level 70).
+Notation "p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (convergence_preorder_on_nfb_co_trace p q) (at level 70, format "p  ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ  q").
 
-Definition bhv_pre_co_cond2_nfb `{
-  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
-  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
-  (p : P) (q : Q) :=
+Definition acceptance_set_preorder_on_nfb_co_trace `{gLtsP : @gLts P A H} {PreAct : Type} (Γ : A → PreAct)
+  (p : P) (q : P) :=
   ∀ (s : trace A) q',
     ¬ has_fb s -> p ⇓ᶜᵒ s -> q ⟹ᶜᵒ[s] q' -> q' ↛ ->
-    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ (⌈ (αᴘʀᴏP ∘ αᴛᴇꜱᴛ) ⌉ (coR p') ⊆ ⌈ (αᴘʀᴏQ ∘ αᴛᴇꜱᴛ) ⌉ (coR q')).
+    ∃ p', p ⟹ᶜᵒ[s] p' /\ p' ↛ /\ ⌈ Γ ⌉ (coR p') ⊆ ⌈ Γ ⌉ (coR q').
 
-Notation "p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_cond2_nfb p q) (at level 70).
+Notation "p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ] q" := (acceptance_set_preorder_on_nfb_co_trace Γ p q) (at level 70, format "p  ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ]  q").
 
-Definition bhv_pre_co_nfb `{
-  gLtsP : @gLts P A H, AbsPT : !AbsAction (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏP : FinA → PreAct),
-  gLtsQ : @gLts Q A H, AbsQT : !AbsAction (gLtsT := gLtsT) Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏQ : FinA → PreAct)}
-  (p : P) (q : Q) :=
-  p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q /\ p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+Definition cnv_acceptance_set_preorder_on_nfb_co_trace `{gLtsP : @gLts P A H} {PreAct : Type} (Γ : A → PreAct)
+  (p : P) (q : P) :=
+  p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q /\ p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ] q.
 
-Notation "p ≼꜀ₒ₋ₐₛⁿᶠᵇ q" := (bhv_pre_co_nfb p q) (at level 70).
+Notation "p ≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ] q" := (cnv_acceptance_set_preorder_on_nfb_co_trace Γ p q) (at level 70, format "p  ≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ]  q").
 
 (* * The easy direction: restricting can only weaken
 
@@ -135,8 +131,8 @@ Lemma bhv_pre_cond1_nfb_of_cond1 `{gLts P A, gLts Q A} (p : P) (q : Q) :
   p ꜀ₙᵥ≼ₐₛ q -> p ꜀ₙᵥ≼ₐₛⁿᶠᵇ q.
 Proof. intros h s _ hs. eapply h, hs. Qed.
 
-Lemma bhv_pre_co_cond1_nfb_of_co_cond1 `{gLtsP : @gLts P A H, gLtsQ : !gLts Q H} (p : P) (q : Q) :
-  bhv_pre_co_cond1 (A := A) p q -> p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+Lemma bhv_pre_co_cond1_nfb_of_co_cond1 `{gLtsP : @gLts P A H} (p q : P) :
+  p ꜀ₙᵥ≼꜀ₒ₋ₐₛ q -> p ꜀ₙᵥ≼꜀ₒ₋ₐₛⁿᶠᵇ q.
 Proof. intros h s _ hs. eapply h, hs. Qed.
 
 Section WeakerMust.
@@ -154,17 +150,23 @@ Section WeakerMust.
       [eapply bhv_pre_cond1_nfb_of_cond1, h1 | eapply bhv_pre_cond2_nfb_of_cond2, h2].
   Qed.
 
-  Lemma bhv_pre_co_cond2_nfb_of_co_cond2 (p : P) (q : Q) : p ₐ꜀꜀≼꜀ₒ₋ₐₛ q -> p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+End WeakerMust.
+
+Section WeakerMust_co.
+
+  Context `{gLtsP : @gLts P A H} {PreAct : Type} (Γ : A → PreAct).
+
+  Lemma bhv_pre_co_cond2_nfb_of_co_cond2 (p q : P) : p ₐ꜀꜀≼꜀ₒ₋ₐₛ[ Γ ] q -> p ₐ꜀꜀≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ] q.
   Proof. intros h s q' _ hc w hst. eapply h; eassumption. Qed.
 
-  Lemma bhv_pre_co_nfb_of_pre_co (p : P) (q : Q) : p ≼꜀ₒ₋ₐₛ q -> p ≼꜀ₒ₋ₐₛⁿᶠᵇ q.
+  Lemma bhv_pre_co_nfb_of_pre_co (p q : P) : p ≼꜀ₒ₋ₐₛ[ Γ ] q -> p ≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ] q.
   Proof.
     intros (h1 & h2). split;
       [eapply bhv_pre_co_cond1_nfb_of_co_cond1, h1
       | eapply bhv_pre_co_cond2_nfb_of_co_cond2, h2].
   Qed.
 
-End WeakerMust.
+End WeakerMust_co.
 
 (* * The restricted relations are preorders *)
 

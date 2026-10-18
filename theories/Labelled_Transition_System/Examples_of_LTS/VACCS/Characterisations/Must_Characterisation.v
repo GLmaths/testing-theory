@@ -29,8 +29,9 @@ From TestingTheory Require Import VACCS.Testing.ta_tc_gen DefinitionAS Equivalen
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower Soundness SetLTSConstruction
   StateTransitionSystems FiniteImageLTS ForwarderConstruction ParallelLTSConstruction
   InteractionBetweenLts Bisimulation DefinitionCI EquivalenceCI VACCS.Testing.ta_tc_gen.
-From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
-  TestSpecBridge VACCS.Language.gLts_Instance.
+From TestingTheory Require Import coFiniteImage DefinitionASrel EquivalenceASco
+  TestSpecBridge SyncActions VACCS.Language.gLts_Instance VACCS.Language.Label_Abstraction
+  Label_Abstraction.LabelAbstraction.
 
 From Coinduction Require Import all.
 Notation "p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q" := (p ⊑ₘᵤₛₜᵢ q) (at level 70).
@@ -71,10 +72,13 @@ Proof.
   now rewrite equivalence_failure_set_and_must_i.
 Qed.
 
+#[local] Instance SyncAction_VACCS : SyncAction (ExtAct TypeOfActions) (ExtAct TypeOfActions) :=
+  SyncAction_of_dual.
+
 Corollary must_iff_co_acceptance_set_VACCS (p q : proc) :
-  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> (p ▷ ∅) ≼꜀ₒ₋ₐₛ (q ▷ ∅).
+  p ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> (p ▷ ∅) ≼꜀ₒ₋ₐₛ[ ρ[𝔸ᴠᴀᴄᴄꜱ] ] (q ▷ ∅).
 Proof.
-  now rewrite equivalence_acc_set_and_must_i_co_trace.
+  exact (equivalence_acc_set_and_must_i_co_trace 𝔸ᴠᴀᴄᴄꜱ (ta := gen_acc_𝔸) p q).
 Qed.
 
 End VACCS_Must_Alt_Corollary.

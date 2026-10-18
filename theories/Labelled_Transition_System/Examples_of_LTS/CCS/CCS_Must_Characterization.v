@@ -30,8 +30,9 @@ From stdpp Require Import gmap gmultiset.
 From TestingTheory Require Import VCCS.Characterisations.Must_Characterisation DefinitionAS Equivalence Must
   ForwarderConstruction ParallelLTSConstruction InteractionBetweenLts Bisimulation MultisetLTSConstruction
   InputOutputActions DefinitionCI DefinitionMS DefinitionFMS Coin_tower VCCS.Language.gLts_Instance.
-From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
-  TestSpecBridge VCCS.Language.gLts_Instance.
+From TestingTheory Require Import coFiniteImage DefinitionASrel EquivalenceASco
+  TestSpecBridge SyncActions VCCS.Language.gLts_Instance VCCS.Language.Label_Abstraction
+  Label_Abstraction.LabelAbstraction.
 
 
 Section CCS_Must_Alt_Corollary.
@@ -76,8 +77,11 @@ Proof.
   eapply must_iff_failure_set_VCCS_without_toFW.
 Qed.
 
+#[local] Instance SyncAction_CCS : SyncAction (ExtAct TypeOfActions) (ExtAct TypeOfActions) :=
+  SyncAction_of_dual.
+
 Corollary must_iff_co_acceptance_set_CCS_without_toFW (p q : proc) :
-  p ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ q.
+  p ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ[ ρ[𝔸ᴠᴄᴄꜱ] ] q.
 Proof.
   eapply must_iff_co_acceptance_set_VCCS_without_toFW.
 Qed.

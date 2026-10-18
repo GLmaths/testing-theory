@@ -39,7 +39,7 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers gmultiset.
 From TestingTheory Require Import ActTau InputOutputActions gLts Bisimulation
-  Testing_Predicate Erlang_Syntax Erlang_LTS Erlang_Instance.
+  Testing_Predicate Erlang.Language.Syntax Erlang.Language.LTS Erlang.Language.gLts_Instance.
 (* begin hide *)
 Section Erlang_Good.
 

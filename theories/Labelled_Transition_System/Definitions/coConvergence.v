@@ -32,7 +32,7 @@ From Stdlib.Program Require Import Equality.
 From stdpp Require Import countable.
 
 From TestingTheory Require Import ActTau ForAllHelper MultisetHelper gLts SyncActions Bisimulation Lts_OBA Lts_FW
-  ActTau Termination WeakTransitions Convergence coWeakTransition.
+  ActTau Termination WeakTransitions Convergence coWeakTransition LtsFW.
 (** ***** Co-convergence *)
 
 (** ******* Definition *)
@@ -203,25 +203,22 @@ Proof.
   exact l0.
 Qed.
 
-Lemma cocnv_retract_lts_non_blocking_action `{gLtsObaFW P A} p q η s :
+Lemma cocnv_retract_lts_non_blocking_action `{H : ExtAction A, gLtsEqP : !gLtsEq P H, !LtsFW P A} p q η s :
   non_blocking η -> p ⇓ᶜᵒ s -> p ⟶[η] q -> q ⇓ᶜᵒ η :: s.
 Proof.
   intros nb hcnv l.
   eapply cocnv_act.
-  - eapply terminate_preserved_by_lts_non_blocking_action; eauto.
-    eapply cocnv_terminate; eauto.
+  - eapply (lfw_terminate_preserved η); [exact nb | exact l | by eapply cocnv_terminate].
   - intros q0 w.
     eapply cowt_decomp_one in w as (r1 & r2 & μ' & w1 & duo & l' & w2).
-    assert (w1' : q ⟹ r1).
-    { eapply cowt_to_wt_dual in w1 as (s' & hf & w1''). inversion hf; subst. exact w1''. }
-    destruct (delay_wt_non_blocking_action nb (mk_lts_eq l) w1') as (t & w0 & l1).
+    assert (w1' : q ⟹ r1) by exact (proj1 (cowt_iff_wt_nil _ _) w1).
+    destruct (lfw_delay_wt_nil η nb (mk_lts_eq l) w1') as (t & w0 & l1).
     destruct l1 as (r' & l1 & heq).
     edestruct (eq_spec r' r2 (ActExt μ')) as (r'' & hlr'' & heqr'').
     { exists r1. split; [exact heq | exact l']. }
-    assert (wpt : p ⟹ᶜᵒ t).
-    { eapply wt_to_cowt_dual with (s:=[]) in w0; [exact w0 | constructor]. }
+    assert (wpt : p ⟹ᶜᵒ t) by exact (proj2 (cowt_iff_wt_nil _ _) w0).
     assert (ht : t ⇓ᶜᵒ s) by (eapply cocnv_preserved_by_cowt_nil; eauto).
-    destruct (fwd_feedback nb duo l1 hlr'') as [(m & hlm & heqm)| Heqr].
+    destruct (lfw_feedback t r' r'' η μ' nb duo l1 hlr'') as [(m & hlm & heqm)| Heqr].
     + assert (hm : m ⇓ᶜᵒ s) by (eapply cocnv_preserved_by_lts_tau; eauto).
       assert (hr'' : r'' ⇓ᶜᵒ s) by (eapply cocnv_preserved_by_eq; [exact heqm | reflexivity | exact hm]).
       assert (hr2 : r2 ⇓ᶜᵒ s) by (eapply cocnv_preserved_by_eq; [exact heqr'' | reflexivity | exact hr'']).
@@ -231,7 +228,7 @@ Proof.
       eapply cocnv_preserved_by_cowt_nil; eauto.
 Qed.
 
-Lemma cocnv_drop_action_in_the_middle `{gLtsObaFW P A} p s1 s2 μ :
+Lemma cocnv_drop_action_in_the_middle `{H : ExtAction A, gLtsEqP : !gLtsEq P H, !LtsFW P A} p s1 s2 μ :
   Forall non_blocking s1 -> p ⇓ᶜᵒ (s1 ++ [μ] ++ s2)
     -> forall r μ', dual μ' μ -> p ⟶[μ'] r -> r ⇓ᶜᵒ (s1 ++ s2).
 Proof.
@@ -241,12 +238,10 @@ Proof.
   - eapply cocnv_preserved_by_cowt_act. eauto.
     eapply lts_to_cowt. exact duo. exact l.
   - inversion his as [| a0 l0 nba his']; subst.
-    destruct (exists_dual a) as (a' & daa').
-    destruct (boomerang p a a') as (p2 & Hyp).
-    destruct (Hyp nba (symmetry daa')) as (tr_b & tr_nb).
-    destruct (nb_delay nba tr_nb l) as (t & w0 & sc).
+    destruct (lfw_boomerang p a nba) as (p2 & tr_b & tr_nb).
+    destruct (lfw_delay p2 p r a (ActExt μ') nba tr_nb l) as (t & w0 & sc).
     destruct sc as (r' & lar & heq).
-    assert (pcowt : p ⟹ᶜᵒ{a} p2) by (eapply lts_to_cowt; [exact (symmetry daa') | exact tr_b]).
+    assert (pcowt : p ⟹ᶜᵒ{a} p2) by (eapply lts_to_cowt; [exact (co_dual a) | exact tr_b]).
     inversion hcnv as [| p' a'' rest hp hclause]; subst.
     assert (hp2 : p2 ⇓ᶜᵒ s1' ++ μ :: s2) by (eapply hclause; exact pcowt).
     assert (ht : t ⇓ᶜᵒ s1' ++ s2) by (exact (IH his' p2 s2 hp2 t μ' duo w0)).
@@ -333,34 +328,20 @@ Proof.
   + intros. constructor. eauto.
 Qed.
 
-Lemma cocnv_annhil_base `{gLtsObaFW P A} p μ η s2 s3 :
+Lemma cocnv_annhil_base `{H : ExtAction A, gLtsEqP : !gLtsEq P H, !LtsFW P A} p μ η s2 s3 :
   Forall non_blocking s2 -> non_blocking η -> dual μ η -> p ⇓ᶜᵒ ([η] ++ s2 ++ [μ] ++ s3)
     -> p ⇓ᶜᵒ (s2 ++ s3).
 Proof.
   intros his2 nbη duo hcnv.
-  destruct (forward_s p [μ] [η]) as (t & w1 & w2).
-  { constructor; [exact nbη | constructor]. }
-  { constructor; [exact duo | constructor]. }
-  assert (pcowt : p ⟹ᶜᵒ{η} t).
-  { eapply (wt_to_cowt_dual p [μ] t w1 [η]).
-    constructor; [exact (symmetry duo) | constructor]. }
+  destruct (lfw_boomerang p η nbη) as (t & l1 & l2).
+  assert (pcowt : p ⟹ᶜᵒ{η} t) by (eapply lts_to_cowt; [exact (co_dual η) | exact l1]).
   simpl in hcnv.
   inversion hcnv as [| p' η' rest hp hclause]; subst.
   assert (ht : t ⇓ᶜᵒ s2 ++ [μ] ++ s3) by (eapply hclause; exact pcowt).
-  destruct w2 as (p' & w2 & heqp').
-  eapply wt_decomp_one in w2 as (r1 & r2 & wr1 & lη & wr2).
-  assert (r1cowt : t ⟹ᶜᵒ r1).
-  { eapply wt_to_cowt_dual with (s:=[]) in wr1; [exact wr1 | constructor]. }
-  assert (hr1 : r1 ⇓ᶜᵒ s2 ++ μ :: s3) by (eapply cocnv_preserved_by_cowt_nil; eauto).
-  assert (hr2 : r2 ⇓ᶜᵒ s2 ++ s3).
-  { exact (cocnv_drop_action_in_the_middle r1 s2 s3 μ his2 hr1 r2 η (symmetry duo) lη). }
-  assert (r2cowt : r2 ⟹ᶜᵒ p').
-  { eapply wt_to_cowt_dual with (s:=[]) in wr2; [exact wr2 | constructor]. }
-  assert (hp' : p' ⇓ᶜᵒ s2 ++ s3) by (eapply cocnv_preserved_by_cowt_nil; eauto).
-  eapply cocnv_preserved_by_eq; [exact heqp' | reflexivity | exact hp'].
+  exact (cocnv_drop_action_in_the_middle t s2 s3 μ his2 ht p η (symmetry duo) l2).
 Qed.
 
-Lemma cocnv_annhil `{gLtsObaFW P A} p μ η s1 s2 s3 :
+Lemma cocnv_annhil `{H : ExtAction A, gLtsEqP : !gLtsEq P H, !LtsFW P A} p μ η s1 s2 s3 :
   Forall non_blocking s1 -> Forall non_blocking s2 -> non_blocking η -> dual μ η
     -> p ⇓ᶜᵒ (s1 ++ [η] ++ s2 ++ [μ] ++ s3)
     -> p ⇓ᶜᵒ (s1 ++ s2 ++ s3).

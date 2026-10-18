@@ -33,7 +33,9 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
 From TestingTheory Require Import ActTau gLts VACCS.Language.gLts_Instance VACCS_Good Bisimulation
-  InputOutputActions Completeness ParallelLTSConstruction InputOutputActions.
+  InputOutputActions Completeness ParallelLTSConstruction InputOutputActions
+  Label_Abstraction.LabelAbstraction VACCS.Language.Label_Abstraction.
+From TestingTheory Require CompletenessASco TestSpecBridge.
 Export VACCS.Language.gLts_Instance VACCS_Good.
 Section VACCS_ta_tc.
 
@@ -415,3 +417,121 @@ Next Obligation. cbn. eauto with cgr. Qed.
 Next Obligation. intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VACCS_ta_tc.
+
+Section VACCS_ta_𝔸.
+
+Context `{VP : VACCS_Parameters}.
+
+Notation A := (ExtAct TypeOfActions).
+
+Definition pfx_𝔸 (μ : A) : gproc :=
+  match μ with
+  | ActIn (c , _) => c ? • ①
+  | ActOut _ => 𝟘
+  end.
+
+Fixpoint unroll_𝔸 (L : list (A / 𝔸ᴠᴀᴄᴄꜱ)) : gproc :=
+  match L with
+  | [] => 𝟘
+  | x :: l => pfx_𝔸 (`x) + unroll_𝔸 l
+  end.
+
+Definition gen_acc_𝔸 (E : gset (A / 𝔸ᴠᴀᴄᴄꜱ)) s := gen_test s (g (unroll_𝔸 (elements E))).
+
+Lemma unroll_𝔸_lts L a r :
+  lts (g (unroll_𝔸 L)) a r → ∃ x, x ∈ L ∧ lts (g (pfx_𝔸 (`x))) a r.
+Proof.
+  induction L as [| x L IH]; simpl; intros h; inversion h; subst.
+  - exists x. split; [apply list_elem_of_here | assumption].
+  - destruct IH as (y & hy & hl); [assumption |].
+    exists y. split; [by apply list_elem_of_further | exact hl].
+Qed.
+
+Lemma unroll_𝔸_lts_rev x L a r :
+  x ∈ L → lts (g (pfx_𝔸 (`x))) a r → lts (g (unroll_𝔸 L)) a r.
+Proof.
+  induction L as [| y L IH]; intros hx hl; [by apply elem_of_nil in hx |]. simpl.
+  apply elem_of_cons in hx as [-> | hx]; [by apply lts_choiceL | apply lts_choiceR; by apply IH].
+Qed.
+
+Lemma class_of_repr_𝔸 (x : A / 𝔸ᴠᴀᴄᴄꜱ) : ρ[𝔸ᴠᴀᴄᴄꜱ] (`x) = x.
+Proof. exact (@LA_repr_spec _ _ _ (LA_class_surj _) x). Qed.
+
+Lemma pfx_𝔸_lts μ a r :
+  lts (g (pfx_𝔸 μ)) a r →
+  ∃ c v w, μ = ActIn (c , v) ∧ a = ActExt (ActIn (c , w)) ∧ good_VACCS r.
+Proof.
+  destruct μ as [[c v]|[c v]]; simpl; intros h; inversion h; subst.
+  exists c, v, v0. split; [done |]. split; [done |]. simpl. constructor.
+Qed.
+
+Lemma not_good_𝔸 L : ¬ good_VACCS (g (unroll_𝔸 L)).
+Proof.
+  induction L as [| x L IH]; simpl; intros imp; inversion imp; subst.
+  match goal with h : _ ∨ _ |- _ => destruct h as [hg | hg] end.
+  - destruct x as [[[c v]|[c v]] hx]; simpl in hg; inversion hg.
+  - exact (IH hg).
+Qed.
+
+#[global] Program Instance gen_acc_𝔸_test_inst E : test_spec (fun s => gen_acc_𝔸 E s).
+Next Obligation.
+  intros E s hh. eapply gen_test_ungood_if; try eassumption. apply not_good_𝔸.
+Qed.
+Next Obligation.
+  intros. eapply gen_test_lts_mu.
+Qed.
+Next Obligation.
+  intros. destruct β.
+  + eapply gen_test_gen_spec_out_lts_tau_ex_inst.
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+Qed.
+Next Obligation.
+  intros. destruct β.
+  + eapply gen_test_gen_spec_out_lts_tau_good. simpl in H. eassumption.
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+Qed.
+Next Obligation.
+  intros. destruct β.
+  + unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+Qed.
+Next Obligation.
+  intros E t'. intros. simpl in *.
+  destruct β.
+  + simpl in *. eapply gen_test_gen_spec_good_not_mu in H0; eauto.
+  + exfalso. eapply H. simpl. unfold non_blocking_output. unfold is_output. exists a; eauto.
+Qed.
+
+#[global] Instance gen_acc_𝔸_spec :
+  CompletenessASco.test_co_acceptance_set_spec gen_acc_𝔸 ρ[𝔸ᴠᴀᴄᴄꜱ].
+Proof.
+  constructor.
+  - intros E. apply TestSpecBridge.test_spec_of_plain, gen_acc_𝔸_test_inst.
+  - intros E h. apply lts_performs_spec1 in h as (r & h). cbn in h.
+    apply unroll_𝔸_lts in h as (x & _ & h).
+    by apply pfx_𝔸_lts in h as (c & v & w & _ & e & _).
+  - intros E η nb h. apply lts_performs_spec1 in h as (r & h). cbn in h.
+    apply unroll_𝔸_lts in h as (x & _ & h).
+    apply pfx_𝔸_lts in h as (c & v & w & _ & e & _).
+    injection e as ->. destruct nb as (? & ?). discriminate.
+  - intros E β e b h. cbn in h.
+    apply unroll_𝔸_lts in h as (x & hx & h).
+    apply pfx_𝔸_lts in h as (c & v & w & ex & e' & _). injection e' as ->.
+    assert (hc : ρ[𝔸ᴠᴀᴄᴄꜱ] (ActIn (c , w)) = x).
+    { rewrite <- (class_of_repr_𝔸 x), ex. by apply class_eq_vaccs. }
+    rewrite hc. by apply elem_of_elements.
+  - intros E x hx (β0 & b0 & e0).
+    destruct (blocking_is_input β0 b0) as ([c v] & ->).
+    assert (hk : vaccs_ker (ActIn (c , v)) (`x)).
+    { apply class_eq_vaccs_inv. by rewrite class_of_repr_𝔸. }
+    remember (`x) as μx eqn:ex. destruct μx as [[c' v']|[c' v']]; simpl in hk; [| contradiction].
+    eexists. exists (ActIn (c' , v')). split.
+    + cbn. apply (unroll_𝔸_lts_rev x); [by apply elem_of_elements |].
+      rewrite <- ex. simpl. constructor.
+    + rewrite <- (class_of_repr_𝔸 x). f_equal. exact ex.
+  - intros β e' E b h. cbn in h.
+    apply unroll_𝔸_lts in h as (x & _ & h).
+    by apply pfx_𝔸_lts in h as (? & ? & ? & _ & _ & hg).
+Qed.
+
+End VACCS_ta_𝔸.

@@ -129,6 +129,37 @@ Next Obligation.
       subst. eapply unique_nb in duo ; subst. contradiction.
 Admitted.
 
+Lemma coR_fw `{H : ExtAction A} `{gLtsP : !gLts P H} {unique_nb : UniqueDual A}
+  `{PI : !@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) (m : MO A) (β : A) :
+  β ∈ coR (p ▷ m) ↔ β ∈ coR p ∨ ∃ η, non_blocking η ∧ η ∈ m ∧ β = co η.
+Proof.
+  split.
+  - intros (μ' & tr & duo & b).
+    eapply lts_performs_spec1 in tr as ((p' , m') & eq).
+    inversion eq; subst; simpl in *.
+    + left. exists μ'. repeat split; eauto. eapply lts_performs_spec2. eauto.
+    + right. destruct (decide (non_blocking μ')) as [nb' | b'].
+      * exists μ'. split; [exact nb' |]. split.
+        -- eapply non_blocking_action_in_ms in l; eauto. multiset_solver.
+        -- eapply unique_nb; eauto.
+      * assert (blocking μ') as Imp; eauto.
+        eapply blocking_action_in_ms in Imp as (mem' & duo' & nb'); eauto.
+        eapply unique_nb in duo; eauto. subst. contradiction.
+  - intros [(μ' & tr & duo & b) | (η & nb & mem & ->)].
+    + exists μ'. repeat split; eauto.
+      eapply lts_performs_spec1 in tr as (p' & tr).
+      eapply lts_performs_spec2. exists (p' ▷ m). eapply ParLeft. exact tr.
+    + exists η. repeat split.
+      * eapply lts_performs_spec2.
+        exists (p , m ∖ {[+ η +]}).
+        eapply ParRight.
+        assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eqm by multiset_solver.
+        rewrite eqm at 1.
+        eapply lts_multiset_minus. exact nb.
+      * exact (proj2_sig (exists_dual η)).
+      * eapply dual_blocks; eauto. symmetry. exact (proj2_sig (exists_dual η)).
+Qed.
+
 #[global] Program Instance FinitaryPreActActionForFW `{CC : Countable PreAct} 
   `{H : ExtAction A, !FinitaryAbsAction (gLtsP := gLtsP) (gLtsT := gLtsT) P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) } {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} 
@@ -138,52 +169,20 @@ Next Obligation.
   intros.
   destruct p as (p, m).
   match goal with Hm : _ ∈ _ ∪ _ |- _ => eapply elem_of_union in Hm; destruct Hm as [in_p | in_M] end; simpl in *.
-  + eapply coR_abs_spec1 in in_p.
-    destruct in_p as (μ & mem & eq). subst.
-    exists μ. split.
-    - destruct mem as (μ' & tr & duo & b).
-      eapply lts_performs_spec1 in tr as (p' & tr).
-      exists μ'. repeat split; eauto.
-      eapply lts_performs_spec2. exists (p' ▷ m).
-      eapply ParLeft. exact tr.
-    - eauto.
-  + simpl in *. eapply gmultiset_elem_of_dom, elem_of_gmultiset_map in in_M.
-    destruct in_M as (μ & eq & mem).
-    exists (co μ). split; eauto.
-    exists μ. repeat split ;eauto.
-    - eapply lts_performs_spec2.
-      assert (μ ∈ MO_without_not_nb m) as mem';eauto. 
-      eapply lts_MO_nb_with_nb_spec1 in mem as (nb & mem).
-      exists (p , m ∖ {[+ μ +]}).
-      eapply ParRight.
-      assert (m = {[+ μ  +]} ⊎ (m ∖ {[+ μ +]})) as eq''' by multiset_solver.
-      rewrite eq''' at 1.
-      eapply lts_multiset_minus. exact nb. 
-    - exact (proj2_sig (exists_dual μ)).
-    - eapply lts_MO_nb_with_nb_spec1 in mem as (nb & mem).
-      eapply dual_blocks; eauto. symmetry. exact (proj2_sig (exists_dual μ)).
+  + eapply coR_abs_spec1 in in_p as (μ & mem & ->).
+    exists μ. split; [apply coR_fw; by left | done].
+  + eapply gmultiset_elem_of_dom, elem_of_gmultiset_map in in_M as (μ & -> & mem).
+    eapply lts_MO_nb_with_nb_spec1 in mem as (nb & mem).
+    exists (co μ). split; [apply coR_fw; right; by exists μ | done].
 Qed.
 Next Obligation.
   intros. match goal with Hm : _ ∈ ⌈ _ ⌉ _ |- _ => destruct Hm as (μ & mem & eq) end. subst.
-  destruct p as (p, m). destruct mem as (μ' & tr & duo & b).
-  eapply lts_performs_spec1 in tr as ((p' , m') & eq).
-  inversion eq; subst; simpl in *.
-  + eapply elem_of_union. left.
-    eapply coR_abs_spec2.
-    exists μ. repeat split ;eauto. exists μ'. repeat split; eauto.
-    eapply lts_performs_spec2. eauto.
+  destruct p as (p, m).
+  apply coR_fw in mem as [mem | (η & nb & mem & ->)]; simpl.
+  + eapply elem_of_union. left. eapply coR_abs_spec2. by exists μ.
   + eapply elem_of_union. right.
     eapply gmultiset_elem_of_dom, elem_of_gmultiset_map.
-    destruct (decide (non_blocking μ')) as [nb' | b'].
-    - exists μ'. split ;eauto.
-      * assert (μ = co μ'). { eapply unique_nb; eauto. }
-        subst. eauto.
-      * eapply non_blocking_action_in_ms in l;eauto. subst.
-        eapply lts_MO_nb_with_nb_spec2;eauto.
-        multiset_solver.
-    - assert (blocking μ') as Imp; eauto.
-      eapply blocking_action_in_ms in Imp as (mem' & duo' & nb'); eauto.
-      eapply unique_nb in duo; eauto. subst. contradiction.
+    exists η. split; [done | by apply lts_MO_nb_with_nb_spec2].
 Qed.
 
 Global Instance Proper_lts_pre_co_actions `{gLtsEq P A} `{Γ : A -> PreAct}:

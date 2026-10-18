@@ -71,18 +71,17 @@ Section Must_sum.
   Notation gLQ := (@lift_right_lts A1 A2 H1 H2 Q gLtsQ).
   Notation SAS := (@SyncAction_sum A1 A2 H1 H2 At Ht SA1 SA2).
 
+  #[local] Hint Extern 0 (ExtAction (A1 + A2)) => exact (@ExtAction_sum A1 A2 H1 H2) : typeclass_instances.
+  #[local] Instance SASi : SyncAction (A1 + A2) At := SAS.
+
   Notation gT := (@gLtsEq_gLts T At Ht gLtsT).
 
-  Context (PILP : @Prop_of_Inter P T (A1 + A2) At (@sync _ _ _ _ SAS) ExtAction_sum gLP Ht gT).
-  Context (PILQ : @Prop_of_Inter Q T (A1 + A2) At (@sync _ _ _ _ SAS) ExtAction_sum gLQ Ht gT).
-  Context (PIPQ : @Prop_of_Inter (P + Q) T (A1 + A2) At (@sync _ _ _ _ SAS) ExtAction_sum gLts_sum Ht gT).
+  Context (PIP : @Prop_of_Inter P T A1 At (@sync _ _ _ _ SA1) H1 gLtsP Ht gT).
+  Context (PIQ : @Prop_of_Inter Q T A2 At (@sync _ _ _ _ SA2) H2 gLtsQ Ht gT).
 
-  Notation STSP := (ParSts_of_union gLP gLtsT (SY := PILP)).
-  Notation SPECP := (ParStsSpec_of_union gLP gLtsT (SY := PILP)).
-  Notation STSQ := (ParSts_of_union gLQ gLtsT (SY := PILQ)).
-  Notation SPECQ := (ParStsSpec_of_union gLQ gLtsT (SY := PILQ)).
-  Notation STSS := (ParSts_of_union gLts_sum gLtsT (SY := PIPQ)).
-  Notation SPECS := (ParStsSpec_of_union gLts_sum gLtsT (SY := PIPQ)).
+  Notation STSP := (ParSts_of_union gLP gLtsT (SY := lift_left_inter PIP)).
+  Notation STSQ := (ParSts_of_union gLQ gLtsT (SY := lift_right_inter PIQ)).
+  Notation STSS := (ParSts_of_union gLts_sum gLtsT (SY := Prop_of_Inter_sum PIP PIQ)).
 
   Lemma must_inl_to (p : P) (t : T) :
     must (SA := SAS) (STS := STSP) p t → must (SA := SAS) (STS := STSS) (inl p) t.
@@ -91,12 +90,12 @@ Section Must_sum.
     - by apply m_now.
     - apply m_step; [exact nh | | | exact IHet |].
       + destruct ex as (y & hy).
-        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECP) in hy
+        apply par_step_inv in hy
           as [(p' & -> & l) | [(t' & -> & l) | (p' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
-        * exists (inl p', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECS (inl p) (inl p') t l).
-        * exists (inl p, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECS (inl p) t t' l).
+        * exists (inl p', t). by apply par_step_left.
+        * exists (inl p, t'). by apply par_step_right.
         * exists (inl p', t').
-          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECS (inl p) (inl p') t t' μ1 μ2 hs l1 l2).
+          by eapply par_step_sync.
       + intros [p' | q'] l; [exact (IHpt p' l) | done].
       + intros [p' | q'] t' μ1 μ2 hs l1 l2; [exact (IHcom p' t' μ1 μ2 hs l1 l2) | done].
   Qed.
@@ -108,12 +107,12 @@ Section Must_sum.
     - by apply m_now.
     - apply m_step; [exact nh | | | exact IHet |].
       + destruct ex as (y & hy).
-        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECQ) in hy
+        apply par_step_inv in hy
           as [(q' & -> & l) | [(t' & -> & l) | (q' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
-        * exists (inr q', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECS (inr q) (inr q') t l).
-        * exists (inr q, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECS (inr q) t t' l).
+        * exists (inr q', t). by apply par_step_left.
+        * exists (inr q, t'). by apply par_step_right.
         * exists (inr q', t').
-          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECS (inr q) (inr q') t t' μ1 μ2 hs l1 l2).
+          by eapply par_step_sync.
       + intros [p' | q'] l; [done | exact (IHpt q' l)].
       + intros [p' | q'] t' μ1 μ2 hs l1 l2; [done | exact (IHcom q' t' μ1 μ2 hs l1 l2)].
   Qed.
@@ -125,14 +124,14 @@ Section Must_sum.
     - by apply m_now.
     - apply m_step; [exact nh | | | |].
       + destruct ex as (y & hy).
-        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECS) in hy
+        apply par_step_inv in hy
           as [(s' & -> & l) | [(t' & -> & l) | (s' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
         * destruct s' as [p' | q']; [| done].
-          exists (p', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECP p p' t l).
-        * exists (p, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECP p t t' l).
+          exists (p', t). by apply par_step_left.
+        * exists (p, t'). by apply par_step_right.
         * destruct s' as [p' | q']; [| done].
           exists (p', t').
-          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECP p p' t t' μ1 μ2 hs l1 l2).
+          by eapply par_step_sync.
       + intros p' l. exact (IHpt (inl p') l p' eq_refl).
       + intros t' l. exact (IHet t' l p eq_refl).
       + intros p' t' μ1 μ2 hs l1 l2. exact (IHcom (inl p') t' μ1 μ2 hs l1 l2 p' eq_refl).
@@ -145,17 +144,16 @@ Section Must_sum.
     - by apply m_now.
     - apply m_step; [exact nh | | | |].
       + destruct ex as (y & hy).
-        apply (@par_step_inv _ _ _ _ _ _ _ _ _ _ SPECS) in hy
+        apply par_step_inv in hy
           as [(s' & -> & l) | [(t' & -> & l) | (s' & t' & μ1 & μ2 & -> & hs & l1 & l2)]].
         * destruct s' as [p' | q']; [done |].
-          exists (q', t). exact (@par_step_left _ _ _ _ _ _ _ _ _ _ SPECQ q q' t l).
-        * exists (q, t'). exact (@par_step_right _ _ _ _ _ _ _ _ _ _ SPECQ q t t' l).
+          exists (q', t). by apply par_step_left.
+        * exists (q, t'). by apply par_step_right.
         * destruct s' as [p' | q']; [done |].
           exists (q', t').
-          exact (@par_step_sync _ _ _ _ _ _ _ _ _ _ SPECQ q q' t t' μ1 μ2 hs l1 l2).
+          by eapply par_step_sync.
       + intros q' l. exact (IHpt (inr q') l q' eq_refl).
       + intros t' l. exact (IHet t' l q eq_refl).
       + intros q' t' μ1 μ2 hs l1 l2. exact (IHcom (inr q') t' μ1 μ2 hs l1 l2 q' eq_refl).
   Qed.
 End Must_sum.
-(* end hide *)

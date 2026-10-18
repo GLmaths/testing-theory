@@ -29,7 +29,7 @@ From Stdlib.Program Require Import Equality.
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap gmultiset.
 
-From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_OBA_FB Lts_FW Testing_Predicate 
+From TestingTheory Require Import ActTau ForAllHelper gLts Bisimulation Lts_OBA Lts_Finite_Non_Blocking_Chain Lts_OBA_FB Lts_FW LtsFW Testing_Predicate 
   Must CodePurification Termination 
   InteractionBetweenLts MultisetLTSConstruction ParallelLTSConstruction ForwarderConstruction FiniteImageLTS
   Convergence WeakTransitions.
@@ -92,8 +92,8 @@ Section Lifting.
 Context `{@gLtsObaFB T A H gLtsEqT gLtsObaT}.
 Context `{!Testing_Predicate outcome gLtsEqT}.
 
-Section Forwarder.
-Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Section Forwarder_LtsFW.
+Context `{gLtsEqP : @gLtsEq P A H} `{!LtsFW P A}.
 Context `{_ : !Prop_of_Inter P T A A dual}.
 
 Lemma must_non_blocking_action_swap_l_fw_eq
@@ -112,16 +112,15 @@ Proof.
       destruct le as (e' & hle' & heqe').
       eapply nh, (outcome_preserved_by_eq e' e2); eauto.
       eapply outcome_preserved_by_lts_non_blocking_action; eauto.
-    + destruct (exists_dual η) as (μ & duo). symmetry in duo.
-      destruct (boomerang p2 η μ) as (p'2 & Hyp).
-      destruct (Hyp nb duo) as (Tr1 & Tr2). 
+    + destruct (lfw_boomerang p2 η nb) as (p'2 & Tr1 & Tr2).
+      pose proof (co_dual η) as duo.
       destruct le as (e'1 & Tr & eq).
       exists (p'2 , e'1). eapply ParSync; eauto.
     + intros p' l.
       destruct lp as (p0 & hlp0 & heqp0).
       edestruct (eq_spec p0 p' τ) as (p3 & hlp3 & heqp3).
       by (exists p2; split; [now symmetry | eassumption]).
-      destruct (nb_delay nb hlp0 hlp3) as (t & l1 & l2).
+      destruct (lfw_delay _ _ _ _ _ nb hlp0 hlp3) as (t & l1 & l2).
       destruct l2 as (p4 & hlp4 & heqp4).
       eapply must_eq_server. etrans. eapply heqp4. eassumption.
       eapply IHpt; eauto with mdb. exists p4. split. eassumption. reflexivity.
@@ -148,7 +147,7 @@ Proof.
       ++ edestruct (eq_spec p0 p' (ActExt $ μ1)) as (p3 & hlp3 & heqp3).
          { exists p2. split. now symmetry. eassumption. }
          assert (heqe' : e0 ⋍ e') by (eapply nb_determinacy; eassumption).
-         destruct (fwd_feedback nb duo hlp0 hlp3) as [(p3' & hlp3' & heqp3')|].
+         destruct (lfw_feedback _ _ _ _ _ nb duo hlp0 hlp3) as [(p3' & hlp3' & heqp3')|].
          +++ eapply must_eq_client. eassumption.
              eapply must_eq_client. symmetry. eapply heqe0.
              eapply must_eq_server. transitivity p3; eassumption.
@@ -160,7 +159,7 @@ Proof.
       ++ destruct (nb_confluence nb n hle0 l2)
           as (t & l3 & (e4 & hle4 & heqe4)).
          edestruct (eq_spec p0 p' (ActExt μ1)) as (p3 & hlp3 & heqp3). eauto with mdb.
-         destruct (nb_delay nb hlp0 hlp3) 
+         destruct (lfw_delay _ _ _ _ _ nb hlp0 hlp3) 
           as (r & l5 & (p4 & hlp4 & heqp4)).
          edestruct (eq_spec e2 t (ActExt μ2)) as (e3 & hle3 & heqe3).
          { exists e0. split. now symmetry. eassumption. }
@@ -172,6 +171,20 @@ Proof.
          * exists p4. split. eassumption. etrans. eapply heqp4. eassumption.
          * exists e4. split. eassumption. etrans. eapply heqe4. now symmetry.
 Qed.
+
+Lemma must_non_blocking_action_swap_l_fw
+  (p1 p2 : P) (e1 e2 : T) (η : A) :
+  non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> p1 must_pass e2 
+    -> p2 must_pass e1.
+Proof.
+  intros. eapply must_non_blocking_action_swap_l_fw_eq; eauto; eexists; split; eauto; reflexivity.
+Qed.
+
+End Forwarder_LtsFW.
+
+Section Forwarder.
+Context `{@gLtsObaFW P A H gLtsEqP gLtsObaP}.
+Context `{_ : !Prop_of_Inter P T A A dual}.
 
 Lemma must_non_blocking_action_swap_r_fw_eq
   (p1 p2 : P) (e1 e2 : T) (η : A) :
@@ -283,14 +296,6 @@ Proof.
          exists e4. split. eassumption. etrans. eapply heqe4. eassumption.
          destruct l4 as (p4 & hlp4 & heqp4).
          exists p4. split. eassumption. etrans. eapply heqp4. now symmetry.
-Qed.
-
-Lemma must_non_blocking_action_swap_l_fw
-  (p1 p2 : P) (e1 e2 : T) (η : A) :
-  non_blocking η -> p1 ⟶[η] p2 -> e1 ⟶[η] e2 -> p1 must_pass e2 
-    -> p2 must_pass e1.
-Proof.
-  intros. eapply must_non_blocking_action_swap_l_fw_eq; eauto; eexists; split; eauto; reflexivity.
 Qed.
 
 Lemma must_non_blocking_action_swap_r_fw

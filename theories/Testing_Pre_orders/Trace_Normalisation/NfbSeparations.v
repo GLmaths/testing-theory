@@ -32,7 +32,7 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
      ForwarderConstruction VACCS.Language.LTS VACCS.Language.gLts_Instance WeakTransitions
      coWeakTransition Termination Convergence Trace_Normalisation.NormalForm Normalisation
      RestrictedSimulation RestrictedPreorders Subset_Act coConvergence
-     DefinitionTI DefinitionTIco DefinitionAS DefinitionASco
+     DefinitionTI DefinitionTIco DefinitionAS DefinitionASrel
      FeedbackNotReversible.
 (* [NatVP] -- the instantiation of the VACCS parameters used by all the
     counterexamples -- is declared [#[local]] in [FeedbackNotReversible.v], so
@@ -66,7 +66,7 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
 (* * co-Trace inclusion: the missing separation
 
     Everything here is read on co-traces, with [has_fb] taken literally on the
-    co-trace, exactly as [pe_qe_co_cond2_ff] and [bhv_pre_co_cond2] do.  No
+    co-trace, exactly as [pe_qe_co_cond2_ff] and [acceptance_set_preorder_on_co_trace] do.  No
     detour through the dual trace and [has_echo] is needed: [easim] and the
     echo are what *proves* [pe_qe_co_cond2_ff] inside
     [FeedbackNotReversible.v], but its statement is already co-native, and it
@@ -173,23 +173,29 @@ Section NfbNotMust.
     /\ ¬ bhv_pre (AbsPT := AbsP) (AbsQT := AbsQ) ((Pw, mt) : st) ((Bp2, mt) : st).
   Proof. split; [exact pw_bp2_as_nfb | exact pw_bp2_not_as]. Qed.
 
+End NfbNotMust.
+
+Section NfbNotMust_co.
+
+  Context {PA : Type} (Γ : ExtAct TypeOfActions -> PA).
+
   (* ** Acceptance sets on co-traces: [Pe] against [Qe] *)
 
   Theorem pe_qe_co_as_nfb :
-    bhv_pre_co_nfb (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
+    ((Pe, mt) : st) ≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ] ((Qe, mt) : st).
   Proof.
     split.
     - intros s _ _. eapply cocnv_iff_cnv, qe_cnv.
     - intros s q' hfb _ w hst.
       destruct (pe_qe_co_cond2_ff s q' hfb w hst) as (p' & wp & hp & hsub).
       exists p'. split; [exact wp | split; [exact hp |]].
-      eapply (abs_of_coR_sub αᴛᴇꜱᴛ αᴘʀᴏP αᴘʀᴏQ same_delta); exact hsub.
+      exact (map_set_mono Γ _ _ hsub).
   Qed.
 
   Theorem co_as_nfb_not_co_as :
-    bhv_pre_co_nfb (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st)
-    /\ ¬ bhv_pre_co (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
-  Proof. split; [exact pe_qe_co_as_nfb | exact (co_must_false_Pe AbsP AbsQ)]. Qed.
+    ((Pe, mt) : st) ≼꜀ₒ₋ₐₛⁿᶠᵇ[ Γ ] ((Qe, mt) : st)
+    /\ ¬ ((Pe, mt) : st) ≼꜀ₒ₋ₐₛ[ Γ ] ((Qe, mt) : st).
+  Proof. split; [exact pe_qe_co_as_nfb | exact (co_must_false_Pe Γ)]. Qed.
 
-End NfbNotMust.
+End NfbNotMust_co.
 (* end hide *)

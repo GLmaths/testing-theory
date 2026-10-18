@@ -31,7 +31,7 @@ From TestingTheory Require Import gLts ActTau InputOutputActions Bisimulation
      Lts_OBA Lts_FW MultisetLTSConstruction InteractionBetweenLts
      ForwarderConstruction VACCS.Language.LTS VACCS.Language.gLts_Instance WeakTransitions
      coWeakTransition Termination Convergence Trace_Normalisation.NormalForm Normalisation
-     RestrictedSimulation Subset_Act coConvergence DefinitionAS DefinitionASco.
+     RestrictedSimulation Subset_Act coConvergence DefinitionAS DefinitionASrel.
 (* * The feedback simplification is not reversible
 
     [wt_fnf] states that a process performing [s] also performs the simplified
@@ -3885,14 +3885,10 @@ Qed.
 (* And the failure of the co-condition itself, for an arbitrary abstraction. *)
 Section CoCond2GenericPe.
 
-  Context {T FA PA : Type}.
-  Context {αᴛᴇꜱᴛ : ExtAct TypeOfActions -> FA} {αᴘʀᴏP αᴘʀᴏQ : FA -> PA}.
-  Context {gLtsT : gLtsEq T VACCS_ExtAction}.
-  Context (AbsP : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏP).
-  Context (AbsQ : AbsAction (gLtsT := gLtsT) st T αᴛᴇꜱᴛ αᴘʀᴏQ).
+  Context {PA : Type} (Γ : ExtAct TypeOfActions -> PA).
 
   Theorem co_must_cond2_false_Pe :
-    ¬ bhv_pre_co_cond2 (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
+    ¬ ((Pe, mt) : st) ₐ꜀꜀≼꜀ₒ₋ₐₛ[ Γ ] ((Qe, mt) : st).
   Proof.
     intro h.
     destruct (h s_bad ((((g 𝟘) ‖ (g 𝟘)), mt) : st) pe_cocnv_s_bad qe_co_reaches_stable
@@ -3904,7 +3900,7 @@ Section CoCond2GenericPe.
       condition holds ([qe_cnv]) and its acceptance condition holds on every
       feedback-free co-trace ([pe_qe_co_cond2_ff]). *)
   Theorem co_must_false_Pe :
-    ¬ bhv_pre_co (AbsPT := AbsP) (AbsQT := AbsQ) ((Pe, mt) : st) ((Qe, mt) : st).
+    ¬ ((Pe, mt) : st) ≼꜀ₒ₋ₐₛ[ Γ ] ((Qe, mt) : st).
   Proof. intros (_ & h2). eapply co_must_cond2_false_Pe, h2. Qed.
 
 

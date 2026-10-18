@@ -29,44 +29,45 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
     Must Bar Lift Subset_Act FiniteImageLTS WeakTransitions Convergence
     InteractionBetweenLts MultisetLTSConstruction ForwarderConstruction ParallelLTSConstruction ActTau
     Testing_Predicate DefinitionAS MustE Lts_Finite_Non_Blocking_Chain.
-From TestingTheory Require Import coFiniteImage DefinitionASco CompletenessASco SoundnessASco.
+From TestingTheory Require Import coFiniteImage DefinitionASrel LtsFW CompletenessASco SoundnessASco
+    Label_Abstraction.LabelAbstraction Label_Abstraction.Decidable_dichotomic.
 (* * Equivalence for the co-acceptance-set preorder *)
 
 Section preorder.
-  Context `{outcome : T -> Prop} `{outcome_dec : forall t, Decision (outcome t)} `{P : Type} `{Q : Type}
-          `{H : !ExtAction A} {unique_nb : UniqueDual A}.
+  Context `{outcome : T -> Prop} `{outcome_dec : forall t, Decision (outcome t)} `{P : Type}
+          `{H : !ExtAction A}.
 
-  Context `{!gLtsOba P gLtsEqP, !coFiniteImagegLts P A} `{!gLtsOba Q gLtsEqQ, !coFiniteImagegLts Q A}
+  Context `{gLtsEqP : !gLtsEq P H, !coFiniteImagegLts P A}
           `{!gLtsOba T gLtsEqT, !Testing_Predicate outcome _} `{!CountablegLts T A}.
 
-  Context `{!Prop_of_Inter P T A A dual} `{!Prop_of_Inter Q T A A dual}.
+  Context `{!Prop_of_Inter P T A A dual}.
 
-  Context `{CC : Countable PreAct} `{!FinitaryAbsAction P T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }
-          `{!FinitaryAbsAction Q T (αᴛᴇꜱᴛ : A → FinA) (αᴘʀᴏ : FinA → PreAct) }.
-
-  Context `{tc_spec : !test_convergence_spec (t_conv : list A → T)}
-          `{ta_spec : !test_co_acceptance_set_spec (ta : gset PreAct → list A → T) (fun x => αᴘʀᴏ (αᴛᴇꜱᴛ x))}.
+  Context `{tc_spec : !test_convergence_spec (t_conv : trace A → T)}.
 
   (* * Main equivalence theorems, co variant *)
 
   Section FWⁿ.
 
-  Context `{!gLtsObaFW P A} `{!gLtsObaFW Q A} `{!gLtsObaFB T A}.
+  Context `{!LtsFW P A}.
+
+  Context (𝔸 : Label_abstraction P T) `{!Dichotomic P ρ[𝔸] }.
+
+  Context `{ta_spec : !test_co_acceptance_set_spec (ta : gset (A / 𝔸) → trace A → T) ρ[𝔸] }.
 
   (* ** The inductive characterisation on FW is equivalent to the inductive must preorder *)
-  Theorem equivalence_fw_acc_set_and_must_i_co_trace (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ q.
+  Theorem equivalence_fw_acc_set_and_must_i_co_trace (p q : P) :
+    p ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ[ ρ[𝔸] ] q.
   Proof.
     split.
-    - intros hpre. now eapply completeness_fw_co in hpre.
-    - now intros hpre%soundness_fw_co.
+    - exact (completeness_fw_co 𝔸 (ta := ta) (tconv := t_conv) p q).
+    - exact (soundness_fw_co 𝔸 p q).
   Qed.
 
   (* ---- *)
 
   (* ** The inductive characterisation on FW is equivalent to the extensional must preorder *)
-  Theorem equivalence_fw_bhv_acc_ctx_co_trace (p : P) (q : Q) :
-    pre_extensional outcome p q <-> p ≼꜀ₒ₋ₐₛ q.
+  Theorem equivalence_fw_bhv_acc_ctx_co_trace (p q : P) :
+    pre_extensional outcome p q <-> p ≼꜀ₒ₋ₐₛ[ ρ[𝔸] ] q.
   Proof.
     rewrite pre_extensional_eq. eapply equivalence_fw_acc_set_and_must_i_co_trace.
   Qed.
@@ -75,32 +76,37 @@ Section preorder.
   (* ---- *)
   Section Lⁿ.
 
-  Context `{!FiniteImagegLts P A} `{!FiniteImagegLts Q A}.
+  Context {unique_nb : UniqueDual A}.
 
-  Context `{!gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}
-          `{!gLtsObaFB Q A, !FiniteNonBlockingChain_LtsOba Q}
+  Context `{!FiniteImagegLts P A}.
+
+  Context `{!gLtsOba P gLtsEqP, !gLtsObaFB P A, !FiniteNonBlockingChain_LtsOba P}
           `{!gLtsObaFB T A, !FiniteNonBlockingChain_LtsOba T}.
 
-  Context `{!Prop_of_Inter P (MO A) A A fw_inter} `{!Prop_of_Inter (P * MO A) T A A dual}
-          `{!Prop_of_Inter Q (MO A) A A fw_inter} `{!Prop_of_Inter (Q * MO A) T A A dual}.
+  Context `{!Prop_of_Inter P (MO A) A A fw_inter} `{!Prop_of_Inter (P * MO A) T A A dual}.
 
-  Context `{!coFiniteImagegLts (P * MO A) A} `{!coFiniteImagegLts (Q * MO A) A}.
+  Context `{!coFiniteImagegLts (P * MO A) A}.
+
+  Context (𝔸 : Label_abstraction (P * MO A) T) `{!Dichotomic (P * MO A) ρ[𝔸] }.
+
+  Context `{ta_spec : !test_co_acceptance_set_spec (ta : gset (A / 𝔸) → trace A → T) ρ[𝔸] }.
 
   (* ** The inductive characterisation on toFW is equivalent to the inductive must preorder *)
-  Theorem equivalence_acc_set_and_must_i_co_trace (p : P) (q : Q) :
-    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼꜀ₒ₋ₐₛ (q, ∅).
+  Theorem equivalence_acc_set_and_must_i_co_trace (p q : P) :
+    p ⊑ₘᵤₛₜᵢ q <-> (p, ∅) ≼꜀ₒ₋ₐₛ[ ρ[𝔸] ] (q, ∅).
   Proof.
     split.
-    - intros hpre. now eapply lift_fw_ctx_pre, completeness_fw_co in hpre.
-    - intros hpre%soundness_fw_co.
-      now eapply lift_fw_ctx_pre.
+    - intros hpre. apply (completeness_fw_co 𝔸 (ta := ta) (tconv := t_conv)).
+      now apply lift_fw_ctx_pre.
+    - intros hpre%(soundness_fw_co 𝔸).
+      now apply lift_fw_ctx_pre.
   Qed.
 
   (* ---- *)
 
   (* ** The inductive characterisation on toFW is equivalent to the extensional must preorder *)
-  Theorem equivalence_bhv_acc_ctx_co_trace (p : P) (q : Q) :
-    pre_extensional outcome p q <-> (p, ∅) ≼꜀ₒ₋ₐₛ (q, ∅).
+  Theorem equivalence_bhv_acc_ctx_co_trace (p q : P) :
+    pre_extensional outcome p q <-> (p, ∅) ≼꜀ₒ₋ₐₛ[ ρ[𝔸] ] (q, ∅).
   Proof.
     rewrite pre_extensional_eq. apply equivalence_acc_set_and_must_i_co_trace.
   Qed.

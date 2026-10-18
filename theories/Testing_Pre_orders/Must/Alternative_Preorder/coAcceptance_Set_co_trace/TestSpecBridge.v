@@ -23,7 +23,7 @@
 (* end hide *)
 
 From stdpp Require Import gmap.
-From TestingTheory Require Import gLts Bisimulation Testing_Predicate.
+From TestingTheory Require Import ActTau gLts Bisimulation Testing_Predicate.
 From TestingTheory Require Import Completeness.
 From TestingTheory Require Import CompletenessASco.
 (* ** Bridge between [Completeness.v]'s and [CompletenessASco.v]'s *)
@@ -56,7 +56,7 @@ Proof.
   - exact tdt.
   - exact tdnba.
   - exact taig.
-  - exact thrt.
+  - intros E pβ hp _. exact (thrt E pβ hp).
   - exact ttg.
 Defined.
 

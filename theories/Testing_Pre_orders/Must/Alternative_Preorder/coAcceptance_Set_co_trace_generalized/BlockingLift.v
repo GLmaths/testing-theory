@@ -410,9 +410,9 @@ Section Blocking_characterisation_P_Q.
     rewrite <- (equivalence_blocking (gLtsEqP := gLtsEqPQ) (SA := SAPQ) (PIP := PIPQ) allblk outcome
                   (coFiniteImage_sum (CFIP := CFIP) (CFIQ := CFIQ)) 𝔸 DichPQ tconv ta (inl p) (inr q)).
     split; intros h t hm.
-    - eapply (must_inr_to PILQ PIPQ), h, (must_inl_from PILP PIPQ _ _ hm p eq_refl).
-    - eapply (must_inr_from PILQ PIPQ (inr q) t); [| done].
-      eapply h, (must_inl_to PILP PIPQ), hm.
+    - eapply (must_inr_to PIP PIQ), h, (must_inl_from PIP PIQ _ _ hm p eq_refl).
+    - eapply (must_inr_from PIP PIQ (inr q) t); [| done].
+      eapply h, (must_inl_to PIP PIQ), hm.
   Qed.
 End Blocking_characterisation_P_Q.
 (* end hide *)

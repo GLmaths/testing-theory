@@ -30,8 +30,9 @@ From TestingTheory Require Import VCCS.Testing.ta_tc_gen DefinitionAS Equivalenc
   gLts Lts_OBA FiniteImageLTS Testing_Predicate Completeness Lts_FW Lts_OBA_FB MultisetLTSConstruction
   DefinitionMS EquivalenceMS DefinitionFMS EquivalenceFMS Coin_tower
   SetLTSConstruction ForwarderConstruction DefinitionCI EquivalenceCI VCCS.Testing.ta_tc_gen.
-From TestingTheory Require Import coFiniteImage DefinitionASco EquivalenceASco
-  TestSpecBridge VCCS.Language.gLts_Instance.
+From TestingTheory Require Import coFiniteImage DefinitionASrel EquivalenceASco
+  TestSpecBridge SyncActions VCCS.Language.gLts_Instance VCCS.Language.Label_Abstraction
+  Label_Abstraction.LabelAbstraction.
 
 From Coinduction Require Import all.
 
@@ -78,10 +79,13 @@ Proof.
   now rewrite<- equivalence_fw_failure_set_and_must_i.
 Qed.
 
+#[local] Instance SyncAction_VCCS : SyncAction (ExtAct TypeOfActions) (ExtAct TypeOfActions) :=
+  SyncAction_of_dual.
+
 Corollary must_iff_co_acceptance_set_VCCS_without_toFW (p q : proc) :
-  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ q.
+  p ᴠᴄᴄꜱ⊑ₘᵤₛₜᵢ q <-> p ≼꜀ₒ₋ₐₛ[ ρ[𝔸ᴠᴄᴄꜱ] ] q.
 Proof.
-  now rewrite equivalence_fw_acc_set_and_must_i_co_trace.
+  exact (equivalence_fw_acc_set_and_must_i_co_trace 𝔸ᴠᴄᴄꜱ (ta := gen_acc_𝔸) p q).
 Qed.
 
 End VCCS_Must_Alt_Corollary.

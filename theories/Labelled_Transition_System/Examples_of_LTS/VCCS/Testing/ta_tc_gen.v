@@ -33,7 +33,8 @@ From Stdlib.Wellfounded Require Import Inverse_Image.
 From stdpp Require Import base countable finite gmap list gmultiset strings.
 
 From TestingTheory Require Import ActTau gLts VCCS.Language.gLts_Instance VCCS_Good Bisimulation
-  InputOutputActions Completeness ParallelLTSConstruction InputOutputActions.
+  InputOutputActions Completeness ParallelLTSConstruction InputOutputActions
+  Label_Abstraction.LabelAbstraction VCCS.Language.Label_Abstraction.
 Export VCCS.Language.gLts_Instance VCCS_Good.
 
 Section VCCS_ta_tc.
@@ -495,3 +496,108 @@ Next Obligation.
  intros e l. cbn in l. inversion l; subst; simpl; eauto with ccs. Qed.
 
 End VCCS_ta_tc.
+
+Section VCCS_ta_𝔸.
+
+Context `{VP : VCCS_Parameters}.
+
+Notation A := (ExtAct TypeOfActions).
+
+Definition pfx_𝔸 (μ : A) : gproc :=
+  match μ with
+  | ActIn (c , _) => c ? • ①
+  | ActOut (c , v) => c ! v • ①
+  end.
+
+Fixpoint unroll_𝔸 (L : list (A / 𝔸ᴠᴄᴄꜱ)) : gproc :=
+  match L with
+  | [] => 𝟘
+  | x :: l => pfx_𝔸 (`x) + unroll_𝔸 l
+  end.
+
+Definition gen_acc_𝔸 (E : gset (A / 𝔸ᴠᴄᴄꜱ)) s := gen_test s (g (unroll_𝔸 (elements E))).
+
+Lemma unroll_𝔸_lts L a r :
+  lts (g (unroll_𝔸 L)) a r → ∃ x, x ∈ L ∧ lts (g (pfx_𝔸 (`x))) a r.
+Proof.
+  induction L as [| x L IH]; simpl; intros h; inversion h; subst.
+  - exists x. split; [apply list_elem_of_here | assumption].
+  - destruct IH as (y & hy & hl); [assumption |].
+    exists y. split; [by apply list_elem_of_further | exact hl].
+Qed.
+
+Lemma unroll_𝔸_lts_rev x L a r :
+  x ∈ L → lts (g (pfx_𝔸 (`x))) a r → lts (g (unroll_𝔸 L)) a r.
+Proof.
+  induction L as [| y L IH]; intros hx hl; [by apply elem_of_nil in hx |]. simpl.
+  apply elem_of_cons in hx as [-> | hx]; [by apply lts_choiceL | apply lts_choiceR; by apply IH].
+Qed.
+
+Lemma class_of_repr_𝔸 (x : A / 𝔸ᴠᴄᴄꜱ) : ρ[𝔸ᴠᴄᴄꜱ] (`x) = x.
+Proof. exact (@LA_repr_spec _ _ _ (LA_class_surj _) x). Qed.
+
+Lemma pfx_𝔸_lts μ a r :
+  lts (g (pfx_𝔸 μ)) a r → ∃ β, a = ActExt β ∧ ρ[𝔸ᴠᴄᴄꜱ] β = ρ[𝔸ᴠᴄᴄꜱ] μ ∧ good_VCCS r.
+Proof.
+  destruct μ as [[c v]|[c v]]; simpl; intros h; inversion h; subst.
+  - exists (ActIn (c , v0)). split; [done |]. split; [| simpl; constructor].
+    apply (LA_class_proj (label_ker 𝔸ᴠᴄᴄꜱ)). unfold label_ker. by apply ker_vccs.
+  - exists (ActOut (c , v)). split; [done |]. split; [done | constructor].
+Qed.
+
+Lemma pfx_𝔸_has μ : ∃ r, lts (g (pfx_𝔸 μ)) (ActExt μ) r.
+Proof. destruct μ as [[c v]|[c v]]; eexists; constructor. Qed.
+
+Lemma not_good_𝔸 L : ¬ good_VCCS (g (unroll_𝔸 L)).
+Proof.
+  induction L as [| x L IH]; simpl; intros imp; inversion imp; subst.
+  match goal with h : _ ∨ _ |- _ => destruct h as [hg | hg] end.
+  - destruct x as [[[c v]|[c v]] hx]; simpl in hg; inversion hg.
+  - exact (IH hg).
+Qed.
+
+#[global] Program Instance gen_acc_𝔸_test_inst E : test_spec (fun s => gen_acc_𝔸 E s).
+Next Obligation.
+  intros E s hh. eapply gen_test_ungood_if; try eassumption. apply not_good_𝔸.
+Qed.
+Next Obligation.
+  intros. eapply gen_test_lts_mu.
+Qed.
+Next Obligation.
+  intros. eapply gen_test_gen_spec_out_lts_tau_ex_inst.
+Qed.
+Next Obligation.
+  intros. simpl in *. eapply gen_test_gen_spec_out_lts_tau_good. simpl in H. eassumption.
+Qed.
+Next Obligation.
+  intros. simpl in *. unfold eq_rel. simpl. constructor. eapply gen_test_gen_spec_out_lts_mu_uniq. eassumption.
+Qed.
+Next Obligation.
+  intros E t'. intros.
+  simpl in *. eapply gen_test_gen_spec_good_not_mu; eauto.
+Qed.
+
+#[global] Program Instance gen_acc_𝔸_spec : test_co_acceptance_set_spec gen_acc_𝔸 ρ[𝔸ᴠᴄᴄꜱ].
+Next Obligation.
+  intros E h. apply lts_performs_spec1 in h as (r & h). cbn in h.
+  apply unroll_𝔸_lts in h as (x & _ & h). by apply pfx_𝔸_lts in h as (β & e & _).
+Qed.
+Next Obligation.
+  intros E a nb. inversion nb.
+Qed.
+Next Obligation.
+  intros E β e b h. cbn in h.
+  apply unroll_𝔸_lts in h as (x & hx & h). apply pfx_𝔸_lts in h as (β' & e' & hc & _).
+  injection e' as <-. rewrite hc, class_of_repr_𝔸. by apply elem_of_elements.
+Qed.
+Next Obligation.
+  intros E x hx. destruct (pfx_𝔸_has (`x)) as (r & h).
+  exists r, (`x). split; [| apply class_of_repr_𝔸].
+  cbn. apply (unroll_𝔸_lts_rev x); [by apply elem_of_elements | exact h].
+Qed.
+Next Obligation.
+  intros β e' E b h. cbn in h.
+  apply unroll_𝔸_lts in h as (x & _ & h). by apply pfx_𝔸_lts in h as (? & _ & _ & hg).
+Qed.
+
+End VCCS_ta_𝔸.

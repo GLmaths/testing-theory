@@ -31,7 +31,7 @@ From stdpp Require Import base countable list decidable finite gmap gmultiset.
 From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Subset_Act
     WeakTransitions Convergence coWeakTransition coConvergence Termination
     FiniteImageLTS Testing_Predicate StateTransitionSystems InteractionBetweenLts
-    DefinitionAS DefinitionASco Trace_Normalisation.NormalForm Normalisation.
+    DefinitionAS Trace_Normalisation.NormalForm Normalisation.
 (* * Normalisation of co-traces
 
     A co-trace is read from the point of view of the *observer*: a step
