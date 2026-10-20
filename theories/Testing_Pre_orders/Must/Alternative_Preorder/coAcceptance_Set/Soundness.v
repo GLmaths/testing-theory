@@ -83,7 +83,7 @@ Lemma mx_sub X t :
     -> forall X', X' ⊆ X
       -> X' must_pass_x t.
 Proof.
-  intros hmx. dependent induction hmx.
+  intros hmx. induction hmx.
   - eauto with mdb.
   - intros qs sub.
     apply mx_step; eauto with mdb.
@@ -123,7 +123,7 @@ Lemma mustx_terminate_unoutcome' X (t : T) :
         -> ¬ outcome t -> forall p, p ∈ X -> p ⤓.
 Proof.
   intros hmx not_happy p mem.
-  dependent induction hmx.
+  revert not_happy p mem. induction hmx; intros not_happy p mem.
   + contradiction.
   + eapply tstep.
     intros q tr. eapply H; eauto.
@@ -140,7 +140,7 @@ Lemma unoutcome_acnv_mu X t t' :
           -> ¬ outcome t -> ¬ outcome t' -> p ⇓ [μ].
 Proof.
   intros hmx μ μ' p mem inter l not_happy not_happy'.
-  dependent induction hmx.
+  destruct hmx.
   - contradiction.
   - edestruct mustx_terminate_unoutcome as [happy | finish].
     + eauto with mdb.
@@ -152,9 +152,9 @@ Proof.
       exists p. split; set_solver.
       assert (h2 : {[q]} ≠ (∅ : gset P)) by set_solver.
       set (hm := com t' μ μ' {[ q ]} inter l h1 h2).
-      destruct (mustx_terminate_unoutcome _ _ hm).
+      destruct (mustx_terminate_unoutcome _ _ hm) as [hh | hterm].
       +++ contradiction.
-      +++ eapply cnv_nil. eapply H3. set_solver.
+      +++ eapply cnv_nil. eapply hterm. set_solver.
 Qed.
 
 Lemma must_mu_either_outcome_cnv X t t' :
@@ -179,7 +179,7 @@ Lemma mx_sum X X' t : X must_pass_x t
       -> (X ∪ X') must_pass_x t.
 Proof.
   intros hmx1 hmx2. revert X' hmx2.
-  dependent induction hmx1. eauto with mdb.
+  induction hmx1. eauto with mdb.
   intros ps2 hmx2.
   eapply mx_step.
   - eassumption.
@@ -312,8 +312,8 @@ Lemma wt_nil_mx:
   forall p1 p2 t, {[ p1 ]} must_pass_x t
     -> p1 ⟹ p2 -> {[ p2 ]} must_pass_x t.
 Proof.
-  intros p1 p2 e hmx wt.
-  dependent induction wt; subst; eauto with mdb.
+  intros p1 p2 e hmx wt. remember ([] : trace A) as s0 eqn:hs0 in wt.
+  revert hs0 hmx. induction wt; intros hs0 hmx; subst; try discriminate; eauto with mdb.
   inversion hmx; subst; eauto with mdb.
   eapply IHwt; eauto with mdb.
   eapply pt; eauto with mdb.
@@ -326,13 +326,13 @@ Lemma wt_nil_mx_set X X' t :
     -> X ⟹ X' -> X' must_pass_x t.
 Proof.
   intros hmx wt_tr.
-  revert t hmx.
-  dependent induction wt_tr; subst; eauto with mdb; intros.
+  revert t hmx. remember ([] : trace A) as s0 eqn:hs0 in wt_tr. revert hs0.
+  induction wt_tr; intros hs0; subst; try discriminate; eauto with mdb; intros.
   inversion hmx; subst; eauto with mdb.
   eapply IHwt_tr ; eauto with mdb.
   eapply pt; eauto with mdb.
   + intros p2 mem. destruct l;subst.
-    destruct (lts_tau_set_from_pset_ispec X) as (Hyp1 & Hyp2).
+    destruct (lts_tau_set_from_pset_ispec p) as (Hyp1 & Hyp2).
     eapply Hyp1 in mem;eauto.
   + destruct l; eauto.
 Qed.
@@ -365,7 +365,7 @@ Lemma not_outcome_and_must_implies_convergence X t :
   ¬ outcome t -> X must_pass_x t -> X ⤓.
 Proof.
   intros not_happy hmx.
-  dependent induction hmx.
+  revert not_happy. induction hmx; intros not_happy.
   + contradiction.
   + constructor.
     intros X' tr.
@@ -395,7 +395,7 @@ Qed.
 
 Lemma must_set_if_must  (p : P) (t : T) : p must_pass t -> {[ p ]} must_pass_x t.
 Proof.
-  intro hm. dependent induction hm.
+  intro hm. induction hm.
   - eauto with mdb.
   - eapply mx_step.
     + eassumption.
@@ -419,7 +419,7 @@ Lemma must_if_must_set_helper  (X : gset P) (t : T) :
     -> forall p, p ∈ X
       -> p must_pass t.
 Proof.
-  intro hm. dependent induction hm.
+  intro hm. induction hm.
   - eauto with mdb.
   - intros p mem. eapply m_step.
     + eassumption.
@@ -470,7 +470,7 @@ Proof.
         { eapply hm. set_solver. }
         clear H. clear IHX. clear H0.
         clear xneq_nil. clear hm. clear X.
-        dependent induction hm'.
+        induction hm'.
         ++ eapply mx_now; eauto.
         ++ eapply mx_step.
            -- eauto.
@@ -722,7 +722,7 @@ Lemma mustx_alt_iff_mustx_alt `{EA : !ExtAction A} `{gLtsT : !gLtsEq T EA} `{TP 
   X must_pass_x t <-> X must_alt_pass_x t.
 Proof.
   split.
-  - intro hmx. dependent induction hmx; eauto.
+  - intro hmx. induction hmx; eauto.
     + constructor ;eauto.
     + eapply mx_step_alt; eauto.
       * intros. destruct H2;eauto. subst.
@@ -736,7 +736,7 @@ Proof.
         destruct X' using set_ind_L. 
         ++ intro. eapply empty_set_stable_wk_not_emp_list_inv;eauto.
         ++ set_solver.
-  - intro hmx. dependent induction hmx; eauto.
+  - intro hmx. induction hmx; eauto.
     + constructor ;eauto.
     + eapply mx_step; eauto.
       * intros. assert (X' ⊆ lts_tau_set_from_pset X).
@@ -1276,7 +1276,7 @@ Lemma soundnessx
   X ≼ₛₑₜ_ₐₛ Y  -> X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
 Proof.
   intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
-  dependent induction hmx; intros.
+  induction hmx; intros.
   - eauto with mdb.
   - destruct (mustx_terminate_unoutcome X t ltac:(eauto with mdb));
     [contradiction|].

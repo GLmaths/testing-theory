@@ -3,13 +3,13 @@ Require Export signatures.pi.
 Require Export signatures.unscoped.
 From Stdlib Require Import Relations Morphisms.
 Arguments core.funcomp _ _ _/.
+Open Scope subst_scope.
 
 (* Notation for π calculus terms *)
 Notation "x ∨ y" := (Or x y) (at level 50).
 Notation "x ⩽ y" := (Inequality x y) (at level 50).
 
 Notation "c ⋉ v" := (act c v) (at level 50).
-Definition τ := tau_action.
 
 Notation "①" := (gpr_success).
 Notation "𝟘" := (gpr_nil).
@@ -26,8 +26,6 @@ Notation "'If' C 'Then' P 'Else' Q" := (pr_if_then_else C P Q)
 
 Coercion g : gproc >-> proc.
 
-Definition νs n := Nat.iter n (fun p => ν p).
-
 (* Notations for renamings and substitutions *)
 Notation "tm [ s1 ; s2 ]" :=
   (subst2 s1 s2 tm) (at level 10, right associativity) : subst_scope.
@@ -36,13 +34,23 @@ Notation "tm [ s ]" :=
 Notation "s '..'" := (scons s ids) (at level 1, format "s ..") : subst_scope.
 Notation "f >> g" := (fun x => g (f x)) (at level 50) : subst_scope.
 Notation "s .: sigma" := (scons s sigma) (at level 55, sigma at next level, right associativity) : subst_scope.
-Open Scope subst_scope.
 Notation "⋅" := ids.
 Notation "tm ⟨ r ⟩" := (ren2 ids r tm) (at level 20).
 
 Coercion cst : Value >-> Data.
 Coercion var_Data : nat >-> Data.
 Coercion var_proc : nat >-> proc.
+
+Class Shiftable (A : Type) := shift_op : A -> A.
+Notation "⇑" := shift_op.
+
+Section Renamings.
+
+Context `{PiV : Pi_Values}.
+
+Definition τ := tau_action.
+
+Definition νs n := Nat.iter n (fun p => ν p).
 
 (* Autosubst doesn't generate these for Action, since it doesn't contain bound variables *)
 
@@ -74,7 +82,13 @@ Proof.
 exact (compRenRen_Act xi zeta _ (fun n => eq_refl) a).
 Qed.
 
-#[global] Instance Ren_Act : (Ren1 _ _ _) := @ren_Act.
+End Renamings.
+
+#[global] Instance Ren_Act : forall {PiV : Pi_Values}, (Ren1 _ _ _) := @ren_Act.
+
+Section Renamings.
+
+Context `{PiV : Pi_Values}.
 
 (* Definition and properties of swap and shift renaming *)
 
@@ -173,12 +187,10 @@ Proof.
 asimpl. intro p. rewrite swap_involutive. now asimpl.
 Qed.
 
-Class Shiftable (A : Type) := shift_op : A -> A.
-Instance Shift_proc : Shiftable proc := ren2 ids shift.
-Instance Shift_gproc : Shiftable gproc := ren2 ids shift.
-Instance Shift_Data : Shiftable Data := ren1 shift.
-Instance Shift_Act  : Shiftable Act := ren1 shift.
-Notation "⇑" := shift_op.
+#[global] Instance Shift_proc : Shiftable proc := ren2 ids shift.
+#[global] Instance Shift_gproc : Shiftable gproc := ren2 ids shift.
+#[global] Instance Shift_Data : Shiftable Data := ren1 shift.
+#[global] Instance Shift_Act  : Shiftable Act := ren1 shift.
 
 Definition nvars {A: Type} `{_ : Shiftable A} (n : nat) : A -> A :=
   Nat.iter n (⇑).
@@ -457,4 +469,6 @@ induction m.
   rewrite PeanoNat.Nat.add_succ_r.
   now rewrite PeanoNat.Nat.add_assoc.
 Qed.
+
+End Renamings.
 (* end hide *)

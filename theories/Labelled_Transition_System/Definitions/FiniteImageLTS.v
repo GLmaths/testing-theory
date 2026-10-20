@@ -173,11 +173,12 @@ Qed.
 Lemma wt_set_nil_spec2 `{FiniteImagegLts P A} p q : 
     forall (tp : p ⤓), p ⟹ q -> q ∈ wt_set_nil p tp.
 Proof.
-  intros tp Htp. revert tp. dependent induction Htp; intros tp; destruct tp.
+  intros tp Htp. remember ([] : trace A) as s0 eqn:hs0 in Htp.
+  revert hs0 tp. induction Htp as [p | s1 p q' t l Htp IHHtp | ]; intros hs0 tp; [| | discriminate]; destruct tp.
   + set_solver.
   + eapply elem_of_union. right.
     eapply elem_of_union_list.
-    set (qr := dexist q l).
+    set (qr := dexist q' l).
     exists (wt_set_nil (`qr) (t0 (`qr) (proj2_dsig qr))).
     split. eapply list_elem_of_fmap.
     exists qr. split. reflexivity.
@@ -208,7 +209,10 @@ Definition wt_set_nil_fin `{FiniteImagegLts P A}
   wt_set_nil_fin_aux p ht (wt_nil_set_dec p ht).
 
 Lemma wt_push_nil_left_lts `{gLts P A} {p q r μ} : p ⟹ q -> q ⟶[μ] r -> p ⟹{μ} r.
-Proof. by intros w1 lts; dependent induction w1; eauto with mdb. Qed.
+Proof.
+  intros w1 lts. remember ([] : trace A) as s0 eqn:hs0 in w1. revert hs0 lts.
+  induction w1; intros hs0 lts; subst; try discriminate; eauto with mdb.
+Qed.
 
 Definition wt_set_mu
   `{FiniteImagegLts P A} (p : P)

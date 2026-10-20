@@ -31,7 +31,7 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality Wf.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import Setoid.
-From Stdlib .Logic Require Import ProofIrrelevance.
+
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 
@@ -48,7 +48,7 @@ Lemma prex1_if_copre `{
 Proof.
   intros Hyp_PreO s hcnv.
   revert ps qs Hyp_PreO hcnv.
-  dependent induction s; intros ps qs Hyp_PreO hcnv; destruct Hyp_PreO.
+  induction s; intros ps qs Hyp_PreO hcnv; destruct Hyp_PreO.
   + eapply convergence_forall_if_convergence_set.
     eapply convergence_set_if_convergence_forall in hcnv.
     constructor. eapply c_cnv. eapply equiv_termination. exact hcnv.
@@ -77,19 +77,19 @@ Proof.
   revert ps qs.
   intros ps qs hsub q s.
   revert ps qs q hsub.
-  dependent induction s; intros ps qs q hsub.
-  + intros q' mem hw hstq' hcnv. revert ps qs hstq' hcnv mem hsub.
-    dependent induction hw; try rename p into q; intros.
+  induction s; intros ps qs q hsub.
+  + intros q' mem hw hstq' hcnv. remember ([] : trace _) as s0 eqn:hs0 in hw. revert ps qs hstq' hcnv mem hsub hs0.
+    induction hw; try rename p into q; intros; subst; try discriminate.
     ++ destruct hsub. edestruct c_now;eauto.
        - eapply equiv_termination. eapply convergence_set_if_convergence_forall; eauto.
     ++ eapply IHhw.
-       - eauto.
        - eauto.
        - eauto.
        - eapply elem_of_singleton. reflexivity.
        - eapply c_tau. eassumption.
          intros q' mem'. assert (q' = q) by set_solver. subst.
          exists p. split; eauto. eapply lts_to_wt_tau;eauto.
+       - reflexivity.
   + intros. rename a into μ.
     replace (μ :: s) with ([μ] ++ s) in H1 by eauto.
     eapply wt_split in H1 as (q0 & hw0 & hw1).

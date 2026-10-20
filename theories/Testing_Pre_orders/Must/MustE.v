@@ -59,12 +59,14 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Lts_OB
     @must_sts P T _ outcome p t.
   Proof.
     split.
-    - intros H1. dependent induction H1; subst.
-      + rewrite /bar_pred /= in H1. now eapply m_sts_now.
-      + destruct (outcome_decidable t).
-        rewrite /bar_pred /= in H1.
-        now eapply m_sts_now. eapply m_sts_step; eauto.
-    - intros hm; dependent induction hm.
+    - intros H1. remember (p, t) as pt eqn:hpt in H1. revert p t hpt.
+      induction H1 as [pt hb | pt hp _ IH]; intros p0 t0 hpt; subst.
+      + rewrite /bar_pred /= in hb. now eapply m_sts_now.
+      + destruct (outcome_decidable t0) as [ho | hno].
+        * now eapply m_sts_now.
+        * eapply m_sts_step; [exact hno | exact hp |].
+          intros p' t' hs. exact (IH (p', t') hs p' t' eq_refl).
+    - intros hm; induction hm.
       + constructor 1. 
         rewrite /bar_pred //=.
       + constructor 2.

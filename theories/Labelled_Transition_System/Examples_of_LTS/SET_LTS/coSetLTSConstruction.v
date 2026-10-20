@@ -202,7 +202,7 @@ Lemma co_termination_sum (X : gset P) (Y : gset P) :
   X ⤓ → Y ⤓ → (X ∪ Y) ⤓.
 Proof.
   intros conv1 conv2. revert Y conv2.
-  dependent induction conv1.
+  induction conv1.
   intros ps2 hmx2.
   constructor. intros.
   rename H1 into hstep. rename H0 into IH. rename H into hter.
@@ -260,7 +260,7 @@ Qed.
 
 Lemma co_termination_set_if_termination (p : P) : p ⤓ → ({[ p ]} : gset P) ⤓.
 Proof.
-  intro hm. dependent induction hm. rename H0 into IH.
+  intro hm. induction hm. rename H0 into IH.
   constructor. intros Y hstep.
   eapply co_termination_forall. intros p' mem.
   destruct hstep as (eq & eq'). subst. unfold cowt_tau_set_from_pset in mem.
@@ -274,7 +274,7 @@ Qed.
 Lemma co_termination_if_termination_set_helper (ps : gset P) :
   ps ⤓ → ∀ p, p ∈ ps → p ⤓.
 Proof.
-  intro hm. dependent induction hm. rename H0 into IH.
+  intro hm. induction hm. rename H0 into IH.
   intros p' mem. constructor.
   intros p'' tr.
   eapply IH.
@@ -332,7 +332,7 @@ Lemma co_wk_tr_inv (ps : gset P) (s : trace Atest) (qs : gset P) :
   ps ⟹[s] qs → ∀ q, q ∈ qs → ∃ p, (p : P) ⟹ᶜᵒ[s] (q : P) ∧ p ∈ ps.
 Proof.
   intro Hyp.
-  dependent induction Hyp.
+  induction Hyp.
   + intros. exists q. split; [constructor | assumption].
   + intros q0 mem0. eapply IHHyp in mem0 as (p' & wk_tr & mem).
     destruct l as (eq & non_empty).
@@ -349,7 +349,7 @@ Lemma co_convergence_set_if_convergence_forall (ps : gset P) (s : trace Atest) :
   (∀ (p : P), p ∈ ps → p ⇓ᶜᵒ s) → ps ⇓ s.
 Proof.
   revert ps.
-  dependent induction s.
+  induction s.
   + intros ps hall. constructor. eapply co_termination_set_for_all.
     intros p mem. assert (hc : p ⇓ᶜᵒ []) by (eapply hall; eauto).
     inversion hc; eauto.
@@ -366,7 +366,7 @@ Lemma co_witness_wk_tr (ps : gset P) p0 (s0 : trace Atest) q0 :
   p0 ⟹ᶜᵒ[s0] q0 → p0 ∈ ps → (∃ qs, ps ⟹[s0] qs ∧ q0 ∈ qs).
 Proof.
   intro wk_tr. revert ps.
-  dependent induction wk_tr.
+  induction wk_tr.
   + intros. exists ps. split; [constructor | assumption].
   + intros ps mem. eapply (cowt_tau_set_from_pset_ispec (SA := SA)) in l as eq; [| exact mem].
     eapply IHwk_tr in eq as (qs' & wk_tr' & mem').
@@ -390,7 +390,7 @@ Lemma co_convergence_forall_if_convergence_set (ps : gset P) (s : trace Atest) :
   ps ⇓ s → ∀ p, p ∈ ps → p ⇓ᶜᵒ s.
 Proof.
   revert ps.
-  dependent induction s.
+  induction s.
   + intros ps hm p mem. inversion hm; subst. constructor.
     eapply co_termination_set_iff_termination_forall; eauto.
   + intros ps hm p mem. inversion hm; subst.

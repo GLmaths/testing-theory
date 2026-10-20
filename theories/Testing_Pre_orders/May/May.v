@@ -69,12 +69,12 @@ Lemma must_sts_iff_must `{
   @may_sts P T _ outcome p t <-> may p t.
 Proof.
   split.
-  - intro hm. dependent induction hm; eauto with mdb.
+  - intro hm. induction hm; eauto with mdb.
     inversion nst as [ | | ]; subst.
     + eapply may_server_step; eauto.
     + eapply may_client_step; eauto.
     + eapply may_com_step; eauto. 
-  - intro hm. dependent induction hm; eauto with mdb.
+  - intro hm. induction hm; eauto with mdb.
     + eapply m_sts_step; eauto. eapply ParLeft; eauto.
     + eapply m_sts_step; eauto. eapply ParRight; eauto.
     + eapply m_sts_step; eauto. eapply ParSync; eauto.
@@ -110,7 +110,7 @@ Lemma may_eq_client `{
 Proof.
   intros p q r heq hm.
   revert r heq.
-  dependent induction hm; intros.
+  induction hm; intros.
   - apply may_now. eapply outcome_preserved_by_eq; eauto.
   - eapply may_server_step; eauto. eapply unoutcome_preserved_by_eq; eauto. symmetry. exact heq.
   - edestruct (eq_spec r t') as (r' & tr & eq).
@@ -133,7 +133,7 @@ Lemma may_eq_server `{
 Proof.
   intros p q r heq hm.
   revert q heq.
-  dependent induction hm; intros.
+  induction hm; intros.
   - now apply may_now.
   - edestruct (eq_spec q p') as (q' & tr & eq).
     { exists p. split; eauto. now symmetry. }
@@ -156,7 +156,7 @@ Lemma may_not_stable_or_outcome `{
 Proof. 
   intros hm. destruct (decide (outcome t)) as [happy | not_happy].
   + now left. 
-  + right. dependent induction hm. 
+  + right. revert not_happy. induction hm; intros not_happy. 
     - contradiction. 
     - exact (IHhm not_happy). 
     - left. eapply lts_performs_spec2; eauto.

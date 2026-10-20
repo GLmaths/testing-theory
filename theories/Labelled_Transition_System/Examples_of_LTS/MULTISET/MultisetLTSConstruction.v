@@ -169,9 +169,9 @@ Lemma lts_MO_nb_on_list_perm `{H : ExtAction A} (l1 : list A) (l2 : list A) :
 Proof.
   intro equiv.
   revert l1 l2 equiv.
-  dependent induction l1.
+  induction l1.
   + intros. eapply Permutation_nil in equiv. rewrite equiv. simpl. reflexivity.
-  + intro l2. intros. revert l1 IHl1 equiv. dependent induction l2.
+  + intro l2. intros. revert l1 IHl1 equiv. induction l2.
     ++ intros. symmetry in equiv. eapply Permutation_nil in equiv. 
        rewrite equiv. simpl. reflexivity.
     ++ intros. destruct (decide (a = a0)) as [eq | not_eq].

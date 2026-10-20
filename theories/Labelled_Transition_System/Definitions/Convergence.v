@@ -85,9 +85,9 @@ Qed.
 Lemma cnv_preserved_by_wt_nil `{M : gLts P A} s p :
   p ⇓ s -> forall q, p ⟹ q -> q ⇓ s.
 Proof.
-  intros hcnv q w.
-  dependent induction w; eauto with mdb.
-  eapply IHw. eapply cnv_preserved_by_lts_tau; eauto. reflexivity.
+  intros hcnv q w. remember ([] : trace A) as s0 eqn:hs0 in w.
+  revert hs0 hcnv. induction w as [| s1 p0 q0 t0 l w IHw | ]; intros hs0 hcnv; [done | | discriminate].
+  eapply IHw; [exact hs0 |]. eapply cnv_preserved_by_lts_tau; eauto.
 Qed.
 
 Lemma cnv_preserved_by_wt_act `{M: gLts P A} s p μ :
@@ -99,7 +99,7 @@ Lemma cnv_iff_prefix_terminate_l `{M: gLts P A} p s :
 Proof.
   intros hcnv t q hpre w.
   revert s p q hcnv hpre w.
-  dependent induction t; intros.
+  induction t; intros.
   - eapply cnv_terminate, cnv_preserved_by_wt_nil; eassumption.
   - eapply wt_pop in w as (p' & w0 & w1).
     inversion hpre; subst. simpl in hcnv.
@@ -114,7 +114,7 @@ Lemma cnv_iff_prefix_terminate_r `{M: gLts P A} p s :
 Proof.
   intros h.
   revert p h.
-  dependent induction s; intros; eauto with mdb.
+  induction s; intros; eauto with mdb.
   eapply cnv_act; eauto with mdb.
   eapply (h []) ; eauto with mdb; eapply prefix_nil.
   intros q w. eapply IHs.
@@ -133,7 +133,7 @@ Lemma cnv_wt_prefix `{M: gLts P A} s1 s2 p :
   p ⇓ s1 ++ s2 -> forall q, p ⟹[s1] q -> q ⇓ s2.
 Proof.
   revert s2 p.
-  dependent induction s1; intros s2 p hcnv q w.
+  induction s1; intros s2 p hcnv q w.
   - eapply cnv_preserved_by_wt_nil; eauto with mdb.
   - eapply wt_pop in w as (p' & w0 & w1).
     inversion hcnv; eauto with mdb.
@@ -141,9 +141,9 @@ Qed.
 
 Lemma terminate_preserved_by_wt_nil `{M: gLts P A} p : p ⤓ -> forall q, p ⟹ q -> q ⤓.
 Proof.
-  intros hcnv q w.
-  dependent induction w; eauto with mdb.
-  eapply IHw. eapply terminate_preserved_by_lts_tau; eauto. reflexivity.
+  intros hcnv q w. remember ([] : trace A) as s0 eqn:hs0 in w.
+  revert hs0 hcnv. induction w as [| s1 p0 q0 t0 l w IHw | ]; intros hs0 hcnv; [done | | discriminate].
+  eapply IHw; [exact hs0 |]. eapply terminate_preserved_by_lts_tau; eauto.
 Qed.
 
 (* *** Properties on convergence in an LTS with a Bissimulation*)
@@ -168,10 +168,10 @@ Qed.
 Lemma terminate_preserved_by_wt_non_blocking_action `{M: gLtsOba P A} p q η : 
   non_blocking η -> p ⤓ -> p ⟹{ η } q -> q ⤓.
 Proof.
-  intros nb ht w.
-  dependent induction w.
+  intros nb ht w. remember [η] as s0 eqn:hs0 in w.
+  revert hs0 ht. induction w as [| s1 p0 q0 t0 l w IHw | μ0 s1 p0 q0 t0 l w]; intros hs0 ht; [discriminate | |].
   - eapply IHw; eauto. eapply terminate_preserved_by_lts_tau ; eauto.
-  - eapply terminate_preserved_by_wt_nil.
+  - injection hs0 as -> ->. eapply terminate_preserved_by_wt_nil.
     eapply terminate_preserved_by_lts_non_blocking_action; eauto. assumption.
 Qed.
 
@@ -354,7 +354,7 @@ Lemma cnv_drop_action_in_the_middle `{gLtsObaFW P A} p s1 s2 μ :
 Proof.
   intros his hcnv r l.
   revert p s2 μ his hcnv r l.
-  dependent induction s1; intros.
+  induction s1; intros.
   - simpl in *.
     eapply cnv_preserved_by_wt_act; eauto. eapply lts_to_wt; eauto.
   - inversion his; subst.
@@ -423,6 +423,6 @@ Qed.
 Lemma equiv_termination `{gLtsP : @gLts P A H} p : p ⇓ [] <-> p ⤓.
 Proof.
   split.
-  + intros. dependent induction H0; eauto.
+  + intros. inversion H0; eauto.
   + intros. constructor. eauto.
 Qed.

@@ -402,6 +402,10 @@ Section barred_sts.
     - exact (MExStop _ (add_sink_step_sink Hstep)).
   Defined.
 
+  Lemma iexec_from_eta `{Sts A} {x : A} (η : iexec_from x) :
+    ∃ y (Hs : sts_step x y) (η' : iexec_from y), η = IExStep x y Hs η'.
+  Proof. destruct η as [x y Hs η']. by exists y, Hs, η'. Qed.
+
   Lemma add_sink_iexec_to_max_last `{Sts A} (a: A) n (p: finexec_from a) η :
     mex_take_from n (add_sink_iexec_to_max η) = Some p →
     fex_from_last (iex_take_from n η) = Orig (fex_from_last p).
@@ -414,8 +418,8 @@ Section barred_sts.
       end.
       cbn; intros Heq.
       destruct (mex_take_from n η') as [p'|] eqn:Hmtf; [cbn in Heq; simplify_eq|done].
-      dependent destruction η; simplify_eq. cbn.
-      cbn in Hkm. destruct x'; try done. simplify_eq.
+      destruct (iexec_from_eta η) as (y0 & Hs0 & η0 & ->); simplify_eq. cbn.
+      cbn in Hkm. destruct y0; try done. simplify_eq.
       by apply IH.
   Qed.
 
@@ -437,20 +441,19 @@ Section barred_sts.
 
   Lemma sink_no_hope `{Bar A}: ¬ complete_intensional_pred (@Sink A).
   Proof.
-    intros Hp. dependent induction Hp. done.
-    apply (H4 Sink ltac:(constructor) _ _ _ eq_refl); done.
+    intros Hp. remember (@Sink A) as s eqn:hs in Hp.
+    induction Hp as [p hb | p _ IH]; subst; [done |].
+    apply (IH Sink ltac:(constructor) eq_refl).
   Qed.
 
   Lemma add_sink_preserves_intensional_pred `{Bar A} (a: A):
     complete_intensional_pred (Orig a) → intensional_pred a.
   Proof.
-    intros Hc.
-    dependent induction Hc; [constructor 1; done|].
-    (* TODO: don't use autogen'd names *)
-
+    intros Hc. remember (Orig a) as o eqn:ho in Hc. revert a ho.
+    induction Hc as [p hb | p hall IH]; intros a ho; subst; [constructor 1; done|].
     destruct (decide (sts_performs a)) as [|Hs].
-    2:{ specialize (H3 _ (StepStableSink _ _ Hs)). by exfalso; apply sink_no_hope. }
-    constructor 2; [done|]. intros p' Hstep. eapply H4; try done. by constructor.
+    2:{ specialize (hall _ (StepStableSink _ _ Hs)). by exfalso; apply sink_no_hope. }
+    constructor 2; [done|]. intros p' Hstep. eapply IH; [by constructor | done].
   Qed.
 End barred_sts.
 

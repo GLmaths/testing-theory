@@ -51,7 +51,7 @@ Qed.
 
 Lemma clos_n_S_inv {A : Type} (R : relation A) x y n:
   clos_n R (S n) x y -> x = y \/ (exists z, R x z /\ clos_n R n z y).
-Proof. intro H. dependent destruction H; eauto. Qed.
+Proof. intro H. inversion H; subst; eauto. Qed.
 
 (** ****** At most n transitions implies at most S n transitions *)
 Lemma clos_n_S `{_ : Reflexive A R} x y n:

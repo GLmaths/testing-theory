@@ -416,7 +416,7 @@ Qed.
 
 Lemma empty_set_stable_wk_inv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} s ps ps' : ps' = ∅ -> ps ⟹[s] ps' -> ps = ∅.
 Proof.
-  intros eq_empty wk_tr. revert eq_empty. dependent induction wk_tr.
+  intros eq_empty wk_tr. revert eq_empty. induction wk_tr.
   + eauto.
   + intro. eapply IHwk_tr in eq_empty. subst.
     inversion l; eauto. set_solver.
@@ -457,7 +457,7 @@ Lemma termination_sub `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A}
     -> forall qs, qs ⊆ ps
       -> qs ⤓.
 Proof.
-  intros hmx. dependent induction hmx.
+  intros hmx. induction hmx.
   constructor. intros. eapply H1. 
   set (q' := lts_tau_set_from_pset_ispec qs).
   destruct q'.
@@ -479,7 +479,7 @@ Qed.
 Lemma termination_sum `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (X : gset P) (Y : gset P) : X ⤓ -> Y ⤓ -> (X ∪ Y) ⤓.
 Proof.
   intros conv1 conv2. revert Y conv2.
-  dependent induction conv1.
+  induction conv1.
   intros ps2 hmx2.
   constructor. intros.
   set (Y := lts_tau_set_from_pset p).
@@ -563,7 +563,7 @@ Qed.
 
 Lemma termination_set_if_termination `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} (p : P) : p ⤓ -> {[ p ]} ⤓.
 Proof.
-  intro hm. dependent induction hm.
+  intro hm. induction hm.
   constructor. intros.
   eapply termination_forall. intros.
   destruct H2 as (eq & eq'). subst. unfold lts_tau_set_from_pset in H3.
@@ -579,7 +579,7 @@ Lemma termination_if_termination_set_helper  `{gLtsP : @gLts P A H} `{!FiniteIma
     -> forall p, p ∈ ps
       -> p ⤓.
 Proof.
-  intro hm. dependent induction hm.
+  intro hm. induction hm.
   intros p' mem. constructor.
   intros p'' tr .
   eapply H1.
@@ -626,7 +626,7 @@ Qed.
 Lemma wk_tr_inv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} ps s qs  : ps ⟹[s] qs -> forall q, q ∈ qs -> exists p, (p : P) ⟹[s] (q : P) /\ p ∈ ps .
 Proof.
   intro Hyp.
-  dependent induction Hyp.
+  induction Hyp.
   + intros. exists q. split;eauto. constructor; eauto.
   + intros. eapply IHHyp in H0 as (p' & wk_tr & mem).
     destruct l as (eq & non_empty).
@@ -642,7 +642,7 @@ Lemma convergence_set_if_convergence_forall `{gLtsP : @gLts P A H} `{!FiniteImag
   (forall (p : P), p ∈ ps -> p ⇓ s) -> ps ⇓ s.
 Proof.
   revert ps.
-  dependent induction s.
+  induction s.
   + constructor. eapply termination_set_for_all. intros; eauto.
     assert (p ⇓ []).
     { eapply H0. eauto. }
@@ -659,7 +659,7 @@ Qed.
 
 Lemma witness_wk_tr `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} ps p s q : p ⟹[s] q -> p ∈ ps -> (exists qs, ps ⟹[s] qs /\ q ∈ qs).
 Proof.
-  intro wk_tr. revert ps. dependent induction wk_tr.
+  intro wk_tr. revert ps. induction wk_tr.
   + intros. exists ps. split;eauto. constructor.
   + intros. eapply lts_tau_set_from_pset_ispec in l as eq;eauto.
     eapply IHwk_tr in eq as (qs' & wk_tr' & mem);eauto.
@@ -679,7 +679,7 @@ Lemma convergence_forall_if_convergence_set `{gLtsP : @gLts P A H} `{!FiniteImag
   ps ⇓ s -> forall p, p ∈ ps -> p ⇓ s.
 Proof.
   unfold trace in s. revert ps.
-  dependent induction s.
+  induction s.
   + intros ps hm p mem. inversion hm; subst. constructor.
     eapply termination_set_iff_termination_forall;eauto.
   + intros. inversion H0; subst.

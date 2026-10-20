@@ -166,7 +166,7 @@ Section copre.
   Lemma prex1_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ꜀ₙᵥ≼ₛₑₜ_ₐₛ Y.
   Proof.
     intros hpq s; revert X Y hpq.
-    dependent induction s; intros X Y hpq hcnv.
+    induction s; intros X Y hpq hcnv.
     + eapply convergence_set_if_convergence_forall in hcnv.
       eapply convergence_forall_if_convergence_set.
       eapply equiv_termination. eapply (c_cnv hpq).
@@ -193,9 +193,9 @@ Section copre.
 
   Lemma prex2_if_copre (X : gset P) (Y : gset Q) : X ᶜᵒ≼ₜₒᵥᵥₑᵣ Y -> X ₐ꜀꜀≼ₛₑₜ_ₐₛ Y.
   Proof.
-    intros hsub q s q' mem; revert X Y q q' mem hsub ; dependent induction s; intros X Y q q' mem hsub.
-    + intros hw hstq' hcnv. revert X Y mem hsub hstq' hcnv.
-      dependent induction hw;intros.
+    intros hsub q s q' mem; revert X Y q q' mem hsub ; induction s; intros X Y q q' mem hsub.
+    + intros hw hstq' hcnv. remember ([] : trace A) as s0 eqn:hs0 in hw. revert X Y mem hsub hstq' hcnv hs0.
+      induction hw; intros; subst; try discriminate.
       * edestruct (c_now hsub).
         - eapply equiv_termination.
           eapply convergence_set_if_convergence_forall;eauto.
@@ -203,13 +203,13 @@ Section copre.
         - firstorder.
         - exists x. eauto.
       * eapply IHhw. 
-        - eauto. 
         - instantiate (1:= {[ q ]}). set_solver.
         - apply (c_tau hsub); eauto.
           intros q'' mem''.
           assert (q'' = q) by set_solver. subst. exists p. split; eauto. eapply lts_to_wt_tau. eauto.
         - eauto.
         - eauto.
+        - reflexivity.
     + intros hqq' hq hcnv; rename a into μ.
       change (μ :: s) with ([μ] ++ s) in hqq'.
       eapply wt_split in hqq' as (q0 & hw0 & hw1).

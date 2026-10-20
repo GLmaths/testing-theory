@@ -1343,11 +1343,13 @@ Lemma fw_wt_MO_com `{@FiniteImagegLts P A H gLtsP} {unique_nb : UniqueDual A}
   (t : P) a q m:
   non_blocking a -> t ⟹{co a} q -> (t ▷ {[+ a +]} ⊎ m) ⟹ (q ▷ m).
 Proof.
-intros nb Ht. dependent induction Ht.
+intros nb Ht. remember [co a] as s0 eqn:hs0 in Ht. revert hs0.
+induction Ht; intros hs0; [discriminate | |].
 - apply wt_tau with (q ▷ {[+ a +]} ⊎ m).
   + now constructor.
   + apply IHHt; trivial.
-- apply wt_tau with (q  ▷ m).
+- injection hs0 as -> ->.
+  apply wt_tau with (q  ▷ m).
   + econstructor; eauto.
     * split. exact (proj2_sig (exists_dual (co a))).
       erewrite<- dual_is_involutive. exact nb.
@@ -1360,12 +1362,13 @@ Lemma fw_wt_left `{@FiniteImagegLts P A H gLtsP} {unique_nb : UniqueDual A}
   (t : P) q0 (M : MO A) μ :
   t ⟹{μ} q0 -> (t ▷ M) ⟹{μ} (q0 ▷ M).
 Proof.
-intros Ht.
-dependent induction Ht.
+intros Ht. remember [μ] as s0 eqn:hs0 in Ht. revert hs0.
+induction Ht; intros hs0; [discriminate | |].
 - apply wt_tau with (q ▷ M).
   + now constructor.
   + apply IHHt; trivial.
-- apply wt_act with (q ▷ M).
+- injection hs0 as -> ->.
+  apply wt_act with (q ▷ M).
   + now constructor.
   + now apply fw_wt.
 Qed.

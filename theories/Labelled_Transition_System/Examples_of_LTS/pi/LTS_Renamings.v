@@ -3,6 +3,10 @@ From TestingTheory Require Import pi.LTS Renamings pi.Congruence.
 From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Morphisms.
 
+Section LTS_Renamings.
+
+Context {PiV : Pi_Values} {PiE : @Pi_Equations PiV}.
+
 Lemma is_bound_ren : forall 𝜆 σ,
   is_bound_out 𝜆 = is_bound_out (ren1 σ 𝜆).
 Proof.
@@ -25,7 +29,9 @@ Lemma Invert_Lts_Input : forall p q c v σ,
   exists c', c = ren1 σ c'.
 Proof.
 intros p q c v σ transition.
-dependent induction transition.
+remember (p ⟨σ⟩) as P0 eqn:x in transition. remember (ActIn (c ⋉ v)) as α eqn:hα in transition.
+revert p c v σ x hα.
+induction transition; intros pX cX vX σX x hα; try discriminate; try (injection hα; intros; subst); subst; try rename p into p0; try rename pX into p; try rename cX into c; try rename vX into v; try rename σX into σ.
 - destruct p; inversion x. destruct g0; inversion x. now exists d.
 - destruct p; inversion x.
   destruct (IHtransition p (⇑ c) (⇑ v) (up_ren σ) H0 eq_refl) as [c' Heq].
@@ -53,12 +59,14 @@ Lemma Invert_Lts_Input_Full : forall p q c v σ,
   lts p (ActIn (c' ⋉ v)) q'.
 Proof.
 intros p q c v σ transition.
-dependent induction transition.
+remember (p ⟨σ⟩) as P0 eqn:x in transition. remember (ActIn (c ⋉ ren1 σ v)) as α eqn:hα in transition.
+revert p c v σ x hα.
+induction transition; intros pX cX vX σX x hα; try discriminate; try (injection hα; intros; subst); subst; try rename p into p0; try rename pX into p; try rename cX into c; try rename vX into v; try rename σX into σ.
 - destruct p; inversion x. destruct g0; inversion x.
   repeat eexists; [|eapply lts_input]. now asimpl.
 - destruct p; inversion x.
   assert (HeqAct: ⇑ (ActIn (c ⋉ ren1 σ v)) = ActIn (⇑ c ⋉ ren1 (up_ren σ) (⇑ v)))
-  by (unfold shift_op; now rewrite <- shift_permute_Data).
+  by (unfold shift_op; now setoid_rewrite <- shift_permute_Data).
   destruct (IHtransition p (⇑ c) (⇑ v) (up_ren σ) H0 HeqAct) as (c' & q' & Heq1 & Heq2 & Heq3).
   destruct (Invert_Shift _ _ _ Heq1) as (d & Hd).
   exists d, (ν q'). repeat split.
@@ -91,7 +99,9 @@ lts (p ⟨σ⟩) (FreeOut (c ⋉ v)) q ->
   lts p (FreeOut (c' ⋉ v')) q'.
 Proof.
 intros p q c v σ transition.
-dependent induction transition.
+remember (p ⟨σ⟩) as P0 eqn:x in transition. remember (FreeOut (c ⋉ v)) as α eqn:hα in transition.
+revert p c v σ x hα.
+induction transition; intros pX cX vX σX x hα; try discriminate; try (injection hα; intros; subst); subst; try rename p into p0; try rename pX into p; try rename cX into c; try rename vX into v; try rename σX into σ.
 - destruct p; inversion x. destruct g0; inversion x.
   repeat eexists; eapply lts_output.
 - destruct p; inversion x.
@@ -130,7 +140,9 @@ Lemma Invert_Lts_BoundOut : forall p q c σ,
   lts p (BoundOut c') q'.
 Proof.
 intros p q c σ transition.
-dependent induction transition.
+remember (p ⟨σ⟩) as P0 eqn:x in transition. remember (BoundOut c) as α eqn:hα in transition.
+revert p c σ x hα.
+induction transition; intros pX cX σX x hα; try discriminate; try (injection hα; intros; subst); subst; try rename p into p0; try rename pX into p; try rename cX into c; try rename σX into σ.
 - (* lts_res *)
   destruct p; inversion x.
   destruct (IHtransition _ (⇑ c) _ H0 eq_refl) as (c' & q' & Heq1 & Heq2 & Heq3).
@@ -151,7 +163,7 @@ dependent induction transition.
   + eapply lts_open. rewrite <- Hd. exact Heq4.
 - destruct p; inversion x.
   destruct (IHtransition _ _ _ H0 eq_refl) as (d & q' & Heq1 & Heq2 & Heq3).
-  rewrite Heq2.
+  rewrite Heq2. simpl.
   repeat eexists.
   + exact Heq1.
   + replace (⇑ (ren_proc ids σ p4)) with ((⇑ p4) ⟨up_ren σ⟩) by now asimpl.
@@ -160,7 +172,7 @@ dependent induction transition.
   + eapply lts_parL; [exact Heq3 |  reflexivity].
 - destruct p; inversion x.
   destruct (IHtransition _ _ _ H1 eq_refl) as (d & q' & Heq1 & Heq2 & Heq3).
-  rewrite Heq2.
+  rewrite Heq2. simpl.
   repeat eexists.
   + exact Heq1.
   + replace (⇑ (ren_proc ids σ p1)) with ((⇑ p1) ⟨up_ren σ⟩) by now asimpl.
@@ -184,13 +196,16 @@ Lemma Invert_Lts_Tau : forall p q σ,
   exists q', q = q' ⟨σ⟩ /\ lts p τ q'.
 Proof.
 intros p q σ Hinj transition.
-dependent induction transition.
+remember (p ⟨σ⟩) as P0 eqn:x in transition. remember τ as α eqn:hα in transition.
+revert σ Hinj p x hα.
+induction transition; intros σX HinjX pX x hα; try discriminate; try (injection hα; intros; subst); subst;
+  try rename σX into σ; try rename HinjX into Hinj; try rename p into p0; try rename pX into p.
 - destruct p; inversion x. destruct g0; inversion H0. exists p; eauto with lts.
 - destruct p; inversion x. eexists. split; [|apply lts_recursion]. now asimpl.
 - destruct p; inversion x. eexists. split; [reflexivity|].
-  apply lts_ifOne.  erewrite H1, Eval_Eq_Spec in H. exact H. apply Eq_Subst_Spec_inj, Hinj.
+  apply lts_ifOne.  rewrite H1 in H. setoid_rewrite Eval_Eq_Spec in H. exact H. apply Eq_Subst_Spec_inj, Hinj.
 - destruct p; inversion x. eexists. split; [reflexivity|].
-  apply lts_ifZero. erewrite H1, Eval_Eq_Spec in H. exact H. apply Eq_Subst_Spec_inj, Hinj.
+  apply lts_ifZero. rewrite H1 in H. setoid_rewrite Eval_Eq_Spec in H. exact H. apply Eq_Subst_Spec_inj, Hinj.
 - destruct p; inversion x. rewrite H0 in transition1.
   destruct (Invert_Lts_FreeOut _ _ _ _ σ transition1) as (c' & v' & q' & Heq1 & Heq2 & Heq3 & Heq4).
   rewrite H1 in transition2. rewrite Heq2 in transition2.
@@ -238,17 +253,17 @@ dependent induction transition.
   + eapply lts_close_r. exact Heq3. exact Heq6.
 - destruct p; inversion x.
   destruct (IHtransition _ (Injective_UpRen _ Hinj) p H0 eq_refl) as (q' & Heq1 & Heq2).
-  rewrite Heq1. eexists. split.
+  rewrite Heq1. simpl. eexists. split.
   + simpl. now change (ν (q' ⟨up_ren σ⟩)) with ((ν q') ⟨σ⟩).
   + apply res_not_bound; eauto.
 - destruct p; inversion x.
   destruct (IHtransition _ Hinj _ H0 eq_refl) as (q' & Heq1 & Heq2).
-  rewrite Heq1. eexists. split.
+  rewrite Heq1. simpl. eexists. split.
   + now change (q' ⟨σ⟩  ‖ ren_proc ids σ p4 ) with ((q' ‖ p4) ⟨σ⟩).
   + apply lts_parL; auto.
 - destruct p; inversion x.
   destruct (IHtransition _ Hinj _ H1 eq_refl) as (q' & Heq1 & Heq2).
-  rewrite Heq1. eexists. split.
+  rewrite Heq1. simpl. eexists. split.
   + now change (ren_proc ids σ p1 ‖ q' ⟨σ⟩) with ((p1 ‖ q') ⟨σ⟩).
   + apply lts_parR; auto.
 - destruct p; inversion x. destruct g0; inversion x.
@@ -286,8 +301,14 @@ destruct 𝜆; try destruct e.
   exists q'. split; eauto with lts. 
 Qed.
 
+End LTS_Renamings.
+
 (* For some reason this makes asimple solve a goal??? *)
 From stdpp Require strings.
+
+Section LTS_Renamings.
+
+Context {PiV : Pi_Values} {PiE : @Pi_Equations PiV}.
 
 Lemma ren_lts : forall p 𝜆 q σ,
   Eq_Subst_Spec σ ->
@@ -297,7 +318,7 @@ Lemma ren_lts : forall p 𝜆 q σ,
    (is_bound_out 𝜆 = true ->
     lts (ren2 ids σ p) (ren1 σ 𝜆) (ren2 ids (up_ren σ) q)).
   intros p 𝜆 q σ EqSpec Transition. revert σ EqSpec.
-  dependent induction Transition; intro σ; split; intro Hbound; inversion Hbound; subst.
+  induction Transition; intro σ; split; intro Hbound; inversion Hbound; subst.
   - asimpl. simpl. refine (eq_rect _ _ lts_input _ _). now asimpl.
   - apply lts_output.
   - apply lts_tau.
@@ -326,34 +347,34 @@ Lemma ren_lts : forall p 𝜆 q σ,
     destruct (IHTransition2 (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition2' _].
     eapply (@lts_close_l (ren1 σ c)); fold ren_proc. (* giving the channel explicitly to avoid some unfolding *)
     + apply IHTransition1'. reflexivity.
-    + unfold shift_op, Shift_proc.
-      rewrite shift_permute.
-      rewrite shift_permute_Data.
+    + unfold shift_op, Shift_proc; cbv beta.
+      setoid_rewrite shift_permute.
+      setoid_rewrite shift_permute_Data.
       apply IHTransition2'. reflexivity.
   - destruct (IHTransition1 σ EqSpec) as [_ IHTransition1'].
     destruct (IHTransition2 (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition2' _].
     eapply (@lts_close_r (ren1 σ c)); fold ren_proc. (* giving the channel explicitly to avoid some unfolding *)
     + apply IHTransition1'. reflexivity.
-    + unfold shift_op, Shift_proc.
-      rewrite shift_permute.
-      rewrite shift_permute_Data.
+    + unfold shift_op, Shift_proc; cbv beta.
+      setoid_rewrite shift_permute.
+      setoid_rewrite shift_permute_Data.
       apply IHTransition2'. reflexivity.
   - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition' _].
     rewrite Hbound. asimpl.
     refine (eq_rect _ _ (lts_res _) _ _).
-    * unfold shift_op. rewrite shift_permute_Action.
+    * unfold shift_op. setoid_rewrite shift_permute_Action.
       apply IHTransition'.
       rewrite (is_bound_ren _ shift) in Hbound.
       apply Hbound.
-    * rewrite <- (is_bound_ren _ σ). now rewrite Hbound.
+    * setoid_rewrite <- (is_bound_ren _ σ). now rewrite Hbound.
   - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [_ IHTransition'].
     rewrite Hbound. asimpl.
     refine (eq_rect _ _ (lts_res _) _ _).
-    * unfold shift_op. rewrite shift_permute_Action.
+    * unfold shift_op. setoid_rewrite shift_permute_Action.
       apply IHTransition'.
       rewrite (is_bound_ren _ shift) in Hbound.
       apply Hbound.
-    * rewrite <- (is_bound_ren _ σ), Hbound. simpl. now asimpl.
+    * setoid_rewrite <- (is_bound_ren _ σ); rewrite Hbound. simpl. now asimpl.
   - destruct (IHTransition (up_ren σ) (Eq_Subst_Spec_lift σ EqSpec)) as [IHTransition' _].
     eapply lts_open; fold ren_proc.
     cbn in IHTransition'. asimpl in IHTransition'.
@@ -411,4 +432,6 @@ intro Transition.
 apply (ren_lts p 𝜆 q swap (Eq_Subst_Spec_inj swap Swap_Injective)) in Transition.
 assumption.
 Qed.
+
+End LTS_Renamings.
 (* end hide *)

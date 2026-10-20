@@ -51,7 +51,7 @@ Lemma strip_eq `{gLtsOba P A} {e e' m} :
     -> r ⟿⋍{ m } e'.
 Proof.
   intro w.
-  dependent induction w; intros r heq.
+  induction w; intros r heq.
   - exists r. split. constructor. reflexivity. etransitivity; eauto.
   - assert (r ⟶⋍[η] p2) as (r0 & l0 & heq0).
     { eapply eq_spec. eexists; eauto. }
@@ -63,15 +63,15 @@ Lemma strip_mem_ex `{gLtsOba P A} {p1 p2 m η} :
   p1 ⟿{{[+ η +]} ⊎ m} p2
     -> (∃ p', p1 ⟶[η] p' /\ non_blocking η).
 Proof.
-  intros hw.
-  dependent induction hw.
+  intros hw. remember ({[+ η +]} ⊎ m) as M eqn:x in hw. revert η m x.
+  induction hw as [| p1 p2 p3 η0 m0 hnb hl hw IHhw]; intros η m x.
   - multiset_solver.
   - assert (mem : η ∈ {[+ η0 +]} ⊎ m0). rewrite x. multiset_solver.
     eapply gmultiset_elem_of_disj_union in mem as [here | there].
     + eapply gmultiset_elem_of_singleton in here. subst. firstorder.
     + edestruct IHhw as (p & HypTr & nb) ; eauto.
       eapply gmultiset_disj_union_difference' in there; eassumption.
-      edestruct (nb_delay H2 H1 HypTr) as (u & l2 & l3).
+      edestruct (nb_delay hnb hl HypTr) as (u & l2 & l3).
       eauto.
 Qed.
 
@@ -79,19 +79,19 @@ Lemma strip_eq_step `{gLtsOba P A} {e e' m η} :
   e ⟿{{[+ η +]} ⊎ m} e' -> ∀ r, e ⟶[η] r
     -> r ⟿⋍{m} e'.
 Proof.
-  intro w.
-  dependent induction w.
+  intro w. remember ({[+ η +]} ⊎ m) as M eqn:x in w. revert η m x.
+  induction w as [| p1 p2 p3 η0 m0 hnb hl w IHw]; intros η m x.
   - multiset_solver.
   - intros r l.
     destruct (decide (η = η0)); subst.
     + assert (p2 ⋍ r) by (eapply nb_determinacy; eassumption).
       eapply gmultiset_disj_union_inj_1 in x. subst.
       eapply strip_eq. eassumption. symmetry. assumption.
-    + assert (m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
-      assert (η ≠ η0) by set_solver.
-      edestruct (nb_confluence H2 H4 H1 l)
+    + assert (Hm0 : m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
+      assert (hneq : η ≠ η0) by set_solver.
+      edestruct (nb_confluence hnb hneq hl l)
         as (t0 & l0 & (r1 & l1 & heq1)).
-      eapply IHw in H3 as (t & hwo & heq); eauto.
+      eapply IHw in Hm0 as (t & hwo & heq); eauto.
       assert (mem : η0 ∈ m) by multiset_solver.
       eapply gmultiset_disj_union_difference' in mem. rewrite mem.
       edestruct (strip_eq hwo r1 heq1) as (t2 & hw2 & heq2).
@@ -212,7 +212,7 @@ Lemma strip_aux2 `{gLtsOba P A} {p q q' m} :
     -> p ⟿⋍{m} q'.
 Proof.
   intros hwp1 hwp. revert p hwp1.
-  dependent induction hwp; intros.
+  induction hwp; intros.
   - exists p. split; eauto. constructor. eauto.
   - edestruct (eq_spec p p2) as (p' & l & equiv). exists p1. split; eauto.
     edestruct (IHhwp p') as (p'3 & stripped & equiv'); eauto.
@@ -225,7 +225,7 @@ Lemma strip_aux1 `{gLtsOba P A} {p q t m1 m2} :
     -> t ⟿⋍{m2} q.
 Proof.
   intros hwp1 hwp. revert q m2 hwp.
-  dependent induction hwp1; intros.
+  induction hwp1; intros.
   - rewrite gmultiset_disj_union_left_id in hwp.
     symmetry in eq. eapply strip_aux2 in eq; eauto.
   - rewrite <- gmultiset_disj_union_assoc in hwp.
@@ -314,8 +314,8 @@ Lemma nb_with_strip `{gLtsOba P A} p1 m p'1 η:
   p1 ⟿{m} p'1 -> η ∈ m 
     -> non_blocking η.
 Proof.
-  intros stripped mem.
-  dependent induction stripped.
+  intros stripped mem. revert mem.
+  induction stripped; intros mem.
   + multiset_solver.
   + destruct (decide (η = η0)) as [eq | not_eq]; subst.
     ++ eauto.
@@ -342,7 +342,7 @@ Lemma not_nb_with_strip_m `{gLtsOba P A} p1 m p'1 β :
     -> Forall (NotEq β) (elements m).
 Proof.
   intros stripped.
-  dependent induction stripped.
+  induction stripped.
   + multiset_solver.
   + intro. eapply simpl_P_in_l. split; eauto.
        eapply BlockingAction_are_not_non_blocking; eauto.
@@ -378,8 +378,8 @@ Lemma aux0 `{gLtsOba P A} {e e' m} :
   ∀ η, η ∈ m -> e ⟿{m} e'
     -> ∃ e', e ⟶[η] e'.
 Proof.
-  intros a mem w.
-  dependent induction w.
+  intros a mem w. revert mem.
+  induction w; intros mem.
   - multiset_solver.
   - eapply gmultiset_elem_of_disj_union in mem as [here | there].
     + eapply gmultiset_elem_of_singleton in here. subst. firstorder.
@@ -391,18 +391,18 @@ Lemma aux3_ `{gLtsOba P A} {e e' m η} :
   e ⟿{{[+ η +]} ⊎ m} e' -> ∀ r, e ⟶[η] r
     -> r ⟿⋍{m} e'.
 Proof.
-  intro w.
-  dependent induction w.
+  intro w. remember ({[+ η +]} ⊎ m) as M eqn:x in w. revert η m x.
+  induction w as [| p1 p2 p3 η0 m0 hnb hl w IHw]; intros η m x.
   - multiset_solver.
   - intros r l.
     destruct (decide (η = η0)); subst.
     + assert (p2 ⋍ r) by (eapply nb_determinacy; eassumption).
       eapply gmultiset_disj_union_inj_1 in x. subst.
       eapply strip_eq. eassumption. symmetry. assumption.
-    + assert (m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
+    + assert (Hm0 : m0 = {[+ η +]} ⊎ m ∖ {[+ η0 +]}) by multiset_solver.
       assert (η ≠ η0) as neq by set_solver.
-      edestruct (nb_confluence H2 neq H1 l) as (t0 & l0 & (r1 & l1 & heq1)).
-      eapply IHw in H3 as (t & hwo & heq); eauto.
+      edestruct (nb_confluence hnb neq hl l) as (t0 & l0 & (r1 & l1 & heq1)).
+      eapply IHw in Hm0 as (t & hwo & heq); eauto.
       assert (mem : η0 ∈ m) by multiset_solver.
       eapply gmultiset_disj_union_difference' in mem. rewrite mem.
       edestruct (strip_eq hwo r1 heq1) as (t2 & hw2 & heq2).
@@ -437,7 +437,7 @@ Lemma strip_union `{gLtsOba P A} p1 m1 p2 m2 p3 :
     -> p1 ⟿{m1 ⊎ m2} p3.
 Proof.
   intro stripped.
-  dependent induction stripped.
+  induction stripped.
   + intro. assert (∅ ⊎ m2 = m2) as mem. multiset_solver. rewrite mem.
     symmetry in eq. eapply mo_stripped_equiv_rev; eauto. 
   + intro stripped'. assert ({[+ η +]} ⊎ m ⊎ m2 = {[+ η +]} ⊎ (m ⊎ m2)) as eq. multiset_solver.
@@ -475,13 +475,13 @@ Lemma lts_oba_mo_strip_refuses `{FiniteNonBlockingChain_LtsOba P A} p q:
   strip p (lts_oba_mo p) q 
   -> forall η, non_blocking η -> q ↛[η].
 Proof.
-  intros w.
-  dependent induction w.
+  intros w. remember (lts_oba_mo p) as M eqn:x in w. revert x.
+  induction w as [| p1 p2 p3 η0 m0 hnb hl w IHw]; intros x.
   - intros η nb.
     destruct (decide (p ⟶[η])) as [accepts | refuses].
     + eapply lts_performs_spec1 in accepts as (q & l).
       eapply lts_oba_mo_spec_bis1 in l; eauto. multiset_solver.
     + eapply refuses_preserved_by_eq; eauto.
-  - eapply lts_oba_mo_spec2 in H2. rewrite <- x in H2.
-    eapply gmultiset_disj_union_inj_1 in H2. eauto. eassumption.
+  - eapply lts_oba_mo_spec2 in hl. rewrite <- x in hl.
+    eapply gmultiset_disj_union_inj_1 in hl. eauto. eassumption.
 Qed.

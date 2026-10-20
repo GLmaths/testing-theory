@@ -804,7 +804,7 @@ Lemma not_must_ta_without_required_acc_set_dich {Q : Type} `{CC : Countable PreA
   ¬ q must_pass (ta X s).
 Proof.
   intros wt hst.
-  dependent induction wt; intros hX hm.
+  revert hst. induction wt; intros hst hX hm.
   - inversion hm as [happy |]; subst.
     ++ contradict happy. apply test_ungood.
     ++ destruct ex as (y & l). pose proof (par_view_of _ _ _ l) as hv. inversion hv; subst.

@@ -6,6 +6,11 @@ From Stdlib Require Import Lia Arith Relations Morphisms.
 From TestingTheory Require Import Renamings.
 
 Reserved Notation "p ≡ q" (at level 70).
+
+Section Congruence.
+
+Context `{PiV : Pi_Values}.
+
 Inductive cgr_step : proc -> proc -> Prop :=
 (*  Reflexivity of the Relation ≡  *)
 | cgr_refl_step : forall p, p ≡ p
@@ -73,12 +78,22 @@ Inductive cgr_step : proc -> proc -> Prop :=
     ((ν P) ‖ Q) ≡ (ν (P ‖ (⇑ Q)))
 where "p ≡ q" := (cgr_step p q).
 
-#[global] Hint Constructors cgr_step:cgr_step_structure.
+Hint Constructors cgr_step:cgr_step_structure.
 
 (* Alternative definition of congruence step, better suited to prove that it's
   a congruence *)
+
+End Congruence.
+
+#[global] Hint Constructors cgr_step:cgr_step_structure.
+
 Reserved Notation "p ≡ₐ q" (at level 70).
 Reserved Notation "p ≡g q" (at level 70).
+
+Section Congruence.
+
+Context `{PiV : Pi_Values}.
+
 Inductive altcgr : proc -> proc -> Prop :=
 | altcgr_refl_step : forall p, p ≡ₐ p
 | altcgr_par_nil_step : forall p, 
@@ -161,10 +176,27 @@ Proof. intros p q hcgr. induction hcgr; try solve [constructor; try exact IHhcgr
 rewrite <- (Swap_Proc_Involutive p) at 2. apply cgr_nu_nu_step.
 Qed.
 
+End Congruence.
+
+Notation "p ≡ₐ q" := (altcgr p q).
+Notation "p ≡g q" := (altcgr_gstep p q).
+#[local] Hint Constructors altcgr:alt_step_structure.
+
 Infix "≡" := cgr_step (at level 70).
 
+Section Congruence.
+
+Context `{PiV : Pi_Values}.
+
 Definition cgr := (clos_trans proc cgr_step).
+
+End Congruence.
+
 Infix "≡*" := cgr (at level 70).
+
+Section Congruence.
+
+Context `{PiV : Pi_Values}.
 
 #[global] Instance cgr_refl : Reflexive cgr.
 Proof. intros. constructor. apply cgr_refl_step. Qed.
@@ -174,7 +206,7 @@ exact H. eapply t_trans; eauto. Qed.
 #[global] Instance cgr_trans : Transitive cgr.
 Proof. intros p q r hcgr1 hcgr2. eapply t_trans; eauto. Qed.
 
-#[global] Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
 
 #[global] Instance cgr_is_eq_rel  : Equivalence cgr.
 Proof. repeat split.
@@ -354,7 +386,7 @@ try solve[now (do 3 (try constructor))].
 Qed.
 
 (* The lemmas on renaming suffice for all of the treatment, except recursive variables. *)
-Instance RenProperStep : Proper (eq ==> (pointwise_relation _ eq) ==> cgr_step ==> cgr_step) ren2.
+#[global] Instance RenProperStep : Proper (eq ==> (pointwise_relation _ eq) ==> cgr_step ==> cgr_step) ren2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs. clear Hs s'. subst.
   revert sp s.
@@ -365,18 +397,17 @@ intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs. clear Hs s'. subst.
       with  ((ren_proc sp (0 .: (1 .: (fun x => S (S (s x))))) p) ⟨swap⟩)
       by now asimpl.
     apply cgr_nu_nu_step.
-  - unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_step _ _).
-  - unfold ren2. simpl. rewrite permute_ren. exact (cgr_scope_rev_step _ _).
+  - unfold ren2. simpl. setoid_rewrite permute_ren. exact (cgr_scope_step _ _).
+  - unfold ren2. simpl. setoid_rewrite permute_ren. exact (cgr_scope_rev_step _ _).
 Qed.
 
-Instance RenProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) ren2.
+#[global] Instance RenProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) ren2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs.
 induction Hq as [p q base_case | p r q transitivity_case].
 - subst. apply t_step. apply RenProperStep; trivial. intro n; trivial.
 - subst. now rewrite IHtransitivity_case.
 Qed.
-
 
 (* Equivalence between the two definitions *)
 
@@ -406,7 +437,8 @@ Combined Scheme altcgr_mutind from altcgr_ind2,galtcgr_ind2.
 Lemma guardcgr_choice_step p1 q1 p2: guardcgr (g p1) (g q1) ->
   guardcgr (g (p1 + p2)) (g (q1 + p2)).
 Proof.
-  intros H%clos_trans_tn1. apply clos_tn1_trans. dependent induction H.
+  intros H%clos_trans_tn1. apply clos_tn1_trans.
+  remember (g q1) as gq eqn:hgq. revert q1 hgq. induction H; intros q1 hgq; subst.
   - constructor. decompose record H; subst.
     eexists; eexists; repeat split. now constructor.
   - decompose record H; subst; clear H. inversion H2; subst.
@@ -490,13 +522,13 @@ Definition shift_down_gproc := ren2 ids pred : gproc -> gproc.
 Lemma shift_down_up_gproc : forall p : gproc, shift_down_gproc (⇑ p) = p.
 Proof. now asimpl. Qed.
 
-Instance RenProperAltcgr : Proper (eq ==> (eq) ==> altcgr ==> altcgr) ren2.
+#[global] Instance RenProperAltcgr : Proper (eq ==> (eq) ==> altcgr ==> altcgr) ren2.
 Proof. intros ?????????. subst. now apply ren2_altcgr. Qed.
 
 Lemma altcgr_guard_proper (p0 p1 : proc) (g0 : gproc) : (p0 ≡ₐ p1) -> sguard g0 p0
   -> sguard g0 p1.
 Proof.
-intro H. dependent induction H generalizing g0; simpl; try solve[constructor]; auto with *;
+intro H. revert g0. induction H; intros g0; simpl; try solve[constructor]; auto with *;
 intuition; simpl; eauto with *.
 - eapply sguard_cgr_proper; eauto.
 - replace (⇑ (⇑ g0)) with ((⇑ (⇑ g0)) ⟨ swap ⟩) by (now asimpl).
@@ -553,7 +585,7 @@ apply transitivity with (M2 ‖ M3). apply cgr_par. exact H. apply transitivity 
 apply cgr_par_com. apply transitivity with (M4 ‖ M2). apply cgr_par. exact H0. apply cgr_par_com.
 Qed.
 
-#[global] Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
+Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
 cgr_par_assoc_rev cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc 
 cgr_choice_assoc_rev cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice 
 cgr_refl cgr_symm cgr_res cgr_scope cgr_scope_rev cgr_res_nil cgr_trans : cgr.
@@ -589,17 +621,17 @@ Qed.
 (* In order to treat recursive variables, we need more subtle instances on substitutions *)
 Definition eq_up_to_cgr f g := forall x :nat, f x ≡* g x.
 
-Instance SubstProperStep : Proper (eq ==> (pointwise_relation _ eq) ==> cgr_step ==> cgr_step) subst2.
+#[global] Instance SubstProperStep : Proper (eq ==> (pointwise_relation _ eq) ==> cgr_step ==> cgr_step) subst2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq. subst. rewrite Hs. clear Hs s'. revert sp s.
 induction Hq;  intros; try solve [asimpl; auto with cgr_step_structure].
 - asimpl. apply cgr_choice_step. apply IHHq.
 - cbn. rewrite Up_Up_Subst_Swap. now apply cgr_nu_nu_step.
-- unfold subst2. simpl. rewrite Shift_Permute_Subst. exact (cgr_scope_step _ _).
-- unfold subst2. simpl. rewrite Shift_Permute_Subst. exact (cgr_scope_rev_step _ _).
+- unfold subst2. simpl. setoid_rewrite Shift_Permute_Subst. exact (cgr_scope_step _ _).
+- unfold subst2. simpl. setoid_rewrite Shift_Permute_Subst. exact (cgr_scope_rev_step _ _).
 Qed.
 
-Instance SubstProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) subst2.
+#[global] Instance SubstProper : Proper (eq ==> (pointwise_relation _ eq) ==> cgr ==> cgr) subst2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq. rewrite Hs, Hp.
 induction Hq as [p q base_case | p r q transitivity_case].
@@ -649,32 +681,32 @@ induction p; cbn.
     * rewrite SubstProper_gproc; try reflexivity. assumption.
 Qed.
 
-Instance SubstProperMutual : Proper (eq_up_to_cgr ==> (pointwise_relation _ eq) ==> eq ==> cgr) subst2.
+#[global] Instance SubstProperMutual : Proper (eq_up_to_cgr ==> (pointwise_relation _ eq) ==> eq ==> cgr) subst2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq. subst. rewrite Hs.
 apply SubstProper_proc. assumption.
 Qed.
 
-Instance SubstProperTotal : Proper (eq_up_to_cgr ==> eq ==> cgr ==> cgr) subst2.
+#[global] Instance SubstProperTotal : Proper (eq_up_to_cgr ==> eq ==> cgr ==> cgr) subst2.
 Proof.
 intros sp' sp Hp s' s Hs q1 q2 Hq.
 subst. now rewrite Hq, Hp.
 Qed.
 
-Instance SconsProper : Proper (cgr ==> eq ==> eq_up_to_cgr) scons.
+#[global] Instance SconsProper : Proper (cgr ==> eq ==> eq_up_to_cgr) scons.
 intros p p' Hp s s' Hs. subst.
 intros [|n]; simpl.
 - trivial.
 - reflexivity.
 Qed.
 
-Instance NewsProper : Proper (eq ==> cgr ==> cgr) νs.
+#[global] Instance NewsProper : Proper (eq ==> cgr ==> cgr) νs.
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
 - now simpl.
 - simpl. now apply cgr_res.
 Qed.
-Instance nvarsProper : Proper (eq ==> cgr ==> cgr) (@nvars proc _).
+#[global] Instance nvarsProper : Proper (eq ==> cgr ==> cgr) (@nvars proc _).
 Proof.
 intros n ? <- p1 p2 Heq. induction n.
 - now simpl.
@@ -688,6 +720,20 @@ induction n.
 - intros p q. simpl. rewrite <- cgr_scope. rewrite IHn. now rewrite shift_in_nvars.
 Qed.
 
+Hint Resolve cgr_is_eq_rel: ccs.
+Hint Constructors clos_trans:ccs.
+Hint Unfold cgr:ccs.
+
+End Congruence.
+
+#[global] Hint Resolve cgr_refl cgr_symm cgr_trans:cgr_eq.
+#[global] Hint Extern 0 (_ ≡* _) => simple apply cgr_refl : cgr_eq cgr.
+#[global] Hint Extern 1 (_ ≡* _) => simple apply cgr_symm : cgr_eq cgr.
+#[global] Hint Extern 2 (_ ≡* _) => simple eapply cgr_trans : cgr_eq cgr.
+#[global] Hint Resolve cgr_par_nil cgr_par_nil_rev cgr_par_nil_rev cgr_par_com cgr_par_assoc 
+cgr_par_assoc_rev cgr_choice_nil cgr_choice_nil_rev cgr_choice_com cgr_choice_assoc 
+cgr_choice_assoc_rev cgr_recursion cgr_tau cgr_input cgr_if_left cgr_if_right cgr_par cgr_choice 
+cgr_refl cgr_symm cgr_res cgr_scope cgr_scope_rev cgr_res_nil cgr_trans : cgr.
 #[global] Hint Resolve cgr_is_eq_rel: ccs.
 #[global] Hint Constructors clos_trans:ccs.
 #[global] Hint Unfold cgr:ccs.

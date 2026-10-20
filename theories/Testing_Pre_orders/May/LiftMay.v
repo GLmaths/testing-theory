@@ -278,7 +278,7 @@ Lemma nf_may_fw_r `{
   t ⟿{m1} t' -> (p, m2) may_pass t -> (p, m1 ⊎ m2) may_pass t'.
 Proof.
   intro hwo. revert p m2.
-  dependent induction hwo; intros q m2 hm.
+  induction hwo; intros q m2 hm.
   rename p into e, q into p.
   - rewrite gmultiset_disj_union_left_id. eapply may_eq_client; eauto.
   - assert (step2 : q ▷ ({[+ η +]} ⊎ m2) may_pass p2).
@@ -451,7 +451,7 @@ Lemma may_to_may_fw `{
     -> (p, m) may_pass t'.
 Proof.
   intros hm. revert m.
-  dependent induction hm.
+  induction hm.
   - intros m heq t' hmo.
     eapply may_now.
     eapply woutpout_preserves_outcome; eauto.

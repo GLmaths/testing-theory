@@ -37,8 +37,8 @@ Lemma Forall2_app {A B : Type} P (s1 s3 : list A) (s2 s4 : list B) :
   Forall2 P s1 s2 -> Forall2 P s3 s4 
     -> Forall2 P (s1 ++ s3) (s2 ++ s4).
 Proof.
-  dependent induction s1; dependent induction s2; 
-  dependent induction s3; dependent induction s4; intros Hyp1 Hyp2 ; simpl in *; 
+  revert s2 s3 s4. induction s1; intros s2; induction s2; intros s3;
+  induction s3; intros s4; induction s4; intros Hyp1 Hyp2 ; simpl in *; 
       eauto; try now inversion Hyp1; try now inversion Hyp2.
   + rewrite app_nil_r. rewrite app_nil_r. eauto.
   + constructor. inversion Hyp1; subst ; auto. apply IHs1.

@@ -83,7 +83,7 @@ Proof. intro w. eapply cowt_pop_gen; eauto. Qed.
 
 Lemma cowt_concat p q r s1 s2 :
   p ⟹ᶜᵒ[s1] q -> q ⟹ᶜᵒ[s2] r -> p ⟹ᶜᵒ[s1 ++ s2] r.
-Proof. intros w1 w2. dependent induction w1; simpl; eauto with mdb. Qed.
+Proof. intros w1 w2. revert w2. induction w1; intros w2; simpl; eauto with mdb. Qed.
 
 Lemma cowt_push_left {p q r μ s} :
   p ⟹ᶜᵒ{μ} q -> q ⟹ᶜᵒ[s] r -> p ⟹ᶜᵒ[μ :: s] r.
@@ -97,7 +97,7 @@ Lemma cowt_split p q s1 s2 :
   p ⟹ᶜᵒ[s1 ++ s2] q -> ∃ r, p ⟹ᶜᵒ[s1] r /\ r ⟹ᶜᵒ[s2] q.
 Proof.
   revert p q.
-  dependent induction s1; intros p q w.
+  induction s1; intros p q w.
   - eauto with mdb.
   - simpl in w. eapply cowt_pop in w as (r & w1 & w2).
     eapply IHs1 in w2 as (r' & w2 & w3).
@@ -193,7 +193,7 @@ Lemma eq_spec_cowt p p' : p ⋍ p' -> forall q s, p ⟹ᶜᵒ[s] q -> p' ⟹ᶜ�
 Proof.
   intros heq q s w.
   revert p' heq.
-  dependent induction w; intros.
+  induction w; intros.
   + exists p'; split. eauto with mdb. now symmetry.
   + edestruct eq_spec as (t' & hlt' & heqt').
     exists p. split; [symmetry|]; eassumption.

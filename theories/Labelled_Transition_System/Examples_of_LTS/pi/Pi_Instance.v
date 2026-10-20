@@ -23,14 +23,9 @@ From Stdlib.Program Require Import Equality.
 From Stdlib Require Import Relations Morphisms.
 From TestingTheory Require Import Renamings pi.Congruence pi.LTS LTS_Renamings.
 
-Parameter (channel_eq_dec : base.EqDecision Value).
-#[global] Instance channel_eqdecision : base.EqDecision Value. Proof. exact channel_eq_dec. Defined.
-Parameter (channel_is_countable : countable.Countable Value).
-#[global] Instance channel_countable : countable.Countable Value. Proof. exact channel_is_countable. Defined.
-Parameter (value_eq_dec : base.EqDecision Value).
-#[global] Instance value_eqdecision : base.EqDecision Value. Proof. exact value_eq_dec. Defined.
-Parameter (value_is_countable : countable.Countable Value).
-#[global] Instance value_countable : countable.Countable Value. Proof. exact value_is_countable. Defined.
+Section Pi_Instance.
+
+Context {PiV : Pi_Values} {PiE : @Pi_Equations PiV}.
 
 Inductive sts : proc -> proc -> Prop :=
 | sts_com : forall {c v p1 p2 g1 g2}, 
@@ -59,7 +54,7 @@ Inductive sts : proc -> proc -> Prop :=
     sts p q -> sts (ν p) (ν q)
 .
 
-#[global] Hint Constructors sts:ccs.
+Hint Constructors sts:ccs.
 
 #[global] Instance sts_Proper : Proper (cgr ==> cgr ==> iff) sts.
 Proof.
@@ -163,7 +158,8 @@ Lemma TransitionShapeForInput : forall P Q c v,
   ((exists L, P = g L) -> R = 𝟘 /\ n = 0).
 Proof.
 intros P Q c v.
-intro Transition. dependent induction Transition;
+intro Transition. remember (ActIn (c ⋉ v)) as α eqn:hα in Transition. revert c v hα.
+induction Transition; intros cX vX hα; try discriminate; try (injection hα; intros; subst); subst; try rename c into c0; try rename cX into c; try rename v into v0; try rename vX into v;
 try destruct (IHTransition c v eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
 - exists P, 𝟘, 𝟘, 0. split; eauto with cgr.
 - destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
@@ -215,7 +211,8 @@ Lemma TransitionShapeForFreeOutput : forall P Q c v,
   ((exists L, P = g L) -> (R = 𝟘 /\ n = 0)).
 Proof.
 intros P Q c v Transition.
-dependent induction Transition; try destruct (IHTransition c v eq_refl)
+remember (FreeOut (c ⋉ v)) as α eqn:hα in Transition. revert c v hα.
+induction Transition; intros cX vX hα; try discriminate; try (injection hα; intros; subst); subst; try rename c into c0; try rename cX into c; try rename v into v0; try rename vX into v; try destruct (IHTransition c v eq_refl)
   as (P1 & G & R & n & H0 & H1 & H3).
 - exists P, 𝟘, 𝟘, 0. repeat split; eauto with cgr.
 - destruct (IHTransition (⇑ c) (⇑ v) eq_refl) as (P1 & G & R & n & H0 & H1 & H3).
@@ -263,7 +260,8 @@ Qed.
 Lemma GuardedDoesNoBoundOutput : forall p c q, not (lts (g p) (BoundOut c) q).
 Proof. 
 intros. intro Transition.
-dependent induction Transition; eapply IHTransition; eauto.
+remember (g p) as gp eqn:hgp in Transition. remember (BoundOut c) as α eqn:hα in Transition.
+revert p hgp c hα. induction Transition; intros; try discriminate; subst; eapply IHTransition; eauto.
 Qed.
 
 Lemma TransitionShapeForBoundOutput : forall P Q c,
@@ -272,7 +270,8 @@ Lemma TransitionShapeForBoundOutput : forall P Q c,
   (P ≡* νs (S n) (nvars (S n) c ! (nvars n (var_Data 0)) • P' + G' ‖ Q')
   /\ Q ≡* (νs n (P' ‖ Q'))).
 Proof.
-intros. dependent induction H.
+intros. remember (BoundOut c) as α eqn:hα in H. revert c hα.
+induction H; intros cX hα; try discriminate; try (injection hα; intros; subst); subst; try rename c into c0; try rename cX into c.
 - destruct (IHlts (⇑ c) eq_refl) as (n & P & Q & G' & HcongrP & HcongrQ).
   exists (S n), (P ⟨ upn n swap ⟩), (Q ⟨ upn n swap ⟩),
          (G' ⟨ upn n swap ⟩).
@@ -314,7 +313,8 @@ Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P 
 (exists Q M, ((P ≡* ((t • Q) + M))) /\ (V ≡* (Q))).
 Proof.
 intros P V (Transition & guard_witness). 
-dependent induction Transition;
+remember τ as α eqn:hα in Transition. revert hα guard_witness.
+induction Transition; intros hα guard_witness; try discriminate; subst;
   try (inversion guard_witness as (g & A); inversion A).
   - exists P. exists 𝟘. split. 
     * apply cgr_choice_nil_rev.
@@ -360,7 +360,7 @@ Proof with (eauto with lts cgr).
 unfold sc_step_then_lts, lts_then_sc.
 intros p' q 𝜆 (p & hcgr & hlts).
 revert p' hcgr.
-dependent induction hlts; intros p'' hcgr.
+induction hlts; intros p'' hcgr.
 - (* lts_input *)     inversion hcgr... eexists; rewrite H2...
 - (* lts_output *)    inversion hcgr... subst. eexists. split; [apply lts_output | now rewrite H3].
 - (* lts_tau *)       inversion hcgr... eexists; rewrite H0...
@@ -416,7 +416,7 @@ dependent induction hlts; intros p'' hcgr.
       rewrite Shift_Shift_Swap_pr in hlts2. cbn in hlts2.
       replace (ren_Data swap (ren_Data shift (⇑ c)) ⋉ 0) with
               (ren_Data swap (⇑ (⇑ c)) ⋉ 0) in hlts2 by now cbn.
-      rewrite Shift_Shift_Swap_Data in hlts2. specialize (hlts2 eq_refl).
+      setoid_rewrite Shift_Shift_Swap_Data in hlts2. specialize (hlts2 eq_refl).
       repeat eexists.
       ** eapply lts_res. eapply lts_close_l. exact H0. apply hlts2.
       ** simpl. rewrite <- (Swap_Proc_Involutive q) at 1.
@@ -449,7 +449,7 @@ dependent induction hlts; intros p'' hcgr.
       -- eapply lts_res. eapply lts_close_r. exact hlts1.
          eapply swap_transition, proj1 in H0.
          specialize (H0 eq_refl).
-         rewrite <- Shift_Swap in H0.
+         setoid_rewrite <- Shift_Swap in H0.
          rewrite Swap_Proc_Involutive in H0.
          change (ren1 swap (⇑ (ActIn (⇑ c ⋉ 0))))
            with (ActIn (ren1 swap (⇑ (⇑ c)) ⋉ 0)) in H0.
@@ -557,7 +557,7 @@ dependent induction hlts; intros p'' hcgr.
            rewrite <- Hrew in H4. clear Hrew.
            apply swap_transition, proj1 in H4. specialize (H4 eq_refl).
            rewrite Shift_Shift_Swap_pr in H4. cbn in H4.
-           rewrite Shift_Shift_Swap_Data in H4.
+           setoid_rewrite Shift_Shift_Swap_Data in H4.
            change (var_Data 1) with (⇑ (var_Data 0)) in H4.
            destruct (Invert_Lts_Input_Full _ _ _ _ _ H4) as (d & q' & H & Heq1 & Heq2).
            apply Injective_Ren_Data in H; [|apply Shift_Injective]. rewrite <- H in Heq2.
@@ -613,7 +613,7 @@ dependent induction hlts; intros p'' hcgr.
                (FreeOut (ren1 swap (⇑ (⇑ c)) ⋉ 0)) in H0
        by now cbn.
        rewrite Shift_Shift_Swap_Data in H0.
-       apply (@lts_res _ (q ⟨swap⟩)). apply lts_open. exact H0.
+       apply (lts_res (q := q ⟨swap⟩)). apply lts_open. exact H0.
     -- now rewrite Swap_Proc_Involutive.
   + subst p1; inversion hlts.
   + (* cgr_res *)
@@ -853,11 +853,11 @@ Proof.
   rewrite n_extrusion.
   rewrite Shift_to_Ren_Data.
   cbn. fold ren_proc. fold ren_gproc.
-  rewrite renRen_Data, Pointwise_Up_Shift_Sum.
+  setoid_rewrite renRen_Data; rewrite Pointwise_Up_Shift_Sum.
   rewrite Push_nvars_par, Push_nvars_choice, Push_nvars_output.
   repeat rewrite nvars_sum.
   rewrite PeanoNat.Nat.add_comm.
-  rewrite <- Shift_to_Ren_Data.
+  setoid_rewrite <- Shift_to_Ren_Data.
   rewrite cgr_par_com, cgr_par_assoc.
   rewrite (cgr_par_com (nvars m R1)), cgr_par_assoc.
   rewrite cgr_par_assoc.
@@ -897,7 +897,7 @@ Qed.
 Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof. 
 intros P Q Transition.
-dependent induction Transition.
+remember τ as α eqn:hα in Transition. induction Transition; try discriminate; subst.
 - rewrite cgr_choice_nil_rev. apply sts_tau.
 - apply sts_recursion.
 - apply sts_ifOne. assumption.
@@ -984,4 +984,8 @@ intros. split.
 * apply TausAndCong_Implies_Reduction.
 * apply Reduction_Implies_TausAndCong.
 Qed.
+
+End Pi_Instance.
+
+#[global] Hint Constructors sts:ccs.
 (* end hide *)

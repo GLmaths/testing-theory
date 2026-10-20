@@ -26,17 +26,7 @@
 (* end hide *)
 
 From Stdlib.Unicode Require Import Utf8.
-From Stdlib.Logic Require Import ProofIrrelevance. 
 From stdpp Require Import list finite gmap gmultiset.
-
-Lemma sig_eq {A} (P : A → Prop) (x y : sig P) :
-  proj1_sig x = proj1_sig y → x = y.
-Proof.
-  destruct x as [x Px]; simpl.
-  destruct y as [y Py]; simpl.
-  intros ->.
-  rewrite (proof_irrelevance _ Px Py); trivial.
-Qed.
 
 Section in_list_finite.
   Context `{!EqDecision A}.
@@ -65,7 +55,7 @@ Section in_list_finite.
     - by apply elem_of_nil in Hx.
     - inversion HPl as [|? ? Ha HPl']; simplify_eq.
       apply elem_of_cons in Hx as [->|]; simpl in *.
-      + exists Ha; apply elem_of_cons; left; apply sig_eq; done.
+      + exists Ha; apply elem_of_cons; left; apply (sig_eq_pi _); done.
       + edestruct IHl as [Hx Hxl]; first done.
         exists Hx; apply elem_of_cons; eauto.
   Qed.
@@ -91,7 +81,7 @@ Section in_list_finite.
       edestruct (elem_of_Forall_to_sig_2 _ Hels) as [Hx' ?].
       { apply list_elem_of_filter; split; first apply (proj2_sig x).
         apply elem_of_remove_dups, Hl; apply (proj2_sig x). }
-      replace x with (`x ↾ Hx'); last by apply sig_eq.
+      replace x with (`x ↾ Hx'); last by apply (sig_eq_pi _).
       done.
   Defined.
 

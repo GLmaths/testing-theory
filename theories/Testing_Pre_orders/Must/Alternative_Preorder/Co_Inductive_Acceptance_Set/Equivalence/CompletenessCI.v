@@ -31,7 +31,7 @@ Import ListNotations.
 From Stdlib.Program Require Import Equality Wf.
 From Stdlib.Wellfounded Require Import Inverse_Image.
 From Stdlib Require Import Setoid.
-From Stdlib .Logic Require Import ProofIrrelevance.
+
 
 From stdpp Require Import base countable finite gmap list finite base decidable finite gmap.
 

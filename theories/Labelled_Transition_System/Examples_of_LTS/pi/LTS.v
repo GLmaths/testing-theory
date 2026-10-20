@@ -1,14 +1,16 @@
 (* begin hide *)
 From TestingTheory Require Import Renamings.
 
-Parameter Eval_Eq : Equation -> (option bool).
-Parameter Eq_Subst_Spec : (nat -> nat) -> Prop.
-Parameter Eq_Subst_Spec_inj : forall σ, injective σ -> Eq_Subst_Spec σ.
-Parameter Eq_Subst_Spec_lift : forall σ, Eq_Subst_Spec σ -> Eq_Subst_Spec (up_ren σ).
-Parameter Eval_Eq_Spec : forall E σ, Eq_Subst_Spec σ -> Eval_Eq (ren1 σ E) = Eval_Eq E.
+Class Pi_Equations `{Pi_Values} := {
+  Eval_Eq : Equation -> option bool;
+  Eq_Subst_Spec : (nat -> nat) -> Prop;
+  Eq_Subst_Spec_inj : forall σ, injective σ -> Eq_Subst_Spec σ;
+  Eq_Subst_Spec_lift : forall σ, Eq_Subst_Spec σ -> Eq_Subst_Spec (up_ren σ);
+  Eval_Eq_Spec : forall E σ, Eq_Subst_Spec σ -> Eval_Eq (ren1 σ E) = Eval_Eq E;
+}.
 
 (* Definition of the LTS *)
-Definition is_bound_out (a:Act) : bool :=
+Definition is_bound_out `{Pi_Values} (a:Act) : bool :=
   match a with
   | BoundOut _ => true
   | _ => false
@@ -16,6 +18,10 @@ Definition is_bound_out (a:Act) : bool :=
 
 Notation "a '⇑?' p" := (if is_bound_out a then ⇑ p else p) (at level 20).
 Notation "a '?↔' p" := (if is_bound_out a then p ⟨swap⟩ else p) (at level 20).
+
+Section LTS.
+
+Context {PiV : Pi_Values} {PiE : @Pi_Equations PiV}.
 
 Lemma Shift_Through_Questions : forall a (p:proc),
   ⇑ (a ⇑? p) = a ⇑? (⇑ p).
@@ -119,6 +125,8 @@ Lemma parR_not_bound : forall p 𝜆 q1 q2,
 Proof.
 intros. eapply lts_parR in H0. exact H0. now rewrite H.
 Qed.
+
+End LTS.
 
 #[global] Hint Constructors lts:lts.
 #[global] Hint Resolve res_not_bound res_bound parR_bound parR_not_bound : lts.

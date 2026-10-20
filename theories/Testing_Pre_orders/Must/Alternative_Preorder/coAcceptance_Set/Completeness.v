@@ -173,13 +173,13 @@ Lemma must_tconv_wt_mu μ s (p q : P) :
   p must_pass (tconv ((co μ) :: s)) -> 
     p ⟹{μ} q -> q must_pass (tconv s).
 Proof.
-  intros hm w.
-  dependent induction w.
+  intros hm w. remember [μ] as s0 eqn:hs0 in w. revert hs0 hm.
+  induction w as [| s1 p0 q0 t0 l w IHw | μ0 s1 p0 q1 q2 l w]; intros hs0 hm; [discriminate | |].
   + eapply IHw; eauto with mdb.
     eapply must_preserved_by_lts_tau_srv; eauto.
-  + edestruct test_next_step as (t' & hlt' & heqt').
+  + injection hs0 as -> ->. edestruct test_next_step as (t' & hlt' & heqt').
     eapply (must_eq_client _ _ _ heqt').
-    eapply (must_preserved_by_weak_nil_srv q t); eauto.
+    eapply (must_preserved_by_weak_nil_srv q1 q2); eauto.
     eapply must_preserved_by_synch_if_notoutcome; eauto with mdb.
     eapply test_ungood. exact (proj2_sig (exists_dual μ)).
 Qed.
@@ -787,7 +787,8 @@ Proof.
   intros hm.
   assert (hpt : p ⤓)
     by now (eapply must_terminate_unoutcome , test_ungood; eauto).
-  induction hpt. dependent induction hm; intros E2 hsub.
+  induction hpt. remember (ta E1 ε) as e eqn:he in hm. revert he.
+  induction hm; intros he E2 hsub; subst.
   - assert (¬ outcome (ta E1 ε)).
     { now eapply test_ungood. }
     contradiction.
@@ -1158,7 +1159,7 @@ Lemma not_must_ta_without_required_acc_set {Q : Type} `{CC : Countable PreAct} `
   q ⟹[s] q' -> q' ↛ -> ¬ q must_pass (ta (E ∖ (coR_abs q')) (coₜ s)).
 Proof.
   intros wt hst.
-  dependent induction wt; intros hm. rename p into q.
+  induction wt; intros hm. rename p into q.
   - inversion hm as [happy | ]; subst.
     ++ contradict happy. eapply test_ungood.
     ++ destruct ex as (t & l). inversion l; subst.

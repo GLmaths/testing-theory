@@ -75,7 +75,7 @@ Proof. intro w. eapply wt_pop_gen; eauto. Qed.
 
 Lemma wt_concat `{gLts P A} p q r s1 s2 :
   p ⟹[s1] q -> q ⟹[s2] r -> p ⟹[s1 ++ s2] r.
-Proof. intros w1 w2. dependent induction w1; simpl; eauto with mdb. Qed.
+Proof. intros w1 w2. revert w2. induction w1; intros w2; simpl; eauto with mdb. Qed.
 
 Lemma wt_push_left `{gLts P A} {p q r μ s} :
   p ⟹{μ} q -> q ⟹[s] r -> p ⟹[μ :: s] r.
@@ -89,7 +89,7 @@ Lemma wt_split `{gLts P A} p q s1 s2 :
   p ⟹[s1 ++ s2] q -> ∃ r, p ⟹[s1] r /\ r ⟹[s2] q.
 Proof.
   revert p q.
-  dependent induction s1; intros p q w.
+  induction s1; intros p q w.
   - eauto with mdb.
   - simpl in w. eapply wt_pop in w as (r & w1 & w2).
     eapply IHs1 in w2 as (r' & w2 & w3).
@@ -147,7 +147,7 @@ Lemma eq_spec_wt `{gLtsEq P A} p p' : p ⋍ p' -> forall q s, p ⟹[s] q -> p' �
 Proof.
   intros heq q s w.
   revert p' heq.
-  dependent induction w; intros.
+  induction w; intros.
   + exists p'; split. eauto with mdb. now symmetry.
   + edestruct eq_spec as (t' & hlt' & heqt').
     exists p. split; [symmetry|]; eassumption.
@@ -355,7 +355,7 @@ Lemma wt_non_blocking_action_perm `{gLtsObaFW P A} {p q} s1 s2 :
 Proof.
   intros hos hp w.
   revert p q hos w.
-  dependent induction hp; intros; eauto.
+  induction hp; intros; eauto.
   - exists q. split. eassumption. reflexivity.
   - eapply wt_pop in w as (p' & w0 & w1).
     replace (x :: l') with ([x] ++ l') by eauto.
@@ -418,7 +418,7 @@ Lemma wt_input_perm `{gLtsObaFW P A} {p q} s1 s2 :
 Proof.
   intros his hp w.
   revert p q his w.
-  dependent induction hp; intros; eauto.
+  induction hp; intros; eauto.
   - exists q. split. eassumption. reflexivity.
   - eapply wt_pop in w as (p' & w0 & w1).
     replace (x :: l') with ([x] ++ l') by eauto.
@@ -442,7 +442,7 @@ Lemma forward_s `{gLtsObaFW P A} p s1 s3:
   Forall non_blocking s3 -> Forall2 dual s1 s3 
     -> exists t, p ⟹[s1] t /\ t ⟹⋍[s3] p.
 Proof.
-  intros nb duo. revert p nb duo. dependent induction s1; intros; inversion duo ; subst.
+  intros nb duo. revert s3 p nb duo. induction s1; intros; inversion duo ; subst.
   - exists p. simpl. split ; eauto with mdb.
     exists p. split; eauto with mdb. reflexivity.
   - inversion nb as [|? ? nb' Hyp_nb_list']; subst. 

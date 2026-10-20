@@ -1,10 +1,19 @@
 (* begin hide *)
 Require Import core unscoped.
 Require Import Setoid Morphisms Relation_Definitions.
+From stdpp Require base countable.
 
-Parameter Value : Type.
+Class Pi_Values := {
+  Value : Type;
+  Value_eq_dec :: stdpp.base.EqDecision Value;
+  Value_countable :: stdpp.countable.Countable Value;
+}.
 (* Parameter Channel : Type. *)
 Module Core.
+
+Section Syntax.
+
+Context `{PiV : Pi_Values}.
 
 Inductive Data : Type :=
   | var_Data : nat -> Data
@@ -2177,139 +2186,6 @@ Class Up_ExtAction X Y :=
 Class Up_Data X Y :=
     up_Data : X -> Y.
 
-#[global] Instance Subst_gproc : (Subst2 _ _ _ _) := @subst_gproc.
-
-#[global] Instance Subst_proc : (Subst2 _ _ _ _) := @subst_proc.
-
-#[global] Instance Up_Data_proc : (Up_proc _ _) := @up_Data_proc.
-
-#[global] Instance Up_proc_Data : (Up_Data _ _) := @up_proc_Data.
-
-#[global] Instance Up_proc_proc : (Up_proc _ _) := @up_proc_proc.
-
-#[global] Instance Ren_gproc : (Ren2 _ _ _ _) := @ren_gproc.
-
-#[global] Instance Ren_proc : (Ren2 _ _ _ _) := @ren_proc.
-
-#[global] Instance VarInstance_proc : (Var _ _) := @var_proc.
-
-#[global]
-Instance Subst_Equation : (Subst1 _ _ _) := @subst_Equation.
-
-#[global] Instance Ren_Equation : (Ren1 _ _ _) := @ren_Equation.
-
-#[global] Instance Subst_Act : (Subst1 _ _ _) := @subst_Act.
-
-#[global]
-Instance Subst_ExtAction : (Subst1 _ _ _) := @subst_ExtAction.
-
-#[global] Instance Subst_Data : (Subst1 _ _ _) := @subst_Data.
-
-#[global] Instance Up_Data_Data : (Up_Data _ _) := @up_Data_Data.
-
-#[global] Instance Ren_Data : (Ren1 _ _ _) := @ren_Data.
-
-#[global]
-Instance VarInstance_Data : (Var _ _) := @var_Data.
-
-Notation "[ sigma_proc ; sigma_Data ]" := (subst_gproc sigma_proc sigma_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s [ sigma_proc ; sigma_Data ]" :=
-(subst_gproc sigma_proc sigma_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "↑__gproc" := up_gproc (only printing)  : subst_scope.
-
-Notation "[ sigma_proc ; sigma_Data ]" := (subst_proc sigma_proc sigma_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s [ sigma_proc ; sigma_Data ]" :=
-(subst_proc sigma_proc sigma_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "↑__proc" := up_proc (only printing)  : subst_scope.
-
-Notation "↑__proc" := up_Data_proc (only printing)  : subst_scope.
-
-Notation "↑__Data" := up_proc_Data (only printing)  : subst_scope.
-
-Notation "↑__proc" := up_proc_proc (only printing)  : subst_scope.
-
-Notation "⟨ xi_proc ; xi_Data ⟩" := (ren_gproc xi_proc xi_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s ⟨ xi_proc ; xi_Data ⟩" := (ren_gproc xi_proc xi_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "⟨ xi_proc ; xi_Data ⟩" := (ren_proc xi_proc xi_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s ⟨ xi_proc ; xi_Data ⟩" := (ren_proc xi_proc xi_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "'var'" := var_proc ( at level 1, only printing)  : subst_scope.
-
-Notation "x '__proc'" := (@ids _ _ VarInstance_proc x)
-( at level 5, format "x __proc", only printing)  : subst_scope.
-
-Notation "x '__proc'" := (var_proc x) ( at level 5, format "x __proc")  :
-subst_scope.
-
-Notation "[ sigma_Data ]" := (subst_Equation sigma_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s [ sigma_Data ]" := (subst_Equation sigma_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "↑__Equation" := up_Equation (only printing)  : subst_scope.
-
-Notation "⟨ xi_Data ⟩" := (ren_Equation xi_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s ⟨ xi_Data ⟩" := (ren_Equation xi_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "[ sigma_Data ]" := (subst_Act sigma_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s [ sigma_Data ]" := (subst_Act sigma_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "↑__Act" := up_Act (only printing)  : subst_scope.
-
-Notation "[ sigma_Data ]" := (subst_ExtAction sigma_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s [ sigma_Data ]" := (subst_ExtAction sigma_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "↑__ExtAction" := up_ExtAction (only printing)  : subst_scope.
-
-Notation "[ sigma_Data ]" := (subst_Data sigma_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s [ sigma_Data ]" := (subst_Data sigma_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "↑__Data" := up_Data (only printing)  : subst_scope.
-
-Notation "↑__Data" := up_Data_Data (only printing)  : subst_scope.
-
-Notation "⟨ xi_Data ⟩" := (ren_Data xi_Data)
-( at level 1, left associativity, only printing)  : fscope.
-
-Notation "s ⟨ xi_Data ⟩" := (ren_Data xi_Data s)
-( at level 7, left associativity, only printing)  : subst_scope.
-
-Notation "'var'" := var_Data ( at level 1, only printing)  : subst_scope.
-
-Notation "x '__Data'" := (@ids _ _ VarInstance_Data x)
-( at level 5, format "x __Data", only printing)  : subst_scope.
-
-Notation "x '__Data'" := (var_Data x) ( at level 5, format "x __Data")  :
-subst_scope.
-
 #[global]
 Instance subst_gproc_morphism :
  (Proper
@@ -2515,6 +2391,138 @@ Instance ren_Data_morphism2 :
 Proof.
 exact (fun f_Data g_Data Eq_Data s => extRen_Data f_Data g_Data Eq_Data s).
 Qed.
+
+End Syntax.
+
+#[global] Instance Subst_gproc : forall {PiV : Pi_Values}, (Subst2 _ _ _ _) := @subst_gproc.
+
+#[global] Instance Subst_proc : forall {PiV : Pi_Values}, (Subst2 _ _ _ _) := @subst_proc.
+
+#[global] Instance Up_Data_proc : forall {PiV : Pi_Values}, (Up_proc _ _) := @up_Data_proc.
+
+#[global] Instance Up_proc_Data : forall {PiV : Pi_Values}, (Up_Data _ _) := @up_proc_Data.
+
+#[global] Instance Up_proc_proc : forall {PiV : Pi_Values}, (Up_proc _ _) := @up_proc_proc.
+
+#[global] Instance Ren_gproc : forall {PiV : Pi_Values}, (Ren2 _ _ _ _) := @ren_gproc.
+
+#[global] Instance Ren_proc : forall {PiV : Pi_Values}, (Ren2 _ _ _ _) := @ren_proc.
+
+#[global] Instance VarInstance_proc : forall {PiV : Pi_Values}, (Var _ _) := @var_proc.
+
+#[global] Instance Subst_Equation : forall {PiV : Pi_Values}, (Subst1 _ _ _) := @subst_Equation.
+
+#[global] Instance Ren_Equation : forall {PiV : Pi_Values}, (Ren1 _ _ _) := @ren_Equation.
+
+#[global] Instance Subst_Act : forall {PiV : Pi_Values}, (Subst1 _ _ _) := @subst_Act.
+
+#[global] Instance Subst_ExtAction : forall {PiV : Pi_Values}, (Subst1 _ _ _) := @subst_ExtAction.
+
+#[global] Instance Subst_Data : forall {PiV : Pi_Values}, (Subst1 _ _ _) := @subst_Data.
+
+#[global] Instance Up_Data_Data : forall {PiV : Pi_Values}, (Up_Data _ _) := @up_Data_Data.
+
+#[global] Instance Ren_Data : forall {PiV : Pi_Values}, (Ren1 _ _ _) := @ren_Data.
+
+#[global] Instance VarInstance_Data : forall {PiV : Pi_Values}, (Var _ _) := @var_Data.
+
+Notation "[ sigma_proc ; sigma_Data ]" := (subst_gproc sigma_proc sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_proc ; sigma_Data ]" :=
+(subst_gproc sigma_proc sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__gproc" := up_gproc (only printing)  : subst_scope.
+
+Notation "[ sigma_proc ; sigma_Data ]" := (subst_proc sigma_proc sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_proc ; sigma_Data ]" :=
+(subst_proc sigma_proc sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__proc" := up_proc (only printing)  : subst_scope.
+
+Notation "↑__proc" := up_Data_proc (only printing)  : subst_scope.
+
+Notation "↑__Data" := up_proc_Data (only printing)  : subst_scope.
+
+Notation "↑__proc" := up_proc_proc (only printing)  : subst_scope.
+
+Notation "⟨ xi_proc ; xi_Data ⟩" := (ren_gproc xi_proc xi_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s ⟨ xi_proc ; xi_Data ⟩" := (ren_gproc xi_proc xi_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "⟨ xi_proc ; xi_Data ⟩" := (ren_proc xi_proc xi_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s ⟨ xi_proc ; xi_Data ⟩" := (ren_proc xi_proc xi_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "'var'" := var_proc ( at level 1, only printing)  : subst_scope.
+
+Notation "x '__proc'" := (@ids _ _ VarInstance_proc x)
+( at level 5, format "x __proc", only printing)  : subst_scope.
+
+Notation "x '__proc'" := (var_proc x) ( at level 5, format "x __proc")  :
+subst_scope.
+
+Notation "[ sigma_Data ]" := (subst_Equation sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_Data ]" := (subst_Equation sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__Equation" := up_Equation (only printing)  : subst_scope.
+
+Notation "⟨ xi_Data ⟩" := (ren_Equation xi_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s ⟨ xi_Data ⟩" := (ren_Equation xi_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "[ sigma_Data ]" := (subst_Act sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_Data ]" := (subst_Act sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__Act" := up_Act (only printing)  : subst_scope.
+
+Notation "[ sigma_Data ]" := (subst_ExtAction sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_Data ]" := (subst_ExtAction sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__ExtAction" := up_ExtAction (only printing)  : subst_scope.
+
+Notation "[ sigma_Data ]" := (subst_Data sigma_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s [ sigma_Data ]" := (subst_Data sigma_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "↑__Data" := up_Data (only printing)  : subst_scope.
+
+Notation "↑__Data" := up_Data_Data (only printing)  : subst_scope.
+
+Notation "⟨ xi_Data ⟩" := (ren_Data xi_Data)
+( at level 1, left associativity, only printing)  : fscope.
+
+Notation "s ⟨ xi_Data ⟩" := (ren_Data xi_Data s)
+( at level 7, left associativity, only printing)  : subst_scope.
+
+Notation "'var'" := var_Data ( at level 1, only printing)  : subst_scope.
+
+Notation "x '__Data'" := (@ids _ _ VarInstance_Data x)
+( at level 5, format "x __Data", only printing)  : subst_scope.
+
+Notation "x '__Data'" := (var_Data x) ( at level 5, format "x __Data")  :
+subst_scope.
 
 Ltac auto_unfold := repeat
                      unfold VarInstance_Data, Var, ids, Ren_Data, Ren1, ren1,

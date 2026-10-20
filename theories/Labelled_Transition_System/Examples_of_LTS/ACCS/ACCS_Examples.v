@@ -539,7 +539,7 @@ Qed.
 
 Lemma omega_diverges : ¬ omega ⤓.
 Proof.
-intro Ht. dependent induction Ht.
+intro Ht. remember omega as o eqn:ho in Ht. induction Ht; subst.
 eapply H0.
 - eapply omega_lts_omega.
 - reflexivity.
@@ -584,7 +584,8 @@ Lemma musts_choice (p q : gproc) (t : proc) :
   (g p) must_pass t -> (g q) must_pass t -> (g (p + q)) must_pass t.
 Proof.
 intros Hp Hq.
-dependent induction Hp; [now constructor|].
+remember (g p) as gp eqn:hgp in Hp. revert hgp.
+induction Hp; intros hgp; subst; [now constructor|].
 destruct Hq; [now constructor|].
 apply m_step.
 - trivial.

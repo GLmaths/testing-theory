@@ -221,7 +221,8 @@ End Tests.
 
 Lemma om_diverges : ¬ om ⤓.
 Proof.
-  intro h. dependent induction h. apply (H0 om); simpl; unfold st_step; set_solver.
+  intro h. remember om as o eqn:ho in h. induction h; subst.
+  apply (H0 om); simpl; unfold st_step; set_solver.
 Qed.
 
 Lemma no_tau_terminates s : next s τ = [] → s ⤓.

@@ -105,7 +105,7 @@ Lemma mustx_iff_mustx_alt_co
   X must_pass_x t <-> X must_alt_pass_x_co t.
 Proof.
   split.
-  - intro hmx. dependent induction hmx; eauto.
+  - intro hmx. induction hmx; eauto.
     + constructor ;eauto.
     + eapply mx_step_alt_co; eauto.
       * intros. destruct H2;eauto. subst.
@@ -122,7 +122,7 @@ Proof.
            destruct Hy as (y & -> & duo).
            assert (y = co μ) by (eapply unique_nb; exact duo).
            subst. exists p. eauto.
-  - intro hmx. dependent induction hmx; eauto.
+  - intro hmx. induction hmx; eauto.
     + constructor ;eauto.
     + eapply mx_step; eauto.
       * intros. assert (X' ⊆ cowt_tau_set_from_pset X).
