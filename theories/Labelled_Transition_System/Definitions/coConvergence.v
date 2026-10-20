@@ -79,8 +79,9 @@ Lemma cocnv_preserved_by_cowt_nil s p :
   p ⇓ᶜᵒ s -> forall q, p ⟹ᶜᵒ q -> q ⇓ᶜᵒ s.
 Proof.
   intros hcnv q w.
-  dependent induction w; eauto with mdb.
-  eapply IHw. eapply cocnv_preserved_by_lts_tau; eauto. reflexivity.
+  remember ([] : trace Atest) as s0 eqn:hs0 in w.
+  revert hs0 hcnv. induction w as [| s1 p0 q0 t0 l w IHw | ]; intros hs0 hcnv; [done | | discriminate].
+  eapply IHw; [exact hs0 |]. eapply cocnv_preserved_by_lts_tau; eauto.
 Qed.
 
 Lemma cocnv_preserved_by_cowt_act s p μ :
@@ -92,7 +93,7 @@ Lemma cocnv_iff_prefix_terminate_l p s :
 Proof.
   intros hcnv t q hpre w.
   revert s p q hcnv hpre w.
-  dependent induction t; intros.
+  induction t; intros.
   - eapply cocnv_terminate, cocnv_preserved_by_cowt_nil; eassumption.
   - eapply cowt_pop in w as (p' & w0 & w1).
     inversion hpre; subst. simpl in hcnv.
@@ -107,7 +108,7 @@ Lemma cocnv_iff_prefix_terminate_r p s :
 Proof.
   intros h.
   revert p h.
-  dependent induction s; intros; eauto with mdb.
+  induction s; intros; eauto with mdb.
   eapply cocnv_act; eauto with mdb.
   eapply (h []) ; eauto with mdb; eapply prefix_nil.
   intros q w. eapply IHs.
@@ -126,7 +127,7 @@ Lemma cocnv_cowt_prefix s1 s2 p :
   p ⇓ᶜᵒ s1 ++ s2 -> forall q, p ⟹ᶜᵒ[s1] q -> q ⇓ᶜᵒ s2.
 Proof.
   revert s2 p.
-  dependent induction s1; intros s2 p hcnv q w.
+  induction s1; intros s2 p hcnv q w.
   - eapply cocnv_preserved_by_cowt_nil; eauto with mdb.
   - eapply cowt_pop in w as (p' & w0 & w1).
     inversion hcnv; eauto with mdb.
@@ -324,7 +325,7 @@ Qed.
 Lemma equiv_cotermination `{gLtsP : @gLts P A H} p : p ⇓ᶜᵒ [] <-> p ⤓.
 Proof.
   split.
-  + intros. dependent induction H0; eauto.
+  + intros. by inversion H0.
   + intros. constructor. eauto.
 Qed.
 

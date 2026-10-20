@@ -50,9 +50,10 @@ Definition const : proc := a ? • (a ! O • 𝟘).
 Definition ccat : proc := a ? • (a ! (0) • 𝟘).
 
 Example copycat_is_above_NIL : g 𝟘 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ccat.
-Proof.
+Proof using VP a O I neq.
   intros e Hyp.
-  dependent induction Hyp.
+  remember (g 𝟘) as p0 eqn:hp in Hyp. revert hp.
+  induction Hyp; intros hp; subst.
   (* the induction hypotheses keep the names the proof expects *)
   all: try rename H1 into H2, H0 into H1, H into H0.
   - eapply m_now. eauto.
@@ -72,7 +73,7 @@ Proof.
            ++ inversion ex. inversion H; subst.
               ** inversion l.
               ** unfold lts_step in l; simpl in *.
-                 assert (lts e ((cst a , v) !) t') as HypTr; eauto.
+                 assert (lts t ((cst a , v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr 
                     as [(t'' & HypTr' & t'0 & HypTr'0 & equiv')|(t'' & HypTr' & equiv'')]; eauto.
                  --- exists (a ! v • 𝟘 ∣ t''). eapply ParRight. eauto.
@@ -85,7 +86,7 @@ Proof.
            ++ intros. unfold lts_step in H2; simpl in *.
               destruct (decide (good_VACCS t'0)) as [happy | not_happy].
               ** now eapply m_now.
-              ** eapply (OBA_with_FB_First_Axiom e t' t'0) in H3
+              ** eapply (OBA_with_FB_First_Axiom t t' t'0) in H3
                     as (e1 & HypTr1 & e'1 & HypTr'1 & equiv); eauto.
                  eapply (@must_eq_client proc); eauto. assert (¬ good_VACCS e'1) as not_happy'.
                  { eapply unoutcome_preserved_by_eq; eauto. }
@@ -103,10 +104,11 @@ Proof.
 Qed.
 
 Example NIL_is_above_copycat : ccat ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g 𝟘).
-Proof.
+Proof using VP a O I neq.
   intros t Hyp.
   assert (ccat must_pass t) as Mq; eauto.
-  dependent induction Hyp.
+  remember ccat as p0 eqn:hp in Hyp. revert hp Mq.
+  induction Hyp; intros hp Mq; subst.
   - now eapply m_now.
   - inversion ex. inversion H2; subst.
     + inversion l.
@@ -143,9 +145,10 @@ Proof.
 Qed.
 
 Example copycat_is_above_constant : const ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ ccat.
-Proof.
+Proof using VP a O I neq.
   intros t HypMust.
-  dependent induction HypMust.
+  remember const as p0 eqn:hp in HypMust. revert hp.
+  induction HypMust; intros hp; subst.
   - now apply m_now.
   - eapply m_step; eauto.
     + inversion ex; subst. inversion H2; subst.

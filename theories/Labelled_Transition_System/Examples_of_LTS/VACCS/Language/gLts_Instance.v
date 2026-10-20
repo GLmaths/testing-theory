@@ -71,16 +71,16 @@ Hint Constructors Well_Defined_Input_in:ccs.
 
 Lemma Inequation_k_data : forall k d, Well_Defined_Data k d -> Well_Defined_Data (S k) d.
 Proof.
-intros. dependent destruction d. constructor. dependent destruction H. constructor. auto with arith.
+intros. destruct d. constructor. inversion H; subst. constructor. auto with arith.
 Qed.
 
 Lemma Inequation_k_equation : forall k c, Well_Defined_Condition k c -> Well_Defined_Condition (S k) c.
 Proof.
-intros. dependent destruction c. destruct v; destruct v0.
+intros. destruct c. destruct v; destruct v0.
 - constructor; constructor.
-- dependent destruction H. constructor. constructor. apply Inequation_k_data. assumption.
-- dependent destruction H. constructor. apply Inequation_k_data. assumption. constructor. 
-- dependent destruction H. constructor; apply Inequation_k_data; assumption.
+- inversion H; subst. constructor. constructor. apply Inequation_k_data. assumption.
+- inversion H; subst. constructor. apply Inequation_k_data. assumption. constructor. 
+- inversion H; subst. constructor; apply Inequation_k_data; assumption.
 Qed.
 
 Lemma Inequation_k_proc : forall k p, Well_Defined_Input_in k p -> Well_Defined_Input_in (S k) p.
@@ -89,51 +89,51 @@ intros. revert H. revert k.
 induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p.
-- intros. dependent destruction H. constructor; apply Hp; simpl; auto with arith; assumption.
+- intros. inversion H; subst. constructor; apply Hp; simpl; auto with arith; assumption.
 - intros. constructor.
-- intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
-- intros. dependent destruction H. constructor. 
+- intros. constructor. apply Hp. simpl; auto with arith. inversion H; subst. assumption.
+- intros. inversion H; subst. constructor. 
   ** apply Inequation_k_equation. assumption.
   ** apply Hp. simpl; auto with arith. assumption.
   ** apply Hp. simpl; auto with arith. assumption.
-- intros. constructor. dependent destruction H. apply Inequation_k_data. assumption.
-- intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
+- intros. constructor. inversion H; subst. apply Inequation_k_data. assumption.
+- intros. constructor. apply Hp. simpl; auto with arith. inversion H; subst. assumption.
 - destruct g.
   ** intros. constructor.
   ** intros. constructor.
-  ** intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
-  ** intros. constructor. apply Hp. simpl; auto with arith. dependent destruction H. assumption.
-  ** intros. dependent destruction H. constructor.
+  ** intros. constructor. apply Hp. simpl; auto with arith. inversion H; subst. assumption.
+  ** intros. constructor. apply Hp. simpl; auto with arith. inversion H; subst. assumption.
+  ** intros. inversion H; subst. constructor.
     -- apply Hp. simpl; auto with arith. assumption.
     -- apply Hp. simpl; auto with arith. assumption.
 Qed.
 
 (* Lemma Congruence_step_Respects_WD_k : forall p q k, Well_Defined_Input_in k p -> p ≡ q -> Well_Defined_Input_in k q. 
 Proof.
-intros. revert H. revert k. dependent induction H0 ; intros.
+intros. revert H. revert k. induction H0 ; intros.
 * auto.
-* dependent destruction H; auto.
+* inversion H; subst; auto.
 * constructor; auto. constructor.
-* dependent destruction H;constructor; auto.
-* dependent destruction H. dependent destruction H. constructor. auto. constructor;auto.
-* dependent destruction H. dependent destruction H0. constructor;auto. constructor; auto.
-* dependent destruction H; auto.
+* inversion H; subst;constructor; auto.
+* inversion H; subst. inversion H; subst. constructor. auto. constructor;auto.
+* inversion H; subst. inversion H0; subst. constructor;auto. constructor; auto.
+* inversion H; subst; auto.
 * constructor; auto. constructor.
-* dependent destruction H. constructor; auto. 
-* dependent destruction H. dependent destruction H. constructor; auto. constructor; auto.
-* dependent destruction H. dependent destruction H0. constructor; auto. constructor; auto.
-* dependent destruction H. constructor. apply IHcgr_step. auto.
-* dependent destruction H. constructor. apply IHcgr_step. auto.
-* constructor. dependent destruction H. apply IHcgr_step. auto.
-* dependent destruction H. constructor; auto.
-* dependent destruction H. constructor; auto.
-* dependent destruction H. constructor; auto.
-* dependent destruction H. constructor; auto.
+* inversion H; subst. constructor; auto. 
+* inversion H; subst. inversion H; subst. constructor; auto. constructor; auto.
+* inversion H; subst. inversion H0; subst. constructor; auto. constructor; auto.
+* inversion H; subst. constructor. apply IHcgr_step. auto.
+* inversion H; subst. constructor. apply IHcgr_step. auto.
+* constructor. inversion H; subst. apply IHcgr_step. auto.
+* inversion H; subst. constructor; auto.
+* inversion H; subst. constructor; auto.
+* inversion H; subst. constructor; auto.
+* inversion H; subst. constructor; auto.
 Qed.
 
 Lemma Congruence_Respects_WD_k : forall p q k, Well_Defined_Input_in k p -> p ≡* q -> Well_Defined_Input_in k q. 
 Proof.
-intros. dependent induction H0.
+intros. induction H0.
 - apply Congruence_step_Respects_WD_k with x; auto.
 - eauto.
 Qed.
@@ -150,11 +150,11 @@ Qed.
 
 Lemma ForData : forall k v d, Well_Defined_Data (S k) d -> Well_Defined_Data k (subst_Data k (cst v) d).
 Proof.
-intros. revert H. revert v. revert k. dependent induction d.
+intros. revert H. revert v. revert k. induction d.
 * intros. simpl. constructor.
 * intros. simpl. destruct (decide (n = k )).
   - constructor. 
-  - dependent destruction H.
+  - inversion H; subst.
     destruct (decide (n < k)). 
     -- constructor. assumption.
     -- constructor. apply NotK.  transitivity n. lia. (* pas top *) assumption. lia.
@@ -164,25 +164,25 @@ Lemma ForEquation : forall k v e, Well_Defined_Condition (S k) e
                 -> Well_Defined_Condition k (subst_in_Equation k (cst v) e).
 Proof.
 intros. revert H. revert v. revert k. 
-- dependent destruction e. dependent induction v; dependent induction v0.
+- destruct e. destruct v; destruct v0.
   * intros. simpl. constructor; constructor.
   * intros. simpl. destruct (decide (n = k)).
     ** constructor; constructor.
-    ** constructor. constructor. dependent destruction H. dependent destruction H0.
+    ** constructor. constructor. inversion H; subst. clear H. rename H3 into H. rename H4 into H0. inversion H0; subst.
        destruct (decide(n < k)).
        --- constructor. assumption.
        --- constructor. lia.
-  * intros. simpl. constructor; try constructor. destruct (decide (n = k)). constructor. dependent destruction H.
-    dependent destruction H.
+  * intros. simpl. constructor; try constructor. destruct (decide (n = k)). constructor. inversion H; subst.
+    inversion H3; subst.
     destruct (decide(n < k)).
        --- constructor. assumption.
        --- constructor. lia. 
   * intros. simpl. constructor.
-    ** destruct (decide (n = k)); try constructor. dependent destruction H. dependent destruction H. 
+    ** destruct (decide (n = k)); try constructor. inversion H; subst. inversion H3; subst. 
        destruct (decide(n < k)).
        --- constructor. assumption.
        --- constructor. lia. 
-    ** destruct (decide (n0 = k)); try constructor. dependent destruction H. dependent destruction H0. 
+    ** destruct (decide (n0 = k)); try constructor. inversion H; subst. inversion H4; subst. 
        destruct (decide(n0 < k)).
        --- constructor. assumption.
        --- constructor. lia. 
@@ -194,23 +194,23 @@ intros. revert v. revert H. revert k.
 induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p.
-* intros. dependent destruction H. simpl. constructor. 
+* intros. inversion H; subst. simpl. constructor. 
   - apply Hp. simpl. auto with arith. assumption.
   - apply Hp. simpl. auto with arith. assumption.
 * intros. simpl. constructor.
-* intros. simpl. dependent destruction H. constructor. apply Hp. simpl. auto with arith. assumption.
-* intros. simpl. dependent destruction H. constructor.
+* intros. simpl. inversion H; subst. constructor. apply Hp. simpl. auto with arith. assumption.
+* intros. simpl. inversion H; subst. constructor.
   - apply ForEquation. assumption.
   - apply Hp. simpl. auto with arith. assumption.
   - apply Hp. simpl. auto with arith. assumption.
-* intros. simpl. dependent destruction H. constructor. apply ForData. assumption.
-* intros. simpl. dependent destruction H. constructor. apply Hp. simpl. auto with arith. assumption.
+* intros. simpl. inversion H; subst. constructor. apply ForData. assumption.
+* intros. simpl. inversion H; subst. constructor. apply Hp. simpl. auto with arith. assumption.
 * destruct g.
   - intros. simpl. constructor.
   - intros. simpl. constructor.
-  - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
-  - intros. simpl. constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
-  - intros. simpl. dependent destruction H. constructor.
+  - intros. simpl. constructor. apply Hp. simpl. auto. inversion H; subst. assumption.
+  - intros. simpl. constructor. apply Hp. simpl. auto. inversion H; subst. assumption.
+  - intros. simpl. inversion H; subst. constructor.
     -- assert (Well_Defined_Input_in k (subst_in_proc k (cst v) (g1))). apply Hp.
       simpl.  auto with arith. assumption. assumption.
     -- assert (Well_Defined_Input_in k (subst_in_proc k (cst v) (g2))). apply Hp.
@@ -220,11 +220,11 @@ Qed.
 Lemma WD_data_and_NewVar : forall d k i, Well_Defined_Data (k + i) d 
                           -> Well_Defined_Data (S (k + i)) (NewVar_in_Data i d).
 Proof.
-dependent induction d; intros.
+induction d; intros.
 - simpl. constructor.
 - simpl. destruct (decide (i < S n)).
-  * constructor. simpl. dependent destruction H. auto with arith.
-  * constructor. dependent destruction H.  transitivity i.
+  * constructor. simpl. inversion H; subst. auto with arith.
+  * constructor. inversion H; subst.  transitivity i.
     apply Nat.nlt_succ_r. assumption.
     auto with arith. 
 Qed.
@@ -232,8 +232,8 @@ Qed.
 Lemma WD_eq_and_NewVar : forall e k i, Well_Defined_Condition (k + i) e 
                           -> Well_Defined_Condition (S (k + i)) (NewVar_in_Equation i e).
 Proof.
-intro. dependent induction e; intros; simpl. 
-* dependent induction H. constructor. 
+intro. induction e; intros; simpl. 
+* inversion H; subst. constructor. 
   - apply WD_data_and_NewVar. assumption.
   - apply WD_data_and_NewVar. assumption.
 Qed.
@@ -244,28 +244,28 @@ intros. revert H. revert k i.
 induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p; intros; simpl.
-* dependent destruction H. constructor.
+* inversion H; subst. constructor.
    - apply Hp. simpl. auto with arith. assumption.
    - apply Hp. simpl. auto with arith. assumption.
 * constructor.
-* constructor. dependent destruction H. apply Hp. simpl. auto with arith. assumption.
-* dependent destruction H. constructor. apply  WD_eq_and_NewVar. assumption.
+* constructor. inversion H; subst. apply Hp. simpl. auto with arith. assumption.
+* inversion H; subst. constructor. apply  WD_eq_and_NewVar. assumption.
    - apply Hp. simpl. auto with arith. assumption.
    - apply Hp. simpl. auto with arith. assumption.
-* constructor. dependent destruction H. apply WD_data_and_NewVar. assumption.
-* constructor. dependent destruction H. apply Hp. simpl. auto with arith. assumption.
+* constructor. inversion H; subst. apply WD_data_and_NewVar. assumption.
+* constructor. inversion H; subst. apply Hp. simpl. auto with arith. assumption.
 * destruct g; intros; simpl.
   - constructor.
   - constructor.
-  - dependent destruction H. constructor. 
+  - inversion H; subst. constructor. 
     assert (S (S (k + i)) = (S k + S i)%nat). simpl. auto with arith.
     rewrite H0. apply Hp. simpl. auto with arith. assert ((k + S i)%nat = S (k + i)).  auto with arith. rewrite H1. assumption.
-  - constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
-  - dependent destruction H. constructor.
-    -- assert (S (k + i) = (S k + i)%nat). auto with arith. rewrite H1.
+  - constructor. apply Hp. simpl. auto. inversion H; subst. assumption.
+  - inversion H; subst. constructor.
+    -- assert (S (k + i) = (S k + i)%nat) as Heq by auto with arith. rewrite Heq.
        assert (Well_Defined_Input_in (S k + i) (NewVar i (g g1))).
        apply Hp. simpl. auto with arith. assumption. assumption.
-    -- assert (S (k + i) = (S k + i)%nat). auto with arith. rewrite H1.
+    -- assert (S (k + i) = (S k + i)%nat) as Heq by auto with arith. rewrite Heq.
        assert (Well_Defined_Input_in (S k + i) (NewVar i (g g2))).
        apply Hp. simpl. auto with arith. assumption. assumption.
 Qed.
@@ -276,23 +276,23 @@ intros. revert H. revert k i.
 induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p; intros; simpl.
-* dependent destruction H. constructor.
+* inversion H; subst. constructor.
    - apply Hp. simpl. auto with arith. assumption.
    - apply Hp. simpl. auto with arith. assumption.
 * constructor.
-* constructor. dependent destruction H. apply Hp. simpl. auto with arith. assumption.
-* dependent destruction H. constructor. eauto.
+* constructor. inversion H; subst. apply Hp. simpl. auto with arith. assumption.
+* inversion H; subst. constructor. eauto.
    - apply Hp. simpl. auto with arith. assumption.
    - apply Hp. simpl. auto with arith. assumption.
-* constructor. dependent destruction H. eauto.
-* constructor. dependent destruction H. apply Hp. simpl. auto with arith. assumption.
+* constructor. inversion H; subst. eauto.
+* constructor. inversion H; subst. apply Hp. simpl. auto with arith. assumption.
 * destruct g; intros; simpl.
   - constructor.
   - constructor.
-  - dependent destruction H. constructor. 
+  - inversion H; subst. constructor. 
     apply Hp. simpl. auto with arith. eauto.
-  - constructor. apply Hp. simpl. auto. dependent destruction H. assumption.
-  - dependent destruction H. constructor.
+  - constructor. apply Hp. simpl. auto. inversion H; subst. assumption.
+  - inversion H; subst. constructor.
     -- assert (Well_Defined_Input_in k (NewVarC i (g g1))).
        apply Hp. simpl. auto with arith. assumption. assumption.
     -- assert (Well_Defined_Input_in k (NewVarC i (g g2))).
@@ -307,25 +307,25 @@ induction p' as (p' & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
 destruct p'.
 * intros. simpl. constructor. 
-  ** apply Hp. simpl. auto with arith. assumption. dependent destruction H. assumption.
-  ** apply Hp. simpl. auto with arith. assumption. dependent destruction H. assumption.
+  ** apply Hp. simpl. auto with arith. assumption. inversion H; subst. assumption.
+  ** apply Hp. simpl. auto with arith. assumption. inversion H; subst. assumption.
 * intros. simpl. destruct (decide (x = n)). assumption. assumption.
 * intros. simpl. destruct (decide (x=n)). 
-  ** dependent destruction H. assumption.
-  ** constructor. apply Hp. simpl; auto with arith. assumption. dependent destruction H. assumption.
-* intros. simpl. dependent destruction H. constructor.
+  ** inversion H; subst. assumption.
+  ** constructor. apply Hp. simpl; auto with arith. assumption. inversion H; subst. assumption.
+* intros. simpl. inversion H; subst. constructor.
   ** assumption.
   ** apply Hp. simpl; auto with arith. assumption. assumption.
   ** apply Hp. simpl; auto with arith. assumption. assumption.
 * intros. simpl. assumption.
-* intros. simpl. constructor. dependent destruction H. apply Hp.
+* intros. simpl. constructor. inversion H; subst. apply Hp.
     - simpl; auto with arith.
     - eapply WD_and_NewVarC. eauto.
     - eauto.
 * destruct g.
   ** intros. simpl. constructor.
   ** intros. simpl. constructor.
-  ** intros. simpl. constructor. dependent destruction H. apply Hp. 
+  ** intros. simpl. constructor. inversion H; subst. apply Hp. 
     - simpl;auto with arith.
     - assert ((S k) = ((S k) + 0)%nat). auto with arith. rewrite H1. apply (WD_and_NewVar k 0 p0).
       assert (k = (k + 0)%nat). auto with arith. rewrite <-H2. assumption. 
@@ -333,8 +333,8 @@ destruct p'.
   ** intros. simpl. constructor. apply Hp.
     - simpl; auto with arith.
     - assumption.
-    - dependent destruction H. assumption.
-  ** intros. simpl. dependent destruction H. constructor.
+    - inversion H; subst. assumption.
+  ** intros. simpl. inversion H; subst. constructor.
     - assert (Well_Defined_Input_in k (pr_subst x (g g1) p)). apply Hp. simpl; auto with arith. assumption.
       assumption. assumption.
     - assert (Well_Defined_Input_in k (pr_subst x (g g2) p)). apply Hp. simpl; auto with arith. assumption.
@@ -344,28 +344,28 @@ Qed.
 Lemma RecursionOverReduction_is_WD : forall k x p, Well_Defined_Input_in k (rec x • p) 
           -> Well_Defined_Input_in k (pr_subst x p (rec x • p)).
 Proof.
-intros. apply ForRecursionSanity. dependent destruction H. assumption. assumption.
+intros. apply ForRecursionSanity. inversion H; subst. assumption. assumption.
 Qed.
 
 Lemma Well_Def_Data_Is_a_value : forall d, Well_Defined_Data 0 d <-> exists v, d = cst v.
 Proof.
 intros. split. 
-- intro. dependent destruction H. exfalso. dependent induction H. exists v. reflexivity.
+- intro. inversion H; subst. lia. exists v. reflexivity.
 - intros. destruct H. subst. constructor.
 Qed.
 
 (* Lemma STS_Respects_WD : forall p q, Well_Defined_Input_in 0 p -> sts p q -> Well_Defined_Input_in 0 q.
 Proof.
-intros. revert H. rename H0 into Reduction. dependent induction Reduction.
+intros. revert H. rename H0 into Reduction. induction Reduction.
 * intros. constructor.
   - constructor.
-  - dependent destruction H. dependent destruction H0. dependent destruction H0_. 
-    dependent destruction H. apply Well_Def_Data_Is_a_value in H. destruct H. subst.  apply ForSTS. assumption. 
-* intros. dependent destruction H. dependent destruction H. assumption.
-* intros. dependent destruction H. apply RecursionOverReduction_is_WD. constructor. assumption.
-* intros. dependent destruction H0. assumption.
-* intros. dependent destruction H0. assumption.
-* intros. dependent destruction H. constructor. apply IHReduction. assumption. assumption.
+  - inversion H; subst. inversion H0; subst. inversion H0_; subst. 
+    inversion H; subst. apply Well_Def_Data_Is_a_value in H. destruct H. subst.  apply ForSTS. assumption. 
+* intros. inversion H; subst. inversion H; subst. assumption.
+* intros. inversion H; subst. apply RecursionOverReduction_is_WD. constructor. assumption.
+* intros. inversion H0; subst. assumption.
+* intros. inversion H0; subst. assumption.
+* intros. inversion H; subst. constructor. apply IHReduction. assumption. assumption.
 * intros. apply Congruence_Respects_WD with q2. apply IHReduction. apply Congruence_Respects_WD with p1. 
   assumption. assumption. assumption.
 Qed. *)
@@ -382,25 +382,22 @@ Inductive Well_Defined_ExtAction: (ExtAct TypeOfActions) -> Prop :=
 Lemma Output_are_good : forall p1 p2 c d, Well_Defined_Input_in 0 p1 -> lts p1 ((c , d) !) p2 
       -> exists v, d = cst v.
 Proof.
-intros. dependent induction H0. dependent destruction H. eapply Well_Def_Data_Is_a_value in H. destruct H.
-subst. exists x. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
-- dependent destruction H. simpl in *. eapply IHlts with (VarC_add 1 c). assumption. simpl. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
-- dependent destruction H. eapply IHlts with c. assumption. reflexivity.
+intros p1 p2 c d H H0. remember ((c , d) !) as α eqn:hα. revert c hα H.
+induction H0; intros c' hα Hwd; try discriminate.
+1: { injection hα as -> ->. inversion Hwd; subst. eapply Well_Def_Data_Is_a_value in H1. destruct H1.
+     subst. exists x. reflexivity. }
+all: inversion Hwd; subst; try (eapply IHlts; [reflexivity | eassumption]).
+injection hα as ->. eapply (IHlts (VarC_add 1 c')); [reflexivity | assumption].
 Qed.
 
 Lemma LTS_Respects_WD : forall p q 𝜆, Well_Defined_Input_in 0 p -> Well_Defined_Action 𝜆 -> lts p 𝜆 q 
             ->  Well_Defined_Input_in 0 q.
 Proof.
-intros. revert H. revert H0. rename H1 into Transition. dependent induction Transition.
-* intros. dependent destruction H0. apply ForSTS. dependent destruction H. assumption.
+intros. revert H. revert H0. rename H1 into Transition. induction Transition.
+* intros. inversion H0; subst. apply ForSTS. inversion H; subst. assumption.
 * intros. constructor.
-* intros. dependent destruction H. assumption.
-* intros. apply ForRecursionSanity. dependent destruction H. assumption. assumption.
+* intros. inversion H; subst. assumption.
+* intros. apply ForRecursionSanity. inversion H; subst. assumption. assumption.
 * intros. inversion H1; subst. eapply IHTransition; eauto.
 * intros. inversion H1; subst. eapply IHTransition; eauto.
 * intros. inversion H; subst. constructor. eapply IHTransition; eauto. destruct μ; destruct a; destruct v; simpl in *.
@@ -409,20 +406,20 @@ intros. revert H. revert H0. rename H1 into Transition. dependent induction Tran
   + simpl. constructor.
   + simpl. inversion H0.
 * intros. inversion H; subst. constructor. eapply IHTransition; eauto.
-* intros. dependent destruction H. constructor. 
-  ** apply IHTransition1. assert (exists v', v = cst v'). eapply Output_are_good. exact H.
-     exact Transition1. destruct H2. subst. constructor. assumption.
-  ** apply IHTransition2. assert (exists v', v = cst v'). eapply Output_are_good. exact H.
-     exact Transition1. destruct H2. subst. constructor. assumption.
-* intros. dependent destruction H. constructor.
-  ** apply IHTransition2. assert (exists v', v = cst v'). eapply Output_are_good. exact H1.
-     exact Transition1. destruct H2. subst. constructor. assumption.
-  ** apply IHTransition1. assert (exists v', v = cst v'). eapply Output_are_good. exact H1.
-     exact Transition1. destruct H2. subst. constructor. assumption.
-* intros. dependent destruction H. constructor. apply IHTransition. assumption. assumption. assumption.
-* intros. dependent destruction H. constructor. assumption. apply IHTransition. assumption. assumption.
-* intros. dependent destruction H. apply IHTransition. assumption. assumption.
-* intros. dependent destruction H. apply IHTransition. assumption. assumption.
+* intros. inversion H; subst. constructor. 
+  ** apply IHTransition1. assert (exists v', v = cst v') as [v' ->]
+       by (eapply Output_are_good; [exact H4 | exact Transition1]). constructor. assumption.
+  ** apply IHTransition2. assert (exists v', v = cst v') as [v' ->]
+       by (eapply Output_are_good; [exact H4 | exact Transition1]). constructor. assumption.
+* intros. inversion H; subst. constructor.
+  ** apply IHTransition2. assert (exists v', v = cst v') as [v' ->]
+       by (eapply Output_are_good; [exact H5 | exact Transition1]). constructor. assumption.
+  ** apply IHTransition1. assert (exists v', v = cst v') as [v' ->]
+       by (eapply Output_are_good; [exact H5 | exact Transition1]). constructor. assumption.
+* intros. inversion H; subst. constructor. apply IHTransition. assumption. assumption. assumption.
+* intros. inversion H; subst. constructor. assumption. apply IHTransition. assumption. assumption.
+* intros. inversion H; subst. apply IHTransition. assumption. assumption.
+* intros. inversion H; subst. apply IHTransition. assumption. assumption.
 Qed.
 
 (** ******* Lemma to simplify the Data in Value for a transition *)
@@ -507,33 +504,34 @@ Lemma OBA_with_FB_Third_Axiom : forall p1 p2 p3 a,
 Proof.
   intros. assert (lts p1 (a !) p2). assumption. apply OutputWithValue in H1.
   decompose record H1. subst. rename x into c. rename x0 into v.
-  revert H0. revert p3. dependent induction H.
-  - intros. inversion H0. subst. eauto with *.
-  - intros. inversion H2; subst.
+  clear H1. revert H0. revert p3. remember (ActExt (ActOut ((c, v) : TypeOfActions))) as α eqn:hα in H. revert c v hα.
+  induction H; intros c' v' hα p3' hl; try discriminate.
+  - inversion hl. subst. eauto with *.
+  - subst. inversion hl; subst.
     + eapply IHlts; eauto.
-    + rewrite H in H8. inversion H8.
-  - intros. inversion H2; subst.
-    + rewrite H in H8. inversion H8.
+    + congruence.
+  - subst. inversion hl; subst.
+    + congruence.
     + eapply IHlts; eauto.
-  - intros. inversion H0;subst. eapply cgr_res.
-    eapply (IHlts (VarC_add 1 c) v); eauto.
-  - intros. inversion H0;subst. 
-    * apply cgr_fullpar. eapply IHlts. eauto. eauto. assumption. eauto with *.
-    * apply TransitionShapeForOutputSimplified in H.
-      apply TransitionShapeForOutputSimplified in H6.
-       transitivity (p2 ‖ ((c ! v • 𝟘) ‖ q2)). eapply cgr_fullpar. 
+  - injection hα as ->. inversion hl; subst. eapply cgr_res.
+    eapply (IHlts (VarC_add 1 c') v'); [reflexivity | eauto].
+  - subst. inversion hl; subst.
+    + apply cgr_fullpar; [eapply IHlts; [reflexivity | eassumption] | reflexivity].
+    + apply TransitionShapeForOutputSimplified in H.
+      match goal with h : lts q _ q2 |- _ => apply TransitionShapeForOutputSimplified in h; rename h into H6 end.
+      transitivity (p2 ‖ ((c' ! v' • 𝟘) ‖ q2)). eapply cgr_fullpar.
       reflexivity. exact H6. etrans. symmetry. eapply cgr_par_assoc.
       eapply cgr_par. etrans. eapply cgr_par_com. symmetry. eauto.
-  - intros. inversion H0 ; subst.
+  - subst. inversion hl; subst.
     + apply TransitionShapeForOutputSimplified in H.
-      apply TransitionShapeForOutputSimplified in H6.
-      transitivity (((c ! v • 𝟘) ‖ p2) ‖ q2); [eauto with cgr|].
-      transitivity (( p2 ‖ (c ! v • 𝟘)) ‖ q2); [eauto with cgr|].
-      transitivity ( p2 ‖ ((c ! v • 𝟘) ‖ q2)); [eauto with cgr|].
+      match goal with h : lts p _ p2 |- _ => apply TransitionShapeForOutputSimplified in h; rename h into H6 end.
+      transitivity (((c' ! v' • 𝟘) ‖ p2) ‖ q2); [eauto with cgr|].
+      transitivity (( p2 ‖ (c' ! v' • 𝟘)) ‖ q2); [eauto with cgr|].
+      transitivity ( p2 ‖ ((c' ! v' • 𝟘) ‖ q2)); [eauto with cgr|].
       apply cgr_fullpar; eauto with *.
-    + apply cgr_fullpar. reflexivity. eapply IHlts. eauto. eauto. assumption.
-  - intros. exfalso. eapply guarded_does_no_output. eassumption.
-  - intros. exfalso. eapply guarded_does_no_output. eassumption.
+    + apply cgr_fullpar; [reflexivity | eapply IHlts; [reflexivity | eassumption]].
+  - exfalso. eapply guarded_does_no_output. eassumption.
+  - exfalso. eapply guarded_does_no_output. eassumption.
 Qed.
 
 Lemma OBA_with_FB_Fourth_Axiom : forall p1 p2 p3 a, lts p1 (a !) p2 -> lts p2 (a ?) p3 
@@ -561,18 +559,20 @@ Proof.
   eapply TransitionShapeForOutputSimplified in H.
   edestruct (Congruence_Respects_Transition ((c ! v • 𝟘) ‖ q1) q2 τ).
   - exists p. split. eauto with *. assumption.
-  - destruct H2. dependent induction H2.
-    + inversion H2_; subst. right. exists q3; split. assumption.
+  - destruct H2. inversion H2; subst.
+    + match goal with h : lts (_ ! _ • 𝟘) _ _ |- _ => inversion h; subst end.
+      right. exists q3; split. assumption.
       rewrite <- H3. transitivity (q3 ‖ 𝟘); eauto with *.
-    + inversion H2_0.
-    + inversion H2.
-    + left. exists q3. split. assumption. 
+    + match goal with h : lts (_ ! _ • 𝟘) _ _ |- _ => inversion h end.
+    + match goal with h : lts (_ ! _ • 𝟘) _ _ |- _ => inversion h end.
+    + left. exists q3. split. assumption.
       assert (lts ((c ! v • 𝟘) ‖ q3) ((c , v) !) (𝟘 ‖ q3)). constructor. constructor.
-      edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q3) ((c , v) !)). exists ((c ! v • 𝟘) ‖ q3).
+      edestruct (Congruence_Respects_Transition q2 (𝟘 ‖ q3) ((c , v) !)) as (x & hx1 & hx2).
+      exists ((c ! v • 𝟘) ‖ q3).
       split.
       * eauto with *.
       * assumption.
-      * destruct H5. exists x. split. assumption.
+      * exists x. split. assumption.
         etransitivity; eauto. eauto with *.
 Qed.
 
@@ -901,7 +901,7 @@ Proof.
 Qed.
 
 Lemma mo_equiv_spec_step : forall {p q k}, p ≡ q -> moutputs_of k p = moutputs_of k q.
-Proof. intros. revert k. dependent induction H ; try multiset_solver; simpl in *; try rewrite H; eauto.
+Proof. intros. revert k. remember 0%nat as n0 eqn:hn0 in H. induction H ; subst; try multiset_solver; simpl in *; try rewrite H; eauto.
 + intros. replace (S (S k))%nat with (0 + (S (S k)))%nat by lia. rewrite VarSwap_and_moutputs. eauto.
 + intros. replace (S (S k))%nat with (0 + (S (S k)))%nat by lia. symmetry. rewrite VarSwap_and_moutputs. eauto.
 + intros. f_equal. replace (NewVarC 0 q) with (NewVarCn 0 1 q); eauto.
@@ -949,8 +949,8 @@ Qed.
 Lemma mo_spec_l e a k :
   a ∈ moutputs_of k e -> {e' | lts (Ѵ  k e) (ActExt $ ActOut a) (Ѵ  k e') /\ moutputs_of k e' = moutputs_of k e ∖ {[+ a +]}}.
 Proof.
-  intros mem.
-  dependent induction e.
+  intros mem. revert a k mem.
+  induction e; intros a k mem.
   + cbn in mem.
     destruct (decide (a ∈ moutputs_of k e1)).
     destruct (IHe1 a k e) as (e1' & lts__e1 & eq).
@@ -995,7 +995,7 @@ Qed.
 Lemma mo_spec_r e a k:
   {e' | lts (Ѵ  k e) (ActExt $ ActOut a) (Ѵ  k e') /\ moutputs_of k e' = moutputs_of k e ∖ {[+ a +]}} -> a ∈ moutputs_of k e.
 Proof.
-  dependent induction e; intros (e' & l & mem).
+  revert a k. induction e; intros a k (e' & l & mem).
   + cbn. eapply inversion_res_ext in l.
     inversion l; subst.
     eapply gmultiset_elem_of_disj_union. left.
@@ -1029,7 +1029,7 @@ Qed.
 Lemma outputs_of_spec1_raw (e : proc) (a : TypeOfActions) k : {e' | lts (Ѵ  k e) (ActExt (ActOut a)) (Ѵ  k e')} 
       -> a ∈ moutputs_of k e.
 Proof.
-  dependent induction e; intros (e' & l).
+  revert a k. induction e; intros a k (e' & l).
   + cbn. eapply inversion_res_ext in l.
     inversion l; subst.
     eapply gmultiset_elem_of_disj_union. left.
@@ -1150,8 +1150,8 @@ end.
 
 Lemma lts_set_output_spec0 p a q : q ∈ lts_set_output p a -> lts p (ActExt (ActOut a)) q.
 Proof.
-  intro mem.
-  dependent induction p; simpl in mem; try now inversion mem.
+  intro mem. revert a q mem.
+  induction p; intros a q mem; simpl in mem; try now inversion mem.
   - eapply elem_of_union in mem as [mem | mem]. 
     * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_parL. apply IHp1. rewrite elem_of_elements in mem. set_solver.
@@ -1173,17 +1173,18 @@ Qed.
 
 Lemma lts_set_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_set_output p a.
 Proof.
-  intro l. dependent induction l; try set_solver.
-  - simpl. rewrite decide_True;eauto. set_solver.
+  intro l. remember (ActExt $ ActOut a) as α eqn:hα. revert a hα.
+  induction l; intros a' hα; try discriminate; try set_solver.
+  - injection hα as <-. simpl. rewrite decide_True;eauto. set_solver.
   - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
   - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
-  - simpl in *. destruct a. try set_solver.
+  - injection hα as ->. simpl in *. destruct a'. apply elem_of_map_2, IHl. reflexivity.
 Qed.
 
 Lemma lts_set_input_spec0 p a q : q ∈ lts_set_input p a -> lts p (ActExt $ ActIn a) q.
 Proof.
-  intro mem.
-  dependent induction p; simpl in mem; try set_solver.
+  intro mem. revert a q mem.
+  induction p; intros a q mem; simpl in mem; try set_solver.
   + eapply elem_of_union in mem. destruct mem.
     ++ eapply elem_of_list_to_set in H.
        eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
@@ -1198,7 +1199,7 @@ Proof.
     - intros. rewrite H in mem. exfalso. inversion mem.
   + eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
     apply lts_res_ext. rewrite elem_of_elements in mem. eapply IHp in mem. simpl. destruct a. eauto. 
-  + dependent induction g; simpl in mem; try set_solver.
+  + revert a q mem. induction g; intros a q mem; simpl in mem; try set_solver.
       ++ destruct (decide (ChannelData_of a = c)).
          +++ subst. eapply elem_of_singleton_1 in mem. subst. destruct a. simpl. apply lts_input.
          +++ destruct a. simpl in *. inversion mem.
@@ -1207,21 +1208,18 @@ Qed.
 
 Lemma lts_set_input_spec1 p a q : lts p (ActExt $ ActIn a) q -> q ∈ lts_set_input p a.
 Proof.
-  intro l. destruct a. destruct v.
-  + dependent induction l; try set_solver.
-    ++ simpl. rewrite decide_True; eauto. set_solver.
-    ++ simpl in *. rewrite H. eauto.
-    ++ simpl in *. rewrite H. eauto.
-  + dependent induction l; try set_solver.
-    ++ simpl. rewrite decide_True; eauto. set_solver.
-    ++ simpl in *. rewrite H. eauto.
-    ++ simpl in *. rewrite H. eauto.
+  intro l. remember (ActExt $ ActIn a) as α eqn:hα. revert a hα.
+  induction l; intros a' hα; try discriminate; try set_solver.
+  - injection hα as <-. simpl. rewrite decide_True; eauto. set_solver.
+  - simpl in *. rewrite H. eapply IHl; eauto.
+  - simpl in *. rewrite H. eapply IHl; eauto.
+  - injection hα as ->. simpl in *. destruct a'. apply elem_of_map_2, IHl. reflexivity.
 Qed.
 
 Lemma lts_set_tau_spec0 p q : q ∈ lts_set_tau p -> lts p τ q.
 Proof.
-  - intro mem.
-    dependent induction p; simpl in mem.
+  - intro mem. revert q mem.
+    induction p; intros q mem; simpl in mem.
     + eapply elem_of_union in mem. destruct mem as [mem1 | mem2].
       ++ eapply elem_of_union in mem1.
          destruct mem1.
@@ -1254,14 +1252,14 @@ Proof.
     + inversion mem.
     + eapply elem_of_list_to_set, list_elem_of_fmap in mem as (t' & eq & h); subst.
       eapply lts_res_tau. eapply IHp. eapply elem_of_elements. eauto.
-    + dependent induction g; simpl in mem; try set_solver;
+    + revert q mem. induction g; intros q mem; simpl in mem; try set_solver;
         try eapply elem_of_singleton_1 in mem; subst; eauto with cgr.
       eapply elem_of_union in mem as [mem1 | mem2]; eauto with cgr.
 Qed.
 
 Lemma lts_set_tau_spec1 p q : lts p τ q -> q ∈ lts_set_tau p.
 Proof. 
-  intro l. dependent induction l; simpl; try set_solver.
+  intro l. remember τ as α eqn:hα. induction l; subst; try discriminate; simpl; try set_solver.
   - rewrite H. set_solver. 
   - rewrite H. set_solver. 
   - eapply elem_of_union. left.
@@ -1843,8 +1841,8 @@ Qed.
 
 Lemma PreCoEquiv (k : nat) (p : proc) (q : proc) (c : PreAct) : p ≡* q -> c ∈ mPreCoAct_of k p -> c ∈ mPreCoAct_of k q.
 Proof.
-  intros eq mem. revert k c mem. dependent induction eq.
-  + dependent induction H; intros; simpl in *; subst; eauto; try multiset_solver.
+  intros eq mem. revert k c mem. induction eq.
+  + remember 0%nat as n0 eqn:hn0 in H. induction H; intros; simpl in *; subst; eauto; try multiset_solver.
     * rewrite H in mem; eauto.
     * rewrite H; eauto.
     * rewrite H in mem; eauto.

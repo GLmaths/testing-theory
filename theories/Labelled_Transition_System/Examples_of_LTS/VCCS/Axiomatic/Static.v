@@ -144,7 +144,7 @@ Proof.
   intros Hs 𝜆 q Ht.
   destruct p; simpl in *.
   - inversion Hs; subst.
-    dependent destruction Ht.
+    inversion Ht; subst.
     + constructor.
       * eapply (IH p1); [simpl; lia | eassumption | eassumption].
       * eapply (IH p2); [simpl; lia | eassumption | eassumption].
@@ -159,12 +159,12 @@ Proof.
       * eapply (IH p2); [simpl; lia | eassumption | eassumption].
   - inversion Hs.
   - inversion Hs.
-  - dependent destruction Ht.
+  - inversion Ht; subst.
     + inversion Hs; subst.
       eapply (IH p1); [simpl; lia | eassumption | eassumption].
     + inversion Hs; subst.
       eapply (IH p2); [simpl; lia | eassumption | eassumption].
-  - dependent destruction Ht.
+  - inversion Ht; subst.
     + inversion Hs; subst.
       constructor.
       eapply (IH p); [simpl; lia | eassumption | eassumption].
@@ -173,16 +173,16 @@ Proof.
       eapply (IH p); [simpl; lia | eassumption | eassumption].
   - inversion Hs; subst.
     destruct g; simpl in *; inversion H0; subst.
-    + dependent destruction Ht.
-    + dependent destruction Ht.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
+    + inversion Ht; subst.
+    + inversion Ht; subst.
       apply Static_subst.
       eassumption.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
       eassumption.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
       eassumption.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
       * eapply (IH (g g1)); simpl; try lia; [constructor|]; eassumption.
       * eapply (IH (g g2)); simpl; try lia; [constructor|]; eassumption.
 Qed.
@@ -194,7 +194,7 @@ Proof.
   intros Hs 𝜆 q Ht.
   destruct p; simpl in *.
   - inversion Hs; subst.
-    dependent destruction Ht.
+    inversion Ht; subst.
     + assert (size p3 < size p1) by (eapply (IH p1); [simpl; lia | eassumption | eassumption]).
       assert (size q2 < size p2) by (eapply (IH p2); [simpl; lia | eassumption | eassumption]).
       simpl; lia.
@@ -207,14 +207,14 @@ Proof.
       simpl; lia.
   - inversion Hs.
   - inversion Hs.
-  - dependent destruction Ht.
+  - inversion Ht; subst.
     + inversion Hs; subst.
-      assert (size p' < size p1) by (eapply (IH p1); [simpl; lia | eassumption | eassumption]).
+      assert (size q < size p1) by (eapply (IH p1); [simpl; lia | eassumption | eassumption]).
       simpl; lia.
     + inversion Hs; subst.
-      assert (size q' < size p2) by (eapply (IH p2); [simpl; lia | eassumption | eassumption]).
+      assert (size q < size p2) by (eapply (IH p2); [simpl; lia | eassumption | eassumption]).
       simpl; lia.
-  - dependent destruction Ht.
+  - inversion Ht; subst.
     + inversion Hs; subst.
       assert (size p' < size p) by (eapply (IH p); [simpl; lia | eassumption | eassumption]).
       simpl; lia.
@@ -223,16 +223,16 @@ Proof.
       simpl; lia.
   - inversion Hs; subst.
     destruct g; simpl in *; inversion H0; subst.
-    + dependent destruction Ht.
-    + dependent destruction Ht.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
+    + inversion Ht; subst.
+    + inversion Ht; subst.
       rewrite size_subst.
       simpl; lia.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
       simpl; lia.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
       simpl; lia.
-    + dependent destruction Ht.
+    + inversion Ht; subst.
       * assert (size q < gsize g1) by (eapply (IH (g g1)); simpl; try lia; [constructor|]; eassumption).
         simpl; lia.
       * assert (size q < gsize g2) by (eapply (IH (g g2)); simpl; try lia; [constructor|]; eassumption).

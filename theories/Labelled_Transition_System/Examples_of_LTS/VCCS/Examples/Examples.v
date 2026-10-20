@@ -85,7 +85,10 @@ Lemma one_out_wt_inv p : one_out ⟹ p -> p = one_out.
 Proof. intros Hyp. inversion Hyp; subst; eauto. lts_inversion lts. Qed.
 
 Lemma all_out_wt_inv p : all_out ⟹ p -> p = all_out.
-Proof. intros Hyp. dependent induction Hyp;subst; eauto. repeat lts_inversion lts. Qed.
+Proof.
+  intros Hyp. remember all_out as ao eqn:hao in Hyp. remember ([] : trace _) as s0 eqn:hs0 in Hyp.
+  induction Hyp; subst; try discriminate; eauto. repeat lts_inversion lts.
+Qed.
 
 Lemma one_out_wt_inv_s b p : one_out ⟹{b} p -> p = g 𝟘.
 Proof.
@@ -459,7 +462,7 @@ Example mem_outside_is_above_mem_inside : mem_inside ᴠᴄᴄꜱ⊑ₘᵤₛₜ
 Proof.
   apply must_iff_acceptance_set_VCCS_without_toFW.
   split.
-  + intros s h_conv. dependent induction h_conv.
+  + intros s h_conv. remember mem_inside as m eqn:hm in h_conv. induction h_conv; subst.
     * constructor. constructor. intros. repeat lts_inversion lts.
     * constructor.
       - constructor. intros. repeat lts_inversion lts.

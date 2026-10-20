@@ -195,7 +195,7 @@ Proof.
     + simpl in *; eauto with mdb.
     + intros p' t' μ1 μ2 duo hl1 hl2.
       apply H0, (ParSync μ1 μ2); eauto.
-  - intro hm. dependent induction hm; eauto with mdb.
+  - intro hm. induction hm; eauto with mdb.
     eapply m_sts_step; eauto with mdb.
     + destruct ex as ((p', t'), hl).
       eapply sts_performs_spec2. by exists (p', t').
@@ -316,9 +316,9 @@ Lemma must_preserved_by_weak_nil_srv `{
   p must_pass t -> p ⟹ q
     -> q must_pass t.
 Proof.
-  intros hm w.
-  dependent induction w; eauto with mdb.
-  eapply IHw; eauto.
+  intros hm w. remember ([] : trace Aproc) as s0 eqn:hs0 in w.
+  revert hs0 hm. induction w as [| s1 p0 q0 t0 l w IHw | ]; intros hs0 hm; [done | | discriminate].
+  eapply IHw; [exact hs0 |].
   eapply must_preserved_by_lts_tau_srv; eauto.
 Qed.
 
@@ -437,16 +437,16 @@ Lemma must_preserved_by_lts_wk_clt `{
   p must_pass t1 -> ¬ outcome t1 -> (∀ t', t1 ⟹ t' -> t' ≠ t2 -> ¬ outcome t') -> t1 ⟹ t2 -> p must_pass t2.
 Proof.
   intros Hyp not_happy Hyp_not_happy wk_tr.
-  remember t2.
-  dependent induction wk_tr.
-  + subst. eauto.
-  + subst. assert (∀ t' : T, q ⟹ t' → t' ≠ t2 → ¬ outcome t') as Hyp_final.
-    {intros. eapply Hyp_not_happy. econstructor; eauto. eauto. }
-    assert (p must_pass q).
-    {eapply must_preserved_by_lts_tau_clt; eauto. }
-    destruct (decide (q = t2)) as [ eq | not_eq].
-    ++ subst. eauto.
-    ++ eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
+  remember ([] : trace Atest) as s0 eqn:hs0 in wk_tr.
+  revert hs0 Hyp not_happy Hyp_not_happy.
+  induction wk_tr as [t | s1 t q t' l wk_tr IHwk_tr | ]; intros hs0 Hyp not_happy Hyp_not_happy; [done | | discriminate].
+  assert (∀ t'' : T, q ⟹ t'' → t'' ≠ t' → ¬ outcome t'') as Hyp_final.
+  { intros. eapply Hyp_not_happy. econstructor; eauto. eauto. }
+  assert (p must_pass q).
+  { eapply must_preserved_by_lts_tau_clt; eauto. }
+  destruct (decide (q = t')) as [eq | not_eq].
+  - subst. eauto.
+  - eapply IHwk_tr; eauto. eapply Hyp_not_happy; eauto with mdb.
 Qed.
 
 Lemma must_preserved_by_wt_synch_if_notoutcome `{
@@ -464,9 +464,11 @@ Lemma must_preserved_by_wt_synch_if_notoutcome `{
             -> p' must_pass t'.
 Proof.
   intros hm u duo hwp hwr.
-  dependent induction hwp.
+  remember [μ] as s0 eqn:hs0 in hwp.
+  revert hs0 hm. induction hwp as [| s1 p0 q0 t0 l hwp IHhwp | μ0 s1 p0 q0 t0 l hwp]; intros hs0 hm; [discriminate | |].
   - eapply IHhwp; eauto. eapply must_preserved_by_lts_tau_srv; eauto.
-  - eapply must_preserved_by_weak_nil_srv; eauto.
+  - injection hs0 as <- ->.
+    eapply must_preserved_by_weak_nil_srv; eauto.
     inversion hm. contradiction. eapply com.
     eassumption. eassumption. eassumption.
 Qed.

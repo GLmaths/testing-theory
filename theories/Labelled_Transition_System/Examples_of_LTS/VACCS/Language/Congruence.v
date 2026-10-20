@@ -214,32 +214,32 @@ Proof. constructor. apply cgr_choice_assoc_rev_step. Qed.
 
 Lemma cgr_recursion : forall n x p q, p ≡*[n] q -> (rec x • p) ≡*[n] (rec x • q).
 Proof.
-intros n x p q H. dependent induction H.
+intros n x p q H. induction H.
 constructor. apply cgr_recursion_step. exact H.
 transitivity (rec x • y); assumption.
 Qed.
 Lemma cgr_tau : forall n p q, p ≡*[n] q -> (𝛕 • p) ≡*[n] (𝛕 • q).
 Proof.
-intros n p q H. dependent induction H.
+intros n p q H. induction H.
 constructor. apply cgr_tau_step. exact H.
 transitivity (𝛕 • y); assumption.
 Qed.
 Lemma cgr_input : forall n c p q, p ≡*[S n] q -> (c ? • p) ≡*[n] (c ? • q).
 Proof.
 intros n c p q H.
-dependent induction H.
+induction H.
 * constructor. apply cgr_input_step. auto.
-* transitivity (c ? • y). apply (IHclos_trans1 n c eq_refl). apply (IHclos_trans2 n c eq_refl).
+* transitivity (c ? • y); assumption.
 Qed.
 Lemma cgr_par : forall n p q r, p ≡*[n] q-> p ‖ r ≡*[n] q ‖ r.
 Proof.
-intros n p q r H. dependent induction H.
+intros n p q r H. induction H.
 constructor. apply cgr_par_step. exact H.
 transitivity (y ‖ r); assumption.
 Qed.
 Lemma cgr_res : forall n p q, p ≡*[n] q-> ν p ≡*[n] ν q.
 Proof.
-intros n p q H. dependent induction H.
+intros n p q H. induction H.
 constructor.
 apply cgr_res_step. exact H.
 transitivity (ν y); assumption.
@@ -247,14 +247,14 @@ Qed.
 Lemma cgr_if_left : forall n C p q q', q ≡*[n] q' ->
   (If C Then p Else q) ≡*[n] (If C Then p Else q').
 Proof.
-intros n C p q q' H. dependent induction H.
+intros n C p q q' H. induction H.
 constructor. apply cgr_if_left_step. exact H.
 transitivity (If C Then p Else y); assumption.
 Qed.
 Lemma cgr_if_right : forall n C p p' q, p ≡*[n] p' ->
   (If C Then p Else q) ≡*[n] (If C Then p' Else q).
 Proof.
-intros n C p p' q H. dependent induction H.
+intros n C p p' q H. induction H.
 constructor. apply cgr_if_right_step. exact H.
 transitivity (If C Then y Else q); assumption.
 Qed.
@@ -401,7 +401,8 @@ Combined Scheme altcgr_mutind from altcgr_ind2,galtcgr_ind2.
 Lemma guardcgr_choice_step n p1 q1 p2: guardcgr n (g p1) (g q1) ->
   guardcgr n (g (p1 + p2)) (g (q1 + p2)).
 Proof.
-  intros H%clos_trans_tn1. apply clos_tn1_trans. dependent induction H.
+  intros H%clos_trans_tn1. apply clos_tn1_trans.
+  remember (g q1) as gq eqn:hgq. revert q1 hgq. induction H; intros q1 hgq; subst.
   - constructor. decompose record H; subst.
     eexists; eexists; repeat split. now constructor.
   - decompose record H; subst; clear H. inversion H2; subst.
@@ -614,7 +615,7 @@ Qed.
 Lemma altcgr_guard_proper n (p0 p1 : proc) (g0 : gproc) : (p0 ≡ₐ[n] p1) -> sguard n g0 p0
   -> sguard n g0 p1.
 Proof.
-intro H. dependent induction H generalizing g0; simpl; try solve[constructor]; auto with *;
+intro H. revert g0. induction H; intros g0; simpl; try solve[constructor]; auto with *;
 intuition; simpl; eauto with *.
 - eapply sguard_cgr_proper; eauto.
 - change 𝟘 with (⇑ 𝟘) in H. now apply NewVar_altcgr_gstep.
@@ -692,9 +693,9 @@ Qed.
 
 Lemma Congruence_Respects_Substitution : forall n p q v, p ≡*[S n] q -> (subst_in_proc n v p) ≡*[n] (subst_in_proc n v q).
 Proof.
-intros n p q v H. dependent induction H.
+intros n p q v H. induction H.
 * constructor. eapply cgr_step_subst; eauto.
-* transitivity (subst_in_proc n v y). apply (IHclos_trans1 n v eq_refl). apply (IHclos_trans2 n v eq_refl).
+* transitivity (subst_in_proc n v y); assumption.
 Qed.
 
 Lemma cgr_step_NewVar : forall n p q, p ≡[ n ] q -> forall j, j <= n -> (NewVar j p) ≡[ (S n) ] (NewVar j q).
@@ -713,7 +714,7 @@ Qed.
 
 Lemma NewVar_Respects_Congruence : forall n p p' j, j <= n -> p ≡*[n] p' -> NewVar j p ≡*[S n] NewVar j p'.
 Proof.
-intros n p p' j Hjn H. dependent induction H.
+intros n p p' j Hjn H. induction H.
 - constructor. eapply cgr_step_NewVar; eauto.
 - transitivity (NewVar j y); assumption.
 Qed.
@@ -737,7 +738,7 @@ Qed.
 
 Lemma NewVarC_Respects_Congruence : forall n p p' j, p ≡*[n] p' -> NewVarC j p ≡*[n] NewVarC j p'.
 Proof.
-intros n p p' j H. dependent induction H.
+intros n p p' j H. induction H.
 - constructor. apply cgr_step_NewVarC; eauto.
 - transitivity (NewVarC j y); assumption.
 Qed.

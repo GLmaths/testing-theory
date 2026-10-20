@@ -85,7 +85,7 @@ Context `{CFI : !coFiniteImagegLts P At}.
 Lemma mx_sub X t :
   X must_pass_x t → ∀ X', X' ⊆ X → X' must_pass_x t.
 Proof.
-  intros hmx. dependent induction hmx.
+  intros hmx. induction hmx.
   - intros. by apply mx_now.
   - intros qs sub.
     apply mx_step; eauto with mdb.
@@ -123,7 +123,7 @@ Lemma mustx_terminate_unoutcome' X (t : T) :
   X must_pass_x t → ¬ outcome t → ∀ p, p ∈ X → p ⤓.
 Proof.
   intros hmx not_happy p mem.
-  dependent induction hmx.
+  revert not_happy p mem. induction hmx; intros not_happy p mem.
   + contradiction.
   + eapply tstep.
     intros q tr. eapply H; eauto.
@@ -138,7 +138,7 @@ Lemma unoutcome_acnv_mu X t t' :
   ¬ outcome t → ¬ outcome t' → p ⇓ᶜᵒ [η].
 Proof.
   intros hmx η p mem l not_happy not_happy'.
-  dependent induction hmx.
+  destruct hmx.
   - contradiction.
   - assert (hmX : X must_pass_x t) by (apply mx_step; assumption).
     destruct (mustx_terminate_unoutcome X t hmX) as [happy | finish].
@@ -173,7 +173,7 @@ Qed.
 Lemma mx_sum X X' t : X must_pass_x t → X' must_pass_x t → (X ∪ X') must_pass_x t.
 Proof.
   intros hmx1 hmx2. revert X' hmx2.
-  dependent induction hmx1.
+  induction hmx1.
   { intros. by apply mx_now. }
   intros ps2 hmx2.
   eapply mx_step.
@@ -293,10 +293,11 @@ Lemma wt_nil_mx :
     ({[ p2 ]} : gset P) must_pass_x t.
 Proof.
   intros p1 p2 e hmx wt.
-  dependent induction wt; subst; [assumption |].
+  remember ([] : trace Ap) as s0 eqn:hs0 in wt.
+  revert hs0 hmx. induction wt as [p | s1 p q p2' l wt IHwt | ]; intros hs0 hmx; [assumption | | discriminate].
   inversion hmx as [hh | nh ex pt et com]; subst.
   - by apply mx_now.
-  - eapply IHwt; [| reflexivity].
+  - eapply IHwt; [reflexivity |].
     eapply pt; [| set_solver].
     intros p2 mem. replace q with p2 in * by set_solver.
     exists p; set_solver.
@@ -356,7 +357,7 @@ Qed.
 Lemma must_set_if_must (p : P) (t : T) :
   p must_pass t → ({[ p ]} : gset P) must_pass_x t.
 Proof.
-  intro hm. dependent induction hm.
+  intro hm. induction hm.
   - by apply mx_now.
   - eapply mx_step.
     + eassumption.
@@ -377,7 +378,7 @@ Qed.
 Lemma must_if_must_set_helper (X : gset P) (t : T) :
   X must_pass_x t → ∀ p, p ∈ X → p must_pass t.
 Proof.
-  intro hm. dependent induction hm.
+  intro hm. induction hm.
   - intros. by apply m_now.
   - intros p mem. eapply m_step.
     + eassumption.
@@ -872,7 +873,7 @@ Qed.
 Lemma soundnessx_co (X : gset P) (Y : gset P) : X ≼ₛₑₜ₋꜀ₒ₋ₐₛ[ ρ[𝔸] ] Y → X ⊑ₛₑₜ_ₘᵤₛₜᵢ Y.
 Proof.
   intros (halt1 & halt2) t hmx. revert Y halt1 halt2.
-  dependent induction hmx; intros Y halt1 halt2.
+  induction hmx; intros Y halt1 halt2.
   - intros. by apply mx_now.
   - assert (hmX : X must_pass_x t) by (apply mx_step; assumption).
     assert (HX0 : ∀ p, p ∈ X → p ⇓ᶜᵒ []).

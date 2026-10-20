@@ -986,35 +986,35 @@ Lemma lts_in_value_swap : forall (p : proc) (μ : ExtAct TypeOfActions) (q : pro
   exists q', lts p (ActExt (ActIn (c, v'))) q'.
 Proof.
   intros p μ q Ht.
-  dependent induction Ht; intros c0 v0 v0' Heq; try discriminate Heq.
+  remember (ActExt μ) as α eqn:hα in Ht. revert μ hα.
+  induction Ht; intros μ0 hα c0 v0 v0' Heq; try discriminate; try (injection hα as hα); subst; try rename μ0 into μ; try discriminate Heq.
   - injection Heq as -> ->.
     exists (P ^ v0').
     apply lts_input.
-  - destruct (IHHt μ JMeq_refl c0 v0 v0' Heq) as (q' & Hq').
+  - destruct (IHHt _ eq_refl c0 v0 v0' eq_refl) as (q' & Hq').
     exists q'.
     eapply lts_ifOne; eauto.
-  - destruct (IHHt μ JMeq_refl c0 v0 v0' Heq) as (q'0 & Hq').
+  - destruct (IHHt _ eq_refl c0 v0 v0' eq_refl) as (q'0 & Hq').
     exists q'0.
     eapply lts_ifZero; eauto.
-  - assert (Heq' : VarC_action_add 1 μ = ActIn (VarC_add 1 c0, v0)) by (subst μ; reflexivity).
-    destruct (IHHt (VarC_action_add 1 μ) JMeq_refl (VarC_add 1 c0) v0 v0' Heq') as (p'' & Hp'').
+  - destruct (IHHt _ eq_refl (VarC_add 1 c0) v0 v0' eq_refl) as (p'' & Hp'').
     exists (ν p'').
     eapply lts_res_ext.
     replace (VarC_action_add 1 (ActIn (c0, v0'))) with (ActIn (VarC_add 1 c0, v0')) by reflexivity.
     exact Hp''.
-  - destruct (IHHt μ JMeq_refl c0 v0 v0' Heq) as (p2' & Hp2').
+  - destruct (IHHt _ eq_refl c0 v0 v0' eq_refl) as (p2' & Hp2').
     exists (p2' ‖ q).
     eapply lts_parL.
     exact Hp2'.
-  - destruct (IHHt μ JMeq_refl c0 v0 v0' Heq) as (q2' & Hq2').
+  - destruct (IHHt _ eq_refl c0 v0 v0' eq_refl) as (q2' & Hq2').
     exists (p ‖ q2').
     eapply lts_parR.
     exact Hq2'.
-  - destruct (IHHt μ JMeq_refl c0 v0 v0' Heq) as (q' & Hq').
+  - destruct (IHHt _ eq_refl c0 v0 v0' eq_refl) as (q' & Hq').
     exists q'.
     eapply lts_choiceL.
     exact Hq'.
-  - destruct (IHHt μ JMeq_refl c0 v0 v0' Heq) as (q' & Hq').
+  - destruct (IHHt _ eq_refl c0 v0 v0' eq_refl) as (q' & Hq').
     exists q'.
     eapply lts_choiceR.
     exact Hq'.

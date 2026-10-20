@@ -125,11 +125,12 @@ Qed.
 Lemma cowt_set_nil_spec2 p q :
     forall (tp : p ⤓), p ⟹ᶜᵒ q -> q ∈ cowt_set_nil p tp.
 Proof.
-  intros tp Htp%cowt_iff_wt_nil. revert tp. dependent induction Htp; intros tp; destruct tp.
+  intros tp Htp%cowt_iff_wt_nil. remember ([] : trace Aproc) as s0 eqn:hs0 in Htp.
+  revert hs0 tp. induction Htp as [p | s1 p q' t l Htp IHHtp | ]; intros hs0 tp; [| | discriminate]; destruct tp.
   + set_solver.
   + simpl. eapply elem_of_union. right.
     eapply elem_of_union_list.
-    set (qr := dexist q l).
+    set (qr := dexist q' l).
     exists (cowt_set_nil (`qr) (t0 (`qr) (proj2_dsig qr))).
     split. eapply list_elem_of_fmap.
     exists qr. split. reflexivity.
@@ -354,12 +355,13 @@ Lemma cowt_nil_stable_set_spec2
   (p q : P) (ht : p ⤓) :
   (p ⟹ᶜᵒ q /\ q ↛) -> q ∈ cowt_nil_stable_set p ht.
 Proof.
-  intros (hw%cowt_iff_wt_nil & hst). dependent induction hw; case ht; induction ht; intros ht; simpl.
+  intros (hw%cowt_iff_wt_nil & hst). remember ([] : trace Aproc) as s0 eqn:hs0 in hw.
+  revert hs0 hst ht. induction hw as [p | s1 p q' t l hw IHhw | ]; intros hs0 hst ht; [| | discriminate]; case ht; induction ht; intros ht; simpl.
   - case (decide (p ⟶)); set_solver.
   - case (decide (p ⟶)); intro hst'.
     + eapply elem_of_union_list.
       eexists. split. eapply list_elem_of_fmap.
-      exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
+      exists (dexist q' l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
     + exfalso. apply hst', (lts_performs_spec2 p τ). eauto.
 Qed.
 

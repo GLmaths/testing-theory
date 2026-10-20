@@ -72,7 +72,7 @@ Qed.
 Lemma cgr_res_scope_n n P Q : (Ѵ  n P) ‖ Q ≡* (Ѵ n (P ‖ NewVarCn 0 n Q)).
 Proof.
   revert P Q.
-  dependent induction n.
+  induction n.
   - simpl. reflexivity.
   - intros. simpl. etrans. eapply cgr_res_scope_rev. eapply cgr_res.
     etrans. eapply IHn. eapply cgr_res_n. eapply cgr_fullpar. reflexivity.
@@ -140,7 +140,8 @@ Lemma TransitionShapeForInput : forall P Q c v, (lts P ((c , v) ?) Q) ->
   /\ ((exists L,P = (g L)) -> R = 𝟘 /\ n = 0))).
 Proof.
 intros P Q c v Transition.
- dependent induction Transition.
+remember (ActExt (ActIn (c, v)) : ActIO TypeOfActions) as α eqn:hα in Transition. revert c v hα.
+induction Transition; intros c0 v0 hα; try discriminate; try (injection hα; intros; subst); subst; try rename c0 into c; try rename v0 into v.
 - exists P. exists 𝟘. exists 𝟘. exists 0. repeat split.
   * simpl. destruct c.
     + simpl. apply cgr_trans with ((cst c ? • P) + 𝟘). apply cgr_trans with (cst c ? • P).
@@ -196,14 +197,19 @@ intros P Q c v Transition.
 Qed.
 
 Lemma guarded_does_no_output : forall p c v q, ¬ lts (g p) ((c , v) !) q.
-Proof. intros. intro l. dependent induction l;eapply IHl; eauto. Defined.
+Proof.
+  intros. intro l. remember (g p) as gp eqn:hgp in l.
+  remember (ActExt (ActOut (c, v)) : ActIO TypeOfActions) as α eqn:hα in l. revert p hgp hα.
+  induction l; intros p0 hgp hα; try discriminate; injection hgp as <-; eapply IHl; eauto.
+Defined.
 
 (** ******* For the (LTS-transition), the transitable terms and transitted terms, that performs an OUPUT, are pretty all the same, up to ≡* *)
 Lemma TransitionShapeForOutput : forall P Q c v, (lts P ((c , v) !) Q) -> 
 (exists R n, (P ≡* (Ѵ  n (((VarC_add n c) ! v • 𝟘) ‖ R)) /\ (Q ≡* Ѵ  n (𝟘 ‖ R)))).
 Proof.
 intros P Q c v Transition.
- dependent induction Transition.
+remember (ActExt (ActOut (c, v)) : ActIO TypeOfActions) as α eqn:hα in Transition. revert c v hα.
+induction Transition; intros c0 v0 hα; try discriminate; try (injection hα; intros; subst); subst; try rename c0 into c; try rename v0 into v.
 - exists 𝟘. exists 0. split; simpl; try rewrite VarC_add_zero.
   * apply cgr_par_nil_rev.
   * apply cgr_par_nil_rev.
@@ -272,7 +278,8 @@ Lemma TransitionShapeForTauAndGuard : forall P V, ((lts P τ V) /\ (exists L, P 
 (exists Q M, ((P ≡* ((𝛕 • Q) + M))) /\ (V ≡* (Q))).
 Proof.
 intros P V Hyp. 
-destruct Hyp. rename H into Transition. dependent induction Transition.
+destruct Hyp. rename H into Transition. remember (τ : ActIO TypeOfActions) as α eqn:hα in Transition. revert hα H0.
+induction Transition; intros hα H0; try discriminate; subst.
 - exists P. exists 𝟘. split. 
   * apply cgr_choice_nil_rev.
   * apply cgr_refl.
@@ -306,12 +313,12 @@ Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
-  + dependent destruction H.
+  + inversion H; subst.
     * simpl. rewrite VarSwap_in_proc_invol. eapply lts_parL. eapply Hp. simpl. lia. eauto.
     * simpl. rewrite VarSwap_in_proc_invol. eapply lts_parR. eapply Hp. simpl. lia. eauto.
   + inversion H.
   + inversion H.
-  + dependent destruction H.
+  + inversion H; subst.
     * simpl. eapply lts_ifOne; eauto. eapply Hp. simpl. lia. eauto.
     * simpl. eapply lts_ifZero; eauto. eapply Hp. simpl. lia. eauto.
   + destruct c.
@@ -331,7 +338,7 @@ Proof.
                       ++++++ inversion H1.
                       ++++++ inversion H1. lia.
            ++++ inversion H; subst. simpl. eapply lts_output.
-  + dependent destruction H. rewrite VarC_action_add_add in H. simpl in H.
+  + inversion H; subst. clear H. rename H2 into H. rewrite VarC_action_add_add in H. simpl in H.
     eapply Hp in H; simpl ; try lia. replace (S (S (S k)))%nat with (1 + (S (S k)))%nat in H by lia.
     rewrite<- VarC_action_add_add in H. eapply lts_res_ext in H. eauto. 
   + destruct g.
@@ -355,7 +362,7 @@ Proof.
                 +++++ destruct a. simpl in *. inversion H3.
            ++++ inversion H; subst. rewrite<- subst_and_VarSwap. rewrite VarSwap_in_proc_invol. eapply lts_input.
     * inversion H.
-    * dependent destruction H.
+    * inversion H; subst.
       - simpl. eapply lts_choiceL. eapply Hp. simpl. lia. eauto.
       - simpl. eapply lts_choiceR. eapply Hp. simpl. lia. eauto.
 Qed.
@@ -367,12 +374,12 @@ Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
-  + dependent destruction H.
+  + inversion H; subst.
     * simpl. rewrite VarSwap_in_proc_invol. eapply lts_parL. eapply Hp. simpl. lia. eauto.
     * simpl. rewrite VarSwap_in_proc_invol. eapply lts_parR. eapply Hp. simpl. lia. eauto.
   + inversion H.
   + inversion H.
-  + dependent destruction H.
+  + inversion H; subst.
     * simpl. eapply lts_ifOne; eauto. eapply Hp. simpl. lia. eauto.
     * simpl. eapply lts_ifZero; eauto. eapply Hp. simpl. lia. eauto.
   + destruct c.
@@ -385,7 +392,7 @@ Proof.
                 eapply lts_output.
            ++++ inversion H; subst. simpl in *.
                 rewrite decide_False; try lia. rewrite decide_False; try lia. eapply lts_output.
-  + dependent destruction H. simpl in *. eapply Hp in H; try lia.
+  + inversion H; subst. clear H. rename H2 into H. simpl in *. eapply Hp in H; try lia.
     eapply lts_res_ext. rewrite VarC_action_add_Swap. eauto.
   + destruct g.
     * inversion H.
@@ -401,7 +408,7 @@ Proof.
            ++++ inversion H; subst. rewrite<- subst_and_VarSwap. rewrite VarSwap_in_proc_invol. simpl in *.
                 rewrite decide_False; try lia. rewrite decide_False; try lia. eapply lts_input.
     * inversion H.
-    * dependent destruction H.
+    * inversion H; subst.
       - simpl. eapply lts_choiceL. eapply Hp. simpl. lia. eauto.
       - simpl. eapply lts_choiceR. eapply Hp. simpl. lia. eauto.
 Qed.
@@ -494,26 +501,26 @@ Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
-  * dependent destruction H; simpl in *.
-    - eapply VarSwap_swap2_proc in H, H0. simpl in *. eapply lts_comL; eauto.
-    - eapply VarSwap_swap2_proc in H, H0. simpl in *. eapply lts_comR; eauto.
+  * inversion H; subst; simpl in *.
+    - eapply VarSwap_swap2_proc in H2, H3. simpl in *. eapply lts_comL; eauto.
+    - eapply VarSwap_swap2_proc in H2, H3. simpl in *. eapply lts_comR; eauto.
     - rewrite VarSwap_in_proc_invol. eapply lts_parL. eapply Hp; simpl; eauto. lia.
     - rewrite VarSwap_in_proc_invol. eapply lts_parR. eapply Hp; simpl; eauto. lia.
   * inversion H.
-  * dependent destruction H; simpl in *. rewrite<- pr_subst_and_VarSwap2.
+  * inversion H; subst; simpl in *. rewrite<- pr_subst_and_VarSwap2.
     simpl in *. rewrite VarSwap_in_proc_invol. constructor.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *.
     - eapply lts_ifOne; eauto. eapply Hp; simpl; eauto. lia.
     - eapply lts_ifZero; eauto. eapply Hp; simpl; eauto. lia.
   * inversion H.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *.
     eapply lts_res_tau. eapply Hp; simpl; eauto.
   * destruct g; simpl in *.
     - inversion H.
     - inversion H.
     - inversion H.
-    - dependent destruction H; simpl in *. rewrite VarSwap_in_proc_invol. eapply lts_tau.
-    - dependent destruction H; simpl in *.
+    - inversion H; subst; simpl in *. rewrite VarSwap_in_proc_invol. eapply lts_tau.
+    - inversion H; subst; simpl in *.
       + eapply lts_choiceL. eapply Hp; simpl; eauto. lia.
       + eapply lts_choiceR. eapply Hp; simpl; eauto. lia.
 Qed.
@@ -525,21 +532,21 @@ Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
-  * dependent destruction H; simpl in *.
-    - eapply Hp in H as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
+  * inversion H; subst; simpl in *.
+    - eapply Hp in H4 as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
       exists μ'. exists (p'' ‖  p2). split; eauto.
-    - eapply Hp in H as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
+    - eapply Hp in H4 as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
       exists μ'. exists (p1 ‖  p''). split; eauto.
   * inversion H.
   * inversion H.
-  * dependent destruction H; simpl in *.
-    - eapply Hp in H0 as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
+  * inversion H; subst; simpl in *.
+    - eapply Hp in H6 as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
       exists μ'. exists p''. split; eauto.
-    - eapply Hp in H0 as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
+    - eapply Hp in H6 as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
       exists μ'. exists p''. split; eauto.
   * inversion H; subst. exists (ActOut (c , v)). exists 𝟘.
     split; eauto.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *. clear H. rename H2 into H.
     eapply Hp in H as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
     rewrite NewVarCzero_and_add in eq'.
     assert (NewVarC_in_ext 0 μ = NewVarC_in_ext (S k) μ'); eauto.
@@ -555,11 +562,11 @@ Proof.
     - inversion H; subst. exists (ActIn (c , v)). exists (p ^ v).
       split ;eauto. rewrite subst_and_NewVarC. eauto.
     - inversion H.
-    - dependent destruction H; simpl in *.
-      + assert (lts (NewVarC k (g g1)) (ActExt μ) q) as Hyp; eauto.
+    - inversion H; subst; simpl in *.
+      + assert (lts (NewVarC k (g g1)) (ActExt μ) p') as Hyp; eauto.
         eapply Hp in Hyp as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
         exists μ'. exists p''. split; eauto.
-      + assert (lts (NewVarC k (g g2)) (ActExt μ) q) as Hyp; eauto.
+      + assert (lts (NewVarC k (g g2)) (ActExt μ) p') as Hyp; eauto.
         eapply Hp in Hyp as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
         exists μ'. exists p''. split; eauto.
 Qed.
@@ -571,7 +578,9 @@ Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *.
+    1-2: clear H; rename H2 into H; rename H3 into H0.
+    3-4: clear H; rename H4 into H.
     - assert (lts (NewVarC k p1) ((c , v) !) p3); eauto. assert (lts (NewVarC k p2) ((c , v) ?) q2); eauto.
       eapply NewVarC_ext_proc in H as (μ' & p'' & eq' & eq'') ; simpl; subst ; try lia.
       eapply NewVarC_ext_proc in H0 as (μ'' & p''' & eq'' & eq''') ; simpl; subst ; try lia.
@@ -587,13 +596,13 @@ Proof.
   * inversion H.
   * inversion H ; subst. exists (pr_subst n p (rec n • p)).
     rewrite<- pr_subst_and_NewVarC. simpl; eauto.
-  * dependent destruction H; simpl in *.
-    - eapply Hp in H0 as (p'' & eq'') ; simpl; subst ; try lia.
+  * inversion H; subst; simpl in *.
+    - eapply Hp in H6 as (p'' & eq'') ; simpl; subst ; try lia.
       exists p''. split; eauto.
-    - eapply Hp in H0 as (p'' & eq'') ; simpl; subst ; try lia.
+    - eapply Hp in H6 as (p'' & eq'') ; simpl; subst ; try lia.
       exists p''. split; eauto.
   * inversion H.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *. clear H. rename H1 into H.
     eapply Hp in H as (p'' & eq'') ; simpl; subst ; try lia.
     exists (ν p''). simpl ; eauto.
   * destruct g; simpl in *.
@@ -601,11 +610,11 @@ Proof.
     - inversion H.
     - inversion H.
     - inversion H; subst. exists p. auto.
-    - dependent destruction H; simpl in *.
-      + assert (lts (NewVarC k (g g1)) τ q) as Hyp; eauto.
+    - inversion H; subst; simpl in *.
+      + assert (lts (NewVarC k (g g1)) τ p') as Hyp; eauto.
         eapply Hp in Hyp as (p'' & eq'') ; simpl; subst ; try lia.
         exists p''. split; eauto.
-      + assert (lts (NewVarC k (g g2)) τ q) as Hyp; eauto.
+      + assert (lts (NewVarC k (g g2)) τ p') as Hyp; eauto.
         eapply Hp in Hyp as (p'' & eq'') ; simpl; subst ; try lia.
         exists p''. split; eauto.
 Qed.
@@ -617,24 +626,22 @@ Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
-  * dependent destruction H; simpl in *; subst.
-    - assert (lts (NewVarC k p1) (ActExt (NewVarC_in_ext k μ')) p3) ; eauto.
-      eapply NewVarC_ext_proc in H as (μ'' & p'' & eq' & eq''); subst.
+  * inversion H; subst; simpl in *.
+    - pose proof H3 as H0. eapply NewVarC_ext_proc in H3 as (μ'' & p'' & eq' & eq''); subst.
       eapply Hp in H0; try lia. assert (NewVarC k (p'' ‖ p2) = NewVarC k p') as Hyp'; eauto.
       eapply NewVarC_inj in Hyp'. subst. eapply lts_parL. eauto.
-    - assert (lts (NewVarC k p2) (ActExt (NewVarC_in_ext k μ')) q2) ; eauto.
-      eapply NewVarC_ext_proc in H as (μ'' & p'' & eq' & eq''); subst. eapply Hp in H0; try lia.
+    - pose proof H3 as H0. eapply NewVarC_ext_proc in H3 as (μ'' & p'' & eq' & eq''); subst. eapply Hp in H0; try lia.
       assert (NewVarC k (p1 ‖ p'') = NewVarC k p') as Hyp'; eauto.
       eapply NewVarC_inj in Hyp'. subst. eapply lts_parR. eauto.
   * inversion H.
   * inversion H.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *.
     - eapply lts_ifOne; eauto. eapply Hp; simpl; eauto. lia.
     - eapply lts_ifZero; eauto. eapply Hp; simpl; eauto. lia.
   * inversion H; subst. assert (NewVarC_in_ext k (ActOut (c , v)) = NewVarC_in_ext k μ') as Hyp; eauto.
     eapply NewVarC_in_ext_inv in Hyp. subst. replace (g 𝟘) with (NewVarC k (g 𝟘)) in H4 by eauto.
     eapply NewVarC_inj in H4. subst. eapply lts_output.
-  * dependent destruction H; simpl in *. rewrite NewVarCzero_and_add in H. assert (0 + k = k)%nat as eq by lia.
+  * inversion H; subst; simpl in *. clear H. rename H3 into H. rewrite NewVarCzero_and_add in H. assert (0 + k = k)%nat as eq by lia.
     rewrite<- eq in H at 2. rewrite NewVarC_and_NewVarC_in_ChannelData in H. simpl in *.
     assert (lts (NewVarC (S k) p) (ActExt (NewVarC_in_ext (S k) (NewVarC_in_ext 0 μ'))) p'0) ;eauto.
     eapply NewVarC_ext_proc in H as (μ'' & p'' & eq1 & eq2). subst.
@@ -647,7 +654,7 @@ Proof.
       eapply NewVarC_in_ext_inv in Hyp. subst. rewrite subst_and_NewVarC in H4.
       eapply NewVarC_inj in H4. subst. eapply lts_input.
     - inversion H.
-    - dependent destruction H; simpl in *.
+    - inversion H; subst; simpl in *.
       + assert (lts (NewVarC k (g g1)) (ActExt (NewVarC_in_ext k μ')) (NewVarC k p')); eauto.
         eapply Hp in H0; simpl; try lia. eapply lts_choiceL. eauto.
       + assert (lts (NewVarC k (g g2)) (ActExt (NewVarC_in_ext k μ')) (NewVarC k p')); eauto.
@@ -661,7 +668,9 @@ Proof.
   induction p as (p & Hp) using
     (well_founded_induction (wf_inverse_image _ nat _ size Nat.lt_wf_0)).
   destruct p; intros; simpl in *.
-  * dependent destruction H; simpl in *; subst.
+  * inversion H; subst; simpl in *; clear H.
+    1-2: rename H2 into x; rename H3 into H; rename H4 into H0.
+    3-4: rename H4 into x; rename H3 into H.
     - assert (lts (NewVarC k p1) ((c , v) !) p3); eauto. assert (lts (NewVarC k p2) ((c , v) ?) q2); eauto.
       eapply NewVarC_ext_proc in H as (μ' & p'' & eq1 & eq2); subst.
       eapply NewVarC_ext_proc in H0 as (μ'' & p''' & eq'1 & eq'2); subst.
@@ -689,13 +698,13 @@ Proof.
       { eapply inversion_NewVarC_par2. eauto. } assert (NewVarC k (p1 ‖ p'1) = NewVarC k p'); eauto.
       eapply NewVarC_inj in H1; subst. eapply lts_parR. eapply Hp; eauto. simpl; lia.
   * inversion H.
-  * dependent destruction H; simpl in *. replace (rec n • NewVarC k p) with (NewVarC k (rec n •  p)) in x; eauto.
+  * inversion H; subst; simpl in *; clear H; match goal with h : _ = NewVarC _ _ |- _ => rename h into x end. replace (rec n • NewVarC k p) with (NewVarC k (rec n •  p)) in x; eauto.
     rewrite pr_subst_and_NewVarC in x. eapply NewVarC_inj in x. subst. constructor.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *.
     - eapply lts_ifOne; eauto. eapply Hp; simpl; eauto. lia.
     - eapply lts_ifZero; eauto. eapply Hp; simpl; eauto. lia.
   * inversion H.
-  * dependent destruction H; simpl in *.
+  * inversion H; subst; simpl in *; clear H; match goal with h : _ = NewVarC _ _ |- _ => rename h into x end.
     assert (lts (NewVarC (S k) p) τ p'0); eauto.
     eapply NewVarC_tau_proc in H as (p'' & eq); subst.
     assert (NewVarC k (ν p'') = NewVarC k p') as Hyp; eauto.
@@ -704,8 +713,8 @@ Proof.
     - inversion H.
     - inversion H.
     - inversion H.
-    - dependent destruction H; simpl in *. eapply NewVarC_inj in x. subst. constructor.
-    - dependent destruction H; simpl in *.
+    - inversion H; subst; simpl in *; clear H; match goal with h : _ = NewVarC _ _ |- _ => rename h into x end. eapply NewVarC_inj in x. subst. constructor.
+    - inversion H; subst; simpl in *.
       + assert (lts (NewVarC k (g g1)) τ (NewVarC k p')); eauto. eapply lts_choiceL. eapply Hp; simpl; eauto. lia.
       + assert (lts (NewVarC k (g g2)) τ (NewVarC k p')); eauto. eapply lts_choiceR. eapply Hp; simpl; eauto. lia.
 Qed.
@@ -716,93 +725,93 @@ Proof.
 (* by induction on the congruence and the step then...*)
   intros p q 𝜆 (p' & hcgr & l).
   revert q 𝜆 l.
-  dependent induction hcgr.
-  - dependent induction H. 
+  induction hcgr.
+  - remember 0%nat as n0 eqn:hn0 in H. induction H; subst. 
 (* reasonning about all possible cases due to the structure of terms *)
     + intros. exists q.  split.  exact l. reflexivity.
     + intros. exists q0.  split. eapply lts_ifOne; eauto. reflexivity.
-    + intros. dependent destruction l.
-      -- exists p'. split; eauto. reflexivity.
-      -- eauto. rewrite H in H0. inversion H0.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- eexists. split; eauto. reflexivity.
+      -- eauto. rewrite H in H5. inversion H5.
     + intros. exists q0.  split. eapply lts_ifZero; eauto. reflexivity.
-    + intros. dependent destruction l.
-      -- eauto. rewrite H in H0. inversion H0.
-      -- exists q'. split; eauto. reflexivity.
-    + intros. exists (q ‖ 𝟘). split. apply lts_parL. assumption. auto with cgr (*par contexte parallele*). 
-    + intros. dependent destruction l. inversion l2. inversion l1. exists p2. split. exact l. auto with cgr. 
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- eauto. rewrite H in H5. inversion H5.
+      -- eexists. split; eauto. reflexivity.
+    + intros. eexists. split. eapply lts_parL. eassumption. auto with cgr (*par contexte parallele*). 
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. inversion l2. inversion l1. exists p2. split. exact l. auto with cgr. 
       inversion l.
-    + intros. dependent destruction l.
-      -- exists (q2 ‖ p2). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). exact l1. exact l2. auto with cgr.
-      -- exists (p2 ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). exact l1. exact l2. auto with cgr.
-      -- exists (p ‖ p2). split. apply lts_parR. assumption. auto with cgr.
-      -- exists (q2 ‖ q). split. apply lts_parL. assumption. auto with cgr.
-    + intros. dependent destruction l.
-      -- dependent destruction l2. 
-         * exists ((p2 ‖ p0) ‖ r). split.
-           apply lts_parL. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption. assumption. auto with cgr.
-         * exists ((p2 ‖ q) ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). apply lts_parL. assumption. assumption.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- eexists. split. eapply lts_comR. exact l1. exact l2. auto with cgr.
+      -- eexists. split. eapply lts_comL. exact l1. exact l2. auto with cgr.
+      -- eexists. split. eapply lts_parR. eassumption. auto with cgr.
+      -- eexists. split. eapply lts_parL. eassumption. auto with cgr.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- inversion l2; subst. 
+         * eexists. split.
+           eapply lts_parL. eapply lts_comL. eassumption. eassumption. auto with cgr.
+         * eexists. split. eapply lts_comL. eapply lts_parL. eassumption. eassumption.
            apply cgr_par_assoc.
-      -- dependent destruction l1. 
-         * exists ((q2 ‖ p2) ‖ r). split. apply lts_parL. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption.
-           assumption. auto with cgr.
-         * exists ((q2 ‖ q) ‖ q0). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parL.
-           assumption. auto with cgr.
-      -- exists ((p2 ‖ q) ‖ r). split. apply lts_parL. apply lts_parL. assumption. auto with cgr.
-      -- dependent destruction l.
-         * exists ((p ‖ p2) ‖ q2). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption. assumption.
+      -- inversion l1; subst. 
+         * eexists. split. eapply lts_parL. eapply lts_comR. eassumption.
+           eassumption. auto with cgr.
+         * eexists. split. eapply lts_comR. eassumption. eapply lts_parL.
+           eassumption. auto with cgr.
+      -- eexists. split. eapply lts_parL. eapply lts_parL. eassumption. auto with cgr.
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+         * eexists. split. eapply lts_comL. eapply lts_parR. eassumption. eassumption.
            auto with cgr.
-         * exists ((p ‖ q2) ‖ p2). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parR.
-           assumption. auto with cgr.
-         * exists ((p ‖ p2) ‖ r). split. apply lts_parL. apply lts_parR. assumption. auto with cgr.
-         * exists ((p ‖ q) ‖ q2). split. apply lts_parR. assumption. auto with cgr.
-    + intros. dependent destruction l.
-      -- dependent destruction l1. 
-         * exists (p2 ‖ (q ‖ q2)). split.
-           eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption. apply lts_parR. assumption. auto with cgr.
-         * exists (p ‖ (q0 ‖ q2)). split. apply lts_parR. eapply lts_comL. instantiate (1:= v). instantiate (1:= c). assumption.
-           assumption. auto with cgr.
-      -- dependent destruction l2. 
-         * exists (p0 ‖ (q ‖ p2)). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). apply lts_parR. assumption.
-           assumption. auto with cgr.
-         * exists (p ‖ (q2 ‖ p2)). split. apply lts_parR.  eapply lts_comR. instantiate (1:= v). instantiate (1:= c). assumption.
-           assumption. auto with cgr.
-      -- dependent destruction l.
-         * exists (p2 ‖ (q2 ‖ r)). split. eapply lts_comL. instantiate (1:= v). instantiate (1:= c).  assumption. apply lts_parL.
-           assumption. auto with cgr.
-         * exists (q2 ‖ (p2 ‖ r)). split. eapply lts_comR. instantiate (1:= v). instantiate (1:= c). apply lts_parL. assumption.
-           assumption. auto with cgr.
-         * exists (p2 ‖ ( q ‖ r)). split. apply lts_parL. assumption. auto with cgr.
-         * exists (p ‖ (q2 ‖ r)). split. apply lts_parR. apply lts_parL. assumption. auto with cgr.
-      -- exists (p ‖ (q ‖ q2)). split. apply lts_parR.  auto. apply lts_parR. assumption. auto with cgr.
+         * eexists. split. eapply lts_comR. eassumption. eapply lts_parR.
+           eassumption. auto with cgr.
+         * eexists. split. eapply lts_parL. eapply lts_parR. eassumption. auto with cgr.
+         * eexists. split. eapply lts_parR. eassumption. auto with cgr.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- inversion l1; subst. 
+         * eexists. split.
+           eapply lts_comL. eassumption. eapply lts_parR. eassumption. auto with cgr.
+         * eexists. split. eapply lts_parR. eapply lts_comL. eassumption.
+           eassumption. auto with cgr.
+      -- inversion l2; subst. 
+         * eexists. split. eapply lts_comR. eapply lts_parR. eassumption.
+           eassumption. auto with cgr.
+         * eexists. split. eapply lts_parR.  eapply lts_comR. eassumption.
+           eassumption. auto with cgr.
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+         * eexists. split. eapply lts_comL. eassumption. eapply lts_parL.
+           eassumption. auto with cgr.
+         * eexists. split. eapply lts_comR. eapply lts_parL. eassumption.
+           eassumption. auto with cgr.
+         * eexists. split. eapply lts_parL. eassumption. auto with cgr.
+         * eexists. split. eapply lts_parR. eapply lts_parL. eassumption. auto with cgr.
+      -- eexists. split. eapply lts_parR.  auto. eapply lts_parR. eassumption. auto with cgr.
     + intros. inversion l.
-    + intros. inversion l; subst.
-      -- inversion H0.
-      -- inversion H0.
-    + intros. dependent destruction l.
-      -- dependent destruction l. exists ((ν (ν VarSwap_in_proc 0 p'))). split.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- inversion l.
+      -- inversion l.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. eexists. split.
          eapply lts_res_ext. eapply lts_res_ext. rewrite VarC_action_add_add in l. simpl in *.
          eapply VarSwap_swap_proc in l. rewrite VarC_action_add_add. simpl in *. eauto. eapply cgr_res_swap_rev.
-      -- dependent destruction l. exists ((ν (ν VarSwap_in_proc 0 p'))). split. eapply lts_res_tau.
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. eexists. split. eapply lts_res_tau.
          eapply lts_res_tau. eapply VarSwap_swap_tau_proc. eauto. eapply cgr_res_swap_rev.
-    + intros. dependent destruction l.
-      -- dependent destruction l. exists ((ν (ν VarSwap_in_proc 0 p'))). split.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. eexists. split.
          eapply lts_res_ext. eapply lts_res_ext. rewrite VarC_action_add_add. simpl.
          eapply VarSwap_swap_proc. rewrite VarSwap_in_proc_invol. rewrite VarC_action_add_add in l. simpl in *.
          eauto. eapply cgr_res_swap_rev.
-      -- dependent destruction l. exists ((ν (ν VarSwap_in_proc 0 p'))). split. eapply lts_res_tau.
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. eexists. split. eapply lts_res_tau.
          eapply lts_res_tau. eapply VarSwap_swap_tau_proc. rewrite VarSwap_in_proc_invol. eauto. eapply cgr_res_swap_rev.
-    + intros. dependent destruction l.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
       -- inversion l1; subst. simpl in *. eapply (NewVarC_preserves_transition 0) in l2.
          rewrite NewVarCzero_and_add_Channel in H1. simpl in *.
-         exists (ν (p' ‖ (NewVarC 0 q2))). split. eapply lts_res_tau.
+         eexists. split. eapply lts_res_tau.
          eapply lts_comL; eauto. eapply cgr_res_scope.
       -- inversion l2; subst. simpl in *. eapply (NewVarC_preserves_transition 0) in l1. simpl in *.
-         exists (ν (p' ‖ (NewVarC 0 p2))). split. eapply lts_res_tau.
+         eexists. split. eapply lts_res_tau.
          eapply lts_comR; eauto. eapply cgr_res_scope.
-      -- dependent destruction l.
-         * exists (ν (p' ‖ NewVarC 0 q)). split. eapply lts_res_ext. eapply lts_parL. eauto.
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+         * eexists. split. eapply lts_res_ext. eapply lts_parL. eauto.
            eapply cgr_res_scope.
-         * exists (ν (p' ‖ NewVarC 0 q)). split. eapply lts_res_tau. eapply lts_parL. eauto.
+         * eexists. split. eapply lts_res_tau. eapply lts_parL. eauto.
            eapply cgr_res_scope.
       -- exists (ν (p ‖ NewVarC 0 q2)). destruct 𝜆.
          * split. eapply lts_res_ext. eapply lts_parR. replace (NewVarC 0 q) with (NewVarCn 0 1 q); eauto.
@@ -811,85 +820,83 @@ Proof.
          * split. eapply lts_res_tau. eapply lts_parR. replace (NewVarC 0 q) with (NewVarCn 0 1 q); eauto.
            replace (NewVarC 0 q2) with (NewVarCn 0 1 q2); eauto. eapply NewVarC_preserves_reduction. eauto.
            eapply cgr_res_scope.
-    + intros. dependent destruction l.
-      -- dependent destruction l.
-         * exists (ν p2 ‖ q). split. eapply lts_parL. eapply lts_res_ext. eauto. eapply cgr_res_scope_rev.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+         * eexists. split. eapply lts_parL. eapply lts_res_ext. eauto. eapply cgr_res_scope_rev.
          * rewrite NewVarCzero_and_add in l. assert (exists q'2, q2 = NewVarC 0 q'2) as (q'2 & eq). 
            { eapply NewVarC_ext_proc in l as (μ' & p'' & eq1 & eq2).
              subst. exists p''. eauto. } subst.
            assert (lts q (ActExt μ) q'2). { eapply NewVarC_ext_proc_rev. eauto. }
-           exists (ν p ‖ q'2). split. eapply lts_parR. eauto.
+           eexists. split. eapply lts_parR. eauto.
            eapply cgr_res_scope_rev.
-      -- dependent destruction l.
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
          * assert (lts (NewVarC 0 q) ((c , v) ?) q2) ;eauto.
            eapply NewVarC_ext_proc in l2 as (μ' & p'' & eq1 & eq2); subst.
            rewrite eq1 in H. eapply NewVarC_in_ext_rev_Input in eq1 as (c' & v' & eq' & eq'' & eq'''); subst.
-           simpl in *. exists ((ν p2) ‖ p''). split. eapply lts_comL. eapply lts_res_ext. rewrite NewVarCzero_and_add.
+           simpl in *. eexists. split. eapply lts_comL. eapply lts_res_ext. rewrite NewVarCzero_and_add.
            eauto. eapply NewVarC_ext_proc_rev; eauto. eapply cgr_res_scope_rev.
          * assert (lts (NewVarC 0 q) ((c , v) !) p2) ;eauto.
            eapply NewVarC_ext_proc in l1 as (μ' & p'' & eq1 & eq2); subst.
            rewrite eq1 in H. eapply NewVarC_in_ext_rev_Output in eq1 as (c' & v' & eq' & eq'' & eq'''); subst.
-           simpl in *. exists ((ν q2) ‖ p''). split. eapply lts_comR. eapply NewVarC_ext_proc_rev; eauto.
+           simpl in *. eexists. split. eapply lts_comR. eapply NewVarC_ext_proc_rev; eauto.
            eapply lts_res_ext. rewrite NewVarCzero_and_add.
            eauto. eapply cgr_res_scope_rev.
-         * exists ((ν p2) ‖ q). split. eapply lts_parL. eapply lts_res_tau. eauto.
+         * eexists. split. eapply lts_parL. eapply lts_res_tau. eauto.
            eapply cgr_res_scope_rev.
          * assert (lts (NewVarC 0 q) τ q2); eauto. eapply NewVarC_tau_proc in l as (q'' & eq''); subst.
-           eapply NewVarC_tau_proc_rev in H. exists ((ν p) ‖ q''). split.
+           eapply NewVarC_tau_proc_rev in H. eexists. split.
            eapply lts_parR. eauto. eapply cgr_res_scope_rev.
-    + intros. exists q.  split. apply lts_choiceL.  assumption. reflexivity.
-    + intros. dependent destruction l.
-      -- exists q. split. assumption. reflexivity.
+    + intros. exists q.  split. eapply lts_choiceL.  eassumption. reflexivity.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- exists q. split. eassumption. reflexivity.
       -- inversion l.
-    + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceR. assumption. reflexivity.
-      -- exists q0. split. apply lts_choiceL. assumption. reflexivity.
-    + intros. dependent destruction l.
-      -- exists q0. split. apply lts_choiceL. apply lts_choiceL. assumption. reflexivity.
-      -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. apply lts_choiceR. assumption. reflexivity.
-         * exists q0. split. apply lts_choiceR. assumption. reflexivity.
-    + intros. dependent destruction l.
-      -- dependent destruction l.
-         * exists q0. split. apply lts_choiceL. assumption. reflexivity.
-         * exists q0. split. apply lts_choiceR. apply lts_choiceL. assumption. reflexivity.
-      -- exists q0. split. apply lts_choiceR. apply lts_choiceR. assumption. reflexivity.
-    + intros. dependent destruction l. exists (pr_subst x p (rec x • p)). split. apply lts_recursion. 
-      apply cgr_subst. assumption.
-    + intros. dependent destruction l. exists p.  split. apply lts_tau.
-      constructor. assumption.
-    + intros. dependent destruction l. exists (p^v). split. apply lts_input.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- exists q0. split. eapply lts_choiceR. eassumption. reflexivity.
+      -- exists q0. split. eapply lts_choiceL. eassumption. reflexivity.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- exists q0. split. eapply lts_choiceL. eapply lts_choiceL. eassumption. reflexivity.
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+         * exists q0. split. eapply lts_choiceL. eapply lts_choiceR. eassumption. reflexivity.
+         * exists q0. split. eapply lts_choiceR. eassumption. reflexivity.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+         * exists q0. split. eapply lts_choiceL. eassumption. reflexivity.
+         * exists q0. split. eapply lts_choiceR. eapply lts_choiceL. eassumption. reflexivity.
+      -- exists q0. split. eapply lts_choiceR. eapply lts_choiceR. eassumption. reflexivity.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. eexists. split. eapply lts_recursion. 
+      apply cgr_subst. eassumption.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. exists p.  split. eapply lts_tau.
+      constructor. eassumption.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ]. eexists. split. eapply lts_input.
       apply Congruence_Respects_Substitution. constructor. apply H.
-    + intros. dependent destruction l.
-      -- destruct (IHcgr_step eq_refl p2 ((c , v) ! )).  exact l1. destruct H0. exists (x ‖ q2).
-          split. eapply lts_comL. exact H0. assumption.
-          apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step eq_refl q2 ((c , v) ?)). assumption. destruct H0. exists (x ‖ p2).
-          split.  eapply lts_comR. exact l1. assumption.
-          apply cgr_fullpar. assumption. reflexivity.
-      -- destruct (IHcgr_step eq_refl p2 𝜆). assumption. destruct H0. eexists.
-          split. instantiate (1:= (x ‖ r)). apply lts_parL. assumption. apply cgr_fullpar.
-          assumption. reflexivity.
-      -- eexists. split. instantiate (1:= (p ‖ q2)). apply lts_parR.
-          assumption. apply cgr_par.
-          constructor. assumption.
-    + intros. inversion l; subst.
-      -- destruct (IHcgr_step eq_refl p' (ActExt (VarC_action_add 1 μ))) as (q'1 & l' & equiv'). eauto.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- destruct (IHcgr_step eq_refl _ _ l1). destruct H0. eexists. split. eapply lts_comL. exact H0. eassumption.
+          apply cgr_fullpar. eassumption. reflexivity.
+      -- destruct (IHcgr_step eq_refl _ _ l2). destruct H0. eexists. split.  eapply lts_comR. exact l1. eassumption.
+          apply cgr_fullpar. eassumption. reflexivity.
+      -- destruct (IHcgr_step eq_refl _ _ l). destruct H0. eexists.
+          split. eapply lts_parL. eassumption. apply cgr_fullpar.
+          eassumption. reflexivity.
+      -- eexists. split. eapply lts_parR.
+          eassumption. apply cgr_par.
+          constructor. eassumption.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- destruct (IHcgr_step eq_refl _ _ l) as (q'1 & l' & equiv').
          exists (ν q'1). split; eauto. eapply lts_res_ext. eauto. eapply cgr_res. eauto.
-      -- destruct (IHcgr_step eq_refl p' τ) as (q'1 & l' & equiv'). eauto. exists (ν q'1). split.
+      -- destruct (IHcgr_step eq_refl _ _ l) as (q'1 & l' & equiv'). eexists. split.
          eapply lts_res_tau. eauto. eapply cgr_res. eauto.
-    + intros. dependent destruction l.
-      -- eexists. split. instantiate (1:= p'). apply lts_ifOne; eauto. reflexivity.
-      -- destruct (IHcgr_step eq_refl q'0 𝜆) as (q'1 & l' & equiv'). eauto.
-         eexists. split. apply lts_ifZero; eauto. eauto.
-    + intros. dependent destruction l.
-      -- destruct (IHcgr_step eq_refl p'0 𝜆) as (p'1 & l' & equiv'). eauto.
-         eexists. split. apply lts_ifOne; eauto. eauto.
-      -- eexists. split. instantiate (1:= q'). apply lts_ifZero; eauto. reflexivity.
-    + intros. dependent destruction l.
-      -- destruct (IHcgr_step eq_refl q 𝜆). assumption. destruct H0. exists x. split. apply lts_choiceL. assumption. assumption.
-      -- eexists. instantiate (1:= q). split. apply lts_choiceR. assumption. reflexivity.
-  - intros. destruct (IHhcgr2 eq_refl q 𝜆). assumption. destruct (IHhcgr1 eq_refl x0 𝜆). destruct H. assumption. exists x1. split. destruct H0. assumption.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- eexists. split. eapply lts_ifOne; eauto. reflexivity.
+      -- destruct (IHcgr_step eq_refl _ _ l) as (q'1 & l' & equiv').
+         eexists. split. eapply lts_ifZero; eauto. eauto.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- destruct (IHcgr_step eq_refl _ _ l) as (p'1 & l' & equiv').
+         eexists. split. eapply lts_ifOne; eauto. eauto.
+      -- eexists. split. eapply lts_ifZero; eauto. reflexivity.
+    + intros. inversion l; subst; clear l; first [ match goal with h1 : lts _ (ActExt (ActOut _)) _, h2 : lts _ (ActExt (ActIn _)) _ |- _ => rename h1 into l1; rename h2 into l2 end | match goal with h : lts _ _ _ |- _ => rename h into l end | idtac ].
+      -- destruct (IHcgr_step eq_refl _ _ l). destruct H0. exists x. split. eapply lts_choiceL. eassumption. eassumption.
+      -- eexists. split. eapply lts_choiceR. eassumption. reflexivity.
+  - intros. destruct (IHhcgr2 q 𝜆). eassumption. destruct (IHhcgr1 x0 𝜆). destruct H. eassumption. exists x1. split. destruct H0. eassumption.
     destruct H. destruct H0. etransitivity; eauto.
 Qed.
 
@@ -1001,7 +1008,7 @@ Qed.
 Lemma Taus_Implies_Reduction : forall P Q, (lts P τ Q) -> (sts P Q).
 Proof. 
 intros.
-dependent induction H.
+remember (τ : ActIO TypeOfActions) as α eqn:hα in H. induction H; try discriminate; subst.
   - eapply sts_cong.  instantiate (1:=  ((𝛕 • P) + 𝟘)). apply cgr_choice_nil_rev. instantiate (1:=P).
     apply sts_tau. constructor. constructor.
   - apply sts_recursion.

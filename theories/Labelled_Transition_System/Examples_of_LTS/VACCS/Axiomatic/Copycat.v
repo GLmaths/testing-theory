@@ -71,7 +71,8 @@ Proof. intros c. constructor. constructor. Qed.
 Lemma must_i_ccat_r : forall c, g 𝟘 ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (ccat c).
 Proof.
   intros c e Hyp.
-  dependent induction Hyp.
+  remember (g 𝟘) as p0 eqn:hp in Hyp. revert hp.
+  induction Hyp; intros hp; subst.
   (* the induction hypotheses keep the names the proof expects *)
   all: try rename H1 into H2, H0 into H1, H into H0.
   - eapply m_now. eauto.
@@ -91,7 +92,7 @@ Proof.
            ++ inversion ex. inversion H; subst.
               ** inversion l.
               ** unfold lts_step in l; simpl in *.
-                 assert (lts e ((c , v) !) t') as HypTr; eauto.
+                 assert (lts t ((c , v) !) t') as HypTr; eauto.
                  eapply OBA_with_FB_Fifth_Axiom in HypTr
                     as [(t'' & HypTr' & t'0 & HypTr'0 & equiv')|(t'' & HypTr' & equiv'')]; eauto.
                  --- exists (c ! v • 𝟘 ∣ t''). eapply ParRight. eauto.
@@ -104,7 +105,7 @@ Proof.
            ++ intros. unfold lts_step in H2; simpl in *.
               destruct (decide (good_VACCS t'0)) as [happy | not_happy].
               ** now eapply m_now.
-              ** eapply (OBA_with_FB_First_Axiom e t' t'0) in H3
+              ** eapply (OBA_with_FB_First_Axiom t t' t'0) in H3
                     as (e1 & HypTr1 & e'1 & HypTr'1 & equiv); eauto.
                  eapply (@must_eq_client proc); eauto. assert (¬ good_VACCS e'1) as not_happy'.
                  { eapply unoutcome_preserved_by_eq; eauto. }
@@ -125,7 +126,8 @@ Lemma must_i_ccat_l : forall c, (ccat c) ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (g �
 Proof.
   intros c t Hyp.
   assert ((ccat c) must_pass t) as Mq; eauto.
-  dependent induction Hyp.
+  remember (ccat c) as p0 eqn:hp in Hyp. revert hp Mq.
+  induction Hyp; intros hp Mq; subst.
   - now eapply m_now.
   - inversion ex. inversion H2; subst.
     + inversion l.
@@ -200,7 +202,8 @@ Definition resp : proc := (cst a) ? • ((cst a) ! V • 𝟘).
 Lemma must_i_resp_below_ccat : resp ᴠᴀᴄᴄꜱ⊑ₘᵤₛₜᵢ (ccat (cst a)).
 Proof.
   intros t HypMust.
-  dependent induction HypMust.
+  remember resp as p0 eqn:hp in HypMust. revert hp.
+  induction HypMust; intros hp; subst.
   - now apply m_now.
   - eapply m_step; eauto.
     + inversion ex; subst. inversion H2; subst.

@@ -207,7 +207,7 @@ Definition gen_acc (G : gset PreAct) s := gen_test s (g (unroll_fw (elements G))
 
 Lemma unroll_a_eq_perm (xs ys : list PreAct) : xs ≡ₚ ys -> (g (unroll_fw xs)) ≡* (g (unroll_fw ys)).
 Proof.
-  intro hperm. dependent induction hperm; simpl; eauto with *.
+  intro hperm. induction hperm; simpl; eauto with *.
   - destruct x; eauto. eapply cgr_fullchoice; eauto with *.
   - destruct y ; destruct x.
     + etrans. symmetry. eapply cgr_choice_assoc. etrans. eapply cgr_fullchoice.

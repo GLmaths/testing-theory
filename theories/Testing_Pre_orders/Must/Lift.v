@@ -56,11 +56,11 @@ Qed.
 Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
   (p, ∅) ⤓ -> p ⤓.
 Proof.
-  intro ht.
-  dependent induction ht.
+  intro ht. remember (p, ∅) as pm eqn:hpm. revert p hpm.
+  induction ht as [pm _ IH]; intros p ->.
   destruct (decide (p ⟶)) as [accept | refuses].
   - eapply tstep. intros p' l'.
-    eapply H2;eauto. eapply ParLeft. eauto.
+    eapply (IH (p', ∅)); [eapply ParLeft; eauto | reflexivity].
   - eapply tstep. intros p' l'.
     exfalso. apply refuses, lts_performs_spec2. eauto.
 Qed.
@@ -79,12 +79,12 @@ Qed.
 Lemma conv_s_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) s: 
   (p, ∅) ⇓ s -> p ⇓ s.
 Proof.
-  intro ht.
-  dependent induction ht.
+  intro ht. remember (p, ∅) as pm eqn:hpm. revert p hpm.
+  induction ht as [pm hpm' | pm μ s hpm' hcont IH]; intros p ->.
   - constructor. eapply conv_lift;eauto.
   - constructor.
     + eapply conv_lift;eauto.
-    + intros. eapply H3;eauto.
+    + intros q w. eapply (IH (q, ∅)); [| reflexivity].
       eapply p_trace_implies_toFW_p_trace;eauto.
 Qed.
 
@@ -354,12 +354,12 @@ Lemma nf_must_fw_r
   e ⟿{m1} e' -> (p, m2) must_pass e -> (p, m1 ⊎ m2) must_pass e'.
 Proof.
   intro hwo. revert p m2.
-  dependent induction hwo; intros q m2 hm.
+  induction hwo; intros q m2 hm.
   rename p into e, q into p.
   - rewrite gmultiset_disj_union_left_id. eapply must_eq_client; eauto.
   - assert ((q, {[+ η +]} ⊎ m2) must_pass p2).
-    -- dependent induction hm; subst. 
-      + eapply m_now. exact (outcome_preserved_by_lts_non_blocking_action _ _ _ H2 H3 H10).
+    -- destruct hm as [hh | nh ex pt et com].
+      + eapply m_now. exact (outcome_preserved_by_lts_non_blocking_action _ _ _ H2 H3 hh).
       + assert (non_blocking η) as nb. eauto.
         edestruct (exists_dual η) as (μ & duo). symmetry in duo.
         eapply com; eauto.

@@ -1525,8 +1525,7 @@ intros. destruct d.
 - simpl. auto.
 - simpl. destruct (decide (k < S n)).
   * simpl. destruct (decide (S n = k)) as [e | e].
-    ** exfalso. dependent destruction l. eapply Nat.neq_succ_diag_l. exact e. 
-       rewrite <-e in l. lia.
+    ** exfalso. lia.
     ** destruct (decide (S n < k)). 
        *** lia.
        *** auto.
@@ -1543,7 +1542,7 @@ Qed.
 
 Lemma subst_NewVar_Equation_cancel : forall e k v, (subst_in_Equation k v (NewVar_in_Equation k e) = e).
 Proof.
-intros E. dependent induction E; intros.
+intros E. destruct E; intros.
 - simpl. rewrite subst_NewVar_Data_cancel. rewrite subst_NewVar_Data_cancel. eauto.
 Qed.
 
@@ -1586,7 +1585,7 @@ destruct p; intros.
     { apply Hp. simpl. auto with arith. }
     assert (subst_in_proc k v (NewVar k (g g2)) = g g2) as eq2.
     { apply Hp. simpl. auto with arith. }
-    dependent destruction eq1. dependent destruction eq2. rewrite x0, x. auto.
+    simpl in eq1, eq2. injection eq1 as eq1. injection eq2 as eq2. rewrite eq1, eq2. auto.
 Qed.
 
 Lemma Eval_simpl_true n v : Eval_Eq n (v == v) = Some true <-> v = v.
