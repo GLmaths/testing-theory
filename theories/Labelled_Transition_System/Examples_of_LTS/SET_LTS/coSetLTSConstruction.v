@@ -45,41 +45,6 @@ Context `{gLtsP : !gLts P Hp}.
 Context `{SA : !SyncAction Aproc Atest}.
 Context `{CFI : !coFiniteImagegLts P Atest}.
 
-(** ***** Successors of a whole set by one synchronising action *)
-
-Definition cowt_extaction_set_from_pset (ps : gset P) (η : Atest) : gset P :=
-  ⋃ (map (fun p => list_to_set (cowt_extaction_set p η)) (elements ps)).
-
-Definition cowt_extaction_set_from_pset_spec1 `{CP : Countable P}
-  (ps : gset P) (η : Atest) (qs : gset P) :=
-  ∀ q, q ∈ qs → ∃ p, p ∈ ps ∧ ∃ μ, sync μ η ∧ p ⟶[μ] q.
-
-Definition cowt_extaction_set_from_pset_spec2 `{CP : Countable P}
-  (ps : gset P) (η : Atest) (qs : gset P) :=
-  ∀ p q, p ∈ ps → (∃ μ, sync μ η ∧ p ⟶[μ] q) → q ∈ qs.
-
-Definition cowt_extaction_set_from_pset_spec `{CP : Countable P}
-  (ps : gset P) (η : Atest) (qs : gset P) :=
-  cowt_extaction_set_from_pset_spec1 ps η qs ∧ cowt_extaction_set_from_pset_spec2 ps η qs.
-
-Lemma cowt_extaction_set_from_pset_ispec (ps : gset P) (η : Atest) :
-  cowt_extaction_set_from_pset_spec ps η (cowt_extaction_set_from_pset ps η).
-Proof.
-  split.
-  - intros a mem.
-    eapply elem_of_union_list in mem as (xs & mem1 & mem2).
-    eapply list_elem_of_fmap in mem1 as (p & heq0 & mem1).
-    subst. eapply elem_of_list_to_set in mem2.
-    eapply cowt_extaction_set_spec in mem2.
-    exists p. split; eauto. eapply elem_of_elements. eauto.
-  - intros p q mem l.
-    eapply elem_of_union_list.
-    exists (list_to_set (cowt_extaction_set p η)).
-    split.
-    + eapply list_elem_of_fmap. exists p. split; eauto. eapply elem_of_elements. eauto.
-    + eapply elem_of_list_to_set. eapply cowt_extaction_set_spec. eauto.
-Qed.
-
 End coSetLTS.
 
 (** ***** [coToSET] itself *)
@@ -90,16 +55,16 @@ End coSetLTS.
   gLts (gset P) Ht.
 Next Obligation.
   intros. destruct X.
-  + exact (H0 = cowt_extaction_set_from_pset H μ ∧ H0 ≠ ∅).
-  + exact (H0 = cowt_tau_set_from_pset H ∧ H0 ≠ ∅).
+  + exact (H0 = colts_extaction_set_from_pset H μ ∧ H0 ≠ ∅).
+  + exact (H0 = colts_tau_set_from_pset H ∧ H0 ≠ ∅).
 Defined.
 Next Obligation.
   intros; simpl in *. unfold coToSET_obligation_1.
   destruct 𝜆.
-  - destruct (decide (b = cowt_extaction_set_from_pset a μ ∧ b ≠ ∅)).
+  - destruct (decide (b = colts_extaction_set_from_pset a μ ∧ b ≠ ∅)).
     + left. eauto.
     + right. eauto.
-  - destruct (decide (b = cowt_tau_set_from_pset a ∧ b ≠ ∅)).
+  - destruct (decide (b = colts_tau_set_from_pset a ∧ b ≠ ∅)).
     + left. eauto.
     + right. eauto.
 Qed.
@@ -111,24 +76,24 @@ Defined.
 Next Obligation.
   intros. simpl in *. unfold coToSET_obligation_3.
   destruct 𝜆 as [η |]; apply not_dec.
-  - destruct (cowt_extaction_set_from_pset_ispec p η) as (Espec1 & Espec2).
-    destruct (decide (cowt_extaction_set_from_pset p η = ∅)) as [Hemp | Hnemp].
+  - destruct (colts_extaction_set_from_pset_ispec p η) as (Espec1 & Espec2).
+    destruct (decide (colts_extaction_set_from_pset p η = ∅)) as [Hemp | Hnemp].
     + left. intros p' mem μ hsy.
       intros n.
       exfalso. eapply lts_performs_spec1 in n as (q & tr).
-      assert (q ∈ cowt_extaction_set_from_pset p η) by (eapply Espec2; eauto).
+      assert (q ∈ colts_extaction_set_from_pset p η) by (eapply Espec2; eauto).
       set_solver.
     + right. intro Hall.
       apply Hnemp. apply leibniz_equiv. intros q. split; [| set_solver].
       intros mem. eapply Espec1 in mem as (p' & memp & μ & hsy & tr).
       pose proof (Hall p' memp μ hsy) as memp'.
       exfalso. apply memp', (lts_performs_spec2 p' (ActExt μ) (exist _ q tr)).
-  - destruct (cowt_tau_set_from_pset_ispec p) as (Tspec1 & Tspec2).
-    destruct (decide (cowt_tau_set_from_pset p = ∅)) as [Hemp | Hnemp].
+  - destruct (colts_tau_set_from_pset_ispec p) as (Tspec1 & Tspec2).
+    destruct (decide (colts_tau_set_from_pset p = ∅)) as [Hemp | Hnemp].
     + left. intros p' mem.
       intros n.
       exfalso. eapply lts_performs_spec1 in n as (q & tr).
-      assert (q ∈ cowt_tau_set_from_pset p) by (eapply Tspec2; eauto).
+      assert (q ∈ colts_tau_set_from_pset p) by (eapply Tspec2; eauto).
       set_solver.
     + right. intro Hall.
       apply Hnemp. apply leibniz_equiv. intros q. split; [| set_solver].
@@ -140,22 +105,22 @@ Next Obligation.
   intros. simpl in *. unfold coToSET_obligation_3 in H.
   unfold coToSET_obligation_1.
   destruct 𝜆 as [η |].
-  - exists (cowt_extaction_set_from_pset p η). split; eauto.
+  - exists (colts_extaction_set_from_pset p η). split; eauto.
     intro Hemp.
     apply H. intros p' mem μ hsy.
     intros n.
     exfalso. eapply lts_performs_spec1 in n as (q & tr).
-    assert (q ∈ cowt_extaction_set_from_pset p η) as Hin.
-    { destruct (cowt_extaction_set_from_pset_ispec p η) as (_ & Hspec2).
+    assert (q ∈ colts_extaction_set_from_pset p η) as Hin.
+    { destruct (colts_extaction_set_from_pset_ispec p η) as (_ & Hspec2).
       eapply Hspec2; eauto. }
     set_solver.
-  - exists (cowt_tau_set_from_pset p). split; eauto.
+  - exists (colts_tau_set_from_pset p). split; eauto.
     intro Hemp.
     apply H. intros p' mem.
     intros n.
     exfalso. eapply lts_performs_spec1 in n as (q & tr).
-    assert (q ∈ cowt_tau_set_from_pset p) as Hin.
-    { destruct (cowt_tau_set_from_pset_ispec p) as (_ & Hspec2).
+    assert (q ∈ colts_tau_set_from_pset p) as Hin.
+    { destruct (colts_tau_set_from_pset_ispec p) as (_ & Hspec2).
       eapply Hspec2; eauto. }
     set_solver.
 Qed.
@@ -165,14 +130,14 @@ Next Obligation.
   - destruct H as (X' & Heq & Hne). subst.
     intro Hall.
     apply Hne. apply leibniz_equiv. intros q. split; [| set_solver].
-    intros mem. eapply cowt_extaction_set_from_pset_ispec in mem
+    intros mem. eapply colts_extaction_set_from_pset_ispec in mem
       as (p' & memp & μ & hsy & tr).
     pose proof (Hall p' memp μ hsy) as memp'.
     exfalso. apply memp', (lts_performs_spec2 p' (ActExt μ) (exist _ q tr)).
   - destruct H as (X' & Heq & Hne). subst.
     intro Hall.
     apply Hne. apply leibniz_equiv. intros q. split; [| set_solver].
-    intros mem. eapply cowt_tau_set_from_pset_ispec in mem as (p' & memp & tr).
+    intros mem. eapply colts_tau_set_from_pset_ispec in mem as (p' & memp & tr).
     eapply Hall in memp.
     exfalso. apply memp, (lts_performs_spec2 p' τ (exist _ q tr)).
 Qed.
@@ -193,7 +158,7 @@ Lemma co_empty_set_termination : (∅ : gset P) ⤓.
 Proof.
   constructor. intros X tr.
   destruct tr as (eq & not_empty).
-  subst. unfold cowt_tau_set_from_pset in not_empty.
+  subst. unfold colts_tau_set_from_pset in not_empty.
   rewrite elements_empty in not_empty. simpl in *.
   exfalso. set_solver.
 Qed.
@@ -206,38 +171,38 @@ Proof.
   intros ps2 hmx2.
   constructor. intros.
   rename H1 into hstep. rename H0 into IH. rename H into hter.
-  assert (hsub1 : q ⊆ cowt_tau_set_from_pset p ∪ cowt_tau_set_from_pset ps2).
+  assert (hsub1 : q ⊆ colts_tau_set_from_pset p ∪ colts_tau_set_from_pset ps2).
   { intros q' mem. destruct hstep as (eq1 & eq2). subst.
-    destruct (cowt_tau_set_from_pset_ispec (p ∪ ps2)) as (Hyp1 & Hyp2).
+    destruct (colts_tau_set_from_pset_ispec (p ∪ ps2)) as (Hyp1 & Hyp2).
     eapply Hyp1 in mem as (q0 & mem & l).
     eapply elem_of_union in mem. destruct mem.
-    eapply elem_of_union. left. eapply cowt_tau_set_from_pset_ispec; eassumption.
-    eapply elem_of_union. right. eapply cowt_tau_set_from_pset_ispec; eassumption. }
-  assert (hsub2 : cowt_tau_set_from_pset p ∪ cowt_tau_set_from_pset ps2 ⊆ q).
+    eapply elem_of_union. left. eapply colts_tau_set_from_pset_ispec; eassumption.
+    eapply elem_of_union. right. eapply colts_tau_set_from_pset_ispec; eassumption. }
+  assert (hsub2 : colts_tau_set_from_pset p ∪ colts_tau_set_from_pset ps2 ⊆ q).
   { intros a ha. eapply elem_of_union in ha.
     destruct ha as [ha | ha].
     ++ destruct hstep as (eq & not_empty). subst.
-       destruct (cowt_tau_set_from_pset_ispec p) as (Hyp1 & Hyp2).
+       destruct (colts_tau_set_from_pset_ispec p) as (Hyp1 & Hyp2).
        eapply Hyp1 in ha as (p'' & mem & tr).
        assert (hm2 : p'' ∈ p ∪ ps2) by set_solver.
-       eapply cowt_tau_set_from_pset_ispec; [exact hm2 | exact tr].
+       eapply colts_tau_set_from_pset_ispec; [exact hm2 | exact tr].
     ++ destruct hstep as (eq & not_empty). subst.
-       destruct (cowt_tau_set_from_pset_ispec ps2) as (Hyp1 & Hyp2).
+       destruct (colts_tau_set_from_pset_ispec ps2) as (Hyp1 & Hyp2).
        eapply Hyp1 in ha as (p'' & mem & tr).
        assert (hm2 : p'' ∈ p ∪ ps2) by set_solver.
-       eapply cowt_tau_set_from_pset_ispec; [exact hm2 | exact tr]. }
-  assert (eq : cowt_tau_set_from_pset p ∪ cowt_tau_set_from_pset ps2 ≡ q)
+       eapply colts_tau_set_from_pset_ispec; [exact hm2 | exact tr]. }
+  assert (eq : colts_tau_set_from_pset p ∪ colts_tau_set_from_pset ps2 ≡ q)
     by set_solver.
-  remember (cowt_tau_set_from_pset p) as Y_'.
-  remember (cowt_tau_set_from_pset ps2) as Z_'.
+  remember (colts_tau_set_from_pset p) as Y_'.
+  remember (colts_tau_set_from_pset ps2) as Z_'.
   destruct Y_' using set_ind_L.
   + destruct Z_' using set_ind_L.
     ++ exfalso. destruct hstep. set_solver.
-    ++ assert (h2 : cowt_tau_set_from_pset ps2 = q) by set_solver.
+    ++ assert (h2 : colts_tau_set_from_pset ps2 = q) by set_solver.
        inversion hmx2 as [hter2].
        eapply hter2. split; [by symmetry | destruct hstep as (_ & hne); exact hne].
   + destruct Z_' using set_ind_L.
-    ++ assert (h2 : cowt_tau_set_from_pset p = q) by set_solver.
+    ++ assert (h2 : colts_tau_set_from_pset p = q) by set_solver.
        eapply hter. split; [by symmetry | destruct hstep as (_ & hne); exact hne].
     ++ subst.
        replace q with (({[x]} ∪ X) ∪ ({[x0]} ∪ X0)) by set_solver.
@@ -263,10 +228,10 @@ Proof.
   intro hm. induction hm. rename H0 into IH.
   constructor. intros Y hstep.
   eapply co_termination_forall. intros p' mem.
-  destruct hstep as (eq & eq'). subst. unfold cowt_tau_set_from_pset in mem.
+  destruct hstep as (eq & eq'). subst. unfold colts_tau_set_from_pset in mem.
   rewrite elements_singleton in mem. simpl in *.
   eapply elem_of_union in mem as [mem | mem].
-  - eapply elem_of_list_to_set in mem. eapply cowt_tau_set_spec in mem.
+  - eapply elem_of_list_to_set in mem. eapply colts_tau_set_spec in mem.
     eapply IH. eauto.
   - set_solver.
 Qed.
@@ -278,8 +243,8 @@ Proof.
   intros p' mem. constructor.
   intros p'' tr.
   eapply IH.
-  + split; [reflexivity | eapply cowt_tau_set_from_pset_ispec in tr; set_solver].
-  + eapply cowt_tau_set_from_pset_ispec; set_solver.
+  + split; [reflexivity | eapply colts_tau_set_from_pset_ispec in tr; set_solver].
+  + eapply colts_tau_set_from_pset_ispec; set_solver.
 Qed.
 
 Lemma co_termination_if_termination_set (p : P) : ({[ p ]} : gset P) ⤓ → p ⤓.
@@ -336,11 +301,11 @@ Proof.
   + intros. exists q. split; [constructor | assumption].
   + intros q0 mem0. eapply IHHyp in mem0 as (p' & wk_tr & mem).
     destruct l as (eq & non_empty).
-    subst. eapply (cowt_tau_set_from_pset_ispec p) in mem as (p'' & mem' & tr).
+    subst. eapply (colts_tau_set_from_pset_ispec p) in mem as (p'' & mem' & tr).
     exists p''. split; eauto. eapply cowt_tau; eauto.
   + intros q0 mem0. eapply IHHyp in mem0 as (p' & wk_tr & mem).
     destruct l as (eq & non_empty).
-    subst. destruct (cowt_extaction_set_from_pset_ispec p μ) as (Hspec1 & _).
+    subst. destruct (colts_extaction_set_from_pset_ispec p μ) as (Hspec1 & _).
     eapply Hspec1 in mem as (p'' & mem' & μ' & hsy & tr).
     exists p''. split; eauto. eapply cowt_act; eauto.
 Qed.
@@ -368,21 +333,21 @@ Proof.
   intro wk_tr. revert ps.
   induction wk_tr.
   + intros. exists ps. split; [constructor | assumption].
-  + intros ps mem. eapply (cowt_tau_set_from_pset_ispec (SA := SA)) in l as eq; [| exact mem].
+  + intros ps mem. eapply (colts_tau_set_from_pset_ispec (SA := SA)) in l as eq; [| exact mem].
     eapply IHwk_tr in eq as (qs' & wk_tr' & mem').
     exists qs'. split; [| exact mem']. eapply wt_tau; [| exact wk_tr'].
     split; [reflexivity |].
-    intro himp. eapply (cowt_tau_set_from_pset_ispec (SA := SA)) in l as eq; [| exact mem].
+    intro himp. eapply (colts_tau_set_from_pset_ispec (SA := SA)) in l as eq; [| exact mem].
     rewrite himp in eq. inversion eq.
   + intros ps mem.
-    assert (hq : q ∈ (cowt_extaction_set_from_pset ps μ)).
-    { eapply cowt_extaction_set_from_pset_ispec; eauto. }
+    assert (hq : q ∈ (colts_extaction_set_from_pset ps μ)).
+    { eapply colts_extaction_set_from_pset_ispec; eauto. }
     eapply IHwk_tr in hq as (qs' & wk_tr' & mem').
     exists qs'. split; [| exact mem']. eapply wt_act; [| exact wk_tr'].
     split; [reflexivity |].
     intro himp.
-    assert (hq2 : q ∈ cowt_extaction_set_from_pset ps μ)
-      by (eapply cowt_extaction_set_from_pset_ispec; eauto).
+    assert (hq2 : q ∈ colts_extaction_set_from_pset ps μ)
+      by (eapply colts_extaction_set_from_pset_ispec; eauto).
     rewrite himp in hq2. inversion hq2.
 Qed.
 

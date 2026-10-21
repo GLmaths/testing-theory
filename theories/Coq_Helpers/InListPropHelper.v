@@ -85,4 +85,75 @@ Section in_list_finite.
       done.
   Defined.
 
+  Definition list_finite (l : list A) : (∀ x, P x ↔ x ∈ l) → Finite {x : A | P x}.
+  Proof.
+    intros Hl.
+    assert (Forall P (remove_dups l)) as Hels.
+    { apply Forall_forall. intros x hx. rewrite <- list_elem_of_In in hx.
+      apply Hl. eapply elem_of_remove_dups. exact hx. }
+    refine {| enum := Forall_to_sig (remove_dups l) Hels |}.
+    - apply Forall_to_sig_NoDup, NoDup_remove_dups.
+    - intros x.
+      edestruct (elem_of_Forall_to_sig_2 _ Hels (`x)) as [Hx' ?].
+      { apply elem_of_remove_dups, Hl, (proj2_sig x). }
+      replace x with (`x ↾ Hx'); last by apply (sig_eq_pi _).
+      done.
+  Defined.
+
 End in_list_finite.
+
+Section gset_finite.
+  Context `{Countable A}.
+
+  Definition gset_decision (S : gset A) (Q : A → Prop) (HS : ∀ x, x ∈ S ↔ Q x) :
+    ∀ x, Decision (Q x) :=
+    λ x, match decide (x ∈ S) with
+         | left h => left (proj1 (HS x) h)
+         | right h => right (λ hq, h (proj2 (HS x) hq))
+         end.
+
+  Lemma gset_decision_Forall (S : gset A) (Q : A → Prop) (HS : ∀ x, x ∈ S ↔ Q x) :
+    Forall (λ x, @bool_decide (Q x) (gset_decision S Q HS x)) (elements S).
+  Proof.
+    apply Forall_forall. intros x Hx%list_elem_of_In%elem_of_elements.
+    apply bool_decide_pack, HS, Hx.
+  Qed.
+
+  Definition gset_finite (S : gset A) (Q : A → Prop) (HS : ∀ x, x ∈ S ↔ Q x) :
+    Finite (@dsig A Q (gset_decision S Q HS)).
+  Proof.
+    refine {| enum := Forall_to_sig (elements S) (gset_decision_Forall S Q HS) |}.
+    - apply Forall_to_sig_NoDup, NoDup_elements.
+    - intros x.
+      edestruct (elem_of_Forall_to_sig_2 _ (gset_decision_Forall S Q HS) (`x)) as [Hx' ?].
+      { apply elem_of_elements, HS. exact (bool_decide_unpack _ (proj2_sig x)). }
+      destruct x as [x hx]. simpl in *.
+      replace hx with Hx' by apply proof_irrel.
+      done.
+  Defined.
+
+End gset_finite.
+
+Lemma elem_of_map_list {A B} (f : A -> B) (l : list A) (x : B) :
+  x ∈ map f l <-> exists y, x = f y /\ y ∈ l.
+Proof.
+  induction l as [|y l IH]; simpl.
+  - split; [intros h; inversion h | intros (z & _ & h); inversion h].
+  - rewrite elem_of_cons, IH. split.
+    + intros [-> | (z & -> & hz)]; [exists y | exists z]; rewrite elem_of_cons; auto.
+    + intros (z & -> & [-> | hz]%elem_of_cons); [left | right; exists z]; auto.
+Qed.
+
+Lemma elem_of_flat_map_list {A B} (F : A -> list B) (l : list A) (x : B) :
+  x ∈ flat_map F l <-> exists a, a ∈ l /\ x ∈ F a.
+Proof.
+  induction l as [|a l IH]; simpl.
+  - split; [intros h; inversion h | intros (b & h & _); inversion h].
+  - rewrite elem_of_app, IH. split.
+    + intros [h | (b & hb & h)]; [exists a | exists b]; rewrite elem_of_cons; auto.
+    + intros (b & [-> | hb]%elem_of_cons & h); [left | right; exists b]; auto.
+Qed.
+
+Lemma elem_of_list_prod_iff {A B} (l : list A) (k : list B) (x : A * B) :
+  x ∈ list_prod l k <-> x.1 ∈ l /\ x.2 ∈ k.
+Proof. rewrite <- list_cprod_list_prod. apply list_elem_of_cprod. Qed.

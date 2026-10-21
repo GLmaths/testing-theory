@@ -557,15 +557,15 @@ apply (tower (P := fun R => forall Y, R ({[omega]} : gset proc) Y)).
   + intros hX y mem hst. exfalso.
     eapply omega_diverges.
     eapply termination_if_termination_set_helper; eauto.
-    apply elem_of_singleton_2; reflexivity.
+    all: apply elem_of_singleton_2; reflexivity.
   + intros μ Y' X' hcnv hY' hX'. exfalso.
     eapply omega_diverges. eapply cnv_terminate.
     eapply convergence_forall_if_convergence_set; eauto.
-    apply elem_of_singleton_2; reflexivity.
+    all: apply elem_of_singleton_2; reflexivity.
   + intros hX. exfalso.
     eapply omega_diverges.
     eapply termination_if_termination_set_helper; eauto.
-    apply elem_of_singleton_2; reflexivity.
+    all: apply elem_of_singleton_2; reflexivity.
 Qed.
 
 End Omega.

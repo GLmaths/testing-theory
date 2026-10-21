@@ -356,6 +356,32 @@ Section PAL_Alt.
     - destruct (IHE1 hin) as [E1' h1]. exists (E1' │ E2). by eapply aar6.
   Qed.
 
+  Fixpoint all_recv_a (p : term) (ot : eot) : list term :=
+    match p with
+    | in( t ) • E =>
+        match eval_in_tuple t with
+        | Some it => if tuple_match_b it ot then [subst_term (build_subst it ot) E] else []
+        | None => []
+        end
+    | read( t ) • E =>
+        match eval_in_tuple t with
+        | Some it =>
+            if tuple_match_b it ot
+            then [(out( eot_to_tuple ot ) • 𝟘) │ subst_term (build_subst it ot) E] else []
+        | None => []
+        end
+    | IF be THEN E1 ELSE E2 =>
+        match eval_bexp be with
+        | Some true => all_recv_a E1 ot
+        | Some false => all_recv_a E2 ot
+        | None => []
+        end
+    | E1 □ E2 => all_recv_a E1 ot ++ all_recv_a E2 ot
+    | E1 ⌊⌊ E2 => map (λ E1', E1' │ E2) (all_recv_a E1 ot)
+    | E1 │ E2 => map (λ E1', E1' │ E2) (all_recv_a E1 ot) ++ map (λ E2', E1 │ E2') (all_recv_a E2 ot)
+    | _ => []
+    end.
+
   Fixpoint all_steps_a (p : term) (𝜆 : Labels PALA_Act) : list term :=
     match p with
     | 𝟘 => []
@@ -424,12 +450,12 @@ Section PAL_Alt.
             ++ map (λ E2', E1 ║ E2') (all_steps_a E2 τ)
             ++ flat_map (λ a,
                  flat_map (λ E1', map (λ E2', E1' │ E2')
-                                    (flat_map (λ l, all_steps_a E2 (ActExt (AIn l))) (labels_of a)))
+                                    (all_recv_a E2 a))
                    (all_steps_a E1 (ActExt (AOut a))))
                  (collect_out_a E1)
             ++ flat_map (λ a,
                  flat_map (λ E2', map (λ E1', E1' │ E2')
-                                    (flat_map (λ l, all_steps_a E1 (ActExt (AIn l))) (labels_of a)))
+                                    (all_recv_a E1 a))
                    (all_steps_a E2 (ActExt (AOut a))))
                  (collect_out_a E2)
         | ActExt _ => []
@@ -441,12 +467,12 @@ Section PAL_Alt.
             ++ map (λ E2', E1 │ E2') (all_steps_a E2 τ)
             ++ flat_map (λ a,
                  flat_map (λ E1', map (λ E2', E1' │ E2')
-                                    (flat_map (λ l, all_steps_a E2 (ActExt (AIn l))) (labels_of a)))
+                                    (all_recv_a E2 a))
                    (all_steps_a E1 (ActExt (AOut a))))
                  (collect_out_a E1)
             ++ flat_map (λ a,
                  flat_map (λ E2', map (λ E1', E1' │ E2')
-                                    (flat_map (λ l, all_steps_a E1 (ActExt (AIn l))) (labels_of a)))
+                                    (all_recv_a E1 a))
                    (all_steps_a E2 (ActExt (AOut a))))
                  (collect_out_a E2)
         | ActExt _ =>
@@ -454,6 +480,26 @@ Section PAL_Alt.
             ++ map (λ E2', E1 │ E2') (all_steps_a E2 𝜆)
         end
     end.
+
+  Lemma all_recv_a_spec p ot q :
+    In q (all_recv_a p ot) ↔ ∃ l, ltuple l = ot ∧ In q (all_steps_a p (ActExt (AIn l))).
+  Proof.
+    revert q. induction p; intros q; simpl.
+    all: try (split; [intros [] | intros (? & _ & [])]; done).
+    all: try (destruct (eval_bexp _) as [[]|];
+              [apply IHp1 | apply IHp2 | split; [intros [] | intros (? & _ & [])]]; done).
+    all: try (destruct (eval_in_tuple _) as [it|]; [| split; [intros [] | intros (? & _ & [])]];
+      split;
+      [ destruct (tuple_match_b it ot) eqn:hb; [| intros []];
+        apply tuple_match_b_correct in hb; destruct (label_of_spec it ot hb) as [h1 h2];
+        intros [<- | []]; exists (label_of it ot); split; [exact h2 |];
+        rewrite bool_decide_true by (symmetry; exact h1); rewrite h2; by left
+      | intros (l & <- & hin); case_bool_decide as he; [| destruct hin];
+        rewrite (proj2 (tuple_match_b_correct it (ltuple l)) (template_tuple_match it l he));
+        exact hin ]; done).
+    all: try setoid_rewrite in_app_iff; try setoid_rewrite in_map_iff;
+      setoid_rewrite IHp1; try setoid_rewrite IHp2; naive_solver.
+  Qed.
 
   Lemma all_steps_a_sound p 𝜆 q : In q (all_steps_a p 𝜆) → lts_step_a p 𝜆 q.
   Proof.
@@ -499,12 +545,12 @@ Section PAL_Alt.
         * apply in_flat_map in hin as (a & ha & hin2).
           apply in_flat_map in hin2 as (E1' & hE1' & hin3).
           apply in_map_iff in hin3 as (E2' & <- & hE2').
-          apply in_flat_map in hE2' as (l & hl & hE2'). apply labels_of_spec in hl.
+          apply all_recv_a_spec in hE2' as (l & hl & hE2').
           eapply (air12 _ _ (AOut a) (AIn l)); [by apply IHp1 | by apply IHp2 | exact hl].
         * apply in_flat_map in hin as (a & ha & hin2).
           apply in_flat_map in hin2 as (E2' & hE2' & hin3).
           apply in_map_iff in hin3 as (E1' & <- & hE1').
-          apply in_flat_map in hE1' as (l & hl & hE1'). apply labels_of_spec in hl.
+          apply all_recv_a_spec in hE1' as (l & hl & hE1').
           eapply (air12 _ _ (AIn l) (AOut a)); [by apply IHp1 | by apply IHp2 | exact hl].
     - destruct 𝜆 as [μ|]; apply in_map_iff in hin as (E1' & <- & hin).
       + by apply aar6, IHp1.
@@ -517,12 +563,12 @@ Section PAL_Alt.
       + apply in_flat_map in hin as (a & ha & hin2).
         apply in_flat_map in hin2 as (E1' & hE1' & hin3).
         apply in_map_iff in hin3 as (E2' & <- & hE2').
-        apply in_flat_map in hE2' as (l & hl & hE2'). apply labels_of_spec in hl.
+        apply all_recv_a_spec in hE2' as (l & hl & hE2').
         eapply (air13 _ _ (AOut a) (AIn l)); [by apply IHp1 | by apply IHp2 | exact hl].
       + apply in_flat_map in hin as (a & ha & hin2).
         apply in_flat_map in hin2 as (E2' & hE2' & hin3).
         apply in_map_iff in hin3 as (E1' & <- & hE1').
-        apply in_flat_map in hE1' as (l & hl & hE1'). apply labels_of_spec in hl.
+        apply all_recv_a_spec in hE1' as (l & hl & hE1').
         eapply (air13 _ _ (AIn l) (AOut a)); [by apply IHp1 | by apply IHp2 | exact hl].
     - contradiction.
     - destruct 𝜆 as [μ|]; [contradiction |]. destruct hin as [<- | []]. apply air2.
@@ -567,26 +613,26 @@ Section PAL_Alt.
         apply in_flat_map. exists a2. split; [done |].
         apply in_flat_map. exists E2'. split; [exact IHlts_step_a2 |].
         apply in_map_iff. exists E1'. split; [done |].
-        apply in_flat_map. exists l1. split; [by apply labels_of_spec | exact IHlts_step_a1].
+        apply all_recv_a_spec. exists l1. split; [done | exact IHlts_step_a1].
       + pose proof (out_step_in_collect_out_a E1 a1 E1' ltac:(assumption)) as ha.
         apply in_or_app; right; apply in_or_app; right; apply in_or_app; left.
         apply in_flat_map. exists a1. split; [done |].
         apply in_flat_map. exists E1'. split; [exact IHlts_step_a1 |].
         apply in_map_iff. exists E2'. split; [done |].
-        apply in_flat_map. exists l2. split; [by apply labels_of_spec | exact IHlts_step_a2].
+        apply all_recv_a_spec. exists l2. split; [done | exact IHlts_step_a2].
     - destruct μ1 as [l1|a1], μ2 as [l2|a2]; simpl in *; try contradiction.
       + pose proof (out_step_in_collect_out_a E2 a2 E2' ltac:(assumption)) as ha.
         apply in_or_app; right; apply in_or_app; right; apply in_or_app; right.
         apply in_flat_map. exists a2. split; [done |].
         apply in_flat_map. exists E2'. split; [exact IHlts_step_a2 |].
         apply in_map_iff. exists E1'. split; [done |].
-        apply in_flat_map. exists l1. split; [by apply labels_of_spec | exact IHlts_step_a1].
+        apply all_recv_a_spec. exists l1. split; [done | exact IHlts_step_a1].
       + pose proof (out_step_in_collect_out_a E1 a1 E1' ltac:(assumption)) as ha.
         apply in_or_app; right; apply in_or_app; right; apply in_or_app; left.
         apply in_flat_map. exists a1. split; [done |].
         apply in_flat_map. exists E1'. split; [exact IHlts_step_a1 |].
         apply in_map_iff. exists E2'. split; [done |].
-        apply in_flat_map. exists l2. split; [by apply labels_of_spec | exact IHlts_step_a2].
+        apply all_recv_a_spec. exists l2. split; [done | exact IHlts_step_a2].
   Qed.
 
   (* ** [gLts] instance *)
@@ -627,19 +673,27 @@ Section PAL_Alt.
     unshelve econstructor.
     - exact term_countable.
     - intros p 𝜆. unfold dsig.
-      eapply (in_list_finite (all_steps_a p 𝜆)).
-      intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply all_steps_a_complete.
+      apply (list_finite (all_steps_a p 𝜆)).
+      intros q. rewrite bool_decide_spec, list_elem_of_In.
+      split; [apply all_steps_a_complete | apply all_steps_a_sound].
   Defined.
 
   Definition co_next_a (p : term) (𝜆 : PALA_Act) : list term :=
-    flat_map (λ 𝜆', all_steps_a p (ActExt 𝜆')) (co_labels 𝜆).
+    match 𝜆 with
+    | AIn l => all_steps_a p (ActExt (AOut (ltuple l)))
+    | AOut ot => all_recv_a p ot
+    end.
 
   Lemma co_next_a_spec p 𝜆 q :
     In q (co_next_a p 𝜆) ↔ ∃ 𝜆', PALA_dual 𝜆' 𝜆 ∧ lts_step_a p (ActExt 𝜆') q.
   Proof.
-    unfold co_next_a. rewrite in_flat_map. split.
-    - intros (𝜆' & h𝜆' & hq). exists 𝜆'. split; [by apply co_labels_spec | by apply all_steps_a_sound].
-    - intros (𝜆' & hd & hs). exists 𝜆'. split; [by apply co_labels_spec | by apply all_steps_a_complete].
+    destruct 𝜆 as [l|ot]; simpl.
+    - split.
+      + intros hin. exists (AOut (ltuple l)). split; [reflexivity | by apply all_steps_a_sound].
+      + intros ([l'|ot'] & hd & hs); simpl in hd; [done |]. subst. by apply all_steps_a_complete.
+    - rewrite all_recv_a_spec. split.
+      + intros (l & hl & hin). exists (AIn l). split; [exact hl | by apply all_steps_a_sound].
+      + intros ([l|ot'] & hd & hs); simpl in hd; [| done]. exists l. split; [exact hd | by apply all_steps_a_complete].
   Qed.
 
   #[global] Instance PALA_co_next_states_decidable p 𝜆 q :
@@ -655,11 +709,12 @@ Section PAL_Alt.
     unshelve econstructor.
     - exact term_countable.
     - intros p. unfold dsig.
-      eapply (in_list_finite (all_steps_a p τ)).
-      intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply all_steps_a_complete.
+      apply (list_finite (all_steps_a p τ)).
+      intros q. rewrite bool_decide_spec, list_elem_of_In.
+      split; [apply all_steps_a_complete | apply all_steps_a_sound].
     - intros p 𝜆. unfold dsig.
-      eapply (in_list_finite (co_next_a p 𝜆)).
-      intros q hq%bool_decide_unpack. apply list_elem_of_In. by apply co_next_a_spec.
+      apply (list_finite (co_next_a p 𝜆)).
+      intros q. rewrite bool_decide_spec, list_elem_of_In. symmetry. apply co_next_a_spec.
   Defined.
 
   (* ** [Prop_of_Inter term term PALA_Act PALA_Act PALA_dual] *)

@@ -109,8 +109,8 @@ Proof.
     + constructor ;eauto.
     + eapply mx_step_alt_co; eauto.
       * intros. destruct H2;eauto. subst.
-        assert (lts_tau_set_from_pset_spec1 X (cowt_tau_set_from_pset X)).
-        { eapply cowt_tau_set_from_pset_ispec. }
+        assert (lts_tau_set_from_pset_spec1 X (colts_tau_set_from_pset X)).
+        { eapply colts_tau_set_from_pset_ispec. }
         eauto.
       * intros t' μ X' hle hws.
         eapply (H1 t' (co μ) μ X'); eauto.
@@ -125,11 +125,11 @@ Proof.
   - intro hmx. induction hmx; eauto.
     + constructor ;eauto.
     + eapply mx_step; eauto.
-      * intros. assert (X' ⊆ cowt_tau_set_from_pset X).
+      * intros. assert (X' ⊆ colts_tau_set_from_pset X).
         { intros p' mem'. eapply H2 in mem' as (p & mem & tr).
-          eapply cowt_tau_set_from_pset_ispec;eauto. }
-        assert (cowt_tau_set_from_pset X  ≠ ∅ ) by set_solver.
-        assert (X ⟶ cowt_tau_set_from_pset X).
+          eapply colts_tau_set_from_pset_ispec;eauto. }
+        assert (colts_tau_set_from_pset X  ≠ ∅ ) by set_solver.
+        assert (X ⟶ colts_tau_set_from_pset X).
         { split ;eauto. }
         eapply H in H6. eapply mx_sub;eauto.
       * intros t' μ1 μ2 X' duo hle hws hneq.

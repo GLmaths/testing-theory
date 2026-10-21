@@ -90,11 +90,11 @@ Proof.
   - intros qs sub.
     apply mx_step; eauto with mdb.
     + intros qs' hs hneq_nil.
-      destruct (cowt_tau_set_from_pset_ispec X) as (Hspec1 & Hspec2).
+      destruct (colts_tau_set_from_pset_ispec X) as (Hspec1 & Hspec2).
       eapply H; eauto with mdb.
       ++ destruct (set_choose_or_empty qs') as [(q' & l'%hs) | hemp].
          +++ intro eq_nil. destruct l' as (q & mem%sub & l).
-             assert (hin : q' ∈ cowt_tau_set_from_pset X)
+             assert (hin : q' ∈ colts_tau_set_from_pset X)
                by (eapply Hspec2; [exact mem | exact l]).
              set_solver.
          +++ set_solver.
@@ -185,11 +185,11 @@ Proof.
     inversion hmx2; subst. contradiction.
     eapply ex0; eassumption.
   - intros X' hs hne.
-    assert (hsub : X' ⊆ cowt_tau_set_from_pset X ∪ cowt_tau_set_from_pset ps2).
+    assert (hsub : X' ⊆ colts_tau_set_from_pset X ∪ colts_tau_set_from_pset ps2).
     { intros q mem. eapply hs in mem as (q0 & mem & l).
       eapply elem_of_union in mem. destruct mem.
-      eapply elem_of_union. left. eapply cowt_tau_set_from_pset_ispec; eassumption.
-      eapply elem_of_union. right. eapply cowt_tau_set_from_pset_ispec; eassumption. }
+      eapply elem_of_union. left. eapply colts_tau_set_from_pset_ispec; eassumption.
+      eapply elem_of_union. right. eapply colts_tau_set_from_pset_ispec; eassumption. }
     eapply lem_dec in hsub as (Y' & Z' & Y_spec' & Z_spec' & eq).
     remember Y' as Y_'. remember Z' as Z_'.
     destruct Y_' using set_ind_L.
@@ -199,21 +199,21 @@ Proof.
          assert (hZ : Z' = X') by set_solver. subst.
          inversion hmx2 as [hh | nh2 ex2 pt2 et2 com2]; subst; [contradiction |].
          eapply pt2; [| exact hne].
-         intros q mem. eapply cowt_tau_set_from_pset_ispec. set_solver.
+         intros q mem. eapply colts_tau_set_from_pset_ispec. set_solver.
     + destruct Z_' using set_ind_L.
       ++ assert (hY : Y' = X') by set_solver.
          assert (hmX : X must_pass_x t) by (apply mx_step; assumption).
          inversion hmX as [hh | nh1 ex1 pt1 et1 com1]; subst; [contradiction |].
          eapply pt1; [| exact hne].
-         intros q mem. eapply cowt_tau_set_from_pset_ispec. set_solver.
+         intros q mem. eapply colts_tau_set_from_pset_ispec. set_solver.
       ++ subst.
          replace X' with (({[x]} ∪ X0) ∪ ({[x0]} ∪ X1)) by set_solver.
          eapply H.
-         +++ intros q mem. eapply cowt_tau_set_from_pset_ispec. set_solver.
+         +++ intros q mem. eapply colts_tau_set_from_pset_ispec. set_solver.
          +++ set_solver.
          +++ inversion hmx2 as [hh | nh2 ex2 pt2 et2 com2]; subst; [contradiction |].
              eapply pt2; [| set_solver].
-             intros q mem. eapply cowt_tau_set_from_pset_ispec. set_solver.
+             intros q mem. eapply colts_tau_set_from_pset_ispec. set_solver.
   - intros t' l. eapply H0; [exact l |].
     inversion hmx2 as [hh | nh2 ex2 pt2 et2 com2]; subst; [contradiction | by eapply et2].
   - intros t' η ps' l ps'_spec neq_nil.
@@ -384,11 +384,11 @@ Proof.
     + eassumption.
     + by eapply ex.
     + intros p' hl.
-      set (X' := list_to_set (cowt_tau_set p) : gset P).
+      set (X' := list_to_set (colts_tau_set p) : gset P).
       assert (hin : p' ∈ X').
-      { eapply cowt_tau_set_spec, elem_of_list_to_set in hl; eauto. }
+      { eapply colts_tau_set_spec, elem_of_list_to_set in hl; eauto. }
       eapply (H X'); eauto.
-      intros p0 mem0%elem_of_list_to_set%cowt_tau_set_spec. set_solver.
+      intros p0 mem0%elem_of_list_to_set%colts_tau_set_spec. set_solver.
       set_solver.
     + intros t' hlt. eapply H0; [exact hlt | exact mem].
     + intros p' e' μ η hsy hlp hle.
@@ -890,13 +890,13 @@ Proof.
       - exact nh.
       - eapply stability_nbhvleqtwo_co; [exact nh | exact hmX | exact hb2].
       - intros Y0' hspec1 hne.
-        destruct (cowt_tau_set_from_pset_ispec Y0) as (Y0full_spec1 & Y0full_spec2).
-        assert (Hsub0 : Y0' ⊆ cowt_tau_set_from_pset Y0).
+        destruct (colts_tau_set_from_pset_ispec Y0) as (Y0full_spec1 & Y0full_spec2).
+        assert (Hsub0 : Y0' ⊆ colts_tau_set_from_pset Y0).
         { intros q memq. destruct (hspec1 q memq) as (p & memp & lstep).
           eapply Y0full_spec2; eauto. }
-        destruct (decide (cowt_tau_set_from_pset Y0 = ∅)) as [Hemp | Hnemp].
+        destruct (decide (colts_tau_set_from_pset Y0 = ∅)) as [Hemp | Hnemp].
         + exfalso. set_solver.
-        + assert (hstep0 : Y0 ⟶ cowt_tau_set_from_pset Y0)
+        + assert (hstep0 : Y0 ⟶ colts_tau_set_from_pset Y0)
             by (split; [reflexivity | exact Hnemp]).
           specialize (IHY0 _ hstep0).
           destruct (bhvx_preserved_by_reduction_co ρ[𝔸] X Y0 _ Y0full_spec1

@@ -590,7 +590,7 @@ Qed.
 Lemma Equation_dec : forall (x y : Equation ValueData) , {x = y} + {x <> y}.
 Proof.
 decide equality. apply Data_dec. apply Data_dec.
-Qed.
+Defined.
 
 #[global] Instance equation_dec : EqDecision (Equation ValueData). exact Equation_dec. Defined.
 
@@ -615,7 +615,7 @@ Qed.
 Proof.
   refine (inj_countable encode_equation decode_equation _).
   apply encode_decide_equations.
-Qed.
+Defined.
 
 Lemma TypeOfActions_dec : forall (x y : TypeOfActions) , {x = y} + {x <> y}.
 Proof.
@@ -636,7 +636,7 @@ decide equality.
 * destruct (decide(v = v0));eauto.
 * destruct (decide(c = c0));eauto.
 * decide equality. destruct (decide(c = c0));eauto.
-Qed.
+Defined.
 
 #[global] Instance proc_eqdecision : EqDecision proc. by exact proc_dec. Defined.
 
@@ -661,7 +661,7 @@ Qed.
 Proof.
   eapply inj_countable with encode_TypeOfActions decode_TypeOfActions. 
   intro. apply encode_decide_TypeOfActions.
-Qed.
+Defined.
 
 Definition encode_ExtAct_TypeOfActions (a : ExtAct TypeOfActions) : 
     gen_tree (nat + (ChannelData + ValueData)) :=
@@ -757,7 +757,7 @@ Qed.
 #[global] Instance proc_count : Countable proc.
 refine (inj_countable' encode_proc decode_proc _).
   apply encode_decide_procs.
-Qed.
+Defined.
 
 Fixpoint moutputs_of (k : nat) p : gmultiset TypeOfActions := 
 match p with
@@ -1022,8 +1022,8 @@ Lemma outputs_of_spec2 p a : a ∈ outputs_of p -> {q | lts p (ActExt (ActOut a)
 Proof.
   intros mem.
   eapply gmultiset_elem_of_dom in mem.
-  eapply mo_spec_l in mem.
-  firstorder.
+  eapply mo_spec_l in mem as (e' & l & _).
+  exists (Ѵ 0 e'). exact l.
 Qed.
 
 Lemma outputs_of_spec1_raw (e : proc) (a : TypeOfActions) k : {e' | lts (Ѵ  k e) (ActExt (ActOut a)) (Ѵ  k e')} 
@@ -1059,270 +1059,215 @@ Proof.
   firstorder.
 Qed.
 
-Fixpoint lts_set_output (p : proc) (a : TypeOfActions) : gset proc:=
-match p with
-  | p1 ‖ p2 => 
-      let ps1 := lts_set_output p1 a in
-      let ps2 := lts_set_output p2 a in
-      (set_map (fun p => p ‖ p2) ps1) ∪ (set_map (fun p => p1 ‖ p) ps2)
-  | pr_var _ => ∅
-  | rec _ • _ => ∅
-  | If E Then A Else B => match (Eval_Eq 0 E) with 
-                          | Some true => lts_set_output A a
-                          | Some false => lts_set_output B a
-                          | None => ∅
+Fixpoint lts_list_output (p : proc) (a : TypeOfActions) : list proc :=
+  match p with
+  | p1 ‖ p2 => map (fun p => p ‖ p2) (lts_list_output p1 a) ++ map (fun p => p1 ‖ p) (lts_list_output p2 a)
+  | If E Then A Else B => match (Eval_Eq 0 E) with
+                          | Some true => lts_list_output A a
+                          | Some false => lts_list_output B a
+                          | None => []
                           end
-  | c ! v • 𝟘 => if decide(a = (c , v)) then {[ (g 𝟘) ]} else ∅
-  | ν p => (set_map (fun q => ν q) (lts_set_output p (VarC_TypeOfActions_add 1 a))) 
-  | g _  => ∅
-end.
+  | c ! v • 𝟘 => if decide (a = (c , v)) then [g 𝟘] else []
+  | ν p => map (fun q => ν q) (lts_list_output p (VarC_TypeOfActions_add 1 a))
+  | _ => []
+  end.
 
-Fixpoint lts_set_input_g (g : gproc) (a : TypeOfActions) : gset proc :=
+Fixpoint lts_list_input_g (g : gproc) (a : TypeOfActions) : list proc :=
   match g with
-  | c ? • p => if decide(ChannelData_of a = c) then {[ p^(ValueData_of a) ]} else ∅
-  | g1 + g2 => lts_set_input_g g1 a ∪ lts_set_input_g g2 a
-  | ① => ∅
-  | 𝟘 => ∅
-  | 𝛕 • p => ∅
+  | c ? • p => if decide (ChannelData_of a = c) then [p^(ValueData_of a)] else []
+  | g1 + g2 => lts_list_input_g g1 a ++ lts_list_input_g g2 a
+  | _ => []
   end.
 
-Fixpoint lts_set_input (p : proc) (a : TypeOfActions) : gset proc :=
-match p with
-  | p1 ‖ p2 =>
-      let ps1 := lts_set_input p1 a in
-      let ps2 := lts_set_input p2 a in
-      (set_map (fun p => p ‖ p2) ps1) ∪ (set_map (fun p => p1 ‖ p) ps2)
-  | pr_var _ => ∅
-  | rec _ • _ => ∅ 
-  | c ! v • 𝟘 => ∅
-  | If E Then A Else B => match (Eval_Eq 0 E) with 
-                          | Some true => lts_set_input A a
-                          | Some false => lts_set_input B a
-                          | None => ∅
+Fixpoint lts_list_input (p : proc) (a : TypeOfActions) : list proc :=
+  match p with
+  | p1 ‖ p2 => map (fun p => p ‖ p2) (lts_list_input p1 a) ++ map (fun p => p1 ‖ p) (lts_list_input p2 a)
+  | If E Then A Else B => match (Eval_Eq 0 E) with
+                          | Some true => lts_list_input A a
+                          | Some false => lts_list_input B a
+                          | None => []
                           end
-  | ν p => set_map (fun q => ν q) (lts_set_input p (VarC_TypeOfActions_add 1 a)) 
-  | g gp => lts_set_input_g gp a  
+  | ν p => map (fun q => ν q) (lts_list_input p (VarC_TypeOfActions_add 1 a))
+  | g gp => lts_list_input_g gp a
+  | _ => []
   end.
 
-Fixpoint lts_set_tau_g (gp : gproc) : gset proc :=
-match gp with
-  | c ? • p => ∅
-  | ① => ∅
-  | 𝟘 => ∅
-  | 𝛕 • p => {[ p ]}
-  | gp1 + gp2 => lts_set_tau_g gp1 ∪ lts_set_tau_g gp2
-end.
+Fixpoint lts_list_tau_g (gp : gproc) : list proc :=
+  match gp with
+  | 𝛕 • p => [p]
+  | gp1 + gp2 => lts_list_tau_g gp1 ++ lts_list_tau_g gp2
+  | _ => []
+  end.
 
-Fixpoint lts_set_tau (p : proc) : gset proc :=
-match p with
+Fixpoint lts_list_tau (p : proc) : list proc :=
+  match p with
   | p1 ‖ p2 =>
-      let ps1_tau : gset proc := set_map (fun p => p ‖ p2) (lts_set_tau p1) in
-      let ps2_tau : gset proc := set_map (fun p => p1 ‖ p) (lts_set_tau p2) in
-      let ps_tau := ps1_tau ∪ ps2_tau in
-      let acts1 := outputs_of p1 in
-      let acts2 := outputs_of p2 in
-      let ps1 :=
-        flat_map (fun a =>
-                    map
-                      (fun '(p1 , p2) => p1 ‖ p2)
-                      (list_prod (elements $ lts_set_output p1 a) (elements $ lts_set_input p2 a)))
-        (elements $ outputs_of p1) in
-      let ps2 :=
-        flat_map
-          (fun a =>
-             map
-               (fun '(p1 , p2) => p1 ‖ p2)
-               (list_prod (elements $ lts_set_input p1 a) (elements $ lts_set_output p2 a)))
-          (elements $ outputs_of p2)
-      in
-      ps_tau ∪ list_to_set ps1 ∪ list_to_set ps2
-  | c ! v • 𝟘 => ∅
-  | pr_var _ => ∅
-  | rec x • p => {[ pr_subst x p (rec x • p) ]}
-  | If C Then A Else B => match (Eval_Eq 0 C) with 
-                          | Some true => lts_set_tau A
-                          | Some false => lts_set_tau B
-                          | None => ∅
+      map (fun p => p ‖ p2) (lts_list_tau p1) ++ map (fun p => p1 ‖ p) (lts_list_tau p2) ++
+      flat_map (fun a => map (fun '(q1 , q2) => q1 ‖ q2)
+                           (list_prod (lts_list_output p1 a) (lts_list_input p2 a)))
+        (elements (outputs_of p1)) ++
+      flat_map (fun a => map (fun '(q1 , q2) => q1 ‖ q2)
+                           (list_prod (lts_list_input p1 a) (lts_list_output p2 a)))
+        (elements (outputs_of p2))
+  | rec x • p => [pr_subst x p (rec x • p)]
+  | If C Then A Else B => match (Eval_Eq 0 C) with
+                          | Some true => lts_list_tau A
+                          | Some false => lts_list_tau B
+                          | None => []
                           end
-  | ν p => set_map (fun q => ν q) (lts_set_tau p)
-  | g gp => lts_set_tau_g gp
-end.
+  | ν p => map (fun q => ν q) (lts_list_tau p)
+  | g gp => lts_list_tau_g gp
+  | _ => []
+  end.
 
-Lemma lts_set_output_spec0 p a q : q ∈ lts_set_output p a -> lts p (ActExt (ActOut a)) q.
+Lemma lts_list_output_spec0 p : forall a q, q ∈ lts_list_output p a -> lts p (ActExt (ActOut a)) q.
 Proof.
-  intro mem. revert a q mem.
-  induction p; intros a q mem; simpl in mem; try now inversion mem.
-  - eapply elem_of_union in mem as [mem | mem]. 
-    * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
-    apply lts_parL. apply IHp1. rewrite elem_of_elements in mem. set_solver.
-    * eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
-    apply lts_parR. apply IHp2. rewrite elem_of_elements in mem. exact mem.
-  - case_eq (Eval_Eq 0 e).
-    * intros. destruct b.
-      ** rewrite H in mem. eapply lts_ifOne; eauto.
-      ** rewrite H in mem. eapply lts_ifZero; eauto.
-    * intros. rewrite H in mem. exfalso. inversion mem.
-  -  case (TypeOfActions_dec a (c , v)) in mem.
-    + rewrite e. rewrite e in mem. rewrite decide_True in mem;eauto.
-      assert (q = (g 𝟘)). set_solver.
-      rewrite H. apply lts_output.
-    + destruct (decide (a = (c , v))). exfalso. apply n. assumption. set_solver.
-  - eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
-    apply lts_res_ext. rewrite elem_of_elements in mem. eapply IHp in mem. simpl. destruct a. eauto.
+  induction p; intros a q mem; simpl in mem.
+  - apply elem_of_app in mem as [mem | mem]; apply elem_of_map_list in mem as (q' & -> & mem).
+    + apply lts_parL. eauto.
+    + apply lts_parR. eauto.
+  - inversion mem.
+  - inversion mem.
+  - case_eq (Eval_Eq 0 e); [intros [] heq | intros heq]; rewrite heq in mem;
+      [eapply lts_ifOne | eapply lts_ifZero | inversion mem]; eauto.
+  - case_decide as hc; [| inversion mem]. apply list_elem_of_singleton in mem as ->.
+    subst. apply lts_output.
+  - apply elem_of_map_list in mem as (q' & -> & mem).
+    apply lts_res_ext. apply IHp in mem. destruct a. exact mem.
+  - inversion mem.
 Qed.
 
-Lemma lts_set_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_set_output p a.
+Lemma lts_list_output_spec1 p a q : lts p (ActExt $ ActOut a) q -> q ∈ lts_list_output p a.
 Proof.
   intro l. remember (ActExt $ ActOut a) as α eqn:hα. revert a hα.
-  induction l; intros a' hα; try discriminate; try set_solver.
-  - injection hα as <-. simpl. rewrite decide_True;eauto. set_solver.
-  - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
-  - simpl in *. rewrite H. eapply IHl; eauto ; simpl.
-  - injection hα as ->. simpl in *. destruct a'. apply elem_of_map_2, IHl. reflexivity.
+  induction l; intros a' hα; try discriminate; simpl.
+  - injection hα as <-. rewrite decide_True by reflexivity. apply list_elem_of_singleton. reflexivity.
+  - rewrite H. eauto.
+  - rewrite H. eauto.
+  - injection hα as ->. destruct a'. apply elem_of_map_list. eexists. split; [reflexivity | apply IHl; reflexivity].
+  - apply elem_of_app. left. apply elem_of_map_list. eexists. split; [reflexivity | eauto].
+  - apply elem_of_app. right. apply elem_of_map_list. eexists. split; [reflexivity | eauto].
+  - specialize (IHl a' hα). inversion IHl.
+  - specialize (IHl a' hα). inversion IHl.
 Qed.
 
-Lemma lts_set_input_spec0 p a q : q ∈ lts_set_input p a -> lts p (ActExt $ ActIn a) q.
+Lemma lts_list_input_spec0 p : forall a q, q ∈ lts_list_input p a -> lts p (ActExt (ActIn a)) q.
 Proof.
-  intro mem. revert a q mem.
-  induction p; intros a q mem; simpl in mem; try set_solver.
-  + eapply elem_of_union in mem. destruct mem.
-    ++ eapply elem_of_list_to_set in H.
-       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
-       rewrite elem_of_elements in mem. eauto with cgr.
-    ++ eapply elem_of_list_to_set in H.
-       eapply list_elem_of_fmap in H as (q' & eq & mem). subst.
-       rewrite elem_of_elements in mem. eauto with cgr.
-  + case_eq (Eval_Eq 0 e).
-    - intros. rewrite H in mem. destruct b.
-      ++ eapply lts_ifOne; eauto.
-      ++ eapply lts_ifZero; eauto.
-    - intros. rewrite H in mem. exfalso. inversion mem.
-  + eapply elem_of_list_to_set, list_elem_of_fmap in mem as (q' & eq & mem). subst.
-    apply lts_res_ext. rewrite elem_of_elements in mem. eapply IHp in mem. simpl. destruct a. eauto. 
-  + revert a q mem. induction g; intros a q mem; simpl in mem; try set_solver.
-      ++ destruct (decide (ChannelData_of a = c)).
-         +++ subst. eapply elem_of_singleton_1 in mem. subst. destruct a. simpl. apply lts_input.
-         +++ destruct a. simpl in *. inversion mem.
-      ++ eapply elem_of_union in mem. destruct mem; eauto with cgr.
+  induction p; intros a q mem; simpl in mem.
+  - apply elem_of_app in mem as [mem | mem]; apply elem_of_map_list in mem as (q' & -> & mem).
+    + apply lts_parL. eauto.
+    + apply lts_parR. eauto.
+  - inversion mem.
+  - inversion mem.
+  - case_eq (Eval_Eq 0 e); [intros [] heq | intros heq]; rewrite heq in mem;
+      [eapply lts_ifOne | eapply lts_ifZero | inversion mem]; eauto.
+  - inversion mem.
+  - apply elem_of_map_list in mem as (q' & -> & mem).
+    apply lts_res_ext. apply IHp in mem. destruct a. exact mem.
+  - revert a q mem. induction g; intros a q mem; simpl in mem; try now inversion mem.
+    + case_decide as hc; [| inversion mem]. apply list_elem_of_singleton in mem as ->.
+      destruct a as [c0 v0]. simpl in hc. subst. apply lts_input.
+    + apply elem_of_app in mem as [mem | mem]; [apply lts_choiceL | apply lts_choiceR]; eauto.
 Qed.
 
-Lemma lts_set_input_spec1 p a q : lts p (ActExt $ ActIn a) q -> q ∈ lts_set_input p a.
+Lemma lts_list_input_spec1 p a q : lts p (ActExt $ ActIn a) q -> q ∈ lts_list_input p a.
 Proof.
   intro l. remember (ActExt $ ActIn a) as α eqn:hα. revert a hα.
-  induction l; intros a' hα; try discriminate; try set_solver.
-  - injection hα as <-. simpl. rewrite decide_True; eauto. set_solver.
-  - simpl in *. rewrite H. eapply IHl; eauto.
-  - simpl in *. rewrite H. eapply IHl; eauto.
-  - injection hα as ->. simpl in *. destruct a'. apply elem_of_map_2, IHl. reflexivity.
+  induction l; intros a' hα; try discriminate; simpl.
+  - injection hα as <-. simpl. rewrite decide_True by reflexivity. apply list_elem_of_singleton. reflexivity.
+  - rewrite H. eauto.
+  - rewrite H. eauto.
+  - injection hα as ->. destruct a'. apply elem_of_map_list. eexists. split; [reflexivity | apply IHl; reflexivity].
+  - apply elem_of_app. left. apply elem_of_map_list. eexists. split; [reflexivity | eauto].
+  - apply elem_of_app. right. apply elem_of_map_list. eexists. split; [reflexivity | eauto].
+  - apply elem_of_app. left. eauto.
+  - apply elem_of_app. right. eauto.
 Qed.
 
-Lemma lts_set_tau_spec0 p q : q ∈ lts_set_tau p -> lts p τ q.
+Lemma lts_list_tau_spec0 p : forall q, q ∈ lts_list_tau p -> lts p τ q.
 Proof.
-  - intro mem. revert q mem.
-    induction p; intros q mem; simpl in mem.
-    + eapply elem_of_union in mem. destruct mem as [mem1 | mem2].
-      ++ eapply elem_of_union in mem1.
-         destruct mem1.
-         eapply elem_of_union in H as [mem1 | mem2]. 
-         eapply elem_of_list_to_set, list_elem_of_fmap in mem1 as (t' & eq & h); subst.
-         rewrite elem_of_elements in h. eauto with cgr.
-         eapply elem_of_list_to_set, list_elem_of_fmap in mem2 as (t' & eq & h); subst.
-         rewrite elem_of_elements in h. eauto with cgr.
-         eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in H as (t' & eq & h); subst.
-         eapply list_elem_of_In, list_elem_of_fmap in h as ((t1 & t2) & eq' & h'). subst.
-         eapply list_elem_of_In, in_prod_iff in h' as (mem1 & mem2).
-         eapply list_elem_of_In in mem1. rewrite elem_of_elements in mem1.
-         eapply list_elem_of_In in mem2. rewrite elem_of_elements in mem2.
-         eapply lts_set_output_spec0 in mem1.
-         eapply lts_set_input_spec0 in mem2. destruct t'. eapply lts_comL. exact mem1. exact mem2.
-      ++ eapply elem_of_list_to_set, list_elem_of_In, in_flat_map in mem2 as (t' & eq & h); subst.
-         eapply list_elem_of_In, list_elem_of_fmap in h as ((t1 & t2) & eq' & h'). subst.
-         eapply list_elem_of_In, in_prod_iff in h' as (mem1 & mem2).
-         eapply list_elem_of_In in mem1. rewrite elem_of_elements in mem1.
-         eapply list_elem_of_In in mem2. rewrite elem_of_elements in mem2.
-         eapply lts_set_input_spec0 in mem1.
-         eapply lts_set_output_spec0 in mem2. destruct t'. eapply lts_comR. exact mem2. exact mem1.
-    + inversion mem.
-    + eapply elem_of_singleton_1 in mem. subst; eauto with cgr.
-    + case_eq (Eval_Eq 0 e); intros; rewrite H in mem.
-      ++ destruct b.
-         +++ eapply lts_ifOne; eauto.
-         +++ eapply lts_ifZero; eauto.
-      ++ exfalso. inversion mem.
-    + inversion mem.
-    + eapply elem_of_list_to_set, list_elem_of_fmap in mem as (t' & eq & h); subst.
-      eapply lts_res_tau. eapply IHp. eapply elem_of_elements. eauto.
-    + revert q mem. induction g; intros q mem; simpl in mem; try set_solver;
-        try eapply elem_of_singleton_1 in mem; subst; eauto with cgr.
-      eapply elem_of_union in mem as [mem1 | mem2]; eauto with cgr.
+  induction p; intros q mem; simpl in mem.
+  - rewrite !elem_of_app in mem. destruct mem as [mem | [mem | [mem | mem]]].
+    + apply elem_of_map_list in mem as (q' & -> & mem). apply lts_parL. eauto.
+    + apply elem_of_map_list in mem as (q' & -> & mem). apply lts_parR. eauto.
+    + apply elem_of_flat_map_list in mem as ([c v] & _ & mem).
+      apply elem_of_map_list in mem as ([q1 q2] & -> & mem).
+      apply elem_of_list_prod_iff in mem as [m1 m2]. simpl in m1, m2.
+      eapply lts_comL; [apply lts_list_output_spec0 | apply lts_list_input_spec0]; eassumption.
+    + apply elem_of_flat_map_list in mem as ([c v] & _ & mem).
+      apply elem_of_map_list in mem as ([q1 q2] & -> & mem).
+      apply elem_of_list_prod_iff in mem as [m1 m2]. simpl in m1, m2.
+      eapply lts_comR; [apply lts_list_output_spec0 | apply lts_list_input_spec0]; eassumption.
+  - inversion mem.
+  - apply list_elem_of_singleton in mem as ->. apply lts_recursion.
+  - case_eq (Eval_Eq 0 e); [intros [] heq | intros heq]; rewrite heq in mem;
+      [eapply lts_ifOne | eapply lts_ifZero | inversion mem]; eauto.
+  - inversion mem.
+  - apply elem_of_map_list in mem as (q' & -> & mem). apply lts_res_tau. eauto.
+  - revert q mem. induction g; intros q mem; simpl in mem; try now inversion mem.
+    + apply list_elem_of_singleton in mem as ->. apply lts_tau.
+    + apply elem_of_app in mem as [mem | mem]; [apply lts_choiceL | apply lts_choiceR]; eauto.
 Qed.
 
-Lemma lts_set_tau_spec1 p q : lts p τ q -> q ∈ lts_set_tau p.
-Proof. 
-  intro l. remember τ as α eqn:hα. induction l; subst; try discriminate; simpl; try set_solver.
-  - rewrite H. set_solver. 
-  - rewrite H. set_solver. 
-  - eapply elem_of_union. left.
-    eapply elem_of_union. right.
-    eapply elem_of_list_to_set.
-    rewrite list_elem_of_In. rewrite in_flat_map.
-    exists (c , v). split.
-    + eapply list_elem_of_In, elem_of_elements.
-      eapply outputs_of_spec1. eauto.
-    + eapply list_elem_of_In, list_elem_of_fmap.
-      exists (p2 , q2). split.
-      ++ reflexivity.
-      ++ eapply list_elem_of_In, in_prod_iff; split; eapply list_elem_of_In, elem_of_elements.
-         eapply lts_set_output_spec1; eauto with ccs.
-         eapply lts_set_input_spec1; eauto with ccs.
-  - eapply elem_of_union. right.
-    eapply elem_of_list_to_set.
-    rewrite list_elem_of_In. rewrite in_flat_map.
-    exists (c , v). split.
-    + eapply list_elem_of_In, elem_of_elements.
-      eapply outputs_of_spec1. exact l1.
-    + eapply list_elem_of_In, list_elem_of_fmap.
-      exists (q2 , p2). split.
-      ++ reflexivity.
-      ++ eapply list_elem_of_In, in_prod_iff; split; eapply list_elem_of_In, elem_of_elements.
-         eapply lts_set_input_spec1; eauto with ccs.
-         eapply lts_set_output_spec1; eauto with ccs.
+Lemma lts_list_tau_spec1 p q : lts p τ q -> q ∈ lts_list_tau p.
+Proof.
+  intro l. remember τ as α eqn:hα. induction l; subst; try discriminate; simpl.
+  - apply list_elem_of_singleton. reflexivity.
+  - apply list_elem_of_singleton. reflexivity.
+  - rewrite H. eauto.
+  - rewrite H. eauto.
+  - apply elem_of_map_list. eexists. split; [reflexivity | eauto].
+  - apply elem_of_app. right. apply elem_of_app. right. apply elem_of_app. left.
+    apply elem_of_flat_map_list. exists (c , v). split.
+    + apply elem_of_elements. eapply outputs_of_spec1. eassumption.
+    + apply elem_of_map_list. exists (p2 , q2). split; [reflexivity |].
+      apply elem_of_list_prod_iff. split; [apply lts_list_output_spec1 | apply lts_list_input_spec1]; eassumption.
+  - apply elem_of_app. right. apply elem_of_app. right. apply elem_of_app. right.
+    apply elem_of_flat_map_list. exists (c , v). split.
+    + apply elem_of_elements. eapply outputs_of_spec1. eassumption.
+    + apply elem_of_map_list. exists (q2 , p2). split; [reflexivity |].
+      apply elem_of_list_prod_iff. split; [apply lts_list_input_spec1 | apply lts_list_output_spec1]; eassumption.
+  - apply elem_of_app. left. apply elem_of_map_list. eexists. split; [reflexivity | eauto].
+  - apply elem_of_app. right. apply elem_of_app. left. apply elem_of_map_list. eexists. split; [reflexivity | eauto].
+  - apply elem_of_app. left. eauto.
+  - apply elem_of_app. right. eauto.
 Qed.
 
 Definition lts_set (p : proc) (𝜆 : ActIO TypeOfActions): gset proc :=
-  match 𝜆 with
-  | τ => lts_set_tau p
-  | ActExt (ActIn a) => lts_set_input p a
-  | ActExt (ActOut a) => lts_set_output p a
-  end.
+  list_to_set (match 𝜆 with
+               | τ => lts_list_tau p
+               | ActExt (ActIn a) => lts_list_input p a
+               | ActExt (ActOut a) => lts_list_output p a
+               end).
 
 Lemma lts_set_spec0 p 𝜆 q : q ∈ lts_set p 𝜆 -> lts p 𝜆 q.
 Proof.
-  destruct 𝜆 as [[a|a]|].
-  - now eapply lts_set_input_spec0.
-  - now eapply lts_set_output_spec0.
-  - now eapply lts_set_tau_spec0.
+  unfold lts_set. rewrite elem_of_list_to_set.
+  destruct 𝜆 as [[a|a]|]; simpl.
+  - apply lts_list_input_spec0.
+  - apply lts_list_output_spec0.
+  - apply lts_list_tau_spec0.
 Qed.
 
 Lemma lts_set_spec1 p 𝜆 q : lts p 𝜆 q -> q ∈ lts_set p 𝜆.
 Proof.
-  destruct 𝜆 as [[a|a]|].
-  - now eapply lts_set_input_spec1.
-  - now eapply lts_set_output_spec1.
-  - now eapply lts_set_tau_spec1.
+  unfold lts_set. rewrite elem_of_list_to_set.
+  destruct 𝜆 as [[a|a]|]; simpl; intros l.
+  - now apply lts_list_input_spec1.
+  - now apply lts_list_output_spec1.
+  - now apply lts_list_tau_spec1.
 Qed.
+
+Lemma lts_set_spec p 𝜆 q : q ∈ lts_set p 𝜆 <-> lts p 𝜆 q.
+Proof. split; [apply lts_set_spec0 | apply lts_set_spec1]. Qed.
 
 Definition proc_stable p 𝜆 := lts_set p 𝜆 = ∅.
 
-Lemma lts_dec p 𝜆 q : { lts p 𝜆 q } + { ~ lts p 𝜆 q }.
-Proof.
-  destruct (decide (q ∈ lts_set p 𝜆)).
-  - eapply lts_set_spec0 in e. eauto.
-  - right. intro l. now eapply lts_set_spec1 in l.
-Qed.
+Definition lts_dec p 𝜆 : forall q, { lts p 𝜆 q } + { ~ lts p 𝜆 q } :=
+  gset_decision (lts_set p 𝜆) (lts p 𝜆) (lts_set_spec p 𝜆).
 
 Lemma proc_stable_dec p 𝜆 : Decision (proc_stable p 𝜆).
-Proof. destruct (decide (lts_set p 𝜆 = ∅)); [ left | right ]; eauto. Qed.
+Proof. destruct (decide (lts_set p 𝜆 = ∅)); [ left | right ]; eauto. Defined.
 
 Lemma gset_nempty_ex (g : gset proc) : g ≠ ∅ -> {p | p ∈ g}.
 Proof.
@@ -1482,17 +1427,7 @@ Qed.
 
 #[global] Program Instance VACCS_gLtsFiniteImage : FiniteImagegLts proc (ExtAct TypeOfActions).
 Next Obligation.
-  intros p 𝜆. unfold dsig.
-  destruct 𝜆 as [[a|a]|].
-  - eapply (in_list_finite (elements (lts_set_input p a))).
-    intros q Htrans%bool_decide_unpack.
-    now eapply elem_of_elements, lts_set_input_spec1.
-  - eapply (in_list_finite (elements (lts_set_output p a))).
-    intros q Htrans%bool_decide_unpack.
-    now eapply elem_of_elements, lts_set_output_spec1.
-  - eapply (in_list_finite (elements (lts_set_tau p))).
-    intros q Htrans%bool_decide_unpack.
-    now eapply elem_of_elements, lts_set_tau_spec1.
+  intros p 𝜆. exact (gset_finite (lts_set p 𝜆) (lts p 𝜆) (lts_set_spec p 𝜆)).
 Defined.
 
 #[global] Program Instance Interaction_between_parallel_VACCS :
@@ -1714,7 +1649,7 @@ Next Obligation.
   + destruct (decide( c = c0)).
     - left. f_equal. subst. eauto.
     - right. intro. inversion H. contradiction.
-Qed.
+Defined.
 
 Definition encode_PreAct (c : PreAct) : gen_tree ChannelData :=
 match c with
@@ -1736,7 +1671,7 @@ Qed.
 Proof.
   refine (inj_countable encode_PreAct decode_PreAct _).
   apply encode_decide_PreAct.
-Qed.
+Defined.
 
 Fixpoint  mPreCoAct_of (k : nat) p : gmultiset PreAct := 
 match p with
@@ -2114,30 +2049,27 @@ Proof.
   - intros tr. exists (ActIn a). split; [reflexivity | exact tr].
 Qed.
 
-#[global] Instance VACCS_gLtsCoFiniteImage : coFiniteImagegLts proc (ExtAct TypeOfActions).
+Definition vaccs_co (μ : ExtAct TypeOfActions) : ExtAct TypeOfActions :=
+  match μ with
+  | ActIn a => ActOut a
+  | ActOut a => ActIn a
+  end.
+
+Lemma vaccs_co_image_spec (p : proc) (μ : ExtAct TypeOfActions) (q : proc) :
+  q ∈ lts_set p (ActExt (vaccs_co μ)) <-> exists μ' : ExtAct TypeOfActions, dual μ' μ /\ p ⟶[μ'] q.
 Proof.
-  unshelve refine {|
-    cofolts_states_countable := proc_count;
-    cofolts_tau_next_states_finite := _;
-    cofolts_next_states_decidable := _;
-    cofolts_next_states_finite := _;
+  rewrite lts_set_spec. destruct μ as [a|a]; simpl.
+  - exact (iff_sym (vaccs_dual_image_in_iff p a q)).
+  - exact (iff_sym (vaccs_dual_image_out_iff p a q)).
+Qed.
+
+#[global] Instance VACCS_gLtsCoFiniteImage : coFiniteImagegLts proc (ExtAct TypeOfActions) :=
+  {| cofolts_states_countable := proc_count;
+     cofolts_tau_next_states_finite p := gset_finite (lts_set p τ) (lts p τ) (lts_set_spec p τ);
+     cofolts_next_states_decidable p μ :=
+       gset_decision (lts_set p (ActExt (vaccs_co μ))) _ (vaccs_co_image_spec p μ);
+     cofolts_next_states_finite p μ :=
+       gset_finite (lts_set p (ActExt (vaccs_co μ))) _ (vaccs_co_image_spec p μ);
   |}.
-  - intros p 𝜆 q. destruct 𝜆 as [a|a].
-    + destruct (decide (p ⟶[ActOut a] q)) as [Hd|Hd].
-      * left. eapply vaccs_dual_image_in_iff. exact Hd.
-      * right. intro Hc. eapply Hd. eapply vaccs_dual_image_in_iff. exact Hc.
-    + destruct (decide (p ⟶[ActIn a] q)) as [Hd|Hd].
-      * left. eapply vaccs_dual_image_out_iff. exact Hd.
-      * right. intro Hc. eapply Hd. eapply vaccs_dual_image_out_iff. exact Hc.
-  - intros p 𝜆. unfold dsig. destruct 𝜆 as [a|a].
-    + unshelve eapply (in_list_finite (elements (lts_set_output p a))).
-      intros q Htrans%bool_decide_unpack.
-      eapply elem_of_elements, lts_set_output_spec1, vaccs_dual_image_in_iff.
-      exact Htrans.
-    + unshelve eapply (in_list_finite (elements (lts_set_input p a))).
-      intros q Htrans%bool_decide_unpack.
-      eapply elem_of_elements, lts_set_input_spec1, vaccs_dual_image_out_iff.
-      exact Htrans.
-Defined.
 
 End VACCS_CoFiniteImage.

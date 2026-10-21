@@ -320,11 +320,9 @@ Qed.
 #[global] Program Instance gen_acc_gen_spec_acc_inst
   : test_co_acceptance_set_spec gen_acc (fun x => αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ x)).
 Next Obligation.
-  intros g. simpl. unfold proc_stable. cbn.
-  remember (lts_set_tau (unroll_fw (elements g))) as ps.
-  destruct ps using set_ind_L; eauto.
-  assert (mem : x ∈ lts_set_tau (unroll_fw (elements g))) by set_solver.
-  eapply lts_set_tau_spec0 in mem.
+  intros g. simpl. unfold proc_stable. intros hne. apply hne.
+  apply leibniz_equiv. intros x. split; [intros mem | set_solver].
+  eapply lts_set_spec0 in mem.
   now eapply gen_acc_does_not_tau in mem.
 Qed.
 Next Obligation.
