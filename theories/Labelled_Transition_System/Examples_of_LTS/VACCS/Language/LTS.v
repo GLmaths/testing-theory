@@ -303,7 +303,7 @@ Fixpoint pr_subst (id : nat) (p : proc) (q : proc) : proc :=
   match p with 
   | p1 ‖ p2 => (pr_subst id p1 q) ‖ (pr_subst id p2 q) 
   | pr_var id' => if decide (id = id') then q else p
-  | rec id' • p => if decide (id = id') then p else rec id' • (pr_subst id p q)
+  | rec id' • p' => if decide (id = id') then rec id' • p' else rec id' • (pr_subst id p' q)
   | If C Then P Else Q => If C Then (pr_subst id P q) Else (pr_subst id Q q)
   | c ! v • 𝟘 => c ! v • 𝟘
   | ν P => ν (pr_subst id P (NewVarC 0 q))
