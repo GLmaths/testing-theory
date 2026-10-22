@@ -164,7 +164,7 @@ Proof.
   intros Hyp. destruct Hyp as [case1 | case2]. 
   + left. decompose record case1. repeat split; eauto.
   + right. intro Hyp. apply case2. decompose record Hyp. eexists. repeat split; eauto.
-Qed.
+Defined.
 
 Definition decide_co_step_right' `{Prop_of_Inter S1 S2 A1 A2} 
   (s1: S1) (* (s'1 : S1) *) (s2 : S2) (s'2 : S2)  (ξ : A1) :
@@ -339,7 +339,7 @@ Lemma implication_simplified_left `{Prop_of_Inter S1 S2 A1 A2}
 Proof.
   intros Hyp. destruct Hyp as [case1 | case2]. left. decompose record case1. repeat split; eauto.
   right. intro HypContra. apply case2. decompose record HypContra. eexists. repeat split; eauto.
-Qed.
+Defined.
 
 Definition decide_co_step_left' `{Prop_of_Inter S1 S2 A1 A2} 
   (s1: S1) (s'1 : S1) (s2 : S2) (* (s'2 : S2) *)  (ξ : A2) :
@@ -438,18 +438,18 @@ Definition decide_inter_step `{M12 : Prop_of_Inter S1 S2 A A inter}
             (s1: S1) (s2: S2) 𝜆 s'1 s'2:
   Decision (inter_step (s1, s2) 𝜆 (s'1, s'2)).
 Proof.
-  destruct (decide (s1 ⟶{𝜆} s'1 ∧ s2 = s'2)) as [[??]|Hnot1].
-  { simplify_eq. left. by constructor. }
-  destruct (decide (s2 ⟶{𝜆} s'2 ∧ s1 = s'1)) as [[??]|Hnot2].
-  { simplify_eq. left. by constructor. }
+  destruct (decide (s1 ⟶{𝜆} s'1 ∧ s2 = s'2)) as [h1|Hnot1].
+  { left. destruct h1 as [? ->]. by constructor. }
+  destruct (decide (s2 ⟶{𝜆} s'2 ∧ s1 = s'1)) as [h2|Hnot2].
+  { left. destruct h2 as [? ->]. by constructor. }
   destruct 𝜆.
   { right. intros contra; inversion contra; simplify_eq; eauto. }
   destruct (search_steps_essential_left s1 s2 s'1 s'2 (elements $ lts_essential_actions_left s1)) as [ξ|] eqn:Hpar1.
-  { apply search_steps_spec_2_essential_left in Hpar1 as (μ & ess_act & step_left & step_right & duo). 
-   left; eapply ParSync; eauto. }
+  { left. apply search_steps_spec_2_essential_left in Hpar1 as (μ & ess_act & step_left & step_right & duo). 
+   eapply ParSync; eauto. }
   destruct (search_steps_essential_right s1 s2 s'1 s'2 (elements $ lts_essential_actions_right s2)) as [ξ|] eqn:Hpar2.
-  { apply search_steps_spec_2_essential_right in Hpar2 as (μ & ess_act & step_right & step_left & duo).  
-   left; eapply ParSync; eauto. }
+  { left. apply search_steps_spec_2_essential_right in Hpar2 as (μ & ess_act & step_right & step_left & duo).  
+   eapply ParSync; eauto. }
   right; intros contra; inversion contra; simplify_eq; eauto.
   eapply lts_essential_actions_spec_interact in eq as case_essential; eauto. destruct case_essential as [ess_act1 | ess_act2].
   - assert (is_Some $ search_steps_essential_left s1 s2 s'1 s'2 (elements (lts_essential_actions_left s1))) as Hc; [|].
@@ -549,7 +549,7 @@ Proof.
     assert ({ μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ)}) as wit.
     eauto. eapply search_co_steps_spec_1_right_performs_rev in wit.
     contradiction.
-Qed.
+Defined.
 
 Lemma transition_to_performs_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (s'2 : S2) (ξ : A1) : 
@@ -733,7 +733,7 @@ Proof.
     assert ({ μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] ∧ inter μ ξ)}) as wit.
     eauto. eapply search_co_steps_spec_1_left_performs_rev in wit.
     contradiction.
-Qed.
+Defined.
 
 Lemma transition_to_performs_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   (s1 : S1) (s2 : S2) (s'1 : S1) (ξ : A2) : 

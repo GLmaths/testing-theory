@@ -82,8 +82,8 @@ Definition lts_multiset_step_decidable `{ExtAction A} {unique_nb : UniqueDual A}
 Proof.
   destruct 𝜆 as [μ |].
   + destruct (decide (non_blocking μ)) as [nb | not_nb].
-    - rename μ into η. destruct (decide ((m =  {[+ η +]} ⊎ m'))); subst.
-      ++ left. eapply lts_multiset_minus; eauto.
+    - rename μ into η. destruct (decide ((m =  {[+ η +]} ⊎ m'))) as [e | ne].
+      ++ left. rewrite e. eapply lts_multiset_minus; eauto.
       ++ right. intro. eapply non_blocking_action_in_ms in nb; eauto.
     - destruct (decide (∃ η', non_blocking η' /\ dual μ η')) as [exists_dual | not_exists_dual].
       ++ destruct (decide (({[+ (co μ) +]} ⊎ m = m') )) as [eq | not_eq].
@@ -94,7 +94,7 @@ Proof.
       ++ right. intro HypTr. 
          eapply blocking_action_in_ms in not_nb as (eq & duo & nb); eauto; subst.
   + right. inversion 1.
-Qed.
+Defined.
 
 Definition lts_multiset_performs `{ExtAction A} (m : MO A) (𝜆 : Labels A) : Prop :=
 match 𝜆 with
@@ -108,7 +108,7 @@ Proof.
   destruct 𝜆 as [μ |]; simpl.
   + destruct (decide (non_blocking μ)); apply _.
   + apply _.
-Qed.
+Defined.
 
 #[global] Program Instance MbgLts `{H : ExtAction A} {unique_nb : UniqueDual A} : gLts (MO A) H :=
 {|

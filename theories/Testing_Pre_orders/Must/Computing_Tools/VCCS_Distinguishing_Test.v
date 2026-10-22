@@ -11,7 +11,7 @@ From TestingTheory Require Import coFiniteImage coConvergence coWeakTransition D
   CompletenessASco EquivalenceASco TestSpecBridge SyncActions
   VCCS.Language.gLts_Instance VCCS.Language.Label_Abstraction
   Label_Abstraction.LabelAbstraction Label_Abstraction.Decidable_dichotomic Subset_Act
-  Computing_Tools.Acceptance_Tests_Gamma Computing_Tools.Bounded_Convergence.
+  Computing_Tools.Search_Helpers Computing_Tools.Acceptance_Tests_Gamma Computing_Tools.Bounded_Convergence.
 
 (* Computing a test that distinguishes two VCCS processes. *)
 
@@ -40,30 +40,6 @@ Proof.
   - by apply must_iff_cocnv.
   - intros hm. by apply hq, must_iff_cocnv.
 Qed.
-
-(* Either some [S p] is included in [C], or a set [X] outside [C] meets every [S p]. *)
-Definition included_or_witnesses {B : Type} `{Countable B} {Q : Type}
-  (ps : list Q) (S : Q → subset_of B) (C : subset_of B) :
-  (∀ p, p ∈ ps → (S p ⊆ C) + { x | x ∈ S p ∧ x ∉ C }) →
-  { p | p ∈ ps ∧ S p ⊆ C }
-  + { X : gset B | (∀ x, x ∈ X → x ∉ C) ∧ (∀ p, p ∈ ps → ∃ x, x ∈ X ∧ x ∈ S p) }.
-Proof.
-  induction ps as [| p ps IH]; intros h.
-  - right. exists ∅. split.
-    + intros x hx. set_solver.
-    + intros p hp. by apply elem_of_nil in hp.
-  - destruct (h p (list_elem_of_here p ps)) as [sub | (x & hx & hnx)].
-    + left. exists p. split; [apply list_elem_of_here | exact sub].
-    + destruct IH as [(p' & hp' & sub) | (X & hXC & hXS)].
-      * intros p' hp'. apply h, list_elem_of_further, hp'.
-      * left. exists p'. split; [apply list_elem_of_further, hp' | exact sub].
-      * right. exists ({[x]} ∪ X). split.
-        -- intros y [->%elem_of_singleton | hy]%elem_of_union; [exact hnx | exact (hXC y hy)].
-        -- intros p0 [-> | hp0]%elem_of_cons.
-           ++ exists x. split; [set_solver | exact hx].
-           ++ destruct (hXS p0 hp0) as (y & hy & hyS).
-              exists y. split; [set_solver | exact hyS].
-Defined.
 
 Lemma PreCoAct_of_spec (p : proc) x : x ∈ PreCoAct_of p ↔ x ∈ ⌈ Γᴠᴄᴄꜱ ⌉ (coR p).
 Proof.
@@ -169,17 +145,6 @@ Proof.
   intros hnone q' w st. eapply (distinguish_in_none p q s hp _ _ hnone).
   apply elem_of_elements, cowaiting_states_spec2. split; [exact w | exact st].
 Qed.
-
-(* The co-traces of length [k] over [alphabet]. *)
-Fixpoint traces_of_length (alphabet : list A) (k : nat) : list (trace A) :=
-  match k with
-  | 0 => [[]]
-  | S k => flat_map (λ μ, map (cons μ) (traces_of_length alphabet k)) alphabet
-  end.
-
-(* The co-traces of length at most [n] over [alphabet], shortest first. *)
-Definition traces_upto (alphabet : list A) (n : nat) : list (trace A) :=
-  flat_map (traces_of_length alphabet) (seq 0 (S n)).
 
 Fixpoint search_in (p q : proc) (hp : ∀ s, p ⇓ᶜᵒ s) (hq : ∀ s, q ⇓ᶜᵒ s) (l : list (trace A)) :
   option { sX : trace A * gset PreAct |
@@ -291,19 +256,8 @@ Definition bounded_co_preorder (alphabet : list A) (n : nat) (p q : proc) : Prop
 Definition distinguishing_pair (p q : proc) : Type :=
   { sX : trace A * gset PreAct | p must_pass (gen_acc sX.2 sX.1) ∧ ¬ q must_pass (gen_acc sX.2 sX.1) }.
 
-(* Either the property holds, or a distinguishing test, or a co-trace along which [p]
-   ([true]) or [q] ([false]) did not converge within the bound. *)
-Inductive bounded_answer (H : Prop) (D : Type) : Type :=
-| Holds : H → bounded_answer H D
-| Distinguished : D → bounded_answer H D
-| Timeout : trace A → bool → bounded_answer H D.
-
-Arguments Holds {H D}.
-Arguments Distinguished {H D}.
-Arguments Timeout {H D}.
-
 Definition decide_in (k : nat) (p q : proc) : ∀ l : list (trace A),
-  bounded_answer
+  bounded_answer (A := A)
     (∀ s, s ∈ l → (p ⇓ᶜᵒ s → q ⇓ᶜᵒ s) ∧
        (∀ q', p ⇓ᶜᵒ s → q ⟹ᶜᵒ[s] q' → q' ↛ →
           ∃ p', p ⟹ᶜᵒ[s] p' ∧ p' ↛ ∧ ⌈ Γᴠᴄᴄꜱ ⌉ (coR p') ⊆ ⌈ Γᴠᴄᴄꜱ ⌉ (coR q')))
@@ -327,16 +281,10 @@ Proof.
 Defined.
 
 Definition decide_co_preorder (alphabet : list A) (n k : nat) (p q : proc) :
-  bounded_answer (bounded_co_preorder alphabet n p q) (distinguishing_pair p q) :=
+  bounded_answer (A := A) (bounded_co_preorder alphabet n p q) (distinguishing_pair p q) :=
   decide_in k p q (traces_upto alphabet n).
 
-(* The verdict without the proofs. *)
-Inductive verdict : Type :=
-| V_holds
-| V_distinguished (s : trace A) (t : proc)
-| V_timeout (s : trace A) (on_p : bool).
-
-Definition co_preorder_verdict (alphabet : list A) (n k : nat) (p q : proc) : verdict :=
+Definition co_preorder_verdict (alphabet : list A) (n k : nat) (p q : proc) : verdict A proc :=
   match decide_co_preorder alphabet n k p q with
   | Holds _ => V_holds
   | Distinguished (exist _ (s, X) _) => V_distinguished s (gen_acc X s)
@@ -354,6 +302,21 @@ Lemma co_preorder_holds_spec (alphabet : list A) (n k : nat) (p q : proc) :
 Proof.
   unfold co_preorder_holds.
   destruct (decide_co_preorder alphabet n k p q) as [h | | ]; [done | discriminate | discriminate].
+Qed.
+
+Definition co_preorder_refuted (alphabet : list A) (n k : nat) (p q : proc) : bool :=
+  match decide_co_preorder alphabet n k p q with
+  | Distinguished _ => true
+  | _ => false
+  end.
+
+(* A distinguishing test found by the decision refutes the must preorder. *)
+Lemma co_preorder_refuted_spec (alphabet : list A) (n k : nat) (p q : proc) :
+  co_preorder_refuted alphabet n k p q = true → p ⋢ₘᵤₛₜᵢ q.
+Proof.
+  unfold co_preorder_refuted.
+  destruct (decide_co_preorder alphabet n k p q) as [| [[s X] [h1 h2]] |]; [discriminate | | discriminate].
+  intros _. exact (distinguishing_test_refutes p q _ h1 h2).
 Qed.
 
 #[local] Existing Instance LA_class_proj.

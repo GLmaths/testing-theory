@@ -1240,7 +1240,7 @@ Proof.
       exfalso.
       apply Hmem.
       multiset_solver.
-Qed.
+Defined.
 
 Definition fw_co_ext_set `{@coFiniteImagegLts P A A H gLtsP H _} {unique_nb : UniqueDual A}
   `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts}
@@ -1309,17 +1309,17 @@ Next Obligation.
   eapply (in_list_finite (fw_co_tau_set p m)).
   intros (q, m') h%bool_decide_unpack.
   now eapply fw_co_tau_set_spec1.
-Qed.
+Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ? p 𝜆 q.
   eapply fw_dual_decidable.
-Qed.
+Defined.
 Next Obligation.
   intros ? ? ? ? ? ? ? (p, m) 𝜆.
   eapply (in_list_finite (fw_co_ext_set p m 𝜆)).
   intros (q, m') h%bool_decide_unpack.
   now eapply fw_co_ext_set_spec1.
-Qed.
+Defined.
 
 From TestingTheory Require Import WeakTransitions.
 
