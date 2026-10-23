@@ -13,16 +13,7 @@ From TestingTheory Require Import coFiniteImage coConvergence coWeakTransition D
   Label_Abstraction.LabelAbstraction Label_Abstraction.Decidable_dichotomic Subset_Act
   Computing_Tools.Search_Helpers Computing_Tools.Acceptance_Tests_Gamma Computing_Tools.Bounded_Convergence.
 
-(* Computing a test that distinguishes two VACCS processes.
-
-   For VACCS the alternative characterisation is stated on the forwarder: [p ⊑ₘᵤₛₜᵢ q]
-   iff [p ▷ ∅ ≼꜀ₒ₋ₐₛ q ▷ ∅]. The waiting states and their co-actions are therefore
-   those of the forwarder states [p' ▷ m'] reached from [p ▷ ∅]: the co-actions of
-   [p' ▷ m'] are those of [p'] and the co-actions of the messages pending in [m'].
-
-   Same method as for VCCS ([VCCS_Distinguishing_Test]), with [Γᴠᴀᴄᴄꜱ] mapping an
-   action to its channel and direction (it has the kernel of [ρ[𝔸ᴠᴀᴄᴄꜱ]]) and the
-   acceptance test [ta_Γ X s] built from [gen_acc]. *)
+(* Computing a test that distinguishes two VACCS processes.  *)
 
 Section VACCS_Distinguishing_Test.
 
@@ -320,7 +311,7 @@ Qed.
 
 (* From a proof that the bounded preorder fails: the distinguishing test, or a co-trace
    along which the convergence check ran out of steps. *)
-Definition test_of_not_bounded (alphabet : list A) (n k : nat) (p q : proc)
+Definition co_test_of_not_bounded (alphabet : list A) (n k : nat) (p q : proc)
   (H : ¬ bounded_co_preorder alphabet n (p ▷ ∅) (q ▷ ∅)) :
   distinguishing_pair (p ▷ ∅) (q ▷ ∅) + (trace A * bool).
 Proof.
@@ -349,11 +340,149 @@ Proof.
   exists p'. split_and!; [exact w' | exact st' | by apply Γ_incl_of_ρ_incl].
 Qed.
 
-Corollary not_preorder_of_not_bounded (alphabet : list A) (n : nat) (p q : proc) :
+Corollary not_preorder_of_not_bounded_co (alphabet : list A) (n : nat) (p q : proc) :
   ¬ bounded_co_preorder alphabet n (p ▷ ∅) (q ▷ ∅) → p ⋢ₘᵤₛₜᵢ q.
 Proof.
   intros hn h%must_iff_co_acceptance_set_VACCS.
   exact (hn (bounded_of_co_preorder alphabet n _ _ h)).
+Qed.
+
+(* ** Bounded search with convergence assumed
+
+   The convergence of the forwarders [p ▷ ∅] and [q ▷ ∅] along every co-trace is given
+   by the hypotheses [hp] and [hq]: only the acceptance part of the preorder is
+   searched. *)
+
+Fixpoint search_in (p q : FW) (hp : ∀ s : trace A, p ⇓ᶜᵒ s) (hq : ∀ s : trace A, q ⇓ᶜᵒ s)
+  (l : list (trace A)) : option (distinguishing_pair p q) :=
+  match l with
+  | [] => None
+  | s :: l' =>
+      match distinguish_at p q s (hp s) (hq s) with
+      | Some (exist _ X h) => Some (exist _ (s, X) h)
+      | None => search_in p q hp hq l'
+      end
+  end.
+
+(* Bounded search: the first co-trace of length at most [n] along which an acceptance
+   test distinguishes [p ▷ ∅] from [q ▷ ∅]. *)
+Definition search_distinguishing_test (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) :
+  option (distinguishing_pair (p ▷ ∅) (q ▷ ∅)) :=
+  search_in (p ▷ ∅) (q ▷ ∅) hp hq (traces_upto alphabet n).
+
+(* The acceptance part of the alternative preorder on the forwarder, restricted to the
+   co-traces of length at most [n] over [alphabet]. *)
+Definition bounded_acc_preorder (alphabet : list A) (n : nat) (p q : FW) : Prop :=
+  ∀ s, s ∈ traces_upto alphabet n → ∀ q', p ⇓ᶜᵒ s → q ⟹ᶜᵒ[s] q' → q' ↛ →
+    ∃ p', p ⟹ᶜᵒ[s] p' ∧ p' ↛ ∧ ⌈ Γᴠᴀᴄᴄꜱ ⌉ (coR p') ⊆ ⌈ Γᴠᴀᴄᴄꜱ ⌉ (coR q').
+
+Lemma search_in_none (p q : FW) (hp : ∀ s : trace A, p ⇓ᶜᵒ s) (hq : ∀ s : trace A, q ⇓ᶜᵒ s)
+  (l : list (trace A)) :
+  search_in p q hp hq l = None → ∀ s, s ∈ l → distinguish_at p q s (hp s) (hq s) = None.
+Proof.
+  induction l as [| s0 l IH]; simpl.
+  - intros _ s m. inversion m.
+  - destruct (distinguish_at p q s0 (hp s0) (hq s0)) as [[X h] |] eqn:e; [discriminate |].
+    intros hnone s [-> | m]%elem_of_cons; [exact e | exact (IH hnone s m)].
+Qed.
+
+(* Completeness of the bounded search: when it fails, the bounded preorder holds. *)
+Lemma search_complete (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) :
+  search_distinguishing_test alphabet n p q hp hq = None →
+  bounded_acc_preorder alphabet n (p ▷ ∅) (q ▷ ∅).
+Proof.
+  intros hnone s m q' _ w st.
+  exact (distinguish_at_none _ _ s (hp s) (hq s) (search_in_none _ _ hp hq _ hnone s m) q' w st).
+Qed.
+
+(* From a proof that the bounded preorder fails, the distinguishing test. *)
+Definition test_of_not_bounded (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s)
+  (H : ¬ bounded_acc_preorder alphabet n (p ▷ ∅) (q ▷ ∅)) :
+  distinguishing_pair (p ▷ ∅) (q ▷ ∅).
+Proof.
+  destruct (search_distinguishing_test alphabet n p q hp hq) as [x |] eqn:e.
+  - exact x.
+  - exfalso. exact (H (search_complete alphabet n p q hp hq e)).
+Defined.
+
+(* Decision of the bounded preorder: either it holds, or a distinguishing test. *)
+Definition decide_bounded_preorder (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) :
+  bounded_acc_preorder alphabet n (p ▷ ∅) (q ▷ ∅) + distinguishing_pair (p ▷ ∅) (q ▷ ∅).
+Proof.
+  destruct (search_distinguishing_test alphabet n p q hp hq) as [x |] eqn:e.
+  - right. exact x.
+  - left. exact (search_complete alphabet n p q hp hq e).
+Defined.
+
+(* The verdict without the proofs: [None] when the bounded preorder holds, otherwise
+   the co-trace and the distinguishing test. *)
+Definition bounded_verdict (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) :
+  option (trace A * proc) :=
+  match decide_bounded_preorder alphabet n p q hp hq with
+  | inl _ => None
+  | inr (exist _ (s, X) _) => Some (s, ta_Γ X s)
+  end.
+
+Definition bounded_preorder_holds (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) : bool :=
+  match decide_bounded_preorder alphabet n p q hp hq with
+  | inl _ => true
+  | inr _ => false
+  end.
+
+Lemma bounded_preorder_holds_spec (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) :
+  bounded_preorder_holds alphabet n p q hp hq = true →
+  bounded_acc_preorder alphabet n (p ▷ ∅) (q ▷ ∅).
+Proof.
+  unfold bounded_preorder_holds.
+  destruct (decide_bounded_preorder alphabet n p q hp hq) as [h | _]; [done | discriminate].
+Qed.
+
+(* The alternative preorder implies each of its bounded restrictions. *)
+Lemma bounded_of_acc_preorder (alphabet : list A) (n : nat) (p q : FW) :
+  p ₐ꜀꜀≼꜀ₒ₋ₐₛ[ ρ[𝔸ᴠᴀᴄᴄꜱ] ] q → bounded_acc_preorder alphabet n p q.
+Proof.
+  intros h s _ q' hps w st. destruct (h s q' hps w st) as (p' & w' & st' & sub).
+  exists p'. split_and!; [exact w' | exact st' | by apply Γ_incl_of_ρ_incl].
+Qed.
+
+Corollary not_preorder_of_not_bounded (alphabet : list A) (n : nat) (p q : proc) :
+  ¬ bounded_acc_preorder alphabet n (p ▷ ∅) (q ▷ ∅) → p ⋢ₘᵤₛₜᵢ q.
+Proof.
+  intros hn h%must_iff_co_acceptance_set_VACCS.
+  destruct h as [_ h]. exact (hn (bounded_of_acc_preorder alphabet n _ _ h)).
+Qed.
+
+(* The co-trace and the test found, without the proofs (for display). *)
+Definition distinguishing_test (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) :
+  option (trace A * proc) :=
+  match search_distinguishing_test alphabet n p q hp hq with
+  | Some (exist _ (s, X) _) => Some (s, ta_Γ X s)
+  | None => None
+  end.
+
+(* Whether the search succeeds, as a boolean (cheap to compute). *)
+Definition search_succeeds (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) : bool :=
+  match search_distinguishing_test alphabet n p q hp hq with
+  | Some _ => true
+  | None => false
+  end.
+
+Lemma search_refutes (alphabet : list A) (n : nat) (p q : proc)
+  (hp : ∀ s : trace A, (p ▷ ∅) ⇓ᶜᵒ s) (hq : ∀ s : trace A, (q ▷ ∅) ⇓ᶜᵒ s) :
+  search_succeeds alphabet n p q hp hq = true → p ⋢ₘᵤₛₜᵢ q.
+Proof.
+  unfold search_succeeds.
+  destruct (search_distinguishing_test alphabet n p q hp hq) as [[[s X] [h1 h2]] |]; [| discriminate].
+  intros _. exact (distinguishing_test_refutes p q _ h1 h2).
 Qed.
 
 End VACCS_Distinguishing_Test.
@@ -418,6 +547,39 @@ Proof. vm_compute. reflexivity. Qed.
 Definition ω : proc := rec 0 • (pr_var 0).
 
 Example ω_timeout : co_preorder_verdict [] 0 5 ω p1 = V_timeout [] true.
+Proof. vm_compute. reflexivity. Qed.
+
+(* With convergence assumed (here as hypotheses): the bounded search, no τ-step bound. *)
+#[local] Instance SyncAction_ex : SyncAction (ExtAct TypeOfActions) (ExtAct TypeOfActions) :=
+  SyncAction_of_dual.
+
+Variable hp1 : ∀ s : trace (ExtAct TypeOfActions), (p1 ▷ ∅ : proc * MO (ExtAct TypeOfActions)) ⇓ᶜᵒ s.
+Variable hq1 : ∀ s : trace (ExtAct TypeOfActions), (q1 ▷ ∅ : proc * MO (ExtAct TypeOfActions)) ⇓ᶜᵒ s.
+
+Example p1_q1_test : distinguishing_test [] 0 p1 q1 hp1 hq1 = Some ([], g ((cst 0 ? • g ①) + 𝟘)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example p1_not_below_q1_search : p1 ⋢ₘᵤₛₜᵢ q1.
+Proof. apply (search_refutes (VP := VACCS_int63) [] 0 p1 q1 hp1 hq1). vm_compute. reflexivity. Qed.
+
+(* The distinguishing test computed from a (here hypothetical) proof that the bounded
+   preorder fails: the proof is never inspected when the search succeeds. *)
+Variable not_bounded1 : ¬ bounded_acc_preorder (VP := VACCS_int63) [] 0 (p1 ▷ ∅) (q1 ▷ ∅).
+
+Example p1_q1_test_of_not_bounded :
+  let '(s, X) := proj1_sig (test_of_not_bounded [] 0 p1 q1 hp1 hq1 not_bounded1) in
+  (s, ta_Γ X s) = ([], g ((cst 0 ? • g ①) + 𝟘)).
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma q1_below_p1_acc : bounded_acc_preorder (VP := VACCS_int63) [] 0 (q1 ▷ ∅) (p1 ▷ ∅).
+Proof. apply (bounded_preorder_holds_spec _ _ _ _ hq1 hp1). vm_compute. reflexivity. Qed.
+
+Variable hp3 : ∀ s : trace (ExtAct TypeOfActions), (p3 ▷ ∅ : proc * MO (ExtAct TypeOfActions)) ⇓ᶜᵒ s.
+Variable hq3 : ∀ s : trace (ExtAct TypeOfActions), (q3 ▷ ∅ : proc * MO (ExtAct TypeOfActions)) ⇓ᶜᵒ s.
+
+Example p3_q3_test :
+  distinguishing_test [ActOut (cst 2, cst 0%uint63)] 1 p3 q3 hp3 hq3
+  = Some ([ActOut (cst 2, cst 0%uint63)], (cst 2 ! cst 0%uint63 • 𝟘) ‖ g ((cst 0 ? • g ①) + 𝟘)).
 Proof. vm_compute. reflexivity. Qed.
 
 End Examples.

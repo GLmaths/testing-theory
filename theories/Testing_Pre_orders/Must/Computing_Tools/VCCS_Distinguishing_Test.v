@@ -352,6 +352,21 @@ Proof.
   exists p'. split_and!; [exact w' | exact st' | by apply Γ_incl_of_ρ_incl].
 Qed.
 
+(* From a proof that the bounded preorder fails: the distinguishing test, or a co-trace
+   along which the convergence check ran out of steps. *)
+Definition co_test_of_not_bounded (alphabet : list A) (n k : nat) (p q : proc)
+  (H : ¬ bounded_co_preorder alphabet n p q) : distinguishing_pair p q + (trace A * bool).
+Proof.
+  destruct (decide_co_preorder alphabet n k p q) as [h | d | s b].
+  - exfalso. exact (H h).
+  - left. exact d.
+  - right. exact (s, b).
+Defined.
+
+Corollary not_preorder_of_not_bounded_co (alphabet : list A) (n : nat) (p q : proc) :
+  ¬ bounded_co_preorder alphabet n p q → ¬ p ≼꜀ₒ₋ₐₛ[ ρ[𝔸ᴠᴄᴄꜱ] ] q.
+Proof. intros hn h. exact (hn (bounded_of_co_preorder alphabet n p q h)). Qed.
+
 (* The co-trace and the test found, without the proofs (for display). *)
 Definition distinguishing_test (alphabet : list A) (n : nat) (p q : proc)
   (hp : ∀ s, p ⇓ᶜᵒ s) (hq : ∀ s, q ⇓ᶜᵒ s) : option (trace A * proc) :=
