@@ -1,0 +1,311 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathpartir}
+\usepackage{xcolor}
+\usepackage[colorlinks,linkcolor=blue!60!black]{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+
+\newtheorem{lemma}{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+\newcommand{\conf}[2]{\langle #1 ,\, #2 \rangle}
+\newcommand{\step}[2]{\xrightarrow{\;#1\;}_{#2}}
+\newcommand{\mto}[1]{\xrightarrow{\;#1\;}}
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\Hil}{\mathcal{H}}
+\newcommand{\tagged}[2]{#1{:}#2}
+\newcommand{\ite}[3]{\mathsf{if}\ #1\ \mathsf{then}\ #2\ \mathsf{else}\ #3}
+\newcommand{\req}[1]{#1(\tilde q)}
+\newcommand{\memop}[1]{\overline{#1(\tilde q)}}
+\newcommand{\mrecv}[1]{\M(\tilde q)?#1}
+\newcommand{\msend}[1]{\M(\tilde q)!#1}
+\newcommand{\sync}{\mathrel{\mathsf{sync}}}
+\newcommand{\upd}[1]{#1^{\tilde q}\rho\,(#1^{\tilde q})^\dagger}
+\newcommand{\br}{M_m^{\tilde q}\rho\,(M_m^{\tilde q})^\dagger}
+\newcommand{\tr}{\mathrm{tr}}
+
+\title{Harmony lemma for lqCCS}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Quantum states and operations}
+
+For a finite set $\Sigma$ of $n$ qubits, $\Hil_\Sigma = (\mathbb{C}^2)^{\otimes n}$.
+
+\begin{definition}[Density operator]\label{def:density}
+A \emph{partial density operator} on $\Hil_\Sigma$ is a linear operator $\rho$
+on $\Hil_\Sigma$ that is positive, i.e.\ $\langle\psi|\rho|\psi\rangle \ge 0$
+for all $|\psi\rangle \in \Hil_\Sigma$, and such that $\tr(\rho) \le 1$. It is a
+\emph{density operator} when $\tr(\rho) = 1$. A pure state $|\psi\rangle$ is the
+density operator $|\psi\rangle\langle\psi|$.
+\end{definition}
+
+\begin{definition}[Quantum gate]\label{def:gate}
+A \emph{quantum gate} on $n$ qubits, written $U : \mathsf{Op}(n)$, is a unitary
+operator on $(\mathbb{C}^2)^{\otimes n}$: $UU^\dagger = U^\dagger U = I$. For a
+tuple $\tilde q$ of $n$ qubits of $\Sigma$, $U^{\tilde q}$ is the operator on
+$\Hil_\Sigma$ that applies $U$ to $\tilde q$ and the identity to the other
+qubits. Applying $U$ to $\tilde q$ maps $\rho$ to $\upd{U}$.
+\end{definition}
+
+\begin{definition}[Measurement]\label{def:meas}
+A \emph{measurement} on $n$ qubits with $k$ outcomes, written
+$\M : \mathsf{Meas}(n)$ with $|\M| = k$, is a family $\{M_m\}_{0 \le m < k}$ of
+linear operators on $(\mathbb{C}^2)^{\otimes n}$ such that
+$\sum_{m} M_m^\dagger M_m = I$. Measuring $\tilde q$ in $\rho$ gives the outcome
+$m$ with probability $p_m = \tr(\br)$, and the \emph{unnormalised branch}
+$\br$, whose trace is $p_m$. The normalised post-measurement state is the branch
+divided by $p_m$.
+\end{definition}
+
+\section{Syntax}
+
+Let $\mathit{Tag} \ni t$ be a countably infinite set of \emph{tags}.
+
+Outputs are asynchronous and sums are guarded:
+\[
+\begin{array}{r@{\ ::=\ }l}
+P & \tagged{t}{c!e} \mid K \mid P \parallel P \mid \ite{e}{P}{P} \mid P \setminus c\\
+K & \mathbf{0}_{\tilde e} \mid \alpha.P \mid K + K\\
+\alpha & \tagged{t}{\tau} \mid \tagged{t}{c?x} \mid
+        \tagged{t}{U(\tilde e)} \mid \tagged{t}{\M(\tilde e \rhd x)}
+\end{array}
+\]
+A \emph{choice} is either a tag or a pair of tags, $s ::= t \mid (t,t')$: a
+pair $(t,t')$ selects the synchronisation between a move tagged $t$ and a move
+tagged $t'$. Throughout, $\lambda$ ranges over all
+actions, $\tau$ included, and $\mu, \mu_1, \mu_2, \ldots$ over external actions.
+
+The LTS of lqCCS configurations $\conf{\rho}{P}$ is given in \cref{fig:conf}.
+
+
+\begin{figure}[h]
+\small
+\begin{mathpar}
+\inferrule*[left=Tau]
+  { }
+  {\conf{\rho}{\tagged{t}{\tau}.P} \step{\tau}{t} \conf{\rho}{P}}
+
+\inferrule*[left=Op]
+  {U : \mathsf{Op}(|\tilde q|)}
+  {\conf{\rho}{\tagged{t}{U(\tilde q)}.P} \step{\tau}{t} \conf{\upd{U}}{P}}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
+  {\conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P} \step{\tau}{t} \conf{\br}{P[m/x]}}
+
+\inferrule*[left=Send]
+  {e \Downarrow v}
+  {\conf{\rho}{\tagged{t}{c!e}} \step{c!v}{t} \conf{\rho}{\mathbf{0}}}
+
+\inferrule*[left=Recv]
+  { }
+  {\conf{\rho}{\tagged{t}{c?x}.P} \step{c?v}{t} \conf{\rho}{P[v/x]}}
+
+\inferrule*[left=IteT]
+  {e \Downarrow \mathit{tt} \\ \conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{\ite{e}{P}{Q}} \step{\lambda}{s} \conf{\rho'}{P'}}
+
+\inferrule*[left=IteF]
+  {e \Downarrow \mathit{ff} \\ \conf{\rho}{Q} \step{\lambda}{s} \conf{\rho'}{Q'}}
+  {\conf{\rho}{\ite{e}{P}{Q}} \step{\lambda}{s} \conf{\rho'}{Q'}}
+
+\inferrule*[left=SumL]
+  {\conf{\rho}{K_1} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{K_1 + K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+
+\inferrule*[left=SumR]
+  {\conf{\rho}{K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{K_1 + K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+
+\inferrule*[left=ParL]
+  {\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{P \parallel Q} \step{\lambda}{s} \conf{\rho'}{P' \parallel Q}}
+
+\inferrule*[left=ParR]
+  {\conf{\rho}{Q} \step{\lambda}{s} \conf{\rho'}{Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\lambda}{s} \conf{\rho'}{P \parallel Q'}}
+
+\inferrule*[left=SynchL]
+  {\conf{\rho}{P} \step{c!v}{t} \conf{\rho}{P'} \\
+   \conf{\rho}{Q} \step{c?v}{t'} \conf{\rho}{Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\tau}{(t,t')} \conf{\rho}{P' \parallel Q'}}
+
+\inferrule*[left=SynchR]
+  {\conf{\rho}{P} \step{c?v}{t} \conf{\rho}{P'} \\
+   \conf{\rho}{Q} \step{c!v}{t'} \conf{\rho}{Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\tau}{(t,t')} \conf{\rho}{P' \parallel Q'}}
+
+\inferrule*[left=Restr]
+  {\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'} \\
+   \forall v.\ \lambda \neq c!v, c?v}
+  {\conf{\rho}{P \setminus c} \step{\lambda}{s} \conf{\rho'}{P' \setminus c}}
+\end{mathpar}
+\caption{Configuration LTS, $\lambda \in \{\tau, c!v, c?v\}$. A measurement
+moves to one unnormalised branch for each outcome $m$; all branches carry the
+same choice $t$.}
+\label{fig:conf}
+\end{figure}
+
+
+\begin{figure}[h]
+\small
+\begin{mathpar}
+\inferrule*[left=Tau]
+  { }
+  {\tagged{t}{\tau}.P \step{\tau}{t} P}
+
+\inferrule*[left=Op]
+  {U : \mathsf{Op}(|\tilde q|)}
+  {\tagged{t}{U(\tilde q)}.P \step{\req{U}}{t} P}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ m \in \mathbb{N}}
+  {\tagged{t}{\M(\tilde q \rhd x)}.P \step{\mrecv{m}}{t} P[m/x]}
+
+\inferrule*[left=Send]
+  {e \Downarrow v}
+  {\tagged{t}{c!e} \step{c!v}{t} \mathbf{0}}
+
+\inferrule*[left=Recv]
+  { }
+  {\tagged{t}{c?x}.P \step{c?v}{t} P[v/x]}
+
+\inferrule*[left=IteT]
+  {e \Downarrow \mathit{tt} \\ P \step{\lambda}{s} P'}
+  {\ite{e}{P}{Q} \step{\lambda}{s} P'}
+
+\inferrule*[left=IteF]
+  {e \Downarrow \mathit{ff} \\ Q \step{\lambda}{s} Q'}
+  {\ite{e}{P}{Q} \step{\lambda}{s} Q'}
+
+\inferrule*[left=SumL]
+  {K_1 \step{\lambda}{s} P'}
+  {K_1 + K_2 \step{\lambda}{s} P'}
+
+\inferrule*[left=SumR]
+  {K_2 \step{\lambda}{s} P'}
+  {K_1 + K_2 \step{\lambda}{s} P'}
+
+\inferrule*[left=ParL]
+  {P \step{\lambda}{s} P'}
+  {P \parallel Q \step{\lambda}{s} P' \parallel Q}
+
+\inferrule*[left=ParR]
+  {Q \step{\lambda}{s} Q'}
+  {P \parallel Q \step{\lambda}{s} P \parallel Q'}
+
+\inferrule*[left=SynchL]
+  {P \step{c!v}{t} P' \\ Q \step{c?v}{t'} Q'}
+  {P \parallel Q \step{\tau}{(t,t')} P' \parallel Q'}
+
+\inferrule*[left=SynchR]
+  {P \step{c?v}{t} P' \\ Q \step{c!v}{t'} Q'}
+  {P \parallel Q \step{\tau}{(t,t')} P' \parallel Q'}
+
+\inferrule*[left=Restr]
+  {P \step{\lambda}{s} P' \\ \forall v.\ \lambda \neq c!v, c?v}
+  {P \setminus c \step{\lambda}{s} P' \setminus c}
+\end{mathpar}
+\caption{Program LTS, $\lambda \in \{\tau\} \cup \{c!v, c?v, \req{U}, \mrecv{m}\}$.
+Quantum operations are requests to the memory: $\req{U}$ asks for $U$ on
+$\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$.}
+\label{fig:prog}
+\end{figure}
+
+\begin{figure}[h]
+\small
+\begin{mathpar}
+\inferrule*[left=Op]
+  {U : \mathsf{Op}(|\tilde q|)}
+  {\rho \mto{\memop{U}} {\upd{U}}}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
+  {\rho \mto{\msend{m}} {\br}}
+\end{mathpar}
+\caption{Memory LTS, $\mu \in \{\memop{U}, \msend{m}\}$.}
+\label{fig:mem}
+\end{figure}
+
+\section{Parallel composition}
+
+The definitions below apply to any two LTSs whose transitions
+$s \step{\lambda}{c} s'$ carry a choice $c \in \{\epsilon, t, (t,t')\}$, where
+$\epsilon$ is the empty choice and is not written: the memory LTS only has
+transitions with choice $\epsilon$. Choices compose by
+$\epsilon \cdot c = c \cdot \epsilon = c$ and $t \cdot t' = (t,t')$.
+
+\begin{definition}[Synchronisation]\label{def:sync}
+A \emph{synchronisation predicate} between two LTSs with external actions
+$A_1$ and $A_2$ is a relation ${\sync} \subseteq A_1 \times A_2$. Between the
+memory and the programs, it is the least relation such that
+\[
+\memop{U} \sync \req{U}
+\qquad\qquad
+\msend{m} \sync \mrecv{m}.
+\]
+\end{definition}
+
+\begin{definition}[Parallel composition]\label{def:par}
+Given a synchronisation predicate $\mathsf{sync}$, the parallel composition $s_1 \parallel s_2$
+of two LTSs is the LTS given by the rules
+\begin{mathpar}
+\inferrule*[left=Left]
+  {s_1 \step{\lambda}{c} s_1'}
+  {s_1 \parallel s_2 \step{\lambda}{c} s_1' \parallel s_2}
+
+\inferrule*[left=Right]
+  {s_2 \step{\lambda}{c} s_2'}
+  {s_1 \parallel s_2 \step{\lambda}{c} s_1 \parallel s_2'}
+
+\inferrule*[left=Sync]
+  {s_1 \step{\mu_1}{c_1} s_1' \\ s_2 \step{\mu_2}{c_2} s_2' \\ \mu_1 \sync \mu_2}
+  {s_1 \parallel s_2 \step{\tau}{c_1 \cdot c_2} s_1' \parallel s_2'}
+\end{mathpar}
+\end{definition}
+
+For a memory $\rho$ and a program $P$, rule Sync gives
+$\rho \parallel P \step{\tau}{t} \rho' \parallel P'$ whenever
+$\rho \mto{\mu_1} \rho'$, $P \step{\mu_2}{t} P'$ and $\mu_1 \sync \mu_2$.
+
+\begin{lemma}[Pre-harmony]\label{lem:pre-harmony}
+For all $\rho, P, s, \rho', P'$,
+\[
+\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{P'}
+\iff
+\rho \parallel P \step{\tau}{s} \rho' \parallel P'.
+\]
+\end{lemma}
+
+That is, the LTS of lqCCS is decomposed into the LTS of programs, which runs
+without the quantum memory (\cref{fig:prog}), and the LTS of the memory
+(\cref{fig:mem}).
+\newpage
+\begin{proof}
+
+($\Leftarrow$) We go by case analysis on the derivation of $\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{P'}$.
+The only two cases are internal transition from the right part or a internal transition from $\sync$, since the memory has no internal transition.
+
+In both case, we go by induction on the transition $P \step{\lambda}{s'} P$.
+
+($\Rightarrow$) For this side, we prove a stronger lemma by generalising the internal label $\tau$ with any label $\lambda$:
+$$
+  \conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}
+\Rightarrow
+\rho \parallel P \step{\lambda}{s} \rho' \parallel P'
+$$
+We go by induction on the derivation of
+$\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$ and we conclude by induction hypothesis.
+\end{proof}
+
+\end{document}

@@ -84,7 +84,7 @@ Section Must_sum.
   Notation STSS := (ParSts_of_union gLts_sum gLtsT (SY := Prop_of_Inter_sum PIP PIQ)).
 
   Lemma must_inl_to (p : P) (t : T) :
-    must (SA := SAS) (STS := STSP) p t → must (SA := SAS) (STS := STSS) (inl p) t.
+    must_intensional (SA := SAS) (STS := STSP) p t → must_intensional (SA := SAS) (STS := STSS) (inl p) t.
   Proof.
     induction 1 as [p t ho | p t nh ex pt IHpt et IHet com IHcom].
     - by apply m_now.
@@ -101,7 +101,7 @@ Section Must_sum.
   Qed.
 
   Lemma must_inr_to (q : Q) (t : T) :
-    must (SA := SAS) (STS := STSQ) q t → must (SA := SAS) (STS := STSS) (inr q) t.
+    must_intensional (SA := SAS) (STS := STSQ) q t → must_intensional (SA := SAS) (STS := STSS) (inr q) t.
   Proof.
     induction 1 as [q t ho | q t nh ex pt IHpt et IHet com IHcom].
     - by apply m_now.
@@ -118,7 +118,7 @@ Section Must_sum.
   Qed.
 
   Lemma must_inl_from (s : P + Q) (t : T) :
-    must (SA := SAS) (STS := STSS) s t → ∀ p, s = inl p → must (SA := SAS) (STS := STSP) p t.
+    must_intensional (SA := SAS) (STS := STSS) s t → ∀ p, s = inl p → must_intensional (SA := SAS) (STS := STSP) p t.
   Proof.
     induction 1 as [s t ho | s t nh ex pt IHpt et IHet com IHcom]; intros p ->.
     - by apply m_now.
@@ -138,7 +138,7 @@ Section Must_sum.
   Qed.
 
   Lemma must_inr_from (s : P + Q) (t : T) :
-    must (SA := SAS) (STS := STSS) s t → ∀ q, s = inr q → must (SA := SAS) (STS := STSQ) q t.
+    must_intensional (SA := SAS) (STS := STSS) s t → ∀ q, s = inr q → must_intensional (SA := SAS) (STS := STSQ) q t.
   Proof.
     induction 1 as [s t ho | s t nh ex pt IHpt et IHet com IHcom]; intros q ->.
     - by apply m_now.

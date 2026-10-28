@@ -50,7 +50,7 @@ Proof.
       destruct eq as (duo & nb).
       eapply non_blocking_action_in_ms in nb; eauto. multiset_solver.
   - eapply tstep. intros (p', m') l'.
-    exfalso. apply refuses, lts_performs_spec2. eauto.
+    exfalso. apply refuses, lts_may_perform_spec2. eauto.
 Qed.
 
 Lemma conv_lift `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} (p : P) : 
@@ -62,7 +62,7 @@ Proof.
   - eapply tstep. intros p' l'.
     eapply (IH (p', ∅)); [eapply ParLeft; eauto | reflexivity].
   - eapply tstep. intros p' l'.
-    exfalso. apply refuses, lts_performs_spec2. eauto.
+    exfalso. apply refuses, lts_may_perform_spec2. eauto.
 Qed.
 
 Lemma p_trace_implies_toFW_p_trace `{H : ExtAction A} {unique_nb : UniqueDual A} `{@Prop_of_Inter P (MO A) A A fw_inter H gLtsP H MbgLts} p μ q :
@@ -449,7 +449,7 @@ Proof.
              rewrite gmultiset_disj_union_right_id.
              eapply Hcom; eauto with mdb.
          +++ exfalso. subst.
-             generalize (lts_performs_spec2 e' _ (exist _ e0 l2)).
+             generalize (lts_may_perform_spec2 e' _ (exist _ e0 l2)).
              eapply lts_oba_mo_strip_refuses; eauto.
        ++ destruct (decide (non_blocking μ1)) as [ nb1 | not_nb1];  simpl in *.
           +++ inversion l1; subst.
@@ -546,7 +546,7 @@ Proof.
            exists (p0 ∣ r0). eapply ParRight; eauto.
         ++ destruct (decide (non_blocking μ2)); destruct (decide (non_blocking μ1)). 
            +++ exfalso. eapply dual_blocks. eauto. symmetry; eauto. eauto.
-           +++ exfalso. generalize (lts_performs_spec2 e' _ (exist _ e0 l2)).
+           +++ exfalso. generalize (lts_may_perform_spec2 e' _ (exist _ e0 l2)).
                eapply lts_oba_mo_strip_refuses; eauto.
            +++ eapply woutpout_preserves_mu in l2 as (r0 & r1 & l0 & _); eauto.
                inversion l1; subst.

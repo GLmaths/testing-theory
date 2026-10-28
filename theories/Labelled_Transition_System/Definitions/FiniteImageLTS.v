@@ -388,7 +388,7 @@ Proof.
     + eapply elem_of_union_list.
       eexists. split. eapply list_elem_of_fmap.
       exists (dexist q l). split. reflexivity. eapply elem_of_enum. eapply IHhw; eauto.
-    + exfalso. apply hst', (lts_performs_spec2 p τ). eauto.
+    + exfalso. apply hst', (lts_may_perform_spec2 p τ). eauto.
 Qed.
 
 Lemma wt_nil_stable_set_dec `{FiniteImagegLts P A} p (ht : p ⤓) : 
@@ -487,7 +487,7 @@ Proof.
     eapply reachable_states_spec1 in mem.
     inversion mem; subst.
     + set_solver.
-    + exfalso. apply hst, lts_performs_spec2. eauto.
+    + exfalso. apply hst, lts_may_perform_spec2. eauto.
   - intro mem. eapply reachable_states_spec2. replace q with p.
     eauto with mdb. set_solver.
 Qed.
@@ -499,7 +499,7 @@ Proof.
   eapply leibniz_equiv.
   intro q. split; intro mem.
   - eapply waiting_states_spec1 in mem as (w & hst').
-    inversion w; subst. set_solver. exfalso. apply hst, lts_performs_spec2. eauto.
+    inversion w; subst. set_solver. exfalso. apply hst, lts_may_perform_spec2. eauto.
   - eapply elem_of_singleton_1 in mem. subst.
     eapply waiting_states_spec2. split; eauto with mdb.
 Qed.

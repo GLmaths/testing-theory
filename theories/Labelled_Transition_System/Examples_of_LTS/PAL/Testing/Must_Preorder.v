@@ -39,7 +39,7 @@ Section PAL_Must.
 
   (* [p] must pass the test [t]. *)
   Definition must_PAL (p t : term) : Prop :=
-    must (gLtsP := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val) (outcome := good_PAL Val) p t.
+    must_intensional (gLtsP := PALA_gLts Val) (gLtsT := PALA_gLtsEq Val) (outcome := good_PAL Val) p t.
 
   (* The Must preorder: [q] passes every test that [p] must pass. *)
   Definition must_pre_PAL (p q : term) : Prop :=

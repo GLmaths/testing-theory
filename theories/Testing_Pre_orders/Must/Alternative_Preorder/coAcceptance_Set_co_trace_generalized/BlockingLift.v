@@ -145,8 +145,8 @@ Section Must_lift.
   Context (STSL : ParSts P T gL gLtsT) (SPECL : ParStsSpec P T gL gLtsT SyncAction_mem STSL).
 
   Lemma must_lift_to (p : P) (t : T) :
-    must (gLtsP := gP) (SA := SA) (STS := STS) p t →
-    must (gLtsP := gL) (SA := SyncAction_mem) (STS := STSL) p t.
+    must_intensional (gLtsP := gP) (SA := SA) (STS := STS) p t →
+    must_intensional (gLtsP := gL) (SA := SyncAction_mem) (STS := STSL) p t.
   Proof.
     induction 1 as [p t ho | p t nh ex pt IHpt et IHet com IHcom].
     - by apply m_now.
@@ -163,8 +163,8 @@ Section Must_lift.
   Qed.
 
   Lemma must_lift_from (p : P) (t : T) :
-    must (gLtsP := gL) (SA := SyncAction_mem) (STS := STSL) p t →
-    must (gLtsP := gP) (SA := SA) (STS := STS) p t.
+    must_intensional (gLtsP := gL) (SA := SyncAction_mem) (STS := STSL) p t →
+    must_intensional (gLtsP := gP) (SA := SA) (STS := STS) p t.
   Proof.
     induction 1 as [p t ho | p t nh ex pt IHpt et IHet com IHcom].
     - by apply m_now.

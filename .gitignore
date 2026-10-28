@@ -7,3 +7,5 @@ devenv.lock
 .nix/
 .vscode/
 .doc/
+paper/*
+!paper/*.tex

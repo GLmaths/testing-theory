@@ -1188,7 +1188,7 @@ Proof.
     exists β, μ2, q', t'. eauto.
   + assert (μ2 ∈ coR p) as some_co_action_of_p.
     { exists μ1. repeat split; eauto.
-      eapply lts_performs_spec2;eauto. }
+      eapply lts_may_perform_spec2;eauto. }
     eapply (map_gamma_of_action (αᴘʀᴏ ∘ αᴛᴇꜱᴛ)) in some_co_action_of_p as mem.
     eapply sub in mem. destruct mem as (μ' & mem & eq).
     eapply (map_gamma_of_action αᴛᴇꜱᴛ) in mem as eq'. symmetry in eq.
@@ -1196,9 +1196,9 @@ Proof.
     2:{ destruct mem as (μ3 & hmem & hdual & hblock). eauto. }
     destruct eq' as (μ'' & mem' & eq'). destruct mem' as (μ''' & tr' & duo2 & b).
     assert (μ'' ∈ R t) as Tr_Test.
-    { eapply abstraction_test_spec in eq';eauto. apply lts_performs_spec2. eauto. }
-    eapply lts_performs_spec1 in Tr_Test as (t'' & Tr'').
-    eapply lts_performs_spec1 in tr' as (q' & tr').
+    { eapply abstraction_test_spec in eq';eauto. apply lts_may_perform_spec2. eauto. }
+    eapply lts_may_perform_spec1 in Tr_Test as (t'' & Tr'').
+    eapply lts_may_perform_spec1 in tr' as (q' & tr').
     exists μ''', μ'', q', t''. eauto.
 Qed.
 
@@ -1230,8 +1230,8 @@ Proof.
 
   assert (q ↛) as stable_q.
   { destruct (decide (q ⟶)) as [not_refuses_q | refuses_q].
-    - exfalso. eapply lts_performs_spec1 in not_refuses_q as (q' & l).
-      apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)). exists (q' ∣ t). eapply ParLeft. exact l.
+    - exfalso. eapply lts_may_perform_spec1 in not_refuses_q as (q' & l).
+      apply refuses_tau_q, (lts_may_perform_spec2 (q ∣ t)). exists (q' ∣ t). eapply ParLeft. exact l.
     - exact refuses_q. }
 
   assert (htX : ∀ p : P, p ∈ X → p ⇓ []).
@@ -1246,13 +1246,13 @@ Proof.
   edestruct (ex p') as ((p'' , t'') & HypTr). now eapply elem_of_singleton.
 
   inversion HypTr as [? ? ? ? tau_left | ? ? ? ? tau_right | ? ? ? ? ? ? ? act_left act_right]; subst.
-  - exfalso; apply stp', lts_performs_spec2; eauto.
+  - exfalso; apply stp', lts_may_perform_spec2; eauto.
   - destruct (decide (t ⟶)) as [not_refuses_t | refuses_t].
-    + apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)).
+    + apply refuses_tau_q, (lts_may_perform_spec2 (q ∣ t)).
       exists (q , t''). eapply ParRight; eauto.
-    + exfalso. apply refuses_t, lts_performs_spec2. eauto with mdb.
+    + exfalso. apply refuses_t, lts_may_perform_spec2. eauto with mdb.
   - eapply communication_enabled in act_left as (μ'1 & μ'2 & q' & t''' & duo & tr1 & tr2); eauto.
-    apply refuses_tau_q, (lts_performs_spec2 (q ∣ t)). exists (q' ∣ t''').
+    apply refuses_tau_q, (lts_may_perform_spec2 (q ∣ t)). exists (q' ∣ t''').
     eapply (ParSync (μ'1)); eauto.
 Qed.
 
@@ -1266,7 +1266,7 @@ Lemma stability_nbhvleqtwo
 Proof.
   intros nhg hmx hleq q mem.
   destruct (decide ((q, t) ⟶)) as [Hp | Hst].
-  - eapply lts_performs_spec1 in Hp as (t' & hl). eauto.
+  - eapply lts_may_perform_spec1 in Hp as (t' & hl). eauto.
   - exfalso. apply (unoutcome_must_st_nleqx X Y t nhg hmx); eauto.
 Qed.
 

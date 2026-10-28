@@ -107,21 +107,21 @@ Next Obligation.
   assert (αᴛᴇꜱᴛ β ∈ ⌈ αᴛᴇꜱᴛ ⌉ coR (p1 ▷ m1)) as mem_h; eauto.
   destruct mem as (μ'' & mem & eq').
   destruct mem as (η''' & tr' & duo & b'').
-  eapply lts_performs_spec1 in tr' as ((p , m) & tr'').
+  eapply lts_may_perform_spec1 in tr' as ((p , m) & tr'').
   inversion tr'';subst.
   - assert (αᴛᴇꜱᴛ β ∈ ⌈ αᴛᴇꜱᴛ ⌉ coR p1) as mem_h'.
     { rewrite eq'. eapply map_gamma_of_action. exists η'''.
-      repeat split; eauto. eapply lts_performs_spec2;eauto. }
+      repeat split; eauto. eapply lts_may_perform_spec2;eauto. }
     eapply (abstraction_prog_spec p1 β β') in mem_h';eauto.
     destruct mem_h' as (β'' & eq'' & mem').
     exists β''. repeat split; eauto. destruct eq'' as (μ & tr & duo' & b''').
-    exists μ. repeat split; eauto. eapply lts_performs_spec1 in tr as (p'' & tr).
-    eapply lts_performs_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
+    exists μ. repeat split; eauto. eapply lts_may_perform_spec1 in tr as (p'' & tr).
+    eapply lts_may_perform_spec2. exists (p'' ▷ m). eapply ParLeft. eauto.
   - destruct (decide (non_blocking η''')) as [nb''' | b'''].
     * eapply non_blocking_action_in_ms in l; eauto.
       subst. exists μ''. split.
       + exists η'''. repeat split. 
-        -- eapply lts_performs_spec2;eauto.
+        -- eapply lts_may_perform_spec2;eauto.
         -- exact duo.
         -- exact b''.
       + rewrite<- eq'. admit.
@@ -135,9 +135,9 @@ Lemma coR_fw `{H : ExtAction A} `{gLtsP : !gLts P H} {unique_nb : UniqueDual A}
 Proof.
   split.
   - intros (μ' & tr & duo & b).
-    eapply lts_performs_spec1 in tr as ((p' , m') & eq).
+    eapply lts_may_perform_spec1 in tr as ((p' , m') & eq).
     inversion eq; subst; simpl in *.
-    + left. exists μ'. repeat split; eauto. eapply lts_performs_spec2. eauto.
+    + left. exists μ'. repeat split; eauto. eapply lts_may_perform_spec2. eauto.
     + right. destruct (decide (non_blocking μ')) as [nb' | b'].
       * exists μ'. split; [exact nb' |]. split.
         -- eapply non_blocking_action_in_ms in l; eauto. multiset_solver.
@@ -147,10 +147,10 @@ Proof.
         eapply unique_nb in duo; eauto. subst. contradiction.
   - intros [(μ' & tr & duo & b) | (η & nb & mem & ->)].
     + exists μ'. repeat split; eauto.
-      eapply lts_performs_spec1 in tr as (p' & tr).
-      eapply lts_performs_spec2. exists (p' ▷ m). eapply ParLeft. exact tr.
+      eapply lts_may_perform_spec1 in tr as (p' & tr).
+      eapply lts_may_perform_spec2. exists (p' ▷ m). eapply ParLeft. exact tr.
     + exists η. repeat split.
-      * eapply lts_performs_spec2.
+      * eapply lts_may_perform_spec2.
         exists (p , m ∖ {[+ η +]}).
         eapply ParRight.
         assert (m = {[+ η +]} ⊎ (m ∖ {[+ η +]})) as eqm by multiset_solver.

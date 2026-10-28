@@ -165,12 +165,12 @@ Section PAL_Alt_Phi.
       + rewrite <- (ltemplate_label_witness tp) in hin.
         destruct (collect_in_a_step p _ hin) as (q & hq).
         exists (AIn _ (label_witness tp)). split.
-        * apply lts_performs_spec2. by exists q.
+        * apply lts_may_perform_spec2. by exists q.
         * cbn [αᴛᴀᴘᴀʟ]. by rewrite ltemplate_label_witness.
       + destruct (collect_out_witnesses_a Val p ot hin) as [q hq].
         exists (AOut _ ot). split; [| done].
-        apply lts_performs_spec2. by exists q.
-    - intros (μ & acc & <-). apply lts_performs_spec1 in acc as (q & hq).
+        apply lts_may_perform_spec2. by exists q.
+    - intros (μ & acc & <-). apply lts_may_perform_spec1 in acc as (q & hq).
       destruct μ as [l|ot]; simpl.
       + left. exists (ltemplate l). split; [done | by eapply in_step_in_collect_in_a].
       + right. exists ot. split; [done | by eapply out_step_in_collect_out_a].
@@ -181,11 +181,11 @@ Section PAL_Alt_Phi.
   (* Test side: labels with the same event are accepted by the same processes. *)
   Lemma αᴛᴇꜱᴛ_test_spec (t : term) μ μ' : αᴛᴀᴘᴀʟ μ = αᴛᴀᴘᴀʟ μ' → t ⟶[μ] → t ⟶[μ'].
   Proof.
-    intros e acc. apply lts_performs_spec1 in acc as (q & hq).
+    intros e acc. apply lts_may_perform_spec1 in acc as (q & hq).
     destruct μ as [l|ot], μ' as [l'|ot']; simpl in e; try discriminate; injection e as e.
     - destruct (in_retarget t l l' q hq (eq_sym e)) as (q' & hq').
-      apply lts_performs_spec2. by exists q'.
-    - subst. apply lts_performs_spec2. by exists q.
+      apply lts_may_perform_spec2. by exists q'.
+    - subst. apply lts_may_perform_spec2. by exists q.
   Qed.
 
   (* The pattern of template [tp], whose formal fields bind [i], [i+1], ... *)
@@ -237,7 +237,7 @@ Section PAL_Alt_Phi.
 
   Lemma probe_accepts μ : probe μ ⟶[μ].
   Proof.
-    apply lts_performs_spec2.
+    apply lts_may_perform_spec2.
     destruct μ as [l|ot]; simpl; eexists.
     - apply aar1; [apply eval_pattern_from | apply template_of_it_from].
     - apply aar3, eval_out_eot_to_tuple.
@@ -245,7 +245,7 @@ Section PAL_Alt_Phi.
 
   Lemma probe_only μ μ' : probe μ ⟶[μ'] → αᴛᴀᴘᴀʟ μ' = αᴛᴀᴘᴀʟ μ.
   Proof.
-    intros acc. apply lts_performs_spec1 in acc as (q & hq).
+    intros acc. apply lts_may_perform_spec1 in acc as (q & hq).
     destruct μ as [l|ot]; unfold probe in hq; simpl in hq; inversion hq; subst.
     - match goal with hev : eval_in_tuple _ = Some _ |- _ =>
         rewrite eval_pattern_from in hev; injection hev as <- end.

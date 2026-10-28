@@ -327,8 +327,8 @@ Defined.
   {| lts_step S 𝜆 T := S ⟶ₑ{𝜆} T ;
      lts_state_eqdec := _ ;
      lts_step_decidable S 𝜆 T := erl_step_dec S 𝜆 T ;
-     lts_performs S 𝜆 := erl_performs S 𝜆 ;
-     lts_performs_decidable S 𝜆 := erl_performs_dec S 𝜆 |}.
+     lts_may_perform S 𝜆 := erl_performs S 𝜆 ;
+     lts_may_perform_decidable S 𝜆 := erl_performs_dec S 𝜆 |}.
 Next Obligation. intros. by apply erl_performs_spec1. Defined.
 Next Obligation. intros. by apply erl_performs_spec2. Defined.
 

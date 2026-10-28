@@ -523,7 +523,7 @@ Proof.
     eapply coreachable_states_spec1 in mem. eapply cowt_iff_wt_nil in mem.
     inversion mem; subst.
     + set_solver.
-    + exfalso. apply hst, lts_performs_spec2. eauto.
+    + exfalso. apply hst, lts_may_perform_spec2. eauto.
   - intro mem. eapply coreachable_states_spec2. replace q with p.
     eapply cowt_iff_wt_nil. eauto with mdb. set_solver.
 Qed.
@@ -536,7 +536,7 @@ Proof.
   intro q. split; intro mem.
   - eapply cowaiting_states_spec1 in mem as (w & hst').
     eapply cowt_iff_wt_nil in w.
-    inversion w; subst. set_solver. exfalso. apply hst, lts_performs_spec2. eauto.
+    inversion w; subst. set_solver. exfalso. apply hst, lts_may_perform_spec2. eauto.
   - eapply elem_of_singleton_1 in mem. subst.
     eapply cowaiting_states_spec2. split; eauto with mdb.
 Qed.

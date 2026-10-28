@@ -86,8 +86,8 @@ Section MustTransfer.
                   ∃ a b, sync2 a b ∧ step2 p (ActExt a) p' ∧ tstep2 t (ActExt b) t').
 
   Lemma must_transfer p t :
-    @must P A1 HA1 gP1 T B1 HB1 gT1 outcome TP1 SA1 ST1 p t →
-    @must P A2 HA2 gP2 T B2 HB2 gT2 outcome TP2 SA2 ST2 p t.
+    @must_intensional P A1 HA1 gP1 T B1 HB1 gT1 outcome TP1 SA1 ST1 p t →
+    @must_intensional P A2 HA2 gP2 T B2 HB2 gT2 outcome TP2 SA2 ST2 p t.
   Proof.
     induction 1 as [p t Ho|p t nh ex pt IHpt et IHet com IHcom].
     - by apply m_now.
@@ -189,9 +189,9 @@ Section Settings.
   Qed.
 
   Lemma must_one_two (x : pconf) (Q : proc) :
-    must (gLtsP := pconf_gLts) (gLtsT := obs_gLtsEq) (outcome := good)
+    must_intensional (gLtsP := pconf_gLts) (gLtsT := obs_gLtsEq) (outcome := good)
       (SA := SyncAction_of_dual) x Q →
-    must (gLtsP := proc_gLts) (gLtsT := test_gLtsEq) (outcome := good) x Q.
+    must_intensional (gLtsP := proc_gLts) (gLtsT := test_gLtsEq) (outcome := good) x Q.
   Proof.
     intros Hm. unshelve eapply (must_transfer _ _ _ _ _ _ _ _ x Q Hm).
     all: lazymatch goal with
@@ -205,8 +205,8 @@ Section Settings.
   Qed.
 
   Lemma must_two_one (x : pconf) (Q : proc) :
-    must (gLtsP := proc_gLts) (gLtsT := test_gLtsEq) (outcome := good) x Q →
-    must (gLtsP := pconf_gLts) (gLtsT := obs_gLtsEq) (outcome := good)
+    must_intensional (gLtsP := proc_gLts) (gLtsT := test_gLtsEq) (outcome := good) x Q →
+    must_intensional (gLtsP := pconf_gLts) (gLtsT := obs_gLtsEq) (outcome := good)
       (SA := SyncAction_of_dual) x Q.
   Proof.
     intros Hm. unshelve eapply (must_transfer _ _ _ _ _ _ _ _ x Q Hm).

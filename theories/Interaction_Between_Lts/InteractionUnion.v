@@ -57,19 +57,19 @@ Definition decide_lift_left_performs s 𝜆 : Decision (lift_left_performs s �
 Proof. destruct 𝜆 as [[] |]; simpl; apply _. Defined.
 
 Lemma lift_left_performs_spec1 s 𝜆 : lift_left_performs s 𝜆 → { s' | lift_left_step s 𝜆 s' }.
-Proof. destruct 𝜆 as [[] |]; simpl; [apply lts_performs_spec1 | done | apply lts_performs_spec1]. Defined.
+Proof. destruct 𝜆 as [[] |]; simpl; [apply lts_may_perform_spec1 | done | apply lts_may_perform_spec1]. Defined.
 
 Lemma lift_left_performs_spec2 s 𝜆 : { s' | lift_left_step s 𝜆 s' } → lift_left_performs s 𝜆.
-Proof. destruct 𝜆 as [[] |]; simpl; [apply lts_performs_spec2 | by intros [] | apply lts_performs_spec2]. Qed.
+Proof. destruct 𝜆 as [[] |]; simpl; [apply lts_may_perform_spec2 | by intros [] | apply lts_may_perform_spec2]. Qed.
 
 Definition lift_left_lts : gLts S1 (@ExtAction_sum A1 A2 H1 H2) :=
   {| lts_step := lift_left_step;
      lts_state_eqdec := _;
      lts_step_decidable := decide_lift_left_step;
-     lts_performs := lift_left_performs;
-     lts_performs_decidable := decide_lift_left_performs;
-     lts_performs_spec1 := lift_left_performs_spec1;
-     lts_performs_spec2 := lift_left_performs_spec2 |}.
+     lts_may_perform := lift_left_performs;
+     lts_may_perform_decidable := decide_lift_left_performs;
+     lts_may_perform_spec1 := lift_left_performs_spec1;
+     lts_may_perform_spec2 := lift_left_performs_spec2 |}.
 
 End Lift_left.
 
@@ -98,19 +98,19 @@ Definition decide_lift_right_performs s 𝜆 : Decision (lift_right_performs s �
 Proof. destruct 𝜆 as [[] |]; simpl; apply _. Defined.
 
 Lemma lift_right_performs_spec1 s 𝜆 : lift_right_performs s 𝜆 → { s' | lift_right_step s 𝜆 s' }.
-Proof. destruct 𝜆 as [[] |]; simpl; [done | apply lts_performs_spec1 | apply lts_performs_spec1]. Defined.
+Proof. destruct 𝜆 as [[] |]; simpl; [done | apply lts_may_perform_spec1 | apply lts_may_perform_spec1]. Defined.
 
 Lemma lift_right_performs_spec2 s 𝜆 : { s' | lift_right_step s 𝜆 s' } → lift_right_performs s 𝜆.
-Proof. destruct 𝜆 as [[] |]; simpl; [by intros [] | apply lts_performs_spec2 | apply lts_performs_spec2]. Qed.
+Proof. destruct 𝜆 as [[] |]; simpl; [by intros [] | apply lts_may_perform_spec2 | apply lts_may_perform_spec2]. Qed.
 
 Definition lift_right_lts : gLts S2 (@ExtAction_sum A1 A2 H1 H2) :=
   {| lts_step := lift_right_step;
      lts_state_eqdec := _;
      lts_step_decidable := decide_lift_right_step;
-     lts_performs := lift_right_performs;
-     lts_performs_decidable := decide_lift_right_performs;
-     lts_performs_spec1 := lift_right_performs_spec1;
-     lts_performs_spec2 := lift_right_performs_spec2 |}.
+     lts_may_perform := lift_right_performs;
+     lts_may_perform_decidable := decide_lift_right_performs;
+     lts_may_perform_spec1 := lift_right_performs_spec1;
+     lts_may_perform_spec2 := lift_right_performs_spec2 |}.
 
 End Lift_right.
 

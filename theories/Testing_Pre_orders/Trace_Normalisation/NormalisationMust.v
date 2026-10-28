@@ -34,7 +34,7 @@ From TestingTheory Require Import ActTau gLts Bisimulation Lts_OBA Lts_FW Subset
     DefinitionAS DefinitionASrel Trace_Normalisation.NormalForm Normalisation NormalisationCo.
 (* * The must preorders on traces in normal form
 
-    The alternative characterisations of [must] in this development are based
+    The alternative characterisations of [must_intensional] in this development are based
     on acceptance sets: [≼ₐₛ] on traces ([DefinitionAS.v]) and [≼꜀ₒ₋ₐₛ] on
     co-traces ([DefinitionASrel.v]).  Both only have to be checked on traces in
     normal form.

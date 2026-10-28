@@ -159,8 +159,8 @@ Proof.
   + right. revert not_happy. induction hm; intros not_happy. 
     - contradiction. 
     - exact (IHhm not_happy). 
-    - left. eapply lts_performs_spec2; eauto.
-    - right. exists μ2. eapply lts_performs_spec2; eauto.
+    - left. eapply lts_may_perform_spec2; eauto.
+    - right. exists μ2. eapply lts_may_perform_spec2; eauto.
 Qed.
 
 Lemma ctx_may_pre_not `{

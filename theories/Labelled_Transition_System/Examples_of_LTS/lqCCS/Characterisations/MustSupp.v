@@ -24,7 +24,7 @@
 (* begin hide *)
 (* * lqCCS: the must on supports is the must of the two LTSs
 
-    [must_supp] ([lqCCS.Characterisations.AlmostSure]) is the classical [must] of the
+    [must_supp] ([lqCCS.Characterisations.AlmostSure]) is the classical [must_intensional] of the
     repository ([Must.v]), for the process LTS [(P, ρ)] and the observer
     LTS of [lqCCS.Language.LTS], linked by [sync] ([must_supp_iff_must]).  With
     [lq_must_as_iff], the almost-sure must of lqCCS is this classical must.
@@ -143,7 +143,7 @@ Section Bridge.
 
   Theorem must_supp_must P ρ Q :
     must_supp (P, Q) ρ → nonzero ρ →
-    must (outcome := good) (P, ρ) Q.
+    must_intensional (outcome := good) (P, ρ) Q.
   Proof.
     intros Hm. remember (P, Q) as C eqn:EC. revert P Q EC.
     induction Hm as [C ρ Hg|C ρ Hz|C ρ Hg Hex Hall IH]; intros P Q -> Hn.
@@ -169,7 +169,7 @@ Section Bridge.
   Qed.
 
   Theorem must_must_supp P ρ Q :
-    must (outcome := good) (P, ρ) Q → nonzero ρ →
+    must_intensional (outcome := good) (P, ρ) Q → nonzero ρ →
     must_supp (P, Q) ρ.
   Proof.
     intros Hm. remember (P, ρ) as x eqn:Ex. revert P ρ Ex.
@@ -200,7 +200,7 @@ Section Bridge.
 
   Theorem must_supp_iff_must P ρ Q :
     nonzero ρ →
-    must_supp (P, Q) ρ ↔ must (outcome := good) (P, ρ) Q.
+    must_supp (P, Q) ρ ↔ must_intensional (outcome := good) (P, ρ) Q.
   Proof.
     intros Hn. split; intros Hm; [by apply must_supp_must|by apply must_must_supp].
   Qed.
@@ -215,7 +215,7 @@ Section Bridge.
     (W_dense : ∀ a b : W, a <ₚ b → ∃ c, a <ₚ c ∧ c <ₚ b)
     P ρ Q :
     nonzero ρ →
-    (P, ρ) must_as Q ↔ must (outcome := good) (P, ρ) Q.
+    (P, ρ) must_as Q ↔ must_intensional (outcome := good) (P, ρ) Q.
   Proof.
     intros Hn. rewrite (lq_must_as_iff XM W_strict W_dense).
     by apply must_supp_iff_must.

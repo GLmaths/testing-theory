@@ -400,10 +400,10 @@ Global Instance Proper_lts_stable `{gLtsEq P A}:
 Proof.
   intros p p' Heq 𝜆 𝜆' ? Hs; subst 𝜆'; cbn in *.
   intros Hf.
-  apply lts_performs_spec1 in Hf as (q & Hq).
+  apply lts_may_perform_spec1 in Hf as (q & Hq).
   destruct (eq_spec p q 𝜆) as (r & Hr & Heqr).
   - eexists; split; eauto.
-  - contradict Hs. apply lts_performs_spec2. eexists; eauto.
+  - contradict Hs. apply lts_may_perform_spec2. eexists; eauto.
 Qed.
 
 (* In the case of a Lts with equivalence relation, the right hand side can also

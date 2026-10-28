@@ -290,7 +290,7 @@ Lemma refuses_tau_preserved_by_cowt_non_blocking_action `{gLtsOba P A} p q s :
 Proof.
   intros s_spec hst hw.
   induction hw; eauto.
-  - exfalso. apply hst, lts_performs_spec2. eauto.
+  - exfalso. apply hst, lts_may_perform_spec2. eauto.
   - inversion s_spec; subst.
     eapply IHhw. eassumption. eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
 Qed.
@@ -300,7 +300,7 @@ Lemma refuses_tau_action_preserved_by_cowt_non_blocking_action `{gLtsOba P A} p 
 Proof.
   intros s_spec hst_tau hst_inp hw.
   induction hw; eauto.
-  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
+  - exfalso. apply hst_tau, lts_may_perform_spec2. eauto.
   - inversion s_spec; subst.
     eapply IHhw; eauto.
     + eapply refuses_tau_preserved_by_lts_non_blocking_action; eauto.
@@ -314,7 +314,7 @@ Lemma lts_input_preserved_by_cowt_output `{gLtsOba P A} p q s μ :
 Proof.
   intros s_spec1 s_spec2 hst_tau hst_inp hw.
   induction hw; eauto.
-  - exfalso. apply hst_tau, lts_performs_spec2. eauto.
+  - exfalso. apply hst_tau, lts_may_perform_spec2. eauto.
   - inversion s_spec1; inversion s_spec2; subst.
     eapply IHhw.
     + eassumption.

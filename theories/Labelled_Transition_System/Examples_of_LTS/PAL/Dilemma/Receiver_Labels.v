@@ -218,13 +218,13 @@ Section PAL_Rcv.
       end.
   Proof.
     split.
-    - intros (μ2 & acc & hd & _). apply lts_performs_spec1 in acc as (q & hq).
+    - intros (μ2 & acc & hd & _). apply lts_may_perform_spec1 in acc as (q & hq).
       destruct η as [l | l], μ2 as [l2 | l2]; cbn in hd; try done; subst; by exists q.
     - destruct η as [l | l]; intros (q & hq).
       + exists (ROut l). split_and!; [| done | intros []].
-        apply lts_performs_spec2. by exists q.
+        apply lts_may_perform_spec2. by exists q.
       + exists (RIn l). split_and!; [| done | intros []].
-        apply lts_performs_spec2. by exists q.
+        apply lts_may_perform_spec2. by exists q.
   Qed.
 
   #[global] Program Instance AbsPALR :

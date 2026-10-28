@@ -90,13 +90,13 @@ Proof.
     rewrite multiplicity_empty.
     destruct (non_blocking_dec η).
     destruct (decide (q ⟶[η])) as [accepts | refuses].
-    + eapply lts_performs_spec1 in accepts as (t & hl).
+    + eapply lts_may_perform_spec1 in accepts as (t & hl).
       assert (p ⟶⋍[η] t) as (u & hlu & hequ).
       { eapply eq_spec. eexists; split; eauto. }
       eapply lts_oba_mo_spec_bis1 in hlu. multiset_solver. assumption.
     + destruct (decide (η ∈ lts_oba_mo q)).
       ++ eapply lts_oba_mo_spec_bis2 in e as (t & hl).
-         exfalso. apply refuses, lts_performs_spec2. destruct hl. now exists t.
+         exfalso. apply refuses, lts_may_perform_spec2. destruct hl. now exists t.
       ++ destruct (multiplicity η (lts_oba_mo q)) eqn:eq; multiset_solver.
     + eapply lts_oba_mo_non_blocking_contra in n. instantiate (1 := q) in n. multiset_solver.
   - assert {t | non_blocking x /\ p ⟶[x] t} as (t & nb & hlt).

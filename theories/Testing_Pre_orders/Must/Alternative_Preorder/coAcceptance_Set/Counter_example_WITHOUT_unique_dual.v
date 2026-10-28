@@ -123,10 +123,10 @@ Proof. intros [s' h] e. unfold st_step in h. rewrite e in h. set_solver. Qed.
     lts_step := st_step;
     lts_state_eqdec := _;
     lts_step_decidable s 𝜆 s' := decide (s' ∈ next s 𝜆);
-    lts_performs s 𝜆 := next s 𝜆 ≠ [];
-    lts_performs_decidable s 𝜆 := decide (next s 𝜆 ≠ []);
-    lts_performs_spec1 := st_performs_spec1;
-    lts_performs_spec2 := st_performs_spec2;
+    lts_may_perform s 𝜆 := next s 𝜆 ≠ [];
+    lts_may_perform_decidable s 𝜆 := decide (next s 𝜆 ≠ []);
+    lts_may_perform_spec1 := st_performs_spec1;
+    lts_may_perform_spec2 := st_performs_spec2;
   |}.
 
 #[global] Program Instance st_gLtsEq : gLtsEq st EA_NU := {|

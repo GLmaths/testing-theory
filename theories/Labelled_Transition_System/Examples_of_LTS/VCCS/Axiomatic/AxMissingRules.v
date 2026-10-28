@@ -120,7 +120,7 @@ Ltac st := repeat constructor.
     encoding — it is Milner's third [𝛕]-law failing:
     [𝛕.P + Q = P + Q] holds in no standard equivalence.
 
-    The counterexample (worked out on the [must] fields directly, see
+    The counterexample (worked out on the [must_intensional] fields directly, see
     [DefinitionAxiomatic.v]) is
 
       gp  := c!v•𝟘        gp' := 𝛕•(c!v•𝟘)        gq = gq' := d!w•𝟘
@@ -129,7 +129,7 @@ Ltac st := repeat constructor.
     lone [𝛕] changes nothing when there is no alternative to pre-empt.
     But [gp + gq] is stable and synchronises with the test [d?①],
     whereas [gp' + gq'] is not: its [𝛕] fires unconditionally, and
-    guarded choice commits, so [must]'s [pt] field then demands that
+    guarded choice commits, so [must_intensional]'s [pt] field then demands that
     [c!v•𝟘] alone pass [d?①], which it cannot.
 
     The system keeps only the two restricted forms — [ax_choice_stable]
@@ -181,7 +181,7 @@ Proof. apply soundness_ax; [st | st | apply ax_2]. Qed.
     Note [X] is carried **into the first branch** — the tempting
     [X + 𝛕•Y ≂ 𝛕•Y ⊕ X] is false, for the reason
     [Axiomatic/MixedSumProbes.v] exhibits: as a branch of its own, [X] would
-    sit under [must]'s [pt] field and owe an interaction by itself. *)
+    sit under [must_intensional]'s [pt] field and owe an interaction by itself. *)
 
 Definition p3 : proc := g ((a ! v • 𝟘) + (𝛕 • (g (b ! w • 𝟘)))).
 Definition q3 : proc :=
@@ -258,7 +258,7 @@ Proof. apply soundness_ax; [st | st | apply ax_6]. Qed.
 
 (* ** 7. [ax_success_l]/[_r] — [①] is a [𝟘] on the server side
 
-    [must]'s outcome field inspects only the *test*, so a server enters
+    [must_intensional]'s outcome field inspects only the *test*, so a server enters
     solely through its transitions — and [①] has none, exactly like
     [𝟘]. Before these two rules, **no rule of the system mentioned [①]
     at all**, and [≡*] does not relate it to [𝟘], so any normal form

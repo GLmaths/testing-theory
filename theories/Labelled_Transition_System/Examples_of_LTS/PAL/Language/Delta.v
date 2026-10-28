@@ -145,7 +145,7 @@ Section PAL_Alt_Delta.
 
   Lemma coprobe_only μ μ' : coprobe μ ∈ (co𝐄 μ' : subset_of term) → αᴘᴀᴘᴀʟ μ' = αᴘᴀᴘᴀʟ μ.
   Proof.
-    rewrite co𝐄_iff. intros (μ'' & hd & acc). apply lts_performs_spec1 in acc as (q & hq).
+    rewrite co𝐄_iff. intros (μ'' & hd & acc). apply lts_may_perform_spec1 in acc as (q & hq).
     destruct μ as [l|ot]; unfold coprobe in hq; simpl in hq; inversion hq; subst.
     - match goal with hev : eval_out_tuple _ = Some _ |- _ =>
         rewrite eval_out_eot_to_tuple in hev; injection hev as <- end.

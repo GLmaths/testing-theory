@@ -270,7 +270,7 @@ Proof.
              intros q mem. eapply (cowt_s_set_from_pset_ispec ps2 η HAX2). set_solver.
 Qed.
 
-(* *** From singletons to arbitrary sets, and back to [must] *)
+(* *** From singletons to arbitrary sets, and back to [must_intensional] *)
 
 Lemma mx_forall X t :
   X ≠ ∅ → (∀ p, p ∈ X → ({[p]} : gset P) must_pass_x t) → X must_pass_x t.
@@ -794,17 +794,17 @@ Proof.
     exists β, η, q', t'. eauto.
   + assert (hco : η ∈ coR p).
     { eapply coR_intro; [| exact hsy | exact not_nb].
-      eapply lts_performs_spec2. by eexists. }
+      eapply lts_may_perform_spec2. by eexists. }
     eapply (map_gamma_of_action ρ[𝔸]) in hco as mem.
     eapply sub in mem. destruct mem as (η' & memq & eq).
-    assert (acc : t ⟶[η]) by (eapply lts_performs_spec2; by eexists).
+    assert (acc : t ⟶[η]) by (eapply lts_may_perform_spec2; by eexists).
     apply (LA_class_proj (label_ker 𝔸)) in eq.
     apply rel_ker_sub in eq as (u & hu & hu''); [| intros μ; exists μ; split; reflexivity].
     pose proof (coR_reverse_inclusion u η' hu'' q memq) as (μ2 & hnref & hsyν & bη'').
     pose proof (Ready_set_inclusion η u hu t acc) as Tr_Test.
     rename u into η''.
-    eapply lts_performs_spec1 in Tr_Test as (t'' & Tr'').
-    eapply lts_performs_spec1 in hnref as (q' & tr').
+    eapply lts_may_perform_spec1 in Tr_Test as (t'' & Tr'').
+    eapply lts_may_perform_spec1 in hnref as (q' & tr').
     exists μ2, η'', q', t''. eauto.
 Qed.
 
@@ -832,7 +832,7 @@ Proof.
   intros not_happy all_must (q & mem' & refuses_tau_q) hbhv2.
   assert (stable_q : q ↛).
   { destruct (decide (q ⟶)) as [not_refuses_q | refuses_q].
-    - exfalso. eapply lts_performs_spec1 in not_refuses_q as (q' & l).
+    - exfalso. eapply lts_may_perform_spec1 in not_refuses_q as (q' & l).
       apply refuses_tau_q. exists (q', t). by apply par_step_left.
     - exact refuses_q. }
   assert (htX : ∀ p, p ∈ X → p ⇓ᶜᵒ []).
@@ -847,7 +847,7 @@ Proof.
   destruct must_p'; [contradiction |].
   edestruct (ex p') as ((p'' , t'') & HypTr). now eapply elem_of_singleton.
   pose proof (par_view_of _ _ _ HypTr) as hv. inversion hv; subst.
-  - exfalso; apply stp', lts_performs_spec2; eauto.
+  - exfalso; apply stp', lts_may_perform_spec2; eauto.
   - apply refuses_tau_q. exists (q, t''). by apply par_step_right.
   - edestruct (communication_enabled_co 𝔸 p' p'' q t t'' μ η hs l1 l2 sub)
       as (μ1 & μ2 & q' & t3 & hsy' & tr1 & tr2).

@@ -89,22 +89,22 @@ Proof.
   - split.
     + intros _. exact I.
     + intros _. destruct (decide ((g ①) ⟶)) as [Hd | Hd].
-      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
+      * exfalso. apply lts_may_perform_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
   - split.
     + intros _. exact I.
     + intros _. destruct (decide ((g 𝟘) ⟶)) as [Hd | Hd].
-      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
+      * exfalso. apply lts_may_perform_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
   - split.
     + intros _. exact I.
     + intros _. destruct (decide ((g (c ? • p)) ⟶)) as [Hd | Hd].
-      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
+      * exfalso. apply lts_may_perform_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
   - split.
     + intros _. exact I.
     + intros _. destruct (decide ((g (c ! v • p)) ⟶)) as [Hd | Hd].
-      * exfalso. apply lts_performs_spec1 in Hd as (r & Hl). inversion Hl.
+      * exfalso. apply lts_may_perform_spec1 in Hd as (r & Hl). inversion Hl.
       * exact Hd.
   - split.
     + intro H. apply H. intro Heq. unfold proc_stable in Heq.
@@ -291,14 +291,14 @@ Lemma wt_nil_stable : forall (p q : proc), p ↛ -> p ⟹[[]] q -> q = p.
 Proof.
   intros p q Hst Hwt. inversion Hwt; subst.
   - reflexivity.
-  - exfalso. apply Hst, lts_performs_spec2. exists q0. exact l.
+  - exfalso. apply Hst, lts_may_perform_spec2. exists q0. exact l.
 Qed.
 
 Lemma wt_cons_stable : forall (p r : proc) μ s, p ↛ -> p ⟹[μ :: s] r ->
   exists q, p ⟶[μ] q /\ q ⟹[s] r.
 Proof.
   intros p r μ s Hst Hwt. inversion Hwt; subst.
-  - exfalso. apply Hst, lts_performs_spec2. exists q. exact l.
+  - exfalso. apply Hst, lts_may_perform_spec2. exists q. exact l.
   - exists q. split; [exact l | exact w].
 Qed.
 
@@ -359,7 +359,7 @@ Proof.
         rewrite (wt_nil_stable (g gp) p0 (proj2 (gStable_iff gp) Hstp) Hw0) in Hincl0.
         exact Hincl0.
     + (* [gp'] takes a [𝛕]: impossible, [gp'] is stable *)
-      exfalso. apply (proj2 (gStable_iff gp') Hstp'), lts_performs_spec2. exists q1. exact Hl.
+      exfalso. apply (proj2 (gStable_iff gp') Hstp'), lts_may_perform_spec2. exists q1. exact Hl.
     + (* [gp'] takes the first visible step: appeal to the hypothesis at [μ :: s'] *)
       subst s.
       assert (Hwp' : (g gp') ⟹[μ :: s'] r) by (eapply wt_act; [exact Hl | exact Hw]).

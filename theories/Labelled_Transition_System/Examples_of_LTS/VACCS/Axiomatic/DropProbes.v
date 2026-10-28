@@ -50,7 +50,7 @@
     [UU], which is τ-stuck, not good, and refuses inputs on [{a}].
 
     **The mechanism.**  The natural probe for the inversion is
-    [(a!v•𝟘) ‖ UU].  Every field of [must (g MM) ((a!v•𝟘) ‖ UU)] goes
+    [(a!v•𝟘) ‖ UU].  Every field of [must_intensional (g MM) ((a!v•𝟘) ‖ UU)] goes
     through except [com], and [com] splits two ways: the message is taken
     by the [a]-guard — the case *canonicity* pins down, and it holds
     here — or **the client emits on [MM]'s other channel [b]**, where the
@@ -58,8 +58,8 @@
     residue.  So the sum fails the probe *through a different guard than
     the one being inverted*, and the continuation learns nothing.
 
-    **Why no judgement of this shape can be complete.**  [must (g M) u] is
-    a conjunction over branches, so [¬ must] is a disjunction, and the
+    **Why no judgement of this shape can be complete.**  [must_intensional (g M) u] is
+    a conjunction over branches, so [¬ must_intensional] is a disjunction, and the
     semantic condition quantifies [∀u ∃branch].  An inductive judgement
     must name the branch before seeing the client.  The plan file records
     the same alternation over τ-branches ([𝛕•A + 𝛕•B]); this is the
@@ -104,7 +104,7 @@ Definition UU : proc := ((cst b) ! (cst w) • 𝟘) ‖ (g ((cst e) ? • (g �
 (* Same inversion tactic as [Axiomatic/ChoiceProbes.v]: invert every [lts]
     whose subject has a concrete head, then close on the channel
     disequalities.  The leading [unfold lts_step] is needed because
-    [must]'s own fields are stated with the [gLts] notation. *)
+    [must_intensional]'s own fields are stated with the [gLts] notation. *)
 
 Ltac blast3 :=
   unfold lts_step in *; simpl in *;
@@ -736,7 +736,7 @@ Qed.
     forbid the client to offer [x]" ([dead_guard_blocks]), while [ex]
     forces the client to offer one of the two channels
     ([guard_forces_emit]).  So [P1] passing [u] forces [u] to emit on [b]
-    and not on [a], and [P2] forces the exact opposite.  Since [must]'s
+    and not on [a], and [P2] forces the exact opposite.  Since [must_intensional]'s
     [pt] field demands *all* τ-successors pass, [PC] fails every τ-stuck
     non-good client, which by [Bad.below_nil_iff] is exactly
     [PC ⊑ₘᵤₛₜᵢ 𝟘].
@@ -1136,7 +1136,7 @@ Qed.
     channel the other needs.
 
     - [PCfg ⊑ₘᵤₛₜᵢ 𝟘]: a τ-stuck non-good client passed by [PCfg] would,
-      through [must]'s [pt] field, be passed by **both** successors, and
+      through [must_intensional]'s [pt] field, be passed by **both** successors, and
       [must_i_tau_choice_join] would then make [PC] pass it — which
       [PC_below_nil] forbids.
     - and **neither successor is below [𝟘]** ([P1_not_below_nil],
@@ -2924,7 +2924,7 @@ End VACCS_DropProbes.
 
     - **L'hypothèse tient, et gratuitement** : [must_i_tau_below] sur la
       délivrance de [rb] donne [PR ⊑ₘᵤₛₜᵢ SBr], et [SBr ≡* msgs lr].
-      Aucun raisonnement [must] n'est requis ([PR_below_msgs]).
+      Aucun raisonnement [must_intensional] n'est requis ([PR_below_msgs]).
     - **[SAr] passe [TRr]** ([SAr_passes_TRr]) : le client est τ-bloqué et
       non bon ; [SAr] prend son message [rc], la continuation répond sur
       [re], le client devient bon.
@@ -3370,7 +3370,7 @@ End VACCS_RegenProbe.
       morte sur [xc] force [𝟘] à passer un résidu τ-bloqué non bon.
     - symétriquement avec [XTb] et [xd].
 
-    Comme le champ [pt] de [must] exige que **tous** les τ-successeurs
+    Comme le champ [pt] de [must_intensional] exige que **tous** les τ-successeurs
     passent, [XP] rate [XTa] (à cause de [XSB]) et rate [XTb] (à cause de
     [XSA]).  Donc ni [XSA] ni [XSB] n'est [⊑ₘᵤₛₜᵢ]-sous [XP], alors que
     [XP] est sous les deux ([must_i_tau_below]) :
@@ -3792,7 +3792,7 @@ End VACCS_XProbe.
     What is left informal is the complementary case, a bag that already
     carries a [b]-message: such a configuration emits [b] straight away
     and [b ? • ①] separates it from [PL], which emits nothing until it has
-    received.  (Formalising that half needs a *positive* [must] against a
+    received.  (Formalising that half needs a *positive* [must_intensional] against a
     configuration with deliveries available, which [must_any_probe] does
     not cover — it asks for a τ-stuck server.)
 
@@ -3893,7 +3893,7 @@ Qed.
 
     [mute_cfg_not_above_PL] covers the bags carrying no [mb]-message.
     The other bags are settled here, and the plan's estimate of the cost
-    was too pessimistic: it expected a **positive** [must] fact against a
+    was too pessimistic: it expected a **positive** [must_intensional] fact against a
     configuration with available deliveries — something
     [Matching.must_any_probe] does not cover, since it needs a
     τ-stuck server.  None is needed.
@@ -4321,7 +4321,7 @@ End VACCS_BadPar.
 
     [TrS2] is τ-stable and offers [ta]; it answers [TrT] on [te] and the
     client becomes good.  [TrS1] has a τ — the delivery — after which the
-    [ta]-guard is gone and nothing at all is left, so [must]'s [pt] field
+    [ta]-guard is gone and nothing at all is left, so [must_intensional]'s [pt] field
     fails against a τ-stuck non-good client.
 
     Note this is *not* an instance of message rigidity
@@ -4347,7 +4347,7 @@ Definition TrT2 : proc :=
   ((g 𝟘) : proc) ‖ ((g ((cst te) ? • ((g ①) : proc))) : proc).
 
 (* A server with no transitions at all fails every τ-stuck non-good
-    client: [must]'s [ex] field has nothing to fire on. *)
+    client: [must_intensional]'s [ex] field has nothing to fire on. *)
 Lemma inert_fails_stuck : forall p u,
   (forall a z, ~ lts p a z) ->
   (forall z, ~ lts u τ z) -> ~ good_VACCS u -> ~ (p must_pass u).

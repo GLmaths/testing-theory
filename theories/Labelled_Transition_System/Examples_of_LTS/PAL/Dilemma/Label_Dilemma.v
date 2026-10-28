@@ -33,7 +33,7 @@ From TestingTheory Require Import ActTau gLts InputOutputActions Bisimulation Su
 
    Take any type of labels [A] with any [dual], and any LTS on the terms of
    PAL whose synchronisations along [dual] are exactly those of PAL
-   ([hsync]; this is what [must] uses to make a process and a test
+   ([hsync]; this is what [must_intensional] uses to make a process and a test
    communicate), with every action blocking. If [Val] is infinite, there are
    no [αᴛᴇꜱᴛ], [αᴘʀᴏ] with [FinitaryAbsAction] and no [gen] with [test_spec].
 
@@ -156,7 +156,7 @@ Section PAL_Label_Dilemma.
   Definition Abs : AbsAction (gLtsP := gLtsEq_gLts) (gLtsT := gLtsT) term term αᴛᴇꜱᴛ αᴘʀᴏ := Fin.(FinitaryAbsAction_Abs).
 
   Lemma accepts_of_step (p q : term) (μ : A) : p ⟶[μ] q → μ ∈ R p.
-  Proof. intros h. exact (lts_performs_spec2 p (ActExt μ) (exist _ q h)). Qed.
+  Proof. intros h. exact (lts_may_perform_spec2 p (ActExt μ) (exist _ q h)). Qed.
 
   (* [c] is a label by which [out(!v).𝟘] synchronises with [in(?x).out(!x).𝟘]. *)
   Definition spec (v : Val) (c : A) : Prop :=
@@ -179,7 +179,7 @@ Section PAL_Label_Dilemma.
     assert (c' ∈ R (out_val v)) as hacc.
     { apply (Abs.(abstraction_test_spec) (out_val v) c c' (hblock c) (hblock c') e).
       by eapply accepts_of_step. }
-    apply lts_performs_spec1 in hacc as (t' & ht').
+    apply lts_may_perform_spec1 in hacc as (t' & ht').
     destruct (proj1 (hsync p_any (out_val v) (out_val w) t')) as (ot & [[h1 h2] | [h1 h2]]).
     - exists a', c'. done.
     - apply p_any_in_inv in h1 as (u & -> & hq). apply out_val_inj in hq.
@@ -193,12 +193,12 @@ Section PAL_Label_Dilemma.
   Proof.
     intros hne hc hc' e hin.
     apply (Abs.(abstraction_prog_spec) (in_val v) c c' (hblock c) (hblock c') e) in hin as (x & hx & ex).
-    destruct hx as (μ2 & acc & hd & _). apply lts_performs_spec1 in acc as (q & hq).
+    destruct hx as (μ2 & acc & hd & _). apply lts_may_perform_spec1 in acc as (q & hq).
     destruct hc' as (a' & hd' & ha' & hstep').
     assert (x ∈ R (out_val w)) as hacc.
     { apply (Abs.(abstraction_test_spec) (out_val w) c' x (hblock c') (hblock x) ex).
       by eapply accepts_of_step. }
-    apply lts_performs_spec1 in hacc as (t' & ht').
+    apply lts_may_perform_spec1 in hacc as (t' & ht').
     destruct (proj1 (hsync (in_val v) (out_val w) q t')) as (ot & [[h1 h2] | [h1 h2]]).
     - exists μ2, x. done.
     - apply in_val_in_inv in h1 as ->. apply out_val_out_inv in h2. injection h2. congruence.

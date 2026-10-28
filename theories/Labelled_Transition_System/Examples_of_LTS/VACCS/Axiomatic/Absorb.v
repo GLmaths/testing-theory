@@ -86,7 +86,7 @@ Section VACCS_Absorb.
 
 Context `{VP : VACCS_Parameters}.
 
-(* [must (g 𝟘) t] is a property of the *client* alone: [𝟘] never
+(* [must_intensional (g 𝟘) t] is a property of the *client* alone: [𝟘] never
     interacts, so the only field with content is [ex], which says [t] has a
     [τ] of its own whenever it is not already good. *)
 Lemma must_nil_tau : forall (t : proc), (g 𝟘) must_pass t -> ~ good_VACCS t ->
@@ -274,9 +274,9 @@ Definition RefusesIn (S : chset) (u : proc) : Prop :=
 
 (* ** Soundness
 
-    By induction on the [must] derivation, not on [Harmless] — the
+    By induction on the [must_intensional] derivation, not on [Harmless] — the
     judgement is preserved by transitions ([hm_tau_step], [hm_in_step]),
-    so each field of [m_step] hands the induction a smaller [must] fact
+    so each field of [m_step] hands the induction a smaller [must_intensional] fact
     with the invariant restored.  The [ParSync]-on-an-input case is where
     the set grows and where the asynchronous shape lemma
     ([TransitionShapeForOutputSimplified]) and [lts_in_value_swap] are
@@ -324,7 +324,7 @@ Qed.
 
 (* A transition either exists or does not — constructively, because the
     VACCS [gLts] instance exposes [lts_set] as a [gset], whose equality
-    with [∅] is decidable.  (The generic [lts_performs_spec1]/[_spec2] both
+    with [∅] is decidable.  (The generic [lts_may_perform_spec1]/[_spec2] both
     misbehave on this instance — one times out — so go through [lts_set]
     directly, as elsewhere in this development.  The [Unshelve] is the
     usual instance-resolution quirk after [set_choose_L].) *)
@@ -454,7 +454,7 @@ Qed.
       Sound through [ex]: the client, being [τ]-stuck too, can only move by
       feeding [p], and feeding is what the third condition follows.
 
-    These are exactly the two ways [must p u] can fail at a [τ]-stuck
+    These are exactly the two ways [must_intensional p u] can fail at a [τ]-stuck
     client, so the judgement is complete by construction. *)
 
 Inductive Bad : chset -> proc -> Prop :=
@@ -469,7 +469,7 @@ Inductive Bad : chset -> proc -> Prop :=
 
 (* ** Soundness
 
-    Induction on the [must] derivation; at each step the *judgement* is
+    Induction on the [must_intensional] derivation; at each step the *judgement* is
     destructed and each clause picks the field that refutes it — [bad_step]
     uses [pt], [bad_stuck] uses [ex].  No preservation lemmas are needed,
     which is the whole point of stating the clauses over transitions.  The
@@ -803,7 +803,7 @@ Qed.
     The existence premise is what makes that sound: an input's
     availability is value-independent ([lts_in_value_swap]), so a single
     [c]-input of [p] supplies one at whatever value the client emits, and
-    [must]'s [com] field then applies.  Without it a process with no
+    [must_intensional]'s [com] field then applies.  Without it a process with no
     [c]-input could "kill" on [c] while ignoring the client entirely.
 
     Deciding the case split needs "does [u] emit on [c]?", which is
@@ -860,7 +860,7 @@ Inductive BadK : chset -> chset -> proc -> Prop :=
     (forall c v p', lts p (ActExt (ActIn (c,v))) p' -> D c) ->
     BadK S D p.
 
-(* Soundness is by induction on the **judgement**, not on the [must]
+(* Soundness is by induction on the **judgement**, not on the [must_intensional]
     derivation: [bk_kill]'s second premise is about the *same* process, so
     only the judgement decreases there.  The [bk_stuck] base case is where
     [D] pays off — every input of [p] is on a channel the client cannot
@@ -1549,7 +1549,7 @@ Qed.
 
 (* ** [ochans p ⊆ S] certifie [Bad S p]
 
-    Le champ [ex] de [must] réclame un pas de la paire ; si le serveur
+    Le champ [ex] de [must_intensional] réclame un pas de la paire ; si le serveur
     n'émet que sur des voies **déjà refusées** par le client, la clause de
     sortie de [bad_stuck] est satisfaite d'emblée.  Les entrées se
     traitent par récurrence : le résidu hérite du critère

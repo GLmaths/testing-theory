@@ -457,7 +457,7 @@ Proof.
           eapply lts_oba_mo_spec_bis2 in mem. destruct mem as (p2 & nb & l).
           eapply Hyp in nb. symmetry in eq. edestruct (eq_spec r' p2) as (r'' & l' & equiv').
           exists r; split; eauto. 
-          assert (r' ⟶[η]). eapply lts_performs_spec2; exists r''; eauto. contradiction.
+          assert (r' ⟶[η]). eapply lts_may_perform_spec2; exists r''; eauto. contradiction.
     ++ multiset_solver.
   + intros r r' stripped Hyp.
     assert (exists r'', r ⟶[x] r'') as (r'' & HypTr).
@@ -479,7 +479,7 @@ Proof.
   induction w as [| p1 p2 p3 η0 m0 hnb hl w IHw]; intros x.
   - intros η nb.
     destruct (decide (p ⟶[η])) as [accepts | refuses].
-    + eapply lts_performs_spec1 in accepts as (q & l).
+    + eapply lts_may_perform_spec1 in accepts as (q & l).
       eapply lts_oba_mo_spec_bis1 in l; eauto. multiset_solver.
     + eapply refuses_preserved_by_eq; eauto.
   - eapply lts_oba_mo_spec2 in hl. rewrite <- x in hl.

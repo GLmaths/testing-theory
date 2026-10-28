@@ -38,7 +38,7 @@
     Proved via the same light route as in VCCS: the two sides have
     *exactly* the same one-step transitions — same labels, same targets,
     not merely related ones — so a generic "same transitions ⟹ same
-    [must]-behaviour" lemma closes it. *)
+    [must_intensional]-behaviour" lemma closes it. *)
 
 From Stdlib Require Import Lia.
 From stdpp Require Import base.
@@ -50,9 +50,9 @@ Section VACCS_Expansion.
 
 Context `{VP : VACCS_Parameters}.
 
-(* ** Same transitions ⟹ same [must]-behaviour
+(* ** Same transitions ⟹ same [must_intensional]-behaviour
 
-    [must]'s recursive structure only ever inspects one-step transitions,
+    [must_intensional]'s recursive structure only ever inspects one-step transitions,
     so no relation on reached states beyond "same transition set" is
     needed anywhere. *)
 

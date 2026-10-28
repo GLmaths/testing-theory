@@ -45,7 +45,7 @@ Section Sum_LTS.
 
   Definition gLts_sum : gLts (P + Q) (@ExtAction_sum A1 A2 H1 H2).
   Proof.
-    refine {| lts_step := sum_step; lts_performs := sum_performs |}.
+    refine {| lts_step := sum_step; lts_may_perform := sum_performs |}.
     - intros [p | q] 𝜆 [p' | q']; simpl;
         [apply decide_lift_left_step | apply _ | apply _ | apply decide_lift_right_step].
     - intros [p | q] 𝜆; simpl; [apply decide_lift_left_performs | apply decide_lift_right_performs].

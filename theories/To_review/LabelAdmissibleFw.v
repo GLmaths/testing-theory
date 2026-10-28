@@ -49,7 +49,7 @@ Section Forwarder_coR.
     apply lts_performs_spec1 in acc as (y & l).
     destruct a as [μ | [η | η]]; simpl in hs.
     - apply fw_inl_inv in l as (p' & -> & l). left.
-      eapply coR_intro; [eapply lts_performs_spec2; by eexists | exact hs | exact b].
+      eapply coR_intro; [eapply lts_may_perform_spec2; by eexists | exact hs | exact b].
     - apply fw_msg_inv in l as (m' & -> & -> & nb). right.
       exists η. split_and!; [multiset_solver | exact nb | exact hs].
     - apply fw_cobar_inv in l as [_ nb]. subst. contradiction.

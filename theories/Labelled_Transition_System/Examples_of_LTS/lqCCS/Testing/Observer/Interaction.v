@@ -102,7 +102,7 @@ Section Characterisation.
   Proof.
     destruct x as [P ρ].
     assert (Hs : (P, ρ) ⟶[LOp E qs] (P, sop_apply E qs ρ)) by (apply pconf_step_def; constructor).
-    apply (lts_performs_spec2 (P, ρ) (ActExt (LOp E qs))). eexists. exact Hs.
+    apply (lts_may_perform_spec2 (P, ρ) (ActExt (LOp E qs))). eexists. exact Hs.
   Qed.
 
   Lemma p_meas_code (x : pconf) M qs n y :
@@ -120,14 +120,14 @@ Section Characterisation.
     exists (code _ k).
     assert (Hs : (P, ρ) ⟶[LMeas M qs (code _ k)] (P, meas_branch M qs k ρ))
       by (apply pconf_step_def; by constructor).
-    apply (lts_performs_spec2 (P, ρ) (ActExt (LMeas M qs (code _ k)))).
+    apply (lts_may_perform_spec2 (P, ρ) (ActExt (LMeas M qs (code _ k)))).
     eexists. exact Hs.
   Qed.
 
   Lemma p_meas_all (x : pconf) :
     (∃ M qs n, x ⟶[LMeas M qs n]) → ∀ M qs, ∃ n, x ⟶[LMeas M qs n].
   Proof.
-    intros (M & qs & n & Hacc) M' qs'. apply lts_performs_spec1 in Hacc as (y & Hs).
+    intros (M & qs & n & Hacc) M' qs'. apply lts_may_perform_spec1 in Hacc as (y & Hs).
     apply p_accepts_meas. by apply p_meas_code in Hs as [? _].
   Qed.
 
@@ -147,26 +147,26 @@ Section Characterisation.
   Proof.
     destruct x as [p m].
     pose proof (p_accepts_op p E qs) as Hr.
-    apply lts_performs_spec1 in Hr as (p' & Hs).
+    apply lts_may_perform_spec1 in Hr as (p' & Hs).
     assert (Hs' : (p, m) ⟶[LOp E qs] (p', m)) by (by apply ParLeft).
-    apply (lts_performs_spec2 (p, m) (ActExt (LOp E qs))). eexists. exact Hs'.
+    apply (lts_may_perform_spec2 (p, m) (ActExt (LOp E qs))). eexists. exact Hs'.
   Qed.
 
   Lemma fw_meas_all (x : pconf * MO lact) :
     (∃ M qs n, x ⟶[LMeas M qs n]) → ∀ M qs, ∃ n, x ⟶[LMeas M qs n].
   Proof.
     destruct x as [p m]. intros (M & qs & n & Hacc) M' qs'.
-    apply lts_performs_spec1 in Hacc as (y & Hs).
+    apply lts_may_perform_spec1 in Hacc as (y & Hs).
     destruct (fw_step_mem _ _ _ Hs ltac:(by intros ?) ltac:(done)) as (p' & Hp).
     simpl in Hp. apply pconf_step_def in Hp.
     assert (Hacc : p ⟶[LMeas M qs n]).
-    { apply (lts_performs_spec2 p (ActExt (LMeas M qs n))).
+    { apply (lts_may_perform_spec2 p (ActExt (LMeas M qs n))).
       eexists. apply pconf_step_def. exact Hp. }
     destruct (p_meas_all p (ex_intro _ M (ex_intro _ qs (ex_intro _ n Hacc))) M' qs')
       as (n' & Hn').
-    exists n'. apply lts_performs_spec1 in Hn' as (p'' & Hs').
+    exists n'. apply lts_may_perform_spec1 in Hn' as (p'' & Hs').
     assert (Hs'' : (p, m) ⟶[LMeas M' qs' n'] (p'', m)) by (by apply ParLeft).
-    apply (lts_performs_spec2 (p, m) (ActExt (LMeas M' qs' n'))).
+    apply (lts_may_perform_spec2 (p, m) (ActExt (LMeas M' qs' n'))).
     eexists. exact Hs''.
   Qed.
 
@@ -282,7 +282,7 @@ Section Characterisation.
       exists (LIn c v). split; [|done].
       exists (LOut c v). split_and!; [|done|by intros ?].
       destruct (pmo_step x _ hin) as (y & hl).
-      apply (lts_performs_spec2 x (ActExt (LOut c v))). eexists. exact hl.
+      apply (lts_may_perform_spec2 x (ActExt (LOut c v))). eexists. exact hl.
     - apply elem_of_singleton in hmem as ->.
       exists (LOp 0 []). split; [|done].
       exists (LOp 0 []). split_and!; [apply p_accepts_op|done|by intros ?].
@@ -294,7 +294,7 @@ Section Characterisation.
   Next Obligation.
     intros pre_μ x (μ & (μ2 & haccept & hsync & hb) & ->).
     simpl in hsync. subst μ. unfold coR_abs_lq.
-    apply lts_performs_spec1 in haccept as (y & hl).
+    apply lts_may_perform_spec1 in haccept as (y & hl).
     destruct μ2 as [c v|c v|E qs|M qs n].
     - apply elem_of_union_l, elem_of_union_l, elem_of_map.
       exists (LOut c v). split; [done|]. by eapply pmo_of_step.
@@ -327,9 +327,9 @@ Section Characterisation.
       destruct in_p as (μ & mem & eq). subst.
       exists μ. split.
       - destruct mem as (μ2 & tr & duo & b).
-        eapply lts_performs_spec1 in tr as (p2 & tr).
+        eapply lts_may_perform_spec1 in tr as (p2 & tr).
         exists μ2. repeat split; eauto.
-        eapply lts_performs_spec2. exists (p2 ▷ m).
+        eapply lts_may_perform_spec2. exists (p2 ▷ m).
         eapply ParLeft. exact tr.
       - eauto.
     + simpl in *. eapply gmultiset_elem_of_dom, elem_of_gmultiset_map in in_M.
@@ -337,7 +337,7 @@ Section Characterisation.
       apply (lts_MO_nb_with_nb_spec1 μ m) in mem as Hmem. destruct Hmem as (nb & mem2).
       exists (co μ). split; [|exact eq].
       exists μ. split_and!.
-      - eapply lts_performs_spec2.
+      - eapply lts_may_perform_spec2.
         exists (p, m ∖ {[+ μ +]}).
         eapply ParRight.
         assert (m = {[+ μ +]} ⊎ (m ∖ {[+ μ +]})) as eqm by multiset_solver.
@@ -349,12 +349,12 @@ Section Characterisation.
   Next Obligation.
     intros pre_mu p hmem. destruct hmem as (μ & mem & eq). subst.
     destruct p as (p, m). destruct mem as (μ2 & tr & duo & b).
-    eapply lts_performs_spec1 in tr as ((p2 , m2) & eq).
+    eapply lts_may_perform_spec1 in tr as ((p2 , m2) & eq).
     inversion eq; subst; simpl in *.
     + eapply elem_of_union. left.
       change (lαᴘʀᴏ (lαᴛᴇꜱᴛ μ) ∈ coR_abs p). eapply coR_abs_spec2.
       exists μ. split; [|reflexivity]. exists μ2.
-      split_and!; [eapply lts_performs_spec2; eexists; exact l|exact duo|exact b].
+      split_and!; [eapply lts_may_perform_spec2; eexists; exact l|exact duo|exact b].
     + eapply elem_of_union. right.
       eapply gmultiset_elem_of_dom, elem_of_gmultiset_map.
       destruct (decide (non_blocking μ2)) as [nb2 | b2].

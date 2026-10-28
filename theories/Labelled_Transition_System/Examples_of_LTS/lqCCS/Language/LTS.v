@@ -37,7 +37,7 @@
       silent steps of [P], and its own requests to its memory.
 
     [sync] is a bijection between labels: each action has exactly one
-    partner.  No action is declared non-blocking: [must] does not depend on
+    partner.  No action is declared non-blocking: [must_intensional] does not depend on
     it, and the axioms on non-blocking actions are then empty.
 
     Both LTSs are given by their lists of successors, so that they are
@@ -63,10 +63,10 @@ Definition gLts_of_succs {S A} `{EA : ExtAction A} `{EqDecision S}
   (f : S → Labels A → list S) : gLts S EA :=
   {| lts_step p 𝜆 q := q ∈ f p 𝜆;
      lts_step_decidable p 𝜆 q := (_ : Decision (q ∈ f p 𝜆));
-     lts_performs p 𝜆 := f p 𝜆 ≠ [];
-     lts_performs_decidable p 𝜆 := _;
-     lts_performs_spec1 p 𝜆 Hl := list_witness (f p 𝜆) Hl;
-     lts_performs_spec2 p 𝜆 '(exist _ q Hq) := ltac:(intros E; rewrite E in Hq; set_solver) |}.
+     lts_may_perform p 𝜆 := f p 𝜆 ≠ [];
+     lts_may_perform_decidable p 𝜆 := _;
+     lts_may_perform_spec1 p 𝜆 Hl := list_witness (f p 𝜆) Hl;
+     lts_may_perform_spec2 p 𝜆 '(exist _ q Hq) := ltac:(intros E; rewrite E in Hq; set_solver) |}.
 
 (* ** Alphabets *)
 
@@ -401,8 +401,8 @@ Section LTSs.
   Lemma step_witness {S A} `{EA : ExtAction A} `{gL : !gLts S EA} p (μ : A) :
     (∃ q, p ⟶[μ] q) → {q | p ⟶[μ] q}.
   Proof.
-    intros Hex. apply lts_performs_spec1.
-    destruct Hex as (q & Hq). apply lts_performs_spec2. by exists q.
+    intros Hex. apply lts_may_perform_spec1.
+    destruct Hex as (q & Hq). apply lts_may_perform_spec2. by exists q.
   Qed.
 
   #[global] Instance lqCCS_Prop_of_Inter :

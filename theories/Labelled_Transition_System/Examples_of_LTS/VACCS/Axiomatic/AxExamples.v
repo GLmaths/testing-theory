@@ -27,7 +27,7 @@
     Two things here.
 
     First, a regression against [Examples/Examples.v]: the two facts that file
-    proves by long [must]-inductions using the OBA-with-feedback axioms are
+    proves by long [must_intensional]-inductions using the OBA-with-feedback axioms are
     recovered from the proof system in **one and two rule applications**.
 
     Second, [completeness_from_NF]: soundness and the normal form together
@@ -52,7 +52,7 @@ Context `{VP : VACCS_Parameters}.
 
 (* ** The copycat, from the system
 
-    [Examples/Examples.v] proves [ccat ≂ₘᵤₛₜᵢ 𝟘] with two ~40-line [must]
+    [Examples/Examples.v] proves [ccat ≂ₘᵤₛₜᵢ 𝟘] with two ~40-line [must_intensional]
     inductions leaning on [OBA_with_FB_First/Fourth/Fifth_Axiom].  Here
     each direction is one rule. *)
 
@@ -141,7 +141,7 @@ Proof. apply soundness_ax. Qed.
 (* * REGRESSION: the whole new chain, on a configuration with an UNSTABLE left
 
     [Bad.unstable_delivery_below_nil] machine-checks, by a direct
-    [must] argument, that a pending message beside a guard that swallows
+    [must_intensional] argument, that a pending message beside a guard that swallows
     it is below [𝟘].  Here the *same* inequation is obtained through the
     entire configuration-level apparatus built for completeness, which
     exercises it end to end:
@@ -176,7 +176,7 @@ End SplitRegression.
     it:
 
     - the first drops a guard whose continuation is a *nested* sum with a
-      **sibling** dead guard.  [must]'s [com] field owes all the residues
+      **sibling** dead guard.  [must_intensional]'s [com] field owes all the residues
       at a channel at once, so one failing sibling suffices — which is
       what [bad_stuck]'s [exists] clause now says and its universal
       predecessor could not.  Note the continuation [d ! y • 𝟘] is a live
@@ -233,7 +233,7 @@ End DropRegression2.
 (* * REGRESSION: THE UNEQUAL-BAG CHAIN, END TO END
 
     [Bad.unstable_delivery_below_nil] machine-checks, by a direct
-    [must] argument, that a one-message bag sits below the empty one when
+    [must_intensional] argument, that a one-message bag sits below the empty one when
     the guard *swallows* the message.  Here the **same** inequation comes
     out of the whole unequal-bag apparatus:
 
@@ -513,7 +513,7 @@ End VACCS_AxExamples.
     one by running the whole different-bags machinery.  With
     [completeness_ax] neither is needed: the semantic fact — which
     [Bad.unstable_delivery_below_nil] establishes by a direct
-    [must] argument — *is* the derivation.
+    [must_intensional] argument — *is* the derivation.
 
     Between [Static] processes there is no gap between the preorder and
     the system. *)

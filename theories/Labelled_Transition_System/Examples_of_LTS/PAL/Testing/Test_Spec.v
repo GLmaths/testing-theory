@@ -290,7 +290,7 @@ Section PAL_Alt_TestSpec.
   Lemma no_step_refuses (p : term) 𝜆 : (∀ q, ¬ p ⟶{𝜆} q) → p ↛{𝜆}.
   Proof.
     intros hn. intros h.
-    destruct (lts_performs_spec1 p 𝜆 h) as [q hq]. by destruct (hn q).
+    destruct (lts_may_perform_spec1 p 𝜆 h) as [q hq]. by destruct (hn q).
   Qed.
 
   (* ** Instances *)

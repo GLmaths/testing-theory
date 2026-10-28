@@ -272,7 +272,7 @@ Proof.
     + exfalso.
       assert (Hl : lts (g ((𝛕 • (g M1)) + (𝛕 • (g M2)))) τ (g M1))
         by (apply lts_choiceL; apply lts_tau).
-      apply Hst, lts_performs_spec2. eexists. exact Hl.
+      apply Hst, lts_may_perform_spec2. eexists. exact Hl.
     + inversion l; subst.
       * inversion H5; subst.
         destruct (IH M1 ltac:(simpl; lia) H1 r w Hst) as (A & Hin & Heq).
@@ -553,7 +553,7 @@ Proof.
   - intro Hwt. inversion Hwt; subst.
     + exfalso.
       assert (Hl : lts (g (ichoice (p0 :: l))) τ p0) by (apply ichoice_lts_tau; set_solver).
-      apply Hst, lts_performs_spec2. eexists. exact Hl.
+      apply Hst, lts_may_perform_spec2. eexists. exact Hl.
     + exists q. split; [apply ichoice_lts_tau; exact l0 | exact w].
     + exfalso. eapply gAllTau_no_ext; [apply ichoice_gAllTau | exact l0].
   - intros (p & Hin & Hwp).

@@ -808,7 +808,7 @@ Qed.
     This is what makes a stable sum *canonical* — at most one guard per
     channel — and canonicity is precisely the condition under which
     [Axiomatic/Bad.v]'s judgement is complete: with two guards on the same
-    channel, [must] requires both to pass, so failure only says *one*
+    channel, [must_intensional] requires both to pass, so failure only says *one*
     fails, and which one may vary with the client. *)
 
 Theorem ax_collapse_input_anywhere : forall (M : gproc) c P Q (l : list gproc),
@@ -835,7 +835,7 @@ Qed.
 
     Why canonicity matters here specifically: [Axiomatic/Bad.v]'s judgement
     is complete exactly when a stable sum carries at most one guard per
-    channel.  With two guards on [c], [must] requires *both* to pass, so
+    channel.  With two guards on [c], [must_intensional] requires *both* to pass, so
     a failure says only that *one* of them fails, and which one may vary
     with the client — the ∀∃ alternation recorded there.  With one guard
     per channel the probe [(c!v•𝟘) ‖ u'] isolates the branch and the

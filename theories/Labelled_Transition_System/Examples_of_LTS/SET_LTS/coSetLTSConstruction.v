@@ -80,26 +80,26 @@ Next Obligation.
     destruct (decide (colts_extaction_set_from_pset p η = ∅)) as [Hemp | Hnemp].
     + left. intros p' mem μ hsy.
       intros n.
-      exfalso. eapply lts_performs_spec1 in n as (q & tr).
+      exfalso. eapply lts_may_perform_spec1 in n as (q & tr).
       assert (q ∈ colts_extaction_set_from_pset p η) by (eapply Espec2; eauto).
       set_solver.
     + right. intro Hall.
       apply Hnemp. apply leibniz_equiv. intros q. split; [| set_solver].
       intros mem. eapply Espec1 in mem as (p' & memp & μ & hsy & tr).
       pose proof (Hall p' memp μ hsy) as memp'.
-      exfalso. apply memp', (lts_performs_spec2 p' (ActExt μ) (exist _ q tr)).
+      exfalso. apply memp', (lts_may_perform_spec2 p' (ActExt μ) (exist _ q tr)).
   - destruct (colts_tau_set_from_pset_ispec p) as (Tspec1 & Tspec2).
     destruct (decide (colts_tau_set_from_pset p = ∅)) as [Hemp | Hnemp].
     + left. intros p' mem.
       intros n.
-      exfalso. eapply lts_performs_spec1 in n as (q & tr).
+      exfalso. eapply lts_may_perform_spec1 in n as (q & tr).
       assert (q ∈ colts_tau_set_from_pset p) by (eapply Tspec2; eauto).
       set_solver.
     + right. intro Hall.
       apply Hnemp. apply leibniz_equiv. intros q. split; [| set_solver].
       intros mem. eapply Tspec1 in mem as (p' & memp & tr).
       eapply Hall in memp.
-      exfalso. apply memp, (lts_performs_spec2 p' τ (exist _ q tr)).
+      exfalso. apply memp, (lts_may_perform_spec2 p' τ (exist _ q tr)).
 Qed.
 Next Obligation.
   intros. simpl in *. unfold coToSET_obligation_3 in H.
@@ -109,7 +109,7 @@ Next Obligation.
     intro Hemp.
     apply H. intros p' mem μ hsy.
     intros n.
-    exfalso. eapply lts_performs_spec1 in n as (q & tr).
+    exfalso. eapply lts_may_perform_spec1 in n as (q & tr).
     assert (q ∈ colts_extaction_set_from_pset p η) as Hin.
     { destruct (colts_extaction_set_from_pset_ispec p η) as (_ & Hspec2).
       eapply Hspec2; eauto. }
@@ -118,7 +118,7 @@ Next Obligation.
     intro Hemp.
     apply H. intros p' mem.
     intros n.
-    exfalso. eapply lts_performs_spec1 in n as (q & tr).
+    exfalso. eapply lts_may_perform_spec1 in n as (q & tr).
     assert (q ∈ colts_tau_set_from_pset p) as Hin.
     { destruct (colts_tau_set_from_pset_ispec p) as (_ & Hspec2).
       eapply Hspec2; eauto. }
@@ -133,13 +133,13 @@ Next Obligation.
     intros mem. eapply colts_extaction_set_from_pset_ispec in mem
       as (p' & memp & μ & hsy & tr).
     pose proof (Hall p' memp μ hsy) as memp'.
-    exfalso. apply memp', (lts_performs_spec2 p' (ActExt μ) (exist _ q tr)).
+    exfalso. apply memp', (lts_may_perform_spec2 p' (ActExt μ) (exist _ q tr)).
   - destruct H as (X' & Heq & Hne). subst.
     intro Hall.
     apply Hne. apply leibniz_equiv. intros q. split; [| set_solver].
     intros mem. eapply colts_tau_set_from_pset_ispec in mem as (p' & memp & tr).
     eapply Hall in memp.
-    exfalso. apply memp, (lts_performs_spec2 p' τ (exist _ q tr)).
+    exfalso. apply memp, (lts_may_perform_spec2 p' τ (exist _ q tr)).
 Qed.
 
 Set Typeclasses Depth 8.
@@ -280,8 +280,8 @@ Lemma co_empty_set_stable_wk_not_emp_list
 Proof.
   intro imp.
   inversion imp; subst.
-  + eapply co_empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
-  + eapply co_empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
+  + eapply co_empty_set_stable. eapply (@lts_may_perform_spec2 (gset P)); eauto.
+  + eapply co_empty_set_stable. eapply (@lts_may_perform_spec2 (gset P)); eauto.
 Qed.
 
 Lemma co_empty_set_conv (s : trace Atest) : (∅ : gset P) ⇓ s.

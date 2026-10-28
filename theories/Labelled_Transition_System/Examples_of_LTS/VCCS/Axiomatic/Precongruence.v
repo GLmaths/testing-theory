@@ -44,7 +44,7 @@ Context `{VP : VCCS_Parameters}.
 
     [⊕] is not primitive in this VCCS syntax; it is definable as [𝛕•X + 𝛕•Y].
     The key Hennessy-Ingólfsdóttir inequation [X⊕Y ⊑ X] (resp. [⊑ Y]) holds
-    here because [must]'s [m_step] constructor's [pt] field already forces
+    here because [must_intensional]'s [m_step] constructor's [pt] field already forces
     every τ-successor of the client to must-pass — [𝛕•X + 𝛕•Y] has exactly
     two τ-successors, [X] and [Y], so weakening to just one of them is free. *)
 
@@ -80,7 +80,7 @@ Qed.
     analysing what [CompletenessAx.v] needs; [DefinitionAxiomatic.v]
     gained the corresponding [ax_int_glb].)
 
-    Proved by induction on *one* of the two given [must]-facts with the
+    Proved by induction on *one* of the two given [must_intensional]-facts with the
     other [revert]-ed first, so that it is carried into every generated
     IH — the same idiom as the merge equations' "join" direction
     ([must_i_input_join_branches] etc.) further down this file. Two
@@ -421,7 +421,7 @@ Qed.
     sum's own stability is untouched and the sibling [gq] keeps exactly
     the role it had.
 
-    Proof is a direct induction on the [must] derivation — no
+    Proof is a direct induction on the [must_intensional] derivation — no
     acceptance-set machinery needed, unlike the stable case. The only
     field doing real work is [pt]: the [𝛕]-reduct is [p'], recovered by
     feeding the left-hand side's own [pt] (which yields [p must_pass t])
@@ -593,7 +593,7 @@ Qed.
     one-for-one via [eq_spec]) does NOT apply here: [⊑ₘᵤₛₜᵢ] is an
     asymmetric preorder, not a bisimulation, so it gives no operational
     correspondence between [p]'s and [q]'s individual steps. Instead we
-    induct directly on the [must] derivation (via [remember], to avoid the
+    induct directly on the [must_intensional] derivation (via [remember], to avoid the
     dependent-type/JMeq mess of [dependent induction] on this heavily
     indexed type), using [Hpq] as a black box exactly where [p]'s own
     behaviour becomes externally observable (the [com] field), and the
@@ -669,7 +669,7 @@ Qed.
 
     La première rédaction passait par [≼ₐₛ] : [ν]'s transition target is a
     *descendant* of its argument, not the argument itself, so a direct
-    [must]-induction does not apply — d'où toute une chaîne
+    [must_intensional]-induction does not apply — d'où toute une chaîne
     ([res_wt_forward]/[res_wt_backward], [res_coR_iff], la commutation de
     l'abstraction) et, avec elle, deux conditions [Static].
 
@@ -840,16 +840,16 @@ Proof.
   intros gp gq μ. split.
   - intros Hst. split.
     + intros Hd.
-      exfalso. eapply lts_performs_spec1 in Hd as (r & Hl).
-      exfalso. apply Hst, lts_performs_spec2. exists r. eapply lts_choiceL. exact Hl.
+      exfalso. eapply lts_may_perform_spec1 in Hd as (r & Hl).
+      exfalso. apply Hst, lts_may_perform_spec2. exists r. eapply lts_choiceL. exact Hl.
     + intros Hd.
-      exfalso. eapply lts_performs_spec1 in Hd as (r & Hl).
-      exfalso. apply Hst, lts_performs_spec2. exists r. eapply lts_choiceR. exact Hl.
+      exfalso. eapply lts_may_perform_spec1 in Hd as (r & Hl).
+      exfalso. apply Hst, lts_may_perform_spec2. exists r. eapply lts_choiceR. exact Hl.
   - intros (Hst1 & Hst2). intros Hd.
-    exfalso. eapply lts_performs_spec1 in Hd as (r & Hl).
+    exfalso. eapply lts_may_perform_spec1 in Hd as (r & Hl).
     inversion Hl; subst.
-    + exfalso. apply Hst1, lts_performs_spec2. exists r. exact H3.
-    + exfalso. apply Hst2, lts_performs_spec2. exists r. exact H3.
+    + exfalso. apply Hst1, lts_may_perform_spec2. exists r. exact H3.
+    + exfalso. apply Hst2, lts_may_perform_spec2. exists r. exact H3.
 Qed.
 
 Lemma choice_stable_iff : forall gp gq, (g (gp+gq)) ↛ <-> (g gp) ↛ /\ (g gq) ↛.
@@ -857,16 +857,16 @@ Proof.
   intros gp gq. split.
   - intros Hst. split.
     + intros Hd.
-      exfalso. eapply lts_performs_spec1 in Hd as (r & Hl).
-      exfalso. apply Hst, lts_performs_spec2. exists r. eapply lts_choiceL. exact Hl.
+      exfalso. eapply lts_may_perform_spec1 in Hd as (r & Hl).
+      exfalso. apply Hst, lts_may_perform_spec2. exists r. eapply lts_choiceL. exact Hl.
     + intros Hd.
-      exfalso. eapply lts_performs_spec1 in Hd as (r & Hl).
-      exfalso. apply Hst, lts_performs_spec2. exists r. eapply lts_choiceR. exact Hl.
+      exfalso. eapply lts_may_perform_spec1 in Hd as (r & Hl).
+      exfalso. apply Hst, lts_may_perform_spec2. exists r. eapply lts_choiceR. exact Hl.
   - intros (Hst1 & Hst2). intros Hd.
-    exfalso. eapply lts_performs_spec1 in Hd as (r & Hl).
+    exfalso. eapply lts_may_perform_spec1 in Hd as (r & Hl).
     inversion Hl; subst.
-    + exfalso. apply Hst1, lts_performs_spec2. exists r. exact H3.
-    + exfalso. apply Hst2, lts_performs_spec2. exists r. exact H3.
+    + exfalso. apply Hst1, lts_may_perform_spec2. exists r. exact H3.
+    + exfalso. apply Hst2, lts_may_perform_spec2. exists r. exact H3.
 Qed.
 
 Lemma choice_coR_union : forall gp gq μ1, μ1 ∈ coR (g (gp+gq)) <-> μ1 ∈ coR (g gp) \/ μ1 ∈ coR (g gq).
@@ -915,7 +915,7 @@ Proof. intros gp gq q r μ s l w. eapply wt_act; [eapply lts_choiceR; exact l | 
     [p^v]/[q^v] is *exactly* what the (necessarily [∀v]-quantified,
     Hennessy's classical "omega rule") hypothesis is about, for whichever
     concrete [v] the interaction actually uses — so the direct
-    [must]-induction technique (as for the output/τ prefixes) applies
+    [must_intensional]-induction technique (as for the output/τ prefixes) applies
     immediately, no acceptance-set detour needed. Confirms the earlier
     correction to the plan: the single Coq binder in [c?p] doesn't make
     this rule non-quantified "for free" (it's still genuinely
@@ -957,7 +957,7 @@ Qed.
     [(c,v)!]) fails to elaborate in isolation — typeclass search can't
     pin down the [ExtAction (ExtAct TypeOfActions)] instance without an
     anchor. Binding [μ : ExtAct TypeOfActions] as an explicit top-level
-    variable first (mirroring how [μ1]/[μ2] are always bound in [must]'s
+    variable first (mirroring how [μ1]/[μ2] are always bound in [must_intensional]'s
     own [com] field) fixes it — this is *the* idiom to use for any
     labelled-transition statement on bare (non-[g]-wrapped) [proc]
     arguments in this file. *)
@@ -1347,8 +1347,8 @@ Proof. exact must_i_par_compat2_erasure. Qed.
 
     Both directions hold, and both bottom out on the same observation:
     [c?P + c?Q] forces a test to survive *both* continuations (via its
-    two possible synchronisation targets, [must]'s [com] field), while
-    [c?(P ⊕ Q)] forces the same thing via [must]'s [pt] field after the
+    two possible synchronisation targets, [must_intensional]'s [com] field), while
+    [c?(P ⊕ Q)] forces the same thing via [must_intensional]'s [pt] field after the
     internal choice's own [𝛕] — the very same requirement, reached
     through a different field. [must_i_tau_choice_join] below is the
     reusable half of that observation, and is the mirror image of

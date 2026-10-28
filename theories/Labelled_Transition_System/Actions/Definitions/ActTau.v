@@ -108,3 +108,69 @@ Definition UniqueDual (A : Type) `{ExtAction A} :=
   forall η β, dual β η → η = proj1_sig (exists_dual β).
 Existing Class UniqueDual.
 
+
+
+(** ** Properties on `Actions` *)
+
+
+Definition lts_exists_duo_decidable : 
+forall (A : Type) (H : ExtAction A) {unique_nb : UniqueDual A} μ, Decision (∃ η' : A, non_blocking η' ∧ dual μ η').
+Proof.
+intros. destruct (decide (non_blocking μ)) as [nb | not_nb].
+  + right. intro Hyp. destruct Hyp as (μ' & nb' & duo').
+    assert (blocking μ).
+    eapply dual_blocks; eauto. contradiction.
+  + destruct (decide (non_blocking (co μ))) as [nb' | not_nb'].
+    ++ left. exists (co μ) ; eauto.
+       split. eauto. exact (proj2_sig (exists_dual μ)).
+    ++ right. intro imp. destruct imp as (η'' & nb'' & duo).
+       assert (η'' = co μ).
+       { eapply unique_nb; eauto. } subst.
+       contradiction.
+Defined.
+
+#[global] Instance lts_exists_duo_decidable_inst `{ExtAction A} {unique_nb : UniqueDual A} μ 
+  : Decision (∃ η', non_blocking η' /\ dual μ η').
+Proof. exact (lts_exists_duo_decidable A H μ). Defined.
+
+
+Lemma dual_is_involutive `{ExtAction A} {unique_nb : UniqueDual A} μ : μ = (co (co μ)).
+Proof.
+  assert (dual μ (co μ)) as duo.
+  { exact (proj2_sig (exists_dual μ)). }
+  symmetry in duo.
+  eapply unique_nb.
+  exact duo.
+Qed.
+
+Lemma dual_trace_is_involutive `{ExtAction A} {unique_nb : UniqueDual A} s : s = (coₜ (coₜ s)).
+Proof.
+  induction s.
+  + simpl ; eauto.
+  + rewrite map_cons. rewrite map_cons. rewrite<- IHs at 1. f_equal.
+    eapply dual_is_involutive.
+Qed.
+
+Lemma simpl_co_trace_singleton `{ExtAction A} {unique_nb : UniqueDual A} l η : coₜ l = [η] -> l = [co η].
+Proof.
+  intro. destruct l.
+  + simpl in *. inversion H0.
+  + simpl in *. inversion H0; subst. f_equal. rewrite<- dual_is_involutive. eauto.
+    eapply map_eq_nil in H3. subst. simpl. eauto.
+Qed.
+
+Lemma dual_traces `{ExtAction A} s : Forall2 dual s (coₜ s).
+Proof.
+  induction s.
+  + simpl. eauto.
+  + simpl. constructor.
+    exact (proj2_sig (exists_dual a)).
+    exact IHs.
+Qed.
+
+
+Lemma BlockingAction_are_not_non_blocking `{H : ExtAction A} {η β} : 
+  non_blocking η → blocking β → β ≠ η.
+Proof.
+  intros nb1 nb2 eq. rewrite eq in nb2. contradiction.
+Qed.

@@ -56,7 +56,7 @@ Proof.
   intros ht.
   induction ht as [p H1 H2].
   destruct (decide (p ⟶)) as [Hp | Hst].
-  - eapply lts_performs_spec1 in Hp as (p'& l).
+  - eapply lts_may_perform_spec1 in Hp as (p'& l).
     destruct (H2 p' l) as (p0 & w0 & st0).
     exists p0; eauto with mdb.
   - exists p; eauto with mdb.

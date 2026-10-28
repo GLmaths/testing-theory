@@ -148,7 +148,7 @@ Proof.
   - intros (μ2 & acc & hsync & hb). simpl in hsync. subst β.
     destruct μ2 as [c v|c v|E qs|M qs n].
     + left. exists (LOut c v). split; [| done].
-      apply lts_performs_spec1 in acc as (y & hl). by eapply pmo_of_step.
+      apply lts_may_perform_spec1 in acc as (y & hl). by eapply pmo_of_step.
     + exfalso. by apply hb.
     + right; left. by exists E, qs.
     + right; right. by exists M, qs, n.
@@ -156,7 +156,7 @@ Proof.
     + destruct (pmo_out x ξ hξ) as (c & v & ->).
       exists (LOut c v). split_and!; [| done | by intros ?].
       destruct (pmo_step x _ hξ) as (y & hl).
-      apply (lts_performs_spec2 x (ActExt (LOut c v))). by exists y.
+      apply (lts_may_perform_spec2 x (ActExt (LOut c v))). by exists y.
     + exists (LOp E qs). split_and!; [apply p_accepts_op | done | by intros ?].
     + exists (LMeas M qs n). split_and!; [exact acc | done | by intros ?].
 Qed.
@@ -207,7 +207,7 @@ Proof.
       * left. apply elem_of_union_l, elem_of_union_l.
         exact (elem_of_map_2 (λ ξ0, ρ[𝔸ʟǫ] (lco ξ0)) _ ξ hξ).
       * left. apply elem_of_union_r, elem_of_singleton. by apply class_eq_lq.
-      * right. apply lts_performs_spec1 in acc as (y & hl).
+      * right. apply lts_may_perform_spec1 in acc as (y & hl).
         apply p_meas_code in hl as [hz _]. split; [exact hz |].
         exists M, qs. by apply class_eq_lq.
     + left. apply elem_of_union_l, elem_of_union_r.

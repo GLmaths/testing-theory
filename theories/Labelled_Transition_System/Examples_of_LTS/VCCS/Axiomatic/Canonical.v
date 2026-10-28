@@ -43,7 +43,7 @@
     was to add four more [ax_pre] axioms carrying an explicit context
     [R]. With [ax_choice_stable] available
     ([Axiomatic/ReadySet.v]/[DefinitionAxiomatic.v]) they are instead
-    *derivable*, in three lines each — no new axioms, no new [must]
+    *derivable*, in three lines each — no new axioms, no new [must_intensional]
     inductions. The [gStable] side conditions are discharged by
     [simpl; exact I] because an input/output guard is stable by
     definition, and — crucially — [ax_choice_stable] constrains only the

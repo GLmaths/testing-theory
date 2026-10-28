@@ -43,7 +43,7 @@
     [g M ‖ g N] and [g ((ext M N + ext_r N M) + int M N)] turn out to
     have *exactly* the same one-step [lts] transitions (same labels,
     same targets, not merely related ones) — [expansion_lts_iff] below
-    — so a generic "same transitions ⟹ same [must]-behaviour" lemma
+    — so a generic "same transitions ⟹ same [must_intensional]-behaviour" lemma
     ([must_same_lts]) closes the whole thing, no trace-interleaving or
     coR-abstraction reasoning needed at all. *)
 (* end hide *)
@@ -58,14 +58,14 @@ Section VCCS_Expansion.
 
 Context `{VP : VCCS_Parameters}.
 
-(* ** A generic tool: identical one-step transitions give identical [must]-behaviour
+(* ** A generic tool: identical one-step transitions give identical [must_intensional]-behaviour
 
     If [p] and [q] have exactly the same outgoing [τ] and external
     transitions (same labels, same targets), they must-pass exactly the
-    same tests — proved by a direct induction on the [must] derivation,
+    same tests — proved by a direct induction on the [must_intensional] derivation,
     substituting [p]'s transitions for [q]'s (or vice versa) at each
     step; no relation on the *reached* states beyond "literally the
-    same transition set" is needed, since [must]'s own recursive
+    same transition set" is needed, since [must_intensional]'s own recursive
     structure (the [pt]/[et]/[com] fields) only ever talks about
     one-step transitions. *)
 
@@ -105,7 +105,7 @@ Qed.
 
 (* ** [①] and [𝟘] are indistinguishable *as servers*
 
-    [must p t]'s outcome field inspects only the *test*; the server
+    [must_intensional p t]'s outcome field inspects only the *test*; the server
     enters solely through its transitions. [①] and [𝟘] have none at all
     — no [lts] constructor mentions either — so they must-pass exactly
     the same tests, and [must_same_lts] gives the equivalence in three

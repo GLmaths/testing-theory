@@ -75,7 +75,7 @@ Lemma Γ_coR_iff (p : term) (x : Event nat) :
 Proof.
   split.
   - intros (β & (μ & acc & hs & _) & ->).
-    apply lts_performs_spec1 in acc as (q & hq).
+    apply lts_may_perform_spec1 in acc as (q & hq).
     destruct μ as [l | ot], β as [l' | ot']; cbn in hs; try contradiction.
     + left. exists ot'. split; [reflexivity |].
       exists (ltemplate nat l). split.
@@ -90,13 +90,13 @@ Proof.
       apply list_elem_of_In in hin.
       destruct (collect_in_a_step nat p l hin) as (q & hq).
       exists (AOut nat (ltuple nat l)). split; [| reflexivity].
-      exists (AIn nat l). split; [apply lts_performs_spec2; by exists q |].
+      exists (AIn nat l). split; [apply lts_may_perform_spec2; by exists q |].
       split; [reflexivity | by intros []].
     + apply t_match_label in hm as (l & <- & <-).
       apply list_elem_of_In in hin.
       destruct (collect_out_witnesses_a nat p _ hin) as (q & hq).
       exists (AIn nat l). split; [| reflexivity].
-      exists (AOut nat (ltuple nat l)). split; [apply lts_performs_spec2; by exists q |].
+      exists (AOut nat (ltuple nat l)). split; [apply lts_may_perform_spec2; by exists q |].
       split; [reflexivity | by intros []].
 Qed.
 

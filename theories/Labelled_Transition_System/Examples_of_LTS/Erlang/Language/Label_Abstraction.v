@@ -40,12 +40,12 @@ Proof.
   - intros (μ' & haccept & hduo & hb).
     destruct β as [a | a]; [| exfalso; apply hb; by exists a].
     symmetry in hduo. apply simplify_match_input in hduo as ->.
-    apply lts_performs_spec1 in haccept as (T & hl).
+    apply lts_may_perform_spec1 in haccept as (T & hl).
     apply erl_out_shape in hl as (p & v & -> & ->).
     exists (out_act p v). split; [| done]. apply erl_out_dom. multiset_solver.
   - intros (μ & hμ & ->). apply erl_dom_out in hμ as (p & v & -> & hin).
     exists (out_act p v). repeat split.
-    + apply lts_performs_spec2. exists (S ∖ ⟪p, v⟫).
+    + apply lts_may_perform_spec2. exists (S ∖ ⟪p, v⟫).
       assert (S = ⟪p, v⟫ ⊎ (S ∖ ⟪p, v⟫)) as heq by multiset_solver.
       rewrite heq at 1. apply ErlOut.
     + by intros (a & heq).

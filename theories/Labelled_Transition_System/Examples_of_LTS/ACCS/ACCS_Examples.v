@@ -386,7 +386,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      apply hst, (lts_performs_spec2 (g (𝛕 • p + 𝛕 • q)) τ). exists p; apply lts_choiceL; constructor.
+      apply hst, (lts_may_perform_spec2 (g (𝛕 • p + 𝛕 • q)) τ). exists p; apply lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -490,7 +490,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      apply hst, (lts_performs_spec2 ((g (𝛕 • p + 𝛕 • q)) ▷ M) τ). eexists (p ▷ M); eapply ParLeft, lts_choiceL; constructor.
+      apply hst, (lts_may_perform_spec2 ((g (𝛕 • p + 𝛕 • q)) ▷ M) τ). eexists (p ▷ M); eapply ParLeft, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -1327,9 +1327,9 @@ Proof.
       intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
       destruct hc; subst c.
-      * apply hst, (lts_performs_spec2
+      * apply hst, (lts_may_perform_spec2
                   (wctx ((ws ++ repeat true n)%list) (cproc Crel) ▷ M) τ). eexists; eapply ParLeft, wctx_lift_tau, reliableW_unfold.
-      * apply hst, (lts_performs_spec2
+      * apply hst, (lts_may_perform_spec2
                   (wctx ((ws ++ repeat true n)%list) (cproc Cbody) ▷ M) τ). eexists; eapply ParLeft, wctx_lift_tau, rbody_end.
     + (* weak μ descendants of the right *)
       intros μ Y' X' hcnv hY' hX'. revert hY'.
@@ -1635,7 +1635,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      apply hst, (lts_performs_spec2 (g 𝟘 ‖ C) τ). eexists; eapply lts_parR, lts_choiceL; constructor.
+      apply hst, (lts_may_perform_spec2 (g 𝟘 ‖ C) τ). eexists; eapply lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -1687,7 +1687,7 @@ Proof.
            eapply wt_tau; [ eapply gl_to_wq | exact hq ].
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      apply hst, (lts_performs_spec2 (Wo ‖ C) τ). eexists; eapply lts_parR, lts_choiceL; constructor.
+      apply hst, (lts_may_perform_spec2 (Wo ‖ C) τ). eexists; eapply lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -1860,7 +1860,7 @@ Proof.
            apply elem_of_union_r, elem_of_singleton_2; reflexivity.
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      apply hst, (lts_performs_spec2 ((g 𝟘 ‖ C) ▷ M) τ). eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor.
+      apply hst, (lts_may_perform_spec2 ((g 𝟘 ‖ C) ▷ M) τ). eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
@@ -1956,7 +1956,7 @@ Proof.
            eapply wt_tau; [ eapply ParLeft, gl_to_wq | exact hq ].
     + intros hX y mem hst. exfalso.
       apply elem_of_singleton_1 in mem; subst y.
-      apply hst, (lts_performs_spec2 ((Wo ‖ C) ▷ M) τ). eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor.
+      apply hst, (lts_may_perform_spec2 ((Wo ‖ C) ▷ M) τ). eexists; eapply ParLeft, lts_parR, lts_choiceL; constructor.
     + intros μ Y' X' hcnv hY' hX'. revert hY'.
       induction Y' using set_ind_L; intros hY'.
       * eapply empty_is_a_top_element.
