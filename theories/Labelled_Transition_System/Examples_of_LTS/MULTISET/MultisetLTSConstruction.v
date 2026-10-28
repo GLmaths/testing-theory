@@ -113,9 +113,9 @@ Defined.
 #[global] Program Instance MbgLts `{H : ExtAction A} {unique_nb : UniqueDual A} : gLts (MO A) H :=
 {|
     lts_step m 𝜆 m' := lts_multiset_step m 𝜆 m' ;
-    lts_performs m 𝜆 := lts_multiset_performs m 𝜆;
+    lts_may_perform m 𝜆 := lts_multiset_performs m 𝜆;
     lts_step_decidable m 𝜆 m' := lts_multiset_step_decidable m 𝜆 m';
-    lts_performs_decidable m 𝜆 := lts_multiset_performs_decidable m 𝜆;
+    lts_may_perform_decidable m 𝜆 := lts_multiset_performs_decidable m 𝜆;
   |}.
 Next Obligation.
   intros ? ? ? m 𝜆 accepts; simpl in *.

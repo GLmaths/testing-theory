@@ -501,11 +501,11 @@ Lemma search_co_steps_spec_helper_right_performs_rev `{Prop_of_Inter S1 S2 A1 A2
 Proof.
   revert lnot. induction l; intros lnot.
   { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc as (μ & ess_act & Hstep & duo).
-   eapply lts_performs_spec1 in Hstep as (s'2 & Hstep); eauto.
+   eapply lts_may_perform_spec1 in Hstep as (s'2 & Hstep); eauto.
    eapply (lts_co_inter_action_spec_right s2 s'2 ξ μ s1) in Hstep as Hyp; eauto.
    simplify_list_eq.
    eapply elem_of_elements in Hyp. eapply Hnots; eauto.
-   repeat split; eauto. eapply lts_performs_spec2. eauto. }
+   repeat split; eauto. eapply lts_may_perform_spec2. eauto. }
   { intros Helems Hnots. simpl.
   destruct (decide (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[a] ∧ inter ξ a)).
   + eauto.
@@ -544,7 +544,7 @@ Proof.
   + left. 
     eapply search_co_steps_spec_1_right_performs in wit.
     destruct wit as (μ' & h1 & h2 & h3). repeat split; eauto.
-    eapply lts_essential_action_spec_left in h1. eapply lts_performs_spec2; eauto.
+    eapply lts_essential_action_spec_left in h1. eapply lts_may_perform_spec2; eauto.
   + right. intros (μ' & h1 & h2 & h3 & h4).
     assert ({ μ | (ξ ∈ lts_essential_actions_left s1 ∧ s2 ⟶[μ] ∧ inter ξ μ)}) as wit.
     eauto. eapply search_co_steps_spec_1_right_performs_rev in wit.
@@ -557,7 +557,7 @@ Lemma transition_to_performs_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   -> { μ | s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}.
 Proof.
   intro Hyp. destruct Hyp as [μ [HypTr2 [inter_prop ess_act]]]. eexists.
-  repeat split; eauto. eapply lts_performs_spec2. exists s'2. eauto.
+  repeat split; eauto. eapply lts_may_perform_spec2. exists s'2. eauto.
 Qed.
 
 Lemma performs_to_transition_essential_left `{Prop_of_Inter S1 S2 A1 A2}
@@ -565,7 +565,7 @@ Lemma performs_to_transition_essential_left `{Prop_of_Inter S1 S2 A1 A2}
   { μ | s2 ⟶[μ] ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1} 
   -> {s'2 & { μ | s2 ⟶[μ] s'2 ∧ inter ξ μ ∧ ξ ∈ lts_essential_actions_left s1}}.
 Proof.
-  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_performs_spec1 in HypNotStable2. 
+  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_may_perform_spec1 in HypNotStable2. 
   destruct HypNotStable2 as [s'2 HypTr2]. eexists. eexists. repeat split; eauto.
 Qed.
 
@@ -589,7 +589,7 @@ Proof.
   intro Hyp.
   eapply some_witness1_right' in Hyp.
   destruct Hyp as (μ & Hperf & inter_h & ess_act).
-  eapply lts_performs_spec1 in Hperf.
+  eapply lts_may_perform_spec1 in Hperf.
   destruct Hperf as (s'2 & HypTr).
   exists μ. exists s'2. repeat split; eauto.
 Qed.
@@ -614,7 +614,7 @@ Proof.
   simpl. destruct (decide (inter_performs_essential_left s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
   destruct Hyp as [Hperf1 act_founded]. eapply some_witness1_right in act_founded.
   destruct act_founded as (μ & s'2 & HypTr2 & duo & ess_act).
-  apply lts_performs_spec1 in Hperf1 as [s'1 HypTr1].
+  apply lts_may_perform_spec1 in Hperf1 as [s'1 HypTr1].
   exists (s'1, s'2). by exists ξ, μ.
 Qed.
 
@@ -636,8 +636,8 @@ Proof.
     destruct (decide (inter_performs_essential_left s1 s2 b)) as [case1 | case2]; [auto|].
     eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
     intros x [Hin | ->%list_elem_of_singleton]%elem_of_app; [eauto|].
-    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_performs_spec2. exists s'1. assumption.
-    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_performs_spec2. exists s'2. assumption.
+    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_may_perform_spec2. exists s'1. assumption.
+    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_may_perform_spec2. exists s'2. assumption.
     split; eauto. 
   - apply (Hccl _ []); eauto. set_solver.
 Qed.
@@ -684,11 +684,11 @@ Lemma search_co_steps_spec_helper_left_performs_rev `{Prop_of_Inter S1 S2 A1 A2 
 Proof.
   revert lnot. induction l; intros lnot.
   { simpl. intros Hels Hnots. intros Hc. exfalso. inversion Hc as (μ & ess_act & Hstep & duo).
-   eapply lts_performs_spec1 in Hstep as (s'1 & Hstep); eauto.
+   eapply lts_may_perform_spec1 in Hstep as (s'1 & Hstep); eauto.
    eapply (lts_co_inter_action_spec_left s1 s'1 ξ μ s2) in Hstep as Hyp; eauto.
    simplify_list_eq.
    eapply elem_of_elements in Hyp. eapply Hnots; eauto.
-   repeat split; eauto. eapply lts_performs_spec2. eauto. }
+   repeat split; eauto. eapply lts_may_perform_spec2. eauto. }
   { intros Helems Hnots. simpl.
   destruct (decide (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[a] ∧ inter a ξ )).
   + eauto.
@@ -728,7 +728,7 @@ Proof.
   + left. 
     eapply search_co_steps_spec_1_left_performs in wit.
     destruct wit as (μ' & h1 & h2 & h3). repeat split; eauto.
-    eapply lts_essential_action_spec_right in h1. eapply lts_performs_spec2; eauto.
+    eapply lts_essential_action_spec_right in h1. eapply lts_may_perform_spec2; eauto.
   + right. intros ( h1 & μ'  & h2 & h3 & h4).
     assert ({ μ | (ξ ∈ lts_essential_actions_right s2 ∧ s1 ⟶[μ] ∧ inter μ ξ)}) as wit.
     eauto. eapply search_co_steps_spec_1_left_performs_rev in wit.
@@ -741,7 +741,7 @@ Lemma transition_to_performs_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   -> { μ | s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}.
 Proof.
   intro Hyp. destruct Hyp as [μ [HypTr2 [inter_prop ess_act]]].  eexists. repeat split; eauto. 
-  eapply lts_performs_spec2. exists s'1. eauto.
+  eapply lts_may_perform_spec2. exists s'1. eauto.
 Qed.
 
 Lemma performs_to_transition_essential_right `{Prop_of_Inter S1 S2 A1 A2}
@@ -749,7 +749,7 @@ Lemma performs_to_transition_essential_right `{Prop_of_Inter S1 S2 A1 A2}
   { μ | s1 ⟶[μ] ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2} 
   -> {s'1 & { μ | s1 ⟶[μ] s'1 ∧ inter μ ξ ∧ ξ ∈ lts_essential_actions_right s2}}.
 Proof.
-  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_performs_spec1 in HypNotStable2. 
+  intro Hyp. destruct Hyp as [μ [HypNotStable2 [inter_prop ess_act]]]. eapply lts_may_perform_spec1 in HypNotStable2. 
   destruct HypNotStable2 as [s'2 HypTr2]. eexists. eexists. repeat split; eauto.
 Qed.
 
@@ -773,7 +773,7 @@ Proof.
   intro Hyp.
   eapply some_witness1_left' in Hyp.
   destruct Hyp as (μ & Hperf & inter_h & ess_act).
-  eapply lts_performs_spec1 in Hperf.
+  eapply lts_may_perform_spec1 in Hperf.
   destruct Hperf as (s'1 & HypTr).
   exists μ. exists s'1. repeat split; eauto.
 Qed.
@@ -798,7 +798,7 @@ Proof.
   simpl. destruct (decide (inter_performs_essential_right s1 s2 ξ)) as [Hyp | Hyp]; eauto. intros _.
   destruct Hyp as [Hperf1 act_founded]. eapply some_witness1_left in act_founded.
   destruct act_founded as (μ & s'1 & HypTr1 & duo & ess_act).
-  apply lts_performs_spec1 in Hperf1 as [s'2 HypTr2].
+  apply lts_may_perform_spec1 in Hperf1 as [s'2 HypTr2].
   exists (s'1, s'2). by exists μ, ξ.
 Qed.
 
@@ -820,8 +820,8 @@ Proof.
     destruct (decide (inter_performs_essential_right s1 s2 b)) as [case1 | case2]; [auto|].
     eapply (IHl (rest ++ [b])); [by simplify_list_eq|].
     intros x [Hin | ->%list_elem_of_singleton]%elem_of_app; [eauto|].
-    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_performs_spec2. exists s'2. assumption.
-    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_performs_spec2. exists s'1. assumption.
+    intros [Hstep1 Hstep2]. eapply case2. split. eapply lts_may_perform_spec2. exists s'2. assumption.
+    destruct Hstep2 as (μ2 & Tr2 & duo2 & ess_act2). exists μ2. split. eapply lts_may_perform_spec2. exists s'1. assumption.
     split; eauto. 
   - apply (Hccl _ []); eauto. set_solver.
 Qed.
@@ -847,9 +847,9 @@ Proof.
     apply or_dec; [apply _|apply or_dec; [apply _|]]. destruct 𝜆; apply _.
   - intros [a b] 𝜆 Hp. unfold inter_lts_performs in Hp. simpl in Hp.
     destruct (decide (a ⟶{𝜆})) as [Hp1|Hn1].
-    { apply lts_performs_spec1 in Hp1 as [s' ?]. refine ((s', b) ↾ _). by constructor. }
+    { apply lts_may_perform_spec1 in Hp1 as [s' ?]. refine ((s', b) ↾ _). by constructor. }
     destruct (decide (b ⟶{𝜆})) as [Hp2|Hn2].
-    { apply lts_performs_spec1 in Hp2 as [s' ?]. refine ((a, s') ↾ _). by constructor. }
+    { apply lts_may_perform_spec1 in Hp2 as [s' ?]. refine ((a, s') ↾ _). by constructor. }
     destruct 𝜆 as [μ|]; [exfalso; by destruct Hp as [|[|]]|].
     destruct (inter_lts_performs_helper_essential_left a b (elements (lts_essential_actions_left a))) eqn:Hs1.
     { apply inter_sts_performs_helper_spec_1_essential_left in Hs1 as ((s'1, s'2) & hs).
@@ -861,8 +861,8 @@ Proof.
   - intros [s1 s2] 𝜆 [[s'1 s'2] Hstep].
     unfold inter_lts_performs.
     inversion Hstep; simplify_eq; simpl.
-    + left. exact (lts_performs_spec2 _ _ (s'1 ↾ l)).
-    + right; left. exact (lts_performs_spec2 _ _ (s'2 ↾ l)).
+    + left. exact (lts_may_perform_spec2 _ _ (s'1 ↾ l)).
+    + right; left. exact (lts_may_perform_spec2 _ _ (s'2 ↾ l)).
     + eapply lts_essential_actions_spec_interact in eq as where_is_the_essential_action; eauto.
       destruct where_is_the_essential_action as [ ess_act1 | ess_act2].
       ++ assert (inter_lts_performs_helper_essential_left s1 s2 (elements $ lts_essential_actions_left s1) = true) as Hccl

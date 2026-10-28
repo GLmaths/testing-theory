@@ -263,7 +263,7 @@ Proof.
       * destruct (fw_cobar_inv p _ η y l1) as (_ & nb).
         simpl in hs. subst ζ. exfalso.
         eapply (lts_oba_mo_strip_refuses e e' hmo η nb).
-        apply lts_performs_spec2. by exists e0.
+        apply lts_may_perform_spec2. by exists e0.
 Qed.
 
 Lemma must_fw_to_must (p : P) (e : T) : (p, ∅) must_pass e → p must_pass e.
@@ -302,7 +302,7 @@ Proof.
            ++ destruct (fw_cobar_inv p _ η f' l1) as (_ & nb).
               simpl in hs. subst ζ. exfalso.
               eapply (lts_oba_mo_strip_refuses e e' hwo η nb).
-              apply lts_performs_spec2. by exists e0.
+              apply lts_may_perform_spec2. by exists e0.
     + intros p' l. eapply IHpt; [by apply fw_tau_left | reflexivity].
     + intros e' l. eapply IHet; [exact l | reflexivity].
     + intros p' e' μ ζ hs l1 l2.

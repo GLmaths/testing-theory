@@ -110,10 +110,10 @@ Lemma refuses_tau_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η :
 Proof.
   intros nb st l.
   destruct (decide (q ⟶)) as [ accepts | refuses ].
-  + eapply lts_performs_spec1 in accepts as (t & l').
+  + eapply lts_may_perform_spec1 in accepts as (t & l').
     destruct (nb_delay nb l l') as (r & l1 & l2).
     assert (p ⟶).
-    { eapply lts_performs_spec2; eauto. }
+    { eapply lts_may_perform_spec2; eauto. }
     contradiction.
   + exact refuses.
 Qed.
@@ -132,10 +132,10 @@ Lemma refuses_action_preserved_by_lts_non_blocking_action `{gLtsOba P A} p q η 
 Proof.
   intros nb st l.
   destruct (decide (q ⟶[μ])) as [ accepts | refuses ].
-  + eapply lts_performs_spec1 in accepts as (t & l').
+  + eapply lts_may_perform_spec1 in accepts as (t & l').
     destruct (nb_delay nb l l') as (r & l1 & l2).
     assert (p ⟶[μ]).
-    { eapply lts_performs_spec2; eauto. }
+    { eapply lts_may_perform_spec2; eauto. }
     contradiction.
   + exact refuses.
 Qed.

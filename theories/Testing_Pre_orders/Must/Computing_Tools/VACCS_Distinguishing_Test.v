@@ -86,7 +86,7 @@ Proof.
       assert (blocking β') as b'.
       { intros nb. eapply (ta_does_no_non_blocking_actions (Γ := λ x, αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ x))
                              (pre_of E) β' nb).
-        apply lts_performs_spec2. by exists r. }
+        apply lts_may_perform_spec2. by exists r. }
       destruct (blocking_is_input β' b') as ([c' v'] & ->). simpl in e |- *.
       by injection e as ->.
   - intros β e' E b h. exact (ta_transition_to_good (Γ := λ x, αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ x)) β e' _ b h).

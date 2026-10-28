@@ -117,7 +117,7 @@ Next Obligation.
   apply coR_abs_erl_spec in hmem as (p & v & -> & hin).
   exists (in_act p v). split; [| done].
   exists (out_act p v). repeat split.
-  - apply lts_performs_spec2. exists (S ∖ ⟪p, v⟫).
+  - apply lts_may_perform_spec2. exists (S ∖ ⟪p, v⟫).
     assert (S = ⟪p, v⟫ ⊎ (S ∖ ⟪p, v⟫)) as heq by multiset_solver.
     rewrite heq at 1. apply ErlOut.
   - by intros (a & heq).
@@ -127,7 +127,7 @@ Next Obligation.
   apply coR_abs_erl_spec.
   destruct μ as [a | a]; [| exfalso; apply hb; by exists a].
   symmetry in hduo. apply simplify_match_input in hduo as ->.
-  apply lts_performs_spec1 in haccept as (T & hl).
+  apply lts_may_perform_spec1 in haccept as (T & hl).
   apply erl_out_shape in hl as (p & v & -> & ->).
   exists p, v. split; [done | multiset_solver].
 Qed.
@@ -280,16 +280,16 @@ Next Obligation.
     destruct in_p as (μ & mem & eq). subst.
     exists μ. split.
     - destruct mem as (μ2 & tr & duo & b).
-      eapply lts_performs_spec1 in tr as (p2 & tr).
+      eapply lts_may_perform_spec1 in tr as (p2 & tr).
       exists μ2. repeat split; eauto.
-      eapply lts_performs_spec2. exists (p2 ▷ m).
+      eapply lts_may_perform_spec2. exists (p2 ▷ m).
       eapply ParLeft. exact tr.
     - eauto.
   + simpl in *. eapply gmultiset_elem_of_dom, elem_of_gmultiset_map in in_M.
     destruct in_M as (μ & eq & mem).
     exists (co μ). split; eauto.
     exists μ. repeat split; eauto.
-    - eapply lts_performs_spec2.
+    - eapply lts_may_perform_spec2.
       assert (μ ∈ MO_without_not_nb m) as mem2; eauto.
       apply (lts_MO_nb_with_nb_spec1 μ m) in mem as (nb & mem).
       exists (p, m ∖ {[+ μ +]}).
@@ -304,12 +304,12 @@ Qed.
 Next Obligation.
   intros pre_mu p hmem. destruct hmem as (μ & mem & eq). subst.
   destruct p as (p, m). destruct mem as (μ2 & tr & duo & b).
-  eapply lts_performs_spec1 in tr as ((p2 , m2) & eq).
+  eapply lts_may_perform_spec1 in tr as ((p2 , m2) & eq).
   inversion eq; subst; simpl in *.
   + eapply elem_of_union. left.
     change (αᴘᴠᴀᴄᴄꜱ (αᴛᴠᴀᴄᴄꜱ μ) ∈ coR_abs p). eapply coR_abs_spec2.
     exists μ. repeat split; eauto. exists μ2. repeat split; eauto.
-    eapply lts_performs_spec2. eauto.
+    eapply lts_may_perform_spec2. eauto.
   + eapply elem_of_union. right.
     eapply gmultiset_elem_of_dom, elem_of_gmultiset_map.
     destruct (decide (non_blocking μ2)) as [nb2 | b2].

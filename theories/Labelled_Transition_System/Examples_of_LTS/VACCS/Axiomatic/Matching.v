@@ -1303,7 +1303,7 @@ Qed.
     This is exactly the obligation [bk_kill] raises, and it is what makes
     the **last** position of any kill order go through: once every other
     surplus channel sits in [D], the client can emit only on the one
-    being killed, so [must]'s [ex] field forces the [com] there and the
+    being killed, so [must_intensional]'s [ex] field forces the [com] there and the
     lemma below closes it.
 
     **The open point, stated in the repository rather than only in
@@ -1385,7 +1385,7 @@ Proof.
   destruct (grestrict_offers N M c HM HN) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (grestrict N M)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+  apply Hst, (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
             ((g (grestrict N M)) ▷ m) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
@@ -1476,7 +1476,7 @@ Proof.
   destruct (offers_mirrorN M N c w r Hr) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (mirrorN M N)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+  apply Hst, (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
             ((g (mirrorN M N)) ▷ m) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
@@ -1537,7 +1537,7 @@ Proof.
   destruct (offers_mirrorN M N c w r Hr) as (w0 & r0 & Hr0).
   destruct (lts_in_value_swap (g (mirrorN M N)) (ActIn (c,w0)) r0 Hr0 c w0 w eq_refl)
     as (r1 & Hr1).
-  apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+  apply Hst, (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
             ((g (mirrorN M N)) ▷ (m ⊎ bag l)) τ).
   apply gmultiset_disj_union_difference' in Hin.
   rewrite Hin. eexists. apply fw_tau_deliver. exact Hr1.
@@ -3011,7 +3011,7 @@ Proof.
     { apply fw_stable_iff. split; [ exact HstN | ].
       intros a Hin q Hq. eapply Hnoc; [ exact Hin | exact Hq ]. }
     intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
+    exfalso. apply lts_may_perform_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
   destruct (copre_settles_ichoice_along (map ActOut l ++ feed k) l l p (g N)
               ((g N) ▷ bag k) Hp Hsem (drain_refill_run N l k) Hsty)
     as (L & HL & HS).
@@ -3149,9 +3149,9 @@ Qed.
     what [escapes_in_pchans] makes possible: the channels to listen on
     can be taken from [pchans P], a finite syntactic set.
 
-    Its three structural properties are what the [must] argument will
+    Its three structural properties are what the [must_intensional] argument will
     consume: it is **not good** (so [nh] is satisfiable), it has **no
-    τ** (so [must]'s [et] field is vacuous and the client can never move
+    τ** (so [must_intensional]'s [et] field is vacuous and the client can never move
     on its own), and it accepts an input on every channel of [L],
     becoming [①] — good — at once.  [EscapesOutside_run] says the
     escaping hypothesis survives internal steps, which is the invariant
@@ -3217,7 +3217,7 @@ Qed.
 
     [settled_fails_probes] is the right half, and it is a single
     inversion: a state that is stable and emits on no channel of [L] has
-    no step at all in the pair, so [must]'s [ex] field cannot be
+    no step at all in the pair, so [must_intensional]'s [ex] field cannot be
     satisfied.
 
     Together: a left that **escapes** [chans K] passes a client that
@@ -3250,7 +3250,7 @@ Proof.
   apply m_step.
   - apply probes_not_good.
   - destruct (decide (x ⟶)) as [Hn | Hs].
-    + apply lts_performs_spec1 in Hn as (z & Hz).
+    + apply lts_may_perform_spec1 in Hn as (z & Hz).
       exists (z, (g (probes L) : proc)). apply ParLeft. exact Hz.
     + destruct (escapes_in_pchans P K HP Hesc x Hw Hs) as (d & w & r & Hr & Hnot & Hin).
       exists (r, (g ① : proc)).
@@ -3377,7 +3377,7 @@ Qed.
     [kk] over enlarges it, a sink absorbing an emission shrinks it, and
     the server visits intermediate buffers about which the hypothesis
     says nothing.  A run that settles quietly at one of those deadlocks
-    the pair, and [must] fails.
+    the pair, and [must_intensional] fails.
 
     So the contrapositive of the certificate — escape at the *single*
     buffer [K] — is strictly weaker than what a test-based argument
@@ -3426,7 +3426,7 @@ Qed.
     and only the first two are new: [probes] alone could never reach a
     buffer below the bag.
 
-    [probe_test_not_good] is the field [nh] of any [must] against it,
+    [probe_test_not_good] is the field [nh] of any [must_intensional] against it,
     and it holds for the reason the design turns on: a message is not
     good, a sink is not good (its continuation is [𝟘]), and only the
     probes can ever produce [①] — after an actual emission. *)
@@ -3515,7 +3515,7 @@ Qed.
     [kk], and nothing else.  With it the right half is again a single
     inversion: a state that is stable, emits on none of the test's
     listening channels, and refuses the test's messages has **no step at
-    all** in the pair, so [must]'s [ex] field cannot be satisfied.
+    all** in the pair, so [must_intensional]'s [ex] field cannot be satisfied.
 
     Read against the intended instance ([kk] carrying [K]'s messages,
     [Ls]/[L] outside [chans K]): a right-hand side settling within
@@ -6151,7 +6151,7 @@ Qed.
 
     The output premise of a weak-output [glb] rule was stated
     per-residue — [p'' ᴠᴀᴄᴄꜱ⊑ₐₓ q''] for each emission residue — and that is
-    *not* semantically implied: [must] does not travel backwards along the
+    *not* semantically implied: [must_intensional] does not travel backwards along the
     server's τ's, so knowing that **one** residue passes a test says
     nothing about [p] itself, and [p ⊑ q] cannot be invoked.
 
@@ -6297,7 +6297,7 @@ Qed.
 
     The comparison of residues has to be made **at one value**: in the
     [com]-output case the client offers [(c,v)?] for a *single* [v], so
-    [must p t0] only ever yields residues at that [v].  [TCatch]'s caught
+    [must_intensional p t0] only ever yields residues at that [v].  [TCatch]'s caught
     continuation is deliberately value-independent, so a selective probe
     is needed —
 

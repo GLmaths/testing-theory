@@ -104,7 +104,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
     [⊕] is not primitive in this syntax; it is [𝛕•X + 𝛕•Y].  What projects
     out of it is not a law about sums at all but the general **τ-step**
     rule: a server's own internal move only ever decreases it, since
-    [must]'s [pt] field hands the obligation straight to every
+    [must_intensional]'s [pt] field hands the obligation straight to every
     τ-successor.  [ax_int_l] is its guarded-sum instance and is derived
     below, and [ax_int_r] follows by commutativity of [+].  Building
     *into* an internal choice is [ax_glb_tau] below, of which [ax_int_glb]
@@ -121,7 +121,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 (* *** Two processes with the same transitions
 
-    [must] inspects a server only through its transitions, so two
+    [must_intensional] inspects a server only through its transitions, so two
     processes with the same transitions pass the same tests
     ([Expansion.must_same_lts]).  The expansion law, the
     normalisation of a restriction over a guarded sum and the two laws
@@ -136,7 +136,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 (* *** Below a guarded sum — two rules
 
     [p] is below a guarded sum [g M] as soon as
-    - it is below every [𝛕]-branch (the [pt] field of [must] at the sum),
+    - it is below every [𝛕]-branch (the [pt] field of [must_intensional] at the sum),
     - holding the received message, it is below every input continuation
       (the [com] field) — not "[p] offers the channel", which it need not
       ([c ? • 𝟘 ⊑ₘᵤₛₜᵢ 𝟘]), and

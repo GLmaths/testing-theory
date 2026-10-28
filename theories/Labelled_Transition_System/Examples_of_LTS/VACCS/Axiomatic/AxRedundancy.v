@@ -31,7 +31,7 @@
     - [ax_tau_step] — a server's own internal move only decreases it;
     - [ax_same_lts] — two processes with the same transitions;
     - [ax_glb_tau], [ax_glb_settle] — below a guarded sum, read off its
-      [must] fields (with a [𝛕]-branch; or settling against any bag);
+      [must_intensional] fields (with a [𝛕]-branch; or settling against any bag);
     - [ax_share_msg] — two branches carrying the same pending message
       pool their residues, the message factoring out of the choice.
 

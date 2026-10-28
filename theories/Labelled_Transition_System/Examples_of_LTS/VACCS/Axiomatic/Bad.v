@@ -26,7 +26,7 @@
 
     [Axiomatic/Absorb.v]'s [Harmless] is sound but provably incomplete for the
     condition it approximates — "passes no τ-stuck, non-good, [S]-refusing
-    client" — and the incompleteness is not incidental.  Unfolding [must]
+    client" — and the incompleteness is not incidental.  Unfolding [must_intensional]
     at such a client [u] (where [et] is vacuous, [u] being τ-stuck) gives,
     for a guarded sum [g M], exactly
 
@@ -118,7 +118,7 @@ Qed.
 (* The clause the [exists] buys, and the reason it was weakened: a
     guarded sum is bad as soon as, **at each channel it guards, ONE of
     its guards has a bad continuation** — the siblings on that channel
-    need not all be bad, because [must]'s [com] field owes them all and
+    need not all be bad, because [must_intensional]'s [com] field owes them all and
     a single failure suffices. *)
 
 Lemma bad_gstable_some : forall S (M : gproc), gStable M ->
@@ -501,7 +501,7 @@ Qed.
 
     The *first* version of [bad_stuck] could not certify it — it demanded
     that **every** [c]-residue be bad, and [K] need not be.  That was too
-    strong: [must]'s [com] field owes all the residues at a channel at
+    strong: [must_intensional]'s [com] field owes all the residues at a channel at
     once, so a single failing one already refutes it.  With the [exists]
     form the instance is an ordinary [Bad], through [bad_gstable_some] —
     so the sibling-sensitivity that [Harmless]/[Bad]'s per-branch reading
@@ -864,7 +864,7 @@ Proof.
   - intros p' t' μ1 μ2 Hd Hp' Ht'. inversion Hp'.
 Qed.
 
-(* Le refus vaut dès qu'**un sommant** est mort : [must]'s [com] doit les
+(* Le refus vaut dès qu'**un sommant** est mort : [must_intensional]'s [com] doit les
     résidus d'un canal *tous à la fois*, donc le sommant mort suffit à le
     faire échouer, quels que soient ses frères.  [summand_lts] relève sa
     transition à la somme entière. *)

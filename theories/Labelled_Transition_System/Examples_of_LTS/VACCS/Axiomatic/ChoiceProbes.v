@@ -64,7 +64,7 @@
     continuation while keeping its guard, so the sum's ready set is
     untouched: [Precongruence.must_i_choice_input_compat] for an
     input summand and [must_i_choice_tau_compat] for a [𝛕] summand.  Those
-    are proved, by direct [must] induction, and between them they cover
+    are proved, by direct [must_intensional] induction, and between them they cover
     every guard shape VACCS has. *)
 
 From Stdlib Require Import Lia.
@@ -100,7 +100,7 @@ Definition T2 : proc := ((cst a) ! (cst I) • 𝟘) ‖ ((g 𝟘) ‖ (g ((cst 
 
     [blast2] inverts every [lts] hypothesis whose subject has a concrete
     head, then closes the residue with the channel disequalities.  The
-    leading [unfold lts_step in *] is needed because [must]'s own fields
+    leading [unfold lts_step in *] is needed because [must_intensional]'s own fields
     are stated with the [gLts] notation [⟶], not with [lts] directly. *)
 
 Ltac blast2 :=

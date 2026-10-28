@@ -77,7 +77,7 @@ Section PAL_Alt_Abs.
 
   Lemma coR_p_val_only v μ : μ ∈ (coR (p_val v) : subset_of PALA_Act) → μ = AOut _ (tuple1 v).
   Proof.
-    intros (μ2 & acc & hd & _). apply lts_performs_spec1 in acc as (q & hq).
+    intros (μ2 & acc & hd & _). apply lts_may_perform_spec1 in acc as (q & hq).
     unfold p_val in hq. cbn in hq. inversion hq; subst.
     match goal with hev : eval_in_tuple _ = Some _ |- _ => cbn in hev; injection hev as <- end.
     match goal with ht : template_of _ _ = _ |- _ =>

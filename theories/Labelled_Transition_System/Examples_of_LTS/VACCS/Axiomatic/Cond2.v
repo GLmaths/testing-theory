@@ -94,14 +94,14 @@ Lemma fw_nil_stable_iff : forall (p : proc), (p ▷ ∅) ↛ <-> p ↛.
 Proof.
   intro p. split.
   - intro H. intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (q & Hq).
-    apply H, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ (p ▷ ∅) τ).
+    exfalso. apply lts_may_perform_spec1 in Hn as (q & Hq).
+    apply H, (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ (p ▷ ∅) τ).
     exists (q ▷ ∅). apply fw_tau_left. exact Hq.
   - intro H. intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as ((p1,m1) & Hq).
+    exfalso. apply lts_may_perform_spec1 in Hn as ((p1,m1) & Hq).
     destruct (fw_tau_shape p ∅ (p1,m1) Hq) as [HA|HB].
     + destruct HA as (p' & Hp' & E).
-      apply H, (@lts_performs_spec2 proc _ _ _ p τ).
+      apply H, (@lts_may_perform_spec2 proc _ _ _ p τ).
       exists p'. exact Hp'.
     + destruct HB as (a & p' & m' & Hm & _ & _). eapply empty_not_disj. exact Hm.
 Qed.
@@ -131,7 +131,7 @@ Proof.
   assert (Hin : (Inputs c) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR (p1 ▷ ∅))).
   { exists (ActIn (c,v)). split; [ | reflexivity ].
     exists (ActOut (c,v)). repeat split.
-    + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+    + apply (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
                             (p1 ▷ ∅) (ActExt (ActOut (c,v)))).
       exists (r ▷ ∅). apply fw_ext_left. exact Hr.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb. }
@@ -141,7 +141,7 @@ Proof.
     destruct Hmu as (μ2 & Hnr & Hd & _).
     destruct μ2 as [[d w]|[d w]]; simpl in Hd; [ exact (match Hd with end) | ].
     inversion Hd; subst.
-    apply lts_performs_spec1 in Hnr as ((r1,m2) & Hr1).
+    apply lts_may_perform_spec1 in Hnr as ((r1,m2) & Hr1).
     destruct (fw_ext_shape q1 ∅ (ActOut (c0,v0)) (r1,m2) Hr1) as [HA|[HB|HC]].
     + destruct HA as (r' & Hr' & _). exists v0, r'. exact Hr'.
     + destruct HB as (b & Hb & _). discriminate Hb.
@@ -270,7 +270,7 @@ Proof.
   assert (Hin : (Inputs d) ∈ ⌈ αᴘᴠᴀᴄᴄꜱ ∘ αᴛᴠᴀᴄᴄꜱ ⌉ (coR x)).
   { exists (ActIn (d,w)). split; [ | reflexivity ].
     exists (ActOut (d,w)). repeat split.
-    + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+    + apply (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
                             x (ActExt (ActOut (d,w)))).
       exists r. exact Hr.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb. }
@@ -280,7 +280,7 @@ Proof.
     destruct Hmu as (μ2 & Hnr & Hd & _).
     destruct μ2 as [[e1 x1]|[e1 x1]]; simpl in Hd; [ exact (match Hd with end) | ].
     inversion Hd; subst.
-    apply lts_performs_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
+    apply lts_may_perform_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
   - exfalso. destruct Hmu as (μ2 & _ & _ & Hb).
     unfold non_blocking_output, is_output in Hb. apply Hb. eexists; reflexivity.
 Qed.
@@ -397,7 +397,7 @@ Proof.
       intros a Hin q Hq. apply gmultiset_elem_of_singleton in Hin.
       injection Hin as Hin. subst a. eapply Hnoc. exact Hq. }
     intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (x & Hx). eapply Hnostep. exact Hx. }
+    exfalso. apply lts_may_perform_spec1 in Hn as (x & Hx). eapply Hnostep. exact Hx. }
   destruct (must_i_cond2_fed (g M) (g N) c v (static_g M HM) (static_g N HN) Hsem
               ((g N) ▷ ({[+ ActOut (c,v) +]} : MO (ExtAct TypeOfActions)))
               (wt_nil _) Hsty) as (x & Hwx & Hstx & Hincl).
@@ -485,7 +485,7 @@ Qed.
     translating the abstracted ready-set inclusion into the
     emitted-channel inclusion the simulation produces.
 
-    This is the acceptance-set counterpart of the [must]-level bridges:
+    This is the acceptance-set counterpart of the [must_intensional]-level bridges:
     it lets an inequation be established by exhibiting a *relation*
     instead of reasoning about every client, and it is the shape the
     restriction certificate should take.  Note it does not re-derive
@@ -501,13 +501,13 @@ Proof.
       destruct Hmu as (μ2 & Hnr & Hd & _).
       destruct μ2 as [[e1 x1]|[e1 x1]]; simpl in Hd; [ exact (match Hd with end) | ].
       inversion Hd; subst.
-      apply lts_performs_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
+      apply lts_may_perform_spec1 in Hnr as (z & Hz). exists w0, z. exact Hz.
     + exfalso. destruct Hmu as (μ2 & _ & _ & Hb).
       unfold non_blocking_output, is_output in Hb. apply Hb. eexists; reflexivity.
   - intros (w & r & Hr).
     exists (ActIn (d,w)). split; [ | reflexivity ].
     exists (ActOut (d,w)). repeat split.
-    + apply (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+    + apply (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
                             x (ActExt (ActOut (d,w)))).
       exists r. exact Hr.
     + unfold non_blocking_output, is_output. intros (b & Hb). discriminate Hb.
@@ -812,13 +812,13 @@ Proof.
   exists (y1 ▷ (k ⊎ y2)). split.
   { apply (fw_tau_run_add (x1 ▷ x2) (y1 ▷ y2) k). exact Hw. }
   assert (Hsty : forall z, ~ ((y1 ▷ y2) ⟶ z)).
-  { intros z Hz. apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
+  { intros z Hz. apply Hst, (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _
                            (y1 ▷ y2) τ).
     exists z. exact Hz. }
   apply fw_stable_iff in Hsty as (Hty & Hry). simpl in Hty, Hry.
   split.
   - intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (z & Hz).
+    exfalso. apply lts_may_perform_spec1 in Hn as (z & Hz).
     eapply (proj2 (fw_stable_iff y1 (k ⊎ y2))); [ | exact Hz ].
     split; [ exact Hty | ].
     intros a Hin q Hq. apply gmultiset_elem_of_disj_union in Hin.
@@ -868,7 +868,7 @@ Proof.
     { apply fw_stable_iff. split; [ exact HstN | ].
       intros a Hin q Hq. eapply Hnoc; [ exact Hin | exact Hq ]. }
     intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
+    exfalso. apply lts_may_perform_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
   assert (Hwq : ((g N) ▷ (∅ : MO (ExtAct TypeOfActions))) ⟹[feed l] ((g N) ▷ bag l)).
   { replace (feed l) with (feed l ++ []) by (rewrite app_nil_r; reflexivity).
     apply fw_wt_feed_list.
@@ -1022,7 +1022,7 @@ Proof.
       - intros q Hq. inversion Hq.
       - intros a Hin q Hq. inversion Hq. }
     intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
+    exfalso. apply lts_may_perform_spec1 in Hn as (z & Hz). eapply Hnostep. exact Hz. }
   assert (Hwq : (((g 𝟘) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))
                   ⟹[feed l] (((g 𝟘) : proc) ▷ bag l)).
   { replace (feed l) with (feed l ++ []) by (rewrite app_nil_r; reflexivity).
@@ -1073,7 +1073,7 @@ Proof.
   intros x y Hst Hw. remember ([] : trace (ExtAct TypeOfActions)) as s0 eqn:Hs.
   induction Hw as [z|s1 z r w Hl Hwt IH|μ s1 z r w Hl Hwt IH].
   - reflexivity.
-  - exfalso. apply Hst, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ z τ). exists r. exact Hl.
+  - exfalso. apply Hst, (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ z τ). exists r. exact Hl.
   - discriminate Hs.
 Qed.
 
@@ -1103,7 +1103,7 @@ Proof.
       - intros z Hz. inversion Hz.
       - intros a Hin z Hz. exfalso. eapply gmultiset_not_elem_of_empty. exact Hin. }
     intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
+    exfalso. apply lts_may_perform_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
   assert (Hwy : (q ▷ ({[+ ActOut (cst d, cst w) +]} : MO (ExtAct TypeOfActions)))
                   ⟹[[]] (((g ((cst c) ? • P)) : proc) ▷ (∅ : MO (ExtAct TypeOfActions)))).
   { eapply wt_tau; [ | apply wt_nil ].
@@ -1129,7 +1129,7 @@ Proof.
         injection Hin as Hin. subst a. unfold p in Hz. inversion Hz; subst.
         apply Hcd. reflexivity. }
     intros Hn.
-    exfalso. apply lts_performs_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
+    exfalso. apply lts_may_perform_spec1 in Hn as (z & Hz). eapply Hns. exact Hz. }
   pose proof (wt_nil_stable_fw _ _ Hstp Hwx) as Hxe. subst x.
   destruct (Hincl (cst d)) as (w0 & r0 & Hr0).
   { exists (cst w). apply fw_emit_of_mem.
@@ -1354,7 +1354,7 @@ Proof.
 Qed.
 
 (* And hence the settling simulation — the acceptance-set counterpart of
-    the two [must]-level bridges — proves inequations between
+    the two [must_intensional]-level bridges — proves inequations between
     *configurations*, not only between bare processes.  Same statement as
     [Cond2.settle_sim_below], with the buffers loaded. *)
 
@@ -1674,7 +1674,7 @@ Qed.
     instances, whereas [copre] wants [FiniteImageLTS]'s own — and the two
     do not unify.  Stating everything together lets unification pick one.
     (This is the same family of traps recorded for [⤓] and for
-    [lts_performs_spec1/2].) *)
+    [lts_may_perform_spec1/2].) *)
 
 Lemma set_sim_copre :
   forall (R : gset (proc * MO (ExtAct TypeOfActions)) ->
@@ -1888,7 +1888,7 @@ Qed.
 
     That second point is exactly what defeated the hand-rolled attempt
     (see the note at [Matching.probe_test]): a test with no escape
-    can be deadlocked by a run that settles quietly, and [must]
+    can be deadlocked by a run that settles quietly, and [must_intensional]
     quantifies over **all** runs.
 
     And the payoff is [must_ta_or_empty_pre_action_set_for_all_trace],

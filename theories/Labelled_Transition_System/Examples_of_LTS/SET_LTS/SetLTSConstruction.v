@@ -100,7 +100,7 @@ Next Obligation.
     exists (lts_extaction_set_from_pset p μ). split; eauto.
     destruct (exists_forall_in_gset p _ _ Hyp).
     + destruct H1 as (p' & Hyp' & Hyp'').
-      intro. eapply lts_performs_spec1 in Hyp'' as (p'' & Hyp''').
+      intro. eapply lts_may_perform_spec1 in Hyp'' as (p'' & Hyp''').
       assert (p'' ∈ lts_extaction_set_from_pset p μ).
       { destruct (lts_extaction_set_from_pset_ispec p μ). eauto. }
       rewrite H1 in H2. inversion H2.
@@ -110,7 +110,7 @@ Next Obligation.
     exists (lts_tau_set_from_pset p). split; eauto.
     destruct (exists_forall_in_gset p _ _ Hyp).
     + destruct H1 as (p' & Hyp' & Hyp'').
-      intro. eapply lts_performs_spec1 in Hyp'' as (p'' & Hyp''').
+      intro. eapply lts_may_perform_spec1 in Hyp'' as (p'' & Hyp''').
       assert (p'' ∈ lts_tau_set_from_pset p).
       { destruct (lts_tau_set_from_pset_ispec p). eauto. }
       rewrite H1 in H2. inversion H2.
@@ -129,7 +129,7 @@ Next Obligation.
       unfold lts_extaction_set_from_pset_spec1 in Hyp'1.
       unfold lts_extaction_set_from_pset_spec2 in Hyp'2.
       eapply Hyp'1 in Hyp as (p'0 & in_Set & Tr).
-      eapply H1 in in_Set. apply in_Set, lts_performs_spec2; eauto.
+      eapply H1 in in_Set. apply in_Set, lts_may_perform_spec2; eauto.
   - intro. destruct H0 as (p' & Hyp1 & Hyp2). subst.
     remember (lts_tau_set_from_pset p).
     induction g using set_ind_L.
@@ -139,7 +139,7 @@ Next Obligation.
       unfold lts_tau_set_from_pset_spec1 in Hyp'1.
       unfold lts_tau_set_from_pset_spec2 in Hyp'2.
       eapply Hyp'1 in Hyp as (p'0 & in_Set & Tr).
-      eapply H1 in in_Set. apply in_Set, lts_performs_spec2; eauto.
+      eapply H1 in in_Set. apply in_Set, lts_may_perform_spec2; eauto.
 Qed.
 
 
@@ -410,8 +410,8 @@ Lemma empty_set_stable_wk `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} s ps : 
 Proof.
   intros not_empty imp. inversion imp; subst.
   + set_solver.
-  + eapply empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
-  + eapply empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
+  + eapply empty_set_stable. eapply (@lts_may_perform_spec2 (gset P)); eauto.
+  + eapply empty_set_stable. eapply (@lts_may_perform_spec2 (gset P)); eauto.
 Qed.
 
 Lemma empty_set_stable_wk_inv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} s ps ps' : ps' = ∅ -> ps ⟹[s] ps' -> ps = ∅.
@@ -433,8 +433,8 @@ Lemma empty_set_stable_wk_not_emp_list `{gLtsP : @gLts P A H} `{!FiniteImagegLts
 Proof.
   intro imp.
   inversion imp; subst.
-  + eapply empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
-  + eapply empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
+  + eapply empty_set_stable. eapply (@lts_may_perform_spec2 (gset P)); eauto.
+  + eapply empty_set_stable. eapply (@lts_may_perform_spec2 (gset P)); eauto.
 Qed.
 
 Lemma empty_set_stable_wk_not_emp_list_inv `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} a s ps : ¬ ps ⟹[a :: s] ∅.
@@ -448,7 +448,7 @@ Lemma empty_set_wk_determinacy `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A} ps
 Proof.
   intro imp. inversion imp.
   + subst. eauto.
-  + subst. exfalso. eapply empty_set_stable. eapply (@lts_performs_spec2 (gset P)); eauto.
+  + subst. exfalso. eapply empty_set_stable. eapply (@lts_may_perform_spec2 (gset P)); eauto.
 Qed.
 
 Lemma termination_sub `{gLtsP : @gLts P A H} `{!FiniteImagegLts P A}

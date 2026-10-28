@@ -85,7 +85,7 @@ Proof.
   assert (Hs : t ⟶[β]) by exact hmem.
   change (t ⟶[β']). destruct (decide (t ⟶[β'])) as [Hok | Href]; [exact Hok |].
   rename Hs into Hr. exfalso.
-  apply lts_performs_spec1 in Hr as (Q & HQ). apply obs_step_def in HQ.
+  apply lts_may_perform_spec1 in Hr as (Q & HQ). apply obs_step_def in HQ.
   assert (∃ Q'', tstep t (ActExt β') Q'') as (Q'' & HQ'').
   { destruct β as [c v|c v|E qs|M qs n]; [exfalso; by apply hb| | |];
       destruct β' as [c' v'|c' v'|E' qs'|M' qs' n']; simpl in heq; simplify_eq;
@@ -94,7 +94,7 @@ Proof.
             | by exists Q
             | (destruct HQ as (x & Q0 & Hs & _); eexists _, x, Q0; split; [exact Hs|reflexivity]) ]. }
   apply (proj2 (obs_step_def _ _ _)) in HQ''.
-  exact (Href (lts_performs_spec2 t (ActExt β') (exist _ Q'' HQ''))).
+  exact (Href (lts_may_perform_spec2 t (ActExt β') (exist _ Q'' HQ''))).
 Qed.
 
 (* ** The observers of the characterisation

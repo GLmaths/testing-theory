@@ -25,16 +25,16 @@
 (* * Erasing [①] from a server
 
     [good] (VACCS_Good.v) is the *client*'s outcome predicate; a server's
-    own [①] is never observed, because [must]'s [m_now] inspects only the
+    own [①] is never observed, because [must_intensional]'s [m_now] inspects only the
     test.  And indeed [①] has no [lts] rule at all — exactly like [𝟘].
 
     This file makes that precise with a syntactic erasure [noone], which
-    rewrites every [①] to [𝟘], and shows it is invisible to [must] on the
+    rewrites every [①] to [𝟘], and shows it is invisible to [must_intensional] on the
     server side.  Two things need it:
 
     - the soundness of the rule [① ⊑ 𝟘] (and back) in the axiom system;
     - the *parallel bridge* of [Axiomatic/Precongruence.v], whose statement
-      [must (p ‖ r) t <-> must p (r ‖ t)] moves [r] from the server to the
+      [must_intensional (p ‖ r) t <-> must_intensional p (r ‖ t)] moves [r] from the server to the
       client and therefore needs [r] to be unable to become [good].  An
       erased process never is, and erasedness is preserved by [lts],
       because [noone]'s image is closed under transitions.
@@ -230,7 +230,7 @@ Proof.
     + inversion Hg; subst. destruct H0 as [H|H]; eapply gnoone_not_good; eassumption.
 Qed.
 
-(* ** Erasing a server is invisible to [must]
+(* ** Erasing a server is invisible to [must_intensional]
 
     Both directions, by induction on the derivation: every field of
     [m_step] transports along [lts_noone] / [lts_noone_inv], and the

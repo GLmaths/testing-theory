@@ -54,7 +54,7 @@ Inductive terminate_i`{gLts P A} (p : P) : Prop :=
 Lemma terminate_i_to_terminate `{gLtsP : gLts P A} (p : P) : terminate_i p -> p ⤓.
 Proof.
   intro Hyp. induction Hyp as [p Hst | p witness spec Ind].
-  + constructor. intros q l. exfalso. apply Hst, lts_performs_spec2. eauto.
+  + constructor. intros q l. exfalso. apply Hst, lts_may_perform_spec2. eauto.
   + eapply tstep; eauto.
 Qed.
 
@@ -62,7 +62,7 @@ Lemma terminate_to_terminate_i `{gLtsP : gLts P A} (p : P) : p ⤓ -> terminate_
 Proof.
   intro Hyp. induction Hyp as [p Hyp1 Hyp2].
   destruct (decide (p ⟶)) as [not_refuses | refuses].
-  + eapply tstep'. eapply lts_performs_spec1 in not_refuses.
+  + eapply tstep'. eapply lts_may_perform_spec1 in not_refuses.
     destruct not_refuses as (p' & tr).
     ++ exists p'; eauto.
     ++ intro p'. intro tr. eapply Hyp2. assumption.
@@ -79,7 +79,7 @@ Qed.
 (** **** On LTS *)
 
 Lemma terminate_if_refuses `{gLts P A} p : p ↛ -> p ⤓.
-Proof. intro st. constructor. intros q l. exfalso. apply st, lts_performs_spec2. eauto. Qed.
+Proof. intro st. constructor. intros q l. exfalso. apply st, lts_may_perform_spec2. eauto. Qed.
 
 Lemma terminate_preserved_by_lts_tau `{gLts P A} p q : p ⤓ -> p ⟶ q -> q ⤓.
 Proof. by inversion 1; eauto. Qed.

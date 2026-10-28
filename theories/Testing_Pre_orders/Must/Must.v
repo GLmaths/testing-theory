@@ -53,26 +53,26 @@ Class ParSts (P T : Type) {Aproc Atest : Type} {Hp : ExtAction Aproc} {Ht : ExtA
   `{PI : !@Prop_of_Inter P T A A dual H gLtsP H (@gLtsEq_gLts T A H gLtsT)} : ParSts P T gLtsP gLtsT :=
   {| par_sts := @parallel_sts P T A H gLtsP (@gLtsEq_gLts T A H gLtsT) PI |}.
 
-Inductive must `{
+Inductive must_intensional `{
     gLtsP : @gLts P Aproc Hp,
     gLtsT : ! @gLtsEq T Atest Ht, !Testing_Predicate outcome _,
     SA : !SyncAction Aproc Atest, STS : !ParSts P T gLtsP gLtsT}
 
     (p : P) (t : T) : Prop :=
-| m_now : outcome t -> must p t
+| m_now : outcome t -> must_intensional p t
 | m_step
     (nh : ¬ outcome t)
     (ex : ∃ t', sts_step (Sts := par_sts) (p, t) t')
-    (pt : forall p', p ⟶ p' -> must p' t)
-    (et : forall t', t ⟶ t' -> must p t')
+    (pt : forall p', p ⟶ p' -> must_intensional p' t)
+    (et : forall t', t ⟶ t' -> must_intensional p t')
     (com : forall p' t' μ1 μ2, sync μ1 μ2
       -> p ⟶[μ1] p'
         -> t ⟶[μ2] t'
-          -> must p' t')
-  : must p t
+          -> must_intensional p' t')
+  : must_intensional p t
 .
 
-Notation "p 'must_pass' t" := (must p t) (at level 70).
+Notation "p 'must_pass' t" := (must_intensional p t) (at level 70).
 
 (** ****** [lts_inversion] inverts the first transition it finds. *)
 Ltac lts_inversion lts ::=
@@ -89,7 +89,7 @@ match goal with
 | H : lts ?p ?a ?q |- _ => inversion H; subst; clear H
  end.
 
-Global Hint Constructors must:mdb.
+Global Hint Constructors must_intensional:mdb.
 
 (** ***** Well-formed computations of [p ∥ t] *)
 
@@ -175,7 +175,7 @@ Proof.
       right; right. by exists s'1, s'2, μ1, μ2.
 Qed.
 
-(** ****** Equivalence of the two inductive definitions [must] and [must_sts] *)
+(** ****** Equivalence of the two inductive definitions [must_intensional] and [must_sts] *)
 
 Lemma must_sts_iff_must `{
     gLtsP : @gLts P A H,
@@ -203,7 +203,7 @@ Proof.
       inversion hl; subst; eauto with mdb.
 Qed.
 
-(** ******* Definition of the contextual preorder based on [must] *)
+(** ******* Definition of the contextual preorder based on [must_intensional] *)
 
 Definition ctx_pre `{
   gLtsP : @gLts P Aproc Hp,
@@ -223,7 +223,7 @@ Notation "p ⊑ₘᵤₛₜᵢ q" := (ctx_pre (SA := SyncAction_of_dual) p q) (a
 Notation "p ⋢ₘᵤₛₜᵢ q" := (¬ ctx_pre (SA := SyncAction_of_dual) p q) (at level 70).
 Notation "p ≂ₘᵤₛₜᵢ q" := (q ⊑ₘᵤₛₜᵢ p /\ p ⊑ₘᵤₛₜᵢ q) (at level 70).
 
-(** ********* Properties on [must] *)
+(** ********* Properties on [must_intensional] *)
 
 Lemma must_eq_client `{
   gLtsP : @gLts P Aproc Hp,
@@ -371,7 +371,7 @@ Proof.
          eapply m_step; eauto.
       ++ intros p' t' μ1 μ2 inter tr_server tr_client.
          assert (t1 ↛[μ2]); eauto.
-         assert (t1 ⟶[μ2]). eapply lts_performs_spec2; eauto. contradiction.
+         assert (t1 ⟶[μ2]). eapply lts_may_perform_spec2; eauto. contradiction.
 Qed.
 
 Lemma must_preserved_by_lts_tau_clt_rev_rev `{
@@ -398,7 +398,7 @@ Proof.
       eauto.
       ++ intros. assert (outcome t'); eauto. now eapply m_now.
       ++ intros. assert (t1 ↛[μ2]); eauto.
-         assert (t1 ⟶[μ2]). eapply lts_performs_spec2; eauto. contradiction.
+         assert (t1 ⟶[μ2]). eapply lts_may_perform_spec2; eauto. contradiction.
 Qed.
 
 Lemma must_terminate_unoutcome `{
@@ -519,7 +519,7 @@ Section Must_transfer.
   Context (STS1 STS2 : ParSts P T gLtsP gLtsT)
     (S1 : ParStsSpec P T gLtsP gLtsT SA STS1) (S2 : ParStsSpec P T gLtsP gLtsT SA STS2).
 
-  Lemma must_transfer (p : P) (t : T) : must (STS := STS1) p t → must (STS := STS2) p t.
+  Lemma must_transfer (p : P) (t : T) : must_intensional (STS := STS1) p t → must_intensional (STS := STS2) p t.
   Proof.
     induction 1 as [p t ho | p t nh ex pt IHpt et IHet com IHcom].
     - by apply m_now.

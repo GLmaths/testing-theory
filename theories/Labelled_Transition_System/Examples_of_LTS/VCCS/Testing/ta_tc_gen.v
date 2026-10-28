@@ -577,7 +577,7 @@ Qed.
 
 #[global] Program Instance gen_acc_𝔸_spec : test_co_acceptance_set_spec gen_acc_𝔸 ρ[𝔸ᴠᴄᴄꜱ].
 Next Obligation.
-  intros E h. apply lts_performs_spec1 in h as (r & h). cbn in h.
+  intros E h. apply lts_may_perform_spec1 in h as (r & h). cbn in h.
   apply unroll_𝔸_lts in h as (x & _ & h). by apply pfx_𝔸_lts in h as (β & e & _).
 Qed.
 Next Obligation.

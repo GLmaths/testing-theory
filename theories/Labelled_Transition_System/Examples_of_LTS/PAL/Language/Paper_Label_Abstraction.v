@@ -86,14 +86,14 @@ Section PAL_LA.
 
   Lemma single_in_accepts ot : single_in ot ⟶[ActIn ot].
   Proof.
-    apply lts_performs_spec2.
+    apply lts_may_perform_spec2.
     exists (subst_term (build_subst (eot_to_eit ot) ot) 𝟘).
     apply ar1; [apply eval_in_eot_to_tuple | by apply tuple_match_eot_to_eit].
   Qed.
 
   Lemma single_in_only ot μ : single_in ot ⟶[μ] → μ = ActIn ot.
   Proof.
-    intros acc. apply lts_performs_spec1 in acc as (q & tr).
+    intros acc. apply lts_may_perform_spec1 in acc as (q & tr).
     change (PAL.Language.Paper_LTS.pal_step Val (single_in ot) (ActExt μ) q) in tr.
     inversion tr; subst.
     match goal with
@@ -105,13 +105,13 @@ Section PAL_LA.
 
   Lemma single_out_accepts ot : single_out ot ⟶[ActOut ot].
   Proof.
-    apply lts_performs_spec2. exists 𝟘.
+    apply lts_may_perform_spec2. exists 𝟘.
     apply ar3, eval_out_eot_to_tuple.
   Qed.
 
   Lemma single_out_only ot μ : single_out ot ⟶[μ] → μ = ActOut ot.
   Proof.
-    intros acc. apply lts_performs_spec1 in acc as (q & tr).
+    intros acc. apply lts_may_perform_spec1 in acc as (q & tr).
     change (PAL.Language.Paper_LTS.pal_step Val (single_out ot) (ActExt μ) q) in tr.
     inversion tr; subst.
     match goal with

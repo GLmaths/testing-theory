@@ -107,31 +107,31 @@ Proof. intros p [c] _. exists c. reflexivity. Qed.
 
 (* ** Refusal, spelled out
 
-    The generic [lts_performs_spec1]/[_spec2] frequently fail to apply
+    The generic [lts_may_perform_spec1]/[_spec2] frequently fail to apply
     against this concrete [gLts] instance (an elaboration mismatch, not a
     type error), so everything here goes through [lts_set_spec0]/[_spec1]
     directly — the workaround already recorded for VCCS. *)
 
 Lemma no_lts_stable : forall (p : proc), (forall q, ~ lts p τ q) -> p ↛.
 Proof.
-  intros p H Hp. apply lts_performs_spec1 in Hp as (q & Hq). eapply H. exact Hq.
+  intros p H Hp. apply lts_may_perform_spec1 in Hp as (q & Hq). eapply H. exact Hq.
 Qed.
 
 Lemma stable_no_lts : forall (p : proc), p ↛ -> forall q, ~ lts p τ q.
 Proof.
-  intros p H q Hq. apply H, lts_performs_spec2. exists q. exact Hq.
+  intros p H q Hq. apply H, lts_may_perform_spec2. exists q. exact Hq.
 Qed.
 
 Lemma no_lts_ext_stable : forall (p : proc) (μ : ExtAct TypeOfActions),
   (forall q, ~ lts p (ActExt μ) q) -> p ↛[μ].
 Proof.
-  intros p μ H Hp. apply lts_performs_spec1 in Hp as (q & Hq). eapply H. exact Hq.
+  intros p μ H Hp. apply lts_may_perform_spec1 in Hp as (q & Hq). eapply H. exact Hq.
 Qed.
 
 Lemma ext_stable_no_lts : forall (p : proc) (μ : ExtAct TypeOfActions),
   p ↛[μ] -> forall q, ~ lts p (ActExt μ) q.
 Proof.
-  intros p μ H q Hq. apply H, lts_performs_spec2. exists q. exact Hq.
+  intros p μ H q Hq. apply H, lts_may_perform_spec2. exists q. exact Hq.
 Qed.
 
 (* ** A guarded sum has an empty ready set *)
@@ -179,7 +179,7 @@ Proof.
   - intro H. destruct (decide (c' = c /\ v' = v)) as [Hyes|Hno]; [ exact Hyes | ].
     exfalso. revert H. apply no_lts_ext_stable. intros q Hq.
     inversion Hq; subst. apply Hno. split; reflexivity.
-  - intros (H1 & H2); subst. apply lts_performs_spec2. eexists. apply lts_output.
+  - intros (H1 & H2); subst. apply lts_may_perform_spec2. eexists. apply lts_output.
 Qed.
 
 Lemma nil_ext_stable : forall (μ : ExtAct TypeOfActions), (g 𝟘) ↛[μ].

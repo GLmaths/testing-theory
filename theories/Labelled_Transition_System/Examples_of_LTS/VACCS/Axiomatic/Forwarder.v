@@ -429,14 +429,14 @@ Lemma stable_of_no_step : forall (x : proc * MO (ExtAct TypeOfActions)),
   (forall z, ~ (x ⟶ z)) -> x ↛.
 Proof.
   intros x H. intros Hn.
-  exfalso. apply lts_performs_spec1 in Hn as (q & Hq). eapply H. exact Hq.
+  exfalso. apply lts_may_perform_spec1 in Hn as (q & Hq). eapply H. exact Hq.
 Qed.
 
 Lemma no_step_of_stable : forall (x : proc * MO (ExtAct TypeOfActions)),
   x ↛ -> forall z, ~ (x ⟶ z).
 Proof.
   intros x H z Hz.
-  apply H, (@lts_performs_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ x τ). exists z; exact Hz.
+  apply H, (@lts_may_perform_spec2 (proc * MO (ExtAct TypeOfActions)) _ _ _ x τ). exists z; exact Hz.
 Qed.
 
 Lemma bag_out : forall (l : list TypeOfActions) z,

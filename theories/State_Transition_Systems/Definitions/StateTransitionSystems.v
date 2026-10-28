@@ -57,8 +57,8 @@ Program Instance sts_of_lts {P} `(M: gLts P H): Sts P :=
     sts_performs s := s ⟶;
   |}.
 Next Obligation. intros ??????. apply _. Defined.
-Next Obligation. intros ????? Hp. by apply lts_performs_spec1. Qed.
-Next Obligation. intros ????? Hq. by apply lts_performs_spec2. Qed.
+Next Obligation. intros ????? Hp. by apply lts_may_perform_spec1. Qed.
+Next Obligation. intros ????? Hq. by apply lts_may_perform_spec2. Qed.
 
 Section sts_executions.
   Context `{Sts P}.

@@ -505,10 +505,10 @@ Qed.
 Proof.
   constructor.
   - intros E. apply TestSpecBridge.test_spec_of_plain, gen_acc_𝔸_test_inst.
-  - intros E h. apply lts_performs_spec1 in h as (r & h). cbn in h.
+  - intros E h. apply lts_may_perform_spec1 in h as (r & h). cbn in h.
     apply unroll_𝔸_lts in h as (x & _ & h).
     by apply pfx_𝔸_lts in h as (c & v & w & _ & e & _).
-  - intros E η nb h. apply lts_performs_spec1 in h as (r & h). cbn in h.
+  - intros E η nb h. apply lts_may_perform_spec1 in h as (r & h). cbn in h.
     apply unroll_𝔸_lts in h as (x & _ & h).
     apply pfx_𝔸_lts in h as (c & v & w & _ & e & _).
     injection e as ->. destruct nb as (? & ?). discriminate.

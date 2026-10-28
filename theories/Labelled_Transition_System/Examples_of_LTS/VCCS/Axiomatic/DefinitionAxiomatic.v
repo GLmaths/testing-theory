@@ -74,7 +74,7 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       precongruence rule per operator, mirroring the lemmas proved in
       [Axiomatic/Precongruence.v]. Every one of these is sound.
     - [ax_int_l]/[ax_int_r]: [X⊕Y ⊑ X] (resp. [Y]), where [⊕] is
-      definable as [𝛕•X + 𝛕•Y] — sound for free via [must]'s own [pt]
+      definable as [𝛕•X + 𝛕•Y] — sound for free via [must_intensional]'s own [pt]
       field ([must_i_int_choice_l]/[_r]). These are glb *elimination*.
     - [ax_int_glb]: the matching glb **introduction** — anything below
       both [q1] and [q2] is below [q1 ⊕ q2]. Sound via
@@ -131,7 +131,7 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
       tempting [X + 𝛕•(g Y) ≂ 𝛕•(g Y) ⊕ X] is **false**, and
       [Axiomatic/MixedSumProbes.v] refutes it with a machine-checked
       counterexample. Promoting [X] to its own [𝛕]-branch would put it
-      under [must]'s [pt] field, making it responsible for offering an
+      under [must_intensional]'s [pt] field, making it responsible for offering an
       interaction by itself — which a stable [X] facing a stable test on
       a disjoint channel cannot do.
     - [ax_output_merge_l]/[_r], [ax_input_merge_l]/[_r]: Hennessy's
@@ -221,7 +221,7 @@ Reserved Notation "p ᴠᴄᴄꜱ⊑ₐₓ q" (at level 70).
     [t = d?SUCCESS] (only ever offers to receive on [d]). [g(gp+gq)] is
     stable (neither branch has a [𝛕]) and syncs with [t] via [gq]
     directly — it must-passes. [g(gp'+gq')] is *not* stable (gp''s own
-    [𝛕] is unconditionally available) — [must]'s [pt] field then forces
+    [𝛕] is unconditionally available) — [must_intensional]'s [pt] field then forces
     the reduct after that [𝛕] (which is [g(c!5•𝟘)] *alone*, [gq] having
     been discarded — guarded choice always commits to one summand only,
     permanently) to must-pass [t] too, and it can't ([c] and [d] never
@@ -319,7 +319,7 @@ Inductive ax_pre : proc -> proc -> Prop :=
 
 (* *** [①] is a [𝟘] on the server side
 
-    [must]'s outcome field inspects only the *test*, so a server enters
+    [must_intensional]'s outcome field inspects only the *test*, so a server enters
     solely through its transitions — and [①] has none, exactly like
     [𝟘]. Structural congruence can drop a [𝟘] summand
     ([cgr_choice_nil]) but says nothing about [①], and no other rule

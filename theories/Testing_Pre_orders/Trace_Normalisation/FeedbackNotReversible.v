@@ -54,7 +54,7 @@ Proof.
   intros hst w. remember ([] : trace A) as s0 eqn:Hs. revert Hs.
   induction w as [ p0 | s p0 q0 t l w IH | μ s p0 q0 t l w IH ]; intro Hs.
   - reflexivity.
-  - exfalso. apply hst, (lts_performs_spec2 p0 τ). exists q0; exact l.
+  - exfalso. apply hst, (lts_may_perform_spec2 p0 τ). exists q0; exact l.
   - discriminate.
 Qed.
 
@@ -66,7 +66,7 @@ Proof.
   eapply wt_pop in w as (t & w1 & _).
   eapply wt_decomp_one in w1 as (r1 & r2 & w2 & l & _).
   eapply wt_nil_stable in w2; [| exact ht]. subst r1.
-  apply hm, (lts_performs_spec2 p (ActExt μ)). exists r2; exact l.
+  apply hm, (lts_may_perform_spec2 p (ActExt μ)). exists r2; exact l.
 Qed.
 
 (* ** The counterexample, in the forwarder lifting of VACCS *)
@@ -88,7 +88,7 @@ Qed.
 Lemma z_stable : z ↛.
 Proof.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as ((p', m') & l).
+  exfalso. eapply lts_may_perform_spec1 in h as ((p', m') & l).
   inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0.
@@ -99,7 +99,7 @@ Qed.
 Lemma z_no_out : z ↛[ActOut a1].
 Proof.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as ((p', m') & l).
+  exfalso. eapply lts_may_perform_spec1 in h as ((p', m') & l).
   inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0; subst; [| multiset_solver].
@@ -198,14 +198,14 @@ Qed.
 Lemma stable_of_no_tau (p : proc) : (forall p', ¬ lts p τ p') -> (p, mt) ↛.
 Proof.
   intro h. intros k.
-  exfalso. eapply lts_performs_spec1 in k as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in k as (r & l).
   eapply fw_tau_empty in l as (p' & l' & _). eapply h, l'.
 Qed.
 
 Lemma nil_mb_stable (m : MO (ExtAct TypeOfActions)) : (g 𝟘, m) ↛.
 Proof.
   intros k.
-  exfalso. eapply lts_performs_spec1 in k as (r & l). inversion l; subst.
+  exfalso. eapply lts_may_perform_spec1 in k as (r & l). inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0.
   - eapply nil_no_step; eassumption.
@@ -275,7 +275,7 @@ Proof. unfold aOut, bOut, c1, c2. discriminate. Qed.
 Lemma nilA_no_bOut : (g 𝟘, {[+ aOut +]} ⊎ mt) ↛[bOut].
 Proof.
   intros k.
-  exfalso. eapply lts_performs_spec1 in k as (r & l). inversion l; subst.
+  exfalso. eapply lts_may_perform_spec1 in k as (r & l). inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0; subst.
     + destruct nb as (c & ->). simpl in duo. exact duo.
@@ -368,7 +368,7 @@ Lemma nilA_no_bOut_gen (a : TypeOfActions) :
 Proof.
   intro hne.
   intros k.
-  exfalso. eapply lts_performs_spec1 in k as (r & l). inversion l; subst.
+  exfalso. eapply lts_may_perform_spec1 in k as (r & l). inversion l; subst.
   - eapply nil_no_step; eassumption.
   - inversion l0; subst.
     + destruct nb as (c & ->). simpl in duo. exact duo.
@@ -1214,7 +1214,7 @@ Proof. eapply stable_of_no_tau. intros p' l. eapply Pin_inv in l as (v & e & _).
 Lemma pin_no_bOut : ((Pin, mt) : st) ↛[bOut].
 Proof.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l).
   eapply fw_act_inv in l as [(p' & l' & _) | [(a & e & _) | (a & m' & _ & e & _)]].
   - eapply Pin_inv in l' as (v & e & _). discriminate.
   - discriminate.
@@ -1347,7 +1347,7 @@ Proof. intro h. inversion h; subst. assumption. Qed.
 Lemma stable_term (x : st) : x ↛ -> x ⤓.
 Proof.
   intro hst. eapply tstep. intros y l. exfalso.
-  apply hst, (lts_performs_spec2 x τ). exists y; exact l.
+  apply hst, (lts_may_perform_spec2 x τ). exists y; exact l.
 Qed.
 
 Lemma not_term_step (x y : st) : x ⟶ y -> ¬ y ⤓ -> ¬ x ⤓.
@@ -1364,7 +1364,7 @@ Proof. eapply stable_of_no_tau. intros p' l. eapply Pdv_inv in l as (v & e & _).
 Lemma Pdv_no_bOut : ((Pdv, mt) : st) ↛[bOut].
 Proof.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l).
   eapply fw_act_inv in l as [(p' & l' & _) | [(a & e & _) | (a & m' & _ & e & _)]].
   - eapply Pdv_inv in l' as (v & e & _). discriminate.
   - discriminate.
@@ -1478,7 +1478,7 @@ Lemma Pdv_stable_gen (m : MO (ExtAct TypeOfActions)) : no_c3 m -> ((Pdv, m) : st
 Proof.
   intro hno.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)].
   - eapply Pdv_inv in l' as (v & e & _). discriminate.
   - eapply Pdv_inv in l' as (v & e & _). injection e as ->.
@@ -1696,7 +1696,7 @@ Lemma Qdv_stable (m : MO (ExtAct TypeOfActions)) : no_c3 m -> ((Qdv, m) : st) �
 Proof.
   intro hno.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)].
   - eapply par_inv in l'
       as [(x & l2 & _) | [(x & l2 & _) | [(b & x & y & l1 & l2 & _ & _) | (b & x & y & l1 & l2 & _ & _)]]].
@@ -1718,7 +1718,7 @@ Lemma Wc3_par_stable (m : MO (ExtAct TypeOfActions)) : no_c3 m -> (((𝟘 ‖ Wc
 Proof.
   intro hno.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)].
   - eapply qgood_no_tau; [eapply qg_wc3 | exact l'].
   - eapply par_inv in l'
@@ -1953,7 +1953,7 @@ Lemma q0good_stable_or_root (X : proc) (m : MO (ExtAct TypeOfActions)) :
 Proof.
   intros hg hne.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(p' & l' & _) | (a & p' & m' & l' & -> & _)];
     destruct hg as [ | | | ]; try (eapply hne; reflexivity).
   - eapply oA_inv in l' as (e & _). discriminate.
@@ -2153,7 +2153,7 @@ Proof.
     destruct μ as [a | a]; [| exfalso; eapply hb; exists a; reflexivity].
     exists a. split; [reflexivity |].
     eapply ext_act_match_sym, simplify_match_input in duo. subst μ2.
-    eapply lts_performs_spec1 in hns as (r & l).
+    eapply lts_may_perform_spec1 in hns as (r & l).
     eapply fw_act_inv in l as [(X' & l' & _) | [(b & e & _) | (b & m' & e & -> & _)]].
     + left. exists X'. exact l'.
     + discriminate.
@@ -2161,10 +2161,10 @@ Proof.
   - intros (a & -> & hcase).
     exists (ActOut a). split; [| split].
     + destruct hcase as [(X' & l') | hin].
-      * apply (lts_performs_spec2 ((X, m) : st) (ActExt (ActOut a))).
+      * apply (lts_may_perform_spec2 ((X, m) : st) (ActExt (ActOut a))).
         exists ((X', m) : st). eapply ParLeft. exact l'.
       * eapply mb_split in hin as (m' & ->).
-        apply (lts_performs_spec2 ((X, {[+ ActOut a +]} ⊎ m') : st) (ActExt (ActOut a))).
+        apply (lts_may_perform_spec2 ((X, {[+ ActOut a +]} ⊎ m') : st) (ActExt (ActOut a))).
         exists ((X, m') : st). eapply q_mb_out.
     + reflexivity.
     + intros (b & e). discriminate.
@@ -2571,7 +2571,7 @@ Qed.
 Lemma stable_of_inert (X : proc) (m : MO (ExtAct TypeOfActions)) : inert X -> ((X, m) : st) ↛.
 Proof.
   intro hi. intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l). eapply inert_no_tau; eassumption.
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l). eapply inert_no_tau; eassumption.
 Qed.
 
 Lemma W_sync (v : ValueData) (m : MO (ExtAct TypeOfActions)) :
@@ -2587,7 +2587,7 @@ Lemma nilW_no_c1 (m : MO (ExtAct TypeOfActions)) :
   (((𝟘 ‖ W), m) : st) ↛ -> forall v, ActOut (c1, v) ∉ m.
 Proof.
   intros hst v hin. eapply mb_split in hin as (m2 & ->).
-  apply hst, (lts_performs_spec2 (((𝟘 ‖ W), {[+ ActOut (c1, v) +]} ⊎ m2) : st) τ).
+  apply hst, (lts_may_perform_spec2 (((𝟘 ‖ W), {[+ ActOut (c1, v) +]} ⊎ m2) : st) τ).
   exists (((𝟘 ‖ (Gd ^ v)), m2) : st). eapply W_sync.
 Qed.
 
@@ -2596,7 +2596,7 @@ Lemma nilWd_stable (m : MO (ExtAct TypeOfActions)) :
 Proof.
   intro hno.
   intros h.
-  exfalso. eapply lts_performs_spec1 in h as (r & l).
+  exfalso. eapply lts_may_perform_spec1 in h as (r & l).
   eapply fw_tau_inv in l as [(X' & l' & _) | (a & X' & m' & l' & -> & _)].
   - eapply par_inv in l'
       as [(y & l2 & _) | [(y & l2 & _) | [(b & y & z & l1 & _ & _ & _) | (b & y & z & l1 & _ & _ & _)]]].
@@ -2623,9 +2623,9 @@ Lemma Rel4_stable E p q : Rel4 E p q -> q ↛ -> exists p', p ⟹ p' /\ p' ↛ /
 Proof.
   intros hr hst.
   destruct hr as [E m | E n hin | E m hnin hin | E m | E v n ne | E x | E Xp Xq m d1 d2].
-  - exfalso. apply hst, (lts_performs_spec2 ((Bp2, m) : st) τ).
+  - exfalso. apply hst, (lts_may_perform_spec2 ((Bp2, m) : st) τ).
     exists (((𝟘 ‖ (Gd ^ v0)), m) : st). eapply Bp2_comL.
-  - exfalso. apply hst, (lts_performs_spec2 (((𝟘 ‖ W), {[+ aOut +]} ⊎ n) : st) τ).
+  - exfalso. apply hst, (lts_may_perform_spec2 (((𝟘 ‖ W), {[+ aOut +]} ⊎ n) : st) τ).
     exists (((𝟘 ‖ (Gd ^ v0)), n) : st). eapply (W_sync v0 n).
   - exists (((𝟘 ‖ Wd), m) : st). split; [eapply wt_nil | split].
     + eapply nilWd_stable, nilW_no_c1, hst.
@@ -3359,7 +3359,7 @@ Lemma st_stable_intro (X : proc) (m : MO (ExtAct TypeOfActions)) :
   (forall r, ¬ (((X, m) : st) ⟶ r)) -> ((X, m) : st) ↛.
 Proof.
   intro h. intros k.
-  exfalso. eapply lts_performs_spec1 in k as (r & l). eapply h; exact l.
+  exfalso. eapply lts_may_perform_spec1 in k as (r & l). eapply h; exact l.
 Qed.
 
 Lemma oB_stable (m : MO (ExtAct TypeOfActions)) : ((oB, m) : st) ↛.
@@ -3397,7 +3397,7 @@ Proof.
   eapply fw_tau_inv in l as [(X' & l' & _) | (a & X' & m' & l' & -> & _)].
   - eapply Pe_inv in l' as (v & e & _). discriminate.
   - eapply Pe_inv in l' as (v & e & _). injection e as ->.
-    apply hst, (lts_performs_spec2 ((Qe, {[+ ActOut (c1, v) +]} ⊎ m') : st) τ).
+    apply hst, (lts_may_perform_spec2 ((Qe, {[+ ActOut (c1, v) +]} ⊎ m') : st) τ).
     exists (((Gpair ^ v), m') : st). eapply Qe_sync.
 Qed.
 
@@ -3499,8 +3499,8 @@ Proof.
   intros [-> | [-> | [-> | ->]]] l.
   - eapply Pe_aOut_tau in l as ->. right; left; reflexivity.
   - eapply Gch_v0_tau in l as [-> | ->]; [right; right; left | right; right; right]; reflexivity.
-  - exfalso. eapply oA_stable, (lts_performs_spec2 ((oA, mt) : st) τ). exists y; exact l.
-  - exfalso. eapply oB_stable, (lts_performs_spec2 ((oB, mt) : st) τ). exists y; exact l.
+  - exfalso. eapply oA_stable, (lts_may_perform_spec2 ((oA, mt) : st) τ). exists y; exact l.
+  - exfalso. eapply oB_stable, (lts_may_perform_spec2 ((oB, mt) : st) τ). exists y; exact l.
 Qed.
 
 Lemma PS_wt (x y : st) : PS x -> x ⟹ y -> PS y.

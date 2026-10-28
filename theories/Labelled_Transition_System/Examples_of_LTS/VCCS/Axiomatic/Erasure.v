@@ -39,7 +39,7 @@ From TestingTheory Require Import VCCS.Language.LTS VCCS.Language.gLts_Instance 
 
     [noone] rewrites every [①] to [𝟘].  Since [①] has no [lts] rule at
     all, erasing removes no transition and adds none, so [noone] is a
-    strong bisimulation in both directions and is invisible to [must].
+    strong bisimulation in both directions and is invisible to [must_intensional].
 
     Consequence, in [Axiomatic/Precongruence.v]: [‖]-precongruence becomes a
     six-line proof — erase, cross the bridge, apply the hypothesis at the
@@ -218,7 +218,7 @@ Proof.
     + inversion Hg; subst. destruct H0 as [H|H]; eapply gnoone_not_good; eassumption.
 Qed.
 
-(* ** Erasing a server is invisible to [must] *)
+(* ** Erasing a server is invisible to [must_intensional] *)
 
 Lemma must_noone : forall (p t : proc), p must_pass t -> (noone p) must_pass t.
 Proof.
@@ -284,7 +284,7 @@ Proof. intros a. simpl. reflexivity. Qed.
 
 (* ** The bridge: an erased context may sit on either side of the barrier
 
-    [must]'s pair LTS does not care how [p | r | t] is bracketed; only the
+    [must_intensional]'s pair LTS does not care how [p | r | t] is bracketed; only the
     outcome predicate does, and [noone r] can never be [good].  So [r]
     moves from the server side to the client side and back. *)
 
