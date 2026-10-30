@@ -58,37 +58,5 @@ Proof.
     exact (IH _ h p' t (tau_succ_mem X p p' hp l) w).
 Qed.
 
-(* Convergence along [s] within [k] τ-steps per segment of [s]. *)
-Fixpoint cocnv_within_set (k : nat) (X : gset P) (s : trace A) : bool :=
-  tau_bounded_set k X &&
-  match s with
-  | [] => true
-  | μ :: s' => cocnv_within_set k (colts_extaction_set_from_pset (tau_reach_set k X) μ) s'
-  end.
-
-Lemma cocnv_within_set_sound k s : ∀ X, cocnv_within_set k X s = true → ∀ p, p ∈ X → p ⇓ᶜᵒ s.
-Proof.
-  induction s as [| μ s IH]; intros X h p hp; simpl in h;
-    apply andb_true_iff in h as [hb hs].
-  - apply cocnv_nil. exact (tau_bounded_set_terminate k X hb p hp).
-  - apply cocnv_act; [exact (tau_bounded_set_terminate k X hb p hp) |].
-    intros q w. apply cowt_decomp_one in w as (t & r & μ' & w1 & duo & l & w2).
-    eapply (cocnv_preserved_by_cowt_nil s r); [| exact w2].
-    apply (IH _ hs r), elem_of_colts_extaction_set_from_pset.
-    exists t. split; [exact (tau_reach_set_complete k X hb p t hp w1) |].
-    exists μ'. split; [exact duo | exact l].
-Qed.
-
-(* The single-process versions. *)
-Definition tau_bounded (k : nat) (p : P) : bool := tau_bounded_set k {[ p ]}.
-
-Definition cocnv_within (k : nat) (p : P) (s : trace A) : bool := cocnv_within_set k {[ p ]} s.
-
-Lemma tau_bounded_terminate k p : tau_bounded k p = true → p ⤓.
-Proof. intros h. exact (tau_bounded_set_terminate k _ h p (elem_of_singleton_2 _ _ eq_refl)). Qed.
-
-Lemma cocnv_within_sound k p s : cocnv_within k p s = true → p ⇓ᶜᵒ s.
-Proof. intros h. exact (cocnv_within_set_sound k s _ h p (elem_of_singleton_2 _ _ eq_refl)). Qed.
-
 End Bounded_Convergence.
 (* end hide *)

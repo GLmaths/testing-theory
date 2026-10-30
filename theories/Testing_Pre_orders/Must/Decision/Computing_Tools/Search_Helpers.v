@@ -32,37 +32,5 @@ Proof.
               exists y. split; [set_solver | exact hyS].
 Defined.
 
-Context {A : Type}.
-
-(* The co-traces of length [k] over [alphabet]. *)
-Fixpoint traces_of_length (alphabet : list A) (k : nat) : list (trace A) :=
-  match k with
-  | 0 => [[]]
-  | S k => flat_map (λ μ, map (cons μ) (traces_of_length alphabet k)) alphabet
-  end.
-
-(* The co-traces of length at most [n] over [alphabet], shortest first. *)
-Definition traces_upto (alphabet : list A) (n : nat) : list (trace A) :=
-  flat_map (traces_of_length alphabet) (seq 0 (S n)).
-
 End Search_Helpers.
-
-(* Either the property holds, or a distinguishing test, or a co-trace along which the
-   first ([true]) or the second ([false]) process did not converge within the bound. *)
-Inductive bounded_answer {A : Type} (H : Prop) (D : Type) : Type :=
-| Holds : H → bounded_answer H D
-| Distinguished : D → bounded_answer H D
-| Timeout : trace A → bool → bounded_answer H D.
-
-Arguments Holds {A H D}.
-Arguments Distinguished {A H D}.
-Arguments Timeout {A H D}.
-
-(* The verdict without the proofs. *)
-Inductive verdict {A P : Type} : Type :=
-| V_holds
-| V_distinguished (s : trace A) (t : P)
-| V_timeout (s : trace A) (on_p : bool).
-
-Arguments verdict : clear implicits.
 (* end hide *)
