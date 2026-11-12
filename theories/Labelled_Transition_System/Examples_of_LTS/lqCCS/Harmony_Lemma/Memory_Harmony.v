@@ -84,12 +84,12 @@ Section Memory_Harmony.
     induction 1 as [t P | t E es qs P Hq | t M es qs k P Hq | t es qs P Hq | t c v P
                    | g1 g2 s l ρ' P' Hg IH | g1 g2 s l ρ' P' Hg IH]; simpl.
     - left. split; [apply pr_guard, pg_tau | done].
-    - right. exists t, (PrOp E qs), (MeOp E qs).
-      split_and!; [done | by apply pr_guard, pg_op | apply me_op | constructor].
+    - right. exists t, (PrOp E qs), (MeSop (SGate E) qs).
+      split_and!; [done | by apply pr_guard, pg_op | apply (me_sop ρ (SGate E)) | constructor].
     - right. exists t, (PrMeas M qs (code _ k)), (MeMeas M qs (code _ k)).
       split_and!; [done | by apply pr_guard, pg_meas | apply me_meas | constructor].
-    - right. exists t, (PrInit qs), (MeInit qs).
-      split_and!; [done | by apply pr_guard, pg_init | apply me_init | constructor].
+    - right. exists t, (PrInit qs), (MeSop SInit qs).
+      split_and!; [done | by apply pr_guard, pg_init | apply (me_sop ρ SInit) | constructor].
     - split_and!; [by exists c, v; right | apply pr_guard, pg_recv | done].
     - destruct l as [a |]; simpl in IH.
       + destruct IH as (Ha & Hp & ->).

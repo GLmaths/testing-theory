@@ -252,8 +252,8 @@ Section STS.
     (l = τ ∧ ρ' = ρ) ∨ (∃ a b, l = ActExt a ∧ mem_step ρ CEps (ActExt b) ρ' ∧ sync b a).
   Proof.
     destruct 1; [by left|right..].
-    - exists (PrOp E qs), (MeOp E qs). split_and!; [done|constructor|constructor].
-    - exists (PrInit qs), (MeInit qs). split_and!; [done|constructor|constructor].
+    - exists (PrOp E qs), (MeSop (SGate E) qs). split_and!; [done|apply (me_sop ρ (SGate E))|constructor].
+    - exists (PrInit qs), (MeSop SInit qs). split_and!; [done|apply (me_sop ρ SInit)|constructor].
     - exists (PrMeas M qs (code _ k)), (MeMeas M qs (code _ k)).
       split_and!; [done|constructor|constructor].
   Qed.
