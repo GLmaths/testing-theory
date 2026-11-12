@@ -6,11 +6,13 @@
 \usepackage[margin=2.2cm]{geometry}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{mathpartir}
+\usepackage{stmaryrd}
 \usepackage{xcolor}
 \usepackage[colorlinks,linkcolor=blue!60!black]{hyperref}
 \usepackage[capitalise,nameinlink]{cleveref}
 
 \newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 
@@ -24,11 +26,38 @@
 \newcommand{\req}[1]{#1(\tilde q)}
 \newcommand{\memop}[1]{\overline{#1(\tilde q)}}
 \newcommand{\mrecv}[1]{\M(\tilde q)?#1}
+\newcommand{\initp}{\mathsf{init}(\tilde q)}
+\newcommand{\meminit}{\overline{\mathsf{init}(\tilde q)}}
+\newcommand{\inirho}{\mathsf{init}^{\tilde q}(\rho)}
 \newcommand{\msend}[1]{\M(\tilde q)!#1}
 \newcommand{\sync}{\mathrel{\mathsf{sync}}}
 \newcommand{\upd}[1]{#1^{\tilde q}\rho\,(#1^{\tilde q})^\dagger}
 \newcommand{\br}{M_m^{\tilde q}\rho\,(M_m^{\tilde q})^\dagger}
 \newcommand{\tr}{\mathrm{tr}}
+\newcommand{\lpar}{\mathbin{|}}
+\newcommand{\rec}[2]{\mathsf{rec}\,#1.\,#2}
+\newcommand{\red}{\longrightarrow}
+\newcommand{\syncM}{\mathrel{\mathsf{sync}_{\M}}}
+\newcommand{\syncC}{\mathrel{\mathsf{sync}_{c}}}
+\newcommand{\syncS}{\mathrel{\mathsf{sync}_{\mathsf{sys}}}}
+\newcommand{\fc}{\mathrm{fc}}
+\newcommand{\chans}{\mathrm{chans}}
+\newcommand{\ren}[3]{#1\{#2/#3\}}
+\newcommand{\size}[1]{|#1|}
+\newtheorem{remark}{Remark}
+\newcommand{\den}[1]{\llbracket #1 \rrbracket}
+\newcommand{\denw}[2]{\llbracket #1 \rrbracket_{#2}}
+\newcommand{\sop}[1]{\mathcal{#1}}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\final}{\mathsf{final}}
+\newcommand{\tree}[4]{#1 \Downarrow_{#2} #3}
+\newcommand{\smyth}{\sqsubseteq_{\mathsf{Sm}}}
+\newcommand{\alt}{\preccurlyeq}
+\newcommand{\DD}{\mathbb{D}}
+\newcommand{\lstep}[1]{\rightsquigarrow_{#1}}
+\newcommand{\coR}{\mathrm{coR}}
+\newcommand{\menu}{\mathsf{menu}}
+\newcommand{\succn}{\mathsf{S}}
 
 \title{Harmony lemma for lqCCS}
 \author{}
@@ -71,18 +100,27 @@ divided by $p_m$.
 
 Let $\mathit{Tag} \ni t$ be a countably infinite set of \emph{tags}.
 
-Outputs are asynchronous and sums are guarded:
+Outputs are asynchronous, sums are guarded, and recursion is as in VACCS, with
+process variables $X$ and a tagged recursion operator:
 \[
 \begin{array}{r@{\ ::=\ }l}
-P & \tagged{t}{c!e} \mid K \mid P \parallel P \mid \ite{e}{P}{P} \mid P \setminus c\\
+P & \tagged{t}{c!e} \mid K \mid P \parallel P \mid \ite{e}{P}{P} \mid P \setminus c
+    \mid X \mid \tagged{t}{\rec{X}{P}}\\
 K & \mathbf{0}_{\tilde e} \mid \alpha.P \mid K + K\\
 \alpha & \tagged{t}{\tau} \mid \tagged{t}{c?x} \mid
         \tagged{t}{U(\tilde e)} \mid \tagged{t}{\M(\tilde e \rhd x)}
+        \mid \tagged{t}{\mathsf{init}(\tilde e)}
 \end{array}
 \]
-A \emph{choice} is either a tag or a pair of tags, $s ::= t \mid (t,t')$: a
-pair $(t,t')$ selects the synchronisation between a move tagged $t$ and a move
-tagged $t'$. Throughout, $\lambda$ ranges over all
+The prefix $\tagged{t}{\mathsf{init}(\tilde e)}$ resets the qubits $\tilde e$
+to $|0\rangle$: on the memory, $\inirho = \sum_{i} |0\rangle_{\tilde q}\langle i|
+\,\rho\, |i\rangle_{\tilde q}\langle 0|$, a trace-preserving operation.
+$P[Q/X]$ is the substitution of $Q$ for the free occurrences of $X$ in $P$;
+unfolding a recursion is a silent move, selected by the tag of the recursion.
+A \emph{choice} is either a tag or an unordered pair of tags,
+$s ::= t \mid \{t,t'\}$: the pair $\{t,t'\}$ selects the synchronisation
+between a move tagged $t$ and a move tagged $t'$, whichever side each move is
+on. Throughout, $\lambda$ ranges over all
 actions, $\tau$ included, and $\mu, \mu_1, \mu_2, \ldots$ over external actions.
 
 The LTS of lqCCS configurations $\conf{\rho}{P}$ is given in \cref{fig:conf}.
@@ -102,6 +140,10 @@ The LTS of lqCCS configurations $\conf{\rho}{P}$ is given in \cref{fig:conf}.
 \inferrule*[left=Meas]
   {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
   {\conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P} \step{\tau}{t} \conf{\br}{P[m/x]}}
+
+\inferrule*[left=Init]
+  { }
+  {\conf{\rho}{\tagged{t}{\initp}.P} \step{\tau}{t} \conf{\inirho}{P}}
 
 \inferrule*[left=Send]
   {e \Downarrow v}
@@ -138,17 +180,22 @@ The LTS of lqCCS configurations $\conf{\rho}{P}$ is given in \cref{fig:conf}.
 \inferrule*[left=SynchL]
   {\conf{\rho}{P} \step{c!v}{t} \conf{\rho}{P'} \\
    \conf{\rho}{Q} \step{c?v}{t'} \conf{\rho}{Q'}}
-  {\conf{\rho}{P \parallel Q} \step{\tau}{(t,t')} \conf{\rho}{P' \parallel Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\tau}{\{t,t'\}} \conf{\rho}{P' \parallel Q'}}
 
 \inferrule*[left=SynchR]
   {\conf{\rho}{P} \step{c?v}{t} \conf{\rho}{P'} \\
    \conf{\rho}{Q} \step{c!v}{t'} \conf{\rho}{Q'}}
-  {\conf{\rho}{P \parallel Q} \step{\tau}{(t,t')} \conf{\rho}{P' \parallel Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\tau}{\{t,t'\}} \conf{\rho}{P' \parallel Q'}}
 
 \inferrule*[left=Restr]
   {\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'} \\
    \forall v.\ \lambda \neq c!v, c?v}
   {\conf{\rho}{P \setminus c} \step{\lambda}{s} \conf{\rho'}{P' \setminus c}}
+
+\inferrule*[left=Rec]
+  { }
+  {\conf{\rho}{\tagged{t}{\rec{X}{P}}} \step{\tau}{t}
+   \conf{\rho}{P[\tagged{t}{\rec{X}{P}}/X]}}
 \end{mathpar}
 \caption{Configuration LTS, $\lambda \in \{\tau, c!v, c?v\}$. A measurement
 moves to one unnormalised branch for each outcome $m$; all branches carry the
@@ -171,6 +218,10 @@ same choice $t$.}
 \inferrule*[left=Meas]
   {\M : \mathsf{Meas}(|\tilde q|) \\ m \in \mathbb{N}}
   {\tagged{t}{\M(\tilde q \rhd x)}.P \step{\mrecv{m}}{t} P[m/x]}
+
+\inferrule*[left=Init]
+  { }
+  {\tagged{t}{\initp}.P \step{\initp}{t} P}
 
 \inferrule*[left=Send]
   {e \Downarrow v}
@@ -206,19 +257,24 @@ same choice $t$.}
 
 \inferrule*[left=SynchL]
   {P \step{c!v}{t} P' \\ Q \step{c?v}{t'} Q'}
-  {P \parallel Q \step{\tau}{(t,t')} P' \parallel Q'}
+  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
 
 \inferrule*[left=SynchR]
   {P \step{c?v}{t} P' \\ Q \step{c!v}{t'} Q'}
-  {P \parallel Q \step{\tau}{(t,t')} P' \parallel Q'}
+  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
 
 \inferrule*[left=Restr]
   {P \step{\lambda}{s} P' \\ \forall v.\ \lambda \neq c!v, c?v}
   {P \setminus c \step{\lambda}{s} P' \setminus c}
+
+\inferrule*[left=Rec]
+  { }
+  {\tagged{t}{\rec{X}{P}} \step{\tau}{t} P[\tagged{t}{\rec{X}{P}}/X]}
 \end{mathpar}
-\caption{Program LTS, $\lambda \in \{\tau\} \cup \{c!v, c?v, \req{U}, \mrecv{m}\}$.
+\caption{Program LTS, $\lambda \in \{\tau\} \cup \{c!v, c?v, \req{U}, \mrecv{m}, \initp\}$.
 Quantum operations are requests to the memory: $\req{U}$ asks for $U$ on
-$\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$.}
+$\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$,
+$\initp$ asks for the initialisation of $\tilde q$.}
 \label{fig:prog}
 \end{figure}
 
@@ -232,8 +288,12 @@ $\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$.}
 \inferrule*[left=Meas]
   {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
   {\rho \mto{\msend{m}} {\br}}
+
+\inferrule*[left=Init]
+  { }
+  {\rho \mto{\meminit} {\inirho}}
 \end{mathpar}
-\caption{Memory LTS, $\mu \in \{\memop{U}, \msend{m}\}$.}
+\caption{Memory LTS, $\mu \in \{\memop{U}, \msend{m}, \meminit\}$.}
 \label{fig:mem}
 \end{figure}
 
@@ -243,69 +303,784 @@ The definitions below apply to any two LTSs whose transitions
 $s \step{\lambda}{c} s'$ carry a choice $c \in \{\epsilon, t, (t,t')\}$, where
 $\epsilon$ is the empty choice and is not written: the memory LTS only has
 transitions with choice $\epsilon$. Choices compose by
-$\epsilon \cdot c = c \cdot \epsilon = c$ and $t \cdot t' = (t,t')$.
+$\epsilon \cdot c = c \cdot \epsilon = c$ and $t \cdot t' = \{t,t'\}$.
 
 \begin{definition}[Synchronisation]\label{def:sync}
 A \emph{synchronisation predicate} between two LTSs with external actions
 $A_1$ and $A_2$ is a relation ${\sync} \subseteq A_1 \times A_2$. Between the
-memory and the programs, it is the least relation such that
+memory and the programs, $\syncM$ is the least relation such that
 \[
-\memop{U} \sync \req{U}
-\qquad\qquad
-\msend{m} \sync \mrecv{m}.
+\memop{U} \syncM \req{U}
+\qquad\quad
+\msend{m} \syncM \mrecv{m}
+\qquad\quad
+\meminit \syncM \initp.
 \]
+Between two programs, $\syncC$ relates the dual actions on a channel:
+$c!v \syncC c?v$ and $c?v \syncC c!v$.
 \end{definition}
 
-\begin{definition}[Parallel composition]\label{def:par}
-Given a synchronisation predicate $\mathsf{sync}$, the parallel composition $s_1 \parallel s_2$
-of two LTSs is the LTS given by the rules
+\begin{definition}[Parallel composition of LTSs]\label{def:par}
+Given a synchronisation predicate $\mathsf{sync}$, the parallel composition
+$L_1 \lpar_{\mathsf{sync}} L_2$ of two LTSs $L_1$ and $L_2$ is the LTS whose
+states are the pairs $s_1 \lpar s_2$ of a state of $L_1$ and a state of $L_2$,
+whose external actions are $A_1 \uplus A_2$, and whose transitions are given
+by the rules
 \begin{mathpar}
 \inferrule*[left=Left]
   {s_1 \step{\lambda}{c} s_1'}
-  {s_1 \parallel s_2 \step{\lambda}{c} s_1' \parallel s_2}
+  {s_1 \lpar s_2 \step{\lambda}{c} s_1' \lpar s_2}
 
 \inferrule*[left=Right]
   {s_2 \step{\lambda}{c} s_2'}
-  {s_1 \parallel s_2 \step{\lambda}{c} s_1 \parallel s_2'}
+  {s_1 \lpar s_2 \step{\lambda}{c} s_1 \lpar s_2'}
 
 \inferrule*[left=Sync]
   {s_1 \step{\mu_1}{c_1} s_1' \\ s_2 \step{\mu_2}{c_2} s_2' \\ \mu_1 \sync \mu_2}
-  {s_1 \parallel s_2 \step{\tau}{c_1 \cdot c_2} s_1' \parallel s_2'}
+  {s_1 \lpar s_2 \step{\tau}{c_1 \cdot c_2} s_1' \lpar s_2'}
 \end{mathpar}
+The symbol $\lpar$ is the composition of LTSs; $\parallel$ remains the
+parallel composition of the syntax.
 \end{definition}
 
 For a memory $\rho$ and a program $P$, rule Sync gives
-$\rho \parallel P \step{\tau}{t} \rho' \parallel P'$ whenever
-$\rho \mto{\mu_1} \rho'$, $P \step{\mu_2}{t} P'$ and $\mu_1 \sync \mu_2$.
+$\rho \lpar P \step{\tau}{t} \rho' \lpar P'$ whenever
+$\rho \mto{\mu_1} \rho'$, $P \step{\mu_2}{t} P'$ and $\mu_1 \syncM \mu_2$.
 
 \begin{lemma}[Pre-harmony]\label{lem:pre-harmony}
 For all $\rho, P, s, \rho', P'$,
 \[
 \conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{P'}
 \iff
-\rho \parallel P \step{\tau}{s} \rho' \parallel P'.
+\rho \lpar P \step{\tau}{s} \rho' \lpar P'
 \]
+where $\lpar$ is the composition for $\syncM$ of the memory LTS
+(\cref{fig:mem}) and the program LTS (\cref{fig:prog}).
 \end{lemma}
 
 That is, the LTS of lqCCS is decomposed into the LTS of programs, which runs
 without the quantum memory (\cref{fig:prog}), and the LTS of the memory
 (\cref{fig:mem}).
-\newpage
+
 \begin{proof}
+($\Leftarrow$) We go by case analysis on the derivation of
+$\rho \lpar P \step{\tau}{s} \rho' \lpar P'$.
+The only two cases are an internal transition of the program (rule Right) or
+a synchronisation (rule Sync), since the memory has no internal transition.
+In both cases, we go by induction on the transition of the program
+$P \step{\lambda}{s'} P'$: a channel action gives the same transition of the
+configuration, with the same memory; a request $\req{U}$ or $\mrecv{m}$
+synchronised with the memory gives the rules Op, Meas and Init of \cref{fig:conf}.
 
-($\Leftarrow$) We go by case analysis on the derivation of $\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{P'}$.
-The only two cases are internal transition from the right part or a internal transition from $\sync$, since the memory has no internal transition.
-
-In both case, we go by induction on the transition $P \step{\lambda}{s'} P$.
-
-($\Rightarrow$) For this side, we prove a stronger lemma by generalising the internal label $\tau$ with any label $\lambda$:
+($\Rightarrow$) For this side, we prove a stronger lemma by generalising the
+internal label $\tau$ with any label $\lambda$:
 $$
   \conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}
 \Rightarrow
-\rho \parallel P \step{\lambda}{s} \rho' \parallel P'
+\rho \lpar P \step{\lambda}{s} \rho' \lpar P'
 $$
 We go by induction on the derivation of
-$\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$ and we conclude by induction hypothesis.
+$\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$ and we conclude by induction
+hypothesis. The rules Op, Meas and Init of \cref{fig:conf} are instances of the rule
+Sync, with the choice $\epsilon \cdot t = t$; the rule Rec is an instance of
+the rule Right.
 \end{proof}
+
+The configuration of a parallel composition $P \parallel Q$ is itself a
+composition of LTSs: the system $\rho \lpar P$ is composed with the program
+$Q$, which synchronises with the memory of the system (through $\syncM$) and
+with the channels of $P$ (through $\syncC$). Let
+${\syncS} \subseteq (A_{\M} \uplus A_{\mathsf{prog}}) \times A_{\mathsf{prog}}$
+be the least relation such that
+\[
+\mu_{\M} \syncS \mu \ \text{ if } \mu_{\M} \syncM \mu
+\qquad\qquad
+\mu_1 \syncS \mu_2 \ \text{ if } \mu_1 \syncC \mu_2 .
+\]
+
+\begin{lemma}[Parallel harmony]\label{lem:par-harmony}
+For all $\rho, P, Q, s, \rho', R$,
+\[
+\conf{\rho}{P \parallel Q} \step{\tau}{s} \conf{\rho'}{R}
+\iff
+R = P' \parallel Q' \text{ and }
+(\rho \lpar P) \lpar Q \step{\tau}{s} (\rho' \lpar P') \lpar Q'
+\text{ for some } P', Q',
+\]
+where the outer composition is for $\syncS$ and the inner one for $\syncM$.
+\end{lemma}
+
+\begin{proof}
+($\Rightarrow$) By case analysis on the last rule of the transition of
+$\conf{\rho}{P \parallel Q}$. ParL is the rule Left, by
+\cref{lem:pre-harmony}. ParR is either the rule Right, for a silent move of
+$Q$, or the rule Sync between a move of the memory (rule Left inside
+$\rho \lpar P$) and a request of $Q$, with choice $\epsilon \cdot t = t$.
+SynchL and SynchR are the rule Sync between a channel action of $P$ (rule
+Right inside $\rho \lpar P$, which does not change $\rho$) and the dual action
+of $Q$, with choice $t \cdot t' = \{t,t'\}$.
+
+($\Leftarrow$) By case analysis on the last rule of the transition of
+$(\rho \lpar P) \lpar Q$, the same correspondence in the other direction;
+the channel actions of programs always carry a single tag, so that the choice
+of a synchronisation between $P$ and $Q$ is a pair $\{t,t'\}$.
+\end{proof}
+
+\section{Structural congruence}
+
+Processes are identified up to $\alpha$-conversion of restricted channels and of
+bound variables. The structural congruence $\equiv$ is the least equivalence
+relation containing the rules of \cref{tab:cgr} and closed under all
+contexts: conditionals, parallel composition, restriction, recursion,
+prefixes and sums. Congruent processes have the same tags.
+
+\begin{table}[h]
+\centering
+\small
+$\begin{array}{l@{\quad}rcl@{\quad}l}
+\textsc{ParNil} & P \parallel \mathbf{0} &\equiv& P \\
+\textsc{ParComm} & P \parallel Q &\equiv& Q \parallel P \\
+\textsc{ParAssoc} & P \parallel (Q \parallel R) &\equiv& (P \parallel Q) \parallel R \\[2pt]
+\textsc{SumNil} & K + \mathbf{0}_{\tilde e} &\equiv& K \\
+\textsc{SumComm} & K + K' &\equiv& K' + K \\
+\textsc{SumAssoc} & K + (K' + K'') &\equiv& (K + K') + K'' \\[2pt]
+\textsc{IteT} & \ite{e}{P}{Q} &\equiv& P & e \Downarrow \mathit{tt} \\
+\textsc{IteF} & \ite{e}{P}{Q} &\equiv& Q & e \Downarrow \mathit{ff} \\
+\textsc{ValExpr} & P &\equiv& P[v/e] & e \Downarrow v \\[2pt]
+\textsc{ResNil} & \mathbf{0}_{\tilde e} \setminus c &\equiv& \mathbf{0}_{\tilde e} \\
+\textsc{ResOrd} & (P \setminus c) \setminus d &\equiv& (P \setminus d) \setminus c \\
+\textsc{ResPar} & (P \parallel Q) \setminus c &\equiv& P \parallel (Q \setminus c) & c \notin \fc(P)
+\end{array}$
+\caption{Structural congruence. In \textsc{ValExpr}, $e$ is an expression of
+an output, of a conditional, of a deadlock $\mathbf{0}_{\tilde e}$ or of a
+quantum prefix, and $P[v/e]$ replaces it by its value. $\fc(P)$ is the set of
+free channels of $P$.}
+\label{tab:cgr}
+\end{table}
+
+\begin{lemma}[Congruence is a bisimulation]\label{lem:cgr-bisim}
+If $P \equiv Q$ and $P \step{\lambda}{s} P'$ in the program LTS, then
+$Q \step{\lambda}{s} Q'$ for some $Q' \equiv P'$.
+\end{lemma}
+
+The choice is preserved because the choice of a synchronisation is an
+unordered pair: \textsc{ParComm} exchanges the two sides of the
+synchronisation, not its choice.
+
+\begin{remark}\label{rem:debruijn}
+Scope extrusion \textsc{ResPar} needs the $\alpha$-conversion of the restricted
+channel: $(R \setminus d) \parallel Q$ with $d$ free in $Q$ must first rename
+$d$. As in VACCS, the mechanisation uses de Bruijn indices for restricted
+channels and for the variables bound by inputs and measurements:
+\textsc{ResPar} reads $(\nu P) \parallel Q \equiv \nu (P \parallel Q^{+})$,
+where $Q^{+}$ shifts the indices of $Q$, \textsc{ResOrd} exchanges the two
+innermost indices, and the substitution $P[Q/X]$ shifts $Q$ under each binder,
+so that $\equiv$ is closed under recursion.
+\end{remark}
+
+\section{Reduction semantics}
+
+The reduction semantics of configurations, written
+$\conf{\rho}{P} \red_{s} \conf{\rho'}{P'}$ and indexed by the choice $s$ that
+selects the redex, is the least relation closed under the rules of
+\cref{tab:sts}. It follows the STS of VACCS: the first six rules are the
+redexes, the last three close them under parallel composition, restriction
+and structural congruence.
+
+\begin{table}[h]
+\centering
+\footnotesize
+$\begin{array}{l@{\quad}rcl@{\quad}l}
+\textsc{Com} &
+  \conf{\rho}{\tagged{t}{c!e} \parallel (\tagged{t'}{c?x}.P + K)} &\red_{\{t,t'\}}&
+  \conf{\rho}{\mathbf{0} \parallel P[v/x]} & e \Downarrow v \\[2pt]
+\textsc{Tau} &
+  \conf{\rho}{\tagged{t}{\tau}.P + K} &\red_{t}& \conf{\rho}{P} \\[2pt]
+\textsc{Op} &
+  \conf{\rho}{\tagged{t}{U(\tilde q)}.P + K} &\red_{t}&
+  \conf{\upd{U}}{P} & U : \mathsf{Op}(|\tilde q|) \\[2pt]
+\textsc{Init} &
+  \conf{\rho}{\tagged{t}{\initp}.P + K} &\red_{t}&
+  \conf{\inirho}{P} \\[2pt]
+\textsc{Meas} &
+  \conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P + K} &\red_{t}&
+  \conf{\br}{P[m/x]} & \M : \mathsf{Meas}(|\tilde q|),\ 0 \le m < |\M| \\[2pt]
+\textsc{Rec} &
+  \conf{\rho}{\tagged{t}{\rec{X}{P}}} &\red_{t}&
+  \conf{\rho}{P[\tagged{t}{\rec{X}{P}}/X]} \\[2pt]
+\textsc{Par} &
+  \conf{\rho}{P \parallel Q} &\red_{s}& \conf{\rho'}{P' \parallel Q}
+  & \conf{\rho}{P} \red_{s} \conf{\rho'}{P'} \\[2pt]
+\textsc{Res} &
+  \conf{\rho}{P \setminus c} &\red_{s}& \conf{\rho'}{P' \setminus c}
+  & \conf{\rho}{P} \red_{s} \conf{\rho'}{P'} \\[2pt]
+\textsc{Cong} &
+  \conf{\rho}{P} &\red_{s}& \conf{\rho'}{Q}
+  & P \equiv P_1,\ \conf{\rho}{P_1} \red_{s} \conf{\rho'}{Q_1},\ Q_1 \equiv Q
+\end{array}$
+\caption{Reduction semantics of configurations.}
+\label{tab:sts}
+\end{table}
+
+As in VACCS, the proof of the Harmony lemma goes through the \emph{shapes}
+of the transitions: up to congruence, a process that performs an action is a
+redex under some restrictions, in parallel with a rest. Here
+$(\nu \tilde d)\,P$ stands for $P \setminus d_1 \cdots \setminus d_n$, with
+$\tilde d$ fresh for everything but $P$ (by $\alpha$-conversion).
+
+\begin{lemma}[Shapes of the transitions]\label{lem:shapes}
+In the program LTS,
+\begin{enumerate}
+\item if $P \step{c!v}{s} P'$ then $s = t$ and
+  $P \equiv (\nu \tilde d)(\tagged{t}{c!e} \parallel R)$,
+  $P' \equiv (\nu \tilde d)(\mathbf{0} \parallel R)$ for some $t, e, R, \tilde d$
+  with $e \Downarrow v$ and $c \notin \tilde d$;
+\item if $P \step{c?v}{s} P'$ then $s = t$ and
+  $P \equiv (\nu \tilde d)((\tagged{t}{c?x}.P_1 + K) \parallel R)$,
+  $P' \equiv (\nu \tilde d)(P_1[v/x] \parallel R)$ for some
+  $t, x, P_1, K, R, \tilde d$ with $c \notin \tilde d$;
+\item if $\conf{\rho}{K} \step{\tau}{s} \conf{\rho'}{P'}$ for a sum $K$, then
+  $K \equiv \alpha.P + K'$ and
+  $\conf{\rho}{\alpha.P} \step{\tau}{s} \conf{\rho'}{P'}$ for some
+  $\alpha, P, K'$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+By induction on the derivation of the transition. A conditional is removed by
+\textsc{IteT} or \textsc{IteF}; for ParL and ParR, the other component is
+pushed into the rest $R$ under the restrictions by \textsc{ParComm},
+\textsc{ParAssoc} and \textsc{ResPar} (after $\alpha$-conversion of $\tilde d$);
+for Restr, the restriction is added to $\tilde d$; for SumL and SumR, the
+summand that moves is brought in front by \textsc{SumComm} and
+\textsc{SumAssoc}.
+\end{proof}
+
+\begin{lemma}[Harmony]\label{lem:harmony}
+For all $\rho, P, s, \rho', Q$,
+\[
+\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}
+\iff
+\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{Q'} \text{ for some } Q' \equiv Q.
+\]
+In particular, for a parallel composition,
+$\conf{\rho}{P \parallel Q} \red_{s} \conf{\rho'}{R}$ iff
+$\conf{\rho}{P \parallel Q} \step{\tau}{s} \conf{\rho'}{R'}$ for some
+$R' \equiv R$.
+\end{lemma}
+
+\begin{proof}
+($\Rightarrow$) By induction on the derivation of the reduction. The redexes
+\textsc{Com}, \textsc{Tau}, \textsc{Op}, \textsc{Init}, \textsc{Meas} and
+\textsc{Rec} are transitions of \cref{fig:conf}, the summand that moves being selected by
+SumL. \textsc{Par} and \textsc{Res} are ParL and Restr. For \textsc{Cong}, let
+$P \equiv P_1$ and, by induction hypothesis,
+$\conf{\rho}{P_1} \step{\tau}{s} \conf{\rho'}{Q_1'}$ with $Q_1' \equiv Q_1$.
+By \cref{lem:pre-harmony} this transition is a silent move of $P_1$, or a
+request of $P_1$ synchronised with the memory; \cref{lem:cgr-bisim} gives the
+same move of $P$, with the same choice and up to $\equiv$, and
+\cref{lem:pre-harmony} again turns it into a transition of
+$\conf{\rho}{P}$.
+
+($\Leftarrow$) By \textsc{Cong} it is enough to show that
+$\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{Q}$ implies
+$\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}$, by induction on the derivation of
+the transition. For a sum, \cref{lem:shapes}(3) brings the summand that moves
+in front, and the redex is \textsc{Tau}, \textsc{Op}, \textsc{Init} or
+\textsc{Meas}. IteT
+and IteF are \textsc{Cong} with \textsc{IteT} and \textsc{IteF}; ParL is
+\textsc{Par}; ParR is \textsc{Par} under \textsc{ParComm}; Restr is
+\textsc{Res}; Rec is \textsc{Rec}. For SynchL, with
+$P \step{c!v}{t} P'$ and $Q \step{c?v}{t'} Q'$, \cref{lem:shapes}(1) and (2)
+give $P \parallel Q \equiv
+(\nu \tilde d)(\tagged{t}{c!e} \parallel R) \parallel
+(\nu \tilde d')((\tagged{t'}{c?x}.P_1 + K) \parallel R')$; the restrictions
+$\tilde d$ and $\tilde d'$ are extruded one by one to the top with
+\textsc{ResPar}, the output and the input are brought side by side with
+\textsc{ParComm} and \textsc{ParAssoc}, and the redex is \textsc{Com}, with
+choice $\{t,t'\}$. SynchR is SynchL under \textsc{ParComm}.
+\end{proof}
+
+\iffalse
+The proof of the Harmony lemma goes through a restatement at the level of
+programs, which is the form used in the next section. Write
+$\rho \xrightarrow{\lambda} \rho'$ for the effect of an internal action on the
+memory: $\rho \xrightarrow{\tau} \rho$, $\rho \xrightarrow{\req{U}} \upd{U}$,
+$\rho \xrightarrow{\initp} \inirho$ and $\rho \xrightarrow{\mrecv{m}} \br$.
+
+\begin{lemma}[Harmony, program level]\label{lem:harmony-prog}
+$\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}$ iff $P \step{\lambda}{s} Q'$ and
+$\rho \xrightarrow{\lambda} \rho'$ for some internal action $\lambda$ and some
+$Q' \equiv Q$.
+\end{lemma}
+
+\section{Denotational semantics}\label{sec:den}
+
+Following Feng and Xu~\cite{FengXu23}, the denotation of a program is a set
+of super-operators on the memory: a measurement sums its branches, and a
+nondeterministic choice is a union. The programs of lqCCS are not closed
+commands: the nondeterminism is resolved by the choices of the tagged
+semantics, so that the denotation is indexed by a \emph{word} of choices
+$w = s_1 \cdots s_n$, the same word on every branch of a measurement (the
+\emph{lifted} model of~\cite{FengXu23}, the schedulers of lqCCS), and
+recursion is unfolded by the silent transition Rec, the word bounding the
+depth of the unfolding, as the syntactic approximations of Unruh, Valiron and
+Ying~\cite[Lemma 3.3]{UVY26}.
+
+An action is \emph{internal} if the memory can serve it:
+$\lambda \in \{\tau, \req{U}, \initp, \mrecv{m}\}$. A program $P$ is
+\emph{final}, written $\final(P)$, if it has no internal transition, and
+\emph{enabled} at $s$ if $P \step{\lambda}{s} P'$ for some internal $\lambda$.
+A super-operator is written $\sop{E}$; $\id$ is the identity, $0$ the null
+super-operator, $\sop{F} \circ \sop{E}$ the composition and
+$\sop{U} = U^{\tilde q}(\cdot)(U^{\tilde q})^\dagger$,
+$\sop{I} = \mathsf{init}^{\tilde q}$ and $\sop{M}_m = M_m^{\tilde q}(\cdot)(M_m^{\tilde q})^\dagger$
+the super-operators of the memory.
+
+\begin{definition}[Denotation]\label{def:den}
+For a program $P$ and a word $w$, $\denw{P}{w}$ is the least set of
+super-operators closed under the rules of \cref{tab:den}, and
+$\den{P} = \bigcup_w \denw{P}{w}$.
+\end{definition}
+
+\begin{table}[h]
+\centering
+\footnotesize
+$\begin{array}{l@{\quad}rcl@{\quad}l}
+\textsc{Final} & \id &\in& \denw{P}{w} & \final(P) \\[2pt]
+\textsc{Dead} & 0 &\in& \denw{P}{\epsilon} & \neg\final(P) \\[2pt]
+\textsc{Stay} & \sop{F} &\in& \denw{P}{s\,w}
+  & \neg\final(P),\ P \text{ not enabled at } s,\ \sop{F} \in \denw{P}{w} \\[2pt]
+\textsc{Tau} & \sop{F} &\in& \denw{P}{s\,w}
+  & P \step{\tau}{s} P',\ \sop{F} \in \denw{P'}{w} \\[2pt]
+\textsc{Op} & \sop{F} \circ \sop{U} &\in& \denw{P}{t\,w}
+  & P \step{\req{U}}{t} P',\ \sop{F} \in \denw{P'}{w} \\[2pt]
+\textsc{Init} & \sop{F} \circ \sop{I} &\in& \denw{P}{t\,w}
+  & P \step{\initp}{t} P',\ \sop{F} \in \denw{P'}{w} \\[2pt]
+\textsc{Meas} & \sum_{0 \le m < |\M|} \sop{F}_m \circ \sop{M}_m &\in& \denw{P}{t\,w}
+  & P \step{\mrecv{m}}{t} P_m,\ \sop{F}_m \in \denw{P_m}{w} \text{ for all } m
+\end{array}$
+\caption{Denotation of a program under a word of choices.}
+\label{tab:den}
+\end{table}
+
+\begin{remark}
+Rules \textsc{Final} and \textsc{Dead} are the two ends of a run: a final
+program has finished, and contributes the memory as it stands; a program still
+running when the word is exhausted contributes nothing, as the approximation
+$P^{(n)}$ of~\cite{UVY26} in which the $n$-th unfolding is replaced by abort.
+Our reduction semantics has no terminal state $E$: a program is final when it
+is $\mathbf{0}$ up to congruence, but also when it is deadlocked, an output or
+an input waiting for a partner, which are the external actions of the program
+LTS. The union over words is the nondeterminism: two transitions with the
+same choice, for instance two outputs on $c$ with the same tag in parallel
+with an input, give two super-operators in $\denw{P}{w}$. The denotation only
+contains the finite approximations; the least upper bound along infinite
+schedulers, which~\cite{FengXu23,UVY26} take in the cpo of super-operators,
+is left for further work.
+\end{remark}
+
+\begin{lemma}[Congruence]\label{lem:den-cgr}
+If $P \equiv Q$ then $\denw{P}{w} = \denw{Q}{w}$ for all $w$, hence
+$\den{P} = \den{Q}$.
+\end{lemma}
+
+\begin{proof}
+By induction on $w$. By \cref{lem:cgr-bisim} every transition of $P$ is
+matched by a transition of $Q$ with the same action and the same choice, up
+to $\equiv$, and conversely: $P$ and $Q$ are final together and enabled at
+the same choices, and each rule of \cref{tab:den} applied to $P$ is applied to
+$Q$ with the induction hypothesis on the residuals.
+\end{proof}
+
+The correspondence with the reduction semantics is that of
+\cite[Theorem 3.1]{UVY26}: the denotation applied to a memory is the sum of
+the memories reached by the runs. The runs are organised in \emph{trees}: a
+node is one reduction, or one reduction per outcome of a measurement, and a
+final configuration is a leaf. To group the reductions by outcome we use a
+labelled copy of \cref{tab:sts}, $\conf{\rho}{P} \red_{s}^{\kappa}
+\conf{\rho'}{P'}$ with $\kappa \in \{\epsilon\} \cup \{m\}$, the label
+$\kappa = m$ when the redex is \textsc{Meas} with outcome $m$ and
+$\kappa = \epsilon$ for the other redexes (the labels $l ::= \epsilon \mid m$
+of~\cite{UVY26}); forgetting $\kappa$ gives back \cref{tab:sts}, and a
+reduction of \cref{tab:sts} has at least one label. A configuration is final
+if it has no reduction, and enabled at $s$ if it has a reduction with choice
+$s$; by \cref{lem:harmony-prog}, $\conf{\rho}{P}$ is final iff $P$ is, and
+enabled at $s$ iff $P$ is.
+
+\begin{definition}[Trees of reductions]\label{def:tree}
+$\tree{\conf{\rho}{P}}{w}{\ell}{}$, ``$\conf{\rho}{P}$ following $w$ has
+the leaves $\ell$'', for a list $\ell$ of memories, is the least relation
+closed under the rules
+\[
+\footnotesize
+\begin{array}{l@{\quad}l@{\quad}l}
+\textsc{Leaf} & \tree{\conf{\rho}{P}}{w}{[\rho]}{} & \conf{\rho}{P} \text{ final} \\[2pt]
+\textsc{Dead} & \tree{\conf{\rho}{P}}{\epsilon}{[\,]}{} & \conf{\rho}{P} \text{ not final} \\[2pt]
+\textsc{Stay} & \tree{\conf{\rho}{P}}{s\,w}{\ell}{}
+  & \conf{\rho}{P} \text{ not final, not enabled at } s,\ \tree{\conf{\rho}{P}}{w}{\ell}{} \\[2pt]
+\textsc{Step} & \tree{\conf{\rho}{P}}{s\,w}{\ell}{}
+  & \conf{\rho}{P} \red_{s}^{\epsilon} \conf{\rho'}{P'},\ \tree{\conf{\rho'}{P'}}{w}{\ell}{} \\[2pt]
+\textsc{Meas} & \tree{\conf{\rho}{P}}{t\,w}{\ell_0 \cdots \ell_{|\M|-1}}{}
+  & \conf{\rho}{P} \red_{t}^{m} \conf{\br}{P_m},\ \tree{\conf{\br}{P_m}}{w}{\ell_m}{}
+    \text{ for all } m
+\end{array}
+\]
+\end{definition}
+
+\begin{theorem}[Correspondence]\label{thm:den}
+For all $\rho$, $P$, $w$ and $\sigma$,
+\[
+\exists \sop{F} \in \denw{P}{w}.\ \sop{F}(\rho) = \sigma
+\quad\iff\quad
+\exists \ell.\ \tree{\conf{\rho}{P}}{w}{\ell}{} \text{ and } \textstyle\sum \ell = \sigma .
+\]
+In particular $\den{P}(\rho) = \{ \sum \ell \mid \tree{\conf{\rho}{P}}{w}{\ell}{},\ w \text{ a word} \}$.
+\end{theorem}
+
+\begin{proof}
+Both directions by induction on $w$, the rules of \cref{tab:den} and of
+\cref{def:tree} being in one-to-one correspondence. \cref{lem:harmony-prog}
+turns a transition $P \step{\lambda}{s} P'$ with $\lambda$ internal into the
+reduction $\conf{\rho}{P} \red_{s}^{\kappa} \conf{\rho'}{P'}$, with
+$\kappa = m$ exactly when $\lambda = \mrecv{m}$, and conversely a reduction
+into a transition to some $Q' \equiv P'$, where \cref{lem:den-cgr} replaces
+$Q'$ by $P'$. The leaves are summed with
+$(\sop{F} \circ \sop{E})(\rho) = \sop{F}(\sop{E}(\rho))$ and
+$(\sum_m \sop{F}_m \circ \sop{M}_m)(\rho) = \sum_m \sop{F}_m(\sop{M}_m(\rho))$,
+the leaves of a measurement node being the concatenation of the leaves of its
+branches.
+\end{proof}
+
+\begin{remark}
+In \cite[Theorem 3.1]{UVY26} the nondeterminism of the measurements is
+resolved by a function $\alpha$ from labels to configurations, and the
+statement is for every $\alpha$; here the measurement is a single node with
+all its outcomes, and the nondeterminism is that of the reduction semantics:
+every tree of \cref{def:tree} is a way of taking the reductions of
+\cref{tab:sts} along $w$, and \cref{thm:den} says that the denotation
+enumerates exactly these trees.
+\end{remark}
+\fi
+
+\section{Smyth must testing and its characterisation}\label{sec:must}
+
+\paragraph{Observers and tested systems.} An \emph{observer} is a program $T$
+in which the guard $\mathbf{1}$ marks success: $T$ is \emph{successful} when
+$\mathbf{1}$ occurs at top level, through parallel compositions,
+restrictions, conditionals whose guard evaluates and sums (so that success
+is invariant under $\equiv$). A program $P$ with a memory $\rho$ is tested
+by running $\conf{\rho}{P \parallel T}$; the observer has no memory of its
+own, its prefixes $U(\tilde q)$, $\M(\tilde q \rhd x)$ and
+$\mathsf{init}(\tilde q)$ act on the shared memory. Following
+\cite{Ceragioli27} we resolve non-determinism by schedulers, with a lifting
+to distributions that keeps every branch of a measurement under the same
+choices. A \emph{distribution} is a formal sum $\sum_i \rho_i \cdot R_i$ of
+programs weighted by partial density operators; its \emph{mass} is
+$\sum_i \tr(\rho_i)$, its \emph{successful mass} the mass of its successful
+components. The \emph{scheduled step} of a configuration,
+$\rho \cdot R \lstep{s} \Delta$, is a silent step of $\conf{\rho}{R}$ with
+choice $s$ (\cref{fig:conf}) in which the outcomes of a measurement are
+grouped: $\Delta = \sum_m \br \cdot R_m$ over the outcomes $m$ of non-zero
+probability for \textsc{Meas} (a distribution is its support, as in a
+pLTS), and $\rho' \cdot R'$ for the other rules. A distribution moves \emph{as a whole}
+under one choice: $\Delta \lstep{s} \Delta'$ when at least one component
+moves, every non-successful component that can do $s$ does it, the
+successful ones stay, and the non-successful ones that cannot do $s$ are
+\emph{lifted}: they stay (lifting Stay) or they disappear (lifting Drop).
+A \emph{run} is an infinite sequence $\Delta_0 \lstep{s_1} \Delta_1
+\lstep{s_2} \cdots$ that stutters once no choice moves any component; its
+\emph{value} is the supremum of the successful masses of the $\Delta_i$.
+
+\begin{definition}[Smyth must]\label{def:smyth}
+For a class $\mathcal{O}$ of observers, $(P, \rho) {\smyth}_{\mathcal{O}} (Q, \sigma)$
+iff for every $T \in \mathcal{O}$ and every run of $\rho \cdot (Q \parallel T)$
+there is a run of $\sigma \cdot (P \parallel T)$ of value at most the value
+of the former.
+\end{definition}
+
+This is the must preorder of Deng et al.~\cite{DvGHM08} with the
+resolutions restricted to one word of choices for the whole distribution,
+as in \cite[Definition 7]{Ceragioli27}, whose resolutions are the
+probabilistic runs of a scheduler. The definition is generic (the Smyth
+must of \texttt{pMust\_smyth.v}, for any scheduled probabilistic system
+and either lifting); lqCCS only provides the step and the composition. We
+write $\smyth$ for the lifting Stay and $\smyth^{\mathsf{D}}$ for Drop.
+With Stay, $\ite{x = 0}{t_1{:}\tau.P}{t_2{:}\tau.Q}$ after a measurement
+completes both branches under the word $t_1 t_2$; with Drop, the word $t_1$
+discards the branch $x = 1$, which counts as failed, as in
+\cite{Ceragioli27} where a path that cannot follow the scheduler has no
+run. Drop extends that definition in two respects: successful components
+are frozen instead of disappearing when another component moves on, and
+the runs are infinite, so that a divergent process is the bottom of both
+preorders ($\Omega = \mathsf{rec}\,X.\,t{:}\tau.X$ satisfies $(\Omega,
+\rho) \smyth (Q, \rho)$ and $(\Omega, \rho) \smyth^{\mathsf{D}} (Q, \rho)$
+for every $Q$, \texttt{Omega\_bottom}), whereas finite maximal schedulers make
+it incomparable. The two preorders differ: for
+$q = \M(q \rhd x).(\ite{x=0}{t_1{:}\tau.a!0}{t_2{:}\tau.a!0})$ and
+$q' = \M(q \rhd x).(\ite{x=0}{t{:}\tau.a!0}{t{:}\tau.a!0})$, the observer
+$a?z.\mathbf{1}$ gives the value $1$ to both under Stay, while under Drop
+$q$ has the value $1/2$ and $q'$ the value $1$, so that
+$q \smyth^{\mathsf{D}} q'$ strictly.
+
+\paragraph{The class of observers.} We characterise ${\smyth}_{\mathcal{O}}$
+for the observers without internal choice: no $\tau$ prefix, no recursion,
+no restriction, no channel used both for input and for output (no
+communication inside the observer), $\mathbf{1}$ never in a sum with a
+prefix (success is persistent), each tag naming one prefix, and tags
+disjoint from those of the tested programs, as in \cite{Ceragioli27}.
+For such an observer the offers at a point of the interaction only depend on
+the \emph{co-trace} that led there, the sequence of its co-actions (tag of
+the observer, action, with the value received or the outcome measured).
+
+\begin{remark}
+An observer with a $\tau$ choice can exploit \emph{timing}. Let
+$P = \M(q \rhd x).c!x.(\ite{x=0}{a!0}{b!0})$ and
+$Q = \M(q \rhd x).(\ite{x=0}{c!x.a!0}{t_5{:}\tau.c!x.b!0})$, and
+$T = c?y.(t{:}\tau.a?z.\mathbf{1} + t'{:}\tau.b?z.\mathbf{1})$. For $Q$
+the scheduler delivers the branch $x=0$ first, chooses $t'$ for it, then
+$t_5$, delivers the branch $x=1$ and chooses $t$: no branch succeeds. For $P$
+both branches reach $T$ at the same step and $t$ or $t'$ applies to both:
+value $1/2$ always. So $P \not\smyth Q$ although $P$ and $Q$ only differ by
+a $\tau$ in one branch, and the preorder is not insensitive to $\tau$. The
+scheduler dates the components through the tags that only one branch has,
+and the choice of the observer may depend on that date. Characterising this
+preorder would need co-traces with dates; we leave it out.
+\end{remark}
+
+\paragraph{The LTS $\DD$.} The alternative preorder is defined on the
+LTS $\DD$ of distributions of \emph{components} $(n, (P, C, E))$ weighted
+by a memory, where $n$ is the co-trace of the component, $E$ the outputs
+(tag, channel, value) the observer offers at $n$, recorded when $n$ is
+reached, and $C$ those of them the program has consumed. Outputs are
+asynchronous: the observer does not see when they are consumed, so a
+consumption is a silent step of the component, which does not extend the
+co-trace; $C$ only forbids a second consumption. The labels of $\DD$ are
+the choices $s$ of the program (a consumption being the choice $(t,k)$ of
+the tags involved) and the \emph{instructions} $(k, t)$, ``the tag $k$ of
+the observer, answered by the tag $t$ of the program''. Three parameters
+describe the observer, its \emph{shape}: its \emph{menu} $I(n)$, the inputs
+$k{:}c?$, operations $k{:}U(\tilde q)$, measurements $k{:}\M(\tilde q)$ and
+initialisations it offers at the co-trace $n$; its \emph{outputs} $O(n)$ at
+$n$; and its \emph{success co-traces} $\succn(n)$, closed under extension.
+\cref{tab:dlts} gives the step of one component; a distribution moves as
+above, the components whose co-trace is in $\succn$ being frozen.
+
+\begin{table}[h]
+\centering
+\footnotesize
+$\begin{array}{l@{\quad}rcl@{\quad}l}
+\textsc{Ch} & \rho \cdot (n,(P,C,E)) &\lstep{s}& \textstyle\sum_i \rho_i \cdot (n,(P_i,C,E))
+  & \rho \cdot P \lstep{s} \sum_i \rho_i \cdot P_i \\[2pt]
+\textsc{Recv} & \rho \cdot (n,(P,C,E)) &\lstep{(t,k)}& \rho \cdot (n,(P',C \cdot (k,c,v),E))
+  & (k,c,v) \in E,\ k \notin C,\ P \step{c?v}{t} P' \\[2pt]
+\textsc{Send} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \rho \cdot (n',(P',C,O(n')))
+  & k{:}c? \in I(n),\ P \step{c!v}{t} P',\ n' = n \cdot k{:}c?v \\[2pt]
+\textsc{Op} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \upd{U} \cdot (n',(P,C,O(n')))
+  & k{:}U(\tilde q) \in I(n),\ n' = n \cdot k{:}U(\tilde q) \\[2pt]
+\textsc{Init} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \inirho \cdot (n',(P,C,O(n')))
+  & k{:}\mathsf{init}(\tilde q) \in I(n),\ n' = n \cdot k{:}\mathsf{init}(\tilde q) \\[2pt]
+\textsc{Meas} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \textstyle\sum_{m,\ \br \neq 0} \br \cdot (n_m,(P,C,O(n_m)))
+  & k{:}\M(\tilde q) \in I(n),\ n_m = n \cdot k{:}\M(\tilde q)!m
+\end{array}$
+\caption{The step of a component of $\DD$, for a shape $(I, O, \succn)$.}
+\label{tab:dlts}
+\end{table}
+
+\begin{definition}[Alternative preorder]\label{def:alt}
+$(P,\rho) \alt (Q,\sigma)$ iff for every shape $(I, O, \succn)$ with
+$\succn$ closed under extension, for every run of
+$\sigma \cdot ([],(Q,[],O([])))$ in $\DD$ there is a run of
+$\rho \cdot ([],(P,[],O([])))$ in $\DD$ of value at most the value of the
+former, the value being the mass of the components whose co-trace is in
+$\succn$.
+\end{definition}
+
+The runs of $\DD$ are the trees of runs of the configuration LTS following
+one word of choices and instructions: the co-traces of the components are
+the co-traces of $\conf{\rho}{P}$ in the LTS $\rho \lpar P$ with the actions
+of the memory exposed to the observer (rule Left of \cref{def:par}), and
+$\DD$ keeps them together because a word applies to all of them. A run
+stops only when every unfrozen component is a \emph{waiting state}, with no
+silent step and no offer of $I(n)$ it can answer: this is where the
+acceptance sets of the classical characterisation live, $\coR(P') \cap I(n)
+= \emptyset$ for every leaf $(n, P')$. Taking one co-trace at a time is not
+possible: two processes that, after a measurement, send the outcome and
+choose $a$ or $b$ with the same tags in both branches (the choice correlated
+or anti-correlated with the outcome) have the same leaves co-trace by
+co-trace and are told apart by $c?y.(\ite{y=0}{a?z.\mathbf{1}}{b?z.\mathbf{1}})$.
+The quantum state only enters through the masses $\tr(\rho')$ of the leaves:
+the operations and measurements of the observer are instructions inside the
+run, so no Löwner comparison of the leaves is needed, and it would be
+incomplete (a program that sends $|0\rangle$ or $|1\rangle$ by an internal
+choice is below one that sends $I/2$).
+
+\paragraph{The theorems.} The shape of an observer $T$ is the triple
+$(\menu_T, O_T, \succn_T)$: $\menu_T(n)$ and $O_T(n)$ are the offers and
+the outputs of the state of $T$ after the co-trace $n$, and $\succn_T(n)$
+holds when that state, or the state at a prefix of $n$, is successful. Write $\mathcal{O}_{P,Q}$ for the
+observers of the class above whose tags are apart from those of $P$ and
+$Q$, and $\alt_{\mathcal{O}}$ for \cref{def:alt} restricted to the shapes of
+the observers of $\mathcal{O}_{P,Q}$.
+
+\begin{theorem}[Soundness and characterisation]\label{thm:char}
+Let $P, Q$ be programs without $\mathbf{1}$, and let $\DD$, $\alt$ and
+$\smyth$ be taken with the same lifting, Stay or Drop. Then
+\[
+(P,\rho) \alt (Q,\sigma)
+\ \Longrightarrow\
+(P,\rho) \alt_{\mathcal{O}} (Q,\sigma)
+\ \Longleftrightarrow\
+(P,\rho) {\smyth}_{\mathcal{O}_{P,Q}} (Q,\sigma).
+\]
+\end{theorem}
+
+\begin{proof}
+Fix an observer $T$. A component $\rho \cdot (P \parallel T')$ of the tested
+system is related to a component $\rho \cdot (n,(P,C,O_T(n)))$ of $\DD$
+when $T'$ is the state of $T$ after the co-trace $n$ followed by the
+outputs $C$. Related distributions have the same successful mass ($P$ has
+no $\mathbf{1}$, and the outputs of $C$ do not change the success of $T'$).
+Every scheduled step of one is a scheduled step of the other with the
+same successors, related: a choice of the program is the same choice on
+both sides, the consumption of an output of $T'$ included (\textsc{Recv});
+an input of $T'$ served by $P$ is the instruction $(k,t)$ of the tags
+involved (\textsc{Send}); an operation of $T'$ on the memory is the
+instruction $(k,t)$ of its tag (\textsc{Op}, \textsc{Init}, \textsc{Meas});
+the tags being disjoint and unique, the choice determines the instruction
+and conversely. The
+consumptions commute with the other co-actions of the observer and keep its
+other offers, so the menu at the co-trace $n$ is what $T'$ offers. A
+distribution is then stable iff the related one is, the lifting of a
+component is the lifting of the related one (both stay, or both are
+successful or both disappear), and a run of one system is mirrored by a run
+of the other with the same successful masses, which needs dependent choice
+to build the mirrored run. The two implications of
+the equivalence apply this transfer to the run of $Q$, then to the witness
+run of $P$; the first implication is the instance of $\alt$ at the shape of
+$T$.
+\end{proof}
+
+\paragraph{The almost-sure must.} The same transfer characterises the
+must with probability one. $P$ passes $T$ almost surely when every run of
+$\rho \cdot (P \parallel T)$ has the value $\tr(\rho)$, its successful mass
+tending to its mass, and $(P,\rho) \sqsubseteq_{\mathsf{as}, \mathcal{O}}
+(Q,\sigma)$ when $Q$ passes almost surely every $T \in \mathcal{O}$ that
+$P$ passes almost surely. Let $(P,\rho) \alt_{\mathsf{as}} (Q,\sigma)$ iff
+for every shape $(I, O, \succn)$ with $\succn$ closed under extension, if
+every run of $\rho \cdot ([],(P,[],O([])))$ in $\DD$ has the value
+$\tr(\rho)$ then every run of $\sigma \cdot ([],(Q,[],O([])))$ has the value
+$\tr(\sigma)$. Under the hypotheses of \cref{thm:char}, and with the same
+lifting on both sides,
+\[
+(P,\rho) \alt_{\mathsf{as}} (Q,\sigma)
+\ \Longrightarrow\
+(P,\rho) \alt_{\mathsf{as}, \mathcal{O}} (Q,\sigma)
+\ \Longleftrightarrow\
+(P,\rho) \sqsubseteq_{\mathsf{as}, \mathcal{O}_{P,Q}} (Q,\sigma),
+\]
+since a run and its mirrored run have the same successful masses and the
+same mass (\texttt{alt\_as\_sound}, \texttt{alt\_as\_obs\_iff}). Under Drop
+a run has full value only if no component ever disappears. The Smyth must
+is finer than the almost-sure must: if below every run of $Q \parallel T$
+there is a run of $P \parallel T$ and the latter all have full value, so
+do the former (\texttt{ctx\_pre\_sm\_as}).
+
+\begin{remark}
+\cref{def:alt} quantifies over all menus, including menus that are the shape
+of no observer (infinitely many offers, a tag offering different kinds of
+actions at different co-traces, menus not uniform in the value received).
+The equivalence is therefore stated for the shapes of observers. The
+quantification over the menu is not removed as in the classical
+characterisation, where the witness $p'$ with $\coR(p') \subseteq
+\coR(q')$ refuses every menu that $q'$ refuses: here the witness is a run,
+and the menu also drives it afterwards, an offer at a waiting state forcing
+it to move. The \emph{uniform} form, where the witness run of $P$ is chosen
+before the menu and is a run under every menu under which the run of $Q$ is
+one (\texttt{alt\_pre\_unif}: the witness uses only the instructions of the
+run of $Q$, stops only where that run stops, and its leaves refuse what the
+leaves of $Q$ at the same co-trace refuse), implies $\alt$; so does the
+weaker \emph{scheduled-word} form, where only the sequence of items and the
+choices of the components are fixed before the menu, an item that no
+component can take being skipped, and the run has to be maximal under every
+menu (\texttt{alt\_pre\_det}, \texttt{alt\_pre\_det\_alt\_pre}). Whether
+either converse holds is not settled, for either lifting. The
+difficulty is not the one of the classical theory: the witness may have to
+park a component at a co-trace that the run of $Q$ never visits, and what
+it does there is decided by the menu; but the shapes punish such a
+component, since an offer at that co-trace can lead to success for $P$
+alone, and every candidate counterexample we examined (found by an
+exhaustive search over small programs and bounded menus) was eventually
+separated by a deeper shape. It would fail, for both liftings, if the
+outcomes of probability zero of a measurement were kept in the
+distributions: a component $d!v$ of
+mass zero can neither stop under the maximal menu nor move under the
+minimal one, while it costs nothing to $\alt$. This is why the scheduled
+step only keeps the outcomes of non-zero probability; from a non-zero
+memory, every component of a run then has a non-zero memory
+(\texttt{drun\_nonzero}).
+\end{remark}
+
+\paragraph{Mechanisation.} The development is in Rocq, in the directory
+\texttt{lqCCS} of the \texttt{testing-theory} library (the earlier
+development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist}):
+\begin{itemize}
+\item \texttt{Language/Syntax.v}: syntax with de Bruijn indices for restricted
+  channels and bound variables, substitutions, shifts;
+\item \texttt{Language/LTS.v}: \cref{fig:conf,fig:prog,fig:mem},
+  \cref{def:par}, and the renaming lemmas;
+\item \texttt{Language/Congruence.v}: \cref{tab:cgr} and
+  \cref{lem:cgr-bisim} (\texttt{cgr\_bisim});
+\item \texttt{Harmony\_Lemma/Memory\_Harmony.v}: \cref{lem:pre-harmony}
+  (\texttt{pre\_harmony});
+\item \texttt{Harmony\_Lemma/Parallel\_Harmony.v}: \cref{lem:par-harmony}
+  (\texttt{parallel\_harmony});
+\item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \cref{tab:sts} (\texttt{sts}) and its
+  labelled copy (\texttt{sts\_lab}); \cref{lem:shapes}: \newline
+  \texttt{TransitionShapeForOutput}, \texttt{TransitionShapeForInput}, \newline
+  \texttt{TransitionShapeForGuard};
+  \cref{lem:harmony}: \texttt{harmony} and \texttt{harmony\_par};
+\item \texttt{Testing\_Pre\_orders/pMust/pMust\_scheduled.v}: distributions,
+  the two liftings and the runs, generic; \texttt{pMust\_almost\_sure.v}:
+  the almost-sure must, generic; \texttt{pMust\_smyth.v}:
+  \cref{def:smyth}, generic, and \texttt{ctx\_pre\_sm\_as};
+  \texttt{pMust\_transfer.v}: the transfer of runs along a stuttering
+  simulation (\texttt{run\_transfer}, \texttt{pmust\_as\_transfer});
+\item \texttt{Testing/Scheduled.v}: the scheduled step of lqCCS and its instance of the
+  generic classes, \texttt{Omega\_bottom}; \texttt{Testing/DistLTS.v}: \cref{tab:dlts}, \cref{def:alt}
+  (\texttt{alt\_pre}, \texttt{alt\_as}), the uniform form (\texttt{alt\_pre\_unif},
+  \texttt{alt\_pre\_unif\_alt\_pre}), the scheduled-word form (\texttt{follows},
+  \texttt{alt\_pre\_det}, \texttt{alt\_pre\_det\_alt\_pre}) and \texttt{drun\_nonzero};
+\item \texttt{Testing/Observers.v}: the class of observers, their shape
+  (\texttt{menu}, \texttt{S\_T}); \newline
+  \texttt{Testing/Smyth\_Soundness.v}: \cref{thm:char}
+  (\texttt{alt\_pre\_sound}, \texttt{alt\_pre\_obs\_iff}) and its almost-sure
+  counterpart (\texttt{alt\_as\_sound}, \texttt{alt\_as\_obs\_iff}).
+\iffalse
+\item \texttt{Language/Denotational.v}: \cref{def:den} (\texttt{den},
+  \texttt{denot}) and \cref{lem:den-cgr} (\texttt{den\_cgr}, \texttt{denot\_cgr});
+\item \texttt{Harmony\_Lemma/Denotational\_Harmony.v}: \cref{def:tree}
+  (\texttt{sts\_tree}) and \cref{thm:den}: \newline
+  \texttt{den\_sound}, \texttt{den\_complete}, \texttt{den\_sts\_iff}.
+\fi
+\end{itemize}
+The quantum model is a parameter: an abstract algebra of super-operators
+acting linearly on memories, with the names of the syntax interpreted in it.
+
+\begin{thebibliography}{9}
+\bibitem{Ceragioli25} L.~Ceragioli, F.~Gadducci, G.~Lomurno, G.~Tedeschi.
+  Testing quantum processes: lqCCS. arXiv:2604.23756.
+\bibitem{Ceragioli27} L.~Ceragioli, F.~Gadducci, G.~Lomurno, G.~Tedeschi.
+  Testing the quantum anonymous transmission protocol. \emph{J. Log. Algebraic
+  Methods Program.} 152 (2027) 101177.
+\bibitem{DvGHM08} Y.~Deng, R.~van Glabbeek, M.~Hennessy, C.~Morgan.
+  Characterising testing preorders for finite probabilistic processes.
+  \emph{Log. Methods Comput. Sci.} 4(4) (2008).
+\bibitem{FengXu23} Y.~Feng, Y.~Xu. Verification of Nondeterministic Quantum
+  Programs. In \emph{ASPLOS 2023}, pages 789--805. ACM, 2023.
+\bibitem{UVY26} D.~Unruh, B.~Valiron, M.~Ying. Reasoning about Parameterized
+  Recursive Quantum Programs: Correctness and Applications. \emph{ACM
+  Transactions on Computational Logic}, 2026.
+\end{thebibliography}
 
 \end{document}

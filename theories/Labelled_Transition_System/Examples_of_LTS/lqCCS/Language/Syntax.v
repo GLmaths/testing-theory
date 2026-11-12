@@ -24,47 +24,28 @@
 (* begin hide *)
 (* * lqCCS: syntax
 
-    Tagged lqCCS, following Ceragioli, Gadducci, Lomurno and Tedeschi,
-    /Verification of Quantum Protocols Adopting Physically Admissible
-    Schedulers/ (arXiv:2604.23756, April 2026), Definition 2.1 and the tagged
-    prefixes of Section 4.1.
+    Tagged lqCCS (Ceragioli, Gadducci, Lomurno, Tedeschi, arXiv:2604.23756),
+    with asynchronous outputs, guarded sums, and recursion as in VACCS.
 
-    Deliberate differences with the paper.
-
-    - Superoperators and measurements are *names* ([sop], [meas]).  Their
-      meaning (Kraus operators, outcomes) is given by the semantics, which is
-      parametric in a model of quantum states; the syntax does not depend on
-      any matrix library.
-    - Variables are bound by substitution of closed values, as in the paper
-      ([P[v/x]]): the binders are [c?x] and [M(ẽ ▷ x)].
-    - [①] ([GSucc]) is an inert guard saying that the observer is good, as
-      in CCS testing ([①] of VACCS); it is used by the testing predicate only.
-    - Sums are *guarded*, as in VACCS: a sum is made of guards ([guard]):
-      [0_ẽ], [①], prefixes [𝜆.P], and sums of guards.  Outputs, parallel
-      composition, restriction and conditionals are processes only, so that
-      an output never stands under a sum.
-
-    - Outputs are *asynchronous*: [t : c!e] is a process with no
-      continuation ([PSend]), not a prefix, as in the lqCCS of POPL 2024
-      (Ceragioli et al., /Quantum Bisimilarity via Barbs and Contexts/).  The
-      2026 paper has a prefix [t : c!e.P]; [t : c!e.P] is recovered as
-      [t : c!e ∥ P] up to the order of the output.  This is what makes outputs
-      non-blocking in the sense of the output-buffered axioms ([Lts_OBA]). *)
+    - Restricted channels are De Bruijn indices ([CIdx i]), as in VACCS:
+      [ν P] binds the index [0] of [P].  Free channels are names ([CName c]).
+      Processes are then identified up to α-conversion, and no side
+      condition is needed for scope extrusion.
+    - Variables of values are named, bound by [c?x] and [M(ẽ ▷ x)], and
+      substituted by closed values.
+    - [①] is an inert guard marking the success of an observer. *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list numbers.
+
 (* ** Names *)
 
 Definition tag : Type := nat.
 Definition qubit : Type := nat.
-Definition var : Type := nat.
-(* Names of trace-preserving superoperators [E : Op(n)] and of
-    measurements [M : Meas(n)]. *)
 Definition sop : Type := nat.
 Definition meas : Type := nat.
-
 Definition chan : Type := nat.
 
 (* ** Values and expressions *)
@@ -78,113 +59,38 @@ Inductive val : Type :=
 Proof. solve_decision. Defined.
 
 Inductive exp : Type :=
-| EVar (x : var)
+| EVar (i : nat)
 | EVal (v : val)
 | ENot (e : exp)
 | EOr (e1 e2 : exp)
 | ELe (e1 e2 : exp)
 | EEq (e1 e2 : exp).
 
-(* ** Tagged prefixes and processes *)
+(* ** Substitution in expressions *)
 
-Inductive prefix : Type :=
-(* [t : τ] *)
-| PTau (t : tag)
-(* [(t, t') : τ], a silent move standing for a synchronisation *)
-| PTauPair (t t' : tag)
-(* [t : c?x] *)
-| PRecv (t : tag) (c : chan) (x : var)
-(* [t : E(ẽ)] *)
-| POp (t : tag) (E : sop) (es : list exp)
-(* [t : M(ẽ ▷ x)] *)
-| PMeas (t : tag) (M : meas) (es : list exp) (x : var).
-
-Inductive proc : Type :=
-(* [t : c!e], an asynchronous output: no continuation, never under a sum *)
-| PSend (t : tag) (c : chan) (e : exp)
-| PIte (e : exp) (P Q : proc)
-| PPar (P Q : proc)
-| PRes (P : proc) (c : chan)
-(* a guarded sum *)
-| PG (g : guard)
-with guard : Type :=
-(* [0_ẽ], deadlock discarding the qubits [ẽ] *)
-| GNil (es : list exp)
-| GSucc
-| GPre (𝜆 : prefix) (P : proc)
-| GSum (g1 g2 : guard).
-
-Scheme proc_mut_ind := Induction for proc Sort Prop
-  with guard_mut_ind := Induction for guard Sort Prop.
-Combined Scheme proc_guard_ind from proc_mut_ind, guard_mut_ind.
-
-Declare Scope lqccs_scope.
-Delimit Scope lqccs_scope with lq.
-Bind Scope lqccs_scope with proc.
-
-Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
-Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
-Notation "g ⊕ g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
-Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
-Notation "P \ c" := (PRes P c) (at level 36, left associativity) : lqccs_scope.
-Notation "①" := GSucc : lqccs_scope.
-
-#[local] Open Scope lqccs_scope.
-
-(* ** Substitution [P[v/x]] *)
-
-Fixpoint exp_subst (e : exp) (x : var) (v : val) : exp :=
+(* [exp_subst k v e] substitutes [v] for the index [k] and lowers the
+    indices above [k]; [exp_shift k e] makes room for a new index [k]. *)
+Fixpoint exp_subst (k : nat) (v : val) (e : exp) : exp :=
   match e with
-  | EVar y => if decide (x = y) then EVal v else EVar y
+  | EVar i => if decide (i = k) then EVal v else if decide (i < k) then EVar i else EVar (pred i)
   | EVal w => EVal w
-  | ENot e => ENot (exp_subst e x v)
-  | EOr e1 e2 => EOr (exp_subst e1 x v) (exp_subst e2 x v)
-  | ELe e1 e2 => ELe (exp_subst e1 x v) (exp_subst e2 x v)
-  | EEq e1 e2 => EEq (exp_subst e1 x v) (exp_subst e2 x v)
+  | ENot e => ENot (exp_subst k v e)
+  | EOr e1 e2 => EOr (exp_subst k v e1) (exp_subst k v e2)
+  | ELe e1 e2 => ELe (exp_subst k v e1) (exp_subst k v e2)
+  | EEq e1 e2 => EEq (exp_subst k v e1) (exp_subst k v e2)
   end.
 
-Definition exps_subst (es : list exp) (x : var) (v : val) : list exp :=
-  map (λ e, exp_subst e x v) es.
-
-(* The variable bound by a prefix, if any. *)
-Definition prefix_binder (𝜆 : prefix) : option var :=
-  match 𝜆 with
-  | PRecv _ _ x | PMeas _ _ _ x => Some x
-  | _ => None
+Fixpoint exp_shift (k : nat) (e : exp) : exp :=
+  match e with
+  | EVar i => if decide (k ≤ i) then EVar (S i) else EVar i
+  | EVal w => EVal w
+  | ENot e => ENot (exp_shift k e)
+  | EOr e1 e2 => EOr (exp_shift k e1) (exp_shift k e2)
+  | ELe e1 e2 => ELe (exp_shift k e1) (exp_shift k e2)
+  | EEq e1 e2 => EEq (exp_shift k e1) (exp_shift k e2)
   end.
 
-Definition prefix_subst (𝜆 : prefix) (x : var) (v : val) : prefix :=
-  match 𝜆 with
-  | PTau t => PTau t
-  | PTauPair t t' => PTauPair t t'
-  | PRecv t c y => PRecv t c y
-  | POp t E es => POp t E (exps_subst es x v)
-  | PMeas t M es y => PMeas t M (exps_subst es x v) y
-  end.
-
-Fixpoint subst (P : proc) (x : var) (v : val) : proc :=
-  match P with
-  | PSend t c e => PSend t c (exp_subst e x v)
-  | PIte e P Q => PIte (exp_subst e x v) (subst P x v) (subst Q x v)
-  | P ∥ Q => subst P x v ∥ subst Q x v
-  | P \ c => subst P x v \ c
-  | PG g => PG (gsubst g x v)
-  end
-with gsubst (g : guard) (x : var) (v : val) : guard :=
-  match g with
-  | GNil es => GNil (exps_subst es x v)
-  | ① => ①
-  | 𝜆 ∙ P =>
-      prefix_subst 𝜆 x v ∙ (if decide (prefix_binder 𝜆 = Some x) then P else subst P x v)
-  | g1 ⊕ g2 => gsubst g1 x v ⊕ gsubst g2 x v
-  end.
-
-Notation "P ⟦ v // x ⟧" := (subst P x v) (at level 20) : lqccs_scope.
-
-(* ** Big-step evaluation [e ⇓ v]
-
-    Only closed expressions evaluate.  Qubits are compared by name, never by
-    value: [q = q'] says nothing about the quantum state. *)
+(* ** Big-step evaluation [e ⇓ v] *)
 
 Definition val_le (v1 v2 : val) : option bool :=
   match v1, v2 with
@@ -216,181 +122,340 @@ Fixpoint eval (e : exp) : option val :=
       end
   end.
 
-(* ** Tags of a process ([Tag(P)] in the paper) *)
-
-Definition prefix_tags (𝜆 : prefix) : list tag :=
-  match 𝜆 with
-  | PTau t | PRecv t _ _ | POp t _ _ | PMeas t _ _ _ => [t]
-  | PTauPair t t' => [t; t']
-  end.
-
-Fixpoint tags (P : proc) : list tag :=
-  match P with
-  | PSend t _ _ => [t]
-  | PIte _ P Q | P ∥ Q => tags P ++ tags Q
-  | P \ _ => tags P
-  | PG g => gtags g
-  end
-with gtags (g : guard) : list tag :=
-  match g with
-  | GNil _ | ① => []
-  | 𝜆 ∙ P => prefix_tags 𝜆 ++ tags P
-  | g1 ⊕ g2 => gtags g1 ++ gtags g2
-  end.
-
-(* ** Decidability and countability *)
-
 #[global] Instance exp_eq_dec : EqDecision exp.
 Proof. solve_decision. Defined.
 
-#[global] Instance prefix_eq_dec : EqDecision prefix.
+
+(* ** Channels: names and De Bruijn indices of restrictions *)
+
+Inductive channel : Type :=
+| CName (c : chan)
+| CIdx (i : nat).
+
+#[global] Instance channel_eq_dec : EqDecision channel.
 Proof. solve_decision. Defined.
 
-Definition val_to_sum (v : val) : bool + nat + qubit :=
-  match v with
-  | VBool b => inl (inl b)
-  | VNat n => inl (inr n)
-  | VQubit q => inr q
-  end.
+(* ** Tagged prefixes and processes *)
 
-Definition val_of_sum (s : bool + nat + qubit) : val :=
-  match s with
-  | inl (inl b) => VBool b
-  | inl (inr n) => VNat n
-  | inr q => VQubit q
-  end.
+Inductive prefix : Type :=
+| PTau (t : tag)
+| PRecv (t : tag) (c : channel)
+| POp (t : tag) (E : sop) (es : list exp)
+| PMeas (t : tag) (M : meas) (es : list exp)
+| PInit (t : tag) (es : list exp).
 
-#[global] Instance val_countable : Countable val.
-Proof.
-  refine (inj_countable' val_to_sum val_of_sum _). by intros [].
-Defined.
+Inductive proc : Type :=
+| PSend (t : tag) (c : channel) (e : exp)
+| PIte (e : exp) (P Q : proc)
+| PPar (P Q : proc)
+| PRes (P : proc)
+| PVar (X : nat)
+| PRec (t : tag) (X : nat) (P : proc)
+| PG (g : guard)
+with guard : Type :=
+| GNil (es : list exp)
+| GSucc
+| GPre (𝜆 : prefix) (P : proc)
+| GSum (g1 g2 : guard).
 
-(* Leaves of the encoding trees: values, and names (variables, tags,
-    channels, superoperators and measurements are all [nat]). *)
-Notation leaf := (val + nat)%type.
+Scheme proc_mut_ind := Induction for proc Sort Prop
+  with guard_mut_ind := Induction for guard Sort Prop.
+Combined Scheme proc_guard_ind from proc_mut_ind, guard_mut_ind.
 
-Fixpoint exp_encode (e : exp) : gen_tree leaf :=
-  match e with
-  | EVar x => GenLeaf (inr x)
-  | EVal v => GenLeaf (inl v)
-  | ENot e => GenNode 0 [exp_encode e]
-  | EOr e1 e2 => GenNode 1 [exp_encode e1; exp_encode e2]
-  | ELe e1 e2 => GenNode 2 [exp_encode e1; exp_encode e2]
-  | EEq e1 e2 => GenNode 3 [exp_encode e1; exp_encode e2]
-  end.
+Declare Scope lqccs_scope.
+Delimit Scope lqccs_scope with lq.
+Bind Scope lqccs_scope with proc.
 
-Fixpoint exp_decode (t : gen_tree leaf) : option exp :=
-  match t with
-  | GenLeaf (inr x) => Some (EVar x)
-  | GenLeaf (inl v) => Some (EVal v)
-  | GenNode 0 [t] => ENot <$> exp_decode t
-  | GenNode 1 [t1; t2] => e1 ← exp_decode t1; e2 ← exp_decode t2; Some (EOr e1 e2)
-  | GenNode 2 [t1; t2] => e1 ← exp_decode t1; e2 ← exp_decode t2; Some (ELe e1 e2)
-  | GenNode 3 [t1; t2] => e1 ← exp_decode t1; e2 ← exp_decode t2; Some (EEq e1 e2)
-  | GenNode _ _ => None
-  end.
+Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
+Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
+Notation "g ⊕ g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
+Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
+Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
+Notation "①" := GSucc : lqccs_scope.
 
-Lemma exp_decode_encode e : exp_decode (exp_encode e) = Some e.
-Proof. induction e; simpl; try done; by rewrite ?IHe, ?IHe1, ?IHe2. Qed.
+#[local] Open Scope lqccs_scope.
 
-#[global] Instance exp_countable : Countable exp.
-Proof. refine (inj_countable exp_encode exp_decode exp_decode_encode). Defined.
+(* ** Substitution of a value [P[v/k]] and shift of the value indices
 
-Definition prefix_to_sum (𝜆 : prefix) :
-  tag + (tag * tag) + (tag * chan * var)
-  + (tag * sop * list exp) + (tag * meas * list exp * var) :=
+    [c?.P] and [M(ẽ ▷).P] bind the index [0] of [P]. *)
+
+(* The number of value indices bound by a prefix. *)
+Definition prefix_binds (𝜆 : prefix) : nat :=
   match 𝜆 with
-  | PTau t => inl (inl (inl (inl t)))
-  | PTauPair t t' => inl (inl (inl (inr (t, t'))))
-  | PRecv t c x => inl (inl (inr (t, c, x)))
-  | POp t E es => inl (inr (t, E, es))
-  | PMeas t M es x => inr (t, M, es, x)
+  | PRecv _ _ | PMeas _ _ _ => 1
+  | _ => 0
   end.
 
-Definition prefix_of_sum (s :
-  tag + (tag * tag) + (tag * chan * var)
-  + (tag * sop * list exp) + (tag * meas * list exp * var)) : prefix :=
-  match s with
-  | inl (inl (inl (inl t))) => PTau t
-  | inl (inl (inl (inr (t, t')))) => PTauPair t t'
-  | inl (inl (inr (t, c, x))) => PRecv t c x
-  | inl (inr (t, E, es)) => POp t E es
-  | inr (t, M, es, x) => PMeas t M es x
+Definition prefix_subst (k : nat) (v : val) (𝜆 : prefix) : prefix :=
+  match 𝜆 with
+  | PTau t => PTau t
+  | PRecv t c => PRecv t c
+  | POp t E es => POp t E (map (exp_subst k v) es)
+  | PMeas t M es => PMeas t M (map (exp_subst k v) es)
+  | PInit t es => PInit t (map (exp_subst k v) es)
   end.
 
-#[global] Instance prefix_countable : Countable prefix.
-Proof.
-  refine (inj_countable' prefix_to_sum prefix_of_sum _). by intros [].
-Defined.
-
-Notation pleaf := (list exp + prefix + exp + chan + (tag * chan * exp))%type.
-
-Fixpoint proc_encode (P : proc) : gen_tree pleaf :=
+Fixpoint subst (k : nat) (v : val) (P : proc) : proc :=
   match P with
-  | PSend t c e => GenLeaf (inr (t, c, e))
-  | PIte e P Q => GenNode 1 [GenLeaf (inl (inl (inr e))); proc_encode P; proc_encode Q]
-  | P ∥ Q => GenNode 3 [proc_encode P; proc_encode Q]
-  | P \ c => GenNode 4 [proc_encode P; GenLeaf (inl (inr c))]
-  | PG g => GenNode 6 [guard_encode g]
+  | PSend t c e => PSend t c (exp_subst k v e)
+  | PIte e P Q => PIte (exp_subst k v e) (subst k v P) (subst k v Q)
+  | P ∥ Q => subst k v P ∥ subst k v Q
+  | ν P => ν (subst k v P)
+  | PVar X => PVar X
+  | PRec t X P => PRec t X (subst k v P)
+  | PG g => PG (gsubst k v g)
   end
-with guard_encode (g : guard) : gen_tree pleaf :=
+with gsubst (k : nat) (v : val) (g : guard) : guard :=
   match g with
-  | GNil es => GenLeaf (inl (inl (inl (inl es))))
-  | ① => GenNode 5 []
-  | 𝜆 ∙ P => GenNode 0 [GenLeaf (inl (inl (inl (inr 𝜆)))); proc_encode P]
-  | g1 ⊕ g2 => GenNode 2 [guard_encode g1; guard_encode g2]
+  | GNil es => GNil (map (exp_subst k v) es)
+  | ① => ①
+  | 𝜆 ∙ P => prefix_subst k v 𝜆 ∙ subst (prefix_binds 𝜆 + k) v P
+  | g1 ⊕ g2 => gsubst k v g1 ⊕ gsubst k v g2
   end.
 
-Fixpoint proc_decode (t : gen_tree pleaf) : option proc :=
-  match t with
-  | GenLeaf (inr (t, c, e)) => Some (PSend t c e)
-  | GenNode 1 [GenLeaf (inl (inl (inr e))); t1; t2] =>
-      P ← proc_decode t1; Q ← proc_decode t2; Some (PIte e P Q)
-  | GenNode 3 [t1; t2] => P ← proc_decode t1; Q ← proc_decode t2; Some (P ∥ Q)
-  | GenNode 4 [t; GenLeaf (inl (inr c))] => (λ P, P \ c) <$> proc_decode t
-  | GenNode 6 [t] => PG <$> guard_decode t
-  | _ => None
+Notation "P ⟦ v ⟧" := (subst 0 v P) (at level 20) : lqccs_scope.
+
+Definition prefix_shift (k : nat) (𝜆 : prefix) : prefix :=
+  match 𝜆 with
+  | PTau t => PTau t
+  | PRecv t c => PRecv t c
+  | POp t E es => POp t E (map (exp_shift k) es)
+  | PMeas t M es => PMeas t M (map (exp_shift k) es)
+  | PInit t es => PInit t (map (exp_shift k) es)
+  end.
+
+Fixpoint shiftv (k : nat) (P : proc) : proc :=
+  match P with
+  | PSend t c e => PSend t c (exp_shift k e)
+  | PIte e P Q => PIte (exp_shift k e) (shiftv k P) (shiftv k Q)
+  | P ∥ Q => shiftv k P ∥ shiftv k Q
+  | ν P => ν (shiftv k P)
+  | PVar X => PVar X
+  | PRec t X P => PRec t X (shiftv k P)
+  | PG g => PG (gshiftv k g)
   end
-with guard_decode (t : gen_tree pleaf) : option guard :=
-  match t with
-  | GenLeaf (inl (inl (inl (inl es)))) => Some (GNil es)
-  | GenNode 5 [] => Some ①
-  | GenNode 0 [GenLeaf (inl (inl (inl (inr 𝜆)))); t] => GPre 𝜆 <$> proc_decode t
-  | GenNode 2 [t1; t2] => g1 ← guard_decode t1; g2 ← guard_decode t2; Some (g1 ⊕ g2)
-  | _ => None
+with gshiftv (k : nat) (g : guard) : guard :=
+  match g with
+  | GNil es => GNil (map (exp_shift k) es)
+  | ① => ①
+  | 𝜆 ∙ P => prefix_shift k 𝜆 ∙ shiftv (prefix_binds 𝜆 + k) P
+  | g1 ⊕ g2 => gshiftv k g1 ⊕ gshiftv k g2
   end.
 
-Lemma proc_guard_decode_encode :
-  (∀ P, proc_decode (proc_encode P) = Some P)
-  ∧ (∀ g, guard_decode (guard_encode g) = Some g).
+(* ** Renaming of the indices of restricted channels
+
+    [ren f P] applies [f] to the free indices of [P]; under a restriction,
+    [f] is lifted.  [ren S] is the shift of VACCS ([NewVarC 0]), [ren swap01]
+    exchanges the two innermost restrictions. *)
+
+Definition lift (f : nat → nat) (i : nat) : nat :=
+  match i with 0 => 0 | S i => S (f i) end.
+
+Definition swap01 (i : nat) : nat :=
+  match i with 0 => 1 | 1 => 0 | _ => i end.
+
+Definition ren_chan (f : nat → nat) (c : channel) : channel :=
+  match c with CName c => CName c | CIdx i => CIdx (f i) end.
+
+Definition prefix_ren (f : nat → nat) (𝜆 : prefix) : prefix :=
+  match 𝜆 with
+  | PRecv t c => PRecv t (ren_chan f c)
+  | _ => 𝜆
+  end.
+
+Fixpoint ren (f : nat → nat) (P : proc) : proc :=
+  match P with
+  | PSend t c e => PSend t (ren_chan f c) e
+  | PIte e P Q => PIte e (ren f P) (ren f Q)
+  | P ∥ Q => ren f P ∥ ren f Q
+  | ν P => ν (ren (lift f) P)
+  | PVar X => PVar X
+  | PRec t X P => PRec t X (ren f P)
+  | PG g => PG (gren f g)
+  end
+with gren (f : nat → nat) (g : guard) : guard :=
+  match g with
+  | GNil es => GNil es
+  | ① => ①
+  | 𝜆 ∙ P => prefix_ren f 𝜆 ∙ ren f P
+  | g1 ⊕ g2 => gren f g1 ⊕ gren f g2
+  end.
+
+(* ** Substitution of a process for a recursion variable [P[Q/X]] *)
+
+Fixpoint pr_subst (X : nat) (P Q : proc) : proc :=
+  match P with
+  | PSend t c e => PSend t c e
+  | PIte e P1 P2 => PIte e (pr_subst X P1 Q) (pr_subst X P2 Q)
+  | P1 ∥ P2 => pr_subst X P1 Q ∥ pr_subst X P2 Q
+  | ν P1 => ν (pr_subst X P1 (ren S Q))
+  | PVar Y => if decide (X = Y) then Q else PVar Y
+  | PRec t Y P1 => if decide (X = Y) then PRec t Y P1 else PRec t Y (pr_subst X P1 Q)
+  | PG g => PG (gpr_subst X g Q)
+  end
+with gpr_subst (X : nat) (g : guard) (Q : proc) : guard :=
+  match g with
+  | GNil es => GNil es
+  | ① => ①
+  | 𝜆 ∙ P => 𝜆 ∙ pr_subst X P (Nat.iter (prefix_binds 𝜆) (shiftv 0) Q)
+  | g1 ⊕ g2 => gpr_subst X g1 Q ⊕ gpr_subst X g2 Q
+  end.
+
+Notation "P ⦃ Q // X ⦄" := (pr_subst X P Q) (at level 20) : lqccs_scope.
+
+(* ** Qubits named by expressions *)
+
+Definition eval_qubit (e : exp) : option qubit :=
+  match eval e with Some (VQubit q) => Some q | _ => None end.
+
+Definition eval_qubits (es : list exp) : option (list qubit) :=
+  mapM eval_qubit es.
+
+(* ** Size *)
+
+Fixpoint size (P : proc) : nat :=
+  match P with
+  | PSend _ _ _ | PVar _ => 1
+  | PIte _ P Q | P ∥ Q => S (size P + size Q)
+  | ν P | PRec _ _ P => S (size P)
+  | PG g => S (gsize g)
+  end
+with gsize (g : guard) : nat :=
+  match g with
+  | GNil _ | ① => 0
+  | 𝜆 ∙ P => S (size P)
+  | g1 ⊕ g2 => S (gsize g1 + gsize g2)
+  end.
+
+(* ** Facts on renamings *)
+
+Lemma lift_ext f g : (∀ i, f i = g i) → ∀ i, lift f i = lift g i.
+Proof. intros H [|i]; simpl; congruence. Qed.
+
+Lemma lift_id i : lift id i = i.
+Proof. by destruct i. Qed.
+
+Lemma lift_comp f g i : lift f (lift g i) = lift (f ∘ g) i.
+Proof. by destruct i. Qed.
+
+Lemma lift_S f i : lift f (S i) = S (f i).
+Proof. done. Qed.
+
+Lemma lift_lift_swap01 f i : lift (lift f) (swap01 i) = swap01 (lift (lift f) i).
+Proof. destruct i as [|[|i]]; done. Qed.
+
+Lemma swap01_invol i : swap01 (swap01 i) = i.
+Proof. destruct i as [|[|i]]; done. Qed.
+
+Lemma swap01_SS i : swap01 (S (S i)) = S (S i).
+Proof. done. Qed.
+
+Lemma ren_chan_ext f g c : (∀ i, f i = g i) → ren_chan f c = ren_chan g c.
+Proof. intros H. destruct c; simpl; congruence. Qed.
+
+Lemma ren_chan_comp f g c : ren_chan f (ren_chan g c) = ren_chan (f ∘ g) c.
+Proof. by destruct c. Qed.
+
+Lemma ren_chan_id c : ren_chan id c = c.
+Proof. by destruct c. Qed.
+
+Lemma ren_chan_inj f : (∀ i j, f i = f j → i = j) → ∀ c c', ren_chan f c = ren_chan f c' → c = c'.
+Proof. intros Hf [c|i] [c'|j]; simpl; intros [=]; subst; [done|]. f_equal. by apply Hf. Qed.
+
+Lemma lift_inj f : (∀ i j, f i = f j → i = j) → ∀ i j, lift f i = lift f j → i = j.
+Proof. intros Hf [|i] [|j]; simpl; intros [=]; subst; [done|]. f_equal. by apply Hf. Qed.
+
+Lemma prefix_ren_ext f g 𝜆 : (∀ i, f i = g i) → prefix_ren f 𝜆 = prefix_ren g 𝜆.
+Proof. intros H. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite (ren_chan_ext f g). Qed.
+
+Lemma ren_ext_all :
+  (∀ P f g, (∀ i, f i = g i) → ren f P = ren g P)
+  ∧ (∀ h f g, (∀ i, f i = g i) → gren f h = gren g h).
 Proof.
-  apply proc_guard_ind; intros; simpl; try done;
-    repeat match goal with H : _ = Some _ |- _ => rewrite H end; done.
+  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  - by rewrite (ren_chan_ext f g).
+  - f_equal. apply H. by apply lift_ext.
+  - f_equal; [by apply prefix_ren_ext | by apply H].
 Qed.
 
-Lemma proc_decode_encode P : proc_decode (proc_encode P) = Some P.
-Proof. apply proc_guard_decode_encode. Qed.
+Lemma ren_ext f g P : (∀ i, f i = g i) → ren f P = ren g P.
+Proof. apply (proj1 ren_ext_all). Qed.
 
-Lemma guard_decode_encode g : guard_decode (guard_encode g) = Some g.
-Proof. apply proc_guard_decode_encode. Qed.
+Lemma prefix_ren_comp f g 𝜆 : prefix_ren f (prefix_ren g 𝜆) = prefix_ren (f ∘ g) 𝜆.
+Proof. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite ren_chan_comp. Qed.
 
-#[global] Instance proc_eq_dec : EqDecision proc.
+Lemma ren_comp_all :
+  (∀ P f g, ren f (ren g P) = ren (f ∘ g) P) ∧ (∀ h f g, gren f (gren g h) = gren (f ∘ g) h).
 Proof.
-  intros P Q. destruct (decide (proc_encode P = proc_encode Q)) as [E|E].
-  - left. apply (f_equal proc_decode) in E. rewrite !proc_decode_encode in E. by simplify_eq.
-  - right. by intros ->.
-Defined.
+  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  - by rewrite ren_chan_comp.
+  - f_equal. rewrite H. apply ren_ext, lift_comp.
+  - f_equal; [apply prefix_ren_comp | apply H].
+Qed.
 
-#[global] Instance guard_eq_dec : EqDecision guard.
+Lemma ren_comp f g P : ren f (ren g P) = ren (f ∘ g) P.
+Proof. apply (proj1 ren_comp_all). Qed.
+
+Lemma ren_id_all : (∀ P, ren id P = P) ∧ (∀ h, gren id h = h).
 Proof.
-  intros g h. destruct (decide (guard_encode g = guard_encode h)) as [E|E].
-  - left. apply (f_equal guard_decode) in E. rewrite !guard_decode_encode in E. by simplify_eq.
-  - right. by intros ->.
-Defined.
+  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  - by rewrite ren_chan_id.
+  - f_equal. rewrite <- H at 2. apply ren_ext, lift_id.
+  - f_equal; [|done]. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite ren_chan_id.
+Qed.
 
-#[global] Instance proc_countable : Countable proc.
-Proof. refine (inj_countable proc_encode proc_decode proc_decode_encode). Defined.
+Lemma ren_id P : ren id P = P.
+Proof. apply (proj1 ren_id_all). Qed.
 
-#[global] Instance guard_countable : Countable guard.
-Proof. refine (inj_countable guard_encode guard_decode guard_decode_encode). Defined.
+(* [ren (lift f) (ren S P) = ren S (ren f P)] *)
+Lemma ren_lift_S f P : ren (lift f) (ren S P) = ren S (ren f P).
+Proof. rewrite !ren_comp. by apply ren_ext. Qed.
+
+Lemma ren_swap01_invol P : ren swap01 (ren swap01 P) = P.
+Proof.
+  rewrite ren_comp. rewrite <- (ren_id P) at 2. apply ren_ext. intros i. apply swap01_invol.
+Qed.
+
+Lemma prefix_ren_subst f k v 𝜆 :
+  prefix_ren f (prefix_subst k v 𝜆) = prefix_subst k v (prefix_ren f 𝜆).
+Proof. by destruct 𝜆. Qed.
+
+Lemma prefix_ren_shift f k 𝜆 : prefix_ren f (prefix_shift k 𝜆) = prefix_shift k (prefix_ren f 𝜆).
+Proof. by destruct 𝜆. Qed.
+
+Lemma prefix_ren_binds f 𝜆 : prefix_binds (prefix_ren f 𝜆) = prefix_binds 𝜆.
+Proof. by destruct 𝜆. Qed.
+
+Lemma ren_subst :
+  (∀ P f k v, ren f (subst k v P) = subst k v (ren f P))
+  ∧ (∀ g f k v, gren f (gsubst k v g) = gsubst k v (gren f g)).
+Proof.
+  apply proc_guard_ind; simpl; intros; try congruence.
+  rewrite prefix_ren_subst, prefix_ren_binds. congruence.
+Qed.
+
+Lemma ren_shiftv :
+  (∀ P f k, ren f (shiftv k P) = shiftv k (ren f P))
+  ∧ (∀ g f k, gren f (gshiftv k g) = gshiftv k (gren f g)).
+Proof.
+  apply proc_guard_ind; simpl; intros; try congruence.
+  rewrite prefix_ren_shift, prefix_ren_binds. congruence.
+Qed.
+
+Lemma ren_shiftv_iter n f Q : ren f (Nat.iter n (shiftv 0) Q) = Nat.iter n (shiftv 0) (ren f Q).
+Proof. induction n; simpl; [done|]. by rewrite (proj1 ren_shiftv), IHn. Qed.
+
+Lemma ren_pr_subst X :
+  (∀ P f Q, ren f (P ⦃ Q // X ⦄) = (ren f P) ⦃ ren f Q // X ⦄)
+  ∧ (∀ g f Q, gren f (gpr_subst X g Q) = gpr_subst X (gren f g) (ren f Q)).
+Proof.
+  apply proc_guard_ind; simpl; intros; try congruence.
+  - f_equal. rewrite H. f_equal. apply ren_lift_S.
+  - by case_decide.
+  - case_decide; simpl; congruence.
+  - rewrite H, prefix_ren_binds, ren_shiftv_iter. done.
+Qed.
+
+Lemma size_ren : (∀ P f, size (ren f P) = size P) ∧ (∀ g f, gsize (gren f g) = gsize g).
+Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
 (* end hide *)

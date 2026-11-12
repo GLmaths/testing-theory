@@ -28,8 +28,9 @@
     probabilities of [p ∥ t] by the Smyth order: below every value of
     [q ∥ t] there is a value of [p ∥ t] ([A ≤Sm B] iff for all [b ∈ B] there
     is [a ∈ A] with [a ≤ b]; for finite sets, [min A ≤ min B]).  Here the resolutions are the
-    admissible runs of [pMust_almost_sure.v]: one scheduler for the whole
-    distribution.
+    admissible runs of [pMust_scheduled.v]: one scheduler for the whole
+    distribution, under either lifting; with [Drop] it is the must of
+    Ceragioli et al. (JLAMP 2027, Definition 7) extended to infinite runs.
 
     The value of a run is the supremum of its successful mass.  Suprema are
     not asked of the probabilities; [sup r1 ≤ sup r2] is stated as "every
@@ -43,7 +44,7 @@
 
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base decidable list.
-From TestingTheory Require Import pMust_almost_sure.
+From TestingTheory Require Export pMust_almost_sure.
 (* begin hide *)
 (* Density of the probabilities, and transitivity across [<ₚ] and [≤ₚ]. *)
 Class DenseWeights `{Weights} := MkDenseWeights {
@@ -52,7 +53,7 @@ Class DenseWeights `{Weights} := MkDenseWeights {
 
 Section Smyth.
   Context `{Weights} {P T C Sch : Type} `{!SchedSts C Sch}
-    `{!pTesting P T C Sch}.
+    `{!pTesting P T C Sch} (L : lifting).
 
   (* [sup r1 ≤ sup r2] *)
   Definition run_le (r1 r2 : nat → dist C) : Prop :=
@@ -60,10 +61,17 @@ Section Smyth.
 
   (* [A(Δ) ≤Sm A(Θ)] *)
   Definition smyth_le (Δ Θ : dist C) : Prop :=
-    ∀ r2, is_run Θ r2 → ∃ r1, is_run Δ r1 ∧ run_le r1 r2.
+    ∀ r2, is_run L Θ r2 → ∃ r1, is_run L Δ r1 ∧ run_le r1 r2.
 
   Definition ctx_pre_sm (p q : P) : Prop :=
     ∀ t : T, smyth_le (compose p t) (compose q t).
+
+  (* The same preorder with the tests restricted to a class [Ts]. *)
+  Definition ctx_pre_sm_on (Ts : T → Prop) (p q : P) : Prop :=
+    ∀ t : T, Ts t → smyth_le (compose p t) (compose q t).
+
+  Lemma ctx_pre_sm_on_all p q : ctx_pre_sm p q → ∀ Ts, ctx_pre_sm_on Ts p q.
+  Proof. intros Hpq Ts t _. apply Hpq. Qed.
 
   Lemma prob_lt_le_trans a b c : a <ₚ b → b ≤ₚ c → a <ₚ c.
   Proof.
@@ -98,7 +106,7 @@ Section Smyth.
       almost surely, so does [Θ] — provided [Θ] does not weigh more than
       [Δ]. *)
   Lemma smyth_le_pmust_as `{!DenseWeights} Δ Θ :
-    (∀ w, w <ₚ dmass Θ → w <ₚ dmass Δ) → smyth_le Δ Θ → pmust_as Δ → pmust_as Θ.
+    (∀ w, w <ₚ dmass Θ → w <ₚ dmass Δ) → smyth_le Δ Θ → pmust_as L Δ → pmust_as L Θ.
   Proof.
     intros Hmass Hsm Has r2 Hr2 w Hw.
     destruct (Hsm r2 Hr2) as (r1 & Hr1 & Hle).
@@ -112,7 +120,7 @@ Section Smyth.
 
   Lemma ctx_pre_sm_as `{!DenseWeights} p q :
     (∀ t w, w <ₚ dmass (compose q t) → w <ₚ dmass (compose p t)) →
-    ctx_pre_sm p q → p ⊑ₐₛ q.
+    ctx_pre_sm p q → ctx_pre_as L p q.
   Proof.
     intros Hmass Hpq t Hp. exact (smyth_le_pmust_as _ _ (Hmass t) (Hpq t) Hp).
   Qed.
@@ -125,10 +133,10 @@ Section Smyth.
       passed by [Θ].  With [w] the whole mass, [must_lt] is the almost-sure
       must. *)
   Definition must_lt (w : prob) (Δ : dist C) : Prop :=
-    ∀ r, is_run Δ r → ∀ w', w' <ₚ w → ∃ n, w' ≤ₚ succ_mass r n.
+    ∀ r, is_run L Δ r → ∀ w', w' <ₚ w → ∃ n, w' ≤ₚ succ_mass r n.
 
   Definition min_run (Δ : dist C) : Prop :=
-    ∃ r, is_run Δ r ∧ ∀ r', is_run Δ r' → run_le r r'.
+    ∃ r, is_run L Δ r ∧ ∀ r', is_run L Δ r' → run_le r r'.
 
   Lemma smyth_le_must_lt `{!DenseWeights} Δ Θ w :
     smyth_le Δ Θ → must_lt w Δ → must_lt w Θ.
@@ -166,5 +174,8 @@ Section Smyth.
   Qed.
 End Smyth.
 
-Notation "p ⊑ₛₘ q" := (ctx_pre_sm p q) (at level 70).
+Notation "p ⊑ₛₘ q" := (ctx_pre_sm Stay p q) (at level 70).
+Notation "p ⊑ₛₘ[ Ts ] q" := (ctx_pre_sm_on Stay Ts p q) (at level 70, format "p  ⊑ₛₘ[ Ts ]  q").
+Notation "p ⊑ₛₘᴰ q" := (ctx_pre_sm Drop p q) (at level 70).
+Notation "p ⊑ₛₘᴰ[ Ts ] q" := (ctx_pre_sm_on Drop Ts p q) (at level 70, format "p  ⊑ₛₘᴰ[ Ts ]  q").
 (* end hide *)
