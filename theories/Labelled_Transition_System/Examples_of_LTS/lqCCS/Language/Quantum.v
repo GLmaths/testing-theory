@@ -50,7 +50,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import List.
 From stdpp Require Import base countable decidable gmap.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure lqCCS.Language.Syntax.
+From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Syntax.
 Class QuantumModel `{StAlg} := MkQuantumModel {
     (* Names of the syntax. *)
     sop_act : sop → list qubit → Act;
@@ -85,10 +85,14 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
     sop_tr E qs ρ : tr (app (act (sop_act E qs)) ρ) = tr ρ;
     (* Completeness of measurements, [Σ_k M_k† M_k = I], read on traces. *)
     meas_tr M qs ρ : tr (app (br (meas_of M qs) (λ _, one)) ρ) = tr ρ;
+    (* Initialisation of qubits to [|0⟩], [Σ_i |0⟩⟨i| ρ |i⟩⟨0|], trace preserving. *)
+    init_act : list qubit → Act;
+    init_tr qs ρ : tr (app (act (init_act qs)) ρ) = tr ρ;
 
     (* Qubits of a state, preserved by the operations of the syntax. *)
     St_qubits : St → gset qubit;
     sop_qubits E qs ρ : St_qubits (app (act (sop_act E qs)) ρ) = St_qubits ρ;
+    init_qubits qs ρ : St_qubits (app (act (init_act qs)) ρ) = St_qubits ρ;
     meas_qubits M qs k ρ :
       St_qubits (app (kraus (meas_of M qs) k) ρ) = St_qubits ρ;
 
@@ -103,6 +107,7 @@ Arguments W {_ _ _ _ _}.
 (* [E^q̃(ρ)] and the branch [k] of [M^q̃(ρ)], unnormalised: its trace is
     the probability of outcome [k]. *)
 Definition sop_apply `{QuantumModel} E qs ρ := app (act (sop_act E qs)) ρ.
+Definition init_apply `{QuantumModel} qs ρ := app (act (init_act qs)) ρ.
 Definition meas_branch `{QuantumModel} M qs (k : Out (meas_of M qs)) ρ :=
   app (kraus (meas_of M qs) k) ρ.
 
@@ -144,6 +149,21 @@ Section Consequences.
     unfold meas_branch. by rewrite comp_1l.
   Qed.
 
+  Lemma tr_nonzero ρ : ρ ≠ szero → tr ρ ≠ W_zero.
+  Proof. intros Hρ E. by apply Hρ, tr_zero_inv. Qed.
+
+  Lemma sop_apply_nonzero E qs ρ : ρ ≠ szero → sop_apply E qs ρ ≠ szero.
+  Proof.
+    intros Hρ E'. apply (tr_nonzero ρ Hρ). rewrite <- (sop_tr E qs ρ). unfold sop_apply in E'.
+    by rewrite E', tr_szero.
+  Qed.
+
+  Lemma init_apply_nonzero qs ρ : ρ ≠ szero → init_apply qs ρ ≠ szero.
+  Proof.
+    intros Hρ E'. apply (tr_nonzero ρ Hρ). rewrite <- (init_tr qs ρ). unfold init_apply in E'.
+    by rewrite E', tr_szero.
+  Qed.
+
   Lemma fold_W_zero l : (∀ x, x ∈ l → x = W_zero) → fold_right W_add W_zero l = W_zero.
   Proof.
     induction l as [|x l IH]; simpl; [done|]. intros Hl.
@@ -168,22 +188,4 @@ Section Consequences.
   Qed.
 End Consequences.
 
-(* ** Weights of the probabilistic must
-
-    Quantum distributions (Definition 6.1) are distributions in the sense of
-    [pMust_almost_sure] whose weights are states and whose mass is the
-    trace. *)
-#[global] Instance Weights_of_QuantumModel `{QuantumModel} : Weights := {|
-  prob := W;
-  prob_zero := W_zero;
-  prob_add := W_add;
-  prob_le := W_le;
-  weight := St;
-  weight_zero := szero;
-  weight_add := sadd;
-  weight_add_comm := sadd_comm;
-  weight_add_assoc := sadd_assoc;
-  weight_add_zero := sadd_szero_l;
-  mass := tr;
-|}.
 (* end hide *)
