@@ -154,9 +154,9 @@ Section Sched.
     intros Hs Hin. inversion Hs as [? Hp|E qs ? Hp|qs ? Hp|M qs Rs R0 Hp0 Hf]; subst.
     - apply list_elem_of_singleton in Hin. simplify_eq. by apply prog_step_tau_conf.
     - apply list_elem_of_singleton in Hin. simplify_eq.
-      eapply prog_step_mem_conf; [exact Hp|apply me_op|constructor].
+      eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ (SGate E))|constructor].
     - apply list_elem_of_singleton in Hin. simplify_eq.
-      eapply prog_step_mem_conf; [exact Hp|apply me_init|constructor].
+      eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ SInit)|constructor].
     - remember (outs_nz M qs ρ) as ks eqn:Eks. clear Eks Hs.
       clear Hp0. revert Hin. induction Hf as [|k R1 ks Rs Hp _ IH]; simpl; intros Hin; [by apply elem_of_nil in Hin|].
       apply elem_of_cons in Hin as [Hin|Hin]; [|by apply IH]. simplify_eq.

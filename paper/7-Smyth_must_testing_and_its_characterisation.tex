@@ -1,0 +1,257 @@
+\section{Smyth must testing and its characterisation}\label{sec:must}
+
+\paragraph{Observers and tested systems.} An \emph{observer} is a program $T$
+in which the guard $\mathbf{1}$ marks success: $T$ is \emph{successful} when
+$\mathbf{1}$ occurs at top level, through parallel compositions,
+restrictions, conditionals whose guard evaluates and sums (so that success
+is invariant under $\equiv$). A program $P$ with a memory $\rho$ is tested
+by running $\conf{\rho}{P \parallel T}$; the observer has no memory of its
+own, its prefixes $U(\tilde q)$, $\M(\tilde q \rhd x)$ and
+$\mathsf{init}(\tilde q)$ act on the shared memory. Following
+\cite{Ceragioli27} we resolve non-determinism by schedulers, with a lifting
+to distributions that keeps every branch of a measurement under the same
+choices. A \emph{distribution} is a formal sum $\sum_i \rho_i \cdot R_i$ of
+programs weighted by partial density operators; its \emph{mass} is
+$\sum_i \tr(\rho_i)$, its \emph{successful mass} the mass of its successful
+components. The \emph{scheduled step} of a configuration,
+$\rho \cdot R \lstep{s} \Delta$, is a silent step of $\conf{\rho}{R}$ with
+choice $s$ (\cref{fig:conf}) in which the outcomes of a measurement are
+grouped: $\Delta = \sum_m \br \cdot R_m$ over the outcomes $m$ of non-zero
+probability for \textsc{Meas} (a distribution is its support, as in a
+pLTS), and $\rho' \cdot R'$ for the other rules. A distribution moves \emph{as a whole}
+under one choice: $\Delta \lstep{s} \Delta'$ when at least one component
+moves, every non-successful component that can do $s$ does it, the
+successful ones stay, and the non-successful ones that cannot do $s$ are
+\emph{lifted}: they stay (lifting Stay) or they disappear (lifting Drop).
+A \emph{run} is an infinite sequence $\Delta_0 \lstep{s_1} \Delta_1
+\lstep{s_2} \cdots$ that stutters once no choice moves any component; its
+\emph{value} is the supremum of the successful masses of the $\Delta_i$.
+
+\begin{definition}[Smyth must]\label{def:smyth}
+For a class $\mathcal{O}$ of observers, $(P, \rho) {\smyth}_{\mathcal{O}} (Q, \sigma)$
+iff for every $T \in \mathcal{O}$ and every run of $\rho \cdot (Q \parallel T)$
+there is a run of $\sigma \cdot (P \parallel T)$ of value at most the value
+of the former.
+\end{definition}
+
+This is the must preorder of Deng et al.~\cite{DvGHM08} with the
+resolutions restricted to one word of choices for the whole distribution,
+as in \cite[Definition 7]{Ceragioli27}, whose resolutions are the
+probabilistic runs of a scheduler. The definition is generic (the Smyth
+must of \texttt{pMust\_smyth.v}, for any scheduled probabilistic system
+and either lifting); lqCCS only provides the step and the composition. We
+write $\smyth$ for the lifting Stay and $\smyth^{\mathsf{D}}$ for Drop.
+With Stay, $\ite{x = 0}{t_1{:}\tau.P}{t_2{:}\tau.Q}$ after a measurement
+completes both branches under the word $t_1 t_2$; with Drop, the word $t_1$
+discards the branch $x = 1$, which counts as failed, as in
+\cite{Ceragioli27} where a path that cannot follow the scheduler has no
+run. Drop extends that definition in two respects: successful components
+are frozen instead of disappearing when another component moves on, and
+the runs are infinite, so that a divergent process is the bottom of both
+preorders ($\Omega = \mathsf{rec}\,X.\,t{:}\tau.X$ satisfies $(\Omega,
+\rho) \smyth (Q, \rho)$ and $(\Omega, \rho) \smyth^{\mathsf{D}} (Q, \rho)$
+for every $Q$, \texttt{Omega\_bottom}), whereas finite maximal schedulers make
+it incomparable. The two preorders differ: for
+$q = \M(q \rhd x).(\ite{x=0}{t_1{:}\tau.a!0}{t_2{:}\tau.a!0})$ and
+$q' = \M(q \rhd x).(\ite{x=0}{t{:}\tau.a!0}{t{:}\tau.a!0})$, the observer
+$a?z.\mathbf{1}$ gives the value $1$ to both under Stay, while under Drop
+$q$ has the value $1/2$ and $q'$ the value $1$, so that
+$q \smyth^{\mathsf{D}} q'$ strictly.
+
+\paragraph{The class of observers.} We characterise ${\smyth}_{\mathcal{O}}$
+for the observers without internal choice: no $\tau$ prefix, no recursion,
+no restriction, no channel used both for input and for output (no
+communication inside the observer), $\mathbf{1}$ never in a sum with a
+prefix (success is persistent), each tag naming one prefix, and tags
+disjoint from those of the tested programs, as in \cite{Ceragioli27}.
+For such an observer the offers at a point of the interaction only depend on
+the \emph{co-trace} that led there, the sequence of its co-actions (tag of
+the observer, action, with the value received or the outcome measured).
+
+\begin{remark}
+An observer with a $\tau$ choice can exploit \emph{timing}. Let
+$P = \M(q \rhd x).c!x.(\ite{x=0}{a!0}{b!0})$ and
+$Q = \M(q \rhd x).(\ite{x=0}{c!x.a!0}{t_5{:}\tau.c!x.b!0})$, and
+$T = c?y.(t{:}\tau.a?z.\mathbf{1} + t'{:}\tau.b?z.\mathbf{1})$. For $Q$
+the scheduler delivers the branch $x=0$ first, chooses $t'$ for it, then
+$t_5$, delivers the branch $x=1$ and chooses $t$: no branch succeeds. For $P$
+both branches reach $T$ at the same step and $t$ or $t'$ applies to both:
+value $1/2$ always. So $P \not\smyth Q$ although $P$ and $Q$ only differ by
+a $\tau$ in one branch, and the preorder is not insensitive to $\tau$. The
+scheduler dates the components through the tags that only one branch has,
+and the choice of the observer may depend on that date. Characterising this
+preorder would need co-traces with dates; we leave it out.
+\end{remark}
+
+\paragraph{The LTS $\DD$.} The alternative preorder is defined on the
+LTS $\DD$ of distributions of \emph{components} $(n, (P, C, E))$ weighted
+by a memory, where $n$ is the co-trace of the component, $E$ the outputs
+(tag, channel, value) the observer offers at $n$, recorded when $n$ is
+reached, and $C$ those of them the program has consumed. Outputs are
+asynchronous: the observer does not see when they are consumed, so a
+consumption is a silent step of the component, which does not extend the
+co-trace; $C$ only forbids a second consumption. The labels of $\DD$ are
+the choices $s$ of the program (a consumption being the choice $(t,k)$ of
+the tags involved) and the \emph{instructions} $(k, t)$, ``the tag $k$ of
+the observer, answered by the tag $t$ of the program''. Three parameters
+describe the observer, its \emph{shape}: its \emph{menu} $I(n)$, the inputs
+$k{:}c?$, operations $k{:}U(\tilde q)$, measurements $k{:}\M(\tilde q)$ and
+initialisations it offers at the co-trace $n$; its \emph{outputs} $O(n)$ at
+$n$; and its \emph{success co-traces} $\succn(n)$, closed under extension.
+\cref{tab:dlts} gives the step of one component; a distribution moves as
+above, the components whose co-trace is in $\succn$ being frozen.
+
+\begin{table}[h]
+\centering
+\footnotesize
+$\begin{array}{l@{\quad}rcl@{\quad}l}
+\textsc{Ch} & \rho \cdot (n,(P,C,E)) &\lstep{s}& \textstyle\sum_i \rho_i \cdot (n,(P_i,C,E))
+  & \rho \cdot P \lstep{s} \sum_i \rho_i \cdot P_i \\[2pt]
+\textsc{Recv} & \rho \cdot (n,(P,C,E)) &\lstep{(t,k)}& \rho \cdot (n,(P',C \cdot (k,c,v),E))
+  & (k,c,v) \in E,\ k \notin C,\ P \step{c?v}{t} P' \\[2pt]
+\textsc{Send} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \rho \cdot (n',(P',C,O(n')))
+  & k{:}c? \in I(n),\ P \step{c!v}{t} P',\ n' = n \cdot k{:}c?v \\[2pt]
+\textsc{Op} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \upd{U} \cdot (n',(P,C,O(n')))
+  & k{:}U(\tilde q) \in I(n),\ n' = n \cdot k{:}U(\tilde q) \\[2pt]
+\textsc{Init} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \inirho \cdot (n',(P,C,O(n')))
+  & k{:}\mathsf{init}(\tilde q) \in I(n),\ n' = n \cdot k{:}\mathsf{init}(\tilde q) \\[2pt]
+\textsc{Meas} & \rho \cdot (n,(P,C,E)) &\lstep{(k,t)}& \textstyle\sum_{m,\ \br \neq 0} \br \cdot (n_m,(P,C,O(n_m)))
+  & k{:}\M(\tilde q) \in I(n),\ n_m = n \cdot k{:}\M(\tilde q)!m
+\end{array}$
+\caption{The step of a component of $\DD$, for a shape $(I, O, \succn)$.}
+\label{tab:dlts}
+\end{table}
+
+\begin{definition}[Alternative preorder]\label{def:alt}
+$(P,\rho) \alt (Q,\sigma)$ iff for every shape $(I, O, \succn)$ with
+$\succn$ closed under extension, for every run of
+$\sigma \cdot ([],(Q,[],O([])))$ in $\DD$ there is a run of
+$\rho \cdot ([],(P,[],O([])))$ in $\DD$ of value at most the value of the
+former, the value being the mass of the components whose co-trace is in
+$\succn$.
+\end{definition}
+
+The runs of $\DD$ are the trees of runs of the configuration LTS following
+one word of choices and instructions: the co-traces of the components are
+the co-traces of $\conf{\rho}{P}$ in the LTS $\rho \lpar P$ with the actions
+of the memory exposed to the observer (rule Left of \cref{def:par}), and
+$\DD$ keeps them together because a word applies to all of them. A run
+stops only when every unfrozen component is a \emph{waiting state}, with no
+silent step and no offer of $I(n)$ it can answer: this is where the
+acceptance sets of the classical characterisation live, $\coR(P') \cap I(n)
+= \emptyset$ for every leaf $(n, P')$. Taking one co-trace at a time is not
+possible: two processes that, after a measurement, send the outcome and
+choose $a$ or $b$ with the same tags in both branches (the choice correlated
+or anti-correlated with the outcome) have the same leaves co-trace by
+co-trace and are told apart by $c?y.(\ite{y=0}{a?z.\mathbf{1}}{b?z.\mathbf{1}})$.
+The quantum state only enters through the masses $\tr(\rho')$ of the leaves:
+the operations and measurements of the observer are instructions inside the
+run, so no Löwner comparison of the leaves is needed, and it would be
+incomplete (a program that sends $|0\rangle$ or $|1\rangle$ by an internal
+choice is below one that sends $I/2$).
+
+\paragraph{The theorems.} The shape of an observer $T$ is the triple
+$(\menu_T, O_T, \succn_T)$: $\menu_T(n)$ and $O_T(n)$ are the offers and
+the outputs of the state of $T$ after the co-trace $n$, and $\succn_T(n)$
+holds when that state, or the state at a prefix of $n$, is successful. Write $\mathcal{O}_{P,Q}$ for the
+observers of the class above whose tags are apart from those of $P$ and
+$Q$, and $\alt_{\mathcal{O}}$ for \cref{def:alt} restricted to the shapes of
+the observers of $\mathcal{O}_{P,Q}$.
+
+\begin{theorem}[Soundness and characterisation]\label{thm:char}
+Let $P, Q$ be programs without $\mathbf{1}$, and let $\DD$, $\alt$ and
+$\smyth$ be taken with the same lifting, Stay or Drop. Then
+\[
+(P,\rho) \alt (Q,\sigma)
+\ \Longrightarrow\
+(P,\rho) \alt_{\mathcal{O}} (Q,\sigma)
+\ \Longleftrightarrow\
+(P,\rho) {\smyth}_{\mathcal{O}_{P,Q}} (Q,\sigma).
+\]
+\end{theorem}
+
+\begin{proof}
+Fix an observer $T$. A component $\rho \cdot (P \parallel T')$ of the tested
+system is related to a component $\rho \cdot (n,(P,C,O_T(n)))$ of $\DD$
+when $T'$ is the state of $T$ after the co-trace $n$ followed by the
+outputs $C$. Related distributions have the same successful mass ($P$ has
+no $\mathbf{1}$, and the outputs of $C$ do not change the success of $T'$).
+Every scheduled step of one is a scheduled step of the other with the
+same successors, related: a choice of the program is the same choice on
+both sides, the consumption of an output of $T'$ included (\textsc{Recv});
+an input of $T'$ served by $P$ is the instruction $(k,t)$ of the tags
+involved (\textsc{Send}); an operation of $T'$ on the memory is the
+instruction $(k,t)$ of its tag (\textsc{Op}, \textsc{Init}, \textsc{Meas});
+the tags being disjoint and unique, the choice determines the instruction
+and conversely. The
+consumptions commute with the other co-actions of the observer and keep its
+other offers, so the menu at the co-trace $n$ is what $T'$ offers. A
+distribution is then stable iff the related one is, the lifting of a
+component is the lifting of the related one (both stay, or both are
+successful or both disappear), and a run of one system is mirrored by a run
+of the other with the same successful masses, which needs dependent choice
+to build the mirrored run. The two implications of
+the equivalence apply this transfer to the run of $Q$, then to the witness
+run of $P$; the first implication is the instance of $\alt$ at the shape of
+$T$.
+\end{proof}
+
+\paragraph{The almost-sure must.} The same transfer characterises the
+must with probability one. $P$ passes $T$ almost surely when every run of
+$\rho \cdot (P \parallel T)$ has the value $\tr(\rho)$, its successful mass
+tending to its mass, and $(P,\rho) \sqsubseteq_{\mathsf{as}, \mathcal{O}}
+(Q,\sigma)$ when $Q$ passes almost surely every $T \in \mathcal{O}$ that
+$P$ passes almost surely. Let $(P,\rho) \alt_{\mathsf{as}} (Q,\sigma)$ iff
+for every shape $(I, O, \succn)$ with $\succn$ closed under extension, if
+every run of $\rho \cdot ([],(P,[],O([])))$ in $\DD$ has the value
+$\tr(\rho)$ then every run of $\sigma \cdot ([],(Q,[],O([])))$ has the value
+$\tr(\sigma)$. Under the hypotheses of \cref{thm:char}, and with the same
+lifting on both sides,
+\[
+(P,\rho) \alt_{\mathsf{as}} (Q,\sigma)
+\ \Longrightarrow\
+(P,\rho) \alt_{\mathsf{as}, \mathcal{O}} (Q,\sigma)
+\ \Longleftrightarrow\
+(P,\rho) \sqsubseteq_{\mathsf{as}, \mathcal{O}_{P,Q}} (Q,\sigma),
+\]
+since a run and its mirrored run have the same successful masses and the
+same mass (\texttt{alt\_as\_sound}, \texttt{alt\_as\_obs\_iff}). Under Drop
+a run has full value only if no component ever disappears. The Smyth must
+is finer than the almost-sure must: if below every run of $Q \parallel T$
+there is a run of $P \parallel T$ and the latter all have full value, so
+do the former (\texttt{ctx\_pre\_sm\_as}).
+
+\begin{remark}
+\cref{def:alt} quantifies over all menus, including menus that are the shape
+of no observer (infinitely many offers, a tag offering different kinds of
+actions at different co-traces, menus not uniform in the value received).
+The equivalence is therefore stated for the shapes of observers. The
+quantification over the menu is not removed as in the classical
+characterisation, where the witness $p'$ with $\coR(p') \subseteq
+\coR(q')$ refuses every menu that $q'$ refuses: here the witness is a run,
+and the menu also drives it afterwards, an offer at a waiting state forcing
+it to move. The \emph{uniform} form, where the witness run of $P$ is chosen
+before the menu and is a run under every menu under which the run of $Q$ is
+one (\texttt{alt\_pre\_unif}: the witness uses only the instructions of the
+run of $Q$, stops only where that run stops, and its leaves refuse what the
+leaves of $Q$ at the same co-trace refuse), implies $\alt$; so does the
+weaker \emph{scheduled-word} form, where only the sequence of items and the
+choices of the components are fixed before the menu, an item that no
+component can take being skipped, and the run has to be maximal under every
+menu (\texttt{alt\_pre\_det}, \texttt{alt\_pre\_det\_alt\_pre}). Whether
+either converse holds is not settled, for either lifting. The
+difficulty is not the one of the classical theory: the witness may have to
+park a component at a co-trace that the run of $Q$ never visits, and what
+it does there is decided by the menu; but the shapes punish such a
+component, since an offer at that co-trace can lead to success for $P$
+alone, and every candidate counterexample we examined (found by an
+exhaustive search over small programs and bounded menus) was eventually
+separated by a deeper shape. It would fail, for both liftings, if the
+outcomes of probability zero of a measurement were kept in the
+distributions: a component $d!v$ of
+mass zero can neither stop under the maximal menu nor move under the
+minimal one, while it costs nothing to $\alt$. This is why the scheduled
+step only keeps the outcomes of non-zero probability; from a non-zero
+memory, every component of a run then has a non-zero memory
+(\texttt{drun\_nonzero}).
+\end{remark}

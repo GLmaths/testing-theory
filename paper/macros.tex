@@ -1,0 +1,92 @@
+% ---------------------------------------------------------------------------
+% Packages
+% ---------------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{xcolor}
+\usepackage[colorlinks,linkcolor=blue!60!black]{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+
+% ---------------------------------------------------------------------------
+% Theorem environments
+% ---------------------------------------------------------------------------
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+% ---------------------------------------------------------------------------
+% Quantum states and operations
+% ---------------------------------------------------------------------------
+\newcommand{\Hil}{\mathcal{H}}
+\newcommand{\M}{\mathcal{M}}
+\newcommand{\sop}[1]{\mathcal{#1}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\sapp}[1]{#1^{\tilde q}(\rho)}
+\newcommand{\upd}[1]{#1^{\tilde q}\rho\,(#1^{\tilde q})^\dagger}
+\newcommand{\br}{M_m^{\tilde q}\rho\,(M_m^{\tilde q})^\dagger}
+\newcommand{\inirho}{\mathsf{init}^{\tilde q}(\rho)}
+
+% ---------------------------------------------------------------------------
+% Syntax of processes
+% ---------------------------------------------------------------------------
+\newcommand{\tagged}[2]{#1{:}#2}
+\newcommand{\ite}[3]{\mathsf{if}\ #1\ \mathsf{then}\ #2\ \mathsf{else}\ #3}
+\newcommand{\rec}[2]{\mathsf{rec}\,#1.\,#2}
+\newcommand{\fc}{\mathrm{fc}}
+\newcommand{\chans}{\mathrm{chans}}
+\newcommand{\ren}[3]{#1\{#2/#3\}}
+\newcommand{\size}[1]{|#1|}
+
+% ---------------------------------------------------------------------------
+% Configurations and transitions
+% ---------------------------------------------------------------------------
+\newcommand{\conf}[2]{\langle #1 ,\, #2 \rangle}
+\newcommand{\step}[2]{\xrightarrow{\;#1\;}_{#2}}
+\newcommand{\mto}[1]{\xrightarrow{\;#1\;}}
+\newcommand{\red}{\longrightarrow}
+
+% ---------------------------------------------------------------------------
+% Actions of programs and of the memory
+% ---------------------------------------------------------------------------
+\newcommand{\req}[1]{#1(\tilde q)}
+\newcommand{\memop}[1]{\overline{#1(\tilde q)}}
+\newcommand{\mrecv}[1]{\M(\tilde q)?#1}
+\newcommand{\msend}[1]{\M(\tilde q)!#1}
+\newcommand{\initp}{\mathsf{init}(\tilde q)}
+\newcommand{\meminit}{\overline{\mathsf{init}(\tilde q)}}
+
+% ---------------------------------------------------------------------------
+% Parallel composition and synchronisation
+% ---------------------------------------------------------------------------
+\newcommand{\lpar}{\mathbin{|}}
+\newcommand{\sync}{\mathrel{\mathsf{sync}}}
+\newcommand{\syncM}{\mathrel{\mathsf{sync}_{\M}}}
+\newcommand{\syncC}{\mathrel{\mathsf{sync}_{c}}}
+\newcommand{\syncS}{\mathrel{\mathsf{sync}_{\mathsf{sys}}}}
+
+% ---------------------------------------------------------------------------
+% Denotational semantics (hidden section)
+% ---------------------------------------------------------------------------
+\newcommand{\den}[1]{\llbracket #1 \rrbracket}
+\newcommand{\denw}[2]{\llbracket #1 \rrbracket_{#2}}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\final}{\mathsf{final}}
+\newcommand{\tree}[4]{#1 \Downarrow_{#2} #3}
+
+% ---------------------------------------------------------------------------
+% Smyth must testing (hidden section)
+% ---------------------------------------------------------------------------
+\newcommand{\smyth}{\sqsubseteq_{\mathsf{Sm}}}
+\newcommand{\alt}{\preccurlyeq}
+\newcommand{\DD}{\mathbb{D}}
+\newcommand{\lstep}[1]{\rightsquigarrow_{#1}}
+\newcommand{\coR}{\mathrm{coR}}
+\newcommand{\menu}{\mathsf{menu}}
+\newcommand{\succn}{\mathsf{S}}

@@ -1,0 +1,147 @@
+\section{Denotational semantics}\label{sec:den}
+
+Following Feng and Xu~\cite{FengXu23}, the denotation of a program is a set
+of super-operators on the memory: a measurement sums its branches, and a
+nondeterministic choice is a union. The programs of lqCCS are not closed
+commands: the nondeterminism is resolved by the choices of the tagged
+semantics, so that the denotation is indexed by a \emph{word} of choices
+$w = s_1 \cdots s_n$, the same word on every branch of a measurement (the
+\emph{lifted} model of~\cite{FengXu23}, the schedulers of lqCCS), and
+recursion is unfolded by the silent transition Rec, the word bounding the
+depth of the unfolding, as the syntactic approximations of Unruh, Valiron and
+Ying~\cite[Lemma 3.3]{UVY26}.
+
+An action is \emph{internal} if it is silent or if the memory can serve it
+(\cref{def:sync}): $\lambda \in \{\tau, \req{U}, \initp, \mrecv{m}\}$. A program $P$ is
+\emph{final}, written $\final(P)$, if it has no internal transition, and
+\emph{enabled} at $s$ if $P \step{\lambda}{s} P'$ for some internal $\lambda$.
+A super-operator is written $\sop{E}$; $\id$ is the identity, $0$ the null
+super-operator, $\sop{F} \circ \sop{E}$ the composition and
+$\sop{E}_U^{\tilde q}$, $\sop{E}_{\mathsf{init}}^{\tilde q}$
+(\cref{def:sop}) and $\sop{M}_m = M_m^{\tilde q}(\cdot)(M_m^{\tilde q})^\dagger$
+the super-operators of the memory.
+
+\begin{definition}[Denotation]\label{def:den}
+For a program $P$ and a word $w$, $\denw{P}{w}$ is the least set of
+super-operators closed under the rules of \cref{tab:den}, and
+$\den{P} = \bigcup_w \denw{P}{w}$.
+\end{definition}
+
+\begin{table}[h]
+\centering
+\footnotesize
+$\begin{array}{l@{\quad}rcl@{\quad}l}
+\textsc{Final} & \id &\in& \denw{P}{w} & \final(P) \\[2pt]
+\textsc{Dead} & 0 &\in& \denw{P}{\epsilon} & \neg\final(P) \\[2pt]
+\textsc{Stay} & \sop{F} &\in& \denw{P}{s\,w}
+  & \neg\final(P),\ P \text{ not enabled at } s,\ \sop{F} \in \denw{P}{w} \\[2pt]
+\textsc{Tau} & \sop{F} &\in& \denw{P}{s\,w}
+  & P \step{\tau}{s} P',\ \sop{F} \in \denw{P'}{w} \\[2pt]
+\textsc{Op} & \sop{F} \circ \sop{E}_U^{\tilde q} &\in& \denw{P}{t\,w}
+  & P \step{\req{U}}{t} P',\ \sop{F} \in \denw{P'}{w} \\[2pt]
+\textsc{Init} & \sop{F} \circ \sop{E}_{\mathsf{init}}^{\tilde q} &\in& \denw{P}{t\,w}
+  & P \step{\initp}{t} P',\ \sop{F} \in \denw{P'}{w} \\[2pt]
+\textsc{Meas} & \sum_{0 \le m < |\M|} \sop{F}_m \circ \sop{M}_m &\in& \denw{P}{t\,w}
+  & P \step{\mrecv{m}}{t} P_m,\ \sop{F}_m \in \denw{P_m}{w} \text{ for all } m
+\end{array}$
+\caption{Denotation of a program under a word of choices.}
+\label{tab:den}
+\end{table}
+
+\begin{remark}
+Rules \textsc{Final} and \textsc{Dead} are the two ends of a run: a final
+program has finished, and contributes the memory as it stands; a program still
+running when the word is exhausted contributes nothing, as the approximation
+$P^{(n)}$ of~\cite{UVY26} in which the $n$-th unfolding is replaced by abort.
+Our reduction semantics has no terminal state $E$: a program is final when it
+is $\mathbf{0}$ up to congruence, but also when it is deadlocked, an output or
+an input waiting for a partner, which are the external actions of the program
+LTS. The union over words is the nondeterminism: two transitions with the
+same choice, for instance two outputs on $c$ with the same tag in parallel
+with an input, give two super-operators in $\denw{P}{w}$. The denotation only
+contains the finite approximations; the least upper bound along infinite
+schedulers, which~\cite{FengXu23,UVY26} take in the cpo of super-operators,
+is left for further work.
+\end{remark}
+
+\begin{lemma}[Congruence]\label{lem:den-cgr}
+If $P \equiv Q$ then $\denw{P}{w} = \denw{Q}{w}$ for all $w$, hence
+$\den{P} = \den{Q}$.
+\end{lemma}
+
+\begin{proof}
+By induction on $w$. By \cref{lem:cgr-bisim} every transition of $P$ is
+matched by a transition of $Q$ with the same action and the same choice, up
+to $\equiv$, and conversely: $P$ and $Q$ are final together and enabled at
+the same choices, and each rule of \cref{tab:den} applied to $P$ is applied to
+$Q$ with the induction hypothesis on the residuals.
+\end{proof}
+
+The correspondence with the reduction semantics is that of
+\cite[Theorem 3.1]{UVY26}: the denotation applied to a memory is the sum of
+the memories reached by the runs. The runs are organised in \emph{trees}: a
+node is one reduction, or one reduction per outcome of a measurement, and a
+final configuration is a leaf. To group the reductions by outcome we use a
+labelled copy of \cref{tab:sts}, $\conf{\rho}{P} \red_{s}^{\kappa}
+\conf{\rho'}{P'}$ with $\kappa \in \{\epsilon\} \cup \{m\}$, the label
+$\kappa = m$ when the redex is \textsc{Meas} with outcome $m$ and
+$\kappa = \epsilon$ for the other redexes (the labels $l ::= \epsilon \mid m$
+of~\cite{UVY26}); forgetting $\kappa$ gives back \cref{tab:sts}, and a
+reduction of \cref{tab:sts} has at least one label. A configuration is final
+if it has no reduction, and enabled at $s$ if it has a reduction with choice
+$s$; by \cref{lem:harmony-prog}, $\conf{\rho}{P}$ is final iff $P$ is, and
+enabled at $s$ iff $P$ is.
+
+\begin{definition}[Trees of reductions]\label{def:tree}
+$\tree{\conf{\rho}{P}}{w}{\ell}{}$, ``$\conf{\rho}{P}$ following $w$ has
+the leaves $\ell$'', for a list $\ell$ of memories, is the least relation
+closed under the rules
+\[
+\footnotesize
+\begin{array}{l@{\quad}l@{\quad}l}
+\textsc{Leaf} & \tree{\conf{\rho}{P}}{w}{[\rho]}{} & \conf{\rho}{P} \text{ final} \\[2pt]
+\textsc{Dead} & \tree{\conf{\rho}{P}}{\epsilon}{[\,]}{} & \conf{\rho}{P} \text{ not final} \\[2pt]
+\textsc{Stay} & \tree{\conf{\rho}{P}}{s\,w}{\ell}{}
+  & \conf{\rho}{P} \text{ not final, not enabled at } s,\ \tree{\conf{\rho}{P}}{w}{\ell}{} \\[2pt]
+\textsc{Step} & \tree{\conf{\rho}{P}}{s\,w}{\ell}{}
+  & \conf{\rho}{P} \red_{s}^{\epsilon} \conf{\rho'}{P'},\ \tree{\conf{\rho'}{P'}}{w}{\ell}{} \\[2pt]
+\textsc{Meas} & \tree{\conf{\rho}{P}}{t\,w}{\ell_0 \cdots \ell_{|\M|-1}}{}
+  & \conf{\rho}{P} \red_{t}^{m} \conf{\br}{P_m},\ \tree{\conf{\br}{P_m}}{w}{\ell_m}{}
+    \text{ for all } m
+\end{array}
+\]
+\end{definition}
+
+\begin{theorem}[Correspondence]\label{thm:den}
+For all $\rho$, $P$, $w$ and $\sigma$,
+\[
+\exists \sop{F} \in \denw{P}{w}.\ \sop{F}(\rho) = \sigma
+\quad\iff\quad
+\exists \ell.\ \tree{\conf{\rho}{P}}{w}{\ell}{} \text{ and } \textstyle\sum \ell = \sigma .
+\]
+In particular $\den{P}(\rho) = \{ \sum \ell \mid \tree{\conf{\rho}{P}}{w}{\ell}{},\ w \text{ a word} \}$.
+\end{theorem}
+
+\begin{proof}
+Both directions by induction on $w$, the rules of \cref{tab:den} and of
+\cref{def:tree} being in one-to-one correspondence. \cref{lem:harmony-prog}
+turns a transition $P \step{\lambda}{s} P'$ with $\lambda$ internal into the
+reduction $\conf{\rho}{P} \red_{s}^{\kappa} \conf{\rho'}{P'}$, with
+$\kappa = m$ exactly when $\lambda = \mrecv{m}$, and conversely a reduction
+into a transition to some $Q' \equiv P'$, where \cref{lem:den-cgr} replaces
+$Q'$ by $P'$. The leaves are summed with
+$(\sop{F} \circ \sop{E})(\rho) = \sop{F}(\sop{E}(\rho))$ and
+$(\sum_m \sop{F}_m \circ \sop{M}_m)(\rho) = \sum_m \sop{F}_m(\sop{M}_m(\rho))$,
+the leaves of a measurement node being the concatenation of the leaves of its
+branches.
+\end{proof}
+
+\begin{remark}
+In \cite[Theorem 3.1]{UVY26} the nondeterminism of the measurements is
+resolved by a function $\alpha$ from labels to configurations, and the
+statement is for every $\alpha$; here the measurement is a single node with
+all its outcomes, and the nondeterminism is that of the reduction semantics:
+every tree of \cref{def:tree} is a way of taking the reductions of
+\cref{tab:sts} along $w$, and \cref{thm:den} says that the denotation
+enumerates exactly these trees.
+\end{remark}

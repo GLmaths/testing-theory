@@ -1,0 +1,45 @@
+\paragraph{Mechanisation.} The development is in Rocq, in the directory
+\texttt{lqCCS} of the \texttt{testing-theory} library (the earlier
+development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist}):
+\begin{itemize}
+\item \texttt{Language/Syntax.v}: syntax with de Bruijn indices for restricted
+  channels and bound variables, substitutions, shifts;
+\item \texttt{Language/LTS.v}: \cref{fig:conf,fig:prog,fig:mem},
+  \cref{def:par}, and the renaming lemmas;
+\item \texttt{Language/Congruence.v}: \cref{tab:cgr} and
+  \cref{lem:cgr-bisim} (\texttt{cgr\_bisim});
+\item \texttt{Harmony\_Lemma/Memory\_Harmony.v}: \cref{lem:pre-harmony}
+  (\texttt{pre\_harmony});
+\item \texttt{Harmony\_Lemma/Parallel\_Harmony.v}: \cref{lem:par-harmony}
+  (\texttt{parallel\_harmony});
+\item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \cref{tab:sts} (\texttt{sts}) and its
+  labelled copy (\texttt{sts\_lab}); \cref{lem:shapes}: \newline
+  \texttt{TransitionShapeForOutput}, \texttt{TransitionShapeForInput}, \newline
+  \texttt{TransitionShapeForGuard};
+  \cref{lem:harmony}: \texttt{harmony} and \texttt{harmony\_par};
+\iffalse
+\item \texttt{Testing\_Pre\_orders/pMust/pMust\_scheduled.v}: distributions,
+  the two liftings and the runs, generic; \texttt{pMust\_almost\_sure.v}:
+  the almost-sure must, generic; \texttt{pMust\_smyth.v}:
+  \cref{def:smyth}, generic, and \texttt{ctx\_pre\_sm\_as};
+  \texttt{pMust\_transfer.v}: the transfer of runs along a stuttering
+  simulation (\texttt{run\_transfer}, \texttt{pmust\_as\_transfer});
+\item \texttt{Testing/Scheduled.v}: the scheduled step of lqCCS and its instance of the
+  generic classes, \texttt{Omega\_bottom}; \texttt{Testing/DistLTS.v}: \cref{tab:dlts}, \cref{def:alt}
+  (\texttt{alt\_pre}, \texttt{alt\_as}), the uniform form (\texttt{alt\_pre\_unif},
+  \texttt{alt\_pre\_unif\_alt\_pre}), the scheduled-word form (\texttt{follows},
+  \texttt{alt\_pre\_det}, \texttt{alt\_pre\_det\_alt\_pre}) and \texttt{drun\_nonzero};
+\item \texttt{Testing/Observers.v}: the class of observers, their shape
+  (\texttt{menu}, \texttt{S\_T}); \newline
+  \texttt{Testing/Smyth\_Soundness.v}: \cref{thm:char}
+  (\texttt{alt\_pre\_sound}, \texttt{alt\_pre\_obs\_iff}) and its almost-sure
+  counterpart (\texttt{alt\_as\_sound}, \texttt{alt\_as\_obs\_iff}).
+\item \texttt{Language/Denotational.v}: \cref{def:den} (\texttt{den},
+  \texttt{denot}) and \cref{lem:den-cgr} (\texttt{den\_cgr}, \texttt{denot\_cgr});
+\item \texttt{Harmony\_Lemma/Denotational\_Harmony.v}: \cref{def:tree}
+  (\texttt{sts\_tree}) and \cref{thm:den}: \newline
+  \texttt{den\_sound}, \texttt{den\_complete}, \texttt{den\_sts\_iff}.
+\fi
+\end{itemize}
+The quantum model is a parameter: an abstract algebra of super-operators
+acting linearly on memories, with the names of the syntax interpreted in it.

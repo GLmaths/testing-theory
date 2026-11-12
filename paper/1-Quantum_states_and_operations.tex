@@ -1,0 +1,44 @@
+\section{Quantum states and operations}
+
+For a finite set $\Sigma$ of $n$ qubits, $\Hil_\Sigma = (\mathbb{C}^2)^{\otimes n}$.
+
+\begin{definition}[Density operator]\label{def:density}
+A \emph{partial density operator} on $\Hil_\Sigma$ is a linear operator $\rho$
+on $\Hil_\Sigma$ that is positive, i.e.\ $\langle\psi|\rho|\psi\rangle \ge 0$
+for all $|\psi\rangle \in \Hil_\Sigma$, and such that $\tr(\rho) \le 1$. It is a
+\emph{density operator} when $\tr(\rho) = 1$. A pure state $|\psi\rangle$ is the
+density operator $|\psi\rangle\langle\psi|$.
+\end{definition}
+
+\begin{definition}[Super-operator]\label{def:sop}
+A \emph{super-operator} on $n$ qubits, written $\sop{E} : \mathsf{Sop}(n)$, is
+a quantum channel: a completely positive and trace-preserving linear map on
+the operators of $(\mathbb{C}^2)^{\otimes n}$. Equivalently,
+$\sop{E}(\rho) = \sum_i E_i \rho E_i^\dagger$ for a family $\{E_i\}_i$ of
+linear operators such that $\sum_i E_i^\dagger E_i = I$. For a tuple
+$\tilde q$ of $n$ qubits of $\Sigma$, $\sop{E}^{\tilde q}$ is the super-operator
+on $\Hil_\Sigma$ that applies $\sop{E}$ to $\tilde q$ and the identity to the
+other qubits. Applying $\sop{E}$ to $\tilde q$ maps $\rho$ to $\sapp{\sop{E}}$,
+and $\tr(\sapp{\sop{E}}) = \tr(\rho)$.
+\end{definition}
+
+The programs use two kinds of super-operators. A \emph{quantum gate} on $n$
+qubits, written $U : \mathsf{Op}(n)$, is a unitary operator on
+$(\mathbb{C}^2)^{\otimes n}$, i.e.\ $UU^\dagger = U^\dagger U = I$; it gives
+the super-operator $\sop{E}_U : \rho \mapsto U \rho U^\dagger$, so that
+$\sapp{\sop{E}_U} = \upd{U}$, where $U^{\tilde q}$ applies $U$ to $\tilde q$
+and the identity to the other qubits. The \emph{initialisation} resets $n$
+qubits to $|0\rangle$; it is the super-operator
+$\sop{E}_{\mathsf{init}} : \rho \mapsto \sum_{i} |0\rangle\langle i| \,\rho\,
+|i\rangle\langle 0|$, where $i$ ranges over the computational basis, and we
+write $\inirho$ for $\sapp{\sop{E}_{\mathsf{init}}}$.
+
+\begin{definition}[Measurement]\label{def:meas}
+A \emph{measurement} on $n$ qubits with $k$ outcomes, written
+$\M : \mathsf{Meas}(n)$ with $|\M| = k$, is a family $\{M_m\}_{0 \le m < k}$ of
+linear operators on $(\mathbb{C}^2)^{\otimes n}$ such that
+$\sum_{m} M_m^\dagger M_m = I$. Measuring $\tilde q$ in $\rho$ gives the outcome
+$m$ with probability $p_m = \tr(\br)$, and the \emph{unnormalised branch}
+$\br$, whose trace is $p_m$. The normalised post-measurement state is the branch
+divided by $p_m$.
+\end{definition}

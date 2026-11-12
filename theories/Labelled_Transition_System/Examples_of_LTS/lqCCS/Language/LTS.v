@@ -160,15 +160,14 @@ Inductive prog_step : proc → choice → Labels prog_action → proc → Prop :
 (* ** The memory LTS and the synchronisation predicates *)
 
 Inductive mem_action : Type :=
-| MeOp (E : sop) (qs : list qubit)
-| MeMeas (M : meas) (qs : list qubit) (n : nat)
-| MeInit (qs : list qubit).
+| MeSop (S : msop) (qs : list qubit)
+| MeMeas (M : meas) (qs : list qubit) (n : nat).
 
-(* [U(q̃)‾ sync U(q̃)], [M(q̃)!m sync M(q̃)?m], [init(q̃)‾ sync init(q̃)] *)
+(* [ℰ_U(q̃)‾ sync U(q̃)], [ℰ_init(q̃)‾ sync init(q̃)], [M(q̃)!m sync M(q̃)?m] *)
 Inductive sync : mem_action → prog_action → Prop :=
-| sync_op E qs : sync (MeOp E qs) (PrOp E qs)
+| sync_op E qs : sync (MeSop (SGate E) qs) (PrOp E qs)
 | sync_meas M qs n : sync (MeMeas M qs n) (PrMeas M qs n)
-| sync_init qs : sync (MeInit qs) (PrInit qs).
+| sync_init qs : sync (MeSop SInit qs) (PrInit qs).
 
 (* [c!v sync c?v] and [c?v sync c!v] *)
 Inductive sync_chan : prog_action → prog_action → Prop :=
@@ -184,12 +183,10 @@ Section Memory.
   Context `{QM : QuantumModel}.
 
   Inductive mem_step : St → choice → Labels mem_action → St → Prop :=
-  | me_op ρ E qs :
-      mem_step ρ CEps (ActExt (MeOp E qs)) (sop_apply E qs ρ)
+  | me_sop ρ S qs :
+      mem_step ρ CEps (ActExt (MeSop S qs)) (msop_apply S qs ρ)
   | me_meas ρ M qs (k : Out (meas_of M qs)) :
-      mem_step ρ CEps (ActExt (MeMeas M qs (code _ k))) (meas_branch M qs k ρ)
-  | me_init ρ qs :
-      mem_step ρ CEps (ActExt (MeInit qs)) (init_apply qs ρ).
+      mem_step ρ CEps (ActExt (MeMeas M qs (code _ k))) (meas_branch M qs k ρ).
 
   (* ** The configuration LTS *)
 

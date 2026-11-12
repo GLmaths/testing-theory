@@ -1,0 +1,130 @@
+\section{Parallel composition}
+
+The definitions below apply to any two LTSs whose transitions
+$s \step{\lambda}{c} s'$ carry a choice $c \in \{\epsilon, t, (t,t')\}$, where
+$\epsilon$ is the empty choice and is not written: the memory LTS only has
+transitions with choice $\epsilon$. Choices compose by
+$\epsilon \cdot c = c \cdot \epsilon = c$ and $t \cdot t' = \{t,t'\}$.
+
+\begin{definition}[Synchronisation]\label{def:sync}
+A \emph{synchronisation predicate} between two LTSs with external actions
+$A_1$ and $A_2$ is a relation ${\sync} \subseteq A_1 \times A_2$. Between the
+memory and the programs, $\syncM$ is the least relation such that
+\[
+\memop{\sop{E}_U} \syncM \req{U}
+\qquad\quad
+\memop{\sop{E}_{\mathsf{init}}} \syncM \initp
+\qquad\quad
+\msend{m} \syncM \mrecv{m}.
+\]
+Between two programs, $\syncC$ relates the dual actions on a channel:
+$c!v \syncC c?v$ and $c?v \syncC c!v$.
+\end{definition}
+
+\begin{definition}[Parallel composition of LTSs]\label{def:par}
+Given a synchronisation predicate $\mathsf{sync}$, the parallel composition
+$L_1 \lpar_{\mathsf{sync}} L_2$ of two LTSs $L_1$ and $L_2$ is the LTS whose
+states are the pairs $s_1 \lpar s_2$ of a state of $L_1$ and a state of $L_2$,
+whose external actions are $A_1 \uplus A_2$, and whose transitions are given
+by the rules
+\begin{mathpar}
+\inferrule*[left=Left]
+  {s_1 \step{\lambda}{c} s_1'}
+  {s_1 \lpar s_2 \step{\lambda}{c} s_1' \lpar s_2}
+
+\inferrule*[left=Right]
+  {s_2 \step{\lambda}{c} s_2'}
+  {s_1 \lpar s_2 \step{\lambda}{c} s_1 \lpar s_2'}
+
+\inferrule*[left=Sync]
+  {s_1 \step{\mu_1}{c_1} s_1' \\ s_2 \step{\mu_2}{c_2} s_2' \\ \mu_1 \sync \mu_2}
+  {s_1 \lpar s_2 \step{\tau}{c_1 \cdot c_2} s_1' \lpar s_2'}
+\end{mathpar}
+The symbol $\lpar$ is the composition of LTSs; $\parallel$ remains the
+parallel composition of the syntax.
+\end{definition}
+
+For a memory $\rho$ and a program $P$, rule Sync gives
+$\rho \lpar P \step{\tau}{t} \rho' \lpar P'$ whenever
+$\rho \mto{\mu_1} \rho'$, $P \step{\mu_2}{t} P'$ and $\mu_1 \syncM \mu_2$.
+
+\begin{lemma}[Pre-harmony]\label{lem:pre-harmony}
+For all $\rho, P, s, \rho', P'$,
+\[
+\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{P'}
+\iff
+\rho \lpar P \step{\tau}{s} \rho' \lpar P'
+\]
+where $\lpar$ is the composition for $\syncM$ of the memory LTS
+(\cref{fig:mem}) and the program LTS (\cref{fig:prog}).
+\end{lemma}
+
+That is, the LTS of lqCCS is decomposed into the LTS of programs, which runs
+without the quantum memory (\cref{fig:prog}), and the LTS of the memory
+(\cref{fig:mem}).
+
+\begin{proof}
+($\Leftarrow$) We go by case analysis on the derivation of
+$\rho \lpar P \step{\tau}{s} \rho' \lpar P'$.
+The only two cases are an internal transition of the program (rule Right) or
+a synchronisation (rule Sync), since the memory has no internal transition.
+In both cases, we go by induction on the transition of the program
+$P \step{\lambda}{s'} P'$: a channel action gives the same transition of the
+configuration, with the same memory; a request $\req{U}$, $\initp$ or $\mrecv{m}$
+synchronised with the memory gives the rules Op, Init and Meas of
+\cref{fig:conf}, since $\sapp{\sop{E}_U} = \upd{U}$ and
+$\sapp{\sop{E}_{\mathsf{init}}} = \inirho$.
+
+($\Rightarrow$) For this side, we prove a stronger lemma by generalising the
+internal label $\tau$ with any label $\lambda$:
+$$
+  \conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}
+\Rightarrow
+\rho \lpar P \step{\lambda}{s} \rho' \lpar P'
+$$
+We go by induction on the derivation of
+$\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$ and we conclude by induction
+hypothesis. The rules Op, Meas and Init of \cref{fig:conf} are instances of the rule
+Sync, with the choice $\epsilon \cdot t = t$; the rule Rec is an instance of
+the rule Right.
+\end{proof}
+
+The configuration of a parallel composition $P \parallel Q$ is itself a
+composition of LTSs: the system $\rho \lpar P$ is composed with the program
+$Q$, which synchronises with the memory of the system (through $\syncM$) and
+with the channels of $P$ (through $\syncC$). Let
+${\syncS} \subseteq (A_{\M} \uplus A_{\mathsf{prog}}) \times A_{\mathsf{prog}}$
+be the least relation such that
+\[
+\mu_{\M} \syncS \mu \ \text{ if } \mu_{\M} \syncM \mu
+\qquad\qquad
+\mu_1 \syncS \mu_2 \ \text{ if } \mu_1 \syncC \mu_2 .
+\]
+
+\begin{lemma}[Parallel harmony]\label{lem:par-harmony}
+For all $\rho, P, Q, s, \rho', R$,
+\[
+\conf{\rho}{P \parallel Q} \step{\tau}{s} \conf{\rho'}{R}
+\iff
+R = P' \parallel Q' \text{ and }
+(\rho \lpar P) \lpar Q \step{\tau}{s} (\rho' \lpar P') \lpar Q'
+\text{ for some } P', Q',
+\]
+where the outer composition is for $\syncS$ and the inner one for $\syncM$.
+\end{lemma}
+
+\begin{proof}
+($\Rightarrow$) By case analysis on the last rule of the transition of
+$\conf{\rho}{P \parallel Q}$. ParL is the rule Left, by
+\cref{lem:pre-harmony}. ParR is either the rule Right, for a silent move of
+$Q$, or the rule Sync between a move of the memory (rule Left inside
+$\rho \lpar P$) and a request of $Q$, with choice $\epsilon \cdot t = t$.
+SynchL and SynchR are the rule Sync between a channel action of $P$ (rule
+Right inside $\rho \lpar P$, which does not change $\rho$) and the dual action
+of $Q$, with choice $t \cdot t' = \{t,t'\}$.
+
+($\Leftarrow$) By case analysis on the last rule of the transition of
+$(\rho \lpar P) \lpar Q$, the same correspondence in the other direction;
+the channel actions of programs always carry a single tag, so that the choice
+of a synchronisation between $P$ and $Q$ is a pair $\{t,t'\}$.
+\end{proof}
