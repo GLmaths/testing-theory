@@ -219,6 +219,47 @@ Proof.
     etrans; [by apply gcgr_sum_l|]. apply rtsc_rl, gcs_sum_assoc.
 Qed.
 
+Definition quant_action (a : prog_action) : Prop :=
+  match a with PrOut _ _ | PrIn _ _ => False | _ => True end.
+
+Lemma TransitionShapeForQuantum P s a Q :
+  quant_action a → prog_step P s (ActExt a) Q →
+  ∃ 𝜆 P1 K R n Q1, P ≡* Ѵ n (PG ((𝜆 ∙ P1) ⊕ K) ∥ R)
+    ∧ prog_gstep (𝜆 ∙ P1) s (ActExt a) Q1 ∧ Q ≡* Ѵ n (Q1 ∥ R).
+Proof.
+  intros Ha Hs. remember (ActExt a) as l eqn:El. revert a Ha El.
+  induction Hs; intros a0 Ha El; simplify_eq.
+  - destruct (TransitionShapeForGuard _ _ _ _ H) as (𝜆 & Q0 & K & Hg & Hs0).
+    exists 𝜆, Q0, K, 𝟘, 0, P'. split_and!; [|done|].
+    + simpl. etrans; [by apply cgr_guard|]. apply rtsc_rl, cs_par_nil.
+    + simpl. apply rtsc_rl, cs_par_nil.
+  - done.
+  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists 𝜆, P1, K, R, n, Q1. split_and!; [|done|done].
+    etrans; [|exact HP]. apply cgr_of_cs. by apply cs_ite_t.
+  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists 𝜆, P1, K, R, n, Q1. split_and!; [|done|done].
+    etrans; [|exact HP]. apply cgr_of_cs. by apply cs_ite_f.
+  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists 𝜆, P1, K, (R ∥ ren (Nat.add n) Q), n, Q1. split_and!; [|done|].
+    + etrans; [by apply cgr_par_l|]. etrans; [apply cgr_res_scope_n|].
+      apply cgr_resn, rtsc_rl, cs_par_assoc.
+    + etrans; [by apply cgr_par_l|]. etrans; [apply cgr_res_scope_n|].
+      apply cgr_resn, rtsc_rl, cs_par_assoc.
+  - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    exists 𝜆, P1, K, (R ∥ ren (Nat.add n) P), n, Q1. split_and!; [|done|].
+    + etrans; [apply cgr_of_cs, cs_par_comm|].
+      etrans; [by apply cgr_par_l|]. etrans; [apply cgr_res_scope_n|].
+      apply cgr_resn, rtsc_rl, cs_par_assoc.
+    + etrans; [apply cgr_of_cs, cs_par_comm|].
+      etrans; [by apply cgr_par_l|]. etrans; [apply cgr_res_scope_n|].
+      apply cgr_resn, rtsc_rl, cs_par_assoc.
+  - assert (E : ren_lbl S (ActExt a0) = ActExt a0) by (destruct a0; simpl in *; done).
+    destruct (IHHs _ Ha E) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    rewrite E in Hg.
+    exists 𝜆, P1, K, R, (S n), Q1. split_and!; [by apply cgr_res|done|by apply cgr_res].
+Qed.
+
 (* ** Labels of the reductions: the outcome of a measurement, or nothing *)
 
 Inductive mlabel : Type :=
@@ -402,6 +443,20 @@ Section STS.
     - inversion Hm; subst. apply sl_rec.
   Qed.
 
+  Lemma Quantum_Implies_Reduction P s a Q ρ ρ' κ :
+    quant_action a → prog_step P s (ActExt a) Q → mem_eff ρ (ActExt a) ρ' κ →
+    sts_lab ρ P s κ ρ' Q.
+  Proof.
+    intros Ha Hs Hm.
+    destruct (TransitionShapeForQuantum _ _ _ _ Ha Hs) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
+    eapply sl_cong; [exact HP| |symmetry; exact HQ].
+    apply sts_resn, sl_par.
+    inversion Hg; subst; inversion Hm; subst.
+    - by apply sl_op.
+    - by apply sl_meas.
+    - by apply sl_init.
+  Qed.
+
   Lemma mstep_sts_lab ρ P s κ ρ' P' : mstep ρ P s κ ρ' P' → sts_lab ρ P s κ ρ' P'.
   Proof. intros (l & Hp & Hm). by eapply Internal_Implies_Reduction. Qed.
 
@@ -480,6 +535,12 @@ Section STS.
       exists Q'. split; [by eapply mstep_conf | done].
     - intros (Q' & Hc & HQ). destruct (conf_mstep _ _ _ _ _ Hc) as (κ & Hm).
       eapply sts_cong; [reflexivity | by eapply mstep_sts | exact HQ].
+  Qed.
+
+  Theorem harmony_composition ρ P s ρ' Q :
+    sts ρ P s ρ' Q ↔ ∃ Q', (mem_step ∣[sync] prog_step) (ρ, P) s τ (ρ', Q') ∧ Q' ≡* Q.
+  Proof.
+    rewrite harmony. split; intros (Q' & Hc & HQ); exists Q'; (split; [by apply pre_harmony|done]).
   Qed.
 
   Corollary harmony_par ρ P Q s ρ' R :
