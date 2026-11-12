@@ -1,4 +1,6 @@
-\section{Quantum states and operations}
+\section{Preliminaries}\label{sec:prelim}
+
+\subsection{Quantum states and operations}
 
 For a finite set $\Sigma$ of $n$ qubits, $\Hil_\Sigma = (\mathbb{C}^2)^{\otimes n}$.
 
@@ -42,3 +44,31 @@ $m$ with probability $p_m = \tr(\br)$, and the \emph{unnormalised branch}
 $\br$, whose trace is $p_m$. The normalised post-measurement state is the branch
 divided by $p_m$.
 \end{definition}
+
+\subsection{Syntax of lqCCS}
+
+Let $\mathit{Tag} \ni t$ be a countably infinite set of \emph{tags}.
+
+Outputs are asynchronous, sums are guarded, and recursion is as in VACCS, with
+process variables $X$ and a tagged recursion operator:
+\[
+\begin{array}{r@{\ ::=\ }l}
+P & \tagged{t}{c!e} \mid K \mid P \parallel P \mid \ite{e}{P}{P} \mid P \setminus c
+    \mid X \mid \tagged{t}{\rec{X}{P}}\\
+K & \mathbf{0}_{\tilde e} \mid \alpha.P \mid K + K\\
+\alpha & \tagged{t}{\tau} \mid \tagged{t}{c?x} \mid
+        \tagged{t}{U(\tilde e)} \mid \tagged{t}{\M(\tilde e \rhd x)}
+        \mid \tagged{t}{\mathsf{init}(\tilde e)}
+\end{array}
+\]
+The prefix $\tagged{t}{U(\tilde e)}$ applies the quantum gate $U$ to the
+qubits $\tilde e$, and the prefix $\tagged{t}{\mathsf{init}(\tilde e)}$ resets
+the qubits $\tilde e$ to $|0\rangle$. Both are super-operators
+(\cref{def:sop}), and the memory treats them alike.
+$P[Q/X]$ is the substitution of $Q$ for the free occurrences of $X$ in $P$;
+unfolding a recursion is a step of its own, selected by the tag of the recursion.
+A \emph{choice} is either a tag or an unordered pair of tags,
+$s ::= t \mid \{t,t'\}$: the pair $\{t,t'\}$ selects the synchronisation
+between a move tagged $t$ and a move tagged $t'$, whichever side each move is
+on. A \emph{configuration} $\conf{\rho}{P}$ is a program $P$ together with
+the quantum memory $\rho$ it acts upon.

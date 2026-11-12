@@ -1,4 +1,16 @@
-\section{Denotational semantics}\label{sec:den}
+\section{Denotational semantics}\label{app:den}\label{sec:den}
+
+The proof of the Harmony lemma goes through a restatement at the level of
+programs, which is the form used in this appendix. Write
+$\rho \xrightarrow{\lambda} \rho'$ for the effect of an internal action on the
+memory: $\rho \xrightarrow{\tau} \rho$, $\rho \xrightarrow{\req{U}} \upd{U}$,
+$\rho \xrightarrow{\initp} \inirho$ and $\rho \xrightarrow{\mrecv{m}} \br$.
+
+\begin{lemma}[Harmony, program level]\label{lem:harmony-prog}
+$\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}$ iff $P \step{\lambda}{s} Q'$ and
+$\rho \xrightarrow{\lambda} \rho'$ for some internal action $\lambda$ and some
+$Q' \equiv Q$.
+\end{lemma}
 
 Following Feng and Xu~\cite{FengXu23}, the denotation of a program is a set
 of super-operators on the memory: a measurement sums its branches, and a
@@ -82,12 +94,12 @@ The correspondence with the reduction semantics is that of
 the memories reached by the runs. The runs are organised in \emph{trees}: a
 node is one reduction, or one reduction per outcome of a measurement, and a
 final configuration is a leaf. To group the reductions by outcome we use a
-labelled copy of \cref{tab:sts}, $\conf{\rho}{P} \red_{s}^{\kappa}
+labelled copy of \cref{fig:sts}, $\conf{\rho}{P} \red_{s}^{\kappa}
 \conf{\rho'}{P'}$ with $\kappa \in \{\epsilon\} \cup \{m\}$, the label
 $\kappa = m$ when the redex is \textsc{Meas} with outcome $m$ and
 $\kappa = \epsilon$ for the other redexes (the labels $l ::= \epsilon \mid m$
-of~\cite{UVY26}); forgetting $\kappa$ gives back \cref{tab:sts}, and a
-reduction of \cref{tab:sts} has at least one label. A configuration is final
+of~\cite{UVY26}); forgetting $\kappa$ gives back \cref{fig:sts}, and a
+reduction of \cref{fig:sts} has at least one label. A configuration is final
 if it has no reduction, and enabled at $s$ if it has a reduction with choice
 $s$; by \cref{lem:harmony-prog}, $\conf{\rho}{P}$ is final iff $P$ is, and
 enabled at $s$ iff $P$ is.
@@ -142,6 +154,6 @@ resolved by a function $\alpha$ from labels to configurations, and the
 statement is for every $\alpha$; here the measurement is a single node with
 all its outcomes, and the nondeterminism is that of the reduction semantics:
 every tree of \cref{def:tree} is a way of taking the reductions of
-\cref{tab:sts} along $w$, and \cref{thm:den} says that the denotation
+\cref{fig:sts} along $w$, and \cref{thm:den} says that the denotation
 enumerates exactly these trees.
 \end{remark}

@@ -1,61 +1,21 @@
-\section{Reduction semantics}
+\section{Harmony lemma}\label{sec:harmony}
 
-The reduction semantics of configurations, written
-$\conf{\rho}{P} \red_{s} \conf{\rho'}{P'}$ and indexed by the choice $s$ that
-selects the redex, is the least relation closed under the rules of
-\cref{tab:sts}. It follows the STS of VACCS: the first six rules are the
-redexes, the last three close them under parallel composition, restriction
-and structural congruence.
 
-\begin{table}[h]
-\centering
-\footnotesize
-$\begin{array}{l@{\quad}rcl@{\quad}l}
-\textsc{Com} &
-  \conf{\rho}{\tagged{t}{c!e} \parallel (\tagged{t'}{c?x}.P + K)} &\red_{\{t,t'\}}&
-  \conf{\rho}{\mathbf{0} \parallel P[v/x]} & e \Downarrow v \\[2pt]
-\textsc{Tau} &
-  \conf{\rho}{\tagged{t}{\tau}.P + K} &\red_{t}& \conf{\rho}{P} \\[2pt]
-\textsc{Op} &
-  \conf{\rho}{\tagged{t}{U(\tilde q)}.P + K} &\red_{t}&
-  \conf{\upd{U}}{P} & U : \mathsf{Op}(|\tilde q|) \\[2pt]
-\textsc{Init} &
-  \conf{\rho}{\tagged{t}{\initp}.P + K} &\red_{t}&
-  \conf{\inirho}{P} \\[2pt]
-\textsc{Meas} &
-  \conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P + K} &\red_{t}&
-  \conf{\br}{P[m/x]} & \M : \mathsf{Meas}(|\tilde q|),\ 0 \le m < |\M| \\[2pt]
-\textsc{Rec} &
-  \conf{\rho}{\tagged{t}{\rec{X}{P}}} &\red_{t}&
-  \conf{\rho}{P[\tagged{t}{\rec{X}{P}}/X]} \\[2pt]
-\textsc{Par} &
-  \conf{\rho}{P \parallel Q} &\red_{s}& \conf{\rho'}{P' \parallel Q}
-  & \conf{\rho}{P} \red_{s} \conf{\rho'}{P'} \\[2pt]
-\textsc{Res} &
-  \conf{\rho}{P \setminus c} &\red_{s}& \conf{\rho'}{P' \setminus c}
-  & \conf{\rho}{P} \red_{s} \conf{\rho'}{P'} \\[2pt]
-\textsc{Cong} &
-  \conf{\rho}{P} &\red_{s}& \conf{\rho'}{Q}
-  & P \equiv P_1,\ \conf{\rho}{P_1} \red_{s} \conf{\rho'}{Q_1},\ Q_1 \equiv Q
-\end{array}$
-\caption{Reduction semantics of configurations.}
-\label{tab:sts}
-\end{table}
-
-As in VACCS, the proof of the Harmony lemma goes through the \emph{shapes}
+The reductions of \cref{fig:sts} and the silent transitions of
+\cref{fig:conf} coincide, up to structural congruence. As in VACCS, the proof goes through the \emph{shapes}
 of the transitions: up to congruence, a process that performs an action is a
 redex under some restrictions, in parallel with a rest. Here
 $(\nu \tilde d)\,P$ stands for $P \setminus d_1 \cdots \setminus d_n$, with
 $\tilde d$ fresh for everything but $P$ (by $\alpha$-conversion).
 
 \begin{lemma}[Shapes of the transitions]\label{lem:shapes}
-In the program LTS,
+In the LTS of configurations,
 \begin{enumerate}
-\item if $P \step{c!v}{s} P'$ then $s = t$ and
+\item if $\conf{\rho}{P} \step{c!v}{s} \conf{\rho'}{P'}$ then $s = t$, $\rho' = \rho$ and
   $P \equiv (\nu \tilde d)(\tagged{t}{c!e} \parallel R)$,
   $P' \equiv (\nu \tilde d)(\mathbf{0} \parallel R)$ for some $t, e, R, \tilde d$
   with $e \Downarrow v$ and $c \notin \tilde d$;
-\item if $P \step{c?v}{s} P'$ then $s = t$ and
+\item if $\conf{\rho}{P} \step{c?v}{s} \conf{\rho'}{P'}$ then $s = t$, $\rho' = \rho$ and
   $P \equiv (\nu \tilde d)((\tagged{t}{c?x}.P_1 + K) \parallel R)$,
   $P' \equiv (\nu \tilde d)(P_1[v/x] \parallel R)$ for some
   $t, x, P_1, K, R, \tilde d$ with $c \notin \tilde d$;
@@ -75,6 +35,15 @@ for Restr, the restriction is added to $\tilde d$; for SumL and SumR, the
 summand that moves is brought in front by \textsc{SumComm} and
 \textsc{SumAssoc}.
 \end{proof}
+
+\begin{lemma}[Congruence is a bisimulation]\label{lem:cgr-bisim}
+If $P \equiv Q$ and $\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$, then
+$\conf{\rho}{Q} \step{\lambda}{s} \conf{\rho'}{Q'}$ for some $Q' \equiv P'$.
+\end{lemma}
+
+The choice is preserved because the choice of a synchronisation is an
+unordered pair: \textsc{ParComm} exchanges the two sides of the
+synchronisation, not its choice.
 
 \begin{lemma}[Harmony]\label{lem:harmony}
 For all $\rho, P, s, \rho', Q$,
@@ -96,11 +65,8 @@ $R' \equiv R$.
 SumL. \textsc{Par} and \textsc{Res} are ParL and Restr. For \textsc{Cong}, let
 $P \equiv P_1$ and, by induction hypothesis,
 $\conf{\rho}{P_1} \step{\tau}{s} \conf{\rho'}{Q_1'}$ with $Q_1' \equiv Q_1$.
-By \cref{lem:pre-harmony} this transition is a silent move of $P_1$, or a
-request of $P_1$ synchronised with the memory; \cref{lem:cgr-bisim} gives the
-same move of $P$, with the same choice and up to $\equiv$, and
-\cref{lem:pre-harmony} again turns it into a transition of
-$\conf{\rho}{P}$.
+\cref{lem:cgr-bisim} gives the same transition of $\conf{\rho}{P}$, with
+the same choice and up to $\equiv$.
 
 ($\Leftarrow$) By \textsc{Cong} it is enough to show that
 $\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{Q}$ implies
@@ -111,7 +77,8 @@ in front, and the redex is \textsc{Tau}, \textsc{Op}, \textsc{Init} or
 and IteF are \textsc{Cong} with \textsc{IteT} and \textsc{IteF}; ParL is
 \textsc{Par}; ParR is \textsc{Par} under \textsc{ParComm}; Restr is
 \textsc{Res}; Rec is \textsc{Rec}. For SynchL, with
-$P \step{c!v}{t} P'$ and $Q \step{c?v}{t'} Q'$, \cref{lem:shapes}(1) and (2)
+$\conf{\rho}{P} \step{c!v}{t} \conf{\rho}{P'}$ and
+$\conf{\rho}{Q} \step{c?v}{t'} \conf{\rho}{Q'}$, \cref{lem:shapes}(1) and (2)
 give $P \parallel Q \equiv
 (\nu \tilde d)(\tagged{t}{c!e} \parallel R) \parallel
 (\nu \tilde d')((\tagged{t'}{c?x}.P_1 + K) \parallel R')$; the restrictions
@@ -120,17 +87,3 @@ $\tilde d$ and $\tilde d'$ are extruded one by one to the top with
 \textsc{ParComm} and \textsc{ParAssoc}, and the redex is \textsc{Com}, with
 choice $\{t,t'\}$. SynchR is SynchL under \textsc{ParComm}.
 \end{proof}
-
-\iffalse
-The proof of the Harmony lemma goes through a restatement at the level of
-programs, which is the form used in the next section. Write
-$\rho \xrightarrow{\lambda} \rho'$ for the effect of an internal action on the
-memory: $\rho \xrightarrow{\tau} \rho$, $\rho \xrightarrow{\req{U}} \upd{U}$,
-$\rho \xrightarrow{\initp} \inirho$ and $\rho \xrightarrow{\mrecv{m}} \br$.
-
-\begin{lemma}[Harmony, program level]\label{lem:harmony-prog}
-$\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}$ iff $P \step{\lambda}{s} Q'$ and
-$\rho \xrightarrow{\lambda} \rho'$ for some internal action $\lambda$ and some
-$Q' \equiv Q$.
-\end{lemma}
-\fi

@@ -1,0 +1,86 @@
+\section{Labelled transition system}\label{sec:lts}
+
+The LTS of lqCCS configurations is given in \cref{fig:conf}. Its transitions
+$\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$ carry an action $\lambda$
+and, like the reductions, the choice $s$ that selects them. Throughout,
+$\lambda$ ranges over all actions, $\tau$ included, and
+$\mu, \mu_1, \mu_2, \ldots$ over external actions. The external actions of a
+configuration are the outputs $c!v$ and the inputs $c?v$ on channels: the
+quantum prefixes act on the memory of the configuration, and are silent.
+
+\begin{figure}[h]
+\small
+\begin{mathpar}
+\inferrule*[left=Tau]
+  { }
+  {\conf{\rho}{\tagged{t}{\tau}.P} \step{\tau}{t} \conf{\rho}{P}}
+
+\inferrule*[left=Op]
+  {U : \mathsf{Op}(|\tilde q|)}
+  {\conf{\rho}{\tagged{t}{U(\tilde q)}.P} \step{\tau}{t} \conf{\upd{U}}{P}}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
+  {\conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P} \step{\tau}{t} \conf{\br}{P[m/x]}}
+
+\inferrule*[left=Init]
+  { }
+  {\conf{\rho}{\tagged{t}{\initp}.P} \step{\tau}{t} \conf{\inirho}{P}}
+
+\inferrule*[left=Send]
+  {e \Downarrow v}
+  {\conf{\rho}{\tagged{t}{c!e}} \step{c!v}{t} \conf{\rho}{\mathbf{0}}}
+
+\inferrule*[left=Recv]
+  { }
+  {\conf{\rho}{\tagged{t}{c?x}.P} \step{c?v}{t} \conf{\rho}{P[v/x]}}
+
+\inferrule*[left=IteT]
+  {e \Downarrow \mathit{tt} \\ \conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{\ite{e}{P}{Q}} \step{\lambda}{s} \conf{\rho'}{P'}}
+
+\inferrule*[left=IteF]
+  {e \Downarrow \mathit{ff} \\ \conf{\rho}{Q} \step{\lambda}{s} \conf{\rho'}{Q'}}
+  {\conf{\rho}{\ite{e}{P}{Q}} \step{\lambda}{s} \conf{\rho'}{Q'}}
+
+\inferrule*[left=SumL]
+  {\conf{\rho}{K_1} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{K_1 + K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+
+\inferrule*[left=SumR]
+  {\conf{\rho}{K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{K_1 + K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+
+\inferrule*[left=ParL]
+  {\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{P \parallel Q} \step{\lambda}{s} \conf{\rho'}{P' \parallel Q}}
+
+\inferrule*[left=ParR]
+  {\conf{\rho}{Q} \step{\lambda}{s} \conf{\rho'}{Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\lambda}{s} \conf{\rho'}{P \parallel Q'}}
+
+\inferrule*[left=SynchL]
+  {\conf{\rho}{P} \step{c!v}{t} \conf{\rho}{P'} \\
+   \conf{\rho}{Q} \step{c?v}{t'} \conf{\rho}{Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\tau}{\{t,t'\}} \conf{\rho}{P' \parallel Q'}}
+
+\inferrule*[left=SynchR]
+  {\conf{\rho}{P} \step{c?v}{t} \conf{\rho}{P'} \\
+   \conf{\rho}{Q} \step{c!v}{t'} \conf{\rho}{Q'}}
+  {\conf{\rho}{P \parallel Q} \step{\tau}{\{t,t'\}} \conf{\rho}{P' \parallel Q'}}
+
+\inferrule*[left=Restr]
+  {\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'} \\
+   \forall v.\ \lambda \neq c!v, c?v}
+  {\conf{\rho}{P \setminus c} \step{\lambda}{s} \conf{\rho'}{P' \setminus c}}
+
+\inferrule*[left=Rec]
+  { }
+  {\conf{\rho}{\tagged{t}{\rec{X}{P}}} \step{\tau}{t}
+   \conf{\rho}{P[\tagged{t}{\rec{X}{P}}/X]}}
+\end{mathpar}
+\caption{Configuration LTS, $\lambda \in \{\tau, c!v, c?v\}$. A measurement
+moves to one unnormalised branch for each outcome $m$; all branches carry the
+same choice $t$.}
+\label{fig:conf}
+\end{figure}

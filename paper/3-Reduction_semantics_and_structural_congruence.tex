@@ -1,4 +1,6 @@
-\section{Structural congruence}
+\section{Reduction semantics and structural congruence}\label{sec:red}
+
+\subsection{Structural congruence}
 
 Processes are identified up to $\alpha$-conversion of restricted channels and of
 bound variables. The structural congruence $\equiv$ is the least equivalence
@@ -30,15 +32,6 @@ free channels of $P$.}
 \label{tab:cgr}
 \end{table}
 
-\begin{lemma}[Congruence is a bisimulation]\label{lem:cgr-bisim}
-If $P \equiv Q$ and $P \step{\lambda}{s} P'$ in the program LTS, then
-$Q \step{\lambda}{s} Q'$ for some $Q' \equiv P'$.
-\end{lemma}
-
-The choice is preserved because the choice of a synchronisation is an
-unordered pair: \textsc{ParComm} exchanges the two sides of the
-synchronisation, not its choice.
-
 \begin{remark}\label{rem:debruijn}
 Scope extrusion \textsc{ResPar} needs the $\alpha$-conversion of the restricted
 channel: $(R \setminus d) \parallel Q$ with $d$ free in $Q$ must first rename
@@ -49,3 +42,59 @@ where $Q^{+}$ shifts the indices of $Q$, \textsc{ResOrd} exchanges the two
 innermost indices, and the substitution $P[Q/X]$ shifts $Q$ under each binder,
 so that $\equiv$ is closed under recursion.
 \end{remark}
+
+\subsection{Reduction semantics}
+
+The reduction semantics of configurations, written
+$\conf{\rho}{P} \red_{s} \conf{\rho'}{P'}$ and indexed by the choice $s$ that
+selects the redex, is the least relation closed under the rules of
+\cref{fig:sts}. It follows the STS of VACCS: the first six rules are the
+redexes, the last three close them under parallel composition, restriction
+and structural congruence.
+
+\begin{figure}[h]
+\small
+\begin{mathpar}
+\inferrule*[left=Com]
+  {e \Downarrow v}
+  {\conf{\rho}{\tagged{t}{c!e} \parallel (\tagged{t'}{c?x}.P + K)} \red_{\{t,t'\}}
+   \conf{\rho}{\mathbf{0} \parallel P[v/x]}}
+
+\inferrule*[left=Tau]
+  { }
+  {\conf{\rho}{\tagged{t}{\tau}.P + K} \red_{t} \conf{\rho}{P}}
+
+\inferrule*[left=Op]
+  {U : \mathsf{Op}(|\tilde q|)}
+  {\conf{\rho}{\tagged{t}{U(\tilde q)}.P + K} \red_{t} \conf{\upd{U}}{P}}
+
+\inferrule*[left=Init]
+  { }
+  {\conf{\rho}{\tagged{t}{\initp}.P + K} \red_{t} \conf{\inirho}{P}}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
+  {\conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P + K} \red_{t} \conf{\br}{P[m/x]}}
+
+\inferrule*[left=Rec]
+  { }
+  {\conf{\rho}{\tagged{t}{\rec{X}{P}}} \red_{t}
+   \conf{\rho}{P[\tagged{t}{\rec{X}{P}}/X]}}
+
+\inferrule*[left=Par]
+  {\conf{\rho}{P} \red_{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{P \parallel Q} \red_{s} \conf{\rho'}{P' \parallel Q}}
+
+\inferrule*[left=Res]
+  {\conf{\rho}{P} \red_{s} \conf{\rho'}{P'}}
+  {\conf{\rho}{P \setminus c} \red_{s} \conf{\rho'}{P' \setminus c}}
+
+\inferrule*[left=Cong]
+  {P \equiv P_1 \\ \conf{\rho}{P_1} \red_{s} \conf{\rho'}{Q_1} \\ Q_1 \equiv Q}
+  {\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}}
+\end{mathpar}
+\caption{Reduction semantics of configurations. A measurement reduces to one
+unnormalised branch for each outcome $m$; all branches carry the same choice
+$t$.}
+\label{fig:sts}
+\end{figure}

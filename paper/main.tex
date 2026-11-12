@@ -2,6 +2,9 @@
 
 \input{macros}
 
+\newif\ifshowappendix
+\showappendixfalse
+
 \title{Harmony lemma for lqCCS}
 \author{}
 \date{}
@@ -24,18 +27,14 @@ transition with that choice, up to structural congruence. All the results
 are mechanised in Rocq, over an abstract quantum model.
 \end{abstract}
 
-\input{1-Quantum_states_and_operations}
-\input{2-Syntax}
-\input{3-Parallel_composition}
-\input{4-Structural_congruence}
-\input{5-Reduction_semantics}
-
-\iffalse
-\input{6-Denotational_semantics}
-\input{7-Smyth_must_testing_and_its_characterisation}
-\fi
-
-\input{8-Mechanisation}
+\input{1-Introduction}
+\input{2-Preliminaries}
+\input{3-Reduction_semantics_and_structural_congruence}
+\input{4-LTS}
+\input{5-Harmony_lemma}
+\input{6-Parallel_LTS_and_parallel_harmony}
+\input{7-Conclusion}
+\input{8-Future_works}
 
 \begin{thebibliography}{9}
 \bibitem{Ceragioli25} L.~Ceragioli, F.~Gadducci, G.~Lomurno, G.~Tedeschi.
@@ -53,5 +52,11 @@ are mechanised in Rocq, over an abstract quantum model.
   Recursive Quantum Programs with Ancilla Data and Probabilistic Control. \emph{ACM
   Transactions on Computational Logic}, 2026.
 \end{thebibliography}
+
+\ifshowappendix
+\appendix
+\input{A-Sound_characterisation_of_the_Smyth_probabilistic_must_preorder}
+\input{B-Denotational_semantics}
+\fi
 
 \end{document}

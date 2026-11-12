@@ -1,4 +1,102 @@
-\section{Parallel composition}
+\section{Parallel LTS and parallel harmony}\label{sec:par}
+
+The LTS of configurations mixes two things: the control of the program and
+its effect on the quantum memory. This section separates them. The program
+LTS (\cref{fig:prog}) runs without memory, its quantum prefixes being
+\emph{requests}; the memory LTS (\cref{fig:mem}) serves these requests; and
+the LTS of configurations is their parallel composition.
+
+\begin{figure}[h]
+\small
+\begin{mathpar}
+\inferrule*[left=Tau]
+  { }
+  {\tagged{t}{\tau}.P \step{\tau}{t} P}
+
+\inferrule*[left=Op]
+  {U : \mathsf{Op}(|\tilde q|)}
+  {\tagged{t}{U(\tilde q)}.P \step{\req{U}}{t} P}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ m \in \mathbb{N}}
+  {\tagged{t}{\M(\tilde q \rhd x)}.P \step{\mrecv{m}}{t} P[m/x]}
+
+\inferrule*[left=Init]
+  { }
+  {\tagged{t}{\initp}.P \step{\initp}{t} P}
+
+\inferrule*[left=Send]
+  {e \Downarrow v}
+  {\tagged{t}{c!e} \step{c!v}{t} \mathbf{0}}
+
+\inferrule*[left=Recv]
+  { }
+  {\tagged{t}{c?x}.P \step{c?v}{t} P[v/x]}
+
+\inferrule*[left=IteT]
+  {e \Downarrow \mathit{tt} \\ P \step{\lambda}{s} P'}
+  {\ite{e}{P}{Q} \step{\lambda}{s} P'}
+
+\inferrule*[left=IteF]
+  {e \Downarrow \mathit{ff} \\ Q \step{\lambda}{s} Q'}
+  {\ite{e}{P}{Q} \step{\lambda}{s} Q'}
+
+\inferrule*[left=SumL]
+  {K_1 \step{\lambda}{s} P'}
+  {K_1 + K_2 \step{\lambda}{s} P'}
+
+\inferrule*[left=SumR]
+  {K_2 \step{\lambda}{s} P'}
+  {K_1 + K_2 \step{\lambda}{s} P'}
+
+\inferrule*[left=ParL]
+  {P \step{\lambda}{s} P'}
+  {P \parallel Q \step{\lambda}{s} P' \parallel Q}
+
+\inferrule*[left=ParR]
+  {Q \step{\lambda}{s} Q'}
+  {P \parallel Q \step{\lambda}{s} P \parallel Q'}
+
+\inferrule*[left=SynchL]
+  {P \step{c!v}{t} P' \\ Q \step{c?v}{t'} Q'}
+  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
+
+\inferrule*[left=SynchR]
+  {P \step{c?v}{t} P' \\ Q \step{c!v}{t'} Q'}
+  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
+
+\inferrule*[left=Restr]
+  {P \step{\lambda}{s} P' \\ \forall v.\ \lambda \neq c!v, c?v}
+  {P \setminus c \step{\lambda}{s} P' \setminus c}
+
+\inferrule*[left=Rec]
+  { }
+  {\tagged{t}{\rec{X}{P}} \step{\tau}{t} P[\tagged{t}{\rec{X}{P}}/X]}
+\end{mathpar}
+\caption{Program LTS, $\lambda \in \{\tau\} \cup \{c!v, c?v, \req{U}, \mrecv{m}, \initp\}$.
+Quantum operations are requests to the memory: $\req{U}$ asks for $U$ on
+$\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$,
+$\initp$ asks for the initialisation of $\tilde q$. The first and the last
+are both served by the action $\memop{\sop{E}}$ of the memory.}
+\label{fig:prog}
+\end{figure}
+
+\begin{figure}[h]
+\small
+\begin{mathpar}
+\inferrule*[left=Sop]
+  {\sop{E} : \mathsf{Sop}(|\tilde q|)}
+  {\rho \mto{\memop{\sop{E}}} {\sapp{\sop{E}}}}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
+  {\rho \mto{\msend{m}} {\br}}
+\end{mathpar}
+\caption{Memory LTS, $\mu \in \{\memop{\sop{E}}, \msend{m}\}$. The memory has
+two kinds of actions only: it applies a super-operator, or it sends the outcome
+of a measurement.}
+\label{fig:mem}
+\end{figure}
 
 The definitions below apply to any two LTSs whose transitions
 $s \step{\lambda}{c} s'$ carry a choice $c \in \{\epsilon, t, (t,t')\}$, where
@@ -61,7 +159,10 @@ where $\lpar$ is the composition for $\syncM$ of the memory LTS
 
 That is, the LTS of lqCCS is decomposed into the LTS of programs, which runs
 without the quantum memory (\cref{fig:prog}), and the LTS of the memory
-(\cref{fig:mem}).
+(\cref{fig:mem}). The same correspondence holds for the channel actions,
+which leave the memory unchanged:
+$\conf{\rho}{P} \step{\mu}{s} \conf{\rho'}{P'}$ iff $\rho' = \rho$ and
+$P \step{\mu}{s} P'$, for $\mu \in \{c!v, c?v\}$.
 
 \begin{proof}
 ($\Leftarrow$) We go by case analysis on the derivation of
@@ -128,3 +229,10 @@ $(\rho \lpar P) \lpar Q$, the same correspondence in the other direction;
 the channel actions of programs always carry a single tag, so that the choice
 of a synchronisation between $P$ and $Q$ is a pair $\{t,t'\}$.
 \end{proof}
+
+\begin{remark}\label{rem:prog-level}
+The decomposition is also how the Harmony lemma is mechanised:
+\cref{lem:shapes}(1), (2) and \cref{lem:cgr-bisim} are proved on the program
+LTS, where the memory plays no role, and transported to configurations by
+\cref{lem:pre-harmony}.
+\end{remark}

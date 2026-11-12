@@ -1,3 +1,14 @@
+\section{Conclusion}\label{sec:conclusion}
+
+We gave lqCCS a reduction semantics modulo structural congruence and a
+labelled transition system on configurations, both indexed by the choices
+that tags make explicit, and proved that they agree: the Harmony lemma
+(\cref{lem:harmony}) holds with the choice preserved. The LTS of
+configurations is moreover the parallel composition of the LTS of programs
+with a memory that has two kinds of actions only
+(\cref{lem:pre-harmony,lem:par-harmony}), so that the quantum part of the
+calculus is confined to one small component.
+
 \paragraph{Mechanisation.} The development is in Rocq, in the directory
 \texttt{lqCCS} of the \texttt{testing-theory} library (the earlier
 development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist}):
@@ -12,12 +23,12 @@ development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist})
   (\texttt{pre\_harmony});
 \item \texttt{Harmony\_Lemma/Parallel\_Harmony.v}: \cref{lem:par-harmony}
   (\texttt{parallel\_harmony});
-\item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \cref{tab:sts} (\texttt{sts}) and its
+\item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \cref{fig:sts} (\texttt{sts}) and its
   labelled copy (\texttt{sts\_lab}); \cref{lem:shapes}: \newline
   \texttt{TransitionShapeForOutput}, \texttt{TransitionShapeForInput}, \newline
   \texttt{TransitionShapeForGuard};
   \cref{lem:harmony}: \texttt{harmony} and \texttt{harmony\_par};
-\iffalse
+\ifshowappendix
 \item \texttt{Testing\_Pre\_orders/pMust/pMust\_scheduled.v}: distributions,
   the two liftings and the runs, generic; \texttt{pMust\_almost\_sure.v}:
   the almost-sure must, generic; \texttt{pMust\_smyth.v}:
