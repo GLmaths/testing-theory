@@ -1,18 +1,145 @@
 \section{Reduction semantics and structural congruence}\label{sec:red}
 
+\subsection{Syntax}\label{sec:syntax}
+
+Let $\mathit{Tag} \ni t$ be a countably infinite set of \emph{tags}.
+
+\emph{Values} are booleans, natural numbers and names of qubits, and
+\emph{expressions} are built from values and variables:
+\[
+\begin{array}{r@{\ ::=\ }l}
+v & \mathit{tt} \mid \mathit{ff} \mid n \mid q\\
+e & x \mid v \mid \neg e \mid e \vee e \mid e \le e \mid e = e
+\end{array}
+\]
+where $n \in \mathbb{N}$, $q$ ranges over the qubits and $x$ over the
+variables. We write $e \Downarrow v$ when the closed expression $e$ evaluates
+to the value $v$: negation and disjunction are defined on booleans, $\le$
+compares two natural numbers or two booleans (with $\mathit{ff} \le \mathit{tt}$),
+and equality compares any two values. An
+expression that contains a variable, or that is ill-typed, has no value. A
+tuple $\tilde e$ of expressions evaluates to a tuple $\tilde q$ of qubits
+when each of its components does.
+
+Outputs are asynchronous, sums are guarded, and recursion is as in VACCS, with
+process variables $X$ and a tagged recursion operator:
+\[
+\begin{array}{r@{\ ::=\ }l}
+P & \tagged{t}{c!e} \mid K \mid P \parallel P \mid \ite{e}{P}{P} \mid P \setminus c
+    \mid X \mid \tagged{t}{\rec{X}{P}}\\
+K & \mathbf{0}_{\tilde e} \mid \mathbf{1} \mid \alpha.P \mid K + K\\
+\alpha & \tagged{t}{\tau} \mid \tagged{t}{c?x} \mid
+        \tagged{t}{U(\tilde e)} \mid \tagged{t}{\M(\tilde e \rhd x)}
+        \mid \tagged{t}{\mathsf{init}(\tilde e)}
+\end{array}
+\]
+The guard $\mathbf{1}$ is inert, like the deadlock $\mathbf{0}_{\tilde e}$: it
+has no reduction, and only marks the \emph{success} of a program used as a
+test. We write $\mathbf{0}$ for the deadlock $\mathbf{0}_{\tilde e}$ whose
+tuple $\tilde e$ is empty. The prefix $\tagged{t}{U(\tilde e)}$ applies the quantum gate $U$ to the
+qubits $\tilde e$, and the prefix $\tagged{t}{\mathsf{init}(\tilde e)}$ resets
+the qubits $\tilde e$ to $|0\rangle$. Both are super-operators
+(\cref{def:sop}), and the memory treats them alike.
+$P[Q/X]$ is the substitution of $Q$ for the free occurrences of $X$ in $P$;
+unfolding a recursion is a step of its own, selected by the tag of the recursion.
+In lqCCS the scheduler selects the transition to perform through the tags
+that decorate the terms~\cite{Ceragioli25}. The choices of
+\cref{sec:lts-prelim} are the empty choice, a tag or an unordered pair of
+tags; we range over them with $s$, the letter $c$ being used for the
+channels:
+\[
+s \ ::=\ \epsilon \mid t \mid \{t,t'\} ,
+\]
+with $t \cdot t' = \{t,t'\}$, the composition of the other non-empty choices
+being undefined. The choice $t$ selects the prefix, the output or the
+recursion tagged $t$, and the choice $\{t,t'\}$ selects the synchronisation
+between a move tagged $t$ and a move tagged $t'$, whichever side each move is
+on. A \emph{configuration} $\conf{\rho}{P}$ is a program $P$ together with
+the quantum memory $\rho$ it acts upon.
+
 \subsection{Structural congruence}
 
-Processes are identified up to $\alpha$-conversion of restricted channels and of
-bound variables. The structural congruence $\equiv$ is the least equivalence
-relation containing the rules of \cref{tab:cgr} and closed under all
-contexts: conditionals, parallel composition, restriction, recursion,
-prefixes and sums. Congruent processes have the same tags.
+A \emph{program} is a term of the language, and a \emph{process} is a
+program together with a memory, that is, a configuration $\conf{\rho}{P}$.
+Programs are identified up to $\alpha$-conversion of restricted channels and
+of bound variables, and processes up to $\alpha$-conversion of the qubit
+register. As in the introduction, the tags are omitted in the examples.
+\begin{description}
+\item[Restricted channels.] The restriction $P \setminus c$ binds the channel
+  $c$ in $P$, and $c$ can be replaced by any channel that is not free in $P$.
+  \begin{example}
+  With $e \neq d$,
+  \[
+  (c!0 \parallel c?x.d!x) \setminus c
+  \ =\
+  (e!0 \parallel e?x.d!x) \setminus e ,
+  \]
+  whereas $d$, which is free, cannot be renamed.
+  \qed
+  \end{example}
+\item[Bound variables.] An input $c?x.P$ and a measurement
+  $\M(\tilde e \rhd x).P$ bind the variable $x$ in $P$, and a
+  recursion $\rec{X}{P}$ binds the process variable $X$ in $P$;
+  a bound variable can be replaced by any variable that is not free in $P$.
+  \begin{example}
+  A variable bound by a measurement and a process variable are renamed:
+  \[
+  \M(q \rhd x).c!x \ =\ \M(q \rhd y).c!y
+  \qquad\text{and}\qquad
+  \rec{X}{\tau.X} \ =\ \rec{Y}{\tau.Y} .
+  \]
+  \qed
+  \end{example}
+\item[Qubit register.] The names of the qubits are not bound in a program,
+  but they are bound in a process, by the memory: they only say which
+  component of the memory a prefix acts upon. The qubits of a process can
+  therefore be renamed, provided the memory is permuted accordingly: for a
+  permutation $\pi$ of the qubits,
+  $\conf{\rho}{P} = \conf{\pi \cdot \rho}{P\pi}$, where $P\pi$ renames the
+  qubits of $P$ and $\pi \cdot \rho$ permutes the components of $\rho$ in the
+  same way.
+  \begin{example}
+  With a register of two qubits $q_0, q_1$,
+  \[
+  \conf{|01\rangle\langle 01|}{c!q_1}
+  \ =\
+  \conf{|10\rangle\langle 10|}{c!q_0} :
+  \]
+  in both processes, the qubit that is sent is the one in state $|1\rangle$.
+  \qed
+  \end{example}
+\end{description}
 
-\begin{table}[h]
+\begin{definition}[Structural congruence on programs]\label{def:cgr-prog}
+The structural congruence on programs, written $P \equiv Q$, is the least
+equivalence relation containing the rules of \cref{tab:cgr} and closed under
+all contexts: conditionals, parallel composition, restriction, recursion,
+prefixes and sums.
+\qed
+\end{definition}
+
+Congruent programs have the same tags.
+
+\begin{definition}[Structural congruence on processes]\label{def:cgr-proc}
+The structural congruence on processes is the congruence on programs, with
+the same memory:
+\[
+\conf{\rho}{P} \equiv \conf{\sigma}{Q}
+\quad\text{iff}\quad
+\rho = \sigma \ \text{ and } \ P \equiv Q .
+\]
+\qed
+\end{definition}
+
+The memories are compared up to the $\alpha$-conversion of the qubit register
+above, which is an identification of processes and not a rule of the
+congruence.
+
+\begin{table}[ht]
 \centering
 \small
 $\begin{array}{l@{\quad}rcl@{\quad}l}
-\textsc{ParNil} & P \parallel \mathbf{0} &\equiv& P \\
+\textsc{ParNil} & P \parallel \mathbf{0}_{\tilde e} &\equiv& P \\
 \textsc{ParComm} & P \parallel Q &\equiv& Q \parallel P \\
 \textsc{ParAssoc} & P \parallel (Q \parallel R) &\equiv& (P \parallel Q) \parallel R \\[2pt]
 \textsc{SumNil} & K + \mathbf{0}_{\tilde e} &\equiv& K \\
@@ -32,27 +159,22 @@ free channels of $P$.}
 \label{tab:cgr}
 \end{table}
 
-\begin{remark}\label{rem:debruijn}
-Scope extrusion \textsc{ResPar} needs the $\alpha$-conversion of the restricted
-channel: $(R \setminus d) \parallel Q$ with $d$ free in $Q$ must first rename
-$d$. As in VACCS, the mechanisation uses de Bruijn indices for restricted
-channels and for the variables bound by inputs and measurements:
-\textsc{ResPar} reads $(\nu P) \parallel Q \equiv \nu (P \parallel Q^{+})$,
-where $Q^{+}$ shifts the indices of $Q$, \textsc{ResOrd} exchanges the two
-innermost indices, and the substitution $P[Q/X]$ shifts $Q$ under each binder,
-so that $\equiv$ is closed under recursion.
-\end{remark}
-
 \subsection{Reduction semantics}
 
-The reduction semantics of configurations, written
+\begin{definition}[Reduction semantics]\label{def:red}
+The \emph{reduction semantics} of lqCCS is the STS whose states are the
+processes $\conf{\rho}{P}$ and whose transition relation, written
 $\conf{\rho}{P} \red_{s} \conf{\rho'}{P'}$ and indexed by the choice $s$ that
 selects the redex, is the least relation closed under the rules of
-\cref{fig:sts}. It follows the STS of VACCS: the first six rules are the
-redexes, the last three close them under parallel composition, restriction
-and structural congruence.
+\cref{fig:sts}.
+\qed
+\end{definition}
 
-\begin{figure}[h]
+It follows the STS of VACCS: the first six rules are the redexes, the last
+three close them under parallel composition, restriction and structural
+congruence.
+
+\begin{figure}[ht]
 \small
 \begin{mathpar}
 \inferrule*[left=Com]
@@ -98,3 +220,47 @@ unnormalised branch for each outcome $m$; all branches carry the same choice
 $t$.}
 \label{fig:sts}
 \end{figure}
+
+\paragraph{Reductions to states or to distributions.}
+In the semantics of lqCCS of Ceragioli et al.~\cite{Ceragioli25}, a step
+leads from a process to a \emph{distribution} of processes, and is indexed by
+the tag, or the pair of tags, that a scheduler selects. The measurement of
+\cref{ex:meas}, tagged $t$, is there one step,
+\[
+\conf{\rho}{\tagged{t}{\M(q \rhd x)}.c!x}
+\ \red_{t}\
+\textstyle\frac{1}{2} \bullet \conf{|0\rangle\langle 0|}{c!0}
+\ \oplus\ \frac{1}{2} \bullet \conf{|1\rangle\langle 1|}{c!1} ,
+\]
+whereas a non-deterministic choice, as in \cref{ex:pure}, is a choice between
+several steps, one for each choice of the scheduler. A probabilistic choice
+is thus inside one step, in the distribution it reaches, whose memories are
+normalised.
+
+The reductions of \cref{fig:sts} lead instead from a process to a process.
+This is the style of operational semantics of Unruh, Valiron and
+Ying~\cite{UVY26} for sequential quantum programs: a non-deterministic
+transition relation between configurations in which each outcome of a
+measurement is a different transition, and in which the probability of the
+outcome is encoded in the memory that is reached, a partial density
+operator. With the rule \textsc{Meas}, the measurement above has two
+reductions,
+\[
+\conf{\rho}{\tagged{t}{\M(q \rhd x)}.c!x} \red_{t}
+\conf{\textstyle\frac{1}{2}|0\rangle\langle 0|}{c!0}
+\qquad
+\conf{\rho}{\tagged{t}{\M(q \rhd x)}.c!x} \red_{t}
+\conf{\textstyle\frac{1}{2}|1\rangle\langle 1|}{c!1} ,
+\]
+and the probability $\frac{1}{2}$ of each is the trace of its memory. In a
+sequential language the measurements are the only source of branching, so
+that every branching is probabilistic. In a concurrent calculus this is no
+longer the case, and such a semantics would confuse the two kinds of
+choices. The tags are what makes it usable here: both reductions above carry
+the choice $t$ of the measurement, while the two reductions of
+\cref{ex:pure} carry the distinct choices $\{t,t_1\}$ and $\{t,t_2\}$. No
+information is lost with respect to the semantics on distributions: when the
+prefixes of a process have distinct tags, its step with choice $s$ is
+recovered by collecting the reductions with choice $s$ from that process,
+and normalising their memories.
+

@@ -1,13 +1,14 @@
 \section{Conclusion}\label{sec:conclusion}
 
 We gave lqCCS a reduction semantics modulo structural congruence and a
-labelled transition system on configurations, both indexed by the choices
-that tags make explicit, and proved that they agree: the Harmony lemma
-(\cref{lem:harmony}) holds with the choice preserved. The LTS of
-configurations is moreover the parallel composition of the LTS of programs
-with a memory that has two kinds of actions only
-(\cref{lem:pre-harmony,lem:par-harmony}), so that the quantum part of the
-calculus is confined to one small component.
+labelled transition system, both indexed by the choices that tags make
+explicit, and proved that they agree: by the Harmony lemma
+(\cref{lem:harmony}), a process $\conf{\rho}{P}$ reduces with a given choice
+exactly when the composition $\rho \lpar P$ of its memory with its program
+performs a silent transition with that choice, up to structural congruence.
+In the labelled semantics the quantum prefixes of a program are
+interactions with a memory that has two kinds of actions only, so that the
+quantum part of the calculus is confined to one small component.
 
 \paragraph{Mechanisation.} The development is in Rocq, in the directory
 \texttt{lqCCS} of the \texttt{testing-theory} library (the earlier
@@ -15,19 +16,28 @@ development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist})
 \begin{itemize}
 \item \texttt{Language/Syntax.v}: syntax with de Bruijn indices for restricted
   channels and bound variables, substitutions, shifts;
-\item \texttt{Language/LTS.v}: \cref{fig:conf,fig:prog,fig:mem},
+\item \texttt{Language/LTS.v}: \cref{fig:prog,fig:mem},
   \cref{def:par}, and the renaming lemmas;
 \item \texttt{Language/Congruence.v}: \cref{tab:cgr} and
-  \cref{lem:cgr-bisim} (\texttt{cgr\_bisim});
-\item \texttt{Harmony\_Lemma/Memory\_Harmony.v}: \cref{lem:pre-harmony}
-  (\texttt{pre\_harmony});
-\item \texttt{Harmony\_Lemma/Parallel\_Harmony.v}: \cref{lem:par-harmony}
-  (\texttt{parallel\_harmony});
-\item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \cref{fig:sts} (\texttt{sts}) and its
-  labelled copy (\texttt{sts\_lab}); \cref{lem:shapes}: \newline
-  \texttt{TransitionShapeForOutput}, \texttt{TransitionShapeForInput}, \newline
+  \cref{lem:cgr-bisim} (\texttt{cs\_bisim} for one step, and
+  \texttt{cgr\_bisim});
+\item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \newline
+  \cref{fig:sts} (\texttt{sts}) and its labelled copy (\texttt{sts\_lab});
+  \newline \cref{lem:silent} (\texttt{mstep\_conf}, \texttt{conf\_mstep});
+  \cref{lem:shapes}: \newline
+  \texttt{TransitionShapeForOutput}, \newline
+  \texttt{TransitionShapeForInput}, \newline
+  \texttt{TransitionShapeForQuantum}, \newline
   \texttt{TransitionShapeForGuard};
-  \cref{lem:harmony}: \texttt{harmony} and \texttt{harmony\_par};
+  \cref{lem:red-int}: \newline \texttt{Reduction\_Implies\_Internal};
+  \cref{lem:com-shapes}: \texttt{Com\_shapes};
+  \cref{lem:int-red}: \newline \texttt{Internal\_Implies\_Reduction}, and
+  \texttt{Quantum\_Implies\_Reduction} for its first case;
+  and the main result, \cref{lem:harmony}: \texttt{harmony\_composition};
+\item \texttt{Harmony\_Lemma/Memory\_Harmony.v} and \newline
+  \texttt{Harmony\_Lemma/Parallel\_Harmony.v}: the complements of
+  \cref{sec:par}, \cref{rem:prog-level} (\texttt{pre\_harmony}) and
+  \cref{lem:par-harmony} (\texttt{parallel\_harmony});
 \ifshowappendix
 \item \texttt{Testing\_Pre\_orders/pMust/pMust\_scheduled.v}: distributions,
   the two liftings and the runs, generic; \texttt{pMust\_almost\_sure.v}:

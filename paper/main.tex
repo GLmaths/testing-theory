@@ -1,30 +1,22 @@
-\documentclass[11pt,a4paper]{article}
+\documentclass[runningheads,orivec]{llncs}
 
 \input{macros}
 
-\newif\ifshowappendix
-\showappendixfalse
+\newif\ifshowappendix%
+\showappendixfalse%
 
 \title{Harmony lemma for lqCCS}
-\author{}
-\date{}
+\titlerunning{Harmony lemma for lqCCS}
+\author{Anonymous Author}
+\authorrunning{Anonymous Author}
+\institute{Anonymous Institution}
 
 \begin{document}
 \maketitle
 
+% FORTE 2027 (DisCoTec 2027): https://www.discotec.org/2027/conferences
+% Submission deadline: Thursday 28 January 2027
 \begin{abstract}
-We present lqCCS, a quantum process calculus with asynchronous outputs,
-guarded sums, tagged recursion and a shared quantum memory, in which every
-nondeterministic choice is identified by the tags of the prefixes that
-resolve it. Its labelled transition system on configurations is obtained as
-the parallel composition of two simpler systems, the LTS of programs and the
-LTS of the memory, where the memory has two kinds of actions only: the application of
-a super-operator, which serves both the quantum gates and the initialisations
-of the programs, and the measurements. We then define a structural congruence and a reduction
-semantics indexed by the same choices, and prove the Harmony lemma: a
-configuration reduces with a given choice exactly when it performs a silent
-transition with that choice, up to structural congruence. All the results
-are mechanised in Rocq, over an abstract quantum model.
 \end{abstract}
 
 \input{1-Introduction}
@@ -36,24 +28,10 @@ are mechanised in Rocq, over an abstract quantum model.
 \input{7-Conclusion}
 \input{8-Future_works}
 
-\begin{thebibliography}{9}
-\bibitem{Ceragioli25} L.~Ceragioli, F.~Gadducci, G.~Lomurno, G.~Tedeschi.
-  Verification of Quantum Protocols Adopting Physically Admissible
-  Schedulers. arXiv:2604.23756.
-\bibitem{Ceragioli27} L.~Ceragioli, F.~Gadducci, G.~Lomurno, G.~Tedeschi.
-  Testing the quantum anonymous transmission protocol. \emph{J. Log. Algebraic
-  Methods Program.} 152 (2027) 101177.
-\bibitem{DvGHM08} Y.~Deng, R.~van Glabbeek, M.~Hennessy, C.~Morgan.
-  Characterising testing preorders for finite probabilistic processes.
-  \emph{Log. Methods Comput. Sci.} 4(4) (2008).
-\bibitem{FengXu23} Y.~Feng, Y.~Xu. Verification of Nondeterministic Quantum
-  Programs. In \emph{ASPLOS 2023}, pages 789--805. ACM, 2023.
-\bibitem{UVY26} D.~Unruh, B.~Valiron, M.~Ying. Reasoning about Parameterized
-  Recursive Quantum Programs with Ancilla Data and Probabilistic Control. \emph{ACM
-  Transactions on Computational Logic}, 2026.
-\end{thebibliography}
+\bibliographystyle{splncs04}
+\bibliography{bibliography}
 
-\ifshowappendix
+\ifshowappendix%
 \appendix
 \input{A-Sound_characterisation_of_the_Smyth_probabilistic_must_preorder}
 \input{B-Denotational_semantics}

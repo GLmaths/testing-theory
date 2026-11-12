@@ -10,6 +10,7 @@ on $\Hil_\Sigma$ that is positive, i.e.\ $\langle\psi|\rho|\psi\rangle \ge 0$
 for all $|\psi\rangle \in \Hil_\Sigma$, and such that $\tr(\rho) \le 1$. It is a
 \emph{density operator} when $\tr(\rho) = 1$. A pure state $|\psi\rangle$ is the
 density operator $|\psi\rangle\langle\psi|$.
+\qed
 \end{definition}
 
 \begin{definition}[Super-operator]\label{def:sop}
@@ -22,6 +23,7 @@ $\tilde q$ of $n$ qubits of $\Sigma$, $\sop{E}^{\tilde q}$ is the super-operator
 on $\Hil_\Sigma$ that applies $\sop{E}$ to $\tilde q$ and the identity to the
 other qubits. Applying $\sop{E}$ to $\tilde q$ maps $\rho$ to $\sapp{\sop{E}}$,
 and $\tr(\sapp{\sop{E}}) = \tr(\rho)$.
+\qed
 \end{definition}
 
 The programs use two kinds of super-operators. A \emph{quantum gate} on $n$
@@ -43,32 +45,154 @@ $\sum_{m} M_m^\dagger M_m = I$. Measuring $\tilde q$ in $\rho$ gives the outcome
 $m$ with probability $p_m = \tr(\br)$, and the \emph{unnormalised branch}
 $\br$, whose trace is $p_m$. The normalised post-measurement state is the branch
 divided by $p_m$.
+\qed
 \end{definition}
 
-\subsection{Syntax of lqCCS}
+\subsection{Labelled transition systems}\label{sec:lts-prelim}
 
-Let $\mathit{Tag} \ni t$ be a countably infinite set of \emph{tags}.
+We fix a countable set $\mathit{Act}$ of
+\emph{external} actions, ranged over by $\mu, \mu_1, \mu_2, \ldots$ We let
+$\tau$ denote a label not in $\mathit{Act}$ that represents internal
+computation, and we denote the set of all \emph{labels} by
+$\mathit{Act}_\tau = \mathit{Act} \cup \{\tau\}$, ranged over by
+$\lambda, \lambda'$.
 
-Outputs are asynchronous, sums are guarded, and recursion is as in VACCS, with
-process variables $X$ and a tagged recursion operator:
+\begin{definition}[LTS]\label{def:lts}
+A \emph{labelled transition system} (LTS) is a triple
+$\lts = \LTS{S}{\rightarrow}{\mathit{Act}_\tau}$ where $S$ is the set
+of states and
+${\rightarrow} \subseteq S \times \mathit{Act}_\tau \times S$ is the
+transition relation. We write $p \mto{\lambda} p'$ to mean that
+$(p, \lambda, p') \in {\rightarrow}$.
+\qed
+\end{definition}
+
+In an LTS, a state may have several transitions with the same label, and
+nothing in the transitions tells them apart, as the next example shows.
+
+\begin{example}[Non-deterministic choice]\label{ex:pure}
+Consider, in the asynchronous value-passing CCS (VACCS), an input in
+parallel with two outputs on the same channel $c$,
+$c?x.P \parallel c!1 \parallel c!2$. The input may receive either value:
 \[
-\begin{array}{r@{\ ::=\ }l}
-P & \tagged{t}{c!e} \mid K \mid P \parallel P \mid \ite{e}{P}{P} \mid P \setminus c
-    \mid X \mid \tagged{t}{\rec{X}{P}}\\
-K & \mathbf{0}_{\tilde e} \mid \alpha.P \mid K + K\\
-\alpha & \tagged{t}{\tau} \mid \tagged{t}{c?x} \mid
-        \tagged{t}{U(\tilde e)} \mid \tagged{t}{\M(\tilde e \rhd x)}
-        \mid \tagged{t}{\mathsf{init}(\tilde e)}
+\begin{array}{rcl}
+c?x.P \parallel c!1 \parallel c!2 &\mto{\tau}& P[1/x] \parallel \mathbf{0} \parallel c!2\\[2pt]
+c?x.P \parallel c!1 \parallel c!2 &\mto{\tau}& P[2/x] \parallel c!1 \parallel \mathbf{0}
 \end{array}
 \]
-The prefix $\tagged{t}{U(\tilde e)}$ applies the quantum gate $U$ to the
-qubits $\tilde e$, and the prefix $\tagged{t}{\mathsf{init}(\tilde e)}$ resets
-the qubits $\tilde e$ to $|0\rangle$. Both are super-operators
-(\cref{def:sop}), and the memory treats them alike.
-$P[Q/X]$ is the substitution of $Q$ for the free occurrences of $X$ in $P$;
-unfolding a recursion is a step of its own, selected by the tag of the recursion.
-A \emph{choice} is either a tag or an unordered pair of tags,
-$s ::= t \mid \{t,t'\}$: the pair $\{t,t'\}$ selects the synchronisation
-between a move tagged $t$ and a move tagged $t'$, whichever side each move is
-on. A \emph{configuration} $\conf{\rho}{P}$ is a program $P$ together with
-the quantum memory $\rho$ it acts upon.
+The two transitions are alternatives: an execution takes one of them, and
+the other is lost.
+\qed
+\end{example}
+
+The choice of \cref{ex:pure} is not the only kind that a quantum process
+makes: there are two kinds of choices, which must be kept distinct. We
+borrow the terminology of Faggian~\cite{Faggian22}, who stresses the
+distinction ``between probabilistic choice (which globally happens with
+certitude) and non-deterministic choice (which leads to different
+distributions of outcomes)''. A \emph{non-deterministic choice} comes from
+concurrency: several redexes are ready, and which one is fired is decided
+from outside, by a scheduler. A \emph{probabilistic choice} comes from a
+measurement: all its outcomes happen, each with its probability, and no
+scheduler has a say in it.
+
+\begin{example}[Probabilistic choice]\label{ex:meas}
+Consider one qubit $q$ in the mixed state
+$\rho = \frac{1}{2}|0\rangle\langle 0| + \frac{1}{2}|1\rangle\langle 1|$, and
+the program $\M(q \rhd x).c!x$ that measures it in the computational basis,
+$\M = \{|0\rangle\langle 0|, |1\rangle\langle 1|\}$, and sends the outcome on
+the channel $c$. By \cref{def:meas}, the outcome $0$ has the unnormalised
+branch $\frac{1}{2}|0\rangle\langle 0|$ and the outcome $1$ the unnormalised
+branch $\frac{1}{2}|1\rangle\langle 1|$, each with trace, that is, with
+probability, $\frac{1}{2}$. The program with its memory has two transitions,
+one for each outcome:
+\[
+\begin{array}{rcl}
+\conf{\rho}{\M(q \rhd x).c!x} &\mto{\tau}& \conf{\frac{1}{2}|0\rangle\langle 0|}{c!0}\\[3pt]
+\conf{\rho}{\M(q \rhd x).c!x} &\mto{\tau}& \conf{\frac{1}{2}|1\rangle\langle 1|}{c!1}
+\end{array}
+\]
+The two transitions are not alternatives: both happen, each with
+probability $\frac{1}{2}$, and the probability of a transition is the trace
+of the memory it reaches. The traces of the two targets add up to the trace
+of the source, $\frac{1}{2} + \frac{1}{2} = 1$: the measurement as a whole
+happens with certitude.
+\qed
+\end{example}
+
+In an LTS the two examples look alike: in both, a state has two transitions
+labelled $\tau$, and the LTS does not remember whether they are two options
+offered to a scheduler or the two outcomes of one step.
+
+To tell them apart, and to let a scheduler name the transition it selects,
+we let each transition carry, in addition to its label, a \emph{choice}, as
+in~\cite{CP10}. With the prefixes of \cref{ex:pure} tagged $t$, $t_1$ and
+$t_2$, its two transitions carry the distinct choices $\{t,t_1\}$ and
+$\{t,t_2\}$, and a scheduler selects one of them. With the measurement of
+\cref{ex:meas} tagged $t$, its two transitions carry the same choice $t$: a
+scheduler can select the measurement, not its outcome. This leads to the
+following definition.
+
+We fix a set $\mathit{Choice}$ of choices, ranged over by $c, c_1, c_2$, with
+a distinguished \emph{empty choice} $\epsilon$ and a partial composition
+$c_1 \cdot c_2$ such that $\epsilon \cdot c = c \cdot \epsilon = c$ for every
+choice $c$. The composition gives the choice of an interaction from the
+choices of its two sides.
+
+\begin{definition}[LTS with choices]\label{def:lts-choice}
+An \emph{LTS with choices} is a quadruple
+$\lts = \LTSc{S}{\rightarrow}{\mathit{Act}_\tau}{\mathit{Choice}}$
+where $S$ is the set of states and
+${\rightarrow} \subseteq S \times \mathit{Act}_\tau \times \mathit{Choice}
+\times S$ is the transition relation. We write $p \step{\lambda}{c} p'$ to
+mean that $(p, \lambda, c, p') \in {\rightarrow}$.
+\qed
+\end{definition}
+
+This generalises \cref{def:lts}: an LTS is an LTS with choices in which every
+transition carries the empty choice, that is, with
+$\mathit{Choice} = \{\epsilon\}$; accordingly, the empty choice is not
+written, and $p \step{\lambda}{\epsilon} p'$ is $p \mto{\lambda} p'$. From
+now on, LTS means LTS with choices. If the set of labels of $\lts$ is a
+singleton, we say that $\lts$ is a \emph{state transition system} (STS), we
+omit its third component, and we write $p \red_{c} p'$ for its transitions.
+
+We proceed to define the composition of two LTSs. In~\cite{BFL26} the two
+LTSs share the set $\mathit{Act}$, and a state of one interacts with a state
+of the other through an involutive duality over $\mathit{Act}$. Here the two
+LTSs may have different external actions, as a program and a quantum memory
+do, and the interactions are given by a relation between the two sets.
+
+\begin{definition}[Duality]\label{def:sync}
+A \emph{duality predicate} between two LTSs with external actions
+$A_1$ and $A_2$ is a relation ${\sync} \subseteq A_1 \times A_2$.
+\qed
+\end{definition}
+
+\begin{definition}[Parallel composition of LTSs]\label{def:par}
+Given a duality predicate $\mathsf{dual}$, the parallel composition
+$\lts_1 \lpar_{\mathsf{dual}} \lts_2$ of two LTSs $\lts_1$ and $\lts_2$ is the LTS whose
+states are the pairs $p_1 \lpar p_2$ of a state of $\lts_1$ and a state of $\lts_2$,
+whose external actions are $A_1 \uplus A_2$, and whose transitions are given
+by the rules
+\begin{mathpar}
+\inferrule*[left=Left]
+  {p_1 \step{\lambda}{c} p_1'}
+  {p_1 \lpar p_2 \step{\lambda}{c} p_1' \lpar p_2}
+
+\inferrule*[left=Right]
+  {p_2 \step{\lambda}{c} p_2'}
+  {p_1 \lpar p_2 \step{\lambda}{c} p_1 \lpar p_2'}
+
+\inferrule*[left=Sync]
+  {p_1 \step{\mu_1}{c_1} p_1' \\ p_2 \step{\mu_2}{c_2} p_2' \\ \mu_1 \sync \mu_2}
+  {p_1 \lpar p_2 \step{\tau}{c_1 \cdot c_2} p_1' \lpar p_2'}
+\end{mathpar}
+\qed
+\end{definition}
+
+The composition of~\cite{BFL26} keeps only the internal moves of
+$\lts_1 \lpar_{\mathsf{dual}} \lts_2$, which form an STS, and its duality
+predicate relates each action to its dual. We keep the external actions of
+the two components, because a composition is composed again in
+\cref{sec:par}.

@@ -24,7 +24,7 @@ depth of the unfolding, as the syntactic approximations of Unruh, Valiron and
 Ying~\cite[Lemma 3.3]{UVY26}.
 
 An action is \emph{internal} if it is silent or if the memory can serve it
-(\cref{def:sync}): $\lambda \in \{\tau, \req{U}, \initp, \mrecv{m}\}$. A program $P$ is
+(\cref{def:sync-lq}): $\lambda \in \{\tau, \req{U}, \initp, \mrecv{m}\}$. A program $P$ is
 \emph{final}, written $\final(P)$, if it has no internal transition, and
 \emph{enabled} at $s$ if $P \step{\lambda}{s} P'$ for some internal $\lambda$.
 A super-operator is written $\sop{E}$; $\id$ is the identity, $0$ the null
@@ -37,9 +37,10 @@ the super-operators of the memory.
 For a program $P$ and a word $w$, $\denw{P}{w}$ is the least set of
 super-operators closed under the rules of \cref{tab:den}, and
 $\den{P} = \bigcup_w \denw{P}{w}$.
+\qed
 \end{definition}
 
-\begin{table}[h]
+\begin{table}[ht]
 \centering
 \footnotesize
 $\begin{array}{l@{\quad}rcl@{\quad}l}
@@ -87,6 +88,7 @@ matched by a transition of $Q$ with the same action and the same choice, up
 to $\equiv$, and conversely: $P$ and $Q$ are final together and enabled at
 the same choices, and each rule of \cref{tab:den} applied to $P$ is applied to
 $Q$ with the induction hypothesis on the residuals.
+\qed
 \end{proof}
 
 The correspondence with the reduction semantics is that of
@@ -122,6 +124,7 @@ closed under the rules
     \text{ for all } m
 \end{array}
 \]
+\qed
 \end{definition}
 
 \begin{theorem}[Correspondence]\label{thm:den}
@@ -146,6 +149,7 @@ $(\sop{F} \circ \sop{E})(\rho) = \sop{F}(\sop{E}(\rho))$ and
 $(\sum_m \sop{F}_m \circ \sop{M}_m)(\rho) = \sum_m \sop{F}_m(\sop{M}_m(\rho))$,
 the leaves of a measurement node being the concatenation of the leaves of its
 branches.
+\qed
 \end{proof}
 
 \begin{remark}

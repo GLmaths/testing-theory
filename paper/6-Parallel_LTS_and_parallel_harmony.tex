@@ -1,199 +1,15 @@
 \section{Parallel LTS and parallel harmony}\label{sec:par}
 
-The LTS of configurations mixes two things: the control of the program and
-its effect on the quantum memory. This section separates them. The program
-LTS (\cref{fig:prog}) runs without memory, its quantum prefixes being
-\emph{requests}; the memory LTS (\cref{fig:mem}) serves these requests; and
-the LTS of configurations is their parallel composition.
+This section is a complement to the Harmony lemma, which does not depend on
+it. A composition of LTSs can be composed again (\cref{def:par}): we show
+that the composition of a memory with a parallel composition
+$P \parallel Q$ of the syntax is the composition of the system
+$\rho \lpar P$ with the program $Q$.
 
-\begin{figure}[h]
-\small
-\begin{mathpar}
-\inferrule*[left=Tau]
-  { }
-  {\tagged{t}{\tau}.P \step{\tau}{t} P}
-
-\inferrule*[left=Op]
-  {U : \mathsf{Op}(|\tilde q|)}
-  {\tagged{t}{U(\tilde q)}.P \step{\req{U}}{t} P}
-
-\inferrule*[left=Meas]
-  {\M : \mathsf{Meas}(|\tilde q|) \\ m \in \mathbb{N}}
-  {\tagged{t}{\M(\tilde q \rhd x)}.P \step{\mrecv{m}}{t} P[m/x]}
-
-\inferrule*[left=Init]
-  { }
-  {\tagged{t}{\initp}.P \step{\initp}{t} P}
-
-\inferrule*[left=Send]
-  {e \Downarrow v}
-  {\tagged{t}{c!e} \step{c!v}{t} \mathbf{0}}
-
-\inferrule*[left=Recv]
-  { }
-  {\tagged{t}{c?x}.P \step{c?v}{t} P[v/x]}
-
-\inferrule*[left=IteT]
-  {e \Downarrow \mathit{tt} \\ P \step{\lambda}{s} P'}
-  {\ite{e}{P}{Q} \step{\lambda}{s} P'}
-
-\inferrule*[left=IteF]
-  {e \Downarrow \mathit{ff} \\ Q \step{\lambda}{s} Q'}
-  {\ite{e}{P}{Q} \step{\lambda}{s} Q'}
-
-\inferrule*[left=SumL]
-  {K_1 \step{\lambda}{s} P'}
-  {K_1 + K_2 \step{\lambda}{s} P'}
-
-\inferrule*[left=SumR]
-  {K_2 \step{\lambda}{s} P'}
-  {K_1 + K_2 \step{\lambda}{s} P'}
-
-\inferrule*[left=ParL]
-  {P \step{\lambda}{s} P'}
-  {P \parallel Q \step{\lambda}{s} P' \parallel Q}
-
-\inferrule*[left=ParR]
-  {Q \step{\lambda}{s} Q'}
-  {P \parallel Q \step{\lambda}{s} P \parallel Q'}
-
-\inferrule*[left=SynchL]
-  {P \step{c!v}{t} P' \\ Q \step{c?v}{t'} Q'}
-  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
-
-\inferrule*[left=SynchR]
-  {P \step{c?v}{t} P' \\ Q \step{c!v}{t'} Q'}
-  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
-
-\inferrule*[left=Restr]
-  {P \step{\lambda}{s} P' \\ \forall v.\ \lambda \neq c!v, c?v}
-  {P \setminus c \step{\lambda}{s} P' \setminus c}
-
-\inferrule*[left=Rec]
-  { }
-  {\tagged{t}{\rec{X}{P}} \step{\tau}{t} P[\tagged{t}{\rec{X}{P}}/X]}
-\end{mathpar}
-\caption{Program LTS, $\lambda \in \{\tau\} \cup \{c!v, c?v, \req{U}, \mrecv{m}, \initp\}$.
-Quantum operations are requests to the memory: $\req{U}$ asks for $U$ on
-$\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$,
-$\initp$ asks for the initialisation of $\tilde q$. The first and the last
-are both served by the action $\memop{\sop{E}}$ of the memory.}
-\label{fig:prog}
-\end{figure}
-
-\begin{figure}[h]
-\small
-\begin{mathpar}
-\inferrule*[left=Sop]
-  {\sop{E} : \mathsf{Sop}(|\tilde q|)}
-  {\rho \mto{\memop{\sop{E}}} {\sapp{\sop{E}}}}
-
-\inferrule*[left=Meas]
-  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
-  {\rho \mto{\msend{m}} {\br}}
-\end{mathpar}
-\caption{Memory LTS, $\mu \in \{\memop{\sop{E}}, \msend{m}\}$. The memory has
-two kinds of actions only: it applies a super-operator, or it sends the outcome
-of a measurement.}
-\label{fig:mem}
-\end{figure}
-
-The definitions below apply to any two LTSs whose transitions
-$s \step{\lambda}{c} s'$ carry a choice $c \in \{\epsilon, t, (t,t')\}$, where
-$\epsilon$ is the empty choice and is not written: the memory LTS only has
-transitions with choice $\epsilon$. Choices compose by
-$\epsilon \cdot c = c \cdot \epsilon = c$ and $t \cdot t' = \{t,t'\}$.
-
-\begin{definition}[Synchronisation]\label{def:sync}
-A \emph{synchronisation predicate} between two LTSs with external actions
-$A_1$ and $A_2$ is a relation ${\sync} \subseteq A_1 \times A_2$. Between the
-memory and the programs, $\syncM$ is the least relation such that
-\[
-\memop{\sop{E}_U} \syncM \req{U}
-\qquad\quad
-\memop{\sop{E}_{\mathsf{init}}} \syncM \initp
-\qquad\quad
-\msend{m} \syncM \mrecv{m}.
-\]
-Between two programs, $\syncC$ relates the dual actions on a channel:
-$c!v \syncC c?v$ and $c?v \syncC c!v$.
-\end{definition}
-
-\begin{definition}[Parallel composition of LTSs]\label{def:par}
-Given a synchronisation predicate $\mathsf{sync}$, the parallel composition
-$L_1 \lpar_{\mathsf{sync}} L_2$ of two LTSs $L_1$ and $L_2$ is the LTS whose
-states are the pairs $s_1 \lpar s_2$ of a state of $L_1$ and a state of $L_2$,
-whose external actions are $A_1 \uplus A_2$, and whose transitions are given
-by the rules
-\begin{mathpar}
-\inferrule*[left=Left]
-  {s_1 \step{\lambda}{c} s_1'}
-  {s_1 \lpar s_2 \step{\lambda}{c} s_1' \lpar s_2}
-
-\inferrule*[left=Right]
-  {s_2 \step{\lambda}{c} s_2'}
-  {s_1 \lpar s_2 \step{\lambda}{c} s_1 \lpar s_2'}
-
-\inferrule*[left=Sync]
-  {s_1 \step{\mu_1}{c_1} s_1' \\ s_2 \step{\mu_2}{c_2} s_2' \\ \mu_1 \sync \mu_2}
-  {s_1 \lpar s_2 \step{\tau}{c_1 \cdot c_2} s_1' \lpar s_2'}
-\end{mathpar}
-The symbol $\lpar$ is the composition of LTSs; $\parallel$ remains the
-parallel composition of the syntax.
-\end{definition}
-
-For a memory $\rho$ and a program $P$, rule Sync gives
-$\rho \lpar P \step{\tau}{t} \rho' \lpar P'$ whenever
-$\rho \mto{\mu_1} \rho'$, $P \step{\mu_2}{t} P'$ and $\mu_1 \syncM \mu_2$.
-
-\begin{lemma}[Pre-harmony]\label{lem:pre-harmony}
-For all $\rho, P, s, \rho', P'$,
-\[
-\conf{\rho}{P} \step{\tau}{s} \conf{\rho'}{P'}
-\iff
-\rho \lpar P \step{\tau}{s} \rho' \lpar P'
-\]
-where $\lpar$ is the composition for $\syncM$ of the memory LTS
-(\cref{fig:mem}) and the program LTS (\cref{fig:prog}).
-\end{lemma}
-
-That is, the LTS of lqCCS is decomposed into the LTS of programs, which runs
-without the quantum memory (\cref{fig:prog}), and the LTS of the memory
-(\cref{fig:mem}). The same correspondence holds for the channel actions,
-which leave the memory unchanged:
-$\conf{\rho}{P} \step{\mu}{s} \conf{\rho'}{P'}$ iff $\rho' = \rho$ and
-$P \step{\mu}{s} P'$, for $\mu \in \{c!v, c?v\}$.
-
-\begin{proof}
-($\Leftarrow$) We go by case analysis on the derivation of
-$\rho \lpar P \step{\tau}{s} \rho' \lpar P'$.
-The only two cases are an internal transition of the program (rule Right) or
-a synchronisation (rule Sync), since the memory has no internal transition.
-In both cases, we go by induction on the transition of the program
-$P \step{\lambda}{s'} P'$: a channel action gives the same transition of the
-configuration, with the same memory; a request $\req{U}$, $\initp$ or $\mrecv{m}$
-synchronised with the memory gives the rules Op, Init and Meas of
-\cref{fig:conf}, since $\sapp{\sop{E}_U} = \upd{U}$ and
-$\sapp{\sop{E}_{\mathsf{init}}} = \inirho$.
-
-($\Rightarrow$) For this side, we prove a stronger lemma by generalising the
-internal label $\tau$ with any label $\lambda$:
-$$
-  \conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}
-\Rightarrow
-\rho \lpar P \step{\lambda}{s} \rho' \lpar P'
-$$
-We go by induction on the derivation of
-$\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$ and we conclude by induction
-hypothesis. The rules Op, Meas and Init of \cref{fig:conf} are instances of the rule
-Sync, with the choice $\epsilon \cdot t = t$; the rule Rec is an instance of
-the rule Right.
-\end{proof}
-
-The configuration of a parallel composition $P \parallel Q$ is itself a
-composition of LTSs: the system $\rho \lpar P$ is composed with the program
-$Q$, which synchronises with the memory of the system (through $\syncM$) and
-with the channels of $P$ (through $\syncC$). Let
+The system $\rho \lpar P$ is composed with the program
+$Q$, which interacts with the memory of the system (through $\syncM$) and
+with the channels of $P$: let $\syncC$ relate the dual actions on a channel,
+$c!v \syncC c?v$ and $c?v \syncC c!v$, and let
 ${\syncS} \subseteq (A_{\M} \uplus A_{\mathsf{prog}}) \times A_{\mathsf{prog}}$
 be the least relation such that
 \[
@@ -202,37 +18,48 @@ be the least relation such that
 \mu_1 \syncS \mu_2 \ \text{ if } \mu_1 \syncC \mu_2 .
 \]
 
+Together with \cref{lem:harmony}, the next lemma describes the reductions
+of $\conf{\rho}{P \parallel Q}$ by the silent transitions of the composition
+$(\rho \lpar P) \lpar Q$.
+
 \begin{lemma}[Parallel harmony]\label{lem:par-harmony}
 For all $\rho, P, Q, s, \rho', R$,
 \[
-\conf{\rho}{P \parallel Q} \step{\tau}{s} \conf{\rho'}{R}
-\iff
+\begin{array}{l}
+\rho \lpar (P \parallel Q) \step{\tau}{s} \rho' \lpar R\\[2pt]
+\quad\iff\
 R = P' \parallel Q' \text{ and }
 (\rho \lpar P) \lpar Q \step{\tau}{s} (\rho' \lpar P') \lpar Q'
 \text{ for some } P', Q',
+\end{array}
 \]
 where the outer composition is for $\syncS$ and the inner one for $\syncM$.
 \end{lemma}
 
 \begin{proof}
-($\Rightarrow$) By case analysis on the last rule of the transition of
-$\conf{\rho}{P \parallel Q}$. ParL is the rule Left, by
-\cref{lem:pre-harmony}. ParR is either the rule Right, for a silent move of
+($\Rightarrow$) By case analysis on the last rule of the transition of the
+program $P \parallel Q$ from which the transition of
+$\rho \lpar (P \parallel Q)$ is derived, by the rule Right or Sync. ParL is
+the rule Left, with the same rule for $\rho \lpar P$. ParR is either the rule Right, for a silent move of
 $Q$, or the rule Sync between a move of the memory (rule Left inside
 $\rho \lpar P$) and a request of $Q$, with choice $\epsilon \cdot t = t$.
-SynchL and SynchR are the rule Sync between a channel action of $P$ (rule
+ComL and ComR are the rule Sync between a channel action of $P$ (rule
 Right inside $\rho \lpar P$, which does not change $\rho$) and the dual action
 of $Q$, with choice $t \cdot t' = \{t,t'\}$.
 
 ($\Leftarrow$) By case analysis on the last rule of the transition of
 $(\rho \lpar P) \lpar Q$, the same correspondence in the other direction;
 the channel actions of programs always carry a single tag, so that the choice
-of a synchronisation between $P$ and $Q$ is a pair $\{t,t'\}$.
+of a communication between $P$ and $Q$ is a pair $\{t,t'\}$.
+\qed
 \end{proof}
 
 \begin{remark}\label{rem:prog-level}
-The decomposition is also how the Harmony lemma is mechanised:
-\cref{lem:shapes}(1), (2) and \cref{lem:cgr-bisim} are proved on the program
-LTS, where the memory plays no role, and transported to configurations by
-\cref{lem:pre-harmony}.
+The mechanisation also defines an LTS directly on the pairs
+$\conf{\rho}{P}$, by induction on the program and without the actions of the
+memory: a gate, an initialisation and a measurement are silent transitions
+that update the memory. Its silent transitions are those of the composition
+$\rho \lpar P$ (\texttt{pre\_harmony}); the Harmony lemma is first proved for
+this LTS (\texttt{harmony}), and \cref{lem:harmony} follows
+(\texttt{harmony\_composition}).
 \end{remark}

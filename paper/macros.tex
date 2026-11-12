@@ -3,23 +3,19 @@
 % ---------------------------------------------------------------------------
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\usepackage[margin=2.2cm]{geometry}
-\usepackage{amsmath,amssymb,amsthm}
+\usepackage{amsmath,amssymb}
 \usepackage{mathpartir}
+\renewcommand{\TirNameStyle}[1]{\small\upshape\textsc{#1}}
+\renewcommand{\LeftTirNameStyle}[1]{\small\upshape\textsc{#1}}
+\renewcommand{\RightTirNameStyle}[1]{\small\upshape\textsc{#1}}
 \usepackage{stmaryrd}
 \usepackage{xcolor}
-\usepackage[colorlinks,linkcolor=blue!60!black]{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage[capitalise,nameinlink]{cleveref}
 
 % ---------------------------------------------------------------------------
-% Theorem environments
+% Theorem environments: provided by the llncs class
 % ---------------------------------------------------------------------------
-\newtheorem{lemma}{Lemma}
-\newtheorem{theorem}{Theorem}
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}
-\newtheorem{remark}{Remark}
 
 % ---------------------------------------------------------------------------
 % Quantum states and operations
@@ -47,10 +43,14 @@
 % ---------------------------------------------------------------------------
 % Configurations and transitions
 % ---------------------------------------------------------------------------
+\newcommand{\lts}{\mathcal{L}}
+\newcommand{\LTS}[3]{\langle #1, #2, #3 \rangle}
+\newcommand{\LTSc}[4]{\langle #1, #2, #3, #4 \rangle}
 \newcommand{\conf}[2]{\langle #1 ,\, #2 \rangle}
 \newcommand{\step}[2]{\xrightarrow{\;#1\;}_{#2}}
 \newcommand{\mto}[1]{\xrightarrow{\;#1\;}}
 \newcommand{\red}{\longrightarrow}
+\newcommand{\eff}[1]{\mathrel{\stackrel{#1}{\rightsquigarrow}}}
 
 % ---------------------------------------------------------------------------
 % Actions of programs and of the memory
@@ -66,10 +66,10 @@
 % Parallel composition and synchronisation
 % ---------------------------------------------------------------------------
 \newcommand{\lpar}{\mathbin{|}}
-\newcommand{\sync}{\mathrel{\mathsf{sync}}}
-\newcommand{\syncM}{\mathrel{\mathsf{sync}_{\M}}}
-\newcommand{\syncC}{\mathrel{\mathsf{sync}_{c}}}
-\newcommand{\syncS}{\mathrel{\mathsf{sync}_{\mathsf{sys}}}}
+\newcommand{\sync}{\mathrel{\mathsf{dual}}}
+\newcommand{\syncM}{\mathrel{\mathsf{dual}_{\M}}}
+\newcommand{\syncC}{\mathrel{\mathsf{dual}_{c}}}
+\newcommand{\syncS}{\mathrel{\mathsf{dual}_{\mathsf{sys}}}}
 
 % ---------------------------------------------------------------------------
 % Denotational semantics (appendix B)

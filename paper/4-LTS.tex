@@ -1,86 +1,165 @@
 \section{Labelled transition system}\label{sec:lts}
 
-The LTS of lqCCS configurations is given in \cref{fig:conf}. Its transitions
-$\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}$ carry an action $\lambda$
-and, like the reductions, the choice $s$ that selects them. Throughout,
-$\lambda$ ranges over all actions, $\tau$ included, and
-$\mu, \mu_1, \mu_2, \ldots$ over external actions. The external actions of a
-configuration are the outputs $c!v$ and the inputs $c?v$ on channels: the
-quantum prefixes act on the memory of the configuration, and are silent.
+The labelled semantics is given in three steps: an LTS for programs, which
+runs without memory; an LTS for the memory; and their parallel composition,
+in which a program and a memory interact. Throughout, $\lambda$ ranges over
+all labels, $\tau$ included, and $\mu, \mu_1, \mu_2, \ldots$ over external
+actions. A transition carries, like a reduction, the choice $s$ that selects
+it.
 
-\begin{figure}[h]
+\subsection{Programs}
+
+The LTS of programs is given in \cref{fig:prog}. Besides the outputs $c!v$
+and the inputs $c?v$ on channels, a program has external actions for its
+quantum prefixes: it \emph{sends} the request $\req{U}$ for a gate and
+$\initp$ for an initialisation, and it \emph{receives} the outcome of a
+measurement with $\mrecv{m}$. Two programs in parallel communicate on a
+channel with the rules ComL and ComR.
+
+\begin{figure}[ht]
 \small
 \begin{mathpar}
 \inferrule*[left=Tau]
   { }
-  {\conf{\rho}{\tagged{t}{\tau}.P} \step{\tau}{t} \conf{\rho}{P}}
+  {\tagged{t}{\tau}.P \step{\tau}{t} P}
 
 \inferrule*[left=Op]
   {U : \mathsf{Op}(|\tilde q|)}
-  {\conf{\rho}{\tagged{t}{U(\tilde q)}.P} \step{\tau}{t} \conf{\upd{U}}{P}}
+  {\tagged{t}{U(\tilde q)}.P \step{\req{U}}{t} P}
 
 \inferrule*[left=Meas]
-  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
-  {\conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P} \step{\tau}{t} \conf{\br}{P[m/x]}}
+  {\M : \mathsf{Meas}(|\tilde q|) \\ m \in \mathbb{N}}
+  {\tagged{t}{\M(\tilde q \rhd x)}.P \step{\mrecv{m}}{t} P[m/x]}
 
 \inferrule*[left=Init]
   { }
-  {\conf{\rho}{\tagged{t}{\initp}.P} \step{\tau}{t} \conf{\inirho}{P}}
+  {\tagged{t}{\initp}.P \step{\initp}{t} P}
 
 \inferrule*[left=Send]
   {e \Downarrow v}
-  {\conf{\rho}{\tagged{t}{c!e}} \step{c!v}{t} \conf{\rho}{\mathbf{0}}}
+  {\tagged{t}{c!e} \step{c!v}{t} \mathbf{0}}
 
 \inferrule*[left=Recv]
   { }
-  {\conf{\rho}{\tagged{t}{c?x}.P} \step{c?v}{t} \conf{\rho}{P[v/x]}}
+  {\tagged{t}{c?x}.P \step{c?v}{t} P[v/x]}
 
 \inferrule*[left=IteT]
-  {e \Downarrow \mathit{tt} \\ \conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}}
-  {\conf{\rho}{\ite{e}{P}{Q}} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {e \Downarrow \mathit{tt} \\ P \step{\lambda}{s} P'}
+  {\ite{e}{P}{Q} \step{\lambda}{s} P'}
 
 \inferrule*[left=IteF]
-  {e \Downarrow \mathit{ff} \\ \conf{\rho}{Q} \step{\lambda}{s} \conf{\rho'}{Q'}}
-  {\conf{\rho}{\ite{e}{P}{Q}} \step{\lambda}{s} \conf{\rho'}{Q'}}
+  {e \Downarrow \mathit{ff} \\ Q \step{\lambda}{s} Q'}
+  {\ite{e}{P}{Q} \step{\lambda}{s} Q'}
 
 \inferrule*[left=SumL]
-  {\conf{\rho}{K_1} \step{\lambda}{s} \conf{\rho'}{P'}}
-  {\conf{\rho}{K_1 + K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {K_1 \step{\lambda}{s} P'}
+  {K_1 + K_2 \step{\lambda}{s} P'}
 
 \inferrule*[left=SumR]
-  {\conf{\rho}{K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
-  {\conf{\rho}{K_1 + K_2} \step{\lambda}{s} \conf{\rho'}{P'}}
+  {K_2 \step{\lambda}{s} P'}
+  {K_1 + K_2 \step{\lambda}{s} P'}
 
 \inferrule*[left=ParL]
-  {\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'}}
-  {\conf{\rho}{P \parallel Q} \step{\lambda}{s} \conf{\rho'}{P' \parallel Q}}
+  {P \step{\lambda}{s} P'}
+  {P \parallel Q \step{\lambda}{s} P' \parallel Q}
 
 \inferrule*[left=ParR]
-  {\conf{\rho}{Q} \step{\lambda}{s} \conf{\rho'}{Q'}}
-  {\conf{\rho}{P \parallel Q} \step{\lambda}{s} \conf{\rho'}{P \parallel Q'}}
+  {Q \step{\lambda}{s} Q'}
+  {P \parallel Q \step{\lambda}{s} P \parallel Q'}
 
-\inferrule*[left=SynchL]
-  {\conf{\rho}{P} \step{c!v}{t} \conf{\rho}{P'} \\
-   \conf{\rho}{Q} \step{c?v}{t'} \conf{\rho}{Q'}}
-  {\conf{\rho}{P \parallel Q} \step{\tau}{\{t,t'\}} \conf{\rho}{P' \parallel Q'}}
+\inferrule*[left=ComL]
+  {P \step{c!v}{t} P' \\ Q \step{c?v}{t'} Q'}
+  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
 
-\inferrule*[left=SynchR]
-  {\conf{\rho}{P} \step{c?v}{t} \conf{\rho}{P'} \\
-   \conf{\rho}{Q} \step{c!v}{t'} \conf{\rho}{Q'}}
-  {\conf{\rho}{P \parallel Q} \step{\tau}{\{t,t'\}} \conf{\rho}{P' \parallel Q'}}
+\inferrule*[left=ComR]
+  {P \step{c?v}{t} P' \\ Q \step{c!v}{t'} Q'}
+  {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
 
 \inferrule*[left=Restr]
-  {\conf{\rho}{P} \step{\lambda}{s} \conf{\rho'}{P'} \\
-   \forall v.\ \lambda \neq c!v, c?v}
-  {\conf{\rho}{P \setminus c} \step{\lambda}{s} \conf{\rho'}{P' \setminus c}}
+  {P \step{\lambda}{s} P' \\ \forall v.\ \lambda \neq c!v, c?v}
+  {P \setminus c \step{\lambda}{s} P' \setminus c}
 
 \inferrule*[left=Rec]
   { }
-  {\conf{\rho}{\tagged{t}{\rec{X}{P}}} \step{\tau}{t}
-   \conf{\rho}{P[\tagged{t}{\rec{X}{P}}/X]}}
+  {\tagged{t}{\rec{X}{P}} \step{\tau}{t} P[\tagged{t}{\rec{X}{P}}/X]}
 \end{mathpar}
-\caption{Configuration LTS, $\lambda \in \{\tau, c!v, c?v\}$. A measurement
-moves to one unnormalised branch for each outcome $m$; all branches carry the
-same choice $t$.}
-\label{fig:conf}
+\caption{Program LTS, $\lambda \in \{\tau\} \cup \{c!v, c?v, \req{U}, \mrecv{m}, \initp\}$.
+Quantum operations are requests to the memory: $\req{U}$ asks for $U$ on
+$\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$,
+$\initp$ asks for the initialisation of $\tilde q$.}
+\label{fig:prog}
 \end{figure}
+
+\subsection{Memory}
+
+The memory has two kinds of actions only (\cref{fig:mem}): it applies a
+super-operator, with $\memop{\sop{E}}$, and it sends the outcome of a
+measurement, with $\msend{m}$. A gate and an initialisation are both served
+by the first: we write $\sop{E}_\mu$ for the super-operator requested by
+$\mu$, that is, $\sop{E}_{\req{U}} = \sop{E}_U$ and
+$\sop{E}_{\initp} = \sop{E}_{\mathsf{init}}$.
+
+\begin{figure}[ht]
+\small
+\begin{mathpar}
+\inferrule*[left=Op]
+  {\sop{E} : \mathsf{Sop}(|\tilde q|)}
+  {\rho \mto{\memop{\sop{E}}} {\sapp{\sop{E}}}}
+
+\inferrule*[left=Meas]
+  {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
+  {\rho \mto{\msend{m}} {\br}}
+\end{mathpar}
+\caption{Memory LTS, $\mu \in \{\memop{\sop{E}}, \msend{m}\}$. The memory has
+two kinds of actions only: it applies a super-operator, or it sends the outcome
+of a measurement.}
+\label{fig:mem}
+\end{figure}
+
+\subsection{The composition of a memory and a program}
+
+The labelled semantics of lqCCS is the parallel composition of the LTS of
+the memory and the LTS of programs (\cref{def:par}). Its states are the pairs
+$\rho \lpar P$ of a memory and a program; the symbol $\lpar$ is the
+composition of LTSs, while $\parallel$ remains the parallel composition of
+the syntax. The interactions between the two are given by the following
+duality predicate (\cref{def:sync}).
+
+\begin{definition}[Duality between memory and programs]\label{def:sync-lq}
+$\syncM$ is the least relation such that
+\[
+\memop{\sop{E}_U} \syncM \req{U}
+\qquad\quad
+\memop{\sop{E}_{\mathsf{init}}} \syncM \initp
+\qquad\quad
+\msend{m} \syncM \mrecv{m}.
+\]
+\qed
+\end{definition}
+
+The transitions of the memory carry the empty choice $\epsilon$, so that an
+interaction has the choice $\epsilon \cdot t = t$ of the program. Since the
+memory has no silent transition, a silent transition of $\rho \lpar P$ is
+derived either by the rule Right of \cref{def:par}, when the program moves
+alone, or by the rule Sync, when the program and the memory interact.
+By definition of $\syncM$, an interaction is either a request of the
+program, for a gate (rule Op of \cref{fig:prog}) or an initialisation (rule
+Init), served by the memory (rule Op of \cref{fig:mem}), or the outcome of a
+measurement, sent by the memory (rule Meas of \cref{fig:mem}) and received
+by the program (rule Meas of \cref{fig:prog}). A measurement moves to one
+unnormalised branch for each outcome $m$, and all the branches carry the same
+choice $t$.
+
+Unfolding the rules, a gate, an initialisation and a measurement give
+\[
+\begin{array}{rcl}
+\rho \lpar \tagged{t}{U(\tilde q)}.P &\step{\tau}{t}& \upd{U} \lpar P\\[2pt]
+\rho \lpar \tagged{t}{\initp}.P &\step{\tau}{t}& \inirho \lpar P\\[2pt]
+\rho \lpar \tagged{t}{\M(\tilde q \rhd x)}.P &\step{\tau}{t}& \br \lpar P[m/x]
+\end{array}
+\]
+for $U : \mathsf{Op}(|\tilde q|)$, and for $\M : \mathsf{Meas}(|\tilde q|)$ and
+$0 \le m < |\M|$. The composition also has external transitions, by the rules
+Left and Right: the actions of the memory, and all the external actions of
+the program. They play no role in the Harmony lemma, which is about the
+silent transitions only.

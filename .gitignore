@@ -9,3 +9,4 @@ devenv.lock
 .doc/
 paper/*
 !paper/*.tex
+!paper/*.bib
