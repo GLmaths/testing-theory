@@ -230,6 +230,27 @@ Section Sched.
     intros E. pose proof (outs_nz_nonempty M qs ρ Hρ) as Hne.
     destruct (outs_nz M qs ρ); [done|]. inversion Hf; subst. done.
   Qed.
+
+  Inductive vis_step (ρ : St) (P : proc) :
+      choice → Labels prog_action + mem_action →
+      list ((Labels prog_action + mem_action) * (proc * St)) → Prop :=
+  | vs_prog (t : tag) a P' :
+      P ⟶{ActExt a}[t] P' →
+      vis_step ρ P t (inl (ActExt a)) [(inl (ActExt a), (P', ρ))]
+  | vs_sop (ℰ : Act) :
+      vis_step ρ P CEps (inr (MeSop ℰ)) [(inr (MeSop ℰ), (P, ℰ · ρ))]
+  | vs_meas M qs :
+      vis_step ρ P CEps (inr (MeMeas M qs 0))
+        (map (λ k, (inr (MeMeas M qs (code _ k)), (P, M ⦅qs⦆[k] · ρ))) (outs_nz M qs ρ)).
+
+  Lemma vis_step_conf ρ P s l Λ x :
+    vis_step ρ P s l Λ → x ∈ Λ → conf_step ρ P s x.1 x.2.2 x.2.1.
+  Proof.
+    intros Hv Hx. inversion Hv as [t a P' Hp|ℰ|M qs]; subst.
+    - apply list_elem_of_singleton in Hx. subst x. by apply prog_step_conf.
+    - apply list_elem_of_singleton in Hx. subst x. apply co_mem_sop.
+    - apply list_elem_of_fmap in Hx as (k & -> & _). apply co_mem_meas.
+  Qed.
 End Sched.
 
 (* The Smyth must of lqCCS is [⊑ₛₘ] of [pMust_smyth]; the characterisation

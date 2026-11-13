@@ -292,7 +292,7 @@ Section Pool.
 
   Context (q : proc * St) (O : node → list msg) (T : proc) (r : nat → dist comp) (w : nat → item).
   Hypothesis HO : ∀ n m, plain n → S_T T n = false → (m ∈ O n ↔ m ∈ O_T T n).
-  Hypothesis Hw : run_word (M := lq_menu O) (menu T) (S_T T) (dinit O q) r w.
+  Hypothesis Hw : run_word (M := lq_menu O) (menu T) (S_T T) (dinit q) r w.
   Hypothesis Hq : ok q.1.
   Hypothesis HT : ok T.
 
@@ -332,35 +332,35 @@ Section Pool.
       destruct (step_meas _ _ _ _ Ho Hp M qs _ eq_refl) as (Hm & Hl & Hfq). by apply HVm.
   Qed.
 
-  Lemma run_pool i x : x ∈ r i → Forall aval x.1.1 ∧ ok x.1.2.1.1 ∧ plain x.1.1 ∧ x.1.2.2 = O x.1.1.
+  Lemma run_pool i x : x ∈ r i → Forall aval x.1.1 ∧ ok x.1.2.1 ∧ plain x.1.1.
   Proof.
     revert x. induction i as [|i IH]; intros x Hx.
     - rewrite (proj1 Hw) in Hx. apply list_elem_of_singleton in Hx. subst x. simpl.
-      split; [constructor|]. split; [exact Hq|]. split; [|done]. intros k c v Hin. by apply elem_of_nil in Hin.
+      split; [constructor|]. split; [exact Hq|]. intros k c v Hin. by apply elem_of_nil in Hin.
     - destruct (proj2 Hw i) as [(_ & Δs & HF & Eq)|(_ & Eq)]; [|rewrite Eq in Hx; by apply IH].
       rewrite Eq in Hx. destruct (dsum_elem _ _ _ x HF Hx) as ([c ρ] & Δ & Hc & _ & Hstep & HxΔ). simpl in Hstep.
-      destruct (IH (c, ρ) Hc) as (Hn & Ho & Hpl & HE). simpl in Hn, Ho, Hpl, HE.
+      destruct (IH (c, ρ) Hc) as (Hn & Ho & Hpl). simpl in Hn, Ho, Hpl.
       destruct Hstep as [(Hns & Hs)|(_ & ->)].
       2:{ apply list_elem_of_singleton in HxΔ. subst x. simpl. done. }
       assert (Hsf : S_T T c.1 = false) by (destruct (S_T T c.1) eqn:Es; [exfalso; apply Hns; exact Es|done]).
-      inversion Hs as [n P C E s Δ0 Hss|n P C E k d v t P' Hin HkC Hp|n P C E k d v t P' HI Hp
-                      |n P C E k E' qs t HI|n P C E k qs t HI|n P C E k M qs t HI]; subst; simpl in *.
+      apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
+                      |n P C k E' qs t HI|n P C k qs t HI|n P C k M qs t HI]; subst; simpl in *.
       + apply list_elem_of_fmap in HxΔ as (y & -> & Hy). simpl.
         split; [done|]. split; [exact (sched_ok ρ P s Δ0 Ho Hss y Hy)|done].
       + apply list_elem_of_singleton in HxΔ. subst x. simpl. split; [done|]. split; [|done].
-        apply (step_ok P _ _ P' Ho Hp). simpl. apply (OT_ok n k d v Hn). apply (HO n _ Hpl Hsf). rewrite <- HE. exact Hin.
+        apply (step_ok P _ _ P' Ho Hp). simpl. apply (OT_ok n k d v Hn). apply (HO n _ Hpl Hsf). exact Hin.
       + apply list_elem_of_singleton in HxΔ. subst x. simpl. split.
         { apply Forall_app. split; [done|]. constructor; [|constructor]. exact (step_out P _ _ P' Ho Hp d v eq_refl). }
-        split; [exact (step_ok P _ _ P' Ho Hp Logic.I)|]. split; [by apply plain_app|done].
+        split; [exact (step_ok P _ _ P' Ho Hp Logic.I)|]. by apply plain_app.
       + apply list_elem_of_singleton in HxΔ. subst x. simpl. split.
         { apply Forall_app. split; [done|]. constructor; [done|constructor]. }
-        split; [done|]. split; [by apply plain_app|done].
+        split; [done|]. by apply plain_app.
       + apply list_elem_of_singleton in HxΔ. subst x. simpl. split.
         { apply Forall_app. split; [done|]. constructor; [done|constructor]. }
-        split; [done|]. split; [by apply plain_app|done].
+        split; [done|]. by apply plain_app.
       + apply list_elem_of_fmap in HxΔ as (k' & -> & Hk'). simpl. split.
         { apply Forall_app. split; [done|]. constructor; [by eexists|constructor]. }
-        split; [done|]. split; [by apply plain_app|done].
+        split; [done|]. by apply plain_app.
   Qed.
 
   Hypothesis HfV : fin V.

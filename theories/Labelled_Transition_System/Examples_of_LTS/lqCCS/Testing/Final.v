@@ -106,7 +106,7 @@ Section Data.
   Definition LVp (n : node) : Prop := ∃ k D x l, k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.1 = n ++ l.
 
   Definition CLp (ch : channel) : Prop :=
-    ∃ k D x t v P', k ≤ N ∧ reach k D ∧ x ∈ D ∧ prog_step x.1.2.1.1 (CTag t) (ActExt (PrOut ch v)) P'.
+    ∃ k D x t v P', k ≤ N ∧ reach k D ∧ x ∈ D ∧ prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P'.
 
   Lemma reach_fin k : fin (reach k).
   Proof.
@@ -135,10 +135,10 @@ Section Data.
   Lemma CLp_fin : fin CLp.
   Proof.
     apply (fin_mono _ (λ ch, ∃ x : comp * weight, (∃ k D, k ≤ N ∧ reach k D ∧ x ∈ D)
-                         ∧ ∃ t v P', prog_step x.1.2.1.1 (CTag t) (ActExt (PrOut ch v)) P')).
+                         ∧ ∃ t v P', prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P')).
     - intros ch (k & D & x & t & v & P' & Hk & Hr & Hx & Hp). exists x. split; [by exists k, D|by exists t, v, P'].
     - apply (fin_bind _ _ comps_fin). intros x _.
-      apply (fin_mono _ (λ ch, ∃ a, psteps x.1.2.1.1 [] [] a ∧ ∃ v, a.1 = ActExt (PrOut ch v))).
+      apply (fin_mono _ (λ ch, ∃ a, psteps x.1.2.1 [] [] a ∧ ∃ v, a.1 = ActExt (PrOut ch v))).
       + intros ch (t & v & P' & Hp). exists (ActExt (PrOut ch v), P'). split; [exists (CTag t); by split|by exists v].
       + apply (fin_bind _ _ (psteps_fin _ [] [])). intros a _. apply fin_uniq.
         intros c1 c2 (v1 & E1) (v2 & E2). congruence.
@@ -151,7 +151,7 @@ Section Data.
   Proof. intros Hk Hr Hx. exists k, D, x, []. by rewrite app_nil_r. Qed.
 
   Lemma CLp_reach k D x t ch v P' : k ≤ N → reach k D → x ∈ D →
-    prog_step x.1.2.1.1 (CTag t) (ActExt (PrOut ch v)) P' → CLp ch.
+    prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P' → CLp ch.
   Proof. intros Hk Hr Hx Hp. by exists k, D, x, t, v, P'. Qed.
 
   Lemma data_exist :
@@ -207,17 +207,17 @@ Section Data.
 End Data.
 
 Theorem lq_MenuTrunc `{QM : QuantumModel} (p q : proc * St) O Ch K : q.2 ≠ szero →
-  MenuTrunc (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit O p) (dinit O q).
+  MenuTrunc (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit p) (dinit q).
 Proof.
   intros Hq I S r w ((T & HT & HO & -> & -> & HCh & HK) & HokT) Hrun.
   destruct (reps_exist p q T K) as (F & HF & Hrep). destruct meas_default as (Mo & HMo).
   assert (Hnz : ∀ i x, x ∈ r i → x.2 ≠ weight_zero).
   { intros i. apply (run_weights (SchedSts0 := mdlts (M := lq_menu O) (menu T) (S_T T)) Stay (λ ρ, ρ ≠ weight_zero)
-      (λ ρ c σ Δ Hg Hs, mstep_nonzero (MenuSts := lq_menu O) (menu T) ρ c σ Δ Hg Hs) (dinit O q) r
+      (λ ρ c σ Δ Hg Hs, mstep_nonzero (MenuSts := lq_menu O) (menu T) ρ c σ Δ Hg Hs) (dinit q) r
       (run_word_is_run (M := lq_menu O) _ _ _ _ _ Hrun)).
     intros x ->%list_elem_of_singleton. exact Hq. }
   exists (Truncation.J0 p q T Ch K O r w F Mo). split; [|split].
-  - exact (J0_run p q T Ch K O r w F Mo HMo HT Hrun HF Hrep Hnz HokT (dinit O p)).
+  - exact (J0_run p q T Ch K O r w F Mo HMo HT Hrun HF Hrep Hnz HokT (dinit p)).
   - exact (J0_branching p q T Ch K O r w F Mo HT HF).
   - intros N.
     destruct (data_exist p q T Ch K O r w F Mo N HT HF)

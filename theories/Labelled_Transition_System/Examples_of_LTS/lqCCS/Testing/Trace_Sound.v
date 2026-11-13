@@ -95,9 +95,6 @@ Proof.
   - destruct (IH Hx) as (y' & Δ' & H1' & H2' & H3' & H4'). exists y', Δ'. split; [by right|]. split; [by right|done].
 Qed.
 
-Lemma reO_id (O : node → list msg) (c : comp) : c.2.2 = O c.1 → reO O c = c.
-Proof. destruct c as [n [[P C] E]]. simpl. intros ->. done. Qed.
-
 Section Snd.
   Context `{QM : QuantumModel} (p q : proc * St).
   Context (O : node → list msg) (Ch : channel → Prop) (K : tag → okind) (T : proc).
@@ -109,7 +106,7 @@ Section Snd.
   Hypothesis HO : ∀ n m, plain n → S_T T n = false → (m ∈ O n ↔ m ∈ O_T T n).
   Hypothesis HCh : ∀ c, c ∈ out_chans T → Ch c.
   Hypothesis HokI : ∀ n o, menu T n o → Ok o.
-  Hypothesis Hw : run_word (M := lq_menu O) (menu T) (S_T T) (dinit O q) r w.
+  Hypothesis Hw : run_word (M := lq_menu O) (menu T) (S_T T) (dinit q) r w.
   Hypothesis Hfin : fin (visited r).
   Hypothesis Hz : q.2 ≠ szero.
 
@@ -142,13 +139,13 @@ Section Snd.
     - rewrite (proj1 (S'_nvis n Hv)) in Hs. discriminate Hs.
   Qed.
 
-  Lemma q_inv i x : x ∈ r i → plain x.1.1 ∧ x.1.2.2 = O x.1.1.
+  Lemma q_inv i x : x ∈ r i → plain x.1.1.
   Proof.
-    refine (run_inv (mdlts (M := lq_menu O) (menu T) (S_T T)) (λ c : comp, plain c.1 ∧ c.2.2 = O c.1) _
-              (dinit O q) r _ _ i x).
-    - intros ρ c σ Δ [Hpl HE] Hs y Hy. exact (proj2 (cstep_reO (menu T) O O ρ c σ Δ (λ m Hm, Hm) Hpl HE Hs) y Hy).
+    refine (run_inv (mdlts (M := lq_menu O) (menu T) (S_T T)) (λ c : comp, plain c.1) _
+              (dinit q) r _ _ i x).
+    - intros ρ c σ Δ Hpl Hs y Hy. exact (cstep_plain (menu T) O ρ c σ Δ Hs Hpl y Hy).
     - exact (run_word_is_run (M := lq_menu O) _ _ _ _ _ Hw).
-    - intros x0 ->%list_elem_of_singleton. split; [intros k c v Hin; by apply elem_of_nil in Hin|done].
+    - exact (dinit_plain q).
   Qed.
 
   Lemma vis_run i x : x ∈ r i → ∀ n m, x.1.1 = n ++ m → visited r n.
@@ -177,50 +174,25 @@ Section Snd.
   Lemma q_S' i c ρ : (c, ρ) ∈ r i → S' c.1 = S_T T c.1.
   Proof. intros Hin. exact (S'_vis _ (q_vis i c ρ Hin)). Qed.
 
+  Lemma Q1 J i c ρ σ Δ : (c, ρ) ∈ r i → cstep J O ρ c σ Δ → cstep J O' ρ c σ Δ.
+  Proof.
+    intros Hin. pose proof (q_vis i c ρ Hin) as Hv. apply cstep_outputs. intros m Hm. by rewrite (O'_vis _ Hv).
+  Qed.
+
+  Lemma Q2 J i c ρ σ Δ : (c, ρ) ∈ r i → cstep J O' ρ c σ Δ → cstep J O ρ c σ Δ.
+  Proof.
+    intros Hin. pose proof (q_vis i c ρ Hin) as Hv. apply cstep_outputs. intros m Hm. by rewrite <- (O'_vis _ Hv).
+  Qed.
+
   Lemma Q3 J i c ρ σ : (c, ρ) ∈ r i → ((∃ Δ, cstep J O ρ c σ Δ) ↔ (∃ Δ, cstep J O' ρ c σ Δ)).
   Proof.
-    intros Hin. destruct (q_inv i (c, ρ) Hin) as [Hpl HE]. pose proof (q_vis i c ρ Hin) as Hv. simpl in Hpl, HE.
-    assert (HE' : c.2.2 = O' c.1) by (by rewrite (O'_vis _ Hv)).
-    split; intros [Δ Hs].
-    - assert (Hsub : ∀ m, m ∈ O c.1 → m ∈ O' c.1) by (intros m Hm; by rewrite (O'_vis _ Hv)).
-      destruct (cstep_reO J O O' ρ c σ Δ Hsub Hpl HE Hs) as [Hs' _]. rewrite (reO_id O' c HE') in Hs'. eauto.
-    - assert (Hsub : ∀ m, m ∈ O' c.1 → m ∈ O c.1) by (intros m Hm; by rewrite <- (O'_vis _ Hv)).
-      destruct (cstep_reO J O' O ρ c σ Δ Hsub Hpl HE' Hs) as [Hs' _]. rewrite (reO_id O c HE) in Hs'. eauto.
+    intros Hin. split; intros [Δ Hs]; exists Δ; [by eapply Q1|by eapply Q2].
   Qed.
 
-  Lemma Q1 J i c ρ σ Δ : (c, ρ) ∈ r i → (∀ y, y ∈ Δ → visited r y.1.1) →
-    cstep J O ρ c σ Δ → cstep J O' ρ c σ Δ.
-  Proof.
-    intros Hin HvΔ Hs. destruct (q_inv i (c, ρ) Hin) as [Hpl HE]. pose proof (q_vis i c ρ Hin) as Hv.
-    simpl in Hpl, HE. assert (HE' : c.2.2 = O' c.1) by (by rewrite (O'_vis _ Hv)).
-    assert (Hsub : ∀ m, m ∈ O c.1 → m ∈ O' c.1) by (intros m Hm; by rewrite (O'_vis _ Hv)).
-    destruct (cstep_reO J O O' ρ c σ Δ Hsub Hpl HE Hs) as [Hs' Hall]. rewrite (reO_id O' c HE') in Hs'.
-    match type of Hs' with cstep _ _ _ _ _ ?D0 => assert (Em : D0 = Δ) end.
-    { rewrite <- (map_id Δ) at 2. apply map_ext_in. intros [y ρy] Hy%list_elem_of_In. simpl. f_equal.
-      apply reO_id. pose proof (HvΔ _ Hy) as Hvy. pose proof (proj2 (Hall _ Hy)) as HEy. simpl in Hvy, HEy |- *.
-      rewrite (O'_vis _ Hvy). exact HEy. }
-    by rewrite Em in Hs'.
-  Qed.
-
-  Lemma Q2 J i c ρ σ Δ : (c, ρ) ∈ r i → (∀ y, y ∈ Δ → visited r y.1.1) →
-    cstep J O' ρ c σ Δ → cstep J O ρ c σ Δ.
-  Proof.
-    intros Hin HvΔ Hs. destruct (q_inv i (c, ρ) Hin) as [Hpl HE]. pose proof (q_vis i c ρ Hin) as Hv.
-    simpl in Hpl, HE. assert (HE' : c.2.2 = O' c.1) by (by rewrite (O'_vis _ Hv)).
-    assert (Hsub : ∀ m, m ∈ O' c.1 → m ∈ O c.1) by (intros m Hm; by rewrite <- (O'_vis _ Hv)).
-    destruct (cstep_reO J O' O ρ c σ Δ Hsub Hpl HE' Hs) as [Hs' Hall]. rewrite (reO_id O c HE) in Hs'.
-    match type of Hs' with cstep _ _ _ _ _ ?D0 => assert (Em : D0 = Δ) end.
-    { rewrite <- (map_id Δ) at 2. apply map_ext_in. intros [y ρy] Hy%list_elem_of_In. simpl. f_equal.
-      apply reO_id. pose proof (HvΔ _ Hy) as Hvy. pose proof (proj2 (Hall _ Hy)) as HEy. simpl in Hvy, HEy |- *.
-      rewrite <- (O'_vis _ Hvy). exact HEy. }
-    by rewrite Em in Hs'.
-  Qed.
-
-  Lemma q_run' : run_word (M := lq_menu O') (menu T) S' (dinit O' q) r w.
+  Lemma q_run' : run_word (M := lq_menu O') (menu T) S' (dinit q) r w.
   Proof.
     destruct Hw as [E0 Hr]. split.
-    - rewrite E0. unfold dinit. rewrite O'_vis; [done|]. exists 0, ([], (q.1, [], O [])), q.2.
-      split; [rewrite E0; by left|done].
+    - exact E0.
     - intros i. destruct (Hr i) as [(Hm & Δs & HF & Eq)|(Hst & Eq)].
       + left. split.
         * destruct Hm as (c & ρ & Δ & Hin & Hns & Hs).
@@ -230,8 +202,7 @@ Section Snd.
         * exists Δs. split; [|done]. refine (Forall2_mem_impl _ _ _ _ HF _). intros [c ρ] Δ Hin HΔ Hstep.
           simpl in Hstep |- *. destruct Hstep as [(Hns & Hs)|(Hd & ->)].
           -- left. split; [change (¬ S' c.1 = true); rewrite (q_S' i c ρ Hin); exact Hns|].
-             apply (Q1 (menu T) i c ρ (w i) Δ Hin); [|exact Hs]. intros [cy ρy] Hy.
-             exists (Datatypes.S i), cy, ρy. split; [|done]. rewrite Eq. exact (elem_of_dsum Δ Δs _ HΔ Hy).
+             exact (Q1 (menu T) i c ρ (w i) Δ Hin Hs).
           -- right. split; [|done]. destruct Hd as [Hsc|Hno].
              ++ left. change (S' c.1 = true). rewrite (q_S' i c ρ Hin). exact Hsc.
              ++ right. intros Δ' Hs'.
@@ -267,7 +238,7 @@ Section Snd.
   Proof.
     intros Hx.
     refine (run_weights (SchedSts0 := mdlts (M := lq_menu O) (menu T) (S_T T)) Stay (λ ρ, ρ ≠ szero)
-              (λ ρ c σ Δ Hg Hs, mstep_nonzero (menu T) ρ c σ Δ Hg Hs) (dinit O q) r
+              (λ ρ c σ Δ Hg Hs, mstep_nonzero (menu T) ρ c σ Δ Hg Hs) (dinit q) r
               (run_word_is_run (M := lq_menu O) _ _ _ _ _ Hw) _ i x Hx).
     intros y ->%list_elem_of_singleton. exact Hz.
   Qed.
@@ -292,7 +263,7 @@ Section Snd.
   Qed.
 
   Lemma vis_plain n : visited r n → plain n.
-  Proof. intros (i & c & ρ & Hin & <-). exact (proj1 (q_inv i (c, ρ) Hin)). Qed.
+  Proof. intros (i & c & ρ & Hin & <-). exact (q_inv i (c, ρ) Hin). Qed.
 
   Lemma coh' : coherent p q O' S' Ch K r w.
   Proof.
@@ -333,13 +304,11 @@ Section Snd.
   Lemma cells_eq' n o : U' n o ↔ U n o.
   Proof.
     unfold used_by, cells. split; intros (i & c & ρ & Δ & Hin & Hs & Hnf & Hne & Hst & Hall); exists i, c, ρ, Δ;
-      (split; [done|]); pose proof (q_S' i c ρ Hin) as ES;
-      assert (HvΔ : ∀ y, y ∈ Δ → visited r y.1.1)
-        by (intros [cy ρy] Hy; exact (q_vis (Datatypes.S i) cy ρy (Hall _ Hy))).
+      (split; [done|]); pose proof (q_S' i c ρ Hin) as ES.
     - split; [change (S_T T c.1 = false); change (S' c.1 = false) in Hs; congruence|].
-      split; [exact Hnf|]. split; [done|]. split; [|done]. exact (Q2 (single n o) i c ρ (w i) Δ Hin HvΔ Hst).
+      split; [exact Hnf|]. split; [done|]. split; [|done]. exact (Q2 (single n o) i c ρ (w i) Δ Hin Hst).
     - split; [change (S' c.1 = false); change (S_T T c.1 = false) in Hs; congruence|].
-      split; [exact Hnf|]. split; [done|]. split; [|done]. exact (Q1 (single n o) i c ρ (w i) Δ Hin HvΔ Hst).
+      split; [exact Hnf|]. split; [done|]. split; [|done]. exact (Q1 (single n o) i c ρ (w i) Δ Hin Hst).
   Qed.
 
   Lemma stable_eq i :
@@ -415,30 +384,22 @@ Section Snd.
   Qed.
 
   Lemma snd_main (DC : dep_choice) : alt_trace p q →
-    ∃ r', is_run (SchedSts0 := mdlts (M := lq_menu O) JY SsY) Stay (dinit O p) r'
+    ∃ r', is_run (SchedSts0 := mdlts (M := lq_menu O) JY SsY) Stay (dinit p) r'
         ∧ run_le (SchedSts0 := mdlts (M := lq_menu O) JY SsY) r' r.
   Proof.
     intros Halt. destruct (Halt O' S' Ch K r w coh' comp') as (r2 & Hr2 & Hle2). unfold trace_sts, trace_menu, trace_succ in Hr2, Hle2.
     set (S1 := mdlts (M := lq_menu O') J' Ss') in *.
     set (S2 := mdlts (M := lq_menu O) J' Ss').
     set (S3 := mdlts (M := lq_menu O) JY SsY).
-    assert (Hsucc : ∀ c : comp, psuccess (SchedSts := S1) c ↔ psuccess (SchedSts := S2) (reO O c)).
-    { intros c. split; intros Hc; exact Hc. }
     assert (Hsub : ∀ n m, m ∈ O' n → m ∈ O n).
     { intros n m. unfold O'. destruct (excluded_middle_informative (visited r n)); [done|by intros ?%elem_of_nil]. }
-    pose proof (morph_run S1 S2 (reO O) (λ c : comp, plain c.1 ∧ c.2.2 = O' c.1) Hsucc) as Hmor.
-    assert (HrX : is_run (SchedSts0 := S2) Stay (dinit O p)
-              (λ i, map (λ x : comp * weight, (reO O x.1, x.2)) (r2 i))).
-    { refine (Hmor _ _ (dinit O' p) r2 _ Hr2).
-      - intros ρ c σ Δ [Hpl HE] Hns Hs. exact (cstep_reO J' O' O ρ c σ Δ (Hsub c.1) Hpl HE Hs).
-      - intros ρ [n [[P C] E]] σ Δ' [Hpl HE] Hns Hs. simpl in Hpl, HE. subst E.
-        assert (Hv : visited r n).
-        { destruct (S' n) eqn:Es; [exfalso; apply Hns; exact (Sstar_S (M := lq_menu O') Ok U' S' r w n Es)|].
-          exact (proj1 (S'_false n Es)). }
-        assert (Hsub' : ∀ m, m ∈ O n → m ∈ O' n) by (intros m Hm; by rewrite (O'_vis n Hv)).
-        destruct (cstep_reO J' O O' ρ (reO O (n, (P, C, O' n))) σ Δ' Hsub' Hpl eq_refl Hs) as [Hs' _].
-        eexists. exact Hs'.
-      - intros x ->%list_elem_of_singleton. split; [|done]. intros k c v Hin. by apply elem_of_nil in Hin. }
+    assert (HrX : is_run (SchedSts0 := S2) Stay (dinit p) r2).
+    { apply (agree_run S1 S2 Stay _ r2); [|exact Hr2].
+      intros i c ρ Hin. split; [done|]. intros Hns σ Δ.
+      assert (Hv : visited r c.1).
+      { destruct (S' c.1) eqn:Es; [exfalso; apply Hns; exact (Sstar_S (M := lq_menu O') Ok U' S' r w c.1 Es)|].
+        exact (proj1 (S'_false c.1 Es)). }
+      split; apply cstep_outputs; intros m Hm; [exact (Hsub c.1 m Hm)|by rewrite (O'_vis c.1 Hv)]. }
     destruct (replay S3 S2
       (λ ρ c σ Δ Hs, mstep_mono (M := lq_menu O) JY J' ρ c σ Δ (λ n o, proj2 (Jstar_eq' n o)) Hs)
       (λ ρ c σ Δ Hs _, or_introl (mstep_mono (M := lq_menu O) J' JY ρ c σ Δ (λ n o, proj1 (Jstar_eq' n o)) Hs))
@@ -446,7 +407,7 @@ Section Snd.
       DC _ _ _ HrX (Sim_refl _ _)) as (r' & Hr' & Hm).
     exists r'. split; [exact Hr'|]. intros n v Hv. destruct (Hm n) as (m & Hmm).
     assert (Hlt : v <ₚ succ_mass (SchedSts0 := S1) r2 m).
-    { unfold succ_mass in *. rewrite (morph_succ S1 S2 (reO O) Hsucc (r2 m)).
+    { unfold succ_mass in *.
       destruct Hv as [Hv1 Hv2]. split; [by etransitivity|]. intros Hb. apply Hv2. by etransitivity. }
     destruct (Hle2 m v Hlt) as (m' & Hm'). exists m'. unfold succ_mass in *.
     erewrite dmass_of_congr; [exact Hm'|]. intros c ρ Hin.
@@ -458,7 +419,7 @@ Section Snd.
 End Snd.
 
 Definition finitary `{QM : QuantumModel} (p q : proc * St) : Prop :=
-  ∀ O Ch K I S (r : nat → dist comp) w, RealT p q O Ch K I S → run_word (M := lq_menu O) I S (dinit O q) r w →
+  ∀ O Ch K I S (r : nat → dist comp) w, RealT p q O Ch K I S → run_word (M := lq_menu O) I S (dinit q) r w →
     fin (visited r).
 
 Theorem trace_sound `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) :

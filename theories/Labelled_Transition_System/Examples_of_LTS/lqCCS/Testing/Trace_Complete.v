@@ -46,7 +46,7 @@ Section Asm.
   Notation Ok := (real_off p q Ch K).
 
   Hypothesis Hcoh : coherent p q O S Ch K r w.
-  Hypothesis Hrun : run_word (M := lq_menu O) U S (dinit O q) r w.
+  Hypothesis Hrun : run_word (M := lq_menu O) U S (dinit q) r w.
   Hypothesis Hcl1 : ∀ n, NoDup (cl n).
   Hypothesis Hcl2 : ∀ n o, o ∈ cl n ↔ U n o.
   Hypothesis Hfuel : ∀ n, S n = false → length n < f0.
@@ -72,7 +72,7 @@ Section Asm.
   Proof.
     unfold used_by, cells. intros (i & c & ρ & Δ & Hin & Hs & Hnf & Hne & Hst & _). simpl in Hst, Hs, Hnf.
     destruct (w i) as [s|k t]; [by destruct Hnf|].
-    inversion Hst; subst; match goal with Hsg : single _ _ _ _ |- _ => destruct Hsg as [E1 E2] end;
+    apply cstep_cases in Hst. inversion Hst; subst; match goal with Hsg : single _ _ _ _ |- _ => destruct Hsg as [E1 E2] end;
       simpl in *; subst; split; done.
   Qed.
 
@@ -163,14 +163,14 @@ Section Asm.
     intros (i & c0 & ρ & Hin & Hs & [(Hd & Hno & Δ & Hst)|(Hst & σ & Δ & Hs')]).
     - simpl in Hst. destruct (w i) as [s|k' t].
       + apply (Hno Δ). simpl. exact (proj1 (cstep_ich _ _ _ _ _ _ Hst) _).
-      + inversion Hst; subst; match goal with Hsg : single _ _ _ _ |- _ => destruct Hsg as [_ Hsg']; discriminate Hsg' end.
+      + apply cstep_cases in Hst. inversion Hst; subst; match goal with Hsg : single _ _ _ _ |- _ => destruct Hsg as [_ Hsg']; discriminate Hsg' end.
     - simpl in Hs'. destruct σ as [s|k' t].
       + apply (Hst (ICh s)). exists c0, ρ, Δ. split; [done|]. split; [intros Hx; simpl in *; congruence|].
         simpl. exact (proj1 (cstep_ich _ _ _ _ _ _ Hs') _).
-      + inversion Hs'; subst; match goal with Hsg : single _ _ _ _ |- _ => destruct Hsg as [_ Hsg']; discriminate Hsg' end.
+      + apply cstep_cases in Hs'. inversion Hs'; subst; match goal with Hsg : single _ _ _ _ |- _ => destruct Hsg as [_ Hsg']; discriminate Hsg' end.
   Qed.
 
-  Lemma q_run : run_word (M := lq_menu O) (menu T) (S_T T) (dinit O q) r w.
+  Lemma q_run : run_word (M := lq_menu O) (menu T) (S_T T) (dinit q) r w.
   Proof.
     rewrite <- (proj1 Hrun). refine (run_sandwich (M := lq_menu O) Ok U S r w Hrun0 (menu T) (S_T T) _ _ _).
     - intros i c ρ Hin. exact (T_S _ (q_clpath i (c, ρ) Hin)).
@@ -275,12 +275,12 @@ Section Asm.
   Qed.
 
   Lemma asm_complete : alt_free_obs p q →
-    ∃ r', is_run (SchedSts0 := trace_sts p q O S Ch K r w) Stay (dinit O p) r'
+    ∃ r', is_run (SchedSts0 := trace_sts p q O S Ch K r w) Stay (dinit p) r'
         ∧ run_le (SchedSts0 := trace_sts p q O S Ch K r w) r' r.
   Proof.
     intros Hfree. destruct (Hfree O Ch K (menu T) (S_T T) T_real r w q_run) as (r' & Hr' & Hle).
     assert (Hpath : ∀ i x, x ∈ r' i → visited_ok (M := lq_menu O) JA x.1.1).
-    { refine (run_inv SA (λ c, visited_ok (M := lq_menu O) JA c.1) _ (dinit O p) r' Hr' _).
+    { refine (run_inv SA (λ c, visited_ok (M := lq_menu O) JA c.1) _ (dinit p) r' Hr' _).
       - intros ρ c σ Δ Hv Hs y Hy. exact (visited_step (M := lq_menu O) JA ρ c σ Δ y Hv Hs Hy).
       - intros x ->%list_elem_of_singleton m a m2 E. simpl in E. destruct m; discriminate E. }
     assert (Hag : ∀ i, agree_on SA SB (r' i)).

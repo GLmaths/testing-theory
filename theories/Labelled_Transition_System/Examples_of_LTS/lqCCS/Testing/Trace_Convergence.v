@@ -219,12 +219,12 @@ Proof.
 Qed.
 
 Lemma cstep_measure `{QM : QuantumModel} T O ρ (c : comp) σ Δ :
-  norec T = true → norec c.2.1.1 = true → cstep (menu T) O ρ c σ Δ →
-  ∀ y, y ∈ Δ → sz y.1.2.1.1 + (sz T - length y.1.1) < sz c.2.1.1 + (sz T - length c.1) ∧ norec y.1.2.1.1 = true.
+  norec T = true → norec c.2.1 = true → cstep (menu T) O ρ c σ Δ →
+  ∀ y, y ∈ Δ → sz y.1.2.1 + (sz T - length y.1.1) < sz c.2.1 + (sz T - length c.1) ∧ norec y.1.2.1 = true.
 Proof.
   intros HT Hc Hs y Hy.
-  inversion Hs as [n P C E s Δ0 Hss|n P C E k d v t P' Hin HkC Hp|n P C E k d v t P' HI Hp
-                  |n P C E k E' qs t HI|n P C E k qs t HI|n P C E k M qs t HI]; subst; simpl in *.
+  apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
+                  |n P C k E' qs t HI|n P C k qs t HI|n P C k M qs t HI]; subst; simpl in *.
   - apply list_elem_of_fmap in Hy as (x & -> & Hx). simpl.
     destruct (sched_sz ρ P s Δ0 Hc Hss x Hx) as [Hl Hr]. split; [lia|done].
   - apply list_elem_of_singleton in Hy. subst y. simpl. destruct (step_sz _ _ _ _ Hc Hp) as [Hl Hr]. split; [lia|done].
@@ -257,14 +257,14 @@ Theorem norec_finitary `{QM : QuantumModel} (p q : proc * St) : norec q.1 = true
 Proof.
   intros Hq O Ch K I S r w ((T & HT & _ & -> & -> & _) & _) Hw.
   assert (HTn : norec T = true) by exact (proj1 obs_norec T (proj1 (proj1 (proj1 HT)))).
-  assert (Hsn : SN (mdlts (M := lq_menu O) (menu T) (S_T T)) (dinit O q)).
+  assert (Hsn : SN (mdlts (M := lq_menu O) (menu T) (S_T T)) (dinit q)).
   { apply (SN_any (mdlts (M := lq_menu O) (menu T) (S_T T))
-             (λ c : comp, sz c.2.1.1 + (sz T - length c.1)) (λ c : comp, norec c.2.1.1 = true)).
+             (λ c : comp, sz c.2.1 + (sz T - length c.1)) (λ c : comp, norec c.2.1 = true)).
     - intros ρ c σ Δ Hi _ Hs y Hy. exact (cstep_measure T O ρ c σ Δ HTn Hi Hs y Hy).
     - intros x ->%list_elem_of_singleton. exact Hq. }
-  destruct (sn_stable (mdlts (M := lq_menu O) (menu T) (S_T T)) (dinit O q) r Hsn
+  destruct (sn_stable (mdlts (M := lq_menu O) (menu T) (S_T T)) (dinit q) r Hsn
               (run_word_is_run (M := lq_menu O) _ _ _ _ _ Hw)) as [N HN].
-  exact (stable_fin O (menu T) (S_T T) (dinit O q) r w N Hw HN).
+  exact (stable_fin O (menu T) (S_T T) (dinit q) r w N Hw HN).
 Qed.
 
 Theorem trace_characterisation_norec `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) :

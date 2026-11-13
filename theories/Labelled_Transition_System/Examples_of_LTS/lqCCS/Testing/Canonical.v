@@ -71,8 +71,8 @@ Section Mass.
 
   Lemma cstep_mass I O ρ c it Δ : cstep I O ρ c it Δ → dmass Δ = tr ρ.
   Proof.
-    inversion 1 as [n P C E s Δ0 Hs| | | | |n P C E k M qs t HI]; subst.
-    - rewrite <- (sched_step_mass _ _ _ _ Hs). exact (dmass_map_snd (λ P', (n, (P', C, E))) Δ0).
+    intros Hcv%cstep_cases. inversion Hcv as [n P C s Δ0 Hs| | | | |n P C k M qs t HI]; subst.
+    - rewrite <- (sched_step_mass _ _ _ _ Hs). exact (dmass_map_snd (λ P', (n, (P', C))) Δ0).
     - apply dmass_one.
     - apply dmass_one.
     - rewrite dmass_one. apply sop_tr.
@@ -95,7 +95,7 @@ Section Mass.
     cstep J O ρ c (IOff k t) Δ →
     ∃ o, J c.1 o ∧ (∀ J', J' c.1 o → cstep J' O ρ c (IOff k t) Δ) ∧ ∀ y, y ∈ Δ → ∃ a, offer_of a = o ∧ y.1.1 = c.1 ++ [a].
   Proof.
-    inversion 1 as [| |n P C E k' d v t' P' HI Hp|n P C E k' E' qs t' HI|n P C E k' qs t' HI|n P C E k' M qs t' HI]; subst.
+    intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' E' qs t' HI|n P C k' qs t' HI|n P C k' M qs t' HI]; subst.
     - exists (OffIn k d). split; [done|]. split; [intros J' HJ'; by apply cs_in|].
       intros y ->%list_elem_of_singleton. by exists (CoIn k d v).
     - exists (OffOp k E' qs). split; [done|]. split; [intros J' HJ'; by apply cs_op|].
@@ -108,7 +108,7 @@ Section Mass.
 
   Lemma cstep_nonempty J O ρ c it Δ : ρ ≠ szero → cstep J O ρ c it Δ → Δ ≠ [].
   Proof.
-    intros Hρ. inversion 1 as [n P C E s Δ0 Hs| | | | |n P C E k M qs t HI]; subst; try done.
+    intros Hρ. intros Hcv%cstep_cases. inversion Hcv as [n P C s Δ0 Hs| | | | |n P C k M qs t HI]; subst; try done.
     - intros E0. apply fmap_nil_inv in E0. subst Δ0. exact (sched_step_nonempty _ _ _ _ Hρ Hs eq_refl).
     - intros E0. apply fmap_nil_inv in E0. exact (outs_nz_nonempty M qs ρ Hρ E0).
   Qed.
@@ -122,7 +122,7 @@ End Mass.
   prob_add_mono := W_add_mono;
 |}.
 
-Notation comp := (node * (proc * list msg * list msg))%type (only parsing).
+Notation comp := (node * (proc * list msg))%type (only parsing).
 
 Definition lq_menu `{QM : QuantumModel} (O : node → list msg) : MenuSts comp item coact offer.
 Proof.
@@ -136,10 +136,10 @@ Proof.
 Defined.
 
 Definition alt_free `{QM : QuantumModel} (p q : proc * St) : Prop :=
-  ∀ O, malt_free (M := lq_menu O) (λ _, True) (dinit O p) (dinit O q).
+  ∀ O, malt_free (M := lq_menu O) (λ _, True) (dinit p) (dinit q).
 
 Lemma alt_pre_menu `{QM : QuantumModel} (p q : proc * St) :
-  alt_pre Stay p q ↔ ∀ O, malt_pre (M := lq_menu O) (λ _, True) (dinit O p) (dinit O q).
+  alt_pre Stay p q ↔ ∀ O, malt_pre (M := lq_menu O) (λ _, True) (dinit p) (dinit q).
 Proof.
   split.
   - intros Hp O I S _ HS. exact (Hp I O S HS).
@@ -162,7 +162,7 @@ Lemma single_op_item `{QM : QuantumModel} O n k E0 qs ρ c it Δ :
   cstep (single n (OffOp k E0 qs)) O ρ c it Δ →
   (∀ J, cstep J O ρ c it Δ) ∨ ∃ t, it = IOff k t.
 Proof.
-  inversion 1 as [? ? ? ? s Δ0 Hs|? ? ? ? k' d v t P' HE HkC Hp|? ? ? ? k' d v t P' HI Hp|? ? ? ? k' E' qs' t HI|? ? ? ? k' qs' t HI|? ? ? ? k' M qs' t HI]; subst.
+  intros Hcv%cstep_cases. inversion Hcv as [? ? ? s Δ0 Hs|? ? ? k' d v t P' HE HkC Hp|? ? ? k' d v t P' HI Hp|? ? ? k' E' qs' t HI|? ? ? k' qs' t HI|? ? ? k' M qs' t HI]; subst.
   - left. intros J. by constructor.
   - left. intros J. by econstructor.
   - destruct HI as [_ Ho]. discriminate Ho.
@@ -172,24 +172,24 @@ Proof.
 Qed.
 
 Theorem convergence `{QM : QuantumModel} (p q : proc * St) O S I r w k :
-  alt_pre Stay p q → ext_closed S → run_word (M := lq_menu O) I S (dinit O q) r w →
+  alt_pre Stay p q → ext_closed S → run_word (M := lq_menu O) I S (dinit q) r w →
   (∀ i, ¬ dstable (SchedSts0 := dlts I O S) (r i)) → (∀ i t, w i ≠ IOff k t) →
-  ∃ r', is_run (SchedSts0 := mdlts (M := lq_menu O) (Jstar (M := lq_menu O) (λ _, True) I S r w) (Sstar (M := lq_menu O) (λ _, True) I S r w)) Stay (dinit O p) r'
+  ∃ r', is_run (SchedSts0 := mdlts (M := lq_menu O) (Jstar (M := lq_menu O) (λ _, True) I S r w) (Sstar (M := lq_menu O) (λ _, True) I S r w)) Stay (dinit p) r'
     ∧ ((∀ i, ¬ dstable (SchedSts0 := mdlts (M := lq_menu O) (Jstar (M := lq_menu O) (λ _, True) I S r w) (Sstar (M := lq_menu O) (λ _, True) I S r w)) (r' i))
        ∨ ∀ v, prob_lt v (tr p.2) → ∃ m, prob_le v (succ_mass (SchedSts0 := dlts I O S) r m)).
 Proof.
   intros Hpre HS Hw Hdiv Hfresh.
-  assert (Hq0 : ∀ x, x ∈ dinit O q → mnode (MenuSts := lq_menu O) x.1 = []).
+  assert (Hq0 : ∀ x, x ∈ dinit q → mnode (MenuSts := lq_menu O) x.1 = []).
   { intros x Hx. apply list_elem_of_singleton in Hx. by subst x. }
   assert (Hen : ∀ J (c : comp) ρ, J (mnode (MenuSts := lq_menu O) c) (OffOp k 0 []) → ∃ σ Δ, mstep (MenuSts := lq_menu O) J ρ c σ Δ).
-  { intros J [n [[P C] E0]] ρ HJ. eexists (IOff k 0), _. exact (cs_op _ _ ρ n P C E0 k 0 [] 0 HJ). }
+  { intros J [n [P C]] ρ HJ. eexists (IOff k 0), _. exact (cs_op _ _ ρ n P C k 0 [] 0 HJ). }
   assert (Hf : ∀ n i ρ (c : comp) Δ, mstep (MenuSts := lq_menu O) (single n (OffOp k 0 [])) ρ c (w i) Δ → ∀ J', mstep (MenuSts := lq_menu O) J' ρ c (w i) Δ).
   { intros n i ρ c Δ Hc. destruct (single_op_item _ _ _ _ _ _ _ _ _ Hc) as [Hall|(t & Ht)]; [exact Hall|].
     exfalso. exact (Hfresh i t Ht). }
-  destruct (mconvergence (M := lq_menu O) _ (dinit O p) (dinit O q) (proj1 (alt_pre_menu p q) Hpre O)
+  destruct (mconvergence (M := lq_menu O) _ (dinit p) (dinit q) (proj1 (alt_pre_menu p q) Hpre O)
     Hq0 S HS I r w (OffOp k 0 []) (λ _ _ _, Logic.I) Logic.I Hw Hdiv Hen Hf) as (r' & Hr' & Hc).
   exists r'. split; [done|]. destruct Hc as [Hc|Hc]; [by left|right]. intros v Hv. apply Hc.
-  assert (E : dmass (dinit O p) = tr p.2) by exact (dmass_one (([], (p.1, [], O [])), p.2)).
+  assert (E : dmass (dinit p) = tr p.2) by exact (dmass_one (([], (p.1, [])), p.2)).
   rewrite E. exact Hv.
 Qed.
 
@@ -201,61 +201,59 @@ Proof.
   apply list_elem_of_singleton in Hin. exact (Ha k c v (eq_sym Hin)).
 Qed.
 
-Definition reO (O' : node → list msg) (c : comp) : comp := (c.1, (c.2.1.1, c.2.1.2, O' c.1)).
-
-Lemma cstep_reO `{QM : QuantumModel} I O O' ρ c σ Δ :
-  (∀ m, m ∈ O c.1 → m ∈ O' c.1) → plain c.1 → c.2.2 = O c.1 → cstep I O ρ c σ Δ →
-  cstep I O' ρ (reO O' c) σ (map (λ x, (reO O' x.1, x.2)) Δ)
-  ∧ ∀ y, y ∈ Δ → plain y.1.1 ∧ y.1.2.2 = O y.1.1.
+Lemma cstep_outputs `{QM : QuantumModel} I O O' ρ c σ Δ :
+  (∀ m, m ∈ O c.1 → m ∈ O' c.1) → cstep I O ρ c σ Δ → cstep I O' ρ c σ Δ.
 Proof.
-  intros HO Hpl HE Hs.
-  inversion Hs as [n P C E s Δ0 Hss|n P C E k d v t P' Hin HkC Hp|n P C E k d v t P' HI Hp
-                  |n P C E k E' qs t HI|n P C E k qs t HI|n P C E k M qs t HI]; subst; unfold reO; simpl in *.
-  - split.
-    + rewrite map_map. exact (cs_ch I O' ρ n P C (O' n) s Δ0 Hss).
-    + intros y (x & -> & _)%list_elem_of_fmap. by split.
-  - split.
-    + apply cs_recv; [|done|done]. apply HO. by rewrite <- HE.
-    + intros y ->%list_elem_of_singleton. by split.
-  - split; [by apply cs_in|]. intros y ->%list_elem_of_singleton. split; [|done]. by apply plain_app.
-  - split; [by apply cs_op|]. intros y ->%list_elem_of_singleton. split; [|done]. by apply plain_app.
-  - split; [by apply cs_init|]. intros y ->%list_elem_of_singleton. split; [|done]. by apply plain_app.
-  - split.
-    + rewrite map_map. exact (cs_meas I O' ρ n P C (O' n) k M qs t HI).
-    + intros y (x & -> & _)%list_elem_of_fmap. split; [|done]. by apply plain_app.
+  intros HO Hs. destruct Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C o l t s Λ HI Hv Ht Ha].
+  - by apply cs_ch.
+  - apply cs_recv; [|done|done]. by apply HO.
+  - by eapply cs_dual.
 Qed.
 
-Lemma smyth_reO `{QM : QuantumModel} I O O' S (p q : proc * St) :
-  (∀ n m, plain n → S n = false → (m ∈ O n ↔ m ∈ O' n)) →
-  smyth_le (SchedSts0 := dlts I O S) Stay (dinit O p) (dinit O q) →
-  smyth_le (SchedSts0 := dlts I O' S) Stay (dinit O' p) (dinit O' q).
+Lemma cstep_plain `{QM : QuantumModel} I O ρ c σ Δ :
+  cstep I O ρ c σ Δ → plain c.1 → ∀ y, y ∈ Δ → plain y.1.1.
 Proof.
-  intros HO Hle.
-  assert (Hres : smyth_le (SchedSts0 := dlts I O' S) Stay
-            (map (λ x, (reO O' x.1, x.2)) (dinit O p)) (map (λ x, (reO O' x.1, x.2)) (dinit O q))).
-  { apply (morph_smyth (dlts I O S) (dlts I O' S) (reO O') (reO O)
-             (λ c, plain c.1 ∧ c.2.2 = O c.1) (λ c, plain c.1 ∧ c.2.2 = O' c.1)); [| | | | | | | | |exact Hle].
-    - intros c. split; intros Hc; exact Hc.
-    - intros ρ c σ Δ [Hpl HE] Hns Hs.
-      assert (HSc : S c.1 = false) by (destruct (S c.1) eqn:E; [by destruct Hns|done]).
-      exact (cstep_reO I O O' ρ c σ Δ (λ m Hm, proj1 (HO c.1 m Hpl HSc) Hm) Hpl HE Hs).
-    - intros ρ [n [[P C] E]] σ Δ' [Hpl HE] Hns Hs. simpl in *. subst E.
-      assert (HSc : S n = false) by (destruct (S n) eqn:E; [by destruct Hns|done]).
-      destruct (cstep_reO I O' O ρ (reO O' (n, (P, C, O n))) σ Δ' (λ m Hm, proj2 (HO n m Hpl HSc) Hm) Hpl eq_refl Hs) as [Hs' _].
-      eexists. exact Hs'.
-    - intros c. split; intros Hc; exact Hc.
-    - intros ρ c σ Δ [Hpl HE] Hns Hs.
-      assert (HSc : S c.1 = false) by (destruct (S c.1) eqn:E; [by destruct Hns|done]).
-      exact (cstep_reO I O' O ρ c σ Δ (λ m Hm, proj2 (HO c.1 m Hpl HSc) Hm) Hpl HE Hs).
-    - intros ρ [n [[P C] E]] σ Δ' [Hpl HE] Hns Hs. simpl in *. subst E.
-      assert (HSc : S n = false) by (destruct (S n) eqn:E; [by destruct Hns|done]).
-      destruct (cstep_reO I O O' ρ (reO O (n, (P, C, O' n))) σ Δ' (λ m Hm, proj1 (HO n m Hpl HSc) Hm) Hpl eq_refl Hs) as [Hs' _].
-      eexists. exact Hs'.
-    - intros x ->%list_elem_of_singleton. split; [|done]. intros k c v Hin. by apply elem_of_nil in Hin.
-    - intros x Hx. change (x ∈ [(([], (q.1, [], O' [])), q.2)]) in Hx. apply list_elem_of_singleton in Hx.
-      subst x. split; [|done]. intros k c v Hin. by apply elem_of_nil in Hin.
-    - done. }
-  exact Hres.
+  intros Hs Hpl.
+  apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
+                  |n P C k E' qs t HI|n P C k qs t HI|n P C k M qs t HI]; subst; simpl in *.
+  - by intros y (x & -> & _)%list_elem_of_fmap.
+  - by intros y ->%list_elem_of_singleton.
+  - intros y ->%list_elem_of_singleton. by apply plain_app.
+  - intros y ->%list_elem_of_singleton. by apply plain_app.
+  - intros y ->%list_elem_of_singleton. by apply plain_app.
+  - intros y (x & -> & _)%list_elem_of_fmap. by apply plain_app.
+Qed.
+
+Lemma outputs_agree `{QM : QuantumModel} I O O' S (D : dist comp) :
+  (∀ n m, plain n → S n = false → (m ∈ O n ↔ m ∈ O' n)) → (∀ x, x ∈ D → plain x.1.1) →
+  agree_on (dlts I O S) (dlts I O' S) D.
+Proof.
+  intros HO HD c ρ Hin. split; [done|]. intros Hns σ Δ. pose proof (HD _ Hin) as Hpl. simpl in Hpl, Hns.
+  assert (HSc : S c.1 = false) by (destruct (S c.1) eqn:E; [by destruct Hns|done]).
+  split; apply cstep_outputs; intros m Hm; by apply (HO c.1 m Hpl HSc).
+Qed.
+
+Lemma dinit_plain `{QM : QuantumModel} (p : proc * St) x : x ∈ dinit p → plain x.1.1.
+Proof. intros ->%list_elem_of_singleton k c v Hin. by apply elem_of_nil in Hin. Qed.
+
+Lemma smyth_outputs `{QM : QuantumModel} I O O' S (p q : proc * St) :
+  (∀ n m, plain n → S n = false → (m ∈ O n ↔ m ∈ O' n)) →
+  smyth_le (SchedSts0 := dlts I O S) Stay (dinit p) (dinit q) →
+  smyth_le (SchedSts0 := dlts I O' S) Stay (dinit p) (dinit q).
+Proof.
+  intros HO Hle r2 Hr2.
+  assert (HO' : ∀ n m, plain n → S n = false → (m ∈ O' n ↔ m ∈ O n)) by (intros n m Hn Hs; symmetry; by apply HO).
+  pose proof (run_inv (dlts I O' S) (λ c : comp, plain c.1) (λ ρ c σ Δ Hc Hs, cstep_plain I O' ρ c σ Δ Hs Hc)
+                _ r2 Hr2 (dinit_plain q)) as Hpl2.
+  assert (Hr2' : is_run (SchedSts0 := dlts I O S) Stay (dinit q) r2).
+  { apply (agree_run (dlts I O' S) (dlts I O S) Stay _ r2); [|done].
+    intros i. apply outputs_agree; [done|]. intros x Hx. exact (Hpl2 i x Hx). }
+  destruct (Hle r2 Hr2') as (r1 & Hr1 & Hrle).
+  pose proof (run_inv (dlts I O S) (λ c : comp, plain c.1) (λ ρ c σ Δ Hc Hs, cstep_plain I O ρ c σ Δ Hs Hc)
+                _ r1 Hr1 (dinit_plain p)) as Hpl1.
+  exists r1. split; [|exact Hrle].
+  apply (agree_run (dlts I O S) (dlts I O' S) Stay _ r1); [|done].
+  intros i. apply outputs_agree; [done|]. intros x Hx. exact (Hpl1 i x Hx).
 Qed.
 
 Definition typed (K : tag → okind) (o : offer) : Prop := off_kind o = K (off_tag o).
@@ -271,7 +269,7 @@ Definition RealT `{QM : QuantumModel} (p q : proc * St) (O : node → list msg) 
   ∧ ∀ n o, I n o → real_off p q Ch K o.
 
 Definition alt_free_obs `{QM : QuantumModel} (p q : proc * St) : Prop :=
-  ∀ O Ch K, malt_free_on (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit O p) (dinit O q).
+  ∀ O Ch K, malt_free_on (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit p) (dinit q).
 
 Definition kinds_of (T : proc) (k : tag) : okind :=
   match find (λ x, bool_decide (x.1 = k)) (tagged T) with Some x => x.2 | None => KOut end.
@@ -318,11 +316,11 @@ Proof.
 Qed.
 
 Lemma alt_pre_obs_menu `{QM : QuantumModel} (p q : proc * St) :
-  alt_pre_obs Stay p q ↔ ∀ O Ch K, malt_pre_on (M := lq_menu O) (RealT p q O Ch K) (dinit O p) (dinit O q).
+  alt_pre_obs Stay p q ↔ ∀ O Ch K, malt_pre_on (M := lq_menu O) (RealT p q O Ch K) (dinit p) (dinit q).
 Proof.
   split.
   - intros Hp O Ch K I S ((T & HT & HO & -> & -> & _) & _).
-    exact (smyth_reO (menu T) (O_T T) O (S_T T) p q (λ n m Hn Hs, iff_sym (HO n m Hn Hs)) (Hp T HT)).
+    exact (smyth_outputs (menu T) (O_T T) O (S_T T) p q (λ n m Hn Hs, iff_sym (HO n m Hn Hs)) (Hp T HT)).
   - intros Hp T HT. refine (Hp (O_T T) (λ c, c ∈ out_chans T) (kinds_of T) (menu T) (S_T T) _).
     split; [|intros n o Hm; exact (menu_real p q T n o HT Hm)].
     exists T. split; [done|]. split; [done|]. split; [done|]. split; [done|]. split; [done|].
@@ -340,7 +338,7 @@ Proof.
 Qed.
 
 Theorem alt_free_obs_complete `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) :
-    (∀ O Ch K, MenuReal (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit O p) (dinit O q)) →
+    (∀ O Ch K, MenuReal (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit p) (dinit q)) →
   ctx_pre_sm_on Stay (obs_for p q) p q → alt_free_obs p q.
 Proof.
   intros HM Hc O Ch K. apply (malt_free_on_complete (M := lq_menu O)); [apply HM|].

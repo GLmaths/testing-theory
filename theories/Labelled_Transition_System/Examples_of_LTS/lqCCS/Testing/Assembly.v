@@ -84,23 +84,10 @@ Qed.
 Lemma succ_prefix T m l : succ_at T m = true → S_T T (m ++ l) = true.
 Proof. intros Hs. apply S_T_app. by apply succ_at_S. Qed.
 
-Lemma cstep_plain `{QM : QuantumModel} I O ρ c σ Δ : cstep I O ρ c σ Δ → plain c.1 → ∀ y, y ∈ Δ → plain y.1.1.
-Proof.
-  intros Hs Hpl y Hy.
-  inversion Hs as [n P C E s Δ0 Hss|n P C E k d v t P' Hin HkC Hp|n P C E k d v t P' HI Hp
-                  |n P C E k E' qs t HI|n P C E k qs t HI|n P C E k M qs t HI]; subst; simpl in *.
-  - apply list_elem_of_fmap in Hy as (x & -> & _). done.
-  - apply list_elem_of_singleton in Hy. by subst.
-  - apply list_elem_of_singleton in Hy. subst. by apply plain_app.
-  - apply list_elem_of_singleton in Hy. subst. by apply plain_app.
-  - apply list_elem_of_singleton in Hy. subst. by apply plain_app.
-  - apply list_elem_of_fmap in Hy as (x & -> & _). by apply plain_app.
-Qed.
-
 Definition relevant (c : comp) (o : offer) : Prop :=
   match o with
   | OffOut _ _ _ => False
-  | OffIn _ ch => ∃ t v P', prog_step c.2.1.1 (CTag t) (ActExt (PrOut ch v)) P'
+  | OffIn _ ch => ∃ t v P', prog_step c.2.1 (CTag t) (ActExt (PrOut ch v)) P'
   | _ => True
   end.
 
@@ -108,8 +95,8 @@ Lemma cstep_menu_eq `{QM : QuantumModel} I J O ρ c σ Δ :
   (∀ o, relevant c o → I c.1 o → J c.1 o) → cstep I O ρ c σ Δ → cstep J O ρ c σ Δ.
 Proof.
   intros Hrel Hs.
-  inversion Hs as [n P C E s Δ0 Hss|n P C E k d v t P' Hin HkC Hp|n P C E k d v t P' HI Hp
-                  |n P C E k E' qs t HI|n P C E k qs t HI|n P C E k M qs t HI]; subst; simpl in *.
+  apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
+                  |n P C k E' qs t HI|n P C k qs t HI|n P C k M qs t HI]; subst; simpl in *.
   - by constructor.
   - by apply cs_recv.
   - apply cs_in; [|done]. apply Hrel; [|done]. by exists t, v, P'.
@@ -136,7 +123,7 @@ Section Asm.
     (Sstar (M := lq_menu O) (real_off p q Ch K) (cells (M := lq_menu O) (S_T T) r w) (S_T T) r w)).
 
   Hypothesis HT : obs_for p q T.
-  Hypothesis Hrun : run_word (M := lq_menu O) (menu T) Sx (dinit O q) r w.
+  Hypothesis Hrun : run_word (M := lq_menu O) (menu T) Sx (dinit q) r w.
   Hypothesis Hnz : ∀ i x, x ∈ r i → x.2 ≠ weight_zero.
   Hypothesis HokT : ∀ n o, menu T n o → Ok o.
   Hypothesis HO : ∀ n m, plain n → Sx n = false → (m ∈ O n ↔ m ∈ O_T T n).
@@ -232,7 +219,7 @@ Section Asm.
 
   Lemma q_plain i x : x ∈ r i → plain x.1.1.
   Proof.
-    apply (run_inv (mdlts (M := lq_menu O) (menu T) Sx) (λ c, plain c.1)) with (D := dinit O q).
+    apply (run_inv (mdlts (M := lq_menu O) (menu T) Sx) (λ c, plain c.1)) with (D := dinit q).
     - intros ρ c σ Δ Hp Hs y Hy. exact (cstep_plain _ _ _ _ _ _ Hs Hp y Hy).
     - exact (run_word_is_run (M := lq_menu O) _ _ _ r w Hrun).
     - intros y ->%list_elem_of_singleton. intros k c v Hin. by apply elem_of_nil in Hin.
@@ -259,7 +246,7 @@ Section Asm.
     intros Hin. destruct (clean_node c.1 (q_plain i (c, ρ) Hin) (q_vis i (c, ρ) Hin)) as [Hw Hr]. by apply clean_S.
   Qed.
 
-  Lemma q_run : is_run (SchedSts0 := STN) Stay (dinit O q) r.
+  Lemma q_run : is_run (SchedSts0 := STN) Stay (dinit q) r.
   Proof.
     apply (run_word_is_run (M := lq_menu O) _ _ _ r w). split; [exact (proj1 Hrun)|].
     refine (proj2 (run_sandwich (M := lq_menu O) Ok U Sx r w HrU (menu TN) (S_T TN) _ _ _)).
@@ -320,17 +307,17 @@ Section Asm.
         apply step_menu. by rewrite ET.
   Qed.
 
-  Lemma p_steps n ρ P C E :
+  Lemma p_steps n ρ P C :
     LV (n) → plain n → visited_ok (M := lq_menu O) (menu TN) n →
     (∀ t ch v P', prog_step P (CTag t) (ActExt (PrOut ch v)) P' → CL ch) → S_T TN n = false →
-    ∀ σ Δ, cstep (menu TN) O ρ (n, (P, C, E)) σ Δ ↔ cstep J0 O ρ (n, (P, C, E)) σ Δ.
+    ∀ σ Δ, cstep (menu TN) O ρ (n, (P, C)) σ Δ ↔ cstep J0 O ρ (n, (P, C)) σ Δ.
   Proof.
     intros Hin Hpl Hv HCLc HS σ Δ.
     assert (HST : Sx n = false).
     { destruct (Sx n) eqn:E0; [|done]. rewrite (tn_S_up VL reps wrapb Hnd T f0 T_len n E0) in HS. discriminate HS. }
     assert (Hne : tnodes TN n ≠ []).
     { clear -Hv. destruct n as [|a m _] using rev_ind; [done|]. apply menu_step. exact (Hv m a [] eq_refl). }
-    assert (Heq : ∀ o, relevant (n, (P, C, E)) o → (menu TN n o ↔ J0 n o)).
+    assert (Heq : ∀ o, relevant (n, (P, C)) o → (menu TN n o ↔ J0 n o)).
     { intros o Hrel. rewrite (tn_menu_head VL reps wrapb Hnd T f0 T_len n o HS (np_cause n Hin Hpl HST) Hne).
       rewrite nout_plain by done. split.
       - intros [HM|[Hin' _]]; [by left|exact (proj1 (HR2 n o Hin'))].
@@ -342,35 +329,35 @@ Section Asm.
 
   Definition goodc (x : comp * weight) : Prop :=
     LV (x.1.1) ∧ plain x.1.1 ∧ visited_ok (M := lq_menu O) (menu TN) x.1.1
-    ∧ ∀ t ch v P', prog_step x.1.2.1.1 (CTag t) (ActExt (PrOut ch v)) P' → CL ch.
+    ∧ ∀ t ch v P', prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P' → CL ch.
 
   Lemma p_agree (D : dist comp) : (∀ x, x ∈ D → goodc x) → agree_on STN SJ0 D.
   Proof.
     intros HD c ρ Hin. destruct (HD (c, ρ) Hin) as (Hg1 & Hg2 & Hg3 & Hg4). split; [exact (p_succ c.1 Hg1 Hg2 Hg3)|].
-    intros Hns σ Δ. destruct c as [n [[P C] E]]. apply p_steps; try done.
+    intros Hns σ Δ. destruct c as [n [P C]]. apply p_steps; try done.
     destruct (S_T TN n) eqn:E0; [by destruct Hns|done].
   Qed.
 
   Fixpoint reach (k : nat) (D : dist comp) : Prop :=
     match k with
-    | 0 => D = dinit O p
+    | 0 => D = dinit p
     | S k => ∃ D0, reach k D0 ∧ rstep SJ0 D0 D
     end.
 
   Hypothesis HLV : ∀ k D x, k ≤ N → reach k D → x ∈ D → LV (x.1.1).
   Hypothesis HCL : ∀ k D x t ch v P', k ≤ N → reach k D → x ∈ D →
-    prog_step x.1.2.1.1 (CTag t) (ActExt (PrOut ch v)) P' → CL ch.
+    prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P' → CL ch.
 
-  Theorem p_good r0 : is_run (SchedSts0 := STN) Stay (dinit O p) r0 →
+  Theorem p_good r0 : is_run (SchedSts0 := STN) Stay (dinit p) r0 →
     ∀ i, i ≤ N → agree_on STN SJ0 (r0 i).
   Proof.
     intros Hrun0.
     assert (Hpl : ∀ i x, x ∈ r0 i → plain x.1.1).
-    { apply (run_inv STN (λ c, plain c.1)) with (D := dinit O p); [|done|].
+    { apply (run_inv STN (λ c, plain c.1)) with (D := dinit p); [|done|].
       - intros ρ c σ Δ Hp Hs y Hy. exact (cstep_plain _ _ _ _ _ _ Hs Hp y Hy).
       - intros y ->%list_elem_of_singleton. intros k c v Hin. by apply elem_of_nil in Hin. }
     assert (Hvis : ∀ i x, x ∈ r0 i → visited_ok (M := lq_menu O) (menu TN) x.1.1).
-    { apply (run_inv STN (λ c, visited_ok (M := lq_menu O) (menu TN) c.1)) with (D := dinit O p); [|done|].
+    { apply (run_inv STN (λ c, visited_ok (M := lq_menu O) (menu TN) c.1)) with (D := dinit p); [|done|].
       - intros ρ c σ Δ Hv Hs y Hy. exact (visited_step (M := lq_menu O) (menu TN) ρ c σ Δ y Hv Hs Hy).
       - intros y ->%list_elem_of_singleton. intros m a m2 E. by destruct m. }
     assert (Hag : ∀ i, i ≤ N → reach i (r0 i) → agree_on STN SJ0 (r0 i)).
