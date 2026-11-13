@@ -25,10 +25,11 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 Section Branching.
   Context `{QM : QuantumModel}.
@@ -108,7 +109,7 @@ Section Branching.
         ∨ (∃ b, psteps Q (vs ++ lP ++ lQ) ns b ∧ x = (b.1, P ∥ b.2))
         ∨ (∃ a, psteps P (vs ++ lP ++ lQ) ns a ∧ ∃ b, psteps Q (vs ++ lP ++ lQ) ns b ∧ x = (τ, a.2 ∥ b.2)))).
       + intros [l R] (s & Hs & Hl). simpl in *.
-        inversion Hs as [ | | | |? ? ? ? P1 Hp|? ? ? ? Q1 Hq|? ? t1 t2 c1 v1 P1 Q1 Hp Hq|? ? t1 t2 c1 v1 P1 Q1 Hp Hq| | ]; subst.
+        inversion Hs as [ | | | | | | | | | |? ? ? ? P1 Hp|? ? ? ? Q1 Hq|? ? t1 t2 c1 v1 P1 Q1 Hp Hq|? ? t1 t2 c1 v1 P1 Q1 Hp Hq| | ]; subst.
         * left. exists (l, P1). split; [|done]. exists s. split; [done|by apply lbl_in_weak].
         * right. left. exists (l, Q1). split; [|done]. exists s. split; [done|by apply lbl_in_weak].
         * right. right. exists (ActExt (PrOut c1 v1), P1). split; [exists (CTag t1); by split|].
@@ -124,7 +125,7 @@ Section Branching.
         exact (fin_img (λ b : Labels prog_action * proc, (τ, a.2 ∥ b.2)) _ (IHQ _ _)).
     - apply (fin_mono _ (λ x, ∃ a, psteps P vs ns a ∧ (ren_lbl S x.1 = a.1 ∧ x.2 = ν a.2))).
       + intros [l R] (s & Hs & Hl). simpl in *.
-        inversion Hs as [ | | | | | | | |? ? ? P1 Hp| ]; subst.
+        inversion Hs as [ | | | | | | | | | | | | | |? ? ? P1 Hp| ]; subst.
         exists (ren_lbl S l, P1). split; [|done]. exists s. split; [done|by apply lbl_in_ren].
       + apply (fin_bind _ _ (IHP vs ns)). intros a _. apply fin_uniq.
         intros [l1 R1] [l2 R2] [Ea1 Ea2] [Eb1 Eb2]. simpl in *. f_equal; [|congruence].
@@ -133,7 +134,7 @@ Section Branching.
     - apply (fin_mono _ (λ x, x = (τ, P ⦃ PRec t X P // X ⦄))); [|apply fin_eq].
       intros [l R] (s & Hs & _). simpl in Hs. inversion Hs; subst. done.
     - apply (fin_mono _ (gsteps g vs ns)); [|apply gsteps_fin].
-      intros [l R] (s & Hs & Hl). simpl in *. inversion Hs; subst. exists s. by split.
+      intros [l R] (s & Hs & Hl). simpl in *. exists s. by split.
   Qed.
 
   Definition sched_of (ρ : St) (P : proc) (a : Labels prog_action * proc) (Δ : dist proc) : Prop :=

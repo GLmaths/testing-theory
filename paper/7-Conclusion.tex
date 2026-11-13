@@ -19,11 +19,11 @@ development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist})
 \item \texttt{Language/LTS.v}: \cref{fig:prog,fig:mem},
   \cref{def:par}, and the renaming lemmas;
 \item \texttt{Language/Congruence.v}: \cref{tab:cgr} and
-  \cref{lem:cgr-bisim} (\texttt{cs\_bisim} for one step, and
+  \cref{lem:cgr-bisim} (\texttt{cgr\_step\_bisim} for one step, and
   \texttt{cgr\_bisim});
 \item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \newline
-  \cref{fig:sts} (\texttt{sts}) and its labelled copy (\texttt{sts\_lab});
-  \newline \cref{lem:silent} (\texttt{mstep\_conf}, \texttt{conf\_mstep});
+  \cref{fig:sts} (\texttt{sts});
+  \newline \cref{lem:silent} (\texttt{comp\_tau\_inv});
   \cref{lem:shapes}: \newline
   \texttt{TransitionShapeForOutput}, \newline
   \texttt{TransitionShapeForInput}, \newline
@@ -31,13 +31,20 @@ development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist})
   \texttt{TransitionShapeForGuard};
   \cref{lem:red-int}: \newline \texttt{Reduction\_Implies\_Internal};
   \cref{lem:com-shapes}: \texttt{Com\_shapes};
-  \cref{lem:int-red}: \newline \texttt{Internal\_Implies\_Reduction}, and
-  \texttt{Quantum\_Implies\_Reduction} for its first case;
+  \cref{lem:int-red}: \newline \texttt{Internal\_Implies\_Reduction}, from
+  \texttt{Taus\_Implies\_Reduction} and \texttt{Quantum\_Implies\_Reduction};
   and the main result, \cref{lem:harmony}: \texttt{harmony\_composition};
+\item \texttt{Harmony\_Lemma/Memory\_Harmony.v}: the mechanisation also
+  defines an LTS directly on the pairs $\conf{\rho}{P}$, by induction on the
+  program, and proves that its silent transitions are those of the
+  composition $\rho \lpar P$ (\texttt{pre\_harmony}), from which the Harmony
+  lemma is restated for this LTS (\texttt{harmony}).
+\iffalse%
 \item \texttt{Harmony\_Lemma/Memory\_Harmony.v} and \newline
-  \texttt{Harmony\_Lemma/Parallel\_Harmony.v}: the complements of
+  \texttt{To\_review/Parallel/Parallel\_Harmony.v}: the complements of
   \cref{sec:par}, \cref{rem:prog-level} (\texttt{pre\_harmony}) and
   \cref{lem:par-harmony} (\texttt{parallel\_harmony});
+\fi
 \ifshowappendix
 \item \texttt{Testing\_Pre\_orders/pMust/pMust\_scheduled.v}: distributions,
   the two liftings and the runs, generic; \texttt{pMust\_almost\_sure.v}:
@@ -57,7 +64,7 @@ development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist})
   counterpart (\texttt{alt\_as\_sound}, \texttt{alt\_as\_obs\_iff}).
 \item \texttt{Language/Denotational.v}: \cref{def:den} (\texttt{den},
   \texttt{denot}) and \cref{lem:den-cgr} (\texttt{den\_cgr}, \texttt{denot\_cgr});
-\item \texttt{Harmony\_Lemma/Denotational\_Harmony.v}: \cref{def:tree}
+\item \texttt{To\_review/Denotational/Denotational\_Harmony.v}: \cref{def:tree}
   (\texttt{sts\_tree}) and \cref{thm:den}: \newline
   \texttt{den\_sound}, \texttt{den\_complete}, \texttt{den\_sts\_iff}.
 \fi

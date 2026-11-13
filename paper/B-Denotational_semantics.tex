@@ -18,7 +18,7 @@ nondeterministic choice is a union. The programs of lqCCS are not closed
 commands: the nondeterminism is resolved by the choices of the tagged
 semantics, so that the denotation is indexed by a \emph{word} of choices
 $w = s_1 \cdots s_n$, the same word on every branch of a measurement (the
-\emph{lifted} model of~\cite{FengXu23}, the schedulers of lqCCS), and
+\emph{lifted} model of Feng and Xu~\cite{FengXu23}, the schedulers of lqCCS), and
 recursion is unfolded by the silent transition Rec, the word bounding the
 depth of the unfolding, as the syntactic approximations of Unruh, Valiron and
 Ying~\cite[Lemma 3.3]{UVY26}.
@@ -65,7 +65,7 @@ $\begin{array}{l@{\quad}rcl@{\quad}l}
 Rules \textsc{Final} and \textsc{Dead} are the two ends of a run: a final
 program has finished, and contributes the memory as it stands; a program still
 running when the word is exhausted contributes nothing, as the approximation
-$P^{(n)}$ of~\cite{UVY26} in which the $n$-th unfolding is replaced by abort.
+$P^{(n)}$ of Unruh et al.~\cite{UVY26} in which the $n$-th unfolding is replaced by abort.
 Our reduction semantics has no terminal state $E$: a program is final when it
 is $\mathbf{0}$ up to congruence, but also when it is deadlocked, an output or
 an input waiting for a partner, which are the external actions of the program
@@ -100,7 +100,7 @@ labelled copy of \cref{fig:sts}, $\conf{\rho}{P} \red_{s}^{\kappa}
 \conf{\rho'}{P'}$ with $\kappa \in \{\epsilon\} \cup \{m\}$, the label
 $\kappa = m$ when the redex is \textsc{Meas} with outcome $m$ and
 $\kappa = \epsilon$ for the other redexes (the labels $l ::= \epsilon \mid m$
-of~\cite{UVY26}); forgetting $\kappa$ gives back \cref{fig:sts}, and a
+of Unruh et al.~\cite{UVY26}); forgetting $\kappa$ gives back \cref{fig:sts}, and a
 reduction of \cref{fig:sts} has at least one label. A configuration is final
 if it has no reduction, and enabled at $s$ if it has a reduction with choice
 $s$; by \cref{lem:harmony-prog}, $\conf{\rho}{P}$ is final iff $P$ is, and
@@ -153,7 +153,7 @@ branches.
 \end{proof}
 
 \begin{remark}
-In \cite[Theorem 3.1]{UVY26} the nondeterminism of the measurements is
+In the result of Unruh et al.~\cite[Theorem 3.1]{UVY26} the nondeterminism of the measurements is
 resolved by a function $\alpha$ from labels to configurations, and the
 statement is for every $\alpha$; here the measurement is a single node with
 all its outcomes, and the nondeterminism is that of the reduction semantics:

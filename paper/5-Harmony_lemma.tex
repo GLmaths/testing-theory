@@ -70,7 +70,7 @@ rule Op or Meas of the memory.
 
 As in VACCS, the proof goes through the \emph{shapes} of the transitions: up
 to congruence, a program that performs an action is a redex under some
-restrictions, in parallel with a rest. Here $(\nu \tilde d)\,P$ stands for
+restrictions, in parallel with a rest. Here $P \setminus \tilde d$ stands for
 $P \setminus d_1 \cdots \setminus d_n$, with $\tilde d$ fresh for everything
 but $P$ (by $\alpha$-conversion).
 
@@ -78,19 +78,19 @@ but $P$ (by $\alpha$-conversion).
 In the LTS of programs,
 \begin{enumerate}
 \item if $P \step{c!v}{s} P'$ then $s = t$ and
-  $P \equiv (\nu \tilde d)(\tagged{t}{c!e} \parallel R)$,
-  $P' \equiv (\nu \tilde d)(\mathbf{0} \parallel R)$ for some $t, e, R, \tilde d$
+  $P \equiv (\tagged{t}{c!e} \parallel R) \setminus \tilde d$,
+  $P' \equiv (\mathbf{0} \parallel R) \setminus \tilde d$ for some $t, e, R, \tilde d$
   with $e \Downarrow v$ and $c \notin \tilde d$;
 \item if $P \step{c?v}{s} P'$ then $s = t$ and
-  $P \equiv (\nu \tilde d)((\tagged{t}{c?x}.P_1 + K) \parallel R)$,
-  $P' \equiv (\nu \tilde d)(P_1[v/x] \parallel R)$ for some
+  $P \equiv ((\tagged{t}{c?x}.P_1 + K) \parallel R) \setminus \tilde d$,
+  $P' \equiv (P_1[v/x] \parallel R) \setminus \tilde d$ for some
   $t, x, P_1, K, R, \tilde d$ with $c \notin \tilde d$;
 \item if $P \step{\mu}{s} P'$ for a quantum action
   $\mu \in \{\req{U}, \initp, \mrecv{m}\}$, then $s = t$ and
   \[
-  P \equiv (\nu \tilde d)((\alpha.P_1 + K) \parallel R)
+  P \equiv ((\alpha.P_1 + K) \parallel R) \setminus \tilde d
   \qquad
-  P' \equiv (\nu \tilde d)(P_1' \parallel R)
+  P' \equiv (P_1' \parallel R) \setminus \tilde d
   \]
   for some $t, \alpha, P_1, P_1', K, R, \tilde d$ such that
   $\alpha.P_1 \step{\mu}{t} P_1'$: the prefix $\alpha$ is $\tagged{t}{U(\tilde q)}$, $\tagged{t}{\initp}$ or
@@ -123,11 +123,11 @@ case of~(1) is the rule Send, with $\tilde d$ empty and $R = \mathbf{0}$, by
 item~(4), the summand that moves is brought in front, and it is an input
 prefix for~(2) and a quantum prefix for~(3). A conditional is removed by \textsc{IteT} or \textsc{IteF}. For ParL,
 the induction hypothesis gives
-$P \equiv (\nu \tilde d)(\tagged{t}{c!e} \parallel R)$; the other component
+$P \equiv (\tagged{t}{c!e} \parallel R) \setminus \tilde d$; the other component
 $Q$ enters the scope of $\tilde d$ by \textsc{ResPar}, one restriction after
 the other and after $\alpha$-conversion of $\tilde d$, and joins the rest by
 \textsc{ParAssoc}:
-$P \parallel Q \equiv (\nu \tilde d)(\tagged{t}{c!e} \parallel (R \parallel Q))$;
+$P \parallel Q \equiv (\tagged{t}{c!e} \parallel (R \parallel Q)) \setminus \tilde d$;
 the same steps apply to the target, and to the shapes of~(2) and~(3). ParR is
 ParL after \textsc{ParComm}. For Restr, the restriction is added to
 $\tilde d$; for~(1) and~(2) it is not $c$, by the side condition of the rule.
@@ -221,11 +221,11 @@ $Q' \equiv Q_1'$, and $Q' \equiv Q_1' \equiv Q_1 \equiv Q$.
 If $e \Downarrow v$ and $c \notin \tilde d, \tilde d'$, then
 \[
 \begin{array}{l}
-\conf{\rho}{(\nu \tilde d)(\tagged{t}{c!e} \parallel R) \parallel
-(\nu \tilde d')((\tagged{t'}{c?x}.P_1 + K) \parallel R')}\\[2pt]
+\conf{\rho}{((\tagged{t}{c!e} \parallel R) \setminus \tilde d) \parallel
+(((\tagged{t'}{c?x}.P_1 + K) \parallel R') \setminus \tilde d')}\\[2pt]
 \qquad \red_{\{t,t'\}}\
-\conf{\rho}{(\nu \tilde d)(\mathbf{0} \parallel R) \parallel
-(\nu \tilde d')(P_1[v/x] \parallel R')} .
+\conf{\rho}{((\mathbf{0} \parallel R) \setminus \tilde d) \parallel
+((P_1[v/x] \parallel R') \setminus \tilde d')} .
 \end{array}
 \]
 \end{lemma}
@@ -251,8 +251,8 @@ label $\lambda$, then $\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}$.
 
 \begin{proof}
 If $\lambda$ is a quantum action, \cref{lem:shapes}(3) gives
-$P \equiv (\nu \tilde d)((\alpha.P_1 + K) \parallel R)$ and
-$Q \equiv (\nu \tilde d)(P_1' \parallel R)$ with
+$P \equiv ((\alpha.P_1 + K) \parallel R) \setminus \tilde d$ and
+$Q \equiv (P_1' \parallel R) \setminus \tilde d$ with
 $\alpha.P_1 \step{\lambda}{s} P_1'$. The redex \textsc{Op}, \textsc{Init} or
 \textsc{Meas}, according to $\alpha$, gives
 $\conf{\rho}{\alpha.P_1 + K} \red_{s} \conf{\rho'}{P_1'}$, where $\rho'$ is

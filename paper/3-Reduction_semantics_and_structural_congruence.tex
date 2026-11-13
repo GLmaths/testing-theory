@@ -21,8 +21,9 @@ expression that contains a variable, or that is ill-typed, has no value. A
 tuple $\tilde e$ of expressions evaluates to a tuple $\tilde q$ of qubits
 when each of its components does.
 
-Outputs are asynchronous, sums are guarded, and recursion is as in VACCS, with
-process variables $X$ and a tagged recursion operator:
+Outputs are asynchronous, sums are guarded, and recursion is defined \`a la
+Hennessy, as in the process calculi of Bernardi et al.~\cite{BFL26}, with process variables
+$X$ and a tagged recursion operator:
 \[
 \begin{array}{r@{\ ::=\ }l}
 P & \tagged{t}{c!e} \mid K \mid P \parallel P \mid \ite{e}{P}{P} \mid P \setminus c
@@ -42,6 +43,13 @@ the qubits $\tilde e$ to $|0\rangle$. Both are super-operators
 (\cref{def:sop}), and the memory treats them alike.
 $P[Q/X]$ is the substitution of $Q$ for the free occurrences of $X$ in $P$;
 unfolding a recursion is a step of its own, selected by the tag of the recursion.
+
+We refer to Ceragioli et al.~\cite{Ceragioli27} for a more detailed description of the
+operators of lqCCS. With respect to the calculus presented there, the
+additional operators are the initialisation $\mathsf{init}$ and the
+recursion $\mathsf{rec}$, which bring lqCCS closer to a quantum programming
+language \`a la Unruh et al.~\cite{UVY26}.
+
 In lqCCS the scheduler selects the transition to perform through the tags
 that decorate the terms~\cite{Ceragioli25}. The choices of
 \cref{sec:lts-prelim} are the empty choice, a tag or an unordered pair of
@@ -63,7 +71,7 @@ A \emph{program} is a term of the language, and a \emph{process} is a
 program together with a memory, that is, a configuration $\conf{\rho}{P}$.
 Programs are identified up to $\alpha$-conversion of restricted channels and
 of bound variables, and processes up to $\alpha$-conversion of the qubit
-register. As in the introduction, the tags are omitted in the examples.
+register. In the examples, the tags are omitted.
 \begin{description}
 \item[Restricted channels.] The restriction $P \setminus c$ binds the channel
   $c$ in $P$, and $c$ can be replaced by any channel that is not free in $P$.
@@ -172,7 +180,10 @@ selects the redex, is the least relation closed under the rules of
 
 It follows the STS of VACCS: the first six rules are the redexes, the last
 three close them under parallel composition, restriction and structural
-congruence.
+congruence. A reduction semantics for lqCCS was first given by Ceragioli et
+al.~\cite{Ceragioli24popl}, in the original presentation of the calculus;
+there the terms are not tagged and a step leads to a distribution of
+processes, a point to which we come back at the end of this section.
 
 \begin{figure}[ht]
 \small
@@ -188,7 +199,7 @@ congruence.
 
 \inferrule*[left=Op]
   {U : \mathsf{Op}(|\tilde q|)}
-  {\conf{\rho}{\tagged{t}{U(\tilde q)}.P + K} \red_{t} \conf{\upd{U}}{P}}
+  {\conf{\rho}{\tagged{t}{U(\tilde q)}.P + K} \red_{t} \bigconf{\upd{U}}{P}}
 
 \inferrule*[left=Init]
   { }
@@ -196,7 +207,7 @@ congruence.
 
 \inferrule*[left=Meas]
   {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
-  {\conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P + K} \red_{t} \conf{\br}{P[m/x]}}
+  {\conf{\rho}{\tagged{t}{\M(\tilde q \rhd x)}.P + K} \red_{t} \bigconf{\br}{P[m/x]}}
 
 \inferrule*[left=Rec]
   { }

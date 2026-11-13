@@ -24,8 +24,8 @@
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base tactics countable decidable gmap gmultiset.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths
-  lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum lqCCS.Prob_dist.Language.Syntax lqCCS.Prob_dist.Language.Program
+From TestingTheory Require Import lqCCS.Language.Algebra
+  lqCCS.Language.Quantum lqCCS.Prob_dist.Language.Syntax lqCCS.Prob_dist.Language.Program
   lqCCS.Prob_dist.Language.FwLTS lqCCS.Prob_dist.Testing.Observer.LTS lqCCS.Prob_dist.Testing.Observer.Tests
   lqCCS.Prob_dist.Testing.Observer.Interaction.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Subset_Act

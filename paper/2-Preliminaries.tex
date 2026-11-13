@@ -126,7 +126,7 @@ offered to a scheduler or the two outcomes of one step.
 
 To tell them apart, and to let a scheduler name the transition it selects,
 we let each transition carry, in addition to its label, a \emph{choice}, as
-in~\cite{CP10}. With the prefixes of \cref{ex:pure} tagged $t$, $t_1$ and
+in the work of Chatzikokolakis and Palamidessi~\cite{CP10}. With the prefixes of \cref{ex:pure} tagged $t$, $t_1$ and
 $t_2$, its two transitions carry the distinct choices $\{t,t_1\}$ and
 $\{t,t_2\}$, and a scheduler selects one of them. With the measurement of
 \cref{ex:meas} tagged $t$, its two transitions carry the same choice $t$: a
@@ -157,21 +157,21 @@ now on, LTS means LTS with choices. If the set of labels of $\lts$ is a
 singleton, we say that $\lts$ is a \emph{state transition system} (STS), we
 omit its third component, and we write $p \red_{c} p'$ for its transitions.
 
-We proceed to define the composition of two LTSs. In~\cite{BFL26} the two
+We proceed to define the composition of two LTSs. In the framework of Bernardi et al.~\cite{BFL26} the two
 LTSs share the set $\mathit{Act}$, and a state of one interacts with a state
 of the other through an involutive duality over $\mathit{Act}$. Here the two
 LTSs may have different external actions, as a program and a quantum memory
 do, and the interactions are given by a relation between the two sets.
 
 \begin{definition}[Duality]\label{def:sync}
-A \emph{duality predicate} between two LTSs with external actions
+A \emph{duality predicate} $\dual$ between two LTSs with external actions
 $A_1$ and $A_2$ is a relation ${\sync} \subseteq A_1 \times A_2$.
 \qed
 \end{definition}
 
 \begin{definition}[Parallel composition of LTSs]\label{def:par}
-Given a duality predicate $\mathsf{dual}$, the parallel composition
-$\lts_1 \lpar_{\mathsf{dual}} \lts_2$ of two LTSs $\lts_1$ and $\lts_2$ is the LTS whose
+Given a duality predicate $\dual$, the parallel composition
+$\lts_1 \lpar_{\dual} \lts_2$ of two LTSs $\lts_1$ and $\lts_2$ is the LTS whose
 states are the pairs $p_1 \lpar p_2$ of a state of $\lts_1$ and a state of $\lts_2$,
 whose external actions are $A_1 \uplus A_2$, and whose transitions are given
 by the rules
@@ -191,8 +191,4 @@ by the rules
 \qed
 \end{definition}
 
-The composition of~\cite{BFL26} keeps only the internal moves of
-$\lts_1 \lpar_{\mathsf{dual}} \lts_2$, which form an STS, and its duality
-predicate relates each action to its dual. We keep the external actions of
-the two components, because a composition is composed again in
-\cref{sec:par}.
+

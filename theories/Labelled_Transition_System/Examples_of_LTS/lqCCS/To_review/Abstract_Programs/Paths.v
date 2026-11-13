@@ -30,33 +30,10 @@
     each once ([enum_spec], [enum_nodup]). *)
 
 From Stdlib Require Import List Arith Lia FinFun ChoiceFacts.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.To_review.Abstract_Programs.Lifted.
 Import ListNotations.
-(* Finite branching: outcomes are enumerated, [+] exists, and [br] is the
-    sum of its branches precomposed with the Kraus maps [ℳ_k]. *)
-Class FinAlg `{Alg} := {
-  add : T -> T -> T;
-  kraus m : Out m -> T;
-  outs m : list (Out m);
-  outs_nodup m : NoDup (outs m);
-  outs_all m k : In k (outs m);
-  add_0l a : add zero a = a;
-  add_0r a : add a zero = a;
-  add_assoc a b c : add a (add b c) = add (add a b) c;
-  comp_addl a b c : add a b ⋅ c = add (a ⋅ c) (b ⋅ c);
-  comp_0l c : zero ⋅ c = zero;
-  br_sum m f : br m f = fold_right add zero (map (fun k => f k ⋅ kraus m k) (outs m)) }.
-
 Section Paths.
 Context `{FinAlg}.
-
-Definition sum := fold_right add zero.
-
-Lemma sum_app l1 l2 : sum (l1 ++ l2) = add (sum l1) (sum l2).
-Proof. induction l1; simpl; [now rewrite add_0l | now rewrite IHl1, add_assoc]. Qed.
-
-Lemma sum_comp l c : sum l ⋅ c = sum (map (fun a => a ⋅ c) l).
-Proof. induction l; simpl; [apply comp_0l | now rewrite comp_addl, IHl]. Qed.
 
 (* ** Labelled transitions and paths *)
 
@@ -164,9 +141,6 @@ Proof.
       * destruct Ht as (b & -> & -> & ->). simpl in Cb. subst b. apply in_map. auto.
 Qed.
 
-(* Each path is listed once: the sum counts paths with multiplicity. *)
-Lemma code_inj m k k' : code m k = code m k' -> k = k'.
-Proof. intro E. pose proof (decode_code m k) as D. rewrite E, decode_code in D. congruence. Qed.
 
 Lemma NoDup_app' {A} (l1 l2 : list A) : NoDup l1 -> NoDup l2 ->
   (forall a, In a l1 -> ~ In a l2) -> NoDup (l1 ++ l2).

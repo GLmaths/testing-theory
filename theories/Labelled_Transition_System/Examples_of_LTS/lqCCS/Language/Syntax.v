@@ -162,18 +162,30 @@ Scheme proc_mut_ind := Induction for proc Sort Prop
   with guard_mut_ind := Induction for guard Sort Prop.
 Combined Scheme proc_guard_ind from proc_mut_ind, guard_mut_ind.
 
+Coercion PG : guard >-> proc.
+
 Declare Scope lqccs_scope.
 Delimit Scope lqccs_scope with lq.
-Bind Scope lqccs_scope with proc.
+Bind Scope lqccs_scope with proc guard.
 
 Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
 Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
-Notation "g ⊕ g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
+Notation "g + g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
 Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
 Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
 Notation "①" := GSucc : lqccs_scope.
 
+Notation "t ∶ '𝛕'" := (PTau t) (at level 40) : lqccs_scope.
+Notation "t ∶ c ?" := (PRecv t c) (at level 40, c at level 9) : lqccs_scope.
+Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9) : lqccs_scope.
+Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9) : lqccs_scope.
+Notation "t ∶ 'init' ⦅ es ⦆" := (PInit t es) (at level 40) : lqccs_scope.
+Notation "t ∶ c ! e" := (PSend t c e) (at level 40, c at level 9, e at level 9) : lqccs_scope.
+Notation "t ∶ 'rec' X ∙ P" := (PRec t X P) (at level 40, X at level 9, P at level 40) : lqccs_scope.
+Notation "'If' e 'Then' P 'Else' Q" := (PIte e P Q) (at level 55, e at level 9, P at level 54, Q at level 54) : lqccs_scope.
+
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 (* ** Substitution of a value [P[v/k]] and shift of the value indices
 
@@ -210,7 +222,7 @@ with gsubst (k : nat) (v : val) (g : guard) : guard :=
   | GNil es => GNil (map (exp_subst k v) es)
   | ① => ①
   | 𝜆 ∙ P => prefix_subst k v 𝜆 ∙ subst (prefix_binds 𝜆 + k) v P
-  | g1 ⊕ g2 => gsubst k v g1 ⊕ gsubst k v g2
+  | (g1 + g2)%lq => (gsubst k v g1 + gsubst k v g2)%lq
   end.
 
 Notation "P ⟦ v ⟧" := (subst 0 v P) (at level 20) : lqccs_scope.
@@ -239,7 +251,7 @@ with gshiftv (k : nat) (g : guard) : guard :=
   | GNil es => GNil (map (exp_shift k) es)
   | ① => ①
   | 𝜆 ∙ P => prefix_shift k 𝜆 ∙ shiftv (prefix_binds 𝜆 + k) P
-  | g1 ⊕ g2 => gshiftv k g1 ⊕ gshiftv k g2
+  | (g1 + g2)%lq => (gshiftv k g1 + gshiftv k g2)%lq
   end.
 
 (* ** Renaming of the indices of restricted channels
@@ -278,7 +290,7 @@ with gren (f : nat → nat) (g : guard) : guard :=
   | GNil es => GNil es
   | ① => ①
   | 𝜆 ∙ P => prefix_ren f 𝜆 ∙ ren f P
-  | g1 ⊕ g2 => gren f g1 ⊕ gren f g2
+  | (g1 + g2)%lq => (gren f g1 + gren f g2)%lq
   end.
 
 (* ** Substitution of a process for a recursion variable [P[Q/X]] *)
@@ -298,7 +310,7 @@ with gpr_subst (X : nat) (g : guard) (Q : proc) : guard :=
   | GNil es => GNil es
   | ① => ①
   | 𝜆 ∙ P => 𝜆 ∙ pr_subst X P (Nat.iter (prefix_binds 𝜆) (shiftv 0) Q)
-  | g1 ⊕ g2 => gpr_subst X g1 Q ⊕ gpr_subst X g2 Q
+  | (g1 + g2)%lq => (gpr_subst X g1 Q + gpr_subst X g2 Q)%lq
   end.
 
 Notation "P ⦃ Q // X ⦄" := (pr_subst X P Q) (at level 20) : lqccs_scope.
@@ -324,7 +336,7 @@ with gsize (g : guard) : nat :=
   match g with
   | GNil _ | ① => 0
   | 𝜆 ∙ P => S (size P)
-  | g1 ⊕ g2 => S (gsize g1 + gsize g2)
+  | (g1 + g2)%lq => S (gsize g1 + gsize g2)
   end.
 
 (* ** Facts on renamings *)

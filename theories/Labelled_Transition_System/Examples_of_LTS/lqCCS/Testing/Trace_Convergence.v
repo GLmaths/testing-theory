@@ -30,10 +30,11 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 Section SN.
   Context `{Weights} {C Sch : Type} (SS : SchedSts C Sch) (μ : C → nat) (Inv : C → Prop).
@@ -125,7 +126,7 @@ with gsz (g : guard) : nat :=
   match g with
   | GNil _ | ① => 0
   | 𝜆 ∙ P => Datatypes.S (sz P)
-  | g1 ⊕ g2 => gsz g1 + gsz g2
+  | (g1 + g2)%lq => gsz g1 + gsz g2
   end.
 
 Fixpoint norec (P : proc) : bool :=
@@ -140,7 +141,7 @@ with gnorec (g : guard) : bool :=
   match g with
   | GNil _ | ① => true
   | 𝜆 ∙ P => norec P
-  | g1 ⊕ g2 => gnorec g1 && gnorec g2
+  | (g1 + g2)%lq => gnorec g1 && gnorec g2
   end.
 
 Lemma sz_subst : (∀ P k v, sz (subst k v P) = sz P) ∧ (∀ g k v, gsz (gsubst k v g) = gsz g).
@@ -160,7 +161,7 @@ Qed.
 
 Lemma gstep_sz g s l P' : gnorec g = true → prog_gstep g s l P' → sz P' < gsz g ∧ norec P' = true.
 Proof.
-  intros Hn Hs. revert Hn. induction Hs; simpl; intros Hn;
+  intros Hn Hs. revert Hn. induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs] using prog_gstep_ind; simpl; intros Hn;
     rewrite ?(proj1 sz_subst), ?(proj1 norec_subst); try (split; [lia|done]).
   - apply andb_prop in Hn as [Hn1 Hn2]. destruct (IHHs Hn1). split; [lia|done].
   - apply andb_prop in Hn as [Hn1 Hn2]. destruct (IHHs Hn2). split; [lia|done].
@@ -168,7 +169,7 @@ Qed.
 
 Lemma step_sz P s l P' : norec P = true → prog_step P s l P' → sz P' < sz P ∧ norec P' = true.
 Proof.
-  intros Hn Hs. revert Hn. induction Hs; simpl; intros Hn.
+  intros Hn Hs. revert Hn. induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?] using prog_step_guard_ind; simpl; intros Hn.
   - by eapply gstep_sz.
   - split; [lia|done].
   - apply andb_prop in Hn as [Hn1 Hn2]. destruct (IHHs Hn1). split; [lia|done].

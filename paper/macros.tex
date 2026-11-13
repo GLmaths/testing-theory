@@ -10,12 +10,29 @@
 \renewcommand{\RightTirNameStyle}[1]{\small\upshape\textsc{#1}}
 \usepackage{stmaryrd}
 \usepackage{xcolor}
+\usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
 \usepackage[capitalise,nameinlink]{cleveref}
 
 % ---------------------------------------------------------------------------
 % Theorem environments: provided by the llncs class
 % ---------------------------------------------------------------------------
+
+% ---------------------------------------------------------------------------
+% Links to the Rocq development
+% ---------------------------------------------------------------------------
+\def\BaseUrl{https://anonymous.4open.science/w/testing-theory-C41C/TestingTheory.} %To be replaced
+\newcommand{\rocqlink}[1]{\href{\BaseUrl#1}{\raisebox{-0.6mm}{\includegraphics[height=0.8em]{orocql.png}}}}
+
+\newcommand{\myshow}[1]{#1}
+
+\newcommand\rocqSyntax[1]{\myshow{\rocqlink{Labelled_Transition_System.Examples_of_LTS.lqCCS.Language.Syntax.html\##1}}}
+\newcommand\rocqQuantum[1]{\myshow{\rocqlink{Labelled_Transition_System.Examples_of_LTS.lqCCS.Language.Quantum.html\##1}}}
+\newcommand\rocqLTS[1]{\myshow{\rocqlink{Labelled_Transition_System.Examples_of_LTS.lqCCS.Language.LTS.html\##1}}}
+\newcommand\rocqCongruence[1]{\myshow{\rocqlink{Labelled_Transition_System.Examples_of_LTS.lqCCS.Language.Congruence.html\##1}}}
+\newcommand\rocqMemoryHarmony[1]{\myshow{\rocqlink{Labelled_Transition_System.Examples_of_LTS.lqCCS.Harmony_Lemma.Memory_Harmony.html\##1}}}
+\newcommand\rocqParallelHarmony[1]{\myshow{\rocqlink{Labelled_Transition_System.Examples_of_LTS.lqCCS.Harmony_Lemma.Parallel_Harmony.html\##1}}}
+\newcommand\rocqSTSHarmony[1]{\myshow{\rocqlink{Labelled_Transition_System.Examples_of_LTS.lqCCS.Harmony_Lemma.STS_Harmony.html\##1}}}
 
 % ---------------------------------------------------------------------------
 % Quantum states and operations
@@ -47,6 +64,7 @@
 \newcommand{\LTS}[3]{\langle #1, #2, #3 \rangle}
 \newcommand{\LTSc}[4]{\langle #1, #2, #3, #4 \rangle}
 \newcommand{\conf}[2]{\langle #1 ,\, #2 \rangle}
+\newcommand{\bigconf}[2]{\bigl\langle #1 ,\, #2 \bigr\rangle}
 \newcommand{\step}[2]{\xrightarrow{\;#1\;}_{#2}}
 \newcommand{\mto}[1]{\xrightarrow{\;#1\;}}
 \newcommand{\red}{\longrightarrow}
@@ -66,10 +84,11 @@
 % Parallel composition and synchronisation
 % ---------------------------------------------------------------------------
 \newcommand{\lpar}{\mathbin{|}}
-\newcommand{\sync}{\mathrel{\mathsf{dual}}}
-\newcommand{\syncM}{\mathrel{\mathsf{dual}_{\M}}}
-\newcommand{\syncC}{\mathrel{\mathsf{dual}_{c}}}
-\newcommand{\syncS}{\mathrel{\mathsf{dual}_{\mathsf{sys}}}}
+\newcommand{\dual}{\mathbb{D}}
+\newcommand{\sync}{\mathrel{\dual}}
+\newcommand{\syncM}{\mathrel{\dual_{\mathsf{mem}}}}
+\newcommand{\syncC}{\mathrel{\dual_{c}}}
+\newcommand{\syncS}{\mathrel{\dual_{\mathsf{sys}}}}
 
 % ---------------------------------------------------------------------------
 % Denotational semantics (appendix B)

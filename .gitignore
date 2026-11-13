@@ -10,3 +10,4 @@ devenv.lock
 paper/*
 !paper/*.tex
 !paper/*.bib
+!paper/*.png

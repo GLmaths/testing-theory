@@ -10,10 +10,10 @@ The system $\rho \lpar P$ is composed with the program
 $Q$, which interacts with the memory of the system (through $\syncM$) and
 with the channels of $P$: let $\syncC$ relate the dual actions on a channel,
 $c!v \syncC c?v$ and $c?v \syncC c!v$, and let
-${\syncS} \subseteq (A_{\M} \uplus A_{\mathsf{prog}}) \times A_{\mathsf{prog}}$
+${\syncS} \subseteq (A_{\mathsf{mem}} \uplus A_{\mathsf{prog}}) \times A_{\mathsf{prog}}$
 be the least relation such that
 \[
-\mu_{\M} \syncS \mu \ \text{ if } \mu_{\M} \syncM \mu
+\mu_{\mathsf{mem}} \syncS \mu \ \text{ if } \mu_{\mathsf{mem}} \syncM \mu
 \qquad\qquad
 \mu_1 \syncS \mu_2 \ \text{ if } \mu_1 \syncC \mu_2 .
 \]

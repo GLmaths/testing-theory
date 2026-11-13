@@ -38,7 +38,7 @@
     states are a function of the normalised history. *)
 
 From Stdlib Require Import List ChoiceFacts.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.To_review.Abstract_Programs.Lifted lqCCS.To_review.Abstract_Programs.Paths.
 Import ListNotations.
 (* Measurement outcomes can be recovered from states (projective measurements). *)
 Class KAlg `{StAlg} := {

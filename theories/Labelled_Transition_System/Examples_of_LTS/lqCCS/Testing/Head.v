@@ -27,10 +27,11 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 Inductive tite (W : proc) : proc → Prop :=
 | ti_refl : tite W W
@@ -41,7 +42,7 @@ Fixpoint gheads (g : guard) : list (prefix * proc) :=
   match g with
   | GNil _ | ① => []
   | 𝜆 ∙ P => [(𝜆, P)]
-  | g1 ⊕ g2 => gheads g1 ++ gheads g2
+  | (g1 + g2)%lq => gheads g1 ++ gheads g2
   end.
 
 Definition sh (𝜆 : prefix) (Q : proc) : proc := Nat.iter (prefix_binds 𝜆) (shiftv 0) Q.

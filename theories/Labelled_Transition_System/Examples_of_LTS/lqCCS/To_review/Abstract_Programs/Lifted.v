@@ -30,42 +30,8 @@
     [adequacy]. *)
 
 From Stdlib Require Import List Arith Lia ChoiceFacts.
+From TestingTheory Require Import lqCCS.Language.Algebra.
 Import ListNotations.
-(* ** Abstract domain of super-operators *)
-
-Class Ord := { T : Type; le : T -> T -> Prop }.
-Infix "⊑" := le (at level 70).
-Definition chain `{Ord} (f : nat -> T) := forall n, f n ⊑ f (S n).
-
-(* A measurement [m] has (at most countably many) outcomes [Out m], coded
-    injectively into [nat].  [comp a b] is [a ∘ b]; [br m f] is
-    [Σ_k f k ∘ ℳ_k]. *)
-Class Alg `{Ord} := {
-  Act : Type; Meas : Type; Out : Meas -> Type;
-  code m : Out m -> nat;
-  decode m : nat -> option (Out m);
-  decode_code m k : decode m (code m k) = Some k;
-  zero : T; one : T; comp : T -> T -> T; act : Act -> T;
-  br m : (Out m -> T) -> T; sup : (nat -> T) -> T;
-  le_refl a : a ⊑ a;
-  le_trans a b c : a ⊑ b -> b ⊑ c -> a ⊑ c;
-  le_antisym a b : a ⊑ b -> b ⊑ a -> a = b;
-  zero_le a : zero ⊑ a;
-  comp_assoc a b c : comp a (comp b c) = comp (comp a b) c;
-  comp_1l a : comp one a = a;
-  comp_1r a : comp a one = a;
-  comp_0r a : comp a zero = zero;
-  comp_mono a a' b b' : a ⊑ a' -> b ⊑ b' -> comp a b ⊑ comp a' b';
-  br_mono m f g : (forall k, f k ⊑ g k) -> br m f ⊑ br m g;
-  comp_br m f c : comp c (br m f) = br m (fun k => comp c (f k));
-  sup_ub f n : chain f -> f n ⊑ sup f;
-  sup_lub f x : chain f -> (forall n, f n ⊑ x) -> sup f ⊑ x;
-  comp_sup_l f a : chain f -> comp (sup f) a = sup (fun n => comp (f n) a);
-  comp_sup_r f a : chain f -> comp a (sup f) = sup (fun n => comp a (f n));
-  br_sup m (f : nat -> Out m -> T) : (forall k, chain (fun n => f n k)) ->
-    br m (fun k => sup (fun n => f n k)) = sup (fun n => br m (f n)) }.
-Infix "⋅" := comp (at level 40, left associativity).
-
 Section Lifted.
 Context `{Alg}.
 #[local] Hint Resolve le_refl zero_le : core.
