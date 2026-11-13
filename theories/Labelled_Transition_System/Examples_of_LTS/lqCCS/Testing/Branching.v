@@ -176,10 +176,10 @@ Section Branching.
     match o with
     | OffOut _ _ _ => False
     | OffIn _ _ => False
-    | OffOp k E' qs => Δ = [((n ++ [CoOp k E' qs], (P, C, O (n ++ [CoOp k E' qs]))), sop_apply E' qs ρ)]
-    | OffInit k qs => Δ = [((n ++ [CoInit k qs], (P, C, O (n ++ [CoInit k qs]))), init_apply qs ρ)]
+    | OffOp k E' qs => Δ = [((n ++ [CoOp k E' qs], (P, C)), sop_apply E' qs ρ)]
+    | OffInit k qs => Δ = [((n ++ [CoInit k qs], (P, C)), init_apply qs ρ)]
     | OffMeas k M qs =>
-        Δ = map (λ k', ((n ++ [CoMeas k M qs (code _ k')], (P, C, O (n ++ [CoMeas k M qs (code _ k')]))),
+        Δ = map (λ k', ((n ++ [CoMeas k M qs (code _ k')], (P, C)),
                         meas_branch M qs k' ρ)) (outs_nz M qs ρ)
     end.
 
@@ -187,16 +187,16 @@ Section Branching.
     (∀ n, fin (λ o, J n o ∧ ∀ k c, o ≠ OffIn k c)) → (∀ n c, fin (λ k, J n (OffIn k c))) →
     fin (λ Δ, ∃ it, cstep J O ρ c it Δ).
   Proof.
-    intros HJ HJi. destruct c as [n [[P C] E]].
+    intros HJ HJi. destruct c as [n [P C]].
     apply (fin_mono _ (λ Δ,
-        (∃ Δ0, (∃ s, sched_step ρ P s Δ0) ∧ Δ = map (λ Pρ, ((n, (Pρ.1, C, E)), Pρ.2)) Δ0)
-      ∨ (∃ m, m ∈ E ∧ ∃ a, psteps P (snd <$> E) [] a ∧ Δ = [((n, (a.2, C ++ [m], E)), ρ)])
+        (∃ Δ0, (∃ s, sched_step ρ P s Δ0) ∧ Δ = map (λ Pρ, ((n, (Pρ.1, C)), Pρ.2)) Δ0)
+      ∨ (∃ m, m ∈ O n ∧ ∃ a, psteps P (snd <$> O n) [] a ∧ Δ = [((n, (a.2, C ++ [m])), ρ)])
       ∨ (∃ o, (J n o ∧ ∀ k c, o ≠ OffIn k c) ∧ cell_of O ρ n P C o Δ)
       ∨ (∃ a, psteps P [] [] a ∧ ∃ c v, a.1 = ActExt (PrOut c v) ∧ ∃ k, J n (OffIn k c)
-          ∧ Δ = [((n ++ [CoIn k c v], (a.2, C, O (n ++ [CoIn k c v]))), ρ)]))).
+          ∧ Δ = [((n ++ [CoIn k c v], (a.2, C)), ρ)]))).
     - intros Δ (it & Hs).
-      inversion Hs as [n0 P0 C0 E0 s Δ0 Hss|n0 P0 C0 E0 k c v t P' HE HkC Hp|n0 P0 C0 E0 k c v t P' HI Hp
-                      |n0 P0 C0 E0 k E' qs t HI|n0 P0 C0 E0 k qs t HI|n0 P0 C0 E0 k M qs t HI]; subst.
+      apply cstep_cases in Hs. inversion Hs as [n0 P0 C0 s Δ0 Hss|n0 P0 C0 k c v t P' HE HkC Hp|n0 P0 C0 k c v t P' HI Hp
+                      |n0 P0 C0 k E' qs t HI|n0 P0 C0 k qs t HI|n0 P0 C0 k M qs t HI]; subst.
       + left. exists Δ0. split; [by exists s|done].
       + right. left. exists (k, c, v). split; [done|]. exists (ActExt (PrIn c v), P'). split; [|done].
         exists (CTag t). split; [done|]. simpl. apply list_elem_of_fmap. by exists (k, c, v).
@@ -205,10 +205,10 @@ Section Branching.
       + right. right. left. exists (OffOp k E' qs). by split.
       + right. right. left. exists (OffInit k qs). by split.
       + right. right. left. exists (OffMeas k M qs). by split.
-    - apply fin_or; [exact (fin_img (map (λ Pρ : proc * St, ((n, (Pρ.1, C, E)), Pρ.2))) _ (sched_fin ρ P))|].
+    - apply fin_or; [exact (fin_img (map (λ Pρ : proc * St, ((n, (Pρ.1, C)), Pρ.2))) _ (sched_fin ρ P))|].
       apply fin_or.
-      + apply (fin_bind _ _ (fin_elem E)). intros m _.
-        exact (fin_img (λ a : Labels prog_action * proc, [((n, (a.2, C ++ [m], E)), ρ)]) _ (psteps_fin P _ _)).
+      + apply (fin_bind _ _ (fin_elem (O n))). intros m _.
+        exact (fin_img (λ a : Labels prog_action * proc, [((n, (a.2, C ++ [m])), ρ)]) _ (psteps_fin P _ _)).
       + apply fin_or.
         * apply (fin_bind _ _ (HJ n)). intros [k c v|k c|k E' qs|k M qs|k qs] [_ Hni]; simpl.
           -- apply fin_false.
@@ -218,9 +218,9 @@ Section Branching.
           -- apply fin_eq.
         * apply (fin_bind _ _ (psteps_fin P [] [])). intros [[[c v|c v|E' qs|M qs m|qs]|] R] _; simpl;
             try (apply (fin_mono _ (λ _, False)); [intros Δ (c0 & v0 & Ea & _); discriminate Ea|apply fin_false]).
-          apply (fin_mono _ (λ Δ, ∃ k, J n (OffIn k c) ∧ Δ = [((n ++ [CoIn k c v], (R, C, O (n ++ [CoIn k c v]))), ρ)])).
+          apply (fin_mono _ (λ Δ, ∃ k, J n (OffIn k c) ∧ Δ = [((n ++ [CoIn k c v], (R, C)), ρ)])).
           -- intros Δ (c0 & v0 & Ea & k & Hk & ->). injection Ea as <- <-. by exists k.
-          -- exact (fin_img (λ k, [((n ++ [CoIn k c v], (R, C, O (n ++ [CoIn k c v]))), ρ)]) _ (HJi n c)).
+          -- exact (fin_img (λ k, [((n ++ [CoIn k c v], (R, C)), ρ)]) _ (HJi n c)).
   Qed.
 
   Theorem lq_rstep_fin O J S :

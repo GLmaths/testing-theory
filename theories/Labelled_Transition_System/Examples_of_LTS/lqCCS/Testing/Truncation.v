@@ -108,7 +108,7 @@ Lemma cstep_off_cell `{QM : QuantumModel} J O ρ c k t Δ :
   cstep J O ρ c (IOff k t) Δ →
   ∃ o, J c.1 o ∧ off_tag o = k ∧ alike o o ∧ cstep (single c.1 o) O ρ c (IOff k t) Δ.
 Proof.
-  inversion 1 as [| |n P C E k' d v t' P' HI Hp|n P C E k' E' qs t' HI|n P C E k' qs t' HI|n P C E k' M qs t' HI]; subst; simpl.
+  intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' E' qs t' HI|n P C k' qs t' HI|n P C k' M qs t' HI]; subst; simpl.
   - exists (OffIn k d). split; [done|]. split; [done|]. split; [done|]. apply cs_in; [by split|done].
   - exists (OffOp k E' qs). split; [done|]. split; [done|]. split; [done|]. apply cs_op. by split.
   - exists (OffInit k qs). split; [done|]. split; [done|]. split; [done|]. apply cs_init. by split.
@@ -120,8 +120,8 @@ Lemma single_swap `{QM : QuantumModel} O n o o' ρ c σ Δ :
   ∃ σ' Δ', cstep (single n o) O ρ c σ' Δ' ∧ (off_tag o = off_tag o' → σ' = σ).
 Proof.
   intros Hal Hs.
-  inversion Hs as [n0 P C E s Δ0 Hss|n0 P C E k d v t P' HE HkC Hp|n0 P C E k d v t P' HI Hp
-                  |n0 P C E k E' qs t HI|n0 P C E k qs t HI|n0 P C E k M qs t HI]; subst.
+  apply cstep_cases in Hs. inversion Hs as [n0 P C s Δ0 Hss|n0 P C k d v t P' HE HkC Hp|n0 P C k d v t P' HI Hp
+                  |n0 P C k E' qs t HI|n0 P C k qs t HI|n0 P C k M qs t HI]; subst.
   - eexists (ICh s), _. split; [by constructor|done].
   - eexists (ICh (cpair t k)), _. split; [by econstructor|done].
   - destruct HI as [-> <-]. destruct o as [|k0 d0| | |]; simpl in Hal; try done. subst d0.
@@ -178,7 +178,7 @@ Section Trunc.
   Proof. destruct o as [| | |k' M qs|]; simpl; try done. intros _. destruct (HMo M) as (M0 & ->). done. Qed.
 
   Hypothesis HT : obs_for p q T.
-  Hypothesis Hrun : run_word (M := lq_menu O) (menu T) Sx (dinit O q) r w.
+  Hypothesis Hrun : run_word (M := lq_menu O) (menu T) Sx (dinit q) r w.
   Hypothesis HF : ∀ k, k ∈ tags T → k ∈ F.
   Hypothesis Hrep : ∀ k, k ∉ F → k ∉ tags p.1 → k ∉ tags q.1 →
     ∃ k', k' ∈ F ∧ k' ∉ tags T ∧ k' ∉ tags p.1 ∧ k' ∉ tags q.1 ∧ K k' = K k.

@@ -35,7 +35,7 @@ Section Characterisation.
   Context `{QM : QuantumModel} (p q : proc * St).
 
   Definition run_against (T : proc) (r : nat → dist comp) (w : nat → item) : Prop :=
-    run_word (M := lq_menu (O_T T)) (menu T) (S_T T) (dinit (O_T T) q) r w.
+    run_word (M := lq_menu (O_T T)) (menu T) (S_T T) (dinit q) r w.
 
   Definition used (T : proc) (r : nat → dist comp) (w : nat → item) : node → offer → Prop :=
     cells (M := lq_menu (O_T T)) (S_T T) r w.
@@ -70,7 +70,7 @@ Section Characterisation.
 
   Definition alt_canon : Prop :=
     ∀ T, obs_for p q T → ∀ r w, run_against T r w →
-      ∃ r', is_run (SchedSts0 := canon_sts T r w) Stay (dinit (O_T T) p) r'
+      ∃ r', is_run (SchedSts0 := canon_sts T r w) Stay (dinit p) r'
           ∧ run_le (SchedSts0 := canon_sts T r w) r' r.
 
   Theorem characterisation (DC : dep_choice) :
@@ -87,7 +87,7 @@ Section Characterisation.
     - intros Ha. apply (alt_pre_obs_iff Stay DC p q). intros T HT r2 Hr2.
       destruct (is_run_word (M := lq_menu (O_T T)) DC (menu T) (S_T T) _ r2 Hr2) as (w & Hw).
       destruct (Ha T HT r2 w Hw) as (rs & Hrs & Hle).
-      refine (free_down (M := lq_menu (O_T T)) (admissible T) DC (dinit (O_T T) p) (dinit (O_T T) q)
+      refine (free_down (M := lq_menu (O_T T)) (admissible T) DC (dinit p) (dinit q)
                 (menu T) (S_T T) r2 w rs _ _ _ Hw Hrs Hle).
       + intros x ->%list_elem_of_singleton. done.
       + intros x ->%list_elem_of_singleton. exact Hz.

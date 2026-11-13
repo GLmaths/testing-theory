@@ -25,12 +25,12 @@
 (* * lqCCS: the LTS 𝔻 of distributions of components with their co-trace
 
     The alternative preorder is stated on the LTS [𝔻] whose states are
-    distributions of components [(n, (P, C, E))] weighted by a memory [ρ]:
+    distributions of components [(n, (P, C))] weighted by a memory [ρ]:
     [n], the node, is the co-trace the component has performed with the
     observer (the co-actions, with the tag of the observer and the value or
-    the outcome), [E] the outputs the observer offers at that node, recorded
-    when the node is reached, and [C] the outputs the program has consumed
-    (tag, channel, value).  Outputs are asynchronous: the observer does not
+    the outcome), and [C] the outputs the program has consumed (tag,
+    channel, value), among the outputs [O n] the observer offers at that
+    node.  Outputs are asynchronous: the observer does not
     see when they are consumed, so a consumption does not extend the node;
     it is a silent step of the component, [C] only prevents a second
     consumption.  The labels of [𝔻] are the choices [s] of the program (a
@@ -78,6 +78,21 @@ Inductive coact : Type :=
 | CoMeas (k : tag) (M : meas) (qs : list qubit) (n : nat)
 | CoInit (k : tag) (qs : list qubit).
 
+Definition co_tag (a : coact) : tag :=
+  match a with
+  | CoOut k _ _ | CoIn k _ _ | CoOp k _ _ | CoMeas k _ _ _ | CoInit k _ => k
+  end.
+
+(* The action of the observer: it outputs what the program inputs. *)
+Definition co_act (a : coact) : prog_action :=
+  match a with
+  | CoOut _ c v => PrOut c v
+  | CoIn _ c v => PrIn c v
+  | CoOp _ E qs => PrOp E qs
+  | CoMeas _ M qs n => PrMeas M qs n
+  | CoInit _ qs => PrInit qs
+  end.
+
 Definition node : Type := list coact.
 
 Inductive item : Type :=
@@ -95,36 +110,155 @@ Section Dist.
   Context `{QM : QuantumModel}.
   Context (I : node → offer → Prop) (O : node → list msg) (S : node → bool).
 
-  Notation comp := (node * (proc * list msg * list msg))%type.
+  Notation comp := (node * (proc * list msg))%type.
 
   (* ** The step of one component *)
 
+  Definition dual (l : Labels prog_action + mem_action) (a : prog_action) : Prop :=
+    match l with
+    | inl (ActExt a0) => sync_sys (inr a0) a
+    | inl τ => False
+    | inr b => sync_sys (inl b) a
+    end.
+
+  Definition blocking_offer (o : offer) : Prop :=
+    match o with OffOut _ _ _ => False | _ => True end.
+
+  Definition off_tag (o : offer) : tag :=
+    match o with
+    | OffOut k _ _ | OffIn k _ | OffOp k _ _ | OffMeas k _ _ | OffInit k _ => k
+    end.
+
+  Definition co_of (o : offer) (l : Labels prog_action + mem_action) : coact :=
+    match o with
+    | OffOut k c v => CoOut k c v
+    | OffIn k c => CoIn k c (match l with inl (ActExt (PrOut _ v)) => v | _ => VNat 0 end)
+    | OffOp k E qs => CoOp k E qs
+    | OffMeas k M qs => CoMeas k M qs (match l with inr (MeMeas _ _ n) => n | _ => 0 end)
+    | OffInit k qs => CoInit k qs
+    end.
+
+  Definition answers (o : offer) (l : Labels prog_action + mem_action) : Prop :=
+    blocking_offer o ∧ dual l (co_act (co_of o l)).
+
+  Definition by_tag (s : choice) (t : tag) : Prop := s = CEps ∨ s = CTag t.
+
   Inductive cstep (ρ : St) : comp → item → dist comp → Prop :=
-  | cs_ch n P C E s Δ :
+  | cs_ch n P C s Δ :
       sched_step ρ P s Δ →
-      cstep ρ (n, (P, C, E)) (ICh s) (map (λ Pρ, ((n, (Pρ.1, C, E)), Pρ.2)) Δ)
-  | cs_recv n P C E k c v t P' :
-      (k, c, v) ∈ E → k ∉ (λ m : msg, m.1.1) <$> C →
+      cstep ρ (n, (P, C)) (ICh s) (map (λ Pρ, ((n, (Pρ.1, C)), Pρ.2)) Δ)
+  | cs_recv n P C k c v t P' :
+      (k, c, v) ∈ O n → k ∉ (λ m : msg, m.1.1) <$> C →
       prog_step P (CTag t) (ActExt (PrIn c v)) P' →
-      cstep ρ (n, (P, C, E)) (ICh (cpair t k)) [((n, (P', C ++ [(k, c, v)], E)), ρ)]
-  | cs_in n P C E k c v t P' :
+      cstep ρ (n, (P, C)) (ICh (cpair t k)) [((n, (P', C ++ [(k, c, v)])), ρ)]
+  | cs_dual n P C o l t s Λ :
+      I n o → vis_step ρ P s l Λ → by_tag s t → answers o l →
+      cstep ρ (n, (P, C)) (IOff (off_tag o) t)
+        (map (λ x, ((n ++ [co_of o x.1], (x.2.1, C)), x.2.2)) Λ).
+
+  Lemma cs_in ρ n P C k c v t P' :
+    I n (OffIn k c) → prog_step P (CTag t) (ActExt (PrOut c v)) P' →
+    cstep ρ (n, (P, C)) (IOff k t)
+      [((n ++ [CoIn k c v], (P', C)), ρ)].
+  Proof.
+    intros HI Hp.
+    apply (cs_dual ρ n P C (OffIn k c) (inl (c ! v)) t t [(inl (c ! v), (P', ρ))] HI).
+    - by apply vs_prog.
+    - by right.
+    - split; [done|]. apply sync_sys_chan. constructor.
+  Qed.
+
+  Lemma cs_op ρ n P C k E' qs t :
+    I n (OffOp k E' qs) →
+    cstep ρ (n, (P, C)) (IOff k t)
+      [((n ++ [CoOp k E' qs], (P, C)), sop_apply E' qs ρ)].
+  Proof.
+    intros HI.
+    apply (cs_dual ρ n P C (OffOp k E' qs) (inr (MeSop (sop_act E' qs))) t CEps
+             [(inr (MeSop (sop_act E' qs)), (P, sop_apply E' qs ρ))] HI).
+    - apply vs_sop.
+    - by left.
+    - split; [done|]. apply sync_sys_mem. constructor.
+  Qed.
+
+  Lemma cs_init ρ n P C k qs t :
+    I n (OffInit k qs) →
+    cstep ρ (n, (P, C)) (IOff k t)
+      [((n ++ [CoInit k qs], (P, C)), init_apply qs ρ)].
+  Proof.
+    intros HI.
+    apply (cs_dual ρ n P C (OffInit k qs) (inr (MeSop (init_act qs))) t CEps
+             [(inr (MeSop (init_act qs)), (P, init_apply qs ρ))] HI).
+    - apply vs_sop.
+    - by left.
+    - split; [done|]. apply sync_sys_mem. constructor.
+  Qed.
+
+  Lemma cs_meas ρ n P C k M qs t :
+    I n (OffMeas k M qs) →
+    cstep ρ (n, (P, C)) (IOff k t)
+      (map (λ k', ((n ++ [CoMeas k M qs (code _ k')], (P, C)),
+                   meas_branch M qs k' ρ))
+         (outs_nz M qs ρ)).
+  Proof.
+    intros HI.
+    pose proof (cs_dual ρ n P C (OffMeas k M qs) (inr (MeMeas M qs 0)) t CEps _ HI
+                  (vs_meas ρ P M qs)) as Hd.
+    rewrite map_map in Hd. apply Hd.
+    - by left.
+    - split; [done|]. apply sync_sys_mem. constructor.
+  Qed.
+
+  Inductive cstep_view (ρ : St) : comp → item → dist comp → Prop :=
+  | cv_ch n P C s Δ :
+      sched_step ρ P s Δ →
+      cstep_view ρ (n, (P, C)) (ICh s) (map (λ Pρ, ((n, (Pρ.1, C)), Pρ.2)) Δ)
+  | cv_recv n P C k c v t P' :
+      (k, c, v) ∈ O n → k ∉ (λ m : msg, m.1.1) <$> C →
+      prog_step P (CTag t) (ActExt (PrIn c v)) P' →
+      cstep_view ρ (n, (P, C)) (ICh (cpair t k)) [((n, (P', C ++ [(k, c, v)])), ρ)]
+  | cv_in n P C k c v t P' :
       I n (OffIn k c) → prog_step P (CTag t) (ActExt (PrOut c v)) P' →
-      cstep ρ (n, (P, C, E)) (IOff k t)
-        [((n ++ [CoIn k c v], (P', C, O (n ++ [CoIn k c v]))), ρ)]
-  | cs_op n P C E k E' qs t :
+      cstep_view ρ (n, (P, C)) (IOff k t)
+        [((n ++ [CoIn k c v], (P', C)), ρ)]
+  | cv_op n P C k E' qs t :
       I n (OffOp k E' qs) →
-      cstep ρ (n, (P, C, E)) (IOff k t)
-        [((n ++ [CoOp k E' qs], (P, C, O (n ++ [CoOp k E' qs]))), sop_apply E' qs ρ)]
-  | cs_init n P C E k qs t :
+      cstep_view ρ (n, (P, C)) (IOff k t)
+        [((n ++ [CoOp k E' qs], (P, C)), sop_apply E' qs ρ)]
+  | cv_init n P C k qs t :
       I n (OffInit k qs) →
-      cstep ρ (n, (P, C, E)) (IOff k t)
-        [((n ++ [CoInit k qs], (P, C, O (n ++ [CoInit k qs]))), init_apply qs ρ)]
-  | cs_meas n P C E k M qs t :
+      cstep_view ρ (n, (P, C)) (IOff k t)
+        [((n ++ [CoInit k qs], (P, C)), init_apply qs ρ)]
+  | cv_meas n P C k M qs t :
       I n (OffMeas k M qs) →
-      cstep ρ (n, (P, C, E)) (IOff k t)
-        (map (λ k', ((n ++ [CoMeas k M qs (code _ k')], (P, C, O (n ++ [CoMeas k M qs (code _ k')]))),
+      cstep_view ρ (n, (P, C)) (IOff k t)
+        (map (λ k', ((n ++ [CoMeas k M qs (code _ k')], (P, C)),
                      meas_branch M qs k' ρ))
            (outs_nz M qs ρ)).
+
+  Lemma cstep_cases ρ c it Δ : cstep ρ c it Δ → cstep_view ρ c it Δ.
+  Proof.
+    intros Hc. destruct Hc as [n P C s Δ Hs|n P C k c v t P' HE HC Hp|n P C o l t s Λ HI Hv Ht [Hb Hd]].
+    - by apply cv_ch.
+    - by apply cv_recv.
+    - destruct Hv as [t0 a P' Hp|ℰ|M qs].
+      + destruct Ht as [Ht|Ht]; [done|]. injection Ht as ->.
+        destruct o as [k c v|k c|k E' qs|k M qs|k qs]; simpl in *; try done.
+        * inversion Hd as [|? ? Hsc]; subst. destruct a; inversion Hsc; subst. by apply cv_in.
+        * inversion Hd as [|? ? Hsc]; subst. inversion Hsc.
+        * inversion Hd as [|? ? Hsc]; subst. inversion Hsc.
+        * inversion Hd as [|? ? Hsc]; subst. inversion Hsc.
+      + destruct o as [k c v|k c|k E' qs|k M qs|k qs]; simpl in *; try done.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy; subst. by apply cv_op.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy; subst. by apply cv_init.
+      + destruct o as [k c v|k c|k E' qs'|k M' qs'|k qs']; simpl in *; try done.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy; subst. rewrite map_map. simpl. by apply cv_meas.
+        * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
+  Qed.
 
   #[global] Instance dlts : SchedSts comp item :=
     {| pMust_scheduled.sstep := cstep; psuccess := λ x, S x.1 = true |}.
@@ -132,7 +266,7 @@ Section Dist.
   Lemma cstep_nonzero ρ c it Θ :
     ρ ≠ szero → cstep ρ c it Θ → ∀ x, x ∈ Θ → x.2 ≠ szero.
   Proof.
-    intros Hρ Hc x Hx. inversion Hc as [? ? ? ? s Δ Hs| | | | |? ? ? ? k M qs t HI]; subst.
+    intros Hρ Hc x Hx. apply cstep_cases in Hc. inversion Hc as [? ? ? s Δ Hs| | | | |? ? ? k M qs t HI]; subst.
     - apply list_elem_of_fmap in Hx as (Pρ & -> & HPρ). destruct Pρ as [P' ρ'].
       exact (sched_step_nonzero ρ _ _ _ Hρ Hs P' ρ' HPρ).
     - apply list_elem_of_singleton in Hx. by subst x.
@@ -143,14 +277,14 @@ Section Dist.
   Qed.
 
   (* The initial distribution: one component at the empty node, nothing consumed. *)
-  Definition dinit (p : proc * St) : dist comp := [(([], (p.1, [], O [])), p.2)].
+  Definition dinit (p : proc * St) : dist comp := [(([], (p.1, [])), p.2)].
 End Dist.
 
 (* ** The alternative preorder *)
 
 Definition alt_pre `{QM : QuantumModel} (L : lifting) (p q : proc * St) : Prop :=
   ∀ (I : node → offer → Prop) (O : node → list msg) (S : node → bool),
-    ext_closed S → smyth_le (SchedSts0 := dlts I O S) L (dinit O p) (dinit O q).
+    ext_closed S → smyth_le (SchedSts0 := dlts I O S) L (dinit p) (dinit q).
 
 Notation "p ≼ q" := (alt_pre Stay p q) (at level 70).
 Notation "p ≼ᴰ q" := (alt_pre Drop p q) (at level 70).
@@ -160,7 +294,7 @@ Notation "p ≼ᴰ q" := (alt_pre Drop p q) (at level 70).
 Definition alt_as `{QM : QuantumModel} (L : lifting) (p q : proc * St) : Prop :=
   ∀ (I : node → offer → Prop) (O : node → list msg) (S : node → bool),
     ext_closed S →
-    pmust_as (SchedSts0 := dlts I O S) L (dinit O p) → pmust_as (SchedSts0 := dlts I O S) L (dinit O q).
+    pmust_as (SchedSts0 := dlts I O S) L (dinit p) → pmust_as (SchedSts0 := dlts I O S) L (dinit q).
 
 Notation "p ≼ₐₛ q" := (alt_as Stay p q) (at level 70).
 Notation "p ≼ₐₛᴰ q" := (alt_as Drop p q) (at level 70).
@@ -173,14 +307,14 @@ Notation "p ≼ₐₛᴰ q" := (alt_as Drop p q) (at level 70).
 
 Definition alt_pre_unif `{QM : QuantumModel} (L : lifting) (p q : proc * St) : Prop :=
   ∀ (O : node → list msg) (S : node → bool), ext_closed S →
-    ∀ (I : node → offer → Prop) r_q, is_run (SchedSts0 := dlts I O S) L (dinit O q) r_q →
+    ∀ (I : node → offer → Prop) r_q, is_run (SchedSts0 := dlts I O S) L (dinit q) r_q →
       ∃ r_p, run_le (SchedSts0 := dlts I O S) r_p r_q ∧
-        ∀ I', is_run (SchedSts0 := dlts I' O S) L (dinit O q) r_q →
-              is_run (SchedSts0 := dlts I' O S) L (dinit O p) r_p.
+        ∀ I', is_run (SchedSts0 := dlts I' O S) L (dinit q) r_q →
+              is_run (SchedSts0 := dlts I' O S) L (dinit p) r_p.
 
 (* Along a run of 𝔻 from a non-zero memory, every component has a non-zero memory. *)
 Lemma drun_nonzero `{QM : QuantumModel} L I O S (p : proc * St) r :
-  p.2 ≠ szero → is_run (SchedSts0 := dlts I O S) L (dinit O p) r → ∀ n x, x ∈ r n → x.2 ≠ szero.
+  p.2 ≠ szero → is_run (SchedSts0 := dlts I O S) L (dinit p) r → ∀ n x, x ∈ r n → x.2 ≠ szero.
 Proof.
   intros Hp Hr. apply (@run_weights Weights_of_QuantumModel _ _ (dlts I O S) L (λ ρ, ρ ≠ szero) (cstep_nonzero I O) _ _ Hr).
   intros x Hx. apply list_elem_of_singleton in Hx. by subst x.
@@ -194,7 +328,7 @@ Qed.
 Section Follow.
   Context `{QM : QuantumModel} (I : node → offer → Prop) (O : node → list msg) (S : node → bool).
 
-  Notation comp := (node * (proc * list msg * list msg))%type.
+  Notation comp := (node * (proc * list msg))%type.
 
   Definition dstep_res (L : lifting) (𝔇 : dist comp) (it : item)
       (res : comp → St → dist comp) (𝔇' : dist comp) : Prop :=
@@ -223,9 +357,9 @@ End Follow.
 
 Definition alt_pre_det `{QM : QuantumModel} (L : lifting) (p q : proc * St) : Prop :=
   ∀ (O : node → list msg) (S : node → bool), ext_closed S →
-    ∀ (I : node → offer → Prop) r_q, is_run (SchedSts0 := dlts I O S) L (dinit O q) r_q →
-      ∃ w res, ∀ I', is_run (SchedSts0 := dlts I' O S) L (dinit O q) r_q →
-        ∃ r_p, follows I' O S L (dinit O p) w res r_p ∧ run_le (SchedSts0 := dlts I' O S) r_p r_q.
+    ∀ (I : node → offer → Prop) r_q, is_run (SchedSts0 := dlts I O S) L (dinit q) r_q →
+      ∃ w res, ∀ I', is_run (SchedSts0 := dlts I' O S) L (dinit q) r_q →
+        ∃ r_p, follows I' O S L (dinit p) w res r_p ∧ run_le (SchedSts0 := dlts I' O S) r_p r_q.
 
 Lemma alt_pre_det_alt_pre `{QM : QuantumModel} L (p q : proc * St) : alt_pre_det L p q → alt_pre L p q.
 Proof.

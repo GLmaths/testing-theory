@@ -43,7 +43,7 @@ Section Trace.
     cells (M := lq_menu O) S r w.
 
   Definition computation (O : node → list msg) (S : node → bool) (r : nat → dist comp) (w : nat → item) : Prop :=
-    run_word (M := lq_menu O) (used_by O S r w) S (dinit O q) r w
+    run_word (M := lq_menu O) (used_by O S r w) S (dinit q) r w
     ∧ fin (visited r).
 
   Definition quiet_outside (O : node → list msg) (S : node → bool) (r : nat → dist comp) : Prop :=
@@ -99,7 +99,7 @@ Section Trace.
 
   Definition alt_trace : Prop :=
     ∀ O S Ch K r w, coherent O S Ch K r w → computation O S r w →
-      ∃ r', is_run (SchedSts0 := trace_sts O S Ch K r w) Stay (dinit O p) r'
+      ∃ r', is_run (SchedSts0 := trace_sts O S Ch K r w) Stay (dinit p) r'
           ∧ run_le (SchedSts0 := trace_sts O S Ch K r w) r' r.
 End Trace.
 (* end hide *)

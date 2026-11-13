@@ -126,21 +126,6 @@ Definition obs (T : proc) : Prop := obsb T = true ∧ chan_disjoint T.
 
 (* ** The observer after a co-action *)
 
-Definition co_tag (a : coact) : tag :=
-  match a with
-  | CoOut k _ _ | CoIn k _ _ | CoOp k _ _ | CoMeas k _ _ _ | CoInit k _ => k
-  end.
-
-(* The action of the observer: it outputs what the program inputs. *)
-Definition co_act (a : coact) : prog_action :=
-  match a with
-  | CoOut _ c v => PrOut c v
-  | CoIn _ c v => PrIn c v
-  | CoOp _ E qs => PrOp E qs
-  | CoMeas _ M qs n => PrMeas M qs n
-  | CoInit _ qs => PrInit qs
-  end.
-
 Fixpoint co_succ (T : proc) (a : coact) : list proc :=
   match T with
   | PSend k' c' e =>

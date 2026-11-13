@@ -24,10 +24,9 @@
 (* * lqCCS: soundness of the alternative preorder
 
     A tested program [⟨ρ, (P, T)⟩], for an observer [T], runs in step with a
-    component [(n, (P, C, E))] of [𝔻] weighted by [ρ]: the observer is in the
+    component [(n, (P, C))] of [𝔻] weighted by [ρ]: the observer is in the
     state [T'] reached from [T] by the co-trace [n] followed by the consumed
-    outputs [C], the outputs [E] are those of the observer at [n], the real
-    program is [P ∥ T'].  Related distributions have
+    outputs [C], the real program is [P ∥ T'].  Related distributions have
     the same successful mass, every scheduled step of one is a scheduled
     step of the other (a choice of the program on one side is the same
     choice on the other; a synchronisation with the observer, or an action
@@ -65,7 +64,7 @@ Section Sound.
 
   Notation I := (menu T).
   Notation S := (S_T T).
-  Notation comp := (node * (proc * list msg * list msg))%type.
+  Notation comp := (node * (proc * list msg))%type.
   Notation dcstep := (cstep (menu T) (O_T T)).
 
   Lemma obs_T : obs T.
@@ -87,8 +86,8 @@ Section Sound.
   (* ** The relation between a tested program and a component of 𝔻 *)
 
   Definition rel_par (x : proc * St) (y : comp * St) : Prop :=
-    x.2 = y.2 ∧ prog_ok y.1.2.1.1 ∧ y.1.2.2 = O_T T y.1.1 ∧
-    ∃ T', T' ∈ tnodes T (eff y.1.1 y.1.2.1.2) ∧ x.1 = y.1.2.1.1 ∥ T'.
+    x.2 = y.2 ∧ prog_ok y.1.2.1 ∧
+    ∃ T', T' ∈ tnodes T (eff y.1.1 y.1.2.2) ∧ x.1 = y.1.2.1 ∥ T'.
 
   Definition rel_comp (x : proc * proc * St) (y : comp * St) : Prop := rel_par (par_of x.1, x.2) y.
 
@@ -104,8 +103,8 @@ Section Sound.
   Lemma rel_unpar Δ Θ : Forall2 rel_par Δ Θ → ∃ Δx, Δ = dmap par_of Δx ∧ Forall2 rel_comp Δx Θ.
   Proof.
     induction 1 as [|x y Δ Θ Hxy _ (Δx & -> & HF)]; [by exists []|].
-    destruct x as [R ρ]. pose proof Hxy as (_ & _ & _ & T' & _ & E). simpl in E. subst R.
-    exists (((y.1.2.1.1, T'), ρ) :: Δx). split; [done|]. by constructor.
+    destruct x as [R ρ]. pose proof Hxy as (_ & _ & T' & _ & E). simpl in E. subst R.
+    exists (((y.1.2.1, T'), ρ) :: Δx). split; [done|]. by constructor.
   Qed.
 
   (* ** Facts on the effective node *)
@@ -164,7 +163,7 @@ Section Sound.
 
   Lemma rel_success x y : rel_comp x y → success x.1.2 ↔ S y.1.1 = true.
   Proof.
-    intros (_ & _ & _ & T' & HT' & E). destruct x as [[P0 T0] ρ0]. simpl in E. injection E as _ ->. simpl.
+    intros (_ & _ & T' & HT' & E). destruct x as [[P0 T0] ρ0]. simpl in E. injection E as _ ->. simpl.
     unfold success. destruct (eff_successb _ _ _ HT') as (Tn & HTn & E). rewrite E.
     symmetry. apply (S_T_tnodes T _ Tn HT HTn).
   Qed.
@@ -316,7 +315,7 @@ Section Sound.
   Lemma par_fwd ρ n P C T' σ Δ :
     prog_ok P → T' ∈ tnodes T (eff n C) → sched_step ρ (P ∥ T') σ Δ →
     ∃ it, corr σ it ∧ ∀ it', corr σ it' →
-      ∃ Θc, dcstep ρ (n, (P, C, O_T T n)) it' Θc ∧ Forall2 rel_par Δ Θc.
+      ∃ Θc, dcstep ρ (n, (P, C)) it' Θc ∧ Forall2 rel_par Δ Θc.
   Proof.
     intros Hok HT' Hs.
     (* a choice of the program only *)
@@ -349,7 +348,7 @@ Section Sound.
       apply par_tau_inv in Hp as [(P' & Hp & ->)|[(T'' & Hp & ->)|[(t & k & c & v & P' & T'' & -> & -> & Hp & Hq)|(t & k & c & v & P' & T'' & -> & -> & Hp & Hq)]]].
       + exists (ICh σ). split; [exact (corr_prog _ _ _ _ Hok Hp)|].
         intros it' Hc. rewrite (Hch _ _ _ Hp _ Hc). eexists. split; [apply cs_ch; by apply ss_tau|].
-        simpl. constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
+        simpl. constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
       + exfalso. apply (obs_no_tau T' (eff_obs _ _ _ HT') σ T'' Hp).
       + (* the program outputs, the observer inputs *)
         destruct (obs_step_co n C T' k _ T'' HT' Hq) as (a & Hk & Hα & Hin & Hkind).
@@ -359,7 +358,7 @@ Section Sound.
         exists (IOff k t). split; [by apply corr_chan|].
         intros it' Hc. rewrite (Hsync t k Ht Hkind _ Hc).
         eexists. split; [by apply cs_in|].
-        constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T''.
+        constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T''.
       + (* the program inputs, the observer outputs *)
         destruct (obs_step_co n C T' k _ T'' HT' Hq) as (a & Hk & Hα & Hin & Hkind).
         rewrite (co_act_out_inv a k c v Hk Hα) in Hin, Hkind. simpl in Hkind.
@@ -373,13 +372,13 @@ Section Sound.
         exists (ICh (cpair t k)). split; [by apply corr_cons|].
         intros it' Hc. rewrite (Hcons t k Ht Hkind _ Hc).
         eexists. split; [by eapply cs_recv|].
-        constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|].
+        constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|].
         exists T''. split; [|done]. simpl. rewrite eff_app. apply tnodes_app_elem. by exists T'.
     - (* an operation on the memory *)
       apply par_ext_inv in Hp as [(P' & Hp & ->)|(T'' & Hp & ->)].
       + exists (ICh σ). split; [exact (corr_prog _ _ _ _ Hok Hp)|].
         intros it' Hc. rewrite (Hch _ _ _ Hp _ Hc). eexists. split; [apply cs_ch; by apply ss_op|].
-        simpl. constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
+        simpl. constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
       + destruct (prog_step_ext_choice _ _ _ _ Hp) as (k & ->).
         destruct (obs_step_co n C T' k _ T'' HT' Hp) as (a & Hk & Hα & Hin & Hkind).
         rewrite (co_act_op_inv a k E qs Hk Hα) in Hin, Hkind. simpl in Hkind.
@@ -387,12 +386,12 @@ Section Sound.
         exists (IOff k 0). split; [eapply corr_mem; [exact Hkind|by left]|].
         intros it' Hc. destruct (Hmem k KOp Hkind ltac:(by left) _ Hc) as (t' & ->).
         eexists. split; [by apply cs_op|].
-        constructor; [|constructor]. split; [done|]. split; [done|]. split; [done|]. by exists T''.
+        constructor; [|constructor]. split; [done|]. split; [done|]. by exists T''.
     - (* an initialisation *)
       apply par_ext_inv in Hp as [(P' & Hp & ->)|(T'' & Hp & ->)].
       + exists (ICh σ). split; [exact (corr_prog _ _ _ _ Hok Hp)|].
         intros it' Hc. rewrite (Hch _ _ _ Hp _ Hc). eexists. split; [apply cs_ch; by apply ss_init|].
-        simpl. constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
+        simpl. constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
       + destruct (prog_step_ext_choice _ _ _ _ Hp) as (k & ->).
         destruct (obs_step_co n C T' k _ T'' HT' Hp) as (a & Hk & Hα & Hin & Hkind).
         rewrite (co_act_init_inv a k qs Hk Hα) in Hin, Hkind. simpl in Hkind.
@@ -400,7 +399,7 @@ Section Sound.
         exists (IOff k 0). split; [eapply corr_mem; [exact Hkind|right; by right]|].
         intros it' Hc. destruct (Hmem k KInit Hkind ltac:(right; by right) _ Hc) as (t' & ->).
         eexists. split; [by apply cs_init|].
-        constructor; [|constructor]. split; [done|]. split; [done|]. split; [done|]. by exists T''.
+        constructor; [|constructor]. split; [done|]. split; [done|]. by exists T''.
     - (* a measurement: all the outcomes are on the same side *)
       destruct (prog_step_ext_choice _ _ _ _ Hp0) as (t & ->).
       apply par_ext_inv in Hp0 as [(P0 & Hp0 & _)|(T0 & Hp0 & _)].
@@ -414,7 +413,7 @@ Section Sound.
         intros it' Hc. rewrite (Hch _ _ _ Hp0 _ Hc). eexists. split; [apply cs_ch; by eapply ss_meas|].
         rewrite zip_with_fmap_r. clear Hf Hp0 Hs. revert HPs. generalize (outs_nz M qs ρ) as ks.
         intros ks HPs. induction HPs as [|k' P' ks Ps Hp _ IH]; simpl; [constructor|].
-        constructor; [|done]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
+        constructor; [|done]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
       + (* the observer measures *)
         destruct (obs_step_co n C T' t _ T0 HT' Hp0) as (a & Hk & Hα & Hin & Hkind).
         rewrite (co_act_meas_inv a t M qs 0 Hk Hα) in Hin, Hkind. simpl in Hkind.
@@ -426,7 +425,7 @@ Section Sound.
         eexists. split; [by apply cs_meas|].
         rewrite zip_with_fmap_r. clear Hf Hp0 Hs Hin HI. revert HTs. generalize (outs_nz M qs ρ) as ks.
         intros ks HTs. induction HTs as [|k' T'' ks Ts Hq _ IH]; simpl; [constructor|].
-        constructor; [|done]. split; [done|]. split; [done|]. split; [done|].
+        constructor; [|done]. split; [done|]. split; [done|].
         destruct (obs_step_co n C T' t _ T'' HT' Hq) as (a' & Hk' & Hα' & Hin' & _).
         rewrite (co_act_meas_inv a' t M qs (code _ k') Hk' Hα') in Hin'.
         destruct (eff_menu n C _ T' T'' HT' Hin') as (_ & HT''). by exists T''.
@@ -528,7 +527,7 @@ Section Sound.
   Qed.
 
   Lemma par_bwd ρ n P C T' it Θc :
-    prog_ok P → T' ∈ tnodes T (eff n C) → dcstep ρ (n, (P, C, O_T T n)) it Θc →
+    prog_ok P → T' ∈ tnodes T (eff n C) → dcstep ρ (n, (P, C)) it Θc →
     ∃ σ, corr σ it ∧ ∀ σ', corr σ' it →
       ∃ Δ, sched_step ρ (P ∥ T') σ' Δ ∧ Forall2 rel_par Δ Θc.
   Proof.
@@ -539,8 +538,8 @@ Section Sound.
     { intros k t x Hk σ' Hc'. inversion Hc' as [|? ? x' Hk' Hx'|? ? Hk' Ht']; subst.
       - left. rewrite (tag_kind_unique k x x' Hk Hk'). done.
       - right. rewrite (tag_kind_unique k x KIn Hk Hk'). done. }
-    inversion Hc as [? ? ? ? s Δ0 Hs|? ? ? ? k c v t P' HE HkC Hp|? ? ? ? k c v t P' HI Hp|? ? ? ? k E' qs t HI
-                     |? ? ? ? k qs t HI|? ? ? ? k M qs t HI]; subst.
+    apply cstep_cases in Hc. inversion Hc as [? ? ? s Δ0 Hs|? ? ? k c v t P' HE HkC Hp|? ? ? k c v t P' HI Hp|? ? ? k E' qs t HI
+                     |? ? ? k qs t HI|? ? ? k M qs t HI]; subst.
     - (* a choice of the program *)
       assert (Hs' : ∃ l P', prog_step P s l P').
       { inversion Hs as [P' Hp|E qs P' Hp|qs P' Hp|M qs Ps P0 Hp0 Hf]; subst; by eauto. }
@@ -549,19 +548,19 @@ Section Sound.
       intros σ' Hc'. inversion Hc'; subst.
       eexists. split; [by apply sched_step_parL|].
       clear Hc Hc' Hp P' l. inversion Hs as [P' Hp|E qs P' Hp|qs P' Hp|M qs Ps P0 Hp0 Hf]; subst; simpl.
-      + constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
-      + constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
-      + constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
+      + constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
+      + constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
+      + constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
       + clear Hs. revert Hf. generalize (outs_nz M qs ρ) as ks. intros ks Hf.
         induction Hf as [|k' P' ks Ps Hp _ IH]; simpl; [constructor|].
-        constructor; [|done]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T'.
+        constructor; [|done]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
     - (* the program consumes an output *)
       destruct (out_step n C T' k c v HT' HE HkC) as (Hk & T'' & Hq & HT'').
       assert (Ht : t ∉ tags T) by (eapply prog_ok_choice; [done|exact Hp|by left]).
       exists (cpair t k). split; [by apply corr_cons|].
       intros σ' Hc'. inversion Hc'; subst.
       eexists. split; [apply ss_tau; by eapply pr_syncR|].
-      constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T''.
+      constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T''.
     - (* the observer inputs *)
       pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
       assert (Ht : t ∉ tags T) by (eapply prog_ok_choice; [done|exact Hp|by left]).
@@ -569,21 +568,21 @@ Section Sound.
       intros σ' Hc'. destruct (Hkind k t KIn Hk σ' Hc') as [[Hm _]|[_ ->]]; [by destruct Hm as [?|[?|?]]|].
       destruct (menu_step_in n C T' k c v HT' HI) as (T'' & Hq & HT'').
       eexists. split; [apply ss_tau; by eapply pr_syncL|].
-      constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. split; [done|]. by exists T''.
+      constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T''.
     - (* the observer operates on the memory *)
       pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
       exists (CTag k). split; [eapply corr_mem; [exact Hk|by left]|].
       intros σ' Hc'. destruct (Hkind k t KOp Hk σ' Hc') as [[_ ->]|[Hm _]]; [|done].
       destruct (menu_step_op n C T' k E' qs HT' HI) as (T'' & Hq & HT'').
       eexists. split; [apply ss_op; by apply pr_parR|].
-      constructor; [|constructor]. split; [done|]. split; [done|]. split; [done|]. by exists T''.
+      constructor; [|constructor]. split; [done|]. split; [done|]. by exists T''.
     - (* the observer initialises *)
       pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
       exists (CTag k). split; [eapply corr_mem; [exact Hk|right; by right]|].
       intros σ' Hc'. destruct (Hkind k t KInit Hk σ' Hc') as [[_ ->]|[Hm _]]; [|done].
       destruct (menu_step_init n C T' k qs HT' HI) as (T'' & Hq & HT'').
       eexists. split; [apply ss_init; by apply pr_parR|].
-      constructor; [|constructor]. split; [done|]. split; [done|]. split; [done|]. by exists T''.
+      constructor; [|constructor]. split; [done|]. split; [done|]. by exists T''.
     - (* the observer measures *)
       pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
       exists (CTag k). split; [eapply corr_mem; [exact Hk|right; by left]|].
@@ -607,7 +606,7 @@ Section Sound.
         simpl. apply pr_parR. apply Hf.
       + rewrite zip_with_fmap_r. generalize (outs_nz M qs ρ) as ks. intros ks.
         induction ks as [|k' ks IH]; simpl; [constructor|].
-        constructor; [|done]. split; [done|]. split; [done|]. split; [done|]. exists (f k'). split; [apply Hf|done].
+        constructor; [|done]. split; [done|]. split; [done|]. exists (f k'). split; [apply Hf|done].
   Qed.
 
   (* ** Lifting to distributions *)
@@ -618,16 +617,16 @@ Section Sound.
   Notation dstable' := (dstable (SchedSts0 := dlts (menu T) (O_T T) (S_T T))).
 
   Lemma rel_comp_shape x y :
-    rel_comp x y → ∃ n P C T', y.1 = (n, (P, C, O_T T n)) ∧ x.1 = (P, T') ∧ x.2 = y.2 ∧ prog_ok P ∧ T' ∈ tnodes T (eff n C).
+    rel_comp x y → ∃ n P C T', y.1 = (n, (P, C)) ∧ x.1 = (P, T') ∧ x.2 = y.2 ∧ prog_ok P ∧ T' ∈ tnodes T (eff n C).
   Proof.
-    intros (Hρ & Hok & HE & T' & HT' & E). destruct y as [[n [[P C] E']] ρ']. destruct x as [[P0 T0] ρ0].
-    simpl in *. subst E'. injection E as -> ->. by exists n, P, C, T'.
+    intros (Hρ & Hok & T' & HT' & E). destruct y as [[n [P C]] ρ']. destruct x as [[P0 T0] ρ0].
+    simpl in *. injection E as -> ->. by exists n, P, C, T'.
   Qed.
 
   Lemma comp_fwd ρ n P C T' σ Δ :
     prog_ok P → T' ∈ tnodes T (eff n C) → conf_sched ρ (P, T') σ Δ →
     ∃ it, corr σ it ∧ ∀ it', corr σ it' →
-      ∃ Θc, dcstep ρ (n, (P, C, O_T T n)) it' Θc ∧ Forall2 rel_comp Δ Θc.
+      ∃ Θc, dcstep ρ (n, (P, C)) it' Θc ∧ Forall2 rel_comp Δ Θc.
   Proof.
     intros Hok HT' Hs. destruct (par_fwd _ _ _ _ _ _ _ Hok HT' Hs) as (it & Hc & Hall).
     exists it. split; [done|]. intros it' Hc'. destruct (Hall it' Hc') as (Θc & Hcs & HF).
@@ -635,7 +634,7 @@ Section Sound.
   Qed.
 
   Lemma comp_bwd ρ n P C T' it Θc :
-    prog_ok P → T' ∈ tnodes T (eff n C) → dcstep ρ (n, (P, C, O_T T n)) it Θc →
+    prog_ok P → T' ∈ tnodes T (eff n C) → dcstep ρ (n, (P, C)) it Θc →
     ∃ σ, corr σ it ∧ ∀ σ', corr σ' it →
       ∃ Δ, conf_sched ρ (P, T') σ' Δ ∧ Forall2 rel_comp Δ Θc.
   Proof.
@@ -671,7 +670,7 @@ Section Sound.
     - destruct (comp_fwd _ _ _ _ _ _ _ Hok HT' Hs) as (it0 & Hc0 & Hall).
       destruct (Hall it Hc) as (Θy & Hcs & HF). exists Θy. split; [|done].
       left. split; [by rewrite <- Hsucc|]. done.
-    - exists (rest (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (n, (P, C, O_T T n)) ρx). split.
+    - exists (rest (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (n, (P, C)) ρx). split.
       + right. split; [|done]. destruct Hst as [Hsu|Hno]; [left; by apply Hsucc|right].
         intros Θ' Hcs.
         destruct (comp_bwd _ _ _ _ _ _ _ Hok HT' Hcs) as (σ0 & Hc0 & Hall).
@@ -776,9 +775,9 @@ Section Sound.
 
   (* ** Soundness *)
 
-  Lemma rel_init (P : proc) (ρ : St) : prog_ok P → Rel (compose (P, ρ) T) (dinit (O_T T) (P, ρ)).
+  Lemma rel_init (P : proc) (ρ : St) : prog_ok P → Rel (compose (P, ρ) T) (dinit (P, ρ)).
   Proof.
-    intros Hok. constructor; [|constructor]. split; [done|]. split; [done|]. split; [done|].
+    intros Hok. constructor; [|constructor]. split; [done|]. split; [done|].
     exists T. split; [|done]. unfold eff. simpl. rewrite tnodes_nil. by left.
   Qed.
 
@@ -813,7 +812,7 @@ Section Sound.
   Proof. intros HR Hst. exists Δ. split; [constructor|]. by eapply dstable_bwd. Qed.
 
   Theorem alt_pre_sound_obs (DC : dep_choice) (p q : proc * St) :
-    prog_ok p.1 → prog_ok q.1 → smyth_le (SchedSts0 := dI) L (dinit (O_T T) p) (dinit (O_T T) q) →
+    prog_ok p.1 → prog_ok q.1 → smyth_le (SchedSts0 := dI) L (dinit p) (dinit q) →
     smyth_le (SchedSts0 := lq_SchedSts) L (compose p T) (compose q T).
   Proof.
     intros Hp Hq Halt r2 Hr2. destruct p as [P ρp]. destruct q as [Q ρq]. simpl in *.
@@ -829,12 +828,12 @@ Section Sound.
     exists m. unfold succ_mass in Hm1, E2 |- *. by rewrite <- E2.
   Qed.
 
-  Lemma dmass_init (P : proc) (ρ : St) : dmass (compose (P, ρ) T) = dmass (dinit (O_T T) (P, ρ)).
+  Lemma dmass_init (P : proc) (ρ : St) : dmass (compose (P, ρ) T) = dmass (dinit (P, ρ)).
   Proof. done. Qed.
 
   Theorem alt_as_sound_obs (DC : dep_choice) (p q : proc * St) :
     prog_ok p.1 → prog_ok q.1 →
-    (pmust_as (SchedSts0 := dI) L (dinit (O_T T) p) → pmust_as (SchedSts0 := dI) L (dinit (O_T T) q)) →
+    (pmust_as (SchedSts0 := dI) L (dinit p) → pmust_as (SchedSts0 := dI) L (dinit q)) →
     pmust_as L (compose p T) → pmust_as L (compose q T).
   Proof.
     intros Hp Hq Halt Hm. destruct p as [P ρp]. destruct q as [Q ρq]. simpl in *.
@@ -851,7 +850,7 @@ Section Sound.
   Theorem smyth_obs_complete (DC : dep_choice) (p q : proc * St) :
     prog_ok p.1 → prog_ok q.1 →
     smyth_le (SchedSts0 := lq_SchedSts) L (compose p T) (compose q T) →
-    smyth_le (SchedSts0 := dI) L (dinit (O_T T) p) (dinit (O_T T) q).
+    smyth_le (SchedSts0 := dI) L (dinit p) (dinit q).
   Proof.
     intros Hp Hq Hsm r2' Hr2'. destruct p as [P ρp]. destruct q as [Q ρq]. simpl in *.
     destruct (@run_transfer _ _ _ _ _ dI lq_SchedSts L DC (λ Θ Δ, Rel Δ Θ) (λ _, 0) (λ _, 0)
@@ -869,7 +868,7 @@ Section Sound.
   Theorem as_obs_complete (DC : dep_choice) (p q : proc * St) :
     prog_ok p.1 → prog_ok q.1 →
     (pmust_as L (compose p T) → pmust_as L (compose q T)) →
-    pmust_as (SchedSts0 := dI) L (dinit (O_T T) p) → pmust_as (SchedSts0 := dI) L (dinit (O_T T) q).
+    pmust_as (SchedSts0 := dI) L (dinit p) → pmust_as (SchedSts0 := dI) L (dinit q).
   Proof.
     intros Hp Hq Hm Has. destruct p as [P ρp]. destruct q as [Q ρq]. simpl in *.
     apply (@pmust_as_transfer _ _ _ _ _ dI lq_SchedSts L DC (λ Θ Δ, Rel Δ Θ) (λ _, 0) (λ _, 0)
@@ -910,7 +909,7 @@ Qed.
     Smyth must for these observers *)
 
 Definition alt_pre_obs `{QM : QuantumModel} (L : lifting) (p q : proc * St) : Prop :=
-  ∀ T, obs_for p q T → smyth_le (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (dinit (O_T T) p) (dinit (O_T T) q).
+  ∀ T, obs_for p q T → smyth_le (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (dinit p) (dinit q).
 
 Lemma alt_pre_alt_pre_obs `{QM : QuantumModel} L (p q : proc * St) : alt_pre L p q → alt_pre_obs L p q.
 Proof. intros Halt T _. apply Halt, S_T_ext_closed. Qed.
@@ -934,8 +933,8 @@ Qed.
 
 Definition alt_as_obs `{QM : QuantumModel} (L : lifting) (p q : proc * St) : Prop :=
   ∀ T, obs_for p q T →
-    pmust_as (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (dinit (O_T T) p) →
-    pmust_as (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (dinit (O_T T) q).
+    pmust_as (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (dinit p) →
+    pmust_as (SchedSts0 := dlts (menu T) (O_T T) (S_T T)) L (dinit q).
 
 Lemma alt_as_alt_as_obs `{QM : QuantumModel} L (p q : proc * St) : alt_as L p q → alt_as_obs L p q.
 Proof. intros Halt T _. apply Halt, S_T_ext_closed. Qed.
