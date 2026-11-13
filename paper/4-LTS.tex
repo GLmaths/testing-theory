@@ -4,12 +4,23 @@ The labelled semantics is given in three steps: an LTS for programs, which
 runs without memory; an LTS for the memory; and their parallel composition,
 in which a program and a memory interact. Throughout, $\lambda$ ranges over
 all labels, $\tau$ included, and $\mu, \mu_1, \mu_2, \ldots$ over external
-actions. A transition carries, like a reduction, the choice $s$ that selects
+actions. A transition carries, like a reduction, the choice $r$ that selects
 it.
 
 \subsection{Programs}
 
-The LTS of programs is given in \cref{fig:prog}. Besides the outputs $c!v$
+\begin{definition}[LTS of \lqCCS programs]\label{def:lts-prog}
+The \emph{LTS of \lqCCS programs} is the LTS with choices whose states are the
+programs of \eqref{eq:programs}, whose external actions are
+\[
+\mu \ ::=\ c!v \mid c?v \mid \req{U} \mid \initp \mid \mrecv{m} ,
+\]
+and whose transition relation, written $P \step{\lambda}{r} P'$, is the
+least relation closed under the rules of \cref{fig:prog}.
+\qed
+\end{definition}
+
+Besides the outputs $c!v$
 and the inputs $c?v$ on channels, a program has external actions for its
 quantum prefixes: it \emph{sends} the request $\req{U}$ for a gate and
 $\initp$ for an initialisation, and it \emph{receives} the outcome of a
@@ -24,7 +35,7 @@ channel with the rules ComL and ComR.
   {\tagged{t}{\tau}.P \step{\tau}{t} P}
 
 \inferrule*[left=Op]
-  {U : \mathsf{Op}(|\tilde q|)}
+  {\sop{E}_U : \mathsf{Op}(|\tilde q|)}
   {\tagged{t}{U(\tilde q)}.P \step{\req{U}}{t} P}
 
 \inferrule*[left=Meas]
@@ -44,28 +55,28 @@ channel with the rules ComL and ComR.
   {\tagged{t}{c?x}.P \step{c?v}{t} P[v/x]}
 
 \inferrule*[left=IteT]
-  {e \Downarrow \mathit{tt} \\ P \step{\lambda}{s} P'}
-  {\ite{e}{P}{Q} \step{\lambda}{s} P'}
+  {e \Downarrow \mathit{tt} \\ P \step{\lambda}{r} P'}
+  {\ite{e}{P}{Q} \step{\lambda}{r} P'}
 
 \inferrule*[left=IteF]
-  {e \Downarrow \mathit{ff} \\ Q \step{\lambda}{s} Q'}
-  {\ite{e}{P}{Q} \step{\lambda}{s} Q'}
+  {e \Downarrow \mathit{ff} \\ Q \step{\lambda}{r} Q'}
+  {\ite{e}{P}{Q} \step{\lambda}{r} Q'}
 
 \inferrule*[left=SumL]
-  {K_1 \step{\lambda}{s} P'}
-  {K_1 + K_2 \step{\lambda}{s} P'}
+  {K_1 \step{\lambda}{r} P'}
+  {K_1 + K_2 \step{\lambda}{r} P'}
 
 \inferrule*[left=SumR]
-  {K_2 \step{\lambda}{s} P'}
-  {K_1 + K_2 \step{\lambda}{s} P'}
+  {K_2 \step{\lambda}{r} P'}
+  {K_1 + K_2 \step{\lambda}{r} P'}
 
 \inferrule*[left=ParL]
-  {P \step{\lambda}{s} P'}
-  {P \parallel Q \step{\lambda}{s} P' \parallel Q}
+  {P \step{\lambda}{r} P'}
+  {P \parallel Q \step{\lambda}{r} P' \parallel Q}
 
 \inferrule*[left=ParR]
-  {Q \step{\lambda}{s} Q'}
-  {P \parallel Q \step{\lambda}{s} P \parallel Q'}
+  {Q \step{\lambda}{r} Q'}
+  {P \parallel Q \step{\lambda}{r} P \parallel Q'}
 
 \inferrule*[left=ComL]
   {P \step{c!v}{t} P' \\ Q \step{c?v}{t'} Q'}
@@ -76,50 +87,99 @@ channel with the rules ComL and ComR.
   {P \parallel Q \step{\tau}{\{t,t'\}} P' \parallel Q'}
 
 \inferrule*[left=Restr]
-  {P \step{\lambda}{s} P' \\ \forall v.\ \lambda \neq c!v, c?v}
-  {P \setminus c \step{\lambda}{s} P' \setminus c}
+  {P \step{\lambda}{r} P' \\ \forall v.\ \lambda \neq c!v, c?v}
+  {P \setminus c \step{\lambda}{r} P' \setminus c}
 
 \inferrule*[left=Rec]
   { }
   {\tagged{t}{\rec{X}{P}} \step{\tau}{t} P[\tagged{t}{\rec{X}{P}}/X]}
 \end{mathpar}
-\caption{Program LTS, $\lambda \in \{\tau\} \cup \{c!v, c?v, \req{U}, \mrecv{m}, \initp\}$.
-Quantum operations are requests to the memory: $\req{U}$ asks for $U$ on
-$\tilde q$, $\mrecv{m}$ receives the outcome $m$ of $\M$ on $\tilde q$,
-$\initp$ asks for the initialisation of $\tilde q$.}
+\caption{The LTS of \lqCCS programs.}
 \label{fig:prog}
 \end{figure}
 
 \subsection{Memory}
 
-The memory has two kinds of actions only (\cref{fig:mem}): it applies a
-super-operator, with $\memop{\sop{E}}$, and it sends the outcome of a
-measurement, with $\msend{m}$. A gate and an initialisation are both served
-by the first: we write $\sop{E}_\mu$ for the super-operator requested by
-$\mu$, that is, $\sop{E}_{\req{U}} = \sop{E}_U$ and
-$\sop{E}_{\initp} = \sop{E}_{\mathsf{init}}$.
+\begin{definition}[LTS of the quantum memory]\label{def:lts-mem}
+The \emph{LTS of the quantum memory} is the LTS whose states are the
+memories $\rho \in \Dens(\Hil_\Sigma)$, whose external actions are
+\[
+\mu \ ::=\ \memop{\sop{E}} \mid \msend{m} ,
+\]
+for $\sop{E} : \mathsf{Op}(|\tilde q|)$ and
+$\M : \mathsf{Meas}(|\tilde q|)$, and whose transition relation, written
+$\rho \mto{\mu} \rho'$, is the least relation closed under the rules of
+\cref{fig:mem}. It has no silent transition, and all its transitions carry
+the empty choice $\epsilon$.
+\qed
+\end{definition}
 
 \begin{figure}[ht]
 \small
 \begin{mathpar}
 \inferrule*[left=Op]
-  {\sop{E} : \mathsf{Sop}(|\tilde q|)}
+  {\sop{E} : \mathsf{Op}(|\tilde q|)}
   {\rho \mto{\memop{\sop{E}}} {\sapp{\sop{E}}}}
 
 \inferrule*[left=Meas]
   {\M : \mathsf{Meas}(|\tilde q|) \\ 0 \le m < |\M|}
   {\rho \mto{\msend{m}} {\br}}
 \end{mathpar}
-\caption{Memory LTS, $\mu \in \{\memop{\sop{E}}, \msend{m}\}$. The memory has
-two kinds of actions only: it applies a super-operator, or it sends the outcome
-of a measurement.}
+\caption{The LTS of the quantum memory.}
 \label{fig:mem}
 \end{figure}
 
+The memory has two kinds of actions only: it applies a super-operator, with
+$\memop{\sop{E}}$, and it sends the outcome of a measurement, with
+$\msend{m}$. A gate and an initialisation are both served
+by the first: we write $\sop{E}_\mu$ for the super-operator requested by
+$\mu$, that is, $\sop{E}_{\req{U}} = \sop{E}_U$ and
+$\sop{E}_{\initp} = \sop{E}_{\mathsf{init}}$.
+
+\Cref{def:lts-mem} follows the four axioms by which Khatri, Lami and
+Wilde~\cite[Section 3.1]{KLW26} summarise the mathematical description of
+quantum systems. The first two axioms give the states of the LTS, and the
+last two give its two rules.
+\begin{description}
+\item[Quantum systems.] A quantum system is associated with a Hilbert space,
+  and its state is described by a density operator acting on this space. The
+  states of the LTS are therefore density operators. We take the partial
+  ones (\cref{def:density}), whose trace may be smaller than $1$: the trace
+  of a memory is the probability of the outcomes of the measurements that
+  led to it.
+\item[Composite systems.] The system composed of two distinct systems is
+  associated with the tensor product of their Hilbert spaces. A memory of
+  $n$ qubits is thus an operator on
+  $\Hil_\Sigma = (\mathbb{C}^2)^{\otimes n}$. This is why an action names the
+  qubits $\tilde q$ it is about: the operation acts on the components
+  $\tilde q$ of the tensor product, and as the identity on the others.
+\item[Measurement.] A measurement is described by a family of operators
+  indexed by its outcomes, and the probability of an outcome is given by
+  the Born rule. For a measurement $\M = \{M_m\}_m$ on the qubits
+  $\tilde q$ of a memory $\rho$, the outcome $m$ has probability
+  $\tr(\br)$. This is the rule Meas: the memory has one transition for each
+  outcome $m$, labelled $\msend{m}$, to the unnormalised post-measurement
+  state $\br$ (\cref{def:meas}), whose trace is the probability given by the
+  Born rule. The probability is thus neither a label nor a weight of the
+  transition: it is kept in the state that is reached. The outcome is
+  \emph{sent} by the memory, because it is the memory, and not the program
+  that asked for the measurement, which determines it.
+\item[Evolution.] The evolution of the state of a quantum system is
+  described by a quantum channel, a linear, completely positive and
+  trace-preserving map. These maps are exactly the trace-preserving
+  super-operators of \cref{def:sop}. This is the rule Op: the memory has
+  one transition for each $\sop{E} : \mathsf{Op}(|\tilde q|)$, labelled
+  $\memop{\sop{E}}$, to the memory $\sapp{\sop{E}}$, which has the same
+  trace as $\rho$. The memory offers every evolution allowed by the axiom;
+  the programs of \lqCCS only request two kinds of them, the gates and the
+  initialisation.
+\end{description}
+
 \subsection{The composition of a memory and a program}
 
-The labelled semantics of lqCCS is the parallel composition of the LTS of
-the memory and the LTS of programs (\cref{def:par}). Its states are the pairs
+The labelled semantics of \lqCCS is the parallel composition
+(\cref{def:par}) of the LTS of the memory (\cref{def:lts-mem}) and the LTS
+of programs (\cref{def:lts-prog}). Its states are the pairs
 $\rho \lpar P$ of a memory and a program; the symbol $\lpar$ is the
 composition of LTSs, while $\parallel$ remains the parallel composition of
 the syntax. The interactions between the two are given by the following
@@ -130,15 +190,15 @@ $\syncM$ is the least relation such that
 \[
 \memop{\sop{E}_U} \syncM \req{U}
 \qquad\quad
-\memop{\sop{E}_{\mathsf{init}}} \syncM \initp
+\meminit \syncM \initp
 \qquad\quad
 \msend{m} \syncM \mrecv{m}.
 \]
 \qed
 \end{definition}
 
-The transitions of the memory carry the empty choice $\epsilon$, so that an
-interaction has the choice $\epsilon \cdot t = t$ of the program. Since the
+The transitions of the memory carry the empty choice $\epsilon$
+(\cref{def:lts-mem}), so that an interaction has the choice $\epsilon \cdot t = t$ of the program. Since the
 memory has no silent transition, a silent transition of $\rho \lpar P$ is
 derived either by the rule Right of \cref{def:par}, when the program moves
 alone, or by the rule Sync, when the program and the memory interact.
@@ -146,9 +206,8 @@ By definition of $\syncM$, an interaction is either a request of the
 program, for a gate (rule Op of \cref{fig:prog}) or an initialisation (rule
 Init), served by the memory (rule Op of \cref{fig:mem}), or the outcome of a
 measurement, sent by the memory (rule Meas of \cref{fig:mem}) and received
-by the program (rule Meas of \cref{fig:prog}). A measurement moves to one
-unnormalised branch for each outcome $m$, and all the branches carry the same
-choice $t$.
+by the program (rule Meas of \cref{fig:prog}). A measurement has one transition for each outcome $m$, to the unnormalised
+post-measurement state, and all of them carry the same choice $t$.
 
 Unfolding the rules, a gate, an initialisation and a measurement give
 \[
@@ -158,8 +217,7 @@ Unfolding the rules, a gate, an initialisation and a measurement give
 \rho \lpar \tagged{t}{\M(\tilde q \rhd x)}.P &\step{\tau}{t}& \br \lpar P[m/x]
 \end{array}
 \]
-for $U : \mathsf{Op}(|\tilde q|)$, and for $\M : \mathsf{Meas}(|\tilde q|)$ and
+for a gate $U$ on $|\tilde q|$ qubits, and for $\M : \mathsf{Meas}(|\tilde q|)$ and
 $0 \le m < |\M|$. The composition also has external transitions, by the rules
 Left and Right: the actions of the memory, and all the external actions of
-the program. They play no role in the Harmony lemma, which is about the
-silent transitions only.
+the program.

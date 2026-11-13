@@ -51,7 +51,7 @@ on two qubits $\tilde q = q_1, q_2$. The program $G$ prepares the uniform
 superposition, applies one Grover iteration, measures the two qubits and
 emits the outcome, a number between $0$ and $3$:
 \[
-G \ =\ \rec{X}{\ \mathsf{init}(\tilde q).\,H^{\otimes 2}(\tilde q).\,
+G \ =\ \rec{X}{\ \mathsf{init}(q_1).\,\mathsf{init}(q_2).\,H^{\otimes 2}(\tilde q).\,
        O_w(\tilde q).\,D(\tilde q).\,\M(\tilde q \rhd x).\,
        (c!x \parallel r?y.X)}
 \]
@@ -66,7 +66,7 @@ the measurement still has a reduction for each of its four outcomes, but the
 memory reached for the outcomes $m \neq w$ has trace zero, so that the
 verifier succeeds in the first round with probability $1$. For $n$ qubits,
 the oracle and the diffusion are repeated about $\frac{\pi}{4}\sqrt{2^n}$
-times; this number is fixed in the term, the recursion of lqCCS having no
+times; this number is fixed in the term, the recursion of \lqCCS having no
 parameter and the expressions no arithmetic. A wrong answer then has a
 non-zero probability, and the request for another run is really used.
 \qed

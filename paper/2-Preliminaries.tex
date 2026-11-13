@@ -4,47 +4,57 @@
 
 For a finite set $\Sigma$ of $n$ qubits, $\Hil_\Sigma = (\mathbb{C}^2)^{\otimes n}$.
 
-\begin{definition}[Density operator]\label{def:density}
+\begin{definition}[Partial density operator]\label{def:density}
 A \emph{partial density operator} on $\Hil_\Sigma$ is a linear operator $\rho$
 on $\Hil_\Sigma$ that is positive, i.e.\ $\langle\psi|\rho|\psi\rangle \ge 0$
 for all $|\psi\rangle \in \Hil_\Sigma$, and such that $\tr(\rho) \le 1$. It is a
 \emph{density operator} when $\tr(\rho) = 1$. A pure state $|\psi\rangle$ is the
-density operator $|\psi\rangle\langle\psi|$.
+density operator $|\psi\rangle\langle\psi|$. We write $\Dens(\Hil_\Sigma)$ for
+the set of partial density operators on $\Hil_\Sigma$; a \emph{memory} is an
+element $\rho$ of $\Dens(\Hil_\Sigma)$.
 \qed
 \end{definition}
 
 \begin{definition}[Super-operator]\label{def:sop}
-A \emph{super-operator} on $n$ qubits, written $\sop{E} : \mathsf{Sop}(n)$, is
-a quantum channel: a completely positive and trace-preserving linear map on
-the operators of $(\mathbb{C}^2)^{\otimes n}$. Equivalently,
-$\sop{E}(\rho) = \sum_i E_i \rho E_i^\dagger$ for a family $\{E_i\}_i$ of
-linear operators such that $\sum_i E_i^\dagger E_i = I$. For a tuple
-$\tilde q$ of $n$ qubits of $\Sigma$, $\sop{E}^{\tilde q}$ is the super-operator
-on $\Hil_\Sigma$ that applies $\sop{E}$ to $\tilde q$ and the identity to the
-other qubits. Applying $\sop{E}$ to $\tilde q$ maps $\rho$ to $\sapp{\sop{E}}$,
-and $\tr(\sapp{\sop{E}}) = \tr(\rho)$.
+A \emph{super-operator} on $n$ qubits is a linear map $\sop{E}$ on the
+operators of $(\mathbb{C}^2)^{\otimes n}$ of the form
+$\sop{E}(\rho) = \sum_i E_i \rho E_i^\dagger$, for a family $\{E_i\}_i$ of
+linear operators. It is \emph{trace-preserving} if
+$\sum_i E_i^\dagger E_i = I$, and \emph{trace non-increasing} if
+$I - \sum_i E_i^\dagger E_i$ is positive. We write
+$\sop{E} : \mathsf{Op}(n)$ to indicate that $\sop{E}$ is a trace-preserving
+super-operator on $n$ qubits. For a tuple $\tilde q$ of $n$ qubits of
+$\Sigma$, $\sop{E}_{\tilde q}$ is the super-operator on $\Hil_\Sigma$ that
+applies $\sop{E}$ to $\tilde q$ and the identity to the other qubits.
+Applying $\sop{E} : \mathsf{Op}(n)$ to $\tilde q$ maps a memory $\rho$ to
+the memory $\sapp{\sop{E}}$, and $\tr(\sapp{\sop{E}}) = \tr(\rho)$.
 \qed
 \end{definition}
 
-The programs use two kinds of super-operators. A \emph{quantum gate} on $n$
-qubits, written $U : \mathsf{Op}(n)$, is a unitary operator on
+The programs use two kinds of trace-preserving super-operators. A
+\emph{quantum gate} on $n$ qubits is a unitary operator $U$ on
 $(\mathbb{C}^2)^{\otimes n}$, i.e.\ $UU^\dagger = U^\dagger U = I$; it gives
-the super-operator $\sop{E}_U : \rho \mapsto U \rho U^\dagger$, so that
-$\sapp{\sop{E}_U} = \upd{U}$, where $U^{\tilde q}$ applies $U$ to $\tilde q$
-and the identity to the other qubits. The \emph{initialisation} resets $n$
-qubits to $|0\rangle$; it is the super-operator
-$\sop{E}_{\mathsf{init}} : \rho \mapsto \sum_{i} |0\rangle\langle i| \,\rho\,
-|i\rangle\langle 0|$, where $i$ ranges over the computational basis, and we
-write $\inirho$ for $\sapp{\sop{E}_{\mathsf{init}}}$.
+the super-operator $\sop{E}_U : \mathsf{Op}(n)$ defined by
+$\sop{E}_U(\rho) = U \rho U^\dagger$, so that
+$\sappp{\sop{E}_U} = \upd{U}$, where $U_{\tilde q}$ applies $U$ to $\tilde q$
+and the identity to the other qubits. The \emph{initialisation} resets one
+qubit to $|0\rangle$; it is the super-operator
+$\sop{E}_{\mathsf{init}} : \mathsf{Op}(1)$ defined by
+$\sop{E}_{\mathsf{init}}(\rho) = |0\rangle\langle 0| \,\rho\, |0\rangle\langle 0|
++ |0\rangle\langle 1| \,\rho\, |1\rangle\langle 0|$, and we
+write $\inirho$ for $(\sop{E}_{\mathsf{init}})_{q}(\rho)$, the memory in which
+the qubit $q$ has been reset.
 
 \begin{definition}[Measurement]\label{def:meas}
 A \emph{measurement} on $n$ qubits with $k$ outcomes, written
 $\M : \mathsf{Meas}(n)$ with $|\M| = k$, is a family $\{M_m\}_{0 \le m < k}$ of
 linear operators on $(\mathbb{C}^2)^{\otimes n}$ such that
-$\sum_{m} M_m^\dagger M_m = I$. Measuring $\tilde q$ in $\rho$ gives the outcome
-$m$ with probability $p_m = \tr(\br)$, and the \emph{unnormalised branch}
-$\br$, whose trace is $p_m$. The normalised post-measurement state is the branch
-divided by $p_m$.
+$\sum_{m} M_m^\dagger M_m = I$. Each $M_m$ gives a trace non-increasing
+super-operator, also written $M_m$, defined by
+$M_m(\rho) = M_m \rho M_m^\dagger$. Measuring $\tilde q$ in a memory $\rho$
+gives the outcome $m$ with probability $\prob_m = \tr(\br)$. The memory $\br$,
+whose trace is $\prob_m$, is the \emph{unnormalised post-measurement state};
+dividing it by $\prob_m$ gives the normalised one.
 \qed
 \end{definition}
 
@@ -102,8 +112,8 @@ $\rho = \frac{1}{2}|0\rangle\langle 0| + \frac{1}{2}|1\rangle\langle 1|$, and
 the program $\M(q \rhd x).c!x$ that measures it in the computational basis,
 $\M = \{|0\rangle\langle 0|, |1\rangle\langle 1|\}$, and sends the outcome on
 the channel $c$. By \cref{def:meas}, the outcome $0$ has the unnormalised
-branch $\frac{1}{2}|0\rangle\langle 0|$ and the outcome $1$ the unnormalised
-branch $\frac{1}{2}|1\rangle\langle 1|$, each with trace, that is, with
+post-measurement state $\frac{1}{2}|0\rangle\langle 0|$ and the outcome $1$
+the state $\frac{1}{2}|1\rangle\langle 1|$, each with trace, that is, with
 probability, $\frac{1}{2}$. The program with its memory has two transitions,
 one for each outcome:
 \[
@@ -133,29 +143,29 @@ $\{t,t_2\}$, and a scheduler selects one of them. With the measurement of
 scheduler can select the measurement, not its outcome. This leads to the
 following definition.
 
-We fix a set $\mathit{Choice}$ of choices, ranged over by $c, c_1, c_2$, with
+We fix a set $\Choice$ of choices, ranged over by $r, r_1, r_2$, with
 a distinguished \emph{empty choice} $\epsilon$ and a partial composition
-$c_1 \cdot c_2$ such that $\epsilon \cdot c = c \cdot \epsilon = c$ for every
-choice $c$. The composition gives the choice of an interaction from the
+$r_1 \cdot r_2$ such that $\epsilon \cdot r = r \cdot \epsilon = r$ for every
+choice $r$. The composition gives the choice of an interaction from the
 choices of its two sides.
 
 \begin{definition}[LTS with choices]\label{def:lts-choice}
 An \emph{LTS with choices} is a quadruple
-$\lts = \LTSc{S}{\rightarrow}{\mathit{Act}_\tau}{\mathit{Choice}}$
+$\lts = \LTSc{S}{\rightarrow}{\mathit{Act}_\tau}{\Choice}$
 where $S$ is the set of states and
-${\rightarrow} \subseteq S \times \mathit{Act}_\tau \times \mathit{Choice}
-\times S$ is the transition relation. We write $p \step{\lambda}{c} p'$ to
-mean that $(p, \lambda, c, p') \in {\rightarrow}$.
+${\rightarrow} \subseteq S \times \mathit{Act}_\tau \times \Choice
+\times S$ is the transition relation. We write $p \step{\lambda}{r} p'$ to
+mean that $(p, \lambda, r, p') \in {\rightarrow}$.
 \qed
 \end{definition}
 
 This generalises \cref{def:lts}: an LTS is an LTS with choices in which every
 transition carries the empty choice, that is, with
-$\mathit{Choice} = \{\epsilon\}$; accordingly, the empty choice is not
+$\Choice = \{\epsilon\}$; accordingly, the empty choice is not
 written, and $p \step{\lambda}{\epsilon} p'$ is $p \mto{\lambda} p'$. From
 now on, LTS means LTS with choices. If the set of labels of $\lts$ is a
 singleton, we say that $\lts$ is a \emph{state transition system} (STS), we
-omit its third component, and we write $p \red_{c} p'$ for its transitions.
+omit its third component, and we write $p \red_{r} p'$ for its transitions.
 
 We proceed to define the composition of two LTSs. In the framework of Bernardi et al.~\cite{BFL26} the two
 LTSs share the set $\mathit{Act}$, and a state of one interacts with a state
@@ -177,16 +187,16 @@ whose external actions are $A_1 \uplus A_2$, and whose transitions are given
 by the rules
 \begin{mathpar}
 \inferrule*[left=Left]
-  {p_1 \step{\lambda}{c} p_1'}
-  {p_1 \lpar p_2 \step{\lambda}{c} p_1' \lpar p_2}
+  {p_1 \step{\lambda}{r} p_1'}
+  {p_1 \lpar p_2 \step{\lambda}{r} p_1' \lpar p_2}
 
 \inferrule*[left=Right]
-  {p_2 \step{\lambda}{c} p_2'}
-  {p_1 \lpar p_2 \step{\lambda}{c} p_1 \lpar p_2'}
+  {p_2 \step{\lambda}{r} p_2'}
+  {p_1 \lpar p_2 \step{\lambda}{r} p_1 \lpar p_2'}
 
 \inferrule*[left=Sync]
-  {p_1 \step{\mu_1}{c_1} p_1' \\ p_2 \step{\mu_2}{c_2} p_2' \\ \mu_1 \sync \mu_2}
-  {p_1 \lpar p_2 \step{\tau}{c_1 \cdot c_2} p_1' \lpar p_2'}
+  {p_1 \step{\mu_1}{r_1} p_1' \\ p_2 \step{\mu_2}{r_2} p_2' \\ \mu_1 \sync \mu_2}
+  {p_1 \lpar p_2 \step{\tau}{r_1 \cdot r_2} p_1' \lpar p_2'}
 \end{mathpar}
 \qed
 \end{definition}

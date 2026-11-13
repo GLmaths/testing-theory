@@ -12,6 +12,7 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
+\usepackage{xspace}
 \usepackage[capitalise,nameinlink]{cleveref}
 
 % ---------------------------------------------------------------------------
@@ -41,10 +42,21 @@
 \newcommand{\M}{\mathcal{M}}
 \newcommand{\sop}[1]{\mathcal{#1}}
 \newcommand{\tr}{\mathrm{tr}}
-\newcommand{\sapp}[1]{#1^{\tilde q}(\rho)}
-\newcommand{\upd}[1]{#1^{\tilde q}\rho\,(#1^{\tilde q})^\dagger}
-\newcommand{\br}{M_m^{\tilde q}\rho\,(M_m^{\tilde q})^\dagger}
-\newcommand{\inirho}{\mathsf{init}^{\tilde q}(\rho)}
+\newcommand{\Dens}{\mathcal{D}}
+\usepackage{mathrsfs}
+\newcommand{\Choice}{\mathscr{C}}
+\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+\newcommand{\prob}{\mathpzc{p}}
+\newcommand{\sapp}[1]{{#1}_{\tilde q}(\rho)}
+\newcommand{\sappp}[1]{(#1)_{\tilde q}(\rho)}
+\newcommand{\upd}[1]{#1_{\tilde q}\,\rho\,#1_{\tilde q}^{\dagger}}
+\newcommand{\br}{(M_m)_{\tilde q}(\rho)}
+\newcommand{\inirho}{\mathsf{init}_{q}(\rho)}
+
+% ---------------------------------------------------------------------------
+% Name of the calculus
+% ---------------------------------------------------------------------------
+\newcommand{\lqCCS}{lqCCS\xspace}
 
 % ---------------------------------------------------------------------------
 % Syntax of processes
@@ -74,11 +86,11 @@
 % Actions of programs and of the memory
 % ---------------------------------------------------------------------------
 \newcommand{\req}[1]{#1(\tilde q)}
-\newcommand{\memop}[1]{\overline{#1(\tilde q)}}
+\newcommand{\memop}[1]{#1(\tilde q)}
 \newcommand{\mrecv}[1]{\M(\tilde q)?#1}
 \newcommand{\msend}[1]{\M(\tilde q)!#1}
-\newcommand{\initp}{\mathsf{init}(\tilde q)}
-\newcommand{\meminit}{\overline{\mathsf{init}(\tilde q)}}
+\newcommand{\initp}{\mathsf{init}(q)}
+\newcommand{\meminit}{\sop{E}_{\mathsf{init}}(q)}
 
 % ---------------------------------------------------------------------------
 % Parallel composition and synchronisation

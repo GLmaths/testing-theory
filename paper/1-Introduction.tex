@@ -25,7 +25,7 @@ changes the state of the memory.
 In a quantum protocol several such programs run concurrently, share a
 memory, and exchange messages, typically the outcomes of their measurements.
 Process calculi are the standard formal languages for concurrent programs,
-and lqCCS~\cite{Ceragioli24popl} is a process calculus for quantum ones: it
+and \lqCCS{}~\cite{Ceragioli24popl} is a process calculus for quantum ones: it
 extends CCS with values and with operations on qubits. Its meaning is
 given by a \emph{reduction semantics}~\cite{SangiorgiWalker01}: a relation
 that describes, step by step, how a program and its memory evolve.
@@ -47,7 +47,7 @@ action that the program offers to its environment, such as sending or
 receiving a message, or the silent label $\tau$ for an internal step.
 
 Two recent lines of work call for each other on this point. On the one hand,
-testing preorders have been defined for lqCCS and used to verify a quantum
+testing preorders have been defined for \lqCCS and used to verify a quantum
 protocol~\cite{Ceragioli27}; the authors leave their alternative
 characterisations as future work, and point to the work of Bernardi et
 al.~\cite{BCLS25,BFL26}. On the other hand, Bernardi et al.\ have
@@ -59,21 +59,21 @@ notion of duality, which says which actions can meet, and a shared medium
 other than a multiset of messages, such as a quantum memory.
 
 The two lines do not meet yet. The existing labelled semantics of
-lqCCS~\cite{Ceragioli25,Ceragioli27} is defined on the pairs of a memory
+\lqCCS{}~\cite{Ceragioli25,Ceragioli27} is defined on the pairs of a memory
 and a program taken as a whole, and one step leads to a probability
 distribution of such pairs. In the framework of Bernardi et al.~\cite{BFL26} the target of a transition is
 a state, not a distribution of states. Moreover, the parties that interact
 there, a program and its test, are two separate LTSs, put together by a
 parallel composition of LTSs; treating the memory as a shared medium, as
 suggested above, asks for the same separation between a program and its
-memory. An LTS of this kind has to be defined for lqCCS, and it has to be
+memory. An LTS of this kind has to be defined for \lqCCS, and it has to be
 trusted. The standard criterion is the \emph{Harmony
 lemma}~\cite{Milner89,SangiorgiWalker01}: the reductions of a system are
 exactly its silent transitions, up to \emph{structural congruence}, the
 equivalence that identifies programs differing only in the way they are
 written. Its proof is tedious enough to be a challenge of the Concurrent
 Calculi Formalisation Benchmark, recently answered in Rocq for a minimal
-$\pi$-calculus~\cite{KanLenglet26}. For lqCCS even its statement is
+$\pi$-calculus~\cite{KanLenglet26}. For \lqCCS even its statement is
 % Source of the two terms: Faggian22, p. 5:10 (page 10 of the PDF),
 % Section 2.4, paragraph "Probabilistic vs Non-deterministic", sentence 1:
 % "It is important to understand the distinction between probabilistic choice
@@ -86,23 +86,23 @@ measurement: all the outcomes happen, each with its probability. A
 ones that are ready: it is made by a scheduler which, to be physically
 admissible, must not depend on the state of the
 memory~\cite{Ceragioli25}. The question is thus: \emph{is there an LTS for
-lqCCS, built with the parallel composition of LTSs of Bernardi et al.~\cite{BFL26}, whose
-silent transitions are exactly the reductions of lqCCS, with the same
+\lqCCS, built with the parallel composition of LTSs of Bernardi et al.~\cite{BFL26}, whose
+silent transitions are exactly the reductions of \lqCCS, with the same
 choices of the scheduler and the same probabilities?}
 
 \paragraph{Main contribution.} We answer this question positively. We treat
 the memory as one more component of the system: we give an LTS to the memory
 $\rho$, another one to the program $P$, which runs without memory, and we
-let the LTS of lqCCS be their parallel composition $\rho \lpar P$. A gate or
+let the LTS of \lqCCS be their parallel composition $\rho \lpar P$. A gate or
 a measurement is then an interaction between the two. \Cref{lem:harmony}
 proves that
 \[
-\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}
+\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}
 \iff
-\rho \lpar P \step{\tau}{s} \rho' \lpar Q' \text{ for some } Q' \equiv Q ,
+\rho \lpar P \step{\tau}{r} \rho' \lpar Q' \text{ for some } Q' \equiv Q ,
 \]
 where the left-hand side is a reduction, the right-hand side a silent
-transition, $\equiv$ the structural congruence, and $s$ the choice of the
+transition, $\equiv$ the structural congruence, and $r$ the choice of the
 scheduler. The result is mechanised in Rocq, on top of the library of
 Bernardi et al.~\cite{BFL26}.
 
@@ -130,7 +130,7 @@ choice of a communication has to be an unordered pair of tags.
 recall the quantum notions we need, and we define LTSs with choices and
 their composition with respect to a duality predicate, a relation that says
 which actions of the two components can meet; neither definition is
-specific to quantum computing. \Cref{sec:red} presents lqCCS, extended with
+specific to quantum computing. \Cref{sec:red} presents \lqCCS, extended with
 the initialisation of qubits and with recursion, and its reduction semantics. \Cref{sec:lts}
 defines the LTS of programs and the LTS of the memory. The latter has two
 kinds of actions only, applying an operation and sending the outcome of a
@@ -139,4 +139,4 @@ component.
 % , which the mechanisation takes as a parameter.
 \Cref{sec:harmony} proves the Harmony lemma. \Cref{sec:conclusion} concludes,
 and \cref{sec:future} discusses the next step, the characterisation of a
-probabilistic must-preorder for lqCCS.
+probabilistic must-preorder for \lqCCS.

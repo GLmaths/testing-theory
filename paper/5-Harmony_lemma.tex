@@ -6,11 +6,11 @@ composition $\rho \lpar P$ of its memory with its program (\cref{sec:lts})
 coincide, up to structural congruence, and with the same choice.
 
 \begin{theorem}[Harmony]\label{lem:harmony}
-For all $\rho, P, s, \rho', Q$,
+For all $\rho, P, r, \rho', Q$,
 \[
-\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}
+\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}
 \iff
-\rho \lpar P \step{\tau}{s} \rho' \lpar Q' \text{ for some } Q' \equiv Q.
+\rho \lpar P \step{\tau}{r} \rho' \lpar Q' \text{ for some } Q' \equiv Q.
 \]
 \end{theorem}
 
@@ -40,11 +40,11 @@ $\rho \eff{\lambda} \rho'$, is given by
 \rho \eff{\mrecv{m}} \br \ \text{ if } 0 \le m < |\M| ,
 \end{array}
 \]
-for $U : \mathsf{Op}(|\tilde q|)$ and $\M : \mathsf{Meas}(|\tilde q|)$.
+for a gate $U$ on $|\tilde q|$ qubits and $\M : \mathsf{Meas}(|\tilde q|)$.
 
 \begin{lemma}[Silent transitions]\label{lem:silent}
-$\rho \lpar P \step{\tau}{s} \rho' \lpar P'$ iff
-$P \step{\lambda}{s} P'$ and $\rho \eff{\lambda} \rho'$ for some internal
+$\rho \lpar P \step{\tau}{r} \rho' \lpar P'$ iff
+$P \step{\lambda}{r} P'$ and $\rho \eff{\lambda} \rho'$ for some internal
 label $\lambda$.
 \end{lemma}
 
@@ -55,8 +55,8 @@ Sync of \cref{def:par}. For Right, the program moves alone:
 $\lambda = \tau$ and the memory is unchanged. For Sync, the memory and the
 program perform dual actions, and by definition of $\syncM$ there are three
 cases. If $\lambda$ is $\req{U}$ or $\initp$, the memory moves by the rule Op
-of \cref{fig:mem}, to $\sapp{\sop{E}_U} = \upd{U}$ or to
-$\sapp{\sop{E}_{\mathsf{init}}} = \inirho$. If $\lambda = \mrecv{m}$, the
+of \cref{fig:mem}, to $\sappp{\sop{E}_U} = \upd{U}$ or to
+$(\sop{E}_{\mathsf{init}})_{q}(\rho) = \inirho$. If $\lambda = \mrecv{m}$, the
 memory moves by the rule Meas of \cref{fig:mem}, to $\br$ with
 $0 \le m < |\M|$. In all cases the choice is the one of the program, the
 memory having the empty choice.
@@ -77,28 +77,31 @@ but $P$ (by $\alpha$-conversion).
 \begin{lemma}[Shapes of the transitions]\label{lem:shapes}
 In the LTS of programs,
 \begin{enumerate}
-\item if $P \step{c!v}{s} P'$ then $s = t$ and
+\item if $P \step{c!v}{r} P'$ then $r = t$ and
   $P \equiv (\tagged{t}{c!e} \parallel R) \setminus \tilde d$,
   $P' \equiv (\mathbf{0} \parallel R) \setminus \tilde d$ for some $t, e, R, \tilde d$
   with $e \Downarrow v$ and $c \notin \tilde d$;
-\item if $P \step{c?v}{s} P'$ then $s = t$ and
+\item if $P \step{c?v}{r} P'$ then $r = t$ and
   $P \equiv ((\tagged{t}{c?x}.P_1 + K) \parallel R) \setminus \tilde d$,
   $P' \equiv (P_1[v/x] \parallel R) \setminus \tilde d$ for some
   $t, x, P_1, K, R, \tilde d$ with $c \notin \tilde d$;
-\item if $P \step{\mu}{s} P'$ for a quantum action
-  $\mu \in \{\req{U}, \initp, \mrecv{m}\}$, then $s = t$ and
-  \[
-  P \equiv ((\alpha.P_1 + K) \parallel R) \setminus \tilde d
-  \qquad
-  P' \equiv (P_1' \parallel R) \setminus \tilde d
-  \]
-  for some $t, \alpha, P_1, P_1', K, R, \tilde d$ such that
-  $\alpha.P_1 \step{\mu}{t} P_1'$: the prefix $\alpha$ is $\tagged{t}{U(\tilde q)}$, $\tagged{t}{\initp}$ or
-  $\tagged{t}{\M(\tilde q \rhd x)}$ according to $\mu$, and $P_1'$ is $P_1$,
-  or $P_1[m/x]$ for a measurement;
-\item if $K \step{\lambda}{s} P'$ for a sum $K$ and any label $\lambda$, then
-  $K \equiv \alpha.P + K'$ and $\alpha.P \step{\lambda}{s} P'$ for some
-  $\alpha, P, K'$.
+\item for the quantum actions, for some $t, P_1, K, R, \tilde d$ (and $x$
+  for a measurement), with $r = t$ in the three cases:
+  \begin{itemize}
+  \item if $P \step{\req{U}}{r} P'$ then
+    $P \equiv ((\tagged{t}{U(\tilde q)}.P_1 + K) \parallel R) \setminus \tilde d$ and
+    $P' \equiv (P_1 \parallel R) \setminus \tilde d$;
+  \item if $P \step{\initp}{r} P'$ then
+    $P \equiv ((\tagged{t}{\initp}.P_1 + K) \parallel R) \setminus \tilde d$ and
+    $P' \equiv (P_1 \parallel R) \setminus \tilde d$;
+  \item if $P \step{\mrecv{m}}{r} P'$ then
+    $P \equiv ((\tagged{t}{\M(\tilde q \rhd x)}.P_1 + K) \parallel R) \setminus \tilde d$ and
+    $P' \equiv (P_1[m/x] \parallel R) \setminus \tilde d$;
+  \end{itemize}
+\item if $K \step{\lambda}{r} P'$ for a sum $K$ and any label $\lambda$, then
+  $K \equiv K_0 + K'$ and $K_0 \step{\lambda}{r} P'$ for some guard $K'$ and
+  some prefixed guard $K_0$, that is, a silent prefix, an input, a gate, a
+  measurement or an initialisation followed by a program.
 \end{enumerate}
 \end{lemma}
 
@@ -110,10 +113,10 @@ Sync of \cref{def:par}, for $\syncM$). Item~(4) is the corresponding statement
 inside a sum.
 
 \begin{proof}
-(4) By induction on the derivation of the transition of $K$. A prefix
-$\alpha.P$ is congruent to $\alpha.P + \mathbf{0}$ by \textsc{SumNil}. For
-SumL, the induction hypothesis gives $K_1 \equiv \alpha.P + K'$, and
-$K_1 + K_2 \equiv \alpha.P + (K' + K_2)$ by \textsc{SumAssoc}. SumR is SumL
+(4) By induction on the derivation of the transition of $K$. A prefixed
+guard $K_0$ is congruent to $K_0 + \mathbf{0}$ by \textsc{SumNil}. For
+SumL, the induction hypothesis gives $K_1 \equiv K_0 + K'$, and
+$K_1 + K_2 \equiv K_0 + (K' + K_2)$ by \textsc{SumAssoc}. SumR is SumL
 after \textsc{SumComm}. The guards $\mathbf{0}_{\tilde e}$ and $\mathbf{1}$
 have no transition.
 
@@ -138,8 +141,8 @@ The rules ComL, ComR and Rec derive silent transitions only.
 \subsection{Congruence and transitions}
 
 \begin{lemma}[Congruence is a bisimulation]\label{lem:cgr-bisim}
-If $P \equiv Q$ and $P \step{\lambda}{s} P'$ in the LTS of programs, then
-$Q \step{\lambda}{s} Q'$ for some $Q' \equiv P'$.
+If $P \equiv Q$ and $P \step{\lambda}{r} P'$ in the LTS of programs, then
+$Q \step{\lambda}{r} Q'$ for some $Q' \equiv P'$.
 \end{lemma}
 
 \begin{proof}
@@ -171,9 +174,9 @@ restriction on $c$, and conversely.
 \emph{Contexts.} Under a conditional, a restriction or a sum, the induction
 hypothesis applies to the component that moves, and the other transitions
 are unchanged. Under a parallel composition, when the other component moves
-the two targets still differ by the step. Under a prefix $\alpha.P$, the
-only transition leads to $P$, or to $P[v/x]$ for an input and to $P[m/x]$
-for a measurement, and the congruence is closed under the substitution of
+the two targets still differ by the step. Under a prefix, that is, in a prefixed guard whose continuation is $P$, the
+only transitions lead to $P$ for a silent prefix, a gate and an
+initialisation, to $P[v/x]$ for an input and to $P[m/x]$ for a measurement, and the congruence is closed under the substitution of
 values. Under a recursion $\tagged{t}{\rec{X}{P}}$, the only transition is the
 unfolding, and $P \equiv P'$ implies
 $P[\tagged{t}{\rec{X}{P}}/X] \equiv P'[\tagged{t}{\rec{X}{P'}}/X]$, the
@@ -193,7 +196,7 @@ the two statements \cref{lem:red-int,lem:int-red} below, which relate the
 reductions to the internal transitions of the program.
 
 \begin{lemma}[Reductions are internal transitions]\label{lem:red-int}
-If $\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}$ then $P \step{\lambda}{s} Q'$ and
+If $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}$ then $P \step{\lambda}{r} Q'$ and
 $\rho \eff{\lambda} \rho'$ for some internal label $\lambda$ and some
 $Q' \equiv Q$.
 \end{lemma}
@@ -206,13 +209,13 @@ $\lambda = \tau$ with the choice $\{t,t'\}$ and $Q' = Q$. For \textsc{Tau},
 the same name of \cref{fig:prog}, under SumL, and $\lambda$ is $\tau$,
 $\req{U}$, $\initp$ or $\mrecv{m}$, whose effect is the memory of the redex;
 again $Q' = Q$. For \textsc{Rec}, $\lambda = \tau$ by the rule Rec. For
-\textsc{Par}, the induction hypothesis gives $P \step{\lambda}{s} P''$ with
-$P'' \equiv P'$; ParL gives $P \parallel Q \step{\lambda}{s} P'' \parallel Q$,
+\textsc{Par}, the induction hypothesis gives $P \step{\lambda}{r} P''$ with
+$P'' \equiv P'$; ParL gives $P \parallel Q \step{\lambda}{r} P'' \parallel Q$,
 and $P'' \parallel Q \equiv P' \parallel Q$. For \textsc{Res}, likewise with
 Restr, whose side condition holds because an internal label is not an
 action on a channel. For \textsc{Cong}, let $P \equiv P_1$ and, by induction
-hypothesis, $P_1 \step{\lambda}{s} Q_1'$ with $\rho \eff{\lambda} \rho'$ and
-$Q_1' \equiv Q_1$. By \cref{lem:cgr-bisim}, $P \step{\lambda}{s} Q'$ for some
+hypothesis, $P_1 \step{\lambda}{r} Q_1'$ with $\rho \eff{\lambda} \rho'$ and
+$Q_1' \equiv Q_1$. By \cref{lem:cgr-bisim}, $P \step{\lambda}{r} Q'$ for some
 $Q' \equiv Q_1'$, and $Q' \equiv Q_1' \equiv Q_1 \equiv Q$.
 \qed
 \end{proof}
@@ -245,25 +248,31 @@ one application of \textsc{Cong}.
 \end{proof}
 
 \begin{lemma}[Internal transitions are reductions]\label{lem:int-red}
-If $P \step{\lambda}{s} Q$ and $\rho \eff{\lambda} \rho'$ for an internal
-label $\lambda$, then $\conf{\rho}{P} \red_{s} \conf{\rho'}{Q}$.
+If $P \step{\lambda}{r} Q$ and $\rho \eff{\lambda} \rho'$ for an internal
+label $\lambda$, then $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}$.
 \end{lemma}
 
 \begin{proof}
-If $\lambda$ is a quantum action, \cref{lem:shapes}(3) gives
-$P \equiv ((\alpha.P_1 + K) \parallel R) \setminus \tilde d$ and
-$Q \equiv (P_1' \parallel R) \setminus \tilde d$ with
-$\alpha.P_1 \step{\lambda}{s} P_1'$. The redex \textsc{Op}, \textsc{Init} or
-\textsc{Meas}, according to $\alpha$, gives
-$\conf{\rho}{\alpha.P_1 + K} \red_{s} \conf{\rho'}{P_1'}$, where $\rho'$ is
-the effect of $\lambda$ on $\rho$, and \textsc{Par}, \textsc{Res} and
-\textsc{Cong} conclude.
+If $\lambda$ is the request $\req{U}$ of a gate, \cref{lem:shapes}(3) gives
+$r = t$,
+$P \equiv ((\tagged{t}{U(\tilde q)}.P_1 + K) \parallel R) \setminus \tilde d$ and
+$Q \equiv (P_1 \parallel R) \setminus \tilde d$. The redex \textsc{Op} gives
+$\conf{\rho}{\tagged{t}{U(\tilde q)}.P_1 + K} \red_{t} \bigconf{\upd{U}}{P_1}$,
+whose memory is $\rho'$, the effect of $\req{U}$ on $\rho$; \textsc{Par},
+\textsc{Res} and \textsc{Cong} conclude. If $\lambda$ is the request $\initp$
+of an initialisation, the argument is the same with the prefix
+$\tagged{t}{\initp}$, the redex \textsc{Init} and the memory $\inirho$. If
+$\lambda$ is the outcome $\mrecv{m}$ of a measurement, it is the same with
+the prefix $\tagged{t}{\M(\tilde q \rhd x)}$, the redex \textsc{Meas}, the
+memory $\br$ and the program $P_1[m/x]$ in place of $P_1$ in $Q$.
 
 If $\lambda = \tau$, then $\rho' = \rho$ and we proceed by induction on the
 derivation of the transition of the program. For a sum $K$,
-\cref{lem:shapes}(4) gives $K \equiv \alpha.P + K'$ with
-$\alpha.P \step{\tau}{s} Q$, so that $\alpha$ is a silent prefix and the
-redex is \textsc{Tau}, under \textsc{Cong}. IteT and IteF are \textsc{Cong}
+\cref{lem:shapes}(4) gives $K \equiv K_0 + K'$ with
+$K_0 \step{\tau}{r} Q$ for a prefixed guard $K_0$. Among the prefixed
+guards only a silent prefix has a silent transition, so that
+$K_0 = \tagged{t}{\tau}.Q$ with $r = t$, and the redex is \textsc{Tau},
+under \textsc{Cong}. IteT and IteF are \textsc{Cong}
 with \textsc{IteT} and \textsc{IteF}, followed by the induction hypothesis.
 ParL is \textsc{Par}; ParR is \textsc{Par} between two applications of
 \textsc{ParComm}; Restr is \textsc{Res}; Rec is \textsc{Rec}. For ComL, with
@@ -277,9 +286,9 @@ after \textsc{ParComm}, the choice $\{t,t'\}$ being unordered.
 
 \begin{proof}[of \cref{lem:harmony}]
 ($\Rightarrow$) By \cref{lem:red-int} and \cref{lem:silent}.
-($\Leftarrow$) By \cref{lem:silent}, $P \step{\lambda}{s} Q'$ and
+($\Leftarrow$) By \cref{lem:silent}, $P \step{\lambda}{r} Q'$ and
 $\rho \eff{\lambda} \rho'$ for some internal label $\lambda$;
-\cref{lem:int-red} gives $\conf{\rho}{P} \red_{s} \conf{\rho'}{Q'}$, and
+\cref{lem:int-red} gives $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q'}$, and
 \textsc{Cong} concludes with $Q' \equiv Q$.
 \qed
 \end{proof}
