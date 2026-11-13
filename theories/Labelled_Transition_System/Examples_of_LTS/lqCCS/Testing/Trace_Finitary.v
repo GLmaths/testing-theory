@@ -30,10 +30,11 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Truncation lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound lqCCS.Testing.Trace_Convergence.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 Section Pool.
   Context `{QM : QuantumModel} (V : val → Prop) (MM : meas → Prop) (L : nat).
@@ -67,7 +68,7 @@ Section Pool.
     | GNil es => Forall oke es
     | ① => True
     | 𝜆 ∙ P => okpre 𝜆 ∧ ok P
-    | g1 ⊕ g2 => gok g1 ∧ gok g2
+    | (g1 + g2)%lq => gok g1 ∧ gok g2
     end.
 
   Hypothesis HVb : ∀ b, V (VBool b).
@@ -211,14 +212,14 @@ Section Pool.
 
   Lemma gstep_noout g s c v P' : ¬ prog_gstep g s (ActExt (PrOut c v)) P'.
   Proof.
-    intros Hs. remember (ActExt (PrOut c v)) as l eqn:El. induction Hs; try discriminate El; auto.
+    intros Hs. remember (ActExt (PrOut c v)) as l eqn:El. induction Hs using prog_gstep_ind; try discriminate El; auto.
   Qed.
 
   Lemma step_out P s l P' : ok P → prog_step P s l P' → ∀ c v, l = ActExt (PrOut c v) → V v.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
-      |P s l P' Hs IH|t X P]; simpl; intros Ho c0 v0 El.
+      |P s l P' Hs IH|t X P] using prog_step_guard_ind; simpl; intros Ho c0 v0 El.
     - subst l. exfalso. exact (gstep_noout _ _ _ _ _ Hg).
     - injection El as _ <-. exact (oke_eval e v Ho He).
     - exact (IH (proj1 (proj2 Ho)) c0 v0 El).
@@ -234,7 +235,7 @@ Section Pool.
   Lemma gstep_meas g s l P' : gok g → prog_gstep g s l P' → ∀ M qs n, l = ActExt (PrMeas M qs n) → mq M qs.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t E es qs P He|t M es qs n P He|t es qs P He
-      |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH]; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
+      |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH] using prog_gstep_ind; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
     - injection El as <- <- <-. destruct Ho as [(Hes & Hm & Hl) _]. destruct (evq es qs Hes He) as [Hlen Hf].
       split; [done|]. split; [lia|done].
     - exact (IH (proj1 Ho) M0 qs0 n0 El).
@@ -245,7 +246,7 @@ Section Pool.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
-      |P s l P' Hs IH|t X P]; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
+      |P s l P' Hs IH|t X P] using prog_step_guard_ind; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
     - exact (gstep_meas g s l P' Ho Hg M0 qs0 n0 El).
     - exact (IH (proj1 (proj2 Ho)) M0 qs0 n0 El).
     - exact (IH (proj2 (proj2 Ho)) M0 qs0 n0 El).
@@ -257,7 +258,7 @@ Section Pool.
   Lemma gstep_ok g s l P' : gok g → prog_gstep g s l P' → lok l → ok P'.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t E es qs P He|t M es qs n P He|t es qs P He
-      |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH]; simpl; intros Ho Hl.
+      |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH] using prog_gstep_ind; simpl; intros Ho Hl.
     - exact (proj2 Ho).
     - exact (proj1 (ok_subst v Hl) P 0 (proj2 Ho)).
     - exact (proj2 Ho).
@@ -274,7 +275,7 @@ Section Pool.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
-      |P s l P' Hs IH|t X P]; simpl; intros Ho Hl.
+      |P s l P' Hs IH|t X P] using prog_step_guard_ind; simpl; intros Ho Hl.
     - exact (gstep_ok g s l P' Ho Hg Hl).
     - constructor.
     - exact (IH (proj1 (proj2 Ho)) Hl).

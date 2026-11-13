@@ -35,7 +35,7 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list sets gmap.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Language.Algebra pMust_almost_sure lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Prob_dist.Language.Syntax lqCCS.Prob_dist.Language.Program lqCCS.Prob_dist.Language.Composition lqCCS.Prob_dist.Language.Succ
   lqCCS.Prob_dist.Characterisations.AlmostSure lqCCS.Prob_dist.Language.LTS.
 From TestingTheory Require Import ActTau gLts SyncActions Bisimulation Testing_Predicate

@@ -27,10 +27,11 @@ From Stdlib Require Import Lia.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 Definition osim (R : proc → proc → Prop) : Prop :=
   ∀ X Y, R X Y → successb X = successb Y
@@ -246,7 +247,7 @@ Fixpoint gosucc (sel : prefix → bool) (g : guard) : list proc :=
   match g with
   | GNil _ | ① => []
   | 𝜆 ∙ P => if sel 𝜆 then [P] else []
-  | g1 ⊕ g2 => gosucc sel g1 ++ gosucc sel g2
+  | (g1 + g2)%lq => gosucc sel g1 ++ gosucc sel g2
   end.
 
 Fixpoint osucc (sel : prefix → bool) (Z : proc) : list proc :=

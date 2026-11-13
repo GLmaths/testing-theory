@@ -36,6 +36,7 @@ From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 (* ** Tags with their kinds *)
 
@@ -66,7 +67,7 @@ with gtagged (g : guard) : list (tag * okind) :=
   match g with
   | GNil _ | ① => []
   | 𝜆 ∙ P => prefix_tagged 𝜆 :: tagged P
-  | g1 ⊕ g2 => gtagged g1 ++ gtagged g2
+  | (g1 + g2)%lq => gtagged g1 ++ gtagged g2
   end.
 
 Definition tags (P : proc) : list tag := map fst (tagged P).
@@ -135,8 +136,8 @@ Qed.
 (* Along a step, the tags of a program only decrease. *)
 Lemma prog_step_tagged P s l P' x : prog_step P s l P' → x ∈ tagged P' → x ∈ tagged P.
 Proof.
-  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; simpl; intros Hx.
-  - induction Hg; simpl in *; try (apply elem_of_app; auto; fail).
+  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ] using prog_step_guard_ind; simpl; intros Hx.
+  - induction Hg using prog_gstep_ind; simpl in *; try (apply elem_of_app; auto; fail).
     + by right.
     + rewrite tagged_subst in Hx. by right.
     + by right.
@@ -175,8 +176,8 @@ Qed.
 Lemma prog_step_choice_tags P s l P' u :
   prog_step P s l P' → u ∈ choice_tags s → u ∈ tags P.
 Proof.
-  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; unfold tags; simpl; intros Hu.
-  - induction Hg; simpl in *.
+  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ] using prog_step_guard_ind; unfold tags; simpl; intros Hu.
+  - induction Hg using prog_gstep_ind; simpl in *.
     all: try (apply list_elem_of_singleton in Hu; subst; by left).
     + rewrite map_app. apply elem_of_app. left. by apply IHHg.
     + rewrite map_app. apply elem_of_app. right. by apply IHHg.

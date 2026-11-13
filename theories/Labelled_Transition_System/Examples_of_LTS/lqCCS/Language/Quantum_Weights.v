@@ -24,7 +24,7 @@
 (* begin hide *)
 From Stdlib.Unicode Require Import Utf8.
 From stdpp Require Import base.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States pMust_almost_sure lqCCS.Language.Quantum.
+From TestingTheory Require Import lqCCS.Language.Algebra pMust_almost_sure lqCCS.Language.Quantum.
 
 (* ** Weights of the probabilistic must (distribution semantics)
 

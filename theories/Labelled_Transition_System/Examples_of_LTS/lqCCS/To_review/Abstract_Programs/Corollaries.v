@@ -31,7 +31,7 @@
       pruned to the choices allowed by σ before composition with the memory. *)
 
 From Stdlib Require Import List ChoiceFacts.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Harmony_Lemma.Harmony.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.To_review.Abstract_Programs.Lifted lqCCS.To_review.Abstract_Programs.Paths lqCCS.To_review.Abstract_Programs.Harmony.
 Import ListNotations.
 Section Corollaries.
 Context `{StAlg}.

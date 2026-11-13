@@ -52,10 +52,11 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Language.Congruence.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 Section Den.
   Context `{QM : QuantumModel}.

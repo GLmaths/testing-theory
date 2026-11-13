@@ -50,7 +50,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import List.
 From stdpp Require Import base countable decidable gmap.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Syntax.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Syntax.
 Class QuantumModel `{StAlg} := MkQuantumModel {
     (* Names of the syntax. *)
     sop_act : sop → list qubit → Act;
@@ -109,17 +109,11 @@ Arguments W {_ _ _ _ _}.
 Definition sop_apply `{QuantumModel} E qs ρ := app (act (sop_act E qs)) ρ.
 Definition init_apply `{QuantumModel} qs ρ := app (act (init_act qs)) ρ.
 
-Inductive msop : Type :=
-| SGate (E : sop)
-| SInit.
-
-Definition msop_apply `{QuantumModel} (S : msop) qs ρ :=
-  match S with
-  | SGate E => sop_apply E qs ρ
-  | SInit => init_apply qs ρ
-  end.
 Definition meas_branch `{QuantumModel} M qs (k : Out (meas_of M qs)) ρ :=
   app (kraus (meas_of M qs) k) ρ.
+
+Notation "ℰ · ρ" := (app (act ℰ) ρ) (at level 41, right associativity) : lqccs_scope.
+Notation "M ⦅ qs ⦆[ k ] · ρ" := (meas_branch M qs k ρ) (at level 30, ρ at level 29) : lqccs_scope.
 
 (* ** First consequences *)
 

@@ -44,10 +44,11 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth.
-From TestingTheory Require Import lqCCS.Harmony_Lemma.Lifted lqCCS.Harmony_Lemma.Paths lqCCS.Harmony_Lemma.States lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Language.Congruence lqCCS.Harmony_Lemma.Memory_Harmony.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
 
 (* ** Success: [①] at top level, through parallel composition, restriction,
     evaluated conditionals and sums *)
@@ -55,7 +56,7 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 Fixpoint gsuccessb (g : guard) : bool :=
   match g with
   | ① => true
-  | g1 ⊕ g2 => gsuccessb g1 || gsuccessb g2
+  | (g1 + g2)%lq => gsuccessb g1 || gsuccessb g2
   | _ => false
   end.
 
@@ -92,7 +93,7 @@ with gtau_freeb (g : guard) : bool :=
   | GNil _ | ① => true
   | PTau _ ∙ _ => false
   | _ ∙ P => tau_freeb P
-  | g1 ⊕ g2 => gtau_freeb g1 && gtau_freeb g2
+  | (g1 + g2)%lq => gtau_freeb g1 && gtau_freeb g2
   end.
 
 Definition tau_free (T : proc) : Prop := tau_freeb T = true.
@@ -149,14 +150,14 @@ Section Sched.
   (* ** The steps of a component are the silent steps of the configuration *)
 
   Lemma sched_step_conf ρ R s Δ R' ρ' :
-    sched_step ρ R s Δ → (R', ρ') ∈ Δ → conf_step ρ R s τ ρ' R'.
+    sched_step ρ R s Δ → (R', ρ') ∈ Δ → ⟨ρ, R⟩ ⟶{τ}[s] ⟨ρ', R'⟩.
   Proof.
     intros Hs Hin. inversion Hs as [? Hp|E qs ? Hp|qs ? Hp|M qs Rs R0 Hp0 Hf]; subst.
-    - apply list_elem_of_singleton in Hin. simplify_eq. by apply prog_step_tau_conf.
+    - apply list_elem_of_singleton in Hin. simplify_eq. by apply prog_step_conf.
     - apply list_elem_of_singleton in Hin. simplify_eq.
-      eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ (SGate E))|constructor].
+      eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ (sop_act E qs))|constructor].
     - apply list_elem_of_singleton in Hin. simplify_eq.
-      eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ SInit)|constructor].
+      eapply prog_step_mem_conf; [exact Hp|apply (me_sop ρ (init_act qs))|constructor].
     - remember (outs_nz M qs ρ) as ks eqn:Eks. clear Eks Hs.
       clear Hp0. revert Hin. induction Hf as [|k R1 ks Rs Hp _ IH]; simpl; intros Hin; [by apply elem_of_nil in Hin|].
       apply elem_of_cons in Hin as [Hin|Hin]; [|by apply IH]. simplify_eq.
@@ -170,15 +171,7 @@ Section Sched.
     intros Hp. remember (ActExt (PrMeas M qs n)) as l eqn:El. revert El.
     induction Hp; intros El n'; simplify_eq;
       try (edestruct IHHp as (R'' & HR''); [done|]; eexists; by econstructor).
-    - (* guard *)
-      enough (∃ R'', prog_gstep g s (ActExt (PrMeas M qs n')) R'') as (R'' & HR'')
-        by (eexists; by constructor).
-      match goal with Hg : prog_gstep _ _ _ _ |- _ => rename Hg into Hgs end.
-      remember (ActExt (PrMeas M qs n)) as l eqn:El. revert El.
-      induction Hgs as [| | | | | ? ? ? ? ? ? IHg| ? ? ? ? ? ? IHg]; intros El; simplify_eq.
-      + eexists. by apply pg_meas.
-      + edestruct IHg as (R'' & HR''); [done|]. eexists. by apply pg_sumL.
-      + edestruct IHg as (R'' & HR''); [done|]. eexists. by apply pg_sumR.
+    eexists. by apply pr_meas.
   Qed.
 
   Lemma mem_step_meas_inv ρ M qs n ρ' :
@@ -187,9 +180,10 @@ Section Sched.
   Proof. inversion 1; subst. by eexists. Qed.
 
   Lemma conf_sched_step ρ R s ρ' R' :
-    conf_step ρ R s τ ρ' R' → ρ' ≠ szero → ∃ Δ, sched_step ρ R s Δ ∧ (R', ρ') ∈ Δ.
+    ⟨ρ, R⟩ ⟶{τ}[s] ⟨ρ', R'⟩ → ρ' ≠ szero → ∃ Δ, sched_step ρ R s Δ ∧ (R', ρ') ∈ Δ.
   Proof.
-    intros Hc Hnz. destruct (conf_step_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(t & a & b & -> & Hp & Hm & Hsy)].
+    intros Hc Hnz. destruct (conf_step_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hsy)];
+      [|destruct (prog_step_ext_choice _ _ _ _ Hp) as (t & ->)].
     - eexists. split; [by apply ss_tau|]. by apply list_elem_of_singleton.
     - inversion Hsy; subst.
       + inversion Hm; subst. eexists. split; [by apply ss_op|]. by apply list_elem_of_singleton.
