@@ -10,64 +10,64 @@ In the labelled semantics the quantum prefixes of a program are
 interactions with a memory that has two kinds of actions only, so that the
 quantum part of the calculus is confined to one small component.
 
-\paragraph{Mechanisation.} The development is in Rocq, in the directory
-\texttt{lqCCS} of the \texttt{testing-theory} library (the earlier
-development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist}):
-\begin{itemize}
-\item \texttt{Language/Syntax.v}: syntax with de Bruijn indices for restricted
-  channels and bound variables, substitutions, shifts;
-\item \texttt{Language/LTS.v}: \cref{fig:prog,fig:mem},
-  \cref{def:par}, and the renaming lemmas;
-\item \texttt{Language/Congruence.v}: \cref{tab:cgr} and
-  \cref{lem:cgr-bisim} (\texttt{cgr\_step\_bisim} for one step, and
-  \texttt{cgr\_bisim});
-\item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \newline
-  \cref{fig:sts} (\texttt{sts});
-  \newline \cref{lem:silent} (\texttt{comp\_tau\_inv});
-  \cref{lem:shapes}: \newline
-  \texttt{TransitionShapeForOutput}, \newline
-  \texttt{TransitionShapeForInput}, \newline
-  \texttt{TransitionShapeForQuantum}, \newline
-  \texttt{TransitionShapeForGuard};
-  \cref{lem:red-int}: \newline \texttt{Reduction\_Implies\_Internal};
-  \cref{lem:com-shapes}: \texttt{Com\_shapes};
-  \cref{lem:int-red}: \newline \texttt{Internal\_Implies\_Reduction}, from
-  \texttt{Taus\_Implies\_Reduction} and \texttt{Quantum\_Implies\_Reduction};
-  and the main result, \cref{lem:harmony}: \texttt{harmony\_composition};
-\item \texttt{Harmony\_Lemma/Memory\_Harmony.v}: the mechanisation also
-  defines an LTS directly on the pairs $\conf{\rho}{P}$, by induction on the
-  program, and proves that its silent transitions are those of the
-  composition $\rho \lpar P$ (\texttt{pre\_harmony}), from which the Harmony
-  lemma is restated for this LTS (\texttt{harmony}).
-\iffalse%
-\item \texttt{Harmony\_Lemma/Memory\_Harmony.v} and \newline
-  \texttt{To\_review/Parallel/Parallel\_Harmony.v}: the complements of
-  \cref{sec:par}, \cref{rem:prog-level} (\texttt{pre\_harmony}) and
-  \cref{lem:par-harmony} (\texttt{parallel\_harmony});
-\fi
-\ifshowappendix
-\item \texttt{Testing\_Pre\_orders/pMust/pMust\_scheduled.v}: distributions,
-  the two liftings and the runs, generic; \texttt{pMust\_almost\_sure.v}:
-  the almost-sure must, generic; \texttt{pMust\_smyth.v}:
-  \cref{def:smyth}, generic, and \texttt{ctx\_pre\_sm\_as};
-  \texttt{pMust\_transfer.v}: the transfer of runs along a stuttering
-  simulation (\texttt{run\_transfer}, \texttt{pmust\_as\_transfer});
-\item \texttt{Testing/Scheduled.v}: the scheduled step of \lqCCS and its instance of the
-  generic classes, \texttt{Omega\_bottom}; \texttt{Testing/DistLTS.v}: \cref{tab:dlts}, \cref{def:alt}
-  (\texttt{alt\_pre}, \texttt{alt\_as}), the uniform form (\texttt{alt\_pre\_unif},
-  \texttt{alt\_pre\_unif\_alt\_pre}), the scheduled-word form (\texttt{follows},
-  \texttt{alt\_pre\_det}, \texttt{alt\_pre\_det\_alt\_pre}) and \texttt{drun\_nonzero};
-\item \texttt{Testing/Observers.v}: the class of observers, their shape
-  (\texttt{menu}, \texttt{S\_T}); \newline
-  \texttt{Testing/Smyth\_Soundness.v}: \cref{thm:char}
-  (\texttt{alt\_pre\_sound}, \texttt{alt\_pre\_obs\_iff}) and its almost-sure
-  counterpart (\texttt{alt\_as\_sound}, \texttt{alt\_as\_obs\_iff}).
-\item \texttt{Language/Denotational.v}: \cref{def:den} (\texttt{den},
-  \texttt{denot}) and \cref{lem:den-cgr} (\texttt{den\_cgr}, \texttt{denot\_cgr});
-\item \texttt{To\_review/Denotational/Denotational\_Harmony.v}: \cref{def:tree}
-  (\texttt{sts\_tree}) and \cref{thm:den}: \newline
-  \texttt{den\_sound}, \texttt{den\_complete}, \texttt{den\_sts\_iff}.
-\fi
-\end{itemize}
-The quantum model is a parameter: an abstract algebra of super-operators
-acting linearly on memories, with the names of the syntax interpreted in it.
+% \paragraph{Mechanisation.} The development is in Rocq, in the directory
+% \texttt{lqCCS} of the \texttt{testing-theory} library (the earlier
+% development on quantum distributions is kept apart in \texttt{lqCCS/Prob\_dist}):
+% \begin{itemize}
+% \item \texttt{Language/Syntax.v}: syntax with de Bruijn indices for restricted
+%   channels and bound variables, substitutions, shifts;
+% \item \texttt{Language/LTS.v}: \cref{fig:prog,fig:mem},
+%   \cref{def:par}, and the renaming lemmas;
+% \item \texttt{Language/Congruence.v}: \cref{tab:cgr} and
+%   \cref{lem:cgr-bisim} (\texttt{cgr\_step\_bisim} for one step, and
+%   \texttt{cgr\_bisim});
+% \item \texttt{Harmony\_Lemma/STS\_Harmony.v}: \newline
+%   \cref{fig:sts} (\texttt{sts});
+%   \newline \cref{lem:silent} (\texttt{comp\_tau\_inv});
+%   \cref{lem:shapes}: \newline
+%   \texttt{TransitionShapeForOutput}, \newline
+%   \texttt{TransitionShapeForInput}, \newline
+%   \texttt{TransitionShapeForQuantum}, \newline
+%   \texttt{TransitionShapeForGuard};
+%   \cref{lem:red-int}: \newline \texttt{Reduction\_Implies\_Internal};
+%   \cref{lem:com-shapes}: \texttt{Com\_shapes};
+%   \cref{lem:int-red}: \newline \texttt{Internal\_Implies\_Reduction}, from
+%   \texttt{Taus\_Implies\_Reduction} and \texttt{Quantum\_Implies\_Reduction};
+%   and the main result, \cref{lem:harmony}: \texttt{harmony\_composition};
+% \item \texttt{Harmony\_Lemma/Memory\_Harmony.v}: the mechanisation also
+%   defines an LTS directly on the pairs $\conf{\rho}{P}$, by induction on the
+%   program, and proves that its silent transitions are those of the
+%   composition $\rho \lpar P$ (\texttt{pre\_harmony}), from which the Harmony
+%   lemma is restated for this LTS (\texttt{harmony}).
+% \iffalse%
+% \item \texttt{Harmony\_Lemma/Memory\_Harmony.v} and \newline
+%   \texttt{To\_review/Parallel/Parallel\_Harmony.v}: the complements of
+%   \cref{sec:par}, \cref{rem:prog-level} (\texttt{pre\_harmony}) and
+%   \cref{lem:par-harmony} (\texttt{parallel\_harmony});
+% \fi
+% \ifshowappendix
+% \item \texttt{Testing\_Pre\_orders/pMust/pMust\_scheduled.v}: distributions,
+%   the two liftings and the runs, generic; \texttt{pMust\_almost\_sure.v}:
+%   the almost-sure must, generic; \texttt{pMust\_smyth.v}:
+%   \cref{def:smyth}, generic, and \texttt{ctx\_pre\_sm\_as};
+%   \texttt{pMust\_transfer.v}: the transfer of runs along a stuttering
+%   simulation (\texttt{run\_transfer}, \texttt{pmust\_as\_transfer});
+% \item \texttt{Testing/Scheduled.v}: the scheduled step of \lqCCS and its instance of the
+%   generic classes, \texttt{Omega\_bottom}; \texttt{Testing/DistLTS.v}: \cref{tab:dlts}, \cref{def:alt}
+%   (\texttt{alt\_pre}, \texttt{alt\_as}), the uniform form (\texttt{alt\_pre\_unif},
+%   \texttt{alt\_pre\_unif\_alt\_pre}), the scheduled-word form (\texttt{follows},
+%   \texttt{alt\_pre\_det}, \texttt{alt\_pre\_det\_alt\_pre}) and \texttt{drun\_nonzero};
+% \item \texttt{Testing/Observers.v}: the class of observers, their shape
+%   (\texttt{menu}, \texttt{S\_T}); \newline
+%   \texttt{Testing/Smyth\_Soundness.v}: \cref{thm:char}
+%   (\texttt{alt\_pre\_sound}, \texttt{alt\_pre\_obs\_iff}) and its almost-sure
+%   counterpart (\texttt{alt\_as\_sound}, \texttt{alt\_as\_obs\_iff}).
+% \item \texttt{Language/Denotational.v}: \cref{def:den} (\texttt{den},
+%   \texttt{denot}) and \cref{lem:den-cgr} (\texttt{den\_cgr}, \texttt{denot\_cgr});
+% \item \texttt{To\_review/Denotational/Denotational\_Harmony.v}: \cref{def:tree}
+%   (\texttt{sts\_tree}) and \cref{thm:den}: \newline
+%   \texttt{den\_sound}, \texttt{den\_complete}, \texttt{den\_sts\_iff}.
+% \fi
+% \end{itemize}
+% The quantum model is a parameter: an abstract algebra of super-operators
+% acting linearly on memories, with the names of the syntax interpreted in it.

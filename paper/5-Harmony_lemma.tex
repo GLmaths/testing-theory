@@ -14,65 +14,9 @@ For all $\rho, P, r, \rho', Q$,
 \]
 \end{theorem}
 
-The rest of the section is the proof. It has three ingredients: a reading of
-the silent transitions of the composition as transitions of the program
-(\cref{lem:silent}), the shapes of the transitions of a program
+The rest of the section is the proof. It has two ingredients: the shapes of the transitions of a program
 (\cref{lem:shapes}), and the fact that the structural congruence is a
 bisimulation (\cref{lem:cgr-bisim}).
-
-\subsection{Silent transitions of the composition}
-
-A label $\lambda$ of a program is \emph{internal} if it is silent or if the
-memory can answer it, that is, if
-\[
-\lambda \in \{\tau,\ \req{U},\ \initp,\ \mrecv{m}\} .
-\]
-The
-\emph{effect} of an internal label on a memory, written
-$\rho \eff{\lambda} \rho'$, is given by
-\[
-\begin{array}{c}
-\rho \eff{\tau} \rho
-\qquad
-\rho \eff{\req{U}} \upd{U}
-\qquad
-\rho \eff{\initp} \inirho\\[4pt]
-\rho \eff{\mrecv{m}} \br \ \text{ if } 0 \le m < |\M| ,
-\end{array}
-\]
-for a gate $U$ on $|\tilde q|$ qubits and $\M : \mathsf{Meas}(|\tilde q|)$.
-
-\begin{lemma}[Silent transitions]\label{lem:silent}
-$\rho \lpar P \step{\tau}{r} \rho' \lpar P'$ iff
-$P \step{\lambda}{r} P'$ and $\rho \eff{\lambda} \rho'$ for some internal
-label $\lambda$.
-\end{lemma}
-
-\begin{proof}
-($\Rightarrow$) Since the memory has no silent transition, a silent
-transition of the composition is derived by the rule Right or by the rule
-Sync of \cref{def:par}. For Right, the program moves alone:
-$\lambda = \tau$ and the memory is unchanged. For Sync, the memory and the
-program perform dual actions, and by definition of $\syncM$ there are three
-cases. If $\lambda$ is $\req{U}$ or $\initp$, the memory moves by the rule Op
-of \cref{fig:mem}, to $\sappp{\sop{E}_U} = \upd{U}$ or to
-$(\sop{E}_{\mathsf{init}})_{q}(\rho) = \inirho$. If $\lambda = \mrecv{m}$, the
-memory moves by the rule Meas of \cref{fig:mem}, to $\br$ with
-$0 \le m < |\M|$. In all cases the choice is the one of the program, the
-memory having the empty choice.
-($\Leftarrow$) By case analysis on the effect: $\tau$ gives the rule Right,
-and a gate, an initialisation and a measurement give the rule Sync, with the
-rule Op or Meas of the memory.
-\qed
-\end{proof}
-
-\subsection{Shapes of the transitions}
-
-As in VACCS, the proof goes through the \emph{shapes} of the transitions: up
-to congruence, a program that performs an action is a redex under some
-restrictions, in parallel with a rest. Here $P \setminus \tilde d$ stands for
-$P \setminus d_1 \cdots \setminus d_n$, with $\tilde d$ fresh for everything
-but $P$ (by $\alpha$-conversion).
 
 \begin{lemma}[Shapes of the transitions]\label{lem:shapes}
 In the LTS of programs,
@@ -98,102 +42,19 @@ In the LTS of programs,
     $P \equiv ((\tagged{t}{\M(\tilde q \rhd x)}.P_1 + K) \parallel R) \setminus \tilde d$ and
     $P' \equiv (P_1[m/x] \parallel R) \setminus \tilde d$;
   \end{itemize}
-\item if $K \step{\lambda}{r} P'$ for a sum $K$ and any label $\lambda$, then
-  $K \equiv K_0 + K'$ and $K_0 \step{\lambda}{r} P'$ for some guard $K'$ and
-  some prefixed guard $K_0$, that is, a silent prefix, an input, a gate, a
-  measurement or an initialisation followed by a program.
 \end{enumerate}
 \end{lemma}
-
-Items~(1) to~(3) give one shape for each external action of a program, that
-is, for each side of an interaction: items~(1) and~(2) for the two partners
-of a communication on a channel (rules ComL and ComR), and item~(3) for the
-partner of the memory in a gate, an initialisation or a measurement (rule
-Sync of \cref{def:par}, for $\syncM$). Item~(4) is the corresponding statement
-inside a sum.
-
 \begin{proof}
-(4) By induction on the derivation of the transition of $K$. A prefixed
-guard $K_0$ is congruent to $K_0 + \mathbf{0}$ by \textsc{SumNil}. For
-SumL, the induction hypothesis gives $K_1 \equiv K_0 + K'$, and
-$K_1 + K_2 \equiv K_0 + (K' + K_2)$ by \textsc{SumAssoc}. SumR is SumL
-after \textsc{SumComm}. The guards $\mathbf{0}_{\tilde e}$ and $\mathbf{1}$
-have no transition.
-
-(1), (2) and (3) By induction on the derivation of the transition. The base
-case of~(1) is the rule Send, with $\tilde d$ empty and $R = \mathbf{0}$, by
-\textsc{ParNil}. The base case of~(2) and~(3) is an action of a sum $K$: by
-item~(4), the summand that moves is brought in front, and it is an input
-prefix for~(2) and a quantum prefix for~(3). A conditional is removed by \textsc{IteT} or \textsc{IteF}. For ParL,
-the induction hypothesis gives
-$P \equiv (\tagged{t}{c!e} \parallel R) \setminus \tilde d$; the other component
-$Q$ enters the scope of $\tilde d$ by \textsc{ResPar}, one restriction after
-the other and after $\alpha$-conversion of $\tilde d$, and joins the rest by
-\textsc{ParAssoc}:
-$P \parallel Q \equiv (\tagged{t}{c!e} \parallel (R \parallel Q)) \setminus \tilde d$;
-the same steps apply to the target, and to the shapes of~(2) and~(3). ParR is
-ParL after \textsc{ParComm}. For Restr, the restriction is added to
-$\tilde d$; for~(1) and~(2) it is not $c$, by the side condition of the rule.
-The rules ComL, ComR and Rec derive silent transitions only.
-\qed
+  We proceed by structural induction on the rule of the LTS in the hypothesis.
 \end{proof}
-
-\subsection{Congruence and transitions}
 
 \begin{lemma}[Congruence is a bisimulation]\label{lem:cgr-bisim}
-If $P \equiv Q$ and $P \step{\lambda}{r} P'$ in the LTS of programs, then
-$Q \step{\lambda}{r} Q'$ for some $Q' \equiv P'$.
+If $\conf{\rho}{Q} \equiv \conf{\rho}{P}$ and $\conf{\rho}{P} \step{\lambda}{r} \conf{\rho'}{P'}$ in the LTS of programs, then
+$\conf{\rho}{Q} \step{\lambda}{r} \conf{\rho'}{Q'}$ for some $\conf{\rho}{Q'} \equiv \conf{\rho'}{P'}$.
 \end{lemma}
-
 \begin{proof}
-The congruence is the reflexive, symmetric and transitive closure of one
-\emph{step}: a rule of \cref{tab:cgr} applied under a context. By induction
-on the number of steps, it is enough to show that when $P$ and $Q$ differ by
-one step, each of them simulates the transitions of the other, with the same
-label and the same choice, and up to $\equiv$. This is proved by induction
-on the derivation of the step.
-
-\emph{Rules.} For \textsc{ParNil}, $\mathbf{0}$ has no transition, so that
-the transitions of $P \parallel \mathbf{0}$ are those of $P$ by ParL. For
-\textsc{ParComm}, ParL and ParR are exchanged, and so are ComL and ComR, with
-the same choice $\{t,t'\}$. For \textsc{ParAssoc}, by case analysis on the two
-rules that derive the transition: a move of one of the three components is
-derived by ParL and ParR on both sides, and a communication between two of
-them by ComL or ComR, placed under or above ParL or ParR. \textsc{SumNil},
-\textsc{SumComm} and \textsc{SumAssoc} are similar, with SumL and SumR.
-\textsc{IteT} and \textsc{IteF} are the rules IteT and IteF. For
-\textsc{ValExpr}, an expression and its value evaluate to the same value, so
-that the two prefixes, outputs or conditionals have the same transitions.
-For \textsc{ResNil}, neither side has a transition. \textsc{ResOrd} and
-\textsc{ResPar} rely on the fact that the transitions are preserved by an
-injective renaming of the channels, and reflected by it: for
-\textsc{ResPar}, since $c \notin \fc(P)$, no action of $P$ is on $c$, so that
-a move of $P$ and a communication between $P$ and $Q$ go through the
-restriction on $c$, and conversely.
-
-\emph{Contexts.} Under a conditional, a restriction or a sum, the induction
-hypothesis applies to the component that moves, and the other transitions
-are unchanged. Under a parallel composition, when the other component moves
-the two targets still differ by the step. Under a prefix, that is, in a prefixed guard whose continuation is $P$, the
-only transitions lead to $P$ for a silent prefix, a gate and an
-initialisation, to $P[v/x]$ for an input and to $P[m/x]$ for a measurement, and the congruence is closed under the substitution of
-values. Under a recursion $\tagged{t}{\rec{X}{P}}$, the only transition is the
-unfolding, and $P \equiv P'$ implies
-$P[\tagged{t}{\rec{X}{P}}/X] \equiv P'[\tagged{t}{\rec{X}{P'}}/X]$, the
-congruence being closed under recursion and under the substitution of
-programs.
-\qed
+  We proceed by structural induction on $\conf{\rho}{Q} \equiv \conf{\rho}{P}$.
 \end{proof}
-
-The choice is preserved because the choice of a communication is an
-unordered pair: \textsc{ParComm} exchanges the two sides of the
-communication, turning ComL into ComR, but not its choice $\{t,t'\}$.
-
-\subsection{Proof of the Harmony lemma}
-
-By \cref{lem:silent}, \cref{lem:harmony} is equivalent to the conjunction of
-the two statements \cref{lem:red-int,lem:int-red} below, which relate the
-reductions to the internal transitions of the program.
 
 \begin{lemma}[Reductions are internal transitions]\label{lem:red-int}
 If $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}$ then $P \step{\lambda}{r} Q'$ and
@@ -202,93 +63,16 @@ $Q' \equiv Q$.
 \end{lemma}
 
 \begin{proof}
-By induction on the derivation of the reduction. For \textsc{Com}, the
-output moves by Send and the input by Recv and SumL, and ComL gives
-$\lambda = \tau$ with the choice $\{t,t'\}$ and $Q' = Q$. For \textsc{Tau},
-\textsc{Op}, \textsc{Init} and \textsc{Meas}, the prefix moves by the rule of
-the same name of \cref{fig:prog}, under SumL, and $\lambda$ is $\tau$,
-$\req{U}$, $\initp$ or $\mrecv{m}$, whose effect is the memory of the redex;
-again $Q' = Q$. For \textsc{Rec}, $\lambda = \tau$ by the rule Rec. For
-\textsc{Par}, the induction hypothesis gives $P \step{\lambda}{r} P''$ with
-$P'' \equiv P'$; ParL gives $P \parallel Q \step{\lambda}{r} P'' \parallel Q$,
-and $P'' \parallel Q \equiv P' \parallel Q$. For \textsc{Res}, likewise with
-Restr, whose side condition holds because an internal label is not an
-action on a channel. For \textsc{Cong}, let $P \equiv P_1$ and, by induction
-hypothesis, $P_1 \step{\lambda}{r} Q_1'$ with $\rho \eff{\lambda} \rho'$ and
-$Q_1' \equiv Q_1$. By \cref{lem:cgr-bisim}, $P \step{\lambda}{r} Q'$ for some
-$Q' \equiv Q_1'$, and $Q' \equiv Q_1' \equiv Q_1 \equiv Q$.
-\qed
-\end{proof}
+  We proceed by structural induction on $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}$.
 
-\begin{lemma}[Communication under restrictions]\label{lem:com-shapes}
-If $e \Downarrow v$ and $c \notin \tilde d, \tilde d'$, then
-\[
-\begin{array}{l}
-\conf{\rho}{((\tagged{t}{c!e} \parallel R) \setminus \tilde d) \parallel
-(((\tagged{t'}{c?x}.P_1 + K) \parallel R') \setminus \tilde d')}\\[2pt]
-\qquad \red_{\{t,t'\}}\
-\conf{\rho}{((\mathbf{0} \parallel R) \setminus \tilde d) \parallel
-((P_1[v/x] \parallel R') \setminus \tilde d')} .
-\end{array}
-\]
-\end{lemma}
-
-\begin{proof}
-By induction on the number of restrictions $\tilde d$, and then $\tilde d'$.
-With no restriction, \textsc{ParAssoc} and \textsc{ParComm} bring the output
-and the input side by side,
-$(\tagged{t}{c!e} \parallel R) \parallel ((\tagged{t'}{c?x}.P_1 + K) \parallel R')
-\equiv (\tagged{t}{c!e} \parallel (\tagged{t'}{c?x}.P_1 + K)) \parallel (R \parallel R')$,
-and the reduction is \textsc{Com} under \textsc{Par} and \textsc{Cong}. A
-restriction is extruded to the top by \textsc{ResPar}, after
-$\alpha$-conversion, the induction hypothesis applies under it by
-\textsc{Res}, and \textsc{ResPar} puts it back in the target; the whole is
-one application of \textsc{Cong}.
-\qed
+  We conclude directly by the rules of the LTS in all cases except for structural congruence rule.
+  For structural congruence rule, we use \cref{lem:cgr-bisim} to conclude.
 \end{proof}
 
 \begin{lemma}[Internal transitions are reductions]\label{lem:int-red}
-If $P \step{\lambda}{r} Q$ and $\rho \eff{\lambda} \rho'$ for an internal
-label $\lambda$, then $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}$.
+If $\conf{\rho}{P} \step{\tau}{r} \conf{\rho'}{Q}$, then $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q}$.
 \end{lemma}
 
 \begin{proof}
-If $\lambda$ is the request $\req{U}$ of a gate, \cref{lem:shapes}(3) gives
-$r = t$,
-$P \equiv ((\tagged{t}{U(\tilde q)}.P_1 + K) \parallel R) \setminus \tilde d$ and
-$Q \equiv (P_1 \parallel R) \setminus \tilde d$. The redex \textsc{Op} gives
-$\conf{\rho}{\tagged{t}{U(\tilde q)}.P_1 + K} \red_{t} \bigconf{\upd{U}}{P_1}$,
-whose memory is $\rho'$, the effect of $\req{U}$ on $\rho$; \textsc{Par},
-\textsc{Res} and \textsc{Cong} conclude. If $\lambda$ is the request $\initp$
-of an initialisation, the argument is the same with the prefix
-$\tagged{t}{\initp}$, the redex \textsc{Init} and the memory $\inirho$. If
-$\lambda$ is the outcome $\mrecv{m}$ of a measurement, it is the same with
-the prefix $\tagged{t}{\M(\tilde q \rhd x)}$, the redex \textsc{Meas}, the
-memory $\br$ and the program $P_1[m/x]$ in place of $P_1$ in $Q$.
-
-If $\lambda = \tau$, then $\rho' = \rho$ and we proceed by induction on the
-derivation of the transition of the program. For a sum $K$,
-\cref{lem:shapes}(4) gives $K \equiv K_0 + K'$ with
-$K_0 \step{\tau}{r} Q$ for a prefixed guard $K_0$. Among the prefixed
-guards only a silent prefix has a silent transition, so that
-$K_0 = \tagged{t}{\tau}.Q$ with $r = t$, and the redex is \textsc{Tau},
-under \textsc{Cong}. IteT and IteF are \textsc{Cong}
-with \textsc{IteT} and \textsc{IteF}, followed by the induction hypothesis.
-ParL is \textsc{Par}; ParR is \textsc{Par} between two applications of
-\textsc{ParComm}; Restr is \textsc{Res}; Rec is \textsc{Rec}. For ComL, with
-$P \step{c!v}{t} P'$ and $Q \step{c?v}{t'} Q'$, the induction hypothesis does
-not apply to the premises, which are not silent; instead,
-\cref{lem:shapes}(1) and (2) give the shapes of $P$, $P'$, $Q$ and $Q'$, and
-\cref{lem:com-shapes} gives the reduction, under \textsc{Cong}. ComR is ComL
-after \textsc{ParComm}, the choice $\{t,t'\}$ being unordered.
-\qed
-\end{proof}
-
-\begin{proof}[of \cref{lem:harmony}]
-($\Rightarrow$) By \cref{lem:red-int} and \cref{lem:silent}.
-($\Leftarrow$) By \cref{lem:silent}, $P \step{\lambda}{r} Q'$ and
-$\rho \eff{\lambda} \rho'$ for some internal label $\lambda$;
-\cref{lem:int-red} gives $\conf{\rho}{P} \red_{r} \conf{\rho'}{Q'}$, and
-\textsc{Cong} concludes with $Q' \equiv Q$.
-\qed
+  The proof goes by structural induction on $\conf{\rho}{P} \step{\tau}{r} \conf{\rho'}{Q}$, and we use \cref{lem:shapes} to conclude.
 \end{proof}
