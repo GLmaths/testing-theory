@@ -130,13 +130,13 @@ Inductive prog_step : proc → choice → Labels prog_action → proc → Prop :
 | pr_tau t P :
     (t ∶ 𝛕 ∙ P) ⟶{τ}[t] P
 | pr_recv t c v P :
-    (t ∶ c ? ∙ P) ⟶{c ? v}[t] (P ⟦ v ⟧)
+    (t ∶ c ? ∙ P) ⟶{c ? v}[t] (P ⁅ v ⁆)
 | pr_op t E es qs P :
     eval_qubits es = Some qs →
     (t ∶ E ⦅es⦆ ∙ P) ⟶{E ⦅qs⦆}[t] P
 | pr_meas t M es qs n P :
     eval_qubits es = Some qs →
-    (t ∶ M ⦅es ▷⦆ ∙ P) ⟶{M ⦅qs⦆? n}[t] (P ⟦ VNat n ⟧)
+    (t ∶ M ⦅es ▷⦆ ∙ P) ⟶{M ⦅qs⦆? n}[t] (P ⁅ VNat n ⁆)
 | pr_init t es qs P :
     eval_qubits es = Some qs →
     (t ∶ init ⦅es⦆ ∙ P) ⟶{init ⦅qs⦆}[t] P
@@ -145,11 +145,11 @@ Inductive prog_step : proc → choice → Labels prog_action → proc → Prop :
 | pr_sumR (g1 g2 : guard) s l P' :
     g2 ⟶{l}[s] P' → (g1 + g2) ⟶{l}[s] P'
 | pr_send t c e v :
-    eval e = Some v → t ∶ c ! e ⟶{c ! v}[t] 𝟘
+    〚 e 〛 = v → t ∶ c ! e ⟶{c ! v}[t] 𝟘
 | pr_iteT e P Q s l P' :
-    eval e = Some (VBool true) → P ⟶{l}[s] P' → If e Then P Else Q ⟶{l}[s] P'
+    〚 e 〛 = true → P ⟶{l}[s] P' → If e Then P Else Q ⟶{l}[s] P'
 | pr_iteF e P Q s l Q' :
-    eval e = Some (VBool false) → Q ⟶{l}[s] Q' → If e Then P Else Q ⟶{l}[s] Q'
+    〚 e 〛 = false → Q ⟶{l}[s] Q' → If e Then P Else Q ⟶{l}[s] Q'
 | pr_parL P Q s l P' :
     P ⟶{l}[s] P' → P ∥ Q ⟶{l}[s] (P' ∥ Q)
 | pr_parR P Q s l Q' :
@@ -175,10 +175,10 @@ Notation "g ⟶ᵍ{ l }[ s ] P'" := (prog_gstep g s l P') (at level 70, only par
 (* Induction on a transition of a guard. *)
 Lemma prog_gstep_ind (Q : guard → choice → Labels prog_action → proc → Prop) :
   (∀ t P, Q (t ∶ 𝛕 ∙ P) t τ P) →
-  (∀ t c v P, Q (t ∶ c ? ∙ P) t (c ? v) (P ⟦ v ⟧)) →
+  (∀ t c v P, Q (t ∶ c ? ∙ P) t (c ? v) (P ⁅ v ⁆)) →
   (∀ t E es qs P, eval_qubits es = Some qs → Q (t ∶ E ⦅es⦆ ∙ P) t (E ⦅qs⦆) P) →
   (∀ t M es qs n P, eval_qubits es = Some qs →
-     Q (t ∶ M ⦅es ▷⦆ ∙ P) t (M ⦅qs⦆? n) (P ⟦ VNat n ⟧)) →
+     Q (t ∶ M ⦅es ▷⦆ ∙ P) t (M ⦅qs⦆? n) (P ⁅ VNat n ⁆)) →
   (∀ t es qs P, eval_qubits es = Some qs → Q (t ∶ init ⦅es⦆ ∙ P) t (init ⦅qs⦆) P) →
   (∀ (g1 g2 : guard) s l P', g1 ⟶{l}[s] P' → Q g1 s l P' → Q (g1 + g2)%lq s l P') →
   (∀ (g1 g2 : guard) s l P', g2 ⟶{l}[s] P' → Q g2 s l P' → Q (g1 + g2)%lq s l P') →
@@ -192,10 +192,10 @@ Qed.
 (* Induction on a transition of a program, the guards being treated at once. *)
 Lemma prog_step_guard_ind (Φ : proc → choice → Labels prog_action → proc → Prop) :
   (∀ (g : guard) s l P', prog_gstep g s l P' → Φ g s l P') →
-  (∀ t c e v, eval e = Some v → Φ (t ∶ c ! e) t (c ! v) 𝟘) →
-  (∀ e P Q s l P', eval e = Some (VBool true) → P ⟶{l}[s] P' → Φ P s l P' →
+  (∀ t c e v, 〚 e 〛 = v → Φ (t ∶ c ! e) t (c ! v) 𝟘) →
+  (∀ e P Q s l P', 〚 e 〛 = true → P ⟶{l}[s] P' → Φ P s l P' →
      Φ (If e Then P Else Q) s l P') →
-  (∀ e P Q s l Q', eval e = Some (VBool false) → Q ⟶{l}[s] Q' → Φ Q s l Q' →
+  (∀ e P Q s l Q', 〚 e 〛 = false → Q ⟶{l}[s] Q' → Φ Q s l Q' →
      Φ (If e Then P Else Q) s l Q') →
   (∀ P Q s l P', P ⟶{l}[s] P' → Φ P s l P' → Φ (P ∥ Q) s l (P' ∥ Q)) →
   (∀ P Q s l Q', Q ⟶{l}[s] Q' → Φ Q s l Q' → Φ (P ∥ Q) s l (P ∥ Q')) →
@@ -255,13 +255,13 @@ Section Memory.
   | co_tau t P :
       ⟨ρ, t ∶ 𝛕 ∙ P⟩ ⟶{τ}[t] ⟨ρ, P⟩
   | co_recv t c v P :
-      ⟨ρ, t ∶ c ? ∙ P⟩ ⟶{c ? v}[t] ⟨ρ, P ⟦ v ⟧⟩
+      ⟨ρ, t ∶ c ? ∙ P⟩ ⟶{c ? v}[t] ⟨ρ, P ⁅ v ⁆⟩
   | co_op t E es qs P :
       eval_qubits es = Some qs →
       ⟨ρ, t ∶ E ⦅es⦆ ∙ P⟩ ⟶{E ⦅qs⦆}[t] ⟨ρ, P⟩
   | co_meas t M es qs n P :
       eval_qubits es = Some qs →
-      ⟨ρ, t ∶ M ⦅es ▷⦆ ∙ P⟩ ⟶{M ⦅qs⦆? n}[t] ⟨ρ, P ⟦ VNat n ⟧⟩
+      ⟨ρ, t ∶ M ⦅es ▷⦆ ∙ P⟩ ⟶{M ⦅qs⦆? n}[t] ⟨ρ, P ⁅ VNat n ⁆⟩
   | co_init t es qs P :
       eval_qubits es = Some qs →
       ⟨ρ, t ∶ init ⦅es⦆ ∙ P⟩ ⟶{init ⦅qs⦆}[t] ⟨ρ, P⟩
@@ -270,11 +270,11 @@ Section Memory.
   | co_sumR (g1 g2 : guard) s l ρ' P' :
       ⟨ρ, g2⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, g1 + g2⟩ ⟶{l}[s] ⟨ρ', P'⟩
   | co_send t c e v :
-      eval e = Some v → ⟨ρ, t ∶ c ! e⟩ ⟶{c ! v}[t] ⟨ρ, 𝟘⟩
+      〚 e 〛 = v → ⟨ρ, t ∶ c ! e⟩ ⟶{c ! v}[t] ⟨ρ, 𝟘⟩
   | co_iteT e P Q s l ρ' P' :
-      eval e = Some (VBool true) → ⟨ρ, P⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{l}[s] ⟨ρ', P'⟩
+      〚 e 〛 = true → ⟨ρ, P⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{l}[s] ⟨ρ', P'⟩
   | co_iteF e P Q s l ρ' Q' :
-      eval e = Some (VBool false) → ⟨ρ, Q⟩ ⟶{l}[s] ⟨ρ', Q'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{l}[s] ⟨ρ', Q'⟩
+      〚 e 〛 = false → ⟨ρ, Q⟩ ⟶{l}[s] ⟨ρ', Q'⟩ → ⟨ρ, If e Then P Else Q⟩ ⟶{l}[s] ⟨ρ', Q'⟩
   | co_parL P Q s l ρ' P' :
       ⟨ρ, P⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶{l}[s] ⟨ρ', P' ∥ Q⟩
   | co_parR P Q s l ρ' Q' :
@@ -407,10 +407,10 @@ Proof.
   all: try (destruct g0 as [es0| |𝜆0 P0|g1' g2']; simpl in *; simplify_eq).
   all: try (destruct 𝜆0; simpl in *; simplify_eq).
   - exists τ, P0. split_and!; [done|done|constructor].
-  - exists (c0 ? v), (P0 ⟦ v ⟧).
+  - exists (c0 ? v), (P0 ⁅ v ⁆).
     split_and!; [done|by rewrite (proj1 ren_subst)|constructor].
   - exists (E0 ⦅qs⦆), P0. split_and!; [done|done|by constructor].
-  - exists (M0 ⦅qs⦆? n), (P0 ⟦ VNat n ⟧).
+  - exists (M0 ⦅qs⦆? n), (P0 ⁅ VNat n ⁆).
     split_and!; [done|by rewrite (proj1 ren_subst)|by constructor].
   - exists (init ⦅qs⦆), P0. split_and!; [done|done|by constructor].
   - destruct (IH f Hf (PG g1') eq_refl) as (l0 & P'0 & -> & -> & Hg). exists l0, P'0. split_and!; [done|done|by apply pr_sumL].

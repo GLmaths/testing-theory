@@ -70,10 +70,10 @@ Qed.
 Lemma offs_fin T : fin (offs T).
 Proof.
   induction T as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|X|t X P IHP|g].
-  - apply (fin_mono _ (λ o, ∃ v, eval e = Some v ∧ o = OffOut t c v)).
+  - apply (fin_mono _ (λ o, ∃ v, 〚 e 〛 = v ∧ o = OffOut t c v)).
     + intros o (a & <- & Hne). simpl in Hne. destruct a; try done. case_decide as Hd; [|done].
       destruct Hd as (-> & -> & Hv). eexists. split; [exact Hv|done].
-    + apply (fin_img (λ v, OffOut t c v) (λ v, eval e = Some v)).
+    + apply (fin_img (λ v, OffOut t c v) (λ v, 〚 e 〛 = v)).
       apply fin_uniq. intros x y Hx Hy. congruence.
   - apply (fin_mono _ (λ o, offs P o ∨ offs Q o)); [|apply fin_or; [exact IHP|exact IHQ]].
     intros o (a & Ea & Hne). simpl in Hne. destruct (eval e) as [[[]| |]|]; try done; [left|right]; by exists a.

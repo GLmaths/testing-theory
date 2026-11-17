@@ -37,7 +37,7 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 
 Inductive bag : list msg → proc → Prop :=
 | bag_nil : bag [] 𝟘
-| bag_one k c v : bag [(k, c, v)] (PSend k c (EVal v))
+| bag_one k c v : bag [(k, c, v)] (k ∶ c ! v)
 | bag_par E1 E2 B1 B2 : bag E1 B1 → bag E2 B2 → bag (E1 ++ E2) (B1 ∥ B2).
 
 Lemma bag_succ E B : bag E B → successb B = false.
@@ -84,8 +84,8 @@ Qed.
 
 Inductive wr (W : proc) : list msg → proc → Prop :=
 | wr_refl : wr W [] W
-| wr_T e X A E : eval e = Some (VBool true) → wr W E X → wr W E (PIte e X A)
-| wr_F e X A E : eval e = Some (VBool false) → wr W E X → wr W E (PIte e A X)
+| wr_T e X A E : 〚 e 〛 = true → wr W E X → wr W E (If e Then X Else A)
+| wr_F e X A E : 〚 e 〛 = false → wr W E X → wr W E (If e Then A Else X)
 | wr_bag E1 E2 B X : bag E1 B → wr W E2 X → wr W (E1 ++ E2) (B ∥ X).
 
 Lemma wr_succ W E X : wr W E X → successb X = successb W.
@@ -186,7 +186,7 @@ Proof. unfold cm. by rewrite omap_app. Qed.
 Section Build.
   Context (S : node → bool) (O : node → list msg) (cl : node → list offer) (VL : list val) (f0 : nat).
 
-  Definition sends (l : list msg) : proc := foldr (λ m acc, PSend m.1.1 m.1.2 (EVal m.2) ∥ acc) 𝟘 l.
+  Definition sends (l : list msg) : proc := foldr (λ (m : msg) acc, (m.1.1 ∶ m.1.2 ! m.2) ∥ acc) 𝟘 l.
 
   Lemma sends_bag l : bag l (sends l).
   Proof.
@@ -201,12 +201,12 @@ Section Build.
   Definition bguard (rec : node → proc) (n : node) (o : offer) : option guard :=
     match o with
     | OffOut _ _ _ => None
-    | OffIn k c => Some (PRecv k c ∙ chain VL (λ v, rec (n ++ [CoIn k c v])) (PG ①))
-    | OffOp k E qs => Some (POp k E (quote qs) ∙ rec (n ++ [CoOp k E qs]))
+    | OffIn k c => Some ((k ∶ c ?) ∙ chain VL (λ v, rec (n ++ [CoIn k c v])) (PG ①))
+    | OffOp k E qs => Some ((k ∶ E ⦅quote qs⦆) ∙ rec (n ++ [CoOp k E qs]))
     | OffMeas k M qs =>
-        Some (PMeas k M (quote qs) ∙
+        Some ((k ∶ M ⦅quote qs ▷⦆) ∙
                 chain VL (λ v, match v with VNat i => rec (n ++ [CoMeas k M qs i]) | _ => PG ① end) (PG ①))
-    | OffInit k qs => Some (PInit k (quote qs) ∙ rec (n ++ [CoInit k qs]))
+    | OffInit k qs => Some ((k ∶ init ⦅quote qs⦆) ∙ rec (n ++ [CoInit k qs]))
     end.
 
   Definition core (rec : node → proc) (n : node) : proc := PG (gsum (omap (bguard rec n) (cl n))).

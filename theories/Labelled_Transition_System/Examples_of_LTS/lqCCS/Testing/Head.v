@@ -35,8 +35,8 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 
 Inductive tite (W : proc) : proc → Prop :=
 | ti_refl : tite W W
-| ti_T e Y A : eval e = Some (VBool true) → tite W Y → tite W (PIte e Y A)
-| ti_F e Y A : eval e = Some (VBool false) → tite W Y → tite W (PIte e A Y).
+| ti_T e Y A : 〚 e 〛 = true → tite W Y → tite W (If e Then Y Else A)
+| ti_F e Y A : 〚 e 〛 = false → tite W Y → tite W (If e Then A Else Y).
 
 Fixpoint gheads (g : guard) : list (prefix * proc) :=
   match g with
@@ -49,26 +49,26 @@ Definition sh (𝜆 : prefix) (Q : proc) : proc := Nat.iter (prefix_binds 𝜆) 
 
 Fixpoint heads (Z : proc) : list (prefix * proc) :=
   match Z with
-  | PIte e P Q =>
+  | If e Then P Else Q =>
       match eval e with
       | Some (VBool true) => heads P
       | Some (VBool false) => heads Q
       | _ => []
       end
   | P ∥ Q => map (λ h, (h.1, h.2 ∥ sh h.1 Q)) (heads P) ++ map (λ h, (h.1, sh h.1 P ∥ h.2)) (heads Q)
-  | t ∶ rec X ∙ P => [(PInit t [], P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄)]
+  | t ∶ rec X ∙ P => [((t ∶ init ⦅[]⦆), P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄)]
   | PG g => gheads g
   | _ => []
   end.
 
 Definition resp (a : coact) (h : prefix * proc) : option proc :=
   match h.1, a with
-  | PRecv k' c', CoIn k c v => if decide (k = k' ∧ c = c') then Some (h.2 ⟦ v ⟧) else None
-  | POp k' E' es, CoOp k E qs =>
+  | (k' ∶ c' ?), CoIn k c v => if decide (k = k' ∧ c = c') then Some (h.2 ⁅ v ⁆) else None
+  | (k' ∶ E' ⦅es⦆), CoOp k E qs =>
       if decide (k = k' ∧ E = E' ∧ eval_qubits es = Some qs) then Some h.2 else None
-  | PMeas k' M' es, CoMeas k M qs n =>
-      if decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) then Some (h.2 ⟦ VNat n ⟧) else None
-  | PInit k' es, CoInit k qs => if decide (k = k' ∧ eval_qubits es = Some qs) then Some h.2 else None
+  | (k' ∶ M' ⦅es ▷⦆), CoMeas k M qs n =>
+      if decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) then Some (h.2 ⁅ VNat n ⁆) else None
+  | (k' ∶ init ⦅es⦆), CoInit k qs => if decide (k = k' ∧ eval_qubits es = Some qs) then Some h.2 else None
   | _, _ => None
   end.
 
@@ -116,10 +116,10 @@ Proof.
 Qed.
 
 Definition chain (vs : list val) (A : val → proc) (d : proc) : proc :=
-  foldr (λ v acc, PIte (EEq (EVar 0) (EVal v)) (shiftv 0 (A v)) acc) d vs.
+  foldr (λ (v : val) acc, (If (#0 =ₑ v) Then shiftv 0 (A v) Else acc)) d vs.
 
 Lemma chain_tite vs A d w :
-  (w ∈ vs ∧ tite (A w) ((chain vs A d) ⟦ w ⟧)) ∨ (w ∉ vs ∧ tite (d ⟦ w ⟧) ((chain vs A d) ⟦ w ⟧)).
+  (w ∈ vs ∧ tite (A w) ((chain vs A d) ⁅ w ⁆)) ∨ (w ∉ vs ∧ tite (d ⁅ w ⁆) ((chain vs A d) ⁅ w ⁆)).
 Proof.
   induction vs as [|v vs IH].
   - right. split; [intros Hin; by apply elem_of_nil in Hin|apply ti_refl].
@@ -139,16 +139,16 @@ Proof. induction l as [|g l IH]; [done|]. simpl. by rewrite IH. Qed.
 Definition rg (o : offer) : option guard :=
   match o with
   | OffOut _ _ _ => None
-  | OffIn k c => Some (PRecv k c ∙ PG ①)
-  | OffOp k E qs => Some (POp k E (quote qs) ∙ PG ①)
-  | OffMeas k M qs => Some (PMeas k M (quote qs) ∙ PG ①)
-  | OffInit k qs => Some (PInit k (quote qs) ∙ PG ①)
+  | OffIn k c => Some ((k ∶ c ?) ∙ PG ①)
+  | OffOp k E qs => Some ((k ∶ E ⦅quote qs⦆) ∙ PG ①)
+  | OffMeas k M qs => Some ((k ∶ M ⦅quote qs ▷⦆) ∙ PG ①)
+  | OffInit k qs => Some ((k ∶ init ⦅quote qs⦆) ∙ PG ①)
   end.
 
 Definition co_of (o : offer) : coact :=
   match o with
   | OffOut k c v => CoOut k c v
-  | OffIn k c => CoIn k c (VBool true)
+  | OffIn k c => CoIn k c true
   | OffOp k E qs => CoOp k E qs
   | OffMeas k M qs => CoMeas k M qs 0
   | OffInit k qs => CoInit k qs
@@ -165,26 +165,26 @@ Section Head.
   Definition hguard (rec : node → proc → proc) (m : node) (h : prefix * proc) : option guard :=
     match h.1 with
     | PTau _ => None
-    | PRecv k c =>
-        Some (PRecv k c ∙ chain VL (λ v, kont rec m (OffIn k c) (CoIn k c v) (h.2 ⟦ v ⟧)) (dflt m (OffIn k c) h.2))
-    | POp k E es =>
+    | k ∶ c ? =>
+        Some ((k ∶ c ?) ∙ chain VL (λ v, kont rec m (OffIn k c) (CoIn k c v) (h.2 ⁅ v ⁆)) (dflt m (OffIn k c) h.2))
+    | k ∶ E ⦅es⦆ =>
         match eval_qubits es with
-        | Some qs => Some (POp k E (quote qs) ∙ kont rec m (OffOp k E qs) (CoOp k E qs) h.2)
+        | Some qs => Some ((k ∶ E ⦅quote qs⦆) ∙ kont rec m (OffOp k E qs) (CoOp k E qs) h.2)
         | None => None
         end
-    | PMeas k M es =>
+    | k ∶ M ⦅es ▷⦆ =>
         match eval_qubits es with
         | Some qs =>
-            Some (PMeas k M (quote qs) ∙
+            Some ((k ∶ M ⦅quote qs ▷⦆) ∙
                     chain VL (λ v, match v with
-                                   | VNat n => kont rec m (OffMeas k M qs) (CoMeas k M qs n) (h.2 ⟦ v ⟧)
+                                   | VNat n => kont rec m (OffMeas k M qs) (CoMeas k M qs n) (h.2 ⁅ v ⁆)
                                    | _ => 𝟘
                                    end) (dflt m (OffMeas k M qs) h.2))
         | None => None
         end
-    | PInit k es =>
+    | k ∶ init ⦅es⦆ =>
         match eval_qubits es with
-        | Some qs => Some (PInit k (quote qs) ∙ kont rec m (OffInit k qs) (CoInit k qs) h.2)
+        | Some qs => Some ((k ∶ init ⦅quote qs⦆) ∙ kont rec m (OffInit k qs) (CoInit k qs) h.2)
         | None => None
         end
     end.
@@ -233,10 +233,10 @@ Section Head.
     - destruct a as [k c0 v|k c0 v|k E0 qs|k M0 qs n|k qs]; try (left; by split).
       destruct (decide (k = t ∧ c0 = c)) as [[-> ->]|Hd]; [|left; by split].
       right. eexists _, _. split; [done|]. split; [done|].
-      destruct (chain_tite VL (λ v, kont rec m (OffIn t c) (CoIn t c v) (D ⟦ v ⟧)) (dflt m (OffIn t c) D) v) as [[_ Ht]|[Hu Ht]].
-      + exists (kont rec m (OffIn t c) (CoIn t c v) (D ⟦ v ⟧)). split; [exact Ht|]. unfold kont. simpl.
+      destruct (chain_tite VL (λ v, kont rec m (OffIn t c) (CoIn t c v) (D ⁅ v ⁆)) (dflt m (OffIn t c) D) v) as [[_ Ht]|[Hu Ht]].
+      + exists (kont rec m (OffIn t c) (CoIn t c v) (D ⁅ v ⁆)). split; [exact Ht|]. unfold kont. simpl.
         destruct (wrapb m (OffIn t c)); [left; by split|right; split; [done|by left]].
-      + exists (dflt m (OffIn t c) D ⟦ v ⟧). split; [exact Ht|]. unfold dflt. simpl.
+      + exists (dflt m (OffIn t c) D ⁅ v ⁆). split; [exact Ht|]. unfold dflt. simpl.
         destruct (wrapb m (OffIn t c)); [left; by split|right; split; [done|right; by split]].
     - destruct (eval_qubits es) as [qs0|] eqn:Eq.
       + destruct a as [k c0 v|k c0 v|k E0 qs|k M0 qs n|k qs]; try (left; by split). simpl. rewrite eval_quote.
@@ -249,12 +249,12 @@ Section Head.
         destruct (decide (k = t ∧ M0 = M ∧ Some qs0 = Some qs)) as [(-> & -> & [= ->])|Hd]; [|left; by split].
         right. eexists _, _. split; [done|]. split; [done|].
         destruct (chain_tite VL (λ v, match v with
-                                      | VNat n0 => kont rec m (OffMeas t M qs) (CoMeas t M qs n0) (D ⟦ v ⟧)
+                                      | VNat n0 => kont rec m (OffMeas t M qs) (CoMeas t M qs n0) (D ⁅ v ⁆)
                                       | _ => 𝟘
                                       end) (dflt m (OffMeas t M qs) D) (VNat n)) as [[_ Ht]|[Hu Ht]].
-        * exists (kont rec m (OffMeas t M qs) (CoMeas t M qs n) (D ⟦ VNat n ⟧)). split; [exact Ht|]. unfold kont. simpl.
+        * exists (kont rec m (OffMeas t M qs) (CoMeas t M qs n) (D ⁅ VNat n ⁆)). split; [exact Ht|]. unfold kont. simpl.
           destruct (wrapb m (OffMeas t M qs)); [left; by split|right; split; [done|by left]].
-        * exists (dflt m (OffMeas t M qs) D ⟦ VNat n ⟧). split; [exact Ht|]. unfold dflt. simpl.
+        * exists (dflt m (OffMeas t M qs) D ⁅ VNat n ⁆). split; [exact Ht|]. unfold dflt. simpl.
           destruct (wrapb m (OffMeas t M qs)); [left; by split|right; split; [done|right; by split]].
       + destruct a as [k c0 v|k c0 v|k E0 qs|k M0 qs n|k qs]; try done.
         case_decide as Hd; [|done]. by destruct Hd as (_ & _ & ?).

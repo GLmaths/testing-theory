@@ -111,9 +111,9 @@ End Osim.
 
 Fixpoint bagof (X : proc) : proc :=
   match X with
-  | PSend k c e => PSend k c e
+  | k ∶ c ! e => k ∶ c ! e
   | P ∥ Q => bagof P ∥ bagof Q
-  | PIte e P Q =>
+  | If e Then P Else Q =>
       match eval e with
       | Some (VBool true) => bagof P
       | Some (VBool false) => bagof Q
@@ -126,7 +126,7 @@ Fixpoint ns (X : proc) : proc :=
   match X with
   | PSend _ _ _ => 𝟘
   | P ∥ Q => ns P ∥ ns Q
-  | PIte e P Q =>
+  | If e Then P Else Q =>
       match eval e with
       | Some (VBool true) => ns P
       | Some (VBool false) => ns Q
@@ -136,12 +136,12 @@ Fixpoint ns (X : proc) : proc :=
   end.
 
 Inductive zs : proc → proc → proc → Prop :=
-| zs_send k c e : zs (PSend k c e) (PSend k c e) 𝟘
+| zs_send k c e : zs (k ∶ c ! e) (k ∶ c ! e) 𝟘
 | zs_refl X : zs 𝟘 X X
 | zs_par B1 B2 P Q P' Q' : zs B1 P P' → zs B2 Q Q' → zs (B1 ∥ B2) (P ∥ Q) (P' ∥ Q')
-| zs_iteT e B P Q Z : eval e = Some (VBool true) → zs B P Z → zs B (PIte e P Q) Z
-| zs_iteF e B P Q Z : eval e = Some (VBool false) → zs B Q Z → zs B (PIte e P Q) Z
-| zs_dead e P Q : eval e ≠ Some (VBool true) → eval e ≠ Some (VBool false) → zs 𝟘 (PIte e P Q) 𝟘.
+| zs_iteT e B P Q Z : 〚 e 〛 = true → zs B P Z → zs B (If e Then P Else Q) Z
+| zs_iteF e B P Q Z : 〚 e 〛 = false → zs B Q Z → zs B (If e Then P Else Q) Z
+| zs_dead e P Q : ¬ 〚 e 〛 = true → ¬ 〚 e 〛 = false → zs 𝟘 (If e Then P Else Q) 𝟘.
 
 Lemma zs_bagof X : zs (bagof X) X (ns X).
 Proof.
@@ -199,8 +199,8 @@ Qed.
 Inductive pull : proc → proc → Prop :=
 | pl_refl X : pull X X
 | pl_bag B X Z W : zs B X Z → pull Z W → pull X (B ∥ W)
-| pl_iteT e A W X : eval e = Some (VBool true) → pull X W → pull X (PIte e W A)
-| pl_iteF e A W X : eval e = Some (VBool false) → pull X W → pull X (PIte e A W).
+| pl_iteT e A W X : 〚 e 〛 = true → pull X W → pull X (If e Then W Else A)
+| pl_iteF e A W X : 〚 e 〛 = false → pull X W → pull X (If e Then A Else W).
 
 Lemma pull_osim : osim pull.
 Proof.
@@ -252,7 +252,7 @@ Fixpoint gosucc (sel : prefix → bool) (g : guard) : list proc :=
 
 Fixpoint osucc (sel : prefix → bool) (Z : proc) : list proc :=
   match Z with
-  | PIte e P Q =>
+  | If e Then P Else Q =>
       match eval e with
       | Some (VBool true) => osucc sel P
       | Some (VBool false) => osucc sel Q
@@ -264,12 +264,12 @@ Fixpoint osucc (sel : prefix → bool) (Z : proc) : list proc :=
   end.
 
 Definition sel_in (k : tag) (c : channel) (𝜆 : prefix) : bool :=
-  match 𝜆 with PRecv k' c' => bool_decide (k = k' ∧ c = c') | _ => false end.
+  match 𝜆 with (k' ∶ c' ?) => bool_decide (k = k' ∧ c = c') | _ => false end.
 
 Definition sel_meas (k : tag) (M : meas) (qs : list qubit) (𝜆 : prefix) : bool :=
-  match 𝜆 with PMeas k' M' es => bool_decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) | _ => false end.
+  match 𝜆 with (k' ∶ M' ⦅es ▷⦆) => bool_decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) | _ => false end.
 
-Lemma gco_succ_in g k c v : gco_succ g (CoIn k c v) = (λ D, D ⟦ v ⟧) <$> gosucc (sel_in k c) g.
+Lemma gco_succ_in g k c v : gco_succ g (CoIn k c v) = (λ D, D ⁅ v ⁆) <$> gosucc (sel_in k c) g.
 Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl.
   - done.
@@ -279,7 +279,7 @@ Proof.
   - by rewrite fmap_app, IH1, IH2.
 Qed.
 
-Lemma co_succ_in Z k c v : co_succ Z (CoIn k c v) = (λ D, D ⟦ v ⟧) <$> osucc (sel_in k c) Z.
+Lemma co_succ_in Z k c v : co_succ Z (CoIn k c v) = (λ D, D ⁅ v ⁆) <$> osucc (sel_in k c) Z.
 Proof.
   induction Z as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl.
   - done.
@@ -293,7 +293,7 @@ Proof.
 Qed.
 
 Lemma gco_succ_meas g k M qs n :
-  gco_succ g (CoMeas k M qs n) = (λ D, D ⟦ VNat n ⟧) <$> gosucc (sel_meas k M qs) g.
+  gco_succ g (CoMeas k M qs n) = (λ D, D ⁅ VNat n ⁆) <$> gosucc (sel_meas k M qs) g.
 Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl.
   - done.
@@ -304,7 +304,7 @@ Proof.
 Qed.
 
 Lemma co_succ_meas Z k M qs n :
-  co_succ Z (CoMeas k M qs n) = (λ D, D ⟦ VNat n ⟧) <$> osucc (sel_meas k M qs) Z.
+  co_succ Z (CoMeas k M qs n) = (λ D, D ⁅ VNat n ⁆) <$> osucc (sel_meas k M qs) Z.
 Proof.
   induction Z as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl.
   - done.
@@ -317,7 +317,7 @@ Proof.
   - apply gco_succ_meas.
 Qed.
 
-Definition quote (qs : list qubit) : list exp := map (λ x, EVal (VQubit x)) qs.
+Definition quote (qs : list qubit) : list exp := map (λ x, EVal $x) qs.
 
 Lemma eval_quote qs : eval_qubits (quote qs) = Some qs.
 Proof.

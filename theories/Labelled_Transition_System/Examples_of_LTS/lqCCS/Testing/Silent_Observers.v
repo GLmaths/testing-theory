@@ -38,16 +38,16 @@ Section Detau.
   Context (E : sop).
 
   Definition pdetau (𝜆 : prefix) : prefix :=
-    match 𝜆 with PTau t => POp t E [] | _ => 𝜆 end.
+    match 𝜆 with (t ∶ 𝛕) => t ∶ E ⦅[]⦆ | _ => 𝜆 end.
 
   Fixpoint detau (P : proc) : proc :=
     match P with
-    | PSend t c e => PSend t c e
-    | PIte e P Q => PIte e (detau P) (detau Q)
+    | t ∶ c ! e => t ∶ c ! e
+    | If e Then P Else Q => If e Then detau P Else detau Q
     | P ∥ Q => detau P ∥ detau Q
     | ν P => ν (detau P)
     | PVar X => PVar X
-    | PRec t X P => PRec t X (detau P)
+    | t ∶ rec X ∙ P => t ∶ rec X ∙ detau P
     | PG g => PG (gdetau g)
     end
   with gdetau (g : guard) : guard :=
@@ -192,9 +192,9 @@ Section Detau.
     - intros 𝜆 P IHP s l' X Hs. destruct 𝜆 as [t|t c|t E0 es|t M es|t es]; simpl in Hs; inversion Hs; subst.
       + match goal with Hq : eval_qubits [] = Some ?qs |- _ => change (Some (@nil qubit) = Some qs) in Hq; injection Hq as <- end.
         exists τ, P. split; [constructor|]. split; [done|by right].
-      + exists (c ? v), (P ⟦ v ⟧). split; [constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
+      + exists (c ? v), (P ⁅ v ⁆). split; [constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
       + exists (E0 ⦅qs⦆), P. split; [by constructor|]. split; [done|by left].
-      + exists (M ⦅qs⦆? n), (P ⟦ VNat n ⟧). split; [by constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
+      + exists (M ⦅qs⦆? n), (P ⁅ VNat n ⁆). split; [by constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
       + exists (init ⦅qs⦆), P. split; [by constructor|]. split; [done|by left].
     - intros g1 IH1 g2 IH2 s l' X Hs. inversion Hs; subst.
       + match goal with Hp : PG (gdetau g1) ⟶{_}[_] _ |- _ => destruct (IH1 _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.

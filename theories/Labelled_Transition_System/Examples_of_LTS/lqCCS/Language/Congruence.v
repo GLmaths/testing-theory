@@ -52,10 +52,10 @@ Inductive cgr_step : proc → proc → Prop :=
 | cgr_par_nil_step P : cgr_step (P ∥ 𝟘) P
 | cgr_par_com_step P Q : cgr_step (P ∥ Q) (Q ∥ P)
 | cgr_par_assoc_rev_step P Q R : cgr_step (P ∥ (Q ∥ R)) ((P ∥ Q) ∥ R)
-| cgr_if_true_step e P Q : eval e = Some (VBool true) → cgr_step (If e Then P Else Q) P
-| cgr_if_false_step e P Q : eval e = Some (VBool false) → cgr_step (If e Then P Else Q) Q
-| cgr_send_val_step t c e v : eval e = Some v → cgr_step (t ∶ c ! e) (t ∶ c ! (EVal v))
-| cgr_if_val_step e v P Q : eval e = Some v → cgr_step (If e Then P Else Q) (If (EVal v) Then P Else Q)
+| cgr_if_true_step e P Q : 〚 e 〛 = true → cgr_step (If e Then P Else Q) P
+| cgr_if_false_step e P Q : 〚 e 〛 = false → cgr_step (If e Then P Else Q) Q
+| cgr_send_val_step t c e v : 〚 e 〛 = v → cgr_step (t ∶ c ! e) (t ∶ c ! v)
+| cgr_if_val_step e v P Q : 〚 e 〛 = v → cgr_step (If e Then P Else Q) (If v Then P Else Q)
 | cgr_res_nil_step es : cgr_step (ν (GNil es)) ((GNil es))
 | cgr_res_swap_step P : cgr_step (ν ν P) (ν ν (ren swap01 P))
 | cgr_res_scope_rev_step P Q : cgr_step ((ν P) ∥ Q) (ν (P ∥ ren S Q))
@@ -72,13 +72,13 @@ with gcgr_step : guard → guard → Prop :=
 | cgr_choice_com_step g h : gcgr_step (g + h) (h + g)
 | cgr_choice_assoc_rev_step g h k : gcgr_step (g + (h + k)) ((g + h) + k)
 | cgr_nil_val_step es1 e v es2 :
-    eval e = Some v → gcgr_step (GNil (es1 ++ e :: es2)) (GNil (es1 ++ EVal v :: es2))
+    〚 e 〛 = v → gcgr_step (GNil (es1 ++ e :: es2)) (GNil (es1 ++ EVal v :: es2))
 | cgr_op_val_step t E es1 e v es2 P :
-    eval e = Some v → gcgr_step (t ∶ E ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ E ⦅es1 ++ EVal v :: es2⦆ ∙ P)
+    〚 e 〛 = v → gcgr_step (t ∶ E ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ E ⦅es1 ++ EVal v :: es2⦆ ∙ P)
 | cgr_meas_val_step t M es1 e v es2 P :
-    eval e = Some v → gcgr_step (t ∶ M ⦅es1 ++ e :: es2 ▷⦆ ∙ P) (t ∶ M ⦅es1 ++ EVal v :: es2 ▷⦆ ∙ P)
+    〚 e 〛 = v → gcgr_step (t ∶ M ⦅es1 ++ e :: es2 ▷⦆ ∙ P) (t ∶ M ⦅es1 ++ EVal v :: es2 ▷⦆ ∙ P)
 | cgr_init_val_step t es1 e v es2 P :
-    eval e = Some v → gcgr_step (t ∶ init ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ init ⦅es1 ++ EVal v :: es2⦆ ∙ P)
+    〚 e 〛 = v → gcgr_step (t ∶ init ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ init ⦅es1 ++ EVal v :: es2⦆ ∙ P)
 (* contexts *)
 | cgr_prefix_step 𝜆 P P' : cgr_step P P' → gcgr_step (𝜆 ∙ P) (𝜆 ∙ P')
 | cgr_choice_step g g' h : gcgr_step g g' → gcgr_step (g + h) (g' + h)
@@ -107,9 +107,9 @@ Proof. apply rtsc_equivalence. Qed.
 (* ** Evaluation *)
 
 Lemma eval_qubits_val es1 e v es2 :
-  eval e = Some v → eval_qubits (es1 ++ e :: es2) = eval_qubits (es1 ++ EVal v :: es2).
+  〚 e 〛 = v → eval_qubits (es1 ++ e :: es2) = eval_qubits (es1 ++ EVal v :: es2).
 Proof.
-  intros He. assert (E : eval_qubit e = eval_qubit (EVal v))
+  intros He. assert (E : eval_qubit e = eval_qubit v)
     by (unfold eval_qubit; simpl; by rewrite He).
   unfold eval_qubits. induction es1 as [|e1 es1 IH]; simpl; [by rewrite E|by rewrite IH].
 Qed.
@@ -139,16 +139,16 @@ Proof. apply rtsc_rl, cgr_par_assoc_rev_step. Qed.
 Lemma cgr_par_assoc_rev P Q R : P ∥ (Q ∥ R) ≡* (P ∥ Q) ∥ R.
 Proof. apply cgr_of_step, cgr_par_assoc_rev_step. Qed.
 
-Lemma cgr_if_true e P Q : eval e = Some (VBool true) → If e Then P Else Q ≡* P.
+Lemma cgr_if_true e P Q : 〚 e 〛 = true → If e Then P Else Q ≡* P.
 Proof. intros. by apply cgr_of_step, cgr_if_true_step. Qed.
 
-Lemma cgr_if_true_rev e P Q : eval e = Some (VBool true) → P ≡* If e Then P Else Q.
+Lemma cgr_if_true_rev e P Q : 〚 e 〛 = true → P ≡* If e Then P Else Q.
 Proof. intros. by apply rtsc_rl, cgr_if_true_step. Qed.
 
-Lemma cgr_if_false e P Q : eval e = Some (VBool false) → If e Then P Else Q ≡* Q.
+Lemma cgr_if_false e P Q : 〚 e 〛 = false → If e Then P Else Q ≡* Q.
 Proof. intros. by apply cgr_of_step, cgr_if_false_step. Qed.
 
-Lemma cgr_if_false_rev e P Q : eval e = Some (VBool false) → Q ≡* If e Then P Else Q.
+Lemma cgr_if_false_rev e P Q : 〚 e 〛 = false → Q ≡* If e Then P Else Q.
 Proof. intros. by apply rtsc_rl, cgr_if_false_step. Qed.
 
 Lemma cgr_res_nil es : (ν (GNil es)) ≡* (GNil es).
@@ -288,21 +288,21 @@ Proof. apply (cgr_ctx (ren f)). intros. by apply cgr_step_ren. Qed.
 
 (* ** Substitution and shift of values *)
 
-Lemma exp_subst_closed k v e w : eval e = Some w → exp_subst k v e = e.
+Lemma exp_subst_closed k v e w : 〚 e 〛 = w → exp_subst k v e = e.
 Proof.
   revert w. induction e; intros w He; simpl in He |- *; try done.
   all: repeat (destruct (eval _) as [[]|] eqn:? in He; try discriminate);
     repeat match goal with
-    | IH : ∀ v, eval ?e = Some v → _, H : eval ?e = Some _ |- _ => rewrite (IH _ H); clear IH
+    | IH : ∀ v, 〚 ?e 〛 = v → _, H : 〚 ?e 〛 = _ |- _ => rewrite (IH _ H); clear IH
     end; done.
 Qed.
 
-Lemma exp_shift_closed k e w : eval e = Some w → exp_shift k e = e.
+Lemma exp_shift_closed k e w : 〚 e 〛 = w → exp_shift k e = e.
 Proof.
   revert w. induction e; intros w He; simpl in He |- *; try done.
   all: repeat (destruct (eval _) as [[]|] eqn:? in He; try discriminate);
     repeat match goal with
-    | IH : ∀ v, eval ?e = Some v → _, H : eval ?e = Some _ |- _ => rewrite (IH _ H); clear IH
+    | IH : ∀ v, 〚 ?e 〛 = v → _, H : 〚 ?e 〛 = _ |- _ => rewrite (IH _ H); clear IH
     end; done.
 Qed.
 
@@ -313,7 +313,7 @@ Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: try (rewrite <- (proj1 ren_subst); by constructor).
   all: rewrite ?map_app; simpl;
-    match goal with Hx : eval ?e = Some _ |- _ => rewrite (exp_subst_closed _ _ e _ Hx) end;
+    match goal with Hx : 〚 ?e 〛 = _ |- _ => rewrite (exp_subst_closed _ _ e _ Hx) end;
     by constructor.
 Qed.
 
@@ -327,7 +327,7 @@ Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: try (rewrite <- (proj1 ren_shiftv); by constructor).
   all: rewrite ?map_app; simpl;
-    match goal with Hx : eval ?e = Some _ |- _ => rewrite (exp_shift_closed _ e _ Hx) end;
+    match goal with Hx : 〚 ?e 〛 = _ |- _ => rewrite (exp_shift_closed _ e _ Hx) end;
     by constructor.
 Qed.
 
@@ -474,14 +474,14 @@ Proof.
         symmetry. apply cgr_par_assoc_rev.
 Qed.
 
-Lemma fwd_ite_t e P Q : eval e = Some (VBool true) → fwd (If e Then P Else Q) P ∧ fwd P (If e Then P Else Q).
+Lemma fwd_ite_t e P Q : 〚 e 〛 = true → fwd (If e Then P Else Q) P ∧ fwd P (If e Then P Else Q).
 Proof.
   intros He. split; apply fwd_refl_step; intros s l P' Hs.
   - inversion Hs; subst; [done|congruence].
   - by apply pr_iteT.
 Qed.
 
-Lemma fwd_ite_f e P Q : eval e = Some (VBool false) → fwd (If e Then P Else Q) Q ∧ fwd Q (If e Then P Else Q).
+Lemma fwd_ite_f e P Q : 〚 e 〛 = false → fwd (If e Then P Else Q) Q ∧ fwd Q (If e Then P Else Q).
 Proof.
   intros He. split; apply fwd_refl_step; intros s l P' Hs.
   - inversion Hs; subst; [congruence|done].
@@ -489,14 +489,14 @@ Proof.
 Qed.
 
 Lemma fwd_send_val t c e v :
-  eval e = Some v → fwd (t ∶ c ! e) (t ∶ c ! (EVal v)) ∧ fwd (t ∶ c ! (EVal v)) (t ∶ c ! e).
+  〚 e 〛 = v → fwd (t ∶ c ! e) (t ∶ c ! v) ∧ fwd (t ∶ c ! v) (t ∶ c ! e).
 Proof.
   intros He.
   split; apply fwd_refl_step; intros s l P' Hs; inversion Hs; subst; constructor; simpl in *; congruence.
 Qed.
 
 Lemma fwd_ite_val e v P Q :
-  eval e = Some v → fwd (If e Then P Else Q) (If (EVal v) Then P Else Q) ∧ fwd (If (EVal v) Then P Else Q) (If e Then P Else Q).
+  〚 e 〛 = v → fwd (If e Then P Else Q) (If v Then P Else Q) ∧ fwd (If v Then P Else Q) (If e Then P Else Q).
 Proof.
   intros He.
   split; apply fwd_refl_step; intros s l P' Hs; inversion Hs; subst;
@@ -591,7 +591,7 @@ Lemma fwd_nil_val es es' : fwd (GNil es) (GNil es').
 Proof. intros s l P' Hs. exfalso. by eapply pstep_nil. Qed.
 
 Lemma fwd_op_val t E es1 e v es2 P :
-  eval e = Some v →
+  〚 e 〛 = v →
   fwd (t ∶ E ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ E ⦅es1 ++ EVal v :: es2⦆ ∙ P)
   ∧ fwd (t ∶ E ⦅es1 ++ EVal v :: es2⦆ ∙ P) (t ∶ E ⦅es1 ++ e :: es2⦆ ∙ P).
 Proof.
@@ -600,7 +600,7 @@ Proof.
 Qed.
 
 Lemma fwd_meas_val t M es1 e v es2 P :
-  eval e = Some v →
+  〚 e 〛 = v →
   fwd (t ∶ M ⦅es1 ++ e :: es2 ▷⦆ ∙ P) (t ∶ M ⦅es1 ++ EVal v :: es2 ▷⦆ ∙ P)
   ∧ fwd (t ∶ M ⦅es1 ++ EVal v :: es2 ▷⦆ ∙ P) (t ∶ M ⦅es1 ++ e :: es2 ▷⦆ ∙ P).
 Proof.
@@ -609,7 +609,7 @@ Proof.
 Qed.
 
 Lemma fwd_init_val t es1 e v es2 P :
-  eval e = Some v →
+  〚 e 〛 = v →
   fwd (t ∶ init ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ init ⦅es1 ++ EVal v :: es2⦆ ∙ P)
   ∧ fwd (t ∶ init ⦅es1 ++ EVal v :: es2⦆ ∙ P) (t ∶ init ⦅es1 ++ e :: es2⦆ ∙ P).
 Proof.
@@ -671,9 +671,9 @@ Lemma fwd_pre 𝜆 P P' : P ≡* P' → fwd (𝜆 ∙ P) (𝜆 ∙ P').
 Proof.
   intros Hc s l X Hs. inversion Hs; subst.
   - exists P'. split; [constructor|done].
-  - exists (P' ⟦ v ⟧). split; [constructor|by apply cgr_subst].
+  - exists (P' ⁅ v ⁆). split; [constructor|by apply cgr_subst].
   - exists P'. split; [by constructor|done].
-  - exists (P' ⟦ VNat n ⟧). split; [by constructor|by apply cgr_subst].
+  - exists (P' ⁅ VNat n ⁆). split; [by constructor|by apply cgr_subst].
   - exists P'. split; [by constructor|done].
 Qed.
 

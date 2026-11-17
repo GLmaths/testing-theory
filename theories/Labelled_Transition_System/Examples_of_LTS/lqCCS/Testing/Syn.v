@@ -68,13 +68,13 @@ Section Syn.
     - apply Hi, elem_of_app. by right.
   Qed.
 
-  Lemma syn_ite e P Q : syn P → syn Q → syn (PIte e P Q).
+  Lemma syn_ite e P Q : syn P → syn Q → syn (If e Then P Else Q).
   Proof.
     intros (Ho1 & Ht1 & Hc1 & Hi1) (Ho2 & Ht2 & Hc2 & Hi2). split; [simpl; by rewrite Ho1, Ho2|].
     repeat split; intros x Hx; simpl in Hx; apply elem_of_app in Hx as [Hx|Hx]; auto.
   Qed.
 
-  Lemma syn_ite_inv e P Q : syn (PIte e P Q) → syn P ∧ syn Q.
+  Lemma syn_ite_inv e P Q : syn (If e Then P Else Q) → syn P ∧ syn Q.
   Proof.
     intros (Ho & Ht & Hc & Hi). simpl in *. apply andb_prop in Ho as [Ho1 Ho2].
     split; (split; [done|]); repeat split; intros x Hx.
@@ -117,7 +117,7 @@ Section Syn.
   Qed.
 
   Definition hsynP (h : prefix * proc) : Prop :=
-    syn h.2 ∧ TG (prefix_tagged h.1) ∧ (∀ t, h.1 ≠ PTau t) ∧ (∀ k c, h.1 = PRecv k c → IC c).
+    syn h.2 ∧ TG (prefix_tagged h.1) ∧ (∀ t, h.1 ≠ (t ∶ 𝛕)) ∧ (∀ k c, h.1 = (k ∶ c ?) → IC c).
 
   Lemma gheads_syn g h : syn (PG g) → h ∈ gheads g → hsynP h.
   Proof.
@@ -159,7 +159,7 @@ Section Syn.
   Qed.
 
   Lemma gsyn_pre 𝜆 P :
-    (∀ t, 𝜆 ≠ PTau t) → TG (prefix_tagged 𝜆) → (∀ k c, 𝜆 = PRecv k c → IC c) → syn P → gsyn (𝜆 ∙ P).
+    (∀ t, 𝜆 ≠ (t ∶ 𝛕)) → TG (prefix_tagged 𝜆) → (∀ k c, 𝜆 = (k ∶ c ?) → IC c) → syn P → gsyn (𝜆 ∙ P).
   Proof.
     intros Hnt Htg Hic (Ho & Ht & Hc & Hi). split; [destruct 𝜆; simpl; try done; by destruct (Hnt t)|].
     split; [done|]. split; [|split; [done|]].

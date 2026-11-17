@@ -80,21 +80,21 @@ Section Den_Harmony.
   (* The same reductions, with the redex recorded. *)
   Inductive sts_lab : St → proc → choice → mlabel → St → proc → Prop :=
   | sl_com ρ t c e v t' P K :
-      eval e = Some v →
-      ⟨ρ, PSend t c e ∥ PG ((PRecv t' c ∙ P) + K)⟩ ⟶[cpair t t', MNone] ⟨ρ, 𝟘 ∥ (subst 0 v P)⟩
+      〚 e 〛 = v →
+      ⟨ρ, (t ∶ c ! e) ∥ PG (((t' ∶ c ?) ∙ P) + K)⟩ ⟶[cpair t t', MNone] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆⟩
   | sl_tau ρ t P K :
-      ⟨ρ, PG ((PTau t ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨ρ, P⟩
+      ⟨ρ, PG (((t ∶ 𝛕) ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨ρ, P⟩
   | sl_op ρ t E es qs P K :
       eval_qubits es = Some qs →
-      ⟨ρ, PG ((POp t E es ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨sop_apply E qs ρ, P⟩
+      ⟨ρ, PG (((t ∶ E ⦅es⦆) ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨sop_apply E qs ρ, P⟩
   | sl_init ρ t es qs P K :
       eval_qubits es = Some qs →
-      ⟨ρ, PG ((PInit t es ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨init_apply qs ρ, P⟩
+      ⟨ρ, PG (((t ∶ init ⦅es⦆) ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨init_apply qs ρ, P⟩
   | sl_meas ρ t M es qs (k : Out (meas_of M qs)) P K :
       eval_qubits es = Some qs →
-      ⟨ρ, PG ((PMeas t M es ∙ P) + K)⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨meas_branch M qs k ρ, (subst 0 (VNat (code _ k)) P)⟩
+      ⟨ρ, PG (((t ∶ M ⦅es ▷⦆) ∙ P) + K)⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨meas_branch M qs k ρ, P ⁅ VNat (code _ k) ⁆⟩
   | sl_rec ρ t X P :
-      ⟨ρ, PRec t X P⟩ ⟶[CTag t, MNone] ⟨ρ, P ⦃ (PRec t X P)↑ // X ⦄⟩
+      ⟨ρ, (t ∶ rec X ∙ P)⟩ ⟶[CTag t, MNone] ⟨ρ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄⟩
   | sl_par ρ P s κ ρ' P' Q :
       ⟨ρ, P⟩ ⟶[s, κ] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶[s, κ] ⟨ρ', P' ∥ Q⟩
   | sl_res ρ P s κ ρ' P' :
@@ -120,10 +120,10 @@ Section Den_Harmony.
   (* A communication between an output under [n] restrictions and an input
       under [m] restrictions: the restrictions are extruded one by one. *)
   Lemma Com_shapes_lab ρ n :
-    ∀ m c e v t t' P1 K R R', eval e = Some v →
-    sts_lab ρ (Ѵ n (PSend t (ren_chan (Nat.add n) c) e ∥ R)
-           ∥ Ѵ m (PG ((PRecv t' (ren_chan (Nat.add m) c) ∙ P1) + K) ∥ R'))
-        (cpair t t') MNone ρ (Ѵ n (𝟘 ∥ R) ∥ Ѵ m ((subst 0 v P1) ∥ R')).
+    ∀ m c e v t t' P1 K R R', 〚 e 〛 = v →
+    sts_lab ρ (Ѵ n ((t ∶ (ren_chan (Nat.add n) c) ! e) ∥ R)
+           ∥ Ѵ m (PG (((t' ∶ (ren_chan (Nat.add m) c) ?) ∙ P1) + K) ∥ R'))
+        (cpair t t') MNone ρ (Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ ∥ R')).
   Proof.
     induction n as [|n IHn]; intros m.
     - induction m as [|m IHm]; intros c e v t t' P1 K R R' He; cbn [Ѵ].
@@ -147,8 +147,8 @@ Section Den_Harmony.
         apply (IHn m (ren_chan S c) e v t t' (ren (liftn m S) P1) (gren (liftn m S) K) R
                  (ren (liftn m S) R') He).
       + rewrite <- (proj1 ren_subst).
-        replace (Ѵ m (ren (liftn m S) ((subst 0 v P1)) ∥ ren (liftn m S) R'))
-          with (ren S (Ѵ m ((subst 0 v P1) ∥ R'))) by (rewrite ren_resn; done).
+        replace (Ѵ m (ren (liftn m S) (P1 ⁅ v ⁆) ∥ ren (liftn m S) R'))
+          with (ren S (Ѵ m (P1 ⁅ v ⁆ ∥ R'))) by (rewrite ren_resn; done).
         apply cgr_res_scope.
   Qed.
 
@@ -215,7 +215,7 @@ Section Den_Harmony.
                    | ρ P s κ ρ' P' Q _ (P'' & (l & Hs & Hm) & HP)
                    | ρ P s κ ρ' P' _ (P'' & (l & Hs & Hm) & HP)
                    | ρ P P1 s κ ρ' Q1 Q Hc _ (Q1' & Hs & HQ) Hc'].
-    - exists (𝟘 ∥ (subst 0 v P)). split; [|reflexivity]. exists τ. split; [|constructor].
+    - exists (𝟘 ∥ P ⁅ v ⁆). split; [|reflexivity]. exists τ. split; [|constructor].
       eapply pr_syncL; [by apply pr_send | apply pr_sumL, pr_recv].
     - exists P. split; [|reflexivity]. exists τ. split; [|constructor].
       apply pr_sumL, pr_tau.
@@ -223,9 +223,9 @@ Section Den_Harmony.
       by apply pr_sumL, pr_op.
     - exists P. split; [|reflexivity]. eexists. split; [|constructor].
       by apply pr_sumL, pr_init.
-    - exists ((subst 0 (VNat (code _ k)) P)). split; [|reflexivity]. eexists. split; [|constructor].
+    - exists (P ⁅ VNat (code _ k) ⁆). split; [|reflexivity]. eexists. split; [|constructor].
       by apply pr_sumL, pr_meas.
-    - exists (P ⦃ (PRec t X P)↑ // X ⦄). split; [|reflexivity]. exists τ. split; [|constructor].
+    - exists (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄). split; [|reflexivity]. exists τ. split; [|constructor].
       apply pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par]. exists l. split; [by apply pr_parL | done].
     - exists (ν P''). split; [|by apply cgr_res]. exists l. split; [|done].

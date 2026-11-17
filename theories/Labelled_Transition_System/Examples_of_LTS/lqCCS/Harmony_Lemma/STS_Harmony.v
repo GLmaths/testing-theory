@@ -105,7 +105,7 @@ Qed.
 
 Lemma gstep_in_shape (g : guard) s c v Q' :
   g ⟶{c ? v}[s] Q' →
-  ∃ (t : tag) P K, s = t ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⟦ v ⟧.
+  ∃ (t : tag) P K, s = t ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆.
 Proof.
   intros Hs. remember (c ? v) as l eqn:El.
   change (prog_gstep g s l Q') in Hs. induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs] using prog_gstep_ind; simplify_eq.
@@ -121,7 +121,7 @@ Qed.
 
 Lemma TransitionShapeForOutput P s c v Q :
   P ⟶{c ! v}[s] Q →
-  ∃ (t : tag) e R n, eval e = Some v ∧ s = t
+  ∃ (t : tag) e R n, 〚 e 〛 = v ∧ s = t
     ∧ P ≡* Ѵ n (t ∶ (ren_chan (Nat.add n) c) ! e ∥ R) ∧ Q ≡* Ѵ n (𝟘 ∥ R).
 Proof.
   intros Hs. remember (c ! v) as l eqn:El. revert c v El.
@@ -160,7 +160,7 @@ Lemma TransitionShapeForInput P s c v Q :
   P ⟶{c ? v}[s] Q →
   ∃ (t : tag) P1 K R n, s = t
     ∧ P ≡* Ѵ n (((t ∶ (ren_chan (Nat.add n) c) ? ∙ P1) + K) ∥ R)
-    ∧ Q ≡* Ѵ n (P1 ⟦ v ⟧ ∥ R).
+    ∧ Q ≡* Ѵ n (P1 ⁅ v ⁆ ∥ R).
 Proof.
   intros Hs. remember (c ? v) as l eqn:El. revert c v El.
   induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?] using prog_step_guard_ind; intros c0 v0 El; simplify_eq.
@@ -286,8 +286,8 @@ Section STS.
 
   Inductive sts : St → proc → choice → St → proc → Prop :=
   | sts_com ρ t c e v t' P K :
-      eval e = Some v →
-      ⟨ρ, t ∶ c ! e ∥ ((t' ∶ c ? ∙ P) + K)⟩ ⟶[⦗t, t'⦘] ⟨ρ, 𝟘 ∥ P ⟦ v ⟧⟩
+      〚 e 〛 = v →
+      ⟨ρ, t ∶ c ! e ∥ ((t' ∶ c ? ∙ P) + K)⟩ ⟶[⦗t, t'⦘] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆⟩
   | sts_tau ρ t P K :
       ⟨ρ, ((t ∶ 𝛕 ∙ P) + K)⟩ ⟶[t] ⟨ρ, P⟩
   | sts_op ρ t E es qs P K :
@@ -298,7 +298,7 @@ Section STS.
       ⟨ρ, ((t ∶ init ⦅es⦆ ∙ P) + K)⟩ ⟶[t] ⟨init_apply qs ρ, P⟩
   | sts_meas ρ t M es qs (k : Out (meas_of M qs)) P K :
       eval_qubits es = Some qs →
-      ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[t] ⟨M ⦅qs⦆[k] · ρ, P ⟦ VNat (code _ k) ⟧⟩
+      ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[t] ⟨M ⦅qs⦆[k] · ρ, P ⁅ VNat (code _ k) ⁆⟩
   | sts_rec ρ t X P :
       ⟨ρ, t ∶ rec X ∙ P⟩ ⟶[t] ⟨ρ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄⟩
   | sts_par ρ P s ρ' P' Q :
@@ -317,10 +317,10 @@ Section STS.
   (* A communication between an output under [n] restrictions and an input
       under [m] restrictions: the restrictions are extruded one by one. *)
   Lemma Com_shapes ρ n :
-    ∀ m c e v t t' P1 K R R', eval e = Some v →
+    ∀ m c e v t t' P1 K R R', 〚 e 〛 = v →
     ⟨ρ, Ѵ n (t ∶ (ren_chan (Nat.add n) c) ! e ∥ R)
         ∥ Ѵ m (((t' ∶ (ren_chan (Nat.add m) c) ? ∙ P1) + K) ∥ R')⟩
-      ⟶[⦗t, t'⦘] ⟨ρ, Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⟦ v ⟧ ∥ R')⟩.
+      ⟶[⦗t, t'⦘] ⟨ρ, Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ ∥ R')⟩.
   Proof.
     induction n as [|n IHn]; intros m.
     - induction m as [|m IHm]; intros c e v t t' P1 K R R' He; cbn [Ѵ].
@@ -344,8 +344,8 @@ Section STS.
         apply (IHn m (ren_chan S c) e v t t' (ren (liftn m S) P1) (gren (liftn m S) K) R
                  (ren (liftn m S) R') He).
       + rewrite <- (proj1 ren_subst).
-        replace (Ѵ m (ren (liftn m S) (P1 ⟦ v ⟧) ∥ ren (liftn m S) R'))
-          with (ren S (Ѵ m (P1 ⟦ v ⟧ ∥ R'))) by (rewrite ren_resn; done).
+        replace (Ѵ m (ren (liftn m S) (P1 ⁅ v ⁆) ∥ ren (liftn m S) R'))
+          with (ren S (Ѵ m (P1 ⁅ v ⁆ ∥ R'))) by (rewrite ren_resn; done).
         apply cgr_res_scope.
   Qed.
 
@@ -412,7 +412,7 @@ Section STS.
                    | ρ P s ρ' P' Q _ (P'' & Hc & HP)
                    | ρ P s ρ' P' _ (P'' & Hc & HP)
                    | ρ P P1 s ρ' Q1 Q Hcg _ (Q1' & Hc & HQ) Hcg'].
-    - exists (𝟘 ∥ P ⟦ v ⟧). split; [|reflexivity]. apply comp_tau_right.
+    - exists (𝟘 ∥ P ⁅ v ⁆). split; [|reflexivity]. apply comp_tau_right.
       eapply pr_syncL; [by apply pr_send | apply pr_sumL, pr_recv].
     - exists P. split; [|reflexivity]. apply comp_tau_right.
       apply pr_sumL, pr_tau.
@@ -420,7 +420,7 @@ Section STS.
       eapply comp_tau_sync; [by apply pr_sumL, pr_op | apply (me_sop ρ (sop_act E qs)) | constructor].
     - exists P. split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_init | apply (me_sop ρ (init_act qs)) | constructor].
-    - exists (P ⟦ VNat (code _ k) ⟧). split; [|reflexivity].
+    - exists (P ⁅ VNat (code _ k) ⁆). split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_meas | apply me_meas | constructor].
     - exists (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄). split; [|reflexivity]. apply comp_tau_right, pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par].

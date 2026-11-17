@@ -128,12 +128,12 @@ Definition obs (T : proc) : Prop := obsb T = true ∧ chan_disjoint T.
 
 Fixpoint co_succ (T : proc) (a : coact) : list proc :=
   match T with
-  | PSend k' c' e =>
+  | k' ∶ c' ! e =>
       match a with
-      | CoOut k c v => if decide (k = k' ∧ c = c' ∧ eval e = Some v) then [𝟘] else []
+      | CoOut k c v => if decide (k = k' ∧ c = c' ∧ 〚 e 〛 = v) then [𝟘] else []
       | _ => []
       end
-  | PIte e P Q =>
+  | If e Then P Else Q =>
       match eval e with
       | Some (VBool true) => co_succ P a
       | Some (VBool false) => co_succ Q a
@@ -141,7 +141,7 @@ Fixpoint co_succ (T : proc) (a : coact) : list proc :=
       end
   | P ∥ Q => ((λ P', P' ∥ Q) <$> co_succ P a) ++ ((λ Q', P ∥ Q') <$> co_succ Q a)
   | ν _ | PVar _ => []
-  | PRec t X P =>
+  | t ∶ rec X ∙ P =>
       match a with
       | CoInit k qs => if decide (k = t ∧ qs = []) then [P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄] else []
       | _ => []
@@ -153,12 +153,12 @@ with gco_succ (g : guard) (a : coact) : list proc :=
   | GNil _ | ① => []
   | 𝜆 ∙ P =>
       match 𝜆, a with
-      | PRecv k' c', CoIn k c v => if decide (k = k' ∧ c = c') then [P ⟦ v ⟧] else []
-      | POp k' E' es, CoOp k E qs =>
+      | (k' ∶ c' ?), CoIn k c v => if decide (k = k' ∧ c = c') then [P ⁅ v ⁆] else []
+      | (k' ∶ E' ⦅es⦆), CoOp k E qs =>
           if decide (k = k' ∧ E = E' ∧ eval_qubits es = Some qs) then [P] else []
-      | PMeas k' M' es, CoMeas k M qs n =>
-          if decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) then [P ⟦ VNat n ⟧] else []
-      | PInit k' es, CoInit k qs => if decide (k = k' ∧ eval_qubits es = Some qs) then [P] else []
+      | (k' ∶ M' ⦅es ▷⦆), CoMeas k M qs n =>
+          if decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) then [P ⁅ VNat n ⁆] else []
+      | (k' ∶ init ⦅es⦆), CoInit k qs => if decide (k = k' ∧ eval_qubits es = Some qs) then [P] else []
       | _, _ => []
       end
   | (g1 + g2)%lq => gco_succ g1 a ++ gco_succ g2 a
@@ -1031,8 +1031,8 @@ Qed.
 
 Fixpoint out_msgs (T : proc) : list msg :=
   match T with
-  | PSend k c e => match eval e with Some v => [(k, c, v)] | None => [] end
-  | PIte e P Q =>
+  | k ∶ c ! e => match eval e with Some v => [(k, c, v)] | None => [] end
+  | If e Then P Else Q =>
       match eval e with
       | Some (VBool true) => out_msgs P
       | Some (VBool false) => out_msgs Q

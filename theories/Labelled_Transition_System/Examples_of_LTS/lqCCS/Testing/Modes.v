@@ -77,8 +77,8 @@ Qed.
 Inductive pullb (base : proc → proc → Prop) : proc → proc → Prop :=
 | pb_base X Y : base X Y → pullb base X Y
 | pb_bag B X Z W : zs B X Z → pullb base Z W → pullb base X (B ∥ W)
-| pb_iteT e A W X : eval e = Some (VBool true) → pullb base X W → pullb base X (PIte e W A)
-| pb_iteF e A W X : eval e = Some (VBool false) → pullb base X W → pullb base X (PIte e A W).
+| pb_iteT e A W X : 〚 e 〛 = true → pullb base X W → pullb base X (If e Then W Else A)
+| pb_iteF e A W X : 〚 e 〛 = false → pullb base X W → pullb base X (If e Then A Else W).
 
 Lemma pullb_tite base X W Y : tite W Y → pullb base X W → pullb base X Y.
 Proof. induction 1 as [|e Y A He _ IH|e Y A He _ IH]; intros Hp; [done|apply pb_iteT; auto|apply pb_iteF; auto]. Qed.

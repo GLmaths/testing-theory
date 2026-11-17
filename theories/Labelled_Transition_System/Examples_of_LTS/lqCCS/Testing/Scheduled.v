@@ -65,7 +65,7 @@ Fixpoint successb (P : proc) : bool :=
   | PG g => gsuccessb g
   | P ∥ Q => successb P || successb Q
   | ν P => successb P
-  | PIte e P Q =>
+  | If e Then P Else Q =>
       match eval e with
       | Some (VBool true) => successb P
       | Some (VBool false) => successb Q

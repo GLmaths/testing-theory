@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -20,20 +19,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
 *)
-(* end hide *)
-(* begin hide *)
+
 (* * lqCCS: syntax
 
     Tagged lqCCS (Ceragioli, Gadducci, Lomurno, Tedeschi, arXiv:2604.23756),
-    with asynchronous outputs, guarded sums, and recursion as in VACCS.
-
-    - Restricted channels are De Bruijn indices ([CIdx i]), as in VACCS:
-      [ν P] binds the index [0] of [P].  Free channels are names ([CName c]).
-      Processes are then identified up to α-conversion, and no side
-      condition is needed for scope extrusion.
-    - Variables of values are named, bound by [c?x] and [M(ẽ ▷ x)], and
-      substituted by closed values.
-    - [①] is an inert guard marking the success of an observer. *)
+    with asynchronous outputs, guarded sums, and recursion as in VACCS. *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
@@ -59,6 +49,13 @@ Inductive val : Type :=
 #[global] Instance val_eq_dec : EqDecision val.
 Proof. solve_decision. Defined.
 
+Declare Scope lqccs_scope.
+Delimit Scope lqccs_scope with lq.
+Bind Scope lqccs_scope with val.
+
+Coercion VBool : bool >-> val.
+Notation "$ n" := (VQubit n) (at level 1, n at level 0, format "$ n") : lqccs_scope.
+
 Inductive exp : Type :=
 | EVar (i : nat)
 | EVal (v : val)
@@ -67,28 +64,40 @@ Inductive exp : Type :=
 | ELe (e1 e2 : exp)
 | EEq (e1 e2 : exp).
 
+Bind Scope lqccs_scope with exp.
+Coercion EVal : val >-> exp.
+
+Notation "# i" := (EVar i) (at level 1, i at level 1, format "# i") : lqccs_scope.
+Notation "¬ₑ e" := (ENot e) (at level 35, right associativity) : lqccs_scope.
+Notation "e1 ∨ₑ e2" := (EOr e1 e2) (at level 50, left associativity) : lqccs_scope.
+Notation "e1 ≤ₑ e2" := (ELe e1 e2) (at level 40, no associativity) : lqccs_scope.
+Notation "e1 =ₑ e2" := (EEq e1 e2) (at level 40, no associativity) : lqccs_scope.
+
+#[local] Open Scope lqccs_scope.
+#[local] Open Scope nat_scope.
+
 (* ** Substitution in expressions *)
 
 (* [exp_subst k v e] substitutes [v] for the index [k] and lowers the
     indices above [k]; [exp_shift k e] makes room for a new index [k]. *)
 Fixpoint exp_subst (k : nat) (v : val) (e : exp) : exp :=
   match e with
-  | EVar i => if decide (i = k) then EVal v else if decide (i < k) then EVar i else EVar (pred i)
-  | EVal w => EVal w
-  | ENot e => ENot (exp_subst k v e)
-  | EOr e1 e2 => EOr (exp_subst k v e1) (exp_subst k v e2)
-  | ELe e1 e2 => ELe (exp_subst k v e1) (exp_subst k v e2)
-  | EEq e1 e2 => EEq (exp_subst k v e1) (exp_subst k v e2)
+  | #i => if decide (i = k) then v else if decide (i < k) then #i else #(pred i)
+  | EVal w => w
+  | ¬ₑ e => ¬ₑ exp_subst k v e
+  | e1 ∨ₑ e2 => exp_subst k v e1 ∨ₑ exp_subst k v e2
+  | e1 ≤ₑ e2 => exp_subst k v e1 ≤ₑ exp_subst k v e2
+  | e1 =ₑ e2 => exp_subst k v e1 =ₑ exp_subst k v e2
   end.
 
 Fixpoint exp_shift (k : nat) (e : exp) : exp :=
   match e with
-  | EVar i => if decide (k ≤ i) then EVar (S i) else EVar i
-  | EVal w => EVal w
-  | ENot e => ENot (exp_shift k e)
-  | EOr e1 e2 => EOr (exp_shift k e1) (exp_shift k e2)
-  | ELe e1 e2 => ELe (exp_shift k e1) (exp_shift k e2)
-  | EEq e1 e2 => EEq (exp_shift k e1) (exp_shift k e2)
+  | #i => if decide (k ≤ i) then #(S i) else #i
+  | EVal w => w
+  | ¬ₑ e => ¬ₑ exp_shift k e
+  | e1 ∨ₑ e2 => exp_shift k e1 ∨ₑ exp_shift k e2
+  | e1 ≤ₑ e2 => exp_shift k e1 ≤ₑ exp_shift k e2
+  | e1 =ₑ e2 => exp_shift k e1 =ₑ exp_shift k e2
   end.
 
 (* ** Big-step evaluation [e ⇓ v] *)
@@ -102,26 +111,28 @@ Definition val_le (v1 v2 : val) : option bool :=
 
 Fixpoint eval (e : exp) : option val :=
   match e with
-  | EVar _ => None
+  | #_ => None
   | EVal v => Some v
-  | ENot e =>
+  | ¬ₑ e =>
       match eval e with Some (VBool b) => Some (VBool (negb b)) | _ => None end
-  | EOr e1 e2 =>
+  | e1 ∨ₑ e2 =>
       match eval e1, eval e2 with
       | Some (VBool b1), Some (VBool b2) => Some (VBool (b1 || b2))
       | _, _ => None
       end
-  | ELe e1 e2 =>
+  | e1 ≤ₑ e2 =>
       match eval e1, eval e2 with
       | Some v1, Some v2 => option_map VBool (val_le v1 v2)
       | _, _ => None
       end
-  | EEq e1 e2 =>
+  | e1 =ₑ e2 =>
       match eval e1, eval e2 with
       | Some v1, Some v2 => Some (VBool (bool_decide (v1 = v2)))
       | _, _ => None
       end
   end.
+
+Notation "〚 e 〛 = v" := (eval e = @Some val v) (at level 70, no associativity) : lqccs_scope.
 
 #[global] Instance exp_eq_dec : EqDecision exp.
 Proof. solve_decision. Defined.
@@ -165,8 +176,6 @@ Combined Scheme proc_guard_ind from proc_mut_ind, guard_mut_ind.
 
 Coercion PG : guard >-> proc.
 
-Declare Scope lqccs_scope.
-Delimit Scope lqccs_scope with lq.
 Bind Scope lqccs_scope with proc guard.
 
 Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
@@ -201,21 +210,21 @@ Definition prefix_binds (𝜆 : prefix) : nat :=
 
 Definition prefix_subst (k : nat) (v : val) (𝜆 : prefix) : prefix :=
   match 𝜆 with
-  | PTau t => PTau t
-  | PRecv t c => PRecv t c
-  | POp t E es => POp t E (map (exp_subst k v) es)
-  | PMeas t M es => PMeas t M (map (exp_subst k v) es)
-  | PInit t es => PInit t (map (exp_subst k v) es)
+  | t ∶ 𝛕 => t ∶ 𝛕
+  | t ∶ c ? => t ∶ c ?
+  | t ∶ E ⦅es⦆ => t ∶ E ⦅map (exp_subst k v) es⦆
+  | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_subst k v) es ▷⦆
+  | t ∶ init ⦅es⦆ => t ∶ init ⦅map (exp_subst k v) es⦆
   end.
 
 Fixpoint subst (k : nat) (v : val) (P : proc) : proc :=
   match P with
-  | PSend t c e => PSend t c (exp_subst k v e)
-  | PIte e P Q => PIte (exp_subst k v e) (subst k v P) (subst k v Q)
+  | t ∶ c ! e => t ∶ c ! (exp_subst k v e)
+  | If e Then P Else Q => If (exp_subst k v e) Then subst k v P Else subst k v Q
   | P ∥ Q => subst k v P ∥ subst k v Q
   | ν P => ν (subst k v P)
   | PVar X => PVar X
-  | PRec t X P => PRec t X (subst k v P)
+  | t ∶ rec X ∙ P => t ∶ rec X ∙ subst k v P
   | PG g => PG (gsubst k v g)
   end
 with gsubst (k : nat) (v : val) (g : guard) : guard :=
@@ -226,25 +235,25 @@ with gsubst (k : nat) (v : val) (g : guard) : guard :=
   | (g1 + g2)%lq => (gsubst k v g1 + gsubst k v g2)%lq
   end.
 
-Notation "P ⟦ v ⟧" := (subst 0 v P) (at level 20) : lqccs_scope.
+Notation "P ⁅ v ⁆" := (subst 0 v P) (at level 20) : lqccs_scope.
 
 Definition prefix_shift (k : nat) (𝜆 : prefix) : prefix :=
   match 𝜆 with
-  | PTau t => PTau t
-  | PRecv t c => PRecv t c
-  | POp t E es => POp t E (map (exp_shift k) es)
-  | PMeas t M es => PMeas t M (map (exp_shift k) es)
-  | PInit t es => PInit t (map (exp_shift k) es)
+  | t ∶ 𝛕 => t ∶ 𝛕
+  | t ∶ c ? => t ∶ c ?
+  | t ∶ E ⦅es⦆ => t ∶ E ⦅map (exp_shift k) es⦆
+  | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_shift k) es ▷⦆
+  | t ∶ init ⦅es⦆ => t ∶ init ⦅map (exp_shift k) es⦆
   end.
 
 Fixpoint shiftv (k : nat) (P : proc) : proc :=
   match P with
-  | PSend t c e => PSend t c (exp_shift k e)
-  | PIte e P Q => PIte (exp_shift k e) (shiftv k P) (shiftv k Q)
+  | t ∶ c ! e => t ∶ c ! (exp_shift k e)
+  | If e Then P Else Q => If (exp_shift k e) Then shiftv k P Else shiftv k Q
   | P ∥ Q => shiftv k P ∥ shiftv k Q
   | ν P => ν (shiftv k P)
   | PVar X => PVar X
-  | PRec t X P => PRec t X (shiftv k P)
+  | t ∶ rec X ∙ P => t ∶ rec X ∙ shiftv k P
   | PG g => PG (gshiftv k g)
   end
 with gshiftv (k : nat) (g : guard) : guard :=
@@ -272,18 +281,18 @@ Definition ren_chan (f : nat → nat) (c : channel) : channel :=
 
 Definition prefix_ren (f : nat → nat) (𝜆 : prefix) : prefix :=
   match 𝜆 with
-  | PRecv t c => PRecv t (ren_chan f c)
+  | t ∶ c ? => t ∶ (ren_chan f c) ?
   | _ => 𝜆
   end.
 
 Fixpoint ren (f : nat → nat) (P : proc) : proc :=
   match P with
-  | PSend t c e => PSend t (ren_chan f c) e
-  | PIte e P Q => PIte e (ren f P) (ren f Q)
+  | t ∶ c ! e => t ∶ (ren_chan f c) ! e
+  | If e Then P Else Q => If e Then ren f P Else ren f Q
   | P ∥ Q => ren f P ∥ ren f Q
   | ν P => ν (ren (lift f) P)
   | PVar X => PVar X
-  | PRec t X P => PRec t X (ren f P)
+  | t ∶ rec X ∙ P => t ∶ rec X ∙ ren f P
   | PG g => PG (gren f g)
   end
 with gren (f : nat → nat) (g : guard) : guard :=
@@ -298,12 +307,12 @@ with gren (f : nat → nat) (g : guard) : guard :=
 
 Fixpoint pr_subst (X : nat) (P Q : proc) : proc :=
   match P with
-  | PSend t c e => PSend t c e
-  | PIte e P1 P2 => PIte e (pr_subst X P1 Q) (pr_subst X P2 Q)
+  | t ∶ c ! e => t ∶ c ! e
+  | If e Then P1 Else P2 => If e Then pr_subst X P1 Q Else pr_subst X P2 Q
   | P1 ∥ P2 => pr_subst X P1 Q ∥ pr_subst X P2 Q
   | ν P1 => ν (pr_subst X P1 (ren S Q))
   | PVar Y => if decide (X = Y) then Q else PVar Y
-  | PRec t Y P1 => if decide (X = Y) then PRec t Y P1 else PRec t Y (pr_subst X P1 Q)
+  | t ∶ rec Y ∙ P1 => if decide (X = Y) then t ∶ rec Y ∙ P1 else t ∶ rec Y ∙ pr_subst X P1 Q
   | PG g => PG (gpr_subst X g Q)
   end
 with gpr_subst (X : nat) (g : guard) (Q : proc) : guard :=
@@ -319,7 +328,7 @@ Notation "P ⦃ Q // X ⦄" := (pr_subst X P Q) (at level 20) : lqccs_scope.
 (* ** Qubits named by expressions *)
 
 Definition eval_qubit (e : exp) : option qubit :=
-  match eval e with Some (VQubit q) => Some q | _ => None end.
+  match eval e with Some ($q) => Some q | _ => None end.
 
 Definition eval_qubits (es : list exp) : option (list qubit) :=
   mapM eval_qubit es.
@@ -500,21 +509,21 @@ Qed.
 
 Definition prefix_tren (f : tag → tag) (𝜆 : prefix) : prefix :=
   match 𝜆 with
-  | PTau t => PTau (f t)
-  | PRecv t c => PRecv (f t) c
-  | POp t E es => POp (f t) E es
-  | PMeas t M es => PMeas (f t) M es
-  | PInit t es => PInit (f t) es
+  | t ∶ 𝛕 => f t ∶ 𝛕
+  | t ∶ c ? => f t ∶ c ?
+  | t ∶ E ⦅es⦆ => f t ∶ E ⦅es⦆
+  | t ∶ M ⦅es ▷⦆ => f t ∶ M ⦅es ▷⦆
+  | t ∶ init ⦅es⦆ => f t ∶ init ⦅es⦆
   end.
 
 Fixpoint tren (f : tag → tag) (P : proc) : proc :=
   match P with
-  | PSend t c e => PSend (f t) c e
-  | PIte e P Q => PIte e (tren f P) (tren f Q)
+  | t ∶ c ! e => f t ∶ c ! e
+  | If e Then P Else Q => If e Then tren f P Else tren f Q
   | P ∥ Q => tren f P ∥ tren f Q
   | ν P => ν (tren f P)
   | PVar X => PVar X
-  | PRec t X P => PRec (f t) X (tren f P)
+  | t ∶ rec X ∙ P => f t ∶ rec X ∙ tren f P
   | PG g => PG (gtren f g)
   end
 with gtren (f : tag → tag) (g : guard) : guard :=

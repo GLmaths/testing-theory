@@ -41,10 +41,10 @@ Section Pool.
 
   Fixpoint oke (e : exp) : Prop :=
     match e with
-    | EVar _ => True
+    | #_ => True
     | EVal v => V v
-    | ENot e => oke e
-    | EOr a b | ELe a b | EEq a b => oke a ∧ oke b
+    | ¬ₑ e => oke e
+    | a ∨ₑ b | a ≤ₑ b | a =ₑ b => oke a ∧ oke b
     end.
 
   Definition okpre (𝜆 : prefix) : Prop :=
@@ -57,7 +57,7 @@ Section Pool.
   Fixpoint ok (P : proc) : Prop :=
     match P with
     | PSend _ _ e => oke e
-    | PIte e P Q => oke e ∧ ok P ∧ ok Q
+    | If e Then P Else Q => oke e ∧ ok P ∧ ok Q
     | P ∥ Q => ok P ∧ ok Q
     | ν P | PRec _ _ P => ok P
     | PVar _ => True
@@ -71,11 +71,11 @@ Section Pool.
     | (g1 + g2)%lq => gok g1 ∧ gok g2
     end.
 
-  Hypothesis HVb : ∀ b, V (VBool b).
+  Hypothesis HVb : ∀ b : bool, V b.
   Hypothesis HVm : ∀ M qs (k' : Out (meas_of M qs)),
-    MM M → length qs ≤ L → Forall (λ x, V (VQubit x)) qs → V (VNat (code _ k')).
+    MM M → length qs ≤ L → Forall (λ x, V $x) qs → V (VNat (code _ k')).
 
-  Lemma oke_eval e v : oke e → eval e = Some v → V v.
+  Lemma oke_eval e v : oke e → 〚 e 〛 = v → V v.
   Proof.
     revert v. induction e as [i|w|e IH|e1 IH1 e2 IH2|e1 IH1 e2 IH2|e1 IH1 e2 IH2]; simpl; intros v Ho He.
     - discriminate He.
@@ -215,10 +215,10 @@ Section Pool.
     end.
 
   Definition mq (M : meas) (qs : list qubit) : Prop :=
-    MM M ∧ length qs ≤ L ∧ Forall (λ x, V (VQubit x)) qs.
+    MM M ∧ length qs ≤ L ∧ Forall (λ x, V $x) qs.
 
   Lemma evq es qs : Forall oke es → eval_qubits es = Some qs →
-    length qs = length es ∧ Forall (λ x, V (VQubit x)) qs.
+    length qs = length es ∧ Forall (λ x, V $x) qs.
   Proof.
     intros Ho He. apply mapM_Some in He. induction He as [|e x es qs Hex _ IH]; [by split|].
     apply Forall_cons in Ho as [Ho1 Ho2]. destruct (IH Ho2) as [Hl Hf]. split; [simpl; by rewrite Hl|].
@@ -504,9 +504,9 @@ Proof.
 Qed.
 
 Definition pool `{QM : QuantumModel} (V0 : list val) (ML : list meas) (L : nat) (v : val) : Prop :=
-  v ∈ V0 ∨ (∃ b, v = VBool b)
+  v ∈ V0 ∨ (∃ b : bool, v = b)
   ∨ ∃ M qs (k' : Out (meas_of M qs)),
-      M ∈ ML ∧ length qs ≤ L ∧ Forall (λ x, VQubit x ∈ V0) qs ∧ v = VNat (code _ k').
+      M ∈ ML ∧ length qs ≤ L ∧ Forall (λ x, $x ∈ V0) qs ∧ v = VNat (code _ k').
 
 Lemma pool_fin `{QM : QuantumModel} V0 ML L : fin (pool V0 ML L).
 Proof.
@@ -514,15 +514,15 @@ Proof.
   - apply (fin_mono _ (λ v, v ∈ [VBool true; VBool false])); [|apply fin_elem].
     intros v [[] ->]; [by left|right; by left].
   - apply (fin_mono _ (λ v, ∃ M, M ∈ ML ∧ ∃ qs,
-        (∃ n, n ∈ seq 0 (Datatypes.S L) ∧ (length qs = n ∧ Forall (λ x, VQubit x ∈ V0) qs))
+        (∃ n, n ∈ seq 0 (Datatypes.S L) ∧ (length qs = n ∧ Forall (λ x, $x ∈ V0) qs))
         ∧ ∃ k' : Out (meas_of M qs), In k' (outs (meas_of M qs)) ∧ v = VNat (code _ k'))).
     + intros v (M & qs & k' & HM & Hl & Hf & ->). exists M. split; [done|]. exists qs. split.
       * exists (length qs). split; [apply elem_of_seq; lia|done].
       * exists k'. split; [apply outs_all|done].
     + apply (fin_bind _ _ (fin_elem ML)). intros M _. apply fin_bind.
       * apply (fin_bind _ _ (fin_elem _)). intros n _. apply fin_lists.
-        exists (omap (λ v, match v with VQubit x => Some x | _ => None end) V0). intros x Hx.
-        apply list_elem_of_omap. by exists (VQubit x).
+        exists (omap (λ v, match v with $x => Some x | _ => None end) V0). intros x Hx.
+        apply list_elem_of_omap. by exists ($x).
       * intros qs _.
         apply (fin_img (λ k' : Out (meas_of M qs), VNat (code _ k')) (λ k', In k' (outs (meas_of M qs)))).
         exists (outs (meas_of M qs)). intros x Hx. by apply list_elem_of_In.

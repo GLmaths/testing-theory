@@ -61,21 +61,21 @@ Section Branching.
     - destruct 𝜆 as [t|t c|t E es|t M es|t es].
       + apply (fin_mono _ (λ x, x = (τ, P))); [|apply fin_eq].
         intros [l R] (s & Hs & _). simpl in Hs. inversion Hs; subst. done.
-      + apply (fin_mono _ (λ x, ∃ v, v ∈ vs ∧ x = (ActExt (PrIn c v), P ⟦ v ⟧))).
+      + apply (fin_mono _ (λ x, ∃ v, v ∈ vs ∧ x = (ActExt (PrIn c v), P ⁅ v ⁆))).
         * intros [l R] (s & Hs & Hl). simpl in *. inversion Hs; subst. simpl in Hl.
           eexists. split; [eassumption|reflexivity].
-        * exact (fin_img (λ v, (ActExt (PrIn c v), P ⟦ v ⟧)) _ (fin_elem vs)).
+        * exact (fin_img (λ v, (ActExt (PrIn c v), P ⁅ v ⁆)) _ (fin_elem vs)).
       + apply (fin_mono _ (λ x, ∃ qs, eval_qubits es = Some qs ∧ x = (ActExt (PrOp E qs), P))).
         * intros [l R] (s & Hs & Hl). simpl in *. inversion Hs; subst.
           eexists. split; [eassumption|reflexivity].
         * apply (fin_img (λ qs, (ActExt (PrOp E qs), P)) (λ qs, eval_qubits es = Some qs)).
           apply fin_uniq. intros x y Hx Hy. congruence.
       + apply (fin_mono _ (λ x, ∃ qs, eval_qubits es = Some qs
-                            ∧ ∃ n, n ∈ ns ∧ x = (ActExt (PrMeas M qs n), P ⟦ VNat n ⟧))).
+                            ∧ ∃ n, n ∈ ns ∧ x = (ActExt (PrMeas M qs n), P ⁅ VNat n ⁆))).
         * intros [l R] (s & Hs & Hl). simpl in *. inversion Hs; subst. simpl in Hl.
           eexists. split; [eassumption|]. eexists. split; [eassumption|reflexivity].
         * apply fin_bind; [apply fin_uniq; intros x y Hx Hy; congruence|]. intros qs _.
-          exact (fin_img (λ n, (ActExt (PrMeas M qs n), P ⟦ VNat n ⟧)) _ (fin_elem ns)).
+          exact (fin_img (λ n, (ActExt (PrMeas M qs n), P ⁅ VNat n ⁆)) _ (fin_elem ns)).
       + apply (fin_mono _ (λ x, ∃ qs, eval_qubits es = Some qs ∧ x = (ActExt (PrInit qs), P))).
         * intros [l R] (s & Hs & Hl). simpl in *. inversion Hs; subst.
           eexists. split; [eassumption|reflexivity].
@@ -96,10 +96,10 @@ Section Branching.
   Lemma psteps_fin P : ∀ vs ns, fin (psteps P vs ns).
   Proof.
     induction P as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|X|t X P IHP|g]; intros vs ns.
-    - apply (fin_mono _ (λ x, ∃ v, eval e = Some v ∧ x = (ActExt (PrOut c v), 𝟘))).
+    - apply (fin_mono _ (λ x, ∃ v, 〚 e 〛 = v ∧ x = (ActExt (PrOut c v), 𝟘))).
       + intros [l R] (s & Hs & Hl). simpl in *. inversion Hs; subst.
         eexists. split; [eassumption|reflexivity].
-      + apply (fin_img (λ v, (ActExt (PrOut c v), 𝟘)) (λ v, eval e = Some v)).
+      + apply (fin_img (λ v, (ActExt (PrOut c v), 𝟘)) (λ v, 〚 e 〛 = v)).
         apply fin_uniq. intros x y Hx Hy. congruence.
     - apply (fin_mono _ (λ x, psteps P vs ns x ∨ psteps Q vs ns x)); [|apply fin_or; [apply IHP|apply IHQ]].
       intros [l R] (s & Hs & Hl). simpl in *. inversion Hs; subst; [left|right]; exists s; by split.
@@ -131,7 +131,7 @@ Section Branching.
         intros [l1 R1] [l2 R2] [Ea1 Ea2] [Eb1 Eb2]. simpl in *. f_equal; [|congruence].
         apply (ren_lbl_inj S (λ i j Hij, eq_add_S i j Hij)). congruence.
     - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros [l R] (s & Hs & _). simpl in Hs. inversion Hs.
-    - apply (fin_mono _ (λ x, x = (τ, P ⦃ (PRec t X P)↑ // X ⦄))); [|apply fin_eq].
+    - apply (fin_mono _ (λ x, x = (τ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄))); [|apply fin_eq].
       intros [l R] (s & Hs & _). simpl in Hs. inversion Hs; subst. done.
     - apply (fin_mono _ (gsteps g vs ns)); [|apply gsteps_fin].
       intros [l R] (s & Hs & Hl). simpl in *. exists s. by split.

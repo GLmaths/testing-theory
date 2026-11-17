@@ -47,7 +47,7 @@ Proof. solve_decision. Defined.
 
 Definition prefix_tagged (𝜆 : prefix) : tag * okind :=
   match 𝜆 with
-  | PTau t => (t, KTau)
+  | t ∶ 𝛕 => (t, KTau)
   | PRecv t _ => (t, KIn)
   | POp t _ _ => (t, KOp)
   | PMeas t _ _ => (t, KMeas)
