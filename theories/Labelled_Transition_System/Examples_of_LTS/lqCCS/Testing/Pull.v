@@ -33,6 +33,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Definition osim (R : proc → proc → Prop) : Prop :=
   ∀ X Y, R X Y → successb X = successb Y
     ∧ ∀ a, length (co_succ Y a) = length (co_succ X a)
@@ -88,7 +91,7 @@ Section Osim.
 
   Lemma osim_O n m : m ∈ O_T Y n ↔ m ∈ O_T X n.
   Proof.
-    destruct m as [[k c] v]. rewrite !O_T_spec.
+    destruct m as [[k c] v]. setoid_rewrite O_T_spec.
     destruct (osim_tnodes n) as [[EX EY]|(X' & Y' & EX & EY & H1)]; rewrite EX, EY.
     - split; intros (T' & HT' & _); by apply elem_of_nil in HT'.
     - destruct (HR X' Y' H1) as [_ Ha]. destruct (Ha (CoOut k c v)) as [Hl _].
@@ -323,4 +326,7 @@ Lemma eval_quote qs : eval_qubits (quote qs) = Some qs.
 Proof.
   unfold eval_qubits, quote. induction qs as [|x qs IH]; [done|]. simpl. rewrite IH. done.
 Qed.
+
+End LqP.
+
 (* end hide *)

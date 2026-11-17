@@ -55,6 +55,9 @@ From TestingTheory Require Import lqCCS.Language.Congruence lqCCS.Harmony_Lemma.
 
 (* ** Iterated restrictions and shifts *)
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Fixpoint Ѵ (n : nat) (P : proc) : proc :=
   match n with 0 => P | S n => ν (Ѵ n P) end.
 
@@ -92,6 +95,9 @@ Proof. revert f. induction n; intros f; simpl; [done|]. by rewrite IHn. Qed.
 Lemma cgr_resn n P Q : P ≡* Q → Ѵ n P ≡* Ѵ n Q.
 Proof. intros H. induction n; simpl; [done|]. by apply cgr_res. Qed.
 
+#[global] Instance resn_proper n : Proper (cgr ==> cgr) (Ѵ n).
+Proof. intros P Q H. by apply cgr_resn. Qed.
+
 (* [(Ѵ n P) ∥ Q ≡ Ѵ n (P ∥ Q⁺ⁿ)] *)
 Lemma cgr_res_scope_n n P Q : (Ѵ n P) ∥ Q ≡* Ѵ n (P ∥ ren (Nat.add n) Q).
 Proof.
@@ -104,19 +110,18 @@ Qed.
 (* ** The shapes of the transitions *)
 
 Lemma gstep_in_shape (g : guard) s c v Q' :
-  g ⟶{c ? v}[s] Q' →
+  g ⟶ᵍ{c ? v}[s] Q' →
   ∃ (t : tag) P K, s = t ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆.
 Proof.
   intros Hs. remember (c ? v) as l eqn:El.
-  change (prog_gstep g s l Q') in Hs. induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs] using prog_gstep_ind; simplify_eq.
+  induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs]; simplify_eq.
   - exists t, P, (GNil []). split_and!; [done|apply gcgr_choice_nil_rev|done].
   - destruct (IHHs eq_refl) as (t & P & K & -> & Hg & ->).
     exists t, P, (K + g2)%lq. split_and!; [done| |done].
-    etrans; [by apply gcgr_choice|]. apply gcgr_choice_assoc.
+    by rewrite Hg, gcgr_choice_assoc.
   - destruct (IHHs eq_refl) as (t & P & K & -> & Hg & ->).
     exists t, P, (K + g1)%lq. split_and!; [done| |done].
-    etrans; [apply gcgr_choice_com|].
-    etrans; [by apply gcgr_choice|]. apply gcgr_choice_assoc.
+    by rewrite gcgr_choice_com, Hg, gcgr_choice_assoc.
 Qed.
 
 Lemma TransitionShapeForOutput P s c v Q :
@@ -125,8 +130,8 @@ Lemma TransitionShapeForOutput P s c v Q :
     ∧ P ≡* Ѵ n (t ∶ (ren_chan (Nat.add n) c) ! e ∥ R) ∧ Q ≡* Ѵ n (𝟘 ∥ R).
 Proof.
   intros Hs. remember (c ! v) as l eqn:El. revert c v El.
-  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?] using prog_step_guard_ind; intros c0 v0 El; simplify_eq.
-  - exfalso. by eapply prog_gstep_not_out.
+  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros c0 v0 El; simplify_eq.
+  - exfalso. by eapply prog_gstep_not_out, pr_guard.
   - exists t, e, 𝟘, 0. split_and!; [done|done| |].
     + simpl. rewrite ren_chan_add_0. apply cgr_par_nil_rev.
     + simpl. apply cgr_par_nil_rev.
@@ -138,18 +143,12 @@ Proof.
     etrans; [|exact HP]. by apply cgr_if_false.
   - destruct (IHHs _ _ eq_refl) as (t & e & R & n & He & -> & HP & HQ).
     exists t, e, (R ∥ ren (Nat.add n) Q), n. split_and!; [done|done| |].
-    + etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
-    + etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
+    + by rewrite HP, cgr_res_scope_n, cgr_par_assoc.
+    + by rewrite HQ, cgr_res_scope_n, cgr_par_assoc.
   - destruct (IHHs _ _ eq_refl) as (t & e & R & n & He & -> & HP & HQ).
     exists t, e, (R ∥ ren (Nat.add n) P), n. split_and!; [done|done| |].
-    + etrans; [apply cgr_par_com|].
-      etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
-    + etrans; [apply cgr_par_com|].
-      etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
+    + by rewrite cgr_par_com, HP, cgr_res_scope_n, cgr_par_assoc.
+    + by rewrite cgr_par_com, HQ, cgr_res_scope_n, cgr_par_assoc.
   - destruct (IHHs _ _ eq_refl) as (t & e & R & n & He & -> & HP & HQ).
     exists t, e, R, (S n). split_and!; [done|done| |].
     + apply cgr_res. rewrite <- ren_chan_add_S. exact HP.
@@ -163,7 +162,7 @@ Lemma TransitionShapeForInput P s c v Q :
     ∧ Q ≡* Ѵ n (P1 ⁅ v ⁆ ∥ R).
 Proof.
   intros Hs. remember (c ? v) as l eqn:El. revert c v El.
-  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?] using prog_step_guard_ind; intros c0 v0 El; simplify_eq.
+  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros c0 v0 El; simplify_eq.
   - destruct (gstep_in_shape _ _ _ _ _ H) as (t & P1 & K & -> & Hg & ->).
     exists t, P1, K, 𝟘, 0. split_and!; [done| |].
     + simpl. rewrite ren_chan_add_0. etrans; [by apply cgr_guard|]. apply cgr_par_nil_rev.
@@ -176,18 +175,12 @@ Proof.
     etrans; [|exact HP]. by apply cgr_if_false.
   - destruct (IHHs _ _ eq_refl) as (t & P1 & K & R & n & -> & HP & HQ).
     exists t, P1, K, (R ∥ ren (Nat.add n) Q), n. split_and!; [done| |].
-    + etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
-    + etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
+    + by rewrite HP, cgr_res_scope_n, cgr_par_assoc.
+    + by rewrite HQ, cgr_res_scope_n, cgr_par_assoc.
   - destruct (IHHs _ _ eq_refl) as (t & P1 & K & R & n & -> & HP & HQ).
     exists t, P1, K, (R ∥ ren (Nat.add n) P), n. split_and!; [done| |].
-    + etrans; [apply cgr_par_com|].
-      etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
-    + etrans; [apply cgr_par_com|].
-      etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
+    + by rewrite cgr_par_com, HP, cgr_res_scope_n, cgr_par_assoc.
+    + by rewrite cgr_par_com, HQ, cgr_res_scope_n, cgr_par_assoc.
   - destruct (IHHs _ _ eq_refl) as (t & P1 & K & R & n & -> & HP & HQ).
     exists t, P1, K, R, (S n). split_and!; [done| |].
     + apply cgr_res. rewrite <- ren_chan_add_S. exact HP.
@@ -197,23 +190,22 @@ Qed.
 (* ** Sums: the guard that moves can be brought in front *)
 
 Lemma TransitionShapeForGuard (g : guard) s l P' :
-  g ⟶{l}[s] P' →
+  g ⟶ᵍ{l}[s] P' →
   ∃ 𝜆 Q K, g ≡ᵍ* ((𝜆 ∙ Q) + K) ∧ (𝜆 ∙ Q) ⟶{l}[s] P'.
 Proof.
-  intros Hs0. change (prog_gstep g s l P') in Hs0. induction Hs0 as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t es qs P Hq
-                 | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH] using prog_gstep_ind.
-  - exists (t ∶ 𝛕), P, (GNil []). split; [apply gcgr_choice_nil_rev|constructor].
-  - exists (t ∶ c ?), P, (GNil []). split; [apply gcgr_choice_nil_rev|constructor].
-  - exists (t ∶ E ⦅es⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by constructor].
-  - exists (t ∶ M ⦅es ▷⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by constructor].
-  - exists (t ∶ init ⦅es⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by constructor].
+  intros Hs0. induction Hs0 as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t es qs P Hq
+                 | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH].
+  - exists (t ∶ 𝛕), P, (GNil []). split; [apply gcgr_choice_nil_rev|apply pr_tau].
+  - exists (t ∶ c ?), P, (GNil []). split; [apply gcgr_choice_nil_rev|apply pr_recv].
+  - exists (t ∶ E ⦅es⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by apply pr_op].
+  - exists (t ∶ M ⦅es ▷⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by apply pr_meas].
+  - exists (t ∶ init ⦅es⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by apply pr_init].
   - destruct IH as (𝜆 & Q & K & Hc & Hs).
     exists 𝜆, Q, (K + g2)%lq. split; [|done].
-    etrans; [by apply gcgr_choice|]. apply gcgr_choice_assoc.
+    by rewrite Hc, gcgr_choice_assoc.
   - destruct IH as (𝜆 & Q & K & Hc & Hs).
     exists 𝜆, Q, (K + g1)%lq. split; [|done].
-    etrans; [apply gcgr_choice_com|].
-    etrans; [by apply gcgr_choice|]. apply gcgr_choice_assoc.
+    by rewrite gcgr_choice_com, Hc, gcgr_choice_assoc.
 Qed.
 
 Definition quant_action (a : prog_action) : Prop :=
@@ -225,7 +217,7 @@ Lemma TransitionShapeForQuantum P s a Q :
     ∧ (𝜆 ∙ P1) ⟶{ActExt a}[s] Q1 ∧ Q ≡* Ѵ n (Q1 ∥ R).
 Proof.
   intros Ha Hs. remember (ActExt a) as l eqn:El. revert a Ha El.
-  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?] using prog_step_guard_ind; intros a0 Ha El; simplify_eq.
+  induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros a0 Ha El; simplify_eq.
   - destruct (TransitionShapeForGuard _ _ _ _ H) as (𝜆 & Q0 & K & Hg & Hs0).
     exists 𝜆, Q0, K, 𝟘, 0, P'. split_and!; [|done|].
     + simpl. etrans; [by apply cgr_guard|]. apply cgr_par_nil_rev.
@@ -239,18 +231,12 @@ Proof.
     etrans; [|exact HP]. by apply cgr_if_false.
   - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
     exists 𝜆, P1, K, (R ∥ ren (Nat.add n) Q), n, Q1. split_and!; [|done|].
-    + etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
-    + etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
+    + by rewrite HP, cgr_res_scope_n, cgr_par_assoc.
+    + by rewrite HQ, cgr_res_scope_n, cgr_par_assoc.
   - destruct (IHHs _ Ha eq_refl) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
     exists 𝜆, P1, K, (R ∥ ren (Nat.add n) P), n, Q1. split_and!; [|done|].
-    + etrans; [apply cgr_par_com|].
-      etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
-    + etrans; [apply cgr_par_com|].
-      etrans; [by apply cgr_par|]. etrans; [apply cgr_res_scope_n|].
-      apply cgr_resn, cgr_par_assoc.
+    + by rewrite cgr_par_com, HP, cgr_res_scope_n, cgr_par_assoc.
+    + by rewrite cgr_par_com, HQ, cgr_res_scope_n, cgr_par_assoc.
   - assert (E : ren_lbl S (ActExt a0) = ActExt a0) by (destruct a0; simpl in *; done).
     destruct (IHHs _ Ha E) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
     rewrite E in Hg.
@@ -356,10 +342,10 @@ Section STS.
     induction Hp as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH
                    | P Q s l P' Hp IH | P Q s l Q' Hp IH
                    | P Q t t' c v P' Q' HpP _ HpQ _ | P Q t t' c v P' Q' HpP _ HpQ _
-                   | P s l P' Hp IH | t X P] using prog_step_guard_ind; intros El; subst.
+                   | P s l P' Hp IH | t X P]; intros El; subst.
     - destruct (TransitionShapeForGuard _ _ _ _ Hg) as (𝜆 & Q & K & Hcg & Hs).
       eapply sts_cong; [apply cgr_guard, Hcg| |reflexivity].
-      inversion Hs; subst. apply sts_tau.
+      apply prog_step_guard in Hs. inversion Hs; subst. apply sts_tau.
     - discriminate.
     - eapply sts_cong; [by apply cgr_if_true | by apply IH | reflexivity].
     - eapply sts_cong; [by apply cgr_if_false | by apply IH | reflexivity].
@@ -388,7 +374,7 @@ Section STS.
     destruct (TransitionShapeForQuantum _ _ _ _ Ha Hp) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
     eapply sts_cong; [exact HP| |symmetry; exact HQ].
     apply sts_resn, sts_par.
-    inversion Hd; subst; inversion Hm; subst; inversion Hg; subst.
+    apply prog_step_guard in Hg. inversion Hd; subst; inversion Hm; subst; inversion Hg; subst.
     - by apply sts_op.
     - by apply sts_meas.
     - by apply sts_init.
@@ -459,4 +445,10 @@ Section STS.
 End STS.
 
 Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70) : lqccs_scope.
+
+End LqP.
+
+Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70).
+Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70) : lqccs_scope.
+
 (* end hide *)

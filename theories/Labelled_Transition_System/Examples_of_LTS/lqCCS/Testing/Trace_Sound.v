@@ -37,6 +37,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Lemma co_succ_out_same T k c v c' v' T1 :
   T1 ∈ co_succ T (CoOut k c v) → co_succ T (CoOut k c' v') ≠ [] → (c, v) ≠ (c', v') →
   co_succ T1 (CoOut k c' v') ≠ [].
@@ -440,4 +443,7 @@ Theorem trace_characterisation `{QM : QuantumModel} (DC : dep_choice) (p q : pro
 Proof.
   intros Hz Hconv. split; [exact (trace_complete DC p q Hz)|exact (trace_sound DC p q Hz Hconv)].
 Qed.
+
+End LqP.
+
 (* end hide *)

@@ -34,6 +34,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Syn.
   Context (TG : tag * okind → Prop) (OC IC : channel → Prop).
 
@@ -228,4 +231,7 @@ Section Syn.
     apply syn_par; [by apply syn_bagof|]. apply syn_PG, hsum_syn; [exact IH|by apply syn_ns].
   Qed.
 End Syn.
+
+End LqP.
+
 (* end hide *)

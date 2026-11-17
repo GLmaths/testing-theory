@@ -33,6 +33,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Lemma tnodes_chans_r T : obsr T → ∀ n X, X ∈ tnodes T n →
   (∀ c, c ∈ out_chans X → c ∈ out_chans T) ∧ (∀ c, c ∈ in_chans X → c ∈ in_chans T).
 Proof.
@@ -167,4 +170,7 @@ Theorem cotrace_sound_rec `{QM : QuantumModel} (DC : dep_choice)
 Proof.
   intros Hz Hc. apply (rec_free_sound DC p q Hz), (trace_sound_r DC p q Hz), cotrace_trace_inf, Hc.
 Qed.
+
+End LqP.
+
 (* end hide *)

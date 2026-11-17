@@ -64,6 +64,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 
 (* ** Offers of the observer, co-actions, nodes, items *)
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Inductive offer : Type :=
 | OffOut (k : tag) (c : channel) (v : val)
 | OffIn (k : tag) (c : channel)
@@ -366,4 +369,12 @@ Proof.
   intros Hd I O S HS r_q Hr_q. destruct (Hd O S HS I r_q Hr_q) as (w & res & Hall).
   destruct (Hall I Hr_q) as (r_p & Hr_p & Hle). exists r_p. split; [|done]. by eapply follows_is_run.
 Qed.
+
+End LqP.
+
+Notation "p ≼ q" := (alt_pre Stay p q) (at level 70).
+Notation "p ≼ᴰ q" := (alt_pre Drop p q) (at level 70).
+Notation "p ≼ₐₛ q" := (alt_as Stay p q) (at level 70).
+Notation "p ≼ₐₛᴰ q" := (alt_as Drop p q) (at level 70).
+
 (* end hide *)

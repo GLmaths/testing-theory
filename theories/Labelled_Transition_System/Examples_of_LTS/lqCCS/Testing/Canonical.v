@@ -31,6 +31,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Mass.
   Context `{QM : QuantumModel}.
 
@@ -344,4 +347,9 @@ Proof.
   intros HM Hc O Ch K. apply (malt_free_on_complete (M := lq_menu O)); [apply HM|].
   apply (proj1 (alt_pre_obs_menu p q)). exact (proj2 (alt_pre_obs_iff Stay DC p q) Hc).
 Qed.
+
+End LqP.
+
+Notation comp := (node * (proc * list msg))%type (only parsing).
+
 (* end hide *)

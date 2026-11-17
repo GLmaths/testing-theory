@@ -35,6 +35,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Inductive bag : list msg → proc → Prop :=
 | bag_nil : bag [] 𝟘
 | bag_one k c v : bag [(k, c, v)] (k ∶ c ! v)
@@ -552,7 +555,7 @@ Section Build.
     intros Hc Hs. destruct (bt_state n Hc) as (X & Et & E & Hw & _ & _ & H3).
     pose proof (clpath_plain n Hc) as Hp. rewrite (nout_plain n Hp) in Hw, H3.
     destruct (H3 Hs) as (Ha1 & _ & Ha3). rewrite (plain_cm n Hp) in Ha3. destruct x as [[k c] v].
-    rewrite O_T_spec. split.
+    setoid_rewrite O_T_spec. split.
     - intros (X0 & HX0 & Hne). rewrite Et in HX0. apply list_elem_of_singleton in HX0. subst X0.
       apply Ha1. by apply (wr_msgs _ _ _ k c v (Wn_nosend n) Hw).
     - intros Hin. exists X. split; [rewrite Et; by left|]. apply (wr_msgs _ _ _ k c v (Wn_nosend n) Hw).
@@ -612,4 +615,7 @@ Section Build.
         exact (bguard_syn (bt f (O n)) n o g (IH (O n)) Hin Hg).
   Qed.
 End Build.
+
+End LqP.
+
 (* end hide *)

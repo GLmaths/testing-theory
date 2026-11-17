@@ -41,6 +41,9 @@ From TestingTheory Require Import lqCCS.Language.Congruence lqCCS.Harmony_Lemma.
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Par_Harmony.
   Context `{QM : QuantumModel}.
 
@@ -52,7 +55,7 @@ Section Par_Harmony.
     split.
     - intros Hc.
       destruct (conf_step_tau_inv _ _ _ _ _ Hc) as [(Hp & ->) | (a & b & Hp & Hm & Hs)].
-      + inversion Hp as [| | | | | | | | | |? ? ? ? P' HP|? ? ? ? Q' HQ|? ? t t' c v P' Q' HP HQ|? ? t t' c v P' Q' HP HQ| |]; subst.
+      + inversion Hp as [| | | |? ? ? ? P' HP|? ? ? ? Q' HQ|? ? t t' c v P' Q' HP HQ|? ? t t' c v P' Q' HP HQ| |]; subst.
         * exists P', Q. split; [done|].
           exact (par_left _ prog_step sync_sys (ρ, P) Q s τ (ρ, P')
                    (par_right mem_step prog_step sync ρ P s τ P' HP)).
@@ -70,7 +73,7 @@ Section Par_Harmony.
           -- exact HQ.
           -- by do 2 constructor.
           -- constructor.
-      + inversion Hp as [| | | | | | | | | |? ? ? ? P' HP|? ? ? ? Q' HQ|? ? t t' c v P' Q' HP HQ|? ? t t' c v P' Q' HP HQ| |]; subst.
+      + inversion Hp as [| | | |? ? ? ? P' HP|? ? ? ? Q' HQ|? ? t t' c v P' Q' HP HQ|? ? t t' c v P' Q' HP HQ| |]; subst.
         * exists P', Q. split; [done|].
           apply (par_left _ prog_step sync_sys (ρ, P) Q s τ (ρ', P')).
           eapply par_sync; [exact Hm | exact HP | exact Hs | constructor].
@@ -106,4 +109,7 @@ Section Par_Harmony.
     ⟨ρ, P ∥ Q⟩ ⟶[s] ⟨ρ', R⟩ ↔ ∃ R', ⟨ρ, P ∥ Q⟩ ⟶{τ}[s] ⟨ρ', R'⟩ ∧ R' ≡* R.
   Proof. apply harmony. Qed.
 End Par_Harmony.
+
+End LqP.
+
 (* end hide *)

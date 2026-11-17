@@ -41,6 +41,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS.
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Lemma sync_lbl_ren `{QuantumModel} b a : 𝔻ₘₑₘ b a → ren_lbl S (ActExt a) = ActExt a.
 Proof. by destruct 1. Qed.
 
@@ -146,8 +149,11 @@ Section Memory_Harmony.
 
   (* ** From the program and the memory to the configuration *)
 
-  Lemma prog_step_conf ρ P s l P' : P ⟶{l}[s] P' → ⟨ρ, P⟩ ⟶{l}[s] ⟨ρ, P'⟩.
+  Lemma prog_gstep_conf ρ (g : guard) s l P' : g ⟶ᵍ{l}[s] P' → ⟨ρ, g⟩ ⟶{l}[s] ⟨ρ, P'⟩.
   Proof. induction 1; by econstructor. Qed.
+
+  Lemma prog_step_conf ρ P s l P' : P ⟶{l}[s] P' → ⟨ρ, P⟩ ⟶{l}[s] ⟨ρ, P'⟩.
+  Proof. induction 1; [by apply prog_gstep_conf|by econstructor..]. Qed.
 
   Lemma mem_step_conf ρ P b ρ' : ρ ⟶ₘ{b} ρ' → ⟨ρ, P⟩ ⟶ₘ{b} ⟨ρ', P⟩.
   Proof. inversion 1; subst; constructor. Qed.
@@ -179,4 +185,7 @@ Section Memory_Harmony.
         rewrite (cmul_eps_l_inv _ _ Hc). by eapply prog_step_mem_conf.
   Qed.
 End Memory_Harmony.
+
+End LqP.
+
 (* end hide *)

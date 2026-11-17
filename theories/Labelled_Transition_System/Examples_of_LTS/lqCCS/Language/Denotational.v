@@ -58,6 +58,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Den.
   Context `{QM : QuantumModel}.
 
@@ -152,4 +155,10 @@ End Den.
 
 Notation "⟦ P ⟧" := (denot P) (at level 0) : lqccs_scope.
 Notation "⟦ P ⟧[ w ]" := (den P w) (at level 0) : lqccs_scope.
+
+End LqP.
+
+Notation "⟦ P ⟧" := (denot P) (at level 0) : lqccs_scope.
+Notation "⟦ P ⟧[ w ]" := (den P w) (at level 0) : lqccs_scope.
+
 (* end hide *)

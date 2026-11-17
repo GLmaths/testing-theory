@@ -49,6 +49,9 @@ From TestingTheory Require Import lqCCS.Harmony_Lemma.Memory_Harmony lqCCS.Harmo
 
 (* ** Labels of the reductions: the outcome of a measurement, or nothing *)
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Inductive mlabel : Type :=
 | MNone
 | MMeas (M : meas) (qs : list qubit) (n : nat).
@@ -159,10 +162,10 @@ Section Den_Harmony.
     induction 1 as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH
                    | P Q s l P' Hp IH | P Q s l Q' Hp IH
                    | P Q t t' c v P' Q' HpP _ HpQ _ | P Q t t' c v P' Q' HpP _ HpQ _
-                   | P s l P' Hp IH | t X P] using prog_step_guard_ind; intros ρ ρ' κ Hm.
+                   | P s l P' Hp IH | t X P]; intros ρ ρ' κ Hm.
     - destruct (TransitionShapeForGuard _ _ _ _ Hg) as (𝜆 & Q & K & Hcg & Hs).
       eapply sl_cong; [apply cgr_guard, Hcg| |reflexivity].
-      inversion Hs; subst; inversion Hm; subst.
+      apply prog_step_guard in Hs. inversion Hs; subst; inversion Hm; subst.
       + apply sl_tau.
       + by apply sl_op.
       + by apply sl_meas.
@@ -421,4 +424,10 @@ Section Den_Harmony.
   Qed.
 End Den_Harmony.
 Notation "⟨ ρ , P ⟩ ⟶[ s , κ ] ⟨ ρ' , P' ⟩" := (sts_lab ρ P s κ ρ' P') (at level 70) : lqccs_scope.
+
+End LqP.
+
+Reserved Notation "⟨ ρ , P ⟩ ⟶[ s , κ ] ⟨ ρ' , P' ⟩" (at level 70).
+Notation "⟨ ρ , P ⟩ ⟶[ s , κ ] ⟨ ρ' , P' ⟩" := (sts_lab ρ P s κ ρ' P') (at level 70) : lqccs_scope.
+
 (* end hide *)

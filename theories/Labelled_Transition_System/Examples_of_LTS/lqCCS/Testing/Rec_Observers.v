@@ -32,6 +32,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 
 #[local] Open Scope lqccs_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Fixpoint obsrb (T : proc) : bool :=
   match T with
   | PSend _ _ _ | PVar _ => true
@@ -196,9 +199,9 @@ Lemma prog_step_out_chan_r P t c v P' :
 Proof.
   intros Hob Hs. remember (CTag t) as s eqn:Es. remember (ActExt (PrOut c v)) as l eqn:El.
   revert Hob Es El.
-  induction Hs as [g s l P' Hg| | | | | | | | | ] using prog_step_guard_ind; intros Hob Es El; simplify_eq; simpl in *.
+  induction Hs as [g s l P' Hg| | | | | | | | | ]; intros Hob Es El; simplify_eq; simpl in *.
   - exfalso. remember (ActExt (PrOut c v)) as l eqn:El. revert El.
-    induction Hg using prog_gstep_ind; intros El; simplify_eq; simpl in Hob.
+    induction Hg; intros El; simplify_eq; simpl in Hob.
     + apply andb_prop in Hob as [[Hob _]%andb_prop _]. by apply IHHg.
     + apply andb_prop in Hob as [[_ Hob]%andb_prop _]. by apply IHHg.
   - by apply list_elem_of_singleton.
@@ -213,9 +216,9 @@ Lemma prog_step_in_chan_r P t c v P' :
 Proof.
   intros Hob Hs. remember (CTag t) as s eqn:Es. remember (ActExt (PrIn c v)) as l eqn:El.
   revert Hob Es El.
-  induction Hs as [g s l P' Hg| | | | | | | | | ] using prog_step_guard_ind; intros Hob Es El; simplify_eq; simpl in *.
+  induction Hs as [g s l P' Hg| | | | | | | | | ]; intros Hob Es El; simplify_eq; simpl in *.
   - remember (ActExt (PrIn c v)) as l eqn:El. revert El.
-    induction Hg using prog_gstep_ind; intros El; simplify_eq; simpl in *.
+    induction Hg; intros El; simplify_eq; simpl in *.
     + by left.
     + apply andb_prop in Hob as [[Hob _]%andb_prop _]. apply elem_of_app. left. by apply IHHg.
     + apply andb_prop in Hob as [[_ Hob]%andb_prop _]. apply elem_of_app. right. by apply IHHg.
@@ -232,8 +235,8 @@ Proof.
   intros Hob Hs.
   induction Hs as [g s l P' Hg| |e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
                   |P Q s l P' Hp IH|P Q s l Q' Hp IH|P Q t t' c v P' Q' Hp IHp Hq IHq
-                  |P Q t t' c v P' Q' Hp IHp Hq IHq| |t X P] using prog_step_guard_ind; simpl in Hob; simplify_eq.
-  - revert Hob. induction Hg as [| | | | |g1 g2 s l P' Hg IH|g1 g2 s l P' Hg IH] using prog_gstep_ind; intros Hob; simpl.
+                  |P Q t t' c v P' Q' Hp IHp Hq IHq| |t X P]; simpl in Hob; simplify_eq.
+  - revert Hob. induction Hg as [| | | | |g1 g2 s l P' Hg IH|g1 g2 s l P' Hg IH]; intros Hob; simpl.
     + split; intros x; done.
     + rewrite out_chans_subst, in_chans_subst. split; [done|]. intros x Hc. by right.
     + done.
@@ -268,13 +271,13 @@ Proof.
   intros Hob Hs. remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El.
   revert k α Es El Hob.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
-                  |P Q s l P' Hp IH|P Q s l Q' Hp IH| | |P s l P' Hp IH|t X P] using prog_step_guard_ind;
+                  |P Q s l P' Hp IH|P Q s l Q' Hp IH| | |P s l P' Hp IH|t X P];
     intros k α Es El Hob; simplify_eq; simpl in Hob.
   - (* guard *)
     enough (∃ a, co_tag a = k ∧ co_act a = α ∧ P' ∈ gco_succ g a) as (a & ? & ? & ?)
       by (exists a; by simpl).
     remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El. revert k α Es El Hob.
-    induction Hg as [| t c v P|t E es qs P Hq|t M es qs n P Hq|t es qs P Hq|g1 g2 s l P' Hg IH|g1 g2 s l P' Hg IH] using prog_gstep_ind;
+    induction Hg as [| t c v P|t E es qs P Hq|t M es qs n P Hq|t es qs P Hq|g1 g2 s l P' Hg IH|g1 g2 s l P' Hg IH];
       intros k α Es El Hob; simplify_eq; simpl in Hob.
     + exists (CoIn k c v). simpl. split; [done|]. split; [done|]. rewrite decide_True; [|done].
       by apply list_elem_of_singleton.
@@ -306,7 +309,7 @@ Qed.
 
 Lemma gobs_success_stuck_r g s l P' : gobsrb g = true → gsuccessb g = true → ¬ prog_gstep g s l P'.
 Proof.
-  intros Hob Hsu Hg. induction Hg using prog_gstep_ind; simpl in *; try done;
+  intros Hob Hsu Hg. induction Hg; simpl in *; try done;
     apply andb_prop in Hob as [_ Hn]; by rewrite Hsu in Hn.
 Qed.
 
@@ -315,9 +318,9 @@ Proof.
   intros [Hob Hdis] Hs. revert Hob Hdis.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
                   |P Q s l P' Hp IH|P Q s l Q' Hp IH|P Q t t' c v P' Q' Hp IHp Hq IHq
-                  |P Q t t' c v P' Q' Hp IHp Hq IHq|P s l P' Hp IH|t X P] using prog_step_guard_ind;
+                  |P Q t t' c v P' Q' Hp IHp Hq IHq|P s l P' Hp IH|t X P];
     intros Hob Hdis; simpl in Hob.
-  - revert Hob Hdis. induction Hg using prog_gstep_ind; intros Hob Hdis; simpl in Hob.
+  - revert Hob Hdis. induction Hg; intros Hob Hdis; simpl in Hob.
     + done.
     + split; [by rewrite obsrb_subst|]. intros x. rewrite out_chans_subst, in_chans_subst.
       intros Hc Hc'. apply (Hdis x); simpl; [done|by right].
@@ -373,10 +376,10 @@ Proof.
   intros [Hob Hdis] Hs. remember τ as l eqn:El. revert Hob Hdis El.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
                   |P Q s l P' Hp IH|P Q s l Q' Hp IH|P Q t t' c v P' Q' Hp IHp Hq IHq
-                  |P Q t t' c v P' Q' Hp IHp Hq IHq|P s l P' Hp IH|t X P] using prog_step_guard_ind;
+                  |P Q t t' c v P' Q' Hp IHp Hq IHq|P s l P' Hp IH|t X P];
     intros Hob Hdis El; simplify_eq; simpl in Hob.
   - exfalso. clear Hdis. remember τ as l0 eqn:El. revert Hob El.
-    induction Hg using prog_gstep_ind; intros Hob El; simplify_eq; simpl in Hob; try done.
+    induction Hg; intros Hob El; simplify_eq; simpl in Hob; try done.
     + apply andb_prop in Hob as [[Hob _]%andb_prop _]. by apply (IHHg Hob).
     + apply andb_prop in Hob as [[_ Hob]%andb_prop _]. by apply (IHHg Hob).
   - apply andb_prop in Hob as [Hob _].
@@ -405,7 +408,7 @@ Proof.
   unfold success. intros Hob Hs. revert Hob.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
                   |P Q s l P' Hp IH|P Q s l Q' Hp IH|P Q t t' c v P' Q' Hp IHp Hq IHq
-                  |P Q t t' c v P' Q' Hp IHp Hq IHq|P s l P' Hp IH|t X P] using prog_step_guard_ind;
+                  |P Q t t' c v P' Q' Hp IHp Hq IHq|P s l P' Hp IH|t X P];
     intros Hob Hsu; simpl in *; try done.
   - exfalso. by eapply gobs_success_stuck_r.
   - apply andb_prop in Hob as [Hob _]. rewrite He in Hsu. by apply IH.
@@ -527,4 +530,7 @@ Proof.
     + apply IH; [done|done|done].
     + intros c' v' E. injection E as E _ _. apply Hkm. rewrite E. simpl. by left.
 Qed.
+
+End LqP.
+
 (* end hide *)

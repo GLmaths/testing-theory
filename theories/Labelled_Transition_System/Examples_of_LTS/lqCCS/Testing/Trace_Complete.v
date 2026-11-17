@@ -36,6 +36,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Asm.
   Context `{QM : QuantumModel} (p q : proc * St).
   Context (O : node → list msg) (S : node → bool) (Ch : channel → Prop) (K : tag → okind).
@@ -384,4 +387,7 @@ Proof.
   - intros n. eapply d_fuel; eassumption.
   - intros n a. eapply d_un; eassumption.
 Qed.
+
+End LqP.
+
 (* end hide *)

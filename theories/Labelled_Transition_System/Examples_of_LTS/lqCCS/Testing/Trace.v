@@ -33,6 +33,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Trace.
   Context `{QM : QuantumModel} (p q : proc * St).
 
@@ -102,4 +105,7 @@ Section Trace.
       ∃ r', is_run (SchedSts0 := trace_sts O S Ch K r w) Stay (dinit p) r'
           ∧ run_le (SchedSts0 := trace_sts O S Ch K r w) r' r.
 End Trace.
+
+End LqP.
+
 (* end hide *)

@@ -49,6 +49,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 
 (* ** Lists *)
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Lemma Forall2_concat' {A B} (R : A → B → Prop) (ls : list (list A)) (ks : list (list B)) :
   Forall2 (Forall2 R) ls ks → Forall2 R (concat ls) (concat ks).
 Proof. induction 1; simpl; [constructor|]. by apply Forall2_app. Qed.
@@ -992,4 +995,7 @@ Proof.
     + intros t Ht HtT. exact (proj1 (Htags t (tgT_tagged T t HtT)) Ht).
     + intros t Ht HtT. exact (proj2 (Htags t (tgT_tagged T t HtT)) Ht).
 Qed.
+
+End LqP.
+
 (* end hide *)

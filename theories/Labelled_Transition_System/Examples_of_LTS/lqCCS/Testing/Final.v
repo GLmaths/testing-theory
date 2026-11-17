@@ -34,6 +34,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 #[global] Instance coact_eq_dec : EqDecision coact.
 Proof. solve_decision. Defined.
 
@@ -242,4 +245,7 @@ Proof.
   intros Hc O Ch K. apply (malt_free_on_trunc (M := lq_menu O) _ _ DC); [by apply lq_MenuTrunc|].
   apply (proj1 (alt_pre_obs_menu p q)). exact (proj2 (alt_pre_obs_iff Stay DC p q) Hc).
 Qed.
+
+End LqP.
+
 (* end hide *)

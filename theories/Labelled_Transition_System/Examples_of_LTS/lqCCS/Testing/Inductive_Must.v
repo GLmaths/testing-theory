@@ -31,6 +31,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Theorem ctx_pre_pmust `{QM : QuantumModel} (W_total : ∀ a b : W, W_le a b ∨ W_le b a) (DC : dep_choice)
     (Ts : proc → Prop) (p q : proc * St) :
   ctx_pre_sm_on Stay Ts p q ↔ ∀ T, Ts T → pmust_pre (compose p T) (compose q T).
@@ -47,4 +50,7 @@ Proof.
   - apply (smyth_pmust (SS := lq_SchedSts) Wt Hfin DC). exact (Hc T HT).
   - apply (smyth_pmust (SS := lq_SchedSts) Wt Hfin DC). exact (Hc T HT).
 Qed.
+
+End LqP.
+
 (* end hide *)

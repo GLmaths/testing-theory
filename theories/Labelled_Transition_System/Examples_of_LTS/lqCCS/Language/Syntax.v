@@ -37,7 +37,6 @@ Definition tag : Type := nat.
 Definition qubit : Type := nat.
 Definition sop : Type := nat.
 Definition meas : Type := nat.
-Definition chan : Type := nat.
 
 (* ** Values and expressions *)
 
@@ -78,8 +77,6 @@ Notation "e1 =ₑ e2" := (EEq e1 e2) (at level 40, no associativity) : lqccs_sco
 
 (* ** Substitution in expressions *)
 
-(* [exp_subst k v e] substitutes [v] for the index [k] and lowers the
-    indices above [k]; [exp_shift k e] makes room for a new index [k]. *)
 Fixpoint exp_subst (k : nat) (v : val) (e : exp) : exp :=
   match e with
   | #i => if decide (i = k) then v else if decide (i < k) then #i else #(pred i)
@@ -100,7 +97,7 @@ Fixpoint exp_shift (k : nat) (e : exp) : exp :=
   | e1 =ₑ e2 => exp_shift k e1 =ₑ exp_shift k e2
   end.
 
-(* ** Big-step evaluation [e ⇓ v] *)
+(* ** Big-step evaluation〚 e 〛 = v, written [e ⇓ v] in the rules of Ceragioli, Gadducci, Lomurno and Tedeschi. *)
 
 Definition val_le (v1 v2 : val) : option bool :=
   match v1, v2 with
@@ -138,10 +135,20 @@ Notation "〚 e 〛 = v" := (eval e = @Some val v) (at level 70, no associativit
 Proof. solve_decision. Defined.
 
 
+(* ** Parameters of the language *)
+
+Class lqCCS_Parameters := {
+  Chan : Type;
+  Chan_eq_dec :: EqDecision Chan
+}.
+
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 (* ** Channels: names and De Bruijn indices of restrictions *)
 
 Inductive channel : Type :=
-| CName (c : chan)
+| CName (c : Chan)
 | CIdx (i : nat).
 
 #[global] Instance channel_eq_dec : EqDecision channel.
@@ -625,4 +632,26 @@ Proof. rewrite tren_comp. apply tren_ext. intros t. apply tag_base_up. Qed.
 
 Lemma size_tren : (∀ P f, size (tren f P) = size P) ∧ (∀ g f, gsize (gtren f g) = gsize g).
 Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
+
+End LqP.
+
+Bind Scope lqccs_scope with proc guard.
+Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
+Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
+Notation "g + g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
+Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
+Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
+Notation "①" := GSucc : lqccs_scope.
+Notation "t ∶ '𝛕'" := (PTau t) (at level 40) : lqccs_scope.
+Notation "t ∶ c ?" := (PRecv t c) (at level 40, c at level 9) : lqccs_scope.
+Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9) : lqccs_scope.
+Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9) : lqccs_scope.
+Notation "t ∶ 'init' ⦅ es ⦆" := (PInit t es) (at level 40) : lqccs_scope.
+Notation "t ∶ c ! e" := (PSend t c e) (at level 40, c at level 9, e at level 9) : lqccs_scope.
+Notation "t ∶ 'rec' X ∙ P" := (PRec t X P) (at level 40, X at level 9, P at level 40) : lqccs_scope.
+Notation "'If' e 'Then' P 'Else' Q" := (PIte e P Q) (at level 55, e at level 9, P at level 54, Q at level 54) : lqccs_scope.
+Notation "P ⁅ v ⁆" := (subst 0 v P) (at level 20) : lqccs_scope.
+Notation "P ⦃ Q // X ⦄" := (pr_subst X P Q) (at level 20) : lqccs_scope.
+Notation "P ↑" := (tren tag_up P) (at level 20, format "P ↑") : lqccs_scope.
+
 (* end hide *)

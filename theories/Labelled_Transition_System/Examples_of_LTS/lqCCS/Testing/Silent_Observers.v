@@ -34,6 +34,9 @@ From TestingTheory Require Import lqCCS.Testing.DistLTS lqCCS.Testing.Programs l
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Detau.
   Context (E : sop).
 
@@ -123,16 +126,22 @@ Section Detau.
   Lemma lrel_ext a l' : lrel (ActExt a) l' → l' = ActExt a.
   Proof. by intros [->|[? _]]. Qed.
 
-  Lemma detau_step P s l P' : P ⟶{l}[s] P' → ∃ l', detau P ⟶{l'}[s] detau P' ∧ lrel l l'.
+  Lemma detau_gstep g s l P' : g ⟶ᵍ{l}[s] P' → ∃ l', gdetau g ⟶ᵍ{l'}[s] detau P' ∧ lrel l l'.
   Proof.
-    induction 1 as [t P | t c v P | t E0 es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH | P Q s l P' Hp IH | P Q s l Q' Hp IH | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P s l P' Hp IH | t X P]; simpl.
-    - exists (ActExt (PrOp E [])). split; [by apply pr_op|by right].
+    induction 1 as [t P | t c v P | t E0 es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH]; simpl.
+    - exists (ActExt (PrOp E [])). split; [by apply pg_op|by right].
     - exists (c ? v). split; [|by left]. rewrite (proj1 detau_subst). constructor.
     - exists (E0 ⦅qs⦆). split; [by constructor|by left].
     - exists (M ⦅qs⦆? n). split; [|by left]. rewrite (proj1 detau_subst). by constructor.
     - exists (init ⦅qs⦆). split; [by constructor|by left].
-    - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pr_sumL|done].
-    - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pr_sumR|done].
+    - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pg_sumL|done].
+    - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pg_sumR|done].
+  Qed.
+
+  Lemma detau_step P s l P' : P ⟶{l}[s] P' → ∃ l', detau P ⟶{l'}[s] detau P' ∧ lrel l l'.
+  Proof.
+    induction 1 as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH | P Q s l P' Hp IH | P Q s l Q' Hp IH | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P s l P' Hp IH | t X P]; simpl.
+    - destruct (detau_gstep _ _ _ _ Hg) as (l' & Hs & Hl). exists l'. split; [by apply pr_guard|done].
     - exists (c ! v). split; [by constructor|by left].
     - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pr_iteT|done].
     - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pr_iteF|done].
@@ -154,7 +163,7 @@ Section Detau.
 
   Lemma detau_step_inv :
     (∀ P s l' X, detau P ⟶{l'}[s] X → ∃ l P', P ⟶{l}[s] P' ∧ X = detau P' ∧ lrel l l')
-    ∧ (∀ g s l' X, PG (gdetau g) ⟶{l'}[s] X → ∃ l P', PG g ⟶{l}[s] P' ∧ X = detau P' ∧ lrel l l').
+    ∧ (∀ g s l' X, gdetau g ⟶ᵍ{l'}[s] X → ∃ l P', g ⟶ᵍ{l}[s] P' ∧ X = detau P' ∧ lrel l l').
   Proof.
     apply proc_guard_ind; simpl.
     - intros t c e s l' X Hs. inversion Hs; subst. exists (c ! v), 𝟘. split; [by constructor|]. split; [done|by left].
@@ -186,7 +195,8 @@ Section Detau.
     - intros t X P IHP s l' Y Hs. inversion Hs; subst. exists τ, (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄).
       split; [constructor|]. split; [|by left].
       rewrite (proj1 (detau_pr_subst X)). simpl. by rewrite (proj1 detau_tren).
-    - intros g IHg s l' X Hs. exact (IHg s l' X Hs).
+    - intros g IHg s l' X Hs%prog_step_guard. destruct (IHg s l' X Hs) as (l & P' & Hs' & -> & Hl).
+      exists l, P'. split; [by apply pr_guard|done].
     - intros es s l' X Hs. inversion Hs.
     - intros s l' X Hs. inversion Hs.
     - intros 𝜆 P IHP s l' X Hs. destruct 𝜆 as [t|t c|t E0 es|t M es|t es]; simpl in Hs; inversion Hs; subst.
@@ -197,10 +207,10 @@ Section Detau.
       + exists (M ⦅qs⦆? n), (P ⁅ VNat n ⁆). split; [by constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
       + exists (init ⦅qs⦆), P. split; [by constructor|]. split; [done|by left].
     - intros g1 IH1 g2 IH2 s l' X Hs. inversion Hs; subst.
-      + match goal with Hp : PG (gdetau g1) ⟶{_}[_] _ |- _ => destruct (IH1 _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
-        exists l, P1. split; [by apply pr_sumL|done].
-      + match goal with Hp : PG (gdetau g2) ⟶{_}[_] _ |- _ => destruct (IH2 _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
-        exists l, P1. split; [by apply pr_sumR|done].
+      + match goal with Hp : gdetau g1 ⟶ᵍ{_}[_] _ |- _ => destruct (IH1 _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
+        exists l, P1. split; [by apply pg_sumL|done].
+      + match goal with Hp : gdetau g2 ⟶ᵍ{_}[_] _ |- _ => destruct (IH2 _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
+        exists l, P1. split; [by apply pg_sumR|done].
   Qed.
   Lemma detau_successb :
     (∀ P, successb (detau P) = successb P) ∧ (∀ g, gsuccessb (gdetau g) = gsuccessb g).
@@ -337,4 +347,7 @@ Section Sched_Detau.
     - intros Hc T HT. apply (smyth_detau_obs DC p q T). exact (Hc _ HT).
   Qed.
 End Sched_Detau.
+
+End LqP.
+
 (* end hide *)

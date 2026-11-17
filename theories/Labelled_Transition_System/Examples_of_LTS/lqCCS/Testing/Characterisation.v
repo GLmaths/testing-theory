@@ -31,6 +31,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Section Characterisation.
   Context `{QM : QuantumModel} (p q : proc * St).
 
@@ -94,4 +97,7 @@ Section Characterisation.
       + intros n o Hm. exact (menu_real p q T n o HT Hm).
   Qed.
 End Characterisation.
+
+End LqP.
+
 (* end hide *)

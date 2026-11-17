@@ -53,6 +53,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 (* ** Success: [①] at top level, through parallel composition, restriction,
     evaluated conditionals and sums *)
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Fixpoint gsuccessb (g : guard) : bool :=
   match g with
   | ① => true
@@ -164,14 +167,24 @@ Section Sched.
       eapply prog_step_mem_conf; [exact Hp|apply me_meas|constructor].
   Qed.
 
+  Lemma prog_gstep_meas_any g s M qs n R' :
+    prog_gstep g s (ActExt (PrMeas M qs n)) R' →
+    ∀ n', ∃ R'', prog_gstep g s (ActExt (PrMeas M qs n')) R''.
+  Proof.
+    intros Hp. remember (ActExt (PrMeas M qs n)) as l eqn:El. revert El.
+    induction Hp; intros El n'; simplify_eq;
+      try (edestruct IHHp as (R'' & HR''); [done|]; eexists; by econstructor).
+    eexists. by apply pg_meas.
+  Qed.
+
   Lemma prog_step_meas_any R s M qs n R' :
     prog_step R s (ActExt (PrMeas M qs n)) R' →
     ∀ n', ∃ R'', prog_step R s (ActExt (PrMeas M qs n')) R''.
   Proof.
     intros Hp. remember (ActExt (PrMeas M qs n)) as l eqn:El. revert El.
-    induction Hp; intros El n'; simplify_eq;
+    induction Hp as [g s l P' Hg| | | | | | | | |]; intros El n'; simplify_eq;
       try (edestruct IHHp as (R'' & HR''); [done|]; eexists; by econstructor).
-    eexists. by apply pr_meas.
+    destruct (prog_gstep_meas_any _ _ _ _ _ _ Hg n') as (R'' & HR''). eexists. by apply pr_guard.
   Qed.
 
   Lemma mem_step_meas_inv ρ M qs n ρ' :
@@ -292,4 +305,7 @@ Section Bottom.
     - destruct Hw as [_ Hnz]. exfalso. apply Hnz, W_zero_le.
   Qed.
 End Bottom.
+
+End LqP.
+
 (* end hide *)

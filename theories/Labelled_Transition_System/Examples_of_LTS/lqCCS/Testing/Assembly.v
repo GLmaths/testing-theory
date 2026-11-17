@@ -34,6 +34,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Lemma co_succ_offer X a a' : offer_of a = offer_of a' → co_succ X a = [] → co_succ X a' = [].
 Proof.
   intros Ho. induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl.
@@ -373,4 +376,7 @@ Section Asm.
     intros i Hi. exact (Hag i Hi (Hre i Hi)).
   Qed.
 End Asm.
+
+End LqP.
+
 (* end hide *)

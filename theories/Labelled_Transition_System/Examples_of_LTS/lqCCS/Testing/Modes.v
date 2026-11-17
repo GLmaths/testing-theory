@@ -34,6 +34,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Lemma omap_cons' {A B} (f : A → option B) x l :
   omap f (x :: l) = match f x with Some y => y :: omap f l | None => omap f l end.
 Proof. done. Qed.
@@ -819,4 +822,7 @@ Section Inv.
     rewrite EY. simpl. rewrite orb_false_r. exact (rel_success VL reps wrapb MR X Y Hr).
   Qed.
 End Inv.
+
+End LqP.
+
 (* end hide *)

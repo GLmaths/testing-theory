@@ -40,6 +40,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 
 (* ** Tags with their kinds *)
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Inductive okind : Type := KTau | KOut | KIn | KOp | KMeas | KInit | KRec.
 
 #[global] Instance okind_eq_dec : EqDecision okind.
@@ -148,8 +151,8 @@ Qed.
 Lemma prog_step_tagged P s l P' x :
   prog_step P s l P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
 Proof.
-  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ] using prog_step_guard_ind; simpl; intros Hx.
-  - induction Hg using prog_gstep_ind; simpl in *; try (apply elem_of_app; auto; fail).
+  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; simpl; intros Hx.
+  - induction Hg; simpl in *; try (apply elem_of_app; auto; fail).
     + by right.
     + rewrite (proj1 tren_subst), tagged_subst in Hx. by right.
     + by right.
@@ -200,8 +203,8 @@ Qed.
 Lemma prog_step_choice_tags P s l P' u :
   prog_step P s l P' → u ∈ choice_tags s → u ∈ tags P.
 Proof.
-  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ] using prog_step_guard_ind; unfold tags; simpl; intros Hu.
-  - induction Hg using prog_gstep_ind; simpl in *.
+  intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; unfold tags; simpl; intros Hu.
+  - induction Hg; simpl in *.
     all: try (apply list_elem_of_singleton in Hu; subst; by left).
     + rewrite map_app. apply elem_of_app. left. by apply IHHg.
     + rewrite map_app. apply elem_of_app. right. by apply IHHg.
@@ -219,4 +222,7 @@ Proof.
   - by apply IHHs.
   - apply list_elem_of_singleton in Hu. subst. by left.
 Qed.
+
+End LqP.
+
 (* end hide *)

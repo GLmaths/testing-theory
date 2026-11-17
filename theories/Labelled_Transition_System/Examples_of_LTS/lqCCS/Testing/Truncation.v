@@ -32,6 +32,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Definition goffs (g : guard) (o : offer) : Prop := ∃ a, offer_of a = o ∧ gco_succ g a ≠ [].
 
 Definition offs (T : proc) (o : offer) : Prop := ∃ a, offer_of a = o ∧ co_succ T a ≠ [].
@@ -349,4 +352,7 @@ Proof.
     + rewrite !elem_of_cons. destruct (K k); auto 10.
     + exists k'. split; [apply elem_of_app; by right|done].
 Qed.
+
+End LqP.
+
 (* end hide *)

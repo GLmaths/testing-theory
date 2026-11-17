@@ -33,6 +33,9 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
+Section LqP.
+  Context `{LP : lqCCS_Parameters}.
+
 Inductive tite (W : proc) : proc → Prop :=
 | ti_refl : tite W W
 | ti_T e Y A : 〚 e 〛 = true → tite W Y → tite W (If e Then Y Else A)
@@ -266,4 +269,7 @@ Section Head.
         case_decide as Hd; [|done]. by destruct Hd as (_ & ?).
   Qed.
 End Head.
+
+End LqP.
+
 (* end hide *)
