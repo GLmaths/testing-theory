@@ -56,6 +56,7 @@ Fixpoint heads (Z : proc) : list (prefix * proc) :=
       | _ => []
       end
   | P ∥ Q => map (λ h, (h.1, h.2 ∥ sh h.1 Q)) (heads P) ++ map (λ h, (h.1, sh h.1 P ∥ h.2)) (heads Q)
+  | t ∶ rec X ∙ P => [(PInit t [], P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄)]
   | PG g => gheads g
   | _ => []
   end.
@@ -108,7 +109,9 @@ Proof.
   - by rewrite omap_app, resp_parL, resp_parR, IHP, IHQ.
   - done.
   - done.
-  - done.
+  - destruct a; unfold resp; simpl; try done. destruct (decide (k = t ∧ qs = [])) as [H1|H1].
+    + destruct H1 as (-> & ->). rewrite decide_True; done.
+    + rewrite decide_False; [done|]. intros (-> & E2). apply H1. injection E2 as <-. done.
   - apply gco_heads.
 Qed.
 

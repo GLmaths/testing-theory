@@ -38,6 +38,7 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
+From Stdlib Require Import Arith.Cantor.
 From stdpp Require Import base countable decidable list numbers.
 
 (* ** Names *)
@@ -469,5 +470,150 @@ Proof.
 Qed.
 
 Lemma size_ren : (∀ P f, size (ren f P) = size P) ∧ (∀ g f, gsize (gren f g) = gsize g).
+Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
+
+(* ** Generations of tags
+
+    A tag is a root with a generation, [⟨r, g⟩]; [tag_up] moves a tag to
+    the next generation of the same root.  Unfolding a recursion moves the
+    tags of the pending recursion to the next generation. *)
+
+Definition tag_root (t : tag) : nat := (Cantor.of_nat t).1.
+
+Definition tag_up (t : tag) : tag := Cantor.to_nat ((Cantor.of_nat t).1, S (Cantor.of_nat t).2).
+
+Lemma tag_up_root t : tag_root (tag_up t) = tag_root t.
+Proof. unfold tag_root, tag_up. by rewrite Cantor.cancel_of_to. Qed.
+
+Lemma tag_up_inj t u : tag_up t = tag_up u → t = u.
+Proof.
+  unfold tag_up. intros E. apply (f_equal Cantor.of_nat) in E. rewrite !Cantor.cancel_of_to in E.
+  injection E as E1 E2. rewrite <- (Cantor.cancel_to_of t), <- (Cantor.cancel_to_of u).
+  f_equal. destruct (Cantor.of_nat t), (Cantor.of_nat u). simpl in *. congruence.
+Qed.
+
+Lemma tag_up_neq t : tag_up t ≠ t.
+Proof.
+  unfold tag_up. intros E. apply (f_equal Cantor.of_nat) in E. rewrite Cantor.cancel_of_to in E.
+  destruct (Cantor.of_nat t) as [r g]. simpl in E. injection E as E. lia.
+Qed.
+
+Definition prefix_tren (f : tag → tag) (𝜆 : prefix) : prefix :=
+  match 𝜆 with
+  | PTau t => PTau (f t)
+  | PRecv t c => PRecv (f t) c
+  | POp t E es => POp (f t) E es
+  | PMeas t M es => PMeas (f t) M es
+  | PInit t es => PInit (f t) es
+  end.
+
+Fixpoint tren (f : tag → tag) (P : proc) : proc :=
+  match P with
+  | PSend t c e => PSend (f t) c e
+  | PIte e P Q => PIte e (tren f P) (tren f Q)
+  | P ∥ Q => tren f P ∥ tren f Q
+  | ν P => ν (tren f P)
+  | PVar X => PVar X
+  | PRec t X P => PRec (f t) X (tren f P)
+  | PG g => PG (gtren f g)
+  end
+with gtren (f : tag → tag) (g : guard) : guard :=
+  match g with
+  | GNil es => GNil es
+  | ① => ①
+  | 𝜆 ∙ P => prefix_tren f 𝜆 ∙ tren f P
+  | (g1 + g2)%lq => (gtren f g1 + gtren f g2)%lq
+  end.
+
+Notation "P ↑" := (tren tag_up P) (at level 20, format "P ↑") : lqccs_scope.
+
+Lemma prefix_tren_binds f 𝜆 : prefix_binds (prefix_tren f 𝜆) = prefix_binds 𝜆.
+Proof. by destruct 𝜆. Qed.
+
+Lemma prefix_tren_subst f k v 𝜆 :
+  prefix_tren f (prefix_subst k v 𝜆) = prefix_subst k v (prefix_tren f 𝜆).
+Proof. by destruct 𝜆. Qed.
+
+Lemma prefix_tren_shift f k 𝜆 : prefix_tren f (prefix_shift k 𝜆) = prefix_shift k (prefix_tren f 𝜆).
+Proof. by destruct 𝜆. Qed.
+
+Lemma prefix_tren_ren f g 𝜆 : prefix_tren f (prefix_ren g 𝜆) = prefix_ren g (prefix_tren f 𝜆).
+Proof. by destruct 𝜆. Qed.
+
+Lemma tren_subst :
+  (∀ P f k v, tren f (subst k v P) = subst k v (tren f P))
+  ∧ (∀ g f k v, gtren f (gsubst k v g) = gsubst k v (gtren f g)).
+Proof.
+  apply proc_guard_ind; simpl; intros; try congruence.
+  rewrite prefix_tren_subst, prefix_tren_binds. congruence.
+Qed.
+
+Lemma tren_shiftv :
+  (∀ P f k, tren f (shiftv k P) = shiftv k (tren f P))
+  ∧ (∀ g f k, gtren f (gshiftv k g) = gshiftv k (gtren f g)).
+Proof.
+  apply proc_guard_ind; simpl; intros; try congruence.
+  rewrite prefix_tren_shift, prefix_tren_binds. congruence.
+Qed.
+
+Lemma tren_shiftv_iter n f Q : tren f (Nat.iter n (shiftv 0) Q) = Nat.iter n (shiftv 0) (tren f Q).
+Proof. induction n; simpl; [done|]. by rewrite (proj1 tren_shiftv), IHn. Qed.
+
+Lemma tren_ren :
+  (∀ P f h, tren f (ren h P) = ren h (tren f P))
+  ∧ (∀ g f h, gtren f (gren h g) = gren h (gtren f g)).
+Proof.
+  apply proc_guard_ind; simpl; intros; try congruence.
+  rewrite prefix_tren_ren. congruence.
+Qed.
+
+Lemma tren_pr_subst X :
+  (∀ P f Q, tren f (P ⦃ Q // X ⦄) = (tren f P) ⦃ tren f Q // X ⦄)
+  ∧ (∀ g f Q, gtren f (gpr_subst X g Q) = gpr_subst X (gtren f g) (tren f Q)).
+Proof.
+  apply proc_guard_ind; simpl; intros; try congruence.
+  - f_equal. rewrite H. f_equal. apply (proj1 tren_ren).
+  - by case_decide.
+  - case_decide; simpl; congruence.
+  - rewrite H, prefix_tren_binds, tren_shiftv_iter. done.
+Qed.
+
+Lemma prefix_tren_ext f g 𝜆 : (∀ t, f t = g t) → prefix_tren f 𝜆 = prefix_tren g 𝜆.
+Proof. intros H. destruct 𝜆; simpl; by rewrite H. Qed.
+
+Lemma tren_ext_all :
+  (∀ P f g, (∀ t, f t = g t) → tren f P = tren g P)
+  ∧ (∀ h f g, (∀ t, f t = g t) → gtren f h = gtren g h).
+Proof.
+  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  f_equal; [by apply prefix_tren_ext | by apply H].
+Qed.
+
+Lemma tren_ext f g P : (∀ t, f t = g t) → tren f P = tren g P.
+Proof. apply (proj1 tren_ext_all). Qed.
+
+Lemma prefix_tren_comp f g 𝜆 : prefix_tren f (prefix_tren g 𝜆) = prefix_tren (f ∘ g) 𝜆.
+Proof. by destruct 𝜆. Qed.
+
+Lemma tren_comp_all :
+  (∀ P f g, tren f (tren g P) = tren (f ∘ g) P) ∧ (∀ h f g, gtren f (gtren g h) = gtren (f ∘ g) h).
+Proof.
+  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
+  f_equal; [apply prefix_tren_comp | apply H].
+Qed.
+
+Lemma tren_comp f g P : tren f (tren g P) = tren (f ∘ g) P.
+Proof. apply (proj1 tren_comp_all). Qed.
+
+(* The first tag of a root. *)
+Definition tag_base (t : tag) : tag := Cantor.to_nat (tag_root t, 0).
+
+Lemma tag_base_up t : tag_base (tag_up t) = tag_base t.
+Proof. unfold tag_base. by rewrite tag_up_root. Qed.
+
+Lemma tren_base_up P : tren tag_base (P↑) = tren tag_base P.
+Proof. rewrite tren_comp. apply tren_ext. intros t. apply tag_base_up. Qed.
+
+Lemma size_tren : (∀ P f, size (tren f P) = size P) ∧ (∀ g f, gsize (gtren f g) = gsize g).
 Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
 (* end hide *)

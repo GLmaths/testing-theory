@@ -300,7 +300,7 @@ Section STS.
       eval_qubits es = Some qs →
       ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[t] ⟨M ⦅qs⦆[k] · ρ, P ⟦ VNat (code _ k) ⟧⟩
   | sts_rec ρ t X P :
-      ⟨ρ, t ∶ rec X ∙ P⟩ ⟶[t] ⟨ρ, P ⦃ t ∶ rec X ∙ P // X ⦄⟩
+      ⟨ρ, t ∶ rec X ∙ P⟩ ⟶[t] ⟨ρ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄⟩
   | sts_par ρ P s ρ' P' Q :
       ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶[s] ⟨ρ', P' ∥ Q⟩
   | sts_res ρ P s ρ' P' :
@@ -422,7 +422,7 @@ Section STS.
       eapply comp_tau_sync; [by apply pr_sumL, pr_init | apply (me_sop ρ (init_act qs)) | constructor].
     - exists (P ⟦ VNat (code _ k) ⟧). split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_meas | apply me_meas | constructor].
-    - exists (P ⦃ t ∶ rec X ∙ P // X ⦄). split; [|reflexivity]. apply comp_tau_right, pr_rec.
+    - exists (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄). split; [|reflexivity]. apply comp_tau_right, pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par].
       destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)].
       + apply comp_tau_right. by apply pr_parL.

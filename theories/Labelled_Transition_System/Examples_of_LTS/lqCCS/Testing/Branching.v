@@ -131,7 +131,7 @@ Section Branching.
         intros [l1 R1] [l2 R2] [Ea1 Ea2] [Eb1 Eb2]. simpl in *. f_equal; [|congruence].
         apply (ren_lbl_inj S (λ i j Hij, eq_add_S i j Hij)). congruence.
     - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros [l R] (s & Hs & _). simpl in Hs. inversion Hs.
-    - apply (fin_mono _ (λ x, x = (τ, P ⦃ PRec t X P // X ⦄))); [|apply fin_eq].
+    - apply (fin_mono _ (λ x, x = (τ, P ⦃ (PRec t X P)↑ // X ⦄))); [|apply fin_eq].
       intros [l R] (s & Hs & _). simpl in Hs. inversion Hs; subst. done.
     - apply (fin_mono _ (gsteps g vs ns)); [|apply gsteps_fin].
       intros [l R] (s & Hs & Hl). simpl in *. exists s. by split.

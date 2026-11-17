@@ -171,6 +171,22 @@ Section Pool.
     - intros g1 IH1 g2 IH2 f [Ha Hb]. split; auto.
   Qed.
 
+  Lemma ok_tren : (∀ P f, ok P → ok (tren f P)) ∧ (∀ g f, gok g → gok (gtren f g)).
+  Proof.
+    apply proc_guard_ind; simpl.
+    - intros t c e f Ho. exact Ho.
+    - intros e P IHP Q IHQ f (He & HP & HQ). split; [done|]. split; auto.
+    - intros P IHP Q IHQ f [HP HQ]. split; auto.
+    - intros P IHP f HP. auto.
+    - intros X f _. exact Logic.I.
+    - intros t X P IHP f HP. auto.
+    - intros g IHg f Hg. auto.
+    - intros es f Ho. exact Ho.
+    - intros f _. exact Logic.I.
+    - intros 𝜆 P IHP f [Ha Hb]. split; [by destruct 𝜆|auto].
+    - intros g1 IH1 g2 IH2 f [Ha Hb]. split; auto.
+  Qed.
+
   Lemma ok_iter n Q : ok Q → ok (Nat.iter n (shiftv 0) Q).
   Proof. intros HQ. induction n as [|n IH]; simpl; [done|]. by apply (proj1 ok_shiftv). Qed.
 
@@ -287,7 +303,7 @@ Section Pool.
     - pose proof (step_out Q _ _ Q' (proj2 Ho) Hs2 c v eq_refl) as Hv.
       split; [exact (IH1 (proj1 Ho) Hv)|exact (IH2 (proj2 Ho) Logic.I)].
     - apply IH; [done|]. by apply lok_ren.
-    - apply (proj1 ok_prsubst); done.
+    - apply (proj1 ok_prsubst); [done|]. exact (proj1 ok_tren (t ∶ rec X ∙ P) tag_up Ho).
   Qed.
 
   Context (q : proc * St) (O : node → list msg) (T : proc) (r : nat → dist comp) (w : nat → item).
@@ -309,7 +325,8 @@ Section Pool.
     - rewrite tnodes_nil in HX. apply list_elem_of_singleton in HX. by subst.
     - apply Forall_app in Hn as [Hn Ha0]. assert (Ha : aval a) by (by inversion Ha0).
       apply tnodes_app_elem in HX as (X0 & HX0 & HX). pose proof (IH X0 Hn HX0) as Ho.
-      pose proof (co_succ_sound _ _ _ HX) as Hs. apply (step_ok X0 _ _ X Ho Hs).
+      destruct (co_succ_step _ _ _ HX) as [Hs|[_ Hs]]; [|by apply (step_ok X0 _ _ X Ho Hs)].
+      apply (step_ok X0 _ _ X Ho Hs).
       destruct a as [k c v|k c v|k E qs|k M qs i|k qs]; simpl in Ha |- *; try done.
       destruct Ha as [k' ->]. destruct (step_meas X0 _ _ X Ho Hs M qs _ eq_refl) as (Hm & Hl & Hf).
       by apply HVm.
@@ -319,7 +336,8 @@ Section Pool.
   Proof.
     intros Hn (X & HX & Hne)%O_T_spec. destruct (co_succ X (CoOut k c v)) as [|X1 l] eqn:E; [done|].
     assert (HX1 : X1 ∈ co_succ X (CoOut k c v)) by (rewrite E; by left).
-    exact (step_out X _ _ X1 (tn_ok n X Hn HX) (co_succ_sound _ _ _ HX1) c v eq_refl).
+    destruct (co_succ_step _ _ _ HX1) as [Hs|[HE0 _]]; [|discriminate HE0].
+    exact (step_out X _ _ X1 (tn_ok n X Hn HX) Hs c v eq_refl).
   Qed.
 
   Lemma sched_ok ρ P s (Δ : list (proc * St)) : ok P → sched_step ρ P s Δ → ∀ y : proc * St, y ∈ Δ → ok y.1.

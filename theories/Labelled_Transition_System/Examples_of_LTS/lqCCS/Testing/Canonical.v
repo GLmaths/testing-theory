@@ -260,7 +260,7 @@ Definition typed (K : tag → okind) (o : offer) : Prop := off_kind o = K (off_t
 
 Definition real_off `{QM : QuantumModel} (p q : proc * St) (Ch : channel → Prop) (K : tag → okind)
     (o : offer) : Prop :=
-  typed K o ∧ off_tag o ∉ tags p.1 ∧ off_tag o ∉ tags q.1 ∧ ∀ k c, o = OffIn k c → ¬ Ch c.
+  typed K o ∧ off_tag o ∉ otags p.1 ∧ off_tag o ∉ otags q.1 ∧ ∀ k c, o = OffIn k c → ¬ Ch c.
 
 Definition RealT `{QM : QuantumModel} (p q : proc * St) (O : node → list msg) (Ch : channel → Prop)
     (K : tag → okind) (I : node → offer → Prop) (S : node → bool) : Prop :=
@@ -295,7 +295,7 @@ Proof.
   intros HT n. induction n as [|a n IH] using rev_ind; intros T' Hin.
   - rewrite tnodes_nil in Hin. apply list_elem_of_singleton in Hin. subst. split; intros c Hc; exact Hc.
   - apply tnodes_app_elem in Hin as (T0 & HT0 & Hin). destruct (IH T0 HT0) as [Ho Hi].
-    destruct (prog_step_chans_sub T0 _ _ T' (proj1 (tnodes_obs T HT n T0 HT0)) (co_succ_sound T0 a T' Hin)) as [Ho0 Hi0].
+    destruct (prog_step_chans_sub T0 _ _ T' (proj1 (tnodes_obs T HT n T0 HT0)) (co_succ_sound T0 a T' (proj1 (tnodes_obs T HT n T0 HT0)) Hin)) as [Ho0 Hi0].
     split; intros c Hc; [exact (Ho c (Ho0 c Hc))|exact (Hi c (Hi0 c Hc))].
 Qed.
 
@@ -311,7 +311,7 @@ Proof.
   simpl in Ha. injection Ha as -> ->.
   destruct (co_succ T' (CoIn k c v)) as [|T'' l] eqn:E; [done|].
   assert (HT'' : T'' ∈ co_succ T' (CoIn k c v)) by (rewrite E; by left).
-  pose proof (prog_step_in_chan T' k c v T'' (proj1 (tnodes_obs T (proj1 HT) n T' HT')) (co_succ_sound _ _ _ HT'')) as Hc.
+  pose proof (prog_step_in_chan T' k c v T'' (proj1 (tnodes_obs T (proj1 HT) n T' HT')) (co_succ_sound _ _ _ (proj1 (tnodes_obs T (proj1 HT) n T' HT')) HT'')) as Hc.
   exact (proj2 (proj1 HT) c Hc1 (proj2 (tnodes_chans T (proj1 HT) n T' HT') c Hc)).
 Qed.
 

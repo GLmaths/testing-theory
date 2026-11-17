@@ -39,10 +39,10 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base countable decidable list propset.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Rec_Observers.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -58,30 +58,50 @@ Lemma dmass_of_cons' `{Weights} {C} (good : C → Prop) `{∀ c, Decision (good 
   = if decide (good x.1) then prob_add (mass x.2) (dmass_of good Δ) else dmass_of good Δ.
 Proof. done. Qed.
 
+Definition off_tag (o : offer) : tag :=
+  match o with OffOut k _ _ | OffIn k _ | OffOp k _ _ | OffMeas k _ _ | OffInit k _ => k end.
+
+Definition off_kind (o : offer) : okind :=
+  match o with OffOut _ _ _ => KOut | OffIn _ _ => KIn | OffOp _ _ _ => KOp | OffMeas _ _ _ => KMeas | OffInit _ _ => KInit end.
+
+Lemma menu_kind T : observer T → ∀ n o, menu T n o → (off_tag o, off_kind o) ∈ tagged T.
+Proof.
+  intros HT n o (T' & a & HT' & <- & Hne).
+  destruct (co_succ T' a) as [|T'' l] eqn:E; [done|].
+  assert (Hin : (co_tag a, kind_of a) ∈ tagged T').
+  { apply (co_succ_tagged T' a T''). rewrite E. by left. }
+  assert (Hsub : tagged T' `sublist_of` tagged T) by (by eapply tnodes_tags; [apply HT|]).
+  pose proof (elem_of_submseteq _ _ _ Hin (sublist_submseteq _ _ Hsub)) as Hin'.
+  by destruct a.
+Qed.
+
 Section Sound.
   Context `{QM : QuantumModel}.
-  Context (T : proc) (HT : observer T) (L : lifting).
+  Context (T : proc) (TG : tag → okind → Prop) (HW : wobserver T).
+  Context (Htag : ∀ n T' k x, T' ∈ tnodes T n → (k, x) ∈ tagged T' → TG k x).
+  Context (Huniq : ∀ k x y, TG k x → TG k y → x = y).
+  Context (L : lifting).
+
+  Definition tgT : propset tag := {[ t | ∃ x, TG t x ]}.
 
   Notation I := (menu T).
   Notation S := (S_T T).
   Notation comp := (node * (proc * list msg))%type.
   Notation dcstep := (cstep (menu T) (O_T T)).
 
-  Lemma obs_T : obs T.
-  Proof. apply HT. Qed.
 
   (* ** Programs under test: tags apart from those of the observer *)
 
-  Definition prog_ok (P : proc) : Prop := ∀ t, t ∈ tags P → t ∉ tags T.
+  Definition prog_ok (P : proc) : Prop := ∀ t, t ∈ otags P → t ∉ tgT.
 
   Lemma prog_ok_step P s l P' : prog_ok P → prog_step P s l P' → prog_ok P'.
   Proof.
-    intros Ht Hp t Ht'. apply Ht. by eapply prog_step_tags.
+    intros Ht Hp t Ht'. apply Ht. by eapply prog_step_otags.
   Qed.
 
   Lemma prog_ok_choice P s l P' t :
-    prog_ok P → prog_step P s l P' → t ∈ choice_tags s → t ∉ tags T.
-  Proof. intros Ht Hp Hs. apply Ht. by eapply prog_step_choice_tags. Qed.
+    prog_ok P → prog_step P s l P' → t ∈ choice_tags s → t ∉ tgT.
+  Proof. intros Ht Hp Hs. apply Ht, tags_otags. by eapply prog_step_choice_tags. Qed.
 
   (* ** The relation between a tested program and a component of 𝔻 *)
 
@@ -112,8 +132,12 @@ Section Sound.
   Lemma eff_app n C m : eff n (C ++ [m]) = eff n C ++ [co_of_msg m].
   Proof. unfold eff. by rewrite fmap_app, app_assoc. Qed.
 
-  Lemma eff_obs n C T' : T' ∈ tnodes T (eff n C) → obs T'.
-  Proof. apply tnodes_obs, obs_T. Qed.
+  Lemma eff_obs n C T' : T' ∈ tnodes T (eff n C) → obsr T'.
+  Proof. apply HW. Qed.
+
+  Lemma succ_vis T' a T'' :
+    (∀ t, a ≠ CoInit t []) → T'' ∈ co_succ T' a → prog_step T' (CTag (co_tag a)) (ActExt (co_act a)) T''.
+  Proof. intros Ha Hin. destruct (co_succ_step _ _ _ Hin) as [Hs|[E _]]; [done|by destruct (Ha _ E)]. Qed.
 
   Lemma eff_successb n C T' :
     T' ∈ tnodes T (eff n C) → ∃ Tn, Tn ∈ tnodes T n ∧ successb T' = successb Tn.
@@ -132,7 +156,7 @@ Section Sound.
     (∀ m, m ∈ C → ∀ c' v', b ≠ CoOut m.1.1 c' v') → co_succ T' b ≠ [].
   Proof.
     intros HTn. unfold eff. revert T'. induction C as [|m C IH] using rev_ind; intros T' HT' Hne Hb.
-    - simpl in HT'. rewrite app_nil_r in HT'. by rewrite (tnodes_unique T n T' Tn HT HT' HTn).
+    - simpl in HT'. rewrite app_nil_r in HT'. by rewrite (tnodes_unique_w T n T' Tn HW HT' HTn).
     - rewrite fmap_app, app_assoc in HT'. simpl in HT'.
       apply tnodes_app_elem in HT' as (T0 & HT0 & Hz0).
       apply (co_succ_out_keep T0 _ _ _ _ _ Hz0).
@@ -145,7 +169,7 @@ Section Sound.
     T' ∈ tnodes T (eff n C) → m ∈ C → co_succ T' (CoOut m.1.1 c' v') = [].
   Proof.
     intros HT' Hm. apply list_elem_of_split in Hm as (C1 & C2 & ->).
-    apply (proj2 (proj2 (proj2 HT)) (n ++ (co_of_msg <$> C1)) (co_of_msg <$> C2) m.1.1 m.1.2 m.2).
+    apply (proj2 (proj2 HW) (n ++ (co_of_msg <$> C1)) (co_of_msg <$> C2) m.1.1 m.1.2 m.2).
     unfold eff in HT'. rewrite fmap_app, fmap_cons in HT'. by rewrite <- app_assoc.
   Qed.
 
@@ -165,7 +189,7 @@ Section Sound.
   Proof.
     intros (_ & _ & T' & HT' & E). destruct x as [[P0 T0] ρ0]. simpl in E. injection E as _ ->. simpl.
     unfold success. destruct (eff_successb _ _ _ HT') as (Tn & HTn & E). rewrite E.
-    symmetry. apply (S_T_tnodes T _ Tn HT HTn).
+    symmetry. apply (S_T_tnodes_w T _ Tn HW HTn).
   Qed.
 
   Lemma rel_mass Δ Θ :
@@ -179,37 +203,30 @@ Section Sound.
 
   (* ** Kinds of the tags of the observer *)
 
-  Definition off_tag (o : offer) : tag :=
-    match o with OffOut k _ _ | OffIn k _ | OffOp k _ _ | OffMeas k _ _ | OffInit k _ => k end.
-
-  Definition off_kind (o : offer) : okind :=
-    match o with OffOut _ _ _ => KOut | OffIn _ _ => KIn | OffOp _ _ _ => KOp | OffMeas _ _ _ => KMeas | OffInit _ _ => KInit end.
-
-  Lemma menu_kind n o : I n o → (off_tag o, off_kind o) ∈ tagged T.
+  Lemma menu_kind_g n o : I n o → TG (off_tag o) (off_kind o).
   Proof.
     intros (T' & a & HT' & <- & Hne).
     destruct (co_succ T' a) as [|T'' l] eqn:E; [done|].
     assert (Hin : (co_tag a, kind_of a) ∈ tagged T').
     { apply (co_succ_tagged T' a T''). rewrite E. by left. }
-    assert (Hsub : tagged T' `sublist_of` tagged T) by (by eapply tnodes_tags; [apply obs_T|]).
-    pose proof (elem_of_submseteq _ _ _ Hin (sublist_submseteq _ _ Hsub)) as Hin'.
+    pose proof (Htag _ _ _ _ HT' Hin) as Hin'.
     by destruct a.
   Qed.
 
-  Lemma tag_kind_unique k x y : (k, x) ∈ tagged T → (k, y) ∈ tagged T → x = y.
-  Proof. exact (proj1 (proj2 HT) k x y). Qed.
+  Lemma tag_kind_unique k x y : TG k (x) → TG k (y) → x = y.
+  Proof. exact (Huniq k x y). Qed.
 
-  Lemma tag_in_T k x : (k, x) ∈ tagged T → k ∈ tags T.
-  Proof. intros Hk. unfold tags. apply list_elem_of_fmap. by exists (k, x). Qed.
+  Lemma tag_in_T k x : TG k (x) → k ∈ tgT.
+  Proof. intros Hk. apply elem_of_PropSet. by exists x. Qed.
 
   Definition mem_kind (x : okind) : Prop := x = KOp ∨ x = KMeas ∨ x = KInit.
 
   (* ** Correspondence between the choices of the tested program and the items of 𝔻 *)
 
   Inductive corr : choice → item → Prop :=
-  | corr_ch σ : (∀ t x, t ∈ choice_tags σ → (t, x) ∈ tagged T → x = KOut) → corr σ (ICh σ)
-  | corr_mem k t x : (k, x) ∈ tagged T → mem_kind x → corr (CTag k) (IOff k t)
-  | corr_chan k t : (k, KIn) ∈ tagged T → t ∉ tags T → corr (cpair t k) (IOff k t).
+  | corr_ch σ : (∀ t x, t ∈ choice_tags σ → TG t (x) → x = KOut) → corr σ (ICh σ)
+  | corr_mem k t x : TG k (x) → mem_kind x → corr (CTag k) (IOff k t)
+  | corr_chan k t : TG k (KIn) → t ∉ tgT → corr (cpair t k) (IOff k t).
 
   Lemma corr_prog P s l P' : prog_ok P → prog_step P s l P' → corr s (ICh s).
   Proof.
@@ -217,7 +234,7 @@ Section Sound.
     apply (prog_ok_choice P s l P' u Hok Hp Hu). by eapply tag_in_T.
   Qed.
 
-  Lemma corr_cons t k : t ∉ tags T → (k, KOut) ∈ tagged T → corr (cpair t k) (ICh (cpair t k)).
+  Lemma corr_cons t k : t ∉ tgT → TG k (KOut) → corr (cpair t k) (ICh (cpair t k)).
   Proof.
     intros Ht Hk. apply corr_ch. intros u x Hu Hx.
     destruct (cpair_tags u t k Hu) as [-> | ->]; [exfalso; apply Ht; by eapply tag_in_T|].
@@ -241,7 +258,7 @@ Section Sound.
 
   (* The pair of a tag of the program and a tag of the observer determines both. *)
   Lemma cpair_inv t k t' k' :
-    t ∉ tags T → k ∈ tags T → t' ∉ tags T → k' ∈ tags T → cpair t k = cpair t' k' → t = t' ∧ k = k'.
+    t ∉ tgT → k ∈ tgT → t' ∉ tgT → k' ∈ tgT → cpair t k = cpair t' k' → t = t' ∧ k = k'.
   Proof.
     intros Ht Hk Ht' Hk' E. unfold cpair in E. injection E as E1 E2.
     assert (Hor : (t = t' ∧ k = k') ∨ (t = k' ∧ k = t')) by lia.
@@ -273,12 +290,11 @@ Section Sound.
   (* A step of the observer, with its co-action. *)
   Lemma obs_step_co n C T' k α T'' :
     T' ∈ tnodes T (eff n C) → prog_step T' (CTag k) (ActExt α) T'' →
-    ∃ a, co_tag a = k ∧ co_act a = α ∧ T'' ∈ co_succ T' a ∧ (k, kind_of a) ∈ tagged T.
+    ∃ a, co_tag a = k ∧ co_act a = α ∧ T'' ∈ co_succ T' a ∧ TG k (kind_of a).
   Proof.
-    intros HT' Hs. destruct (co_succ_complete T' k α T'' (proj1 (eff_obs _ _ _ HT')) Hs) as (a & Hk & Hα & Hin).
+    intros HT' Hs. destruct (co_succ_complete_r T' k α T'' (proj1 (eff_obs _ _ _ HT')) Hs) as (a & Hk & Hα & Hin).
     exists a. split; [done|]. split; [done|]. split; [done|]. rewrite <- Hk.
-    eapply elem_of_submseteq; [by eapply co_succ_tagged|]. apply sublist_submseteq.
-    eapply tnodes_tags; [apply obs_T|exact HT'].
+    eapply Htag; [exact HT'|by eapply co_succ_tagged].
   Qed.
 
   Lemma Forall2_head {A B} (Q : A → B → Prop) (l1 : list A) (l2 : list B) :
@@ -324,20 +340,20 @@ Section Sound.
       - exfalso. apply (prog_ok_choice P _ _ _ k Hok Hp); [by left|]. by eapply tag_in_T.
       - exfalso. apply (prog_ok_choice P _ _ _ k Hok Hp); [apply cpair_tags_in|]. by eapply tag_in_T. }
     (* the item of a memory action of the observer *)
-    assert (Hmem : ∀ k x, (k, x) ∈ tagged T → mem_kind x →
+    assert (Hmem : ∀ k x, TG k (x) → mem_kind x →
       ∀ it', corr (CTag k) it' → ∃ t', it' = IOff k t').
     { intros k x Hk Hx it' Hc. inversion Hc as [? Hno|? ? ? Hk' Hx'|? ? Hk' Ht']; subst.
       - exfalso. rewrite (Hno k x ltac:(by left) Hk) in Hx. by destruct Hx as [?|[?|?]].
       - by eexists. }
     (* the item of an input of the observer *)
-    assert (Hsync : ∀ t k, t ∉ tags T → (k, KIn) ∈ tagged T →
+    assert (Hsync : ∀ t k, t ∉ tgT → TG k (KIn) →
       ∀ it', corr (cpair t k) it' → it' = IOff k t).
     { intros t k Ht Hk it' Hc. inversion Hc as [? Hno|? ? ? Hk' Hx'|k0 t0 Hk' Ht']; subst.
       - exfalso. by pose proof (Hno k KIn (proj2 (cpair_tags_in t k)) Hk).
       - assert (Hor : (t = t0 ∧ k = k0) ∨ (t = k0 ∧ k = t0)) by lia.
         destruct Hor as [[-> ->]|[-> ->]]; [done|]. exfalso. apply Ht. by eapply tag_in_T. }
     (* the item of a consumption of an output of the observer *)
-    assert (Hcons : ∀ t k, t ∉ tags T → (k, KOut) ∈ tagged T →
+    assert (Hcons : ∀ t k, t ∉ tgT → TG k (KOut) →
       ∀ it', corr (cpair t k) it' → it' = ICh (cpair t k)).
     { intros t k Ht Hk it' Hc. inversion Hc as [? Hno|? ? ? Hk' Hx'|k0 t0 Hk' Ht']; subst; [done|].
       assert (Hor : (t = t0 ∧ k = k0) ∨ (t = k0 ∧ k = t0)) by lia.
@@ -349,12 +365,21 @@ Section Sound.
       + exists (ICh σ). split; [exact (corr_prog _ _ _ _ Hok Hp)|].
         intros it' Hc. rewrite (Hch _ _ _ Hp _ Hc). eexists. split; [apply cs_ch; by apply ss_tau|].
         simpl. constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
-      + exfalso. apply (obs_no_tau T' (eff_obs _ _ _ HT') σ T'' Hp).
+      + (* the observer unfolds a recursion *)
+        destruct (obs_tau_r T' σ T'' (eff_obs _ _ _ HT') Hp) as (k & -> & Hin).
+        destruct (eff_menu n C _ T' T'' HT' Hin) as (HI & HT''). simpl in HI.
+        assert (Hkind : TG k KInit).
+        { eapply Htag; [exact HT'|]. exact (co_succ_tagged T' (CoInit k []) T'' Hin). }
+        exists (IOff k 0). split; [eapply corr_mem; [exact Hkind|right; by right]|].
+        intros it' Hc. destruct (Hmem k KInit Hkind ltac:(right; by right) _ Hc) as (t' & ->).
+        eexists. split; [by apply cs_init|].
+        constructor; [|constructor]. split; [simpl; unfold init_apply; by rewrite init_nil|].
+        split; [done|]. by exists T''.
       + (* the program outputs, the observer inputs *)
         destruct (obs_step_co n C T' k _ T'' HT' Hq) as (a & Hk & Hα & Hin & Hkind).
         rewrite (co_act_in_inv a k c v Hk Hα) in Hin, Hkind. simpl in Hkind.
         destruct (eff_menu n C _ T' T'' HT' Hin) as (HI & HT''). simpl in HI.
-        assert (Ht : t ∉ tags T) by (eapply prog_ok_choice; [done|exact Hp|by left]).
+        assert (Ht : t ∉ tgT) by (eapply prog_ok_choice; [done|exact Hp|by left]).
         exists (IOff k t). split; [by apply corr_chan|].
         intros it' Hc. rewrite (Hsync t k Ht Hkind _ Hc).
         eexists. split; [by apply cs_in|].
@@ -365,7 +390,7 @@ Section Sound.
         destruct (eff_swap T n C _ T' T'' HT' Hin) as (Tn & Tb & HTn & HTb & _).
         assert (HE : (k, c, v) ∈ O_T T n).
         { apply O_T_spec. exists Tn. split; [done|]. intros E. rewrite E in HTb. by apply elem_of_nil in HTb. }
-        assert (Ht : t ∉ tags T) by (eapply prog_ok_choice; [done|exact Hp|by left]).
+        assert (Ht : t ∉ tgT) by (eapply prog_ok_choice; [done|exact Hp|by left]).
         assert (HkC : k ∉ (λ m : msg, m.1.1) <$> C).
         { intros (m & Hm & HmC)%list_elem_of_fmap. simpl in Hm. rewrite Hm, (eff_out_gone n C m c v T' HT' HmC) in Hin.
           by apply elem_of_nil in Hin. }
@@ -404,10 +429,10 @@ Section Sound.
       destruct (prog_step_ext_choice _ _ _ _ Hp0) as (t & ->).
       apply par_ext_inv in Hp0 as [(P0 & Hp0 & _)|(T0 & Hp0 & _)].
       + (* the program measures *)
-        assert (Ht : t ∉ tags T) by (eapply prog_ok_choice; [done|exact Hp0|by left]).
+        assert (Ht : t ∉ tgT) by (eapply prog_ok_choice; [done|exact Hp0|by left]).
         assert (Ht' : t ∉ tags T').
-        { intros Hin. apply Ht. unfold tags in *. eapply elem_of_submseteq; [exact Hin|].
-          apply sublist_submseteq, (fmap_sublist fst). eapply tnodes_tags; [apply obs_T|exact HT']. }
+        { intros Hin. apply Ht. unfold tags in Hin. apply list_elem_of_fmap in Hin as ([t0 x] & -> & Hin).
+          exact (tag_in_T _ _ (Htag _ _ _ _ HT' Hin)). }
         destruct (meas_side_P P T' t M qs _ _ Ht' Hf) as (Ps & HPs & ->).
         exists (ICh (CTag t)). split; [exact (corr_prog _ _ _ _ Hok Hp0)|].
         intros it' Hc. rewrite (Hch _ _ _ Hp0 _ Hc). eexists. split; [apply cs_ch; by eapply ss_meas|].
@@ -418,7 +443,7 @@ Section Sound.
         destruct (obs_step_co n C T' t _ T0 HT' Hp0) as (a & Hk & Hα & Hin & Hkind).
         rewrite (co_act_meas_inv a t M qs 0 Hk Hα) in Hin, Hkind. simpl in Hkind.
         destruct (eff_menu n C _ T' T0 HT' Hin) as (HI & _). simpl in HI.
-        assert (HtP : t ∉ tags P) by (intros HtP; apply (Hok t HtP); by eapply tag_in_T).
+        assert (HtP : t ∉ tags P) by (intros HtP; apply (Hok t (tags_otags P t HtP)); by eapply tag_in_T).
         destruct (meas_side_T P T' t M qs _ _ HtP Hf) as (Ts & HTs & ->).
         exists (IOff t 0). split; [eapply corr_mem; [exact Hkind|right; by left]|].
         intros it' Hc. destruct (Hmem t KMeas Hkind ltac:(right; by left) _ Hc) as (t' & ->).
@@ -453,7 +478,7 @@ Section Sound.
     intros HT' (Tn & a & HTn & Ha & Hne). destruct (offer_of_in a k c Ha) as (v0 & ->).
     assert (Hne' : co_succ T' (CoIn k c v) ≠ []).
     { eapply eff_keep; [exact HTn|exact HT'|by eapply co_succ_in_val|]. by intros. }
-    exists (hd 𝟘 (co_succ T' (CoIn k c v))). split; [by apply (co_succ_sound T' (CoIn k c v)), hd_elem_of|].
+    exists (hd 𝟘 (co_succ T' (CoIn k c v))). split; [apply (succ_vis T' (CoIn k c v)); [by intros ? ?|by apply hd_elem_of]|].
     by apply (eff_menu n C (CoIn k c v) T'), hd_elem_of.
   Qed.
 
@@ -464,15 +489,14 @@ Section Sound.
   (* An output offered at the node is answered by the observer after the consumptions. *)
   Lemma out_step n C T' k c v :
     T' ∈ tnodes T (eff n C) → (k, c, v) ∈ O_T T n → k ∉ (λ m : msg, m.1.1) <$> C →
-    (k, KOut) ∈ tagged T ∧
+    TG k (KOut) ∧
     ∃ T'', prog_step T' (CTag k) (ActExt (PrOut c v)) T'' ∧ T'' ∈ tnodes T (eff n (C ++ [(k, c, v)])).
   Proof.
     intros HT' (Tn & HTn & Hne)%O_T_spec HkC.
-    assert (Hne' : co_succ T' (CoOut k c v) ≠ []) by (by eapply eff_out_keep).
+    assert (Hne' : co_succ T' (CoOut k c v) ≠ []) by (by eapply eff_out_keep_w).
     split.
-    - eapply elem_of_submseteq; [apply (co_succ_tagged T' (CoOut k c v) (hd 𝟘 (co_succ T' (CoOut k c v)))), hd_elem_of, Hne'|].
-      apply sublist_submseteq. eapply tnodes_tags; [apply obs_T|exact HT'].
-    - exists (hd 𝟘 (co_succ T' (CoOut k c v))). split; [by apply (co_succ_sound T' (CoOut k c v)), hd_elem_of|].
+    - eapply Htag; [exact HT'|]. apply (co_succ_tagged T' (CoOut k c v) (hd 𝟘 (co_succ T' (CoOut k c v)))), hd_elem_of, Hne'.
+    - exists (hd 𝟘 (co_succ T' (CoOut k c v))). split; [apply (succ_vis T' (CoOut k c v)); [by intros ? ?|by apply hd_elem_of]|].
       rewrite eff_app. apply tnodes_app_elem. exists T'. split; [done|]. by apply hd_elem_of.
   Qed.
 
@@ -483,19 +507,22 @@ Section Sound.
     intros HT' (Tn & a & HTn & Ha & Hne). rewrite (offer_of_op a k E qs Ha) in Hne.
     assert (Hne' : co_succ T' (CoOp k E qs) ≠ []).
     { eapply eff_keep; [exact HTn|exact HT'|done|]. by intros. }
-    exists (hd 𝟘 (co_succ T' (CoOp k E qs))). split; [by apply (co_succ_sound T' (CoOp k E qs)), hd_elem_of|].
+    exists (hd 𝟘 (co_succ T' (CoOp k E qs))). split; [apply (succ_vis T' (CoOp k E qs)); [by intros ? ?|by apply hd_elem_of]|].
     by apply (eff_menu n C (CoOp k E qs) T'), hd_elem_of.
   Qed.
 
   Lemma menu_step_init n C T' k qs :
     T' ∈ tnodes T (eff n C) → I n (OffInit k qs) →
-    ∃ T'', prog_step T' (CTag k) (ActExt (PrInit qs)) T'' ∧ T'' ∈ tnodes T (eff (n ++ [CoInit k qs]) C).
+    ∃ T'', (prog_step T' (CTag k) (ActExt (PrInit qs)) T'' ∨ (qs = [] ∧ prog_step T' (CTag k) τ T''))
+      ∧ T'' ∈ tnodes T (eff (n ++ [CoInit k qs]) C).
   Proof.
     intros HT' (Tn & a & HTn & Ha & Hne). rewrite (offer_of_init a k qs Ha) in Hne.
     assert (Hne' : co_succ T' (CoInit k qs) ≠ []).
     { eapply eff_keep; [exact HTn|exact HT'|done|]. by intros. }
-    exists (hd 𝟘 (co_succ T' (CoInit k qs))). split; [by apply (co_succ_sound T' (CoInit k qs)), hd_elem_of|].
-    by apply (eff_menu n C (CoInit k qs) T'), hd_elem_of.
+    exists (hd 𝟘 (co_succ T' (CoInit k qs))). split.
+    - destruct (co_succ_step _ _ _ (hd_elem_of 𝟘 _ Hne')) as [Hs|[E0 Hs]]; [by left|right].
+      simpl in E0. injection E0 as ->. split; [done|exact Hs].
+    - by apply (eff_menu n C (CoInit k qs) T'), hd_elem_of.
   Qed.
 
   Lemma menu_step_meas n C T' k M qs m :
@@ -505,7 +532,7 @@ Section Sound.
     intros HT' (Tn & a & HTn & Ha & Hne). destruct (offer_of_meas a k M qs Ha) as (m0 & ->).
     assert (Hne' : co_succ T' (CoMeas k M qs m) ≠ []).
     { eapply eff_keep; [exact HTn|exact HT'|by eapply co_succ_meas_out|]. by intros. }
-    exists (hd 𝟘 (co_succ T' (CoMeas k M qs m))). split; [by apply (co_succ_sound T' (CoMeas k M qs m)), hd_elem_of|].
+    exists (hd 𝟘 (co_succ T' (CoMeas k M qs m))). split; [apply (succ_vis T' (CoMeas k M qs m)); [by intros ? ?|by apply hd_elem_of]|].
     by apply (eff_menu n C (CoMeas k M qs m) T'), hd_elem_of.
   Qed.
 
@@ -533,7 +560,7 @@ Section Sound.
   Proof.
     intros Hok HT' Hc.
     (* the choice of an item of the observer of a given kind *)
-    assert (Hkind : ∀ k t x, (k, x) ∈ tagged T → ∀ σ', corr σ' (IOff k t) →
+    assert (Hkind : ∀ k t x, TG k (x) → ∀ σ', corr σ' (IOff k t) →
       (mem_kind x ∧ σ' = CTag k) ∨ (x = KIn ∧ σ' = cpair t k)).
     { intros k t x Hk σ' Hc'. inversion Hc' as [|? ? x' Hk' Hx'|? ? Hk' Ht']; subst.
       - left. rewrite (tag_kind_unique k x x' Hk Hk'). done.
@@ -556,35 +583,38 @@ Section Sound.
         constructor; [|done]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T'.
     - (* the program consumes an output *)
       destruct (out_step n C T' k c v HT' HE HkC) as (Hk & T'' & Hq & HT'').
-      assert (Ht : t ∉ tags T) by (eapply prog_ok_choice; [done|exact Hp|by left]).
+      assert (Ht : t ∉ tgT) by (eapply prog_ok_choice; [done|exact Hp|by left]).
       exists (cpair t k). split; [by apply corr_cons|].
       intros σ' Hc'. inversion Hc'; subst.
       eexists. split; [apply ss_tau; by eapply pr_syncR|].
       constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T''.
     - (* the observer inputs *)
-      pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
-      assert (Ht : t ∉ tags T) by (eapply prog_ok_choice; [done|exact Hp|by left]).
+      pose proof (menu_kind_g _ _ HI) as Hk. simpl in Hk.
+      assert (Ht : t ∉ tgT) by (eapply prog_ok_choice; [done|exact Hp|by left]).
       exists (cpair t k). split; [by apply corr_chan|].
       intros σ' Hc'. destruct (Hkind k t KIn Hk σ' Hc') as [[Hm _]|[_ ->]]; [by destruct Hm as [?|[?|?]]|].
       destruct (menu_step_in n C T' k c v HT' HI) as (T'' & Hq & HT'').
       eexists. split; [apply ss_tau; by eapply pr_syncL|].
       constructor; [|constructor]. split; [done|]. split; [by eapply prog_ok_step|]. by exists T''.
     - (* the observer operates on the memory *)
-      pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
+      pose proof (menu_kind_g _ _ HI) as Hk. simpl in Hk.
       exists (CTag k). split; [eapply corr_mem; [exact Hk|by left]|].
       intros σ' Hc'. destruct (Hkind k t KOp Hk σ' Hc') as [[_ ->]|[Hm _]]; [|done].
       destruct (menu_step_op n C T' k E' qs HT' HI) as (T'' & Hq & HT'').
       eexists. split; [apply ss_op; by apply pr_parR|].
       constructor; [|constructor]. split; [done|]. split; [done|]. by exists T''.
     - (* the observer initialises *)
-      pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
+      pose proof (menu_kind_g _ _ HI) as Hk. simpl in Hk.
       exists (CTag k). split; [eapply corr_mem; [exact Hk|right; by right]|].
       intros σ' Hc'. destruct (Hkind k t KInit Hk σ' Hc') as [[_ ->]|[Hm _]]; [|done].
-      destruct (menu_step_init n C T' k qs HT' HI) as (T'' & Hq & HT'').
-      eexists. split; [apply ss_init; by apply pr_parR|].
-      constructor; [|constructor]. split; [done|]. split; [done|]. by exists T''.
+      destruct (menu_step_init n C T' k qs HT' HI) as (T'' & [Hq|(-> & Hq)] & HT'').
+      + eexists. split; [apply ss_init; by apply pr_parR|].
+        constructor; [|constructor]. split; [done|]. split; [done|]. by exists T''.
+      + eexists. split; [apply ss_tau; by apply pr_parR|].
+        constructor; [|constructor]. split; [simpl; unfold init_apply; by rewrite init_nil|].
+        split; [done|]. by exists T''.
     - (* the observer measures *)
-      pose proof (menu_kind _ _ HI) as Hk. simpl in Hk.
+      pose proof (menu_kind_g _ _ HI) as Hk. simpl in Hk.
       exists (CTag k). split; [eapply corr_mem; [exact Hk|right; by left]|].
       intros σ' Hc'. destruct (Hkind k t KMeas Hk σ' Hc') as [[_ ->]|[Hm _]]; [|done].
       set (f := λ k' : Out (meas_of M qs), hd 𝟘 (co_succ T' (CoMeas k M qs (code _ k')))).
@@ -592,11 +622,11 @@ Section Sound.
                         ∧ f k' ∈ tnodes T (eff (n ++ [CoMeas k M qs (code _ k')]) C)).
       { intros k'. destruct (menu_step_meas n C T' k M qs (code _ k') HT' HI) as (T'' & Hq & HT'').
         split.
-        - apply (co_succ_sound T' (CoMeas k M qs (code _ k'))). apply hd_elem_of. intros E.
-          apply (co_succ_complete T' k _ T'' (proj1 (eff_obs _ _ _ HT'))) in Hq as (a & Hka & Hα & Hin).
+        - apply (succ_vis T' (CoMeas k M qs (code _ k'))); [by intros ? ?|]. apply hd_elem_of. intros E.
+          apply (co_succ_complete_r T' k _ T'' (proj1 (eff_obs _ _ _ HT'))) in Hq as (a & Hka & Hα & Hin).
           rewrite (co_act_meas_inv a k M qs (code _ k') Hka Hα), E in Hin. by apply elem_of_nil in Hin.
         - apply (eff_menu n C (CoMeas k M qs (code _ k')) T'); [done|]. apply hd_elem_of. intros E.
-          apply (co_succ_complete T' k _ T'' (proj1 (eff_obs _ _ _ HT'))) in Hq as (a & Hka & Hα & Hin).
+          apply (co_succ_complete_r T' k _ T'' (proj1 (eff_obs _ _ _ HT'))) in Hq as (a & Hka & Hα & Hin).
           rewrite (co_act_meas_inv a k M qs (code _ k') Hka Hα), E in Hin. by apply elem_of_nil in Hin. }
       exists (zip_with (λ k' R', (R', meas_branch M qs k' ρ)) (outs_nz M qs ρ) ((λ k', P ∥ f k') <$> outs_nz M qs ρ)).
       split.
@@ -880,19 +910,28 @@ Section Sound.
   Qed.
 End Sound.
 
+Lemma observer_Htag T : observer T → ∀ n T' k x, T' ∈ tnodes T n → (k, x) ∈ tagged T' → (k, x) ∈ tagged T.
+Proof.
+  intros HT n T' k x HT' Hk.
+  exact (elem_of_submseteq _ _ _ Hk (sublist_submseteq _ _ (tnodes_tags T (proj1 HT) n T' HT'))).
+Qed.
+
+Lemma tgT_tagged T t : t ∈ tgT (λ k x, (k, x) ∈ tagged T) → t ∈ tags T.
+Proof. intros (x & Hx)%elem_of_PropSet. unfold tags. apply list_elem_of_fmap. by exists (t, x). Qed.
+
 (* ** The theorem: [≼] is below the Smyth must for the observers *)
 
 Definition obs_for `{QM : QuantumModel} (p q : proc * St) (T : proc) : Prop :=
-  observer T ∧ ∀ t, t ∈ tags T → t ∉ tags p.1 ∧ t ∉ tags q.1.
+  observer T ∧ ∀ t, t ∈ tags T → t ∉ otags p.1 ∧ t ∉ otags q.1.
 
 Theorem alt_pre_sound `{QM : QuantumModel}
   (L : lifting) (DC : dep_choice) (p q : proc * St) :
   alt_pre L p q → ctx_pre_sm_on L (obs_for p q) p q.
 Proof.
   intros Halt T [HT Htags].
-  apply (alt_pre_sound_obs T HT L DC p q); [| |apply Halt, S_T_ext_closed].
-  - intros t Ht HtT. exact (proj1 (Htags t HtT) Ht).
-  - intros t Ht HtT. exact (proj2 (Htags t HtT) Ht).
+  apply (alt_pre_sound_obs T (λ k x, (k, x) ∈ tagged T) (observer_w T HT) (observer_Htag T HT) (proj1 (proj2 HT)) L DC p q); [| |apply Halt, S_T_ext_closed].
+  - intros t Ht HtT. exact (proj1 (Htags t (tgT_tagged T t HtT)) Ht).
+  - intros t Ht HtT. exact (proj2 (Htags t (tgT_tagged T t HtT)) Ht).
 Qed.
 
 Theorem alt_as_sound `{QM : QuantumModel}
@@ -900,9 +939,9 @@ Theorem alt_as_sound `{QM : QuantumModel}
   alt_as L p q → ctx_pre_as_on L (obs_for p q) p q.
 Proof.
   intros Halt T [HT Htags].
-  apply (alt_as_sound_obs T HT L DC p q); [| |apply Halt, S_T_ext_closed].
-  - intros t Ht HtT. exact (proj1 (Htags t HtT) Ht).
-  - intros t Ht HtT. exact (proj2 (Htags t HtT) Ht).
+  apply (alt_as_sound_obs T (λ k x, (k, x) ∈ tagged T) (observer_w T HT) (observer_Htag T HT) (proj1 (proj2 HT)) L DC p q); [| |apply Halt, S_T_ext_closed].
+  - intros t Ht HtT. exact (proj1 (Htags t (tgT_tagged T t HtT)) Ht).
+  - intros t Ht HtT. exact (proj2 (Htags t (tgT_tagged T t HtT)) Ht).
 Qed.
 
 (* ** The alternative preorder restricted to the shapes of observers is the
@@ -920,13 +959,13 @@ Theorem alt_pre_obs_iff `{QM : QuantumModel}
 Proof.
   split.
   - intros Halt T [HT Htags].
-    apply (alt_pre_sound_obs T HT L DC p q); [| |apply Halt; by split].
-    + intros t Ht HtT. exact (proj1 (Htags t HtT) Ht).
-    + intros t Ht HtT. exact (proj2 (Htags t HtT) Ht).
+    apply (alt_pre_sound_obs T (λ k x, (k, x) ∈ tagged T) (observer_w T HT) (observer_Htag T HT) (proj1 (proj2 HT)) L DC p q); [| |apply Halt; by split].
+    + intros t Ht HtT. exact (proj1 (Htags t (tgT_tagged T t HtT)) Ht).
+    + intros t Ht HtT. exact (proj2 (Htags t (tgT_tagged T t HtT)) Ht).
   - intros Hsm T [HT Htags].
-    apply (smyth_obs_complete T HT L DC p q); [| |apply Hsm; by split].
-    + intros t Ht HtT. exact (proj1 (Htags t HtT) Ht).
-    + intros t Ht HtT. exact (proj2 (Htags t HtT) Ht).
+    apply (smyth_obs_complete T (λ k x, (k, x) ∈ tagged T) (observer_w T HT) (observer_Htag T HT) (proj1 (proj2 HT)) L DC p q); [| |apply Hsm; by split].
+    + intros t Ht HtT. exact (proj1 (Htags t (tgT_tagged T t HtT)) Ht).
+    + intros t Ht HtT. exact (proj2 (Htags t (tgT_tagged T t HtT)) Ht).
 Qed.
 
 (* ** The same for the almost-sure must *)
@@ -945,12 +984,12 @@ Theorem alt_as_obs_iff `{QM : QuantumModel}
 Proof.
   split.
   - intros Halt T [HT Htags].
-    apply (alt_as_sound_obs T HT L DC p q); [| |apply Halt; by split].
-    + intros t Ht HtT. exact (proj1 (Htags t HtT) Ht).
-    + intros t Ht HtT. exact (proj2 (Htags t HtT) Ht).
+    apply (alt_as_sound_obs T (λ k x, (k, x) ∈ tagged T) (observer_w T HT) (observer_Htag T HT) (proj1 (proj2 HT)) L DC p q); [| |apply Halt; by split].
+    + intros t Ht HtT. exact (proj1 (Htags t (tgT_tagged T t HtT)) Ht).
+    + intros t Ht HtT. exact (proj2 (Htags t (tgT_tagged T t HtT)) Ht).
   - intros Hm T [HT Htags].
-    apply (as_obs_complete T HT L DC p q); [| |apply Hm; by split].
-    + intros t Ht HtT. exact (proj1 (Htags t HtT) Ht).
-    + intros t Ht HtT. exact (proj2 (Htags t HtT) Ht).
+    apply (as_obs_complete T (λ k x, (k, x) ∈ tagged T) (observer_w T HT) (observer_Htag T HT) (proj1 (proj2 HT)) L DC p q); [| |apply Hm; by split].
+    + intros t Ht HtT. exact (proj1 (Htags t (tgT_tagged T t HtT)) Ht).
+    + intros t Ht HtT. exact (proj2 (Htags t (tgT_tagged T t HtT)) Ht).
 Qed.
 (* end hide *)

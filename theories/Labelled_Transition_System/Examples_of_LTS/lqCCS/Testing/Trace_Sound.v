@@ -31,6 +31,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
+From TestingTheory Require Import lqCCS.Testing.Rec_Observers.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Build lqCCS.Testing.Trace_Complete.
 
 #[local] Open Scope lqccs_scope.
@@ -55,24 +56,24 @@ Proof.
 Qed.
 
 Lemma O_T_fun T n k c v c' v' :
-  observer T → (k, c, v) ∈ O_T T n → (k, c', v') ∈ O_T T n → c = c' ∧ v = v'.
+  wobserver T → (k, c, v) ∈ O_T T n → (k, c', v') ∈ O_T T n → c = c' ∧ v = v'.
 Proof.
   intros HT (X & HX & Hne)%O_T_spec (X' & HX' & Hne')%O_T_spec.
-  rewrite (tnodes_unique T n X' X HT HX' HX) in Hne'.
+  rewrite (tnodes_unique_w T n X' X HT HX' HX) in Hne'.
   destruct (decide ((c, v) = (c', v'))) as [[= -> ->]|Hd]; [done|]. exfalso.
   destruct (co_succ X (CoOut k c v)) as [|X1 l] eqn:E1; [done|].
   assert (H1 : X1 ∈ co_succ X (CoOut k c v)) by (rewrite E1; by left).
   apply (co_succ_out_same X k c v c' v' X1 H1 Hne' Hd).
-  apply (proj2 (proj2 (proj2 HT)) n [] k c v c' v' X1). rewrite app_nil_r. apply tnodes_app_elem. by exists X.
+  apply (proj2 (proj2 HT) n [] k c v c' v' X1). rewrite app_nil_r. apply tnodes_app_elem. by exists X.
 Qed.
 
 Lemma O_T_mono T n a m :
-  observer T → (∀ k c v, a ≠ CoOut k c v) → tnodes T (n ++ [a]) ≠ [] → m ∈ O_T T n → m ∈ O_T T (n ++ [a]).
+  wobserver T → (∀ k c v, a ≠ CoOut k c v) → tnodes T (n ++ [a]) ≠ [] → m ∈ O_T T n → m ∈ O_T T (n ++ [a]).
 Proof.
   destruct m as [[k c] v]. intros HT Ha Hne (X & HX & Hout)%O_T_spec.
   destruct (tnodes T (n ++ [a])) as [|Y l] eqn:Et; [done|].
   assert (HY : Y ∈ tnodes T (n ++ [a])) by (rewrite Et; by left). pose proof HY as HY0.
-  apply tnodes_app_elem in HY as (X0 & HX0 & HYa). rewrite (tnodes_unique T n X0 X HT HX0 HX) in HYa.
+  apply tnodes_app_elem in HY as (X0 & HX0 & HYa). rewrite (tnodes_unique_w T n X0 X HT HX0 HX) in HYa.
   destruct (co_succ X (CoOut k c v)) as [|X1 l1] eqn:E1; [done|].
   assert (H1 : X1 ∈ co_succ X (CoOut k c v)) by (rewrite E1; by left).
   assert (Hb : co_succ X1 a ≠ []).
@@ -82,7 +83,7 @@ Proof.
   assert (H2 : X2 ∈ co_succ X1 a) by (rewrite E2; by left).
   destruct (co_succ_out_swap X k c v a X1 X2 H1 H2) as (Y' & HY' & H3).
   assert (HYn : Y' ∈ tnodes T (n ++ [a])) by (apply tnodes_app_elem; by exists X).
-  rewrite (tnodes_unique T _ Y' Y HT HYn HY0) in H3.
+  rewrite (tnodes_unique_w T _ Y' Y HT HYn HY0) in H3.
   apply O_T_spec. exists Y. split; [done|]. intros En. rewrite En in H3. by apply elem_of_nil in H3.
 Qed.
 
@@ -102,12 +103,12 @@ Section Snd.
 
   Notation Ok := (real_off p q Ch K).
 
-  Hypothesis HT : obs_for p q T.
+  Hypothesis HW : wobserver T.
+  Hypothesis Hchans : ∀ n X c, X ∈ tnodes T n → c ∈ out_chans X → c ∈ out_chans T.
   Hypothesis HO : ∀ n m, plain n → S_T T n = false → (m ∈ O n ↔ m ∈ O_T T n).
   Hypothesis HCh : ∀ c, c ∈ out_chans T → Ch c.
   Hypothesis HokI : ∀ n o, menu T n o → Ok o.
   Hypothesis Hw : run_word (M := lq_menu O) (menu T) (S_T T) (dinit q) r w.
-  Hypothesis Hfin : fin (visited r).
   Hypothesis Hz : q.2 ≠ szero.
 
   Definition O' (n : node) : list msg := if excluded_middle_informative (visited r n) then O n else [].
@@ -255,12 +256,8 @@ Section Snd.
   Lemma HrunU : run_word (M := lq_menu O) U (S_T T) (r 0) r w.
   Proof. exact (run_cells (M := lq_menu O) (menu T) (S_T T) r w Hrun0 (Hinit0 _) q_nz). Qed.
 
-  Lemma comp' : computation q O' S' r w.
-  Proof.
-    split.
-    - rewrite <- (proj1 q_run'). exact HrunU'.
-    - exact Hfin.
-  Qed.
+  Lemma run' : run_word (M := lq_menu O') (used_by O' S' r w) S' (dinit q) r w.
+  Proof. rewrite <- (proj1 q_run'). exact HrunU'. Qed.
 
   Lemma vis_plain n : visited r n → plain n.
   Proof. intros (i & c & ρ & Hin & <-). exact (q_inv i (c, ρ) Hin). Qed.
@@ -280,17 +277,17 @@ Section Snd.
       split; [by symmetry|]. split; [done|]. split; [done|]. apply HCh.
       destruct (co_succ X (CoOut k c v)) as [|X1 l] eqn:E; [done|].
       assert (HX1 : X1 ∈ co_succ X (CoOut k c v)) by (rewrite E; by left).
-      pose proof (prog_step_out_chan X k c v X1 (proj1 (tnodes_obs T (proj1 (proj1 HT)) n X HX))
-                    (co_succ_sound _ _ _ HX1)) as Hc.
-      exact (proj1 (tnodes_chans T (proj1 (proj1 HT)) n X HX) c Hc).
+      destruct (co_succ_step _ _ _ HX1) as [Hst|[HE _]]; [|discriminate HE].
+      pose proof (prog_step_out_chan_r X k c v X1 (proj1 (proj1 HW n X HX)) Hst) as Hc.
+      exact (Hchans n X c HX Hc).
     - intros n k c v c' v' Hs Hi1 Hi2. destruct (S'_false n Hs) as [Hv Hf]. rewrite (O'_vis n Hv) in Hi1, Hi2.
-      apply (HO n _ (vis_plain n Hv) Hf) in Hi1, Hi2. exact (O_T_fun T n k c v c' v' (proj1 HT) Hi1 Hi2).
+      apply (HO n _ (vis_plain n Hv) Hf) in Hi1, Hi2. exact (O_T_fun T n k c v c' v' HW Hi1 Hi2).
     - intros n a m Hs Hin. destruct (S'_false _ Hs) as [Hv Hf]. pose proof (vis_prefix n [a] Hv) as Hvn.
       rewrite (O'_vis _ Hv). rewrite (O'_vis _ Hvn) in Hin.
       assert (Esn : S_T T n = false).
       { destruct (S_T T n) eqn:Esn; [|done]. rewrite (S_T_ext_closed T n a Esn) in Hf. discriminate Hf. }
       pose proof (vis_plain _ Hv) as Hpl. destruct (plain_snoc n a Hpl) as [Hpn Ha].
-      apply (HO _ _ Hpl Hf). apply (HO n _ Hpn Esn) in Hin. apply O_T_mono; [exact (proj1 HT)|exact Ha| |exact Hin].
+      apply (HO _ _ Hpl Hf). apply (HO n _ Hpn Esn) in Hin. apply O_T_mono; [exact HW|exact Ha| |exact Hin].
       destruct Hv as (i & c0 & ρ0 & Hin0 & E0).
       pose proof (visited_run (M := lq_menu O) (menu T) (S_T T) r w Hrun0 (Hinit0 _) i (c0, ρ0) Hin0 n a []) as Hmn.
       destruct Hmn as (X & a' & HX & Ea & Hne); [simpl; by rewrite E0|].
@@ -383,11 +380,14 @@ Section Snd.
     - apply Sstar_crossed. by apply crossed_eq'.
   Qed.
 
-  Lemma snd_main (DC : dep_choice) : alt_trace p q →
+  Lemma snd_main (DC : dep_choice) :
+    (coherent p q O' S' Ch K r w → run_word (M := lq_menu O') (used_by O' S' r w) S' (dinit q) r w →
+      ∃ r2, is_run (SchedSts0 := trace_sts p q O' S' Ch K r w) Stay (dinit p) r2
+          ∧ run_le (SchedSts0 := trace_sts p q O' S' Ch K r w) r2 r) →
     ∃ r', is_run (SchedSts0 := mdlts (M := lq_menu O) JY SsY) Stay (dinit p) r'
         ∧ run_le (SchedSts0 := mdlts (M := lq_menu O) JY SsY) r' r.
   Proof.
-    intros Halt. destruct (Halt O' S' Ch K r w coh' comp') as (r2 & Hr2 & Hle2). unfold trace_sts, trace_menu, trace_succ in Hr2, Hle2.
+    intros Halt. destruct (Halt coh' run') as (r2 & Hr2 & Hle2). unfold trace_sts, trace_menu, trace_succ in Hr2, Hle2.
     set (S1 := mdlts (M := lq_menu O') J' Ss') in *.
     set (S2 := mdlts (M := lq_menu O) J' Ss').
     set (S3 := mdlts (M := lq_menu O) JY SsY).
@@ -429,7 +429,9 @@ Proof.
   intros Hz Hconv Halt. apply (proj2 (alt_free_obs_iff DC p q Hz)).
   intros O Ch K I S HR r w Hw. pose proof (Hconv O Ch K I S r w HR Hw) as HN.
   destruct HR as ((T & HT & HO & -> & -> & HCh & HK) & HokI).
-  exact (snd_main p q O Ch K T r w HT HO HCh HokI Hw HN Hz DC Halt).
+  refine (snd_main p q O Ch K T r w (observer_w T (proj1 HT)) _ HO HCh HokI Hw Hz DC
+            (λ Hc Hw', Halt _ _ Ch K r w Hc (conj Hw' HN))).
+  intros n X c HX Hc. exact (proj1 (tnodes_chans T (proj1 (proj1 HT)) n X HX) c Hc).
 Qed.
 
 Theorem trace_characterisation `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) :

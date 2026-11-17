@@ -263,25 +263,29 @@ Section Bottom.
 
   Definition Omega (t : tag) : proc := PRec t 0 (PVar 0).
 
-  Lemma Omega_step t : prog_step (Omega t) (CTag t) τ (Omega t).
+  Lemma Omega_step t : prog_step (Omega t) (CTag t) τ (Omega (tag_up t)).
   Proof. exact (pr_rec t 0 (PVar 0)). Qed.
 
-  Lemma Omega_run L t T ρ : is_run L [((Omega t, T), ρ)] (λ _, [((Omega t, T), ρ)]).
+  Definition Omega_run_of (t : tag) (T : proc) (ρ : St) (i : nat) : dist (proc * proc) :=
+    [((Omega (if decide (success T) then t else Nat.iter i tag_up t), T), ρ)].
+
+  Lemma Omega_run L t T ρ : is_run L [((Omega t, T), ρ)] (Omega_run_of t T ρ).
   Proof.
-    split; [done|]. intros n. destruct (decide (success T)) as [Hs|Hs].
+    unfold Omega_run_of. split; [by case_decide|]. intros n. destruct (decide (success T)) as [Hs|Hs].
     - right. split; [|done]. intros σ (c & ρ' & Δ & Hin & Hns & _).
       apply list_elem_of_singleton in Hin. simplify_eq. by apply Hns.
-    - left. exists (CTag t). split.
-      + exists (Omega t, T), ρ, [((Omega t, T), ρ)]. split; [by left|]. split; [done|].
+    - left. exists (CTag (Nat.iter n tag_up t)). split.
+      + eexists _, ρ, [((Omega (tag_up (Nat.iter n tag_up t)), T), ρ)]. split; [by left|]. split; [done|].
         apply ss_tau. by apply pr_parL, Omega_step.
-      + exists [[((Omega t, T), ρ)]]. split; [|done]. constructor; [|constructor]. left. split; [done|].
+      + exists [[((Omega (tag_up (Nat.iter n tag_up t)), T), ρ)]]. split; [|done].
+        constructor; [|constructor]. left. split; [done|].
         apply ss_tau. by apply pr_parL, Omega_step.
   Qed.
 
   Theorem Omega_bottom L t (Q : proc) (ρ : St) : ctx_pre_sm L (Omega t, ρ) (Q, ρ).
   Proof.
-    intros T r Hr. exists (λ _, [((Omega t, T), ρ)]). split; [apply Omega_run|].
-    intros n w Hw. unfold succ_mass in *. simpl in Hw.
+    intros T r Hr. exists (Omega_run_of t T ρ). split; [apply Omega_run|].
+    intros n w Hw. unfold succ_mass, Omega_run_of in *. simpl in Hw.
     destruct (decide (success T)) as [Hs|Hs].
     - exists 0. destruct Hr as [-> _]. simpl.
       rewrite decide_True; [|done]. exact (proj1 Hw).

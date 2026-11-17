@@ -94,7 +94,7 @@ Section Den_Harmony.
       eval_qubits es = Some qs →
       ⟨ρ, PG ((PMeas t M es ∙ P) + K)⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨meas_branch M qs k ρ, (subst 0 (VNat (code _ k)) P)⟩
   | sl_rec ρ t X P :
-      ⟨ρ, PRec t X P⟩ ⟶[CTag t, MNone] ⟨ρ, P ⦃ PRec t X P // X ⦄⟩
+      ⟨ρ, PRec t X P⟩ ⟶[CTag t, MNone] ⟨ρ, P ⦃ (PRec t X P)↑ // X ⦄⟩
   | sl_par ρ P s κ ρ' P' Q :
       ⟨ρ, P⟩ ⟶[s, κ] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶[s, κ] ⟨ρ', P' ∥ Q⟩
   | sl_res ρ P s κ ρ' P' :
@@ -225,7 +225,7 @@ Section Den_Harmony.
       by apply pr_sumL, pr_init.
     - exists ((subst 0 (VNat (code _ k)) P)). split; [|reflexivity]. eexists. split; [|constructor].
       by apply pr_sumL, pr_meas.
-    - exists (P ⦃ PRec t X P // X ⦄). split; [|reflexivity]. exists τ. split; [|constructor].
+    - exists (P ⦃ (PRec t X P)↑ // X ⦄). split; [|reflexivity]. exists τ. split; [|constructor].
       apply pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par]. exists l. split; [by apply pr_parL | done].
     - exists (ν P''). split; [|by apply cgr_res]. exists l. split; [|done].

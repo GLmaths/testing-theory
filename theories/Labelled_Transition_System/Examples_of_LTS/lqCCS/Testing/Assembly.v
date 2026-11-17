@@ -43,7 +43,7 @@ Proof.
     by rewrite (IHP E1), (IHQ E2).
   - done.
   - done.
-  - done.
+  - destruct a, a'; simpl in *; try done; inversion Ho; subst; done.
   - rewrite !gco_heads. by apply omap_nil_offer.
 Qed.
 
@@ -165,7 +165,7 @@ Section Asm.
     destruct (rep_ok m o Hin) as (Hty & _). symmetry. exact Hty.
   Qed.
 
-  Lemma TG_tag k x : TG (k, x) → k ∉ tags p.1 ∧ k ∉ tags q.1.
+  Lemma TG_tag k x : TG (k, x) → k ∉ otags p.1 ∧ k ∉ otags q.1.
   Proof.
     intros [Hin|(m & o & Hin & E)].
     - apply (proj2 HT). unfold tags. apply list_elem_of_fmap. by exists (k, x).

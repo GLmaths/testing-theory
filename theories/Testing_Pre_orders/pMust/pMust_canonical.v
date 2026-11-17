@@ -323,6 +323,96 @@ Section MorphSmyth.
   Qed.
 End MorphSmyth.
 
+Section MorphBisim.
+  Context `{WeightLaws} {C C' Sch : Type} (S1 : SchedSts C Sch) (S2 : SchedSts C' Sch).
+  Context (f : C → C').
+
+  Notation fd := (map (λ x : C * weight, (f x.1, x.2))).
+
+  Hypothesis Hsucc : ∀ c, psuccess (SchedSts := S1) c ↔ psuccess (SchedSts := S2) (f c).
+  Hypothesis Hfwd : ∀ ρ c σ Δ, sstep (SchedSts := S1) ρ c σ Δ → sstep (SchedSts := S2) ρ (f c) σ (fd Δ).
+  Hypothesis Hbwd : ∀ ρ c σ Δ', sstep (SchedSts := S2) ρ (f c) σ Δ' →
+    ∃ Δ, sstep (SchedSts := S1) ρ c σ Δ ∧ fd Δ = Δ'.
+
+  Lemma bisim_run_fwd D r :
+    is_run (SchedSts0 := S1) Stay D r → is_run (SchedSts0 := S2) Stay (fd D) (λ i, fd (r i)).
+  Proof.
+    apply (morph_run S1 S2 f (λ _, True) Hsucc).
+    - intros ρ c σ Δ _ _ Hs. split; [by apply Hfwd|done].
+    - intros ρ c σ Δ' _ _ Hs. destruct (Hbwd _ _ _ _ Hs) as (Δ & Hs1 & _). by exists Δ.
+    - done.
+  Qed.
+
+  Lemma bisim_comps_bwd (D : dist C) σ Δs' :
+    Forall2 (λ cρ Δ, comp_step (SchedSts0 := S2) Stay cρ.2 cρ.1 σ Δ) (fd D) Δs' →
+    ∃ Δs, Forall2 (λ cρ Δ, comp_step (SchedSts0 := S1) Stay cρ.2 cρ.1 σ Δ) D Δs ∧ map fd Δs = Δs'.
+  Proof.
+    revert Δs'. induction D as [|[c ρ] D IH]; intros Δs' HF.
+    - inversion HF; subst. by exists [].
+    - inversion HF as [|? Δ' ? Δs0 Hc HF0]; subst. destruct (IH _ HF0) as (Δs & HFs & Es). simpl in Hc.
+      destruct Hc as [[Hns Hs]|[Hst ->]].
+      + destruct (Hbwd _ _ _ _ Hs) as (Δ & Hs1 & EΔ). exists (Δ :: Δs). split; [|simpl; by rewrite EΔ, Es].
+        constructor; [|done]. left. split; [intros Hc; apply Hns, Hsucc, Hc|done].
+      + exists ([(c, ρ)] :: Δs). split; [|simpl; by rewrite Es]. constructor; [|done]. right. split; [|done].
+        destruct Hst as [Hc|Hno]; [left; by apply Hsucc|right]. intros Δ Hs. exact (Hno _ (Hfwd _ _ _ _ Hs)).
+  Qed.
+
+  Lemma bisim_dstep_bwd (D : dist C) σ Θ' :
+    dstep (SchedSts0 := S2) Stay (fd D) σ Θ' → ∃ D', dstep (SchedSts0 := S1) Stay D σ D' ∧ fd D' = Θ'.
+  Proof.
+    intros [(c' & ρ & Δ' & Hin & Hns & Hs) (Δs' & HF & ->)].
+    destruct (bisim_comps_bwd D σ Δs' HF) as (Δs & HFs & <-). exists (dsum Δs). split.
+    - split; [|by exists Δs]. apply list_elem_of_fmap in Hin as ([c ρ0] & E & Hin). simpl in E. injection E as -> ->.
+      destruct (Hbwd _ _ _ _ Hs) as (Δ & Hs1 & _). exists c, ρ0, Δ. split; [done|].
+      split; [intros Hc; apply Hns, Hsucc, Hc|done].
+    - unfold dsum. by rewrite concat_map.
+  Qed.
+
+  Lemma bisim_dstable_bwd (D : dist C) : dstable (SchedSts0 := S2) (fd D) → dstable (SchedSts0 := S1) D.
+  Proof.
+    intros Hst σ (c & ρ & Δ & Hin & Hns & Hs). apply (Hst σ). exists (f c), ρ, (fd Δ).
+    split; [apply list_elem_of_fmap; by exists (c, ρ)|]. split; [intros Hc; apply Hns, Hsucc, Hc|by apply Hfwd].
+  Qed.
+
+  Lemma bisim_run_bwd (DC : dep_choice) (D : dist C) r' :
+    is_run (SchedSts0 := S2) Stay (fd D) r' →
+    ∃ r, is_run (SchedSts0 := S1) Stay D r ∧ ∀ i, fd (r i) = r' i.
+  Proof.
+    intros [Hr0 Hr].
+    destruct (DC (nat * dist C)%type
+      (λ x y, y.1 = S x.1 ∧ (fd x.2 = r' x.1 →
+         fd y.2 = r' (S x.1) ∧ ((∃ σ, dstep (SchedSts0 := S1) Stay x.2 σ y.2)
+                                 ∨ (dstable (SchedSts0 := S1) x.2 ∧ y.2 = x.2)))) (0, D)) as (g & Hg0 & Hg).
+    { intros [i X]. simpl. destruct (classic (fd X = r' i)) as [E|E]; [|exists (S i, X); split; [done|by intros ?]].
+      destruct (Hr i) as [(σ & Hs)|[Hst E']].
+      - rewrite <- E in Hs. destruct (bisim_dstep_bwd X σ _ Hs) as (Y & HY & EY).
+        exists (S i, Y). split; [done|]. intros _. split; [done|]. left. by exists σ.
+      - exists (S i, X). split; [done|]. intros _. split; [by rewrite E'|]. right. split; [|done].
+        apply bisim_dstable_bwd. by rewrite E. }
+    assert (Hi : ∀ i, (g i).1 = i).
+    { induction i as [|i IH]; [by rewrite Hg0|]. rewrite (proj1 (Hg i)). by rewrite IH. }
+    assert (Hd : ∀ i, fd (g i).2 = r' i).
+    { induction i as [|i IH]; [by rewrite Hg0|]. pose proof (proj2 (Hg i)) as Hn. rewrite Hi in Hn.
+      exact (proj1 (Hn IH)). }
+    exists (λ i, (g i).2). split; [|exact Hd]. split; [by rewrite Hg0|].
+    intros i. pose proof (proj2 (Hg i)) as Hn. rewrite Hi in Hn. exact (proj2 (Hn (Hd i))).
+  Qed.
+
+  Theorem bisim_smyth (DC : dep_choice) (Dp Dq : dist C) :
+    smyth_le (SchedSts0 := S1) Stay Dp Dq ↔ smyth_le (SchedSts0 := S2) Stay (fd Dp) (fd Dq).
+  Proof.
+    split.
+    - intros Hle r2' Hr2'. destruct (bisim_run_bwd DC Dq r2' Hr2') as (r2 & Hr2 & E2).
+      destruct (Hle _ Hr2) as (r1 & Hr1 & Hrl). exists (λ i, fd (r1 i)). split; [by apply bisim_run_fwd|].
+      intros n v Hv. unfold succ_mass in *. rewrite <- (morph_succ S1 S2 f Hsucc (r1 n)) in Hv.
+      destruct (Hrl n v Hv) as (m & Hm). exists m. rewrite <- (E2 m), <- (morph_succ S1 S2 f Hsucc (r2 m)). exact Hm.
+    - intros Hle r2 Hr2. destruct (Hle _ (bisim_run_fwd Dq r2 Hr2)) as (r1' & Hr1' & Hrl).
+      destruct (bisim_run_bwd DC Dp r1' Hr1') as (r1 & Hr1 & E1). exists r1. split; [done|].
+      intros n v Hv. unfold succ_mass in *. rewrite (morph_succ S1 S2 f Hsucc (r1 n)), (E1 n) in Hv.
+      destruct (Hrl n v Hv) as (m & Hm). exists m. rewrite (morph_succ S1 S2 f Hsucc (r2 m)). exact Hm.
+  Qed.
+End MorphBisim.
+
 Definition fin {A} (P : A → Prop) : Prop := ∃ l : list A, ∀ x, P x → x ∈ l.
 
 Lemma fin_mono {A} (P Q : A → Prop) : (∀ x, P x → Q x) → fin Q → fin P.

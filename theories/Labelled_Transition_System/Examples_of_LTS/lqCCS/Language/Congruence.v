@@ -369,12 +369,24 @@ Proof.
   - apply gcgr_fullchoice; auto.
 Qed.
 
+Lemma cgr_step_tren :
+  (∀ P P', cgr_step P P' → ∀ f, cgr_step (tren f P) (tren f P'))
+  ∧ (∀ g g', gcgr_step g g' → ∀ f, gcgr_step (gtren f g) (gtren f g')).
+Proof.
+  apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
+  - rewrite (proj1 tren_ren). apply cgr_res_swap_step.
+  - rewrite (proj1 tren_ren). apply cgr_res_scope_rev_step.
+Qed.
+
+Lemma cgr_tren f P P' : P ≡* P' → tren f P ≡* tren f P'.
+Proof. apply (cgr_ctx (tren f)). intros. by apply cgr_step_tren. Qed.
+
 (* Unfolding congruent recursions gives congruent processes. *)
 Lemma cgr_unfold t X P P' :
-  P ≡* P' → P ⦃ t ∶ rec X ∙ P // X ⦄ ≡* P' ⦃ t ∶ rec X ∙ P' // X ⦄.
+  P ≡* P' → P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄ ≡* P' ⦃ (t ∶ rec X ∙ P')↑ // X ⦄.
 Proof.
   intros H. etrans; [by apply cgr_pr_subst_l|].
-  apply (proj1 cgr_pr_subst_r). by apply cgr_recursion.
+  apply (proj1 cgr_pr_subst_r). by apply cgr_tren, cgr_recursion.
 Qed.
 
 (* ** Facts on steps *)
@@ -652,7 +664,7 @@ Qed.
 Lemma fwd_rec t X P P' : P ≡* P' → fwd (t ∶ rec X ∙ P) (t ∶ rec X ∙ P').
 Proof.
   intros H s l Y Hs. inversion Hs; subst.
-  exists (P' ⦃ t ∶ rec X ∙ P' // X ⦄). split; [constructor|by apply cgr_unfold].
+  exists (P' ⦃ (t ∶ rec X ∙ P')↑ // X ⦄). split; [constructor|by apply cgr_unfold].
 Qed.
 
 Lemma fwd_pre 𝜆 P P' : P ≡* P' → fwd (𝜆 ∙ P) (𝜆 ∙ P').

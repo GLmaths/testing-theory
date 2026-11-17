@@ -54,7 +54,7 @@ Section Trace.
     ∀ n o, used_by O S r w n o → real_off p q Ch K o.
 
   Definition outputs_sync (O : node → list msg) (S : node → bool) (Ch : channel → Prop) (K : tag → okind) : Prop :=
-    ∀ n k c v, S n = false → (k, c, v) ∈ O n → K k = KOut ∧ k ∉ tags p.1 ∧ k ∉ tags q.1 ∧ Ch c.
+    ∀ n k c v, S n = false → (k, c, v) ∈ O n → K k = KOut ∧ k ∉ otags p.1 ∧ k ∉ otags q.1 ∧ Ch c.
 
   Definition one_output_per_tag (O : node → list msg) (S : node → bool) : Prop :=
     ∀ n k c v c' v', S n = false → (k, c, v) ∈ O n → (k, c', v') ∈ O n → c = c' ∧ v = v'.

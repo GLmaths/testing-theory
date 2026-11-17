@@ -206,8 +206,8 @@ Proof.
   intros HT. revert X. induction n as [|a n IH] using rev_ind; intros X HX.
   - rewrite tnodes_nil in HX. apply list_elem_of_singleton in HX. subst X. simpl. split; [lia|done].
   - apply tnodes_app_elem in HX as (X0 & HX0 & HX). destruct (IH X0 HX0) as [Hl Hr].
-    destruct (step_sz _ _ _ _ Hr (co_succ_sound _ _ _ HX)) as [Hl' Hr']. rewrite length_app. simpl.
-    split; [lia|done].
+    destruct (co_succ_step _ _ _ HX) as [Hs|[_ Hs]]; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' Hr']; rewrite length_app; simpl.
+    all: split; [lia|done].
 Qed.
 
 Lemma menu_depth T n o : norec T = true → menu T n o → length n < sz T.
@@ -215,7 +215,7 @@ Proof.
   intros HT (X & a & HX & _ & Hne). destruct (co_succ X a) as [|X' l] eqn:E; [done|].
   destruct (tnodes_sz T n X HT HX) as [Hl Hr].
   assert (HX' : X' ∈ co_succ X a) by (rewrite E; by left).
-  destruct (step_sz _ _ _ _ Hr (co_succ_sound _ _ _ HX')) as [Hl' _]. lia.
+  destruct (co_succ_step _ _ _ HX') as [Hs|[_ Hs]]; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' _]; lia.
 Qed.
 
 Lemma cstep_measure `{QM : QuantumModel} T O ρ (c : comp) σ Δ :

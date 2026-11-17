@@ -88,6 +88,8 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
     (* Initialisation of qubits to [|0⟩], [Σ_i |0⟩⟨i| ρ |i⟩⟨0|], trace preserving. *)
     init_act : list qubit → Act;
     init_tr qs ρ : tr (app (act (init_act qs)) ρ) = tr ρ;
+    (* Initialising no qubit does nothing. *)
+    init_nil ρ : app (act (init_act [])) ρ = ρ;
 
     (* Qubits of a state, preserved by the operations of the syntax. *)
     St_qubits : St → gset qubit;

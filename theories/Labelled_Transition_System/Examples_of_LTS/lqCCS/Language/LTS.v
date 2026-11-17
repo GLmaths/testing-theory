@@ -163,7 +163,7 @@ Inductive prog_step : proc → choice → Labels prog_action → proc → Prop :
 | pr_res P s l P' :
     P ⟶{ren_lbl S l}[s] P' → ν P ⟶{l}[s] (ν P')
 | pr_rec t X P :
-    t ∶ rec X ∙ P ⟶{τ}[t] (P ⦃ t ∶ rec X ∙ P // X ⦄)
+    t ∶ rec X ∙ P ⟶{τ}[t] (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄)
 where "P ⟶{ l }[ s ] P'" := (prog_step P s l P') : lqccs_scope.
 
 (* ** Transitions of a guard *)
@@ -204,7 +204,7 @@ Lemma prog_step_guard_ind (Φ : proc → choice → Labels prog_action → proc 
   (∀ P Q (t t' : tag) c v P' Q', P ⟶{c ? v}[t] P' → Φ P t (c ? v) P' →
      Q ⟶{c ! v}[t'] Q' → Φ Q t' (c ! v) Q' → Φ (P ∥ Q) ⦗t, t'⦘ τ (P' ∥ Q')) →
   (∀ P s l P', P ⟶{ren_lbl S l}[s] P' → Φ P s (ren_lbl S l) P' → Φ (ν P) s l (ν P')) →
-  (∀ t X P, Φ (t ∶ rec X ∙ P) t τ (P ⦃ t ∶ rec X ∙ P // X ⦄)) →
+  (∀ t X P, Φ (t ∶ rec X ∙ P) t τ (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄)) →
   ∀ P s l P', P ⟶{l}[s] P' → Φ P s l P'.
 Proof.
   intros Hg Hsend HiteT HiteF HparL HparR HsyncL HsyncR Hres Hrec P s l P' Hs.
@@ -290,7 +290,7 @@ Section Memory.
   | co_res P s l ρ' P' :
       ⟨ρ, P⟩ ⟶{ren_lbl S l}[s] ⟨ρ', P'⟩ → ⟨ρ, ν P⟩ ⟶{l}[s] ⟨ρ', ν P'⟩
   | co_rec t X P :
-      ⟨ρ, t ∶ rec X ∙ P⟩ ⟶{τ}[t] ⟨ρ, P ⦃ t ∶ rec X ∙ P // X ⦄⟩
+      ⟨ρ, t ∶ rec X ∙ P⟩ ⟶{τ}[t] ⟨ρ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄⟩
   | co_mem_sop P (ℰ : Act) :
       ⟨ρ, P⟩ ⟶ₘ{ℰ} ⟨ℰ · ρ, P⟩
   | co_mem_meas P M qs (k : Out (meas_of M qs)) :
@@ -392,7 +392,7 @@ Proof.
   - by eapply pr_syncL; [apply IH1|apply IH2].
   - by eapply pr_syncR; [apply IH1|apply IH2].
   - apply pr_res. rewrite <- ren_lbl_lift_S. apply IH.
-  - rewrite (proj1 (ren_pr_subst X)). simpl. constructor.
+  - rewrite (proj1 (ren_pr_subst X)). simpl. rewrite <- (proj1 tren_ren P). exact (pr_rec t X (ren f P)).
 Qed.
 
 (* The converse, for an injective renaming. *)
@@ -447,7 +447,7 @@ Proof.
     + exists (M ⦅qs⦆? n), (ν P'0). split_and!; [done|done|by apply pr_res].
     + exists (init ⦅qs0⦆), (ν P'0). split_and!; [done|done|by apply pr_res].
     + exists τ, (ν P'0). split_and!; [done|done|by apply pr_res].
-  - exists τ, (P1 ⦃ t0 ∶ rec X0 ∙ P1 // X0 ⦄).
-    split_and!; [done| |constructor]. rewrite (proj1 (ren_pr_subst X0)). done.
+  - exists τ, (P1 ⦃ (t0 ∶ rec X0 ∙ P1)↑ // X0 ⦄).
+    split_and!; [done| |constructor]. rewrite (proj1 (ren_pr_subst X0)), <- (proj1 tren_ren). done.
 Qed.
 (* end hide *)

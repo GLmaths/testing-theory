@@ -52,7 +52,7 @@ Section Asm.
   Hypothesis Hfuel : ∀ n, S n = false → length n < f0.
   Hypothesis Hun : ∀ n a, unlisted VL a → S (n ++ [a]) = true.
 
-  Definition TG (x : tag * okind) : Prop := K x.1 = x.2 ∧ x.1 ∉ tags p.1 ∧ x.1 ∉ tags q.1.
+  Definition TG (x : tag * okind) : Prop := K x.1 = x.2 ∧ x.1 ∉ otags p.1 ∧ x.1 ∉ otags q.1.
 
   Definition T : proc := BT S O cl VL f0.
 
@@ -139,7 +139,7 @@ Section Asm.
     destruct (co_succ T' (CoIn k c v)) as [|T'' l] eqn:E; [done|].
     assert (HT'' : T'' ∈ co_succ T' (CoIn k c v)) by (rewrite E; by left).
     pose proof (prog_step_in_chan T' k c v T'' (proj1 (tnodes_obs T (proj1 T_observer) n T' HT'))
-                  (co_succ_sound _ _ _ HT'')) as Hc.
+                  (co_succ_sound _ _ _ (proj1 (tnodes_obs T (proj1 T_observer) n T' HT')) HT'')) as Hc.
     exact (Hic c (proj2 (tnodes_chans T (proj1 T_observer) n T' HT') c Hc) Hc1).
   Qed.
 

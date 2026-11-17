@@ -24,14 +24,14 @@
 (* begin hide *)
 (* * lqCCS: tags of programs
 
-    The tags of a program with the kind of the prefix they tag.  They only
-    decrease along the steps: a tested program keeps its tags apart from
-    those of the observer. *)
+    The tags of a program with the kind of the prefix they tag.  Up to
+    their generation, they only decrease along the steps: a tested program
+    keeps its tags apart from those of the observer. *)
 
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base countable decidable list propset.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled.
 
@@ -60,7 +60,7 @@ Fixpoint tagged (P : proc) : list (tag * okind) :=
   | PIte _ P Q | P ∥ Q => tagged P ++ tagged Q
   | ν P => tagged P
   | PVar _ => []
-  | PRec t _ P => (t, KRec) :: tagged P
+  | PRec t _ P => (t, KInit) :: tagged P
   | PG g => gtagged g
   end
 with gtagged (g : guard) : list (tag * okind) :=
@@ -133,15 +133,27 @@ Proof.
         left; apply elem_of_app; auto.
 Qed.
 
-(* Along a step, the tags of a program only decrease. *)
-Lemma prog_step_tagged P s l P' x : prog_step P s l P' → x ∈ tagged P' → x ∈ tagged P.
+Lemma prefix_tagged_tren f 𝜆 : prefix_tagged (prefix_tren f 𝜆) = (f (prefix_tagged 𝜆).1, (prefix_tagged 𝜆).2).
+Proof. by destruct 𝜆. Qed.
+
+Lemma tagged_tren f P : tagged (tren f P) = map (λ x, (f x.1, x.2)) (tagged P)
+with gtagged_gtren f g : gtagged (gtren f g) = map (λ x, (f x.1, x.2)) (gtagged g).
+Proof.
+  - destruct P; simpl; rewrite ?map_app; try done; try (by rewrite !tagged_tren); try apply gtagged_gtren.
+  - destruct g; simpl; rewrite ?map_app; try done; try (by rewrite !gtagged_gtren).
+    by rewrite prefix_tagged_tren, tagged_tren.
+Qed.
+
+(* Along a step, the tags of a program only decrease, up to their generation. *)
+Lemma prog_step_tagged P s l P' x :
+  prog_step P s l P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
 Proof.
   intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ] using prog_step_guard_ind; simpl; intros Hx.
   - induction Hg using prog_gstep_ind; simpl in *; try (apply elem_of_app; auto; fail).
     + by right.
-    + rewrite tagged_subst in Hx. by right.
+    + rewrite (proj1 tren_subst), tagged_subst in Hx. by right.
     + by right.
-    + rewrite tagged_subst in Hx. by right.
+    + rewrite (proj1 tren_subst), tagged_subst in Hx. by right.
     + by right.
   - by apply elem_of_nil in Hx.
   - apply elem_of_app. auto.
@@ -151,13 +163,25 @@ Proof.
   - apply elem_of_app in Hx as [Hx|Hx]; apply elem_of_app; auto.
   - apply elem_of_app in Hx as [Hx|Hx]; apply elem_of_app; auto.
   - auto.
-  - apply tagged_pr_subst in Hx as [Hx|Hx]; [by right|done].
+  - rewrite (proj1 (tren_pr_subst X)) in Hx. apply tagged_pr_subst in Hx as [Hx|Hx]; [by right|].
+    simpl in Hx. by rewrite tag_base_up, tren_base_up in Hx.
 Qed.
 
-Lemma prog_step_tags P s l P' t : prog_step P s l P' → t ∈ tags P' → t ∈ tags P.
+(* The tags a program may come to have: those of the roots of its tags. *)
+Definition otags (P : proc) : propset tag := {[ t | tag_base t ∈ tags (tren tag_base P) ]}.
+
+Lemma tags_otags P t : t ∈ tags P → t ∈ otags P.
 Proof.
-  intros Hs Ht. unfold tags in *. apply list_elem_of_fmap in Ht as (x & -> & Hx).
-  apply list_elem_of_fmap. exists x. split; [done|]. by eapply prog_step_tagged.
+  unfold otags, tags. intros (x & -> & Hx)%list_elem_of_fmap. apply elem_of_PropSet.
+  rewrite tagged_tren. apply list_elem_of_fmap. exists (tag_base x.1, x.2). split; [done|].
+  apply list_elem_of_fmap. by exists x.
+Qed.
+
+Lemma prog_step_otags P s l P' t : prog_step P s l P' → t ∈ otags P' → t ∈ otags P.
+Proof.
+  unfold otags, tags. intros Hs Ht. rewrite elem_of_PropSet in Ht |- *.
+  apply list_elem_of_fmap in Ht as (x & E & Hx). apply list_elem_of_fmap. exists x. split; [done|].
+  by eapply prog_step_tagged.
 Qed.
 
 (* The tags of a choice. *)

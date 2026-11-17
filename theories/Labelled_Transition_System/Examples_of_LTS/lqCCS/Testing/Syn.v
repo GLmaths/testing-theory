@@ -34,35 +34,6 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-Lemma gsuccessb_gshiftv k g : gsuccessb (gshiftv k g) = gsuccessb g.
-Proof. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
-
-Lemma obsb_shiftv k P : obsb (shiftv k P) = obsb P
-with gobsb_gshiftv k g : gobsb (gshiftv k g) = gobsb g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !obsb_shiftv); try apply gobsb_gshiftv.
-  - destruct g; simpl; try done; try (by rewrite !gobsb_gshiftv, !gsuccessb_gshiftv);
-      try (destruct 𝜆; simpl; try done; apply obsb_shiftv).
-Qed.
-
-Lemma out_chans_shiftv k P : out_chans (shiftv k P) = out_chans P
-with gout_chans_gshiftv k g : gout_chans (gshiftv k g) = gout_chans g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !out_chans_shiftv); try apply out_chans_shiftv;
-      try apply gout_chans_gshiftv.
-  - destruct g; simpl; try done; try (by rewrite !gout_chans_gshiftv);
-      try (destruct 𝜆; simpl; apply out_chans_shiftv).
-Qed.
-
-Lemma in_chans_shiftv k P : in_chans (shiftv k P) = in_chans P
-with gin_chans_gshiftv k g : gin_chans (gshiftv k g) = gin_chans g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !in_chans_shiftv); try apply in_chans_shiftv;
-      try apply gin_chans_gshiftv.
-  - destruct g; simpl; try done; try (by rewrite !gin_chans_gshiftv);
-      try (destruct 𝜆; simpl; try apply in_chans_shiftv; by rewrite in_chans_shiftv).
-Qed.
-
 Section Syn.
   Context (TG : tag * okind → Prop) (OC IC : channel → Prop).
 
@@ -178,7 +149,7 @@ Section Syn.
       + destruct (IHQ h0 HQ Hin) as (H1 & H2 & H3 & H4). split; [|done]. simpl. apply syn_par; [by apply syn_sh|done].
     - by apply elem_of_nil in Hin.
     - by apply elem_of_nil in Hin.
-    - by apply elem_of_nil in Hin.
+    - destruct HZ as [HZ _]. discriminate HZ.
     - exact (gheads_syn g h HZ Hin).
   Qed.
 

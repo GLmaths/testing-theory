@@ -83,7 +83,8 @@ Proof.
     + left. exists a. split; [done|]. by rewrite E1.
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
-  - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
+  - apply (fin_mono _ (λ o, o ∈ [OffInit t []])); [|apply fin_elem]. intros o (a & <- & Hne). simpl in Hne.
+    destruct a; try done. case_decide as Hd; [|done]. destruct Hd as (-> & ->). by left.
   - exact (goffs_fin g).
 Qed.
 
@@ -180,8 +181,8 @@ Section Trunc.
   Hypothesis HT : obs_for p q T.
   Hypothesis Hrun : run_word (M := lq_menu O) (menu T) Sx (dinit q) r w.
   Hypothesis HF : ∀ k, k ∈ tags T → k ∈ F.
-  Hypothesis Hrep : ∀ k, k ∉ F → k ∉ tags p.1 → k ∉ tags q.1 →
-    ∃ k', k' ∈ F ∧ k' ∉ tags T ∧ k' ∉ tags p.1 ∧ k' ∉ tags q.1 ∧ K k' = K k.
+  Hypothesis Hrep : ∀ k, k ∉ F → k ∉ otags p.1 → k ∉ otags q.1 →
+    ∃ k', k' ∈ F ∧ k' ∉ tags T ∧ k' ∉ otags p.1 ∧ k' ∉ otags q.1 ∧ K k' = K k.
   Hypothesis Hnz : ∀ i x, x ∈ r i → x.2 ≠ weight_zero.
   Hypothesis HokT : ∀ n o, menu T n o → real_off p q Ch K o.
 
@@ -229,7 +230,7 @@ Section Trunc.
 
   Lemma star_rep n o o' :
     Js n o → ¬ U n o → alike o o' → K (off_tag o') = K (off_tag o) →
-    off_tag o' ∉ tags p.1 → off_tag o' ∉ tags q.1 →
+    off_tag o' ∉ otags p.1 → off_tag o' ∉ otags q.1 →
     off_tag o' ∉ tags T ∨ off_tag o = off_tag o' → Js n o'.
   Proof.
     intros [HU|[Hok Hnr]] HnU Hal HK Hp Hq Ht; [done|]. right. split.
@@ -246,7 +247,7 @@ Section Trunc.
     assert (HnU : ¬ U n o) by (intros HU; apply HnM; by apply U_menu).
     assert (Hok : real_off p q Ch K o) by (destruct HJ as [HU|[Hok _]]; [by destruct HnU|exact Hok]).
     destruct Hok as (_ & Hp & Hq & _).
-    assert (Hk : ∃ k', k' ∈ F ∧ k' ∉ tags p.1 ∧ k' ∉ tags q.1 ∧ K k' = K (off_tag o)
+    assert (Hk : ∃ k', k' ∈ F ∧ k' ∉ otags p.1 ∧ k' ∉ otags q.1 ∧ K k' = K (off_tag o)
                  ∧ (k' ∉ tags T ∨ off_tag o = k') ∧ (off_tag o ∈ F → k' = off_tag o)).
     { destruct (classic (off_tag o ∈ F)) as [HkF|HkF].
       - exists (off_tag o). split; [done|]. split; [done|]. split; [done|]. split; [done|]. split; [by right|done].
@@ -327,14 +328,14 @@ Qed.
 
 Lemma reps_exist `{QM : QuantumModel} (p q : proc * St) (T : proc) (K : tag → okind) :
   ∃ F : list tag, (∀ k, k ∈ tags T → k ∈ F)
-     ∧ ∀ k, k ∉ F → k ∉ tags p.1 → k ∉ tags q.1 →
-         ∃ k', k' ∈ F ∧ k' ∉ tags T ∧ k' ∉ tags p.1 ∧ k' ∉ tags q.1 ∧ K k' = K k.
+     ∧ ∀ k, k ∉ F → k ∉ otags p.1 → k ∉ otags q.1 →
+         ∃ k', k' ∈ F ∧ k' ∉ tags T ∧ k' ∉ otags p.1 ∧ k' ∉ otags q.1 ∧ K k' = K k.
 Proof.
-  assert (Hks : ∀ ks : list okind, ∃ fr : list tag, ∀ k, K k ∈ ks → k ∉ tags T → k ∉ tags p.1 → k ∉ tags q.1 →
-    ∃ k', k' ∈ fr ∧ k' ∉ tags T ∧ k' ∉ tags p.1 ∧ k' ∉ tags q.1 ∧ K k' = K k).
+  assert (Hks : ∀ ks : list okind, ∃ fr : list tag, ∀ k, K k ∈ ks → k ∉ tags T → k ∉ otags p.1 → k ∉ otags q.1 →
+    ∃ k', k' ∈ fr ∧ k' ∉ tags T ∧ k' ∉ otags p.1 ∧ k' ∉ otags q.1 ∧ K k' = K k).
   { induction ks as [|κ ks (fr & IH)].
     - exists []. intros k Hk. by apply elem_of_nil in Hk.
-    - destruct (classic (∃ k0, K k0 = κ ∧ k0 ∉ tags T ∧ k0 ∉ tags p.1 ∧ k0 ∉ tags q.1)) as [(k0 & Ek & Ha & Hb & Hc)|Hn].
+    - destruct (classic (∃ k0, K k0 = κ ∧ k0 ∉ tags T ∧ k0 ∉ otags p.1 ∧ k0 ∉ otags q.1)) as [(k0 & Ek & Ha & Hb & Hc)|Hn].
       + exists (k0 :: fr). intros k Hk HkT Hkp Hkq. apply elem_of_cons in Hk as [Hk|Hk].
         * exists k0. split; [by left|]. split; [done|]. split; [done|]. split; [done|]. congruence.
         * destruct (IH k Hk HkT Hkp Hkq) as (k' & Hin & Hrest). exists k'. split; [by right|done].
