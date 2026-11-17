@@ -43,7 +43,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets numbers.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -62,7 +62,7 @@ Inductive choice : Type :=
 Definition cpair (t t' : tag) : choice := CPair (Nat.min t t') (Nat.max t t').
 
 Coercion CTag : tag >-> choice.
-Notation "⦗ t , t' ⦘" := (cpair t t') (at level 0) : lqccs_scope.
+Notation "⦗ t , t' ⦘" := (cpair t t') (at level 0, format "⦗ t ,  t' ⦘") : lqccs_scope.
 
 Lemma cpair_comm t t' : cpair t t' = cpair t' t.
 Proof. unfold cpair. by rewrite Nat.min_comm, Nat.max_comm. Qed.
@@ -70,7 +70,7 @@ Proof. unfold cpair. by rewrite Nat.min_comm, Nat.max_comm. Qed.
 Inductive cmul : choice → choice → choice → Prop :=
 | cmul_eps_l c : cmul CEps c c
 | cmul_eps_r c : cmul c CEps c
-| cmul_tags t t' : cmul (CTag t) (CTag t') (cpair t t').
+| cmul_tags t t' : cmul (CTag t) (CTag t') ⦗t, t'⦘.
 
 (* ** Parallel composition of two LTSs with choices *)
 
@@ -96,7 +96,7 @@ Section Parallel.
       par_step (s1, s2) c τ (s1', s2').
 End Parallel.
 
-Notation "L1 ∣[ R ] L2" := (par_step L1 L2 R) (at level 60).
+Notation "L1 ∣[ R ] L2" := (par_step L1 L2 R) (at level 60, format "L1  ∣[ R ]  L2").
 
 (* ** The program LTS *)
 
@@ -105,13 +105,13 @@ Inductive prog_action : Type :=
 | PrIn (c : channel) (v : val)
 | PrOp (E : sop) (qs : list qubit)
 | PrMeas (M : meas) (qs : list qubit) (n : nat)
-| PrInit (qs : list qubit).
+| PrInit (q : qubit).
 
 Notation "c ! v" := (ActExt (PrOut c v)) (at level 30, v at level 9) : lqccs_scope.
 Notation "c ? v" := (ActExt (PrIn c v)) (at level 30, v at level 9) : lqccs_scope.
-Notation "E ⦅ qs ⦆" := (ActExt (PrOp E qs)) (at level 30) : lqccs_scope.
-Notation "M ⦅ qs ⦆? n" := (ActExt (PrMeas M qs n)) (at level 30, n at level 9) : lqccs_scope.
-Notation "'init' ⦅ qs ⦆" := (ActExt (PrInit qs)) (at level 30) : lqccs_scope.
+Notation "E ⦅ qs ⦆" := (ActExt (PrOp E qs)) (at level 30, format "E  ⦅ qs ⦆") : lqccs_scope.
+Notation "M ⦅ qs ⦆? n" := (ActExt (PrMeas M qs n)) (at level 30, n at level 9, format "M  ⦅ qs ⦆?  n") : lqccs_scope.
+Notation "'init' ⦅ q ⦆" := (ActExt (PrInit q)) (at level 30, format "'init'  ⦅ q ⦆") : lqccs_scope.
 
 Definition chan_action (a : prog_action) : Prop :=
   ∃ c v, a = PrOut c v ∨ a = PrIn c v.
@@ -127,32 +127,10 @@ Definition ren_action (f : nat → nat) (a : prog_action) : prog_action :=
 Definition ren_lbl (f : nat → nat) (l : Labels prog_action) : Labels prog_action :=
   match l with ActExt a => ActExt (ren_action f a) | τ => τ end.
 
-Reserved Notation "P ⟶{ l }[ s ] P'" (at level 70).
-Reserved Notation "g ⟶ᵍ{ l }[ s ] P'" (at level 70).
+Reserved Notation "P ⟶{ l }[ s ] P'" (at level 70, format "P  ⟶{ l }[ s ]  P'").
+Reserved Notation "g ⟶ᵍ{ l }[ s ] P'" (at level 70, format "g  ⟶ᵍ{ l }[ s ]  P'").
 
-(* ** Transitions of a guard *)
-
-Inductive prog_gstep : guard → choice → Labels prog_action → proc → Prop :=
-| pg_tau t P :
-    (t ∶ 𝛕 ∙ P) ⟶ᵍ{τ}[t] P
-| pg_recv t c v P :
-    (t ∶ c ? ∙ P) ⟶ᵍ{c ? v}[t] (P ⁅ v ⁆)
-| pg_op t E es qs P :
-    eval_qubits es = Some qs →
-    (t ∶ E ⦅es⦆ ∙ P) ⟶ᵍ{E ⦅qs⦆}[t] P
-| pg_meas t M es qs n P :
-    eval_qubits es = Some qs →
-    (t ∶ M ⦅es ▷⦆ ∙ P) ⟶ᵍ{M ⦅qs⦆? n}[t] (P ⁅ VNat n ⁆)
-| pg_init t es qs P :
-    eval_qubits es = Some qs →
-    (t ∶ init ⦅es⦆ ∙ P) ⟶ᵍ{init ⦅qs⦆}[t] P
-| pg_sumL (g1 g2 : guard) s l P' :
-    g1 ⟶ᵍ{l}[s] P' → (g1 + g2) ⟶ᵍ{l}[s] P'
-| pg_sumR (g1 g2 : guard) s l P' :
-    g2 ⟶ᵍ{l}[s] P' → (g1 + g2) ⟶ᵍ{l}[s] P'
-where "g ⟶ᵍ{ l }[ s ] P'" := (prog_gstep g s l P') : lqccs_scope.
-
-(* ** Transitions of a program *)
+(* ** Transitions of a program and of a guard *)
 
 Inductive prog_step : proc → choice → Labels prog_action → proc → Prop :=
 | pr_guard (g : guard) s l P' :
@@ -175,9 +153,28 @@ Inductive prog_step : proc → choice → Labels prog_action → proc → Prop :
     P ∥ Q ⟶{τ}[⦗t, t'⦘] (P' ∥ Q')
 | pr_res P s l P' :
     P ⟶{ren_lbl S l}[s] P' → ν P ⟶{l}[s] (ν P')
-| pr_rec t X P :
-    t ∶ rec X ∙ P ⟶{τ}[t] (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄)
-where "P ⟶{ l }[ s ] P'" := (prog_step P s l P') : lqccs_scope.
+| pr_rec t P :
+    t ∶ rec ∙ P ⟶{τ}[t] (P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ)
+with prog_gstep : guard → choice → Labels prog_action → proc → Prop :=
+| pg_tau t P :
+    (t ∶ 𝛕 ∙ P) ⟶ᵍ{τ}[t] P
+| pg_recv t c v P :
+    (t ∶ c ? ∙ P) ⟶ᵍ{c ? v}[t] (P ⁅ v ⁆ᵥ)
+| pg_op t E es qs P :
+    eval_qubits es = Some qs →
+    (t ∶ E ⦅es⦆ ∙ P) ⟶ᵍ{E ⦅qs⦆}[t] P
+| pg_meas t M es qs n P :
+    eval_qubits es = Some qs →
+    (t ∶ M ⦅es ▷⦆ ∙ P) ⟶ᵍ{M ⦅qs⦆? n}[t] (P ⁅ VNat n ⁆ᵥ)
+| pg_init t e q P :
+    eval_qubit e = Some q →
+    (t ∶ e := |0⟩ ∙ P) ⟶ᵍ{init ⦅q⦆}[t] P
+| pg_sumL (g1 g2 : guard) s l P' :
+    g1 ⟶ᵍ{l}[s] P' → (g1 + g2) ⟶ᵍ{l}[s] P'
+| pg_sumR (g1 g2 : guard) s l P' :
+    g2 ⟶ᵍ{l}[s] P' → (g1 + g2) ⟶ᵍ{l}[s] P'
+where "P ⟶{ l }[ s ] P'" := (prog_step P s l P') : lqccs_scope
+and "g ⟶ᵍ{ l }[ s ] P'" := (prog_gstep g s l P') : lqccs_scope.
 
 Lemma prog_step_guard (g : guard) s l P' : g ⟶{l}[s] P' ↔ g ⟶ᵍ{l}[s] P'.
 Proof. split; [by inversion 1|apply pr_guard]. Qed.
@@ -185,17 +182,17 @@ Proof. split; [by inversion 1|apply pr_guard]. Qed.
 Lemma pr_tau t P : (t ∶ 𝛕 ∙ P) ⟶{τ}[t] P.
 Proof. apply pr_guard, pg_tau. Qed.
 
-Lemma pr_recv t c v P : (t ∶ c ? ∙ P) ⟶{c ? v}[t] (P ⁅ v ⁆).
+Lemma pr_recv t c v P : (t ∶ c ? ∙ P) ⟶{c ? v}[t] (P ⁅ v ⁆ᵥ).
 Proof. apply pr_guard, pg_recv. Qed.
 
 Lemma pr_op t E es qs P : eval_qubits es = Some qs → (t ∶ E ⦅es⦆ ∙ P) ⟶{E ⦅qs⦆}[t] P.
 Proof. intros H. by apply pr_guard, pg_op. Qed.
 
 Lemma pr_meas t M es qs n P :
-  eval_qubits es = Some qs → (t ∶ M ⦅es ▷⦆ ∙ P) ⟶{M ⦅qs⦆? n}[t] (P ⁅ VNat n ⁆).
+  eval_qubits es = Some qs → (t ∶ M ⦅es ▷⦆ ∙ P) ⟶{M ⦅qs⦆? n}[t] (P ⁅ VNat n ⁆ᵥ).
 Proof. intros H. by apply pr_guard, pg_meas. Qed.
 
-Lemma pr_init t es qs P : eval_qubits es = Some qs → (t ∶ init ⦅es⦆ ∙ P) ⟶{init ⦅qs⦆}[t] P.
+Lemma pr_init t e q P : eval_qubit e = Some q → (t ∶ e := |0⟩ ∙ P) ⟶{init ⦅q⦆}[t] P.
 Proof. intros H. by apply pr_guard, pg_init. Qed.
 
 Lemma pr_sumL (g1 g2 : guard) s l P' : g1 ⟶{l}[s] P' → (g1 + g2) ⟶{l}[s] P'.
@@ -211,10 +208,10 @@ Inductive sync_chan : prog_action → prog_action → Prop :=
 | sync_out_in c v : sync_chan (PrOut c v) (PrIn c v)
 | sync_in_out c v : sync_chan (PrIn c v) (PrOut c v).
 
-Reserved Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" (at level 70).
-Reserved Notation "ρ ⟶ₘ{ μ } ρ'" (at level 70).
-Reserved Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" (at level 70).
-Reserved Notation "M ⦅ qs ⦆! n" (at level 30, n at level 9).
+Reserved Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ l }[ s ]  ⟨ ρ' ,  P' ⟩").
+Reserved Notation "ρ ⟶ₘ{ μ } ρ'" (at level 70, format "ρ  ⟶ₘ{ μ }  ρ'").
+Reserved Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶ₘ{ μ }  ⟨ ρ' ,  P' ⟩").
+Reserved Notation "M ⦅ qs ⦆! n" (at level 30, n at level 9, format "M  ⦅ qs ⦆!  n").
 
 Section Memory.
   Context `{QM : QuantumModel}.
@@ -229,7 +226,7 @@ Section Memory.
   Inductive sync : mem_action → prog_action → Prop :=
   | sync_op E qs : sync (sop_act E qs) (PrOp E qs)
   | sync_meas M qs n : sync (M ⦅qs⦆! n) (PrMeas M qs n)
-  | sync_init qs : sync (init_act qs) (PrInit qs).
+  | sync_init q : sync (init_act q) (PrInit q).
 
   Inductive sync_sys : mem_action + prog_action → prog_action → Prop :=
   | sync_sys_mem b a : sync b a → sync_sys (inl b) a
@@ -248,16 +245,16 @@ Section Memory.
   | co_tau t P :
       ⟨ρ, t ∶ 𝛕 ∙ P⟩ ⟶{τ}[t] ⟨ρ, P⟩
   | co_recv t c v P :
-      ⟨ρ, t ∶ c ? ∙ P⟩ ⟶{c ? v}[t] ⟨ρ, P ⁅ v ⁆⟩
+      ⟨ρ, t ∶ c ? ∙ P⟩ ⟶{c ? v}[t] ⟨ρ, P ⁅ v ⁆ᵥ⟩
   | co_op t E es qs P :
       eval_qubits es = Some qs →
       ⟨ρ, t ∶ E ⦅es⦆ ∙ P⟩ ⟶{E ⦅qs⦆}[t] ⟨ρ, P⟩
   | co_meas t M es qs n P :
       eval_qubits es = Some qs →
-      ⟨ρ, t ∶ M ⦅es ▷⦆ ∙ P⟩ ⟶{M ⦅qs⦆? n}[t] ⟨ρ, P ⁅ VNat n ⁆⟩
-  | co_init t es qs P :
-      eval_qubits es = Some qs →
-      ⟨ρ, t ∶ init ⦅es⦆ ∙ P⟩ ⟶{init ⦅qs⦆}[t] ⟨ρ, P⟩
+      ⟨ρ, t ∶ M ⦅es ▷⦆ ∙ P⟩ ⟶{M ⦅qs⦆? n}[t] ⟨ρ, P ⁅ VNat n ⁆ᵥ⟩
+  | co_init t e q P :
+      eval_qubit e = Some q →
+      ⟨ρ, t ∶ e := |0⟩ ∙ P⟩ ⟶{init ⦅q⦆}[t] ⟨ρ, P⟩
   | co_sumL (g1 g2 : guard) s l ρ' P' :
       ⟨ρ, g1⟩ ⟶{l}[s] ⟨ρ', P'⟩ → ⟨ρ, g1 + g2⟩ ⟶{l}[s] ⟨ρ', P'⟩
   | co_sumR (g1 g2 : guard) s l ρ' P' :
@@ -282,8 +279,8 @@ Section Memory.
       ⟨ρ, P ∥ Q⟩ ⟶{τ}[⦗t, t'⦘] ⟨ρ, P' ∥ Q'⟩
   | co_res P s l ρ' P' :
       ⟨ρ, P⟩ ⟶{ren_lbl S l}[s] ⟨ρ', P'⟩ → ⟨ρ, ν P⟩ ⟶{l}[s] ⟨ρ', ν P'⟩
-  | co_rec t X P :
-      ⟨ρ, t ∶ rec X ∙ P⟩ ⟶{τ}[t] ⟨ρ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄⟩
+  | co_rec t P :
+      ⟨ρ, t ∶ rec ∙ P⟩ ⟶{τ}[t] ⟨ρ, P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ⟩
   | co_mem_sop P (ℰ : Act) :
       ⟨ρ, P⟩ ⟶ₘ{ℰ} ⟨ℰ · ρ, P⟩
   | co_mem_meas P M qs (k : Out (meas_of M qs)) :
@@ -296,9 +293,9 @@ Section Memory.
       ⟨ρ, P⟩ ⟶{M ⦅qs⦆? n}[s] ⟨ρ, P'⟩ →
       ⟨ρ, P⟩ ⟶ₘ{M ⦅qs⦆! n} ⟨ρ', P⟩ →
       ⟨ρ, P⟩ ⟶{τ}[s] ⟨ρ', P'⟩
-  | co_initCom P s qs ρ' P' :
-      ⟨ρ, P⟩ ⟶{init ⦅qs⦆}[s] ⟨ρ, P'⟩ →
-      ⟨ρ, P⟩ ⟶ₘ{init_act qs} ⟨ρ', P⟩ →
+  | co_initCom P s q ρ' P' :
+      ⟨ρ, P⟩ ⟶{init ⦅q⦆}[s] ⟨ρ, P'⟩ →
+      ⟨ρ, P⟩ ⟶ₘ{init_act q} ⟨ρ', P⟩ →
       ⟨ρ, P⟩ ⟶{τ}[s] ⟨ρ', P'⟩
   where "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" := (conf_step ρ P s (inl l) ρ' P') : lqccs_scope
   and "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P CEps (inr (μ : mem_action)) ρ' P') : lqccs_scope.
@@ -308,16 +305,16 @@ Notation "M ⦅ qs ⦆! n" := (MeMeas M qs n) : lqccs_scope.
 Notation "ρ ⟶ₘ{ μ } ρ'" := (mem_step ρ CEps (ActExt (μ : mem_action)) ρ')
   (at level 70, only parsing) : lqccs_scope.
 Notation "ρ ⟶ₘ{ μ } ρ'" := (mem_step ρ CEps (ActExt μ) ρ')
-  (at level 70, only printing) : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" := (conf_step ρ P s (inl l) ρ' P') (at level 70) : lqccs_scope.
+  (at level 70, only printing, format "ρ  ⟶ₘ{ μ }  ρ'") : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" := (conf_step ρ P s (inl l) ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ l }[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P CEps (inr (μ : mem_action)) ρ' P')
   (at level 70, only parsing) : lqccs_scope.
 Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P CEps (inr μ) ρ' P')
-  (at level 70, only printing) : lqccs_scope.
+  (at level 70, only printing, format "⟨ ρ ,  P ⟩  ⟶ₘ{ μ }  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 Notation "'𝔻ₘₑₘ'" := sync : lqccs_scope.
 Notation "ρ ∣ P ⟶{ l }[ s ] ρ' ∣ P'" :=
   (par_step mem_step prog_step sync (ρ, P) s l (ρ', P'))
-  (at level 70, P at level 25, ρ' at level 25, P' at level 25) : lqccs_scope.
+  (at level 70, P at level 25, ρ' at level 25, P' at level 25, format "ρ  ∣  P  ⟶{ l }[ s ]  ρ'  ∣  P'") : lqccs_scope.
 
 (* ** Facts on the program LTS *)
 
@@ -325,9 +322,6 @@ Lemma prog_gstep_not_out (g : guard) s c v P' : ¬ g ⟶{c ! v}[s] P'.
 Proof.
   intros Hs%prog_step_guard. remember (c ! v) as l eqn:El. induction Hs; simplify_eq; auto.
 Qed.
-
-Lemma ren_lbl_ext l : ∀ a, ren_lbl S l = ActExt a → ∃ a', l = ActExt a'.
-Proof. destruct l; simpl; intros a Ha; simplify_eq; eauto. Qed.
 
 Lemma prog_gstep_tag g s l P' : g ⟶ᵍ{l}[s] P' → ∃ t, s = CTag t.
 Proof. induction 1; eauto. Qed.
@@ -338,163 +332,36 @@ Proof.
   induction Hs as [g s l P' Hg| | | | | | | | |]; intros a0 El; simplify_eq; eauto using prog_gstep_tag.
 Qed.
 
-(* ** Renaming of the indices commutes with the transitions *)
-
-Lemma ren_action_comp f g a : ren_action f (ren_action g a) = ren_action (f ∘ g) a.
-Proof. destruct a; simpl; by rewrite ?ren_chan_comp. Qed.
-
-Lemma ren_lbl_comp f g l : ren_lbl f (ren_lbl g l) = ren_lbl (f ∘ g) l.
-Proof. destruct l; simpl; by rewrite ?ren_action_comp. Qed.
-
-Lemma ren_action_ext f g a : (∀ i, f i = g i) → ren_action f a = ren_action g a.
-Proof. intros H. destruct a; simpl; by rewrite ?(ren_chan_ext f g). Qed.
-
-Lemma ren_lbl_ext_fun f g l : (∀ i, f i = g i) → ren_lbl f l = ren_lbl g l.
-Proof. intros H. destruct l; simpl; by rewrite ?(ren_action_ext f g). Qed.
-
-(* [ren_lbl (lift f) (ren_lbl S l) = ren_lbl S (ren_lbl f l)] *)
-Lemma ren_lbl_lift_S f l : ren_lbl (lift f) (ren_lbl S l) = ren_lbl S (ren_lbl f l).
-Proof. rewrite !ren_lbl_comp. by apply ren_lbl_ext_fun. Qed.
-
-Lemma ren_action_inj f :
-  (∀ i j, f i = f j → i = j) → ∀ a a', ren_action f a = ren_action f a' → a = a'.
-Proof.
-  intros Hf [c v|c v| | |] [c' v'|c' v'| | |]; simpl; intros [=]; subst; try done.
-  all: f_equal; by eapply ren_chan_inj.
-Qed.
-
-Lemma ren_lbl_inj f :
-  (∀ i j, f i = f j → i = j) → ∀ l l', ren_lbl f l = ren_lbl f l' → l = l'.
-Proof.
-  intros Hf [a|] [a'|]; simpl; intros [=]; try done. f_equal. by eapply ren_action_inj.
-Qed.
-
-Lemma prog_gstep_ren f g s l P' :
-  g ⟶ᵍ{l}[s] P' → gren f g ⟶ᵍ{ren_lbl f l}[s] (ren f P').
-Proof.
-  induction 1 as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH]; simpl.
-  - constructor.
-  - rewrite (proj1 ren_subst). constructor.
-  - by constructor.
-  - rewrite (proj1 ren_subst). by constructor.
-  - by constructor.
-  - by apply pg_sumL.
-  - by apply pg_sumR.
-Qed.
-
-Lemma prog_step_ren f P s l P' :
-  P ⟶{l}[s] P' → ren f P ⟶{ren_lbl f l}[s] (ren f P').
-Proof.
-  intros Hs. revert f. induction Hs as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH | P Q s l P' Hp IH | P Q s l Q' Hp IH | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P s l P' Hp IH | t X P]; intros f; simpl in *.
-  - apply pr_guard. by apply prog_gstep_ren.
-  - by constructor.
-  - by apply pr_iteT.
-  - by apply pr_iteF.
-  - by apply pr_parL.
-  - by apply pr_parR.
-  - by eapply pr_syncL; [apply IH1|apply IH2].
-  - by eapply pr_syncR; [apply IH1|apply IH2].
-  - apply pr_res. rewrite <- ren_lbl_lift_S. apply IH.
-  - rewrite (proj1 (ren_pr_subst X)). simpl. rewrite <- (proj1 tren_ren P). exact (pr_rec t X (ren f P)).
-Qed.
-
-(* The converse, for an injective renaming. *)
-Lemma prog_gstep_ren_inv f :
-  (∀ i j, f i = f j → i = j) →
-  ∀ g s l' X, gren f g ⟶ᵍ{l'}[s] X →
-  ∃ l P', l' = ren_lbl f l ∧ X = ren f P' ∧ g ⟶ᵍ{l}[s] P'.
-Proof.
-  intros Hf g s l' X Hs. remember (gren f g) as RG eqn:ER. revert g ER.
-  induction Hs as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH]; intros g0 ER;
-    destruct g0 as [es0| |𝜆0 P0|g1' g2']; simpl in ER; simplify_eq.
-  all: try (destruct 𝜆0; simpl in *; simplify_eq).
-  - exists τ, P0. split_and!; [done|done|constructor].
-  - exists (c0 ? v), (P0 ⁅ v ⁆).
-    split_and!; [done|by rewrite (proj1 ren_subst)|constructor].
-  - exists (E0 ⦅qs⦆), P0. split_and!; [done|done|by constructor].
-  - exists (M0 ⦅qs⦆? n), (P0 ⁅ VNat n ⁆).
-    split_and!; [done|by rewrite (proj1 ren_subst)|by constructor].
-  - exists (init ⦅qs⦆), P0. split_and!; [done|done|by constructor].
-  - destruct (IH g1' eq_refl) as (l0 & P'0 & -> & -> & Hg). exists l0, P'0. split_and!; [done|done|by apply pg_sumL].
-  - destruct (IH g2' eq_refl) as (l0 & P'0 & -> & -> & Hg). exists l0, P'0. split_and!; [done|done|by apply pg_sumR].
-Qed.
-
-Lemma prog_step_ren_inv f :
-  (∀ i j, f i = f j → i = j) →
-  ∀ P s l' X, ren f P ⟶{l'}[s] X →
-  ∃ l P', l' = ren_lbl f l ∧ X = ren f P' ∧ P ⟶{l}[s] P'.
-Proof.
-  intros Hf P s l' X Hs. remember (ren f P) as RP eqn:ER. revert f Hf P ER.
-  induction Hs as [g s l P' Hg | t c e v Hev | e P Q s l P' Hev Hst IH | e P Q s l Q' Hev Hst IH | P Q s l P' Hst IH | P Q s l Q' Hst IH | P Q t t' c v P' Q' Hst1 IH1 Hst2 IH2 | P Q t t' c v P' Q' Hst1 IH1 Hst2 IH2 | P s l P' Hst IH | t X P]; intros f Hf P0 ER;
-    destruct P0 as [t0 c0 e0|e0 P1 P2|P1 P2|P1|X0|t0 X0 P1|g0]; simpl in ER; simplify_eq.
-  - destruct (prog_gstep_ren_inv f Hf g0 _ _ _ Hg) as (l0 & P'0 & -> & -> & Hg0).
-    exists l0, P'0. split_and!; [done|done|by apply pr_guard].
-  - exists (c0 ! v), 𝟘. split_and!; [done|done|by constructor].
-  - destruct (IH f Hf P1 eq_refl) as (l0 & P'0 & -> & -> & Hp).
-    exists l0, P'0. split_and!; [done|done|by apply pr_iteT].
-  - destruct (IH f Hf P2 eq_refl) as (l0 & P'0 & -> & -> & Hp).
-    exists l0, P'0. split_and!; [done|done|by apply pr_iteF].
-  - destruct (IH f Hf P1 eq_refl) as (l0 & P'0 & -> & -> & Hp).
-    exists l0, (P'0 ∥ P2). split_and!; [done|done|by apply pr_parL].
-  - destruct (IH f Hf P2 eq_refl) as (l0 & P'0 & -> & -> & Hp).
-    exists l0, (P1 ∥ P'0). split_and!; [done|done|by apply pr_parR].
-  - destruct (IH1 f Hf P1 eq_refl) as (l1 & P1' & E1 & -> & Hp1).
-    destruct (IH2 f Hf P2 eq_refl) as (l2 & P2' & E2 & -> & Hp2).
-    destruct l1 as [[c1 v1|c1 v1| | |]|]; simpl in E1; simplify_eq.
-    destruct l2 as [[c2 v2|c2 v2| | |]|]; simpl in E2; simplify_eq.
-    assert (c1 = c2) by (eapply ren_chan_inj; [exact Hf|congruence]). subst.
-    exists τ, (P1' ∥ P2'). split_and!; [done|done|by eapply pr_syncL].
-  - destruct (IH1 f Hf P1 eq_refl) as (l1 & P1' & E1 & -> & Hp1).
-    destruct (IH2 f Hf P2 eq_refl) as (l2 & P2' & E2 & -> & Hp2).
-    destruct l1 as [[c1 v1|c1 v1| | |]|]; simpl in E1; simplify_eq.
-    destruct l2 as [[c2 v2|c2 v2| | |]|]; simpl in E2; simplify_eq.
-    assert (c1 = c2) by (eapply ren_chan_inj; [exact Hf|congruence]). subst.
-    exists τ, (P1' ∥ P2'). split_and!; [done|done|by eapply pr_syncR].
-  - destruct (IH (lift f) (lift_inj f Hf) P1 eq_refl) as (l0 & P'0 & E0 & -> & Hp).
-    destruct l0 as [[[c0|[|i]] v0|[c0|[|i]] v0|E' qs|M qs n|qs0]|]; simpl in E0;
-      destruct l as [[[c1|i1] v1|[c1|i1] v1|E1 qs1|M1 qs1 n1|qs2]|]; simpl in E0; simplify_eq.
-    + exists ((CName c0) ! v0), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists ((CIdx i) ! v0), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists ((CName c0) ? v0), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists ((CIdx i) ? v0), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists (E' ⦅qs⦆), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists (M ⦅qs⦆? n), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists (init ⦅qs0⦆), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists τ, (ν P'0). split_and!; [done|done|by apply pr_res].
-  - exists τ, (P1 ⦃ (t0 ∶ rec X0 ∙ P1)↑ // X0 ⦄).
-    split_and!; [done| |constructor]. rewrite (proj1 (ren_pr_subst X0)), <- (proj1 tren_ren). done.
-Qed.
-
 End LqP.
 
-Notation "⦗ t , t' ⦘" := (cpair t t') (at level 0) : lqccs_scope.
-Notation "L1 ∣[ R ] L2" := (par_step L1 L2 R) (at level 60).
+Notation "⦗ t , t' ⦘" := (cpair t t') (at level 0, format "⦗ t ,  t' ⦘") : lqccs_scope.
+Notation "L1 ∣[ R ] L2" := (par_step L1 L2 R) (at level 60, format "L1  ∣[ R ]  L2").
 Notation "c ! v" := (ActExt (PrOut c v)) (at level 30, v at level 9) : lqccs_scope.
 Notation "c ? v" := (ActExt (PrIn c v)) (at level 30, v at level 9) : lqccs_scope.
-Notation "E ⦅ qs ⦆" := (ActExt (PrOp E qs)) (at level 30) : lqccs_scope.
-Notation "M ⦅ qs ⦆? n" := (ActExt (PrMeas M qs n)) (at level 30, n at level 9) : lqccs_scope.
-Notation "'init' ⦅ qs ⦆" := (ActExt (PrInit qs)) (at level 30) : lqccs_scope.
-Reserved Notation "P ⟶{ l }[ s ] P'" (at level 70).
-Reserved Notation "g ⟶ᵍ{ l }[ s ] P'" (at level 70).
+Notation "E ⦅ qs ⦆" := (ActExt (PrOp E qs)) (at level 30, format "E  ⦅ qs ⦆") : lqccs_scope.
+Notation "M ⦅ qs ⦆? n" := (ActExt (PrMeas M qs n)) (at level 30, n at level 9, format "M  ⦅ qs ⦆?  n") : lqccs_scope.
+Notation "'init' ⦅ q ⦆" := (ActExt (PrInit q)) (at level 30, format "'init'  ⦅ q ⦆") : lqccs_scope.
+Reserved Notation "P ⟶{ l }[ s ] P'" (at level 70, format "P  ⟶{ l }[ s ]  P'").
+Reserved Notation "g ⟶ᵍ{ l }[ s ] P'" (at level 70, format "g  ⟶ᵍ{ l }[ s ]  P'").
 Notation "g ⟶ᵍ{ l }[ s ] P'" := (prog_gstep g s l P') : lqccs_scope.
 Notation "P ⟶{ l }[ s ] P'" := (prog_step P s l P') : lqccs_scope.
-Reserved Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" (at level 70).
-Reserved Notation "ρ ⟶ₘ{ μ } ρ'" (at level 70).
-Reserved Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" (at level 70).
-Reserved Notation "M ⦅ qs ⦆! n" (at level 30, n at level 9).
+Reserved Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ l }[ s ]  ⟨ ρ' ,  P' ⟩").
+Reserved Notation "ρ ⟶ₘ{ μ } ρ'" (at level 70, format "ρ  ⟶ₘ{ μ }  ρ'").
+Reserved Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶ₘ{ μ }  ⟨ ρ' ,  P' ⟩").
+Reserved Notation "M ⦅ qs ⦆! n" (at level 30, n at level 9, format "M  ⦅ qs ⦆!  n").
 Notation "M ⦅ qs ⦆! n" := (MeMeas M qs n) : lqccs_scope.
 Notation "ρ ⟶ₘ{ μ } ρ'" := (mem_step ρ CEps (ActExt (μ : mem_action)) ρ')
   (at level 70, only parsing) : lqccs_scope.
 Notation "ρ ⟶ₘ{ μ } ρ'" := (mem_step ρ CEps (ActExt μ) ρ')
-  (at level 70, only printing) : lqccs_scope.
-Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" := (conf_step ρ P s (inl l) ρ' P') (at level 70) : lqccs_scope.
+  (at level 70, only printing, format "ρ  ⟶ₘ{ μ }  ρ'") : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ⟶{ l }[ s ] ⟨ ρ' , P' ⟩" := (conf_step ρ P s (inl l) ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶{ l }[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P CEps (inr (μ : mem_action)) ρ' P')
   (at level 70, only parsing) : lqccs_scope.
 Notation "⟨ ρ , P ⟩ ⟶ₘ{ μ } ⟨ ρ' , P' ⟩" := (conf_step ρ P CEps (inr μ) ρ' P')
-  (at level 70, only printing) : lqccs_scope.
+  (at level 70, only printing, format "⟨ ρ ,  P ⟩  ⟶ₘ{ μ }  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 Notation "'𝔻ₘₑₘ'" := sync : lqccs_scope.
 Notation "ρ ∣ P ⟶{ l }[ s ] ρ' ∣ P'" :=
   (par_step mem_step prog_step sync (ρ, P) s l (ρ', P'))
-  (at level 70, P at level 25, ρ' at level 25, P' at level 25) : lqccs_scope.
+  (at level 70, P at level 25, ρ' at level 25, P' at level 25, format "ρ  ∣  P  ⟶{ l }[ s ]  ρ'  ∣  P'") : lqccs_scope.
 
 (* end hide *)

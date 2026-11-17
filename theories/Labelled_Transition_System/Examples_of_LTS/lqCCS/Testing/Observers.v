@@ -23,11 +23,11 @@
 (* begin hide *)
 (* * lqCCS: deterministic observers and their shape
 
-    The observers of the characterisation are the programs with [①] whose
+    The observers of the characterisation are the programs with [𝟙] whose
     offers at a point of the interaction depend only on the co-trace that led
     there: no [τ] prefix, no recursion, no restriction, no channel used both
     for input and for output (no communication inside the observer), and
-    [①] never in a sum with a prefix (success is persistent).  For them the
+    [𝟙] never in a sum with a prefix (success is persistent).  For them the
     state after a co-trace is computed by [co_succ], and the shape of the
     observer is its menu [I_T] (the offers at every node) and its success
     nodes [S_T]. *)
@@ -38,7 +38,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Language.Congruence lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -47,15 +47,6 @@ From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS
 
 Section LqP.
   Context `{LP : lqCCS_Parameters}.
-
-Lemma successb_ren f P : successb (ren f P) = successb P
-with gsuccessb_gren f g : gsuccessb (gren f g) = gsuccessb g.
-Proof.
-  - destruct P; simpl; try done.
-    + destruct (eval e) as [[b| |]|]; try done. destruct b; apply successb_ren.
-    + by rewrite !successb_ren.
-  - destruct g; simpl; try done. by rewrite !gsuccessb_gren.
-Qed.
 
 Lemma cgr_step_successb :
   (∀ P Q, cgr_step P Q → successb P = successb Q) ∧ (∀ g h, gcgr_step g h → gsuccessb g = gsuccessb h).
@@ -76,57 +67,6 @@ Qed.
 Lemma cgr_success P Q : P ≡* Q → success P ↔ success Q.
 Proof. intros Hc. unfold success. by rewrite (cgr_successb _ _ Hc). Qed.
 
-(* ** The class of observers *)
-
-Fixpoint obsb (T : proc) : bool :=
-  match T with
-  | PSend _ _ _ => true
-  | PIte _ P Q | P ∥ Q => obsb P && obsb Q
-  | ν _ | PVar _ | PRec _ _ _ => false
-  | PG g => gobsb g
-  end
-with gobsb (g : guard) : bool :=
-  match g with
-  | GNil _ | ① => true
-  | PTau _ ∙ _ => false
-  | _ ∙ P => obsb P
-  | (g1 + g2)%lq => gobsb g1 && gobsb g2 && negb (gsuccessb g1 || gsuccessb g2)
-  end.
-
-Fixpoint out_chans (T : proc) : list channel :=
-  match T with
-  | PSend _ c _ => [c]
-  | PIte _ P Q | P ∥ Q => out_chans P ++ out_chans Q
-  | ν P | PRec _ _ P => out_chans P
-  | PVar _ => []
-  | PG g => gout_chans g
-  end
-with gout_chans (g : guard) : list channel :=
-  match g with
-  | GNil _ | ① => []
-  | _ ∙ P => out_chans P
-  | (g1 + g2)%lq => gout_chans g1 ++ gout_chans g2
-  end.
-
-Fixpoint in_chans (T : proc) : list channel :=
-  match T with
-  | PSend _ _ _ | PVar _ => []
-  | PIte _ P Q | P ∥ Q => in_chans P ++ in_chans Q
-  | ν P | PRec _ _ P => in_chans P
-  | PG g => gin_chans g
-  end
-with gin_chans (g : guard) : list channel :=
-  match g with
-  | GNil _ | ① => []
-  | PRecv _ c ∙ P => c :: in_chans P
-  | _ ∙ P => in_chans P
-  | (g1 + g2)%lq => gin_chans g1 ++ gin_chans g2
-  end.
-
-Definition chan_disjoint (T : proc) : Prop := ∀ c, c ∈ out_chans T → c ∉ in_chans T.
-
-Definition obs (T : proc) : Prop := obsb T = true ∧ chan_disjoint T.
-
 (* ** The observer after a co-action *)
 
 Fixpoint co_succ (T : proc) (a : coact) : list proc :=
@@ -144,33 +84,33 @@ Fixpoint co_succ (T : proc) (a : coact) : list proc :=
       end
   | P ∥ Q => ((λ P', P' ∥ Q) <$> co_succ P a) ++ ((λ Q', P ∥ Q') <$> co_succ Q a)
   | ν _ | PVar _ => []
-  | t ∶ rec X ∙ P =>
+  | t ∶ rec ∙ P =>
       match a with
-      | CoInit k qs => if decide (k = t ∧ qs = []) then [P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄] else []
+      | CoUnfold k => if decide (k = t) then [P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ] else []
       | _ => []
       end
   | PG g => gco_succ g a
   end
 with gco_succ (g : guard) (a : coact) : list proc :=
   match g with
-  | GNil _ | ① => []
+  | 𝟘{_} | 𝟙 => []
   | 𝜆 ∙ P =>
       match 𝜆, a with
-      | (k' ∶ c' ?), CoIn k c v => if decide (k = k' ∧ c = c') then [P ⁅ v ⁆] else []
+      | (k' ∶ c' ?), CoIn k c v => if decide (k = k' ∧ c = c') then [P ⁅ v ⁆ᵥ] else []
       | (k' ∶ E' ⦅es⦆), CoOp k E qs =>
           if decide (k = k' ∧ E = E' ∧ eval_qubits es = Some qs) then [P] else []
       | (k' ∶ M' ⦅es ▷⦆), CoMeas k M qs n =>
-          if decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) then [P ⁅ VNat n ⁆] else []
-      | (k' ∶ init ⦅es⦆), CoInit k qs => if decide (k = k' ∧ eval_qubits es = Some qs) then [P] else []
+          if decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) then [P ⁅ VNat n ⁆ᵥ] else []
+      | (k' ∶ e := |0⟩), CoInit k q => if decide (k = k' ∧ eval_qubit e = Some q) then [P] else []
       | _, _ => []
       end
   | (g1 + g2)%lq => gco_succ g1 a ++ gco_succ g2 a
   end.
 
 Lemma co_succ_sound T a T' :
-  obsb T = true → T' ∈ co_succ T a → prog_step T (CTag (co_tag a)) (ActExt (co_act a)) T'
+  obsb T = true → T' ∈ co_succ T a → T ⟶{co_act a}[(CTag (co_tag a))] T'
 with gco_succ_sound g a T' :
-  gobsb g = true → T' ∈ gco_succ g a → prog_gstep g (CTag (co_tag a)) (ActExt (co_act a)) T'.
+  gobsb g = true → T' ∈ gco_succ g a → g ⟶ᵍ{co_act a}[(CTag (co_tag a))] T'.
 Proof.
   - destruct T; simpl; intros Hob Hin.
     + destruct a; try by apply elem_of_nil in Hin.
@@ -207,26 +147,25 @@ Qed.
 
 Lemma co_succ_step T a T' :
   T' ∈ co_succ T a →
-  prog_step T (CTag (co_tag a)) (ActExt (co_act a)) T'
-  ∨ (a = CoInit (co_tag a) [] ∧ prog_step T (CTag (co_tag a)) τ T')
-with gco_succ_step g a T' : T' ∈ gco_succ g a → prog_gstep g (CTag (co_tag a)) (ActExt (co_act a)) T'.
+  T ⟶{co_act a}[(CTag (co_tag a))] T'
+with gco_succ_step g a T' : T' ∈ gco_succ g a → g ⟶ᵍ{co_act a}[(CTag (co_tag a))] T'.
 Proof.
   - destruct T; simpl; intros Hin.
-    + left. destruct a; try by apply elem_of_nil in Hin.
+    + destruct a; try by apply elem_of_nil in Hin.
       case_decide as Hd; [|by apply elem_of_nil in Hin].
       destruct Hd as (-> & -> & He). apply list_elem_of_singleton in Hin. subst. simpl. by constructor.
     + destruct (eval e) as [[[]| |]|] eqn:He; try by apply elem_of_nil in Hin.
-      * destruct (co_succ_step _ _ _ Hin) as [Hs|[HE Hs]]; [left; by apply pr_iteT|right; split; [done|by apply pr_iteT]].
-      * destruct (co_succ_step _ _ _ Hin) as [Hs|[HE Hs]]; [left; by apply pr_iteF|right; split; [done|by apply pr_iteF]].
+      * apply pr_iteT; [done|]. by apply co_succ_step.
+      * apply pr_iteF; [done|]. by apply co_succ_step.
     + apply elem_of_app in Hin as [(P' & -> & Hin)%list_elem_of_fmap|(Q' & -> & Hin)%list_elem_of_fmap].
-      * destruct (co_succ_step _ _ _ Hin) as [Hs|[HE Hs]]; [left; by apply pr_parL|right; split; [done|by apply pr_parL]].
-      * destruct (co_succ_step _ _ _ Hin) as [Hs|[HE Hs]]; [left; by apply pr_parR|right; split; [done|by apply pr_parR]].
+      * apply pr_parL. by apply co_succ_step.
+      * apply pr_parR. by apply co_succ_step.
     + by apply elem_of_nil in Hin.
     + by apply elem_of_nil in Hin.
-    + right. destruct a; try by apply elem_of_nil in Hin.
-      case_decide as Hd; [|by apply elem_of_nil in Hin]. destruct Hd as (-> & ->).
-      apply list_elem_of_singleton in Hin. subst. simpl. split; [done|apply pr_rec].
-    + left. apply pr_guard. by apply gco_succ_step.
+    + destruct a; try by apply elem_of_nil in Hin.
+      case_decide as Hd; [|by apply elem_of_nil in Hin]. subst.
+      apply list_elem_of_singleton in Hin. subst. simpl. apply pr_rec.
+    + apply pr_guard. by apply gco_succ_step.
   - destruct g; simpl; intros Hin.
     + by apply elem_of_nil in Hin.
     + by apply elem_of_nil in Hin.
@@ -245,16 +184,16 @@ Proof.
 Qed.
 
 Lemma co_succ_complete T k α T' :
-  obsb T = true → prog_step T (CTag k) (ActExt α) T' →
-  ∃ a, co_tag a = k ∧ co_act a = α ∧ T' ∈ co_succ T a.
+  obsb T = true → T ⟶{ActExt α}[(CTag k)] T' →
+  ∃ a, co_tag a = k ∧ co_act a = ActExt α ∧ T' ∈ co_succ T a.
 Proof.
   intros Hob Hs. remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El.
   revert k α Es El Hob.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
-                  |P Q s l P' Hp IH|P Q s l Q' Hp IH| | |P s l P' Hp IH|t X P];
+                  |P Q s l P' Hp IH|P Q s l Q' Hp IH| | |P s l P' Hp IH|t P];
     intros k α Es El Hob; simplify_eq; simpl in Hob.
   - (* guard *)
-    enough (∃ a, co_tag a = k ∧ co_act a = α ∧ P' ∈ gco_succ g a) as (a & ? & ? & ?)
+    enough (∃ a, co_tag a = k ∧ co_act a = ActExt α ∧ P' ∈ gco_succ g a) as (a & ? & ? & ?)
       by (exists a; by simpl).
     remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El. revert k α Es El Hob.
     induction Hg as [| t c v P|t E es qs P Hq|t M es qs n P Hq|t es qs P Hq|g1 g2 s l P' Hg IH|g1 g2 s l P' Hg IH];
@@ -290,12 +229,12 @@ Qed.
 (* ** The channels of the actions of an observer *)
 
 Lemma prog_step_out_chan P t c v P' :
-  obsb P = true → prog_step P (CTag t) (ActExt (PrOut c v)) P' → c ∈ out_chans P.
+  obsb P = true → P ⟶{c ! v}[(CTag t)] P' → c ∈ out_chans P.
 Proof.
-  intros Hob Hs. remember (CTag t) as s eqn:Es. remember (ActExt (PrOut c v)) as l eqn:El.
+  intros Hob Hs. remember (CTag t) as s eqn:Es. remember (c ! v) as l eqn:El.
   revert Hob Es El.
   induction Hs as [g s l P' Hg| | | | | | | | | ]; intros Hob Es El; simplify_eq; simpl in *.
-  - exfalso. remember (ActExt (PrOut c v)) as l eqn:El. revert El.
+  - exfalso. remember (c ! v) as l eqn:El. revert El.
     induction Hg; intros El; simplify_eq; simpl in Hob.
     + apply andb_prop in Hob as [[Hob _]%andb_prop _]. by apply IHHg.
     + apply andb_prop in Hob as [[_ Hob]%andb_prop _]. by apply IHHg.
@@ -307,12 +246,12 @@ Proof.
 Qed.
 
 Lemma prog_step_in_chan P t c v P' :
-  obsb P = true → prog_step P (CTag t) (ActExt (PrIn c v)) P' → c ∈ in_chans P.
+  obsb P = true → P ⟶{c ? v}[(CTag t)] P' → c ∈ in_chans P.
 Proof.
-  intros Hob Hs. remember (CTag t) as s eqn:Es. remember (ActExt (PrIn c v)) as l eqn:El.
+  intros Hob Hs. remember (CTag t) as s eqn:Es. remember (c ? v) as l eqn:El.
   revert Hob Es El.
   induction Hs as [g s l P' Hg| | | | | | | | | ]; intros Hob Es El; simplify_eq; simpl in *.
-  - remember (ActExt (PrIn c v)) as l eqn:El. revert El.
+  - remember (c ? v) as l eqn:El. revert El.
     induction Hg; intros El; simplify_eq; simpl in *.
     + by left.
     + apply andb_prop in Hob as [[Hob _]%andb_prop _]. apply elem_of_app. left. by apply IHHg.
@@ -325,7 +264,7 @@ Qed.
 
 (* ** Observers have no silent step and stay observers *)
 
-Lemma obs_no_tau T : obs T → ∀ s T', ¬ prog_step T s τ T'.
+Lemma obs_no_tau T : obs T → ∀ s T', ¬ T ⟶{τ}[s] T'.
 Proof.
   intros [Hob Hdis] s T' Hs. remember τ as l eqn:El. revert Hob Hdis El.
   induction Hs as [g s l P' Hg| |e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
@@ -355,38 +294,8 @@ Qed.
 
 (* ** Observers stay observers, and their success persists *)
 
-Lemma gsuccessb_gsubst k v g : gsuccessb (gsubst k v g) = gsuccessb g.
-Proof. induction g; simpl; try done. by rewrite IHg1, IHg2. Qed.
-
-
-Lemma obsb_subst k v P : obsb (subst k v P) = obsb P
-with gobsb_gsubst k v g : gobsb (gsubst k v g) = gobsb g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !obsb_subst); try apply gobsb_gsubst.
-  - destruct g; simpl; try done; try (by rewrite !gobsb_gsubst, !gsuccessb_gsubst);
-      try (destruct 𝜆; simpl; try done; apply obsb_subst).
-Qed.
-
-Lemma out_chans_subst k v P : out_chans (subst k v P) = out_chans P
-with gout_chans_gsubst k v g : gout_chans (gsubst k v g) = gout_chans g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !out_chans_subst); try apply out_chans_subst;
-      try apply gout_chans_gsubst.
-  - destruct g; simpl; try done; try (by rewrite !gout_chans_gsubst);
-      try (destruct 𝜆; simpl; apply out_chans_subst).
-Qed.
-
-Lemma in_chans_subst k v P : in_chans (subst k v P) = in_chans P
-with gin_chans_gsubst k v g : gin_chans (gsubst k v g) = gin_chans g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !in_chans_subst); try apply in_chans_subst;
-      try apply gin_chans_gsubst.
-  - destruct g; simpl; try done; try (by rewrite !gin_chans_gsubst);
-      try (destruct 𝜆; simpl; try apply in_chans_subst; by rewrite in_chans_subst).
-Qed.
-
 Lemma prog_step_chans_sub P s l P' :
-  obsb P = true → prog_step P s l P' →
+  obsb P = true → P ⟶{l}[s] P' →
   (∀ c, c ∈ out_chans P' → c ∈ out_chans P) ∧ (∀ c, c ∈ in_chans P' → c ∈ in_chans P).
 Proof.
   intros Hob Hs.
@@ -419,7 +328,7 @@ Proof.
 Qed.
 
 (* The derivative of an observer by a visible action. *)
-Lemma obs_step T k α T' : obs T → prog_step T (CTag k) (ActExt α) T' → obs T'.
+Lemma obs_step T k α T' : obs T → T ⟶{ActExt α}[(CTag k)] T' → obs T'.
 Proof.
   intros [Hob Hdis] Hs. remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El.
   revert Hob Hdis Es El.
@@ -465,14 +374,14 @@ Proof.
     + by apply (HdisQ x).
 Qed.
 
-Lemma gobs_success_stuck g s l P' : gobsb g = true → gsuccessb g = true → ¬ prog_gstep g s l P'.
+Lemma gobs_success_stuck g s l P' : gobsb g = true → gsuccessb g = true → ¬ g ⟶ᵍ{l}[s] P'.
 Proof.
   intros Hob Hsu Hg. induction Hg; simpl in *; try done;
     apply andb_prop in Hob as [_ Hn]; by rewrite Hsu in Hn.
 Qed.
 
 Lemma obs_success_step T k α T' :
-  obsb T = true → prog_step T (CTag k) (ActExt α) T' → success T → success T'.
+  obsb T = true → T ⟶{ActExt α}[(CTag k)] T' → success T → success T'.
 Proof.
   unfold success. intros Hob Hs. remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El.
   revert Hob Es El.
@@ -511,13 +420,62 @@ Proof.
     apply list_elem_of_In, list_elem_of_fmap. by exists T'.
 Qed.
 
+Lemma co_succ_unfold_nil k :
+  (∀ T, co_succ T (CoUnfold k) = [] ∨ obsb T = false) ∧ (∀ g, gco_succ g (CoUnfold k) = []).
+Proof.
+  apply proc_guard_ind; simpl; try (intros; by left); try (intros; by right).
+  - intros e P HP Q HQ. destruct HP as [HP|HP]; [|right; by rewrite HP].
+    destruct HQ as [HQ|HQ]; [|right; by rewrite HQ, andb_false_r]. left. destruct (eval e) as [[[]| |]|]; done.
+  - intros P HP Q HQ. destruct HP as [HP|HP]; [|right; by rewrite HP].
+    destruct HQ as [HQ|HQ]; [|right; by rewrite HQ, andb_false_r]. left. by rewrite HP, HQ.
+  - done.
+  - done.
+  - intros 𝜆 P _. by destruct 𝜆.
+  - intros g1 H1 g2 H2. by rewrite H1, H2.
+Qed.
+
+Lemma co_succ_obs_ext T a T' : obsb T = true → T' ∈ co_succ T a → ∃ α, co_act a = ActExt α.
+Proof.
+  intros Hob Hin. destruct a as [k c v|k c v|k E qs|k M qs n|k q|k]; try by eexists.
+  exfalso. destruct (proj1 (co_succ_unfold_nil k) T) as [E|E].
+  - rewrite E in Hin. by apply elem_of_nil in Hin.
+  - rewrite Hob in E. discriminate E.
+Qed.
+
+Lemma co_succ_obsb T a T' : obsb T = true → T' ∈ co_succ T a → obsb T' = true
+with gco_succ_obsb g a T' : gobsb g = true → T' ∈ gco_succ g a → obsb T' = true.
+Proof.
+  - destruct T; simpl; intros Hob Hin.
+    + destruct a; try by apply elem_of_nil in Hin. case_decide; [|by apply elem_of_nil in Hin].
+      by apply list_elem_of_singleton in Hin as ->.
+    + apply andb_prop in Hob as [HobP HobQ].
+      destruct (eval e) as [[[]| |]|]; try (by apply elem_of_nil in Hin);
+        [exact (co_succ_obsb _ _ _ HobP Hin)|exact (co_succ_obsb _ _ _ HobQ Hin)].
+    + apply andb_prop in Hob as [HobP HobQ].
+      apply elem_of_app in Hin as [(P' & -> & Hin)%list_elem_of_fmap|(Q' & -> & Hin)%list_elem_of_fmap]; simpl; apply andb_true_intro.
+      * split; [exact (co_succ_obsb _ _ _ HobP Hin)|done].
+      * split; [done|exact (co_succ_obsb _ _ _ HobQ Hin)].
+    + discriminate Hob.
+    + discriminate Hob.
+    + discriminate Hob.
+    + by eapply gco_succ_obsb.
+  - destruct g; simpl; intros Hob Hin.
+    + by apply elem_of_nil in Hin.
+    + by apply elem_of_nil in Hin.
+    + destruct 𝜆, a; try (by apply elem_of_nil in Hin); case_decide; try (by apply elem_of_nil in Hin);
+        apply list_elem_of_singleton in Hin as ->; by rewrite ?obsb_subst.
+    + apply andb_prop in Hob as [[Hob1 Hob2]%andb_prop _].
+      apply elem_of_app in Hin as [Hin|Hin]; [exact (gco_succ_obsb _ _ _ Hob1 Hin)|exact (gco_succ_obsb _ _ _ Hob2 Hin)].
+Qed.
+
 Lemma tnodes_obs T : obs T → ∀ n T', T' ∈ tnodes T n → obs T'.
 Proof.
   intros HT n. induction n as [|a n IH] using rev_ind; intros T' Hin.
   - rewrite tnodes_nil in Hin. apply list_elem_of_singleton in Hin. by subst.
-  - apply tnodes_app_elem in Hin as (T0 & HT0 & Hin). apply (obs_step T0 (co_tag a) (co_act a)).
-    + by apply IH.
-    + apply co_succ_sound; [exact (proj1 (IH T0 HT0))|exact Hin].
+  - apply tnodes_app_elem in Hin as (T0 & HT0 & Hin). pose proof (IH T0 HT0) as HT0'.
+    destruct (co_succ_obs_ext _ _ _ (proj1 HT0') Hin) as (α & Hα).
+    pose proof (co_succ_sound _ _ _ (proj1 HT0') Hin) as Hs. rewrite Hα in Hs.
+    exact (obs_step _ _ _ _ HT0' Hs).
 Qed.
 
 (* ** Tags of observers *)
@@ -525,6 +483,7 @@ Qed.
 Definition kind_of (a : coact) : okind :=
   match a with
   | CoOut _ _ _ => KOut | CoIn _ _ _ => KIn | CoOp _ _ _ => KOp | CoMeas _ _ _ _ => KMeas | CoInit _ _ => KInit
+  | CoUnfold _ => KRec
   end.
 
 Lemma co_succ_tagged T a T' : T' ∈ co_succ T a → (co_tag a, kind_of a) ∈ tagged T
@@ -540,7 +499,7 @@ Proof.
     + by apply elem_of_nil in Hin.
     + by apply elem_of_nil in Hin.
     + destruct a; try by apply elem_of_nil in Hin. case_decide as Hd; [|by apply elem_of_nil in Hin].
-      destruct Hd as (-> & _). simpl. by left.
+      subst. simpl. by left.
     + by eapply gco_succ_tagged.
   - destruct g; simpl; intros Hin.
     + by apply elem_of_nil in Hin.
@@ -589,7 +548,7 @@ Lemma co_succ_unique T a T1 T2 :
 with gco_succ_unique g a T1 T2 :
   gobsb g = true → NoDup (map fst (gtagged g)) → T1 ∈ gco_succ g a → T2 ∈ gco_succ g a → T1 = T2.
 Proof.
-  - unfold tags. destruct T as [t c e|e P Q|P Q|P|X|t X P|g]; simpl; intros Hob Hnd H1 H2.
+  - unfold tags. destruct T as [t c e|e P Q|P Q|P|X|t P|g]; simpl; intros Hob Hnd H1 H2.
     + destruct a; try by apply elem_of_nil in H1. case_decide; [|by apply elem_of_nil in H1].
       apply list_elem_of_singleton in H1, H2. congruence.
     + apply andb_prop in Hob as [HobP HobQ]. rewrite map_app in Hnd. apply NoDup_app in Hnd as (Hn1 & _ & Hn2).
@@ -653,7 +612,7 @@ Qed.
 Lemma co_succ_len T a : obsb T = true → NoDup (tags T) → length (co_succ T a) ≤ 1
 with gco_succ_len g a : gobsb g = true → NoDup (map fst (gtagged g)) → length (gco_succ g a) ≤ 1.
 Proof.
-  - unfold tags. destruct T as [t c e|e P Q|P Q|P|X|t X P|g]; simpl; intros Hob Hnd.
+  - unfold tags. destruct T as [t c e|e P Q|P Q|P|X|t P|g]; simpl; intros Hob Hnd.
     + destruct a; simpl; try lia. case_decide; simpl; lia.
     + apply andb_prop in Hob as [HobP HobQ]. rewrite map_app in Hnd. apply NoDup_app in Hnd as (Hn1 & _ & Hn2).
       destruct (eval e) as [[[]| |]|]; simpl; try lia; by apply co_succ_len.
@@ -742,7 +701,7 @@ Lemma co_succ_out_swap T k c v b T1 T2 :
   T1 ∈ co_succ T (CoOut k c v) → T2 ∈ co_succ T1 b →
   ∃ T1', T1' ∈ co_succ T b ∧ T2 ∈ co_succ T1' (CoOut k c v).
 Proof.
-  revert T1 T2. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t X P IH|g]; simpl;
+  revert T1 T2. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t P IH|g]; simpl;
     intros T1 T2 H1 H2.
   - case_decide; [|by apply elem_of_nil in H1]. apply list_elem_of_singleton in H1. subst.
     simpl in H2. by apply elem_of_nil in H2.
@@ -773,7 +732,7 @@ Qed.
 Lemma co_succ_out_successb T k c v T' :
   T' ∈ co_succ T (CoOut k c v) → successb T' = successb T.
 Proof.
-  revert T'. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t X P IH|g]; simpl; intros T' H1.
+  revert T'. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t P IH|g]; simpl; intros T' H1.
   - case_decide; [|by apply elem_of_nil in H1]. apply list_elem_of_singleton in H1. by subst.
   - destruct (eval e) as [[[]| |]|]; try (by apply elem_of_nil in H1); auto.
   - apply elem_of_app in H1 as [(P1 & -> & H1)%list_elem_of_fmap|(Q1 & -> & H1)%list_elem_of_fmap]; simpl.
@@ -790,7 +749,7 @@ Qed.
 Lemma co_succ_out_tag_gone T k c v T' :
   NoDup (tags T) → T' ∈ co_succ T (CoOut k c v) → k ∉ tags T'.
 Proof.
-  unfold tags. revert T'. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t X P IH|g]; simpl;
+  unfold tags. revert T'. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t P IH|g]; simpl;
     intros T' Hnd H1.
   - case_decide; [|by apply elem_of_nil in H1]. apply list_elem_of_singleton in H1. subst. simpl.
     by intros ?%elem_of_nil.
@@ -841,7 +800,8 @@ Definition offer_of (a : coact) : offer :=
   | CoIn k c _ => OffIn k c
   | CoOp k E qs => OffOp k E qs
   | CoMeas k M qs _ => OffMeas k M qs
-  | CoInit k qs => OffInit k qs
+  | CoInit k q => OffInit k q
+  | CoUnfold k => OffUnfold k
   end.
 
 (* The menu of [T] at the node [n]. *)
@@ -885,9 +845,11 @@ Proof.
     assert (Hin : T'' ∈ tnodes T ((n ++ m) ++ [a])) by (rewrite E; by left).
     apply tnodes_app_elem in Hin as (T' & HT' & Hin').
     apply (succ_at_tnodes T _ T'' HT); [rewrite E; by left|].
-    apply (obs_success_step T' (co_tag a) (co_act a)).
-    + by apply (tnodes_obs T (proj1 HT) (n ++ m)).
-    + apply co_succ_sound; [exact (proj1 (tnodes_obs T (proj1 HT) (n ++ m) T' HT'))|exact Hin'].
+    pose proof (proj1 (tnodes_obs T (proj1 HT) (n ++ m) T' HT')) as Hob'.
+    destruct (co_succ_obs_ext _ _ _ Hob' Hin') as (α & Hα).
+    apply (obs_success_step T' (co_tag a) α).
+    + exact Hob'.
+    + rewrite <- Hα. by apply co_succ_sound.
     + apply (succ_at_tnodes T _ T' HT HT'). apply IH; [done|]. intros E'. rewrite E' in HT'. by apply elem_of_nil in HT'.
 Qed.
 
@@ -906,7 +868,7 @@ Lemma co_succ_out_keep T k c v b T1 :
   T1 ∈ co_succ T (CoOut k c v) → co_succ T b ≠ [] →
   (∀ c' v', b ≠ CoOut k c' v') → co_succ T1 b ≠ [].
 Proof.
-  revert T1. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t X P IH|g]; simpl;
+  revert T1. induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t P IH|g]; simpl;
     intros T1 H1 Hb Hne.
   - case_decide as Hd; [|by apply elem_of_nil in H1]. destruct Hd as (-> & -> & He).
     destruct b; try done. case_decide as Hd'; [|done]. destruct Hd' as (-> & -> & _).
@@ -936,7 +898,7 @@ Qed.
 Lemma co_succ_in_val T k c v v' : co_succ T (CoIn k c v) ≠ [] → co_succ T (CoIn k c v') ≠ []
 with gco_succ_in_val g k c v v' : gco_succ g (CoIn k c v) ≠ [] → gco_succ g (CoIn k c v') ≠ [].
 Proof.
-  - destruct T as [t c' e|e P Q|P Q|P|X|t X P|g]; simpl; intros H; try done.
+  - destruct T as [t c' e|e P Q|P Q|P|X|t P|g]; simpl; intros H; try done.
     + destruct (eval e) as [[[]| |]|]; try done; by eapply co_succ_in_val.
     + intros E. apply app_eq_nil in E as [E1 E2]. apply fmap_nil_inv in E1, E2. apply H.
       assert (co_succ P (CoIn k c v) = []) as ->.
@@ -964,7 +926,7 @@ Lemma co_succ_meas_out T k M qs n n' :
 with gco_succ_meas_out g k M qs n n' :
   gco_succ g (CoMeas k M qs n) ≠ [] → gco_succ g (CoMeas k M qs n') ≠ [].
 Proof.
-  - destruct T as [t c' e|e P Q|P Q|P|X|t X P|g]; simpl; intros H; try done.
+  - destruct T as [t c' e|e P Q|P Q|P|X|t P|g]; simpl; intros H; try done.
     + destruct (eval e) as [[[]| |]|]; try done; by eapply co_succ_meas_out.
     + intros E. apply app_eq_nil in E as [E1 E2]. apply fmap_nil_inv in E1, E2. apply H.
       assert (co_succ P (CoMeas k M qs n) = []) as ->.
@@ -1047,7 +1009,7 @@ Fixpoint out_msgs (T : proc) : list msg :=
 
 Lemma out_msgs_spec T k c v : (k, c, v) ∈ out_msgs T ↔ co_succ T (CoOut k c v) ≠ [].
 Proof.
-  induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t X P IH|g]; simpl.
+  induction T as [t c' e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t P IH|g]; simpl.
   - destruct (eval e) as [v0|] eqn:He.
     + rewrite list_elem_of_singleton. case_decide as Hd; split.
       * done.
@@ -1080,35 +1042,6 @@ Proof.
     + apply list_elem_of_In, list_elem_of_fmap. by exists T'.
     + apply list_elem_of_In. by apply out_msgs_spec.
 Qed.
-Lemma gsuccessb_gshiftv k g : gsuccessb (gshiftv k g) = gsuccessb g.
-Proof. induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl; try done. by rewrite IH1, IH2. Qed.
-
-Lemma obsb_shiftv k P : obsb (shiftv k P) = obsb P
-with gobsb_gshiftv k g : gobsb (gshiftv k g) = gobsb g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !obsb_shiftv); try apply gobsb_gshiftv.
-  - destruct g; simpl; try done; try (by rewrite !gobsb_gshiftv, !gsuccessb_gshiftv);
-      try (destruct 𝜆; simpl; try done; apply obsb_shiftv).
-Qed.
-
-Lemma out_chans_shiftv k P : out_chans (shiftv k P) = out_chans P
-with gout_chans_gshiftv k g : gout_chans (gshiftv k g) = gout_chans g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !out_chans_shiftv); try apply out_chans_shiftv;
-      try apply gout_chans_gshiftv.
-  - destruct g; simpl; try done; try (by rewrite !gout_chans_gshiftv);
-      try (destruct 𝜆; simpl; apply out_chans_shiftv).
-Qed.
-
-Lemma in_chans_shiftv k P : in_chans (shiftv k P) = in_chans P
-with gin_chans_gshiftv k g : gin_chans (gshiftv k g) = gin_chans g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !in_chans_shiftv); try apply in_chans_shiftv;
-      try apply gin_chans_gshiftv.
-  - destruct g; simpl; try done; try (by rewrite !gin_chans_gshiftv);
-      try (destruct 𝜆; simpl; try apply in_chans_shiftv; by rewrite in_chans_shiftv).
-Qed.
-
 End LqP.
 
 (* end hide *)

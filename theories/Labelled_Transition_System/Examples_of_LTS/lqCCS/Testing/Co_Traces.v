@@ -28,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical pMust_cotrace.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Finitary.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Finitary.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -47,7 +47,8 @@ Section CoTraces.
     ∧ outputs_sync p q O S Ch K ∧ one_output_per_tag O S ∧ outputs_persist O S.
 
   Definition alt_cotrace : Prop :=
-    ∀ O S Ch K π U R, co_trace (M := lq_menu O) S (dinit q) π U R → co_coherent O S Ch K π U → fin (co_visited π) →
+    ∀ O S Ch K π U R, (∀ k, K k ≠ KRec) → co_trace (M := lq_menu O) S (dinit q) π U R → co_coherent O S Ch K π U →
+      fin (co_visited π) →
       ∃ I π' R', co_run (M := lq_menu O) I (co_success (M := lq_menu O) S (co_menu (real_off p q Ch K) U R) U) (dinit p) π' R'
         ∧ co_below (M := lq_menu O) (real_off p q Ch K) S U R π I π' R'.
 
@@ -57,7 +58,7 @@ Section CoTraces.
         ∧ co_below (M := lq_menu O) (real_off p q Ch K) S U R π I π' R'.
 
   Lemma alt_cotrace_inf_fin : alt_cotrace_inf → alt_cotrace.
-  Proof. intros Hi O S Ch K π U R Ht Hc _. exact (Hi O S Ch K π U R Ht Hc). Qed.
+  Proof. intros Hi O S Ch K π U R _ Ht Hc _. exact (Hi O S Ch K π U R Ht Hc). Qed.
 
   Lemma visited_co O (r : nat → dist comp) n :
     visited r n ↔ co_visited (λ i, co_dist (M := lq_menu O) (r i)) n.
@@ -77,16 +78,16 @@ Section CoTraces.
   Theorem alt_cotrace_iff (DC : dep_choice) : alt_trace p q ↔ alt_cotrace.
   Proof.
     split.
-    - intros Ht O S Ch K π U R (r & w & Hw & -> & -> & ->) (HS & Hq & Hc & Ho1 & Ho2 & Ho3) Hfin.
+    - intros Ht O S Ch K π U R HKr (r & w & Hw & -> & -> & ->) (HS & Hq & Hc & Ho1 & Ho2 & Ho3) Hfin.
       assert (Hr : run_word (M := lq_menu O) (cells (M := lq_menu O) S r w) S (r 0) r w) by (split; [done|apply Hw]).
       refine (co_fwd (M := lq_menu O) (real_off p q Ch K) (dinit p) S r w Hr (dinit_root r (proj1 Hw)) DC _).
-      apply (Ht O S Ch K r w).
+      apply (Ht O S Ch K r w HKr).
       + split; [done|]. split; [|done]. intros n Hn. apply Hq. by rewrite <- (visited_co O).
       + split; [exact Hw|]. refine (fin_iff _ _ _ Hfin). intros n. symmetry. apply (visited_co O).
-    - intros Hc O S Ch K r w (HS & Hq & Hcs & Ho1 & Ho2 & Ho3) [Hw Hfin].
+    - intros Hc O S Ch K r w HKr (HS & Hq & Hcs & Ho1 & Ho2 & Ho3) [Hw Hfin].
       assert (Hr : run_word (M := lq_menu O) (cells (M := lq_menu O) S r w) S (r 0) r w) by (split; [done|apply Hw]).
       refine (co_bwd (M := lq_menu O) (real_off p q Ch K) (dinit p) S r w Hr (dinit_root r (proj1 Hw)) Hcs _).
-      apply (Hc O S Ch K).
+      apply (Hc O S Ch K); [exact HKr| | |].
       + by exists r, w.
       + split; [done|]. split; [|done]. intros n Hn. apply Hq. by rewrite (visited_co O).
       + refine (fin_iff _ _ _ Hfin). intros n. apply (visited_co O).

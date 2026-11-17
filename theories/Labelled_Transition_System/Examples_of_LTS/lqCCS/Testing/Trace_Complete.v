@@ -31,7 +31,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Build.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Build.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -54,6 +54,7 @@ Section Asm.
   Hypothesis Hcl2 : ∀ n o, o ∈ cl n ↔ U n o.
   Hypothesis Hfuel : ∀ n, S n = false → length n < f0.
   Hypothesis Hun : ∀ n a, unlisted VL a → S (n ++ [a]) = true.
+  Hypothesis HKr : ∀ k, K k ≠ KRec.
 
   Definition TG (x : tag * okind) : Prop := K x.1 = x.2 ∧ x.1 ∉ otags p.1 ∧ x.1 ∉ otags q.1.
 
@@ -82,6 +83,12 @@ Section Asm.
   Lemma cHclo n k c v : OffOut k c v ∉ cl n.
   Proof. intros Hin%Hcl2. destruct (U_cell _ _ Hin) as [_ Hn]. by apply (Hn k c v). Qed.
 
+  Lemma cHclu n k : OffUnfold k ∉ cl n.
+  Proof.
+    intros Hin%Hcl2. destruct Hcoh as (_ & _ & Hcs & _). destruct (Hcs n _ Hin) as (Hty & _).
+    unfold typed in Hty. simpl in Hty. apply (HKr k). congruence.
+  Qed.
+
   Lemma Hrun0 : run_word (M := lq_menu O) U S (r 0) r w.
   Proof. destruct Hrun as [E Hr]. split; [done|exact Hr]. Qed.
 
@@ -98,13 +105,13 @@ Section Asm.
   Qed.
 
   Lemma T_inv m : (∀ X, X ∈ tnodes T m → inv S O cl VL f0 m X) ∧ length (tnodes T m) ≤ 1.
-  Proof. exact (bt_inv S O cl VL f0 Hfuel Hun Hcl1 cHOf cHOm m). Qed.
+  Proof. exact (bt_inv S O cl VL f0 Hfuel Hun Hcl1 cHclu cHOf cHOm m). Qed.
 
   Lemma T_S n : clpath S cl n → S_T T n = S n.
-  Proof. exact (bt_S S O cl VL f0 cHS Hfuel Hun Hcl1 cHOf cHOm cHclo n). Qed.
+  Proof. exact (bt_S S O cl VL f0 cHS Hfuel Hun Hcl1 cHclu cHOf cHOm cHclo n). Qed.
 
   Lemma T_menu n o : plain n → (∀ k c v, o ≠ OffOut k c v) → (menu T n o ↔ clpath S cl n ∧ S n = false ∧ o ∈ cl n).
-  Proof. exact (bt_menu S O cl VL f0 Hfuel Hun Hcl1 cHOf cHOm cHclo n o). Qed.
+  Proof. exact (bt_menu S O cl VL f0 Hfuel Hun Hcl1 cHclu cHOf cHOm cHclo n o). Qed.
 
   Lemma T_syn : syn TG (λ c, Ch c) (λ c, ¬ Ch c) T.
   Proof.
@@ -123,7 +130,7 @@ Section Asm.
       simpl in E1, E2. congruence.
     - intros n. exact (proj2 (T_inv n)).
     - intros n m k c v c' v' Y HY.
-      exact (bt_gone S O cl VL f0 Hfuel Hun Hcl1 cHOf cHOm n m k c v c' v' Y HY).
+      exact (bt_gone S O cl VL f0 Hfuel Hun Hcl1 cHclu cHOf cHOm n m k c v c' v' Y HY).
   Qed.
 
   Lemma T_for : obs_for p q T.
@@ -137,7 +144,7 @@ Section Asm.
     intros Hm. destruct T_syn as (Hob & Htg & Hoc & Hic).
     destruct (Htg _ (menu_kind T T_observer n o Hm)) as (Hk & Hp & Hq). simpl in Hk, Hp, Hq.
     split; [by symmetry|]. split; [done|]. split; [done|]. intros k c -> Hc1.
-    destruct Hm as (T' & a & HT' & Ha & Hne). destruct a as [|k' c' v| | |]; try discriminate Ha.
+    destruct Hm as (T' & a & HT' & Ha & Hne). destruct a as [|k' c' v| | | |]; try discriminate Ha.
     simpl in Ha. injection Ha as -> ->.
     destruct (co_succ T' (CoIn k c v)) as [|T'' l] eqn:E; [done|].
     assert (HT'' : T'' ∈ co_succ T' (CoIn k c v)) by (rewrite E; by left).
@@ -151,12 +158,12 @@ Section Asm.
     split; [|exact T_ok]. exists T. split; [exact T_for|]. split; [|split; [done|split; [done|split]]].
     - intros n m Hpl Hs. destruct (classic (clpath S cl n)) as [Hc|Hc].
       + rewrite (T_S n Hc) in Hs. symmetry.
-        exact (bt_O S O cl VL f0 Hfuel Hun Hcl1 cHOf cHOm cHclo n m Hc Hs).
+        exact (bt_O S O cl VL f0 Hfuel Hun Hcl1 cHclu cHOf cHOm cHclo n m Hc Hs).
       + destruct Hcoh as (_ & Hoff & _).
         assert (Hnv : ¬ visited r n).
         { intros (i & c & ρ & Hin & <-). apply Hc. exact (q_clpath i (c, ρ) Hin). }
         rewrite (proj2 (Hoff n Hnv)). unfold O_T, T.
-        rewrite (bt_nostate S O cl VL f0 Hfuel Hun Hcl1 cHOf cHOm n Hpl Hc). done.
+        rewrite (bt_nostate S O cl VL f0 Hfuel Hun Hcl1 cHclu cHOf cHOm n Hpl Hc). done.
     - intros c Hc. exact (proj1 (proj2 (proj2 T_syn)) c Hc).
     - intros k x Hin. exact (proj1 (proj1 (proj2 T_syn) _ Hin)).
   Qed.
@@ -281,7 +288,7 @@ Section Asm.
     ∃ r', is_run (SchedSts0 := trace_sts p q O S Ch K r w) Stay (dinit p) r'
         ∧ run_le (SchedSts0 := trace_sts p q O S Ch K r w) r' r.
   Proof.
-    intros Hfree. destruct (Hfree O Ch K (menu T) (S_T T) T_real r w q_run) as (r' & Hr' & Hle).
+    intros Hfree. destruct (Hfree O Ch K HKr (menu T) (S_T T) T_real r w q_run) as (r' & Hr' & Hle).
     assert (Hpath : ∀ i x, x ∈ r' i → visited_ok (M := lq_menu O) JA x.1.1).
     { refine (run_inv SA (λ c, visited_ok (M := lq_menu O) JA c.1) _ (dinit p) r' Hr' _).
       - intros ρ c σ Δ Hv Hs y Hy. exact (visited_step (M := lq_menu O) JA ρ c σ Δ y Hv Hs Hy).
@@ -351,7 +358,7 @@ Section Data.
     assert (Hsub : ∀ v, v ∈ valsof (n ++ [a]) → v ∈ VLd L).
     { intros v Hv. unfold VLd. apply list_elem_of_In, in_concat. exists (valsof (n ++ [a])).
       split; [|by apply list_elem_of_In]. apply in_map_iff. exists (n ++ [a]). split; [done|by apply list_elem_of_In]. }
-    destruct a as [k c v|k c v|k E0 qs|k M qs i|k qs]; simpl in Hu; try done.
+    destruct a as [k c v|k c v|k E0 qs|k M qs i|k q0|k]; simpl in Hu; try done.
     - apply Hu, Hsub. unfold valsof. rewrite omap_app. apply elem_of_app. right. by left.
     - apply Hu, Hsub. unfold valsof. rewrite omap_app. apply elem_of_app. right. by left.
   Qed.
@@ -379,8 +386,8 @@ Theorem trace_complete `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) 
   q.2 ≠ szero →
   ctx_pre_sm_on Stay (obs_for p q) p q → alt_trace p q.
 Proof.
-  intros Hz Hc O S Ch K r w Hcoh [Hrun (L & HL)].
-  refine (asm_complete p q O S Ch K r w (cld O S r w L) (VLd L) (f0d L) Hcoh Hrun _ _ _ _
+  intros Hz Hc O S Ch K r w HKr Hcoh [Hrun (L & HL)].
+  refine (asm_complete p q O S Ch K r w (cld O S r w L) (VLd L) (f0d L) Hcoh Hrun _ _ _ _ HKr
             (proj1 (alt_free_obs_iff DC p q Hz) Hc)).
   - intros n. apply d_cl1.
   - intros n o. eapply d_cl2; eassumption.

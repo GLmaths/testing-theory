@@ -29,7 +29,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -50,7 +50,7 @@ Section Syn.
   Lemma syn_nil : syn 𝟘.
   Proof. split; [done|]. repeat split; intros x Hx; by apply elem_of_nil in Hx. Qed.
 
-  Lemma syn_succ : syn (PG ①).
+  Lemma syn_succ : syn (PG 𝟙).
   Proof. split; [done|]. repeat split; intros x Hx; by apply elem_of_nil in Hx. Qed.
 
   Lemma syn_par P Q : syn P → syn Q → syn (P ∥ Q).
@@ -89,7 +89,7 @@ Section Syn.
     - apply Hi, elem_of_app. by right.
   Qed.
 
-  Lemma syn_subst k v P : syn P → syn (subst k v P).
+  Lemma syn_subst k v P : syn P → syn (P ⁅ v // k ⁆ᵥ).
   Proof. unfold syn. by rewrite obsb_subst, tagged_subst, out_chans_subst, in_chans_subst. Qed.
 
   Lemma syn_shiftv k P : syn P → syn (shiftv k P).
@@ -105,7 +105,7 @@ Section Syn.
 
   Lemma syn_bagof X : syn X → syn (bagof X).
   Proof.
-    induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl; intros HX; try apply syn_nil.
+    induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl; intros HX; try apply syn_nil.
     - done.
     - apply syn_ite_inv in HX as [HP HQ]. destruct (eval e) as [[[]| |]|]; auto using syn_nil.
     - apply syn_par_inv in HX as [HP HQ]. apply syn_par; auto.
@@ -113,7 +113,7 @@ Section Syn.
 
   Lemma syn_ns X : syn X → syn (ns X).
   Proof.
-    induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl; intros HX; try done.
+    induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl; intros HX; try done.
     - apply syn_nil.
     - apply syn_ite_inv in HX as [HP HQ]. destruct (eval e) as [[[]| |]|]; auto using syn_nil.
     - apply syn_par_inv in HX as [HP HQ]. apply syn_par; auto.
@@ -142,7 +142,7 @@ Section Syn.
 
   Lemma heads_syn Z h : syn Z → h ∈ heads Z → hsynP h.
   Proof.
-    revert h. induction Z as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl; intros h HZ Hin.
+    revert h. induction Z as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl; intros h HZ Hin.
     - by apply elem_of_nil in Hin.
     - apply syn_ite_inv in HZ as [HP HQ]. destruct (eval e) as [[[]| |]|]; try (by apply elem_of_nil in Hin); auto.
     - apply syn_par_inv in HZ as [HP HQ].
@@ -170,7 +170,7 @@ Section Syn.
     - intros c Hc0. destruct 𝜆; simpl in Hc0; auto. apply elem_of_cons in Hc0 as [->|Hc0]; [by eapply Hic|auto].
   Qed.
 
-  Lemma gsyn_nil : gsyn (GNil []).
+  Lemma gsyn_nil : gsyn 𝟘{ [] }.
   Proof. split; [done|]. split; [done|]. repeat split; intros x Hx; by apply elem_of_nil in Hx. Qed.
 
   Lemma gsum_syn (l : list guard) : (∀ g, g ∈ l → gsyn g) → gsyn (gsum l).
@@ -195,7 +195,7 @@ Section Syn.
     (∀ m' X', syn X' → syn (rec m' X')) → hsynP h → hguard VL wrapb rec m h = Some g → gsyn g.
   Proof.
     intros Hrec (HD & Htg & Hnt & Hic) Hg. destruct h as [𝜆 D]. unfold hguard in Hg.
-    destruct 𝜆 as [t|t c|t E es|t M es|t es]; simpl in *.
+    destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl in *.
     - discriminate Hg.
     - injection Hg as <-. apply gsyn_pre; [done|done| |].
       + exact Hic.
@@ -205,14 +205,14 @@ Section Syn.
     - destruct (eval_qubits es) as [qs|]; [|discriminate Hg]. injection Hg as <-.
       apply gsyn_pre; [done|done|done|]. apply syn_chain; [|by apply dflt_syn].
       intros v. destruct v; try apply syn_nil. apply kont_syn; [done|by apply syn_subst].
-    - destruct (eval_qubits es) as [qs|]; [|discriminate Hg]. injection Hg as <-.
+    - destruct (eval_qubit e) as [q|]; [|discriminate Hg]. injection Hg as <-.
       apply gsyn_pre; [done|done|done|]. by apply kont_syn.
   Qed.
 
   Lemma rg_syn m o g : o ∈ reps m → rg o = Some g → gsyn g.
   Proof.
     intros Hin Hg. destruct (Hreps m o Hin) as [Htg Hic].
-    destruct o as [k c v|k c|k E qs|k M qs|k qs]; simpl in *; [discriminate Hg|injection Hg as <-..];
+    destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl in *; [discriminate Hg|injection Hg as <-..|discriminate Hg];
       (apply gsyn_pre; [done|done| |apply syn_succ]); try done.
     intros k0 c0 [= <- <-]. by apply (Hic k c).
   Qed.

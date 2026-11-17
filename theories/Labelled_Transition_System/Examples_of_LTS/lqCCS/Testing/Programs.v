@@ -33,123 +33,18 @@ From Stdlib.Lists Require Import List.
 Import ListNotations.
 From stdpp Require Import base countable decidable list propset.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-(* ** Tags with their kinds *)
+(* ** Tags along the transitions *)
 
 Section LqP.
   Context `{LP : lqCCS_Parameters}.
 
-Inductive okind : Type := KTau | KOut | KIn | KOp | KMeas | KInit | KRec.
-
-#[global] Instance okind_eq_dec : EqDecision okind.
-Proof. solve_decision. Defined.
-
-Definition prefix_tagged (𝜆 : prefix) : tag * okind :=
-  match 𝜆 with
-  | t ∶ 𝛕 => (t, KTau)
-  | PRecv t _ => (t, KIn)
-  | POp t _ _ => (t, KOp)
-  | PMeas t _ _ => (t, KMeas)
-  | PInit t _ => (t, KInit)
-  end.
-
-Fixpoint tagged (P : proc) : list (tag * okind) :=
-  match P with
-  | PSend t _ _ => [(t, KOut)]
-  | PIte _ P Q | P ∥ Q => tagged P ++ tagged Q
-  | ν P => tagged P
-  | PVar _ => []
-  | PRec t _ P => (t, KInit) :: tagged P
-  | PG g => gtagged g
-  end
-with gtagged (g : guard) : list (tag * okind) :=
-  match g with
-  | GNil _ | ① => []
-  | 𝜆 ∙ P => prefix_tagged 𝜆 :: tagged P
-  | (g1 + g2)%lq => gtagged g1 ++ gtagged g2
-  end.
-
-Definition tags (P : proc) : list tag := map fst (tagged P).
-
-Lemma prefix_tagged_subst k v 𝜆 : prefix_tagged (prefix_subst k v 𝜆) = prefix_tagged 𝜆.
-Proof. by destruct 𝜆. Qed.
-
-Lemma prefix_tagged_shift k 𝜆 : prefix_tagged (prefix_shift k 𝜆) = prefix_tagged 𝜆.
-Proof. by destruct 𝜆. Qed.
-
-Lemma prefix_tagged_ren f 𝜆 : prefix_tagged (prefix_ren f 𝜆) = prefix_tagged 𝜆.
-Proof. by destruct 𝜆. Qed.
-
-Lemma tagged_subst k v P : tagged (subst k v P) = tagged P
-with gtagged_gsubst k v g : gtagged (gsubst k v g) = gtagged g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !tagged_subst); try apply gtagged_gsubst.
-  - destruct g; simpl; try done; try (by rewrite !gtagged_gsubst).
-    by rewrite prefix_tagged_subst, tagged_subst.
-Qed.
-
-Lemma tagged_shiftv k P : tagged (shiftv k P) = tagged P
-with gtagged_gshiftv k g : gtagged (gshiftv k g) = gtagged g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !tagged_shiftv); try apply gtagged_gshiftv.
-  - destruct g; simpl; try done; try (by rewrite !gtagged_gshiftv).
-    by rewrite prefix_tagged_shift, tagged_shiftv.
-Qed.
-
-Lemma tagged_ren f P : tagged (ren f P) = tagged P
-with gtagged_gren f g : gtagged (gren f g) = gtagged g.
-Proof.
-  - destruct P; simpl; try done; try (by rewrite !tagged_ren); try apply gtagged_gren.
-  - destruct g; simpl; try done; try (by rewrite !gtagged_gren).
-    by rewrite prefix_tagged_ren, tagged_ren.
-Qed.
-
-Lemma tagged_shiftv_iter n P : tagged (Nat.iter n (shiftv 0) P) = tagged P.
-Proof. induction n as [|n IH]; simpl; [done|]. by rewrite tagged_shiftv. Qed.
-
-Lemma tagged_pr_subst X P Q x :
-  x ∈ tagged (P ⦃ Q // X ⦄) → x ∈ tagged P ∨ x ∈ tagged Q
-with gtagged_gpr_subst X g Q x :
-  x ∈ gtagged (gpr_subst X g Q) → x ∈ gtagged g ∨ x ∈ tagged Q.
-Proof.
-  - destruct P; simpl; intros Hx.
-    + by left.
-    + apply elem_of_app in Hx as [Hx|Hx]; apply tagged_pr_subst in Hx as [Hx|Hx]; auto;
-        left; apply elem_of_app; auto.
-    + apply elem_of_app in Hx as [Hx|Hx]; apply tagged_pr_subst in Hx as [Hx|Hx]; auto;
-        left; apply elem_of_app; auto.
-    + apply tagged_pr_subst in Hx as [Hx|Hx]; [by left|]. right. by rewrite tagged_ren in Hx.
-    + case_decide; [by right|]. by left.
-    + case_decide; [by left|]. apply elem_of_cons in Hx as [->|Hx]; [left; by left|].
-      apply tagged_pr_subst in Hx as [Hx|Hx]; [left; by right|by right].
-    + by apply (gtagged_gpr_subst X).
-  - destruct g; simpl; intros Hx.
-    + by left.
-    + by left.
-    + apply elem_of_cons in Hx as [->|Hx]; [left; by left|].
-      apply tagged_pr_subst in Hx as [Hx|Hx]; [left; by right|]. right. by rewrite tagged_shiftv_iter in Hx.
-    + apply elem_of_app in Hx as [Hx|Hx]; apply gtagged_gpr_subst in Hx as [Hx|Hx]; auto;
-        left; apply elem_of_app; auto.
-Qed.
-
-Lemma prefix_tagged_tren f 𝜆 : prefix_tagged (prefix_tren f 𝜆) = (f (prefix_tagged 𝜆).1, (prefix_tagged 𝜆).2).
-Proof. by destruct 𝜆. Qed.
-
-Lemma tagged_tren f P : tagged (tren f P) = map (λ x, (f x.1, x.2)) (tagged P)
-with gtagged_gtren f g : gtagged (gtren f g) = map (λ x, (f x.1, x.2)) (gtagged g).
-Proof.
-  - destruct P; simpl; rewrite ?map_app; try done; try (by rewrite !tagged_tren); try apply gtagged_gtren.
-  - destruct g; simpl; rewrite ?map_app; try done; try (by rewrite !gtagged_gtren).
-    by rewrite prefix_tagged_tren, tagged_tren.
-Qed.
-
-(* Along a step, the tags of a program only decrease, up to their generation. *)
 Lemma prog_step_tagged P s l P' x :
-  prog_step P s l P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
+  P ⟶{l}[s] P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
 Proof.
   intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; simpl; intros Hx.
   - induction Hg; simpl in *; try (apply elem_of_app; auto; fail).
@@ -166,7 +61,7 @@ Proof.
   - apply elem_of_app in Hx as [Hx|Hx]; apply elem_of_app; auto.
   - apply elem_of_app in Hx as [Hx|Hx]; apply elem_of_app; auto.
   - auto.
-  - rewrite (proj1 (tren_pr_subst X)) in Hx. apply tagged_pr_subst in Hx as [Hx|Hx]; [by right|].
+  - rewrite (proj1 tren_pr_subst) in Hx. apply tagged_pr_subst in Hx as [Hx|Hx]; [by right|].
     simpl in Hx. by rewrite tag_base_up, tren_base_up in Hx.
 Qed.
 
@@ -180,7 +75,7 @@ Proof.
   apply list_elem_of_fmap. by exists x.
 Qed.
 
-Lemma prog_step_otags P s l P' t : prog_step P s l P' → t ∈ otags P' → t ∈ otags P.
+Lemma prog_step_otags P s l P' t : P ⟶{l}[s] P' → t ∈ otags P' → t ∈ otags P.
 Proof.
   unfold otags, tags. intros Hs Ht. rewrite elem_of_PropSet in Ht |- *.
   apply list_elem_of_fmap in Ht as (x & E & Hx). apply list_elem_of_fmap. exists x. split; [done|].
@@ -191,7 +86,7 @@ Qed.
 Definition choice_tags (s : choice) : list tag :=
   match s with CEps => [] | CTag t => [t] | CPair t t' => [t; t'] end.
 
-Lemma cpair_tags u t t' : u ∈ choice_tags (cpair t t') → u = t ∨ u = t'.
+Lemma cpair_tags u t t' : u ∈ choice_tags ⦗t, t'⦘ → u = t ∨ u = t'.
 Proof.
   unfold cpair. simpl. intros Hu. apply elem_of_cons in Hu as [->|Hu].
   - destruct (Nat.min_spec t t') as [[_ ->]|[_ ->]]; auto.
@@ -201,7 +96,7 @@ Qed.
 
 (* The tags of the choice of a step belong to the program. *)
 Lemma prog_step_choice_tags P s l P' u :
-  prog_step P s l P' → u ∈ choice_tags s → u ∈ tags P.
+  P ⟶{l}[s] P' → u ∈ choice_tags s → u ∈ tags P.
 Proof.
   intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; unfold tags; simpl; intros Hu.
   - induction Hg; simpl in *.

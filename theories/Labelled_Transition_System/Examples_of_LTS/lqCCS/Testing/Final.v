@@ -29,7 +29,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -109,7 +109,7 @@ Section Data.
   Definition LVp (n : node) : Prop := ∃ k D x l, k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.1 = n ++ l.
 
   Definition CLp (ch : channel) : Prop :=
-    ∃ k D x t v P', k ≤ N ∧ reach k D ∧ x ∈ D ∧ prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P'.
+    ∃ k D x t v P', k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.2.1 ⟶{ch ! v}[(CTag t)] P'.
 
   Lemma reach_fin k : fin (reach k).
   Proof.
@@ -138,11 +138,11 @@ Section Data.
   Lemma CLp_fin : fin CLp.
   Proof.
     apply (fin_mono _ (λ ch, ∃ x : comp * weight, (∃ k D, k ≤ N ∧ reach k D ∧ x ∈ D)
-                         ∧ ∃ t v P', prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P')).
+                         ∧ ∃ t v P', x.1.2.1 ⟶{ch ! v}[(CTag t)] P')).
     - intros ch (k & D & x & t & v & P' & Hk & Hr & Hx & Hp). exists x. split; [by exists k, D|by exists t, v, P'].
     - apply (fin_bind _ _ comps_fin). intros x _.
-      apply (fin_mono _ (λ ch, ∃ a, psteps x.1.2.1 [] [] a ∧ ∃ v, a.1 = ActExt (PrOut ch v))).
-      + intros ch (t & v & P' & Hp). exists (ActExt (PrOut ch v), P'). split; [exists (CTag t); by split|by exists v].
+      apply (fin_mono _ (λ ch, ∃ a, psteps x.1.2.1 [] [] a ∧ ∃ v, a.1 = ch ! v)).
+      + intros ch (t & v & P' & Hp). exists (ch ! v, P'). split; [exists (CTag t); by split|by exists v].
       + apply (fin_bind _ _ (psteps_fin _ [] [])). intros a _. apply fin_uniq.
         intros c1 c2 (v1 & E1) (v2 & E2). congruence.
   Qed.
@@ -154,7 +154,7 @@ Section Data.
   Proof. intros Hk Hr Hx. exists k, D, x, []. by rewrite app_nil_r. Qed.
 
   Lemma CLp_reach k D x t ch v P' : k ≤ N → reach k D → x ∈ D →
-    prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P' → CLp ch.
+    x.1.2.1 ⟶{ch ! v}[(CTag t)] P' → CLp ch.
   Proof. intros Hk Hr Hx Hp. by exists k, D, x, t, v, P'. Qed.
 
   Lemma data_exist :
@@ -202,17 +202,17 @@ Section Data.
       assert (Hv : ∀ v, v ∈ valsof n → v ∈ concat (map valsof L)).
       { intros v Hv. apply list_elem_of_In, in_concat. exists (valsof n).
         split; [apply in_map, list_elem_of_In, HL, Hn|by apply list_elem_of_In]. }
-      destruct a as [k c v|k c v|k E qs|k M qs j|k qs]; simpl in Hu; try done.
+      destruct a as [k c v|k c v|k E qs|k M qs j|k q0|k]; simpl in Hu; try done.
       + apply Hu, Hv. apply list_elem_of_omap. by exists (CoIn k c v).
       + apply Hu, Hv. apply list_elem_of_omap. by exists (CoMeas k M qs j).
     - intros n Hn. pose proof (len_le_sum L n (HL n Hn)). lia.
   Qed.
 End Data.
 
-Theorem lq_MenuTrunc `{QM : QuantumModel} (p q : proc * St) O Ch K : q.2 ≠ szero →
+Theorem lq_MenuTrunc `{QM : QuantumModel} (p q : proc * St) O Ch K : q.2 ≠ szero → (∀ k, K k ≠ KRec) →
   MenuTrunc (M := lq_menu O) (real_off p q Ch K) (RealT p q O Ch K) (dinit p) (dinit q).
 Proof.
-  intros Hq I S r w ((T & HT & HO & -> & -> & HCh & HK) & HokT) Hrun.
+  intros Hq HKr I S r w ((T & HT & HO & -> & -> & HCh & HK) & HokT) Hrun.
   destruct (reps_exist p q T K) as (F & HF & Hrep). destruct meas_default as (Mo & HMo).
   assert (Hnz : ∀ i x, x ∈ r i → x.2 ≠ weight_zero).
   { intros i. apply (run_weights (SchedSts0 := mdlts (M := lq_menu O) (menu T) (S_T T)) Stay (λ ρ, ρ ≠ weight_zero)
@@ -242,8 +242,8 @@ Theorem alt_free_obs_iff `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St
   (ctx_pre_sm_on Stay (obs_for p q) p q ↔ alt_free_obs p q).
 Proof.
   intros Hz. split; [|exact (alt_free_obs_sound DC p q Hz)].
-  intros Hc O Ch K. apply (malt_free_on_trunc (M := lq_menu O) _ _ DC); [by apply lq_MenuTrunc|].
-  apply (proj1 (alt_pre_obs_menu p q)). exact (proj2 (alt_pre_obs_iff Stay DC p q) Hc).
+  intros Hc O Ch K HKr. apply (malt_free_on_trunc (M := lq_menu O) _ _ DC); [by apply lq_MenuTrunc|].
+  apply (proj1 (alt_pre_obs_menu p q)); [exact (proj2 (alt_pre_obs_iff Stay DC p q) Hc)|exact HKr].
 Qed.
 
 End LqP.

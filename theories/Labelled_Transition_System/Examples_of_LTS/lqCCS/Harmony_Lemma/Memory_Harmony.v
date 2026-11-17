@@ -36,7 +36,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra pMust_almost_sure lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.

@@ -28,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list propset.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical pMust_cotrace.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Rec_Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Sound lqCCS.Testing.Co_Traces.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Rec_Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Sound lqCCS.Testing.Co_Traces.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -42,7 +42,7 @@ Proof.
   intros HT n. induction n as [|a n IH] using rev_ind; intros X Hin.
   - rewrite tnodes_nil in Hin. apply list_elem_of_singleton in Hin. subst. split; intros c Hc; exact Hc.
   - apply tnodes_app_elem in Hin as (X0 & HX0 & Hin). destruct (IH X0 HX0) as [Ho Hi].
-    assert (Hst : ∃ s l, prog_step X0 s l X) by (destruct (co_succ_step _ _ _ Hin) as [Hp|[_ Hp]]; eauto).
+    assert (Hst : ∃ s l, X0 ⟶{l}[s] X) by (pose proof (co_succ_step _ _ _ Hin); eauto).
     destruct Hst as (s & l & Hp).
     destruct (prog_step_chans_sub_r X0 s l X (proj1 (tnodes_obsr T HT n X0 HX0)) Hp) as [Ho0 Hi0].
     split; intros c Hc; [exact (Ho c (Ho0 c Hc))|exact (Hi c (Hi0 c Hc))].
@@ -105,11 +105,11 @@ Proof.
   split; [unfold typed; symmetry; exact (kinds_r_tagged T _ _ (proj1 HT) Hk)|].
   destruct (rtagged_otags p q T _ _ HT Hk) as [Htp Htq]. split; [exact Htp|]. split; [exact Htq|].
   intros k c -> Hc1.
-  destruct Hm as (X & a & HX & Ha & Hne). destruct a as [|k' c' v| | |]; try discriminate Ha.
+  destruct Hm as (X & a & HX & Ha & Hne). destruct a as [|k' c' v| | | |]; try discriminate Ha.
   simpl in Ha. injection Ha as -> ->.
   destruct (co_succ X (CoIn k c v)) as [|X' l] eqn:E; [done|].
   assert (HX' : X' ∈ co_succ X (CoIn k c v)) by (rewrite E; by left).
-  destruct (co_succ_step _ _ _ HX') as [Hs|[HE0 _]]; [|discriminate HE0].
+  pose proof (co_succ_step _ _ _ HX') as Hs.
   pose proof (prog_step_in_chan_r X k c v X' (proj1 (tnodes_obsr T (proj1 (proj1 HT)) n X HX)) Hs) as Hc.
   exact (proj2 (proj1 (proj1 HT)) c Hc1 (proj2 (tnodes_chans_r T (proj1 (proj1 HT)) n X HX) c Hc)).
 Qed.

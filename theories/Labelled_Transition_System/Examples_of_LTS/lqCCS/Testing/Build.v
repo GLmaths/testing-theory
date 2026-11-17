@@ -30,7 +30,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -204,67 +204,72 @@ Section Build.
   Definition bguard (rec : node → proc) (n : node) (o : offer) : option guard :=
     match o with
     | OffOut _ _ _ => None
-    | OffIn k c => Some ((k ∶ c ?) ∙ chain VL (λ v, rec (n ++ [CoIn k c v])) (PG ①))
+    | OffIn k c => Some ((k ∶ c ?) ∙ chain VL (λ v, rec (n ++ [CoIn k c v])) (PG 𝟙))
     | OffOp k E qs => Some ((k ∶ E ⦅quote qs⦆) ∙ rec (n ++ [CoOp k E qs]))
     | OffMeas k M qs =>
         Some ((k ∶ M ⦅quote qs ▷⦆) ∙
-                chain VL (λ v, match v with VNat i => rec (n ++ [CoMeas k M qs i]) | _ => PG ① end) (PG ①))
-    | OffInit k qs => Some ((k ∶ init ⦅quote qs⦆) ∙ rec (n ++ [CoInit k qs]))
+                chain VL (λ v, match v with VNat i => rec (n ++ [CoMeas k M qs i]) | _ => PG 𝟙 end) (PG 𝟙))
+    | OffInit k q => Some ((k ∶ $q := |0⟩) ∙ rec (n ++ [CoInit k q]))
+    | OffUnfold _ => None
     end.
 
   Definition core (rec : node → proc) (n : node) : proc := PG (gsum (omap (bguard rec n) (cl n))).
 
   Fixpoint bt (f : nat) (prev : list msg) (n : node) : proc :=
-    if S n then PG ① else
+    if S n then PG 𝟙 else
     match f with
     | 0 => 𝟘
     | Datatypes.S f' => sends (fresh prev (O n)) ∥ core (bt f' (O n)) n
     end.
 
-  Lemma bguard_none rec n o a : (∀ k c v, a ≠ CoOut k c v) → bguard rec n o = None → offer_of a ≠ o.
-  Proof. intros Ha. destruct o; try done. intros _. destruct a; try done. by destruct (Ha k0 c0 v0). Qed.
+  Lemma bguard_none rec n o a : (∀ k c v, a ≠ CoOut k c v) → (∀ k, o ≠ OffUnfold k) → bguard rec n o = None →
+    offer_of a ≠ o.
+  Proof.
+    intros Ha Hu. destruct o; try done; intros _; [|by destruct (Hu k)]. destruct a; try done. by destruct (Ha k0 c0 v0).
+  Qed.
 
   Lemma bguard_spec rec n o a g : bguard rec n o = Some g →
     (offer_of a ≠ o ∧ gco_succ g a = [])
     ∨ (offer_of a = o ∧ ∃ Y W, gco_succ g a = [Y] ∧ tite W Y
-         ∧ (W = rec (n ++ [a]) ∨ (W = PG ① ∧ unlisted VL a))).
+         ∧ (W = rec (n ++ [a]) ∨ (W = PG 𝟙 ∧ unlisted VL a))).
   Proof.
-    destruct o as [k c v|k c|k E qs|k M qs|k qs]; simpl; intros Hg; try done; injection Hg as <-.
-    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 qs0]; simpl; try (left; by split).
+    destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl; intros Hg; try done; injection Hg as <-.
+    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 q0|k0]; simpl; try (left; by split).
       destruct (decide (k0 = k ∧ c0 = c)) as [[-> ->]|Hd]; [|left; split; [intros [= -> ->]; by apply Hd|done]].
       right. split; [done|].
-      destruct (chain_tite VL (λ v, rec (n ++ [CoIn k c v])) (PG ①) v0) as [[_ Ht]|[Hu Ht]].
+      destruct (chain_tite VL (λ v, rec (n ++ [CoIn k c v])) (PG 𝟙) v0) as [[_ Ht]|[Hu Ht]].
       + eexists _, _. split; [done|]. split; [exact Ht|by left].
       + eexists _, _. split; [done|]. split; [exact Ht|right; by split].
-    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 qs0]; simpl; try (left; by split).
+    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 q0|k0]; simpl; try (left; by split).
       rewrite eval_quote.
       destruct (decide (k0 = k ∧ E0 = E ∧ Some qs = Some qs0)) as [(-> & -> & [= ->])|Hd];
         [|left; split; [intros [= -> -> ->]; by apply Hd|done]].
       right. split; [done|]. eexists _, _. split; [done|]. split; [apply ti_refl|by left].
-    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 qs0]; simpl; try (left; by split).
+    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 q0|k0]; simpl; try (left; by split).
       rewrite eval_quote.
       destruct (decide (k0 = k ∧ M0 = M ∧ Some qs = Some qs0)) as [(-> & -> & [= ->])|Hd];
         [|left; split; [intros [= -> -> ->]; by apply Hd|done]].
       right. split; [done|].
-      destruct (chain_tite VL (λ v, match v with VNat i0 => rec (n ++ [CoMeas k M qs0 i0]) | _ => PG ① end)
-                  (PG ①) (VNat i)) as [[_ Ht]|[Hu Ht]].
+      destruct (chain_tite VL (λ v, match v with VNat i0 => rec (n ++ [CoMeas k M qs0 i0]) | _ => PG 𝟙 end)
+                  (PG 𝟙) (VNat i)) as [[_ Ht]|[Hu Ht]].
       + eexists _, _. split; [done|]. split; [exact Ht|by left].
       + eexists _, _. split; [done|]. split; [exact Ht|right; by split].
-    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 qs0]; simpl; try (left; by split).
-      rewrite eval_quote.
-      destruct (decide (k0 = k ∧ Some qs = Some qs0)) as [(-> & [= ->])|Hd];
+    - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 q0|k0]; simpl; try (left; by split).
+      change (eval_qubit $q) with (Some q).
+      destruct (decide (k0 = k ∧ Some q = Some q0)) as [(-> & [= ->])|Hd];
         [|left; split; [intros [= -> ->]; by apply Hd|done]].
       right. split; [done|]. eexists _, _. split; [done|]. split; [apply ti_refl|by left].
   Qed.
 
-  Lemma gs_step rec n a (l : list offer) : (∀ k c v, a ≠ CoOut k c v) → NoDup l →
+  Lemma gs_step rec n a (l : list offer) : (∀ k c v, a ≠ CoOut k c v) → (∀ k, OffUnfold k ∉ l) → NoDup l →
     (offer_of a ∉ l ∧ gco_succ (gsum (omap (bguard rec n) l)) a = [])
     ∨ (offer_of a ∈ l ∧ ∃ Y W, gco_succ (gsum (omap (bguard rec n) l)) a = [Y] ∧ tite W Y
-         ∧ (W = rec (n ++ [a]) ∨ (W = PG ① ∧ unlisted VL a))).
+         ∧ (W = rec (n ++ [a]) ∨ (W = PG 𝟙 ∧ unlisted VL a))).
   Proof.
-    intros Ha. induction l as [|o l IH]; intros Hnd.
+    intros Ha. induction l as [|o l IH]; intros Hu Hnd.
     - left. split; [by intros ?%elem_of_nil|done].
-    - apply NoDup_cons in Hnd as [Ho Hnd]. specialize (IH Hnd). rewrite omap_cons'.
+    - apply NoDup_cons in Hnd as [Ho Hnd].
+      specialize (IH (λ k Hk, Hu k (proj2 (elem_of_cons _ _ _) (or_intror Hk))) Hnd). rewrite omap_cons'.
       destruct (bguard rec n o) as [g|] eqn:Eg.
       + simpl. destruct (bguard_spec rec n o a g Eg) as [[Hne ->]|(<- & Y & W & -> & Ht & HW)].
         * simpl. destruct IH as [[Hn Hnil]|(Hin & Hex)].
@@ -272,7 +277,7 @@ Section Build.
           -- right. split; [by right|done].
         * destruct IH as [[Hn ->]|(Hin & _)]; [|by destruct Ho].
           right. split; [by left|]. exists Y, W. by split.
-      + pose proof (bguard_none rec n o a Ha Eg) as Hne. destruct IH as [[Hn Hnil]|(Hin & Hex)].
+      + pose proof (bguard_none rec n o a Ha (λ k E, Hu k (proj2 (elem_of_cons _ _ _) (or_introl (eq_sym E)))) Eg) as Hne. destruct IH as [[Hn Hnil]|(Hin & Hex)].
         * left. split; [|done]. intros [E|Hin]%elem_of_cons; [by apply Hne|by apply Hn].
         * right. split; [by right|done].
   Qed.
@@ -281,11 +286,12 @@ Section Build.
   Hypothesis Hfuel : ∀ n, S n = false → length n < f0.
   Hypothesis Hun : ∀ n a, unlisted VL a → S (n ++ [a]) = true.
   Hypothesis Hcl : ∀ n, NoDup (cl n).
+  Hypothesis Hclu : ∀ n k, OffUnfold k ∉ cl n.
   Hypothesis HOf : ∀ n x y, S n = false → x ∈ O n → y ∈ O n → mtag x = mtag y → x = y.
   Hypothesis HOm : ∀ n a x, S (n ++ [a]) = false → x ∈ O n → x ∈ O (n ++ [a]).
 
   Definition Wn (n : node) : proc :=
-    if S n then PG ① else core (bt (f0 - Datatypes.S (length n)) (O n)) n.
+    if S n then PG 𝟙 else core (bt (f0 - Datatypes.S (length n)) (O n)) n.
 
   Definition En (prev : list msg) (n : node) : list msg := if S n then [] else fresh prev (O n).
 
@@ -306,10 +312,10 @@ Section Build.
   Lemma Wn_step n a : (∀ k c v, a ≠ CoOut k c v) →
     (co_succ (Wn n) a = [] ∧ (S n = true ∨ offer_of a ∉ cl n))
     ∨ (S n = false ∧ offer_of a ∈ cl n ∧ ∃ Y W, co_succ (Wn n) a = [Y] ∧ tite W Y
-         ∧ (W = bt (f0 - Datatypes.S (length n)) (O n) (n ++ [a]) ∨ (W = PG ① ∧ unlisted VL a))).
+         ∧ (W = bt (f0 - Datatypes.S (length n)) (O n) (n ++ [a]) ∨ (W = PG 𝟙 ∧ unlisted VL a))).
   Proof.
     intros Ha. unfold Wn. destruct (S n) eqn:Es; [left; split; [done|by left]|]. unfold core. simpl.
-    destruct (gs_step (bt (f0 - Datatypes.S (length n)) (O n)) n a (cl n) Ha (Hcl n)) as [[Hn Hnil]|(Hin & Hex)].
+    destruct (gs_step (bt (f0 - Datatypes.S (length n)) (O n)) n a (cl n) Ha (Hclu n) (Hcl n)) as [[Hn Hnil]|(Hin & Hex)].
     - left. split; [done|by right].
     - right. by split.
   Qed.
@@ -594,7 +600,7 @@ Section Build.
     (∀ n', syn TG OC IC (rec n')) → o ∈ cl n → bguard rec n o = Some g → gsyn TG OC IC g.
   Proof.
     intros Hrec Hin Hg. destruct (Hcl_ok n o Hin) as [Ht Hc].
-    destruct o as [k c v|k c|k E qs|k M qs|k qs]; simpl in Hg; try done; injection Hg as <-.
+    destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl in Hg; try done; injection Hg as <-.
     - apply gsyn_pre; [done|exact Ht|intros k' c' [= -> ->]; by eapply Hc|].
       apply syn_chain; [intros v; apply Hrec|apply syn_succ].
     - apply gsyn_pre; [done|exact Ht|done|apply Hrec].

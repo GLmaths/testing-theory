@@ -28,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
 From TestingTheory Require Import lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
 
 #[local] Open Scope lqccs_scope.
@@ -50,13 +50,13 @@ Section Detau.
     | P ∥ Q => detau P ∥ detau Q
     | ν P => ν (detau P)
     | PVar X => PVar X
-    | t ∶ rec X ∙ P => t ∶ rec X ∙ detau P
+    | t ∶ rec ∙ P => t ∶ rec ∙ detau P
     | PG g => PG (gdetau g)
     end
   with gdetau (g : guard) : guard :=
     match g with
-    | GNil es => GNil es
-    | ① => ①
+    | 𝟘{es} => 𝟘{es}
+    | 𝟙 => 𝟙
     | 𝜆 ∙ P => pdetau 𝜆 ∙ detau P
     | (g1 + g2)%lq => (gdetau g1 + gdetau g2)%lq
     end.
@@ -77,7 +77,7 @@ Section Detau.
   Proof. by destruct 𝜆. Qed.
 
   Lemma detau_subst :
-    (∀ P k v, detau (subst k v P) = subst k v (detau P))
+    (∀ P k v, detau (P ⁅ v // k ⁆ᵥ) = (detau P) ⁅ v // k ⁆ᵥ)
     ∧ (∀ g k v, gdetau (gsubst k v g) = gsubst k v (gdetau g)).
   Proof.
     apply proc_guard_ind; simpl; intros; try congruence.
@@ -92,7 +92,7 @@ Section Detau.
     rewrite pdetau_shift, pdetau_binds. congruence.
   Qed.
 
-  Lemma detau_shiftv_iter n Q : detau (Nat.iter n (shiftv 0) Q) = Nat.iter n (shiftv 0) (detau Q).
+  Lemma detau_shiftv_iter n Q : detau (Nat.iter n ⇧ᵥ Q) = Nat.iter n ⇧ᵥ (detau Q).
   Proof. induction n; simpl; [done|]. by rewrite (proj1 detau_shiftv), IHn. Qed.
 
   Lemma detau_ren :
@@ -109,19 +109,23 @@ Section Detau.
     rewrite pdetau_tren. congruence.
   Qed.
 
-  Lemma detau_pr_subst X :
-    (∀ P Q, detau (P ⦃ Q // X ⦄) = (detau P) ⦃ detau Q // X ⦄)
-    ∧ (∀ g Q, gdetau (gpr_subst X g Q) = gpr_subst X (gdetau g) (detau Q)).
+  Lemma detau_rshift :
+    (∀ P k, detau (rshift k P) = rshift k (detau P)) ∧ (∀ g k, gdetau (grshift k g) = grshift k (gdetau g)).
+  Proof. apply proc_guard_ind; simpl; intros; try congruence. by case_decide. Qed.
+
+  Lemma detau_pr_subst :
+    (∀ P k Q, detau (P ⁅ Q // k ⁆ₚ) = (detau P) ⁅ detau Q // k ⁆ₚ)
+    ∧ (∀ g k Q, gdetau (gpr_subst k g Q) = gpr_subst k (gdetau g) (detau Q)).
   Proof.
     apply proc_guard_ind; simpl; intros; try congruence.
     - f_equal. rewrite H. f_equal. apply (proj1 detau_ren).
-    - by case_decide.
-    - case_decide; simpl; congruence.
+    - by repeat case_decide.
+    - by rewrite H, (proj1 detau_rshift).
     - rewrite H, pdetau_binds, detau_shiftv_iter. done.
   Qed.
 
   Definition lrel (l l' : Labels prog_action) : Prop :=
-    l' = l ∨ (l = τ ∧ l' = ActExt (PrOp E [])).
+    l' = l ∨ (l = τ ∧ l' = E ⦅[]⦆).
 
   Lemma lrel_ext a l' : lrel (ActExt a) l' → l' = ActExt a.
   Proof. by intros [->|[? _]]. Qed.
@@ -129,7 +133,7 @@ Section Detau.
   Lemma detau_gstep g s l P' : g ⟶ᵍ{l}[s] P' → ∃ l', gdetau g ⟶ᵍ{l'}[s] detau P' ∧ lrel l l'.
   Proof.
     induction 1 as [t P | t c v P | t E0 es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH]; simpl.
-    - exists (ActExt (PrOp E [])). split; [by apply pg_op|by right].
+    - exists (E ⦅[]⦆). split; [by apply pg_op|by right].
     - exists (c ? v). split; [|by left]. rewrite (proj1 detau_subst). constructor.
     - exists (E0 ⦅qs⦆). split; [by constructor|by left].
     - exists (M ⦅qs⦆? n). split; [|by left]. rewrite (proj1 detau_subst). by constructor.
@@ -140,7 +144,7 @@ Section Detau.
 
   Lemma detau_step P s l P' : P ⟶{l}[s] P' → ∃ l', detau P ⟶{l'}[s] detau P' ∧ lrel l l'.
   Proof.
-    induction 1 as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH | P Q s l P' Hp IH | P Q s l Q' Hp IH | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P s l P' Hp IH | t X P]; simpl.
+    induction 1 as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH | P Q s l P' Hp IH | P Q s l Q' Hp IH | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P s l P' Hp IH | t P]; simpl.
     - destruct (detau_gstep _ _ _ _ Hg) as (l' & Hs & Hl). exists l'. split; [by apply pr_guard|done].
     - exists (c ! v). split; [by constructor|by left].
     - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pr_iteT|done].
@@ -154,9 +158,9 @@ Section Detau.
     - destruct IH as (l' & Hs & [->|[El ->]]).
       + exists l. split; [by apply pr_res|by left].
       + destruct l as [a|]; [destruct a; discriminate El|].
-        exists (ActExt (PrOp E [])). split; [by apply pr_res|by right].
-    - exists τ. split; [|by left]. rewrite (proj1 (detau_pr_subst X)). simpl.
-      rewrite (proj1 detau_tren). exact (pr_rec t X (detau P)).
+        exists (E ⦅[]⦆). split; [by apply pr_res|by right].
+    - exists τ. split; [|by left]. rewrite (proj1 detau_pr_subst). simpl.
+      rewrite (proj1 detau_tren). exact (pr_rec t (detau P)).
   Qed.
   Lemma lrel_chan l a : lrel l (ActExt a) → (∀ qs, a ≠ PrOp E qs) → l = ActExt a.
   Proof. intros [->|[_ E1]] Ha; [done|]. injection E1 as ->. by destruct (Ha []). Qed.
@@ -192,20 +196,20 @@ Section Detau.
       + destruct l' as [[c v|c v|E0 qs|M qs n|qs]|]; simpl in El; try discriminate El.
         injection El as -> ->. exists τ, (ν P1). split; [by apply pr_res|]. split; [done|by right].
     - intros X0 s l' X Hs. inversion Hs.
-    - intros t X P IHP s l' Y Hs. inversion Hs; subst. exists τ, (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄).
+    - intros t P IHP s l' Y Hs. inversion Hs; subst. exists τ, (P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ).
       split; [constructor|]. split; [|by left].
-      rewrite (proj1 (detau_pr_subst X)). simpl. by rewrite (proj1 detau_tren).
+      rewrite (proj1 detau_pr_subst). simpl. by rewrite (proj1 detau_tren).
     - intros g IHg s l' X Hs%prog_step_guard. destruct (IHg s l' X Hs) as (l & P' & Hs' & -> & Hl).
       exists l, P'. split; [by apply pr_guard|done].
     - intros es s l' X Hs. inversion Hs.
     - intros s l' X Hs. inversion Hs.
-    - intros 𝜆 P IHP s l' X Hs. destruct 𝜆 as [t|t c|t E0 es|t M es|t es]; simpl in Hs; inversion Hs; subst.
+    - intros 𝜆 P IHP s l' X Hs. destruct 𝜆 as [t|t c|t E0 es|t M es|t e]; simpl in Hs; inversion Hs; subst.
       + match goal with Hq : eval_qubits [] = Some ?qs |- _ => change (Some (@nil qubit) = Some qs) in Hq; injection Hq as <- end.
         exists τ, P. split; [constructor|]. split; [done|by right].
-      + exists (c ? v), (P ⁅ v ⁆). split; [constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
+      + exists (c ? v), (P ⁅ v ⁆ᵥ). split; [constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
       + exists (E0 ⦅qs⦆), P. split; [by constructor|]. split; [done|by left].
-      + exists (M ⦅qs⦆? n), (P ⁅ VNat n ⁆). split; [by constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
-      + exists (init ⦅qs⦆), P. split; [by constructor|]. split; [done|by left].
+      + exists (M ⦅qs⦆? n), (P ⁅ VNat n ⁆ᵥ). split; [by constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
+      + eexists _, P. split; [by constructor|]. split; [done|by left].
     - intros g1 IH1 g2 IH2 s l' X Hs. inversion Hs; subst.
       + match goal with Hp : gdetau g1 ⟶ᵍ{_}[_] _ |- _ => destruct (IH1 _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
         exists l, P1. split; [by apply pg_sumL|done].
@@ -250,16 +254,16 @@ Section Sched_Detau.
   Proof. apply lrel_chan. Qed.
 
   Lemma meas_fwd R s M qs (ks : list (Out (meas_of M qs))) Rs :
-    Forall2 (λ k R', prog_step R s (ActExt (PrMeas M qs (code _ k))) R') ks Rs →
-    Forall2 (λ k R', prog_step (detau E R) s (ActExt (PrMeas M qs (code _ k))) R') ks (map (detau E) Rs).
+    Forall2 (λ k R', R ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks Rs →
+    Forall2 (λ k R', (detau E R) ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks (map (detau E) Rs).
   Proof.
     induction 1 as [|k R' ks Rs Hp _ IH]; simpl; constructor; [|done].
     destruct (detau_step E _ _ _ _ Hp) as (l' & Hs & ->%lrel_ext). done.
   Qed.
 
   Lemma meas_bwd R s M qs (ks : list (Out (meas_of M qs))) Rs' :
-    Forall2 (λ k R', prog_step (detau E R) s (ActExt (PrMeas M qs (code _ k))) R') ks Rs' →
-    ∃ Rs, Forall2 (λ k R', prog_step R s (ActExt (PrMeas M qs (code _ k))) R') ks Rs ∧ map (detau E) Rs = Rs'.
+    Forall2 (λ k R', (detau E R) ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks Rs' →
+    ∃ Rs, Forall2 (λ k R', R ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks Rs ∧ map (detau E) Rs = Rs'.
   Proof.
     induction 1 as [|k R'' ks Rs' Hp _ (Rs & HF & <-)]; [by exists []|].
     destruct (proj1 (detau_step_inv E) _ _ _ _ Hp) as (l & P' & Hs & -> & Hl).

@@ -28,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -101,7 +101,7 @@ Section Trace.
   Qed.
 
   Definition alt_trace : Prop :=
-    ∀ O S Ch K r w, coherent O S Ch K r w → computation O S r w →
+    ∀ O S Ch K r w, (∀ k, K k ≠ KRec) → coherent O S Ch K r w → computation O S r w →
       ∃ r', is_run (SchedSts0 := trace_sts O S Ch K r w) Stay (dinit p) r'
           ∧ run_le (SchedSts0 := trace_sts O S Ch K r w) r' r.
 End Trace.

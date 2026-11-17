@@ -27,7 +27,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -44,7 +44,7 @@ Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2].
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
-  - destruct 𝜆 as [t|t c|t E es|t M es|t es].
+  - destruct 𝜆 as [t|t c|t E es|t M es|t e].
     + apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). simpl in Hne. by destruct a.
     + apply (fin_mono _ (λ o, o = OffIn t c)); [|apply fin_eq].
       intros o (a & <- & Hne). simpl in Hne. destruct a; try done. case_decide as Hd; [|done].
@@ -59,10 +59,10 @@ Proof.
         destruct Hd as (-> & -> & Hq). eexists. split; [exact Hq|done].
       * apply (fin_img (λ qs, OffMeas t M qs) (λ qs, eval_qubits es = Some qs)).
         apply fin_uniq. intros x y Hx Hy. congruence.
-    + apply (fin_mono _ (λ o, ∃ qs, eval_qubits es = Some qs ∧ o = OffInit t qs)).
+    + apply (fin_mono _ (λ o, ∃ q, eval_qubit e = Some q ∧ o = OffInit t q)).
       * intros o (a & <- & Hne). simpl in Hne. destruct a; try done. case_decide as Hd; [|done].
         destruct Hd as (-> & Hq). eexists. split; [exact Hq|done].
-      * apply (fin_img (λ qs, OffInit t qs) (λ qs, eval_qubits es = Some qs)).
+      * apply (fin_img (λ q, OffInit t q) (λ q, eval_qubit e = Some q)).
         apply fin_uniq. intros x y Hx Hy. congruence.
   - apply (fin_mono _ (λ o, goffs g1 o ∨ goffs g2 o)); [|apply fin_or; [exact IH1|exact IH2]].
     intros o (a & Ea & Hne). simpl in Hne. destruct (gco_succ g1 a) as [|x l] eqn:E1.
@@ -72,7 +72,7 @@ Qed.
 
 Lemma offs_fin T : fin (offs T).
 Proof.
-  induction T as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|X|t X P IHP|g].
+  induction T as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|X|t P IHP|g].
   - apply (fin_mono _ (λ o, ∃ v, 〚 e 〛 = v ∧ o = OffOut t c v)).
     + intros o (a & <- & Hne). simpl in Hne. destruct a; try done. case_decide as Hd; [|done].
       destruct Hd as (-> & -> & Hv). eexists. split; [exact Hv|done].
@@ -86,8 +86,8 @@ Proof.
     + left. exists a. split; [done|]. by rewrite E1.
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
-  - apply (fin_mono _ (λ o, o ∈ [OffInit t []])); [|apply fin_elem]. intros o (a & <- & Hne). simpl in Hne.
-    destruct a; try done. case_decide as Hd; [|done]. destruct Hd as (-> & ->). by left.
+  - apply (fin_mono _ (λ o, o = OffUnfold t)); [|apply fin_eq]. intros o (a & <- & Hne). simpl in Hne.
+    destruct a; try done. case_decide as Hd; [|done]. by subst.
   - exact (goffs_fin g).
 Qed.
 
@@ -101,7 +101,8 @@ Qed.
 Definition alike (o o' : offer) : Prop :=
   match o, o' with
   | OffIn _ c, OffIn _ c' => c = c'
-  | OffOp _ _ _, OffOp _ _ _ | OffInit _ _, OffInit _ _ | OffMeas _ _ _, OffMeas _ _ _ => True
+  | OffOp _ _ _, OffOp _ _ _ | OffInit _ _, OffInit _ _ | OffMeas _ _ _, OffMeas _ _ _
+  | OffUnfold _, OffUnfold _ => True
   | _, _ => False
   end.
 
@@ -112,11 +113,12 @@ Lemma cstep_off_cell `{QM : QuantumModel} J O ρ c k t Δ :
   cstep J O ρ c (IOff k t) Δ →
   ∃ o, J c.1 o ∧ off_tag o = k ∧ alike o o ∧ cstep (single c.1 o) O ρ c (IOff k t) Δ.
 Proof.
-  intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' E' qs t' HI|n P C k' qs t' HI|n P C k' M qs t' HI]; subst; simpl.
+  intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' E' qs t' HI|n P C k' q t' HI|n P C k' M qs t' HI|n P C k' t' HI]; subst; simpl.
   - exists (OffIn k d). split; [done|]. split; [done|]. split; [done|]. apply cs_in; [by split|done].
   - exists (OffOp k E' qs). split; [done|]. split; [done|]. split; [done|]. apply cs_op. by split.
-  - exists (OffInit k qs). split; [done|]. split; [done|]. split; [done|]. apply cs_init. by split.
+  - exists (OffInit k q). split; [done|]. split; [done|]. split; [done|]. apply cs_init. by split.
   - exists (OffMeas k M qs). split; [done|]. split; [done|]. split; [done|]. apply cs_meas. by split.
+  - exists (OffUnfold k). split; [done|]. split; [done|]. split; [done|]. apply cs_unfold. by split.
 Qed.
 
 Lemma single_swap `{QM : QuantumModel} O n o o' ρ c σ Δ :
@@ -125,17 +127,19 @@ Lemma single_swap `{QM : QuantumModel} O n o o' ρ c σ Δ :
 Proof.
   intros Hal Hs.
   apply cstep_cases in Hs. inversion Hs as [n0 P C s Δ0 Hss|n0 P C k d v t P' HE HkC Hp|n0 P C k d v t P' HI Hp
-                  |n0 P C k E' qs t HI|n0 P C k qs t HI|n0 P C k M qs t HI]; subst.
+                  |n0 P C k E' qs t HI|n0 P C k q t HI|n0 P C k M qs t HI|n0 P C k t HI]; subst.
   - eexists (ICh s), _. split; [by constructor|done].
-  - eexists (ICh (cpair t k)), _. split; [by econstructor|done].
-  - destruct HI as [-> <-]. destruct o as [|k0 d0| | |]; simpl in Hal; try done. subst d0.
+  - eexists (ICh ⦗t, k⦘), _. split; [by econstructor|done].
+  - destruct HI as [-> <-]. destruct o as [|k0 d0| | | |]; simpl in Hal; try done. subst d0.
     eexists (IOff k0 t), _. split; [apply cs_in; [by split|exact Hp]|]. simpl. by intros ->.
-  - destruct HI as [-> <-]. destruct o as [| |k0 E0 qs0| |]; simpl in Hal; try done.
+  - destruct HI as [-> <-]. destruct o as [| |k0 E0 qs0| | |]; simpl in Hal; try done.
     eexists (IOff k0 t), _. split; [apply cs_op; by split|]. simpl. by intros ->.
-  - destruct HI as [-> <-]. destruct o as [| | | |k0 qs0]; simpl in Hal; try done.
+  - destruct HI as [-> <-]. destruct o as [| | | |k0 q0|]; simpl in Hal; try done.
     eexists (IOff k0 t), _. split; [apply cs_init; by split|]. simpl. by intros ->.
-  - destruct HI as [-> <-]. destruct o as [| | |k0 M0 qs0|]; simpl in Hal; try done.
+  - destruct HI as [-> <-]. destruct o as [| | |k0 M0 qs0| |]; simpl in Hal; try done.
     eexists (IOff k0 t), _. split; [apply cs_meas; by split|]. simpl. by intros ->.
+  - destruct HI as [-> <-]. destruct o as [| | | | |k0]; simpl in Hal; try done.
+    eexists (IOff k0 t), _. split; [apply cs_unfold; by split|]. simpl. by intros ->.
 Qed.
 
 Section Trunc.
@@ -153,7 +157,8 @@ Section Trunc.
     | OffIn _ c => OffIn k c
     | OffOp _ _ _ => OffOp k 0 []
     | OffMeas _ M _ => OffMeas k (default M Mo) []
-    | OffInit _ _ => OffInit k []
+    | OffInit _ _ => OffInit k 0
+    | OffUnfold _ => OffUnfold k
     end.
 
   Definition canon (o : offer) : Prop :=
@@ -162,7 +167,8 @@ Section Trunc.
     | OffIn _ _ => True
     | OffOp _ E qs => E = 0 ∧ qs = []
     | OffMeas _ M qs => Mo = Some M ∧ qs = []
-    | OffInit _ qs => qs = []
+    | OffInit _ q => q = 0
+    | OffUnfold _ => True
     end.
 
   Definition J0 (n : node) (o : offer) : Prop := menu T n o ∨ (Js n o ∧ off_tag o ∈ F ∧ canon o).
@@ -179,7 +185,7 @@ Section Trunc.
   Hypothesis HMo : ∀ M : meas, ∃ M0, Mo = Some M0.
 
   Lemma canon_retag k o : alike o o → canon (retag k o).
-  Proof. destruct o as [| | |k' M qs|]; simpl; try done. intros _. destruct (HMo M) as (M0 & ->). done. Qed.
+  Proof. destruct o as [| | |k' M qs| |]; simpl; try done. intros _. destruct (HMo M) as (M0 & ->). done. Qed.
 
   Hypothesis HT : obs_for p q T.
   Hypothesis Hrun : run_word (M := lq_menu O) (menu T) Sx (dinit q) r w.
@@ -239,7 +245,7 @@ Section Trunc.
     intros [HU|[Hok Hnr]] HnU Hal HK Hp Hq Ht; [done|]. right. split.
     - destruct Hok as (Hty & _ & _ & Hch). split; [|split; [done|split; [done|]]].
       + unfold typed in *. rewrite HK, <- Hty. symmetry. exact (alike_kind o o' Hal).
-      + intros k c ->. destruct o as [|k0 c0| | |]; simpl in Hal; try done. subst c0. exact (Hch k0 c eq_refl).
+      + intros k c ->. destruct o as [|k0 c0| | | |]; simpl in Hal; try done. subst c0. exact (Hch k0 c eq_refl).
     - intros Hr. apply Hnr. exact (refused_swap n o o' Hal Ht Hr).
   Qed.
 
@@ -302,16 +308,17 @@ Section Trunc.
   Lemma J0_fin_cells n : fin (λ o, J0 n o ∧ ∀ k c, o ≠ OffIn k c).
   Proof.
     apply (fin_mono _ (λ o, menu T n o
-      ∨ ∃ k, k ∈ F ∧ (o = OffOp k 0 [] ∨ o = OffInit k [] ∨ ∃ M, Mo = Some M ∧ o = OffMeas k M []))).
+      ∨ ∃ k, k ∈ F ∧ (o = OffOp k 0 [] ∨ o = OffInit k 0 ∨ o = OffUnfold k ∨ ∃ M, Mo = Some M ∧ o = OffMeas k M []))).
     - intros o [[HM|(_ & HkF & Hc)] Hni]; [by left|right]. exists (off_tag o). split; [done|].
-      destruct o as [k c v|k c|k E qs|k M qs|k qs]; simpl in *.
+      destruct o as [k c v|k c|k E qs|k M qs|k q0|k]; simpl in *.
       + done.
       + by destruct (Hni k c).
       + destruct Hc as [-> ->]. by left.
-      + destruct Hc as [HM ->]. right. right. by exists M.
+      + destruct Hc as [HM ->]. right. right. right. by exists M.
       + subst. right. by left.
+      + right. right. by left.
     - apply fin_or; [apply menu_fin|]. apply (fin_bind _ _ (fin_elem F)). intros k _.
-      apply fin_or; [apply fin_eq|]. apply fin_or; [apply fin_eq|].
+      apply fin_or; [apply fin_eq|]. apply fin_or; [apply fin_eq|]. apply fin_or; [apply fin_eq|].
       apply (fin_img (λ M, OffMeas k M []) (λ M, Mo = Some M)). apply fin_uniq. intros x y Hx Hy. congruence.
   Qed.
 

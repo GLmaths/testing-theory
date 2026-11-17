@@ -57,7 +57,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -72,28 +72,31 @@ Inductive offer : Type :=
 | OffIn (k : tag) (c : channel)
 | OffOp (k : tag) (E : sop) (qs : list qubit)
 | OffMeas (k : tag) (M : meas) (qs : list qubit)
-| OffInit (k : tag) (qs : list qubit).
+| OffInit (k : tag) (q : qubit)
+| OffUnfold (k : tag).
 
 Inductive coact : Type :=
 | CoOut (k : tag) (c : channel) (v : val)
 | CoIn (k : tag) (c : channel) (v : val)
 | CoOp (k : tag) (E : sop) (qs : list qubit)
 | CoMeas (k : tag) (M : meas) (qs : list qubit) (n : nat)
-| CoInit (k : tag) (qs : list qubit).
+| CoInit (k : tag) (q : qubit)
+| CoUnfold (k : tag).
 
 Definition co_tag (a : coact) : tag :=
   match a with
-  | CoOut k _ _ | CoIn k _ _ | CoOp k _ _ | CoMeas k _ _ _ | CoInit k _ => k
+  | CoOut k _ _ | CoIn k _ _ | CoOp k _ _ | CoMeas k _ _ _ | CoInit k _ | CoUnfold k => k
   end.
 
-(* The action of the observer: it outputs what the program inputs. *)
-Definition co_act (a : coact) : prog_action :=
+(* The action of the observer: it outputs what the program inputs; unfolding is silent. *)
+Definition co_act (a : coact) : Labels prog_action :=
   match a with
-  | CoOut _ c v => PrOut c v
-  | CoIn _ c v => PrIn c v
-  | CoOp _ E qs => PrOp E qs
-  | CoMeas _ M qs n => PrMeas M qs n
-  | CoInit _ qs => PrInit qs
+  | CoOut _ c v => c ! v
+  | CoIn _ c v => c ? v
+  | CoOp _ E qs => E ⦅qs⦆
+  | CoMeas _ M qs n => M ⦅qs⦆? n
+  | CoInit _ q => init ⦅q⦆
+  | CoUnfold _ => τ
   end.
 
 Definition node : Type := list coact.
@@ -129,20 +132,21 @@ Section Dist.
 
   Definition off_tag (o : offer) : tag :=
     match o with
-    | OffOut k _ _ | OffIn k _ | OffOp k _ _ | OffMeas k _ _ | OffInit k _ => k
+    | OffOut k _ _ | OffIn k _ | OffOp k _ _ | OffMeas k _ _ | OffInit k _ | OffUnfold k => k
     end.
 
   Definition co_of (o : offer) (l : Labels prog_action + mem_action) : coact :=
     match o with
     | OffOut k c v => CoOut k c v
-    | OffIn k c => CoIn k c (match l with inl (ActExt (PrOut _ v)) => v | _ => VNat 0 end)
+    | OffIn k c => CoIn k c (match l with inl (_ ! v) => v | _ => VNat 0 end)
     | OffOp k E qs => CoOp k E qs
-    | OffMeas k M qs => CoMeas k M qs (match l with inr (MeMeas _ _ n) => n | _ => 0 end)
-    | OffInit k qs => CoInit k qs
+    | OffMeas k M qs => CoMeas k M qs (match l with inr (_ ⦅_⦆! n) => n | _ => 0 end)
+    | OffInit k q => CoInit k q
+    | OffUnfold k => CoUnfold k
     end.
 
   Definition answers (o : offer) (l : Labels prog_action + mem_action) : Prop :=
-    blocking_offer o ∧ dual l (co_act (co_of o l)).
+    blocking_offer o ∧ match co_act (co_of o l) with ActExt a => dual l a | τ => False end.
 
   Definition by_tag (s : choice) (t : tag) : Prop := s = CEps ∨ s = CTag t.
 
@@ -152,15 +156,18 @@ Section Dist.
       cstep ρ (n, (P, C)) (ICh s) (map (λ Pρ, ((n, (Pρ.1, C)), Pρ.2)) Δ)
   | cs_recv n P C k c v t P' :
       (k, c, v) ∈ O n → k ∉ (λ m : msg, m.1.1) <$> C →
-      prog_step P (CTag t) (ActExt (PrIn c v)) P' →
-      cstep ρ (n, (P, C)) (ICh (cpair t k)) [((n, (P', C ++ [(k, c, v)])), ρ)]
+      P ⟶{c ? v}[(CTag t)] P' →
+      cstep ρ (n, (P, C)) (ICh ⦗t, k⦘) [((n, (P', C ++ [(k, c, v)])), ρ)]
   | cs_dual n P C o l t s Λ :
       I n o → vis_step ρ P s l Λ → by_tag s t → answers o l →
       cstep ρ (n, (P, C)) (IOff (off_tag o) t)
-        (map (λ x, ((n ++ [co_of o x.1], (x.2.1, C)), x.2.2)) Λ).
+        (map (λ x, ((n ++ [co_of o x.1], (x.2.1, C)), x.2.2)) Λ)
+  | cs_unfold n P C k t :
+      I n (OffUnfold k) →
+      cstep ρ (n, (P, C)) (IOff k t) [((n ++ [CoUnfold k], (P, C)), ρ)].
 
   Lemma cs_in ρ n P C k c v t P' :
-    I n (OffIn k c) → prog_step P (CTag t) (ActExt (PrOut c v)) P' →
+    I n (OffIn k c) → P ⟶{c ! v}[(CTag t)] P' →
     cstep ρ (n, (P, C)) (IOff k t)
       [((n ++ [CoIn k c v], (P', C)), ρ)].
   Proof.
@@ -184,14 +191,14 @@ Section Dist.
     - split; [done|]. apply sync_sys_mem. constructor.
   Qed.
 
-  Lemma cs_init ρ n P C k qs t :
-    I n (OffInit k qs) →
+  Lemma cs_init ρ n P C k q t :
+    I n (OffInit k q) →
     cstep ρ (n, (P, C)) (IOff k t)
-      [((n ++ [CoInit k qs], (P, C)), init_apply qs ρ)].
+      [((n ++ [CoInit k q], (P, C)), init_apply q ρ)].
   Proof.
     intros HI.
-    apply (cs_dual ρ n P C (OffInit k qs) (inr (MeSop (init_act qs))) t CEps
-             [(inr (MeSop (init_act qs)), (P, init_apply qs ρ))] HI).
+    apply (cs_dual ρ n P C (OffInit k q) (inr (MeSop (init_act q))) t CEps
+             [(inr (MeSop (init_act q)), (P, init_apply q ρ))] HI).
     - apply vs_sop.
     - by left.
     - split; [done|]. apply sync_sys_mem. constructor.
@@ -201,11 +208,11 @@ Section Dist.
     I n (OffMeas k M qs) →
     cstep ρ (n, (P, C)) (IOff k t)
       (map (λ k', ((n ++ [CoMeas k M qs (code _ k')], (P, C)),
-                   meas_branch M qs k' ρ))
+                   M ⦅qs⦆[k'] · ρ))
          (outs_nz M qs ρ)).
   Proof.
     intros HI.
-    pose proof (cs_dual ρ n P C (OffMeas k M qs) (inr (MeMeas M qs 0)) t CEps _ HI
+    pose proof (cs_dual ρ n P C (OffMeas k M qs) (inr (M ⦅qs⦆! 0)) t CEps _ HI
                   (vs_meas ρ P M qs)) as Hd.
     rewrite map_map in Hd. apply Hd.
     - by left.
@@ -218,49 +225,53 @@ Section Dist.
       cstep_view ρ (n, (P, C)) (ICh s) (map (λ Pρ, ((n, (Pρ.1, C)), Pρ.2)) Δ)
   | cv_recv n P C k c v t P' :
       (k, c, v) ∈ O n → k ∉ (λ m : msg, m.1.1) <$> C →
-      prog_step P (CTag t) (ActExt (PrIn c v)) P' →
-      cstep_view ρ (n, (P, C)) (ICh (cpair t k)) [((n, (P', C ++ [(k, c, v)])), ρ)]
+      P ⟶{c ? v}[(CTag t)] P' →
+      cstep_view ρ (n, (P, C)) (ICh ⦗t, k⦘) [((n, (P', C ++ [(k, c, v)])), ρ)]
   | cv_in n P C k c v t P' :
-      I n (OffIn k c) → prog_step P (CTag t) (ActExt (PrOut c v)) P' →
+      I n (OffIn k c) → P ⟶{c ! v}[(CTag t)] P' →
       cstep_view ρ (n, (P, C)) (IOff k t)
         [((n ++ [CoIn k c v], (P', C)), ρ)]
   | cv_op n P C k E' qs t :
       I n (OffOp k E' qs) →
       cstep_view ρ (n, (P, C)) (IOff k t)
         [((n ++ [CoOp k E' qs], (P, C)), sop_apply E' qs ρ)]
-  | cv_init n P C k qs t :
-      I n (OffInit k qs) →
+  | cv_init n P C k q t :
+      I n (OffInit k q) →
       cstep_view ρ (n, (P, C)) (IOff k t)
-        [((n ++ [CoInit k qs], (P, C)), init_apply qs ρ)]
+        [((n ++ [CoInit k q], (P, C)), init_apply q ρ)]
   | cv_meas n P C k M qs t :
       I n (OffMeas k M qs) →
       cstep_view ρ (n, (P, C)) (IOff k t)
         (map (λ k', ((n ++ [CoMeas k M qs (code _ k')], (P, C)),
-                     meas_branch M qs k' ρ))
-           (outs_nz M qs ρ)).
+                     M ⦅qs⦆[k'] · ρ))
+           (outs_nz M qs ρ))
+  | cv_unfold n P C k t :
+      I n (OffUnfold k) →
+      cstep_view ρ (n, (P, C)) (IOff k t) [((n ++ [CoUnfold k], (P, C)), ρ)].
 
   Lemma cstep_cases ρ c it Δ : cstep ρ c it Δ → cstep_view ρ c it Δ.
   Proof.
-    intros Hc. destruct Hc as [n P C s Δ Hs|n P C k c v t P' HE HC Hp|n P C o l t s Λ HI Hv Ht [Hb Hd]].
+    intros Hc. destruct Hc as [n P C s Δ Hs|n P C k c v t P' HE HC Hp|n P C o l t s Λ HI Hv Ht [Hb Hd]|n P C k t HI].
     - by apply cv_ch.
     - by apply cv_recv.
     - destruct Hv as [t0 a P' Hp|ℰ|M qs].
       + destruct Ht as [Ht|Ht]; [done|]. injection Ht as ->.
-        destruct o as [k c v|k c|k E' qs|k M qs|k qs]; simpl in *; try done.
+        destruct o as [k c v|k c|k E' qs|k M qs|k q|k]; simpl in *; try done.
         * inversion Hd as [|? ? Hsc]; subst. destruct a; inversion Hsc; subst. by apply cv_in.
         * inversion Hd as [|? ? Hsc]; subst. inversion Hsc.
         * inversion Hd as [|? ? Hsc]; subst. inversion Hsc.
         * inversion Hd as [|? ? Hsc]; subst. inversion Hsc.
-      + destruct o as [k c v|k c|k E' qs|k M qs|k qs]; simpl in *; try done.
+      + destruct o as [k c v|k c|k E' qs|k M qs|k q|k]; simpl in *; try done.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy; subst. by apply cv_op.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy; subst. by apply cv_init.
-      + destruct o as [k c v|k c|k E' qs'|k M' qs'|k qs']; simpl in *; try done.
+      + destruct o as [k c v|k c|k E' qs'|k M' qs'|k q'|k]; simpl in *; try done.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy; subst. rewrite map_map. simpl. by apply cv_meas.
         * inversion Hd as [? ? Hsy|]; subst. inversion Hsy.
+    - by apply cv_unfold.
   Qed.
 
   #[global] Instance dlts : SchedSts comp item :=
@@ -269,7 +280,7 @@ Section Dist.
   Lemma cstep_nonzero ρ c it Θ :
     ρ ≠ szero → cstep ρ c it Θ → ∀ x, x ∈ Θ → x.2 ≠ szero.
   Proof.
-    intros Hρ Hc x Hx. apply cstep_cases in Hc. inversion Hc as [? ? ? s Δ Hs| | | | |? ? ? k M qs t HI]; subst.
+    intros Hρ Hc x Hx. apply cstep_cases in Hc. inversion Hc as [? ? ? s Δ Hs| | | | |? ? ? k M qs t HI|]; subst.
     - apply list_elem_of_fmap in Hx as (Pρ & -> & HPρ). destruct Pρ as [P' ρ'].
       exact (sched_step_nonzero ρ _ _ _ Hρ Hs P' ρ' HPρ).
     - apply list_elem_of_singleton in Hx. by subst x.
@@ -277,6 +288,7 @@ Section Dist.
     - apply list_elem_of_singleton in Hx. subst x. by apply sop_apply_nonzero.
     - apply list_elem_of_singleton in Hx. subst x. by apply init_apply_nonzero.
     - apply list_elem_of_fmap in Hx as (k' & -> & Hk'). by apply outs_nz_spec in Hk'.
+    - apply list_elem_of_singleton in Hx. by subst x.
   Qed.
 
   (* The initial distribution: one component at the empty node, nothing consumed. *)

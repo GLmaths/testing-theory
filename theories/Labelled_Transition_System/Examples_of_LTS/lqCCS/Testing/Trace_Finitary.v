@@ -31,7 +31,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Truncation lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound lqCCS.Testing.Trace_Convergence.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Truncation lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound lqCCS.Testing.Trace_Convergence.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -52,9 +52,10 @@ Section Pool.
 
   Definition okpre (𝜆 : prefix) : Prop :=
     match 𝜆 with
-    | PTau _ | PRecv _ _ => True
-    | POp _ _ es | PInit _ es => Forall oke es
-    | PMeas _ M es => Forall oke es ∧ MM M ∧ length es ≤ L
+    | _ ∶ 𝛕 | _ ∶ _ ? => True
+    | POp _ _ es => Forall oke es
+    | PReinit _ e => oke e
+    | _ ∶ M ⦅es ▷⦆ => Forall oke es ∧ MM M ∧ length es ≤ L
     end.
 
   Fixpoint ok (P : proc) : Prop :=
@@ -62,14 +63,14 @@ Section Pool.
     | PSend _ _ e => oke e
     | If e Then P Else Q => oke e ∧ ok P ∧ ok Q
     | P ∥ Q => ok P ∧ ok Q
-    | ν P | PRec _ _ P => ok P
+    | ν P | _ ∶ rec ∙ P => ok P
     | PVar _ => True
     | PG g => gok g
     end
   with gok (g : guard) : Prop :=
     match g with
-    | GNil es => Forall oke es
-    | ① => True
+    | 𝟘{es} => Forall oke es
+    | 𝟙 => True
     | 𝜆 ∙ P => okpre 𝜆 ∧ ok P
     | (g1 + g2)%lq => gok g1 ∧ gok g2
     end.
@@ -112,21 +113,21 @@ Section Pool.
 
   Lemma okpre_subst k v 𝜆 : V v → okpre 𝜆 → okpre (prefix_subst k v 𝜆).
   Proof.
-    intros Hv. destruct 𝜆 as [t|t c|t E es|t M es|t es]; simpl; try done.
+    intros Hv. destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl; try done.
     - by apply okes_subst.
     - intros (Ho & Hm & Hl). rewrite length_map. split; [by apply okes_subst|done].
-    - by apply okes_subst.
+    - by apply oke_subst.
   Qed.
 
   Lemma okpre_shift k 𝜆 : okpre 𝜆 → okpre (prefix_shift k 𝜆).
   Proof.
-    destruct 𝜆 as [t|t c|t E es|t M es|t es]; simpl; try done.
+    destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl; try done.
     - by apply okes_shift.
     - intros (Ho & Hm & Hl). rewrite length_map. split; [by apply okes_shift|done].
-    - by apply okes_shift.
+    - by apply oke_shift.
   Qed.
 
-  Lemma ok_subst v : V v → (∀ P k, ok P → ok (subst k v P)) ∧ (∀ g k, gok g → gok (gsubst k v g)).
+  Lemma ok_subst v : V v → (∀ P k, ok P → ok (P ⁅ v // k ⁆ᵥ)) ∧ (∀ g k, gok g → gok (gsubst k v g)).
   Proof.
     intros Hv. apply proc_guard_ind; simpl.
     - intros t c e k Ho. by apply oke_subst.
@@ -134,7 +135,7 @@ Section Pool.
     - intros P IHP Q IHQ k [HP HQ]. split; auto.
     - intros P IHP k HP. auto.
     - done.
-    - intros t X P IHP k HP. auto.
+    - intros t P IHP k HP. auto.
     - intros g IHg k Hg. auto.
     - intros es k Ho. by apply okes_subst.
     - done.
@@ -150,7 +151,7 @@ Section Pool.
     - intros P IHP Q IHQ k [HP HQ]. split; auto.
     - intros P IHP k HP. auto.
     - done.
-    - intros t X P IHP k HP. auto.
+    - intros t P IHP k HP. auto.
     - intros g IHg k Hg. auto.
     - intros es k Ho. by apply okes_shift.
     - done.
@@ -166,7 +167,7 @@ Section Pool.
     - intros P IHP Q IHQ f [HP HQ]. split; auto.
     - intros P IHP f HP. auto.
     - intros X f _. exact Logic.I.
-    - intros t X P IHP f HP. auto.
+    - intros t P IHP f HP. auto.
     - intros g IHg f Hg. auto.
     - intros es f Ho. exact Ho.
     - intros f _. exact Logic.I.
@@ -182,7 +183,7 @@ Section Pool.
     - intros P IHP Q IHQ f [HP HQ]. split; auto.
     - intros P IHP f HP. auto.
     - intros X f _. exact Logic.I.
-    - intros t X P IHP f HP. auto.
+    - intros t P IHP f HP. auto.
     - intros g IHg f Hg. auto.
     - intros es f Ho. exact Ho.
     - intros f _. exact Logic.I.
@@ -190,30 +191,46 @@ Section Pool.
     - intros g1 IH1 g2 IH2 f [Ha Hb]. split; auto.
   Qed.
 
-  Lemma ok_iter n Q : ok Q → ok (Nat.iter n (shiftv 0) Q).
+  Lemma ok_iter n Q : ok Q → ok (Nat.iter n ⇧ᵥ Q).
   Proof. intros HQ. induction n as [|n IH]; simpl; [done|]. by apply (proj1 ok_shiftv). Qed.
 
-  Lemma ok_prsubst :
-    (∀ P X Q, ok P → ok Q → ok (pr_subst X P Q)) ∧ (∀ g X Q, gok g → ok Q → gok (gpr_subst X g Q)).
+  Lemma ok_rshift : (∀ P k, ok P → ok (rshift k P)) ∧ (∀ g k, gok g → gok (grshift k g)).
   Proof.
     apply proc_guard_ind; simpl.
-    - intros t c e X R Ho _. exact Ho.
-    - intros e P IHP Q IHQ X R (He & HP & HQ) HR. split; [done|]. split; auto.
-    - intros P IHP Q IHQ X R [HP HQ] HR. split; auto.
-    - intros P IHP X R HP HR. apply IHP; [done|]. by apply (proj1 ok_ren).
-    - intros Y X R _ HR. by case_decide.
-    - intros t Y P IHP X R HP HR. case_decide; simpl; auto.
-    - intros g IHg X R Hg HR. auto.
-    - intros es X R Ho _. exact Ho.
-    - intros X R _ _. exact Logic.I.
-    - intros 𝜆 P IHP X R [Ha Hb] HR. split; [done|]. apply IHP; [done|]. by apply ok_iter.
-    - intros g1 IH1 g2 IH2 X R [Ha Hb] HR. split; auto.
+    - intros t c e k Ho. exact Ho.
+    - intros e P IHP Q IHQ k (He & HP & HQ). split; [done|]. split; auto.
+    - intros P IHP Q IHQ k [HP HQ]. split; auto.
+    - intros P IHP k HP. auto.
+    - intros i k _. by case_decide.
+    - intros t P IHP k HP. auto.
+    - intros g IHg k Hg. auto.
+    - intros es k Ho. exact Ho.
+    - intros k _. exact Logic.I.
+    - intros 𝜆 P IHP k [Ha Hb]. split; [done|auto].
+    - intros g1 IH1 g2 IH2 k [Ha Hb]. split; auto.
+  Qed.
+
+  Lemma ok_prsubst :
+    (∀ P k Q, ok P → ok Q → ok (P ⁅ Q // k ⁆ₚ)) ∧ (∀ g k Q, gok g → ok Q → gok (gpr_subst k g Q)).
+  Proof.
+    apply proc_guard_ind; simpl.
+    - intros t c e k R Ho _. exact Ho.
+    - intros e P IHP Q IHQ k R (He & HP & HQ) HR. split; [done|]. split; auto.
+    - intros P IHP Q IHQ k R [HP HQ] HR. split; auto.
+    - intros P IHP k R HP HR. apply IHP; [done|]. by apply (proj1 ok_ren).
+    - intros Y k R _ HR. by repeat case_decide.
+    - intros t P IHP k R HP HR. apply IHP; [done|]. by apply (proj1 ok_rshift).
+    - intros g IHg k R Hg HR. auto.
+    - intros es k R Ho _. exact Ho.
+    - intros k R _ _. exact Logic.I.
+    - intros 𝜆 P IHP k R [Ha Hb] HR. split; [done|]. apply IHP; [done|]. by apply ok_iter.
+    - intros g1 IH1 g2 IH2 k R [Ha Hb] HR. split; auto.
   Qed.
 
   Definition lok (l : Labels prog_action) : Prop :=
     match l with
-    | ActExt (PrIn _ v) => V v
-    | ActExt (PrMeas _ _ n) => V (VNat n)
+    | _ ? v => V v
+    | _ ⦅_⦆? n => V (VNat n)
     | _ => True
     end.
 
@@ -229,16 +246,16 @@ Section Pool.
     injection Hex as <-. exact (oke_eval e _ Ho1 Ee).
   Qed.
 
-  Lemma gstep_noout g s c v P' : ¬ prog_gstep g s (ActExt (PrOut c v)) P'.
+  Lemma gstep_noout g s c v P' : ¬ g ⟶ᵍ{c ! v}[s] P'.
   Proof.
-    intros Hs. remember (ActExt (PrOut c v)) as l eqn:El. induction Hs; try discriminate El; auto.
+    intros Hs. remember (c ! v) as l eqn:El. induction Hs; try discriminate El; auto.
   Qed.
 
-  Lemma step_out P s l P' : ok P → prog_step P s l P' → ∀ c v, l = ActExt (PrOut c v) → V v.
+  Lemma step_out P s l P' : ok P → P ⟶{l}[s] P' → ∀ c v, l = c ! v → V v.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
-      |P s l P' Hs IH|t X P]; simpl; intros Ho c0 v0 El.
+      |P s l P' Hs IH|t P]; simpl; intros Ho c0 v0 El.
     - subst l. exfalso. exact (gstep_noout _ _ _ _ _ Hg).
     - injection El as _ <-. exact (oke_eval e v Ho He).
     - exact (IH (proj1 (proj2 Ho)) c0 v0 El).
@@ -251,7 +268,7 @@ Section Pool.
     - discriminate El.
   Qed.
 
-  Lemma gstep_meas g s l P' : gok g → prog_gstep g s l P' → ∀ M qs n, l = ActExt (PrMeas M qs n) → mq M qs.
+  Lemma gstep_meas g s l P' : gok g → g ⟶ᵍ{l}[s] P' → ∀ M qs n, l = M ⦅qs⦆? n → mq M qs.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t E es qs P He|t M es qs n P He|t es qs P He
       |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH]; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
@@ -261,11 +278,11 @@ Section Pool.
     - exact (IH (proj2 Ho) M0 qs0 n0 El).
   Qed.
 
-  Lemma step_meas P s l P' : ok P → prog_step P s l P' → ∀ M qs n, l = ActExt (PrMeas M qs n) → mq M qs.
+  Lemma step_meas P s l P' : ok P → P ⟶{l}[s] P' → ∀ M qs n, l = M ⦅qs⦆? n → mq M qs.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
-      |P s l P' Hs IH|t X P]; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
+      |P s l P' Hs IH|t P]; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
     - exact (gstep_meas g s l P' Ho Hg M0 qs0 n0 El).
     - exact (IH (proj1 (proj2 Ho)) M0 qs0 n0 El).
     - exact (IH (proj2 (proj2 Ho)) M0 qs0 n0 El).
@@ -274,7 +291,7 @@ Section Pool.
     - subst l. exact (IH Ho M0 qs0 n0 eq_refl).
   Qed.
 
-  Lemma gstep_ok g s l P' : gok g → prog_gstep g s l P' → lok l → ok P'.
+  Lemma gstep_ok g s l P' : gok g → g ⟶ᵍ{l}[s] P' → lok l → ok P'.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t E es qs P He|t M es qs n P He|t es qs P He
       |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH]; simpl; intros Ho Hl.
@@ -290,11 +307,11 @@ Section Pool.
   Lemma lok_ren l : lok (ren_lbl Datatypes.S l) ↔ lok l.
   Proof. destruct l as [[]|]; done. Qed.
 
-  Lemma step_ok P s l P' : ok P → prog_step P s l P' → lok l → ok P'.
+  Lemma step_ok P s l P' : ok P → P ⟶{l}[s] P' → lok l → ok P'.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
-      |P s l P' Hs IH|t X P]; simpl; intros Ho Hl.
+      |P s l P' Hs IH|t P]; simpl; intros Ho Hl.
     - exact (gstep_ok g s l P' Ho Hg Hl).
     - constructor.
     - exact (IH (proj1 (proj2 Ho)) Hl).
@@ -306,7 +323,7 @@ Section Pool.
     - pose proof (step_out Q _ _ Q' (proj2 Ho) Hs2 c v eq_refl) as Hv.
       split; [exact (IH1 (proj1 Ho) Hv)|exact (IH2 (proj2 Ho) Logic.I)].
     - apply IH; [done|]. by apply lok_ren.
-    - apply (proj1 ok_prsubst); [done|]. exact (proj1 ok_tren (t ∶ rec X ∙ P) tag_up Ho).
+    - apply (proj1 ok_prsubst); [done|]. exact (proj1 ok_tren (t ∶ rec ∙ P) tag_up Ho).
   Qed.
 
   Context (q : proc * St) (O : node → list msg) (T : proc) (r : nat → dist comp) (w : nat → item).
@@ -328,9 +345,9 @@ Section Pool.
     - rewrite tnodes_nil in HX. apply list_elem_of_singleton in HX. by subst.
     - apply Forall_app in Hn as [Hn Ha0]. assert (Ha : aval a) by (by inversion Ha0).
       apply tnodes_app_elem in HX as (X0 & HX0 & HX). pose proof (IH X0 Hn HX0) as Ho.
-      destruct (co_succ_step _ _ _ HX) as [Hs|[_ Hs]]; [|by apply (step_ok X0 _ _ X Ho Hs)].
+      pose proof (co_succ_step _ _ _ HX) as Hs.
       apply (step_ok X0 _ _ X Ho Hs).
-      destruct a as [k c v|k c v|k E qs|k M qs i|k qs]; simpl in Ha |- *; try done.
+      destruct a as [k c v|k c v|k E qs|k M qs i|k q0|k]; simpl in Ha |- *; try done.
       destruct Ha as [k' ->]. destruct (step_meas X0 _ _ X Ho Hs M qs _ eq_refl) as (Hm & Hl & Hf).
       by apply HVm.
   Qed.
@@ -339,7 +356,7 @@ Section Pool.
   Proof.
     intros Hn (X & HX & Hne)%O_T_spec. destruct (co_succ X (CoOut k c v)) as [|X1 l] eqn:E; [done|].
     assert (HX1 : X1 ∈ co_succ X (CoOut k c v)) by (rewrite E; by left).
-    destruct (co_succ_step _ _ _ HX1) as [Hs|[HE0 _]]; [|discriminate HE0].
+    pose proof (co_succ_step _ _ _ HX1) as Hs.
     exact (step_out X _ _ X1 (tn_ok n X Hn HX) Hs c v eq_refl).
   Qed.
 
@@ -365,7 +382,7 @@ Section Pool.
       2:{ apply list_elem_of_singleton in HxΔ. subst x. simpl. done. }
       assert (Hsf : S_T T c.1 = false) by (destruct (S_T T c.1) eqn:Es; [exfalso; apply Hns; exact Es|done]).
       apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                      |n P C k E' qs t HI|n P C k qs t HI|n P C k M qs t HI]; subst; simpl in *.
+                      |n P C k E' qs t HI|n P C k q0 t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
       + apply list_elem_of_fmap in HxΔ as (y & -> & Hy). simpl.
         split; [done|]. split; [exact (sched_ok ρ P s Δ0 Ho Hss y Hy)|done].
       + apply list_elem_of_singleton in HxΔ. subst x. simpl. split; [done|]. split; [|done].
@@ -382,13 +399,16 @@ Section Pool.
       + apply list_elem_of_fmap in HxΔ as (k' & -> & Hk'). simpl. split.
         { apply Forall_app. split; [done|]. constructor; [by eexists|constructor]. }
         split; [done|]. by apply plain_app.
+      + apply list_elem_of_singleton in HxΔ. subst x. simpl. split.
+        { apply Forall_app. split; [done|]. constructor; [done|constructor]. }
+        split; [done|]. by apply plain_app.
   Qed.
 
   Hypothesis HfV : fin V.
 
   Lemma aval_fin o : fin (λ a, offer_of a = o ∧ aval a).
   Proof.
-    destruct o as [k c v|k c|k E qs|k M qs|k qs].
+    destruct o as [k c v|k c|k E qs|k M qs|k q0|k].
     - apply (fin_mono _ (λ a, a = CoOut k c v)); [|apply fin_eq]. intros a [Eo _].
       destruct a; simpl in Eo; try discriminate Eo. by injection Eo as -> -> ->.
     - apply (fin_mono _ (λ a, ∃ v, V v ∧ a = CoIn k c v)); [|exact (fin_img (λ v, CoIn k c v) V HfV)].
@@ -396,12 +416,14 @@ Section Pool.
     - apply (fin_mono _ (λ a, a = CoOp k E qs)); [|apply fin_eq]. intros a [Eo _].
       destruct a; simpl in Eo; try discriminate Eo. by injection Eo as -> -> ->.
     - apply (fin_mono _ (λ a, ∃ k' : Out (meas_of M qs), In k' (outs (meas_of M qs)) ∧ a = CoMeas k M qs (code _ k'))).
-      + intros a [Eo Ha]. destruct a as [| | |k0 M0 qs0 i|]; simpl in Eo; try discriminate Eo.
+      + intros a [Eo Ha]. destruct a as [| | |k0 M0 qs0 i| |]; simpl in Eo; try discriminate Eo.
         injection Eo as -> -> ->. destruct Ha as [k' ->]. exists k'. split; [apply outs_all|done].
       + apply (fin_img (λ k' : Out (meas_of M qs), CoMeas k M qs (code _ k')) (λ k', In k' (outs (meas_of M qs)))).
         exists (outs (meas_of M qs)). intros x Hx. by apply list_elem_of_In.
-    - apply (fin_mono _ (λ a, a = CoInit k qs)); [|apply fin_eq]. intros a [Eo _].
+    - apply (fin_mono _ (λ a, a = CoInit k q0)); [|apply fin_eq]. intros a [Eo _].
       destruct a; simpl in Eo; try discriminate Eo. by injection Eo as -> ->.
+    - apply (fin_mono _ (λ a, a = CoUnfold k)); [|apply fin_eq]. intros a [Eo _].
+      destruct a; simpl in Eo; try discriminate Eo. by injection Eo as ->.
   Qed.
 
   Lemma vis_menu m a : visited r (m ++ [a]) → menu T m (offer_of a) ∧ aval a.
@@ -478,7 +500,7 @@ Qed.
 
 Lemma okpre_sup 𝜆 : sup (λ V MM L, okpre V MM L 𝜆).
 Proof.
-  destruct 𝜆 as [t|t c|t E es|t M es|t es].
+  destruct 𝜆 as [t|t c|t E es|t M es|t e].
   - exact sup_true.
   - exact sup_true.
   - exact (okes_sup es).
@@ -487,7 +509,7 @@ Proof.
     assert (HB : sup (λ _ _ L, length es ≤ L)).
     { exists [], [], (length es). intros V MM L' _ _ HL. exact HL. }
     exact (sup_and _ _ (okes_sup es) (sup_and _ _ HA HB)).
-  - exact (okes_sup es).
+  - exact (oke_sup e).
 Qed.
 
 Lemma ok_sup : (∀ P, sup (λ V MM L, ok V MM L P)) ∧ (∀ g, sup (λ V MM L, gok V MM L g)).
@@ -498,7 +520,7 @@ Proof.
   - intros P IHP Q IHQ. exact (sup_and _ _ IHP IHQ).
   - intros P IHP. exact IHP.
   - intros X. exact sup_true.
-  - intros t X P IHP. exact IHP.
+  - intros t P IHP. exact IHP.
   - intros g IHg. exact IHg.
   - intros es. exact (okes_sup es).
   - exact sup_true.

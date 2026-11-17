@@ -161,15 +161,15 @@ Inductive prefix : Type :=
 | PRecv (t : tag) (c : channel)
 | POp (t : tag) (E : sop) (es : list exp)
 | PMeas (t : tag) (M : meas) (es : list exp)
-| PInit (t : tag) (es : list exp).
+| PReinit (t : tag) (e : exp).
 
 Inductive proc : Type :=
 | PSend (t : tag) (c : channel) (e : exp)
 | PIte (e : exp) (P Q : proc)
 | PPar (P Q : proc)
 | PRes (P : proc)
-| PVar (X : nat)
-| PRec (t : tag) (X : nat) (P : proc)
+| PVar (i : nat)
+| PRec (t : tag) (P : proc)
 | PG (g : guard)
 with guard : Type :=
 | GNil (es : list exp)
@@ -185,20 +185,21 @@ Coercion PG : guard >-> proc.
 
 Bind Scope lqccs_scope with proc guard.
 
+Notation "𝟘{ es }" := (GNil es) (at level 1, format "𝟘{ es }") : lqccs_scope.
 Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
 Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
 Notation "g + g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
 Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
 Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
-Notation "①" := GSucc : lqccs_scope.
+Notation "𝟙" := GSucc : lqccs_scope.
 
 Notation "t ∶ '𝛕'" := (PTau t) (at level 40) : lqccs_scope.
 Notation "t ∶ c ?" := (PRecv t c) (at level 40, c at level 9) : lqccs_scope.
-Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9) : lqccs_scope.
-Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9) : lqccs_scope.
-Notation "t ∶ 'init' ⦅ es ⦆" := (PInit t es) (at level 40) : lqccs_scope.
+Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9, format "t  ∶  E  ⦅ es ⦆") : lqccs_scope.
+Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9, format "t  ∶  M  ⦅ es  ▷⦆") : lqccs_scope.
+Notation "t ∶ e ':=' '|0⟩'" := (PReinit t e) (at level 40, e at level 9) : lqccs_scope.
 Notation "t ∶ c ! e" := (PSend t c e) (at level 40, c at level 9, e at level 9) : lqccs_scope.
-Notation "t ∶ 'rec' X ∙ P" := (PRec t X P) (at level 40, X at level 9, P at level 40) : lqccs_scope.
+Notation "t ∶ 'rec' ∙ P" := (PRec t P) (at level 40, P at level 40) : lqccs_scope.
 Notation "'If' e 'Then' P 'Else' Q" := (PIte e P Q) (at level 55, e at level 9, P at level 54, Q at level 54) : lqccs_scope.
 
 #[local] Open Scope lqccs_scope.
@@ -211,7 +212,7 @@ Notation "'If' e 'Then' P 'Else' Q" := (PIte e P Q) (at level 55, e at level 9, 
 (* The number of value indices bound by a prefix. *)
 Definition prefix_binds (𝜆 : prefix) : nat :=
   match 𝜆 with
-  | PRecv _ _ | PMeas _ _ _ => 1
+  | _ ∶ _ ? | _ ∶ _ ⦅_ ▷⦆ => 1
   | _ => 0
   end.
 
@@ -221,7 +222,7 @@ Definition prefix_subst (k : nat) (v : val) (𝜆 : prefix) : prefix :=
   | t ∶ c ? => t ∶ c ?
   | t ∶ E ⦅es⦆ => t ∶ E ⦅map (exp_subst k v) es⦆
   | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_subst k v) es ▷⦆
-  | t ∶ init ⦅es⦆ => t ∶ init ⦅map (exp_subst k v) es⦆
+  | t ∶ e := |0⟩ => t ∶ (exp_subst k v e) := |0⟩
   end.
 
 Fixpoint subst (k : nat) (v : val) (P : proc) : proc :=
@@ -230,19 +231,20 @@ Fixpoint subst (k : nat) (v : val) (P : proc) : proc :=
   | If e Then P Else Q => If (exp_subst k v e) Then subst k v P Else subst k v Q
   | P ∥ Q => subst k v P ∥ subst k v Q
   | ν P => ν (subst k v P)
-  | PVar X => PVar X
-  | t ∶ rec X ∙ P => t ∶ rec X ∙ subst k v P
+  | PVar i => PVar i
+  | t ∶ rec ∙ P => t ∶ rec ∙ subst k v P
   | PG g => PG (gsubst k v g)
   end
 with gsubst (k : nat) (v : val) (g : guard) : guard :=
   match g with
-  | GNil es => GNil (map (exp_subst k v) es)
-  | ① => ①
+  | 𝟘{es} => 𝟘{map (exp_subst k v) es}
+  | 𝟙 => 𝟙
   | 𝜆 ∙ P => prefix_subst k v 𝜆 ∙ subst (prefix_binds 𝜆 + k) v P
   | (g1 + g2)%lq => (gsubst k v g1 + gsubst k v g2)%lq
   end.
 
-Notation "P ⁅ v ⁆" := (subst 0 v P) (at level 20) : lqccs_scope.
+Notation "P ⁅ v // k ⁆ᵥ" := (subst k v P) (at level 20) : lqccs_scope.
+Notation "P ⁅ v ⁆ᵥ" := (subst 0 v P) (at level 20) : lqccs_scope.
 
 Definition prefix_shift (k : nat) (𝜆 : prefix) : prefix :=
   match 𝜆 with
@@ -250,7 +252,7 @@ Definition prefix_shift (k : nat) (𝜆 : prefix) : prefix :=
   | t ∶ c ? => t ∶ c ?
   | t ∶ E ⦅es⦆ => t ∶ E ⦅map (exp_shift k) es⦆
   | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_shift k) es ▷⦆
-  | t ∶ init ⦅es⦆ => t ∶ init ⦅map (exp_shift k) es⦆
+  | t ∶ e := |0⟩ => t ∶ (exp_shift k e) := |0⟩
   end.
 
 Fixpoint shiftv (k : nat) (P : proc) : proc :=
@@ -259,17 +261,19 @@ Fixpoint shiftv (k : nat) (P : proc) : proc :=
   | If e Then P Else Q => If (exp_shift k e) Then shiftv k P Else shiftv k Q
   | P ∥ Q => shiftv k P ∥ shiftv k Q
   | ν P => ν (shiftv k P)
-  | PVar X => PVar X
-  | t ∶ rec X ∙ P => t ∶ rec X ∙ shiftv k P
+  | PVar i => PVar i
+  | t ∶ rec ∙ P => t ∶ rec ∙ shiftv k P
   | PG g => PG (gshiftv k g)
   end
 with gshiftv (k : nat) (g : guard) : guard :=
   match g with
-  | GNil es => GNil (map (exp_shift k) es)
-  | ① => ①
+  | 𝟘{es} => 𝟘{map (exp_shift k) es}
+  | 𝟙 => 𝟙
   | 𝜆 ∙ P => prefix_shift k 𝜆 ∙ shiftv (prefix_binds 𝜆 + k) P
   | (g1 + g2)%lq => (gshiftv k g1 + gshiftv k g2)%lq
   end.
+
+Notation "⇧ᵥ" := (shiftv 0) : lqccs_scope.
 
 (* ** Renaming of the indices of restricted channels
 
@@ -298,39 +302,72 @@ Fixpoint ren (f : nat → nat) (P : proc) : proc :=
   | If e Then P Else Q => If e Then ren f P Else ren f Q
   | P ∥ Q => ren f P ∥ ren f Q
   | ν P => ν (ren (lift f) P)
-  | PVar X => PVar X
-  | t ∶ rec X ∙ P => t ∶ rec X ∙ ren f P
+  | PVar i => PVar i
+  | t ∶ rec ∙ P => t ∶ rec ∙ ren f P
   | PG g => PG (gren f g)
   end
 with gren (f : nat → nat) (g : guard) : guard :=
   match g with
-  | GNil es => GNil es
-  | ① => ①
+  | 𝟘{es} => 𝟘{es}
+  | 𝟙 => 𝟙
   | 𝜆 ∙ P => prefix_ren f 𝜆 ∙ ren f P
   | (g1 + g2)%lq => (gren f g1 + gren f g2)%lq
   end.
 
-(* ** Substitution of a process for a recursion variable [P[Q/X]] *)
+(* ** Shift of the recursion indices
 
-Fixpoint pr_subst (X : nat) (P Q : proc) : proc :=
+    [rec.P] binds the recursion index [0] of [P]. *)
+
+Fixpoint rshift (k : nat) (P : proc) : proc :=
   match P with
   | t ∶ c ! e => t ∶ c ! e
-  | If e Then P1 Else P2 => If e Then pr_subst X P1 Q Else pr_subst X P2 Q
-  | P1 ∥ P2 => pr_subst X P1 Q ∥ pr_subst X P2 Q
-  | ν P1 => ν (pr_subst X P1 (ren S Q))
-  | PVar Y => if decide (X = Y) then Q else PVar Y
-  | t ∶ rec Y ∙ P1 => if decide (X = Y) then t ∶ rec Y ∙ P1 else t ∶ rec Y ∙ pr_subst X P1 Q
-  | PG g => PG (gpr_subst X g Q)
+  | If e Then P1 Else P2 => If e Then rshift k P1 Else rshift k P2
+  | P1 ∥ P2 => rshift k P1 ∥ rshift k P2
+  | ν P1 => ν (rshift k P1)
+  | PVar i => if decide (k ≤ i) then PVar (S i) else PVar i
+  | t ∶ rec ∙ P1 => t ∶ rec ∙ rshift (S k) P1
+  | PG g => PG (grshift k g)
   end
-with gpr_subst (X : nat) (g : guard) (Q : proc) : guard :=
+with grshift (k : nat) (g : guard) : guard :=
   match g with
-  | GNil es => GNil es
-  | ① => ①
-  | 𝜆 ∙ P => 𝜆 ∙ pr_subst X P (Nat.iter (prefix_binds 𝜆) (shiftv 0) Q)
-  | (g1 + g2)%lq => (gpr_subst X g1 Q + gpr_subst X g2 Q)%lq
+  | 𝟘{es} => 𝟘{es}
+  | 𝟙 => 𝟙
+  | 𝜆 ∙ P => 𝜆 ∙ rshift k P
+  | (g1 + g2)%lq => (grshift k g1 + grshift k g2)%lq
   end.
 
-Notation "P ⦃ Q // X ⦄" := (pr_subst X P Q) (at level 20) : lqccs_scope.
+Notation "⇧ₚ" := (rshift 0) : lqccs_scope.
+
+(* ** Substitution of a process for a recursion index [P[Q/k]] *)
+
+Fixpoint pr_subst (k : nat) (P Q : proc) : proc :=
+  match P with
+  | t ∶ c ! e => t ∶ c ! e
+  | If e Then P1 Else P2 => If e Then pr_subst k P1 Q Else pr_subst k P2 Q
+  | P1 ∥ P2 => pr_subst k P1 Q ∥ pr_subst k P2 Q
+  | ν P1 => ν (pr_subst k P1 (ren S Q))
+  | PVar i => if decide (i = k) then Q else if decide (k < i) then PVar (pred i) else PVar i
+  | t ∶ rec ∙ P1 => t ∶ rec ∙ pr_subst (S k) P1 (⇧ₚ Q)
+  | PG g => PG (gpr_subst k g Q)
+  end
+with gpr_subst (k : nat) (g : guard) (Q : proc) : guard :=
+  match g with
+  | 𝟘{es} => 𝟘{es}
+  | 𝟙 => 𝟙
+  | 𝜆 ∙ P => 𝜆 ∙ pr_subst k P (Nat.iter (prefix_binds 𝜆) ⇧ᵥ Q)
+  | (g1 + g2)%lq => (gpr_subst k g1 Q + gpr_subst k g2 Q)%lq
+  end.
+
+Notation "P ⁅ Q // k ⁆ₚ" := (pr_subst k P Q) (at level 20) : lqccs_scope.
+Notation "P ⁅ Q ⁆ₚ" := (pr_subst 0 P Q) (at level 20) : lqccs_scope.
+
+(* ** Iterated restrictions and lifts *)
+
+Fixpoint Ѵ (n : nat) (P : proc) : proc :=
+  match n with 0 => P | S n => ν (Ѵ n P) end.
+
+Fixpoint liftn (n : nat) (f : nat → nat) : nat → nat :=
+  match n with 0 => f | S n => liftn n (lift f) end.
 
 (* ** Qubits named by expressions *)
 
@@ -345,148 +382,16 @@ Definition eval_qubits (es : list exp) : option (list qubit) :=
 Fixpoint size (P : proc) : nat :=
   match P with
   | PSend _ _ _ | PVar _ => 1
-  | PIte _ P Q | P ∥ Q => S (size P + size Q)
-  | ν P | PRec _ _ P => S (size P)
+  | If _ Then P Else Q | P ∥ Q => S (size P + size Q)
+  | ν P | _ ∶ rec ∙ P => S (size P)
   | PG g => S (gsize g)
   end
 with gsize (g : guard) : nat :=
   match g with
-  | GNil _ | ① => 0
+  | 𝟘{_} | 𝟙 => 0
   | 𝜆 ∙ P => S (size P)
   | (g1 + g2)%lq => S (gsize g1 + gsize g2)
   end.
-
-(* ** Facts on renamings *)
-
-Lemma lift_ext f g : (∀ i, f i = g i) → ∀ i, lift f i = lift g i.
-Proof. intros H [|i]; simpl; congruence. Qed.
-
-Lemma lift_id i : lift id i = i.
-Proof. by destruct i. Qed.
-
-Lemma lift_comp f g i : lift f (lift g i) = lift (f ∘ g) i.
-Proof. by destruct i. Qed.
-
-Lemma lift_S f i : lift f (S i) = S (f i).
-Proof. done. Qed.
-
-Lemma lift_lift_swap01 f i : lift (lift f) (swap01 i) = swap01 (lift (lift f) i).
-Proof. destruct i as [|[|i]]; done. Qed.
-
-Lemma swap01_invol i : swap01 (swap01 i) = i.
-Proof. destruct i as [|[|i]]; done. Qed.
-
-Lemma swap01_SS i : swap01 (S (S i)) = S (S i).
-Proof. done. Qed.
-
-Lemma ren_chan_ext f g c : (∀ i, f i = g i) → ren_chan f c = ren_chan g c.
-Proof. intros H. destruct c; simpl; congruence. Qed.
-
-Lemma ren_chan_comp f g c : ren_chan f (ren_chan g c) = ren_chan (f ∘ g) c.
-Proof. by destruct c. Qed.
-
-Lemma ren_chan_id c : ren_chan id c = c.
-Proof. by destruct c. Qed.
-
-Lemma ren_chan_inj f : (∀ i j, f i = f j → i = j) → ∀ c c', ren_chan f c = ren_chan f c' → c = c'.
-Proof. intros Hf [c|i] [c'|j]; simpl; intros [=]; subst; [done|]. f_equal. by apply Hf. Qed.
-
-Lemma lift_inj f : (∀ i j, f i = f j → i = j) → ∀ i j, lift f i = lift f j → i = j.
-Proof. intros Hf [|i] [|j]; simpl; intros [=]; subst; [done|]. f_equal. by apply Hf. Qed.
-
-Lemma prefix_ren_ext f g 𝜆 : (∀ i, f i = g i) → prefix_ren f 𝜆 = prefix_ren g 𝜆.
-Proof. intros H. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite (ren_chan_ext f g). Qed.
-
-Lemma ren_ext_all :
-  (∀ P f g, (∀ i, f i = g i) → ren f P = ren g P)
-  ∧ (∀ h f g, (∀ i, f i = g i) → gren f h = gren g h).
-Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
-  - by rewrite (ren_chan_ext f g).
-  - f_equal. apply H. by apply lift_ext.
-  - f_equal; [by apply prefix_ren_ext | by apply H].
-Qed.
-
-Lemma ren_ext f g P : (∀ i, f i = g i) → ren f P = ren g P.
-Proof. apply (proj1 ren_ext_all). Qed.
-
-Lemma prefix_ren_comp f g 𝜆 : prefix_ren f (prefix_ren g 𝜆) = prefix_ren (f ∘ g) 𝜆.
-Proof. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite ren_chan_comp. Qed.
-
-Lemma ren_comp_all :
-  (∀ P f g, ren f (ren g P) = ren (f ∘ g) P) ∧ (∀ h f g, gren f (gren g h) = gren (f ∘ g) h).
-Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
-  - by rewrite ren_chan_comp.
-  - f_equal. rewrite H. apply ren_ext, lift_comp.
-  - f_equal; [apply prefix_ren_comp | apply H].
-Qed.
-
-Lemma ren_comp f g P : ren f (ren g P) = ren (f ∘ g) P.
-Proof. apply (proj1 ren_comp_all). Qed.
-
-Lemma ren_id_all : (∀ P, ren id P = P) ∧ (∀ h, gren id h = h).
-Proof.
-  apply proc_guard_ind; simpl; intros; try (f_equal; auto; done).
-  - by rewrite ren_chan_id.
-  - f_equal. rewrite <- H at 2. apply ren_ext, lift_id.
-  - f_equal; [|done]. destruct 𝜆; simpl; [done| |done|done|done]. by rewrite ren_chan_id.
-Qed.
-
-Lemma ren_id P : ren id P = P.
-Proof. apply (proj1 ren_id_all). Qed.
-
-(* [ren (lift f) (ren S P) = ren S (ren f P)] *)
-Lemma ren_lift_S f P : ren (lift f) (ren S P) = ren S (ren f P).
-Proof. rewrite !ren_comp. by apply ren_ext. Qed.
-
-Lemma ren_swap01_invol P : ren swap01 (ren swap01 P) = P.
-Proof.
-  rewrite ren_comp. rewrite <- (ren_id P) at 2. apply ren_ext. intros i. apply swap01_invol.
-Qed.
-
-Lemma prefix_ren_subst f k v 𝜆 :
-  prefix_ren f (prefix_subst k v 𝜆) = prefix_subst k v (prefix_ren f 𝜆).
-Proof. by destruct 𝜆. Qed.
-
-Lemma prefix_ren_shift f k 𝜆 : prefix_ren f (prefix_shift k 𝜆) = prefix_shift k (prefix_ren f 𝜆).
-Proof. by destruct 𝜆. Qed.
-
-Lemma prefix_ren_binds f 𝜆 : prefix_binds (prefix_ren f 𝜆) = prefix_binds 𝜆.
-Proof. by destruct 𝜆. Qed.
-
-Lemma ren_subst :
-  (∀ P f k v, ren f (subst k v P) = subst k v (ren f P))
-  ∧ (∀ g f k v, gren f (gsubst k v g) = gsubst k v (gren f g)).
-Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
-  rewrite prefix_ren_subst, prefix_ren_binds. congruence.
-Qed.
-
-Lemma ren_shiftv :
-  (∀ P f k, ren f (shiftv k P) = shiftv k (ren f P))
-  ∧ (∀ g f k, gren f (gshiftv k g) = gshiftv k (gren f g)).
-Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
-  rewrite prefix_ren_shift, prefix_ren_binds. congruence.
-Qed.
-
-Lemma ren_shiftv_iter n f Q : ren f (Nat.iter n (shiftv 0) Q) = Nat.iter n (shiftv 0) (ren f Q).
-Proof. induction n; simpl; [done|]. by rewrite (proj1 ren_shiftv), IHn. Qed.
-
-Lemma ren_pr_subst X :
-  (∀ P f Q, ren f (P ⦃ Q // X ⦄) = (ren f P) ⦃ ren f Q // X ⦄)
-  ∧ (∀ g f Q, gren f (gpr_subst X g Q) = gpr_subst X (gren f g) (ren f Q)).
-Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
-  - f_equal. rewrite H. f_equal. apply ren_lift_S.
-  - by case_decide.
-  - case_decide; simpl; congruence.
-  - rewrite H, prefix_ren_binds, ren_shiftv_iter. done.
-Qed.
-
-Lemma size_ren : (∀ P f, size (ren f P) = size P) ∧ (∀ g f, gsize (gren f g) = gsize g).
-Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
 
 (* ** Generations of tags
 
@@ -520,7 +425,7 @@ Definition prefix_tren (f : tag → tag) (𝜆 : prefix) : prefix :=
   | t ∶ c ? => f t ∶ c ?
   | t ∶ E ⦅es⦆ => f t ∶ E ⦅es⦆
   | t ∶ M ⦅es ▷⦆ => f t ∶ M ⦅es ▷⦆
-  | t ∶ init ⦅es⦆ => f t ∶ init ⦅es⦆
+  | t ∶ e := |0⟩ => f t ∶ e := |0⟩
   end.
 
 Fixpoint tren (f : tag → tag) (P : proc) : proc :=
@@ -529,70 +434,19 @@ Fixpoint tren (f : tag → tag) (P : proc) : proc :=
   | If e Then P Else Q => If e Then tren f P Else tren f Q
   | P ∥ Q => tren f P ∥ tren f Q
   | ν P => ν (tren f P)
-  | PVar X => PVar X
-  | t ∶ rec X ∙ P => f t ∶ rec X ∙ tren f P
+  | PVar i => PVar i
+  | t ∶ rec ∙ P => f t ∶ rec ∙ tren f P
   | PG g => PG (gtren f g)
   end
 with gtren (f : tag → tag) (g : guard) : guard :=
   match g with
-  | GNil es => GNil es
-  | ① => ①
+  | 𝟘{es} => 𝟘{es}
+  | 𝟙 => 𝟙
   | 𝜆 ∙ P => prefix_tren f 𝜆 ∙ tren f P
   | (g1 + g2)%lq => (gtren f g1 + gtren f g2)%lq
   end.
 
 Notation "P ↑" := (tren tag_up P) (at level 20, format "P ↑") : lqccs_scope.
-
-Lemma prefix_tren_binds f 𝜆 : prefix_binds (prefix_tren f 𝜆) = prefix_binds 𝜆.
-Proof. by destruct 𝜆. Qed.
-
-Lemma prefix_tren_subst f k v 𝜆 :
-  prefix_tren f (prefix_subst k v 𝜆) = prefix_subst k v (prefix_tren f 𝜆).
-Proof. by destruct 𝜆. Qed.
-
-Lemma prefix_tren_shift f k 𝜆 : prefix_tren f (prefix_shift k 𝜆) = prefix_shift k (prefix_tren f 𝜆).
-Proof. by destruct 𝜆. Qed.
-
-Lemma prefix_tren_ren f g 𝜆 : prefix_tren f (prefix_ren g 𝜆) = prefix_ren g (prefix_tren f 𝜆).
-Proof. by destruct 𝜆. Qed.
-
-Lemma tren_subst :
-  (∀ P f k v, tren f (subst k v P) = subst k v (tren f P))
-  ∧ (∀ g f k v, gtren f (gsubst k v g) = gsubst k v (gtren f g)).
-Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
-  rewrite prefix_tren_subst, prefix_tren_binds. congruence.
-Qed.
-
-Lemma tren_shiftv :
-  (∀ P f k, tren f (shiftv k P) = shiftv k (tren f P))
-  ∧ (∀ g f k, gtren f (gshiftv k g) = gshiftv k (gtren f g)).
-Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
-  rewrite prefix_tren_shift, prefix_tren_binds. congruence.
-Qed.
-
-Lemma tren_shiftv_iter n f Q : tren f (Nat.iter n (shiftv 0) Q) = Nat.iter n (shiftv 0) (tren f Q).
-Proof. induction n; simpl; [done|]. by rewrite (proj1 tren_shiftv), IHn. Qed.
-
-Lemma tren_ren :
-  (∀ P f h, tren f (ren h P) = ren h (tren f P))
-  ∧ (∀ g f h, gtren f (gren h g) = gren h (gtren f g)).
-Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
-  rewrite prefix_tren_ren. congruence.
-Qed.
-
-Lemma tren_pr_subst X :
-  (∀ P f Q, tren f (P ⦃ Q // X ⦄) = (tren f P) ⦃ tren f Q // X ⦄)
-  ∧ (∀ g f Q, gtren f (gpr_subst X g Q) = gpr_subst X (gtren f g) (tren f Q)).
-Proof.
-  apply proc_guard_ind; simpl; intros; try congruence.
-  - f_equal. rewrite H. f_equal. apply (proj1 tren_ren).
-  - by case_decide.
-  - case_decide; simpl; congruence.
-  - rewrite H, prefix_tren_binds, tren_shiftv_iter. done.
-Qed.
 
 Lemma prefix_tren_ext f g 𝜆 : (∀ t, f t = g t) → prefix_tren f 𝜆 = prefix_tren g 𝜆.
 Proof. intros H. destruct 𝜆; simpl; by rewrite H. Qed.
@@ -636,22 +490,27 @@ Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
 End LqP.
 
 Bind Scope lqccs_scope with proc guard.
+Notation "𝟘{ es }" := (GNil es) (at level 1, format "𝟘{ es }") : lqccs_scope.
 Notation "𝟘" := (PG (GNil [])) : lqccs_scope.
 Notation "𝜆 ∙ P" := (GPre 𝜆 P) (at level 46, right associativity) : lqccs_scope.
 Notation "g + g'" := (GSum g g') (at level 50, left associativity) : lqccs_scope.
 Notation "P ∥ Q" := (PPar P Q) (at level 60, right associativity) : lqccs_scope.
 Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
-Notation "①" := GSucc : lqccs_scope.
+Notation "𝟙" := GSucc : lqccs_scope.
 Notation "t ∶ '𝛕'" := (PTau t) (at level 40) : lqccs_scope.
 Notation "t ∶ c ?" := (PRecv t c) (at level 40, c at level 9) : lqccs_scope.
-Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9) : lqccs_scope.
-Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9) : lqccs_scope.
-Notation "t ∶ 'init' ⦅ es ⦆" := (PInit t es) (at level 40) : lqccs_scope.
+Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9, format "t  ∶  E  ⦅ es ⦆") : lqccs_scope.
+Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9, format "t  ∶  M  ⦅ es  ▷⦆") : lqccs_scope.
+Notation "t ∶ e ':=' '|0⟩'" := (PReinit t e) (at level 40, e at level 9) : lqccs_scope.
 Notation "t ∶ c ! e" := (PSend t c e) (at level 40, c at level 9, e at level 9) : lqccs_scope.
-Notation "t ∶ 'rec' X ∙ P" := (PRec t X P) (at level 40, X at level 9, P at level 40) : lqccs_scope.
+Notation "t ∶ 'rec' ∙ P" := (PRec t P) (at level 40, P at level 40) : lqccs_scope.
 Notation "'If' e 'Then' P 'Else' Q" := (PIte e P Q) (at level 55, e at level 9, P at level 54, Q at level 54) : lqccs_scope.
-Notation "P ⁅ v ⁆" := (subst 0 v P) (at level 20) : lqccs_scope.
-Notation "P ⦃ Q // X ⦄" := (pr_subst X P Q) (at level 20) : lqccs_scope.
+Notation "P ⁅ v // k ⁆ᵥ" := (subst k v P) (at level 20) : lqccs_scope.
+Notation "P ⁅ v ⁆ᵥ" := (subst 0 v P) (at level 20) : lqccs_scope.
+Notation "P ⁅ Q // k ⁆ₚ" := (pr_subst k P Q) (at level 20) : lqccs_scope.
+Notation "P ⁅ Q ⁆ₚ" := (pr_subst 0 P Q) (at level 20) : lqccs_scope.
 Notation "P ↑" := (tren tag_up P) (at level 20, format "P ↑") : lqccs_scope.
+Notation "⇧ᵥ" := (shiftv 0) : lqccs_scope.
+Notation "⇧ₚ" := (rshift 0) : lqccs_scope.
 
 (* end hide *)

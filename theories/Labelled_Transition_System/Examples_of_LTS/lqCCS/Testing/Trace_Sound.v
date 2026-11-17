@@ -32,7 +32,7 @@ From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
 From TestingTheory Require Import lqCCS.Testing.Rec_Observers.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Build lqCCS.Testing.Trace_Complete.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Build lqCCS.Testing.Trace_Complete.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -44,7 +44,7 @@ Lemma co_succ_out_same T k c v c' v' T1 :
   T1 ∈ co_succ T (CoOut k c v) → co_succ T (CoOut k c' v') ≠ [] → (c, v) ≠ (c', v') →
   co_succ T1 (CoOut k c' v') ≠ [].
 Proof.
-  revert T1. induction T as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t X P IH|g]; simpl; intros T1 H1 Hb Hne.
+  revert T1. induction T as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IH|X|t P IH|g]; simpl; intros T1 H1 Hb Hne.
   - repeat case_decide; try (by apply elem_of_nil in H1); try done. exfalso. apply Hne.
     repeat match goal with Hx : _ ∧ _ |- _ => destruct Hx end. congruence.
   - destruct (eval e) as [[[]| |]|]; try (by apply elem_of_nil in H1); eauto.
@@ -280,7 +280,7 @@ Section Snd.
       split; [by symmetry|]. split; [done|]. split; [done|]. apply HCh.
       destruct (co_succ X (CoOut k c v)) as [|X1 l] eqn:E; [done|].
       assert (HX1 : X1 ∈ co_succ X (CoOut k c v)) by (rewrite E; by left).
-      destruct (co_succ_step _ _ _ HX1) as [Hst|[HE _]]; [|discriminate HE].
+      pose proof (co_succ_step _ _ _ HX1) as Hst.
       pose proof (prog_step_out_chan_r X k c v X1 (proj1 (proj1 HW n X HX)) Hst) as Hc.
       exact (Hchans n X c HX Hc).
     - intros n k c v c' v' Hs Hi1 Hi2. destruct (S'_false n Hs) as [Hv Hf]. rewrite (O'_vis n Hv) in Hi1, Hi2.
@@ -430,10 +430,10 @@ Theorem trace_sound `{QM : QuantumModel} (DC : dep_choice) (p q : proc * St) :
   alt_trace p q → ctx_pre_sm_on Stay (obs_for p q) p q.
 Proof.
   intros Hz Hconv Halt. apply (proj2 (alt_free_obs_iff DC p q Hz)).
-  intros O Ch K I S HR r w Hw. pose proof (Hconv O Ch K I S r w HR Hw) as HN.
+  intros O Ch K HKr I S HR r w Hw. pose proof (Hconv O Ch K I S r w HR Hw) as HN.
   destruct HR as ((T & HT & HO & -> & -> & HCh & HK) & HokI).
   refine (snd_main p q O Ch K T r w (observer_w T (proj1 HT)) _ HO HCh HokI Hw Hz DC
-            (λ Hc Hw', Halt _ _ Ch K r w Hc (conj Hw' HN))).
+            (λ Hc Hw', Halt _ _ Ch K r w HKr Hc (conj Hw' HN))).
   intros n X c HX Hc. exact (proj1 (tnodes_chans T (proj1 (proj1 HT)) n X HX) c Hc).
 Qed.
 

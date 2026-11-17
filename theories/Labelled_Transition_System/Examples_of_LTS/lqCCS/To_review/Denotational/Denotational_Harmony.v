@@ -41,7 +41,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets relations.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Language.Congruence lqCCS.Language.Denotational.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence lqCCS.Language.Denotational.
 From TestingTheory Require Import lqCCS.Harmony_Lemma.Memory_Harmony lqCCS.Harmony_Lemma.STS_Harmony.
 
 #[local] Open Scope lqccs_scope.
@@ -68,14 +68,14 @@ Section Den_Harmony.
       [κ].  Channel actions have no effect: they are not internal. *)
   Inductive mem_eff_lab (ρ : St) : Labels prog_action → St → mlabel → Prop :=
   | mel_tau : mem_eff_lab ρ τ ρ MNone
-  | mel_op E qs : mem_eff_lab ρ (ActExt (PrOp E qs)) (sop_apply E qs ρ) MNone
-  | mel_init qs : mem_eff_lab ρ (ActExt (PrInit qs)) (init_apply qs ρ) MNone
+  | mel_op E qs : mem_eff_lab ρ (E ⦅qs⦆) (sop_apply E qs ρ) MNone
+  | mel_init q : mem_eff_lab ρ (init ⦅q⦆) (init_apply q ρ) MNone
   | mel_meas M qs (k : Out (meas_of M qs)) :
-      mem_eff_lab ρ (ActExt (PrMeas M qs (code _ k))) (meas_branch M qs k ρ) (MMeas M qs (code _ k)).
+      mem_eff_lab ρ (M ⦅qs⦆? (code _ k)) (M ⦅qs⦆[k] · ρ) (MMeas M qs (code _ k)).
 
   (* A step of the program with its effect on the memory. *)
   Definition mstep_lab (ρ : St) (P : proc) (s : choice) (κ : mlabel) (ρ' : St) (P' : proc) : Prop :=
-    ∃ l, prog_step P s l P' ∧ mem_eff_lab ρ l ρ' κ.
+    ∃ l, P ⟶{l}[s] P' ∧ mem_eff_lab ρ l ρ' κ.
 
   Lemma mem_eff_lab_ren ρ l ρ' κ f : mem_eff_lab ρ l ρ' κ → ren_lbl f l = l.
   Proof. by destruct 1. Qed.
@@ -84,20 +84,20 @@ Section Den_Harmony.
   Inductive sts_lab : St → proc → choice → mlabel → St → proc → Prop :=
   | sl_com ρ t c e v t' P K :
       〚 e 〛 = v →
-      ⟨ρ, (t ∶ c ! e) ∥ PG (((t' ∶ c ?) ∙ P) + K)⟩ ⟶[cpair t t', MNone] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆⟩
+      ⟨ρ, (t ∶ c ! e) ∥ PG (((t' ∶ c ?) ∙ P) + K)⟩ ⟶[⦗t, t'⦘, MNone] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆ᵥ⟩
   | sl_tau ρ t P K :
       ⟨ρ, PG (((t ∶ 𝛕) ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨ρ, P⟩
   | sl_op ρ t E es qs P K :
       eval_qubits es = Some qs →
       ⟨ρ, PG (((t ∶ E ⦅es⦆) ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨sop_apply E qs ρ, P⟩
-  | sl_init ρ t es qs P K :
-      eval_qubits es = Some qs →
-      ⟨ρ, PG (((t ∶ init ⦅es⦆) ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨init_apply qs ρ, P⟩
+  | sl_init ρ t e q P K :
+      eval_qubit e = Some q →
+      ⟨ρ, PG (((t ∶ e := |0⟩) ∙ P) + K)⟩ ⟶[CTag t, MNone] ⟨init_apply q ρ, P⟩
   | sl_meas ρ t M es qs (k : Out (meas_of M qs)) P K :
       eval_qubits es = Some qs →
-      ⟨ρ, PG (((t ∶ M ⦅es ▷⦆) ∙ P) + K)⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨meas_branch M qs k ρ, P ⁅ VNat (code _ k) ⁆⟩
-  | sl_rec ρ t X P :
-      ⟨ρ, (t ∶ rec X ∙ P)⟩ ⟶[CTag t, MNone] ⟨ρ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄⟩
+      ⟨ρ, PG (((t ∶ M ⦅es ▷⦆) ∙ P) + K)⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨M ⦅qs⦆[k] · ρ, P ⁅ VNat (code _ k) ⁆ᵥ⟩
+  | sl_rec ρ t P :
+      ⟨ρ, (t ∶ rec ∙ P)⟩ ⟶[CTag t, MNone] ⟨ρ, P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ⟩
   | sl_par ρ P s κ ρ' P' Q :
       ⟨ρ, P⟩ ⟶[s, κ] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶[s, κ] ⟨ρ', P' ∥ Q⟩
   | sl_res ρ P s κ ρ' P' :
@@ -126,7 +126,7 @@ Section Den_Harmony.
     ∀ m c e v t t' P1 K R R', 〚 e 〛 = v →
     sts_lab ρ (Ѵ n ((t ∶ (ren_chan (Nat.add n) c) ! e) ∥ R)
            ∥ Ѵ m (PG (((t' ∶ (ren_chan (Nat.add m) c) ?) ∙ P1) + K) ∥ R'))
-        (cpair t t') MNone ρ (Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ ∥ R')).
+        ⦗t, t'⦘ MNone ρ (Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ᵥ ∥ R')).
   Proof.
     induction n as [|n IHn]; intros m.
     - induction m as [|m IHm]; intros c e v t t' P1 K R R' He; cbn [Ѵ].
@@ -150,19 +150,19 @@ Section Den_Harmony.
         apply (IHn m (ren_chan S c) e v t t' (ren (liftn m S) P1) (gren (liftn m S) K) R
                  (ren (liftn m S) R') He).
       + rewrite <- (proj1 ren_subst).
-        replace (Ѵ m (ren (liftn m S) (P1 ⁅ v ⁆) ∥ ren (liftn m S) R'))
-          with (ren S (Ѵ m (P1 ⁅ v ⁆ ∥ R'))) by (rewrite ren_resn; done).
+        replace (Ѵ m (ren (liftn m S) (P1 ⁅ v ⁆ᵥ) ∥ ren (liftn m S) R'))
+          with (ren S (Ѵ m (P1 ⁅ v ⁆ᵥ ∥ R'))) by (rewrite ren_resn; done).
         apply cgr_res_scope.
   Qed.
 
   (* A program step with its effect on the memory is a reduction. *)
   Lemma Internal_Implies_Reduction_lab P s l P' :
-    prog_step P s l P' → ∀ ρ ρ' κ, mem_eff_lab ρ l ρ' κ → ⟨ρ, P⟩ ⟶[s, κ] ⟨ρ', P'⟩.
+    P ⟶{l}[s] P' → ∀ ρ ρ' κ, mem_eff_lab ρ l ρ' κ → ⟨ρ, P⟩ ⟶[s, κ] ⟨ρ', P'⟩.
   Proof.
     induction 1 as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH
                    | P Q s l P' Hp IH | P Q s l Q' Hp IH
                    | P Q t t' c v P' Q' HpP _ HpQ _ | P Q t t' c v P' Q' HpP _ HpQ _
-                   | P s l P' Hp IH | t X P]; intros ρ ρ' κ Hm.
+                   | P s l P' Hp IH | t P]; intros ρ ρ' κ Hm.
     - destruct (TransitionShapeForGuard _ _ _ _ Hg) as (𝜆 & Q & K & Hcg & Hs).
       eapply sl_cong; [apply cgr_guard, Hcg| |reflexivity].
       apply prog_step_guard in Hs. inversion Hs; subst; inversion Hm; subst.
@@ -214,11 +214,11 @@ Section Den_Harmony.
     ⟨ρ, P⟩ ⟶[s, κ] ⟨ρ', Q⟩ → ∃ Q', mstep_lab ρ P s κ ρ' Q' ∧ Q' ≡* Q.
   Proof.
     induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t E es qs P K Hq | ρ t es qs P K Hq
-                   | ρ t M es qs k P K Hq | ρ t X P
+                   | ρ t M es qs k P K Hq | ρ t P
                    | ρ P s κ ρ' P' Q _ (P'' & (l & Hs & Hm) & HP)
                    | ρ P s κ ρ' P' _ (P'' & (l & Hs & Hm) & HP)
                    | ρ P P1 s κ ρ' Q1 Q Hc _ (Q1' & Hs & HQ) Hc'].
-    - exists (𝟘 ∥ P ⁅ v ⁆). split; [|reflexivity]. exists τ. split; [|constructor].
+    - exists (𝟘 ∥ P ⁅ v ⁆ᵥ). split; [|reflexivity]. exists τ. split; [|constructor].
       eapply pr_syncL; [by apply pr_send | apply pr_sumL, pr_recv].
     - exists P. split; [|reflexivity]. exists τ. split; [|constructor].
       apply pr_sumL, pr_tau.
@@ -226,9 +226,9 @@ Section Den_Harmony.
       by apply pr_sumL, pr_op.
     - exists P. split; [|reflexivity]. eexists. split; [|constructor].
       by apply pr_sumL, pr_init.
-    - exists (P ⁅ VNat (code _ k) ⁆). split; [|reflexivity]. eexists. split; [|constructor].
+    - exists (P ⁅ VNat (code _ k) ⁆ᵥ). split; [|reflexivity]. eexists. split; [|constructor].
       by apply pr_sumL, pr_meas.
-    - exists (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄). split; [|reflexivity]. exists τ. split; [|constructor].
+    - exists (P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ). split; [|reflexivity]. exists τ. split; [|constructor].
       apply pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par]. exists l. split; [by apply pr_parL | done].
     - exists (ν P''). split; [|by apply cgr_res]. exists l. split; [|done].
@@ -258,8 +258,8 @@ Section Den_Harmony.
   | tree_step ρ P s w ρ' P' l :
       ⟨ρ, P⟩ ⟶[s, MNone] ⟨ρ', P'⟩ → sts_tree ρ' P' w l → sts_tree ρ P (s :: w) l
   | tree_meas ρ P t w M qs (Pls : list (proc * list St)) :
-      Forall2 (λ k pl, ⟨ρ, P⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨meas_branch M qs k ρ, pl.1⟩
-                       ∧ sts_tree (meas_branch M qs k ρ) pl.1 w pl.2)
+      Forall2 (λ k pl, ⟨ρ, P⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨M ⦅qs⦆[k] · ρ, pl.1⟩
+                       ∧ sts_tree (M ⦅qs⦆[k] · ρ) pl.1 w pl.2)
         (outs (meas_of M qs)) Pls →
       sts_tree ρ P (CTag t :: w) (concat (map snd Pls)).
 
@@ -273,7 +273,7 @@ Section Den_Harmony.
 
   Lemma mem_eff_lab_meas_inv ρ l ρ' M qs n :
     mem_eff_lab ρ l ρ' (MMeas M qs n) →
-    ∃ k : Out (meas_of M qs), n = code _ k ∧ l = ActExt (PrMeas M qs n).
+    ∃ k : Out (meas_of M qs), n = code _ k ∧ l = M ⦅qs⦆? n.
   Proof. inversion 1; subst. by eexists. Qed.
 
   Lemma stable_conf_iff ρ P : stable_conf ρ P ↔ stable P.
@@ -319,18 +319,18 @@ Section Den_Harmony.
   Lemma sound_meas ρ P t w M qs :
     (∀ P' F, den P' w F → ∀ ρ0, ∃ l, sts_tree ρ0 P' w l ∧ app F ρ0 = ssum l) →
     ∀ (ks : list (Out (meas_of M qs))) (PFs : list (proc * T)),
-      Forall2 (λ k pf, prog_step P (CTag t) (ActExt (PrMeas M qs (code _ k))) pf.1 ∧ den pf.1 w pf.2)
+      Forall2 (λ k pf, P ⟶{M ⦅qs⦆? (code _ k)}[(CTag t)] pf.1 ∧ den pf.1 w pf.2)
         ks PFs →
       ∃ Pls : list (proc * list St),
-        Forall2 (λ k pl, ⟨ρ, P⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨meas_branch M qs k ρ, pl.1⟩
-                         ∧ sts_tree (meas_branch M qs k ρ) pl.1 w pl.2) ks Pls
+        Forall2 (λ k pl, ⟨ρ, P⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨M ⦅qs⦆[k] · ρ, pl.1⟩
+                         ∧ sts_tree (M ⦅qs⦆[k] · ρ) pl.1 w pl.2) ks Pls
         ∧ ssum (concat (map snd Pls))
           = ssum (zip_with (λ k F, app F (app (kraus (meas_of M qs) k) ρ)) ks (map snd PFs)).
   Proof.
     intros IH ks PFs Hf.
     induction Hf as [|k pf ks PFs (Hp & Hd) _ (Pls & Hf' & E)].
     - by exists [].
-    - destruct (IH _ _ Hd (meas_branch M qs k ρ)) as (l & Ht & El).
+    - destruct (IH _ _ Hd (M ⦅qs⦆[k] · ρ)) as (l & Ht & El).
       exists ((pf.1, l) :: Pls). split.
       + constructor; [|done]. split; [|done].
         eapply Internal_Implies_Reduction_lab; [exact Hp|constructor].
@@ -341,7 +341,7 @@ Section Den_Harmony.
   Proof.
     induction w as [|s w IH]; intros P F Hd ρ;
       inversion Hd as [? Hs|? Hs|? ? ? Hs|? ? ? ? Hs He Hd'|? ? ? P' ? Hp Hd'|? t ? U qs P' ? Hp Hd'
-                       |? t ? qs P' ? Hp Hd'|? t ? M qs PFs Hf]; subst.
+                       |? t ? q P' ? Hp Hd'|? t ? M qs PFs Hf]; subst.
     - exists [ρ]. split; [apply tree_nil_stable; by apply stable_conf_iff|].
       by rewrite app_one, ssum_single.
     - exists []. split; [apply tree_nil_run; by rewrite stable_conf_iff|]. apply app_zero.
@@ -354,7 +354,7 @@ Section Den_Harmony.
     - destruct (IH _ _ Hd' (sop_apply U qs ρ)) as (l & Ht & E). exists l. split.
       + eapply tree_step; [|exact Ht]. eapply Internal_Implies_Reduction_lab; [exact Hp|constructor].
       + by rewrite app_comp.
-    - destruct (IH _ _ Hd' (init_apply qs ρ)) as (l & Ht & E). exists l. split.
+    - destruct (IH _ _ Hd' (init_apply q ρ)) as (l & Ht & E). exists l. split.
       + eapply tree_step; [|exact Ht]. eapply Internal_Implies_Reduction_lab; [exact Hp|constructor].
       + by rewrite app_comp.
     - destruct (sound_meas ρ P t w M qs IH _ _ Hf) as (Pls & Hf' & E).
@@ -367,10 +367,10 @@ Section Den_Harmony.
   Lemma complete_meas ρ P t w M qs :
     (∀ ρ0 P' l, sts_tree ρ0 P' w l → ∃ F, den P' w F ∧ app F ρ0 = ssum l) →
     ∀ (ks : list (Out (meas_of M qs))) (Pls : list (proc * list St)),
-      Forall2 (λ k pl, ⟨ρ, P⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨meas_branch M qs k ρ, pl.1⟩
-                       ∧ sts_tree (meas_branch M qs k ρ) pl.1 w pl.2) ks Pls →
+      Forall2 (λ k pl, ⟨ρ, P⟩ ⟶[CTag t, MMeas M qs (code _ k)] ⟨M ⦅qs⦆[k] · ρ, pl.1⟩
+                       ∧ sts_tree (M ⦅qs⦆[k] · ρ) pl.1 w pl.2) ks Pls →
       ∃ PFs : list (proc * T),
-        Forall2 (λ k pf, prog_step P (CTag t) (ActExt (PrMeas M qs (code _ k))) pf.1 ∧ den pf.1 w pf.2)
+        Forall2 (λ k pf, P ⟶{M ⦅qs⦆? (code _ k)}[(CTag t)] pf.1 ∧ den pf.1 w pf.2)
           ks PFs
         ∧ ssum (zip_with (λ k F, app F (app (kraus (meas_of M qs) k) ρ)) ks (map snd PFs))
           = ssum (concat (map snd Pls)).
@@ -407,7 +407,7 @@ Section Den_Harmony.
       + destruct (prog_step_ext_choice _ _ _ _ Hp) as (t & ->).
         exists (F ⋅ act (sop_act E0 qs)). split; [by eapply den_op|]. by rewrite app_comp.
       + destruct (prog_step_ext_choice _ _ _ _ Hp) as (t & ->).
-        exists (F ⋅ act (init_act qs)). split; [by eapply den_init|]. by rewrite app_comp.
+        exists (F ⋅ act (init_act q)). split; [by eapply den_init|]. by rewrite app_comp.
     - destruct (complete_meas ρ P t w M qs IH _ _ Hf) as (PFs & Hf' & E).
       exists (meas_sum M qs (map snd PFs)). split; [by apply (den_meas P t w M qs)|].
       unfold meas_sum. by rewrite app_sum_zip.

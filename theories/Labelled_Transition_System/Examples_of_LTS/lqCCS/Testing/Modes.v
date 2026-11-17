@@ -29,7 +29,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -50,7 +50,7 @@ Definition nosend (X : proc) : Prop := ∀ k c v, co_succ X (CoOut k c v) = [].
 
 Lemma ns_nosend X : nosend (ns X).
 Proof.
-  intros k c v. induction X as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl.
+  intros k c v. induction X as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl.
   - done.
   - destruct (eval e) as [[[]| |]|]; done.
   - by rewrite IHP, IHQ.
@@ -151,40 +151,42 @@ Proof.
   destruct (resp a h) eqn:E; [done|]. rewrite (resp_offer a a' h Ho E). exact IH.
 Qed.
 
-Lemma rg_resp o a : (∀ k c v, a ≠ CoOut k c v) →
+Lemma rg_resp o a : (∀ k c v, a ≠ CoOut k c v) → (∀ k, o ≠ OffUnfold k) →
   match rg o with
-  | Some g => (offer_of a = o → gco_succ g a = [PG ①]) ∧ (offer_of a ≠ o → gco_succ g a = [])
+  | Some g => (offer_of a = o → gco_succ g a = [PG 𝟙]) ∧ (offer_of a ≠ o → gco_succ g a = [])
   | None => offer_of a ≠ o
   end.
 Proof.
-  intros Ha. destruct o as [k c v|k c|k E qs|k M qs|k qs]; simpl.
+  intros Ha Hu. destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl.
   - intros Ho. destruct a; try discriminate Ho. by destruct (Ha k0 c0 v0).
-  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 qs0]; simpl; try (split; [intros [=]|done]).
+  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 q0|k0]; simpl; try (split; [intros [=]|done]).
     case_decide as Hd.
     + split; [done|]. intros Hne. destruct Hne. by destruct Hd as [-> ->].
     + split; [|done]. intros [= -> ->]. by destruct Hd.
-  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 qs0]; simpl; try (split; [intros [=]|done]).
+  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 q0|k0]; simpl; try (split; [intros [=]|done]).
     rewrite eval_quote. case_decide as Hd.
     + split; [done|]. intros Hne. destruct Hne. by destruct Hd as (-> & -> & [= ->]).
     + split; [|done]. intros [= -> -> ->]. by destruct Hd.
-  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 qs0]; simpl; try (split; [intros [=]|done]).
+  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 q0|k0]; simpl; try (split; [intros [=]|done]).
     rewrite eval_quote. case_decide as Hd.
     + split; [done|]. intros Hne. destruct Hne. by destruct Hd as (-> & -> & [= ->]).
     + split; [|done]. intros [= -> -> ->]. by destruct Hd.
-  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 qs0]; simpl; try (split; [intros [=]|done]).
-    rewrite eval_quote. case_decide as Hd.
+  - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 q0|k0]; simpl; try (split; [intros [=]|done]).
+    change (eval_qubit $q) with (Some q). case_decide as Hd.
     + split; [done|]. intros Hne. destruct Hne. by destruct Hd as (-> & [= ->]).
     + split; [|done]. intros [= -> ->]. by destruct Hd.
+  - by destruct (Hu k).
 Qed.
 
-Lemma reps_part (l : list offer) a : (∀ k c v, a ≠ CoOut k c v) → NoDup l →
-  (offer_of a ∈ l → concat (map (λ g, gco_succ g a) (omap rg l)) = [PG ①])
+Lemma reps_part (l : list offer) a : (∀ k c v, a ≠ CoOut k c v) → (∀ k, OffUnfold k ∉ l) → NoDup l →
+  (offer_of a ∈ l → concat (map (λ g, gco_succ g a) (omap rg l)) = [PG 𝟙])
   ∧ (offer_of a ∉ l → concat (map (λ g, gco_succ g a) (omap rg l)) = []).
 Proof.
-  intros Ha. induction l as [|o l IH]; intros Hnd.
+  intros Ha. induction l as [|o l IH]; intros Hu Hnd.
   - split; [intros Hin; by apply elem_of_nil in Hin|done].
-  - apply NoDup_cons in Hnd as [Hni Hnd]. destruct (IH Hnd) as [IH1 IH2]. rewrite omap_cons'.
-    pose proof (rg_resp o a Ha) as Hr. destruct (rg o) as [g|].
+  - apply NoDup_cons in Hnd as [Hni Hnd].
+    destruct (IH (λ k Hk, Hu k (proj2 (elem_of_cons _ _ _) (or_intror Hk))) Hnd) as [IH1 IH2]. rewrite omap_cons'.
+    pose proof (rg_resp o a Ha (λ k E, Hu k (proj2 (elem_of_cons _ _ _) (or_introl (eq_sym E))))) as Hr. destruct (rg o) as [g|].
     + destruct Hr as [Hr1 Hr2]. simpl. split.
       * intros Hin. apply elem_of_cons in Hin as [E|Hin].
         -- rewrite (Hr1 E). rewrite IH2; [done|]. by rewrite E.
@@ -198,17 +200,25 @@ Qed.
 
 Definition ans (X : proc) (o : offer) : Prop := ∃ a, offer_of a = o ∧ co_succ X a ≠ [].
 
+Lemma ns_obsb X : obsb X = true → obsb (ns X) = true.
+Proof.
+  induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl; intros Hob; try done.
+  - apply andb_prop in Hob as [HP HQ]. destruct (eval e) as [[[]| |]|]; auto.
+  - apply andb_prop in Hob as [HP HQ]. by rewrite IHP, IHQ.
+Qed.
+
 Inductive mode : Type := MP | MH (f : nat) (m : node) | MC | MR.
 
 Section Modes.
   Context (VL : list val) (reps : node → list offer) (wrapb : node → offer → bool).
   Hypothesis Hnd : ∀ m, NoDup (reps m).
+  Hypothesis Hru : ∀ m k, OffUnfold k ∉ reps m.
 
   Definition bP (X Y : proc) : Prop := Y = X.
-  Definition bC (X Y : proc) : Prop := ∃ W, pullb bP X W ∧ Y = PG ① ∥ W.
+  Definition bC (X Y : proc) : Prop := ∃ W, pullb bP X W ∧ Y = PG 𝟙 ∥ W.
   Definition bH (f : nat) (m : node) (X Y : proc) : Prop :=
-    successb X = false ∧ nosend X ∧ Y = PG (hsum VL reps wrapb (tn VL reps wrapb f) m X).
-  Definition bR (X Y : proc) : Prop := nosend X ∧ Y = PG ①.
+    successb X = false ∧ nosend X ∧ obsb X = true ∧ Y = PG (hsum VL reps wrapb (tn VL reps wrapb f) m X).
+  Definition bR (X Y : proc) : Prop := nosend X ∧ Y = PG 𝟙.
 
   Definition rel (md : mode) : proc → proc → Prop :=
     pullb (match md with MP => bP | MH f m => bH f m | MC => bC | MR => bR end).
@@ -216,14 +226,14 @@ Section Modes.
   Lemma rel_bagc md : bagc (rel md).
   Proof. intros B X Z W Hz Hp. by eapply pb_bag. Qed.
 
-  Lemma tn_rel f m X :
+  Lemma tn_rel f m X : obsb X = true →
     (rel MP X (tn VL reps wrapb f m X) ∧ (f = 0 ∨ successb X = true))
     ∨ ∃ f', f = S f' ∧ rel (MH f' m) X (tn VL reps wrapb f m X).
   Proof.
-    destruct f as [|f]; [left; split; [by apply pb_base|by left]|]. simpl.
+    intros Hob. destruct f as [|f]; [left; split; [by apply pb_base|by left]|]. simpl.
     destruct (successb X) eqn:Es; [left; split; [by apply pb_base|by right]|].
     right. exists f. split; [done|]. apply (pb_bag _ _ _ _ _ (zs_bagof X)). apply pb_base.
-    split; [|split; [apply ns_nosend|done]].
+    split; [|split; [apply ns_nosend|split; [by apply ns_obsb|done]]].
     pose proof (zs_success _ _ _ (zs_bagof X)) as E. rewrite Es in E. by destruct (successb (bagof X)), (successb (ns X)).
   Qed.
 
@@ -252,15 +262,15 @@ Section Modes.
        ∧ ((rel MP X' Y' ∧ (unlisted VL a ∨ f = 0 ∨ successb X' = true))
           ∨ ∃ f', f = S f' ∧ rel (MH f' (m ++ [a])) X' Y')).
 
-  Lemma bH_nout f m Z a : (∀ k c v, a ≠ CoOut k c v) → nosend Z →
+  Lemma bH_nout f m Z a : (∀ k c v, a ≠ CoOut k c v) → nosend Z → obsb Z = true →
     LH m a (length (co_succ Z a)) (length (co_succ (PG (hsum VL reps wrapb (tn VL reps wrapb f) m Z)) a))
     ∧ ∀ Y', Y' ∈ co_succ (PG (hsum VL reps wrapb (tn VL reps wrapb f) m Z)) a →
         (∃ Z', Z' ∈ co_succ Z a ∧ Q1H f m a Z' Y') ∨ (co_succ Z a = [] ∧ rel MR Z Y').
   Proof.
-    intros Ha Hns. simpl. unfold hsum. rewrite gco_gsum, map_app, concat_app, (co_heads Z a Ha).
+    intros Ha Hns Hob. simpl. unfold hsum. rewrite gco_gsum, map_app, concat_app, (co_heads Z a Ha Hob).
     destruct (heads_part (tn VL reps wrapb f) m a (heads Z)) as [Hl1 He1].
     assert (Hndr : NoDup (repl reps m Z)) by (apply NoDup_filter, Hnd).
-    destruct (reps_part (repl reps m Z) a Ha Hndr) as [R1 R2].
+    destruct (reps_part (repl reps m Z) a Ha (λ k Hk, Hru m k (proj2 (proj1 (list_elem_of_filter _ _ _) Hk))) Hndr) as [R1 R2].
     assert (Hmem : offer_of a ∈ repl reps m Z ↔ offer_of a ∈ reps m ∧ omap (resp a) (heads Z) = []).
     { unfold repl. rewrite list_elem_of_filter. unfold free_rep. split.
       - intros [Hf Hin]. split; [done|].
@@ -280,7 +290,8 @@ Section Modes.
       + left. destruct (He1 Y' HY) as (Z' & HZ' & Hh). exists Z'. split; [done|].
         destruct Hh as (W & Ht & [[Hw ->]|[Hw [->|[-> Hu]]]]).
         * left. split; [done|]. apply (pullb_tite _ _ _ _ Ht). apply pb_base. exists Z'. split; [by apply pb_base|done].
-        * right. split; [done|]. destruct (tn_rel f (m ++ [a]) Z') as [[Hp Hc]|(f' & Ef & Hh')].
+        * right. split; [done|]. assert (HZo : obsb Z' = true) by (apply (co_succ_obsb Z a Z' Hob); by rewrite (co_heads Z a Ha Hob)).
+          destruct (tn_rel f (m ++ [a]) Z' HZo) as [[Hp Hc]|(f' & Ef & Hh')].
           -- left. split; [by apply (pullb_tite _ _ _ _ Ht)|by right].
           -- right. exists f'. split; [done|]. by apply (pullb_tite _ _ _ _ Ht).
         * right. split; [done|]. left. split; [|by left]. apply (pullb_tite _ _ _ _ Ht). by apply pb_base.
@@ -302,7 +313,7 @@ Section Modes.
         rewrite (zs_success _ _ _ Hz), Hc. apply orb_true_r.
       + right. split; [done|]. right. exists f'. split; [done|]. by eapply pb_bag.
     - apply rel_bagc.
-    - intros X0 Y0 (Hs & Hn & ->). exact (bH_nout f m X0 a Ha Hn).
+    - intros X0 Y0 (Hs & Hn & Hob & ->). exact (bH_nout f m X0 a Ha Hn Hob).
   Qed.
 
   Lemma rel_nout_P X Y a : (∀ k c v, a ≠ CoOut k c v) → rel MP X Y →
@@ -349,7 +360,7 @@ Section Modes.
     ∧ ∀ Y', Y' ∈ co_succ Y (CoOut k c v) → ∃ X', X' ∈ co_succ X (CoOut k c v) ∧ rel md X' Y'.
   Proof.
     destruct md as [|f m| |]; [apply rel_out_P| | |]; apply pullb_out.
-    - intros X0 Y0 (_ & Hn & ->). simpl. rewrite gco_out, (Hn k c v). split; [done|].
+    - intros X0 Y0 (_ & Hn & _ & ->). simpl. rewrite gco_out, (Hn k c v). split; [done|].
       intros Y' HY. by apply elem_of_nil in HY.
     - intros X0 Y0 (W & HW & ->). destruct (rel_out_P X0 W k c v HW) as [Hl Hel]. simpl. split.
       + by rewrite length_fmap.
@@ -368,14 +379,14 @@ Section Modes.
   Lemma hsum_nosucc rec m Z : gsuccessb (hsum VL reps wrapb rec m Z) = false.
   Proof.
     apply gsum_nosucc. intros g Hg. apply elem_of_app in Hg as [Hg|Hg]; apply list_elem_of_omap in Hg as (x & _ & Hx).
-    - destruct x as [𝜆 D]. unfold hguard in Hx. destruct 𝜆 as [t|t c|t E es|t M es|t es]; simpl in Hx.
+    - destruct x as [𝜆 D]. unfold hguard in Hx. destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl in Hx.
       + discriminate Hx.
       + injection Hx as <-. done.
       + destruct (eval_qubits es); [injection Hx as <-; done|discriminate Hx].
       + destruct (eval_qubits es); [injection Hx as <-; done|discriminate Hx].
-      + destruct (eval_qubits es); [injection Hx as <-; done|discriminate Hx].
-    - destruct x as [k c v|k c|k E qs|k M qs|k qs]; simpl in Hx;
-        [discriminate Hx|injection Hx as <-; done..].
+      + destruct (eval_qubit e); [injection Hx as <-; done|discriminate Hx].
+    - destruct x as [k c v|k c|k E qs|k M qs|k q|k]; simpl in Hx;
+        [discriminate Hx|injection Hx as <-; done..|discriminate Hx].
   Qed.
 
   Lemma rel_success md X Y : rel md X Y →
@@ -387,7 +398,7 @@ Section Modes.
   Proof.
     destruct md as [|f m| |]; intros Hp.
     - refine (pullb_succ bP (λ x y, y = x) _ X Y Hp). by intros X0 Y0 ->.
-    - refine (pullb_succ (bH f m) (λ x y, x = false ∧ y = false) _ X Y Hp). intros X0 Y0 (Hs & _ & ->).
+    - refine (pullb_succ (bH f m) (λ x y, x = false ∧ y = false) _ X Y Hp). intros X0 Y0 (Hs & _ & _ & ->).
       split; [done|]. apply hsum_nosucc.
     - refine (pullb_succ bC (λ x y, y = true) _ X Y Hp). by intros X0 Y0 (W & _ & ->).
     - refine (pullb_succ bR (λ x y, y = true) _ X Y Hp). by intros X0 Y0 (_ & ->).
@@ -533,8 +544,10 @@ Qed.
 Section Inv.
   Context (VL : list val) (reps : node → list offer) (wrapb : node → offer → bool).
   Hypothesis Hnd : ∀ m, NoDup (reps m).
+  Hypothesis Hru : ∀ m k, OffUnfold k ∉ reps m.
   Context (T : proc) (f0 : nat).
   Hypothesis HT1 : ∀ n, length (tnodes T n) ≤ 1.
+  Hypothesis HTo : obsb T = true.
 
   Notation TN := (tn VL reps wrapb f0 [] T).
   Notation rel := (rel VL reps wrapb).
@@ -621,7 +634,7 @@ Section Inv.
         * destruct (rel_nout_P VL reps wrapb X Y a Ha' Hr) as [Hl He].
           destruct (single_step _ _ (rel MP) Hlx Hl He) as [[-> ->]|(X' & Y' & -> & -> & Hr')]; [by left|].
           right. left. exists X', Y', MP. split; [done|]. split; [done|]. split; [done|]. by apply pcause_ext.
-        * destruct Hm as (Em & Ef & Hnw). destruct (rel_nout_H VL reps wrapb Hnd f m X Y a Ha' Hr) as [HL He].
+        * destruct Hm as (Em & Ef & Hnw). destruct (rel_nout_H VL reps wrapb Hnd Hru f m X Y a Ha' Hr) as [HL He].
           destruct (tri_step _ _ (offer_of a ∈ reps m) (Q1H VL reps wrapb f m a) (rel MR X) Hlx HL He)
             as [(-> & -> & _)|[(X' & Y' & E1 & E2 & HQ)|(E1 & Hin & Y' & -> & HR)]].
           -- by left.
@@ -664,7 +677,7 @@ Section Inv.
   Theorem inv_all n : inv n.
   Proof.
     induction n as [|a n IH] using rev_ind; [|by apply inv_step].
-    right. left. destruct (tn_rel VL reps wrapb f0 [] T) as [[Hp Hc]|(f' & Ef & Hh)].
+    right. left. destruct (tn_rel VL reps wrapb f0 [] T HTo) as [[Hp Hc]|(f' & Ef & Hh)].
     - exists T, TN, MP. split; [done|]. split; [done|]. split; [done|]. destruct Hc as [->|Hc].
       + left. simpl. lia.
       + right. left. apply S_T_spec. exists 0. split; [simpl; lia|]. unfold succ_at. simpl. by rewrite Hc.
@@ -752,7 +765,7 @@ Section Inv.
     - split; intros Hm; [by destruct (menu_nil _ _ _ EX Hm)|by destruct (menu_nil _ _ _ EY Hm)].
     - rewrite (menu_single _ _ _ o EX), (menu_single _ _ _ o EY). destruct Hm as [[Hr _]|(f & Hr)].
       + rewrite (ans_P VL reps wrapb X Y o Hr). split; [done|by left].
-      + rewrite (ans_H VL reps wrapb Hnd f (nout n) X Y o Hr). split; [by left|].
+      + rewrite (ans_H VL reps wrapb Hnd Hru f (nout n) X Y o Hr). split; [by left|].
         intros [Ha|[Hin _]]; [by left|by right].
   Qed.
 
@@ -761,7 +774,7 @@ Section Inv.
   Proof.
     intros HS Hnp Hne. destruct (tn_low n HS) as [[EX EY]|(X & Y & EX & EY & Hm)]; [done|].
     rewrite (menu_single _ _ _ o EX), (menu_single _ _ _ o EY). destruct Hm as [[_ Hp]|(f & Hr)]; [done|].
-    exact (ans_H VL reps wrapb Hnd f (nout n) X Y o Hr).
+    exact (ans_H VL reps wrapb Hnd Hru f (nout n) X Y o Hr).
   Qed.
 
   Lemma tn_menu_any n o : menu TN n o → menu T n o ∨ o ∈ reps (nout n) ∨ ∃ n0, menu T n0 o.
@@ -770,7 +783,7 @@ Section Inv.
     - by destruct (menu_nil _ _ _ EY Hm).
     - apply (menu_single _ _ _ o EY) in Hm. rewrite (menu_single _ _ _ o EX). destruct md as [|f m| |]; simpl in Ht.
       + left. by apply (ans_P VL reps wrapb X Y o Hr).
-      + destruct Ht as (Em & _). subst m. destruct (proj1 (ans_H VL reps wrapb Hnd f (nout n) X Y o Hr) Hm) as [Hx|[Hin _]];
+      + destruct Ht as (Em & _). subst m. destruct (proj1 (ans_H VL reps wrapb Hnd Hru f (nout n) X Y o Hr) Hm) as [Hx|[Hin _]];
           [by left|right; by left].
       + left. by apply (ans_C VL reps wrapb X Y o Hr).
       + done.

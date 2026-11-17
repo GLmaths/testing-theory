@@ -26,7 +26,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -82,7 +82,7 @@ Section Characterisation.
   Proof.
     intros Hz. split.
     - intros Hc T HT r w Hr.
-      apply (proj1 (alt_free_obs_iff DC p q Hz) Hc (O_T T) (λ c, c ∈ out_chans T) (kinds_of T) (menu T) (S_T T));
+      apply (proj1 (alt_free_obs_iff DC p q Hz) Hc (O_T T) (λ c, c ∈ out_chans T) (kinds_of T) (λ k, kinds_of_norec T k (proj1 (proj1 (proj1 HT)))) (menu T) (S_T T));
         [|exact Hr].
       split; [|intros n o Hm; exact (menu_real p q T n o HT Hm)].
       exists T. split; [done|]. split; [done|]. split; [done|]. split; [done|]. split; [done|].

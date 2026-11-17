@@ -29,7 +29,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -39,7 +39,7 @@ Section LqP.
 
 Lemma co_succ_offer X a a' : offer_of a = offer_of a' → co_succ X a = [] → co_succ X a' = [].
 Proof.
-  intros Ho. induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl.
+  intros Ho. induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl.
   - destruct a, a'; simpl in *; try done; inversion Ho; subst; done.
   - destruct (eval e) as [[[]| |]|]; done.
   - intros E. apply app_eq_nil in E as [E1 E2]. apply fmap_nil_inv in E1. apply fmap_nil_inv in E2.
@@ -90,7 +90,7 @@ Proof. intros Hs. apply S_T_app. by apply succ_at_S. Qed.
 Definition relevant (c : comp) (o : offer) : Prop :=
   match o with
   | OffOut _ _ _ => False
-  | OffIn _ ch => ∃ t v P', prog_step c.2.1 (CTag t) (ActExt (PrOut ch v)) P'
+  | OffIn _ ch => ∃ t v P', c.2.1 ⟶{ch ! v}[(CTag t)] P'
   | _ => True
   end.
 
@@ -99,13 +99,14 @@ Lemma cstep_menu_eq `{QM : QuantumModel} I J O ρ c σ Δ :
 Proof.
   intros Hrel Hs.
   apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                  |n P C k E' qs t HI|n P C k qs t HI|n P C k M qs t HI]; subst; simpl in *.
+                  |n P C k E' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
   - by constructor.
   - by apply cs_recv.
   - apply cs_in; [|done]. apply Hrel; [|done]. by exists t, v, P'.
   - apply cs_op. by apply Hrel.
   - apply cs_init. by apply Hrel.
   - apply cs_meas. by apply Hrel.
+  - apply cs_unfold. by apply Hrel.
 Qed.
 
 Section Asm.
@@ -140,6 +141,7 @@ Section Asm.
   Hypothesis HLVp : ∀ n m, LV (n ++ m) → LV (n).
   Hypothesis HVL : ∀ n a, LV (n) → a ∈ n → ¬ unlisted VL a.
   Hypothesis Hf0 : ∀ n, LV (n) → length n < f0.
+  Hypothesis HKr : ∀ k, K k ≠ KRec.
 
   Lemma T_len n : length (tnodes T n) ≤ 1.
   Proof. exact (proj1 (proj2 (proj2 (proj1 HT))) n). Qed.
@@ -149,6 +151,12 @@ Section Asm.
     intros Hin. destruct (HR2 m o Hin) as [HJ HnM]. destruct HJ as [HM|[HJ _]]; [done|].
     destruct HJ as [HU|[Hok _]]; [|done]. destruct HnM. exact (U_menu q T O r w Hrun m o HU).
   Qed.
+
+  Lemma reps_nounf m k : OffUnfold k ∉ reps m.
+  Proof. intros Hin. destruct (rep_ok m _ Hin) as (Hty & _). unfold typed in Hty. simpl in Hty. apply (HKr k). congruence. Qed.
+
+  Lemma T_ob : obsb T = true.
+  Proof. exact (proj1 (proj1 (proj1 HT))). Qed.
 
   Definition TG (x : tag * okind) : Prop := x ∈ tagged T ∨ ∃ m o, o ∈ reps m ∧ x = (off_tag o, off_kind o).
   Definition OC (c : channel) : Prop := c ∈ out_chans T.
@@ -183,8 +191,8 @@ Section Asm.
       + exact (proj2 Hobs c (Hoc c Hc) Hin).
       + destruct (rep_ok m _ Hin) as (_ & _ & _ & Hch). exact (Hch k c eq_refl (HCh c (Hoc c Hc))).
     - intros k x y Hx Hy. rewrite <- (TG_kind k x (Htg _ Hx)). exact (TG_kind k y (Htg _ Hy)).
-    - exact (tn_len VL reps wrapb Hnd T f0 T_len).
-    - intros n m k c v c' v' Y HY. exact (tn_gone VL reps wrapb Hnd T f0 T_len n m k c v c' v' Y Hk4 HY).
+    - exact (tn_len VL reps wrapb Hnd reps_nounf T f0 T_len T_ob).
+    - intros n m k c v c' v' Y HY. exact (tn_gone VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n m k c v c' v' Y Hk4 HY).
   Qed.
 
   Lemma TN_real : RealT p q O Ch K (menu TN) (S_T TN).
@@ -195,11 +203,11 @@ Section Asm.
         exact (TG_tag k x (proj1 (proj2 TN_syn) _ Hin)).
       + split; [|split; [done|split; [done|split]]].
         * intros n [[k c] v] Hpl HS. assert (HST : Sx n = false).
-          { destruct (Sx n) eqn:E; [|done]. rewrite (tn_S_up VL reps wrapb Hnd T f0 T_len n E) in HS. discriminate HS. }
-          rewrite (HO n _ Hpl HST). symmetry. exact (tn_O VL reps wrapb Hnd T f0 T_len n k c v HS).
+          { destruct (Sx n) eqn:E; [|done]. rewrite (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n E) in HS. discriminate HS. }
+          rewrite (HO n _ Hpl HST). symmetry. exact (tn_O VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n k c v HS).
         * intros c Hc. apply HCh. exact (proj1 (proj2 (proj2 TN_syn)) c Hc).
         * intros k x Hin. exact (TG_kind k x (proj1 (proj2 TN_syn) _ Hin)).
-    - intros n o Hm. destruct (tn_menu_any VL reps wrapb Hnd T f0 T_len n o Hm) as [HM|[Hin|(n0 & HM)]].
+    - intros n o Hm. destruct (tn_menu_any VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n o Hm) as [HM|[Hin|(n0 & HM)]].
       + exact (HokT n o HM).
       + exact (rep_ok _ o Hin).
       + exact (HokT n0 o HM).
@@ -240,8 +248,8 @@ Section Asm.
   Lemma clean_S n : ¬ wpath wrapb T n → ¬ rpath reps n → S_T TN n = Sx n.
   Proof.
     intros Hw Hr. apply eq_true_iff_eq. split.
-    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd T f0 T_len n HS) as [Hc|[Hc|Hc]]; done.
-    - exact (tn_S_up VL reps wrapb Hnd T f0 T_len n).
+    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n HS) as [Hc|[Hc|Hc]]; done.
+    - exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n).
   Qed.
 
   Lemma q_S i c ρ : (c, ρ) ∈ r i → S_T TN c.1 = Sx c.1.
@@ -255,9 +263,9 @@ Section Asm.
     refine (proj2 (run_sandwich (M := lq_menu O) Ok U Sx r w HrU (menu TN) (S_T TN) _ _ _)).
     - intros i c ρ Hin. exact (q_S i c ρ Hin).
     - intros i c ρ o Hin HS HU. assert (HSN : S_T TN c.1 = false) by (rewrite (q_S i c ρ Hin); exact HS).
-      apply (proj1 (tn_menu_low VL reps wrapb Hnd T f0 T_len c.1 o HSN)). exact (U_menu q T O r w Hrun _ o HU).
+      apply (proj1 (tn_menu_low VL reps wrapb Hnd reps_nounf T f0 T_len T_ob c.1 o HSN)). exact (U_menu q T O r w Hrun _ o HU).
     - intros i c ρ o Hin HS Hm. assert (HSN : S_T TN c.1 = false) by (rewrite (q_S i c ρ Hin); exact HS).
-      destruct (proj2 (tn_menu_low VL reps wrapb Hnd T f0 T_len c.1 o HSN) Hm) as [HM|Hin'].
+      destruct (proj2 (tn_menu_low VL reps wrapb Hnd reps_nounf T f0 T_len T_ob c.1 o HSN) Hm) as [HM|Hin'].
       + exact (menu_star p q T Ch K O r w Hrun Hnz HokT _ o HM).
       + rewrite nout_plain in Hin' by (exact (q_plain i (c, ρ) Hin)).
         exact (J0_sub p q T Ch K O r w F Mo Hrun Hnz HokT _ o (proj1 (HR2 _ o Hin'))).
@@ -280,7 +288,7 @@ Section Asm.
   Lemma p_succ n : LV (n) → plain n → visited_ok (M := lq_menu O) (menu TN) n → (S_T TN n = true ↔ Ss n = true).
   Proof.
     intros Hin Hpl Hv. split.
-    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd T f0 T_len n HS)
+    - intros HS. destruct (tn_S_cases VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n HS)
         as [Hc|[(m & a & m2 & E & Ha & Hw & HTne)|(m & a & m2 & E & Ha & Hr)]].
       + by apply Sstar_S.
       + apply Sstar_crossed. subst n. exists m, a, m2. split; [done|].
@@ -292,8 +300,8 @@ Section Asm.
         * exact (J0_sub p q T Ch K O r w F Mo Hrun Hnz HokT m _ HJ).
         * intros HU. apply HnM. exact (U_menu q T O r w Hrun m _ HU).
     - intros HS. apply Sstar_inv in HS as [HS|(m & a & m2 & E & HJ & HnU)];
-        [exact (tn_S_up VL reps wrapb Hnd T f0 T_len n HS)|].
-      destruct (Sx n) eqn:EST; [exact (tn_S_up VL reps wrapb Hnd T f0 T_len n EST)|].
+        [exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n HS)|].
+      destruct (Sx n) eqn:EST; [exact (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n EST)|].
       assert (E' : n = (m ++ [a]) ++ m2) by (rewrite E; by rewrite <- app_assoc).
       assert (HinP : LV (m ++ [a])) by (apply (HLVp _ m2); by rewrite <- E').
       assert (HplP : plain (m ++ [a])) by (apply (plain_app_l _ m2); by rewrite <- E').
@@ -303,8 +311,8 @@ Section Asm.
       { intros k c v ->. apply (HplP k c v). apply elem_of_app. right. by left. }
       assert (HneN : tnodes TN (m ++ [a]) ≠ []) by (apply menu_step; exact (Hv m a m2 E)).
       rewrite E'. destruct (tnodes T (m ++ [a])) as [|X lx] eqn:ET.
-      + exact (succ_prefix TN _ m2 (tn_rep_succ VL reps wrapb Hnd T f0 T_len (m ++ [a]) ET HneN)).
-      + apply succ_prefix. apply (tn_wrap_succ VL reps wrapb Hnd T f0 T_len m a Ha);
+      + exact (succ_prefix TN _ m2 (tn_rep_succ VL reps wrapb Hnd reps_nounf T f0 T_len T_ob (m ++ [a]) ET HneN)).
+      + apply succ_prefix. apply (tn_wrap_succ VL reps wrapb Hnd reps_nounf T f0 T_len T_ob m a Ha);
           [|by rewrite ET|done|exact (np_cause _ HinP HplP HSP)].
         rewrite nout_plain by (exact (plain_app_l _ _ HplP)). apply (HW2 m); [exact (HLVp m [a] HinP)| |exact HnU].
         apply step_menu. by rewrite ET.
@@ -312,16 +320,16 @@ Section Asm.
 
   Lemma p_steps n ρ P C :
     LV (n) → plain n → visited_ok (M := lq_menu O) (menu TN) n →
-    (∀ t ch v P', prog_step P (CTag t) (ActExt (PrOut ch v)) P' → CL ch) → S_T TN n = false →
+    (∀ t ch v P', P ⟶{ch ! v}[(CTag t)] P' → CL ch) → S_T TN n = false →
     ∀ σ Δ, cstep (menu TN) O ρ (n, (P, C)) σ Δ ↔ cstep J0 O ρ (n, (P, C)) σ Δ.
   Proof.
     intros Hin Hpl Hv HCLc HS σ Δ.
     assert (HST : Sx n = false).
-    { destruct (Sx n) eqn:E0; [|done]. rewrite (tn_S_up VL reps wrapb Hnd T f0 T_len n E0) in HS. discriminate HS. }
+    { destruct (Sx n) eqn:E0; [|done]. rewrite (tn_S_up VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n E0) in HS. discriminate HS. }
     assert (Hne : tnodes TN n ≠ []).
     { clear -Hv. destruct n as [|a m _] using rev_ind; [done|]. apply menu_step. exact (Hv m a [] eq_refl). }
     assert (Heq : ∀ o, relevant (n, (P, C)) o → (menu TN n o ↔ J0 n o)).
-    { intros o Hrel. rewrite (tn_menu_head VL reps wrapb Hnd T f0 T_len n o HS (np_cause n Hin Hpl HST) Hne).
+    { intros o Hrel. rewrite (tn_menu_head VL reps wrapb Hnd reps_nounf T f0 T_len T_ob n o HS (np_cause n Hin Hpl HST) Hne).
       rewrite nout_plain by done. split.
       - intros [HM|[Hin' _]]; [by left|exact (proj1 (HR2 n o Hin'))].
       - intros HJ. destruct (classic (menu T n o)) as [HM|HnM]; [by left|right]. split.
@@ -332,7 +340,7 @@ Section Asm.
 
   Definition goodc (x : comp * weight) : Prop :=
     LV (x.1.1) ∧ plain x.1.1 ∧ visited_ok (M := lq_menu O) (menu TN) x.1.1
-    ∧ ∀ t ch v P', prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P' → CL ch.
+    ∧ ∀ t ch v P', x.1.2.1 ⟶{ch ! v}[(CTag t)] P' → CL ch.
 
   Lemma p_agree (D : dist comp) : (∀ x, x ∈ D → goodc x) → agree_on STN SJ0 D.
   Proof.
@@ -349,7 +357,7 @@ Section Asm.
 
   Hypothesis HLV : ∀ k D x, k ≤ N → reach k D → x ∈ D → LV (x.1.1).
   Hypothesis HCL : ∀ k D x t ch v P', k ≤ N → reach k D → x ∈ D →
-    prog_step x.1.2.1 (CTag t) (ActExt (PrOut ch v)) P' → CL ch.
+    x.1.2.1 ⟶{ch ! v}[(CTag t)] P' → CL ch.
 
   Theorem p_good r0 : is_run (SchedSts0 := STN) Stay (dinit p) r0 →
     ∀ i, i ≤ N → agree_on STN SJ0 (r0 i).

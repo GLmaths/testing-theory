@@ -28,7 +28,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -148,7 +148,7 @@ Inductive zs : proc → proc → proc → Prop :=
 
 Lemma zs_bagof X : zs (bagof X) X (ns X).
 Proof.
-  induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl; try apply zs_refl.
+  induction X as [t c e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl; try apply zs_refl.
   - apply zs_send.
   - destruct (eval e) as [[[]| |]|] eqn:He.
     + by apply zs_iteT.
@@ -221,34 +221,9 @@ Proof.
   - destruct IH as [IHs IHa]. split; [simpl; by rewrite He|]. intros a. simpl. rewrite He. exact (IHa a).
 Qed.
 
-Lemma exp_subst_shift k v e : exp_subst k v (exp_shift k e) = e.
-Proof.
-  induction e as [i|w|e IH|e1 IH1 e2 IH2|e1 IH1 e2 IH2|e1 IH1 e2 IH2]; simpl; try congruence.
-  case_decide as Hk; simpl.
-  - case_decide as Ha; [lia|]. case_decide as Hb; [lia|done].
-  - case_decide as Ha; [lia|]. case_decide as Hb; [done|lia].
-Qed.
-
-Lemma exps_subst_shift k v (es : list exp) : map (exp_subst k v) (map (exp_shift k) es) = es.
-Proof. induction es as [|e es IH]; [done|]. simpl. by rewrite exp_subst_shift, IH. Qed.
-
-Lemma prefix_subst_shift k v 𝜆 : prefix_subst k v (prefix_shift k 𝜆) = 𝜆.
-Proof. destruct 𝜆; simpl; by rewrite ?exps_subst_shift. Qed.
-
-Lemma prefix_binds_shift k 𝜆 : prefix_binds (prefix_shift k 𝜆) = prefix_binds 𝜆.
-Proof. by destruct 𝜆. Qed.
-
-Lemma subst_shiftv k v P : subst k v (shiftv k P) = P
-with gsubst_gshiftv k v g : gsubst k v (gshiftv k g) = g.
-Proof.
-  - destruct P; simpl; rewrite ?exp_subst_shift, ?subst_shiftv, ?gsubst_gshiftv; done.
-  - destruct g; simpl; rewrite ?exps_subst_shift, ?prefix_subst_shift, ?prefix_binds_shift,
-      ?subst_shiftv, ?gsubst_gshiftv; done.
-Qed.
-
 Fixpoint gosucc (sel : prefix → bool) (g : guard) : list proc :=
   match g with
-  | GNil _ | ① => []
+  | 𝟘{_} | 𝟙 => []
   | 𝜆 ∙ P => if sel 𝜆 then [P] else []
   | (g1 + g2)%lq => gosucc sel g1 ++ gosucc sel g2
   end.
@@ -261,7 +236,7 @@ Fixpoint osucc (sel : prefix → bool) (Z : proc) : list proc :=
       | Some (VBool false) => osucc sel Q
       | _ => []
       end
-  | P ∥ Q => ((λ D, D ∥ shiftv 0 Q) <$> osucc sel P) ++ ((λ D, shiftv 0 P ∥ D) <$> osucc sel Q)
+  | P ∥ Q => ((λ D, D ∥ ⇧ᵥ Q) <$> osucc sel P) ++ ((λ D, ⇧ᵥ P ∥ D) <$> osucc sel Q)
   | PG g => gosucc sel g
   | _ => []
   end.
@@ -272,7 +247,7 @@ Definition sel_in (k : tag) (c : channel) (𝜆 : prefix) : bool :=
 Definition sel_meas (k : tag) (M : meas) (qs : list qubit) (𝜆 : prefix) : bool :=
   match 𝜆 with (k' ∶ M' ⦅es ▷⦆) => bool_decide (k = k' ∧ M = M' ∧ eval_qubits es = Some qs) | _ => false end.
 
-Lemma gco_succ_in g k c v : gco_succ g (CoIn k c v) = (λ D, D ⁅ v ⁆) <$> gosucc (sel_in k c) g.
+Lemma gco_succ_in g k c v : gco_succ g (CoIn k c v) = (λ D, D ⁅ v ⁆ᵥ) <$> gosucc (sel_in k c) g.
 Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl.
   - done.
@@ -282,9 +257,9 @@ Proof.
   - by rewrite fmap_app, IH1, IH2.
 Qed.
 
-Lemma co_succ_in Z k c v : co_succ Z (CoIn k c v) = (λ D, D ⁅ v ⁆) <$> osucc (sel_in k c) Z.
+Lemma co_succ_in Z k c v : co_succ Z (CoIn k c v) = (λ D, D ⁅ v ⁆ᵥ) <$> osucc (sel_in k c) Z.
 Proof.
-  induction Z as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl.
+  induction Z as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl.
   - done.
   - destruct (eval e) as [[[]| |]|]; done.
   - rewrite fmap_app, <- !list_fmap_compose, IHP, IHQ, <- !list_fmap_compose.
@@ -296,7 +271,7 @@ Proof.
 Qed.
 
 Lemma gco_succ_meas g k M qs n :
-  gco_succ g (CoMeas k M qs n) = (λ D, D ⁅ VNat n ⁆) <$> gosucc (sel_meas k M qs) g.
+  gco_succ g (CoMeas k M qs n) = (λ D, D ⁅ VNat n ⁆ᵥ) <$> gosucc (sel_meas k M qs) g.
 Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl.
   - done.
@@ -307,9 +282,9 @@ Proof.
 Qed.
 
 Lemma co_succ_meas Z k M qs n :
-  co_succ Z (CoMeas k M qs n) = (λ D, D ⁅ VNat n ⁆) <$> osucc (sel_meas k M qs) Z.
+  co_succ Z (CoMeas k M qs n) = (λ D, D ⁅ VNat n ⁆ᵥ) <$> osucc (sel_meas k M qs) Z.
 Proof.
-  induction Z as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t x P IHP|g]; simpl.
+  induction Z as [t c0 e|e P IHP Q IHQ|P IHP Q IHQ|P IHP|x|t P IHP|g]; simpl.
   - done.
   - destruct (eval e) as [[[]| |]|]; done.
   - rewrite fmap_app, <- !list_fmap_compose, IHP, IHQ, <- !list_fmap_compose.

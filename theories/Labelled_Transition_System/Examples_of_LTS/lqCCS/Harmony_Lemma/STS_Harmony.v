@@ -47,50 +47,16 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list sets relations.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas.
 From TestingTheory Require Import lqCCS.Language.Congruence lqCCS.Harmony_Lemma.Memory_Harmony.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
-(* ** Iterated restrictions and shifts *)
+(* ** Iterated restrictions and congruence *)
 
 Section LqP.
   Context `{LP : lqCCS_Parameters}.
-
-Fixpoint Ѵ (n : nat) (P : proc) : proc :=
-  match n with 0 => P | S n => ν (Ѵ n P) end.
-
-Fixpoint liftn (n : nat) (f : nat → nat) : nat → nat :=
-  match n with 0 => f | S n => liftn n (lift f) end.
-
-Lemma liftn_add n : ∀ f i, liftn n f (n + i) = n + f i.
-Proof.
-  induction n; intros f i; simpl; [done|].
-  replace (S (n + i)) with (n + S i) by lia. rewrite IHn. simpl. lia.
-Qed.
-
-Lemma ren_chan_add_0 c : ren_chan (Nat.add 0) c = c.
-Proof. by destruct c. Qed.
-
-Lemma ren_chan_add_S n c : ren_chan (Nat.add n) (ren_chan S c) = ren_chan (Nat.add (S n)) c.
-Proof. rewrite ren_chan_comp. apply ren_chan_ext. intros i. simpl. lia. Qed.
-
-Lemma ren_chan_liftn f m c :
-  ren_chan (liftn m f) (ren_chan (Nat.add m) c) = ren_chan (Nat.add m) (ren_chan f c).
-Proof. rewrite !ren_chan_comp. apply ren_chan_ext. intros i. simpl. by rewrite liftn_add. Qed.
-
-Lemma ren_add_S n P : ren (Nat.add n) (ren S P) = ren (Nat.add (S n)) P.
-Proof. rewrite ren_comp. apply ren_ext. intros i. simpl. lia. Qed.
-
-Lemma ren_lbl_add_S n l : ren_lbl (Nat.add n) (ren_lbl S l) = ren_lbl (Nat.add (S n)) l.
-Proof. rewrite ren_lbl_comp. apply ren_lbl_ext_fun. intros i. simpl. lia. Qed.
-
-Lemma ren_lbl_add_0 l : ren_lbl (Nat.add 0) l = l.
-Proof. destruct l as [[c v|c v| | |]|]; simpl; by rewrite ?ren_chan_add_0. Qed.
-
-Lemma ren_resn f n P : ren f (Ѵ n P) = Ѵ n (ren (liftn n f) P).
-Proof. revert f. induction n; intros f; simpl; [done|]. by rewrite IHn. Qed.
 
 Lemma cgr_resn n P Q : P ≡* Q → Ѵ n P ≡* Ѵ n Q.
 Proof. intros H. induction n; simpl; [done|]. by apply cgr_res. Qed.
@@ -111,11 +77,11 @@ Qed.
 
 Lemma gstep_in_shape (g : guard) s c v Q' :
   g ⟶ᵍ{c ? v}[s] Q' →
-  ∃ (t : tag) P K, s = t ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆.
+  ∃ (t : tag) P K, s = t ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆ᵥ.
 Proof.
   intros Hs. remember (c ? v) as l eqn:El.
   induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs]; simplify_eq.
-  - exists t, P, (GNil []). split_and!; [done|apply gcgr_choice_nil_rev|done].
+  - exists t, P, 𝟘{ [] }. split_and!; [done|apply gcgr_choice_nil_rev|done].
   - destruct (IHHs eq_refl) as (t & P & K & -> & Hg & ->).
     exists t, P, (K + g2)%lq. split_and!; [done| |done].
     by rewrite Hg, gcgr_choice_assoc.
@@ -159,7 +125,7 @@ Lemma TransitionShapeForInput P s c v Q :
   P ⟶{c ? v}[s] Q →
   ∃ (t : tag) P1 K R n, s = t
     ∧ P ≡* Ѵ n (((t ∶ (ren_chan (Nat.add n) c) ? ∙ P1) + K) ∥ R)
-    ∧ Q ≡* Ѵ n (P1 ⁅ v ⁆ ∥ R).
+    ∧ Q ≡* Ѵ n (P1 ⁅ v ⁆ᵥ ∥ R).
 Proof.
   intros Hs. remember (c ? v) as l eqn:El. revert c v El.
   induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros c0 v0 El; simplify_eq.
@@ -193,13 +159,13 @@ Lemma TransitionShapeForGuard (g : guard) s l P' :
   g ⟶ᵍ{l}[s] P' →
   ∃ 𝜆 Q K, g ≡ᵍ* ((𝜆 ∙ Q) + K) ∧ (𝜆 ∙ Q) ⟶{l}[s] P'.
 Proof.
-  intros Hs0. induction Hs0 as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t es qs P Hq
+  intros Hs0. induction Hs0 as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t e q P Hq
                  | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH].
-  - exists (t ∶ 𝛕), P, (GNil []). split; [apply gcgr_choice_nil_rev|apply pr_tau].
-  - exists (t ∶ c ?), P, (GNil []). split; [apply gcgr_choice_nil_rev|apply pr_recv].
-  - exists (t ∶ E ⦅es⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by apply pr_op].
-  - exists (t ∶ M ⦅es ▷⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by apply pr_meas].
-  - exists (t ∶ init ⦅es⦆), P, (GNil []). split; [apply gcgr_choice_nil_rev|by apply pr_init].
+  - exists (t ∶ 𝛕), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|apply pr_tau].
+  - exists (t ∶ c ?), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|apply pr_recv].
+  - exists (t ∶ E ⦅es⦆), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_op].
+  - exists (t ∶ M ⦅es ▷⦆), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_meas].
+  - exists (t ∶ e := |0⟩), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_init].
   - destruct IH as (𝜆 & Q & K & Hc & Hs).
     exists 𝜆, Q, (K + g2)%lq. split; [|done].
     by rewrite Hc, gcgr_choice_assoc.
@@ -243,7 +209,7 @@ Proof.
     exists 𝜆, P1, K, R, (S n), Q1. split_and!; [by apply cgr_res|done|by apply cgr_res].
 Qed.
 
-Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70).
+Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩").
 
 Section STS.
   Context `{QM : QuantumModel}.
@@ -273,20 +239,20 @@ Section STS.
   Inductive sts : St → proc → choice → St → proc → Prop :=
   | sts_com ρ t c e v t' P K :
       〚 e 〛 = v →
-      ⟨ρ, t ∶ c ! e ∥ ((t' ∶ c ? ∙ P) + K)⟩ ⟶[⦗t, t'⦘] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆⟩
+      ⟨ρ, t ∶ c ! e ∥ ((t' ∶ c ? ∙ P) + K)⟩ ⟶[⦗t, t'⦘] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆ᵥ⟩
   | sts_tau ρ t P K :
       ⟨ρ, ((t ∶ 𝛕 ∙ P) + K)⟩ ⟶[t] ⟨ρ, P⟩
   | sts_op ρ t E es qs P K :
       eval_qubits es = Some qs →
       ⟨ρ, ((t ∶ E ⦅es⦆ ∙ P) + K)⟩ ⟶[t] ⟨sop_apply E qs ρ, P⟩
-  | sts_init ρ t es qs P K :
-      eval_qubits es = Some qs →
-      ⟨ρ, ((t ∶ init ⦅es⦆ ∙ P) + K)⟩ ⟶[t] ⟨init_apply qs ρ, P⟩
+  | sts_init ρ t e q P K :
+      eval_qubit e = Some q →
+      ⟨ρ, ((t ∶ e := |0⟩ ∙ P) + K)⟩ ⟶[t] ⟨init_apply q ρ, P⟩
   | sts_meas ρ t M es qs (k : Out (meas_of M qs)) P K :
       eval_qubits es = Some qs →
-      ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[t] ⟨M ⦅qs⦆[k] · ρ, P ⁅ VNat (code _ k) ⁆⟩
-  | sts_rec ρ t X P :
-      ⟨ρ, t ∶ rec X ∙ P⟩ ⟶[t] ⟨ρ, P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄⟩
+      ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[t] ⟨M ⦅qs⦆[k] · ρ, P ⁅ VNat (code _ k) ⁆ᵥ⟩
+  | sts_rec ρ t P :
+      ⟨ρ, t ∶ rec ∙ P⟩ ⟶[t] ⟨ρ, P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ⟩
   | sts_par ρ P s ρ' P' Q :
       ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶[s] ⟨ρ', P' ∥ Q⟩
   | sts_res ρ P s ρ' P' :
@@ -306,7 +272,7 @@ Section STS.
     ∀ m c e v t t' P1 K R R', 〚 e 〛 = v →
     ⟨ρ, Ѵ n (t ∶ (ren_chan (Nat.add n) c) ! e ∥ R)
         ∥ Ѵ m (((t' ∶ (ren_chan (Nat.add m) c) ? ∙ P1) + K) ∥ R')⟩
-      ⟶[⦗t, t'⦘] ⟨ρ, Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ ∥ R')⟩.
+      ⟶[⦗t, t'⦘] ⟨ρ, Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ᵥ ∥ R')⟩.
   Proof.
     induction n as [|n IHn]; intros m.
     - induction m as [|m IHm]; intros c e v t t' P1 K R R' He; cbn [Ѵ].
@@ -330,8 +296,8 @@ Section STS.
         apply (IHn m (ren_chan S c) e v t t' (ren (liftn m S) P1) (gren (liftn m S) K) R
                  (ren (liftn m S) R') He).
       + rewrite <- (proj1 ren_subst).
-        replace (Ѵ m (ren (liftn m S) (P1 ⁅ v ⁆) ∥ ren (liftn m S) R'))
-          with (ren S (Ѵ m (P1 ⁅ v ⁆ ∥ R'))) by (rewrite ren_resn; done).
+        replace (Ѵ m (ren (liftn m S) (P1 ⁅ v ⁆ᵥ) ∥ ren (liftn m S) R'))
+          with (ren S (Ѵ m (P1 ⁅ v ⁆ᵥ ∥ R'))) by (rewrite ren_resn; done).
         apply cgr_res_scope.
   Qed.
 
@@ -342,7 +308,7 @@ Section STS.
     induction Hp as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH
                    | P Q s l P' Hp IH | P Q s l Q' Hp IH
                    | P Q t t' c v P' Q' HpP _ HpQ _ | P Q t t' c v P' Q' HpP _ HpQ _
-                   | P s l P' Hp IH | t X P]; intros El; subst.
+                   | P s l P' Hp IH | t P]; intros El; subst.
     - destruct (TransitionShapeForGuard _ _ _ _ Hg) as (𝜆 & Q & K & Hcg & Hs).
       eapply sts_cong; [apply cgr_guard, Hcg| |reflexivity].
       apply prog_step_guard in Hs. inversion Hs; subst. apply sts_tau.
@@ -393,22 +359,22 @@ Section STS.
   Lemma Reduction_Implies_Internal ρ P s ρ' Q :
     ⟨ρ, P⟩ ⟶[s] ⟨ρ', Q⟩ → ∃ Q', ρ ∣ P ⟶{τ}[s] ρ' ∣ Q' ∧ Q' ≡* Q.
   Proof.
-    induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t E es qs P K Hq | ρ t es qs P K Hq
-                   | ρ t M es qs k P K Hq | ρ t X P
+    induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t E es qs P K Hq | ρ t e q P K Hq
+                   | ρ t M es qs k P K Hq | ρ t P
                    | ρ P s ρ' P' Q _ (P'' & Hc & HP)
                    | ρ P s ρ' P' _ (P'' & Hc & HP)
                    | ρ P P1 s ρ' Q1 Q Hcg _ (Q1' & Hc & HQ) Hcg'].
-    - exists (𝟘 ∥ P ⁅ v ⁆). split; [|reflexivity]. apply comp_tau_right.
+    - exists (𝟘 ∥ P ⁅ v ⁆ᵥ). split; [|reflexivity]. apply comp_tau_right.
       eapply pr_syncL; [by apply pr_send | apply pr_sumL, pr_recv].
     - exists P. split; [|reflexivity]. apply comp_tau_right.
       apply pr_sumL, pr_tau.
     - exists P. split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_op | apply (me_sop ρ (sop_act E qs)) | constructor].
     - exists P. split; [|reflexivity].
-      eapply comp_tau_sync; [by apply pr_sumL, pr_init | apply (me_sop ρ (init_act qs)) | constructor].
-    - exists (P ⁅ VNat (code _ k) ⁆). split; [|reflexivity].
+      eapply comp_tau_sync; [by apply pr_sumL, pr_init | apply (me_sop ρ (init_act q)) | constructor].
+    - exists (P ⁅ VNat (code _ k) ⁆ᵥ). split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_meas | apply me_meas | constructor].
-    - exists (P ⦃ (t ∶ rec X ∙ P)↑ // X ⦄). split; [|reflexivity]. apply comp_tau_right, pr_rec.
+    - exists (P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ). split; [|reflexivity]. apply comp_tau_right, pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par].
       destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)].
       + apply comp_tau_right. by apply pr_parL.
@@ -444,11 +410,11 @@ Section STS.
   Qed.
 End STS.
 
-Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70) : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 
 End LqP.
 
-Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70).
-Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70) : lqccs_scope.
+Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩").
+Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 
 (* end hide *)

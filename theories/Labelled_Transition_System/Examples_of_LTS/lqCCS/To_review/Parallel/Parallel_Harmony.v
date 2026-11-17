@@ -35,7 +35,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra pMust_almost_sure lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Harmony_Lemma.Memory_Harmony.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Harmony_Lemma.Memory_Harmony.
 From TestingTheory Require Import lqCCS.Language.Congruence lqCCS.Harmony_Lemma.STS_Harmony.
 
 #[local] Open Scope lqccs_scope.
@@ -62,14 +62,14 @@ Section Par_Harmony.
         * exists P, Q'. split; [done|].
           exact (par_right (mem_step ∣[sync] prog_step) prog_step sync_sys (ρ, P) Q s τ Q' HQ).
         * exists P', Q'. split; [done|].
-          eapply (par_sync _ _ _ (ρ, P) Q (CTag t) (CTag t') (cpair t t') (inr (PrOut c v)) (PrIn c v)).
-          -- exact (par_right mem_step prog_step sync ρ P (CTag t) (ActExt (PrOut c v)) P' HP).
+          eapply (par_sync _ _ _ (ρ, P) Q (CTag t) (CTag t') ⦗t, t'⦘ (inr (PrOut c v)) (PrIn c v)).
+          -- exact (par_right mem_step prog_step sync ρ P (CTag t) (c ! v) P' HP).
           -- exact HQ.
           -- by do 2 constructor.
           -- constructor.
         * exists P', Q'. split; [done|].
-          eapply (par_sync _ _ _ (ρ, P) Q (CTag t) (CTag t') (cpair t t') (inr (PrIn c v)) (PrOut c v)).
-          -- exact (par_right mem_step prog_step sync ρ P (CTag t) (ActExt (PrIn c v)) P' HP).
+          eapply (par_sync _ _ _ (ρ, P) Q (CTag t) (CTag t') ⦗t, t'⦘ (inr (PrIn c v)) (PrOut c v)).
+          -- exact (par_right mem_step prog_step sync ρ P (CTag t) (c ? v) P' HP).
           -- exact HQ.
           -- by do 2 constructor.
           -- constructor.

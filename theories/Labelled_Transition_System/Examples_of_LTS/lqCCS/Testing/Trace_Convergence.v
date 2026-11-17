@@ -31,7 +31,7 @@ Import ListNotations.
 From stdpp Require Import base countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -120,14 +120,14 @@ End SN.
 Fixpoint sz (P : proc) : nat :=
   match P with
   | PSend _ _ _ => 1
-  | PIte _ P Q | P ∥ Q => sz P + sz Q
-  | ν P | PRec _ _ P => sz P
+  | If _ Then P Else Q | P ∥ Q => sz P + sz Q
+  | ν P | _ ∶ rec ∙ P => sz P
   | PVar _ => 0
   | PG g => gsz g
   end
 with gsz (g : guard) : nat :=
   match g with
-  | GNil _ | ① => 0
+  | 𝟘{_} | 𝟙 => 0
   | 𝜆 ∙ P => Datatypes.S (sz P)
   | (g1 + g2)%lq => gsz g1 + gsz g2
   end.
@@ -135,22 +135,22 @@ with gsz (g : guard) : nat :=
 Fixpoint norec (P : proc) : bool :=
   match P with
   | PSend _ _ _ | PVar _ => true
-  | PIte _ P Q | P ∥ Q => norec P && norec Q
+  | If _ Then P Else Q | P ∥ Q => norec P && norec Q
   | ν P => norec P
-  | PRec _ _ _ => false
+  | _ ∶ rec ∙ _ => false
   | PG g => gnorec g
   end
 with gnorec (g : guard) : bool :=
   match g with
-  | GNil _ | ① => true
+  | 𝟘{_} | 𝟙 => true
   | 𝜆 ∙ P => norec P
   | (g1 + g2)%lq => gnorec g1 && gnorec g2
   end.
 
-Lemma sz_subst : (∀ P k v, sz (subst k v P) = sz P) ∧ (∀ g k v, gsz (gsubst k v g) = gsz g).
+Lemma sz_subst : (∀ P k v, sz (P ⁅ v // k ⁆ᵥ) = sz P) ∧ (∀ g k v, gsz (gsubst k v g) = gsz g).
 Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
 
-Lemma norec_subst : (∀ P k v, norec (subst k v P) = norec P) ∧ (∀ g k v, gnorec (gsubst k v g) = gnorec g).
+Lemma norec_subst : (∀ P k v, norec (P ⁅ v // k ⁆ᵥ) = norec P) ∧ (∀ g k v, gnorec (gsubst k v g) = gnorec g).
 Proof. apply proc_guard_ind; simpl; intros; congruence. Qed.
 
 Lemma obs_norec : (∀ P, obsb P = true → norec P = true) ∧ (∀ g, gobsb g = true → gnorec g = true).
@@ -162,7 +162,7 @@ Proof.
   - intros g1 IH1 g2 IH2 [[Hg1 Hg2]%andb_prop _]%andb_prop. by rewrite IH1, IH2.
 Qed.
 
-Lemma gstep_sz g s l P' : gnorec g = true → prog_gstep g s l P' → sz P' < gsz g ∧ norec P' = true.
+Lemma gstep_sz g s l P' : gnorec g = true → g ⟶ᵍ{l}[s] P' → sz P' < gsz g ∧ norec P' = true.
 Proof.
   intros Hn Hs. revert Hn. induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs]; simpl; intros Hn;
     rewrite ?(proj1 sz_subst), ?(proj1 norec_subst); try (split; [lia|done]).
@@ -170,7 +170,7 @@ Proof.
   - apply andb_prop in Hn as [Hn1 Hn2]. destruct (IHHs Hn2). split; [lia|done].
 Qed.
 
-Lemma step_sz P s l P' : norec P = true → prog_step P s l P' → sz P' < sz P ∧ norec P' = true.
+Lemma step_sz P s l P' : norec P = true → P ⟶{l}[s] P' → sz P' < sz P ∧ norec P' = true.
 Proof.
   intros Hn Hs. revert Hn. induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; simpl; intros Hn.
   - by eapply gstep_sz.
@@ -209,7 +209,7 @@ Proof.
   intros HT. revert X. induction n as [|a n IH] using rev_ind; intros X HX.
   - rewrite tnodes_nil in HX. apply list_elem_of_singleton in HX. subst X. simpl. split; [lia|done].
   - apply tnodes_app_elem in HX as (X0 & HX0 & HX). destruct (IH X0 HX0) as [Hl Hr].
-    destruct (co_succ_step _ _ _ HX) as [Hs|[_ Hs]]; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' Hr']; rewrite length_app; simpl.
+    pose proof (co_succ_step _ _ _ HX) as Hs; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' Hr']; rewrite length_app; simpl.
     all: split; [lia|done].
 Qed.
 
@@ -218,7 +218,7 @@ Proof.
   intros HT (X & a & HX & _ & Hne). destruct (co_succ X a) as [|X' l] eqn:E; [done|].
   destruct (tnodes_sz T n X HT HX) as [Hl Hr].
   assert (HX' : X' ∈ co_succ X a) by (rewrite E; by left).
-  destruct (co_succ_step _ _ _ HX') as [Hs|[_ Hs]]; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' _]; lia.
+  pose proof (co_succ_step _ _ _ HX') as Hs; destruct (step_sz _ _ _ _ Hr Hs) as [Hl' _]; lia.
 Qed.
 
 Lemma cstep_measure `{QM : QuantumModel} T O ρ (c : comp) σ Δ :
@@ -227,7 +227,7 @@ Lemma cstep_measure `{QM : QuantumModel} T O ρ (c : comp) σ Δ :
 Proof.
   intros HT Hc Hs y Hy.
   apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                  |n P C k E' qs t HI|n P C k qs t HI|n P C k M qs t HI]; subst; simpl in *.
+                  |n P C k E' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
   - apply list_elem_of_fmap in Hy as (x & -> & Hx). simpl.
     destruct (sched_sz ρ P s Δ0 Hc Hss x Hx) as [Hl Hr]. split; [lia|done].
   - apply list_elem_of_singleton in Hy. subst y. simpl. destruct (step_sz _ _ _ _ Hc Hp) as [Hl Hr]. split; [lia|done].
@@ -238,6 +238,8 @@ Proof.
   - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T n _ HT HI) as Hd.
     rewrite length_app. simpl. split; [lia|done].
   - apply list_elem_of_fmap in Hy as (x & -> & Hx). simpl. pose proof (menu_depth T n _ HT HI) as Hd.
+    rewrite length_app. simpl. split; [lia|done].
+  - apply list_elem_of_singleton in Hy. subst y. simpl. pose proof (menu_depth T n _ HT HI) as Hd.
     rewrite length_app. simpl. split; [lia|done].
 Qed.
 
