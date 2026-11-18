@@ -44,13 +44,14 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list sets relations.
+From stdpp Require Import base gmultiset countable decidable list sets relations.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas.
 From TestingTheory Require Import lqCCS.Language.Congruence lqCCS.Harmony_Lemma.Memory_Harmony.
 
 #[local] Open Scope lqccs_scope.
+#[local] Open Scope par_scope.
 #[local] Open Scope nat_scope.
 
 (* ** Iterated restrictions and congruence *)
@@ -77,7 +78,7 @@ Qed.
 
 Lemma gstep_in_shape (g : guard) s c v Q' :
   g ⟶ᵍ{c ? v}[s] Q' →
-  ∃ (t : tag) P K, s = t ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆ᵥ.
+  ∃ (t : tag) P K, s = {[+ t +]} ∧ g ≡ᵍ* ((t ∶ c ? ∙ P) + K) ∧ Q' = P ⁅ v ⁆ᵥ.
 Proof.
   intros Hs. remember (c ? v) as l eqn:El.
   induction Hs as [| | | | | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs]; simplify_eq.
@@ -91,8 +92,8 @@ Proof.
 Qed.
 
 Lemma TransitionShapeForOutput P s c v Q :
-  P ⟶{c ! v}[s] Q →
-  ∃ (t : tag) e R n, 〚 e 〛 = v ∧ s = t
+  P ⟶ₚ{c ! v}[s] Q →
+  ∃ (t : tag) e R n, 〚 e 〛 = v ∧ s = {[+ t +]}
     ∧ P ≡* Ѵ n (t ∶ (ren_chan (Nat.add n) c) ! e ∥ R) ∧ Q ≡* Ѵ n (𝟘 ∥ R).
 Proof.
   intros Hs. remember (c ! v) as l eqn:El. revert c v El.
@@ -122,8 +123,8 @@ Proof.
 Qed.
 
 Lemma TransitionShapeForInput P s c v Q :
-  P ⟶{c ? v}[s] Q →
-  ∃ (t : tag) P1 K R n, s = t
+  P ⟶ₚ{c ? v}[s] Q →
+  ∃ (t : tag) P1 K R n, s = {[+ t +]}
     ∧ P ≡* Ѵ n (((t ∶ (ren_chan (Nat.add n) c) ? ∙ P1) + K) ∥ R)
     ∧ Q ≡* Ѵ n (P1 ⁅ v ⁆ᵥ ∥ R).
 Proof.
@@ -157,13 +158,13 @@ Qed.
 
 Lemma TransitionShapeForGuard (g : guard) s l P' :
   g ⟶ᵍ{l}[s] P' →
-  ∃ 𝜆 Q K, g ≡ᵍ* ((𝜆 ∙ Q) + K) ∧ (𝜆 ∙ Q) ⟶{l}[s] P'.
+  ∃ 𝜆 Q K, g ≡ᵍ* ((𝜆 ∙ Q) + K) ∧ (𝜆 ∙ Q) ⟶ₚ{l}[s] P'.
 Proof.
-  intros Hs0. induction Hs0 as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t e q P Hq
+  intros Hs0. induction Hs0 as [t P | t c v P | t U es qs P Hq | t M es qs n P Hq | t e q P Hq
                  | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH].
   - exists (t ∶ 𝛕), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|apply pr_tau].
   - exists (t ∶ c ?), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|apply pr_recv].
-  - exists (t ∶ E ⦅es⦆), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_op].
+  - exists (t ∶ U ⦅es⦆), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_op].
   - exists (t ∶ M ⦅es ▷⦆), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_meas].
   - exists (t ∶ e := |0⟩), P, 𝟘{ [] }. split; [apply gcgr_choice_nil_rev|by apply pr_init].
   - destruct IH as (𝜆 & Q & K & Hc & Hs).
@@ -178,9 +179,9 @@ Definition quant_action (a : prog_action) : Prop :=
   match a with PrOut _ _ | PrIn _ _ => False | _ => True end.
 
 Lemma TransitionShapeForQuantum P s a Q :
-  quant_action a → P ⟶{ActExt a}[s] Q →
+  quant_action a → P ⟶ₚ{ActExt a}[s] Q →
   ∃ 𝜆 P1 K R n Q1, P ≡* Ѵ n (((𝜆 ∙ P1) + K) ∥ R)
-    ∧ (𝜆 ∙ P1) ⟶{ActExt a}[s] Q1 ∧ Q ≡* Ѵ n (Q1 ∥ R).
+    ∧ (𝜆 ∙ P1) ⟶ₚ{ActExt a}[s] Q1 ∧ Q ≡* Ѵ n (Q1 ∥ R).
 Proof.
   intros Ha Hs. remember (ActExt a) as l eqn:El. revert a Ha El.
   induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; intros a0 Ha El; simplify_eq.
@@ -218,41 +219,41 @@ Section STS.
 
   Lemma comp_tau_inv ρ P s ρ' P' :
     ρ ∣ P ⟶{τ}[s] ρ' ∣ P' →
-    (P ⟶{τ}[s] P' ∧ ρ' = ρ) ∨ (∃ a b, P ⟶{ActExt a}[s] P' ∧ ρ ⟶ₘ{b} ρ' ∧ 𝔻ₘₑₘ b a).
+    (P ⟶ₚ{τ}[s] P' ∧ ρ' = ρ) ∨ (∃ a b, P ⟶ₚ{ActExt a}[s] P' ∧ ρ ⟶ₘ{b} ρ' ∧ 𝔻ₘₑₘ b a).
   Proof.
-    intros Hp. inversion Hp as [? ? ? l ? Hm El | ? ? ? l ? Hq El | ? ? c1 c2 ? μ1 μ2 ? ? Hm Hq Hs Hc]; subst.
+    intros Hp. inversion Hp as [? ? ? l ? Hm El | ? ? ? l ? Hq El | ? ? c1 c2 μ1 μ2 ? ? Hm Hq Hs]; subst.
     - destruct (mem_step_choice _ _ _ _ Hm) as (_ & b & ->). discriminate.
     - destruct l; [discriminate |]. by left.
     - destruct (mem_step_choice _ _ _ _ Hm) as (-> & _).
-      rewrite (cmul_eps_l_inv _ _ Hc). right. by exists μ2, μ1.
+      rewrite (left_id_L ∅ (⊎) c2). right. by exists μ2, μ1.
   Qed.
 
-  Lemma comp_tau_right ρ P s P' : P ⟶{τ}[s] P' → ρ ∣ P ⟶{τ}[s] ρ ∣ P'.
+  Lemma comp_tau_right ρ P s P' : P ⟶ₚ{τ}[s] P' → ρ ∣ P ⟶{τ}[s] ρ ∣ P'.
   Proof. intros Hp. exact (par_right mem_step prog_step sync ρ P s τ P' Hp). Qed.
 
   Lemma comp_tau_sync ρ P s a P' b ρ' :
-    P ⟶{ActExt a}[s] P' → ρ ⟶ₘ{b} ρ' → 𝔻ₘₑₘ b a → ρ ∣ P ⟶{τ}[s] ρ' ∣ P'.
-  Proof. intros Hp Hm Hs. eapply par_sync; [exact Hm | exact Hp | exact Hs | constructor]. Qed.
+    P ⟶ₚ{ActExt a}[s] P' → ρ ⟶ₘ{b} ρ' → 𝔻ₘₑₘ b a → ρ ∣ P ⟶{τ}[s] ρ' ∣ P'.
+  Proof. intros Hp Hm Hs. rewrite <- (left_id_L ∅ (⊎) s). eapply par_sync; [exact Hm | exact Hp | exact Hs]. Qed.
 
   (* ** The reduction semantics *)
 
   Inductive sts : St → proc → choice → St → proc → Prop :=
   | sts_com ρ t c e v t' P K :
       〚 e 〛 = v →
-      ⟨ρ, t ∶ c ! e ∥ ((t' ∶ c ? ∙ P) + K)⟩ ⟶[⦗t, t'⦘] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆ᵥ⟩
+      ⟨ρ, t ∶ c ! e ∥ ((t' ∶ c ? ∙ P) + K)⟩ ⟶[{[+ t; t' +]}] ⟨ρ, 𝟘 ∥ P ⁅ v ⁆ᵥ⟩
   | sts_tau ρ t P K :
-      ⟨ρ, ((t ∶ 𝛕 ∙ P) + K)⟩ ⟶[t] ⟨ρ, P⟩
-  | sts_op ρ t E es qs P K :
+      ⟨ρ, ((t ∶ 𝛕 ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨ρ, P⟩
+  | sts_op ρ t U es qs P K :
       eval_qubits es = Some qs →
-      ⟨ρ, ((t ∶ E ⦅es⦆ ∙ P) + K)⟩ ⟶[t] ⟨sop_apply E qs ρ, P⟩
+      ⟨ρ, ((t ∶ U ⦅es⦆ ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨sop_apply U qs ρ, P⟩
   | sts_init ρ t e q P K :
       eval_qubit e = Some q →
-      ⟨ρ, ((t ∶ e := |0⟩ ∙ P) + K)⟩ ⟶[t] ⟨init_apply q ρ, P⟩
-  | sts_meas ρ t M es qs (k : Out (meas_of M qs)) P K :
-      eval_qubits es = Some qs →
-      ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[t] ⟨M ⦅qs⦆[k] · ρ, P ⁅ VNat (code _ k) ⁆ᵥ⟩
+      ⟨ρ, ((t ∶ e := |0⟩ ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨init_apply q ρ, P⟩
+  | sts_meas ρ t M es qs k P K :
+      eval_qubits es = Some qs → k ∈ outs (meas_of M qs) →
+      ⟨ρ, ((t ∶ M ⦅es ▷⦆ ∙ P) + K)⟩ ⟶[{[+ t +]}] ⟨M ⦅qs⦆[k] · ρ, P ⁅ VNat k ⁆ᵥ⟩
   | sts_rec ρ t P :
-      ⟨ρ, t ∶ rec ∙ P⟩ ⟶[t] ⟨ρ, P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ⟩
+      ⟨ρ, t ∶ rec ∙ P⟩ ⟶[{[+ t +]}] ⟨ρ, P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ⟩
   | sts_par ρ P s ρ' P' Q :
       ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩ → ⟨ρ, P ∥ Q⟩ ⟶[s] ⟨ρ', P' ∥ Q⟩
   | sts_res ρ P s ρ' P' :
@@ -272,7 +273,7 @@ Section STS.
     ∀ m c e v t t' P1 K R R', 〚 e 〛 = v →
     ⟨ρ, Ѵ n (t ∶ (ren_chan (Nat.add n) c) ! e ∥ R)
         ∥ Ѵ m (((t' ∶ (ren_chan (Nat.add m) c) ? ∙ P1) + K) ∥ R')⟩
-      ⟶[⦗t, t'⦘] ⟨ρ, Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ᵥ ∥ R')⟩.
+      ⟶[{[+ t; t' +]}] ⟨ρ, Ѵ n (𝟘 ∥ R) ∥ Ѵ m (P1 ⁅ v ⁆ᵥ ∥ R')⟩.
   Proof.
     induction n as [|n IHn]; intros m.
     - induction m as [|m IHm]; intros c e v t t' P1 K R R' He; cbn [Ѵ].
@@ -302,7 +303,7 @@ Section STS.
   Qed.
 
   (* A silent transition of the program is a reduction. *)
-  Lemma Taus_Implies_Reduction ρ P s P' : P ⟶{τ}[s] P' → ⟨ρ, P⟩ ⟶[s] ⟨ρ, P'⟩.
+  Lemma Taus_Implies_Reduction ρ P s P' : P ⟶ₚ{τ}[s] P' → ⟨ρ, P⟩ ⟶[s] ⟨ρ, P'⟩.
   Proof.
     intros Hp. remember (τ : Labels prog_action) as l eqn:El. revert El.
     induction Hp as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH
@@ -323,7 +324,7 @@ Section STS.
       eapply sts_cong; [by apply cgr_fullpar | by apply Com_shapes | symmetry; by apply cgr_fullpar].
     - destruct (TransitionShapeForInput _ _ _ _ _ HpP) as (t0 & P1 & K & R & n & Et & HP1 & HP2).
       destruct (TransitionShapeForOutput _ _ _ _ _ HpQ) as (t0' & e & R' & m & He & Et' & HQ1 & HQ2).
-      simplify_eq. rewrite cpair_comm.
+      simplify_eq. rewrite (comm disj_union {[+ t0 +]}).
       eapply sts_cong.
       + etrans; [apply cgr_par_com|]. by apply cgr_fullpar.
       + by apply Com_shapes.
@@ -334,7 +335,7 @@ Section STS.
 
   (* A quantum action of the program answered by the memory is a reduction. *)
   Lemma Quantum_Implies_Reduction ρ P s a P' b ρ' :
-    P ⟶{ActExt a}[s] P' → ρ ⟶ₘ{b} ρ' → 𝔻ₘₑₘ b a → ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩.
+    P ⟶ₚ{ActExt a}[s] P' → ρ ⟶ₘ{b} ρ' → 𝔻ₘₑₘ b a → ⟨ρ, P⟩ ⟶[s] ⟨ρ', P'⟩.
   Proof.
     intros Hp Hm Hd. assert (Ha : quant_action a) by (by destruct Hd).
     destruct (TransitionShapeForQuantum _ _ _ _ Ha Hp) as (𝜆 & P1 & K & R & n & Q1 & HP & Hg & HQ).
@@ -359,8 +360,8 @@ Section STS.
   Lemma Reduction_Implies_Internal ρ P s ρ' Q :
     ⟨ρ, P⟩ ⟶[s] ⟨ρ', Q⟩ → ∃ Q', ρ ∣ P ⟶{τ}[s] ρ' ∣ Q' ∧ Q' ≡* Q.
   Proof.
-    induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t E es qs P K Hq | ρ t e q P K Hq
-                   | ρ t M es qs k P K Hq | ρ t P
+    induction 1 as [ρ t c e v t' P K He | ρ t P K | ρ t U es qs P K Hq | ρ t e q P K Hq
+                   | ρ t M es qs k P K Hq Hk | ρ t P
                    | ρ P s ρ' P' Q _ (P'' & Hc & HP)
                    | ρ P s ρ' P' _ (P'' & Hc & HP)
                    | ρ P P1 s ρ' Q1 Q Hcg _ (Q1' & Hc & HQ) Hcg'].
@@ -369,11 +370,11 @@ Section STS.
     - exists P. split; [|reflexivity]. apply comp_tau_right.
       apply pr_sumL, pr_tau.
     - exists P. split; [|reflexivity].
-      eapply comp_tau_sync; [by apply pr_sumL, pr_op | apply (me_sop ρ (sop_act E qs)) | constructor].
+      eapply comp_tau_sync; [by apply pr_sumL, pr_op | apply (me_sop ρ (sop_act U qs)) | constructor].
     - exists P. split; [|reflexivity].
       eapply comp_tau_sync; [by apply pr_sumL, pr_init | apply (me_sop ρ (init_act q)) | constructor].
-    - exists (P ⁅ VNat (code _ k) ⁆ᵥ). split; [|reflexivity].
-      eapply comp_tau_sync; [by apply pr_sumL, pr_meas | apply me_meas | constructor].
+    - exists (P ⁅ VNat k ⁆ᵥ). split; [|reflexivity].
+      eapply comp_tau_sync; [by apply pr_sumL, pr_meas | by apply me_meas | constructor].
     - exists (P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ). split; [|reflexivity]. apply comp_tau_right, pr_rec.
     - exists (P'' ∥ Q). split; [|by apply cgr_par].
       destruct (comp_tau_inv _ _ _ _ _ Hc) as [(Hp & ->)|(a & b & Hp & Hm & Hd)].
@@ -411,10 +412,12 @@ Section STS.
 End STS.
 
 Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ↛[ s ] ⟨ ρ' , P' ⟩" := (¬ sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 
 End LqP.
 
 Reserved Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩").
 Notation "⟨ ρ , P ⟩ ⟶[ s ] ⟨ ρ' , P' ⟩" := (sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ⟶[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
+Notation "⟨ ρ , P ⟩ ↛[ s ] ⟨ ρ' , P' ⟩" := (¬ sts ρ P s ρ' P') (at level 70, format "⟨ ρ ,  P ⟩  ↛[ s ]  ⟨ ρ' ,  P' ⟩") : lqccs_scope.
 
 (* end hide *)

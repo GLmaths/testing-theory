@@ -31,9 +31,9 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list propset.
+From stdpp Require Import base gmultiset countable decidable list propset.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -44,7 +44,7 @@ Section LqP.
   Context `{LP : lqCCS_Parameters}.
 
 Lemma prog_step_tagged P s l P' x :
-  P ⟶{l}[s] P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
+  P ⟶ₚ{l}[s] P' → x ∈ tagged (tren tag_base P') → x ∈ tagged (tren tag_base P).
 Proof.
   intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; simpl; intros Hx.
   - induction Hg; simpl in *; try (apply elem_of_app; auto; fail).
@@ -75,47 +75,38 @@ Proof.
   apply list_elem_of_fmap. by exists x.
 Qed.
 
-Lemma prog_step_otags P s l P' t : P ⟶{l}[s] P' → t ∈ otags P' → t ∈ otags P.
+Lemma prog_step_otags P s l P' t : P ⟶ₚ{l}[s] P' → t ∈ otags P' → t ∈ otags P.
 Proof.
   unfold otags, tags. intros Hs Ht. rewrite elem_of_PropSet in Ht |- *.
   apply list_elem_of_fmap in Ht as (x & E & Hx). apply list_elem_of_fmap. exists x. split; [done|].
   by eapply prog_step_tagged.
 Qed.
 
-(* The tags of a choice. *)
-Definition choice_tags (s : choice) : list tag :=
-  match s with CEps => [] | CTag t => [t] | CPair t t' => [t; t'] end.
-
-Lemma cpair_tags u t t' : u ∈ choice_tags ⦗t, t'⦘ → u = t ∨ u = t'.
-Proof.
-  unfold cpair. simpl. intros Hu. apply elem_of_cons in Hu as [->|Hu].
-  - destruct (Nat.min_spec t t') as [[_ ->]|[_ ->]]; auto.
-  - apply elem_of_cons in Hu as [->|Hu]; [|by apply elem_of_nil in Hu].
-    destruct (Nat.max_spec t t') as [[_ ->]|[_ ->]]; auto.
-Qed.
+Lemma choice_pair_elem u t t' : u ∈ ({[+ t; t' +]} : choice) → u = t ∨ u = t'.
+Proof. rewrite gmultiset_elem_of_disj_union, !gmultiset_elem_of_singleton. tauto. Qed.
 
 (* The tags of the choice of a step belong to the program. *)
 Lemma prog_step_choice_tags P s l P' u :
-  P ⟶{l}[s] P' → u ∈ choice_tags s → u ∈ tags P.
+  P ⟶ₚ{l}[s] P' → u ∈ s → u ∈ tags P.
 Proof.
   intros Hs. induction Hs as [g s l P' Hg| | | | | | | | | ]; unfold tags; simpl; intros Hu.
   - induction Hg; simpl in *.
-    all: try (apply list_elem_of_singleton in Hu; subst; by left).
+    all: try (apply gmultiset_elem_of_singleton in Hu; subst; by left).
     + rewrite map_app. apply elem_of_app. left. by apply IHHg.
     + rewrite map_app. apply elem_of_app. right. by apply IHHg.
-  - apply list_elem_of_singleton in Hu. subst. by left.
+  - apply gmultiset_elem_of_singleton in Hu. subst. by left.
   - rewrite map_app. apply elem_of_app. left. by apply IHHs.
   - rewrite map_app. apply elem_of_app. right. by apply IHHs.
   - rewrite map_app. apply elem_of_app. left. by apply IHHs.
   - rewrite map_app. apply elem_of_app. right. by apply IHHs.
-  - rewrite map_app. apply elem_of_app. destruct (cpair_tags _ _ _ Hu) as [-> | ->].
-    + left. apply IHHs1. by left.
-    + right. apply IHHs2. by left.
-  - rewrite map_app. apply elem_of_app. destruct (cpair_tags _ _ _ Hu) as [-> | ->].
-    + left. apply IHHs1. by left.
-    + right. apply IHHs2. by left.
+  - rewrite map_app. apply elem_of_app. destruct (choice_pair_elem _ _ _ Hu) as [-> | ->].
+    + left. by apply IHHs1, gmultiset_elem_of_singleton.
+    + right. by apply IHHs2, gmultiset_elem_of_singleton.
+  - rewrite map_app. apply elem_of_app. destruct (choice_pair_elem _ _ _ Hu) as [-> | ->].
+    + left. by apply IHHs1, gmultiset_elem_of_singleton.
+    + right. by apply IHHs2, gmultiset_elem_of_singleton.
   - by apply IHHs.
-  - apply list_elem_of_singleton in Hu. subst. by left.
+  - apply gmultiset_elem_of_singleton in Hu. subst. by left.
 Qed.
 
 End LqP.

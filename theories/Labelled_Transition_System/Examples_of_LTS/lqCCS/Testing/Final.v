@@ -26,10 +26,10 @@ From Stdlib.Bool Require Import Bool.
 From Stdlib.Logic Require Import Classical_Prop.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -109,7 +109,7 @@ Section Data.
   Definition LVp (n : node) : Prop := ∃ k D x l, k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.1 = n ++ l.
 
   Definition CLp (ch : channel) : Prop :=
-    ∃ k D x t v P', k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.2.1 ⟶{ch ! v}[(CTag t)] P'.
+    ∃ k D x t v P', k ≤ N ∧ reach k D ∧ x ∈ D ∧ x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P'.
 
   Lemma reach_fin k : fin (reach k).
   Proof.
@@ -138,11 +138,11 @@ Section Data.
   Lemma CLp_fin : fin CLp.
   Proof.
     apply (fin_mono _ (λ ch, ∃ x : comp * weight, (∃ k D, k ≤ N ∧ reach k D ∧ x ∈ D)
-                         ∧ ∃ t v P', x.1.2.1 ⟶{ch ! v}[(CTag t)] P')).
+                         ∧ ∃ t v P', x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P')).
     - intros ch (k & D & x & t & v & P' & Hk & Hr & Hx & Hp). exists x. split; [by exists k, D|by exists t, v, P'].
     - apply (fin_bind _ _ comps_fin). intros x _.
       apply (fin_mono _ (λ ch, ∃ a, psteps x.1.2.1 [] [] a ∧ ∃ v, a.1 = ch ! v)).
-      + intros ch (t & v & P' & Hp). exists (ch ! v, P'). split; [exists (CTag t); by split|by exists v].
+      + intros ch (t & v & P' & Hp). exists (ch ! v, P'). split; [exists ({[+ t +]}); by split|by exists v].
       + apply (fin_bind _ _ (psteps_fin _ [] [])). intros a _. apply fin_uniq.
         intros c1 c2 (v1 & E1) (v2 & E2). congruence.
   Qed.
@@ -154,7 +154,7 @@ Section Data.
   Proof. intros Hk Hr Hx. exists k, D, x, []. by rewrite app_nil_r. Qed.
 
   Lemma CLp_reach k D x t ch v P' : k ≤ N → reach k D → x ∈ D →
-    x.1.2.1 ⟶{ch ! v}[(CTag t)] P' → CLp ch.
+    x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P' → CLp ch.
   Proof. intros Hk Hr Hx Hp. by exists k, D, x, t, v, P'. Qed.
 
   Lemma data_exist :

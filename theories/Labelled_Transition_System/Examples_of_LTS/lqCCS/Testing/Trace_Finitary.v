@@ -28,10 +28,10 @@ From Stdlib.Bool Require Import Bool.
 From Stdlib.Logic Require Import Classical.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Truncation lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound lqCCS.Testing.Trace_Convergence.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Truncation lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound lqCCS.Testing.Trace_Convergence.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -76,8 +76,8 @@ Section Pool.
     end.
 
   Hypothesis HVb : ∀ b : bool, V b.
-  Hypothesis HVm : ∀ M qs (k' : Out (meas_of M qs)),
-    MM M → length qs ≤ L → Forall (λ x, V $x) qs → V (VNat (code _ k')).
+  Hypothesis HVm : ∀ M qs k', In k' (outs (meas_of M qs)) →
+    MM M → length qs ≤ L → Forall (λ x, V $x) qs → V (VNat k').
 
   Lemma oke_eval e v : oke e → 〚 e 〛 = v → V v.
   Proof.
@@ -113,7 +113,7 @@ Section Pool.
 
   Lemma okpre_subst k v 𝜆 : V v → okpre 𝜆 → okpre (prefix_subst k v 𝜆).
   Proof.
-    intros Hv. destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl; try done.
+    intros Hv. destruct 𝜆 as [t|t c|t U es|t M es|t e]; simpl; try done.
     - by apply okes_subst.
     - intros (Ho & Hm & Hl). rewrite length_map. split; [by apply okes_subst|done].
     - by apply oke_subst.
@@ -121,7 +121,7 @@ Section Pool.
 
   Lemma okpre_shift k 𝜆 : okpre 𝜆 → okpre (prefix_shift k 𝜆).
   Proof.
-    destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl; try done.
+    destruct 𝜆 as [t|t c|t U es|t M es|t e]; simpl; try done.
     - by apply okes_shift.
     - intros (Ho & Hm & Hl). rewrite length_map. split; [by apply okes_shift|done].
     - by apply oke_shift.
@@ -246,12 +246,12 @@ Section Pool.
     injection Hex as <-. exact (oke_eval e _ Ho1 Ee).
   Qed.
 
-  Lemma gstep_noout g s c v P' : ¬ g ⟶ᵍ{c ! v}[s] P'.
+  Lemma gstep_noout g s c v P' : g ↛ᵍ{c ! v}[s] P'.
   Proof.
     intros Hs. remember (c ! v) as l eqn:El. induction Hs; try discriminate El; auto.
   Qed.
 
-  Lemma step_out P s l P' : ok P → P ⟶{l}[s] P' → ∀ c v, l = c ! v → V v.
+  Lemma step_out P s l P' : ok P → P ⟶ₚ{l}[s] P' → ∀ c v, l = c ! v → V v.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
@@ -270,7 +270,7 @@ Section Pool.
 
   Lemma gstep_meas g s l P' : gok g → g ⟶ᵍ{l}[s] P' → ∀ M qs n, l = M ⦅qs⦆? n → mq M qs.
   Proof.
-    intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t E es qs P He|t M es qs n P He|t es qs P He
+    intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t U es qs P He|t M es qs n P He|t es qs P He
       |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH]; simpl; intros Ho M0 qs0 n0 El; try discriminate El.
     - injection El as <- <- <-. destruct Ho as [(Hes & Hm & Hl) _]. destruct (evq es qs Hes He) as [Hlen Hf].
       split; [done|]. split; [lia|done].
@@ -278,7 +278,7 @@ Section Pool.
     - exact (IH (proj2 Ho) M0 qs0 n0 El).
   Qed.
 
-  Lemma step_meas P s l P' : ok P → P ⟶{l}[s] P' → ∀ M qs n, l = M ⦅qs⦆? n → mq M qs.
+  Lemma step_meas P s l P' : ok P → P ⟶ₚ{l}[s] P' → ∀ M qs n, l = M ⦅qs⦆? n → mq M qs.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
@@ -293,7 +293,7 @@ Section Pool.
 
   Lemma gstep_ok g s l P' : gok g → g ⟶ᵍ{l}[s] P' → lok l → ok P'.
   Proof.
-    intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t E es qs P He|t M es qs n P He|t es qs P He
+    intros Ho Hs. revert Ho. induction Hs as [t P|t c v P|t U es qs P He|t M es qs n P He|t es qs P He
       |g1 g2 s l P' Hs IH|g1 g2 s l P' Hs IH]; simpl; intros Ho Hl.
     - exact (proj2 Ho).
     - exact (proj1 (ok_subst v Hl) P 0 (proj2 Ho)).
@@ -307,7 +307,7 @@ Section Pool.
   Lemma lok_ren l : lok (ren_lbl Datatypes.S l) ↔ lok l.
   Proof. destruct l as [[]|]; done. Qed.
 
-  Lemma step_ok P s l P' : ok P → P ⟶{l}[s] P' → lok l → ok P'.
+  Lemma step_ok P s l P' : ok P → P ⟶ₚ{l}[s] P' → lok l → ok P'.
   Proof.
     intros Ho Hs. revert Ho. induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hs IH|e P Q s l Q' He Hs IH
       |P Q s l P' Hs IH|P Q s l Q' Hs IH|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2|P Q t t' c v P' Q' Hs1 IH1 Hs2 IH2
@@ -335,7 +335,7 @@ Section Pool.
   Definition aval (a : coact) : Prop :=
     match a with
     | CoIn _ _ v => V v
-    | CoMeas _ M qs i => ∃ k' : Out (meas_of M qs), i = code _ k'
+    | CoMeas _ M qs i => In i (outs (meas_of M qs))
     | _ => True
     end.
 
@@ -347,9 +347,9 @@ Section Pool.
       apply tnodes_app_elem in HX as (X0 & HX0 & HX). pose proof (IH X0 Hn HX0) as Ho.
       pose proof (co_succ_step _ _ _ HX) as Hs.
       apply (step_ok X0 _ _ X Ho Hs).
-      destruct a as [k c v|k c v|k E qs|k M qs i|k q0|k]; simpl in Ha |- *; try done.
-      destruct Ha as [k' ->]. destruct (step_meas X0 _ _ X Ho Hs M qs _ eq_refl) as (Hm & Hl & Hf).
-      by apply HVm.
+      destruct a as [k c v|k c v|k U qs|k M qs i|k q0|k]; simpl in Ha |- *; try done.
+      destruct (step_meas X0 _ _ X Ho Hs M qs _ eq_refl) as (Hm & Hl & Hf).
+      by apply (HVm M qs i).
   Qed.
 
   Lemma OT_ok n k c v : Forall aval n → (k, c, v) ∈ O_T T n → V v.
@@ -362,12 +362,13 @@ Section Pool.
 
   Lemma sched_ok ρ P s (Δ : list (proc * St)) : ok P → sched_step ρ P s Δ → ∀ y : proc * St, y ∈ Δ → ok y.1.
   Proof.
-    intros Ho Hs y Hy. inversion Hs as [R' Hp|E qs R' Hp|qs R' Hp|M qs Rs R0 Hp0 Hf]; subst.
+    intros Ho Hs y Hy. inversion Hs as [R' Hp|U qs R' Hp|qs R' Hp|M qs Rs R0 Hp0 Hf]; subst.
     - apply list_elem_of_singleton in Hy. subst y. exact (step_ok _ _ _ _ Ho Hp Logic.I).
     - apply list_elem_of_singleton in Hy. subst y. exact (step_ok _ _ _ _ Ho Hp Logic.I).
     - apply list_elem_of_singleton in Hy. subst y. exact (step_ok _ _ _ _ Ho Hp Logic.I).
-    - destruct (zip_elem _ _ _ _ y Hf Hy) as (k & R' & Hp & ->). apply (step_ok _ _ _ _ Ho Hp). simpl.
-      destruct (step_meas _ _ _ _ Ho Hp M qs _ eq_refl) as (Hm & Hl & Hfq). by apply HVm.
+    - destruct (zip_elem _ _ _ _ y Hf Hy) as (k & R' & Hk & Hp & ->). apply (step_ok _ _ _ _ Ho Hp). simpl.
+      destruct (step_meas _ _ _ _ Ho Hp M qs _ eq_refl) as (Hm & Hl & Hfq).
+      apply (HVm M qs k); [|done..]. apply list_elem_of_In. by apply outs_nz_spec in Hk as [? _].
   Qed.
 
   Lemma run_pool i x : x ∈ r i → Forall aval x.1.1 ∧ ok x.1.2.1 ∧ plain x.1.1.
@@ -382,7 +383,7 @@ Section Pool.
       2:{ apply list_elem_of_singleton in HxΔ. subst x. simpl. done. }
       assert (Hsf : S_T T c.1 = false) by (destruct (S_T T c.1) eqn:Es; [exfalso; apply Hns; exact Es|done]).
       apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                      |n P C k E' qs t HI|n P C k q0 t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
+                      |n P C k U' qs t HI|n P C k q0 t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
       + apply list_elem_of_fmap in HxΔ as (y & -> & Hy). simpl.
         split; [done|]. split; [exact (sched_ok ρ P s Δ0 Ho Hss y Hy)|done].
       + apply list_elem_of_singleton in HxΔ. subst x. simpl. split; [done|]. split; [|done].
@@ -397,7 +398,7 @@ Section Pool.
         { apply Forall_app. split; [done|]. constructor; [done|constructor]. }
         split; [done|]. by apply plain_app.
       + apply list_elem_of_fmap in HxΔ as (k' & -> & Hk'). simpl. split.
-        { apply Forall_app. split; [done|]. constructor; [by eexists|constructor]. }
+        { apply Forall_app. split; [done|]. constructor; [apply list_elem_of_In; by apply outs_nz_spec in Hk' as [? _]|constructor]. }
         split; [done|]. by apply plain_app.
       + apply list_elem_of_singleton in HxΔ. subst x. simpl. split.
         { apply Forall_app. split; [done|]. constructor; [done|constructor]. }
@@ -408,17 +409,17 @@ Section Pool.
 
   Lemma aval_fin o : fin (λ a, offer_of a = o ∧ aval a).
   Proof.
-    destruct o as [k c v|k c|k E qs|k M qs|k q0|k].
+    destruct o as [k c v|k c|k U qs|k M qs|k q0|k].
     - apply (fin_mono _ (λ a, a = CoOut k c v)); [|apply fin_eq]. intros a [Eo _].
       destruct a; simpl in Eo; try discriminate Eo. by injection Eo as -> -> ->.
     - apply (fin_mono _ (λ a, ∃ v, V v ∧ a = CoIn k c v)); [|exact (fin_img (λ v, CoIn k c v) V HfV)].
       intros a [Eo Ha]. destruct a; simpl in Eo; try discriminate Eo. injection Eo as -> ->. by exists v.
-    - apply (fin_mono _ (λ a, a = CoOp k E qs)); [|apply fin_eq]. intros a [Eo _].
+    - apply (fin_mono _ (λ a, a = CoOp k U qs)); [|apply fin_eq]. intros a [Eo _].
       destruct a; simpl in Eo; try discriminate Eo. by injection Eo as -> -> ->.
-    - apply (fin_mono _ (λ a, ∃ k' : Out (meas_of M qs), In k' (outs (meas_of M qs)) ∧ a = CoMeas k M qs (code _ k'))).
+    - apply (fin_mono _ (λ a, ∃ k' : nat, In k' (outs (meas_of M qs)) ∧ a = CoMeas k M qs k')).
       + intros a [Eo Ha]. destruct a as [| | |k0 M0 qs0 i| |]; simpl in Eo; try discriminate Eo.
-        injection Eo as -> -> ->. destruct Ha as [k' ->]. exists k'. split; [apply outs_all|done].
-      + apply (fin_img (λ k' : Out (meas_of M qs), CoMeas k M qs (code _ k')) (λ k', In k' (outs (meas_of M qs)))).
+        injection Eo as -> -> ->. by exists i.
+      + apply (fin_img (λ k' : nat, CoMeas k M qs k') (λ k', In k' (outs (meas_of M qs)))).
         exists (outs (meas_of M qs)). intros x Hx. by apply list_elem_of_In.
     - apply (fin_mono _ (λ a, a = CoInit k q0)); [|apply fin_eq]. intros a [Eo _].
       destruct a; simpl in Eo; try discriminate Eo. by injection Eo as -> ->.
@@ -500,7 +501,7 @@ Qed.
 
 Lemma okpre_sup 𝜆 : sup (λ V MM L, okpre V MM L 𝜆).
 Proof.
-  destruct 𝜆 as [t|t c|t E es|t M es|t e].
+  destruct 𝜆 as [t|t c|t U es|t M es|t e].
   - exact sup_true.
   - exact sup_true.
   - exact (okes_sup es).
@@ -530,8 +531,8 @@ Qed.
 
 Definition pool `{QM : QuantumModel} (V0 : list val) (ML : list meas) (L : nat) (v : val) : Prop :=
   v ∈ V0 ∨ (∃ b : bool, v = b)
-  ∨ ∃ M qs (k' : Out (meas_of M qs)),
-      M ∈ ML ∧ length qs ≤ L ∧ Forall (λ x, $x ∈ V0) qs ∧ v = VNat (code _ k').
+  ∨ ∃ M qs k', In k' (outs (meas_of M qs)) ∧
+      M ∈ ML ∧ length qs ≤ L ∧ Forall (λ x, $x ∈ V0) qs ∧ v = VNat k'.
 
 Lemma pool_fin `{QM : QuantumModel} V0 ML L : fin (pool V0 ML L).
 Proof.
@@ -540,16 +541,16 @@ Proof.
     intros v [[] ->]; [by left|right; by left].
   - apply (fin_mono _ (λ v, ∃ M, M ∈ ML ∧ ∃ qs,
         (∃ n, n ∈ seq 0 (Datatypes.S L) ∧ (length qs = n ∧ Forall (λ x, $x ∈ V0) qs))
-        ∧ ∃ k' : Out (meas_of M qs), In k' (outs (meas_of M qs)) ∧ v = VNat (code _ k'))).
-    + intros v (M & qs & k' & HM & Hl & Hf & ->). exists M. split; [done|]. exists qs. split.
+        ∧ ∃ k' : nat, In k' (outs (meas_of M qs)) ∧ v = VNat k')).
+    + intros v (M & qs & k' & Hk & HM & Hl & Hf & ->). exists M. split; [done|]. exists qs. split.
       * exists (length qs). split; [apply elem_of_seq; lia|done].
-      * exists k'. split; [apply outs_all|done].
+      * by exists k'.
     + apply (fin_bind _ _ (fin_elem ML)). intros M _. apply fin_bind.
       * apply (fin_bind _ _ (fin_elem _)). intros n _. apply fin_lists.
         exists (omap (λ v, match v with $x => Some x | _ => None end) V0). intros x Hx.
         apply list_elem_of_omap. by exists ($x).
       * intros qs _.
-        apply (fin_img (λ k' : Out (meas_of M qs), VNat (code _ k')) (λ k', In k' (outs (meas_of M qs)))).
+        apply (fin_img (λ k' : nat, VNat k') (λ k', In k' (outs (meas_of M qs)))).
         exists (outs (meas_of M qs)). intros x Hx. by apply list_elem_of_In.
 Qed.
 
@@ -559,8 +560,8 @@ Proof.
   destruct (proj1 ok_sup q.1) as (V1 & M1 & L1 & Hq1). destruct (proj1 ok_sup T) as (V2 & M2 & L2 & HT2).
   refine (vis_fin (pool (V1 ++ V2) (M1 ++ M2) (max L1 L2)) (λ M, M ∈ M1 ++ M2) (max L1 L2) _ _ q O T r w HO Hw _ _ _ _).
   - intros b. right. left. by exists b.
-  - intros M qs k' HM Hl Hf. right. right. exists M, qs, k'. split; [done|]. split; [done|]. split; [|done].
-    eapply Forall_impl; [exact Hf|]. intros x [Hx|[(b & Hb)|(M' & qs' & k'' & _ & _ & _ & Hb)]];
+  - intros M qs k' Hk HM Hl Hf. right. right. exists M, qs, k'. split_and!; [done|done|done| |done].
+    eapply Forall_impl; [exact Hf|]. intros x [Hx|[(b & Hb)|(M' & qs' & k'' & _ & _ & _ & _ & Hb)]];
       [done|discriminate Hb|discriminate Hb].
   - apply Hq1; [intros v Hv; left; apply elem_of_app; by left|intros M HM; apply elem_of_app; by left|lia].
   - apply HT2; [intros v Hv; left; apply elem_of_app; by right|intros M HM; apply elem_of_app; by right|lia].

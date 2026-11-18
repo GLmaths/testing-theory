@@ -25,10 +25,10 @@ From Stdlib.Lists Require Import List.
 From Stdlib.Bool Require Import Bool.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -252,7 +252,7 @@ Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl.
   - done.
   - done.
-  - destruct 𝜆 as [t|t c0|t E es|t M es|t es]; simpl; [done| |done|done|done].
+  - destruct 𝜆 as [t|t c0|t U es|t M es|t es]; simpl; [done| |done|done|done].
     case_decide as Hd; [rewrite bool_decide_eq_true_2 by done|rewrite bool_decide_eq_false_2 by done]; done.
   - by rewrite fmap_app, IH1, IH2.
 Qed.
@@ -276,7 +276,7 @@ Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2]; simpl.
   - done.
   - done.
-  - destruct 𝜆 as [t|t c0|t E es|t M0 es|t es]; simpl; [done|done|done| |done].
+  - destruct 𝜆 as [t|t c0|t U es|t M0 es|t es]; simpl; [done|done|done| |done].
     case_decide as Hd; [rewrite bool_decide_eq_true_2 by done|rewrite bool_decide_eq_false_2 by done]; done.
   - by rewrite fmap_app, IH1, IH2.
 Qed.

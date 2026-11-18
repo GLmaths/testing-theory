@@ -24,10 +24,10 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list numbers.
+From stdpp Require Import base gmultiset countable decidable list numbers.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -83,7 +83,7 @@ Proof. destruct l as [[c v|c v| | |]|]; simpl; by rewrite ?ren_chan_add_0. Qed.
 Lemma prog_gstep_ren f g s l P' :
   g ⟶ᵍ{l}[s] P' → gren f g ⟶ᵍ{ren_lbl f l}[s] (ren f P').
 Proof.
-  induction 1 as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH]; simpl.
+  induction 1 as [t P | t c v P | t U es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hg IH | g1 g2 s l P' Hg IH]; simpl.
   - constructor.
   - rewrite (proj1 ren_subst). constructor.
   - by constructor.
@@ -94,7 +94,7 @@ Proof.
 Qed.
 
 Lemma prog_step_ren f P s l P' :
-  P ⟶{l}[s] P' → ren f P ⟶{ren_lbl f l}[s] (ren f P').
+  P ⟶ₚ{l}[s] P' → ren f P ⟶ₚ{ren_lbl f l}[s] (ren f P').
 Proof.
   intros Hs. revert f. induction Hs as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH | P Q s l P' Hp IH | P Q s l Q' Hp IH | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P s l P' Hp IH | t P]; intros f; simpl in *.
   - apply pr_guard. by apply prog_gstep_ren.
@@ -116,24 +116,24 @@ Lemma prog_gstep_ren_inv f :
   ∃ l P', l' = ren_lbl f l ∧ X = ren f P' ∧ g ⟶ᵍ{l}[s] P'.
 Proof.
   intros Hf g s l' X Hs. remember (gren f g) as RG eqn:ER. revert g ER.
-  induction Hs as [t P | t c v P | t E es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH]; intros g0 ER;
+  induction Hs as [t P | t c v P | t U es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH]; intros g0 ER;
     destruct g0 as [es0| |𝜆0 P0|g1' g2']; simpl in ER; simplify_eq.
   all: try (destruct 𝜆0; simpl in *; simplify_eq).
   - exists τ, P0. split_and!; [done|done|constructor].
   - exists (c0 ? v), (P0 ⁅ v ⁆ᵥ).
     split_and!; [done|by rewrite (proj1 ren_subst)|constructor].
-  - exists (E0 ⦅qs⦆), P0. split_and!; [done|done|by constructor].
+  - exists (⦅qs⦆ ! U0), P0. split_and!; [done|done|by constructor].
   - exists (M0 ⦅qs⦆? n), (P0 ⁅ VNat n ⁆ᵥ).
     split_and!; [done|by rewrite (proj1 ren_subst)|by constructor].
-  - exists (init ⦅qs⦆), P0. split_and!; [done|done|by constructor].
+  - exists (reinit qs), P0. split_and!; [done|done|by constructor].
   - destruct (IH g1' eq_refl) as (l0 & P'0 & -> & -> & Hg). exists l0, P'0. split_and!; [done|done|by apply pg_sumL].
   - destruct (IH g2' eq_refl) as (l0 & P'0 & -> & -> & Hg). exists l0, P'0. split_and!; [done|done|by apply pg_sumR].
 Qed.
 
 Lemma prog_step_ren_inv f :
   (∀ i j, f i = f j → i = j) →
-  ∀ P s l' X, ren f P ⟶{l'}[s] X →
-  ∃ l P', l' = ren_lbl f l ∧ X = ren f P' ∧ P ⟶{l}[s] P'.
+  ∀ P s l' X, ren f P ⟶ₚ{l'}[s] X →
+  ∃ l P', l' = ren_lbl f l ∧ X = ren f P' ∧ P ⟶ₚ{l}[s] P'.
 Proof.
   intros Hf P s l' X Hs. remember (ren f P) as RP eqn:ER. revert f Hf P ER.
   induction Hs as [g s l P' Hg | t c e v Hev | e P Q s l P' Hev Hst IH | e P Q s l Q' Hev Hst IH | P Q s l P' Hst IH | P Q s l Q' Hst IH | P Q t t' c v P' Q' Hst1 IH1 Hst2 IH2 | P Q t t' c v P' Q' Hst1 IH1 Hst2 IH2 | P s l P' Hst IH | t P]; intros f Hf P0 ER;
@@ -162,15 +162,15 @@ Proof.
     assert (c1 = c2) by (eapply ren_chan_inj; [exact Hf|congruence]). subst.
     exists τ, (P1' ∥ P2'). split_and!; [done|done|by eapply pr_syncR].
   - destruct (IH (lift f) (lift_inj f Hf) P1 eq_refl) as (l0 & P'0 & E0 & -> & Hp).
-    destruct l0 as [[[c0|[|i]] v0|[c0|[|i]] v0|E' qs|M qs n|qs0]|]; simpl in E0;
+    destruct l0 as [[[c0|[|i]] v0|[c0|[|i]] v0|U' qs|M qs n|qs0]|]; simpl in E0;
       destruct l as [[[c1|i1] v1|[c1|i1] v1|E1 qs1|M1 qs1 n1|qs2]|]; simpl in E0; simplify_eq.
     + exists ((CName c0) ! v0), (ν P'0). split_and!; [done|done|by apply pr_res].
     + exists ((CIdx i) ! v0), (ν P'0). split_and!; [done|done|by apply pr_res].
     + exists ((CName c0) ? v0), (ν P'0). split_and!; [done|done|by apply pr_res].
     + exists ((CIdx i) ? v0), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists (E' ⦅qs⦆), (ν P'0). split_and!; [done|done|by apply pr_res].
+    + exists (⦅qs⦆ ! U'), (ν P'0). split_and!; [done|done|by apply pr_res].
     + exists (M ⦅qs⦆? n), (ν P'0). split_and!; [done|done|by apply pr_res].
-    + exists (init ⦅qs0⦆), (ν P'0). split_and!; [done|done|by apply pr_res].
+    + exists (reinit qs0), (ν P'0). split_and!; [done|done|by apply pr_res].
     + exists τ, (ν P'0). split_and!; [done|done|by apply pr_res].
   - exists τ, (P1 ⁅ (t0 ∶ rec ∙ P1)↑ ⁆ₚ).
     split_and!; [done| |constructor]. rewrite (proj1 ren_pr_subst), <- (proj1 tren_ren). done.

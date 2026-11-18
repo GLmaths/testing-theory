@@ -36,16 +36,12 @@ Class Ord := { T : Type; le : T -> T -> Prop }.
 Infix "⊑" := le (at level 70).
 Definition chain `{Ord} (f : nat -> T) := forall n, f n ⊑ f (S n).
 
-(* A measurement [m] has (at most countably many) outcomes [Out m], coded
-    injectively into [nat].  [comp a b] is [a ∘ b]; [br m f] is
-    [Σ_k f k ∘ ℳ_k]. *)
+(* The outcomes of a measurement [m] are natural numbers.  [comp a b] is
+    [a ∘ b]; [br m f] is [Σ_k f k ∘ ℳ_k]. *)
 Class Alg `{Ord} := {
-  Act : Type; Meas : Type; Out : Meas -> Type;
-  code m : Out m -> nat;
-  decode m : nat -> option (Out m);
-  decode_code m k : decode m (code m k) = Some k;
+  Act : Type; Meas : Type;
   zero : T; one : T; comp : T -> T -> T; act : Act -> T;
-  br m : (Out m -> T) -> T; sup : (nat -> T) -> T;
+  br (m : Meas) : (nat -> T) -> T; sup : (nat -> T) -> T;
   le_refl a : a ⊑ a;
   le_trans a b c : a ⊑ b -> b ⊑ c -> a ⊑ c;
   le_antisym a b : a ⊑ b -> b ⊑ a -> a = b;
@@ -61,26 +57,19 @@ Class Alg `{Ord} := {
   sup_lub f x : chain f -> (forall n, f n ⊑ x) -> sup f ⊑ x;
   comp_sup_l f a : chain f -> comp (sup f) a = sup (fun n => comp (f n) a);
   comp_sup_r f a : chain f -> comp a (sup f) = sup (fun n => comp a (f n));
-  br_sup m (f : nat -> Out m -> T) : (forall k, chain (fun n => f n k)) ->
+  br_sup m (f : nat -> nat -> T) : (forall k, chain (fun n => f n k)) ->
     br m (fun k => sup (fun n => f n k)) = sup (fun n => br m (f n)) }.
 Infix "⋅" := comp (at level 40, left associativity).
 
-Section Alg.
-Context `{Alg}.
 
-Lemma code_inj m k k' : code m k = code m k' -> k = k'.
-Proof. intro E. pose proof (decode_code m k) as D. rewrite E, decode_code in D. congruence. Qed.
-
-End Alg.
-
-(* Finite branching: outcomes are enumerated, [+] exists, and [br] is the
-    sum of its branches precomposed with the Kraus maps [ℳ_k]. *)
+(* Finite branching: the outcomes of [m] are the list [outs m], [+] exists,
+    and [br] is the sum of its branches precomposed with the Kraus maps
+    [ℳ_k]. *)
 Class FinAlg `{Alg} := {
   add : T -> T -> T;
-  kraus m : Out m -> T;
-  outs m : list (Out m);
+  kraus (m : Meas) : nat -> T;
+  outs (m : Meas) : list nat;
   outs_nodup m : NoDup (outs m);
-  outs_all m k : In k (outs m);
   add_0l a : add zero a = a;
   add_0r a : add a zero = a;
   add_assoc a b c : add a (add b c) = add (add a b) c;

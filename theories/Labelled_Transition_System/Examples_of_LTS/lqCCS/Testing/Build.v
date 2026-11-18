@@ -27,10 +27,10 @@ From Stdlib.Lists Require Import List.
 From Stdlib.Bool Require Import Bool.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -205,7 +205,7 @@ Section Build.
     match o with
     | OffOut _ _ _ => None
     | OffIn k c => Some ((k ∶ c ?) ∙ chain VL (λ v, rec (n ++ [CoIn k c v])) (PG 𝟙))
-    | OffOp k E qs => Some ((k ∶ E ⦅quote qs⦆) ∙ rec (n ++ [CoOp k E qs]))
+    | OffOp k U qs => Some ((k ∶ U ⦅quote qs⦆) ∙ rec (n ++ [CoOp k U qs]))
     | OffMeas k M qs =>
         Some ((k ∶ M ⦅quote qs ▷⦆) ∙
                 chain VL (λ v, match v with VNat i => rec (n ++ [CoMeas k M qs i]) | _ => PG 𝟙 end) (PG 𝟙))
@@ -233,7 +233,7 @@ Section Build.
     ∨ (offer_of a = o ∧ ∃ Y W, gco_succ g a = [Y] ∧ tite W Y
          ∧ (W = rec (n ++ [a]) ∨ (W = PG 𝟙 ∧ unlisted VL a))).
   Proof.
-    destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl; intros Hg; try done; injection Hg as <-.
+    destruct o as [k c v|k c|k U qs|k M qs|k q|k]; simpl; intros Hg; try done; injection Hg as <-.
     - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 q0|k0]; simpl; try (left; by split).
       destruct (decide (k0 = k ∧ c0 = c)) as [[-> ->]|Hd]; [|left; split; [intros [= -> ->]; by apply Hd|done]].
       right. split; [done|].
@@ -242,7 +242,7 @@ Section Build.
       + eexists _, _. split; [done|]. split; [exact Ht|right; by split].
     - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 q0|k0]; simpl; try (left; by split).
       rewrite eval_quote.
-      destruct (decide (k0 = k ∧ E0 = E ∧ Some qs = Some qs0)) as [(-> & -> & [= ->])|Hd];
+      destruct (decide (k0 = k ∧ E0 = U ∧ Some qs = Some qs0)) as [(-> & -> & [= ->])|Hd];
         [|left; split; [intros [= -> -> ->]; by apply Hd|done]].
       right. split; [done|]. eexists _, _. split; [done|]. split; [apply ti_refl|by left].
     - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 i|k0 q0|k0]; simpl; try (left; by split).
@@ -600,7 +600,7 @@ Section Build.
     (∀ n', syn TG OC IC (rec n')) → o ∈ cl n → bguard rec n o = Some g → gsyn TG OC IC g.
   Proof.
     intros Hrec Hin Hg. destruct (Hcl_ok n o Hin) as [Ht Hc].
-    destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl in Hg; try done; injection Hg as <-.
+    destruct o as [k c v|k c|k U qs|k M qs|k q|k]; simpl in Hg; try done; injection Hg as <-.
     - apply gsyn_pre; [done|exact Ht|intros k' c' [= -> ->]; by eapply Hc|].
       apply syn_chain; [intros v; apply Hrec|apply syn_succ].
     - apply gsyn_pre; [done|exact Ht|done|apply Hrec].

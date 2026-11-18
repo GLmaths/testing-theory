@@ -50,16 +50,19 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
 Section LqP.
   Context `{LP : lqCCS_Parameters}.
+
+Reserved Notation "⟦ P ⟧" (at level 0, format "⟦ P ⟧").
+Reserved Notation "⟦ P ⟧[ w ]" (at level 0, format "⟦ P ⟧[ w ]").
 
 Section Den.
   Context `{QM : QuantumModel}.
@@ -68,14 +71,14 @@ Section Den.
 
   Inductive internal : Labels prog_action → Prop :=
   | int_tau : internal τ
-  | int_op U qs : internal (U ⦅qs⦆)
-  | int_init q : internal (init ⦅q⦆)
-  | int_meas M qs (k : Out (meas_of M qs)) : internal (M ⦅qs⦆? (code _ k)).
+  | int_op U qs : internal (⦅qs⦆ ! U)
+  | int_init q : internal (reinit q)
+  | int_meas M qs k : k ∈ outs (meas_of M qs) → internal (M ⦅qs⦆? k).
 
   (* No internal move: the program is finished (or deadlocked). *)
-  Definition stable (P : proc) : Prop := ∀ s l P', P ⟶{l}[s] P' → ¬ internal l.
+  Definition stable (P : proc) : Prop := ∀ s l P', P ⟶ₚ{l}[s] P' → ¬ internal l.
 
-  Definition enabled (P : proc) (s : choice) : Prop := ∃ l P', P ⟶{l}[s] P' ∧ internal l.
+  Definition enabled (P : proc) (s : choice) : Prop := ∃ l P', P ⟶ₚ{l}[s] P' ∧ internal l.
 
   (* [Σ_k F_k ⋅ M_k], the results [F_k] being listed as the outcomes. *)
   Definition meas_sum (M : meas) (qs : list qubit) (Fs : list T) : T :=
@@ -84,24 +87,27 @@ Section Den.
   (* ** The denotation under a word of choices *)
 
   Inductive den : proc → list choice → T → Prop :=
-  | den_nil_stable P : stable P → den P [] one
-  | den_nil_run P : ¬ stable P → den P [] zero
-  | den_stable P s w : stable P → den P (s :: w) one
-  | den_stay P s w F : ¬ stable P → ¬ enabled P s → den P w F → den P (s :: w) F
-  | den_tau P s w P' F : P ⟶{τ}[s] P' → den P' w F → den P (s :: w) F
+  | den_nil_stable P : stable P → ⟦P⟧[[]] one
+  | den_nil_run P : ¬ stable P → ⟦P⟧[[]] zero
+  | den_stable P s w : stable P → ⟦P⟧[s :: w] one
+  | den_stay P s w F : ¬ stable P → ¬ enabled P s → ⟦P⟧[w] F → ⟦P⟧[s :: w] F
+  | den_tau P s w P' F : P ⟶ₚ{τ}[s] P' → ⟦P'⟧[w] F → ⟦P⟧[s :: w] F
   | den_op P t w U qs P' F :
-      P ⟶{U ⦅qs⦆}[(CTag t)] P' → den P' w F →
-      den P (CTag t :: w) (F ⋅ act (sop_act U qs))
+      P ⟶ₚ{⦅qs⦆ ! U}[{[+ t +]}] P' → ⟦P'⟧[w] F →
+      ⟦P⟧[{[+ t +]} :: w] (F ⋅ act (sop_act U qs))
   | den_init P t w q P' F :
-      P ⟶{init ⦅q⦆}[(CTag t)] P' → den P' w F →
-      den P (CTag t :: w) (F ⋅ act (init_act q))
+      P ⟶ₚ{reinit q}[{[+ t +]}] P' → ⟦P'⟧[w] F →
+      ⟦P⟧[{[+ t +]} :: w] (F ⋅ act (init_act q))
   | den_meas P t w M qs (PFs : list (proc * T)) :
-      Forall2 (λ k pf, P ⟶{M ⦅qs⦆? (code _ k)}[(CTag t)] pf.1 ∧ den pf.1 w pf.2)
+      Forall2 (λ k pf, P ⟶ₚ{M ⦅qs⦆? k}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2)
         (outs (meas_of M qs)) PFs →
-      den P (CTag t :: w) (meas_sum M qs (map snd PFs)).
+      ⟦P⟧[{[+ t +]} :: w] (meas_sum M qs (map snd PFs))
+  where "⟦ P ⟧[ w ]" := (den P w) : lqccs_scope.
 
   (* [⟦P⟧], the union over all words. *)
-  Definition denot (P : proc) (F : T) : Prop := ∃ w, den P w F.
+  Definition denot (P : proc) (F : T) : Prop := ∃ w, ⟦P⟧[w] F.
+
+  Notation "⟦ P ⟧" := (denot P) : lqccs_scope.
 
   (* ** Congruent programs have the same denotation *)
 
@@ -117,7 +123,7 @@ Section Den.
     destruct (Hf _ _ _ Hp) as (Q' & Hq & _). by exists l, Q'.
   Qed.
 
-  Lemma den_cgr w : ∀ P Q F, P ≡* Q → den P w F → den Q w F.
+  Lemma den_cgr w : ∀ P Q F, P ≡* Q → ⟦P⟧[w] F → ⟦Q⟧[w] F.
   Proof.
     induction w as [|s w IH]; intros P Q F Hc Hd;
       inversion Hd as [? Hs|? Hs|? ? ? Hs|? ? ? ? Hs He Hd'|? ? ? P' ? Hp Hd'|? t ? U qs P' ? Hp Hd'
@@ -134,9 +140,9 @@ Section Den.
       eapply den_op; [exact Hq|]. by apply IH with P'.
     - destruct (cgr_bisim _ _ Hc _ _ _ Hp) as (Q' & Hq & HQ).
       eapply den_init; [exact Hq|]. by apply IH with P'.
-    - assert (Hall : ∀ (ks : list (Out (meas_of M qs))) PFs,
-        Forall2 (λ k pf, P ⟶{M ⦅qs⦆? (code _ k)}[(CTag t)] pf.1 ∧ den pf.1 w pf.2) ks PFs →
-        ∃ PFs', Forall2 (λ k pf, Q ⟶{M ⦅qs⦆? (code _ k)}[(CTag t)] pf.1 ∧ den pf.1 w pf.2) ks PFs'
+    - assert (Hall : ∀ (ks : list (nat)) PFs,
+        Forall2 (λ k pf, P ⟶ₚ{M ⦅qs⦆? k}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2) ks PFs →
+        ∃ PFs', Forall2 (λ k pf, Q ⟶ₚ{M ⦅qs⦆? k}[{[+ t +]}] pf.1 ∧ ⟦pf.1⟧[w] pf.2) ks PFs'
                 ∧ map snd PFs' = map snd PFs).
       { intros ks PFs0 Hf0. induction Hf0 as [|k pf ks' PFs' (Hp & Hd') _ (PFs'' & Hf'' & E)].
         - by exists [].
@@ -146,7 +152,7 @@ Section Den.
       destruct (Hall _ _ Hf) as (PFs' & Hf' & E). rewrite <- E. by apply den_meas.
   Qed.
 
-  Theorem denot_cgr P Q F : P ≡* Q → denot P F ↔ denot Q F.
+  Theorem denot_cgr P Q F : P ≡* Q → ⟦P⟧ F ↔ ⟦Q⟧ F.
   Proof.
     intros Hc. split; intros (w & Hd); exists w; [by eapply den_cgr|].
     eapply den_cgr; [by symmetry|done].

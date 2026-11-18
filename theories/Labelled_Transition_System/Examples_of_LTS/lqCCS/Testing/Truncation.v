@@ -24,10 +24,10 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 From Stdlib.Logic Require Import Classical_Prop.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -44,15 +44,15 @@ Proof.
   induction g as [es| |𝜆 P|g1 IH1 g2 IH2].
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
   - apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). done.
-  - destruct 𝜆 as [t|t c|t E es|t M es|t e].
+  - destruct 𝜆 as [t|t c|t U es|t M es|t e].
     + apply (fin_mono _ (λ _, False)); [|apply fin_false]. intros o (a & _ & Hne). simpl in Hne. by destruct a.
     + apply (fin_mono _ (λ o, o = OffIn t c)); [|apply fin_eq].
       intros o (a & <- & Hne). simpl in Hne. destruct a; try done. case_decide as Hd; [|done].
       destruct Hd as [-> ->]. done.
-    + apply (fin_mono _ (λ o, ∃ qs, eval_qubits es = Some qs ∧ o = OffOp t E qs)).
+    + apply (fin_mono _ (λ o, ∃ qs, eval_qubits es = Some qs ∧ o = OffOp t U qs)).
       * intros o (a & <- & Hne). simpl in Hne. destruct a; try done. case_decide as Hd; [|done].
         destruct Hd as (-> & -> & Hq). eexists. split; [exact Hq|done].
-      * apply (fin_img (λ qs, OffOp t E qs) (λ qs, eval_qubits es = Some qs)).
+      * apply (fin_img (λ qs, OffOp t U qs) (λ qs, eval_qubits es = Some qs)).
         apply fin_uniq. intros x y Hx Hy. congruence.
     + apply (fin_mono _ (λ o, ∃ qs, eval_qubits es = Some qs ∧ o = OffMeas t M qs)).
       * intros o (a & <- & Hne). simpl in Hne. destruct a; try done. case_decide as Hd; [|done].
@@ -113,9 +113,9 @@ Lemma cstep_off_cell `{QM : QuantumModel} J O ρ c k t Δ :
   cstep J O ρ c (IOff k t) Δ →
   ∃ o, J c.1 o ∧ off_tag o = k ∧ alike o o ∧ cstep (single c.1 o) O ρ c (IOff k t) Δ.
 Proof.
-  intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' E' qs t' HI|n P C k' q t' HI|n P C k' M qs t' HI|n P C k' t' HI]; subst; simpl.
+  intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' U' qs t' HI|n P C k' q t' HI|n P C k' M qs t' HI|n P C k' t' HI]; subst; simpl.
   - exists (OffIn k d). split; [done|]. split; [done|]. split; [done|]. apply cs_in; [by split|done].
-  - exists (OffOp k E' qs). split; [done|]. split; [done|]. split; [done|]. apply cs_op. by split.
+  - exists (OffOp k U' qs). split; [done|]. split; [done|]. split; [done|]. apply cs_op. by split.
   - exists (OffInit k q). split; [done|]. split; [done|]. split; [done|]. apply cs_init. by split.
   - exists (OffMeas k M qs). split; [done|]. split; [done|]. split; [done|]. apply cs_meas. by split.
   - exists (OffUnfold k). split; [done|]. split; [done|]. split; [done|]. apply cs_unfold. by split.
@@ -127,9 +127,9 @@ Lemma single_swap `{QM : QuantumModel} O n o o' ρ c σ Δ :
 Proof.
   intros Hal Hs.
   apply cstep_cases in Hs. inversion Hs as [n0 P C s Δ0 Hss|n0 P C k d v t P' HE HkC Hp|n0 P C k d v t P' HI Hp
-                  |n0 P C k E' qs t HI|n0 P C k q t HI|n0 P C k M qs t HI|n0 P C k t HI]; subst.
+                  |n0 P C k U' qs t HI|n0 P C k q t HI|n0 P C k M qs t HI|n0 P C k t HI]; subst.
   - eexists (ICh s), _. split; [by constructor|done].
-  - eexists (ICh ⦗t, k⦘), _. split; [by econstructor|done].
+  - eexists (ICh {[+ t; k +]}), _. split; [by econstructor|done].
   - destruct HI as [-> <-]. destruct o as [|k0 d0| | | |]; simpl in Hal; try done. subst d0.
     eexists (IOff k0 t), _. split; [apply cs_in; [by split|exact Hp]|]. simpl. by intros ->.
   - destruct HI as [-> <-]. destruct o as [| |k0 E0 qs0| | |]; simpl in Hal; try done.
@@ -165,7 +165,7 @@ Section Trunc.
     match o with
     | OffOut _ _ _ => False
     | OffIn _ _ => True
-    | OffOp _ E qs => E = 0 ∧ qs = []
+    | OffOp _ U qs => U = 0 ∧ qs = []
     | OffMeas _ M qs => Mo = Some M ∧ qs = []
     | OffInit _ q => q = 0
     | OffUnfold _ => True
@@ -310,7 +310,7 @@ Section Trunc.
     apply (fin_mono _ (λ o, menu T n o
       ∨ ∃ k, k ∈ F ∧ (o = OffOp k 0 [] ∨ o = OffInit k 0 ∨ o = OffUnfold k ∨ ∃ M, Mo = Some M ∧ o = OffMeas k M []))).
     - intros o [[HM|(_ & HkF & Hc)] Hni]; [by left|right]. exists (off_tag o). split; [done|].
-      destruct o as [k c v|k c|k E qs|k M qs|k q0|k]; simpl in *.
+      destruct o as [k c v|k c|k U qs|k M qs|k q0|k]; simpl in *.
       + done.
       + by destruct (Hni k c).
       + destruct Hc as [-> ->]. by left.

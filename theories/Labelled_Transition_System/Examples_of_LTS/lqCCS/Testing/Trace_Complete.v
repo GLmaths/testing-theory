@@ -28,10 +28,10 @@ From Stdlib.Bool Require Import Bool.
 From Stdlib.Logic Require Import Classical ClassicalDescription.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Build.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn lqCCS.Testing.Assembly lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Build.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -358,7 +358,7 @@ Section Data.
     assert (Hsub : ∀ v, v ∈ valsof (n ++ [a]) → v ∈ VLd L).
     { intros v Hv. unfold VLd. apply list_elem_of_In, in_concat. exists (valsof (n ++ [a])).
       split; [|by apply list_elem_of_In]. apply in_map_iff. exists (n ++ [a]). split; [done|by apply list_elem_of_In]. }
-    destruct a as [k c v|k c v|k E0 qs|k M qs i|k q0|k]; simpl in Hu; try done.
+    destruct a as [k c v|k c v|k U0 qs|k M qs i|k q0|k]; simpl in Hu; try done.
     - apply Hu, Hsub. unfold valsof. rewrite omap_app. apply elem_of_app. right. by left.
     - apply Hu, Hsub. unfold valsof. rewrite omap_app. apply elem_of_app. right. by left.
   Qed.

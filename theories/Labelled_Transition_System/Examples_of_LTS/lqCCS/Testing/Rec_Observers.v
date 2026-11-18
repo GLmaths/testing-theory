@@ -25,10 +25,10 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list propset.
+From stdpp Require Import base gmultiset countable decidable list propset.
 From TestingTheory Require Import ActTau pMust_almost_sure.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Language.Congruence lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers.
 
 #[local] Open Scope lqccs_scope.
 
@@ -36,9 +36,9 @@ Section LqP.
   Context `{LP : lqCCS_Parameters}.
 
 Lemma prog_step_out_chan_r P t c v P' :
-  obsrb P = true → P ⟶{c ! v}[(CTag t)] P' → c ∈ out_chans P.
+  obsrb P = true → P ⟶ₚ{c ! v}[{[+ t +]}] P' → c ∈ out_chans P.
 Proof.
-  intros Hob Hs. remember (CTag t) as s eqn:Es. remember (c ! v) as l eqn:El.
+  intros Hob Hs. remember ({[+ t +]}) as s eqn:Es. remember (c ! v) as l eqn:El.
   revert Hob Es El.
   induction Hs as [g s l P' Hg| | | | | | | | | ]; intros Hob Es El; simplify_eq; simpl in *.
   - exfalso. remember (c ! v) as l eqn:El. revert El.
@@ -53,9 +53,9 @@ Proof.
 Qed.
 
 Lemma prog_step_in_chan_r P t c v P' :
-  obsrb P = true → P ⟶{c ? v}[(CTag t)] P' → c ∈ in_chans P.
+  obsrb P = true → P ⟶ₚ{c ? v}[{[+ t +]}] P' → c ∈ in_chans P.
 Proof.
-  intros Hob Hs. remember (CTag t) as s eqn:Es. remember (c ? v) as l eqn:El.
+  intros Hob Hs. remember ({[+ t +]}) as s eqn:Es. remember (c ? v) as l eqn:El.
   revert Hob Es El.
   induction Hs as [g s l P' Hg| | | | | | | | | ]; intros Hob Es El; simplify_eq; simpl in *.
   - remember (c ? v) as l eqn:El. revert El.
@@ -70,7 +70,7 @@ Proof.
 Qed.
 
 Lemma prog_step_chans_sub_r P s l P' :
-  obsrb P = true → P ⟶{l}[s] P' →
+  obsrb P = true → P ⟶ₚ{l}[s] P' →
   (∀ c, c ∈ out_chans P' → c ∈ out_chans P) ∧ (∀ c, c ∈ in_chans P' → c ∈ in_chans P).
 Proof.
   intros Hob Hs.
@@ -106,10 +106,10 @@ Proof.
 Qed.
 
 Lemma co_succ_complete_r T k α T' :
-  obsrb T = true → T ⟶{ActExt α}[(CTag k)] T' →
+  obsrb T = true → T ⟶ₚ{ActExt α}[{[+ k +]}] T' →
   ∃ a, co_tag a = k ∧ co_act a = ActExt α ∧ T' ∈ co_succ T a.
 Proof.
-  intros Hob Hs. remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El.
+  intros Hob Hs. remember ({[+ k +]}) as s eqn:Es. remember (ActExt α) as l eqn:El.
   revert k α Es El Hob.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
                   |P Q s l P' Hp IH|P Q s l Q' Hp IH| | |P s l P' Hp IH|t P];
@@ -117,12 +117,12 @@ Proof.
   - (* guard *)
     enough (∃ a, co_tag a = k ∧ co_act a = ActExt α ∧ P' ∈ gco_succ g a) as (a & ? & ? & ?)
       by (exists a; by simpl).
-    remember (CTag k) as s eqn:Es. remember (ActExt α) as l eqn:El. revert k α Es El Hob.
-    induction Hg as [| t c v P|t E es qs P Hq|t M es qs n P Hq|t es qs P Hq|g1 g2 s l P' Hg IH|g1 g2 s l P' Hg IH];
+    remember ({[+ k +]}) as s eqn:Es. remember (ActExt α) as l eqn:El. revert k α Es El Hob.
+    induction Hg as [| t c v P|t U es qs P Hq|t M es qs n P Hq|t es qs P Hq|g1 g2 s l P' Hg IH|g1 g2 s l P' Hg IH];
       intros k α Es El Hob; simplify_eq; simpl in Hob.
     + exists (CoIn k c v). simpl. split; [done|]. split; [done|]. rewrite decide_True; [|done].
       by apply list_elem_of_singleton.
-    + exists (CoOp k E qs). simpl. split; [done|]. split; [done|]. rewrite decide_True; [|done].
+    + exists (CoOp k U qs). simpl. split; [done|]. split; [done|]. rewrite decide_True; [|done].
       by apply list_elem_of_singleton.
     + exists (CoMeas k M qs n). simpl. split; [done|]. split; [done|]. rewrite decide_True; [|done].
       by apply list_elem_of_singleton.
@@ -148,13 +148,13 @@ Proof.
     apply list_elem_of_fmap. by exists Q'.
 Qed.
 
-Lemma gobs_success_stuck_r g s l P' : gobsrb g = true → gsuccessb g = true → ¬ g ⟶ᵍ{l}[s] P'.
+Lemma gobs_success_stuck_r g s l P' : gobsrb g = true → gsuccessb g = true → g ↛ᵍ{l}[s] P'.
 Proof.
   intros Hob Hsu Hg. induction Hg; simpl in *; try done;
     apply andb_prop in Hob as [_ Hn]; by rewrite Hsu in Hn.
 Qed.
 
-Lemma obs_step_r T s l T' : obsr T → T ⟶{l}[s] T' → obsr T'.
+Lemma obs_step_r T s l T' : obsr T → T ⟶ₚ{l}[s] T' → obsr T'.
 Proof.
   intros [Hob Hdis] Hs. revert Hob Hdis.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
@@ -212,7 +212,7 @@ Proof.
         simpl in Hc, Hc'; rewrite ?out_chans_tren in Hc; rewrite ?in_chans_tren in Hc'; exact (Hdis x Hc Hc').
 Qed.
 
-Lemma obs_tau_r T s T' : obsr T → T ⟶{τ}[s] T' → ∃ t, s = CTag t ∧ T' ∈ co_succ T (CoUnfold t).
+Lemma obs_tau_r T s T' : obsr T → T ⟶ₚ{τ}[s] T' → ∃ t, s = {[+ t +]} ∧ T' ∈ co_succ T (CoUnfold t).
 Proof.
   intros [Hob Hdis] Hs. remember τ as l eqn:El. revert Hob Hdis El.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
@@ -244,7 +244,7 @@ Proof.
   - exists t. split; [done|]. simpl. rewrite decide_True; [by left|done].
 Qed.
 
-Lemma obs_success_step_r T s l T' : obsrb T = true → T ⟶{l}[s] T' → success T → success T'.
+Lemma obs_success_step_r T s l T' : obsrb T = true → T ⟶ₚ{l}[s] T' → success T → success T'.
 Proof.
   unfold success. intros Hob Hs. revert Hob.
   induction Hs as [g s l P' Hg|t c e v He|e P Q s l P' He Hp IH|e P Q s l Q' He Hp IH
@@ -352,7 +352,7 @@ Proof.
   - apply tnodes_app_elem in Hin as (T0 & HT0 & Hin). unfold rtagged.
     assert (Hk' : (tag_base k, x) ∈ tagged (tren tag_base T')).
     { rewrite tagged_tren. apply list_elem_of_fmap. by exists (k, x). }
-    assert (Hstep : ∃ s l, T0 ⟶{l}[s] T') by (pose proof (co_succ_step _ _ _ Hin); eauto).
+    assert (Hstep : ∃ s l, T0 ⟶ₚ{l}[s] T') by (pose proof (co_succ_step _ _ _ Hin); eauto).
     destruct Hstep as (s & l & Hp).
     pose proof (prog_step_tagged _ _ _ _ _ Hp Hk') as Hk0. rewrite tagged_tren in Hk0.
     apply list_elem_of_fmap in Hk0 as ([k0 x0] & E & Hk0). simpl in E. injection E as E1 E2. subst x0.

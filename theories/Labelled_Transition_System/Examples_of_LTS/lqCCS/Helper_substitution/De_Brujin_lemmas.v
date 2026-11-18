@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -307,5 +306,3 @@ Lemma ren_resn f n P : ren f (Ѵ n P) = Ѵ n (ren (liftn n f) P).
 Proof. revert f. induction n; intros f; simpl; [done|]. by rewrite IHn. Qed.
 
 End LqP.
-
-(* end hide *)

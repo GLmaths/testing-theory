@@ -23,10 +23,10 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -38,7 +38,7 @@ Section Mass.
   Context `{QM : QuantumModel}.
 
   Lemma tr_outs_nz M qs ρ :
-    foldr (λ k acc, W_add (tr (M ⦅qs⦆[k] · ρ)) acc) W_zero (outs_nz M qs ρ) = tr ρ.
+    foldr (λ k acc, W_add (tr (M ⦅qs⦆[k] · ρ)) acc) W_zero (outs_nz (meas_of M qs) ρ) = tr ρ.
   Proof.
     rewrite <- (meas_tr M qs ρ), br_sum.
     fold (sum (map (λ k, one ⋅ kraus (meas_of M qs) k) (outs (meas_of M qs)))).
@@ -47,7 +47,7 @@ Section Mass.
     induction l as [|k l IH]; [done|]. simpl. rewrite filter_cons. rewrite comp_1l.
     case_decide as Hk; simpl.
     - by rewrite IH.
-    - unfold meas_branch in Hk. rewrite Hk, tr_szero, W_add_zero. exact IH.
+    - rewrite Hk, tr_szero, W_add_zero. exact IH.
   Qed.
 
   Lemma dmass_one {C} (x : C * weight) : dmass [x] = tr x.2.
@@ -58,7 +58,7 @@ Section Mass.
 
   Lemma sched_step_mass ρ R s Δ : sched_step ρ R s Δ → dmass Δ = tr ρ.
   Proof.
-    inversion 1 as [? Hp|E qs ? Hp|qs ? Hp|M qs Rs R0 Hp0 Hf]; subst.
+    inversion 1 as [? Hp|U qs ? Hp|qs ? Hp|M qs Rs R0 Hp0 Hf]; subst.
     - apply dmass_one.
     - rewrite dmass_one. apply sop_tr.
     - rewrite dmass_one. apply init_tr.
@@ -80,7 +80,7 @@ Section Mass.
     - apply dmass_one.
     - rewrite dmass_one. apply sop_tr.
     - rewrite dmass_one. apply init_tr.
-    - rewrite <- (tr_outs_nz M qs ρ). generalize (outs_nz M qs ρ) as ks. intros ks.
+    - rewrite <- (tr_outs_nz M qs ρ). generalize (outs_nz (meas_of M qs) ρ) as ks. intros ks.
       induction ks as [|k' ks IH]; [done|]. by rewrite map_cons, dmass_cons, IH.
     - apply dmass_one.
   Qed.
@@ -99,15 +99,15 @@ Section Mass.
     cstep J O ρ c (IOff k t) Δ →
     ∃ o, J c.1 o ∧ (∀ J', J' c.1 o → cstep J' O ρ c (IOff k t) Δ) ∧ ∀ y, y ∈ Δ → ∃ a, offer_of a = o ∧ y.1.1 = c.1 ++ [a].
   Proof.
-    intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' E' qs t' HI|n P C k' q t' HI|n P C k' M qs t' HI|n P C k' t' HI]; subst.
+    intros Hcv%cstep_cases. inversion Hcv as [| |n P C k' d v t' P' HI Hp|n P C k' U' qs t' HI|n P C k' q t' HI|n P C k' M qs t' HI|n P C k' t' HI]; subst.
     - exists (OffIn k d). split; [done|]. split; [intros J' HJ'; by apply cs_in|].
       intros y ->%list_elem_of_singleton. by exists (CoIn k d v).
-    - exists (OffOp k E' qs). split; [done|]. split; [intros J' HJ'; by apply cs_op|].
-      intros y ->%list_elem_of_singleton. by exists (CoOp k E' qs).
+    - exists (OffOp k U' qs). split; [done|]. split; [intros J' HJ'; by apply cs_op|].
+      intros y ->%list_elem_of_singleton. by exists (CoOp k U' qs).
     - exists (OffInit k q). split; [done|]. split; [intros J' HJ'; by apply cs_init|].
       intros y ->%list_elem_of_singleton. by exists (CoInit k q).
     - exists (OffMeas k M qs). split; [done|]. split; [intros J' HJ'; by apply cs_meas|].
-      intros y (k'' & -> & _)%list_elem_of_fmap. by exists (CoMeas k M qs (code _ k'')).
+      intros y (k'' & -> & _)%list_elem_of_fmap. by exists (CoMeas k M qs k'').
     - exists (OffUnfold k). split; [done|]. split; [intros J' HJ'; by apply cs_unfold|].
       intros y ->%list_elem_of_singleton. by exists (CoUnfold k).
   Qed.
@@ -164,11 +164,11 @@ Proof.
     + intros x ->%list_elem_of_singleton. exact Hq.
 Qed.
 
-Lemma single_op_item `{QM : QuantumModel} O n k E0 qs ρ c it Δ :
-  cstep (single n (OffOp k E0 qs)) O ρ c it Δ →
+Lemma single_op_item `{QM : QuantumModel} O n k U0 qs ρ c it Δ :
+  cstep (single n (OffOp k U0 qs)) O ρ c it Δ →
   (∀ J, cstep J O ρ c it Δ) ∨ ∃ t, it = IOff k t.
 Proof.
-  intros Hcv%cstep_cases. inversion Hcv as [? ? ? s Δ0 Hs|? ? ? k' d v t P' HE HkC Hp|? ? ? k' d v t P' HI Hp|? ? ? k' E' qs' t HI|? ? ? k' qs' t HI|? ? ? k' M qs' t HI|? ? ? k' t HI]; subst.
+  intros Hcv%cstep_cases. inversion Hcv as [? ? ? s Δ0 Hs|? ? ? k' d v t P' HE HkC Hp|? ? ? k' d v t P' HI Hp|? ? ? k' U' qs' t HI|? ? ? k' qs' t HI|? ? ? k' M qs' t HI|? ? ? k' t HI]; subst.
   - left. intros J. by constructor.
   - left. intros J. by econstructor.
   - destruct HI as [_ Ho]. discriminate Ho.
@@ -223,7 +223,7 @@ Lemma cstep_plain `{QM : QuantumModel} I O ρ c σ Δ :
 Proof.
   intros Hs Hpl.
   apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                  |n P C k E' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
+                  |n P C k U' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
   - by intros y (x & -> & _)%list_elem_of_fmap.
   - by intros y ->%list_elem_of_singleton.
   - intros y ->%list_elem_of_singleton. by apply plain_app.

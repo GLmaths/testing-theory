@@ -26,10 +26,10 @@ From Stdlib.Bool Require Import Bool.
 From Stdlib.Logic Require Import Classical_Prop.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -195,7 +195,7 @@ Section Syn.
     (∀ m' X', syn X' → syn (rec m' X')) → hsynP h → hguard VL wrapb rec m h = Some g → gsyn g.
   Proof.
     intros Hrec (HD & Htg & Hnt & Hic) Hg. destruct h as [𝜆 D]. unfold hguard in Hg.
-    destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl in *.
+    destruct 𝜆 as [t|t c|t U es|t M es|t e]; simpl in *.
     - discriminate Hg.
     - injection Hg as <-. apply gsyn_pre; [done|done| |].
       + exact Hic.
@@ -212,7 +212,7 @@ Section Syn.
   Lemma rg_syn m o g : o ∈ reps m → rg o = Some g → gsyn g.
   Proof.
     intros Hin Hg. destruct (Hreps m o Hin) as [Htg Hic].
-    destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl in *; [discriminate Hg|injection Hg as <-..|discriminate Hg];
+    destruct o as [k c v|k c|k U qs|k M qs|k q|k]; simpl in *; [discriminate Hg|injection Hg as <-..|discriminate Hg];
       (apply gsyn_pre; [done|done| |apply syn_succ]); try done.
     intros k0 c0 [= <- <-]. by apply (Hic k c).
   Qed.

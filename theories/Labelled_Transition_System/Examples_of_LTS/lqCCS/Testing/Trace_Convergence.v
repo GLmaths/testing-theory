@@ -28,10 +28,10 @@ From Stdlib.Bool Require Import Bool.
 From Stdlib.Logic Require Import Classical.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Complete lqCCS.Testing.Trace_Sound.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -170,7 +170,7 @@ Proof.
   - apply andb_prop in Hn as [Hn1 Hn2]. destruct (IHHs Hn2). split; [lia|done].
 Qed.
 
-Lemma step_sz P s l P' : norec P = true → P ⟶{l}[s] P' → sz P' < sz P ∧ norec P' = true.
+Lemma step_sz P s l P' : norec P = true → P ⟶ₚ{l}[s] P' → sz P' < sz P ∧ norec P' = true.
 Proof.
   intros Hn Hs. revert Hn. induction Hs as [? ? ? ? H | ? ? ? ? ? | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? IHHs | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? ? ? ? ? IHHs1 ? IHHs2 | ? ? ? ? ? IHHs | ? ? ?]; simpl; intros Hn.
   - by eapply gstep_sz.
@@ -188,20 +188,21 @@ Proof.
 Qed.
 
 Lemma zip_elem {A B X} (R : A → B → Prop) (f : A → B → X) (l : list A) (k : list B) x :
-  Forall2 R l k → x ∈ zip_with f l k → ∃ a b, R a b ∧ x = f a b.
+  Forall2 R l k → x ∈ zip_with f l k → ∃ a b, a ∈ l ∧ R a b ∧ x = f a b.
 Proof.
   induction 1 as [|a b l k Hab _ IH]; simpl; intros Hx; [by apply elem_of_nil in Hx|].
-  apply elem_of_cons in Hx as [->|Hx]; [by exists a, b|by apply IH].
+  apply elem_of_cons in Hx as [->|Hx]; [exists a, b; split; [by left|done]|].
+  destruct (IH Hx) as (a' & b' & Ha' & Hr & ->). exists a', b'. split; [by right|done].
 Qed.
 
 Lemma sched_sz `{QM : QuantumModel} ρ P s (Δ : list (proc * St)) :
   norec P = true → sched_step ρ P s Δ → ∀ x : proc * St, x ∈ Δ → sz x.1 < sz P ∧ norec x.1 = true.
 Proof.
-  intros Hn Hs x Hx. inversion Hs as [R' Hp|E qs R' Hp|qs R' Hp|M qs Rs R0 Hp0 Hf]; subst.
+  intros Hn Hs x Hx. inversion Hs as [R' Hp|U qs R' Hp|qs R' Hp|M qs Rs R0 Hp0 Hf]; subst.
   - apply list_elem_of_singleton in Hx. subst x. exact (step_sz _ _ _ _ Hn Hp).
   - apply list_elem_of_singleton in Hx. subst x. exact (step_sz _ _ _ _ Hn Hp).
   - apply list_elem_of_singleton in Hx. subst x. exact (step_sz _ _ _ _ Hn Hp).
-  - destruct (zip_elem _ _ _ _ x Hf Hx) as (k & R' & Hp & ->). exact (step_sz _ _ _ _ Hn Hp).
+  - destruct (zip_elem _ _ _ _ x Hf Hx) as (k & R' & _ & Hp & ->). exact (step_sz _ _ _ _ Hn Hp).
 Qed.
 
 Lemma tnodes_sz T n X : norec T = true → X ∈ tnodes T n → sz X + length n ≤ sz T ∧ norec X = true.
@@ -227,7 +228,7 @@ Lemma cstep_measure `{QM : QuantumModel} T O ρ (c : comp) σ Δ :
 Proof.
   intros HT Hc Hs y Hy.
   apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                  |n P C k E' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
+                  |n P C k U' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
   - apply list_elem_of_fmap in Hy as (x & -> & Hx). simpl.
     destruct (sched_sz ρ P s Δ0 Hc Hss x Hx) as [Hl Hr]. split; [lia|done].
   - apply list_elem_of_singleton in Hy. subst y. simpl. destruct (step_sz _ _ _ _ Hc Hp) as [Hl Hr]. split; [lia|done].

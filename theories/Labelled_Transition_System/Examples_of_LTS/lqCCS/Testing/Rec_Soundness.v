@@ -25,10 +25,10 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list propset.
+From stdpp Require Import base gmultiset countable decidable list propset.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical pMust_cotrace.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Rec_Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Sound lqCCS.Testing.Co_Traces.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Rec_Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Final lqCCS.Testing.Trace lqCCS.Testing.Trace_Sound lqCCS.Testing.Co_Traces.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -42,7 +42,7 @@ Proof.
   intros HT n. induction n as [|a n IH] using rev_ind; intros X Hin.
   - rewrite tnodes_nil in Hin. apply list_elem_of_singleton in Hin. subst. split; intros c Hc; exact Hc.
   - apply tnodes_app_elem in Hin as (X0 & HX0 & Hin). destruct (IH X0 HX0) as [Ho Hi].
-    assert (Hst : ∃ s l, X0 ⟶{l}[s] X) by (pose proof (co_succ_step _ _ _ Hin); eauto).
+    assert (Hst : ∃ s l, X0 ⟶ₚ{l}[s] X) by (pose proof (co_succ_step _ _ _ Hin); eauto).
     destruct Hst as (s & l & Hp).
     destruct (prog_step_chans_sub_r X0 s l X (proj1 (tnodes_obsr T HT n X0 HX0)) Hp) as [Ho0 Hi0].
     split; intros c Hc; [exact (Ho c (Ho0 c Hc))|exact (Hi c (Hi0 c Hc))].

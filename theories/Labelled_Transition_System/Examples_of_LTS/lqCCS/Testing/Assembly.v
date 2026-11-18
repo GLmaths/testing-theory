@@ -26,10 +26,10 @@ From Stdlib.Bool Require Import Bool.
 From Stdlib.Logic Require Import Classical_Prop.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Branching lqCCS.Testing.Truncation lqCCS.Testing.Pull lqCCS.Testing.Head lqCCS.Testing.Modes lqCCS.Testing.Syn.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -90,7 +90,7 @@ Proof. intros Hs. apply S_T_app. by apply succ_at_S. Qed.
 Definition relevant (c : comp) (o : offer) : Prop :=
   match o with
   | OffOut _ _ _ => False
-  | OffIn _ ch => ∃ t v P', c.2.1 ⟶{ch ! v}[(CTag t)] P'
+  | OffIn _ ch => ∃ t v P', c.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P'
   | _ => True
   end.
 
@@ -99,7 +99,7 @@ Lemma cstep_menu_eq `{QM : QuantumModel} I J O ρ c σ Δ :
 Proof.
   intros Hrel Hs.
   apply cstep_cases in Hs. inversion Hs as [n P C s Δ0 Hss|n P C k d v t P' Hin HkC Hp|n P C k d v t P' HI Hp
-                  |n P C k E' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
+                  |n P C k U' qs t HI|n P C k q t HI|n P C k M qs t HI|n P C k t HI]; subst; simpl in *.
   - by constructor.
   - by apply cs_recv.
   - apply cs_in; [|done]. apply Hrel; [|done]. by exists t, v, P'.
@@ -320,7 +320,7 @@ Section Asm.
 
   Lemma p_steps n ρ P C :
     LV (n) → plain n → visited_ok (M := lq_menu O) (menu TN) n →
-    (∀ t ch v P', P ⟶{ch ! v}[(CTag t)] P' → CL ch) → S_T TN n = false →
+    (∀ t ch v P', P ⟶ₚ{ch ! v}[{[+ t +]}] P' → CL ch) → S_T TN n = false →
     ∀ σ Δ, cstep (menu TN) O ρ (n, (P, C)) σ Δ ↔ cstep J0 O ρ (n, (P, C)) σ Δ.
   Proof.
     intros Hin Hpl Hv HCLc HS σ Δ.
@@ -340,7 +340,7 @@ Section Asm.
 
   Definition goodc (x : comp * weight) : Prop :=
     LV (x.1.1) ∧ plain x.1.1 ∧ visited_ok (M := lq_menu O) (menu TN) x.1.1
-    ∧ ∀ t ch v P', x.1.2.1 ⟶{ch ! v}[(CTag t)] P' → CL ch.
+    ∧ ∀ t ch v P', x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P' → CL ch.
 
   Lemma p_agree (D : dist comp) : (∀ x, x ∈ D → goodc x) → agree_on STN SJ0 D.
   Proof.
@@ -357,7 +357,7 @@ Section Asm.
 
   Hypothesis HLV : ∀ k D x, k ≤ N → reach k D → x ∈ D → LV (x.1.1).
   Hypothesis HCL : ∀ k D x t ch v P', k ≤ N → reach k D → x ∈ D →
-    x.1.2.1 ⟶{ch ! v}[(CTag t)] P' → CL ch.
+    x.1.2.1 ⟶ₚ{ch ! v}[{[+ t +]}] P' → CL ch.
 
   Theorem p_good r0 : is_run (SchedSts0 := STN) Stay (dinit p) r0 →
     ∀ i, i ≤ N → agree_on STN SJ0 (r0 i).

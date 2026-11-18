@@ -1,4 +1,3 @@
-(* begin hide *)
 (*
    Copyright (c) 2026 Gaëtan Lopez <glopez@irif.fr>
 
@@ -38,54 +37,59 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list sets relations.
+From stdpp Require Import base gmultiset countable decidable list sets relations.
 From TestingTheory Require Import ActTau.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
 
 (* ** One step of congruence *)
 
+Reserved Notation "P ≡ Q" (at level 70, no associativity).
+Reserved Notation "g ≡ᵍ h" (at level 70, no associativity).
+
 Section LqP.
   Context `{LP : lqCCS_Parameters}.
 
 Inductive cgr_step : proc → proc → Prop :=
-| cgr_par_nil_step P : cgr_step (P ∥ 𝟘) P
-| cgr_par_com_step P Q : cgr_step (P ∥ Q) (Q ∥ P)
-| cgr_par_assoc_rev_step P Q R : cgr_step (P ∥ (Q ∥ R)) ((P ∥ Q) ∥ R)
-| cgr_if_true_step e P Q : 〚 e 〛 = true → cgr_step (If e Then P Else Q) P
-| cgr_if_false_step e P Q : 〚 e 〛 = false → cgr_step (If e Then P Else Q) Q
-| cgr_send_val_step t c e v : 〚 e 〛 = v → cgr_step (t ∶ c ! e) (t ∶ c ! v)
-| cgr_if_val_step e v P Q : 〚 e 〛 = v → cgr_step (If e Then P Else Q) (If v Then P Else Q)
-| cgr_res_nil_step es : cgr_step (ν 𝟘{es}) 𝟘{es}
-| cgr_res_swap_step P : cgr_step (ν ν P) (ν ν (ren swap01 P))
-| cgr_res_scope_rev_step P Q : cgr_step ((ν P) ∥ Q) (ν (P ∥ ren S Q))
+| cgr_par_nil_step P : (P ∥ 𝟘) ≡ P
+| cgr_par_com_step P Q : (P ∥ Q) ≡ (Q ∥ P)
+| cgr_par_assoc_rev_step P Q R : (P ∥ (Q ∥ R)) ≡ ((P ∥ Q) ∥ R)
+| cgr_if_true_step e P Q : 〚 e 〛 = true → (If e Then P Else Q) ≡ P
+| cgr_if_false_step e P Q : 〚 e 〛 = false → (If e Then P Else Q) ≡ Q
+| cgr_send_val_step t c e v : 〚 e 〛 = v → (t ∶ c ! e) ≡ (t ∶ c ! v)
+| cgr_if_val_step e v P Q : 〚 e 〛 = v → (If e Then P Else Q) ≡ (If v Then P Else Q)
+| cgr_res_nil_step es : (ν 𝟘{es}) ≡ 𝟘{es}
+| cgr_res_swap_step P : (ν ν P) ≡ (ν ν (ren swap01 P))
+| cgr_res_scope_rev_step P Q : ((ν P) ∥ Q) ≡ (ν (P ∥ ren S Q))
 (* contexts *)
-| cgr_if_then_step e P P' Q : cgr_step P P' → cgr_step (If e Then P Else Q) (If e Then P' Else Q)
-| cgr_if_else_step e P Q Q' : cgr_step Q Q' → cgr_step (If e Then P Else Q) (If e Then P Else Q')
-| cgr_par_step P P' Q : cgr_step P P' → cgr_step (P ∥ Q) (P' ∥ Q)
-| cgr_par_right_step P Q Q' : cgr_step Q Q' → cgr_step (P ∥ Q) (P ∥ Q')
-| cgr_res_step P P' : cgr_step P P' → cgr_step (ν P) (ν P')
-| cgr_recursion_step t P P' : cgr_step P P' → cgr_step (t ∶ rec ∙ P) (t ∶ rec ∙ P')
-| cgr_guard_step g g' : gcgr_step g g' → cgr_step g g'
+| cgr_if_then_step e P P' Q : P ≡ P' → (If e Then P Else Q) ≡ (If e Then P' Else Q)
+| cgr_if_else_step e P Q Q' : Q ≡ Q' → (If e Then P Else Q) ≡ (If e Then P Else Q')
+| cgr_par_step P P' Q : P ≡ P' → (P ∥ Q) ≡ (P' ∥ Q)
+| cgr_par_right_step P Q Q' : Q ≡ Q' → (P ∥ Q) ≡ (P ∥ Q')
+| cgr_res_step P P' : P ≡ P' → (ν P) ≡ (ν P')
+| cgr_recursion_step t P P' : P ≡ P' → (t ∶ rec ∙ P) ≡ (t ∶ rec ∙ P')
+| cgr_guard_step g g' : g ≡ᵍ g' → g ≡ g'
 with gcgr_step : guard → guard → Prop :=
-| cgr_choice_nil_step g es : gcgr_step (g + 𝟘{es}) g
-| cgr_choice_com_step g h : gcgr_step (g + h) (h + g)
-| cgr_choice_assoc_rev_step g h k : gcgr_step (g + (h + k)) ((g + h) + k)
+| cgr_choice_nil_step g es : (g + 𝟘{es}) ≡ᵍ g
+| cgr_choice_com_step g h : (g + h) ≡ᵍ (h + g)
+| cgr_choice_assoc_rev_step g h k : (g + (h + k)) ≡ᵍ ((g + h) + k)
 | cgr_nil_val_step es1 e v es2 :
-    〚 e 〛 = v → gcgr_step 𝟘{es1 ++ e :: es2} 𝟘{es1 ++ EVal v :: es2}
-| cgr_op_val_step t E es1 e v es2 P :
-    〚 e 〛 = v → gcgr_step (t ∶ E ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ E ⦅es1 ++ EVal v :: es2⦆ ∙ P)
+    〚 e 〛 = v → 𝟘{es1 ++ e :: es2} ≡ᵍ 𝟘{es1 ++ EVal v :: es2}
+| cgr_op_val_step t U es1 e v es2 P :
+    〚 e 〛 = v → (t ∶ U ⦅es1 ++ e :: es2⦆ ∙ P) ≡ᵍ (t ∶ U ⦅es1 ++ EVal v :: es2⦆ ∙ P)
 | cgr_meas_val_step t M es1 e v es2 P :
-    〚 e 〛 = v → gcgr_step (t ∶ M ⦅es1 ++ e :: es2 ▷⦆ ∙ P) (t ∶ M ⦅es1 ++ EVal v :: es2 ▷⦆ ∙ P)
+    〚 e 〛 = v → (t ∶ M ⦅es1 ++ e :: es2 ▷⦆ ∙ P) ≡ᵍ (t ∶ M ⦅es1 ++ EVal v :: es2 ▷⦆ ∙ P)
 | cgr_init_val_step t e v P :
-    〚 e 〛 = v → gcgr_step (t ∶ e := |0⟩ ∙ P) (t ∶ v := |0⟩ ∙ P)
+    〚 e 〛 = v → (t ∶ e := |0⟩ ∙ P) ≡ᵍ (t ∶ v := |0⟩ ∙ P)
 (* contexts *)
-| cgr_prefix_step 𝜆 P P' : cgr_step P P' → gcgr_step (𝜆 ∙ P) (𝜆 ∙ P')
-| cgr_choice_step g g' h : gcgr_step g g' → gcgr_step (g + h) (g' + h)
-| cgr_choice_right_step g h h' : gcgr_step h h' → gcgr_step (g + h) (g + h').
+| cgr_prefix_step 𝜆 P P' : P ≡ P' → (𝜆 ∙ P) ≡ᵍ (𝜆 ∙ P')
+| cgr_choice_step g g' h : g ≡ᵍ g' → (g + h) ≡ᵍ (g' + h)
+| cgr_choice_right_step g h h' : h ≡ᵍ h' → (g + h) ≡ᵍ (g + h')
+where "P ≡ Q" := (cgr_step P Q) : lqccs_scope
+and "g ≡ᵍ h" := (gcgr_step g h) : lqccs_scope.
 
 Scheme cgr_step_mut_ind := Induction for cgr_step Sort Prop
   with gcgr_step_mut_ind := Induction for gcgr_step Sort Prop.
@@ -119,10 +123,10 @@ Qed.
 
 (* ** One step is a congruence *)
 
-Lemma cgr_of_step P Q : cgr_step P Q → P ≡* Q.
+Lemma cgr_of_step P Q : P ≡ Q → P ≡* Q.
 Proof. apply rtsc_lr. Qed.
 
-Lemma gcgr_of_step g h : gcgr_step g h → g ≡ᵍ* h.
+Lemma gcgr_of_step g h : g ≡ᵍ h → g ≡ᵍ* h.
 Proof. apply rtsc_lr. Qed.
 
 (* ** The rules, as congruences *)
@@ -190,7 +194,7 @@ Proof. apply gcgr_of_step, cgr_choice_assoc_rev_step. Qed.
 (* ** Congruence under contexts *)
 
 Lemma cgr_ctx (f : proc → proc) :
-  (∀ P Q, cgr_step P Q → cgr_step (f P) (f Q)) → ∀ P Q, P ≡* Q → f P ≡* f Q.
+  (∀ P Q, P ≡ Q → (f P) ≡ (f Q)) → ∀ P Q, P ≡* Q → f P ≡* f Q.
 Proof.
   intros Hf P Q. induction 1 as [P|P Q R [HPQ|HQP] _ IH]; [done| |].
   - etrans; [|exact IH]. apply rtsc_lr. by apply Hf.
@@ -198,7 +202,7 @@ Proof.
 Qed.
 
 Lemma gcgr_ctx (f : guard → guard) :
-  (∀ g h, gcgr_step g h → gcgr_step (f g) (f h)) → ∀ g h, g ≡ᵍ* h → (f g) ≡ᵍ* (f h).
+  (∀ g h, g ≡ᵍ h → (f g) ≡ᵍ (f h)) → ∀ g h, g ≡ᵍ* h → (f g) ≡ᵍ* (f h).
 Proof.
   intros Hf g h. induction 1 as [g|g h k [Hgh|Hhg] _ IH]; [done| |].
   - etrans; [|exact IH]. apply rtsc_lr. by apply Hf.
@@ -286,8 +290,8 @@ Proof. by rewrite cgr_par_assoc_rev, (cgr_par_swap P Q R), cgr_par_assoc. Qed.
 (* ** Renamings of indices *)
 
 Lemma cgr_step_ren :
-  (∀ P Q, cgr_step P Q → ∀ f, cgr_step (ren f P) (ren f Q))
-  ∧ (∀ g h, gcgr_step g h → ∀ f, gcgr_step (gren f g) (gren f h)).
+  (∀ P Q, P ≡ Q → ∀ f, (ren f P) ≡ (ren f Q))
+  ∧ (∀ g h, g ≡ᵍ h → ∀ f, (gren f g) ≡ᵍ (gren f h)).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   - rewrite ren_lift_lift_swap01. apply cgr_res_swap_step.
@@ -303,8 +307,8 @@ Proof. intros P P' HP. by apply cgr_ren. Qed.
 (* ** Substitution and shift of values *)
 
 Lemma cgr_step_subst :
-  (∀ P Q, cgr_step P Q → ∀ k v, cgr_step (P ⁅ v // k ⁆ᵥ) (Q ⁅ v // k ⁆ᵥ))
-  ∧ (∀ g h, gcgr_step g h → ∀ k v, gcgr_step (gsubst k v g) (gsubst k v h)).
+  (∀ P Q, P ≡ Q → ∀ k v, (P ⁅ v // k ⁆ᵥ) ≡ (Q ⁅ v // k ⁆ᵥ))
+  ∧ (∀ g h, g ≡ᵍ h → ∀ k v, (gsubst k v g) ≡ᵍ (gsubst k v h)).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: try (rewrite <- (proj1 ren_subst); by constructor).
@@ -320,8 +324,8 @@ Proof. apply (cgr_ctx (subst k v)). intros. by apply cgr_step_subst. Qed.
 Proof. intros P P' HP. by apply cgr_subst. Qed.
 
 Lemma cgr_step_shiftv :
-  (∀ P Q, cgr_step P Q → ∀ k, cgr_step (shiftv k P) (shiftv k Q))
-  ∧ (∀ g h, gcgr_step g h → ∀ k, gcgr_step (gshiftv k g) (gshiftv k h)).
+  (∀ P Q, P ≡ Q → ∀ k, (shiftv k P) ≡ (shiftv k Q))
+  ∧ (∀ g h, g ≡ᵍ h → ∀ k, (gshiftv k g) ≡ᵍ (gshiftv k h)).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   all: try (rewrite <- (proj1 ren_shiftv); by constructor).
@@ -339,8 +343,8 @@ Proof. induction n; simpl; [done|]. intros. by apply cgr_shiftv, IHn. Qed.
 (* ** Substitution of processes *)
 
 Lemma cgr_step_pr_subst_l :
-  (∀ P P', cgr_step P P' → ∀ k Q, cgr_step (P ⁅ Q // k ⁆ₚ) (P' ⁅ Q // k ⁆ₚ))
-  ∧ (∀ g g', gcgr_step g g' → ∀ k Q, gcgr_step (gpr_subst k g Q) (gpr_subst k g' Q)).
+  (∀ P P', P ≡ P' → ∀ k Q, (P ⁅ Q // k ⁆ₚ) ≡ (P' ⁅ Q // k ⁆ₚ))
+  ∧ (∀ g g', g ≡ᵍ g' → ∀ k Q, (gpr_subst k g Q) ≡ᵍ (gpr_subst k g' Q)).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   - replace ((ren swap01 P) ⁅ ren S (ren S Q) // k ⁆ₚ) with (ren swap01 (P ⁅ ren S (ren S Q) // k ⁆ₚ)).
@@ -353,8 +357,8 @@ Lemma cgr_pr_subst_l P P' k Q : P ≡* P' → P ⁅ Q // k ⁆ₚ ≡* P' ⁅ Q 
 Proof. apply (cgr_ctx (λ P, P ⁅ Q // k ⁆ₚ)). intros. by apply cgr_step_pr_subst_l. Qed.
 
 Lemma cgr_step_rshift :
-  (∀ P P', cgr_step P P' → ∀ k, cgr_step (rshift k P) (rshift k P'))
-  ∧ (∀ g g', gcgr_step g g' → ∀ k, gcgr_step (grshift k g) (grshift k g')).
+  (∀ P P', P ≡ P' → ∀ k, (rshift k P) ≡ (rshift k P'))
+  ∧ (∀ g g', g ≡ᵍ g' → ∀ k, (grshift k g) ≡ᵍ (grshift k g')).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   - rewrite <- (proj1 ren_rshift). apply cgr_res_swap_step.
@@ -380,8 +384,8 @@ Proof.
 Qed.
 
 Lemma cgr_step_tren :
-  (∀ P P', cgr_step P P' → ∀ f, cgr_step (tren f P) (tren f P'))
-  ∧ (∀ g g', gcgr_step g g' → ∀ f, gcgr_step (gtren f g) (gtren f g')).
+  (∀ P P', P ≡ P' → ∀ f, (tren f P) ≡ (tren f P'))
+  ∧ (∀ g g', g ≡ᵍ g' → ∀ f, (gtren f g) ≡ᵍ (gtren f g')).
 Proof.
   apply cgr_gcgr_step_ind; simpl; intros; try (constructor; done); try (by constructor; apply H).
   - rewrite (proj1 tren_ren). apply cgr_res_swap_step.
@@ -404,7 +408,7 @@ Qed.
 
 (* ** Facts on steps *)
 
-Lemma pstep_nil es s l P' : ¬ 𝟘{es} ⟶{l}[s] P'.
+Lemma pstep_nil es s l P' : 𝟘{es} ↛ₚ{l}[s] P'.
 Proof. intros Hs%prog_step_guard. inversion Hs. Qed.
 
 Lemma S_inj_fun : ∀ i j : nat, S i = S j → i = j.
@@ -413,9 +417,9 @@ Proof. intros i j [=]. done. Qed.
 (* ** Structural congruence is a bisimulation *)
 
 Definition fwd (P Q : proc) : Prop :=
-  ∀ s l P', P ⟶{l}[s] P' → ∃ Q', Q ⟶{l}[s] Q' ∧ P' ≡* Q'.
+  ∀ s l P', P ⟶ₚ{l}[s] P' → ∃ Q', Q ⟶ₚ{l}[s] Q' ∧ P' ≡* Q'.
 
-Lemma fwd_refl_step P Q : (∀ s l P', P ⟶{l}[s] P' → Q ⟶{l}[s] P') → fwd P Q.
+Lemma fwd_refl_step P Q : (∀ s l P', P ⟶ₚ{l}[s] P' → Q ⟶ₚ{l}[s] P') → fwd P Q.
 Proof. intros H s l P' Hs. exists P'. split; [by apply H|done]. Qed.
 
 Lemma fwd_par_nil P : fwd (P ∥ 𝟘) P ∧ fwd P (P ∥ 𝟘).
@@ -435,8 +439,8 @@ Proof.
     subst.
   - exists (Q ∥ P'). split; [by apply pr_parR|]. apply cgr_par_com.
   - exists (Q' ∥ P). split; [by apply pr_parL|]. apply cgr_par_com.
-  - exists (Q' ∥ P'). split; [rewrite cpair_comm; by eapply pr_syncR|]. apply cgr_par_com.
-  - exists (Q' ∥ P'). split; [rewrite cpair_comm; by eapply pr_syncL|]. apply cgr_par_com.
+  - exists (Q' ∥ P'). split; [rewrite (comm disj_union {[+ t +]}); by eapply pr_syncR|]. apply cgr_par_com.
+  - exists (Q' ∥ P'). split; [rewrite (comm disj_union {[+ t +]}); by eapply pr_syncL|]. apply cgr_par_com.
 Qed.
 
 Lemma fwd_par_assoc P Q R :
@@ -603,10 +607,10 @@ Qed.
 Lemma fwd_nil_val es es' : fwd 𝟘{es} 𝟘{es'}.
 Proof. intros s l P' Hs. exfalso. by eapply pstep_nil. Qed.
 
-Lemma fwd_op_val t E es1 e v es2 P :
+Lemma fwd_op_val t U es1 e v es2 P :
   〚 e 〛 = v →
-  fwd (t ∶ E ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ E ⦅es1 ++ EVal v :: es2⦆ ∙ P)
-  ∧ fwd (t ∶ E ⦅es1 ++ EVal v :: es2⦆ ∙ P) (t ∶ E ⦅es1 ++ e :: es2⦆ ∙ P).
+  fwd (t ∶ U ⦅es1 ++ e :: es2⦆ ∙ P) (t ∶ U ⦅es1 ++ EVal v :: es2⦆ ∙ P)
+  ∧ fwd (t ∶ U ⦅es1 ++ EVal v :: es2⦆ ∙ P) (t ∶ U ⦅es1 ++ e :: es2⦆ ∙ P).
 Proof.
   intros He. pose proof (eval_qubits_val es1 e v es2 He) as Ev.
   split; apply fwd_refl_step; intros s l X Hs%prog_step_guard; apply prog_step_guard; inversion Hs; subst; constructor; congruence.
@@ -706,7 +710,7 @@ Qed.
 (* *** The bisimulation *)
 
 Theorem cgr_step_bisim :
-  (∀ P Q, cgr_step P Q → fwd P Q ∧ fwd Q P) ∧ (∀ g h, gcgr_step g h → fwd g h ∧ fwd h g).
+  (∀ P Q, P ≡ Q → fwd P Q ∧ fwd Q P) ∧ (∀ g h, g ≡ᵍ h → fwd g h ∧ fwd h g).
 Proof.
   apply cgr_gcgr_step_ind; intros.
   - apply fwd_par_nil.
@@ -754,10 +758,10 @@ Qed.
 (* ** Congruence respects transitions, as in VACCS *)
 
 Definition sc_then_lts (P : proc) (s : choice) (l : Labels prog_action) (Q : proc) : Prop :=
-  ∃ R, P ≡* R ∧ R ⟶{l}[s] Q.
+  ∃ R, P ≡* R ∧ R ⟶ₚ{l}[s] Q.
 
 Definition lts_then_sc (P : proc) (s : choice) (l : Labels prog_action) (Q : proc) : Prop :=
-  ∃ R, P ⟶{l}[s] R ∧ R ≡* Q.
+  ∃ R, P ⟶ₚ{l}[s] R ∧ R ≡* Q.
 
 Theorem Congruence_Respects_Transition P s l Q : sc_then_lts P s l Q → lts_then_sc P s l Q.
 Proof.
@@ -769,6 +773,8 @@ End LqP.
 
 Arguments cgr {_} (_ _)%_lq.
 Arguments gcgr {_} (_ _)%_lq.
+Notation "P ≡ Q" := (cgr_step P Q) : lqccs_scope.
+Notation "g ≡ᵍ h" := (gcgr_step g h) : lqccs_scope.
 Notation "P ≡* Q" := (cgr P Q) (at level 70) : lqccs_scope.
 Notation "g ≡ᵍ* h" := (gcgr g h) (at level 70) : lqccs_scope.
 

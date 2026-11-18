@@ -25,10 +25,10 @@
 From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_scheduled pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas.
 From TestingTheory Require Import lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical.
 
 #[local] Open Scope lqccs_scope.
@@ -38,10 +38,10 @@ Section LqP.
   Context `{LP : lqCCS_Parameters}.
 
 Section Detau.
-  Context (E : sop).
+  Context (U : unitary).
 
   Definition pdetau (𝜆 : prefix) : prefix :=
-    match 𝜆 with (t ∶ 𝛕) => t ∶ E ⦅[]⦆ | _ => 𝜆 end.
+    match 𝜆 with (t ∶ 𝛕) => t ∶ U ⦅[]⦆ | _ => 𝜆 end.
 
   Fixpoint detau (P : proc) : proc :=
     match P with
@@ -125,24 +125,24 @@ Section Detau.
   Qed.
 
   Definition lrel (l l' : Labels prog_action) : Prop :=
-    l' = l ∨ (l = τ ∧ l' = E ⦅[]⦆).
+    l' = l ∨ (l = τ ∧ l' = ⦅[]⦆ ! U).
 
   Lemma lrel_ext a l' : lrel (ActExt a) l' → l' = ActExt a.
   Proof. by intros [->|[? _]]. Qed.
 
   Lemma detau_gstep g s l P' : g ⟶ᵍ{l}[s] P' → ∃ l', gdetau g ⟶ᵍ{l'}[s] detau P' ∧ lrel l l'.
   Proof.
-    induction 1 as [t P | t c v P | t E0 es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH]; simpl.
-    - exists (E ⦅[]⦆). split; [by apply pg_op|by right].
+    induction 1 as [t P | t c v P | t U0 es qs P Hq | t M es qs n P Hq | t es qs P Hq | g1 g2 s l P' Hgs IH | g1 g2 s l P' Hgs IH]; simpl.
+    - exists (⦅[]⦆ ! U). split; [by apply pg_op|by right].
     - exists (c ? v). split; [|by left]. rewrite (proj1 detau_subst). constructor.
-    - exists (E0 ⦅qs⦆). split; [by constructor|by left].
+    - exists (⦅qs⦆ ! U0). split; [by constructor|by left].
     - exists (M ⦅qs⦆? n). split; [|by left]. rewrite (proj1 detau_subst). by constructor.
-    - exists (init ⦅qs⦆). split; [by constructor|by left].
+    - exists (reinit qs). split; [by constructor|by left].
     - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pg_sumL|done].
     - destruct IH as (l' & Hs & Hl). exists l'. split; [by apply pg_sumR|done].
   Qed.
 
-  Lemma detau_step P s l P' : P ⟶{l}[s] P' → ∃ l', detau P ⟶{l'}[s] detau P' ∧ lrel l l'.
+  Lemma detau_step P s l P' : P ⟶ₚ{l}[s] P' → ∃ l', detau P ⟶ₚ{l'}[s] detau P' ∧ lrel l l'.
   Proof.
     induction 1 as [g s l P' Hg | t c e v He | e P Q s l P' He Hp IH | e P Q s l Q' He Hp IH | P Q s l P' Hp IH | P Q s l Q' Hp IH | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P Q t t' c v P' Q' Hp1 IH1 Hp2 IH2 | P s l P' Hp IH | t P]; simpl.
     - destruct (detau_gstep _ _ _ _ Hg) as (l' & Hs & Hl). exists l'. split; [by apply pr_guard|done].
@@ -158,42 +158,42 @@ Section Detau.
     - destruct IH as (l' & Hs & [->|[El ->]]).
       + exists l. split; [by apply pr_res|by left].
       + destruct l as [a|]; [destruct a; discriminate El|].
-        exists (E ⦅[]⦆). split; [by apply pr_res|by right].
+        exists (⦅[]⦆ ! U). split; [by apply pr_res|by right].
     - exists τ. split; [|by left]. rewrite (proj1 detau_pr_subst). simpl.
       rewrite (proj1 detau_tren). exact (pr_rec t (detau P)).
   Qed.
-  Lemma lrel_chan l a : lrel l (ActExt a) → (∀ qs, a ≠ PrOp E qs) → l = ActExt a.
-  Proof. intros [->|[_ E1]] Ha; [done|]. injection E1 as ->. by destruct (Ha []). Qed.
+  Lemma lrel_chan l a : lrel l (ActExt a) → (∀ qs, a ≠ PrOp U qs) → l = ActExt a.
+  Proof. intros [->|[_ U1]] Ha; [done|]. injection U1 as ->. by destruct (Ha []). Qed.
 
   Lemma detau_step_inv :
-    (∀ P s l' X, detau P ⟶{l'}[s] X → ∃ l P', P ⟶{l}[s] P' ∧ X = detau P' ∧ lrel l l')
+    (∀ P s l' X, detau P ⟶ₚ{l'}[s] X → ∃ l P', P ⟶ₚ{l}[s] P' ∧ X = detau P' ∧ lrel l l')
     ∧ (∀ g s l' X, gdetau g ⟶ᵍ{l'}[s] X → ∃ l P', g ⟶ᵍ{l}[s] P' ∧ X = detau P' ∧ lrel l l').
   Proof.
     apply proc_guard_ind; simpl.
     - intros t c e s l' X Hs. inversion Hs; subst. exists (c ! v), 𝟘. split; [by constructor|]. split; [done|by left].
     - intros e P IHP Q IHQ s l' X Hs. inversion Hs; subst.
-      + match goal with Hp : detau P ⟶{_}[_] _ |- _ => destruct (IHP _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
+      + match goal with Hp : detau P ⟶ₚ{_}[_] _ |- _ => destruct (IHP _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
         exists l, P1. split; [by apply pr_iteT|done].
-      + match goal with Hp : detau Q ⟶{_}[_] _ |- _ => destruct (IHQ _ _ _ Hp) as (l & Q1 & Hs' & -> & Hl) end.
+      + match goal with Hp : detau Q ⟶ₚ{_}[_] _ |- _ => destruct (IHQ _ _ _ Hp) as (l & Q1 & Hs' & -> & Hl) end.
         exists l, Q1. split; [by apply pr_iteF|done].
     - intros P IHP Q IHQ s l' X Hs. inversion Hs; subst.
-      + match goal with Hp : detau P ⟶{_}[_] _ |- _ => destruct (IHP _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
+      + match goal with Hp : detau P ⟶ₚ{_}[_] _ |- _ => destruct (IHP _ _ _ Hp) as (l & P1 & Hs' & -> & Hl) end.
         exists l, (P1 ∥ Q). split; [by apply pr_parL|done].
-      + match goal with Hp : detau Q ⟶{_}[_] _ |- _ => destruct (IHQ _ _ _ Hp) as (l & Q1 & Hs' & -> & Hl) end.
+      + match goal with Hp : detau Q ⟶ₚ{_}[_] _ |- _ => destruct (IHQ _ _ _ Hp) as (l & Q1 & Hs' & -> & Hl) end.
         exists l, (P ∥ Q1). split; [by apply pr_parR|done].
-      + match goal with Hp : detau P ⟶{_}[_] _, Hq : detau Q ⟶{_}[_] _ |- _ =>
+      + match goal with Hp : detau P ⟶ₚ{_}[_] _, Hq : detau Q ⟶ₚ{_}[_] _ |- _ =>
           destruct (IHP _ _ _ Hp) as (l1 & P1 & Hs1 & -> & Hl1); destruct (IHQ _ _ _ Hq) as (l2 & Q1 & Hs2 & -> & Hl2) end.
         apply lrel_chan in Hl1; [|done]. apply lrel_chan in Hl2; [|done]. subst.
         exists τ, (P1 ∥ Q1). split; [by eapply pr_syncL|]. split; [done|by left].
-      + match goal with Hp : detau P ⟶{_}[_] _, Hq : detau Q ⟶{_}[_] _ |- _ =>
+      + match goal with Hp : detau P ⟶ₚ{_}[_] _, Hq : detau Q ⟶ₚ{_}[_] _ |- _ =>
           destruct (IHP _ _ _ Hp) as (l1 & P1 & Hs1 & -> & Hl1); destruct (IHQ _ _ _ Hq) as (l2 & Q1 & Hs2 & -> & Hl2) end.
         apply lrel_chan in Hl1; [|done]. apply lrel_chan in Hl2; [|done]. subst.
         exists τ, (P1 ∥ Q1). split; [by eapply pr_syncR|]. split; [done|by left].
     - intros P IHP s l' X Hs. inversion Hs; subst.
-      match goal with Hp : detau P ⟶{_}[_] _ |- _ => destruct (IHP _ _ _ Hp) as (l0 & P1 & Hs' & -> & Hl) end.
+      match goal with Hp : detau P ⟶ₚ{_}[_] _ |- _ => destruct (IHP _ _ _ Hp) as (l0 & P1 & Hs' & -> & Hl) end.
       destruct Hl as [El|[-> El]].
       + exists l', (ν P1). split; [apply pr_res; by rewrite El|]. split; [done|by left].
-      + destruct l' as [[c v|c v|E0 qs|M qs n|qs]|]; simpl in El; try discriminate El.
+      + destruct l' as [[c v|c v|U0 qs|M qs n|qs]|]; simpl in El; try discriminate El.
         injection El as -> ->. exists τ, (ν P1). split; [by apply pr_res|]. split; [done|by right].
     - intros X0 s l' X Hs. inversion Hs.
     - intros t P IHP s l' Y Hs. inversion Hs; subst. exists τ, (P ⁅ (t ∶ rec ∙ P)↑ ⁆ₚ).
@@ -203,11 +203,11 @@ Section Detau.
       exists l, P'. split; [by apply pr_guard|done].
     - intros es s l' X Hs. inversion Hs.
     - intros s l' X Hs. inversion Hs.
-    - intros 𝜆 P IHP s l' X Hs. destruct 𝜆 as [t|t c|t E0 es|t M es|t e]; simpl in Hs; inversion Hs; subst.
+    - intros 𝜆 P IHP s l' X Hs. destruct 𝜆 as [t|t c|t U0 es|t M es|t e]; simpl in Hs; inversion Hs; subst.
       + match goal with Hq : eval_qubits [] = Some ?qs |- _ => change (Some (@nil qubit) = Some qs) in Hq; injection Hq as <- end.
         exists τ, P. split; [constructor|]. split; [done|by right].
       + exists (c ? v), (P ⁅ v ⁆ᵥ). split; [constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
-      + exists (E0 ⦅qs⦆), P. split; [by constructor|]. split; [done|by left].
+      + exists (⦅qs⦆ ! U0), P. split; [by constructor|]. split; [done|by left].
       + exists (M ⦅qs⦆? n), (P ⁅ VNat n ⁆ᵥ). split; [by constructor|]. split; [by rewrite (proj1 detau_subst)|by left].
       + eexists _, P. split; [by constructor|]. split; [done|by left].
     - intros g1 IH1 g2 IH2 s l' X Hs. inversion Hs; subst.
@@ -245,63 +245,63 @@ Section Detau.
 End Detau.
 
 Section Sched_Detau.
-  Context `{QM : QuantumModel} (E : sop).
-  Hypothesis HE : ∀ ρ, sop_apply E [] ρ = ρ.
+  Context `{QM : QuantumModel} (U : unitary).
+  Hypothesis HE : ∀ ρ, sop_apply U [] ρ = ρ.
 
-  Notation dd := (map (λ x : proc * St, (detau E x.1, x.2))).
+  Notation dd := (map (λ x : proc * St, (detau U x.1, x.2))).
 
-  Lemma lrel_not_op l a : lrel E l (ActExt a) → (∀ qs, a ≠ PrOp E qs) → l = ActExt a.
+  Lemma lrel_not_op l a : lrel U l (ActExt a) → (∀ qs, a ≠ PrOp U qs) → l = ActExt a.
   Proof. apply lrel_chan. Qed.
 
-  Lemma meas_fwd R s M qs (ks : list (Out (meas_of M qs))) Rs :
-    Forall2 (λ k R', R ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks Rs →
-    Forall2 (λ k R', (detau E R) ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks (map (detau E) Rs).
+  Lemma meas_fwd R s M qs (ks : list (nat)) Rs :
+    Forall2 (λ k R', R ⟶ₚ{M ⦅qs⦆? k}[s] R') ks Rs →
+    Forall2 (λ k R', (detau U R) ⟶ₚ{M ⦅qs⦆? k}[s] R') ks (map (detau U) Rs).
   Proof.
     induction 1 as [|k R' ks Rs Hp _ IH]; simpl; constructor; [|done].
-    destruct (detau_step E _ _ _ _ Hp) as (l' & Hs & ->%lrel_ext). done.
+    destruct (detau_step U _ _ _ _ Hp) as (l' & Hs & ->%lrel_ext). done.
   Qed.
 
-  Lemma meas_bwd R s M qs (ks : list (Out (meas_of M qs))) Rs' :
-    Forall2 (λ k R', (detau E R) ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks Rs' →
-    ∃ Rs, Forall2 (λ k R', R ⟶{M ⦅qs⦆? (code _ k)}[s] R') ks Rs ∧ map (detau E) Rs = Rs'.
+  Lemma meas_bwd R s M qs (ks : list (nat)) Rs' :
+    Forall2 (λ k R', (detau U R) ⟶ₚ{M ⦅qs⦆? k}[s] R') ks Rs' →
+    ∃ Rs, Forall2 (λ k R', R ⟶ₚ{M ⦅qs⦆? k}[s] R') ks Rs ∧ map (detau U) Rs = Rs'.
   Proof.
     induction 1 as [|k R'' ks Rs' Hp _ (Rs & HF & <-)]; [by exists []|].
-    destruct (proj1 (detau_step_inv E) _ _ _ _ Hp) as (l & P' & Hs & -> & Hl).
+    destruct (proj1 (detau_step_inv U) _ _ _ _ Hp) as (l & P' & Hs & -> & Hl).
     apply lrel_not_op in Hl; [|done]. subst l. exists (P' :: Rs). split; [by constructor|done].
   Qed.
 
   Lemma map_zip_detau {A} (f : A → St) (ks : list A) (Rs : list proc) :
-    dd (zip_with (λ k R', (R', f k)) ks Rs) = zip_with (λ k R', (R', f k)) ks (map (detau E) Rs).
+    dd (zip_with (λ k R', (R', f k)) ks Rs) = zip_with (λ k R', (R', f k)) ks (map (detau U) Rs).
   Proof. revert Rs. induction ks as [|k ks IH]; intros [|R Rs]; simpl; try done. by rewrite IH. Qed.
 
-  Lemma sched_detau_fwd ρ R s Δ : sched_step ρ R s Δ → sched_step ρ (detau E R) s (dd Δ).
+  Lemma sched_detau_fwd ρ R s Δ : sched_step ρ R s Δ → sched_step ρ (detau U R) s (dd Δ).
   Proof.
-    intros Hs. inversion Hs as [R' Hp|E0 qs R' Hp|qs R' Hp|M qs Rs R0 Hp0 HF]; subst; simpl.
-    - destruct (detau_step E _ _ _ _ Hp) as (l' & Hs' & [->|[_ ->]]).
+    intros Hs. inversion Hs as [R' Hp|U0 qs R' Hp|qs R' Hp|M qs Rs R0 Hp0 HF]; subst; simpl.
+    - destruct (detau_step U _ _ _ _ Hp) as (l' & Hs' & [->|[_ ->]]).
       + by apply ss_tau.
       + rewrite <- (HE ρ) at 2. by apply ss_op.
-    - destruct (detau_step E _ _ _ _ Hp) as (l' & Hs' & ->%lrel_ext). by apply ss_op.
-    - destruct (detau_step E _ _ _ _ Hp) as (l' & Hs' & ->%lrel_ext). by apply ss_init.
-    - destruct (detau_step E _ _ _ _ Hp0) as (l' & Hs' & ->%lrel_ext). rewrite map_zip_detau.
+    - destruct (detau_step U _ _ _ _ Hp) as (l' & Hs' & ->%lrel_ext). by apply ss_op.
+    - destruct (detau_step U _ _ _ _ Hp) as (l' & Hs' & ->%lrel_ext). by apply ss_init.
+    - destruct (detau_step U _ _ _ _ Hp0) as (l' & Hs' & ->%lrel_ext). rewrite map_zip_detau.
       eapply ss_meas; [exact Hs'|by apply meas_fwd].
   Qed.
 
-  Lemma sched_detau_bwd ρ R s Δ' : sched_step ρ (detau E R) s Δ' → ∃ Δ, sched_step ρ R s Δ ∧ dd Δ = Δ'.
+  Lemma sched_detau_bwd ρ R s Δ' : sched_step ρ (detau U R) s Δ' → ∃ Δ, sched_step ρ R s Δ ∧ dd Δ = Δ'.
   Proof.
-    intros Hs. inversion Hs as [R' Hp|E0 qs R' Hp|qs R' Hp|M qs Rs' R0 Hp0 HF]; subst.
-    - destruct (proj1 (detau_step_inv E) _ _ _ _ Hp) as (l & P' & Hs1 & -> & [El|[_ El]]); [|discriminate El].
+    intros Hs. inversion Hs as [R' Hp|U0 qs R' Hp|qs R' Hp|M qs Rs' R0 Hp0 HF]; subst.
+    - destruct (proj1 (detau_step_inv U) _ _ _ _ Hp) as (l & P' & Hs1 & -> & [El|[_ El]]); [|discriminate El].
       subst l. exists [(P', ρ)]. split; [by apply ss_tau|done].
-    - destruct (proj1 (detau_step_inv E) _ _ _ _ Hp) as (l & P' & Hs1 & -> & [El|[-> El]]).
-      + subst l. exists [(P', sop_apply E0 qs ρ)]. split; [by apply ss_op|done].
+    - destruct (proj1 (detau_step_inv U) _ _ _ _ Hp) as (l & P' & Hs1 & -> & [El|[-> El]]).
+      + subst l. exists [(P', sop_apply U0 qs ρ)]. split; [by apply ss_op|done].
       + injection El as -> ->. exists [(P', ρ)]. split; [by apply ss_tau|]. simpl. by rewrite HE.
-    - destruct (proj1 (detau_step_inv E) _ _ _ _ Hp) as (l & P' & Hs1 & -> & Hl).
+    - destruct (proj1 (detau_step_inv U) _ _ _ _ Hp) as (l & P' & Hs1 & -> & Hl).
       apply lrel_not_op in Hl; [|done]. subst l. exists [(P', init_apply qs ρ)]. split; [by apply ss_init|done].
-    - destruct (proj1 (detau_step_inv E) _ _ _ _ Hp0) as (l & P0 & Hs0 & -> & Hl).
+    - destruct (proj1 (detau_step_inv U) _ _ _ _ Hp0) as (l & P0 & Hs0 & -> & Hl).
       apply lrel_not_op in Hl; [|done]. subst l. destruct (meas_bwd _ _ _ _ _ _ HF) as (Rs & HFs & <-).
       eexists. split; [by eapply ss_meas|]. apply map_zip_detau.
   Qed.
 
-  Definition fdetau (c : proc * proc) : proc * proc := (detau E c.1, detau E c.2).
+  Definition fdetau (c : proc * proc) : proc * proc := (detau U c.1, detau U c.2).
 
   Notation fd := (map (λ x : proc * proc * St, (fdetau x.1, x.2))).
 
@@ -312,8 +312,8 @@ Section Sched_Detau.
     dd Δ0 = dmap par_of Δ' → ∃ Δ, dmap par_of Δ = Δ0 ∧ fd Δ = Δ'.
   Proof.
     revert Δ'. induction Δ0 as [|[x ρ] Δ0 IH]; intros [|[[a b] ρ'] Δ'] Eq; simpl in Eq; try discriminate Eq; [by exists []|].
-    injection Eq as E1 E2 E3. destruct (IH _ E3) as (Δ & <- & <-).
-    destruct x as [| |u v| | | |]; simpl in E1; try discriminate E1. injection E1 as Ea Eb. subst a b ρ'.
+    injection Eq as U1 U2 E3. destruct (IH _ E3) as (Δ & <- & <-).
+    destruct x as [| |u v| | | |]; simpl in U1; try discriminate U1. injection U1 as Ea Eb. subst a b ρ'.
     exists (((u, v), ρ) :: Δ). split; done.
   Qed.
 
@@ -322,32 +322,32 @@ Section Sched_Detau.
 
   Lemma conf_detau_bwd ρ c s Δ' : conf_sched ρ (fdetau c) s Δ' → ∃ Δ, conf_sched ρ c s Δ ∧ fd Δ = Δ'.
   Proof.
-    unfold conf_sched. intros Hs. destruct (sched_detau_bwd ρ (par_of c) s _ Hs) as (Δ0 & Hs0 & E0).
-    destruct (unpar_detau Δ0 Δ' E0) as (Δ & <- & <-). by exists Δ.
+    unfold conf_sched. intros Hs. destruct (sched_detau_bwd ρ (par_of c) s _ Hs) as (Δ0 & Hs0 & U0).
+    destruct (unpar_detau Δ0 Δ' U0) as (Δ & <- & <-). by exists Δ.
   Qed.
 
   Theorem smyth_detau (DC : dep_choice) (p q : proc * St) (T : proc) :
     smyth_le (SchedSts0 := lq_SchedSts) Stay (compose p T) (compose q T)
-    ↔ smyth_le (SchedSts0 := lq_SchedSts) Stay (compose (detau E p.1, p.2) (detau E T)) (compose (detau E q.1, q.2) (detau E T)).
+    ↔ smyth_le (SchedSts0 := lq_SchedSts) Stay (compose (detau U p.1, p.2) (detau U T)) (compose (detau U q.1, q.2) (detau U T)).
   Proof.
-    exact (bisim_smyth lq_SchedSts lq_SchedSts fdetau (λ c, iff_sym (detau_success E c.2))
+    exact (bisim_smyth lq_SchedSts lq_SchedSts fdetau (λ c, iff_sym (detau_success U c.2))
              conf_detau_fwd conf_detau_bwd DC (compose p T) (compose q T)).
   Qed.
 
   Theorem smyth_detau_obs (DC : dep_choice) (p q : proc * St) (T : proc) :
     smyth_le (SchedSts0 := lq_SchedSts) Stay (compose p T) (compose q T)
-    ↔ smyth_le (SchedSts0 := lq_SchedSts) Stay (compose p (detau E T)) (compose q (detau E T)).
+    ↔ smyth_le (SchedSts0 := lq_SchedSts) Stay (compose p (detau U T)) (compose q (detau U T)).
   Proof.
-    rewrite (smyth_detau DC p q T), (smyth_detau DC p q (detau E T)), (proj1 (detau_idem E)). done.
+    rewrite (smyth_detau DC p q T), (smyth_detau DC p q (detau U T)), (proj1 (detau_idem U)). done.
   Qed.
 
-  Definition obs_for_silent (p q : proc * St) (T : proc) : Prop := obs_for p q (detau E T).
+  Definition obs_for_silent (p q : proc * St) (T : proc) : Prop := obs_for p q (detau U T).
 
   Theorem silent_observers (DC : dep_choice) (p q : proc * St) :
     ctx_pre_sm_on Stay (obs_for_silent p q) p q ↔ ctx_pre_sm_on Stay (obs_for p q) p q.
   Proof.
     split.
-    - intros Hc T HT. apply Hc. unfold obs_for_silent. by rewrite (proj1 (detau_obs E) T (proj1 (proj1 (proj1 HT)))).
+    - intros Hc T HT. apply Hc. unfold obs_for_silent. by rewrite (proj1 (detau_obs U) T (proj1 (proj1 (proj1 HT)))).
     - intros Hc T HT. apply (smyth_detau_obs DC p q T). exact (Hc _ HT).
   Qed.
 End Sched_Detau.

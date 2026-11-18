@@ -35,7 +35,7 @@ From stdpp Require Import base countable decidable list numbers.
 
 Definition tag : Type := nat.
 Definition qubit : Type := nat.
-Definition sop : Type := nat.
+Definition unitary : Type := nat.
 Definition meas : Type := nat.
 
 (* ** Values and expressions *)
@@ -159,7 +159,7 @@ Proof. solve_decision. Defined.
 Inductive prefix : Type :=
 | PTau (t : tag)
 | PRecv (t : tag) (c : channel)
-| POp (t : tag) (E : sop) (es : list exp)
+| POp (t : tag) (U : unitary) (es : list exp)
 | PMeas (t : tag) (M : meas) (es : list exp)
 | PReinit (t : tag) (e : exp).
 
@@ -195,7 +195,7 @@ Notation "𝟙" := GSucc : lqccs_scope.
 
 Notation "t ∶ '𝛕'" := (PTau t) (at level 40) : lqccs_scope.
 Notation "t ∶ c ?" := (PRecv t c) (at level 40, c at level 9) : lqccs_scope.
-Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9, format "t  ∶  E  ⦅ es ⦆") : lqccs_scope.
+Notation "t ∶ U ⦅ es ⦆" := (POp t U es) (at level 40, U at level 9, format "t  ∶  U  ⦅ es ⦆") : lqccs_scope.
 Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9, format "t  ∶  M  ⦅ es  ▷⦆") : lqccs_scope.
 Notation "t ∶ e ':=' '|0⟩'" := (PReinit t e) (at level 40, e at level 9) : lqccs_scope.
 Notation "t ∶ c ! e" := (PSend t c e) (at level 40, c at level 9, e at level 9) : lqccs_scope.
@@ -220,7 +220,7 @@ Definition prefix_subst (k : nat) (v : val) (𝜆 : prefix) : prefix :=
   match 𝜆 with
   | t ∶ 𝛕 => t ∶ 𝛕
   | t ∶ c ? => t ∶ c ?
-  | t ∶ E ⦅es⦆ => t ∶ E ⦅map (exp_subst k v) es⦆
+  | t ∶ U ⦅es⦆ => t ∶ U ⦅map (exp_subst k v) es⦆
   | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_subst k v) es ▷⦆
   | t ∶ e := |0⟩ => t ∶ (exp_subst k v e) := |0⟩
   end.
@@ -250,7 +250,7 @@ Definition prefix_shift (k : nat) (𝜆 : prefix) : prefix :=
   match 𝜆 with
   | t ∶ 𝛕 => t ∶ 𝛕
   | t ∶ c ? => t ∶ c ?
-  | t ∶ E ⦅es⦆ => t ∶ E ⦅map (exp_shift k) es⦆
+  | t ∶ U ⦅es⦆ => t ∶ U ⦅map (exp_shift k) es⦆
   | t ∶ M ⦅es ▷⦆ => t ∶ M ⦅map (exp_shift k) es ▷⦆
   | t ∶ e := |0⟩ => t ∶ (exp_shift k e) := |0⟩
   end.
@@ -275,11 +275,7 @@ with gshiftv (k : nat) (g : guard) : guard :=
 
 Notation "⇧ᵥ" := (shiftv 0) : lqccs_scope.
 
-(* ** Renaming of the indices of restricted channels
-
-    [ren f P] applies [f] to the free indices of [P]; under a restriction,
-    [f] is lifted.  [ren S] is the shift of VACCS ([NewVarC 0]), [ren swap01]
-    exchanges the two innermost restrictions. *)
+(* ** Renaming of the indices of restricted channels *)
 
 Definition lift (f : nat → nat) (i : nat) : nat :=
   match i with 0 => 0 | S i => S (f i) end.
@@ -423,7 +419,7 @@ Definition prefix_tren (f : tag → tag) (𝜆 : prefix) : prefix :=
   match 𝜆 with
   | t ∶ 𝛕 => f t ∶ 𝛕
   | t ∶ c ? => f t ∶ c ?
-  | t ∶ E ⦅es⦆ => f t ∶ E ⦅es⦆
+  | t ∶ U ⦅es⦆ => f t ∶ U ⦅es⦆
   | t ∶ M ⦅es ▷⦆ => f t ∶ M ⦅es ▷⦆
   | t ∶ e := |0⟩ => f t ∶ e := |0⟩
   end.
@@ -499,7 +495,7 @@ Notation "'ν' P" := (PRes P) (at level 36) : lqccs_scope.
 Notation "𝟙" := GSucc : lqccs_scope.
 Notation "t ∶ '𝛕'" := (PTau t) (at level 40) : lqccs_scope.
 Notation "t ∶ c ?" := (PRecv t c) (at level 40, c at level 9) : lqccs_scope.
-Notation "t ∶ E ⦅ es ⦆" := (POp t E es) (at level 40, E at level 9, format "t  ∶  E  ⦅ es ⦆") : lqccs_scope.
+Notation "t ∶ U ⦅ es ⦆" := (POp t U es) (at level 40, U at level 9, format "t  ∶  U  ⦅ es ⦆") : lqccs_scope.
 Notation "t ∶ M ⦅ es ▷⦆" := (PMeas t M es) (at level 40, M at level 9, format "t  ∶  M  ⦅ es  ▷⦆") : lqccs_scope.
 Notation "t ∶ e ':=' '|0⟩'" := (PReinit t e) (at level 40, e at level 9) : lqccs_scope.
 Notation "t ∶ c ! e" := (PSend t c e) (at level 40, c at level 9, e at level 9) : lqccs_scope.
@@ -512,5 +508,3 @@ Notation "P ⁅ Q ⁆ₚ" := (pr_subst 0 P Q) (at level 20) : lqccs_scope.
 Notation "P ↑" := (tren tag_up P) (at level 20, format "P ↑") : lqccs_scope.
 Notation "⇧ᵥ" := (shiftv 0) : lqccs_scope.
 Notation "⇧ₚ" := (rshift 0) : lqccs_scope.
-
-(* end hide *)

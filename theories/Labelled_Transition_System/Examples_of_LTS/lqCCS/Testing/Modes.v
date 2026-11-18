@@ -26,10 +26,10 @@ From Stdlib.Bool Require Import Bool.
 From Stdlib.Logic Require Import Classical_Prop.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list.
+From stdpp Require Import base gmultiset countable decidable list.
 From TestingTheory Require Import ActTau pMust_almost_sure pMust_smyth pMust_transfer pMust_canonical.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Quantum lqCCS.Language.Quantum_Weights.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.Language.LTS lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Helper_substitution.Label_lemmas lqCCS.Testing.Scheduled lqCCS.Testing.Observer_predicates lqCCS.Helper_substitution.Tag_lemmas lqCCS.Testing.DistLTS lqCCS.Testing.Programs lqCCS.Testing.Observers lqCCS.Testing.Smyth_Soundness lqCCS.Testing.Canonical lqCCS.Testing.Pull lqCCS.Testing.Head.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
@@ -157,7 +157,7 @@ Lemma rg_resp o a : (∀ k c v, a ≠ CoOut k c v) → (∀ k, o ≠ OffUnfold k
   | None => offer_of a ≠ o
   end.
 Proof.
-  intros Ha Hu. destruct o as [k c v|k c|k E qs|k M qs|k q|k]; simpl.
+  intros Ha Hu. destruct o as [k c v|k c|k U qs|k M qs|k q|k]; simpl.
   - intros Ho. destruct a; try discriminate Ho. by destruct (Ha k0 c0 v0).
   - destruct a as [k0 c0 v0|k0 c0 v0|k0 E0 qs0|k0 M0 qs0 n0|k0 q0|k0]; simpl; try (split; [intros [=]|done]).
     case_decide as Hd.
@@ -379,13 +379,13 @@ Section Modes.
   Lemma hsum_nosucc rec m Z : gsuccessb (hsum VL reps wrapb rec m Z) = false.
   Proof.
     apply gsum_nosucc. intros g Hg. apply elem_of_app in Hg as [Hg|Hg]; apply list_elem_of_omap in Hg as (x & _ & Hx).
-    - destruct x as [𝜆 D]. unfold hguard in Hx. destruct 𝜆 as [t|t c|t E es|t M es|t e]; simpl in Hx.
+    - destruct x as [𝜆 D]. unfold hguard in Hx. destruct 𝜆 as [t|t c|t U es|t M es|t e]; simpl in Hx.
       + discriminate Hx.
       + injection Hx as <-. done.
       + destruct (eval_qubits es); [injection Hx as <-; done|discriminate Hx].
       + destruct (eval_qubits es); [injection Hx as <-; done|discriminate Hx].
       + destruct (eval_qubit e); [injection Hx as <-; done|discriminate Hx].
-    - destruct x as [k c v|k c|k E qs|k M qs|k q|k]; simpl in Hx;
+    - destruct x as [k c v|k c|k U qs|k M qs|k q|k]; simpl in Hx;
         [discriminate Hx|injection Hx as <-; done..|discriminate Hx].
   Qed.
 

@@ -30,9 +30,9 @@
     [Harmony_lemma/]: super-operators [T] ([Alg], [FinAlg]) acting linearly
     on states [St] ([StAlg]).  This file only adds what lqCCS needs on top:
 
-    - names: a superoperator [E] applied to qubits [q̃] is an atomic
-      operation [sop_act E q̃ : Act], a measurement [M] on [q̃] is
-      [meas_of M q̃ : Meas]; padding [E] to the whole state ([E^q̃] in the
+    - names: a unitary [U] applied to qubits [q̃] is an atomic
+      operation [sop_act U q̃ : Act], a measurement [M] on [q̃] is
+      [meas_of M q̃ : Meas]; padding [U] to the whole state ([U^q̃] in the
       paper) is the instance's business;
     - states are partial density operators, not normalised: addition is
       total, and the bound [tr ≤ 1] of the paper (Definition 6.1) is a
@@ -51,9 +51,14 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib Require Import List.
 From stdpp Require Import base countable decidable gmap.
 From TestingTheory Require Import lqCCS.Language.Algebra lqCCS.Language.Syntax lqCCS.Helper_substitution.De_Brujin_lemmas.
+Notation "ℰ · ρ" := (app (act ℰ) ρ) (at level 41, right associativity) : lqccs_scope.
+Notation "ℳ ·[ k ] ρ" := (app (kraus ℳ k) ρ) (at level 41, right associativity, format "ℳ  ·[ k ]  ρ") : lqccs_scope.
+
+#[local] Open Scope lqccs_scope.
+
 Class QuantumModel `{StAlg} := MkQuantumModel {
     (* Names of the syntax. *)
-    sop_act : sop → list qubit → Act;
+    sop_act : unitary → list qubit → Act;
     meas_of : meas → list qubit → Meas;
 
     (* States: a commutative monoid, acted upon linearly. *)
@@ -82,19 +87,19 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
     (* Positivity: only [O] has trace zero. *)
     tr_zero_inv ρ : tr ρ = W_zero → ρ = szero;
     (* Superoperators of the syntax are trace preserving. *)
-    sop_tr E qs ρ : tr (app (act (sop_act E qs)) ρ) = tr ρ;
+    sop_tr U qs ρ : tr (sop_act U qs · ρ) = tr ρ;
     (* Completeness of measurements, [Σ_k M_k† M_k = I], read on traces. *)
     meas_tr M qs ρ : tr (app (br (meas_of M qs) (λ _, one)) ρ) = tr ρ;
     (* Initialisation of a qubit to [|0⟩], [Σ_i |0⟩⟨i| ρ |i⟩⟨0|], trace preserving. *)
     init_act : qubit → Act;
-    init_tr q ρ : tr (app (act (init_act q)) ρ) = tr ρ;
+    init_tr q ρ : tr (init_act q · ρ) = tr ρ;
 
     (* Qubits of a state, preserved by the operations of the syntax. *)
     St_qubits : St → gset qubit;
-    sop_qubits E qs ρ : St_qubits (app (act (sop_act E qs)) ρ) = St_qubits ρ;
-    init_qubits q ρ : St_qubits (app (act (init_act q)) ρ) = St_qubits ρ;
+    sop_qubits U qs ρ : St_qubits (sop_act U qs · ρ) = St_qubits ρ;
+    init_qubits q ρ : St_qubits (init_act q · ρ) = St_qubits ρ;
     meas_qubits M qs k ρ :
-      St_qubits (app (kraus (meas_of M qs) k) ρ) = St_qubits ρ;
+      St_qubits (meas_of M qs ·[k] ρ) = St_qubits ρ;
 
     (* Partial trace [tr_Σ'(ρ)]. *)
     ptrace : gset qubit → St → St;
@@ -104,18 +109,13 @@ Class QuantumModel `{StAlg} := MkQuantumModel {
 
 Arguments W {_ _ _ _ _}.
 
-(* [E^q̃(ρ)] and the branch [k] of [M^q̃(ρ)], unnormalised: its trace is
+(* [U^q̃(ρ)] and the branch [k] of [M^q̃(ρ)], unnormalised: its trace is
     the probability of outcome [k]. *)
-Definition sop_apply `{QuantumModel} E qs ρ := app (act (sop_act E qs)) ρ.
-Definition init_apply `{QuantumModel} q ρ := app (act (init_act q)) ρ.
+Definition sop_apply `{QuantumModel} U qs ρ := sop_act U qs · ρ.
+Definition init_apply `{QuantumModel} q ρ := init_act q · ρ.
 
-Definition meas_branch `{QuantumModel} M qs (k : Out (meas_of M qs)) ρ :=
-  app (kraus (meas_of M qs) k) ρ.
+Notation "M ⦅ qs ⦆[ k ] · ρ" := (app (kraus (meas_of M qs) k) ρ) (at level 30, ρ at level 29, format "M  ⦅ qs ⦆[ k ]  ·  ρ") : lqccs_scope.
 
-Notation "ℰ · ρ" := (app (act ℰ) ρ) (at level 41, right associativity) : lqccs_scope.
-Notation "M ⦅ qs ⦆[ k ] · ρ" := (meas_branch M qs k ρ) (at level 30, ρ at level 29, format "M  ⦅ qs ⦆[ k ]  ·  ρ") : lqccs_scope.
-
-#[local] Open Scope lqccs_scope.
 
 (* ** First consequences *)
 
@@ -128,7 +128,7 @@ Section Consequences.
   Lemma W_add_zero_r a : W_add a W_zero = a.
   Proof. by rewrite W_add_comm, W_add_zero. Qed.
 
-  Lemma sop_szero E qs : sop_apply E qs szero = szero.
+  Lemma sop_szero U qs : sop_apply U qs szero = szero.
   Proof. apply app_szero. Qed.
 
   Lemma tr_ssum l : tr (ssum l) = fold_right W_add W_zero (map tr l).
@@ -146,21 +146,22 @@ Section Consequences.
   Qed.
 
   (* A measurement branch never weighs more than the state it comes from. *)
-  Lemma meas_branch_le M qs k ρ : W_le (tr (M ⦅qs⦆[k] · ρ)) (tr ρ).
+  Lemma meas_branch_le M qs k ρ : In k (outs (meas_of M qs)) → W_le (tr (M ⦅qs⦆[k] · ρ)) (tr ρ).
   Proof.
+    intros Hk.
     rewrite <- (meas_tr M qs ρ), br_sum. fold (sum (map (λ k, one ⋅ kraus (meas_of M qs) k)
                                                  (outs (meas_of M qs)))).
     rewrite app_ssum, tr_ssum, !map_map.
-    apply le_fold_right, in_map_iff. exists k. split; [|apply outs_all].
-    unfold meas_branch. by rewrite comp_1l.
+    apply le_fold_right, in_map_iff. exists k. split; [|exact Hk].
+    by rewrite comp_1l.
   Qed.
 
   Lemma tr_nonzero ρ : ρ ≠ szero → tr ρ ≠ W_zero.
   Proof. intros Hρ E. by apply Hρ, tr_zero_inv. Qed.
 
-  Lemma sop_apply_nonzero E qs ρ : ρ ≠ szero → sop_apply E qs ρ ≠ szero.
+  Lemma sop_apply_nonzero U qs ρ : ρ ≠ szero → sop_apply U qs ρ ≠ szero.
   Proof.
-    intros Hρ E'. apply (tr_nonzero ρ Hρ). rewrite <- (sop_tr E qs ρ). unfold sop_apply in E'.
+    intros Hρ E'. apply (tr_nonzero ρ Hρ). rewrite <- (sop_tr U qs ρ). unfold sop_apply in E'.
     by rewrite E', tr_szero.
   Qed.
 
@@ -177,19 +178,19 @@ Section Consequences.
   Qed.
 
   (* A measurement of a non-zero state has an outcome of non-zero weight. *)
-  Lemma meas_nonzero_branch M qs ρ : ρ ≠ szero → ∃ k, M ⦅qs⦆[k] · ρ ≠ szero.
+  Lemma meas_nonzero_branch M qs ρ : ρ ≠ szero → ∃ k, k ∈ outs (meas_of M qs) ∧ M ⦅qs⦆[k] · ρ ≠ szero.
   Proof.
     intros Hρ.
     destruct (decide (Exists (λ k, M ⦅qs⦆[k] · ρ ≠ szero) (outs (meas_of M qs))))
       as [HE|HE].
-    - apply Exists_exists in HE as (k & _ & Hk). eauto.
+    - apply Exists_exists in HE as (k & Hin & Hk). eauto.
     - exfalso. apply Hρ, tr_zero_inv.
       rewrite <- (meas_tr M qs ρ), br_sum. fold (sum (map (λ k, one ⋅ kraus (meas_of M qs) k)
                                                    (outs (meas_of M qs)))).
       rewrite app_ssum, tr_ssum, !map_map. apply fold_W_zero.
       intros w (k & -> & Hk)%list_elem_of_fmap. rewrite comp_1l.
       destruct (decide (M ⦅qs⦆[k] · ρ = szero)) as [Hz|Hz].
-      + unfold meas_branch in Hz. by rewrite Hz, tr_szero.
+      + by rewrite Hz, tr_szero.
       + exfalso. apply HE, Exists_exists. exists k. split; [done|done].
   Qed.
 End Consequences.

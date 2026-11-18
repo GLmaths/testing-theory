@@ -24,9 +24,9 @@ From Stdlib.Unicode Require Import Utf8.
 From Stdlib.Lists Require Import List.
 From Stdlib Require Import Lia.
 Import ListNotations.
-From stdpp Require Import base countable decidable list numbers.
+From stdpp Require Import base gmultiset countable decidable list numbers.
 From TestingTheory Require Import ActTau.
-From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.Language.LTS lqCCS.Testing.Scheduled.
+From TestingTheory Require Import lqCCS.Language.Syntax lqCCS.General_definition.Parallel_choice_LTS lqCCS.Language.LTS_quantum_mem lqCCS.Language.LTS_lqCCS_prog lqCCS.Language.LTS_lqCCS_process lqCCS.Language.LTS_lqCCS_par_Qmem lqCCS.Testing.Scheduled.
 
 #[local] Open Scope lqccs_scope.
 #[local] Open Scope nat_scope.
